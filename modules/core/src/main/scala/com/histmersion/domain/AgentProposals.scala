@@ -8,7 +8,7 @@ import com.histmersion.util.json.StoredIdCodecs.given
 import com.histmersion.api.library.{EdgesPatch, MetadataPatch}
 import com.histmersion.api.given
 
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.automation.Approval
@@ -43,7 +43,7 @@ object AgentProposals:
       target: Option[com.histmersion.domain.library.Citekey] = None,
       evidence: Proposal.Evidence = Proposal.Evidence(""),
       quote: Option[Proposal.Quote] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema:
     /** One line for a person: what would change. */
@@ -110,7 +110,7 @@ object AgentProposals:
       target: Option[ProposalAnswer.Target] = None,
       evidence: ProposalAnswer.Evidence,
       quote: ProposalAnswer.Quote
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object ProposalAnswer:
     type Kind = Kind.T
     object Kind extends Newtype[String, Pure]

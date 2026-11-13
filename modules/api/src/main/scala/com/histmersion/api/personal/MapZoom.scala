@@ -1,7 +1,9 @@
 package com.histmersion
 package api.personal
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
+import com.histmersion.util.json.JsonCodec
 
-import io.circe.{Decoder, Encoder}
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.any.Pure
 import sttp.tapir.Schema
@@ -9,6 +11,5 @@ import sttp.tapir.Schema
 type MapZoom = MapZoom.T
 
 object MapZoom extends Newtype[Double, Pure]:
-  given Encoder[MapZoom] = Encoder.encodeDouble.contramap(_.value)
-  given Decoder[MapZoom] = Decoder.decodeDouble.map(MapZoom(_))
+  given JsonValueCodec[MapZoom] = JsonCodec.mapped[MapZoom, Double](_.value, b => Right(MapZoom(b)))
   given Schema[MapZoom] = Schema.schemaForDouble.as[MapZoom]

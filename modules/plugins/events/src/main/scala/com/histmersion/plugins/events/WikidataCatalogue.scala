@@ -1,12 +1,16 @@
 package com.histmersion
 package plugins.events
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
+import com.histmersion.util.json.Cursor
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.plugin.*
 import com.histmersion.upstreams.wikidata.WikidataClasses
 import com.histmersion.upstreams.dating.CatalogDating
 import com.histmersion.upstreams.wikidata.WikidataItem
-import io.circe.{ACursor, Json}
 
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets.UTF_8
@@ -54,7 +58,7 @@ final class WikidataCatalogue(cfg: WikidataSettings) extends EventCatalogue:
   /** The item read again from its `raw` (its rows of the query's answer), in the kind it is stored with. */
   override def reread(stored: CatalogueEvent): Option[CatalogueEvent] =
     stored.raw
-      .flatMap(t => io.circe.parser.parse(t.value).toOption)
+      .flatMap(t => RawJson.parse(t.value).toOption)
       .flatMap(j =>
         WikidataCatalogue
           .parse(Json.obj("results" -> Json.obj("bindings" -> j)), stored.kind)
@@ -109,7 +113,7 @@ object WikidataCatalogue:
   def sparqlUrl(endpoint: WikidataSettings.SparqlUrl, query: Query): Plugin.Http.Url =
     Plugin.Http.Url(s"$endpoint?format=json&query=${URLEncoder.encode(query.value, UTF_8)}")
 
-  private def binding(b: ACursor, k: String): Option[String] =
+  private def binding(b: Cursor, k: String): Option[String] =
     b.downField(k).get[String]("value").toOption.map(_.trim).filter(_.nonEmpty)
 
   /** Pure: `Point(4.5 47.53)` → (lat 47.53, lon 4.5). */
@@ -124,10 +128,10 @@ object WikidataCatalogue:
     * answers the id) keep it.
     */
   def parse(json: Json, kind: CatalogueEvent.Kind): Either[Problem, List[CatalogueEvent]] =
-    json.hcursor.downField("results").downField("bindings").focus.flatMap(_.asArray) match
+    json.cursor.downField("results").downField("bindings").focus.flatMap(_.asArray) match
       case None       => Left(Problem.Unclassified(Legacy.Text("no results in the answer")))
       case Some(rows) =>
-        val bs = rows.toList.map(_.hcursor)
+        val bs = rows.toList.map(_.cursor)
         Right(bs.groupBy(b => binding(b, "item").getOrElse("")).toList.filter(_._1.nonEmpty).sortBy(_._1).flatMap {
           (uri, rs) =>
             val qid = uri.reverse.takeWhile(_ != '/').reverse

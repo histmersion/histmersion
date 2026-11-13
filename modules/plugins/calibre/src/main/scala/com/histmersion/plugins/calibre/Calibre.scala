@@ -1,5 +1,8 @@
 package com.histmersion
 package plugins.calibre
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.plugin.EnvVar
@@ -503,12 +506,12 @@ object Calibre:
   def parseMachineJson(out: Processes.Result.Out): Either[Problem, List[Book]] =
     if out.value.trim.isEmpty then Right(Nil) // no match: nothing is printed at all
     else
-      io.circe.parser
+      RawJson
         .parse(out.value)
         .left
-        .map(e => Problem.Unclassified(Legacy.Text(s"calibredb returned unparseable JSON: ${e.getMessage}")))
+        .map(e => Problem.Unclassified(Legacy.Text(s"calibredb returned unparseable JSON: $e")))
         .map(_.asArray.toList.flatten.flatMap { j =>
-          val c = j.hcursor
+          val c = j.cursor
           c.downField("id").as[Int].toOption.map { id =>
             Book(
               id = Book.Id(id),
@@ -568,12 +571,12 @@ object Calibre:
     // `sqlite3 -json` prints NOTHING for an empty result, not `[]` — that was "exhausted input"
     if out.value.trim.isEmpty then Right(Nil)
     else
-      io.circe.parser
+      RawJson
         .parse(out.value)
         .left
-        .map(e => Problem.Unclassified(Legacy.Text(s"sqlite3 returned unparseable JSON: ${e.getMessage}")))
+        .map(e => Problem.Unclassified(Legacy.Text(s"sqlite3 returned unparseable JSON: $e")))
         .map(_.asArray.toList.flatten.flatMap { j =>
-          val c = j.hcursor
+          val c = j.cursor
           def s(f: String) = c.downField(f).as[String].toOption.map(_.trim).filter(_.nonEmpty)
           c.downField("id").as[Int].toOption.map { id =>
             Book(

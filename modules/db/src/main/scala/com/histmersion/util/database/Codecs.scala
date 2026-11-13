@@ -1,7 +1,6 @@
 package com.histmersion
 package util.database
 import com.augustnagro.magnum.*
-import io.circe.syntax.*
 
 /** `DbCodec[List[String]]` for Postgres `text[]` columns — THE way arrays cross the JDBC boundary. Reads via
   * `java.sql.Array`, writes via `createArrayOf("text", ...)`: select the column as-is and bind a list as

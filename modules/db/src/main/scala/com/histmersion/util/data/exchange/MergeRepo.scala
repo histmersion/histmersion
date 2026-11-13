@@ -1,5 +1,8 @@
 package com.histmersion
 package util.data.exchange
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.api.exchange.Bundle
@@ -128,9 +131,9 @@ object MergeRepo:
         .query[(String, Option[String])]
         .run()
         .head
-      val json = Jsonb.read[io.circe.Json](Jsonb.JsonText(report))
+      val json = Jsonb.read[Json](Jsonb.JsonText(report))
       // an apply wrote a MergeApplyResult (it has `applied` and `tally`), an import a BundleImportResult
-      val applied = json.filter(_.hcursor.downField("tally").succeeded).flatMap(_.as[MergeApplyResult].toOption)
+      val applied = json.filter(_.cursor.downField("tally").focus.isDefined).flatMap(_.as[MergeApplyResult].toOption)
       val imported = if applied.isDefined then None
       else json.flatMap(_.as[Bundle.ImportResult].toOption)
       val remembered = sql"SELECT issue_id, decision FROM merge_decisions WHERE merge_id = ${r.id} ORDER BY issue_id"
@@ -277,7 +280,7 @@ object MergeRepo:
       bundleSha: Sha256,
       ownBundle: BundlePlan.EntityOwnBundle,
       decided: List[MergePlanner.Row],
-      report: io.circe.Json,
+      report: Json,
       changed: RowCount,
       applied: Option[(MergeRow.AppliedAt, MergeRow.Backup, MergeRow.FromLabel)] = None
   )(using DbCon): Option[UUID] =

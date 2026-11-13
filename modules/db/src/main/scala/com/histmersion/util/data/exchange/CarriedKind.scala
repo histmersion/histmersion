@@ -1,5 +1,6 @@
 package com.histmersion
 package util.data.exchange
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 
 import com.histmersion.api.exchange.Bundle
 
@@ -10,7 +11,6 @@ import com.histmersion.util.data.{DataOwner, TableName}
 import com.histmersion.util.storage.ContentStore
 
 import com.augustnagro.magnum.DbCon
-import io.circe.Encoder
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A kind of record a bundle carries for its owner: one entry of the archive, its lines out for a scope (with the blobs
@@ -51,7 +51,7 @@ object CarriedKind:
 
   /** A kind of record whose lines use no blob: its lines stamped with their revs, `clock` the change each carries. */
 
-  def records[A: Encoder.AsObject](owner: DataOwner, kind: Bundle.Kind, table: TableName, steps: List[RowsIn])(
+  def records[A: JsonValueCodec](owner: DataOwner, kind: Bundle.Kind, table: TableName, steps: List[RowsIn])(
       lines: BundleScope => DbCon ?=> List[A]
   )(clock: A => RecordsClock, set: (BundleEntities, List[A]) => BundleEntities): CarriedKind =
     Lines(
@@ -67,7 +67,7 @@ object CarriedKind:
     )
 
   /** A set its records own: its lines as they are, with no rev; `clock` the change a line carries, when it has one. */
-  def owned[A: Encoder.AsObject](owner: DataOwner, entry: BundleEntry, steps: List[RowsIn])(
+  def owned[A: JsonValueCodec](owner: DataOwner, entry: BundleEntry, steps: List[RowsIn])(
       lines: BundleScope => DbCon ?=> List[A]
   )(clock: A => Option[OwnedClock], set: (BundleEntities, List[A]) => BundleEntities): CarriedKind =
     Lines(

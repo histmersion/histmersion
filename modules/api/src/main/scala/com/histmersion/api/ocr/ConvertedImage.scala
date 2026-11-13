@@ -1,6 +1,6 @@
 package com.histmersion
 package api.ocr
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
@@ -15,7 +15,7 @@ final case class ConvertedImage(
     width: Option[ConvertedImage.Width] = None,
     height: Option[ConvertedImage.Height] = None,
     sha256: Option[Sha256] = None
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema
 

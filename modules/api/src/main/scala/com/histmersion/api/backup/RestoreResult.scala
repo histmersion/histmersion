@@ -1,6 +1,6 @@
 package com.histmersion
 package api.backup
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
@@ -17,7 +17,7 @@ final case class RestoreResult(
     sourcesAfter: RestoreResult.SourcesAfter,
     durationMs: RestoreResult.DurationMs,
     warnings: List[RestoreResult.Warnings] = Nil
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema
 

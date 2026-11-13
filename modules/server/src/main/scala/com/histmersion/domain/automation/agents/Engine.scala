@@ -16,8 +16,6 @@ import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.*
 import com.histmersion.domain.automation.workflows.{ToolName, Workflows}
 import com.histmersion.api.VocabularyCodecs.given
-import io.circe.parser.decode
-import io.circe.syntax.*
 import sttp.ai.core.agent.*
 import sttp.shared.Identity
 
@@ -783,15 +781,8 @@ object Engine:
       val r = raw.trim
       if r.isEmpty then "" else s" — the answer began: ${r.take(AnswerExcerpt)}"
     def why(cause: Throwable): Problem = cause match
-      case d: io.circe.DecodingFailure =>
-        val path = io.circe.CursorOp.opsToPath(d.history)
-        Problem.Unclassified(
-          Legacy.Text(
-            s"the answer does not match the schema at ${if path.isEmpty then "the top level" else path}: ${d.message}"
-          )
-        )
-      case p: io.circe.ParsingFailure =>
-        Problem.Unclassified(Legacy.Text(s"the answer is not valid JSON: ${p.message}"))
+      case d if SttpAiJson.decodingFailure(d).nonEmpty =>
+        Problem.Unclassified(Legacy.Text(SttpAiJson.decodingFailure(d).getOrElse("")))
       case e =>
         Problem.Unclassified(
           Legacy.Text(s"the answer could not be decoded: ${Option(e.getMessage).getOrElse(e.getClass.getSimpleName)}")

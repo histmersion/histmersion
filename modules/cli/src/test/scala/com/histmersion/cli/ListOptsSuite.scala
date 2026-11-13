@@ -1,5 +1,7 @@
 package com.histmersion
 package cli
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.Cursor
 
 import com.histmersion.api.automation.ListFilters.{ApprovalFilter, JobFilter, RunFilter}
 import com.monovore.decline.Command

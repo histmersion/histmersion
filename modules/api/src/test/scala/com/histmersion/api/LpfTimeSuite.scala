@@ -1,5 +1,7 @@
 package com.histmersion
 package api
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -11,7 +13,7 @@ import com.histmersion.api.catalogue.{Lpf, Period}
 import com.histmersion.api.catalogue.Year
 class LpfTimeSuite extends munit.FunSuite:
 
-  private def json(s: String) = io.circe.parser.parse(s).toOption.get
+  private def json(s: String) = RawJson.parse(s).toOption.get
   private def when(s: String) = Lpf.parseWhen(json(s))
 
   test("parseYear: the spellings LPF and hand-made GeoJSON actually contain"):

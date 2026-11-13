@@ -7,10 +7,7 @@ import com.histmersion.domain.automation.agents.{FirstCallProbe, LlmCall, LlmCli
 
 import com.histmersion.config.OpencodeConfig
 import com.histmersion.api.automation.Agents.ModelRef
-import io.circe.{parser, Json}
-import io.circe.syntax.*
 import sttp.ai.core.agent.*
-import sttp.apispec.circe.*
 
 /** The `opencode` provider: `opencode run --agent <role> --format json -m <provider/model>` on the GENERATED config
   * (`XDG_CONFIG_HOME` and `OPENCODE_CONFIG_DIR` pointed at it, the Claude Code folders and autoupdate off, an empty

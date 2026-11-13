@@ -1,5 +1,11 @@
 package com.histmersion
 package server.agents
+import com.histmersion.domain.automation.agents.SttpAiJson
+import com.histmersion.domain.automation.agents.SttpAiJson.given
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.domain.library.workflows.*
@@ -93,7 +99,7 @@ class AiTrafficSuite extends munit.FunSuite:
   // ── the step's tools and answers ───────────────────────────────────────────────────────────────
 
   private val search = AgentTool.fromFunction[AgentSearchInput]("search", "Search the corpus by its filters")(in =>
-    s"""{"total":2,"query":${io.circe.Json
+    s"""{"total":2,"query":${Json
         .fromString(in.query.map(_.value).getOrElse(""))
         .noSpaces},"hits":["zz2001_a","zz2002_b"]}"""
   )
@@ -137,7 +143,7 @@ class AiTrafficSuite extends munit.FunSuite:
     json(
       s"""{"id":"msg_01zz","type":"message","role":"assistant","model":"$model","content":[$content],"stop_reason":"$stop","stop_sequence":null,"usage":$usage}"""
     )
-  private def claudeText(t: String) = s"""{"type":"text","text":${io.circe.Json.fromString(t).noSpaces}}"""
+  private def claudeText(t: String) = s"""{"type":"text","text":${Json.fromString(t).noSpaces}}"""
   private def claudeTool(id: String, name: String, input: String) =
     s"""{"type":"tool_use","id":"$id","name":"$name","input":$input}"""
   private val claudeUsage =
@@ -151,11 +157,11 @@ class AiTrafficSuite extends munit.FunSuite:
       s"""{"id":"chatcmpl-zz1","object":"chat.completion","created":1761900000,"model":"$model","choices":[{"index":0,"message":$message,"logprobs":null,"finish_reason":"$finish"}],"usage":$usage,"system_fingerprint":"fp_zz"}"""
     )
   private def openaiText(t: String) =
-    s"""{"role":"assistant","content":${io.circe.Json.fromString(t).noSpaces},"refusal":null}"""
+    s"""{"role":"assistant","content":${Json.fromString(t).noSpaces},"refusal":null}"""
   private def openaiTools(calls: String*) = s"""{"role":"assistant","content":null,"tool_calls":[${calls
       .mkString(",")}]}"""
   private def openaiCall(id: Option[String], name: String, args: String) =
-    s"""{${id.fold("")(i => s""""id":"$i",""")}"type":"function","function":{"name":"$name","arguments":${io.circe.Json
+    s"""{${id.fold("")(i => s""""id":"$i",""")}"type":"function","function":{"name":"$name","arguments":${Json
         .fromString(args)
         .noSpaces}}}"""
   private val openaiUsage =
@@ -183,7 +189,7 @@ class AiTrafficSuite extends munit.FunSuite:
   /** The loop over `ref` for `c`, as the engine runs a step: through the server's factory, then
     * `AgentsControllers.call`.
     */
-  private def scenario[A: io.circe.Encoder](
+  private def scenario[A: JsonValueCodec](
       up: Upstream,
       name: String,
       ref: ModelRef,
@@ -209,7 +215,7 @@ class AiTrafficSuite extends munit.FunSuite:
           case Left(Left(limit)) => sb ++= s"engine: plan limit: ${limit.getMessage} (until ${limit.until})\n"
           case Left(Right(e))    => sb ++= s"engine: provider error: ${e.message.sentence}\n"
           case Right(res)        =>
-            sb ++= s"answer: ${res.finalAnswer.fold(af => s"failed: ${Engine.answerProblem(af, res.finishReason).sentence}", a => io.circe.Encoder[A].apply(a).noSpaces)}\n"
+            sb ++= s"answer: ${res.finalAnswer.fold(af => s"failed: ${Engine.answerProblem(af, res.finishReason).sentence}", a => a.asJson.noSpaces)}\n"
             sb ++= s"raw answer: ${LlmClient.rawAnswer(res.finalAnswer)}\n"
             sb ++= s"finish: ${LlmClient.finish(res.finishReason)}; iterations: ${res.iterations}\n"
             res.toolCalls.foreach(t =>

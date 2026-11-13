@@ -1,5 +1,8 @@
 package com.histmersion
 package domain.research.articles
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -87,11 +90,10 @@ private[articles] object ArticleRepo:
 
   /** The filter and the reasons as the jsonb columns store them. */
   private def filterJson(a: Article): Option[String] =
-    import io.circe.syntax.*
-    a.filter.map(_.asJson.deepDropNullValues.noSpaces)
+    a.filter.map(_.asJson.withoutNulls.noSpaces)
   private def reasonsJson(a: Article): String =
-    io.circe.Json
-      .obj(a.reasons.toList.sortBy(_._1.value).map((k, v) => k.value -> io.circe.Json.fromString(v.sentence))*)
+    Json
+      .obj(a.reasons.toList.sortBy(_._1.value).map((k, v) => k.value -> Json.fromString(v.sentence))*)
       .noSpaces
 
   /** The stored JSON back; a value that no longer decodes (an older shape) reads as none, never fails the read. */

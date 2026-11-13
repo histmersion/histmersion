@@ -1,5 +1,8 @@
 package com.histmersion
 package domain.research.workflows
+import com.histmersion.util.json.JsonCodec
+import hearth.kindlings.jsoniterderivation.JsoniterConfig
+import com.histmersion.domain.automation.agents.SttpAiJson.given
 
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.domain.automation.agents.ToolResultCap
@@ -84,9 +87,8 @@ object ResearchAgentTools:
   val CheckEdits: ToolName = ToolName("check_edits")
   val ArticleCoverage: ToolName = ToolName("article_coverage")
 
-/** Scala defaults hold when an agent's arguments are decoded — `get_article {"slug":…}` needs no `parts` (without it
-  * every optional argument was required, and an agent spent turns on "Missing required field", 2026-10-16). Not strict:
-  * a stray argument is ignored rather than costing a turn.
+/** Scala defaults hold when an agent's arguments are decoded — `search {"topics":[…]}` needs no `tags: []` (without it
+  * every list was required, and a Codex skeptic step spent ~3 calls a step on "Missing required field", 2026-10-16) —
+  * and the schemas the agent is sent say so. Not strict: a stray argument is ignored rather than costing a turn.
   */
-private given hearth.kindlings.circederivation.Configuration =
-  hearth.kindlings.circederivation.Configuration.default.withDefaults
+private given JsoniterConfig = JsonCodec.schemas

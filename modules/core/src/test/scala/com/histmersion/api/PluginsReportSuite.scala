@@ -1,5 +1,7 @@
 package com.histmersion
 package api
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.testsupport.ComparedByValue.given
@@ -9,7 +11,6 @@ import com.histmersion.domain.*
 import com.histmersion.config.given
 import com.histmersion.domain.given
 
-import io.circe.syntax.*
 import com.histmersion.util.plugins.PluginKit
 import com.histmersion.api.instance.{About, AboutMarkdown, BuildStamp, Health}
 import com.histmersion.api.jobs.JobCounts
@@ -194,7 +195,7 @@ class PluginsReportSuite extends munit.FunSuite:
 
   test("the report crosses the wire; an About or UiConfig from a server without plugins still decodes"):
     val r = PluginsReport(PluginsReport.SpiVersion(1), List(vault, broken), List(PluginsReport.Warnings("w")))
-    assertEquals(io.circe.parser.decode[PluginsReport](r.asJson.noSpaces), Right(r))
+    assertEquals(RawJson.decode[PluginsReport](r.asJson.noSpaces), Right(r))
     val about = About(
       About.Name("histmersion"),
       BuildStamp(BuildStamp.Version("1")),
@@ -205,4 +206,4 @@ class PluginsReportSuite extends munit.FunSuite:
       None
     )
     val older = about.asJson.mapObject(_.remove("plugins")).noSpaces
-    assertEquals(io.circe.parser.decode[About](older).map(_.plugins), Right(PluginsReport()))
+    assertEquals(RawJson.decode[About](older).map(_.plugins), Right(PluginsReport()))

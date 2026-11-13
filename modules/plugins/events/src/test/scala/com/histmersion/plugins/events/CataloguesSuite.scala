@@ -1,5 +1,9 @@
 package com.histmersion
 package plugins.events
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -8,9 +12,6 @@ import com.histmersion.api.catalogue.{CatalogRecord, EventPrecision}
 import com.histmersion.plugin.*
 import com.histmersion.pluginhost.PluginEvents
 import com.histmersion.upstreams.dating.CatalogDating
-
-import io.circe.Json
-import io.circe.parser.parse
 import com.histmersion.domain.DeepTime
 import com.histmersion.api.catalogue.EventSummary
 import com.histmersion.upstreams.wikidata.WikidataItem
@@ -22,7 +23,9 @@ import com.histmersion.upstreams.wikidata.WikidataItem
 class CataloguesSuite extends munit.FunSuite:
 
   private def fixture(name: String): Json =
-    parse(scala.io.Source.fromResource(s"events/$name")(using scala.io.Codec.UTF8).mkString).fold(throw _, identity)
+    RawJson
+      .parse(scala.io.Source.fromResource(s"events/$name")(using scala.io.Codec.UTF8).mkString)
+      .fold(e => throw IllegalArgumentException(e), identity)
 
   private def years(e: CatalogueEvent) =
     (
@@ -91,12 +94,15 @@ class CataloguesSuite extends munit.FunSuite:
 
   /** A GVP WFS feature as the service answers (2026-10-16), `EndDateYear` null. */
   private def feature(num: Int, volcano: String, year: Long, pm: Long, method: String): Json =
-    parse(
-      s"""{"type":"Feature","id":"Smithsonian_VOTW_Holocene_Eruptions.fid-$num","geometry":{"type":"Point","coordinates":[-19.7,63.98]},
+    RawJson
+      .parse(
+        s"""{"type":"Feature","id":"Smithsonian_VOTW_Holocene_Eruptions.fid-$num","geometry":{"type":"Point","coordinates":[-19.7,63.98]},
          |"properties":{"Volcano_Number":372070,"Volcano_Name":"$volcano","Eruption_Number":$num,"Activity_Type":"Confirmed Eruption",
          |"ExplosivityIndexMax":null,"StartEvidenceMethod":"$method","StartDateYearModifier":null,"StartDateYear":$year,
          |"StartDateYearUncertainty":$pm,"EndDateYear":null,"EndDateYearUncertainty":null}}""".stripMargin
-    ).toOption.get
+      )
+      .toOption
+      .get
 
   private val samples = List(
     // eruption, volcano, year, ±, method, the span expected once held inside the present and the Holocene
@@ -283,12 +289,16 @@ class CataloguesSuite extends munit.FunSuite:
     assertEquals(recs.map(_.id).distinct.size, recs.size)
 
   test("Wikidata: an item that is a legendary battle or a mythical event is never attested"):
-    val row = (legend: String) => parse(s"""{"results":{"bindings":[{
+    val row = (legend: String) =>
+      RawJson
+        .parse(s"""{"results":{"bindings":[{
       "item":{"type":"uri","value":"http://www.wikidata.org/entity/Q1"},
       "itemLabel":{"type":"literal","value":"Fall of Troy"},
       "date":{"type":"literal","value":"-1183-01-01T00:00:00Z"},"datePrec":{"type":"literal","value":"9"},
       "coord":{"type":"literal","value":"Point(26.24 39.95)"},
-      "legend":{"type":"uri","value":"http://www.wikidata.org/entity/$legend"}}]}}""").toOption.get
+      "legend":{"type":"uri","value":"http://www.wikidata.org/entity/$legend"}}]}}""")
+        .toOption
+        .get
     assertEquals(
       WikidataCatalogue.parse(row("Q26913948"), CatalogueEvent.Kind("siege")).toOption.get.head.historicity,
       "legendary"

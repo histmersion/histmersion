@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.library.workflows
+import com.histmersion.domain.automation.agents.SttpAiJson.given
 
 import com.histmersion.domain.EnrichSource
 import com.histmersion.api.VocabularyCodecs.given

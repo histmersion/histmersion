@@ -1,13 +1,12 @@
 package com.histmersion
 package api.library
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonKeyCodec
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
-import io.circe.KeyEncoder
-import io.circe.KeyDecoder
 
 final case class CandidateSweep(
     goal: CandidateSweep.Goal,
@@ -19,7 +18,7 @@ final case class CandidateSweep(
     unseen: CandidateSweep.Unseen,
     dryRun: CandidateSweep.DryRun = CandidateSweep.DryRun(false),
     notes: List[CandidateSweep.Notes] = Nil
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema
 object CandidateSweep:
@@ -36,8 +35,7 @@ object CandidateSweep:
   object Again extends Newtype[Int, Pure]
   type SkippedKey = SkippedKey.T
   object SkippedKey extends Newtype[String, Pure]:
-    given KeyEncoder[T] = KeyEncoder.encodeKeyString.contramap(_.value)
-    given KeyDecoder[T] = KeyDecoder.decodeKeyString.map(SkippedKey(_))
+    given JsonKeyCodec[T] = JsonCodec.key[T](_.value, k => Right((SkippedKey(_))(k)))
   type SkippedValue = SkippedValue.T
   object SkippedValue extends Newtype[Int, Pure]
   type Unseen = Unseen.T
@@ -48,7 +46,7 @@ object CandidateSweep:
   object Notes extends Newtype[String, Pure]
 
   final case class Request(goal: Request.Goal, dryRun: Request.DryRun = Request.DryRun(false))
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 

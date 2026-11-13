@@ -1,5 +1,8 @@
 package com.histmersion
 package server.agents
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -19,8 +22,6 @@ import com.histmersion.domain.automation.agents.{
 
 import com.histmersion.domain.automation.workflows.ToolName
 
-import io.circe.Json
-import io.circe.syntax.*
 import sttp.ai.core.agent.ResponseSchema
 
 import java.nio.file.{Files, Path}
@@ -78,18 +79,23 @@ object PromptBudget:
   private lazy val toolbox = TestToolbox(null)
 
   /** One tool as the agent MCP endpoint lists it (`tools/list`). */
-  def toolJson(t: ToolName): Json =
-    val at = toolbox.tool(t).get
-    Json.obj("name" -> at.name.asJson, "description" -> at.description.asJson, "inputSchema" -> Toolbox.inputSchema(at))
+  extension (t: ToolName)
+    def toolJson: Json =
+      val at = toolbox.tool(t).get
+      Json.obj(
+        "name" -> at.name.asJson,
+        "description" -> at.description.asJson,
+        "inputSchema" -> Toolbox.inputSchema(at)
+      )
 
-  def toolChars(t: ToolName): Int = toolJson(t).noSpaces.length
+    def toolChars: Int = t.toolJson.noSpaces.length
 
   def rows(d: AgentGenerator.Defs): List[Row] =
     d.agents.sortBy(_.name.value).map { a =>
       Row(
         a.name,
         d.system(a, ToolStyle.Claude).length,
-        a.tools.map(t => t -> toolChars(t)).toMap,
+        a.tools.map(t => t -> t.toolChars).toMap,
         answers.get(a.name).fold(0)(s => ClaudeCode.schemaJson(s).value.length)
       )
     }
@@ -104,7 +110,7 @@ object PromptBudget:
 
   def toolTable: String =
     "| tool | chars | ~tok |\n|---|---:|---:|\n" +
-      ToolboxOrder.names.map(t => s"| ${t.value} | ${toolChars(t)} | ${tokens(toolChars(t))} |").mkString("\n")
+      ToolboxOrder.names.map(t => s"| ${t.value} | ${t.toolChars} | ${tokens(t.toolChars)} |").mkString("\n")
 
   /** The files `export` writes, relative to its directory. */
   def exportTree(d: AgentGenerator.Defs): Map[String, String] =
@@ -118,7 +124,7 @@ object PromptBudget:
     )
     val runs = d.agents.filter(_.runsOn(AgentRuntime.ClaudeCode))
     AgentGenerator.claudeCode(d, settings) ++
-      runs.map(a => s"mcp-tools/${a.name}.json" -> Json.obj("tools" -> a.tools.map(toolJson).asJson).spaces2) ++
+      runs.map(a => s"mcp-tools/${a.name}.json" -> Json.obj("tools" -> a.tools.map(_.toolJson).asJson).spaces2) ++
       runs.flatMap(a =>
         answers.get(a.name).map(s => s"answer-schemas/${a.name}.json" -> ClaudeCode.schemaJson(s).value)
       )

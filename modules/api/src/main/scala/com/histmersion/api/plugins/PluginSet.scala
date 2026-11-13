@@ -1,6 +1,6 @@
 package com.histmersion
 package api.plugins
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.Plural
@@ -19,7 +19,7 @@ final case class PluginSet(
     kit: Option[PluginSet.Kit] = None,
     linkedAt: Option[PluginSet.LinkedAt] = None,
     dependencies: Option[List[PluginFile]] = None
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema
 object PluginSet:

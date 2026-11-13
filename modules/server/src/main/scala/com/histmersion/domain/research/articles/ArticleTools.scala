@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.research.articles
+import com.histmersion.util.mcp.ChimpJson.given
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.aliases.AliasKinds
@@ -8,9 +9,8 @@ import chimp.server.*
 import com.histmersion.api.{Api, StrictJson}
 import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.util.mcp.McpOut
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
-import io.circe.Codec
 import sttp.tapir.Schema
 import com.histmersion.api.aliases.Aliases
 import com.histmersion.api.library.Filter
@@ -241,7 +241,7 @@ object ArticleTools:
       title: Option[ListArticlesInput.Title] = None,
       limit: Option[ListArticlesInput.Limit] = None,
       offset: Option[ListArticlesInput.Offset] = None
-  ) derives KindlingsCodecAsObject:
+  ) derives JsonCodec:
     /** `tag` is the shared Filter's (a source tag: articles CITING such a source); `query` is the article's own full
       * text — see [[Api.ArticleQuery]].
       */
@@ -279,7 +279,7 @@ object ArticleTools:
       .modify(_.title)(_.description("Case-insensitive substring of the article's title"))
 
   final case class GetArticleInput(slug: GetArticleInput.Slug, parts: Option[GetArticleInput.Parts] = None)
-      derives KindlingsCodecAsObject
+      derives JsonCodec
   object GetArticleInput:
     type Slug = Article.Slug
     val Slug: Article.Slug.type = Article.Slug
@@ -322,7 +322,7 @@ object ArticleTools:
   def articleReviewMarkdown(articles: ArticlesControllers, in: ArticleReviewInput): McpOut.Markdown =
     readSlug(in.slug).flatMap(articles.review).fold(e => McpOut.refusal(e), v => Article.ReviewView.markdown(v).value)
 
-  final case class ArticleReviewInput(slug: ArticleReviewInput.Slug) derives KindlingsCodecAsObject
+  final case class ArticleReviewInput(slug: ArticleReviewInput.Slug) derives JsonCodec
   object ArticleReviewInput:
     type Slug = Article.Slug
     val Slug: Article.Slug.type = Article.Slug
@@ -332,7 +332,7 @@ object ArticleTools:
       .schema
       .modify(_.slug)(_.description("The article's slug"))
 
-  final case class ArticleCoverageInput(slug: ArticleCoverageInput.Slug) derives KindlingsCodecAsObject
+  final case class ArticleCoverageInput(slug: ArticleCoverageInput.Slug) derives JsonCodec
   object ArticleCoverageInput:
     type Slug = Article.Slug
     val Slug: Article.Slug.type = Article.Slug
@@ -372,7 +372,7 @@ object ArticleTools:
       edits: List[Article.Edits.EditAnswer] = Nil,
       body: Option[CheckEditsInput.Body] = None,
       kind: Option[CheckEditsInput.Kind] = None
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object CheckEditsInput:
     type Slug = Article.Slug
     val Slug: Article.Slug.type = Article.Slug
@@ -397,7 +397,7 @@ object ArticleTools:
       slug: PutArticleInput.Slug,
       article: Article.Put,
       strict: PutArticleInput.Strict = PutArticleInput.Strict(false)
-  )
+  ) derives StrictJson
   object PutArticleInput:
     type Slug = Article.Slug
     val Slug: Article.Slug.type = Article.Slug
@@ -409,7 +409,6 @@ object ArticleTools:
       .derived[PutArticleInput]
       .schema
       .modify(_.strict)(_.description(LibraryTools.StrictDoc))
-    given Codec.AsObject[PutArticleInput] = StrictJson.codec(KindlingsCodecAsObject.derived[PutArticleInput]) // #813
 
   final case class PatchArticleInput(
       slug: PatchArticleInput.Slug,
@@ -427,11 +426,11 @@ object ArticleTools:
       .derived[PatchArticleInput]
       .schema
       .modify(_.strict)(_.description(LibraryTools.StrictDoc))
-    given Codec.AsObject[PatchArticleInput] =
-      StrictJson.codec(KindlingsCodecAsObject.derived[PatchArticleInput]) // #813
+    given JsonCodec[PatchArticleInput] =
+      StrictJson.codec(JsonCodec.derived[PatchArticleInput]) // #813
 
   final case class ExportArticleInput(slug: ExportArticleInput.Slug)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -439,7 +438,7 @@ object ArticleTools:
     type Slug = Article.Slug
     val Slug: Article.Slug.type = Article.Slug
 
-  final case class ArticleVersionsInput(slug: ArticleVersionsInput.Slug) derives KindlingsCodecAsObject
+  final case class ArticleVersionsInput(slug: ArticleVersionsInput.Slug) derives JsonCodec
   object ArticleVersionsInput:
     type Slug = Article.Slug
     val Slug: Article.Slug.type = Article.Slug
@@ -450,7 +449,7 @@ object ArticleTools:
       .modify(_.slug)(_.description("The article's slug (lowercase, e.g. steppe_hypothesis)"))
 
   final case class ArticleVersionInput(slug: ArticleVersionInput.Slug, versionId: ArticleVersionInput.VersionId)
-      derives KindlingsCodecAsObject
+      derives JsonCodec
   object ArticleVersionInput:
     type Slug = Article.Slug
     val Slug: Article.Slug.type = Article.Slug

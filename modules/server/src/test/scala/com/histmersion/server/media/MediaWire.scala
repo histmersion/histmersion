@@ -1,5 +1,7 @@
 package com.histmersion
 package server.media
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.domain.catalogue.places.PlaceFixtures
@@ -10,7 +12,6 @@ import com.histmersion.domain.CoreQuota
 import com.histmersion.plugin.Plugin
 import com.histmersion.pluginhost.{HttpAnswer, HttpTransport}
 import com.histmersion.util.ocr.ConverterClient
-import io.circe.syntax.*
 import org.ekrich.config.ConfigFactory
 
 import java.nio.charset.StandardCharsets.UTF_8

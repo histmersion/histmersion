@@ -3,7 +3,7 @@ package api.automation
 
 import com.histmersion.util.problem.Problem
 
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.Plural
@@ -16,7 +16,7 @@ object ApprovalDigest:
   object Line extends Newtype[String, Pure]
 
   final case class SubjectCount(subject: SubjectCount.Subject, count: SubjectCount.Count)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -33,7 +33,7 @@ object ApprovalDigest:
       decidedBy: KindGroup.DecidedBy = Approval.DecidedBy.Wire("person"),
       subjects: List[SubjectCount] = Nil,
       ids: List[Open.Id] = Nil
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -52,7 +52,7 @@ object ApprovalDigest:
       heldForPerson: Digest.HeldForPerson = Digest.HeldForPerson(0),
       lastWritten: Option[Digest.LastWritten] = None,
       goalPlansWait: Option[Digest.GoalPlansWait] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -77,7 +77,7 @@ object ApprovalDigest:
       dryRun: BulkDecide.DryRun = BulkDecide.DryRun(false),
       limit: Option[BulkDecide.Limit] = None,
       by: Option[BulkDecide.By] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -96,7 +96,7 @@ object ApprovalDigest:
     object By extends Newtype[String, Pure]
 
   final case class BulkFailed(id: BulkFailed.Id, error: Problem)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -111,7 +111,7 @@ object ApprovalDigest:
       decided: List[BulkResult.Decided] = Nil,
       failed: List[BulkFailed] = Nil,
       left: BulkResult.Left = BulkResult.Left(0)
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 

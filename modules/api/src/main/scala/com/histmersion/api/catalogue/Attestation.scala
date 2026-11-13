@@ -1,12 +1,11 @@
 package com.histmersion
 package api.catalogue
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.OffsetPage
 import com.histmersion.api.StrictJson
-import io.circe.Codec
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
@@ -30,7 +29,7 @@ final case class Attestation(
     xywh: Option[Attestation.Xywh] = None,
     ctsUrn: Option[Attestation.CtsUrn] = None,
     note: Option[Attestation.Note] = None
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema
 
@@ -68,7 +67,7 @@ object Attestation:
   final case class Deleted(
       id: Id,
       deleted: Deleted.Value
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -81,7 +80,7 @@ object Attestation:
       attestations: scala.List[Attestation],
       offset: Offset = Offset(0),
       next: Option[Offset] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema:
     def page: OffsetPage = OffsetPage(total, offset, RowCount(attestations.size))
@@ -108,12 +107,9 @@ object Attestation:
       xywh: Option[Xywh] = None,
       ctsUrn: Option[CtsUrn] = None,
       note: Option[Note] = None
-  ) derives KindlingsSchema,
+  ) derives StrictJson,
+        KindlingsSchema,
         com.histmersion.api.json.Schema
-
-  object Patch:
-
-    given Codec.AsObject[Patch] = StrictJson.codec(KindlingsCodecAsObject.derived[Patch])
 
   final case class Put(
       citekey: Citekey,
@@ -130,9 +126,6 @@ object Attestation:
       xywh: Option[Xywh] = None,
       ctsUrn: Option[CtsUrn] = None,
       note: Option[Note] = None
-  ) derives KindlingsSchema,
+  ) derives StrictJson,
+        KindlingsSchema,
         com.histmersion.api.json.Schema
-
-  object Put:
-
-    given Codec.AsObject[Put] = StrictJson.codec(KindlingsCodecAsObject.derived[Put])

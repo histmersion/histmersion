@@ -1,13 +1,12 @@
 package com.histmersion
 package domain.library.acquisition
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.config.AppConfig
 import com.histmersion.upstreams.landing.RepositoryLanding
-
-import io.circe.parser.parse
 
 /** Repository landing pages (#1580): which pages are a repository's, what their tags name, Zenodo's files. Pure; the
   * recorded pages and records are exercised end to end in the server's `LandingFetchSuite`.
@@ -179,12 +178,15 @@ class RepositoryLandingSuite extends munit.FunSuite:
     assert(r.academic(Host("x.ac.at")) && r.academic(Host("x.edu")) && r.academic(Host("x.edu.au")))
 
   test("candidates: OpenAlex's landing pages and record-page pdf_urls, repositories marked, distinct, best first"):
-    val j = parse(
-      """{"best_oa_location":{"landing_page_url":"https://zenodo.org/record/3695551","pdf_url":"https://zenodo.org/record/3695551","source":{"type":"repository"}},
+    val j = RawJson
+      .parse(
+        """{"best_oa_location":{"landing_page_url":"https://zenodo.org/record/3695551","pdf_url":"https://zenodo.org/record/3695551","source":{"type":"repository"}},
       "locations":[{"landing_page_url":"https://zenodo.org/record/3695551","pdf_url":"https://zenodo.org/record/3695551","source":{"type":"repository"}},
         {"landing_page_url":"https://doi.org/10.5281/zenodo.3695551","pdf_url":null,"source":{"type":"repository"}},
         {"landing_page_url":"https://publisher.example.com/a","pdf_url":"https://publisher.example.com/a.pdf","source":{"type":"journal"}}]}"""
-    ).toOption.get
+      )
+      .toOption
+      .get
     assertEquals(
       openalexCandidates(j),
       List(
@@ -197,19 +199,25 @@ class RepositoryLandingSuite extends munit.FunSuite:
         )
       )
     )
-    val u = parse(
-      """{"best_oa_location":{"url_for_pdf":null,"url_for_landing_page":"https://eprints.x.ac.uk/1/","host_type":"repository"},
+    val u = RawJson
+      .parse(
+        """{"best_oa_location":{"url_for_pdf":null,"url_for_landing_page":"https://eprints.x.ac.uk/1/","host_type":"repository"},
       "oa_locations":[{"url_for_pdf":"https://eprints.x.ac.uk/1/1/a.pdf","url_for_landing_page":"https://eprints.x.ac.uk/1/","host_type":"repository"}]}"""
-    ).toOption.get
+      )
+      .toOption
+      .get
     assertEquals(
       unpaywallCandidates(u),
       List(
         Candidate(Candidate.Url("https://eprints.x.ac.uk/1/"), Candidate.Repository(true), open = Candidate.Open(true))
       )
     )
-    val p = parse(
-      """{"oa_locations":[{"url_for_landing_page":"https://pub.example.com/a","host_type":"publisher"}]}"""
-    ).toOption.get
+    val p = RawJson
+      .parse(
+        """{"oa_locations":[{"url_for_landing_page":"https://pub.example.com/a","host_type":"publisher"}]}"""
+      )
+      .toOption
+      .get
     assertEquals(
       unpaywallCandidates(p),
       List(
@@ -234,9 +242,12 @@ class RepositoryLandingSuite extends munit.FunSuite:
 
   test("open locations (#2550): OpenAlex's is_oa, every Unpaywall oa_location; any index's word makes it open"):
     val j =
-      parse("""{"locations":[{"is_oa":true,"landing_page_url":"https://ejournals.eu/a","source":{"type":"journal"}},
+      RawJson
+        .parse("""{"locations":[{"is_oa":true,"landing_page_url":"https://ejournals.eu/a","source":{"type":"journal"}},
       {"is_oa":false,"landing_page_url":"https://ejournals.eu/b","source":{"type":"journal"}},
-      {"landing_page_url":"https://ejournals.eu/c","source":{"type":"journal"}}]}""").toOption.get
+      {"landing_page_url":"https://ejournals.eu/c","source":{"type":"journal"}}]}""")
+        .toOption
+        .get
     assertEquals(
       openalexCandidates(j).map(c => c.url.value.takeRight(1) -> c.open),
       List("a" -> true, "b" -> false, "c" -> false)
@@ -368,14 +379,17 @@ class RepositoryLandingSuite extends munit.FunSuite:
   test("the DOI handle API: the first URL value"):
     assertEquals(
       handleUrl(
-        parse(
-          """{"responseCode":1,"values":[{"type":"HS_ADMIN","data":{}},
+        RawJson
+          .parse(
+            """{"responseCode":1,"values":[{"type":"HS_ADMIN","data":{}},
       {"type":"URL","data":{"format":"string","value":"https://ore.eu/ore/article/view/1056/version/1810"}}]}"""
-        ).toOption.get
+          )
+          .toOption
+          .get
       ),
       Some("https://ore.eu/ore/article/view/1056/version/1810")
     )
-    assertEquals(handleUrl(parse("""{"responseCode":100,"values":[]}""").toOption.get), None)
+    assertEquals(handleUrl(RawJson.parse("""{"responseCode":100,"values":[]}""").toOption.get), None)
 
   test("Zenodo: a record id from a record URL or a Zenodo DOI; an open record's PDFs with their MD5"):
     assertEquals(zenodoRecordId(ZenodoLocator("https://zenodo.org/record/3695551")), Some("3695551"))
@@ -388,7 +402,7 @@ class RepositoryLandingSuite extends munit.FunSuite:
        "links":{"self":"https://zenodo.org/api/records/3695551/files/Oreshko%%20Ahhiyawa-Danuna-offprint.pdf/content"}},
       {"key":"data.csv","links":{"self":"https://zenodo.org/api/records/3695551/files/data.csv/content"}}]}"""
     assertEquals(
-      zenodoFiles(parse(rec.format("open")).toOption.get),
+      zenodoFiles(RawJson.parse(rec.format("open")).toOption.get),
       List(
         ZenodoFile(
           ZenodoFile.Url("https://zenodo.org/api/records/3695551/files/Oreshko%20Ahhiyawa-Danuna-offprint.pdf/content"),
@@ -396,16 +410,19 @@ class RepositoryLandingSuite extends munit.FunSuite:
         )
       )
     )
-    assertEquals(zenodoFiles(parse(rec.format("restricted")).toOption.get), Nil)
-    assertEquals(zenodoFiles(parse(rec.format("embargoed")).toOption.get), Nil)
+    assertEquals(zenodoFiles(RawJson.parse(rec.format("restricted")).toOption.get), Nil)
+    assertEquals(zenodoFiles(RawJson.parse(rec.format("embargoed")).toOption.get), Nil)
     assertEquals(
-      zenodoFiles(parse("""{"files":[{"key":"a.pdf","links":{"self":"https://z/a"}}]}""").toOption.get),
+      zenodoFiles(RawJson.parse("""{"files":[{"key":"a.pdf","links":{"self":"https://z/a"}}]}""").toOption.get),
       Nil,
       "no access stated: not taken"
     )
     assertEquals(
       zenodoFiles(
-        parse("""{"access":{"files":"public"},"files":[{"key":"a.PDF","links":{"self":"https://z/a"}}]}""").toOption.get
+        RawJson
+          .parse("""{"access":{"files":"public"},"files":[{"key":"a.PDF","links":{"self":"https://z/a"}}]}""")
+          .toOption
+          .get
       ),
       List(ZenodoFile(ZenodoFile.Url("https://z/a"), None))
     )
@@ -413,13 +430,16 @@ class RepositoryLandingSuite extends munit.FunSuite:
   test("DataCite: where a DOI resolves"):
     assertEquals(
       dataciteUrl(
-        parse(
-          """{"data":{"attributes":{"url":"https://publikationen.uni-tuebingen.de/xmlui/handle/10900/73561"}}}"""
-        ).toOption.get
+        RawJson
+          .parse(
+            """{"data":{"attributes":{"url":"https://publikationen.uni-tuebingen.de/xmlui/handle/10900/73561"}}}"""
+          )
+          .toOption
+          .get
       ),
       Some("https://publikationen.uni-tuebingen.de/xmlui/handle/10900/73561")
     )
-    assertEquals(dataciteUrl(parse("""{"errors":[{"status":"404"}]}""").toOption.get), None)
+    assertEquals(dataciteUrl(RawJson.parse("""{"errors":[{"status":"404"}]}""").toOption.get), None)
 
   test("an HTML answer is told from other bytes"):
     assert(looksLikeHtml(PageBytes("<!DOCTYPE html><html>".getBytes("UTF-8"))))

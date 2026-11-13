@@ -1,6 +1,6 @@
 package com.histmersion
 package api.catalogue
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
@@ -18,7 +18,7 @@ final case class EventCatalogueRef(
     magnitude: Option[EventCatalogueRef.Magnitude] = None,
     deaths: Option[EventCatalogueRef.Deaths] = None,
     retrievedAt: Option[EventCatalogueRef.RetrievedAt] = None
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema
 

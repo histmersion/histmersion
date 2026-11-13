@@ -1,5 +1,8 @@
 package com.histmersion
 package cli
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.Cursor
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 

@@ -2,15 +2,17 @@ package com.histmersion
 package api
 
 import com.histmersion.util.problem.{Legacy, Problem}
-import hearth.kindlings.circederivation.Configuration
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Citekey
+import hearth.kindlings.jsoniterderivation.JsoniterConfig
 
-/** Honour Scala default values when decoding: without this Kindlings requires every non-Option field in the JSON, so
-  * `{"tags":{"add":["sea-peoples"]}}` would be refused for a missing `remove`. The domain and config packages import it
-  * (`import com.histmersion.api.given`) for the codecs they derive.
+import util.json.JsonCodec
+
+/** How a record's schema is derived: a field with a default is optional, as its codec reads it (`JsonCodec`) — a patch
+  * like `{"tags":{"add":["sea-peoples"]}}` must not be described as needing `remove`. The domain and config packages
+  * import it (`import com.histmersion.api.given`) for the schemas they derive.
   */
-given Configuration = Configuration.default.withDefaults
+given JsoniterConfig = JsonCodec.schemas
 
 object Write:
   type ListItem = ListItem.T

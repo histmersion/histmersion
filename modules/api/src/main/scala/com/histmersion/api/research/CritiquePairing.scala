@@ -1,7 +1,7 @@
 package com.histmersion
 package api.research
 import scala.annotation.tailrec
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import com.histmersion.api.LatinFold
 import com.histmersion.api.library.Hit
 import com.histmersion.api.given
@@ -35,7 +35,7 @@ object CritiquePairing:
       edges: List[Hit.Edges],
       named: Hit.Named,
       mechanical: Hit.Mechanical
-  ) derives KindlingsCodecAsObject:
+  ) derives JsonCodec:
     def ref: CritiqueRef = CritiqueRef(cited, missing)
 
     def line: String =

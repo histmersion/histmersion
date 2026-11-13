@@ -1,5 +1,9 @@
 package com.histmersion
 package cli
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
+import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.Problem
 import com.histmersion.api.problem.Text.sentence
 
@@ -9,7 +13,6 @@ import com.histmersion.config.CalibreCliConfig
 import com.histmersion.api.Api
 import com.histmersion.api.library.{CalibreGap, CalibreGaps, CalibrePushRequest, Citekey, Source}
 import com.sun.net.httpserver.{HttpExchange, HttpServer}
-import io.circe.syntax.*
 
 import java.net.InetSocketAddress
 import java.nio.file.{Files, Path}
@@ -85,7 +88,7 @@ class CalibrePushSuite extends munit.FunSuite:
               List("Content-Type" -> "application/json")
             )
           else if path == "/api/acquire/calibre/pushed" then
-            val req = io.circe.parser.decode[CalibrePushRequest](String(ex.getRequestBody.readAllBytes())).toOption.get
+            val req = RawJson.decode[CalibrePushRequest](String(ex.getRequestBody.readAllBytes())).toOption.get
             pushed.add(s"${req.citekey}=${req.calibreId}")
             (
               200,
@@ -310,11 +313,11 @@ class CalibrePushSuite extends munit.FunSuite:
           )
         )
       assertEquals(r, Right(()))
-      val j = io.circe.parser.parse(out).fold(e => fail(e.toString), identity).hcursor
+      val j = RawJson.parse(out).fold(e => fail(e.toString), identity).cursor
       assertEquals(j.get[Int]("count"), Right(1))
       assertEquals(j.get[Int]("uncounted"), Right(1))
       assertEquals(j.get[Int]("total"), Right(2))
-      val rows = j.downField("gaps").as[List[io.circe.Json]].getOrElse(Nil).map(_.hcursor)
+      val rows = j.downField("gaps").as[List[Json]].getOrElse(Nil).map(_.cursor)
       assertEquals(
         rows.map(r => (r.get[String]("citekey"), r.get[String]("original"), r.get[Boolean]("counted"))),
         List((Right("zz_stored"), Right("stored"), Right(true)), (Right("zz_none"), Right("none"), Right(false)))

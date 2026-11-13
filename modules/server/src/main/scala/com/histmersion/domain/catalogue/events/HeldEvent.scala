@@ -1,5 +1,8 @@
 package com.histmersion
 package domain.catalogue.events
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.api.TimeSpan
 import com.histmersion.api.catalogue.{
@@ -112,16 +115,16 @@ object HeldEvent:
 
   /** The `type` of a GeoJSON geometry, upper case. */
   def typeOf(geojson: EventDetailRow.Geometry): Option[EventRow.GeometryType] =
-    io.circe.parser
+    RawJson
       .parse(geojson.value)
       .toOption
-      .flatMap(_.hcursor.get[String]("type").toOption)
+      .flatMap(_.cursor.get[String]("type").toOption)
       .map(t => EventRow.GeometryType(t.toUpperCase))
 
   /** The point of a GeoJSON `Point`: (lat, lon). */
   def pointOf(geojson: EventDetailRow.Geometry): Option[(Latitude, Longitude)] =
-    io.circe.parser.parse(geojson.value).toOption.flatMap { j =>
-      val c = j.hcursor
+    RawJson.parse(geojson.value).toOption.flatMap { j =>
+      val c = j.cursor
       if !c.get[String]("type").toOption.contains("Point") then None
       else
         c.get[List[Double]]("coordinates")

@@ -1,5 +1,9 @@
 package com.histmersion
 package server.agents
+import com.histmersion.util.json.RawJson
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.Cursor
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.domain.automation.agents.*
@@ -9,10 +13,7 @@ import com.histmersion.config.OpencodeConfig
 import com.histmersion.api.automation.Agents.{ModelRef, ProviderKind}
 import com.histmersion.api.automation.PlanQuota
 import java.nio.file.Path
-import io.circe.{parser, Json}
-import io.circe.syntax.*
 import sttp.ai.core.agent.*
-import sttp.apispec.circe.*
 import io.github.iltotore.iron.constraint.any.Pure
 
 object Opencode:
@@ -40,7 +41,7 @@ object Opencode:
     * output or error), `step_finish` (tokens, cost), `error`.
     */
   def parse(lines: List[CliProcess.Run.Lines]): CliOutcome =
-    val events = lines.map(_.value.trim).filter(_.startsWith("{")).flatMap(l => parser.parse(l).toOption)
+    val events = lines.map(_.value.trim).filter(_.startsWith("{")).flatMap(l => RawJson.parse(l).toOption)
     val entries = Vector.newBuilder[ConversationEntry]
     val calls = Vector.newBuilder[ToolCallRecord]
     // accumulators of ONE parse, over the events in order
@@ -50,7 +51,7 @@ object Opencode:
     var turns = 0
     def strip(t: String) = t.stripPrefix(s"${AgentDefinitions.McpServer}_")
     events.foreach { e =>
-      val c = e.hcursor
+      val c = e.cursor
       val part = c.downField("part")
       c.downField("type").as[String].getOrElse("") match
         case "text" =>
@@ -74,7 +75,7 @@ object Opencode:
         case "step_finish" =>
           turns += 1
           val t = part.downField("tokens")
-          val l = (cur: io.circe.ACursor) => cur.as[Long].getOrElse(0L)
+          val l = (cur: Cursor) => cur.as[Long].getOrElse(0L)
           val (in, out) = (l(t.downField("input")), l(t.downField("output")) + l(t.downField("reasoning")))
           val (cr, cw) = (l(t.downField("cache").downField("read")), l(t.downField("cache").downField("write")))
           usage = usage + TokenUsage(Tokens(in + cr + cw), Tokens(out), Tokens(cr), Tokens.Zero, Tokens(cw))

@@ -1,6 +1,6 @@
 package com.histmersion
 package api.library
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
@@ -21,7 +21,7 @@ final case class Bucket(
     alsoUnder: List[Bucket.AlsoUnder] = Nil,
     children: List[Bucket] = Nil,
     samples: List[Bucket.Sample] = Nil
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema
 object Bucket:
   /** [[Bucket]] is recursive, so its schema is a `KindlingsSchema[Bucket]` (the `derives` clause), not a given
@@ -48,6 +48,6 @@ object Bucket:
   def schema: Schema[Bucket] = summon[KindlingsSchema[Bucket]].schema
 
   final case class Sample(citekey: Citekey, title: Title)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema

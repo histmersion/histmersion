@@ -1,9 +1,11 @@
 package com.histmersion
 package upstreams.wikidata
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.util.problem.{Legacy, Problem}
-
-import io.circe.Json
 
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets.UTF_8
@@ -36,21 +38,21 @@ object WikidataEntities:
     * read. An API error is `Left("code: info")`.
     */
   def items(json: Json, props: Set[WikidataStatement.Property]): Either[Problem, Map[WikidataItem.Id, WikidataItem]] =
-    val c = json.hcursor
+    val c = json.cursor
     c.downField("error").focus match
       case Some(err) =>
-        val code = err.hcursor.get[String]("code").getOrElse("error")
-        Left(Problem.Unclassified(Legacy.Text(s"$code: ${err.hcursor.get[String]("info").getOrElse("")}".trim)))
+        val code = err.cursor.get[String]("code").getOrElse("error")
+        Left(Problem.Unclassified(Legacy.Text(s"$code: ${err.cursor.get[String]("info").getOrElse("")}".trim)))
       case None =>
         val ents = c.downField("entities").focus.flatMap(_.asObject).map(_.toList).getOrElse(Nil)
         Right(ents.flatMap { (key, ent) =>
-          val e = ent.hcursor
+          val e = ent.cursor
           if e.downField("missing").focus.isDefined then None
           else
             val claims = e.downField("claims").focus.flatMap(_.asObject)
             def statementsOf(p: WikidataStatement.Property): List[WikidataStatement] =
               claims.flatMap(_((p).value)).flatMap(_.asArray).toList.flatten.zipWithIndex.flatMap { (st, i) =>
-                val s = st.hcursor
+                val s = st.cursor
                 val rank = s.get[String]("rank").getOrElse("normal")
                 val snak = s.downField("mainsnak")
                 val v = snak.downField("datavalue").get[String]("value").toOption.map(_.trim).filter(_.nonEmpty)

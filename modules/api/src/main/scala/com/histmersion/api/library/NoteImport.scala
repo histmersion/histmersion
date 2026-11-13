@@ -1,7 +1,7 @@
 package com.histmersion
 package api.library
 import scala.annotation.tailrec
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.media.AssetInput
@@ -16,7 +16,7 @@ final case class NoteImport(
     mtime: Option[NoteImport.Mtime] = None,
     force: NoteImport.Force = NoteImport.Force(false),
     assets: List[AssetInput] = Nil
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema
 

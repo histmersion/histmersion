@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.automation.agents
+import com.github.plokhotnyuk.jsoniter_scala.core.{writeToString, JsonValueCodec}
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -105,8 +106,8 @@ object LlmClient:
     )
 
   /** The model's final text, whether or not it parsed as the typed answer. */
-  def rawAnswer[Out](a: Either[AgentFailure, Out])(using io.circe.Encoder[Out]): String =
-    a.fold(_.rawAnswer, out => io.circe.Encoder[Out].apply(out).noSpaces)
+  def rawAnswer[Out](a: Either[AgentFailure, Out])(using JsonValueCodec[Out]): String =
+    a.fold(_.rawAnswer, out => writeToString(out))
 
   /** A [[FinishReason]] as words, for a run's trace. */
   def finish(r: FinishReason): String = r match

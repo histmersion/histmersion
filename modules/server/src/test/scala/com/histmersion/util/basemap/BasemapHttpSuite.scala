@@ -1,5 +1,10 @@
 package com.histmersion
 package util.basemap
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.Cursor
+import hearth.kindlings.jsoniterjson.Json
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
@@ -78,7 +83,7 @@ class BasemapHttpSuite extends DbSuite:
     val dir = Files.createTempDirectory("basemap-http")
     withServer(dir) { url =>
       // nothing downloaded yet: the status says so, and how to fetch it
-      val s0 = io.circe.parser.decode[Basemap.Status](String(get(url).body)).fold(e => fail(e.toString), identity)
+      val s0 = RawJson.decode[Basemap.Status](String(get(url).body)).fold(e => fail(e.toString), identity)
       assert(!s0.available.value)
       assertEquals(s0.fetchCommand, "histmersion basemap fetch")
       assertEquals(s0.dir, dir.toString)
@@ -86,7 +91,7 @@ class BasemapHttpSuite extends DbSuite:
 
       BasemapFixtures.vectorArchive(dir.resolve("vector.pmtiles"), maxZoom = PmTiles.Zoom(3))
       BasemapFixtures.terrainArchive(dir.resolve("terrain.pmtiles"), maxZoom = PmTiles.Zoom(2))
-      val s1 = io.circe.parser.decode[Basemap.Status](String(get(url).body)).fold(e => fail(e.toString), identity)
+      val s1 = RawJson.decode[Basemap.Status](String(get(url).body)).fold(e => fail(e.toString), identity)
       assert(s1.available.value, s1.toString)
       val v = s1.layers.find(_.layer == Basemap.Layer.Wire("vector")).get
       assertEquals((v.present, v.maxZoom, v.tileType), (true, Some(3), Some("application/vnd.mapbox-vector-tile")))
@@ -128,16 +133,16 @@ class BasemapHttpSuite extends DbSuite:
     withServer(dir) { url =>
       val config = url.stripSuffix("/basemap") + "/config"
       def source() =
-        io.circe.parser.decode[UiConfig](String(get(config).body)).fold(e => fail(e.toString), _.baseMapSource)
+        RawJson.decode[UiConfig](String(get(config).body)).fold(e => fail(e.toString), _.baseMapSource)
       assertEquals(source(), "online", "nothing downloaded")
       BasemapFixtures.vectorArchive(
         dir.resolve("vector.pmtiles"),
         maxZoom = PmTiles.Zoom(3),
-        io.circe.Json.obj(
-          "histmersion" -> io.circe.Json.obj("drop" -> io.circe.Json.fromString("roads; places; boundaries"))
+        Json.obj(
+          "histmersion" -> Json.obj("drop" -> Json.fromString("roads; places; boundaries"))
         )
       )
-      val st = io.circe.parser.decode[Basemap.Status](String(get(url).body)).fold(e => fail(e.toString), identity)
+      val st = RawJson.decode[Basemap.Status](String(get(url).body)).fold(e => fail(e.toString), identity)
       assertEquals(st.missing(Basemap.StyleState.Id("readable")), List("boundaries", "places", "roads"))
       assertEquals(st.missing(Basemap.StyleState.Id("physical")), Nil)
       assertEquals(source(), "local", "Physical draws nothing the default drop list leaves out")
@@ -145,7 +150,7 @@ class BasemapHttpSuite extends DbSuite:
       BasemapFixtures.vectorArchive(
         dir.resolve("vector.pmtiles"),
         maxZoom = PmTiles.Zoom(3),
-        io.circe.Json.obj("histmersion" -> io.circe.Json.obj("keepAll" -> io.circe.Json.True))
+        Json.obj("histmersion" -> Json.obj("keepAll" -> Json.True))
       )
       assertEquals(source(), "local", "a --keep-all extract: the page asks no other host")
       // the page's cut: only the kinds and properties it reads
@@ -179,10 +184,10 @@ class BasemapHttpSuite extends DbSuite:
     Files.copy(fixture.resolve("terrain.pmtiles"), dir.resolve("terrain.pmtiles"))
     Files.createDirectories(dir.resolve("terrain-focus"))
     Files.copy(fixture.resolve("terrain-focus/argolid.pmtiles"), dir.resolve("terrain-focus/argolid.pmtiles"))
-    def terrain(url: String): io.circe.ACursor =
-      val json = io.circe.parser.parse(String(get(url).body)).fold(e => fail(e.toString), identity)
-      val layers = json.hcursor.downField("layers").values.getOrElse(fail(json.noSpaces))
-      layers.find(_.hcursor.get[String]("layer").contains("terrain")).getOrElse(fail(json.noSpaces)).hcursor
+    def terrain(url: String): Cursor =
+      val json = RawJson.parse(String(get(url).body)).fold(e => fail(e.toString), identity)
+      val layers = json.cursor.downField("layers").values.getOrElse(fail(json.noSpaces))
+      layers.find(_.cursor.get[String]("layer").contains("terrain")).getOrElse(fail(json.noSpaces)).cursor
     for onDemand <- List(true, false) do
       withServer(dir, onDemand) { url =>
         val t = terrain(url)
@@ -199,7 +204,7 @@ class BasemapHttpSuite extends DbSuite:
         assertEquals(od.get[Int]("maxZoom"), Right(AppConfig.load().basemap.terrain.onDemand.maxZoom))
         assert(od.get[Long]("maxBytes").isRight && od.get[String]("dir").isRight, od.focus.toString)
         // and the typed status a page decodes says the same
-        val st = io.circe.parser.decode[Basemap.Status](String(get(url).body)).fold(e => fail(e.toString), identity)
+        val st = RawJson.decode[Basemap.Status](String(get(url).body)).fold(e => fail(e.toString), identity)
         val info = st.layers.find(_.layer == Basemap.Layer.Wire("terrain")).get
         assertEquals(info.focus.map(_.name), List("argolid"))
         assertEquals(
@@ -215,7 +220,7 @@ class BasemapHttpSuite extends DbSuite:
     Files.createDirectories(dir.resolve("terrain-focus"))
     Files.copy(fixture.resolve("terrain-focus/argolid.pmtiles"), dir.resolve("terrain-focus/argolid.pmtiles"))
     withServer(dir, onDemand = false) { url =>
-      val st = io.circe.parser.decode[Basemap.Status](String(get(url).body)).fold(e => fail(e.toString), identity)
+      val st = RawJson.decode[Basemap.Status](String(get(url).body)).fold(e => fail(e.toString), identity)
       val t = st.layers.find(_.layer == Basemap.Layer.Wire("terrain")).get
       assertEquals((t.maxZoom, t.deepest), (Some(6), Some(11)))
       def tile(z: Basemap.Zoom, lon: Longitude, lat: Latitude) =
@@ -250,6 +255,6 @@ class BasemapHttpSuite extends DbSuite:
       assertEquals(tile(Basemap.Zoom(9), Longitude(-40.0), Latitude(10.0)).statusCode, 204)
       // the tiles' URLs change with the focus regions: a resampled tile is never kept past a new region
       Files.delete(dir.resolve("terrain-focus/argolid.pmtiles"))
-      val after = io.circe.parser.decode[Basemap.Status](String(get(url).body)).fold(e => fail(e.toString), identity)
+      val after = RawJson.decode[Basemap.Status](String(get(url).body)).fold(e => fail(e.toString), identity)
       assertNotEquals(after.layers.find(_.layer == Basemap.Layer.Wire("terrain")).get.version, t.version)
     }

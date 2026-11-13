@@ -4,7 +4,7 @@ package domain.library.workflows
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.Filter
 import com.histmersion.api.VocabularyCodecs.given
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.catalogue.Year
@@ -22,7 +22,7 @@ final case class AgentSearchInput(
     sort: Option[Sort.Wire] = None,
     limit: Option[Filter.Limit] = None,
     offset: Option[Filter.Offset] = None
-) derives KindlingsCodecAsObject:
+) derives JsonCodec:
   def toFilter: Filter =
     Filter.of(
       query,

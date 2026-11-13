@@ -1,5 +1,8 @@
 package com.histmersion
 package server.agents
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
+import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -7,7 +10,7 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.domain.library.workflows.*
 
-import com.histmersion.domain.automation.agents.{AnswerSchemas, Engine, Prompt}
+import com.histmersion.domain.automation.agents.{AnswerNotJson, AnswerSchemas, Engine, Prompt, SttpAiJson}
 import com.histmersion.domain.automation.managers.Zero
 
 import sttp.ai.core.agent.*
@@ -66,28 +69,28 @@ class StepFailureSuite extends munit.FunSuite:
   test("#941 a decoding failure names the path and the decoder's message, then the start of the answer"):
     val raw = """{"notes": 5}"""
     val f =
-      LibraryAnswers.notes.codec
-        .decodeJson(io.circe.parser.parse(raw).toOption.get)
+      SttpAiJson
+        .answer(LibraryAnswers.notes, RawJson.parse(raw).toOption.get)
         .left
         .map(AgentParseError(raw, _))
     val p = Engine.answerProblem(f.swap.toOption.get, FinishReason.NaturalStop)
     assert(p.sentence.startsWith("the answer does not match the schema at .notes: "), p)
-    assert(p.sentence.contains("expecting string"), p)
+    assert(p.sentence.contains("expected '\"'"), p)
     assert(p.sentence.endsWith(s"the answer began: $raw"), p)
     assertEquals(Engine.undecoded(f), Some(raw))
 
   test("#941 a missing field deep in a list is located by index"):
     val raw = """{"findings":[{"claim":"x"}]}"""
     val f =
-      LibraryAnswers.findings.codec
-        .decodeJson(io.circe.parser.parse(raw).toOption.get)
+      SttpAiJson
+        .answer(LibraryAnswers.findings, RawJson.parse(raw).toOption.get)
         .left
         .map(AgentParseError(raw, _))
     val p = Engine.answerProblem(f.swap.toOption.get, FinishReason.NaturalStop)
     assert(p.sentence.contains(".findings[0]."), p)
 
   test("#941 not JSON, no answer at all, and a long answer is quoted only in part"):
-    val bad = AgentParseError("{nope", io.circe.ParsingFailure("expected json value", new RuntimeException("x")))
+    val bad = AgentParseError("{nope", AnswerNotJson("expected json value"))
     assert(
       Engine
         .answerProblem(bad, FinishReason.NaturalStop)
@@ -101,14 +104,11 @@ class StepFailureSuite extends munit.FunSuite:
     )
     assertEquals(Engine.undecoded(Left(none)), None, "nothing to hand back")
     // sttp-ai's HTTP loop: out of turns after an undecodable answer, the last decoder error is the cause
-    val df = io.circe.DecodingFailure(
-      "Got value '5' with wrong type, expecting string",
-      List(io.circe.CursorOp.DownField("notes"))
-    )
+    val df = SttpAiJson.answer(LibraryAnswers.notes, RawJson.parse("""{"notes": 5}""").toOption.get).swap.toOption.get
     val gaveUp = AgentIncomplete("""{"notes": 5}""", FinishReason.MaxIterations, Some(df))
     val p = Engine.answerProblem(gaveUp, FinishReason.MaxIterations)
     assert(
-      p.sentence.startsWith("the answer does not match the schema at .notes: Got value '5'") && p.sentence.contains(
+      p.sentence.startsWith("the answer does not match the schema at .notes: expected '\"'") && p.sentence.contains(
         "(iteration limit)"
       ),
       p
@@ -139,7 +139,7 @@ class StepFailureSuite extends munit.FunSuite:
     assertEquals(CliOutcomes.textProblem(CliOutcomes.TextProblemText("  ")), None)
     val text = """Here it is: {"notes": "abc"""
     val ok = """{"type":"result","subtype":"success","is_error":false,"num_turns":2,"result":""" +
-      io.circe.Json.fromString(text).noSpaces + ""","usage":{}}"""
+      Json.fromString(text).noSpaces + ""","usage":{}}"""
     val r = claudeResult(CliProcess.Run.Lines(ClaudeStreams.Init), CliProcess.Run.Lines(ok))
     val f = r.finalAnswer.swap.toOption.get
     val p = Engine.answerProblem(f, r.finishReason)

@@ -1,7 +1,7 @@
 package com.histmersion
 package api.library
-import com.histmersion.api.given_Configuration
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.api.given
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -18,7 +18,7 @@ final case class CollectionImportRequest(
     convert: CollectionImportRequest.Convert = CollectionImportRequest.Convert(true),
     cover: CollectionImportRequest.Cover = CollectionImportRequest.Cover(true),
     acquireItem: Option[CollectionImportRequest.AcquireItem] = None
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema
 

@@ -1,41 +1,45 @@
 package com.histmersion
 package api
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
-import io.circe.{Codec, CursorOp, Decoder, DecodingFailure, Json}
+import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReader, JsonValueCodec, JsonWriter}
+import hearth.kindlings.jsoniterjson.Json
 import sttp.tapir.{Schema, SchemaType}
 import io.github.iltotore.iron.constraint.any.Pure
 
-/** A derived decoder ignores keys it does not know, so a misplaced or misspelt key decodes to "change nothing"; write
-  * inputs refuse unknown keys instead.
+import util.json.{JsonCodec, RawJson}
+
+/** A write input's JSON codec (`derives StrictJson`): a derived decoder ignores keys it does not know, so a misplaced
+  * or misspelt key decodes to "change nothing"; a write input refuses unknown keys instead, naming the keys it takes.
   */
+trait StrictJson[A] extends JsonCodec[A]
+
 object StrictJson:
+  /** The record's own derived codec, refusing unknown keys; its schema names the keys it takes. */
+  inline def derived[A](using Schema[A]): StrictJson[A] = codec(JsonCodec.derived[A])
+
   type FieldName = FieldName.T
   object FieldName extends Newtype[String, Pure]
   type FieldPath = FieldPath.T
   object FieldPath extends Newtype[String, Pure]
 
-  def codec[A](derived: Codec.AsObject[A])(using s: Schema[A]): Codec.AsObject[A] =
-    Codec.AsObject.from(decoder(derived), derived)
-
-  def decoder[A](d: Decoder[A])(using s: Schema[A]): Decoder[A] =
+  def codec[A](derived: JsonValueCodec[A])(using s: Schema[A]): StrictJson[A] =
     val known = fieldNames(s)
-    Decoder.instance { c =>
-      c.value.asObject match
-        case None =>
-          Left(
-            DecodingFailure(
-              s"${at(c.history)}expected an object with keys ${known.mkString(", ")}; " +
-                s"got ${jsonKind(c.value)}",
-              c.history
-            )
-          )
-        case Some(o) =>
-          problems((o.keys.toList).map(refactorValue => FieldName(refactorValue)), s) match
-            case None      => d(c)
-            case Some(msg) => Left(DecodingFailure(s"${at(c.history)}${msg.sentence}", c.history))
-    }
+    new StrictJson[A]:
+      def nullValue: A = derived.nullValue
+      def encodeValue(x: A, out: JsonWriter): Unit = derived.encodeValue(x, out)
+      def decodeValue(in: JsonReader, default: A): A =
+        val json = RawJson.codec.decodeValue(in, Json.Null)
+        json.asObject match
+          case None =>
+            in.decodeError(s"expected an object with keys ${known.mkString(", ")}; got ${jsonKind(json)}")
+          case Some(o) =>
+            problems(o.keys.toList.map(k => FieldName(k)), s) match
+              case Some(msg) => in.decodeError(msg.sentence)
+              case None      => json.as[A](using derived).fold(in.decodeError, identity)
 
   def problems(keys: List[FieldName], s: Schema[?]): Option[Problem] =
     val known = fieldNames(s)
@@ -78,11 +82,6 @@ object StrictJson:
     case SchemaType.SOption(e) => unwrap(e)
     case SchemaType.SArray(e)  => unwrap(e)
     case _                     => s
-
-  private def at(history: List[CursorOp]): String =
-    CursorOp.opsToPath(history).stripPrefix(".") match
-      case ""   => ("")
-      case path => (s"$path: ")
 
   private def jsonKind(j: Json): String =
     j.fold(("null"), _ => ("a boolean"), _ => ("a number"), _ => ("a string"), _ => ("an array"), _ => ("an object"))

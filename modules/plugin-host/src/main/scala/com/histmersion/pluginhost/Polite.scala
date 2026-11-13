@@ -1,13 +1,15 @@
 package com.histmersion
 package pluginhost
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.plugin.Plugin
 import com.histmersion.domain.HttpPolicy
 import com.histmersion.config.MediaConfig
-
-import io.circe.Json
 
 import java.net.URI
 import java.time.Instant
@@ -117,12 +119,12 @@ final class Polite(
       headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue] = Map.empty
   ): Either[Plugin.Http.Failure, Json] =
     get(url, headers).flatMap(a =>
-      io.circe.parser
+      RawJson
         .parse(a.text.value)
         .left
         .map(e =>
           Plugin.Http.Failure
-            .Transport(Problem.Unclassified(Legacy.Text(s"${host(url).value}: unparseable JSON (${e.getMessage})")))
+            .Transport(Problem.Unclassified(Legacy.Text(s"${host(url).value}: unparseable JSON ($e)")))
         )
     )
 

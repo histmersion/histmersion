@@ -1,10 +1,10 @@
 package com.histmersion
 package domain.library.workflows
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.VocabularyCodecs.given
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
-import io.circe.{Codec, Decoder, Encoder}
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.domain.library.Citekey
@@ -21,7 +21,7 @@ final case class AgentGetSourceInput(
     heading: Option[SourceService.Heading] = None,
     offset: Option[Offset] = None,
     chars: Option[SourcesControllers.Chars] = None
-) derives KindlingsCodecAsObject:
+) derives JsonCodec:
   def sectionOrBody: Option[Source.Section.Wire] =
     section
       .map(s => Source.Section.Wire(s.value.trim))
@@ -36,11 +36,7 @@ object AgentGetSourceInput:
   /** What a model typed as the citekey is looked up as it stands: a key that names no source answers "not found", not a
     * refused turn.
     */
-  private given Codec[Citekey] =
-    Codec.from(
-      Decoder.decodeString.map(Citekey.assume(_)),
-      Encoder.encodeString.contramap(_.value)
-    )
+  private given JsonValueCodec[Citekey] = JsonCodec.text[Citekey](_.value, s => Right(Citekey.assume(s)))
 
   given Schema[AgentGetSourceInput] = KindlingsSchema
     .derived[AgentGetSourceInput]

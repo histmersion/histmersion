@@ -1,5 +1,6 @@
 package com.histmersion
 package server.media
+import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.testsupport.ComparedByValue.given

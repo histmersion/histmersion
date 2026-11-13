@@ -1,5 +1,7 @@
 package com.histmersion
 package server
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.testsupport.ComparedByValue.given
@@ -383,9 +385,9 @@ class MarkdownLintSuite extends munit.FunSuite:
         FormatIssue.Message("m"),
         Some(FormatIssue.Fix("f"))
       )
-    val j = io.circe.parser.decode[FormatIssue](io.circe.syntax.EncoderOps(i).asJson.noSpaces)
+    val j = RawJson.decode[FormatIssue]((i).asJson.noSpaces)
     assertEquals(j, Right(i))
-    assert(io.circe.syntax.EncoderOps(i).asJson.noSpaces.contains("\"rule\":\"table-not-rendered\""))
+    assert((i).asJson.noSpaces.contains("\"rule\":\"table-not-rendered\""))
 
   // ── the page notice ─────────────────────────────────────────────────────────────────────────
 

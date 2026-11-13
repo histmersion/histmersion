@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.automation.goals
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
@@ -260,8 +262,8 @@ abstract class GoalServiceContract extends EngineStoreSuite:
     g(s).setBudget(com.histmersion.domain.automation.Goal.Slug("zz-p"), Some(BigDecimal("2.50")))
     val Some((plan, usd)) = g(s).planAndBudget(com.histmersion.domain.automation.Goal.Slug("zz-p")): @unchecked
     assertEquals(
-      plan.map(p => io.circe.parser.parse(p.value).toOption),
-      Some(io.circe.parser.parse("""{"goal":"zz-p"}""").toOption)
+      plan.map(p => RawJson.parse(p.value).toOption),
+      Some(RawJson.parse("""{"goal":"zz-p"}""").toOption)
     )
     assertEquals(usd.map(_.toDouble), Some(2.5))
     assertEquals(g(s).planned(), Set("zz-p"))

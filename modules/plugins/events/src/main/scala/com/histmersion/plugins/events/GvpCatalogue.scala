@@ -1,10 +1,13 @@
 package com.histmersion
 package plugins.events
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.plugin.*
 import com.histmersion.upstreams.dating.CatalogDating
-import io.circe.Json
 
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets.UTF_8
@@ -70,7 +73,7 @@ final class GvpCatalogue(cfg: GvpEvents) extends EventCatalogue:
     */
   override def reread(stored: CatalogueEvent): Option[CatalogueEvent] =
     stored.raw
-      .flatMap(t => io.circe.parser.parse(t.value).toOption)
+      .flatMap(t => RawJson.parse(t.value).toOption)
       .flatMap(GvpCatalogue.record)
       .map(n => n.copy(names = (stored.names ++ n.names).distinct.filterNot(_.value == n.label.value)))
       .orElse(Option.when(stored.central.isEmpty)(GvpCatalogue.fromBefore088(stored)))
@@ -109,7 +112,7 @@ object GvpCatalogue:
     * `contested`. Years are GVP's signed years (BCE negative), ± its stated uncertainty.
     */
   def parse(json: Json): Either[Problem, (List[CatalogueEvent], Option[Count])] =
-    val c = json.hcursor
+    val c = json.cursor
     c.downField("features").focus.flatMap(_.asArray) match
       case None =>
         Left(
@@ -129,33 +132,38 @@ object GvpCatalogue:
     */
   def record(f: Json): Option[CatalogueEvent] =
     import JsonFields.*
-    val p = f.hcursor.downField("properties")
+    val p = f.cursor.downField("properties")
     val coords =
-      f.hcursor.downField("geometry").downField("coordinates").focus.flatMap(_.asArray).getOrElse(Vector.empty)
+      f.cursor.downField("geometry").downField("coordinates").focus.flatMap(_.asArray).getOrElse(Vector.empty)
     val (lon, lat) =
-      (coords.headOption.flatMap(_.asNumber).map(_.toDouble), coords.lift(1).flatMap(_.asNumber).map(_.toDouble))
-    val activity = str(p, JsonFields.Key("Activity_Type")).map(_.value).getOrElse("")
+      (
+        coords.headOption.flatMap(_.asNumber).flatMap(_.toDouble),
+        coords.lift(1).flatMap(_.asNumber).flatMap(_.toDouble)
+      )
+    val activity = p.str(JsonFields.Key("Activity_Type")).map(_.value).getOrElse("")
     for
-      num <- long(p, JsonFields.Key("Eruption_Number"))
-      year <- long(p, JsonFields.Key("StartDateYear"))
+      num <- p.long(JsonFields.Key("Eruption_Number"))
+      year <- p.long(JsonFields.Key("StartDateYear"))
       if !activity.toLowerCase(Locale.ROOT).contains("discredited")
     yield
-      val volcano = str(p, JsonFields.Key("Volcano_Name")).map(_.value).getOrElse("unnamed volcano")
-      val vnum = long(p, JsonFields.Key("Volcano_Number"))
-      val pm = long(p, JsonFields.Key("StartDateYearUncertainty")).filter(_.value > 0)
+      val volcano = p.str(JsonFields.Key("Volcano_Name")).map(_.value).getOrElse("unnamed volcano")
+      val vnum = p.long(JsonFields.Key("Volcano_Number"))
+      val pm = p.long(JsonFields.Key("StartDateYearUncertainty")).filter(_.value > 0)
       val start =
         CatalogDating.year(CatalogDating.HistoricalYear(year.value), pm.map(m => CatalogDating.YearMargin(m.value)))
-      val end = long(p, JsonFields.Key("EndDateYear")).map(y =>
-        CatalogDating.year(
-          CatalogDating.HistoricalYear(y.value),
-          long(p, JsonFields.Key("EndDateYearUncertainty")).map(m => CatalogDating.YearMargin(m.value))
+      val end = p
+        .long(JsonFields.Key("EndDateYear"))
+        .map(y =>
+          CatalogDating.year(
+            CatalogDating.HistoricalYear(y.value),
+            p.long(JsonFields.Key("EndDateYearUncertainty")).map(m => CatalogDating.YearMargin(m.value))
+          )
         )
-      )
-      val vei = long(p, JsonFields.Key("ExplosivityIndexMax")).map(_.value.toInt)
-      val method = str(p, JsonFields.Key("StartEvidenceMethod"))
+      val vei = p.long(JsonFields.Key("ExplosivityIndexMax")).map(_.value.toInt)
+      val method = p.str(JsonFields.Key("StartEvidenceMethod"))
       val doubt =
         activity.toLowerCase(Locale.ROOT).contains("uncertain") ||
-          str(p, JsonFields.Key("StartDateYearModifier")).map(_.value).contains("?")
+          p.str(JsonFields.Key("StartDateYearModifier")).map(_.value).contains("?")
       val d = Dated.of(CatalogDating.span(Some(start), end))
       CatalogueEvent(
         id = CatalogueEvent.Id(num.value.toString),
@@ -176,7 +184,7 @@ object GvpCatalogue:
         description = Some(
           CatalogueEvent.Description(
             (List(s"$activity at $volcano") ++ vei.map(v => s"VEI $v") ++
-              str(p, JsonFields.Key("ActivityArea")).map(a => s"area: ${a.value}")).mkString("; ")
+              p.str(JsonFields.Key("ActivityArea")).map(a => s"area: ${a.value}")).mkString("; ")
           )
         ),
         group = vnum.map(v => CatalogueEvent.Group(s"volcano:${v.value}")),

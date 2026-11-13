@@ -1,13 +1,12 @@
 package com.histmersion
 package server.agents
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.api.problem.Text.sentence
-import com.histmersion.domain.automation.agents.StrictJsonSchema
+import com.histmersion.domain.automation.agents.{AnswerNotJson, StrictJsonSchema, SttpAiJson}
+import com.histmersion.util.json.RawJson.*
 
-import io.circe.{parser, Json}
-import io.circe.syntax.*
 import sttp.ai.core.agent.*
-import sttp.apispec.circe.*
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.automation.agents.LlmCall
 import com.histmersion.api.automation.Agents
@@ -28,16 +27,22 @@ object CliOutcomes:
       modelId: Option[Agents.ModelRef.Model]
   ): AgentResult[Either[AgentFailure, Out]] =
     val raw = o.finalText.map(_.value).getOrElse("")
-    val parsed = parser.parse(stripFence(raw))
+    val parsed = RawJson.parse(stripFence(raw))
     val finish = o.error.fold(FinishReason.NaturalStop)(e => FinishReason.Error(e.sentence.take(600)))
     val answer: Either[AgentFailure, Out] = parsed match
       // a null decodes as an absent field: Codex's strict schema makes the model answer `null` for
       // every optional field it would have left out (StrictJsonSchema), and a field with a default
       // (`tags: List[String] = Nil`) would otherwise refuse it
-      case Right(j) => schema.codec.decodeJson(j.deepDropNullValues).left.map(e => AgentParseError(raw, e))
+      case Right(j) => SttpAiJson.answer(schema, j.withoutNulls).left.map(e => AgentParseError(raw, e))
       // #941: an answer that ended normally but is not JSON keeps the parser's error as its cause
       case Left(pf) =>
-        Left(AgentIncomplete(raw, finish, Option.when(finish == FinishReason.NaturalStop && raw.trim.nonEmpty)(pf)))
+        Left(
+          AgentIncomplete(
+            raw,
+            finish,
+            Option.when(finish == FinishReason.NaturalStop && raw.trim.nonEmpty)(AnswerNotJson(pf))
+          )
+        )
     val entries = ConversationEntry.UserPrompt(user.value) +: o.entries
     AgentResult(
       answer,
@@ -54,11 +59,11 @@ object CliOutcomes:
     * (nothing was answered) or a text that is a JSON object. What the step records and the retry is told, instead of
     * "not the JSON the schema asks for".
     */
-  def textProblem(text: TextProblemText): Option[io.circe.ParsingFailure] =
+  def textProblem(text: TextProblemText): Option[AnswerNotJson] =
     val t = text.value.trim
     if t.isEmpty then None
-    else if parser.parse(stripFence(t)).exists(j => !j.isObject) then
-      Some(io.circe.ParsingFailure("the answer is JSON but not an object", null))
+    else if RawJson.parse(stripFence(t)).exists(j => !j.isObject) then
+      Some(AnswerNotJson("the answer is JSON but not an object"))
     else
       val fenced = "(?s)```(?:json)?\\s*(\\{.*)\\s*```".r.findFirstMatchIn(t).map(_.group(1).trim)
       val start = t.indexOf('{')
@@ -66,11 +71,11 @@ object CliOutcomes:
         t.substring(start, t.lastIndexOf('}') + 1)
       else t.substring(start)))
       candidate match
-        case None    => Some(io.circe.ParsingFailure("there is no JSON object in the answer (it is prose)", null))
+        case None    => Some(AnswerNotJson("there is no JSON object in the answer (it is prose)"))
         case Some(c) =>
-          parser.parse(c) match
-            case Left(pf)                => Some(pf)
-            case Right(j) if !j.isObject => Some(io.circe.ParsingFailure("the answer is JSON but not an object", null))
+          RawJson.parse(c) match
+            case Left(pf)                => Some(AnswerNotJson(pf))
+            case Right(j) if !j.isObject => Some(AnswerNotJson("the answer is JSON but not an object"))
             case Right(_)                => None
 
   def stripFence(s: String): String =

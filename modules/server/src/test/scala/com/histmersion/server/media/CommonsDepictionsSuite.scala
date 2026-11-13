@@ -1,5 +1,7 @@
 package com.histmersion
 package server.media
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
@@ -38,7 +40,7 @@ class CommonsDepictionsSuite extends munit.FunSuite:
         """{"LicenseShortName":{"value":"CC BY 4.0"},"License":{"value":"cc-by-4.0"}}"""
       else
         """{"Artist":{"value":"Zqmd"},"LicenseShortName":{"value":"CC BY-SA 4.0"},"License":{"value":"cc-by-sa-4.0"}}"""
-      s"""{"pageid":${i + 1},"ns":6,"title":${io.circe.Json
+      s"""{"pageid":${i + 1},"ns":6,"title":${Json
           .fromString(t)
           .noSpaces},"imageinfo":[{"size":100,"width":10,"height":10,
          "thumburl":"https://upload.example/$i-$width.jpg","thumbwidth":$width,"thumbheight":$width,

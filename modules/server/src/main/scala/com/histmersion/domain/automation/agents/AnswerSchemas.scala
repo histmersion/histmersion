@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.automation.agents
+import com.histmersion.domain.automation.agents.SttpAiJson.given
 
 import com.histmersion.domain.{HintProposals, PlanGoal}
 import com.histmersion.api.automation.Agents.ProbeAnswer

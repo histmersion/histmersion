@@ -1,8 +1,6 @@
 package com.histmersion
 package domain
-
-import io.circe.parser.decode
-import io.circe.syntax.*
+import com.histmersion.util.json.RawJson.*
 
 /** Stored agent runs keep loading: every golden line (written from the codecs runs were stored with) decodes and
   * encodes back to the same bytes, and today's values encode to exactly those lines.

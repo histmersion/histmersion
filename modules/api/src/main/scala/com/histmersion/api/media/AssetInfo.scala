@@ -1,6 +1,6 @@
 package com.histmersion
 package api.media
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
@@ -15,7 +15,7 @@ final case class AssetInfo(
     sha256: Sha256,
     width: Option[AssetInfo.Width] = None,
     height: Option[AssetInfo.Height] = None
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema
 

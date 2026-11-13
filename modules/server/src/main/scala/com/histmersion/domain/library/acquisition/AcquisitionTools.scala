@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
+import hearth.kindlings.jsoniterderivation.JsoniterConfig
+import com.histmersion.util.mcp.ChimpJson.given
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.config.*
@@ -8,7 +10,7 @@ import com.histmersion.util.mcp.McpOut
 import com.histmersion.api.VocabularyCodecs.given
 
 import chimp.server.*
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.library.{
@@ -216,12 +218,9 @@ final class AcquisitionTools(
   val tools = List(discover, refs, assess, followups, ingestDoi, archive, candidates)
 
 object AcquisitionTools:
-  /** Honour Scala defaults when decoding tool arguments, as `McpTools` does — otherwise every optional field would be
-    * required in the JSON.
-    */
-
-  given hearth.kindlings.circederivation.Configuration =
-    hearth.kindlings.circederivation.Configuration.default.withDefaults.withStrictDecoding
+  /** Refuse an argument a tool does not know, as `McpTools` does. */
+  given JsonCodec.Unknown = JsonCodec.Unknown.Refused
+  given JsoniterConfig = JsonCodec.schemas
 
   final case class DiscoverInput(
       query: Option[AcquireApi.Query] = None,
@@ -231,7 +230,7 @@ object AcquisitionTools:
       sort: Option[AcquireApi.Filter] = None,
       limit: Option[AcquireApi.Limit] = None,
       notInDb: DiscoverInput.NotInDb = DiscoverInput.NotInDb(false)
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -248,7 +247,7 @@ object AcquisitionTools:
       as: Option[Source.Candidate.State] = None,
       sweep: CandidatesInput.Sweep = CandidatesInput.Sweep(false),
       dryRun: CandidatesInput.DryRun = CandidatesInput.DryRun(false)
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -259,7 +258,7 @@ object AcquisitionTools:
     object DryRun extends Newtype[Boolean, Pure]
 
   final case class RefsInput(id: RefsRequest.Id, apply: RefsRequest.Apply = RefsRequest.Apply(false))
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -269,7 +268,7 @@ object AcquisitionTools:
       forceStatus: AssessRequest.ForceStatus = AssessRequest.ForceStatus(false),
       updateRetractions: AssessInput.UpdateRetractions = AssessInput.UpdateRetractions(false),
       retractionsStatus: AssessInput.RetractionsStatus = AssessInput.RetractionsStatus(false)
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -284,7 +283,7 @@ object AcquisitionTools:
       since: Option[FollowupsRequest.Since] = None,
       limit: Option[FollowupsRequest.Limit] = None,
       apply: FollowupsRequest.Apply = FollowupsRequest.Apply(false)
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -294,7 +293,7 @@ object AcquisitionTools:
       arxiv: Option[Ingest.Request.Arxiv] = None,
       refetch: Ingest.Request.Refetch = Ingest.Request.Refetch(false),
       legalOnly: IngestInput.LegalOnly = IngestInput.LegalOnly(false)
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object IngestInput:
     type LegalOnly = LegalOnly.T
     object LegalOnly extends Newtype[Boolean, Pure]
@@ -313,7 +312,7 @@ object AcquisitionTools:
       citekey: Option[Citekey] = None,
       format: Option[ArchiveImportRequest.Format] = None,
       rows: Option[AcquireApi.Limit] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 

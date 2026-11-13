@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.library.workflows
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.JsonCodec.given
 
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.domain.{AgentVerify, CompareRuns}
@@ -7,7 +9,6 @@ import com.histmersion.domain.CompareRuns.{EnrichSide, Run, Step}
 import com.histmersion.domain.EnrichSource.{Classified, Findings, Geocoded, VerifiedFindings}
 import com.histmersion.domain.automation.agents.OutputComparison
 
-import io.circe.parser.decode
 import scala.annotation.tailrec
 
 /** enrich-source's runs compared by their outputs (`agent compare`, #992): the findings each kept, the verifier's quote
@@ -30,13 +31,13 @@ object EnrichComparison extends OutputComparison:
       rest match
         case Nil                                                                              => (checked, passed)
         case s :: tail if s.status == com.histmersion.domain.automation.Step.Status.Done.wire =>
-          s.output.flatMap(o => decode[VerifiedFindings](o.value).toOption) match
+          s.output.flatMap(o => RawJson.decode[VerifiedFindings](o.value).toOption) match
             case Some(v) =>
               val n = v.proposed.fold(v.findings.size)(_.value)
               loop(tail, checked + n, passed + n - v.quoteFailed.fold(0)(_.value))
             case None => loop(tail, checked, passed)
         case s :: tail =>
-          s.output.flatMap(o => decode[Findings](o.value).toOption) match
+          s.output.flatMap(o => RawJson.decode[Findings](o.value).toOption) match
             case Some(f) =>
               val n = f.findings.size
               val fails =

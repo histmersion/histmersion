@@ -1,5 +1,6 @@
 package com.histmersion
 package cli
+import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import cats.syntax.all.*

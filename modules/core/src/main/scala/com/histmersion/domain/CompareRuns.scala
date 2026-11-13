@@ -1,10 +1,10 @@
 package com.histmersion
 package domain
+import com.histmersion.util.json.RawJson
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 
 import com.histmersion.util.problem.{Legacy, Problem}
 import scala.annotation.tailrec
-import io.circe.Decoder
-import io.circe.parser.decode
 import com.histmersion.domain.automation.agents.OutputComparison
 import com.histmersion.util.text.ComparedText
 import io.github.iltotore.iron.constraint.any.Pure
@@ -448,12 +448,12 @@ object CompareRuns:
     )
 
   /** The checkpoint of step `name`: its last finished attempt's output, decoded. */
-  def output[O: Decoder](d: Run, name: CompareRuns.OutputName): Option[O] =
+  def output[O: JsonValueCodec](d: Run, name: CompareRuns.OutputName): Option[O] =
     d.steps
       .filter(s => s.name == name && s.status == com.histmersion.domain.automation.Step.Status.Done.wire)
       .lastOption
       .flatMap(_.output)
-      .flatMap(o => decode[O](o.value).toOption)
+      .flatMap(o => RawJson.decode[O](o.value).toOption)
 
   private def words(s: String): Set[String] =
     ComparedText

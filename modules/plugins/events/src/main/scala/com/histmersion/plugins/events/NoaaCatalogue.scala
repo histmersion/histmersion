@@ -1,10 +1,14 @@
 package com.histmersion
 package plugins.events
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
+import com.histmersion.util.json.Cursor
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.plugin.*
 import com.histmersion.upstreams.dating.CatalogDating
-import io.circe.{ACursor, Json}
 
 import java.util.Locale
 import io.github.iltotore.iron.constraint.any.Pure
@@ -52,8 +56,8 @@ final class NoaaCatalogue(cfg: NoaaSettings) extends EventCatalogue:
   /** The item read again from its `raw`, its dataset named by its id (`volcano:1351`). */
   override def reread(stored: CatalogueEvent): Option[CatalogueEvent] =
     stored.raw
-      .flatMap(t => io.circe.parser.parse(t.value).toOption)
-      .flatMap(j => NoaaCatalogue.datasetOf(stored.id).flatMap(NoaaCatalogue.record(_, j.hcursor)))
+      .flatMap(t => RawJson.parse(t.value).toOption)
+      .flatMap(j => NoaaCatalogue.datasetOf(stored.id).flatMap(NoaaCatalogue.record(_, j.cursor)))
       .map(n => n.copy(names = (stored.names ++ n.names).distinct.filterNot(_.value == n.label.value)))
 
 object NoaaCatalogue:
@@ -98,11 +102,11 @@ object NoaaCatalogue:
     * are dropped; very doubtful (1) and questionable (2) ones are `contested`.
     */
   def parse(dataset: Dataset, json: Json): Either[Problem, (List[CatalogueEvent], Count)] =
-    val c = json.hcursor
+    val c = json.cursor
     c.downField("items").focus.flatMap(_.asArray) match
       case None        => Left(Problem.Unclassified(Legacy.Text("no items in the answer")))
       case Some(items) =>
-        Right((items.toList.flatMap(i => record(dataset, i.hcursor)), Count(c.get[Int]("totalPages").getOrElse(1))))
+        Right((items.toList.flatMap(i => record(dataset, i.cursor)), Count(c.get[Int]("totalPages").getOrElse(1))))
 
   /** Pure: the dataset a NOAA record's id names (`volcano:1351` → volcanoes). */
   def datasetOf(providerId: CatalogueEvent.Id): Option[Dataset] =
@@ -122,27 +126,28 @@ object NoaaCatalogue:
     )
 
   /** Pure: one item of a dataset's answer as an event. */
-  def record(dataset: Dataset, i: ACursor): Option[CatalogueEvent] =
+  def record(dataset: Dataset, i: Cursor): Option[CatalogueEvent] =
     import JsonFields.*
     val kind = dataset match
       case Earthquakes => "earthquake"
       case Volcanoes   => "eruption"
       case _           => "tsunami"
-    val validity = long(i, Key("eventValidity"))
+    val validity = i.long(Key("eventValidity"))
     for
-      id <- long(i, Key("id"))
-      year <- long(i, JsonFields.Key("year"))
+      id <- i.long(Key("id"))
+      year <- i.long(JsonFields.Key("year"))
       if dataset != Tsunamis || validity.forall(_.value >= 1)
     yield
-      val where = str(i, JsonFields.Key("locationName"))
-        .orElse(str(i, JsonFields.Key("name")))
+      val where = i
+        .str(JsonFields.Key("locationName"))
+        .orElse(i.str(JsonFields.Key("name")))
         .map(t => titleCase(t).value)
         .getOrElse("unknown place")
       val one = singular(dataset).value
       val label = dataset match
-        case Volcanoes => s"Eruption of ${str(i, JsonFields.Key("name")).map(_.value).getOrElse(where)}"
+        case Volcanoes => s"Eruption of ${i.str(JsonFields.Key("name")).map(_.value).getOrElse(where)}"
         case _         => s"${one.capitalize}, $where"
-      val deaths = long(i, JsonFields.Key("deathsTotal")).orElse(long(i, JsonFields.Key("deaths")))
+      val deaths = i.long(JsonFields.Key("deathsTotal")).orElse(i.long(JsonFields.Key("deaths")))
       val d = Dated.of(CatalogDating.span(Some(CatalogDating.year(CatalogDating.HistoricalYear(year.value))), None))
       CatalogueEvent(
         id = CatalogueEvent.Id(s"$one:${id.value}"),
@@ -157,36 +162,39 @@ object NoaaCatalogue:
         notAfter = d.notAfter,
         beginBy = d.beginBy,
         endFrom = d.endFrom,
-        lat = latitude(dbl(i, JsonFields.Key("latitude"))),
-        lon = longitude(dbl(i, JsonFields.Key("longitude"))),
+        lat = latitude(i.dbl(JsonFields.Key("latitude"))),
+        lon = longitude(i.dbl(JsonFields.Key("longitude"))),
         historicity = CatalogueEvent.Historicity(if validity.exists(_.value <= 2) then "contested" else "attested"),
         // a tsunami's record carries the magnitude of the earthquake behind it: not the tsunami's size
         vei =
-          long(i, JsonFields.Key("vei")).map(v => CatalogueEvent.Vei(v.value.toInt)).filter(_ => dataset == Volcanoes),
-        magnitude = dbl(i, JsonFields.Key("eqMagnitude"))
+          i.long(JsonFields.Key("vei")).map(v => CatalogueEvent.Vei(v.value.toInt)).filter(_ => dataset == Volcanoes),
+        magnitude = i
+          .dbl(JsonFields.Key("eqMagnitude"))
           .map(m => CatalogueEvent.Magnitude(m.value))
           .filter(_ => dataset == Earthquakes),
         deaths = deaths.map(n => CatalogueEvent.Deaths(n.value)),
         names = Option
           .when(dataset == Volcanoes)(
-            str(i, JsonFields.Key("name")).map(n => CatalogueEvent.Names(s"${n.value} eruption"))
+            i.str(JsonFields.Key("name")).map(n => CatalogueEvent.Names(s"${n.value} eruption"))
           )
           .flatten
           .toList,
         description = Some(
           CatalogueEvent.Description(
-            (List(s"$where") ++ dbl(i, JsonFields.Key("eqMagnitude")).map(m =>
-              if dataset == Earthquakes then s"magnitude ${m.value}"
-              else s"caused by an earthquake of magnitude ${m.value}"
-            ) ++
-              long(i, JsonFields.Key("vei")).map(v => s"VEI ${v.value}") ++ deaths.map(n =>
+            (List(s"$where") ++ i
+              .dbl(JsonFields.Key("eqMagnitude"))
+              .map(m =>
+                if dataset == Earthquakes then s"magnitude ${m.value}"
+                else s"caused by an earthquake of magnitude ${m.value}"
+              ) ++
+              i.long(JsonFields.Key("vei")).map(v => s"VEI ${v.value}") ++ deaths.map(n =>
                 s"${n.value} deaths recorded"
               ) ++
-              dbl(i, JsonFields.Key("maxWaterHeight")).map(h => s"max. water height ${h.value} m")).mkString("; ")
+              i.dbl(JsonFields.Key("maxWaterHeight")).map(h => s"max. water height ${h.value} m")).mkString("; ")
           )
         ),
         group = if dataset == Volcanoes then
-          long(i, JsonFields.Key("volcanoLocationNewNum")).map(v => CatalogueEvent.Group(s"volcano:${v.value}"))
+          i.long(JsonFields.Key("volcanoLocationNewNum")).map(v => CatalogueEvent.Group(s"volcano:${v.value}"))
         else None,
         central = Dated.year(CatalogDating.HistoricalYear(year.value)),
         raw = i.focus.map(j => CatalogueEvent.Raw(j.noSpaces))

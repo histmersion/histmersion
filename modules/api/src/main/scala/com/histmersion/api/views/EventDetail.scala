@@ -1,6 +1,6 @@
 package com.histmersion
 package api.views
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.catalogue.EventCard
@@ -47,7 +47,7 @@ final case class EventDetail(
     candidates: List[EventLinkCandidate] = Nil,
     leads: List[EventLead] = Nil,
     corrections: List[Correction] = Nil
-) extends EventCard derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema:
+) extends EventCard derives JsonCodec, KindlingsSchema, com.histmersion.api.json.Schema:
   /** The page in Markdown, with its pictures. */
   def markdown: EventDetail.Markdown =
     EventDetail.Markdown(EventsMarkdown.event(this, media.map(_.markdownLine.value)))

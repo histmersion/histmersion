@@ -1,5 +1,6 @@
 package com.histmersion
 package util.basemap
+import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -21,10 +22,10 @@ import com.histmersion.util.storage.Store
   val b = BBox.parse(BBox.Text(bbox)).getOrElse(sys.error(s"bad bbox $bbox"))
   val all = cfg.files.flatMap { f =>
     val text = Files.readString(Path.of(dir, s"$f.geojson"))
-    io.circe.parser
+    RawJson
       .parse(text)
       .left
-      .map(e => Problem.Unclassified(Legacy.Text(e.getMessage)))
+      .map(e => Problem.Unclassified(Legacy.Text(e)))
       .flatMap(BasemapLabels.parse(BasemapLabels.FileName(f.value), _))
       .fold(e => sys.error(e.sentence), identity)
   }

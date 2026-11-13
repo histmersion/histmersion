@@ -1,5 +1,8 @@
 package com.histmersion
 package api
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -84,9 +87,9 @@ class OffsetPageSuite extends munit.FunSuite:
     assertEquals(links, "_No asset links._")
 
   test("the JSON carries offset and next; a body without them still decodes (older server)"):
-    import io.circe.syntax.*
+    import com.histmersion.util.json.RawJson.*
     val j = EventList.of(EventList.Total(412), List(ev(1)), UnreadPage.Offset(50)).asJson
-    assertEquals(j.hcursor.get[Int]("offset"), Right(50))
-    assertEquals(j.hcursor.get[Option[Int]]("next"), Right(Some(51)))
-    val old = io.circe.parser.decode[Goal.List]("""{"total":1,"goals":[]}""")
+    assertEquals(j.cursor.get[Int]("offset"), Right(50))
+    assertEquals(j.cursor.get[Option[Int]]("next"), Right(Some(51)))
+    val old = RawJson.decode[Goal.List]("""{"total":1,"goals":[]}""")
     assertEquals(old.map(x => (x.offset.value: Int)), Right(0))

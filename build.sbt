@@ -1,5 +1,5 @@
 // Histmersion — native Scala MCP server + host CLI over a Postgres/PostGIS store.
-// Direct-style SoftwareMill stack: Tapir + tapir-netty-server-sync, Chimp (MCP), Circe (+Kindlings),
+// Direct-style SoftwareMill stack: Tapir + tapir-netty-server-sync, Chimp (MCP), jsoniter-scala (+Kindlings),
 // Ox, Magnum (sync JDBC). Toolchain (.sdkmanrc, `sdk env install && sdk env`): GraalVM CE 25.4 + native-image,
 // pinned in scripts/bundle/graalvm-pins.txt; sbt 2.0.11, also in project/build.properties.
 
@@ -28,7 +28,7 @@ ThisBuild / startYear := Some(2026)
 // tapir 1.14 and sttp-ai 0.12 bring sttp-apispec 0.12; Chimp 0.6.0 (the newest) was built against 0.11.10.
 // Chimp only builds its tools' input schemas with it, and every MCP suite (tools/list, tools/call over HTTP)
 // passes on 0.12 — so 0.12 may evict 0.11 here. Drop this when a Chimp built on 0.12 is out.
-ThisBuild / libraryDependencySchemes ++= Seq("jsonschema-circe", "apispec-model")
+ThisBuild / libraryDependencySchemes ++= Seq("jsonschema-circe", "apispec-model", "openapi-model")
   .map(m => "com.softwaremill.sttp.apispec" %% m % VersionScheme.Always)
 
 ThisBuild / scalacOptions ++= Seq(
@@ -110,6 +110,18 @@ def writeMavenArtifact(
   files.foreach { case (classifier, f) =>
     put(if classifier.isEmpty then s"$base.jar" else s"$base-$classifier.jar", IO.readBytes(f))
   }
+}
+
+/** What a POM declares it needs at run time: `group:artifact` of each dependency that is neither optional nor test- or
+  * provided-scoped.
+  */
+def pomNeeds(pom: File): (String, Seq[String]) = {
+  val xml = scala.xml.XML.loadFile(pom)
+  val self = s"${(xml \ "groupId").headOption.fold("")(_.text.trim)}:${(xml \ "artifactId").text.trim}"
+  val needs = (xml \ "dependencies" \ "dependency")
+    .filterNot(d => (d \ "optional").text.trim == "true" || Set("test", "provided", "system")((d \ "scope").text.trim))
+    .map(d => s"${(d \ "groupId").text.trim}:${(d \ "artifactId").text.trim}")
+  self -> needs
 }
 
 /** The modules the server resolves at run time, `group:artifact` → version (evicted ones left out). */
@@ -212,6 +224,25 @@ lazy val problem = projectMatrix
   .jvmPlatform(scalaVersions = Seq(scala3))
   .jsPlatform(scalaVersions = Seq(scala3))
 
+// JSON without circe: the derived record codec, the base types' and containers' codecs, raw JSON (Kindlings' AST) and a
+// cursor over it; shared by the wire contract and the plugin SPI
+lazy val json = projectMatrix
+  .in(file("modules/json"))
+  .settings(
+    name := "histmersion-json",
+    description := "JSON for Histmersion and its plugins: derived jsoniter codecs, raw JSON (Kindlings' AST) and a cursor"
+  )
+  .settings(commonDeps)
+  .settings(
+    libraryDependencies ++= Seq(
+      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core" % V.jsoniter,
+      "com.kubuszok" %% "kindlings-jsoniter-derivation" % V.kindlings,
+      "com.kubuszok" %% "kindlings-jsoniter-json" % V.kindlings
+    )
+  )
+  .jvmPlatform(scalaVersions = Seq(scala3))
+  .jsPlatform(scalaVersions = Seq(scala3))
+
 lazy val values = projectMatrix
   .in(file("modules/values"))
   .dependsOn(newtype, problem)
@@ -225,20 +256,22 @@ lazy val values = projectMatrix
 
 lazy val api = projectMatrix
   .in(file("modules/api"))
-  .dependsOn(newtype, problem)
+  .dependsOn(newtype, problem, json)
   .settings(
     name := "histmersion-api",
-    description := "The wire contract: records, Tapir endpoints, circe codecs and schemas, Markdown (JVM and Scala.js)"
+    description := "The wire contract: records, Tapir endpoints, jsoniter codecs and schemas, Markdown (JVM and Scala.js)"
   )
   .settings(commonDeps)
   .settings(
     libraryDependencies ++= Seq(
       "com.softwaremill.sttp.tapir" %% "tapir-core" % V.tapir,
-      "com.softwaremill.sttp.tapir" %% "tapir-json-circe" % V.tapir,
-      "io.circe" %% "circe-core" % V.circe,
-      // Kindlings derives circe Codec AND tapir Schema from the same model → they match by construction.
-      "com.kubuszok" %% "kindlings-circe-derivation" % V.kindlings,
+      "com.softwaremill.sttp.tapir" %% "tapir-jsoniter-scala" % V.tapir,
+      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core" % V.jsoniter,
+      // Kindlings derives the jsoniter codec AND the tapir Schema from the same model → they match by construction.
+      "com.kubuszok" %% "kindlings-jsoniter-derivation" % V.kindlings,
       "com.kubuszok" %% "kindlings-tapir-schema-derivation" % V.kindlings,
+      // JSON no record describes (model answers, tool schemas, upstream replies, jsonb documents), without circe
+      "com.kubuszok" %% "kindlings-jsoniter-json" % V.kindlings,
       // lenses: one field of a record updated without spelling out the copy
       "com.kubuszok" %% "kindlings-optics" % V.kindlings,
       // the model's newtypes (AGENTS.md, Coding practices 1-2): opaque, so they erase to their base types
@@ -290,8 +323,8 @@ lazy val core = projectMatrix
   .settings(
     libraryDependencies ++= Seq(
       "com.softwaremill.sttp.tapir" %% "tapir-core" % V.tapir,
-      "io.circe" %% "circe-core" % V.circe,
-      "com.kubuszok" %% "kindlings-circe-derivation" % V.kindlings,
+      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core" % V.jsoniter,
+      "com.kubuszok" %% "kindlings-jsoniter-derivation" % V.kindlings,
       "com.kubuszok" %% "kindlings-tapir-schema-derivation" % V.kindlings,
       "io.github.iltotore" %% "iron" % V.iron
     )
@@ -306,7 +339,7 @@ lazy val core = projectMatrix
 
 lazy val pluginApi = project
   .in(file("modules/plugin-api"))
-  .dependsOn(newtype.jvm(scala3), problem.jvm(scala3))
+  .dependsOn(newtype.jvm(scala3), problem.jvm(scala3), json.jvm(scala3))
   // sconfig, kindlings-sconfig-derivation and iron only (all in the plugin platform): no Histmersion class on a plugin's class path
   .settings(
     name := "histmersion-plugin-api",
@@ -323,7 +356,7 @@ lazy val pluginApi = project
 
 // The parsers and clients of the public upstreams (OpenAlex, Crossref, Unpaywall, CORE, DataCite, archive.org, Europe
 // PMC, JATS, the landing-page rules, the catalogues' dating) over the SPI's HTTP: ONE copy, used by the first-party
-// plugins and by the host. Plugin platform only (plugin-api, circe, sttp's model): it registers nothing.
+// plugins and by the host. Plugin platform only (plugin-api, its JSON, sttp's model): it registers nothing.
 lazy val upstreams = project
   .in(file("modules/upstreams"))
   .dependsOn(pluginApi)
@@ -334,8 +367,6 @@ lazy val upstreams = project
   .settings(commonDeps)
   .settings(
     libraryDependencies ++= Seq(
-      "io.circe" %% "circe-core" % V.circe,
-      "io.circe" %% "circe-parser" % V.circe,
       "com.softwaremill.sttp.client4" %% "core" % V.sttp
     ),
     // the upstreams' captured answers, shared with the suites that read them through the host
@@ -439,7 +470,7 @@ lazy val pluginsGazetteers = projectMatrix
   .jvmPlatform(scalaVersions = Seq(scala3))
 
 // Histmersion's own HTTP AI providers (ai-anthropic, ai-openai, ai-local): the Anthropic Messages API and the OpenAI
-// chat-completions API over the SPI's AiHttp, plugin platform only (plugin-api, circe, sttp's model); the host's agent
+// chat-completions API over the SPI's AiHttp, plugin platform only (plugin-api, its JSON, sttp's model); the host's agent
 // loop runs them as any plugin's provider; in every image, each switched off by its `enabled`
 lazy val pluginsAiHttp = projectMatrix
   .in(file("modules/plugins/ai-http"))
@@ -451,15 +482,13 @@ lazy val pluginsAiHttp = projectMatrix
   .settings(commonDeps)
   .settings(
     libraryDependencies ++= Seq(
-      "io.circe" %% "circe-core" % V.circe,
-      "io.circe" %% "circe-parser" % V.circe,
       "com.softwaremill.sttp.client4" %% "core" % V.sttp
     )
   )
   .jvmPlatform(scalaVersions = Seq(scala3))
 
 // Histmersion's own Calibre plugin (calibre): the local Calibre library as a source collection, read with calibredb
-// (sqlite3 while the GUI holds it) and written back with it; plugin-api and circe alone, in every image, switched off by
+// (sqlite3 while the GUI holds it) and written back with it; plugin-api alone, in every image, switched off by
 // its `enabled`. Its suites run a fake calibredb over fixture libraries only.
 lazy val pluginsCalibre = projectMatrix
   .in(file("modules/plugins/calibre"))
@@ -469,12 +498,6 @@ lazy val pluginsCalibre = projectMatrix
     description := "Histmersion's own Calibre plugin: the local Calibre library as a source collection"
   )
   .settings(commonDeps)
-  .settings(
-    libraryDependencies ++= Seq(
-      "io.circe" %% "circe-core" % V.circe,
-      "io.circe" %% "circe-parser" % V.circe
-    )
-  )
   .jvmPlatform(scalaVersions = Seq(scala3))
 
 lazy val pluginHello = project
@@ -893,6 +916,13 @@ lazy val server = project
         conv.toPath((problem.jvm(scala3) / Compile / packageBin).value).toFile,
         conv.toPath((problem.jvm(scala3) / Compile / packageSrc).value).toFile
       )
+      // JSON, which plugin-api's POM names
+      module(
+        (json.jvm(scala3) / projectID).value,
+        conv.toPath((json.jvm(scala3) / makePom).value).toFile,
+        conv.toPath((json.jvm(scala3) / Compile / packageBin).value).toFile,
+        conv.toPath((json.jvm(scala3) / Compile / packageSrc).value).toFile
+      )
       val platformName = s"histmersion-plugin-platform_${scalaBinaryVersion.value}"
       val pom = PluginRepo.platformPom(
         pluginApiId.organization,
@@ -929,7 +959,41 @@ lazy val server = project
       val resolved = resolvedModules((Runtime / update).value)
       val curated = PluginRepo.parseContract(IO.readLines(pluginPlatformContract)).getOrElse(Nil)
       IO.writeLines(built, curated.map(l => s"${l.key}:${resolved.getOrElse(l.key, "NOT-SHIPPED")}"))
-      Seq(out, contract, built)
+      // every resolved module of the shipped class paths with what pulled it in (ClasspathSuite). The update report
+      // carries no callers under coursier, so they are read off the POMs: a library's from the cache beside its jar,
+      // a module of ours from its makePom.
+      val callers = (Test / resourceManaged).value / "dependency-callers.tsv"
+      val conv = fileConverter.value
+      val ours = makePom
+        .all(ScopeFilter(inDependencies(ThisProject, includeRoot = false) || inDependencies(web, includeRoot = false)))
+        .value
+        .map(p => pomNeeds(conv.toPath(p).toFile))
+        .toMap
+      def rows(project: String, report: UpdateReport, conf: String): Seq[String] = {
+        val modules = report.configuration(ConfigRef(conf)).toSeq.flatMap(_.modules).filterNot(_.evicted)
+        val needs = modules.map { m =>
+          val key = s"${m.module.organization}:${m.module.name}"
+          val pom = m.artifacts.collectFirst {
+            case (_, f) if f.getName.endsWith(".jar") =>
+              new File(f.getParentFile, f.getName.stripSuffix(".jar") + ".pom")
+          }
+          key -> ours.getOrElse(key, pom.filter(_.isFile).fold(Seq.empty[String])(f => pomNeeds(f)._2))
+        }
+        modules.map { m =>
+          val key = s"${m.module.organization}:${m.module.name}"
+          val by = needs.collect { case (caller, ns) if ns.contains(key) => caller }.distinct.sorted.mkString(",")
+          s"$project\t$conf\t${m.module.organization}\t${m.module.name}\t${m.module.revision}\t$by"
+        }
+      }
+      IO.writeLines(
+        callers,
+        rows("server", (Runtime / update).value, "runtime") ++ rows("server", (Test / update).value, "test") ++
+          rows("cli", (cli / Runtime / update).value, "runtime") ++
+          rows("plugin-api", (pluginApi / Runtime / update).value, "runtime") ++
+          rows("plugin-testkit", (pluginTestkit / Runtime / update).value, "runtime") ++
+          rows("web", (web / Compile / update).value, "compile")
+      )
+      Seq(out, contract, built, callers)
     }.taskValue
   )
   .settings(
@@ -1014,7 +1078,10 @@ lazy val server = project
       "com.softwaremill.sttp.ai" %% "agent-testkit" % V.sttpAi % Test,
       // the OpenAPI document ContractSnapshotSuite compares with its snapshot
       "com.softwaremill.sttp.tapir" %% "tapir-openapi-docs" % V.tapir % Test,
-      "com.softwaremill.sttp.apispec" %% "openapi-circe" % V.apispec % Test
+      // the JSON of the agents' tool and answer schemas (apispec's JSON Schema model) and of the OpenAPI document,
+      // without circe; byte-for-byte what apispec's circe module wrote
+      ("com.kubuszok" %% "kindlings-tapir-openapi-jsoniter" % V.kindlings)
+        .exclude("com.softwaremill.sttp.tapir", "tapir-openapi-docs_3")
     )
   )
 
@@ -1101,7 +1168,7 @@ lazy val web = project
 lazy val root = project
   .in(file("."))
   .aggregate(
-    (newtype.projectRefs ++ problem.projectRefs ++ values.projectRefs ++ api.projectRefs ++ core.projectRefs ++ pluginsFetchers.projectRefs ++
+    (newtype.projectRefs ++ problem.projectRefs ++ json.projectRefs ++ values.projectRefs ++ api.projectRefs ++ core.projectRefs ++ pluginsFetchers.projectRefs ++
       pluginsEvents.projectRefs ++ pluginsMedia.projectRefs ++
       pluginsGazetteers.projectRefs ++ pluginsAiHttp.projectRefs ++ pluginsCalibre.projectRefs)*
   )

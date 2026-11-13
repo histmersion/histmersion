@@ -1,5 +1,9 @@
 package com.histmersion
 package server.agents
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -10,7 +14,6 @@ import com.histmersion.domain.automation.agents.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.*
-import io.circe.parser
 
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
@@ -427,7 +430,7 @@ object AgentDoctor:
     * configured.
     */
   def login(json: Output, useApiKey: ClaudeCodeConfig.UseApiKey): Either[Problem, DoctorCheck.Detail] =
-    parser.parse(json.value.trim).toOption.map(_.hcursor) match
+    RawJson.parse(json.value.trim).toOption.map(_.cursor) match
       case None =>
         Left(Problem.Unclassified(Legacy.Text(s"'claude auth status' did not answer JSON: ${json.value.take(200)}")))
       case Some(c) =>
@@ -485,13 +488,13 @@ object AgentDoctor:
 
   /** `{"data":[{"id":…},…]}` → the ids. */
   def modelIds(body: Output): Either[Problem, List[ModelRef.Model]] =
-    parser.parse(body.value).left.map(e => Problem.Unclassified(Legacy.Text(s"not JSON: ${e.getMessage}"))).flatMap { j =>
-      j.hcursor
+    RawJson.parse(body.value).left.map(e => Problem.Unclassified(Legacy.Text(s"not JSON: $e"))).flatMap { j =>
+      j.cursor
         .downField("data")
-        .as[List[io.circe.Json]]
+        .as[List[Json]]
         .left
         .map(_ => Problem.Unclassified(Legacy.Text("no data[] in the answer")))
-        .map(_.flatMap(_.hcursor.downField("id").as[String].toOption).map(ModelRef.Model(_)))
+        .map(_.flatMap(_.cursor.downField("id").as[String].toOption).map(ModelRef.Model(_)))
     }
 
   /** Run a local command (no network of ours) with `env` changes (None = removed): its exit code and output, or why it

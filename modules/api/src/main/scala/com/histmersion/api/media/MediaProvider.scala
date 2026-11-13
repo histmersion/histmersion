@@ -5,7 +5,7 @@ import com.histmersion.api.library.Source
 import com.histmersion.api.given
 import com.histmersion.api.plugins.PluginDescription
 import com.histmersion.api.json.NewtypeCodecs.given
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
@@ -78,7 +78,7 @@ object MediaProvider:
       plugin: PluginDescription.Id,
       builtin: Info.Builtin,
       licences: Info.Licences
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 

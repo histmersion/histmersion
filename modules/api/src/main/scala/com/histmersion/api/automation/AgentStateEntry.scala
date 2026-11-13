@@ -1,19 +1,20 @@
 package com.histmersion
 package api.automation
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import hearth.kindlings.jsoniterjson.Json
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 
-/** `value` is JSON carried as a string, so Kindlings/tapir derive its Schema without a custom one for `io.circe.Json`.
+/** `value` is JSON carried as a string, so Kindlings/tapir derive its Schema without a custom one for `Json`.
   */
 final case class AgentStateEntry(
     key: AgentStateEntry.Key,
     value: AgentStateEntry.Value,
     updatedAt: Option[AgentStateEntry.UpdatedAt] = None
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema
 

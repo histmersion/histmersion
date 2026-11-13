@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.research.workflows
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -31,7 +33,6 @@ import com.histmersion.domain.ReviewArticle.*
 import com.histmersion.domain.ReviewArticle.Finding
 import com.histmersion.api.automation.Queue.QueuePatch
 import com.histmersion.domain.ReviewLedger.Ledger
-import io.circe.syntax.*
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.research.{
   CritiquePair,

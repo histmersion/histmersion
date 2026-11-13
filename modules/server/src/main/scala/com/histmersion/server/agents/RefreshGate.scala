@@ -3,7 +3,6 @@ package server.agents
 import com.histmersion.util.problem.Problem
 
 import com.histmersion.api.automation.PlanQuota.*
-import io.circe.{parser, Json}
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.locks.ReentrantLock

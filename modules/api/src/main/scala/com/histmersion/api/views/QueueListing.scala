@@ -1,6 +1,6 @@
 package com.histmersion
 package api.views
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.automation.Queue
@@ -16,7 +16,7 @@ final case class QueueListing(
     items: List[Queue.QueueItem],
     checks: List[Acquire.Checks.AcquireCheck] = Nil,
     goals: List[Queue.ItemGoals] = Nil
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema:
 

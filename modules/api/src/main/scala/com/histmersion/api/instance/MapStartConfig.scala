@@ -1,6 +1,6 @@
 package com.histmersion
 package api.instance
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -14,7 +14,7 @@ final case class MapStartConfig(
     lon: Longitude = Longitude(30.0),
     zoom: MapStartConfig.Zoom = MapStartConfig.Zoom(5.0),
     label: MapStartConfig.Label = MapStartConfig.Label("")
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       CanEqual
 

@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.automation.managers
+import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -844,7 +845,6 @@ final class ManagersControllers(
       e: HintEffect,
       by: ManagerHint.Author
   ): String =
-    import io.circe.syntax.*
     val a = agents.approvalStore.openSubject(
       None,
       ApprovalKind.HintEffect,

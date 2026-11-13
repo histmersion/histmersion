@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.catalogue.places
+import com.histmersion.api.json.NewtypeCodecs.given
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.domain.MergeSettings
 import com.histmersion.util.data.exchange.BundleImport
@@ -78,7 +80,7 @@ private[places] object PlaceBundleRepo:
           r.geom.map(g => Bundle.Place.Geom(g.value)),
           rangeOf(r.pNull.value, r.pLo.map(_.value), r.pHi.map(_.value)),
           r.source.map(s => Bundle.Place.Source(s.value)),
-          r.properties.flatMap(p => Jsonb.read[io.circe.Json](Jsonb.JsonText(p.value))),
+          r.properties.flatMap(p => Jsonb.read[Json](Jsonb.JsonText(p.value))),
           names
             .getOrElse(r.id, Vector.empty)
             .toList
@@ -257,7 +259,7 @@ private[places] object PlaceBundleRepo:
     val places = w.es.places.filter(p => w.writes(p.uid))
     places.foreach { p =>
       val range = rangeOrAll(p.period)
-      val props = p.properties.map(BundleFormat.printer.print)
+      val props = p.properties.map(BundleFormat.print)
       sql"""INSERT INTO places (uid, origin, id, label, kind, geom, period, source, properties, dataset, updated_at)
             VALUES (${p.uid}, ${p.origin}, ${p.id}, ${p.label}, ${p.kind}, ST_GeomFromEWKB(decode(${p.geom}, 'hex')),
               $range::int8range, ${p.source}, $props::jsonb, 'local',

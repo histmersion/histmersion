@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.library.acquisition
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -7,7 +8,6 @@ import com.histmersion.api
 import com.histmersion.upstreams.parse.AcquireParse
 import com.histmersion.upstreams.identifiers.Identifiers
 
-import io.circe.parser.parse
 import com.histmersion.api.library.Acquire
 import com.histmersion.api.catalogue.Year
 import com.histmersion.domain.library.Doi
@@ -19,7 +19,9 @@ import com.histmersion.domain.library.Doi
 class UpstreamRecordsSuite extends munit.FunSuite:
 
   private def fixture(name: String) =
-    parse(scala.io.Source.fromResource(s"acquire/$name").mkString).fold(throw _, identity)
+    RawJson
+      .parse(scala.io.Source.fromResource(s"acquire/$name").mkString)
+      .fold(e => throw IllegalArgumentException(e), identity)
 
   test("an OpenAlex or Crossref work gets the citekey the corpus already uses"):
     assertEquals(AcquireParse.openalexWork(fixture("openalex_work.json")).wire.citekey, Some("haak2015_massive"))

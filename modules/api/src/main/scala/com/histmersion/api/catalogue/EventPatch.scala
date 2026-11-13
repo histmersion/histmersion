@@ -1,9 +1,8 @@
 package com.histmersion
 package api.catalogue
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
-import io.circe.Codec
 import com.histmersion.api.{StrictJson, TimeSpan}
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -25,7 +24,8 @@ final case class EventPatch(
     participants: Option[List[EventParticipant]] = None,
     scale: Option[EventSummary.Scale] = None,
     wikidata: Option[EventPatch.Wikidata] = None
-) derives KindlingsSchema,
+) derives StrictJson,
+      KindlingsSchema,
       com.histmersion.api.json.Schema,
       CanEqual
 object EventPatch:
@@ -34,5 +34,3 @@ object EventPatch:
   object Geometry extends Newtype[String, Pure]
   type Wikidata = Wikidata.T
   object Wikidata extends Newtype[String, Pure]
-
-  given Codec.AsObject[EventPatch] = StrictJson.codec(KindlingsCodecAsObject.derived[EventPatch])

@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.automation.managers
+import com.histmersion.util.json.RawJson.*
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.util.problem.{Legacy, Problem}
 
@@ -29,8 +30,7 @@ import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.automation.managers.ManagerRepo
 import com.histmersion.domain.automation.worklists.WorkListControllers
 import com.histmersion.api.VocabularyCodecs.given
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
-import io.circe.syntax.*
+import com.histmersion.util.json.JsonCodec
 
 import javax.sql.DataSource
 import com.histmersion.api.automation.{AgentsMarkdown, ManagersMarkdown}
@@ -201,7 +201,7 @@ object HintEffectPipeline:
       items: List[Loaded.Items],
       known: List[HintProposals.Item],
       settings: Loaded.Settings
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   object Loaded:
     type Items = Items.T

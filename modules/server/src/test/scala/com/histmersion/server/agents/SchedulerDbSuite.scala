@@ -1,5 +1,6 @@
 package com.histmersion
 package server.agents
+import com.histmersion.util.json.RawJson.*
 
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
@@ -25,7 +26,6 @@ import com.histmersion.domain.automation.managers.ManagerRepo
 import com.histmersion.util.database.Migrate
 import com.histmersion.domain.research.workflows.ReviewLedgerFixtures
 import com.histmersion.server.{Deps, ServerWiring}
-import io.circe.syntax.*
 
 import java.time.Instant
 import com.histmersion.db.*

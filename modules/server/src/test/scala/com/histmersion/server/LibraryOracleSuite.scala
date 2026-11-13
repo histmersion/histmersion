@@ -1,12 +1,14 @@
 package com.histmersion
 package server
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson
+import hearth.kindlings.jsoniterjson.Json
+import com.histmersion.util.json.RawJson.*
 
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.config.*
 import com.augustnagro.magnum.*
-import io.circe.{parser, Json}
-import io.circe.syntax.*
 import ox.supervised
 
 import java.awt.image.BufferedImage
@@ -163,10 +165,10 @@ class LibraryOracleSuite extends DbSuite:
     )
     val text = String(r.body, UTF_8)
     val payload = text.linesIterator.find(_.startsWith("data:")).map(_.stripPrefix("data:").trim).getOrElse(text)
-    parser
+    RawJson
       .parse(payload)
       .toOption
-      .flatMap(_.hcursor.downField("result").downField("content").downArray.downField("text").as[String].toOption)
+      .flatMap(_.cursor.downField("result").downField("content").downArray.downField("text").as[String].toOption)
       .getOrElse(s"${r.statusCode} $text")
 
   private def exec(ds: DataSource, statement: Sql.Text): Unit =
@@ -948,8 +950,8 @@ class LibraryOracleSuite extends DbSuite:
     MsRe.replaceAllIn(DayRe.replaceAllIn(t3, "DAY"), "· N ms")
 
   private def json(text: String, names: Map[String, String]): String =
-    parser.parse(text) match
-      case Right(j) => normalise(j.spaces2SortKeys, names)
+    RawJson.parse(text) match
+      case Right(j) => normalise(j.sortedKeys.spaces2, names)
       case Left(_)  => normalise(text, names)
 
   /** A recorded answer: its status, then its body as sorted JSON when it is JSON. */
@@ -1329,14 +1331,13 @@ class LibraryOracleSuite extends DbSuite:
         val _ = in.skip((512 - size % 512) % 512)
         val path = if prefix.isEmpty then name else s"$prefix/$name"
         if path == "manifest.json" then
-          val m = parser.parse(String(data, UTF_8)).fold(e => fail(e.toString), identity)
-          val kept = m
-            .mapObject(_.remove("createdAt").remove("bundleId"))
-            .hcursor
-            .downField("files")
-            .withFocus(_.mapArray(_.map(_.mapObject(_.remove("sha256")))))
-            .top
-            .getOrElse(m)
+          val m = RawJson.parse(String(data, UTF_8)).fold(e => fail(e.toString), identity)
+          val kept = m.mapObject { o =>
+            val top = o.filterKeys(k => k != "createdAt" && k != "bundleId")
+            top("files").fold(top)(f =>
+              top.updated("files", f.mapArray(_.map(_.mapObject(_.filterKeys(_ != "sha256")))))
+            )
+          }
           out ++= s"== $path\n${xjson(kept.noSpaces, names)}\n"
         else if path.endsWith(".ndjson") then
           val lines = String(data, UTF_8).linesIterator.toList
@@ -1395,13 +1396,13 @@ class LibraryOracleSuite extends DbSuite:
         o =>
           Json.fromFields(o.toList.map { (k, v) =>
             val inner = sortIssues(v)
-            if IssueArrays(k) then k -> inner.mapArray(_.sortBy(_.spaces2SortKeys)) else k -> inner
+            if IssueArrays(k) then k -> inner.mapArray(_.sortBy(_.sortedKeys.spaces2)) else k -> inner
           })
       )
-    val t = parser.parse(text) match
+    val t = RawJson.parse(text) match
       case Right(j) =>
-        val n = normalise(walk(j).spaces2SortKeys, names)
-        parser.parse(n).fold(_ => n, sortIssues(_).spaces2SortKeys)
+        val n = normalise(walk(j).sortedKeys.spaces2, names)
+        RawJson.parse(n).fold(_ => n, sortIssues(_).sortedKeys.spaces2)
       case Left(_) => normalise(text, names)
     stamps(t)
 
@@ -1418,10 +1419,10 @@ class LibraryOracleSuite extends DbSuite:
     */
   private def issueNames(plans: List[String]): Map[String, String] =
     val issues = plans
-      .flatMap(p => parser.parse(p.dropWhile(_ != '{')).toOption)
-      .flatMap(_.hcursor.downField("issues").focus.flatMap(_.asArray).getOrElse(Vector.empty))
+      .flatMap(p => RawJson.parse(p.dropWhile(_ != '{')).toOption)
+      .flatMap(_.cursor.downField("issues").focus.flatMap(_.asArray).getOrElse(Vector.empty))
       .flatMap { i =>
-        val c = i.hcursor
+        val c = i.cursor
         for
           id <- c.downField("id").as[String].toOption
           kind = c.downField("kind").as[String].getOrElse("?")
@@ -1432,7 +1433,7 @@ class LibraryOracleSuite extends DbSuite:
             .toOption
             .orElse(c.downField("left").downField("label").as[String].toOption)
             .getOrElse("?")
-        yield (id, s"${id.take(1)}-issue:$kind:$label", i.hcursor.downField("title").as[String].getOrElse(""))
+        yield (id, s"${id.take(1)}-issue:$kind:$label", i.cursor.downField("title").as[String].getOrElse(""))
       }
       .distinctBy(_._1)
     issues
@@ -1502,31 +1503,31 @@ class LibraryOracleSuite extends DbSuite:
     val up = ok(postBytes(s"$url/api/bundle/upload", bundle))
     val sha = field(up, "sha256")
     val p0 = ok(post(s"$url/api/merge/plan", s"""{"bundle":"$sha"}"""))
-    val open = parser
+    val open = RawJson
       .parse(p0)
       .toOption
-      .flatMap(_.hcursor.downField("issues").focus)
+      .flatMap(_.cursor.downField("issues").focus)
       .flatMap(_.asArray)
       .getOrElse(Vector.empty)
       .flatMap { i =>
-        val options = i.hcursor.downField("options").as[List[String]].getOrElse(Nil)
-        val suggested = i.hcursor.downField("suggested").as[String].toOption
+        val options = i.cursor.downField("options").as[List[String]].getOrElse(Nil)
+        val suggested = i.cursor.downField("suggested").as[String].toOption
         val choice =
           if options.isEmpty || options.contains("keep-right") then "keep-right" else suggested.getOrElse(options.head)
-        i.hcursor
+        i.cursor
           .downField("id")
           .as[String]
           .toOption
-          .filter(_ => i.hcursor.downField("decision").focus.forall(_.isNull))
+          .filter(_ => i.cursor.downField("decision").focus.forall(_.isNull))
           .map(_ -> choice)
       }
       .sorted
     val resolutions =
       s"""{"resolve":[${open.map((id, d) => s"""{"issue":"$id","decision":"$d"}""").mkString(",")}]}"""
     val p1 = ok(post(s"$url/api/merge/plan", s"""{"bundle":"$sha","resolutions":$resolutions}"""))
-    val decided = parser.decode[MergeResolutions](resolutions).fold(e => fail(e.toString), identity)
+    val decided = RawJson.decode[MergeResolutions](resolutions).fold(e => fail(e.toString), identity)
     val template =
-      MergeResolutions.Text.template(parser.decode[MergePlan](p1).fold(e => fail(e.toString), identity), decided)
+      MergeResolutions.Text.template(RawJson.decode[MergePlan](p1).fold(e => fail(e.toString), identity), decided)
     val read = ok(post(s"$url/api/merge/resolutions", template.value, "text/plain"))
     val hash = field(p1, "planHash")
     val job = ok(post(s"$url/api/merge/apply", s"""{"bundle":"$sha","planHash":"$hash","resolutions":$resolutions}"""))

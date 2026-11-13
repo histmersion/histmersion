@@ -1,11 +1,10 @@
 package com.histmersion
 package api.library
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.circe.{Codec as CirceCodec, Decoder, Encoder}
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class Facet(
@@ -13,7 +12,7 @@ final case class Facet(
     count: Facet.Count,
     id: Option[Facet.Id] = None,
     contested: Facet.Contested = Facet.Contested(false)
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema
 object Facet:

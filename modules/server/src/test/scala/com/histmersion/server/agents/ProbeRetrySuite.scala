@@ -1,5 +1,7 @@
 package com.histmersion
 package server.agents
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -136,7 +138,7 @@ class ProbeRetrySuite extends DbSuite with RunTranscripts:
 
   private val Haiku = ModelRef(ProviderKind.ClaudeCode, Agents.ModelRef.Model("haiku"))
   private def result(text: String, structured: String) =
-    s"""{"type":"result","subtype":"success","is_error":false,"num_turns":2,"result":${io.circe.Json
+    s"""{"type":"result","subtype":"success","is_error":false,"num_turns":2,"result":${Json
         .fromString(text)
         .noSpaces},""" +
       s""""structured_output":$structured,"usage":{"input_tokens":100,"output_tokens":10},"permission_denials":[]}"""

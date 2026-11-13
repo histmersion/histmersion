@@ -1,6 +1,6 @@
 package com.histmersion
 package api.media
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
@@ -29,6 +29,6 @@ final case class MediaGeoHit(
     sourceUrl: Option[MediaItem.SourceUrl] = None,
     licenseUrl: Option[MediaItem.LicenseUrl] = None,
     author: Option[MediaItem.Author] = None
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema

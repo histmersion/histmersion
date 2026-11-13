@@ -1,5 +1,7 @@
 package com.histmersion
 package api
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
@@ -67,6 +69,6 @@ class QueueLinksSuite extends munit.FunSuite:
     )
 
   test("an item from a client may name its goal and the run writing it; an unknown key is still refused"):
-    val in = io.circe.parser.decode[QueueAdd]("""{"text":"a line","goal":"collapse","job":"run-1"}""")
+    val in = RawJson.decode[QueueAdd]("""{"text":"a line","goal":"collapse","job":"run-1"}""")
     assertEquals(in.map(a => (a.goal, a.job)), Right((Some("collapse"), Some("run-1"))))
-    assert(io.circe.parser.decode[QueueAdd]("""{"text":"a line","run":"x"}""").isLeft)
+    assert(RawJson.decode[QueueAdd]("""{"text":"a line","run":"x"}""").isLeft)

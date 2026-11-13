@@ -1,13 +1,12 @@
 package com.histmersion
 package domain.automation.agents
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.server.agents.ClaudeCode
 
 import com.histmersion.config.{AgentsConfig, AppConfig, UserPaths}
 import com.histmersion.api.automation.Agents.GenerateResult
-import io.circe.Json
-import io.circe.syntax.*
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path, StandardCopyOption}

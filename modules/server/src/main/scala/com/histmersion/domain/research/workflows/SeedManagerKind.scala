@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.research.workflows
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -246,10 +248,10 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
             case (Some(d), Some(r)) =>
               val snap = c
                 .checkpoint(Run.Id.assume(r.id.value), AgentRepo.StepRecord.Name("snapshot"))
-                .flatMap(o => io.circe.parser.decode[CompileArticlePipeline.Snap](o).toOption)
+                .flatMap(o => RawJson.decode[CompileArticlePipeline.Snap](o).toOption)
               val found = c
                 .checkpoint(Run.Id.assume(r.id.value), AgentRepo.StepRecord.Name("filter"))
-                .flatMap(o => io.circe.parser.decode[CompileArticlePipeline.Found](o).toOption)
+                .flatMap(o => RawJson.decode[CompileArticlePipeline.Found](o).toOption)
               val facts = DraftFacts(
                 DraftFacts.Slug(d.slug.value),
                 DraftFacts.Create(d.mode == DraftMode.Create),

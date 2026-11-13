@@ -1,6 +1,6 @@
 package com.histmersion
 package api.research
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
@@ -16,7 +16,7 @@ final case class CritiqueSide(
     year: Option[Year] = None,
     cited: CritiqueSide.Cited = CritiqueSide.Cited(false),
     mentions: CritiqueSide.Mentions = CritiqueSide.Mentions(0)
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema
 

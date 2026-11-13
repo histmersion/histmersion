@@ -4,7 +4,7 @@ package api.automation
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.WireEnumValues
@@ -63,8 +63,7 @@ object ModelChains:
       def all: Array[Measure] = values
       def wire(e: Measure): WireEnumValues.Wire = WireEnumValues.Wire((e.wire).value)
       def fromWire(s: WireEnumValues.Wire): Option[Measure] = parse(Wire((s).value))
-    given io.circe.Encoder[Measure] = WireEnum.encoder
-    given io.circe.Decoder[Measure] = WireEnum.decoder
+    given com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec[Measure] = WireEnum.codec
     given Schema[Measure] = WireEnum.schema
 
   final case class Window(seconds: Window.Seconds):
@@ -370,7 +369,7 @@ object ModelChains:
     ((tok).map(refactorValue5 => LimitState.FreesAt(refactorValue5)), usd)
 
   final case class LimitSpec(amount: LimitSpec.Amount, measure: Measure, window: LimitSpec.Window)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -381,7 +380,7 @@ object ModelChains:
     object Window extends Newtype[String, Pure]
 
   final case class ChainSet(models: List[ChainSet.Models])
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -392,7 +391,7 @@ object ModelChains:
       target: AllowanceSet.Target,
       limits: List[LimitSpec] = Nil,
       reservePct: AllowanceSet.ReservePct = Allowance.ReservePct(0)
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -419,7 +418,7 @@ object ModelChains:
       reserve: LimitStatus.Reserve,
       usable: LimitStatus.Usable,
       freesAt: Option[LimitStatus.FreesAt] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -449,7 +448,7 @@ object ModelChains:
       usable: AllowanceStatus.Usable,
       freesAt: Option[AllowanceStatus.FreesAt] = None,
       note: Option[AllowanceStatus.Note] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -471,7 +470,7 @@ object ModelChains:
       freesAt: Option[ChainEntry.FreesAt] = None,
       billing: Option[ChainEntry.Billing] = None,
       cooling: ChainEntry.Cooling = ChainEntry.Cooling(false)
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -494,7 +493,7 @@ object ModelChains:
       models: List[ChainEntry],
       active: Option[RoleChain.Active] = None,
       problem: Option[Problem] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 

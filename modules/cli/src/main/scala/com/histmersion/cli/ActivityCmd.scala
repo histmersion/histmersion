@@ -1,5 +1,7 @@
 package com.histmersion
 package cli
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.Cursor
 
 import cats.syntax.all.*
 import com.monovore.decline.*

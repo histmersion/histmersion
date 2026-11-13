@@ -1,9 +1,12 @@
 package com.histmersion
 package plugins.media
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.plugin.*
-import io.circe.Json
 
 /** `cleveland`: The Cleveland Museum of Art Open Access API (https://openaccess-api.clevelandart.org/), no key. A
   * search answers the records themselves (`/api/artworks/?q=&cc0=1&has_image=1`). A record's `share_license_status` is
@@ -63,7 +66,7 @@ object ClevelandCollection:
   def records(
       json: Json
   ): Either[Problem, List[Either[Problem, MediaItem]]] =
-    val c = json.hcursor
+    val c = json.cursor
     c.downField("data").focus.flatMap(_.asArray) match
       case None =>
         Left(
@@ -72,7 +75,7 @@ object ClevelandCollection:
       case Some(rows) => Right(rows.toList.map(record))
 
   def record(json: Json): Either[Problem, MediaItem] =
-    val c = json.hcursor
+    val c = json.cursor
     c.str("accession_number")
       .orElse(c.str("id"))
       .toRight(Problem.Unclassified(Legacy.Text("no accession number")))

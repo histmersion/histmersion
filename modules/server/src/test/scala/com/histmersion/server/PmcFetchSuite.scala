@@ -1,5 +1,7 @@
 package com.histmersion
 package server
+import com.histmersion.util.json.RawJson
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -11,7 +13,6 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.domain.library.acquisition.*
 import com.histmersion.pluginhost.HttpAnswer
-import io.circe.Json
 
 import java.nio.file.Files
 import com.histmersion.api.ocr.ConvertedDoc
@@ -59,10 +60,10 @@ class PmcFetchSuite extends munit.FunSuite:
       answer(url, headers).map(b => Http.Text(new String(b, "UTF-8")))
     def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Failure, Json] =
       text(url, headers).flatMap(s =>
-        io.circe.parser
+        RawJson
           .parse(s.value)
           .left
-          .map(e => Http.Failure.Transport(Problem.Unclassified(Legacy.Text(e.getMessage))))
+          .map(e => Http.Failure.Transport(Problem.Unclassified(Legacy.Text(e))))
       )
 
   private def cfg = AppConfig.load().acquire.copy(contactEmail = AcquireConfig.ContactEmail("someone@example.org"))

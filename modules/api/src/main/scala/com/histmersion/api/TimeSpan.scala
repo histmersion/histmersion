@@ -1,7 +1,7 @@
 package com.histmersion
 package api
 
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -12,7 +12,7 @@ final case class TimeSpan(
     beginBy: Option[Year] = None,
     endFrom: Option[Year] = None,
     notAfter: Option[Year] = None
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema,
       CanEqual:

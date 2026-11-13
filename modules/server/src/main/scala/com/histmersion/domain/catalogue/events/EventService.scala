@@ -1,5 +1,9 @@
 package com.histmersion
 package domain.catalogue.events
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
+import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.api.catalogue.EventEntry
@@ -84,7 +88,7 @@ trait EventService:
   def delete(id: Event.Id): Boolean
 
 object EventService:
-  private given CanEqual[io.circe.Json, io.circe.Json] = CanEqual.derived
+  private given CanEqual[Json, Json] = CanEqual.derived
 
   def apply(db: Transactor, related: EventSourceFilter): EventService = Implementation(db, related)
 
@@ -292,17 +296,17 @@ object EventService:
         }
 
     def geometryError(geojson: EventDetailRow.Geometry): Option[Problem] =
-      io.circe.parser.parse(geojson.value) match
-        case Left(e)  => Some(Problem.Unclassified(Legacy.Text(e.message)))
+      RawJson.parse(geojson.value) match
+        case Left(e)  => Some(Problem.Unclassified(Legacy.Text(e)))
         case Right(j) =>
-          val c = j.hcursor
+          val c = j.cursor
           c.get[String]("type").toOption match
             case None => Some(Problem.Unclassified(Legacy.Text("unknown GeoJSON type")))
             case Some(t) if c.downField("coordinates").succeeded || t == "GeometryCollection" => None
             case Some(_) => Some(Problem.Unclassified(Legacy.Text("Unable to find 'coordinates' in GeoJSON string")))
 
     /** The corrections a person's `fields` make on an event an import created, recorded as the database does. */
-    private def withCorrections(s: CatalogueState, id: Event.Id, fields: Map[String, io.circe.Json]): CatalogueState =
+    private def withCorrections(s: CatalogueState, id: Event.Id, fields: Map[String, Json]): CatalogueState =
       val upstream = for
         e <- s.events.find(_.id == id)
         cat <- e.catalogue
@@ -316,7 +320,7 @@ object EventService:
       yield cat -> rec
       upstream.fold(s) { (provider, rec) =>
         val up = EventFields.upstream(rec)
-        @tailrec def loop(rest: List[(String, io.circe.Json)], acc: CatalogueState): CatalogueState = rest match
+        @tailrec def loop(rest: List[(String, Json)], acc: CatalogueState): CatalogueState = rest match
           case (f, v) :: tail => loop(tail, up.get(f).fold(acc)(u => corrected(acc, provider, id, f, v, u)))
           case Nil            => acc
         loop(fields.toList, s)
@@ -328,8 +332,8 @@ object EventService:
         provider: HeldEvent.Catalogue,
         id: Event.Id,
         field: String,
-        value: io.circe.Json,
-        upstream: io.circe.Json
+        value: Json,
+        upstream: Json
     ): CatalogueState =
       val others =
         s.corrections.filterNot(c =>

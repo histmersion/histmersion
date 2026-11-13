@@ -1,6 +1,7 @@
 package com.histmersion
 package api.library
-import io.circe.{Codec as CirceCodec, Decoder, Encoder}
+import com.histmersion.util.json.JsonCodec
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
@@ -31,8 +32,8 @@ object Sort:
 
   val all: List[Wire] = values.toList.map(label)
 
-  given CirceCodec[Sort] = CirceCodec.from(
-    Decoder.decodeString.emap(s => parse(Wire(s)).toRight(s"unknown sort '$s' (${all.mkString("|")})")),
-    Encoder.encodeString.contramap[Sort](s => label(s).value)
+  given JsonValueCodec[Sort] = JsonCodec.text[Sort](
+    s => label(s).value,
+    s => parse(Wire(s)).toRight(s"unknown sort '$s' (${all.mkString("|")})")
   )
   given Schema[Sort] = Schema.string[Sort]

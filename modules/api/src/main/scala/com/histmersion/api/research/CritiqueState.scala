@@ -1,6 +1,6 @@
 package com.histmersion
 package api.research
-import io.circe.{Decoder, Encoder}
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import sttp.tapir.Schema
 import com.histmersion.api.WireEnumValues
 import com.histmersion.api.WireEnum
@@ -21,6 +21,5 @@ object CritiqueState:
     def all: Array[CritiqueState] = values
     def wire(e: CritiqueState): WireEnumValues.Wire = WireEnumValues.Wire((e.wire).value)
     def fromWire(s: WireEnumValues.Wire): Option[CritiqueState] = parse(Wire((s).value))
-  given Encoder[CritiqueState] = WireEnum.encoder
-  given Decoder[CritiqueState] = WireEnum.decoder
+  given JsonValueCodec[CritiqueState] = WireEnum.codec
   given Schema[CritiqueState] = WireEnum.schema

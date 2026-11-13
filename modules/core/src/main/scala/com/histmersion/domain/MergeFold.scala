@@ -1,5 +1,6 @@
 package com.histmersion
 package domain
+import hearth.kindlings.jsoniterjson.Json
 
 import hearth.kindlings.optics.syntax.*
 
@@ -13,7 +14,6 @@ import com.histmersion.api.given
 
 import com.histmersion.domain.automation.Goal
 import com.histmersion.api.exchange.Bundle
-import io.circe.Json
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** How two records that are one are folded into one (docs/research-merge-import.md §5.4, milestones M4–M5): goals,

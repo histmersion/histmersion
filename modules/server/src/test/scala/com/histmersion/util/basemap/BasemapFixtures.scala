@@ -1,12 +1,13 @@
 package com.histmersion
 package util.basemap
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.{ByteCount, ByteOffset}
 import com.histmersion.util.storage.{Location, Reservation, Storage, Store}
-import io.circe.Json
 
 import java.nio.file.{Files, Path}
 import java.util.concurrent.atomic.AtomicInteger

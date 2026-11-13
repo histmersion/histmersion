@@ -1,5 +1,8 @@
 package com.histmersion
 package server.events
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
@@ -16,7 +19,6 @@ import com.histmersion.server.Deps
 import com.histmersion.server.media.FakeMediaHttp
 
 import com.augustnagro.magnum.*
-import io.circe.syntax.*
 import org.ekrich.config.ConfigFactory
 
 import java.nio.charset.StandardCharsets.UTF_8
@@ -97,7 +99,7 @@ class EventTrafficSuite extends DbSuite:
   /** Rows as stored, without the columns a run's clock, a fresh id or the database's own instance fills. */
   private def steady(json: List[String]): String =
     json.map { j =>
-      io.circe.parser
+      RawJson
         .parse(j)
         .fold(e => fail(e.toString), identity)
         .mapObject(_.filterKeys(k => !k.endsWith("_at") && k != "uid" && k != "origin"))

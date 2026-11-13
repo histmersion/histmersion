@@ -1,5 +1,7 @@
 package com.histmersion
 package server
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -75,7 +77,7 @@ class IiifHandlerSuite extends munit.FunSuite:
       ImageSize.Width(1024),
       ImageSize.Height(768)
     )
-    val c = json.hcursor
+    val c = json.cursor
     assert(c.get[String]("@context").isRight)
     assert(c.get[String]("type").isRight)
     assert(c.get[String]("protocol").isRight)
@@ -85,7 +87,7 @@ class IiifHandlerSuite extends munit.FunSuite:
 
   test("infoJson extraFeatures lists Level 1 features"):
     val json = Iiif.infoJson(Iiif.ImageId("http://x/iiif/a/b"), ImageSize.Width(100), ImageSize.Height(100))
-    val features = json.hcursor.downField("extraFeatures").as[List[String]]
+    val features = json.cursor.downField("extraFeatures").as[List[String]]
     assert(features.isRight)
     assert(features.toOption.get.contains("regionByPx"))
     assert(features.toOption.get.contains("sizeByW"))

@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.library
+import com.histmersion.util.mcp.ChimpJson.given
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.aliases.AliasKinds
@@ -18,9 +19,8 @@ import com.histmersion.domain.library.sources.{SourcesControllers, SourceService
 import com.histmersion.domain.library.search.FilterSql
 import com.histmersion.util.data.mirror.Frontmatter
 import com.histmersion.util.mcp.McpOut
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
-import io.circe.Codec
 import sttp.tapir.Schema
 import com.histmersion.api.aliases.Aliases
 import com.histmersion.api.checks.FormatMarkdown
@@ -393,7 +393,7 @@ object LibraryTools:
       asOf: Option[Api.AggregateQuery.TreeAsOf] = None,
       samples: Option[Api.AggregateQuery.TreeSamples] = None,
       verbose: SearchInput.Verbose = SearchInput.Verbose(true)
-  ) derives KindlingsCodecAsObject:
+  ) derives JsonCodec:
     def toFilter: Filter = Filter.of(
       query,
       tags,
@@ -449,7 +449,7 @@ object LibraryTools:
       maxLon: Option[Longitude] = None,
       maxLat: Option[Latitude] = None,
       limit: Option[Filter.Limit] = None
-  ) derives KindlingsCodecAsObject:
+  ) derives JsonCodec:
     def toFilter: Filter = Filter.of(
       query,
       tags,
@@ -484,7 +484,7 @@ object LibraryTools:
       heading: Option[SourceService.Heading] = None,
       offset: Option[GetSourceInput.Offset] = None,
       chars: Option[SourcesControllers.Chars] = None
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object GetSourceInput:
     type FullText = FullText.T
     object FullText extends Newtype[Boolean, Pure]
@@ -532,7 +532,7 @@ object LibraryTools:
       regex: Api.PassagesQuery.Regex = Api.PassagesQuery.Regex(false),
       limit: Option[Api.PassagesQuery.Limit] = None,
       context: Option[Api.PassagesQuery.Context] = None
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object PassagesInput:
 
     given Schema[PassagesInput] = KindlingsSchema
@@ -573,7 +573,7 @@ object LibraryTools:
       /** @deprecated use `places` */
       region: Option[Filter.Places] = None,
       offset: Option[Filter.Offset] = None
-  ) derives KindlingsCodecAsObject:
+  ) derives JsonCodec:
     def toQuery: Api.FindingsQuery =
       val effectiveFrom = from.orElse(periodStart)
       val effectiveTo = to.orElse(periodEnd)
@@ -608,8 +608,7 @@ object LibraryTools:
       .modify(_.periodStart)(_.description("Deprecated alias for from"))
       .modify(_.periodEnd)(_.description("Deprecated alias for to"))
 
-  final case class NeighborsInput(citekey: Citekey, kinds: List[NeighborsInput.Kinds] = Nil)
-      derives KindlingsCodecAsObject
+  final case class NeighborsInput(citekey: Citekey, kinds: List[NeighborsInput.Kinds] = Nil) derives JsonCodec
   object NeighborsInput:
     type Kinds = Edge.Kind.Wire
     val Kinds: Edge.Kind.Wire.type = Edge.Kind.Wire
@@ -625,7 +624,7 @@ object LibraryTools:
   final case class GraphInput(
       citekey: Citekey,
       depth: Option[CitationService.Depth] = None
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object GraphInput:
 
     given Schema[GraphInput] = KindlingsSchema
@@ -637,7 +636,7 @@ object LibraryTools:
   final case class ContradictionsInput(
       citekey: Option[Citekey] = None,
       since: Option[CitationService.Since] = None
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object ContradictionsInput:
 
     given Schema[ContradictionsInput] = KindlingsSchema
@@ -652,7 +651,7 @@ object LibraryTools:
       citekey: Citekey,
       source: com.histmersion.api.library.Source.Put,
       strict: PutSourceInput.Strict = PutSourceInput.Strict(false)
-  )
+  ) derives StrictJson
   object PutSourceInput:
     type Strict = Strict.T
     object Strict extends Newtype[Boolean, Pure]
@@ -661,13 +660,12 @@ object LibraryTools:
       .derived[PutSourceInput]
       .schema
       .modify(_.strict)(_.description(StrictDoc))
-    given Codec.AsObject[PutSourceInput] = StrictJson.codec(KindlingsCodecAsObject.derived[PutSourceInput]) // #813
 
   final case class PatchSourceInput(
       citekey: Citekey,
       patch: com.histmersion.api.library.Source.Patch,
       strict: PatchSourceInput.Strict = PatchSourceInput.Strict(false)
-  )
+  ) derives StrictJson
   object PatchSourceInput:
     type Strict = Strict.T
     object Strict extends Newtype[Boolean, Pure]
@@ -676,10 +674,9 @@ object LibraryTools:
       .derived[PatchSourceInput]
       .schema
       .modify(_.strict)(_.description(StrictDoc))
-    given Codec.AsObject[PatchSourceInput] = StrictJson.codec(KindlingsCodecAsObject.derived[PatchSourceInput]) // #813
 
   final case class RenameSourceInput(citekey: Citekey, newCitekey: com.histmersion.api.library.Citekey)
-      derives KindlingsCodecAsObject
+      derives JsonCodec
   object RenameSourceInput:
 
     given Schema[RenameSourceInput] = KindlingsSchema
@@ -689,7 +686,7 @@ object LibraryTools:
       .modify(_.newCitekey)(_.description("The citekey it should have from now on"))
 
   final case class ExportSourceInput(citekey: Citekey)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -720,7 +717,7 @@ object LibraryTools:
       periodEnd: Option[Year] = None,
       /** @deprecated use `places` */
       region: Option[Filter.Places] = None
-  ) derives KindlingsCodecAsObject:
+  ) derives JsonCodec:
     def toFilter: Filter =
       val effectiveFrom = from.orElse(periodStart)
       val effectiveTo = to.orElse(periodEnd)

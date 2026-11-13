@@ -4,7 +4,7 @@ package api.automation
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.api.WireEnumValues
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
@@ -12,8 +12,6 @@ import com.histmersion.api.WireEnumValues
 import com.histmersion.api.OffsetPage
 import com.histmersion.api.StrictJson
 import com.histmersion.api.research.Coverage
-import io.circe.Codec
-import io.circe.{Codec, Decoder, Encoder}
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.catalogue.Year
 import io.github.iltotore.iron.constraint.any.Pure
@@ -35,7 +33,7 @@ final case class Goal(
     periodEnd: Option[Year] = None,
     parentSlug: Option[Goal.Slug] = None,
     updatedAt: Option[Goal.UpdatedAt] = None
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema
 
@@ -104,7 +102,7 @@ object Goal:
   final case class Deleted(
       slug: Slug,
       deleted: Deleted.Value
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -117,7 +115,7 @@ object Goal:
       goals: scala.List[Goal],
       offset: Offset = Offset(0),
       next: Option[Offset] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema:
     def page: OffsetPage = OffsetPage(total, offset, RowCount(goals.size))
@@ -142,15 +140,14 @@ object Goal:
       periodEnd: Option[Year] = None,
       parentSlug: Option[Slug] = None,
       budgetUsd: Option[Patch.BudgetUsd] = None
-  ) derives KindlingsSchema,
+  ) derives StrictJson,
+        KindlingsSchema,
         com.histmersion.api.json.Schema
 
   object Patch:
 
     type BudgetUsd = BudgetUsd.T
     object BudgetUsd extends Newtype[Double, Pure]
-
-    given Codec.AsObject[Patch] = StrictJson.codec(KindlingsCodecAsObject.derived[Patch])
 
   object Plans:
 
@@ -159,7 +156,7 @@ object Goal:
         title: Title,
         notes: Option[Notes] = None,
         tags: scala.List[Tags] = Nil
-    ) derives KindlingsCodecAsObject,
+    ) derives JsonCodec,
           KindlingsSchema,
           com.histmersion.api.json.Schema
 
@@ -172,7 +169,7 @@ object Goal:
         inCorpus: PlannedWork.InCorpus = PlannedWork.InCorpus(false),
         isOa: PlannedWork.IsOa = PlannedWork.IsOa(false),
         why: Problem = Problem.Unclassified(Legacy.Text(""))
-    ) derives KindlingsCodecAsObject,
+    ) derives JsonCodec,
           KindlingsSchema,
           com.histmersion.api.json.Schema
 
@@ -189,7 +186,7 @@ object Goal:
         queries: scala.List[Plan.Queries] = Nil,
         works: scala.List[PlannedWork] = Nil,
         dropped: scala.List[Plan.Dropped] = Nil
-    ) derives KindlingsCodecAsObject,
+    ) derives JsonCodec,
           KindlingsSchema,
           com.histmersion.api.json.Schema:
       def isEmpty: Boolean = (subGoals.isEmpty && queries.isEmpty && works.isEmpty)
@@ -220,7 +217,7 @@ object Goal:
         problems: scala.List[ArticleDraft.Problems] = Nil,
         filter: ArticleDraft.Filter = ArticleDraft.Filter(""),
         reasons: scala.List[Coverage.Reason] = Nil
-    ) derives KindlingsCodecAsObject,
+    ) derives JsonCodec,
           KindlingsSchema,
           com.histmersion.api.json.Schema
 
@@ -241,7 +238,7 @@ object Goal:
         title: Option[GoalLink.Title] = None,
         createdAt: GoalLink.CreatedAt = GoalLink.CreatedAt(""),
         queue: Option[GoalLink.Queue] = None
-    ) derives KindlingsCodecAsObject,
+    ) derives JsonCodec,
           KindlingsSchema,
           com.histmersion.api.json.Schema
 
@@ -260,7 +257,8 @@ object Goal:
       object Queue extends Newtype[String, Pure]
 
     final case class LinkAdd(kind: LinkKind, ref: LinkAdd.Ref, note: Option[LinkAdd.Note] = None)
-        derives KindlingsSchema,
+        derives StrictJson,
+          KindlingsSchema,
           com.histmersion.api.json.Schema
     object LinkAdd:
 
@@ -268,8 +266,6 @@ object Goal:
       object Ref extends Newtype[String, Pure]
       type Note = Note.T
       object Note extends Newtype[String, Pure]
-
-      given Codec.AsObject[LinkAdd] = StrictJson.codec(KindlingsCodecAsObject.derived[LinkAdd])
 
     /** `cron`: five fields in UTC, or `@daily`… */
     final case class GoalSchedule(
@@ -282,7 +278,7 @@ object Goal:
         lastRunAt: Option[GoalSchedule.LastRunAt] = None,
         lastRun: Option[GoalSchedule.LastRun] = None,
         lastNote: Option[GoalSchedule.LastNote] = None
-    ) derives KindlingsCodecAsObject,
+    ) derives JsonCodec,
           KindlingsSchema,
           com.histmersion.api.json.Schema
 
@@ -306,7 +302,8 @@ object Goal:
         cron: ScheduleSet.Cron,
         enabled: ScheduleSet.Enabled = ScheduleSet.Enabled(true),
         budgetUsd: Option[ScheduleSet.BudgetUsd] = None
-    ) derives KindlingsSchema,
+    ) derives StrictJson,
+          KindlingsSchema,
           com.histmersion.api.json.Schema
     object ScheduleSet:
 
@@ -317,12 +314,7 @@ object Goal:
       type BudgetUsd = BudgetUsd.T
       object BudgetUsd extends Newtype[Double, Pure]
 
-      given Codec.AsObject[ScheduleSet] = StrictJson.codec(KindlingsCodecAsObject.derived[ScheduleSet])
-
-    final case class Removed(removed: Removed.Value)
-        derives KindlingsCodecAsObject,
-          KindlingsSchema,
-          com.histmersion.api.json.Schema
+    final case class Removed(removed: Removed.Value) derives JsonCodec, KindlingsSchema, com.histmersion.api.json.Schema
 
     object Removed:
       type Value = Value.T
@@ -335,7 +327,7 @@ object Goal:
         schedules: scala.List[GoalSchedule] = Nil,
         plan: Option[Plan] = None,
         budgetUsd: Option[GoalView.BudgetUsd] = None
-    ) derives KindlingsCodecAsObject,
+    ) derives JsonCodec,
           KindlingsSchema,
           com.histmersion.api.json.Schema
 
@@ -352,12 +344,9 @@ object Goal:
       periodStart: Option[Year] = None,
       periodEnd: Option[Year] = None,
       parentSlug: Option[Slug] = None
-  ) derives KindlingsSchema,
+  ) derives StrictJson,
+        KindlingsSchema,
         com.histmersion.api.json.Schema
-
-  object Put:
-
-    given Codec.AsObject[Put] = StrictJson.codec(KindlingsCodecAsObject.derived[Put])
 
   object Stages:
     export Goal.{Stage as MeaningStatus, StageMeaning as MeaningResult}

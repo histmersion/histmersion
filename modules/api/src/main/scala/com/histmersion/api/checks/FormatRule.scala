@@ -1,6 +1,6 @@
 package com.histmersion
 package api.checks
-import io.circe.{Decoder, Encoder}
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import sttp.tapir.Schema
 import com.histmersion.api.WireEnumValues
 import com.histmersion.api.WireEnum
@@ -275,8 +275,7 @@ object FormatRule:
     def all: Array[FormatRule] = values
     def wire(e: FormatRule): WireEnumValues.Wire = WireEnumValues.Wire((e.wire).value)
     def fromWire(s: WireEnumValues.Wire): Option[FormatRule] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
-  given Encoder[FormatRule] = WireEnum.encoder
-  given Decoder[FormatRule] = WireEnum.decoder
+  given JsonValueCodec[FormatRule] = WireEnum.codec
   given Schema[FormatRule] = WireEnum.schema
 
   def fromWire(s: Wire): Option[FormatRule] = summon[WireEnumValues[FormatRule]].fromWire(WireEnumValues.Wire(s.value))

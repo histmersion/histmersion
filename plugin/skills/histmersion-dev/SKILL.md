@@ -212,7 +212,7 @@ on Maven Central — Histmersion is an app — but every install carries a Maven
 and `plugin new` do too, so a project names `m2Local`, never a path of this machine). It holds
 `com.histmersion::histmersion-plugin-api` (jar, sources, POM), the testkit and
 `com.histmersion::histmersion-plugin-platform`, a POM-only artifact whose dependencies are the libraries the
-server provides to plugins at the versions it ships (sconfig, kindlings, circe, cats, sttp client, tapir,
+server provides to plugins at the versions it ships (sconfig, kindlings, jsoniter-scala, sttp client, tapir,
 ox, iron; the contract is `modules/plugin-api/plugin-platform.txt`, checked by `PluginPlatformSuite`). `new`
 writes a scala-cli project: `project.scala`, the build with EVERY directive (`//> using repository m2Local`,
 the API and the platform as `compileOnly.dep`, `resourceDir`, `publish.organization/name/version`,

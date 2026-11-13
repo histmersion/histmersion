@@ -1,5 +1,6 @@
 package com.histmersion
 package server.media
+import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -33,7 +34,6 @@ import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.util.jobs.JobRepo
 import com.histmersion.server.{Composition, Deps}
 import com.histmersion.util.ocr.ConverterClient
-import io.circe.parser.decode
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import com.histmersion.domain.media.MediaRole
@@ -321,7 +321,7 @@ class MediaSourcesSuite extends DbSuite:
           "application/octet-stream"
         )
         assertEquals(ok, 200, ob)
-        val m = decode[MediaItem](ob).fold(e => fail(e.getMessage), identity)
+        val m = RawJson.decode[MediaItem](ob).fold(e => fail(e), identity)
         assertEquals((m.provider, m.providerKey, m.license), (Some("calibre"), Some("zqms77"), None))
         assertEquals(
           m.targets.map(t => (t.targetType, t.targetId.value: String, t.role)),
@@ -329,7 +329,7 @@ class MediaSourcesSuite extends DbSuite:
         )
         val (ss, sb) = get(s"$url/api/sources/$Paper?body=false")
         assertEquals(ss, 200, sb)
-        val sw = decode[Source.WithFindings](sb).fold(e => fail(e.getMessage), identity)
+        val sw = RawJson.decode[Source.WithFindings](sb).fold(e => fail(e), identity)
         assertEquals(sw.illustration.map(t => (t.uid, t.role)), Some((m.uid, "cover")))
         val (ts, _) = get(s"$url${sw.illustration.get.url}")
         assertEquals(ts, 200)
@@ -337,7 +337,7 @@ class MediaSourcesSuite extends DbSuite:
         val (ds2, db2) =
           send("POST", s"$url/api/media/covers", """{"dryRun":true,"covers":false}""".getBytes, "application/json")
         assertEquals(ds2, 200, db2)
-        assert(decode[MediaCoversReport](db2).isRight, db2)
+        assert(RawJson.decode[MediaCoversReport](db2).isRight, db2)
       finally b.stop()
     }
 
@@ -382,7 +382,10 @@ class MediaSourcesSuite extends DbSuite:
       try
         val (ps, pb) = get(s"$url/api/places/zqms_site?counts=true")
         assertEquals(ps, 200, pb)
-        assertEquals(decode[PlaceDetail](pb).map(_.media.map(_.uid.value: String)), Right(List(uid.value: String)))
+        assertEquals(
+          RawJson.decode[PlaceDetail](pb).map(_.media.map(_.uid.value: String)),
+          Right(List(uid.value: String))
+        )
       finally b.stop()
     }
     connect(ds)(sql"DELETE FROM assets WHERE provider_key = 'File:Zqms lions.jpg'".update.run())

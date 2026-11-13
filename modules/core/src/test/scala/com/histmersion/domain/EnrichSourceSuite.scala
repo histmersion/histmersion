@@ -1,5 +1,6 @@
 package com.histmersion
 package domain
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
@@ -261,10 +262,9 @@ class EnrichSourceSuite extends munit.FunSuite:
     assertEquals(kind(None), None)
 
   test("#981 findings: a checkpoint written before placeKind existed still decodes (a paused run resumes)"):
-    import io.circe.parser.decode
     val old = """{"findings":[{"claim":"c","quote":"q","ratio":1.0,"place":"Albania","start":800,"end":900,""" +
       """"periodName":null,"tags":[],"confidence":"high"}]}"""
-    val v = decode[VerifiedFindings](old).fold(e => fail(e.getMessage), identity)
+    val v = RawJson.decode[VerifiedFindings](old).fold(e => fail(e), identity)
     assertEquals(v.findings.head.place, Some("Albania"))
     assertEquals(v.findings.head.placeKind, None)
     assertEquals(v.findings.head.period, Some(Period(Year(800), Year(900))))

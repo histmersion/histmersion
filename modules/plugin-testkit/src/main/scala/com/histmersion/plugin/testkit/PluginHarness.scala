@@ -1,5 +1,8 @@
 package com.histmersion
 package plugin.testkit
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
 
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
@@ -135,10 +138,10 @@ final class PluginHarness private (
       .left
       .map(_.problem)
       .flatMap(b =>
-        io.circe.parser
+        RawJson
           .parse(new String(b.value, UTF_8))
           .left
-          .map(e => Problem.Unclassified(Legacy.Text(s"${url.value} returned unparseable JSON: ${e.getMessage}")))
+          .map(e => Problem.Unclassified(Legacy.Text(s"${url.value} returned unparseable JSON: $e")))
       )
     run(
       WorkLookup

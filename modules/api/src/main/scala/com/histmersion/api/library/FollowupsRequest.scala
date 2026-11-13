@@ -1,6 +1,6 @@
 package com.histmersion
 package api.library
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
@@ -12,7 +12,7 @@ final case class FollowupsRequest(
     since: Option[FollowupsRequest.Since] = None,
     limit: Option[FollowupsRequest.Limit] = None,
     apply: FollowupsRequest.Apply = FollowupsRequest.Apply(false)
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema
 

@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.automation.agents
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
@@ -100,7 +102,7 @@ class PluginAiRunSuite extends DbSuite with RunTranscripts:
        |  ]
        |}""".stripMargin
 
-  private def quote(s: String) = io.circe.Json.fromString(s).noSpaces
+  private def quote(s: String) = Json.fromString(s).noSpaces
 
   private val Secret = "s3cr3t-value-zz"
 

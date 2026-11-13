@@ -1,5 +1,10 @@
 package com.histmersion
 package server.agents
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.domain.automation.agents.SttpAiJson
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
+import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -8,10 +13,7 @@ import com.histmersion.domain.automation.managers.Zero
 
 import com.histmersion.config.{ClaudeCodeConfig, ClaudePlanConfig}
 import com.histmersion.api.automation.Agents.{ModelRef, ProviderKind}
-import io.circe.{parser, Json}
-import io.circe.syntax.*
 import sttp.ai.core.agent.*
-import sttp.apispec.circe.*
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.system.JvmHome
 import com.histmersion.api.automation.PlanQuota
@@ -51,7 +53,9 @@ object ClaudeCode:
     * `$schema` marker sttp-ai's renderer may add is dropped (the rest is shared).
     */
   def schemaJson(s: ResponseSchema[?]): SchemaJson =
-    SchemaJson(s.schema.asJson.deepDropNullValues.mapObject(_.remove("$schema")).noSpaces)
+    SchemaJson(
+      SttpAiJson.answerSchema(s).asObject.fold(Json.Null)(o => Json.fromJsonObject(o.remove("$schema"))).noSpaces
+    )
 
   /** How the step's prompt reaches the CLI: as the generated plugin's agent (with its role settings), or — no generated
     * tree — as a system prompt file.
@@ -209,13 +213,13 @@ object ClaudeCode:
   def watch(line: CliProcess.Run.Lines, pools: PoolSink): Option[CliProcess.Run.Stopped] =
     if !line.value.contains("rate_limit_event") then None
     else
-      parser
+      RawJson
         .parse(line.value)
         .toOption
-        .filter(_.hcursor.downField("type").as[String].contains("rate_limit_event"))
+        .filter(_.cursor.downField("type").as[String].contains("rate_limit_event"))
         .flatMap { j =>
           val now = System.currentTimeMillis()
-          val rs = j.hcursor
+          val rs = j.cursor
             .downField("rate_limit_info")
             .focus
             .map(PlanPools.claudeReadings(_, PlanQuota.Source.Run, PlanQuota.Now(now)))
@@ -279,7 +283,7 @@ object ClaudeCode:
   )
 
   private def tokens(j: Json, keys: String*): Long =
-    keys.iterator.flatMap(k => j.hcursor.downField(k).as[Long].toOption).nextOption().getOrElse(0L)
+    keys.iterator.flatMap(k => j.cursor.downField(k).as[Long].toOption).nextOption().getOrElse(0L)
 
   /** `usage` of the result line (input_tokens excludes cache reads/writes on Anthropic's wire). */
   private def usageOf(u: Json): TokenUsage =
@@ -296,7 +300,7 @@ object ClaudeCode:
     * message the CLI made up, not a call).
     */
   def firstCallTokens(message: Json): Option[AgentRepo.StepRecord.FirstCallTokens] =
-    val c = message.hcursor
+    val c = message.cursor
     if c.downField("model").as[String].contains("<synthetic>") then None
     else
       c.downField("usage")
@@ -309,11 +313,11 @@ object ClaudeCode:
 
   private def text(content: Json): String =
     content.asString.getOrElse(
-      content.asArray.toList.flatten.flatMap(b => b.hcursor.downField("text").as[String].toOption).mkString("\n")
+      content.asArray.toList.flatten.flatMap(b => b.cursor.downField("text").as[String].toOption).mkString("\n")
     )
 
   def parse(lines: List[CliProcess.Run.Lines]): Outcome =
-    val events = lines.map(_.value.trim).filter(_.startsWith("{")).flatMap(l => parser.parse(l).toOption)
+    val events = lines.map(_.value.trim).filter(_.startsWith("{")).flatMap(l => RawJson.parse(l).toOption)
     val names = scala.collection.mutable.Map.empty[String, String] // tool_use id → tool name
     // `var`s and builders: the accumulators of ONE parse, over the events in order
     var turn = 0 // the assistant message count, for the tool call records
@@ -330,14 +334,14 @@ object ClaudeCode:
     val now = System.currentTimeMillis()
     def strip(n: String) = n.stripPrefix(s"mcp__${McpServer}__")
     events.foreach { e =>
-      val c = e.hcursor
+      val c = e.cursor
       c.downField("type").as[String].getOrElse("") match
         case "system" if c.downField("subtype").as[String].contains("init") =>
           model = c.downField("model").as[String].toOption.map(ModelRef.Model(_)).orElse(model)
           val servers = c.downField("mcp_servers").as[List[Json]].getOrElse(Nil)
           mcpProblem = servers
-            .find(s => s.hcursor.downField("name").as[String].contains(McpServer))
-            .flatMap(_.hcursor.downField("status").as[String].toOption)
+            .find(s => s.cursor.downField("name").as[String].contains(McpServer))
+            .flatMap(_.cursor.downField("status").as[String].toOption)
             .filterNot(s => s == "connected" || s == "pending")
             .map(s => Problem.Unclassified(Legacy.Text(s"the agent MCP server is $s")))
         case "assistant" if c.downField("parent_tool_use_id").focus.forall(_.isNull) =>
@@ -345,14 +349,14 @@ object ClaudeCode:
           if firstCall.isEmpty then firstCall = c.downField("message").focus.flatMap(firstCallTokens)
           val blocks = c.downField("message").downField("content").as[List[Json]].getOrElse(Nil)
           val said = blocks
-            .filter(_.hcursor.downField("type").as[String].contains("text"))
-            .flatMap(_.hcursor.downField("text").as[String].toOption)
+            .filter(_.cursor.downField("type").as[String].contains("text"))
+            .flatMap(_.cursor.downField("text").as[String].toOption)
             .mkString("\n")
-          val tcs = blocks.filter(_.hcursor.downField("type").as[String].contains("tool_use")).map { b =>
-            val id = b.hcursor.downField("id").as[String].getOrElse("")
-            val nm = strip(b.hcursor.downField("name").as[String].getOrElse(""))
+          val tcs = blocks.filter(_.cursor.downField("type").as[String].contains("tool_use")).map { b =>
+            val id = b.cursor.downField("id").as[String].getOrElse("")
+            val nm = strip(b.cursor.downField("name").as[String].getOrElse(""))
             names(id) = nm
-            val tc = ToolCall(id, nm, b.hcursor.downField("input").focus.fold("{}")(_.noSpaces))
+            val tc = ToolCall(id, nm, b.cursor.downField("input").focus.fold("{}")(_.noSpaces))
             pending(id) = tc
             tc
           }
@@ -362,10 +366,10 @@ object ClaudeCode:
             .downField("content")
             .as[List[Json]]
             .getOrElse(Nil)
-            .filter(_.hcursor.downField("type").as[String].contains("tool_result"))
+            .filter(_.cursor.downField("type").as[String].contains("tool_result"))
             .foreach { b =>
-              val id = b.hcursor.downField("tool_use_id").as[String].getOrElse("")
-              val out = b.hcursor.downField("content").focus.fold("")(text)
+              val id = b.cursor.downField("tool_use_id").as[String].getOrElse("")
+              val out = b.cursor.downField("content").focus.fold("")(text)
               val nm = names.getOrElse(id, "")
               entries += ConversationEntry.ToolResult(id, nm, out)
               pending.remove(id).foreach(tc => calls += ToolCallRecord(id, nm, tc.input, out, turn))
@@ -394,7 +398,7 @@ object ClaudeCode:
                 .downField("permission_denials")
                 .as[List[Json]]
                 .getOrElse(Nil)
-                .map(d => Result.Denials(d.hcursor.downField("tool_name").as[String].getOrElse(d.noSpaces))),
+                .map(d => Result.Denials(d.cursor.downField("tool_name").as[String].getOrElse(d.noSpaces))),
               errors = c
                 .downField("errors")
                 .as[List[Json]]
@@ -451,7 +455,7 @@ object ClaudeCode:
     val braces = Option.when(text.indexOf('{') >= 0 && text.lastIndexOf('}') > text.indexOf('{'))(
       text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1)
     )
-    fenced.orElse(braces).flatMap(t => io.circe.parser.parse(t).toOption).filter(_.isObject)
+    fenced.orElse(braces).flatMap(t => RawJson.parse(t).toOption).filter(_.isObject)
 
   /** sttp-ai's result from what the CLI printed, or the plan's usage limit (Left). */
   def result[Out](
@@ -491,7 +495,7 @@ object ClaudeCode:
           r.structured.orElse(Option.when(finish == FinishReason.NaturalStop)(jsonInText(r.text)).flatten)
         val raw = structured.fold(r.text.value)(_.noSpaces)
         val answer: Either[AgentFailure, Out] = structured match
-          case Some(j) => schema.codec.decodeJson(j).left.map(e => AgentParseError(raw, e))
+          case Some(j) => SttpAiJson.answer(schema, j).left.map(e => AgentParseError(raw, e))
           // #941: a text answer with no decodable object keeps the parser's error as its cause
           case None =>
             Left(

@@ -1,6 +1,6 @@
 package com.histmersion
 package api.media
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
@@ -22,7 +22,7 @@ final case class AssetLink(
     targetId: MediaTarget.TargetId,
     xywh: Option[AssetLink.Xywh] = None,
     notes: Option[AssetLink.Notes] = None
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema
 
@@ -39,7 +39,7 @@ object AssetLink:
   final case class Deleted(
       id: Id,
       deleted: Deleted.Value
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -52,7 +52,7 @@ object AssetLink:
       links: scala.List[AssetLink],
       offset: Offset = Offset(0),
       next: Option[Offset] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema:
     def page: OffsetPage = OffsetPage(total, offset, RowCount(links.size))
@@ -75,6 +75,6 @@ object AssetLink:
       targetId: MediaTarget.TargetId,
       xywh: Option[Xywh] = None,
       notes: Option[Notes] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema

@@ -12,7 +12,7 @@ import com.histmersion.api.Write
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.Api
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
@@ -203,7 +203,7 @@ object Backup:
       (String.format(Locale.ROOT, "%.1f %s", v, units(exp - 1)))
 
   final case class Info(file: Info.File, bytes: ByteCount, createdAt: Info.CreatedAt)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -218,7 +218,7 @@ object Backup:
       sha256: Sha256,
       durationMs: Result.DurationMs,
       pruned: List[Result.Pruned] = Nil
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -248,7 +248,7 @@ object Backup:
       sha256: Option[Sha256] = None,
       error: Option[Problem] = None,
       pruned: List[Status.Pruned] = Nil
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema:
     def stateOf: Option[State] = State.parse(state)

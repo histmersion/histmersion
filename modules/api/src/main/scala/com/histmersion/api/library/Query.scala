@@ -3,7 +3,7 @@ package api.library
 
 import com.histmersion.util.problem.{Legacy, Problem}
 
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
@@ -34,7 +34,7 @@ object Query:
   export QueryResult.{Columns as MarkdownTableColumns, Rows as MarkdownTableRows}
 
   final case class QueryRequest(sql: QueryRequest.Sql)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -47,7 +47,7 @@ object Query:
       rowCount: QueryResult.RowCount,
       truncated: QueryResult.Truncated,
       elapsedMs: QueryResult.ElapsedMs
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -67,7 +67,7 @@ object Query:
       name: SchemaColumn.Name,
       dataType: SchemaColumn.DataType,
       nullable: SchemaColumn.Nullable
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -80,7 +80,7 @@ object Query:
     object Nullable extends Newtype[Boolean, Pure]
 
   final case class SchemaTable(name: SchemaTable.Name, kind: SchemaTable.Kind, columns: List[SchemaColumn])
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -91,7 +91,7 @@ object Query:
     object Kind extends Newtype[String, Pure]
 
   final case class SchemaTables(tables: List[SchemaTable])
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 

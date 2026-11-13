@@ -1,5 +1,8 @@
 package com.histmersion
 package util.ocr
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.util.storage.Blob
@@ -41,11 +44,11 @@ final class HttpConverterClient(cfg: => ConverterSettings, http: HttpClient)
           .POST(body)
           .build()
       )
-      json <- io.circe.parser.parse(text).left.map(_.getMessage)
-      n <- json.hcursor.get[Int]("pages").left.map(_ => "no page count")
+      json <- RawJson.parse(text)
+      n <- json.cursor.get[Int]("pages").left.map(_ => "no page count")
     yield ConverterClient.PageCount(
       ConverterClient.PageCount.Pages(n),
-      ConverterClient.PageCount.Scanned(json.hcursor.get[Int]("scanned").getOrElse(0))
+      ConverterClient.PageCount.Scanned(json.cursor.get[Int]("scanned").getOrElse(0))
     )).toOption
 
   def convert(
@@ -64,10 +67,10 @@ final class HttpConverterClient(cfg: => ConverterSettings, http: HttpClient)
         .POST(body)
         .build()
       text <- send(req)
-      doc <- io.circe.parser
+      doc <- RawJson
         .decode[ConvertedDoc](text)
         .left
-        .map(e => s"converter at $base returned unreadable JSON: ${e.getMessage}")
+        .map(e => s"converter at $base returned unreadable JSON: $e")
     yield doc).left.map((text => Problem.Unclassified(Legacy.Text(text))))
 
   override def thumbnail(
@@ -95,8 +98,8 @@ final class HttpConverterClient(cfg: => ConverterSettings, http: HttpClient)
       .build()
     (for
       text <- send(req, timeoutHint = None)
-      json <- io.circe.parser.parse(text).left.map(e => s"converter at $base returned unreadable JSON: ${e.getMessage}")
-      c = json.hcursor
+      json <- RawJson.parse(text).left.map(e => s"converter at $base returned unreadable JSON: $e")
+      c = json.cursor
       b64 <- c.get[String]("base64").left.map(_ => s"converter at $base returned no thumbnail")
       raw <- scala.util.Try(java.util.Base64.getDecoder.decode(b64)).toEither.left.map(_.getMessage)
     yield ConverterClient.Thumb(

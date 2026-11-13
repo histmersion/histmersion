@@ -3,7 +3,7 @@ package api.catalogue
 
 import com.histmersion.util.problem.{Legacy, Problem}
 
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.TimeSpan
@@ -29,7 +29,7 @@ final case class EventGeo(
     size: Option[EventGeo.Size] = None,
     precision: EventGeo.Precision = EventGeo.Precision(EventPrecision.Precise),
     dating: Option[EventGeo.Dating] = None
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema
 object EventGeo:
@@ -72,7 +72,7 @@ object EventGeo:
       events: scala.List[EventGeo],
       unplaced: List.Unplaced = List.Unplaced(0),
       imprecise: List.Imprecise = List.Imprecise(0)
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 

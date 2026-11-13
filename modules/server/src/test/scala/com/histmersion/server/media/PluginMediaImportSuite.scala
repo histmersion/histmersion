@@ -1,5 +1,7 @@
 package com.histmersion
 package server.media
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
@@ -27,7 +29,6 @@ import com.histmersion.domain.*
 import com.histmersion.util.database.Migrate
 import com.histmersion.plugin as spi
 import com.histmersion.server.{Composition, Deps}
-import io.circe.parser.decode
 import org.ekrich.config.ConfigFactory
 
 import java.net.URI
@@ -332,7 +333,7 @@ class PluginMediaImportSuite extends DbSuite:
           HttpResponse.BodyHandlers.ofString()
         )
         assertEquals(r.statusCode, 200, r.body)
-        val ps = decode[List[MediaProvider.Info]](r.body).fold(e => fail(s"$e: ${r.body}"), identity)
+        val ps = RawJson.decode[List[MediaProvider.Info]](r.body).fold(e => fail(s"$e: ${r.body}"), identity)
         assertEquals(ps.map(_.name).last, Collection)
         assert(
           ps.find(_.name == MediaItem.Provider("met"))

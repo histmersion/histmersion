@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.library.workflows
+import com.histmersion.util.json.RawJson.*
 
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -14,8 +15,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.Pipeline
 import CurrencyCheckRules.CurrencyAction
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
-import io.circe.syntax.*
+import com.histmersion.util.json.JsonCodec
 
 import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.api.library.Acquire
@@ -137,9 +137,8 @@ final class CurrencyCheckPipeline(
     )
 
 object CurrencyCheckPipeline:
-  final case class Target(citekey: Citekey, doi: Option[Doi]) derives KindlingsCodecAsObject
-  final case class Assessed(checked: Assessed.Checked, retracted: List[Assessed.Retracted])
-      derives KindlingsCodecAsObject
+  final case class Target(citekey: Citekey, doi: Option[Doi]) derives JsonCodec
+  final case class Assessed(checked: Assessed.Checked, retracted: List[Assessed.Retracted]) derives JsonCodec
 
   object Assessed:
     type Checked = Checked.T
@@ -147,7 +146,7 @@ object CurrencyCheckPipeline:
     type Retracted = Citekey
     val Retracted: Citekey.type = Citekey
   final case class Followed(citing: Followed.Citing, proposed: Followed.Proposed, queued: Followed.Queued)
-      derives KindlingsCodecAsObject
+      derives JsonCodec
 
   object Followed:
     type Citing = Citing.T

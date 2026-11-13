@@ -1,5 +1,6 @@
 package com.histmersion
 package domain
+import com.histmersion.util.json.RawJson.*
 
 import hearth.kindlings.optics.syntax.*
 
@@ -13,7 +14,6 @@ import com.histmersion.api.MergeFixture
 import com.histmersion.api.given
 
 import MergeFixture.*
-import io.circe.syntax.*
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path, Paths}

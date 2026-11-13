@@ -1,11 +1,12 @@
 package com.histmersion
 package server
+import com.histmersion.util.mcp.ChimpJson.given
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
 import com.histmersion.util.mcp.McpOut
 import chimp.server.*
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.Markdown
@@ -183,7 +184,7 @@ object OpsTools:
       case other =>
         s"_unknown action '$other' — use list, add, done or recheck_"
 
-  // Inputs last, per the file convention: circe Codec + tapir Schema both derived by Kindlings.
+  // Inputs last, per the file convention: JSON codec + tapir Schema both derived by Kindlings.
   final case class LintInput(
       rules: List[String] = Nil,
       fix: Boolean = false,
@@ -191,7 +192,7 @@ object OpsTools:
       source: Option[String] = None,
       text: Option[String] = None,
       field: Option[FormatField] = None
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object LintInput:
     given Schema[LintInput] = KindlingsSchema
       .derived[LintInput]
@@ -217,7 +218,7 @@ object OpsTools:
       all: Boolean = false,
       dryRun: Boolean = false,
       limit: Option[Int] = None
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object QueueInput:
     given Schema[QueueInput] = KindlingsSchema
       .derived[QueueInput]
@@ -245,4 +246,4 @@ object OpsTools:
         _.description("action=recheck: try at most this many due items (default acquire.recheck.per-pass)")
       )
 
-  final case class BackupsInput() derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class BackupsInput() derives JsonCodec, KindlingsSchema, com.histmersion.api.json.Schema

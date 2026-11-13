@@ -1,11 +1,14 @@
 package com.histmersion
 package api.catalogue
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
+import hearth.kindlings.jsoniterjson.{Json, JsonObject}
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import hearth.kindlings.optics.syntax.*
 
-import io.circe.{Json, JsonObject}
 import com.histmersion.api.{LpfDataset, Span, Validity}
 import com.histmersion.api.library.ExternalId
 import com.histmersion.api.given
@@ -13,9 +16,8 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.WireEnumValues
 import com.histmersion.api.Plural
 import com.histmersion.api.WireEnum
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
-import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -126,7 +128,7 @@ object Gazetteer:
       val u = t.value.trim.toUpperCase(java.util.Locale.ROOT).replaceFirst("^SRID=\\d+;", "")
       u.startsWith("POINT") || u.startsWith("MULTIPOINT")
     case Some(GazGeometry.GeoJson(t)) =>
-      io.circe.parser
+      RawJson
         .parse(t.value)
         .toOption
         .flatMap(_.asObject)
@@ -400,7 +402,7 @@ object Gazetteer:
       attribution: Option[Extract.Attribution] = None,
       url: Option[Extract.Url] = None,
       built: Option[Extract.Built] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -442,8 +444,7 @@ object Gazetteer:
       def all: Array[Kind] = values
       def wire(e: Kind): WireEnumValues.Wire = WireEnumValues.Wire((e.wire).value)
       def fromWire(s: WireEnumValues.Wire): Option[Kind] = parse(Wire((s).value))
-    given Encoder[Kind] = WireEnum.encoder
-    given Decoder[Kind] = WireEnum.decoder
+    given JsonValueCodec[Kind] = WireEnum.codec
     given Schema[Kind] = WireEnum.schema
 
   final case class LoadCounts(
@@ -465,7 +466,7 @@ object Gazetteer:
       descriptionsChanged: LoadCounts.DescriptionsChanged = LoadCounts.DescriptionsChanged((0).toLong),
       linksChanged: LoadCounts.LinksChanged = LoadCounts.LinksChanged((0).toLong),
       pointAreasSkipped: LoadCounts.PointAreasSkipped = LoadCounts.PointAreasSkipped((0).toLong)
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema:
     def +(o: LoadCounts): LoadCounts =
@@ -541,10 +542,7 @@ object Gazetteer:
     type PointAreasSkipped = PointAreasSkipped.T
     object PointAreasSkipped extends Newtype[Long, Pure]
 
-  final case class Manifest(extracts: List[Extract])
-      derives KindlingsCodecAsObject,
-        KindlingsSchema,
-        com.histmersion.api.json.Schema
+  final case class Manifest(extracts: List[Extract]) derives JsonCodec, KindlingsSchema, com.histmersion.api.json.Schema
 
   final case class SourceInfo(
       key: SourceInfo.Key,
@@ -562,7 +560,7 @@ object Gazetteer:
       citation: Option[SourceInfo.Citation] = None,
       periodStart: Option[Year] = None,
       periodEnd: Option[Year] = None
-  ) derives KindlingsCodecAsObject,
+  ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 

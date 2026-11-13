@@ -1,5 +1,8 @@
 package com.histmersion
 package domain.library.acquisition
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
@@ -43,7 +46,7 @@ final class OpenAlexIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex
     works(s"from_publication_date:$since,type:article|book|book-chapter", limit.value, Some(query)).left
       .map((text => Problem.Unclassified(Legacy.Text(text))))
 
-  private def work(doi: Doi): Either[String, io.circe.Json] =
+  private def work(doi: Doi): Either[String, Json] =
     http
       .json(
         Url(
@@ -58,7 +61,7 @@ final class OpenAlexIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex
 
   def citing(doi: Doi, since: LocalDate, limit: CitationAlerts.CitingLimit) =
     work(doi)
-      .flatMap(j => j.hcursor.get[String]("id").left.map(_.getMessage))
+      .flatMap(j => j.cursor.get[String]("id"))
       .map(_.split("/").last)
       .flatMap(id => works(s"cites:$id,from_publication_date:$since", limit.value, None))
       .left

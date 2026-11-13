@@ -1,6 +1,6 @@
 package com.histmersion
 package api.media
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.OffsetPage
@@ -15,7 +15,7 @@ final case class MediaList(
     items: List[MediaItem],
     offset: Offset = Offset(0),
     next: Option[Offset] = None
-) derives KindlingsCodecAsObject,
+) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema:
   def page: OffsetPage = OffsetPage(total, offset, RowCount(items.size))

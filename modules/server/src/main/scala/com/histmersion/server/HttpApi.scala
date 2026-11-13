@@ -1,5 +1,7 @@
 package com.histmersion
 package server
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.Cursor
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import sttp.tapir.*
@@ -7,7 +9,7 @@ import sttp.tapir.server.ServerEndpoint
 import sttp.tapir.files.*
 import sttp.shared.Identity
 import sttp.model.{Header, MediaType, StatusCode}
-import sttp.tapir.json.circe.*
+import com.histmersion.api.json.TapirJson.*
 import com.histmersion.api.{Api, OpsApi, WebPaths}
 import com.histmersion.config.*
 import com.histmersion.domain.*

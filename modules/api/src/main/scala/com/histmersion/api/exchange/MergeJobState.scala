@@ -1,6 +1,6 @@
 package com.histmersion
 package api.exchange
-import io.circe.{Decoder, Encoder}
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import sttp.tapir.Schema
 
 import com.histmersion.api.WireEnumValues
@@ -21,6 +21,5 @@ object MergeJobState:
       WireEnumValues.Wire((Wire(e.toString.toLowerCase(java.util.Locale.ROOT))).value)
     def fromWire(s: WireEnumValues.Wire): Option[MergeJobState] =
       values.find(_.toString.equalsIgnoreCase((s).value.trim))
-  given Encoder[MergeJobState] = WireEnum.encoder
-  given Decoder[MergeJobState] = WireEnum.decoder
+  given JsonValueCodec[MergeJobState] = WireEnum.codec
   given Schema[MergeJobState] = WireEnum.schema

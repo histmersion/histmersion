@@ -5,9 +5,10 @@ import com.histmersion.util.problem.{Legacy, Problem}
 
 import hearth.kindlings.optics.syntax.*
 
-import io.circe.ACursor
 import com.histmersion.api.{PeriodODataset, Years}
 import com.histmersion.api.given
+import com.histmersion.util.json.{Cursor, RawJson}
+import com.histmersion.util.json.RawJson.*
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** PeriodO writes ISO 8601 years, which count a year 0 (`"-2999"` is 3000 BC, `"0000"` is 1 BC). The store's signed
@@ -61,18 +62,18 @@ object PeriodO:
   val MinSiblings: MinSiblings = MinSiblingsCount(3)
 
   def parse(json: String): Either[Problem, PeriodODataset] =
-    io.circe.parser
-      .parse((json))
+    RawJson
+      .parse(json)
       .left
-      .map(e => Problem.Unclassified(Legacy.Text(s"not JSON: ${e.getMessage}")))
+      .map(e => Problem.Unclassified(Legacy.Text(s"not JSON: $e")))
       .flatMap { doc =>
-        val c = doc.hcursor
+        val c = doc.cursor
         val overlay = c.downField("histmersion")
         def strings(key: Wire): List[(String, String)] = overlay
           .downField((key).value)
           .focus
           .flatMap(_.asObject)
-          .map(_.toList.flatMap((k, v) => v.asString.map(k -> _)))
+          .map(_.fields.toList.flatMap((k, v) => v.asString.map(k -> _)))
           .getOrElse(Nil)
         val presets = strings(Wire("presets")).map((id, r) =>
           PresetRegion
@@ -95,7 +96,7 @@ object PeriodO:
             .toRight(Problem.Unclassified(Legacy.Text("not a PeriodO dataset: no `authorities` object")))
           ps <- presets.collectFirst { case Left(e) => e }.toLeft(presets.collect { case Right(p) => p }.toMap)
         yield
-          val read = auths.toList.map((id, a) => authority(HistoricalPeriod.Id(id), a.hcursor))
+          val read = auths.fields.toList.map((id, a) => authority(HistoricalPeriod.Id(id), a.cursor))
           PeriodODataset(
             read.map(_._1),
             strings(Wire("parents"))
@@ -110,7 +111,7 @@ object PeriodO:
               .flatMap(
                 (
                     refactorCallback2 =>
-                      (refactorCallback2.toInt).map(refactorValue3 => PeriodODataset.Version(refactorValue3))
+                      (refactorCallback2.asInt).map(refactorValue3 => PeriodODataset.Version(refactorValue3))
                 )
               )
           )
@@ -118,18 +119,18 @@ object PeriodO:
 
   private def authority(
       id: HistoricalPeriod.Id,
-      c: ACursor
+      c: Cursor
   ): (Authority, List[SkippedPeriod]) =
     val src = c.downField("source")
-    val title = str(src, Wire("title")).orElse(str(src.downField("partOf"), Wire("title"))).getOrElse(id.value)
-    val year = int(src, Wire("yearPublished")).orElse(int(src.downField("partOf"), Wire("yearPublished")))
+    val title = src.downField("title").text.orElse(src.downField("partOf").downField("title").text).getOrElse(id.value)
+    val year = src.downField("yearPublished").whole.orElse(src.down("partOf", "yearPublished").whole).map(Year(_))
     val defs = c
       .downField("periods")
       .focus
       .flatMap(_.asObject)
-      .map(_.toList)
+      .map(_.fields.toList)
       .getOrElse(Nil)
-      .map((pid, p) => definition(HistoricalPeriod.Id(pid), p.hcursor))
+      .map((pid, p) => definition(HistoricalPeriod.Id(pid), p.cursor))
     val (implausible, kept) = implausibleSpans(defs.flatMap(_.toOption))
     (
       Authority(id, HistoricalPeriod.Label(title), year, kept),
@@ -168,11 +169,11 @@ object PeriodO:
 
   private def definition(
       id: HistoricalPeriod.Id,
-      c: ACursor
+      c: Cursor
   ): Either[SkippedPeriod, Definition] =
     // FASTI labels its Ukrainian periods in Ukrainian, with the English label as an alternative
-    val own = str(c, Wire("label")).map((_).trim).filter(_.nonEmpty)
-    val english = str(c, Wire("languageTag")).exists((_).toLowerCase.startsWith("en"))
+    val own = c.downField("label").text.map((_).trim).filter(_.nonEmpty)
+    val english = c.downField("languageTag").text.exists((_).toLowerCase.startsWith("en"))
     val label = (if english then own else None)
       .orElse(
         c.downField("localizedLabels")
@@ -185,16 +186,18 @@ object PeriodO:
       )
       .orElse(own)
       .getOrElse(id.value)
-    val start = bound(c.downField("start").downField("in"), Wire("earliestYear"))
-    val stop = bound(c.downField("stop").downField("in"), Wire("latestYear"))
-    val region = str(c, Wire("spatialCoverageDescription")).map((_).trim).filter(_.nonEmpty).orElse {
+    def bound(in: Cursor, outer: String) =
+      in.downField("year").literal.orElse(in.downField(outer).literal).flatMap(isoYear)
+    val start = bound(c.downField("start").downField("in"), "earliestYear")
+    val stop = bound(c.downField("stop").downField("in"), "latestYear")
+    val region = c.downField("spatialCoverageDescription").text.map((_).trim).filter(_.nonEmpty).orElse {
       val labels = c
         .downField("spatialCoverage")
         .focus
         .flatMap(_.asArray)
         .toList
         .flatten
-        .flatMap(_.hcursor.downField("label").focus.flatMap(_.asString))
+        .flatMap(_.cursor.downField("label").focus.flatMap(_.asString))
         .map(_.trim)
         .filter(_.nonEmpty)
       Option.when(labels.nonEmpty)(labels.mkString(", "))
@@ -213,34 +216,12 @@ object PeriodO:
             HistoricalPeriod.Label(label),
             Period(s, e),
             region.map(HistoricalPeriod.Region(_)),
-            str(c, Wire("broader")).map(HistoricalPeriod.Id(_))
+            c.downField("broader").text.map(HistoricalPeriod.Id(_))
           )
         )
       case (Some(s), Some(e)) =>
         skip(Period.Skip.EndsBeforeStart, SkippedPeriod.Detail(s"starts after it ends ($s > $e)"))
       case _ => skip(Period.Skip.NoSpan, SkippedPeriod.Detail("no readable start or stop year"))
-
-  private def bound(in: ACursor, outer: Wire): Option[Year] =
-    (yearAt(in, Wire("year"))
-      .orElse(yearAt(in, Wire((outer).value))))
-      .map(refactorValue7 => Year((refactorValue7).value))
-
-  private def yearAt(c: ACursor, key: Wire): Option[Year] =
-    c.downField((key).value).focus.flatMap(j => j.asString.orElse(j.asNumber.map(_.toString))).flatMap(isoYear)
-
-  private def str(c: ACursor, key: Wire): Option[String] = c
-    .downField((key).value)
-    .focus
-    .flatMap((refactorCallback => (refactorCallback.asString).map(refactorValue4 => (refactorValue4))))
-  private def int(c: ACursor, key: Wire): Option[Year] =
-    c.downField((key).value)
-      .focus
-      .flatMap(j =>
-        (j.asNumber
-          .flatMap(_.toInt)
-          .orElse(j.asString.flatMap(_.toIntOption)))
-          .map(refactorValue12 => Year(refactorValue12))
-      )
 
   def toPeriods(
       ds: PeriodODataset,

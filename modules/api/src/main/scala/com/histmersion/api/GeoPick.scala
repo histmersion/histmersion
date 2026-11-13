@@ -37,8 +37,7 @@ object GeoPick:
     def all: Array[GeoPick] = values
     def wire(e: GeoPick): WireEnumValues.Wire = WireEnumValues.Wire((e.wire).value)
     def fromWire(s: WireEnumValues.Wire): Option[GeoPick] = parse(Wire((s).value))
-  given io.circe.Encoder[GeoPick] = WireEnum.encoder
-  given io.circe.Decoder[GeoPick] = WireEnum.decoder
+  given com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec[GeoPick] = WireEnum.codec
   given Schema[GeoPick] = WireEnum.schema
 
   def yearOf(pick: GeoPick, lo: Year, hi: Year): Year = pick match

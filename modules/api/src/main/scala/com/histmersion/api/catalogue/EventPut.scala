@@ -1,9 +1,8 @@
 package com.histmersion
 package api.catalogue
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
-import io.circe.Codec
 import com.histmersion.api.{StrictJson, TimeSpan}
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -23,10 +22,9 @@ final case class EventPut(
     edges: List[EventEdge] = Nil,
     participants: List[EventParticipant] = Nil,
     scale: Option[EventSummary.Scale] = None
-) derives KindlingsSchema,
+) derives StrictJson,
+      KindlingsSchema,
       com.histmersion.api.json.Schema
 object EventPut:
 
   export EventPatch.Geometry
-
-  given Codec.AsObject[EventPut] = StrictJson.codec(KindlingsCodecAsObject.derived[EventPut])

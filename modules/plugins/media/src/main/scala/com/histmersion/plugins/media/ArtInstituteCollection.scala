@@ -1,9 +1,12 @@
 package com.histmersion
 package plugins.media
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.plugin.*
-import io.circe.Json
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `aic`: the Art Institute of Chicago API (https://api.artic.edu/docs/), no key. A search answers the fields asked
@@ -75,7 +78,7 @@ object ArtInstituteCollection:
       displayPx: CollectionSettings.DisplayPx,
       thumbPx: ThumbPx
   ): Either[Problem, List[Either[Problem, MediaItem]]] =
-    val c = json.hcursor
+    val c = json.cursor
     c.downField("data").focus.flatMap(_.asArray) match
       case None =>
         Left(
@@ -89,7 +92,7 @@ object ArtInstituteCollection:
       displayPx: CollectionSettings.DisplayPx,
       thumbPx: ThumbPx
   ): Either[Problem, MediaItem] =
-    val c = json.hcursor
+    val c = json.cursor
     c.long("id").toRight(Problem.Unclassified(Legacy.Text("no id"))).map { id =>
       val title = c.str("title").getOrElse(s"Artwork $id")
       val artist = c.str("artist_title")

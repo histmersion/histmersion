@@ -1,9 +1,12 @@
 package com.histmersion
 package plugins.gazetteers
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
+import hearth.kindlings.jsoniterjson.{Json, JsonObject}
 
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.plugin.*
-import io.circe.{Json, JsonObject}
 
 /** Named historical periods from ChronOntology (DAI).
   *
@@ -23,10 +26,10 @@ object ChronOntology extends DownloadedGazetteer:
     GazetteerRights(Licence("open access"), GazetteerRights.Credit("ChronOntology (DAI), open access"))
 
   def read(text: DownloadedGazetteer.Text): Either[Problem, List[GazetteerPlace]] =
-    io.circe.parser
+    RawJson
       .parse(text.value)
       .left
-      .map(e => Problem.Unclassified(Legacy.Text(s"invalid JSON: ${e.getMessage}")))
+      .map(e => Problem.Unclassified(Legacy.Text(s"invalid JSON: $e")))
       .flatMap { doc =>
         val results = doc.asObject
           .flatMap(_("results"))
@@ -67,7 +70,7 @@ object ChronOntology extends DownloadedGazetteer:
     val en = names("en").flatMap(_.asArray).flatMap(_.headOption).flatMap(_.asString)
     GazetteerName.Name(
       en.getOrElse {
-        names.toIterable.flatMap((_, v) => v.asArray.flatMap(_.headOption).flatMap(_.asString)).headOption.getOrElse("")
+        names.fields.flatMap((_, v) => v.asArray.flatMap(_.headOption).flatMap(_.asString)).headOption.getOrElse("")
       }
     )
 

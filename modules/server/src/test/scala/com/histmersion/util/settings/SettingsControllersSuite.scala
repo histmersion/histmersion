@@ -1,5 +1,6 @@
 package com.histmersion
 package util.settings
+import com.histmersion.util.json.RawJson.*
 
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
@@ -82,7 +83,7 @@ class SettingsControllersSuite extends munit.FunSuite:
     val auth = p.field(ConfigEdit.Field.Key("auth.api-key")).get
     assertEquals(auth.credential.map(_.form), Some("plain"))
     assertEquals((auth.value, auth.effective), (None, None))
-    val json = io.circe.syntax.EncoderOps(p).asJson.noSpaces
+    val json = (p).asJson.noSpaces
     assert(!json.contains("hunter2") && !json.contains("s3cret-key"), "no credential anywhere in the answer")
 
   test("a change is written into the text, the rest kept, then reloaded; the same change again changes nothing"):

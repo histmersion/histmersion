@@ -1,5 +1,7 @@
 package com.histmersion
 package server.media
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.api.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
@@ -22,7 +24,6 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.server.{Composition, Deps}
-import io.circe.parser.decode
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import com.histmersion.db.*
@@ -196,7 +197,7 @@ class MediaHttpSuite extends DbSuite:
       try
         val (ps, pb) = get(s"$url/api/places/$PlaceId?counts=true")
         assertEquals(ps, 200, pb)
-        val d = decode[PlaceDetail](pb).fold(e => fail(e.getMessage), identity)
+        val d = RawJson.decode[PlaceDetail](pb).fold(e => fail(e), identity)
         val t = d.media.headOption.getOrElse(fail(pb))
         assertEquals(
           (t.role, t.license, t.credit),
@@ -204,7 +205,7 @@ class MediaHttpSuite extends DbSuite:
         )
         assert(d.links.exists(l => l.scheme.value == "commons" && l.externalId.value == "Mycenae"), d.links.toString)
         assertEquals(
-          decode[PlaceDetail](get(s"$url/api/places/$PlaceId")._2).map(_.media),
+          RawJson.decode[PlaceDetail](get(s"$url/api/places/$PlaceId")._2).map(_.media),
           Right(Nil),
           "only the card asks"
         )
@@ -218,23 +219,23 @@ class MediaHttpSuite extends DbSuite:
 
         val (ls, lb) = get(s"$url/api/media?place=$PlaceId")
         assertEquals(ls, 200, lb)
-        val l = decode[MediaList](lb).fold(e => fail(e.getMessage), identity)
+        val l = RawJson.decode[MediaList](lb).fold(e => fail(e), identity)
         assertEquals(l.items.map(_.uid), List(t.uid))
         val (ss, sb) = get(s"$url/api/media/${t.uid}")
         assertEquals(ss, 200, sb)
         assertEquals(
-          decode[MediaItem](sb).map(_.targets.map(_.targetId.value: String)),
+          RawJson.decode[MediaItem](sb).map(_.targets.map(_.targetId.value: String)),
           Right(List(PlaceId.value: String))
         )
         val (fs, fb) = get(s"$url/api/media/facets")
         assertEquals(fs, 200, fb)
-        assert(decode[MediaFacets](fb).exists(_.licences.exists(_.key.value == "CC-BY-SA-2.5")), fb)
+        assert(RawJson.decode[MediaFacets](fb).exists(_.licences.exists(_.key.value == "CC-BY-SA-2.5")), fb)
         val (gs, gb) = get(s"$url/api/media-geo?provider=${MediaProvider.Commons}&license=CC-BY-SA-2.5&limit=1000")
         assertEquals(gs, 200, gb)
-        assert(decode[List[MediaGeoHit]](gb).exists(_.exists(_.uid == t.uid)), gb)
+        assert(RawJson.decode[List[MediaGeoHit]](gb).exists(_.exists(_.uid == t.uid)), gb)
         val (cs, cb) = send("POST", s"$url/api/media/fill-licences", "")
         assertEquals(cs, 200, cb)
-        assert(decode[FigureLicenceFill](cb).exists(!_.applied.value), cb)
+        assert(RawJson.decode[FigureLicenceFill](cb).exists(!_.applied.value), cb)
       finally b.stop()
     }
 
@@ -248,7 +249,10 @@ class MediaHttpSuite extends DbSuite:
         assert(bb.contains("not a Wikidata item id"), bb)
         val (ok, ob) = send("PATCH", s"$url/api/events/$EventId", """{"wikidata":"Q132564"}""")
         assertEquals(ok, 200, ob)
-        assertEquals(decode[EventDetail](get(s"$url/api/events/$EventId")._2).map(_.wikidata), Right(Some("Q132564")))
+        assertEquals(
+          RawJson.decode[EventDetail](get(s"$url/api/events/$EventId")._2).map(_.wikidata),
+          Right(Some("Q132564"))
+        )
         val (ds2, db2) =
           send("POST", s"$url/api/media/import", s"""{"event":"$EventId","dryRun":true,"provider":"bogus"}""")
         assertEquals(ds2, 400, db2)

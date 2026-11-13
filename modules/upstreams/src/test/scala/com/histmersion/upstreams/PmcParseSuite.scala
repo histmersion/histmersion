@@ -1,7 +1,8 @@
 package com.histmersion
 package upstreams
-
-import io.circe.parser.parse
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
 import com.histmersion.upstreams.europepmc.EuropePmcHit
 import com.histmersion.upstreams.parse.AcquireParse
 import com.histmersion.upstreams.pmc.PmcObject
@@ -16,7 +17,7 @@ import com.histmersion.plugin.WorkKey
 class PmcParseSuite extends munit.FunSuite:
 
   private def text(name: String) = scala.io.Source.fromResource(s"acquire/$name").mkString
-  private def json(name: String) = parse(text(name)).fold(throw _, identity)
+  private def json(name: String) = RawJson.parse(text(name)).fold(e => throw IllegalArgumentException(e), identity)
 
   test("an open-access hit: its PMCID and only the free PDF links"):
     val hit = AcquireParse.europepmcHit(json("europepmc_oa.json"), Doi("10.1038/nature25778"))

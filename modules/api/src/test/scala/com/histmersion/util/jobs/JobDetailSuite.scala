@@ -1,5 +1,7 @@
 package com.histmersion
 package util.jobs
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -7,8 +9,6 @@ import com.histmersion.api.exchange.InitPlan
 import com.histmersion.api.jobs.JobDetail
 import com.histmersion.api.catalogue.SkippedPeriod
 import com.histmersion.api.maintenance.VacuumPlan
-import io.circe.parser.decode
-import io.circe.syntax.*
 import com.histmersion.api.RegisteredJobKinds
 import com.histmersion.api.maintenance.Vacuum
 import com.histmersion.api.catalogue.Period
@@ -27,7 +27,7 @@ class JobDetailSuite extends munit.FunSuite:
 
   test("a value read back in another key order (as jsonb keeps it) is written in its field's order"):
     val stored = """{"vacuum": {"tables": ["sources"], "analyze": true}, "skippedPeriodCount": 0, "init": null}"""
-    val d = decode[JobDetail](stored).fold(e => fail(e.getMessage), identity)
+    val d = RawJson.decode[JobDetail](stored).fold(e => fail(e), identity)
     assertEquals(
       d,
       VacuumPlan.Detail(Some(VacuumPlan(analyze = VacuumPlan.Analyze(true), List(Vacuum.Request.Tables("sources")))))
@@ -35,7 +35,7 @@ class JobDetailSuite extends munit.FunSuite:
     assert(d.asJson.noSpaces.contains(""""vacuum":{"analyze":true,"tables":["sources"]}"""), d.asJson.noSpaces)
 
   test("defaults and unknown keys are not held, so a detail of defaults is the empty one"):
-    val d = decode[JobDetail]("""{"skippedPeriods": [], "about": null, "later": 1}""").toOption
+    val d = RawJson.decode[JobDetail]("""{"skippedPeriods": [], "about": null, "later": 1}""").toOption
     assertEquals(d, Some(JobDetail.empty))
 
   test("a field set, changed and read; a value of the wrong shape fails the whole detail"):
@@ -45,4 +45,4 @@ class JobDetailSuite extends munit.FunSuite:
     assertEquals(SkippedPeriod.SkippedCount.of(d), 2)
     assertEquals(InitPlan.Detail.of(d).map(_.gazetteer), Some(true))
     assertEquals(SkippedPeriod.Skipped.of(d), Nil)
-    assert(decode[JobDetail]("""{"skippedPeriodCount": "two"}""").isLeft)
+    assert(RawJson.decode[JobDetail]("""{"skippedPeriodCount": "two"}""").isLeft)

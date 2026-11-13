@@ -12,7 +12,7 @@ import com.histmersion.api.catalogue.{Geocode, Period, Year}
 import com.histmersion.api.checks.Lint
 import com.histmersion.api.given
 
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.library.Source
@@ -73,7 +73,7 @@ object EnrichSource:
   // ── LLM answers (their JSON schemas are what the provider is asked to fill) ─────────────────────
 
   /** A year as the source states it. The model never converts; [[AgentVerify.toSignedYear]] does. */
-  final case class StatedYear(value: ToSignedYearValue, unit: YearUnit.Wire) derives KindlingsCodecAsObject
+  final case class StatedYear(value: ToSignedYearValue, unit: YearUnit.Wire) derives JsonCodec
   object StatedYear:
     given Schema[StatedYear] = KindlingsSchema
       .derived[StatedYear]
@@ -84,7 +84,7 @@ object EnrichSource:
       )
 
   final case class StatedPeriod(start: StatedYear, end: StatedYear, name: Option[StatedPeriod.Name] = None)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
@@ -100,7 +100,7 @@ object EnrichSource:
       period: Option[StatedPeriod],
       status: com.histmersion.domain.library.Source.Status.Wire,
       statusEvidence: Classification.StatusEvidence
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object Classification:
     type Summary = Summary.T
     object Summary extends Newtype[String, Pure]
@@ -130,7 +130,7 @@ object EnrichSource:
       periodName: Option[FindingProposal.PeriodName],
       tags: List[Tag] = Nil,
       confidence: com.histmersion.domain.library.Confidence.Wire
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
   object FindingProposal:
     type Claim = Claim.T
     object Claim extends Newtype[String, Pure]
@@ -153,14 +153,11 @@ object EnrichSource:
       .modify(_.confidence)(_.description("high | medium | low | contested — how firmly the SOURCE states it"))
 
   final case class Findings(findings: List[FindingProposal] = Nil)
-      derives KindlingsCodecAsObject,
+      derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
-  final case class Notes(notes: Notes.Value)
-      derives KindlingsCodecAsObject,
-        KindlingsSchema,
-        com.histmersion.api.json.Schema
+  final case class Notes(notes: Notes.Value) derives JsonCodec, KindlingsSchema, com.histmersion.api.json.Schema
 
   object Notes:
     type Value = Value.T
@@ -169,8 +166,7 @@ object EnrichSource:
   // ── checkpointed intermediate values ───────────────────────────────────────────────────────────
 
   /** One stretch of the body sent to the findings step; `heading` is the nearest heading above it. */
-  final case class Window(index: Window.Index, heading: Option[Window.Heading], text: Window.Text)
-      derives KindlingsCodecAsObject
+  final case class Window(index: Window.Index, heading: Option[Window.Heading], text: Window.Text) derives JsonCodec
 
   object Window:
     type Index = Index.T
@@ -202,7 +198,7 @@ object EnrichSource:
       windows: List[Window],
       tags: List[Tag] = Nil,
       doi: Option[Doi] = None
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   object Loaded:
     type Title = Title.T
@@ -234,7 +230,7 @@ object EnrichSource:
       tags: List[Tag],
       confidence: VerifiedFinding.Confidence,
       placeKind: Option[Geocode.KindHint] = None
-  ) derives KindlingsCodecAsObject:
+  ) derives JsonCodec:
     /** The finding's own period, for a time-aware choice among dated places. */
     def period: Option[Period] = (start, end) match
       case (Some(s), Some(e)) => Some(Period(s, e))
@@ -262,7 +258,7 @@ object EnrichSource:
       findings: List[VerifiedFinding],
       proposed: Option[VerifiedFindings.Proposed] = None,
       quoteFailed: Option[VerifiedFindings.QuoteFailed] = None
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   object VerifiedFindings:
     type Proposed = Proposed.T
@@ -280,7 +276,7 @@ object EnrichSource:
       placeId: Option[com.histmersion.domain.catalogue.Place.Id],
       label: Option[GeocodeChoice.Label],
       approximate: Option[GeocodeChoice.Approximate]
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   object GeocodeChoice:
     type Claim = Claim.T
@@ -293,7 +289,7 @@ object EnrichSource:
     object Approximate extends Newtype[String, Pure]
 
   /** The `geocode` step: the findings with their points, and every choice behind them. */
-  final case class Geocoded(findings: List[Finding.Input], choices: List[GeocodeChoice]) derives KindlingsCodecAsObject
+  final case class Geocoded(findings: List[Finding.Input], choices: List[GeocodeChoice]) derives JsonCodec
 
   /** A classification whose period has been converted to signed years. */
   final case class Classified(
@@ -305,7 +301,7 @@ object EnrichSource:
       periodName: Option[StatedPeriod.Name],
       status: Source.Status,
       statusEvidence: Classified.StatusEvidence
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   object Classified:
     type Summary = Summary.T
@@ -317,7 +313,7 @@ object EnrichSource:
       findingsAdded: Patched.FindingsAdded,
       fieldsSet: List[Patched.FieldsSet],
       statusProposal: Option[Patched.StatusProposal]
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   object Patched:
     type FindingsAdded = FindingsAdded.T
@@ -334,7 +330,7 @@ object EnrichSource:
       checked: MetaChecked.Checked,
       differences: List[MetaChecked.Differences],
       note: MetaChecked.Note = MetaChecked.Note("")
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   object MetaChecked:
     type Checked = Checked.T
@@ -349,7 +345,7 @@ object EnrichSource:
       ran: Upstreamed.Ran,
       summary: Upstreamed.Summary,
       retracted: Upstreamed.Retracted = Upstreamed.Retracted(false)
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   object Upstreamed:
     type Ran = Ran.T
@@ -366,7 +362,7 @@ object EnrichSource:
       applied: Option[StatusRouted.Applied],
       approval: Option[StatusRouted.Approval],
       note: StatusRouted.Note
-  ) derives KindlingsCodecAsObject
+  ) derives JsonCodec
 
   object StatusRouted:
     type Applied = Applied.T
@@ -377,8 +373,7 @@ object EnrichSource:
     object Note extends Newtype[String, Pure]
 
   /** The `close` step: the per-source lint, the acquisition item and the log line. */
-  final case class Closed(line: Closed.Line, lint: List[Closed.Lint], acquire: Option[Closed.Acquire])
-      derives KindlingsCodecAsObject
+  final case class Closed(line: Closed.Line, lint: List[Closed.Lint], acquire: Option[Closed.Acquire]) derives JsonCodec
 
   object Closed:
     type Line = Line.T

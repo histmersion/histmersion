@@ -1,5 +1,9 @@
 package com.histmersion
 package server.agents
+import com.histmersion.util.json.RawJson
+import com.histmersion.api.json.NewtypeCodecs.given
+import hearth.kindlings.jsoniterjson.Json
+import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 import io.scalaland.chimney.dsl.*
@@ -18,7 +22,6 @@ import com.histmersion.api.automation.PlanQuota
 import com.histmersion.api.automation.Agents.{ModelRef, ProviderKind}
 import com.histmersion.api.automation.PlanQuota.*
 import com.histmersion.domain.automation.agents.PlanQuotaRepo
-import io.circe.{parser, Json}
 
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.{ConcurrentHashMap, Semaphore, TimeUnit}
@@ -597,7 +600,7 @@ object PlanPools:
     * API key where the plan is wanted, is Missing; an answer that is not JSON is Unknown.
     */
   def claudeLogin(out: AgentDoctor.Output, useApiKey: ClaudeCodeConfig.UseApiKey): Login =
-    if parser.parse(out.value.trim).isLeft then
+    if RawJson.parse(out.value.trim).isLeft then
       Login.Unknown(
         Problem.Unclassified(Legacy.Text(s"'claude auth status' did not answer JSON: ${out.value.take(200)}"))
       )
@@ -689,14 +692,14 @@ object PlanPools:
       )
 
   private def num(j: Json, k: String): Option[Double] =
-    j.hcursor.downField(k).as[Double].toOption
+    j.cursor.downField(k).as[Double].toOption
 
   /** Claude's `rate_limit_event.rate_limit_info` → readings (§3a P1): every `unifiedWindows` entry (`five_hour`,
     * `seven_day`, …; `utilization` 0–1, `resetsAt` epoch s), else the representative window; `status: rejected` marks
     * the window it names refused.
     */
   def claudeReadings(info: Json, source: Source, now: PlanQuota.Now): List[Reading] =
-    val c = info.hcursor
+    val c = info.cursor
     val status = c.downField("status").as[String].toOption
     val repKind = c.downField("rateLimitType").as[String].toOption
     val repReset = c.downField("resetsAt").as[Long].toOption.map(s => Reading.ResetsAt(s * 1000))
@@ -707,7 +710,7 @@ object PlanPools:
           Reading.Limit("claude"),
           Reading.Kind(kind),
           Reading.UsedPct(u * 100),
-          w.hcursor.downField("resetsAt").as[Long].toOption.map(s => Reading.ResetsAt(s * 1000)),
+          w.cursor.downField("resetsAt").as[Long].toOption.map(s => Reading.ResetsAt(s * 1000)),
           rejected = Reading.Rejected(status.contains("rejected") && repKind.contains(kind)),
           Reading.ObservedAt(now.value),
           source
@@ -773,7 +776,7 @@ object PlanPools:
       Option[(Problem, Option[PlanQuotaRepo.Pool.RefusalUntil])],
       Option[PlanQuotaRepo.Pool.PlanType]
   ) =
-    val c = result.hcursor
+    val c = result.cursor
     val buckets: List[Json] =
       c.downField("rateLimitsByLimitId")
         .focus
@@ -782,12 +785,12 @@ object PlanPools:
         .filter(_.nonEmpty)
         .getOrElse(c.downField("rateLimits").focus.toList)
     val rs = buckets.flatMap { b =>
-      val bc = b.hcursor
+      val bc = b.cursor
       val limit = bc.downField("limitId").as[String].toOption.getOrElse("codex")
       val reached = bc.downField("rateLimitReachedType").focus.exists(!_.isNull)
       val model = bc.downField("normalModelSlug").as[String].toOption.filter(_ => limit != "codex")
       List("primary", "secondary").flatMap(k => bc.downField(k).focus.filterNot(_.isNull)).flatMap { w =>
-        val wc = w.hcursor
+        val wc = w.cursor
         for
           used <- wc.downField("usedPercent").as[Double].toOption
           mins <- wc.downField("windowDurationMins").as[Long].toOption
@@ -817,7 +820,7 @@ object PlanPools:
         )
       )
     val plan = buckets
-      .flatMap(_.hcursor.downField("planType").as[String].toOption)
+      .flatMap(_.cursor.downField("planType").as[String].toOption)
       .headOption
       .map(PlanQuotaRepo.Pool.PlanType(_))
     (rs, refusal, plan)
@@ -848,20 +851,20 @@ object PlanPools:
           Iterator
             .continually(lines.readLine())
             .takeWhile(_ != null)
-            .flatMap(l => parser.parse(l).toOption)
-            .find(j => j.hcursor.downField("id").as[Int].toOption.contains(2))
+            .flatMap(l => RawJson.parse(l).toOption)
+            .find(j => j.cursor.downField("id").as[Int].toOption.contains(2))
         }
         reader.get(math.max(1, timeoutSeconds.value).toLong, TimeUnit.SECONDS) match
           case None =>
             Left(Problem.Unclassified(Legacy.Text("codex app-server ended without answering account/rateLimits/read")))
           case Some(j) =>
-            j.hcursor
+            j.cursor
               .downField("result")
               .focus
               .toRight(
                 Problem.Unclassified(
                   Legacy.Text(
-                    s"account/rateLimits/read: ${j.hcursor.downField("error").downField("message").as[String].getOrElse(j.noSpaces.take(200))}"
+                    s"account/rateLimits/read: ${j.cursor.downField("error").downField("message").as[String].getOrElse(j.noSpaces.take(200))}"
                   )
                 )
               )

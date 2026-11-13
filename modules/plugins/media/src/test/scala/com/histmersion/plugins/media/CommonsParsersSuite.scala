@@ -1,5 +1,9 @@
 package com.histmersion
 package plugins.media
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.JsonCodec.given
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.testsupport.ComparedByValue.given
@@ -8,8 +12,6 @@ import com.histmersion.config.AppConfig
 import com.histmersion.plugin.*
 import com.histmersion.pluginhost.{FirstPartySettings, HostLicences}
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.circe.Json
-import io.circe.parser.parse as json
 import org.ekrich.config.ConfigFactory
 
 import java.nio.charset.StandardCharsets.UTF_8
@@ -56,8 +58,9 @@ class CommonsParsersSuite extends munit.FunSuite:
     )
     assert(!t.value.contains("extmetadata") && !t.value.contains("maxlag"), t)
 
-  private val imageinfo = json(
-    """{"query":{
+  private val imageinfo = RawJson
+    .parse(
+      """{"query":{
     "normalized":[{"from":"File:a.jpg","to":"File:A.jpg"}],
     "pages":[
       {"title":"File:Gone.jpg","missing":true},
@@ -65,7 +68,9 @@ class CommonsParsersSuite extends munit.FunSuite:
         "thumburl":"https://up/t/1280px-A.jpg?utm_source=x","thumbwidth":1280,"thumbheight":853,
         "url":"https://up/A.jpg?utm_source=x","descriptionurl":"https://commons/wiki/File:A.jpg","mime":"image/jpeg",
         "extmetadata":{"License":{"value":"cc-by-sa-4.0"},"Artist":{"value":"<b>Ann</b>"},"Flag":{"value":true}}}]}]}}"""
-  ).toOption.get
+    )
+    .toOption
+    .get
 
   test("imageinfo: files by the title asked (normalised too), missing files as Left, URLs untracked"):
     val m = Commons.imageInfo(imageinfo).toOption.get
@@ -83,7 +88,7 @@ class CommonsParsersSuite extends munit.FunSuite:
     assertEquals(a.meta.get(Commons.File.MetaKey("Flag")), Some("true"))
 
   test("imageinfo: an API error is a Left for the whole answer"):
-    val err = json("""{"error":{"code":"maxlag","info":"Waiting: 6 seconds lagged."}}""").toOption.get
+    val err = RawJson.parse("""{"error":{"code":"maxlag","info":"Waiting: 6 seconds lagged."}}""").toOption.get
     assertEquals(Commons.imageInfo(err).left.toOption.map(_.legacyText.takeWhile(_ != ':')), Some("maxlag"))
 
   // ── rights ───────────────────────────────────────────────────────────────────────────────────
