@@ -2,7 +2,7 @@ package com.histmersion
 package util.basemap
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.api.BBox
 import com.histmersion.config.*

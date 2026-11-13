@@ -1,7 +1,7 @@
 package com.histmersion
 package util.problem
 
-import api.problem.Text.sentence
+import util.problem.Text.sentence
 import ProblemLog.line
 
 /** The log line of every case: its group and case, each of its fields by name, then its English sentence. */

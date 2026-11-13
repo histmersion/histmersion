@@ -5,7 +5,7 @@ import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.JsonCodec.given
 
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.config.{AppConfig, LoadedConfig}
 import com.histmersion.api.plugins.{PluginState, PluginStatus}

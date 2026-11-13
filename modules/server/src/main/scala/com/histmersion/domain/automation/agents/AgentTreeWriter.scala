@@ -5,7 +5,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.automation.Agents.GenerateResult
 import com.histmersion.util.storage.{ByteSource, Store}
 import java.nio.charset.StandardCharsets.UTF_8

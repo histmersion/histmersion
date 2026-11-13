@@ -3,7 +3,7 @@ package domain.library.workflows
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.JsonCodec.given
 
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.domain.{AgentVerify, CompareRuns}
 import com.histmersion.domain.CompareRuns.{EnrichSide, Run, Step}
 import com.histmersion.domain.EnrichSource.{Classified, Findings, Geocoded, VerifiedFindings}

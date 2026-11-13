@@ -2,7 +2,7 @@ package com.histmersion
 package domain.catalogue.places
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.util.problem.Problem
 
 import hearth.kindlings.optics.syntax.*

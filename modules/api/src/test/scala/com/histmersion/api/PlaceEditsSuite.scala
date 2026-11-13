@@ -6,7 +6,7 @@ import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson
 
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*

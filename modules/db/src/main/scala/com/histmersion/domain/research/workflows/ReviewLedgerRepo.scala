@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.research.workflows
 
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.util.database.Jsonb
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.domain.ReviewLedger.Ledger

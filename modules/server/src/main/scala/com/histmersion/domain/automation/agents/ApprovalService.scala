@@ -3,7 +3,7 @@ package domain.automation.agents
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.Cursor
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.api.Paging

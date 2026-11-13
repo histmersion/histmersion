@@ -2,7 +2,7 @@ package com.histmersion
 package plugin.testkit.internal
 
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.plugin.Plugin
 import com.histmersion.domain.CoreQuota
 import com.histmersion.plugin.testkit.{HttpMode, PluginHarness, UnrecordedRequest}

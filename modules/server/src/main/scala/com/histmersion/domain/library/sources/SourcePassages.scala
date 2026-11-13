@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.sources
 
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.util.database.Transactor
 import com.histmersion.domain.PassageFinder
 import com.histmersion.domain.catalogue.evidence.passages.{Passage, PassageReader}

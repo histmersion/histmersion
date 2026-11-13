@@ -1,7 +1,7 @@
 package com.histmersion
 package util.data.maintenance
 
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import java.nio.charset.StandardCharsets.UTF_8
 import com.histmersion.util.process.{Processes, ProcessLaunch, ProcessOutput}
 import com.histmersion.util.storage.{ByteSource, Store}

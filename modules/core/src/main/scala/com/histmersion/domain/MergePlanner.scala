@@ -5,7 +5,7 @@ import hearth.kindlings.jsoniterjson.JsonObject
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.exchange.MergeIssue
 import com.histmersion.api.exchange.MergeDecision
 

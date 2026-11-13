@@ -1,7 +1,7 @@
 package com.histmersion
 package web.settings
 
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.Wording
 import com.histmersion.api.plugins.{PluginSet, PluginState, PluginStatus}
 import com.histmersion.api.instance.UiConfig

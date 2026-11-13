@@ -1,7 +1,7 @@
 package com.histmersion
 package api.library
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.api.exchange.MergeIssue
 import com.histmersion.api.{Ascii, WireEnumValues}

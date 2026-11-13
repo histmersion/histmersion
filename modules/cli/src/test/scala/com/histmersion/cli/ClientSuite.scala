@@ -1,7 +1,7 @@
 package com.histmersion
 package cli
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 
 /** What the CLI says when the server answers outside an endpoint's contract. */
 class ClientSuite extends munit.FunSuite:

@@ -1,7 +1,7 @@
 package com.histmersion
 package api.research
 
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.Plural
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure

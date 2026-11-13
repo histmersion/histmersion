@@ -14,7 +14,7 @@ import json.NewtypeCodecs.given
 import util.problem.{NonEmptyVector, Problem, Problems}
 import util.problem.Problem.*
 import Answer.Entry
-import Text.sentence
+import util.problem.Text.sentence
 
 /** The body of every failed request: `{"problems": [{"group", "case", "data", "text"}]}`, always a list. `data` is the
   * case's fields as its derived codec writes them; `text` is its English sentence, for `curl` and for clients that do

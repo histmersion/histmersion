@@ -1,7 +1,7 @@
 package com.histmersion
 package cli
 
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.config.*
 import java.nio.file.Files
 import com.histmersion.api.exchange.EditionsPolicy

@@ -1,6 +1,6 @@
 package com.histmersion
 package server
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.util.settings.{info, ConfigSource}
 

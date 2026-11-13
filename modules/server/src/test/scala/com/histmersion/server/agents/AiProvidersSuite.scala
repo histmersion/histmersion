@@ -3,7 +3,7 @@ package server.agents
 import com.histmersion.domain.automation.agents.SttpAiJson
 import com.histmersion.domain.automation.agents.SttpAiJson.given
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.testsupport.ComparedByValue.given
 

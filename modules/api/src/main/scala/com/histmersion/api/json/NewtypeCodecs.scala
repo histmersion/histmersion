@@ -7,7 +7,7 @@ import sttp.tapir.Schema
 
 import hearth.kindlings.jsoniterjson.Json
 import util.json.{JsonCodec, RawJson}
-import api.problem.Text.sentence
+import util.problem.Text.sentence
 import util.problem.{Legacy, Problem}
 
 /** The JSON codec, key codec and tapir schema of every newtype (`type X = X.T; object X extends Newtype[Base, C]`),

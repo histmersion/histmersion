@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.catalogue.events
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.api.{BBox, YearFmt}
 import com.histmersion.api.catalogue.{

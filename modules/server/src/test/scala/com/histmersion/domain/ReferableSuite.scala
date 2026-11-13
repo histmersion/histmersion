@@ -1,7 +1,7 @@
 package com.histmersion
 package domain
 
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.automation.goals.GoalReferable
 import com.histmersion.domain.catalogue.CatalogueReferable

@@ -4,7 +4,7 @@ import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.json.RawJson.asLong
 
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
 

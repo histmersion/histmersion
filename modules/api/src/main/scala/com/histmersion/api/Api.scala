@@ -5,7 +5,7 @@ import com.histmersion.util.json.Cursor
 import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import sttp.tapir.*
 import com.histmersion.api.json.TapirJson.*
 import sttp.model.StatusCode

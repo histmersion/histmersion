@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.goals
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 
 import io.scalaland.chimney.dsl.*
 

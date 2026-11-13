@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.agents
 
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.server.agents.Codex
 
 import scala.annotation.tailrec

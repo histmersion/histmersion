@@ -1,7 +1,7 @@
 package com.histmersion
 package web
 
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.{Plural, UiLabels, Wording}
 import com.histmersion.api.automation.Goal.Plans.{GoalView, LinkKind, ScheduleKind}
 import com.histmersion.api.automation.Managers.{ManagerInfo, ManagerItem}

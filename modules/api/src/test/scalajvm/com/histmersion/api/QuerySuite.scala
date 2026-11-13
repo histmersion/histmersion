@@ -1,7 +1,7 @@
 package com.histmersion
 package api
 
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.library.Query.*

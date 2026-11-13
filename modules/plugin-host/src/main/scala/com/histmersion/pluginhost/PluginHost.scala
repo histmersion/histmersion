@@ -2,7 +2,7 @@ package com.histmersion
 package pluginhost
 
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.config.EnvOverrides
 import com.histmersion.api.Sha256
 import com.histmersion.api.plugins.{PluginJar, PluginSet, PluginSetting, PluginsReport, PluginState, PluginStatus}

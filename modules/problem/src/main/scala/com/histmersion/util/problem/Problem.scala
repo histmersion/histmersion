@@ -575,14 +575,12 @@ object Problem:
       case _: Stored       => Group.Stored
 
     /** TEMPORARY (G60 step 1, counted by `G60fromString`): the words of an [[Unclassified]] problem as its site wrote
-      * them, for the modules that cannot see the api's renderer `api.problem.Text` (plugin-api, upstreams, the plugins,
-      * plugin-vaults, plugin-resolver, values, config). Every problem those modules meet is unclassified until their
-      * slice moves them to cases and renders them at an edge; any other case shows as Scala prints it. Goes with
-      * `Unclassified`.
+      * them, and the [[Text.sentence]] of any other case, for the code that still builds one problem's text into
+      * another's until its slice. Goes with `Unclassified`.
       */
     def legacyText: String = problem match
       case Unclassified(text) => s"$text"
-      case other              => s"$other"
+      case other              => Text.sentence(other)
 
     /** Is it a missing entity? */
     def isNotFound: Boolean = problem match

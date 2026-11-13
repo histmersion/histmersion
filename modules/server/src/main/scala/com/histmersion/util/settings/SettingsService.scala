@@ -2,7 +2,7 @@ package com.histmersion
 package util.settings
 
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.config.{AppConfig, LoadedConfig, SetupConfig}
 import com.histmersion.config.edit.*
 import org.ekrich.config.{Config, ConfigFactory, ConfigParseOptions, ConfigSyntax}

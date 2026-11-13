@@ -1,11 +1,9 @@
 package com.histmersion
-package api
-package problem
+package util.problem
 
 import java.time.Instant
 
-import util.problem.{External, NonEmptyVector, Problem, Problems}
-import util.problem.Problem.*
+import Problem.*
 
 /** The English sentence of every problem: what the HTTP body's `text`, the CLI's `error:` line, the MCP tool's error
   * and the web's error line show. It may change wording freely; what a column stores is [[Stored]]'s, frozen.

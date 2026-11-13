@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.media.figures
 
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.util.data.maintenance.WriteGate
 
 /** The licence fill's controller: a dry run always answers; writing is refused while the maintenance lock is held. */
