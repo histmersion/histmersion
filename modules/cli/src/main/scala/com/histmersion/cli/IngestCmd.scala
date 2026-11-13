@@ -3,8 +3,6 @@ package cli
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.problem.{Legacy, Problem}
 
-import cats.syntax.all.*
-import com.monovore.decline.*
 import com.histmersion.api.Api
 import com.histmersion.config.*
 
@@ -15,6 +13,7 @@ import com.histmersion.api.library.{AuthorName, Citekey, Doi, Title}
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.SpatialHierarchyResult.Job
 import com.histmersion.util.console.Console
+import com.histmersion.api.automation.ListFilters
 import com.histmersion.api.Paging
 
 /** `histmersion ingest <file>` · `reocr` · `assets` · `jobs` — OCR that keeps the figures, as a job (plan §1.8).
@@ -91,68 +90,42 @@ object IngestCmd:
         if noWait.value then Right(()) else pollJob(c, a.jobId, 0)
       }
 
-  private def reocr(using console: Console) =
-    Opts.subcommand("reocr", "Convert a source's stored original again (e.g. under the slow, accurate OCR path)") {
-      (
-        Opts.argument[String]("citekey"),
-        Opts.flag("quality", "Slow, accurate OCR (docling)").orFalse,
-        Opts.flag("no-wait", "Print the job id and return instead of following it").orFalse
-      )
-        .mapN { (ck, quality, noWait) => (c: Client) =>
-          c.reocr(Citekey(ck), Api.Overwrite(quality)).flatMap { a =>
-            Cli.out.println(s"queued job ${a.jobId} for ${a.citekey}")
-            if noWait then Right(()) else pollJob(c, a.jobId, 0)
-          }
-        }
-    }
-
-  private def assets(using console: Console) =
-    Opts.subcommand("assets", "The figures stored with a source, and the URLs they are served at") {
-      Opts
-        .argument[String]("citekey")
-        .map(ck =>
-          (c: Client) =>
-            c.assets(Citekey(ck)).map(rows => Cli.out.println(IngestMarkdown.assets(Citekey(ck), rows.toVector)))
-        )
-    }
-
-  /** `histmersion jobs pause|resume|cancel <id>`. */
-  private def control(action: Api.JobControl.Action, help: String)(using
-      console: Console
-  ): Opts[Client => Either[Cli.Error, Unit]] =
-    Opts.subcommand(action.value, help) {
-      (Opts.argument[String]("id"), Output.jsonFlag).mapN { (id, json) => (c: Client) =>
-        c.call(Api.jobControl)((Job.Id(id), action)).map(j => Output.emit(json, j)(IngestMarkdown.job))
-      }
-    }
-
-  private def controls(using console: Console) =
-    control(
-      Api.JobControl.Action("pause"),
+  /** The help of `jobs pause|resume|cancel`. */
+  object ControlHelp:
+    val pause: String =
       "Pause a long background job (a picture or event import, a base-map download, an acquisition " +
         "re-check, the init job's gazetteer loads) after the part it is on — or an agent run; it keeps what it did"
-    ) orElse
-      control(Api.JobControl.Action("resume"), "Resume a paused job: it goes on with the parts it had not done") orElse
-      control(
-        Api.JobControl.Action("cancel"),
-        "Cancel a job: a background job stops after the part it is on and is recorded as cancelled"
-      )
+    val resume: String = "Resume a paused job: it goes on with the parts it had not done"
+    val cancel: String = "Cancel a job: a background job stops after the part it is on and is recorded as cancelled"
 
-  private def jobs(using console: Console) = Opts.subcommand(
-    "jobs",
-    "Recent background jobs (OCR, imports, agent runs, …), filtered on the server, " +
-      "or one job by id; `jobs pause|resume|cancel <id>` controls one"
-  ) {
-    controls orElse (
-      Opts.argument[String]("id").orNone,
-      ListOpts.jobs,
-      Opts.option[Int]("limit", "Max rows").orNone,
-      Opts
-        .option[String]("before", "The next older page: the id of the last job shown (the listing prints the command)")
-        .orNone,
-      Output.jsonFlag
+  /** What `histmersion …` of this group was asked to do, every argument parsed. */
+  enum Command extends Cli.Command:
+    case Reocr(ck: String, quality: Boolean, noWait: Boolean)
+    case Assets(ck: String)
+    case Jobs(
+        id: Option[String],
+        filter: ListFilters.JobFilter,
+        limit: Option[Int],
+        before: Option[String],
+        json: Cli.JsonOutput
     )
-      .mapN { (id, f, limit, before, json) => (c: Client) =>
+    case Control(action: Api.JobControl.Action, id: String, json: Cli.JsonOutput)
+
+    def run(c: Client)(using Console): Either[Cli.Error, Unit] = IngestCmd.run(c, this)
+
+  /** Carry out one command against the server. */
+  def run(c: Client, cmd: Command)(using console: Console): Either[Cli.Error, Unit] =
+    cmd match
+      case Command.Reocr(ck, quality, noWait) =>
+        c.reocr(Citekey(ck), Api.Overwrite(quality)).flatMap { a =>
+          Cli.out.println(s"queued job ${a.jobId} for ${a.citekey}")
+          if noWait then Right(()) else pollJob(c, a.jobId, 0)
+        }
+      case Command.Assets(ck) =>
+        c.assets(Citekey(ck)).map(rows => Cli.out.println(IngestMarkdown.assets(Citekey(ck), rows.toVector)))
+      case Command.Control(action, id, json) =>
+        c.call(Api.jobControl)((Job.Id(id), action)).map(j => Output.emit(json, j)(IngestMarkdown.job))
+      case Command.Jobs(id, f, limit, before, json) =>
         id match
           case Some(i) => c.job(Job.Id(i)).map(j => Output.emit(json, j)(IngestMarkdown.job))
           case None    =>
@@ -172,7 +145,3 @@ object IngestCmd:
                 )
               )
             }
-      }
-  }
-
-  def all(using console: Console): Opts[Client => Either[Cli.Error, Unit]] = reocr orElse assets orElse jobs

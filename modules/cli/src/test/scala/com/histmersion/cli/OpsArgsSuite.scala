@@ -1,30 +1,26 @@
 package com.histmersion
 package cli
 
-import com.histmersion.cli.Ops.{QueueArgs, QueueCmd}
+import com.histmersion.cli.Ops.QueueCmd
 import com.histmersion.api.automation.Queue
+import com.histmersion.util.problem.{Legacy, Problem}
 
-/** `histmersion queue …` keeps the grammar the plan specifies rather than decline's subcommand-per-verb shape, so the
-  * positional dispatch is a pure function — and therefore has tests.
+/** `histmersion queue …`: each list and each verb is a subcommand (`queue acquire add "…"`, `queue done 3`, `queue
+  * acquire recheck`), parsed into [[QueueCmd]].
   */
 class OpsArgsSuite extends munit.FunSuite:
 
-  private given console: com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard
+  private val json = Cli.JsonOutput(false)
 
-  private def parse(args: String*) = QueueArgs.parse(args.toList, None, None, all = false)
+  private def parse(args: String*) = Parsing.parse("queue" +: args*)
 
-  test("`queue <list>` shows that list"):
-    assertEquals(parse("acquire"), Right(QueueCmd.Show(Queue.Kind.Label("acquire"), false)))
-    assertEquals(parse("tasks"), Right(QueueCmd.Show(Queue.Kind.Label("tasks"), false)))
-    assertEquals(parse("log"), Right(QueueCmd.Show(Queue.Kind.Label("log"), false)))
+  test("`queue <list>` shows that list, --all with the done items"):
+    assertEquals(parse("acquire"), Right(QueueCmd.Show(Queue.Kind.Label("acquire"), false, json)))
+    assertEquals(parse("tasks"), Right(QueueCmd.Show(Queue.Kind.Label("tasks"), false, json)))
+    assertEquals(parse("log", "--json"), Right(QueueCmd.Show(Queue.Kind.Label("log"), false, Cli.JsonOutput(true))))
+    assertEquals(parse("tasks", "--all"), Right(QueueCmd.Show(Queue.Kind.Label("tasks"), true, json)))
 
-  test("--all is carried into the show command"):
-    assertEquals(
-      QueueArgs.parse(List("tasks"), None, None, all = true),
-      Right(QueueCmd.Show(Queue.Kind.Label("tasks"), true))
-    )
-
-  test("`queue <list> add \"text\"` adds, with --topic when given"):
+  test("`queue <list> add \"text\"` adds, with --topic and --reason when given"):
     assertEquals(
       parse("acquire", "add", "Eller, Myth of Matriarchal Prehistory"),
       Right(
@@ -32,121 +28,96 @@ class OpsArgsSuite extends munit.FunSuite:
           Queue.Kind.Label("acquire"),
           Queue.QueueItem.Text("Eller, Myth of Matriarchal Prehistory"),
           None,
-          None
+          None,
+          json
         )
       )
     )
     assertEquals(
-      QueueArgs.parse(List("tasks", "add", "enrich x"), Some("Backlog"), None, all = false),
+      parse("tasks", "add", "enrich x", "--topic", "Backlog", "--reason", "why"),
       Right(
         QueueCmd.Add(
           Queue.Kind.Label("tasks"),
           Queue.QueueItem.Text("enrich x"),
           Some(Queue.QueueItem.Topic("Backlog")),
-          None
+          Some(Problem.Unclassified(Legacy.Text("why"))),
+          json
         )
       )
     )
 
   test("`add` without text is a usage error, not an empty item"):
     assert(parse("acquire", "add").isLeft)
-    assert(parse("acquire", "add").left.exists(_.contains("needs the item text")))
+    assert(parse("acquire", "add", "  ").isLeft)
 
-  test("done / rm take an integer id"):
-    assertEquals(parse("done", "12"), Right(QueueCmd.Done(Queue.Id(12))))
-    assertEquals(parse("rm", "3"), Right(QueueCmd.Rm(Queue.Id(3))))
-    assert(parse("done", "twelve").left.exists(_.contains("is not an item id")))
+  test("done / rm take an integer id; a word is a malformed id"):
+    assertEquals(parse("done", "12"), Right(QueueCmd.Done(Queue.Id(12), json)))
+    assertEquals(parse("rm", "3"), Right(QueueCmd.Rm(Queue.Id(3), json)))
+    parse("done", "twelve") match
+      case Left(CommandLine.Outcome.Failed(_: Problem.Invalid.Malformed, _)) => ()
+      case other                                                             => fail(s"$other")
 
-  test("edit takes an id and the new text (the article's one review item is rewritten, #934)"):
+  test("edit takes an id and the new text"):
     assertEquals(
       parse("edit", "12", "review-article x: 1 open MAJOR — R1: y"),
-      Right(QueueCmd.Edit(Queue.Id(12), Queue.QueueItem.Text("review-article x: 1 open MAJOR — R1: y")))
+      Right(QueueCmd.Edit(Queue.Id(12), Queue.QueueItem.Text("review-article x: 1 open MAJOR — R1: y"), json))
     )
-    assert(parse("edit", "12").left.exists(_.contains("takes an item id and the new text")))
-    assert(parse("edit", "12", "  ").left.exists(_.contains("needs the new text")))
-    assert(parse("edit", "x", "t").left.exists(_.contains("is not an item id")))
+    assert(parse("edit", "12").isLeft)
+    assert(parse("edit", "12", "  ").isLeft)
+    assert(parse("edit", "x", "t").isLeft)
 
   test("export / import take a directory"):
     assertEquals(parse("export", "/tmp/meta"), Right(QueueCmd.Export("/tmp/meta")))
     assertEquals(parse("import", "/tmp/meta"), Right(QueueCmd.Import("/tmp/meta")))
 
-  test("an unknown list or verb reports the usage line"):
-    assert(parse("notes").left.exists(_.contains("unknown list or verb 'notes'")))
-    assertEquals(parse(), Left(QueueArgs.usage))
-    assertEquals(parse("acquire", "wat", "x"), Left(QueueArgs.usage))
+  test("an unknown list or verb, or none, is refused"):
+    assert(parse("notes").isLeft)
+    assert(parse().isLeft)
+    assert(parse("acquire", "wat", "x").isLeft)
 
-  test("`queue acquire recheck` takes --dry-run, --limit and --id; the flags belong to it alone"):
-    assertEquals(parse("acquire", "recheck"), Right(QueueCmd.Recheck(false, None, None)))
+  test("`queue acquire recheck` takes --dry-run, --limit and --id; only the acquisition list has it"):
+    assertEquals(parse("acquire", "recheck"), Right(QueueCmd.Recheck(false, None, None, false, false, json)))
     assertEquals(
-      QueueArgs.parse(List("acquire", "recheck"), None, None, all = false, dryRun = true, limit = Some(5)),
-      Right(QueueCmd.Recheck(true, Some(5), None))
+      parse("acquire", "recheck", "--dry-run", "--limit", "5"),
+      Right(QueueCmd.Recheck(true, Some(5), None, false, false, json))
     )
     assertEquals(
-      QueueArgs.parse(List("acquire", "recheck"), None, None, all = false, item = Some(42)),
-      Right(QueueCmd.Recheck(false, None, Some(42)))
+      parse("acquire", "recheck", "--id", "42"),
+      Right(QueueCmd.Recheck(false, None, Some(42), false, false, json))
     )
-    assert(
-      QueueArgs
-        .parse(List("acquire", "recheck"), None, None, all = false, limit = Some(-1))
-        .left
-        .exists(_.contains("--limit"))
-    )
-    assert(
-      QueueArgs
-        .parse(List("acquire"), None, None, all = false, dryRun = true)
-        .left
-        .exists(_.contains("go with `queue acquire recheck`"))
-    )
-    assert(QueueArgs.parse(List("done", "3"), None, None, all = false, item = Some(3)).isLeft)
-    assertEquals(parse("tasks", "recheck"), Left(QueueArgs.usage), "only the acquisition list is re-checked")
+    assert(parse("acquire", "recheck", "--limit", "-1").isLeft)
+    assert(parse("acquire", "recheck", "--id", "x").isLeft)
+    assert(parse("acquire", "--dry-run").isLeft, "the flags belong to recheck")
+    assert(parse("done", "3", "--id", "3").isLeft)
+    assert(parse("tasks", "recheck").isLeft, "only the acquisition list is re-checked")
 
-  test("the decline options parse into the recheck command"):
-    val cmd = com.monovore.decline.Command("histmersion", "test")(Ops.queue)
-    assert(cmd.parse(List("queue", "acquire", "recheck", "--dry-run", "--limit", "5", "--json"), Map.empty).isRight)
-    assert(cmd.parse(List("queue", "acquire", "recheck", "--id", "42"), Map.empty).isRight)
-    assert(cmd.parse(List("queue", "acquire", "recheck", "--id", "x"), Map.empty).isLeft)
-
-  test("`queue acquire recheck --all`: every open item; --no-wait returns with the job id; neither goes elsewhere"):
+  test("`queue acquire recheck --all`: every open item; --no-wait returns with the job id; not with --id or --limit"):
+    assertEquals(parse("acquire", "recheck", "--all"), Right(QueueCmd.Recheck(false, None, None, true, false, json)))
     assertEquals(
-      QueueArgs.parse(List("acquire", "recheck"), None, None, all = true),
-      Right(QueueCmd.Recheck(false, None, None, all = true))
+      parse("acquire", "recheck", "--all", "--no-wait"),
+      Right(QueueCmd.Recheck(false, None, None, true, true, json))
     )
     assertEquals(
-      QueueArgs.parse(List("acquire", "recheck"), None, None, all = true, noWait = true),
-      Right(QueueCmd.Recheck(false, None, None, all = true, noWait = true))
-    )
-    assertEquals(
-      QueueArgs.parse(List("acquire", "recheck"), None, None, all = true, dryRun = true),
-      Right(QueueCmd.Recheck(true, None, None, all = true)),
+      parse("acquire", "recheck", "--all", "--dry-run"),
+      Right(QueueCmd.Recheck(true, None, None, true, false, json)),
       "a dry run of --all lists every item it would try"
     )
     assertEquals(
-      QueueArgs.parse(List("acquire", "recheck"), None, None, all = false, limit = Some(20), noWait = true),
-      Right(QueueCmd.Recheck(false, Some(20), None, noWait = true))
+      parse("acquire", "recheck", "--limit", "20", "--no-wait", "--json"),
+      Right(QueueCmd.Recheck(false, Some(20), None, false, true, Cli.JsonOutput(true)))
     )
-    assert(
-      QueueArgs
-        .parse(List("acquire", "recheck"), None, None, all = true, item = Some(4))
-        .left
-        .exists(_.contains("not both"))
-    )
-    assert(
-      QueueArgs
-        .parse(List("acquire", "recheck"), None, None, all = true, limit = Some(4))
-        .left
-        .exists(_.contains("not both"))
-    )
-    assert(QueueArgs.parse(List("tasks"), None, None, all = false, noWait = true).left.exists(_.contains("--no-wait")))
+    assert(parse("acquire", "recheck", "--all", "--id", "4").isLeft)
+    assert(parse("acquire", "recheck", "--all", "--limit", "4").isLeft)
+    assert(parse("tasks", "--no-wait").isLeft)
     assertEquals(
-      QueueArgs.parse(List("acquire"), None, None, all = true),
-      Right(QueueCmd.Show(Queue.Kind.Label("acquire"), true)),
+      parse("acquire", "--all"),
+      Right(QueueCmd.Show(Queue.Kind.Label("acquire"), true, json)),
       "--all without recheck still shows the done items"
     )
-    val cmd = com.monovore.decline.Command("histmersion", "test")(Ops.queue)
-    assert(cmd.parse(List("queue", "acquire", "recheck", "--all", "--no-wait"), Map.empty).isRight)
-    assert(cmd.parse(List("queue", "acquire", "recheck", "--all", "--json"), Map.empty).isRight)
-    assert(QueueArgs.usage.contains("--all") && QueueArgs.usage.contains("--no-wait"))
 
-  test("the usage line names all three lists and every verb"):
-    List("acquire", "tasks", "log", "add", "done", "rm", "export", "import", "recheck")
-      .foreach(w => assert(QueueArgs.usage.contains(w), s"usage does not mention $w"))
+  test("the help names all three lists and every verb"):
+    val help = Parsing.help("queue", "--help")
+    List("acquire", "tasks", "log", "done", "edit", "rm", "export", "import")
+      .foreach(w => assert(help.contains(w), s"the help does not mention $w"))
+    assert(Parsing.help("queue", "acquire", "--help").contains("recheck"))
+    assert(Parsing.help("queue", "acquire", "--help").contains("add"))

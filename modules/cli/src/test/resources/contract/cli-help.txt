@@ -2099,11 +2099,7 @@ Options and flags:
         Wait for the run to finish (or pause, or wait for an approval), printing its progress
 
 ==== histmersion goals link
-Usage:
-    histmersion goals link --source <string> [--note <string>] <slug>
-    histmersion goals link --article <string> [--note <string>] <slug>
-    histmersion goals link --query <string> [--note <string>] <slug>
-    histmersion goals link --item <integer> [--note <string>] <slug>
+Usage: histmersion goals link [--source <string>] [--article <string>] [--query <string>] [--item <integer>] [--note <string>] <slug>
 
 Link a goal to a source, an article, a search query or a queue item
 
@@ -2131,9 +2127,7 @@ Options and flags:
         Display this help text.
 
 ==== histmersion goals schedule
-Usage:
-    histmersion goals schedule --remove <slug> <kind>
-    histmersion goals schedule --cron <string> [--off] [--budget-usd <floating-point>] <slug> <kind>
+Usage: histmersion goals schedule [--remove] [--cron <string>] [--off] [--budget-usd <floating-point>] <slug> <kind>
 
 Set (or --remove) a goal's currency or acquisition schedule: a sweep of its watcher watch:<goal> (created paused — resume it with `agent manager watch:<goal> resume`; its one cron is shared by both sweeps); runs only while the server's agents are enabled
 
@@ -2150,7 +2144,7 @@ Options and flags:
         Cost cap of each run it starts
 
 ==== histmersion goals schedules
-Usage: histmersion goals schedules 
+Usage: histmersion goals schedules
 
 Every goal's schedules, the next due first
 
@@ -3011,7 +3005,7 @@ Options and flags:
         Print the job id and return instead of following it
 
 ==== histmersion media providers
-Usage: histmersion media providers 
+Usage: histmersion media providers
 
 The providers `media import` can run on this server: the built-in ones and any a plugin registered, with what each asks about, the plugin that provides it and the licences it may store
 
@@ -3212,9 +3206,66 @@ Options and flags:
         Print the raw JSON response instead of Markdown
 
 ==== histmersion queue
-Usage: histmersion queue [--topic <string>] [--reason <string>] [--all] [--dry-run] [--limit <integer>] [--id <integer>] [--no-wait] [--json] [<args>...]
+Usage:
+    histmersion queue acquire
+    histmersion queue tasks
+    histmersion queue log
+    histmersion queue done
+    histmersion queue edit
+    histmersion queue rm
+    histmersion queue export
+    histmersion queue import
 
 Bookkeeping queues: acquire / tasks / log — show, add, done, edit, rm, export (with the goals as GOALS.md), import; acquire recheck: the legal re-check of the acquisition list (more than one item, or --all for every item past the caps, as a server job it follows)
+
+Options and flags:
+    --help
+        Display this help text.
+
+Subcommands:
+    acquire
+        Show the acquire list (add: put an item on it)
+    tasks
+        Show the tasks list (add: put an item on it)
+    log
+        Show the log list (add: put an item on it)
+    done
+        Mark an item done
+    edit
+        Replace an item's text
+    rm
+        Remove an item
+    export
+        Write ACQUIRE.md, TASKS.md, LOG.md and GOALS.md into a directory
+    import
+        Read ACQUIRE.md, TASKS.md and LOG.md back from a directory (replacing the lists)
+
+==== histmersion queue acquire
+Usage:
+    histmersion queue acquire add
+    histmersion queue acquire recheck
+    histmersion queue acquire [--all] [--json]
+
+Show the acquire list (add: put an item on it)
+
+Options and flags:
+    --help
+        Display this help text.
+    --all
+        Include done items and the file's prose blocks
+    --json
+        Print the raw JSON response instead of Markdown
+
+Subcommands:
+    add
+        Add an item to the acquire list
+    recheck
+        The legal re-check of the acquisition list now: the due items the caps allow, or --all (more than one item runs as a server job it follows)
+
+==== histmersion queue acquire add
+Usage: histmersion queue acquire add [--topic <string>] [--reason <string>] [--json] <text>
+
+Add an item to the acquire list
 
 Options and flags:
     --help
@@ -3223,18 +3274,148 @@ Options and flags:
         Group the added item under this heading
     --reason <string>
         Why this item is on the list / what research direction it serves
-    --all
-        Include done items and the file's prose blocks; acquire recheck: every open item with a DOI, due or not, past the caps (a server job)
-    --dry-run
-        acquire recheck: list what it would close and try; no fetcher is asked, nothing stored
-    --limit <integer>
-        acquire recheck: try at most this many due items (default acquire.recheck.per-pass)
-    --id <integer>
-        acquire recheck: this acquisition item only, due or not
-    --no-wait
-        acquire recheck: print the job id and return instead of following the job
     --json
         Print the raw JSON response instead of Markdown
+
+==== histmersion queue acquire recheck
+Usage: histmersion queue acquire recheck [--all] [--dry-run] [--limit <integer>] [--id <integer>] [--no-wait] [--json]
+
+The legal re-check of the acquisition list now: the due items the caps allow, or --all (more than one item runs as a server job it follows)
+
+Options and flags:
+    --help
+        Display this help text.
+    --all
+        Every open item with a DOI, due or not, past the caps (a server job)
+    --dry-run
+        List what it would close and try; no fetcher is asked, nothing stored
+    --limit <integer>
+        Try at most this many due items (default acquire.recheck.per-pass)
+    --id <integer>
+        This acquisition item only, due or not
+    --no-wait
+        Print the job id and return instead of following the job
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion queue tasks
+Usage:
+    histmersion queue tasks add
+    histmersion queue tasks [--all] [--json]
+
+Show the tasks list (add: put an item on it)
+
+Options and flags:
+    --help
+        Display this help text.
+    --all
+        Include done items and the file's prose blocks
+    --json
+        Print the raw JSON response instead of Markdown
+
+Subcommands:
+    add
+        Add an item to the tasks list
+
+==== histmersion queue tasks add
+Usage: histmersion queue tasks add [--topic <string>] [--reason <string>] [--json] <text>
+
+Add an item to the tasks list
+
+Options and flags:
+    --help
+        Display this help text.
+    --topic <string>
+        Group the added item under this heading
+    --reason <string>
+        Why this item is on the list / what research direction it serves
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion queue log
+Usage:
+    histmersion queue log add
+    histmersion queue log [--all] [--json]
+
+Show the log list (add: put an item on it)
+
+Options and flags:
+    --help
+        Display this help text.
+    --all
+        Include done items and the file's prose blocks
+    --json
+        Print the raw JSON response instead of Markdown
+
+Subcommands:
+    add
+        Add an item to the log list
+
+==== histmersion queue log add
+Usage: histmersion queue log add [--topic <string>] [--reason <string>] [--json] <text>
+
+Add an item to the log list
+
+Options and flags:
+    --help
+        Display this help text.
+    --topic <string>
+        Group the added item under this heading
+    --reason <string>
+        Why this item is on the list / what research direction it serves
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion queue done
+Usage: histmersion queue done [--json] <id>
+
+Mark an item done
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion queue edit
+Usage: histmersion queue edit [--json] <id> <text>
+
+Replace an item's text
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion queue rm
+Usage: histmersion queue rm [--json] <id>
+
+Remove an item
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion queue export
+Usage: histmersion queue export <dir>
+
+Write ACQUIRE.md, TASKS.md, LOG.md and GOALS.md into a directory
+
+Options and flags:
+    --help
+        Display this help text.
+
+==== histmersion queue import
+Usage: histmersion queue import <dir>
+
+Read ACQUIRE.md, TASKS.md and LOG.md back from a directory (replacing the lists)
+
+Options and flags:
+    --help
+        Display this help text.
 
 ==== histmersion query
 Usage: histmersion query [--json] <sql>

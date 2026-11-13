@@ -114,9 +114,9 @@ hand.
 | `histmersion goals get [--json] <slug>` | Show one goal: sub-goals, links, schedules, approved plan |
 | `histmersion goals update [--title <string>] [--status <string>] [--notes <string>] [--budget-usd <floating-point>] [--from <integer>] [--to <integer>] <slug>` | Update goal fields (patch) |
 | `histmersion goals plan [--model <string>] [--budget-usd <floating-point>] [--follow] <slug>` | Ask the server's planner for sub-goals, search queries and works (DOIs checked upstream); nothing is created until you approve the plan (histmersion agent approve) |
-| `histmersion goals link --source <string> [--note <string>] <slug>` | Link a goal to a source, an article, a search query or a queue item |
+| `histmersion goals link [--source <string>] [--article <string>] [--query <string>] [--item <integer>] [--note <string>] <slug>` | Link a goal to a source, an article, a search query or a queue item |
 | `histmersion goals unlink <slug> <kind> <ref>` | Remove one link of a goal |
-| `histmersion goals schedule --remove <slug> <kind>` | Set (or --remove) a goal's currency or acquisition schedule: a sweep of its watcher watch:&lt;goal&gt; (created paused — resume it with `agent manager watch:<goal> resume`; its one cron is shared by both sweeps); runs only while the server's agents are enabled |
+| `histmersion goals schedule [--remove] [--cron <string>] [--off] [--budget-usd <floating-point>] <slug> <kind>` | Set (or --remove) a goal's currency or acquisition schedule: a sweep of its watcher watch:&lt;goal&gt; (created paused — resume it with `agent manager watch:<goal> resume`; its one cron is shared by both sweeps); runs only while the server's agents are enabled |
 | `histmersion goals schedules` | Every goal's schedules, the next due first |
 | `histmersion goals rename [--json] <old> <new>` | Give a goal a new slug — sub-goals, links and schedules follow. The old slug stays an alias: every read and every write that names it (put, patch, delete, rename, a reference) goes to the record under its new slug, and the answer names the new slug. |
 | `histmersion agent-state list` | List all agent state keys |
@@ -181,7 +181,18 @@ hand.
 | `histmersion asset-links add --citekey <string> --asset <string> --relation <string> --target-type <string> --target-id <string> [--xywh <string>] [--notes <string>]` | Create an asset link |
 | `histmersion asset-links rm <id>` | Delete an asset link by id |
 | `histmersion lint [--rule <string>]... [--fix] [--article <string>] [--source <string>] [--file <string>] [--json]` | Health-check the corpus (34 rules: dangling-edges, unresolved-short-citekeys, no-findings, no-period, no-regions, empty-summary, unassessed-status, duplicate-doi, duplicate-sha256, orphan-sources, stale-chunks, undated-findings, unlocated-findings, legacy-figure-links, dangling-article-links, non-canonical-tag, missing-year, year-citekey-mismatch, author-pipe, article-filler, article-uncited-paragraph, article-thin-summary, article-critique-pairing, superseded-without-edge, article-markdown, note-markdown, finding-geocode, finding-unplaced, place-kind, place-grid-point, place-imported-point-area, finding-placeholder, media-licence, event-correction-conflict) |
-| `histmersion queue [--topic <string>] [--reason <string>] [--all] [--dry-run] [--limit <integer>] [--id <integer>] [--no-wait] [--json] [<args>...]` | Bookkeeping queues: acquire / tasks / log — show, add, done, edit, rm, export (with the goals as GOALS.md), import; acquire recheck: the legal re-check of the acquisition list (more than one item, or --all for every item past the caps, as a server job it follows) |
+| `histmersion queue acquire add [--topic <string>] [--reason <string>] [--json] <text>` | Add an item to the acquire list |
+| `histmersion queue acquire recheck [--all] [--dry-run] [--limit <integer>] [--id <integer>] [--no-wait] [--json]` | The legal re-check of the acquisition list now: the due items the caps allow, or --all (more than one item runs as a server job it follows) |
+| `histmersion queue acquire [--all] [--json]` | Show the acquire list (add: put an item on it) |
+| `histmersion queue tasks add [--topic <string>] [--reason <string>] [--json] <text>` | Add an item to the tasks list |
+| `histmersion queue tasks [--all] [--json]` | Show the tasks list (add: put an item on it) |
+| `histmersion queue log add [--topic <string>] [--reason <string>] [--json] <text>` | Add an item to the log list |
+| `histmersion queue log [--all] [--json]` | Show the log list (add: put an item on it) |
+| `histmersion queue done [--json] <id>` | Mark an item done |
+| `histmersion queue edit [--json] <id> <text>` | Replace an item's text |
+| `histmersion queue rm [--json] <id>` | Remove an item |
+| `histmersion queue export <dir>` | Write ACQUIRE.md, TASKS.md, LOG.md and GOALS.md into a directory |
+| `histmersion queue import <dir>` | Read ACQUIRE.md, TASKS.md and LOG.md back from a directory (replacing the lists) |
 | `histmersion query [--json] <sql>` | Run ONE read-only SQL statement (a write is refused by Postgres itself) |
 | `histmersion schema [--json]` | List the tables and columns `query` can read (from information_schema) |
 | `histmersion discover search [--since <integer>] [--sort <string>] [--limit <integer>] [--not-in-db] [--json] <query>` | OpenAlex search for literature to ingest |

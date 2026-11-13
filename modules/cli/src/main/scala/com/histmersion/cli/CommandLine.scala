@@ -64,7 +64,16 @@ object CommandLine:
     commandline.AgentStateArgs.AgentStateEntry,
     commandline.AssetLinksArgs.AssetLinksEntry,
     commandline.ConfigArgs.ConfigEntry,
-    commandline.BasemapArgs.BasemapEntry
+    commandline.BasemapArgs.BasemapEntry,
+    commandline.OpsArgs.LintEntry,
+    commandline.OpsArgs.QueueEntry,
+    commandline.OpsArgs.QueryEntry,
+    commandline.OpsArgs.SchemaEntry,
+    commandline.IngestArgs.ReocrEntry,
+    commandline.IngestArgs.AssetsEntry,
+    commandline.IngestArgs.JobsEntry,
+    commandline.GoalsArgs.GoalsEntry,
+    commandline.MediaArgs.MediaEntry
   )
 
   private val Globals = Set("--server", "--token")

@@ -21,21 +21,39 @@ object CandidatesArgs:
     def help: String = "New sources found for the research goals without a model: list, sweep, mark"
     def conf(): Subcommand = GroupCandidates()
 
-  final private class LeafSweep() extends Leaf("histmersion candidates", "sweep", "Read a goal's saved queries, citation and author alerts from their watermarks now (no model)") with SharedFlags:
+  final private class LeafSweep()
+      extends Leaf(
+        "histmersion candidates",
+        "sweep",
+        "Read a goal's saved queries, citation and author alerts from their watermarks now (no model)"
+      )
+      with SharedFlags:
     private val goal_ = arg[String]("goal")
     private val dry_ = flag("dry-run", "Read, store nothing (no candidates, no watermarks)")
 
     def command: Either[Problem, Cli.Command] = Right(CandidatesCmd.Command.Sweep(goal_(), dry_.getOrElse(false)))
 
-  final private class LeafMark() extends Leaf("histmersion candidates", "mark", "Record a decision on candidates by id: seen, queued, dismissed (or new again)") with SharedFlags:
+  final private class LeafMark()
+      extends Leaf(
+        "histmersion candidates",
+        "mark",
+        "Record a decision on candidates by id: seen, queued, dismissed (or new again)"
+      )
+      with SharedFlags:
     private val ids_ = args[Long]("id", required = true)
     private val as_ = value[String]("as", "seen|queued|dismissed|new")
 
-    def command: Either[Problem, Cli.Command] = Right(CandidatesCmd.Command.Mark(ids_(), as_.getOrElse(Candidates.State.Seen.wire.value)))
+    def command: Either[Problem, Cli.Command] = Right(
+      CandidatesCmd.Command.Mark(ids_(), as_.getOrElse(Candidates.State.Seen.wire.value))
+    )
 
   /** `candidates [--goal g] [--state s]…` lists; `candidates sweep|mark` are the other commands. */
   final private class GroupCandidates()
-      extends Leaf("histmersion", "candidates", "New sources found for the research goals without a model: list, sweep, mark")
+      extends Leaf(
+        "histmersion",
+        "candidates",
+        "New sources found for the research goals without a model: list, sweep, mark"
+      )
       with SharedFlags:
     private val goal_ = value[String]("goal", "One goal's candidates (default: every goal)")
     private val state_ =
