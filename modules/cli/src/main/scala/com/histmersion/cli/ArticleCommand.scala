@@ -11,8 +11,10 @@ import io.github.iltotore.iron.constraint.any.Pure
 
 import java.nio.file.Path
 
+import ArticleCommand.{Draft, Edit, Fix}
+
 /** What `histmersion article …` was asked to do, every argument already a typed value: the command line's parser
-  * ([[commandline.ArticleArgs]]) builds one, and [[ArticleCli.run]] carries it out against a server.
+  * ([[commandline.ArticleArgs]]) builds one, and [[ArticleCli.Perform]] carries it out against a server.
   */
 enum ArticleCommand extends Cli.Command derives CanEqual:
   case Listing(
@@ -25,14 +27,14 @@ enum ArticleCommand extends Cli.Command derives CanEqual:
   case Put(file: Path, kind: Option[Article.Kind.Wire], strict: Cli.Strict)
   case Patch(
       slug: ReviewGoal.Slug,
-      edit: ArticleCommand.Edit,
+      edit: Edit,
       strict: Cli.Strict,
       filter: ArticlePatches.FilterFlags,
       reasons: List[ArticlePatches.ReasonText],
       critiques: List[Problem]
   )
-  case Lint(slug: ReviewGoal.Slug, fix: ArticleCommand.Fix, json: Cli.JsonOutput)
-  case Check(slug: ReviewGoal.Slug, draft: ArticleCommand.Draft, kind: Option[Article.Kind.Wire], json: Cli.JsonOutput)
+  case Lint(slug: ReviewGoal.Slug, fix: Fix, json: Cli.JsonOutput)
+  case Check(slug: ReviewGoal.Slug, draft: Draft, kind: Option[Article.Kind.Wire], json: Cli.JsonOutput)
   case Coverage(slug: ReviewGoal.Slug, json: Cli.JsonOutput)
   case Review(slug: ReviewGoal.Slug, json: Cli.JsonOutput)
   case Delete(slug: ReviewGoal.Slug)
@@ -42,7 +44,7 @@ enum ArticleCommand extends Cli.Command derives CanEqual:
   case Version(slug: ReviewGoal.Slug, id: Article.VersionId)
   case Rename(from: ReviewGoal.Slug, to: LabelRename.To, json: Cli.JsonOutput)
 
-  def run(c: Client)(using Console): Either[Cli.Error, Unit] = ArticleCli.run(c, this)
+  def run(c: Client)(using Console): Either[Cli.Error, Unit] = ArticleCli.Perform(c)(this)
 
 object ArticleCommand:
   type Fix = Fix.T
@@ -81,7 +83,3 @@ object ArticleCommand:
             Problem.Invalid.Exclusion.OneOf
           )
         )
-
-  /** `--parts body,summary`: the parts asked for, none = all. */
-  def parts(csv: Option[String]): Vector[Article.Part] =
-    csv.toVector.flatMap(_.split(',').map(_.trim.toLowerCase)).map(Article.Part(_))

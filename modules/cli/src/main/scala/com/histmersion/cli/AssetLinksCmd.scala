@@ -29,29 +29,30 @@ object AssetLinksCmd:
     )
     case Rm(id: Long)
 
-    def run(c: Client)(using Console): Either[Cli.Error, Unit] = AssetLinksCmd.run(c, this)
+    def run(c: Client)(using Console): Either[Cli.Error, Unit] = Perform(c)(this)
 
-  /** Carry out one command against the server. */
-  def run(c: Client, cmd: Command)(using console: Console): Either[Cli.Error, Unit] =
-    cmd match
-      case Command.Search(ck, asset, tt, ti) =>
-        c.assetLinks(
-          ck.map(Citekey(_)),
-          asset.map(Bundle.Asset.Variant(_)),
-          tt.map(Attestation.TargetType(_)),
-          ti.map(Attestation.TargetId(_))
-        ).map(r => Cli.out.println(MediaMarkdown.assetLinkList(r)))
-      case Command.Add(ck, asset, rel, tt, ti, xywh, notes) =>
-        c.createAssetLink(
-          AssetLink.Put(
-            Citekey(ck),
-            Bundle.Asset.FileName(asset),
-            AssetRelation.Wire(rel),
-            MediaTarget.TargetType(tt),
-            MediaTarget.TargetId(ti),
-            xywh.map(AssetLink.Xywh(_)),
-            notes.map(AssetLink.Notes(_))
-          )
-        ).map(l => Cli.out.println(MediaMarkdown.assetLink(l)))
-      case Command.Rm(id) =>
-        c.deleteAssetLink(AssetLink.Id(id)).map(d => Cli.out.println(s"Deleted asset link #${d.id}."))
+  /** Carries out Command commands against one server. */
+  final private[cli] class Perform(c: Client)(using console: Console):
+    def apply(cmd: Command): Either[Cli.Error, Unit] =
+      cmd match
+        case Command.Search(ck, asset, tt, ti) =>
+          c.assetLinks(
+            ck.map(Citekey(_)),
+            asset.map(Bundle.Asset.Variant(_)),
+            tt.map(Attestation.TargetType(_)),
+            ti.map(Attestation.TargetId(_))
+          ).map(r => Cli.out.println(MediaMarkdown.assetLinkList(r)))
+        case Command.Add(ck, asset, rel, tt, ti, xywh, notes) =>
+          c.createAssetLink(
+            AssetLink.Put(
+              Citekey(ck),
+              Bundle.Asset.FileName(asset),
+              AssetRelation.Wire(rel),
+              MediaTarget.TargetType(tt),
+              MediaTarget.TargetId(ti),
+              xywh.map(AssetLink.Xywh(_)),
+              notes.map(AssetLink.Notes(_))
+            )
+          ).map(l => Cli.out.println(MediaMarkdown.assetLink(l)))
+        case Command.Rm(id) =>
+          c.deleteAssetLink(AssetLink.Id(id)).map(d => Cli.out.println(s"Deleted asset link #${d.id}."))

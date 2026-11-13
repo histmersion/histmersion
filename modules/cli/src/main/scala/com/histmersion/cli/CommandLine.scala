@@ -27,7 +27,13 @@ import java.nio.file.Path
   */
 object CommandLine:
   type HelpText = HelpText.T
-  object HelpText extends Newtype[String, Pure]
+  object HelpText extends Newtype[String, Pure]:
+    extension (help: HelpText)
+      /** Whether the help says `words` anywhere. */
+      def mentions(words: String): Boolean = help.value.contains(words)
+
+      /** The help as it is printed. */
+      def printed: String = help.value
 
   /** What the command line asks for. */
   enum Outcome derives CanEqual:
@@ -85,23 +91,23 @@ object CommandLine:
     commandline.AgentArgs.AgentEntry,
     commandline.MediaArgs.MediaEntry,
     commandline.AssetLinksArgs.AssetLinksEntry,
-    commandline.OpsArgs.LintEntry,
-    commandline.OpsArgs.QueueEntry,
-    commandline.OpsArgs.QueryEntry,
-    commandline.OpsArgs.SchemaEntry,
+    commandline.UpkeepArgs.LintEntry,
+    commandline.UpkeepArgs.QueueEntry,
+    commandline.UpkeepArgs.QueryEntry,
+    commandline.UpkeepArgs.SchemaEntry,
     commandline.AcquireArgs.DiscoverEntry,
     commandline.AcquireArgs.RefsEntry,
     commandline.AcquireArgs.AssessEntry,
     commandline.AcquireArgs.FollowupsEntry,
     commandline.AcquireArgs.IngestEntry,
     commandline.AcquireArgs.ArchiveEntry,
-    commandline.CalibreArgs.CalibreEntry,
+    commandline.LibraryArgs.LibraryEntry,
     commandline.IngestArgs.ReocrEntry,
     commandline.IngestArgs.AssetsEntry,
     commandline.IngestArgs.JobsEntry,
     commandline.ActivityArgs.ActivityEntry,
     commandline.BookmarksArgs.BookmarksEntry,
-    commandline.NotesArgs.NotesEntry,
+    commandline.NoteArgs.NoteEntry,
     commandline.ConfigArgs.ConfigEntry,
     commandline.BasemapArgs.BasemapEntry,
     commandline.PluginArgs.PluginEntry

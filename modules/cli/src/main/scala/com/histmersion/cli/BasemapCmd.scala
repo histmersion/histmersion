@@ -28,36 +28,37 @@ object BasemapCmd:
     )
     case Rm(layer: Option[String], focus: Option[String], cache: Boolean)
 
-    def run(c: Client)(using Console): Either[Cli.Error, Unit] = BasemapCmd.run(c, this)
+    def run(c: Client)(using Console): Either[Cli.Error, Unit] = Perform(c)(this)
 
-  /** Carry out one command against the server. */
-  def run(c: Client, cmd: Command)(using console: Console): Either[Cli.Error, Unit] =
-    cmd match
-      case Command.Status(json) =>
-        c.basemapStatus().map(s => Output.emit(json, s)(BasemapMarkdown.status))
-      case Command.Fetch(layer, z, tz, bbox, focus, dry, keepAll, noWait) =>
-        c.basemapFetch(
-          Basemap.FetchQuery(
-            Basemap.FetchQuery.Layer(if focus.isDefined then "terrain" else layer),
-            z.map(Basemap.FetchQuery.MaxZoom(_)),
-            tz.map(Basemap.FetchQuery.TerrainMaxZoom(_)),
-            bbox.map(Basemap.FetchQuery.Bbox(_)),
-            Basemap.FetchQuery.DryRun(dry),
-            Basemap.FetchQuery.KeepAll(keepAll),
-            focus.map(Basemap.FetchQuery.Focus(_))
-          )
-        ).flatMap { j =>
-          Cli.out.println(
-            s"base-map job `${j.id}` started: ${j.detail.flatMap(JobDetail.Purpose.of).getOrElse("")} (`histmersion jobs` lists it)"
-          )
-          if noWait then Right(()) else IngestCmd.pollJob(c, j.id, 0)
-        }
-      case Command.Rm(layer, focus, cache) =>
-        val l = layer.getOrElse(if focus.isDefined || cache then "none" else "all")
-        c.basemapRemove(
-          Basemap.RemoveQuery(
-            Basemap.RemoveQuery.Layer(l),
-            focus.map(Basemap.RemoveQuery.Focus(_)),
-            Basemap.RemoveQuery.Cache(cache)
-          )
-        ).map(r => Cli.out.println(BasemapMarkdown.removed(r)))
+  /** Carries out Command commands against one server. */
+  final private[cli] class Perform(c: Client)(using console: Console):
+    def apply(cmd: Command): Either[Cli.Error, Unit] =
+      cmd match
+        case Command.Status(json) =>
+          c.basemapStatus().map(s => Output.emit(json, s)(BasemapMarkdown.status))
+        case Command.Fetch(layer, z, tz, bbox, focus, dry, keepAll, noWait) =>
+          c.basemapFetch(
+            Basemap.FetchQuery(
+              Basemap.FetchQuery.Layer(if focus.isDefined then "terrain" else layer),
+              z.map(Basemap.FetchQuery.MaxZoom(_)),
+              tz.map(Basemap.FetchQuery.TerrainMaxZoom(_)),
+              bbox.map(Basemap.FetchQuery.Bbox(_)),
+              Basemap.FetchQuery.DryRun(dry),
+              Basemap.FetchQuery.KeepAll(keepAll),
+              focus.map(Basemap.FetchQuery.Focus(_))
+            )
+          ).flatMap { j =>
+            Cli.out.println(
+              s"base-map job `${j.id}` started: ${j.detail.flatMap(JobDetail.Purpose.of).getOrElse("")} (`histmersion jobs` lists it)"
+            )
+            if noWait then Right(()) else IngestCmd.pollJob(c, j.id, 0)
+          }
+        case Command.Rm(layer, focus, cache) =>
+          val l = layer.getOrElse(if focus.isDefined || cache then "none" else "all")
+          c.basemapRemove(
+            Basemap.RemoveQuery(
+              Basemap.RemoveQuery.Layer(l),
+              focus.map(Basemap.RemoveQuery.Focus(_)),
+              Basemap.RemoveQuery.Cache(cache)
+            )
+          ).map(r => Cli.out.println(BasemapMarkdown.removed(r)))

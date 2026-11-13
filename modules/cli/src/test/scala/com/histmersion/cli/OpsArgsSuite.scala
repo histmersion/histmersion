@@ -3,7 +3,8 @@ package cli
 
 import com.histmersion.cli.Ops.QueueCmd
 import com.histmersion.api.automation.Queue
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
+import com.histmersion.api.problem.Text.sentence
 
 /** `histmersion queue …`: each list and each verb is a subcommand (`queue acquire add "…"`, `queue done 3`, `queue
   * acquire recheck`), parsed into [[QueueCmd]].
@@ -33,18 +34,14 @@ class OpsArgsSuite extends munit.FunSuite:
         )
       )
     )
-    assertEquals(
-      parse("tasks", "add", "enrich x", "--topic", "Backlog", "--reason", "why"),
-      Right(
-        QueueCmd.Add(
-          Queue.Kind.Label("tasks"),
-          Queue.QueueItem.Text("enrich x"),
-          Some(Queue.QueueItem.Topic("Backlog")),
-          Some(Problem.Unclassified(Legacy.Text("why"))),
-          json
+    parse("tasks", "add", "enrich x", "--topic", "Backlog", "--reason", "why") match
+      case Right(QueueCmd.Add(list, text, topic, Some(reason), `json`)) =>
+        assertEquals(
+          (list, text, topic),
+          (Queue.Kind.Label("tasks"), Queue.QueueItem.Text("enrich x"), Some(Queue.QueueItem.Topic("Backlog")))
         )
-      )
-    )
+        assertEquals(reason.sentence, "why")
+      case other => fail(s"${other.toString}")
 
   test("`add` without text is a usage error, not an empty item"):
     assert(parse("acquire", "add").isLeft)
@@ -55,7 +52,7 @@ class OpsArgsSuite extends munit.FunSuite:
     assertEquals(parse("rm", "3"), Right(QueueCmd.Rm(Queue.Id(3), json)))
     parse("done", "twelve") match
       case Left(CommandLine.Outcome.Failed(_: Problem.Invalid.Malformed, _)) => ()
-      case other                                                             => fail(s"$other")
+      case other                                                             => fail(s"${other.toString}")
 
   test("edit takes an id and the new text"):
     assertEquals(

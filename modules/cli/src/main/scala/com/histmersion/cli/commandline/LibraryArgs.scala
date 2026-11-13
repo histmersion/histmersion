@@ -45,8 +45,8 @@ import org.rogach.scallop.*
 import scala.util.chaining.*
 
 /** The command line of [[CalibreCmd]]. */
-object CalibreArgs:
-  object CalibreEntry extends CommandLine.Entry:
+object LibraryArgs:
+  object LibraryEntry extends CommandLine.Entry:
     val name = "calibre"
     def help: String = "The local Calibre library: search, import, link, push, update, set, audit, sync, gaps"
     def conf(): Subcommand = GroupCalibre()

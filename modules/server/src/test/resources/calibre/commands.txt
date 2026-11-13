@@ -84,7 +84,7 @@ calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,tit
 exit 1
 --- stdout
 --- stderr
-give a query, or --unlinked
+error: query is required
 
 Usage: histmersion calibre search [--unlinked] [--limit <integer>] [--json] [<query>]
 
@@ -767,7 +767,7 @@ error: no acquisition item 424242
 exit 1
 --- stdout
 --- stderr
---acquire-item is ticked off by the conversion; drop --no-convert, or tick the item off with `histmersion queue done <id>`
+error: give at most one of --no-convert, --acquire-item
 
 Usage: histmersion calibre import [--citekey <string>] [--format <string>] [--no-convert] [--no-wait] [--acquire-item <integer>] [--json] <calibre-id>
 

@@ -209,23 +209,21 @@ object Cli:
         err.println(WorkingDir.message)
         sys.exit(3)
 
-  private def runCommand(args: Array[String])(using console: Console): Unit = runParsed(CommandLine.parse(args.toSeq))
-
-  /** A command line [[CommandLine]] (scallop) parsed: the exit code is decided here, at the edge. */
-  private def runParsed(outcome: CommandLine.Outcome)(using console: Console): Unit =
-    outcome match
+  /** The exit code is decided here, at the edge. */
+  private def runCommand(args: Array[String])(using console: Console): Unit =
+    CommandLine.parse(args.toSeq) match
       case CommandLine.Outcome.Help(text)            => out.println(text); sys.exit(0)
       case CommandLine.Outcome.Failed(problem, help) =>
         err.println(s"error: ${problem.sentence}\n\n$help"); sys.exit(ExitCode.Usage.value)
       case CommandLine.Outcome.Run(server, tok, cmd) =>
-        finish(server.map(_.value), tok.map(_.value), cmd.run)
+        finish(server, tok, cmd.run)
 
-  private def finish(server: Option[String], tok: Option[String], run: Client => Either[Error, Unit])(using
-      console: Console
+  private def finish(server: Option[Client.ServerUrl], tok: Option[Client.Token], run: Client => Either[Error, Unit])(
+      using console: Console
   ): Unit =
-    val url = server.getOrElse(Settings.app.cli.serverUrl.value)
-    val token = tok.orElse(Option(System.getenv("HISTMERSION_TOKEN")).filter(_.nonEmpty))
-    run(new Client(Client.ServerUrl(url), token.map(Client.Token(_)))) match
+    val url = server.getOrElse(Client.ServerUrl(Settings.app.cli.serverUrl.value))
+    val token = tok.orElse(Option(System.getenv("HISTMERSION_TOKEN")).filter(_.nonEmpty).map(Client.Token(_)))
+    run(new Client(url, token)) match
       case Right(())                     => ()
       case Left(e) if e.workingDirDenied => err.println(WorkingDir.message); sys.exit(e.exitCode.value)
       case Left(e)                       => err.println(s"error: ${e.message.sentence}"); sys.exit(e.exitCode.value)
@@ -243,11 +241,11 @@ object Cli:
     val ExitCode: com.histmersion.cli.ExitCode.type = com.histmersion.cli.ExitCode
 
   /** What `histmersion …` of this group was asked to do, every argument parsed. */
-  enum TopCommand extends Cli.Command:
+  enum TopCommand extends Command:
     case Vacuum(analyze: Boolean, tables: List[String], noWait: Boolean)
     case Version()
     case Health()
-    case About(json: Cli.JsonOutput)
+    case About(json: JsonOutput)
     case Seed(dir: String, force: Boolean)
     case Reindex()
     case Search(
@@ -258,15 +256,15 @@ object Cli:
         samples: Option[Int],
         unit: Option[String],
         brief: Boolean,
-        f0: com.histmersion.api.library.Filter,
-        json: Cli.JsonOutput
+        f0: Filter,
+        json: JsonOutput
     )
     case Facets(
         field: String,
         prefix: Option[String],
         q: Option[String],
-        f: com.histmersion.api.library.Filter,
-        json: Cli.JsonOutput
+        f: Filter,
+        json: JsonOutput
     )
     case Get(
         ck: String,
@@ -275,20 +273,20 @@ object Cli:
         heading: Option[String],
         offset: Option[Int],
         chars: Option[Int],
-        json: Cli.JsonOutput
+        json: JsonOutput
     )
     case Passages(ck: String, q: String, regex: Boolean, limit: Option[Int], context: Option[Int])
-    case GeoWhen(region: Option[String], f: com.histmersion.api.library.Filter, json: Cli.JsonOutput)
+    case GeoWhen(region: Option[String], f: Filter, json: JsonOutput)
     case Histogram(
         q: Option[String],
         region: Option[String],
         unit: Option[String],
-        f0: com.histmersion.api.library.Filter,
-        json: Cli.JsonOutput
+        f0: Filter,
+        json: JsonOutput
     )
-    case Neighbors(ck: String, kinds: List[String], json: Cli.JsonOutput)
-    case Graph(ck: String, depth: Option[Int], json: Cli.JsonOutput)
-    case Contradictions(ck: Option[String], since: Option[Long], json: Cli.JsonOutput)
+    case Neighbors(ck: String, kinds: List[String], json: JsonOutput)
+    case Graph(ck: String, depth: Option[Int], json: JsonOutput)
+    case Contradictions(ck: Option[String], since: Option[Long], json: JsonOutput)
     case Put(file: String)
     case Patch(
         ck: String,
@@ -320,282 +318,283 @@ object Cli:
         noMeta: Boolean
     )
     case Backup(into: Option[String])
-    case Backups(json: Cli.JsonOutput)
+    case Backups(json: JsonOutput)
     case Restore(file: String, force: Boolean, yes: Boolean)
 
-    def run(c: Client)(using Console): Either[Cli.Error, Unit] = Cli.runTop(c, this)
+    def run(c: Client)(using Console): Either[Error, Unit] = PerformTop(c)(this)
 
-  /** Carry out one command against the server. */
-  def runTop(c: Client, cmd: TopCommand)(using console: Console): Either[Cli.Error, Unit] =
-    cmd match
-      case TopCommand.Version() =>
-        out.println(s"cli    ${Version.name} ${Version.version}")
-        c.version.map(v => out.println(s"server ${v.name} ${v.version}"))
-      case TopCommand.Health() =>
-        c.health.map(h =>
-          out.println(
-            (s"${h.status} · db ${h.db} · schema ${h.schemaVersion.getOrElse("?")}" ::
-              h.warnings.map(w => s"warning: $w")).mkString("\n")
-          )
-        )
-      case TopCommand.About(json) =>
-        c.about.map { a =>
-          val exe = scala.util
-            .Try(ProcessHandle.current().info().command().orElse(null))
-            .toOption
-            .flatMap(Option(_))
-            .map(java.nio.file.Path.of(_))
-          val withLocal = LocalStorage.add(
-            a,
-            c.serverUrl,
-            Settings.app,
-            k => Option(java.lang.System.getenv(k.value)).map(Environment.VariablesValue(_)),
-            UserPaths.OsName(java.lang.System.getProperty("os.name", "")),
-            exe
-          )
-          Output.emit(json, withLocal)(AboutMarkdown.render)
-        }
-      case TopCommand.Seed(dir, force) =>
-        Option(dir).filter(_.nonEmpty).map(Path.of(_)).filter(Files.isDirectory(_)) match
-          case Some(p) => hostSeed(c, p, Api.Overwrite(force))
-          case None    =>
-            c.seed(SeedRequest(SeedRequest.Dir(dir), SeedRequest.Force(force)))
-              .map(report) // server-side (bind-mounted) corpus
-      case TopCommand.Reindex() =>
-        reindexLoop(c, None, 0, 0)
-      case TopCommand.Search(q, group, depth, asOf, samples, unit, brief, f0, json) =>
-        val f = f0.modify(_.q).setTo(q.map(_.trim).filter(_.nonEmpty).map(Filter.Q(_)))
-        group.map(_.trim).filter(_.nonEmpty) match
-          case None =>
-            c.sources(f).map { r =>
-              // the result says where its page starts, so the footer's `next: offset=` is right on every page
-              Output.emit(json, r)(r =>
-                if brief then SearchMarkdown.briefResults(r) else SearchMarkdown.searchResults(r)
-              )
-            }
-          case Some(by) =>
-            Tree.parseBy(by) match
-              case None =>
-                Left(
-                  Error(
-                    Problem.Unclassified(Legacy.Text(s"unknown --group '$by' (${GroupAxes.mkString(" | ")})")),
-                    exitCode = ExitCode.Usage
-                  )
-                )
-              case Some(axes) =>
-                c.aggregate(
-                  Api.AggregateQuery.tree(
-                    Api.AggregateQuery.By(axes.mkString(",")),
-                    f,
-                    unit.map(Api.AggregateQuery.TreeUnit(_)),
-                    depth.map(Api.AggregateQuery.Depth(_)),
-                    asOf.map(Api.AggregateQuery.TreeAsOf(_)),
-                    samples.map(Api.AggregateQuery.TreeSamples(_))
-                  )
-                ).map(h =>
-                  Output.emit(json, h)(SearchMarkdown.tree(_, SearchMarkdown.TreeUnit(unit.getOrElse("sources"))))
-                )
-      case TopCommand.Facets(field, prefix, q, f, json) =>
-        c.facets(
-          Api.Facets.Field(field),
-          prefix.map(Api.Facets.Prefix(_)),
-          f.modify(_.q).setTo(q.map(_.trim).filter(_.nonEmpty).map(Filter.Q(_)))
-        ).map(rows => Output.emit(json, rows)(rs => SearchMarkdown.facets(Facet.FieldText(field), rs.toVector)))
-      case TopCommand.Get(ck, full, section, heading, offset, chars, json) =>
-        if section.isDefined || heading.isDefined || offset.isDefined || chars.isDefined then
-          if json.value then
-            Left(
-              Error(
-                Problem.Unclassified(
-                  Legacy.Text("--json prints the whole record; drop --section/--heading/--offset/--chars")
-                ),
-                exitCode = ExitCode.Usage
-              )
+  /** Carries out TopCommand commands against one server. */
+  final private[cli] class PerformTop(c: Client)(using console: Console):
+    def apply(cmd: TopCommand): Either[Error, Unit] =
+      cmd match
+        case TopCommand.Version() =>
+          out.println(s"cli    ${Version.name} ${Version.version}")
+          c.version.map(v => out.println(s"server ${v.name} ${v.version}"))
+        case TopCommand.Health() =>
+          c.health.map(h =>
+            out.println(
+              (s"${h.status} · db ${h.db} · schema ${h.schemaVersion.getOrElse("?")}" ::
+                h.warnings.map(w => s"warning: $w")).mkString("\n")
             )
-          else
-            c.sourceView(
-              Api.SourceViewQuery(
-                Citekey(ck),
-                Api.SourceViewQuery.FullText(full),
-                section.map(Api.SourceViewQuery.Section(_)),
-                heading.map(Api.SourceViewQuery.Heading(_)),
-                offset.map(Api.SourceViewQuery.Offset(_)),
-                chars.map(Api.SourceViewQuery.Chars(_))
-              )
-            ).map(value => out.println(value))
-        else
-          c.getSource(Citekey(ck))
-            .map(sw =>
-              Output.emit(json, if full then sw else sw.modify(_.source.ocrMarkdown).setTo(None))(sw =>
-                SourcesMarkdown.source(sw.source, sw.findings.toVector, full)
-              )
+          )
+        case TopCommand.About(json) =>
+          c.about.map { a =>
+            val exe = scala.util
+              .Try(ProcessHandle.current().info().command().orElse(null))
+              .toOption
+              .flatMap(Option(_))
+              .map(java.nio.file.Path.of(_))
+            val withLocal = LocalStorage.add(
+              a,
+              c.serverUrl,
+              Settings.app,
+              k => Option(java.lang.System.getenv(k.value)).map(Environment.VariablesValue(_)),
+              UserPaths.OsName(java.lang.System.getProperty("os.name", "")),
+              exe
             )
-      case TopCommand.Passages(ck, q, regex, limit, context) =>
-        c.passages(
-          Api.PassagesQuery(
-            Citekey(ck),
-            Api.PassagesQuery.Q(q),
-            Api.PassagesQuery.Regex(regex),
-            limit.map(Api.PassagesQuery.Limit(_)),
-            context.map(Api.PassagesQuery.Context(_))
-          )
-        ).map(r => out.println(PassagesMarkdown.render(r)))
-      case TopCommand.GeoWhen(region, f, json) =>
-        c.findingsPage(Api.FindingsQuery(f, region.map(Api.FindingsQuery.Region(_))))
-          .map(p => Output.emit(json, p)(SearchMarkdown.geoPage))
-      case TopCommand.Histogram(q, region, unit, f0, json) =>
-        val f = f0
-          .modify(_.q)
-          .setTo(q.map(_.trim).filter(_.nonEmpty).map(Filter.Q(_)))
-          .modify(_.places)
-          .setTo(f0.places ++ region.toList.map(Filter.Places(_)))
-        c.aggregate(Api.AggregateQuery.time(f, unit.map(Api.AggregateQuery.TimeUnit(_))))
-          .map(h => Output.emit(json, h)(SearchMarkdown.histogram(_, Histogram.Unit(unit.getOrElse("sources")))))
-      case TopCommand.Neighbors(ck, kinds, json) =>
-        c.neighbors(Citekey(ck), kinds.map(Edge.Kind.Wire(_)))
-          .map(rows => Output.emit(json, rows)(rs => SourcesMarkdown.neighbors(Citekey(ck), rs.toVector)))
-      case TopCommand.Graph(ck, depth, json) =>
-        c.graph(Citekey(ck), depth.map(Source.Graph.DepthCount(_)))
-          .map(g => Output.emit(json, g)(SourcesMarkdown.graph))
-      case TopCommand.Contradictions(ck, since, json) =>
-        val key = ck.map(Citekey(_))
-        c.contradictions(key, since.map(Api.AggregateQuery.AsOf(_)))
-          .map(r => Output.emit(json, r)(SourcesMarkdown.contradictions(_, key)))
-      case TopCommand.Put(file) =>
-        val p = Path.of(file)
-        if !Files.isRegularFile(p) then
-          Left(Error(Problem.Unclassified(Legacy.Text(s"no such file: $file")), exitCode = ExitCode.Usage))
-        // an explicit `put` is always deliberate → force past the "newer in DB" guard
-        else c.importNote(Notes.toImport(p, force = Api.Overwrite(true))).map(report)
-      case TopCommand.Patch(
-            ck,
-            json,
-            tAdd,
-            tRem,
-            tRep,
-            tops,
-            regs,
-            summary,
-            status,
-            title,
-            notesFile,
-            period,
-            bodyFile,
-            addF,
-            remF,
-            ifUpd,
-            addE,
-            remE,
-            strict
-          ) =>
-        Patches
-          .build(
-            json,
-            tAdd,
-            tRem,
-            tRep,
-            tops,
-            regs,
-            summary.map(Source.Summary(_)),
-            status,
-            title.map(Title(_)),
-            notesFile.map(Patches.NotesFile(_)),
-            period,
-            bodyFile.map(Patches.BodyFile(_)),
-            addF,
-            remF,
-            ifUpd.map(Source.UpdatedAt(_)),
-            addE.toList,
-            remE.toList
-          )
-          .flatMap(p =>
-            c.patchSource(Citekey(ck), p, Strict(strict)).map { sw =>
-              out.println(
-                SourcesMarkdown.source(sw.source, sw.findings.toVector, false) + FormatMarkdown.notice(sw.formatting)
-              )
-              sw.source.updatedAt.foreach(u => out.println(s"\nupdatedAt: $u"))
-            }
-          )
-      case TopCommand.Export(dir, only, srcDir, artDir, metaDir, noMeta) =>
-        val out = Path.of(dir)
-        val sources = srcDir.map(Path.of(_)).getOrElse(placed(out, MirrorPlacement.SourceFiles))
-        val articles = artDir.map(Path.of(_)).getOrElse(placed(out, MirrorPlacement.ArticleFiles))
-        val _ = Files.createDirectories(sources)
-        (if only.nonEmpty then Right(only.map(Citekey(_))) else c.citekeys).flatMap { ks =>
-          val total = ks.size
-          val failed = ks.zipWithIndex.flatMap { (ck, i) =>
-            Cli.out.println(s"${i + 1}/$total $ck")
-            c.exportSource(ck) match
-              case Right(text) =>
-                val _ = Files.writeString(
-                  sources.resolve(MirrorPlacement.noteFile(MirrorPlacement.RecordId(ck.value)).value),
-                  text.value
-                )
-                None
-              case Left(e) => Some(s"$ck: ${e.message.sentence}")
+            Output.emit(json, withLocal)(AboutMarkdown.render)
           }
-          Cli.out.println(s"exported ${total - failed.size} note(s) to $sources, failed ${failed.size}")
-          // a renamed source's note would otherwise linger under its OLD citekey — and a later
-          // `seed` of the mirror would try to bring the old name back — so a full export removes it
-          if only.isEmpty then pruneRenamed(c, sources)
-          failed.take(10).foreach(f => err.println(s"  ! $f"))
-          // a partial export must not look like success — the mirror on disk would be silently stale
-          // the compiled wiki (2.7), the bookkeeping queues (2.8) and the goals are part of the same mirror on disk
-          val meta =
-            if noMeta then Right(())
-            else
-              Ops
-                .writeMeta(c, metaDir.map(Path.of(_)).getOrElse(placed(out, MirrorPlacement.MetaFiles)))
-                .map(fs => Cli.out.println(s"wrote ${fs.mkString(", ")}"))
-          meta.flatMap { _ =>
-            if failed.nonEmpty then
+        case TopCommand.Seed(dir, force) =>
+          Option(dir).filter(_.nonEmpty).map(Path.of(_)).filter(Files.isDirectory(_)) match
+            case Some(p) => hostSeed(c, p, Api.Overwrite(force))
+            case None    =>
+              c.seed(SeedRequest(SeedRequest.Dir(dir), SeedRequest.Force(force)))
+                .map(report) // server-side (bind-mounted) corpus
+        case TopCommand.Reindex() =>
+          reindexLoop(c, None, 0, 0)
+        case TopCommand.Search(q, group, depth, asOf, samples, unit, brief, f0, json) =>
+          val f = f0.modify(_.q).setTo(q.map(_.trim).filter(_.nonEmpty).map(Filter.Q(_)))
+          group.map(_.trim).filter(_.nonEmpty) match
+            case None =>
+              c.sources(f).map { r =>
+                // the result says where its page starts, so the footer's `next: offset=` is right on every page
+                Output.emit(json, r)(r =>
+                  if brief then SearchMarkdown.briefResults(r) else SearchMarkdown.searchResults(r)
+                )
+              }
+            case Some(by) =>
+              Tree.parseBy(by) match
+                case None =>
+                  Left(
+                    Error(
+                      Problem.Unclassified(Legacy.Text(s"unknown --group '$by' (${GroupAxes.mkString(" | ")})")),
+                      exitCode = ExitCode.Usage
+                    )
+                  )
+                case Some(axes) =>
+                  c.aggregate(
+                    Api.AggregateQuery.tree(
+                      Api.AggregateQuery.By(axes.mkString(",")),
+                      f,
+                      unit.map(Api.AggregateQuery.TreeUnit(_)),
+                      depth.map(Api.AggregateQuery.Depth(_)),
+                      asOf.map(Api.AggregateQuery.TreeAsOf(_)),
+                      samples.map(Api.AggregateQuery.TreeSamples(_))
+                    )
+                  ).map(h =>
+                    Output.emit(json, h)(SearchMarkdown.tree(_, SearchMarkdown.TreeUnit(unit.getOrElse("sources"))))
+                  )
+        case TopCommand.Facets(field, prefix, q, f, json) =>
+          c.facets(
+            Api.Facets.Field(field),
+            prefix.map(Api.Facets.Prefix(_)),
+            f.modify(_.q).setTo(q.map(_.trim).filter(_.nonEmpty).map(Filter.Q(_)))
+          ).map(rows => Output.emit(json, rows)(rs => SearchMarkdown.facets(Facet.FieldText(field), rs.toVector)))
+        case TopCommand.Get(ck, full, section, heading, offset, chars, json) =>
+          if section.isDefined || heading.isDefined || offset.isDefined || chars.isDefined then
+            if json.value then
               Left(
                 Error(
-                  Problem.Unclassified(Legacy.Text(s"${failed.size} of $total source(s) could not be exported")),
-                  exitCode = ExitCode.Refused
+                  Problem.Unclassified(
+                    Legacy.Text("--json prints the whole record; drop --section/--heading/--offset/--chars")
+                  ),
+                  exitCode = ExitCode.Usage
                 )
               )
-            else if only.nonEmpty then Right(())
-            else ArticleCli.exportAll(c, articles).map(_ => ())
-          }
-        }
-      case TopCommand.Backup(into) =>
-        c.backup.flatMap(s => JobFollow.backup(() => c.backupStatus, s)).flatMap { r =>
-          out.println(Markdown.backup(r))
-          into match
-            case None    => Right(())
-            case Some(d) =>
-              // the name comes back over the wire, so it is validated here too before it becomes a
-              // path on THIS machine — the same gate the server applies to it
-              Backup
-                .safeName(Backup.Name(r.file.value))
-                .left
-                .map(m =>
+            else
+              c.sourceView(
+                Api.SourceViewQuery(
+                  Citekey(ck),
+                  Api.SourceViewQuery.FullText(full),
+                  section.map(Api.SourceViewQuery.Section(_)),
+                  heading.map(Api.SourceViewQuery.Heading(_)),
+                  offset.map(Api.SourceViewQuery.Offset(_)),
+                  chars.map(Api.SourceViewQuery.Chars(_))
+                )
+              ).map(value => out.println(value))
+          else
+            c.getSource(Citekey(ck))
+              .map(sw =>
+                Output.emit(json, if full then sw else sw.modify(_.source.ocrMarkdown).setTo(None))(sw =>
+                  SourcesMarkdown.source(sw.source, sw.findings.toVector, full)
+                )
+              )
+        case TopCommand.Passages(ck, q, regex, limit, context) =>
+          c.passages(
+            Api.PassagesQuery(
+              Citekey(ck),
+              Api.PassagesQuery.Q(q),
+              Api.PassagesQuery.Regex(regex),
+              limit.map(Api.PassagesQuery.Limit(_)),
+              context.map(Api.PassagesQuery.Context(_))
+            )
+          ).map(r => out.println(PassagesMarkdown.render(r)))
+        case TopCommand.GeoWhen(region, f, json) =>
+          c.findingsPage(Api.FindingsQuery(f, region.map(Api.FindingsQuery.Region(_))))
+            .map(p => Output.emit(json, p)(SearchMarkdown.geoPage))
+        case TopCommand.Histogram(q, region, unit, f0, json) =>
+          val f = f0
+            .modify(_.q)
+            .setTo(q.map(_.trim).filter(_.nonEmpty).map(Filter.Q(_)))
+            .modify(_.places)
+            .setTo(f0.places ++ region.toList.map(Filter.Places(_)))
+          c.aggregate(Api.AggregateQuery.time(f, unit.map(Api.AggregateQuery.TimeUnit(_))))
+            .map(h => Output.emit(json, h)(SearchMarkdown.histogram(_, Histogram.Unit(unit.getOrElse("sources")))))
+        case TopCommand.Neighbors(ck, kinds, json) =>
+          c.neighbors(Citekey(ck), kinds.map(Edge.Kind.Wire(_)))
+            .map(rows => Output.emit(json, rows)(rs => SourcesMarkdown.neighbors(Citekey(ck), rs.toVector)))
+        case TopCommand.Graph(ck, depth, json) =>
+          c.graph(Citekey(ck), depth.map(Source.Graph.DepthCount(_)))
+            .map(g => Output.emit(json, g)(SourcesMarkdown.graph))
+        case TopCommand.Contradictions(ck, since, json) =>
+          val key = ck.map(Citekey(_))
+          c.contradictions(key, since.map(Api.AggregateQuery.AsOf(_)))
+            .map(r => Output.emit(json, r)(SourcesMarkdown.contradictions(_, key)))
+        case TopCommand.Put(file) =>
+          val p = Path.of(file)
+          if !Files.isRegularFile(p) then
+            Left(Error(Problem.Unclassified(Legacy.Text(s"no such file: $file")), exitCode = ExitCode.Usage))
+          // an explicit `put` is always deliberate → force past the "newer in DB" guard
+          else c.importNote(Notes.toImport(p, force = Api.Overwrite(true))).map(report)
+        case TopCommand.Patch(
+              ck,
+              json,
+              tAdd,
+              tRem,
+              tRep,
+              tops,
+              regs,
+              summary,
+              status,
+              title,
+              notesFile,
+              period,
+              bodyFile,
+              addF,
+              remF,
+              ifUpd,
+              addE,
+              remE,
+              strict
+            ) =>
+          Patches
+            .build(
+              json,
+              tAdd,
+              tRem,
+              tRep,
+              tops,
+              regs,
+              summary.map(Source.Summary(_)),
+              status,
+              title.map(Title(_)),
+              notesFile.map(Patches.NotesFile(_)),
+              period,
+              bodyFile.map(Patches.BodyFile(_)),
+              addF,
+              remF,
+              ifUpd.map(Source.UpdatedAt(_)),
+              addE.toList,
+              remE.toList
+            )
+            .flatMap(p =>
+              c.patchSource(Citekey(ck), p, Strict(strict)).map { sw =>
+                out.println(
+                  SourcesMarkdown.source(sw.source, sw.findings.toVector, false) + FormatMarkdown.notice(sw.formatting)
+                )
+                sw.source.updatedAt.foreach(u => out.println(s"\nupdatedAt: $u"))
+              }
+            )
+        case TopCommand.Export(dir, only, srcDir, artDir, metaDir, noMeta) =>
+          val out = Path.of(dir)
+          val sources = srcDir.map(Path.of(_)).getOrElse(placed(out, MirrorPlacement.SourceFiles))
+          val articles = artDir.map(Path.of(_)).getOrElse(placed(out, MirrorPlacement.ArticleFiles))
+          val _ = Files.createDirectories(sources)
+          (if only.nonEmpty then Right(only.map(Citekey(_))) else c.citekeys).flatMap { ks =>
+            val total = ks.size
+            val failed = ks.zipWithIndex.flatMap { (ck, i) =>
+              Cli.out.println(s"${i + 1}/$total $ck")
+              c.exportSource(ck) match
+                case Right(text) =>
+                  val _ = Files.writeString(
+                    sources.resolve(MirrorPlacement.noteFile(MirrorPlacement.RecordId(ck.value)).value),
+                    text.value
+                  )
+                  None
+                case Left(e) => Some(s"$ck: ${e.message.sentence}")
+            }
+            Cli.out.println(s"exported ${total - failed.size} note(s) to $sources, failed ${failed.size}")
+            // a renamed source's note would otherwise linger under its OLD citekey — and a later
+            // `seed` of the mirror would try to bring the old name back — so a full export removes it
+            if only.isEmpty then pruneRenamed(c, sources)
+            failed.take(10).foreach(f => err.println(s"  ! $f"))
+            // a partial export must not look like success — the mirror on disk would be silently stale
+            // the compiled wiki (2.7), the bookkeeping queues (2.8) and the goals are part of the same mirror on disk
+            val meta =
+              if noMeta then Right(())
+              else
+                Ops
+                  .writeMeta(c, metaDir.map(Path.of(_)).getOrElse(placed(out, MirrorPlacement.MetaFiles)))
+                  .map(fs => Cli.out.println(s"wrote ${fs.mkString(", ")}"))
+            meta.flatMap { _ =>
+              if failed.nonEmpty then
+                Left(
                   Error(
-                    Problem.Unclassified(Legacy.Text(s"server returned an odd file name: ${m.sentence}")),
+                    Problem.Unclassified(Legacy.Text(s"${failed.size} of $total source(s) could not be exported")),
                     exitCode = ExitCode.Refused
                   )
                 )
-                .flatMap { name =>
-                  val dir = Path.of(d)
-                  val _ = Files.createDirectories(dir)
-                  c.downloadBackup(Backup.Name(name.value), dir.resolve(name.value).toFile)
-                    .map(f => out.println(s"downloaded → ${f.getAbsolutePath}"))
-                }
-        }
-      case TopCommand.Backups(json) =>
-        c.backups.map(rows => Output.emit(json, rows)(rs => Markdown.backups(rs.toVector)))
-      case TopCommand.Restore(file, force, yes) =>
-        if !yes && !confirm(Question(s"Restore '$file' into the server's database? This DROPS what is there."))
-        then Left(Error(Problem.Unclassified(Legacy.Text("aborted")), exitCode = ExitCode.Usage))
-        else
-          c.restore(RestoreRequest(RestoreRequest.File(file), RestoreRequest.Force(force)))
-            .map(r => out.println(Markdown.restored(r)))
-      case TopCommand.Vacuum(analyze, tables, noWait) =>
-        c.vacuum(Vacuum.Request(Vacuum.Request.Analyze(analyze), tables.map(Vacuum.Request.Tables(_)))).flatMap { j =>
-          out.println(
-            s"vacuum job `${j.id}` started: ${j.detail.flatMap(VacuumPlan.Detail.of).map(Vacuum.describe).getOrElse("")} " +
-              "(`histmersion jobs` lists it)"
-          )
-          if noWait then Right(()) else IngestCmd.pollJob(c, j.id, 0)
-        }
+              else if only.nonEmpty then Right(())
+              else ArticleCli.exportAll(c, articles).map(_ => ())
+            }
+          }
+        case TopCommand.Backup(into) =>
+          c.backup.flatMap(s => JobFollow.backup(() => c.backupStatus, s)).flatMap { r =>
+            out.println(Markdown.backup(r))
+            into match
+              case None    => Right(())
+              case Some(d) =>
+                // the name comes back over the wire, so it is validated here too before it becomes a
+                // path on THIS machine — the same gate the server applies to it
+                Backup
+                  .safeName(Backup.Name(r.file.value))
+                  .left
+                  .map(m =>
+                    Error(
+                      Problem.Unclassified(Legacy.Text(s"server returned an odd file name: ${m.sentence}")),
+                      exitCode = ExitCode.Refused
+                    )
+                  )
+                  .flatMap { name =>
+                    val dir = Path.of(d)
+                    val _ = Files.createDirectories(dir)
+                    c.downloadBackup(Backup.Name(name.value), dir.resolve(name.value).toFile)
+                      .map(f => out.println(s"downloaded → ${f.getAbsolutePath}"))
+                  }
+          }
+        case TopCommand.Backups(json) =>
+          c.backups.map(rows => Output.emit(json, rows)(rs => Markdown.backups(rs.toVector)))
+        case TopCommand.Restore(file, force, yes) =>
+          if !yes && !confirm(Question(s"Restore '$file' into the server's database? This DROPS what is there."))
+          then Left(Error(Problem.Unclassified(Legacy.Text("aborted")), exitCode = ExitCode.Usage))
+          else
+            c.restore(RestoreRequest(RestoreRequest.File(file), RestoreRequest.Force(force)))
+              .map(r => out.println(Markdown.restored(r)))
+        case TopCommand.Vacuum(analyze, tables, noWait) =>
+          c.vacuum(Vacuum.Request(Vacuum.Request.Analyze(analyze), tables.map(Vacuum.Request.Tables(_)))).flatMap { j =>
+            out.println(
+              s"vacuum job `${j.id}` started: ${j.detail.flatMap(VacuumPlan.Detail.of).map(Vacuum.describe).getOrElse("")} " +
+                "(`histmersion jobs` lists it)"
+            )
+            if noWait then Right(()) else IngestCmd.pollJob(c, j.id, 0)
+          }

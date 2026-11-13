@@ -19,6 +19,10 @@ object ArticleArgs extends CommandLine.Entry:
   val help = "The compiled wiki: list/get/put/patch/lint/check/coverage/review/rename/export/import/versions articles"
   private val Parent = "histmersion article"
 
+  /** `--parts body,summary`: the parts asked for, none = all. */
+  private def partsOf(csv: Option[String]): Vector[Article.Part] =
+    csv.toVector.flatMap(_.split(',').map(_.trim.toLowerCase)).map(Article.Part(_))
+
   def conf(): Subcommand = new Group("histmersion", name, help):
     holds(
       ArticleList(),
@@ -65,7 +69,7 @@ object ArticleArgs extends CommandLine.Entry:
     private val asJson = json()
 
     def command: Either[Problem, Cli.Command] =
-      Right(ArticleCommand.Get(slug(), ArticleCommand.parts(parts.toOption), asJson()))
+      Right(ArticleCommand.Get(slug(), partsOf(parts.toOption), asJson()))
 
   final private class ArticlePut()
       extends Leaf(Parent, "put", "Send ONE article note file (frontmatter + body) as a full create/replace"):

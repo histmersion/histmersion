@@ -21,17 +21,17 @@ class ListOptsSuite extends munit.FunSuite:
   private def approvals(args: String*): Either[String, ApprovalFilter] =
     Parsing.parse("agent" +: "approvals" +: args*) match
       case Right(AgentCmd.Command.Approvals(f, _, _, _)) => Right(f)
-      case other                                         => Left(s"$other")
+      case other                                         => Left(s"${other.toString}")
 
   private def runs(args: String*): Either[String, RunFilter] =
     Parsing.parse("agent" +: "runs" +: args*) match
       case Right(AgentCmd.Command.Runs(f, _, _, _)) => Right(f)
-      case other                                    => Left(s"$other")
+      case other                                    => Left(s"${other.toString}")
 
   private def jobs(args: String*): Either[String, JobFilter] =
     Parsing.parse("jobs" +: args*) match
       case Right(IngestCmd.Command.Jobs(_, f, _, _, _)) => Right(f)
-      case other                                        => Left(s"$other")
+      case other                                        => Left(s"${other.toString}")
 
   test("approvals: state, kinds (repeated and comma-separated), subject, goal, decided-by"):
     assertEquals(

@@ -757,7 +757,7 @@ class CalibreSuite extends munit.FunSuite:
     def parse(args: String*) = Parsing.parse(args*)
     def refusal(args: String*) = parse(args*) match
       case Left(CommandLine.Outcome.Failed(p, _)) => p
-      case other                                  => fail(s"not refused: $other")
+      case other                                  => fail(s"not refused: ${other.toString}")
     assert(parse("calibre", "search", "troy").isRight)
     assert(parse("calibre", "search", "--unlinked").isRight)
     assert(parse("calibre", "search", "--unlinked", "troy", "--limit", "5").isRight)

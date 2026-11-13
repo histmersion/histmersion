@@ -35,7 +35,7 @@ object AgentArgs:
     def conf(): Subcommand = GroupAgent()
 
   /** `agent models` shows; `agent models set|reset` change a role's chain. */
-  final private class LeafModels()
+  final private class ModelsLeaf()
       extends Leaf(
         "histmersion agent",
         "models",
@@ -87,7 +87,7 @@ object AgentArgs:
   private val Pools = PlanQuota.PoolId.values.map(_.wire).mkString(", ")
 
   /** `agent quota` shows; `agent quota hold|release|floors|fallthrough|refresh` change or read the pools. */
-  final private class LeafQuota()
+  final private class QuotaLeaf()
       extends Leaf(
         "histmersion agent",
         "quota",
@@ -336,9 +336,9 @@ object AgentArgs:
       ):
     holds(
       (List(
-        LeafModels(),
+        ModelsLeaf(),
         LeafAllowance(),
-        LeafQuota(),
+        QuotaLeaf(),
         LeafGenerate(),
         LeafDoctor(),
         LeafProbe(),

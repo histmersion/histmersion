@@ -55,7 +55,7 @@ object Ops:
         json: Cli.JsonOutput
     )
 
-    def run(c: Client)(using Console): Either[Cli.Error, Unit] = Ops.runQueue(c, this)
+    def run(c: Client)(using Console): Either[Cli.Error, Unit] = RunQueue(c)(this)
 
   // ── the meta files on disk ────────────────────────────────────────────────────────────────────────
 
@@ -183,44 +183,46 @@ object Ops:
         r.modify(_.subject).setTo(FormatReport.Subject(p.getFileName.toString)).modify(_.text).setTo(None)
       }
 
-  private[cli] def runQueue(c: Client, cmd: QueueCmd)(using console: Console): Either[Cli.Error, Unit] =
-    cmd match
-      case QueueCmd.Show(list, all, json) =>
-        c.queueList(Queue.Wire(list.value), all)
-          .map(l => Output.emit(json, l)(l => l.markdown.fold("")(_.value)))
-      case QueueCmd.Add(list, text, topic, reason, json) =>
-        c.queueAdd(Queue.Wire(list.value), QueueAdd(text, topic, reason = reason))
-          .map(i =>
-            Output.emit(json, i)(i => s"added #${i.id} to ${i.list}${i.topic.map(t => s" · $t").getOrElse("")}")
-          )
-      // the item as it now stands, with --json like `show` and `add` (it printed only the line before)
-      case QueueCmd.Done(id, json) =>
-        c.queuePatch(id, QueuePatch(status = Some(Queue.QueueItem.Status(Queue.Done))))
-          .map(i => Output.emit(json, i)(i => s"done #${i.id}: ${i.text}"))
-      case QueueCmd.Edit(id, text, json) =>
-        c.queuePatch(id, QueuePatch(text = Some(text)))
-          .map(i => Output.emit(json, i)(i => s"edited #${i.id}: ${i.text}"))
-      case QueueCmd.Rm(id, json) =>
-        c.queueDelete(id).map(i => Output.emit(json, i)(i => s"removed #${i.id}: ${i.text}"))
-      case QueueCmd.Export(dir) =>
-        writeMeta(c, Path.of(dir)).map(fs => Cli.out.println(s"wrote ${fs.mkString(", ")} to $dir"))
-      case QueueCmd.Import(dir) =>
-        readMeta(c, Path.of(dir), replace = Api.Overwrite(true)).map(_.foreach(l => Cli.out.println(s"  $l")))
-      case QueueCmd.Recheck(dryRun, limit, id, all, noWait, json) =>
-        c.call(AcquisitionWorkApi.acquireRecheck)(
-          Acquire.Checks.RecheckRequest(
-            Acquire.Checks.RecheckRequest.DryRun(dryRun),
-            limit.map(Acquire.Checks.RecheckRequest.Limit(_)),
-            id.map(Acquire.Checks.RecheckRequest.Id(_)),
-            Some(Acquire.Checks.RecheckRequest.By("cli")),
-            Acquire.Checks.RecheckRequest.All(all)
-          )
-        ).flatMap { r =>
-          Output.emit(json, r)(AcquireChecksMarkdown.result)
-          r.job match
-            case Some(j) if !noWait && !json.value => IngestCmd.pollJob(c, j.id, 0)
-            case _                                 => Right(())
-        }
+  /** Carries out QueueCmd commands against one server. */
+  final private[cli] class RunQueue(c: Client)(using console: Console):
+    def apply(cmd: QueueCmd): Either[Cli.Error, Unit] =
+      cmd match
+        case QueueCmd.Show(list, all, json) =>
+          c.queueList(Queue.Wire(list.value), all)
+            .map(l => Output.emit(json, l)(l => l.markdown.fold("")(_.value)))
+        case QueueCmd.Add(list, text, topic, reason, json) =>
+          c.queueAdd(Queue.Wire(list.value), QueueAdd(text, topic, reason = reason))
+            .map(i =>
+              Output.emit(json, i)(i => s"added #${i.id} to ${i.list}${i.topic.map(t => s" · $t").getOrElse("")}")
+            )
+        // the item as it now stands, with --json like `show` and `add` (it printed only the line before)
+        case QueueCmd.Done(id, json) =>
+          c.queuePatch(id, QueuePatch(status = Some(Queue.QueueItem.Status(Queue.Done))))
+            .map(i => Output.emit(json, i)(i => s"done #${i.id}: ${i.text}"))
+        case QueueCmd.Edit(id, text, json) =>
+          c.queuePatch(id, QueuePatch(text = Some(text)))
+            .map(i => Output.emit(json, i)(i => s"edited #${i.id}: ${i.text}"))
+        case QueueCmd.Rm(id, json) =>
+          c.queueDelete(id).map(i => Output.emit(json, i)(i => s"removed #${i.id}: ${i.text}"))
+        case QueueCmd.Export(dir) =>
+          writeMeta(c, Path.of(dir)).map(fs => Cli.out.println(s"wrote ${fs.mkString(", ")} to $dir"))
+        case QueueCmd.Import(dir) =>
+          readMeta(c, Path.of(dir), replace = Api.Overwrite(true)).map(_.foreach(l => Cli.out.println(s"  $l")))
+        case QueueCmd.Recheck(dryRun, limit, id, all, noWait, json) =>
+          c.call(AcquisitionWorkApi.acquireRecheck)(
+            Acquire.Checks.RecheckRequest(
+              Acquire.Checks.RecheckRequest.DryRun(dryRun),
+              limit.map(Acquire.Checks.RecheckRequest.Limit(_)),
+              id.map(Acquire.Checks.RecheckRequest.Id(_)),
+              Some(Acquire.Checks.RecheckRequest.By("cli")),
+              Acquire.Checks.RecheckRequest.All(all)
+            )
+          ).flatMap { r =>
+            Output.emit(json, r)(AcquireChecksMarkdown.result)
+            r.job match
+              case Some(j) if !noWait && !json.value => IngestCmd.pollJob(c, j.id, 0)
+              case _                                 => Right(())
+          }
 
   /** What `histmersion …` of this group was asked to do, every argument parsed. */
   enum Command extends Cli.Command:
@@ -235,26 +237,29 @@ object Ops:
     case Query(sql: String, json: Cli.JsonOutput)
     case Schema(json: Cli.JsonOutput)
 
-    def run(c: Client)(using Console): Either[Cli.Error, Unit] = Ops.run(c, this)
+    def run(c: Client)(using Console): Either[Cli.Error, Unit] = Perform(c)(this)
 
-  /** Carry out one command against the server. */
-  def run(c: Client, cmd: Command)(using console: Console): Either[Cli.Error, Unit] =
-    cmd match
-      case Command.Lint(rules, fix, article, source, file, json) =>
-        def show(r: FormatReport)(using console: Console) = Output.emit(json, r)(FormatMarkdown.report)
-        (article, source, file) match
-          case (Some(slug), _, _) =>
-            (if fix then c.fixArticleFormat(ReviewGoal.Slug(slug)) else c.lintArticle(ReviewGoal.Slug(slug))).map(show)
-          case (_, Some(ck), _) => (if fix then c.fixSourceFormat(Citekey(ck)) else c.lintSource(Citekey(ck))).map(show)
-          case (_, _, Some(f))  => lintFile(c, java.nio.file.Path.of(f), fix).map(show)
-          case _                =>
-            for
-              fixed <- if fix then fixLoop(c, rules, 0, 0, 0) else Right(Nil)
-              rep <- c.lint(rules.map(Lint.Wire(_)))
-            yield
-              val full = rep.modify(_.fixed).setTo(fixed)
-              Output.emit(json, full)(Lint.markdown(_).value)
-      case Command.Query(sql, json) =>
-        c.query(Query.Statement(sql)).map(r => Output.emit(json, r)(Query.markdown(_).value))
-      case Command.Schema(json) =>
-        c.schemaTables.map(s => Output.emit(json, s)(Query.schemaMarkdown(_).value))
+  /** Carries out Command commands against one server. */
+  final private[cli] class Perform(c: Client)(using console: Console):
+    def apply(cmd: Command): Either[Cli.Error, Unit] =
+      cmd match
+        case Command.Lint(rules, fix, article, source, file, json) =>
+          def show(r: FormatReport)(using console: Console) = Output.emit(json, r)(FormatMarkdown.report)
+          (article, source, file) match
+            case (Some(slug), _, _) =>
+              (if fix then c.fixArticleFormat(ReviewGoal.Slug(slug)) else c.lintArticle(ReviewGoal.Slug(slug)))
+                .map(show)
+            case (_, Some(ck), _) =>
+              (if fix then c.fixSourceFormat(Citekey(ck)) else c.lintSource(Citekey(ck))).map(show)
+            case (_, _, Some(f)) => lintFile(c, java.nio.file.Path.of(f), fix).map(show)
+            case _               =>
+              for
+                fixed <- if fix then fixLoop(c, rules, 0, 0, 0) else Right(Nil)
+                rep <- c.lint(rules.map(Lint.Wire(_)))
+              yield
+                val full = rep.modify(_.fixed).setTo(fixed)
+                Output.emit(json, full)(Lint.markdown(_).value)
+        case Command.Query(sql, json) =>
+          c.query(Query.Statement(sql)).map(r => Output.emit(json, r)(Query.markdown(_).value))
+        case Command.Schema(json) =>
+          c.schemaTables.map(s => Output.emit(json, s)(Query.schemaMarkdown(_).value))

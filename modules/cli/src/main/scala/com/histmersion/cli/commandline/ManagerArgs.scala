@@ -41,8 +41,8 @@ object ManagerArgs:
       LeafManagers(),
       LeafManager(),
       LeafEnqueue(),
-      LeafAutopilot(),
-      LeafScheduler(),
+      AutopilotLeaf(),
+      SchedulerLeaf(),
       LeafStalls()
     )
 
@@ -280,7 +280,7 @@ object ManagerArgs:
   // ── autopilot ──────────────────────────────────────────────────────────────────────────────────
 
   /** `agent autopilot` is its status; each other verb is a subcommand. */
-  final private class LeafAutopilot()
+  final private class AutopilotLeaf()
       extends Leaf(
         Agent,
         "autopilot",
@@ -348,7 +348,7 @@ object ManagerArgs:
   // ── scheduler ──────────────────────────────────────────────────────────────────────────────────
 
   /** `agent scheduler` is its status; queue, why and strategy are subcommands. */
-  final private class LeafScheduler()
+  final private class SchedulerLeaf()
       extends Leaf(
         Agent,
         "scheduler",

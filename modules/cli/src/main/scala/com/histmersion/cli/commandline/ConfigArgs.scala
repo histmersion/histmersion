@@ -47,4 +47,4 @@ object ConfigArgs:
         "config",
         "The settings file: where it is, its settings (get, set, unset — the file is changed in place, comments and all), reloading and restarting the server"
       ):
-    holds((LeafPath() :: LeafReload() :: SettingsArgs.leaves())*)
+    holds((LeafPath() :: LeafReload() :: ConfigSettingArgs.leaves())*)
