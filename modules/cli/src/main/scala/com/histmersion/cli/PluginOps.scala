@@ -5,8 +5,6 @@ import com.histmersion.api.problem.Text.sentence
 
 import hearth.kindlings.optics.syntax.*
 
-import cats.syntax.all.*
-import com.monovore.decline.*
 import com.histmersion.config.*
 import com.histmersion.util.plugins.PluginKit.{Coordinates, Index, Installed, Origin}
 

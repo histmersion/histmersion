@@ -1,9 +1,9 @@
 package com.histmersion
 package cli
+import com.histmersion.cli.AllOrFirst.traverse
 
 import com.histmersion.api.media.MediaMarkdown
 
-import cats.syntax.all.*
 import com.histmersion.api.Api
 import com.histmersion.config.*
 import com.histmersion.api.media.{

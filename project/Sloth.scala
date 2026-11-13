@@ -5,8 +5,8 @@ import sbt.librarymanagement.LibraryManagementCodec.given
 import sbt.util.CacheImplicits.given
 
 /** VirtusLab Sloth (https://github.com/VirtusLab/sloth) rewrites the lazy-val bytecode of jars that were compiled by
-  * Scala < 3.8 (circe, cats, tapir, sttp, decline, sconfig, magnolia…) from the `sun.misc.Unsafe` scheme to the
-  * `VarHandle` scheme Scala 3.8 emits. Without it every native binary prints JDK 25's "terminally deprecated method in
+  * Scala < 3.8 (circe, cats, tapir, sttp, sconfig, magnolia…) from the `sun.misc.Unsafe` scheme to the `VarHandle`
+  * scheme Scala 3.8 emits. Without it every native binary prints JDK 25's "terminally deprecated method in
   * sun.misc.Unsafe" warning on first lazy val, and JDK 26 removes the method. The Sloth CLI jar is not published; build
   * it with `sbt cli/assembly` in a Sloth checkout and point `SLOTH_JAR` at it (default: a checkout next to this repo,
   * as CI makes one, or next to the main worktree when building from a `git worktree`). Absent → the native image is

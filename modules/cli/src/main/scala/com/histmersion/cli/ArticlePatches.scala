@@ -1,5 +1,6 @@
 package com.histmersion
 package cli
+import com.histmersion.cli.AllOrFirst.traverse
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
@@ -8,8 +9,6 @@ import com.histmersion.api.problem.Text.sentence
 import hearth.kindlings.optics.syntax.*
 
 import scala.annotation.tailrec
-import cats.syntax.all.*
-import com.monovore.decline.*
 import com.histmersion.api.ListPatch
 import com.histmersion.config.*
 

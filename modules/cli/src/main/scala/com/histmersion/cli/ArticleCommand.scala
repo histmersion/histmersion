@@ -12,8 +12,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import java.nio.file.Path
 
 /** What `histmersion article …` was asked to do, every argument already a typed value: the command line's parser
-  * (decline in [[ArticleCli]], scallop in [[CommandLine]]) builds one, and [[ArticleCli.run]] carries it out against a
-  * server.
+  * ([[commandline.ArticleArgs]]) builds one, and [[ArticleCli.run]] carries it out against a server.
   */
 enum ArticleCommand extends Cli.Command derives CanEqual:
   case Listing(

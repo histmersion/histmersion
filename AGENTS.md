@@ -142,7 +142,7 @@ Adding an operation to a feature in its own package:
 1. The owner's package — a newtype for every new kind of value (rule 1), on its entity's companion when it is one
    of the entity's properties (`Approval.Kind`). Its JSON, schema, column, setting and CLI argument
    come from the generic instances (`util.json.NewtypeCodecs`, `util.database.NewtypeColumns`,
-   `config.NewtypeReaders`, `cli.NewtypeArguments`); add a round-trip test.
+   `config.NewtypeReaders`, the converter in `cli.CommandLine`); add a round-trip test.
 2. `api.<domain>` — the input and output records, an entity's on the entity's companion (`Source.Patch`), `derives JsonCodec,
    KindlingsSchema`; the Tapir endpoint in the feature's endpoints object, added to `Api.all` in its place (route
    matching and `tools/list` depend on the order); how the output renders as Markdown. Every surface returns
@@ -154,7 +154,9 @@ Adding an operation to a feature in its own package:
    guard for a write, the service call with the `Caller`, the conversion to the wire record (Chimney).
 5. `<Feature>Routes` + `<Feature>Tools` — the same controller method bound to its REST endpoint and its MCP tool,
    listed in `HttpApi` and `McpTools`.
-6. `cli` — the client call and the decline subcommand (`Cli`).
+6. `cli` — the client call, the command in its group's ADT (a `Cli.Command`) and its scallop subcommand in the
+   group's adapter (`cli.commandline.<Group>Args`; only there and in `cli/CommandLine.scala` may scallop be named —
+   `ContractsSuite` rule `scallop`).
 7. The contract snapshots (`ContractSnapshotSuite`, `CliHelpSnapshotSuite`) fail on the new endpoint, tool and
    command: rewrite them with `HISTMERSION_UPDATE_CONTRACT=1` and check that the diff holds only the addition.
    Update the reference pages (`docs/user-guide/reference/`) in the same commit.
@@ -777,7 +779,7 @@ formatted against `Locale.ROOT` (see `Backup.humanBytes`) — the default locale
   depth goes in `reference/` and `contributing/` (see `contributing/docs.md`).
 - The reference pages hold the tables (CLI, MCP, REST, config). The **CLI table is generated**:
   `./tools/gen-cli-docs.sh` (or `just cli-docs`) rewrites `docs/user-guide/reference/cli.md` between
-  the `CLI REFERENCE` markers from decline's own `--help`; `just api-docs` rewrites the endpoint index
+  the `CLI REFERENCE` markers from the CLI's own `--help`; `just api-docs` rewrites the endpoint index
   in `reference/rest-api.md`. Do not hand-edit inside those markers.
 - `docs/writing-guide.md` — the rules for prose compiled out of the corpus. They live there **once**;
   skills link to it rather than restating it.

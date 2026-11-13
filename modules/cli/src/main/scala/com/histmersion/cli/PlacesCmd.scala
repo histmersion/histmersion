@@ -7,7 +7,6 @@ import com.histmersion.api.exchange.Bundle
 
 import com.histmersion.api.catalogue.PlacesMarkdown
 
-import cats.syntax.all.*
 import com.histmersion.api.{Api, Dataset, Paging}
 import com.histmersion.config.*
 

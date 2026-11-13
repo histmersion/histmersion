@@ -344,7 +344,7 @@ exposed as REST + MCP tool + CLI (same contract from `core`):
   makes "CLI and MCP agree" a mechanical fact.
 
 ### 2.3 Docs, agents, skills, plugin
-- **`README.md`**: what it is, install (one command), run, CLI reference (generated from decline
+- **`README.md`**: what it is, install (one command), run, CLI reference (generated from the CLI's
   `--help`), MCP tools table, config table (from `reference.conf`), backup/restore (`pg_dump`),
   troubleshooting (native-image notes distilled from this project's history).
 - **`AGENTS.md`** (Scala practices: Scala 3 syntax, direct style, immutability, `Either` errors, no

@@ -30,7 +30,8 @@ import scala.util.chaining.*
 object AgentArgs:
   object AgentEntry extends CommandLine.Entry:
     val name = "agent"
-    def help: String = "Embedded research agents: models, allowance, quota, generate, doctor, probe, run, runs, show, compare, pause, resume, cancel, approvals, approve, reject, digest, decide-all, managers, manager, enqueue, autopilot, scheduler, stalls"
+    def help: String =
+      "Embedded research agents: models, allowance, quota, generate, doctor, probe, run, runs, show, compare, pause, resume, cancel, approvals, approve, reject, digest, decide-all, managers, manager, enqueue, autopilot, scheduler, stalls"
     def conf(): Subcommand = GroupAgent()
 
   /** `agent models` shows; `agent models set|reset` change a role's chain. */
@@ -63,13 +64,25 @@ object AgentArgs:
     private val role_ = arg[String]("role")
     def command: Either[Problem, Cli.Command] = Right(AgentCmd.Command.ModelsReset(role_()))
 
-  final private class LeafAllowance() extends Leaf("histmersion agent", "allowance", "Save the allowance of a model (provider:model) or of a provider (provider:*): tokens and/or USD per rolling window and a reserve below which the chain's next model is used; --remove goes back to config") with SharedFlags:
+  final private class LeafAllowance()
+      extends Leaf(
+        "histmersion agent",
+        "allowance",
+        "Save the allowance of a model (provider:model) or of a provider (provider:*): tokens and/or USD per rolling window and a reserve below which the chain's next model is used; --remove goes back to config"
+      )
+      with SharedFlags:
     private val target_ = arg[String]("target")
-    private val limits_ = values[String]("limit", "A limit: '<amount> tokens/<window>' or '<amount> usd/<window>' (window: 5h, 7d, day, week, month); repeatable; none = unlimited")
+    private val limits_ = values[String](
+      "limit",
+      "A limit: '<amount> tokens/<window>' or '<amount> usd/<window>' (window: 5h, 7d, day, week, month); repeatable; none = unlimited"
+    )
     private val reserve_ = value[Int]("reserve", "Stop using it once less than this % of any limit is left (0-99)")
-    private val remove_ = flag("remove", "Drop the saved allowance: the server's config (agents.allowances) applies again")
+    private val remove_ =
+      flag("remove", "Drop the saved allowance: the server's config (agents.allowances) applies again")
 
-    def command: Either[Problem, Cli.Command] = Right(AgentCmd.Command.Allowance(target_(), limits_.getOrElse(Nil), reserve_.getOrElse(0), remove_.getOrElse(false)))
+    def command: Either[Problem, Cli.Command] = Right(
+      AgentCmd.Command.Allowance(target_(), limits_.getOrElse(Nil), reserve_.getOrElse(0), remove_.getOrElse(false))
+    )
 
   private val Pools = PlanQuota.PoolId.values.map(_.wire).mkString(", ")
 
@@ -145,18 +158,37 @@ object AgentArgs:
     private val pool_ = arg[String]("pool", required = false)
     def command: Either[Problem, Cli.Command] = Right(AgentCmd.Command.QuotaRefresh(pool_.toOption))
 
-  final private class LeafGenerate() extends Leaf("histmersion agent", "generate", "Write the per-runtime agent definitions (Claude Code plugins, Codex home, opencode config) from the server's bundled agents and skills — on the SERVER's disk") with SharedFlags:
-    private val rts_ = values[String]("runtime", "Only this runtime: claude-code, codex or opencode (repeatable; default all three)")
+  final private class LeafGenerate()
+      extends Leaf(
+        "histmersion agent",
+        "generate",
+        "Write the per-runtime agent definitions (Claude Code plugins, Codex home, opencode config) from the server's bundled agents and skills — on the SERVER's disk"
+      )
+      with SharedFlags:
+    private val rts_ =
+      values[String]("runtime", "Only this runtime: claude-code, codex or opencode (repeatable; default all three)")
     private val out_ = value[String]("out", "A directory on the server to write to instead of its runtimes directory")
 
     def command: Either[Problem, Cli.Command] = Right(AgentCmd.Command.Generate(rts_.getOrElse(Nil), out_.toOption))
 
-  final private class LeafDoctor() extends Leaf("histmersion agent", "doctor", "Check every provider without spending anything: keys, the free model listing, prices, the claude CLI and its login") with SharedFlags:
+  final private class LeafDoctor()
+      extends Leaf(
+        "histmersion agent",
+        "doctor",
+        "Check every provider without spending anything: keys, the free model listing, prices, the claude CLI and its login"
+      )
+      with SharedFlags:
     private val offline_ = flag("offline", "Skip the providers' model listings (no network)")
 
     def command: Either[Problem, Cli.Command] = Right(AgentCmd.Command.Doctor(offline_.getOrElse(false)))
 
-  final private class LeafProbe() extends Leaf("histmersion agent", "probe", "One live model call with one read-only tool (get_source) and a typed answer, checked against the record") with SharedFlags:
+  final private class LeafProbe()
+      extends Leaf(
+        "histmersion agent",
+        "probe",
+        "One live model call with one read-only tool (get_source) and a typed answer, checked against the record"
+      )
+      with SharedFlags:
     private val ck_ = arg[String]("citekey")
     private val model_ = modelFlag()
 
@@ -224,7 +256,9 @@ object AgentArgs:
         )
       )
 
-  final private class LeafRuns() extends Leaf("histmersion agent", "runs", "Agent runs, newest first, filtered on the server") with SharedFlags:
+  final private class LeafRuns()
+      extends Leaf("histmersion agent", "runs", "Agent runs, newest first, filtered on the server")
+      with SharedFlags:
     private val f_ = runFilter()
     private val limit_ = value[Int]("limit", "How many")
     private val before_ = beforeFlag("run")
@@ -232,14 +266,26 @@ object AgentArgs:
 
     def command: Either[Problem, Cli.Command] = Right(AgentCmd.Command.Runs(f_(), limit_.toOption, before_(), json_()))
 
-  final private class LeafShow() extends Leaf("histmersion agent", "show", "One run: its steps — tokens (with the first call's input and the turns), cost — and warnings (and --messages: the trace)") with SharedFlags:
+  final private class LeafShow()
+      extends Leaf(
+        "histmersion agent",
+        "show",
+        "One run: its steps — tokens (with the first call's input and the turns), cost — and warnings (and --messages: the trace)"
+      )
+      with SharedFlags:
     private val id_ = arg[String]("id")
     private val msgs_ = flag("messages", "Include the traced messages and tool calls")
     private val fol_ = followFlag()
 
     def command: Either[Problem, Cli.Command] = Right(AgentCmd.Command.Show(id_(), msgs_.getOrElse(false), fol_()))
 
-  final private class LeafCompare() extends Leaf("histmersion agent", "compare", "Runs of one pipeline on one target side by side: per step the model (configured → reported), tokens, the first call's input and the turns, cost or plan pool, time and attempts; then the outputs (enrich-source: findings, quote check, places, periods, summary and notes, the claims only one run made; review-article: verdicts, findings per reviewer and kind, the major findings runs share)") with SharedFlags:
+  final private class LeafCompare()
+      extends Leaf(
+        "histmersion agent",
+        "compare",
+        "Runs of one pipeline on one target side by side: per step the model (configured → reported), tokens, the first call's input and the turns, cost or plan pool, time and attempts; then the outputs (enrich-source: findings, quote check, places, periods, summary and notes, the claims only one run made; review-article: verdicts, findings per reviewer and kind, the major findings runs share)"
+      )
+      with SharedFlags:
     private val ids_ = args[String]("run-id", required = true)
     private val json_ = json()
 
@@ -260,13 +306,21 @@ object AgentArgs:
         AgentCmd.Command.Control(action, id_(), caps.flatMap(_._1.toOption), caps.flatMap(_._2.toOption))
       )
 
-  final private class LeafApprovals() extends Leaf("histmersion agent", "approvals", "Changes runs proposed for a person to decide (statuses, disagreement edges, goal plans, articles to publish, …), filtered on the server; the open ones by default") with SharedFlags:
+  final private class LeafApprovals()
+      extends Leaf(
+        "histmersion agent",
+        "approvals",
+        "Changes runs proposed for a person to decide (statuses, disagreement edges, goal plans, articles to publish, …), filtered on the server; the open ones by default"
+      )
+      with SharedFlags:
     private val f_ = approvalFilter()
     private val limit_ = value[Int]("limit", "How many")
     private val before_ = beforeFlag("approval")
     private val json_ = json()
 
-    def command: Either[Problem, Cli.Command] = Right(AgentCmd.Command.Approvals(f_(), limit_.toOption, before_(), json_()))
+    def command: Either[Problem, Cli.Command] = Right(
+      AgentCmd.Command.Approvals(f_(), limit_.toOption, before_(), json_())
+    )
 
   /** `agent approve|reject <id>…`. */
   final private class LeafDecide(d: Decision, help: String) extends Leaf("histmersion agent", d.wire.value, help):
@@ -274,7 +328,12 @@ object AgentArgs:
     private val note_ = value[String]("note", "Why — kept with the decision (with every id)")
     def command: Either[Problem, Cli.Command] = Right(AgentCmd.Command.Decide(d, ids_(), note_.toOption))
 
-  final private class GroupAgent() extends Group("histmersion", "agent", "Embedded research agents: models, allowance, quota, generate, doctor, probe, run, runs, show, compare, pause, resume, cancel, approvals, approve, reject, digest, decide-all, managers, manager, enqueue, autopilot, scheduler, stalls"):
+  final private class GroupAgent()
+      extends Group(
+        "histmersion",
+        "agent",
+        "Embedded research agents: models, allowance, quota, generate, doctor, probe, run, runs, show, compare, pause, resume, cancel, approvals, approve, reject, digest, decide-all, managers, manager, enqueue, autopilot, scheduler, stalls"
+      ):
     holds(
       (List(
         LeafModels(),

@@ -3,20 +3,17 @@ package cli
 import com.histmersion.util.json.RawJson.*
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 
-import com.monovore.decline.*
 import com.histmersion.util.console.Console
 
 /** The one way a command prints its answer (#1946): the shared Markdown rendering — for people and LLMs — or, with
-  * `--json`, the response as the server sent it, for scripts. Every command that offers JSON takes [[jsonFlag]] (one
-  * name, one help line) and prints through [[emit]], so the JSON is always the wire DTO's own codec, pretty-printed the
-  * same way, and never a hand-built object that could drift from it.
+  * `--json`, the response as the server sent it, for scripts. Every command that offers JSON takes `--json` (one name,
+  * one help line) and prints through [[emit]], so the JSON is always the wire DTO's own codec, pretty-printed the same
+  * way, and never a hand-built object that could drift from it.
   */
 object Output:
   /** `--json` — the same flag, with the same help, on every command that has one. */
 
   val JsonHelp: String = "Print the raw JSON response instead of Markdown"
-
-  val jsonFlag: Opts[Cli.JsonOutput] = Opts.flag("json", JsonHelp).orFalse.map(Cli.JsonOutput(_))
 
   /** A response as `--json` prints it: the DTO's own codec, two-space indented. Pure. */
   def json[A: JsonValueCodec](a: A): String = a.asJson.spaces2

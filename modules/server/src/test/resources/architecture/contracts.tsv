@@ -238,7 +238,7 @@ derives	server:server/views/EventCardTools.scala	codec given written by hand	4
 derives	upstreams:domain/library/acquisition/CoreEndpoint.scala	codec given written by hand	2
 derives	upstreams:domain/library/acquisition/Endpoint.scala	codec given written by hand	1
 derives	web:web/ApiClient.scala	codec given written by hand	1
-global	cli:cli/Cli.scala	environment	3
+global	cli:cli/Cli.scala	environment	2
 global	cli:cli/Cli.scala	system property	1
 global	cli:cli/PluginCmd.scala	environment	3
 global	cli:cli/PluginCmd.scala	system property	1

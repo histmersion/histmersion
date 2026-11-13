@@ -4,7 +4,6 @@ import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.Cursor
 
 import com.histmersion.api.automation.ListFilters.{ApprovalFilter, JobFilter, RunFilter}
-import com.monovore.decline.Command
 import com.histmersion.api.automation.Approval
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.automation.Agents
@@ -19,13 +18,24 @@ class ListOptsSuite extends munit.FunSuite:
 
   private given console: com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard
 
-  private def parse[A](opts: com.monovore.decline.Opts[A], args: String*): Either[String, A] =
-    Command("t", "test")(opts).parse(args.toList, Map.empty).left.map(_.toString)
+  private def approvals(args: String*): Either[String, ApprovalFilter] =
+    Parsing.parse("agent" +: "approvals" +: args*) match
+      case Right(AgentCmd.Command.Approvals(f, _, _, _)) => Right(f)
+      case other                                         => Left(s"$other")
+
+  private def runs(args: String*): Either[String, RunFilter] =
+    Parsing.parse("agent" +: "runs" +: args*) match
+      case Right(AgentCmd.Command.Runs(f, _, _, _)) => Right(f)
+      case other                                    => Left(s"$other")
+
+  private def jobs(args: String*): Either[String, JobFilter] =
+    Parsing.parse("jobs" +: args*) match
+      case Right(IngestCmd.Command.Jobs(_, f, _, _, _)) => Right(f)
+      case other                                        => Left(s"$other")
 
   test("approvals: state, kinds (repeated and comma-separated), subject, goal, decided-by"):
     assertEquals(
-      parse(
-        ListOpts.approvals,
+      approvals(
         "--kind",
         "goal-plan,edge",
         "--kind",
@@ -49,17 +59,16 @@ class ListOptsSuite extends munit.FunSuite:
         )
       )
     )
-    assertEquals(parse(ListOpts.approvals), Right(ApprovalFilter()))
+    assertEquals(approvals(), Right(ApprovalFilter()))
     // the server reads the comma-separated and repeated values as one list
     assertEquals(
-      parse(ListOpts.approvals, "--kind", "goal-plan,edge").map(_.normalized.kind),
+      approvals("--kind", "goal-plan,edge").map(_.normalized.kind),
       Right(List(Approval.Kind.Wire("goal-plan"), Approval.Kind.Wire("edge")))
     )
 
   test("runs: every filter, and the dates as typed (the server reads them)"):
     assertEquals(
-      parse(
-        ListOpts.runs,
+      runs(
         "--pipeline",
         "review-article",
         "--status",
@@ -101,7 +110,7 @@ class ListOptsSuite extends munit.FunSuite:
 
   test("jobs: kinds, states, dates, subject"):
     assertEquals(
-      parse(ListOpts.jobs, "--kind", "ingest", "--kind", "reocr", "--status", "failed", "--since", "2026-09-01"),
+      jobs("--kind", "ingest", "--kind", "reocr", "--status", "failed", "--since", "2026-09-01"),
       Right(
         JobFilter(
           List(JobState.Wire("failed")),

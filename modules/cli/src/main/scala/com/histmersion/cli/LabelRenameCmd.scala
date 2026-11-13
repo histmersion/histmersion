@@ -7,8 +7,6 @@ import com.histmersion.api.exchange.Bundle
 
 import com.histmersion.api.aliases.AliasKinds
 
-import cats.syntax.all.*
-import com.monovore.decline.*
 import com.histmersion.config.*
 import com.histmersion.api.aliases.{Aliases, LabelRename, LabelRenames}
 import com.histmersion.api.automation.Goal
@@ -40,30 +38,6 @@ object LabelRenameCmd:
       .left
       .map(_.message)
       .map(t => Rename(kind, from.trim, LabelRename.To(t.value), json))
-
-  def apply(kind: Bundle.Kind)(using console: Console): Opts[Client => Either[Cli.Error, Unit]] =
-    args(kind)
-      .map { (from, to, json) => (c: Client) =>
-        val r = kind match
-          case Bundle.Kind.Article => c.renameArticle(ReviewGoal.Slug(from), to)
-          case Bundle.Kind.Event   => c.renameEvent(Event.Uid(from), to)
-          case Bundle.Kind.Place   => c.renamePlace(Place.Id(from), to)
-          case _                   => c.renameGoal(Goal.Uid(from), to)
-        r.map(x => Output.emit(json, x)(MergeMarkdown.renamed))
-      }
-
-  /** The `rename` subcommand of `kind` as decline parses it: the old label (trimmed), the new one checked. */
-  def args(kind: Bundle.Kind): Opts[(String, LabelRename.To, Cli.JsonOutput)] =
-    Opts.subcommand("rename", help(kind)) {
-      (Opts.argument[String]("old"), Opts.argument[String]("new"), Output.jsonFlag).tupled
-        .mapValidated((from, to, json) =>
-          LabelRenames
-            .validate(kind, LabelRenames.Label(from), LabelRenames.Label(to))
-            .leftMap(_.message.sentence)
-            .toValidatedNel
-            .map(t => (from.trim, LabelRename.To(t.value), json))
-        )
-    }
 
   /** The help line of the `rename` subcommand of `kind`. */
   def help(kind: Bundle.Kind): String =

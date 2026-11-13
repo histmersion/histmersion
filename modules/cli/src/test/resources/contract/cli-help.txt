@@ -185,7 +185,7 @@ Subcommands:
         Plugins of the Histmersion installed on THIS machine: add, rm, list, status, rebuild, rollback (refused when the CLI points at another machine); new, repo and api-jar for writing one
 
 ==== histmersion version
-Usage: histmersion version 
+Usage: histmersion version
 
 Print the CLI and server versions
 
@@ -194,7 +194,7 @@ Options and flags:
         Display this help text.
 
 ==== histmersion health
-Usage: histmersion health 
+Usage: histmersion health
 
 Server health (db, schema version)
 
@@ -225,7 +225,7 @@ Options and flags:
         Overwrite rows newer than the files
 
 ==== histmersion reindex
-Usage: histmersion reindex 
+Usage: histmersion reindex
 
 Rebuild the full-text chunk index for every source
 
@@ -623,7 +623,8 @@ Options and flags:
         Do not ask for confirmation
 
 ==== histmersion maintenance
-Usage: histmersion maintenance vacuum
+Usage:
+    histmersion maintenance vacuum
 
 Database upkeep on the server: vacuum
 

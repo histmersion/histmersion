@@ -18,7 +18,6 @@ import org.rogach.scallop.exceptions.{
 }
 
 import java.nio.file.Path
-import scala.annotation.tailrec
 
 /** The command line as scallop parses it. Scallop's configuration is mutable — options are declared on an object and
   * read back after `verify()` — so it stays in this file, the core every command group shares, and in the groups'
@@ -49,33 +48,47 @@ object CommandLine:
 
   /** The top-level words this parser owns, in the order the root's help lists them. */
   private[cli] def entries: List[Entry] = List(
+    commandline.TopArgs.VersionEntry,
+    commandline.TopArgs.HealthEntry,
+    commandline.TopArgs.AboutEntry,
+    commandline.TopArgs.SeedEntry,
+    commandline.TopArgs.ReindexEntry,
+    commandline.TopArgs.SearchEntry,
+    commandline.TopArgs.FacetsEntry,
+    commandline.TopArgs.GetEntry,
+    commandline.TopArgs.PassagesEntry,
+    commandline.TopArgs.GeoWhenEntry,
+    commandline.TopArgs.HistogramEntry,
+    commandline.TopArgs.NeighborsEntry,
+    commandline.TopArgs.GraphEntry,
+    commandline.TopArgs.ContradictionsEntry,
+    commandline.TopArgs.PutEntry,
+    commandline.TopArgs.PatchEntry,
     commandline.RenameArgs,
     commandline.DeleteArgs,
+    commandline.TopArgs.ExportEntry,
+    commandline.TopArgs.BackupEntry,
+    commandline.TopArgs.BackupsEntry,
+    commandline.TopArgs.RestoreEntry,
+    commandline.TopArgs.MaintenanceEntry,
     commandline.BundleArgs.BundleEntry,
     commandline.MergeArgs.MergeEntry,
     commandline.ArticleArgs,
-    commandline.ActivityArgs.ActivityEntry,
-    commandline.BookmarksArgs.BookmarksEntry,
-    commandline.NotesArgs.NotesEntry,
+    commandline.PlacesArgs.PlacesEntry,
     commandline.PeriodsArgs.PeriodsEntry,
     commandline.PeriodsArgs.InitEntry,
+    commandline.EventsArgs.EventsEntry,
     commandline.AttestationsArgs.AttestationsEntry,
     commandline.CandidatesArgs.CandidatesEntry,
+    commandline.GoalsArgs.GoalsEntry,
     commandline.AgentStateArgs.AgentStateEntry,
+    commandline.AgentArgs.AgentEntry,
+    commandline.MediaArgs.MediaEntry,
     commandline.AssetLinksArgs.AssetLinksEntry,
-    commandline.ConfigArgs.ConfigEntry,
-    commandline.BasemapArgs.BasemapEntry,
     commandline.OpsArgs.LintEntry,
     commandline.OpsArgs.QueueEntry,
     commandline.OpsArgs.QueryEntry,
     commandline.OpsArgs.SchemaEntry,
-    commandline.IngestArgs.ReocrEntry,
-    commandline.IngestArgs.AssetsEntry,
-    commandline.IngestArgs.JobsEntry,
-    commandline.GoalsArgs.GoalsEntry,
-    commandline.MediaArgs.MediaEntry,
-    commandline.PlacesArgs.PlacesEntry,
-    commandline.EventsArgs.EventsEntry,
     commandline.AcquireArgs.DiscoverEntry,
     commandline.AcquireArgs.RefsEntry,
     commandline.AcquireArgs.AssessEntry,
@@ -83,23 +96,16 @@ object CommandLine:
     commandline.AcquireArgs.IngestEntry,
     commandline.AcquireArgs.ArchiveEntry,
     commandline.CalibreArgs.CalibreEntry,
-    commandline.PluginArgs.PluginEntry,
-    commandline.AgentArgs.AgentEntry
+    commandline.IngestArgs.ReocrEntry,
+    commandline.IngestArgs.AssetsEntry,
+    commandline.IngestArgs.JobsEntry,
+    commandline.ActivityArgs.ActivityEntry,
+    commandline.BookmarksArgs.BookmarksEntry,
+    commandline.NotesArgs.NotesEntry,
+    commandline.ConfigArgs.ConfigEntry,
+    commandline.BasemapArgs.BasemapEntry,
+    commandline.PluginArgs.PluginEntry
   )
-
-  private val Globals = Set("--server", "--token")
-
-  /** Whether the command line names a word this parser owns (after the global options). */
-  def handles(args: Seq[String]): Boolean = firstWord(args.toList).exists(w => entries.exists(_.name == w))
-
-  /** The help line of a top-level word this parser owns. */
-  def helpOf(name: String): String = entries.find(_.name == name).fold("")(_.help)
-
-  @tailrec private def firstWord(args: List[String]): Option[String] = args match
-    case flag :: _ :: rest if Globals(flag)                            => firstWord(rest)
-    case flag :: rest if Globals.exists(g => flag.startsWith(g + "=")) => firstWord(rest)
-    case word :: _                                                     => Some(word)
-    case Nil                                                           => None
 
   /** Parse `args`: the typed command, the help asked for, or what is wrong with them. */
   def parse(args: Seq[String]): Outcome =
@@ -154,7 +160,7 @@ object CommandLine:
   /** Help in decline's layout — usage, description, options and flags, subcommands — so the help text, its snapshot and
     * the generated CLI reference read as they did.
     */
-  final private class Layout(val path: String) extends ScallopHelpFormatter:
+  final private class Layout(val path: String, root: Option[String] = None) extends ScallopHelpFormatter:
     override def formatHelp(s: Scallop, subcommandPrefix: String): String =
       def isFlag(o: SimpleOption) = o.converter.asInstanceOf[AnyRef] eq flagConverter
       val options = s.opts.collect { case o: SimpleOption if o.name != "help" && o.name != "version" => o }
@@ -171,7 +177,9 @@ object CommandLine:
         if o.required then one else s"[$one]"
       val own = options.map(usage) ++ operands.map(operand)
       val usages =
-        if s.subbuilders.nonEmpty then
+        if root.isDefined then
+          s.subbuilders.map((name, _) => s"    ${((path :: own) :+ name).mkString(" ")}").mkString("Usage:\n", "\n", "")
+        else if s.subbuilders.nonEmpty then
           (s.subbuilders.map((name, sub) =>
             sub.helpFormatter match
               case l: Layout => s"    ${l.path}"
@@ -191,7 +199,7 @@ object CommandLine:
           List(
             s.subbuilders.map((name, sub) => s"    $name\n        ${sub.descr}").mkString("Subcommands:\n", "\n", "")
           )
-      (usages :: s.descr :: flags :: subcommands).filter(_.nonEmpty).mkString("\n\n")
+      (usages :: root.getOrElse(s.descr) :: flags :: subcommands).filter(_.nonEmpty).mkString("\n\n")
 
   /** A path the command reads later, refused here when the platform cannot name it. */
   private[cli] def pathOf(field: String, raw: Option[String]): Either[Problem, Option[Path]] =
@@ -395,7 +403,7 @@ object CommandLine:
     stderrPrintln = line => printed :+= line
     exitHandler = code => exited = Some(code)
     errorMessageHandler = message => failure = Some(Problem.Unclassified(Legacy.Text(message)))
-    helpFormatter = Layout("histmersion")
+    helpFormatter = Layout("histmersion", Some("Histmersion — CLI over the Histmersion server (MCP twin)"))
 
     private val server =
       value[Client.ServerUrl](

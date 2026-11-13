@@ -13,9 +13,8 @@ object Dependencies {
       "2.41.5" // com.github.plokhotnyuk.jsoniter-scala — the JSON codecs (what tapir-jsoniter-scala 1.14.0 brings)
     val kindlings = "0.3.3" // com.kubuszok — Hearth-based jsoniter / tapir-schema / sconfig derivation
     val hearth = "0.4.3" // com.kubuszok — the macro commons Kindlings 0.3.3 is built on (its version, not a newer one)
-    val decline = "2.6.2"
     val scallop =
-      "6.0.1" // org.rogach — the CLI parser replacing decline (G62b spike; no dependency but the Scala library)
+      "6.0.1" // org.rogach — the CLI parser (no dependency but the Scala library)
     val ox = "1.0.2" // direct-style concurrency (via tapir-netty-server-sync); 1.0+ dropped
     // StructuredTaskScope for its own ThreadHerd → JDK 25 (JEP 505) safe
     val magnum = "1.3.1" // sync JDBC

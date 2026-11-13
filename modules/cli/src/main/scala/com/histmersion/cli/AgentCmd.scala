@@ -1,5 +1,6 @@
 package com.histmersion
 package cli
+import com.histmersion.cli.AllOrFirst.traverse
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.Cursor
@@ -8,7 +9,6 @@ import com.histmersion.api.problem.Text.sentence
 
 import hearth.kindlings.optics.syntax.*
 
-import cats.syntax.all.*
 import com.histmersion.config.*
 import com.histmersion.api.automation.Agents.*
 import com.histmersion.api.automation.{AgentRole, AgentsApi, AgentsMarkdown, ModelChains, PlanQuota}

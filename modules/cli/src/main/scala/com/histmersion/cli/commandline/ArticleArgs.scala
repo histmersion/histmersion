@@ -184,7 +184,7 @@ object ArticleArgs extends CommandLine.Entry:
         "Dry-run edits to an article (or a whole draft body) and list the problems the review checks would find — writes nothing"
       ):
     private val slug = arg[ReviewGoal.Slug]("slug")
-    // decline's `<string>`, until the help may change: the paths are read in `command`
+    // read as text, so the help says `<string>` as it always did: the paths are read in `command`
     private val editsFile = value[String](
       "edits-file",
       "A JSON list of edits: [{\"op\": \"replace|insertAfter|insertBefore|delete\", \"anchor\": \"…\", \"text\": \"…\"}]"

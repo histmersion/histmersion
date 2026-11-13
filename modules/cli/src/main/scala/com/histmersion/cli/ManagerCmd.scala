@@ -3,7 +3,6 @@ package cli
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.problem.{Legacy, Problem}
 
-import cats.syntax.all.*
 import com.histmersion.config.*
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.api.automation.{

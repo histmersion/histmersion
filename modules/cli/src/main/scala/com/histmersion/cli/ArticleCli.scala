@@ -11,9 +11,6 @@ import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.exchange.Bundle
 
 import scala.annotation.tailrec
-import cats.syntax.all.*
-import com.monovore.decline.*
-import com.histmersion.cli.NewtypeArguments.given
 import com.histmersion.api.exchange.MergeMarkdown
 import com.histmersion.api.Api
 import com.histmersion.config.*
@@ -213,7 +210,7 @@ object ArticleCli:
       case ArticleCommand.Get(slug, parts, json) =>
         c.getArticle(slug).map(v => Output.emit(json, v)(ArticleMarkdown.article(_, parts.toList)))
       case ArticleCommand.Put(p, kind, strict) =>
-        if !Files.isRegularFile(p) then usage(Problem.Unclassified(Legacy.Text(s"no such file: $p"))).asLeft
+        if !Files.isRegularFile(p) then Left(usage(Problem.Unclassified(Legacy.Text(s"no such file: $p"))))
         else
           // an explicit `put` is always deliberate → force past the "newer in DB" guard
           val fallback = kind.getOrElse(kindOf(p.toAbsolutePath.getParent))
@@ -265,7 +262,7 @@ object ArticleCli:
         val _ = Files.createDirectories(out)
         exportAll(c, out).map(_ => ())
       case ArticleCommand.Import(p, force) =>
-        if !Files.isDirectory(p) then usage(Problem.Unclassified(Legacy.Text(s"not a directory: $p"))).asLeft
+        if !Files.isDirectory(p) then Left(usage(Problem.Unclassified(Legacy.Text(s"not a directory: $p"))))
         else Right(report(importAll(c, p, force, Set(WikiLayout.SourcesDir))))
       case ArticleCommand.Patch(slug, e, strict, ff, rs, crs) =>
         ArticlePatches
