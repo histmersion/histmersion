@@ -4,13 +4,13 @@ package util.json
 import java.nio.charset.StandardCharsets.UTF_8
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{
+  readFromStringReentrant,
+  writeToStringReentrant,
   JsonReader,
   JsonReaderException,
   JsonValueCodec,
   JsonWriter,
-  ReaderConfig,
-  readFromStringReentrant,
-  writeToStringReentrant
+  ReaderConfig
 }
 import hearth.kindlings.jsoniterjson.{Json, JsonNumber, JsonObject}
 
@@ -80,7 +80,8 @@ object RawJson:
   /** The text as JSON, or why it is not. */
   def parse(text: String): Either[String, Json] = decode[Json](text)
 
-  /** The text as an `A`, or why it is not one, prefixed by where in the text (`findings.add[0]: unknown key 'date'`). */
+  /** The text as an `A`, or why it is not one, prefixed by where in the text (`findings.add[0]: unknown key 'date'`).
+    */
   def decode[A](text: String)(using codec: JsonValueCodec[A]): Either[String, A] =
     decodeAt[A](text).left.map((at, why) => if at.isEmpty then why else s"${Cursor.pathText(at)}: $why")
 
@@ -105,8 +106,6 @@ object RawJson:
         case _ => (outer, message)
     case other => (Nil, other)
 
-
-
   extension (json: Json)
     /** Compact text. */
     def noSpaces: String = writeToStringReentrant(json)
@@ -118,7 +117,6 @@ object RawJson:
 
     /** Indented by two spaces as people write JSON (`"key": value`), otherwise laid out as [[spaces2]]. */
     def written: String = layout(json, ": ")
-
 
     /** The object without its `null` fields (only its own; nested objects keep theirs), as circe's `dropNullValues`. */
     def dropNullValues: Json = json match
@@ -169,8 +167,9 @@ object RawJson:
       case (Some(a), Some(b)) =>
         Json.Obj(b.fields.foldLeft(a) { case (acc, (k, v)) =>
           acc(k) match
-            case Some(old) => JsonObject(acc.fields.map((ok, ov) => if ok == k then ok -> ov.deepMerge(v) else ok -> ov))
-            case None      => acc.add(k, v)
+            case Some(old) =>
+              JsonObject(acc.fields.map((ok, ov) => if ok == k then ok -> ov.deepMerge(v) else ok -> ov))
+            case None => acc.add(k, v)
         })
       case _ => that
 
@@ -180,6 +179,7 @@ object RawJson:
     def filterKeys(keep: String => Boolean): JsonObject = JsonObject(o.fields.filter((k, _) => keep(k)))
     def filter(keep: ((String, Json)) => Boolean): JsonObject = JsonObject(o.fields.filter(keep))
     def contains(key: String): Boolean = o.fields.exists(_._1 == key)
+
     /** The object with `key` set to `value`, in place if it is there, else appended. */
     def updated(key: String, value: Json): JsonObject =
       if o.contains(key) then JsonObject(o.fields.map((k, v) => if k == key then k -> value else k -> v))
@@ -197,6 +197,7 @@ object RawJson:
 
   extension (companion: Json.type)
     def fromFields(fields: Iterable[(String, Json)]): Json = Json.Obj(JsonObject.fromIterable(fields))
+
     /** A number from a double, `null` for a NaN or an infinity. */
     def fromDoubleOrNull(d: Double): Json = Json.fromDouble(d).getOrElse(Json.Null)
     def fromDoubleOrString(d: Double): Json = Json.fromDouble(d).getOrElse(Json.fromString(d.toString))

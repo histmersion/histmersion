@@ -19,7 +19,8 @@ import hearth.kindlings.jsoniterderivation.{JsoniterConfig, KindlingsJsonValueCo
   *
   * STOP-GAP: this type exists only for that Kindlings 0.3.3 behaviour. Once Kindlings reads absent options and defaults
   * without changing what it writes, and checks required fields, `derives JsonCodec` becomes Kindlings' own derivation
-  * (one config) and this wrapper (the dual derivation, `of`, `missing`) goes; the givens and `mapped`/`text`/`key` stay.
+  * (one config) and this wrapper (the dual derivation, `of`, `missing`) goes; the givens and `mapped`/`text`/`key`
+  * stay.
   */
 trait JsonCodec[A] extends JsonValueCodec[A]
 
@@ -68,7 +69,9 @@ object JsonCodec:
     case product: (A <:< Product) =>
       (a: A) =>
         val p = product(a)
-        p.productIterator.zipWithIndex.collectFirst { case (field, i) if Option(field).isEmpty => p.productElementName(i) }
+        p.productIterator.zipWithIndex.collectFirst {
+          case (field, i) if Option(field).isEmpty => p.productElementName(i)
+        }
     case _ => (_: A) => None
   }
 
@@ -146,9 +149,11 @@ object JsonCodec:
       in.readBigDecimal(default, java.math.MathContext.UNLIMITED, Int.MaxValue, Int.MaxValue)
     def encodeValue(x: BigDecimal, out: JsonWriter): Unit = out.writeVal(x)
 
-  given instant: JsonValueCodec[Instant] = text(_.toString, s => scala.util.Try(Instant.parse(s)).toEither.left.map(_.getMessage))
+  given instant: JsonValueCodec[Instant] =
+    text(_.toString, s => scala.util.Try(Instant.parse(s)).toEither.left.map(_.getMessage))
 
-  given uuid: JsonValueCodec[UUID] = text(_.toString, s => scala.util.Try(UUID.fromString(s)).toEither.left.map(_.getMessage))
+  given uuid: JsonValueCodec[UUID] =
+    text(_.toString, s => scala.util.Try(UUID.fromString(s)).toEither.left.map(_.getMessage))
 
   given stringKey: JsonKeyCodec[String] = key(identity, Right(_))
 
@@ -185,7 +190,8 @@ object JsonCodec:
       out.writeArrayEnd()
 
   given list: [A: JsonValueCodec] => JsonValueCodec[List[A]] = sequence[A, List[A]](_.toList, identity, Nil)
-  given vector: [A: JsonValueCodec] => JsonValueCodec[Vector[A]] = sequence[A, Vector[A]](identity, identity, Vector.empty)
+  given vector: [A: JsonValueCodec] => JsonValueCodec[Vector[A]] =
+    sequence[A, Vector[A]](identity, identity, Vector.empty)
   given seq: [A: JsonValueCodec] => JsonValueCodec[Seq[A]] = sequence[A, Seq[A]](identity, identity, Seq.empty)
   given set: [A: JsonValueCodec] => JsonValueCodec[Set[A]] = sequence[A, Set[A]](_.toSet, identity, Set.empty)
 
@@ -212,6 +218,7 @@ object JsonCodec:
       }
       out.writeObjectEnd()
 
-  given map: [K: JsonKeyCodec, V: JsonValueCodec] => JsonValueCodec[Map[K, V]] = entries[K, V, Map[K, V]](_.toMap, identity, Map.empty)
+  given map: [K: JsonKeyCodec, V: JsonValueCodec] => JsonValueCodec[Map[K, V]] =
+    entries[K, V, Map[K, V]](_.toMap, identity, Map.empty)
   given listMap: [K: JsonKeyCodec, V: JsonValueCodec] => JsonValueCodec[ListMap[K, V]] =
     entries[K, V, ListMap[K, V]](ListMap.from, identity, ListMap.empty)

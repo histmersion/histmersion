@@ -8,7 +8,7 @@ import hearth.kindlings.jsoniterjson.Json
   * (`doc.cursor.downField("a").downArray.focus`).
   */
 final case class Cursor(focus: Option[Json], at: Vector[Either[String, Int]] = Vector.empty):
-  import Cursor.{Read, Step, pathText}
+  import Cursor.{pathText, Read, Step}
 
   /** The value at `key`, if this is an object that has it. */
   def downField(key: String): Cursor = Cursor(focus.flatMap(_.asObject).flatMap(_(key)), at :+ Left(key))
@@ -142,8 +142,8 @@ object Cursor:
     else if text(i) == '"' then i
     else stringEnd(text, i + 1)
 
-  /** How a value is read where a cursor stands, or why it cannot be: a decoder for JSON whose shape no record
-    * describes (an upstream's reply read field by field).
+  /** How a value is read where a cursor stands, or why it cannot be: a decoder for JSON whose shape no record describes
+    * (an upstream's reply read field by field).
     */
   final class Read[A](val at: Cursor => Either[String, A]):
     /** The document read from its root. */
@@ -153,10 +153,12 @@ object Cursor:
     /** An array, each element read by `each`. */
     def list[A](each: Read[A]): Read[List[A]] = Read { c =>
       c.focus.flatMap(_.asArray) match
-        case None => c.fail("expected an array")
+        case None         => c.fail("expected an array")
         case Some(values) =>
           values.indices
-            .foldLeft[Either[String, List[A]]](Right(Nil))((acc, i) => acc.flatMap(as => each.at(c.downN(i)).map(_ :: as)))
+            .foldLeft[Either[String, List[A]]](Right(Nil))((acc, i) =>
+              acc.flatMap(as => each.at(c.downN(i)).map(_ :: as))
+            )
             .map(_.reverse)
     }
 

@@ -26,8 +26,8 @@ import scala.annotation.tailrec
 /** The command line as scallop parses it. Scallop's configuration is mutable — options are declared on an object and
   * read back after `verify()` — so it lives here and nowhere else: only this file declares `opt`, `trailArg` and
   * subcommands, and it hands the rest of the CLI a typed [[ArticleCommand]] (or the help, or a [[Problem]]). Every
-  * argument is parsed once, here, into its newtype; scallop's exit and output go through its per-instance hooks, so
-  * the parser never ends the process.
+  * argument is parsed once, here, into its newtype; scallop's exit and output go through its per-instance hooks, so the
+  * parser never ends the process.
   *
   * The groups listed in [[Groups]] are parsed here; every other command is still decline's ([[Cli]]).
   */
@@ -50,7 +50,7 @@ object CommandLine:
   def handles(args: Seq[String]): Boolean = firstWord(args.toList).exists(Groups)
 
   @tailrec private def firstWord(args: List[String]): Option[String] = args match
-    case flag :: _ :: rest if Globals(flag)                           => firstWord(rest)
+    case flag :: _ :: rest if Globals(flag)                            => firstWord(rest)
     case flag :: rest if Globals.exists(g => flag.startsWith(g + "=")) => firstWord(rest)
     case word :: _                                                     => Some(word)
     case Nil                                                           => None
@@ -72,7 +72,7 @@ object CommandLine:
   /** An option given any number of times, one value each time (decline's `options`), not scallop's greedy list. */
   private def repeated[T](one: ValueConverter[T]): ValueConverter[List[T]] = Repeated(one)
 
-  private final class Repeated[T](one: ValueConverter[T]) extends ValueConverter[List[T]]:
+  final private class Repeated[T](one: ValueConverter[T]) extends ValueConverter[List[T]]:
     def parse(s: List[(String, List[String])]): Either[String, Option[List[T]]] =
       s.foldLeft[Either[String, List[T]]](Right(Nil))((acc, given1) =>
         acc.flatMap(done => one.parse(List(given1)).map(v => done ++ v.toList))
@@ -92,10 +92,10 @@ object CommandLine:
     given Metavar[Path] = of("path")
     given newtype: [T] => (m: RefinedType.Mirror[T]) => (base: Metavar[m.BaseType]) => Metavar[T] = of(base.name)
 
-  /** Help in decline's layout — usage, description, options and flags, subcommands — so the help text, its snapshot
-    * and the generated CLI reference do not change with the parser.
+  /** Help in decline's layout — usage, description, options and flags, subcommands — so the help text, its snapshot and
+    * the generated CLI reference do not change with the parser.
     */
-  private final class Layout(path: String) extends ScallopHelpFormatter:
+  final private class Layout(path: String) extends ScallopHelpFormatter:
     override def formatHelp(s: Scallop, subcommandPrefix: String): String =
       def isFlag(o: SimpleOption) = o.converter.asInstanceOf[AnyRef] eq flagConverter
       val options = s.opts.collect { case o: SimpleOption if o.name != "help" && o.name != "version" => o }
@@ -108,14 +108,19 @@ object CommandLine:
       val usages =
         if s.subbuilders.nonEmpty then s.subbuilders.map((name, _) => s"    $path $name").mkString("Usage:\n", "\n", "")
         else
-          (s"Usage: $path" :: options.map(usage) ++ operands.map(o => if o.required then s"<${o.name}>" else s"[<${o.name}>]"))
+          (s"Usage: $path" :: options.map(usage) ++ operands.map(o =>
+            if o.required then s"<${o.name}>" else s"[<${o.name}>]"
+          ))
             .mkString(" ")
       val flags = ("    --help\n        Display this help text." :: options.map(o =>
         s"    ${if isFlag(o) then s"--${o.name}" else s"--${o.name} <${o.argName}>"}\n        ${o.descr}"
       )).mkString("Options and flags:\n", "\n", "")
       val subcommands =
         if s.subbuilders.isEmpty then Nil
-        else List(s.subbuilders.map((name, sub) => s"    $name\n        ${sub.descr}").mkString("Subcommands:\n", "\n", ""))
+        else
+          List(
+            s.subbuilders.map((name, sub) => s"    $name\n        ${sub.descr}").mkString("Subcommands:\n", "\n", "")
+          )
       (usages :: s.descr :: flags :: subcommands).mkString("\n\n")
 
   /** A path the command reads later, refused here when the platform cannot name it. */
@@ -142,7 +147,7 @@ object CommandLine:
   /** The newtype each option and argument of one subcommand parses into, by name, so a value scallop refuses becomes a
     * typed [[Problem.Invalid.Malformed]].
     */
-  private final class Types:
+  final private class Types:
     private var byName = Map.empty[String, Problem.TypeName]
     private var optionNames = Vector.empty[String]
 
@@ -223,7 +228,7 @@ object CommandLine:
       trailArg[T](name = name, descr = descr, required = required)(using c)
 
   /** One subcommand that is a whole command: it turns its verified options into the command. */
-  private abstract class Leaf(name: String, help: String) extends Subcommand(name) with Declares:
+  abstract private class Leaf(name: String, help: String) extends Subcommand(name) with Declares:
     guessOptionName = false
     noshort = true
     descr(help)
@@ -231,7 +236,7 @@ object CommandLine:
 
     def command: Either[Problem, ArticleCommand]
 
-  private final class Root(args: Seq[String]) extends ScallopConf(args) with Declares:
+  final private class Root(args: Seq[String]) extends ScallopConf(args) with Declares:
     private var printed = Vector.empty[String]
     private var exited: Option[Int] = None
     private var failure: Option[Problem] = None
@@ -246,7 +251,10 @@ object CommandLine:
     helpFormatter = Layout("histmersion")
 
     private val server =
-      value[Client.ServerUrl]("server", "Histmersion server URL (default: config cli.serverUrl / $HISTMERSION_SERVER_URL)")
+      value[Client.ServerUrl](
+        "server",
+        "Histmersion server URL (default: config cli.serverUrl / $HISTMERSION_SERVER_URL)"
+      )
     private val token = value[Client.Token]("token", "API key for authenticated servers (or $HISTMERSION_TOKEN)")
 
     addSubcommand(ArticleGroup())
@@ -258,7 +266,7 @@ object CommandLine:
 
     def outcome: Outcome =
       failure match
-        case Some(problem) => Outcome.Failed(problem, HelpText(helpOf(args)))
+        case Some(problem)            => Outcome.Failed(problem, HelpText(helpOf(args)))
         case None if exited.isDefined => Outcome.Help(HelpText(printed.mkString("\n")))
         case None                     =>
           subcommands.lastOption match
@@ -286,7 +294,7 @@ object CommandLine:
 
   // ── `histmersion article …` ───────────────────────────────────────────────────────────────────────
 
-  private final class ArticleGroup() extends Subcommand("article") with Declares:
+  final private class ArticleGroup() extends Subcommand("article") with Declares:
     guessOptionName = false
     noshort = true
     private val help =
@@ -314,11 +322,12 @@ object CommandLine:
   private val StrictHelp =
     "Refuse the write when the Markdown has a formatting error (default: write, then list them)"
 
-  private final class ArticleList()
+  final private class ArticleList()
       extends Leaf("list", "List/search compiled articles (the filter flags select the sources they cite)"):
     private val query = arg[String]("query", required = false)
     private val kind = value[Api.ArticleQuery.Kind]("kind", s"Article kind (${Articles.Kinds.mkString("|")})")
-    private def many[T: {ValueConverter, Named, Metavar}](p: Filter.Docs.Param) = values[T](p.rest.value, s"${p.doc} (repeatable)")
+    private def many[T: {ValueConverter, Named, Metavar}](p: Filter.Docs.Param) =
+      values[T](p.rest.value, s"${p.doc} (repeatable)")
     private def year(p: Filter.Docs.Param) = value[Year](p.rest.value, p.doc.value)
     private val tags = many[Filter.Tags](Filter.Docs.tags)
     private val authors = many[Filter.Authors](Filter.Docs.authors)
@@ -329,7 +338,8 @@ object CommandLine:
     private val yearTo = value[Year]("year-to", Filter.Docs.yearTo.doc.value)
     private val from = year(Filter.Docs.from)
     private val to = year(Filter.Docs.to)
-    private val bbox = value[BBox.Text]("bbox", "minLon,minLat,maxLon,maxLat (minLon > maxLon crosses the antimeridian)")
+    private val bbox =
+      value[BBox.Text]("bbox", "minLon,minLat,maxLon,maxLat (minLon > maxLon crosses the antimeridian)")
     private val sort = value[Sort.Wire](Filter.Docs.sort.rest.value, Filter.Docs.sort.doc.value)
     private val limit = value[Filter.Limit](Filter.Docs.limit.rest.value, Filter.Docs.limit.doc.value)
     private val offset = value[Filter.Offset](Filter.Docs.offset.rest.value, Filter.Docs.offset.doc.value)
@@ -369,7 +379,7 @@ object CommandLine:
         )
       )
 
-  private final class ArticleGet()
+  final private class ArticleGet()
       extends Leaf("get", "Show one article (parts: body,summary,coverage,cited,backlinks — default all)"):
     private val slug = arg[ReviewGoal.Slug]("slug")
     private val parts =
@@ -379,7 +389,7 @@ object CommandLine:
     def command: Either[Problem, ArticleCommand] =
       Right(ArticleCommand.Get(slug(), ArticleCommand.parts(parts.toOption), Cli.JsonOutput(json.getOrElse(false))))
 
-  private final class ArticlePut()
+  final private class ArticlePut()
       extends Leaf("put", "Send ONE article note file (frontmatter + body) as a full create/replace"):
     private val file = arg[Path]("file.md")
     private val kind = value[Article.Kind.Wire]("kind", "Kind when the frontmatter has no `type:`")
@@ -388,7 +398,7 @@ object CommandLine:
     def command: Either[Problem, ArticleCommand] =
       Right(ArticleCommand.Put(file(), kind.toOption, Cli.Strict(strict.getOrElse(false))))
 
-  private final class ArticlePatch()
+  final private class ArticlePatch()
       extends Leaf("patch", "Extend or correct one article — only the parts you pass change"):
     private val slug = arg[ReviewGoal.Slug]("slug")
     private val json =
@@ -397,7 +407,8 @@ object CommandLine:
     private val lede = value[Article.SummaryText]("summary", "New summary (the one-paragraph lede)")
     private val kind = value[Article.Kind.Wire]("kind", s"New kind (${Articles.Kinds.mkString("|")})")
     private val bodyFile = value[ArticlePatches.TextFile]("body-file", "File whose Markdown REPLACES the body")
-    private val appendFile = value[ArticlePatches.TextFile]("append-file", "File whose Markdown is APPENDED to the body")
+    private val appendFile =
+      value[ArticlePatches.TextFile]("append-file", "File whose Markdown is APPENDED to the body")
     private val tagsAdd = value[ArticlePatches.CsvText]("tags-add", "Comma-separated tags to add")
     private val tagsRemove = value[ArticlePatches.CsvText]("tags-remove", "Comma-separated tags to remove")
     private val tagsReplace =
@@ -473,7 +484,7 @@ object CommandLine:
         )
       )
 
-  private final class ArticleLint()
+  final private class ArticleLint()
       extends Leaf(
         "lint",
         "Formatting problems of one article's body and summary (--fix applies the wording-safe repairs)"
@@ -487,7 +498,7 @@ object CommandLine:
         ArticleCommand.Lint(slug(), ArticleCommand.Fix(fix.getOrElse(false)), Cli.JsonOutput(json.getOrElse(false)))
       )
 
-  private final class ArticleCheck()
+  final private class ArticleCheck()
       extends Leaf(
         "check",
         "Dry-run edits to an article (or a whole draft body) and list the problems the review checks would find — writes nothing"
@@ -512,7 +523,7 @@ object CommandLine:
         draft <- ArticleCommand.draft(edits, body)
       yield ArticleCommand.Check(slug(), draft, kind.toOption, Cli.JsonOutput(json.getOrElse(false)))
 
-  private final class ArticleCoverage()
+  final private class ArticleCoverage()
       extends Leaf(
         "coverage",
         "The article's filter against the corpus: sources cited, not used (with reasons), statuses, edges, drift, the critique checklist (disagreements checked), and the generated sections"
@@ -523,7 +534,7 @@ object CommandLine:
     def command: Either[Problem, ArticleCommand] =
       Right(ArticleCommand.Coverage(slug(), Cli.JsonOutput(json.getOrElse(false))))
 
-  private final class ArticleReview()
+  final private class ArticleReview()
       extends Leaf(
         "review",
         "The article's review state (unreviewed, queued, in review, passed, majors open, stopped), the goals linking it, and every review finding by run and round with what became of it"
@@ -534,41 +545,35 @@ object CommandLine:
     def command: Either[Problem, ArticleCommand] =
       Right(ArticleCommand.Review(slug(), Cli.JsonOutput(json.getOrElse(false))))
 
-  private final class ArticleDelete()
-      extends Leaf("delete", "Remove one article (its links go with it)"):
+  final private class ArticleDelete() extends Leaf("delete", "Remove one article (its links go with it)"):
     private val slug = arg[ReviewGoal.Slug]("slug")
 
     def command: Either[Problem, ArticleCommand] = Right(ArticleCommand.Delete(slug()))
 
-  private final class ArticleExport()
-      extends Leaf("export", "Write each article to <dir>/<kind>/<slug>.md"):
+  final private class ArticleExport() extends Leaf("export", "Write each article to <dir>/<kind>/<slug>.md"):
     private val dir = arg[Path]("dir")
 
     def command: Either[Problem, ArticleCommand] = Right(ArticleCommand.Export(dir()))
 
-  private final class ArticleImport()
-      extends Leaf("import", "Import <dir>/<kind>/*.md (and any *.md in <dir> itself)"):
+  final private class ArticleImport() extends Leaf("import", "Import <dir>/<kind>/*.md (and any *.md in <dir> itself)"):
     private val dir = arg[Path]("dir")
     private val force = flag("force", "Overwrite articles newer than the files")
 
     def command: Either[Problem, ArticleCommand] =
       Right(ArticleCommand.Import(dir(), Api.Overwrite(force.getOrElse(false))))
 
-  private final class ArticleVersions()
-      extends Leaf("versions", "Show the edit history of one article"):
+  final private class ArticleVersions() extends Leaf("versions", "Show the edit history of one article"):
     private val slug = arg[ReviewGoal.Slug]("slug")
 
     def command: Either[Problem, ArticleCommand] = Right(ArticleCommand.Versions(slug()))
 
-  private final class ArticleVersion()
-      extends Leaf("version", "Show one historical version's full body"):
+  final private class ArticleVersion() extends Leaf("version", "Show one historical version's full body"):
     private val slug = arg[ReviewGoal.Slug]("slug")
     private val id = arg[Article.VersionId]("id")
 
     def command: Either[Problem, ArticleCommand] = Right(ArticleCommand.Version(slug(), id()))
 
-  private final class ArticleRename()
-      extends Leaf("rename", LabelRenameCmd.help(Bundle.Kind.Article)):
+  final private class ArticleRename() extends Leaf("rename", LabelRenameCmd.help(Bundle.Kind.Article)):
     private val from = arg[LabelRenames.Label]("old")
     private val to = arg[LabelRenames.Label]("new")
     private val json = flag("json", JsonHelp)

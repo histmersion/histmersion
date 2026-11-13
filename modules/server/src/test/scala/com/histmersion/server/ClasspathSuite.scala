@@ -19,18 +19,30 @@ class ClasspathSuite extends munit.FunSuite:
       }
     }
     assert(rows.nonEmpty, "dependency-callers.tsv is empty")
-    assert(bad.isEmpty, bad.mkString("circe or cats on a class path through something else than a carrier:\n", "\n", ""))
+    assert(
+      bad.isEmpty,
+      bad.mkString("circe or cats on a class path through something else than a carrier:\n", "\n", "")
+    )
 
   test("a module of ours bringing circe would be caught"):
     val rs = List(
       Row("x", "runtime", "io.circe", "circe-core_3", "0.14.17", List("com.histmersion:histmersion-api_3")),
       Row("x", "runtime", "com.histmersion", "histmersion-api_3", "0.1.0", Nil)
     )
-    assertEquals(unexplained("io.circe:circe-core_3", rs.map(r => r.module -> r).toMap).map(_.mkString(" <- ")),
-      List("io.circe:circe-core_3 <- com.histmersion:histmersion-api_3"))
+    assertEquals(
+      unexplained("io.circe:circe-core_3", rs.map(r => r.module -> r).toMap).map(_.mkString(" <- ")),
+      List("io.circe:circe-core_3 <- com.histmersion:histmersion-api_3")
+    )
 
 object ClasspathSuite:
-  final case class Row(project: String, conf: String, organization: String, name: String, revision: String, callers: List[String]):
+  final case class Row(
+      project: String,
+      conf: String,
+      organization: String,
+      name: String,
+      revision: String,
+      callers: List[String]
+  ):
     def module: String = s"$organization:$name"
 
   /** The organisations whose libraries arrive only through a carrier. */
