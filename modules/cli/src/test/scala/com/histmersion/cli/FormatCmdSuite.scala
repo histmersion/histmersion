@@ -30,9 +30,9 @@ class FormatCmdSuite extends munit.FunSuite:
     assert(Parsing.parses("lint", "--rule", "article-markdown", "--rule", "note-markdown"))
 
   test("places rename <old> <new>; an unusable id is refused before anything is sent"):
-    assert(parses(PlacesCmd.command, "places", "rename", "zz_old", "zz_new"))
-    assert(!parses(PlacesCmd.command, "places", "rename", "zz_old", "Not An Id"))
-    assert(!parses(PlacesCmd.command, "places", "rename", "zz_old", "zz_old"))
+    assert(Parsing.parses("places", "rename", "zz_old", "zz_new"))
+    assert(!Parsing.parses("places", "rename", "zz_old", "Not An Id"))
+    assert(!Parsing.parses("places", "rename", "zz_old", "zz_old"))
 
   test("a note file's own frontmatter is split off; a body is all body"):
     val note = FileFormat.Text("---\ntype: concept\nslug: x\n---\n\n# X\n\nText.\n")

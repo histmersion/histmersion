@@ -744,15 +744,17 @@ object Cli:
             orElse migrated("rename") orElse migrated("delete") orElse exportCmd
             orElse backup orElse backups orElse restore orElse maintenanceCmd orElse migrated("bundle") orElse migrated(
               "merge"
-            ) orElse migrated("article") orElse PlacesCmd.command
+            ) orElse migrated("article") orElse migrated("places")
             orElse migrated("periods") orElse migrated("init")
-            orElse EventsCmd.command orElse migrated("attestations") orElse migrated("candidates")
+            orElse migrated("events") orElse migrated("attestations") orElse migrated("candidates")
             orElse migrated("goals") orElse migrated("agent-state") orElse AgentCmd.command
             orElse migrated("media") orElse migrated("asset-links")
             // stream 2.8 — lint · queue · read-only query
             orElse migrated("lint") orElse migrated("queue") orElse migrated("query") orElse migrated("schema")
             // stream 2.6: discover / refs / assess / followups / ingest / archive, and host-side calibre
-            orElse AcquireCmd.all orElse CalibreCmd.all
+            orElse migrated("discover") orElse migrated("refs") orElse migrated("assess") orElse migrated(
+              "followups"
+            ) orElse migrated("ingest") orElse migrated("archive") orElse CalibreCmd.all
             // stream 2.4 — OCR that keeps the figures, as a job (`ingest <file>` lives in AcquireCmd,
             // which owns the name and dispatches file-vs-DOI)
             orElse migrated("reocr") orElse migrated("assets") orElse migrated("jobs") orElse migrated("activity")
