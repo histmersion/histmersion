@@ -3,8 +3,6 @@ package cli
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.Cursor
 
-import cats.syntax.all.*
-import com.monovore.decline.*
 import com.histmersion.api.Api
 import com.histmersion.api.automation.{Activity, ActivityMarkdown}
 import com.histmersion.util.console.Console
@@ -14,26 +12,24 @@ import com.histmersion.util.console.Console
   */
 object ActivityCmd:
 
-  def command(using console: Console): Opts[Client => Either[Cli.Error, Unit]] =
-    Opts.subcommand(
-      "activity",
-      "What the agents, the server and you did, one list, newest first: agent runs, " +
-        "background jobs, worklog lines and your decisions, each with what it touched"
-    ) {
-      (
-        Opts
-          .option[String](
-            "kind",
-            s"Only: ${Activity.Show.values.filter(_ != Activity.Show.Everything).map(_.wire).mkString(", ")}"
-          )
-          .orNone,
-        Opts.flag("running", "Only what is running now (as --kind running)").orFalse,
-        Opts.option[String]("since", "From: 2026-10-01, an ISO instant, or 7d / 12h / 30m ago").orNone,
-        Opts.option[String]("goal", "Only what concerns this research goal (its slug)").orNone,
-        Opts.option[Int]("limit", s"Entries (default ${Activity.DefaultLimit}, at most ${Activity.MaxLimit})").orNone,
-        Opts.option[String]("before", "The next older page: the cursor the last page printed").orNone,
-        Output.jsonFlag
-      ).mapN { (kind, running, since, goal, limit, before, json) => (c: Client) =>
+  /** What `histmersion …` of this group was asked to do, every argument parsed. */
+  enum Command extends Cli.Command:
+    case Activity(
+        kind: Option[String],
+        running: Boolean,
+        since: Option[String],
+        goal: Option[String],
+        limit: Option[Int],
+        before: Option[String],
+        json: Cli.JsonOutput
+    )
+
+    def run(c: Client)(using Console): Either[Cli.Error, Unit] = ActivityCmd.run(c, this)
+
+  /** Carry out one command against the server. */
+  def run(c: Client, cmd: Command)(using console: Console): Either[Cli.Error, Unit] =
+    cmd match
+      case Command.Activity(kind, running, since, goal, limit, before, json) =>
         val show = if running then Some(Activity.Show.Running.wire.value) else kind
         val opts = List("kind" -> show, "since" -> since, "goal" -> goal, "limit" -> limit.map(_.toString))
         c.call(Api.activity)(
@@ -49,5 +45,3 @@ object ActivityCmd:
             ActivityMarkdown.page(_, cursor => s"Older: `${PageCmd.next("activity", opts, cursor)}`")
           )
         )
-      }
-    }

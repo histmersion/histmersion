@@ -6,6 +6,7 @@ import com.histmersion.api.aliases.LabelRename
 import com.histmersion.api.library.Filter
 import com.histmersion.api.research.{Article, ReviewGoal}
 import com.histmersion.util.problem.{NonEmptyVector, Problem}
+import com.histmersion.util.console.Console
 import io.github.iltotore.iron.constraint.any.Pure
 
 import java.nio.file.Path
@@ -14,7 +15,7 @@ import java.nio.file.Path
   * (decline in [[ArticleCli]], scallop in [[CommandLine]]) builds one, and [[ArticleCli.run]] carries it out against a
   * server.
   */
-enum ArticleCommand derives CanEqual:
+enum ArticleCommand extends Cli.Command derives CanEqual:
   case Listing(
       text: Option[Api.ArticleQuery.Text],
       kind: Option[Api.ArticleQuery.Kind],
@@ -41,6 +42,8 @@ enum ArticleCommand derives CanEqual:
   case Versions(slug: ReviewGoal.Slug)
   case Version(slug: ReviewGoal.Slug, id: Article.VersionId)
   case Rename(from: ReviewGoal.Slug, to: LabelRename.To, json: Cli.JsonOutput)
+
+  def run(c: Client)(using Console): Either[Cli.Error, Unit] = ArticleCli.run(c, this)
 
 object ArticleCommand:
   type Fix = Fix.T

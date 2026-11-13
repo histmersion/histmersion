@@ -17,11 +17,11 @@ class FormatCmdSuite extends munit.FunSuite:
     Command("histmersion", "test")(cmd).parse(args.toList, Map.empty).isRight
 
   test("article lint <slug> [--fix] [--json]; patch and put take --strict"):
-    assert(parses(ArticleCli.command, "article", "lint", "sea_peoples"))
-    assert(parses(ArticleCli.command, "article", "lint", "sea_peoples", "--fix", "--json"))
-    assert(!parses(ArticleCli.command, "article", "lint"))
-    assert(parses(ArticleCli.command, "article", "patch", "sea_peoples", "--title", "T", "--strict"))
-    assert(parses(ArticleCli.command, "article", "put", "x.md", "--strict"))
+    assert(Parsing.parses("article", "lint", "sea_peoples"))
+    assert(Parsing.parses("article", "lint", "sea_peoples", "--fix", "--json"))
+    assert(!Parsing.parses("article", "lint"))
+    assert(Parsing.parses("article", "patch", "sea_peoples", "--title", "T", "--strict"))
+    assert(Parsing.parses("article", "put", "x.md", "--strict"))
 
   test("lint takes --article, --source or --file, with --fix"):
     assert(parses(Ops.lint, "lint", "--source", "haak2015_massive", "--fix"))

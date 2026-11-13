@@ -3,7 +3,6 @@ package cli
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.api.library.CalibreEntryCheck
-import com.monovore.decline.Command
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.library.Source
 import com.histmersion.config.CalibreCliConfig
@@ -13,8 +12,7 @@ class DeleteCmdSuite extends munit.FunSuite:
 
   private given console: com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard
 
-  private val cmd = Command("delete", "test")(DeleteCmd.args)
-  private def parse(args: String*) = cmd.parse(args.toList, Map.empty)
+  private def parse(args: String*) = Parsing.parse("delete" +: args*)
 
   test("a dry run by default; --apply and --json are flags"):
     assertEquals(
@@ -63,9 +61,8 @@ class DeleteCmdSuite extends munit.FunSuite:
     )
 
   test("the subcommand is registered under `delete` and says it is a dry run"):
-    val top = Command("histmersion", "test")(DeleteCmd.command)
-    assert(top.parse(List("delete", "a2020_x"), Map.empty).isRight)
-    assert(top.parse(List("delete", "--help"), Map.empty).left.exists(_.toString.contains("dry run")))
+    assert(Parsing.parses("delete", "a2020_x"))
+    assert(Parsing.help("delete", "--help").contains("dry run"))
 
   test("the linked Calibre entry is looked up in the library before the answer says it is there (#1776)"):
     val book = Calibre.Book(

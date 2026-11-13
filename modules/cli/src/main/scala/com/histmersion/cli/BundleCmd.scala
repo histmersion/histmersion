@@ -3,8 +3,6 @@ package cli
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
-import cats.syntax.all.*
-import com.monovore.decline.*
 import com.histmersion.config.*
 
 import java.nio.file.{Files, Path, StandardCopyOption}
@@ -35,97 +33,63 @@ object BundleCmd:
       }
     finally in.close()
 
-  private def exportCmd(using console: Console) = Opts.subcommand(
-    "export",
-    "Write the whole database (or, with --since, what changed after a moment, deletions included) to a portable .hmx bundle"
-  ) {
-    (
-      Opts.argument[String]("file.hmx"),
-      Opts
-        .option[String]("since", "Only what changed after this moment (ISO-8601, e.g. a previous bundle's asOf)")
-        .orNone
-    ).mapN { (file, since) => (c: Client) =>
-      val dest = Path.of(file).toAbsolutePath
-      val part = dest.resolveSibling(dest.getFileName.toString + ".part")
-      Option(dest.getParent).foreach(d => Files.createDirectories(d))
-      c.exportBundle(since.map(Bundle.Name(_)), part.toFile) match
-        case Left(e) =>
-          val _ = Files.deleteIfExists(part)
-          Left(e)
-        case Right(_) =>
-          val _ = Files.move(part, dest, StandardCopyOption.REPLACE_EXISTING)
-          manifestOf(dest).fold(
-            e =>
-              Left(
-                Cli.Error(
-                  Problem.Unclassified(Legacy.Text(s"the server sent something that is not a bundle: ${e.sentence}")),
-                  exitCode = ExitCode.Refused
-                )
-              ),
-            m => Right(Cli.out.println(s"${BundleMarkdown.manifest(m)}\n\n→ $dest (${Files.size(dest)} bytes)"))
-          )
-    }
-  }
+  /** What `histmersion …` of this group was asked to do, every argument parsed. */
+  enum Command extends Cli.Command:
+    case Export(file: String, since: Option[String])
+    case Verify(file: String, json: Cli.JsonOutput)
+    case Import(file: String, dryRun: Boolean, res: MergeCmd.ResolutionFlags, json: Cli.JsonOutput)
+    case Instance(label: Option[String])
 
-  private def verifyCmd(using console: Console) = Opts.subcommand(
-    "verify",
-    "Check a bundle against this server: format, schema, every checksum, record and blob — every problem listed"
-  ) {
-    (Opts.argument[String]("file.hmx"), Output.jsonFlag).mapN { (file, json) => (c: Client) =>
-      existing(file).flatMap(c.verifyBundle).flatMap { r =>
-        Output.emit(json, r)(BundleMarkdown.verify)
-        if r.ok.value then Right(())
-        else
-          Left(Cli.Error(Problem.Unclassified(Legacy.Text("the bundle did not verify")), exitCode = ExitCode.Refused))
-      }
-    }
-  }
+    def run(c: Client)(using Console): Either[Cli.Error, Unit] = BundleCmd.run(c, this)
 
-  private def importCmd(using console: Console) = Opts.subcommand(
-    "import",
-    "Import a bundle: what the merge plan says is new or changed, after every open issue is decided (--resolutions); refused while one is open"
-  ) {
-    (
-      Opts.argument[String]("file.hmx"),
-      Opts.flag("dry-run", "Report what the import would do, and write nothing").orFalse,
-      MergeCmd.resolutionOpts,
-      Output.jsonFlag
-    ).mapN { (file, dryRun, res, json) => (c: Client) =>
-      val run: Either[Cli.Error, Bundle.ImportResult] =
-        if res.isEmpty then existing(file).flatMap(c.importBundle(Cli.DryRun(dryRun), _))
-        else
-          for
-            f <- existing(file)
-            r <- MergeCmd.resolutions(res)
-            u <- MergeCmd.upload(c, f)
-            x <- c.mergeImport(
-              MergeImportRequest(MergeImportRequest.Bundle(u.sha256.value), r, MergeImportRequest.DryRun(dryRun))
+  /** Carry out one command against the server. */
+  def run(c: Client, cmd: Command)(using console: Console): Either[Cli.Error, Unit] =
+    cmd match
+      case Command.Export(file, since) =>
+        val dest = Path.of(file).toAbsolutePath
+        val part = dest.resolveSibling(dest.getFileName.toString + ".part")
+        Option(dest.getParent).foreach(d => Files.createDirectories(d))
+        c.exportBundle(since.map(Bundle.Name(_)), part.toFile) match
+          case Left(e) =>
+            val _ = Files.deleteIfExists(part)
+            Left(e)
+          case Right(_) =>
+            val _ = Files.move(part, dest, StandardCopyOption.REPLACE_EXISTING)
+            manifestOf(dest).fold(
+              e =>
+                Left(
+                  Cli.Error(
+                    Problem.Unclassified(Legacy.Text(s"the server sent something that is not a bundle: ${e.sentence}")),
+                    exitCode = ExitCode.Refused
+                  )
+                ),
+              m => Right(Cli.out.println(s"${BundleMarkdown.manifest(m)}\n\n→ $dest (${Files.size(dest)} bytes)"))
             )
-          yield x
-      run.flatMap { r =>
-        Output.emit(json, r)(BundleMarkdown.importResult)
-        if r.problems.isEmpty then Right(())
-        else Left(Cli.Error(Problem.Unclassified(Legacy.Text("the import was refused")), exitCode = ExitCode.Refused))
-      }
-    }
-  }
-
-  private def instanceCmd(using console: Console) = Opts.subcommand(
-    "instance",
-    "This collection's identity (the origin of every row it creates); --label names it, e.g. work or home"
-  ) {
-    Opts.option[String]("label", "Name this instance; an empty string clears the name").orNone.map {
-      label => (c: Client) =>
+      case Command.Verify(file, json) =>
+        existing(file).flatMap(c.verifyBundle).flatMap { r =>
+          Output.emit(json, r)(BundleMarkdown.verify)
+          if r.ok.value then Right(())
+          else
+            Left(Cli.Error(Problem.Unclassified(Legacy.Text("the bundle did not verify")), exitCode = ExitCode.Refused))
+        }
+      case Command.Import(file, dryRun, res, json) =>
+        val run: Either[Cli.Error, Bundle.ImportResult] =
+          if res.isEmpty then existing(file).flatMap(c.importBundle(Cli.DryRun(dryRun), _))
+          else
+            for
+              f <- existing(file)
+              r <- MergeCmd.resolutions(res)
+              u <- MergeCmd.upload(c, f)
+              x <- c.mergeImport(
+                MergeImportRequest(MergeImportRequest.Bundle(u.sha256.value), r, MergeImportRequest.DryRun(dryRun))
+              )
+            yield x
+        run.flatMap { r =>
+          Output.emit(json, r)(BundleMarkdown.importResult)
+          if r.problems.isEmpty then Right(())
+          else Left(Cli.Error(Problem.Unclassified(Legacy.Text("the import was refused")), exitCode = ExitCode.Refused))
+        }
+      case Command.Instance(label) =>
         label
           .fold(c.instance)(l => c.setInstance(Some(InstanceLabel.Label(l))))
           .map(i => Cli.out.println(BundleMarkdown.instance(i)))
-    }
-  }
-
-  def command(using console: Console): Opts[Client => Either[Cli.Error, Unit]] =
-    Opts.subcommand(
-      "bundle",
-      "Portable .hmx bundles: export, verify and import a whole collection, carrying its identities"
-    ) {
-      exportCmd orElse verifyCmd orElse importCmd orElse instanceCmd
-    }

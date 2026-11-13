@@ -2,7 +2,6 @@ package com.histmersion
 package cli
 
 import com.histmersion.config.*
-import com.monovore.decline.Command
 import java.nio.file.Files
 import java.util.UUID
 import com.histmersion.util.data.exchange.{BundleFormat, BundleTar}
@@ -16,8 +15,7 @@ class BundleCmdSuite extends munit.FunSuite:
 
   private given console: com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard
 
-  private val top = Command("histmersion", "test")(BundleCmd.command)
-  private def parses(args: String*) = top.parse(args.toList, Map.empty).isRight
+  private def parses(args: String*) = Parsing.parses(args*)
 
   test("export, verify, import and instance parse; a missing file is a usage error"):
     assert(parses("bundle", "export", "work.hmx"))

@@ -2,8 +2,6 @@ package com.histmersion
 package cli
 import com.histmersion.api.json.NewtypeCodecs.given
 
-import cats.syntax.all.*
-import com.monovore.decline.*
 import com.histmersion.api.personal.*
 import com.histmersion.api.ItemKind
 import com.histmersion.util.console.Console
@@ -14,46 +12,28 @@ import com.histmersion.api.library.Title
   */
 object BookmarksCmd:
 
-  private def list(using console: Console) = Opts.subcommand("list", "Your bookmarks, newest first") {
-    (
-      Opts.option[String]("kind", s"Only: ${ItemKind.values.map(_.wire).mkString(", ")}").orNone,
-      Opts.option[String]("query", "Words the bookmark's name or the item's title holds").orNone,
-      Opts.option[Int]("limit", s"How many (default ${PersonalIds.DefaultLimit})").orNone,
-      Output.jsonFlag
-    ).mapN { (kind, q, limit, json) => (c: Client) =>
-      c.call(PersonalApi.bookmarks)(
-        (kind.map(ItemKind.Wire(_)), q.map(PersonalApi.Search(_)), limit)
-      ).map(bs => Output.emit(json, bs)(PersonalMarkdown.bookmarks))
-    }
-  }
+  /** What `histmersion …` of this group was asked to do, every argument parsed. */
+  enum Command extends Cli.Command:
+    case ListCmd(kind: Option[String], q: Option[String], limit: Option[Int], json: Cli.JsonOutput)
+    case Add(raw: TargetFlags.Raw, label: Option[String], title: Option[String], json: Cli.JsonOutput)
+    case Rm(id: String, json: Cli.JsonOutput)
 
-  private def add(using console: Console) = Opts.subcommand(
-    "add",
-    "Bookmark an item (`source anthony2007_horse`), a place on the map " +
-      "(`point --lat 37.73 --lon 22.75`), a view (`view --view 'from=-1300&to=-1100' --lat .. --lon .. --zoom 6`) or a " +
-      "period (`period --from -1200 --to -1150 --label 'the crisis years'`)"
-  ) {
-    (
-      TargetFlags.opts(ItemKind.Bookmarkable, views = TargetFlags.Views(true)),
-      Opts.option[String]("label", "Your name for it").orNone,
-      Opts.option[String]("title", "What the item is called, when the collection does not hold it").orNone,
-      Output.jsonFlag
-    ).mapN { (raw, label, title, json) => (c: Client) =>
-      TargetFlags
-        .target(raw)
-        .flatMap(t =>
-          c.call(PersonalApi.addBookmark)(Bookmark.New(t, label.map(Bookmark.Label(_)), title.map(Title(_))))
-            .map(b => Output.emit(json, b)(b => s"Bookmarked: ${PersonalMarkdown.bookmarkLine(b).stripPrefix("- ")}"))
-        )
-    }
-  }
+    def run(c: Client)(using Console): Either[Cli.Error, Unit] = BookmarksCmd.run(c, this)
 
-  private def rm(using console: Console) = Opts.subcommand("rm", "Remove a bookmark (its id, from `bookmarks list`)") {
-    (Opts.argument[String]("id"), Output.jsonFlag).mapN { (id, json) => (c: Client) =>
-      c.call(PersonalApi.removeBookmark)(Bookmark.Id(id))
-        .map(b => Output.emit(json, b)(b => s"Removed the bookmark **${b.name}**."))
-    }
-  }
-
-  def command(using console: Console): Opts[Client => Either[Cli.Error, Unit]] =
-    Opts.subcommand("bookmarks", "Your bookmarks: list, add, rm")(list orElse add orElse rm)
+  /** Carry out one command against the server. */
+  def run(c: Client, cmd: Command)(using console: Console): Either[Cli.Error, Unit] =
+    cmd match
+      case Command.ListCmd(kind, q, limit, json) =>
+        c.call(PersonalApi.bookmarks)(
+          (kind.map(ItemKind.Wire(_)), q.map(PersonalApi.Search(_)), limit)
+        ).map(bs => Output.emit(json, bs)(PersonalMarkdown.bookmarks))
+      case Command.Add(raw, label, title, json) =>
+        TargetFlags
+          .target(raw)
+          .flatMap(t =>
+            c.call(PersonalApi.addBookmark)(Bookmark.New(t, label.map(Bookmark.Label(_)), title.map(Title(_))))
+              .map(b => Output.emit(json, b)(b => s"Bookmarked: ${PersonalMarkdown.bookmarkLine(b).stripPrefix("- ")}"))
+          )
+      case Command.Rm(id, json) =>
+        c.call(PersonalApi.removeBookmark)(Bookmark.Id(id))
+          .map(b => Output.emit(json, b)(b => s"Removed the bookmark **${b.name}**."))
