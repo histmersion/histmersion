@@ -2,7 +2,7 @@ package com.histmersion
 package web
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.Cursor
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.api.Wording
 import com.histmersion.api.automation.Activity.{Entry, EntryKind}

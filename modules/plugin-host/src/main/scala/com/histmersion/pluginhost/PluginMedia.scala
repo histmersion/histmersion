@@ -2,7 +2,7 @@ package com.histmersion
 package pluginhost
 
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.config.MediaConfig

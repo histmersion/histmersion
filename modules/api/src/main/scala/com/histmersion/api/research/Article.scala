@@ -1,7 +1,7 @@
 package com.histmersion.api.research
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.Newtype
 import hearth.kindlings.optics.syntax.*

@@ -1,7 +1,7 @@
 package com.histmersion
 package api.automation
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.api.automation.Agents.PauseReason
 import com.histmersion.api.jobs.JobState

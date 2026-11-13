@@ -2,7 +2,7 @@ package com.histmersion
 package api.library
 
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.api.{Csv, LatinFold}
 import com.histmersion.api.given

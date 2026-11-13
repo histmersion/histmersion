@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.ingest
 
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.media.AssetLinks
 import com.histmersion.api.library.SeedResult
 import com.histmersion.domain.Caller

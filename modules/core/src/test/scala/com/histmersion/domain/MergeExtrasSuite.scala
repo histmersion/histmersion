@@ -2,7 +2,7 @@ package com.histmersion
 package domain
 import hearth.kindlings.jsoniterjson.Json
 
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*

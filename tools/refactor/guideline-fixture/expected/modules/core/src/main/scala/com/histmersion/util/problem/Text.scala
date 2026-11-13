@@ -1,10 +1,7 @@
 package com.histmersion
-package api
-package problem
+package util.problem
 
-import util.problem.Problem
-
-/** The sentence of a problem, as the api renders it. */
+/** The sentence of a problem, as the problem module renders it. */
 object Text:
   extension (problem: Problem)
     def sentence: String = problem match

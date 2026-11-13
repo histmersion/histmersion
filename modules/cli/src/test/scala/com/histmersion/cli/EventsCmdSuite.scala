@@ -1,7 +1,7 @@
 package com.histmersion
 package cli
 
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.catalogue.EventPatch
 import com.histmersion.api.catalogue.EventSummary
 import com.histmersion.api.catalogue.Place

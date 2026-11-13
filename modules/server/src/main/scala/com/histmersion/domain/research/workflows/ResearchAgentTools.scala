@@ -4,7 +4,7 @@ import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.jsoniterderivation.JsoniterConfig
 import com.histmersion.domain.automation.agents.SttpAiJson.given
 
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.domain.automation.agents.ToolResultCap
 
 import com.histmersion.api.research.{Article, ArticleMarkdown}

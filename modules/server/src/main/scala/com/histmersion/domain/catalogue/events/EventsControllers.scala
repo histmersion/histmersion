@@ -2,7 +2,7 @@ package com.histmersion
 package domain.catalogue.events
 
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import io.scalaland.chimney.dsl.*
 import com.histmersion.api.exchange.Bundle
 

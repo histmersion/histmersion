@@ -1,7 +1,7 @@
 package com.histmersion
 package util.problem
 
-import api.problem.Text.sentence
+import util.problem.Text.sentence
 
 /** A problem in the server's log: `<group>.<case> <field>=<value> …: <sentence>`, the keys being the case's own field
   * names. Outside text appears here in full; an internal problem is logged as an error, any other as a warning.

@@ -1,7 +1,7 @@
 package com.histmersion
 package web.setup
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.{Api, Wording}

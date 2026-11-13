@@ -1,7 +1,7 @@
 package com.histmersion
 package web
 
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.Wording
 import com.histmersion.api.UiLabels
 import com.histmersion.api.automation.Agents.{ApprovalInfo, ApprovalKind, ApprovalState, Decision}

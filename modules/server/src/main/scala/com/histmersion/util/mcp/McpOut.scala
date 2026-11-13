@@ -1,7 +1,7 @@
 package com.histmersion
 package util.mcp
 
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import chimp.server.{NoStructuredOutput, ToolResult}
 import com.histmersion.api.Api
 

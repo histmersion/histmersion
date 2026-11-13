@@ -210,19 +210,24 @@ lazy val newtype = projectMatrix
   .jvmPlatform(scalaVersions = Seq(scala3))
   .jsPlatform(scalaVersions = Seq(scala3))
 
-// The one closed failure type of the application (Problem, Problems, the outside text it carries), on Iron alone: no
-// codec and no wording, which the edges that render it own
+// The one closed failure type of the application (Problem, Problems, the outside text it carries) and its English
+// sentence (Text), on Iron alone: the codecs, the statuses and the stored wording are the api's. The sentence lives here
+// because the modules below the api render problems too (the plugin resolver's console, the plugins' log lines)
 lazy val problem = projectMatrix
   .in(file("modules/problem"))
   .dependsOn(newtype)
   .settings(
     name := "histmersion-problem",
-    description := "The closed Problem of the application, its accumulation (Problems) and the outside text it carries"
+    description :=
+      "The closed Problem of the application, its accumulation (Problems), the outside text it carries and its sentence"
   )
   .settings(commonDeps)
   .settings(libraryDependencies += "io.github.iltotore" %% "iron" % V.iron)
   .jvmPlatform(scalaVersions = Seq(scala3))
-  .jsPlatform(scalaVersions = Seq(scala3))
+  .jsPlatform(
+    scalaVersions = Seq(scala3),
+    settings = Seq(libraryDependencies += "io.github.cquiroz" %% "scala-java-time" % V.scalaJavaTime)
+  )
 
 // JSON without circe: the derived record codec, the base types' and containers' codecs, raw JSON (Kindlings' AST) and a
 // cursor over it; shared by the wire contract and the plugin SPI

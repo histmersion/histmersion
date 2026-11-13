@@ -2,7 +2,7 @@ package com.histmersion
 package domain.automation.agents
 import com.github.plokhotnyuk.jsoniter_scala.core.{writeToString, JsonValueCodec}
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.server.agents.{BuiltinAi, ClaudeCode, CliRuntime, Codex, HostAiProvider, Opencode}
 

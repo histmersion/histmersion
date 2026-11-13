@@ -1,7 +1,7 @@
 package com.histmersion
 package server.agents
 
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.domain.automation.agents.{AgentDefinitions, AgentRuntime, AgentTrees, Prompts}

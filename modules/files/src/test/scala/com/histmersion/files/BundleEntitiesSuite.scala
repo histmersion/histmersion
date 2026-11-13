@@ -2,7 +2,7 @@ package com.histmersion
 package files
 import hearth.kindlings.jsoniterjson.Json
 
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.given

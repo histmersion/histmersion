@@ -1,6 +1,6 @@
 package com.histmersion
 package web
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.exchange.MergeIssue

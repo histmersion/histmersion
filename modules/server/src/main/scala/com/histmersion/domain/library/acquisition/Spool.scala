@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.api.text.SafeName
 import com.histmersion.util.storage.{ByteSource, Store}

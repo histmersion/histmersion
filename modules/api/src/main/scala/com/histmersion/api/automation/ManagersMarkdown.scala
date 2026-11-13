@@ -1,6 +1,6 @@
 package com.histmersion
 package api.automation
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import scala.annotation.tailrec
 import com.histmersion.api.Plural
 import com.histmersion.api.given

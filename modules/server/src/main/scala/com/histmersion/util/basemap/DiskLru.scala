@@ -1,7 +1,7 @@
 package com.histmersion
 package util.basemap
 
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.ByteCount
 import com.histmersion.util.storage.{ByteSource, Store}
 

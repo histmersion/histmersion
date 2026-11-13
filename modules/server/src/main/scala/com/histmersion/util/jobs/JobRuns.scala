@@ -1,6 +1,6 @@
 package com.histmersion
 package util.jobs
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.util.database.Transactor

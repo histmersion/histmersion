@@ -1,7 +1,7 @@
 package com.histmersion
 package api.library
 
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.{Paging, Plural}
 import com.histmersion.api.automation.ListFilters
 import com.histmersion.api.catalogue.{PeriodsMarkdown, SkippedPeriod}

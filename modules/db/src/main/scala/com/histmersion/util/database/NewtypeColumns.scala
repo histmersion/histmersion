@@ -6,7 +6,7 @@ import io.github.iltotore.iron.RefinedType
 
 import java.sql.{PreparedStatement, ResultSet, SQLException}
 
-import api.problem.Text.sentence
+import util.problem.Text.sentence
 import util.problem.{Legacy, Problem}
 
 /** The column codec of every newtype, from its base type's. A value its constraint refuses fails the read, naming the

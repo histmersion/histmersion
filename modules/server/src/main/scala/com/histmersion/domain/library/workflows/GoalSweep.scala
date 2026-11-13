@@ -3,7 +3,7 @@ package domain.library.workflows
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.domain.automation.agents.RunCtx
 import com.histmersion.domain.automation.goals.GoalService
 import com.histmersion.domain.automation.workflows.Pipelines

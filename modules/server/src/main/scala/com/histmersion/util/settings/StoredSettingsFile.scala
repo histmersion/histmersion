@@ -2,7 +2,7 @@ package com.histmersion
 package util.settings
 
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.config.AppConfig
 import com.histmersion.config.edit.{ConfigFileState, FileVersion, SettingError, SettingsFile, WriteOutcome}
 import com.histmersion.util.storage.{Store, TempName}

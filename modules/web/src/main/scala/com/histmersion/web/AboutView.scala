@@ -1,7 +1,7 @@
 package com.histmersion
 package web
 
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.{ByteCount, ServiceState, Wording}
 import com.raquo.laminar.api.L.*
 

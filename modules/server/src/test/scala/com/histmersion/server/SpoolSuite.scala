@@ -1,7 +1,7 @@
 package com.histmersion
 package server
 
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.domain.library.acquisition.Spool
 import com.histmersion.util.storage.{Location, Storage}
 import java.nio.file.{Files, Path}

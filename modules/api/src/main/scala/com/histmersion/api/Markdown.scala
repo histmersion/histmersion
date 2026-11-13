@@ -1,7 +1,7 @@
 package com.histmersion
 package api
 
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.backup.{Backup, RestoreResult}
 import com.histmersion.api.library.Label
 import io.github.iltotore.iron.constraint.any.Pure

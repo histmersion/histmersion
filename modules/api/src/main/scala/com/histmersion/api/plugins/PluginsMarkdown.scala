@@ -1,7 +1,7 @@
 package com.histmersion
 package api.plugins
 
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.Plural
 import com.histmersion.api.settings.ConfigFileInfo
 import com.histmersion.api.given

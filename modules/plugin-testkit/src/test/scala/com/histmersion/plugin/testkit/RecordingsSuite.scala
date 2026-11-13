@@ -1,7 +1,7 @@
 package com.histmersion
 package plugin.testkit
 
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.domain.CoreQuota
 import com.histmersion.pluginhost.{HttpAnswer, HttpTransport}
 import com.histmersion.plugin.testkit.internal.{ProjectPaths, RecordedExchange, Scrubber}

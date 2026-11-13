@@ -1,7 +1,7 @@
 package com.histmersion
 package web.library
 
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.library.Ingest
 class DoiIngestSuite extends munit.FunSuite:
 

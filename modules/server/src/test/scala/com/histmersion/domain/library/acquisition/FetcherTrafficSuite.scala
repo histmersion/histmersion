@@ -1,6 +1,6 @@
 package com.histmersion
 package domain.library.acquisition
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.server.ServerPlugins
 import com.histmersion.util.plugins.{Plugin, Plugins}

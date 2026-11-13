@@ -2,7 +2,7 @@ package com.histmersion
 package server.views
 import com.histmersion.util.mcp.ChimpJson.given
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.aliases.AliasKinds

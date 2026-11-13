@@ -1,7 +1,7 @@
 package com.histmersion
 package files
 
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.given
 
 import java.nio.file.Paths

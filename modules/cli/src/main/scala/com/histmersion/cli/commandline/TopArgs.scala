@@ -4,7 +4,7 @@ package commandline
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.library.Tree
 import com.histmersion.api.library.SearchMarkdown
 import com.histmersion.api.library.SourcesMarkdown

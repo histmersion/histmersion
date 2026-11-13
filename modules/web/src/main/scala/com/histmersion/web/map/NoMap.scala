@@ -1,7 +1,7 @@
 package com.histmersion
 package web.map
 import com.histmersion.util.problem.Problem
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 
 import org.scalajs.dom
 

@@ -276,7 +276,7 @@ class ProblemUnification(config: ProblemUnification.Config, index: ConcurrentHas
     val wanted = List(
       Option.when(keepsName && !inProblemPackage)(if (usesLegacy) "import com.histmersion.util.problem.{Legacy, Problem}" else "import com.histmersion.util.problem.Problem"),
       Option.when(!keepsName && usesLegacy && !inProblemPackage)("import com.histmersion.util.problem.Legacy"),
-      Option.when(usesReader && seesApi)("import com.histmersion.api.problem.Text.sentence")
+      Option.when(usesReader && seesApi)("import com.histmersion.util.problem.Text.sentence")
     ).flatten
     val importPatch = if (wanted.isEmpty) Patch.empty else {
       val pkgs = doc.tree.collect { case p: Pkg => p }

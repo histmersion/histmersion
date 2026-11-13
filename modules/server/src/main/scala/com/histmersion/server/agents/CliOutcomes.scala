@@ -2,7 +2,7 @@ package com.histmersion
 package server.agents
 import com.histmersion.util.json.RawJson
 
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.domain.automation.agents.{AnswerNotJson, StrictJsonSchema, SttpAiJson}
 import com.histmersion.util.json.RawJson.*
 

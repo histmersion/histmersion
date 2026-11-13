@@ -2,7 +2,7 @@ package com.histmersion
 package domain.automation.managers
 
 import com.histmersion.util.problem.Problem
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.api.automation.Agents.{JobKind, PauseReason, RunState}
 import com.histmersion.api.automation.Manager

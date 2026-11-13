@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.agents
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.util.storage.{ByteSource, Resources, SafePath, Store, Stores}
 import java.nio.charset.StandardCharsets.UTF_8

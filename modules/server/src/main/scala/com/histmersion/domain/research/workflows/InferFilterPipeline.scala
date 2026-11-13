@@ -2,7 +2,7 @@ package com.histmersion
 package domain.research.workflows
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.problem.Problem
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.domain.automation.agents.*

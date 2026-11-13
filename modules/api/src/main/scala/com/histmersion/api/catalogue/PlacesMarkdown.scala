@@ -1,6 +1,6 @@
 package com.histmersion
 package api.catalogue
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.Markdown.*
 import com.histmersion.api.YearFmt
 

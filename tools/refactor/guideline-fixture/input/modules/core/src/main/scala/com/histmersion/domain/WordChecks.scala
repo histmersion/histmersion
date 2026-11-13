@@ -3,8 +3,8 @@ package domain
 
 import util.problem.Problem
 import util.problem.Problem.legacyText
-import api.problem.Text
-import api.problem.Text.sentence
+import util.problem.Text
+import util.problem.Text.sentence
 
 /** G5textBranch on the closed Problem's words: its sentence, its temporary legacy text, the api's renderer's output. */
 final class WordChecks(p: Problem, ps: List[Problem]):

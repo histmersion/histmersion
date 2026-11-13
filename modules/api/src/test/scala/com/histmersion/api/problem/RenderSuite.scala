@@ -9,7 +9,7 @@ import util.problem.{External, Problem, Problems}
 import util.problem.Problem.*
 import Column.stored
 import Answer.{answer, decoded, entry, problem, retryAfter, status}
-import Text.{sentence, sentences}
+import util.problem.Text.{sentence, sentences}
 
 /** Every case of [[Problem]], through every renderer the api owns: its HTTP status, its English sentence, its frozen
   * stored sentence (which reads back as the case) and its JSON (which decodes back to the case). The renderers' matches

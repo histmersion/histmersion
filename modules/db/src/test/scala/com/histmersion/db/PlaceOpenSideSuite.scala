@@ -1,7 +1,7 @@
 package com.histmersion
 package db
 
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.catalogue.places.PlaceFixtures

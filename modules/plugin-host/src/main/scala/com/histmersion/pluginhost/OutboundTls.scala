@@ -1,7 +1,7 @@
 package com.histmersion
 package pluginhost
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.domain.HttpPolicy
 import com.histmersion.config.TlsConfig

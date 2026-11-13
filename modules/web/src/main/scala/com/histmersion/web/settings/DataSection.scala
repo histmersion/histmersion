@@ -1,7 +1,7 @@
 package com.histmersion
 package web.settings
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.api.{Api, Plural}
 import com.histmersion.web.{ApiClient, Auth, MapRegionsView}

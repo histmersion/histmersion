@@ -1,6 +1,6 @@
 package com.histmersion
 package api.automation
-import com.histmersion.api.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.{Paging, Plural, RowCount, YearFmt}
 import com.histmersion.api.library.Facet
 import com.histmersion.api.given
