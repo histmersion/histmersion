@@ -28,6 +28,7 @@ object Column:
       case Invalid.OutOfRange(t, raw, b, at)  =>
         s"${path(at)}$t '$raw' is out of [${b.least.mkString}, ${b.greatest.mkString}]"
       case Invalid.Inconsistent(fs, rule, at) => s"${path(at)}${fs.toVector.mkString(", ")} break ${rule.productPrefix}"
+      case Invalid.Reference(form, at)        => s"${path(at)}no secret reference: ${form.stored}"
       case NotFound.Entity(t, key)            => s"no $t '$key'"
       case Conflict.AlreadyExists(t, key)     => s"$t '$key' already exists"
       case Conflict.Renamed(t, asked, now)    => s"$t '$asked' was renamed to '$now'"
@@ -43,6 +44,7 @@ object Column:
       case Upstream.Timeout(name, url, after)  => s"$name did not answer at $url within $after ms"
       case Upstream.BadReply(name, url, s, r)  => s"$name's answer at $url is not ${s.productPrefix} — $r"
       case Io.File(op, path, reported)         => s"could not ${op.productPrefix} $path — $reported"
+      case Io.Wrong(path, Io.Kind.Inside(dir)) => s"$path is outside $dir"
       case Io.Wrong(path, expected)            => s"$path is not ${expected.productPrefix}"
       case Io.Corrupt(format, at, damage)     => s"the ${format.productPrefix} data at $at is damaged: ${damage.stored}"
       case Io.Process(tool, ending)           => s"$tool ${ending.stored}"
@@ -50,9 +52,11 @@ object Column:
       case Config.Setting(key, fault)         => s"$key is wrong: ${fault.stored}"
       case Config.Unavailable(capability)     => s"this server has no ${capability.productPrefix}"
       case Config.Reload(stage, scope)        => s"reloading the settings failed at ${stage.productPrefix} in $scope"
+      case Config.Cycle(scopes)               => s"reload cycle: ${scopes.toVector.mkString(CycleArrow)}"
       case Plugin.Load(plugin, fault)         => s"plugin $plugin did not load: ${fault.stored}"
       case Plugin.Rejected(plugin, item, why) => s"$plugin did not take '$item': ${why.productPrefix}"
       case Plugin.Vault(vault, failure)       => s"secret vault $vault failed: ${failure.stored}"
+      case Plugin.Dependency(p, m, want, has) => s"$p needs $m $want; it ships $has"
       case Plugin.Said(plugin, claim, text)   => s"$plugin says (${claim.productPrefix}): $text"
       case Problem.Run.Paused(reason, at)     => s"paused for ${reason.productPrefix}${until(at)}"
       case Problem.Run.NoModel(role, tried)   => s"no model of the $role chain can run${passedOver(tried)}"
@@ -101,18 +105,44 @@ object Column:
   private def passedOver(tried: Vector[Problem.Run.Model]): String =
     if tried.isEmpty then "" else s" (passed over: ${tried.mkString(", ")})"
 
+  private def raws(written: String): Vector[Raw] =
+    if written.isEmpty then Vector.empty else written.split(ListSeparator, -1).toVector.map(r => Raw(s"$r"))
+
   /** The case of an enum of code words named `name`. */
   private def word[E <: Product](values: Seq[E], name: String | Null): Option[E] =
     Option(name).flatMap(n => values.find(_.productPrefix == n))
 
+  private val CycleArrow = " → "
+
   private val Damages = Vector(Io.Damage.Checksum, Io.Damage.Truncated, Io.Damage.Undecodable)
-  private val Faults = Vector(Config.Fault.Empty, Config.Fault.NoSecret)
+  private val Kinds = Vector(
+    Io.Kind.File,
+    Io.Kind.Directory,
+    Io.Kind.Present,
+    Io.Kind.Absent,
+    Io.Kind.Executable,
+    Io.Kind.Listed,
+    Io.Kind.OnPath
+  )
+  private val Faults = Vector(
+    Config.Fault.Empty,
+    Config.Fault.NoSecret,
+    Config.Fault.Block,
+    Config.Fault.Undeclared,
+    Config.Fault.OutsideRoot,
+    Config.Fault.Credential(None),
+    Config.Fault.Literal,
+    Config.Fault.Substituted,
+    Config.Fault.NotReadBack
+  )
+  private val Forms = Vector(Invalid.Form.Bare, Invalid.Form.EmptyValue)
   private val LoadFaults = Vector(
     Plugin.Fault.Missing,
     Plugin.Fault.NullComponent,
     Plugin.Fault.BadDescriptor,
     Plugin.Fault.VersionMismatch,
-    Plugin.Fault.Duplicate
+    Plugin.Fault.Duplicate,
+    Plugin.Fault.NoProvider
   )
   private val VaultFailures =
     Vector(Plugin.Retrieval.NoVault, Plugin.Retrieval.NoEntry, Plugin.Retrieval.EmptyValue, Plugin.Retrieval.Locked)
@@ -129,9 +159,18 @@ object Column:
     Content.Requirement.OutsidePeriod
   )
 
+  extension (form: Invalid.Form)
+    private def stored: String = form match
+      case Invalid.Form.EnvName(name)   => s"EnvName '$name'"
+      case Invalid.Form.NoEntry(vault)  => s"NoEntry '$vault'"
+      case Invalid.Form.VaultName(name) => s"VaultName '$name'"
+      case other                        => other.productPrefix
+
   extension (damage: Io.Damage)
     private def stored: String = damage match
       case Io.Damage.Length(expected, found) => s"Length $expected/$found"
+      case Io.Damage.Unreadable(reported)    => s"Unreadable — $reported"
+      case Io.Damage.Newer(found, reads)     => s"Newer $found/$reads"
       case other                             => other.productPrefix
 
   extension (ending: Io.Ending)
@@ -146,18 +185,32 @@ object Column:
       case Config.Fault.Malformed(raw)   => s"Malformed '$raw'"
       case Config.Fault.Unknown(raw)     => s"Unknown '$raw'"
       case Config.Fault.Conflicts(other) => s"Conflicts $other"
+      case Config.Fault.WrongKind(e, f)  => s"WrongKind ${e.productPrefix}/${f.productPrefix}"
+      case Config.Fault.Unreadable(r)    => s"Unreadable — $r"
+      case Config.Fault.Credential(v)    => s"Credential${v.fold("")(n => s" $n")}"
+      case Config.Fault.Included(file)   => s"Included $file"
       case other                         => other.productPrefix
 
   extension (fault: Plugin.Fault)
     private def stored: String = fault match
-      case Plugin.Fault.Threw(reported) => s"Threw — $reported"
-      case other                        => other.productPrefix
+      case Plugin.Fault.Threw(reported)             => s"Threw — $reported"
+      case Plugin.Fault.SpiMismatch(built, speaks)  => s"SpiMismatch $built/$speaks"
+      case Plugin.Fault.SignerChanged(pinned, seen) => s"SignerChanged $pinned / $seen"
+      case Plugin.Fault.Taken(by)                   => s"Taken $by"
+      case other                                    => other.productPrefix
 
   extension (failure: Plugin.Retrieval)
     private def stored: String = failure match
-      case Plugin.Retrieval.TimedOut(after) => s"TimedOut $after ms"
-      case Plugin.Retrieval.Failed(stderr)  => s"Failed — $stderr"
-      case other                            => other.productPrefix
+      case Plugin.Retrieval.TimedOut(after)           => s"TimedOut $after ms"
+      case Plugin.Retrieval.Failed(stderr)            => s"Failed — $stderr"
+      case Plugin.Retrieval.Blank(ref)                => s"Blank '$ref'"
+      case Plugin.Retrieval.Absent(ref)               => s"Absent '$ref'"
+      case Plugin.Retrieval.Unread(ref, exit, stderr) => s"Unread '$ref' exit $exit — $stderr"
+      case Plugin.Retrieval.NoKey(configured, seen)   =>
+        s"NoKey ${configured.mkString(ListSeparator)} / ${seen.mkString(ListSeparator)}"
+      case Plugin.Retrieval.Key(key, attempt, stderr) =>
+        s"Key $key ${attempt.productPrefix}${stderr.fold("")(e => s" — $e")}"
+      case other => other.productPrefix
 
   extension (block: Problem.Run.Block)
     private def stored: String = block match
@@ -178,6 +231,7 @@ object Column:
   private val MissingAt = s"(?s)^$Prefix(\\S+) is required$$".r
   private val OutOfRangeAt = s"(?s)^$Prefix(\\S+) '(.*)' is out of \\[(.*?), (.*?)\\]$$".r
   private val InconsistentAt = s"(?s)^$Prefix(.+) break (\\w+)$$".r
+  private val ReferenceAt = s"(?s)^${Prefix}no secret reference: (\\w+)(?: '(.*)')?$$".r
   private val NoEntity = "(?s)^no (\\S+) '(.*)'$".r
   private val Exists = "(?s)^(\\S+) '(.*)' already exists$".r
   private val RenamedTo = "(?s)^(\\S+) '(.*)' was renamed to '(.*)'$".r
@@ -194,7 +248,8 @@ object Column:
   private val NotShaped = "(?s)^(\\S+)'s answer at (\\S+) is not (\\w+) — (.*)$".r
   private val CouldNot = "(?s)^could not (\\w+) (.+?) — (.*)$".r
   private val IsNot = "(?s)^(.+) is not (\\w+)$".r
-  private val Damaged = "(?s)^the (\\w+) data at (.+) is damaged: (\\w+)(?: (\\d+)/(\\d+))?$".r
+  private val IsOutside = "(?s)^(.+) is outside (.+)$".r
+  private val Damaged = "(?s)^the (\\w+) data at (.+?) is damaged: (\\w+)(?: (\\d+)/(\\d+)| — (.*))?$".r
   private val Exited = "(?s)^(.+?) exited with (-?\\d+) — (.*)$".r
   private val Unfinished = "(?s)^(.+?) did not finish within (\\d+) ms$".r
   private val NotStarted = "(?s)^(.+?) could not be started — (.*)$".r
@@ -202,7 +257,14 @@ object Column:
   private val WrongSetting = "(?s)^(\\S+) is wrong: (\\w+)(?: (.*))?$".r
   private val NoCapability = "^this server has no (\\w+)$".r
   private val ReloadFailed = "(?s)^reloading the settings failed at (\\w+) in (.*)$".r
-  private val NotLoaded = "(?s)^plugin (\\S+) did not load: (\\w+)(?: — (.*))?$".r
+  private val ReloadCycle = "(?s)^reload cycle: (.+)$".r
+  private val NotLoaded = "(?s)^plugin (\\S+) did not load: (\\w+)(?: (.*))?$".r
+  private val Needs = "(?s)^(\\S+) needs (\\S+) (\\S+); it ships (\\S+)$".r
+  private val Pair = "^(\\S+)/(\\S+)$".r
+  private val Quoted = "(?s)^'(.*)'$".r
+  private val UnreadAt = "(?s)^'(.*)' exit (-?\\d+) — (.*)$".r
+  private val KeyTried = "(?s)^(\\S+) (\\w+)(?: — (.*))?$".r
+  private val ListSeparator = ", "
   private val NotTaken = "(?s)^(\\S+) did not take '(.*)': (\\w+)$".r
   private val VaultFailed = "(?s)^secret vault (\\S+) failed: (\\w+)(?: (.*))?$".r
   private val Says = "(?s)^(\\S+) says \\((\\w+)\\): (.*)$".r
@@ -253,6 +315,17 @@ object Column:
           fs <- NonEmptyVector.from(fields.split(", ", -1).toVector.map(f => Field(s"$f")))
           r <- word(Invalid.Exclusion.values.toSeq, rule)
         yield Invalid.Inconsistent(fs, r, pathOf(at))
+      case _ => None
+    },
+    {
+      case ReferenceAt(at, form, raw) =>
+        val read: Option[Invalid.Form] = (form, Option(raw)) match
+          case ("EnvName", Some(r))   => Some(Invalid.Form.EnvName(Raw(s"$r")))
+          case ("NoEntry", Some(r))   => Some(Invalid.Form.NoEntry(Raw(s"$r")))
+          case ("VaultName", Some(r)) => Some(Invalid.Form.VaultName(Raw(s"$r")))
+          case (_, None)              => word(Forms, form)
+          case _                      => None
+        read.map(Invalid.Reference(_, pathOf(at)))
       case _ => None
     },
     {
@@ -336,19 +409,25 @@ object Column:
       case _ => None
     },
     {
-      case IsNot(path, kind) => word(Io.Kind.values.toSeq, kind).map(Io.Wrong(Io.Path(s"$path"), _))
+      case IsNot(path, kind) => word(Kinds, kind).map(Io.Wrong(Io.Path(s"$path"), _))
       case _                 => None
     },
     {
-      case Damaged(format, at, damage, expected, found) =>
-        val read: Option[Io.Damage] = (Option(expected), Option(found)) match
-          case (Some(e), Some(f)) if damage == "Length" =>
+      case IsOutside(path, dir) => Some(Io.Wrong(Io.Path(s"$path"), Io.Kind.Inside(Io.Path(s"$dir"))))
+      case _                    => None
+    },
+    {
+      case Damaged(format, at, damage, expected, found, reported) =>
+        val read: Option[Io.Damage] = (Option(expected), Option(found), Option(reported)) match
+          case (Some(e), Some(f), None) if damage == "Length" =>
             for
               ec <- Count.read(e)
               fc <- Count.read(f)
             yield Io.Damage.Length(ec, fc)
-          case (None, None) => word(Damages, damage)
-          case _            => None
+          case (Some(e), Some(f), None) if damage == "Newer"   => Some(Io.Damage.Newer(Raw(s"$e"), Raw(s"$f")))
+          case (None, None, Some(r)) if damage == "Unreadable" => Some(Io.Damage.Unreadable(External.Reported(s"$r")))
+          case (None, None, None)                              => word(Damages, damage)
+          case _                                               => None
         for
           f <- word(Io.Format.values.toSeq, format)
           d <- read
@@ -381,13 +460,27 @@ object Column:
           .filter(a => a.length >= 2 && a.startsWith("'") && a.endsWith("'"))
           .map(a => Raw(s"${a.drop(1).dropRight(1)}"))
         val read: Option[Config.Fault] = (fault, arg) match
-          case ("Unset", Some(v))     => Some(Config.Fault.Unset(SettingKey(s"$v")))
-          case ("Malformed", Some(_)) => quoted.map(Config.Fault.Malformed(_))
-          case ("Unknown", Some(_))   => quoted.map(Config.Fault.Unknown(_))
-          case ("Conflicts", Some(o)) => Some(Config.Fault.Conflicts(SettingKey(s"$o")))
-          case (_, None)              => word(Faults, fault)
-          case _                      => None
+          case ("Unset", Some(v))              => Some(Config.Fault.Unset(SettingKey(s"$v")))
+          case ("Malformed", Some(_))          => quoted.map(Config.Fault.Malformed(_))
+          case ("Unknown", Some(_))            => quoted.map(Config.Fault.Unknown(_))
+          case ("Conflicts", Some(o))          => Some(Config.Fault.Conflicts(SettingKey(s"$o")))
+          case ("WrongKind", Some(Pair(e, f))) =>
+            for
+              ek <- word(Config.ValueKind.values.toSeq, e)
+              fk <- word(Config.ValueKind.values.toSeq, f)
+            yield Config.Fault.WrongKind(ek, fk)
+          case ("Unreadable", Some(r)) if r.startsWith("— ") =>
+            Some(Config.Fault.Unreadable(External.Reported(s"${r.stripPrefix("— ")}")))
+          case ("Credential", Some(v)) => Some(Config.Fault.Credential(Some(SettingKey(s"$v"))))
+          case ("Included", Some(f))   => Some(Config.Fault.Included(Io.Path(s"$f")))
+          case (_, None)               => word(Faults, fault)
+          case _                       => None
         read.map(Config.Setting(SettingKey(s"$key"), _))
+      case _ => None
+    },
+    {
+      case ReloadCycle(scopes) =>
+        NonEmptyVector.from(scopes.split(CycleArrow, -1).toVector.map(s => Config.Scope(s"$s"))).map(Config.Cycle(_))
       case _ => None
     },
     {
@@ -400,11 +493,26 @@ object Column:
       case _ => None
     },
     {
-      case NotLoaded(plugin, fault, reported) =>
-        val read: Option[Plugin.Fault] = Option(reported) match
-          case Some(r) => Option.when(fault == "Threw")(Plugin.Fault.Threw(External.Reported(s"$r")))
-          case None    => word(LoadFaults, fault)
+      case NotLoaded(plugin, fault, argument) =>
+        val read: Option[Plugin.Fault] = (fault, Option(argument)) match
+          case ("Threw", Some(r)) if r.startsWith("— ") =>
+            Some(Plugin.Fault.Threw(External.Reported(s"${r.stripPrefix("— ")}")))
+          case ("SpiMismatch", Some(Pair(b, s))) =>
+            Some(Plugin.Fault.SpiMismatch(Raw(s"$b"), Raw(s"$s")))
+          case ("SignerChanged", Some(a)) =>
+            a.split(" / ", -1).toList match
+              case List(pinned, seen) =>
+                Some(Plugin.Fault.SignerChanged(Plugin.Signer(s"$pinned"), Plugin.Signer(s"$seen")))
+              case _ => None
+          case ("Taken", Some(by)) => Some(Plugin.Fault.Taken(Raw(s"$by")))
+          case (_, None)           => word(LoadFaults, fault)
+          case _                   => None
         read.map(Plugin.Load(Plugin.Id(s"$plugin"), _))
+      case _ => None
+    },
+    {
+      case Needs(plugin, module, wanted, shipped) =>
+        Some(Plugin.Dependency(Plugin.Id(s"$plugin"), Raw(s"$module"), Raw(s"$wanted"), Raw(s"$shipped")))
       case _ => None
     },
     {
@@ -419,6 +527,17 @@ object Column:
             Millis.read(a.stripSuffix(" ms")).map(Plugin.Retrieval.TimedOut(_))
           case ("Failed", Some(a)) if a.startsWith("— ") =>
             Some(Plugin.Retrieval.Failed(External.Stderr(s"${a.stripPrefix("— ")}")))
+          case ("Blank", Some(Quoted(r)))                  => Some(Plugin.Retrieval.Blank(Raw(s"$r")))
+          case ("Absent", Some(Quoted(r)))                 => Some(Plugin.Retrieval.Absent(Raw(s"$r")))
+          case ("Unread", Some(UnreadAt(r, exit, stderr))) =>
+            Io.ExitCode.read(exit).map(Plugin.Retrieval.Unread(Raw(s"$r"), _, External.Stderr(s"$stderr")))
+          case ("NoKey", Some(a)) =>
+            a.split(" / ", -1).toList match
+              case List(configured, seen) => Some(Plugin.Retrieval.NoKey(raws(configured), raws(seen)))
+              case _                      => None
+          case ("Key", Some(KeyTried(key, attempt, stderr))) =>
+            word(Plugin.Attempt.values.toSeq, attempt)
+              .map(Plugin.Retrieval.Key(Raw(s"$key"), _, Option(stderr).map(e => External.Stderr(s"$e"))))
           case (_, None) => word(VaultFailures, failure)
           case _         => None
         read.map(Plugin.Vault(Plugin.Id(s"$vault"), _))

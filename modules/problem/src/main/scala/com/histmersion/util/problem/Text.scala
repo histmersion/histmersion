@@ -20,6 +20,7 @@ object Text:
       case Invalid.Missing(field, at)          => s"${path(at)}$field is required"
       case Invalid.OutOfRange(t, raw, b, at)   => s"${path(at)}${t.short} $raw is ${b.range}"
       case Invalid.Inconsistent(fs, rule, at)  => s"${path(at)}${rule.of(fs)}"
+      case Invalid.Reference(form, at)         => s"${path(at)}${form.said}"
       case NotFound.Entity(t, key)             => s"no ${t.short} '$key'"
       case Conflict.AlreadyExists(t, key)      => s"${t.short} '$key' already exists"
       case Conflict.Renamed(t, asked, now)     => s"${t.short} '$asked' was renamed to '$now' — write to '$now' instead"
@@ -42,7 +43,15 @@ object Text:
       case Config.Setting(key, fault)          => s"$key ${fault.said}"
       case Config.Unavailable(capability)      => s"this server has no ${words(capability.productPrefix)}"
       case Config.Reload(stage, scope) => s"reloading the settings failed at ${words(stage.productPrefix)} ($scope)"
-      case Plugin.Load(plugin, fault)  => s"plugin $plugin did not load: ${fault.said}"
+      case Config.Cycle(scopes)        =>
+        s"the parts a reload rebuilds depend on each other in a cycle: ${scopes.toVector.mkString(" → ")}"
+      case Plugin.Load(plugin, Plugin.Fault.SignerChanged(pinned, seen)) =>
+        s"plugin $plugin did not load: it was installed signed by $pinned, this jar is signed by $seen — remove the " +
+          s"plugin first with `histmersion plugin rm $plugin` to trust the new key"
+      case Plugin.Load(plugin, fault)                     => s"plugin $plugin did not load: ${fault.said}"
+      case Plugin.Dependency(plugin, module, want, ships) =>
+        s"$plugin needs $module $want, but this Histmersion ships $ships — build the plugin against $ships " +
+          s"(the histmersion-plugin-platform POM), or install a Histmersion that ships $want"
       case Plugin.Rejected(plugin, item, why)   => s"$plugin did not take $item: ${words(why.productPrefix)}"
       case Plugin.Vault(vault, failure)         => s"secret vault $vault failed: ${failure.said}"
       case Plugin.Said(plugin, claim, text)     => s"$plugin (${words(claim.productPrefix)}): $text"
@@ -94,6 +103,18 @@ object Text:
         case Invalid.Exclusion.AtMostOne => s"give at most one of $named"
         case Invalid.Exclusion.Ordered   => s"$named must be in order"
 
+  /** The forms a secret's reference takes. */
+  private val ReferenceForms = "value:<literal>, env:<NAME> or <vault>:<ref>"
+
+  extension (form: Invalid.Form)
+    private def said: String = form match
+      case Invalid.Form.Bare            => s"a secret is a reference ($ReferenceForms), not a bare value"
+      case Invalid.Form.EmptyValue      => "value: has no value"
+      case Invalid.Form.EnvName(name)   => s"env:$name is not an environment variable name"
+      case Invalid.Form.NoEntry(vault)  => s"$vault: names no entry"
+      case Invalid.Form.VaultName(name) =>
+        s"a secret is a reference ($ReferenceForms); '$name' is not a vault name ([a-z0-9][a-z0-9-]*)"
+
   extension (activity: Conflict.Activity)
     private def named: String = activity match
       case Conflict.Activity.CalibreGui => "the Calibre GUI"
@@ -107,6 +128,7 @@ object Text:
       case Refused.Rule.ReadOnlyQuery     => "a query may only read: it holds a statement that writes"
       case Refused.Rule.LoginOutsideLocal => "this login is refused while the server listens beyond this machine"
       case Refused.Rule.LegalOnly         => "only legal open-access copies may be fetched"
+      case Refused.Rule.ReadOnly          => "the collection is read-only"
 
   extension (limit: Refused.Limit)
     private def named: String = limit match
@@ -119,11 +141,14 @@ object Text:
 
   extension (kind: Io.Kind)
     private def missed: String = kind match
-      case Io.Kind.File       => "is not a file"
-      case Io.Kind.Directory  => "is not a directory"
-      case Io.Kind.Present    => "is not there"
-      case Io.Kind.Absent     => "is there already"
-      case Io.Kind.Executable => "is not executable"
+      case Io.Kind.File              => "is not a file"
+      case Io.Kind.Directory         => "is not a directory"
+      case Io.Kind.Present           => "is not there"
+      case Io.Kind.Absent            => "is there already"
+      case Io.Kind.Executable        => "is not executable"
+      case Io.Kind.Listed            => "is not in the manifest"
+      case Io.Kind.OnPath            => "was not found on the PATH"
+      case Io.Kind.Inside(directory) => s"is outside $directory, the directory it is confined to"
 
   extension (damage: Io.Damage)
     private def said: String = damage match
@@ -131,6 +156,8 @@ object Text:
       case Io.Damage.Truncated               => "is cut short"
       case Io.Damage.Undecodable             => "cannot be decoded"
       case Io.Damage.Length(expected, found) => s"holds $found units, not $expected"
+      case Io.Damage.Unreadable(reported)    => s"cannot be read — $reported"
+      case Io.Damage.Newer(found, reads) => s"is in format $found, newer than the format $reads this Histmersion reads"
 
   extension (ending: Io.Ending)
     private def said: String = ending match
@@ -146,17 +173,67 @@ object Text:
       case Config.Fault.Unknown(raw)     => s"has an unknown value '$raw'"
       case Config.Fault.Conflicts(other) => s"contradicts $other"
       case Config.Fault.NoSecret         => "names a secret no vault holds"
+      case Config.Fault.Block            => "is a block of settings, not one setting: set one of the settings inside it"
+      case Config.Fault.WrongKind(e, f)  => s"must be ${e.said}, not ${f.said}"
+      case Config.Fault.Unreadable(r)    => s"cannot be read — $r"
+      case Config.Fault.Undeclared       => "is no setting: it is ignored"
+      case Config.Fault.OutsideRoot      => "is no setting: it is ignored (settings go under histmersion { … })"
+      case Config.Fault.Credential(v)    =>
+        "holds a key or password itself, so it is not written into the settings file: " +
+          v.fold("set it in the server's environment instead")(n =>
+            s"set the environment variable $n for the server instead"
+          )
+      case Config.Fault.Literal =>
+        "holds value:, which writes the key itself into the settings file, where anyone who can read the file can " +
+          "read it: use env:<NAME> or a password manager's entry, or confirm that you want value:"
+      case Config.Fault.Substituted =>
+        "is written in the settings file with a substitution (${…}) or +=, which is kept exactly as it is: change it " +
+          "in the file itself"
+      case Config.Fault.Included(file) => s"is set in $file, which the settings file includes: change it there"
+      case Config.Fault.NotReadBack    => "did not read back as it was written"
+
+  extension (kind: Config.ValueKind)
+    private def said: String = kind match
+      case Config.ValueKind.Text   => "text"
+      case Config.ValueKind.Number => "a number"
+      case Config.ValueKind.Flag   => "true or false"
+      case Config.ValueKind.List   => "a list [ … ]"
+      case Config.ValueKind.Block  => "a block of settings"
+      case Config.ValueKind.Null   => "null"
 
   extension (fault: Plugin.Fault)
     private def said: String = fault match
-      case Plugin.Fault.Threw(reported) => s"loading it threw — $reported"
-      case other                        => words(other.productPrefix)
+      case Plugin.Fault.Threw(reported)            => s"loading it threw — $reported"
+      case Plugin.Fault.SpiMismatch(built, speaks) =>
+        s"it was built against plugin SPI $built; this Histmersion speaks SPI $speaks — rebuild the plugin against SPI $speaks"
+      case Plugin.Fault.SignerChanged(pinned, seen) =>
+        s"it was installed signed by $pinned, this jar is signed by $seen"
+      case Plugin.Fault.NoProvider =>
+        "it holds no plugin (no META-INF/services/com.histmersion.plugin.Plugin provider)"
+      case Plugin.Fault.Taken(by) => s"its id is already provided by $by"
+      case other                  => words(other.productPrefix)
 
   extension (failure: Plugin.Retrieval)
     private def said: String = failure match
-      case Plugin.Retrieval.TimedOut(after) => s"it did not answer within $after ms"
-      case Plugin.Retrieval.Failed(stderr)  => s"its tool failed — $stderr"
-      case other                            => words(other.productPrefix)
+      case Plugin.Retrieval.TimedOut(after)           => s"it did not answer within $after ms"
+      case Plugin.Retrieval.Failed(stderr)            => s"its tool failed — $stderr"
+      case Plugin.Retrieval.Blank(ref)                => s"'$ref' has an empty value"
+      case Plugin.Retrieval.Absent(ref)               => s"it holds no '$ref'"
+      case Plugin.Retrieval.Unread(ref, exit, stderr) => s"it could not read '$ref' (exit $exit) — $stderr"
+      case Plugin.Retrieval.NoKey(configured, seen)   =>
+        val sees = if seen.isEmpty then "ykman sees no YubiKey" else s"ykman sees ${seen.mkString(", ")}"
+        s"none of the configured YubiKeys (${configured.mkString(", ")}) is connected ($sees) — plug one in"
+      case Plugin.Retrieval.Key(key, attempt, stderr) =>
+        s"YubiKey $key: ${attempt.said}${stderr.fold("")(e => s" — $e")}"
+      case other => words(other.productPrefix)
+
+  extension (attempt: Plugin.Attempt)
+    private def said: String = attempt match
+      case Plugin.Attempt.NotConnected     => "not connected"
+      case Plugin.Attempt.NotTouched       => "not touched in time"
+      case Plugin.Attempt.WrongCredentials => "invalid credentials (the password, key file or YubiKey is wrong)"
+      case Plugin.Attempt.ChallengeFailed  => "challenge-response failed"
+      case Plugin.Attempt.Refused          => "an error KeePassXC gave"
 
   private def triedModels(tried: Vector[Problem.Run.Model]): String =
     if tried.isEmpty then "" else s" (passed over: ${tried.mkString(", ")})"

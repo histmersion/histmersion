@@ -31,6 +31,7 @@ class RenderSuite extends munit.FunSuite:
     "Missing" -> (400, "rationale is required"),
     "OutOfRange" -> (400, "com.histmersion.Latitude '91' is out of [-90, 90]"),
     "Inconsistent" -> (400, "lat, lon break Together"),
+    "Reference" -> (400, "plugins / api-key: no secret reference: EnvName '1PASSWORD'"),
     "Entity" -> (404, "no com.histmersion.domain.library.Citekey 'anthony2007'"),
     "AlreadyExists" -> (409, "com.histmersion.domain.catalogue.Place.Id 'pleiades_579885' already exists"),
     "Renamed" -> (409, "com.histmersion.domain.library.Citekey 'anthony2006' was renamed to 'anthony2007'"),
@@ -71,9 +72,14 @@ class RenderSuite extends munit.FunSuite:
     "Setting" -> (503, "histmersion.agents.providers.codex.command is wrong: Empty"),
     "Unavailable" -> (503, "this server has no Originals"),
     "Reload" -> (503, "reloading the settings failed at Close in plugins"),
+    "Cycle" -> (503, "reload cycle: db → lease → db"),
     "Load" -> (500, "plugin media-met did not load: NullComponent"),
     "Rejected" -> (422, "media-smithsonian did not take 'edanmdm:nmnhanthro_8371234': NoImage"),
     "Vault" -> (500, "secret vault keepassxc failed: TimedOut 20000 ms"),
+    "Dependency" -> (
+      409,
+      "doi-mirror-0.1.0.jar needs com.github.plokhotnyuk.jsoniter-scala:jsoniter-scala-core_3 2.42.0; it ships 2.41.5"
+    ),
     "Said" -> (503, "gazetteer-awmc says (Unavailable): the AWMC server is in maintenance"),
     "Paused" -> (409, "paused for Allowance until 2025-11-10T00:00:00Z"),
     "NoModel" -> (409, "no model of the reviewer chain can run (passed over: claude-opus-5-5, gpt-6)"),
@@ -158,24 +164,62 @@ class RenderSuite extends munit.FunSuite:
         Vector(
           Config.Fault.Malformed(Raw("x y")),
           Config.Fault.Unknown(Raw("z")),
-          Config.Fault.Conflicts(SettingKey("c.d"))
+          Config.Fault.Conflicts(SettingKey("c.d")),
+          Config.Fault.Block,
+          Config.Fault.WrongKind(Config.ValueKind.Number, Config.ValueKind.Text),
+          Config.Fault.Unreadable(reported),
+          Config.Fault.Undeclared,
+          Config.Fault.OutsideRoot,
+          Config.Fault.Credential(None),
+          Config.Fault.Credential(Some(SettingKey("ANTHROPIC_API_KEY"))),
+          Config.Fault.Literal,
+          Config.Fault.Substituted,
+          Config.Fault.Included(Io.Path("/etc/histmersion/extra.conf")),
+          Config.Fault.NotReadBack
         )
           .map(Config.Setting(SettingKey("a.b"), _)) ++
+        Vector(
+          Invalid.Form.Bare,
+          Invalid.Form.EmptyValue,
+          Invalid.Form.EnvName(Raw("1X")),
+          Invalid.Form.NoEntry(Raw("keepassxc")),
+          Invalid.Form.VaultName(Raw("Bad Vault"))
+        ).map(Invalid.Reference(_)) ++
+        Vector(
+          Io.Damage.Unreadable(reported),
+          Io.Damage.Newer(Raw("2"), Raw("1"))
+        ).map(Io.Corrupt(Io.Format.Json, Where("kit.json"), _)) ++
+        Io.Format.values.toVector.map(Io.Corrupt(_, Where("x"), Io.Damage.Checksum)) ++
+        Config.Capability.values.toVector.map(Config.Unavailable(_)) ++
         Vector(
           Plugin.Fault.Missing,
           Plugin.Fault.NullComponent,
           Plugin.Fault.BadDescriptor,
           Plugin.Fault.VersionMismatch,
           Plugin.Fault.Duplicate,
-          Plugin.Fault.Threw(reported)
+          Plugin.Fault.Threw(reported),
+          Plugin.Fault.SpiMismatch(Raw("7"), Raw("1")),
+          Plugin.Fault.SignerChanged(Plugin.Signer("ABCD 1234"), Plugin.Signer("EF01")),
+          Plugin.Fault.NoProvider,
+          Plugin.Fault.Taken(Raw("other.jar"))
         ).map(Plugin.Load(Plugin.Id("p"), _)) ++
         Vector(
           Plugin.Retrieval.NoVault,
           Plugin.Retrieval.NoEntry,
           Plugin.Retrieval.EmptyValue,
           Plugin.Retrieval.Locked,
-          Plugin.Retrieval.Failed(External.Stderr("locked"))
+          Plugin.Retrieval.Failed(External.Stderr("locked")),
+          Plugin.Retrieval.Blank(Raw("db/entry")),
+          Plugin.Retrieval.Absent(Raw("op://vault/item")),
+          Plugin.Retrieval.Unread(Raw("db/entry"), Io.ExitCode(1), External.Stderr("Error: locked")),
+          Plugin.Retrieval.NoKey(Vector(Raw("2"), Raw("1:123")), Vector.empty),
+          Plugin.Retrieval.NoKey(Vector(Raw("2:9")), Vector(Raw("123"), Raw("456"))),
+          Plugin.Retrieval.Key(Raw("2:9"), Plugin.Attempt.NotTouched, None),
+          Plugin.Retrieval.Key(Raw("1"), Plugin.Attempt.WrongCredentials, Some(External.Stderr("Error: invalid")))
         ).map(Plugin.Vault(Plugin.Id("v"), _)) ++
+        Plugin.Attempt.values.toVector.map(a =>
+          Plugin.Vault(Plugin.Id("v"), Plugin.Retrieval.Key(Raw("2"), a, None))
+        ) ++
         Vector(Run.Block.SpendCap, Run.Block.Draining, Run.Block.OutsideWindow, Run.Block.Waiting)
           .map(Run.Blocked(_)) ++
         Vector(
@@ -186,7 +230,16 @@ class RenderSuite extends munit.FunSuite:
         ).map(Content.Proposal(_, Where("findings"))) ++
         Vector(Io.Ending.TimedOut(Millis(5L)), Io.Ending.NotStarted(reported)).map(Io.Process(Io.Tool("pg_dump"), _)) ++
         Io.Access.values.toVector.map(Io.File(_, Io.Path("/a b/c"), reported)) ++
-        Io.Kind.values.toVector.map(Io.Wrong(Io.Path("/x"), _)) ++
+        Vector(
+          Io.Kind.File,
+          Io.Kind.Directory,
+          Io.Kind.Present,
+          Io.Kind.Absent,
+          Io.Kind.Executable,
+          Io.Kind.Listed,
+          Io.Kind.OnPath,
+          Io.Kind.Inside(Io.Path("/srv/corpus"))
+        ).map(Io.Wrong(Io.Path("/x"), _)) ++
         Conflict.Activity.values.toVector.map(Conflict.Busy(_)) ++
         Refused.Rule.values.toVector.map(Refused.Policy(_)) ++
         Run.PauseReason.values.toVector.map(Run.Paused(_, None)) ++
