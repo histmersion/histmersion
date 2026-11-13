@@ -5,7 +5,7 @@ import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.JsonCodec.given
 import hearth.kindlings.jsoniterjson.Json
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets.UTF_8
@@ -35,14 +35,25 @@ object WikidataEntities:
 
   /** Pure: the items of a `wbgetentities` answer, keyed by the id ASKED for (a redirected item answers under the id
     * that was asked, with the statements of its target). `props` are the picture properties to keep; P373 is always
-    * read. An API error is `Left("code: info")`.
+    * read. An API error is a [[Problem.Upstream.BadReply]] at `asked`, the URL `json` answered, reporting `code: info`.
     */
-  def items(json: Json, props: Set[WikidataStatement.Property]): Either[Problem, Map[WikidataItem.Id, WikidataItem]] =
+  def items(
+      json: Json,
+      props: Set[WikidataStatement.Property],
+      asked: Problem.Upstream.Url
+  ): Either[Problem, Map[WikidataItem.Id, WikidataItem]] =
     val c = json.cursor
     c.downField("error").focus match
       case Some(err) =>
         val code = err.cursor.get[String]("code").getOrElse("error")
-        Left(Problem.Unclassified(Legacy.Text(s"$code: ${err.cursor.get[String]("info").getOrElse("")}".trim)))
+        Left(
+          Problem.Upstream.BadReply(
+            Problem.Upstream.Name("wikidata"),
+            asked,
+            Problem.Upstream.Shape.Json,
+            External.Reported.of(s"$code: ${err.cursor.get[String]("info").getOrElse("")}".trim)
+          )
+        )
       case None =>
         val ents = c.downField("entities").focus.flatMap(_.asObject).map(_.toList).getOrElse(Nil)
         Right(ents.flatMap { (key, ent) =>

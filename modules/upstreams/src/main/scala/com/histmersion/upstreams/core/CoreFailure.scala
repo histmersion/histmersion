@@ -1,6 +1,6 @@
 package com.histmersion
 package upstreams.core
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import io.github.iltotore.iron.constraint.any.Pure
 enum CoreFailure derives CanEqual:
@@ -11,5 +11,5 @@ enum CoreFailure derives CanEqual:
   case Failed(why: Problem)
 
   def message: Problem = this match
-    case Skipped(why) => Problem.Unclassified(Legacy.Text(s"CORE not asked: ${why.legacyText}"))
+    case Skipped(why) => why
     case Failed(why)  => why

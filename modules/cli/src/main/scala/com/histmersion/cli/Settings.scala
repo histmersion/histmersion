@@ -1,8 +1,8 @@
 package com.histmersion
 package cli
 
-import com.histmersion.util.problem.Problem
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.{Problem, Problems}
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.config.*
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -15,10 +15,10 @@ object Settings:
   type Prefix = Prefix.T
   object Prefix extends Newtype[String, Pure]
 
-  lazy val loaded: Either[Problem, LoadedConfig] = AppConfig.loadWithUserFile()
+  lazy val loaded: Either[Problems, LoadedConfig] = AppConfig.loadWithUserFile()
 
   lazy val app: AppConfig = loaded match
     case Right(l)  => l.config
     case Left(err) =>
-      scribe.warn(s"warning: ${err.sentence} — going on with the defaults and the environment")
+      err.sentences.foreach(s => scribe.warn(s"warning: $s — going on with the defaults and the environment"))
       AppConfig.load()

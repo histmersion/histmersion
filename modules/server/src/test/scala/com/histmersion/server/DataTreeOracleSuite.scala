@@ -1,7 +1,7 @@
 package com.histmersion
 package server
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import hearth.kindlings.optics.syntax.*
 
@@ -116,7 +116,7 @@ class DataTreeOracleSuite extends DbSuite:
   private def serverRun(): Unit =
     Files.createDirectories(configFile.getParent)
     Files.writeString(configFile, settingsText("limits.search = 5"))
-    val l = AppConfig.loadWithUserFile(env, Some(configFile)).fold(e => fail(e.sentence), identity)
+    val l = AppConfig.loadWithUserFile(env, Some(configFile)).fold(e => fail(e.sentences.mkString("; ")), identity)
     supervised {
       val b = Composition
         .server(
@@ -160,7 +160,8 @@ class DataTreeOracleSuite extends DbSuite:
       builds = RangeHttp.ResponseText("""[{"key":"20261018.pmtiles","size":1},{"key":"20261019.pmtiles","size":-1}]""")
     )
     val t = BasemapFixtures.LocalRange(BasemapFixtures.terrainArchive(src.resolve("t.pmtiles"), PmTiles.Zoom(5)))
-    val base = AppConfig.loadWithUserFile(env, Some(configFile)).fold(e => fail(e.sentence), identity).config
+    val base =
+      AppConfig.loadWithUserFile(env, Some(configFile)).fold(e => fail(e.sentences.mkString("; ")), identity).config
     val cfg = base
       .modify(_.basemap)
       .setTo(
@@ -285,7 +286,8 @@ class DataTreeOracleSuite extends DbSuite:
 
   /** A file the acquisition spools for the converter. */
   private def spoolRun(): Unit =
-    val base = AppConfig.loadWithUserFile(env, Some(configFile)).fold(e => fail(e.sentence), identity).config
+    val base =
+      AppConfig.loadWithUserFile(env, Some(configFile)).fold(e => fail(e.sentences.mkString("; ")), identity).config
     assert(
       Spool(
         Storage

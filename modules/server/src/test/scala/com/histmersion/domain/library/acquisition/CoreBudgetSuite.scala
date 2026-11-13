@@ -2,7 +2,7 @@ package com.histmersion
 package domain.library.acquisition
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -104,7 +104,7 @@ class CoreBudgetSuite extends munit.FunSuite:
            |  exhausted-pause-seconds = 60 }
            |$user""".stripMargin
       )
-      .fold(e => fail(e.sentence), identity)
+      .fold(e => fail(e.sentences.mkString("; ")), identity)
 
   /** A clock the test moves; `sleep` moves it too (and is recorded), so nothing waits. */
   final private class Clock:

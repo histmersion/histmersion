@@ -1,7 +1,7 @@
 package com.histmersion
 package config.edit
 
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.config.LoadedConfig
 import org.ekrich.config.{Config, ConfigOrigin}
 import io.github.iltotore.iron.constraint.any.Pure
@@ -43,5 +43,5 @@ object SettingsFile:
   final case class Staged(
       parsed: Either[SettingError, Config],
       own: ConfigOrigin => Boolean,
-      load: Config => Either[Problem, LoadedConfig]
+      load: Config => Either[Problems, LoadedConfig]
   )

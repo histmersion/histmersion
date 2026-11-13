@@ -3,7 +3,7 @@ package server.media
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson.*
 
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.util.database.Transactor
 
 import com.histmersion.server.MediaWiring
@@ -39,7 +39,8 @@ class MediaTrafficSuite extends DbSuite:
 
   private val Transcript = "traffic/media.txt"
 
-  private def load(more: String): LoadedConfig = MediaWire.load(more).fold(e => fail(e.sentence), identity)
+  private def load(more: String): LoadedConfig =
+    MediaWire.load(more).fold(e => fail(e.sentences.mkString("; ")), identity)
 
   private lazy val scratch = ScratchDatabases("mediatraffic", load("").config.db.copy(url = DbConfig.Url(testDb.get)))
   private lazy val ds = scratch("media")

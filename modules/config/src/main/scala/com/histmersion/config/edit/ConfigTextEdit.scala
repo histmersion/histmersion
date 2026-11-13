@@ -1,7 +1,8 @@
 package com.histmersion
 package config.edit
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
+import com.histmersion.config.ConfigLayers
 import org.ekrich.config.{Config, ConfigException, ConfigFactory, ConfigObject, ConfigOrigin}
 import org.ekrich.config.parser.ConfigDocumentFactory
 
@@ -58,7 +59,9 @@ object ConfigTextEdit:
       // a key changed twice in one write: the last change wins, the first is not written at all
       val last = edits.reverse.distinctBy(_.key.value).reverse
       loop(last, doc, Nil, Nil)
-    catch case e: ConfigException => Left(SettingError.Unreadable(Problem.Unclassified.of(e)))
+    catch
+      case e: ConfigException =>
+        Left(SettingError.Unreadable(ConfigLayers.unreadable(e, Problem.Where("the settings file"))))
 
   private val AddedBlock = """^(\s*)("[^"]*"|[A-Za-z0-9_-]+) : \{\s*$""".r
   private val AddedValue = """^(\s*)("[^"]*"|[A-Za-z0-9_-]+) : (.*)$""".r
@@ -149,7 +152,7 @@ object ConfigTextEdit:
           case _                                                                                        =>
             Left(
               SettingError.Invalid(
-                Problem.Unclassified(Legacy.Text(s"${key.relative} did not read back as it was written"))
+                Problem.Config.Setting(Problem.SettingKey(s"$key"), Problem.Config.Fault.NotReadBack)
               )
             )
       }

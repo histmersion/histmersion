@@ -1,6 +1,6 @@
 package com.histmersion
 package server
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import hearth.kindlings.optics.syntax.*
 
@@ -96,7 +96,8 @@ class HotReloadSuite extends DbSuite:
          |""".stripMargin
     )
 
-  private def loaded: LoadedConfig = AppConfig.loadWithUserFile(env, Some(file)).fold(e => fail(e.sentence), identity)
+  private def loaded: LoadedConfig =
+    AppConfig.loadWithUserFile(env, Some(file)).fold(e => fail(e.sentences.mkString("; ")), identity)
   private val source =
     ConfigSource(() => AppConfig.loadWithUserFile(env, Some(file)))
 

@@ -1,7 +1,9 @@
 package com.histmersion
 package plugin
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Text.sentence
+
+import com.histmersion.util.problem.{External, Problem}
 
 /** The source-fetching part of the SPI (docs/research-plugins.md §5.1). */
 class SourceFetcherSuite extends munit.FunSuite:
@@ -21,16 +23,18 @@ class SourceFetcherSuite extends munit.FunSuite:
     assert(!(WorkKey(pmcid = Some(WorkKey.Pmcid("PMC6091220"))).isEmpty))
 
   test("a refusing registry takes nothing and says why, naming the id"):
-    val r = Registry.refusing[SourceFetcher](Problem.Unclassified(Legacy.Text("no chain here")))
+    val r = Registry.refusing[SourceFetcher](Problem.Config.Unavailable(Problem.Config.Capability.AcquisitionChain))
     val f = new SourceFetcher:
       val access = Access.Open
-      def fetch(work: WorkKey, ctx: Fetch.Context) = Fetch.Miss(Problem.Unclassified(Legacy.Text("nothing")))
+      def fetch(work: WorkKey, ctx: Fetch.Context) = Fetch.Miss(
+        Problem.Plugin.Said(Problem.Plugin.Id("test"), Problem.Plugin.Claim.Failed, External.PluginSaid.of("nothing"))
+      )
     assertEquals(
       ((r
         .add(Registry.AddId("portal"), f))
         .left
-        .map(refactorError => (refactorError).legacyText): Either[String, Unit]),
-      Left("'portal': no chain here")
+        .map(refactorError => (refactorError).sentence): Either[String, Unit]),
+      Left("this server has no acquisition chain")
     )
 
   test("a context written before source fetchers existed still compiles and refuses a fetcher"):
@@ -40,20 +44,26 @@ class SourceFetcherSuite extends munit.FunSuite:
             url: Plugin.Http.Url,
             headers: Map[Header.Name, Header.Value]
         ): Either[Plugin.Http.Failure, Plugin.HttpResponse.Body] =
-          Left(Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text("offline"))))
+          Left(Plugin.Http.Failure.Transport(Problem.Config.Unavailable(Problem.Config.Capability.Network)))
       }
       def log = new Plugin.Log {
         def info(m: Plugin.Log.Line): Unit = (); def warn(m: Plugin.Log.Line): Unit = ()
       }
       def env(name: EnvVar.Name): Option[EnvVar.Value] = None
       def secret(s: Secret): Either[Problem, Secret.Resolved] =
-        Left(Problem.Unclassified(Legacy.Text("none")))
-      def secretVaults = Registry.refusing(Problem.Unclassified(Legacy.Text("no vaults")))
+        Left(
+          Problem.Plugin.Said(Problem.Plugin.Id("test"), Problem.Plugin.Claim.Failed, External.PluginSaid.of("none"))
+        )
+      def secretVaults =
+        Registry.refusing(Problem.Plugin.Vault(Problem.Plugin.Id("test"), Problem.Plugin.Retrieval.NoVault))
     val f = new SourceFetcher:
       val access = Access.Subscription
-      def fetch(work: WorkKey, ctx: Fetch.Context) = Fetch.Refused(Problem.Unclassified(Legacy.Text("no entitlement")))
+      def fetch(work: WorkKey, ctx: Fetch.Context) = Fetch.Refused(
+        Problem.Plugin
+          .Said(Problem.Plugin.Id("test"), Problem.Plugin.Claim.Failed, External.PluginSaid.of("no entitlement"))
+      )
     assert(
-      ctx.sourceFetchers.add(Registry.AddId("portal"), f).left.exists((_).legacyText.contains("no acquisition chain"))
+      ctx.sourceFetchers.add(Registry.AddId("portal"), f).left.exists(_.sentence.contains("no acquisition chain"))
     )
 
   test("a FetchedFile's licence is optional"):

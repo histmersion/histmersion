@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
+
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.JsonCodec.given
@@ -50,7 +52,7 @@ object WorkLookup:
       .flatMap { why =>
         // a miss (404) and a refusal (429/503) both land here; the reason says which
         log.info(
-          Plugin.Log.Line(s"acquire: OpenAlex did not answer for $doi (${why.legacyText}) — falling back to Crossref")
+          Plugin.Log.Line(s"acquire: OpenAlex did not answer for $doi (${why.sentence}) — falling back to Crossref")
         )
         json(crossrefUrl(cfg, doi)).map(AcquireParse.crossrefWork).map(withUnpaywall(cfg, json, doi, _))
       }

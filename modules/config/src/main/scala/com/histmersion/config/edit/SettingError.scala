@@ -1,7 +1,7 @@
 package com.histmersion
 package config.edit
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{Problem, Problems}
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Why a change to the config file was refused, in words a person acts on. The file is never written when one of these
@@ -11,7 +11,7 @@ enum SettingError derives CanEqual:
   case BadKey(why: Problem)
   case UnknownKey(key: SettingKey, closest: List[SettingKey])
   case NotAValue(key: SettingKey)
-  case BadValue(key: SettingKey, why: Problem)
+  case BadValue(key: SettingKey, why: Problem.Config.Fault)
   case WrongKind(key: SettingKey, want: SettingKind, got: SettingKind)
 
   /** The credential itself would go into the file: its environment variable is the place. */
@@ -33,43 +33,46 @@ enum SettingError derives CanEqual:
   case Unreadable(why: Problem)
 
   /** The new file would not load. */
-  case Invalid(why: Problem)
+  case Invalid(why: Problems)
 
-  /** The file changed after it was read (an editor, another window). */
-  case Changed
+  /** The file changed after it was read (an editor, another window): `sent` is the version it was read at, `stored` the
+    * one it has.
+    */
+  case Changed(sent: FileVersion, stored: FileVersion)
   case NoFile(why: Problem)
   case Io(why: Problem)
 
-  def message: Problem = Problem.Unclassified(Legacy.Text(text))
-
-  private def text: String = this match
-    case BadKey(why)            => why.legacyText
+  def message: Problems = this match
+    case BadKey(why)            => why
     case UnknownKey(k, closest) =>
-      s"There is no setting called ${k.relative}." +
-        (if closest.isEmpty then "" else s" Did you mean ${closest.map(_.relative).mkString(" or ")}?")
-    case NotAValue(k) => s"${k.relative} is a group of settings, not one setting: set one of the settings inside it."
-    case BadValue(k, why)         => s"${k.relative}: ${why.legacyText}."
-    case WrongKind(k, want, got)  => s"${k.relative} takes ${want.describe}, not ${got.describe}."
+      Problem.Invalid.Unknown(
+        Problem.TypeName.of(SettingKey),
+        Problem.Raw(s"$k"),
+        closest.toVector.map(c => Problem.Raw(s"$c"))
+      )
+    case NotAValue(k)             => setting(k, Problem.Config.Fault.Block)
+    case BadValue(k, why)         => setting(k, why)
+    case WrongKind(k, want, got)  => setting(k, Problem.Config.Fault.WrongKind(want.valueKind, got.valueKind))
     case CredentialInFile(k, env) =>
-      s"${k.relative} holds a key or password itself, so it is not written into the settings file. " +
-        env.fold("Set it in the server's environment instead.")(v =>
-          s"Set the environment variable $v for the server instead."
-        )
-    case NotAReference(k, why)  => s"${k.relative}: ${why.legacyText}."
-    case LiteralNeedsConsent(k) =>
-      s"${k.relative}: value: writes the key itself into the settings file, where anyone who can read the file can read it. " +
-        "Use env:<NAME> or a password manager's entry, or confirm that you want value:."
-    case Substitution(k) =>
-      s"${k.relative} is written in the settings file with a substitution ($${…}) or +=, which is kept exactly as it is. " +
-        "Change it in the file itself."
-    case FromInclude(k, file) => s"${k.relative} is set in $file, which the settings file includes. Change it there."
-    case Unreadable(why)      =>
-      s"The settings file does not read, so it is not changed: ${why.legacyText}. Fix it in a text editor first."
-    case Invalid(why) =>
-      s"That change would leave settings the server cannot start with, so it was not made: ${why.legacyText}"
-    case Changed     => "The settings file changed since it was read. Look at it again, then make the change."
-    case NoFile(why) => why.legacyText
-    case Io(why)     => s"The settings file could not be written: ${why.legacyText}"
+      setting(k, Problem.Config.Fault.Credential(env.map(v => Problem.SettingKey(s"$v"))))
+    case NotAReference(k, why)  => why.within(Problem.Field(s"$k"))
+    case LiteralNeedsConsent(k) => setting(k, Problem.Config.Fault.Literal)
+    case Substitution(k)        => setting(k, Problem.Config.Fault.Substituted)
+    case FromInclude(k, file)   => setting(k, Problem.Config.Fault.Included(Problem.Io.Path(s"$file")))
+    case Unreadable(why)        => why
+    case Invalid(why)           => why
+    case Changed(sent, stored)  =>
+      Problem.Conflict.Stale(
+        Problem.TypeName.of(SettingsFile.Path),
+        Problem.Raw("the settings file"),
+        Problem.Conflict.Stamp(s"$sent"),
+        Problem.Conflict.Stamp(s"$stored")
+      )
+    case NoFile(why) => why
+    case Io(why)     => why
+
+  private def setting(key: SettingKey, fault: Problem.Config.Fault): Problem =
+    Problem.Config.Setting(Problem.SettingKey(s"$key"), fault)
 
 object SettingError:
   object CredentialInFile:

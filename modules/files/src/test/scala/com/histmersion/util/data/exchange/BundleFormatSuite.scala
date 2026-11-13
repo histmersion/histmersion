@@ -1,6 +1,8 @@
 package com.histmersion
 package util.data.exchange
 
+import com.histmersion.util.problem.Problem
+
 import com.histmersion.util.problem.Text.sentence
 import hearth.kindlings.optics.syntax.*
 
@@ -136,7 +138,10 @@ class BundleFormatSuite extends munit.FunSuite:
     assertEquals(BundleFormat.decodeLine[Bundle.Goal](line, stamped = true).map(_.slug), Right("g"))
     val tampered = line.replace("\"Title\"", "\"Other\"")
     assert(
-      BundleFormat.decodeLine[Bundle.Goal](tampered, stamped = true).left.exists(_.sentence.contains("does not match"))
+      BundleFormat.decodeLine[Bundle.Goal](tampered, stamped = true).left.exists {
+        case Problem.Io.Corrupt(Problem.Io.Format.Json, _, Problem.Io.Damage.Checksum) => true
+        case _                                                                         => false
+      }
     )
     assert(BundleFormat.decodeLine[Bundle.Goal]("{not json", stamped = true).isLeft)
 

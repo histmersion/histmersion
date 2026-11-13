@@ -1,7 +1,7 @@
 package com.histmersion
 package plugin
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A collection of sources — a local Calibre library, archive.org's texts, a folder of PDFs — that the host searches
@@ -29,7 +29,7 @@ trait SourceCollection:
   /** Why the collection does not write, for the host's refusal of a write it did not declare: the setting that turns
     * writing on, when there is one.
     */
-  def readOnlyReason: Problem = Problem.Unclassified(Legacy.Text("it is read-only"))
+  def readOnlyReason: Problem = Problem.Refused.Policy(Problem.Refused.Rule.ReadOnly)
 
   /** Whether the collection can be reached from here: `Left` says what is missing (the library's folder, a permission
     * the operating system has not granted, a mount). The host asks before it runs an operation and in its diagnostics.
@@ -61,7 +61,7 @@ trait SourceCollection:
 
   /** Add `file` as a new item described by `metadata`; the new item's id. */
   def add(metadata: CollectionMetadata, file: FetchedFile): Either[Problem, CollectionId] =
-    Left(Problem.Unclassified(Legacy.Text(s"$title does not take new items: ${readOnlyReason.legacyText}")))
+    Left(readOnlyReason)
 
   /** Replace the file of the same format in item `id` with `file` (the original of the host's source `key`), keeping
     * the item and every link to it; the format replaced.
@@ -71,14 +71,14 @@ trait SourceCollection:
       key: SourceCollection.ReplaceKey,
       file: FetchedFile
   ): Either[Problem, SourceCollection.FileFormat] =
-    Left(Problem.Unclassified(Legacy.Text(s"$title does not take new files: ${readOnlyReason.legacyText}")))
+    Left(readOnlyReason)
 
   /** Bring item `id` in line with `metadata`; the fields written (none when it already agrees). */
   def update(
       id: CollectionId,
       metadata: CollectionMetadata
   ): Either[Problem, List[CollectionChange]] =
-    Left(Problem.Unclassified(Legacy.Text(s"$title does not rewrite its items: ${readOnlyReason.legacyText}")))
+    Left(readOnlyReason)
 
   /** Plan the update of every linked item at once (against one reading of the collection), and with `apply` write the
     * items that would change; one entry per item, in id order.
@@ -87,14 +87,14 @@ trait SourceCollection:
       links: List[CollectionLink],
       apply: SourceCollection.UpdateAllApply
   ): Either[Problem, List[CollectionUpdateEntry]] =
-    Left(Problem.Unclassified(Legacy.Text(s"$title does not rewrite its items: ${readOnlyReason.legacyText}")))
+    Left(readOnlyReason)
 
   /** Set named fields on item `id`, as `name -> value` pairs in the collection's own field names. */
   def set(
       id: CollectionId,
       fields: List[(SourceCollection.FieldName, SourceCollection.FieldValue)]
   ): Either[Problem, Unit] =
-    Left(Problem.Unclassified(Legacy.Text(s"$title does not rewrite its items: ${readOnlyReason.legacyText}")))
+    Left(readOnlyReason)
 
   /** Compare every linked item with the host's record of it; the items that disagree, in id order. */
   def audit(records: List[CollectionRecord]): Either[Problem, List[CollectionFinding]] =

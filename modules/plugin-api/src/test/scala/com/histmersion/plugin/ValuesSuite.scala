@@ -1,6 +1,8 @@
 package com.histmersion
 package plugin
 
+import com.histmersion.util.problem.Text.sentence
+
 /** The SPI's own newtypes: what each accepts, at compile time for a literal and at run time for a value read from a
   * provider; and the SPI generation compiled into the plugin.
   */
@@ -24,8 +26,8 @@ class ValuesSuite extends munit.FunSuite:
       ((Period
         .from(Year(-1600), Year(-1700)))
         .left
-        .map(refactorError => (refactorError).legacyText): Either[String, Period]),
-      Left("the period ends (-1700) before it starts (-1600)")
+        .map(refactorError => (refactorError).sentence): Either[String, Period]),
+      Left("end: Year -1700 is below -1600")
     )
 
   // The SPI's values are unconstrained: the host validates them where they enter (SpiValuesSuite in plugin-host,

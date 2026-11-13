@@ -2,7 +2,7 @@ package com.histmersion
 package util.data.exchange
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.{Json, JsonObject}
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 
 import com.histmersion.api.given
 import com.histmersion.util.json.RawJson
@@ -69,19 +69,26 @@ object BundleFormat:
 
   /** Parse one line, and for a stamped kind check that its `rev` is the rev of its content. */
   def decodeLine[A](line: String, stamped: Boolean)(using JsonValueCodec[A]): Either[Problem, A] =
-    RawJson.parse(line).left.map(e => Problem.Unclassified(Legacy.Text(s"not JSON: $e"))).flatMap { json =>
+    RawJson.parse(line).left.map(e => unreadable(TheLine, s"$e")).flatMap { json =>
       val revOk =
         if !stamped then Right(())
         else
-          json.asObject.toRight(Problem.Unclassified(Legacy.Text("not a JSON object"))).flatMap { obj =>
+          json.asObject.toRight(damaged(TheLine, Problem.Io.Damage.Undecodable)).flatMap { obj =>
             obj("rev").flatMap(_.asString) match
-              case None                       => Left(Problem.Unclassified(Legacy.Text("no rev")))
+              case None                       => Left(Problem.Invalid.Missing(Problem.Field("rev")))
               case Some(r) if r == revOf(obj) => Right(())
-              case Some(r)                    =>
-                Left(Problem.Unclassified(Legacy.Text(s"rev $r does not match its content (${revOf(obj)})")))
+              case Some(r)                    => Left(damaged(s"rev $r", Problem.Io.Damage.Checksum))
           }
-      revOk.flatMap(_ => json.as[A].left.map(e => Problem.Unclassified(Legacy.Text(s"$e"))))
+      revOk.flatMap(_ => json.as[A].left.map(e => unreadable(TheLine, s"$e")))
     }
+
+  private val TheLine = "the line"
+
+  private def damaged(at: String, damage: Problem.Io.Damage): Problem =
+    Problem.Io.Corrupt(Problem.Io.Format.Json, Problem.Where(s"$at"), damage)
+
+  private def unreadable(at: String, reported: String): Problem =
+    damaged(at, Problem.Io.Damage.Unreadable(External.Reported.of(reported)))
 
   // ── the bundle id ──────────────────────────────────────────────────────────────────────────
 
@@ -115,7 +122,7 @@ object BundleFormat:
     RawJson
       .decode[Bundle.Manifest](String(bytes, UTF_8))
       .left
-      .map(e => Problem.Unclassified(Legacy.Text(s"manifest.json: $e")))
+      .map(e => unreadable("manifest.json", s"$e"))
 
   /** Can THIS server read `m`? A newer format or a newer schema is refused (the importer only ever upgrades older
     * ones); every reason is returned. `serverSchema` is the Flyway version, numeric.

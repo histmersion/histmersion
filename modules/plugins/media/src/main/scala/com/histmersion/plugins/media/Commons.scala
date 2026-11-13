@@ -200,11 +200,12 @@ object Commons:
       val depictedBy = byItem.flatMap(_._2.toOption).map(Depicts.depictedBy).flatMap(_.toList).toMap
       val works = depictedBy.values.flatten.toList.distinct
       val workAnswers = works.grouped(wikidata.batch.value.max(1)).toList.map { ids =>
+        val asked = entitiesUrl(ids, wikidata)
         ids -> http
-          .askJson(entitiesUrl(ids, wikidata))
+          .askJson(asked)
           .left
           .map(_.problem)
-          .flatMap(WikidataEntities.items(_, Set(WikidataStatement.Property("P18"))))
+          .flatMap(WikidataEntities.items(_, Set(WikidataStatement.Property("P18")), Problem.Upstream.Url(s"$asked")))
       }
       val workImage: Map[WikidataId, File.Title] = workAnswers
         .flatMap(_._2.toOption)

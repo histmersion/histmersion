@@ -158,10 +158,15 @@ class PluginToolSuite extends munit.FunSuite:
     val clean = kitWith(Files.createDirectories(d.resolve("k2")), Map.empty)
     val foreign = variant(hello, d.resolve("foreign.jar"), Some("com.histmersion.fixtures.hello.ForeignSpiPlugin\n"))
     val (_, spi) = RelinkPlugins.check(clean, List(foreign), Nil, loader)
-    assert(spi.exists(_.sentence.contains(s"built for plugin SPI ${Spi.Version + 98}")), spi)
+    assert(spi.exists(_.sentence.contains(s"built against plugin SPI ${Spi.Version + 98}")), spi)
     val twin = variant(hello, d.resolve("hello-copy.jar"), Some("com.histmersion.fixtures.hello.HelloPlugin\n"))
     val (_, twice) = RelinkPlugins.check(clean, List(hello, twin), Nil, loader)
-    assert(twice.exists(_.sentence.contains(s"plugin id 'hello' is already provided by ${hello.getFileName}")), twice)
+    assert(
+      twice.exists(
+        _.sentence.contains(s"plugin hello did not load: its id is already provided by ${hello.getFileName}")
+      ),
+      twice
+    )
     assert(twice.exists(_.sentence.startsWith("hello-copy.jar duplicates classes")), twice)
     assertEquals(
       RelinkPlugins.hostIds(loader).get(PluginDescription.Id("archive-org")),

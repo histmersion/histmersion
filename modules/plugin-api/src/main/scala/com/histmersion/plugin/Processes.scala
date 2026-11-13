@@ -1,7 +1,7 @@
 package com.histmersion
 package plugin
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import scala.concurrent.duration.FiniteDuration
 import io.github.iltotore.iron.constraint.any.Pure
 import Processes.Failure
@@ -41,10 +41,10 @@ object Processes:
     case TimedOut(tool: Tool, after: FiniteDuration)
     case NotStarted(why: Problem)
 
-    /** The sentence for a person. */
+    /** What failed, as a problem. */
     def problem: Problem = this match
       case TimedOut(tool, after) =>
-        Problem.Unclassified(Legacy.Text(s"$tool did not answer within ${after.toSeconds} s"))
+        Problem.Io.Process(Problem.Io.Tool(s"$tool"), Problem.Io.Ending.TimedOut(Problem.Millis.of(after)))
       case NotStarted(why) => why
 
   /** The file name of a tool. */
@@ -89,9 +89,10 @@ object Processes:
         stdin: Option[RunStdin],
         timeout: FiniteDuration
     ): Either[Failure, Result] =
-      Left(Failure.NotStarted(Problem.Unclassified(Legacy.Text("this host supplies no processes"))))
+      Left(Failure.NotStarted(NoProcesses))
     def start(argv: List[StartArgv], env: Map[EnvVar.Name, EnvVar.Value]): Either[Problem, Session] =
-      Left(Problem.Unclassified(Legacy.Text("this host supplies no processes")))
-    def capture(argv: List[CaptureArgv]): Either[Problem, Result] = Left(
-      Problem.Unclassified(Legacy.Text("this host supplies no processes"))
-    )
+      Left(NoProcesses)
+    def capture(argv: List[CaptureArgv]): Either[Problem, Result] = Left(NoProcesses)
+
+    /** What every call answers: the host lends no processes. */
+    val NoProcesses: Problem = Problem.Config.Unavailable(Problem.Config.Capability.Processes)

@@ -1,7 +1,7 @@
 package com.histmersion
 package pluginresolver
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.all.*
 
@@ -10,12 +10,13 @@ import io.github.iltotore.iron.constraint.all.*
   */
 final case class Conflict(plugin: Conflict.Plugin, key: ModuleKey, wanted: ModuleVersion, shipped: ModuleVersion):
   def message: Problem =
-    Problem.Unclassified(
-      Legacy.Text(
-        s"$plugin needs $key ${wanted.value}, but this Histmersion ships ${shipped.value} — " +
-          s"build the plugin against ${shipped.value} (the histmersion-plugin-platform POM), or install a Histmersion that ships ${wanted.value}"
+    Problem.Plugin
+      .Dependency(
+        Problem.Plugin.Id(s"$plugin"),
+        Problem.Raw(s"$key"),
+        Problem.Raw(s"$wanted"),
+        Problem.Raw(s"$shipped")
       )
-    )
 
 object Conflict:
 

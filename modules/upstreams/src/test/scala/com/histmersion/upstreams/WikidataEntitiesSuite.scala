@@ -1,5 +1,7 @@
 package com.histmersion
 package upstreams
+
+import com.histmersion.util.problem.{External, Problem}
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.JsonCodec.given
@@ -11,6 +13,7 @@ import com.histmersion.upstreams.wikidata.WikidataItem
   * items, their picture statements and Commons category, the best statements of a property. Pure.
   */
 class WikidataEntitiesSuite extends munit.FunSuite:
+  private val Asked = Problem.Upstream.Url("https://wd/w/api.php?action=wbgetentities")
 
   private val entities = RawJson
     .parse("""{"entities":{
@@ -29,7 +32,7 @@ class WikidataEntitiesSuite extends munit.FunSuite:
 
   test("wbgetentities: the picture statements kept, deprecated and no-value ones dropped, P373 read"):
     val items = WikidataEntities
-      .items(entities, Set(WikidataStatement.Property("P18"), WikidataStatement.Property("P242")))
+      .items(entities, Set(WikidataStatement.Property("P18"), WikidataStatement.Property("P242")), Asked)
       .toOption
       .get
     assertEquals(items.keySet, Set("Q1"), "a missing item is left out")
@@ -42,7 +45,7 @@ class WikidataEntitiesSuite extends munit.FunSuite:
 
   test("best: the preferred statements when there are any, else the normal ones, capped"):
     val st = WikidataEntities
-      .items(entities, Set(WikidataStatement.Property("P18")))
+      .items(entities, Set(WikidataStatement.Property("P18")), Asked)
       .toOption
       .get(WikidataItem.Id("Q1"))
       .statements
@@ -51,16 +54,19 @@ class WikidataEntitiesSuite extends munit.FunSuite:
     assertEquals(WikidataStatement.best(normals, WikidataStatement.BestPer(1)).map(_.file), List("B.jpg"))
     assertEquals(WikidataStatement.best(normals, WikidataStatement.BestPer(0)), Nil)
 
-  test("an API error (maxlag) is a Left with its code"):
+  test("an API error (maxlag) is a BadReply at the URL asked, with its code"):
     val err =
       RawJson.parse("""{"error":{"code":"maxlag","info":"Waiting for wdqs1013: 11 seconds lagged."}}""").toOption.get
     assertEquals(
-      WikidataEntities
-        .items(err, Set(WikidataStatement.Property("P18")))
-        .left
-        .toOption
-        .map(_.legacyText.takeWhile(_ != ':')),
-      Some("maxlag")
+      WikidataEntities.items(err, Set(WikidataStatement.Property("P18")), Asked).left.toOption,
+      Some(
+        Problem.Upstream.BadReply(
+          Problem.Upstream.Name("wikidata"),
+          Asked,
+          Problem.Upstream.Shape.Json,
+          External.Reported("maxlag: Waiting for wdqs1013: 11 seconds lagged.")
+        )
+      )
     )
 
   test("the wbgetentities URL: ids joined and encoded, maxlag only when set"):

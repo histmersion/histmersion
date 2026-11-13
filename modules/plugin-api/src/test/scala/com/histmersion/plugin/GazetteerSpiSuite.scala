@@ -1,7 +1,9 @@
 package com.histmersion
 package plugin
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Text.sentence
+
+import com.histmersion.util.problem.{External, Problem}
 
 /** The gazetteer extension point added within SPI 2: a context written before it refuses a source (so a plugin built
   * against it still compiles and links), and a place's defaults are the plain ones.
@@ -15,16 +17,17 @@ class GazetteerSpiSuite extends munit.FunSuite:
           url: Plugin.Http.Url,
           headers: Map[Header.Name, Header.Value]
       ): Either[Plugin.Http.Failure, Plugin.HttpResponse.Body] =
-        Left(Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text("offline"))))
+        Left(Plugin.Http.Failure.Transport(Problem.Config.Unavailable(Problem.Config.Capability.Network)))
     }
     def log = new Plugin.Log {
       def info(m: Plugin.Log.Line): Unit = (); def warn(m: Plugin.Log.Line): Unit = ()
     }
     def env(name: EnvVar.Name): Option[EnvVar.Value] = None
     def secret(s: Secret): Either[Problem, Secret.Resolved] = Left(
-      Problem.Unclassified(Legacy.Text("none"))
+      Problem.Plugin.Said(Problem.Plugin.Id("test"), Problem.Plugin.Claim.Failed, External.PluginSaid.of("none"))
     )
-    def secretVaults = Registry.refusing(Problem.Unclassified(Legacy.Text("no vaults")))
+    def secretVaults =
+      Registry.refusing(Problem.Plugin.Vault(Problem.Plugin.Id("test"), Problem.Plugin.Retrieval.NoVault))
 
   private object Nowhere extends GazetteerSource:
     def title = GazetteerSource.Title("Nowhere")
@@ -40,8 +43,8 @@ class GazetteerSpiSuite extends munit.FunSuite:
       ((EarlyContext.gazetteerSources
         .add(Registry.AddId("nowhere"), Nowhere))
         .left
-        .map(refactorError => (refactorError).legacyText): Either[String, Unit]),
-      Left("'nowhere': this host has no gazetteer import")
+        .map(refactorError => (refactorError).sentence): Either[String, Unit]),
+      Left("this server has no gazetteer import")
     )
 
   test("a place, its names and relations default to always valid, no shape, the dataset's credit"):

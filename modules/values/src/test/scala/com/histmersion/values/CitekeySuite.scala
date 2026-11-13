@@ -1,6 +1,8 @@
 package com.histmersion
 package values
 
+import com.histmersion.util.problem.Problem
+
 import com.histmersion.values.testsupport.ComparedByValue.given
 
 /** A citekey is a path segment on the server's disk (the ingest spool, the acquisition spool) and a URL segment.
@@ -34,13 +36,16 @@ class CitekeySuite extends munit.FunSuite:
   test("surrounding whitespace is trimmed, not rejected"):
     assertEquals(Citekey.parse("  cline2014_collapse  ").map(c => c.value: String), Right("cline2014_collapse"))
 
-  test("the message says what a citekey looks like"):
-    val e = Citekey.parse("Bad Key!").swap.toOption.get
-    assert(e.legacyText.contains("invalid citekey"), e)
-    assert(e.legacyText.contains("anthony2007_horse"), e)
-
-  test("the traversal guard has its own message"):
-    assert(Citekey.parse("../x").swap.toOption.get.legacyText.contains("'..'"))
+  test("no citekey is Malformed, naming the type, its constraint and the input; an empty one is Missing"):
+    Citekey.parse("Bad Key!") match
+      case Left(Problem.Invalid.Malformed(t, c, raw, _)) =>
+        assertEquals(t, Problem.TypeName("com.histmersion.domain.library.Citekey"))
+        assertEquals(raw, Problem.Raw("Bad Key!"))
+        assert(s"${c.name}".contains("[a-z][a-z0-9_.-]{1,120}"), c)
+      case other => fail(s"not malformed: $other")
+    assert(Citekey.parse("../x").left.exists(_.isInstanceOf[Problem.Invalid.Malformed]))
+    assert(Citekey.parse("ab..cd").left.exists(_.isInstanceOf[Problem.Invalid.Malformed]))
+    assertEquals(Citekey.parse("  "), Left(Problem.Invalid.Missing(Problem.Field("citekey"))))
 
   test("valid classifies without a message; a literal is checked by the compiler"):
     assert(Citekey.valid("anthony2007_horse") && !Citekey.valid("x/../y"))

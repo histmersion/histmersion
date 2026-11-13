@@ -1,10 +1,12 @@
 package com.histmersion
 package plugins.vaults
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
+import Subprocess.firstLine
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import org.ekrich.config.{ConfigValue, ConfigValueType}
 import io.github.iltotore.iron.constraint.any.Pure
+import io.github.iltotore.iron.constraint.string.Match
 
 /** KeePassXC's YubiKey challenge-response (`keepassxc-cli … -y <slot>[:<serial>]`): which keys the `yubikey` setting
   * lists, which of them are connected, and what a failed attempt means — the next key, or stop. All pure;
@@ -33,41 +35,33 @@ object YubiKey:
     type Serial = Serial.T
     object Serial extends Newtype[Long, Pure]
 
+  /** One entry as written: the challenge-response slot (1 or 2), then optionally `:` and the key's serial (`ykman list
+    * --serials`).
+    */
+  type Written = Written.T
+  object Written extends Newtype[String, Match["[12](:[0-9]+)?"]]
+
   /** Pure: `"2"` or `"2:12345678"`. */
   def parse(text: Text): Either[Problem, Slot] =
     val t = (text).value.trim
-    def bad =
-      s"yubikey '$t' is not <slot>[:<serial>] — the slot is 1 or 2, the serial the key's number (`ykman list --serials`)"
+    val refused = Problem.Invalid.malformed(Written.refused(t)).within(Problem.Field("yubikey"))
     t.split(":", -1).toList match
-      case List(s) =>
-        s.toIntOption
-          .filter(Set(1, 2))
-          .map(v => Slot(Slot.Value(v), None))
-          .toRight(Problem.Unclassified(Legacy.Text(bad)))
+      case List(s)    => s.toIntOption.filter(Set(1, 2)).map(v => Slot(Slot.Value(v), None)).toRight(refused)
       case List(s, n) =>
         (for
-          slot <- s.toIntOption.filter(Set(1, 2)).toRight(bad)
-          serial <- Option.when(n.nonEmpty && n.forall(_.isDigit))(n).flatMap(_.toLongOption).toRight(bad)
-        yield Slot(Slot.Value(slot), Some(Slot.Serial(serial)))).left.map(refactorError2 =>
-          Problem.Unclassified(Legacy.Text(refactorError2))
-        )
-      case _ => Left(Problem.Unclassified(Legacy.Text(bad)))
+          slot <- s.toIntOption.filter(Set(1, 2))
+          serial <- Option.when(n.nonEmpty && n.forall(_.isDigit))(n).flatMap(_.toLongOption)
+        yield Slot(Slot.Value(slot), Some(Slot.Serial(serial)))).toRight(refused)
+      case _ => Left(refused)
 
   /** Pure: every entry of the setting, in order, without repeats; the first malformed one fails it all. */
   def parseAll(entries: List[Setting.Entries]): Either[Problem, List[Slot]] =
-    (entries
+    entries
       .map((_).value.trim)
       .filter(_.nonEmpty)
-      .foldLeft[Either[String, List[Slot]]](Right(Nil)) { (acc, e) =>
-        acc.flatMap(ok =>
-          (parse(Text(e))
-            .map(s => if ok.contains(s) then ok else ok :+ s))
-            .left
-            .map(refactorError => (refactorError).legacyText)
-        )
-      })
-      .left
-      .map(refactorError3 => Problem.Unclassified(Legacy.Text(refactorError3)))
+      .foldLeft[Either[Problem, List[Slot]]](Right(Nil)) { (acc, e) =>
+        acc.flatMap(ok => parse(Text(e)).map(s => if ok.contains(s) then ok else ok :+ s))
+      }
 
   /** Pure: the serials `ykman list --serials` printed, one per line (anything else is ignored). */
   def serials(out: SerialsOut): Set[Slot.Serial] =
@@ -96,10 +90,10 @@ object YubiKey:
   /** What one failed attempt means. */
   enum Failure derives CanEqual:
     /** This key is not there or did not answer: the next one may. */
-    case Next(why: Problem)
+    case Next(attempt: Problem.Plugin.Attempt)
 
     /** No other key would change it (wrong credentials, nobody touched the key, an error KeePassXC gave). */
-    case Stop(why: Problem)
+    case Stop(attempt: Problem.Plugin.Attempt)
 
     /** The database has no such entry; no other key would change it. */
     case NoEntry(entry: Setting.Entries)
@@ -112,10 +106,13 @@ object YubiKey:
     /** It could not be run, or its answer could not be read. */
     case Unusable(why: Problem)
 
-    /** The sentence for a person. */
+    /** What failed, as a problem. */
     def problem: Problem = this match
       case TimedOut(waited) =>
-        Problem.Unclassified(Legacy.Text(s"keepassxc-cli did not answer within ${waited.toSeconds} s"))
+        Problem.Io.Process(
+          Problem.Io.Tool("keepassxc-cli"),
+          Problem.Io.Ending.TimedOut(Problem.Millis.of(waited))
+        )
       case Unusable(why) => why
 
   /** Pure: what one failed attempt means (KeePassXC's message, [[KeePassXcMessage.parse]]) → next or stop. Wrong
@@ -123,34 +120,28 @@ object YubiKey:
     * listed key a wrong key is the same answer. Unknown messages stop too, so a failure is never retried blindly.
     */
   def failure(message: KeePassXcMessage, entry: Setting.Entries): Failure = message match
-    case KeePassXcMessage.InvalidCredentials =>
-      Failure.Stop(
-        Problem.Unclassified(Legacy.Text("invalid credentials (the password, key file or YubiKey is wrong)"))
-      )
-    case KeePassXcMessage.NoEntry    => Failure.NoEntry(entry)
-    case KeePassXcMessage.NotTouched =>
-      Failure.Stop(Problem.Unclassified(Legacy.Text("the YubiKey was not touched in time")))
-    case KeePassXcMessage.KeyAbsent               => Failure.Next(Problem.Unclassified(Legacy.Text("not connected")))
-    case KeePassXcMessage.ChallengeResponseFailed =>
-      Failure.Next(Problem.Unclassified(Legacy.Text("challenge-response failed")))
-    case KeePassXcMessage.Other => Failure.Stop(Problem.Unclassified(Legacy.Text("an error KeePassXC gave")))
+    case KeePassXcMessage.InvalidCredentials      => Failure.Stop(Problem.Plugin.Attempt.WrongCredentials)
+    case KeePassXcMessage.NoEntry                 => Failure.NoEntry(entry)
+    case KeePassXcMessage.NotTouched              => Failure.Stop(Problem.Plugin.Attempt.NotTouched)
+    case KeePassXcMessage.KeyAbsent               => Failure.Next(Problem.Plugin.Attempt.NotConnected)
+    case KeePassXcMessage.ChallengeResponseFailed => Failure.Next(Problem.Plugin.Attempt.ChallengeFailed)
+    case KeePassXcMessage.Other                   => Failure.Stop(Problem.Plugin.Attempt.Refused)
 
   /** Pure: KeePassXC's own message for an error text — the first stderr line that is not its prompt ("Please present or
     * touch your YubiKey", "Enter password to unlock").
     */
-  def problem(err: Problem): Problem =
-    Subprocess.problem(
-      Problem.Unclassified(
-        Legacy.Text(
-          (err).legacyText.linesIterator
+  extension (err: Subprocess.Result.Err)
+    def unprompted: External.Stderr =
+      Subprocess.Result
+        .Err(
+          s"$err".linesIterator
             .filterNot { l =>
               val low = l.toLowerCase(java.util.Locale.ROOT)
               low.contains("touch your yubikey") || low.contains("enter password")
             }
             .mkString("\n")
         )
-      )
-    )
+        .firstLine
 
   /** The `yubikey` setting: one `"<slot>[:<serial>]"` string (commas or spaces may separate several), or a list of
     * them, tried in that order.

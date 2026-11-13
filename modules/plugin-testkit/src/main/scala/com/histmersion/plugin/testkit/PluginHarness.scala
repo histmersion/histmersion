@@ -4,8 +4,8 @@ import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.JsonCodec.given
 
-import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.{Legacy, Problem, Problems}
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.config.{AppConfig, LoadedConfig}
 import com.histmersion.api.plugins.{PluginState, PluginStatus}
@@ -462,7 +462,7 @@ object PluginHarness:
       defaults <- defaultsOf(plugin)
       vaults <- testVaults(secrets)
       user <- userConfig(id, text, vaults.isDefined)
-      host <- hostConfig(envConfig, histmersionConf)
+      host <- hostConfig(envConfig, histmersionConf).left.map(_.toNonEmpty.head)
       harness <- register(
         id,
         plugin,
@@ -584,7 +584,7 @@ object PluginHarness:
   /** The server's settings: its defaults and the environment's overrides (or a `histmersion.conf`), with the contact
     * e-mail left out so that no request of a test carries it — the settings a first-party plugin is supplied from too.
     */
-  private def hostConfig(env: Config, file: Option[Path]): Either[Problem, LoadedConfig] =
+  private def hostConfig(env: Config, file: Option[Path]): Either[Problems, LoadedConfig] =
     AppConfig
       .loadWithUserFile(env, file)
       .map(l =>

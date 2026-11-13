@@ -1,6 +1,6 @@
 package com.histmersion
 package domain.library.acquisition
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.server.ServerPlugins
 import com.histmersion.util.plugins.{Plugin, Plugins}
@@ -91,7 +91,9 @@ class FetcherTrafficSuite extends munit.FunSuite:
       |""".stripMargin
 
   private def loaded(text: String, env: Map[String, String]): LoadedConfig =
-    AppConfig.loadWithUserText(ConfigFactory.parseMap(env.asJava), text).fold(e => fail(e.sentence), identity)
+    AppConfig
+      .loadWithUserText(ConfigFactory.parseMap(env.asJava), text)
+      .fold(e => fail(e.sentences.mkString("; ")), identity)
 
   private val t0 = Instant.parse("2026-10-26T18:50:00Z")
 

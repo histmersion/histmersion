@@ -32,7 +32,7 @@ class MediaSourceBoundarySuite extends munit.FunSuite:
   test("source parser errors reach the media boundary unchanged"):
     assertEquals(
       controllers().putFiguresAsked(Citekey("../escape"), Nil).left.map(_.message).left.map(_.sentence),
-      Left("invalid citekey '../escape' — it may not contain '..'")
+      Left("'../escape' is not a Citekey: Should match (?!.*\\.\\.)[a-z][a-z0-9_.-]{1,120}")
     )
 
   test("a valid absent source is not found"):

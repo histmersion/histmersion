@@ -42,8 +42,11 @@ object ConfigCmd:
             case Some(p) =>
               Cli.out.println(p)
               AppConfig.loadWithUserFile(org.ekrich.config.ConfigFactory.systemEnvironment(), Some(p)) match
-                case Left(err) => Left(Cli.Error(err))
-                case Right(l)  =>
+                case Left(err) =>
+                  val all = err.toVector
+                  all.init.foreach(p => Cli.err.println(s"error: ${p.sentence}"))
+                  Left(Cli.Error(all.last))
+                case Right(l) =>
                   if !Files.exists(p) then Cli.err.println("(not there yet: the defaults and the environment apply)")
                   else
                     l.file.warnings.foreach(w => Cli.err.println(s"warning: ${w.sentence}"))

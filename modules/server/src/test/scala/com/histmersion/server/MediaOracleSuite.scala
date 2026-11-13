@@ -5,7 +5,7 @@ import com.histmersion.util.json.RawJson
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -244,7 +244,7 @@ class MediaOracleSuite extends DbSuite:
           |}
           |""".stripMargin
       )
-      .fold(e => fail(e.sentence), _.config.media)
+      .fold(e => fail(e.sentences.mkString("; ")), _.config.media)
     List("defaults" -> defaults, "configured" -> configured).foreach { (what, cfg) =>
       names.foreach { n =>
         val csv = BuiltinMedia.licencesFor(n, cfg)
@@ -1059,7 +1059,7 @@ class MediaOracleSuite extends DbSuite:
       .load("""histmersion.plugins.zq-own.enabled = true
               |histmersion.media.collections.per-collection { "zq-own" = "cc0,public-domain,cc-by,cc-by-sa" }
               |""".stripMargin)
-      .fold(e => fail(e.sentence), identity)
+      .fold(e => fail(e.sentences.mkString("; ")), identity)
     val wire = MediaWire.Wire(ownRoute)
     val plugins = ServerPlugins.offlineWith(
       List(OwnPlugin()),

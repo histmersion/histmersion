@@ -1,7 +1,7 @@
 package com.histmersion
 package server
-import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.{Legacy, Problem, Problems}
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import hearth.kindlings.optics.syntax.*
 
@@ -99,7 +99,7 @@ final class ServerGraph private (
             ReloadReport(
               published = ReloadReport.Published(false),
               generation,
-              errors = List(ReloadReport.Errors(e.sentence)),
+              errors = e.sentences.toList.map(ReloadReport.Errors(_)),
               file = file
             )
           case Right(next) =>
@@ -118,7 +118,9 @@ final class ServerGraph private (
               val eff = ConfigReload.effective(running.loaded.merged, next.merged, changed)
               AppConfig.fromMerged(eff).map(src.adjust) match
                 case Left(e) =>
-                  base.modify(_.errors).setTo(List(ReloadReport.Errors(s"the config does not decode: ${e.sentence}")))
+                  base
+                    .modify(_.errors)
+                    .setTo(e.sentences.toList.map(s => ReloadReport.Errors(s"the config does not decode: $s")))
                 case Right(app) =>
                   val hc = HotConfig(app, next.modify(_.config).setTo(app).modify(_.merged).setTo(eff))
                   graph.reload(

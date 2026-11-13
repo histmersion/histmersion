@@ -1,9 +1,8 @@
 package com.histmersion
 package domain.library
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.string.Match
-import io.github.iltotore.iron.constraint.any.Pure
 
 /** Lower-case, starts with a letter, then letters, digits, `_`, `.` or `-`, 2 to 121 characters, and never `..`. A
   * citekey is a file name on the server (the ingest spool keeps `<spool>/<citekey>`) and a URL segment, so it is
@@ -21,18 +20,8 @@ object Citekey extends Newtype[String, CitekeyRule]:
 
   def parse(raw: String): Either[Problem, Citekey] =
     val s = Option(raw).map((_).trim).getOrElse("")
-    if s.isEmpty then Left(Problem.Unclassified(Legacy.Text("citekey is required")))
-    else if s.contains("..") then
-      Left(Problem.Unclassified(Legacy.Text(s"invalid citekey '$raw' — it may not contain '..'")))
-    else
-      either(s).left.map(_ =>
-        Problem.Unclassified(
-          Legacy.Text(
-            s"invalid citekey '$raw' — lower-case, start with a letter, then letters, digits, " +
-              "'_', '.' or '-' (2-121 characters), e.g. anthony2007_horse"
-          )
-        )
-      )
+    if s.isEmpty then Left(Problem.Invalid.Missing(Problem.Field("citekey")))
+    else checked(s).left.map(Problem.Invalid.malformed)
 
   /** Is `raw` a citekey as it stands — for the places that classify rather than reject (a `[[link]]` target). */
   def valid(raw: ValidRaw): Boolean = (parse(raw).isRight)

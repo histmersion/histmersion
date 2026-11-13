@@ -56,21 +56,16 @@ final class WikidataPictures(media: MediaSettings, licences: LicenceReader) exte
       (media.wikidata.placeRoles ++ media.wikidata.eventRoles).map(r => WikidataStatement.Property(r._1.value)).toSet
     // the items whose batch Wikidata did not answer: their targets are NOT recorded as asked
     val answers = targets.map(_.qid).distinct.grouped(media.wikidata.batch.value.max(1)).toList.map { ids =>
+      val asked = WikidataEntities.url(
+        WikidataEntities.Api(media.wikidata.apiUrl.value),
+        ids.map(i => WikidataItem.Id(i.value)),
+        WikidataEntities.Maxlag(media.wikidata.maxlag.value)
+      )
       ids -> http
-        .askJson(
-          Plugin.Http.Url(
-            WikidataEntities
-              .url(
-                WikidataEntities.Api(media.wikidata.apiUrl.value),
-                ids.map(i => WikidataItem.Id(i.value)),
-                WikidataEntities.Maxlag(media.wikidata.maxlag.value)
-              )
-              .value
-          )
-        )
+        .askJson(Plugin.Http.Url(asked.value))
         .left
         .map(_.problem)
-        .flatMap(j => WikidataEntities.items(j, props))
+        .flatMap(j => WikidataEntities.items(j, props, Problem.Upstream.Url(s"$asked")))
     }
     val items = answers.flatMap(_._2.toOption).flatMap(_.toList).toMap
     val unanswered = answers.collect { case (ids, Left(_)) => ids }.flatten.toSet

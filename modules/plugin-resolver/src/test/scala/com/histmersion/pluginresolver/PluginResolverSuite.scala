@@ -1,6 +1,9 @@
 package com.histmersion
 package pluginresolver
 
+import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.Text.{sentence, sentences}
+
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
@@ -60,7 +63,7 @@ class PluginResolverSuite extends munit.FunSuite:
         Resolver.Argument(refactorValue)
       )
     ) match
-      case Left(e)  => fail((e).legacyText)
+      case Left(e)  => fail(e.sentences.mkString("; "))
       case Right(r) => DependencyResolver.resolve(r.copy(cache = Some(s.cache)))(using consoleFor(out += _, err += _))
     ((rc).value, out.result(), err.result())
 
@@ -141,7 +144,7 @@ class PluginResolverSuite extends munit.FunSuite:
           Resolver.Argument(s.plugins.resolve("hello-deps-0.1.0.jar").toString)
         )
       )
-      .fold(e => fail((e).legacyText), identity)
+      .fold(e => fail(e.sentences.mkString("; ")), identity)
     assertEquals(
       ((DependencyResolver.resolve(again.copy(cache = Some(s.cache)))(using consoleFor(_ => (), _ => ()))).value: Int),
       0
@@ -149,7 +152,7 @@ class PluginResolverSuite extends munit.FunSuite:
     assertEquals(lines(s.lib.resolve(LibDirectory.Repositories)), List(fixtures.toUri.toString))
     val other = RepositoryUrl
       .fromArgument(Resolver.Argument(s.kit.resolve("other-repo").toString))
-      .fold(e => fail((e).legacyText), identity)
+      .fold(e => fail(e.sentences.mkString("; ")), identity)
     assertEquals(
       ((DependencyResolver
         .resolve(again.copy(cache = Some(s.cache), repositories = List(other)))(using consoleFor(_ => (), _ => ())))
@@ -193,8 +196,16 @@ class PluginResolverSuite extends munit.FunSuite:
         )
         .left
         .toOption)
-        .map(refactorValue2 => (refactorValue2).legacyText): Option[String]),
-      Some("unknown option --nope")
+        .map(_.toVector)),
+      Some(
+        Vector(
+          Problem.Invalid.Unknown(
+            Problem.TypeName("com.histmersion.pluginresolver.Resolver.Argument"),
+            Problem.Raw("--nope"),
+            Vector("--kit", "--lib", "--histmersion-repo", "--repo", "--check").map(r => Problem.Raw(s"$r"))
+          )
+        )
+      )
     )
     assertEquals(
       ((DependencyResolver.run(List(Resolver.Argument("nothing")))(using consoleFor(_ => (), _ => ()))).value: Int),

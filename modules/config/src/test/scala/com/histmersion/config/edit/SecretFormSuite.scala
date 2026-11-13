@@ -1,6 +1,8 @@
 package com.histmersion
 package config.edit
 
+import com.histmersion.util.problem.Problem
+
 class SecretFormSuite extends munit.FunSuite:
   private def key(s: SettingKey.ParseRaw) = SettingKey.parse(s).toOption.get
 
@@ -24,6 +26,6 @@ class SecretFormSuite extends munit.FunSuite:
     assertEquals(SecretForm.shown("env:X", r), Some("env:X"))
     assertEquals(SecretForm.shown("abc123", r), None)
     val bad = SecretForm.reference("abc123")
-    assert(bad.isLeft && !bad.left.toOption.get.contains("abc123"), s"the error never repeats the text: $bad")
+    assertEquals(bad, Left(Problem.Invalid.Reference(Problem.Invalid.Form.Bare)), "the error never repeats the text")
     assert(SecretForm.reference("env:1BAD").isLeft)
     assert(SecretForm.reference("Weird:x").isLeft)

@@ -3,7 +3,7 @@ package domain.library.collections
 import com.histmersion.util.json.RawJson.*
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import hearth.kindlings.optics.syntax.*
 
@@ -134,7 +134,7 @@ class ArchiveTrafficSuite extends DbSuite:
     val loaded: LoadedConfig =
       AppConfig
         .loadWithUserText(ConfigFactory.parseMap(Map.empty[String, String].asJava), Text)
-        .fold(e => fail(e.sentence), identity)
+        .fold(e => fail(e.sentences.mkString("; ")), identity)
     val ds = scratch("run")
     val spool = Files.createTempDirectory("histmersion-archive-spool-")
     val app = loaded.config

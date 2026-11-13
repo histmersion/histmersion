@@ -39,7 +39,7 @@ final class MetCollection(conf: CollectionSettings)
             .askJson(MetCollection.objectUrl(conf.apiUrl, id))
             .flatMap(j => MetCollection.record(j).unreadable)
             .left
-            .map(_.within(s"object $id"))
+            .map(_.within(Problem.Field(s"object $id")))
         )
       )
 

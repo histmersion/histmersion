@@ -2,7 +2,7 @@ package com.histmersion
 package server
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -40,7 +40,9 @@ class OaFetchSuite extends munit.FunSuite:
   private def acquire(email: AcquireConfig.ContactEmail) = AppConfig.load().acquire.copy(contactEmail = email)
 
   private def loaded(text: String): LoadedConfig =
-    AppConfig.loadWithUserText(org.ekrich.config.ConfigFactory.empty, text).fold(e => fail(e.sentence), identity)
+    AppConfig
+      .loadWithUserText(org.ekrich.config.ConfigFactory.empty, text)
+      .fold(e => fail(e.sentences.mkString("; ")), identity)
 
   private def asked(email: AcquireConfig.ContactEmail): List[Http.Url] =
     val cfg = acquire(email)

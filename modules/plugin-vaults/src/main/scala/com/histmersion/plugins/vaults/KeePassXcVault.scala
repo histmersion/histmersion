@@ -1,6 +1,10 @@
 package com.histmersion
 package plugins.vaults
-import com.histmersion.util.problem.{Legacy, Problem}
+import Vaults.{failed, said}
+import Subprocess.{code, firstLine}
+import YubiKey.unprompted
+import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.Text.sentence
 
 import scala.annotation.tailrec
 import com.histmersion.plugin.*
@@ -33,7 +37,7 @@ final class KeePassXcVault(
   def resolve(ref: Secret.Vault.ResolveRef): Either[Problem, Secret.Resolved] =
     request(ref).flatMap { (entry, attr) =>
       if yubikeys.nonEmpty then
-        withYubiKey(s"read '$ref'", s"for '$ref'", entry)(yk =>
+        withYubiKey(s"for '$ref'", entry)(yk =>
           Subprocess
             .run(argv(attr, entry, Some(yk)), Map.empty, stdin, yubikeyTimeout)
             .map(r => if r.exit.value == 0 then Right(r) else Left(r))
@@ -133,28 +137,24 @@ final class KeePassXcVault(
   private def session(
       batched: List[(Secret.Vault.ResolveRef, (KeePassXcSession.Entry, Vaults.Field))]
   ): Map[Secret.Vault.ResolveRef, Either[Problem, Secret.Resolved]] =
-    val what = s"open $file for ${batched.size} references"
     val opened: Either[Problem, Opened] =
       if yubikeys.nonEmpty then
         withYubiKey(
-          what,
           s"for ${batched.size} references (${batched.map(_._1).mkString(", ")})",
           KeePassXcSession.Entry("")
         )(yk => open(Some(yk), yubikeyTimeout))
       else
         open(None, timeout) match
-          case Left(why) =>
-            Left(Problem.Unclassified(Legacy.Text(s"$name: could not $what (${why.problem.legacyText})")))
+          case Left(why)      => Left(why.problem)
           case Right(Left(r)) =>
             Left(
-              Problem.Unclassified(
-                Legacy.Text(
-                  classify(KeePassXcSession.Entry(""))(r.err.value.toLowerCase(java.util.Locale.ROOT))
-                    .getOrElse(
-                      s"$name: could not $what (exit ${r.exit}: ${YubiKey.problem(Problem.Unclassified(Legacy.Text(r.err.value))).legacyText})"
-                    )
+              classify(KeePassXcSession.Entry(""))(r.err.value.toLowerCase(java.util.Locale.ROOT))
+                .getOrElse(
+                  name.failed(
+                    Problem.Plugin.Retrieval
+                      .Unread(Problem.Raw(s"$file"), r.exit.code, r.err.unprompted)
+                  )
                 )
-              )
             )
           case Right(Right(o)) => Right(o)
     opened match
@@ -179,21 +179,16 @@ final class KeePassXcVault(
         rest: List[(Secret.Vault.ResolveRef, (KeePassXcSession.Entry, Vaults.Field))],
         acc: Map[Secret.Vault.ResolveRef, Either[Problem, Secret.Resolved]],
         mark: KeePassXcSession.Segment.From,
-        broken: Option[String]
+        broken: Option[Problem]
     ): Map[Secret.Vault.ResolveRef, Either[Problem, Secret.Resolved]] =
       (rest, broken) match
         case (Nil, _)                    => acc
         case ((ref, _) :: tail, Some(b)) =>
-          read(
-            tail,
-            acc.updated(ref, Left(Problem.Unclassified(Legacy.Text(s"$name: could not read '$ref' ($b)")))),
-            KeePassXcSession.Segment.From(0),
-            broken
-          )
+          read(tail, acc.updated(ref, Left(b)), KeePassXcSession.Segment.From(0), broken)
         case ((ref, (entry, attr)) :: tail, None) =>
           val cmd = KeePassXcSession.command(attr, entry)
           val errMark = s.err.value.length
-          val answered = s.send(Processes.Session.SendLine(cmd.value)).left.map(e => e.legacyText).flatMap { _ =>
+          val answered = s.send(Processes.Session.SendLine(cmd.value)).flatMap { _ =>
             val _ = s.awaitOut(timeout)(out =>
               KeePassXcSession.segment(Processes.Result.Out(out.value), mark, o.prompt).isDefined
             )
@@ -201,18 +196,19 @@ final class KeePassXcVault(
             KeePassXcSession
               .segment(out, mark, o.prompt)
               .map(seg => (seg, KeePassXcSession.Segment.From(out.value.length)))
-              .toRight(if s.alive then s"keepassxc-cli did not answer within ${timeout.toSeconds} s"
-              else
-                s"keepassxc-cli stopped: ${YubiKey.problem(Problem.Unclassified(Legacy.Text(s.err.value.drop(errMark)))).legacyText}")
+              .toRight(
+                if s.alive then
+                  Problem.Io.Process(
+                    Problem.Io.Tool("keepassxc-cli"),
+                    Problem.Io.Ending.TimedOut(Problem.Millis.of(timeout))
+                  )
+                else
+                  name
+                    .failed(Problem.Plugin.Retrieval.Failed(Processes.Result.Err(s.err.value.drop(errMark)).unprompted))
+              )
           }
           answered match
-            case Left(broken) =>
-              read(
-                tail,
-                acc.updated(ref, Left(Problem.Unclassified(Legacy.Text(s"$name: could not read '$ref' ($broken)")))),
-                mark,
-                Some(broken)
-              )
+            case Left(broken)       => read(tail, acc.updated(ref, Left(broken)), mark, Some(broken))
             case Right((seg, next)) =>
               val v = KeePassXcSession.answer(seg, cmd)
               val result: Either[Problem, Secret.Resolved] =
@@ -220,16 +216,11 @@ final class KeePassXcVault(
                 else
                   s.awaitErr(Processes.Session.AwaitErrLength(errMark), 500.millis)
                   val err = s.err.value.drop(errMark)
-                  if err.trim.isEmpty then Left(Problem.Unclassified(Legacy.Text(s"$name: '$ref' has an empty value")))
+                  if err.trim.isEmpty then Left(name.failed(Problem.Plugin.Retrieval.Blank(Problem.Raw(s"$ref"))))
                   else
                     Left(
-                      Problem.Unclassified(
-                        Legacy.Text(
-                          classify(entry)(err.toLowerCase(java.util.Locale.ROOT))
-                            .getOrElse(
-                              s"$name: could not read '$ref' (${Subprocess.problem(Problem.Unclassified(Legacy.Text(err))).legacyText})"
-                            )
-                        )
+                      classify(entry)(err.toLowerCase(java.util.Locale.ROOT)).getOrElse(
+                        name.failed(Problem.Plugin.Retrieval.Failed(Processes.Result.Err(err).firstLine))
                       )
                     )
               read(tail, acc.updated(ref, result), next, None)
@@ -241,45 +232,41 @@ final class KeePassXcVault(
       Subprocess.run(List(y.value, "list", "--serials").map(a => Processes.RunArgv(a)), Map.empty, None, timeout) match
         case Right(r) if r.exit.value == 0 => Some(YubiKey.serials(YubiKey.SerialsOut(r.out.value)))
         case Right(r)                      =>
-          log.info(
-            Plugin.Log.Line(
-              s"ykman list failed (exit ${r.exit}: ${Subprocess.problem(Problem.Unclassified(Legacy.Text(r.err.value))).legacyText}): trying the YubiKeys in order"
-            )
-          );
+          val failed = Problem.Io.Process(
+            Problem.Io.Tool("ykman"),
+            Problem.Io.Ending.Exited(r.exit.code, r.err.firstLine)
+          )
+          log.info(Plugin.Log.Line(s"${failed.sentence}: trying the YubiKeys in order"));
           None
-        case Left(why) => log.info(Plugin.Log.Line(s"${why.problem.legacyText}: trying the YubiKeys in order")); None
+        case Left(why) => log.info(Plugin.Log.Line(s"${why.problem.sentence}: trying the YubiKeys in order")); None
     }
 
   /** Each planned key in turn until `attempt` opens the database with it (`Right(Right)`); a failure (`Right(Left)`:
-    * KeePassXC's answer) that no other key could fix stops at once, and so does a key not touched in time. The error
-    * names every entry: tried (and why it failed) or not connected. `what` says what failed ("read '<ref>'"), `purpose`
+    * KeePassXC's answer) that no other key could fix stops at once, and so does a key not touched in time. Every key
+    * that failed is logged; the answer is the last one's failure (or that none of them is connected). `purpose` says
     * what the log line asks the touch for.
     */
-  private def withYubiKey[A](what: String, purpose: String, entry: KeePassXcSession.Entry)(
+  private def withYubiKey[A](purpose: String, entry: KeePassXcSession.Entry)(
       attempt: YubiKey.Slot => Either[YubiKey.NoAnswer, Either[Subprocess.Result, A]]
   ): Either[Problem, A] =
     val found = connected()
     val (planned, absent) = YubiKey.plan(yubikeys, found, lastOpened.get)
-    val notConnected = absent.map(s => s"${s.shown}: not connected")
-    def report(tried: List[String], tail: String) =
-      val parts = (tried ++ notConnected).mkString("; ")
-      Left(Problem.Unclassified(Legacy.Text(s"$name: could not $what with a YubiKey — $parts$tail")))
+    def key(yk: YubiKey.Slot, attempt: Problem.Plugin.Attempt, stderr: Option[Subprocess.Result.Err]): Problem =
+      name.failed(Problem.Plugin.Retrieval.Key(Problem.Raw(s"${yk.shown}"), attempt, stderr.map(_.unprompted)))
+    absent.foreach(yk => log.info(Plugin.Log.Line(key(yk, Problem.Plugin.Attempt.NotConnected, None).sentence)))
     if planned.isEmpty then
-      val seen = found.fold("")(s =>
-        if s.isEmpty then " (ykman sees no YubiKey)"
-        else s" (ykman sees ${s.toList.sortBy(x => x.value: Long).mkString(", ")})"
-      )
       Left(
-        Problem.Unclassified(
-          Legacy.Text(
-            s"$name: none of the configured YubiKeys is connected$seen — ${yubikeys.map(_.shown).mkString(", ")}; plug one in"
+        name.failed(
+          Problem.Plugin.Retrieval.NoKey(
+            yubikeys.toVector.map(yk => Problem.Raw(s"${yk.shown}")),
+            found.toVector.flatMap(_.toVector.sortBy(x => x.value: Long).map(s => Problem.Raw(s"$s")))
           )
         )
       )
     else
       @annotation.tailrec
-      def go(rest: List[YubiKey.Slot], tried: List[String]): Either[Problem, A] = rest match
-        case Nil        => report(tried, " — plug in (or touch) one of them")
+      def go(rest: List[YubiKey.Slot], last: Option[Problem]): Either[Problem, A] = rest match
+        case Nil        => Left(last.getOrElse(name.failed(Problem.Plugin.Retrieval.Locked)))
         case yk :: more =>
           log.info(
             Plugin.Log.Line(
@@ -288,31 +275,35 @@ final class KeePassXcVault(
             )
           )
           attempt(yk) match
-            case Left(why) =>
-              val what = why match
-                case YubiKey.NoAnswer.TimedOut(_)  => s"not touched in time (${why.problem.legacyText})"
-                case YubiKey.NoAnswer.Unusable(of) => of.legacyText
-              report(tried :+ s"${yk.shown}: $what", "; not trying further keys")
-            case Right(Right(a)) =>
+            case Left(YubiKey.NoAnswer.TimedOut(_))  => Left(key(yk, Problem.Plugin.Attempt.NotTouched, None))
+            case Left(YubiKey.NoAnswer.Unusable(of)) => Left(of)
+            case Right(Right(a))                     =>
               lastOpened.set(Some(yk))
               Right(a)
             case Right(Left(r)) =>
-              val msg = YubiKey.problem(Problem.Unclassified(Legacy.Text(r.err.value)))
               YubiKey.failure(
                 KeePassXcMessage.parse(KeePassXcMessage.Stderr(r.err.value)),
                 YubiKey.Setting.Entries(entry.value)
               ) match
                 case YubiKey.Failure.Next(why) =>
-                  go(more, tried :+ s"${yk.shown}: ${why.legacyText} (${msg.legacyText})")
+                  val failed = key(yk, why, Some(r.err))
+                  log.info(Plugin.Log.Line(failed.sentence))
+                  go(more, Some(failed))
                 case YubiKey.Failure.NoEntry(missing) =>
-                  Left(Problem.Unclassified(Legacy.Text(s"$name: no entry '$missing'")))
-                case YubiKey.Failure.Stop(why) =>
-                  report(tried :+ s"${yk.shown}: ${why.legacyText} (${msg.legacyText})", "; not trying further keys")
-      go(planned, Nil)
+                  Left(name.failed(Problem.Plugin.Retrieval.Absent(Problem.Raw(s"$missing"))))
+                case YubiKey.Failure.Stop(why) => Left(key(yk, why, Some(r.err)))
+      go(planned, None)
 
-  private def classify(entry: KeePassXcSession.Entry)(err: String): Option[String] =
+  private def classify(entry: KeePassXcSession.Entry)(err: String): Option[Problem] =
     if err.contains("invalid credentials") || err.contains("wrong key") || err.contains("unable to unlock") ||
       err.contains("enter password")
-    then Some(s"$name: the database is locked — set password = \"env:<NAME>\" (or a key-file) for this vault")
-    else if err.contains("could not find entry") || err.contains("not found") then Some(s"$name: no entry '$entry'")
+    then
+      Some(
+        name.said(
+          Problem.Plugin.Claim.Misconfigured,
+          "the database is locked — set password = \"env:<NAME>\" (or a key-file) for this vault"
+        )
+      )
+    else if err.contains("could not find entry") || err.contains("not found") then
+      Some(name.failed(Problem.Plugin.Retrieval.Absent(Problem.Raw(s"$entry"))))
     else None

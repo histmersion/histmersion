@@ -1,7 +1,9 @@
 package com.histmersion
 package plugin
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Text.sentence
+
+import com.histmersion.util.problem.{External, Problem}
 
 /** The media-collection and event-catalogue parts of the SPI (docs/research-plugins.md §6). */
 class ProviderSpiSuite extends munit.FunSuite:
@@ -11,7 +13,7 @@ class ProviderSpiSuite extends munit.FunSuite:
         url: Plugin.Http.Url,
         headers: Map[Header.Name, Header.Value]
     ): Either[Plugin.Http.Failure, Plugin.HttpResponse.Body] =
-      Left(Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text("offline"))))
+      Left(Plugin.Http.Failure.Transport(Problem.Config.Unavailable(Problem.Config.Capability.Network)))
   }
 
   private object Portal extends MediaCollection:
@@ -26,7 +28,13 @@ class ProviderSpiSuite extends munit.FunSuite:
               MediaItem.Title((place.label).value),
               MediaItem.PageUrl("https://portal.example/k"),
               None,
-              Left(Problem.Unclassified(Legacy.Text("not open access")))
+              Left(
+                Problem.Plugin.Said(
+                  Problem.Plugin.Id("test"),
+                  Problem.Plugin.Claim.Failed,
+                  External.PluginSaid.of("not open access")
+                )
+              )
             )
           )
         )
@@ -54,8 +62,8 @@ class ProviderSpiSuite extends munit.FunSuite:
       Portal.search(MediaPlace(MediaPlace.Id("p"), MediaPlace.Label("Mycenae")), offline).toOption.get.head.toOption.get
     assertEquals(Portal.complete(item, offline), Right(item))
     assertEquals(
-      ((item.rights).left.map(refactorError => (refactorError).legacyText): Either[String, MediaRights]),
-      Left("not open access")
+      ((item.rights).left.map(refactorError => (refactorError).sentence): Either[String, MediaRights]),
+      Left("test (failed): not open access")
     )
     assertEquals(
       ((MediaCollection.Roles).map(refactorValue2 => (refactorValue2).value): Set[String]),
@@ -95,15 +103,18 @@ class ProviderSpiSuite extends munit.FunSuite:
       }
       def env(name: EnvVar.Name): Option[EnvVar.Value] = None
       def secret(s: Secret): Either[Problem, Secret.Resolved] =
-        Left(Problem.Unclassified(Legacy.Text("none")))
-      def secretVaults = Registry.refusing(Problem.Unclassified(Legacy.Text("no vaults")))
+        Left(
+          Problem.Plugin.Said(Problem.Plugin.Id("test"), Problem.Plugin.Claim.Failed, External.PluginSaid.of("none"))
+        )
+      def secretVaults =
+        Registry.refusing(Problem.Plugin.Vault(Problem.Plugin.Id("test"), Problem.Plugin.Retrieval.NoVault))
     assert(
-      ctx.mediaCollections.add(Registry.AddId("portal"), Portal).left.exists((_).legacyText.contains("no media import"))
+      ctx.mediaCollections.add(Registry.AddId("portal"), Portal).left.exists(_.sentence.contains("no media import"))
     )
     assert(
       ctx.eventCatalogues
         .add(Registry.AddId("quakes"), Quakes)
         .left
-        .exists((_).legacyText.contains("no event catalogues"))
+        .exists(_.sentence.contains("no event catalogues"))
     )
     assertEquals(Spi.Version, 2)

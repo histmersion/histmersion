@@ -378,10 +378,12 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
       MergeResolutionsFile.Text("bundel: x\npolicy:\n  editions: sometimes\n  colour: red\nresolve: [1, 2]\n")
     )
     val es = bad.left.getOrElse(fail("parsed"))
-    assert(es.exists(_.sentence.contains("unknown key 'bundel'")), es.toString)
-    assert(es.exists(_.sentence.contains("'sometimes' is not merge or separate")))
-    assert(es.exists(_.sentence.contains("policy: unknown key 'colour'")))
-    assert(es.exists(_.sentence.contains("resolve: expected a map")))
+    assert(es.exists(_.sentence.contains("unknown MergeResolutions 'bundel'")), es.toString)
+    assert(
+      es.exists(_.sentence.contains("policy.editions: unknown EditionsPolicy 'sometimes' (one of: merge, separate)"))
+    )
+    assert(es.exists(_.sentence.contains("policy: unknown MergePolicy 'colour'")))
+    assert(es.exists(_.sentence.contains("the yaml data at resolve cannot be decoded")))
     assertEquals(MergeResolutionsFile.parse(MergeResolutionsFile.Text("")), Right(MergeResolutions()))
     assertEquals(
       MergeResolutionsFile.flag(MergeResolutions.Text.Flag("S-12345678=keep-left")),

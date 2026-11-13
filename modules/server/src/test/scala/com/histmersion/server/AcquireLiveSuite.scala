@@ -1,7 +1,7 @@
 package com.histmersion
 package server
 
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.domain.library.acquisition.OpenAlexDiscovery
@@ -32,7 +32,9 @@ class AcquireLiveSuite extends munit.FunSuite:
   private lazy val cfg = AppConfig.load().acquire
 
   private def loaded(text: String): LoadedConfig =
-    AppConfig.loadWithUserText(org.ekrich.config.ConfigFactory.empty, text).fold(e => fail(e.sentence), identity)
+    AppConfig
+      .loadWithUserText(org.ekrich.config.ConfigFactory.empty, text)
+      .fold(e => fail(e.sentences.mkString("; ")), identity)
 
   private lazy val http = SttpHttp(cfg, clock = () => java.time.Instant.now(java.time.Clock.systemUTC()))
   private lazy val openalex =

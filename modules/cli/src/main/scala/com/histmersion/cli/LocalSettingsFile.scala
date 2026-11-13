@@ -47,7 +47,10 @@ final class LocalSettingsFile(val path: Path) extends SettingsFile:
             AppConfig
               .loadWithUserFile(env, Some(temp))
               .left
-              .map(m => Problem.Unclassified(Legacy.Text(m.sentence.replace(temp.toString, path.toString))))
+              .map(
+                _.toNonEmpty
+                  .map(m => Problem.Unclassified(Legacy.Text(m.sentence.replace(temp.toString, path.toString))))
+              )
         )
         for
           _ <- check(staged)

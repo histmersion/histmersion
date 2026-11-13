@@ -1,6 +1,6 @@
 package com.histmersion
 package util.data.exchange
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 
 import hearth.kindlings.optics.syntax.*
 
@@ -12,6 +12,7 @@ import scala.jdk.CollectionConverters.*
 import com.histmersion.api.exchange.EditionsPolicy
 import com.histmersion.api.exchange.{MergePlan, MergePolicy, MergeResolution, MergeResolutions}
 import io.github.iltotore.iron.constraint.any.Pure
+import io.github.iltotore.iron.constraint.string.ValidUUID
 
 /** The resolution file of `merge plan --resolutions` (docs/research-merge-import.md §6.3): read it, and write the
   * template `--write-template` starts one from. Pure.
@@ -34,6 +35,10 @@ object MergeResolutionsFile:
   type Text = Text.T
   object Text extends Newtype[String, Pure]
 
+  /** The `bundle:` a resolution file names: a bundle's id. */
+  type BundleId = BundleId.T
+  object BundleId extends Newtype[String, ValidUUID]
+
   private def yaml = Yaml(SafeConstructor(LoaderOptions()))
 
   def parse(text: Text): Either[List[Problem], MergeResolutions] =
@@ -41,20 +46,20 @@ object MergeResolutionsFile:
       .Try(Option(yaml.load[AnyRef](text.value)))
       .toEither
       .left
-      .map(e => List(Problem.Unclassified(Legacy.Text(s"not YAML: ${e.getMessage}"))))
+      .map(e => List(notYaml("the file", Problem.Io.Damage.Unreadable(External.Reported.of(e)))))
       .flatMap {
         case None                         => Right(MergeResolutions())
         case Some(m: java.util.Map[?, ?]) =>
           val top = m.asScala.toMap.map((k, v) => String.valueOf(k) -> v.asInstanceOf[AnyRef])
-          val errors = List.newBuilder[String]
+          val errors = List.newBuilder[Problem]
           top.keySet
             .diff(Set("bundle", "plan", "policy", "resolve", "texts"))
             .toList
             .sorted
-            .foreach(k => errors += s"unknown key '$k' (bundle, policy, resolve, texts)")
+            .foreach(k => errors += unknown[MergeResolutions](k, Vector("bundle", "policy", "resolve", "texts")))
           val bundle = top.get("bundle").flatMap(Option(_)).map(String.valueOf).flatMap { b =>
             scala.util.Try(java.util.UUID.fromString(b.trim)).toOption.orElse {
-              errors += s"bundle: '$b' is not a bundle id"; None
+              errors += Problem.Invalid.malformed(BundleId.refused(b.trim)).within(Problem.Field("bundle")); None
             }
           }
           val editions = top.get("policy").flatMap(Option(_)) match
@@ -65,13 +70,15 @@ object MergeResolutionsFile:
                 .diff(Set("editions"))
                 .toList
                 .sorted
-                .foreach(k => errors += s"policy: unknown key '$k' (editions)")
+                .foreach(k => errors += unknown[MergePolicy](k, Vector("editions"), "policy"))
               pm.get("editions").flatMap(Option(_)).map(String.valueOf).flatMap { e =>
                 EditionsPolicy.values
                   .find(_.toString.equalsIgnoreCase(e.trim))
-                  .orElse { errors += s"policy.editions: '$e' is not merge or separate"; None }
+                  .orElse {
+                    errors += unknown[EditionsPolicy](e, Vector("merge", "separate"), "policy", "editions"); None
+                  }
               }
-            case Some(other) => errors += s"policy: expected a map, found '$other'"; None
+            case Some(_) => errors += notYaml("policy", Problem.Io.Damage.Undecodable); None
           val resolve = top.get("resolve").flatMap(Option(_)) match
             case None                         => Nil
             case Some(r: java.util.Map[?, ?]) =>
@@ -86,7 +93,7 @@ object MergeResolutionsFile:
                     )
                 }
                 .sortBy(_.issue)
-            case Some(other) => errors += s"resolve: expected a map of issue id → decision, found '$other'"; Nil
+            case Some(_) => errors += notYaml("resolve", Problem.Io.Damage.Undecodable); Nil
           // the merged texts of `file:` decisions made on the review screen, kept in the file itself
           val texts: Map[MergeResolution.Issue, MergeResolution.Text] = top.get("texts").flatMap(Option(_)) match
             case None                         => Map.empty
@@ -97,14 +104,14 @@ object MergeResolutionsFile:
                     .map(x => MergeResolution.Issue(String.valueOf(k).trim) -> MergeResolution.Text(String.valueOf(x)))
                 )
                 .toMap
-            case Some(other) => errors += s"texts: expected a map of issue id → text, found '$other'"; Map.empty
+            case Some(_) => errors += notYaml("texts", Problem.Io.Damage.Undecodable); Map.empty
           texts.keySet
             .diff(resolve.map(_.issue).toSet)
             .toList
             .sorted
-            .foreach(k => errors += s"texts: $k has a text but no decision under resolve")
+            .foreach(k => errors += Problem.Invalid.Missing(Problem.Field(s"$k"), Vector(Problem.Field("resolve"))))
           val es = errors.result()
-          if es.nonEmpty then Left(es.map((text => Problem.Unclassified(Legacy.Text(text)))))
+          if es.nonEmpty then Left(es)
           else
             Right(
               MergeResolutions(
@@ -113,8 +120,21 @@ object MergeResolutionsFile:
                 bundle
               )
             )
-        case Some(other) => Left(List(Problem.Unclassified(Legacy.Text(s"expected a map at the top, found '$other'"))))
+        case Some(_) => Left(List(notYaml("the top", Problem.Io.Damage.Undecodable)))
       }
+
+  private def notYaml(at: String, damage: Problem.Io.Damage): Problem =
+    Problem.Io.Corrupt(Problem.Io.Format.Yaml, Problem.Where(s"$at"), damage)
+
+  private def unknown[A](key: String, known: Vector[String], at: String*)(using
+      hearth.typename.TypeName[A]
+  ): Problem =
+    Problem.Invalid.Unknown(
+      Problem.TypeName.named[A],
+      Problem.Raw(s"$key"),
+      known.map(k => Problem.Raw(s"$k")),
+      at.toVector.map(f => Problem.Field(s"$f"))
+    )
 
   /** `ID=decision` of a `--resolve` flag. */
   def flag(s: MergeResolutions.Text.Flag): Either[Problem, MergeResolution] =

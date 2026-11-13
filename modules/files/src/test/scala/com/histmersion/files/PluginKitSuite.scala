@@ -1,6 +1,6 @@
 package com.histmersion
 package files
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 import com.histmersion.util.problem.Text.sentence
 
 import hearth.kindlings.optics.syntax.*
@@ -300,14 +300,17 @@ class PluginKitSuite extends munit.FunSuite:
               PluginDescription.Id(""),
               PluginDescription.Version(""),
               PluginDescription.SpiVersion(0),
-              error = Some(Problem.Unclassified(Legacy.Text("boom")))
+              error = Some(
+                Problem.Plugin
+                  .Said(Problem.Plugin.Id("test"), Problem.Plugin.Claim.Failed, External.PluginSaid.of("boom"))
+              )
             )
           )
         ),
         PluginSet.SpiVersion(0),
         Map.empty
       )
-        .exists(_.sentence.contains("could not be loaded: boom"))
+        .exists(_.sentence.contains("boom"))
     )
     assert(
       refusals(ok, PluginSet.SpiVersion(1), Map(PluginDescription.Id("p") -> "other.jar")).head.sentence
@@ -324,14 +327,13 @@ class PluginKitSuite extends munit.FunSuite:
           PluginDescription.Id(""),
           PluginDescription.Version(""),
           PluginDescription.SpiVersion(0),
-          error = Some(Problem.Unclassified(Legacy.Text(foreign)))
+          error = Some(
+            Problem.Plugin.Said(Problem.Plugin.Id("test"), Problem.Plugin.Claim.Failed, External.PluginSaid.of(foreign))
+          )
         )
       )
     )
-    assertEquals(
-      refusals(broken, PluginSet.SpiVersion(2), Map.empty).map(_.sentence),
-      List(s"a provider in b.jar could not be loaded: $foreign")
-    )
+    assertEquals(refusals(broken, PluginSet.SpiVersion(2), Map.empty), broken.plugins.flatMap(_.error))
     val missing = PluginJar(
       PluginJar.File("m.jar"),
       Sha256("1"),
@@ -340,13 +342,19 @@ class PluginKitSuite extends munit.FunSuite:
           PluginDescription.Id(""),
           PluginDescription.Version(""),
           PluginDescription.SpiVersion(0),
-          error = Some(Problem.Unclassified(Legacy.Text("class x.Y is missing")))
+          error = Some(
+            Problem.Plugin.Said(
+              Problem.Plugin.Id("test"),
+              Problem.Plugin.Claim.Failed,
+              External.PluginSaid.of("class x.Y is missing")
+            )
+          )
         )
       )
     )
     assertEquals(
-      refusals(missing, PluginSet.SpiVersion(2), Map(PluginDescription.Id("") -> "other.jar")).map(_.sentence),
-      List("a provider in m.jar could not be loaded: class x.Y is missing")
+      refusals(missing, PluginSet.SpiVersion(2), Map(PluginDescription.Id("") -> "other.jar")),
+      missing.plugins.flatMap(_.error)
     )
 
   test("kit manifest: SHA256SUMS round trip; verify names missing, changed and extra files"):
@@ -376,7 +384,7 @@ class PluginKitSuite extends munit.FunSuite:
           KitFile.File("lib/x.jar") -> KitFile.Sha256.applyUnsafe("e" * 64)
         )
       ).map(_.sentence),
-      List("missing: classpath", "changed: lib/b.jar", "not in the manifest: lib/x.jar")
+      List("classpath is not there", "the kit data at lib/b.jar fails its checksum", "lib/x.jar is not in the manifest")
     )
     val k =
       KitManifest(

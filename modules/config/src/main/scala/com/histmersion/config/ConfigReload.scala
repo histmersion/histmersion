@@ -1,7 +1,6 @@
 package com.histmersion
 package config
 
-import com.histmersion.util.problem.{Legacy, Problem}
 import org.ekrich.config.{Config, ConfigFactory, ConfigRenderOptions}
 
 import scala.jdk.CollectionConverters.*
@@ -28,33 +27,30 @@ object ConfigReload:
   def settings(merged: org.ekrich.config.Config): org.ekrich.config.Config =
     if merged.hasPath(Root) then merged.withOnlyPath(Root) else ConfigFactory.empty
 
+  /** Why a setting takes effect only at a restart: the part of the server it sizes or binds is built once. */
+  enum SetOnce(val said: String) derives CanEqual:
+    case Listener extends SetOnce("the listener is bound once")
+    case RequestTimeout extends SetOnce("the listener's request timeout is set when it is bound")
+    case ShutdownGrace extends SetOnce("the listener's shutdown grace is set when it is bound")
+    case Runtime extends SetOnce("the bundled PostgreSQL and converter are started once")
+    case AgentPool extends SetOnce("the agent pool is started (or not) at startup")
+    case AgentPoolSize extends SetOnce("the size of the agent pool, started once")
+    case LlmCalls extends SetOnce("the LLM-call semaphore, sized once")
+    case OcrPool extends SetOnce("the size of the OCR worker pool, started once")
+
   /** The settings a running server cannot change in place, and why. The running value is kept until a restart (see
     * [[effective]]), and the reload report lists them.
     */
-  val RestartOnly: List[(Key, Problem)] = List(
-    Key("histmersion.server.host") -> Problem.Unclassified(Legacy.Text("the listener is bound once")),
-    Key("histmersion.server.port") -> Problem.Unclassified(Legacy.Text("the listener is bound once")),
-    Key("histmersion.server.request-timeout-seconds") -> Problem.Unclassified(
-      Legacy.Text("the listener's request timeout is set when it is bound")
-    ),
-    Key("histmersion.server.shutdown-grace-seconds") -> Problem.Unclassified(
-      Legacy.Text("the listener's shutdown grace is set when it is bound")
-    ),
-    Key("histmersion.runtime") -> Problem.Unclassified(
-      Legacy.Text("the bundled PostgreSQL and converter are started once")
-    ),
-    Key("histmersion.agents.enabled") -> Problem.Unclassified(
-      Legacy.Text("the agent pool is started (or not) at startup")
-    ),
-    Key("histmersion.agents.max-concurrent-runs") -> Problem.Unclassified(
-      Legacy.Text("the size of the agent pool, started once")
-    ),
-    Key("histmersion.agents.max-llm-calls-in-flight") -> Problem.Unclassified(
-      Legacy.Text("the LLM-call semaphore, sized once")
-    ),
-    Key("histmersion.converter.parallelism") -> Problem.Unclassified(
-      Legacy.Text("the size of the OCR worker pool, started once")
-    )
+  val RestartOnly: List[(Key, SetOnce)] = List(
+    Key("histmersion.server.host") -> SetOnce.Listener,
+    Key("histmersion.server.port") -> SetOnce.Listener,
+    Key("histmersion.server.request-timeout-seconds") -> SetOnce.RequestTimeout,
+    Key("histmersion.server.shutdown-grace-seconds") -> SetOnce.ShutdownGrace,
+    Key("histmersion.runtime") -> SetOnce.Runtime,
+    Key("histmersion.agents.enabled") -> SetOnce.AgentPool,
+    Key("histmersion.agents.max-concurrent-runs") -> SetOnce.AgentPoolSize,
+    Key("histmersion.agents.max-llm-calls-in-flight") -> SetOnce.LlmCalls,
+    Key("histmersion.converter.parallelism") -> SetOnce.OcrPool
   )
 
   def restartOnly(key: Key): Boolean = RestartOnly.exists((k, _) => HotPlan.keyMatches(key, k))

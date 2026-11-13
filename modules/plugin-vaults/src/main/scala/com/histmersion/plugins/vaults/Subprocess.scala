@@ -1,6 +1,6 @@
 package com.histmersion
 package plugins.vaults
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 
 import com.histmersion.plugin.EnvVar
 
@@ -11,7 +11,9 @@ import java.util.concurrent.{CompletableFuture, TimeUnit}
 import scala.concurrent.duration.FiniteDuration
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
-import io.github.iltotore.iron.constraint.any.Pure
+import io.github.iltotore.iron.constraint.any.{Not, Pure}
+import io.github.iltotore.iron.constraint.collection.MinLength
+import io.github.iltotore.iron.constraint.string.StartWith
 import com.histmersion.plugin.Processes
 import com.histmersion.plugin.Plugin
 import com.histmersion.plugin.LocalFiles
@@ -43,22 +45,19 @@ object Subprocess:
     val t = Option((tool).value).getOrElse("").trim
     def runnable(p: Path) =
       files.isFile(p) && files.isExecutable(p)
-    if t.isEmpty then Left(Problem.Unclassified(Legacy.Text("no command is configured (cli = \"…\")")))
+    if t.isEmpty then Left(Problem.Invalid.Missing(Problem.Field("cli")))
     else if t.contains('/') then
       val p = Path.of(t)
       if runnable(p) then Right(Vaults.Path(p.toString))
-      else Left(Problem.Unclassified(Legacy.Text(s"$t is not an executable file")))
+      else Left(Problem.Io.Wrong(Problem.Io.Path(s"$t"), Problem.Io.Kind.Executable))
     else
-      ((path.toList
+      path.toList
         .flatMap((_).value.split(java.io.File.pathSeparatorChar).toList)
         .filter(_.nonEmpty)
         .map(d => Path.of(d, t))
         .find(runnable)
-        .map(_.toString)
-        .toRight(s"$t was not found on the PATH"))
-        .left
-        .map(refactorError => Problem.Unclassified(Legacy.Text(refactorError))))
-        .map(refactorValue => Vaults.Path(refactorValue))
+        .map(p => Vaults.Path(p.toString))
+        .toRight(Problem.Io.Wrong(Problem.Io.Path(s"$t"), Problem.Io.Kind.OnPath))
 
   /** Run `argv` with `env` added to the server's environment, `stdin` written and closed (no stdin: closed at once, so
     * a tool that would prompt sees end-of-file instead of waiting), within `timeout`. `Left` = it could not start or
@@ -89,11 +88,14 @@ object Subprocess:
     * asked.
     */
 
-  /** Pure: the tool's own message for a log line — the first non-blank stderr line, bounded. */
-  def problem(err: Problem): Problem =
-    Problem.Unclassified(
-      Legacy.Text((err).legacyText.linesIterator.map(_.trim).find(_.nonEmpty).map(_.take(200)).getOrElse("no message"))
-    )
+  extension (exit: Result.Exit)
+    /** The tool's exit status, as a problem names it. */
+    def code: Problem.Io.ExitCode = Problem.Io.ExitCode(exit.value)
+
+  extension (err: Result.Err)
+    /** Pure: the tool's own message — the first non-blank line it wrote to its standard error, bounded. */
+    def firstLine: External.Stderr =
+      External.Stderr.tail(s"$err".linesIterator.map(_.trim).find(_.nonEmpty).map(_.take(200)).getOrElse("no message"))
 
   /** Pure: what a tool printed, without the one line break it ends with (`op read`, `bw get` and `keepassxc-cli show`
     * all end their value with one). Nothing else is trimmed: a value may begin or end with a space.
@@ -102,6 +104,12 @@ object Subprocess:
 
   /** Pure: an argument that would read as an option of the tool is refused rather than passed on. */
   def plain(what: Vaults.Operation, s: Text): Either[Problem, Plain] =
-    if (s).value.isEmpty then Left(Problem.Unclassified(Legacy.Text(s"$what is empty")))
-    else if (s).value.startsWith("-") then Left(Problem.Unclassified(Legacy.Text(s"$what may not start with '-'")))
-    else Right(Plain((s).value))
+    Argument
+      .checked((s).value)
+      .map(a => Plain(s"$a"))
+      .left
+      .map(refused => Problem.Invalid.malformed(refused).within(Problem.Field(s"$what")))
+
+  /** An argument handed to a vault's tool: something, and nothing the tool would read as an option. */
+  type Argument = Argument.T
+  object Argument extends Newtype[String, MinLength[1] & Not[StartWith["-"]]]

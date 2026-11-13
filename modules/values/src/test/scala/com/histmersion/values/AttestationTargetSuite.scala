@@ -4,6 +4,7 @@ package values
 import com.histmersion.values.testsupport.ComparedByValue.given
 
 import com.histmersion.domain.catalogue.AttestationTarget
+import com.histmersion.util.problem.Problem
 
 class AttestationTargetSuite extends munit.FunSuite:
 
@@ -11,7 +12,13 @@ class AttestationTargetSuite extends munit.FunSuite:
     assertEquals(AttestationTarget.check(AttestationTarget.Wire(" Event ")), Right("event"))
     assertEquals(AttestationTarget.check(AttestationTarget.Wire("event_dating")), Right("event_dating"))
     assertEquals(
-      AttestationTarget.check(AttestationTarget.Wire("bogus")).left.map(_.legacyText),
-      Left("unknown target type 'bogus' (finding, event, event_dating, place, edge)")
+      AttestationTarget.check(AttestationTarget.Wire("bogus")),
+      Left(
+        Problem.Invalid.Unknown(
+          Problem.TypeName("com.histmersion.domain.catalogue.AttestationTarget.Wire"),
+          Problem.Raw("bogus"),
+          Vector("finding", "event", "event_dating", "place", "edge").map(r => Problem.Raw(s"$r"))
+        )
+      )
     )
     assert(AttestationTarget.check(AttestationTarget.Wire("")).isLeft)

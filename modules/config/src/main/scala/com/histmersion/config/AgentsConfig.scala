@@ -6,7 +6,7 @@ import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
 
 given ConfigReader[ScheduledRefresh] =
-  summon[ConfigReader[Minutes]].emap(m => ScheduledRefresh.fromMinutes(m).left.map(_.legacyText))
+  ConfigLayers.checking(summon[ConfigReader[Minutes]])(ScheduledRefresh.fromMinutes)
 
 final case class AgentsConfig(
     enabled: AgentsConfig.Enabled,

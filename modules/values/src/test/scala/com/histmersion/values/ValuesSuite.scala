@@ -1,6 +1,8 @@
 package com.histmersion
 package values
 
+import com.histmersion.util.problem.Problem
+
 import com.histmersion.values.testsupport.ComparedByValue.given
 
 import com.histmersion.{Latitude, LatLon, Longitude, Period, Year}
@@ -15,8 +17,13 @@ class ValuesSuite extends munit.FunSuite:
     )
     assertEquals(Period.from(Year(-3100), Year(-3300)), Left(Period.Error.EndsBeforeStart(Year(-3100), Year(-3300))))
     assertEquals(
-      (Period.Error.EndsBeforeStart(Year(-3100), Year(-3300)).message).legacyText,
-      "the period ends (-3300) before it starts (-3100)"
+      Period.Error.EndsBeforeStart(Year(-3100), Year(-3300)).message,
+      Problem.Invalid.OutOfRange(
+        Problem.TypeName("com.histmersion.Year"),
+        Problem.Raw("-3300"),
+        Problem.Invalid.Bounds(Some(Problem.Raw("-3100")), None),
+        Vector(Problem.Field("end"))
+      )
     )
     assert(Period.point(Year(-1200)).isPoint && !Period.from(Year(1), Year(2)).toOption.get.isPoint)
     assert(compileErrors("Period(Year(1), Year(2))").nonEmpty, "only through from or point")

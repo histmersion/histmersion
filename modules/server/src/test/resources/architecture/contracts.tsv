@@ -1025,7 +1025,6 @@ unwrap	files:util/storage/SafePath.scala	.value outside a boundary	4
 unwrap	plugin-api:plugin/Licence.scala	.value outside a boundary	1
 unwrap	plugin-api:plugin/LicenceReader.scala	.value outside a boundary	3
 unwrap	plugin-api:plugin/MediaCollection.scala	.value outside a boundary	2
-unwrap	plugin-api:plugin/Period.scala	.value outside a boundary	2
 unwrap	plugin-api:plugin/Plugin.scala	.value outside a boundary	5
 unwrap	plugin-api:plugin/Secret.scala	.value outside a boundary	1
 unwrap	plugin-host:pluginhost/Challenge.scala	.value outside a boundary	7
@@ -1055,7 +1054,6 @@ unwrap	plugin-host:pluginhost/SpiValues.scala	.value outside a boundary	25
 unwrap	plugin-host:pluginhost/SttpTransport.scala	.value outside a boundary	6
 unwrap	plugin-host:pluginhost/SystemProcesses.scala	.value outside a boundary	15
 unwrap	plugin-host:pluginhost/UpstreamSettingsOf.scala	.value outside a boundary	25
-unwrap	plugin-resolver:pluginresolver/Conflict.scala	.value outside a boundary	4
 unwrap	plugin-resolver:pluginresolver/Coursier.scala	.value outside a boundary	14
 unwrap	plugin-resolver:pluginresolver/Dependency.scala	.value outside a boundary	1
 unwrap	plugin-resolver:pluginresolver/DependencyResolver.scala	.value outside a boundary	14
@@ -1069,13 +1067,13 @@ unwrap	plugin-resolver:pluginresolver/ServerModules.scala	.value outside a bound
 unwrap	plugin-vaults:plugins/vaults/BitwardenPlugin.scala	.value outside a boundary	5
 unwrap	plugin-vaults:plugins/vaults/BitwardenVault.scala	.value outside a boundary	7
 unwrap	plugin-vaults:plugins/vaults/KeePassXcMessage.scala	.value outside a boundary	1
-unwrap	plugin-vaults:plugins/vaults/KeePassXcPlugin.scala	.value outside a boundary	13
+unwrap	plugin-vaults:plugins/vaults/KeePassXcPlugin.scala	.value outside a boundary	11
 unwrap	plugin-vaults:plugins/vaults/KeePassXcSession.scala	.value outside a boundary	23
-unwrap	plugin-vaults:plugins/vaults/KeePassXcVault.scala	.value outside a boundary	35
+unwrap	plugin-vaults:plugins/vaults/KeePassXcVault.scala	.value outside a boundary	32
 unwrap	plugin-vaults:plugins/vaults/OnePasswordPlugin.scala	.value outside a boundary	5
 unwrap	plugin-vaults:plugins/vaults/OnePasswordVault.scala	.value outside a boundary	4
-unwrap	plugin-vaults:plugins/vaults/Subprocess.scala	.value outside a boundary	6
-unwrap	plugin-vaults:plugins/vaults/Vaults.scala	.value outside a boundary	12
+unwrap	plugin-vaults:plugins/vaults/Subprocess.scala	.value outside a boundary	5
+unwrap	plugin-vaults:plugins/vaults/Vaults.scala	.value outside a boundary	11
 unwrap	plugin-vaults:plugins/vaults/YubiKey.scala	.value outside a boundary	6
 unwrap	server:domain/Referable.scala	.value outside a boundary	2
 unwrap	server:domain/Referables.scala	.value outside a boundary	1
@@ -1432,7 +1430,6 @@ unwrap	upstreams:upstreams/wikidata/WikidataEntities.scala	.value outside a boun
 unwrap	upstreams:upstreams/wikidata/WikidataStatement.scala	.value outside a boundary	2
 unwrap	values:Latitude.scala	.value outside a boundary	1
 unwrap	values:Longitude.scala	.value outside a boundary	1
-unwrap	values:Period.scala	.value outside a boundary	2
 unwrap	values:domain/Licence.scala	.value outside a boundary	12
 unwrap	values:domain/automation/AgentRole.scala	.value outside a boundary	1
 unwrap	values:domain/automation/Approval.scala	.value outside a boundary	8

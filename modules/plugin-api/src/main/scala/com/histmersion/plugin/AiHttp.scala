@@ -1,7 +1,7 @@
 package com.histmersion
 package plugin
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import io.github.iltotore.iron.constraint.any.Pure
 import AiHttp.Failure
 
@@ -54,9 +54,9 @@ object AiHttp:
         headers: Map[Header.Name, Header.Value],
         body: PostBody,
         timeoutSeconds: TimeoutSeconds
-    ) = Left(Failure.Refused(Problem.Unclassified(Legacy.Text("offline"))))
+    ) = Left(Failure.Refused(Problem.Config.Unavailable(Problem.Config.Capability.Network)))
     def get(url: Plugin.Http.Url, headers: Map[Header.Name, Header.Value], timeoutSeconds: TimeoutSeconds) = Left(
-      Failure.Refused(Problem.Unclassified(Legacy.Text("offline")))
+      Failure.Refused(Problem.Config.Unavailable(Problem.Config.Capability.Network))
     )
 
   /** One HTTP answer. */

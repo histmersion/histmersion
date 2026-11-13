@@ -7,7 +7,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.domain.library.workflows.*
 
 import com.histmersion.domain.automation.agents.*
@@ -173,7 +173,7 @@ class AiTrafficSuite extends munit.FunSuite:
   // ── one scenario ───────────────────────────────────────────────────────────────────────────────
 
   private def loaded(text: String): LoadedConfig =
-    AppConfig.loadWithUserText(ConfigFactory.empty, text).fold(e => fail(e.sentence), identity)
+    AppConfig.loadWithUserText(ConfigFactory.empty, text).fold(e => fail(e.sentences.mkString("; ")), identity)
 
   private def providers(port: Int, extra: String = "", key: Boolean = true): String =
     val k = if key then "api-key = \"k-test\"\n" else ""

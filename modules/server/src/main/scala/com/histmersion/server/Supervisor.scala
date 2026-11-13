@@ -1,6 +1,6 @@
 package com.histmersion
 package server
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{Legacy, Problem, Problems}
 import com.histmersion.util.problem.Text.sentence
 
 import hearth.kindlings.optics.syntax.*
@@ -341,7 +341,7 @@ object Supervisor:
     */
   def reloadSource(
       started: AppConfig,
-      read: () => Either[Problem, LoadedConfig],
+      read: () => Either[Problems, LoadedConfig],
       paths: UserPaths
   ): ConfigSource =
     val l = layout(started.runtime, currentExecutable, paths.environment.lookup, paths.osName)
