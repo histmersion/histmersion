@@ -3,7 +3,6 @@ package cli
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.problem.Text.sentence
 
-import com.monovore.decline.*
 import com.histmersion.config.*
 
 import java.nio.file.Files
@@ -13,12 +12,22 @@ import com.histmersion.util.console.Console
 /** `histmersion config …` — the user config file. */
 object ConfigCmd:
 
-  private def path(using console: Console) = Opts.subcommand(
-    "path",
-    "Where the user config file is on this machine (printed alone on stdout), whether it exists and reads cleanly; the running server's file is in histmersion about"
-  ) {
-    Opts.unit.map(_ =>
-      (_: Client) =>
+  /** `histmersion config reload` — the SERVER reads its config file again and applies it in place
+    * (docs/research-plugins.md §3.5); exit 2 when an error left its config unchanged.
+    */
+
+  /** What `histmersion …` of this group was asked to do, every argument parsed. */
+  enum Command extends Cli.Command:
+    case Path()
+    case Reload(json: Cli.JsonOutput)
+
+    def run(c: Client)(using Console): Either[Cli.Error, Unit] = ConfigCmd.run(c, this)
+
+  /** Carry out one command against the server. */
+  def run(c: Client, cmd: Command)(using console: Console): Either[Cli.Error, Unit] =
+    cmd match
+      case Command.Path() =>
+        val _ = c
         val located = UserPaths.configFile(Environment.of(org.ekrich.config.ConfigFactory.systemEnvironment()).lookup)
         located match
           case None =>
@@ -39,30 +48,12 @@ object ConfigCmd:
                   l.file.warnings.foreach(w => Cli.err.println(s"warning: ${w.sentence}"))
                   if l.file.unknownKeys.isEmpty then Cli.err.println("(reads cleanly)")
                 Right(())
-    )
-  }
-
-  /** `histmersion config reload` — the SERVER reads its config file again and applies it in place
-    * (docs/research-plugins.md §3.5); exit 2 when an error left its config unchanged.
-    */
-  private def reload(using console: Console) = Opts.subcommand(
-    "reload",
-    "Make the server read its config file again and apply it in place, no restart (restart-only settings are listed, not applied)"
-  ) {
-    Output.jsonFlag.map { json => (c: Client) =>
-      c.configReload.flatMap { r =>
-        Output.emit(json, r)(ReloadMarkdown.report)
-        if r.errors.isEmpty then Right(())
-        else
-          Left(Cli.Error(Problem.Unclassified(Legacy.Text("the config was not reloaded")), exitCode = ExitCode.Refused))
-      }
-    }
-  }
-
-  def command(using console: Console): Opts[Client => Either[Cli.Error, Unit]] =
-    Opts.subcommand(
-      "config",
-      "The settings file: where it is, its settings (get, set, unset — the file is changed in place, comments and all), reloading and restarting the server"
-    ) {
-      path orElse reload orElse SettingsCmd.get orElse SettingsCmd.set orElse SettingsCmd.unset orElse SettingsCmd.restart
-    }
+      case Command.Reload(json) =>
+        c.configReload.flatMap { r =>
+          Output.emit(json, r)(ReloadMarkdown.report)
+          if r.errors.isEmpty then Right(())
+          else
+            Left(
+              Cli.Error(Problem.Unclassified(Legacy.Text("the config was not reloaded")), exitCode = ExitCode.Refused)
+            )
+        }

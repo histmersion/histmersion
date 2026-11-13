@@ -1,8 +1,6 @@
 package com.histmersion
 package cli
 
-import cats.syntax.all.*
-import com.monovore.decline.*
 import com.histmersion.config.*
 import com.histmersion.api.basemap.BasemapMarkdown
 import com.histmersion.api.jobs.JobDetail
@@ -15,55 +13,29 @@ import com.histmersion.util.console.Console
   */
 object BasemapCmd:
 
-  private def statusCmd(using console: Console) =
-    Opts.subcommand("status", "What is downloaded, where, the free space there, and which styles lack data") {
-      Output.jsonFlag.map { json => (c: Client) =>
-        c.basemapStatus().map(s => Output.emit(json, s)(BasemapMarkdown.status))
-      }
-    }
-
-  private def fetchCmd(using console: Console) = Opts.subcommand(
-    "fetch",
-    "Download the local base map (coast, water, rivers, land cover; relief; physical names; sea floor; with --keep-all roads, places and borders) as a server job — resumable; " +
-      "refused when the disk would be left with less than basemap.min-free-gb"
-  ) {
-    (
-      Opts.option[String]("layer", "vector, terrain, labels, bathymetry or all (default all)").withDefault("all"),
-      Opts
-        .option[Int](
-          "max-zoom",
-          "Deepest zoom of the vector layer (default basemap.vector.max-zoom; with --layer terrain alone, of the relief)"
-        )
-        .orNone,
-      Opts
-        .option[Int](
-          "terrain-max-zoom",
-          "Deepest zoom of the relief, 512-pixel tiles (default basemap.terrain.max-zoom)"
-        )
-        .orNone,
-      Opts
-        .option[String](
-          "bbox",
-          "Region as minLon,minLat,maxLon,maxLat, or world (default basemap.bbox); --dry-run says the size zoom by zoom"
-        )
-        .orNone,
-      Opts
-        .option[String](
-          "focus",
-          "Keep the relief of a region deeper than the extract, to basemap.terrain.on-demand.max-zoom: " +
-            "a name of basemap.terrain.focus-regions (aegean, anatolia, levant, mesopotamia, nile-delta, argolid) or a new one with --bbox"
-        )
-        .orNone,
-      Opts.flag("dry-run", "Read only the directories and report what the download would take").orFalse,
-      Opts
-        .flag(
-          "keep-all",
-          "Store the vector layer unfiltered — roads, places and borders too, for the Readable map (basemap.vector.drop not applied)"
-        )
-        .orFalse,
-      Opts.flag("no-wait", "Print the job id and return instead of following it").orFalse
+  /** What `histmersion …` of this group was asked to do, every argument parsed. */
+  enum Command extends Cli.Command:
+    case Status(json: Cli.JsonOutput)
+    case Fetch(
+        layer: String,
+        z: Option[Int],
+        tz: Option[Int],
+        bbox: Option[String],
+        focus: Option[String],
+        dry: Boolean,
+        keepAll: Boolean,
+        noWait: Boolean
     )
-      .mapN { (layer, z, tz, bbox, focus, dry, keepAll, noWait) => (c: Client) =>
+    case Rm(layer: Option[String], focus: Option[String], cache: Boolean)
+
+    def run(c: Client)(using Console): Either[Cli.Error, Unit] = BasemapCmd.run(c, this)
+
+  /** Carry out one command against the server. */
+  def run(c: Client, cmd: Command)(using console: Console): Either[Cli.Error, Unit] =
+    cmd match
+      case Command.Status(json) =>
+        c.basemapStatus().map(s => Output.emit(json, s)(BasemapMarkdown.status))
+      case Command.Fetch(layer, z, tz, bbox, focus, dry, keepAll, noWait) =>
         c.basemapFetch(
           Basemap.FetchQuery(
             Basemap.FetchQuery.Layer(if focus.isDefined then "terrain" else layer),
@@ -80,41 +52,12 @@ object BasemapCmd:
           )
           if noWait then Right(()) else IngestCmd.pollJob(c, j.id, 0)
         }
-      }
-  }
-
-  private def rmCmd(using console: Console) = Opts.subcommand(
-    "rm",
-    "Remove the downloaded base-map files (and an unfinished download), focus regions, the on-demand relief cache"
-  ) {
-    (
-      Opts
-        .option[String](
-          "layer",
-          "vector, terrain, labels, bathymetry or all — all includes the focus regions and the relief cache " +
-            "(default all; none when only --focus or --cache is given)"
-        )
-        .orNone,
-      Opts.option[String]("focus", "A focus region's relief, by name, or all").orNone,
-      Opts
-        .flag(
-          "cache",
-          "The caches of tiles read on demand (the deeper relief, the map and the sea floor outside the region)"
-        )
-        .orFalse
-    ).mapN { (layer, focus, cache) => (c: Client) =>
-      val l = layer.getOrElse(if focus.isDefined || cache then "none" else "all")
-      c.basemapRemove(
-        Basemap.RemoveQuery(
-          Basemap.RemoveQuery.Layer(l),
-          focus.map(Basemap.RemoveQuery.Focus(_)),
-          Basemap.RemoveQuery.Cache(cache)
-        )
-      ).map(r => Cli.out.println(BasemapMarkdown.removed(r)))
-    }
-  }
-
-  def command(using console: Console): Opts[Client => Either[Cli.Error, Unit]] =
-    Opts.subcommand("basemap", "The web UI's local base map (street maps and terrain): status, styles, fetch, rm") {
-      statusCmd orElse fetchCmd orElse rmCmd
-    }
+      case Command.Rm(layer, focus, cache) =>
+        val l = layer.getOrElse(if focus.isDefined || cache then "none" else "all")
+        c.basemapRemove(
+          Basemap.RemoveQuery(
+            Basemap.RemoveQuery.Layer(l),
+            focus.map(Basemap.RemoveQuery.Focus(_)),
+            Basemap.RemoveQuery.Cache(cache)
+          )
+        ).map(r => Cli.out.println(BasemapMarkdown.removed(r)))

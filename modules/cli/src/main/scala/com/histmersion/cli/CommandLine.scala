@@ -56,7 +56,15 @@ object CommandLine:
     commandline.ArticleArgs,
     commandline.ActivityArgs.ActivityEntry,
     commandline.BookmarksArgs.BookmarksEntry,
-    commandline.NotesArgs.NotesEntry
+    commandline.NotesArgs.NotesEntry,
+    commandline.PeriodsArgs.PeriodsEntry,
+    commandline.PeriodsArgs.InitEntry,
+    commandline.AttestationsArgs.AttestationsEntry,
+    commandline.CandidatesArgs.CandidatesEntry,
+    commandline.AgentStateArgs.AgentStateEntry,
+    commandline.AssetLinksArgs.AssetLinksEntry,
+    commandline.ConfigArgs.ConfigEntry,
+    commandline.BasemapArgs.BasemapEntry
   )
 
   private val Globals = Set("--server", "--token")
@@ -144,7 +152,8 @@ object CommandLine:
       val own = options.map(usage) ++ operands.map(operand)
       val usages =
         if s.subbuilders.nonEmpty then
-          s.subbuilders.map((name, _) => s"    ${((path :: own) :+ name).mkString(" ")}").mkString("Usage:\n", "\n", "")
+          (s.subbuilders.map((name, _) => s"    $path $name") ++
+            Option.when(own.nonEmpty)(s"    ${(path :: own).mkString(" ")}")).mkString("Usage:\n", "\n", "")
         else (s"Usage: $path" :: own).mkString(" ")
       val flags = ("    --help\n        Display this help text." :: options.map(o =>
         s"    ${if isFlag(o) then s"--${o.name}" else s"--${o.name} <${o.argName}>"}\n        ${o.descr}"
@@ -252,6 +261,11 @@ object CommandLine:
     /** The subcommands declared on this one. */
     def children: Seq[ScallopConfBase] = subconfigs
 
+    /** Declare subcommands, in the order the help lists them. A [[Leaf]] that holds some runs alone too: its own
+      * options are the command when none of them is named (`candidates [--goal g]` beside `candidates sweep`).
+      */
+    protected def holds(confs: Subcommand*): Unit = confs.foreach(addSubcommand)
+
     /** A flag: present or not. */
     protected def flag(name: String, descr: String): ScallopOption[Boolean] =
       types.option(name, typeName[Boolean])
@@ -340,9 +354,6 @@ object CommandLine:
     noshort = true
     descr(help)
     helpFormatter = Layout(s"$parent $name")
-
-    /** Declare the subcommands, in the order the help lists them. */
-    protected def holds(confs: Subcommand*): Unit = confs.foreach(addSubcommand)
 
   final private class Root(args: Seq[String]) extends ScallopConf(args) with Declares:
     private var printed = Vector.empty[String]

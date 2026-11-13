@@ -1,8 +1,6 @@
 package com.histmersion
 package cli
 
-import cats.syntax.all.*
-import com.monovore.decline.*
 import com.histmersion.config.*
 import com.histmersion.api.library.{AcquireApi, CandidateMark, Candidates, CandidatesMarkdown}
 import com.histmersion.api.library.CandidateSweep
@@ -16,16 +14,29 @@ import com.histmersion.api.library.Source
   */
 object CandidatesCmd:
 
-  private def listCmd(using console: Console) =
-    (
-      Opts.option[String]("goal", "One goal's candidates (default: every goal)").orNone,
-      Opts
-        .option[String]("state", s"${Candidates.State.values.map(_.wire).mkString("|")} (default new: the unseen)")
-        .orNone,
-      Opts.option[Int]("limit", "Max results").orNone,
-      Opts.option[Int]("offset", "Skip this many (the list's footer names the next offset)").orNone
-    )
-      .mapN { (goal, state, limit, offset) => (c: Client) =>
+  /** What `histmersion …` of this group was asked to do, every argument parsed. */
+  enum Command extends Cli.Command:
+    case Sweep(goal: String, dry: Boolean)
+    case Mark(ids: List[Long], as: String)
+    case Listing(goal: Option[String], state: Option[String], limit: Option[Int], offset: Option[Int])
+
+    def run(c: Client)(using Console): Either[Cli.Error, Unit] = CandidatesCmd.run(c, this)
+
+  /** Carry out one command against the server. */
+  def run(c: Client, cmd: Command)(using console: Console): Either[Cli.Error, Unit] =
+    cmd match
+      case Command.Sweep(goal, dry) =>
+        c.call(AcquireApi.sweepCandidates)(
+          CandidateSweep.Request(CandidateSweep.Request.Goal(goal), CandidateSweep.Request.DryRun(dry))
+        ).map(s => Cli.out.println(CandidatesMarkdown.sweep(s)))
+      case Command.Mark(ids, as) =>
+        c.call(AcquireApi.markCandidates)(
+          CandidateMark(
+            ids.toList.map(Source.Candidate.Id(_)),
+            Source.Candidate.State(as)
+          )
+        ).map(m => Cli.out.println(CandidatesMarkdown.marked(m)))
+      case Command.Listing(goal, state, limit, offset) =>
         c.call(AcquireApi.candidates)(
           (
             goal.map(Goal.Slug(_)),
@@ -34,37 +45,3 @@ object CandidatesCmd:
             offset.map(CandidateList.Offset(_))
           )
         ).map(l => Cli.out.println(CandidatesMarkdown.list(l)))
-      }
-
-  private def sweepCmd(using console: Console) = Opts.subcommand(
-    "sweep",
-    "Read a goal's saved queries, citation and author alerts from their watermarks now (no model)"
-  ) {
-    (Opts.argument[String]("goal"), Opts.flag("dry-run", "Read, store nothing (no candidates, no watermarks)").orFalse)
-      .mapN { (goal, dry) => (c: Client) =>
-        c.call(AcquireApi.sweepCandidates)(
-          CandidateSweep.Request(CandidateSweep.Request.Goal(goal), CandidateSweep.Request.DryRun(dry))
-        ).map(s => Cli.out.println(CandidatesMarkdown.sweep(s)))
-      }
-  }
-
-  private def markCmd(using console: Console) =
-    Opts.subcommand("mark", "Record a decision on candidates by id: seen, queued, dismissed (or new again)") {
-      (
-        Opts.arguments[Long]("id"),
-        Opts.option[String]("as", "seen|queued|dismissed|new").withDefault(Candidates.State.Seen.wire.value)
-      )
-        .mapN { (ids, as) => (c: Client) =>
-          c.call(AcquireApi.markCandidates)(
-            CandidateMark(
-              ids.toList.map(Source.Candidate.Id(_)),
-              Source.Candidate.State(as)
-            )
-          ).map(m => Cli.out.println(CandidatesMarkdown.marked(m)))
-        }
-    }
-
-  def command(using console: Console): Opts[Client => Either[Cli.Error, Unit]] =
-    Opts.subcommand("candidates", "New sources found for the research goals without a model: list, sweep, mark") {
-      sweepCmd orElse markCmd orElse listCmd
-    }

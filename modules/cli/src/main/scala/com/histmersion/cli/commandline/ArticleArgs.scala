@@ -237,7 +237,8 @@ object ArticleArgs extends CommandLine.Entry:
 
     def command: Either[Problem, Cli.Command] = Right(ArticleCommand.Export(dir()))
 
-  final private class ArticleImport() extends Leaf(Parent, "import", "Import <dir>/<kind>/*.md (and any *.md in <dir> itself)"):
+  final private class ArticleImport()
+      extends Leaf(Parent, "import", "Import <dir>/<kind>/*.md (and any *.md in <dir> itself)"):
     private val dir = arg[Path]("dir")
     private val force = flag("force", "Overwrite articles newer than the files")
 

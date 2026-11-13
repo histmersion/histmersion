@@ -13,6 +13,14 @@ modules/cli/src/main/scala/com/histmersion/cli/CalibreCmd.scala	cli-args	parses 
 modules/cli/src/main/scala/com/histmersion/cli/CandidatesCmd.scala	cli-args	parses `histmersion candidates` arguments
 modules/cli/src/main/scala/com/histmersion/cli/Cli.scala	cli-args	parses the top-level `histmersion` command line and dispatches to the command parsers
 modules/cli/src/main/scala/com/histmersion/cli/CommandLine.scala	cli-args	the scallop adapter: the one file that declares scallop options and parses a command line into a typed command
+modules/cli/src/main/scala/com/histmersion/cli/commandline/AgentStateArgs.scala	cli-args	the scallop adapter of `histmersion agentstate`: declares its options, parses them into typed commands
+modules/cli/src/main/scala/com/histmersion/cli/commandline/AssetLinksArgs.scala	cli-args	the scallop adapter of `histmersion assetlinks`: declares its options, parses them into typed commands
+modules/cli/src/main/scala/com/histmersion/cli/commandline/AttestationsArgs.scala	cli-args	the scallop adapter of `histmersion attestations`: declares its options, parses them into typed commands
+modules/cli/src/main/scala/com/histmersion/cli/commandline/BasemapArgs.scala	cli-args	the scallop adapter of `histmersion basemap`: declares its options, parses them into typed commands
+modules/cli/src/main/scala/com/histmersion/cli/commandline/CandidatesArgs.scala	cli-args	the scallop adapter of `histmersion candidates`: declares its options, parses them into typed commands
+modules/cli/src/main/scala/com/histmersion/cli/commandline/ConfigArgs.scala	cli-args	the scallop adapter of `histmersion config`: declares its options, parses them into typed commands
+modules/cli/src/main/scala/com/histmersion/cli/commandline/PeriodsArgs.scala	cli-args	the scallop adapter of `histmersion periods`: declares its options, parses them into typed commands
+modules/cli/src/main/scala/com/histmersion/cli/commandline/SettingsArgs.scala	cli-args	the scallop adapter of `histmersion settings`: declares its options, parses them into typed commands
 modules/cli/src/main/scala/com/histmersion/cli/commandline/ActivityArgs.scala	cli-args	the scallop adapter of `histmersion activity`: declares its options, parses them into typed commands
 modules/cli/src/main/scala/com/histmersion/cli/commandline/ArticleArgs.scala	cli-args	the scallop adapter of `histmersion article`: declares its options, parses them into typed commands
 modules/cli/src/main/scala/com/histmersion/cli/commandline/BookmarksArgs.scala	cli-args	the scallop adapter of `histmersion bookmarks`: declares its options, parses them into typed commands
