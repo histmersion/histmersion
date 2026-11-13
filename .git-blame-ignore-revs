@@ -2,3 +2,6 @@
 
 # Reformat every Scala source and build file with scalafmt
 4c1da9d15c773a07e3f900ebb29754689e27f4c0
+
+# Format the sources scalafmt left unformatted
+68c93aead54d05d7b74f82681d50ae8d2711b8c2
