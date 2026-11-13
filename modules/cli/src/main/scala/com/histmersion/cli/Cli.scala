@@ -747,7 +747,7 @@ object Cli:
             ) orElse migrated("article") orElse migrated("places")
             orElse migrated("periods") orElse migrated("init")
             orElse migrated("events") orElse migrated("attestations") orElse migrated("candidates")
-            orElse migrated("goals") orElse migrated("agent-state") orElse AgentCmd.command
+            orElse migrated("goals") orElse migrated("agent-state") orElse migrated("agent")
             orElse migrated("media") orElse migrated("asset-links")
             // stream 2.8 — lint · queue · read-only query
             orElse migrated("lint") orElse migrated("queue") orElse migrated("query") orElse migrated("schema")

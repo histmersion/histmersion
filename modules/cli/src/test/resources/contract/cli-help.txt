@@ -2294,7 +2294,9 @@ Subcommands:
         The unfinished research goals with no progress in N days (default agents.autopilot.stall-days), each with the one reason it stands still — draining, waiting for a person, held, paused, a budget, quota, the scheduler's queue, a block, a failed item, no candidates, idle — and the command that unblocks it
 
 ==== histmersion agent models
-Usage: histmersion agent models [set | reset]
+Usage:
+    histmersion agent models set
+    histmersion agent models reset
 
 Each step role's model chain, the model its next call would use, and every allowance's use per window
 
@@ -2342,7 +2344,12 @@ Options and flags:
         Drop the saved allowance: the server's config (agents.allowances) applies again
 
 ==== histmersion agent quota
-Usage: histmersion agent quota [hold | release | floors | fallthrough | refresh]
+Usage:
+    histmersion agent quota hold
+    histmersion agent quota release
+    histmersion agent quota floors
+    histmersion agent quota fallthrough
+    histmersion agent quota refresh
 
 Subscription pools (Claude plan, ChatGPT plan): each window's use, its floor, reset and reading age; the hold switch; metered allowances
 
@@ -2668,7 +2675,22 @@ Options and flags:
 ==== histmersion agent manager
 Usage:
     histmersion agent manager new
-    histmersion agent manager <id> [status | items | events | pause | resume | stop | hint | enqueue | hold | release | skip | reopen | priority | cron | config]
+    histmersion agent manager <id> status
+    histmersion agent manager <id> items
+    histmersion agent manager <id> events
+    histmersion agent manager <id> pause
+    histmersion agent manager <id> resume
+    histmersion agent manager <id> stop
+    histmersion agent manager <id> hint
+    histmersion agent manager <id> enqueue
+    histmersion agent manager <id> hold
+    histmersion agent manager <id> release
+    histmersion agent manager <id> skip
+    histmersion agent manager <id> reopen
+    histmersion agent manager <id> priority
+    histmersion agent manager <id> cron
+    histmersion agent manager <id> config
+    histmersion agent manager [<id>]
 
 One process manager: new, or <id> status|items|events|pause|resume|stop|hint|enqueue|hold|release|skip|reopen|priority|cron|config
 
@@ -2730,7 +2752,7 @@ Options and flags:
         Print the raw JSON response instead of Markdown
 
 ==== histmersion agent manager status
-Usage: histmersion agent manager status [--json]
+Usage: histmersion agent manager <id> status [--json]
 
 The manager: items in flight with their runs, hints, newest events
 
@@ -2741,7 +2763,7 @@ Options and flags:
         Print the raw JSON response instead of Markdown
 
 ==== histmersion agent manager items
-Usage: histmersion agent manager items [--status <string>] [--offset <integer>] [--limit <integer>] [--json]
+Usage: histmersion agent manager <id> items [--status <string>] [--offset <integer>] [--limit <integer>] [--json]
 
 Its items, the most urgent first
 
@@ -2758,7 +2780,7 @@ Options and flags:
         Print the raw JSON response instead of Markdown
 
 ==== histmersion agent manager events
-Usage: histmersion agent manager events [--before <integer>] [--limit <integer>]
+Usage: histmersion agent manager <id> events [--before <integer>] [--limit <integer>]
 
 Its events, newest first
 
@@ -2771,7 +2793,7 @@ Options and flags:
         How many
 
 ==== histmersion agent manager pause
-Usage: histmersion agent manager pause [--runs]
+Usage: histmersion agent manager <id> pause [--runs]
 
 Start no new runs (its runs in flight go on, unless --runs)
 
@@ -2782,7 +2804,7 @@ Options and flags:
         Pause its runs in flight too
 
 ==== histmersion agent manager resume
-Usage: histmersion agent manager resume 
+Usage: histmersion agent manager <id> resume
 
 Start runs again (and resume the runs a pause --runs paused)
 
@@ -2791,7 +2813,7 @@ Options and flags:
         Display this help text.
 
 ==== histmersion agent manager stop
-Usage: histmersion agent manager stop 
+Usage: histmersion agent manager <id> stop
 
 Cancel its runs in flight and its open items
 
@@ -2800,7 +2822,7 @@ Options and flags:
         Display this help text.
 
 ==== histmersion agent manager hint
-Usage: histmersion agent manager hint [--item <string>] [--once] [--suggest] <text>
+Usage: histmersion agent manager <id> hint [--item <string>] [--once] [--suggest] <text>
 
 A note its runs' fixer and skeptic read (standing unless --once); --suggest: the server's model proposes the action it asks for (hold, prioritise, skip, settings), applied only when you approve it
 
@@ -2815,7 +2837,7 @@ Options and flags:
         Let the server's planner model propose a structured action (an approval you decide)
 
 ==== histmersion agent manager enqueue
-Usage: histmersion agent manager enqueue [--priority <integer>] <kind> <target>
+Usage: histmersion agent manager <id> enqueue [--priority <integer>] <kind> <target>
 
 Drive a target: kind review|filter|extend <article> (review manager), enrich <citekey> (enrich), propose <goal> (seed), sweep|currency <goal> (watch); a settled one is re-opened
 
@@ -2826,7 +2848,7 @@ Options and flags:
         Its priority (default 10: first)
 
 ==== histmersion agent manager hold
-Usage: histmersion agent manager hold [--until <string>] [--until-source <string>] [--reason <string>] <target>
+Usage: histmersion agent manager <id> hold [--until <string>] [--until-source <string>] [--reason <string>] <target>
 
 Hold an item: until a date, until a source (DOI or citekey) is in the corpus, or until released
 
@@ -2841,7 +2863,7 @@ Options and flags:
         Why
 
 ==== histmersion agent manager release
-Usage: histmersion agent manager release <target>
+Usage: histmersion agent manager <id> release <target>
 
 Release a held item
 
@@ -2850,7 +2872,7 @@ Options and flags:
         Display this help text.
 
 ==== histmersion agent manager skip
-Usage: histmersion agent manager skip [--reason <string>] <target>
+Usage: histmersion agent manager <id> skip [--reason <string>] <target>
 
 Stop an item as skipped (its run, if any, is cancelled)
 
@@ -2861,7 +2883,7 @@ Options and flags:
         Why
 
 ==== histmersion agent manager reopen
-Usage: histmersion agent manager reopen <target>
+Usage: histmersion agent manager <id> reopen <target>
 
 Bring a settled item back (its runs counted from zero)
 
@@ -2870,7 +2892,7 @@ Options and flags:
         Display this help text.
 
 ==== histmersion agent manager priority
-Usage: histmersion agent manager priority <target> <priority>
+Usage: histmersion agent manager <id> priority <target> <priority>
 
 Set an item's priority (higher first)
 
@@ -2879,7 +2901,7 @@ Options and flags:
         Display this help text.
 
 ==== histmersion agent manager cron
-Usage: histmersion agent manager cron <cron>
+Usage: histmersion agent manager <id> cron <cron>
 
 When it fires (UTC): five fields, or @daily/@weekly/@monthly; "" clears it. A watcher re-opens its sweeps, the review manager refills, a seeding manager proposes again
 
@@ -2888,7 +2910,7 @@ Options and flags:
         Display this help text.
 
 ==== histmersion agent manager config
-Usage: histmersion agent manager config [<key=value>...]
+Usage: histmersion agent manager <id> config [<key=value>...]
 
 Replace its settings: key=value pairs (none: back to the server's defaults): max-runs, rounds, max-runs-per-article, no-progress-runs, reopen-limit, cooldown-minutes, low-water, refill-batch, max-failures, budget-usd, tags, goal, models, stale-after-days, infer-filter, min-sources, max-articles, sweeps, auto-ingest, auto-ingest-per-day, daily-usd (metered spend; 0 = none), auto-approve (its runs' plans and drafts decided by code checks), extend-min-new
 
@@ -2910,20 +2932,140 @@ Options and flags:
         Print the raw JSON response instead of Markdown
 
 ==== histmersion agent autopilot
-Usage: histmersion agent autopilot [--dry-run] [--json] [<status|on|off|drain|undrain|repair-acquire|focus|mode>] [<focus: list|pin|unpin|priority|max [goal] [n]>...]
+Usage:
+    histmersion agent autopilot status
+    histmersion agent autopilot on
+    histmersion agent autopilot off
+    histmersion agent autopilot drain
+    histmersion agent autopilot undrain
+    histmersion agent autopilot repair-acquire
+    histmersion agent autopilot focus
+    histmersion agent autopilot mode
+    histmersion agent autopilot [--json]
 
 The autopilot: status (default) — per research goal its stage, managers, sources, articles, open approvals, last activity and pace, and the watchers' ingest backlog; on — every goal gets an active seeding manager and watcher and moves from planned to reviewed by itself (within every cap, budget and plan floor); off — the seeding managers and watchers it runs are paused; repair-acquire [--dry-run] — move the acquisition items a watcher's sweep created for legal open-access works into the watchers' ingest backlog (a person's items are never touched); focus [list|pin <goal>|unpin <goal>|priority <goal> <n>|max <n|default>] — at most max-active-goals goals are active for model work (finish-first: articles to review, then to compile, then enough sources; depth-first within a tree; a person's pins and priority; then the oldest), the others' model-using items wait; ingestion is not capped; drain — nothing new starts while the runs in flight finish (the status says DRAINED once none is queued or running: safe to stop the server for a deploy); undrain — lift it (turning it on lifts it too); mode <working|finish|pause> — the two switches as the web UI's one choice: working, finish current work then pause (on and draining), pause now (off)
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+Subcommands:
+    status
+        Per research goal its stage, managers, sources, articles, approvals, activity and pace
+    on
+        Every goal gets an active seeding manager and watcher
+    off
+        Pause the seeding managers and watchers it runs
+    drain
+        Nothing new starts while the runs in flight finish
+    undrain
+        Lift the drain
+    repair-acquire
+        Move the acquisition items a watcher's sweep created for legal open-access works into the ingest backlog
+    focus
+        The goals active for model work: list | pin <goal> | unpin <goal> | priority <goal> <n> | max <n|default>
+    mode
+        working, finish (current work, then pause) or pause (now)
+
+==== histmersion agent autopilot status
+Usage: histmersion agent autopilot status [--json]
+
+Per research goal its stage, managers, sources, articles, approvals, activity and pace
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion agent autopilot on
+Usage: histmersion agent autopilot on [--json]
+
+Every goal gets an active seeding manager and watcher
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion agent autopilot off
+Usage: histmersion agent autopilot off [--json]
+
+Pause the seeding managers and watchers it runs
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion agent autopilot drain
+Usage: histmersion agent autopilot drain [--json]
+
+Nothing new starts while the runs in flight finish
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion agent autopilot undrain
+Usage: histmersion agent autopilot undrain [--json]
+
+Lift the drain
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion agent autopilot repair-acquire
+Usage: histmersion agent autopilot repair-acquire [--json] [--dry-run]
+
+Move the acquisition items a watcher's sweep created for legal open-access works into the ingest backlog
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
     --dry-run
-        repair-acquire: list what it would do, change nothing
+        List what it would do, change nothing
+
+==== histmersion agent autopilot focus
+Usage: histmersion agent autopilot focus [--json] [<list|pin|unpin|priority|max [goal] [n]>...]
+
+The goals active for model work: list | pin <goal> | unpin <goal> | priority <goal> <n> | max <n|default>
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion agent autopilot mode
+Usage: histmersion agent autopilot mode [--json] <working|finish|pause>
+
+working, finish (current work, then pause) or pause (now)
+
+Options and flags:
+    --help
+        Display this help text.
     --json
         Print the raw JSON response instead of Markdown
 
 ==== histmersion agent scheduler
-Usage: histmersion agent scheduler [--limit <integer>] [--json] [<status|queue|why|strategy>] [<why: <item>; strategy: <name|default>>...]
+Usage:
+    histmersion agent scheduler status
+    histmersion agent scheduler queue
+    histmersion agent scheduler why
+    histmersion agent scheduler strategy
+    histmersion agent scheduler [--limit <integer>] [--json]
 
 The central scheduler that admits the managers' work across every job type: status (default) — the strategy, the runs at once and plan pools, the job types' shares, what the last pass started and the queue with why each item waits; queue — only the waiting items, in the order they would start; why <item> — one item (its id, or the target of an open item): waiting behind what, running, waiting for a person, held, settled; strategy <type-balanced|goal-first|default> — switch it live (default: back to agents.scheduler.strategy)
 
@@ -2932,6 +3074,64 @@ Options and flags:
         Display this help text.
     --limit <integer>
         How many waiting items to show (status: 50, queue: 200)
+    --json
+        Print the raw JSON response instead of Markdown
+
+Subcommands:
+    status
+        The strategy, pools, shares, the last pass and the queue
+    queue
+        Only the waiting items, in the order they would start
+    why
+        One item (its id, or the target of an open item): why it waits
+    strategy
+        Switch the strategy live: type-balanced, goal-first or default (back to agents.scheduler.strategy)
+
+==== histmersion agent scheduler status
+Usage: histmersion agent scheduler status [--limit <integer>] [--json]
+
+The strategy, pools, shares, the last pass and the queue
+
+Options and flags:
+    --help
+        Display this help text.
+    --limit <integer>
+        How many waiting items to show (default 50)
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion agent scheduler queue
+Usage: histmersion agent scheduler queue [--limit <integer>] [--json]
+
+Only the waiting items, in the order they would start
+
+Options and flags:
+    --help
+        Display this help text.
+    --limit <integer>
+        How many waiting items to show (default 200)
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion agent scheduler why
+Usage: histmersion agent scheduler why [--json] <item>
+
+One item (its id, or the target of an open item): why it waits
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion agent scheduler strategy
+Usage: histmersion agent scheduler strategy [--json] <name>
+
+Switch the strategy live: type-balanced, goal-first or default (back to agents.scheduler.strategy)
+
+Options and flags:
+    --help
+        Display this help text.
     --json
         Print the raw JSON response instead of Markdown
 

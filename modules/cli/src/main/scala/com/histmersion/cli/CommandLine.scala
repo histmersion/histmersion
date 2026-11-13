@@ -83,7 +83,8 @@ object CommandLine:
     commandline.AcquireArgs.IngestEntry,
     commandline.AcquireArgs.ArchiveEntry,
     commandline.CalibreArgs.CalibreEntry,
-    commandline.PluginArgs.PluginEntry
+    commandline.PluginArgs.PluginEntry,
+    commandline.AgentArgs.AgentEntry
   )
 
   private val Globals = Set("--server", "--token")
@@ -153,7 +154,7 @@ object CommandLine:
   /** Help in decline's layout — usage, description, options and flags, subcommands — so the help text, its snapshot and
     * the generated CLI reference read as they did.
     */
-  final private class Layout(path: String) extends ScallopHelpFormatter:
+  final private class Layout(val path: String) extends ScallopHelpFormatter:
     override def formatHelp(s: Scallop, subcommandPrefix: String): String =
       def isFlag(o: SimpleOption) = o.converter.asInstanceOf[AnyRef] eq flagConverter
       val options = s.opts.collect { case o: SimpleOption if o.name != "help" && o.name != "version" => o }
@@ -171,7 +172,11 @@ object CommandLine:
       val own = options.map(usage) ++ operands.map(operand)
       val usages =
         if s.subbuilders.nonEmpty then
-          (s.subbuilders.map((name, _) => s"    $path $name") ++
+          (s.subbuilders.map((name, sub) =>
+            sub.helpFormatter match
+              case l: Layout => s"    ${l.path}"
+              case _         => s"    $path $name"
+          ) ++
             Option.when(own.nonEmpty)(s"    ${(path :: own).mkString(" ")}")).mkString("Usage:\n", "\n", "")
         else (s"Usage: $path" :: own).mkString(" ")
       def spelled(o: SimpleOption) =
@@ -263,7 +268,7 @@ object CommandLine:
     val types: Types = Types()
 
     /** An option with a value, given at most once. */
-    protected def value[T](name: String, descr: String, required: Boolean = false)(using
+    def value[T](name: String, descr: String, required: Boolean = false)(using
         c: ValueConverter[T],
         n: Named[T],
         m: Metavar[T]
@@ -272,7 +277,7 @@ object CommandLine:
       opt[T](name = name, descr = descr, argName = m.name, required = required)(using c)
 
     /** An option given any number of times. */
-    protected def values[T](name: String, descr: String, required: Boolean = false)(using
+    def values[T](name: String, descr: String, required: Boolean = false)(using
         c: ValueConverter[T],
         n: Named[T],
         m: Metavar[T]
@@ -286,21 +291,21 @@ object CommandLine:
     /** Declare subcommands, in the order the help lists them. A [[Leaf]] that holds some runs alone too: its own
       * options are the command when none of them is named (`candidates [--goal g]` beside `candidates sweep`).
       */
-    protected def holds(confs: Subcommand*): Unit = confs.foreach(addSubcommand)
+    def holds(confs: Subcommand*): Unit = confs.foreach(addSubcommand)
 
     /** A flag: present or not; `short`, a one-letter spelling (`-y`). */
-    protected def flag(name: String, descr: String, short: Char = '\u0000'): ScallopOption[Boolean] =
+    def flag(name: String, descr: String, short: Char = '\u0000'): ScallopOption[Boolean] =
       types.option(name, typeName[Boolean])
       if short == '\u0000' then opt[Boolean](name = name, descr = descr)(using flagConverter)
       else opt[Boolean](name = name, descr = descr, short = short, noshort = false)(using flagConverter)
 
     /** `--json`, as every command that offers it spells it. */
-    protected def json(): () => Cli.JsonOutput =
+    def json(): () => Cli.JsonOutput =
       val f = flag("json", Output.JsonHelp)
       () => Cli.JsonOutput(f.getOrElse(false))
 
     /** A positional argument. */
-    protected def arg[T](name: String, required: Boolean = true)(using
+    def arg[T](name: String, required: Boolean = true)(using
         c: ValueConverter[T],
         n: Named[T]
     ): ScallopOption[T] =
@@ -308,7 +313,7 @@ object CommandLine:
       trailArg[T](name = name, required = required)(using c)
 
     /** Positional arguments, any number (at least one when `required`). */
-    protected def args[T](name: String, required: Boolean = false)(using
+    def args[T](name: String, required: Boolean = false)(using
         c: ValueConverter[T],
         n: Named[T]
     ): ScallopOption[List[T]] =
@@ -318,7 +323,7 @@ object CommandLine:
     /** The shared [[Filter]] flags (`search`, `facets`, `histogram`, `geo-when`, `article list`, `events search`), in
       * their one order; the filter is read after the command line is verified.
       */
-    protected def filterFlags(): () => Filter =
+    def filterFlags(): () => Filter =
       def many(p: Filter.Docs.Param) = values[String](p.rest.value, s"${p.doc} (repeatable)")
       def year(name: String, doc: String) = value[Year](name, doc)
       val tags = many(Filter.Docs.tags)

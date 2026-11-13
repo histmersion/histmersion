@@ -109,20 +109,38 @@ object CalibreArgs:
           )
         )
 
-  final private class LeafLink() extends Leaf("histmersion calibre", "link", "Link a source to an existing Calibre entry (checks the entry exists; Calibre itself is not changed)") with SharedFlags:
+  final private class LeafLink()
+      extends Leaf(
+        "histmersion calibre",
+        "link",
+        "Link a source to an existing Calibre entry (checks the entry exists; Calibre itself is not changed)"
+      )
+      with SharedFlags:
     private val ckText_ = arg[String]("citekey")
     private val idValue_ = arg[Int]("calibre-id")
     private val json_ = json()
 
     def command: Either[Problem, Cli.Command] = Right(CalibreCmd.Command.Link(ckText_(), idValue_(), json_()))
 
-  final private class LeafPush() extends Leaf("histmersion calibre", "push", "Add a stored source's file to Calibre with title/authors/DOI/tags; --replace swaps the file of its linked entry instead (Calibre GUI must be closed)") with SharedFlags:
+  final private class LeafPush()
+      extends Leaf(
+        "histmersion calibre",
+        "push",
+        "Add a stored source's file to Calibre with title/authors/DOI/tags; --replace swaps the file of its linked entry instead (Calibre GUI must be closed)"
+      )
+      with SharedFlags:
     private val ckText_ = arg[String]("citekey")
-    private val file_ = value[String]("file", "The file to add (default: the original the server stored; without --replace, <cli.calibre.originals-dir>/<citekey>/paper.* first when present)")
-    private val replaceFlag_ = flag("replace", "Replace the file of the source's LINKED Calibre entry instead of adding a new entry")
+    private val file_ = value[String](
+      "file",
+      "The file to add (default: the original the server stored; without --replace, <cli.calibre.originals-dir>/<citekey>/paper.* first when present)"
+    )
+    private val replaceFlag_ =
+      flag("replace", "Replace the file of the source's LINKED Calibre entry instead of adding a new entry")
     private val json_ = json()
 
-    def command: Either[Problem, Cli.Command] = Right(CalibreCmd.Command.Push(ckText_(), file_.toOption, replaceFlag_.getOrElse(false), json_()))
+    def command: Either[Problem, Cli.Command] = Right(
+      CalibreCmd.Command.Push(ckText_(), file_.toOption, replaceFlag_.getOrElse(false), json_())
+    )
 
   /** `update <citekey>` rewrites one entry, `update --all [--apply]` every linked one: one or the other. */
   final private class LeafUpdate()
@@ -141,7 +159,7 @@ object CalibreArgs:
     def command: Either[Problem, Cli.Command] =
       (ck_.toOption, all_.getOrElse(false)) match
         case (Some(ck), false) if !apply_.getOrElse(false) => Right(CalibreCmd.Command.UpdateOne(ck, json_()))
-        case (None, true) => Right(CalibreCmd.Command.UpdateAll(Api.Apply(apply_.getOrElse(false)), json_()))
+        case (None, true)     => Right(CalibreCmd.Command.UpdateAll(Api.Apply(apply_.getOrElse(false)), json_()))
         case (Some(_), false) =>
           Left(
             Problem.Invalid.Inconsistent(
@@ -157,30 +175,73 @@ object CalibreArgs:
             )
           )
 
-  final private class LeafSetCmd() extends Leaf("histmersion calibre", "set", s"Set fields on a Calibre entry, e.g. --field languages:eng (settable: ${Calibre.SettableFields.mkString(", ")}; Calibre GUI must be closed)") with SharedFlags:
+  final private class LeafSetCmd()
+      extends Leaf(
+        "histmersion calibre",
+        "set",
+        s"Set fields on a Calibre entry, e.g. --field languages:eng (settable: ${Calibre.SettableFields.mkString(", ")}; Calibre GUI must be closed)"
+      )
+      with SharedFlags:
     private val idValue_ = arg[Int]("calibre-id")
     private val raw_ = values[String]("field", "<name>:<value>, repeatable", required = true)
 
     def command: Either[Problem, Cli.Command] = Right(CalibreCmd.Command.SetCmd(idValue_(), raw_()))
 
-  final private class LeafAudit() extends Leaf("histmersion calibre", "audit", "Compare every source's Calibre entry with the corpus record (title, authors, year) — read-only") with SharedFlags:
+  final private class LeafAudit()
+      extends Leaf(
+        "histmersion calibre",
+        "audit",
+        "Compare every source's Calibre entry with the corpus record (title, authors, year) — read-only"
+      )
+      with SharedFlags:
     private val json_ = json()
 
     def command: Either[Problem, Cli.Command] = Right(CalibreCmd.Command.Audit(json_()))
 
-  final private class LeafSync() extends Leaf("histmersion calibre", "sync", "Push every source with a fetched file that is not in Calibre yet (dry run unless --apply)") with SharedFlags:
+  final private class LeafSync()
+      extends Leaf(
+        "histmersion calibre",
+        "sync",
+        "Push every source with a fetched file that is not in Calibre yet (dry run unless --apply)"
+      )
+      with SharedFlags:
     private val apply_ = flag("apply", "Actually add them (Calibre GUI must be closed)")
     private val limit_ = value[Int]("limit", "Only consider this many gaps")
     private val json_ = json()
 
-    def command: Either[Problem, Cli.Command] = Right(CalibreCmd.Command.Sync(apply_.getOrElse(false), limit_.toOption, json_()))
+    def command: Either[Problem, Cli.Command] = Right(
+      CalibreCmd.Command.Sync(apply_.getOrElse(false), limit_.toOption, json_())
+    )
 
-  final private class LeafGaps() extends Leaf("histmersion calibre", "gaps", "List sources with a fetched file that are missing from Calibre; --quiet prints one line and exits 1 when there are any (the reminder hook)") with SharedFlags:
+  final private class LeafGaps()
+      extends Leaf(
+        "histmersion calibre",
+        "gaps",
+        "List sources with a fetched file that are missing from Calibre; --quiet prints one line and exits 1 when there are any (the reminder hook)"
+      )
+      with SharedFlags:
     private val quiet_ = flag("quiet", "One line, exit 1 when gaps exist (records with no fetched file never count)")
     private val limit_ = value[Int]("limit", "Max gaps to list")
     private val json_ = json()
 
-    def command: Either[Problem, Cli.Command] = Right(CalibreCmd.Command.Gaps(quiet_.getOrElse(false), limit_.toOption, json_()))
+    def command: Either[Problem, Cli.Command] = Right(
+      CalibreCmd.Command.Gaps(quiet_.getOrElse(false), limit_.toOption, json_())
+    )
 
-  final private class GroupCalibre() extends Group("histmersion", "calibre", "The local Calibre library: search, import, link, push, update, set, audit, sync, gaps"):
-    holds(LeafSearch(), LeafImport(), LeafLink(), LeafPush(), LeafUpdate(), LeafSetCmd(), LeafAudit(), LeafSync(), LeafGaps())
+  final private class GroupCalibre()
+      extends Group(
+        "histmersion",
+        "calibre",
+        "The local Calibre library: search, import, link, push, update, set, audit, sync, gaps"
+      ):
+    holds(
+      LeafSearch(),
+      LeafImport(),
+      LeafLink(),
+      LeafPush(),
+      LeafUpdate(),
+      LeafSetCmd(),
+      LeafAudit(),
+      LeafSync(),
+      LeafGaps()
+    )
