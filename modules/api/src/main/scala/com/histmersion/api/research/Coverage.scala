@@ -1,9 +1,6 @@
 package com.histmersion
 package api.research
 
-import com.histmersion.util.problem.Text.sentence
-import com.histmersion.util.problem.{Legacy, Problem}
-
 import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -61,12 +58,18 @@ object Coverage:
   object Edge:
     export com.histmersion.api.library.Edge.Kind.Wire as Kind
 
-  final case class Entry(source: Source, reason: Option[Problem])
+  final case class Entry(source: Source, reason: Option[Rationale])
       derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
-  final case class Reason(citekey: Citekey, reason: Problem) derives JsonCodec
+  /** Why an article leaves one source of its filter out, in the words of whoever left it out: a decision, not a
+    * failure.
+    */
+  type Rationale = Rationale.T
+  object Rationale extends Newtype[String, Pure]
+
+  final case class Reason(citekey: Citekey, reason: Rationale) derives JsonCodec
   object Reason:
     given Schema[Reason] = KindlingsSchema
       .derived[Reason]
@@ -81,21 +84,21 @@ object Coverage:
 
     val MaxChars = 500
 
-    def merge(current: Map[Citekey, Problem], stated: List[Reason]): Either[String, Map[Citekey, Problem]] =
-      stated.foldLeft[Either[String, Map[Citekey, Problem]]](Right(current)) { (acc, r) =>
+    def merge(current: Map[Citekey, Rationale], stated: List[Reason]): Either[String, Map[Citekey, Rationale]] =
+      stated.foldLeft[Either[String, Map[Citekey, Rationale]]](Right(current)) { (acc, r) =>
         acc.flatMap { m =>
           val ck =
             Option(r.citekey).map(_.value.trim.stripPrefix("[[").stripSuffix("]]").trim.toLowerCase).getOrElse("")
-          val text = Option(r.reason).map((_).sentence.trim.replaceAll("\\s+", " ")).getOrElse("")
+          val text = Option(r.reason).map(w => s"$w".trim.replaceAll("\\s+", " ")).getOrElse("")
           if !((Article.Links.isCitekeyShaped((ck))) == (true)) then Left(s"reason for '${r.citekey}': not a citekey")
           else if text.length > MaxChars then
             Left(s"reason for $ck: ${text.length} characters (at most $MaxChars — one sentence)")
           else if text.isEmpty then Right(m - Citekey(ck))
-          else Right(m.updated(Citekey(ck), Problem.Unclassified(Legacy.Text(text))))
+          else Right(m.updated(Citekey(ck), Rationale(s"$text")))
         }
       }
 
-    def list(m: Map[Citekey, Problem]): List[Reason] = m.toList.sortBy[String](_._1.value).map(Reason(_, _))
+    def list(m: Map[Citekey, Rationale]): List[Reason] = m.toList.sortBy[String](_._1.value).map(Reason(_, _))
 
   final case class Source(
       citekey: Citekey,

@@ -156,8 +156,8 @@ class ArticlePatchesSuite extends munit.FunSuite:
     assertEquals(
       p.reasons,
       List(
-        Coverage.Reason(Citekey("graves2017_greek"), Problem.Unclassified(Legacy.Text("retells the myths"))),
-        Coverage.Reason(Citekey("nilsson1927_minoan"), Problem.Unclassified(Legacy.Text("")))
+        Coverage.Reason(Citekey("graves2017_greek"), Coverage.Rationale("retells the myths")),
+        Coverage.Reason(Citekey("nilsson1927_minoan"), Coverage.Rationale(""))
       )
     )
     // no flag: the --json filter stands

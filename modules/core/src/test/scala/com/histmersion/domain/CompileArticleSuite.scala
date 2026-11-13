@@ -204,7 +204,7 @@ class CompileArticleSuite extends munit.FunSuite:
       List(
         Coverage.Reason(
           com.histmersion.api.library.Citekey("c2001_old"),
-          Problem.Unclassified(Legacy.Text("about Egypt"))
+          Coverage.Rationale("about Egypt")
         )
       )
     )
@@ -264,7 +264,7 @@ class CompileArticleSuite extends munit.FunSuite:
     )
     val why = Coverage.Reason(
       com.histmersion.api.library.Citekey("b2024_iso"),
-      Problem.Unclassified(Legacy.Text("Its isotopes speak to a later period."))
+      Coverage.Rationale("Its isotopes speak to a later period.")
     )
     val (d, _) = checkDraft(
       draft(Article.Body(noIso), reasons = List(why)),
@@ -283,23 +283,23 @@ class CompileArticleSuite extends munit.FunSuite:
       List(
         Coverage.Reason(
           com.histmersion.api.library.Citekey("b2024_iso"),
-          Problem.Unclassified(Legacy.Text("Its isotopes speak to a later period."))
+          Coverage.Rationale("Its isotopes speak to a later period.")
         ),
         Coverage.Reason(
           com.histmersion.api.library.Citekey("c2001_old"),
-          Problem.Unclassified(Legacy.Text("about Egypt"))
+          Coverage.Rationale("about Egypt")
         )
       ).sortBy(_.citekey.value)
     )
     // the writer's reason wins over the extraction's; a reason for a cited source or one outside the table is a problem
     val bad = List(
       Coverage
-        .Reason(com.histmersion.api.library.Citekey("[[a2019_tin]]"), Problem.Unclassified(Legacy.Text("not needed"))),
+        .Reason(com.histmersion.api.library.Citekey("[[a2019_tin]]"), Coverage.Rationale("not needed")),
       Coverage
-        .Reason(com.histmersion.api.library.Citekey("zz1999_nope"), Problem.Unclassified(Legacy.Text("never read"))),
+        .Reason(com.histmersion.api.library.Citekey("zz1999_nope"), Coverage.Rationale("never read")),
       Coverage.Reason(
         com.histmersion.api.library.Citekey("c2001_old"),
-        Problem.Unclassified(Legacy.Text("covers Egypt only"))
+        Coverage.Rationale("covers Egypt only")
       )
     )
     val ps2 = checkDraft(
@@ -338,7 +338,7 @@ class CompileArticleSuite extends munit.FunSuite:
       List(
         Coverage.Reason(
           com.histmersion.api.library.Citekey("c2001_old"),
-          Problem.Unclassified(Legacy.Text("covers Egypt only"))
+          Coverage.Rationale("covers Egypt only")
         )
       )
     )

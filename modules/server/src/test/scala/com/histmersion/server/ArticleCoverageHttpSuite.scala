@@ -139,7 +139,7 @@ class ArticleCoverageHttpSuite extends DbSuite:
         assertEquals((c.total, c.checked), (5, 5))
         assertEquals(c.cited.map(_.citekey), List(Cited1, Cited2).sortBy[String](_.value))
         assertEquals(
-          c.notUsed.map(e => e.source.citekey -> e.reason.map(_.sentence)),
+          c.notUsed.map(e => e.source.citekey -> e.reason.map(w => s"$w")),
           List(Why -> Some("About Egypt, not the Aegean"), NoWhy -> None, Dispute -> None).sortBy[String](_._1.value)
         )
         assertEquals(c.citedOutside, List(Outside))

@@ -2644,7 +2644,7 @@ object ReviewArticle:
           val ck = com.histmersion.api.library.Citekey(
             Option(r.citekey).map(_.value.trim.stripPrefix("[[").stripSuffix("]]").trim.toLowerCase).getOrElse("")
           )
-          val removes = Option(r.reason).forall(_.sentence.trim.isEmpty)
+          val removes = Option(r.reason).forall(w => s"$w".trim.isEmpty)
           if removes && stored.contains(ck) then Right(r.modify(_.citekey).setTo(ck))
           else if removes then Left(s"reason for [[$ck]]: empty, and no reason is stored for it")
           else if !inFilter(ck) then

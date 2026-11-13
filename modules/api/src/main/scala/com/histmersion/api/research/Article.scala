@@ -4,6 +4,7 @@ import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.Newtype
+import com.histmersion.api.research.Coverage.Rationale
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.catalogue.Period
@@ -38,7 +39,7 @@ final case class Article(
     period: Option[Period] = None,
     updatedAt: Option[Article.UpdatedAt] = None,
     filter: Option[Article.Filter] = None,
-    reasons: Map[com.histmersion.api.library.Citekey, Problem] = Map.empty
+    reasons: Map[com.histmersion.api.library.Citekey, Coverage.Rationale] = Map.empty
 )
 
 object Article:
@@ -122,7 +123,7 @@ object Article:
         hits: scala.List[com.histmersion.api.research.Coverage.Source],
         citedInFilter: Set[com.histmersion.api.library.Citekey],
         cited: scala.List[com.histmersion.api.library.Citekey],
-        reasons: Map[com.histmersion.api.library.Citekey, Problem],
+        reasons: Map[com.histmersion.api.library.Citekey, Rationale],
         edges: scala.List[com.histmersion.api.research.Coverage.Edge],
         searches: scala.List[CoverageSearch]
     ): Coverage =
@@ -174,7 +175,7 @@ object Article:
     def unplacedAfter(
         c: Coverage,
         cited: Set[com.histmersion.api.library.Citekey],
-        reasons: Map[com.histmersion.api.library.Citekey, Problem]
+        reasons: Map[com.histmersion.api.library.Citekey, Rationale]
     ): scala.List[com.histmersion.api.library.Citekey] =
       c.notUsed.map(_.source.citekey).filterNot(ck => cited(ck) || reasons.contains(ck))
 
@@ -230,8 +231,8 @@ object Article:
 
     private def statusNote(s: Source.Status): String = if Stated(s) then (s" (${s.wire})") else ("")
 
-    private def endSentence(s: Problem): String =
-      val t = s.sentence
+    private def endSentence(s: Rationale): String =
+      val t = s"$s"
       if t.endsWith(".") || t.endsWith("?") || t.endsWith("!") then t else s"$t."
 
     def method(c: Coverage): Method =

@@ -922,9 +922,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
         .patch(
           Slug("zzagent_x"),
           Article
-            .Patch(reasons =
-              List(Coverage.Reason(ApiCk2, Problem.Unclassified(Legacy.Text("a later study, cited elsewhere"))))
-            )
+            .Patch(reasons = List(Coverage.Reason(ApiCk2, Coverage.Rationale("a later study, cited elsewhere"))))
         )
         .isRight
     )

@@ -391,7 +391,7 @@ object ArticleService:
       val rewritten = moved.articles.keys.toList.sorted.filter { s =>
         val a = moved.articles(s).article
         (a.body.value + " " + a.summary
-          .fold("")(_.value) + " " + a.reasons.map((k, v) => s"$k ${v.sentence}").mkString(" ")).toLowerCase
+          .fold("")(_.value) + " " + a.reasons.map((k, v) => s"$k $v").mkString(" ")).toLowerCase
           .contains(needle)
       }
       @tailrec def loop(

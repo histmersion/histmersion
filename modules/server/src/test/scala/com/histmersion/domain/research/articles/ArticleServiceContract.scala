@@ -36,7 +36,7 @@ abstract class ArticleServiceContract extends ResearchStoreSuite:
       Some(Period(Year(-1600), Year(-1400))),
       None,
       Some(Article.Filter(tags = List(Filter.Tags("zr-oracle")))),
-      Map(Citekey("zrdelta2010_survey") -> Problem.Unclassified(Legacy.Text("Region-wide.")))
+      Map(Citekey("zrdelta2010_survey") -> Coverage.Rationale("Region-wide."))
     )
 
   private val Walls = Slug("zr_walls")
@@ -56,7 +56,7 @@ abstract class ArticleServiceContract extends ResearchStoreSuite:
     val loaded = s.articles.load(Walls).get
     assertEquals(loaded.updatedAt, Some(token))
     assertEquals(loaded.filter, Some(Article.Filter(tags = List(Filter.Tags("zr-oracle")))))
-    assertEquals(loaded.reasons.view.mapValues(_.sentence).toMap, Map("zrdelta2010_survey" -> "Region-wide."))
+    assertEquals(loaded.reasons.view.mapValues(w => s"$w").toMap, Map("zrdelta2010_survey" -> "Region-wide."))
     assertEquals(loaded.period, Some(Period(Year(-1600), Year(-1400))))
     val view = s.articles.view(Walls).get
     assertEquals(view.article.updatedAt, Some(token))

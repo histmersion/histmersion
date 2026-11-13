@@ -1,9 +1,6 @@
 package com.histmersion
 package domain.research.articles
 
-import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
-
 import com.histmersion.api.given
 
 import com.histmersion.util.data.mirror.Frontmatter as MirrorFrontmatter
@@ -12,7 +9,7 @@ import scala.compiletime.asMatchable
 import scala.jdk.CollectionConverters.*
 import com.histmersion.api.catalogue.{Period, Year}
 import com.histmersion.api.library.Citekey
-import com.histmersion.api.research.{Article, Articles}
+import com.histmersion.api.research.{Article, Articles, Coverage}
 
 /** `wiki/<kind>/<slug>.md` ⇄ [[Article]] — the same frontmatter-plus-body shape as [[Export.note]] /
   * [[Frontmatter.parseNote]], for articles.
@@ -33,7 +30,7 @@ object ArticleNote:
   def render(a: Article, generated: Option[String] = None): String =
     val reasons = Option.when(a.reasons.nonEmpty) {
       val r = new java.util.LinkedHashMap[String, Any]()
-      a.reasons.toList.sortBy(_._1.value).foreach((k, v) => r.put(k.value, v.sentence))
+      a.reasons.toList.sortBy(_._1.value).foreach((k, v) => r.put(k.value, s"$v"))
       "reasons" -> r
     }
     val fields = List(
@@ -124,7 +121,7 @@ object ArticleNote:
             r.asScala.toList
               .flatMap((k, v) => Option(v).map(x => k.toString.trim.toLowerCase -> x.toString.trim))
               .filter((k, v) => k.nonEmpty && v.nonEmpty)
-              .map((k, v) => Citekey(k) -> Problem.Unclassified(Legacy.Text(v)))
+              .map((k, v) => Citekey(k) -> Coverage.Rationale(s"$v"))
               .toMap
           }
           .getOrElse(Map.empty)
