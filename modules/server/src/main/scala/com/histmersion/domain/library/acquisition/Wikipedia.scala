@@ -27,8 +27,6 @@ final class Wikipedia(cfg: AcquireConfig, http: Http) extends WikiClient:
               "redirects" -> "1"
             )
           )
-          .left
-          .map(_.problem)
           .flatMap { j =>
             AcquireParse
               .wikiText(j)

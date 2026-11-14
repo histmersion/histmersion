@@ -18,27 +18,24 @@ final class SttpHttp(policy: PolicyHttp) extends Http:
   def bytes(
       url: Http.Url,
       headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
-  ): Either[Http.Failure, HttpAnswer.Body] =
-    policy.bytes(HttpTransport.Url(url.value), headers).left.map(failure)
+  ): Either[Problem, HttpAnswer.Body] =
+    policy.bytes(HttpTransport.Url(url.value), headers)
 
   override def once(
       url: Http.Url,
       headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
-  ): Either[Http.Failure, HttpAnswer] =
-    policy.once(HttpTransport.Url(url.value), headers).left.map(failure)
+  ): Either[Problem, HttpAnswer] =
+    policy.once(HttpTransport.Url(url.value), headers)
 
-  private def failure(why: Problem): Http.Failure =
-    why.answered.fold(Http.Failure.Transport(why))(code => Http.Failure.Status(HttpAnswer.Code(code.value), why))
-
-  def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Failure, Http.Text] =
+  def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Problem, Http.Text] =
     bytes(url, headers).map(b => Http.Text(new String(b.value, "UTF-8")))
 
-  def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Failure, Json] =
+  def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Problem, Json] =
     text(url, headers).flatMap(s =>
       RawJson
         .parse(s.value)
         .left
-        .map(e => Http.Failure.Transport(Problem.Unclassified(Legacy.Text(s"$url returned unparseable JSON: $e"))))
+        .map(e => Problem.Unclassified(Legacy.Text(s"$url returned unparseable JSON: $e")))
     )
 
 object SttpHttp:

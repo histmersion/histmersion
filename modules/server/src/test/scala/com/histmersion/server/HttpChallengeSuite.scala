@@ -65,7 +65,7 @@ class HttpChallengeSuite extends munit.FunSuite:
         val r =
           SttpHttp(cfg, tries = PolicyHttp.Tries(3), clock = () => java.time.Instant.now(java.time.Clock.systemUTC()))
             .bytes(Http.Url(s"$base$path"))
-        assert(r.left.exists(_.problem.sentence.contains("bot-protection challenge")), s"$path: $r")
+        assert(r.left.exists(_.sentence.contains("bot-protection challenge")), s"$path: $r")
       assertEquals(seen.size, 2)
     }
 
@@ -74,7 +74,7 @@ class HttpChallengeSuite extends munit.FunSuite:
       val r =
         SttpHttp(cfg, tries = PolicyHttp.Tries(3), clock = () => java.time.Instant.now(java.time.Clock.systemUTC()))
           .bytes(Http.Url(s"$base/challenge-403"))
-      assert(r.left.exists(_.problem.sentence.contains("bot-protection challenge")), r.toString)
+      assert(r.left.exists(_.sentence.contains("bot-protection challenge")), r.toString)
       assertEquals(seen.size, 1)
     }
 
@@ -83,7 +83,7 @@ class HttpChallengeSuite extends munit.FunSuite:
       val r =
         SttpHttp(cfg, tries = PolicyHttp.Tries(3), clock = () => java.time.Instant.now(java.time.Clock.systemUTC()))
           .bytes(Http.Url(s"$base/challenge-503"))
-      assert(r.left.exists(_.problem.sentence.contains("bot-protection challenge")), r.toString)
+      assert(r.left.exists(_.sentence.contains("bot-protection challenge")), r.toString)
       assertEquals(seen.size, 1)
     }
 

@@ -64,7 +64,7 @@ G44	plugins/gazetteers	main	22
 G44	plugins/gazetteers	test	62
 G44	plugins/media	main	97
 G44	plugins/media	test	57
-G44	server	main	10230
+G44	server	main	10225
 G44	server	test	3784
 G44	upstreams	main	139
 G44	upstreams	test	44
@@ -263,8 +263,8 @@ G60fromString	plugins/calibre	test	38
 G60fromString	plugins/media	main	60
 G60fromString	plugins/media	test	55
 G60fromString	problem	main	2
-G60fromString	server	main	748
-G60fromString	server	test	305
+G60fromString	server	main	738
+G60fromString	server	test	303
 G60fromString	web	main	58
 G60fromString	web	test	27
 G60unrecognised	api	main	1

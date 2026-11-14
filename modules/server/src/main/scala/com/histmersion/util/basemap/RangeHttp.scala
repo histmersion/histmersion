@@ -1,6 +1,6 @@
 package com.histmersion
 package util.basemap
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 
 import com.histmersion.util.storage.Reservation
 import io.github.iltotore.iron.constraint.any.Pure
@@ -29,7 +29,7 @@ trait RangeHttp:
 
   /** A whole small file (one map tile): `None` when the server has none (404, or 403 from a bucket). */
   def file(url: RangeHttp.Url): Either[Problem, Option[RangeHttp.ResponseBytes]] = Left(
-    Problem.Unclassified(Legacy.Text(s"${url.value}: whole files are not read by this client"))
+    Problem.Refused.Policy(Problem.Refused.Rule.RangesOnly)
   )
 
 object RangeHttp:
@@ -42,7 +42,16 @@ object RangeHttp:
   type StatusCode = StatusCode.T
   object StatusCode extends Newtype[Int, Pure]
   type Url = Url.T
-  object Url extends Newtype[String, Pure]
+  object Url extends Newtype[String, Pure]:
+    extension (url: Url)
+      /** The upstream a failed request names: the URL's host (the URL itself when it has none). */
+      def upstream: Problem.Upstream.Name =
+        Problem.Upstream.Name(
+          s"${scala.util.Try(java.net.URI.create(s"$url").getHost).toOption.flatMap(Option(_)).getOrElse(s"$url")}"
+        )
+
+      /** The URL as a failed request names it. */
+      def address: Problem.Upstream.Url = Problem.Upstream.Url(s"$url")
 
   /** Pure: `Content-Range: bytes 0-99/12345` → `(0, 99, Some(12345))`. */
 
@@ -71,13 +80,18 @@ object RangeHttp:
     val count: Long = length.value
     if code.value == 200 then
       Left(
-        Problem.Unclassified(
-          Legacy.Text(
-            s"${url.value} ignores range requests (answered 200 to a range) — refused rather than download the whole file"
-          )
+        Problem.Upstream.BadReply.here(
+          url.upstream,
+          url.address,
+          Problem.Upstream.Shape.Range,
+          External.Reported.of("HTTP 200: the whole file, refused rather than downloaded")
         )
       )
-    else if code.value != 206 then Left(Problem.Unclassified(Legacy.Text(s"${url.value}: HTTP ${code.value}")))
+    else if code.value != 206 then
+      Left(
+        Problem.Upstream.Http
+          .here(url.upstream, url.address, Problem.Upstream.Status(code.value), External.ReplyExcerpt(""))
+      )
     else
       range.flatMap(contentRange) match
         // a range past the end of the file is answered up to its end
@@ -85,10 +99,17 @@ object RangeHttp:
           Right(total)
         case Some((a, b, total)) =>
           Left(
-            Problem.Unclassified(
-              Legacy.Text(
-                s"${url.value} answered bytes ${a.value}-${b.value}/${total.fold("*")(_.value.toString)} for $want-${want + count - 1}"
+            Problem.Upstream.BadReply.here(
+              url.upstream,
+              url.address,
+              Problem.Upstream.Shape.Range,
+              External.Reported.of(
+                s"bytes ${a.value}-${b.value}/${total.fold("*")(_.value.toString)} for $want-${want + count - 1}"
               )
             )
           )
-        case None => Left(Problem.Unclassified(Legacy.Text(s"${url.value} sent no Content-Range")))
+        case None =>
+          Left(
+            Problem.Upstream.BadReply
+              .here(url.upstream, url.address, Problem.Upstream.Shape.Range, External.Reported.of("no Content-Range"))
+          )
