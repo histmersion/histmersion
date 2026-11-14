@@ -276,6 +276,34 @@ object Managers:
     type ExtendMinNew = ExtendMinNew.T
     object ExtendMinNew extends Newtype[Int, Pure]
 
+    /** The settings `parse` reads, by their kebab-case names (each also has a camelCase spelling). */
+    val Keys: Vector[String] = Vector(
+      "max-runs",
+      "max-open",
+      "rounds",
+      "max-runs-per-article",
+      "no-progress-runs",
+      "reopen-limit",
+      "cooldown-minutes",
+      "low-water",
+      "refill-batch",
+      "max-failures",
+      "stale-after-days",
+      "min-sources",
+      "max-articles",
+      "auto-ingest-per-day",
+      "infer-filter",
+      "auto-ingest",
+      "auto-approve",
+      "extend-min-new",
+      "sweeps",
+      "daily-usd",
+      "budget-usd",
+      "include-tags",
+      "include-goal",
+      "models"
+    )
+
     def parse(kvs: List[Spec]): Either[Problems, ManagerConfig] =
       kvs.foldLeft[Either[Problems, ManagerConfig]](Right(ManagerConfig())) { (acc, kv) =>
         acc.flatMap { c =>
@@ -382,7 +410,7 @@ object Managers:
                     .partitionMap(identity) match
                     case (Nil, ms) => Right(c.copy(models = Some(ms)))
                     case (errs, _) => Left(Problems.from(errs.toVector).getOrElse(errs.head).at(Field(s"$k")))
-                case other => Left(Invalid.Unknown.here(TypeName.named[ManagerConfig], Raw(s"$other"), Vector.empty))
+                case other => Left(Invalid.Undeclared.here(Field(s"$other"), Keys.map(key => Field(s"$key"))))
             case _ => Left(Invalid.Unreadable.here(TypeName.of(Spec), Raw(s"$kv"), Vector(Raw("max-runs=2"))))
         }
       }

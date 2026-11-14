@@ -1,6 +1,7 @@
 package com.histmersion
 package api
 
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -116,8 +117,12 @@ class BackupSuite extends munit.FunSuite:
     assert(Backup.safeName(Backup.Name("a" * 200 + ".dump")).isLeft)
 
   test("safeName's message says what is wrong"):
-    assert(Backup.safeName(Backup.Name("../x.dump")).left.exists(_.sentence.contains("no directories")))
-    assert(Backup.safeName(Backup.Name("x.sql")).left.exists(_.sentence.contains(".dump")))
+    def unreadable(raw: String) = Backup.safeName(Backup.Name(raw)).left.exists {
+      case Problem.Invalid.Unreadable(_, r, examples, _) => r == Problem.Raw(raw) && examples.nonEmpty
+      case _                                             => false
+    }
+    assert(unreadable("../x.dump"))
+    assert(unreadable("x.sql"))
 
   // ── JDBC URL → pg_dump arguments ─────────────────────────────────────────────────────────────
 
@@ -187,10 +192,20 @@ class BackupSuite extends munit.FunSuite:
     )
     assert(out.isLeft, out.toString)
     assert(out.left.exists(_.sentence.contains("could not open input file")), out.toString)
-    assert(out.left.exists(_.sentence.contains("exit 1")), out.toString)
+    assert(
+      out.left.exists {
+        case Problem.Io.Process(tool, Problem.Io.Ending.Exited(code, _)) =>
+          tool == Problem.Io.Tool("pg_restore") && code == Problem.Io.ExitCode(1)
+        case _ => false
+      },
+      out.toString
+    )
 
   test("restoreOutcome: a failure with no output at all still says something"):
-    assert(Backup.restoreOutcome(Backup.ExitCode(2), Nil).left.exists(_.sentence.contains("exit 2")))
+    assert(Backup.restoreOutcome(Backup.ExitCode(2), Nil).left.exists {
+      case Problem.Io.Process(_, Problem.Io.Ending.Exited(code, _)) => code == Problem.Io.ExitCode(2)
+      case _                                                        => false
+    })
 
   test("restoreOutcome: warnings keep only the notable lines, trimmed"):
     val out = Backup.restoreOutcome(

@@ -197,7 +197,7 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
       )
     )
     assert(r.resolutionErrors.exists(e => e.value.startsWith("S-00000000") && e.value.contains("stale")))
-    assert(r.resolutionErrors.exists(_.value.contains("'sideways' is not a decision")))
+    assert(r.resolutionErrors.exists(_.value.contains("unknown MergeDecision.Kind 'sideways'")), r.resolutionErrors)
     assertEquals(r.resolutionErrors.size, 5, r.resolutionErrors.mkString("\n"))
     // a rename must be a free citekey
     val taken = plan(res = resolve(coll.id -> MergeResolution.Decision("rename-right:page1959_history"))).plan

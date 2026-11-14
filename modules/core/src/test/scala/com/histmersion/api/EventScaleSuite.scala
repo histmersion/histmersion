@@ -3,6 +3,7 @@ package api
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
 
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -164,18 +165,22 @@ class EventScaleSuite extends munit.FunSuite:
     assertEquals(EventGeometry.check(EventGeometry.Geojson(s"  $pt\n")), Right(pt))
     assert(EventGeometry.check(EventGeometry.Geojson("""{"type":"MultiPolygon","coordinates":[]}""")).isRight)
     val wkt = EventGeometry.check(EventGeometry.Geojson("POINT(36.5 34.55)"))
-    assert(wkt.left.exists(_.sentence.contains("not WKT")), wkt.toString)
-    assert(
-      EventGeometry
-        .check(EventGeometry.Geojson("srid=4326;polygon((0 0,1 0,1 1,0 0))"))
-        .left
-        .exists(_.sentence.contains("not WKT"))
-    )
-    assert(
-      EventGeometry
-        .check(EventGeometry.Geojson("""{"type":"Feature","geometry":null}"""))
-        .left
-        .exists(_.sentence.contains("not a Feature"))
+    def unreadable(e: Either[Problem, ?]) = e.left.exists {
+      case Problem.Invalid.Unreadable(t, _, _, _) => t == Problem.TypeName.of(EventGeometry.Geojson)
+      case _                                      => false
+    }
+    assert(unreadable(wkt), wkt.toString)
+    assert(unreadable(EventGeometry.check(EventGeometry.Geojson("srid=4326;polygon((0 0,1 0,1 1,0 0))"))))
+    assertEquals(
+      EventGeometry.check(EventGeometry.Geojson("""{"type":"Feature","geometry":null}""")),
+      Left(
+        Problem.Invalid.Wrapped(
+          Problem.TypeName.of(EventGeometry.Geojson),
+          Problem.Raw("Feature"),
+          Problem.Field("geometry"),
+          Vector(Problem.Field("geometry"))
+        )
+      )
     )
     assert(
       EventGeometry.check(EventGeometry.Geojson("""{"type":"Circle"}""")).left.exists(_.sentence.contains("'Circle'"))
@@ -184,10 +189,11 @@ class EventScaleSuite extends munit.FunSuite:
       EventGeometry
         .check(EventGeometry.Geojson("""{"coordinates":[1,2]}"""))
         .left
-        .exists(_.sentence.contains("no \"type\""))
+        .toOption
+        .contains(Problem.Invalid.Missing(Problem.Field("type"), Vector(Problem.Field("geometry"))))
     )
     assert(EventGeometry.check(EventGeometry.Geojson("[1,2]")).isLeft)
-    assert(EventGeometry.check(EventGeometry.Geojson("near Kadesh")).left.exists(_.sentence.contains("not GeoJSON")))
+    assert(unreadable(EventGeometry.check(EventGeometry.Geojson("near Kadesh"))))
 
   test("EventGeo.outer: the outer span, one known end alone, nothing when undated"):
     assertEquals(
@@ -206,8 +212,14 @@ class EventScaleSuite extends munit.FunSuite:
     assertEquals((TimeSpan(endFrom = Some(Year(-1110)), notAfter = Some(Year(-1100)))).outer, Some((-1110L, -1100L)))
     // points recorded out of order are ordered, not inverted
     assertEquals((TimeSpan(notBefore = Some(Year(-1000)), notAfter = Some(Year(-1100)))).outer, Some((-1100L, -1000L)))
-    assertEquals(EventGeo.missingEnd(TimeSpan(notBefore = Some(Year(-1200)))).map(_.sentence), Some("end not recorded"))
-    assertEquals(EventGeo.missingEnd(TimeSpan(endFrom = Some(Year(-1200)))).map(_.sentence), Some("start not recorded"))
+    assertEquals(
+      EventGeo.missingEnd(TimeSpan(notBefore = Some(Year(-1200)))),
+      Some(Problem.Invalid.Missing.here(Problem.Field("end")))
+    )
+    assertEquals(
+      EventGeo.missingEnd(TimeSpan(endFrom = Some(Year(-1200)))),
+      Some(Problem.Invalid.Missing.here(Problem.Field("start")))
+    )
     assertEquals(EventGeo.missingEnd(TimeSpan(Some(Year(-1300)), None, None, Some(Year(-1250)))), None)
     assertEquals(EventGeo.missingEnd(TimeSpan()), None)
 
