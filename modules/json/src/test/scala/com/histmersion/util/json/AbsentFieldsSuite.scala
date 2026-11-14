@@ -53,7 +53,9 @@ class AbsentFieldsSuite extends munit.FunSuite:
       Right(Shape("a", Some("n"), Inner("w"), List("t"), 1, List("x")))
     )
 
-  test("an empty list where the default is not empty reads as the default, so a record's collection defaults are empty"):
+  test(
+    "an empty list where the default is not empty reads as the default, so a record's collection defaults are empty"
+  ):
     // jsoniter-scala's rule, which Kindlings follows: what is written as [] does not read back as empty
     assertEquals(
       RawJson.decode[Shape]("""{"name":"a","inner":{"word":"w"},"tags":[],"more":[]}""").map(_.more),
@@ -68,13 +70,19 @@ class AbsentFieldsSuite extends munit.FunSuite:
 
   test("an absent required field is missing, named in the message"):
     assertEquals(
-      RawJson.decode[Shape]("""{"inner":{"word":"w"},"tags":[]}""").left.map(_.contains("missing required field \"name\"")),
+      RawJson
+        .decode[Shape]("""{"inner":{"word":"w"},"tags":[]}""")
+        .left
+        .map(_.contains("missing required field \"name\"")),
       Left(true)
     )
 
   test("an absent collection without a default is missing, as any other required field"):
     assertEquals(
-      RawJson.decode[Shape]("""{"name":"a","inner":{"word":"w"}}""").left.map(_.contains("missing required field \"tags\"")),
+      RawJson
+        .decode[Shape]("""{"name":"a","inner":{"word":"w"}}""")
+        .left
+        .map(_.contains("missing required field \"tags\"")),
       Left(true)
     )
 
@@ -92,6 +100,9 @@ class AbsentFieldsSuite extends munit.FunSuite:
     assert(RawJson.decode[Shape](extra)(using Shape.strict).isLeft)
 
   test("an enum case without fields is an empty object, or a word where the codec writes words"):
-    assertEquals(com.github.plokhotnyuk.jsoniter_scala.core.writeToString(Coded(Code.Read))(using Coded.words), """{"code":"Read"}""")
+    assertEquals(
+      com.github.plokhotnyuk.jsoniter_scala.core.writeToString(Coded(Code.Read))(using Coded.words),
+      """{"code":"Read"}"""
+    )
     assertEquals(Kind.Plain.asJson.noSpaces, """{"Plain":{}}""")
     assertEquals(RawJson.decode[Kind]("""{"Named":{"name":"x"}}"""), Right(Kind.Named("x")))
