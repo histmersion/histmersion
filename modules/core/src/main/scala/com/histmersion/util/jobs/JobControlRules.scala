@@ -1,6 +1,7 @@
 package com.histmersion
 package util.jobs
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.Problem.{Conflict, Raw}
 
 import com.histmersion.api.jobs.{JobInfo, JobState}
 import io.github.iltotore.iron.constraint.any.Pure
@@ -18,36 +19,25 @@ object JobControlRules:
     * says why it cannot be done. `resumable`: this server holds the paused job's way to go on (a restart loses it).
     */
   def decide(job: JobInfo, action: JobAction, resumable: Boolean): Either[Problem, JobControlStep] =
+    def refused(control: Conflict.Control): Either[Problem, JobControlStep] =
+      Left(Conflict.Job(Raw(s"${job.id}"), Conflict.State(s"${job.status}"), control))
     if RegisteredJobKinds.all.ownControl(job.kind) then Right(JobControlStep.Run(action))
     else if !stoppable(job.kind) then
-      Left(
-        Problem.Unclassified(
-          Legacy.Text(s"a ${job.kind} job cannot be paused or cancelled: it runs as one piece and ends by itself")
-        )
-      )
+      refused(Conflict.Control.OnePiece(Raw(s"${job.kind}")))
     else
       (action, JobState.parse(job.status)) match
-        case (_, None)                    => Left(Problem.Unclassified(Legacy.Text(s"job ${job.id} is ${job.status}")))
-        case (_, Some(s)) if s.isTerminal =>
-          Left(Problem.Unclassified(Legacy.Text(s"job ${job.id} has ended (${s.wire})")))
+        case (_, None)                    => refused(Conflict.Control.Unrecognised)
+        case (_, Some(s)) if s.isTerminal => refused(Conflict.Control.Ended)
         case (JobAction.Pause, Some(JobState.Running)) => Right(JobControlStep.RequestStop(JobStop.Pause))
-        case (JobAction.Pause, Some(JobState.Paused))  =>
-          Left(Problem.Unclassified(Legacy.Text(s"job ${job.id} is already paused")))
-        case (JobAction.Pause, Some(_)) =>
-          Left(Problem.Unclassified(Legacy.Text(s"job ${job.id} has not started yet: cancel it instead")))
+        case (JobAction.Pause, Some(JobState.Paused))  => refused(Conflict.Control.AlreadyPaused)
+        case (JobAction.Pause, Some(_))                => refused(Conflict.Control.NotStarted)
         case (JobAction.Cancel, Some(JobState.Running)) => Right(JobControlStep.RequestStop(JobStop.Cancel))
         case (JobAction.Cancel, Some(_))                => Right(JobControlStep.CancelNow)
         case (JobAction.Resume, Some(JobState.Paused))  =>
           if resumable then Right(JobControlStep.Resume)
           else
-            Left(
-              Problem.Unclassified(
-                Legacy.Text(
-                  s"job ${job.id} was paused before the server restarted: start it again — it goes on where it stopped"
-                )
-              )
-            )
-        case (JobAction.Resume, Some(_)) => Left(Problem.Unclassified(Legacy.Text(s"job ${job.id} is not paused")))
+            refused(Conflict.Control.PausedBeforeRestart)
+        case (JobAction.Resume, Some(_)) => refused(Conflict.Control.NotPaused)
 
   /** The progress line a stopped job keeps: what it had done, and that it was paused or cancelled. */
   def stoppedLine(stop: JobStop, last: Option[JobInfo.Progress]): JobInfo.Progress =

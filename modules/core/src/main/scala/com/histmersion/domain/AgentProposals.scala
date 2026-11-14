@@ -1,8 +1,8 @@
 package com.histmersion
 package domain
 
-import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.Problem.{Content, Field, Invalid, Raw, Where}
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.StoredIdCodecs.given
 import com.histmersion.api.library.{EdgesPatch, MetadataPatch}
@@ -79,7 +79,16 @@ object AgentProposals:
     case Ask
 
     /** Nothing to do (the source already has that status). */
-    case Skip(reason: Problem)
+    case Skip(reason: Route.Unneeded)
+
+  object Route:
+    /** Why a proposal needs nothing done. */
+    enum Unneeded derives CanEqual:
+      /** The source already has the proposed status (`status`; None: it has none, and none is proposed). */
+      case Already(status: Option[Source.Status])
+
+      /** A kind of approval that changes no source (`kind`: a plan, an article). */
+      case NotSourceChange(kind: Approval.Kind)
 
   /** A status is APPLIED without a person only when it fills an `unassessed` source with `current` or `foundational` —
     * the rule `enrich-source` has followed since P1 — or when status changes are configured `auto`. Every edge follows
@@ -89,7 +98,7 @@ object AgentProposals:
     p.kind match
       case Approval.Kind.StatusChange =>
         if p.status.isEmpty || p.status == current then
-          Route.Skip(Problem.Unclassified(Legacy.Text(s"already ${current.fold("?")(_.wire)}")))
+          Route.Skip(Route.Unneeded.Already(current))
         else if current.contains(Source.Status.Unassessed) &&
           p.status.exists(s => s == Source.Status.Current || s == Source.Status.Foundational)
         then Route.Apply
@@ -97,7 +106,7 @@ object AgentProposals:
         else Route.Ask
       case Approval.Kind.Edge =>
         if edgeMode == Approval.Mode.Auto then Route.Apply else Route.Ask
-      case k => Route.Skip(Problem.Unclassified(Legacy.Text(s"${k.wire} is not a source change")))
+      case k => Route.Skip(Route.Unneeded.NotSourceChange(k))
 
   // ── from a model's answer ───────────────────────────────────────────────────────────────────────
 
@@ -158,37 +167,28 @@ object AgentProposals:
       minRatio: AgentVerify.MinRatio
   ): Either[Problem, Proposal] =
     val raw = a.citekey.value.trim
-    val label = s"proposal for ${if raw.isEmpty then "?" else raw}"
+    // the model's answer is judged here: what it wrote is shown back to it as it wrote it
+    val at = Where(s"proposal for ${if raw.isEmpty then "?" else raw}")
+    def broken(rule: Content.Requirement): Problem = Content.Proposal(rule, at)
     def quoted(keys: List[com.histmersion.domain.library.Citekey]): Either[Problem, Proposal.Quote] =
       val q = Proposal.Quote(a.quote.value.trim)
-      if q.value.isEmpty then Left(Problem.Unclassified(Legacy.Text(s"$label: no quote")))
+      if q.value.isEmpty then Left(broken(Content.Requirement.QuoteGiven))
       else if keys.flatMap(text(_)).exists(t => AgentVerify.findQuote(q, t, minRatio).accepted) then Right(q)
-      else
-        Left(Problem.Unclassified(Legacy.Text(s"$label: the quote is not in the record of ${keys.mkString(" or ")}")))
+      else Left(broken(Content.Requirement.QuoteInRecords(keys.toVector.map(k => Raw(k.value)))))
     for
       ck <- com.histmersion.domain.library.Citekey
         .parse(raw)
         .toOption
         .filter(isCitekey)
-        .toRight(Problem.Unclassified(Legacy.Text(s"$label: '$raw' is not a citekey")))
-      _ <- Either.cond(
-        a.evidence.value.trim.nonEmpty,
-        (),
-        Problem.Unclassified(Legacy.Text(s"$label: no evidence given"))
-      )
+        .toRight(broken(Content.Requirement.KnownCitekey(Raw(raw))))
+      _ <- Either.cond(a.evidence.value.trim.nonEmpty, (), broken(Content.Requirement.EvidenceGiven))
       p <- a.kind.value.trim.toLowerCase match
         case "status" =>
           for
             st <- a.status
-              .toRight(Problem.Unclassified(Legacy.Text(s"$label: a status change names no status")))
-              .flatMap(AgentVerify.status)
-              .left
-              .map(m => Problem.Unclassified(Legacy.Text(s"$label: ${m.sentence}")))
-            _ <- Either.cond(
-              st != Source.Status.Unassessed,
-              (),
-              Problem.Unclassified(Legacy.Text(s"$label: unassessed is not a change to propose"))
-            )
+              .toRight(broken(Content.Requirement.StatusNamed))
+              .flatMap(s => AgentVerify.status(s).left.map(_.within(Field(s"$at"))))
+            _ <- Either.cond(st != Source.Status.Unassessed, (), broken(Content.Requirement.NotUnassessed))
             q <- quoted(List(ck))
           yield Proposal(
             Approval.Kind.StatusChange,
@@ -203,16 +203,20 @@ object AgentProposals:
               .flatMap(Edge.Kind.fromWire)
               .filter(EdgeKinds.contains)
               .toRight(
-                Problem.Unclassified(
-                  Legacy.Text(s"$label: edge kind must be one of ${EdgeKinds.map(Edge.Kind.wireOf).mkString(", ")}")
-                )
+                Invalid.Unknown
+                  .here(
+                    Problem.TypeName.named[Edge.Kind],
+                    Raw(a.edgeKind.fold("")(_.value)),
+                    EdgeKinds.toVector.map(e => Raw(s"${Edge.Kind.wireOf(e)}"))
+                  )
+                  .within(Field(s"$at"))
               )
             t <- a.target
               .map(_.value.trim)
               .flatMap(com.histmersion.domain.library.Citekey.parse(_).toOption)
               .filter(isCitekey)
-              .toRight(Problem.Unclassified(Legacy.Text(s"$label: the edge target is not a citekey")))
-            _ <- Either.cond(t != ck, (), Problem.Unclassified(Legacy.Text(s"$label: an edge from a source to itself")))
+              .toRight(broken(Content.Requirement.EdgeTarget))
+            _ <- Either.cond(t != ck, (), broken(Content.Requirement.NoSelfEdge))
             q <- quoted(List(ck, t))
           yield Proposal(
             Approval.Kind.Edge,
@@ -222,5 +226,10 @@ object AgentProposals:
             evidence = Proposal.Evidence(a.evidence.value.trim),
             quote = Some(q)
           )
-        case other => Left(Problem.Unclassified(Legacy.Text(s"$label: kind '$other' is neither status nor edge")))
+        case other =>
+          Left(
+            Invalid.Unknown
+              .here(Problem.TypeName.of(ProposalAnswer.Kind), Raw(other), Vector(Raw("status"), Raw("edge")))
+              .within(Field(s"$at"))
+          )
     yield p

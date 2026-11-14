@@ -105,7 +105,7 @@ class AgentVerifySuite extends munit.FunSuite:
     )
     assert(periodProblems(PeriodStart(0), PeriodEnd(10), MaxAbsYear(3000000)).exists(_.sentence.contains("year 0")))
     assert(
-      periodProblems(PeriodStart(-4000000), PeriodEnd(-1), MaxAbsYear(3000000)).exists(_.sentence.contains("beyond"))
+      periodProblems(PeriodStart(-4000000), PeriodEnd(-1), MaxAbsYear(3000000)).exists(_.sentence.contains("period start -4000000 is"))
     )
     assert(
       periodProblems(PeriodStart(-3000), PeriodEnd(-2900), MaxAbsYear(3000000), Some(Period(Year(-1700), Year(-1200))))
@@ -120,8 +120,22 @@ class AgentVerifySuite extends munit.FunSuite:
     val text = LinkProblemsText(
       "See [[haak2015_massive]] and [[ie-migrations|the article]] and [[nope2020_x]]. Also \\[\\[x\\]\\]."
     )
-    val ps = linkProblems(text, _.value == "haak2015_massive", _.value == "ie-migrations")
+    val ps = linkProblems(text, PeriodAt, _.value == "haak2015_massive", _.value == "ie-migrations")
     assertEquals(ps.size, 2, ps)
+    assertEquals(
+      ps,
+      List(
+        com.histmersion.util.problem.Problem.Content.Proposal(
+          com.histmersion.util.problem.Problem.Content.Requirement.UnescapedLinks,
+          PeriodAt
+        ),
+        com.histmersion.util.problem.Problem.Content.Proposal(
+          com.histmersion.util.problem.Problem.Content.Requirement
+            .LinkTarget(com.histmersion.util.problem.Problem.Raw("nope2020_x")),
+          PeriodAt
+        )
+      )
+    )
     assert(ps.exists(_.sentence.contains("[[nope2020_x]]")))
     assert(ps.exists(_.sentence.contains("escaped")))
     assertEquals(wikilinks(Text("[[a]] [[b|B]] [[a]]")), List("a", "b"))

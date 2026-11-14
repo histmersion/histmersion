@@ -312,6 +312,36 @@ object Problem:
     /** A merge does not carry out `subject` (an issue, a record or a resolution, as the plan names it): `hold`. */
     final case class Held(subject: Where, hold: Hold) extends Conflict
 
+    /** A person's pause, cancel or resume of the background job `job`, whose status is `status`, cannot be done:
+      * `control` says why, and what to do instead.
+      */
+    final case class Job(job: Raw, status: State, control: Control) extends Conflict
+
+    /** Why a job cannot be paused, cancelled or resumed. */
+    enum Control derives CanEqual:
+      /** A job of `kind` runs as one piece and ends by itself: it is never paused or cancelled. */
+      case OnePiece(kind: Raw)
+
+      /** The status is none this server knows. */
+      case Unrecognised
+
+      /** The job has ended. */
+      case Ended
+
+      /** The job is paused already. */
+      case AlreadyPaused
+
+      /** The job has not started: cancelling it is what stops it. */
+      case NotStarted
+
+      /** The job was paused before the server restarted, which lost its way to go on: starting it again goes on where
+        * it stopped.
+        */
+      case PausedBeforeRestart
+
+      /** Only a paused job resumes. */
+      case NotPaused
+
     /** Why a merge does not carry something out. */
     enum Hold derives CanEqual:
       /** No decision settles the issue yet. */
@@ -945,6 +975,72 @@ object Problem:
       /** At most `cap` claims per source; it gave `gave`. */
       case TooManyClaims(cap: Count, gave: Count)
 
+      /** An agent's proposal gives no quote: the sentence of the record that shows it, copied exactly. */
+      case QuoteGiven
+
+      /** The proposal's quote is in none of `records` (the citekeys whose summary, findings and body were searched). */
+      case QuoteInRecords(records: Vector[Raw])
+
+      /** `stated` is no citekey of the corpus. */
+      case KnownCitekey(stated: Raw)
+
+      /** The proposal says nothing about why. */
+      case EvidenceGiven
+
+      /** A status change names no status. */
+      case StatusNamed
+
+      /** `unassessed` is where a source starts, never a change to propose. */
+      case NotUnassessed
+
+      /** An edge's target is no citekey of the corpus. */
+      case EdgeTarget
+
+      /** An edge from a source to itself. */
+      case NoSelfEdge
+
+      /** A BCE year is stated as zero or a negative number (`stated`). */
+      case PositiveBce(stated: Raw)
+
+      /** A CE year is stated as zero or a negative number (`stated`): BCE says it. */
+      case CeFromOne(stated: Raw)
+
+      /** A raw (uncalibrated) radiocarbon age (`stated`) is no calendar year. */
+      case Calibrated(stated: Raw)
+
+      /** A period starts (`start`) after it ends (`end`). */
+      case StartBeforeEnd(start: Raw, end: Raw)
+
+      /** A period (`span`) lies outside the source's own period (`own`). */
+      case WithinSourcePeriod(span: Raw, own: Raw)
+
+      /** `[[target]]` links nothing: it is neither a citekey nor an article slug. */
+      case LinkTarget(target: Raw)
+
+      /** Escaped link brackets (`\[\[…\]\]`) render as text and link nothing. */
+      case UnescapedLinks
+
+      /** A config hint gives no settings to change (`key=value`). */
+      case SettingsGiven
+
+      /** A hint names items the manager does not hold (`unknown`): they are named exactly as listed. */
+      case KnownItems(unknown: Vector[Raw])
+
+      /** A hint names neither items (targets) nor a tag. */
+      case ItemsNamed
+
+      /** A hold gives neither `until` (a date) nor `untilSource` (a DOI or citekey). */
+      case HoldUntil
+
+      /** `stated` is no date (`2026-11-01`). */
+      case DateGiven(stated: Raw)
+
+      /** A priority (`stated`) beyond ±`greatest`. */
+      case PriorityWithin(stated: Raw, greatest: Raw)
+
+      /** None of the items a hint names exists. */
+      case ExistingItems
+
   /** Something that should not happen happened: a bug, or a fault of the platform. */
   sealed trait Internal extends Problem
 
@@ -1153,6 +1249,7 @@ object Problem:
         Count(3L)
       ),
       Conflict.Held(Where("source anthony2007"), Conflict.Hold.SameWork(Raw("anthony2006"), Raw("doi"))),
+      Conflict.Job(Raw("0193f1c4"), Conflict.State("queued"), Conflict.Control.NotStarted),
       Refused.Policy(Refused.Rule.RunTokenRequired),
       Refused.Quota(Refused.Limit.DailySpend, Refused.Amount(5.25), Refused.Amount(4.5), Some(EpochMs(1762732800000L))),
       Refused.Disabled(Refused.Feature("events-gvp"), SettingKey("histmersion.events.gvp.enabled")),

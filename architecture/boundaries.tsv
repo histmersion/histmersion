@@ -300,3 +300,7 @@ modules/json/src/main/scala/com/histmersion/util/json/JsonCodec.scala	json	deriv
 modules/json/src/main/scala/com/histmersion/util/json/RawJson.scala	json	reads and writes JSON no record describes, as text circe wrote
 modules/server/src/main/scala/com/histmersion/domain/automation/agents/SttpAiJson.scala	json	the one place sttp-ai's circe codecs and JSON Schemas meet ours
 modules/server/src/main/scala/com/histmersion/util/mcp/ChimpJson.scala	json	the one place Chimp's circe decoders meet our codecs
+# model output enters here: these checks are the first code to judge a model's answer (decoded from its JSON, strings on the wire), and name what it wrote back to it as a Problem.Raw
+modules/core/src/main/scala/com/histmersion/domain/AgentProposals.scala	json	model output enters here: check judges a proposed status or edge as the model wrote it
+modules/core/src/main/scala/com/histmersion/domain/AgentVerify.scala	json	model output enters here: status, confidence, links, years and periods are judged as the model wrote them
+modules/core/src/main/scala/com/histmersion/domain/HintProposals.scala	json	model output enters here: check judges a manager hint's effect as the model wrote it

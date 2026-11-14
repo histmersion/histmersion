@@ -744,7 +744,7 @@ object EnrichSource:
     val text = Option(n.notes.value).map(_.trim).getOrElse("")
     if text.isEmpty then Left(List(Problem.Unclassified(Legacy.Text("the notes are empty"))))
     else
-      linkProblems(LinkProblemsText(text), isCitekey, isSlug) match
+      linkProblems(LinkProblemsText(text), Problem.Where("notes"), isCitekey, isSlug) match
         case Nil => Right(Description(text))
         case ps  => Left(ps)
 

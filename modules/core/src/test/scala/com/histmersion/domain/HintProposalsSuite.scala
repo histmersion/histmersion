@@ -27,7 +27,7 @@ class HintProposalsSuite extends munit.FunSuite:
   test("none (or nothing) proposes nothing; an unknown action is sent back, and on the last attempt proposes nothing"):
     assertEquals(chk(HintAnswer(HintAnswer.Action("none"))), Right((None, Nil)))
     assertEquals(chk(HintAnswer(HintAnswer.Action(""))), Right((None, Nil)))
-    assert(chk(HintAnswer(HintAnswer.Action("delete"))).left.exists(_.head.sentence.contains("is not an action")))
+    assert(chk(HintAnswer(HintAnswer.Action("delete"))).left.exists(_.head.sentence.contains("unknown hint answer action 'delete'")))
     assert(
       chk(HintAnswer(HintAnswer.Action("delete")), last = HintProposals.Last(true)).exists((e, ws) =>
         e.isEmpty && ws.head.value.startsWith("nothing proposed")

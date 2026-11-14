@@ -1,7 +1,8 @@
 package com.histmersion
 package domain
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.Problem.{Content, Invalid, Raw, Where}
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.given
@@ -98,15 +99,17 @@ object HintProposals:
     else if !HintEffect.Proposable.contains(action) then
       fail(
         List(
-          Problem.Unclassified(
-            Legacy.Text(s"'${a.action}' is not an action (one of: none, ${HintEffect.Proposable.mkString(", ")})")
+          Invalid.Unknown.here(
+            Problem.TypeName.of(HintAnswer.Action),
+            Raw(a.action.value),
+            ("none" +: HintEffect.Proposable.toVector).map(Raw(_))
           )
         )
       )
     else if action == HintEffect.Config then
       val kvs = a.settings.map(_.value.trim).filter(_.nonEmpty)
       if kvs.isEmpty then
-        fail(List(Problem.Unclassified(Legacy.Text("config: give the settings to change as key=value"))))
+        fail(List(Content.Proposal(Content.Requirement.SettingsGiven, Where(HintEffect.Config))))
       else
         ManagerConfig.parse(kvs.map(ManagerConfig.Spec(_))) match
           case Left(e)  => fail(e.at(Problem.Field("config")).toVector.toList)
@@ -114,31 +117,34 @@ object HintProposals:
     else
       val problems = List(
         Option.when(unknown.nonEmpty && !last.value)(
-          Problem.Unclassified(
-            Legacy.Text(s"not among the manager's items: ${unknown.mkString(", ")} — name them exactly as listed")
-          )
+          Content.Proposal(Content.Requirement.KnownItems(unknown.toVector.map(i => Raw(i.value))), Where("targets"))
         ),
         Option.when(good.isEmpty && unknown.isEmpty && tag.isEmpty && item.isEmpty)(
-          Problem.Unclassified(Legacy.Text(s"$action: name the items (targets) or a tag"))
+          Content.Proposal(Content.Requirement.ItemsNamed, Where(action))
         ),
         Option.when(
           action == HintEffect.HoldAction && a.until.forall(_.value.trim.isEmpty) && a.untilSource.forall(
             _.value.trim.isEmpty
           )
-        )(Problem.Unclassified(Legacy.Text("hold: give `until` (a date) or `untilSource` (a DOI or citekey)"))),
+        )(Content.Proposal(Content.Requirement.HoldUntil, Where(HintEffect.HoldAction))),
         a.until
           .map(_.value.trim)
           .filter(_.nonEmpty)
           .filter(u => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(u)).isEmpty)
-          .map(u => Problem.Unclassified(Legacy.Text(s"hold: '$u' is not a date (2026-11-01)"))),
+          .map(u => Content.Proposal(Content.Requirement.DateGiven(Raw(u)), Where(HintEffect.HoldAction))),
         a.priority
           .map(_.value)
           .filter(p => p < -MaxPriority || p > MaxPriority)
-          .map(p => Problem.Unclassified(Legacy.Text(s"prioritise: priority $p is outside ±$MaxPriority")))
+          .map(p =>
+            Content.Proposal(
+              Content.Requirement.PriorityWithin(Raw.of(p.toLong), Raw.of(MaxPriority.toLong)),
+              Where(HintEffect.Prioritise)
+            )
+          )
       ).flatten
       if problems.nonEmpty then fail(problems)
       else if good.isEmpty && tag.isEmpty && item.isEmpty then
-        fail(List(Problem.Unclassified(Legacy.Text(s"$action: none of the items it names exists"))))
+        fail(List(Content.Proposal(Content.Requirement.ExistingItems, Where(action))))
       else
         Right(
           (

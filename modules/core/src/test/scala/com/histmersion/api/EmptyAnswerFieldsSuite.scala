@@ -96,7 +96,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
         CheckClassificationMaxAbsYear(50000),
         last = Last(true)
       ).left
-        .exists(_.exists(_.sentence.contains("is not a status")))
+        .exists(_.exists(_.sentence.contains("unknown source status")))
     )
     val noEvidence = checkClassification(
       classification(evidence = Classification.StatusEvidence("")),
@@ -159,7 +159,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     assert(
       problems(
         proposal(FindingProposal.Claim("Tin by sea."), confidence = com.histmersion.domain.library.Confidence.Wire(""))
-      ).head.sentence.contains("is not a confidence")
+      ).head.sentence.contains("unknown confidence")
     )
 
   test("notes: empty notes fail"):
@@ -206,7 +206,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     assert(
       problems(
         ClaimAnswer(ClaimAnswer.Claim("Tin."), quote, None, None, com.histmersion.domain.library.Confidence.Wire(""))
-      ).head.sentence.contains("is not a confidence")
+      ).head.sentence.contains("unknown confidence")
     )
     assertEquals(
       checkExtract(

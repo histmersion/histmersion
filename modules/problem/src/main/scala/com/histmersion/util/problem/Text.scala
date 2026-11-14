@@ -37,6 +37,7 @@ object Text:
       case NotFound.Copy(work)                             => s"no legal open-access PDF found for $work"
       case NotFound.Dangling(t, key, from, within)         => within.missed(t, key, from)
       case Conflict.Held(subject, hold)                    => hold.said(subject)
+      case Conflict.Job(job, status, control)              => control.said(job, status)
       case Conflict.AlreadyExists(t, key)                  => s"${t.noun} '$key' already exists"
       case Conflict.Renamed(t, asked, now)   => s"${t.noun} '$asked' was renamed to '$now' — write to '$now' instead"
       case Conflict.Stale(t, key, sent, now) =>
@@ -561,6 +562,18 @@ object Text:
       case Problem.Run.Block.PoolFull(pool) => s"the $pool pool runs as many as it may"
       case other                            => words(other.productPrefix)
 
+  extension (control: Conflict.Control)
+    private def said(job: Raw, status: Conflict.State): String = control match
+      case Conflict.Control.OnePiece(kind) =>
+        s"a $kind job cannot be paused or cancelled: it runs as one piece and ends by itself"
+      case Conflict.Control.Unrecognised        => s"job $job is $status"
+      case Conflict.Control.Ended               => s"job $job has ended ($status)"
+      case Conflict.Control.AlreadyPaused       => s"job $job is already paused"
+      case Conflict.Control.NotStarted          => s"job $job has not started yet: cancel it instead"
+      case Conflict.Control.PausedBeforeRestart =>
+        s"job $job was paused before the server restarted: start it again — it goes on where it stopped"
+      case Conflict.Control.NotPaused => s"job $job is not paused"
+
   extension (cause: Content.Flaw)
     private def said: String = cause match
       case Content.Flaw.HandWrittenSourcesCited => "a hand-written Sources cited section (the page generates it)"
@@ -584,3 +597,29 @@ object Text:
         "a replace with no new text — give the text, or use delete to remove the passage"
       case Content.Requirement.AnchorInArticle =>
         "it is not in the article — copy it exactly from the current body (earlier edits included)"
+      case Content.Requirement.QuoteGiven              => "no quote"
+      case Content.Requirement.QuoteInRecords(records) =>
+        s"the quote is not in the record of ${records.mkString(" or ")}"
+      case Content.Requirement.KnownCitekey(stated)     => s"'$stated' is not a citekey"
+      case Content.Requirement.EvidenceGiven           => "no evidence given"
+      case Content.Requirement.StatusNamed             => "a status change names no status"
+      case Content.Requirement.NotUnassessed           => "unassessed is not a change to propose"
+      case Content.Requirement.EdgeTarget              => "the edge target is not a citekey"
+      case Content.Requirement.NoSelfEdge              => "an edge from a source to itself"
+      case Content.Requirement.PositiveBce(stated)     => s"$stated BCE: a BCE year is a positive number"
+      case Content.Requirement.CeFromOne(stated)       =>
+        s"$stated CE: there is no year 0 (or a negative CE year); use BCE"
+      case Content.Requirement.Calibrated(stated) =>
+        s"$stated BP is an uncalibrated radiocarbon age; it cannot be stored as a calendar year"
+      case Content.Requirement.StartBeforeEnd(start, end)  => s"starts ($start) after it ends ($end)"
+      case Content.Requirement.WithinSourcePeriod(span, own) => s"$span lies outside the source's own period $own"
+      case Content.Requirement.LinkTarget(target)            => s"[[$target]] is neither a citekey nor an article"
+      case Content.Requirement.UnescapedLinks => "escaped link brackets (\\[\\[…\\]\\]) link nothing"
+      case Content.Requirement.SettingsGiven     => "give the settings to change as key=value"
+      case Content.Requirement.KnownItems(unknown) =>
+        s"not among the manager's items: ${unknown.mkString(", ")} — name them exactly as listed"
+      case Content.Requirement.ItemsNamed                => "name the items (targets) or a tag"
+      case Content.Requirement.HoldUntil                 => "give `until` (a date) or `untilSource` (a DOI or citekey)"
+      case Content.Requirement.DateGiven(stated)          => s"'$stated' is not a date (2026-11-01)"
+      case Content.Requirement.PriorityWithin(stated, max) => s"priority $stated is outside ±$max"
+      case Content.Requirement.ExistingItems             => "none of the items it names exists"
