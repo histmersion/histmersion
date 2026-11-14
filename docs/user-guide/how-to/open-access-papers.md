@@ -85,7 +85,8 @@ When CORE answers HTTP 429, or its `X-RateLimit-Remaining` header reaches 0, His
 it again until the time CORE gives in `X-RateLimit-Retry-After`. Meanwhile:
 
 - an ingest skips the `core` step and goes on down the chain; the job's report says
-  `core: no copy — CORE not asked: …` with the reason;
+  the reason, e.g.
+  `core: no copy — CORE's daily budget for PDF lookups is spent (…)`;
 - a candidate sweep leaves CORE out and says so at the top of its report. Those watches keep their
   place and are read at the next sweep.
 
