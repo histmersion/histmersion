@@ -1,7 +1,7 @@
 package com.histmersion
 package pluginhost
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Legacy, Problem, Problems}
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.config.EnvOverrides
 import com.histmersion.api.Sha256
@@ -304,17 +304,24 @@ object PluginHost:
         case v                             => List((prefix :+ ConfigPath(k)) -> v)
     }
 
-  /** Pure: a decoding error as `histmersion.plugins.<id>[.<key>]: what`. */
-  def describe(id: Plugin.Info.Id, err: ConfigDecodingError): Problem = err match
+  /** Pure: each decoding error as the setting it is at (`histmersion.plugins.<id>[.<key>]`) and what the reader said.
+    */
+  def describe(id: Plugin.Info.Id, err: ConfigDecodingError): Problems = err match
     case ConfigDecodingError.Multiple(errs) =>
-      Problem.Unclassified(Legacy.Text(errs.toList.map(describe(id, _)).mkString("; ")))
-    case e => Problem.Unclassified(Legacy.Text((s"$Root.$id" :: e.path).mkString(".") + s": ${e.message}"))
+      errs.toList.map(describe(id, _)).reduce(_ ++ _)
+    case e =>
+      Problems.of(
+        Problem.Config.Setting(
+          Problem.SettingKey((s"$Root.$id" :: e.path).mkString(".")),
+          Problem.Config.Fault.Unreadable(External.Reported.of(e.message))
+        )
+      )
 
   /** Decode a plugin's block with the plugin's own reader — the path-dependent type keeps the decoded value tied to the
     * plugin that will receive it, with no cast.
     */
   def decode(p: Plugin, conf: Config): Either[Problem, p.Config] =
-    try p.configReader.from(conf.withoutPath("enabled").root).left.map(describe(p.info.id, _))
+    try p.configReader.from(conf.withoutPath("enabled").root).left.map(e => describe(p.info.id, e).toNonEmpty.head)
     catch
       case e: LinkageError => Left(Problem.Unclassified(Legacy.Text(s"$Root.${p.info.id}: ${failure(e).sentence}")))
       case NonFatal(e)     => Left(Problem.Unclassified(Legacy.Text(s"$Root.${p.info.id}: ${e.getMessage}")))
