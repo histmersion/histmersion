@@ -1021,7 +1021,7 @@ private[places] object PlaceRepo:
           FROM place_footprints f
           WHERE f.place_id = $placeId
             AND ($asOf::bigint IS NULL OR f.period @> $asOf::bigint)
-          ORDER BY f.role, ${SqlLiteral(RangeSql.start("f.period"))}""".query[FootprintRow].run().map(_.toDto)
+          ORDER BY f.role, ${SqlLiteral(RangeSql.start("f.period"))}, f.id""".query[FootprintRow].run().map(_.toDto)
 
   def links(placeId: com.histmersion.domain.catalogue.Place.Id)(using DbCon): Vector[Place.Link] =
     sql"""SELECT place_id, scheme, external_id, relation FROM place_links
@@ -1214,7 +1214,7 @@ private[places] object PlaceRepo:
   def manualNames(id: Option[com.histmersion.domain.catalogue.Place.Id])(using DbCon): List[ManualPlaceName] =
     sql"""SELECT n.place_id, p.label, n.name, n.lang FROM place_names n JOIN places p ON p.id = n.place_id
           WHERE n.manual AND ($id::text IS NULL OR n.place_id = $id::text)
-          ORDER BY n.place_id, n.name, n.lang""".query[ManualPlaceName].run().toList
+          ORDER BY n.place_id, n.name, n.lang, n.import_source, n.import_ref""".query[ManualPlaceName].run().toList
 
   /** Create a person's own place (`dataset = local`, V052): refused when the id is taken — by a place or as an old id
     * of one (V055) — so `places add` can never overwrite seed data.

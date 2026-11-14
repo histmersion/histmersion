@@ -143,7 +143,7 @@ private[acquisition] object CandidateRepo:
   /** How many candidates there are in each state (of one goal, or of all). */
   def counts(goal: Option[Goal.Slug])(using DbCon): List[CandidateCount] =
     sql"""SELECT state, count(*)::int FROM source_candidates WHERE ($goal::text IS NULL OR goal = $goal)
-            GROUP BY state ORDER BY CASE state WHEN 'new' THEN 0 WHEN 'seen' THEN 1 WHEN 'queued' THEN 2 ELSE 3 END"""
+            GROUP BY state ORDER BY CASE state WHEN 'new' THEN 0 WHEN 'seen' THEN 1 WHEN 'queued' THEN 2 ELSE 3 END, state"""
       .query[(Source.Candidate.State, CandidateCount.Count)]
       .run()
       .toList

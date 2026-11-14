@@ -295,7 +295,7 @@ object JobRepo:
   def runsDue(kind: Job.Kind, paused: RunRow.Status, at: DueAt)(using DbCon): Vector[Run.Id] =
     sql"""SELECT id FROM jobs WHERE kind = $kind AND status = $paused
                                 AND resume_at IS NOT NULL AND resume_at <= $at::timestamptz
-          ORDER BY resume_at, created_at""".query[Run.Id].run()
+          ORDER BY resume_at, created_at, id""".query[Run.Id].run()
 
   /** The `paused` runs that do not resume by themselves before `at`: (id, pipeline, model, error). */
   def runsPausedUntil(
@@ -306,7 +306,7 @@ object JobRepo:
     sql"""SELECT id, coalesce(pipeline, ''), model, coalesce(error, '') FROM jobs
           WHERE kind = $kind AND status = $paused
             AND (resume_at IS NULL OR resume_at > $at::timestamptz)
-          ORDER BY updated_at, created_at""".query[(Run.Id, Pipeline.Wire, Option[RunRow.Model], Problem)].run()
+          ORDER BY updated_at, created_at, id""".query[(Run.Id, Pipeline.Wire, Option[RunRow.Model], Problem)].run()
 
   def runProgress(kind: Job.Kind, id: Run.Id, text: JobRow.Progress)(using DbCon): Unit =
     val _ = sql"UPDATE jobs SET progress = $text, updated_at = now() WHERE id = $id AND kind = $kind".update.run()
@@ -336,7 +336,7 @@ object JobRepo:
                       RETURNING id, origin""".query[(Run.Id, Option[RunRow.Origin])].run()
     val waiting = sql"""SELECT id FROM jobs WHERE kind = $kind AND status = $queued
                           AND NOT (id = ANY($except::text[]))
-                        ORDER BY created_at""".query[Run.Id].run()
+                        ORDER BY created_at, id""".query[Run.Id].run()
     (moved, waiting)
 
   /** A `paused` run's resume time (unless it moved on meanwhile). */

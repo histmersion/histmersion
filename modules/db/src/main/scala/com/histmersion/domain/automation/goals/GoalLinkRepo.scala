@@ -42,7 +42,7 @@ object GoalLinkRepo:
                  CASE l.kind WHEN 'queue-item' THEN (SELECT q.list FROM queue_items q WHERE q.id::text = l.ref) END
           FROM goal_links l WHERE l.goal_slug = $goal
           ORDER BY CASE l.kind WHEN 'source' THEN 0 WHEN 'article' THEN 1 WHEN 'query' THEN 2 ELSE 3 END,
-                   l.created_at, l.ref""".query[LinkRow].run().toList.flatMap { r =>
+                   l.created_at, l.ref, l.kind""".query[LinkRow].run().toList.flatMap { r =>
       LinkKind.parse(r.kind).map(k => GoalLink(k, r.ref, r.note, r.title, r.createdAt, r.queue))
     }
 

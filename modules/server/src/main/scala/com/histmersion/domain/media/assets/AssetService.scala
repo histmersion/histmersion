@@ -774,7 +774,7 @@ object AssetService:
           a.point.isDefined && k.forall(kk => a.kind.exists(_.value == kk)) && inSpan(a) && ofProvider(a, provider) &&
             underLicence(a, license)
         )
-        .sortBy(a => (a.period.flatMap(_._1).isEmpty, a.period.flatMap(_._1).map(y => y.value: Long)))
+        .sortBy(a => (a.period.flatMap(_._1).isEmpty, a.period.flatMap(_._1).map(y => y.value: Long), a.uid))
         .take(limit.value.max(1))
         .toList
         .map(a => hit(a, a.point.get))

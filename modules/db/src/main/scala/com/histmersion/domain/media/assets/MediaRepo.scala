@@ -294,7 +294,7 @@ private[assets] object MediaRepo:
       sql"""SELECT asset_uid::text, target_type, target_id, role, coalesce(property, ''), coalesce(item, ''),
                    coalesce(basis, '')
             FROM media_links WHERE asset_uid = ANY($uids::uuid[])
-            ORDER BY asset_uid, target_type, target_id, rank"""
+            ORDER BY asset_uid, target_type, target_id, rank, role"""
         .query[(MediaItemRow.Uid, String, String, String, String, String, String)]
         .run()
         .toList
@@ -392,7 +392,7 @@ private[assets] object MediaRepo:
                  OR a.provider = $provider::text)
             AND ($license::text IS NULL OR ($license::text = 'none' AND coalesce(btrim(a.license), '') = '')
                  OR a.license = $license::text)
-          ORDER BY lower(a.period) NULLS LAST LIMIT ${limit.value.max(1)}"""
+          ORDER BY lower(a.period) NULLS LAST, a.uid LIMIT ${limit.value.max(1)}"""
       .query[MediaGeoRow]
       .run()
       .toList
@@ -482,7 +482,7 @@ private[assets] object MediaRepo:
          FROM assets a
          WHERE (coalesce(btrim(a.license), '') = '' AND coalesce(a.provider, '') NOT IN ('calibre', 'open-library'))
             OR (a.provider IS NOT NULL AND coalesce(btrim(a.credit), '') = '')
-         ORDER BY a.provider NULLS LAST, 1""".query[(GapItem, GapDetail)].run().toList
+         ORDER BY a.provider NULLS LAST, 1, a.uid""".query[(GapItem, GapDetail)].run().toList
 
   /** A source's stored figures (images only), as the illustration's choice weighs them. */
   def sourceFigures(citekey: Citekey)(using DbCon): List[SourceFigure] =

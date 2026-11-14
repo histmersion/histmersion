@@ -6223,7 +6223,7 @@ websearch_to_tsquery('english', ?)
 (ts_rank_cd(s.tsv, websearch_to_tsquery('english', ?)) + coalesce(bc.rank, 0))
   params: S(sea peoples)
 ## findingsQuery
-SELECT f.citekey, f.id, f.claim, f.region_name, ST_X(f.geom), ST_Y(f.geom), lower(f.period), upper(f.period) - 1, f.period_name, f.tags, ARRAY(SELECT p.label FROM finding_places fp JOIN places p ON p.id = fp.place_id WHERE fp.finding_id = f.id ORDER BY p.label), ARRAY(SELECT fp.place_id FROM finding_places fp WHERE fp.finding_id = f.id ORDER BY fp.place_id) FROM findings f WHERE f.citekey IN (?, ?) ORDER BY f.citekey, f.id
+SELECT f.citekey, f.id, f.claim, f.region_name, ST_X(f.geom), ST_Y(f.geom), lower(f.period), upper(f.period) - 1, f.period_name, f.tags, ARRAY(SELECT p.label FROM finding_places fp JOIN places p ON p.id = fp.place_id WHERE fp.finding_id = f.id ORDER BY p.label, p.id), ARRAY(SELECT fp.place_id FROM finding_places fp WHERE fp.finding_id = f.id ORDER BY fp.place_id) FROM findings f WHERE f.citekey IN (?, ?) ORDER BY f.citekey, f.id
   params: S(zqa1990_a), S(zqb2001_b)
 ## orderBy
 relevance: ORDER BY s.cited_by_count DESC NULLS LAST, s.citekey

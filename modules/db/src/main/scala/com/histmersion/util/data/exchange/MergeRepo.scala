@@ -99,7 +99,9 @@ object MergeRepo:
     else
       Sql
         .of(
-          Sql.OfText(s"SELECT $mergeCols FROM merges m WHERE m.id::text LIKE ? ORDER BY m.applied_at DESC LIMIT 2"),
+          Sql.OfText(
+            s"SELECT $mergeCols FROM merges m WHERE m.id::text LIKE ? ORDER BY m.applied_at DESC, m.id DESC LIMIT 2"
+          ),
           Param.S(Param.S.V(p + "%"))
         )
         .frag

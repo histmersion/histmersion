@@ -45,7 +45,7 @@ final class EventSourceReferrer extends SourceReferrer:
       .toList
       .map((s, k, d) => DeleteBlocker(DeleteBlocker.Kind.EventEdge, DeleteBlocker.Id(s"$s $k $d")))
     val participants = sql"""SELECT event_id, actor FROM event_participants WHERE citekey = ANY($keys::text[])
-                             ORDER BY event_id, actor"""
+                             ORDER BY event_id, actor, role"""
       .query[(String, String)]
       .run()
       .toList

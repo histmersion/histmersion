@@ -71,7 +71,7 @@ private[events] object EventRepo:
   def list(where: Sql, limit: PageSize, offset: Offset)(using DbCon): EventList =
     val total = (Sql.raw(Sql.Text(s"SELECT count(*)::int FROM $fromEvents WHERE ")) ++ where).frag.query[Int].run().head
     val rows = (Sql.raw(Sql.Text(s"SELECT $summaryCols FROM $fromEvents WHERE ")) ++ where ++
-      Sql.raw(Sql.Text(" ORDER BY coalesce(e.not_before, e.begin_by), e.label")) ++
+      Sql.raw(Sql.Text(" ORDER BY coalesce(e.not_before, e.begin_by), e.label, e.id")) ++
       Sql.of(
         Sql.Text(" LIMIT ? OFFSET ?"),
         Param.I(Param.I.V(limit.value.max(1))),
@@ -95,7 +95,7 @@ private[events] object EventRepo:
     val where =
       listed ++ Sql.of(Sql.OfText(" AND e.uncertainty <= ?"), Param.L(Param.L.V(EventPrecision.ApproximateUpTo.value)))
     val rows = (geoSelect ++ where ++
-      Sql.raw(Sql.Text(" ORDER BY coalesce(e.not_before, e.begin_by), e.label")) ++
+      Sql.raw(Sql.Text(" ORDER BY coalesce(e.not_before, e.begin_by), e.label, e.id")) ++
       Sql.of(Sql.Text(" LIMIT ?"), Param.I(Param.I.V(limit.value.max(1))))).frag.query[EventGeoRow].run().toList
     val unplaced = (Sql.raw(
       Sql.Text(s"SELECT count(*)::int FROM $fromEvents WHERE e.geom IS NULL AND ep.geom IS NULL AND ")
@@ -157,7 +157,7 @@ private[events] object EventRepo:
           .map(_.toSummary)
       }
       val children = sql"""SELECT ${SqlLiteral(summaryCols)} FROM ${SqlLiteral(fromEvents)}
-            WHERE e.parent_id = $id ORDER BY coalesce(e.not_before, e.begin_by), e.label"""
+            WHERE e.parent_id = $id ORDER BY coalesce(e.not_before, e.begin_by), e.label, e.id"""
         .query[EventRow]
         .run()
         .toList
