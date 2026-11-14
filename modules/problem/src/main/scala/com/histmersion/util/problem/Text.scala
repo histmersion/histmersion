@@ -78,6 +78,7 @@ object Text:
       */
     def reason: String = problem match
       case Plugin.Rejected(plugin, _, why)       => s"$plugin did not take it: ${words(why.productPrefix)}"
+      case NotFound.Entity(t, _)                 => s"no such ${t.short}"
       case Invalid.Malformed(t, c, raw, _)       => Invalid.Malformed(t, c, raw, Vector.empty).sentence
       case Invalid.Unknown(t, raw, known, _)     => Invalid.Unknown(t, raw, known, Vector.empty).sentence
       case Invalid.Missing(field, _)             => Invalid.Missing(field, Vector.empty).sentence

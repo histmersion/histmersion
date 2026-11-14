@@ -102,7 +102,8 @@ class CasesSuite extends munit.FunSuite:
     assertEquals(a.reason, "media-met did not take it: restricted")
     assertEquals(a.reason, b.reason)
     assertEquals(Invalid.Missing(Field("credit"), Vector(Field("k1"))).reason, "credit is required")
-    val other: Problem = NotFound.Entity(TypeName("x.Y"), Raw("k"))
+    assertEquals(NotFound.Entity(TypeName("x.Commons.File"), Raw("File:A.jpg")).reason, "no such Commons.File")
+    val other: Problem = Conflict.Busy(Conflict.Activity.Backup)
     assertEquals(other.reason, other.sentence)
 
   test("only a missing entity or copy is not found"):
