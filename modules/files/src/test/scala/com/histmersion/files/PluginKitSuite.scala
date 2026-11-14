@@ -70,6 +70,8 @@ class PluginKitSuite extends munit.FunSuite:
     def errors(text: String) = parseJars(text).map(_.flatMap(_.plugins.flatMap(_.error.toList.flatMap(_.sentences))))
     assertEquals(errors(jar("\"it needs a key\"")), Right(List("it needs a key")))
     assertEquals(errors(jar("[\"one\",\"two\"]")), Right(List("one", "two")))
+    val one = parseJars(jar("\"it needs a key\"")).map(renderJars)
+    assert(one.exists(_.replaceAll("\\s", "").contains("\"error\":[\"itneedsakey\"]")), s"one problem is a list: $one")
     val two = PluginJar(
       PluginJar.File("p.jar"),
       Sha256("11"),

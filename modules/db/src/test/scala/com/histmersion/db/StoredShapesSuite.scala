@@ -169,6 +169,26 @@ object StoredShapesSuite:
             Option.unless(sameJson(again, text))(s"writes $again")
     )
 
+  /** The same file as an earlier version wrote it (`file-<name>-<earlier>`, kept as captured): each line must read as
+    * the value of the line beside it in today's fixture, which is what it writes again.
+    */
+  def earlierFile[A](name: String, earlier: String, render: A => String, parse: String => Either[Problem, A]): Shape =
+    def text(line: String) = line.replace("\\n", "\n")
+    Shape(
+      s"file-$name-$earlier",
+      () => (),
+      l => parse(text(l)).left.toOption.map(e => s"does not decode: $e"),
+      Some(
+        Dropped(
+          s"file-$name",
+          (d, f) =>
+            parse(text(d)).map(render) match
+              case Left(e)      => Some(s"does not decode: $e")
+              case Right(again) => Option.unless(sameJson(again, text(f)))(s"reads as $again, not as $f")
+        )
+      )
+    )
+
   /** A `jsonb` column holding any JSON (a place's properties, a correction's values, the agents' state): what the store
     * prints must parse and print the same document again.
     */
@@ -271,6 +291,10 @@ object StoredShapesSuite:
         PluginKit.renderIndex,
         PluginKit.parseIndex
       ),
+      // a plugin's problems were written bare when there was one; they are a list now, and the bare form still reads
+      earlierFile[PluginSet]("plugin-set", "bare", PluginKit.renderSet, PluginKit.parseSet),
+      earlierFile[List[PluginJar]]("plugin-jars", "bare", PluginKit.renderJars, PluginKit.parseJars),
+      earlierFile[PluginKit.Index]("plugin-index", "bare", PluginKit.renderIndex, PluginKit.parseIndex),
       file[PluginKit.KitManifest](
         "kit-manifest",
         73,

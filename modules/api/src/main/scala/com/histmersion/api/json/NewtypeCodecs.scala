@@ -3,7 +3,7 @@ package api.json
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonValueCodec}
 import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
-import sttp.tapir.Schema
+import sttp.tapir.{Schema, Validator}
 
 import hearth.kindlings.jsoniterjson.Json
 import util.json.{JsonCodec, RawJson}
@@ -45,8 +45,8 @@ object NewtypeCodecs:
 
   given problemSchema: Schema[Problem] = Schema.schemaForString.as[Problem]
 
-  /** One value or several (`Problems` is one problem or several): the one value itself, several as a list — so a field
-    * that held one value (as an earlier version wrote it) reads, and writes, the same.
+  /** One value or several (`Problems` is one problem or several), always written as a list, as its schema says. A
+    * single value written bare — as an earlier version wrote a field that held one value — reads as a list of one.
     */
   given oneOrMore: [A] => (one: JsonValueCodec[A]) => JsonValueCodec[A | NonEmptyVector[A]] =
     // at run time several values are the vector itself, and one value is never a vector
@@ -56,10 +56,7 @@ object NewtypeCodecs:
     def of(read: Vector[A]): Option[A | NonEmptyVector[A]] =
       if read.size == 1 then read.headOption else NonEmptyVector.from(read)
     JsonCodec.mapped[A | NonEmptyVector[A], Json](
-      values =>
-        all(values) match
-          case Vector(single) => single.asJson(using one)
-          case several        => Json.Arr(several.map(_.asJson(using one))),
+      values => Json.Arr(all(values).map(_.asJson(using one))),
       json =>
         json.asArray.fold(json.as(using one).map(a => a: A | NonEmptyVector[A])) { elements =>
           val read = elements.map(_.as(using one))
@@ -70,8 +67,9 @@ object NewtypeCodecs:
         }
     )
 
+  /** A non-empty list of the values: what [[oneOrMore]] writes. */
   given oneOrMoreSchema: [A] => (one: Schema[A]) => Schema[A | NonEmptyVector[A]] =
-    Schema.schemaForIterable[A, Vector].as[A | NonEmptyVector[A]]
+    Schema.schemaForIterable[A, Vector].validate(Validator.minSize[A, Vector](1)).as[A | NonEmptyVector[A]]
 
   /** Any JSON value (as tapir's circe module described circe's `Json`). */
   given jsonSchema: Schema[Json] = Schema.any
