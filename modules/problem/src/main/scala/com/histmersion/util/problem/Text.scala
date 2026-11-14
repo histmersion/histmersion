@@ -22,6 +22,7 @@ object Text:
       case Invalid.Inconsistent(fs, rule, at)  => s"${path(at)}${rule.of(fs)}"
       case Invalid.Reference(form, at)         => s"${path(at)}${form.said}"
       case NotFound.Entity(t, key)             => s"no ${t.short} '$key'"
+      case NotFound.Copy(work)                 => s"no legal open-access PDF found for $work"
       case Conflict.AlreadyExists(t, key)      => s"${t.short} '$key' already exists"
       case Conflict.Renamed(t, asked, now)     => s"${t.short} '$asked' was renamed to '$now' — write to '$now' instead"
       case Conflict.Stale(t, key, sent, now)   => s"${t.short} '$key' has moved on: you sent $sent, it is now $now"
@@ -38,7 +39,7 @@ object Text:
       case Upstream.Unreachable(name, url, r, at) => s"${path(at)}cannot reach $name at $url — $r"
       case Upstream.Timeout(name, url, after, at) => s"${path(at)}$name did not answer at $url within $after ms"
       case Upstream.BadReply(name, url, s, r, at) =>
-        s"${path(at)}$name's answer at $url is not ${words(s.productPrefix)} — $r"
+        s"${path(at)}$name's answer at $url is not ${s.noun} — $r"
       case Io.File(op, path, reported)    => s"could not ${words(op.productPrefix)} $path — $reported"
       case Io.Wrong(path, expected)       => s"$path ${expected.missed}"
       case Io.Corrupt(format, at, damage) => s"the ${words(format.productPrefix)} data at $at ${damage.said}"
@@ -71,6 +72,17 @@ object Text:
       case Internal.Unexpected(id, where, e, r) => s"$where failed unexpectedly ($e, problem $id) — $r"
       case Unclassified(text)                   => s"$text"
       case Stored.Unrecognised(text)            => s"$text"
+
+    /** The sentence without the one item or input path it names: what a report counts problems of a kind by (every
+      * record a collection refused as restricted is one reason, not one sentence per record).
+      */
+    def reason: String = problem match
+      case Plugin.Rejected(plugin, _, why)       => s"$plugin did not take it: ${words(why.productPrefix)}"
+      case Invalid.Malformed(t, c, raw, _)       => Invalid.Malformed(t, c, raw, Vector.empty).sentence
+      case Invalid.Unknown(t, raw, known, _)     => Invalid.Unknown(t, raw, known, Vector.empty).sentence
+      case Invalid.Missing(field, _)             => Invalid.Missing(field, Vector.empty).sentence
+      case Invalid.OutOfRange(t, raw, bounds, _) => Invalid.OutOfRange(t, raw, bounds, Vector.empty).sentence
+      case other                                 => other.sentence
 
   extension (problems: Problems)
     /** One sentence per problem, in order. */
@@ -106,6 +118,7 @@ object Text:
         case Invalid.Exclusion.OneOf     => s"give exactly one of $named"
         case Invalid.Exclusion.AtMostOne => s"give at most one of $named"
         case Invalid.Exclusion.Ordered   => s"$named must be in order"
+        case Invalid.Exclusion.Same      => s"$named must be the same"
 
   /** The forms a secret's reference takes. */
   private val ReferenceForms = "value:<literal>, env:<NAME> or <vault>:<ref>"
@@ -135,6 +148,8 @@ object Text:
       case Refused.Rule.ReadOnly          => "the collection is read-only"
       case Refused.Rule.LendingOnly       => "the item is lending-only: borrow it on its site"
       case Refused.Rule.RangesOnly        => "this client reads ranges of a file, never a whole file"
+      case Refused.Rule.RegistrationOver  =>
+        "registration is over: a plugin adds to a registry only from inside its register"
 
   extension (limit: Refused.Limit)
     private def named: String = limit match
@@ -144,6 +159,19 @@ object Text:
       case Refused.Limit.ProviderQuota => "the provider's quota"
       case Refused.Limit.RateLimit     => "the rate limit"
       case Refused.Limit.PlanAllowance => "the plan's allowance"
+
+  extension (shape: Upstream.Shape)
+    /** What the answer should have been, as a noun phrase: `a byte range`, `JSON`. */
+    private def noun: String = shape match
+      case Upstream.Shape.Json     => "JSON"
+      case Upstream.Shape.Xml      => "XML"
+      case Upstream.Shape.Html     => "HTML"
+      case Upstream.Shape.Text     => "text"
+      case Upstream.Shape.Image    => "an image"
+      case Upstream.Shape.Document => "a document"
+      case Upstream.Shape.Archive  => "an archive"
+      case Upstream.Shape.Problems => "a list of problems"
+      case Upstream.Shape.Range    => "a byte range"
 
   extension (kind: Io.Kind)
     private def missed: String = kind match
@@ -183,6 +211,7 @@ object Text:
       case Config.Fault.WrongKind(e, f)  => s"must be ${e.said}, not ${f.said}"
       case Config.Fault.Unreadable(r)    => s"cannot be read — $r"
       case Config.Fault.Undeclared       => "is no setting: it is ignored"
+      case Config.Fault.NotInDefaults    => "is no setting of the plugin: its defaults do not declare it"
       case Config.Fault.OutsideRoot      => "is no setting: it is ignored (settings go under histmersion { … })"
       case Config.Fault.Credential(v)    =>
         "holds a key or password itself, so it is not written into the settings file: " +
@@ -213,6 +242,13 @@ object Text:
       case Plugin.Fault.Threw(reported)            => s"loading it threw — $reported"
       case Plugin.Fault.SpiMismatch(built, speaks) =>
         s"it was built against plugin SPI $built; this Histmersion speaks SPI $speaks — rebuild the plugin against SPI $speaks"
+      case Plugin.Fault.ForeignSpi(speaks) =>
+        s"it was built against another plugin SPI; this Histmersion speaks SPI $speaks — rebuild the plugin against SPI $speaks"
+      case Plugin.Fault.MissingClass(name) =>
+        s"class $name is missing: the plugin uses a library that is neither part of Histmersion nor installed with it — " +
+          "install the plugin with `histmersion plugin add` from a jar published with its POM, which lists its dependencies"
+      case Plugin.Fault.Duplicate                   => "another plugin claims its id too"
+      case Plugin.Fault.NullComponent               => "it registered null in place of a component"
       case Plugin.Fault.SignerChanged(pinned, seen) =>
         s"it was installed signed by $pinned, this jar is signed by $seen"
       case Plugin.Fault.NoProvider =>
@@ -222,10 +258,11 @@ object Text:
 
   extension (failure: Plugin.Retrieval)
     private def said: String = failure match
-      case Plugin.Retrieval.TimedOut(after)           => s"it did not answer within $after ms"
-      case Plugin.Retrieval.Failed(stderr)            => s"its tool failed — $stderr"
-      case Plugin.Retrieval.Blank(ref)                => s"'$ref' has an empty value"
-      case Plugin.Retrieval.Absent(ref)               => s"it holds no '$ref'"
+      case Plugin.Retrieval.TimedOut(after) => s"it did not answer within $after ms"
+      case Plugin.Retrieval.NoVault        => "no vault of that name is registered (enable the plugin that provides it)"
+      case Plugin.Retrieval.Failed(stderr) => s"its tool failed — $stderr"
+      case Plugin.Retrieval.Blank(ref)     => s"'$ref' has an empty value"
+      case Plugin.Retrieval.Absent(ref)    => s"it holds no '$ref'"
       case Plugin.Retrieval.Unread(ref, exit, stderr) => s"it could not read '$ref' (exit $exit) — $stderr"
       case Plugin.Retrieval.NoKey(configured, seen)   =>
         val sees = if seen.isEmpty then "ykman sees no YubiKey" else s"ykman sees ${seen.mkString(", ")}"

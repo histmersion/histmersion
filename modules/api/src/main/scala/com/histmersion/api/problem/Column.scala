@@ -30,6 +30,7 @@ object Column:
       case Invalid.Inconsistent(fs, rule, at) => s"${path(at)}${fs.toVector.mkString(", ")} break ${rule.productPrefix}"
       case Invalid.Reference(form, at)        => s"${path(at)}no secret reference: ${form.stored}"
       case NotFound.Entity(t, key)            => s"no $t '$key'"
+      case NotFound.Copy(work)                => s"no open-access copy of '$work'"
       case Conflict.AlreadyExists(t, key)     => s"$t '$key' already exists"
       case Conflict.Renamed(t, asked, now)    => s"$t '$asked' was renamed to '$now'"
       case Conflict.Stale(t, key, sent, now)  => s"$t '$key' has moved on: sent $sent, stored $now"
@@ -131,6 +132,7 @@ object Column:
     Config.Fault.NoSecret,
     Config.Fault.Block,
     Config.Fault.Undeclared,
+    Config.Fault.NotInDefaults,
     Config.Fault.OutsideRoot,
     Config.Fault.Credential(None),
     Config.Fault.Literal,
@@ -200,6 +202,8 @@ object Column:
       case Plugin.Fault.SpiMismatch(built, speaks)  => s"SpiMismatch $built/$speaks"
       case Plugin.Fault.SignerChanged(pinned, seen) => s"SignerChanged $pinned / $seen"
       case Plugin.Fault.Taken(by)                   => s"Taken $by"
+      case Plugin.Fault.ForeignSpi(speaks)          => s"ForeignSpi $speaks"
+      case Plugin.Fault.MissingClass(name)          => s"MissingClass $name"
       case other                                    => other.productPrefix
 
   extension (failure: Plugin.Retrieval)
@@ -236,6 +240,7 @@ object Column:
   private val InconsistentAt = s"(?s)^$Prefix(.+) break (\\w+)$$".r
   private val ReferenceAt = s"(?s)^${Prefix}no secret reference: (\\w+)(?: '(.*)')?$$".r
   private val NoEntity = "(?s)^no (\\S+) '(.*)'$".r
+  private val NoCopy = "(?s)^no open-access copy of '(.*)'$".r
   private val Exists = "(?s)^(\\S+) '(.*)' already exists$".r
   private val RenamedTo = "(?s)^(\\S+) '(.*)' was renamed to '(.*)'$".r
   private val MovedOn = "(?s)^(\\S+) '(.*)' has moved on: sent (.*), stored (.*)$".r
@@ -336,6 +341,10 @@ object Column:
     {
       case NoEntity(t, key) => Some(NotFound.Entity(TypeName(s"$t"), Raw(s"$key")))
       case _                => None
+    },
+    {
+      case NoCopy(work) => Some(NotFound.Copy(Raw(s"$work")))
+      case _            => None
     },
     {
       case Exists(t, key) => Some(Conflict.AlreadyExists(TypeName(s"$t"), Raw(s"$key")))
@@ -536,9 +545,11 @@ object Column:
               case List(pinned, seen) =>
                 Some(Plugin.Fault.SignerChanged(Plugin.Signer(s"$pinned"), Plugin.Signer(s"$seen")))
               case _ => None
-          case ("Taken", Some(by)) => Some(Plugin.Fault.Taken(Raw(s"$by")))
-          case (_, None)           => word(LoadFaults, fault)
-          case _                   => None
+          case ("Taken", Some(by))          => Some(Plugin.Fault.Taken(Raw(s"$by")))
+          case ("ForeignSpi", Some(s))      => Some(Plugin.Fault.ForeignSpi(Raw(s"$s")))
+          case ("MissingClass", Some(name)) => Some(Plugin.Fault.MissingClass(Raw(s"$name")))
+          case (_, None)                    => word(LoadFaults, fault)
+          case _                            => None
         read.map(Plugin.Load(Plugin.Id(s"$plugin"), _))
       case _ => None
     },

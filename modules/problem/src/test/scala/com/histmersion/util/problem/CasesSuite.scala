@@ -36,7 +36,7 @@ class CasesSuite extends munit.FunSuite:
 
   test("there are eleven groups and two cases outside them"):
     assertEquals(Group.values.length, 13)
-    assertEquals(examples.size, 48)
+    assertEquals(examples.size, 49)
 
   test("an exception becomes an internal problem with its class and its message's first line, cut to 300"):
     val long = "x" * 400
@@ -87,5 +87,23 @@ class CasesSuite extends munit.FunSuite:
     )
     assertEquals(found.sentence, s"object 7: met answered HTTP 404 at $url — gone")
 
-  test("only a missing entity is not found"):
-    assertEquals(examples.filter(_.isNotFound).map(_.group), Vector(Group.NotFound))
+  test("problems from a list: none is none, one is the problem itself, several are all of them in order"):
+    val a: Problem = Invalid.Missing.here(Field("a"))
+    val b: Problem = Invalid.Missing.here(Field("b"))
+    assertEquals(Problems.from(Vector.empty), None)
+    assertEquals(Problems.from(Vector(a)), Some(a: Problems))
+    assertEquals(Problems.from(Vector(a, b)).map(_.toVector), Some(Vector(a, b)))
+    assertEquals(Problems.from(Vector(a, b)), Some(Problems.of(a, b)))
+
+  test("a reason is the sentence without the item or the input path, so that a report counts alike refusals once"):
+    import Text.reason
+    val a = Plugin.Rejected(Plugin.Id("media-met"), Raw("248284"), Plugin.Refusal.Restricted)
+    val b = Plugin.Rejected(Plugin.Id("media-met"), Raw("1"), Plugin.Refusal.Restricted)
+    assertEquals(a.reason, "media-met did not take it: restricted")
+    assertEquals(a.reason, b.reason)
+    assertEquals(Invalid.Missing(Field("credit"), Vector(Field("k1"))).reason, "credit is required")
+    val other: Problem = NotFound.Entity(TypeName("x.Y"), Raw("k"))
+    assertEquals(other.reason, other.sentence)
+
+  test("only a missing entity or copy is not found"):
+    assertEquals(examples.filter(_.isNotFound).map(_.productPrefix), Vector("Entity", "Copy"))
