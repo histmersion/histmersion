@@ -1,8 +1,6 @@
 package com.histmersion
 package chimneyiron
 
-import io.scalaland.chimney.histmersion.IronNewtypePairs
-
 class IronNewtypePairsSuite extends munit.FunSuite:
 
   test("names in compile errors drop package objects and scala.Predef") {

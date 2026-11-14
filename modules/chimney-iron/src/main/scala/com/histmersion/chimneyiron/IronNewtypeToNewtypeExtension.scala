@@ -1,4 +1,5 @@
-package io.scalaland.chimney.histmersion
+package com.histmersion
+package chimneyiron
 
 import hearth.{MacroCommons, MacroCommonsScala3}
 import hearth.fp.effect.MIO
