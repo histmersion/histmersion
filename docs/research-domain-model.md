@@ -661,7 +661,7 @@ any drift. The exact `Constraint` summoning is confirmed in slice 1. If it does 
 fallback is one explicit line per newtype on the same pattern; the result on the wire is the same either way.
 
 **Where a raw value is parsed (Q1).** Today the endpoints take raw strings and the handlers produce the error text
-(`'X' is not a Citekey: Should match …`). Tapir's default decode failure answers in plain text instead. To keep
+(`'X' is not a citekey: Should match …`). Tapir's default decode failure answers in plain text instead. To keep
 error responses identical, **output records carry the constrained newtypes, and input records keep the raw
 representation as a `Pure` newtype** (`CitekeyInput`, …). The controller is the one parse boundary, as rule 2
 asks. Moving parsing into decoders, with a decode-failure handler that answers `ApiError(message)`, is a later,

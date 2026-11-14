@@ -241,7 +241,7 @@ class BundleHttpSuite extends DbSuite with com.histmersion.db.Bounded:
       )
       val bad = post(s"$url/api/merge/resolutions", "resolve: [1, 2]\nwhat: x\n".getBytes("UTF-8"))
       assertEquals(bad.statusCode, 400, bad.body)
-      assert(bad.body.contains("unknown MergeResolutions 'what'"), bad.body)
+      assert(bad.body.contains("unknown merge resolution 'what'"), bad.body)
 
       // merge list | show | ledger over what an import left
       import com.augustnagro.magnum.*

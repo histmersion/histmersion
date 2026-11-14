@@ -360,7 +360,7 @@ class QueueSuite extends munit.FunSuite:
     assertEquals(Queue.applyPatch(cur, QueuePatch(status = Some(QueueItem.Status(" DONE ")))).status, Done)
     // an item edited in the web UI keeps its other fields
     val edited = Queue.applyPatch(cur, QueuePatch(text = Some(QueueItem.Text("x")), topic = Some(QueueItem.Topic(""))))
-    assertEquals((edited.status, edited.reason.map(_.value), edited.id), (Open, Some("for the review"), 7))
+    assertEquals((edited.status, edited.reason, edited.id), (Open, Some(Rationale("for the review")), 7))
 
   test("a patched text may be absent but never blank"):
     assertEquals(Queue.textOf(None), Right(None))

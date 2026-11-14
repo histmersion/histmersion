@@ -77,7 +77,7 @@ class CommonsParsersSuite extends munit.FunSuite:
 
   test("imageinfo: files by the title asked (normalised too), missing files as Left, URLs untracked"):
     val m = Commons.imageInfo(imageinfo).toOption.get
-    assertEquals(m(Commons.File.Title("File:Gone.jpg")).left.map(_.sentence), Left("no Commons.File 'File:Gone.jpg'"))
+    assertEquals(m(Commons.File.Title("File:Gone.jpg")).left.map(_.sentence), Left("no commons file 'File:Gone.jpg'"))
     val a = m(Commons.File.Title("File:A.jpg")).toOption.get
     assertEquals(
       m(Commons.File.Title("File:a.jpg")),
@@ -184,11 +184,11 @@ class CommonsParsersSuite extends munit.FunSuite:
     assertEquals(failed, Nil)
     assertEquals(
       items(Commons.File.Title("File:Gone.jpg")).rights.left.map(_.sentence),
-      Left("no Commons.File 'File:Gone.jpg'")
+      Left("no commons file 'File:Gone.jpg'")
     )
     assertEquals(
       items(Commons.File.Title("File:Other.jpg")).rights.left.map(_.sentence),
-      Left("no Commons.File 'File:Other.jpg'")
+      Left("no commons file 'File:Other.jpg'")
     )
     val down = new Plugin.Http {
       def get(url: Plugin.Http.Url, headers: Map[Header.Name, Header.Value]) =
@@ -204,7 +204,7 @@ class CommonsParsersSuite extends munit.FunSuite:
     val (none, lines) = Commons.Files(down, media, HostLicences).items(List(Commons.File.Title("File:A.jpg")))
     assertEquals(
       none(Commons.File.Title("File:A.jpg")).rights.left.map(_.sentence),
-      Left("no Commons.File 'File:A.jpg'")
+      Left("no commons file 'File:A.jpg'")
     )
     assertEquals(
       lines.map(l => s"${l.line}"),

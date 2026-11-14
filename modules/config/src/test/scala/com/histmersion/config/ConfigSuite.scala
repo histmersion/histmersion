@@ -411,7 +411,7 @@ class ConfigSuite extends munit.FunSuite:
       case Vector(Problem.Invalid.Malformed(t, _, raw, _)) =>
         assertEquals((s"$t", s"$raw"), ("com.histmersion.config.RefreshIntervalMinutes", "-1"))
       case other => fail(s"not refused: $other")
-    assert(e.getMessage.contains("'-1' is not a RefreshIntervalMinutes"), e.getMessage)
+    assert(e.getMessage.contains("'-1' is not a refresh interval in minutes"), e.getMessage)
 
   test("publishers that refuse scripts: the shipped hosts, replaced from the environment, none when empty"):
     val shipped = AppConfig.load(env()).acquire.landing.refusingHosts

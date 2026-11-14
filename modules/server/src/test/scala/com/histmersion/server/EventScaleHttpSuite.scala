@@ -122,7 +122,7 @@ class EventScaleHttpSuite extends munit.FunSuite:
         delete(s"$url/api/events/$geoId")
         val (ws, wb) = put(s"$url/api/events/$geoId", """{"label":"Zqes WKT","geometry":"POINT(36.5 34.55)"}""")
         assertEquals(ws, 400, wb)
-        assert(wb.contains("is not a EventGeometry.Geojson"), wb)
+        assert(wb.contains("is not an event geometry GeoJSON"), wb)
         assertEquals(get(s"$url/api/events/$geoId")._1, 404, "a refused PUT creates nothing")
 
         // the shape is right but PostGIS cannot read the coordinates: its words, still a 400

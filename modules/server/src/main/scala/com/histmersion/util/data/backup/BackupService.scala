@@ -327,7 +327,7 @@ object BackupService:
             command("--clean", "--if-exists", "--no-owner", "--no-privileges", file.toString)
         )
         warnings <- Backup
-          .restoreOutcome(Backup.ExitCode(res._1.value), res._2.map(Backup.ToolOutput(_)))
+          .restoreOutcome(Problem.Io.ExitCode(res._1.value), res._2.map(Backup.ToolOutput(_)))
           .left
           .map(m => problem(m.sentence))
       yield (RestoreDuration((System.nanoTime() - started) / 1000000L), warnings.map(o => RestoreNote(o.value)))

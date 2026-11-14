@@ -442,7 +442,7 @@ class RenameRepoSuite extends DbSuite:
           assertEquals(e.code, code, e.message)
           assert(e.message.sentence.contains(says), e.message)
     refused(Old, RenameToNewRaw(Old.value), Some(Write.CodeInvalid), "already the citekey")
-    refused(Old, RenameToNewRaw("Not A Key"), Some(Write.CodeInvalid), "is not a Citekey")
+    refused(Old, RenameToNewRaw("Not A Key"), Some(Write.CodeInvalid), "is not a citekey")
     refused(Old, RenameToNewRaw("zzrn-2011"), Some(Write.CodeInvalid), "LINK-shaped")
     refused(Citekey("zzrn2000_missing"), RenameToNewRaw(New.value), Some(Write.CodeNotFound), "zzrn2000_missing")
     refused(Old, RenameToNewRaw(Other.value), Some(Write.CodeInvalid), "already the citekey of another source")

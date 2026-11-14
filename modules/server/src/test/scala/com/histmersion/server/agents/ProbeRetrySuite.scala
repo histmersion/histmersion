@@ -123,7 +123,12 @@ class ProbeRetrySuite extends DbSuite with RunTranscripts:
     assertEquals((r.attempts, r.problems, r.matchesRecord), (2, Nil, true), r)
     assertEquals(r.usage.input, 200L, "both attempts are counted")
     val retry = c.steps(1).head.history.entries.collectFirst { case ConversationEntry.UserPrompt(p) => p }.get
-    assert(retry.contains("- title is required") && retry.contains("- year is required"), retry.take(2000))
+    assert(
+      retry.contains("- title: it is empty — copy the source's exact title from get_source") && retry.contains(
+        "- year is required"
+      ),
+      retry.take(2000)
+    )
 
   test("a model that never fills them: the probe reports the answer incomplete, never as matching"):
     val c = ScriptedClient(Model)
@@ -133,7 +138,11 @@ class ProbeRetrySuite extends DbSuite with RunTranscripts:
     assert(!r.matchesRecord.value)
     assertEquals(r.problems.size, 2, r.problems)
     assert(
-      AgentsMarkdown.probe(r).contains("answer is **incomplete**: title is required; year is required"),
+      AgentsMarkdown
+        .probe(r)
+        .contains(
+          "answer is **incomplete**: title: it is empty — copy the source's exact title from get_source; year is required"
+        ),
       AgentsMarkdown.probe(r)
     )
 

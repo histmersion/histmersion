@@ -2418,7 +2418,7 @@ build record's plugin fingerprint covers the POMs; the signed plugins manifest c
 
 **A missing class.** A plugin class that needs a class no jar has threw `NoClassDefFoundError`, a
 `LinkageError` that `NonFatal` does not catch: discovery, config decoding and `register` let it escape.
-They catch it now, and the plugin fails alone with "class X is missing: the plugin uses a library that is
+They catch it now, and the plugin fails alone with "class 'X' is missing: the plugin uses a library that is
 neither part of Histmersion nor installed with it — install the plugin with `histmersion plugin add`
 from a jar published with its POM" (`PluginHost.failure`; pluginTool's describe uses it too).
 

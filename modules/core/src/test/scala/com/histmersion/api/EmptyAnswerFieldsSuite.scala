@@ -45,7 +45,10 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     val empty = ProbeAnswer(Citekey("huxley1956_catalogue"), com.histmersion.api.library.Title(""), None)
     assertEquals(
       empty.problems(Some(ProbeAnswer.RecordYear(1956))),
-      List(Problem.Invalid.Missing.here(Problem.Field("title")), Problem.Invalid.Missing.here(Problem.Field("year")))
+      List(
+        Problem.Content.Proposal(Problem.Content.Requirement.ExactTitle, Problem.Where("title")),
+        Problem.Invalid.Missing.here(Problem.Field("year"))
+      )
     )
     assertEquals(
       ProbeAnswer(Citekey(" "), com.histmersion.api.library.Title("A Catalogue"), Some(Year(1956)))
@@ -466,7 +469,10 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
         FixerAnswer.Notes("")
       )
     )
-    assert(nullText.exists(_.endsWith("text is required")), nullText)
+    assert(
+      nullText.exists(_.endsWith("a replace with no new text — give the text, or use delete to remove the passage")),
+      nullText
+    )
     val noAnchor = problems(
       FixerAnswer(
         List(EditAnswer(Op.Replace, EditAnswer.Anchor(""), Some(Article.Edits.NewText("by ship")))),

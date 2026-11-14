@@ -371,7 +371,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
     assert(
       dup.report.plugins
         .find(_.id.value == "zq-plugin")
-        .exists(_.errors.exists(_.sentence.contains("MediaCollection 'met' already exists")))
+        .exists(_.errors.exists(_.sentence.contains("media collection 'met' already exists")))
     )
     assert(
       dup.registries.mediaCollections
@@ -404,13 +404,13 @@ class ProviderPluginsSuite extends munit.FunSuite:
       build(List(Portal(catalogue = Registry.AddId("volcano"))), portalOn).report.plugins
         .find(_.id.value == "zq-plugin")
         .get
-    assert(cat.errors.exists(_.sentence.contains("EventCatalogue 'volcano' already exists")), cat.toString)
+    assert(cat.errors.exists(_.sentence.contains("event catalogue 'volcano' already exists")), cat.toString)
     val role =
       build(List(Portal(role = MediaItem.Role("cover"))), portalOn).report.plugins.find(_.id.value == "zq-plugin").get
     assert(
       role.errors.exists(
         _.sentence.contains(
-          "unknown MediaItem.Role 'cover' (one of: aerial-view, depiction, image, locator-map, map, object, plan, route-map)"
+          "unknown media item role 'cover' (one of: aerial-view, depiction, image, locator-map, map, object, plan, route-map)"
         )
       ),
       role.toString
@@ -607,7 +607,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
       PluginEvents
         .record(CatalogRecord.Provider("x"), ok.modify(_.wikidata).setTo(Some(WikidataId("not-an-item"))))
         .map(_.warnings),
-      Right(List("q-1: catalogue 'x': 'not-an-item' is not a Wikidata.Id: Should match Q[1-9][0-9]*, left out"))
+      Right(List("q-1: catalogue 'x': 'not-an-item' is not a Wikidata id: Should match Q[1-9][0-9]*, left out"))
     )
     assertEquals(
       PluginEvents
@@ -627,7 +627,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
       PluginEvents
         .record(CatalogRecord.Provider("x"), ok.modify(_.historicity).setTo(CatalogueEvent.Historicity("certain")))
         .left
-        .exists(_.sentence.contains("unknown CatalogueEvent.Historicity 'certain'"))
+        .exists(_.sentence.contains("unknown catalogue event historicity 'certain'"))
     )
     assertEquals(
       PluginEvents
@@ -643,7 +643,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
       PluginEvents
         .record(CatalogRecord.Provider("x"), ok.modify(_.lat).setTo(Some(Latitude(95.0))))
         .map(c => (c.record.lat, c.warnings.head)),
-      Right((None, "q-1: catalogue 'x': '95.0' is not a Latitude: Should be included in [-90.0, 90.0], left out"))
+      Right((None, "q-1: catalogue 'x': '95.0' is not a latitude: Should be included in [-90.0, 90.0], left out"))
     )
     assertEquals(
       PluginEvents

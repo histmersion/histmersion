@@ -9,10 +9,11 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import RetractionNotice.Account
 
 final case class RetractionNotice(
     nature: Option[RetractionNotice.Nature],
-    reason: Option[RetractionNotice.Account],
+    reason: Option[Account],
     date: Option[RetractionNotice.Date]
 ) derives JsonCodec,
       KindlingsSchema,

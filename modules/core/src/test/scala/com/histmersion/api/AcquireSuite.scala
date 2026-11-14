@@ -288,7 +288,7 @@ class AcquireSuite extends munit.FunSuite:
     assertEquals(rows.head.nature, Some("Retraction"))
     assertEquals(
       rows.head.reason,
-      Some(Acquire.RetractionRow.Account("+Concerns/Issues About Data;+Duplication of Image"))
+      Some(RetractionNotice.Account("+Concerns/Issues About Data;+Duplication of Image"))
     )
     // the second row's Notes column contains a comma AND a newline inside quotes
     assertEquals(rows(1).doi, "10.1038/nature00000") // lower-cased by normalizeDoi

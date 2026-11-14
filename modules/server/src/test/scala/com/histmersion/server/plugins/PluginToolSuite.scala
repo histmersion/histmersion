@@ -208,7 +208,7 @@ class PluginToolSuite extends munit.FunSuite:
       assert(
         without.error.exists(
           _.sentences.exists(e =>
-            e.contains("class com.histmersion.fixtures.hellolib.Shout") && e.contains("is missing") &&
+            e.contains("class 'com.histmersion.fixtures.hellolib.Shout") && e.contains("is missing") &&
               e.contains("histmersion plugin add")
           )
         ),

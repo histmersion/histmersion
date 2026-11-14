@@ -225,7 +225,7 @@ class WriteHttpSuite extends munit.FunSuite:
         val (s1, b1) = post(s"$url/api/attestations", s"""{"citekey":"$k","targetType":"bogus","targetId":"x"}""")
         assertEquals(s1, 400, b1)
         assert(
-          b1.contains("unknown AttestationTarget 'bogus' (one of: finding, event, event_dating, place, edge)"),
+          b1.contains("unknown attestation target 'bogus' (one of: finding, event, event_dating, place, edge)"),
           b1
         )
         val (s2, b2) =
@@ -233,7 +233,7 @@ class WriteHttpSuite extends munit.FunSuite:
         assertEquals(s2, 404, b2)
         val (m1s, m1) = mcp(url, "put_attestation", s"""{"citekey":"$k","targetType":"bogus","targetId":"x"}""")
         assertEquals(m1s, 200, m1)
-        assert(m1.contains("unknown AttestationTarget") && !m1.contains("Internal server error"), m1)
+        assert(m1.contains("unknown attestation target") && !m1.contains("Internal server error"), m1)
         // a valid one, its type in any case, is written
         val (s3, b3) = post(s"$url/api/attestations", s"""{"citekey":"$k","targetType":" Event ","targetId":"zz_e"}""")
         assertEquals(s3, 200, b3)

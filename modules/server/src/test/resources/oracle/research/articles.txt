@@ -603,24 +603,24 @@
 == put refused: a bad slug
 400 {
   "code" : "invalid",
-  "message" : "'Bad Slug' is not a Slug: Should match [a-z0-9][a-z0-9_.-]{0,120}"
+  "message" : "'Bad Slug' is not a slug: Should match [a-z0-9][a-z0-9_.-]{0,120}"
 }
 == put refused: a bad kind
 400 {
   "code" : "invalid",
-  "message" : "kind: 'Not A Kind!' is not a Article.Kind (e.g. concept, myth, culture, region, timeline, report, index)"
+  "message" : "kind: 'Not A Kind!' is not an article kind (e.g. concept, myth, culture, region, timeline, report, index)"
 }
 == put refused: an unknown key
 400 Invalid value for: body (unknown key 'nope' (one of: title, kind, body, summary, tags, regions, periodStart, periodEnd, filter, reasons))
 == put refused: a reason for no citekey
 400 {
   "code" : "invalid",
-  "message" : "reasons: 'not a key!' is not a Citekey (e.g. anthony2007)"
+  "message" : "reasons: 'not a key!' is not a citekey (e.g. anthony2007)"
 }
 == put refused: an overlong reason
 400 {
   "code" : "invalid",
-  "message" : "reasons.zralpha1990_walls: Coverage.Rationale 501 is above 500"
+  "message" : "reasons.zralpha1990_walls: coverage rationale 501 is above 500"
 }
 == put refused: strict, a formatting error
 400 {
@@ -1342,7 +1342,7 @@ The Zr culture built walls [[zralpha1990_walls]].
 == GET /api/articles/zr_nothing
 404 {
   "code" : "not_found",
-  "message" : "no Article.Slug 'zr_nothing'"
+  "message" : "no article slug 'zr_nothing'"
 }
 == tool get_article (all)
 # The walls of Zrtown
@@ -2928,7 +2928,7 @@ _showing 2–3 of 6 — next: offset=3 — full set: limit=6_
 == patch zr_harbour: append to a missing section
 400 {
   "code" : "invalid",
-  "message" : "no Article.Section 'No such'"
+  "message" : "no article section 'No such'"
 }
 == patch zr_harbour: tags add
 200 {
@@ -3930,12 +3930,12 @@ _showing 2–3 of 6 — next: offset=3 — full set: limit=6_
 == patch zr_harbour: refused: a stale ifUpdatedAt
 412 {
   "code" : "precondition_failed",
-  "message" : "Article.Slug 'zr_harbour' has moved on: you sent TS, it is now TS"
+  "message" : "article slug 'zr_harbour' has moved on: you sent TS, it is now TS — read it again and re-apply your change"
 }
 == patch zr_harbour: refused: a malformed ifUpdatedAt
 412 {
   "code" : "precondition_failed",
-  "message" : "Article.Slug 'zr_harbour' has moved on: you sent yesterday, it is now TS"
+  "message" : "article slug 'zr_harbour' has moved on: you sent yesterday, it is now TS — read it again and re-apply your change"
 }
 == patch zr_harbour: with the current ifUpdatedAt
 200 {
@@ -4102,12 +4102,12 @@ _showing 2–3 of 6 — next: offset=3 — full set: limit=6_
 == patch zr_harbour: refused: a bad kind
 400 {
   "code" : "invalid",
-  "message" : "kind: 'Not A Kind!' is not a Article.Kind (e.g. concept, myth, culture, region, timeline, report, index)"
+  "message" : "kind: 'Not A Kind!' is not an article kind (e.g. concept, myth, culture, region, timeline, report, index)"
 }
 == patch zr_nothing: unknown article
 404 {
   "code" : "not_found",
-  "message" : "no Article.Slug 'zr_nothing'"
+  "message" : "no article slug 'zr_nothing'"
 }
 == patch zr_harbour: filter cleared
 200 {
@@ -4171,7 +4171,7 @@ The end of the dynasty [[zrgamma1975_kings]].
 
 - [[zrgamma1975_kings]] — Zrauthor 1975 · _Kings of Zrland_ · **superseded**
 == tool patch_article refused (stale)
-_Article.Slug 'zr_kings' has moved on: you sent TS, it is now TS_
+_article slug 'zr_kings' has moved on: you sent TS, it is now TS — read it again and re-apply your change_
 == GET versions of harbour
 200 [
   {
@@ -4312,7 +4312,7 @@ _Article.Slug 'zr_kings' has moved on: you sent TS, it is now TS_
 == GET versions of an unknown article
 400 {
   "code" : "not_found",
-  "message" : "no Article.Slug 'zr_nothing'"
+  "message" : "no article slug 'zr_nothing'"
 }
 == tool article_versions
 ### 15 version(s) of zr_harbour
@@ -4558,7 +4558,7 @@ The harbour was founded by a hero [[zrbeta2001_harbour]]. See [[zr_walls]] for t
 == GET coverage of zr_nothing
 404 {
   "code" : "not_found",
-  "message" : "no Article.Slug 'zr_nothing'"
+  "message" : "no article slug 'zr_nothing'"
 }
 == tool article_coverage
 ## Coverage of [[zr_walls]]
@@ -4617,7 +4617,7 @@ _article 'zr_kings' records no filter, so it has no generated coverage — set t
 == GET review of zr_nothing
 404 {
   "code" : "not_found",
-  "message" : "no Article.Slug 'zr_nothing'"
+  "message" : "no article slug 'zr_nothing'"
 }
 == tool article_review
 ## Review of [[zr_walls]]
@@ -4655,14 +4655,14 @@ No finding recorded.
       "anchor" : "no such passage",
       "index" : 1,
       "op" : "delete",
-      "problem" : "no Article.Edits.Anchor 'no such passage'",
+      "problem" : "anchor: it is not in the article — copy it exactly from the current body (earlier edits included)",
       "text" : ""
     }
   ],
   "fatal" : false,
   "kind" : "concept",
   "problems" : [
-    "edit 1 (delete \"no such passage\"): no Article.Edits.Anchor 'no such passage'"
+    "edit 1 (delete \"no such passage\"): anchor: it is not in the article — copy it exactly from the current body (earlier edits included)"
   ],
   "slug" : "zr_walls",
   "wordsAfter" : 52,
@@ -4721,7 +4721,7 @@ No finding recorded.
 == check an unknown article's edits
 404 {
   "code" : "not_found",
-  "message" : "no Article.Slug 'zr_new'"
+  "message" : "no article slug 'zr_new'"
 }
 == tool check_edits
 ## Check of [[zr_walls]] (concept)
@@ -4822,7 +4822,7 @@ No problems: these are the checks code runs on the answer, and it would pass the
 == lint unknown
 404 {
   "code" : "not_found",
-  "message" : "no Article.Slug 'zr_nothing'"
+  "message" : "no article slug 'zr_nothing'"
 }
 == export zr_walls
 200 ---
@@ -4892,7 +4892,7 @@ period_end: null
 == export zr_nothing
 404 {
   "code" : "not_found",
-  "message" : "no Article.Slug 'zr_nothing'"
+  "message" : "no article slug 'zr_nothing'"
 }
 == tool export_article
 ---
@@ -5118,12 +5118,12 @@ _Method: search {tags: ["zr-oracle"]} → 4; statuses: 2 current, 1 contested, 1
 == rename refused: invalid
 400 {
   "code" : "invalid",
-  "message" : "article slug: 'Bad Slug' is not a LabelRenames.Label (e.g. sea_peoples)"
+  "message" : "article slug: 'Bad Slug' is not a label (e.g. sea_peoples)"
 }
 == rename refused: unknown
 404 {
   "code" : "not_found",
-  "message" : "no Article.Slug 'zr_nothing'"
+  "message" : "no article slug 'zr_nothing'"
 }
 == GET by the old slug
 200 {
@@ -5618,7 +5618,7 @@ _Method: search {tags: ["zr-oracle"]} → 4; statuses: 2 current, 1 contested, 1
 == delete eps refused (cited)
 400 {
   "code" : "invalid",
-  "message" : "Citekey 'zreps1999_lost' is referred to by 1 DeleteBlocker.Kind.Article"
+  "message" : "citekey 'zreps1999_lost' is referred to by 1 article — remove those references first (there is no override)"
 }
 == delete the citing article
 200 {
@@ -5628,7 +5628,7 @@ _Method: search {tags: ["zr-oracle"]} → 4; statuses: 2 current, 1 contested, 1
 == delete it again
 404 {
   "code" : "not_found",
-  "message" : "no Article.Slug 'zr_lost'"
+  "message" : "no article slug 'zr_lost'"
 }
 == delete eps
 200 {

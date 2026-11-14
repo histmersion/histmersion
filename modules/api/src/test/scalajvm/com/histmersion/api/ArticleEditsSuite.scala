@@ -15,6 +15,8 @@ import com.histmersion.api.research.Article
 class ArticleEditsSuite extends munit.FunSuite:
   private val MissingText: Problem = Problem.Invalid.Missing.here(Problem.Field("text"))
   private val MissingAnchor: Problem = Problem.Invalid.Missing.here(Problem.Field("anchor"))
+  private val ReplaceWithoutText: Problem =
+    Problem.Content.Proposal(Problem.Content.Requirement.ReplaceText, Problem.Where("text"))
 
   private val BodyText =
     """Tin reached the Aegean by sea [[knapp2016_tin]].
@@ -67,7 +69,7 @@ class ArticleEditsSuite extends munit.FunSuite:
     for t <- List(None, Some(NewText("")), Some(NewText("   "))) do
       val r = applyAll(Body, List(e(Op.Replace, Anchor("by sea"), t)))
       assertEquals(r.body, Body, s"text ${t.fold("null")(x => s"'${x.value}'")}: nothing changed")
-      assertEquals(r.results.map(_.problem), List(Some(MissingText)), r.problems)
+      assertEquals(r.results.map(_.problem), List(Some(ReplaceWithoutText)), r.problems)
     assertEquals(
       applyAll(Body, List(EditAnswer(Op.Delete, Anchor(null), None))).results.map(_.problem),
       List(Some(MissingAnchor))
@@ -79,7 +81,7 @@ class ArticleEditsSuite extends munit.FunSuite:
     // from the wire: "text": null decodes as absent
     val js = """[{"op":"replace","anchor":"by sea","text":null}]"""
     val decoded = RawJson.decode[List[EditAnswer]](js).fold(e => fail(e), identity)
-    assertEquals(applyAll(Body, decoded).results.map(_.problem), List(Some(MissingText)))
+    assertEquals(applyAll(Body, decoded).results.map(_.problem), List(Some(ReplaceWithoutText)))
 
   test("an anchor is matched with whitespace normalised, and nothing else"):
     val wrapped = Article.Body("Tin reached the Aegean\nby sea [[knapp2016_tin]].")
@@ -103,7 +105,7 @@ class ArticleEditsSuite extends munit.FunSuite:
     assertEquals(
       r.results.map(_.problem),
       List(
-        Some(Problem.NotFound.Entity(anchor, Problem.Raw("by land"))),
+        Some(Problem.Content.Proposal(Problem.Content.Requirement.AnchorInArticle, Problem.Where("anchor"))),
         Some(Problem.Invalid.Ambiguous.here(anchor, Problem.Raw("[[knapp2016_tin]]."), Problem.Count.of(3L))),
         None
       )

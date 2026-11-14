@@ -16,6 +16,7 @@ import java.time.{Clock, Instant, ZoneOffset}
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.api.catalogue.Geocode
 import com.histmersion.domain.catalogue.Place
+import com.histmersion.api.catalogue.Place as ApiPlace
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.Dataset
@@ -111,7 +112,7 @@ class PlacesControllersSuite extends munit.FunSuite:
     assert(
       c.importPlaces(Caller.Local, None, Some(Dataset.Wire("other")), doc)
         .left
-        .exists(_.message.sentence.contains("unknown Dataset 'other' (one of: "))
+        .exists(_.message.sentence.contains("unknown dataset 'other' (one of: "))
     )
     assert(c.importPlaces(Caller.Local, None, None, PlacesControllers.DatasetBody("not json")).isLeft)
 
@@ -143,7 +144,7 @@ class PlacesControllersSuite extends munit.FunSuite:
       Place.Id("zzcl_hill"),
       com.histmersion.api.catalogue.Place.OverrideSet(
         kind = Some(com.histmersion.api.catalogue.Place.OverrideSet.Kind("region")),
-        reason = Some(com.histmersion.api.catalogue.Place.Rationale("dug"))
+        reason = Some(ApiPlace.Rationale("dug"))
       )
     )
     assertEquals(set.map(_.kindAfter), Right("region"))

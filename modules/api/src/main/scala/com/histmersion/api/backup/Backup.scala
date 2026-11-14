@@ -21,9 +21,6 @@ import com.histmersion.api.ByteCount
 import com.histmersion.api.Sha256
 
 object Backup:
-  /** pg_restore's exit status: a process's exit status, as a problem names it. */
-  type ExitCode = Problem.Io.ExitCode
-  val ExitCode: Problem.Io.ExitCode.type = Problem.Io.ExitCode
   type JdbcUrl = JdbcUrl.T
   object JdbcUrl extends Newtype[String, Pure]
   type Name = Name.T
@@ -123,7 +120,7 @@ object Backup:
 
   def parseJdbc(url: JdbcUrl): Either[Problem, PgTarget] =
     val u = Option(url).map((_).value.trim).getOrElse("")
-    val jdbc = Vector(Raw("jdbc:postgresql://127.0.0.1:5432/histmersion"))
+    val jdbc = Vector(Raw("jdbc:postgresql://127.0.0.1/histmersion"))
     if !u.startsWith(JdbcScheme) then Left(Invalid.Unreadable.here(TypeName.named[PgTarget], Raw(s"$u"), jdbc))
     else
       val rest = u.drop(JdbcScheme.length).takeWhile(_ != '?')
@@ -145,7 +142,7 @@ object Backup:
         case Some(p) =>
           ((p.toIntOption
             .map(Some(_))
-            .toRight(Invalid.Unreadable.here(TypeName.of(PgTarget.Port), Raw(s"$p"), Vector(Raw("5432"))))))
+            .toRight(Invalid.Unreadable.here(TypeName.of(PgTarget.Port), Raw(s"$p"), Vector.empty))))
             .map(refactorValue2 => (refactorValue2).map(refactorValue3 => PgTarget.Port(refactorValue3)))
       for
         name <- Some(db.trim)
@@ -165,13 +162,13 @@ object Backup:
     * with `SET transaction_timeout = 0`, which Postgres < 17 rejects) while the data restores perfectly, so a run that
     * reached that summary succeeded with warnings.
     */
-  def restoreOutcome(exit: ExitCode, output: List[ToolOutput]): Either[Problem, List[Outcome]] =
+  def restoreOutcome(exit: Problem.Io.ExitCode, output: List[ToolOutput]): Either[Problem, List[Outcome]] =
     val notable = output
       .map((_).value.trim)
       .filter(_.nonEmpty)
       .filter(l => l.toLowerCase.contains("error") || l.toLowerCase.contains("warning"))
     val completed = output.exists(l => IgnoredErrors.findFirstMatchIn((l).value).isDefined)
-    if exit == ExitCode(0) || completed then Right((notable).map(refactorValue9 => Outcome(refactorValue9)))
+    if exit == Problem.Io.ExitCode(0) || completed then Right((notable).map(refactorValue9 => Outcome(refactorValue9)))
     else
       Left(
         Problem.Io.Process(

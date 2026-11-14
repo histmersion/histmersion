@@ -85,9 +85,9 @@ final class PersonalControllers(
   private def label(title: Option[Title]): Option[TargetLabel] =
     TargetLabel.tidy(title.map(t => TargetLabel.Label(t.value)))
 
-  private def target(t: Target, allowed: Set[MarkKind], what: String): Either[Api.Error, MarkTarget] =
+  private def target(t: Target, allowed: Set[MarkKind], what: Problem.Field): Either[Api.Error, MarkTarget] =
     Target
-      .check(t, allowed, Problem.Field(what))
+      .check(t, allowed, what)
       .flatMap(MarkTarget.zoomChecked(_))
       .flatMap(
         MarkTarget
@@ -114,7 +114,7 @@ final class PersonalControllers(
     maintenance.guard(WriteGate.OperationName("add_bookmark")):
       for
         user <- person(caller)
-        t <- target(in.target, MarkKind.Bookmarkable, "bookmark")
+        t <- target(in.target, MarkKind.Bookmarkable, Problem.Field("bookmark"))
         label <- Bookmark.Label.tidy(in.label).left.map(p => bad(p))
       yield bookmarks.add(user, t, label, this.label(in.title), now()).wire
 
@@ -166,7 +166,7 @@ final class PersonalControllers(
     maintenance.guard(WriteGate.OperationName("add_note")):
       for
         user <- person(caller)
-        t <- target(in.target, MarkKind.Notable, "note")
+        t <- target(in.target, MarkKind.Notable, Problem.Field("note"))
         text <- com.histmersion.api.personal.Note.Text.tidy(in.text).left.map(p => bad(p))
       yield notes.add(user, t, text, label(in.title), now()).wire
 

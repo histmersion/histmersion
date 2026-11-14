@@ -36,7 +36,7 @@ class CasesSuite extends munit.FunSuite:
 
   test("there are eleven groups and two cases outside them"):
     assertEquals(Group.values.length, 13)
-    assertEquals(examples.size, 53)
+    assertEquals(examples.size, 59)
 
   test("an exception becomes an internal problem with its class and its message's first line, cut to 300"):
     val long = "x" * 400
@@ -119,9 +119,9 @@ class CasesSuite extends munit.FunSuite:
     assertEquals(Invalid.Missing(Field("credit"), Vector(Field("k1"))).reason, "credit is required")
     val year =
       Invalid.Unreadable(TypeName("com.histmersion.Year"), Raw("x"), Vector(Raw("1300 BCE")), Vector(Field("from")))
-    assertEquals(year.sentence, "from: 'x' is not a Year (e.g. 1300 BCE)")
-    assertEquals(year.reason, "'x' is not a Year (e.g. 1300 BCE)")
-    assertEquals(NotFound.Entity(TypeName("x.Commons.File"), Raw("File:A.jpg")).reason, "no such Commons.File")
+    assertEquals(year.sentence, "from: 'x' is not a year (e.g. 1300 BCE)")
+    assertEquals(year.reason, "'x' is not a year (e.g. 1300 BCE)")
+    assertEquals(NotFound.Entity(TypeName("x.Commons.File"), Raw("File:A.jpg")).reason, "no such commons file")
     val other: Problem = Conflict.Busy(Conflict.Activity.Backup)
     assertEquals(other.reason, other.sentence)
 

@@ -358,10 +358,8 @@ abstract class PlaceServiceContract extends CatalogueStoreSuite:
     )
     val listed = p.overrides(Some(com.histmersion.domain.catalogue.Place.Id("zzp_hill")))
     assertEquals(
-      listed.map(o =>
-        (o.placeId, o.kind, o.periodStart, o.periodEnd, o.periodSet, o.reason.map(_.value), o.sourceKind)
-      ),
-      List(("zzp_hill", Some("polity"), Some(-1500L), Some(-1100L), true, Some("the survey"), "site"))
+      listed.map(o => (o.placeId, o.kind, o.periodStart, o.periodEnd, o.periodSet, o.reason, o.sourceKind)),
+      List(("zzp_hill", Some("polity"), Some(-1500L), Some(-1100L), true, Some(Place.Rationale("the survey")), "site"))
     )
     assertEquals(listed.map(o => (o.sourcePeriodStart, o.sourcePeriodEnd)), List((Some(-1650L), Some(-1180L))))
     assertEquals(p.overrides(None).map(_.placeId), List("zzp_hill"))

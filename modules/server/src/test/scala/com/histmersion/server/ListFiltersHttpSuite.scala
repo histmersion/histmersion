@@ -123,7 +123,7 @@ class ListFiltersHttpSuite extends DbSuite:
       assertEquals(facets(hall)(ListFilters.FacetName("decidedBy")), Map("person" -> 1))
       val (bad, bb, _) = get(s"$url/api/agents/approvals?kind=bogus")
       assertEquals(bad, 400, bb)
-      assert(bb.contains("unknown ListFilters.Term 'bogus'") && bb.contains("goal-plan"), bb)
+      assert(bb.contains("unknown list filter term 'bogus'") && bb.contains("goal-plan"), bb)
 
       val (s2, b2, h2) = get(s"$url/api/agents/runs?subject=$tag&pipeline=review-article")
       assertEquals(s2, 200, b2)
@@ -156,5 +156,5 @@ class ListFiltersHttpSuite extends DbSuite:
       val mj = mcp(url, "job_status", s"""{"subject":"$tag","kind":["media-import"]}""")
       assert(mj.contains(s"$tag-job2") && !mj.contains(s"$tag-job0") && mj.contains("By kind:"), mj)
       val mbad = mcp(url, "list_approvals", """{"decidedBy":["robot"]}""")
-      assert(mbad.contains("unknown ListFilters.Term 'robot'"), mbad)
+      assert(mbad.contains("unknown list filter term 'robot'"), mbad)
     }

@@ -161,11 +161,11 @@ class VaultsSuite extends munit.FunSuite:
     assertEquals(Subprocess.value(Processes.Result.Out("v\r\n")), "v")
     assertEquals(
       Subprocess.plain(Vaults.Operation("x"), Subprocess.Text("--help")).left.map(_.sentence),
-      Left("x: '--help' is not a Subprocess.Argument: Should have a minimum length of 1 & !(Should start with -)")
+      Left("x: '--help' is not a subprocess argument: Should have a minimum length of 1 & !(Should start with -)")
     )
     assertEquals(
       Subprocess.plain(Vaults.Operation("x"), Subprocess.Text("")).left.map(_.sentence),
-      Left("x: '' is not a Subprocess.Argument: Should have a minimum length of 1 & !(Should start with -)")
+      Left("x: '' is not a subprocess argument: Should have a minimum length of 1 & !(Should start with -)")
     )
     assertEquals(
       Vaults.entryAndField(Secret.Vault.ResolveRef("A/B#UserName"), Vaults.Field("password")),
@@ -311,7 +311,7 @@ class VaultsSuite extends munit.FunSuite:
     )
     assertEquals(YubiKey.Slot(YubiKey.Slot.Value(2), Some(YubiKey.Slot.Serial(5L))).shown, "2:5")
     List("3", "0", "x", "2:", "2:abc", "2:-1", "2:1:3", "", ":5").foreach(b =>
-      assert(YubiKey.parse(YubiKey.Text(b)).left.exists(_.sentence.contains("is not a YubiKey.Written")), b)
+      assert(YubiKey.parse(YubiKey.Text(b)).left.exists(_.sentence.contains("is not a YubiKey")), b)
     )
     assertEquals(
       YubiKey.parseAll(
@@ -570,7 +570,7 @@ class VaultsSuite extends munit.FunSuite:
     def reg(h: String) = p.register(decode(p, s"""database = "$db", $h"""), Ctx(Map("PATH" -> d.toString)))
     assert(
       reg("yubikey = [\"2:1\", \"3\"]").left.exists(
-        _.sentences.mkString("; ").startsWith("yubikey: '3' is not a YubiKey.Written")
+        _.sentences.mkString("; ").startsWith("yubikey: '3' is not a YubiKey")
       )
     )
     assert(
@@ -737,7 +737,7 @@ class VaultsSuite extends munit.FunSuite:
       v.resolveAll(List(Secret.Vault.ResolveRef("-x"), Secret.Vault.ResolveRef("D"), Secret.Vault.ResolveRef("E")))
     assertEquals(
       bad(Secret.Vault.ResolveRef("-x")).left.map(_.sentences.mkString("; ")),
-      Left("the entry: '-x' is not a Subprocess.Argument: Should have a minimum length of 1 & !(Should start with -)")
+      Left("the entry: '-x' is not a subprocess argument: Should have a minimum length of 1 & !(Should start with -)")
     )
     assertEquals(
       (bad(Secret.Vault.ResolveRef("D")), bad(Secret.Vault.ResolveRef("E"))),

@@ -270,7 +270,7 @@
 == refused: invalid (zqalpha1991_walls → ZQ bad)
 400 {
   "code" : "invalid",
-  "message" : "'ZQ bad' is not a Citekey: Should match (?!.*\\.\\.)[a-z][a-z0-9_.-]{1,120}"
+  "message" : "'ZQ bad' is not a citekey: Should match (?!.*\\.\\.)[a-z][a-z0-9_.-]{1,120}"
 }
 == refused: not link-shaped (zqalpha1991_walls → zqwalls)
 400 {
@@ -1113,7 +1113,7 @@ Mirror: the next full `histmersion export` removes `sources/zqbeta2001_cove.md`.
 == delete zqeps1999_cited: refused
 400 {
   "code" : "invalid",
-  "message" : "Citekey 'zqeps1999_cited' is referred to by 1 DeleteBlocker.Kind.Article"
+  "message" : "citekey 'zqeps1999_cited' is referred to by 1 article — remove those references first (there is no override)"
 }
 == delete zqnone2000_x: unknown
 404 {

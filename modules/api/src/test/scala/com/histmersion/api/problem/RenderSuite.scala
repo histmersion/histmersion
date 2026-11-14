@@ -173,7 +173,9 @@ class RenderSuite extends munit.FunSuite:
     )
     assertEquals(Invalid.Missing.here(Field("f")).retryAfter, None)
 
-  test("the code words of every enum with fields read back from a column"):
+  test(
+    "the code words of every enum with fields read back from a column; no English sentence shows a type's code name"
+  ):
     val reported = External.Reported("x: y")
     val variants: Vector[Problem] =
       Vector(Io.Damage.Checksum, Io.Damage.Truncated, Io.Damage.Undecodable)
@@ -258,7 +260,10 @@ class RenderSuite extends munit.FunSuite:
           Content.Requirement.CitesNoSource,
           Content.Requirement.UnknownCitekey,
           Content.Requirement.OutsidePeriod,
-          Content.Requirement.StandIn
+          Content.Requirement.StandIn,
+          Content.Requirement.ExactTitle,
+          Content.Requirement.ReplaceText,
+          Content.Requirement.AnchorInArticle
         ).map(Content.Proposal(_, Where("findings"))) ++
         Vector(Io.Ending.TimedOut(Millis(5L)), Io.Ending.NotStarted(reported)).map(Io.Process(Io.Tool("pg_dump"), _)) ++
         Io.Access.values.toVector.map(Io.File(_, Io.Path("/a b/c"), reported)) ++
@@ -312,6 +317,9 @@ class RenderSuite extends munit.FunSuite:
           )
         }
     variants.foreach(v => assertEquals(Column.read(v.stored), v, v.stored))
+    (examples ++ variants).filterNot(_.group == Group.Stored).map(_.sentence).foreach { s =>
+      assertEquals(testsupport.TypeNamesShown.in(s), None, s"a type's code name in: $s")
+    }
 
   test("English names what an answer should have been as a noun, and every reply shape differently"):
     def said(shape: Upstream.Shape) =

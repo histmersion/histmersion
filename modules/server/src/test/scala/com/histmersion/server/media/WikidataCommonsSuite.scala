@@ -156,7 +156,7 @@ class WikidataCommonsSuite extends munit.FunSuite:
         "licence cc-by-nc-sa not allowed for wikimedia-commons",
         "marked non-free on Commons",
         "no author to credit",
-        "no such Commons.File"
+        "no such commons file"
       )
     )
     assertEquals((r.stored, r.updated, r.linked, r.categories), (0, 0, 0, 0))

@@ -144,10 +144,10 @@ class CritiqueReasonsSuite extends DbSuite:
       ).isRight
     )
     assertEquals(
-      stored.map((src, dst, reason, by) => (src.value: String, dst.value: String, reason.value, by)),
+      stored.map((src, dst, reason, by) => (src.value: String, dst.value: String, reason, by)),
       List(
-        (Smith, Frazer, "x", Some("skeptic (agent run abcd1234)")),
-        (Brown, Frazer, "Cited for the rites only.", Some("person"))
+        (Smith, Frazer, Coverage.Rationale("x"), Some("skeptic (agent run abcd1234)")),
+        (Brown, Frazer, Coverage.Rationale("Cited for the rites only."), Some("person"))
       )
     )
     assertEquals(h.research.articles.get(Slug).toOption.get.article.updatedAt, token)
@@ -208,7 +208,10 @@ class CritiqueReasonsSuite extends DbSuite:
     assert(
       patch(CritiqueReason(BrownRef, FrazerRef, Coverage.Rationale("Renamed, still the same."))).isRight
     )
-    assertEquals(stored.map(r => (r._1, r._3.value)), List(("zzcrit1999_ritesb", "Renamed, still the same.")))
+    assertEquals(
+      stored.map(r => (r._1, r._3)),
+      List(("zzcrit1999_ritesb", Coverage.Rationale("Renamed, still the same.")))
+    )
     // the article's rename carries it
     assert(h.research.articles.rename(Slug, LabelRename(LabelRename.To("zzcrit_bough2"))).isRight)
     assertEquals(ArticleFixtures.critiques(ds, com.histmersion.domain.research.Slug("zzcrit_bough2")).size, 1)

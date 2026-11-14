@@ -58,7 +58,7 @@ class ListQueriesSuite extends munit.FunSuite:
       ListQueries
         .approvals(ApprovalFilter(kind = List(Approval.Kind.Wire("goal-plan"), Approval.Kind.Wire("bogus"))))
         .left
-        .exists(_.message.sentence.contains("kind: unknown ListFilters.Term 'bogus'"))
+        .exists(_.message.sentence.contains("kind: unknown list filter term 'bogus'"))
     )
     assert(
       ListQueries
@@ -105,19 +105,19 @@ class ListQueriesSuite extends munit.FunSuite:
       ListQueries
         .runs(RunFilter(status = List(RunFilter.Status("stuck"))), now)
         .left
-        .exists(_.message.sentence.contains("unknown ListFilters.Term 'stuck'"))
+        .exists(_.message.sentence.contains("unknown list filter term 'stuck'"))
     )
     assert(
       ListQueries
         .runs(RunFilter(pipeline = List(RunFilter.Pipeline("write-novel"))), now)
         .left
-        .exists(_.message.sentence.contains("unknown ListFilters.Term"))
+        .exists(_.message.sentence.contains("unknown list filter term"))
     )
     assert(
       ListQueries
         .runs(RunFilter(origin = List(Agents.Origin.Wire("cron"))), now)
         .left
-        .exists(_.message.sentence.contains("unknown ListFilters.Term"))
+        .exists(_.message.sentence.contains("unknown list filter term"))
     )
     assert(
       ListQueries

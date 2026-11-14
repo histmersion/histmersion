@@ -131,7 +131,7 @@ class CalibreCollectionSuite extends munit.FunSuite:
     assert(
       c.set(CollectionId("1"), List(SourceCollection.FieldName("bogus") -> SourceCollection.FieldValue("x")))
         .left
-        .exists(_.sentences.mkString("; ").contains("unknown Calibre.Field.Name 'bogus'"))
+        .exists(_.sentences.mkString("; ").contains("unknown field name 'bogus'"))
     )
     val calls = f.takeLog().map(_.split(' ').take(2).mkString(" "))
     assertEquals(

@@ -84,7 +84,7 @@ class PersonalControllersSuite extends munit.FunSuite:
     assert(
       c.addNote(me, Note.New(Target(ItemKind.View, view = Some(ViewState("a=b"))), Note.Text("x")))
         .left
-        .exists(_.message.sentence.contains("unknown ItemKind 'view'"))
+        .exists(_.message.sentence.contains("unknown item kind 'view'"))
     )
     assert(
       c.addNote(me, Note.New(Target.item(ItemKind.Source, ItemKey("zz")), Note.Text("   ")))

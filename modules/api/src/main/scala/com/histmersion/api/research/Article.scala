@@ -419,7 +419,7 @@ object Article:
         a.op match
           case Op.Delete                             => Right(Edit.Delete(anchor))
           case Op.Replace if text.value.trim.isEmpty =>
-            Left(Problem.Invalid.Missing.here(Problem.Field("text")))
+            Left(Problem.Content.Proposal(Problem.Content.Requirement.ReplaceText, Problem.Where("text")))
           case Op.Replace                   => Right(Edit.Replace(anchor, text))
           case _ if text.value.trim.isEmpty => Left(Problem.Invalid.Missing.here(Problem.Field("text")))
           case Op.InsertAfter               => Right(Edit.InsertAfter(anchor, text))
@@ -499,7 +499,7 @@ object Article:
               val last = (i).value + na.length - 1
               Right((Offset(pos((i).value)), Offset(pos(last) + 1)))
             case Nil =>
-              Left(Problem.NotFound.Entity(Problem.TypeName.of(Anchor), Problem.Raw(s"$a")))
+              Left(Problem.Content.Proposal(Problem.Content.Requirement.AnchorInArticle, Problem.Where("anchor")))
             case more =>
               Left(
                 Problem.Invalid.Ambiguous

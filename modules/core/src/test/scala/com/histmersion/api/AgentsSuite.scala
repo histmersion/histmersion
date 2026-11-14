@@ -28,7 +28,7 @@ import com.histmersion.api.research.Article
 class AgentsSuite extends munit.FunSuite:
   private def unknownProvider(name: Problem.Raw)(p: Problem): Boolean = p match
     case Problem.Invalid.Unknown(t, raw, _, _) =>
-      t == Problem.TypeName.of(com.histmersion.api.automation.ProviderKind.Wire) && raw == name
+      t == Problem.TypeName.of(Agents.ProviderKind.Wire) && raw == name
     case _ => false
 
   test("ModelRef: only the first colon separates the provider (Ollama ids carry colons)"):
