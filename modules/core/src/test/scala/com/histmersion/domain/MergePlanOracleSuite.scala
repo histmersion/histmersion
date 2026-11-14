@@ -1,5 +1,6 @@
 package com.histmersion
 package domain
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.util.json.RawJson.*
 
 import hearth.kindlings.optics.syntax.*
@@ -122,7 +123,7 @@ class MergePlanOracleSuite extends munit.FunSuite with Bounded:
       lines.foreach(l => out ++= s"$l\n")
     section("plan", List(r.plan.asJson.spaces2))
     section("rows", r.rows.map(_.toString))
-    section("needs apply", r.needsApply.map(_.value))
+    section("needs apply", r.needsApply.map(_.sentence))
     section("old citekeys left out", r.skipAliases.toList.map(_.value).sorted)
     section("notes", r.notes.map(_.value))
     section("apply: folds", a.folds.map(_.toString))

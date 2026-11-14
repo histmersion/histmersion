@@ -52,6 +52,9 @@ object Bundle:
     /** The letter a merge issue about this kind of record starts its id with (`P-1a2b3c4d`). */
     def issueLetter: String = Kind.letterOf(this)
 
+    /** The kind as a problem names the type of its record: a reader reads it as the kind's own name (`source`). */
+    def typeName: Problem.TypeName = Problem.TypeName(s"com.histmersion.api.exchange.Bundle.Kind.$productPrefix")
+
   object Kind:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
@@ -824,7 +827,7 @@ object Bundle:
       applied: ImportResult.Applied,
       counts: List[KindCounts],
       blobs: ImportResult.Blobs,
-      problems: List[ImportResult.Problems],
+      problems: List[Problem],
       conflicts: List[ImportResult.Conflicts],
       notes: List[ImportResult.Notes],
       mergeId: Option[UUID] = None,
@@ -843,8 +846,6 @@ object Bundle:
     object Applied extends Newtype[Boolean, Pure]
     type Blobs = Blobs.T
     object Blobs extends Newtype[Int, Pure]
-    type Problems = Problems.T
-    object Problems extends Newtype[String, Pure]
     type Conflicts = Conflicts.T
     object Conflicts extends Newtype[String, Pure]
     type Notes = Notes.T
@@ -1173,20 +1174,16 @@ object Bundle:
     object Dst extends Newtype[String, Pure]
     export com.histmersion.api.library.Edge.Kind.Wire as Kind
 
-  final case class Upload(sha256: Sha256, bytes: ByteCount, manifest: Option[Manifest], problems: List[Upload.Problems])
+  final case class Upload(sha256: Sha256, bytes: ByteCount, manifest: Option[Manifest], problems: List[Problem])
       derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
-
-  object Upload:
-    type Problems = Problems.T
-    object Problems extends Newtype[String, Pure]
 
   final case class VerifyResult(
       ok: VerifyResult.Ok,
       manifest: Option[Manifest],
       blobsChecked: VerifyResult.BlobsChecked,
-      problems: List[VerifyResult.Problems]
+      problems: List[Problem]
   ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
@@ -1196,5 +1193,3 @@ object Bundle:
     object Ok extends Newtype[Boolean, Pure]
     type BlobsChecked = BlobsChecked.T
     object BlobsChecked extends Newtype[Int, Pure]
-    type Problems = Problems.T
-    object Problems extends Newtype[String, Pure]

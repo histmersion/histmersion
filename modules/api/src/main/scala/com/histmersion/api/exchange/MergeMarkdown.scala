@@ -31,8 +31,8 @@ object MergeMarkdown:
         (if (p.resolved).value > 0 then s"+r(${p.resolved})" else "")
     ).mkString("  \n")
     val sections = List(
-      section(("Problems (no decision fixes these)"), p.problems.map(x => (s"- $x"))),
-      section(("Resolutions not used (errors)"), p.resolutionErrors.map(x => (s"- $x"))),
+      section(("Problems (no decision fixes these)"), p.problems.map(x => (s"- ${x.sentence}"))),
+      section(("Resolutions not used (errors)"), p.resolutionErrors.map(x => (s"- ${x.sentence}"))),
       section(("Blocking"), open.map(((issue)))),
       section(("Decided"), decided.map(((issue)))),
       section(("Conditional (listed now, so no new issue appears after a decision)"), conditional.map(((issue)))),
@@ -107,7 +107,7 @@ object MergeMarkdown:
       )
       .toList
     val sections = List(
-      section(("Problems (nothing was written)"), r.problems.map(x => (s"- $x"))),
+      section(("Problems (nothing was written)"), r.problems.map(x => (s"- ${x.sentence}"))),
       section(("Open"), r.issues.map(((issue)))),
       section(("Notes"), r.notes.map(x => (s"- $x")))
     ).flatten

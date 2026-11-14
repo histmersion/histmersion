@@ -271,6 +271,20 @@ object Problem:
     /** No fetcher found a legal open-access copy of `work` (its DOI or arXiv id). */
     final case class Copy(work: Raw) extends NotFound
 
+    /** No `typeName` `key` is `within` the place it is looked for, and `from` refers to it. */
+    final case class Dangling(typeName: TypeName, key: Raw, from: Where, within: Scope) extends NotFound
+
+    /** Where a referred-to record is looked for. */
+    enum Scope derives CanEqual:
+      /** In the bundle that holds the reference. */
+      case Bundle
+
+      /** In the bundle or in this collection. */
+      case BundleOrHere
+
+      /** In this server's gazetteer. */
+      case Gazetteer
+
   /** The request is valid, but the stored state does not allow it now. */
   sealed trait Conflict extends Problem
 
@@ -293,6 +307,49 @@ object Problem:
 
     /** `count` values of the type `by` refer to it (one problem per type of referrer). */
     final case class Referenced(typeName: TypeName, key: Raw, by: TypeName, count: Count) extends Conflict
+
+    /** A merge does not carry out `subject` (an issue, a record or a resolution, as the plan names it): `hold`. */
+    final case class Held(subject: Where, hold: Hold) extends Conflict
+
+    /** Why a merge does not carry something out. */
+    enum Hold derives CanEqual:
+      /** No decision settles the issue yet. */
+      case Open
+
+      /** The record is the same work as `here`, by `basis`: folding the two is `merge apply`'s. */
+      case SameWork(here: Raw, basis: Raw)
+
+      /** `gate` decided `decided`: folding the record into `into` is `merge apply`'s. */
+      case Folds(gate: Raw, decided: Raw, into: Raw)
+
+      /** The bundle's record and this collection's are merged into one: `merge apply`'s. */
+      case Merges
+
+      /** Citekeys given to resolve a collision (`subject` names the decisions): `merge apply`'s. */
+      case Renames
+
+      /** A label taken here is numbered anew: `merge apply`'s. */
+      case Renumbers
+
+      /** Carrying out the decision `decided` is `merge apply`'s. */
+      case Carries(decided: Raw)
+
+      /** The resolution names no issue of this plan: the records changed since it was decided, or it never was one. */
+      case Stale
+
+      /** The resolution applies only if `on` is decided `when`; `on` is decided `now`, or does not apply (`None`). */
+      case Conditional(on: Raw, when: Raw, now: Option[Raw])
+
+      /** Several records of the bundle map onto the record `subject` here. */
+      case Collides
+
+      /** The plan is `subject` now, not `sent`, the one reviewed: the collection, the bundle or the resolutions
+        * changed.
+        */
+      case PlanChanged(sent: Raw)
+
+      /** The decision `decided` needs the merged text, which was not sent. */
+      case TextNotSent(decided: Raw)
 
     /** A version of a value as the store writes it: a time or a revision, in its wire spelling. */
     type Stamp = Stamp.T
@@ -485,6 +542,42 @@ object Problem:
     /** The database refused `op`. */
     final case class Database(op: DbOp, reported: External.Reported) extends Io
 
+    /** The entry `entry` of an `archive` file is not as its manifest or its records say: `fault`. */
+    final case class Entry(archive: Format, entry: Path, fault: Fault) extends Io
+
+    /** What is wrong with an entry of an archive. */
+    enum Fault derives CanEqual:
+      /** The archive holds no such entry. */
+      case Missing
+
+      /** The manifest lists it; the archive does not hold it. */
+      case Omitted
+
+      /** The archive holds it; the manifest does not list it. */
+      case Unlisted
+
+      /** The archive holds it more than once. */
+      case Repeated
+
+      /** It is no entry such an archive holds. */
+      case Foreign
+
+      /** It comes first, where `first` belongs. */
+      case Ahead(first: Path)
+
+      /** No record of the archive refers to it. */
+      case Unreferenced
+
+      /** `uses` records refer to it, and the archive does not hold it. */
+      case Dangling(uses: Count)
+
+      /** Its `measure` is `found`, where the manifest lists `listed`. */
+      case Differs(measure: Measure, listed: Raw, found: Raw)
+
+    /** What a manifest lists of an entry. */
+    enum Measure derives CanEqual:
+      case Sha256, Bytes, Lines, Entries
+
     /** A path on a file system, as text: the browser has no file system type. */
     type Path = Path.T
     object Path extends Newtype[String, Pure]
@@ -524,6 +617,9 @@ object Problem:
 
       /** It is written in format `found`, newer than the format `reads` this version reads. */
       case Newer(found: Raw, reads: Raw)
+
+      /** It comes from database schema `found`, newer than the schema `reads` this version has. */
+      case Schema(found: Count, reads: Count)
 
     /** How a process ended that did not end well. */
     enum Ending derives CanEqual:
@@ -1028,6 +1124,12 @@ object Problem:
       Invalid.Reference(Invalid.Form.EnvName(Raw("1PASSWORD")), Vector(Field("plugins"), Field("api-key"))),
       NotFound.Entity(citekey, Raw("anthony2007")),
       NotFound.Copy(Raw("doi:10.1017/S0003598X00000001")),
+      NotFound.Dangling(
+        TypeName("com.histmersion.api.exchange.Bundle.Kind.Source"),
+        Raw("0193f1c4-7b2a-7c3e-9d41-5e6f7a8b9c0d"),
+        Where("finding anthony2007#1"),
+        NotFound.Scope.BundleOrHere
+      ),
       Conflict.AlreadyExists(TypeName("com.histmersion.domain.catalogue.Place.Id"), Raw("pleiades_579885")),
       Conflict.Renamed(citekey, Raw("anthony2006"), Raw("anthony2007")),
       Conflict.Stale(
@@ -1049,6 +1151,7 @@ object Problem:
         TypeName("com.histmersion.domain.library.Finding"),
         Count(3L)
       ),
+      Conflict.Held(Where("source anthony2007"), Conflict.Hold.SameWork(Raw("anthony2006"), Raw("doi"))),
       Refused.Policy(Refused.Rule.RunTokenRequired),
       Refused.Quota(Refused.Limit.DailySpend, Refused.Amount(5.25), Refused.Amount(4.5), Some(EpochMs(1762732800000L))),
       Refused.Disabled(Refused.Feature("events-gvp"), SettingKey("histmersion.events.gvp.enabled")),
@@ -1077,6 +1180,11 @@ object Problem:
       Io.Database(
         Io.DbOp.Migrate,
         External.Reported("org.postgresql.util.PSQLException: relation \"jobs\" does not exist")
+      ),
+      Io.Entry(
+        Io.Format.Bundle,
+        Io.Path("entities/sources.ndjson"),
+        Io.Fault.Differs(Io.Measure.Lines, Raw("4"), Raw("3"))
       ),
       Config.Setting(SettingKey("histmersion.agents.providers.codex.command"), Config.Fault.Empty),
       Config.Unavailable(Config.Capability.Originals),

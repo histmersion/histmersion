@@ -1,5 +1,6 @@
 package com.histmersion
 package util.data.exchange
+import com.histmersion.util.problem.{Problem, Problems}
 
 import hearth.kindlings.optics.syntax.*
 
@@ -22,8 +23,6 @@ import com.histmersion.util.text.MinHash
   * they write over.
   */
 object MergePlans:
-  type PlanFileText = PlanFileText.T
-  object PlanFileText extends Newtype[String, Pure]
 
   /** `merge plan`: read the bundle, gather this collection's state in one read-only snapshot, plan. */
 
@@ -36,10 +35,10 @@ object MergePlans:
       chunkChars: ImportOptions.ChunkChars,
       kinds: CarriedKinds,
       rules: MergeRuleSet
-  ): Either[PlanFileText, MergePlan] =
+  ): Either[Problems, MergePlan] =
     val loaded = bundle.read(BundleReader.read(_, hashBlobs = false))
     loaded.manifest match
-      case None    => Left(PlanFileText(("not a readable bundle" :: loaded.problems).mkString("; ")))
+      case None    => Left(loaded.unreadable)
       case Some(m) =>
         Right(transact(ds) {
           sql"SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY".update.run()
@@ -63,7 +62,7 @@ object MergePlans:
     val input0 = MergeState.load(
       loaded.entities,
       m,
-      loaded.problems.map(MergePlanner.Input.ReadProblems(_)),
+      loaded.problems,
       files,
       chunkChars,
       cfg,

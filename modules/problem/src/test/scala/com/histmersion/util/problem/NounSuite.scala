@@ -1,7 +1,8 @@
 package com.histmersion
 package util.problem
 
-/** A type's name reads as an English noun in a sentence: derived from the name, never a package, a dot or a code name. */
+/** A type's name reads as an English noun in a sentence: derived from the name, never a package, a dot or a code name.
+  */
 class NounSuite extends munit.FunSuite:
   import Problem.*
   import Text.{a, aNoun, counted, noun, plural}

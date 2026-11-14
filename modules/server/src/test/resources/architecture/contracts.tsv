@@ -952,7 +952,7 @@ unwrap	core:domain/IngestBacklog.scala	.value outside a boundary	21
 unwrap	core:domain/JsonRead.scala	.value outside a boundary	1
 unwrap	core:domain/ManagerPolicy.scala	.value outside a boundary	66
 unwrap	core:domain/MergeFold.scala	.value outside a boundary	29
-unwrap	core:domain/MergePlanner.scala	.value outside a boundary	118
+unwrap	core:domain/MergePlanner.scala	.value outside a boundary	114
 unwrap	core:domain/PassageFinder.scala	.value outside a boundary	14
 unwrap	core:domain/PlanArticles.scala	.value outside a boundary	24
 unwrap	core:domain/PlanGoal.scala	.value outside a boundary	41

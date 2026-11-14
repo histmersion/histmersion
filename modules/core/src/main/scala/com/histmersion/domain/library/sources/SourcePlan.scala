@@ -363,7 +363,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
       (s: Bundle.Source, o: UUID) => sourcesByUid.get(o).map(l => IssueDetail(MergeIssue.Detail.sourceFields(l, s)))
     )
 
-  override def citekeyArgument(i: MergeIssue, dec: MergeDecision): Option[Either[MergePlan.ResolutionErrors, Unit]] =
+  override def citekeyArgument(i: MergeIssue, dec: MergeDecision): Option[Either[Problem, Unit]] =
     dec.kind match
       case km.Map =>
         val allowed = List(i.left, i.right).flatten.map(_.label.value)
@@ -372,20 +372,17 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
         Some(
           if !allowed.contains(ck) then
             Left(
-              MergePlan.ResolutionErrors(
-                s"map takes one of the two citekeys: ${allowed.map(c => s"map:$c").mkString(" or ")}"
+              Problem.Invalid.Unknown.here(
+                Problem.TypeName.named[Citekey],
+                Problem.Raw(s"$ck"),
+                allowed.map(c => Problem.Raw(s"$c")).toVector
               )
             )
           else if in.labels.citekeys
               .get(wire(ck))
               .orElse(in.labels.aliases.get(wire(ck)))
               .exists(o => !leftUid.contains(o))
-          then
-            Left(
-              MergePlan.ResolutionErrors(
-                s"'$ck' is a citekey (or an old one) of another source here — merge under the other citekey"
-              )
-            )
+          then Left(Problem.Conflict.AlreadyExists(Problem.TypeName.named[Citekey], Problem.Raw(s"$ck")))
           else Right(())
         )
       case km.RenameRight | km.RenameLeft =>
@@ -393,9 +390,15 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
         val labelsHere = in.labels.citekeys.keySet ++ in.labels.aliases.keySet ++ fes.sources.map(_.citekey)
         Some(
           if !Citekeys.valid(Citekeys.ValidCk(ck)) then
-            Left(MergePlan.ResolutionErrors(s"'$ck' is not a citekey (lower-case letters, digits and _)"))
+            Left(
+              Problem.Invalid.Unreadable.here(
+                Problem.TypeName.named[Citekey],
+                Problem.Raw(s"$ck"),
+                Vector(Problem.Raw("anthony2007"), Problem.Raw("guterbock1997_hittite"))
+              )
+            )
           else if labelsHere(wire(ck)) then
-            Left(MergePlan.ResolutionErrors(s"'$ck' is already a citekey (or an old one) here or in the bundle"))
+            Left(Problem.Conflict.AlreadyExists(Problem.TypeName.named[Citekey], Problem.Raw(s"$ck")))
           else Right(())
         )
       case _ => None

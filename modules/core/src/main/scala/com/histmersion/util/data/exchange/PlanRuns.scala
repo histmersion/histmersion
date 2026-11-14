@@ -1,5 +1,6 @@
 package com.histmersion
 package util.data.exchange
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.api.exchange.EditionsPolicy
 
@@ -60,7 +61,7 @@ final class PlanRuns(runs: List[PlanRun]) extends PlanRun:
   override def citekeyArgument(
       issue: MergeIssue,
       decision: MergeDecision
-  ): Option[Either[MergePlan.ResolutionErrors, Unit]] =
+  ): Option[Either[Problem, Unit]] =
     runs.iterator.flatMap(_.citekeyArgument(issue, decision)).nextOption()
 
   /** Every run folds; the folded source takes the bundle's body when one of them says so. */
@@ -103,7 +104,7 @@ final class PlanRuns(runs: List[PlanRun]) extends PlanRun:
 
   override def addedOnBoth(questions: PlanQuestions): Unit = runs.foreach(_.addedOnBoth(questions))
 
-  override def argument(issue: MergeIssue, decision: MergeDecision): Option[Either[MergePlan.ResolutionErrors, Unit]] =
+  override def argument(issue: MergeIssue, decision: MergeDecision): Option[Either[Problem, Unit]] =
     runs.iterator.flatMap(_.argument(issue, decision)).nextOption()
 
   override def pairIssue(kind: MergeIssue.Kind): Boolean = runs.exists(_.pairIssue(kind))
@@ -133,7 +134,7 @@ final class PlanRuns(runs: List[PlanRun]) extends PlanRun:
       finalEs: BundleEntities,
       live: UUID => Boolean,
       writes: UUID => Boolean
-  ): List[MergePlan.Problems] =
+  ): List[Problem] =
     runs.flatMap(_.problems(finalEs, live, writes))
 
   override def dropped: Set[UUID] = runs.flatMap(_.dropped).toSet

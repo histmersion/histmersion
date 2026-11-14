@@ -2,6 +2,7 @@ package com.histmersion
 package files
 import hearth.kindlings.jsoniterjson.Json
 
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 import hearth.kindlings.optics.syntax.*
 
@@ -163,7 +164,10 @@ class BundleEntitiesSuite extends munit.FunSuite:
     List("catalogue", "names", "wikidata", "central", "plusMinus", "datingMethod").foreach(f =>
       assert(!plain.line.contains(s"\"$f\""), plain.line)
     )
-    assertEquals(BundleFormat.decodeLine[Bundle.Event](plain.line, stamped = true).map(_.names), Right(None))
+    assertEquals(
+      BundleFormat.decodeLine[Bundle.Event](plain.line, stamped = true, Problem.Where("e:1")).map(_.names),
+      Right(None)
+    )
     val gvp = BundleFormat.stamp(
       event(
         _.modify(_.catalogue)
@@ -182,7 +186,9 @@ class BundleEntitiesSuite extends munit.FunSuite:
     )
     assertNotEquals(gvp.rev, plain.rev)
     assertEquals(
-      BundleFormat.decodeLine[Bundle.Event](gvp.line, stamped = true).map(e => (e.catalogue, e.names, e.plusMinus)),
+      BundleFormat
+        .decodeLine[Bundle.Event](gvp.line, stamped = true, Problem.Where("e:1"))
+        .map(e => (e.catalogue, e.names, e.plusMinus)),
       Right((Some("gvp"), Some(List("Thera", "Santorini")), Some(10L)))
     )
 
@@ -350,11 +356,19 @@ class BundleEntitiesSuite extends munit.FunSuite:
     )
     val l = BundleReader.read(ByteArrayInputStream(ok), hashBlobs = true)
     // the blob's content is not its name, and nothing references it
-    assert(l.problems.exists(_.contains("hashes to")), l.problems.mkString("\n"))
-    assert(l.problems.exists(_.contains("nothing references it")), l.problems.mkString("\n"))
+    assertEquals(
+      l.problems.map(_.sentence),
+      List(
+        "the bundle data at blobs/sha256/ab/abababababababababababababababababababababababababababababababab fails its checksum",
+        "blobs/sha256/ab/abababababababababababababababababababababababababababababababab is in the bundle, but nothing refers to it"
+      )
+    )
     assertEquals(l.entities.goals.map(_.slug), List("g"))
     val noManifest = BundleReader.read(ByteArrayInputStream(tar(ps*)), hashBlobs = false)
     assert(noManifest.manifest.isEmpty)
-    assert(noManifest.problems.exists(_.contains("first entry")))
+    assertEquals(
+      noManifest.problems.headOption.map(_.sentence),
+      Some(s"${ps.head._1} comes first in the bundle, where manifest.json belongs")
+    )
 
   // ── decisions ────────────────────────────────────────────────────────────────────────────────

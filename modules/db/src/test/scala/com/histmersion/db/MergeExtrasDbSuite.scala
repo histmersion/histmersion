@@ -1,5 +1,6 @@
 package com.histmersion
 package db
+import com.histmersion.util.problem.Text.sentences
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
 
@@ -132,7 +133,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
         TestExchange.kinds,
         TestExchange.rules
       )
-      .fold(e => fail(e.value), identity)
+      .fold(e => fail(e.sentences.mkString("; ")), identity)
 
   private def importInto(ds: DataSource, bundle: Path, originals: Path): Bundle.ImportResult =
     BundleImporter
@@ -147,7 +148,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
         TestExchange.kinds,
         TestExchange.rules
       )
-      .fold(e => fail(e), identity)
+      .fold(e => fail(e.sentences.mkString("; ")), identity)
 
   private def applyIn(
       ds: DataSource,
@@ -172,7 +173,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
         TestExchange.rules,
         TestExchange.followUps
       )
-      .fold(e => fail(e), identity)
+      .fold(e => fail(e.sentences.mkString("; ")), identity)
 
   private def count(ds: DataSource, q: String): Int = connect(ds)(Sql.raw(Sql.Text(q)).frag.query[Int].run().head)
   private def text(ds: DataSource, q: String): Option[String] =

@@ -50,6 +50,7 @@ object Answer:
       case _: Conflict.Renamed       => StatusCode.Conflict
       case _: Conflict.WrongState    => StatusCode.Conflict
       case _: Conflict.Referenced    => StatusCode.Conflict
+      case _: Conflict.Held          => StatusCode.Conflict
       case _: Refused.Policy         => StatusCode.Forbidden
       case _: Refused.Quota          => StatusCode.TooManyRequests
       case _: Refused.Disabled       => StatusCode.Forbidden

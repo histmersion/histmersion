@@ -4,14 +4,25 @@ package testsupport
 /** Finds a type's code name where an English sentence should name it as a reader does: a dotted type path
   * (`Queue.QueueItem.Id`, `com.histmersion.x`) or a CamelCase type name (`ModelRef`). Quoted input ('…', "…", `…`) is
   * shown as given, the outside text after an em dash is the outside's, a throwable's class is what an internal failure
-  * reports, the MCP library's framing of a decoding failure (circe's `DecodingFailure`, gone with G62) is its own,
-  * and a field's name (`isPublicDomain`) is what the data calls it, so none of them counts.
+  * reports, the MCP library's framing of a decoding failure (circe's `DecodingFailure`, gone with G62) is its own, and
+  * a field's name (`isPublicDomain`) is what the data calls it, so none of them counts.
   */
 object TypeNamesShown:
 
   /** Names spelled in CamelCase in English too. */
   val ProperNames: Set[String] =
-    Set("GeoJSON", "YubiKey", "YubiKeys", "KeePassXC", "ChatGPT", "OpenAlex", "PostgreSQL", "CrossRef", "PeriodO", "WebP")
+    Set(
+      "GeoJSON",
+      "YubiKey",
+      "YubiKeys",
+      "KeePassXC",
+      "ChatGPT",
+      "OpenAlex",
+      "PostgreSQL",
+      "CrossRef",
+      "PeriodO",
+      "WebP"
+    )
 
   private val Dotted = """\b[A-Za-z][A-Za-z0-9]*(\.[A-Z][A-Za-z0-9]*)+\b""".r
   private val Camel = """\b[A-Z][a-z]+[A-Z][A-Za-z]*\b""".r

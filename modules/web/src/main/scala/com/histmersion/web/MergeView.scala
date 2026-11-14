@@ -336,7 +336,7 @@ object MergeView:
         fail("the upload"),
         u => {
           if u.manifest.isEmpty then
-            failure.set(Some(s"${f.name} is not a readable bundle: ${u.problems.mkString("; ")}"))
+            failure.set(Some(s"${f.name} is not a readable bundle: ${u.problems.map(_.sentence).mkString("; ")}"))
           else
             upload.set(Some(u))
             plan.set(None); selected.set(None)
@@ -514,7 +514,7 @@ object MergeView:
           cls := "merge-problems",
           role := "alert",
           strong("No decision fixes these: "),
-          ul(p.problems.map(x => li(x.value)))
+          ul(p.problems.map(x => li(x.sentence)))
         )
       ),
       Option.when(p.resolutionErrors.nonEmpty)(
@@ -522,7 +522,7 @@ object MergeView:
           cls := "merge-problems",
           role := "alert",
           strong("Decisions that could not be used: "),
-          ul(p.resolutionErrors.map(x => li(x.value)))
+          ul(p.resolutionErrors.map(x => li(x.sentence)))
         )
       ),
       div(
@@ -995,7 +995,7 @@ object MergeView:
         cls := "form-error",
         role := "alert",
         p_("Not merged: nothing was written."),
-        ul(r.problems.map(x => li(x.value)))
+        ul(r.problems.map(x => li(x.sentence)))
       )
     else if r.mergeId.isEmpty then p_(cls := "form-ok", "Nothing to merge: the bundle is merged already.")
     else

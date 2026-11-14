@@ -169,7 +169,7 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
     val no = event("w-ev-no", "zz_ev_no", "Nowhere").copy(placeId = Some(Place.Id("zz_nowhere")))
     val r = run(foreign.copy(places = List(p), events = List(ok, no)))
     assertEquals(
-      r.plan.problems.filter(_.value.contains("gazetteer")).map(_.value.takeWhile(_ != ':')),
+      r.plan.problems.filter(_.sentence.contains("gazetteer")).map(_.sentence.takeWhile(_ != ':')),
       List("event zz_ev_no")
     )
 

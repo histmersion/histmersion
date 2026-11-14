@@ -200,7 +200,7 @@ object BundleService:
           w.rules
         )
         .left
-        .map(e => Api.Error(Problem.Unclassified(Legacy.Text(s"bundle import failed: $e"))))
+        .map(e => Api.Error(e.toNonEmpty.head))
 
     /** Where an uploaded bundle is kept: `upload-<sha256>.hmx`, content-addressed. */
     private def keyOf(sha: Sha256): Store.Key = Store.Key.applyUnsafe(s"upload-$sha${Bundle.Extension}")
@@ -246,7 +246,7 @@ object BundleService:
           com.histmersion.api.Sha256(sha.value),
           ByteCount(blob.size.value),
           loaded.manifest,
-          loaded.problems.map(Bundle.Upload.Problems(_))
+          loaded.problems
         )
 
     private def copyIn(store: Store, key: Store.Key, upload: ByteSource): Either[String, Unit] =
@@ -279,7 +279,7 @@ object BundleService:
             w.rules
           )
           .left
-          .map(e => Api.Error(Problem.Unclassified(Legacy.Text(s"merge plan failed: $e"))))
+          .map(e => Api.Error(e.toNonEmpty.head))
       }
 
     def importKept(
@@ -306,7 +306,7 @@ object BundleService:
               resolutions,
               MergeSettingsViews.settings(cfg.merge),
               planHash,
-              () => w.backup().fold(e => Left(BundleImporter.BackupFile(e.message.sentence)), f => Right(f.value)),
+              () => w.backup().fold(e => Left(e.message), f => Right(f.value)),
               w.carried,
               w.rules,
               w.followUps
@@ -317,7 +317,7 @@ object BundleService:
               r
             }
             .left
-            .map(e => Problem.Unclassified(Legacy.Text(s"merge apply failed: $e")))
+            .map(_.toNonEmpty.head)
         }
       }
 

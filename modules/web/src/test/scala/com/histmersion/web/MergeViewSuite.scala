@@ -1,5 +1,6 @@
 package com.histmersion
 package web
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.testsupport.ComparedByValue.given
 import hearth.kindlings.optics.syntax.*
@@ -106,7 +107,21 @@ class MergeViewSuite extends munit.FunSuite:
       MergeView.applicable(plan(List(issue(MergeIssue.Id("S-2"), decision = Some(MergeDecision.Wire("keep-left"))))))
     )
     assert(!MergeView.applicable(plan(Nil, changes = MergePlan.Changes(0))), "nothing to write is nothing to apply")
-    assert(!MergeView.applicable(plan(Nil).modify(_.problems).setTo(List(MergePlan.Problems("a blob is missing")))))
+    assert(
+      !MergeView.applicable(
+        plan(Nil)
+          .modify(_.problems)
+          .setTo(
+            List(
+              Problem.Io.Entry(
+                Problem.Io.Format.Bundle,
+                Problem.Io.Path("blobs/sha256/ab/ab"),
+                Problem.Io.Fault.Dangling(Problem.Count(1L))
+              )
+            )
+          )
+      )
+    )
 
   test("the filter matches the id, the kind, the title and the labels"):
     val is = List(issue(MergeIssue.Id("S-1")), issue(MergeIssue.Id("A-2"), kind = MergeIssue.Kind.ArticleDiverged))

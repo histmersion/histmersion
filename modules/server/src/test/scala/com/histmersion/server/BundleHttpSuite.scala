@@ -165,7 +165,7 @@ class BundleHttpSuite extends DbSuite with com.histmersion.db.Bounded:
       // its own bundle: every source the same record by uid, nothing to decide; a resolution for no issue is an error
       assertEquals(plan.open, Nil)
       assertEquals(plan.matches.byUid.value, plan.matches.sources.value)
-      assert(plan.resolutionErrors.exists(_.value.startsWith("S-00000000")), pl.body)
+      assert(plan.resolutionErrors.exists(_.sentence.startsWith("S-00000000")), pl.body)
       // a name that is no upload: 404; not a sha256: 400
       assertEquals(postJson(s"$url/api/merge/plan", s"""{"bundle":"${"0" * 64}"}""").statusCode, 404)
       assertEquals(postJson(s"$url/api/merge/plan", """{"bundle":"../../etc/passwd"}""").statusCode, 400)
@@ -182,7 +182,7 @@ class BundleHttpSuite extends DbSuite with com.histmersion.db.Bounded:
       val sj = decode[MergeApplyJob](stale.body)
       assertEquals(sj.state, MergeJobState.Done, stale.body)
       val st = sj.result.getOrElse(fail(stale.body))
-      assert(!st.applied.value && st.problems.exists(_.value.contains("not 0badc0de")), stale.body)
+      assert(!st.applied.value && st.problems.exists(_.sentence.contains("not 0badc0de")), stale.body)
       // …and can be asked about again by its id
       val again = get(s"$url/api/merge/apply/${sj.job}")
       assertEquals(again.statusCode, 200)
@@ -359,7 +359,7 @@ class BundleHttpSuite extends DbSuite with com.histmersion.db.Bounded:
         val d = decode[MergeApplyJob](String(done.body, "UTF-8"))
         assertEquals((d.state, d.planHash), (MergeJobState.Done, "0badc0de"))
         assert(
-          d.result.exists(r => !r.applied.value && r.problems.exists(_.value.contains("not 0badc0de"))),
+          d.result.exists(r => !r.applied.value && r.problems.exists(_.sentence.contains("not 0badc0de"))),
           d.toString
         )
         val i = decode[MergeApplyJob](String(get(s"$url/api/merge/apply/$cut").body, "UTF-8"))

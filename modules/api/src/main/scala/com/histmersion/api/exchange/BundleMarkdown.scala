@@ -5,6 +5,7 @@ import com.histmersion.api.Plural
 import com.histmersion.api.aliases.InstanceInfo
 import com.histmersion.api.given
 import com.histmersion.api.ByteCount
+import com.histmersion.util.problem.Text.sentence
 object BundleMarkdown:
 
   def instance(i: InstanceInfo): String =
@@ -36,7 +37,7 @@ object BundleMarkdown:
     val head = if (r.ok) == Bundle.VerifyResult.Ok(true) then
       s"**OK** — every checksum, record and ${Plural.count(Plural.CountN(r.blobsChecked.value.toLong), Plural.CountSingular("blob"))} verified"
     else s"**NOT OK** — ${Plural.count(Plural.CountN((r.problems.size).toLong), Plural.CountSingular("problem"))}"
-    (head :: r.manifest.map(manifest).toList ++ problems(("Problems"), r.problems.map(_.value))).mkString("\n\n")
+    (head :: r.manifest.map(manifest).toList ++ problems(("Problems"), r.problems.map(_.sentence))).mkString("\n\n")
 
   def importResult(r: Bundle.ImportResult): String =
     val verb =
@@ -69,7 +70,7 @@ object BundleMarkdown:
               .mkString("\n")
         )
     (s"$verb · bundle ${r.bundleId} from ${who(r.from)}" :: table ++
-      problems(("Problems (fix these, then import again)"), r.problems.map(_.value)) ++ issues ++
+      problems(("Problems (fix these, then import again)"), r.problems.map(_.sentence)) ++ issues ++
       problems("Conflicts (changed on both sides; decided by a resolution)", r.conflicts.map(_.value)) ++
       problems("Notes", r.notes.map(_.value))).mkString("\n\n")
 

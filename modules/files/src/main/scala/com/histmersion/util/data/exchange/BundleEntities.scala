@@ -1,7 +1,7 @@
 package com.histmersion
 package util.data.exchange
 
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Problem
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.Sha256
 import com.histmersion.api.given
@@ -173,7 +173,10 @@ object BundleEntities:
 
   /** One uid a line refers to, the uid the referring line is written under, and which line (for the message).
     */
-  final case class Reference(kind: Bundle.Kind, uid: UUID, owner: UUID, from: String, required: Boolean)
+  final case class Reference(kind: Bundle.Kind, uid: UUID, owner: UUID, from: String, required: Boolean):
+    /** The problem of this reference when its record is not `within` where it is looked for. */
+    def missing(within: Problem.NotFound.Scope): Problem =
+      Problem.NotFound.Dangling(kind.typeName, Problem.Raw(s"$uid"), Problem.Where(s"$from"), within)
 
   /** What a blob is for. */
   enum BlobUse derives CanEqual:
@@ -192,13 +195,13 @@ object BundleEntities:
   /** Decode the payloads read from a bundle; every bad line is reported (`<file>:<line>: why`), the good ones kept. A
     * missing file is an empty one.
     */
-  def decode(payloads: Map[String, Array[Byte]]): (BundleEntities, List[String]) =
-    val problems = List.newBuilder[String]
+  def decode(payloads: Map[String, Array[Byte]]): (BundleEntities, List[Problem]) =
+    val problems = List.newBuilder[Problem]
     def read[A: JsonValueCodec](path: String, stamped: Boolean): List[A] =
       payloads.get(path).toList.flatMap(BundleFormat.splitLines).zipWithIndex.flatMap { (l, i) =>
-        BundleFormat.decodeLine[A](l, stamped) match
+        BundleFormat.decodeLine[A](l, stamped, Problem.Where(s"$path:${i + 1}")) match
           case Right(a) => Some(a)
-          case Left(e)  => problems += s"$path:${i + 1}: ${e.sentence}"; None
+          case Left(e)  => problems += e; None
       }
     val es = BundleEntities(
       sources = read[Bundle.Source](Bundle.Kind.Source.file, true),
