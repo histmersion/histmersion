@@ -45,8 +45,10 @@ trait AiProvider:
   /** Its own checks for `agent doctor` (`online = false`: send nothing). Spends nothing. */
   def doctor(online: AiProvider.DoctorOnline, http: AiHttp): List[AiCheck] = Nil
 
-  /** ONE model call. */
-  def turn(request: AiTurn.Request, http: AiHttp): Either[AiFailure, AiTurn]
+  /** ONE model call: its turn, or why there is none — the provider's plan reporting its own usage limit as
+    * [[Problem.Upstream.Limited]] (the host asks the chain's next model meanwhile), anything else pausing the run.
+    */
+  def turn(request: AiTurn.Request, http: AiHttp): Either[Problem, AiTurn]
 
 object AiProvider:
   type Title = Title.T

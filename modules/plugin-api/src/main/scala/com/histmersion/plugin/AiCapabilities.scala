@@ -11,8 +11,8 @@ import io.github.iltotore.iron.constraint.any.Pure
   *   [[AiMessage.User]] messages where the loop puts them (the last message); off, they are left out
   * @param verbatimFailures
   *   the provider's refusals and failures are complete descriptions, shown as they are: the host adds neither the
-  *   model's name to a [[AiProvider.check]] refusal nor the model and an exception's name to an [[AiFailure.Error]];
-  *   off, it adds them
+  *   model's name to a [[AiProvider.check]] refusal nor the model and an exception's name to an error; off, it adds
+  *   them
   */
 final case class AiCapabilities(
     tools: AiCapabilities.Tools = AiCapabilities.Tools(true),

@@ -28,7 +28,7 @@ final class ClevelandCollection(conf: CollectionSettings)
   def search(
       place: MediaPlace,
       http: Plugin.Http
-  ): Either[Plugin.Http.Failure, List[Either[Plugin.Http.Failure, MediaItem]]] =
+  ): Either[Problem, List[Either[Problem, MediaItem]]] =
     http
       .askJson(
         ClevelandCollection

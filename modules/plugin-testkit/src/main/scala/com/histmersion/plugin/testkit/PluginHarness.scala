@@ -135,8 +135,6 @@ final class PluginHarness private (
     val clean = doi.value.trim.toLowerCase(java.util.Locale.ROOT).replaceFirst("^(https?://)?(dx\\.)?doi\\.org/", "")
     def json(url: RepositoryLanding.Candidate.Url) = acquisition
       .bytes(HttpTransport.Url(url.value))
-      .left
-      .map(_.problem)
       .flatMap(b =>
         RawJson
           .parse(new String(b.value, UTF_8))
@@ -226,16 +224,16 @@ final class PluginHarness private (
           val http = PluginMedia.http(polite)
           val allow = host.media.collections.allowed(MediaPluginCollectionsConfig.PerCollectionKey(collection.value))
           PluginMedia.guardHttp(col.search(place, http)) match
-            case Left(why)    => (Nil, Some(why.problem))
+            case Left(why)    => (Nil, Some(why))
             case Right(items) => (items.map(judge(PluginMedia.Provider(collection.value), col, http, allow)), None)
         }
         MediaReport(verdicts, failure, logged, asked)
 
   private def judge(name: PluginMedia.Provider, col: MediaCollection, http: Plugin.Http, allow: LicencePolicy)(
-      answered: Either[Plugin.Http.Failure, MediaItem]
+      answered: Either[Problem, MediaItem]
   ): MediaVerdict =
     answered match
-      case Left(why)   => MediaVerdict(MediaRecord.Key(s"${why.problem.sentence}"), None, None, Some(why.problem))
+      case Left(why)   => MediaVerdict(MediaRecord.Key(s"${why.sentence}"), None, None, Some(why))
       case Right(item) =>
         val rec = PluginMedia.record(item)
         PluginMedia.refusal(rec, allow, name) match

@@ -49,27 +49,17 @@ final class ChatCompletionsProvider(
   private def key: ProviderSettings.ApiKey =
     if settings.apiKey.value.isEmpty then ProviderSettings.ApiKey("none") else settings.apiKey
 
-  def turn(request: AiTurn.Request, http: AiHttp): Either[AiFailure, AiTurn] =
-    val sent: Either[String, AiTurn] = for
-      url <- base.left.map(_.legacyText).map(_.endpoint("chat", "completions"))
-      body = ChatRequest.of(request, settings.strictTools).body
-      answer <- http
-        .post(
-          Plugin.Http.Url(url.value),
-          ChatCompletionsProvider.headers(key),
-          body,
-          AiHttp.TimeoutSeconds(math.max(1, settings.timeoutSeconds.value))
-        )
-        .left
-        .map(e =>
-          SendFailure(e)
-            .describe(SendFailure.Method("POST"), Plugin.Http.Url(url.value))
-            .legacyText
-        )
-      turn <- ChatAnswer(ChatAnswer.Status(answer.status.value), ChatAnswer.Body(answer.body.value)).turn.left
-        .map(why => s"RuntimeException: OpenAI API error: ${why.legacyText}")
+  def turn(request: AiTurn.Request, http: AiHttp): Either[Problem, AiTurn] =
+    for
+      url <- base.map(_.endpoint("chat", "completions"))
+      answer <- http.post(
+        Plugin.Http.Url(url.value),
+        ChatCompletionsProvider.headers(key),
+        ChatRequest.of(request, settings.strictTools).body,
+        AiHttp.TimeoutSeconds(math.max(1, settings.timeoutSeconds.value))
+      )
+      turn <- ChatAnswer(ChatAnswer.Status(answer.status.value), ChatAnswer.Body(answer.body.value)).turn
     yield turn
-    sent.left.map(m => AiFailure.Error(Problem.Unclassified(Legacy.Text(m))))
 
 object ChatCompletionsProvider:
   type Name = Name.T

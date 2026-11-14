@@ -251,7 +251,14 @@ object ContractsSuite:
     * layers; each later step adds its own).
     */
   val Classified: List[String] =
-    List("values", "config", "files", "plugin-api", "plugin-resolver", "upstreams", "plugin-vaults")
+    List("values", "config", "files", "plugin-api", "plugin-resolver", "upstreams", "plugin-vaults") ++
+      List("plugins/events", "plugins/fetchers", "plugins/gazetteers") ++
+      List(
+        "plugin-fixtures/hello",
+        "plugin-fixtures/hello-ai",
+        "plugin-fixtures/hello-deps",
+        "plugin-fixtures/hello-lib"
+      )
 
   val Modules: List[String] = List(
     "problem",

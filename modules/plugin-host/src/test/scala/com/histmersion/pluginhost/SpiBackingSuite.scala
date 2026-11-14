@@ -24,7 +24,7 @@ class SpiBackingSuite extends munit.FunSuite:
       () =>
         new Plugin.Http {
           def get(u: Plugin.Http.Url, h: Map[Header.Name, Header.Value]) =
-            Left(Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text("offline"))))
+            Left(Problem.Unclassified(Legacy.Text("offline")))
         },
       ConfigFactory.empty,
       (_, _, _) => (),
@@ -70,7 +70,7 @@ class SpiBackingSuite extends munit.FunSuite:
           Plugin.Http.Url("https://core.example/v3/search"),
           Map(Header.Name("Authorization") -> Header.Value("Bearer k"))
         )
-        .fold(e => fail(e.problem.sentence), identity)
+        .fold(e => fail(e.sentence), identity)
     assertEquals(
       (r.status, r.header(Header.Name("X-RateLimit-Remaining")), String(r.body.value, "UTF-8")),
       (429, Some("0"), "slow down")

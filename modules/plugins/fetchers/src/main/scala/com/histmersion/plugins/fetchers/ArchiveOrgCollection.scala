@@ -1,6 +1,6 @@
 package com.histmersion
 package plugins.fetchers
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.plugin.*
 import com.histmersion.upstreams.parse.AcquireParse
@@ -39,12 +39,14 @@ final class ArchiveOrgCollection(client: () => ArchiveOrg) extends SourceCollect
         format.map(f => AcquireParse.WantedFileKind(f.value))
       )
       .map(ArchiveOrgCollection.collectionFile)
-      .toRight(Problem.Unclassified(Legacy.Text(s"'${item.id.value}' has no epub/pdf file to download")))
+      .toRight(
+        Problem.NotFound.Entity(Problem.TypeName("com.histmersion.plugin.Copy"), Problem.Raw(s"${item.id.value}"))
+      )
 
   def original(item: CollectionItem, file: CollectionFile): Either[Problem, FetchedFile] =
     if item.restricted.value then
       Left(
-        Problem.Unclassified(Legacy.Text(s"'${item.id.value}' is a lending-only item — borrow it on archive.org"))
+        Problem.Refused.Policy(Problem.Refused.Rule.LendingOnly)
       )
     else
       client()

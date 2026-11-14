@@ -201,7 +201,7 @@ class KeyedCollectionsSuite extends munit.FunSuite:
       run(collection(Smithsonian), http, List(target(egypt), target(syria)), dryRun = DryOff, store)
     assert(
       r.failed.exists(
-        _.value.contains("the API key was refused (check histmersion.plugins.media-smithsonian.api-key)")
+        _.value.contains("histmersion.plugins.media-smithsonian.api-key was refused by media-smithsonian (HTTP 403)")
       ),
       r.failed.toString
     )

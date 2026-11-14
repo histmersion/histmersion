@@ -39,7 +39,7 @@ final class EuropeanaCollection(conf: CollectionSettings, key: Option[KeyedColle
   def search(
       place: MediaPlace,
       http: Plugin.Http
-  ): Either[Plugin.Http.Failure, List[Either[Plugin.Http.Failure, MediaItem]]] =
+  ): Either[Problem, List[Either[Problem, MediaItem]]] =
     http
       .askJson(Europeana.searchUrl(conf.apiUrl, place.label, conf.candidates, exclusions), headers)
       .flatMap(j => Europeana.records(j, conf.apiUrl, licences, exclusions).unreadableEach)
@@ -51,4 +51,4 @@ final class EuropeanaCollection(conf: CollectionSettings, key: Option[KeyedColle
       .askJson(Europeana.recordUrl(conf.apiUrl, item.key), headers)
       .flatMap(j => Europeana.item(j, item, licences, exclusions).unreadable)
       .left
-      .map(e => explain(e).problem)
+      .map(explain)

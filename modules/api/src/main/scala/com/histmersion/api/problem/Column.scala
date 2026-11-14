@@ -33,19 +33,21 @@ object Column:
       case Conflict.AlreadyExists(t, key)     => s"$t '$key' already exists"
       case Conflict.Renamed(t, asked, now)    => s"$t '$asked' was renamed to '$now'"
       case Conflict.Stale(t, key, sent, now)  => s"$t '$key' has moved on: sent $sent, stored $now"
-      case Conflict.WrongState(t, key, is, ws) => s"$t '$key' is $is; it needs ${ws.mkString(" or ")}"
-      case Conflict.Busy(activity)             => s"${activity.productPrefix} is still running"
-      case Conflict.Referenced(t, key, by, n)  => s"$t '$key' is referred to by $n $by"
-      case Refused.Policy(rule)                => s"refused: ${rule.productPrefix}"
-      case Refused.Quota(limit, used, cap, at) => s"${limit.productPrefix} is spent: $used of $cap${until(at)}"
-      case Refused.Disabled(feature, setting)  => s"$feature is switched off by $setting"
-      case Upstream.Http(name, url, st, body)  => s"$name answered HTTP $st at $url — $body"
-      case Upstream.Unreachable(name, url, r)  => s"cannot reach $name at $url — $r"
-      case Upstream.Timeout(name, url, after)  => s"$name did not answer at $url within $after ms"
-      case Upstream.BadReply(name, url, s, r)  => s"$name's answer at $url is not ${s.productPrefix} — $r"
-      case Io.File(op, path, reported)         => s"could not ${op.productPrefix} $path — $reported"
-      case Io.Wrong(path, Io.Kind.Inside(dir)) => s"$path is outside $dir"
-      case Io.Wrong(path, expected)            => s"$path is not ${expected.productPrefix}"
+      case Conflict.WrongState(t, key, is, ws)    => s"$t '$key' is $is; it needs ${ws.mkString(" or ")}"
+      case Conflict.Busy(activity)                => s"${activity.productPrefix} is still running"
+      case Conflict.Referenced(t, key, by, n)     => s"$t '$key' is referred to by $n $by"
+      case Refused.Policy(rule)                   => s"refused: ${rule.productPrefix}"
+      case Refused.Quota(limit, used, cap, at)    => s"${limit.productPrefix} is spent: $used of $cap${until(at)}"
+      case Refused.Disabled(feature, setting)     => s"$feature is switched off by $setting"
+      case Upstream.Http(name, url, st, body, at) => s"${path(at)}$name answered HTTP $st at $url — $body"
+      case Upstream.Challenged(name, url, st, at) => s"${path(at)}$name challenged with HTTP $st at $url"
+      case Upstream.Limited(name, at)             => s"$name is limited${until(at)}"
+      case Upstream.Unreachable(name, url, r, at) => s"${path(at)}cannot reach $name at $url — $r"
+      case Upstream.Timeout(name, url, after, at) => s"${path(at)}$name did not answer at $url within $after ms"
+      case Upstream.BadReply(name, url, s, r, at) => s"${path(at)}$name's answer at $url is not ${s.productPrefix} — $r"
+      case Io.File(op, path, reported)            => s"could not ${op.productPrefix} $path — $reported"
+      case Io.Wrong(path, Io.Kind.Inside(dir))    => s"$path is outside $dir"
+      case Io.Wrong(path, expected)               => s"$path is not ${expected.productPrefix}"
       case Io.Corrupt(format, at, damage)     => s"the ${format.productPrefix} data at $at is damaged: ${damage.stored}"
       case Io.Process(tool, ending)           => s"$tool ${ending.stored}"
       case Io.Database(op, reported)          => s"the database refused to ${op.productPrefix} — $reported"
@@ -189,6 +191,7 @@ object Column:
       case Config.Fault.Unreadable(r)    => s"Unreadable — $r"
       case Config.Fault.Credential(v)    => s"Credential${v.fold("")(n => s" $n")}"
       case Config.Fault.Included(file)   => s"Included $file"
+      case Config.Fault.Rejected(u, st)  => s"Rejected $u/$st"
       case other                         => other.productPrefix
 
   extension (fault: Plugin.Fault)
@@ -242,10 +245,12 @@ object Column:
   private val RefusedBy = "^refused: (\\w+)$".r
   private val Spent = "^(\\w+) is spent: (\\S+) of (\\S+?)(?: until (\\S+))?$".r
   private val SwitchedOff = "(?s)^(.+) is switched off by (\\S+)$".r
-  private val Answered = "(?s)^(\\S+) answered HTTP (\\d+) at (\\S+) — (.*)$".r
-  private val CannotReach = "(?s)^cannot reach (\\S+) at (\\S+) — (.*)$".r
-  private val NoAnswer = "^(\\S+) did not answer at (\\S+) within (\\d+) ms$".r
-  private val NotShaped = "(?s)^(\\S+)'s answer at (\\S+) is not (\\w+) — (.*)$".r
+  private val Answered = s"(?s)^$Prefix(\\S+) answered HTTP (\\d+) at (\\S+) — (.*)$$".r
+  private val ChallengedAt = s"(?s)^$Prefix(\\S+) challenged with HTTP (\\d+) at (\\S+)$$".r
+  private val LimitedTill = "^(\\S+) is limited(?: until (\\S+))?$".r
+  private val CannotReach = s"(?s)^${Prefix}cannot reach (\\S+) at (\\S+) — (.*)$$".r
+  private val NoAnswer = s"(?s)^$Prefix(\\S+) did not answer at (\\S+) within (\\d+) ms$$".r
+  private val NotShaped = s"(?s)^$Prefix(\\S+)'s answer at (\\S+) is not (\\w+) — (.*)$$".r
   private val CouldNot = "(?s)^could not (\\w+) (.+?) — (.*)$".r
   private val IsNot = "(?s)^(.+) is not (\\w+)$".r
   private val IsOutside = "(?s)^(.+) is outside (.+)$".r
@@ -381,26 +386,51 @@ object Column:
       case _ => None
     },
     {
-      case Answered(name, status, url, body) =>
+      case Answered(at, name, status, url, body) =>
         Upstream.Status
           .read(status)
-          .map(Upstream.Http(Upstream.Name(s"$name"), Upstream.Url(s"$url"), _, External.ReplyExcerpt(s"$body")))
+          .map(
+            Upstream
+              .Http(Upstream.Name(s"$name"), Upstream.Url(s"$url"), _, External.ReplyExcerpt(s"$body"), pathOf(at))
+          )
       case _ => None
     },
     {
-      case CannotReach(name, url, reported) =>
-        Some(Upstream.Unreachable(Upstream.Name(s"$name"), Upstream.Url(s"$url"), External.Reported(s"$reported")))
+      case ChallengedAt(at, name, status, url) =>
+        Upstream.Status
+          .read(status)
+          .map(Upstream.Challenged(Upstream.Name(s"$name"), Upstream.Url(s"$url"), _, pathOf(at)))
       case _ => None
     },
     {
-      case NoAnswer(name, url, after) =>
-        Millis.read(after).map(Upstream.Timeout(Upstream.Name(s"$name"), Upstream.Url(s"$url"), _))
+      case LimitedTill(name, at) => untilOf(at).map(Upstream.Limited(Upstream.Name(s"$name"), _))
+      case _                     => None
+    },
+    {
+      case CannotReach(at, name, url, reported) =>
+        Some(
+          Upstream
+            .Unreachable(Upstream.Name(s"$name"), Upstream.Url(s"$url"), External.Reported(s"$reported"), pathOf(at))
+        )
       case _ => None
     },
     {
-      case NotShaped(name, url, shape, reported) =>
+      case NoAnswer(at, name, url, after) =>
+        Millis.read(after).map(Upstream.Timeout(Upstream.Name(s"$name"), Upstream.Url(s"$url"), _, pathOf(at)))
+      case _ => None
+    },
+    {
+      case NotShaped(at, name, url, shape, reported) =>
         word(Upstream.Shape.values.toSeq, shape)
-          .map(Upstream.BadReply(Upstream.Name(s"$name"), Upstream.Url(s"$url"), _, External.Reported(s"$reported")))
+          .map(
+            Upstream.BadReply(
+              Upstream.Name(s"$name"),
+              Upstream.Url(s"$url"),
+              _,
+              External.Reported(s"$reported"),
+              pathOf(at)
+            )
+          )
       case _ => None
     },
     {
@@ -471,10 +501,12 @@ object Column:
             yield Config.Fault.WrongKind(ek, fk)
           case ("Unreadable", Some(r)) if r.startsWith("— ") =>
             Some(Config.Fault.Unreadable(External.Reported(s"${r.stripPrefix("— ")}")))
-          case ("Credential", Some(v)) => Some(Config.Fault.Credential(Some(SettingKey(s"$v"))))
-          case ("Included", Some(f))   => Some(Config.Fault.Included(Io.Path(s"$f")))
-          case (_, None)               => word(Faults, fault)
-          case _                       => None
+          case ("Credential", Some(v))         => Some(Config.Fault.Credential(Some(SettingKey(s"$v"))))
+          case ("Included", Some(f))           => Some(Config.Fault.Included(Io.Path(s"$f")))
+          case ("Rejected", Some(Pair(u, st))) =>
+            Upstream.Status.read(st).map(Config.Fault.Rejected(Upstream.Name(s"$u"), _))
+          case (_, None) => word(Faults, fault)
+          case _         => None
         read.map(Config.Setting(SettingKey(s"$key"), _))
       case _ => None
     },

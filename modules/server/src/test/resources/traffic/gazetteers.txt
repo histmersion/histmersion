@@ -82,27 +82,27 @@ dry run: ImportResult(3,0,0,List(dry run),None)
 source: https://github.com/Seshat-Global-History-Databank/cliopatria/raw/main/cliopatria.geojson.zip
 GET /Seshat-Global-History-Databank/cliopatria/raw/main/cliopatria.geojson.zip
   User-agent: Histmersion/<version> (gazetteer import)
-places: failed: zip contains no usable file
+places: failed: a usable file in the zip is required
 GET /Seshat-Global-History-Databank/cliopatria/raw/main/cliopatria.geojson.zip
   User-agent: Histmersion/<version> (gazetteer import)
-dry run: failed: zip contains no usable file
+dry run: failed: a usable file in the zip is required
 ## awmc: a body that is not JSON
 source: https://raw.githubusercontent.com/AWMC/geodata/master/Cultural-Data/regional_name_linework/regional_names_linework.geojson
 GET /AWMC/geodata/master/Cultural-Data/regional_name_linework/regional_names_linework.geojson
   User-agent: Histmersion/<version> (gazetteer import)
-places: failed: invalid JSON: expected value
+places: failed: the json data at the AWMC places cannot be read — expected value
 GET /AWMC/geodata/master/Cultural-Data/regional_name_linework/regional_names_linework.geojson
   User-agent: Histmersion/<version> (gazetteer import)
-dry run: failed: invalid JSON: expected value
+dry run: failed: the json data at the AWMC places cannot be read — expected value
 ## chronontology: a JSON body of another shape
 source: https://chronontology.dainst.org/data/period?size=15000&from=0
 GET /data/period?size=15000&from=0
   User-agent: Histmersion/<version> (gazetteer import)
-places: failed: expected {results: [...]}
+places: failed: results is required
 GET /data/period?size=15000&from=0
   User-agent: Histmersion/<version> (gazetteer import)
-dry run: failed: expected {results: [...]}
+dry run: failed: results is required
 ## chronontology: HTTP 503
 GET /data/period?size=15000&from=0
   User-agent: Histmersion/<version> (gazetteer import)
-places: failed: HTTP 503 from <origin>/data/period?size=15000&from=0
+places: failed: chronontology.dainst.org answered HTTP 503 at <origin>/data/period?size=15000&from=0 — busy

@@ -87,18 +87,16 @@ object PluginMedia:
         .map(a => Plugin.HttpResponse.Body(a.body.value))
 
   /** A plugin's answer to a request, or what it threw as a failure of that call (one that needed no answer). */
-  def guardHttp[A](a: => Either[Plugin.Http.Failure, A]): Either[Plugin.Http.Failure, A] =
+  def guardHttp[A](a: => Either[Problem, A]): Either[Problem, A] =
     try
       Option(a).getOrElse(
-        Left(Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text("the plugin answered nothing"))))
+        Left(Problem.Unclassified(Legacy.Text("the plugin answered nothing")))
       )
     catch
       case e: InterruptedException => throw e
       case NonFatal(e)             =>
         Left(
-          Plugin.Http.Failure.Transport(
-            Problem.Unclassified(Legacy.Text(s"the plugin failed: ${e.getClass.getSimpleName}: ${e.getMessage}"))
-          )
+          Problem.Unclassified(Legacy.Text(s"the plugin failed: ${e.getClass.getSimpleName}: ${e.getMessage}"))
         )
 
   /** A plugin's answer, or what it threw as a failure of that call. */

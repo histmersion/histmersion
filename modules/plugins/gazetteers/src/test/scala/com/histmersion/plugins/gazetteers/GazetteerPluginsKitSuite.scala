@@ -1,6 +1,7 @@
 package com.histmersion
 package plugins.gazetteers
 
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.plugin.Plugin
 import com.histmersion.plugin.testkit.{HttpMode, PluginHarness, StubAnswer}
 import com.histmersion.pluginhost.{HttpAnswer, HttpTransport, Registries}
@@ -18,7 +19,7 @@ class GazetteerPluginsKitSuite extends munit.FunSuite:
     )
 
   private def load(id: Plugin.Info.Id, stubs: Map[HttpTransport.Url, StubAnswer] = Map.empty) =
-    PluginHarness.load(id, http = HttpMode.Stub(stubs), env = Map.empty).fold(e => fail(e.legacyText), identity)
+    PluginHarness.load(id, http = HttpMode.Stub(stubs), env = Map.empty).fold(e => fail(e.sentence), identity)
 
   private val plugins =
     List(
@@ -42,7 +43,7 @@ class GazetteerPluginsKitSuite extends munit.FunSuite:
       http = HttpMode.Offline,
       env = Map.empty
     )
-    assert(refused.left.exists(_.legacyText.contains("unknown setting")), refused.toString)
+    assert(refused.left.exists(_.sentence.contains("unknown setting")), refused.toString)
 
   test("awmc and chronontology: one request to the dataset, every place kept with the dataset's credit"):
     val awmc = load(
@@ -93,10 +94,10 @@ class GazetteerPluginsKitSuite extends munit.FunSuite:
       )
     )
     assertEquals(
-      missing.readGazetteer(Registries.GazetteerSourcesKey("cliopatria")).failure.map(_.legacyText),
-      Some(s"HTTP 404 from ${Cliopatria.url}")
+      missing.readGazetteer(Registries.GazetteerSourcesKey("cliopatria")).failure.map(_.sentence),
+      Some(s"github.com answered HTTP 404 at ${Cliopatria.url} — ")
     )
     assertEquals(
-      missing.readGazetteer(Registries.GazetteerSourcesKey("nowhere")).failure.map(_.legacyText),
+      missing.readGazetteer(Registries.GazetteerSourcesKey("nowhere")).failure.map(_.sentence),
       Some("the plugin registered no gazetteer source 'nowhere'")
     )

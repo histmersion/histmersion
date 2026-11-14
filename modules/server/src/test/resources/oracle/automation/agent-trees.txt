@@ -1,12 +1,12 @@
-definitions	145a71464e34789006a4262495afe1e9a28e03e82849834628fba397b9e2ed83
+definitions	e69b2476277c7b0c67763b4ecaea9ac750d14ee70fc90d4e90513fc5290fd2bf
 answer	runtimes=claude-code,codex,opencode files=206 written=206 removed=0
 known tools	archive,article_coverage,assess,check_edits,discover,events,facets,followups,geo_when,get_article,get_source,histogram,ingest,ingest_doi,job_status,lint,list_articles,manager,neighbors,passages,patch_article,patch_source,place_names,place_override,places,put_article,query,queue,refs,run_status,search
 claude-code/
 claude-code/.claude-plugin/
-claude-code/.claude-plugin/marketplace.json	602	3e5aaf4a1cccaf8880cbf343262b4ef15182febe20ca01bd17100ae2a9ca95f7
+claude-code/.claude-plugin/marketplace.json	602	342cb31e0c20c84fac136efda6e7b01b3a95b64a1eed8f8be90b1f49aa14933a
 claude-code/headless/
 claude-code/headless/.claude-plugin/
-claude-code/headless/.claude-plugin/plugin.json	407	06fd3e385d94f3bc5f4857f1c88d0b353de6c1bbde5e977a7740dd5e0cce1771
+claude-code/headless/.claude-plugin/plugin.json	407	48ccf7d333230c46bf9dc699c99c517a8de54e57b7151a4829639cd456359095
 claude-code/headless/agents/
 claude-code/headless/agents/acquisition-ranker.md	1234	82f939e55cb47389e98169f1a617d315afae5da96ea67eb343fb665542fa921f
 claude-code/headless/agents/article-cold-reader.md	5674	6f27000cd1573ae6401e4aca3a8d16bc38dc0f41afb9d80ddd4893bf9eed3306
@@ -44,7 +44,7 @@ claude-code/headless/skills/histmersion-dev/SKILL.md	26071	3032a593b13137c0eeda2
 claude-code/headless/skills/histmersion-ingest/
 claude-code/headless/skills/histmersion-ingest/SKILL.md	15113	1271f14bfae43eb3401a273d74510e2499859f1c4f4f601a5bab6f78491ac3a1
 claude-code/headless/skills/histmersion-query/
-claude-code/headless/skills/histmersion-query/SKILL.md	15276	2a45902c7e08d26209b2d4e0cd1c46aaa2464efba4e9f9fcd40b8392f449da3b
+claude-code/headless/skills/histmersion-query/SKILL.md	15285	e03a3845a8dade60334c928a288b525de42264486561805a11f57e24adc8161c
 claude-code/headless/skills/import-archive/
 claude-code/headless/skills/import-archive/SKILL.md	3877	510f9f87667c99df05d88260ad0561f29ff484d97d214ae7bea86278d2bc6374
 claude-code/headless/skills/import-calibre/
@@ -67,7 +67,7 @@ claude-code/headless/skills/update-topic/
 claude-code/headless/skills/update-topic/SKILL.md	4745	d160f2d36b96d317cec2d58c5641191d1a53c863f931a3e4763f1f380c68cff9
 claude-code/histmersion/
 claude-code/histmersion/.claude-plugin/
-claude-code/histmersion/.claude-plugin/plugin.json	502	5de1fd3304ddf6b2866e58a520b62541dc65cd318bed8f1e2d4561f8f11c67e2
+claude-code/histmersion/.claude-plugin/plugin.json	502	77a2fe5b92e26ec39be9557decd3ddf23572bd145b077ecb09cc4d02f2708268
 claude-code/histmersion/.mcp.json	116	09a2ac5ff5dba4d58fd4b1675d84ee202c33931b0b74eab808b4913f8096ebd9
 claude-code/histmersion/agents/
 claude-code/histmersion/agents/article-cold-reader.md	5548	b9cdb9b646a27e80f3fa5a7d3eab9bd634644c44e05aca2a0499127bbaa3c6dd
@@ -92,7 +92,7 @@ claude-code/histmersion/skills/histmersion-dev/SKILL.md	26071	3032a593b13137c0ee
 claude-code/histmersion/skills/histmersion-ingest/
 claude-code/histmersion/skills/histmersion-ingest/SKILL.md	15113	1271f14bfae43eb3401a273d74510e2499859f1c4f4f601a5bab6f78491ac3a1
 claude-code/histmersion/skills/histmersion-query/
-claude-code/histmersion/skills/histmersion-query/SKILL.md	15276	2a45902c7e08d26209b2d4e0cd1c46aaa2464efba4e9f9fcd40b8392f449da3b
+claude-code/histmersion/skills/histmersion-query/SKILL.md	15285	e03a3845a8dade60334c928a288b525de42264486561805a11f57e24adc8161c
 claude-code/histmersion/skills/import-archive/
 claude-code/histmersion/skills/import-archive/SKILL.md	3933	37a4fa703221b9f81103411779d1acb77f642e3a34d577803e60c85e795066e2
 claude-code/histmersion/skills/import-calibre/
@@ -198,7 +198,7 @@ codex/home/skills/histmersion-dev/SKILL.md	26073	47e114da4f7e79a2091ea540decf3f8
 codex/home/skills/histmersion-ingest/
 codex/home/skills/histmersion-ingest/SKILL.md	15095	57b804859829e2bebd2e042720dcc0150c204b7e8585899d221003103ed0613c
 codex/home/skills/histmersion-query/
-codex/home/skills/histmersion-query/SKILL.md	15260	4270274132182a7154aeede09bca2d33b1d4f35fc8121c3d9355b738b45c853d
+codex/home/skills/histmersion-query/SKILL.md	15269	95137d474f095e0cb4b378923cf0c7902f20e56fef2ab0f59f607e8da417c7b6
 codex/home/skills/import-archive/
 codex/home/skills/import-archive/SKILL.md	3751	fe4c062fa18c817336d79536230eeadbad33722e16082ad67876156a9b36b1c2
 codex/home/skills/import-calibre/
@@ -221,7 +221,7 @@ codex/home/skills/update-topic/
 codex/home/skills/update-topic/SKILL.md	4583	0754307a6bdd11839bf16562e6edf6009016c7e36c202de7c35d9b985e6a160e
 codex/plugin/
 codex/plugin/.codex-plugin/
-codex/plugin/.codex-plugin/plugin.json	334	7294aba780d3cdea80affacf5e2afae2a86bca77469a6c15d1815158d219d999
+codex/plugin/.codex-plugin/plugin.json	334	7e3c9275f3cae210b044522b035023517c7d251be328b96dfc32ed848f50d7a3
 codex/plugin/.mcp.json	116	09a2ac5ff5dba4d58fd4b1675d84ee202c33931b0b74eab808b4913f8096ebd9
 codex/plugin/skills/
 codex/plugin/skills/assess-paper/
@@ -241,7 +241,7 @@ codex/plugin/skills/histmersion-dev/SKILL.md	26073	47e114da4f7e79a2091ea540decf3
 codex/plugin/skills/histmersion-ingest/
 codex/plugin/skills/histmersion-ingest/SKILL.md	15095	57b804859829e2bebd2e042720dcc0150c204b7e8585899d221003103ed0613c
 codex/plugin/skills/histmersion-query/
-codex/plugin/skills/histmersion-query/SKILL.md	15260	4270274132182a7154aeede09bca2d33b1d4f35fc8121c3d9355b738b45c853d
+codex/plugin/skills/histmersion-query/SKILL.md	15269	95137d474f095e0cb4b378923cf0c7902f20e56fef2ab0f59f607e8da417c7b6
 codex/plugin/skills/import-archive/
 codex/plugin/skills/import-archive/SKILL.md	3751	fe4c062fa18c817336d79536230eeadbad33722e16082ad67876156a9b36b1c2
 codex/plugin/skills/import-calibre/
@@ -262,7 +262,7 @@ codex/plugin/skills/trailhead/
 codex/plugin/skills/trailhead/SKILL.md	5620	98672d78cb85c7318e47f823bb0df2cf9607cca5a52b19044b661c088040cd14
 codex/plugin/skills/update-topic/
 codex/plugin/skills/update-topic/SKILL.md	4583	0754307a6bdd11839bf16562e6edf6009016c7e36c202de7c35d9b985e6a160e
-manifest.json	25014	fe2aaa3693aa22641b8fc5330dd600a4fc5f7cbf3c08c7aab43b2c0f4518d7d2
+manifest.json	25014	05d19df4a887912366ce72c1328806f3a7a7c7b600771a052de6a4bfad62d51b
 opencode/
 opencode/config/
 opencode/config/agents/
@@ -300,7 +300,7 @@ opencode/config/skills/histmersion-dev/SKILL.md	26065	daedc04e127dbcb71e3b7bf1a5
 opencode/config/skills/histmersion-ingest/
 opencode/config/skills/histmersion-ingest/SKILL.md	15107	1f2fdbba78fe9f9911dc84b2055844b4e3564071c91c9e928bc01f31d9edd8ef
 opencode/config/skills/histmersion-query/
-opencode/config/skills/histmersion-query/SKILL.md	15264	2190f04ef4c11717ed648c7727b48536da8a4343ef035b920f41c8d0e3a6585a
+opencode/config/skills/histmersion-query/SKILL.md	15273	7e46847980a09c6d9fe560c56bcbc40279035c87a6d730d6b21a0bfa5893301d
 opencode/config/skills/import-archive/
 opencode/config/skills/import-archive/SKILL.md	3835	2ccd38f7fc6f6b93055a51206783e260be7ae369c89892bf264fc64f30f0e934
 opencode/config/skills/import-calibre/
@@ -341,7 +341,7 @@ opencode/interactive/skills/histmersion-dev/SKILL.md	26065	daedc04e127dbcb71e3b7
 opencode/interactive/skills/histmersion-ingest/
 opencode/interactive/skills/histmersion-ingest/SKILL.md	15107	1f2fdbba78fe9f9911dc84b2055844b4e3564071c91c9e928bc01f31d9edd8ef
 opencode/interactive/skills/histmersion-query/
-opencode/interactive/skills/histmersion-query/SKILL.md	15264	2190f04ef4c11717ed648c7727b48536da8a4343ef035b920f41c8d0e3a6585a
+opencode/interactive/skills/histmersion-query/SKILL.md	15273	7e46847980a09c6d9fe560c56bcbc40279035c87a6d730d6b21a0bfa5893301d
 opencode/interactive/skills/import-archive/
 opencode/interactive/skills/import-archive/SKILL.md	3835	2ccd38f7fc6f6b93055a51206783e260be7ae369c89892bf264fc64f30f0e934
 opencode/interactive/skills/import-calibre/

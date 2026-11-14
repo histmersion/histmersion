@@ -1,7 +1,7 @@
 package com.histmersion
 package pluginhost
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 import com.histmersion.api.instance.Version
 import com.histmersion.domain.HttpPolicy
 import com.histmersion.plugin.*
@@ -9,6 +9,7 @@ import com.histmersion.plugin.*
 import java.nio.charset.StandardCharsets
 import scala.jdk.CollectionConverters.*
 import scala.util.control.NonFatal
+import scala.concurrent.duration.DurationInt
 
 /** The host's [[AiHttp]]: java.net.http over HTTP/1.1 (as every client of the server), the host's User-Agent (no e-mail
   * can reach it, [[HttpPolicy.userAgent]]), a timeout per call, and nothing sent or received logged.
@@ -36,7 +37,7 @@ final class HostAiHttp extends AiHttp:
       headers: Map[Header.Name, Header.Value],
       body: AiHttp.PostBody,
       timeoutSeconds: AiHttp.TimeoutSeconds
-  ): Either[AiHttp.Failure, AiHttp.Response] =
+  ): Either[Problem, AiHttp.Response] =
     send(
       url.value,
       headers.map((k, v) => k.value -> v.value),
@@ -48,7 +49,7 @@ final class HostAiHttp extends AiHttp:
       url: Plugin.Http.Url,
       headers: Map[Header.Name, Header.Value],
       timeoutSeconds: AiHttp.TimeoutSeconds
-  ): Either[AiHttp.Failure, AiHttp.Response] =
+  ): Either[Problem, AiHttp.Response] =
     send(url.value, headers.map((k, v) => k.value -> v.value), timeoutSeconds.value, _.GET())
 
   private def send(
@@ -56,7 +57,7 @@ final class HostAiHttp extends AiHttp:
       headers: Map[String, String],
       timeoutSeconds: Int,
       method: java.net.http.HttpRequest.Builder => java.net.http.HttpRequest.Builder
-  ): Either[AiHttp.Failure, AiHttp.Response] =
+  ): Either[Problem, AiHttp.Response] =
     try
       val b = java.net.http.HttpRequest
         .newBuilder(java.net.URI.create(url))
@@ -77,22 +78,16 @@ final class HostAiHttp extends AiHttp:
     catch
       case e: InterruptedException => throw e
       // the message only: never the request, which may carry a key in a header
-      case NonFatal(e) => Left(failureOf(e))
+      case NonFatal(e) => Left(failureOf(e, url, timeoutSeconds))
 
-  /** What a failed send was, from the type of the exception; its text is `<exception>: <message>`, cut at 300. */
-  def failureOf(e: Throwable): AiHttp.Failure =
-    val reported =
-      Problem.Unclassified(Legacy.Text(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}".take(300)))
+  /** What a failed send to `url` was, from the type of the exception: no answer within `timeoutSeconds`, or none at all
+    * (refused, unknown host, a URL the client refuses, a broken read) with the exception's own words — never the
+    * request, which may carry a key in a header.
+    */
+  def failureOf(e: Throwable, url: String, timeoutSeconds: Int): Problem =
+    val asked = HttpTransport.Url(url)
     e match
-      case _: java.net.ConnectException | _: java.net.UnknownHostException | _: java.net.MalformedURLException |
-          _: java.net.NoRouteToHostException | _: java.net.PortUnreachableException | _: java.net.ProtocolException |
-          _: java.net.URISyntaxException =>
-        AiHttp.Failure.Connect(reported)
       case _: java.util.concurrent.TimeoutException | _: java.net.http.HttpTimeoutException |
           _: java.net.SocketTimeoutException =>
-        AiHttp.Failure.TimedOut(reported)
-      case _: IllegalArgumentException | _: IllegalStateException | _: SecurityException |
-          _: UnsupportedOperationException | _: NullPointerException =>
-        AiHttp.Failure.Refused(reported)
-      case _: Exception => AiHttp.Failure.Read(reported)
-      case _            => AiHttp.Failure.Refused(reported)
+        Problem.Upstream.Timeout(asked.upstream, asked.address, Problem.Millis.of(math.max(1, timeoutSeconds).seconds))
+      case _ => Problem.Upstream.Unreachable(asked.upstream, asked.address, External.Reported.of(e))

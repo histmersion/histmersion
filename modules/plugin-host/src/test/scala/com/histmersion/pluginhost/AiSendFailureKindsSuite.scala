@@ -1,47 +1,35 @@
 package com.histmersion
 package pluginhost
 
-import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.plugin.AiHttp.Failure
+import com.histmersion.util.problem.{External, Problem}
 import com.histmersion.testsupport.ComparedByValue.given
 
-/** What a failed send was, read from the type of the exception. */
+/** What a failed send was, read from the type of the exception: no answer in time, or no answer at all. */
 class AiSendFailureKindsSuite extends munit.FunSuite:
 
   private val http = new HostAiHttp
-  private def kindOf(e: Throwable): String = http.failureOf(e) match
-    case Failure.Connect(_)  => "Connect"
-    case Failure.TimedOut(_) => "TimedOut"
-    case Failure.Read(_)     => "Read"
-    case Failure.Refused(_)  => "Refused"
+  private val url = "https://api.example/v1/messages"
+  private def failed(e: Throwable): Problem = http.failureOf(e, url, 30)
+  private val (name, at) =
+    (Problem.Upstream.Name("api.example"), Problem.Upstream.Url("https://api.example/v1/messages"))
 
-  test("a connection that could not be made is Connect"):
-    assertEquals(kindOf(new java.net.ConnectException("refused")), "Connect")
-    assertEquals(kindOf(new java.net.UnknownHostException("x")), "Connect")
-    assertEquals(kindOf(new java.net.NoRouteToHostException("x")), "Connect")
-    assertEquals(kindOf(new java.net.MalformedURLException("x")), "Connect")
-    assertEquals(kindOf(new java.net.URISyntaxException("x", "y")), "Connect")
+  test("a send that took too long is a timeout of the call's own limit"):
+    List(
+      new java.net.http.HttpConnectTimeoutException("HTTP connect timed out"),
+      new java.net.http.HttpTimeoutException("request timed out"),
+      new java.net.SocketTimeoutException("x"),
+      new java.util.concurrent.TimeoutException("x")
+    ).foreach(e => assertEquals(failed(e), Problem.Upstream.Timeout(name, at, Problem.Millis(30000L)), e.toString))
 
-  test("a send that took too long is TimedOut"):
-    assertEquals(kindOf(new java.net.http.HttpConnectTimeoutException("HTTP connect timed out")), "TimedOut")
-    assertEquals(kindOf(new java.net.http.HttpTimeoutException("request timed out")), "TimedOut")
-    assertEquals(kindOf(new java.net.SocketTimeoutException("x")), "TimedOut")
-    assertEquals(kindOf(new java.util.concurrent.TimeoutException("x")), "TimedOut")
-
-  test("any other failure of the transport is Read; a request that could not be made is Refused"):
-    assertEquals(kindOf(new java.io.EOFException("EOF reached while reading")), "Read")
-    assertEquals(kindOf(new java.io.IOException("x")), "Read")
-    assertEquals(kindOf(new IllegalArgumentException("URI with undefined scheme")), "Refused")
-    assertEquals(kindOf(new IllegalStateException("x")), "Refused")
-    assertEquals(kindOf(new NullPointerException()), "Refused")
-    assertEquals(kindOf(new AssertionError("x")), "Refused")
-
-  test("the reported text is the exception and its message"):
+  test("anything else is an unreachable upstream, with the exception's own words and never the request"):
+    List(
+      new java.net.ConnectException("refused"),
+      new java.net.UnknownHostException("x"),
+      new java.io.EOFException("EOF reached while reading"),
+      new IllegalArgumentException("URI with undefined scheme"),
+      new NullPointerException()
+    ).foreach(e => assertEquals(failed(e), Problem.Upstream.Unreachable(name, at, External.Reported.of(e)), e.toString))
     assertEquals(
-      http.failureOf(new IllegalArgumentException("URI with undefined scheme")).reported,
-      Problem.Unclassified(Legacy.Text("IllegalArgumentException: URI with undefined scheme"))
-    )
-    assertEquals(
-      http.failureOf(new java.net.ConnectException()).reported,
-      Problem.Unclassified(Legacy.Text("ConnectException: "))
+      failed(new java.net.ConnectException("refused")).toString.contains("java.net.ConnectException: refused"),
+      true
     )

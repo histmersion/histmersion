@@ -168,13 +168,12 @@ object PluginAiClient:
         conf.responseSchema.flatMap(_.description).map(d => AiTurn.Request.AnswerDescription(d))
       )
       PluginAi.turn(provider, req, http) match
-        case Right(t)                               => response(t, model)
-        case Left(AiFailure.LimitReached(m, until)) =>
+        case Right(t)                                           => response(t, model)
+        case Left(limited @ Problem.Upstream.Limited(_, until)) =>
           throw new ModelLimitReached(
             model,
             until.map(u => java.time.Instant.ofEpochMilli(u.value)),
-            Problem.Unclassified(Legacy.Text(s"${model.wire}: ${m.sentence}".take(300)))
+            Problem.Unclassified(Legacy.Text(s"${model.wire}: ${limited.sentence}".take(300)))
           )
-        case Left(AiFailure.Error(m)) if caps.verbatimFailures.value =>
-          throw VerbatimFailure(m)
-        case Left(AiFailure.Error(m)) => throw java.io.IOException(s"${model.wire}: ${m.sentence}".take(600))
+        case Left(m) if caps.verbatimFailures.value => throw VerbatimFailure(m)
+        case Left(m) => throw java.io.IOException(s"${model.wire}: ${m.sentence}".take(600))

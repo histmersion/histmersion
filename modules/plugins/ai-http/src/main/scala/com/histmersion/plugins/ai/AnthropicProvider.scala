@@ -33,35 +33,27 @@ final class AnthropicProvider(settings: ProviderSettings) extends AiProvider:
         )
       )
 
-  def turn(request: AiTurn.Request, http: AiHttp): Either[AiFailure, AiTurn] =
+  def turn(request: AiTurn.Request, http: AiHttp): Either[Problem, AiTurn] =
     val schema = request.answerSchemaRendered.orElse(request.answerSchema)
-    val sent: Either[String, AiTurn] = for
-      url <- base.left.map(_.legacyText).map(_.endpoint("v1", "messages"))
-      body <- AnthropicRequest.of(request).left.map(_.legacyText)
+    for
+      url <- base.map(_.endpoint("v1", "messages"))
+      body <- AnthropicRequest.of(request)
       _ <- Either.cond(
         schema.isEmpty || AnthropicProvider.structuredOutput(request.model),
         (),
-        AnthropicProvider.noStructuredOutput(request.model).legacyText
+        AnthropicProvider.noStructuredOutput(request.model)
       )
-      answer <- http
-        .post(
-          Plugin.Http.Url(url.value),
-          AnthropicProvider.headers(settings.apiKey),
-          body.body,
-          AiHttp.TimeoutSeconds(math.max(1, settings.timeoutSeconds.value))
-        )
-        .left
-        .map(e =>
-          SendFailure(e)
-            .describe(SendFailure.Method("POST"), Plugin.Http.Url(url.value))
-            .legacyText
-        )
+      answer <- http.post(
+        Plugin.Http.Url(url.value),
+        AnthropicProvider.headers(settings.apiKey),
+        body.body,
+        AiHttp.TimeoutSeconds(math.max(1, settings.timeoutSeconds.value))
+      )
       turn <- AnthropicAnswer(
         AnthropicAnswer.Status(answer.status.value),
         AnthropicAnswer.Body(answer.body.value)
-      ).turn.left.map(why => s"RuntimeException: Claude API error: ${why.legacyText}")
+      ).turn
     yield turn
-    sent.left.map(m => AiFailure.Error(Problem.Unclassified(Legacy.Text(m))))
 
 object AnthropicProvider:
   type WithoutStructuredOutput = WithoutStructuredOutputValue

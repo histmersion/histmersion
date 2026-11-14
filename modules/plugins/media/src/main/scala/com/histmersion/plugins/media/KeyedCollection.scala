@@ -57,17 +57,13 @@ abstract class KeyedCollection(
   protected def apiKey: KeyedCollection.Key = key.getOrElse(KeyedCollection.Key(""))
 
   /** Pure: an HTTP 401/403 of a key-gated API named as a refused key, with the setting to check. */
-  protected def explain(e: Plugin.Http.Failure): Plugin.Http.Failure = e match
-    case Plugin.Http.Failure.Status(code, why) if code.refusesAccess =>
-      Plugin.Http.Failure.Status(
-        code,
-        Problem.Unclassified(
-          Legacy.Text(
-            s"${why.legacyText} — the API key was refused (check histmersion.plugins.${plugin.value}.api-key)"
-          )
-        )
+  protected def explain(e: Problem): Problem = e.answered.filter(_.refusesAccess) match
+    case Some(status) =>
+      Problem.Config.Setting(
+        Problem.SettingKey(s"histmersion.plugins.${plugin.value}.api-key"),
+        Problem.Config.Fault.Rejected(Problem.Upstream.Name(s"${plugin.value}"), status)
       )
-    case other => other
+    case None => e
 
 object KeyedCollection:
   type Plugin = Plugin.T

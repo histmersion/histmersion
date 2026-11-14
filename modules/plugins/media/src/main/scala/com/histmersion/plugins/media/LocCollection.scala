@@ -29,22 +29,16 @@ final class LocCollection(conf: CollectionSettings, thumbPx: LocCollection.Thumb
   val role = MediaCollection.Map
   override def matchRule = MediaMatchRule.Map(Year(conf.maxYear.value))
 
-  private def explain(e: Plugin.Http.Failure): Plugin.Http.Failure = e match
-    case Plugin.Http.Failure.Status(code, why) if code == Plugin.HttpResponse.Status.Forbidden =>
-      Plugin.Http.Failure.Status(
-        code,
-        Problem.Unclassified(
-          Legacy.Text(
-            s"${why.legacyText} — loc.gov refuses automated clients with a bot challenge at the moment; not worked around"
-          )
-        )
-      )
+  /** loc.gov refuses automated clients with a bot challenge at the moment (a 403): said so, not worked around. */
+  private def explain(e: Problem): Problem = e match
+    case Problem.Upstream.Http(name, url, status, _, at) if status == Problem.Upstream.Status.Forbidden =>
+      Problem.Upstream.Challenged(name, url, status, at)
     case other => other
 
   def search(
       place: MediaPlace,
       http: Plugin.Http
-  ): Either[Plugin.Http.Failure, List[Either[Plugin.Http.Failure, MediaItem]]] =
+  ): Either[Problem, List[Either[Problem, MediaItem]]] =
     http
       .askJson(LocCollection.searchUrl(conf.apiUrl, place.label, conf.candidates))
       .flatMap(j => LocCollection.results(j).unreadable)

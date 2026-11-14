@@ -13,6 +13,6 @@ import com.histmersion.pluginhost.PluginAi
   */
 final case class AiReport(
     check: Either[Problem, Unit],
-    turn: Option[Either[AiFailure, AiTurn]],
+    turn: Option[Either[Problem, AiTurn]],
     log: List[LogLine]
 )

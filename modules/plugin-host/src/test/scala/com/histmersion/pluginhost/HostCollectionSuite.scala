@@ -51,7 +51,7 @@ class HostCollectionSuite extends munit.FunSuite:
         () =>
           new Plugin.Http {
             def get(u: Plugin.Http.Url, h: Map[Header.Name, Header.Value]) =
-              Left(Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text("offline"))))
+              Left(Problem.Unclassified(Legacy.Text("offline")))
           },
         ConfigFactory.empty,
         (_, _, _) => ()

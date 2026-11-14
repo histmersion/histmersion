@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.media.imports
 
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 import hearth.kindlings.optics.syntax.*
 
@@ -139,9 +140,14 @@ final class OwnImport(name: MediaImporter.ImporterName, col: MediaCollection, fe
           MediaFound(
             Nil,
             Nil,
-            failed = List(MediaFound.Failed(s"the plugin failed: ${e.getClass.getSimpleName}: ${e.getMessage}"))
+            failed = List(
+              MediaFound.Failed(
+                MediaFound.Failed.About("the plugin"),
+                Problem.from(e, Problem.Where("searching a collection"), Problem.Internal.Id.mint())
+              )
+            )
           )
-    val failed = List.newBuilder[String] ++= found.failed.map(_.value)
+    val failed = List.newBuilder[String] ++= found.failed.map(f => s"${f.line}")
     val byId = targets.map(t => idOf(t) -> t).toMap
     val uses = found.uses.filter(u => byId.contains(u.target))
     val verdicts = uses.map(_.item).distinctBy(_.key).map(it => it.key -> judge(it)).toMap
@@ -224,9 +230,14 @@ final class OwnImport(name: MediaImporter.ImporterName, col: MediaCollection, fe
         case NonFatal(e)             =>
           MediaCompleted(
             Map.empty,
-            List(MediaCompleted.Failed(s"the plugin failed: ${e.getClass.getSimpleName}: ${e.getMessage}"))
+            List(
+              MediaFound.Failed(
+                MediaFound.Failed.About("the plugin"),
+                Problem.from(e, Problem.Where("completing a collection's items"), Problem.Internal.Id.mint())
+              )
+            )
           )
-    failed ++= completed.failed.map(_.value)
+    failed ++= completed.failed.map(f => s"${f.line}")
     val firstUse = uses.groupBy(_.item.key).view.mapValues(_.head).toMap
 
     // `var`s: the counts of what this run wrote
@@ -350,9 +361,7 @@ final class OwnImport(name: MediaImporter.ImporterName, col: MediaCollection, fe
       case None       =>
         item.imageUrl
           .toRight("no image")
-          .flatMap(u =>
-            fetch.file(HttpTransport.Url(u.value), Polite.Mime(mime)).left.map(f => s"${f.problem.sentence}")
-          )
+          .flatMap(u => fetch.file(HttpTransport.Url(u.value), Polite.Mime(mime)).left.map(f => s"${f.sentence}"))
           .flatMap { (bytes, got) =>
             if bytes.value.length.toLong > cfg.maxBytes.value then
               Left(s"rendition of ${bytes.value.length} bytes is larger than media.max-bytes")
@@ -369,7 +378,7 @@ final class OwnImport(name: MediaImporter.ImporterName, col: MediaCollection, fe
                       )
                     )
                   case Left(why) =>
-                    scribe.warn(s"media: thumbnail of ${item.key} not fetched: ${why.problem.sentence}"); None
+                    scribe.warn(s"media: thumbnail of ${item.key} not fetched: ${why.sentence}"); None
               }
               Right((bytes.value, got.value, t))
           }

@@ -93,8 +93,6 @@ class PluginCatalogueSuite extends DbSuite:
     def read(part: EventCatalogue.ReadPart, q: CatalogueQuery, http: Plugin.Http) =
       http
         .get(Plugin.Http.Url(s"https://zq.example/api/$part"), Map.empty)
-        .left
-        .map(_.problem)
         .flatMap { _ =>
           part.value match
             case "p1" =>
@@ -241,8 +239,6 @@ class PluginCatalogueSuite extends DbSuite:
     def read(part: EventCatalogue.ReadPart, q: CatalogueQuery, http: Plugin.Http) =
       http
         .get(Plugin.Http.Url("https://zq.example/api/floods"), Map.empty)
-        .left
-        .map(_.problem)
         .map(_ =>
           CataloguePage(
             List(
@@ -277,7 +273,7 @@ class PluginCatalogueSuite extends DbSuite:
         () =>
           new Plugin.Http {
             def get(u: Plugin.Http.Url, h: Map[Header.Name, Header.Value]) =
-              Left(Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text("no"))))
+              Left(Problem.Unclassified(Legacy.Text("no")))
           },
         ConfigFactory.empty
       )

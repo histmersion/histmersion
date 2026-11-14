@@ -1,5 +1,6 @@
 package com.histmersion
 package plugins.events
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.JsonCodec.given
@@ -54,7 +55,7 @@ class CataloguesSuite extends munit.FunSuite:
       e: CatalogueEvent,
       l: CatalogDating.Limits = limits
   ): CatalogRecord =
-    PluginEvents.derive(PluginEvents.record(provider, e).fold(e => fail(e.legacyText), _.record), l)
+    PluginEvents.derive(PluginEvents.record(provider, e).fold(e => fail(e.sentence), _.record), l)
 
   // ── GVP ─────────────────────────────────────────────────────────────────────────────────────
 
@@ -171,7 +172,7 @@ class CataloguesSuite extends munit.FunSuite:
     val r = PluginEvents.derive(
       PluginEvents
         .record(CatalogRecord.Provider("gvp"), gvp.reread(legacy).get)
-        .fold(e => fail(e.legacyText), _.record),
+        .fold(e => fail(e.sentence), _.record),
       limits
     )
     assertEquals((r.central, r.plusMinus, r.datingMethod), (Some(250L), Some(2500L), Some("Tephrochronology")))
@@ -189,7 +190,7 @@ class CataloguesSuite extends munit.FunSuite:
   test("a stored record goes to its catalogue and back unchanged"):
     val (recs, _) = GvpCatalogue.parse(fixture("gvp.json")).toOption.get
     recs.foreach { e =>
-      val r = PluginEvents.record(CatalogRecord.Provider("gvp"), e).fold(e => fail(e.legacyText), _.record)
+      val r = PluginEvents.record(CatalogRecord.Provider("gvp"), e).fold(e => fail(e.sentence), _.record)
       assertEquals(
         PluginEvents.event(r).flatMap(PluginEvents.record(CatalogRecord.Provider("gvp"), _).toOption.map(_.record)),
         Some(r)

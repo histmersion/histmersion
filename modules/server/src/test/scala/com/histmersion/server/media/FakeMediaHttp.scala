@@ -24,9 +24,9 @@ final class FakeMediaHttp(route: String => Either[String, HttpAnswer]) extends H
   def get(
       url: HttpTransport.Url,
       headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
-  ): Either[Plugin.Http.Failure, HttpAnswer] =
+  ): Either[Problem, HttpAnswer] =
     requests += url.value -> headers.map((k, v) => k.value -> v.value)
-    route(url.value).left.map(m => Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text(m))))
+    route(url.value).left.map(m => Problem.Unclassified(Legacy.Text(m)))
 
 object FakeMediaHttp:
   /** The answer a fake server gives: its status, its headers and body as they go over the wire. */

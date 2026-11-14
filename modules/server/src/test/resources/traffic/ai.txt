@@ -2,34 +2,31 @@
 client: anthropic:claude-sonnet-4-5
 request 1
   POST /anthropic/v1/messages
-  Accept-encoding: gzip, deflate
   Anthropic-version: 2023-06-01
   Content-length: 3551
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   X-api-key: k-test
   body: {"model":"claude-sonnet-4-5","messages":[{"role":"user","content":[{"text":"Classify the source.\n<source>Tin was essential for bronze.</source>","type":"text"}]}],"system":"You are a careful research assistant. Answer with JSON only.","max_tokens":16000,"tools":[{"name":"search","description":"Search the corpus by its filters","input_schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentSearchInput","type":"object","properties":{"query":{"description":"Free text: words AND-ed, \"a phrase\", -word, or","type":["string","null"]},"topics":{"description":"Every one required","type":"array","items":{"type":"string"}},"tags":{"description":"Every one required","type":"array","items":{"type":"string"}},"authors":{"description":"Any one, a substring of an author's name","type":"array","items":{"type":"string"}},"status":{"description":"Any of foundational|current|contested|superseded|debunked|retracted|unassessed","type":"array","items":{"type":"string"}},"from":{"description":"Period start, a signed year (BCE negative)","type":["integer","null"],"format":"int64"},"to":{"description":"Period end, a signed year","type":["integer","null"],"format":"int64"},"sort":{"description":"relevance|cited|period|year|oldest|title","type":["string","null"]},"limit":{"description":"Results per page","type":["integer","null"],"format":"int32"},"offset":{"description":"The next page's offset, from the listing's footer","type":["integer","null"],"format":"int32"}}}},{"name":"facets","description":"The values of one field","input_schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentFacetsInput","type":"object","required":["field"],"properties":{"field":{"description":"tags|authors|places|topics|status","type":"string"},"prefix":{"description":"Only values starting with this","type":["string","null"]}}}}],"output_config":{"format":{"type":"json_schema","schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","$defs":{"StatedPeriod":{"title":"StatedPeriod","description":"The deep-time span the source is ABOUT (not its publication date); null if none","type":"object","required":["start","end"],"properties":{"start":{"$ref":"#/$defs/StatedYear"},"end":{"$ref":"#/$defs/StatedYear"},"name":{"type":["string","null"]}},"additionalProperties":false},"StatedYear":{"title":"StatedYear","type":"object","required":["value","unit"],"properties":{"value":{"description":"The number as written, always positive (3300 for 3300 BCE)","type":"integer","format":"int64"},"unit":{"description":"BCE | CE | calBP (calibrated years before 1950) | BP (UNcalibrated radiocarbon years)","type":"string"}},"additionalProperties":false}},"title":"Classification","type":"object","required":["summary","status","statusEvidence"],"properties":{"summary":{"description":"3-6 sentences: what the source argues and on what evidence","type":"string"},"topics":{"type":"array","items":{"type":"string"}},"regions":{"type":"array","items":{"type":"string"}},"tags":{"description":"lowercase_snake_case; prefer tags the facets tool lists","type":"array","items":{"type":"string"}},"period":{"description":"The deep-time span the source is ABOUT (not its publication date); null if none","anyOf":[{"$ref":"#/$defs/StatedPeriod"},{"type":"null"}]},"status":{"description":"foundational | current | contested | superseded | debunked | retracted | unassessed","type":"string"},"statusEvidence":{"description":"Why that status, from the text; empty if unassessed","type":"string"}},"additionalProperties":false}}}}
   -> 200
 request 2
   POST /anthropic/v1/messages
-  Accept-encoding: gzip, deflate
   Anthropic-version: 2023-06-01
   Content-length: 4278
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   X-api-key: k-test
   body: {"model":"claude-sonnet-4-5","messages":[{"role":"user","content":[{"text":"Classify the source.\n<source>Tin was essential for bronze.</source>","type":"text"}]},{"role":"assistant","content":[{"text":"Let me look.","type":"text"},{"id":"toolu_01","name":"search","input":{"topics":["trade"],"tags":["Tin Trade"],"query":"tin","to":-1000,"authors":[],"status":["current"],"from":-3000,"limit":5},"type":"tool_use"},{"id":"toolu_02","name":"facets","input":{"field":"tags","prefix":"Tin"},"type":"tool_use"}]},{"role":"user","content":[{"tool_use_id":"toolu_01","content":"{\"total\":2,\"query\":\"tin\",\"hits\":[\"zz2001_a\",\"zz2002_b\"]}","type":"tool_result"}]},{"role":"user","content":[{"tool_use_id":"toolu_02","content":"{\"field\":\"tags\",\"values\":[\"Tin Trade\",\"Bronze Age\"]}","type":"tool_result"}]},{"role":"user","content":[{"text":"[Iteration 2 of 3]","type":"text"}]}],"system":"You are a careful research assistant. Answer with JSON only.","max_tokens":16000,"tools":[{"name":"search","description":"Search the corpus by its filters","input_schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentSearchInput","type":"object","properties":{"query":{"description":"Free text: words AND-ed, \"a phrase\", -word, or","type":["string","null"]},"topics":{"description":"Every one required","type":"array","items":{"type":"string"}},"tags":{"description":"Every one required","type":"array","items":{"type":"string"}},"authors":{"description":"Any one, a substring of an author's name","type":"array","items":{"type":"string"}},"status":{"description":"Any of foundational|current|contested|superseded|debunked|retracted|unassessed","type":"array","items":{"type":"string"}},"from":{"description":"Period start, a signed year (BCE negative)","type":["integer","null"],"format":"int64"},"to":{"description":"Period end, a signed year","type":["integer","null"],"format":"int64"},"sort":{"description":"relevance|cited|period|year|oldest|title","type":["string","null"]},"limit":{"description":"Results per page","type":["integer","null"],"format":"int32"},"offset":{"description":"The next page's offset, from the listing's footer","type":["integer","null"],"format":"int32"}}}},{"name":"facets","description":"The values of one field","input_schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentFacetsInput","type":"object","required":["field"],"properties":{"field":{"description":"tags|authors|places|topics|status","type":"string"},"prefix":{"description":"Only values starting with this","type":["string","null"]}}}}],"output_config":{"format":{"type":"json_schema","schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","$defs":{"StatedPeriod":{"title":"StatedPeriod","description":"The deep-time span the source is ABOUT (not its publication date); null if none","type":"object","required":["start","end"],"properties":{"start":{"$ref":"#/$defs/StatedYear"},"end":{"$ref":"#/$defs/StatedYear"},"name":{"type":["string","null"]}},"additionalProperties":false},"StatedYear":{"title":"StatedYear","type":"object","required":["value","unit"],"properties":{"value":{"description":"The number as written, always positive (3300 for 3300 BCE)","type":"integer","format":"int64"},"unit":{"description":"BCE | CE | calBP (calibrated years before 1950) | BP (UNcalibrated radiocarbon years)","type":"string"}},"additionalProperties":false}},"title":"Classification","type":"object","required":["summary","status","statusEvidence"],"properties":{"summary":{"description":"3-6 sentences: what the source argues and on what evidence","type":"string"},"topics":{"type":"array","items":{"type":"string"}},"regions":{"type":"array","items":{"type":"string"}},"tags":{"description":"lowercase_snake_case; prefer tags the facets tool lists","type":"array","items":{"type":"string"}},"period":{"description":"The deep-time span the source is ABOUT (not its publication date); null if none","anyOf":[{"$ref":"#/$defs/StatedPeriod"},{"type":"null"}]},"status":{"description":"foundational | current | contested | superseded | debunked | retracted | unassessed","type":"string"},"statusEvidence":{"description":"Why that status, from the text; empty if unassessed","type":"string"}},"additionalProperties":false}}}}
   -> 200
 request 3
   POST /anthropic/v1/messages
-  Accept-encoding: gzip, deflate
   Anthropic-version: 2023-06-01
   Content-length: 2935
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   X-api-key: k-test
   body: {"model":"claude-sonnet-4-5","messages":[{"role":"user","content":[{"text":"Classify the source.\n<source>Tin was essential for bronze.</source>","type":"text"}]},{"role":"assistant","content":[{"text":"Let me look.","type":"text"},{"id":"toolu_01","name":"search","input":{"topics":["trade"],"tags":["Tin Trade"],"query":"tin","to":-1000,"authors":[],"status":["current"],"from":-3000,"limit":5},"type":"tool_use"},{"id":"toolu_02","name":"facets","input":{"field":"tags","prefix":"Tin"},"type":"tool_use"}]},{"role":"user","content":[{"tool_use_id":"toolu_01","content":"{\"total\":2,\"query\":\"tin\",\"hits\":[\"zz2001_a\",\"zz2002_b\"]}","type":"tool_result"}]},{"role":"user","content":[{"tool_use_id":"toolu_02","content":"{\"field\":\"tags\",\"values\":[\"Tin Trade\",\"Bronze Age\"]}","type":"tool_result"}]},{"role":"assistant","content":[{"id":"toolu_03","name":"facets","input":{"field":"topics"},"type":"tool_use"}]},{"role":"user","content":[{"tool_use_id":"toolu_03","content":"{\"field\":\"topics\",\"values\":[\"Tin Trade\",\"Bronze Age\"]}","type":"tool_result"}]},{"role":"user","content":[{"text":"[Iteration 3 of 3]","type":"text"}]}],"system":"You are a careful research assistant. Answer with JSON only.","max_tokens":16000,"output_config":{"format":{"type":"json_schema","schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","$defs":{"StatedPeriod":{"title":"StatedPeriod","description":"The deep-time span the source is ABOUT (not its publication date); null if none","type":"object","required":["start","end"],"properties":{"start":{"$ref":"#/$defs/StatedYear"},"end":{"$ref":"#/$defs/StatedYear"},"name":{"type":["string","null"]}},"additionalProperties":false},"StatedYear":{"title":"StatedYear","type":"object","required":["value","unit"],"properties":{"value":{"description":"The number as written, always positive (3300 for 3300 BCE)","type":"integer","format":"int64"},"unit":{"description":"BCE | CE | calBP (calibrated years before 1950) | BP (UNcalibrated radiocarbon years)","type":"string"}},"additionalProperties":false}},"title":"Classification","type":"object","required":["summary","status","statusEvidence"],"properties":{"summary":{"description":"3-6 sentences: what the source argues and on what evidence","type":"string"},"topics":{"type":"array","items":{"type":"string"}},"regions":{"type":"array","items":{"type":"string"}},"tags":{"description":"lowercase_snake_case; prefer tags the facets tool lists","type":"array","items":{"type":"string"}},"period":{"description":"The deep-time span the source is ABOUT (not its publication date); null if none","anyOf":[{"$ref":"#/$defs/StatedPeriod"},{"type":"null"}]},"status":{"description":"foundational | current | contested | superseded | debunked | retracted | unassessed","type":"string"},"statusEvidence":{"description":"Why that status, from the text; empty if unassessed","type":"string"}},"additionalProperties":false}}}}
   -> 200
@@ -51,23 +48,21 @@ trace: user assistant tool-call(search) tool-call(facets) tool(search) tool(face
 client: anthropic:claude-sonnet-4-5
 request 1
   POST /anthropic/v1/messages
-  Accept-encoding: gzip, deflate
   Anthropic-version: 2023-06-01
   Content-length: 2199
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   X-api-key: k-test
   body: {"model":"claude-sonnet-4-5","messages":[{"role":"user","content":[{"text":"Classify the source.\n<source>Tin was essential for bronze.</source>","type":"text"}]}],"system":"You are a careful research assistant. Answer with JSON only.","max_tokens":2000,"tools":[{"name":"search","description":"Search the corpus by its filters","input_schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentSearchInput","type":"object","properties":{"query":{"description":"Free text: words AND-ed, \"a phrase\", -word, or","type":["string","null"]},"topics":{"description":"Every one required","type":"array","items":{"type":"string"}},"tags":{"description":"Every one required","type":"array","items":{"type":"string"}},"authors":{"description":"Any one, a substring of an author's name","type":"array","items":{"type":"string"}},"status":{"description":"Any of foundational|current|contested|superseded|debunked|retracted|unassessed","type":"array","items":{"type":"string"}},"from":{"description":"Period start, a signed year (BCE negative)","type":["integer","null"],"format":"int64"},"to":{"description":"Period end, a signed year","type":["integer","null"],"format":"int64"},"sort":{"description":"relevance|cited|period|year|oldest|title","type":["string","null"]},"limit":{"description":"Results per page","type":["integer","null"],"format":"int32"},"offset":{"description":"The next page's offset, from the listing's footer","type":["integer","null"],"format":"int32"}}}},{"name":"facets","description":"The values of one field","input_schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentFacetsInput","type":"object","required":["field"],"properties":{"field":{"description":"tags|authors|places|topics|status","type":"string"},"prefix":{"description":"Only values starting with this","type":["string","null"]}}}}],"output_config":{"format":{"type":"json_schema","schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"ProbeAnswer","type":"object","required":["citekey","title"],"properties":{"citekey":{"type":"string"},"title":{"type":"string"},"year":{"type":["integer","null"],"format":"int32"}},"additionalProperties":false}}}}
   -> 200
 request 2
   POST /anthropic/v1/messages
-  Accept-encoding: gzip, deflate
   Anthropic-version: 2023-06-01
   Content-length: 2503
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   X-api-key: k-test
   body: {"model":"claude-sonnet-4-5","messages":[{"role":"user","content":[{"text":"Classify the source.\n<source>Tin was essential for bronze.</source>","type":"text"}]},{"role":"assistant","content":[{"id":"toolu_09","name":"query","input":{"sql":"DELETE FROM sources"},"type":"tool_use"}]},{"role":"user","content":[{"tool_use_id":"toolu_09","content":"Tool not found: query","type":"tool_result"}]},{"role":"user","content":[{"text":"[Iteration 2 of 6]","type":"text"}]}],"system":"You are a careful research assistant. Answer with JSON only.","max_tokens":2000,"tools":[{"name":"search","description":"Search the corpus by its filters","input_schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentSearchInput","type":"object","properties":{"query":{"description":"Free text: words AND-ed, \"a phrase\", -word, or","type":["string","null"]},"topics":{"description":"Every one required","type":"array","items":{"type":"string"}},"tags":{"description":"Every one required","type":"array","items":{"type":"string"}},"authors":{"description":"Any one, a substring of an author's name","type":"array","items":{"type":"string"}},"status":{"description":"Any of foundational|current|contested|superseded|debunked|retracted|unassessed","type":"array","items":{"type":"string"}},"from":{"description":"Period start, a signed year (BCE negative)","type":["integer","null"],"format":"int64"},"to":{"description":"Period end, a signed year","type":["integer","null"],"format":"int64"},"sort":{"description":"relevance|cited|period|year|oldest|title","type":["string","null"]},"limit":{"description":"Results per page","type":["integer","null"],"format":"int32"},"offset":{"description":"The next page's offset, from the listing's footer","type":["integer","null"],"format":"int32"}}}},{"name":"facets","description":"The values of one field","input_schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentFacetsInput","type":"object","required":["field"],"properties":{"field":{"description":"tags|authors|places|topics|status","type":"string"},"prefix":{"description":"Only values starting with this","type":["string","null"]}}}}],"output_config":{"format":{"type":"json_schema","schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"ProbeAnswer","type":"object","required":["citekey","title"],"properties":{"citekey":{"type":"string"},"title":{"type":"string"},"year":{"type":["integer","null"],"format":"int32"}},"additionalProperties":false}}}}
   -> 200
@@ -86,12 +81,11 @@ trace: user assistant tool-call(query) tool(query) assistant
 client: anthropic:claude-sonnet-4-5
 request 1
   POST /anthropic/v1/messages
-  Accept-encoding: gzip, deflate
   Anthropic-version: 2023-06-01
   Content-length: 490
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   X-api-key: k-test
   body: {"model":"claude-sonnet-4-5","messages":[{"role":"user","content":[{"text":"Classify the source.\n<source>Tin was essential for bronze.</source>","type":"text"}]}],"system":"You are a careful research assistant. Answer with JSON only.","max_tokens":64,"output_config":{"format":{"type":"json_schema","schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"Ping","type":"object","required":["word"],"properties":{"word":{"type":"string"}},"additionalProperties":false}}}}
   -> 200
@@ -108,12 +102,11 @@ trace: user assistant
 client: anthropic:claude-sonnet-4-5
 request 1
   POST /anthropic/v1/messages
-  Accept-encoding: gzip, deflate
   Anthropic-version: 2023-06-01
   Content-length: 592
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   X-api-key: k-test
   body: {"model":"claude-sonnet-4-5","messages":[{"role":"user","content":[{"text":"Classify the source.\n<source>Tin was essential for bronze.</source>","type":"text"}]}],"system":"You are a careful research assistant. Answer with JSON only.","max_tokens":16000,"output_config":{"format":{"type":"json_schema","schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"ProbeAnswer","type":"object","required":["citekey","title"],"properties":{"citekey":{"type":"string"},"title":{"type":"string"},"year":{"type":["integer","null"],"format":"int32"}},"additionalProperties":false}}}}
   -> 200
@@ -134,110 +127,103 @@ engine: provider error: the call to anthropic:claude-3-haiku-20240307 failed: Un
 client: anthropic:claude-sonnet-4-5
 request 1
   POST /anthropic/v1/messages
-  Accept-encoding: gzip, deflate
   Anthropic-version: 2023-06-01
   Content-length: 2200
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   X-api-key: k-test
   body: {"model":"claude-sonnet-4-5","messages":[{"role":"user","content":[{"text":"Classify the source.\n<source>Tin was essential for bronze.</source>","type":"text"}]}],"system":"You are a careful research assistant. Answer with JSON only.","max_tokens":16000,"tools":[{"name":"search","description":"Search the corpus by its filters","input_schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentSearchInput","type":"object","properties":{"query":{"description":"Free text: words AND-ed, \"a phrase\", -word, or","type":["string","null"]},"topics":{"description":"Every one required","type":"array","items":{"type":"string"}},"tags":{"description":"Every one required","type":"array","items":{"type":"string"}},"authors":{"description":"Any one, a substring of an author's name","type":"array","items":{"type":"string"}},"status":{"description":"Any of foundational|current|contested|superseded|debunked|retracted|unassessed","type":"array","items":{"type":"string"}},"from":{"description":"Period start, a signed year (BCE negative)","type":["integer","null"],"format":"int64"},"to":{"description":"Period end, a signed year","type":["integer","null"],"format":"int64"},"sort":{"description":"relevance|cited|period|year|oldest|title","type":["string","null"]},"limit":{"description":"Results per page","type":["integer","null"],"format":"int32"},"offset":{"description":"The next page's offset, from the listing's footer","type":["integer","null"],"format":"int32"}}}},{"name":"facets","description":"The values of one field","input_schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentFacetsInput","type":"object","required":["field"],"properties":{"field":{"description":"tags|authors|places|topics|status","type":"string"},"prefix":{"description":"Only values starting with this","type":["string","null"]}}}}],"output_config":{"format":{"type":"json_schema","schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"ProbeAnswer","type":"object","required":["citekey","title"],"properties":{"citekey":{"type":"string"},"title":{"type":"string"},"year":{"type":["integer","null"],"format":"int32"}},"additionalProperties":false}}}}
   -> 500
-engine: provider error: the call to anthropic:claude-sonnet-4-5 failed: RuntimeException: Claude API error: {"type":"error","error":{"type":"api_error","message":"Internal server error"}}
+engine: provider error: the call to anthropic:claude-sonnet-4-5 failed: {"type":"error","error":{"type":"api_error","message":"Internal server error"}}
 
 ## anthropic: HTTP 529 overloaded
 client: anthropic:claude-sonnet-4-5
 request 1
   POST /anthropic/v1/messages
-  Accept-encoding: gzip, deflate
   Anthropic-version: 2023-06-01
   Content-length: 2200
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   X-api-key: k-test
   body: {"model":"claude-sonnet-4-5","messages":[{"role":"user","content":[{"text":"Classify the source.\n<source>Tin was essential for bronze.</source>","type":"text"}]}],"system":"You are a careful research assistant. Answer with JSON only.","max_tokens":16000,"tools":[{"name":"search","description":"Search the corpus by its filters","input_schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentSearchInput","type":"object","properties":{"query":{"description":"Free text: words AND-ed, \"a phrase\", -word, or","type":["string","null"]},"topics":{"description":"Every one required","type":"array","items":{"type":"string"}},"tags":{"description":"Every one required","type":"array","items":{"type":"string"}},"authors":{"description":"Any one, a substring of an author's name","type":"array","items":{"type":"string"}},"status":{"description":"Any of foundational|current|contested|superseded|debunked|retracted|unassessed","type":"array","items":{"type":"string"}},"from":{"description":"Period start, a signed year (BCE negative)","type":["integer","null"],"format":"int64"},"to":{"description":"Period end, a signed year","type":["integer","null"],"format":"int64"},"sort":{"description":"relevance|cited|period|year|oldest|title","type":["string","null"]},"limit":{"description":"Results per page","type":["integer","null"],"format":"int32"},"offset":{"description":"The next page's offset, from the listing's footer","type":["integer","null"],"format":"int32"}}}},{"name":"facets","description":"The values of one field","input_schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentFacetsInput","type":"object","required":["field"],"properties":{"field":{"description":"tags|authors|places|topics|status","type":"string"},"prefix":{"description":"Only values starting with this","type":["string","null"]}}}}],"output_config":{"format":{"type":"json_schema","schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"ProbeAnswer","type":"object","required":["citekey","title"],"properties":{"citekey":{"type":"string"},"title":{"type":"string"},"year":{"type":["integer","null"],"format":"int32"}},"additionalProperties":false}}}}
   -> 529
-engine: provider error: the call to anthropic:claude-sonnet-4-5 failed: RuntimeException: Claude API error: {"type":"error","error":{"type":"overloaded_error","message":"Overloaded"}}
+engine: provider error: the call to anthropic:claude-sonnet-4-5 failed: {"type":"error","error":{"type":"overloaded_error","message":"Overloaded"}}
 
 ## anthropic: HTTP 429 with retry-after
 client: anthropic:claude-sonnet-4-5
 request 1
   POST /anthropic/v1/messages
-  Accept-encoding: gzip, deflate
   Anthropic-version: 2023-06-01
   Content-length: 2200
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   X-api-key: k-test
   body: {"model":"claude-sonnet-4-5","messages":[{"role":"user","content":[{"text":"Classify the source.\n<source>Tin was essential for bronze.</source>","type":"text"}]}],"system":"You are a careful research assistant. Answer with JSON only.","max_tokens":16000,"tools":[{"name":"search","description":"Search the corpus by its filters","input_schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentSearchInput","type":"object","properties":{"query":{"description":"Free text: words AND-ed, \"a phrase\", -word, or","type":["string","null"]},"topics":{"description":"Every one required","type":"array","items":{"type":"string"}},"tags":{"description":"Every one required","type":"array","items":{"type":"string"}},"authors":{"description":"Any one, a substring of an author's name","type":"array","items":{"type":"string"}},"status":{"description":"Any of foundational|current|contested|superseded|debunked|retracted|unassessed","type":"array","items":{"type":"string"}},"from":{"description":"Period start, a signed year (BCE negative)","type":["integer","null"],"format":"int64"},"to":{"description":"Period end, a signed year","type":["integer","null"],"format":"int64"},"sort":{"description":"relevance|cited|period|year|oldest|title","type":["string","null"]},"limit":{"description":"Results per page","type":["integer","null"],"format":"int32"},"offset":{"description":"The next page's offset, from the listing's footer","type":["integer","null"],"format":"int32"}}}},{"name":"facets","description":"The values of one field","input_schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentFacetsInput","type":"object","required":["field"],"properties":{"field":{"description":"tags|authors|places|topics|status","type":"string"},"prefix":{"description":"Only values starting with this","type":["string","null"]}}}}],"output_config":{"format":{"type":"json_schema","schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"ProbeAnswer","type":"object","required":["citekey","title"],"properties":{"citekey":{"type":"string"},"title":{"type":"string"},"year":{"type":["integer","null"],"format":"int32"}},"additionalProperties":false}}}}
   -> 429
-engine: provider error: the call to anthropic:claude-sonnet-4-5 failed: RuntimeException: Claude API error: {"type":"error","error":{"type":"rate_limit_error","message":"Number of request tokens has exceeded your per-minute rate limit"}}
+engine: provider error: the call to anthropic:claude-sonnet-4-5 failed: {"type":"error","error":{"type":"rate_limit_error","message":"Number of request tokens has exceeded your per-minute rate limit"}}
 
 ## anthropic: HTTP 401
 client: anthropic:claude-sonnet-4-5
 request 1
   POST /anthropic/v1/messages
-  Accept-encoding: gzip, deflate
   Anthropic-version: 2023-06-01
   Content-length: 2200
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   X-api-key: k-test
   body: {"model":"claude-sonnet-4-5","messages":[{"role":"user","content":[{"text":"Classify the source.\n<source>Tin was essential for bronze.</source>","type":"text"}]}],"system":"You are a careful research assistant. Answer with JSON only.","max_tokens":16000,"tools":[{"name":"search","description":"Search the corpus by its filters","input_schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentSearchInput","type":"object","properties":{"query":{"description":"Free text: words AND-ed, \"a phrase\", -word, or","type":["string","null"]},"topics":{"description":"Every one required","type":"array","items":{"type":"string"}},"tags":{"description":"Every one required","type":"array","items":{"type":"string"}},"authors":{"description":"Any one, a substring of an author's name","type":"array","items":{"type":"string"}},"status":{"description":"Any of foundational|current|contested|superseded|debunked|retracted|unassessed","type":"array","items":{"type":"string"}},"from":{"description":"Period start, a signed year (BCE negative)","type":["integer","null"],"format":"int64"},"to":{"description":"Period end, a signed year","type":["integer","null"],"format":"int64"},"sort":{"description":"relevance|cited|period|year|oldest|title","type":["string","null"]},"limit":{"description":"Results per page","type":["integer","null"],"format":"int32"},"offset":{"description":"The next page's offset, from the listing's footer","type":["integer","null"],"format":"int32"}}}},{"name":"facets","description":"The values of one field","input_schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentFacetsInput","type":"object","required":["field"],"properties":{"field":{"description":"tags|authors|places|topics|status","type":"string"},"prefix":{"description":"Only values starting with this","type":["string","null"]}}}}],"output_config":{"format":{"type":"json_schema","schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"ProbeAnswer","type":"object","required":["citekey","title"],"properties":{"citekey":{"type":"string"},"title":{"type":"string"},"year":{"type":["integer","null"],"format":"int32"}},"additionalProperties":false}}}}
   -> 401
-engine: provider error: the call to anthropic:claude-sonnet-4-5 failed: RuntimeException: Claude API error: {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"}}
+engine: provider error: the call to anthropic:claude-sonnet-4-5 failed: {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"}}
 
 ## anthropic: an error answer that is not JSON
 client: anthropic:claude-sonnet-4-5
 request 1
   POST /anthropic/v1/messages
-  Accept-encoding: gzip, deflate
   Anthropic-version: 2023-06-01
   Content-length: 2200
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   X-api-key: k-test
   body: {"model":"claude-sonnet-4-5","messages":[{"role":"user","content":[{"text":"Classify the source.\n<source>Tin was essential for bronze.</source>","type":"text"}]}],"system":"You are a careful research assistant. Answer with JSON only.","max_tokens":16000,"tools":[{"name":"search","description":"Search the corpus by its filters","input_schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentSearchInput","type":"object","properties":{"query":{"description":"Free text: words AND-ed, \"a phrase\", -word, or","type":["string","null"]},"topics":{"description":"Every one required","type":"array","items":{"type":"string"}},"tags":{"description":"Every one required","type":"array","items":{"type":"string"}},"authors":{"description":"Any one, a substring of an author's name","type":"array","items":{"type":"string"}},"status":{"description":"Any of foundational|current|contested|superseded|debunked|retracted|unassessed","type":"array","items":{"type":"string"}},"from":{"description":"Period start, a signed year (BCE negative)","type":["integer","null"],"format":"int64"},"to":{"description":"Period end, a signed year","type":["integer","null"],"format":"int64"},"sort":{"description":"relevance|cited|period|year|oldest|title","type":["string","null"]},"limit":{"description":"Results per page","type":["integer","null"],"format":"int32"},"offset":{"description":"The next page's offset, from the listing's footer","type":["integer","null"],"format":"int32"}}}},{"name":"facets","description":"The values of one field","input_schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentFacetsInput","type":"object","required":["field"],"properties":{"field":{"description":"tags|authors|places|topics|status","type":"string"},"prefix":{"description":"Only values starting with this","type":["string","null"]}}}}],"output_config":{"format":{"type":"json_schema","schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"ProbeAnswer","type":"object","required":["citekey","title"],"properties":{"citekey":{"type":"string"},"title":{"type":"string"},"year":{"type":["integer","null"],"format":"int32"}},"additionalProperties":false}}}}
   -> 502
-engine: provider error: the call to anthropic:claude-sonnet-4-5 failed: RuntimeException: Claude API error: <html>Bad Gateway</html>
+engine: provider error: the call to anthropic:claude-sonnet-4-5 failed: <html>Bad Gateway</html>
 
 ## anthropic: a malformed body
 client: anthropic:claude-sonnet-4-5
 request 1
   POST /anthropic/v1/messages
-  Accept-encoding: gzip, deflate
   Anthropic-version: 2023-06-01
   Content-length: 2200
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   X-api-key: k-test
   body: {"model":"claude-sonnet-4-5","messages":[{"role":"user","content":[{"text":"Classify the source.\n<source>Tin was essential for bronze.</source>","type":"text"}]}],"system":"You are a careful research assistant. Answer with JSON only.","max_tokens":16000,"tools":[{"name":"search","description":"Search the corpus by its filters","input_schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentSearchInput","type":"object","properties":{"query":{"description":"Free text: words AND-ed, \"a phrase\", -word, or","type":["string","null"]},"topics":{"description":"Every one required","type":"array","items":{"type":"string"}},"tags":{"description":"Every one required","type":"array","items":{"type":"string"}},"authors":{"description":"Any one, a substring of an author's name","type":"array","items":{"type":"string"}},"status":{"description":"Any of foundational|current|contested|superseded|debunked|retracted|unassessed","type":"array","items":{"type":"string"}},"from":{"description":"Period start, a signed year (BCE negative)","type":["integer","null"],"format":"int64"},"to":{"description":"Period end, a signed year","type":["integer","null"],"format":"int64"},"sort":{"description":"relevance|cited|period|year|oldest|title","type":["string","null"]},"limit":{"description":"Results per page","type":["integer","null"],"format":"int32"},"offset":{"description":"The next page's offset, from the listing's footer","type":["integer","null"],"format":"int32"}}}},{"name":"facets","description":"The values of one field","input_schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentFacetsInput","type":"object","required":["field"],"properties":{"field":{"description":"tags|authors|places|topics|status","type":"string"},"prefix":{"description":"Only values starting with this","type":["string","null"]}}}}],"output_config":{"format":{"type":"json_schema","schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"ProbeAnswer","type":"object","required":["citekey","title"],"properties":{"citekey":{"type":"string"},"title":{"type":"string"},"year":{"type":["integer","null"],"format":"int32"}},"additionalProperties":false}}}}
   -> 200
-engine: provider error: the call to anthropic:claude-sonnet-4-5 failed: RuntimeException: Claude API error: content: unexpected end of input
+engine: provider error: the call to anthropic:claude-sonnet-4-5 failed: content: unexpected end of input
 
 ## anthropic: a body missing its usage
 client: anthropic:claude-sonnet-4-5
 request 1
   POST /anthropic/v1/messages
-  Accept-encoding: gzip, deflate
   Anthropic-version: 2023-06-01
   Content-length: 2200
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   X-api-key: k-test
   body: {"model":"claude-sonnet-4-5","messages":[{"role":"user","content":[{"text":"Classify the source.\n<source>Tin was essential for bronze.</source>","type":"text"}]}],"system":"You are a careful research assistant. Answer with JSON only.","max_tokens":16000,"tools":[{"name":"search","description":"Search the corpus by its filters","input_schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentSearchInput","type":"object","properties":{"query":{"description":"Free text: words AND-ed, \"a phrase\", -word, or","type":["string","null"]},"topics":{"description":"Every one required","type":"array","items":{"type":"string"}},"tags":{"description":"Every one required","type":"array","items":{"type":"string"}},"authors":{"description":"Any one, a substring of an author's name","type":"array","items":{"type":"string"}},"status":{"description":"Any of foundational|current|contested|superseded|debunked|retracted|unassessed","type":"array","items":{"type":"string"}},"from":{"description":"Period start, a signed year (BCE negative)","type":["integer","null"],"format":"int64"},"to":{"description":"Period end, a signed year","type":["integer","null"],"format":"int64"},"sort":{"description":"relevance|cited|period|year|oldest|title","type":["string","null"]},"limit":{"description":"Results per page","type":["integer","null"],"format":"int32"},"offset":{"description":"The next page's offset, from the listing's footer","type":["integer","null"],"format":"int32"}}}},{"name":"facets","description":"The values of one field","input_schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentFacetsInput","type":"object","required":["field"],"properties":{"field":{"description":"tags|authors|places|topics|status","type":"string"},"prefix":{"description":"Only values starting with this","type":["string","null"]}}}}],"output_config":{"format":{"type":"json_schema","schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"ProbeAnswer","type":"object","required":["citekey","title"],"properties":{"citekey":{"type":"string"},"title":{"type":"string"},"year":{"type":["integer","null"],"format":"int32"}},"additionalProperties":false}}}}
   -> 200
-engine: provider error: the call to anthropic:claude-sonnet-4-5 failed: RuntimeException: Claude API error: error: missing required field
+engine: provider error: the call to anthropic:claude-sonnet-4-5 failed: error: missing required field
 
 ## anthropic: nothing listens
 client: anthropic:claude-sonnet-4-5
-engine: provider error: the call to anthropic:claude-sonnet-4-5 failed: ConnectException: Exception when sending request: POST http://127.0.0.1:<closed>/v1/messages
+engine: provider error: the call to anthropic:claude-sonnet-4-5 failed: cannot reach 127.0.0.1 at http://127.0.0.1:<closed>/v1/messages — java.net.ConnectException
 
 ## anthropic: no key
 client: refused: no Anthropic API key — set ANTHROPIC_API_KEY in the server's environment
@@ -247,29 +233,27 @@ client: refused: agents.providers.anthropic.base-url: Invalid port: port. Is the
 
 ## anthropic: a relative base URL
 client: anthropic:claude-sonnet-4-5
-engine: provider error: the call to anthropic:claude-sonnet-4-5 failed: IllegalArgumentException: URI with undefined scheme
+engine: provider error: the call to anthropic:claude-sonnet-4-5 failed: cannot reach not%20a%20url/v1/messages at not%20a%20url/v1/messages — java.lang.IllegalArgumentException: URI with undefined scheme
 
 ## anthropic: the final answer forced on the second iteration
 client: anthropic:claude-sonnet-4-5
 request 1
   POST /anthropic/v1/messages
-  Accept-encoding: gzip, deflate
   Anthropic-version: 2023-06-01
   Content-length: 2200
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   X-api-key: k-test
   body: {"model":"claude-sonnet-4-5","messages":[{"role":"user","content":[{"text":"Classify the source.\n<source>Tin was essential for bronze.</source>","type":"text"}]}],"system":"You are a careful research assistant. Answer with JSON only.","max_tokens":16000,"tools":[{"name":"search","description":"Search the corpus by its filters","input_schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentSearchInput","type":"object","properties":{"query":{"description":"Free text: words AND-ed, \"a phrase\", -word, or","type":["string","null"]},"topics":{"description":"Every one required","type":"array","items":{"type":"string"}},"tags":{"description":"Every one required","type":"array","items":{"type":"string"}},"authors":{"description":"Any one, a substring of an author's name","type":"array","items":{"type":"string"}},"status":{"description":"Any of foundational|current|contested|superseded|debunked|retracted|unassessed","type":"array","items":{"type":"string"}},"from":{"description":"Period start, a signed year (BCE negative)","type":["integer","null"],"format":"int64"},"to":{"description":"Period end, a signed year","type":["integer","null"],"format":"int64"},"sort":{"description":"relevance|cited|period|year|oldest|title","type":["string","null"]},"limit":{"description":"Results per page","type":["integer","null"],"format":"int32"},"offset":{"description":"The next page's offset, from the listing's footer","type":["integer","null"],"format":"int32"}}}},{"name":"facets","description":"The values of one field","input_schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentFacetsInput","type":"object","required":["field"],"properties":{"field":{"description":"tags|authors|places|topics|status","type":"string"},"prefix":{"description":"Only values starting with this","type":["string","null"]}}}}],"output_config":{"format":{"type":"json_schema","schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"ProbeAnswer","type":"object","required":["citekey","title"],"properties":{"citekey":{"type":"string"},"title":{"type":"string"},"year":{"type":["integer","null"],"format":"int32"}},"additionalProperties":false}}}}
   -> 200
 request 2
   POST /anthropic/v1/messages
-  Accept-encoding: gzip, deflate
   Anthropic-version: 2023-06-01
   Content-length: 937
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   X-api-key: k-test
   body: {"model":"claude-sonnet-4-5","messages":[{"role":"user","content":[{"text":"Classify the source.\n<source>Tin was essential for bronze.</source>","type":"text"}]},{"role":"assistant","content":[{"id":"toolu_05","name":"facets","input":{"field":"tags"},"type":"tool_use"}]},{"role":"user","content":[{"tool_use_id":"toolu_05","content":"{\"field\":\"tags\",\"values\":[\"Tin Trade\",\"Bronze Age\"]}","type":"tool_result"}]},{"role":"user","content":[{"text":"Answer now with what you have.","type":"text"}]}],"system":"You are a careful research assistant. Answer with JSON only.","max_tokens":16000,"output_config":{"format":{"type":"json_schema","schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"ProbeAnswer","type":"object","required":["citekey","title"],"properties":{"citekey":{"type":"string"},"title":{"type":"string"},"year":{"type":["integer","null"],"format":"int32"}},"additionalProperties":false}}}}
   -> 200
@@ -288,72 +272,67 @@ trace: user assistant tool-call(facets) tool(facets) assistant
 client: anthropic:claude-sonnet-4-5
 request 1
   POST /anthropic/v1/messages
-  Accept-encoding: gzip, deflate
   Anthropic-version: 2023-06-01
   Content-length: 2200
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   X-api-key: k-test
   body: {"model":"claude-sonnet-4-5","messages":[{"role":"user","content":[{"text":"Classify the source.\n<source>Tin was essential for bronze.</source>","type":"text"}]}],"system":"You are a careful research assistant. Answer with JSON only.","max_tokens":16000,"tools":[{"name":"search","description":"Search the corpus by its filters","input_schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentSearchInput","type":"object","properties":{"query":{"description":"Free text: words AND-ed, \"a phrase\", -word, or","type":["string","null"]},"topics":{"description":"Every one required","type":"array","items":{"type":"string"}},"tags":{"description":"Every one required","type":"array","items":{"type":"string"}},"authors":{"description":"Any one, a substring of an author's name","type":"array","items":{"type":"string"}},"status":{"description":"Any of foundational|current|contested|superseded|debunked|retracted|unassessed","type":"array","items":{"type":"string"}},"from":{"description":"Period start, a signed year (BCE negative)","type":["integer","null"],"format":"int64"},"to":{"description":"Period end, a signed year","type":["integer","null"],"format":"int64"},"sort":{"description":"relevance|cited|period|year|oldest|title","type":["string","null"]},"limit":{"description":"Results per page","type":["integer","null"],"format":"int32"},"offset":{"description":"The next page's offset, from the listing's footer","type":["integer","null"],"format":"int32"}}}},{"name":"facets","description":"The values of one field","input_schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentFacetsInput","type":"object","required":["field"],"properties":{"field":{"description":"tags|authors|places|topics|status","type":"string"},"prefix":{"description":"Only values starting with this","type":["string","null"]}}}}],"output_config":{"format":{"type":"json_schema","schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"ProbeAnswer","type":"object","required":["citekey","title"],"properties":{"citekey":{"type":"string"},"title":{"type":"string"},"year":{"type":["integer","null"],"format":"int32"}},"additionalProperties":false}}}}
   -> 200
-engine: provider error: the call to anthropic:claude-sonnet-4-5 failed: RuntimeException: Claude API error: Overloaded
+engine: provider error: the call to anthropic:claude-sonnet-4-5 failed: Overloaded
 
 ## anthropic: a 200 answer that is a JSON array
 client: anthropic:claude-sonnet-4-5
 request 1
   POST /anthropic/v1/messages
-  Accept-encoding: gzip, deflate
   Anthropic-version: 2023-06-01
   Content-length: 2200
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   X-api-key: k-test
   body: {"model":"claude-sonnet-4-5","messages":[{"role":"user","content":[{"text":"Classify the source.\n<source>Tin was essential for bronze.</source>","type":"text"}]}],"system":"You are a careful research assistant. Answer with JSON only.","max_tokens":16000,"tools":[{"name":"search","description":"Search the corpus by its filters","input_schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentSearchInput","type":"object","properties":{"query":{"description":"Free text: words AND-ed, \"a phrase\", -word, or","type":["string","null"]},"topics":{"description":"Every one required","type":"array","items":{"type":"string"}},"tags":{"description":"Every one required","type":"array","items":{"type":"string"}},"authors":{"description":"Any one, a substring of an author's name","type":"array","items":{"type":"string"}},"status":{"description":"Any of foundational|current|contested|superseded|debunked|retracted|unassessed","type":"array","items":{"type":"string"}},"from":{"description":"Period start, a signed year (BCE negative)","type":["integer","null"],"format":"int64"},"to":{"description":"Period end, a signed year","type":["integer","null"],"format":"int64"},"sort":{"description":"relevance|cited|period|year|oldest|title","type":["string","null"]},"limit":{"description":"Results per page","type":["integer","null"],"format":"int32"},"offset":{"description":"The next page's offset, from the listing's footer","type":["integer","null"],"format":"int32"}}}},{"name":"facets","description":"The values of one field","input_schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentFacetsInput","type":"object","required":["field"],"properties":{"field":{"description":"tags|authors|places|topics|status","type":"string"},"prefix":{"description":"Only values starting with this","type":["string","null"]}}}}],"output_config":{"format":{"type":"json_schema","schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"ProbeAnswer","type":"object","required":["citekey","title"],"properties":{"citekey":{"type":"string"},"title":{"type":"string"},"year":{"type":["integer","null"],"format":"int32"}},"additionalProperties":false}}}}
   -> 200
-engine: provider error: the call to anthropic:claude-sonnet-4-5 failed: RuntimeException: Claude API error: expected an object
+engine: provider error: the call to anthropic:claude-sonnet-4-5 failed: expected an object
 
 ## anthropic: an error answer with an empty body
 client: anthropic:claude-sonnet-4-5
 request 1
   POST /anthropic/v1/messages
-  Accept-encoding: gzip, deflate
   Anthropic-version: 2023-06-01
   Content-length: 2200
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   X-api-key: k-test
   body: {"model":"claude-sonnet-4-5","messages":[{"role":"user","content":[{"text":"Classify the source.\n<source>Tin was essential for bronze.</source>","type":"text"}]}],"system":"You are a careful research assistant. Answer with JSON only.","max_tokens":16000,"tools":[{"name":"search","description":"Search the corpus by its filters","input_schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentSearchInput","type":"object","properties":{"query":{"description":"Free text: words AND-ed, \"a phrase\", -word, or","type":["string","null"]},"topics":{"description":"Every one required","type":"array","items":{"type":"string"}},"tags":{"description":"Every one required","type":"array","items":{"type":"string"}},"authors":{"description":"Any one, a substring of an author's name","type":"array","items":{"type":"string"}},"status":{"description":"Any of foundational|current|contested|superseded|debunked|retracted|unassessed","type":"array","items":{"type":"string"}},"from":{"description":"Period start, a signed year (BCE negative)","type":["integer","null"],"format":"int64"},"to":{"description":"Period end, a signed year","type":["integer","null"],"format":"int64"},"sort":{"description":"relevance|cited|period|year|oldest|title","type":["string","null"]},"limit":{"description":"Results per page","type":["integer","null"],"format":"int32"},"offset":{"description":"The next page's offset, from the listing's footer","type":["integer","null"],"format":"int32"}}}},{"name":"facets","description":"The values of one field","input_schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentFacetsInput","type":"object","required":["field"],"properties":{"field":{"description":"tags|authors|places|topics|status","type":"string"},"prefix":{"description":"Only values starting with this","type":["string","null"]}}}}],"output_config":{"format":{"type":"json_schema","schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"ProbeAnswer","type":"object","required":["citekey","title"],"properties":{"citekey":{"type":"string"},"title":{"type":"string"},"year":{"type":["integer","null"],"format":"int32"}},"additionalProperties":false}}}}
   -> 500
-engine: provider error: the call to anthropic:claude-sonnet-4-5 failed: RuntimeException: Claude API error: 
+engine: provider error: the call to anthropic:claude-sonnet-4-5 failed: 
 
 ## anthropic: no answer within timeout-seconds
 client: anthropic:claude-sonnet-4-5
 request 1
   POST /anthropic/v1/messages
-  Accept-encoding: gzip, deflate
   Anthropic-version: 2023-06-01
   Content-length: 2200
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   X-api-key: k-test
   body: {"model":"claude-sonnet-4-5","messages":[{"role":"user","content":[{"text":"Classify the source.\n<source>Tin was essential for bronze.</source>","type":"text"}]}],"system":"You are a careful research assistant. Answer with JSON only.","max_tokens":16000,"tools":[{"name":"search","description":"Search the corpus by its filters","input_schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentSearchInput","type":"object","properties":{"query":{"description":"Free text: words AND-ed, \"a phrase\", -word, or","type":["string","null"]},"topics":{"description":"Every one required","type":"array","items":{"type":"string"}},"tags":{"description":"Every one required","type":"array","items":{"type":"string"}},"authors":{"description":"Any one, a substring of an author's name","type":"array","items":{"type":"string"}},"status":{"description":"Any of foundational|current|contested|superseded|debunked|retracted|unassessed","type":"array","items":{"type":"string"}},"from":{"description":"Period start, a signed year (BCE negative)","type":["integer","null"],"format":"int64"},"to":{"description":"Period end, a signed year","type":["integer","null"],"format":"int64"},"sort":{"description":"relevance|cited|period|year|oldest|title","type":["string","null"]},"limit":{"description":"Results per page","type":["integer","null"],"format":"int32"},"offset":{"description":"The next page's offset, from the listing's footer","type":["integer","null"],"format":"int32"}}}},{"name":"facets","description":"The values of one field","input_schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentFacetsInput","type":"object","required":["field"],"properties":{"field":{"description":"tags|authors|places|topics|status","type":"string"},"prefix":{"description":"Only values starting with this","type":["string","null"]}}}}],"output_config":{"format":{"type":"json_schema","schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"ProbeAnswer","type":"object","required":["citekey","title"],"properties":{"citekey":{"type":"string"},"title":{"type":"string"},"year":{"type":["integer","null"],"format":"int32"}},"additionalProperties":false}}}}
   -> 200
-engine: provider error: the call to anthropic:claude-sonnet-4-5 failed: TimeoutException: Exception when sending request: POST http://127.0.0.1:<port>/anthropic/v1/messages
+engine: provider error: the call to anthropic:claude-sonnet-4-5 failed: 127.0.0.1 did not answer at http://127.0.0.1:<port>/anthropic/v1/messages within 1000 ms
 
 ## anthropic: a base URL with a trailing slash
 client: anthropic:claude-sonnet-4-5
 request 1
   POST /anthropic/v1/messages
-  Accept-encoding: gzip, deflate
   Anthropic-version: 2023-06-01
   Content-length: 592
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   X-api-key: k-test
   body: {"model":"claude-sonnet-4-5","messages":[{"role":"user","content":[{"text":"Classify the source.\n<source>Tin was essential for bronze.</source>","type":"text"}]}],"system":"You are a careful research assistant. Answer with JSON only.","max_tokens":16000,"output_config":{"format":{"type":"json_schema","schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"ProbeAnswer","type":"object","required":["citekey","title"],"properties":{"citekey":{"type":"string"},"title":{"type":"string"},"year":{"type":["integer","null"],"format":"int32"}},"additionalProperties":false}}}}
   -> 200
@@ -368,7 +347,7 @@ trace: user assistant
 
 ## anthropic: an ftp base URL
 client: anthropic:claude-sonnet-4-5
-engine: provider error: the call to anthropic:claude-sonnet-4-5 failed: IllegalArgumentException: invalid URI scheme ftp
+engine: provider error: the call to anthropic:claude-sonnet-4-5 failed: cannot reach 127.0.0.1 at ftp://127.0.0.1/x/v1/messages — java.lang.IllegalArgumentException: invalid URI scheme ftp
 
 ## anthropic: switched off
 client: refused: anthropic:claude-sonnet-4-5: the anthropic provider is switched off (histmersion.plugins.ai-anthropic.enabled = false)
@@ -377,32 +356,29 @@ client: refused: anthropic:claude-sonnet-4-5: the anthropic provider is switched
 client: openai:gpt-5
 request 1
   POST /openai/v1/chat/completions
-  Accept-encoding: gzip, deflate
   Authorization: Bearer k-test
   Content-length: 3939
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   body: {"messages":[{"content":"You are a careful research assistant. Answer with JSON only.","role":"system"},{"content":"Classify the source.\n<source>Tin was essential for bronze.</source>","role":"user"}],"model":"gpt-5","response_format":{"type":"json_schema","json_schema":{"name":"final_response","strict":true,"schema":{"additionalProperties":false,"required":["summary","topics","regions","tags","period","status","statusEvidence"],"$schema":"https://json-schema.org/draft/2020-12/schema","$defs":{"StatedPeriod":{"additionalProperties":false,"required":["start","end","name"],"title":"StatedPeriod","description":"The deep-time span the source is ABOUT (not its publication date); null if none","type":"object","properties":{"start":{"$ref":"#/$defs/StatedYear"},"end":{"$ref":"#/$defs/StatedYear"},"name":{"type":["string","null"]}}},"StatedYear":{"additionalProperties":false,"required":["value","unit"],"title":"StatedYear","type":"object","properties":{"value":{"description":"The number as written, always positive (3300 for 3300 BCE)","type":"integer","format":"int64"},"unit":{"description":"BCE | CE | calBP (calibrated years before 1950) | BP (UNcalibrated radiocarbon years)","type":"string"}}}},"title":"Classification","type":"object","properties":{"summary":{"description":"3-6 sentences: what the source argues and on what evidence","type":"string"},"topics":{"type":["array","null"],"items":{"type":"string"}},"regions":{"type":["array","null"],"items":{"type":"string"}},"tags":{"description":"lowercase_snake_case; prefer tags the facets tool lists","type":["array","null"],"items":{"type":"string"}},"period":{"description":"The deep-time span the source is ABOUT (not its publication date); null if none","anyOf":[{"$ref":"#/$defs/StatedPeriod"},{"type":"null"}]},"status":{"description":"foundational | current | contested | superseded | debunked | retracted | unassessed","type":"string"},"statusEvidence":{"description":"Why that status, from the text; empty if unassessed","type":"string"}}}}},"tools":[{"type":"function","function":{"name":"search","description":"Search the corpus by its filters","parameters":{"properties":{"query":{"description":"Free text: words AND-ed, \"a phrase\", -word, or","type":["string","null"]},"topics":{"description":"Every one required","type":["array","null"],"items":{"type":"string"}},"tags":{"description":"Every one required","type":["array","null"],"items":{"type":"string"}},"authors":{"description":"Any one, a substring of an author's name","type":["array","null"],"items":{"type":"string"}},"status":{"description":"Any of foundational|current|contested|superseded|debunked|retracted|unassessed","type":["array","null"],"items":{"type":"string"}},"from":{"description":"Period start, a signed year (BCE negative)","type":["integer","null"],"format":"int64"},"to":{"description":"Period end, a signed year","type":["integer","null"],"format":"int64"},"sort":{"description":"relevance|cited|period|year|oldest|title","type":["string","null"]},"limit":{"description":"Results per page","type":["integer","null"],"format":"int32"},"offset":{"description":"The next page's offset, from the listing's footer","type":["integer","null"],"format":"int32"}},"additionalProperties":false,"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentSearchInput","type":"object","required":["query","topics","tags","authors","status","from","to","sort","limit","offset"]},"strict":true}},{"type":"function","function":{"name":"facets","description":"The values of one field","parameters":{"properties":{"field":{"description":"tags|authors|places|topics|status","type":"string"},"prefix":{"description":"Only values starting with this","type":["string","null"]}},"additionalProperties":false,"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentFacetsInput","type":"object","required":["field","prefix"]},"strict":true}}],"max_completion_tokens":16000}
   -> 200
 request 2
   POST /openai/v1/chat/completions
-  Accept-encoding: gzip, deflate
   Authorization: Bearer k-test
   Content-length: 4618
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   body: {"messages":[{"content":"You are a careful research assistant. Answer with JSON only.","role":"system"},{"content":"Classify the source.\n<source>Tin was essential for bronze.</source>","role":"user"},{"content":"","tool_calls":[{"type":"function","function":{"arguments":"{\"query\":\"tin\",\"topics\":[\"trade\"],\"tags\":[],\"authors\":[],\"status\":[],\"from\":null,\"to\":null,\"sort\":null,\"limit\":5,\"offset\":null}","name":"search"},"id":"call_zzA"},{"type":"function","function":{"arguments":"{\"field\":\"tags\",\"prefix\":null}","name":"facets"},"id":"call_1"}],"role":"assistant"},{"content":"{\"total\":2,\"query\":\"tin\",\"hits\":[\"zz2001_a\",\"zz2002_b\"]}","tool_call_id":"call_zzA","role":"tool"},{"content":"{\"field\":\"tags\",\"values\":[\"Tin Trade\",\"Bronze Age\"]}","tool_call_id":"call_1","role":"tool"},{"content":"[Iteration 2 of 3]","role":"user"}],"model":"gpt-5","response_format":{"type":"json_schema","json_schema":{"name":"final_response","strict":true,"schema":{"additionalProperties":false,"required":["summary","topics","regions","tags","period","status","statusEvidence"],"$schema":"https://json-schema.org/draft/2020-12/schema","$defs":{"StatedPeriod":{"additionalProperties":false,"required":["start","end","name"],"title":"StatedPeriod","description":"The deep-time span the source is ABOUT (not its publication date); null if none","type":"object","properties":{"start":{"$ref":"#/$defs/StatedYear"},"end":{"$ref":"#/$defs/StatedYear"},"name":{"type":["string","null"]}}},"StatedYear":{"additionalProperties":false,"required":["value","unit"],"title":"StatedYear","type":"object","properties":{"value":{"description":"The number as written, always positive (3300 for 3300 BCE)","type":"integer","format":"int64"},"unit":{"description":"BCE | CE | calBP (calibrated years before 1950) | BP (UNcalibrated radiocarbon years)","type":"string"}}}},"title":"Classification","type":"object","properties":{"summary":{"description":"3-6 sentences: what the source argues and on what evidence","type":"string"},"topics":{"type":["array","null"],"items":{"type":"string"}},"regions":{"type":["array","null"],"items":{"type":"string"}},"tags":{"description":"lowercase_snake_case; prefer tags the facets tool lists","type":["array","null"],"items":{"type":"string"}},"period":{"description":"The deep-time span the source is ABOUT (not its publication date); null if none","anyOf":[{"$ref":"#/$defs/StatedPeriod"},{"type":"null"}]},"status":{"description":"foundational | current | contested | superseded | debunked | retracted | unassessed","type":"string"},"statusEvidence":{"description":"Why that status, from the text; empty if unassessed","type":"string"}}}}},"tools":[{"type":"function","function":{"name":"search","description":"Search the corpus by its filters","parameters":{"properties":{"query":{"description":"Free text: words AND-ed, \"a phrase\", -word, or","type":["string","null"]},"topics":{"description":"Every one required","type":["array","null"],"items":{"type":"string"}},"tags":{"description":"Every one required","type":["array","null"],"items":{"type":"string"}},"authors":{"description":"Any one, a substring of an author's name","type":["array","null"],"items":{"type":"string"}},"status":{"description":"Any of foundational|current|contested|superseded|debunked|retracted|unassessed","type":["array","null"],"items":{"type":"string"}},"from":{"description":"Period start, a signed year (BCE negative)","type":["integer","null"],"format":"int64"},"to":{"description":"Period end, a signed year","type":["integer","null"],"format":"int64"},"sort":{"description":"relevance|cited|period|year|oldest|title","type":["string","null"]},"limit":{"description":"Results per page","type":["integer","null"],"format":"int32"},"offset":{"description":"The next page's offset, from the listing's footer","type":["integer","null"],"format":"int32"}},"additionalProperties":false,"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentSearchInput","type":"object","required":["query","topics","tags","authors","status","from","to","sort","limit","offset"]},"strict":true}},{"type":"function","function":{"name":"facets","description":"The values of one field","parameters":{"properties":{"field":{"description":"tags|authors|places|topics|status","type":"string"},"prefix":{"description":"Only values starting with this","type":["string","null"]}},"additionalProperties":false,"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentFacetsInput","type":"object","required":["field","prefix"]},"strict":true}}],"max_completion_tokens":16000}
   -> 200
 request 3
   POST /openai/v1/chat/completions
-  Accept-encoding: gzip, deflate
   Authorization: Bearer k-test
   Content-length: 2999
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   body: {"messages":[{"content":"You are a careful research assistant. Answer with JSON only.","role":"system"},{"content":"Classify the source.\n<source>Tin was essential for bronze.</source>","role":"user"},{"content":"","tool_calls":[{"type":"function","function":{"arguments":"{\"query\":\"tin\",\"topics\":[\"trade\"],\"tags\":[],\"authors\":[],\"status\":[],\"from\":null,\"to\":null,\"sort\":null,\"limit\":5,\"offset\":null}","name":"search"},"id":"call_zzA"},{"type":"function","function":{"arguments":"{\"field\":\"tags\",\"prefix\":null}","name":"facets"},"id":"call_1"}],"role":"assistant"},{"content":"{\"total\":2,\"query\":\"tin\",\"hits\":[\"zz2001_a\",\"zz2002_b\"]}","tool_call_id":"call_zzA","role":"tool"},{"content":"{\"field\":\"tags\",\"values\":[\"Tin Trade\",\"Bronze Age\"]}","tool_call_id":"call_1","role":"tool"},{"content":"","tool_calls":[{"type":"function","function":{"arguments":"{\"field\":\"topics\"}","name":"facets"},"id":"call_zzB"}],"role":"assistant"},{"content":"{\"field\":\"topics\",\"values\":[\"Tin Trade\",\"Bronze Age\"]}","tool_call_id":"call_zzB","role":"tool"},{"content":"[Iteration 3 of 3]","role":"user"}],"model":"gpt-5","response_format":{"type":"json_schema","json_schema":{"name":"final_response","strict":true,"schema":{"additionalProperties":false,"required":["summary","topics","regions","tags","period","status","statusEvidence"],"$schema":"https://json-schema.org/draft/2020-12/schema","$defs":{"StatedPeriod":{"additionalProperties":false,"required":["start","end","name"],"title":"StatedPeriod","description":"The deep-time span the source is ABOUT (not its publication date); null if none","type":"object","properties":{"start":{"$ref":"#/$defs/StatedYear"},"end":{"$ref":"#/$defs/StatedYear"},"name":{"type":["string","null"]}}},"StatedYear":{"additionalProperties":false,"required":["value","unit"],"title":"StatedYear","type":"object","properties":{"value":{"description":"The number as written, always positive (3300 for 3300 BCE)","type":"integer","format":"int64"},"unit":{"description":"BCE | CE | calBP (calibrated years before 1950) | BP (UNcalibrated radiocarbon years)","type":"string"}}}},"title":"Classification","type":"object","properties":{"summary":{"description":"3-6 sentences: what the source argues and on what evidence","type":"string"},"topics":{"type":["array","null"],"items":{"type":"string"}},"regions":{"type":["array","null"],"items":{"type":"string"}},"tags":{"description":"lowercase_snake_case; prefer tags the facets tool lists","type":["array","null"],"items":{"type":"string"}},"period":{"description":"The deep-time span the source is ABOUT (not its publication date); null if none","anyOf":[{"$ref":"#/$defs/StatedPeriod"},{"type":"null"}]},"status":{"description":"foundational | current | contested | superseded | debunked | retracted | unassessed","type":"string"},"statusEvidence":{"description":"Why that status, from the text; empty if unassessed","type":"string"}}}}},"max_completion_tokens":16000}
   -> 200
 answer: {"summary":"Tin reached the Aegean by sea.","topics":["trade"],"regions":["Anatolia"],"tags":["Tin Trade"],"period":null,"status":"current","statusEvidence":"widely cited"}
@@ -423,22 +399,20 @@ trace: user assistant tool-call(search) tool-call(facets) tool(search) tool(face
 client: openai:gpt-5
 request 1
   POST /openai/v1/chat/completions
-  Accept-encoding: gzip, deflate
   Authorization: Bearer k-test
   Content-length: 2225
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   body: {"messages":[{"content":"You are a careful research assistant. Answer with JSON only.","role":"system"},{"content":"Classify the source.\n<source>Tin was essential for bronze.</source>","role":"user"}],"model":"gpt-5","response_format":{"type":"json_schema","json_schema":{"name":"final_response","strict":true,"schema":{"additionalProperties":false,"required":["word"],"$schema":"https://json-schema.org/draft/2020-12/schema","title":"Ping","type":"object","properties":{"word":{"type":"string"}}},"description":"one word back"}},"tools":[{"type":"function","function":{"name":"search","description":"Search the corpus by its filters","parameters":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentSearchInput","type":"object","properties":{"query":{"description":"Free text: words AND-ed, \"a phrase\", -word, or","type":["string","null"]},"topics":{"description":"Every one required","type":"array","items":{"type":"string"}},"tags":{"description":"Every one required","type":"array","items":{"type":"string"}},"authors":{"description":"Any one, a substring of an author's name","type":"array","items":{"type":"string"}},"status":{"description":"Any of foundational|current|contested|superseded|debunked|retracted|unassessed","type":"array","items":{"type":"string"}},"from":{"description":"Period start, a signed year (BCE negative)","type":["integer","null"],"format":"int64"},"to":{"description":"Period end, a signed year","type":["integer","null"],"format":"int64"},"sort":{"description":"relevance|cited|period|year|oldest|title","type":["string","null"]},"limit":{"description":"Results per page","type":["integer","null"],"format":"int32"},"offset":{"description":"The next page's offset, from the listing's footer","type":["integer","null"],"format":"int32"}}}}},{"type":"function","function":{"name":"facets","description":"The values of one field","parameters":{"properties":{"field":{"description":"tags|authors|places|topics|status","type":"string"},"prefix":{"description":"Only values starting with this","type":["string","null"]}},"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentFacetsInput","type":"object","required":["field"]}}}],"max_completion_tokens":500}
   -> 200
 request 2
   POST /openai/v1/chat/completions
-  Accept-encoding: gzip, deflate
   Authorization: Bearer k-test
   Content-length: 2538
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   body: {"messages":[{"content":"You are a careful research assistant. Answer with JSON only.","role":"system"},{"content":"Classify the source.\n<source>Tin was essential for bronze.</source>","role":"user"},{"content":"","tool_calls":[{"type":"function","function":{"arguments":"{\"field\":\"tags\"}","name":"facets"},"id":"call_zzC"}],"role":"assistant"},{"content":"{\"field\":\"tags\",\"values\":[\"Tin Trade\",\"Bronze Age\"]}","tool_call_id":"call_zzC","role":"tool"},{"content":"[Iteration 2 of 4]","role":"user"}],"model":"gpt-5","response_format":{"type":"json_schema","json_schema":{"name":"final_response","strict":true,"schema":{"additionalProperties":false,"required":["word"],"$schema":"https://json-schema.org/draft/2020-12/schema","title":"Ping","type":"object","properties":{"word":{"type":"string"}}},"description":"one word back"}},"tools":[{"type":"function","function":{"name":"search","description":"Search the corpus by its filters","parameters":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentSearchInput","type":"object","properties":{"query":{"description":"Free text: words AND-ed, \"a phrase\", -word, or","type":["string","null"]},"topics":{"description":"Every one required","type":"array","items":{"type":"string"}},"tags":{"description":"Every one required","type":"array","items":{"type":"string"}},"authors":{"description":"Any one, a substring of an author's name","type":"array","items":{"type":"string"}},"status":{"description":"Any of foundational|current|contested|superseded|debunked|retracted|unassessed","type":"array","items":{"type":"string"}},"from":{"description":"Period start, a signed year (BCE negative)","type":["integer","null"],"format":"int64"},"to":{"description":"Period end, a signed year","type":["integer","null"],"format":"int64"},"sort":{"description":"relevance|cited|period|year|oldest|title","type":["string","null"]},"limit":{"description":"Results per page","type":["integer","null"],"format":"int32"},"offset":{"description":"The next page's offset, from the listing's footer","type":["integer","null"],"format":"int32"}}}}},{"type":"function","function":{"name":"facets","description":"The values of one field","parameters":{"properties":{"field":{"description":"tags|authors|places|topics|status","type":"string"},"prefix":{"description":"Only values starting with this","type":["string","null"]}},"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentFacetsInput","type":"object","required":["field"]}}}],"max_completion_tokens":500}
   -> 200
 answer: {"word":"pong"}
@@ -456,12 +430,11 @@ trace: user assistant tool-call(facets) tool(facets) assistant
 client: openai:gpt-5
 request 1
   POST /openai/v1/chat/completions
-  Accept-encoding: gzip, deflate
   Authorization: Bearer k-test
   Content-length: 2523
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   body: {"messages":[{"content":"You are a careful research assistant. Answer with JSON only.","role":"system"},{"content":"Classify the source.\n<source>Tin was essential for bronze.</source>","role":"user"}],"model":"gpt-5","response_format":{"type":"json_schema","json_schema":{"name":"final_response","strict":true,"schema":{"additionalProperties":false,"required":["citekey","title","year"],"$schema":"https://json-schema.org/draft/2020-12/schema","title":"ProbeAnswer","type":"object","properties":{"citekey":{"type":"string"},"title":{"type":"string"},"year":{"type":["integer","null"],"format":"int32"}}}}},"tools":[{"type":"function","function":{"name":"search","description":"Search the corpus by its filters","parameters":{"properties":{"query":{"description":"Free text: words AND-ed, \"a phrase\", -word, or","type":["string","null"]},"topics":{"description":"Every one required","type":["array","null"],"items":{"type":"string"}},"tags":{"description":"Every one required","type":["array","null"],"items":{"type":"string"}},"authors":{"description":"Any one, a substring of an author's name","type":["array","null"],"items":{"type":"string"}},"status":{"description":"Any of foundational|current|contested|superseded|debunked|retracted|unassessed","type":["array","null"],"items":{"type":"string"}},"from":{"description":"Period start, a signed year (BCE negative)","type":["integer","null"],"format":"int64"},"to":{"description":"Period end, a signed year","type":["integer","null"],"format":"int64"},"sort":{"description":"relevance|cited|period|year|oldest|title","type":["string","null"]},"limit":{"description":"Results per page","type":["integer","null"],"format":"int32"},"offset":{"description":"The next page's offset, from the listing's footer","type":["integer","null"],"format":"int32"}},"additionalProperties":false,"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentSearchInput","type":"object","required":["query","topics","tags","authors","status","from","to","sort","limit","offset"]},"strict":true}},{"type":"function","function":{"name":"facets","description":"The values of one field","parameters":{"properties":{"field":{"description":"tags|authors|places|topics|status","type":"string"},"prefix":{"description":"Only values starting with this","type":["string","null"]}},"additionalProperties":false,"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentFacetsInput","type":"object","required":["field","prefix"]},"strict":true}}],"max_completion_tokens":32}
   -> 200
 answer: failed: the answer is not the JSON the schema asks for (token limit) — the answer began: {"citekey":"zz
@@ -477,12 +450,11 @@ trace: user assistant
 client: openai:gpt-5
 request 1
   POST /openai/v1/chat/completions
-  Accept-encoding: gzip, deflate
   Authorization: Bearer k-test
   Content-length: 2526
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   body: {"messages":[{"content":"You are a careful research assistant. Answer with JSON only.","role":"system"},{"content":"Classify the source.\n<source>Tin was essential for bronze.</source>","role":"user"}],"model":"gpt-5","response_format":{"type":"json_schema","json_schema":{"name":"final_response","strict":true,"schema":{"additionalProperties":false,"required":["citekey","title","year"],"$schema":"https://json-schema.org/draft/2020-12/schema","title":"ProbeAnswer","type":"object","properties":{"citekey":{"type":"string"},"title":{"type":"string"},"year":{"type":["integer","null"],"format":"int32"}}}}},"tools":[{"type":"function","function":{"name":"search","description":"Search the corpus by its filters","parameters":{"properties":{"query":{"description":"Free text: words AND-ed, \"a phrase\", -word, or","type":["string","null"]},"topics":{"description":"Every one required","type":["array","null"],"items":{"type":"string"}},"tags":{"description":"Every one required","type":["array","null"],"items":{"type":"string"}},"authors":{"description":"Any one, a substring of an author's name","type":["array","null"],"items":{"type":"string"}},"status":{"description":"Any of foundational|current|contested|superseded|debunked|retracted|unassessed","type":["array","null"],"items":{"type":"string"}},"from":{"description":"Period start, a signed year (BCE negative)","type":["integer","null"],"format":"int64"},"to":{"description":"Period end, a signed year","type":["integer","null"],"format":"int64"},"sort":{"description":"relevance|cited|period|year|oldest|title","type":["string","null"]},"limit":{"description":"Results per page","type":["integer","null"],"format":"int32"},"offset":{"description":"The next page's offset, from the listing's footer","type":["integer","null"],"format":"int32"}},"additionalProperties":false,"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentSearchInput","type":"object","required":["query","topics","tags","authors","status","from","to","sort","limit","offset"]},"strict":true}},{"type":"function","function":{"name":"facets","description":"The values of one field","parameters":{"properties":{"field":{"description":"tags|authors|places|topics|status","type":"string"},"prefix":{"description":"Only values starting with this","type":["string","null"]}},"additionalProperties":false,"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentFacetsInput","type":"object","required":["field","prefix"]},"strict":true}}],"max_completion_tokens":16000}
   -> 200
 answer: failed: the answer is not valid JSON: exhausted input
@@ -498,92 +470,85 @@ trace: user
 client: openai:gpt-5
 request 1
   POST /openai/v1/chat/completions
-  Accept-encoding: gzip, deflate
   Authorization: Bearer k-test
   Content-length: 2526
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   body: {"messages":[{"content":"You are a careful research assistant. Answer with JSON only.","role":"system"},{"content":"Classify the source.\n<source>Tin was essential for bronze.</source>","role":"user"}],"model":"gpt-5","response_format":{"type":"json_schema","json_schema":{"name":"final_response","strict":true,"schema":{"additionalProperties":false,"required":["citekey","title","year"],"$schema":"https://json-schema.org/draft/2020-12/schema","title":"ProbeAnswer","type":"object","properties":{"citekey":{"type":"string"},"title":{"type":"string"},"year":{"type":["integer","null"],"format":"int32"}}}}},"tools":[{"type":"function","function":{"name":"search","description":"Search the corpus by its filters","parameters":{"properties":{"query":{"description":"Free text: words AND-ed, \"a phrase\", -word, or","type":["string","null"]},"topics":{"description":"Every one required","type":["array","null"],"items":{"type":"string"}},"tags":{"description":"Every one required","type":["array","null"],"items":{"type":"string"}},"authors":{"description":"Any one, a substring of an author's name","type":["array","null"],"items":{"type":"string"}},"status":{"description":"Any of foundational|current|contested|superseded|debunked|retracted|unassessed","type":["array","null"],"items":{"type":"string"}},"from":{"description":"Period start, a signed year (BCE negative)","type":["integer","null"],"format":"int64"},"to":{"description":"Period end, a signed year","type":["integer","null"],"format":"int64"},"sort":{"description":"relevance|cited|period|year|oldest|title","type":["string","null"]},"limit":{"description":"Results per page","type":["integer","null"],"format":"int32"},"offset":{"description":"The next page's offset, from the listing's footer","type":["integer","null"],"format":"int32"}},"additionalProperties":false,"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentSearchInput","type":"object","required":["query","topics","tags","authors","status","from","to","sort","limit","offset"]},"strict":true}},{"type":"function","function":{"name":"facets","description":"The values of one field","parameters":{"properties":{"field":{"description":"tags|authors|places|topics|status","type":"string"},"prefix":{"description":"Only values starting with this","type":["string","null"]}},"additionalProperties":false,"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentFacetsInput","type":"object","required":["field","prefix"]},"strict":true}}],"max_completion_tokens":16000}
   -> 500
-engine: provider error: the call to openai:gpt-5 failed: RuntimeException: OpenAI API error: The server had an error while processing your request.
+engine: provider error: the call to openai:gpt-5 failed: The server had an error while processing your request.
 
 ## openai: HTTP 429 with retry-after
 client: openai:gpt-5
 request 1
   POST /openai/v1/chat/completions
-  Accept-encoding: gzip, deflate
   Authorization: Bearer k-test
   Content-length: 2526
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   body: {"messages":[{"content":"You are a careful research assistant. Answer with JSON only.","role":"system"},{"content":"Classify the source.\n<source>Tin was essential for bronze.</source>","role":"user"}],"model":"gpt-5","response_format":{"type":"json_schema","json_schema":{"name":"final_response","strict":true,"schema":{"additionalProperties":false,"required":["citekey","title","year"],"$schema":"https://json-schema.org/draft/2020-12/schema","title":"ProbeAnswer","type":"object","properties":{"citekey":{"type":"string"},"title":{"type":"string"},"year":{"type":["integer","null"],"format":"int32"}}}}},"tools":[{"type":"function","function":{"name":"search","description":"Search the corpus by its filters","parameters":{"properties":{"query":{"description":"Free text: words AND-ed, \"a phrase\", -word, or","type":["string","null"]},"topics":{"description":"Every one required","type":["array","null"],"items":{"type":"string"}},"tags":{"description":"Every one required","type":["array","null"],"items":{"type":"string"}},"authors":{"description":"Any one, a substring of an author's name","type":["array","null"],"items":{"type":"string"}},"status":{"description":"Any of foundational|current|contested|superseded|debunked|retracted|unassessed","type":["array","null"],"items":{"type":"string"}},"from":{"description":"Period start, a signed year (BCE negative)","type":["integer","null"],"format":"int64"},"to":{"description":"Period end, a signed year","type":["integer","null"],"format":"int64"},"sort":{"description":"relevance|cited|period|year|oldest|title","type":["string","null"]},"limit":{"description":"Results per page","type":["integer","null"],"format":"int32"},"offset":{"description":"The next page's offset, from the listing's footer","type":["integer","null"],"format":"int32"}},"additionalProperties":false,"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentSearchInput","type":"object","required":["query","topics","tags","authors","status","from","to","sort","limit","offset"]},"strict":true}},{"type":"function","function":{"name":"facets","description":"The values of one field","parameters":{"properties":{"field":{"description":"tags|authors|places|topics|status","type":"string"},"prefix":{"description":"Only values starting with this","type":["string","null"]}},"additionalProperties":false,"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentFacetsInput","type":"object","required":["field","prefix"]},"strict":true}}],"max_completion_tokens":16000}
   -> 429
-engine: provider error: the call to openai:gpt-5 failed: RuntimeException: OpenAI API error: Rate limit reached for gpt-5 on tokens per min.
+engine: provider error: the call to openai:gpt-5 failed: Rate limit reached for gpt-5 on tokens per min.
 
 ## openai: HTTP 401
 client: openai:gpt-5
 request 1
   POST /openai/v1/chat/completions
-  Accept-encoding: gzip, deflate
   Authorization: Bearer k-test
   Content-length: 2526
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   body: {"messages":[{"content":"You are a careful research assistant. Answer with JSON only.","role":"system"},{"content":"Classify the source.\n<source>Tin was essential for bronze.</source>","role":"user"}],"model":"gpt-5","response_format":{"type":"json_schema","json_schema":{"name":"final_response","strict":true,"schema":{"additionalProperties":false,"required":["citekey","title","year"],"$schema":"https://json-schema.org/draft/2020-12/schema","title":"ProbeAnswer","type":"object","properties":{"citekey":{"type":"string"},"title":{"type":"string"},"year":{"type":["integer","null"],"format":"int32"}}}}},"tools":[{"type":"function","function":{"name":"search","description":"Search the corpus by its filters","parameters":{"properties":{"query":{"description":"Free text: words AND-ed, \"a phrase\", -word, or","type":["string","null"]},"topics":{"description":"Every one required","type":["array","null"],"items":{"type":"string"}},"tags":{"description":"Every one required","type":["array","null"],"items":{"type":"string"}},"authors":{"description":"Any one, a substring of an author's name","type":["array","null"],"items":{"type":"string"}},"status":{"description":"Any of foundational|current|contested|superseded|debunked|retracted|unassessed","type":["array","null"],"items":{"type":"string"}},"from":{"description":"Period start, a signed year (BCE negative)","type":["integer","null"],"format":"int64"},"to":{"description":"Period end, a signed year","type":["integer","null"],"format":"int64"},"sort":{"description":"relevance|cited|period|year|oldest|title","type":["string","null"]},"limit":{"description":"Results per page","type":["integer","null"],"format":"int32"},"offset":{"description":"The next page's offset, from the listing's footer","type":["integer","null"],"format":"int32"}},"additionalProperties":false,"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentSearchInput","type":"object","required":["query","topics","tags","authors","status","from","to","sort","limit","offset"]},"strict":true}},{"type":"function","function":{"name":"facets","description":"The values of one field","parameters":{"properties":{"field":{"description":"tags|authors|places|topics|status","type":"string"},"prefix":{"description":"Only values starting with this","type":["string","null"]}},"additionalProperties":false,"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentFacetsInput","type":"object","required":["field","prefix"]},"strict":true}}],"max_completion_tokens":16000}
   -> 401
-engine: provider error: the call to openai:gpt-5 failed: RuntimeException: OpenAI API error: Incorrect API key provided.
+engine: provider error: the call to openai:gpt-5 failed: Incorrect API key provided.
 
 ## openai: a malformed body
 client: openai:gpt-5
 request 1
   POST /openai/v1/chat/completions
-  Accept-encoding: gzip, deflate
   Authorization: Bearer k-test
   Content-length: 2526
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   body: {"messages":[{"content":"You are a careful research assistant. Answer with JSON only.","role":"system"},{"content":"Classify the source.\n<source>Tin was essential for bronze.</source>","role":"user"}],"model":"gpt-5","response_format":{"type":"json_schema","json_schema":{"name":"final_response","strict":true,"schema":{"additionalProperties":false,"required":["citekey","title","year"],"$schema":"https://json-schema.org/draft/2020-12/schema","title":"ProbeAnswer","type":"object","properties":{"citekey":{"type":"string"},"title":{"type":"string"},"year":{"type":["integer","null"],"format":"int32"}}}}},"tools":[{"type":"function","function":{"name":"search","description":"Search the corpus by its filters","parameters":{"properties":{"query":{"description":"Free text: words AND-ed, \"a phrase\", -word, or","type":["string","null"]},"topics":{"description":"Every one required","type":["array","null"],"items":{"type":"string"}},"tags":{"description":"Every one required","type":["array","null"],"items":{"type":"string"}},"authors":{"description":"Any one, a substring of an author's name","type":["array","null"],"items":{"type":"string"}},"status":{"description":"Any of foundational|current|contested|superseded|debunked|retracted|unassessed","type":["array","null"],"items":{"type":"string"}},"from":{"description":"Period start, a signed year (BCE negative)","type":["integer","null"],"format":"int64"},"to":{"description":"Period end, a signed year","type":["integer","null"],"format":"int64"},"sort":{"description":"relevance|cited|period|year|oldest|title","type":["string","null"]},"limit":{"description":"Results per page","type":["integer","null"],"format":"int32"},"offset":{"description":"The next page's offset, from the listing's footer","type":["integer","null"],"format":"int32"}},"additionalProperties":false,"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentSearchInput","type":"object","required":["query","topics","tags","authors","status","from","to","sort","limit","offset"]},"strict":true}},{"type":"function","function":{"name":"facets","description":"The values of one field","parameters":{"properties":{"field":{"description":"tags|authors|places|topics|status","type":"string"},"prefix":{"description":"Only values starting with this","type":["string","null"]}},"additionalProperties":false,"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentFacetsInput","type":"object","required":["field","prefix"]},"strict":true}}],"max_completion_tokens":16000}
   -> 200
-engine: provider error: the call to openai:gpt-5 failed: RuntimeException: OpenAI API error: choices: expected an array
+engine: provider error: the call to openai:gpt-5 failed: choices: expected an array
 
 ## openai: an error answer that is not JSON
 client: openai:gpt-5
 request 1
   POST /openai/v1/chat/completions
-  Accept-encoding: gzip, deflate
   Authorization: Bearer k-test
   Content-length: 2526
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   body: {"messages":[{"content":"You are a careful research assistant. Answer with JSON only.","role":"system"},{"content":"Classify the source.\n<source>Tin was essential for bronze.</source>","role":"user"}],"model":"gpt-5","response_format":{"type":"json_schema","json_schema":{"name":"final_response","strict":true,"schema":{"additionalProperties":false,"required":["citekey","title","year"],"$schema":"https://json-schema.org/draft/2020-12/schema","title":"ProbeAnswer","type":"object","properties":{"citekey":{"type":"string"},"title":{"type":"string"},"year":{"type":["integer","null"],"format":"int32"}}}}},"tools":[{"type":"function","function":{"name":"search","description":"Search the corpus by its filters","parameters":{"properties":{"query":{"description":"Free text: words AND-ed, \"a phrase\", -word, or","type":["string","null"]},"topics":{"description":"Every one required","type":["array","null"],"items":{"type":"string"}},"tags":{"description":"Every one required","type":["array","null"],"items":{"type":"string"}},"authors":{"description":"Any one, a substring of an author's name","type":["array","null"],"items":{"type":"string"}},"status":{"description":"Any of foundational|current|contested|superseded|debunked|retracted|unassessed","type":["array","null"],"items":{"type":"string"}},"from":{"description":"Period start, a signed year (BCE negative)","type":["integer","null"],"format":"int64"},"to":{"description":"Period end, a signed year","type":["integer","null"],"format":"int64"},"sort":{"description":"relevance|cited|period|year|oldest|title","type":["string","null"]},"limit":{"description":"Results per page","type":["integer","null"],"format":"int32"},"offset":{"description":"The next page's offset, from the listing's footer","type":["integer","null"],"format":"int32"}},"additionalProperties":false,"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentSearchInput","type":"object","required":["query","topics","tags","authors","status","from","to","sort","limit","offset"]},"strict":true}},{"type":"function","function":{"name":"facets","description":"The values of one field","parameters":{"properties":{"field":{"description":"tags|authors|places|topics|status","type":"string"},"prefix":{"description":"Only values starting with this","type":["string","null"]}},"additionalProperties":false,"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentFacetsInput","type":"object","required":["field","prefix"]},"strict":true}}],"max_completion_tokens":16000}
   -> 503
-engine: provider error: the call to openai:gpt-5 failed: RuntimeException: OpenAI API error: upstream unavailable
+engine: provider error: the call to openai:gpt-5 failed: upstream unavailable
 
 ## openai: text beside a tool call, a call without a function name
 client: openai:gpt-5
 request 1
   POST /openai/v1/chat/completions
-  Accept-encoding: gzip, deflate
   Authorization: Bearer k-test
   Content-length: 2526
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   body: {"messages":[{"content":"You are a careful research assistant. Answer with JSON only.","role":"system"},{"content":"Classify the source.\n<source>Tin was essential for bronze.</source>","role":"user"}],"model":"gpt-5","response_format":{"type":"json_schema","json_schema":{"name":"final_response","strict":true,"schema":{"additionalProperties":false,"required":["citekey","title","year"],"$schema":"https://json-schema.org/draft/2020-12/schema","title":"ProbeAnswer","type":"object","properties":{"citekey":{"type":"string"},"title":{"type":"string"},"year":{"type":["integer","null"],"format":"int32"}}}}},"tools":[{"type":"function","function":{"name":"search","description":"Search the corpus by its filters","parameters":{"properties":{"query":{"description":"Free text: words AND-ed, \"a phrase\", -word, or","type":["string","null"]},"topics":{"description":"Every one required","type":["array","null"],"items":{"type":"string"}},"tags":{"description":"Every one required","type":["array","null"],"items":{"type":"string"}},"authors":{"description":"Any one, a substring of an author's name","type":["array","null"],"items":{"type":"string"}},"status":{"description":"Any of foundational|current|contested|superseded|debunked|retracted|unassessed","type":["array","null"],"items":{"type":"string"}},"from":{"description":"Period start, a signed year (BCE negative)","type":["integer","null"],"format":"int64"},"to":{"description":"Period end, a signed year","type":["integer","null"],"format":"int64"},"sort":{"description":"relevance|cited|period|year|oldest|title","type":["string","null"]},"limit":{"description":"Results per page","type":["integer","null"],"format":"int32"},"offset":{"description":"The next page's offset, from the listing's footer","type":["integer","null"],"format":"int32"}},"additionalProperties":false,"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentSearchInput","type":"object","required":["query","topics","tags","authors","status","from","to","sort","limit","offset"]},"strict":true}},{"type":"function","function":{"name":"facets","description":"The values of one field","parameters":{"properties":{"field":{"description":"tags|authors|places|topics|status","type":"string"},"prefix":{"description":"Only values starting with this","type":["string","null"]}},"additionalProperties":false,"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentFacetsInput","type":"object","required":["field","prefix"]},"strict":true}}],"max_completion_tokens":16000}
   -> 200
 request 2
   POST /openai/v1/chat/completions
-  Accept-encoding: gzip, deflate
   Authorization: Bearer k-test
   Content-length: 3018
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   body: {"messages":[{"content":"You are a careful research assistant. Answer with JSON only.","role":"system"},{"content":"Classify the source.\n<source>Tin was essential for bronze.</source>","role":"user"},{"content":"Checking the tags.","tool_calls":[{"type":"function","function":{"arguments":"{\"field\":\"tags\"}","name":"facets"},"id":"call_zzD"},{"type":"function","function":{"arguments":"{}","name":"unknown"},"id":"call_zzE"}],"role":"assistant"},{"content":"{\"field\":\"tags\",\"values\":[\"Tin Trade\",\"Bronze Age\"]}","tool_call_id":"call_zzD","role":"tool"},{"content":"Tool not found: unknown","tool_call_id":"call_zzE","role":"tool"},{"content":"[Iteration 2 of 3]","role":"user"}],"model":"gpt-5","response_format":{"type":"json_schema","json_schema":{"name":"final_response","strict":true,"schema":{"additionalProperties":false,"required":["citekey","title","year"],"$schema":"https://json-schema.org/draft/2020-12/schema","title":"ProbeAnswer","type":"object","properties":{"citekey":{"type":"string"},"title":{"type":"string"},"year":{"type":["integer","null"],"format":"int32"}}}}},"tools":[{"type":"function","function":{"name":"search","description":"Search the corpus by its filters","parameters":{"properties":{"query":{"description":"Free text: words AND-ed, \"a phrase\", -word, or","type":["string","null"]},"topics":{"description":"Every one required","type":["array","null"],"items":{"type":"string"}},"tags":{"description":"Every one required","type":["array","null"],"items":{"type":"string"}},"authors":{"description":"Any one, a substring of an author's name","type":["array","null"],"items":{"type":"string"}},"status":{"description":"Any of foundational|current|contested|superseded|debunked|retracted|unassessed","type":["array","null"],"items":{"type":"string"}},"from":{"description":"Period start, a signed year (BCE negative)","type":["integer","null"],"format":"int64"},"to":{"description":"Period end, a signed year","type":["integer","null"],"format":"int64"},"sort":{"description":"relevance|cited|period|year|oldest|title","type":["string","null"]},"limit":{"description":"Results per page","type":["integer","null"],"format":"int32"},"offset":{"description":"The next page's offset, from the listing's footer","type":["integer","null"],"format":"int32"}},"additionalProperties":false,"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentSearchInput","type":"object","required":["query","topics","tags","authors","status","from","to","sort","limit","offset"]},"strict":true}},{"type":"function","function":{"name":"facets","description":"The values of one field","parameters":{"properties":{"field":{"description":"tags|authors|places|topics|status","type":"string"},"prefix":{"description":"Only values starting with this","type":["string","null"]}},"additionalProperties":false,"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentFacetsInput","type":"object","required":["field","prefix"]},"strict":true}}],"max_completion_tokens":16000}
   -> 200
 answer: {"citekey":"zz2001_a","title":"Tin","year":2001}
@@ -602,99 +567,92 @@ trace: user assistant tool-call(facets) tool-call(unknown) tool(facets) tool(unk
 client: openai:gpt-5
 request 1
   POST /openai/v1/chat/completions
-  Accept-encoding: gzip, deflate
   Authorization: Bearer k-test
   Content-length: 2526
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   body: {"messages":[{"content":"You are a careful research assistant. Answer with JSON only.","role":"system"},{"content":"Classify the source.\n<source>Tin was essential for bronze.</source>","role":"user"}],"model":"gpt-5","response_format":{"type":"json_schema","json_schema":{"name":"final_response","strict":true,"schema":{"additionalProperties":false,"required":["citekey","title","year"],"$schema":"https://json-schema.org/draft/2020-12/schema","title":"ProbeAnswer","type":"object","properties":{"citekey":{"type":"string"},"title":{"type":"string"},"year":{"type":["integer","null"],"format":"int32"}}}}},"tools":[{"type":"function","function":{"name":"search","description":"Search the corpus by its filters","parameters":{"properties":{"query":{"description":"Free text: words AND-ed, \"a phrase\", -word, or","type":["string","null"]},"topics":{"description":"Every one required","type":["array","null"],"items":{"type":"string"}},"tags":{"description":"Every one required","type":["array","null"],"items":{"type":"string"}},"authors":{"description":"Any one, a substring of an author's name","type":["array","null"],"items":{"type":"string"}},"status":{"description":"Any of foundational|current|contested|superseded|debunked|retracted|unassessed","type":["array","null"],"items":{"type":"string"}},"from":{"description":"Period start, a signed year (BCE negative)","type":["integer","null"],"format":"int64"},"to":{"description":"Period end, a signed year","type":["integer","null"],"format":"int64"},"sort":{"description":"relevance|cited|period|year|oldest|title","type":["string","null"]},"limit":{"description":"Results per page","type":["integer","null"],"format":"int32"},"offset":{"description":"The next page's offset, from the listing's footer","type":["integer","null"],"format":"int32"}},"additionalProperties":false,"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentSearchInput","type":"object","required":["query","topics","tags","authors","status","from","to","sort","limit","offset"]},"strict":true}},{"type":"function","function":{"name":"facets","description":"The values of one field","parameters":{"properties":{"field":{"description":"tags|authors|places|topics|status","type":"string"},"prefix":{"description":"Only values starting with this","type":["string","null"]}},"additionalProperties":false,"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentFacetsInput","type":"object","required":["field","prefix"]},"strict":true}}],"max_completion_tokens":16000}
   -> 200
-engine: provider error: the call to openai:gpt-5 failed: RuntimeException: OpenAI API error: expected an object
+engine: provider error: the call to openai:gpt-5 failed: expected an object
 
 ## openai: a choice without its role
 client: openai:gpt-5
 request 1
   POST /openai/v1/chat/completions
-  Accept-encoding: gzip, deflate
   Authorization: Bearer k-test
   Content-length: 2526
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   body: {"messages":[{"content":"You are a careful research assistant. Answer with JSON only.","role":"system"},{"content":"Classify the source.\n<source>Tin was essential for bronze.</source>","role":"user"}],"model":"gpt-5","response_format":{"type":"json_schema","json_schema":{"name":"final_response","strict":true,"schema":{"additionalProperties":false,"required":["citekey","title","year"],"$schema":"https://json-schema.org/draft/2020-12/schema","title":"ProbeAnswer","type":"object","properties":{"citekey":{"type":"string"},"title":{"type":"string"},"year":{"type":["integer","null"],"format":"int32"}}}}},"tools":[{"type":"function","function":{"name":"search","description":"Search the corpus by its filters","parameters":{"properties":{"query":{"description":"Free text: words AND-ed, \"a phrase\", -word, or","type":["string","null"]},"topics":{"description":"Every one required","type":["array","null"],"items":{"type":"string"}},"tags":{"description":"Every one required","type":["array","null"],"items":{"type":"string"}},"authors":{"description":"Any one, a substring of an author's name","type":["array","null"],"items":{"type":"string"}},"status":{"description":"Any of foundational|current|contested|superseded|debunked|retracted|unassessed","type":["array","null"],"items":{"type":"string"}},"from":{"description":"Period start, a signed year (BCE negative)","type":["integer","null"],"format":"int64"},"to":{"description":"Period end, a signed year","type":["integer","null"],"format":"int64"},"sort":{"description":"relevance|cited|period|year|oldest|title","type":["string","null"]},"limit":{"description":"Results per page","type":["integer","null"],"format":"int32"},"offset":{"description":"The next page's offset, from the listing's footer","type":["integer","null"],"format":"int32"}},"additionalProperties":false,"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentSearchInput","type":"object","required":["query","topics","tags","authors","status","from","to","sort","limit","offset"]},"strict":true}},{"type":"function","function":{"name":"facets","description":"The values of one field","parameters":{"properties":{"field":{"description":"tags|authors|places|topics|status","type":"string"},"prefix":{"description":"Only values starting with this","type":["string","null"]}},"additionalProperties":false,"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentFacetsInput","type":"object","required":["field","prefix"]},"strict":true}}],"max_completion_tokens":16000}
   -> 200
-engine: provider error: the call to openai:gpt-5 failed: RuntimeException: OpenAI API error: choices[0].message.role: missing required field
+engine: provider error: the call to openai:gpt-5 failed: choices[0].message.role: missing required field
 
 ## openai: an answer without its usage
 client: openai:gpt-5
 request 1
   POST /openai/v1/chat/completions
-  Accept-encoding: gzip, deflate
   Authorization: Bearer k-test
   Content-length: 2526
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   body: {"messages":[{"content":"You are a careful research assistant. Answer with JSON only.","role":"system"},{"content":"Classify the source.\n<source>Tin was essential for bronze.</source>","role":"user"}],"model":"gpt-5","response_format":{"type":"json_schema","json_schema":{"name":"final_response","strict":true,"schema":{"additionalProperties":false,"required":["citekey","title","year"],"$schema":"https://json-schema.org/draft/2020-12/schema","title":"ProbeAnswer","type":"object","properties":{"citekey":{"type":"string"},"title":{"type":"string"},"year":{"type":["integer","null"],"format":"int32"}}}}},"tools":[{"type":"function","function":{"name":"search","description":"Search the corpus by its filters","parameters":{"properties":{"query":{"description":"Free text: words AND-ed, \"a phrase\", -word, or","type":["string","null"]},"topics":{"description":"Every one required","type":["array","null"],"items":{"type":"string"}},"tags":{"description":"Every one required","type":["array","null"],"items":{"type":"string"}},"authors":{"description":"Any one, a substring of an author's name","type":["array","null"],"items":{"type":"string"}},"status":{"description":"Any of foundational|current|contested|superseded|debunked|retracted|unassessed","type":["array","null"],"items":{"type":"string"}},"from":{"description":"Period start, a signed year (BCE negative)","type":["integer","null"],"format":"int64"},"to":{"description":"Period end, a signed year","type":["integer","null"],"format":"int64"},"sort":{"description":"relevance|cited|period|year|oldest|title","type":["string","null"]},"limit":{"description":"Results per page","type":["integer","null"],"format":"int32"},"offset":{"description":"The next page's offset, from the listing's footer","type":["integer","null"],"format":"int32"}},"additionalProperties":false,"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentSearchInput","type":"object","required":["query","topics","tags","authors","status","from","to","sort","limit","offset"]},"strict":true}},{"type":"function","function":{"name":"facets","description":"The values of one field","parameters":{"properties":{"field":{"description":"tags|authors|places|topics|status","type":"string"},"prefix":{"description":"Only values starting with this","type":["string","null"]}},"additionalProperties":false,"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentFacetsInput","type":"object","required":["field","prefix"]},"strict":true}}],"max_completion_tokens":16000}
   -> 200
-engine: provider error: the call to openai:gpt-5 failed: RuntimeException: OpenAI API error: usage: missing required field
+engine: provider error: the call to openai:gpt-5 failed: usage: missing required field
 
 ## openai: an error object without a message
 client: openai:gpt-5
 request 1
   POST /openai/v1/chat/completions
-  Accept-encoding: gzip, deflate
   Authorization: Bearer k-test
   Content-length: 2526
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   body: {"messages":[{"content":"You are a careful research assistant. Answer with JSON only.","role":"system"},{"content":"Classify the source.\n<source>Tin was essential for bronze.</source>","role":"user"}],"model":"gpt-5","response_format":{"type":"json_schema","json_schema":{"name":"final_response","strict":true,"schema":{"additionalProperties":false,"required":["citekey","title","year"],"$schema":"https://json-schema.org/draft/2020-12/schema","title":"ProbeAnswer","type":"object","properties":{"citekey":{"type":"string"},"title":{"type":"string"},"year":{"type":["integer","null"],"format":"int32"}}}}},"tools":[{"type":"function","function":{"name":"search","description":"Search the corpus by its filters","parameters":{"properties":{"query":{"description":"Free text: words AND-ed, \"a phrase\", -word, or","type":["string","null"]},"topics":{"description":"Every one required","type":["array","null"],"items":{"type":"string"}},"tags":{"description":"Every one required","type":["array","null"],"items":{"type":"string"}},"authors":{"description":"Any one, a substring of an author's name","type":["array","null"],"items":{"type":"string"}},"status":{"description":"Any of foundational|current|contested|superseded|debunked|retracted|unassessed","type":["array","null"],"items":{"type":"string"}},"from":{"description":"Period start, a signed year (BCE negative)","type":["integer","null"],"format":"int64"},"to":{"description":"Period end, a signed year","type":["integer","null"],"format":"int64"},"sort":{"description":"relevance|cited|period|year|oldest|title","type":["string","null"]},"limit":{"description":"Results per page","type":["integer","null"],"format":"int32"},"offset":{"description":"The next page's offset, from the listing's footer","type":["integer","null"],"format":"int32"}},"additionalProperties":false,"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentSearchInput","type":"object","required":["query","topics","tags","authors","status","from","to","sort","limit","offset"]},"strict":true}},{"type":"function","function":{"name":"facets","description":"The values of one field","parameters":{"properties":{"field":{"description":"tags|authors|places|topics|status","type":"string"},"prefix":{"description":"Only values starting with this","type":["string","null"]}},"additionalProperties":false,"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentFacetsInput","type":"object","required":["field","prefix"]},"strict":true}}],"max_completion_tokens":16000}
   -> 500
-engine: provider error: the call to openai:gpt-5 failed: RuntimeException: OpenAI API error: statusCode: 500, response: {"error":{"type":"server_error","code":null}}
+engine: provider error: the call to openai:gpt-5 failed: statusCode: 500, response: {"error":{"type":"server_error","code":null}}
 
 ## openai: an error that is null
 client: openai:gpt-5
 request 1
   POST /openai/v1/chat/completions
-  Accept-encoding: gzip, deflate
   Authorization: Bearer k-test
   Content-length: 2526
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   body: {"messages":[{"content":"You are a careful research assistant. Answer with JSON only.","role":"system"},{"content":"Classify the source.\n<source>Tin was essential for bronze.</source>","role":"user"}],"model":"gpt-5","response_format":{"type":"json_schema","json_schema":{"name":"final_response","strict":true,"schema":{"additionalProperties":false,"required":["citekey","title","year"],"$schema":"https://json-schema.org/draft/2020-12/schema","title":"ProbeAnswer","type":"object","properties":{"citekey":{"type":"string"},"title":{"type":"string"},"year":{"type":["integer","null"],"format":"int32"}}}}},"tools":[{"type":"function","function":{"name":"search","description":"Search the corpus by its filters","parameters":{"properties":{"query":{"description":"Free text: words AND-ed, \"a phrase\", -word, or","type":["string","null"]},"topics":{"description":"Every one required","type":["array","null"],"items":{"type":"string"}},"tags":{"description":"Every one required","type":["array","null"],"items":{"type":"string"}},"authors":{"description":"Any one, a substring of an author's name","type":["array","null"],"items":{"type":"string"}},"status":{"description":"Any of foundational|current|contested|superseded|debunked|retracted|unassessed","type":["array","null"],"items":{"type":"string"}},"from":{"description":"Period start, a signed year (BCE negative)","type":["integer","null"],"format":"int64"},"to":{"description":"Period end, a signed year","type":["integer","null"],"format":"int64"},"sort":{"description":"relevance|cited|period|year|oldest|title","type":["string","null"]},"limit":{"description":"Results per page","type":["integer","null"],"format":"int32"},"offset":{"description":"The next page's offset, from the listing's footer","type":["integer","null"],"format":"int32"}},"additionalProperties":false,"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentSearchInput","type":"object","required":["query","topics","tags","authors","status","from","to","sort","limit","offset"]},"strict":true}},{"type":"function","function":{"name":"facets","description":"The values of one field","parameters":{"properties":{"field":{"description":"tags|authors|places|topics|status","type":"string"},"prefix":{"description":"Only values starting with this","type":["string","null"]}},"additionalProperties":false,"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentFacetsInput","type":"object","required":["field","prefix"]},"strict":true}}],"max_completion_tokens":16000}
   -> 500
-engine: provider error: the call to openai:gpt-5 failed: RuntimeException: OpenAI API error: {"error":null}
+engine: provider error: the call to openai:gpt-5 failed: {"error":null}
 
 ## openai: HTTP 404 in another shape
 client: openai:gpt-5
 request 1
   POST /openai/v1/chat/completions
-  Accept-encoding: gzip, deflate
   Authorization: Bearer k-test
   Content-length: 2526
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   body: {"messages":[{"content":"You are a careful research assistant. Answer with JSON only.","role":"system"},{"content":"Classify the source.\n<source>Tin was essential for bronze.</source>","role":"user"}],"model":"gpt-5","response_format":{"type":"json_schema","json_schema":{"name":"final_response","strict":true,"schema":{"additionalProperties":false,"required":["citekey","title","year"],"$schema":"https://json-schema.org/draft/2020-12/schema","title":"ProbeAnswer","type":"object","properties":{"citekey":{"type":"string"},"title":{"type":"string"},"year":{"type":["integer","null"],"format":"int32"}}}}},"tools":[{"type":"function","function":{"name":"search","description":"Search the corpus by its filters","parameters":{"properties":{"query":{"description":"Free text: words AND-ed, \"a phrase\", -word, or","type":["string","null"]},"topics":{"description":"Every one required","type":["array","null"],"items":{"type":"string"}},"tags":{"description":"Every one required","type":["array","null"],"items":{"type":"string"}},"authors":{"description":"Any one, a substring of an author's name","type":["array","null"],"items":{"type":"string"}},"status":{"description":"Any of foundational|current|contested|superseded|debunked|retracted|unassessed","type":["array","null"],"items":{"type":"string"}},"from":{"description":"Period start, a signed year (BCE negative)","type":["integer","null"],"format":"int64"},"to":{"description":"Period end, a signed year","type":["integer","null"],"format":"int64"},"sort":{"description":"relevance|cited|period|year|oldest|title","type":["string","null"]},"limit":{"description":"Results per page","type":["integer","null"],"format":"int32"},"offset":{"description":"The next page's offset, from the listing's footer","type":["integer","null"],"format":"int32"}},"additionalProperties":false,"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentSearchInput","type":"object","required":["query","topics","tags","authors","status","from","to","sort","limit","offset"]},"strict":true}},{"type":"function","function":{"name":"facets","description":"The values of one field","parameters":{"properties":{"field":{"description":"tags|authors|places|topics|status","type":"string"},"prefix":{"description":"Only values starting with this","type":["string","null"]}},"additionalProperties":false,"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentFacetsInput","type":"object","required":["field","prefix"]},"strict":true}}],"max_completion_tokens":16000}
   -> 404
-engine: provider error: the call to openai:gpt-5 failed: RuntimeException: OpenAI API error: {"statusCode":404,"message":"Resource not found"}
+engine: provider error: the call to openai:gpt-5 failed: {"statusCode":404,"message":"Resource not found"}
 
 ## openai: HTTP 400 with a long body
 client: openai:gpt-5
 request 1
   POST /openai/v1/chat/completions
-  Accept-encoding: gzip, deflate
   Authorization: Bearer k-test
   Content-length: 2526
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   body: {"messages":[{"content":"You are a careful research assistant. Answer with JSON only.","role":"system"},{"content":"Classify the source.\n<source>Tin was essential for bronze.</source>","role":"user"}],"model":"gpt-5","response_format":{"type":"json_schema","json_schema":{"name":"final_response","strict":true,"schema":{"additionalProperties":false,"required":["citekey","title","year"],"$schema":"https://json-schema.org/draft/2020-12/schema","title":"ProbeAnswer","type":"object","properties":{"citekey":{"type":"string"},"title":{"type":"string"},"year":{"type":["integer","null"],"format":"int32"}}}}},"tools":[{"type":"function","function":{"name":"search","description":"Search the corpus by its filters","parameters":{"properties":{"query":{"description":"Free text: words AND-ed, \"a phrase\", -word, or","type":["string","null"]},"topics":{"description":"Every one required","type":["array","null"],"items":{"type":"string"}},"tags":{"description":"Every one required","type":["array","null"],"items":{"type":"string"}},"authors":{"description":"Any one, a substring of an author's name","type":["array","null"],"items":{"type":"string"}},"status":{"description":"Any of foundational|current|contested|superseded|debunked|retracted|unassessed","type":["array","null"],"items":{"type":"string"}},"from":{"description":"Period start, a signed year (BCE negative)","type":["integer","null"],"format":"int64"},"to":{"description":"Period end, a signed year","type":["integer","null"],"format":"int64"},"sort":{"description":"relevance|cited|period|year|oldest|title","type":["string","null"]},"limit":{"description":"Results per page","type":["integer","null"],"format":"int32"},"offset":{"description":"The next page's offset, from the listing's footer","type":["integer","null"],"format":"int32"}},"additionalProperties":false,"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentSearchInput","type":"object","required":["query","topics","tags","authors","status","from","to","sort","limit","offset"]},"strict":true}},{"type":"function","function":{"name":"facets","description":"The values of one field","parameters":{"properties":{"field":{"description":"tags|authors|places|topics|status","type":"string"},"prefix":{"description":"Only values starting with this","type":["string","null"]}},"additionalProperties":false,"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentFacetsInput","type":"object","required":["field","prefix"]},"strict":true}}],"max_completion_tokens":16000}
   -> 400
-engine: provider error: the call to openai:gpt-5 failed: RuntimeException: OpenAI API error: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+engine: provider error: the call to openai:gpt-5 failed: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 ## openai: no key
 client: refused: no OpenAI API key — set OPENAI_API_KEY in the server's environment
@@ -703,22 +661,20 @@ client: refused: no OpenAI API key — set OPENAI_API_KEY in the server's enviro
 client: local:qwen3-coder
 request 1
   POST /local/v1/chat/completions
-  Accept-encoding: gzip, deflate
   Authorization: Bearer none
   Content-length: 2309
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   body: {"messages":[{"content":"You are a careful research assistant. Answer with JSON only.","role":"system"},{"content":"Classify the source.\n<source>Tin was essential for bronze.</source>","role":"user"}],"model":"qwen3-coder","response_format":{"type":"json_schema","json_schema":{"name":"final_response","strict":true,"schema":{"additionalProperties":false,"required":["citekey","title","year"],"$schema":"https://json-schema.org/draft/2020-12/schema","title":"ProbeAnswer","type":"object","properties":{"citekey":{"type":"string"},"title":{"type":"string"},"year":{"type":["integer","null"],"format":"int32"}}}}},"tools":[{"type":"function","function":{"name":"search","description":"Search the corpus by its filters","parameters":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentSearchInput","type":"object","properties":{"query":{"description":"Free text: words AND-ed, \"a phrase\", -word, or","type":["string","null"]},"topics":{"description":"Every one required","type":"array","items":{"type":"string"}},"tags":{"description":"Every one required","type":"array","items":{"type":"string"}},"authors":{"description":"Any one, a substring of an author's name","type":"array","items":{"type":"string"}},"status":{"description":"Any of foundational|current|contested|superseded|debunked|retracted|unassessed","type":"array","items":{"type":"string"}},"from":{"description":"Period start, a signed year (BCE negative)","type":["integer","null"],"format":"int64"},"to":{"description":"Period end, a signed year","type":["integer","null"],"format":"int64"},"sort":{"description":"relevance|cited|period|year|oldest|title","type":["string","null"]},"limit":{"description":"Results per page","type":["integer","null"],"format":"int32"},"offset":{"description":"The next page's offset, from the listing's footer","type":["integer","null"],"format":"int32"}}}}},{"type":"function","function":{"name":"facets","description":"The values of one field","parameters":{"properties":{"field":{"description":"tags|authors|places|topics|status","type":"string"},"prefix":{"description":"Only values starting with this","type":["string","null"]}},"$schema":"https://json-schema.org/draft/2020-12/schema","title":"AgentFacetsInput","type":"object","required":["field"]}}}],"max_completion_tokens":16000}
   -> 200
 request 2
   POST /local/v1/chat/completions
-  Accept-encoding: gzip, deflate
   Authorization: Bearer none
   Content-length: 957
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   body: {"messages":[{"content":"You are a careful research assistant. Answer with JSON only.","role":"system"},{"content":"Classify the source.\n<source>Tin was essential for bronze.</source>","role":"user"},{"content":"","tool_calls":[{"type":"function","function":{"arguments":"{\"query\":\"tin\"}","name":"search"},"id":"call_1"}],"role":"assistant"},{"content":"{\"total\":2,\"query\":\"tin\",\"hits\":[\"zz2001_a\",\"zz2002_b\"]}","tool_call_id":"call_1","role":"tool"},{"content":"[Iteration 2 of 2]","role":"user"}],"model":"qwen3-coder","response_format":{"type":"json_schema","json_schema":{"name":"final_response","strict":true,"schema":{"additionalProperties":false,"required":["citekey","title","year"],"$schema":"https://json-schema.org/draft/2020-12/schema","title":"ProbeAnswer","type":"object","properties":{"citekey":{"type":"string"},"title":{"type":"string"},"year":{"type":["integer","null"],"format":"int32"}}}}},"max_completion_tokens":16000}
   -> 200
 answer: {"citekey":"zz2001_a","title":"Tin","year":2001}
@@ -736,12 +692,11 @@ trace: user assistant tool-call(search) tool(search) assistant
 client: local:qwen3-coder
 request 1
   POST /local/v1/chat/completions
-  Accept-encoding: gzip, deflate
   Authorization: Bearer k-local
   Content-length: 2131
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   body: {"messages":[{"content":"You are a careful research assistant. Answer with JSON only.","role":"system"},{"content":"Classify the source.\n<source>Tin was essential for bronze.</source>","role":"user"}],"model":"qwen3-coder","response_format":{"type":"json_schema","json_schema":{"name":"final_response","strict":true,"schema":{"additionalProperties":false,"required":["findings"],"$schema":"https://json-schema.org/draft/2020-12/schema","$defs":{"FindingProposal":{"additionalProperties":false,"required":["claim","quote","place","placeKind","start","end","periodName","tags","confidence"],"title":"FindingProposal","type":"object","properties":{"claim":{"description":"One claim the source makes, in your words, one sentence","type":"string"},"quote":{"description":"The sentence(s) of the text that state it, copied EXACTLY, 8-60 words","type":"string"},"place":{"description":"The place the claim is about, as a gazetteer would name it; null if none","type":["string","null"]},"placeKind":{"description":"What kind of place `place` is: site (a city, settlement or excavated site) | region (a country, landscape or province) | polity (a state, kingdom or empire) | water (a sea, lake or river) | unknown; null if no place","type":["string","null"]},"start":{"anyOf":[{"$ref":"#/$defs/StatedYear"},{"type":"null"}]},"end":{"anyOf":[{"$ref":"#/$defs/StatedYear"},{"type":"null"}]},"periodName":{"type":["string","null"]},"tags":{"type":["array","null"],"items":{"type":"string"}},"confidence":{"description":"high | medium | low | contested — how firmly the SOURCE states it","type":"string"}}},"StatedYear":{"additionalProperties":false,"required":["value","unit"],"title":"StatedYear","type":"object","properties":{"value":{"description":"The number as written, always positive (3300 for 3300 BCE)","type":"integer","format":"int64"},"unit":{"description":"BCE | CE | calBP (calibrated years before 1950) | BP (UNcalibrated radiocarbon years)","type":"string"}}}},"title":"Findings","type":"object","properties":{"findings":{"type":["array","null"],"items":{"$ref":"#/$defs/FindingProposal"}}}}}},"max_completion_tokens":16000}
   -> 200
 answer: {"findings":[]}
@@ -757,12 +712,11 @@ trace: user assistant
 client: local:qwen3-coder
 request 1
   POST /local/v1/chat/completions
-  Accept-encoding: gzip, deflate
   Authorization: Bearer none
   Content-length: 643
   Content-type: application/json
   Host: 127.0.0.1:<port>
-  User-agent: Java-http-client/25.0.4.1.1
+  User-agent: Histmersion/0.1.0-SNAPSHOT (agents)
   body: {"messages":[{"content":"You are a careful research assistant. Answer with JSON only.","role":"system"},{"content":"Classify the source.\n<source>Tin was essential for bronze.</source>","role":"user"}],"model":"qwen3-coder","response_format":{"type":"json_schema","json_schema":{"name":"final_response","strict":true,"schema":{"additionalProperties":false,"required":["citekey","title","year"],"$schema":"https://json-schema.org/draft/2020-12/schema","title":"ProbeAnswer","type":"object","properties":{"citekey":{"type":"string"},"title":{"type":"string"},"year":{"type":["integer","null"],"format":"int32"}}}}},"max_completion_tokens":16000}
   -> 200
 answer: {"citekey":"zz2001_a","title":"Tin","year":2001}
@@ -776,4 +730,4 @@ trace: user assistant
 
 ## local: nothing listens
 client: local:qwen3-coder
-engine: provider error: the call to local:qwen3-coder failed: ConnectException: Exception when sending request: POST http://127.0.0.1:<closed>/v1/chat/completions
+engine: provider error: the call to local:qwen3-coder failed: cannot reach 127.0.0.1 at http://127.0.0.1:<closed>/v1/chat/completions — java.net.ConnectException

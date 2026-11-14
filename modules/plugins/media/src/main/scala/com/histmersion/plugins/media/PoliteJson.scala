@@ -19,7 +19,7 @@ extension (http: Plugin.Http)
   def askJson(
       url: Plugin.Http.Url,
       headers: Map[Header.Name, Header.Value] = Map.empty
-  ): Either[Plugin.Http.Failure, Json] =
+  ): Either[Problem, Json] =
     http
       .get(url, headers)
       .flatMap(body =>
@@ -27,12 +27,10 @@ extension (http: Plugin.Http)
           .parse(String(body.value, UTF_8))
           .left
           .map(e =>
-            Plugin.Http.Failure.Transport(
-              Problem.Unclassified(
-                Legacy.Text(
-                  s"${scala.util.Try(URI.create(url.value).getHost).toOption.flatMap(Option(_)).getOrElse(url.value)}: " +
-                    s"unparseable JSON ($e)"
-                )
+            Problem.Unclassified(
+              Legacy.Text(
+                s"${scala.util.Try(URI.create(url.value).getHost).toOption.flatMap(Option(_)).getOrElse(url.value)}: " +
+                  s"unparseable JSON ($e)"
               )
             )
           )
@@ -40,9 +38,9 @@ extension (http: Plugin.Http)
 
 extension [A](reading: Either[Problem, A])
   /** A reading of an answer that failed, as the failure of the request. */
-  def unreadable: Either[Plugin.Http.Failure, A] = reading.left.map(Plugin.Http.Failure.Transport(_))
+  def unreadable: Either[Problem, A] = reading
 
 extension [A](readings: Either[Problem, List[Either[Problem, A]]])
   /** The records of an answer, each one unreadable on its own or not. */
-  def unreadableEach: Either[Plugin.Http.Failure, List[Either[Plugin.Http.Failure, A]]] =
+  def unreadableEach: Either[Problem, List[Either[Problem, A]]] =
     readings.unreadable.map(_.map(_.unreadable))

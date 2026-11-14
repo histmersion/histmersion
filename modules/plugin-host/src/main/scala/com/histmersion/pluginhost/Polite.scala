@@ -5,7 +5,7 @@ import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.JsonCodec.given
 import hearth.kindlings.jsoniterjson.Json
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.plugin.Plugin
 import com.histmersion.domain.HttpPolicy
@@ -65,13 +65,13 @@ final class Polite(
   def get(
       url: HttpTransport.Url,
       headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue] = Map.empty
-  ): Either[Plugin.Http.Failure, HttpAnswer] =
+  ): Either[Problem, HttpAnswer] =
     val h = host(url)
     val sent =
       headers.filterNot(_._1.value.equalsIgnoreCase("User-Agent")) +
         (CoreQuota.HeaderName("User-Agent") ->
           CoreQuota.HeaderValue(HttpPolicy.userAgent(HttpPolicy.UserAgent(cfg.userAgent.value)).value))
-    def attempt(n: HttpPolicy.Attempt, refusals: Int): Either[Plugin.Http.Failure, HttpAnswer] =
+    def attempt(n: HttpPolicy.Attempt, refusals: Int): Either[Problem, HttpAnswer] =
       pace(h)
       count += 1
       http.get(url, sent).flatMap { a =>
@@ -102,12 +102,8 @@ final class Polite(
             val waited = if a.code.value == 403 && refusals > 0 then
               s" (still, after waiting ${refusalBackoffMs.take(refusals).map(_.value).sum / 1000} s)"
             else ""
-            Left(
-              Plugin.Http.Failure.Status(
-                a.code.status,
-                Problem.Unclassified(Legacy.Text(s"${h.value}: ${why.sentence}$waited"))
-              )
-            )
+            log.warn(HostLog.Line(s"media: ${why.sentence} from ${h.value}$waited — giving up"))
+            Left(url.answered(a.code.status, a.body.value))
       }
     attempt(HttpPolicy.Attempt(0), 0)
 
@@ -117,14 +113,13 @@ final class Polite(
   def json(
       url: HttpTransport.Url,
       headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue] = Map.empty
-  ): Either[Plugin.Http.Failure, Json] =
+  ): Either[Problem, Json] =
     get(url, headers).flatMap(a =>
       RawJson
         .parse(a.text.value)
         .left
         .map(e =>
-          Plugin.Http.Failure
-            .Transport(Problem.Unclassified(Legacy.Text(s"${host(url).value}: unparseable JSON ($e)")))
+          Problem.Upstream.BadReply(url.upstream, url.address, Problem.Upstream.Shape.Json, External.Reported.of(s"$e"))
         )
     )
 
@@ -132,7 +127,7 @@ final class Polite(
   def file(
       url: HttpTransport.Url,
       fallbackMime: Polite.Mime
-  ): Either[Plugin.Http.Failure, (HttpAnswer.Body, Polite.Mime)] =
+  ): Either[Problem, (HttpAnswer.Body, Polite.Mime)] =
     get(url).map(a =>
       (
         a.body,

@@ -1,5 +1,5 @@
 package com.histmersion.fixtures.hello
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.plugin.*
 import com.histmersion.plugin.Plugin.Config.given
@@ -26,9 +26,7 @@ final class HelloPlugin extends Plugin:
       )
       .toEither
       .left
-      .map(e =>
-        Problem.Unclassified(Legacy.Text(s"greeter '${config.greeter}': ${e.getClass.getSimpleName}: ${e.getMessage}"))
-      )
+      .map(e => Problem.from(e, Problem.Where(s"building the greeter '${config.greeter}'"), Problem.Internal.Id.mint()))
       .flatMap { greeter =>
         ctx.log.info(
           Plugin.Log.Line(

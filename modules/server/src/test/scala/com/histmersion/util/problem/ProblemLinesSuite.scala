@@ -23,7 +23,7 @@ class ProblemLinesSuite extends munit.FunSuite:
     )
     assertEquals(
       p.line,
-      "Upstream.Unreachable upstream=core url=https://core.ac.uk reported=\"java.io.IOException: reset \\\"by peer\\\"\": " +
+      "Upstream.Unreachable upstream=core url=https://core.ac.uk reported=\"java.io.IOException: reset \\\"by peer\\\"\" at=Vector(): " +
         "cannot reach core at https://core.ac.uk — java.io.IOException: reset \"by peer\""
     )
 

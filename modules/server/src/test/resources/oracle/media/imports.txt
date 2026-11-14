@@ -318,8 +318,8 @@ report: {
   "categories" : 0,
   "dryRun" : true,
   "failed" : [
-    "pleiades_570491: collectionapi.metmuseum.org: HTTP 404",
-    "pleiades_570491: collectionapi.metmuseum.org: HTTP 404"
+    "pleiades_570491: object 252446: collectionapi.metmuseum.org answered HTTP 404 at https://collectionapi.metmuseum.org/public/collection/v1/objects/252446 — ",
+    "pleiades_570491: object 253574: collectionapi.metmuseum.org answered HTTP 404 at https://collectionapi.metmuseum.org/public/collection/v1/objects/253574 — "
   ],
   "files" : 1,
   "items" : 3,
@@ -1061,8 +1061,8 @@ report: {
   "categories" : 0,
   "dryRun" : false,
   "failed" : [
-    "pleiades_570491: collectionapi.metmuseum.org: HTTP 404",
-    "pleiades_570491: collectionapi.metmuseum.org: HTTP 404"
+    "pleiades_570491: object 252446: collectionapi.metmuseum.org answered HTTP 404 at https://collectionapi.metmuseum.org/public/collection/v1/objects/252446 — ",
+    "pleiades_570491: object 253574: collectionapi.metmuseum.org answered HTTP 404 at https://collectionapi.metmuseum.org/public/collection/v1/objects/253574 — "
   ],
   "files" : 1,
   "items" : 3,

@@ -23,8 +23,6 @@ extension (http: Plugin.Http)
         }.toMap
       )
       .map(body => String(body.value, UTF_8))
-      .left
-      .map(_.problem)
 
   /** One GET answered as JSON; an answer that is none says so, with the URL. */
   def json(url: String, headers: Map[String, String] = Map.empty): Either[Problem, Json] =

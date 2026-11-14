@@ -4,7 +4,7 @@ import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.JsonCodec.given
 import hearth.kindlings.jsoniterjson.Json
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 
 import com.histmersion.plugin.*
 import com.histmersion.upstreams.dating.CatalogDating
@@ -58,15 +58,21 @@ final class GvpCatalogue(cfg: GvpEvents) extends EventCatalogue:
             Either.cond(
               total.forall(_.value <= rs.size),
               CataloguePage(rs),
-              Problem.Unclassified(
-                Legacy.Text(
-                  s"${total.map(_.value).getOrElse(0)} eruptions in $a..$b, more than one request takes (events.gvp.page-size)"
-                )
+              Problem.Invalid.OutOfRange(
+                Problem.TypeName("com.histmersion.plugins.events.GvpCatalogue.Eruptions"),
+                Problem.Raw(s"${total.map(_.value).getOrElse(0)}"),
+                Problem.Invalid.Bounds(None, Some(Problem.Raw(s"${rs.size} (events.gvp.page-size)")))
               )
             )
           )
       case other =>
-        Left(Problem.Unclassified(Legacy.Text(s"'$other' is no window of years of the GVP's")))
+        Left(
+          Problem.Invalid.Unknown(
+            Problem.TypeName("com.histmersion.plugins.events.GvpCatalogue.Window"),
+            Problem.Raw(s"$other"),
+            Vector.empty
+          )
+        )
 
   /** The feature read again from its `raw`; a record stored before the central year and the ± were kept (V088, no
     * `raw`), read back from its span and the "dated by …" of its description.
@@ -116,11 +122,12 @@ object GvpCatalogue:
     c.downField("features").focus.flatMap(_.asArray) match
       case None =>
         Left(
-          Problem.Unclassified(
-            Legacy.Text(
-              c.downField("exceptions").focus.map(_.noSpaces.take(200)).getOrElse("no features in the answer")
+          c.downField("exceptions")
+            .focus
+            .fold(Problem.Invalid.Missing(Problem.Field("features")))(e =>
+              Problem.Plugin
+                .Said(Problem.Plugin.Id("events-gvp"), Problem.Plugin.Claim.Failed, External.PluginSaid.of(e.noSpaces))
             )
-          )
         )
       case Some(fs) =>
         val total = c.get[Int]("numberMatched").toOption.orElse(c.get[Int]("totalFeatures").toOption)

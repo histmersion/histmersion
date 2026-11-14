@@ -12,7 +12,7 @@ import com.histmersion.domain.library.Doi
 /** An [[AiHttp]] that sends nothing: it answers each request with the next of `answers` (once they run out, with a
   * refused `Left`, "no scripted answer") and keeps every request, to assert on what the provider sent.
   */
-final class ScriptedAiHttp(answers: Either[AiHttp.Failure, AiHttp.Response]*) extends AiHttp:
+final class ScriptedAiHttp(answers: Either[Problem, AiHttp.Response]*) extends AiHttp:
   // the answers not yet given and the requests seen; guarded by `this` (a provider may call from several threads)
   private val left = scala.collection.mutable.Queue(answers*)
   private val seen = List.newBuilder[AiHttpRequest]
@@ -24,7 +24,7 @@ final class ScriptedAiHttp(answers: Either[AiHttp.Failure, AiHttp.Response]*) ex
       headers: Map[Header.Name, Header.Value],
       body: AiHttp.PostBody,
       timeoutSeconds: AiHttp.TimeoutSeconds
-  ): Either[AiHttp.Failure, AiHttp.Response] =
+  ): Either[Problem, AiHttp.Response] =
     next(
       AiHttpRequest(
         AiHttpRequest.Method("POST"),
@@ -38,7 +38,7 @@ final class ScriptedAiHttp(answers: Either[AiHttp.Failure, AiHttp.Response]*) ex
       url: Plugin.Http.Url,
       headers: Map[Header.Name, Header.Value],
       timeoutSeconds: AiHttp.TimeoutSeconds
-  ): Either[AiHttp.Failure, AiHttp.Response] =
+  ): Either[Problem, AiHttp.Response] =
     next(
       AiHttpRequest(
         AiHttpRequest.Method("GET"),
@@ -48,9 +48,9 @@ final class ScriptedAiHttp(answers: Either[AiHttp.Failure, AiHttp.Response]*) ex
       )
     )
 
-  private def next(r: AiHttpRequest): Either[AiHttp.Failure, AiHttp.Response] = synchronized {
+  private def next(r: AiHttpRequest): Either[Problem, AiHttp.Response] = synchronized {
     seen += r
-    if left.isEmpty then Left(AiHttp.Failure.Refused(Problem.Unclassified(Legacy.Text("no scripted answer"))))
+    if left.isEmpty then Left(Problem.Unclassified(Legacy.Text("no scripted answer")))
     else left.dequeue()
   }
 

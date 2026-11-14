@@ -110,12 +110,12 @@ object MediaWire:
     def get(
         url: HttpTransport.Url,
         headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
-    ): Either[Plugin.Http.Failure, HttpAnswer] = synchronized {
+    ): Either[Problem, HttpAnswer] = synchronized {
       val a = answer(url.value)
       out ++= s"GET $url\n"
       headers.toList.sortBy(_._1.value.toLowerCase(java.util.Locale.ROOT)).foreach((k, v) => out ++= s"  $k: $v\n")
       out ++= s"  -> ${a.fold(e => s"error $e", a => s"${a.code} ${a.body.value.length} bytes")}\n"
-      a.left.map(m => Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text(m))))
+      a.left.map(m => Problem.Unclassified(Legacy.Text(m)))
     }
     def take(): String = synchronized {
       val s = out.result()

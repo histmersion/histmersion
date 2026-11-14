@@ -56,7 +56,7 @@ final class ArchiveOrg(archive: Endpoint, http: Plugin.Http):
           .replace("+", "%20")
       )
     )
-    http.get(Plugin.Http.Url(url.value)).left.map(_.problem).flatMap { b =>
+    http.get(Plugin.Http.Url(url.value)).flatMap { b =>
       if b.value.length < 10240 then
         Left(
           Problem.Upstream.BadReply(

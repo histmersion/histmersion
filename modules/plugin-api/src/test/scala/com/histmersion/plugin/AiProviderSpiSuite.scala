@@ -14,10 +14,8 @@ class AiProviderSpiSuite extends munit.FunSuite:
       r.messages
         .collectFirst { case AiMessage.User(t) => t }
         .toRight(
-          AiFailure.Error(
-            Problem.Plugin
-              .Said(Problem.Plugin.Id("test"), Problem.Plugin.Claim.Failed, External.PluginSaid.of("no user message"))
-          )
+          Problem.Plugin
+            .Said(Problem.Plugin.Id("test"), Problem.Plugin.Claim.Failed, External.PluginSaid.of("no user message"))
         )
         .map(t =>
           AiTurn(AiTurn.Text((t).value), usage = Some(AiUsage(AiUsage.Input((10).toLong), AiUsage.Output((2).toLong))))
@@ -72,32 +70,25 @@ class AiProviderSpiSuite extends munit.FunSuite:
     assertEquals(
       Echo.turn(req.copy(messages = Nil), AiHttp.Offline),
       Left(
-        AiFailure.Error(
-          Problem.Plugin
-            .Said(Problem.Plugin.Id("test"), Problem.Plugin.Claim.Failed, External.PluginSaid.of("no user message"))
-        )
+        Problem.Plugin
+          .Said(Problem.Plugin.Id("test"), Problem.Plugin.Claim.Failed, External.PluginSaid.of("no user message"))
       )
     )
     assertEquals(
-      AiFailure.LimitReached(
-        Problem.Plugin.Said(Problem.Plugin.Id("test"), Problem.Plugin.Claim.Failed, External.PluginSaid.of("limit"))
-      ),
-      AiFailure.LimitReached(
-        Problem.Plugin.Said(Problem.Plugin.Id("test"), Problem.Plugin.Claim.Failed, External.PluginSaid.of("limit")),
-        None
-      )
+      Problem.Upstream.Limited(Problem.Upstream.Name("test"), None).sentence,
+      "test's usage limit is reached"
     )
 
   test("the offline client sends nothing"):
     assertEquals(
       AiHttp.Offline
         .post(Plugin.Http.Url("https://x.example"), Map.empty, AiHttp.PostBody("{}"), AiHttp.TimeoutSeconds(5)),
-      Left(AiHttp.Failure.Refused(Problem.Config.Unavailable(Problem.Config.Capability.Network)))
+      Left(Problem.Config.Unavailable(Problem.Config.Capability.Network))
     )
     assertEquals(
       AiHttp.Offline
         .get(Plugin.Http.Url("https://x.example"), Map.empty, AiHttp.TimeoutSeconds(5)),
-      Left(AiHttp.Failure.Refused(Problem.Config.Unavailable(Problem.Config.Capability.Network)))
+      Left(Problem.Config.Unavailable(Problem.Config.Capability.Network))
     )
 
   test("a context written before AI providers existed still compiles and refuses one; the SPI is still 1"):
@@ -106,8 +97,8 @@ class AiProviderSpiSuite extends munit.FunSuite:
         def get(
             url: Plugin.Http.Url,
             headers: Map[Header.Name, Header.Value]
-        ): Either[Plugin.Http.Failure, Plugin.HttpResponse.Body] =
-          Left(Plugin.Http.Failure.Transport(Problem.Config.Unavailable(Problem.Config.Capability.Network)))
+        ): Either[Problem, Plugin.HttpResponse.Body] =
+          Left(Problem.Config.Unavailable(Problem.Config.Capability.Network))
       }
       def log = new Plugin.Log {
         def info(m: Plugin.Log.Line): Unit = (); def warn(m: Plugin.Log.Line): Unit = ()

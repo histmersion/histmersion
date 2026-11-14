@@ -41,7 +41,7 @@ final class CoreApi(core: CoreEndpoint, http: Plugin.Http, quota: UpstreamQuota)
             (Header.Name(refactorTuple._1), Header.Value(refactorTuple._2))
           }
         ) match
-          case Left(e)  => Left(CoreFailure.Failed(e.problem))
+          case Left(e)  => Left(CoreFailure.Failed(e))
           case Right(a) =>
             quota.observe(a.status, a.headers)
             val answered = Problem.Upstream.Http(
@@ -50,7 +50,7 @@ final class CoreApi(core: CoreEndpoint, http: Plugin.Http, quota: UpstreamQuota)
               Problem.Upstream.Status((a.status).value),
               External.ReplyExcerpt.head(String(a.body.value, UTF_8))
             )
-            if a.status == Plugin.HttpResponse.Status(429) then Left(CoreFailure.Skipped(answered))
+            if a.status == Problem.Upstream.Status(429) then Left(CoreFailure.Skipped(answered))
             else if (a.status).value >= 400 then Left(CoreFailure.Failed(answered))
             else
               RawJson

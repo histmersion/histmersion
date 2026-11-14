@@ -247,7 +247,7 @@ class CalibreCollectionSuite extends munit.FunSuite:
       override def processes: Processes = summon[Processes]
       def http = new Plugin.Http {
         def get(u: Plugin.Http.Url, hs: Map[Header.Name, Header.Value]) =
-          Left(Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text("offline"))))
+          Left(Problem.Unclassified(Legacy.Text("offline")))
       }
       def log = new Plugin.Log { def info(m: Plugin.Log.Line) = (); def warn(m: Plugin.Log.Line) = () }
       def env(name: EnvVar.Name) =

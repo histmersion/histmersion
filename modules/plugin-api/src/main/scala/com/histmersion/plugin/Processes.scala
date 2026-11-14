@@ -4,7 +4,6 @@ package plugin
 import com.histmersion.util.problem.Problem
 import scala.concurrent.duration.FiniteDuration
 import io.github.iltotore.iron.constraint.any.Pure
-import Processes.Failure
 
 /** Argument-vector execution supplied by the host. Implementations never interpret argv through a shell. stdout and
   * stderr remain separate; stdout may contain secrets and must not be included in errors.
@@ -15,7 +14,7 @@ trait Processes:
       env: Map[EnvVar.Name, EnvVar.Value],
       stdin: Option[Processes.RunStdin],
       timeout: FiniteDuration
-  ): Either[Failure, Processes.Result]
+  ): Either[Problem, Processes.Result]
   def start(
       argv: List[Processes.StartArgv],
       env: Map[EnvVar.Name, EnvVar.Value]
@@ -33,19 +32,6 @@ object Processes:
   object StartArgv extends Newtype[String, Pure]
   type CaptureArgv = CaptureArgv.T
   object CaptureArgv extends Newtype[String, Pure]
-
-  /** Why [[Processes.run]] gave no [[Result]]: the tool did not finish within the time limit (it was killed), or it
-    * could not be started. A tool that ran and exited non-zero is a [[Result]], not a failure.
-    */
-  enum Failure derives CanEqual:
-    case TimedOut(tool: Tool, after: FiniteDuration)
-    case NotStarted(why: Problem)
-
-    /** What failed, as a problem. */
-    def problem: Problem = this match
-      case TimedOut(tool, after) =>
-        Problem.Io.Process(Problem.Io.Tool(s"$tool"), Problem.Io.Ending.TimedOut(Problem.Millis.of(after)))
-      case NotStarted(why) => why
 
   /** The file name of a tool. */
   type Tool = Tool.T
@@ -88,8 +74,8 @@ object Processes:
         env: Map[EnvVar.Name, EnvVar.Value],
         stdin: Option[RunStdin],
         timeout: FiniteDuration
-    ): Either[Failure, Result] =
-      Left(Failure.NotStarted(NoProcesses))
+    ): Either[Problem, Result] =
+      Left(NoProcesses)
     def start(argv: List[StartArgv], env: Map[EnvVar.Name, EnvVar.Value]): Either[Problem, Session] =
       Left(NoProcesses)
     def capture(argv: List[CaptureArgv]): Either[Problem, Result] = Left(NoProcesses)

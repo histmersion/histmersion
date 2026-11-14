@@ -52,6 +52,8 @@ class RenderSuite extends munit.FunSuite:
       502,
       "core answered HTTP 429 at https://api.core.ac.uk/v3/search/works — {\"message\":\"rate limited\"}"
     ),
+    "Challenged" -> (502, "archive-org challenged with HTTP 403 at https://archive.org/download/x/x.pdf"),
+    "Limited" -> (429, "claude is limited until 2025-11-10T00:00:00Z"),
     "Unreachable" -> (
       502,
       "cannot reach core at https://api.core.ac.uk/v3/search/works — java.io.IOException: connection reset"
@@ -172,6 +174,7 @@ class RenderSuite extends munit.FunSuite:
           Config.Fault.OutsideRoot,
           Config.Fault.Credential(None),
           Config.Fault.Credential(Some(SettingKey("ANTHROPIC_API_KEY"))),
+          Config.Fault.Rejected(Upstream.Name("europeana"), Upstream.Status(401)),
           Config.Fault.Literal,
           Config.Fault.Substituted,
           Config.Fault.Included(Io.Path("/etc/histmersion/extra.conf")),
@@ -249,7 +252,18 @@ class RenderSuite extends munit.FunSuite:
           Conflict.WrongState(TypeName("a.B"), Raw("k"), Conflict.State("done"), Vector.empty),
           Run.NoModel(Run.Role("writer"), Vector.empty),
           Refused.Quota(Refused.Limit.RateLimit, Refused.Amount(1.5), Refused.Amount(2.5), None)
-        )
+        ) ++ {
+          val (met, url, at) =
+            (Upstream.Name("met"), Upstream.Url("https://met.example/objects/7"), Vector(Field("object 7")))
+          Vector(
+            Upstream.Http(met, url, Upstream.Status(404), External.ReplyExcerpt("gone"), at),
+            Upstream.Unreachable(met, url, External.Reported("reset"), at),
+            Upstream.Challenged(met, url, Upstream.Status(403), at),
+            Upstream.Limited(met, None),
+            Upstream.Timeout(met, url, Millis(5L), at),
+            Upstream.BadReply(met, url, Upstream.Shape.Json, External.Reported("eof"), at)
+          )
+        }
     variants.foreach(v => assertEquals(Column.read(v.stored), v, v.stored))
 
   test("a text no case writes reads as it was, and writes back the same"):

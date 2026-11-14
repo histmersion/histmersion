@@ -56,7 +56,7 @@ class ArchiveTrafficSuite extends DbSuite:
 
   private val ContentType = CoreQuota.HeaderName("content-type")
 
-  private def json(s: String): Either[SpiPlugin.Http.Failure, HttpAnswer] =
+  private def json(s: String): Either[Problem, HttpAnswer] =
     Right(
       HttpAnswer(
         HttpAnswer.Code(200),
@@ -64,7 +64,7 @@ class ArchiveTrafficSuite extends DbSuite:
         HttpAnswer.Body(s.getBytes(UTF_8))
       )
     )
-  private val notFound: Either[SpiPlugin.Http.Failure, HttpAnswer] =
+  private val notFound: Either[Problem, HttpAnswer] =
     Right(
       HttpAnswer(
         HttpAnswer.Code(404),
@@ -73,20 +73,19 @@ class ArchiveTrafficSuite extends DbSuite:
       )
     )
 
-  final private class Wire(routes: PartialFunction[String, Either[SpiPlugin.Http.Failure, HttpAnswer]])
-      extends HttpTransport:
+  final private class Wire(routes: PartialFunction[String, Either[Problem, HttpAnswer]]) extends HttpTransport:
     val out = StringBuilder()
     def get(
         url: HttpTransport.Url,
         headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
-    ): Either[SpiPlugin.Http.Failure, HttpAnswer] =
+    ): Either[Problem, HttpAnswer] =
       val answer = routes.applyOrElse(url.value, (_: String) => notFound)
       out ++= s"GET $url\n"
       headers.toList.sortBy(_._1.value.toLowerCase(java.util.Locale.ROOT)).foreach((k, v) => out ++= s"  $k: $v\n")
-      out ++= s"  -> ${answer.fold(e => s"error ${e.problem.sentence}", a => a.code.toString)}\n"
+      out ++= s"  -> ${answer.fold(e => s"error ${e.sentence}", a => a.code.toString)}\n"
       answer
 
-  private def routes(c: AcquireConfig): PartialFunction[String, Either[SpiPlugin.Http.Failure, HttpAnswer]] =
+  private def routes(c: AcquireConfig): PartialFunction[String, Either[Problem, HttpAnswer]] =
     val base = c.archiveOrg.url
     {
       case u if u.startsWith(s"$base/advancedsearch.php") =>

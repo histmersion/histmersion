@@ -31,19 +31,23 @@ object Text:
       case Refused.Policy(rule)                => rule.said
       case Refused.Quota(limit, used, cap, at) => s"${limit.named} is spent: $used of $cap${until(at)}"
       case Refused.Disabled(feature, setting)  => s"$feature is switched off ($setting)"
-      case Upstream.Http(name, url, st, body)  => s"$name answered HTTP $st at $url — $body"
-      case Upstream.Unreachable(name, url, r)  => s"cannot reach $name at $url — $r"
-      case Upstream.Timeout(name, url, after)  => s"$name did not answer at $url within $after ms"
-      case Upstream.BadReply(name, url, s, r)  => s"$name's answer at $url is not ${words(s.productPrefix)} — $r"
-      case Io.File(op, path, reported)         => s"could not ${words(op.productPrefix)} $path — $reported"
-      case Io.Wrong(path, expected)            => s"$path ${expected.missed}"
-      case Io.Corrupt(format, at, damage)      => s"the ${words(format.productPrefix)} data at $at ${damage.said}"
-      case Io.Process(tool, ending)            => s"$tool ${ending.said}"
-      case Io.Database(op, reported)           => s"the database refused to ${words(op.productPrefix)} — $reported"
-      case Config.Setting(key, fault)          => s"$key ${fault.said}"
-      case Config.Unavailable(capability)      => s"this server has no ${words(capability.productPrefix)}"
-      case Config.Reload(stage, scope) => s"reloading the settings failed at ${words(stage.productPrefix)} ($scope)"
-      case Config.Cycle(scopes)        =>
+      case Upstream.Http(name, url, st, body, at) => s"${path(at)}$name answered HTTP $st at $url — $body"
+      case Upstream.Challenged(name, url, st, at) =>
+        s"${path(at)}$name answered HTTP $st at $url with a bot-protection challenge, not the page"
+      case Upstream.Limited(name, at)             => s"$name's usage limit is reached${until(at)}"
+      case Upstream.Unreachable(name, url, r, at) => s"${path(at)}cannot reach $name at $url — $r"
+      case Upstream.Timeout(name, url, after, at) => s"${path(at)}$name did not answer at $url within $after ms"
+      case Upstream.BadReply(name, url, s, r, at) =>
+        s"${path(at)}$name's answer at $url is not ${words(s.productPrefix)} — $r"
+      case Io.File(op, path, reported)    => s"could not ${words(op.productPrefix)} $path — $reported"
+      case Io.Wrong(path, expected)       => s"$path ${expected.missed}"
+      case Io.Corrupt(format, at, damage) => s"the ${words(format.productPrefix)} data at $at ${damage.said}"
+      case Io.Process(tool, ending)       => s"$tool ${ending.said}"
+      case Io.Database(op, reported)      => s"the database refused to ${words(op.productPrefix)} — $reported"
+      case Config.Setting(key, fault)     => s"$key ${fault.said}"
+      case Config.Unavailable(capability) => s"this server has no ${words(capability.productPrefix)}"
+      case Config.Reload(stage, scope)    => s"reloading the settings failed at ${words(stage.productPrefix)} ($scope)"
+      case Config.Cycle(scopes)           =>
         s"the parts a reload rebuilds depend on each other in a cycle: ${scopes.toVector.mkString(" → ")}"
       case Plugin.Load(plugin, Plugin.Fault.SignerChanged(pinned, seen)) =>
         s"plugin $plugin did not load: it was installed signed by $pinned, this jar is signed by $seen — remove the " +
@@ -129,6 +133,7 @@ object Text:
       case Refused.Rule.LoginOutsideLocal => "this login is refused while the server listens beyond this machine"
       case Refused.Rule.LegalOnly         => "only legal open-access copies may be fetched"
       case Refused.Rule.ReadOnly          => "the collection is read-only"
+      case Refused.Rule.LendingOnly       => "the item is lending-only: borrow it on its site"
 
   extension (limit: Refused.Limit)
     private def named: String = limit match
@@ -183,7 +188,8 @@ object Text:
           v.fold("set it in the server's environment instead")(n =>
             s"set the environment variable $n for the server instead"
           )
-      case Config.Fault.Literal =>
+      case Config.Fault.Rejected(u, st) => s"was refused by $u (HTTP $st): check the key it holds"
+      case Config.Fault.Literal         =>
         "holds value:, which writes the key itself into the settings file, where anyone who can read the file can " +
           "read it: use env:<NAME> or a password manager's entry, or confirm that you want value:"
       case Config.Fault.Substituted =>

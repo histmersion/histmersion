@@ -141,7 +141,7 @@ class PluginAiRunSuite extends DbSuite with RunTranscripts:
         () =>
           new Plugin.Http {
             def get(u: Plugin.Http.Url, h: Map[Header.Name, Header.Value]) =
-              Left(Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text("offline"))))
+              Left(Problem.Unclassified(Legacy.Text("offline")))
           },
         env
       ),

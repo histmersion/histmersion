@@ -80,6 +80,6 @@ object HttpDownload:
         else if e.isDirectory || e.getName.startsWith("__MACOSX") then usable(zis.getNextEntry)
         else Some(e)
       usable(zis.getNextEntry) match
-        case None    => Left(Problem.Unclassified(Legacy.Text("zip contains no usable file")))
+        case None    => Left(Problem.Unclassified(Legacy.Text("a usable file in the zip is required")))
         case Some(_) => Right(Text(new String(readAll(zis), "UTF-8")))
     catch case e: Exception => Left(Problem.Unclassified(Legacy.Text(s"unzip failed: ${e.getMessage}")))

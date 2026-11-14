@@ -312,7 +312,7 @@ class PluginHarnessSuite extends munit.FunSuite:
     val keyed = loaded(KitAi, "api-key = \"value:k-0000\"")
     assert(keyed.warnings.exists(_.value.contains("value:***")), keyed.warnings.toString)
     val down = keyed.aiTurn(Registries.AiProvidersKey("kit-ai"), request, ScriptedAiHttp())
-    assertEquals(down.turn, Some(Left(AiFailure.Error(Problem.Unclassified(Legacy.Text("no scripted answer"))))))
+    assertEquals(down.turn, Some(Left(Problem.Unclassified(Legacy.Text("no scripted answer")))))
 
   test("a secret vault resolves as the server asks it"):
     val h = loaded(KitVault, "entries = [\"portal=s3cret\"]")

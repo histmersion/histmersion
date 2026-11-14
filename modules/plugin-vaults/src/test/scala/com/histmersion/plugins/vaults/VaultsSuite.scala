@@ -46,7 +46,7 @@ class VaultsSuite extends munit.FunSuite:
     var infos: List[String] = Nil // what it logged at info (test-local)
     def http = new Plugin.Http {
       def get(url: Plugin.Http.Url, headers: Map[Header.Name, Header.Value]) =
-        Left(Plugin.Http.Failure.Transport(Problem.Config.Unavailable(Problem.Config.Capability.Network)))
+        Left(Problem.Config.Unavailable(Problem.Config.Capability.Network))
     }
     val log = new Plugin.Log {
       def info(m: Plugin.Log.Line) = infos = infos :+ m.value
@@ -141,11 +141,11 @@ class VaultsSuite extends munit.FunSuite:
     val slow = script(d, "slow", "sleep 30\n")
     val t0 = System.nanoTime
     val r = Subprocess.run(List(Processes.RunArgv(slow.toString)), Map.empty, None, 1.second)
-    assert(r.left.exists(_.problem.sentence.contains("did not finish within 1000 ms")), r)
+    assert(r.left.exists(_.sentence.contains("did not finish within 1000 ms")), r)
     assert(
       r.left.exists {
-        case Processes.Failure.TimedOut(_, after) => after.toSeconds == 1L
-        case _                                    => false
+        case Problem.Io.Process(_, Problem.Io.Ending.TimedOut(after)) => after.duration.toSeconds == 1L
+        case _                                                        => false
       },
       r
     )
@@ -748,7 +748,7 @@ class VaultsSuite extends munit.FunSuite:
           Some(Processes.RunStdin(stdin)),
           60.seconds
         )
-        .fold(e => fail(e.problem.sentence), identity)
+        .fold(e => fail(e.sentence), identity)
       assertEquals(r.exit, 0, r.err)
     kp(List("db-create", "-q", "-p", db), "test-pw\ntest-pw\n")
     kp(List("mkdir", "-q", db, "G"), "test-pw\n")

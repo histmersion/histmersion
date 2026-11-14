@@ -1,6 +1,7 @@
 package com.histmersion
 package plugins.fetchers
 
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.plugin.{Doi, Plugin, Secret, WorkKey}
 import com.histmersion.plugin.testkit.{FetchOutcome, HttpMode, PluginHarness, StubAnswer}
 import com.histmersion.pluginhost.{HttpAnswer, HttpTransport}
@@ -25,7 +26,7 @@ class FetcherPluginsKitSuite extends munit.FunSuite:
   ) =
     PluginHarness
       .load(id, config, http = HttpMode.Stub(stubs), secrets = secrets, env = Map.empty)
-      .fold(e => fail(e.legacyText), identity)
+      .fold(e => fail(e.sentence), identity)
 
   private def json(s: HttpAnswer.Text) = StubAnswer.text(s, CoreQuota.HeaderValue("application/json"))
 
@@ -53,7 +54,7 @@ class FetcherPluginsKitSuite extends munit.FunSuite:
       http = HttpMode.Offline,
       env = Map.empty
     )
-    assert(refused.left.exists(_.legacyText.contains("unknown setting")), refused.toString)
+    assert(refused.left.exists(_.sentence.contains("unknown setting")), refused.toString)
 
   // ── archive-org ─────────────────────────────────────────────────────────────────────────────
 
@@ -99,7 +100,7 @@ class FetcherPluginsKitSuite extends munit.FunSuite:
     )
     val r = h.fetch(WorkKey(archive = Some(WorkKey.Archive("zqlent"))))
     r.outcome match
-      case FetchOutcome.Refused(why) => assert(why.legacyText.contains("lending-only"), why)
+      case FetchOutcome.Refused(why) => assert(why.sentence.contains("lending-only"), why)
       case other                     => fail(s"not refused: $other")
     assertEquals(r.requests, List("GET https://archive.org/metadata/zqlent"))
 
@@ -111,7 +112,7 @@ class FetcherPluginsKitSuite extends munit.FunSuite:
     assert(
       h.fetch(WorkKey(archive = Some(WorkKey.Archive("zqbook"))))
         .answers
-        .exists(_.why.legacyText.contains("no epub/pdf"))
+        .exists(_.why.sentence.contains("no Copy 'zqbook'"))
     )
 
   // ── the open-access indexes ─────────────────────────────────────────────────────────────────
@@ -151,10 +152,10 @@ class FetcherPluginsKitSuite extends munit.FunSuite:
     assertEquals(r.file.map(_.source), Some("core"), r.toString)
     assert(!h.log.exists(_.message.value.contains("k-secret")))
 
-  test("oa-core with no key at all does not ask CORE, and says which settings would key it"):
+  test("oa-core with no key at all does not ask CORE, and says which setting would key it"):
     val r = load(Plugin.Info.Id("oa-core")).fetch(WorkKey(doi = Some(Doi.applyUnsafe("10.1/core"))))
     assertEquals(r.requests, Nil)
-    assert(r.answers.exists(_.why.legacyText.contains("plugins.oa-core.api-key or acquire.core.api-key")), r.toString)
+    assert(r.answers.exists(_.why.sentence.contains("histmersion.plugins.oa-core.api-key is empty")), r.toString)
 
   test("oa-landing alone (no index plugin registered): the DOI's DataCite page, no index asked"):
     val h = load(

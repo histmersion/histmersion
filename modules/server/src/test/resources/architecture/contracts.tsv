@@ -1052,7 +1052,7 @@ unwrap	plugin-host:pluginhost/Polite.scala	.value outside a boundary	29
 unwrap	plugin-host:pluginhost/Politeness.scala	.value outside a boundary	5
 unwrap	plugin-host:pluginhost/ReservedNames.scala	.value outside a boundary	4
 unwrap	plugin-host:pluginhost/SpiValues.scala	.value outside a boundary	25
-unwrap	plugin-host:pluginhost/SttpTransport.scala	.value outside a boundary	6
+unwrap	plugin-host:pluginhost/SttpTransport.scala	.value outside a boundary	5
 unwrap	plugin-host:pluginhost/SystemProcesses.scala	.value outside a boundary	15
 unwrap	plugin-host:pluginhost/UpstreamSettingsOf.scala	.value outside a boundary	25
 unwrap	plugin-resolver:pluginresolver/Coursier.scala	.value outside a boundary	14
@@ -1261,7 +1261,7 @@ unwrap	server:domain/media/imports/ImportsControllers.scala	.value outside a bou
 unwrap	server:domain/media/imports/MediaImporter.scala	.value outside a boundary	13
 unwrap	server:domain/media/imports/MediaImporters.scala	.value outside a boundary	15
 unwrap	server:domain/media/imports/MediaStore.scala	.value outside a boundary	7
-unwrap	server:domain/media/imports/OwnImport.scala	.value outside a boundary	97
+unwrap	server:domain/media/imports/OwnImport.scala	.value outside a boundary	95
 unwrap	server:domain/media/imports/PluginCollection.scala	.value outside a boundary	14
 unwrap	server:domain/media/imports/SearchedCollection.scala	.value outside a boundary	8
 unwrap	server:domain/media/links/AssetLinkService.scala	.value outside a boundary	26

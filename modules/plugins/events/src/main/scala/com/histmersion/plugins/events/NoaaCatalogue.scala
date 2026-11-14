@@ -5,7 +5,7 @@ import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.JsonCodec.given
 import com.histmersion.util.json.Cursor
 import hearth.kindlings.jsoniterjson.Json
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.plugin.*
 import com.histmersion.upstreams.dating.CatalogDating
@@ -51,7 +51,13 @@ final class NoaaCatalogue(cfg: NoaaSettings) extends EventCatalogue:
           .flatMap(j => NoaaCatalogue.parse(ds, j))
           .map((rs, pages) => CataloguePage(rs, Option.when(p < pages.value)(CataloguePage.Next(s"$dataset:${p + 1}"))))
       case other =>
-        Left(Problem.Unclassified(Legacy.Text(s"'$other' is no page of NOAA's datasets")))
+        Left(
+          Problem.Invalid.Unknown(
+            Problem.TypeName("com.histmersion.plugins.events.NoaaCatalogue.Page"),
+            Problem.Raw(s"$other"),
+            Vector.empty
+          )
+        )
 
   /** The item read again from its `raw`, its dataset named by its id (`volcano:1351`). */
   override def reread(stored: CatalogueEvent): Option[CatalogueEvent] =
@@ -104,7 +110,7 @@ object NoaaCatalogue:
   def parse(dataset: Dataset, json: Json): Either[Problem, (List[CatalogueEvent], Count)] =
     val c = json.cursor
     c.downField("items").focus.flatMap(_.asArray) match
-      case None        => Left(Problem.Unclassified(Legacy.Text("no items in the answer")))
+      case None        => Left(Problem.Invalid.Missing(Problem.Field("items")))
       case Some(items) =>
         Right((items.toList.flatMap(i => record(dataset, i.cursor)), Count(c.get[Int]("totalPages").getOrElse(1))))
 

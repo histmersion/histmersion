@@ -6,6 +6,7 @@ import scala.deriving.Mirror
 
 class CasesSuite extends munit.FunSuite:
   import Problem.*
+  import Text.sentence
 
   private inline def cases[T](using m: Mirror.SumOf[T]): Set[String] =
     constValueTuple[m.MirroredElemLabels].toList.map(label => s"$label").toSet
@@ -35,7 +36,7 @@ class CasesSuite extends munit.FunSuite:
 
   test("there are eleven groups and two cases outside them"):
     assertEquals(Group.values.length, 13)
-    assertEquals(examples.size, 46)
+    assertEquals(examples.size, 48)
 
   test("an exception becomes an internal problem with its class and its message's first line, cut to 300"):
     val long = "x" * 400
@@ -68,6 +69,22 @@ class CasesSuite extends munit.FunSuite:
     )
     val other: Problem = NotFound.Entity(TypeName("x.Y"), Raw("k"))
     assertEquals(other.within(Field("edges")), other)
+
+  test("an upstream's failure on one part of what was asked names that part, in its sentence too"):
+    val url = Upstream.Url("https://met.example/objects/7")
+    val gone: Problem = Upstream.Http(Upstream.Name("met"), url, Upstream.Status(404), External.ReplyExcerpt("gone"))
+    val found = gone.within(Field("object 7"))
+    assertEquals(
+      found,
+      Upstream.Http(
+        Upstream.Name("met"),
+        url,
+        Upstream.Status(404),
+        External.ReplyExcerpt("gone"),
+        Vector(Field("object 7"))
+      )
+    )
+    assertEquals(found.sentence, s"object 7: met answered HTTP 404 at $url — gone")
 
   test("only a missing entity is not found"):
     assertEquals(examples.filter(_.isNotFound).map(_.group), Vector(Group.NotFound))
