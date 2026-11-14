@@ -128,7 +128,7 @@ class CalibreSuite extends munit.FunSuite:
     val shell = RecordingShell(running = true)
     val r =
       Calibre(cfg(), shell).add(Path.of("/tmp/x.pdf"), Calibre.Push(Calibre.Push.Title("T"), List(Calibre.Author("A"))))
-    assert(r.left.exists(_.sentences.mkString("; ").contains("Calibre GUI is still running")), r)
+    assert(r.left.exists(_.sentences.mkString("; ").contains("the Calibre GUI is running — quit it first")), r)
 
   /** A shell whose `calibredb list` answers with one book (the entry being updated). */
   private class LibraryShell(onShelf: String) extends RecordingShell():
@@ -396,7 +396,7 @@ class CalibreSuite extends munit.FunSuite:
       Calibre(cfg(), gui)
         .updateAll(linked, apply = Calibre.UpdateAllApply(true))
         .left
-        .exists(_.sentences.mkString("; ").contains("Calibre GUI is still running"))
+        .exists(_.sentences.mkString("; ").contains("the Calibre GUI is running — quit it first"))
     )
     assertEquals(gui.commands, Nil)
 
@@ -452,7 +452,7 @@ class CalibreSuite extends munit.FunSuite:
       Calibre(cfg(), gui)
         .update(Calibre.Book.Id(1), Calibre.Push(Calibre.Push.Title("T"), List(Calibre.Author("A"))))
         .left
-        .exists(_.sentences.mkString("; ").contains("Calibre GUI is still running"))
+        .exists(_.sentences.mkString("; ").contains("the Calibre GUI is running — quit it first"))
     )
     assertEquals(gui.commands, Nil)
 
@@ -513,7 +513,7 @@ class CalibreSuite extends munit.FunSuite:
       Calibre(cfg(), gui)
         .replaceFormat(Calibre.Book.Id(1), f)
         .left
-        .exists(_.sentences.mkString("; ").contains("Calibre GUI is still running"))
+        .exists(_.sentences.mkString("; ").contains("the Calibre GUI is running — quit it first"))
     )
     assertEquals(gui.commands, Nil)
     val none = LibraryShell("[]")

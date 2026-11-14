@@ -105,7 +105,13 @@ object ArtInstituteCollection:
       val image = c.str("image_id")
       val rights =
         if !c.bool("is_public_domain").contains(true) then
-          Left(MediaPlugin.rejected(Name, s"$id", Problem.Plugin.Refusal.Restricted))
+          Left(
+            MediaPlugin.rejected(
+              Name,
+              s"$id",
+              MediaPlugin.notOpen(Problem.Field("is_public_domain"), c.bool("is_public_domain"))
+            )
+          )
         else Right(MediaRights.cc0(artist.map(MediaRights.Author(_)), MediaRights.Credit(credit)))
       MediaItem(
         MediaItem.Key(id.toString),

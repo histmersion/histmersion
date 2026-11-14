@@ -554,6 +554,9 @@ object Problem:
       /** Written, it did not read back as it was written. */
       case NotReadBack
 
+      /** It holds no key, and the plugin needs one: `needs`, the plugin's words for the key and where it is issued. */
+      case KeyNeeded(needs: External.PluginSaid)
+
     /** The kinds of value a setting holds. */
     enum ValueKind derives CanEqual:
       case Text, Number, Flag, List, Block, Null
@@ -628,7 +631,16 @@ object Problem:
 
     /** Why a plugin did not take an item. */
     enum Refusal derives CanEqual:
-      case NoLicence, NoImage, NoName, NoLocation, NoDate, Duplicate, Restricted, LicenceNotAllowed
+      case NoLicence, NoImage, NoName, NoLocation, NoDate, Duplicate, Restricted
+
+      /** Its licence is of the family `family`, which the collection's allowlist does not hold. */
+      case LicenceNotAllowed(family: Raw)
+
+      /** The provider's rights field `field` does not mark it open: it states `stated` (nothing, when empty). */
+      case NotOpen(field: Field, stated: Vector[Raw])
+
+      /** None of its images is open: the images' rights field `field` states `stated` (nothing, when empty). */
+      case NoOpenImage(field: Field, stated: Vector[Raw])
 
     /** How a vault failed. */
     enum Retrieval derives CanEqual:
@@ -940,7 +952,11 @@ object Problem:
       Config.Reload(Config.Stage.Close, Config.Scope("plugins")),
       Config.Cycle(NonEmptyVector.of(Config.Scope("db"), Config.Scope("lease"), Config.Scope("db"))),
       Plugin.Load(Plugin.Id("media-met"), Plugin.Fault.NullComponent),
-      Plugin.Rejected(Plugin.Id("media-smithsonian"), Raw("edanmdm:nmnhanthro_8371234"), Plugin.Refusal.NoImage),
+      Plugin.Rejected(
+        Plugin.Id("media-met"),
+        Raw("248284"),
+        Plugin.Refusal.NotOpen(Field("isPublicDomain"), Vector(Raw("false")))
+      ),
       Plugin.Vault(Plugin.Id("keepassxc"), Plugin.Retrieval.TimedOut(Millis(20000L))),
       Plugin.Dependency(
         Plugin.Id("doi-mirror-0.1.0.jar"),

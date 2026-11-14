@@ -112,7 +112,11 @@ object MetCollection:
         val rights: Either[Problem, MediaRights] =
           if c.bool("isPublicDomain").contains(true) then
             Right(MediaRights.cc0(artist.map(MediaRights.Author(_)), MediaRights.Credit(credit)))
-          else Left(MediaPlugin.rejected(Name, s"$id", Problem.Plugin.Refusal.Restricted))
+          else
+            Left(
+              MediaPlugin
+                .rejected(Name, s"$id", MediaPlugin.notOpen(Problem.Field("isPublicDomain"), c.bool("isPublicDomain")))
+            )
         val period = Period
           .range(
             c.long("objectBeginDate").map(d => year(Year(d)).value),

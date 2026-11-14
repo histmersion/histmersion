@@ -1,7 +1,7 @@
 package com.histmersion
 package files
-import com.histmersion.util.problem.{External, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.{External, Problem, Problems}
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import hearth.kindlings.optics.syntax.*
 
@@ -12,6 +12,9 @@ import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.util.plugins.PluginKit.*
 import com.histmersion.api.plugins.{PluginDescription, PluginFile, PluginJar, PluginSet}
 import com.histmersion.util.plugins.PluginKit
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.noSpaces
+import com.histmersion.api.json.NewtypeCodecs.given
 
 class PluginKitSuite extends munit.FunSuite:
 
@@ -60,6 +63,34 @@ class PluginKitSuite extends munit.FunSuite:
       "absent options are left out"
     )
     assert(parseSet("{").isLeft)
+
+  test("a description keeps every problem its plugin met; one an earlier version wrote as a sentence still reads"):
+    def jar(error: String) =
+      s"""[{"file":"p.jar","sha256":"11","plugins":[{"id":"p","version":"1","spiVersion":1,"error":$error}]}]"""
+    def errors(text: String) = parseJars(text).map(_.flatMap(_.plugins.flatMap(_.error.toList.flatMap(_.sentences))))
+    assertEquals(errors(jar("\"it needs a key\"")), Right(List("it needs a key")))
+    assertEquals(errors(jar("[\"one\",\"two\"]")), Right(List("one", "two")))
+    val two = PluginJar(
+      PluginJar.File("p.jar"),
+      Sha256("11"),
+      List(
+        PluginDescription(
+          PluginDescription.Id("p"),
+          PluginDescription.Version("1"),
+          PluginDescription.SpiVersion(1),
+          error = Some(
+            Problems.of(
+              Problem.Plugin.Load(Problem.Plugin.Id("p"), Problem.Plugin.Fault.NullComponent),
+              Problem.Plugin.Load(Problem.Plugin.Id("p"), Problem.Plugin.Fault.Duplicate)
+            )
+          )
+        )
+      )
+    )
+    assertEquals(
+      parseJars(RawJson.asJson(List(two)).noSpaces).map(_.flatMap(_.plugins.map(_.error.map(_.sentences)))),
+      Right(List(two.plugins.head.error.map(_.sentences)))
+    )
 
   test("PluginSet.describe: first-party only, or the jars"):
     assert(PluginSet.describe(None).value.startsWith("first-party plugins only"))

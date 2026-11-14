@@ -223,8 +223,9 @@ class PluginMediaImportSuite extends DbSuite:
       List(("by", "CC-BY-4.0", "place_of_origin = Zqplenai; 1400–1300 BCE within 1600–1100 BCE"))
     )
     val rejected = r.rejected.map(c => c.key -> c.n).toMap
-    // the NC record and the all-rights-reserved one: one reason, counted twice
-    assertEquals(rejected.get(MediaCount.Key(s"$Collection did not take it: licence not allowed")), Some(2))
+    // the NC record and the all-rights-reserved one: a reason each, naming its licence family
+    assertEquals(rejected.get(MediaCount.Key("licence cc-by-nc not allowed")), Some(1))
+    assertEquals(rejected.get(MediaCount.Key("licence all-rights-reserved not allowed")), Some(1))
     assertEquals(rejected.get(MediaCount.Key("its place is not on the map")), Some(1))
     assertEquals(
       r.byLicence.map(c => (c.key, c.allowed)).toMap,
@@ -249,9 +250,7 @@ class PluginMediaImportSuite extends DbSuite:
       .fold(e => fail(e.message.sentence), identity)
     assertEquals((r.stored, r.linked), (2, 2), r.toString)
     assert(
-      r.rejected.exists(c =>
-        c.key.value == s"$Collection did not take it: licence not allowed" && c.n == MediaCount.N(1)
-      ),
+      r.rejected.exists(c => c.key.value == "licence all-rights-reserved not allowed" && c.n == MediaCount.N(1)),
       r.rejected.toString
     )
     val stored = connect(ds)(

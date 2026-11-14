@@ -1,8 +1,8 @@
 package com.histmersion
 package server.plugins
 
-import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.{Legacy, Problem, Problems}
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.plugin.Header
 
 import scala.annotation.tailrec
@@ -255,7 +255,7 @@ object RelinkPlugins:
       st.map(_.provides).getOrElse(Nil),
       access,
       st.filter(s => s.state == PluginState.Failed.wire || s.state == PluginState.Refused.wire)
-        .flatMap(_.errors.headOption)
+        .flatMap(s => Problems.from(s.errors.toVector))
     )
 
   // ── check ─────────────────────────────────────────────────────────────────────────────────────
@@ -334,7 +334,7 @@ object RelinkPlugins:
               if p.access.isEmpty then "none declared" else p.access.mkString(", ")
             }" +
             (if p.provides.isEmpty then "" else s" · provides ${p.provides.mkString(", ")}") +
-            p.error.fold("")(e => s" · with its defaults alone: ${e.sentence}")
+            p.error.fold("")(e => s" · with its defaults alone: ${e.sentences.mkString("; ")}")
         )
       )
     )

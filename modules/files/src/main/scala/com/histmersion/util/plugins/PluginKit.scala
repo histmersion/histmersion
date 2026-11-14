@@ -318,7 +318,8 @@ object PluginKit:
       if jar.plugins.isEmpty then List(Problem.Plugin.Load(file, Problem.Plugin.Fault.NoProvider)) else Nil
     none ++ jar.plugins.flatMap { p =>
       // a provider that could not be loaded has no id, version or SPI to compare: its error is the reason
-      if p.id.isEmpty then List(p.error.getOrElse(Problem.Plugin.Load(file, Problem.Plugin.Fault.BadDescriptor)))
+      if p.id.isEmpty then
+        p.error.fold(List(Problem.Plugin.Load(file, Problem.Plugin.Fault.BadDescriptor)))(_.toVector.toList)
       else
         val id = Problem.Plugin.Id(s"${p.id}")
         val spi = Option

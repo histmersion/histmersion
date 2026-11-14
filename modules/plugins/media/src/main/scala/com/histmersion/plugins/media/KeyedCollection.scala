@@ -1,6 +1,6 @@
 package com.histmersion
 package plugins.media
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.{External, Problem}
 
 import com.histmersion.plugin.*
 import io.github.iltotore.iron.constraint.any.Pure
@@ -49,7 +49,7 @@ abstract class KeyedCollection(
         .toRight(
           Problem.Config.Setting(
             Problem.SettingKey(s"histmersion.plugins.$plugin.api-key"),
-            Problem.Config.Fault.Empty
+            Problem.Config.Fault.KeyNeeded(External.PluginSaid.of(s"$needs"))
           )
         )
         .map(_ => ())

@@ -262,7 +262,7 @@ class MediaCollectionsJobSuite extends DbSuite:
           List(("9001", "place_of_origin = Zqmcenai; 1400–1300 BCE within 1600–1100 BCE"))
         )
         assert(dry.rejected.exists(_.key.value == "names another place on the map"), dry.rejected.toString)
-        assert(dry.rejected.exists(_.key.value == "media-aic did not take it: restricted"), dry.rejected.toString)
+        assert(dry.rejected.exists(_.key.value == "not Open Access (is_public_domain is false)"), dry.rejected.toString)
         assertEquals(searches.size, 1)
         assert(searches.head.contains("q=Zqmcenae"), searches.head)
 

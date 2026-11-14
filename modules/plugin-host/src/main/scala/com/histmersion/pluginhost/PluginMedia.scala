@@ -70,13 +70,13 @@ object PluginMedia:
     def problem(provider: Provider, item: MediaRecord.Key): Problem =
       val plugin = Problem.Plugin.Id(s"$provider")
       this match
-        case Withheld(why)                => Problem.Plugin.Said(plugin, Problem.Plugin.Claim.Rejected, why)
-        case Unreadable(why)              => why
-        case LicenceNotAllowed(_, source) =>
+        case Withheld(why)                     => Problem.Plugin.Said(plugin, Problem.Plugin.Claim.Rejected, why)
+        case Unreadable(why)                   => why
+        case LicenceNotAllowed(family, source) =>
           Problem.Plugin.Rejected(
             Problem.Plugin.Id(s"$source"),
             Problem.Raw(s"$item"),
-            Problem.Plugin.Refusal.LicenceNotAllowed
+            Problem.Plugin.Refusal.LicenceNotAllowed(Problem.Raw(s"${family.wire}"))
           )
         case NoImage => Problem.Plugin.Rejected(plugin, Problem.Raw(s"$item"), Problem.Plugin.Refusal.NoImage)
 

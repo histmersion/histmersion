@@ -116,7 +116,7 @@ class MediaPluginsKitSuite extends munit.FunSuite:
     assertEquals(r.kept.map(v => (v.key, v.licence)), List(("252448", Some("CC0-1.0"))))
     assertEquals(
       r.verdicts.find(_.key.value == "248284").flatMap(_.refused).map(_.sentence),
-      Some("media-met did not take 248284: restricted")
+      Some("media-met did not take 248284: not Open Access (isPublicDomain is false)")
     )
     assertEquals(
       r.verdicts.count(_.item.isEmpty),

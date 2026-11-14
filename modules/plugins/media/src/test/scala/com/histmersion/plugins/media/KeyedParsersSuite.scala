@@ -117,7 +117,9 @@ class KeyedParsersSuite extends munit.FunSuite:
       RawJson.parse(row.noSpaces.replace("\"access\":\"CC0\"", "\"access\":\"Usage conditions apply\"")).toOption.get
     assertEquals(
       Smithsonian.record(restricted).map(_.rights.left.toOption.map(_.sentence)),
-      Right(Some("media-smithsonian did not take fsg_F1909.1185: restricted"))
+      Right(
+        Some("media-smithsonian did not take fsg_F1909.1185: no CC0 image (usage.access is Usage conditions apply)")
+      )
     )
     val none = RawJson.parse(row.noSpaces.replace("\"online_media\"", "\"x_online_media\"")).toOption.get
     assertEquals(

@@ -26,6 +26,10 @@ object MediaPlugin:
   def rejected(plugin: String, item: String, refusal: Problem.Plugin.Refusal): Problem =
     Problem.Plugin.Rejected(Problem.Plugin.Id(plugin), Problem.Raw(item), refusal)
 
+  /** The provider's rights field `field` does not mark the record open: it states `stated`, when it states anything. */
+  def notOpen[A](field: Problem.Field, stated: Option[A]): Problem.Plugin.Refusal =
+    Problem.Plugin.Refusal.NotOpen(field, stated.toVector.map(v => Problem.Raw(s"$v")))
+
   /** The answer lacks `field`, found in `at` (outermost first). */
   def missing(field: String, at: String*): Problem =
     Problem.Invalid.Missing(Problem.Field(field), at.toVector.map(Problem.Field(_)))

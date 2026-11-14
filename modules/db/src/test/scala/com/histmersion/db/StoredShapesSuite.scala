@@ -42,7 +42,7 @@ import com.histmersion.api.research.Article
 import com.histmersion.domain.AgentProposals
 import com.histmersion.domain.ReviewLedger.Ledger
 import com.histmersion.domain.automation.approvals.ProposalEvidence
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.{NonEmptyVector, Problem}
 import com.histmersion.util.plugins.PluginKit
 import com.histmersion.api.plugins.{PluginJar, PluginSet}
 import StoredCodecs.{sameJson, BundleCodec, Codec, JsonAst, JsonSamples}
@@ -347,4 +347,8 @@ object StoredShapesSuite:
     given [T] => (m: RefinedType.Mirror[T]) => (base: Arbitrary[m.BaseType]) => Arbitrary[T] =
       Arbitrary(base.arbitrary.map(m.ops.either).retryUntil(_.isRight, 1000).map(_.toOption.get.asInstanceOf[T]))
     given Arbitrary[Problem] = Arbitrary(Gen.const(Problem.Run.Interrupted))
+    given Arbitrary[NonEmptyVector[Problem]] =
+      Arbitrary(
+        Gen.const(NonEmptyVector.of[Problem](Problem.Run.Interrupted, Problem.Run.Cancelled(Problem.Run.Actor.Person)))
+      )
     given Arbitrary[JsonAst] = Arbitrary(JsonSamples.gen)
