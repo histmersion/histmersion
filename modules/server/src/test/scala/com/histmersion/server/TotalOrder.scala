@@ -8,11 +8,11 @@ import scala.jdk.CollectionConverters.*
 import com.histmersion.server.ArchitectureSuite.SourceFile
 
 /** Whether an `ORDER BY` of the code's SQL names a total order: its terms, with the columns its `WHERE` pins to one
-  * value, cover a primary key or a unique constraint of a table its statement reads. A list read in an order with
-  * ties comes back in whatever order the plan gives, and a page of it may skip or repeat rows.
+  * value, cover a primary key or a unique constraint of a table its statement reads. A list read in an order with ties
+  * comes back in whatever order the plan gives, and a page of it may skip or repeat rows.
   *
-  * The tables' keys are read from the migrations. A clause the reading cannot judge (a column of a sub-select or a
-  * CTE, a select list's position, an expression) is a finding unless a person has reviewed it: then it is listed in
+  * The tables' keys are read from the migrations. A clause the reading cannot judge (a column of a sub-select or a CTE,
+  * a select list's position, an expression) is a finding unless a person has reviewed it: then it is listed in
   * `architecture/total-order.tsv` with why it is total, or why its order does not matter.
   */
 object TotalOrder:
@@ -47,20 +47,26 @@ object TotalOrder:
 
   /** The keys of every migration. */
   def migrationKeys(): Keys =
-    val sql = Files.list(Migrations).iterator.asScala.filter(_.toString.endsWith(".sql")).toList.sorted
+    val sql = Files
+      .list(Migrations)
+      .iterator
+      .asScala
+      .filter(_.toString.endsWith(".sql"))
+      .toList
+      .sorted
       .map(Files.readString(_, UTF_8))
       .mkString("\n")
     keys(sql)
 
   private val OrderBy = "ORDER BY\\s+".r
 
-  /** Where a clause ends: a `LIMIT`, `OFFSET`, `FOR`, `UNION`, `ON CONFLICT` or a parenthesis it did not open (the
-    * end of the string literal ends it too).
+  /** Where a clause ends: a `LIMIT`, `OFFSET`, `FOR`, `UNION`, `ON CONFLICT` or a parenthesis it did not open (the end
+    * of the string literal ends it too).
     */
   private val Stop = "(?s)^\\s+(LIMIT|OFFSET|FOR\\s|UNION|ON CONFLICT|FETCH|\\))".r
 
-  /** The `ORDER BY` clauses of the SQL in a source (`key`, its text `raw`), with the text of the statement before each (where its tables and
-    * its pinned columns are). A clause in a comment is none.
+  /** The `ORDER BY` clauses of the SQL in a source (`key`, its text `raw`), with the text of the statement before each
+    * (where its tables and its pinned columns are). A clause in a comment is none.
     */
   def clauses(key: String, raw: String): List[(Clause, String)] =
     OrderBy.findAllMatchIn(raw).toList.flatMap { m =>
@@ -168,10 +174,10 @@ object TotalOrder:
   private def terms(clause: String): List[String] =
     val (last, done, _) = clause.foldLeft(("", List.empty[String], 0)) { case ((cur, acc, depth), c) =>
       c match
-        case '(' | '{'             => (cur + c, acc, depth + 1)
-        case ')' | '}'             => (cur + c, acc, depth - 1)
-        case ',' if depth == 0     => ("", cur :: acc, depth)
-        case other                 => (cur + other, acc, depth)
+        case '(' | '{'         => (cur + c, acc, depth + 1)
+        case ')' | '}'         => (cur + c, acc, depth - 1)
+        case ',' if depth == 0 => ("", cur :: acc, depth)
+        case other             => (cur + other, acc, depth)
     }
     (last :: done).reverse
 

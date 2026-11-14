@@ -31,7 +31,7 @@ G44	cli	main	322
 G44	cli	test	81
 G44	config	main	155
 G44	config	test	47
-G44	core	main	2672
+G44	core	main	2671
 G44	core	test	1009
 G44	db	main	500
 G44	db	test	1433
@@ -248,8 +248,8 @@ G60fromString	api	main	213
 G60fromString	api	test	61
 G60fromString	cli	main	141
 G60fromString	cli	test	21
-G60fromString	core	main	246
-G60fromString	core	test	148
+G60fromString	core	main	243
+G60fromString	core	test	140
 G60fromString	db	main	82
 G60fromString	db	test	11
 G60fromString	problem	main	2

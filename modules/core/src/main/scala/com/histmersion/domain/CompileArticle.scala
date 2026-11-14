@@ -78,7 +78,7 @@ object CompileArticle:
 
   final case class ExtractAnswer(
       relevant: ExtractAnswer.Relevant,
-      reason: Problem,
+      reason: Coverage.Rationale,
       claims: List[ClaimAnswer] = Nil
   ) derives JsonCodec
   object ExtractAnswer:
@@ -106,7 +106,8 @@ object CompileArticle:
   ) derives JsonCodec
 
   /** One source's verified extraction (checkpointed): its claims, or why it is not used. */
-  final case class Extracted(citekey: Citekey, claims: List[Claim], notUsed: Option[Problem]) derives JsonCodec
+  final case class Extracted(citekey: Citekey, claims: List[Claim], notUsed: Option[Coverage.Rationale])
+      derives JsonCodec
 
   /** Check one extraction: every quote must be in `record` (summary, findings, notes, body excerpt), every confidence
     * in the vocabulary; a source judged irrelevant must say why. Unverifiable claims send the answer back; on the last
@@ -155,7 +156,7 @@ object CompileArticle:
       Option.when(claims.size > maxClaims.value)(
         Problem.Unclassified(Legacy.Text(s"at most $maxClaims claims per source (you gave ${claims.size})"))
       )
-    val reason = Option(a.reason).map(_.sentence.trim).filter(_.nonEmpty)
+    val reason = Option(a.reason).map(r => s"$r".trim).filter(_.nonEmpty)
     val noReason =
       Option.when((!a.relevant.value || a.claims.isEmpty) && reason.isEmpty)(
         Problem.Unclassified(Legacy.Text("say why the record is not used"))
@@ -166,7 +167,7 @@ object CompileArticle:
       val kept = if a.relevant.value then claims.take(maxClaims.value) else Nil
       val notUsed =
         Option.when(kept.isEmpty)(
-          Problem.Unclassified(Legacy.Text(reason.getOrElse("no claim could be verified in its record")))
+          Coverage.Rationale(s"${reason.getOrElse("no claim could be verified in its record")}")
         )
       Right(
         (
@@ -188,8 +189,8 @@ object CompileArticle:
     * them, the disputed ones (a non-current status), and the Not-used list with reasons. `filter` is the filter line
     * for the `_Method_` note.
     */
-  /** A source the article leaves out, and why. */
-  final case class NotUsed(citekey: Citekey, reason: Problem) derives JsonCodec
+  /** A source the article leaves out, and why: a rationale, not a failure. */
+  final case class NotUsed(citekey: Citekey, reason: Coverage.Rationale) derives JsonCodec
 
   final case class Evidence(
       filter: ArticleDraft.Filter,
@@ -234,12 +235,12 @@ object CompileArticle:
       .map(_.citekey)
     val notUsed = extracted.collect {
       case e if e.claims.isEmpty =>
-        NotUsed(e.citekey, e.notUsed.getOrElse(Problem.Unclassified(Legacy.Text("no claim"))))
+        NotUsed(e.citekey, e.notUsed.getOrElse(Coverage.Rationale("no claim")))
     } ++
       facts.collect {
         case f
             if f.status == Source.Status.Retracted && counts.getOrElse(f.citekey, Evidence.ClaimCount(0)).hasClaims =>
-          NotUsed(f.citekey, Problem.Unclassified(Legacy.Text("retracted: may be cited only to note the retraction")))
+          NotUsed(f.citekey, Coverage.Rationale("retracted: may be cited only to note the retraction"))
       }
     Evidence(filter, total, facts, counts, kept, disputed, notUsed.distinctBy(_.citekey))
 
@@ -261,7 +262,7 @@ object CompileArticle:
       ev.claims.toList.filter(_._2.hasClaims).sortBy(-_._2.value).map((ck, n) => s"[[$ck]] $n").mkString(", ")
     val notUsed =
       if ev.notUsed.isEmpty then "none"
-      else ev.notUsed.map(n => s"[[${n.citekey}]]: ${n.reason.sentence}").mkString("\n- ")
+      else ev.notUsed.map(n => s"[[${n.citekey}]]: ${n.reason}").mkString("\n- ")
     Description(
       s"Filter: ${ev.filter} → ${ev.total}\n\n## Claim table\n\n${sources.mkString("\n")}\n\n" +
         s"## Evidence model\n\n- disagreement edges among the sources: $edges\n" +
@@ -452,7 +453,7 @@ object CompileArticle:
     val reasons =
       (evidence.notUsed
         .filterNot(n => citesAll(n.citekey))
-        .map(n => com.histmersion.api.library.Citekey(n.citekey.value) -> Coverage.Rationale(s"${n.reason.sentence}"))
+        .map(n => com.histmersion.api.library.Citekey(n.citekey.value) -> n.reason)
         .toMap ++ writerReasons)
     val unexplained =
       evidence.used.filterNot(ck => citesAll(ck) || reasons.contains(com.histmersion.api.library.Citekey(ck.value)))

@@ -4,6 +4,7 @@ import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
+import com.histmersion.api.research.Coverage
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -177,7 +178,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
   test("extract: an empty claim, quote or confidence fails; an unused record must say why"):
     def problems(c: ClaimAnswer) =
       checkExtract(
-        ExtractAnswer(ExtractAnswer.Relevant(true), Problem.Unclassified(Legacy.Text("tin")), List(c)),
+        ExtractAnswer(ExtractAnswer.Relevant(true), Coverage.Rationale("tin"), List(c)),
         com.histmersion.domain.library.Citekey("ck"),
         record,
         minRatio,
@@ -209,7 +210,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     )
     assertEquals(
       checkExtract(
-        ExtractAnswer(ExtractAnswer.Relevant(false), Problem.Unclassified(Legacy.Text("")), Nil),
+        ExtractAnswer(ExtractAnswer.Relevant(false), Coverage.Rationale(""), Nil),
         com.histmersion.domain.library.Citekey("ck"),
         record,
         minRatio,
