@@ -14,7 +14,8 @@ import com.histmersion.server.ArchitectureSuite.{Blank, SourceFile, Violation}
   *   - `unwrap` (rules 1, 4): `.value` outside boundary code (the db, cli, web and config modules; routes, endpoints,
   *     tools, codecs, repositories, SQL, Markdown, JSON, wiring and transformer files; a newtype's own file);
   *   - `concept` (rule 3): a top-level type name defined in more than one file of one layer;
-  *   - `derives` (rule 7): a codec, schema or config given written by hand, or a `.derived` call;
+  *   - `derives` (rule 7, G66): a codec, schema or config given written by hand, generic ones included, or a `.derived`
+  *     call;
   *   - `copy` (rule 8): `.copy(`;
   *   - `one-type` (rule 9): a file with more than one top-level type (a companion, a type alias of a newtype, its
   *     constraint `<Name>Rule` and the cases of a sealed type in its file not counted);
@@ -317,6 +318,32 @@ class ContractsSuite extends munit.FunSuite:
     assertEquals(found("server:x/Answers.scala").map(v => (v.count, v.at)), List((1, "server:x/Answers.scala:3")))
     assertEquals(found("problem:util/problem/Answers.scala"), Nil)
 
+  test("a hand-written codec given counts for derives, generic and polymorphic forms included"):
+    val code =
+      """object Codecs:
+        |  given JsonValueCodec[Foo] = make
+        |  given foo: Schema[Foo] = make
+        |  given box: [A] => (c: JsonValueCodec[A]) => JsonValueCodec[Box[A]] = make
+        |  given [A] => Schema[A] => Schema[Box[A]] = make
+        |  given [A](using c: JsonValueCodec[A]): JsonValueCodec[List[A]] = make
+        |  given pair[A: Schema, B: Schema]: Schema[(A, B)] = make
+        |  given split: [A] =>
+        |    (c: JsonValueCodec[A]) =>
+        |      JsonValueCodec[Split[A]] = make
+        |  inline given wrapped: [T] => (m: Mirror[T]) => (b: JsonKeyCodec[m.Base]) => JsonKeyCodec[T] = make
+        |  given ordering: [A] => (c: JsonValueCodec[A]) => Ordering[Box[A]] = make
+        |  given [A] => CanEqual[Box[A], Box[A]] = CanEqual.derived
+        |  given Conversion[Foo, Bar] = make
+        |""".stripMargin
+    def lines(key: String) =
+      Rules
+        .all(List(ArchitectureSuite.SourceFile(key, "com.histmersion.x", Blank(code), code)))
+        .filter(_.rule == "derives")
+        .map(v => (v.count, v.at))
+    assertEquals(lines("core:x/Codecs.scala"), List((9, "core:x/Codecs.scala:2")))
+    assertEquals(Rules.genericCodecGivens(code).map(code.substring(0, _).count(_ == '\n') + 1), List(4, 5, 6, 7, 8, 11))
+    assertEquals(lines("json:x/Codecs.scala"), Nil)
+
   test("a type named for an entity and a property is the property, a component of the entity is not"):
     val entities = Set("Approval", "Source", "PeriodO", "Citekey")
     assertEquals(Rules.propertyOf("ApprovalKind", entities), Some("Approval"))
@@ -582,6 +609,40 @@ object ContractsSuite:
       if CirceAdapters(s.key) then Nil
       else counted("circe", s, "circe outside a listed adapter", Circe.findAllMatchIn(s.code).map(_.start).toList)
     private val HandGiven = ("(?m)^\\s*given\\s+(?:\\w+\\s*:\\s*)?" + Codecs + "\\[").r
+    private val GivenStart =
+      "(?m)^\\s*(?:(?:inline|transparent|private|protected|override)(?:\\[\\w+\\])?\\s+)*given\\b".r
+    private val Generic = "^given\\s+(?:\\w+\\s*)?(?::\\s*)?[\\[(]".r
+    private val CodecResult = ("^\\s*" + Codecs + "\\[").r
+
+    /** A generic or polymorphic given of a codec type class — `given x: [A] => (c: JsonValueCodec[A]) =>
+      * JsonValueCodec[F[A]]`, `given [A](using Codec[A]): Codec[List[A]]`, `given x[A: Schema]: Schema[F[A]]`, an
+      * `inline given` too — whose result type (after its last `=>`, or its last `:`, outside brackets and parentheses)
+      * is the codec.
+      */
+    def genericCodecGivens(code: String): List[Int] =
+      GivenStart
+        .findAllMatchIn(code)
+        .flatMap { m =>
+          val h = header(code, m.end - "given".length)
+          Option.when(Generic.findFirstIn(h).isDefined && CodecResult.findFirstIn(resultType(h)).isDefined)(m.start)
+        }
+        .toList
+
+    /** The text after a header's last `=>` or `:` at depth 0 (the whole header when it has neither). */
+    private def resultType(h: String): String =
+      var depth = 0
+      var last = 0
+      var i = 0
+      while i < h.length do
+        val c = h(i)
+        if c == '(' || c == '[' then depth += 1
+        else if c == ')' || c == ']' then depth -= 1
+        else if depth == 0 && h.startsWith("=>", i) then
+          last = i + 2
+          i += 1
+        else if depth == 0 && c == ':' then last = i + 1
+        i += 1
+      h.substring(last)
 
     /** The JSON module is the codec library itself: its givens are the base instances (a string, a list) that every
       * derivation builds on, as circe's own were.
@@ -590,7 +651,8 @@ object ContractsSuite:
       if module(s) == "json" then Nil
       else
         val hits =
-          HandGiven.findAllMatchIn(s.code).map(_.start) ++ "\\.derived\\b".r.findAllMatchIn(s.code).map(_.start)
+          HandGiven.findAllMatchIn(s.code).map(_.start) ++ genericCodecGivens(s.code) ++
+            "\\.derived\\b".r.findAllMatchIn(s.code).map(_.start)
         counted("derives", s, "codec given written by hand", hits.toList.distinct.sorted)
 
     private def copies(s: SourceFile): List[Violation] =
