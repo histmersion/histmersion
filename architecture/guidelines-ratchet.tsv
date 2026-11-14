@@ -31,7 +31,7 @@ G44	cli	main	322
 G44	cli	test	81
 G44	config	main	155
 G44	config	test	47
-G44	core	main	2663
+G44	core	main	2662
 G44	core	test	992
 G44	db	main	485
 G44	db	test	1416
@@ -166,7 +166,7 @@ G47self	api	main	3766
 G47self	cli	main	228
 G47self	config	main	728
 G47self	console	main	7
-G47self	core	main	1025
+G47self	core	main	1024
 G47self	db	main	801
 G47self	files	main	34
 G47self	plugin-api	main	281
@@ -201,7 +201,7 @@ G49	cli	test	17
 G49	config	main	65
 G49	config	test	8
 G49	console	main	1
-G49	core	main	853
+G49	core	main	852
 G49	core	test	168
 G49	db	main	987
 G49	db	test	341
@@ -248,7 +248,7 @@ G60fromString	api	main	2
 G60fromString	api	test	11
 G60fromString	cli	main	134
 G60fromString	cli	test	15
-G60fromString	core	main	179
+G60fromString	core	main	136
 G60fromString	core	test	82
 G60fromString	db	main	77
 G60fromString	db	test	5

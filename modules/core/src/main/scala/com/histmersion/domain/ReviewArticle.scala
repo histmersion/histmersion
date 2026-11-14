@@ -2277,7 +2277,9 @@ object ReviewArticle:
       corpus: BodyCorpus
   ): Article.Edits.ArticleCheck =
     def links(t: String): List[String] =
-      AgentVerify.linkProblems(AgentVerify.LinkProblemsText(t), corpus.isCitekey, corpus.isTarget).map(_.sentence)
+      AgentVerify
+        .linkProblems(AgentVerify.LinkProblemsText(t), Problem.Where("text"), corpus.isCitekey, corpus.isTarget)
+        .map(_.sentence)
     val applied = draft match
       case Article.Edits.Draft.Edits(es) =>
         Article.Edits.applyAll(

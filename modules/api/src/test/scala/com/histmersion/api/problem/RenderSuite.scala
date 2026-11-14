@@ -53,6 +53,7 @@ class RenderSuite extends munit.FunSuite:
       "no com.histmersion.api.exchange.Bundle.Kind.Source '0193f1c4-7b2a-7c3e-9d41-5e6f7a8b9c0d' in BundleOrHere, referred to by finding anthony2007#1"
     ),
     "Held" -> (409, "held SameWork anthony2006 | doi: source anthony2007"),
+    "Job" -> (409, "job '0193f1c4' is queued: NotStarted"),
     "Entry" -> (500, "Bundle entry entities/sources.ndjson: Differs Lines 4/3"),
     "AlreadyExists" -> (409, "com.histmersion.domain.catalogue.Place.Id 'pleiades_579885' already exists"),
     "Renamed" -> (409, "com.histmersion.domain.library.Citekey 'anthony2006' was renamed to 'anthony2007'"),
@@ -253,6 +254,15 @@ class RenderSuite extends munit.FunSuite:
           Conflict.Hold.PlanChanged(Raw("7c41e9a2")),
           Conflict.Hold.TextNotSent(Raw("file"))
         ).map(Conflict.Held(Where("S-3c1e7a2b source anthony2007 — same work?"), _)) ++
+        Vector(
+          Conflict.Control.OnePiece(Raw("backup")),
+          Conflict.Control.Unrecognised,
+          Conflict.Control.Ended,
+          Conflict.Control.AlreadyPaused,
+          Conflict.Control.NotStarted,
+          Conflict.Control.PausedBeforeRestart,
+          Conflict.Control.NotPaused
+        ).map(Conflict.Job(Raw("j: 1"), Conflict.State("running"), _)) ++
         Io.Format.values.toVector.map(Io.Corrupt(_, Where("x"), Io.Damage.Checksum)) ++
         Config.Capability.values.toVector.map(Config.Unavailable(_)) ++
         Vector(
@@ -303,8 +313,36 @@ class RenderSuite extends munit.FunSuite:
           Content.Requirement.StandIn,
           Content.Requirement.ExactTitle,
           Content.Requirement.ReplaceText,
-          Content.Requirement.AnchorInArticle
+          Content.Requirement.AnchorInArticle,
+          Content.Requirement.QuoteGiven,
+          Content.Requirement.QuoteInRecords(Vector(Raw("anthony2007"), Raw("haak2015"))),
+          Content.Requirement.KnownCitekey(Raw("Anthony 2007")),
+          Content.Requirement.EvidenceGiven,
+          Content.Requirement.StatusNamed,
+          Content.Requirement.NotUnassessed,
+          Content.Requirement.EdgeTarget,
+          Content.Requirement.NoSelfEdge,
+          Content.Requirement.PositiveBce(Raw("-3300")),
+          Content.Requirement.CeFromOne(Raw("0")),
+          Content.Requirement.Calibrated(Raw("3270")),
+          Content.Requirement.StartBeforeEnd(Raw("-1500"), Raw("-1600")),
+          Content.Requirement.HistoricalReckoning,
+          Content.Requirement.YearWithin(Raw("3000000")),
+          Content.Requirement.WithinSourcePeriod(Raw("-3000"), Raw("-2900"), Raw("-1700"), Raw("-1200")),
+          Content.Requirement.LinkTarget(Raw("ie-migration")),
+          Content.Requirement.UnescapedLinks,
+          Content.Requirement.SettingsGiven,
+          Content.Requirement.KnownItems(Vector(Raw("goal one"), Raw("ie-migrations"))),
+          Content.Requirement.ItemsNamed,
+          Content.Requirement.HoldUntil,
+          Content.Requirement.DateGiven(Raw("next week")),
+          Content.Requirement.PriorityWithin(Raw("25"), Raw("20")),
+          Content.Requirement.ExistingItems
         ).map(Content.Proposal(_, Where("findings"))) ++
+        Vector(
+          Content.Proposal(Content.Requirement.QuoteInRecords(Vector(Raw("a: b"))), Where("proposal for x: y")),
+          Content.Proposal(Content.Requirement.StartBeforeEnd(Raw("1 in 2"), Raw("3")), Where("period"))
+        ) ++
         Vector(Io.Ending.TimedOut(Millis(5L)), Io.Ending.NotStarted(reported)).map(Io.Process(Io.Tool("pg_dump"), _)) ++
         Io.Access.values.toVector.map(Io.File(_, Io.Path("/a b/c"), reported)) ++
         Vector(

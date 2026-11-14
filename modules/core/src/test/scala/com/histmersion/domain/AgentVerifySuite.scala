@@ -1,6 +1,7 @@
 package com.histmersion
 package domain
 
+import com.histmersion.util.problem.Problem.{Content, Raw, Where}
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -120,8 +121,15 @@ class AgentVerifySuite extends munit.FunSuite:
     val text = LinkProblemsText(
       "See [[haak2015_massive]] and [[ie-migrations|the article]] and [[nope2020_x]]. Also \\[\\[x\\]\\]."
     )
-    val ps = linkProblems(text, _.value == "haak2015_massive", _.value == "ie-migrations")
-    assertEquals(ps.size, 2, ps)
+    val notes = Where("notes")
+    val ps = linkProblems(text, notes, _.value == "haak2015_massive", _.value == "ie-migrations")
+    assertEquals(
+      ps,
+      List(
+        Content.Proposal(Content.Requirement.UnescapedLinks, notes),
+        Content.Proposal(Content.Requirement.LinkTarget(Raw("nope2020_x")), notes)
+      )
+    )
     assert(ps.exists(_.sentence.contains("[[nope2020_x]]")))
     assert(ps.exists(_.sentence.contains("escaped")))
     assertEquals(wikilinks(Text("[[a]] [[b|B]] [[a]]")), List("a", "b"))

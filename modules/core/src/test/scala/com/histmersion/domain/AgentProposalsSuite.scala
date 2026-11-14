@@ -157,7 +157,7 @@ class AgentProposalsSuite extends munit.FunSuite:
           ProposalAnswer.Quote("one ton of tin")
         )
       ).left
-        .exists(_.sentence.contains("neither"))
+        .exists(_.sentence.contains("unknown proposal answer kind 'rename' (one of: status, edge)"))
     )
 
   test("route: the fill rule applies, anything else waits for a person unless configured auto"):

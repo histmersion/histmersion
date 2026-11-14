@@ -2,7 +2,7 @@ package com.histmersion
 package domain
 import com.histmersion.util.json.RawJson
 
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -129,7 +129,19 @@ class EnrichSourceSuite extends munit.FunSuite:
     )
     assert(
       checkClassification(bp, EnrichSource.CheckClassificationMaxAbsYear(3000000), last = EnrichSource.Last(false)).left
-        .exists(_.exists(_.sentence.contains("uncalibrated")))
+        .exists(
+          _.exists(
+            _.sentence == "period: 3270 BP is an uncalibrated radiocarbon age; it cannot be stored as a calendar year"
+          )
+        )
+    )
+    val mya = StatedPeriod(
+      StatedYear(AgentVerify.ToSignedYearValue(3), AgentVerify.YearUnit.Wire("Ma")),
+      StatedYear(AgentVerify.ToSignedYearValue(2), AgentVerify.YearUnit.Wire("Ma"))
+    )
+    assertEquals(
+      convert(mya, AgentVerify.MaxAbsYear(3000000), None).left.map(_.sentences),
+      Left(Vector("period: unknown year unit 'Ma' (one of: BCE, CE, calBP, BP)"))
     )
     val (v, ws) = checkClassification(
       bp,

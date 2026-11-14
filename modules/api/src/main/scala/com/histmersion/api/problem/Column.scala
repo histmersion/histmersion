@@ -41,6 +41,7 @@ object Column:
       case NotFound.Copy(work)                => s"no open-access copy of '$work'"
       case NotFound.Dangling(t, key, from, in)    => s"no $t '$key' in ${in.productPrefix}, referred to by $from"
       case Conflict.Held(subject, hold)           => s"held ${hold.stored}: $subject"
+      case Conflict.Job(job, status, control)     => s"job '$job' is $status: ${control.stored}"
       case Conflict.AlreadyExists(t, key)         => s"$t '$key' already exists"
       case Conflict.Renamed(t, asked, now)        => s"$t '$asked' was renamed to '$now'"
       case Conflict.Stale(t, key, sent, now)      => s"$t '$key' has moved on: sent $sent, stored $now"
@@ -206,7 +207,19 @@ object Column:
     Content.Requirement.StandIn,
     Content.Requirement.ExactTitle,
     Content.Requirement.ReplaceText,
-    Content.Requirement.AnchorInArticle
+    Content.Requirement.AnchorInArticle,
+    Content.Requirement.QuoteGiven,
+    Content.Requirement.EvidenceGiven,
+    Content.Requirement.StatusNamed,
+    Content.Requirement.NotUnassessed,
+    Content.Requirement.EdgeTarget,
+    Content.Requirement.NoSelfEdge,
+    Content.Requirement.UnescapedLinks,
+    Content.Requirement.SettingsGiven,
+    Content.Requirement.ItemsNamed,
+    Content.Requirement.HoldUntil,
+    Content.Requirement.ExistingItems,
+    Content.Requirement.HistoricalReckoning
   )
 
   extension (form: Invalid.Form)
@@ -230,6 +243,20 @@ object Column:
       case Io.Fault.Dangling(uses)                  => s"Dangling $uses"
       case Io.Fault.Differs(measure, listed, found) => s"Differs ${measure.productPrefix} $listed/$found"
       case other                                    => other.productPrefix
+
+  extension (control: Conflict.Control)
+    private def stored: String = control match
+      case Conflict.Control.OnePiece(kind) => s"OnePiece $kind"
+      case other                           => other.productPrefix
+
+  private val Controls = Vector(
+    Conflict.Control.Unrecognised,
+    Conflict.Control.Ended,
+    Conflict.Control.AlreadyPaused,
+    Conflict.Control.NotStarted,
+    Conflict.Control.PausedBeforeRestart,
+    Conflict.Control.NotPaused
+  )
 
   extension (hold: Conflict.Hold)
     private def stored: String =
@@ -306,8 +333,21 @@ object Column:
 
   extension (rule: Content.Requirement)
     private def stored: String = rule match
-      case Content.Requirement.TooManyClaims(cap, gave) => s"TooManyClaims $cap/$gave"
-      case other                                        => other.productPrefix
+      case Content.Requirement.TooManyClaims(cap, gave)   => s"TooManyClaims $cap/$gave"
+      case Content.Requirement.QuoteInRecords(records)    => s"QuoteInRecords ${records.mkString(ListSeparator)}"
+      case Content.Requirement.KnownCitekey(stated)       => s"KnownCitekey '$stated'"
+      case Content.Requirement.PositiveBce(stated)        => s"PositiveBce '$stated'"
+      case Content.Requirement.CeFromOne(stated)          => s"CeFromOne '$stated'"
+      case Content.Requirement.Calibrated(stated)         => s"Calibrated '$stated'"
+      case Content.Requirement.StartBeforeEnd(start, end) => s"StartBeforeEnd '$start'..'$end'"
+      case Content.Requirement.YearWithin(greatest)       => s"YearWithin '$greatest'"
+      case Content.Requirement.WithinSourcePeriod(start, end, ownStart, ownEnd) =>
+        s"WithinSourcePeriod '$start'..'$end' in '$ownStart'..'$ownEnd'"
+      case Content.Requirement.LinkTarget(target)          => s"LinkTarget '$target'"
+      case Content.Requirement.KnownItems(unknown)         => s"KnownItems ${unknown.mkString(ListSeparator)}"
+      case Content.Requirement.DateGiven(stated)           => s"DateGiven '$stated'"
+      case Content.Requirement.PriorityWithin(stated, max) => s"PriorityWithin '$stated' in '$max'"
+      case other                                           => other.productPrefix
 
   // ---- the readers: one per frozen sentence; a reader's case counts only if it writes the text back -------------
 
@@ -330,6 +370,7 @@ object Column:
   private val DanglingIn = "(?s)^no (\\S+) '(.*)' in (\\w+), referred to by (.*)$".r
   private val HeldBy = "(?s)^held (\\w+)(?: (.*?))?: (.*)$".r
   private val HoldSeparator = " | "
+  private val JobControl = "(?s)^job '(.*)' is (\\S*): (\\w+)(?: (.*))?$".r
   private val EntryOf = "(?s)^(\\w+) entry (.+?): (\\w+)(?: (.*))?$".r
   private val Differing = "(?s)^(\\w+) (\\S*)/(\\S*)$".r
   private val NoCopy = "(?s)^no open-access copy of '(.*)'$".r
@@ -379,6 +420,10 @@ object Column:
   private val CannotGoOn = "(?s)^step (.+) cannot go on: (\\w+)$".r
   private val FindingOf = "^finding: (\\w+)$".r
   private val ProposalAt = "(?s)^(.+): (\\w+)(?: (\\d+)/(\\d+))?$".r
+  private val ProposalWith = "(?s)^(.+): (\\w+) (.*)$".r
+  private val OneQuoted = "(?s)^'(.*)'$".r
+  private val TwoQuoted = "(?s)^'(.*)'(\\.\\.| in )'(.*)'$".r
+  private val FourQuoted = "(?s)^'(.*)'\\.\\.'(.*)' in '(.*)'\\.\\.'(.*)'$".r
   private val UnpricedModel = "(?s)^model (\\S+) is unpriced(?: \\((\\w+)(?: (\\S+))?\\))?$".r
   private val CutShortBy = "^cut short: (\\w+)$".r
   private val UnrecordedBy = "^unrecorded: (\\w+)$".r
@@ -842,6 +887,44 @@ object Column:
             yield Content.Requirement.TooManyClaims(cc, gc)
           case (None, None) => word(ProposalRules, rule)
           case _            => None
+        read.map(Content.Proposal(_, Where(s"$at")))
+      case _ => None
+    },
+    {
+      case JobControl(job, status, name, kind) =>
+        val control = (name, Option(kind)) match
+          case ("OnePiece", Some(k)) => Some(Conflict.Control.OnePiece(Raw(s"$k")))
+          case (other, None)         => word(Controls, other)
+          case _                     => None
+        control.map(Conflict.Job(Raw(s"$job"), Conflict.State(s"$status"), _))
+      case _ => None
+    },
+    {
+      case ProposalWith(at, rule, written) =>
+        val one = written match
+          case OneQuoted(r) => Some(Raw(s"$r"))
+          case _            => None
+        val two = written match
+          case TwoQuoted(a, _, b) => Some((Raw(s"$a"), Raw(s"$b")))
+          case _                  => None
+        val read: Option[Content.Requirement] = rule match
+          case "QuoteInRecords"     => Some(Content.Requirement.QuoteInRecords(raws(written)))
+          case "KnownCitekey"       => one.map(Content.Requirement.KnownCitekey(_))
+          case "PositiveBce"        => one.map(Content.Requirement.PositiveBce(_))
+          case "CeFromOne"          => one.map(Content.Requirement.CeFromOne(_))
+          case "Calibrated"         => one.map(Content.Requirement.Calibrated(_))
+          case "LinkTarget"         => one.map(Content.Requirement.LinkTarget(_))
+          case "StartBeforeEnd"     => two.map(Content.Requirement.StartBeforeEnd(_, _))
+          case "YearWithin"         => one.map(Content.Requirement.YearWithin(_))
+          case "WithinSourcePeriod" =>
+            written match
+              case FourQuoted(a, b, c, d) =>
+                Some(Content.Requirement.WithinSourcePeriod(Raw(s"$a"), Raw(s"$b"), Raw(s"$c"), Raw(s"$d")))
+              case _ => None
+          case "KnownItems"     => Some(Content.Requirement.KnownItems(raws(written)))
+          case "DateGiven"      => one.map(Content.Requirement.DateGiven(_))
+          case "PriorityWithin" => two.map(Content.Requirement.PriorityWithin(_, _))
+          case _                => None
         read.map(Content.Proposal(_, Where(s"$at")))
       case _ => None
     },

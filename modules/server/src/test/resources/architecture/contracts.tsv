@@ -947,7 +947,7 @@ unwrap	core:domain/EnrichSource.scala	.value outside a boundary	80
 unwrap	core:domain/FilterInference.scala	.value outside a boundary	14
 unwrap	core:domain/GoalFocus.scala	.value outside a boundary	59
 unwrap	core:domain/Highlight.scala	.value outside a boundary	3
-unwrap	core:domain/HintProposals.scala	.value outside a boundary	14
+unwrap	core:domain/HintProposals.scala	.value outside a boundary	13
 unwrap	core:domain/HttpPolicy.scala	.value outside a boundary	12
 unwrap	core:domain/IngestBacklog.scala	.value outside a boundary	21
 unwrap	core:domain/JsonRead.scala	.value outside a boundary	1

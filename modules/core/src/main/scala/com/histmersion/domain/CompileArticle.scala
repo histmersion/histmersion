@@ -403,7 +403,7 @@ object CompileArticle:
       Option.when(text.value.isEmpty)("the text is empty"),
       whole.left.toOption.map(m => s"${m.sentence} — name an existing heading, or null to add at the end")
     ).flatten ++ AgentVerify
-      .linkProblems(AgentVerify.Text(text.value), corpus.isCitekey, corpus.isTarget)
+      .linkProblems(AgentVerify.Text(text.value), Problem.Where("text"), corpus.isCitekey, corpus.isTarget)
       .map(_.sentence) ++
       Option
         .when(ReviewArticle.headings(text).exists(h => h.trim.equalsIgnoreCase("sources cited")))(
