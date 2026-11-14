@@ -2,7 +2,7 @@ package com.histmersion
 package domain.media.imports
 
 import com.histmersion.util.problem.Problem
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{reason, sentence}
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.pluginhost.{HttpTransport, PluginMedia, Polite, SpiValues}
@@ -73,7 +73,7 @@ final class OwnImport(name: MediaImporter.ImporterName, col: MediaCollection, fe
   /** The host's reading of an item's stated licence, and its judgement. */
   private def judge(item: MediaItem): Verdict =
     item.rights match
-      case Left(why)     => Verdict(None, Left(why.sentence))
+      case Left(why)     => Verdict(None, Left(why.reason))
       case Right(rights) =>
         val stated = scala.util.Try(SpiValues.licenceOf(rights.licence)).toOption.map(_.value).getOrElse("").trim
         val read = Licence.ofStatement(Licence.Statement(stated))
