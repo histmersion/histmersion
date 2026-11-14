@@ -43,7 +43,14 @@ object MergeResolutions:
             )
           )
         case _ =>
-          Left(Problem.Invalid.Unreadable(Problem.TypeName.named[MergeResolutions], Problem.Raw(s"$s"), Vector(Problem.Raw("S-3c1e7a2b=keep-left")), Vector(Problem.Field("resolve"))))
+          Left(
+            Problem.Invalid.Unreadable(
+              Problem.TypeName.named[MergeResolutions],
+              Problem.Raw(s"$s"),
+              Vector(Problem.Raw("S-3c1e7a2b=keep-left")),
+              Vector(Problem.Field("resolve"))
+            )
+          )
 
     def template(p: MergePlan, current: MergeResolutions): Template =
       val chosen = current.resolve.map(r => r.issue.value -> r.decision).toMap

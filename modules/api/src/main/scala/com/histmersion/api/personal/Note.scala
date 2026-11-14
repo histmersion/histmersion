@@ -57,7 +57,13 @@ object Note:
       val t = raw.value.replace("\r\n", "\n").stripTrailing
       if t.trim.isEmpty then Left(Problem.Invalid.Missing.here(Problem.Field("text")))
       else if t.length > MaxChars then
-        Left(Problem.Invalid.OutOfRange.here(Problem.TypeName.of(Text), Problem.Raw.of(t.length.toLong), Problem.Invalid.Bounds(None, Some(Problem.Raw.of(MaxChars.toLong)))))
+        Left(
+          Problem.Invalid.OutOfRange.here(
+            Problem.TypeName.of(Text),
+            Problem.Raw.of(t.length.toLong),
+            Problem.Invalid.Bounds(None, Some(Problem.Raw.of(MaxChars.toLong)))
+          )
+        )
       else Right(Text(t))
     given JsonValueCodec[Text] = JsonCodec.mapped[Text, String](_.value, b => Right(Text(b)))
     given Schema[Text] = Schema.string[Text]

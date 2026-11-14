@@ -70,7 +70,8 @@ object Iiif:
               .toRight(
                 Invalid.Unreadable.here(TypeName.named[Region], Raw(s"$s"), Vector(Raw("full"), Raw("10,20,300,400")))
               )
-          case _ => Left(Invalid.Unreadable.here(TypeName.named[Region], Raw(s"$s"), Vector(Raw("full"), Raw("10,20,300,400"))))
+          case _ =>
+            Left(Invalid.Unreadable.here(TypeName.named[Region], Raw(s"$s"), Vector(Raw("full"), Raw("10,20,300,400"))))
 
   enum Size derives CanEqual:
     case Max
@@ -113,33 +114,71 @@ object Iiif:
             case List(ws, hs) =>
               (for w <- ws.toIntOption.filter(_ > 0); h <- hs.toIntOption.filter(_ > 0)
               yield BestFit(BestFit.W(w), BestFit.H(h)))
-                .toRight(Invalid.Unreadable.here(TypeName.named[Size], Raw(s"$s"), Vector(Raw("max"), Raw("300,"), Raw(",200"), Raw("300,200"), Raw("!300,200"))))
-            case _ => Left(Invalid.Unreadable.here(TypeName.named[Size], Raw(s"$s"), Vector(Raw("max"), Raw("300,"), Raw(",200"), Raw("300,200"), Raw("!300,200"))))
+                .toRight(
+                  Invalid.Unreadable.here(
+                    TypeName.named[Size],
+                    Raw(s"$s"),
+                    Vector(Raw("max"), Raw("300,"), Raw(",200"), Raw("300,200"), Raw("!300,200"))
+                  )
+                )
+            case _ =>
+              Left(
+                Invalid.Unreadable.here(
+                  TypeName.named[Size],
+                  Raw(s"$s"),
+                  Vector(Raw("max"), Raw("300,"), Raw(",200"), Raw("300,200"), Raw("!300,200"))
+                )
+              )
         case _ if t.endsWith(",") =>
           t.dropRight(1)
             .toIntOption
             .filter(_ > 0)
             .map(w => Width(Width.W(w)))
-            .toRight(Invalid.Unreadable.here(TypeName.named[Size], Raw(s"$s"), Vector(Raw("max"), Raw("300,"), Raw(",200"), Raw("300,200"), Raw("!300,200"))))
+            .toRight(
+              Invalid.Unreadable.here(
+                TypeName.named[Size],
+                Raw(s"$s"),
+                Vector(Raw("max"), Raw("300,"), Raw(",200"), Raw("300,200"), Raw("!300,200"))
+              )
+            )
         case _ if t.startsWith(",") =>
           t.drop(1)
             .toIntOption
             .filter(_ > 0)
             .map(h => Height(Height.H(h)))
-            .toRight(Invalid.Unreadable.here(TypeName.named[Size], Raw(s"$s"), Vector(Raw("max"), Raw("300,"), Raw(",200"), Raw("300,200"), Raw("!300,200"))))
+            .toRight(
+              Invalid.Unreadable.here(
+                TypeName.named[Size],
+                Raw(s"$s"),
+                Vector(Raw("max"), Raw("300,"), Raw(",200"), Raw("300,200"), Raw("!300,200"))
+              )
+            )
         case _ =>
           t.split(",").toList match
             case List(ws, hs) =>
               (for w <- ws.toIntOption.filter(_ > 0); h <- hs.toIntOption.filter(_ > 0)
               yield Exact(Exact.W(w), Exact.H(h)))
-                .toRight(Invalid.Unreadable.here(TypeName.named[Size], Raw(s"$s"), Vector(Raw("max"), Raw("300,"), Raw(",200"), Raw("300,200"), Raw("!300,200"))))
-            case _ => Left(Invalid.Unreadable.here(TypeName.named[Size], Raw(s"$s"), Vector(Raw("max"), Raw("300,"), Raw(",200"), Raw("300,200"), Raw("!300,200"))))
+                .toRight(
+                  Invalid.Unreadable.here(
+                    TypeName.named[Size],
+                    Raw(s"$s"),
+                    Vector(Raw("max"), Raw("300,"), Raw(",200"), Raw("300,200"), Raw("!300,200"))
+                  )
+                )
+            case _ =>
+              Left(
+                Invalid.Unreadable.here(
+                  TypeName.named[Size],
+                  Raw(s"$s"),
+                  Vector(Raw("max"), Raw("300,"), Raw(",200"), Raw("300,200"), Raw("!300,200"))
+                )
+              )
 
   def parseFormat(s: ArchiveFile.Format.Wire): Either[Problem, Format] =
     (s).value.trim.toLowerCase match
       case "jpg" | "jpeg" => Right(Format("jpg"))
       case "png"          => Right(Format("png"))
-      case other          => Left(Invalid.Unreadable.here(TypeName.of(Format), Raw(s"$other"), Vector(Raw("jpg"), Raw("png"))))
+      case other => Left(Invalid.Unreadable.here(TypeName.of(Format), Raw(s"$other"), Vector(Raw("jpg"), Raw("png"))))
 
   def contentType(format: Format): Api.ContentType = format.value match
     case "png" => Api.ContentType("image/png")

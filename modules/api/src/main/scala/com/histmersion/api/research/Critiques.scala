@@ -197,9 +197,7 @@ object Critiques:
       else
         "\n\nSet aside with a reason:\n\n" +
           reasoned
-            .map(p =>
-              s"- ${p.line} — ${p.reason.fold("")(r => s"$r")}${p.reasonBy.fold("")(b => s" _(by $b)_")}"
-            )
+            .map(p => s"- ${p.line} — ${p.reason.fold("")(r => s"$r")}${p.reasonBy.fold("")(b => s" _(by $b)_")}")
             .mkString("\n")
       Markdown(
         s"### Disagreements checked\n\n${summary(pairs)} (a pair is addressed when both sources are cited in one paragraph)." +

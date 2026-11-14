@@ -32,9 +32,17 @@ class TargetSuite extends munit.FunSuite:
       Target.check(point.modify(_.id).setTo(Some(ItemKey("x"))), ItemKind.Notable, Problem.Field("note")).map(_.id),
       Right(None)
     )
-    assert(Target.check(Target(ItemKind.Period, from = Some(Year(-1))), ItemKind.Bookmarkable, Problem.Field("bookmark")).isLeft)
+    assert(
+      Target
+        .check(Target(ItemKind.Period, from = Some(Year(-1))), ItemKind.Bookmarkable, Problem.Field("bookmark"))
+        .isLeft
+    )
     assert(Target.check(Target(ItemKind.View), ItemKind.Bookmarkable, Problem.Field("bookmark")).isLeft)
-    assert(Target.check(Target(ItemKind.View, view = Some(ViewState("#a=1"))), ItemKind.Notable, Problem.Field("note")).isLeft)
+    assert(
+      Target
+        .check(Target(ItemKind.View, view = Some(ViewState("#a=1"))), ItemKind.Notable, Problem.Field("note"))
+        .isLeft
+    )
     assertEquals(
       Target
         .check(Target(ItemKind.View, view = Some(ViewState("#a=1"))), ItemKind.Bookmarkable, Problem.Field("bookmark"))
@@ -42,7 +50,13 @@ class TargetSuite extends munit.FunSuite:
       Right(Some("a=1"))
     )
     assert(
-      Target.check(Target(ItemKind.View, view = Some(ViewState("a" * 8193))), ItemKind.Bookmarkable, Problem.Field("bookmark")).isLeft
+      Target
+        .check(
+          Target(ItemKind.View, view = Some(ViewState("a" * 8193))),
+          ItemKind.Bookmarkable,
+          Problem.Field("bookmark")
+        )
+        .isLeft
     )
 
   test("where a target is, in words"):

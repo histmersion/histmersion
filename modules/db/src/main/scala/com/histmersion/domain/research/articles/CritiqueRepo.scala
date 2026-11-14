@@ -85,7 +85,7 @@ private[articles] object CritiqueRepo:
                   )
                 )
               case (Some(a), Some(b)) if s"${r.reason}".isEmpty => Right(done :+ Change.Remove(a, b))
-              case (Some(a), Some(b))                              =>
+              case (Some(a), Some(b))                           =>
                 val dirs = sql"""SELECT src, dst FROM edges WHERE kind = ANY($kinds::text[])
                                  AND ((src = $a AND dst = $b) OR (src = $b AND dst = $a))"""
                   .query[(com.histmersion.domain.library.Citekey, com.histmersion.domain.library.Citekey)]

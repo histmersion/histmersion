@@ -120,7 +120,7 @@ final class AgentDoctor(
        else warn("agents", "off (agents.enabled = false): nothing runs, settings can still be made")) ::
         Agents.Prices
           .parse(Agents.Prices.Wire(cfg.prices.value))
-          .fold(m => List(fail("prices", s"agents.prices: ${m}")), _ => Nil) ++
+          .fold(m => List(fail("prices", s"agents.prices: $m")), _ => Nil) ++
         allowanceProblems.map(fail("allowances", _)) ++
         allowances.collect {
           case e if e.allowance.isLeft =>

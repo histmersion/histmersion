@@ -99,14 +99,21 @@ object MergeDecision:
     Kind.values.find(d => Kind.wireOf(d) == Kind.Wire(k)) match
       case None =>
         Left(
-          Problem.Invalid.Unknown.here(Problem.TypeName.named[Kind], Problem.Raw(s"$s"), Kind.values.toVector.map(k => Problem.Raw(s"${Kind.wireOf(k)}")))
+          Problem.Invalid.Unknown.here(
+            Problem.TypeName.named[Kind],
+            Problem.Raw(s"$s"),
+            Kind.values.toVector.map(k => Problem.Raw(s"${Kind.wireOf(k)}"))
+          )
         )
       case Some(d) if ((d.takesArgument) == (true)) && arg.forall(_.isEmpty) =>
         Left(
           Problem.Invalid.Missing(Problem.Field("argument"), Vector(Problem.Field(s"$s")))
         )
       case Some(d) if !((d.takesArgument) == (true)) && arg.isDefined =>
-        Left(Problem.Invalid.Unreadable.here(Problem.TypeName.named[Kind], Problem.Raw(s"$s"), Vector(Problem.Raw(s"${Kind.wireOf(d)}"))))
+        Left(
+          Problem.Invalid.Unreadable
+            .here(Problem.TypeName.named[Kind], Problem.Raw(s"$s"), Vector(Problem.Raw(s"${Kind.wireOf(d)}")))
+        )
       case Some(d) => Right(MergeDecision(d, (arg.filter(_.nonEmpty)).map(refactorValue => Argument(refactorValue))))
 
   given JsonValueCodec[MergeDecision] = JsonCodec.mapped[MergeDecision, String](

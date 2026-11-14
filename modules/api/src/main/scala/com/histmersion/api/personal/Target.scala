@@ -81,9 +81,22 @@ object Target:
           case ItemKind.View =>
             val view = t.view.map(_.value.trim.stripPrefix("#"))
             if view.exists(_.length > ViewState.MaxChars) then
-              Left(Invalid.OutOfRange(TypeName.of(ViewState), Raw.of(view.fold(0L)(_.length.toLong)), Invalid.Bounds(None, Some(Raw.of(ViewState.MaxChars.toLong))), Vector(what)))
+              Left(
+                Invalid.OutOfRange(
+                  TypeName.of(ViewState),
+                  Raw.of(view.fold(0L)(_.length.toLong)),
+                  Invalid.Bounds(None, Some(Raw.of(ViewState.MaxChars.toLong))),
+                  Vector(what)
+                )
+              )
             else if view.isEmpty && t.lat.isEmpty then
-              Left(Invalid.Inconsistent(NonEmptyVector.of(Field("view"), Field("lat")), Invalid.Exclusion.AtLeastOne, Vector(what)))
+              Left(
+                Invalid.Inconsistent(
+                  NonEmptyVector.of(Field("view"), Field("lat")),
+                  Invalid.Exclusion.AtLeastOne,
+                  Vector(what)
+                )
+              )
             else
               Right(
                 Target(

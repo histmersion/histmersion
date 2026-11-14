@@ -16,19 +16,36 @@ object EventGeometry:
 
   def point(lat: Latitude, lon: Longitude): Either[Problem, Geojson] =
     if (lat).value.isNaN || (lat).value < -90 || (lat).value > 90 then
-      Left(Invalid.OutOfRange(TypeName.of(Latitude), Raw(s"$lat"), Invalid.Bounds(Some(Raw("-90")), Some(Raw("90"))), Vector(Field("lat"))))
+      Left(
+        Invalid.OutOfRange(
+          TypeName.of(Latitude),
+          Raw(s"$lat"),
+          Invalid.Bounds(Some(Raw("-90")), Some(Raw("90"))),
+          Vector(Field("lat"))
+        )
+      )
     else if (lon).value.isNaN || (lon).value < -180 || (lon).value > 180 then
-      Left(Invalid.OutOfRange(TypeName.of(Longitude), Raw(s"$lon"), Invalid.Bounds(Some(Raw("-180")), Some(Raw("180"))), Vector(Field("lon"))))
+      Left(
+        Invalid.OutOfRange(
+          TypeName.of(Longitude),
+          Raw(s"$lon"),
+          Invalid.Bounds(Some(Raw("-180")), Some(Raw("180"))),
+          Vector(Field("lon"))
+        )
+      )
     else Right(Geojson(s"""{"type":"Point","coordinates":[${fmt(((lon).value))},${fmt(((lat).value))}]}"""))
 
   def of(geometry: Option[Geojson], lat: Option[Latitude], lon: Option[Longitude]): Either[Problem, Option[Geojson]] =
     (geometry.map((_).value.trim).filter(_.nonEmpty), lat, lon) match
       case (Some(_), Some(_), _) | (Some(_), _, Some(_)) =>
-        Left(Invalid.Inconsistent.here(NonEmptyVector.of(Field("geometry"), Field("lat/lon")), Invalid.Exclusion.AtMostOne))
+        Left(
+          Invalid.Inconsistent.here(NonEmptyVector.of(Field("geometry"), Field("lat/lon")), Invalid.Exclusion.AtMostOne)
+        )
       case (g @ Some(_), None, None) => Right((g).map(refactorValue => Geojson(refactorValue)))
       case (None, Some(a), Some(o))  => point(a, o).map(Some(_))
       case (None, None, None)        => Right(None)
-      case _                         => Left(Invalid.Inconsistent.here(NonEmptyVector.of(Field("lat"), Field("lon")), Invalid.Exclusion.Together))
+      case _                         =>
+        Left(Invalid.Inconsistent.here(NonEmptyVector.of(Field("lat"), Field("lon")), Invalid.Exclusion.Together))
 
   /** The GeoJSON geometry types of RFC 7946 (a Feature is not one). */
   val GeometryTypes: Set[Type] =
@@ -59,9 +76,23 @@ object EventGeometry:
           j.asObject.flatMap(_("type")).flatMap(_.asString) match
             case Some(tp) if GeometryTypes(Type(tp))          => Right(Geojson(t))
             case Some(tp @ ("Feature" | "FeatureCollection")) =>
-              Left(Invalid.Unknown(TypeName.of(Type), Raw(s"$tp"), GeometryTypes.toVector.sorted.map(k => Raw(s"$k")), Vector(Field("geometry"))))
+              Left(
+                Invalid.Unknown(
+                  TypeName.of(Type),
+                  Raw(s"$tp"),
+                  GeometryTypes.toVector.sorted.map(k => Raw(s"$k")),
+                  Vector(Field("geometry"))
+                )
+              )
             case Some(tp) =>
-              Left(Invalid.Unknown(TypeName.of(Type), Raw(s"$tp"), GeometryTypes.toVector.sorted.map(k => Raw(s"$k")), Vector(Field("geometry"))))
+              Left(
+                Invalid.Unknown(
+                  TypeName.of(Type),
+                  Raw(s"$tp"),
+                  GeometryTypes.toVector.sorted.map(k => Raw(s"$k")),
+                  Vector(Field("geometry"))
+                )
+              )
             case None =>
               Left(Invalid.Missing(Field("type"), Vector(Field("geometry"))))
 

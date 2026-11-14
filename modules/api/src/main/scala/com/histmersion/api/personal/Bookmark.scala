@@ -53,7 +53,13 @@ object Bookmark:
     def tidy(raw: Option[Label]): Either[Problem, Option[Label]] =
       raw.map(_.value.trim.replaceAll("\\s+", " ")).filter(_.nonEmpty) match
         case Some(l) if l.length > MaxChars =>
-          Left(Problem.Invalid.OutOfRange.here(Problem.TypeName.of(Label), Problem.Raw("name"), Problem.Invalid.Bounds(None, Some(Problem.Raw.of(MaxChars.toLong)))))
+          Left(
+            Problem.Invalid.OutOfRange.here(
+              Problem.TypeName.of(Label),
+              Problem.Raw("name"),
+              Problem.Invalid.Bounds(None, Some(Problem.Raw.of(MaxChars.toLong)))
+            )
+          )
         case other => Right(other.map(Label(_)))
     given JsonValueCodec[Label] = JsonCodec.mapped[Label, String](_.value, b => Right(Label(b)))
     given Schema[Label] = Schema.string[Label]

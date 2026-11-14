@@ -104,7 +104,8 @@ object ModelChains:
           )
         case Some(x) if x < 60 || x > MaxSeconds.value =>
           Left(
-            Invalid.OutOfRange.here(TypeName.of(LimitSpec.Window), Raw(s"$s"), Invalid.Bounds(Some(Raw("1m")), Some(Raw("90d"))))
+            Invalid.OutOfRange
+              .here(TypeName.of(LimitSpec.Window), Raw(s"$s"), Invalid.Bounds(Some(Raw("1m")), Some(Raw("90d"))))
           )
         case Some(x) => Right(Window(Seconds(x)))
 
@@ -136,7 +137,9 @@ object ModelChains:
         .toOption
         .map(_ * mult)
         .filter(_ > 0)
-        .toRight(Invalid.Unreadable.here(TypeName.of(LimitSpec.Amount), Raw(s"$raw"), Vector(Raw("500k"), Raw("5"), Raw("$5"))))
+        .toRight(
+          Invalid.Unreadable.here(TypeName.of(LimitSpec.Amount), Raw(s"$raw"), Vector(Raw("500k"), Raw("5"), Raw("$5")))
+        )
 
     def parse(s: Spec): Either[Problem, Limit] =
       val t = (s).value.trim
@@ -152,11 +155,14 @@ object ModelChains:
               Measure
                 .parse(Measure.Wire(m))
                 .toRight(
-                  Invalid.Unknown.here(TypeName.named[Measure], Raw(s"$m"), Measure.values.toVector.map(v => Raw(s"${v.wire}")))
+                  Invalid.Unknown
+                    .here(TypeName.named[Measure], Raw(s"$m"), Measure.values.toVector.map(v => Raw(s"${v.wire}")))
                 )
                 .flatMap(me => amount((a)).map(_ -> me))
             case _ =>
-              Left(Invalid.Unreadable.here(TypeName.of(Spec), Raw(s"$t"), Vector(Raw("500k tokens/5h"), Raw("5 usd/day"))))
+              Left(
+                Invalid.Unreadable.here(TypeName.of(Spec), Raw(s"$t"), Vector(Raw("500k tokens/5h"), Raw("5 usd/day")))
+              )
           for
             am <- parsed
             w <- Window.parse(LimitSpec.Window(win))
@@ -210,7 +216,8 @@ object ModelChains:
           .parse(com.histmersion.api.automation.ProviderKind.Wire(p), known)
           .map(Provider(_))
           .toRight(
-            Invalid.Unknown.here(TypeName.of(ProviderKind.Wire), Raw(s"$p"), Vector(Raw(s"${ProviderKind.names(known)}")))
+            Invalid.Unknown
+              .here(TypeName.of(ProviderKind.Wire), Raw(s"$p"), Vector(Raw(s"${ProviderKind.names(known)}")))
           )
       else ModelRef.parse(ModelRef.Wire(t), known).map(Model(_))
 
@@ -231,7 +238,10 @@ object ModelChains:
 
     def of(target: Target, limits: List[Limit], reservePct: OfReservePct): Either[Problem, Allowance] =
       if (reservePct).value < 0 || (reservePct).value > 99 then
-        Left(Invalid.OutOfRange.here(TypeName.of(ReservePct), Raw(s"$reservePct"), Invalid.Bounds(Some(Raw("0")), Some(Raw("99")))))
+        Left(
+          Invalid.OutOfRange
+            .here(TypeName.of(ReservePct), Raw(s"$reservePct"), Invalid.Bounds(Some(Raw("0")), Some(Raw("99"))))
+        )
       else
         val windows =
           limits.groupBy(l => (l.measure, l.window.seconds)).collect { case (k, ls) if ls.size > 1 => ls.head }
@@ -247,8 +257,10 @@ object ModelChains:
     val parsed = entries.map { e =>
       e.indexOf('=') match
         case -1 =>
-          Left(Invalid.Unreadable.here(TypeName.of(Allowance.Spec), Raw(s"$e"), Vector(Raw("claude-code:* = 5 usd/day"))))
-        case i  =>
+          Left(
+            Invalid.Unreadable.here(TypeName.of(Allowance.Spec), Raw(s"$e"), Vector(Raw("claude-code:* = 5 usd/day")))
+          )
+        case i =>
           parseAllowance(
             Target.Spec(e.substring(0, i)),
             (e.substring(i + 1).split(',').toList).map(refactorValue11 => Limit.Spec(refactorValue11)),
@@ -274,7 +286,7 @@ object ModelChains:
       rs <- reserves match
         case Nil      => Right(Allowance.ReservePct(0))
         case r :: Nil => parseReserve(Allowance.ReserveSpec(r.drop("reserve".length)))
-        case _        => Left(Invalid.Repeated(TypeName.of(Allowance.ReservePct), Raw("reserve"), Vector(Field(s"${t.wire}"))))
+        case _ => Left(Invalid.Repeated(TypeName.of(Allowance.ReservePct), Raw("reserve"), Vector(Field(s"${t.wire}"))))
       ls <- limits.map(l => Limit.parse(Limit.Spec(l))).partitionMap(identity) match
         case (Nil, ok) => Right(ok)
         case (errs, _) => Left(errs.reduce[Problems](_ ++ _).at(Field(s"${t.wire}")))
@@ -288,7 +300,10 @@ object ModelChains:
       .stripSuffix("%")
       .trim
       .toIntOption
-      .toRight(Invalid.Unreadable.here(TypeName.of(Allowance.ReservePct), Raw(s"${(s).value.trim}"), Vector(Raw("reserve 20%"))))))
+      .toRight(
+        Invalid.Unreadable
+          .here(TypeName.of(Allowance.ReservePct), Raw(s"${(s).value.trim}"), Vector(Raw("reserve 20%")))
+      )))
       .map(refactorValue15 => Allowance.ReservePct(refactorValue15))
 
   final case class Spend(at: Spend.At, tokens: Spend.Tokens, usd: BigDecimal)

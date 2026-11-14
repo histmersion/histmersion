@@ -1052,8 +1052,7 @@ final class ReviewArticlePipeline(
           val p =
             QueuePatch(
               status = Some(Queue.QueueItem.Status(Queue.Done)),
-              reason =
-                Some(Queue.Rationale(s"no MAJOR open after agent run ${ctx.run.id.value.take(8)}"))
+              reason = Some(Queue.Rationale(s"no MAJOR open after agent run ${ctx.run.id.value.take(8)}"))
             )
           val _ =
             ctx.write(s"tasks item #${item.id} done", p.asJson)(

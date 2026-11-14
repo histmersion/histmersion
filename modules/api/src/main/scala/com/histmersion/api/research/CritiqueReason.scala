@@ -51,7 +51,13 @@ object CritiqueReason:
   def parse(s: Spec): Either[Problem, CritiqueReason] =
     val i = (s).value.indexOf('=')
     if i < 0 then
-      Left(Problem.Invalid.Unreadable.here(Problem.TypeName.of(Spec), Problem.Raw(s"$s"), Vector(Problem.Raw("a1999>b2001=it concerns the dating only"))))
+      Left(
+        Problem.Invalid.Unreadable.here(
+          Problem.TypeName.of(Spec),
+          Problem.Raw(s"$s"),
+          Vector(Problem.Raw("a1999>b2001=it concerns the dating only"))
+        )
+      )
     else
       CritiqueRef
         .parse(CritiqueRef.Wire((s).value.take(i)))

@@ -65,7 +65,13 @@ object PeriodO:
     RawJson
       .parse(json)
       .left
-      .map(e => Problem.Io.Corrupt(Problem.Io.Format.Json, Problem.Where("PeriodO dataset"), Problem.Io.Damage.Unreadable(External.Reported.of(s"$e"))))
+      .map(e =>
+        Problem.Io.Corrupt(
+          Problem.Io.Format.Json,
+          Problem.Where("PeriodO dataset"),
+          Problem.Io.Damage.Unreadable(External.Reported.of(s"$e"))
+        )
+      )
       .flatMap { doc =>
         val c = doc.cursor
         val overlay = c.downField("histmersion")

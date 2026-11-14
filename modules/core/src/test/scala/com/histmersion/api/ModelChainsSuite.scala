@@ -33,7 +33,10 @@ class ModelChainsSuite extends munit.FunSuite:
 
   test("a chain reports every bad model and refuses a model named twice"):
     val e = parseChain(ModelChains.Chain.Spec("ollama:x > local: > claude-code:sonnet")).left.toOption.get
-    assert(e.sentences.mkString("; ").contains("'ollama'") && e.sentences.mkString("; ").contains("model is required"), e)
+    assert(
+      e.sentences.mkString("; ").contains("'ollama'") && e.sentences.mkString("; ").contains("model is required"),
+      e
+    )
     assert(
       parseModels(List(ModelRef.Model.Spec("claude-code:sonnet"), ModelRef.Model.Spec("claude-code:sonnet"))).left
         .exists(_.sentences.mkString("; ").contains("more than once"))
@@ -53,7 +56,12 @@ class ModelChainsSuite extends munit.FunSuite:
     assertEquals(Window.parse(ModelChains.LimitSpec.Window("90m")).map(_.text), Right("90m"))
     assert(Window.parse(ModelChains.LimitSpec.Window("0h")).isLeft)
     assert(Window.parse(ModelChains.LimitSpec.Window("91d")).isLeft)
-    assert(Window.parse(ModelChains.LimitSpec.Window("fortnight")).left.exists(_.sentences.mkString("; ").contains("not a window")))
+    assert(
+      Window
+        .parse(ModelChains.LimitSpec.Window("fortnight"))
+        .left
+        .exists(_.sentences.mkString("; ").contains("not a window"))
+    )
 
   test("limits: tokens with k/M suffixes, usd with a word or a dollar sign"):
     assertEquals(
@@ -69,12 +77,22 @@ class ModelChainsSuite extends munit.FunSuite:
     assertEquals(Limit.parse(ModelChains.Limit.Spec("1.5M tokens/5h")).map(_.amount), Right(BigDecimal(1500000)))
 
   test("limits: a fractional token count, a bad unit, no window, a non-positive amount are errors"):
-    assert(Limit.parse(ModelChains.Limit.Spec("1.5 tokens/5h")).left.exists(_.sentences.mkString("; ").contains("whole number")))
     assert(
-      Limit.parse(ModelChains.Limit.Spec("5 euros/day")).left.exists(_.sentences.mkString("; ").contains("neither tokens nor usd"))
+      Limit
+        .parse(ModelChains.Limit.Spec("1.5 tokens/5h"))
+        .left
+        .exists(_.sentences.mkString("; ").contains("whole number"))
+    )
+    assert(
+      Limit
+        .parse(ModelChains.Limit.Spec("5 euros/day"))
+        .left
+        .exists(_.sentences.mkString("; ").contains("neither tokens nor usd"))
     )
     assert(Limit.parse(ModelChains.Limit.Spec("5 usd")).isLeft)
-    assert(Limit.parse(ModelChains.Limit.Spec("0 usd/day")).left.exists(_.sentences.mkString("; ").contains("positive")))
+    assert(
+      Limit.parse(ModelChains.Limit.Spec("0 usd/day")).left.exists(_.sentences.mkString("; ").contains("positive"))
+    )
     assert(
       Limit
         .fromSpec(LimitSpec(ModelChains.LimitSpec.Amount(-1), Measure.Usd, ModelChains.LimitSpec.Window("day")))

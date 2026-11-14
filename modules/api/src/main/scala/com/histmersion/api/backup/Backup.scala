@@ -93,7 +93,10 @@ object Backup:
     val example = Vector(Raw(s"histmersion-2026-11-01$Extension"))
     if n.isEmpty then Left(Invalid.Missing.here(Field("file")))
     else if n.length > 128 then
-      Left(Invalid.OutOfRange.here(TypeName.of(Result.File), Raw.of(n.length.toLong), Invalid.Bounds(None, Some(Raw("128")))))
+      Left(
+        Invalid.OutOfRange
+          .here(TypeName.of(Result.File), Raw.of(n.length.toLong), Invalid.Bounds(None, Some(Raw("128"))))
+      )
     else if !n.endsWith(Extension) || n.length == Extension.length || !Safe.matches(n) then
       Left(Invalid.Unreadable.here(TypeName.of(Result.File), Raw(s"$n"), example))
     else Right(Result.File(n))
@@ -172,7 +175,8 @@ object Backup:
       Left(
         Problem.Io.Process(
           Problem.Io.Tool("pg_restore"),
-          Problem.Io.Ending.Exited(Problem.Io.ExitCode(exit.value), External.Stderr.tail(notable.takeRight(5).mkString("\n")))
+          Problem.Io.Ending
+            .Exited(Problem.Io.ExitCode(exit.value), External.Stderr.tail(notable.takeRight(5).mkString("\n")))
         )
       )
 

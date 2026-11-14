@@ -109,7 +109,7 @@ object HintProposals:
         fail(List(Problem.Unclassified(Legacy.Text("config: give the settings to change as key=value"))))
       else
         ManagerConfig.parse(kvs.map(ManagerConfig.Spec(_))) match
-          case Left(e)  => fail(List(Problem.Unclassified(Legacy.Text(s"config: ${e}"))))
+          case Left(e)  => fail(List(Problem.Unclassified(Legacy.Text(s"config: $e"))))
           case Right(c) => Right((Some(HintEffect(HintEffect.Action(HintEffect.Config), config = Some(c))), Nil))
     else
       val problems = List(

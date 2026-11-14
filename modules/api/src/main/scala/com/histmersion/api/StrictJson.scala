@@ -40,7 +40,7 @@ object StrictJson:
           case Some(o) =>
             problems(o.keys.toList.map(k => FieldName(k)), s) match
               case Some(refused) => in.decodeError(refused.sentences.mkString("; "))
-              case None      => json.as[A](using derived).fold(in.decodeError, identity)
+              case None          => json.as[A](using derived).fold(in.decodeError, identity)
 
   /** The keys `s` does not take, each with the keys it takes, and where a key belongs that the record holds deeper. */
   def problems(keys: List[FieldName], s: Schema[?]): Option[Problems] =
@@ -50,7 +50,9 @@ object StrictJson:
     val taken = known.toVector.map(k => Raw(s"$k"))
     Problems.from(unknown.toVector.flatMap { k =>
       Invalid.Unknown.here(TypeName.of(FieldName), Raw(s"$k"), taken) +:
-        nested.collectFirst { case (path, f) if f == k => Invalid.Misplaced.here(Field(s"$k"), Field(s"$path")) }.toVector
+        nested.collectFirst {
+          case (path, f) if f == k => Invalid.Misplaced.here(Field(s"$k"), Field(s"$path"))
+        }.toVector
     })
 
   def fieldNames(s: Schema[?]): List[FieldName] = s.schemaType match

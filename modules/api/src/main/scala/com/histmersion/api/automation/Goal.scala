@@ -1,7 +1,6 @@
 package com.histmersion
 package api.automation
 
-
 import com.histmersion.api.WireEnumValues
 import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema

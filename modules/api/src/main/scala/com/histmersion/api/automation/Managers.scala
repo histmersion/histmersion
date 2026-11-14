@@ -318,7 +318,14 @@ object Managers:
                   val ws = v.split(",").toList.map(_.trim).filter(_.nonEmpty)
                   ws.find(w => Sweep.parse(Sweep.Wire(w)).isEmpty) match
                     case Some(w) =>
-                      Left(Invalid.Unknown(TypeName.named[Sweep], Raw(s"$w"), Sweep.values.toVector.map(x => Raw(s"${x.wire}")), at))
+                      Left(
+                        Invalid.Unknown(
+                          TypeName.named[Sweep],
+                          Raw(s"$w"),
+                          Sweep.values.toVector.map(x => Raw(s"${x.wire}")),
+                          at
+                        )
+                      )
                     case None =>
                       Right(
                         c.copy(sweeps =
@@ -334,12 +341,16 @@ object Managers:
                 case "dailyUsd" | "daily-usd" =>
                   v.toDoubleOption
                     .filter(_ >= 0)
-                    .toRight(Invalid.OutOfRange(TypeName.of(DailyUsd), Raw(s"$v"), Invalid.Bounds(Some(Raw("0")), None), at))
+                    .toRight(
+                      Invalid.OutOfRange(TypeName.of(DailyUsd), Raw(s"$v"), Invalid.Bounds(Some(Raw("0")), None), at)
+                    )
                     .map(d => c.copy(dailyUsd = Some(DailyUsd(d))))
                 case "budgetUsd" | "budget-usd" =>
                   v.toDoubleOption
                     .filter(_ > 0)
-                    .toRight(Invalid.OutOfRange(TypeName.of(BudgetUsd), Raw(s"$v"), Invalid.Bounds(Some(Raw("0")), None), at))
+                    .toRight(
+                      Invalid.OutOfRange(TypeName.of(BudgetUsd), Raw(s"$v"), Invalid.Bounds(Some(Raw("0")), None), at)
+                    )
                     .map(d => c.copy(budgetUsd = Some(BudgetUsd(d))))
                 case "includeTags" | "include-tags" | "tags" =>
                   Right(
@@ -380,7 +391,9 @@ object Managers:
       case "true" | "on" | "yes"  => Right((true))
       case "false" | "off" | "no" => Right((false))
       case _                      =>
-        Left(Invalid.Unknown(TypeName.named[Boolean], Raw(s"$v"), Vector(Raw("true"), Raw("false")), Vector(Field(s"$k"))))
+        Left(
+          Invalid.Unknown(TypeName.named[Boolean], Raw(s"$v"), Vector(Raw("true"), Raw("false")), Vector(Field(s"$k")))
+        )
 
   final case class ItemCounts(
       pending: ItemCounts.Pending = ItemCounts.Pending(0),

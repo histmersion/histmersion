@@ -414,8 +414,7 @@ object Article:
     def parse(a: EditAnswer): Either[Problem, Edit] =
       val anchor = Option(a.anchor).getOrElse(Anchor(""))
       val text = Option(a.text).flatten.getOrElse(NewText(""))
-      if anchor.value.trim.isEmpty then
-        Left(Problem.Invalid.Missing.here(Problem.Field("anchor")))
+      if anchor.value.trim.isEmpty then Left(Problem.Invalid.Missing.here(Problem.Field("anchor")))
       else
         a.op match
           case Op.Delete                             => Right(Edit.Delete(anchor))
@@ -503,7 +502,8 @@ object Article:
               Left(Problem.NotFound.Entity(Problem.TypeName.of(Anchor), Problem.Raw(s"$a")))
             case more =>
               Left(
-                Problem.Invalid.Ambiguous.here(Problem.TypeName.of(Anchor), Problem.Raw(s"$a"), Problem.Count.of(more.size.toLong))
+                Problem.Invalid.Ambiguous
+                  .here(Problem.TypeName.of(Anchor), Problem.Raw(s"$a"), Problem.Count.of(more.size.toLong))
               )
 
     private def cut(text: Body, s: Offset, e: Offset): Body =
@@ -569,11 +569,17 @@ object Article:
       def draft: Either[Problem, Draft] =
         (edits, body.filter(_.value.trim.nonEmpty)) match
           case (Nil, None) =>
-            Left(Problem.Invalid.Inconsistent.here(NonEmptyVector.of(Problem.Field("edits"), Problem.Field("body")), Problem.Invalid.Exclusion.OneOf))
+            Left(
+              Problem.Invalid.Inconsistent
+                .here(NonEmptyVector.of(Problem.Field("edits"), Problem.Field("body")), Problem.Invalid.Exclusion.OneOf)
+            )
           case (_ :: _, Some(_)) =>
-            Left(Problem.Invalid.Inconsistent.here(NonEmptyVector.of(Problem.Field("edits"), Problem.Field("body")), Problem.Invalid.Exclusion.OneOf))
-          case (es, None)        => Right(Draft.Edits(es))
-          case (Nil, Some(b))    => Right(Draft.Body(b))
+            Left(
+              Problem.Invalid.Inconsistent
+                .here(NonEmptyVector.of(Problem.Field("edits"), Problem.Field("body")), Problem.Invalid.Exclusion.OneOf)
+            )
+          case (es, None)     => Right(Draft.Edits(es))
+          case (Nil, Some(b)) => Right(Draft.Body(b))
     object ArticleCheckRequest:
       given Schema[ArticleCheckRequest] = KindlingsSchema
         .derived[ArticleCheckRequest]

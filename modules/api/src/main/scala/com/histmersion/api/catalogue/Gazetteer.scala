@@ -269,29 +269,33 @@ object Gazetteer:
     Lpf.readFeature(j, Place.KindValue(Place.Kind.Site), ordinal).flatMap { in =>
       val f = j.asObject.getOrElse(JsonObject.empty)
       val raw = str(f, "@id", "id").orElse(f("properties").flatMap(_.asObject).flatMap(str(_, "@id", "id", "pid")))
-      raw.toRight(Problem.Invalid.Missing(Problem.Field("@id"), Vector(Problem.Field(s"features"), Problem.Field(s"$ordinal")))).map { ref =>
-        val own = ExternalId.parse(ExternalId.Reference(ref))
-        val names = readNames(f)
-        val label = in.place.label.value
-        val all = if names.exists(_.name.value == label) then names else GazName(GazName.Name(label)) :: names
-        GazRecord(
-          ref = GazRecord.Ref(own.map(_.key.value).getOrElse(ref)),
-          own = own,
-          placeId = placeIdFor(own, PlaceRef(ref), dataset),
-          label = GazRecord.Label(label),
-          kind = GazRecord.Kind(in.place.kind.value),
-          geometry = in.place.geometry.map(g => GazGeometry.GeoJson(GazGeometry.GeoJson.Text(g.value))),
-          span = f("when").orElse(f("properties").flatMap(_.asObject).flatMap(_("when"))).fold(Span.always)(span),
-          names = mergeNames(all),
-          links = readLinks(f).filterNot(l => own.contains(l.id)),
-          source = in.place.source
-            .map(s => GazRecord.Source(s.value))
-            .orElse(defaultSource.map(k => GazRecord.Source(k.value))),
-          properties = in.place.properties.map(p => GazRecord.Properties(p.value)),
-          descriptions = readDescriptions(f),
-          itemClass = f("properties").flatMap(_.asObject).flatMap(str(_, "class")).map(c => GazRecord.ItemClass(c))
+      raw
+        .toRight(
+          Problem.Invalid.Missing(Problem.Field("@id"), Vector(Problem.Field(s"features"), Problem.Field(s"$ordinal")))
         )
-      }
+        .map { ref =>
+          val own = ExternalId.parse(ExternalId.Reference(ref))
+          val names = readNames(f)
+          val label = in.place.label.value
+          val all = if names.exists(_.name.value == label) then names else GazName(GazName.Name(label)) :: names
+          GazRecord(
+            ref = GazRecord.Ref(own.map(_.key.value).getOrElse(ref)),
+            own = own,
+            placeId = placeIdFor(own, PlaceRef(ref), dataset),
+            label = GazRecord.Label(label),
+            kind = GazRecord.Kind(in.place.kind.value),
+            geometry = in.place.geometry.map(g => GazGeometry.GeoJson(GazGeometry.GeoJson.Text(g.value))),
+            span = f("when").orElse(f("properties").flatMap(_.asObject).flatMap(_("when"))).fold(Span.always)(span),
+            names = mergeNames(all),
+            links = readLinks(f).filterNot(l => own.contains(l.id)),
+            source = in.place.source
+              .map(s => GazRecord.Source(s.value))
+              .orElse(defaultSource.map(k => GazRecord.Source(k.value))),
+            properties = in.place.properties.map(p => GazRecord.Properties(p.value)),
+            descriptions = readDescriptions(f),
+            itemClass = f("properties").flatMap(_.asObject).flatMap(str(_, "class")).map(c => GazRecord.ItemClass(c))
+          )
+        }
     }
 
   def dataset(top: JsonObject, sidecar: Option[JsonObject] = None): LpfDataset =
@@ -322,8 +326,8 @@ object Gazetteer:
         .toMap
     def get(k: String): Option[String] = (row.get((k)).filter(_.nonEmpty)).map(refactorValue19 => (refactorValue19))
     (get(("id")), get(("title"))) match
-      case (None, _)                => Left(Problem.Invalid.Missing(Problem.Field("id"), Vector(Problem.Field(s"line $line"))))
-      case (_, None)                => Left(Problem.Invalid.Missing(Problem.Field("title"), Vector(Problem.Field(s"line $line"))))
+      case (None, _) => Left(Problem.Invalid.Missing(Problem.Field("id"), Vector(Problem.Field(s"line $line"))))
+      case (_, None) => Left(Problem.Invalid.Missing(Problem.Field("title"), Vector(Problem.Field(s"line $line"))))
       case (Some(ref), Some(title)) =>
         val own = ExternalId.parse(ExternalId.Reference(ref))
         val variants = get(("variants")).toList.flatMap((_).split(";").toList).map(_.trim).filter(_.nonEmpty).map { v =>

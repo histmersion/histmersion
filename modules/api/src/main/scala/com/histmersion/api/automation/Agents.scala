@@ -54,12 +54,20 @@ object Agents:
       val t = (s).value.trim
       t.indexOf(':') match
         case -1 =>
-          Left(Invalid.Unreadable.here(TypeName.of(Wire), Raw(s"$t"), Vector(Raw("claude-code:opus"), Raw("openai:gpt-5"))))
+          Left(
+            Invalid.Unreadable.here(TypeName.of(Wire), Raw(s"$t"), Vector(Raw("claude-code:opus"), Raw("openai:gpt-5")))
+          )
         case i =>
           val (p, m) = (t.substring(0, i), t.substring(i + 1).trim)
           ProviderKind.parse(com.histmersion.api.automation.ProviderKind.Wire(p), known) match
             case None =>
-              Left(Invalid.Unknown.here(TypeName.of(com.histmersion.api.automation.ProviderKind.Wire), Raw(s"$p"), Vector(Raw(s"${ProviderKind.names(known)}"))))
+              Left(
+                Invalid.Unknown.here(
+                  TypeName.of(com.histmersion.api.automation.ProviderKind.Wire),
+                  Raw(s"$p"),
+                  Vector(Raw(s"${ProviderKind.names(known)}"))
+                )
+              )
             case Some(_) if m.isEmpty => Left(Invalid.Missing(Field("model"), Vector(Field(s"$t"))))
             case Some(k)              => Right(ModelRef(k, Model(m)))
 
@@ -156,13 +164,19 @@ object Agents:
             val dec = nums.map(n => scala.util.Try(BigDecimal(n)).toOption.filter(_ >= 0))
             if model.isEmpty then Left(Invalid.Missing(Field("model"), Vector(Field(s"$e"))))
             else if dec.exists(_.isEmpty) then
-              Left(Invalid.OutOfRange(TypeName.named[Price], Raw(s"$e"), Invalid.Bounds(Some(Raw("0")), None), Vector.empty))
+              Left(
+                Invalid
+                  .OutOfRange(TypeName.named[Price], Raw(s"$e"), Invalid.Bounds(Some(Raw("0")), None), Vector.empty)
+              )
             else
               dec.flatten match
                 case List(in, out)         => Right(ModelRef.Model(model) -> Price(in, out))
                 case List(in, out, cr, cw) => Right(ModelRef.Model(model) -> Price(in, out, Some(cr), Some(cw)))
-                case _ =>
-                  Left(Invalid.Unreadable.here(TypeName.of(Wire), Raw(s"$e"), Vector(Raw("m=3/15"), Raw("m=3/15/0.3/3.75"))))
+                case _                     =>
+                  Left(
+                    Invalid.Unreadable
+                      .here(TypeName.of(Wire), Raw(s"$e"), Vector(Raw("m=3/15"), Raw("m=3/15/0.3/3.75")))
+                  )
       }
       parsed.collect { case Left(m) => m } match
         case Nil  => Right(parsed.collect { case Right(kv) => kv }.toMap)
@@ -193,7 +207,6 @@ object Agents:
     /** The model has no price in `agents.prices`: an error, never a price of zero. */
     private def unpriced(model: ModelRef.Model): Problem =
       Problem.NotFound.Entity(TypeName.named[Price], Raw(s"$model"))
-
 
   val JobKind = AgentJobKinds.Agent.kind.value
 
@@ -383,8 +396,12 @@ object Agents:
 
     def parse(s: Wire): Either[Problem, ModelOverride] =
       (s).value.indexOf('=') match
-        case -1 => Left(Invalid.Unreadable.here(TypeName.of(Wire), Raw(s"${(s).value.trim}"), Vector(Raw("reviewer=claude-code:opus"))))
-        case i  =>
+        case -1 =>
+          Left(
+            Invalid.Unreadable
+              .here(TypeName.of(Wire), Raw(s"${(s).value.trim}"), Vector(Raw("reviewer=claude-code:opus")))
+          )
+        case i =>
           val (r, m) =
             ((s).value.substring(0, i).trim.toLowerCase(java.util.Locale.ROOT), (s).value.substring(i + 1).trim)
           if r.isEmpty then Left(Invalid.Missing(Field("role"), Vector(Field(s"${(s).value.trim}"))))

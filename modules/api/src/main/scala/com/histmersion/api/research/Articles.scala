@@ -59,7 +59,10 @@ object Articles:
   private val Kind = """^[a-z][a-z0-9_-]*$""".r
 
   def notFound(slug: Article.Slug): Api.Error =
-    Api.Error(Problem.NotFound.Entity(Problem.TypeName.of(Article.Slug), Problem.Raw(s"$slug")), Some(Api.Error.Code(Write.CodeNotFound)))
+    Api.Error(
+      Problem.NotFound.Entity(Problem.TypeName.of(Article.Slug), Problem.Raw(s"$slug")),
+      Some(Api.Error.Code(Write.CodeNotFound))
+    )
 
   def kindOf(raw: Article.Kind.Wire): Either[Problem, Article.Kind.Wire] =
     val k = (raw).value.trim.toLowerCase
@@ -220,7 +223,17 @@ object Articles:
     (start, end) match
       case (Some(a), Some(b)) if a <= b => Right(Some(Period(a, b)))
       case (Some(a), Some(b))           =>
-        Left(Problem.Invalid.Inconsistent.here(NonEmptyVector.of(Problem.Field("periodStart"), Problem.Field("periodEnd")), Problem.Invalid.Exclusion.Ordered))
+        Left(
+          Problem.Invalid.Inconsistent.here(
+            NonEmptyVector.of(Problem.Field("periodStart"), Problem.Field("periodEnd")),
+            Problem.Invalid.Exclusion.Ordered
+          )
+        )
       case (None, None) => Right(None)
-      case _ =>
-        Left(Problem.Invalid.Inconsistent.here(NonEmptyVector.of(Problem.Field("periodStart"), Problem.Field("periodEnd")), Problem.Invalid.Exclusion.Together))
+      case _            =>
+        Left(
+          Problem.Invalid.Inconsistent.here(
+            NonEmptyVector.of(Problem.Field("periodStart"), Problem.Field("periodEnd")),
+            Problem.Invalid.Exclusion.Together
+          )
+        )

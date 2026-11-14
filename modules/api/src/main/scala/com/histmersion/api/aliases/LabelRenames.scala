@@ -25,7 +25,12 @@ object LabelRenames:
     if !Shape.matches(to) then
       Left(
         Api.Error(
-          Problem.Invalid.Unreadable(Problem.TypeName.of(Label), Problem.Raw(s"$to"), Vector(Problem.Raw("sea_peoples")), Vector(what)),
+          Problem.Invalid.Unreadable(
+            Problem.TypeName.of(Label),
+            Problem.Raw(s"$to"),
+            Vector(Problem.Raw("sea_peoples")),
+            Vector(what)
+          ),
           Some(Api.Error.Code(Write.CodeInvalid))
         )
       )
