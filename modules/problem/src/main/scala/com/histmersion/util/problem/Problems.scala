@@ -1,5 +1,6 @@
 package com.histmersion
 package util.problem
+import com.histmersion.util.nonempty.NonEmptyVector
 
 /** One problem or several. A function that can fail for several reasons at once returns `Either[Problems, A]`; one that
   * returns `Either[Problem, A]` already conforms. The operations are on [[Problem]]'s companion (`toVector`, `++`,

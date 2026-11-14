@@ -1,6 +1,6 @@
 package com.histmersion
 package cli
-import com.histmersion.util.problem.NonEmptyVector
+import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
 

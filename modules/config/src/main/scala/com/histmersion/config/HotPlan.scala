@@ -1,7 +1,8 @@
 package com.histmersion
 package config
+import com.histmersion.util.nonempty.NonEmptyVector
 
-import com.histmersion.util.problem.{NonEmptyVector, Problem, Problems}
+import com.histmersion.util.problem.{Problem, Problems}
 
 /** The graph logic of a config reload, pure: which nodes a set of changed keys touches, what has to be rebuilt with
   * them (every node that depends on one, transitively), and in which order. The server's `hot.HotGraph` builds and

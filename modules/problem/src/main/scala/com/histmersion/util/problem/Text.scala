@@ -1,5 +1,6 @@
 package com.histmersion
 package util.problem
+import com.histmersion.util.nonempty.NonEmptyVector
 
 import java.time.Instant
 

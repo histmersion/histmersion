@@ -1,6 +1,6 @@
 package com.histmersion
 package server
-import com.histmersion.util.problem.{Legacy, Problem, Problems}
+import com.histmersion.util.problem.{External, Legacy, Problem, Problems}
 import com.histmersion.util.problem.Text.sentence
 
 import hearth.kindlings.optics.syntax.*
@@ -14,7 +14,8 @@ import com.histmersion.util.data.maintenance.PgRelocation
 import com.histmersion.util.process.{Processes, ProcessLaunch, ProcessOutput, RunningProcess}
 import com.histmersion.util.storage.{Location, Storage}
 
-import java.nio.file.{Files, Path}
+import java.nio.charset.StandardCharsets.UTF_8
+import java.nio.file.{Files, Path, StandardCopyOption}
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
 import scala.jdk.CollectionConverters.*
@@ -277,6 +278,63 @@ object Supervisor:
   private val converter = AtomicReference[Option[RunningProcess]](None)
   private val processes: Processes = Processes()
 
+  /** What became of a plugin file at the start. */
+  enum PluginFile derives CanEqual:
+    /** It is not there, or already in the form this version reads. */
+    case Kept
+
+    /** It held a plugin's problem bare, and now holds it in a list. */
+    case Rewritten
+
+  extension (l: Layout)
+    /** The plugin files an earlier version wrote with a bare problem (the set recorded beside the binary, the plugins
+      * index), rewritten once into the list form this one reads; a file that cannot be rewritten is left as it is, and
+      * said so.
+      */
+    private def rewritePluginFiles(): Unit =
+      List(
+        l.home.resolve("bin").resolve("histmersion-server.plugin-set.json") -> util.plugins.PluginKit.parseSet,
+        l.data.resolve("plugins").resolve("index.json") -> util.plugins.PluginKit.parseIndex
+      ).foreach { (file, read) =>
+        file.rewrittenOnce(read) match
+          case Right(PluginFile.Rewritten) => scribe.info(s"runtime: rewrote $file into the list form of its problems")
+          case Right(PluginFile.Kept)      => ()
+          case Left(problem)               => scribe.warn(s"runtime: left $file as it is: ${problem.sentence}")
+      }
+
+  extension (file: Path)
+    /** The plugin file brought into the form this version reads ([[util.plugins.PluginKit.listedProblems]]), when it
+      * holds a bare problem; `read` is today's reader of its kind. The new text must read with it; it is written beside
+      * the file and moved over it in one step. A `Left` leaves the file exactly as it was.
+      */
+    private[server] def rewrittenOnce[A](read: String => Either[Problem, A]): Either[Problem, PluginFile] =
+      if !Files.isRegularFile(file) then Right(PluginFile.Kept)
+      else
+        for
+          text <- file.attempt(Problem.Io.Access.Read)(Files.readString(file, UTF_8))
+          listed <- util.plugins.PluginKit.listedProblems(text, s"${file.getFileName}")
+          outcome <- listed.fold[Either[Problem, PluginFile]](Right(PluginFile.Kept)) { rewritten =>
+            read(rewritten).flatMap(_ => file.replacedBy(rewritten)).map(_ => PluginFile.Rewritten)
+          }
+        yield outcome
+
+    /** `text` written beside the file, then moved over it in one step; the scratch file is removed when that fails. */
+    private def replacedBy(text: String): Either[Problem, Unit] =
+      val scratch = file.resolveSibling(s"${file.getFileName}.rewrite")
+      val written =
+        for
+          _ <- scratch.attempt(Problem.Io.Access.Write)(Files.writeString(scratch, text + "\n", UTF_8))
+          _ <- file.attempt(Problem.Io.Access.Move)(
+            Files.move(scratch, file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
+          )
+        yield ()
+      written.left.foreach(_ => scala.util.Try(Files.deleteIfExists(scratch)))
+      written
+
+    private def attempt[A](op: Problem.Io.Access)(run: => A): Either[Problem, A] =
+      try Right(run)
+      catch case e: java.io.IOException => Left(Problem.Io.File(op, Problem.Io.Path(s"$file"), External.Reported.of(e)))
+
   /** Start (or adopt) the bundled Postgres and the converter, register their shutdown, and return the configuration
     * that points at them. Throws with an actionable message when the bundle is incomplete — the server cannot run
     * without its database.
@@ -291,6 +349,7 @@ object Supervisor:
       )
     List(l.data, l.logs, l.backups, l.uploads, l.bundles).foreach(d => Files.createDirectories(d))
     scribe.info(s"runtime: bundle ${l.home}, data ${l.data}")
+    l.rewritePluginFiles()
     PgRelocation
       .relocate(Storage.at(Location.Postgres, l.pgBin.getParent), PgRelocation.MacOsMode(paths.isMac), processes)
       .foreach(r =>

@@ -1,6 +1,7 @@
 package com.histmersion
 package api.research
-import com.histmersion.util.problem.{NonEmptyVector, Problem}
+import com.histmersion.util.nonempty.NonEmptyVector
+import com.histmersion.util.problem.Problem
 
 import hearth.kindlings.optics.syntax.*
 

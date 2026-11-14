@@ -1,5 +1,6 @@
 package com.histmersion
 package cli
+import com.histmersion.util.nonempty.NonEmptyVector
 
 import com.histmersion.api.Api
 import com.histmersion.api.aliases.LabelRename
@@ -8,7 +9,7 @@ import com.histmersion.api.library.Filter
 import com.histmersion.api.research.{Article, ReviewGoal}
 import com.histmersion.domain.research.Slug
 import com.histmersion.testsupport.ComparedByValue.given
-import com.histmersion.util.problem.{NonEmptyVector, Problem}
+import com.histmersion.util.problem.Problem
 import com.histmersion.cli.CommandLine.given
 import org.rogach.scallop.*
 

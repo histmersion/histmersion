@@ -1,6 +1,7 @@
 package com.histmersion
 package cli
 package commandline
+import com.histmersion.util.nonempty.NonEmptyVector
 
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.automation.GoalsMarkdown
@@ -15,7 +16,7 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.api.research.ReviewGoal
 import com.histmersion.util.console.Console
 import com.histmersion.cli.CommandLine.{given, *}
-import com.histmersion.util.problem.{NonEmptyVector, Problem}
+import com.histmersion.util.problem.Problem
 import org.rogach.scallop.*
 import scala.util.chaining.*
 

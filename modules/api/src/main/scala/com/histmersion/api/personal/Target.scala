@@ -1,8 +1,9 @@
 package com.histmersion
 package api.personal
+import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.api.given
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
-import com.histmersion.util.problem.{NonEmptyVector, Problem}
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Problem.{Field, Invalid, Raw, TypeName}
 
 import com.histmersion.api.json.NewtypeCodecs.given

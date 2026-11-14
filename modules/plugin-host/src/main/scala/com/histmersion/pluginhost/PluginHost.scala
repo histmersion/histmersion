@@ -1,7 +1,8 @@
 package com.histmersion
 package pluginhost
+import com.histmersion.util.nonempty.NonEmptyVector
 
-import com.histmersion.util.problem.{External, NonEmptyVector, Problem, Problems}
+import com.histmersion.util.problem.{External, Problem, Problems}
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.config.EnvOverrides
 import com.histmersion.api.Sha256

@@ -1,6 +1,7 @@
 package com.histmersion
 package server.plugins
 
+import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.util.problem.{Legacy, Problem, Problems}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.plugin.Header
@@ -211,7 +212,7 @@ object RelinkPlugins:
       PluginDescription.Id(""),
       PluginDescription.Version(""),
       PluginDescription.SpiVersion(0),
-      error = Some(Problem.Unclassified(Legacy.Text(error)))
+      error = Some(NonEmptyVector.of(Problem.Unclassified(Legacy.Text(error))))
     )
 
   private def fromJar(c: Class[?], jar: Path): Boolean =
@@ -255,7 +256,7 @@ object RelinkPlugins:
       st.map(_.provides).getOrElse(Nil),
       access,
       st.filter(s => s.state == PluginState.Failed.wire || s.state == PluginState.Refused.wire)
-        .flatMap(s => Problems.from(s.errors.toVector))
+        .flatMap(s => NonEmptyVector.from(s.errors.toVector))
     )
 
   // ── check ─────────────────────────────────────────────────────────────────────────────────────

@@ -1,11 +1,12 @@
 package com.histmersion
 package api
 package problem
+import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 
-import util.problem.{External, NonEmptyVector, Problem, Problems}
+import util.problem.{External, Problem, Problems}
 import util.problem.Problem.*
 import Column.stored
 import Answer.{answer, decoded, entry, problem, retryAfter, status}

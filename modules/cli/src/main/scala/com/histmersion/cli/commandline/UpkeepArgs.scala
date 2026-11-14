@@ -1,6 +1,7 @@
 package com.histmersion
 package cli
 package commandline
+import com.histmersion.util.nonempty.NonEmptyVector
 
 import com.histmersion.util.problem.{Legacy, Problem}
 import hearth.kindlings.optics.syntax.*
@@ -16,7 +17,7 @@ import com.histmersion.util.console.Console
 import com.histmersion.api.Api
 import com.histmersion.api.library.AcquisitionWorkApi
 import com.histmersion.cli.CommandLine.{given, *}
-import com.histmersion.util.problem.{NonEmptyVector, Problem}
+import com.histmersion.util.problem.Problem
 import org.rogach.scallop.*
 import scala.util.chaining.*
 import com.histmersion.api.automation.Queue

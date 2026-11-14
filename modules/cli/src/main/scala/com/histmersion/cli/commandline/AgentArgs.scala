@@ -1,6 +1,7 @@
 package com.histmersion
 package cli
 package commandline
+import com.histmersion.util.nonempty.NonEmptyVector
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson.*
@@ -22,7 +23,7 @@ import com.histmersion.api.automation.Goal
 import com.histmersion.api.Paging
 import com.histmersion.api.automation.Approval
 import com.histmersion.cli.CommandLine.{given, *}
-import com.histmersion.util.problem.{NonEmptyVector, Problem}
+import com.histmersion.util.problem.Problem
 import org.rogach.scallop.*
 import scala.util.chaining.*
 
