@@ -1842,7 +1842,7 @@ _No source 'zqnone2000_x'_
 == PATCH zqgamma1975_kings: refused: a stale token
 412 {
   "code" : "precondition_failed",
-  "message" : "Citekey 'zqgamma1975_kings' has moved on: you sent TS, it is now TS"
+  "message" : "citekey 'zqgamma1975_kings' has moved on: you sent TS, it is now TS — read it again and re-apply your change"
 }
 == PATCH zqgamma1975_kings: refused: an edge from another source
 400 {

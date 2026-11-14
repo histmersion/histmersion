@@ -129,7 +129,7 @@ class PortalParsersSuite extends munit.FunSuite:
       row.mapObject(_.updated("License [URI]", Json.arr(Json.fromString("https://example.org/t")))),
       licences
     )
-    assert(odd.toOption.get.rights.left.exists(_.sentence.contains(": unknown Licence '")))
+    assert(odd.toOption.get.rights.left.exists(_.sentence.contains(": unknown licence '")))
     assert(
       OpenContext
         .record(row, LicenceReader.Unread)
@@ -137,7 +137,7 @@ class PortalParsersSuite extends munit.FunSuite:
         .get
         .rights
         .left
-        .exists(_.sentence.contains(": unknown Licence '")),
+        .exists(_.sentence.contains(": unknown licence '")),
       "a host that lends no reading: no licence is readable, so none is stated"
     )
 

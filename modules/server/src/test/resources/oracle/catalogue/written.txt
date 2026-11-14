@@ -1286,7 +1286,7 @@
 == attestation refused
 400 {
   "code" : "invalid",
-  "message" : "unknown AttestationTarget 'planet' (one of: finding, event, event_dating, place, edge)"
+  "message" : "unknown attestation target 'planet' (one of: finding, event, event_dating, place, edge)"
 }
 == attestation missing source
 404 {

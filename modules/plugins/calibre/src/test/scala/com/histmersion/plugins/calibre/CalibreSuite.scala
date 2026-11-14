@@ -423,7 +423,7 @@ class CalibreSuite extends munit.FunSuite:
       Calibre(cfg(), quiet)
         .set(Calibre.Book.Id(1), List(Calibre.Field.Name("formats") -> Calibre.Field.Value("x")))
         .left
-        .exists(_.sentences.mkString("; ").contains("unknown Calibre.Field.Name 'formats'"))
+        .exists(_.sentences.mkString("; ").contains("unknown field name 'formats'"))
     )
     assert(
       Calibre(cfg(), quiet)
@@ -521,7 +521,7 @@ class CalibreSuite extends munit.FunSuite:
       Calibre(cfg(), none)
         .replaceFormat(Calibre.Book.Id(1567), f)
         .left
-        .exists(_.sentences.mkString("; ").contains("no Calibre.Book.Id '1567'"))
+        .exists(_.sentences.mkString("; ").contains("no book id '1567'"))
     )
     assert(!none.commands.exists(_.exists(_.value == "add_format")))
     val quiet = RecordingShell()

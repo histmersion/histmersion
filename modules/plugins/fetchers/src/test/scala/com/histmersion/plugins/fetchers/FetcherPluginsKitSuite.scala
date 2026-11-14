@@ -112,7 +112,7 @@ class FetcherPluginsKitSuite extends munit.FunSuite:
     assert(
       h.fetch(WorkKey(archive = Some(WorkKey.Archive("zqbook"))))
         .answers
-        .exists(_.why.sentence.contains("no Copy 'zqbook'"))
+        .exists(_.why.sentence.contains("no copy 'zqbook'"))
     )
 
   // ── the open-access indexes ─────────────────────────────────────────────────────────────────

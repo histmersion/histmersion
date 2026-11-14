@@ -17974,7 +17974,7 @@ _unsupported unit='nonsense' — use sources, findings or starts_
 == POST /api/query SET TRANSACTION READ WRITE
 400 {
   "code" : null,
-  "message" : "unknown Query.Statement 'SET' (one of: SELECT, WITH)"
+  "message" : "unknown query statement 'SET' (one of: SELECT, WITH)"
 }
 == POST /api/query WITH x AS (DELETE FROM sources RETURNING 1) SELECT * FROM x
 400 {

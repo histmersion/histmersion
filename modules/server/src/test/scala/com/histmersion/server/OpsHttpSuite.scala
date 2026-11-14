@@ -144,10 +144,10 @@ class OpsHttpSuite extends DbSuite:
       // listing ever returns, and a malformed created_at was a 500 from `?::timestamptz`.
       val (badS, badB) = post(s"$url/api/queue/acquire", """{"text":"zzhttp bad","status":"pending"}""")
       assertEquals(badS, 400, badB)
-      assert(badB.contains("unknown Queue.QueueItem.Status 'pending'"), badB)
+      assert(badB.contains("unknown queue item status 'pending'"), badB)
       val (cs2, cb2) = post(s"$url/api/queue/acquire", """{"text":"zzhttp bad date","createdAt":"yesterday"}""")
       assertEquals(cs2, 400, cb2)
-      assert(cb2.contains("is not a Queue.QueueItem.CreatedAt"), cb2)
+      assert(cb2.contains("is not a queue item creation time"), cb2)
       assertEquals(patch(s"$url/api/queue/items/$id", """{"status":"pending"}""")._1, 400)
       // the web UI's editor: a blank text is refused, a blank topic clears it, and the rest stays
       val (es2, eb2) = post(s"$url/api/queue/tasks", """{"text":"zzhttp edit me","topic":"Books"}""")

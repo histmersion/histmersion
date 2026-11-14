@@ -201,7 +201,7 @@ object Source:
       val kind = Problem.TypeName.named[DeleteBlocker.Kind]
       val referred = blockers.groupBy(_.kind).toVector.sortBy(_._1.ordinal).map { (k, bs) =>
         Problem.Conflict.Referenced(
-          Problem.TypeName.of(com.histmersion.api.library.Citekey),
+          Problem.TypeName.of(Citekey),
           Problem.Raw(s"$ck"),
           Problem.TypeName(s"$kind.${k.productPrefix}"),
           Problem.Count.of(bs.size.toLong)
@@ -211,7 +211,7 @@ object Source:
         .from(referred)
         .getOrElse(
           Problem.Conflict.WrongState(
-            Problem.TypeName.of(com.histmersion.api.library.Citekey),
+            Problem.TypeName.of(Citekey),
             Problem.Raw(s"$ck"),
             Problem.Conflict.State("blocked"),
             Vector.empty
@@ -716,7 +716,7 @@ object Source:
           else
             Left(
               Problem.Conflict.Stale(
-                Problem.TypeName.of(com.histmersion.api.library.Citekey),
+                Problem.TypeName.of(Citekey),
                 Problem.Raw(s"${existing.citekey}"),
                 Problem.Conflict.Stamp(s"$want"),
                 Problem.Conflict.Stamp(s"$actual")

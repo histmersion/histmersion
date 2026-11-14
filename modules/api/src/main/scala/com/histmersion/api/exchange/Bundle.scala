@@ -18,6 +18,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Sha256
 import com.histmersion.api.ByteCount
 import com.histmersion.api.library.Citekey
+import com.histmersion.api.automation.Queue
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Year
@@ -1030,7 +1031,7 @@ object Bundle:
       text: QueueItem.Text,
       topic: Option[QueueItem.Topic],
       status: QueueItem.Status,
-      reason: Option[com.histmersion.api.automation.Queue.Rationale],
+      reason: Option[Queue.Rationale],
       createdAt: QueueItem.CreatedAt,
       doneAt: Option[QueueItem.DoneAt],
       updatedAt: QueueItem.UpdatedAt,

@@ -85,7 +85,7 @@ class AcquireMatchSuite extends munit.FunSuite:
   test("a DOI in the item's reason closes it too"):
     val withReason = item(QueueItem.Id(3), QueueItem.Text("Kristiansen's Brill volume"))
       .modify(_.reason)
-      .setTo(Some(com.histmersion.api.automation.Queue.Rationale("doi 10.1163/9789004441385")))
+      .setTo(Some(Queue.Rationale("doi 10.1163/9789004441385")))
     assertEquals(
       AcquireMatch.decide(
         List(withReason),

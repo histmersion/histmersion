@@ -206,7 +206,7 @@ class PluginHostSuite extends munit.FunSuite:
     assertEquals(errs.keySet, Set("a", "B_x", "c", "order"))
     assertEquals(errs(Plugin.Info.Id("a")), Problem.Plugin.Load(Problem.Plugin.Id("a"), Problem.Plugin.Fault.Duplicate))
     assert(errs(Plugin.Info.Id("c")).sentence.contains("built against plugin SPI 2; this Histmersion speaks SPI 1"))
-    assert(errs(Plugin.Info.Id("B_x")).sentence.contains("'B_x' is not a RegistryName"))
+    assert(errs(Plugin.Info.Id("B_x")).sentence.contains("'B_x' is not a registry name"))
     assertEquals(
       errs(Plugin.Info.Id("order")),
       Problem.Conflict.AlreadyExists(Problem.TypeName.of(Plugin.Info.Id), Problem.Raw("order"))
@@ -508,7 +508,7 @@ class PluginHostSuite extends munit.FunSuite:
     assertEquals(st.state.value: String, PluginState.Failed.wire.value: String)
     assert(
       st.errors.exists(e =>
-        e.sentence.contains("class org.example.xml.Elem is missing") && e.sentence.contains("histmersion plugin add")
+        e.sentence.contains("class 'org.example.xml.Elem' is missing") && e.sentence.contains("histmersion plugin add")
       ),
       st.errors
     )
@@ -551,7 +551,7 @@ class PluginHostSuite extends munit.FunSuite:
     )
     val (g3, _) = build(List(MakerPlugin()), """histmersion.plugins.maker { enabled = true, vault = "Bad_Name" }""")
     assert(
-      statusOf(g3, "maker").errors.exists(_.sentence.contains("'Bad_Name' is not a RegistryName")),
+      statusOf(g3, "maker").errors.exists(_.sentence.contains("'Bad_Name' is not a registry name")),
       statusOf(g3, "maker")
     )
 

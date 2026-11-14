@@ -293,7 +293,7 @@ class KeyedParsersSuite extends munit.FunSuite:
     )
     assertEquals(
       rs(2).rights.left.toOption.map(_.sentence),
-      Some("/9200999/fixture_mycenae_nc: unknown Licence 'http://rightsstatements.org/vocab/NoC-NC/1.0/'")
+      Some("/9200999/fixture_mycenae_nc: unknown licence 'http://rightsstatements.org/vocab/NoC-NC/1.0/'")
     )
 
   test("Europeana: licence short names for the credit line"):

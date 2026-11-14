@@ -59,11 +59,11 @@ object Agents:
           )
         case i =>
           val (p, m) = (t.substring(0, i), t.substring(i + 1).trim)
-          ProviderKind.parse(com.histmersion.api.automation.ProviderKind.Wire(p), known) match
+          ProviderKind.parse(ProviderKind.Wire(p), known) match
             case None =>
               Left(
                 Invalid.Unknown.here(
-                  TypeName.of(com.histmersion.api.automation.ProviderKind.Wire),
+                  TypeName.of(ProviderKind.Wire),
                   Raw(s"$p"),
                   ProviderKind.wires(known).map(w => Raw(s"$w"))
                 )
@@ -286,7 +286,7 @@ object Agents:
         Invalid.Missing.here(Field("citekey"))
       ),
       Option.when(Option(title).forall(_.value.trim.isEmpty))(
-        Invalid.Missing.here(Field("title"))
+        Problem.Content.Proposal(Problem.Content.Requirement.ExactTitle, Problem.Where("title"))
       ),
       Option.when(year.isEmpty && recordYear.isDefined)(
         Invalid.Missing.here(Field("year"))

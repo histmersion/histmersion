@@ -142,7 +142,7 @@ class HotGraphSuite extends munit.FunSuite:
         f.graph
           .node[Int](Hot.Graph.Def.Name("pool"))(_ => Right(1))
           .swap
-          .exists(_.sentence.contains("HotNode.Name 'pool' already exists"))
+          .exists(_.sentence.contains("hot node name 'pool' already exists"))
       )
     }
 

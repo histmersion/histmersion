@@ -101,5 +101,5 @@ class GazetteerPluginsKitSuite extends munit.FunSuite:
     )
     assertEquals(
       missing.readGazetteer(Registries.GazetteerSourcesKey("nowhere")).failure.map(_.sentence),
-      Some("no GazetteerSource 'nowhere'")
+      Some("no gazetteer source 'nowhere'")
     )

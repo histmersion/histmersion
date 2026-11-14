@@ -246,7 +246,7 @@ class KeyedCollectionsSuite extends munit.FunSuite:
       r.rejected.map(_.key.value).sorted,
       List(
         "its dcterms:spatial names another place on the map",
-        "unknown Licence 'http://rightsstatements.org/vocab/NoC-NC/1.0/'"
+        "unknown licence 'http://rightsstatements.org/vocab/NoC-NC/1.0/'"
       )
     )
     assertEquals(http.requests.size, 1, "a dry run never reads the Record API")

@@ -478,7 +478,7 @@ class CompileArticleSuite extends munit.FunSuite:
         Goal.Plans.ArticleDraft.Filter("f"),
         corpus,
         last = Last(true)
-      ).left.exists(_.exists(_.sentence.contains("no Article.Section '## Nope'")))
+      ).left.exists(_.exists(_.sentence.contains("no article section '## Nope'")))
     )
     // the required sections are not demanded of an extension
     assert(

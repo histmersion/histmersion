@@ -15,34 +15,36 @@ object Text:
   extension (problem: Problem)
     /** The sentence that says what failed. */
     def sentence: String = problem match
-      case Invalid.Malformed(t, c, raw, at)    => s"${path(at)}'$raw' is not a ${t.short}: ${c.description}"
-      case Invalid.Unknown(t, raw, known, at)  => s"${path(at)}unknown ${t.short} '$raw'${oneOf(known)}"
-      case Invalid.Unreadable(t, raw, eg, at)  => s"${path(at)}'$raw' is not a ${t.short}${forExample(eg)}"
+      case Invalid.Malformed(t, c, raw, at)    => s"${path(at)}'$raw' is not ${t.aNoun}: ${c.description}"
+      case Invalid.Unknown(t, raw, known, at)  => s"${path(at)}unknown ${t.noun} '$raw'${oneOf(known)}"
+      case Invalid.Unreadable(t, raw, eg, at)  => s"${path(at)}'$raw' is not ${t.aNoun}${forExample(eg)}"
       case Invalid.Missing(field, at)          => s"${path(at)}$field is required"
       case Invalid.Undeclared(field, ds, at)   => s"${path(at)}unknown key '$field'${oneOf(ds.map(d => Raw(s"$d")))}"
       case Invalid.Wrapped(_, raw, member, at) =>
-        s"${path(at)}a $raw is not the value itself: give its \"$member\" member"
+        s"${path(at)}a '$raw' is not the value itself: give its \"$member\" member"
       case Invalid.StoredOn(_, item, owner, at) =>
         s"${path(at)}$item is stored on '$owner', not here: patch '$owner' to record it"
       case Invalid.Ambiguous(t, raw, n, at) =>
-        s"${path(at)}the ${t.short} '$raw' matches $n places — quote more of it so it matches one"
-      case Invalid.Repeated(t, raw, at)        => s"${path(at)}${t.short} '$raw' is given more than once"
+        s"${path(at)}the ${t.noun} '$raw' matches $n places — quote more of it so it matches one"
+      case Invalid.Repeated(t, raw, at)        => s"${path(at)}${t.noun} '$raw' is given more than once"
       case Invalid.Misplaced(field, under, at) => s"${path(at)}'$field' belongs under '$under' ($under.$field)"
-      case Invalid.OutOfRange(t, raw, b, at)   => s"${path(at)}${t.short} $raw is ${b.range}"
+      case Invalid.OutOfRange(t, raw, b, at)   => s"${path(at)}${t.noun} $raw is ${b.range}"
       case Invalid.Inconsistent(fs, rule, at)  => s"${path(at)}${rule.of(fs)}"
       case Invalid.Reference(form, at)         => s"${path(at)}${form.said}"
       case NotFound.Entity(t, key) if t.short == "Citekey" => s"No source '$key'"
-      case NotFound.Entity(t, key)                         => s"no ${t.short} '$key'"
+      case NotFound.Entity(t, key)                         => s"no ${t.noun} '$key'"
       case NotFound.Copy(work)                             => s"no legal open-access PDF found for $work"
-      case Conflict.AlreadyExists(t, key)                  => s"${t.short} '$key' already exists"
-      case Conflict.Renamed(t, asked, now)     => s"${t.short} '$asked' was renamed to '$now' — write to '$now' instead"
-      case Conflict.Stale(t, key, sent, now)   => s"${t.short} '$key' has moved on: you sent $sent, it is now $now"
-      case Conflict.WrongState(t, key, is, ws) => s"${t.short} '$key' is $is; this needs ${ws.mkString(" or ")}"
+      case Conflict.AlreadyExists(t, key)                  => s"${t.noun} '$key' already exists"
+      case Conflict.Renamed(t, asked, now)   => s"${t.noun} '$asked' was renamed to '$now' — write to '$now' instead"
+      case Conflict.Stale(t, key, sent, now) =>
+        s"${t.noun} '$key' has moved on: you sent $sent, it is now $now — read it again and re-apply your change"
+      case Conflict.WrongState(t, key, is, ws) => s"${t.noun} '$key' is $is; this needs ${ws.mkString(" or ")}"
       case Conflict.Busy(activity)             => activity.running
-      case Conflict.Referenced(t, key, by, n)  => s"${t.short} '$key' is referred to by $n ${by.short}"
-      case Refused.Policy(rule)                => rule.said
-      case Refused.Quota(limit, used, cap, at) => s"${limit.named} is spent: $used of $cap${until(at)}"
-      case Refused.Disabled(feature, setting)  => s"$feature is switched off ($setting)"
+      case Conflict.Referenced(t, key, by, n)  =>
+        s"${t.noun} '$key' is referred to by ${by.counted(n)} — remove those references first (there is no override)"
+      case Refused.Policy(rule)                   => rule.said
+      case Refused.Quota(limit, used, cap, at)    => s"${limit.named} is spent: $used of $cap${until(at)}"
+      case Refused.Disabled(feature, setting)     => s"$feature is switched off ($setting)"
       case Upstream.Http(name, url, st, body, at) => s"${path(at)}$name answered HTTP $st at $url — $body"
       case Upstream.Challenged(name, url, st, at) =>
         s"${path(at)}$name answered HTTP $st at $url with a bot-protection challenge, not the page"
@@ -95,7 +97,7 @@ object Text:
       */
     def reason: String = problem match
       case Plugin.Rejected(_, _, why)            => why.said
-      case NotFound.Entity(t, _)                 => s"no such ${t.short}"
+      case NotFound.Entity(t, _)                 => s"no such ${t.noun}"
       case Invalid.Malformed(t, c, raw, _)       => Invalid.Malformed(t, c, raw, Vector.empty).sentence
       case Invalid.Unknown(t, raw, known, _)     => Invalid.Unknown(t, raw, known, Vector.empty).sentence
       case Invalid.Unreadable(t, raw, eg, _)     => Invalid.Unreadable(t, raw, eg, Vector.empty).sentence
@@ -120,6 +122,147 @@ object Text:
     def short: String =
       val named = s"$typeName".split('.').toVector.dropWhile(_.headOption.forall(_.isLower))
       (if named.size > 1 && named.lastOption.contains("Wire") then named.dropRight(1) else named).mkString(".")
+
+  extension (typeName: TypeName)
+    /** The type as a reader names it, in English, derived from its name: the words of its own name, read in the
+      * singular, qualified by the type it is nested in when its own name is one word (`Source.Status` is `source
+      * status`, `Queue.QueueItem.Id` is `queue item id`, `Article.Edits.Anchor` is `edit anchor`, `Agents.ModelRef` is
+      * `model reference`, `MergeResolutions` is `merge resolution`). A `Wire` or `Spec` type is the written form of the
+      * type it is nested in and is named by it (`ProviderKind.Wire` is `provider kind`, `LimitSpec.Window` is `limit
+      * window`); a case of a `Kind` enum is named by itself (`DeleteBlocker.Kind.Job` is `job`); a request record does
+      * not qualify (`Place.Add.Kind` is `place kind`); an abbreviation is spelled out ([[Spelled]]). It may read
+      * loosely; it never shows a package, a dot or a code name.
+      */
+    def noun: String =
+      val named = s"$typeName".split('.').toVector.filter(_.nonEmpty).dropWhile(_.headOption.forall(_.isLower))
+      val segments = named.reverse.dropWhile(s => named.size > 1 && FormSegments(s)).reverse
+      segments.lastOption.fold(s"$typeName".toLowerCase) { own =>
+        val named = nounWords(own)
+        val timed = named.size > 1 && named.last == "at"
+        val ownWords = if timed then named.dropRight(1).map(w => Happened.getOrElse(w, w)) :+ "time" else named
+        val enclosing =
+          segments.dropRight(1).reverse.dropWhile(Transparent).headOption.filterNot(_ == "Kind").map(nounWords)
+        val qualified = enclosing match
+          case Some(outer) if ownWords.size == 1 && outer.contains(ownWords.head) => ownWords
+          case Some(outer) if ownWords.size == 1 || timed                         => outer.map(singular) ++ ownWords
+          case _                                                                  => ownWords
+        val read = Units.get(qualified.last) match
+          case Some(unit) if qualified.size > 1 => qualified.dropRight(1) ++ Vector("in", unit)
+          case _                                => qualified.dropRight(1) :+ singular(qualified.last)
+        read.flatMap(w => Spelled.getOrElse(w, w).split(' ')).mkString(" ")
+      }
+
+    /** The noun after `a` or `an`. */
+    def aNoun: String = a(typeName.noun)
+
+    /** The noun counted: `1 article`, `3 findings`. */
+    def counted(n: Count): String = if s"$n" == "1" then s"$n ${typeName.noun}" else s"$n ${plural(typeName.noun)}"
+
+  /** The segments that name the written form of the type they are nested in, not a type of their own. */
+  private val FormSegments = Set("Wire", "Spec", "Written", "T")
+
+  /** The records a request or a view is nested in, named for what is done (`Place.Add.Kind` is a place's kind): they do
+    * not qualify a noun, the type they are nested in does.
+    */
+  private val Transparent = Set("Add", "Put", "Set", "Patch", "Edit", "Info", "Input", "Request")
+
+  /** Abbreviations and code words in a type's name, spelled as a reader writes them. */
+  private val Spelled: Map[String, String] = Map(
+    "ref" -> "reference",
+    "pct" -> "percentage",
+    "usd" -> "dollar amount",
+    "bbox" -> "bounding box",
+    "lang" -> "language",
+    "geojson" -> "GeoJSON",
+    "json" -> "JSON",
+    "pg" -> "Postgres",
+    "iiif" -> "IIIF",
+    "ai" -> "AI",
+    "http" -> "HTTP",
+    "id" -> "id",
+    "int" -> "whole number",
+    "calibre" -> "Calibre",
+    "citekey" -> "citekey",
+    "doi" -> "DOI",
+    "url" -> "URL",
+    "uri" -> "URI",
+    "isbn" -> "ISBN",
+    "yubikey" -> "YubiKey",
+    "periodo" -> "PeriodO",
+    "wikidata" -> "Wikidata",
+    "pleiades" -> "Pleiades"
+  )
+
+  /** What happened, in a time's name (`CreatedAt` is a `creation time`, qualified by what was created). */
+  private val Happened: Map[String, String] = Map(
+    "created" -> "creation",
+    "updated" -> "update",
+    "done" -> "completion",
+    "checked" -> "check",
+    "started" -> "start",
+    "finished" -> "finish",
+    "decided" -> "decision",
+    "deleted" -> "deletion",
+    "closed" -> "closing"
+  )
+
+  /** A unit a type's name ends in: the value is a quantity in it (`RefreshIntervalMinutes` is `refresh interval in
+    * minutes`).
+    */
+  private val Units: Map[String, String] = Map(
+    "minutes" -> "minutes",
+    "seconds" -> "seconds",
+    "millis" -> "milliseconds",
+    "ms" -> "milliseconds",
+    "hours" -> "hours",
+    "days" -> "days",
+    "bytes" -> "bytes",
+    "pixels" -> "pixels"
+  )
+
+  /** A type name's words, lowercase, with a trailing `Spec` dropped (`LimitSpec` is `limit`): `ModelRef` is `model
+    * ref`, `BBox` is `bbox`, `HTTPMode` is `http mode`.
+    */
+  private def nounWords(segment: String): Vector[String] =
+    val split = segment
+      .replaceAll("([A-Z]+)([A-Z][a-z])", "$1 $2")
+      .replaceAll("([a-z0-9])([A-Z])", "$1 $2")
+      .split(' ')
+      .toVector
+      .filter(_.nonEmpty)
+      .map(_.toLowerCase)
+    val joined = if split.forall(_.length == 1) then Vector(split.mkString) else split
+    val bboxed = joined.mkString(" ").replace("b box", "bbox").replace("yubi key", "yubikey").split(' ').toVector
+    if bboxed.size > 1 && bboxed.last == "spec" then bboxed.dropRight(1) else bboxed
+
+  /** One of a plural word: `resolutions` is `resolution`, `entries` is `entry`; `status`, `class`, `basis` stay. */
+  private def singular(word: String): String =
+    if word.endsWith("ies") && word.length > 4 then s"${word.dropRight(3)}y"
+    else if word == "aliases" || Vector("sses", "xes", "ches", "shes").exists(word.endsWith) then word.dropRight(2)
+    else if Vector("ss", "us", "is").exists(word.endsWith) || !word.endsWith("s") || Uncounted(word) then word
+    else word.dropRight(1)
+
+  /** Words that end in s in the singular too. */
+  private val Uncounted = Set("commons", "news", "series", "species", "alias", "canvas")
+
+  /** Many of a noun phrase: its last word in the plural (`finding` is `findings`, `entry` is `entries`). */
+  def plural(noun: String): String =
+    val (init, last) = noun.splitAt(noun.lastIndexOf(' ') + 1)
+    val many =
+      if last.endsWith("y") && !Vector("ay", "ey", "oy", "uy").exists(last.endsWith) then s"${last.dropRight(1)}ies"
+      else if Vector("s", "x", "ch", "sh").exists(last.endsWith) then s"${last}es"
+      else s"${last}s"
+    s"$init$many"
+
+  /** A noun phrase after `a` or `an`, by its first sound: `an article`, `a queue item id`, `a user`, `an HTTP mode`. */
+  def a(noun: String): String =
+    val first = noun.takeWhile(_ != ' ')
+    val vowelSound =
+      if first.nonEmpty && first.forall(c => c.isUpper || c.isDigit) then "AEFHILMNORSX".contains(first.head)
+      else
+        "aeiou".contains(first.headOption.getOrElse(' ').toLower) &&
+        !Vector("uni", "use", "usu", "uti", "eu", "one").exists(first.toLowerCase.startsWith)
+    s"${if vowelSound then "an" else "a"} $noun"
 
   /** A code name in words: `MergeApply` is `merge apply`. */
   def words(name: String): String = name.flatMap(c => if c.isUpper then s" ${c.toLower}" else s"$c").trim
@@ -309,7 +452,7 @@ object Text:
       case Plugin.Fault.ForeignSpi(speaks) =>
         s"it was built against another plugin SPI; this Histmersion speaks SPI $speaks — rebuild the plugin against SPI $speaks"
       case Plugin.Fault.MissingClass(name) =>
-        s"class $name is missing: the plugin uses a library that is neither part of Histmersion nor installed with it — " +
+        s"class '$name' is missing: the plugin uses a library that is neither part of Histmersion nor installed with it — " +
           "install the plugin with `histmersion plugin add` from a jar published with its POM, which lists its dependencies"
       case Plugin.Fault.Duplicate                   => "another plugin claims its id too"
       case Plugin.Fault.NullComponent               => "it registered null in place of a component"
@@ -377,3 +520,9 @@ object Text:
       case Content.Requirement.StandIn        =>
         "it is a stand-in (a placeholder, TODO or lorem ipsum), not the text: write it, or leave it out"
       case Content.Requirement.TooManyClaims(cap, gave) => s"at most $cap claims per source (you gave $gave)"
+      case Content.Requirement.ExactTitle               =>
+        "it is empty — copy the source's exact title from get_source"
+      case Content.Requirement.ReplaceText =>
+        "a replace with no new text — give the text, or use delete to remove the passage"
+      case Content.Requirement.AnchorInArticle =>
+        "it is not in the article — copy it exactly from the current body (earlier edits included)"

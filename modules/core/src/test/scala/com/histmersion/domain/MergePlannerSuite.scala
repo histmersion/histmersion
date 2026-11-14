@@ -197,7 +197,7 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
       )
     )
     assert(r.resolutionErrors.exists(e => e.value.startsWith("S-00000000") && e.value.contains("stale")))
-    assert(r.resolutionErrors.exists(_.value.contains("unknown MergeDecision.Kind 'sideways'")), r.resolutionErrors)
+    assert(r.resolutionErrors.exists(_.value.contains("unknown merge decision kind 'sideways'")), r.resolutionErrors)
     assertEquals(r.resolutionErrors.size, 5, r.resolutionErrors.mkString("\n"))
     // a rename must be a free citekey
     val taken = plan(res = resolve(coll.id -> MergeResolution.Decision("rename-right:page1959_history"))).plan
@@ -378,11 +378,11 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
       MergeResolutionsFile.Text("bundel: x\npolicy:\n  editions: sometimes\n  colour: red\nresolve: [1, 2]\n")
     )
     val es = bad.left.getOrElse(fail("parsed"))
-    assert(es.exists(_.sentence.contains("unknown MergeResolutions 'bundel'")), es.toString)
+    assert(es.exists(_.sentence.contains("unknown merge resolution 'bundel'")), es.toString)
     assert(
-      es.exists(_.sentence.contains("policy.editions: unknown EditionsPolicy 'sometimes' (one of: merge, separate)"))
+      es.exists(_.sentence.contains("policy.editions: unknown editions policy 'sometimes' (one of: merge, separate)"))
     )
-    assert(es.exists(_.sentence.contains("policy: unknown MergePolicy 'colour'")))
+    assert(es.exists(_.sentence.contains("policy: unknown merge policy 'colour'")))
     assert(es.exists(_.sentence.contains("the yaml data at resolve cannot be decoded")))
     assertEquals(MergeResolutionsFile.parse(MergeResolutionsFile.Text("")), Right(MergeResolutions()))
     assertEquals(

@@ -33,7 +33,7 @@ import java.util.concurrent.{ConcurrentHashMap, ConcurrentLinkedQueue}
 import scala.jdk.CollectionConverters.*
 import com.histmersion.db.*
 import com.histmersion.api.aliases.LabelRename
-import com.histmersion.api.automation.{AgentsMarkdown, RunCompare}
+import com.histmersion.api.automation.{AgentsMarkdown, Queue, RunCompare}
 import com.histmersion.api.library.EdgesPatch
 import com.histmersion.api.library.Edge
 import com.histmersion.api.library.Source
@@ -626,7 +626,8 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     assertEquals(
       retryPoints(retry),
       List(
-        "edit 1 (replace \"Tin came to the Aegean by sea\"): no Article.Edits.Anchor 'Tin came to the Aegean by sea'",
+        "edit 1 (replace \"Tin came to the Aegean by sea\"): " +
+          "anchor: it is not in the article — copy it exactly from the current body (earlier edits included)",
         "you list R1 as applied, but no edit changed the article"
       )
     )
@@ -1271,8 +1272,8 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     assertEquals(item.status, "open")
     val old = items.find(_.id == legacy.id).get
     assertEquals(
-      (old.status, old.reason.map(_.value)),
-      ("done", Some(s"superseded by #${item.id} (one item per article)"))
+      (old.status, old.reason),
+      ("done", Some(Queue.Rationale(s"superseded by #${item.id} (one item per article)")))
     )
     assertEquals(ledgerOf(h).flatMap(_.task).map(_.value), Some(item.id.value))
 
@@ -1340,8 +1341,8 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     )
     val closed = items.find(_.id == item.id).get
     assertEquals(
-      (closed.status, closed.reason.map(_.value)),
-      ("done", Some(s"no MAJOR open after agent run ${r3.id.value.take(8)}"))
+      (closed.status, closed.reason),
+      ("done", Some(Queue.Rationale(s"no MAJOR open after agent run ${r3.id.value.take(8)}")))
     )
     val led = ledgerOf(h).get
     assertEquals(led.task, None)
@@ -1395,8 +1396,8 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
         .exists(_.text.value.startsWith(s"review-article [[$Slug]]: 1 open MAJOR — R1 (Intro)"))
     )
     assertEquals(
-      items.find(_.id == twice.id).map(i => (i.status, i.reason.map(_.value))),
-      Some(("done", Some(s"superseded by #${mine.id} (one item per article)")))
+      items.find(_.id == twice.id).map(i => (i.status, i.reason)),
+      Some(("done", Some(Queue.Rationale(s"superseded by #${mine.id} (one item per article)"))))
     )
     assertEquals(ledgerOf(h).flatMap(_.task).map(_.value), Some(mine.id.value))
 

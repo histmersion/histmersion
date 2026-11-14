@@ -202,7 +202,7 @@ class AiProvidersSuite extends munit.FunSuite:
     assert(
       taken.report.plugins
         .find(_.id.value == "zq-ai")
-        .exists(_.errors.exists(_.sentence.contains("AiProvider 'local' already exists"))),
+        .exists(_.errors.exists(_.sentence.contains("AI provider 'local' already exists"))),
       taken.report.toString
     )
     assert(
@@ -215,13 +215,13 @@ class AiProvidersSuite extends munit.FunSuite:
     assert(
       free.report.plugins
         .find(_.id.value == "zq-ai")
-        .exists(_.errors.exists(_.sentence.contains("AiProvider 'local' already exists"))),
+        .exists(_.errors.exists(_.sentence.contains("AI provider 'local' already exists"))),
       free.report.toString
     )
     assert(!free.registries.aiProviders.contains(Registries.AiProvidersKey("local")))
     val bad = build(List(AiPlugin(Registry.AddId("Not_Kebab"), p)), on())
     assert(
-      bad.report.plugins.head.errors.exists(_.sentence.contains("'Not_Kebab' is not a RegistryName")),
+      bad.report.plugins.head.errors.exists(_.sentence.contains("'Not_Kebab' is not a registry name")),
       bad.report.toString
     )
 

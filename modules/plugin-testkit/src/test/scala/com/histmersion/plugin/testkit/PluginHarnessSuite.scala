@@ -88,7 +88,7 @@ class PluginHarnessSuite extends munit.FunSuite:
   test("the server's own refusals: an unknown id, no defaults, a failed register, a bad setting, disabled"):
     def why(id: Plugin.Info.Id, config: String = ""): String =
       PluginHarness.load(id, config, env = Map.empty).swap.map(_.sentences.mkString("; ")).getOrElse(fail("loaded"))
-    assert(why(Plugin.Info.Id("nope")).contains("no Plugin.Info.Id 'nope'"), why(Plugin.Info.Id("nope")))
+    assert(why(Plugin.Info.Id("nope")).contains("no plugin id 'nope'"), why(Plugin.Info.Id("nope")))
     assert(
       why(Plugin.Info.Id("kit-nodefaults")).contains("META-INF/histmersion/plugins/kit-nodefaults.conf"),
       why(Plugin.Info.Id("kit-nodefaults"))
@@ -292,7 +292,7 @@ class PluginHarnessSuite extends munit.FunSuite:
       h.searchMedia(Registries.MediaCollectionsKey("other"), MediaPlace(MediaPlace.Id("x"), MediaPlace.Label("y")))
         .failure
         .map(_.sentence),
-      Some("no MediaCollection 'other'")
+      Some("no media collection 'other'")
     )
 
   test("events: every part read page by page, each record checked and dated by the server"):

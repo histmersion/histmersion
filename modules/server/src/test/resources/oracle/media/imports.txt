@@ -795,7 +795,7 @@ report: {
     },
     {
       "allowed" : true,
-      "key" : "unknown Licence 'http://rightsstatements.org/vocab/NoC-NC/1.0/'",
+      "key" : "unknown licence 'http://rightsstatements.org/vocab/NoC-NC/1.0/'",
       "n" : 1
     }
   ],
@@ -1599,7 +1599,7 @@ report: {
     },
     {
       "allowed" : true,
-      "key" : "unknown Licence 'http://rightsstatements.org/vocab/NoC-NC/1.0/'",
+      "key" : "unknown licence 'http://rightsstatements.org/vocab/NoC-NC/1.0/'",
       "n" : 1
     }
   ],

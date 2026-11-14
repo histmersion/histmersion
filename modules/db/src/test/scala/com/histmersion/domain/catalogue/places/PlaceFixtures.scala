@@ -195,7 +195,7 @@ object PlaceFixtures:
   def remove(
       ds: DataSource,
       id: com.histmersion.domain.catalogue.Place.Id,
-      reason: Option[com.histmersion.api.catalogue.Place.Rationale]
+      reason: Option[Place.Rationale]
   ): Either[Api.Error, Place.Gone] =
     transact(ds)(PlaceOverrideRepo.remove(BPlaceRow.Id(id.value), reason))
 

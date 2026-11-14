@@ -176,18 +176,18 @@ class BackupSuite extends munit.FunSuite:
   )
 
   test("restoreOutcome: a clean run has no warnings"):
-    assertEquals(Backup.restoreOutcome(Backup.ExitCode(0), Nil), Right(Nil))
+    assertEquals(Backup.restoreOutcome(Problem.Io.ExitCode(0), Nil), Right(Nil))
 
   test("restoreOutcome: exit 1 WITH the 'errors ignored' summary is success with warnings"):
     // this is the pg_dump-18-into-Postgres-16 case: the data restores, one SET is skipped
-    val out = Backup.restoreOutcome(Backup.ExitCode(1), skew)
+    val out = Backup.restoreOutcome(Problem.Io.ExitCode(1), skew)
     assert(out.isRight, out.toString)
     assertEquals(out.toOption.get.size, 2) // the error line and the summary; not the bare "Command was:"
     assert(out.toOption.get.exists(_.value.contains("transaction_timeout")), out.toString)
 
   test("restoreOutcome: exit 1 WITHOUT that summary is a failure, quoting the output"):
     val out = Backup.restoreOutcome(
-      Backup.ExitCode(1),
+      Problem.Io.ExitCode(1),
       List(Backup.ToolOutput("pg_restore: error: could not open input file: No such file"))
     )
     assert(out.isLeft, out.toString)
@@ -202,14 +202,14 @@ class BackupSuite extends munit.FunSuite:
     )
 
   test("restoreOutcome: a failure with no output at all still says something"):
-    assert(Backup.restoreOutcome(Backup.ExitCode(2), Nil).left.exists {
+    assert(Backup.restoreOutcome(Problem.Io.ExitCode(2), Nil).left.exists {
       case Problem.Io.Process(_, Problem.Io.Ending.Exited(code, _)) => code == Problem.Io.ExitCode(2)
       case _                                                        => false
     })
 
   test("restoreOutcome: warnings keep only the notable lines, trimmed"):
     val out = Backup.restoreOutcome(
-      Backup.ExitCode(0),
+      Problem.Io.ExitCode(0),
       List(Backup.ToolOutput(""), Backup.ToolOutput("  pg_restore: warning: x  "), Backup.ToolOutput("chatter"))
     )
     assertEquals(out, Right(List("pg_restore: warning: x")))

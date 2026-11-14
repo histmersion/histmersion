@@ -183,7 +183,10 @@ object Column:
     Content.Requirement.CitesNoSource,
     Content.Requirement.UnknownCitekey,
     Content.Requirement.OutsidePeriod,
-    Content.Requirement.StandIn
+    Content.Requirement.StandIn,
+    Content.Requirement.ExactTitle,
+    Content.Requirement.ReplaceText,
+    Content.Requirement.AnchorInArticle
   )
 
   extension (form: Invalid.Form)

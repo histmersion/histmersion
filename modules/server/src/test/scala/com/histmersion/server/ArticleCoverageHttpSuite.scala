@@ -238,12 +238,12 @@ class ArticleCoverageHttpSuite extends DbSuite:
         assertEquals(
           reasoned.coverage.toList
             .flatMap(_.critiques)
-            .map(p => (p.ref.wire, p.state, p.reason.map(_.value), p.reasonBy)),
+            .map(p => (p.ref.wire, p.state, p.reason, p.reasonBy)),
           List(
             (
               s"$Critic>$Cited2",
               CritiqueState.Reasoned,
-              Some("The article cites it for the wreck's date only."),
+              Some(Coverage.Rationale("The article cites it for the wreck's date only.")),
               Some("person")
             )
           )

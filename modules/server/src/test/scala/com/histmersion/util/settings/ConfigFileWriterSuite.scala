@@ -180,7 +180,7 @@ abstract class ConfigFileWriterSuite(fileAt: Path => SettingsFile) extends munit
         .contains("histmersion.backups.keep must be a number, not text")
     )
     val unknown = refused(f, set(K("backups.kep"), num(1))).message.sentences.mkString(" ")
-    assert(unknown.contains("unknown SettingKey 'histmersion.backups.kep'"), unknown)
+    assert(unknown.contains("unknown setting key 'histmersion.backups.kep'"), unknown)
     assert(refused(f, set(K("backups"), num(1))).message.sentences.mkString(" ").contains("is a block of settings"))
     assertEquals(read(f), Commented)
 
@@ -193,7 +193,7 @@ abstract class ConfigFileWriterSuite(fileAt: Path => SettingsFile) extends munit
     )
     assert(e.isInstanceOf[SettingError.Invalid], s"$e")
     assert(
-      e.message.sentences.mkString(" ").contains("unknown SeaFloorSource 'nonsense' (one of: etopo1, gebco)"),
+      e.message.sentences.mkString(" ").contains("unknown sea floor source 'nonsense' (one of: etopo1, gebco)"),
       e.message
     )
     assertEquals(read(f), Commented)

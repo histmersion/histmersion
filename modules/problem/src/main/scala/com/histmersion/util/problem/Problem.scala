@@ -836,6 +836,15 @@ object Problem:
       /** A stand-in (placeholder, TODO, lorem ipsum) where the text belongs. */
       case StandIn
 
+      /** A probe's answer left the title empty: it is the source's exact title, copied from its record. */
+      case ExactTitle
+
+      /** A replace edit gave no new text: it needs the text, or is a delete. */
+      case ReplaceText
+
+      /** An edit's anchor is not in the article: it quotes the current body exactly, earlier edits included. */
+      case AnchorInArticle
+
       /** At most `cap` claims per source; it gave `gave`. */
       case TooManyClaims(cap: Count, gave: Count)
 

@@ -21,7 +21,12 @@ object Queue:
 
   /** Why an item is on a list, or how it was closed: a rationale, not a failure. */
   type Rationale = Rationale.T
-  object Rationale extends Newtype[String, Pure]
+  object Rationale extends Newtype[String, Pure]:
+    extension (r: Rationale)
+      /** Does it record that the item was ingested as this citekey (`ingested as [[citekey]]`)? */
+      def recordsIngestOf(citekey: Citekey): Boolean = s"$r".contains(ingestTag(citekey))
+
+    def ingestTag(citekey: Citekey): String = s"ingested as [[$citekey]]"
   type Export = Export.T
   object Export extends Newtype[String, Pure]
   type FileText = FileText.T
@@ -176,7 +181,7 @@ object Queue:
       case other                             => Right(other)
 
   def fulfilledReason(prev: Option[Rationale], citekey: Citekey): Rationale =
-    val tag = s"ingested as [[$citekey]]"
+    val tag = Rationale.ingestTag(citekey)
     prev.map(r => s"$r".trim).filter(_.nonEmpty) match
       case Some(p) if p.contains(tag) => Rationale(s"$p")
       case Some(p)                    => Rationale(s"$p · $tag")

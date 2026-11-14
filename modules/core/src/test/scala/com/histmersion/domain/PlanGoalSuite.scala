@@ -78,7 +78,7 @@ class PlanGoalSuite extends munit.FunSuite:
       List(WorkAnswer(WorkAnswer.Doi("not-a-doi"), Rationale("?")))
     )
     val ps = check(bad, Goal.Slug("bronze-age"), taken, Set.empty, caps, last = LastRound(false)).left.toOption.get
-    assert(ps.exists(_.sentence.contains("is not a Slug")), ps)
+    assert(ps.exists(_.sentence.contains("is not a slug")), ps)
     assert(ps.exists(_.sentence.contains("has no title")), ps)
     assert(ps.exists(_.sentence.contains("longer than 40")), ps)
     assert(ps.exists(_.sentence.contains("is not a DOI")), ps)
@@ -120,7 +120,7 @@ class PlanGoalSuite extends munit.FunSuite:
     assertEquals(p.subGoals.map(_.slug), List("good"))
     assertEquals(p.works, Nil)
     assert(
-      warns.exists(_.sentence.contains("not a DOI")) && p.dropped.exists(_.value.contains("is not a Slug")),
+      warns.exists(_.sentence.contains("not a DOI")) && p.dropped.exists(_.value.contains("is not a slug")),
       (warns, p.dropped)
     )
 

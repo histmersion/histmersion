@@ -577,7 +577,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     assert(run.warnings.exists(_.value.contains("year 2019 differs from the upstream record's 2020")), run.warnings)
     val done = QueueRows.get(ds, item.id).get
     assertEquals(done.status, Queue.Done)
-    assert(done.reason.exists(_.value.contains(Ck.value)), done)
+    assert(done.reason.exists(_.recordsIngestOf(ApiCk)), done)
     val log = h.workListView
       .list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll(true))
       .toOption
@@ -632,7 +632,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
       a.startRun(
         RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget, acquireItem = Some(Queue.QueueItem.Id(-7)))
       ).left
-        .exists(_.message.sentence.contains("no Queue.QueueItem.Id '-7'"))
+        .exists(_.message.sentence.contains("no queue item id '-7'"))
     )
 
   test("approvals: approving applies the change once, a second decision is a conflict, rejecting changes nothing"):
@@ -994,7 +994,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     )
     assert(
       refused(ModelOverride(Agents.ModelOverride.Role("extractor"), Agents.ModelOverride.Model("haiku"))).left
-        .exists(_.contains("'haiku' is not a Agents.ModelRef"))
+        .exists(_.contains("'haiku' is not a model reference"))
     )
     assert(
       refused(ModelOverride(Agents.ModelOverride.Role("extractor"), Agents.ModelOverride.Model("local:unpriced"))).left
@@ -1009,7 +1009,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     )
     assertEquals(
       ModelOverride.parse(Agents.ModelOverride.Wire("fixer")).left.map(_.sentence),
-      Left("'fixer' is not a Agents.ModelOverride (e.g. reviewer=claude-code:opus)")
+      Left("'fixer' is not a model override (e.g. reviewer=claude-code:opus)")
     )
     val ok = a
       .startRun(
@@ -1463,9 +1463,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     assert(n.value >= 3, n)
     val after = List(mine, sched, mgr).map(r => connect(ds)(AgentRepo.get(r.id)).get)
     assert(
-      after.forall(r =>
-        r.status.value == "paused" && r.error.contains(Problem.Run.Interrupted)
-      ),
+      after.forall(r => r.status.value == "paused" && r.error.contains(Problem.Run.Interrupted)),
       after
     )
     assertEquals(after.map(_.resumeAt.isDefined), List(false, true, true))

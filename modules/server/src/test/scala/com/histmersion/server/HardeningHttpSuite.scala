@@ -113,7 +113,7 @@ class HardeningHttpSuite extends munit.FunSuite:
     withServer { (url, _) =>
       val (ps, pb) = put(s"$url/api/sources/$traversal", """{"title":"pwn"}""")
       assertEquals(ps, 400, pb)
-      assert(pb.contains("is not a Citekey"), pb)
+      assert(pb.contains("is not a citekey"), pb)
       assertEquals(patch(s"$url/api/sources/$traversal", """{"summary":"x"}""")._1, 400)
       assertEquals(post(s"$url/api/sources/$traversal/reocr", "")._1, 400)
       assertEquals(post(s"$url/api/sources/$traversal/assets", """{"assets":[]}""")._1, 400)

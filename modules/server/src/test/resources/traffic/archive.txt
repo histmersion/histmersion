@@ -221,7 +221,7 @@ refused: 'zqlent' is a lending-only item — borrow it on archive.org; it is not
 GET https://archive.org/metadata/zqnofile
   User-Agent: histmersion/0.1
   -> 200
-refused: no Copy 'zqnofile'
+refused: no copy 'zqnofile'
 
 ## archive import zqbook --format pdf --citekey zqarch_book
 GET https://archive.org/metadata/zqbook

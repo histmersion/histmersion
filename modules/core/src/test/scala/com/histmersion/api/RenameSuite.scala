@@ -42,8 +42,8 @@ class RenameSuite extends munit.FunSuite:
           assert(e.sentence.contains(says), e)
         case Right(k) => fail(s"$to should be refused, got $k")
     refused(Citekeys.RenameToNewRaw("page2024_history"), "already the citekey")
-    refused(Citekeys.RenameToNewRaw("Page 1959"), "is not a Citekey")
-    refused(Citekeys.RenameToNewRaw("../etc"), "is not a Citekey")
+    refused(Citekeys.RenameToNewRaw("Page 1959"), "is not a citekey")
+    refused(Citekeys.RenameToNewRaw("../etc"), "is not a citekey")
     refused(
       Citekeys.RenameToNewRaw("page-1959"),
       "LINK-shaped"

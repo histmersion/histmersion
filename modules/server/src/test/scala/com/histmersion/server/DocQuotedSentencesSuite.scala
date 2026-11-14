@@ -30,10 +30,10 @@ class DocQuotedSentencesSuite extends munit.FunSuite:
 
   test("a shape: … is any text, a lone capital letter one value, the rest itself"):
     assert(
-      Shape.matches("'X' is not a Citekey: Should match …", "'Gimbutas 1956' is not a Citekey: Should match [a-z]+")
+      Shape.matches("'X' is not a citekey: Should match …", "'Gimbutas 1956' is not a citekey: Should match [a-z]+")
     )
     assert(Shape.matches("p needs X Y", "p needs m 1.0"))
-    assert(!Shape.matches("invalid citekey 'X' …", "'Gimbutas 1956' is not a Citekey: Should match [a-z]+"))
+    assert(!Shape.matches("invalid citekey 'X' …", "'Gimbutas 1956' is not a citekey: Should match [a-z]+"))
     assert(!Shape.matches("CORE not asked: …", "CORE asked to wait until 2026-01-01T00:00:00Z (HTTP 429)"))
 
   test("a row is a file, its quote and the shape; comments and blank lines are not rows"):

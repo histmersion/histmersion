@@ -60,14 +60,14 @@ class WorkListControllersSuite extends munit.FunSuite:
         WorkListControllers.ListName("tasks"),
         QueueAdd(Queue.QueueItem.Text("x"), status = Some(Queue.QueueItem.Status("maybe")))
       ).left
-        .exists(_.message.sentence.contains("unknown Queue.QueueItem.Status 'maybe'"))
+        .exists(_.message.sentence.contains("unknown queue item status 'maybe'"))
     )
     assert(
       c.add(
         WorkListControllers.ListName("tasks"),
         QueueAdd(Queue.QueueItem.Text("x"), createdAt = Some(Queue.QueueItem.CreatedAt("yesterday")))
       ).left
-        .exists(_.message.sentence.contains("'yesterday' is not a Queue.QueueItem.CreatedAt"))
+        .exists(_.message.sentence.contains("'yesterday' is not a queue item creation time"))
     )
     assertEquals(
       c.patch(QueueItemId(42), QueuePatch(text = Some(Queue.QueueItem.Text(" "))))

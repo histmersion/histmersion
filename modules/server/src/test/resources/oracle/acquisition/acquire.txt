@@ -363,7 +363,7 @@ job: 200 {"id":"UUID","kind":"acquire_recheck","status":"done","citekey":null,"p
       "checks" : 1,
       "item" : 1,
       "outcome" : "no-copy",
-      "reason" : "checked DAY: no legal copy (archive-org: no copy — archive.org identifier is required; unpaywall: no copy — no Copy '10.5555/zq.gold'; core: no copy — CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — no Copy '10.5555/zq.gold'; pmc: no copy — no Copy '10.5555/zq.gold'; arxiv: no copy — arxiv is required; landing: no copy — no Copy '10.5555/zq.gold'; pmc-text: no copy — no Copy '10.5555/zq.gold'; zq-shelf: no copy — the "
+      "reason" : "checked DAY: no legal copy (archive-org: no copy — archive.org identifier is required; unpaywall: no copy — no copy '10.5555/zq.gold'; core: no copy — CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — no copy '10.5555/zq.gold'; pmc: no copy — no copy '10.5555/zq.gold'; arxiv: no copy — arxiv is required; landing: no copy — no copy '10.5555/zq.gold'; pmc-text: no copy — no copy '10.5555/zq.gold'; zq-shelf: no copy — the "
     },
     {
       "checkedAt" : "TS",
@@ -384,14 +384,14 @@ job: 200 {"id":"UUID","kind":"acquire_recheck","status":"done","citekey":null,"p
       "checks" : 1,
       "item" : 5,
       "outcome" : "no-copy",
-      "reason" : "checked DAY: no legal copy (archive-org: no copy — archive.org identifier is required; unpaywall: no copy — no Copy '10.5555/zq.ref1'; core: no copy — CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — no Copy '10.5555/zq.ref1'; pmc: no copy — no Copy '10.5555/zq.ref1'; arxiv: no copy — arxiv is required; landing: no copy — no Copy '10.5555/zq.ref1'; pmc-text: no copy — no Copy '10.5555/zq.ref1'; zq-shelf: no copy — the "
+      "reason" : "checked DAY: no legal copy (archive-org: no copy — archive.org identifier is required; unpaywall: no copy — no copy '10.5555/zq.ref1'; core: no copy — CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — no copy '10.5555/zq.ref1'; pmc: no copy — no copy '10.5555/zq.ref1'; arxiv: no copy — arxiv is required; landing: no copy — no copy '10.5555/zq.ref1'; pmc-text: no copy — no copy '10.5555/zq.ref1'; zq-shelf: no copy — the "
     },
     {
       "checkedAt" : "TS",
       "checks" : 1,
       "item" : 6,
       "outcome" : "no-copy",
-      "reason" : "checked DAY: no legal copy (archive-org: no copy — archive.org identifier is required; unpaywall: no copy — no Copy '10.5555/zq.closed'; core: no copy — CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — no Copy '10.5555/zq.closed'; pmc: no copy — no Copy '10.5555/zq.closed'; arxiv: no copy — arxiv is required; landing: no copy — no Copy '10.5555/zq.closed'; pmc-text: no copy — no Copy '10.5555/zq.closed'; zq-shelf: no c"
+      "reason" : "checked DAY: no legal copy (archive-org: no copy — archive.org identifier is required; unpaywall: no copy — no copy '10.5555/zq.closed'; core: no copy — CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — no copy '10.5555/zq.closed'; pmc: no copy — no copy '10.5555/zq.closed'; arxiv: no copy — arxiv is required; landing: no copy — no copy '10.5555/zq.closed'; pmc-text: no copy — no copy '10.5555/zq.closed'; zq-shelf: no c"
     }
   ],
   "goals" : [
@@ -528,7 +528,7 @@ A Zq atlas (buy)
 
 **browser download**
 - [ ] Fay Zqgold (2022). Gold open access on a refusing host. https://doi.org/10.5555/zq.gold — gold open access, but no script may download it: download it in the browser, then histmersion ingest <file> --citekey zqgold2022_gold  `#1`
-  - _checked DAY: no legal copy (archive-org: no copy — archive.org identifier is required; unpaywall: no copy — no Copy '10.5555/zq.gold'; core: no copy — CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — no Copy '10.5555/zq.gold'; pmc: no copy — no Copy '10.5555/zq.gold'; arxiv: no copy — arxiv is required; landing: no copy — no Copy '10.5555/zq.gold'; pmc-text: no copy — no Copy '10.5555/zq.gold'; zq-shelf: no copy — the _
+  - _checked DAY: no legal copy (archive-org: no copy — archive.org identifier is required; unpaywall: no copy — no copy '10.5555/zq.gold'; core: no copy — CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — no copy '10.5555/zq.gold'; pmc: no copy — no copy '10.5555/zq.gold'; arxiv: no copy — arxiv is required; landing: no copy — no copy '10.5555/zq.gold'; pmc-text: no copy — no copy '10.5555/zq.gold'; zq-shelf: no copy — the _
 
 **(no topic)**
 - [x] Find the Zq ledger (no DOI) — _ingested as [[zqa_ledger]]_  `#2`
@@ -537,12 +537,12 @@ A Zq atlas (buy)
 - [x] Have we 10.5555/zq.open? — _ingested as [[zqauthor2019_roads]]_  `#4`
   - _checked DAY: in the corpus with its original as [[zqauthor2019_roads]] — closed_
 - [ ] Get 10.5555/zq.ref1  `#5`
-  - _checked DAY: no legal copy (archive-org: no copy — archive.org identifier is required; unpaywall: no copy — no Copy '10.5555/zq.ref1'; core: no copy — CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — no Copy '10.5555/zq.ref1'; pmc: no copy — no Copy '10.5555/zq.ref1'; arxiv: no copy — arxiv is required; landing: no copy — no Copy '10.5555/zq.ref1'; pmc-text: no copy — no Copy '10.5555/zq.ref1'; zq-shelf: no copy — the _
+  - _checked DAY: no legal copy (archive-org: no copy — archive.org identifier is required; unpaywall: no copy — no copy '10.5555/zq.ref1'; core: no copy — CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — no copy '10.5555/zq.ref1'; pmc: no copy — no copy '10.5555/zq.ref1'; arxiv: no copy — arxiv is required; landing: no copy — no copy '10.5555/zq.ref1'; pmc-text: no copy — no copy '10.5555/zq.ref1'; zq-shelf: no copy — the _
 - [x] A Zq atlas (buy) — _bought_  `#8`
 
 **zq**
 - [ ] Wanted: doi:10.5555/zq.closed  `#6`
-  - _checked DAY: no legal copy (archive-org: no copy — archive.org identifier is required; unpaywall: no copy — no Copy '10.5555/zq.closed'; core: no copy — CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — no Copy '10.5555/zq.closed'; pmc: no copy — no Copy '10.5555/zq.closed'; arxiv: no copy — arxiv is required; landing: no copy — no Copy '10.5555/zq.closed'; pmc-text: no copy — no Copy '10.5555/zq.closed'; zq-shelf: no c_
+  - _checked DAY: no legal copy (archive-org: no copy — archive.org identifier is required; unpaywall: no copy — no copy '10.5555/zq.closed'; core: no copy — CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — no copy '10.5555/zq.closed'; pmc: no copy — no copy '10.5555/zq.closed'; arxiv: no copy — arxiv is required; landing: no copy — no copy '10.5555/zq.closed'; pmc-text: no copy — no copy '10.5555/zq.closed'; zq-shelf: no c_
 == put goal zqa-goal
 200 {
   "notes" : null,

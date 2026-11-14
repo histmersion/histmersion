@@ -760,7 +760,7 @@ calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,tit
 exit 1
 --- stdout
 --- stderr
-error: no Queue.QueueItem.Id '424242'
+error: no queue item id '424242'
 --- calls
 
 ## histmersion calibre import 5 --no-convert --acquire-item 1
@@ -1175,7 +1175,7 @@ calibredb "set_metadata" "--with-library" "<library>" "1" "--field" "languages:e
 exit 2
 --- stdout
 --- stderr
-error: --field: unknown Calibre.Field.Name 'bogus' (one of: title, authors, publisher, pubdate, languages, identifiers, tags, comments, series)
+error: --field: unknown field name 'bogus' (one of: title, authors, publisher, pubdate, languages, identifiers, tags, comments, series)
 --- calls
 
 ## histmersion calibre set 1 --field title:Unknown
@@ -1196,7 +1196,7 @@ error: 'nocolon' is not <name>:<value>
 exit 2
 --- stdout
 --- stderr
-error: no Calibre.Book.Id '99'
+error: no book id '99'
 --- calls
 calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "1" "--search" "id:99"
 
