@@ -11,7 +11,8 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A plugin a jar holds, as the relink kit's tool described it: `error` is every problem it met registering with its
-  * defaults alone (a file an earlier version wrote holds one sentence there, which reads as one problem).
+  * defaults alone, written as a list (a file an earlier version wrote holds one sentence there, bare, which reads as a list
+  * of one problem).
   */
 final case class PluginDescription(
     id: PluginDescription.Id,
