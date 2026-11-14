@@ -592,7 +592,7 @@ object ManagersView:
                 Option.when(g.pinned.value)(span(cls := "muted", " · pinned")),
                 span(cls := "muted", s" · ${g.title}")
               ),
-              div(cls := "job-progress", g.why.sentence),
+              div(cls := "job-progress", s"${g.why}"),
               g.doing.map(d => div(cls := "muted", s"now: $d")),
               div(cls := "job-meta muted", focusPace(g).value),
               child.maybe <-- Auth.writable.map(w => Option.when(w)(div(cls := "form-row", pinButton(g))))
@@ -612,7 +612,7 @@ object ManagersView:
                 div(
                   cls := "job-main",
                   div(cls := "job-subject", goalLink(g.slug)),
-                  div(cls := "muted", g.why.sentence),
+                  div(cls := "muted", s"${g.why}"),
                   child.maybe <-- Auth.writable.map(w => Option.when(w)(div(cls := "form-row", pinButton(g))))
                 )
               )
@@ -1050,7 +1050,7 @@ object ManagersView:
                         s" · ${Wording.manager(Wording.Id(x.manager.value))}"
                       )
                     ),
-                    div(cls := "muted", x.why.sentence)
+                    div(cls := "muted", s"${x.why}")
                   )
                 )
               )
@@ -1111,7 +1111,7 @@ object ManagersView:
                           (if w.position.value > 0 then s" · #${w.position} in line" else "")
                       )
                     ),
-                    div(cls := "job-progress", w.why.sentence),
+                    div(cls := "job-progress", s"${w.why}"),
                     Option.when(w.behind.nonEmpty)(div(cls := "muted", s"behind ${w.behind.mkString(", ")}")),
                     div(
                       cls := "job-meta muted",
@@ -1562,7 +1562,7 @@ object ManagersView:
             cls := "muted",
             "held" + h.until.fold("")(u => s" until $u") + h.untilSource.fold("")(s => s" until $s exists") +
               h.focus.fold("")(g => s" for the focus (goal $g; pin it in the managers window to run it now)") +
-              Option(h.reason).filter(_.sentence.nonEmpty).fold("")(r => s" — ${r.sentence}")
+              Option(h.reason).filter(w => s"$w".nonEmpty).fold("")(r => s" — ${r}")
           )
         ),
         i.notBefore.map(t => div(cls := "muted", s"not before $t")),

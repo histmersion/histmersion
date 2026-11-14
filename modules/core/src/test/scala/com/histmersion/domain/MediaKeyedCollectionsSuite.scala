@@ -50,7 +50,7 @@ class MediaKeyedCollectionsSuite extends munit.FunSuite:
           Some(Year(1500))
         )
         .left
-        .map(_.sentence),
+        .map(w => s"$w"),
       Left("made after 1500 CE")
     )
     assertEquals(
@@ -62,7 +62,7 @@ class MediaKeyedCollectionsSuite extends munit.FunSuite:
           Some(Year(1500))
         )
         .left
-        .map(_.sentence),
+        .map(w => s"$w"),
       Left("made after 1500 CE"),
       "made by the latest year: its end, not its start"
     )
@@ -86,7 +86,7 @@ class MediaKeyedCollectionsSuite extends munit.FunSuite:
       "no latest year: the place's period alone"
     )
     assertEquals(
-      MediaMatch.dated(MediaMatch.Basis("x = Orkney"), rec(None), orkney, Some(Year(1500))).left.map(_.sentence),
+      MediaMatch.dated(MediaMatch.Basis("x = Orkney"), rec(None), orkney, Some(Year(1500))).left.map(w => s"$w"),
       Left("no dates on the record")
     )
     val late = orkney.modify(_.period).setTo(DeepTime.span(DeepTime.SignedYear(1600L), DeepTime.SignedYear(1900L)))
@@ -99,7 +99,7 @@ class MediaKeyedCollectionsSuite extends munit.FunSuite:
           Some(Year(1500))
         )
         .left
-        .map(_.sentence),
+        .map(w => s"$w"),
       Left("its dates do not overlap the place's"),
       "a place that begins after the latest year is never widened back"
     )

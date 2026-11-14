@@ -1,8 +1,7 @@
 package com.histmersion
 package api
 
-import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -70,6 +69,22 @@ class PlanQuotaSuite extends munit.FunSuite:
         .isLeft && Floors.parse(PlanQuota.Floors.Wire("=3")).isLeft
     )
     assertEquals(Floors.parse(PlanQuota.Floors.Wire("")).map(_.byKind), Right(Map.empty))
+    assertEquals(
+      Floors.parse(PlanQuota.Floors.Wire("five_hour=130, =3, seven_day")).left.map(_.toVector),
+      Left(
+        Vector(
+          Problem.Invalid.OutOfRange(
+            Problem.TypeName("com.histmersion.api.automation.PlanQuota.Floors.Floor"),
+            Problem.Raw("130"),
+            Problem.Invalid.Bounds(Some(Problem.Raw("0")), Some(Problem.Raw("100"))),
+            Vector(Problem.Field("five_hour=130"))
+          ),
+          Problem.Invalid.Missing(Problem.Field("window"), Vector(Problem.Field("=3"))),
+          Problem.Invalid.Missing(Problem.Field("percent"), Vector(Problem.Field("seven_day")))
+        )
+      ),
+      "every item's problem, each at its item"
+    )
     assertEquals(f.text, "codex/10080m=20, five_hour=30, seven_day=25")
 
   test("usable only while every window keeps MORE than its floor left"):
@@ -90,7 +105,7 @@ class PlanQuotaSuite extends munit.FunSuite:
     )
     low match
       case Verdict.Blocked(why, until) =>
-        assert(why.sentence.contains("five_hour: 25% left, floor 25%"), why)
+        assert(s"${why}".contains("five_hour: 25% left, floor 25%"), why)
         assertEquals(until, Some(Now + 60 * Min), "until the blocking window resets")
       case other => fail(s"not blocked: $other")
     assertEquals(states.map(_.usable), List(false, true))
@@ -116,11 +131,11 @@ class PlanQuotaSuite extends munit.FunSuite:
       verdict(
         List(r(FiveHour, Reading.UsedPct(1))),
         held = PlanQuota.PoolStatus.Held(false),
-        Some((Problem.Unclassified(Legacy.Text("ordinary usage not allowed")), None)),
+        Some((Rationale("ordinary usage not allowed"), None)),
         Rules0,
         NowAt
       )
-    assertEquals(v1, Verdict.Blocked(Problem.Unclassified(Legacy.Text("ordinary usage not allowed")), None))
+    assertEquals(v1, Verdict.Blocked(Rationale("ordinary usage not allowed"), None))
     val (v2, _) = verdict(
       List(r(Window10080, Reading.UsedPct(3), rejected = Reading.Rejected(true), limit = Reading.Limit("codex"))),
       held = PlanQuota.PoolStatus.Held(false),
@@ -132,7 +147,7 @@ class PlanQuotaSuite extends munit.FunSuite:
     val (v3, _) = verdict(
       Nil,
       held = PlanQuota.PoolStatus.Held(false),
-      Some((Problem.Unclassified(Legacy.Text("gone")), Some(Verdict.Blocked.Until(Now - 1)))),
+      Some((Rationale("gone"), Some(Verdict.Blocked.Until(Now - 1)))),
       Rules0,
       NowAt
     )
@@ -141,7 +156,7 @@ class PlanQuotaSuite extends munit.FunSuite:
   test("the hold switch wins over everything"):
     val (v, _) =
       verdict(List(r(FiveHour, Reading.UsedPct(0))), held = PlanQuota.PoolStatus.Held(true), None, Rules0, NowAt)
-    assert(v match { case Verdict.Blocked(w, None) => w.sentence.contains("held"); case _ => false }, v)
+    assert(v match { case Verdict.Blocked(w, None) => s"${w}".contains("held"); case _ => false }, v)
 
   test("no reading is unknown: usable, said so; a window whose reset passed has started over"):
     assertEquals(
@@ -176,7 +191,7 @@ class PlanQuotaSuite extends munit.FunSuite:
       Rules0,
       NowAt
     )
-    assert(!v.usable && v.asInstanceOf[Verdict.Blocked].reason.sentence.contains("stale"), v)
+    assert(!v.usable && s"${v.asInstanceOf[Verdict.Blocked].reason}".contains("stale"), v)
 
   test("newest reading per window; a fallback model's bucket counts only for that model"):
     val older = r(FiveHour, Reading.UsedPct(99), seen = Reading.ObservedAt(Now - 5 * Min))
@@ -303,7 +318,7 @@ class PlanQuotaSuite extends munit.FunSuite:
       ),
       None
     )
-    assertEquals(decide(None).left.map(_.sentence.contains("decides by itself")), Left(true))
+    assertEquals(decide(None).left.map(w => s"$w".contains("decides by itself")), Left(true))
 
   test("#989: a usable pool, a hold, a refusal, a rejected window: no refresh"):
     assertEquals(
@@ -323,7 +338,7 @@ class PlanQuotaSuite extends munit.FunSuite:
       refreshNeed(
         stale,
         held = PlanQuota.PoolStatus.Held(false),
-        Some((Problem.Unclassified(Legacy.Text("no")), None)),
+        Some((Rationale("no"), None)),
         Rules0,
         NowAt
       ),
@@ -333,7 +348,7 @@ class PlanQuotaSuite extends munit.FunSuite:
       refreshNeed(
         stale,
         held = PlanQuota.PoolStatus.Held(false),
-        Some((Problem.Unclassified(Legacy.Text("no")), Some(Verdict.Blocked.Until(Now - 1)))),
+        Some((Rationale("no"), Some(Verdict.Blocked.Until(Now - 1)))),
         Rules0,
         NowAt
       ),
@@ -371,7 +386,7 @@ class PlanQuotaSuite extends munit.FunSuite:
   test("#989: throttled to once per stale-minutes; a person's refresh is not, but never without a login"):
     assert(
       decide(Some(RefreshNeed.StaleOnly), last = Some(RefreshInfo.LastAttempt(Now - 9 * Min))).left
-        .exists(_.sentence.contains("less than stale-minutes"))
+        .exists(w => s"$w".contains("less than stale-minutes"))
     )
     assertEquals(
       decide(Some(RefreshNeed.StaleOnly), last = Some(RefreshInfo.LastAttempt(Now - 10 * Min))),
@@ -390,20 +405,20 @@ class PlanQuotaSuite extends munit.FunSuite:
       "forced: no need, no throttle"
     )
     assert(
-      decide(None, login = Login.Missing(Problem.Unclassified(Legacy.Text("not logged in"))), force = true).left
-        .exists(_.sentence.startsWith("no login"))
+      decide(None, login = Login.Missing(Rationale("not logged in")), force = true).left
+        .exists(w => s"$w".startsWith("no login"))
     )
 
   test("#989: no login means no refresh; an unknown login does not stop one; refresh off is off"):
     assert(
-      decide(Some(RefreshNeed.NoReading), login = Login.Missing(Problem.Unclassified(Legacy.Text("x")))).left
-        .exists(_.sentence.contains("no login: x"))
+      decide(Some(RefreshNeed.NoReading), login = Login.Missing(Rationale("x"))).left
+        .exists(w => s"$w".contains("no login: x"))
     )
     assertEquals(
-      decide(Some(RefreshNeed.NoReading), login = Login.Unknown(Problem.Unclassified(Legacy.Text("timeout")))),
+      decide(Some(RefreshNeed.NoReading), login = Login.Unknown(Rationale("timeout"))),
       Right(Some(RefreshNeed.NoReading))
     )
-    assert(decide(Some(RefreshNeed.StaleOnly), enabled = false).left.exists(_.sentence.contains("off")))
+    assert(decide(Some(RefreshNeed.StaleOnly), enabled = false).left.exists(w => s"$w".contains("off")))
     assertEquals(RefreshMode.parse(PlanQuota.RefreshMode.Wire(" Probe ")), Some(RefreshMode.Probe))
     assertEquals(RefreshMode.parse(PlanQuota.RefreshMode.Wire("sometimes")), None)
     assertEquals(Source.parse(PlanQuota.Source.Wire("probe")), Some(Source.Probe))

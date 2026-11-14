@@ -1,7 +1,6 @@
 package com.histmersion
 package api.automation
 
-import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -11,6 +10,10 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 
 object Autopilot:
+
+  /** Why a goal is active, queued or waiting: the narration of the focus's decision, not a failure. */
+  type Rationale = Rationale.T
+  object Rationale extends Newtype[String, Pure]
 
   final case class AutopilotSet(on: AutopilotSet.On, by: Option[AutopilotSet.By] = None)
       derives JsonCodec,
@@ -98,7 +101,7 @@ object Autopilot:
       title: FocusGoal.Title = Goal.Title(""),
       status: FocusGoal.Status = FocusGoal.Status(""),
       stage: FocusGoal.Stage = FocusGoal.Stage(""),
-      why: Problem = Problem.Unclassified(Legacy.Text("")),
+      why: Rationale = Rationale(""),
       pinned: FocusGoal.Pinned = FocusGoal.Pinned(false),
       priority: FocusGoal.Priority = FocusGoal.Priority(0),
       since: Option[FocusGoal.Since] = None,
@@ -135,7 +138,7 @@ object Autopilot:
   final case class FocusWaiting(
       slug: FocusWaiting.Slug,
       code: FocusWaiting.Code,
-      why: Problem = Problem.Unclassified(Legacy.Text("")),
+      why: Rationale = Rationale(""),
       pinned: FocusWaiting.Pinned = FocusWaiting.Pinned(false)
   ) derives JsonCodec,
         KindlingsSchema,

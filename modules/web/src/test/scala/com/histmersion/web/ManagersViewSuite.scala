@@ -111,12 +111,12 @@ class ManagersViewSuite extends munit.FunSuite:
       Managers.ManagerItem.Target("g"),
       Managers.ManagerItem.Status("held"),
       hold =
-        Some(Hold(reason = Problem.Unclassified(Legacy.Text("focus: waits")), focus = Some(Managers.Hold.Focus("g"))))
+        Some(Hold(reason = Managers.Rationale("focus: waits"), focus = Some(Managers.Hold.Focus("g"))))
     )
     assertEquals(ManagersView.itemActionsFor(focus), List("priority", "skip"))
     assertEquals(
       ManagersView.itemActionsFor(
-        focus.modify(_.hold).setTo(Some(Hold(reason = Problem.Unclassified(Legacy.Text("held by a person")))))
+        focus.modify(_.hold).setTo(Some(Hold(reason = Managers.Rationale("held by a person"))))
       ),
       List("release", "priority", "skip")
     )

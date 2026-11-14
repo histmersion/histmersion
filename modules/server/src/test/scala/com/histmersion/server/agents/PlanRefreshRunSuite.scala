@@ -392,11 +392,11 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
     ) =
       a.pools.refreshOnSchedule(PoolId.ClaudePlan, autopilotOn, wanted, when)
     assertEquals(
-      onSchedule(autopilotOn = PlanReadSchedule.AutopilotOn(false)).left.map(_.sentence),
+      onSchedule(autopilotOn = PlanReadSchedule.AutopilotOn(false)).left.map(w => s"$w"),
       Left("the autopilot is off")
     )
     assertEquals(
-      onSchedule(wanted = PlanReadSchedule.Wanted(false)).left.map(_.sentence),
+      onSchedule(wanted = PlanReadSchedule.Wanted(false)).left.map(w => s"$w"),
       Left("no queued work wants the pool")
     )
     assertEquals(reads.probes.get(), 0)
@@ -409,7 +409,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
       pool.refresh.exists(_.value.contains("every 180 min while the autopilot has queued work for it")),
       pool.refresh
     )
-    assert(onSchedule(when = at.plusSeconds(179 * 60)).left.exists(_.sentence.startsWith("read 179 min ago")))
+    assert(onSchedule(when = at.plusSeconds(179 * 60)).left.exists(w => s"$w".startsWith("read 179 min ago")))
     assertEquals(onSchedule(when = at.plusSeconds(181 * 60)).map(_.ok), Right(true))
     assertEquals(reads.probes.get(), 2)
     // a reading a run recorded since counts like the schedule's own
@@ -429,7 +429,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
         )
       )
     )
-    assert(onSchedule(when = at.plusSeconds(330 * 60)).left.exists(_.sentence.startsWith("read 30 min ago")))
+    assert(onSchedule(when = at.plusSeconds(330 * 60)).left.exists(w => s"$w".startsWith("read 30 min ago")))
     assertEquals(reads.probes.get(), 2)
 
   test(
@@ -447,7 +447,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
           java.time.Instant.now()
         )
         .left
-        .exists(_.sentence.startsWith("no login"))
+        .exists(w => s"$w".startsWith("no login"))
     )
     val off = baseCfg
       .modify(_.agents)
@@ -470,7 +470,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
           java.time.Instant.now()
         )
         .left
-        .map(_.sentence),
+        .map(w => s"$w"),
       Left("the schedule is off")
     )
     val reads3 = Reads(); reads3.probeOut = List(event(20, 30), Result)
@@ -587,7 +587,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
     assertEquals(reads.probes.get(), 0)
     val pool = a.quota.plans.find(_.pool.value == "claude-plan").get
     assert(
-      !pool.available.value && !pool.usable.value && pool.reason.exists(_.sentence.startsWith("unavailable: no login")),
+      !pool.available.value && !pool.usable.value && pool.reason.exists(w => s"$w".startsWith("unavailable: no login")),
       pool
     )
     assert(AgentsMarkdown.pool(pool).contains("**unavailable: no login"), AgentsMarkdown.pool(pool))

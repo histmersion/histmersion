@@ -74,8 +74,8 @@ object ManagersMarkdown:
       s" · held${h.until.fold("")(u => s" until $u")}${h.untilSource.fold("")(s => s" until $s exists")}" +
         h.untilApproval
           .fold("")(a => s" until approval #$a is decided") + Option(h.reason)
-          .filter(_.sentence.nonEmpty)
-          .fold("")(r => s": ${r.sentence}")
+          .filter(r => s"$r".nonEmpty)
+          .fold("")(r => s": ${r}")
     )
     val nb = i.notBefore.fold("")(t => s" · not before $t")
     val kind = if i.kind == ManagerItem.Kind(ArticleReview) then "" else s" (${i.kind})"

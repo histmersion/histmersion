@@ -197,14 +197,14 @@ object ModelsView:
                   pl.planType.fold("")(t => s" · plan $t")
               ),
               if !pl.available.value then
-                span(cls := "run-paused", s" · ${pl.reason.map(_.sentence).getOrElse("unavailable: no login")}")
+                span(cls := "run-paused", s" · ${pl.reason.map(w => s"$w").getOrElse("unavailable: no login")}")
               else if pl.held.value then span(cls := "run-paused", " · held")
               else if pl.usable.value then
-                span(cls := "muted", pl.reason.fold(" · usable")(r => s" · usable (${r.sentence})"))
+                span(cls := "muted", pl.reason.fold(" · usable")(r => s" · usable (${r})"))
               else
                 span(
                   cls := "run-paused",
-                  s" · paused: ${pl.reason.map(_.sentence).getOrElse("below its floor")}${pl.until
+                  s" · paused: ${pl.reason.map(w => s"$w").getOrElse("below its floor")}${pl.until
                       .fold("")(u => s" until $u")}"
                 )
               ,

@@ -411,7 +411,7 @@ object ReviewLedger:
         .fold(led)(_ =>
           update(led, w.id)(e =>
             e.copy(
-              notFixed = Some(Entry.NotFixed(s"pass $round: ${w.reason.sentence}".take(300))),
+              notFixed = Some(Entry.NotFixed(s"pass $round: ${w.reason}".take(300))),
               notFixedCount = Entry.NotFixedCount(e.notFixedCount.value + 1)
             )
           )
@@ -442,7 +442,7 @@ object ReviewLedger:
             _.copy(
               status = Status.WontFix,
               claimed = Entry.Claimed(false),
-              closed = Some(Closure(Reviewer.Wire("fixer"), round, run, Closure.Note(w.reason.sentence)))
+              closed = Some(Closure(Reviewer.Wire("fixer"), round, run, Closure.Note(s"${w.reason}")))
             )
           )
         )

@@ -12,6 +12,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
 import com.histmersion.api.automation.Goal.Plans.{Plan, PlannedGoal, PlannedWork}
+import com.histmersion.api.automation.Goal.Rationale
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.research.Slug
 import io.github.iltotore.iron.constraint.any.Pure
@@ -68,7 +69,7 @@ object PlanGoal:
       .modify(_.notes)(_.description("What it should establish, in one or two sentences; null if obvious"))
       .modify(_.tags)(_.description("Tags from the corpus vocabulary (facets), not new ones"))
 
-  final case class WorkAnswer(doi: WorkAnswer.Doi, why: Problem) derives JsonCodec
+  final case class WorkAnswer(doi: WorkAnswer.Doi, why: Rationale) derives JsonCodec
   object WorkAnswer:
     type Doi = Doi.T
     object Doi extends Newtype[String, Pure]
@@ -101,7 +102,7 @@ object PlanGoal:
 
   // ── checked (checkpointed before the upstream lookups) ──────────────────────────────────────────
 
-  final case class ProposedWork(doi: Doi, why: Problem) derives JsonCodec
+  final case class ProposedWork(doi: Doi, why: Rationale) derives JsonCodec
 
   /** The planner's answer after the pure checks; its DOIs are not looked up yet. */
   final case class Proposed(
@@ -188,7 +189,7 @@ object PlanGoal:
           case None                              => problems += s"'${w.doi}' is not a DOI (10.xxxx/…)"; acc
           case Some(d) if acc.exists(_.doi == d) => acc
           case Some(d)                           =>
-            acc :+ ProposedWork(d, Problem.Unclassified(Legacy.Text(Option(w.why).fold("")(_.sentence.trim))))
+            acc :+ ProposedWork(d, Rationale(Option(w.why).fold("")(r => s"$r".trim)))
       }
       .toList
 
@@ -283,7 +284,7 @@ object PlanGoal:
     val who = w.authors.headOption.map(a => if w.authors.size > 1 then s"$a et al." else a.value)
     val head = List(who, w.year.map(y => s"($y)")).flatten.mkString(" ")
     val title = w.title.fold(w.doi.value)(_.value)
-    val why = Option(w.why).map(_.sentence.trim).filter(_.nonEmpty).fold("")(r => s": $r")
+    val why = Option(w.why).map(r => s"$r".trim).filter(_.nonEmpty).fold("")(r => s": $r")
     AcquireText(s"${if head.isEmpty then "" else s"$head. "}$title. https://doi.org/${w.doi} — for goal $goal$why")
 
   /** The log line of an applied (or rejected) plan. */

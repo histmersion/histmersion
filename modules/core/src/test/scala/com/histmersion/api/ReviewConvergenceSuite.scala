@@ -470,9 +470,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
         List(
           WontFix(
             ReviewArticle.WontFix.Id("S1"),
-            Problem.Unclassified(
-              Legacy.Text("listed as applied, but [[zz2024_iso]] and [[knapp2016_tin]] are not cited in one paragraph")
-            )
+            ReviewArticle.Rationale("listed as applied, but [[zz2024_iso]] and [[knapp2016_tin]] are not cited in one paragraph")
           )
         )
       )
@@ -764,9 +762,9 @@ class ReviewConvergenceSuite extends munit.FunSuite:
       List(
         WontFix(
           ReviewArticle.WontFix.Id("R1"),
-          Problem.Unclassified(Legacy.Text("the fixer neither applied nor rejected it"))
+          ReviewArticle.Rationale("the fixer neither applied nor rejected it")
         ),
-        WontFix(ReviewArticle.WontFix.Id("C2"), Problem.Unclassified(Legacy.Text("the fixer did not answer it")))
+        WontFix(ReviewArticle.WontFix.Id("C2"), ReviewArticle.Rationale("the fixer did not answer it"))
       )
     )
     val l = applyFix(

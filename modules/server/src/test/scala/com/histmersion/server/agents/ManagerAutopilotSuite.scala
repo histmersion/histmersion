@@ -515,7 +515,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
     val waits = item(seedId(ref(Goal)), ProposeKind, itemTarget(Goal))
     assertEquals((waits.status, waits.hold), ("pending", None), "the proposal waits for the plan")
     val why = a.scheduler.why(ManagerItem.Ref(waits.id.toString)).fold(e => fail(e.message.sentence), identity)
-    assert(why.code.value == "blocked" && why.why.sentence.contains("plan comes first"), why)
+    assert(why.code.value == "blocked" && s"${why.why}".contains("plan comes first"), why)
     assertEquals(
       a.scheduler.why(ManagerItem.Ref(item(seedId(ref(Goal)), PlanGoalKind, itemTarget(Goal)).id.toString)).map(_.code),
       Right(AgentScheduler.Code.Person)
@@ -757,7 +757,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
       "2 of 2 articles approved today: the third waits"
     )
     a.autoApprovals.judge(TestRuns.approvals(ds).approval(ApiIds.approval(p2.id)).get, None, None, now) match
-      case AutopilotPolicy.Verdict.Leave(w) => assert(w.sentence.contains("daily cap"), w)
+      case AutopilotPolicy.Verdict.Leave(w) => assert(s"$w".contains("daily cap"), w)
       case v                                => fail(v.toString)
     // a thin filter is rejected with why
     val p3 = TestRuns

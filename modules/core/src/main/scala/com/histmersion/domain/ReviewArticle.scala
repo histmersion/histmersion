@@ -46,6 +46,10 @@ import com.histmersion.domain.automation.Run
   * JVM-only, like [[EnrichSource]], because quote matching needs `java.text.Normalizer`.
   */
 object ReviewArticle:
+
+  /** Why a finding is not fixed: the fixer's words, or the account of what the fixer left; not a failure. */
+  type Rationale = Rationale.T
+  object Rationale extends Newtype[String, Pure]
   type CitedInCorpusCount = CitedInCorpusCount.T
   object CitedInCorpusCount extends Newtype[Int, Pure]
   type Criticised = com.histmersion.api.library.Citekey
@@ -622,7 +626,7 @@ object ReviewArticle:
         )
       )
 
-  final case class WontFixAnswer(id: WontFixAnswer.Id, reason: Problem) derives JsonCodec
+  final case class WontFixAnswer(id: WontFixAnswer.Id, reason: Rationale) derives JsonCodec
   object WontFixAnswer:
     type Id = WontFix.Id
     val Id: WontFix.Id.type = WontFix.Id
@@ -1017,7 +1021,7 @@ object ReviewArticle:
     type Repairs = Repairs.T
     object Repairs extends Newtype[String, Pure]
 
-  final case class WontFix(id: WontFix.Id, reason: Problem) derives JsonCodec
+  final case class WontFix(id: WontFix.Id, reason: Rationale) derives JsonCodec
 
   object WontFix:
     type Id = Finding.Id
@@ -2418,8 +2422,8 @@ object ReviewArticle:
         case None                   => Left(s"won't fix '$id': there is no such finding")
         case Some(f) if f.major && !needsFilter(f, coverage) =>
           Left(s"$id is MAJOR: apply it or reject it — only a minor finding can be declined")
-        case Some(_) if Option(w.reason).forall(_.sentence.trim.isEmpty) => Left(s"won't fix $id: give the reason")
-        case Some(_) => Right(WontFix(id, Problem.Unclassified(Legacy.Text(w.reason.sentence.trim))))
+        case Some(_) if Option(w.reason).forall(r => s"$r".trim.isEmpty) => Left(s"won't fix $id: give the reason")
+        case Some(_) => Right(WontFix(id, Rationale(s"${w.reason}".trim)))
     }
     val edits = Option(a.edits).getOrElse(Nil)
 
@@ -2521,7 +2525,7 @@ object ReviewArticle:
           .map((_, r) => s"listed as applied, but ${unansweredText(r)}")
           .orElse(rejectedBad.find(_._1 == f.id).map(_ => "its rejection's quote is not in the record it names"))
           .getOrElse(if f.major then "the fixer neither applied nor rejected it" else "the fixer did not answer it")
-        WontFix(f.id, Problem.Unclassified(Legacy.Text(why)))
+        WontFix(f.id, Rationale(why))
       }
       val fix = Fix(
         rev.body,

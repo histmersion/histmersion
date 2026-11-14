@@ -12,6 +12,10 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.jobs.JobKinds
 
 object AgentScheduler:
+  /** Why the scheduler started, keeps waiting or holds an item: the narration of its decision, not a failure. */
+  type Rationale = Rationale.T
+  object Rationale extends Newtype[String, Pure]
+
 
   final case class StrategyLine(name: StrategyLine.Name, describe: StrategyLine.Describe = StrategyLine.Describe(""))
       derives JsonCodec,
@@ -31,7 +35,7 @@ object AgentScheduler:
       jobType: Started.JobType,
       target: Started.Target,
       goal: Option[Goal.Slug] = None,
-      why: Problem = Problem.Unclassified(Legacy.Text(""))
+      why: Rationale = Rationale("")
   ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
@@ -58,7 +62,7 @@ object AgentScheduler:
       priority: Waiting.Priority = Waiting.Priority(0),
       waitedMinutes: Waiting.WaitedMinutes = Waiting.WaitedMinutes((0).toLong),
       code: Waiting.Code = Waiting.Code(""),
-      why: Problem = Problem.Unclassified(Legacy.Text("")),
+      why: Rationale = Rationale(""),
       behind: List[Waiting.Behind] = Nil,
       position: Waiting.Position = Waiting.Position(0)
   ) derives JsonCodec,
@@ -186,7 +190,7 @@ object AgentScheduler:
       target: WhyInfo.Target = WhyInfo.Target(""),
       status: WhyInfo.Status = WhyInfo.Status(""),
       code: WhyInfo.Code = WhyInfo.Code(""),
-      why: Problem = Problem.Unclassified(Legacy.Text("")),
+      why: Rationale = Rationale(""),
       behind: List[WhyInfo.Behind] = Nil,
       position: WhyInfo.Position = WhyInfo.Position(0),
       run: Option[WhyInfo.Run] = None,

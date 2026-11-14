@@ -38,6 +38,10 @@ final case class Goal(
       com.histmersion.api.json.Schema
 
 object Goal:
+  /** Why a plan names a work: the planner's words, not a failure. */
+  type Rationale = Rationale.T
+  object Rationale extends Newtype[String, Pure]
+
   type Export = Export.T
   object Export extends Newtype[String, Pure]
   type LinkSectionKey = LinkSectionKey.T
@@ -168,7 +172,7 @@ object Goal:
         citekey: Option[Citekey] = None,
         inCorpus: PlannedWork.InCorpus = PlannedWork.InCorpus(false),
         isOa: PlannedWork.IsOa = PlannedWork.IsOa(false),
-        why: Problem = Problem.Unclassified(Legacy.Text(""))
+        why: Rationale = Rationale("")
     ) derives JsonCodec,
           KindlingsSchema,
           com.histmersion.api.json.Schema

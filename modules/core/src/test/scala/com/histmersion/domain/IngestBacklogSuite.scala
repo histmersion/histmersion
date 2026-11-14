@@ -353,7 +353,7 @@ class IngestBacklogSuite extends munit.FunSuite:
             List(com.histmersion.api.library.AuthorName("A")),
             None,
             List(Goal.Slug("g1"), Goal.Slug("g2")),
-            Problem.Unclassified(Legacy.Text("fits")),
+            Managers.Rationale("fits"),
             Some(Managers.OaWork.FoundBy("run"))
           )
         )

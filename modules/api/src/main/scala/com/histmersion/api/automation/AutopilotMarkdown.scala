@@ -47,21 +47,21 @@ object AutopilotMarkdown:
           .map { (g, i) =>
             s"${i + 1}. **${g.slug}** _(${g.status}, ${g.stage})_${
                 if (g.pinned) == FocusGoal.Pinned(true) then " (pinned)" else ""
-              } — ${g.why.sentence}" +
+              } — ${g.why}" +
               g.doing.fold("")(d => s"\n   - now: $d") + s"\n   - ${pace(g)}"
           }
           .mkString("\n")
     val queue =
       if f.queue.isEmpty then "_Nothing waits for a slot._"
       else
-        f.queue.zipWithIndex.map((g, i) => s"${i + 1}. ${g.slug} _(${g.stage})_ — ${g.why.sentence}").mkString("\n") +
+        f.queue.zipWithIndex.map((g, i) => s"${i + 1}. ${g.slug} _(${g.stage})_ — ${g.why}").mkString("\n") +
           (if (f.queued).value > f.queue.size then s"\n\n…and ${(f.queued).value - f.queue.size} more" else "")
     val waits = f.waiting.groupBy(_.code).toList.sortBy(-_._2.size).map { (c, ws) =>
       s"- ${Plural.count(Plural.CountN((ws.size).toLong), Plural.CountSingular("goal"))} $c: " + ws
         .take(5)
         .map(w => s"${w.slug}${if (w.pinned) == FocusWaiting.Pinned(true) then " (pinned)" else ""}")
         .mkString(", ") +
-        (if ws.size > 5 then ", …" else "") + ws.headOption.fold("")(w => s" — e.g. ${(w.why).sentence.take(200)}")
+        (if ws.size > 5 then ", …" else "") + ws.headOption.fold("")(w => s" — e.g. ${s"${w.why}".take(200)}")
     }
     (List(head, "") ++ lines
       .flatMap(l => List(l, "")) ++ List("### Active", "", active, "", s"### Queue (${f.queued})", "", queue) ++

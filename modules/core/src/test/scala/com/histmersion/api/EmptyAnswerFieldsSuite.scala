@@ -5,6 +5,8 @@ import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.research.Coverage
+import com.histmersion.api.automation.Goal.Rationale as WorkRationale
+import com.histmersion.domain.library.workflows.AcquisitionSweepRules.Rationale as PickRationale
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -518,7 +520,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
   private var noCheckId: CheckAnswer.Id = scala.compiletime.uninitialized
   private var noCheckNote: CheckAnswer.Note = scala.compiletime.uninitialized
   private var noWontFixId: WontFixAnswer.Id = scala.compiletime.uninitialized
-  private var noWontFixReason: Problem = scala.compiletime.uninitialized
+  private var noWontFixReason: ReviewArticle.Rationale = scala.compiletime.uninitialized
   private var noWorkDoi: PlanGoal.WorkAnswer.Doi = scala.compiletime.uninitialized
 
   test("check: an empty or null id, and a not-fixed check with no note, fail; a fixed check's note stays optional"):
@@ -649,17 +651,17 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
         last = LastRound(false)
       ).left.toOption.get
     assert(
-      problems(WontFixAnswer(WontFixAnswer.Id(""), Problem.Unclassified(Legacy.Text("wordy, but exact")))).contains(
+      problems(WontFixAnswer(WontFixAnswer.Id(""), ReviewArticle.Rationale("wordy, but exact"))).contains(
         "a won't-fix with no id — give the id of the minor finding you decline"
       )
     )
     assert(
-      problems(WontFixAnswer(noWontFixId, Problem.Unclassified(Legacy.Text("wordy, but exact")))).contains(
+      problems(WontFixAnswer(noWontFixId, ReviewArticle.Rationale("wordy, but exact"))).contains(
         "a won't-fix with no id — give the id of the minor finding you decline"
       )
     )
     assert(
-      problems(WontFixAnswer(WontFixAnswer.Id("R1"), Problem.Unclassified(Legacy.Text(" "))))
+      problems(WontFixAnswer(WontFixAnswer.Id("R1"), ReviewArticle.Rationale(" ")))
         .contains("won't fix R1: give the reason")
     )
     assert(problems(WontFixAnswer(WontFixAnswer.Id("R1"), noWontFixReason)).contains("won't fix R1: give the reason"))
@@ -704,7 +706,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
           PlanAnswer.Rationale("why"),
           Nil,
           Nil,
-          List(WorkAnswer(noWorkDoi, Problem.Unclassified(Legacy.Text("x"))))
+          List(WorkAnswer(noWorkDoi, WorkRationale("x")))
         )
       )
         .exists(_.sentence.contains("is not a DOI"))
@@ -726,7 +728,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     )
     assert(
       checkRanking(
-        Ranking(List(Pick(Pick.DoiText(""), Problem.Unclassified(Legacy.Text("fits"))))),
+        Ranking(List(Pick(Pick.DoiText(""), PickRationale("fits")))),
         offered,
         last = LastAttempt(false)
       ).left
@@ -734,7 +736,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     )
     assert(
       checkRanking(
-        Ranking(List(Pick(Pick.DoiText("10.1000/a"), Problem.Unclassified(Legacy.Text(""))))),
+        Ranking(List(Pick(Pick.DoiText("10.1000/a"), PickRationale("")))),
         offered,
         last = LastAttempt(false)
       ).isRight

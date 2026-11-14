@@ -82,7 +82,7 @@ final class PlanPools(
         (
           Floors.Empty,
           PoolStatus.FloorsSource("saved"),
-          Some(Problem.Unclassified(Legacy.Text(s"saved floors do not parse: ${m.sentence}")))
+          Some(Problem.Unclassified(Legacy.Text(s"saved floors do not parse: ${m}")))
         )
       case None =>
         Floors.parse(poolCfg(p)._1) match
@@ -91,7 +91,7 @@ final class PlanPools(
             (
               Floors.Empty,
               PoolStatus.FloorsSource("config"),
-              Some(Problem.Unclassified(Legacy.Text(s"agents.quota.${p.wire}.floors: ${m.sentence}")))
+              Some(Problem.Unclassified(Legacy.Text(s"agents.quota.${p.wire}.floors: ${m}")))
             )
 
   def rules(p: PoolId): Rules =
@@ -112,7 +112,7 @@ final class PlanPools(
     PlanQuota.verdict(
       Transactor(ds).read(PlanQuotaRepo.readings(p)),
       PoolStatus.Held(pool.held.value),
-      pool.refusal.map(r => r -> pool.refusalUntil.map(u => Verdict.Blocked.Until(u.value))),
+      pool.refusal.map(r => PlanQuota.Rationale(s"${r.sentence}") -> pool.refusalUntil.map(u => Verdict.Blocked.Until(u.value))),
       rules(p),
       now,
       model
@@ -124,7 +124,7 @@ final class PlanPools(
     PlanQuota.refreshNeed(
       Transactor(ds).read(PlanQuotaRepo.readings(p)),
       PoolStatus.Held(pool.held.value),
-      pool.refusal.map(r => r -> pool.refusalUntil.map(u => Verdict.Blocked.Until(u.value))),
+      pool.refusal.map(r => PlanQuota.Rationale(s"${r.sentence}") -> pool.refusalUntil.map(u => Verdict.Blocked.Until(u.value))),
       rules(p),
       now,
       model
@@ -161,7 +161,7 @@ final class PlanPools(
   def blocked(
       p: PoolId,
       model: Option[AgentsControllers.ModelName]
-  ): Option[(Problem, Option[PlanQuotaRepo.EpochMillis])] =
+  ): Option[(PlanQuota.Rationale, Option[PlanQuotaRepo.EpochMillis])] =
     verdict(p, model.map(m => ChainEntry.Model(m.value)))._1 match
       case Verdict.Blocked(why, until) =>
         Some((why, until.map(u => PlanQuotaRepo.EpochMillis(u.value))))
@@ -200,7 +200,7 @@ final class PlanPools(
       AgentsConfig.DoctorTimeoutSeconds(math.max(1, cfg.doctorTimeoutSeconds.value))
     ) match
       case Left(why) =>
-        Login.Unknown(Problem.Unclassified(Legacy.Text(s"'claude auth status' failed: ${why.sentence}")))
+        Login.Unknown(PlanQuota.Rationale(s"'claude auth status' failed: ${why.sentence}"))
       case Right((_, out)) => PlanPools.claudeLogin(out, cc.useApiKey)
 
   /** Whether `m` may be offered at all: a model whose own runtime spends the pool (claude-code on the Claude plan,
@@ -209,7 +209,7 @@ final class PlanPools(
   def unavailable(m: ModelRef, now: PlanQuota.Now = now0): Option[Problem] =
     poolOf(m).filter(p => PlanPools.loginGates(p, m)).flatMap { p =>
       login(p, now) match
-        case Login.Missing(why) => Some(Problem.Unclassified(Legacy.Text(s"unavailable: no login — ${why.sentence}")))
+        case Login.Missing(why) => Some(Problem.Unclassified(Legacy.Text(s"unavailable: no login — ${why}")))
         case _                  => None
     }
 
@@ -254,7 +254,7 @@ final class PlanPools(
       autopilotOn: PlanReadSchedule.AutopilotOn,
       wanted: PlanReadSchedule.Wanted,
       now: java.time.Instant
-  ): Either[Problem, Refreshed] =
+  ): Either[PlanQuota.Rationale, Refreshed] =
     val at = now.toEpochMilli
     gate.exclusive(p, at) { last =>
       val newest = lastObserved(p).map(o => java.time.Instant.ofEpochMilli(o.value))
@@ -266,7 +266,7 @@ final class PlanPools(
         last.map(l => java.time.Instant.ofEpochMilli(l.value)),
         now
       ) match
-        case ScheduledRead.NotDue(why) => Left(Problem.Unclassified(Legacy.Text(s"${why.sentence}")))
+        case ScheduledRead.NotDue(why) => Left(PlanQuota.Rationale(s"${why.sentence}"))
         case ScheduledRead.Due         =>
           PlanQuota
             .refreshDecision(
@@ -282,7 +282,7 @@ final class PlanPools(
               takeAndLog(
                 p,
                 RefreshTrigger.Schedule,
-                Problem.Unclassified(Legacy.Text(RefreshTrigger.Schedule.wire.value)),
+                PlanQuota.Rationale(s"${RefreshTrigger.Schedule.wire}"),
                 PlanQuota.Now(at)
               )
             )
@@ -298,7 +298,7 @@ final class PlanPools(
       model: Option[ChainEntry.Model] = None,
       force: PlanPools.Force = PlanPools.Force(false),
       now: PlanQuota.Now = now0
-  ): Either[Problem, Refreshed] =
+  ): Either[PlanQuota.Rationale, Refreshed] =
     gate.exclusive(p, now.value) { last =>
       // asked again inside the gate: a caller that waited sees the reading the one before it took
       val needNow = need(p, model, now)
@@ -316,16 +316,16 @@ final class PlanPools(
           takeAndLog(
             p,
             trigger,
-            Problem.Unclassified(Legacy.Text(n.fold(trigger.wire.value)(x => s"${trigger.wire}, ${x.text}"))),
+            PlanQuota.Rationale(n.fold(s"${trigger.wire}")(x => s"${trigger.wire}, ${x.text}")),
             now
           )
         )
     }
 
   /** One reading of `p`, logged (server log and the pool's refresh log) with why it was taken. */
-  private def takeAndLog(p: PoolId, trigger: RefreshTrigger, why: Problem, now: PlanQuota.Now): Refreshed =
+  private def takeAndLog(p: PoolId, trigger: RefreshTrigger, why: PlanQuota.Rationale, now: PlanQuota.Now): Refreshed =
     val r = take(p, now)
-    val line = s"plan refresh ${p.wire} (${why.sentence}) ${r.text}"
+    val line = s"plan refresh ${p.wire} ($why) ${r.text}"
     if r.ok.value then scribe.info(line) else scribe.warn(line)
     Transactor(ds).transact(
       PlanQuotaRepo.logRefresh(
@@ -455,9 +455,9 @@ final class PlanPools(
         case Login.Missing(why) => Some(why)
         case _                  => None
       val (ok, why, until) = (v, missing) match
-        case (_, Some(m))                  => (false, Some(s"unavailable: no login — ${m.sentence}"), None)
+        case (_, Some(m))                  => (false, Some(s"unavailable: no login — ${m}"), None)
         case (Verdict.Usable(n), None)     => (true, n.map(_.value), None)
-        case (Verdict.Blocked(w, u), None) => (false, Some(w.sentence), u.map(x => iso(x.value)))
+        case (Verdict.Blocked(w, u), None) => (false, Some(s"$w"), u.map(x => iso(x.value)))
       val modeProblem = Option.when(p == PoolId.ClaudePlan)(claudeMode.left.toOption).flatten
       val (n, last) = Transactor(ds).read(PlanQuotaRepo.refreshes(p, PlanQuotaRepo.EpochMillis(today)))
       PoolStatus(
@@ -469,7 +469,7 @@ final class PlanPools(
         src,
         PoolStatus.Held(pool.held.value),
         PoolStatus.Usable(ok),
-        why.map((text => Problem.Unclassified(Legacy.Text(text)))),
+        why.map(text => PlanQuota.Rationale(s"$text")),
         until.map(PoolStatus.Until(_)),
         PoolStatus.MaxCallsInFlight(math.max(1, poolCfg(p)._2)),
         ws,
@@ -480,8 +480,8 @@ final class PlanPools(
           PoolStatus.Login(
             lg match
               case Login.Present(d) => d.value
-              case Login.Missing(w) => s"no login: ${w.sentence}"
-              case Login.Unknown(w) => s"not known: ${w.sentence}"
+              case Login.Missing(w) => s"no login: ${w}"
+              case Login.Unknown(w) => s"not known: ${w}"
           )
         ),
         refresh = refreshMode(p).map(m => PoolStatus.Refresh(m.value)),
@@ -602,24 +602,24 @@ object PlanPools:
   def claudeLogin(out: AgentDoctor.Output, useApiKey: ClaudeCodeConfig.UseApiKey): Login =
     if RawJson.parse(out.value.trim).isLeft then
       Login.Unknown(
-        Problem.Unclassified(Legacy.Text(s"'claude auth status' did not answer JSON: ${out.value.take(200)}"))
+        PlanQuota.Rationale(s"'claude auth status' did not answer JSON: ${out.value.take(200)}")
       )
     else
       AgentDoctor
         .login(out, useApiKey)
-        .fold(p => Login.Missing(p), d => Login.Present(Login.Present.Detail(d.value)))
+        .fold(p => Login.Missing(PlanQuota.Rationale(s"${p.sentence}")), d => Login.Present(Login.Present.Detail(d.value)))
 
   /** The runs' CODEX_HOME has a login when its `auth.json` exists (it is never read). */
   def codexLogin(home: Option[java.nio.file.Path], command: CodexConfig.Command): Login = home match
     case None =>
       Login.Missing(
-        Problem.Unclassified(Legacy.Text("no CODEX_HOME — set agents.runtimes.dir or agents.providers.codex.home"))
+        PlanQuota.Rationale("no CODEX_HOME — set agents.runtimes.dir or agents.providers.codex.home")
       )
     case Some(h) =>
       if java.nio.file.Files.isRegularFile(h.resolve("auth.json")) then
         Login.Present(Login.Present.Detail(s"$h has a login"))
       else
-        Login.Missing(Problem.Unclassified(Legacy.Text(s"$h has none — run `CODEX_HOME=\"$h\" $command login` once")))
+        Login.Missing(PlanQuota.Rationale(s"$h has none — run `CODEX_HOME=\"$h\" $command login` once"))
 
   /** The probe's output → the readings to record: its `rate_limit_event` windows; when it carried none but ended on the
     * plan's usage limit, one refused window until the reset it names (else the cool-down). Left = it said nothing about

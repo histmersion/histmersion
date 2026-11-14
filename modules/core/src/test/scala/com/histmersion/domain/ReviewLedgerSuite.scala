@@ -271,10 +271,10 @@ class ReviewLedgerSuite extends munit.FunSuite:
       ReviewArticle.Fix.WordsAfter(1),
       wontFix = List(
         ReviewArticle
-          .WontFix(ReviewArticle.WontFix.Id("C1"), Problem.Unclassified(Legacy.Text("defined in the glossary"))),
+          .WontFix(ReviewArticle.WontFix.Id("C1"), ReviewArticle.Rationale("defined in the glossary")),
         ReviewArticle.WontFix(
           ReviewArticle.WontFix.Id("R1"),
-          Problem.Unclassified(Legacy.Text("a major cannot be declined"))
+          ReviewArticle.Rationale("a major cannot be declined")
         )
       )
     )
@@ -375,7 +375,7 @@ class ReviewLedgerSuite extends munit.FunSuite:
           ReviewArticle.Fix.Notes(""),
           ReviewArticle.Fix.WordsBefore(1),
           ReviewArticle.Fix.WordsAfter(1),
-          wontFix = List(WontFix(ReviewArticle.WontFix.Id("C1"), Problem.Unclassified(Legacy.Text("fine"))))
+          wontFix = List(WontFix(ReviewArticle.WontFix.Id("C1"), ReviewArticle.Rationale("fine")))
         ),
         ReviewLedger.ApplyFixRun("b7f86a38-be91-c3c1-64ae-ba52940975e8"),
         ReviewLedger.ApplyFixRound(1)
@@ -543,7 +543,7 @@ class ReviewLedgerSuite extends munit.FunSuite:
         ReviewArticle.Fix.Notes(""),
         ReviewArticle.Fix.WordsBefore(1),
         ReviewArticle.Fix.WordsAfter(1),
-        wontFix = List(WontFix(ReviewArticle.WontFix.Id("C1"), Problem.Unclassified(Legacy.Text("names, not terms"))))
+        wontFix = List(WontFix(ReviewArticle.WontFix.Id("C1"), ReviewArticle.Rationale("names, not terms")))
       ),
       ReviewLedger.ApplyFixRun("b7f86a38-be91-c3c1-64ae-ba52940975e8"),
       ReviewLedger.ApplyFixRound(1)
@@ -886,7 +886,7 @@ class ReviewLedgerSuite extends munit.FunSuite:
           ReviewArticle.Fix.WordsBefore(1),
           ReviewArticle.Fix.WordsAfter(1),
           wontFix =
-            List(ReviewArticle.WontFix(ReviewArticle.WontFix.Id("C1"), Problem.Unclassified(Legacy.Text("fine"))))
+            List(ReviewArticle.WontFix(ReviewArticle.WontFix.Id("C1"), ReviewArticle.Rationale("fine")))
         ),
         ReviewLedger.ApplyFixRun("4b43b0ae-e356-24cd-95b9-10189b3dc231"),
         ReviewLedger.ApplyFixRound(1)

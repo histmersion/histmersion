@@ -39,6 +39,7 @@ import com.histmersion.api.library.WorkRef
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Source
 import com.histmersion.domain.automation.worklists.QueueItemId
+import com.histmersion.api.automation.Managers
 
 /** The watchers' INGEST BACKLOG (docs/research-process-managers.md "As built: the ingest backlog"). A watcher with
   * auto-ingest on used to send every legal open-access pick past the day's allowance to the acquisition list — the
@@ -98,7 +99,7 @@ final class OaBacklog(
               .derive[com.histmersion.api.automation.Goal.LinkKind, Goal.LinkKind]
               .transform(LinkKind.Source),
             GoalLink.Ref(ck.value),
-            Some(GoalLink.Note(s"found again by a watcher sweep: ${w.why.sentence}".take(500)))
+            Some(GoalLink.Note(s"found again by a watcher sweep: ${w.why}".take(500)))
           )
 
         p
@@ -321,7 +322,7 @@ final class OaBacklog(
               .derive[com.histmersion.api.automation.Goal.LinkKind, Goal.LinkKind]
               .transform(LinkKind.Source),
             GoalLink.Ref(ck.value),
-            Some(GoalLink.Note(s"found by a watcher sweep: ${w.why.sentence}".take(500)))
+            Some(GoalLink.Note(s"found by a watcher sweep: ${w.why}".take(500)))
           )
         )
         settle(
@@ -341,7 +342,7 @@ final class OaBacklog(
                   .derive[com.histmersion.api.automation.Goal.LinkKind, Goal.LinkKind]
                   .transform(LinkKind.Source),
                 GoalLink.Ref(r.citekey.value),
-                Some(GoalLink.Note(s"ingested from a watcher's backlog: ${w.why.sentence}".take(500)))
+                Some(GoalLink.Note(s"ingested from a watcher's backlog: ${w.why}".take(500)))
               )
             )
             settle(
@@ -425,7 +426,7 @@ final class OaBacklog(
                     None
                   ),
                   g,
-                  w.why
+                  AcquisitionSweepRules.Rationale(s"${w.why}")
                 )
                 .value
             )
@@ -527,7 +528,7 @@ final class OaBacklog(
             first.authors.map(a => com.histmersion.api.library.AuthorName(a.value)),
             first.venue.map(v => Source.Venue(v.value)),
             apiGoals,
-            first.why.fold(Problem.Unclassified(Legacy.Text("")))(w => w),
+            Managers.Rationale(first.why.fold("")(w => s"$w")),
             Some(OaWork.FoundBy(first.job.value)),
             Some(OaWork.AcquireText(first.text.value))
           )

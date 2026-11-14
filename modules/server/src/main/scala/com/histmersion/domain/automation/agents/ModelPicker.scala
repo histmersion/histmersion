@@ -294,7 +294,7 @@ final class ModelPicker(
         case _                               => (Problem.Unclassified(Legacy.Text("")), None)
       ModelState(
         ModelState.Usable(false),
-        Some(Problem.Unclassified(Legacy.Text(s"the ${p.title} is below its floor: ${why.sentence}"))),
+        Some(Problem.Unclassified(Legacy.Text(s"the ${p.title} is below its floor: ${why}"))),
         until.map(u => PlanQuotaRepo.EpochMillis(u.value)),
         ht,
         hu,

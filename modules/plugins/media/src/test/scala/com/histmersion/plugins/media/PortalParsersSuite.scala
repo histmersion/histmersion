@@ -255,7 +255,7 @@ class PortalParsersSuite extends munit.FunSuite:
         DeepTime.span(DeepTime.SignedYear(-8000L), DeepTime.SignedYear(2000L))
       )
     assertEquals(
-      MediaMatch.withIds(recs.head, kahramanmaras, domIds, domNames, deeper).left.map(_.sentence),
+      MediaMatch.withIds(recs.head, kahramanmaras, domIds, domNames, deeper).left.map(w => s"$w"),
       Left("its context names another place on the map")
     )
     // the unit "I" kept as a context field (as before #2571) refused it: the map's "I" is another place
@@ -263,7 +263,7 @@ class PortalParsersSuite extends munit.FunSuite:
       (MediaRecord.Geography.Field("context") -> MediaRecord.Geography.Value("I")) :: recs.head.geography
     )
     assertEquals(
-      MediaMatch.withIds(before, domuztepe, domIds, domNames, deeper).left.map(_.sentence),
+      MediaMatch.withIds(before, domuztepe, domIds, domNames, deeper).left.map(w => s"$w"),
       Left("its context names another place on the map")
     )
 

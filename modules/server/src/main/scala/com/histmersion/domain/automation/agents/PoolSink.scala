@@ -1,6 +1,6 @@
 package com.histmersion
 package domain.automation.agents
-import com.histmersion.util.problem.Problem
+import com.histmersion.api.automation.PlanQuota
 
 import com.histmersion.server.agents.PlanPools
 
@@ -18,7 +18,7 @@ trait PoolSink:
   def blocked(
       p: PoolId,
       model: Option[AgentsControllers.ModelName]
-  ): Option[(Problem, Option[PlanQuotaRepo.EpochMillis])]
+  ): Option[(PlanQuota.Rationale, Option[PlanQuotaRepo.EpochMillis])]
 
   /** Read the ChatGPT plan from the app-server when the last read is old enough (throttled). */
   def refresh(now: PlanQuotaRepo.EpochMillis): Unit

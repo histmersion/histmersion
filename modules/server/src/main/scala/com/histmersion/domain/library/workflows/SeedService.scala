@@ -18,6 +18,7 @@ import java.time.Instant
 import com.histmersion.api.library.Candidates
 import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.automation.worklists.WorkListControllers
+import com.histmersion.api.automation.Managers
 
 /** SEED BEFORE THE PLAN (#3762 proposal 5): a research goal with no source does not wait for its plan to be approved
   * before it gathers. Each managers' tick (the autopilot on, not draining), up to
@@ -127,9 +128,7 @@ final class SeedService(
               c.authors,
               c.venue,
               List(com.histmersion.api.automation.Goal.Slug(goal.value)),
-              Problem.Unclassified(
-                Legacy.Text("seed before the plan: a legal open-access candidate of the goal's own search (no model)")
-              )
+              Managers.Rationale("seed before the plan: a legal open-access candidate of the goal's own search (no model)")
             )
           )
         }

@@ -37,6 +37,7 @@ import com.histmersion.api.automation.{AgentsMarkdown, ManagersMarkdown}
 import com.histmersion.util.jobs.Job
 import com.histmersion.api.automation.Goal
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.automation.Managers
 
 /** `hint-effect <manager>` (docs/research-process-managers.md §3.6, phase 3): a person's hint, in words, read by the
   * planner model (the `hint-reader` definition: no tools — the hint, the manager's items and its settings are given as
@@ -77,7 +78,7 @@ final class HintEffectPipeline(
           )
           .map((e, ws) =>
             Checked(
-              Proposed(e, Problem.Unclassified(Legacy.Text(Option(a.why).map(_.sentence.trim).getOrElse(""))), ws),
+              Proposed(e, Managers.Rationale(Option(a.why).fold("")(w => s"$w".trim)), ws),
               ws.map(w => Checked.Warnings(w.value))
             )
           )

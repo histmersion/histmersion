@@ -51,6 +51,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.domain.automation.agents.PoolSink
 import com.histmersion.domain.automation.agents.PlanQuotaRepo
+import com.histmersion.api.automation.PlanQuota
 
 /** The `claude-code` provider without a model: the argument vector, the environment, the stream-json output read back
   * (rate-limit readings, the quota guard's abort, the last of two results), the plan's usage limit — and the whole
@@ -594,7 +595,7 @@ class ClaudeCodeSuite extends munit.FunSuite:
     val sink = FakeCli.Sink(block =
       Some(
         (
-          Problem.Unclassified(Legacy.Text("five_hour: 8% left, floor 25%")),
+          PlanQuota.Rationale("five_hour: 8% left, floor 25%"),
           Some(PlanQuotaRepo.EpochMillis(1791236400000L))
         )
       )

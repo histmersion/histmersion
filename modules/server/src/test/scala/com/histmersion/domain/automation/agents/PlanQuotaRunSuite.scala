@@ -380,7 +380,7 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
     val q = a.quota
     val gpt = q.plans.find(_.pool.value == "chatgpt-plan").get
     assert(
-      !gpt.usable.value && gpt.reason.map(_.sentence).contains("ordinary usage not allowed") && gpt.planType.contains(
+      !gpt.usable.value && gpt.reason.map(w => s"$w").contains("ordinary usage not allowed") && gpt.planType.contains(
         "prolite"
       ),
       gpt
@@ -532,7 +532,7 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
         )
       )
     )
-    assert(!stop.allow.value && stop.reason.exists(_.sentence.contains("floor 25%")) && stop.resetsAt.isDefined, stop)
+    assert(!stop.allow.value && stop.reason.exists(w => s"$w".contains("floor 25%")) && stop.resetsAt.isDefined, stop)
 
   test("REST: quota, hold, and the guard endpoint takes a RUN TOKEN where writes need the API key"):
     val http = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build()

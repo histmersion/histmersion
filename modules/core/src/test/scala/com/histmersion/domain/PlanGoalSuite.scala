@@ -14,6 +14,7 @@ import com.histmersion.domain.PlanGoal.*
 import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.library.Citekey
+import com.histmersion.api.automation.Goal.Rationale
 
 /** plan-goal's pure checks: what a retry can fix is sent back, what it cannot is dropped with a note, DOIs are looked
   * up before a person sees them, and the acquisition item of a work.
@@ -47,8 +48,8 @@ class PlanGoalSuite extends munit.FunSuite:
       ),
       List(PlanAnswer.Queries("Bronze Age tin"), PlanAnswer.Queries("bronze age tin")),
       List(
-        WorkAnswer(WorkAnswer.Doi("https://doi.org/10.1000/ABC"), Problem.Unclassified(Legacy.Text("the isotopes"))),
-        WorkAnswer(WorkAnswer.Doi("doi:10.1000/abc"), Problem.Unclassified(Legacy.Text("again")))
+        WorkAnswer(WorkAnswer.Doi("https://doi.org/10.1000/ABC"), Rationale("the isotopes")),
+        WorkAnswer(WorkAnswer.Doi("doi:10.1000/abc"), Rationale("again"))
       )
     )
     val (p, warns) = check(a, Goal.Slug("bronze-age"), taken, Set.empty, caps, last = LastRound(false)).toOption.get
@@ -74,7 +75,7 @@ class PlanGoalSuite extends munit.FunSuite:
         SubGoalAnswer(SubGoalAnswer.Slug("ok-slug"), SubGoalAnswer.Title(" "))
       ),
       List(PlanAnswer.Queries("x" * 41)),
-      List(WorkAnswer(WorkAnswer.Doi("not-a-doi"), Problem.Unclassified(Legacy.Text("?"))))
+      List(WorkAnswer(WorkAnswer.Doi("not-a-doi"), Rationale("?")))
     )
     val ps = check(bad, Goal.Slug("bronze-age"), taken, Set.empty, caps, last = LastRound(false)).left.toOption.get
     assert(ps.exists(_.sentence.contains("is not a Slug")), ps)
@@ -113,7 +114,7 @@ class PlanGoalSuite extends munit.FunSuite:
           SubGoalAnswer(SubGoalAnswer.Slug("BAD SLUG"), SubGoalAnswer.Title("x")),
           SubGoalAnswer(SubGoalAnswer.Slug("good"), SubGoalAnswer.Title("Good"))
         ),
-        works = List(WorkAnswer(WorkAnswer.Doi("nope"), Problem.Unclassified(Legacy.Text(""))))
+        works = List(WorkAnswer(WorkAnswer.Doi("nope"), Rationale("")))
       )
     val (p, warns) = check(a, Goal.Slug("g"), taken, Set.empty, caps, last = LastRound(true)).toOption.get
     assertEquals(p.subGoals.map(_.slug), List("good"))
@@ -129,9 +130,9 @@ class PlanGoalSuite extends munit.FunSuite:
       Nil,
       Nil,
       List(
-        ProposedWork(Doi("10.1000/a"), Problem.Unclassified(Legacy.Text("a"))),
-        ProposedWork(Doi("10.1000/b"), Problem.Unclassified(Legacy.Text("b"))),
-        ProposedWork(Doi("10.1000/c"), Problem.Unclassified(Legacy.Text("c")))
+        ProposedWork(Doi("10.1000/a"), Rationale("a")),
+        ProposedWork(Doi("10.1000/b"), Rationale("b")),
+        ProposedWork(Doi("10.1000/c"), Rationale("c"))
       ),
       Nil
     )
@@ -174,7 +175,7 @@ class PlanGoalSuite extends munit.FunSuite:
           Nil,
           Some(com.histmersion.api.library.Citekey("a2020_x")),
           inCorpus = PlannedWork.InCorpus(true),
-          why = Problem.Unclassified(Legacy.Text("a"))
+          why = Rationale("a")
         )
       )
     )
@@ -188,7 +189,7 @@ class PlanGoalSuite extends munit.FunSuite:
         Some(com.histmersion.api.library.Title("Tin isotopes")),
         Some(com.histmersion.api.catalogue.Year(2024)),
         List(com.histmersion.api.library.AuthorName("Berger"), com.histmersion.api.library.AuthorName("Lockhoff")),
-        why = Problem.Unclassified(Legacy.Text("dates the tin"))
+        why = Rationale("dates the tin")
       )
     val t = acquireText(w, Goal.Slug("bronze-age"))
     assertEquals(

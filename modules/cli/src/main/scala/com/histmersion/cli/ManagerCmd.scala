@@ -25,6 +25,7 @@ import com.histmersion.util.console.Console
 import com.histmersion.api.library.AcquisitionWorkApi
 import com.histmersion.api.automation.Activity
 import com.histmersion.api.automation.Stalls
+import com.histmersion.api.automation.Managers
 
 /** `histmersion agent managers` and `histmersion agent manager <id> …` — the persistent process managers
   * (docs/research-process-managers.md). The server runs them; this reads and steers them over HTTP.
@@ -321,7 +322,7 @@ object ManagerCmd:
                   ItemPatch.Action("hold"),
                   until = u.map(ItemPatch.Until(_)),
                   untilSource = s.map(ItemPatch.UntilSource(_)),
-                  reason = r.map(text => Problem.Unclassified(Legacy.Text(text)))
+                  reason = r.map(text => Managers.Rationale(text))
                 )
               )
             case ManagerVerb.Release(t) => itemPatch(c, id, ManagerItem.Ref(t), ItemPatch(ItemPatch.Action("release")))
@@ -330,7 +331,7 @@ object ManagerCmd:
                 c,
                 id,
                 ManagerItem.Ref(t),
-                ItemPatch(ItemPatch.Action("skip"), reason = r.map(text => Problem.Unclassified(Legacy.Text(text))))
+                ItemPatch(ItemPatch.Action("skip"), reason = r.map(text => Managers.Rationale(text)))
               )
             case ManagerVerb.Reopen(t) => itemPatch(c, id, ManagerItem.Ref(t), ItemPatch(ItemPatch.Action("reopen")))
             case ManagerVerb.Priority(t, p) =>

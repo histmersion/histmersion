@@ -250,7 +250,7 @@ class PlanRefreshSuite extends munit.FunSuite:
     )
     val home = Files.createTempDirectory("hm-codex-home-")
     assert(PlanPools.codexLogin(Some(home), CodexConfig.Command("codex")) match
-      case Login.Missing(w) => w.sentence.contains("codex login") && w.sentence.contains(home.toString)
+      case Login.Missing(w) => s"$w".contains("codex login") && s"$w".contains(home.toString)
       case _                => false)
     assert(PlanPools.codexLogin(None, CodexConfig.Command("codex")).isInstanceOf[Login.Missing])
     Files.writeString(home.resolve("auth.json"), "") // an empty stand-in: only its presence is looked at

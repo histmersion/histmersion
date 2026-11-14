@@ -577,7 +577,7 @@ object AgentRepo:
           .modify(_.evidence)
           .setTo(
             ApprovalInfo.Evidence(
-              p.map(x => Option(x.why.sentence).filter(_.nonEmpty).getOrElse(x.text.value)).getOrElse("")
+              p.map(x => Option(s"${x.why}").filter(_.nonEmpty).getOrElse(x.text.value)).getOrElse("")
             )
           )
       case _ =>
