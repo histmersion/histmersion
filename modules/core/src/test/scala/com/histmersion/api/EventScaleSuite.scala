@@ -214,11 +214,11 @@ class EventScaleSuite extends munit.FunSuite:
     assertEquals((TimeSpan(notBefore = Some(Year(-1000)), notAfter = Some(Year(-1100)))).outer, Some((-1100L, -1000L)))
     assertEquals(
       EventGeo.missingEnd(TimeSpan(notBefore = Some(Year(-1200)))),
-      Some(Problem.Invalid.Missing.here(Problem.Field("end")))
+      Some(EventGeo.Side.End)
     )
     assertEquals(
       EventGeo.missingEnd(TimeSpan(endFrom = Some(Year(-1200)))),
-      Some(Problem.Invalid.Missing.here(Problem.Field("start")))
+      Some(EventGeo.Side.Start)
     )
     assertEquals(EventGeo.missingEnd(TimeSpan(Some(Year(-1300)), None, None, Some(Year(-1250)))), None)
     assertEquals(EventGeo.missingEnd(TimeSpan()), None)
