@@ -1,6 +1,7 @@
 package com.histmersion
 package web
 
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -107,7 +108,10 @@ class MapRegionsSuite extends munit.FunSuite:
         None,
         MapRegions.ZoomText(""),
         dryRun = Basemap.FetchQuery.DryRun(true)
-      ).left.exists(_.sentence.contains("west must be < east"))
+      ).left.exists {
+        case Problem.Invalid.Inconsistent(_, Problem.Invalid.Exclusion.Ordered, _) => true
+        case _                                                                    => false
+      }
     )
     assert(
       request(

@@ -76,7 +76,7 @@ class MergeCmdSuite extends munit.FunSuite:
       )
     val msg = bad.left.map(_.message.sentence).swap.getOrElse(fail("accepted"))
     assert(
-      msg.contains("no such file") && msg.contains("--resolve nonsense") && msg.contains("--editions sometimes"),
+      msg.contains("no such file") && msg.contains("resolve: 'nonsense'") && msg.contains("--editions sometimes"),
       msg
     )
     assertEquals(bad.left.map(_.exitCode), Left(ExitCode.Usage))

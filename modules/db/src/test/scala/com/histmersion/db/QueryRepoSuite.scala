@@ -1,6 +1,7 @@
 package com.histmersion
 package db
 
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -161,7 +162,7 @@ class QueryRepoSuite extends DbSuite:
     assert(e.toLowerCase.contains("syntax"), e)
 
   test("an empty statement is refused before it reaches the database"):
-    assertEquals(run("   ").left.map(_.sentence), Left("empty statement"))
+    assertEquals(run("   ").left.toOption, Some(Problem.Invalid.Missing.here(Problem.Field("sql"))))
 
   // ── the limits ───────────────────────────────────────────────────────────────────────────────
 
@@ -218,8 +219,7 @@ class QueryRepoSuite extends DbSuite:
   test("`SET TRANSACTION READ WRITE; SELECT …` is refused, and nothing was executed"):
     val e = run(s"SET TRANSACTION READ WRITE; select * from sources").left
       .getOrElse(fail("the disarming batch was NOT refused"))
-      .sentence
-    assert(e.contains("statements"), e)
+    assertEquals(e, Problem.Refused.Policy(Problem.Refused.Rule.OneStatement))
     assert(probeExists)
 
   test("`SET LOCAL statement_timeout = 0; SELECT pg_sleep(30)` is refused"):

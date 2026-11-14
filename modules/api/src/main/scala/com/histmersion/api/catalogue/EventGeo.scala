@@ -1,7 +1,6 @@
 package com.histmersion
 package api.catalogue
 
-import com.histmersion.util.problem.Problem
 
 import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -61,11 +60,16 @@ object EventGeo:
     type Description = Description.T
     object Description extends Newtype[String, Pure]
 
-  def missingEnd(ts: TimeSpan): Option[Problem] =
+  /** An end of a time span. */
+  enum Side derives CanEqual:
+    case Start, End
+
+  /** The end of `ts` no date records, when the other end is recorded: a fact about the event, not a failure. */
+  def missingEnd(ts: TimeSpan): Option[Side] =
     val hasStart = ts.notBefore.isDefined || ts.beginBy.isDefined
     val hasEnd = ts.endFrom.isDefined || ts.notAfter.isDefined
-    if hasStart && !hasEnd then Some(Problem.Invalid.Missing.here(Problem.Field("end")))
-    else if hasEnd && !hasStart then Some(Problem.Invalid.Missing.here(Problem.Field("start")))
+    if hasStart && !hasEnd then Some(Side.End)
+    else if hasEnd && !hasStart then Some(Side.Start)
     else None
 
   final case class List(
