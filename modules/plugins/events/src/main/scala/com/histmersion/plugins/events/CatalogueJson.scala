@@ -20,7 +20,7 @@ final class CatalogueJson(http: Plugin.Http):
           .parse(String(b.value, "UTF-8"))
           .left
           .map(e =>
-            Problem.Upstream.BadReply(
+            Problem.Upstream.BadReply.here(
               Problem.Upstream.Name(s"${CatalogueJson.host(url)}"),
               Problem.Upstream.Url(s"$url"),
               Problem.Upstream.Shape.Json,

@@ -256,9 +256,9 @@ object CommandLine:
 
   /** Scallop's error, typed; `types` are those of the subcommand the command line names, innermost first. */
   private def problem(e: ScallopException, types: List[Types]): Problem = e match
-    case RequiredOptionNotFound(name) => Problem.Invalid.Missing(Problem.Field(name))
+    case RequiredOptionNotFound(name) => Problem.Invalid.Missing.here(Problem.Field(name))
     case UnknownOption(name)          =>
-      Problem.Invalid.Unknown(
+      Problem.Invalid.Unknown.here(
         typeName[OptionName],
         Problem.Raw(s"--$name"),
         types.headOption.toVector.flatMap(_.options).sorted.map(Problem.Raw(_))
@@ -272,7 +272,7 @@ object CommandLine:
         Vector(Problem.Field(name))
       )
     case ExcessArguments(extra) =>
-      Problem.Invalid.Unknown(typeName[Operand], Problem.Raw(extra.mkString(" ")), Vector.empty)
+      Problem.Invalid.Unknown.here(typeName[Operand], Problem.Raw(extra.mkString(" ")), Vector.empty)
     case other => Problem.Unclassified(Legacy.Text(other.getMessage))
 
   // ── the configuration tree ────────────────────────────────────────────────────────────────────
@@ -436,7 +436,7 @@ object CommandLine:
                 problem => Outcome.Failed(problem, HelpText(helpOf(args))),
                 Outcome.Run(server.toOption, token.toOption, _)
               )
-            case _ => Outcome.Failed(Problem.Invalid.Missing(Problem.Field("command")), HelpText(helpOf(args)))
+            case _ => Outcome.Failed(Problem.Invalid.Missing.here(Problem.Field("command")), HelpText(helpOf(args)))
 
     /** The subcommands `args` name, outermost first. */
     private def confsOf(args: Seq[String]): List[Declares] =

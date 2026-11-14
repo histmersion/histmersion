@@ -18,7 +18,7 @@ class SpiAdditionsSuite extends munit.FunSuite:
     ): Either[Problem, Plugin.HttpResponse.Body] =
       if (url).value.endsWith("/missing") then
         Left(
-          Problem.Upstream.Http(
+          Problem.Upstream.Http.here(
             Problem.Upstream.Name("x.example"),
             Problem.Upstream.Url(s"$url"),
             Problem.Upstream.Status.NotFound,

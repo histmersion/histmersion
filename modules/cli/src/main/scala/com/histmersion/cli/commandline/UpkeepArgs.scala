@@ -121,7 +121,7 @@ object UpkeepArgs:
     private val json_ = json()
 
     def command: Either[Problem, Cli.Command] =
-      if text_().trim.isEmpty then Left(Problem.Invalid.Missing(Problem.Field("text")))
+      if text_().trim.isEmpty then Left(Problem.Invalid.Missing.here(Problem.Field("text")))
       else
         Right(
           Ops.QueueCmd.Add(
@@ -159,7 +159,7 @@ object UpkeepArgs:
         )
       else if all && (id_.isDefined || limit_.isDefined) then
         Left(
-          Problem.Invalid.Inconsistent(
+          Problem.Invalid.Inconsistent.here(
             NonEmptyVector.of(Problem.Field("--all"), Problem.Field(if id_.isDefined then "--id" else "--limit")),
             Problem.Invalid.Exclusion.AtMostOne
           )
@@ -182,7 +182,7 @@ object UpkeepArgs:
     private val json_ = json()
 
     def command: Either[Problem, Cli.Command] =
-      if text_().trim.isEmpty then Left(Problem.Invalid.Missing(Problem.Field("text")))
+      if text_().trim.isEmpty then Left(Problem.Invalid.Missing.here(Problem.Field("text")))
       else Right(Ops.QueueCmd.Edit(id_(), Queue.QueueItem.Text(text_()), json_()))
 
   final private class LeafRm() extends Leaf(QueueParent, "rm", "Remove an item"):

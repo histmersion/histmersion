@@ -60,7 +60,7 @@ class WikidataEntitiesSuite extends munit.FunSuite:
     assertEquals(
       WikidataEntities.items(err, Set(WikidataStatement.Property("P18")), Asked).left.toOption,
       Some(
-        Problem.Upstream.BadReply(
+        Problem.Upstream.BadReply.here(
           Problem.Upstream.Name("wikidata"),
           Asked,
           Problem.Upstream.Shape.Json,

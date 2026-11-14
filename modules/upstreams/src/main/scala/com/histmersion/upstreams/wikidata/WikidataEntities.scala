@@ -47,7 +47,7 @@ object WikidataEntities:
       case Some(err) =>
         val code = err.cursor.get[String]("code").getOrElse("error")
         Left(
-          Problem.Upstream.BadReply(
+          Problem.Upstream.BadReply.here(
             Problem.Upstream.Name("wikidata"),
             asked,
             Problem.Upstream.Shape.Json,

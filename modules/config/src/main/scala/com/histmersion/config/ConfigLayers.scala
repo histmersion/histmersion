@@ -177,7 +177,7 @@ private[config] object ConfigLayers:
       case ConfigDecodingError.CannotConvert(path, _, Some(raised: Raised)) =>
         raised.problems.at(Problem.Field(s"${keyOf(path)}"))
       case ConfigDecodingError.Missing(path, key) =>
-        Problem.Invalid.Missing(Problem.Field(s"${keyOf(ending(path, key))}"))
+        Problem.Invalid.Missing.here(Problem.Field(s"${keyOf(ending(path, key))}"))
       case ConfigDecodingError.UnknownKey(path, key) =>
         Problem.Config.Setting(Problem.SettingKey(s"${keyOf(ending(path, key))}"), Problem.Config.Fault.Undeclared)
       case e =>

@@ -71,7 +71,7 @@ final class PolicyHttp(
         case Right(answer) =>
           val code = HttpPolicy.StatusCode(answer.code.value)
           if Challenge.isChallenge(code, answer.headers, Challenge.Body(answer.body.value)) then
-            Left(Problem.Upstream.Challenged(url.upstream, url.address, answer.code.status))
+            Left(Problem.Upstream.Challenged.here(url.upstream, url.address, answer.code.status))
           else
             HttpPolicy.decide(
               code,

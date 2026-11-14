@@ -45,7 +45,7 @@ class CitekeySuite extends munit.FunSuite:
       case other => fail(s"not malformed: $other")
     assert(Citekey.parse("../x").left.exists(_.isInstanceOf[Problem.Invalid.Malformed]))
     assert(Citekey.parse("ab..cd").left.exists(_.isInstanceOf[Problem.Invalid.Malformed]))
-    assertEquals(Citekey.parse("  "), Left(Problem.Invalid.Missing(Problem.Field("citekey"))))
+    assertEquals(Citekey.parse("  "), Left(Problem.Invalid.Missing.here(Problem.Field("citekey"))))
 
   test("valid classifies without a message; a literal is checked by the compiler"):
     assert(Citekey.valid("anthony2007_horse") && !Citekey.valid("x/../y"))

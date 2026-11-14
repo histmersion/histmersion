@@ -58,7 +58,7 @@ final class GvpCatalogue(cfg: GvpEvents) extends EventCatalogue:
             Either.cond(
               total.forall(_.value <= rs.size),
               CataloguePage(rs),
-              Problem.Invalid.OutOfRange(
+              Problem.Invalid.OutOfRange.here(
                 Problem.TypeName("com.histmersion.plugins.events.GvpCatalogue.Eruptions"),
                 Problem.Raw(s"${total.map(_.value).getOrElse(0)}"),
                 Problem.Invalid.Bounds(None, Some(Problem.Raw(s"${rs.size} (events.gvp.page-size)")))
@@ -67,7 +67,7 @@ final class GvpCatalogue(cfg: GvpEvents) extends EventCatalogue:
           )
       case other =>
         Left(
-          Problem.Invalid.Unknown(
+          Problem.Invalid.Unknown.here(
             Problem.TypeName("com.histmersion.plugins.events.GvpCatalogue.Window"),
             Problem.Raw(s"$other"),
             Vector.empty
@@ -124,7 +124,7 @@ object GvpCatalogue:
         Left(
           c.downField("exceptions")
             .focus
-            .fold(Problem.Invalid.Missing(Problem.Field("features")))(e =>
+            .fold(Problem.Invalid.Missing.here(Problem.Field("features")))(e =>
               Problem.Plugin
                 .Said(Problem.Plugin.Id("events-gvp"), Problem.Plugin.Claim.Failed, External.PluginSaid.of(e.noSpaces))
             )

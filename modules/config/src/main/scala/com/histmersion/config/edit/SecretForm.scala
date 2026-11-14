@@ -37,7 +37,7 @@ object SecretForm:
   /** The reference's form, or why `text` is none. Never repeats `text` (it may be the value). */
   def reference(text: String): Either[Problem, SecretForm] =
     val t = text.trim
-    def not(form: Problem.Invalid.Form) = Left(Problem.Invalid.Reference(form))
+    def not(form: Problem.Invalid.Form) = Left(Problem.Invalid.Reference.here(form))
     t.indexOf(':') match
       case i if i <= 0 => not(Problem.Invalid.Form.Bare)
       case i           =>

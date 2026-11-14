@@ -19,7 +19,7 @@ class ExitOnProblemsSuite extends munit.FunSuite:
   test("the server out of reach outweighs a usage error among several problems"):
     val unreachable = examples.collect { case u: Upstream.Unreachable => u }.head
     assertEquals(
-      ExitCode.of(Problems.of(Invalid.Missing(Field("x")), unreachable), ExitCode.Origin.Local),
+      ExitCode.of(Problems.of(Invalid.Missing.here(Field("x")), unreachable), ExitCode.Origin.Local),
       ExitCode.Unreachable
     )
-    assertEquals(ExitCode.of(Problems.of(Invalid.Missing(Field("x"))), ExitCode.Origin.Local), ExitCode.Usage)
+    assertEquals(ExitCode.of(Problems.of(Invalid.Missing.here(Field("x"))), ExitCode.Origin.Local), ExitCode.Usage)

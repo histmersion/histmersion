@@ -26,6 +26,10 @@ class SecretFormSuite extends munit.FunSuite:
     assertEquals(SecretForm.shown("env:X", r), Some("env:X"))
     assertEquals(SecretForm.shown("abc123", r), None)
     val bad = SecretForm.reference("abc123")
-    assertEquals(bad, Left(Problem.Invalid.Reference(Problem.Invalid.Form.Bare)), "the error never repeats the text")
+    assertEquals(
+      bad,
+      Left(Problem.Invalid.Reference.here(Problem.Invalid.Form.Bare)),
+      "the error never repeats the text"
+    )
     assert(SecretForm.reference("env:1BAD").isLeft)
     assert(SecretForm.reference("Weird:x").isLeft)

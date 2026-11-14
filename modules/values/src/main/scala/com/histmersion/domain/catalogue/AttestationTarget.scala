@@ -19,5 +19,6 @@ object AttestationTarget:
     Either.cond(
       all.contains(n),
       Wire(n),
-      Problem.Invalid.Unknown(Problem.TypeName.of(Wire), Problem.Raw(s"$t"), all.map(w => Problem.Raw(s"$w")).toVector)
+      Problem.Invalid.Unknown
+        .here(Problem.TypeName.of(Wire), Problem.Raw(s"$t"), all.map(w => Problem.Raw(s"$w")).toVector)
     )

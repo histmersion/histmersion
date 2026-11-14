@@ -41,7 +41,7 @@ object ChronOntology extends DownloadedGazetteer:
           .flatMap(_("results"))
           .flatMap(_.asArray)
           .map(_.toList)
-          .toRight(Problem.Invalid.Missing(Problem.Field("results")))
+          .toRight(Problem.Invalid.Missing.here(Problem.Field("results")))
         results.map(_.flatMap(r => readResult(r).toOption))
       }
 

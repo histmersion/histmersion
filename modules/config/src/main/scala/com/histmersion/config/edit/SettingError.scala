@@ -45,7 +45,7 @@ enum SettingError derives CanEqual:
   def message: Problems = this match
     case BadKey(why)            => why
     case UnknownKey(k, closest) =>
-      Problem.Invalid.Unknown(
+      Problem.Invalid.Unknown.here(
         Problem.TypeName.of(SettingKey),
         Problem.Raw(s"$k"),
         closest.toVector.map(c => Problem.Raw(s"$c"))

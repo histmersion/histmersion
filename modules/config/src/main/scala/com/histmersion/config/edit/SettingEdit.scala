@@ -42,5 +42,5 @@ object SettingEdit:
           parse(k, v, schema) match
             case Left(e)  => Left(e)
             case Right(e) => loop(tail, e :: acc)
-    if changes.isEmpty then Left(SettingError.BadKey(Problem.Invalid.Missing(Problem.Field("changes"))))
+    if changes.isEmpty then Left(SettingError.BadKey(Problem.Invalid.Missing.here(Problem.Field("changes"))))
     else loop(changes, Nil)

@@ -47,7 +47,7 @@ final class SttpTransport(timeoutSeconds: SttpTransport.TimeoutSeconds, tls: Opt
       .Try(req.send(backend))
       .toEither
       .left
-      .map(e => Problem.Upstream.Unreachable(url.upstream, url.address, External.Reported.of(e)))
+      .map(e => Problem.Upstream.Unreachable.here(url.upstream, url.address, External.Reported.of(e)))
       .map(resp =>
         HttpAnswer(
           HttpAnswer.Code(resp.code.code),

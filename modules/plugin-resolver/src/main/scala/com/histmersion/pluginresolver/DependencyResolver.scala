@@ -81,12 +81,12 @@ object DependencyResolver:
       case refactorPattern6 :: t if (refactorPattern6.value == "--check") =>
         loop(t, acc.copy(check = ResolveRequest.Check(true)))
       case flag :: _ if (flag).value.startsWith("--") =>
-        Left(Problem.Invalid.Unknown(Problem.TypeName.of(Resolver.Argument), Problem.Raw(s"$flag"), Options))
+        Left(Problem.Invalid.Unknown.here(Problem.TypeName.of(Resolver.Argument), Problem.Raw(s"$flag"), Options))
       case jars => Right(acc.copy(jars = jars.map((refactorValue4 => Path.of(refactorValue4.value)))))
     val empty = Path.of("")
     loop(args, ResolveRequest(empty, empty, None, Nil, ResolveRequest.Check(false), Nil)).flatMap { r =>
       val missing = List("--kit" -> r.kit, "--lib" -> r.lib).collect { case (flag, `empty`) =>
-        Problem.Invalid.Missing(Problem.Field(s"$flag"))
+        Problem.Invalid.Missing.here(Problem.Field(s"$flag"))
       }
       NonEmptyVector.from(missing.toVector).toLeft(r)
     }

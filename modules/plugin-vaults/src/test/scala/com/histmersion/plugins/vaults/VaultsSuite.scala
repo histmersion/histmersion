@@ -269,7 +269,7 @@ class VaultsSuite extends munit.FunSuite:
     val db = Files.writeString(d.resolve("v.kdbx"), "")
     val p = KeePassXcPlugin()
     def reg(h: String, ctx: Ctx) = p.register(decode(p, h), ctx)
-    assertEquals(reg("", Ctx(Map("PATH" -> d.toString))), Left(Problem.Invalid.Missing(Problem.Field("database"))))
+    assertEquals(reg("", Ctx(Map("PATH" -> d.toString))), Left(Problem.Invalid.Missing.here(Problem.Field("database"))))
     assert(
       reg(s"""database = "${d.resolve("nope.kdbx")}"""", Ctx(Map("PATH" -> d.toString))).left
         .exists(_.sentence.contains("is not a file"))

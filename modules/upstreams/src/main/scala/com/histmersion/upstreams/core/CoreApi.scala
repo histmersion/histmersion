@@ -44,7 +44,7 @@ final class CoreApi(core: CoreEndpoint, http: Plugin.Http, quota: UpstreamQuota)
           case Left(e)  => Left(CoreFailure.Failed(e))
           case Right(a) =>
             quota.observe(a.status, a.headers)
-            val answered = Problem.Upstream.Http(
+            val answered = Problem.Upstream.Http.here(
               Problem.Upstream.Name("core"),
               Problem.Upstream.Url(s"$url"),
               Problem.Upstream.Status((a.status).value),
@@ -58,7 +58,7 @@ final class CoreApi(core: CoreEndpoint, http: Plugin.Http, quota: UpstreamQuota)
                 .left
                 .map(e =>
                   CoreFailure.Failed(
-                    Problem.Upstream.BadReply(
+                    Problem.Upstream.BadReply.here(
                       Problem.Upstream.Name("core"),
                       Problem.Upstream.Url(s"$url"),
                       Problem.Upstream.Shape.Json,

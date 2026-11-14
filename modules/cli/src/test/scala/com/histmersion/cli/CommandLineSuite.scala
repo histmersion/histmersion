@@ -123,15 +123,15 @@ class CommandLineSuite extends munit.FunSuite:
     )
 
   test("a missing positional argument is Missing"):
-    assertEquals(problem("get"), Problem.Invalid.Missing(Problem.Field("slug")))
-    assertEquals(problem("version", "sea_peoples"), Problem.Invalid.Missing(Problem.Field("id")))
+    assertEquals(problem("get"), Problem.Invalid.Missing.here(Problem.Field("slug")))
+    assertEquals(problem("version", "sea_peoples"), Problem.Invalid.Missing.here(Problem.Field("id")))
 
   test("an unknown option is Unknown, with the help of the subcommand it was given to"):
     scallop("get", "sea_peoples", "--bogus") match
       case CommandLine.Outcome.Failed(p, help) =>
         assertEquals(
           p,
-          Problem.Invalid.Unknown(
+          Problem.Invalid.Unknown.here(
             Problem.TypeName("com.histmersion.cli.CommandLine.OptionName"),
             Problem.Raw("--bogus"),
             Vector(Problem.Raw("--json"), Problem.Raw("--parts"))
@@ -162,7 +162,7 @@ class CommandLineSuite extends munit.FunSuite:
   test("rules across options are typed problems: check takes exactly one draft, rename checks the new slug"):
     assertEquals(
       problem("check", "sea_peoples"),
-      Problem.Invalid.Inconsistent(
+      Problem.Invalid.Inconsistent.here(
         NonEmptyVector.of(Problem.Field("--edits-file"), Problem.Field("--body-file")),
         Problem.Invalid.Exclusion.OneOf
       )
@@ -189,7 +189,7 @@ class CommandLineSuite extends munit.FunSuite:
       case other                          => fail(s"${other.toString}")
 
   test("a group with no subcommand is a missing command"):
-    assertEquals(problem(), Problem.Invalid.Missing(Problem.Field("command")))
+    assertEquals(problem(), Problem.Invalid.Missing.here(Problem.Field("command")))
 
   test("put keeps the path as given"):
     assertEquals(run("put", "a.md"), ArticleCommand.Put(Path.of("a.md"), None, Cli.Strict(false)))

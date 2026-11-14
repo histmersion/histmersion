@@ -66,7 +66,7 @@ object LibraryArgs:
     // an EMPTY query is the whole library (`search "" --limit 2000`, the enrich-calibre audit); only a missing one is
     // refused
     def command: Either[Problem, Cli.Command] =
-      if q_.isEmpty && !unlinked_.getOrElse(false) then Left(Problem.Invalid.Missing(Problem.Field("query")))
+      if q_.isEmpty && !unlinked_.getOrElse(false) then Left(Problem.Invalid.Missing.here(Problem.Field("query")))
       else Right(CalibreCmd.Command.Search(q_.toOption, unlinked_.getOrElse(false), limit_.toOption, json_()))
 
   final private class LeafImport()
@@ -91,7 +91,7 @@ object LibraryArgs:
     def command: Either[Problem, Cli.Command] =
       if noConvert_.getOrElse(false) && item_.isDefined then
         Left(
-          Problem.Invalid.Inconsistent(
+          Problem.Invalid.Inconsistent.here(
             NonEmptyVector.of(Problem.Field("--no-convert"), Problem.Field("--acquire-item")),
             Problem.Invalid.Exclusion.AtMostOne
           )
@@ -162,14 +162,14 @@ object LibraryArgs:
         case (None, true)     => Right(CalibreCmd.Command.UpdateAll(Api.Apply(apply_.getOrElse(false)), json_()))
         case (Some(_), false) =>
           Left(
-            Problem.Invalid.Inconsistent(
+            Problem.Invalid.Inconsistent.here(
               NonEmptyVector.of(Problem.Field("citekey"), Problem.Field("--apply")),
               Problem.Invalid.Exclusion.AtMostOne
             )
           )
         case _ =>
           Left(
-            Problem.Invalid.Inconsistent(
+            Problem.Invalid.Inconsistent.here(
               NonEmptyVector.of(Problem.Field("citekey"), Problem.Field("--all")),
               Problem.Invalid.Exclusion.OneOf
             )

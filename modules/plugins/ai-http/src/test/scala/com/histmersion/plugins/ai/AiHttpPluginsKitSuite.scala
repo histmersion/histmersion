@@ -152,7 +152,7 @@ class AiHttpPluginsKitSuite extends munit.FunSuite:
     )
 
   test("a client that cannot connect: the host's problem, with the URL, is the provider's failure"):
-    val unreachable = Problem.Upstream.Unreachable(
+    val unreachable = Problem.Upstream.Unreachable.here(
       Problem.Upstream.Name("api.anthropic.com"),
       Problem.Upstream.Url("https://api.anthropic.com/v1/messages"),
       External.Reported("java.net.ConnectException: refused")

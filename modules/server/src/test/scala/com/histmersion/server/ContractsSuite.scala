@@ -51,8 +51,10 @@ import com.histmersion.server.ArchitectureSuite.{Blank, SourceFile, Violation}
   *   - `unrecognised` (G60, no exception allowed): `Stored.Unrecognised` built in main code anywhere but the stored
   *     column's reader (`api.problem.Column`) and the cases' own file — a sentence no case writes is read, never made.
   *
-  * Besides the listed rules, one holds with no exception at all: a module G60 has classified ([[Classified]]) holds no
-  * `Unclassified`, `legacyText` or `Legacy.Text`, in its main or its test code.
+  * Besides the listed rules, two hold with no exception at all: a module G60 has classified ([[Classified]]) holds no
+  * `Unclassified`, `legacyText` or `Legacy.Text`, in its main or its test code; and no case of the problem module has a
+  * default parameter — a caller states every field (an empty path through a named constructor such as `here`), so no
+  * value is filled in that the caller did not choose.
   *
   * The violations that exist today are listed in `architecture/contracts.tsv`, exact both ways (a new violation fails,
   * a row nothing violates any more fails, a count must match); each step of the refactor shrinks the list.
@@ -182,6 +184,33 @@ class ContractsSuite extends munit.FunSuite:
   test("the modules G60 has classified hold no unclassified problem, in main or test code"):
     val found = Rules.unclassified(Classified.flatMap(m => SourceFile.all(m) ++ SourceFile.all(m, "test")))
     assertEquals(found.map(v => s"${v.at}: ${v.detail}"), Nil)
+
+  test("no case of the problem module has a default parameter"):
+    val found = Rules.caseDefaults(SourceFile.all("problem"))
+    assertEquals(found.map(v => s"${v.at}: ${v.detail}"), Nil)
+
+  test("a default parameter of a case is found, in a class or an enum case, on one line or several"):
+    val code =
+      """object Cases:
+        |  final case class A(x: Int, at: Vector[String] = Vector.empty)
+        |  final case class B(
+        |      x: Int,
+        |      y: Option[Int] = None
+        |  )
+        |  final case class C(x: Int, at: Vector[String])
+        |  enum E:
+        |    case D(x: Int = 1)
+        |    case F(x: Int)
+        |""".stripMargin
+    val file = ArchitectureSuite.SourceFile("problem:x/Cases.scala", "com.histmersion.x", Blank(code), code)
+    assertEquals(
+      Rules.caseDefaults(List(file)).map(v => (v.at, v.detail)),
+      List(
+        ("problem:x/Cases.scala:2", "A.at"),
+        ("problem:x/Cases.scala:3", "B.y"),
+        ("problem:x/Cases.scala:9", "D.x")
+      )
+    )
 
   test("an unclassified problem is found however it is spelled, never in a comment or a string"):
     val code =
@@ -717,6 +746,29 @@ object ContractsSuite:
     private val UnclassifiedSite = "\\b(Unclassified|legacyText|Legacy)\\b".r
 
     /** Every unclassified site of the files: the temporary case, its text carrier, the accessor of its words. */
+    /** The parameters with a default of every case (`case class X(…)`, an enum's `case X(…)`) in the sources. */
+    def caseDefaults(sources: List[SourceFile]): List[Violation] =
+      sources.flatMap { s =>
+        CaseWithFields.findAllMatchIn(s.code).toList.flatMap { m =>
+          val close = (m.end until s.code.length)
+            .foldLeft((1, -1)) { case ((depth, at), i) =>
+              if at >= 0 then (depth, at)
+              else
+                s.code(i) match
+                  case '(' => (depth + 1, at)
+                  case ')' => if depth == 1 then (0, i) else (depth - 1, at)
+                  case _   => (depth, at)
+            }
+            ._2
+          val params = if close < 0 then "" else s.code.substring(m.end, close)
+          Param
+            .findAllMatchIn(params)
+            .filter(_.group(2).contains('='))
+            .map(p => Violation("default", s.key, s"${m.group(1)}.${p.group(1)}", 1, s"${s.key}:${s.lineOf(m.start)}"))
+            .toList
+        }
+      }
+
     def unclassified(sources: List[SourceFile]): List[Violation] =
       sources.flatMap(s =>
         UnclassifiedSite

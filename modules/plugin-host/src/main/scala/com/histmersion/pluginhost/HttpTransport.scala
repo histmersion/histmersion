@@ -34,4 +34,9 @@ object HttpTransport:
 
       /** `status` was the answer at this URL, `body` its start. */
       def answered(status: Problem.Upstream.Status, body: Array[Byte]): Problem =
-        Problem.Upstream.Http(url.upstream, url.address, status, External.ReplyExcerpt.head(new String(body, "UTF-8")))
+        Problem.Upstream.Http.here(
+          url.upstream,
+          url.address,
+          status,
+          External.ReplyExcerpt.head(new String(body, "UTF-8"))
+        )

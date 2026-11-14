@@ -32,7 +32,7 @@ trait DownloadedGazetteer extends GazetteerSource:
       case Left(e)                           => Left(e)
       case Right(r) if r.status.value != 200 =>
         Left(
-          Problem.Upstream.Http(
+          Problem.Upstream.Http.here(
             Problem.Upstream.Name(
               s"${scala.util.Try(java.net.URI.create(s"$url").getHost).toOption.flatMap(Option(_)).getOrElse(s"$url")}"
             ),
@@ -81,7 +81,7 @@ object DownloadedGazetteer:
         else if e.isDirectory || e.getName.startsWith("__MACOSX") then usable(zis.getNextEntry)
         else Some(e)
       usable(zis.getNextEntry) match
-        case None    => Left(Problem.Invalid.Missing(Problem.Field("a usable file in the zip")))
+        case None    => Left(Problem.Invalid.Missing.here(Problem.Field("a usable file in the zip")))
         case Some(_) => Right(Text(String(zis.readAllBytes(), UTF_8)))
     catch
       case e: Exception =>

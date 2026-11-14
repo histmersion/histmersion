@@ -93,7 +93,7 @@ object Secret:
     /** Pure: a reference from its text. Never echoes the text back in an error (it may be a value). */
     def parse(text: ParseText): Either[Problem, Ref] =
       val t = Option((text).value).getOrElse("").trim
-      def not(form: Problem.Invalid.Form) = Left(Problem.Invalid.Reference(form))
+      def not(form: Problem.Invalid.Form) = Left(Problem.Invalid.Reference.here(form))
       t.indexOf(':') match
         case i if i <= 0 => not(Problem.Invalid.Form.Bare)
         case i           =>

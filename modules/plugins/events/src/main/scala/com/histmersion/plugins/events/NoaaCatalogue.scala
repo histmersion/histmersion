@@ -52,7 +52,7 @@ final class NoaaCatalogue(cfg: NoaaSettings) extends EventCatalogue:
           .map((rs, pages) => CataloguePage(rs, Option.when(p < pages.value)(CataloguePage.Next(s"$dataset:${p + 1}"))))
       case other =>
         Left(
-          Problem.Invalid.Unknown(
+          Problem.Invalid.Unknown.here(
             Problem.TypeName("com.histmersion.plugins.events.NoaaCatalogue.Page"),
             Problem.Raw(s"$other"),
             Vector.empty
@@ -110,7 +110,7 @@ object NoaaCatalogue:
   def parse(dataset: Dataset, json: Json): Either[Problem, (List[CatalogueEvent], Count)] =
     val c = json.cursor
     c.downField("items").focus.flatMap(_.asArray) match
-      case None        => Left(Problem.Invalid.Missing(Problem.Field("items")))
+      case None        => Left(Problem.Invalid.Missing.here(Problem.Field("items")))
       case Some(items) =>
         Right((items.toList.flatMap(i => record(dataset, i.cursor)), Count(c.get[Int]("totalPages").getOrElse(1))))
 

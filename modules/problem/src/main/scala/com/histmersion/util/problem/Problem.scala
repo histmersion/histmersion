@@ -117,28 +117,50 @@ object Problem:
   object Invalid:
 
     /** `raw` is no value of the type `typeName`: it fails `constraint`. */
-    final case class Malformed(typeName: TypeName, constraint: Constraint, raw: Raw, at: Vector[Field] = Vector.empty)
-        extends Invalid
+    final case class Malformed(typeName: TypeName, constraint: Constraint, raw: Raw, at: Vector[Field]) extends Invalid
+
+    object Malformed:
+      /** The problem of the request as a whole: no path into it. */
+      def here(typeName: TypeName, constraint: Constraint, raw: Raw): Malformed =
+        Malformed(typeName, constraint, raw, Vector.empty)
 
     /** `raw` is none of the values of `typeName` the operation knows (`known`, when the list is short). */
-    final case class Unknown(typeName: TypeName, raw: Raw, known: Vector[Raw], at: Vector[Field] = Vector.empty)
-        extends Invalid
+    final case class Unknown(typeName: TypeName, raw: Raw, known: Vector[Raw], at: Vector[Field]) extends Invalid
+
+    object Unknown:
+      /** The problem of the request as a whole: no path into it. */
+      def here(typeName: TypeName, raw: Raw, known: Vector[Raw]): Unknown = Unknown(typeName, raw, known, Vector.empty)
 
     /** `field` is required and was not given, or was empty. */
-    final case class Missing(field: Field, at: Vector[Field] = Vector.empty) extends Invalid
+    final case class Missing(field: Field, at: Vector[Field]) extends Invalid
+
+    object Missing:
+      /** The problem of the request as a whole: no path into it. */
+      def here(field: Field): Missing = Missing(field, Vector.empty)
 
     /** `raw` is a value of `typeName`, but outside what the operation takes. */
-    final case class OutOfRange(typeName: TypeName, raw: Raw, bounds: Bounds, at: Vector[Field] = Vector.empty)
-        extends Invalid
+    final case class OutOfRange(typeName: TypeName, raw: Raw, bounds: Bounds, at: Vector[Field]) extends Invalid
+
+    object OutOfRange:
+      /** The problem of the request as a whole: no path into it. */
+      def here(typeName: TypeName, raw: Raw, bounds: Bounds): OutOfRange =
+        OutOfRange(typeName, raw, bounds, Vector.empty)
 
     /** The `fields` given break `rule` together, though each is a value on its own. */
-    final case class Inconsistent(fields: NonEmptyVector[Field], rule: Exclusion, at: Vector[Field] = Vector.empty)
-        extends Invalid
+    final case class Inconsistent(fields: NonEmptyVector[Field], rule: Exclusion, at: Vector[Field]) extends Invalid
+
+    object Inconsistent:
+      /** The problem of the request as a whole: no path into it. */
+      def here(fields: NonEmptyVector[Field], rule: Exclusion): Inconsistent = Inconsistent(fields, rule, Vector.empty)
 
     /** A secret's reference (`value:<literal>`, `env:<NAME>`, `<vault>:<ref>`) is not one: `form` says how. The input
       * itself is never kept: it may be the secret.
       */
-    final case class Reference(form: Form, at: Vector[Field] = Vector.empty) extends Invalid
+    final case class Reference(form: Form, at: Vector[Field]) extends Invalid
+
+    object Reference:
+      /** The problem of the request as a whole: no path into it. */
+      def here(form: Form): Reference = Reference(form, Vector.empty)
 
     /** The least and the greatest value taken, either open. */
     final case class Bounds(least: Option[Raw], greatest: Option[Raw]) derives CanEqual
@@ -176,7 +198,7 @@ object Problem:
 
     /** The input a newtype refused: its type, its constraint and the input, as the newtype module recorded them. */
     def malformed(refusal: Newtype.Refusal): Invalid =
-      Malformed(TypeName.of(refusal.typeName), Constraint.of(refusal.constraint), Raw(s"${refusal.raw}"))
+      Malformed.here(TypeName.of(refusal.typeName), Constraint.of(refusal.constraint), Raw(s"${refusal.raw}"))
 
   /** What the operation names does not exist. */
   sealed trait NotFound extends Problem
@@ -288,12 +310,20 @@ object Problem:
         url: Url,
         status: Status,
         body: External.ReplyExcerpt,
-        at: Vector[Field] = Vector.empty
+        at: Vector[Field]
     ) extends Upstream
 
+    object Http:
+      /** The problem of the request as a whole: no path into it. */
+      def here(upstream: Name, url: Url, status: Status, body: External.ReplyExcerpt): Http =
+        Http(upstream, url, status, body, Vector.empty)
+
     /** `upstream` answered `status` at `url` with a bot-protection challenge, not the page: taken as no answer. */
-    final case class Challenged(upstream: Name, url: Url, status: Status, at: Vector[Field] = Vector.empty)
-        extends Upstream
+    final case class Challenged(upstream: Name, url: Url, status: Status, at: Vector[Field]) extends Upstream
+
+    object Challenged:
+      /** The problem of the request as a whole: no path into it. */
+      def here(upstream: Name, url: Url, status: Status): Challenged = Challenged(upstream, url, status, Vector.empty)
 
     /** `upstream` (a model's plan) reports its own usage limit reached, until `until` when it said: the next model of
       * the chain is asked meanwhile.
@@ -305,11 +335,20 @@ object Problem:
         upstream: Name,
         url: Url,
         reported: External.Reported,
-        at: Vector[Field] = Vector.empty
+        at: Vector[Field]
     ) extends Upstream
 
+    object Unreachable:
+      /** The problem of the request as a whole: no path into it. */
+      def here(upstream: Name, url: Url, reported: External.Reported): Unreachable =
+        Unreachable(upstream, url, reported, Vector.empty)
+
     /** `upstream` did not answer at `url` within `after`. */
-    final case class Timeout(upstream: Name, url: Url, after: Millis, at: Vector[Field] = Vector.empty) extends Upstream
+    final case class Timeout(upstream: Name, url: Url, after: Millis, at: Vector[Field]) extends Upstream
+
+    object Timeout:
+      /** The problem of the request as a whole: no path into it. */
+      def here(upstream: Name, url: Url, after: Millis): Timeout = Timeout(upstream, url, after, Vector.empty)
 
     /** `upstream` answered at `url`, but not with `expected`. */
     final case class BadReply(
@@ -317,8 +356,13 @@ object Problem:
         url: Url,
         expected: Shape,
         reported: External.Reported,
-        at: Vector[Field] = Vector.empty
+        at: Vector[Field]
     ) extends Upstream
+
+    object BadReply:
+      /** The problem of the request as a whole: no path into it. */
+      def here(upstream: Name, url: Url, expected: Shape, reported: External.Reported): BadReply =
+        BadReply(upstream, url, expected, reported, Vector.empty)
 
     /** The service, by the name its settings and plugin use (`openalex`, `core`, the Histmersion server itself). */
     type Name = Name.T
@@ -808,15 +852,15 @@ object Problem:
         Raw("Gimbutas 1956"),
         Vector(Field("edges"), Field("dst"))
       ),
-      Invalid.Unknown(
+      Invalid.Unknown.here(
         TypeName("com.histmersion.domain.library.Source.Status"),
         Raw("dubious"),
         Vector(Raw("current"), Raw("contested"))
       ),
-      Invalid.Missing(Field("rationale")),
-      Invalid
-        .OutOfRange(TypeName("com.histmersion.Latitude"), Raw("91"), Invalid.Bounds(Some(Raw("-90")), Some(Raw("90")))),
-      Invalid.Inconsistent(NonEmptyVector.of(Field("lat"), Field("lon")), Invalid.Exclusion.Together),
+      Invalid.Missing.here(Field("rationale")),
+      Invalid.OutOfRange
+        .here(TypeName("com.histmersion.Latitude"), Raw("91"), Invalid.Bounds(Some(Raw("-90")), Some(Raw("90")))),
+      Invalid.Inconsistent.here(NonEmptyVector.of(Field("lat"), Field("lon")), Invalid.Exclusion.Together),
       Invalid.Reference(Invalid.Form.EnvName(Raw("1PASSWORD")), Vector(Field("plugins"), Field("api-key"))),
       NotFound.Entity(citekey, Raw("anthony2007")),
       Conflict.AlreadyExists(TypeName("com.histmersion.domain.catalogue.Place.Id"), Raw("pleiades_579885")),
@@ -843,16 +887,17 @@ object Problem:
       Refused.Policy(Refused.Rule.RunTokenRequired),
       Refused.Quota(Refused.Limit.DailySpend, Refused.Amount(5.25), Refused.Amount(4.5), Some(EpochMs(1762732800000L))),
       Refused.Disabled(Refused.Feature("events-gvp"), SettingKey("histmersion.events.gvp.enabled")),
-      Upstream.Http(core, url, Upstream.Status(429), External.ReplyExcerpt("{\"message\":\"rate limited\"}")),
-      Upstream.Challenged(
+      Upstream.Http.here(core, url, Upstream.Status(429), External.ReplyExcerpt("{\"message\":\"rate limited\"}")),
+      Upstream.Challenged.here(
         Upstream.Name("archive-org"),
         Upstream.Url("https://archive.org/download/x/x.pdf"),
         Upstream.Status(403)
       ),
       Upstream.Limited(Upstream.Name("claude"), Some(EpochMs(1762732800000L))),
-      Upstream.Unreachable(core, url, reported),
-      Upstream.Timeout(core, url, Millis(30000L)),
-      Upstream.BadReply(core, url, Upstream.Shape.Json, External.Reported("expected json value got '<html>' (line 1)")),
+      Upstream.Unreachable.here(core, url, reported),
+      Upstream.Timeout.here(core, url, Millis(30000L)),
+      Upstream.BadReply
+        .here(core, url, Upstream.Shape.Json, External.Reported("expected json value got '<html>' (line 1)")),
       Io.File(
         Io.Access.Read,
         Io.Path("/tmp/bundle.hmx"),

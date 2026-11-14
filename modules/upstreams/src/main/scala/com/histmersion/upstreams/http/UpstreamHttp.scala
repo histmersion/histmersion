@@ -31,7 +31,7 @@ extension (http: Plugin.Http)
         .parse(s)
         .left
         .map(e =>
-          Problem.Upstream.BadReply(
+          Problem.Upstream.BadReply.here(
             Problem.Upstream
               .Name(s"${scala.util.Try(URI.create(url).getHost).toOption.flatMap(Option(_)).getOrElse(url)}"),
             Problem.Upstream.Url(s"$url"),

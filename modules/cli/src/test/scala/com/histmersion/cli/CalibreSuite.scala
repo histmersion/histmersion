@@ -762,11 +762,11 @@ class CalibreSuite extends munit.FunSuite:
     assert(parse("calibre", "search", "--unlinked").isRight)
     assert(parse("calibre", "search", "--unlinked", "troy", "--limit", "5").isRight)
     assert(parse("calibre", "search", "").isRight, "an empty query is the whole library")
-    assertEquals(refusal("calibre", "search"), Problem.Invalid.Missing(Problem.Field("query")))
+    assertEquals(refusal("calibre", "search"), Problem.Invalid.Missing.here(Problem.Field("query")))
     assert(parse("calibre", "import", "1693", "--acquire-item", "12").isRight)
     assertEquals(
       refusal("calibre", "import", "1693", "--acquire-item", "12", "--no-convert"),
-      Problem.Invalid.Inconsistent(
+      Problem.Invalid.Inconsistent.here(
         NonEmptyVector.of(Problem.Field("--no-convert"), Problem.Field("--acquire-item")),
         Problem.Invalid.Exclusion.AtMostOne
       )

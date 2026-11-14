@@ -198,7 +198,7 @@ class PluginHostPartsSuite extends munit.FunSuite:
     assertEquals(
       PolicyHttp(HttpPolicy.UserAgent("ua"), missing, log = quiet).bytes(HttpTransport.Url("https://x.example/d")),
       Left(
-        Problem.Upstream.Http(
+        Problem.Upstream.Http.here(
           Problem.Upstream.Name("x.example"),
           Problem.Upstream.Url("https://x.example/d"),
           Problem.Upstream.Status.NotFound,

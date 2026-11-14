@@ -45,7 +45,7 @@ class ArchiveOrgCollectionSuite extends munit.FunSuite:
           .get(url.value)
           .map(a => Plugin.HttpResponse.Body(a.getBytes(UTF_8)))
           .toRight(
-            Problem.Upstream.Http(
+            Problem.Upstream.Http.here(
               Problem.Upstream.Name("archive.org"),
               Problem.Upstream.Url(s"$url"),
               Problem.Upstream.Status.NotFound,

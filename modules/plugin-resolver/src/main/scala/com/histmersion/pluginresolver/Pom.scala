@@ -85,7 +85,7 @@ object Pom:
           Problem.Io.Damage.Unreadable(External.Reported.of(e))
         )
       )
-      .filterOrElse(_.getLocalName == "project", Problem.Invalid.Missing(Problem.Field("project")))
+      .filterOrElse(_.getLocalName == "project", Problem.Invalid.Missing.here(Problem.Field("project")))
 
   private def child(e: Element, name: ElementName): Option[Element] =
     val nodes = e.getChildNodes
