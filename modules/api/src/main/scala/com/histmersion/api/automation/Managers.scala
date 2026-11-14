@@ -1,7 +1,8 @@
 package com.histmersion
 package api.automation
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{Problem, Problems}
+import com.histmersion.util.problem.Problem.{Field, Invalid, Raw, TypeName}
 import com.histmersion.util.problem.Text.sentence
 
 import scala.annotation.tailrec
@@ -275,15 +276,16 @@ object Managers:
     type ExtendMinNew = ExtendMinNew.T
     object ExtendMinNew extends Newtype[Int, Pure]
 
-    def parse(kvs: List[Spec]): Either[Problem, ManagerConfig] =
-      kvs.foldLeft[Either[Problem, ManagerConfig]](Right(ManagerConfig())) { (acc, kv) =>
+    def parse(kvs: List[Spec]): Either[Problems, ManagerConfig] =
+      kvs.foldLeft[Either[Problems, ManagerConfig]](Right(ManagerConfig())) { (acc, kv) =>
         acc.flatMap { c =>
           (kv).value.split("=", 2) match
             case Array(k0, v0) =>
               val (k, v) = (k0.trim, v0.trim)
+              val at = Vector(Field(s"$k"))
               def int = v.toIntOption
                 .filter(_ >= 0)
-                .toRight(Problem.Unclassified(Legacy.Text(s"$k: '$v' is not a whole number")))
+                .toRight(Invalid.OutOfRange(TypeName.named[Int], Raw(s"$v"), Invalid.Bounds(Some(Raw("0")), None), at))
               k match
                 case "maxRuns" | "max-runs"                       => int.map(n => c.copy(maxRuns = Some(MaxRuns(n))))
                 case "maxOpen" | "max-open"                       => int.map(n => c.copy(maxOpen = Some(MaxOpen(n))))
@@ -316,11 +318,7 @@ object Managers:
                   val ws = v.split(",").toList.map(_.trim).filter(_.nonEmpty)
                   ws.find(w => Sweep.parse(Sweep.Wire(w)).isEmpty) match
                     case Some(w) =>
-                      Left(
-                        Problem.Unclassified(
-                          Legacy.Text(s"$k: '$w' is not a sweep (one of: ${Sweep.values.map(_.wire).mkString(", ")})")
-                        )
-                      )
+                      Left(Invalid.Unknown(TypeName.named[Sweep], Raw(s"$w"), Sweep.values.toVector.map(x => Raw(s"${x.wire}")), at))
                     case None =>
                       Right(
                         c.copy(sweeps =
@@ -336,12 +334,12 @@ object Managers:
                 case "dailyUsd" | "daily-usd" =>
                   v.toDoubleOption
                     .filter(_ >= 0)
-                    .toRight(Problem.Unclassified(Legacy.Text(s"$k: '$v' is not a number of USD (0 = no cap)")))
+                    .toRight(Invalid.OutOfRange(TypeName.of(DailyUsd), Raw(s"$v"), Invalid.Bounds(Some(Raw("0")), None), at))
                     .map(d => c.copy(dailyUsd = Some(DailyUsd(d))))
                 case "budgetUsd" | "budget-usd" =>
                   v.toDoubleOption
                     .filter(_ > 0)
-                    .toRight(Problem.Unclassified(Legacy.Text(s"$k: '$v' is not a positive number")))
+                    .toRight(Invalid.OutOfRange(TypeName.of(BudgetUsd), Raw(s"$v"), Invalid.Bounds(Some(Raw("0")), None), at))
                     .map(d => c.copy(budgetUsd = Some(BudgetUsd(d))))
                 case "includeTags" | "include-tags" | "tags" =>
                   Right(
@@ -372,16 +370,17 @@ object Managers:
                     }
                     .partitionMap(identity) match
                     case (Nil, ms) => Right(c.copy(models = Some(ms)))
-                    case (errs, _) => Left(Problem.Unclassified(Legacy.Text(errs.map(_.sentence).mkString("; "))))
-                case other => Left(Problem.Unclassified(Legacy.Text(s"unknown manager setting '$other'")))
-            case _ => Left(Problem.Unclassified(Legacy.Text(s"'$kv' is not key=value")))
+                    case (errs, _) => Left(Problems.from(errs.toVector).getOrElse(errs.head).at(Field(s"$k")))
+                case other => Left(Invalid.Unknown.here(TypeName.named[ManagerConfig], Raw(s"$other"), Vector.empty))
+            case _ => Left(Invalid.Unreadable.here(TypeName.of(Spec), Raw(s"$kv"), Vector(Raw("max-runs=2"))))
         }
       }
 
     private def bool(k: String, v: String): Either[Problem, Boolean] = (v).toLowerCase match
       case "true" | "on" | "yes"  => Right((true))
       case "false" | "off" | "no" => Right((false))
-      case _                      => Left(Problem.Unclassified(Legacy.Text(s"$k: '$v' is not true or false")))
+      case _                      =>
+        Left(Invalid.Unknown(TypeName.named[Boolean], Raw(s"$v"), Vector(Raw("true"), Raw("false")), Vector(Field(s"$k"))))
 
   final case class ItemCounts(
       pending: ItemCounts.Pending = ItemCounts.Pending(0),

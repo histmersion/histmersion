@@ -465,7 +465,7 @@ final class ReviewArticlePipeline(
         "reason against the records like a Not used reason):\n\n" +
         Prompt.data(
           "critique-reasons",
-          reasoned.map(p => s"- ${p.ref.wire}: ${p.reason.fold("")(_.sentence)}").mkString("\n")
+          reasoned.map(p => s"- ${p.ref.wire}: ${p.reason.fold("")(w => s"$w")}").mkString("\n")
         )
 
   // ── steps ──────────────────────────────────────────────────────────────────────────────────────
@@ -1053,7 +1053,7 @@ final class ReviewArticlePipeline(
             QueuePatch(
               status = Some(Queue.QueueItem.Status(Queue.Done)),
               reason =
-                Some(Problem.Unclassified(Legacy.Text(s"no MAJOR open after agent run ${ctx.run.id.value.take(8)}")))
+                Some(Queue.Rationale(s"no MAJOR open after agent run ${ctx.run.id.value.take(8)}"))
             )
           val _ =
             ctx.write(s"tasks item #${item.id} done", p.asJson)(
@@ -1078,7 +1078,7 @@ final class ReviewArticlePipeline(
         val p =
           QueuePatch(
             status = Some(Queue.QueueItem.Status(Queue.Done)),
-            reason = Some(Problem.Unclassified(Legacy.Text(why)))
+            reason = Some(Queue.Rationale(why))
           )
         val _ =
           ctx.write(s"tasks item #${item.id} done", p.asJson)(

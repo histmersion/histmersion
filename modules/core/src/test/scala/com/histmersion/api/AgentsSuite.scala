@@ -3,7 +3,7 @@ package api
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -115,7 +115,7 @@ class AgentsSuite extends munit.FunSuite:
 
   test("Prices: every malformed entry is reported, none silently skipped"):
     val e = Prices.parse(Agents.Prices.Wire("a=1; b=x/2; c=1/2/3; =1/1")).left.toOption.get
-    List("'a=1'", "'b=x/2'", "'c=1/2/3'", "'=1/1'").foreach(m => assert(e.sentence.contains(m), e))
+    List("a=1", "b=x/2", "c=1/2/3", "=1/1").foreach(m => assert(e.sentences.mkString("; ").contains(m), e))
     assert(Prices.parse(Agents.Prices.Wire("a=-1/2")).isLeft)
 
   test("cost: per million tokens, cache reads and writes at their own rates"):

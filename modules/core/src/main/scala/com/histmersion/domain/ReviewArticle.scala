@@ -1028,7 +1028,7 @@ object ReviewArticle:
     val Id: Finding.Id.type = Finding.Id
 
   /** A verified [[SetAsideAnswer]]: the finding, the checklist pair, the reason stored. */
-  final case class SetAside(id: SetAside.Id, pair: CritiqueRef, reason: Problem) derives JsonCodec
+  final case class SetAside(id: SetAside.Id, pair: CritiqueRef, reason: Coverage.Rationale) derives JsonCodec
 
   object SetAside:
     type Id = Finding.Id
@@ -1860,7 +1860,7 @@ object ReviewArticle:
               if p.state == CritiqueState.Addressed then
                 s"${p.ref.wire} is addressed — both sources are cited in one paragraph"
               else
-                s"${p.ref.wire} is set aside with a stored reason: \"${p.reason.map(_.sentence).getOrElse("").take(160)}\""
+                s"${p.ref.wire} is set aside with a stored reason: \"${p.reason.map(w => s"$w").getOrElse("").take(160)}\""
             minor(f.modify(_.pair).setTo(Some(p.ref)), why)
           case None if f.pair.isEmpty && rule.full.value && !last.value =>
             Left(
@@ -1940,7 +1940,7 @@ object ReviewArticle:
             Left(
               s"not material ${p.ref.wire}: the reason is ${reason.length} characters (at most ${CritiqueReason.MaxChars})"
             )
-          case Some(p) => Right(CritiqueReason(p.ref.src, p.ref.dst, Problem.Unclassified(Legacy.Text(reason))))
+          case Some(p) => Right(CritiqueReason(p.ref.src, p.ref.dst, Coverage.Rationale(reason)))
       }
     }
     val ok = results.collect { case Right(c) => c }.distinctBy(c => (c.src, c.dst))
@@ -2580,7 +2580,7 @@ object ReviewArticle:
           case Some(Left(e))  => Left(s"set aside: $e")
           case Some(Right(r)) =>
             held(s"set aside ${r.wire}", r, reason).map(p =>
-              Right(CritiqueReason(p.ref.src, p.ref.dst, Problem.Unclassified(Legacy.Text(reason))))
+              Right(CritiqueReason(p.ref.src, p.ref.dst, Coverage.Rationale(reason)))
             )
       else
         byId.get(id) match
@@ -2596,7 +2596,7 @@ object ReviewArticle:
                 held(s"set aside $id", r, reason).left
                   .map(m => if m.contains("no recorded edge") then s"$m — apply or reject the finding" else m)
               )
-              .map(p => Left(SetAside(id, p.ref, Problem.Unclassified(Legacy.Text(reason)))))
+              .map(p => Left(SetAside(id, p.ref, Coverage.Rationale(reason))))
     }
     val ok = results.collect { case Right(v) => v }
     (
@@ -2658,6 +2658,8 @@ object ReviewArticle:
           else
             Coverage.Reason
               .merge(Map.empty, List(r.modify(_.citekey).setTo(ck)))
+              .left
+              .map(_.sentence)
               .map(_ => r.modify(_.citekey).setTo(ck))
         }
         val ok = checked.collect { case Right(r) => r }

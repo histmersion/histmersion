@@ -137,7 +137,7 @@ abstract class ArticleServiceContract extends ResearchStoreSuite:
       Article.Patch(
         title = Some(Article.Title("x")),
         critiqueReasons = List(
-          CritiqueReason(Citekey("zra"), Citekey("zrb"), Problem.Unclassified(Legacy.Text("Not about the walls.")))
+          CritiqueReason(Citekey("zra"), Citekey("zrb"), Coverage.Rationale("Not about the walls."))
         )
       ),
       Me
@@ -149,7 +149,7 @@ abstract class ArticleServiceContract extends ResearchStoreSuite:
     val long = s.articles.patch(
       Walls,
       Article.Patch(critiqueReasons =
-        List(CritiqueReason(Citekey("zra"), Citekey("zrb"), Problem.Unclassified(Legacy.Text("w" * 501))))
+        List(CritiqueReason(Citekey("zra"), Citekey("zrb"), Coverage.Rationale("w" * 501)))
       ),
       Me
     )

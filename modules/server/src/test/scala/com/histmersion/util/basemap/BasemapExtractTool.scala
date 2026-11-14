@@ -21,6 +21,7 @@ import com.histmersion.util.storage.Store
 import java.nio.file.{Files, Path}
 import java.security.MessageDigest
 import com.histmersion.api.basemap.Basemap
+import com.histmersion.util.problem.Text.sentences
 
 /** Measuring tools for docs/research-terrain-basemap.md (and how the browser fixture's vector extract was made), with
   * the fetch's own code — never run by the tests:
@@ -205,7 +206,7 @@ object BasemapExtractTool:
     )
     orDie(BasemapFetch.download(http, plan, work, pace, note, _ => Right(())))
     val drop =
-      Basemap.parseDrop(Basemap.DropRule.Spec(cfg.vector.drop.value)).fold(p => sys.error(p.sentence), identity)
+      Basemap.parseDrop(Basemap.DropRule.Spec(cfg.vector.drop.value)).fold(p => sys.error(p.sentences.mkString("; ")), identity)
     val rules = if keepAll then Map.empty[Mvt.LayerName, Mvt.Rule] else BasemapService.mvtRules(drop)
     val meta = BasemapFetch.localMetadata(
       plan,
@@ -237,7 +238,7 @@ object BasemapExtractTool:
       BasemapService.mvtRules(
         Basemap
           .parseDrop(Basemap.DropRule.Spec(AppConfig.load().basemap.vector.drop.value))
-          .fold(p => sys.error(p.sentence), identity)
+          .fold(p => sys.error(p.sentences.mkString("; ")), identity)
       )
     val h = f.header
     val b = boxOf(h)

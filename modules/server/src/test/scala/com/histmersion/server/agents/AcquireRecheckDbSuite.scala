@@ -259,7 +259,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
         .find(_.id == full)
         .get
         .reason
-        .exists(_.sentence.contains("[[zzrecheck_full]]"))
+        .exists(_.value.contains("[[zzrecheck_full]]"))
     )
     assertEquals(
       (status(h, meta), status(h, none), status(h, noDoi)),

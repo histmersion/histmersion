@@ -1030,7 +1030,7 @@ object Bundle:
       text: QueueItem.Text,
       topic: Option[QueueItem.Topic],
       status: QueueItem.Status,
-      reason: Option[Problem],
+      reason: Option[com.histmersion.api.automation.Queue.Rationale],
       createdAt: QueueItem.CreatedAt,
       doneAt: Option[QueueItem.DoneAt],
       updatedAt: QueueItem.UpdatedAt,

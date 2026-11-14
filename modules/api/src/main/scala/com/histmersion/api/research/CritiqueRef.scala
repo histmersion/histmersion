@@ -1,7 +1,7 @@
 package com.histmersion
 package api.research
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -32,10 +32,4 @@ object CritiqueRef:
       case a :: b :: Nil if (key((a))).nonEmpty && (key((b))).nonEmpty && key((a)) != key((b)) =>
         Right(CritiqueRef(Citekey(key((a))), Citekey(key((b)))))
       case _ =>
-        Left(
-          Problem.Unclassified(
-            Legacy.Text(
-              s"'$s' is not a pair — write it as <src>><dst>, the critic first (e.g. smith1987_dying>frazer1922_golden)"
-            )
-          )
-        )
+        Left(Problem.Invalid.Unreadable.here(Problem.TypeName.of(Wire), Problem.Raw(s"$s"), Vector(Problem.Raw("smith1987_dying>frazer1922_golden"))))

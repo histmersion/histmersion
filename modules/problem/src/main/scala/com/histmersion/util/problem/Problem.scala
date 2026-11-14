@@ -131,6 +131,35 @@ object Problem:
       /** The problem of the request as a whole: no path into it. */
       def here(typeName: TypeName, raw: Raw, known: Vector[Raw]): Unknown = Unknown(typeName, raw, known, Vector.empty)
 
+    /** `raw` is written in none of the forms a value of `typeName` is written in; `examples` shows some of them. */
+    final case class Unreadable(typeName: TypeName, raw: Raw, examples: Vector[Raw], at: Vector[Field]) extends Invalid
+
+    object Unreadable:
+      /** The problem of the request as a whole: no path into it. */
+      def here(typeName: TypeName, raw: Raw, examples: Vector[Raw]): Unreadable =
+        Unreadable(typeName, raw, examples, Vector.empty)
+
+    /** `field` was given where the request takes none of that name; it belongs under `under`. */
+    final case class Misplaced(field: Field, under: Field, at: Vector[Field]) extends Invalid
+
+    object Misplaced:
+      /** The problem of the request as a whole: no path into it. */
+      def here(field: Field, under: Field): Misplaced = Misplaced(field, under, Vector.empty)
+
+    /** The value `raw` of `typeName` is given more than once where each may be given once. */
+    final case class Repeated(typeName: TypeName, raw: Raw, at: Vector[Field]) extends Invalid
+
+    object Repeated:
+      /** The problem of the request as a whole: no path into it. */
+      def here(typeName: TypeName, raw: Raw): Repeated = Repeated(typeName, raw, Vector.empty)
+
+    /** `raw`, a value of `typeName` that must name one place, matches `count` places: more of it tells them apart. */
+    final case class Ambiguous(typeName: TypeName, raw: Raw, count: Count, at: Vector[Field]) extends Invalid
+
+    object Ambiguous:
+      /** The problem of the request as a whole: no path into it. */
+      def here(typeName: TypeName, raw: Raw, count: Count): Ambiguous = Ambiguous(typeName, raw, count, Vector.empty)
+
     /** `field` is required and was not given, or was empty. */
     final case class Missing(field: Field, at: Vector[Field]) extends Invalid
 
@@ -176,11 +205,17 @@ object Problem:
       /** At most one of them. */
       case AtMostOne
 
+      /** At least one of them. */
+      case AtLeastOne
+
       /** Each no greater than the next (a start before its end). */
       case Ordered
 
       /** All of them the same value. */
       case Same
+
+      /** No two of them the same value. */
+      case Distinct
 
     /** How a text fails to be a secret's reference. */
     enum Form derives CanEqual:
@@ -276,6 +311,9 @@ object Problem:
 
       /** The read-only query holds a statement that writes. */
       case ReadOnlyQuery
+
+      /** The query holds several statements; it runs exactly one. */
+      case OneStatement
 
       /** The runtime refuses this login while the server listens beyond the local machine. */
       case LoginOutsideLocal
@@ -752,6 +790,9 @@ object Problem:
     enum Requirement derives CanEqual:
       case NoYearZero, CitesNoSource, UnknownCitekey, OutsidePeriod
 
+      /** A stand-in (placeholder, TODO, lorem ipsum) where the text belongs. */
+      case StandIn
+
       /** At most `cap` claims per source; it gave `gave`. */
       case TooManyClaims(cap: Count, gave: Count)
 
@@ -856,7 +897,11 @@ object Problem:
     def within(field: Field): Problem = problem match
       case Invalid.Malformed(t, c, raw, at)   => Invalid.Malformed(t, c, raw, field +: at)
       case Invalid.Unknown(t, raw, known, at) => Invalid.Unknown(t, raw, known, field +: at)
+      case Invalid.Unreadable(t, raw, eg, at) => Invalid.Unreadable(t, raw, eg, field +: at)
       case Invalid.Missing(f, at)             => Invalid.Missing(f, field +: at)
+      case Invalid.Ambiguous(t, raw, n, at)   => Invalid.Ambiguous(t, raw, n, field +: at)
+      case Invalid.Repeated(t, raw, at)       => Invalid.Repeated(t, raw, field +: at)
+      case Invalid.Misplaced(f, under, at)    => Invalid.Misplaced(f, under, field +: at)
       case Invalid.OutOfRange(t, raw, b, at)  => Invalid.OutOfRange(t, raw, b, field +: at)
       case Invalid.Inconsistent(fs, rule, at) => Invalid.Inconsistent(fs, rule, field +: at)
       case Invalid.Reference(form, at)        => Invalid.Reference(form, field +: at)
@@ -890,7 +935,21 @@ object Problem:
         Raw("dubious"),
         Vector(Raw("current"), Raw("contested"))
       ),
+      Invalid.Unreadable(
+        TypeName("com.histmersion.Year"),
+        Raw("13oo BCE"),
+        Vector(Raw("1300 BCE"), Raw("530 CE"), Raw("-1300")),
+        Vector(Field("from"))
+      ),
       Invalid.Missing.here(Field("rationale")),
+      Invalid.Ambiguous(
+        TypeName("com.histmersion.api.research.Article.Edits.Anchor"),
+        Raw("the Hittite texts"),
+        Count(2L),
+        Vector(Field("edits"), Field("0"))
+      ),
+      Invalid.Repeated(TypeName("com.histmersion.api.automation.Agents.ModelRef"), Raw("claude:opus"), Vector(Field("chain"))),
+      Invalid.Misplaced.here(Field("status"), Field("metadata")),
       Invalid.OutOfRange
         .here(TypeName("com.histmersion.Latitude"), Raw("91"), Invalid.Bounds(Some(Raw("-90")), Some(Raw("90")))),
       Invalid.Inconsistent.here(NonEmptyVector.of(Field("lat"), Field("lon")), Invalid.Exclusion.Together),

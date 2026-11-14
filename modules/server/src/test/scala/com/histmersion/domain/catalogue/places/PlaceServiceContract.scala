@@ -333,7 +333,7 @@ abstract class PlaceServiceContract extends CatalogueStoreSuite:
       Place.OverrideEdit.Put(
         Some(Place.OverrideEdit.Put.Kind("polity")),
         Some((Some(Year(-1500L)), Some(Year(-1100L)))),
-        Some(Problem.Unclassified(Legacy.Text("the survey")))
+        Some(Place.Rationale("the survey"))
       ),
       Tolerance
     )
@@ -359,7 +359,7 @@ abstract class PlaceServiceContract extends CatalogueStoreSuite:
     val listed = p.overrides(Some(com.histmersion.domain.catalogue.Place.Id("zzp_hill")))
     assertEquals(
       listed.map(o =>
-        (o.placeId, o.kind, o.periodStart, o.periodEnd, o.periodSet, o.reason.map(_.sentence), o.sourceKind)
+        (o.placeId, o.kind, o.periodStart, o.periodEnd, o.periodSet, o.reason.map(_.value), o.sourceKind)
       ),
       List(("zzp_hill", Some("polity"), Some(-1500L), Some(-1100L), true, Some("the survey"), "site"))
     )
@@ -435,7 +435,7 @@ abstract class PlaceServiceContract extends CatalogueStoreSuite:
     assertEquals(
       p.remove(
         com.histmersion.domain.catalogue.Place.Id("zzp_march"),
-        Some(Problem.Unclassified(Legacy.Text("a child")))
+        Some(Place.Rationale("a child"))
       ).left
         .map(_.code),
       Left(Some(Write.CodeInvalid)),
@@ -444,7 +444,7 @@ abstract class PlaceServiceContract extends CatalogueStoreSuite:
     assertEquals(
       p.remove(
         com.histmersion.domain.catalogue.Place.Id("zzp_lost"),
-        Some(Problem.Unclassified(Legacy.Text("a phantom")))
+        Some(Place.Rationale("a phantom"))
       ).map(g => (g.placeId, g.into)),
       Right(("zzp_lost", None))
     )

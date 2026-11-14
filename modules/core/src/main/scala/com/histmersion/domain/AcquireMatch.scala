@@ -199,7 +199,7 @@ object AcquireMatch:
     val key = doi.flatMap(d => doiKeyOf(d.value))
     val open = items.filter(i => i.list == Queue.Kind.Acquire.label && i.status == Queue.QueueItem.Status(Queue.Open))
     val (closes, rest) =
-      open.partition(i => key.exists(doisInText(i.text.value + " " + i.reason.map(_.sentence).getOrElse("")).contains))
+      open.partition(i => key.exists(doisInText(i.text.value + " " + i.reason.map(w => s"$w").getOrElse("")).contains))
     val proposals = rest
       .flatMap { i =>
         val s = scoreOf(i.text.value, title.value, authors)

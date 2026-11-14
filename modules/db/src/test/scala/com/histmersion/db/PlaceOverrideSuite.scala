@@ -154,7 +154,7 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
       kind: Option[Place.OverrideEdit.Put.Kind] = None,
       from: Option[Year] = None,
       to: Option[Year] = None,
-      reason: Option[Problem] = None
+      reason: Option[Place.Rationale] = None
   ) =
     PlaceFixtures.setOverride(
       ds,
@@ -168,7 +168,7 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
     assertEquals(placesOf(0), Set(Regio, City), "as a site, Regio XII takes the city's findings by distance")
     val r = put(
       kind = Some(Place.OverrideEdit.Put.Kind(DPlace.Kind.Region)),
-      reason = Some(Problem.Unclassified(Legacy.Text("one of the 14 regiones")))
+      reason = Some(Place.Rationale("one of the 14 regiones"))
     ).toOption.get
     assertEquals(
       (r.kindBefore, r.kindAfter, r.findingsBefore, r.findingsAfter, r.unlocated),
@@ -178,7 +178,7 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
     assertEquals(placesOf(1), Set(City))
     val o = PlaceFixtures.overrides(ds, Some(Regio))
     assertEquals(
-      o.map(x => (x.kind, x.periodSet, x.sourceKind, x.reason.map(_.sentence))),
+      o.map(x => (x.kind, x.periodSet, x.sourceKind, x.reason.map(_.value))),
       List((Some("region"), false, "site", Some("one of the 14 regiones")))
     )
     assertEquals(PlaceFixtures.overrides(ds, None).filter(_.placeId.value.startsWith("zzpo")).size, 1)
@@ -257,7 +257,7 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
         .Put(
           None,
           Some((Some(Year(-508L)), Some(Year(-322L)))),
-          Some(Problem.Unclassified(Legacy.Text("kept a region")))
+          Some(Place.Rationale("kept a region"))
         ),
       tol
     )
@@ -333,7 +333,7 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
       .remove(
         ds,
         com.histmersion.domain.catalogue.Place.Id("zzpo_road"),
-        Some(Problem.Unclassified(Legacy.Text("withdrawn by Pleiades, no replacement")))
+        Some(Place.Rationale("withdrawn by Pleiades, no replacement"))
       )
       .toOption
       .get
@@ -384,7 +384,7 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
       id: DPlace.Id,
       lon: Longitude,
       lat: Latitude,
-      reason: Problem = Problem.Unclassified(Legacy.Text("Pleiades representative point"))
+      reason: Place.Rationale = Place.Rationale("Pleiades representative point")
   ) =
     PlaceFixtures.setOverride(ds, id, Place.OverrideEdit.Put(None, None, Some(reason), Some(GeoPoint(lon, lat))), tol)
 
@@ -483,7 +483,7 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
       id,
       Longitude(152.5),
       Latitude(-32.5),
-      Problem.Unclassified(Legacy.Text("Pleiades reprPoint; the Wikidata coordinate is the capital"))
+      Place.Rationale("Pleiades reprPoint; the Wikidata coordinate is the capital")
     )
     assertEquals(geom(id), "POINT(152.5 -32.5)")
     assertEquals(listed, Nil)

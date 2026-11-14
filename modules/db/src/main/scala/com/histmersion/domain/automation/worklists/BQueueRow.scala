@@ -8,6 +8,7 @@ import com.augustnagro.magnum.DbCodec
 import java.util.UUID
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.automation.Queue
 
 /** A work list's item as a bundle reads it (Magnum maps a SELECT's columns positionally). */
 final private[histmersion] case class BQueueRow(
@@ -17,7 +18,7 @@ final private[histmersion] case class BQueueRow(
     text: BQueueRow.Text,
     topic: Option[BQueueRow.Topic],
     status: BQueueRow.Status,
-    reason: Option[Problem],
+    reason: Option[Queue.Rationale],
     createdAt: BQueueRow.CreatedAt,
     doneAt: Option[BQueueRow.DoneAt],
     updatedAt: BQueueRow.UpdatedAt

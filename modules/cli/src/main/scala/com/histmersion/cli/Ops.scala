@@ -16,6 +16,7 @@ import com.histmersion.api.library.Acquire
 import com.histmersion.util.console.Console
 import com.histmersion.api.Api
 import com.histmersion.api.library.AcquisitionWorkApi
+import com.histmersion.api.automation.Queue
 
 /** The CLI commands of stream 2.8 — `lint`, `queue`, `query`, `schema` — plus the pure argument parsing they need. Like
   * every other command they are HTTP clients of the server; the host never touches Postgres.
@@ -34,7 +35,7 @@ object Ops:
         list: Queue.Kind.Label,
         text: Queue.QueueItem.Text,
         topic: Option[Queue.QueueItem.Topic],
-        reason: Option[Problem],
+        reason: Option[Queue.Rationale],
         json: Cli.JsonOutput
     )
     case Done(id: Queue.Id, json: Cli.JsonOutput)

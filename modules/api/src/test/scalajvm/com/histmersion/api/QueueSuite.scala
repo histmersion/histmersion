@@ -331,7 +331,7 @@ class QueueSuite extends munit.FunSuite:
       QueueItem.Text("a book"),
       Some(QueueItem.Topic("Books")),
       QueueItem.Status(Open),
-      Some(Problem.Unclassified(Legacy.Text("for the review"))),
+      Some(Queue.Rationale("for the review")),
       None,
       None
     )
@@ -342,11 +342,11 @@ class QueueSuite extends munit.FunSuite:
     )
     assertEquals(Queue.applyPatch(cur, QueuePatch(topic = Some(QueueItem.Topic("  Papers ")))).topic, Some("Papers"))
     assertEquals(Queue.applyPatch(cur, QueuePatch(topic = Some(QueueItem.Topic("  ")))).topic, None)
-    assertEquals(Queue.applyPatch(cur, QueuePatch(reason = Some(Problem.Unclassified(Legacy.Text(""))))).reason, None)
+    assertEquals(Queue.applyPatch(cur, QueuePatch(reason = Some(Queue.Rationale("")))).reason, None)
     assertEquals(Queue.applyPatch(cur, QueuePatch(status = Some(QueueItem.Status(" DONE ")))).status, Done)
     // an item edited in the web UI keeps its other fields
     val edited = Queue.applyPatch(cur, QueuePatch(text = Some(QueueItem.Text("x")), topic = Some(QueueItem.Topic(""))))
-    assertEquals((edited.status, edited.reason.map(_.sentence), edited.id), (Open, Some("for the review"), 7))
+    assertEquals((edited.status, edited.reason.map(_.value), edited.id), (Open, Some("for the review"), 7))
 
   test("a patched text may be absent but never blank"):
     assertEquals(Queue.textOf(None), Right(None))
@@ -359,40 +359,40 @@ class QueueSuite extends munit.FunSuite:
       id: QueueItem.Id,
       list: QueueItem.List = QueueItem.List("acquire"),
       status: QueueItem.Status = QueueItem.Status(Open),
-      reason: Option[Problem] = None
+      reason: Option[Queue.Rationale] = None
   ) =
     QueueItem(id, list, QueueItem.Text(s"item ${id.value}"), Some(QueueItem.Topic("linear_b")), status, reason)
 
   test("a fulfilled item is ticked off as ingested as [[citekey]], keeping why it was wanted"):
     assertEquals(
-      (Queue.fulfilledReason(None, Citekey("lambert2013_babylonian"))).sentence,
+      (Queue.fulfilledReason(None, Citekey("lambert2013_babylonian"))).value,
       "ingested as [[lambert2013_babylonian]]"
     )
     assertEquals(
-      (Queue.fulfilledReason(Some(Problem.Unclassified(Legacy.Text("  "))), Citekey("a2020_b"))).sentence,
+      (Queue.fulfilledReason(Some(Queue.Rationale("  ")), Citekey("a2020_b"))).value,
       "ingested as [[a2020_b]]"
     )
     assertEquals(
       (Queue
         .fulfilledReason(
-          Some(Problem.Unclassified(Legacy.Text("Nagy 2001 argues against it"))),
+          Some(Queue.Rationale("Nagy 2001 argues against it")),
           Citekey("finkelberg2000_cypria")
         ))
-        .sentence,
+        .value,
       "Nagy 2001 argues against it · ingested as [[finkelberg2000_cypria]]"
     )
     // recording the same source twice adds nothing
     assertEquals(
       (Queue
-        .fulfilledReason(Some(Problem.Unclassified(Legacy.Text("ingested as [[a2020_b]]"))), Citekey("a2020_b")))
-        .sentence,
+        .fulfilledReason(Some(Queue.Rationale("ingested as [[a2020_b]]")), Citekey("a2020_b")))
+        .value,
       "ingested as [[a2020_b]]"
     )
     assertEquals(
       Queue.fulfil(item(QueueItem.Id(567)), Citekey("lambert2013_babylonian")),
       QueuePatch(
         status = Some(QueueItem.Status(Done)),
-        reason = Some(Problem.Unclassified(Legacy.Text("ingested as [[lambert2013_babylonian]]")))
+        reason = Some(Queue.Rationale("ingested as [[lambert2013_babylonian]]"))
       )
     )
 

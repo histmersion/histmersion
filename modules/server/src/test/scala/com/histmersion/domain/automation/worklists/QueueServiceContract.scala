@@ -126,13 +126,13 @@ abstract class QueueServiceContract(name: String) extends DbSuite:
       QueueAdd(
         QueueItem.Text("tidy up"),
         Some(QueueItem.Topic("Chores")),
-        reason = Some(Problem.Unclassified(Legacy.Text("why not")))
+        reason = Some(Queue.Rationale("why not"))
       )
     )
     val p =
       q.patch(
         id(i),
-        QueuePatch(topic = Some(QueueItem.Topic("")), reason = Some(Problem.Unclassified(Legacy.Text(" "))))
+        QueuePatch(topic = Some(QueueItem.Topic("")), reason = Some(Queue.Rationale(" ")))
       ).toOption
         .get
     assertEquals((p.topic, p.reason, p.text, p.status), (None, None, "tidy up", Open))

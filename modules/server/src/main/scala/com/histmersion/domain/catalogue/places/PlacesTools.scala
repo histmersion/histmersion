@@ -19,6 +19,7 @@ import sttp.tapir.Schema
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.api.Api
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.catalogue.Place.Rationale as PlaceRationale
 
 /** The gazetteer for agents: `places` (search, or show one place with its hierarchy), `place_names` (a person's names),
   * `place_override` (a person's kind, period and point; merge, remove) and `add_place`.
@@ -61,7 +62,7 @@ object PlacesTools:
       kind: Option[PlaceOverrideInput.Kind] = None,
       periodStart: Option[com.histmersion.Year] = None,
       periodEnd: Option[com.histmersion.Year] = None,
-      reason: Option[Problem] = None,
+      reason: Option[PlaceRationale] = None,
       reset: Option[PlaceOverrideInput.Reset] = None,
       mergeInto: Option[PlaceOverrideInput.MergeInto] = None,
       remove: Option[PlaceOverrideInput.Remove] = None,

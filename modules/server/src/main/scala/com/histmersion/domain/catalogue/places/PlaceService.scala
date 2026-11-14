@@ -21,6 +21,7 @@ import com.histmersion.api.catalogue.Place
 import com.histmersion.domain.DeepTime
 import com.histmersion.domain.catalogue.Place as DPlace
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.catalogue.Place.Rationale as PlaceRationale
 
 /** The gazetteer's records: the places, their names (a person's among them), their old ids, the kinds and periods a
   * person set over a source's, and the hierarchy — imported, searched, read at a year, curated by hand. A finding's
@@ -99,7 +100,7 @@ trait PlaceService:
   def merge(from: DPlace.Id, into: DPlace.Id, toleranceKm: GeocodeSettings.ToleranceKm): Either[Api.Error, Place.Gone]
 
   /** A place nothing refers to, removed for good. */
-  def remove(id: DPlace.Id, reason: Option[Problem]): Either[Api.Error, Place.Gone]
+  def remove(id: DPlace.Id, reason: Option[PlaceRationale]): Either[Api.Error, Place.Gone]
 
 object PlaceService:
   type DepthLimit = DepthLimit.T
@@ -186,7 +187,7 @@ object PlaceService:
         toleranceKm: GeocodeSettings.ToleranceKm
     ): Either[Api.Error, Place.Gone] =
       db.transact(PlaceOverrideRepo.merge(BPlaceRow.Id(from.value), BPlaceRow.Id(into.value), toleranceKm))
-    def remove(id: DPlace.Id, reason: Option[Problem]): Either[Api.Error, Place.Gone] =
+    def remove(id: DPlace.Id, reason: Option[PlaceRationale]): Either[Api.Error, Place.Gone] =
       db.transact(
         PlaceOverrideRepo.remove(BPlaceRow.Id(id.value), reason)
       )
@@ -766,7 +767,7 @@ object PlaceService:
             )
           )
 
-    def remove(id: DPlace.Id, reason: Option[Problem]): Either[Api.Error, Place.Gone] =
+    def remove(id: DPlace.Id, reason: Option[PlaceRationale]): Either[Api.Error, Place.Gone] =
       find(apiId(id)).toRight(notFound(id.value)).flatMap { p =>
         val s = state.get
         val refs = List(

@@ -174,7 +174,7 @@ final class IngestQueue(
             Stopped.write(
               Stopped.Cause.Paused(
                 PauseReason.Interrupted,
-                Problem.Unclassified(Legacy.Text("the upload is no longer held by this process"))
+                Stopped.Detail("the upload is no longer held by this process")
               )
             )
           )

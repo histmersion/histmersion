@@ -1,6 +1,6 @@
 package com.histmersion
 package api.research
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{NonEmptyVector, Problem}
 
 import hearth.kindlings.optics.syntax.*
 
@@ -51,14 +51,7 @@ object Articles:
       case Some(s) =>
         val norm = s.toLowerCase.replaceAll("[^a-z]+", " ").trim
         if StandIns.contains(norm) || norm.startsWith("lorem ipsum") then
-          Left(
-            Problem.Unclassified(
-              Legacy.Text(
-                s"summary '$s' is a stand-in, not a summary — write the one-paragraph lede, or omit it " +
-                  "and the article's opening paragraph (or its `## Summary` section) is used"
-              )
-            )
-          )
+          Left(Problem.Content.Proposal(Problem.Content.Requirement.StandIn, Problem.Where("summary")))
         else Right(Some(Article.SummaryText(s)))
 
   val Kinds = List("concept", "myth", "culture", "region", "timeline", "report", "index")
@@ -66,15 +59,18 @@ object Articles:
   private val Kind = """^[a-z][a-z0-9_-]*$""".r
 
   def notFound(slug: Article.Slug): Api.Error =
-    Api.Error(Problem.Unclassified(Legacy.Text(s"No article '$slug'")), Some(Api.Error.Code(Write.CodeNotFound)))
+    Api.Error(Problem.NotFound.Entity(Problem.TypeName.of(Article.Slug), Problem.Raw(s"$slug")), Some(Api.Error.Code(Write.CodeNotFound)))
 
   def kindOf(raw: Article.Kind.Wire): Either[Problem, Article.Kind.Wire] =
     val k = (raw).value.trim.toLowerCase
     if Kind.matches(k) then Right(Article.Kind.Wire(k))
     else
       Left(
-        Problem.Unclassified(
-          Legacy.Text(s"invalid kind '$raw' — one of ${Kinds.mkString(", ")} (or another lower-case word)")
+        Problem.Invalid.Unreadable(
+          Problem.TypeName.of(Article.Kind.Wire),
+          Problem.Raw(s"$raw"),
+          Kinds.toVector.map(k => Problem.Raw(s"$k")),
+          Vector(Problem.Field("kind"))
         )
       )
 
@@ -92,10 +88,11 @@ object Articles:
     if SlugPattern.matches(s) then Right(Article.Slug(s))
     else
       Left(
-        Problem.Unclassified(
-          Legacy.Text(
-            s"invalid slug '${raw.value}' — use lower-case letters, digits, '_', '-' or '.' (e.g. sea_peoples)"
-          )
+        Problem.Invalid.Unreadable(
+          Problem.TypeName.of(Article.Slug),
+          Problem.Raw(s"$raw"),
+          Vector(Problem.Raw("sea_peoples")),
+          Vector(Problem.Field("slug"))
         )
       )
 
@@ -106,11 +103,11 @@ object Articles:
       k <- kindOf(p.kind)
       _ <-
         if p.title.value.trim.nonEmpty then Right(())
-        else Left(Problem.Unclassified(Legacy.Text("title must not be empty")))
+        else Left(Problem.Invalid.Missing.here(Problem.Field("title")))
       period <- periodOf(p.periodStart, p.periodEnd)
       summary <- summaryOf(p.summary)
       filter <- p.filter.fold[Either[Problem, Option[Article.Filter]]](Right(None))(f => Article.Filter.normalise(f))
-      reasons <- Coverage.Reason.merge(Map.empty, p.reasons).left.map(e => Problem.Unclassified(Legacy.Text(e)))
+      reasons <- Coverage.Reason.merge(Map.empty, p.reasons)
     yield Article(
       slug = s,
       title = Article.Title(p.title.value.trim),
@@ -132,11 +129,11 @@ object Articles:
         if want == actual then Right(())
         else
           Left(
-            Problem.Unclassified(
-              Legacy.Text(
-                s"'${existing.slug}' has moved on: you sent ifUpdatedAt='$want' but the stored " +
-                  s"updatedAt is '$actual'. Re-read the article and re-apply your patch."
-              )
+            Problem.Conflict.Stale(
+              Problem.TypeName.of(Article.Slug),
+              Problem.Raw(s"${existing.slug}"),
+              Problem.Conflict.Stamp(s"$want"),
+              Problem.Conflict.Stamp(s"$actual")
             )
           )
 
@@ -154,8 +151,6 @@ object Articles:
       )
       reasons <- Coverage.Reason
         .merge(existing.reasons, patch.reasons)
-        .left
-        .map(e => Problem.Unclassified(Legacy.Text(e)))
     yield existing
       .modify(_.title)
       .setTo(patch.title.map(t => Article.Title(t.value.trim)).filter(_.value.nonEmpty).getOrElse(existing.title))
@@ -206,7 +201,7 @@ object Articles:
       val t = line.trim
       t.startsWith("#") && t.replaceAll("^#+\\s*", "").trim.toLowerCase == sNorm
     }
-    if idx < 0 then Left(Problem.Unclassified(Legacy.Text(s"no heading matching '$section' in the article body")))
+    if idx < 0 then Left(Problem.NotFound.Entity(Problem.TypeName.of(Article.Section), Problem.Raw(s"$section")))
     else
       val level = lines(idx).trim.takeWhile(_ == '#').length
       val rest = lines.drop(idx + 1)
@@ -225,6 +220,7 @@ object Articles:
     (start, end) match
       case (Some(a), Some(b)) if a <= b => Right(Some(Period(a, b)))
       case (Some(a), Some(b))           =>
-        Left(Problem.Unclassified(Legacy.Text(s"period_start ($a) must not be after period_end ($b)")))
+        Left(Problem.Invalid.Inconsistent.here(NonEmptyVector.of(Problem.Field("periodStart"), Problem.Field("periodEnd")), Problem.Invalid.Exclusion.Ordered))
       case (None, None) => Right(None)
-      case _            => Left(Problem.Unclassified(Legacy.Text("give both periodStart and periodEnd, or neither")))
+      case _ =>
+        Left(Problem.Invalid.Inconsistent.here(NonEmptyVector.of(Problem.Field("periodStart"), Problem.Field("periodEnd")), Problem.Invalid.Exclusion.Together))

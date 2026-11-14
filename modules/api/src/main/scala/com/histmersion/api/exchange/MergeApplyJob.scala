@@ -1,7 +1,7 @@
 package com.histmersion
 package api.exchange
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -49,14 +49,8 @@ object MergeApplyJob:
     case Interrupted
     case Other(problem: Problem)
 
-  val InterruptedText: Problem =
-    Problem.Unclassified(
-      Legacy.Text(
-        "the server stopped while this merge apply ran — its transaction was committed or rolled back as a whole, " +
-          "never half applied; `histmersion merge list` shows whether it was applied, and planning the bundle again " +
-          "shows what is left"
-      )
-    )
+  /** A restart cut the apply short: its transaction was committed or rolled back as a whole, never half applied. */
+  val InterruptedText: Problem = Problem.Run.Interrupted
 
   def of(
       id: SpatialHierarchyResult.Job.Id,
@@ -78,13 +72,7 @@ object MergeApplyJob:
             bundle,
             planHash,
             elapsedMs,
-            error = Some(
-              Problem.Unclassified(
-                Legacy.Text(
-                  "the merge apply finished but its result was not recorded — `histmersion merge list` shows what was applied"
-                )
-              )
-            )
+            error = Some(Problem.NotFound.Entity(Problem.TypeName.named[MergeApplyResult], Problem.Raw(s"$id")))
           )
         )(r =>
           MergeApplyJob(

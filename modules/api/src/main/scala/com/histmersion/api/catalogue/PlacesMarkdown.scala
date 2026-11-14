@@ -125,7 +125,7 @@ object PlacesMarkdown:
             yield s", point ${Place.Overrides.pointText(la, lo)}").getOrElse(", no point")
           val src = s"${r.sourceKind}, ${Place.Overrides.periodText(r.sourcePeriodStart, r.sourcePeriodEnd)}$srcPt"
           s"- **${r.label}** `${r.placeId}`: ${set.mkString(", ")} _(the source says: $src)_" +
-            r.reason.fold("")(w => s" — ${w.sentence}")
+            r.reason.fold("")(w => s" — $w")
         }
         .mkString("\n")
 

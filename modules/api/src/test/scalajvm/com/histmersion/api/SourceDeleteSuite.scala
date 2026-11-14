@@ -23,11 +23,20 @@ class SourceDeleteSuite extends munit.FunSuite:
     DeleteBlocker(DeleteBlocker.Kind.Job, DeleteBlocker.Id("j1"), Some(DeleteBlocker.Title("ingest")))
   )
 
-  test("the refusal names every blocker and offers no override"):
-    val m = Source.Delete.refusal(Ck, blocked).sentence
-    assert(m.contains("cited by article ahhiyawa (Ahhiyawa), troy"), m)
-    assert(m.contains("still being written by job j1 (ingest)"), m)
-    assert(m.contains("no override"), m)
+  test("the refusal counts the blockers of each kind"):
+    val ck = com.histmersion.util.problem.Problem.TypeName.of(Citekey)
+    val kind = com.histmersion.util.problem.Problem.TypeName.named[DeleteBlocker.Kind]
+    def referred(k: DeleteBlocker.Kind, n: Long) =
+      com.histmersion.util.problem.Problem.Conflict.Referenced(
+        ck,
+        com.histmersion.util.problem.Problem.Raw(s"$Ck"),
+        com.histmersion.util.problem.Problem.TypeName(s"$kind.${k.productPrefix}"),
+        com.histmersion.util.problem.Problem.Count(n)
+      )
+    assertEquals(
+      Source.Delete.refusal(Ck, blocked).toVector,
+      Vector(referred(DeleteBlocker.Kind.Article, 2L), referred(DeleteBlocker.Kind.Job, 1L))
+    )
 
   private val done = Source.Deletion(
     Ck,

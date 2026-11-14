@@ -1272,7 +1272,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     assertEquals(item.status, "open")
     val old = items.find(_.id == legacy.id).get
     assertEquals(
-      (old.status, old.reason.map(_.sentence)),
+      (old.status, old.reason.map(_.value)),
       ("done", Some(s"superseded by #${item.id} (one item per article)"))
     )
     assertEquals(ledgerOf(h).flatMap(_.task).map(_.value), Some(item.id.value))
@@ -1341,7 +1341,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     )
     val closed = items.find(_.id == item.id).get
     assertEquals(
-      (closed.status, closed.reason.map(_.sentence)),
+      (closed.status, closed.reason.map(_.value)),
       ("done", Some(s"no MAJOR open after agent run ${r3.id.value.take(8)}"))
     )
     val led = ledgerOf(h).get
@@ -1396,7 +1396,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
         .exists(_.text.value.startsWith(s"review-article [[$Slug]]: 1 open MAJOR — R1 (Intro)"))
     )
     assertEquals(
-      items.find(_.id == twice.id).map(i => (i.status, i.reason.map(_.sentence))),
+      items.find(_.id == twice.id).map(i => (i.status, i.reason.map(_.value))),
       Some(("done", Some(s"superseded by #${mine.id} (one item per article)")))
     )
     assertEquals(ledgerOf(h).flatMap(_.task).map(_.value), Some(mine.id.value))

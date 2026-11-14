@@ -88,13 +88,13 @@ class HowJobsStopSuite extends munit.FunSuite:
     assert(!cause(Problem.Unclassified(Legacy.Text("plan-quota: x"))).pausedOn(PauseReason.Allowance))
     assertEquals(
       cause(Problem.Unclassified(Legacy.Text("interrupted: interrupted"))),
-      Stopped.Cause.Paused(PauseReason.Interrupted, Problem.Unclassified(Legacy.Text("interrupted")))
+      Stopped.Cause.Paused(PauseReason.Interrupted, Stopped.Detail("interrupted"))
     )
     assert(cause(Problem.Unclassified(Legacy.Text("stalled: "))).pausedOn(PauseReason.Stalled))
 
   test("every pause reason reads from what it writes"):
     PauseReason.values.foreach { r =>
-      val c = Stopped.Cause.Paused(r, Problem.Unclassified(Legacy.Text("why")))
+      val c = Stopped.Cause.Paused(r, Stopped.Detail("why"))
       assertEquals(Stopped.from(Stopped.write(c)).cause, c)
     }
 
@@ -126,7 +126,7 @@ class HowJobsStopSuite extends munit.FunSuite:
   test("a paused run's reason is the one its stored sentence writes; no sentence means a person paused it"):
     PauseReason.values.foreach { r =>
       assertEquals(
-        Stopped.pausedFor(Some(Stopped.write(Stopped.Cause.Paused(r, Problem.Unclassified(Legacy.Text("why")))))),
+        Stopped.pausedFor(Some(Stopped.write(Stopped.Cause.Paused(r, Stopped.Detail("why"))))),
         Some(r)
       )
     }
@@ -140,7 +140,7 @@ class HowJobsStopSuite extends munit.FunSuite:
   test("the pattern a column is filtered by matches the sentences that read as that pause, and only those"):
     PauseReason.values.foreach { r =>
       val prefix = Stopped.pausedPattern(r).stripSuffix("%")
-      val written = s"${Stopped.write(Stopped.Cause.Paused(r, Problem.Unclassified(Legacy.Text("why")))).sentence}"
+      val written = s"${Stopped.write(Stopped.Cause.Paused(r, Stopped.Detail("why"))).sentence}"
       assert(written.startsWith(prefix), written)
       assertEquals(cause(Problem.Unclassified(Legacy.Text(s"${r.wire}:no space"))).pausedOn(r), false)
       assert(!"%_\\".exists(prefix.contains(_)), prefix)
@@ -166,5 +166,5 @@ class HowJobsStopSuite extends munit.FunSuite:
     )
     assertEquals(
       cause(Problem.Unclassified(Legacy.Text("plan-quota: something else"))),
-      Stopped.Cause.Paused(PauseReason.PlanQuota, Problem.Unclassified(Legacy.Text("something else")))
+      Stopped.Cause.Paused(PauseReason.PlanQuota, Stopped.Detail("something else"))
     )

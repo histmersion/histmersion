@@ -5,6 +5,7 @@ import com.histmersion.util.problem.Problem
 import com.histmersion.api.catalogue.Period
 import com.histmersion.domain.catalogue.Place
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.catalogue.Place.Rationale as PlaceRationale
 
 /** A person's kind and period for a place as the in-memory catalogue holds it, with what the place's source said
   * before: a reset puts that back.
@@ -13,7 +14,7 @@ final case class HeldOverride(
     placeId: Place.Id,
     kind: Option[HeldOverride.Kind],
     period: Option[(Option[HeldOverride.Bound.Start], Option[HeldOverride.Bound.End])],
-    reason: Option[Problem],
+    reason: Option[PlaceRationale],
     sourceKind: HeldOverride.SourceKind,
     sourcePeriod: Option[Period],
     updatedAt: HeldOverride.UpdatedAt

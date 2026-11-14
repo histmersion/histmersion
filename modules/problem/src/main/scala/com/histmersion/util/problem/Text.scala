@@ -17,10 +17,16 @@ object Text:
     def sentence: String = problem match
       case Invalid.Malformed(t, c, raw, at)    => s"${path(at)}'$raw' is not a ${t.short}: ${c.description}"
       case Invalid.Unknown(t, raw, known, at)  => s"${path(at)}unknown ${t.short} '$raw'${oneOf(known)}"
+      case Invalid.Unreadable(t, raw, eg, at)  => s"${path(at)}'$raw' is not a ${t.short}${forExample(eg)}"
       case Invalid.Missing(field, at)          => s"${path(at)}$field is required"
+      case Invalid.Ambiguous(t, raw, n, at)    =>
+        s"${path(at)}the ${t.short} '$raw' matches $n places — quote more of it so it matches one"
+      case Invalid.Repeated(t, raw, at)        => s"${path(at)}${t.short} '$raw' is given more than once"
+      case Invalid.Misplaced(field, under, at) => s"${path(at)}'$field' belongs under '$under' ($under.$field)"
       case Invalid.OutOfRange(t, raw, b, at)   => s"${path(at)}${t.short} $raw is ${b.range}"
       case Invalid.Inconsistent(fs, rule, at)  => s"${path(at)}${rule.of(fs)}"
       case Invalid.Reference(form, at)         => s"${path(at)}${form.said}"
+      case NotFound.Entity(t, key) if t.short == "Citekey" => s"No source '$key'"
       case NotFound.Entity(t, key)             => s"no ${t.short} '$key'"
       case NotFound.Copy(work)                 => s"no legal open-access PDF found for $work"
       case Conflict.AlreadyExists(t, key)      => s"${t.short} '$key' already exists"
@@ -82,7 +88,11 @@ object Text:
       case NotFound.Entity(t, _)                 => s"no such ${t.short}"
       case Invalid.Malformed(t, c, raw, _)       => Invalid.Malformed(t, c, raw, Vector.empty).sentence
       case Invalid.Unknown(t, raw, known, _)     => Invalid.Unknown(t, raw, known, Vector.empty).sentence
+      case Invalid.Unreadable(t, raw, eg, _)     => Invalid.Unreadable(t, raw, eg, Vector.empty).sentence
       case Invalid.Missing(field, _)             => Invalid.Missing(field, Vector.empty).sentence
+      case Invalid.Ambiguous(t, raw, n, _)       => Invalid.Ambiguous(t, raw, n, Vector.empty).sentence
+      case Invalid.Repeated(t, raw, _)           => Invalid.Repeated(t, raw, Vector.empty).sentence
+      case Invalid.Misplaced(field, under, _)    => Invalid.Misplaced(field, under, Vector.empty).sentence
       case Invalid.OutOfRange(t, raw, bounds, _) => Invalid.OutOfRange(t, raw, bounds, Vector.empty).sentence
       case other                                 => other.sentence
 
@@ -103,6 +113,9 @@ object Text:
 
   private def until(at: Option[EpochMs]): String = at.fold("")(t => s" until ${t.iso}")
 
+  private def forExample(examples: Vector[Raw]): String =
+    if examples.isEmpty then "" else s" (e.g. ${examples.mkString(", ")})"
+
   private def oneOf(known: Vector[Raw]): String = if known.isEmpty then "" else s" (one of: ${known.mkString(", ")})"
 
   extension (bounds: Invalid.Bounds)
@@ -118,9 +131,11 @@ object Text:
       rule match
         case Invalid.Exclusion.Together  => s"give $named together, or none of them"
         case Invalid.Exclusion.OneOf     => s"give exactly one of $named"
-        case Invalid.Exclusion.AtMostOne => s"give at most one of $named"
+        case Invalid.Exclusion.AtMostOne  => s"give at most one of $named"
+        case Invalid.Exclusion.AtLeastOne => s"give at least one of $named"
         case Invalid.Exclusion.Ordered   => s"$named must be in order"
-        case Invalid.Exclusion.Same      => s"$named must be the same"
+        case Invalid.Exclusion.Same       => s"$named must be the same"
+        case Invalid.Exclusion.Distinct   => s"$named must differ"
 
   /** The forms a secret's reference takes. */
   private val ReferenceForms = "value:<literal>, env:<NAME> or <vault>:<ref>"
@@ -146,6 +161,8 @@ object Text:
       case Refused.Rule.ApiKeyRequired    => "the API key is required"
       case Refused.Rule.WorkingDirDenied  => "the command may not write in this working directory"
       case Refused.Rule.ReadOnlyQuery     => "a query may only read: it holds a statement that writes"
+      case Refused.Rule.OneStatement      =>
+        "a query runs exactly one statement: drop the ';'-separated batch and ask again"
       case Refused.Rule.LoginOutsideLocal => "this login is refused while the server listens beyond this machine"
       case Refused.Rule.LegalOnly         => "only legal open-access copies may be fetched"
       case Refused.Rule.ReadOnly          => "the collection is read-only"
@@ -316,4 +333,6 @@ object Text:
       case Content.Requirement.CitesNoSource            => "the text cites no source"
       case Content.Requirement.UnknownCitekey           => "it names a source that is not in the corpus"
       case Content.Requirement.OutsidePeriod            => "it falls outside the period"
+      case Content.Requirement.StandIn                  =>
+        "it is a stand-in (a placeholder, TODO or lorem ipsum), not the text: write it, or leave it out"
       case Content.Requirement.TooManyClaims(cap, gave) => s"at most $cap claims per source (you gave $gave)"

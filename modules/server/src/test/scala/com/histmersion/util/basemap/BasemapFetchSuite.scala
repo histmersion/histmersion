@@ -20,6 +20,7 @@ import com.histmersion.api.basemap.Basemap
 import com.histmersion.util.storage.Store
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
+import com.histmersion.util.problem.Text.sentences
 
 /** The base-map extract (plan → download → assemble) against a local archive behind a fake range server — no network —
   * and its pure parts.
@@ -36,7 +37,7 @@ class BasemapFetchSuite extends munit.FunSuite:
   private val aegean = BBox(Longitude(22), Latitude(35), Longitude(29), Latitude(41))
   private val dropRules = Basemap
     .parseDrop(Basemap.DropRule.Spec(AppConfig.load().basemap.vector.drop.value))
-    .fold(e => fail(e.sentence), identity)
+    .fold(e => fail(e.sentences.mkString("; ")), identity)
   private val keep = BasemapService.mvtRules(dropRules)
 
   private val Kind = Mvt.PropKey("kind")

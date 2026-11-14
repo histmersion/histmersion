@@ -688,7 +688,7 @@ class ToolsSuite extends munit.FunSuite:
         Queue.QueueAdd(
           QueueItem.Text("x"),
           Some(QueueItem.Topic("Corpus hygiene")),
-          reason = Some(Problem.Unclassified(Legacy.Text("because")))
+          reason = Some(Queue.Rationale("because"))
         )
       )
     )
@@ -767,13 +767,13 @@ class ToolsSuite extends munit.FunSuite:
       QueueView.fulfil(item, Preview.Target.Source.Citekey("lambert2013_babylonian")),
       QueueItem.Id(567) -> Queue.QueuePatch(
         status = Some(QueueItem.Status(Queue.Done)),
-        reason = Some(Problem.Unclassified(Legacy.Text("ingested as [[lambert2013_babylonian]]")))
+        reason = Some(Queue.Rationale("ingested as [[lambert2013_babylonian]]"))
       )
     )
     // the reason renders the citekey as a source link
     assert(
       QueueView
-        .segments(UiLabels.Text(Queue.fulfilledReason(None, Citekey("a2020_b")).sentence))
+        .segments(UiLabels.Text(Queue.fulfilledReason(None, Citekey("a2020_b")).value))
         .contains(QueueView.Seg.Cite(QueueView.Seg.Cite.Citekey("a2020_b")))
     )
   }
