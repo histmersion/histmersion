@@ -13,14 +13,8 @@ import hearth.kindlings.jsoniterderivation.{JsoniterConfig, KindlingsJsonValueCo
   * written, `None` as `null`, an enum case without fields as `{"Case":{}}`, a sum type wrapped in its case's name.
   *
   * Reading is lenient where the old decoders were: an absent `Option` field is `None`, an absent field with a default
-  * takes it. Kindlings 0.3.3 fills those only when the same flags also leave such fields out of what it writes, so a
-  * codec is two derivations, one that reads and one that writes; a field still absent after reading (a required one,
-  * with no default) fails as missing.
-  *
-  * STOP-GAP: this type exists only for that Kindlings 0.3.3 behaviour. Once Kindlings reads absent options and defaults
-  * without changing what it writes, and checks required fields, `derives JsonCodec` becomes Kindlings' own derivation
-  * (one config) and this wrapper (the dual derivation, `of`, `missing`) goes; the givens and `mapped`/`text`/`key`
-  * stay.
+  * takes it. Any other absent field fails as missing (`missing required field "name"`), a collection without a default
+  * too.
   */
 trait JsonCodec[A] extends JsonValueCodec[A]
 
@@ -36,57 +30,31 @@ object JsonCodec:
   object Unknown:
     given default: Unknown = Skipped
 
-  /** How a derived codec reads: absent options and defaults filled in. */
-  def reading(unknown: Unknown): JsoniterConfig =
-    JsoniterConfig.default.withCirceLikeObjectEncoding.withTransientNone.withTransientDefault.withDecodingOnly
+  /** How a derived codec reads and writes: every field written, `None` as `null`; an absent collection without a
+    * default is missing, as any other required field.
+    */
+  def config(unknown: Unknown): JsoniterConfig =
+    JsoniterConfig.default.withCirceLikeObjectEncoding.withRequireCollectionFields
       .withSkipUnexpectedFields(unknown == Unknown.Skipped)
 
-  /** How a derived codec writes: every field, `None` as `null`. */
-  val writing: JsoniterConfig = JsoniterConfig.default.withCirceLikeObjectEncoding.withEncodingOnly
-
   /** What a schema derived beside a codec is told of it (Kindlings' Tapir schemas read it): a field with a default may
-    * be absent, as [[reading]] reads it.
+    * be absent, as the codec reads it. Kindlings derives that from `transientDefault`, which the codecs leave off (they
+    * write every field).
     */
   val schemas: JsoniterConfig = JsoniterConfig.default.withTransientDefault
 
   inline def derived[A](using unknown: Unknown): JsonCodec[A] =
-    of(
-      KindlingsJsonValueCodec.derived[A](using reading(unknown)),
-      KindlingsJsonValueCodec.derived[A](using writing),
-      missing[A]
-    )
+    of(KindlingsJsonValueCodec.derived[A](using config(unknown)))
 
   /** The codec with code words (enum cases without fields) written as strings (`"Read"`), for the problems' cases. */
   inline def derivedWords[A]: JsonCodec[A] =
-    of(
-      KindlingsJsonValueCodec.derived[A](using reading(Unknown.Skipped).withEnumAsStrings),
-      KindlingsJsonValueCodec.derived[A](using writing.withEnumAsStrings),
-      missing[A]
-    )
+    of(KindlingsJsonValueCodec.derived[A](using config(Unknown.Skipped).withEnumAsStrings))
 
-  /** The name of a field a record read without, if it is a record. */
-  private inline def missing[A]: A => Option[String] = compiletime.summonFrom {
-    case product: (A <:< Product) =>
-      (a: A) =>
-        val p = product(a)
-        p.productIterator.zipWithIndex.collectFirst {
-          case (field, i) if Option(field).isEmpty => p.productElementName(i)
-        }
-    case _ => (_: A) => None
-  }
-
-  def of[A](reads: JsonValueCodec[A], writes: JsonValueCodec[A], missing: A => Option[String]): JsonCodec[A] =
+  private def of[A](codec: JsonValueCodec[A]): JsonCodec[A] =
     new JsonCodec[A]:
-      def nullValue: A = reads.nullValue
-      def decodeValue(in: JsonReader, default: A): A =
-        // a collection's own refusal (a NonEmptyVector read from an empty list) reaches the derived codec as an
-        // IllegalArgumentException, not as a decoding error: it is one, where the reader stands
-        val a =
-          try reads.decodeValue(in, default)
-          catch case refused: IllegalArgumentException => in.decodeError(s"${refused.getMessage}")
-        missing(a).foreach(field => in.decodeError(s"missing required field: $field"))
-        a
-      def encodeValue(x: A, out: JsonWriter): Unit = writes.encodeValue(x, out)
+      def nullValue: A = codec.nullValue
+      def decodeValue(in: JsonReader, default: A): A = codec.decodeValue(in, default)
+      def encodeValue(x: A, out: JsonWriter): Unit = codec.encodeValue(x, out)
 
   /** A codec over another type's: `to` writes, `from` reads or says why it cannot. */
   def mapped[A, B](to: A => B, from: B => Either[String, A])(using base: JsonValueCodec[B]): JsonCodec[A] =
