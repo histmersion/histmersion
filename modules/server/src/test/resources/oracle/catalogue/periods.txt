@@ -361,18 +361,6 @@
     "region" : "Serbia, Balkans, Turdaș-Vinča Culture, Starčevo Culture"
   },
   {
-    "authority" : "PeriodO p0jtbzwxgdq · Cypriot antiquities text panels (2007)",
-    "id" : "p0jtbzwxgdq",
-    "label" : "Neolithic",
-    "parentId" : null,
-    "period" : {
-      "end" : -5500,
-      "start" : -7000
-    },
-    "preset" : "cyprus",
-    "region" : "Cyprus"
-  },
-  {
     "authority" : "PeriodO p06v8w44jbs · FASTI - Home (2004)",
     "id" : "p06v8w44jbs",
     "label" : "Neolithic",
@@ -383,6 +371,18 @@
     },
     "preset" : "eastern-europe",
     "region" : "Ukraine"
+  },
+  {
+    "authority" : "PeriodO p0jtbzwxgdq · Cypriot antiquities text panels (2007)",
+    "id" : "p0jtbzwxgdq",
+    "label" : "Neolithic",
+    "parentId" : null,
+    "period" : {
+      "end" : -5500,
+      "start" : -7000
+    },
+    "preset" : "cyprus",
+    "region" : "Cyprus"
   },
   {
     "authority" : "PeriodO p0m63nj6xtw · The Levantine Ceramics Project (2012)",
@@ -649,18 +649,6 @@
     "region" : "Levant"
   },
   {
-    "authority" : "PeriodO p0s2rwktsx4 · ROCEEH Out of Africa Database (ROAD) (2020)",
-    "id" : "p0s2rwktsx4",
-    "label" : "Chalcolithic",
-    "parentId" : null,
-    "period" : {
-      "end" : -3001,
-      "start" : -5001
-    },
-    "preset" : null,
-    "region" : "Eurasia"
-  },
-  {
     "authority" : "PeriodO p0m64tdqdhw · EAMENA Database (2021)",
     "id" : "p0m64tdqdhw",
     "label" : "Chalcolithic",
@@ -671,6 +659,18 @@
     },
     "preset" : "iran",
     "region" : "Southern Iran"
+  },
+  {
+    "authority" : "PeriodO p0s2rwktsx4 · ROCEEH Out of Africa Database (ROAD) (2020)",
+    "id" : "p0s2rwktsx4",
+    "label" : "Chalcolithic",
+    "parentId" : null,
+    "period" : {
+      "end" : -3001,
+      "start" : -5001
+    },
+    "preset" : null,
+    "region" : "Eurasia"
   },
   {
     "authority" : "PeriodO p06vx8jxh5x · Institutul Național al Patrimoniului periodizare (2023)",
@@ -685,18 +685,6 @@
     "region" : "Romania"
   },
   {
-    "authority" : "PeriodO p0cwscsjj9h · DB-HERITAGE historical periods (2021)",
-    "id" : "p0cwscsjj9h",
-    "label" : "Neolithic",
-    "parentId" : null,
-    "period" : {
-      "end" : -3000,
-      "start" : -5000
-    },
-    "preset" : "iberia",
-    "region" : "Portugal"
-  },
-  {
     "authority" : "PeriodO p06v8w4bm9m · FASTI - Home (2004)",
     "id" : "p06v8w4bm9m",
     "label" : "Neolithic",
@@ -707,6 +695,18 @@
     },
     "preset" : "italy",
     "region" : "Italy"
+  },
+  {
+    "authority" : "PeriodO p0cwscsjj9h · DB-HERITAGE historical periods (2021)",
+    "id" : "p0cwscsjj9h",
+    "label" : "Neolithic",
+    "parentId" : null,
+    "period" : {
+      "end" : -3000,
+      "start" : -5000
+    },
+    "preset" : "iberia",
+    "region" : "Portugal"
   },
   {
     "authority" : "PeriodO p08m57hfj2z · British Museum",
@@ -841,18 +841,6 @@
     "region" : "Scotland"
   },
   {
-    "authority" : "PeriodO p0qhb66f8kc · ARIADNE Data Collection (2015)",
-    "id" : "p0qhb66f8kc",
-    "label" : "Copper Age",
-    "parentId" : null,
-    "period" : {
-      "end" : -2202,
-      "start" : -4251
-    },
-    "preset" : "central-europe",
-    "region" : "Germany, Switzerland, Czech Republic, Liechtenstein"
-  },
-  {
     "authority" : "PeriodO p0qhb66cb4k · ARIADNE Data Collection (2015)",
     "id" : "p0qhb66cb4k",
     "label" : "Copper Age",
@@ -863,6 +851,18 @@
     },
     "preset" : "central-europe",
     "region" : "Austria"
+  },
+  {
+    "authority" : "PeriodO p0qhb66f8kc · ARIADNE Data Collection (2015)",
+    "id" : "p0qhb66f8kc",
+    "label" : "Copper Age",
+    "parentId" : null,
+    "period" : {
+      "end" : -2202,
+      "start" : -4251
+    },
+    "preset" : "central-europe",
+    "region" : "Germany, Switzerland, Czech Republic, Liechtenstein"
   },
   {
     "authority" : "PeriodO p0m64tdswpg · EAMENA Database (2021)",
@@ -901,18 +901,6 @@
     "region" : "Cyprus"
   },
   {
-    "authority" : "PeriodO p0kh9dsbz2g · Historic England Periods (2014)",
-    "id" : "p0kh9dsbz2g",
-    "label" : "Neolithic",
-    "parentId" : null,
-    "period" : {
-      "end" : -2200,
-      "start" : -4000
-    },
-    "preset" : "britain-ireland",
-    "region" : "England"
-  },
-  {
     "authority" : "PeriodO p06hps84bgf · Archaeological periods for the island of Ireland (2022)",
     "id" : "p06hps84bgf",
     "label" : "Neolithic",
@@ -923,6 +911,18 @@
     },
     "preset" : "britain-ireland",
     "region" : "Island of Ireland"
+  },
+  {
+    "authority" : "PeriodO p0kh9dsbz2g · Historic England Periods (2014)",
+    "id" : "p0kh9dsbz2g",
+    "label" : "Neolithic",
+    "parentId" : null,
+    "period" : {
+      "end" : -2200,
+      "start" : -4000
+    },
+    "preset" : "britain-ireland",
+    "region" : "England"
   },
   {
     "authority" : "PeriodO p0qhb664686 · ARIADNE Data Collection (2015)",
@@ -1105,6 +1105,18 @@
     "region" : "Greece"
   },
   {
+    "authority" : "PeriodO p06v8w4hzqv · FASTI - Home (2004)",
+    "id" : "p06v8w4hzqv",
+    "label" : "Early Bronze Age",
+    "parentId" : null,
+    "period" : {
+      "end" : -2300,
+      "start" : -3200
+    },
+    "preset" : "eastern-europe",
+    "region" : "Ukraine"
+  },
+  {
     "authority" : "PeriodO p0ds9qjkz7p · The British School at Athens: archaeological periods of Greece (2022)",
     "id" : "p0ds9qjkz7p",
     "label" : "Early Bronze Age",
@@ -1117,16 +1129,16 @@
     "region" : "Greece"
   },
   {
-    "authority" : "PeriodO p06v8w4hzqv · FASTI - Home (2004)",
-    "id" : "p06v8w4hzqv",
-    "label" : "Early Bronze Age",
+    "authority" : "PeriodO p0m64td2tp9 · EAMENA Database (2021)",
+    "id" : "p0m64td2tp9",
+    "label" : "Bronze Age",
     "parentId" : null,
     "period" : {
-      "end" : -2300,
-      "start" : -3200
+      "end" : -901,
+      "start" : -3101
     },
-    "preset" : "eastern-europe",
-    "region" : "Ukraine"
+    "preset" : "levant-mesopotamia",
+    "region" : "Southern Mesopotamia"
   },
   {
     "authority" : "PeriodO p0m64tdcj4g · EAMENA Database (2021)",
@@ -1141,18 +1153,6 @@
     "region" : "Northern Mesopotamia"
   },
   {
-    "authority" : "PeriodO p0m64tdq3k6 · EAMENA Database (2021)",
-    "id" : "p0m64tdq3k6",
-    "label" : "Bronze Age",
-    "parentId" : null,
-    "period" : {
-      "end" : -1101,
-      "start" : -3101
-    },
-    "preset" : "iran",
-    "region" : "Khuzestan, Iran"
-  },
-  {
     "authority" : "PeriodO p0m64tdht8m · EAMENA Database (2021)",
     "id" : "p0m64tdht8m",
     "label" : "Bronze Age",
@@ -1165,6 +1165,18 @@
     "region" : "Northwest Iran"
   },
   {
+    "authority" : "PeriodO p0m64tdq3k6 · EAMENA Database (2021)",
+    "id" : "p0m64tdq3k6",
+    "label" : "Bronze Age",
+    "parentId" : null,
+    "period" : {
+      "end" : -1101,
+      "start" : -3101
+    },
+    "preset" : "iran",
+    "region" : "Khuzestan, Iran"
+  },
+  {
     "authority" : "PeriodO p0m64tds5vh · EAMENA Database (2021)",
     "id" : "p0m64tds5vh",
     "label" : "Bronze Age",
@@ -1175,18 +1187,6 @@
     },
     "preset" : "iran",
     "region" : "Northeast Iran"
-  },
-  {
-    "authority" : "PeriodO p0m64td2tp9 · EAMENA Database (2021)",
-    "id" : "p0m64td2tp9",
-    "label" : "Bronze Age",
-    "parentId" : null,
-    "period" : {
-      "end" : -901,
-      "start" : -3101
-    },
-    "preset" : "levant-mesopotamia",
-    "region" : "Southern Mesopotamia"
   },
   {
     "authority" : "PeriodO p0m64tddbc7 · EAMENA Database (2021)",
@@ -1417,18 +1417,6 @@
     "region" : "Egypt"
   },
   {
-    "authority" : "PeriodO p0m64tdsqhp · EAMENA Database (2021)",
-    "id" : "p0m64tdsqhp",
-    "label" : "Bronze Age",
-    "parentId" : null,
-    "period" : {
-      "end" : -1001,
-      "start" : -2901
-    },
-    "preset" : "iran",
-    "region" : "Southern Iran"
-  },
-  {
     "authority" : "PeriodO p0m64tdbgsc · EAMENA Database (2021)",
     "id" : "p0m64tdbgsc",
     "label" : "Bronze Age",
@@ -1439,6 +1427,18 @@
     },
     "preset" : "iran",
     "region" : "Central Zagros, Iran"
+  },
+  {
+    "authority" : "PeriodO p0m64tdsqhp · EAMENA Database (2021)",
+    "id" : "p0m64tdsqhp",
+    "label" : "Bronze Age",
+    "parentId" : null,
+    "period" : {
+      "end" : -1001,
+      "start" : -2901
+    },
+    "preset" : "iran",
+    "region" : "Southern Iran"
   },
   {
     "authority" : "PeriodO p0m64tdzs88 · EAMENA Database (2021)",
@@ -1681,18 +1681,6 @@
     "region" : "Ukraine"
   },
   {
-    "authority" : "PeriodO p0qhb66wrsn · ARIADNE Data Collection (2015)",
-    "id" : "p0qhb66wrsn",
-    "label" : "Bronze Age",
-    "parentId" : null,
-    "period" : {
-      "end" : -802,
-      "start" : -2201
-    },
-    "preset" : "central-europe",
-    "region" : "Austria"
-  },
-  {
     "authority" : "PeriodO p0qhb66b3zn · ARIADNE Data Collection (2015)",
     "id" : "p0qhb66b3zn",
     "label" : "Bronze Age",
@@ -1703,6 +1691,18 @@
     },
     "preset" : "central-europe",
     "region" : "Germany, Switzerland, Czech Republic, Liechtenstein"
+  },
+  {
+    "authority" : "PeriodO p0qhb66wrsn · ARIADNE Data Collection (2015)",
+    "id" : "p0qhb66wrsn",
+    "label" : "Bronze Age",
+    "parentId" : null,
+    "period" : {
+      "end" : -802,
+      "start" : -2201
+    },
+    "preset" : "central-europe",
+    "region" : "Austria"
   },
   {
     "authority" : "PeriodO p0xxt6tfv6h · Scottish Archaeological Periods & Ages (ScAPA) (2018)",
@@ -2797,18 +2797,6 @@
     "region" : "Southern Levant"
   },
   {
-    "authority" : "PeriodO p06v8w4z9mm · FASTI - Home (2004)",
-    "id" : "p06v8w4z9mm",
-    "label" : "Iron Age",
-    "parentId" : null,
-    "period" : {
-      "end" : -752,
-      "start" : -1000
-    },
-    "preset" : "italy",
-    "region" : "Italy"
-  },
-  {
     "authority" : "PeriodO p06v8w4t56d · FASTI - Home (2004)",
     "id" : "p06v8w4t56d",
     "label" : "Iron Age",
@@ -2819,6 +2807,18 @@
     },
     "preset" : "eastern-europe",
     "region" : "Ukraine"
+  },
+  {
+    "authority" : "PeriodO p06v8w4z9mm · FASTI - Home (2004)",
+    "id" : "p06v8w4z9mm",
+    "label" : "Iron Age",
+    "parentId" : null,
+    "period" : {
+      "end" : -752,
+      "start" : -1000
+    },
+    "preset" : "italy",
+    "region" : "Italy"
   },
   {
     "authority" : "PeriodO p0m64td6qd2 · EAMENA Database (2021)",
@@ -2893,18 +2893,6 @@
     "region" : "Turkey"
   },
   {
-    "authority" : "PeriodO p0xxt6tvdbz · Scottish Archaeological Periods & Ages (ScAPA) (2018)",
-    "id" : "p0xxt6tvdbz",
-    "label" : "Iron Age",
-    "parentId" : null,
-    "period" : {
-      "end" : 500,
-      "start" : -801
-    },
-    "preset" : "britain-ireland",
-    "region" : "Scotland"
-  },
-  {
     "authority" : "PeriodO p0qhb66w478 · ARIADNE Data Collection (2015)",
     "id" : "p0qhb66w478",
     "label" : "Iron Age",
@@ -2915,6 +2903,18 @@
     },
     "preset" : "central-europe",
     "region" : "Austria"
+  },
+  {
+    "authority" : "PeriodO p0xxt6tvdbz · Scottish Archaeological Periods & Ages (ScAPA) (2018)",
+    "id" : "p0xxt6tvdbz",
+    "label" : "Iron Age",
+    "parentId" : null,
+    "period" : {
+      "end" : 500,
+      "start" : -801
+    },
+    "preset" : "britain-ireland",
+    "region" : "Scotland"
   },
   {
     "authority" : "PeriodO p0ds9qjpdcd · The British School at Athens: archaeological periods of Greece (2022)",
@@ -2929,18 +2929,6 @@
     "region" : "Greece"
   },
   {
-    "authority" : "PeriodO p0cwscswhdc · DB-HERITAGE historical periods (2021)",
-    "id" : "p0cwscswhdc",
-    "label" : "Iron Age",
-    "parentId" : null,
-    "period" : {
-      "end" : -26,
-      "start" : -800
-    },
-    "preset" : "iberia",
-    "region" : "Portugal"
-  },
-  {
     "authority" : "PeriodO p06hps8h2jd · Archaeological periods for the island of Ireland (2022)",
     "id" : "p06hps8h2jd",
     "label" : "Iron Age",
@@ -2951,6 +2939,18 @@
     },
     "preset" : "britain-ireland",
     "region" : "Island of Ireland"
+  },
+  {
+    "authority" : "PeriodO p0cwscswhdc · DB-HERITAGE historical periods (2021)",
+    "id" : "p0cwscswhdc",
+    "label" : "Iron Age",
+    "parentId" : null,
+    "period" : {
+      "end" : -26,
+      "start" : -800
+    },
+    "preset" : "iberia",
+    "region" : "Portugal"
   },
   {
     "authority" : "PeriodO p0kh9dsj33x · Historic England Periods (2014)",
@@ -3073,18 +3073,6 @@
     "region" : "Levant/Mesopotamia"
   },
   {
-    "authority" : "PeriodO p0qhb66x7jw · ARIADNE Data Collection (2015)",
-    "id" : "p0qhb66x7jw",
-    "label" : "Iron Age",
-    "parentId" : null,
-    "period" : {
-      "end" : 1049,
-      "start" : -501
-    },
-    "preset" : "scandinavia",
-    "region" : "Denmark"
-  },
-  {
     "authority" : "PeriodO p0qhb667g25 · ARIADNE Data Collection (2015)",
     "id" : "p0qhb667g25",
     "label" : "Iron Age",
@@ -3095,6 +3083,18 @@
     },
     "preset" : "scandinavia",
     "region" : "Norway"
+  },
+  {
+    "authority" : "PeriodO p0qhb66x7jw · ARIADNE Data Collection (2015)",
+    "id" : "p0qhb66x7jw",
+    "label" : "Iron Age",
+    "parentId" : null,
+    "period" : {
+      "end" : 1049,
+      "start" : -501
+    },
+    "preset" : "scandinavia",
+    "region" : "Denmark"
   },
   {
     "authority" : "PeriodO p0ds9qj2hxw · The British School at Athens: archaeological periods of Greece (2022)",
@@ -3544,6 +3544,18 @@
     "region" : "Greece"
   },
   {
+    "authority" : "PeriodO p0m64td2tp9 · EAMENA Database (2021)",
+    "id" : "p0m64td2tp9",
+    "label" : "Bronze Age",
+    "parentId" : null,
+    "period" : {
+      "end" : -901,
+      "start" : -3101
+    },
+    "preset" : "levant-mesopotamia",
+    "region" : "Southern Mesopotamia"
+  },
+  {
     "authority" : "PeriodO p0m64tdcj4g · EAMENA Database (2021)",
     "id" : "p0m64tdcj4g",
     "label" : "Bronze Age",
@@ -3554,18 +3566,6 @@
     },
     "preset" : "levant-mesopotamia",
     "region" : "Northern Mesopotamia"
-  },
-  {
-    "authority" : "PeriodO p0m64tds5vh · EAMENA Database (2021)",
-    "id" : "p0m64tds5vh",
-    "label" : "Bronze Age",
-    "parentId" : null,
-    "period" : {
-      "end" : -1501,
-      "start" : -3101
-    },
-    "preset" : "iran",
-    "region" : "Northeast Iran"
   },
   {
     "authority" : "PeriodO p0m64tdht8m · EAMENA Database (2021)",
@@ -3592,16 +3592,16 @@
     "region" : "Khuzestan, Iran"
   },
   {
-    "authority" : "PeriodO p0m64td2tp9 · EAMENA Database (2021)",
-    "id" : "p0m64td2tp9",
+    "authority" : "PeriodO p0m64tds5vh · EAMENA Database (2021)",
+    "id" : "p0m64tds5vh",
     "label" : "Bronze Age",
     "parentId" : null,
     "period" : {
-      "end" : -901,
+      "end" : -1501,
       "start" : -3101
     },
-    "preset" : "levant-mesopotamia",
-    "region" : "Southern Mesopotamia"
+    "preset" : "iran",
+    "region" : "Northeast Iran"
   },
   {
     "authority" : "PeriodO p0m64tddbc7 · EAMENA Database (2021)",
@@ -3712,18 +3712,6 @@
     "region" : "Zzqland"
   },
   {
-    "authority" : "PeriodO p0m64tdsqhp · EAMENA Database (2021)",
-    "id" : "p0m64tdsqhp",
-    "label" : "Bronze Age",
-    "parentId" : null,
-    "period" : {
-      "end" : -1001,
-      "start" : -2901
-    },
-    "preset" : "iran",
-    "region" : "Southern Iran"
-  },
-  {
     "authority" : "PeriodO p0m64tdbgsc · EAMENA Database (2021)",
     "id" : "p0m64tdbgsc",
     "label" : "Bronze Age",
@@ -3734,6 +3722,18 @@
     },
     "preset" : "iran",
     "region" : "Central Zagros, Iran"
+  },
+  {
+    "authority" : "PeriodO p0m64tdsqhp · EAMENA Database (2021)",
+    "id" : "p0m64tdsqhp",
+    "label" : "Bronze Age",
+    "parentId" : null,
+    "period" : {
+      "end" : -1001,
+      "start" : -2901
+    },
+    "preset" : "iran",
+    "region" : "Southern Iran"
   },
   {
     "authority" : "PeriodO p0m64tdzs88 · EAMENA Database (2021)",
@@ -3892,6 +3892,18 @@
     "region" : "Germany, Switzerland, Czech Republic, Liechtenstein"
   },
   {
+    "authority" : "PeriodO p0qhb66wrsn · ARIADNE Data Collection (2015)",
+    "id" : "p0qhb66wrsn",
+    "label" : "Bronze Age",
+    "parentId" : null,
+    "period" : {
+      "end" : -802,
+      "start" : -2201
+    },
+    "preset" : "central-europe",
+    "region" : "Austria"
+  },
+  {
     "authority" : "PeriodO p0xxt6tfv6h · Scottish Archaeological Periods & Ages (ScAPA) (2018)",
     "id" : "p0xxt6tfv6h",
     "label" : "Bronze Age",
@@ -3904,16 +3916,16 @@
     "region" : "Scotland"
   },
   {
-    "authority" : "PeriodO p0qhb66wrsn · ARIADNE Data Collection (2015)",
-    "id" : "p0qhb66wrsn",
+    "authority" : "PeriodO p06hps8vvgz · Archaeological periods for the island of Ireland (2022)",
+    "id" : "p06hps8vvgz",
     "label" : "Bronze Age",
     "parentId" : null,
     "period" : {
-      "end" : -802,
-      "start" : -2201
+      "end" : -801,
+      "start" : -2200
     },
-    "preset" : "central-europe",
-    "region" : "Austria"
+    "preset" : "britain-ireland",
+    "region" : "Island of Ireland"
   },
   {
     "authority" : "PeriodO p0cwscs3csg · DB-HERITAGE historical periods (2021)",
@@ -3938,18 +3950,6 @@
     },
     "preset" : "southeast-europe",
     "region" : "Serbia, Balkans, Urnfield Culture, Vatin Culture, Somogyvár-Vinkovci Culture, Mureș Culture, Cruceni-Belegiš Culture"
-  },
-  {
-    "authority" : "PeriodO p06hps8vvgz · Archaeological periods for the island of Ireland (2022)",
-    "id" : "p06hps8vvgz",
-    "label" : "Bronze Age",
-    "parentId" : null,
-    "period" : {
-      "end" : -801,
-      "start" : -2200
-    },
-    "preset" : "britain-ireland",
-    "region" : "Island of Ireland"
   },
   {
     "authority" : "PeriodO p0m64tdkfpr · EAMENA Database (2021)",
@@ -4036,18 +4036,6 @@
     "region" : "Southern Mesopotamia"
   },
   {
-    "authority" : "PeriodO p0qhb665rjw · ARIADNE Data Collection (2015)",
-    "id" : "p0qhb665rjw",
-    "label" : "Bronze Age",
-    "parentId" : null,
-    "period" : {
-      "end" : -402,
-      "start" : -1801
-    },
-    "preset" : "central-europe",
-    "region" : "Poland"
-  },
-  {
     "authority" : "PeriodO p0qhb66358p · ARIADNE Data Collection (2015)",
     "id" : "p0qhb66358p",
     "label" : "Bronze Age",
@@ -4058,6 +4046,18 @@
     },
     "preset" : "scandinavia",
     "region" : "Norway"
+  },
+  {
+    "authority" : "PeriodO p0qhb665rjw · ARIADNE Data Collection (2015)",
+    "id" : "p0qhb665rjw",
+    "label" : "Bronze Age",
+    "parentId" : null,
+    "period" : {
+      "end" : -402,
+      "start" : -1801
+    },
+    "preset" : "central-europe",
+    "region" : "Poland"
   },
   {
     "authority" : "PeriodO p0m64tdb3v4 · EAMENA Database (2021)",
@@ -4417,18 +4417,6 @@
     "region" : "Greece"
   },
   {
-    "authority" : "PeriodO p0m64tdht8m · EAMENA Database (2021)",
-    "id" : "p0m64tdht8m",
-    "label" : "Bronze Age",
-    "parentId" : null,
-    "period" : {
-      "end" : -1251,
-      "start" : -3101
-    },
-    "preset" : "iran",
-    "region" : "Northwest Iran"
-  },
-  {
     "authority" : "PeriodO p0m64td2tp9 · EAMENA Database (2021)",
     "id" : "p0m64td2tp9",
     "label" : "Bronze Age",
@@ -4451,6 +4439,18 @@
     },
     "preset" : "levant-mesopotamia",
     "region" : "Northern Mesopotamia"
+  },
+  {
+    "authority" : "PeriodO p0m64tdht8m · EAMENA Database (2021)",
+    "id" : "p0m64tdht8m",
+    "label" : "Bronze Age",
+    "parentId" : null,
+    "period" : {
+      "end" : -1251,
+      "start" : -3101
+    },
+    "preset" : "iran",
+    "region" : "Northwest Iran"
   },
   {
     "authority" : "PeriodO p0m64tdq3k6 · EAMENA Database (2021)",
@@ -4609,6 +4609,18 @@
     "region" : "Italy"
   },
   {
+    "authority" : "PeriodO p0qhb66b3zn · ARIADNE Data Collection (2015)",
+    "id" : "p0qhb66b3zn",
+    "label" : "Bronze Age",
+    "parentId" : null,
+    "period" : {
+      "end" : -802,
+      "start" : -2201
+    },
+    "preset" : "central-europe",
+    "region" : "Germany, Switzerland, Czech Republic, Liechtenstein"
+  },
+  {
     "authority" : "PeriodO p0qhb66wrsn · ARIADNE Data Collection (2015)",
     "id" : "p0qhb66wrsn",
     "label" : "Bronze Age",
@@ -4633,16 +4645,16 @@
     "region" : "Scotland"
   },
   {
-    "authority" : "PeriodO p0qhb66b3zn · ARIADNE Data Collection (2015)",
-    "id" : "p0qhb66b3zn",
+    "authority" : "PeriodO p06hps8vvgz · Archaeological periods for the island of Ireland (2022)",
+    "id" : "p06hps8vvgz",
     "label" : "Bronze Age",
     "parentId" : null,
     "period" : {
-      "end" : -802,
-      "start" : -2201
+      "end" : -801,
+      "start" : -2200
     },
-    "preset" : "central-europe",
-    "region" : "Germany, Switzerland, Czech Republic, Liechtenstein"
+    "preset" : "britain-ireland",
+    "region" : "Island of Ireland"
   },
   {
     "authority" : "PeriodO p0cwscs3csg · DB-HERITAGE historical periods (2021)",
@@ -4655,18 +4667,6 @@
     },
     "preset" : "iberia",
     "region" : "Portugal"
-  },
-  {
-    "authority" : "PeriodO p06hps8vvgz · Archaeological periods for the island of Ireland (2022)",
-    "id" : "p06hps8vvgz",
-    "label" : "Bronze Age",
-    "parentId" : null,
-    "period" : {
-      "end" : -801,
-      "start" : -2200
-    },
-    "preset" : "britain-ireland",
-    "region" : "Island of Ireland"
   },
   {
     "authority" : "PeriodO p0ghrgf2rdm ·  Cultural Monuments in Serbia Timeline (2022)",
@@ -5224,42 +5224,6 @@
     "region" : "Greece"
   },
   {
-    "authority" : "PeriodO p0m64tdht8m · EAMENA Database (2021)",
-    "id" : "p0m64tdht8m",
-    "label" : "Bronze Age",
-    "parentId" : null,
-    "period" : {
-      "end" : -1251,
-      "start" : -3101
-    },
-    "preset" : "iran",
-    "region" : "Northwest Iran"
-  },
-  {
-    "authority" : "PeriodO p0m64tds5vh · EAMENA Database (2021)",
-    "id" : "p0m64tds5vh",
-    "label" : "Bronze Age",
-    "parentId" : null,
-    "period" : {
-      "end" : -1501,
-      "start" : -3101
-    },
-    "preset" : "iran",
-    "region" : "Northeast Iran"
-  },
-  {
-    "authority" : "PeriodO p0m64tdq3k6 · EAMENA Database (2021)",
-    "id" : "p0m64tdq3k6",
-    "label" : "Bronze Age",
-    "parentId" : null,
-    "period" : {
-      "end" : -1101,
-      "start" : -3101
-    },
-    "preset" : "iran",
-    "region" : "Khuzestan, Iran"
-  },
-  {
     "authority" : "PeriodO p0m64td2tp9 · EAMENA Database (2021)",
     "id" : "p0m64td2tp9",
     "label" : "Bronze Age",
@@ -5282,6 +5246,42 @@
     },
     "preset" : "levant-mesopotamia",
     "region" : "Northern Mesopotamia"
+  },
+  {
+    "authority" : "PeriodO p0m64tdht8m · EAMENA Database (2021)",
+    "id" : "p0m64tdht8m",
+    "label" : "Bronze Age",
+    "parentId" : null,
+    "period" : {
+      "end" : -1251,
+      "start" : -3101
+    },
+    "preset" : "iran",
+    "region" : "Northwest Iran"
+  },
+  {
+    "authority" : "PeriodO p0m64tdq3k6 · EAMENA Database (2021)",
+    "id" : "p0m64tdq3k6",
+    "label" : "Bronze Age",
+    "parentId" : null,
+    "period" : {
+      "end" : -1101,
+      "start" : -3101
+    },
+    "preset" : "iran",
+    "region" : "Khuzestan, Iran"
+  },
+  {
+    "authority" : "PeriodO p0m64tds5vh · EAMENA Database (2021)",
+    "id" : "p0m64tds5vh",
+    "label" : "Bronze Age",
+    "parentId" : null,
+    "period" : {
+      "end" : -1501,
+      "start" : -3101
+    },
+    "preset" : "iran",
+    "region" : "Northeast Iran"
   },
   {
     "authority" : "PeriodO p0ds9qjhmqs · The British School at Athens: archaeological periods of Greece (2022)",
@@ -5428,18 +5428,6 @@
     "region" : "Ukraine"
   },
   {
-    "authority" : "PeriodO p0xxt6tfv6h · Scottish Archaeological Periods & Ages (ScAPA) (2018)",
-    "id" : "p0xxt6tfv6h",
-    "label" : "Bronze Age",
-    "parentId" : null,
-    "period" : {
-      "end" : -801,
-      "start" : -2201
-    },
-    "preset" : "britain-ireland",
-    "region" : "Scotland"
-  },
-  {
     "authority" : "PeriodO p0qhb66b3zn · ARIADNE Data Collection (2015)",
     "id" : "p0qhb66b3zn",
     "label" : "Bronze Age",
@@ -5464,6 +5452,30 @@
     "region" : "Austria"
   },
   {
+    "authority" : "PeriodO p0xxt6tfv6h · Scottish Archaeological Periods & Ages (ScAPA) (2018)",
+    "id" : "p0xxt6tfv6h",
+    "label" : "Bronze Age",
+    "parentId" : null,
+    "period" : {
+      "end" : -801,
+      "start" : -2201
+    },
+    "preset" : "britain-ireland",
+    "region" : "Scotland"
+  },
+  {
+    "authority" : "PeriodO p06hps8vvgz · Archaeological periods for the island of Ireland (2022)",
+    "id" : "p06hps8vvgz",
+    "label" : "Bronze Age",
+    "parentId" : null,
+    "period" : {
+      "end" : -801,
+      "start" : -2200
+    },
+    "preset" : "britain-ireland",
+    "region" : "Island of Ireland"
+  },
+  {
     "authority" : "PeriodO p0cwscs3csg · DB-HERITAGE historical periods (2021)",
     "id" : "p0cwscs3csg",
     "label" : "Bronze Age",
@@ -5486,18 +5498,6 @@
     },
     "preset" : "southeast-europe",
     "region" : "Serbia, Balkans, Urnfield Culture, Vatin Culture, Somogyvár-Vinkovci Culture, Mureș Culture, Cruceni-Belegiš Culture"
-  },
-  {
-    "authority" : "PeriodO p06hps8vvgz · Archaeological periods for the island of Ireland (2022)",
-    "id" : "p06hps8vvgz",
-    "label" : "Bronze Age",
-    "parentId" : null,
-    "period" : {
-      "end" : -801,
-      "start" : -2200
-    },
-    "preset" : "britain-ireland",
-    "region" : "Island of Ireland"
   },
   {
     "authority" : "PeriodO p0ds9qjkb6q · The British School at Athens: archaeological periods of Greece (2022)",
@@ -5536,18 +5536,6 @@
     "region" : "Turkey"
   },
   {
-    "authority" : "PeriodO p0m64tdw8bh · EAMENA Database (2021)",
-    "id" : "p0m64tdw8bh",
-    "label" : "Middle Bronze Age 1",
-    "parentId" : "p0m64tdcj4g",
-    "period" : {
-      "end" : -1801,
-      "start" : -2001
-    },
-    "preset" : null,
-    "region" : "Northern Mesopotamia"
-  },
-  {
     "authority" : "PeriodO p0m64tddkc2 · EAMENA Database (2021)",
     "id" : "p0m64tddkc2",
     "label" : "Middle Bronze Age 1",
@@ -5558,6 +5546,18 @@
     },
     "preset" : null,
     "region" : "Levant"
+  },
+  {
+    "authority" : "PeriodO p0m64tdw8bh · EAMENA Database (2021)",
+    "id" : "p0m64tdw8bh",
+    "label" : "Middle Bronze Age 1",
+    "parentId" : "p0m64tdcj4g",
+    "period" : {
+      "end" : -1801,
+      "start" : -2001
+    },
+    "preset" : null,
+    "region" : "Northern Mesopotamia"
   },
   {
     "authority" : "PeriodO p0m64td859f · EAMENA Database (2021)",
@@ -5734,10 +5734,10 @@
 | `p0m64tdfpbq` | Bronze Age | 3601 BCE–1201 BCE | Levant |  | Levant and Mesopotamia |
 | `p0qhb6659nf` | Bronze Age | 3401 BCE–1102 BCE | Bulgaria |  | Southeast Europe |
 | `p0ds9qjq7b2` | Bronze Age | 3200 BCE–1050 BCE | Greece |  | Aegean |
-| `p0m64tdcj4g` | Bronze Age | 3101 BCE–1201 BCE | Northern Mesopotamia |  | Levant and Mesopotamia |
 | `p0m64td2tp9` | Bronze Age | 3101 BCE–901 BCE | Southern Mesopotamia |  | Levant and Mesopotamia |
-| `p0m64tdq3k6` | Bronze Age | 3101 BCE–1101 BCE | Khuzestan, Iran |  | Iran |
+| `p0m64tdcj4g` | Bronze Age | 3101 BCE–1201 BCE | Northern Mesopotamia |  | Levant and Mesopotamia |
 | `p0m64tdht8m` | Bronze Age | 3101 BCE–1251 BCE | Northwest Iran |  | Iran |
+| `p0m64tdq3k6` | Bronze Age | 3101 BCE–1101 BCE | Khuzestan, Iran |  | Iran |
 | `p0ds9qjhmqs` | Bronze Age Cycladic | 3100 BCE–1080 BCE | Greece | `p0ds9qjq7b2` | Aegean |
 | `p0ds9qj9pc2` | Bronze Age Helladic | 3100 BCE–1050 BCE | Greece | `p0ds9qjq7b2` | Aegean |
 | `p0ds9qj9kdj` | Bronze Age Minoan | 3100 BCE–1050 BCE | Crete | `p0ds9qjq7b2` | Aegean |
@@ -5748,14 +5748,14 @@
 | `p0kh9ds7q8m` | Bronze Age | 2600 BCE–700 BCE | England |  | Britain and Ireland |
 | `p0jtbzwjsrv` | Bronze Age | 2500 BCE–1050 BCE | Cyprus |  | Cyprus |
 | `p06v8w4kqqb` | Bronze age | 2300 BCE–1002 BCE | Italy |  | Italy |
-| `p0xxt6tfv6h` | Bronze Age | 2201 BCE–801 BCE | Scotland |  | Britain and Ireland |
-| `p0qhb66wrsn` | Bronze Age | 2201 BCE–802 BCE | Austria |  | Central Europe |
 | `p0qhb66b3zn` | Bronze Age | 2201 BCE–802 BCE | Germany, Switzerland, Czech Republic, Liechtenstein |  | Central Europe |
-| `p0ghrgf2rdm` | Bronze Age | 2200 BCE–1100 BCE | Serbia, Balkans, Urnfield Culture, Vatin Culture, Somogyvár-Vinkovci Culture, Mureș Culture, Cruceni-Belegiš Culture |  | Southeast Europe |
-| `p0cwscs3csg` | Bronze Age | 2200 BCE–701 BCE | Portugal |  | Iberia |
+| `p0qhb66wrsn` | Bronze Age | 2201 BCE–802 BCE | Austria |  | Central Europe |
+| `p0xxt6tfv6h` | Bronze Age | 2201 BCE–801 BCE | Scotland |  | Britain and Ireland |
 | `p06hps8vvgz` | Bronze Age | 2200 BCE–801 BCE | Island of Ireland |  | Britain and Ireland |
-| `p0qhb665rjw` | Bronze Age | 1801 BCE–402 BCE | Poland |  | Central Europe |
+| `p0cwscs3csg` | Bronze Age | 2200 BCE–701 BCE | Portugal |  | Iberia |
+| `p0ghrgf2rdm` | Bronze Age | 2200 BCE–1100 BCE | Serbia, Balkans, Urnfield Culture, Vatin Culture, Somogyvár-Vinkovci Culture, Mureș Culture, Cruceni-Belegiš Culture |  | Southeast Europe |
 | `p0qhb66358p` | Bronze Age | 1801 BCE–502 BCE | Norway |  | Scandinavia |
+| `p0qhb665rjw` | Bronze Age | 1801 BCE–402 BCE | Poland |  | Central Europe |
 | `p06v8w4v2r4` | Late Bronze Age | 1800 BCE–1300 BCE | Ukraine |  | Eastern Europe |
 | `p03wskd82ps` | Middle Bronze Age Anatolia (1750-1450 BC) | 1751 BCE–1451 BCE | Anatolia |  |  |
 | `p0qhb66wrbs` | Bronze Age | 1701 BCE–502 BCE | Denmark |  | Scandinavia |
