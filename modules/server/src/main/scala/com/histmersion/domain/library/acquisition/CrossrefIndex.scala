@@ -30,6 +30,4 @@ final class CrossrefIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex
           "mailto" -> cfg.mailto.value
         )
       )
-      .left
-      .map(_.problem)
       .map(AcquireParse.crossrefWorks(_).map(_.wire))

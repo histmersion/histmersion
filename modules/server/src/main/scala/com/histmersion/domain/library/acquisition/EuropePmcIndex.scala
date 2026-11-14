@@ -26,6 +26,4 @@ final class EuropePmcIndex(cfg: AcquireConfig, http: Http) extends ScholarlyInde
           "sort" -> "FIRST_PDATE desc"
         )
       )
-      .left
-      .map(_.problem)
       .map(Candidates.europepmcWorks)

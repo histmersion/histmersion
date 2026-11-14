@@ -134,6 +134,7 @@ object Text:
       case Refused.Rule.LegalOnly         => "only legal open-access copies may be fetched"
       case Refused.Rule.ReadOnly          => "the collection is read-only"
       case Refused.Rule.LendingOnly       => "the item is lending-only: borrow it on its site"
+      case Refused.Rule.RangesOnly        => "this client reads ranges of a file, never a whole file"
 
   extension (limit: Refused.Limit)
     private def named: String = limit match

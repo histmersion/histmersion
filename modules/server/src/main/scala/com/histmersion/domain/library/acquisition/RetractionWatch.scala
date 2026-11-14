@@ -9,6 +9,4 @@ final class RetractionWatch(cfg: AcquireConfig, http: Http) extends RetractionWa
   def csv(): Either[Problem, RetractionWatchClient.Csv] =
     http
       .text(Http.Url(cfg.retractionWatch.csvUrl.value))
-      .left
-      .map(_.problem)
       .map(t => RetractionWatchClient.Csv(t.value))

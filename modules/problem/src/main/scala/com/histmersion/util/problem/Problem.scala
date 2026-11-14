@@ -283,6 +283,9 @@ object Problem:
       /** The item is only lent (borrowed on its site), never downloaded. */
       case LendingOnly
 
+      /** The client reads ranges of a file, never a whole one. */
+      case RangesOnly
+
     /** The allowances a request can spend. */
     enum Limit derives CanEqual:
       case DailySpend, MonthlySpend, RunSpend, ProviderQuota, RateLimit, PlanAllowance
@@ -391,7 +394,7 @@ object Problem:
 
     /** What a reply was expected to be. */
     enum Shape derives CanEqual:
-      case Json, Xml, Html, Text, Image, Document, Archive, Problems
+      case Json, Xml, Html, Text, Image, Document, Archive, Problems, Range
 
   /** A file, a process or the database failed under the operation. */
   sealed trait Io extends Problem

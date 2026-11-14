@@ -286,7 +286,7 @@ class BasemapFetchSuite extends munit.FunSuite:
     )
     assertEquals(check(206, Some("bytes 10-19/1000"), 10, 10), Right(1000L))
     assertEquals(check(206, Some("bytes 0-49/50"), 0, 16384), Right(50L))
-    assert(check(200, None, 0, 10).left.exists(_.sentence.contains("ignores range requests")))
+    assert(check(200, None, 0, 10).left.exists(_.sentence.contains("the whole file, refused rather than downloaded")))
     assert(check(206, Some("bytes 0-9/1000"), 10, 10).isLeft)
     assert(check(404, None, 0, 10).isLeft)
 

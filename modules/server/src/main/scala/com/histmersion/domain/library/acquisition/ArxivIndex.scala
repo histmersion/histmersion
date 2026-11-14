@@ -27,6 +27,4 @@ final class ArxivIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex:
           "max_results" -> math.max(1, math.min(limit.value, 100)).toString
         )
       )
-      .left
-      .map(_.problem)
       .map(t => Candidates.arxivWorks(t.value).filter(_.year.forall(_.value >= since.getYear)))

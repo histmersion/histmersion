@@ -24,18 +24,18 @@ class OaFetchSuite extends munit.FunSuite:
   final private class RecordingHttp extends Http:
     var urls: List[Http.Url] = Nil // a test double is the one place a var is the simplest thing
     private def miss(url: Http.Url) = {
-      urls = urls :+ url; Left(Http.Failure.Transport(Problem.Unclassified(Legacy.Text(s"$url: offline"))))
+      urls = urls :+ url; Left(Problem.Unclassified(Legacy.Text(s"$url: offline")))
     }
-    def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Failure, Json] =
+    def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Problem, Json] =
       miss(url)
     def text(
         url: Http.Url,
         headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
-    ): Either[Http.Failure, Http.Text] = miss(url)
+    ): Either[Problem, Http.Text] = miss(url)
     def bytes(
         url: Http.Url,
         headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
-    ): Either[Http.Failure, HttpAnswer.Body] = miss(url)
+    ): Either[Problem, HttpAnswer.Body] = miss(url)
 
   private def acquire(email: AcquireConfig.ContactEmail) = AppConfig.load().acquire.copy(contactEmail = email)
 

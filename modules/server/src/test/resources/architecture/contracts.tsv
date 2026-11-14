@@ -1196,7 +1196,7 @@ unwrap	server:domain/library/acquisition/OpenAlexIndex.scala	.value outside a bo
 unwrap	server:domain/library/acquisition/RetractionWatch.scala	.value outside a boundary	2
 unwrap	server:domain/library/acquisition/SemanticScholar.scala	.value outside a boundary	12
 unwrap	server:domain/library/acquisition/Spool.scala	.value outside a boundary	3
-unwrap	server:domain/library/acquisition/SttpHttp.scala	.value outside a boundary	8
+unwrap	server:domain/library/acquisition/SttpHttp.scala	.value outside a boundary	7
 unwrap	server:domain/library/acquisition/UpstreamQuotaService.scala	.value outside a boundary	4
 unwrap	server:domain/library/acquisition/UpstreamRecords.scala	.value outside a boundary	13
 unwrap	server:domain/library/acquisition/Wikipedia.scala	.value outside a boundary	7
@@ -1361,7 +1361,7 @@ unwrap	server:util/basemap/OnDemandTiles.scala	.value outside a boundary	71
 unwrap	server:util/basemap/PmTiles.scala	.value outside a boundary	81
 unwrap	server:util/basemap/PmTilesWriter.scala	.value outside a boundary	17
 unwrap	server:util/basemap/Png.scala	.value outside a boundary	6
-unwrap	server:util/basemap/RangeHttp.scala	.value outside a boundary	17
+unwrap	server:util/basemap/RangeHttp.scala	.value outside a boundary	12
 unwrap	server:util/basemap/TerrainResample.scala	.value outside a boundary	7
 unwrap	server:util/basemap/TerrariumPng.scala	.value outside a boundary	2
 unwrap	server:util/basemap/Vp8l.scala	.value outside a boundary	3
