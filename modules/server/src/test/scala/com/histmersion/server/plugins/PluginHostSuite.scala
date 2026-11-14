@@ -718,7 +718,7 @@ class PluginHostSuite extends munit.FunSuite:
     )
     assertEquals(
       statusOf(g, "1password").error.map(_.sentence),
-      Some("histmersion.plugins.1password: /nonexistent/op is not an executable file")
+      Some("histmersion.plugins.1password: /nonexistent/op is not executable")
     )
     assert(
       statusOf(g, "bitwarden").settings.contains(

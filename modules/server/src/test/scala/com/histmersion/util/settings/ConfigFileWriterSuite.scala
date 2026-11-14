@@ -175,11 +175,13 @@ abstract class ConfigFileWriterSuite(fileAt: Path => SettingsFile) extends munit
   test("a value of the wrong kind, an unknown key and a block are refused in plain words"):
     val f = fileWith(Commented)
     assert(
-      refused(f, set(K("backups.keep"), text(T("many")))).message.sentences.mkString(" ").contains("takes a number")
+      refused(f, set(K("backups.keep"), text(T("many")))).message.sentences
+        .mkString(" ")
+        .contains("histmersion.backups.keep must be a number, not text")
     )
     val unknown = refused(f, set(K("backups.kep"), num(1))).message.sentences.mkString(" ")
-    assert(unknown.contains("no setting called backups.kep") && unknown.contains("Did you mean backups.keep"), unknown)
-    assert(refused(f, set(K("backups"), num(1))).message.sentences.mkString(" ").contains("group of settings"))
+    assert(unknown.contains("unknown SettingKey 'histmersion.backups.kep'"), unknown)
+    assert(refused(f, set(K("backups"), num(1))).message.sentences.mkString(" ").contains("is a block of settings"))
     assertEquals(read(f), Commented)
 
   test("a value the server could not start with is refused before the file is touched"):
@@ -191,7 +193,7 @@ abstract class ConfigFileWriterSuite(fileAt: Path => SettingsFile) extends munit
     )
     assert(e.isInstanceOf[SettingError.Invalid], s"$e")
     assert(
-      e.message.sentences.mkString(" ").contains("could not") || e.message.sentences.mkString(" ").contains("cannot"),
+      e.message.sentences.mkString(" ").contains("unknown SeaFloorSource 'nonsense' (one of: etopo1, gebco)"),
       e.message
     )
     assertEquals(read(f), Commented)

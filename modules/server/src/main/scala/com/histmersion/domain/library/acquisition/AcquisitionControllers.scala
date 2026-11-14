@@ -248,7 +248,7 @@ final class AcquisitionControllers(
           )
         )
         .left
-        .map(e => err(e))
+        .map(e => err(e.toNonEmpty.head))
         .map { works =>
           // ONE index for the whole page: `mark` used to read `lower(doi) -> citekey` for the entire
           // corpus once per RESULT ROW, i.e. 25 full-table scans for one search.

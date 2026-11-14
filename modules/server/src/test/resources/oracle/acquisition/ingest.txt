@@ -727,7 +727,7 @@ job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqarx2021_prepr
       "step" : "fetch"
     },
     {
-      "detail" : "archive-org: no copy — archive-org needs an archive.org identifier; unpaywall: no copy — unpaywall has no copy of 10.5555/zq.unknown; core: no copy — CORE not asked: CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — openalex has no copy of 10.5555/zq.unknown; pmc: no copy — pmc has no copy of 10.5555/zq.unknown; arxiv: no copy — arxiv needs an arXiv id; landing: no copy — landing has no copy of 10.5555/zq.unknown; pmc-text: no copy — pmc-text has no copy of 10.5555/zq.unknown; zq-shelf: no copy — the zq shelf has only one work",
+      "detail" : "archive-org: no copy — archive-org needs an archive.org identifier; unpaywall: no copy — unpaywall has no copy of 10.5555/zq.unknown; core: no copy — CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — openalex has no copy of 10.5555/zq.unknown; pmc: no copy — pmc has no copy of 10.5555/zq.unknown; arxiv: no copy — arxiv needs an arXiv id; landing: no copy — landing has no copy of 10.5555/zq.unknown; pmc-text: no copy — pmc-text has no copy of 10.5555/zq.unknown; zq-shelf: no copy — the zq shelf has only one work",
       "ok" : false,
       "step" : "chain"
     },
@@ -799,7 +799,7 @@ job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqarx2021_prepr
       "step" : "fetch"
     },
     {
-      "detail" : "archive-org: no copy — archive-org needs an archive.org identifier; unpaywall: no copy — unpaywall has no copy of 10.5555/zq.ref1; core: no copy — CORE not asked: CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — openalex has no copy of 10.5555/zq.ref1; pmc: no copy — pmc has no copy of 10.5555/zq.ref1; arxiv: no copy — arxiv needs an arXiv id; landing: no copy — landing has no copy of 10.5555/zq.ref1; pmc-text: no copy — pmc-text has no copy of 10.5555/zq.ref1; zq-shelf: no copy — the zq shelf has only one work",
+      "detail" : "archive-org: no copy — archive-org needs an archive.org identifier; unpaywall: no copy — unpaywall has no copy of 10.5555/zq.ref1; core: no copy — CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — openalex has no copy of 10.5555/zq.ref1; pmc: no copy — pmc has no copy of 10.5555/zq.ref1; arxiv: no copy — arxiv needs an arXiv id; landing: no copy — landing has no copy of 10.5555/zq.ref1; pmc-text: no copy — pmc-text has no copy of 10.5555/zq.ref1; zq-shelf: no copy — the zq shelf has only one work",
       "ok" : false,
       "step" : "chain"
     },
@@ -833,7 +833,7 @@ job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqarx2021_prepr
 == ingest (bad citekey)
 400 {
   "code" : "invalid",
-  "message" : "invalid citekey '../escape' — it may not contain '..'"
+  "message" : "'../escape' is not a Citekey: Should match (?!.*\\.\\.)[a-z][a-z0-9_.-]{1,120}"
 }
   > GET /openalex/works/https://doi.org/10.5555/zq.closed?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
 == upload zqa_upload
@@ -865,7 +865,7 @@ job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqa_dup","progr
 == upload (bad citekey)
 400 {
   "code" : "invalid_citekey",
-  "message" : "invalid citekey 'Bad Key' — lower-case, start with a letter, then letters, digits, '_', '.' or '-' (2-121 characters), e.g. anthony2007_horse"
+  "message" : "'Bad Key' is not a Citekey: Should match (?!.*\\.\\.)[a-z][a-z0-9_.-]{1,120}"
 }
 == acquire add (an item an upload fulfils)
 200 {
@@ -941,7 +941,7 @@ A later reply on Zqtell
 
 - ✓ **metadata** — A later reply on Zqtell (2024), 1 citation(s)
 - ✗ **fetch** — no legal open-access PDF found
-- ✗ **chain** — archive-org: no copy — archive-org needs an archive.org identifier; unpaywall: no copy — unpaywall has no copy of 10.5555/zq.later; core: no copy — CORE not asked: CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — openalex has no copy of 10.5555/zq.later; pmc: no copy — pmc has no copy of 10.5555/zq.later; arxiv: no copy — arxiv needs an arXiv id; landing: no copy — landing has no copy of 10.5555/zq.later; pmc-text: no copy — pmc-text has no copy of 10.5555/zq.later; zq-shelf: no copy — the zq shelf has only one work
+- ✗ **chain** — archive-org: no copy — archive-org needs an archive.org identifier; unpaywall: no copy — unpaywall has no copy of 10.5555/zq.later; core: no copy — CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — openalex has no copy of 10.5555/zq.later; pmc: no copy — pmc has no copy of 10.5555/zq.later; arxiv: no copy — arxiv needs an arXiv id; landing: no copy — landing has no copy of 10.5555/zq.later; pmc-text: no copy — pmc-text has no copy of 10.5555/zq.later; zq-shelf: no copy — the zq shelf has only one work
 - ✗ **references** — 0 reference(s), 0 resolve to stored sources
 - ✓ **store** — created source from metadata — no file was acquired, so there is nothing to convert
 - ✓ **assess** — current → status=current
@@ -974,7 +974,7 @@ A closed study of Zqtell
 
 - ✓ **metadata** — A closed study of Zqtell (2021), 5 citation(s)
 - ✗ **fetch** — no legal open-access PDF found
-- ✗ **chain** — archive-org: no copy — archive-org needs an archive.org identifier; unpaywall: no copy — unpaywall has no copy of 10.5555/zq.closed; core: no copy — CORE not asked: CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — openalex has no copy of 10.5555/zq.closed; pmc: no copy — pmc has no copy of 10.5555/zq.closed; arxiv: no copy — arxiv needs an arXiv id; landing: no copy — landing has no copy of 10.5555/zq.closed; pmc-text: no copy — pmc-text has no copy of 10.5555/zq.closed; zq-shelf: no copy — the zq shelf has only one work
+- ✗ **chain** — archive-org: no copy — archive-org needs an archive.org identifier; unpaywall: no copy — unpaywall has no copy of 10.5555/zq.closed; core: no copy — CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — openalex has no copy of 10.5555/zq.closed; pmc: no copy — pmc has no copy of 10.5555/zq.closed; arxiv: no copy — arxiv needs an arXiv id; landing: no copy — landing has no copy of 10.5555/zq.closed; pmc-text: no copy — pmc-text has no copy of 10.5555/zq.closed; zq-shelf: no copy — the zq shelf has only one work
 - ✗ **references** — 0 reference(s), 0 resolve to stored sources
 - ✓ **store** — updated source from metadata — no file was acquired, so there is nothing to convert
 - ✓ **assess** — current

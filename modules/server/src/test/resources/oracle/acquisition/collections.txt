@@ -654,7 +654,7 @@
 == acquire calibre meta (bad)
 400 {
   "code" : "invalid",
-  "message" : "invalid citekey 'No Key' — lower-case, start with a letter, then letters, digits, '_', '.' or '-' (2-121 characters), e.g. anthony2007_horse"
+  "message" : "'No Key' is not a Citekey: Should match (?!.*\\.\\.)[a-z][a-z0-9_.-]{1,120}"
 }
 == acquire calibre pushed zqa_cited
 200 {

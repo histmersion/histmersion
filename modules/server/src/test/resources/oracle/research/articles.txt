@@ -603,7 +603,7 @@
 == put refused: a bad slug
 400 {
   "code" : "invalid",
-  "message" : "invalid slug 'Bad Slug' — use lower-case letters, digits, '_', '-' or '.' (e.g. sea_peoples)"
+  "message" : "'Bad Slug' is not a Slug: Should match [a-z0-9][a-z0-9_.-]{0,120}"
 }
 == put refused: a bad kind
 400 {

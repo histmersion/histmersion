@@ -183,11 +183,10 @@ class CoreBudgetSuite extends munit.FunSuite:
       val out = chain.fetchWorkExplained(work, legalOnly = FetchChain.LegalOnly(true))
       // the job's report says why core had nothing, and the next step was asked
       assertEquals(out.answers.map(_.fetcher), List("core", "next"))
-      assert(
-        out.answers.head.why.sentence
-          .startsWith("CORE not asked: CORE answered HTTP 429; not asked until 2026-10-26T18:52:11Z"),
-        out.answers.head.why
-      )
+      val refused = out.answers.head.why match
+        case Problem.Upstream.Http(name, _, status, _) => s"$name" == "core" && s"$status" == "429"
+        case _                                         => false
+      assert(refused, out.answers.head.why)
       assertEquals(core.asked.size, 1)
       // until then neither use asks CORE
       clock.advance(60)
@@ -198,7 +197,7 @@ class CoreBudgetSuite extends munit.FunSuite:
         idx
           .search(Search.Query("bronze age"), LocalDate.of(2026, 1, 1), ScholarlyIndex.Limit(10))
           .left
-          .exists(_.sentence.startsWith("CORE not asked"))
+          .exists(_.sentence.contains("CORE asked to wait until 2026-10-26T18:52:11Z"))
       )
       assertEquals(core.asked.size, 1)
       // after it, CORE is asked again: here it has the PDF
