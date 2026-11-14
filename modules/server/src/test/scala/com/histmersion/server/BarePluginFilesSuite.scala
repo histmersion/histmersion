@@ -7,7 +7,7 @@ import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 
 import com.histmersion.util.plugins.PluginKit
-import Supervisor.{PluginFile, rewrittenOnce}
+import Supervisor.{rewrittenOnce, PluginFile}
 
 /** The once-only rewrite, at the server's start, of the plugin files an earlier version wrote with a bare problem: on
   * files in a temporary directory, never the install's.

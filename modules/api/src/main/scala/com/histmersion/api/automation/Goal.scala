@@ -19,6 +19,11 @@ import com.histmersion.api.personal.UnreadPage
 import com.histmersion.api.library.Doi
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.library.Citekey
+// the records in Plans name these by the types themselves: Kindlings 0.3.4 (Hearth 0.4.4) refuses a field typed through
+// Plans' exports of them ("Argument for parameter `kind` of <init> has type …LinkKind, expected …LinkKind")
+import com.histmersion.api.research.DraftMode as DraftModeOf
+import com.histmersion.api.automation.ScheduleKind as ScheduleKindOf
+import com.histmersion.api.automation.Goal.LinkKind as LinkKindOf
 
 final case class Goal(
     slug: Goal.Slug,
@@ -202,13 +207,14 @@ object Goal:
       type Dropped = Dropped.T
       object Dropped extends Newtype[String, Pure]
 
+    // The records below name these types through the imports, not the exports (see the imports)
     export Goal.LinkKind as LinkKind
     export com.histmersion.api.research.DraftMode
     export com.histmersion.api.automation.ScheduleKind
 
     final case class ArticleDraft(
         slug: com.histmersion.api.research.Article.Slug,
-        mode: DraftMode,
+        mode: DraftModeOf,
         title: com.histmersion.api.research.Article.Title,
         kind: com.histmersion.api.research.Article.Kind.Wire,
         text: ArticleDraft.Text,
@@ -234,7 +240,7 @@ object Goal:
       object Filter extends Newtype[String, Pure]
 
     final case class GoalLink(
-        kind: LinkKind,
+        kind: LinkKindOf,
         ref: GoalLink.Ref,
         note: Option[GoalLink.Note] = None,
         title: Option[GoalLink.Title] = None,
@@ -258,7 +264,7 @@ object Goal:
       type Queue = Queue.T
       object Queue extends Newtype[String, Pure]
 
-    final case class LinkAdd(kind: LinkKind, ref: LinkAdd.Ref, note: Option[LinkAdd.Note] = None)
+    final case class LinkAdd(kind: LinkKindOf, ref: LinkAdd.Ref, note: Option[LinkAdd.Note] = None)
         derives StrictJson,
           KindlingsSchema,
           com.histmersion.api.json.Schema
@@ -272,7 +278,7 @@ object Goal:
     /** `cron`: five fields in UTC, or `@daily`… */
     final case class GoalSchedule(
         goal: Slug,
-        kind: ScheduleKind,
+        kind: ScheduleKindOf,
         cron: GoalSchedule.Cron,
         enabled: GoalSchedule.Enabled,
         budgetUsd: Option[GoalSchedule.BudgetUsd] = None,

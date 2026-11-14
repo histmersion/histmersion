@@ -9,7 +9,9 @@ import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.nonempty.NonEmptyVector
 
 /** A record holding a [[NonEmptyVector]], derived as every module derives one: the provider makes it a list. */
-final case class Box(items: NonEmptyVector[Int], more: Option[NonEmptyVector[String]]) derives JsonCodec, KindlingsSchema
+final case class Box(items: NonEmptyVector[Int], more: Option[NonEmptyVector[String]])
+    derives JsonCodec,
+      KindlingsSchema
 
 object Box:
   given CanEqual[Box, Box] = CanEqual.derived

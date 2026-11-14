@@ -10,9 +10,9 @@ object Dependencies {
     val sttp = "4.1.0" // sttp client4 (CLI → server HTTP client); matches tapir 1.14.0
     val chimp = "0.6.0"
     val jsoniter =
-      "2.41.5" // com.github.plokhotnyuk.jsoniter-scala — the JSON codecs (what tapir-jsoniter-scala 1.14.0 brings)
-    val kindlings = "0.3.3" // com.kubuszok — Hearth-based jsoniter / tapir-schema / sconfig derivation
-    val hearth = "0.4.3" // com.kubuszok — the macro commons Kindlings 0.3.3 is built on (its version, not a newer one)
+      "2.42.3" // com.github.plokhotnyuk.jsoniter-scala — the JSON codecs (what Kindlings 0.3.4 brings; tapir 1.14.0 is on 2.41)
+    val kindlings = "0.3.4" // com.kubuszok — Hearth-based jsoniter / tapir-schema / sconfig derivation
+    val hearth = "0.4.4" // com.kubuszok — the macro commons Kindlings 0.3.4 is built on (its version, not a newer one)
     val scallop =
       "6.0.1" // org.rogach — the CLI parser (no dependency but the Scala library)
     val ox = "1.0.2" // direct-style concurrency (via tapir-netty-server-sync); 1.0+ dropped

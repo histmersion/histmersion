@@ -38,7 +38,8 @@ object SttpAiJson:
     circe.Encoder.instance(a => circe.parser.parse(writeToString(a)).fold(e => throw e, identity))
   )
 
-  private val Missing = """missing required field: (.+)""".r
+  /** Kindlings' wording of a required field the answer left out (jsoniter-scala's). */
+  private val Missing = """missing required field "(.+)"""".r
 
   /** A JSON Schema as JSON, `null` fields left out. */
   def schema(s: Schema): Json =
