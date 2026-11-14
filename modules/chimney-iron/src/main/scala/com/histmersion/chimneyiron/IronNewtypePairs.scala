@@ -1,5 +1,5 @@
-// Chimney 2.1 keeps its macro-extension API private[chimney]; only code under io.scalaland.chimney can implement it.
-package io.scalaland.chimney.histmersion
+package com.histmersion
+package chimneyiron
 
 import io.github.iltotore.iron.{Constraint, RefinedType}
 import io.github.iltotore.iron.constraint.any.Pure

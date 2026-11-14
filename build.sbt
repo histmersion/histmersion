@@ -666,8 +666,8 @@ lazy val chimneyIron = project
   .settings(
     libraryDependencies ++= Seq(
       "io.scalaland" %% "chimney" % V.chimney % Provided,
-      // the Hearth the application's macros run on (Kindlings'), not the older one Chimney was built with: its
-      // MacroCommonsScala3 extractor gives the extension scala.quoted's Type and Expr
+      // the extension matches Hearth's MacroCommonsScala3 (scala.quoted's Type and Expr): the Hearth Kindlings and
+      // Chimney 2.1.1 are built on
       "com.kubuszok" %% "hearth" % V.hearth % Provided,
       "io.github.iltotore" %% "iron" % V.iron % Provided
     )
@@ -685,7 +685,7 @@ lazy val chimneyIronTests = project
   .settings(
     libraryDependencies ++= Seq(
       "io.scalaland" %% "chimney" % V.chimney,
-      "com.kubuszok" %% "hearth" % V.hearth, // the application's Hearth, as chimney-iron is built with
+      "com.kubuszok" %% "hearth" % V.hearth, // the application's Hearth, as chimney-iron is built with it
       "io.github.iltotore" %% "iron" % V.iron
     )
   )

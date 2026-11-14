@@ -28,7 +28,7 @@ object Dependencies {
     val laminar = "17.2.1" // com.raquo — reactive UI for Scala.js
     val sttpAi = "0.12.0" // com.softwaremill.sttp.ai — LLM provider clients + agent loop (embedded
     // agents, docs/research-embedded-agents.md); same tapir/sttp as above
-    val chimney = "2.1.0" // io.scalaland — layer-to-layer model conversions (chimney-iron extends its macros)
+    val chimney = "2.1.1" // io.scalaland — layer-to-layer model conversions (chimney-iron extends its macros)
     val iron = "3.4.1" // io.github.iltotore — refined newtypes
     val munit = "1.3.6"
     val apispec = "0.12.0" // com.softwaremill.sttp.apispec — what tapir 1.14 and sttp-ai 0.12 bring
