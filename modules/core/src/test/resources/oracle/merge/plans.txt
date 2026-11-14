@@ -7102,8 +7102,8 @@ bodies wanted:
   "problems" : [
   ],
   "resolutionErrors" : [
-    "S-1587dc99: 'Smith-2019' is not a citekey (lower-case letters, digits and _)",
-    "S-a9c61009: map takes one of the two citekeys: map:page1959_history or map:page2024_history",
+    "S-1587dc99: 'Smith-2019' is not a citekey (e.g. anthony2007, guterbock1997_hittite)",
+    "S-a9c61009: unknown citekey 'nonsense' (one of: page1959_history, page2024_history)",
     "S-00000000: not an issue of this plan — stale (the records changed since it was decided) or never one"
   ],
   "resolved" : 0,
@@ -8557,8 +8557,8 @@ bodies wanted:
   "problems" : [
   ],
   "resolutionErrors" : [
-    "S-1587dc99: 'kuhrt1995_ancient' is already a citekey (or an old one) here or in the bundle",
-    "S-a9c61009: map takes one of the two citekeys: map:page1959_history or map:page2024_history"
+    "citekey 'kuhrt1995_ancient' already exists",
+    "S-a9c61009: unknown citekey 'guterbock1997_hittite' (one of: page1959_history, page2024_history)"
   ],
   "resolved" : 0,
   "changes" : 16
@@ -10008,7 +10008,7 @@ bodies wanted:
   "problems" : [
   ],
   "resolutionErrors" : [
-    "S-1587dc99: 'latacz2023_troy' is already a citekey (or an old one) here or in the bundle"
+    "citekey 'latacz2023_troy' already exists"
   ],
   "resolved" : 1,
   "changes" : 18

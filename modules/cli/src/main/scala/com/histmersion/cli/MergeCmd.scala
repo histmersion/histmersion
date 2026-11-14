@@ -119,7 +119,9 @@ object MergeCmd:
       if u.manifest.isEmpty then
         Left(
           Cli.Error(
-            Problem.Unclassified(Legacy.Text(s"${f.getPath} is not a readable bundle: ${u.problems.mkString("; ")}")),
+            Problem.Unclassified(
+              Legacy.Text(s"${f.getPath} is not a readable bundle: ${u.problems.map(_.sentence).mkString("; ")}")
+            ),
             exitCode = ExitCode.Refused
           )
         )

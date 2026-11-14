@@ -1,5 +1,6 @@
 package com.histmersion
 package domain
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
@@ -111,8 +112,8 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
 
   test("an import of this plan refuses every merged source (merge apply folds it) and says why"):
     val r = plan()
-    assert(r.needsApply.exists(_.value.contains("guterbock1997_perspectives")), r.needsApply.mkString("\n"))
-    assert(r.needsApply.exists(_.value.contains("kuhrt1995_near")))
+    assert(r.needsApply.exists(_.sentence.contains("guterbock1997_perspectives")), r.needsApply.mkString("\n"))
+    assert(r.needsApply.exists(_.sentence.contains("kuhrt1995_near")))
     // the pair folds into this collection's row: its uid, ours
     assertEquals(r.rows.find(_.foreignUid == uid("w-guterbock")).map(_.uid), Some(uid("h-guterbock")))
     assert(r.apply.folds.contains(MergePlanner.Fold(Bundle.Kind.Source, uid("w-guterbock"), uid("h-guterbock"))))
@@ -143,7 +144,7 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
     ).plan
     assert(!both.issues.exists(_.id == year.id))
     assert(
-      both.resolutionErrors.exists(e => e.value.startsWith(year.id.value) && e.value.contains("applies only if")),
+      both.resolutionErrors.exists(e => e.sentence.startsWith(year.id.value) && e.sentence.contains("applies only if")),
       both.resolutionErrors.toString
     )
     val bothRows = plan(res = resolve(gate.id -> MergeResolution.Decision("both"))).rows
@@ -188,20 +189,20 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
     ).plan
     assertEquals(r.resolved, 1)
     assert(
-      r.resolutionErrors.exists(e => e.value.startsWith(gate.id.value) && e.value.contains("map takes one of")),
+      r.resolutionErrors.exists(e => e.sentence.startsWith(gate.id.value) && e.sentence.contains("unknown citekey")),
       r.resolutionErrors.toString
     )
     assert(
       r.resolutionErrors.exists(e =>
-        e.value.startsWith(coll.id.value) && e.value.contains("not a decision for this issue")
+        e.sentence.startsWith(coll.id.value) && e.sentence.contains("unknown merge decision kind 'keep-left'")
       )
     )
-    assert(r.resolutionErrors.exists(e => e.value.startsWith("S-00000000") && e.value.contains("stale")))
-    assert(r.resolutionErrors.exists(_.value.contains("unknown merge decision kind 'sideways'")), r.resolutionErrors)
+    assert(r.resolutionErrors.exists(e => e.sentence.startsWith("S-00000000") && e.sentence.contains("stale")))
+    assert(r.resolutionErrors.exists(_.sentence.contains("unknown merge decision kind 'sideways'")), r.resolutionErrors)
     assertEquals(r.resolutionErrors.size, 5, r.resolutionErrors.mkString("\n"))
     // a rename must be a free citekey
     val taken = plan(res = resolve(coll.id -> MergeResolution.Decision("rename-right:page1959_history"))).plan
-    assert(taken.resolutionErrors.exists(_.value.contains("already a citekey")), taken.resolutionErrors.toString)
+    assert(taken.resolutionErrors.exists(_.sentence.contains("already exists")), taken.resolutionErrors.toString)
 
   test("an id goes stale when a record it is about changes; the resolution is reported, not re-applied"):
     val p0 = plan().plan
@@ -217,7 +218,7 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
     val again = issue(p1, Issue.Kind.DoiDiffers, IssueSide.Label("kuhrt1995_near"))
     assertNotEquals(again.id, doi.id)
     assertEquals(again.decision, None)
-    assert(p1.resolutionErrors.exists(_.value.startsWith(doi.id.value)), p1.resolutionErrors.toString)
+    assert(p1.resolutionErrors.exists(_.sentence.startsWith(doi.id.value)), p1.resolutionErrors.toString)
     // …while every issue about other records keeps its id
     val others = p0.issues.filterNot(_.right.exists(_.label == IssueSide.Label("kuhrt1995_near"))).map(_.id).toSet
     assertEquals(others -- p1.issues.map(_.id).toSet, Set.empty)
@@ -257,7 +258,7 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
     assertEquals(right.rows.find(_.foreignUid == sharedThere.uid).map(_.decision), Some(Decision.FastForward))
     // keep-right on a taken event label is merge apply's
     val apply = plan(res = resolve(event.id -> MergeResolution.Decision("keep-right")))
-    assert(apply.needsApply.exists(_.value.startsWith(event.id.value)), apply.needsApply.mkString("\n"))
+    assert(apply.needsApply.exists(_.sentence.startsWith(event.id.value)), apply.needsApply.mkString("\n"))
 
   // ── properties ────────────────────────────────────────────────────────────────────────────
 
@@ -676,7 +677,7 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
           .modify(_.mergeId)
           .setTo(None)
           .modify(_.problems)
-          .setTo(List(MergeApplyResult.Problems("the plan is x, not y")))
+          .setTo(List(Problem.Conflict.Held(Problem.Where("x"), Problem.Conflict.Hold.PlanChanged(Problem.Raw("y")))))
       )
-    assert(refused.contains("nothing was written") && refused.contains("the plan is x, not y"), refused)
+    assert(refused.contains("nothing was written") && refused.contains("the plan is x, not y:"), refused)
     assert(!md.contains("_merged") && !md.contains("Kept"), "no identifiers in user-facing text")

@@ -1,5 +1,6 @@
 package com.histmersion
 package db
+import com.histmersion.util.problem.Text.sentences
 
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
@@ -134,7 +135,7 @@ class MergeSuite extends DbSuite with Bounded:
         TestExchange.kinds,
         TestExchange.rules
       )
-      .fold(e => fail(e.value), identity)
+      .fold(e => fail(e.sentences.mkString("; ")), identity)
 
   private def importInto(
       ds: DataSource,
@@ -155,7 +156,7 @@ class MergeSuite extends DbSuite with Bounded:
         TestExchange.kinds,
         TestExchange.rules
       )
-      .fold(e => fail(e), identity)
+      .fold(e => fail(e.sentences.mkString("; ")), identity)
 
   private def count(ds: DataSource, q: String): Int = connect(ds)(Sql.raw(Sql.Text(q)).frag.query[Int].run().head)
 
@@ -716,10 +717,13 @@ class MergeSuite extends DbSuite with Bounded:
     val p = planIn(home, bundle, sh)
     assertEquals(r.planHash, Some(p.planHash))
     p.open.foreach(i =>
-      assert(r.problems.exists(_.value.startsWith(i.id.value)), s"${i.id} not reported:\n${r.problems.mkString("\n")}")
+      assert(
+        r.problems.exists(_.sentence.startsWith(i.id.value)),
+        s"${i.id} not reported:\n${r.problems.mkString("\n")}"
+      )
     )
     assert(
-      r.problems.exists(x => x.value.contains("guterbock1997_perspectives") && x.value.contains("merge apply")),
+      r.problems.exists(x => x.sentence.contains("guterbock1997_perspectives") && x.sentence.contains("merge apply")),
       r.problems.mkString("\n")
     )
     // decided the importable way, the merges still need merge apply
@@ -731,7 +735,7 @@ class MergeSuite extends DbSuite with Bounded:
     val r2 = importInto(home, bundle, sh, res)
     assert(!r2.applied.value)
     assert(
-      r2.problems.forall(x => x.value.contains("merge apply") || x.value.contains("open")),
+      r2.problems.forall(x => x.sentence.contains("merge apply") || x.sentence.contains("open")),
       r2.problems.mkString("\n")
     )
     assert(java.util.Arrays.equals(Files.readAllBytes(exportOf(home, sh)), before), "a refused import wrote something")
@@ -860,7 +864,7 @@ class MergeSuite extends DbSuite with Bounded:
         TestExchange.rules,
         TestExchange.followUps
       )
-      .fold(e => fail(e), identity)
+      .fold(e => fail(e.sentences.mkString("; ")), identity)
 
   private val confText = "One.\n\nTwo, as merged by hand.\n\nThree."
 
@@ -920,7 +924,7 @@ class MergeSuite extends DbSuite with Bounded:
     val before = Files.readAllBytes(exportOf(home, sh))
     val stale = applyIn(home, bundle, sh, res, MergePlan.PlanHash("0badc0de"))
     assert(!stale.applied.value)
-    assert(stale.problems.exists(_.value.contains("not 0badc0de")), stale.problems.mkString("\n"))
+    assert(stale.problems.exists(_.sentence.contains("not 0badc0de")), stale.problems.mkString("\n"))
     assertEquals(backupsTaken.get, 0)
     assert(java.util.Arrays.equals(Files.readAllBytes(exportOf(home, sh)), before), "a refused apply wrote something")
 
@@ -1102,7 +1106,7 @@ class MergeSuite extends DbSuite with Bounded:
     val taken = backupsTaken.get
     val r = applyIn(home, bundle, sh, MergeResolutions(), p.planHash)
     assert(!r.applied.value)
-    p.open.foreach(i => assert(r.problems.exists(_.value.startsWith(i.id.value)), s"${i.id} not reported"))
+    p.open.foreach(i => assert(r.problems.exists(_.sentence.startsWith(i.id.value)), s"${i.id} not reported"))
     assertEquals(backupsTaken.get, taken)
 
   test(

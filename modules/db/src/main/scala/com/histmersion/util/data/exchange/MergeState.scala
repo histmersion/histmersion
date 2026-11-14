@@ -1,5 +1,6 @@
 package com.histmersion
 package util.data.exchange
+import com.histmersion.util.problem.{Problem, Problems}
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.config.*
@@ -45,7 +46,7 @@ object MergeState:
   def load(
       es: BundleEntities,
       m: Bundle.Manifest,
-      readProblems: List[Input.ReadProblems],
+      readProblems: List[Problem],
       originals: ContentStore,
       chunkChars: ImportOptions.ChunkChars,
       cfg: MergeSettings,
@@ -130,7 +131,7 @@ object MergeState:
     val known = Input(
       m,
       Bundle.Instance(inst.id, inst.label.map(l => Bundle.Instance.Label(l.value))),
-      BundleFormat.compatible(m, schema).map(c => Input.Compat(c)),
+      BundleFormat.compatible(m, schema),
       readProblems,
       es,
       uidAliases,
@@ -311,7 +312,7 @@ object MergeState:
       chunkChars: ImportOptions.ChunkChars,
       kinds: CarriedKinds,
       rules: MergeRuleSet
-  ): Either[MergePlans.PlanFileText, MergePlan] =
+  ): Either[Problems, MergePlan] =
     MergePlans.planFile(ds, ByteSource.file(file), resolutions, cfg, originals, chunkChars, kinds, rules)
 
   private[histmersion] def withFile[A](file: Path)(f: InputStream => A): A = ByteSource.file(file).read(f)

@@ -38,9 +38,11 @@ object Column:
       case Invalid.Reference(form, at)        => s"${path(at)}no secret reference: ${form.stored}"
       case NotFound.Entity(t, key)            => s"no $t '$key'"
       case NotFound.Copy(work)                => s"no open-access copy of '$work'"
-      case Conflict.AlreadyExists(t, key)     => s"$t '$key' already exists"
-      case Conflict.Renamed(t, asked, now)    => s"$t '$asked' was renamed to '$now'"
-      case Conflict.Stale(t, key, sent, now)  => s"$t '$key' has moved on: sent $sent, stored $now"
+      case NotFound.Dangling(t, key, from, in)    => s"no $t '$key' in ${in.productPrefix}, referred to by $from"
+      case Conflict.Held(subject, hold)           => s"held ${hold.stored}: $subject"
+      case Conflict.AlreadyExists(t, key)         => s"$t '$key' already exists"
+      case Conflict.Renamed(t, asked, now)        => s"$t '$asked' was renamed to '$now'"
+      case Conflict.Stale(t, key, sent, now)      => s"$t '$key' has moved on: sent $sent, stored $now"
       case Conflict.WrongState(t, key, is, ws)    => s"$t '$key' is $is; it needs ${ws.mkString(" or ")}"
       case Conflict.Busy(activity)                => s"${activity.productPrefix} is still running"
       case Conflict.Referenced(t, key, by, n)     => s"$t '$key' is referred to by $n $by"
@@ -59,6 +61,7 @@ object Column:
       case Io.Corrupt(format, at, damage)     => s"the ${format.productPrefix} data at $at is damaged: ${damage.stored}"
       case Io.Process(tool, ending)           => s"$tool ${ending.stored}"
       case Io.Database(op, reported)          => s"the database refused to ${op.productPrefix} — $reported"
+      case Io.Entry(archive, entry, fault)    => s"${archive.productPrefix} entry $entry: ${fault.stored}"
       case Config.Setting(key, fault)         => s"$key is wrong: ${fault.stored}"
       case Config.Unavailable(capability)     => s"this server has no ${capability.productPrefix}"
       case Config.Reload(stage, scope)        => s"reloading the settings failed at ${stage.productPrefix} in $scope"
@@ -153,6 +156,22 @@ object Column:
     Config.Fault.NotReadBack
   )
   private val Forms = Vector(Invalid.Form.Bare, Invalid.Form.EmptyValue)
+  private val EntryFaults = Vector(
+    Io.Fault.Missing,
+    Io.Fault.Omitted,
+    Io.Fault.Unlisted,
+    Io.Fault.Repeated,
+    Io.Fault.Foreign,
+    Io.Fault.Unreferenced
+  )
+  private val Holds = Vector(
+    Conflict.Hold.Open,
+    Conflict.Hold.Merges,
+    Conflict.Hold.Renames,
+    Conflict.Hold.Renumbers,
+    Conflict.Hold.Stale,
+    Conflict.Hold.Collides
+  )
   private val LoadFaults = Vector(
     Plugin.Fault.Missing,
     Plugin.Fault.NullComponent,
@@ -201,7 +220,28 @@ object Column:
       case Io.Damage.Length(expected, found) => s"Length $expected/$found"
       case Io.Damage.Unreadable(reported)    => s"Unreadable — $reported"
       case Io.Damage.Newer(found, reads)     => s"Newer $found/$reads"
+      case Io.Damage.Schema(found, reads)    => s"Schema $found/$reads"
       case other                             => other.productPrefix
+
+  extension (fault: Io.Fault)
+    private def stored: String = fault match
+      case Io.Fault.Ahead(first)                    => s"Ahead $first"
+      case Io.Fault.Dangling(uses)                  => s"Dangling $uses"
+      case Io.Fault.Differs(measure, listed, found) => s"Differs ${measure.productPrefix} $listed/$found"
+      case other                                    => other.productPrefix
+
+  extension (hold: Conflict.Hold)
+    private def stored: String =
+      val args: Vector[String] = hold match
+        case Conflict.Hold.SameWork(here, basis)      => Vector(s"$here", s"$basis")
+        case Conflict.Hold.Folds(gate, decided, into) => Vector(s"$gate", s"$decided", s"$into")
+        case Conflict.Hold.Carries(decided)           => Vector(s"$decided")
+        case Conflict.Hold.Conditional(on, when, now) => Vector(s"$on", s"$when") ++ now.map(n => s"$n")
+        case Conflict.Hold.PlanChanged(sent)          => Vector(s"$sent")
+        case Conflict.Hold.TextNotSent(decided)       => Vector(s"$decided")
+        case _                                        => Vector.empty
+      (hold.productPrefix +: (if args.isEmpty then Vector.empty else Vector(args.mkString(HoldSeparator))))
+        .mkString(" ")
 
   extension (ending: Io.Ending)
     private def stored: String = ending match
@@ -286,6 +326,11 @@ object Column:
   private val InconsistentAt = s"(?s)^$Prefix(.+) break (\\w+)$$".r
   private val ReferenceAt = s"(?s)^${Prefix}no secret reference: (\\w+)(?: '(.*)')?$$".r
   private val NoEntity = "(?s)^no (\\S+) '(.*)'$".r
+  private val DanglingIn = "(?s)^no (\\S+) '(.*)' in (\\w+), referred to by (.*)$".r
+  private val HeldBy = "(?s)^held (\\w+)(?: (.*?))?: (.*)$".r
+  private val HoldSeparator = " | "
+  private val EntryOf = "(?s)^(\\w+) entry (.+?): (\\w+)(?: (.*))?$".r
+  private val Differing = "(?s)^(\\w+) (\\S*)/(\\S*)$".r
   private val NoCopy = "(?s)^no open-access copy of '(.*)'$".r
   private val Exists = "(?s)^(\\S+) '(.*)' already exists$".r
   private val RenamedTo = "(?s)^(\\S+) '(.*)' was renamed to '(.*)'$".r
@@ -422,6 +467,42 @@ object Column:
       case _ => None
     },
     {
+      case DanglingIn(t, key, in, from) =>
+        word(NotFound.Scope.values.toSeq, in).map(NotFound.Dangling(TypeName(s"$t"), Raw(s"$key"), Where(s"$from"), _))
+      case _ => None
+    },
+    {
+      case HeldBy(name, written, subject) =>
+        val args = Option(written).fold(Vector.empty[Raw])(_.split(" \\| ", -1).toVector.map(a => Raw(s"$a")))
+        val hold: Option[Conflict.Hold] = (name, args) match
+          case ("SameWork", Vector(here, basis))      => Some(Conflict.Hold.SameWork(here, basis))
+          case ("Folds", Vector(gate, decided, into)) => Some(Conflict.Hold.Folds(gate, decided, into))
+          case ("Carries", Vector(decided))           => Some(Conflict.Hold.Carries(decided))
+          case ("Conditional", Vector(on, when))      => Some(Conflict.Hold.Conditional(on, when, None))
+          case ("Conditional", Vector(on, when, now)) => Some(Conflict.Hold.Conditional(on, when, Some(now)))
+          case ("PlanChanged", Vector(sent))          => Some(Conflict.Hold.PlanChanged(sent))
+          case ("TextNotSent", Vector(decided))       => Some(Conflict.Hold.TextNotSent(decided))
+          case (other, Vector())                      => word(Holds, other)
+          case _                                      => None
+        hold.map(Conflict.Held(Where(s"$subject"), _))
+      case _ => None
+    },
+    {
+      case EntryOf(archive, entry, name, written) =>
+        val fault: Option[Io.Fault] = (name, Option(written)) match
+          case ("Ahead", Some(first))                               => Some(Io.Fault.Ahead(Io.Path(s"$first")))
+          case ("Dangling", Some(n))                                => Count.read(n).map(Io.Fault.Dangling(_))
+          case ("Differs", Some(Differing(measure, listed, found))) =>
+            word(Io.Measure.values.toSeq, measure).map(Io.Fault.Differs(_, Raw(s"$listed"), Raw(s"$found")))
+          case (other, None) => word(EntryFaults, other)
+          case _             => None
+        for
+          a <- word(Io.Format.values.toSeq, archive)
+          f <- fault
+        yield Io.Entry(a, Io.Path(s"$entry"), f)
+      case _ => None
+    },
+    {
       case NoEntity(t, key) => Some(NotFound.Entity(TypeName(s"$t"), Raw(s"$key")))
       case _                => None
     },
@@ -546,7 +627,12 @@ object Column:
               ec <- Count.read(e)
               fc <- Count.read(f)
             yield Io.Damage.Length(ec, fc)
-          case (Some(e), Some(f), None) if damage == "Newer"   => Some(Io.Damage.Newer(Raw(s"$e"), Raw(s"$f")))
+          case (Some(e), Some(f), None) if damage == "Newer"  => Some(Io.Damage.Newer(Raw(s"$e"), Raw(s"$f")))
+          case (Some(e), Some(f), None) if damage == "Schema" =>
+            for
+              ec <- Count.read(e)
+              fc <- Count.read(f)
+            yield Io.Damage.Schema(ec, fc)
           case (None, None, Some(r)) if damage == "Unreadable" => Some(Io.Damage.Unreadable(External.Reported(s"$r")))
           case (None, None, None)                              => word(Damages, damage)
           case _                                               => None

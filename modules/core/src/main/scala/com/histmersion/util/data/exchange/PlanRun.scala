@@ -1,5 +1,6 @@
 package com.histmersion
 package util.data.exchange
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.api.exchange.EditionsPolicy
 
@@ -64,7 +65,7 @@ trait PlanRun:
   def labelsTakenFirst(questions: PlanQuestions): Unit = ()
 
   /** A decision's argument that names a source by its citekey checked (`map`, a rename no kind checks itself). */
-  def citekeyArgument(issue: MergeIssue, decision: MergeDecision): Option[Either[MergePlan.ResolutionErrors, Unit]] =
+  def citekeyArgument(issue: MergeIssue, decision: MergeDecision): Option[Either[Problem, Unit]] =
     None
 
   /** A pair of sources that folds, under `citekey`, before every kind's [[foldPairFirst]]: whether the folded source
@@ -114,7 +115,7 @@ trait PlanRun:
   def addedOnBoth(questions: PlanQuestions): Unit = ()
 
   /** A decision's argument checked for an issue of this kind; `None` for an issue the kind does not check. */
-  def argument(issue: MergeIssue, decision: MergeDecision): Option[Either[MergePlan.ResolutionErrors, Unit]] = None
+  def argument(issue: MergeIssue, decision: MergeDecision): Option[Either[Problem, Unit]] = None
 
   /** An issue of a pair: its decision is carried out with the pair's fold. */
   def pairIssue(kind: MergeIssue.Kind): Boolean = false
@@ -152,7 +153,7 @@ trait PlanRun:
   def lines(es: BundleEntities, es0: BundleEntities): BundleEntities = es
 
   /** What cannot be imported whatever is decided: the written lines (`writes`) that need what is not coming. */
-  def problems(finalEs: BundleEntities, live: UUID => Boolean, writes: UUID => Boolean): List[MergePlan.Problems] = Nil
+  def problems(finalEs: BundleEntities, live: UUID => Boolean, writes: UUID => Boolean): List[Problem] = Nil
 
   /** Bundle records left out for good: recorded as deleted here. */
   def dropped: Set[UUID] = Set.empty

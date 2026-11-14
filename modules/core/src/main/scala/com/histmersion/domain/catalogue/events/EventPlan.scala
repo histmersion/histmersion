@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.catalogue.events
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.api.exchange.Bundle
 
@@ -91,16 +92,22 @@ final class EventPlan(in: MergePlanner.Input) extends PlanRun:
           }
       }
 
-  override def argument(issue: MergeIssue, decision: MergeDecision): Option[Either[MergePlan.ResolutionErrors, Unit]] =
+  override def argument(issue: MergeIssue, decision: MergeDecision): Option[Either[Problem, Unit]] =
     Option.when(
       issue.entity == Bundle.Kind.Event && (decision.kind == km.RenameRight || decision.kind == km.RenameLeft)
     ) {
       val eid = decision.argument.map(_.value).getOrElse("")
       val idsHere = in.local.events.map(_.id).toSet ++ in.foreign.events.map(_.id)
       if !SlugShape.matches(eid) then
-        Left(MergePlan.ResolutionErrors(s"'$eid' is not an event id (lower-case letters, digits, _ . -)"))
+        Left(
+          Problem.Invalid.Unreadable.here(
+            Problem.TypeName.named[Bundle.Event.Id],
+            Problem.Raw(s"$eid"),
+            Vector(Problem.Raw("bronze_age_collapse"), Problem.Raw("thera.eruption"))
+          )
+        )
       else if idsHere(Bundle.Event.Id(eid)) then
-        Left(MergePlan.ResolutionErrors(s"'$eid' is already an event id here or in the bundle"))
+        Left(Problem.Conflict.AlreadyExists(Problem.TypeName.named[Bundle.Event.Id], Problem.Raw(s"$eid")))
       else Right(())
     }
 
@@ -130,15 +137,18 @@ final class EventPlan(in: MergePlanner.Input) extends PlanRun:
       finalEs: BundleEntities,
       live: UUID => Boolean,
       writes: UUID => Boolean
-  ): List[MergePlan.Problems] =
+  ): List[Problem] =
     val placesComing = finalEs.places.filter(p => live(p.uid)).map(_.id).toSet ++ in.local.places.map(_.id)
     finalEs.events
       .filter(e => writes(e.uid))
       .flatMap(e => e.placeId.map(e.id -> _))
       .filterNot((_, p) => in.places(MergePlanner.Input.Places(p.value)) || placesComing(p))
       .map((e, p) =>
-        MergePlan.Problems(
-          s"event $e: place '$p' is not in this gazetteer — run `histmersion init` (or import that place) first"
+        Problem.NotFound.Dangling(
+          Bundle.Kind.Place.typeName,
+          Problem.Raw(s"$p"),
+          Problem.Where(s"event $e"),
+          Problem.NotFound.Scope.Gazetteer
         )
       )
 

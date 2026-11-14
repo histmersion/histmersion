@@ -1,7 +1,7 @@
 package com.histmersion
 package util.data.exchange
 import com.histmersion.util.json.RawJson.*
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{Legacy, Problem, Problems}
 import com.histmersion.util.problem.Text.sentence
 
 import hearth.kindlings.optics.syntax.*
@@ -54,10 +54,10 @@ object BundleImporter:
       merge: MergeSettings,
       kinds: CarriedKinds,
       rules: MergeRuleSet
-  ): Either[String, Bundle.ImportResult] =
+  ): Either[Problems, Bundle.ImportResult] =
     val loaded = bundle.read(BundleReader.read(_, hashBlobs = false))
     loaded.manifest match
-      case None    => Left(("not a readable bundle" :: loaded.problems).mkString("; "))
+      case None    => Left(loaded.unreadable)
       case Some(m) =>
         try
           Right(
@@ -79,7 +79,7 @@ object BundleImporter:
       applied = Bundle.ImportResult.Applied(false),
       Nil,
       Bundle.ImportResult.Blobs(0),
-      problems.map(p => Bundle.ImportResult.Problems(p.sentence)),
+      problems,
       Nil,
       Nil
     )
@@ -87,6 +87,15 @@ object BundleImporter:
   /** The issue as a problem line names it. */
   private def named(i: MergeIssue): IssueName =
     IssueName(s"${i.id} ${i.entity.wire} ${i.right.orElse(i.left).fold("")(_.label)} — ${i.title}")
+
+  extension (i: MergeIssue)
+    /** The issue as a problem that holds the import up until it is decided. */
+    private def holdingUp: Problem = Problem.Conflict.Held(Problem.Where(s"${named(i)}"), Problem.Conflict.Hold.Open)
+
+    /** Does `problem` say that carrying out this issue's decision is `merge apply`'s? */
+    private def carriedBy(problem: Problem): Boolean = problem match
+      case Problem.Conflict.Held(subject, Problem.Conflict.Hold.Carries(_)) => s"$subject" == s"${i.id}"
+      case _                                                                => false
 
   /** What the decided rows do, per kind of record, for the kinds they touch. */
   private def counted(decided: List[MergePlanner.Row]): List[Bundle.KindCounts] =
@@ -127,9 +136,8 @@ object BundleImporter:
 
     // ── what holds it up: the plan's problems, its open issues, decisions only merge apply can do ──
     val holding = plan.issues.filter(_.open)
-    val problems: List[String] = plan.problems.map(_.value) ++
-      holding.map(i => s"${named(i).value}: open — decide it (`merge plan --write-template`)") ++
-      plan.resolutionErrors.map(e => s"resolution ${e.value}") ++ planned.needsApply.map(_.value)
+    val problems: List[Problem] =
+      plan.problems ++ holding.map(_.holdingUp) ++ plan.resolutionErrors ++ planned.needsApply
     val conflictIssues =
       plan.issues.filter(i =>
         i.kind == MergeIssue.Kind.ChangedBothSides || i.kind == MergeIssue.Kind.DeletedThereChangedHere
@@ -140,9 +148,7 @@ object BundleImporter:
     val counts = counted(decided)
     val needed = neededBlobs(es, writes)
     val shown =
-      holding ++ plan.issues.filter(i =>
-        i.decision.isDefined && planned.needsApply.exists(_.value.startsWith(i.id.value))
-      )
+      holding ++ plan.issues.filter(i => i.decision.isDefined && planned.needsApply.exists(i.carriedBy))
     def result(applied: Bundle.ImportResult.Applied, mergeId: Option[UUID]) =
       Bundle.ImportResult(
         m.bundleId,
@@ -151,7 +157,7 @@ object BundleImporter:
         applied,
         counts,
         if applied.value then Bundle.ImportResult.Blobs(needed.size) else Bundle.ImportResult.Blobs(0),
-        problems.map(Bundle.ImportResult.Problems(_)),
+        problems,
         conflicts,
         planned.notes.map(n => Bundle.ImportResult.Notes(n.value)),
         mergeId,
@@ -285,14 +291,14 @@ object BundleImporter:
       resolutions: MergeResolutions,
       merge: MergeSettings,
       planHash: MergeRow.PlanHash,
-      backup: () => Either[BackupFile, String],
+      backup: () => Either[Problem, String],
       kinds: CarriedKinds,
       rules: MergeRuleSet,
       followUps: MergeFollowUps
-  ): Either[String, MergeApplyResult] =
+  ): Either[Problems, MergeApplyResult] =
     val loaded = bundle.read(BundleReader.read(_, hashBlobs = false))
     loaded.manifest match
-      case None    => Left(("not a readable bundle" :: loaded.problems).mkString("; "))
+      case None    => Left(loaded.unreadable)
       case Some(m) =>
         try
           Right(
@@ -322,7 +328,7 @@ object BundleImporter:
                 m.instance,
                 applied = MergeApplyResult.Applied(false),
                 MergeApplyResult.PlanHash(planHash.value),
-                problems = a.problems.map(p => MergeApplyResult.Problems(p.sentence))
+                problems = a.problems
               )
             )
 
@@ -336,7 +342,7 @@ object BundleImporter:
       resolutions: MergeResolutions,
       merge: MergeSettings,
       planHash: MergeRow.PlanHash,
-      backup: () => Either[BackupFile, String],
+      backup: () => Either[Problem, String],
       kinds: CarriedKinds,
       rules: MergeRuleSet,
       followUps: MergeFollowUps
@@ -348,16 +354,21 @@ object BundleImporter:
       i.condition.isEmpty && i.decision.exists(_.kind == MergeDecision.Kind.File) &&
         !resolutions.resolve.exists(r => r.issue.value.trim == i.id.value && r.text.isDefined)
     )
-    val problems: List[String] = plan.problems.map(_.value) ++
+    val problems: List[Problem] = plan.problems ++
       Option
         .when(plan.planHash.value != planHash.value.trim)(
-          s"the plan is ${plan.planHash.value}, not ${planHash.value}: this collection, the bundle or the resolutions changed since " +
-            "it was planned — plan again, review it, and apply that plan"
+          Problem.Conflict.Held(
+            Problem.Where(s"${plan.planHash}"),
+            Problem.Conflict.Hold.PlanChanged(Problem.Raw(s"$planHash"))
+          )
         )
         .toList ++
-      plan.open.map(i => s"${named(i).value}: open — decide it (`merge plan --write-template`)") ++
-      plan.resolutionErrors.map(e => s"resolution ${e.value}") ++
-      noText.map(i => s"${i.id}: ${i.decision.get.wire} — the merged text was not sent (the CLI reads the file)")
+      plan.open.map(_.holdingUp) ++ plan.resolutionErrors ++
+      noText.flatMap(i =>
+        i.decision.map(d =>
+          Problem.Conflict.Held(Problem.Where(s"${i.id}"), Problem.Conflict.Hold.TextNotSent(Problem.Raw(s"${d.wire}")))
+        )
+      )
     val counts = counted(planned.rows)
     val base = MergeApplyResult(
       m.bundleId,
@@ -366,7 +377,7 @@ object BundleImporter:
       MergeApplyResult.PlanHash(plan.planHash.value),
       counts = counts,
       tally = planned.apply.tally,
-      problems = problems.map(MergeApplyResult.Problems(_)),
+      problems = problems,
       issues = plan.open,
       notes = planned.notes.map(n => MergeApplyResult.Notes(n.value))
     )
@@ -384,7 +395,7 @@ object BundleImporter:
         case Left(e) =>
           base
             .modify(_.problems)
-            .setTo(List(MergeApplyResult.Problems(s"the backup before the merge failed, nothing was written: $e")))
+            .setTo(List(e))
         case Right(dump) =>
           writeAll(bundle, input, planned, opts, files, kinds)
           val ap = planned.apply

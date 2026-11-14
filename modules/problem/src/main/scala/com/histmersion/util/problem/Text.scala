@@ -34,6 +34,8 @@ object Text:
       case NotFound.Entity(t, key) if t.short == "Citekey" => s"No source '$key'"
       case NotFound.Entity(t, key)                         => s"no ${t.noun} '$key'"
       case NotFound.Copy(work)                             => s"no legal open-access PDF found for $work"
+      case NotFound.Dangling(t, key, from, within)         => within.missed(t, key, from)
+      case Conflict.Held(subject, hold)                    => hold.said(subject)
       case Conflict.AlreadyExists(t, key)                  => s"${t.noun} '$key' already exists"
       case Conflict.Renamed(t, asked, now)   => s"${t.noun} '$asked' was renamed to '$now' — write to '$now' instead"
       case Conflict.Stale(t, key, sent, now) =>
@@ -53,15 +55,16 @@ object Text:
       case Upstream.Timeout(name, url, after, at) => s"${path(at)}$name did not answer at $url within $after ms"
       case Upstream.BadReply(name, url, s, r, at) =>
         s"${path(at)}$name's answer at $url is not ${s.noun} — $r"
-      case Io.File(op, path, reported)    => s"could not ${words(op.productPrefix)} $path — $reported"
-      case Io.Wrong(path, expected)       => s"$path ${expected.missed}"
-      case Io.Corrupt(format, at, damage) => s"the ${words(format.productPrefix)} data at $at ${damage.said}"
-      case Io.Process(tool, ending)       => s"$tool ${ending.said}"
-      case Io.Database(op, reported)      => s"the database refused to ${words(op.productPrefix)} — $reported"
-      case Config.Setting(key, fault)     => s"$key ${fault.said}"
-      case Config.Unavailable(capability) => s"this server has no ${words(capability.productPrefix)}"
-      case Config.Reload(stage, scope)    => s"reloading the settings failed at ${words(stage.productPrefix)} ($scope)"
-      case Config.Cycle(scopes)           =>
+      case Io.File(op, path, reported)     => s"could not ${words(op.productPrefix)} $path — $reported"
+      case Io.Wrong(path, expected)        => s"$path ${expected.missed}"
+      case Io.Corrupt(format, at, damage)  => s"the ${words(format.productPrefix)} data at $at ${damage.said}"
+      case Io.Process(tool, ending)        => s"$tool ${ending.said}"
+      case Io.Database(op, reported)       => s"the database refused to ${words(op.productPrefix)} — $reported"
+      case Io.Entry(archive, entry, fault) => fault.said(words(archive.productPrefix), entry)
+      case Config.Setting(key, fault)      => s"$key ${fault.said}"
+      case Config.Unavailable(capability)  => s"this server has no ${words(capability.productPrefix)}"
+      case Config.Reload(stage, scope)     => s"reloading the settings failed at ${words(stage.productPrefix)} ($scope)"
+      case Config.Cycle(scopes)            =>
         s"the parts a reload rebuilds depend on each other in a cycle: ${scopes.toVector.mkString(" → ")}"
       case Config.Unpriced(model, metered) =>
         s"model '$model' has no price — add it to agents.prices (HISTMERSION_AGENTS_PRICES), e.g. \"$model=0/0\" for " +
@@ -395,7 +398,61 @@ object Text:
       case Io.Damage.Undecodable             => "cannot be decoded"
       case Io.Damage.Length(expected, found) => s"holds $found units, not $expected"
       case Io.Damage.Unreadable(reported)    => s"cannot be read — $reported"
-      case Io.Damage.Newer(found, reads) => s"is in format $found, newer than the format $reads this Histmersion reads"
+      case Io.Damage.Newer(found, reads)  => s"is in format $found, newer than the format $reads this Histmersion reads"
+      case Io.Damage.Schema(found, reads) =>
+        s"comes from database schema V$found, newer than this Histmersion's V$reads — upgrade Histmersion"
+
+  extension (fault: Io.Fault)
+    private def said(archive: String, entry: Io.Path): String = fault match
+      case Io.Fault.Missing      => s"the $archive holds no $entry"
+      case Io.Fault.Omitted      => s"$entry is listed in the manifest but missing from the $archive"
+      case Io.Fault.Unlisted     => s"$entry is in the $archive but not in the manifest"
+      case Io.Fault.Repeated     => s"$entry appears twice in the $archive"
+      case Io.Fault.Foreign      => s"$entry is not a file a $archive holds"
+      case Io.Fault.Ahead(first) => s"$entry comes first in the $archive, where $first belongs"
+      case Io.Fault.Unreferenced => s"$entry is in the $archive, but nothing refers to it"
+      case Io.Fault.Dangling(n)  =>
+        s"$entry is referred to ${if s"$n" == "1" then "once" else s"$n times"}, but the $archive does not hold it"
+      case Io.Fault.Differs(measure, listed, found) =>
+        s"$entry ${measure.holds(found)}, but the manifest lists $listed"
+
+  extension (measure: Io.Measure)
+    private def holds(found: Raw): String = measure match
+      case Io.Measure.Sha256  => s"has sha256 $found"
+      case Io.Measure.Bytes   => s"holds $found bytes"
+      case Io.Measure.Lines   => s"holds $found lines"
+      case Io.Measure.Entries => s"holds $found entries"
+
+  extension (scope: NotFound.Scope)
+    private def missed(t: TypeName, key: Raw, from: Where): String = scope match
+      case NotFound.Scope.Bundle       => s"$from: ${t.noun} $key is not in the bundle"
+      case NotFound.Scope.BundleOrHere => s"$from: needs ${t.noun} $key, which is neither in the bundle nor here"
+      case NotFound.Scope.Gazetteer    =>
+        s"$from: ${t.noun} '$key' is not in this gazetteer — run `histmersion init` (or import that place) first"
+
+  extension (hold: Conflict.Hold)
+    private def said(subject: Where): String = hold match
+      case Conflict.Hold.Open                  => s"$subject: open — decide it (`merge plan --write-template`)"
+      case Conflict.Hold.SameWork(here, basis) =>
+        s"$subject: the same work as $here here ($basis) — folding the two into one is `merge apply`'s"
+      case Conflict.Hold.Folds(gate, decided, into) =>
+        s"$subject: $gate decided $decided — folding it into $into is `merge apply`'s"
+      case Conflict.Hold.Merges =>
+        s"$subject: the bundle's and this collection's are merged into one — that is `merge apply`'s"
+      case Conflict.Hold.Renames =>
+        s"citekeys given to resolve a collision ($subject) — that is `merge apply`'s"
+      case Conflict.Hold.Renumbers        => s"$subject: a label taken here, renumbered — that is `merge apply`'s"
+      case Conflict.Hold.Carries(decided) => s"$subject = $decided: carrying that out is `merge apply`'s"
+      case Conflict.Hold.Stale            =>
+        s"$subject: not an issue of this plan — stale (the records changed since it was decided) or never one"
+      case Conflict.Hold.Conditional(on, when, now) =>
+        s"$subject: applies only if $on = $when, and $on ${now.fold("does not apply")(d => s"is $d")}"
+      case Conflict.Hold.Collides          => s"several records of the bundle map onto $subject here"
+      case Conflict.Hold.PlanChanged(sent) =>
+        s"the plan is $subject, not $sent: this collection, the bundle or the resolutions changed since it was " +
+          "planned — plan again, review it, and apply that plan"
+      case Conflict.Hold.TextNotSent(decided) =>
+        s"$subject: $decided — the merged text was not sent (the CLI reads the file)"
 
   extension (ending: Io.Ending)
     private def said: String = ending match

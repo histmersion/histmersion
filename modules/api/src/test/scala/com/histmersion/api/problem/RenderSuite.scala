@@ -47,6 +47,12 @@ class RenderSuite extends munit.FunSuite:
     "Reference" -> (400, "plugins / api-key: no secret reference: EnvName '1PASSWORD'"),
     "Entity" -> (404, "no com.histmersion.domain.library.Citekey 'anthony2007'"),
     "Copy" -> (404, "no open-access copy of 'doi:10.1017/S0003598X00000001'"),
+    "Dangling" -> (
+      404,
+      "no com.histmersion.api.exchange.Bundle.Kind.Source '0193f1c4-7b2a-7c3e-9d41-5e6f7a8b9c0d' in BundleOrHere, referred to by finding anthony2007#1"
+    ),
+    "Held" -> (409, "held SameWork anthony2006 | doi: source anthony2007"),
+    "Entry" -> (500, "Bundle entry entities/sources.ndjson: Differs Lines 4/3"),
     "AlreadyExists" -> (409, "com.histmersion.domain.catalogue.Place.Id 'pleiades_579885' already exists"),
     "Renamed" -> (409, "com.histmersion.domain.library.Citekey 'anthony2006' was renamed to 'anthony2007'"),
     "Stale" -> (
@@ -211,8 +217,41 @@ class RenderSuite extends munit.FunSuite:
         ).map(Invalid.Reference.here(_)) ++
         Vector(
           Io.Damage.Unreadable(reported),
-          Io.Damage.Newer(Raw("2"), Raw("1"))
+          Io.Damage.Newer(Raw("2"), Raw("1")),
+          Io.Damage.Schema(Count(54L), Count(53L))
         ).map(Io.Corrupt(Io.Format.Json, Where("kit.json"), _)) ++
+        Vector(
+          Io.Fault.Missing,
+          Io.Fault.Omitted,
+          Io.Fault.Unlisted,
+          Io.Fault.Repeated,
+          Io.Fault.Foreign,
+          Io.Fault.Ahead(Io.Path("manifest.json")),
+          Io.Fault.Unreferenced,
+          Io.Fault.Dangling(Count(1L)),
+          Io.Fault.Dangling(Count(2L))
+        ).map(Io.Entry(Io.Format.Bundle, Io.Path("blobs/ab12"), _)) ++
+        Io.Measure.values.toVector.map(m =>
+          Io.Entry(Io.Format.Bundle, Io.Path("blobs/"), Io.Fault.Differs(m, Raw("ab12"), Raw("cd34")))
+        ) ++
+        NotFound.Scope.values.toVector.map(
+          NotFound.Dangling(TypeName("com.histmersion.api.exchange.Bundle.Kind.Place"), Raw("x_1"), Where("event e"), _)
+        ) ++
+        Vector(
+          Conflict.Hold.Open,
+          Conflict.Hold.SameWork(Raw("anthony2006"), Raw("title and year")),
+          Conflict.Hold.Folds(Raw("S-1a2b"), Raw("map:anthony2006"), Raw("anthony2006")),
+          Conflict.Hold.Merges,
+          Conflict.Hold.Renames,
+          Conflict.Hold.Renumbers,
+          Conflict.Hold.Carries(Raw("keep-right")),
+          Conflict.Hold.Stale,
+          Conflict.Hold.Conditional(Raw("S-1a2b"), Raw("keep-left"), None),
+          Conflict.Hold.Conditional(Raw("S-1a2b"), Raw("keep-left"), Some(Raw("open"))),
+          Conflict.Hold.Collides,
+          Conflict.Hold.PlanChanged(Raw("7c41e9a2")),
+          Conflict.Hold.TextNotSent(Raw("file"))
+        ).map(Conflict.Held(Where("S-3c1e7a2b source anthony2007 — same work?"), _)) ++
         Io.Format.values.toVector.map(Io.Corrupt(_, Where("x"), Io.Damage.Checksum)) ++
         Config.Capability.values.toVector.map(Config.Unavailable(_)) ++
         Vector(

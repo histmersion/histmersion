@@ -135,15 +135,24 @@ class BundleFormatSuite extends munit.FunSuite:
 
   test("decoding a line checks its rev; a tampered line is reported"):
     val line = BundleFormat.stamp(goal(Bundle.Goal.Slug("g"))).line
-    assertEquals(BundleFormat.decodeLine[Bundle.Goal](line, stamped = true).map(_.slug), Right("g"))
+    assertEquals(
+      BundleFormat.decodeLine[Bundle.Goal](line, stamped = true, Problem.Where("entities/goals.ndjson:1")).map(_.slug),
+      Right("g")
+    )
     val tampered = line.replace("\"Title\"", "\"Other\"")
     assert(
-      BundleFormat.decodeLine[Bundle.Goal](tampered, stamped = true).left.exists {
-        case Problem.Io.Corrupt(Problem.Io.Format.Json, _, Problem.Io.Damage.Checksum) => true
-        case _                                                                         => false
-      }
+      BundleFormat
+        .decodeLine[Bundle.Goal](tampered, stamped = true, Problem.Where("entities/goals.ndjson:1"))
+        .left
+        .exists {
+          case Problem.Io.Corrupt(Problem.Io.Format.Json, at, Problem.Io.Damage.Checksum) =>
+            s"$at" == "entities/goals.ndjson:1"
+          case _ => false
+        }
     )
-    assert(BundleFormat.decodeLine[Bundle.Goal]("{not json", stamped = true).isLeft)
+    assert(
+      BundleFormat.decodeLine[Bundle.Goal]("{not json", stamped = true, Problem.Where("entities/goals.ndjson:1")).isLeft
+    )
 
   test("content uuids: deterministic, version 8, RFC variant"):
     val u = BundleFormat.contentUuid(Seq("a", "b"))
@@ -172,8 +181,27 @@ class BundleFormatSuite extends munit.FunSuite:
     )
     assertEquals(BundleFormat.compatible(m, Some(Bundle.Manifest.SchemaVersion("33"))), Nil)
     assertEquals(BundleFormat.compatible(m, Some(Bundle.Manifest.SchemaVersion("40"))), Nil)
-    assert(
-      BundleFormat.compatible(m, Some(Bundle.Manifest.SchemaVersion("32"))).exists(_.contains("newer than this server"))
+    assertEquals(
+      BundleFormat.compatible(m, Some(Bundle.Manifest.SchemaVersion("32"))),
+      List(
+        Problem.Io.Corrupt(
+          Problem.Io.Format.Bundle,
+          Problem.Where("manifest.json"),
+          Problem.Io.Damage.Schema(Problem.Count(33L), Problem.Count(32L))
+        )
+      )
+    )
+    assertEquals(
+      BundleFormat.compatible(m, Some(Bundle.Manifest.SchemaVersion("32"))).map(_.sentence),
+      List(
+        "the bundle data at manifest.json comes from database schema V33, newer than this Histmersion's V32 — upgrade Histmersion"
+      )
+    )
+    assertEquals(
+      BundleFormat
+        .compatible(m.modify(_.schemaVersion).setTo(Bundle.Manifest.SchemaVersion("v33")), None)
+        .map(_.sentence),
+      List("schemaVersion: 'v33' is not a schema version (e.g. 54)")
     )
     assertEquals(
       BundleFormat
@@ -184,8 +212,11 @@ class BundleFormatSuite extends munit.FunSuite:
             .setTo(Bundle.Manifest.FormatVersion(99)),
           Some(Bundle.Manifest.SchemaVersion("33"))
         )
-        .size,
-      2
+        .map(_.sentence),
+      List(
+        "format: unknown manifest format 'x' (one of: histmersion-bundle)",
+        s"the bundle data at manifest.json is in format 99, newer than the format ${Bundle.FormatVersion} this Histmersion reads"
+      )
     )
 
   test("file checks list every missing, unexpected and differing file"):
@@ -224,7 +255,14 @@ class BundleFormatSuite extends munit.FunSuite:
       m,
       Map(f.path -> f.modify(_.sha256).setTo(Sha256("b")), Bundle.FileInfo.Path("entities/x.ndjson") -> f)
     )
-    assertEquals(ps.size, 3, ps.mkString("\n"))
+    assertEquals(
+      ps.map(_.sentence),
+      List(
+        "entities/queue.ndjson is listed in the manifest but missing from the bundle",
+        "entities/x.ndjson is in the bundle but not in the manifest",
+        "entities/goals.ndjson has sha256 b, but the manifest lists a"
+      )
+    )
 
   // ── entities ─────────────────────────────────────────────────────────────────────────────────
 
@@ -257,13 +295,16 @@ class BundleFormatSuite extends munit.FunSuite:
       applied = Bundle.ImportResult.Applied(false),
       List(Bundle.KindCounts(Bundle.Kind.Source, inserted = Bundle.KindCounts.Inserted(2))),
       Bundle.ImportResult.Blobs(0),
-      List(Bundle.ImportResult.Problems("source x: clash")),
+      List(Problem.Conflict.Held(Problem.Where("source x"), Problem.Conflict.Hold.Merges)),
       Nil,
       Nil
     )
     val md = BundleMarkdown.importResult(r)
     assert(md.startsWith("**Refused**"), md)
-    assert(md.contains("- source x: clash"), md)
+    assert(
+      md.contains("- source x: the bundle's and this collection's are merged into one — that is `merge apply`'s"),
+      md
+    )
     assert(md.contains("work ("), md)
     assert(
       BundleMarkdown

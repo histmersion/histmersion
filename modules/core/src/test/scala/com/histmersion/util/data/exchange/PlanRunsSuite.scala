@@ -1,5 +1,6 @@
 package com.histmersion
 package util.data.exchange
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -46,16 +47,16 @@ class PlanRunsSuite extends munit.FunSuite:
     override def argument(
         issue: MergeIssue,
         decision: MergeDecision
-    ): Option[Either[MergePlan.ResolutionErrors, Unit]] =
-      Option.when(answers)(Left(MergePlan.ResolutionErrors(name)))
+    ): Option[Either[Problem, Unit]] =
+      Option.when(answers)(Left(Problem.Invalid.Missing.here(Problem.Field(name))))
     override def pairIssue(kind: MergeIssue.Kind): Boolean = answers && kind == MergeIssue.Kind.AttestationUnanchored
     override def dropped: Set[UUID] = Set(uid(name))
     override def bodyIssue(right: UUID): Option[MergeIssue.Id] = Option.when(answers)(MergeIssue.Id(name))
     override def citekeyArgument(
         issue: MergeIssue,
         decision: MergeDecision
-    ): Option[Either[MergePlan.ResolutionErrors, Unit]] =
-      Option.when(answers)(Left(MergePlan.ResolutionErrors(s"$name citekey")))
+    ): Option[Either[Problem, Unit]] =
+      Option.when(answers)(Left(Problem.Invalid.Missing.here(Problem.Field(s"$name citekey"))))
     override def foldSources(
         right: com.histmersion.api.exchange.Bundle.Source,
         left: com.histmersion.api.exchange.Bundle.Source,
@@ -108,7 +109,7 @@ class PlanRunsSuite extends munit.FunSuite:
     assertEquals(runs.ownerSource(uid("x"), com.histmersion.api.exchange.Bundle.Kind.Attestation), Some(uid("b")))
     assertEquals(
       runs.argument(issue, MergeDecision(MergeDecision.Kind.RenameRight, Some(MergeDecision.Argument("y")))),
-      Some(Left(MergePlan.ResolutionErrors("b")))
+      Some(Left(Problem.Invalid.Missing.here(Problem.Field("b"))))
     )
     assert(runs.pairIssue(MergeIssue.Kind.AttestationUnanchored))
     assert(!runs.pairIssue(MergeIssue.Kind.TitleDiffers))
@@ -116,7 +117,7 @@ class PlanRunsSuite extends munit.FunSuite:
     assertEquals(runs.bodyIssue(uid("x")), Some(MergeIssue.Id("b")))
     assertEquals(
       runs.citekeyArgument(issue, MergeDecision(MergeDecision.Kind.Map, Some(MergeDecision.Argument("y")))),
-      Some(Left(MergePlan.ResolutionErrors("b citekey")))
+      Some(Left(Problem.Invalid.Missing.here(Problem.Field("b citekey"))))
     )
     assertEquals(
       PlanRuns(Nil).citekeyArgument(issue, MergeDecision(MergeDecision.Kind.Map, Some(MergeDecision.Argument("y")))),

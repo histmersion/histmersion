@@ -36,7 +36,7 @@ class CasesSuite extends munit.FunSuite:
 
   test("there are eleven groups and two cases outside them"):
     assertEquals(Group.values.length, 13)
-    assertEquals(examples.size, 59)
+    assertEquals(examples.size, 62)
 
   test("an exception becomes an internal problem with its class and its message's first line, cut to 300"):
     val long = "x" * 400
@@ -141,5 +141,5 @@ class CasesSuite extends munit.FunSuite:
         "a secret reference (\"env:<NAME>\" or a vault's, e.g. \"keepassxc:<entry>#password\"); it was not asked"
     )
 
-  test("only a missing entity or copy is not found"):
-    assertEquals(examples.filter(_.isNotFound).map(_.productPrefix), Vector("Entity", "Copy"))
+  test("only a missing entity, copy or referred-to record is not found"):
+    assertEquals(examples.filter(_.isNotFound).map(_.productPrefix), Vector("Entity", "Copy", "Dangling"))

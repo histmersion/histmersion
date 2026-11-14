@@ -1,5 +1,6 @@
 package com.histmersion
 package db
+import com.histmersion.util.problem.Text.sentences
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
 
@@ -541,7 +542,7 @@ class BundleSuite extends DbSuite with Bounded:
         TestExchange.kinds,
         TestExchange.rules
       )
-      .fold(e => fail(e), identity)
+      .fold(e => fail(e.sentences.mkString("; ")), identity)
 
   private def text(entries: List[(String, Array[Byte])], path: String): String =
     String(entries.find(_._1 == path).map(_._2).getOrElse(fail(s"no $path")), UTF_8)
@@ -901,7 +902,7 @@ class BundleSuite extends DbSuite with Bounded:
     )
     assert(r3.conflicts.exists(_.value.contains(A1.value)), r3.conflicts.toString)
     val conflict = r3.issues.find(_.kind == Issue.Kind.ChangedBothSides).getOrElse(fail(r3.toString))
-    assert(r3.problems.exists(_.value.startsWith(conflict.id.value)), r3.problems.toString)
+    assert(r3.problems.exists(_.sentence.startsWith(conflict.id.value)), r3.problems.toString)
     assertEquals(SourceFixtures.load(b, A1).flatMap(_.summary), Some("work edit"))
     // …until it is decided: keep-left keeps ours and records that it was decided
     val keep = MergeResolutions(
@@ -985,10 +986,10 @@ class BundleSuite extends DbSuite with Bounded:
     assert(!r.applied.value)
     // the same work (same DOI) under another uid: merging is merge apply's (M5); its findings go with it
     assert(
-      r.problems.exists(p => p.value.contains(s"source $A1") && p.value.contains("merge apply")),
+      r.problems.exists(p => p.sentence.contains(s"source $A1") && p.sentence.contains("merge apply")),
       r.problems.mkString("\n")
     )
-    assert(r.problems.exists(_.value.contains("article zzb_topic")), r.problems.mkString("\n"))
+    assert(r.problems.exists(_.sentence.contains("article zzb_topic")), r.problems.mkString("\n"))
     assert(r.issues.exists(i => i.kind == Issue.Kind.ArticleDiverged && i.open), r.issues.toString)
     assert(java.util.Arrays.equals(exportOf(c, sc), before), "a refused import wrote something")
 
@@ -1027,14 +1028,18 @@ class BundleSuite extends DbSuite with Bounded:
     val v1 = verify(edited)
     assert(!v1.ok.value)
     assert(
-      v1.problems.exists(_.value.contains(s"${Bundle.Kind.Goal.file}: sha256")),
+      v1.problems.exists(_.sentence.contains(s"${Bundle.Kind.Goal.file} has sha256")),
       v1.problems.mkString("\n")
     )
-    assert(v1.problems.exists(_.value.contains("fails its checksum")), v1.problems.mkString("\n"))
+    assert(v1.problems.exists(_.sentence.contains("fails its checksum")), v1.problems.mkString("\n"))
     val corrupt = rebuild { case (p, b) =>
       if p.startsWith("blobs/") && b.length > 5 then p -> b.updated(0, (b(0) ^ 1).toByte) else p -> b
     }
-    assert(verify(corrupt).problems.exists(_.value.contains("its content hashes to")))
+    assert(
+      verify(corrupt).problems.exists(p =>
+        p.sentence.startsWith("the bundle data at blobs/") && p.sentence.endsWith("fails its checksum")
+      )
+    )
     val whole = rebuild(identity)
     val v3 = verify(whole.take(whole.length / 2))
     assert(!v3.ok.value)
@@ -1044,7 +1049,7 @@ class BundleSuite extends DbSuite with Bounded:
       BundleReader
         .verify(java.io.ByteArrayInputStream(whole), Some(Bundle.Manifest.SchemaVersion("1")))
         .problems
-        .exists(_.value.contains("newer"))
+        .exists(_.sentence.contains("newer"))
     )
 
   test("property: random corpora round-trip export → import → export, byte for byte"):

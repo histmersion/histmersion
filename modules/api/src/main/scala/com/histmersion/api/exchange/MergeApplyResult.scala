@@ -8,6 +8,7 @@ import java.util.UUID
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.problem.Problem
 
 final case class MergeApplyResult(
     bundleId: UUID,
@@ -21,7 +22,7 @@ final case class MergeApplyResult(
     reviews: List[MergeApplyResult.Reviews] = Nil,
     logEntry: Option[MergeApplyResult.LogEntry] = None,
     replanChanges: Option[MergeApplyResult.ReplanChanges] = None,
-    problems: List[MergeApplyResult.Problems] = Nil,
+    problems: List[Problem] = Nil,
     issues: List[MergeIssue] = Nil,
     notes: List[MergeApplyResult.Notes] = Nil
 ) derives JsonCodec,
@@ -42,7 +43,5 @@ object MergeApplyResult:
   object LogEntry extends Newtype[Int, Pure]
   type ReplanChanges = ReplanChanges.T
   object ReplanChanges extends Newtype[Int, Pure]
-  type Problems = Problems.T
-  object Problems extends Newtype[String, Pure]
   type Notes = Notes.T
   object Notes extends Newtype[String, Pure]

@@ -1,5 +1,6 @@
 package com.histmersion
 package db
+import com.histmersion.util.problem.Problem
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
@@ -30,7 +31,7 @@ object StoredCodecs:
     given [A: JsonValueCodec] => BundleCodec[A] = BundleCodec(
       a => BundleFormat.stamp(a).line,
       a => BundleFormat.line(a),
-      (l, stamped) => BundleFormat.decodeLine[A](l, stamped).left.map(e => s"$e")
+      (l, stamped) => BundleFormat.decodeLine[A](l, stamped, Problem.Where("the line")).left.map(e => s"$e")
     )
 
   type JsonAst = Json

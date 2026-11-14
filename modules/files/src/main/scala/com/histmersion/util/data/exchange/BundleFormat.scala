@@ -67,28 +67,33 @@ object BundleFormat:
 
   final case class Stamped(rev: String, line: String)
 
-  /** Parse one line, and for a stamped kind check that its `rev` is the rev of its content. */
-  def decodeLine[A](line: String, stamped: Boolean)(using JsonValueCodec[A]): Either[Problem, A] =
-    RawJson.parse(line).left.map(e => unreadable(TheLine, s"$e")).flatMap { json =>
+  /** Parse one line, found at `at` (`entities/sources.ndjson:3`), and for a stamped kind check that its `rev` is the
+    * rev of its content.
+    */
+  def decodeLine[A](line: String, stamped: Boolean, at: Problem.Where)(using JsonValueCodec[A]): Either[Problem, A] =
+    RawJson.parse(line).left.map(e => at.unreadable(s"$e")).flatMap { json =>
       val revOk =
         if !stamped then Right(())
         else
-          json.asObject.toRight(damaged(TheLine, Problem.Io.Damage.Undecodable)).flatMap { obj =>
+          json.asObject.toRight(at.damaged(Problem.Io.Damage.Undecodable)).flatMap { obj =>
             obj("rev").flatMap(_.asString) match
-              case None                       => Left(Problem.Invalid.Missing.here(Problem.Field("rev")))
+              case None => Left(Problem.Invalid.Missing(Problem.Field("rev"), Vector(Problem.Field(s"$at"))))
               case Some(r) if r == revOf(obj) => Right(())
-              case Some(r)                    => Left(damaged(s"rev $r", Problem.Io.Damage.Checksum))
+              case Some(_)                    => Left(at.damaged(Problem.Io.Damage.Checksum))
           }
-      revOk.flatMap(_ => json.as[A].left.map(e => unreadable(TheLine, s"$e")))
+      revOk.flatMap(_ => json.as[A].left.map(e => at.unreadable(s"$e")))
     }
 
-  private val TheLine = "the line"
+  extension (at: Problem.Where)
+    /** The JSON at this place is damaged: `damage`. */
+    private def damaged(damage: Problem.Io.Damage): Problem = Problem.Io.Corrupt(Problem.Io.Format.Json, at, damage)
 
-  private def damaged(at: String, damage: Problem.Io.Damage): Problem =
-    Problem.Io.Corrupt(Problem.Io.Format.Json, Problem.Where(s"$at"), damage)
+    /** The JSON at this place cannot be read: `reported` is what the reader said. */
+    private def unreadable(reported: String): Problem =
+      at.damaged(Problem.Io.Damage.Unreadable(External.Reported.of(reported)))
 
-  private def unreadable(at: String, reported: String): Problem =
-    damaged(at, Problem.Io.Damage.Unreadable(External.Reported.of(reported)))
+  /** The bundle's manifest, where a problem with it is found. */
+  private val ManifestAt = Problem.Where(s"${Bundle.ManifestPath}")
 
   // ── the bundle id ──────────────────────────────────────────────────────────────────────────
 
@@ -122,39 +127,72 @@ object BundleFormat:
     RawJson
       .decode[Bundle.Manifest](String(bytes, UTF_8))
       .left
-      .map(e => unreadable("manifest.json", s"$e"))
+      .map(e => ManifestAt.unreadable(s"$e"))
 
   /** Can THIS server read `m`? A newer format or a newer schema is refused (the importer only ever upgrades older
     * ones); every reason is returned. `serverSchema` is the Flyway version, numeric.
     */
-  def compatible(m: Bundle.Manifest, serverSchema: Option[Bundle.Manifest.SchemaVersion]): List[String] =
+  def compatible(m: Bundle.Manifest, serverSchema: Option[Bundle.Manifest.SchemaVersion]): List[Problem] =
     def num(v: Bundle.Manifest.SchemaVersion) = v.value.trim.toIntOption
     List(
-      Option.when(m.format.value != Bundle.Format)(s"not a Histmersion bundle (format '${m.format}')"),
+      Option.when(m.format.value != Bundle.Format)(
+        Problem.Invalid.Unknown(
+          Problem.TypeName.named[Bundle.Manifest.Format],
+          Problem.Raw(s"${m.format}"),
+          Vector(Problem.Raw(s"${Bundle.Format}")),
+          Vector(Problem.Field("format"))
+        )
+      ),
       Option.when(m.formatVersion.value > Bundle.FormatVersion)(
-        s"bundle format ${m.formatVersion} is newer than this server reads (${Bundle.FormatVersion}) — upgrade Histmersion"
+        Problem.Io.Corrupt(
+          Problem.Io.Format.Bundle,
+          ManifestAt,
+          Problem.Io.Damage
+            .Newer(Problem.Raw(s"${m.formatVersion}"), Problem.Raw.of(Bundle.FormatVersion.toLong))
+        )
       ),
       (num(m.schemaVersion), serverSchema.flatMap(num)) match
         case (Some(b), Some(s)) if b > s =>
-          Some(s"bundle schema V$b is newer than this server's V$s — upgrade Histmersion")
-        case (None, _) => Some(s"bundle schema version '${m.schemaVersion}' is not a number")
-        case _         => None
+          Some(
+            Problem.Io.Corrupt(
+              Problem.Io.Format.Bundle,
+              ManifestAt,
+              Problem.Io.Damage.Schema(Problem.Count.of(b.toLong), Problem.Count.of(s.toLong))
+            )
+          )
+        case (None, _) =>
+          Some(
+            Problem.Invalid.Unreadable(
+              Problem.TypeName.named[Bundle.Manifest.SchemaVersion],
+              Problem.Raw(s"${m.schemaVersion}"),
+              Vector(Problem.Raw("54")),
+              Vector(Problem.Field("schemaVersion"))
+            )
+          )
+        case _ => None
     ).flatten
 
   /** The manifest's file list against what the tar holds: missing, unexpected and mismatching files. */
-  def checkFiles(m: Bundle.Manifest, seen: Map[Bundle.FileInfo.Path, Bundle.FileInfo]): List[String] =
+  def checkFiles(m: Bundle.Manifest, seen: Map[Bundle.FileInfo.Path, Bundle.FileInfo]): List[Problem] =
     val listed = m.files.map(f => f.path -> f).toMap
+    def entry(path: Bundle.FileInfo.Path, fault: Problem.Io.Fault): Problem =
+      Problem.Io.Entry(Problem.Io.Format.Bundle, Problem.Io.Path(s"$path"), fault)
+    def differs(path: Bundle.FileInfo.Path, measure: Problem.Io.Measure, listed: String, found: String) =
+      entry(path, Problem.Io.Fault.Differs(measure, Problem.Raw(s"$listed"), Problem.Raw(s"$found")))
     val missing = m.files
       .filterNot(f => seen.contains(f.path))
-      .map(f => s"${f.path}: listed in the manifest, missing from the bundle")
+      .map(f => entry(f.path, Problem.Io.Fault.Omitted))
     val unexpected =
-      seen.keys.toList.sorted.filterNot(listed.contains).map(p => s"$p: in the bundle, not in the manifest")
+      seen.keys.toList.sorted.filterNot(listed.contains).map(entry(_, Problem.Io.Fault.Unlisted))
     val differ = m.files.flatMap(f =>
       seen.get(f.path).toList.flatMap { s =>
         List(
-          Option.when(s.sha256 != f.sha256)(s"${f.path}: sha256 ${s.sha256} ≠ manifest ${f.sha256}"),
-          Option.when(s.bytes != f.bytes)(s"${f.path}: ${s.bytes} bytes ≠ manifest ${f.bytes}"),
-          Option.when(s.lines != f.lines)(s"${f.path}: ${s.lines} lines ≠ manifest ${f.lines}")
+          Option.when(s.sha256 != f.sha256)(
+            differs(f.path, Problem.Io.Measure.Sha256, s"${f.sha256}", s"${s.sha256}")
+          ),
+          Option
+            .when(s.bytes != f.bytes)(differs(f.path, Problem.Io.Measure.Bytes, s"${f.bytes}", s"${s.bytes}")),
+          Option.when(s.lines != f.lines)(differs(f.path, Problem.Io.Measure.Lines, s"${f.lines}", s"${s.lines}"))
         ).flatten
       }
     )
