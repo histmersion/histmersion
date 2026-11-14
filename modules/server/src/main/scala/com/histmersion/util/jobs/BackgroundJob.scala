@@ -89,7 +89,7 @@ object BackgroundJob:
 
   /** Start `body` as a job of `kind` (with `detail` stored on its row) in `slot`; `Left` — naming the running one —
     * when the slot is held. `what` names this kind of work in that refusal ("a vacuum job"), `busyCode` is its error
-    * code. Answers the job as it stands once its thread is started.
+    * code. Answers the job as it was queued: its thread may have moved it on already, which the caller follows by id.
     *
     * With `stops`, a person may pause or cancel the job: its progress report — which a long job makes between its parts
     * — throws [[JobStopped]] once a stop is asked, the row is left `paused` (keeping what it had done) or `cancelled`,
