@@ -215,8 +215,8 @@ final class AutoApprovals(
       case Some(ApprovalKind.GoalPlan) =>
         (a.plan, agents.focus.goalPlansWait()) match
           case (_, Some(wait)) => Verdict.Leave(AutopilotPolicy.Rationale(wait.value))
-          case (None, _)    => Verdict.Leave(AutopilotPolicy.Rationale("the approval carries no readable plan"))
-          case (Some(p), _) =>
+          case (None, _)       => Verdict.Leave(AutopilotPolicy.Rationale("the approval carries no readable plan"))
+          case (Some(p), _)    =>
             val raw = a.subject.fold(p.goal.value)(_.value)
             (com.histmersion.domain.automation.Goal.Slug.option(raw), Slug.option(raw)) match
               case (Some(goal), Some(slug)) =>

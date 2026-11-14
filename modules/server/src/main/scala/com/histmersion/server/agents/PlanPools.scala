@@ -82,7 +82,7 @@ final class PlanPools(
         (
           Floors.Empty,
           PoolStatus.FloorsSource("saved"),
-          Some(Problem.Unclassified(Legacy.Text(s"saved floors do not parse: ${m}")))
+          Some(Problem.Unclassified(Legacy.Text(s"saved floors do not parse: $m")))
         )
       case None =>
         Floors.parse(poolCfg(p)._1) match
@@ -91,7 +91,7 @@ final class PlanPools(
             (
               Floors.Empty,
               PoolStatus.FloorsSource("config"),
-              Some(Problem.Unclassified(Legacy.Text(s"agents.quota.${p.wire}.floors: ${m}")))
+              Some(Problem.Unclassified(Legacy.Text(s"agents.quota.${p.wire}.floors: $m")))
             )
 
   def rules(p: PoolId): Rules =
@@ -112,7 +112,9 @@ final class PlanPools(
     PlanQuota.verdict(
       Transactor(ds).read(PlanQuotaRepo.readings(p)),
       PoolStatus.Held(pool.held.value),
-      pool.refusal.map(r => PlanQuota.Rationale(s"${r.sentence}") -> pool.refusalUntil.map(u => Verdict.Blocked.Until(u.value))),
+      pool.refusal.map(r =>
+        PlanQuota.Rationale(s"${r.sentence}") -> pool.refusalUntil.map(u => Verdict.Blocked.Until(u.value))
+      ),
       rules(p),
       now,
       model
@@ -124,7 +126,9 @@ final class PlanPools(
     PlanQuota.refreshNeed(
       Transactor(ds).read(PlanQuotaRepo.readings(p)),
       PoolStatus.Held(pool.held.value),
-      pool.refusal.map(r => PlanQuota.Rationale(s"${r.sentence}") -> pool.refusalUntil.map(u => Verdict.Blocked.Until(u.value))),
+      pool.refusal.map(r =>
+        PlanQuota.Rationale(s"${r.sentence}") -> pool.refusalUntil.map(u => Verdict.Blocked.Until(u.value))
+      ),
       rules(p),
       now,
       model
@@ -209,7 +213,7 @@ final class PlanPools(
   def unavailable(m: ModelRef, now: PlanQuota.Now = now0): Option[Problem] =
     poolOf(m).filter(p => PlanPools.loginGates(p, m)).flatMap { p =>
       login(p, now) match
-        case Login.Missing(why) => Some(Problem.Unclassified(Legacy.Text(s"unavailable: no login — ${why}")))
+        case Login.Missing(why) => Some(Problem.Unclassified(Legacy.Text(s"unavailable: no login — $why")))
         case _                  => None
     }
 
@@ -455,7 +459,7 @@ final class PlanPools(
         case Login.Missing(why) => Some(why)
         case _                  => None
       val (ok, why, until) = (v, missing) match
-        case (_, Some(m))                  => (false, Some(s"unavailable: no login — ${m}"), None)
+        case (_, Some(m))                  => (false, Some(s"unavailable: no login — $m"), None)
         case (Verdict.Usable(n), None)     => (true, n.map(_.value), None)
         case (Verdict.Blocked(w, u), None) => (false, Some(s"$w"), u.map(x => iso(x.value)))
       val modeProblem = Option.when(p == PoolId.ClaudePlan)(claudeMode.left.toOption).flatten
@@ -480,8 +484,8 @@ final class PlanPools(
           PoolStatus.Login(
             lg match
               case Login.Present(d) => d.value
-              case Login.Missing(w) => s"no login: ${w}"
-              case Login.Unknown(w) => s"not known: ${w}"
+              case Login.Missing(w) => s"no login: $w"
+              case Login.Unknown(w) => s"not known: $w"
           )
         ),
         refresh = refreshMode(p).map(m => PoolStatus.Refresh(m.value)),
@@ -607,7 +611,10 @@ object PlanPools:
     else
       AgentDoctor
         .login(out, useApiKey)
-        .fold(p => Login.Missing(PlanQuota.Rationale(s"${p.sentence}")), d => Login.Present(Login.Present.Detail(d.value)))
+        .fold(
+          p => Login.Missing(PlanQuota.Rationale(s"${p.sentence}")),
+          d => Login.Present(Login.Present.Detail(d.value))
+        )
 
   /** The runs' CODEX_HOME has a login when its `auth.json` exists (it is never read). */
   def codexLogin(home: Option[java.nio.file.Path], command: CodexConfig.Command): Login = home match
@@ -618,8 +625,7 @@ object PlanPools:
     case Some(h) =>
       if java.nio.file.Files.isRegularFile(h.resolve("auth.json")) then
         Login.Present(Login.Present.Detail(s"$h has a login"))
-      else
-        Login.Missing(PlanQuota.Rationale(s"$h has none — run `CODEX_HOME=\"$h\" $command login` once"))
+      else Login.Missing(PlanQuota.Rationale(s"$h has none — run `CODEX_HOME=\"$h\" $command login` once"))
 
   /** The probe's output → the readings to record: its `rate_limit_event` windows; when it carried none but ended on the
     * plan's usage limit, one refused window until the reset it names (else the cool-down). Left = it said nothing about

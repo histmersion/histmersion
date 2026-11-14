@@ -16,7 +16,6 @@ object AgentScheduler:
   type Rationale = Rationale.T
   object Rationale extends Newtype[String, Pure]
 
-
   final case class StrategyLine(name: StrategyLine.Name, describe: StrategyLine.Describe = StrategyLine.Describe(""))
       derives JsonCodec,
         KindlingsSchema,

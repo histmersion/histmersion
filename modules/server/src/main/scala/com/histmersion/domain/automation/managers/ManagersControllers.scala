@@ -621,9 +621,7 @@ final class ManagersControllers(
             None,
             Feed.Held,
             s"${i.target}: held" +
-              h.until.fold("")(u => s" until $u") + h.untilSource.fold("")(s =>
-                s" until $s exists"
-              ) + s" — ${h.reason}"
+              h.until.fold("")(u => s" until $u") + h.untilSource.fold("")(s => s" until $s exists") + s" — ${h.reason}"
           )
         case "release" if i.hold.exists(_.focus.isDefined) && agents.focus.inForce =>
           val g = i.hold.flatMap(_.focus).fold("")(_.value)
@@ -655,7 +653,7 @@ final class ManagersControllers(
           i.runId.filter(_ => i.status == ItemStatus.Active.wire).foreach(r => agents.engine.cancel(runIdOf(r)))
           val why = in.reason
             .filter(w => s"$w".trim.nonEmpty)
-            .fold("skipped by a person")(r => s"skipped by a person: ${r}")
+            .fold("skipped by a person")(r => s"skipped by a person: $r")
           Either
             .cond(
               transact(ds)(

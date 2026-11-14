@@ -181,7 +181,7 @@ class GoalFocusSuite extends munit.FunSuite:
     val p = select(goals, s3.modify(_.max).setTo(Settings.Max(2)))
     assertEquals(active(p).toSet, Set("pin", "toreview"))
     assertEquals(
-      p.left.map((a, p) => (a, s"${p}")),
+      p.left.map((a, p) => (a, s"$p")),
       List("gathering" -> "gave its slot to toreview, which has articles to review")
     )
     assert(s"${p.active.find(_.slug == Goal.Slug("toreview")).get.why}".contains("took the slot of gathering"))
@@ -207,7 +207,7 @@ class GoalFocusSuite extends munit.FunSuite:
     )
     val p = select(goals, s3.modify(_.max).setTo(Settings.Max(2)))
     assertEquals(active(p), List("a", "next"))
-    assertEquals(p.left.map((a, p) => (a, s"${p}")), List("done" -> "it is reviewed"))
+    assertEquals(p.left.map((a, p) => (a, s"$p")), List("done" -> "it is reviewed"))
     assertEquals(p.joined, List("next"))
 
   test("stuck (its last item stopped, nothing open) and idle free the slot; neither is a candidate"):
@@ -254,7 +254,7 @@ class GoalFocusSuite extends munit.FunSuite:
       )
     val p = select(goals, s3.modify(_.max).setTo(Settings.Max(2)))
     assertEquals(active(p), List("byauto", "next"))
-    assertEquals(p.left.map((a, p) => (a, s"${p}")), List("byperson" -> "waits for a person: approval #41"))
+    assertEquals(p.left.map((a, p) => (a, s"$p")), List("byperson" -> "waits for a person: approval #41"))
     // a proposal behind a plan that waits for a person waits for that person too; behind a pending plan it is fine
     val behind = select(
       List(
@@ -267,7 +267,7 @@ class GoalFocusSuite extends munit.FunSuite:
       s3
     )
     assertEquals(
-      behind.waiting.map((a, b, p) => (a, b, s"${p}")),
+      behind.waiting.map((a, b, p) => (a, b, s"$p")),
       List(("p", Code.Person, "waits for a person: approval #41"))
     )
     assertEquals(
@@ -313,7 +313,7 @@ class GoalFocusSuite extends munit.FunSuite:
     assertEquals(active(waiting), List("k1"))
     assert(
       waiting.waiting.exists((s, c, why) =>
-        s == Goal.Slug("p") && c == Code.Children && s"${why}".contains("1 unfinished sub-goal")
+        s == Goal.Slug("p") && c == Code.Children && s"$why".contains("1 unfinished sub-goal")
       ),
       waiting.waiting
     )

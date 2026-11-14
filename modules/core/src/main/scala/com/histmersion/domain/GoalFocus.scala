@@ -289,8 +289,8 @@ object GoalFocus:
       Rationale(s"${counted(f.compileOpen.value, "approved article")} to compile")
     case Stage.Ready =>
       Rationale(
-          s"${counted(f.sources.value, "source")} (at least ${math.max(1, minSources.value)}), no article yet"
-        )
+        s"${counted(f.sources.value, "source")} (at least ${math.max(1, minSources.value)}), no article yet"
+      )
     case Stage.Gathering =>
       Rationale(s"${counted(f.sources.value, "source")}: still gathering its plan and sources")
 
@@ -338,8 +338,8 @@ object GoalFocus:
         Fit.Waits(
           Code.Plans,
           Rationale(
-              s"its next step is a goal plan, and ${counted(s.openPersonPlans.value, "goal plan")} already wait for a person"
-            )
+            s"its next step is a goal plan, and ${counted(s.openPersonPlans.value, "goal plan")} already wait for a person"
+          )
         )
       else Fit.Candidate(stage(f, s.minSources))
 
@@ -382,10 +382,10 @@ object GoalFocus:
       case (1, Some(s)) => List(s"in the same tree as $s (active)")
       case _            => Nil
     Rationale(
-        (List(s"${st.wire}: ${stageWhy(f, st, minSources)}") ++ near ++
-          Option.when(f.priority.value != 0)(s"priority ${f.priority}").toList ++
-          Option.when(f.createdAt.value.nonEmpty)(s"created ${f.createdAt.value.take(10)}").toList).mkString("; ")
-      )
+      (List(s"${st.wire}: ${stageWhy(f, st, minSources)}") ++ near ++
+        Option.when(f.priority.value != 0)(s"priority ${f.priority}").toList ++
+        Option.when(f.createdAt.value.nonEmpty)(s"created ${f.createdAt.value.take(10)}").toList).mkString("; ")
+    )
 
   /** One pass of the focus over every goal. Pins are always active; the goals active before keep their slots while they
     * are candidates (the cap lowered: the worst go back to the queue first); free slots go to the best candidates one
@@ -462,14 +462,13 @@ object GoalFocus:
     val active = chosen.map { g =>
       val st = stageOf(g.slug)
       val why =
-        if g.pinned.value then
-          Rationale(s"pinned by a person; ${st.wire}: ${stageWhy(g, st, s.minSources)}")
+        if g.pinned.value then Rationale(s"pinned by a person; ${st.wire}: ${stageWhy(g, st, s.minSources)}")
         else
           freshWhy.getOrElse(
             g.slug,
             Rationale(
-                s"active${g.since.fold("")(t => s" since $t")}, kept until it is reviewed; ${st.wire}: ${stageWhy(g, st, s.minSources)}"
-              )
+              s"active${g.since.fold("")(t => s" since $t")}, kept until it is reviewed; ${st.wire}: ${stageWhy(g, st, s.minSources)}"
+            )
           )
       Pick(g.slug, st, why, g.pinned, if g.active.value then g.since else None)
     }
@@ -544,13 +543,15 @@ object GoalFocus:
           if actives.exists(g => !openKids.contains(g) || i.kind.value == PlanGoalItem) then None
           else
             Some(
-              actives.head -> Rationale(s"$HoldPrefix goal ${actives.head} waits for its sub-goals before its own ${i.kind}")
+              actives.head -> Rationale(
+                s"$HoldPrefix goal ${actives.head} waits for its sub-goals before its own ${i.kind}"
+              )
             )
         else
           Some(
             unfinished.head -> Rationale(
-                s"$HoldPrefix waits until goal ${unfinished.head} is one of the active goals (agents.autopilot.max-active-goals)"
-              )
+              s"$HoldPrefix waits until goal ${unfinished.head} is one of the active goals (agents.autopilot.max-active-goals)"
+            )
           )
       (i, wait)
     }

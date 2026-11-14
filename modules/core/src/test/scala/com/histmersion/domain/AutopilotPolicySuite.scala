@@ -50,7 +50,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
     )
     articlePlan(ok, AutopilotPolicy.MinSources(5), AutopilotPolicy.ApprovedToday(0), AutopilotPolicy.Cap(6)) match
       case Verdict.Approve(r) =>
-        assert(s"${r}".contains("2 articles") && s"${r}".contains("a 9, b 5") && s"${r}".contains("2 of 6"), r)
+        assert(s"$r".contains("2 articles") && s"$r".contains("a 9, b 5") && s"$r".contains("2 of 6"), r)
       case v => fail(v.toString)
     assert(
       articlePlan(ok, AutopilotPolicy.MinSources(5), AutopilotPolicy.ApprovedToday(4), AutopilotPolicy.Cap(6))
@@ -87,7 +87,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
       AutopilotPolicy.Cap(6)
     ) match
       case Verdict.Reject(r) =>
-        assert(s"${r}".contains("a: the slug is taken") && s"${r}".contains("b: its filter returns 2"), r)
+        assert(s"$r".contains("a: the slug is taken") && s"$r".contains("b: its filter returns 2"), r)
       case v => fail(v.toString)
     assert(
       articlePlan(Nil, AutopilotPolicy.MinSources(5), AutopilotPolicy.ApprovedToday(0), AutopilotPolicy.Cap(6))
@@ -133,7 +133,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
   test("article-publish: each failed check rejects with why"):
     def why(d: DraftFacts) =
       articlePublish(d, AutopilotPolicy.MinSources(3), AutopilotPolicy.ApprovedToday(0), AutopilotPolicy.Cap(10)) match
-        case Verdict.Reject(r) => s"${r}"
+        case Verdict.Reject(r) => s"$r"
         case v                 => fail(v.toString)
     assert(
       why(draft.modify(_.filterRecorded).setTo(AutopilotPolicy.DraftFacts.FilterRecorded(false)))
@@ -175,7 +175,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
       AutopilotPolicy.Cap(5)
     ) match
       case Verdict.Reject(r) =>
-        assert(s"${r}".contains("3 sub-goals") && s"${r}".contains("2 level(s) below a root"), r)
+        assert(s"$r".contains("3 sub-goals") && s"$r".contains("2 level(s) below a root"), r)
       case v => fail(v.toString)
     assert(
       goalPlan(
@@ -269,7 +269,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
           .setTo(AutopilotPolicy.GoalFacts.Articles(2))
           .modify(_.reviewed)
           .setTo(AutopilotPolicy.GoalFacts.Reviewed(true))
-      ).map((a, p) => (a, s"${p}")),
+      ).map((a, p) => (a, s"$p")),
       Some((Goal.Status.Reviewed, "its 2 articles passed review"))
     )
 

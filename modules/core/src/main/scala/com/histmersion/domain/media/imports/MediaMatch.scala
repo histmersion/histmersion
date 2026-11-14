@@ -106,7 +106,7 @@ object MediaMatch:
     if named.isEmpty then Left(Unmatched("no place on the record"))
     else if specific.value then
       named.iterator.map((f, v, k) => (f, v, resolve(k))).find(_._3.nonEmpty) match
-        case None => Left(Unmatched("its place is not on the map"))
+        case None                                         => Left(Unmatched("its place is not on the map"))
         case Some((f, v, ids)) if ids == Set(target.id)   => Right(Basis(s"$f = $v"))
         case Some((_, _, ids)) if ids.contains(target.id) =>
           Left(Unmatched("its place name is ambiguous on the map"))
@@ -134,7 +134,7 @@ object MediaMatch:
     */
   def dated(basis: Basis, rec: MediaRecord, target: PlaceInfo, latest: Option[Year]): Either[Unmatched, Basis] =
     (rec.period, target.period) match
-      case (None, _) => Left(Unmatched("no dates on the record"))
+      case (None, _)                                     => Left(Unmatched("no dates on the record"))
       case (Some(r), _) if latest.exists(y => r.end > y) =>
         Left(Unmatched(s"made after ${year(latest.get)}"))
       case (_, None)          => Left(Unmatched("the place has no period to compare"))

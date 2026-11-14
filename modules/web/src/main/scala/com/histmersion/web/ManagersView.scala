@@ -1562,7 +1562,7 @@ object ManagersView:
             cls := "muted",
             "held" + h.until.fold("")(u => s" until $u") + h.untilSource.fold("")(s => s" until $s exists") +
               h.focus.fold("")(g => s" for the focus (goal $g; pin it in the managers window to run it now)") +
-              Option(h.reason).filter(w => s"$w".nonEmpty).fold("")(r => s" — ${r}")
+              Option(h.reason).filter(w => s"$w".nonEmpty).fold("")(r => s" — $r")
           )
         ),
         i.notBefore.map(t => div(cls := "muted", s"not before $t")),

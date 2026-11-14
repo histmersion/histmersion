@@ -110,8 +110,7 @@ class ManagersViewSuite extends munit.FunSuite:
       ManagerItem.Kind(ProposeArticles),
       Managers.ManagerItem.Target("g"),
       Managers.ManagerItem.Status("held"),
-      hold =
-        Some(Hold(reason = Managers.Rationale("focus: waits"), focus = Some(Managers.Hold.Focus("g"))))
+      hold = Some(Hold(reason = Managers.Rationale("focus: waits"), focus = Some(Managers.Hold.Focus("g"))))
     )
     assertEquals(ManagersView.itemActionsFor(focus), List("priority", "skip"))
     assertEquals(

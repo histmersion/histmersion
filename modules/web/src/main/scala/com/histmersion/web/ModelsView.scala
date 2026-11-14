@@ -199,8 +199,7 @@ object ModelsView:
               if !pl.available.value then
                 span(cls := "run-paused", s" · ${pl.reason.map(w => s"$w").getOrElse("unavailable: no login")}")
               else if pl.held.value then span(cls := "run-paused", " · held")
-              else if pl.usable.value then
-                span(cls := "muted", pl.reason.fold(" · usable")(r => s" · usable (${r})"))
+              else if pl.usable.value then span(cls := "muted", pl.reason.fold(" · usable")(r => s" · usable ($r)"))
               else
                 span(
                   cls := "run-paused",

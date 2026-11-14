@@ -470,7 +470,9 @@ class ReviewConvergenceSuite extends munit.FunSuite:
         List(
           WontFix(
             ReviewArticle.WontFix.Id("S1"),
-            ReviewArticle.Rationale("listed as applied, but [[zz2024_iso]] and [[knapp2016_tin]] are not cited in one paragraph")
+            ReviewArticle.Rationale(
+              "listed as applied, but [[zz2024_iso]] and [[knapp2016_tin]] are not cited in one paragraph"
+            )
           )
         )
       )

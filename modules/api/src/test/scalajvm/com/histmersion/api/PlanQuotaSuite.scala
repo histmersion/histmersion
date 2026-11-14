@@ -105,7 +105,7 @@ class PlanQuotaSuite extends munit.FunSuite:
     )
     low match
       case Verdict.Blocked(why, until) =>
-        assert(s"${why}".contains("five_hour: 25% left, floor 25%"), why)
+        assert(s"$why".contains("five_hour: 25% left, floor 25%"), why)
         assertEquals(until, Some(Now + 60 * Min), "until the blocking window resets")
       case other => fail(s"not blocked: $other")
     assertEquals(states.map(_.usable), List(false, true))
@@ -156,7 +156,7 @@ class PlanQuotaSuite extends munit.FunSuite:
   test("the hold switch wins over everything"):
     val (v, _) =
       verdict(List(r(FiveHour, Reading.UsedPct(0))), held = PlanQuota.PoolStatus.Held(true), None, Rules0, NowAt)
-    assert(v match { case Verdict.Blocked(w, None) => s"${w}".contains("held"); case _ => false }, v)
+    assert(v match { case Verdict.Blocked(w, None) => s"$w".contains("held"); case _ => false }, v)
 
   test("no reading is unknown: usable, said so; a window whose reset passed has started over"):
     assertEquals(

@@ -121,8 +121,7 @@ object AutopilotPolicy:
       else None
     }
     if n == 0 then Verdict.Reject(Rationale("the plan names no article"))
-    else if bad.nonEmpty then
-      Verdict.Reject(Rationale(s"checks failed — ${bad.mkString("; ")}"))
+    else if bad.nonEmpty then Verdict.Reject(Rationale(s"checks failed — ${bad.mkString("; ")}"))
     else if n > cap.value then
       Verdict.Leave(
         Rationale(s"${counted(n, "article")} exceed the daily cap of $cap for one research area")
@@ -130,15 +129,15 @@ object AutopilotPolicy:
     else if approvedToday.value + n > cap.value then
       Verdict.Leave(
         Rationale(
-            s"the area's daily cap is reached ($approvedToday of $cap articles approved today); decided tomorrow"
-          )
+          s"the area's daily cap is reached ($approvedToday of $cap articles approved today); decided tomorrow"
+        )
       )
     else
       Verdict.Approve(
         Rationale(
-            s"${counted(n, "article")}, every slug free and every filter at least $minSources sources " +
-              s"(${articles.map(a => s"${a.slug} ${a.hits}").mkString(", ")}); ${approvedToday.value + n} of $cap today"
-          )
+          s"${counted(n, "article")}, every slug free and every filter at least $minSources sources " +
+            s"(${articles.map(a => s"${a.slug} ${a.hits}").mkString(", ")}); ${approvedToday.value + n} of $cap today"
+        )
       )
 
   /** A draft to publish (compile-article), as code reads it. `hits` = what the run's filter returned (None: not known).
@@ -175,31 +174,29 @@ object AutopilotPolicy:
     * tomorrow.
     */
   def articlePublish(d: DraftFacts, minSources: MinSources, approvedToday: ApprovedToday, cap: Cap): Verdict =
-    if !d.filterRecorded.value then
-      Verdict.Reject(Rationale("the run records no coverage filter"))
+    if !d.filterRecorded.value then Verdict.Reject(Rationale("the run records no coverage filter"))
     else if d.hits.forall(_.value < minSources.value) then
       Verdict.Reject(
         Rationale(
-            s"its filter returns ${d.hits.fold("an unknown number of")(_.toString)} source(s), fewer than $minSources"
-          )
+          s"its filter returns ${d.hits.fold("an unknown number of")(_.toString)} source(s), fewer than $minSources"
+        )
       )
     else if d.problems.nonEmpty then
       Verdict.Reject(
         Rationale(
-            s"the self-check left ${counted(d.problems.size, "problem")}: ${d.problems.take(3).mkString("; ").take(600)}"
-          )
+          s"the self-check left ${counted(d.problems.size, "problem")}: ${d.problems.take(3).mkString("; ").take(600)}"
+        )
       )
     else if d.cited.value == 0 then Verdict.Reject(Rationale("the text cites no source"))
-    else if d.create.value && !d.slugFree.value then
-      Verdict.Reject(Rationale(s"the slug ${d.slug} is taken now"))
+    else if d.create.value && !d.slugFree.value then Verdict.Reject(Rationale(s"the slug ${d.slug} is taken now"))
     else if approvedToday.value >= cap.value then
       Verdict.Leave(Rationale(s"the daily cap of $cap drafts is reached; decided tomorrow"))
     else
       Verdict.Approve(
         Rationale(
-            s"filter ${d.hits.getOrElse(0)} sources (at least $minSources), ${counted(d.cited.value, "source")} cited, " +
-              s"no self-check problem; ${approvedToday.value + 1} of $cap today"
-          )
+          s"filter ${d.hits.getOrElse(0)} sources (at least $minSources), ${counted(d.cited.value, "source")} cited, " +
+            s"no self-check problem; ${approvedToday.value + 1} of $cap today"
+        )
       )
 
   /** A goal's plan (plan-goal), as code reads it; `depth` = how far below a root goal it is (0 = a root). */
@@ -232,18 +229,18 @@ object AutopilotPolicy:
     else if p.subGoals.value > 0 && p.depth.value >= maxDepth.value then
       Verdict.Reject(
         Rationale(
-            s"it proposes ${counted(p.subGoals.value, "sub-goal")} for a goal ${depthText(p.depth)}; " +
-              s"sub-goals stop at depth $maxDepth (the deepest sub-goal the checks approve)"
-          )
+          s"it proposes ${counted(p.subGoals.value, "sub-goal")} for a goal ${depthText(p.depth)}; " +
+            s"sub-goals stop at depth $maxDepth (the deepest sub-goal the checks approve)"
+        )
       )
     else if approvedToday.value >= cap.value then
       Verdict.Leave(Rationale(s"the daily cap of $cap goal plans is reached; decided tomorrow"))
     else
       Verdict.Approve(
         Rationale(
-            s"${counted(p.subGoals.value, "sub-goal")}, ${counted(p.queries.value, "query", "queries")}, ${counted(p.works.value, "work")}" +
-              s" (depth ${p.depth} of $maxDepth); ${approvedToday.value + 1} of $cap today"
-          )
+          s"${counted(p.subGoals.value, "sub-goal")}, ${counted(p.queries.value, "query", "queries")}, ${counted(p.works.value, "work")}" +
+            s" (depth ${p.depth} of $maxDepth); ${approvedToday.value + 1} of $cap today"
+        )
       )
 
   /** A goal plan while the focus is on (docs/research-process-managers.md "As built: the focus"): decided by code only
@@ -394,8 +391,8 @@ object AutopilotPolicy:
     */
   val NotePrefix: NotePrefix = NotePrefixValue(Approval.DecidedBy.AutopilotNote)
   def note(v: Verdict): Option[Note] = v match
-    case Verdict.Approve(r) => Some(Note(s"$NotePrefix approved — ${r}"))
-    case Verdict.Reject(r)  => Some(Note(s"$NotePrefix rejected — ${r}"))
+    case Verdict.Approve(r) => Some(Note(s"$NotePrefix approved — $r"))
+    case Verdict.Reject(r)  => Some(Note(s"$NotePrefix rejected — $r"))
     case Verdict.Leave(_)   => None
 
   /** How deep a goal is: the number of parents above it (a cycle or a missing parent stops the walk). */

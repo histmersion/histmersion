@@ -128,7 +128,9 @@ final class SeedService(
               c.authors,
               c.venue,
               List(com.histmersion.api.automation.Goal.Slug(goal.value)),
-              Managers.Rationale("seed before the plan: a legal open-access candidate of the goal's own search (no model)")
+              Managers.Rationale(
+                "seed before the plan: a legal open-access candidate of the goal's own search (no model)"
+              )
             )
           )
         }
