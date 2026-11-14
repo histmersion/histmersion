@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.fetchers
 
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.plugin.{Doi, Plugin, Secret, WorkKey}
 import com.histmersion.plugin.testkit.{FetchOutcome, HttpMode, PluginHarness, StubAnswer}
 import com.histmersion.pluginhost.{HttpAnswer, HttpTransport}
@@ -26,7 +26,7 @@ class FetcherPluginsKitSuite extends munit.FunSuite:
   ) =
     PluginHarness
       .load(id, config, http = HttpMode.Stub(stubs), secrets = secrets, env = Map.empty)
-      .fold(e => fail(e.sentence), identity)
+      .fold(e => fail(e.sentences.mkString("; ")), identity)
 
   private def json(s: HttpAnswer.Text) = StubAnswer.text(s, CoreQuota.HeaderValue("application/json"))
 
@@ -54,7 +54,7 @@ class FetcherPluginsKitSuite extends munit.FunSuite:
       http = HttpMode.Offline,
       env = Map.empty
     )
-    assert(refused.left.exists(_.sentence.contains("unknown setting")), refused.toString)
+    assert(refused.left.exists(_.sentences.mkString("; ").contains("is no setting of the plugin")), refused.toString)
 
   // ── archive-org ─────────────────────────────────────────────────────────────────────────────
 
@@ -100,7 +100,7 @@ class FetcherPluginsKitSuite extends munit.FunSuite:
     )
     val r = h.fetch(WorkKey(archive = Some(WorkKey.Archive("zqlent"))))
     r.outcome match
-      case FetchOutcome.Refused(why) => assert(why.sentence.contains("lending-only"), why)
+      case FetchOutcome.Refused(why) => assert(why.sentences.mkString("; ").contains("lending-only"), why)
       case other                     => fail(s"not refused: $other")
     assertEquals(r.requests, List("GET https://archive.org/metadata/zqlent"))
 

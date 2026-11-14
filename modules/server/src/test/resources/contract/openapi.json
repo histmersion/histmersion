@@ -21726,8 +21726,11 @@
           "reachable" : {
             "type" : "boolean"
           },
-          "problem" : {
-            "type" : "string"
+          "problems" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
           }
         }
       },
@@ -21960,8 +21963,11 @@
               "$ref" : "#/components/schemas/CollectionFieldChange"
             }
           },
-          "reason" : {
-            "type" : "string"
+          "reasons" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
           }
         }
       },
@@ -30686,8 +30692,11 @@
               "type" : "string"
             }
           },
-          "error" : {
-            "type" : "string"
+          "errors" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
           }
         }
       },

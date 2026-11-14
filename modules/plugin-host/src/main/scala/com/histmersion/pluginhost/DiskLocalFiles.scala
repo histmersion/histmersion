@@ -1,6 +1,6 @@
 package com.histmersion
 package pluginhost
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem, Problems}
 
 import com.histmersion.plugin.LocalFiles
 import java.nio.file.{Files, Path}
@@ -19,18 +19,22 @@ final class DiskLocalFiles extends LocalFiles:
     finally in.close()
 
   def staged[A](name: LocalFiles.StagedName, bytes: LocalFiles.Content)(
-      use: Path => Either[Problem, A]
-  ): Either[Problem, A] =
+      use: Path => Either[Problems, A]
+  ): Either[Problems, A] =
     val n = name.value
     if n.isEmpty || n == "." || n == ".." || n.contains('/') || n.contains('\\') || n.contains('\u0000') then
-      Left(Problem.Unclassified(Legacy.Text("cannot stage the file: expected a single filename")))
+      Left(Problem.Io.Wrong(Problem.Io.Path(n), Problem.Io.Kind.File))
     else
       Try(Files.createTempDirectory("histmersion-original-")).toEither.left
-        .map(e => Problem.Unclassified(Legacy.Text(s"cannot stage the file: ${e.getMessage}")))
+        .map(e =>
+          Problem.Io.File(Problem.Io.Access.Create, Problem.Io.Path("histmersion-original-"), External.Reported.of(e))
+        )
         .flatMap { dir =>
           try
             Try(Files.write(dir.resolve(n), bytes.value)).toEither.left
-              .map(e => Problem.Unclassified(Legacy.Text(s"cannot stage the file: ${e.getMessage}")))
+              .map(e =>
+                Problem.Io.File(Problem.Io.Access.Write, Problem.Io.Path(s"${dir.resolve(n)}"), External.Reported.of(e))
+              )
               .flatMap(p => use(p))
           finally
             val entries = Files.list(dir)

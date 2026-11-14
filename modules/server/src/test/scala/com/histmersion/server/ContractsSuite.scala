@@ -277,11 +277,12 @@ class ContractsSuite extends munit.FunSuite:
 object ContractsSuite:
 
   /** The modules G60 has classified: none of their sites builds `Problem.Unclassified` any more (step 2 the leaf
-    * layers; each later step adds its own).
+    * layers, step 3 the plugin host, the testkit and the bundled plugins; each later step adds its own).
     */
   val Classified: List[String] =
     List("values", "config", "files", "plugin-api", "plugin-resolver", "upstreams", "plugin-vaults") ++
       List("plugins/events", "plugins/fetchers", "plugins/gazetteers") ++
+      List("plugin-host", "plugin-testkit", "plugins/media", "plugins/calibre", "plugins/ai-http") ++
       List(
         "plugin-fixtures/hello",
         "plugin-fixtures/hello-ai",

@@ -102,7 +102,7 @@ configured zq-other: "cc0" → cc0
 "see the licence" "https://creativecommons.org/licenses/by/3.0/" → CC-BY-3.0|cc-by url="https://creativecommons.org/licenses/by/3.0/" author=null credit="Zq"
 "see the licence" "https://zq.example/terms" → see-the-licence|unknown url="https://zq.example/terms" author=null credit="Zq"
 "cc0" " " → CC0-1.0|cc0 url=null author=null credit="Zq"
-"cc-by-4.0" null → refused: no credit line
+"cc-by-4.0" null → refused: credit is required
 "All rights reserved" null → all-rights-reserved|all-rights-reserved url=null author=null credit="Zq Museum"
 # the host's own statements
 CC0-1.0|cc0 url="https://creativecommons.org/publicdomain/zero/1.0/" author="Zq" credit="Zq, CC0"

@@ -1,5 +1,6 @@
 package com.histmersion
 package plugins.ai
+import com.histmersion.util.problem.{External, Problem}
 
 import com.histmersion.plugin.*
 import com.histmersion.testsupport.ComparedByValue.given
@@ -93,7 +94,13 @@ class AnthropicWireSuite extends munit.FunSuite:
         )
       )
     )
-    assertEquals(AnthropicRequest.of(r).left.map(_.legacyText), Left("expected '{'"))
+    assertEquals(
+      AnthropicRequest.of(r).left.map {
+        case Problem.Io.Corrupt(_, _, Problem.Io.Damage.Unreadable(reported)) => s"$reported"
+        case other                                                            => s"$other"
+      },
+      Left("expected '{'")
+    )
 
   private val ok =
     """{"id":"m","type":"message","role":"assistant","model":"claude-y","content":[{"type":"thinking","thinking":"…"},""" +
@@ -101,7 +108,7 @@ class AnthropicWireSuite extends munit.FunSuite:
 
   test("an answer: its first text block, its stop reason, its usage, the model that served it"):
     assertEquals(
-      AnthropicAnswer(AnthropicAnswer.Status(200), AnthropicAnswer.Body(ok)).turn,
+      anthropic(AnthropicAnswer.Status(200), AnthropicAnswer.Body(ok)).turn,
       Right(
         AiTurn(
           AiTurn.Text("first"),
@@ -113,33 +120,46 @@ class AnthropicWireSuite extends munit.FunSuite:
       )
     )
 
+  private def anthropic(status: AnthropicAnswer.Status, body: AnthropicAnswer.Body) = AnthropicAnswer(
+    Problem.Upstream.Name("anthropic"),
+    Problem.Upstream.Url("https://api.anthropic.com/v1/messages"),
+    status,
+    body
+  )
+
+  /** What the answer said: an error and its words, or why a success answer cannot be read. */
+  private def said(p: Problem): String = p match
+    case Problem.Upstream.Http(_, _, status, body, _)    => s"$status $body"
+    case Problem.Upstream.BadReply(_, _, _, reported, _) => s"$reported"
+    case other                                           => s"$other"
+
   test("a failure: an error status's body as it came; an error in a success answer by its message; else why"):
     assertEquals(
-      AnthropicAnswer(AnthropicAnswer.Status(529), AnthropicAnswer.Body("""{"type":"error"}""")).turn.left
-        .map(_.legacyText),
-      Left("""{"type":"error"}""")
+      anthropic(AnthropicAnswer.Status(529), AnthropicAnswer.Body("""{"type":"error"}""")).turn.left
+        .map(said),
+      Left("""529 {"type":"error"}""")
     )
     assertEquals(
-      AnthropicAnswer(
+      anthropic(
         AnthropicAnswer.Status(200),
         AnthropicAnswer.Body("""{"type":"error","error":{"type":"overloaded_error","message":"Overloaded"}}""")
-      ).turn.left.map(_.legacyText),
-      Left("Overloaded")
+      ).turn.left.map(said),
+      Left("200 Overloaded")
     )
     assertEquals(
-      AnthropicAnswer(AnthropicAnswer.Status(200), AnthropicAnswer.Body("""{"id":"m"""")).turn.left.map(_.legacyText),
+      anthropic(AnthropicAnswer.Status(200), AnthropicAnswer.Body("""{"id":"m"""")).turn.left.map(said),
       Left("id: unexpected end of input")
     )
     assertEquals(
-      AnthropicAnswer(AnthropicAnswer.Status(200), AnthropicAnswer.Body("""{"id":"m"}""")).turn.left.map(_.legacyText),
+      anthropic(AnthropicAnswer.Status(200), AnthropicAnswer.Body("""{"id":"m"}""")).turn.left.map(said),
       Left("error: missing required field")
     )
     // a content block of an unknown type is not a message
     assertEquals(
-      AnthropicAnswer(
+      anthropic(
         AnthropicAnswer.Status(200),
         AnthropicAnswer.Body(ok.replace("thinking\",\"thinking", "unknown\",\"thinking"))
-      ).turn.left.map(_.legacyText),
+      ).turn.left.map(said),
       Left("error: missing required field")
     )
 

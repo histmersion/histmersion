@@ -1,7 +1,7 @@
 package com.histmersion
 package pluginhost
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import com.histmersion.plugin.*
 
 import scala.jdk.CollectionConverters.*
@@ -20,21 +20,18 @@ object PluginAi:
   def check(provider: AiProvider, model: ModelName): Either[Problem, Unit] =
     try
       Option(provider.check(AiProvider.CheckModel(model.value)))
-        .getOrElse(Left(Problem.Unclassified(Legacy.Text("its check answered null"))))
+        .getOrElse(Left(PluginMedia.answeredNothing))
     catch
       case e: InterruptedException => throw e
-      case NonFatal(e) => Left(Problem.Unclassified(Legacy.Text(s"its check threw ${e.getClass.getSimpleName}")))
+      case NonFatal(e)             => Left(PluginMedia.threw(e))
 
   /** One model call: the provider's answer, or its failure — an exception or a `null` being an error. */
   def turn(provider: AiProvider, request: AiTurn.Request, http: AiHttp): Either[Problem, AiTurn] =
     val answer =
       try
         Option(provider.turn(request, http))
-          .getOrElse(Left(Problem.Unclassified(Legacy.Text("the provider answered null"))))
+          .getOrElse(Left(PluginMedia.answeredNothing))
       catch
         case e: InterruptedException => throw e
-        case NonFatal(e)             =>
-          Left(
-            Problem.Unclassified(Legacy.Text(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}"))
-          )
-    answer.flatMap(t => Option(t).toRight(Problem.Unclassified(Legacy.Text("the provider answered null"))))
+        case NonFatal(e)             => Left(PluginMedia.threw(e))
+    answer.flatMap(t => Option(t).toRight(PluginMedia.answeredNothing))

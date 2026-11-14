@@ -1,8 +1,8 @@
 package com.histmersion
 package plugin.testkit
 
-import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.domain.CoreQuota
@@ -70,7 +70,7 @@ class PluginHarnessSuite extends munit.FunSuite:
       secrets: Map[Secret.Ref.ParseText, Secret.Resolved] = Map.empty,
       env: Map[String, String] = Map.empty
   ): PluginHarness =
-    PluginHarness.load(id, config, http, secrets, env).fold(e => fail(e.sentence), identity)
+    PluginHarness.load(id, config, http, secrets, env).fold(e => fail(e.sentences.mkString("; ")), identity)
 
   private val KitFetcher = Plugin.Info.Id("kit-fetcher")
   private val KitMedia = Plugin.Info.Id("kit-media")
@@ -87,17 +87,19 @@ class PluginHarnessSuite extends munit.FunSuite:
 
   test("the server's own refusals: an unknown id, no defaults, a failed register, a bad setting, disabled"):
     def why(id: Plugin.Info.Id, config: String = ""): String =
-      PluginHarness.load(id, config, env = Map.empty).swap.map(_.sentence).getOrElse(fail("loaded"))
-    assert(why(Plugin.Info.Id("nope")).contains("found: kit-"), why(Plugin.Info.Id("nope")))
+      PluginHarness.load(id, config, env = Map.empty).swap.map(_.sentences.mkString("; ")).getOrElse(fail("loaded"))
+    assert(why(Plugin.Info.Id("nope")).contains("no Plugin.Info.Id 'nope'"), why(Plugin.Info.Id("nope")))
     assert(
       why(Plugin.Info.Id("kit-nodefaults")).contains("META-INF/histmersion/plugins/kit-nodefaults.conf"),
       why(Plugin.Info.Id("kit-nodefaults"))
     )
     assert(why(Plugin.Info.Id("kit-broken")).contains("broken on purpose"), why(Plugin.Info.Id("kit-broken")))
     assert(
-      why(KitFetcher, "base-urll = \"x\"").contains("histmersion.plugins.kit-fetcher.base-urll: unknown setting")
+      why(KitFetcher, "base-urll = \"x\"").contains(
+        "histmersion.plugins.kit-fetcher.base-urll is no setting of the plugin"
+      )
     )
-    assert(why(KitFetcher, "enabled = false").contains("disabled"))
+    assert(why(KitFetcher, "enabled = false").contains("is switched off"))
     assert(
       why(KitFetcher, "token = \"nonsense\"")
         .contains("not a bare value") || why(KitFetcher, "token = \"nonsense\"").contains("reference")
@@ -130,7 +132,13 @@ class PluginHarnessSuite extends munit.FunSuite:
     )
     assertEquals(ai.requests.map(_.headers(CoreQuota.HeaderName("x-api-key"))), List("***"))
     val missing = PluginHarness.load(KitAi, "api-key = \"keepassxc:Models/key\"", env = Map.empty)
-    assert(missing.left.exists(_.sentence.contains("no secret vault 'keepassxc'")), missing.toString)
+    assert(
+      missing.left.exists(_.exists {
+        case Problem.Plugin.Vault(vault, Problem.Plugin.Retrieval.NoVault) => vault == Problem.Plugin.Id("keepassxc")
+        case _                                                             => false
+      }),
+      missing.toString
+    )
 
   // ── fetch ──────────────────────────────────────────────────────────────────────────────────────
 
@@ -162,15 +170,34 @@ class PluginHarnessSuite extends munit.FunSuite:
     assertEquals(found.requests, List("GET https://books.example/10.1/ok.pdf"))
     assertEquals(
       h.fetch(WorkKey(doi = Some(Doi("10.1/tiny")))).outcome,
-      FetchOutcome.Miss(Problem.Unclassified(Legacy.Text("kit-fetcher: not a PDF")))
+      FetchOutcome.Miss(
+        Problem.Io.Corrupt(
+          Problem.Io.Format.Pdf,
+          Problem.Where("https://books.example/10.1/tiny.pdf"),
+          Problem.Io.Damage.Undecodable
+        )
+      )
     )
     h.fetch(WorkKey(doi = Some(Doi("10.1/cf")))).outcome match
-      case FetchOutcome.Refused(why) => assert(why.sentence.contains("bot-protection challenge"), why)
+      case FetchOutcome.Refused(why) => assert(why.sentences.mkString.contains("bot-protection challenge"), why)
       case other                     => fail(s"expected a refusal, got $other")
-    assert(h.fetch(WorkKey(doi = Some(Doi("10.1/none")))).outcome.toString.contains("HTTP 404"))
+    val none = h.fetch(WorkKey(doi = Some(Doi("10.1/none")))).outcome
+    assert(
+      none match
+        case FetchOutcome.Miss(why) => why.sentences.mkString.contains("HTTP 404")
+        case _                      => false
+      ,
+      none
+    )
     assertEquals(
       h.fetch(WorkKey(title = Some(WorkKey.Title("No DOI")))).answers,
-      List(FetcherAnswer(FetchChain.Answer.Fetcher("kit-fetcher"), false, Problem.Unclassified(Legacy.Text("no DOI"))))
+      List(
+        FetcherAnswer(
+          FetchChain.Answer.Fetcher("kit-fetcher"),
+          false,
+          Problem.Invalid.Missing.here(Problem.Field("doi"))
+        )
+      )
     )
   }
 
@@ -258,14 +285,14 @@ class PluginHarnessSuite extends munit.FunSuite:
     assertEquals(r.kept.map(v => v.key -> v.licence), List("a" -> Some("CC-BY-4.0")))
     assertEquals(
       r.verdicts.map(v => v.key -> v.refused.isDefined),
-      List("a" -> false, "b" -> true, "c" -> true, "unreadable record 'nonsense'" -> true)
+      List("a" -> false, "b" -> true, "c" -> true, "the text data at record nonsense cannot be decoded" -> true)
     )
-    assertEquals(r.verdicts(2).refused.map(_.sentence), Some("no image"))
+    assertEquals(r.verdicts(2).refused.map(_.sentence), Some("kit-media did not take c: no image"))
     assertEquals(
       h.searchMedia(Registries.MediaCollectionsKey("other"), MediaPlace(MediaPlace.Id("x"), MediaPlace.Label("y")))
         .failure
         .map(_.sentence),
-      Some("the plugin registered no media collection 'other'")
+      Some("no MediaCollection 'other'")
     )
 
   test("events: every part read page by page, each record checked and dated by the server"):
@@ -290,7 +317,7 @@ class PluginHarnessSuite extends munit.FunSuite:
         ("vesuvius", "eruption", Some(Year(79)), Some(Year(79)))
       )
     )
-    assertEquals(r.refused, List("p1: bad: its dating runs backwards"))
+    assertEquals(r.refused, List("p1: kit-events.bad: notBefore, beginBy, endFrom, notAfter must be in order"))
 
   private val request = AiTurn.Request(
     AiTurn.Request.Model("m"),
@@ -307,12 +334,18 @@ class PluginHarnessSuite extends munit.FunSuite:
     val none = loaded(KitAi)
     assertEquals(
       none.aiTurn(Registries.AiProvidersKey("kit-ai"), request),
-      AiReport(Left(Problem.Unclassified(Legacy.Text("no api-key configured"))), None, Nil)
+      AiReport(
+        Left(
+          Problem.Config.Setting(Problem.SettingKey("histmersion.plugins.kit-ai.api-key"), Problem.Config.Fault.Empty)
+        ),
+        None,
+        Nil
+      )
     )
     val keyed = loaded(KitAi, "api-key = \"value:k-0000\"")
     assert(keyed.warnings.exists(_.value.contains("value:***")), keyed.warnings.toString)
     val down = keyed.aiTurn(Registries.AiProvidersKey("kit-ai"), request, ScriptedAiHttp())
-    assertEquals(down.turn, Some(Left(Problem.Unclassified(Legacy.Text("no scripted answer")))))
+    assert(down.turn.exists(_.left.exists(_.isNotFound)), down.toString)
 
   test("a secret vault resolves as the server asks it"):
     val h = loaded(KitVault, "entries = [\"portal=s3cret\"]")
@@ -320,5 +353,5 @@ class PluginHarnessSuite extends munit.FunSuite:
     assert(
       h.resolveSecret(Secret.Ref.Vault.Value("kit-vault"), Secret.Ref.Vault.Ref("other"))
         .left
-        .exists(_.sentence.contains("no entry 'other'"))
+        .exists(_.sentences.mkString.contains("it holds no 'other'"))
     )

@@ -1,6 +1,6 @@
 package com.histmersion
 package pluginhost
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.plugin as spi
 import io.github.iltotore.iron.constraint.any.Pure
@@ -73,12 +73,7 @@ object SpiValues:
 
   // ── from a plugin ───────────────────────────────────────────────────────────────────────────
 
-  def yearOf(y: Year): Either[Problem, com.histmersion.Year] =
-    Year
-      .either(y.value)
-      .map(ok => com.histmersion.Year(ok.value))
-      .left
-      .map(_ => Problem.Unclassified(Legacy.Text(s"year ${y.value} is not a year")))
+  def yearOf(y: Year): Either[Problem, com.histmersion.Year] = Right(com.histmersion.Year(y.value))
 
   /** A plugin's period, its ends in either order (a period a plugin could not have built that way is still one span of
     * years).
@@ -95,29 +90,27 @@ object SpiValues:
 
   def latitudeOf(l: Latitude): Either[Problem, com.histmersion.Latitude] =
     com.histmersion.Latitude
-      .either(l.value)
+      .checked(l.value)
       .left
-      .map(_ => Problem.Unclassified(Legacy.Text(s"latitude ${l.value} is not between -90 and 90")))
+      .map(Problem.Invalid.malformed)
 
   def longitudeOf(l: Longitude): Either[Problem, com.histmersion.Longitude] =
     com.histmersion.Longitude
-      .either(l.value)
+      .checked(l.value)
       .left
-      .map(_ => Problem.Unclassified(Legacy.Text(s"longitude ${l.value} is not between -180 and 180")))
+      .map(Problem.Invalid.malformed)
 
   def doiOf(d: spi.Doi): Either[Problem, Doi] =
     Doi
-      .either(d.value)
+      .checked(d.value)
       .left
-      .map(_ => Problem.Unclassified(Legacy.Text(s"DOI '${d.value}' is not a DOI (10.<registrant>/<suffix>)")))
+      .map(Problem.Invalid.malformed)
 
   def wikidataOf(q: WikidataId): Either[Problem, Wikidata.Id] =
     Wikidata.Id
-      .either(q.value)
+      .checked(q.value)
       .left
-      .map(_ =>
-        Problem.Unclassified(Legacy.Text(s"Wikidata id '${q.value}' is not a Wikidata item (Q and its number)"))
-      )
+      .map(Problem.Invalid.malformed)
 
   /** A licence statement, as the text the host reads (and judges itself). */
   def licenceOf(l: Licence): com.histmersion.domain.Licence.Id = com.histmersion.domain.Licence.Id(l.value)

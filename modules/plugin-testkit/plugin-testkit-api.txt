@@ -284,15 +284,15 @@ com.histmersion.plugin.testkit.FetchOutcome$Found$ fromProduct(scala.Product): c
 com.histmersion.plugin.testkit.FetchOutcome$Found$ new()
 com.histmersion.plugin.testkit.FetchOutcome$Found$ toString(): java.lang.String
 com.histmersion.plugin.testkit.FetchOutcome$Found$ unapply(com.histmersion.plugin.testkit.FetchOutcome$Found): com.histmersion.plugin.testkit.FetchOutcome$Found
-com.histmersion.plugin.testkit.FetchOutcome$Miss _1(): com.histmersion.util.problem.Problem
-com.histmersion.plugin.testkit.FetchOutcome$Miss apply(com.histmersion.util.problem.Problem): com.histmersion.plugin.testkit.FetchOutcome$Miss
+com.histmersion.plugin.testkit.FetchOutcome$Miss _1(): java.io.Serializable
+com.histmersion.plugin.testkit.FetchOutcome$Miss apply(java.io.Serializable): com.histmersion.plugin.testkit.FetchOutcome$Miss
 com.histmersion.plugin.testkit.FetchOutcome$Miss canEqual(java.lang.Object): boolean
 com.histmersion.plugin.testkit.FetchOutcome$Miss class
-com.histmersion.plugin.testkit.FetchOutcome$Miss copy(com.histmersion.util.problem.Problem): com.histmersion.plugin.testkit.FetchOutcome$Miss
+com.histmersion.plugin.testkit.FetchOutcome$Miss copy(java.io.Serializable): com.histmersion.plugin.testkit.FetchOutcome$Miss
 com.histmersion.plugin.testkit.FetchOutcome$Miss equals(java.lang.Object): boolean
 com.histmersion.plugin.testkit.FetchOutcome$Miss fromProduct(scala.Product): com.histmersion.plugin.testkit.FetchOutcome$Miss
 com.histmersion.plugin.testkit.FetchOutcome$Miss hashCode(): int
-com.histmersion.plugin.testkit.FetchOutcome$Miss new(com.histmersion.util.problem.Problem)
+com.histmersion.plugin.testkit.FetchOutcome$Miss new(java.io.Serializable)
 com.histmersion.plugin.testkit.FetchOutcome$Miss ordinal(): int
 com.histmersion.plugin.testkit.FetchOutcome$Miss productArity(): int
 com.histmersion.plugin.testkit.FetchOutcome$Miss productElement(int): java.lang.Object
@@ -300,22 +300,22 @@ com.histmersion.plugin.testkit.FetchOutcome$Miss productElementName(int): java.l
 com.histmersion.plugin.testkit.FetchOutcome$Miss productPrefix(): java.lang.String
 com.histmersion.plugin.testkit.FetchOutcome$Miss toString(): java.lang.String
 com.histmersion.plugin.testkit.FetchOutcome$Miss unapply(com.histmersion.plugin.testkit.FetchOutcome$Miss): com.histmersion.plugin.testkit.FetchOutcome$Miss
-com.histmersion.plugin.testkit.FetchOutcome$Miss why(): com.histmersion.util.problem.Problem
-com.histmersion.plugin.testkit.FetchOutcome$Miss$ apply(com.histmersion.util.problem.Problem): com.histmersion.plugin.testkit.FetchOutcome$Miss
+com.histmersion.plugin.testkit.FetchOutcome$Miss why(): java.io.Serializable
+com.histmersion.plugin.testkit.FetchOutcome$Miss$ apply(java.io.Serializable): com.histmersion.plugin.testkit.FetchOutcome$Miss
 com.histmersion.plugin.testkit.FetchOutcome$Miss$ class
 com.histmersion.plugin.testkit.FetchOutcome$Miss$ fromProduct(scala.Product): com.histmersion.plugin.testkit.FetchOutcome$Miss
 com.histmersion.plugin.testkit.FetchOutcome$Miss$ new()
 com.histmersion.plugin.testkit.FetchOutcome$Miss$ toString(): java.lang.String
 com.histmersion.plugin.testkit.FetchOutcome$Miss$ unapply(com.histmersion.plugin.testkit.FetchOutcome$Miss): com.histmersion.plugin.testkit.FetchOutcome$Miss
-com.histmersion.plugin.testkit.FetchOutcome$Refused _1(): com.histmersion.util.problem.Problem
-com.histmersion.plugin.testkit.FetchOutcome$Refused apply(com.histmersion.util.problem.Problem): com.histmersion.plugin.testkit.FetchOutcome$Refused
+com.histmersion.plugin.testkit.FetchOutcome$Refused _1(): java.io.Serializable
+com.histmersion.plugin.testkit.FetchOutcome$Refused apply(java.io.Serializable): com.histmersion.plugin.testkit.FetchOutcome$Refused
 com.histmersion.plugin.testkit.FetchOutcome$Refused canEqual(java.lang.Object): boolean
 com.histmersion.plugin.testkit.FetchOutcome$Refused class
-com.histmersion.plugin.testkit.FetchOutcome$Refused copy(com.histmersion.util.problem.Problem): com.histmersion.plugin.testkit.FetchOutcome$Refused
+com.histmersion.plugin.testkit.FetchOutcome$Refused copy(java.io.Serializable): com.histmersion.plugin.testkit.FetchOutcome$Refused
 com.histmersion.plugin.testkit.FetchOutcome$Refused equals(java.lang.Object): boolean
 com.histmersion.plugin.testkit.FetchOutcome$Refused fromProduct(scala.Product): com.histmersion.plugin.testkit.FetchOutcome$Refused
 com.histmersion.plugin.testkit.FetchOutcome$Refused hashCode(): int
-com.histmersion.plugin.testkit.FetchOutcome$Refused new(com.histmersion.util.problem.Problem)
+com.histmersion.plugin.testkit.FetchOutcome$Refused new(java.io.Serializable)
 com.histmersion.plugin.testkit.FetchOutcome$Refused ordinal(): int
 com.histmersion.plugin.testkit.FetchOutcome$Refused productArity(): int
 com.histmersion.plugin.testkit.FetchOutcome$Refused productElement(int): java.lang.Object
@@ -323,8 +323,8 @@ com.histmersion.plugin.testkit.FetchOutcome$Refused productElementName(int): jav
 com.histmersion.plugin.testkit.FetchOutcome$Refused productPrefix(): java.lang.String
 com.histmersion.plugin.testkit.FetchOutcome$Refused toString(): java.lang.String
 com.histmersion.plugin.testkit.FetchOutcome$Refused unapply(com.histmersion.plugin.testkit.FetchOutcome$Refused): com.histmersion.plugin.testkit.FetchOutcome$Refused
-com.histmersion.plugin.testkit.FetchOutcome$Refused why(): com.histmersion.util.problem.Problem
-com.histmersion.plugin.testkit.FetchOutcome$Refused$ apply(com.histmersion.util.problem.Problem): com.histmersion.plugin.testkit.FetchOutcome$Refused
+com.histmersion.plugin.testkit.FetchOutcome$Refused why(): java.io.Serializable
+com.histmersion.plugin.testkit.FetchOutcome$Refused$ apply(java.io.Serializable): com.histmersion.plugin.testkit.FetchOutcome$Refused
 com.histmersion.plugin.testkit.FetchOutcome$Refused$ class
 com.histmersion.plugin.testkit.FetchOutcome$Refused$ fromProduct(scala.Product): com.histmersion.plugin.testkit.FetchOutcome$Refused
 com.histmersion.plugin.testkit.FetchOutcome$Refused$ new()

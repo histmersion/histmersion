@@ -1,12 +1,13 @@
 package com.histmersion
 package plugins.calibre
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem, Problems}
 
 import com.histmersion.plugin.*
 
 import java.nio.file.Path
 import scala.util.Try
 import io.github.iltotore.iron.constraint.any.Pure
+import io.github.iltotore.iron.constraint.string.Match
 
 /** The Calibre library as a [[SourceCollection]]: [[Calibre]] read and written, its books as collection items. Writes
   * only with `writeBack`, and then refused while the Calibre GUI holds the library.
@@ -28,53 +29,49 @@ final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollec
     else Set(CollectionCapability.Read)
 
   override def readOnlyReason: Problem =
-    Problem.Unclassified(
-      Legacy.Text(
-        "write-back is off — set histmersion.plugins.calibre.write-back = true " +
-          "(HISTMERSION_PLUGIN_CALIBRE_WRITE_BACK=true) to let the server write to the library"
-      )
+    Problem.Refused.Disabled(
+      Problem.Refused.Feature("write-back"),
+      Problem.SettingKey("histmersion.plugins.calibre.write-back")
     )
 
-  override def reach: Either[Problem, Unit] =
+  override def reach: Either[Problems, Unit] =
     CalibreCollection.reach(Path.of(library.library.value))
 
-  def search(query: CollectionQuery): Either[Problem, List[CollectionItem]] =
+  def search(query: CollectionQuery): Either[Problems, List[CollectionItem]] =
     (query.text match
       case Some(text) =>
         calibre.search(text, query.limit.fold(CalibreCollection.SearchLimit)(l => Calibre.SearchLimit(l.value)))
       case None => query.limit.fold(calibre.all())(l => calibre.all(Calibre.AllLimit(l.value)))
     ).map(_.map(CalibreCollection.item))
 
-  def item(id: CollectionId): Either[Problem, Option[CollectionItem]] =
+  def item(id: CollectionId): Either[Problems, Option[CollectionItem]] =
     id.value.trim.toIntOption
-      .fold[Either[Problem, Option[CollectionItem]]](Right(None))(n =>
+      .fold[Either[Problems, Option[CollectionItem]]](Right(None))(n =>
         calibre.byId(Calibre.Book.Id(n)).map(_.map(CalibreCollection.item))
       )
 
-  override def admits(item: CollectionItem): Either[Problem, Unit] =
+  override def admits(item: CollectionItem): Either[Problems, Unit] =
     Calibre
       .guard(Calibre.Push.Title(item.title.fold("")(_.value)), item.authors.map(a => Calibre.Push.Authors(a.value)))
       .left
-      .map(e => Problem.Unclassified(Legacy.Text(s"Calibre id ${item.id.value} has ${e.legacyText}")))
+      .map(_.at(Problem.Field(s"Calibre id ${item.id}")))
 
   def file(
       item: CollectionItem,
       format: Option[SourceCollection.FileFormat]
-  ): Either[Problem, CollectionFile] =
+  ): Either[Problems, CollectionFile] =
     CalibreCollection
       .book(item)
       .pick(format.map(f => CollectionFile.Format(f.value)))
       .map(f => CollectionFile(CollectionFile.Name(f.value)))
       .toRight(
-        Problem.Unclassified(
-          Legacy.Text(
-            s"Calibre id ${item.id.value} has no pdf/epub (formats: ${item.files.map(_.name.value).mkString(", ")}); " +
-              "KFX/MOBI must be converted in Calibre first"
-          )
+        Calibre.said(
+          s"Calibre id ${item.id.value} has no pdf/epub (formats: ${item.files.map(_.name.value).mkString(", ")}); " +
+            "KFX/MOBI must be converted in Calibre first"
         )
       )
 
-  def original(item: CollectionItem, file: CollectionFile): Either[Problem, FetchedFile] =
+  def original(item: CollectionItem, file: CollectionFile): Either[Problems, FetchedFile] =
     CalibreCollection
       .read(file.name)
       .map(bytes =>
@@ -86,7 +83,7 @@ final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollec
         )
       )
 
-  override def cover(item: CollectionItem): Either[Problem, Option[FetchedFile]] =
+  override def cover(item: CollectionItem): Either[Problems, Option[FetchedFile]] =
     item.cover.map(_.value.trim).filter(p => p.nonEmpty && files.isFile(Path.of(p))) match
       case None       => Right(None)
       case Some(path) =>
@@ -107,7 +104,7 @@ final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollec
   override def add(
       metadata: CollectionMetadata,
       file: FetchedFile
-  ): Either[Problem, CollectionId] =
+  ): Either[Problems, CollectionId] =
     CalibreCollection
       .staged(LocalFiles.StagedName(metadata.key.value), file)(p => calibre.add(p, CalibreCollection.push(metadata)))
       .map(id => CollectionId(id.value.toString))
@@ -116,7 +113,7 @@ final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollec
       id: CollectionId,
       key: SourceCollection.ReplaceKey,
       file: FetchedFile
-  ): Either[Problem, SourceCollection.FileFormat] =
+  ): Either[Problems, SourceCollection.FileFormat] =
     CalibreCollection
       .number(id)
       .flatMap(n => CalibreCollection.staged(LocalFiles.StagedName(key.value), file)(p => calibre.replaceFormat(n, p)))
@@ -125,7 +122,7 @@ final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollec
   override def update(
       id: CollectionId,
       metadata: CollectionMetadata
-  ): Either[Problem, List[CollectionChange]] =
+  ): Either[Problems, List[CollectionChange]] =
     CalibreCollection
       .number(id)
       .flatMap(calibre.update(_, CalibreCollection.push(metadata)))
@@ -134,7 +131,7 @@ final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollec
   override def updateAll(
       links: List[CollectionLink],
       apply: SourceCollection.UpdateAllApply
-  ): Either[Problem, List[CollectionUpdateEntry]] =
+  ): Either[Problems, List[CollectionUpdateEntry]] =
     val linked = links.flatMap(l =>
       l.id.value.trim.toIntOption.map(n =>
         LinkedRecord(
@@ -151,7 +148,7 @@ final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollec
   override def set(
       id: CollectionId,
       fields: List[(SourceCollection.FieldName, SourceCollection.FieldValue)]
-  ): Either[Problem, Unit] =
+  ): Either[Problems, Unit] =
     CalibreCollection
       .number(id)
       .flatMap(
@@ -160,7 +157,7 @@ final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollec
 
   override def audit(
       records: List[CollectionRecord]
-  ): Either[Problem, List[CollectionFinding]] =
+  ): Either[Problems, List[CollectionFinding]] =
     val recs = records.flatMap(r =>
       r.id.value.trim.toIntOption.map(n =>
         AuditRecord(
@@ -179,6 +176,10 @@ final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollec
       }
 
 object CalibreCollection:
+
+  /** A Calibre entry's id as a collection id spells it: decimal digits that fit an `Int`. */
+  type IdText = IdText.T
+  object IdText extends Newtype[String, Match["[0-9]{1,9}"]]
   type WriteBack = WriteBack.T
   object WriteBack extends Newtype[Boolean, Pure]
 
@@ -271,25 +272,27 @@ object CalibreCollection:
       CollectionFinding.Fixable(f.fixable)
     )
 
-  def number(id: CollectionId): Either[Problem, Calibre.Book.Id] =
-    id.value.trim.toIntOption
-      .map(Calibre.Book.Id(_))
-      .toRight(Problem.Unclassified(Legacy.Text(s"'${id.value}' is not a Calibre id")))
+  def number(id: CollectionId): Either[Problems, Calibre.Book.Id] =
+    IdText
+      .checked(id.value.trim)
+      .left
+      .map(Problem.Invalid.malformed)
+      .map(t => Calibre.Book.Id(t.value.toInt))
 
   def extension(name: CollectionFile.Name): FetchedFile.Extension =
     FetchedFile.Extension(name.value.reverse.takeWhile(_ != '.').reverse.toLowerCase(java.util.Locale.ROOT))
 
-  def read(name: CollectionFile.Name)(using files: LocalFiles): Either[Problem, FetchedFile.Bytes] =
+  def read(name: CollectionFile.Name)(using files: LocalFiles): Either[Problems, FetchedFile.Bytes] =
     Try(FetchedFile.Bytes(files.read(Path.of(name.value)).value)).toEither.left.map(e =>
-      Problem.Unclassified(Legacy.Text(s"cannot read ${name.value} (${e.getMessage})"))
+      Problem.Io.File(Problem.Io.Access.Read, Problem.Io.Path(s"$name"), External.Reported.of(e))
     )
 
   /** `file` written as `<a temporary directory>/<name>.<extension>` (the extension is what tells Calibre the format),
     * `f` run on it, and the directory deleted whatever happens.
     */
   def staged[A](name: LocalFiles.StagedName, file: FetchedFile)(
-      f: Path => Either[Problem, A]
-  )(using files: LocalFiles): Either[Problem, A] =
+      f: Path => Either[Problems, A]
+  )(using files: LocalFiles): Either[Problems, A] =
     files
       .staged(
         LocalFiles.StagedName(s"${name.value}.${file.extension.value}"),
@@ -297,14 +300,15 @@ object CalibreCollection:
       )(p => f(p))
 
   /** Whether the server can read the library at `dir`, and when it cannot, what it needs. */
-  def reach(dir: Path)(using files: LocalFiles): Either[Problem, Unit] =
+  def reach(dir: Path)(using files: LocalFiles): Either[Problems, Unit] =
     val db = dir.resolve("metadata.db")
     if !files.isDirectory(dir) && !files.exists(db) then
       Left(
-        Problem.Unclassified(
-          Legacy.Text(
-            s"there is no Calibre library at $dir — set histmersion.plugins.calibre.library-path to the folder that " +
-              "holds metadata.db (a server in a container needs that folder mounted)"
+        Problems.of(
+          Problem.Io.Wrong(Problem.Io.Path(s"$dir"), Problem.Io.Kind.Directory),
+          Calibre.said(
+            "set histmersion.plugins.calibre.library-path to the folder that holds metadata.db (a server in a " +
+              "container needs that folder mounted)"
           )
         )
       )
@@ -312,13 +316,19 @@ object CalibreCollection:
       (Try { files.readPrefix(db, LocalFiles.ReadPrefixLength(16)); () }.toEither.left
         .map {
           case _: java.nio.file.NoSuchFileException =>
-            s"there is no metadata.db in $dir — set histmersion.plugins.calibre.library-path to the Calibre library's folder"
+            Problems.of(
+              Problem.Io.Wrong(Problem.Io.Path(s"$db"), Problem.Io.Kind.Present),
+              Calibre.said("set histmersion.plugins.calibre.library-path to the Calibre library's folder")
+            )
           case e =>
-            s"the server cannot read $db (${e.getClass.getSimpleName}: ${e.getMessage}) — on macOS a library in " +
-              "Documents, Desktop, Downloads, iCloud Drive or on an external volume needs Full Disk Access (or Files " +
-              "and Folders) for the server's binary, granted in System Settings → Privacy & Security; a server in a " +
-              "container needs the library mounted"
+            Problems.of(
+              Problem.Io.File(Problem.Io.Access.Read, Problem.Io.Path(s"$db"), External.Reported.of(e)),
+              Calibre.said(
+                "on macOS a library in Documents, Desktop, Downloads, iCloud Drive or on an external volume needs Full " +
+                  "Disk Access (or Files and Folders) for the server's binary, granted in System Settings → Privacy & " +
+                  "Security; a server in a container needs the library mounted"
+              )
+            )
         }
-        .map(_ => ()))
-        .left
-        .map((text => Problem.Unclassified(Legacy.Text(text))))
+        .map(_ => ())
+    )

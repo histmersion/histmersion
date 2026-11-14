@@ -1143,7 +1143,7 @@ object Calibre:
         citekeys: List[UpdateRow.Citekeys],
         state: UpdateRow.State,
         changes: List[Change],
-        reason: Option[Problem]
+        reasons: List[Problem]
     ) derives JsonCodec
     object UpdateRow:
       type CalibreId = Calibre.Book.Id
@@ -1163,9 +1163,9 @@ object Calibre:
           case UpdateOutcome.Missing       => ("missing", Nil)
           case UpdateOutcome.Refused(_)    => ("refused", Nil)
         val reason = e.outcome match
-          case UpdateOutcome.Failed(_, r) => Some(r)
-          case UpdateOutcome.Refused(r)   => Some(r)
-          case _                          => None
+          case UpdateOutcome.Failed(_, r) => List(r)
+          case UpdateOutcome.Refused(r)   => List(r)
+          case _                          => Nil
         UpdateRow(
           e.calibreId,
           e.citekeys.map(k => Citekeys(k.value)),
@@ -1179,7 +1179,7 @@ object Calibre:
           r.citekeys,
           r.state,
           r.changes.map(ch => Change(ch.field, ch.from, ch.to)),
-          r.reason
+          r.reasons
         )
 
     /** `calibre audit --json`: one entry that disagrees with its record; `fix` = the citekey whose record

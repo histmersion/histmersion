@@ -1,7 +1,7 @@
 package com.histmersion
 package plugin.testkit
 
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.Problems
 import com.histmersion.plugin.*
 import com.histmersion.pluginhost.FetchChain
 
@@ -16,7 +16,7 @@ enum FetchOutcome derives CanEqual:
   case Found(fetcher: FetchChain.Outcome.FoundBy, file: FetchedFile, savedTo: Option[Path])
 
   /** No fetcher had a copy; each one's reason, as the ingest report lists them. */
-  case Miss(why: Problem)
+  case Miss(why: Problems)
 
   /** A fetcher knows of a copy it may not take (a lending-only item, a bot challenge, no open licence). */
-  case Refused(why: Problem)
+  case Refused(why: Problems)

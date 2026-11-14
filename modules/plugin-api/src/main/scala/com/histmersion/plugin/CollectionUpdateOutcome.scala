@@ -1,7 +1,7 @@
 package com.histmersion
 package plugin
 
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.Problems
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What [[SourceCollection.updateAll]] does, or did, to one item. */
@@ -13,7 +13,7 @@ enum CollectionUpdateOutcome derives CanEqual:
   case Applied(changes: List[CollectionChange])
 
   /** Writing these fields failed, for `reason`. */
-  case Failed(changes: List[CollectionChange], reason: Problem)
+  case Failed(changes: List[CollectionChange], reason: Problems)
 
   /** The item already says what the source says. */
   case UpToDate
@@ -25,4 +25,4 @@ enum CollectionUpdateOutcome derives CanEqual:
   case Missing
 
   /** The source's own metadata is refused (a blank or placeholder title or author), for `reason`. */
-  case Refused(reason: Problem)
+  case Refused(reason: Problems)

@@ -5,7 +5,7 @@ import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.JsonCodec.given
 import com.histmersion.util.json.Cursor
 import hearth.kindlings.jsoniterjson.Json
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.plugin.*
 
@@ -23,6 +23,9 @@ import io.github.iltotore.iron.constraint.any.Pure
   * date (never an accession or collection date), read by [[FreeTextDates]]. Pure.
   */
 object Smithsonian:
+
+  /** The plugin's id: what its problems name. */
+  val Name = "media-smithsonian"
   type Label = Label.T
   object Label extends Newtype[String, Pure]
   type Unit = Unit.T
@@ -91,9 +94,12 @@ object Smithsonian:
       case None if resp.long("rowCount").isDefined => Right(Nil)
       case None                                    =>
         val gov = c.downField("error")
-        Left(Problem.Unclassified(Legacy.Text(List(gov.str("code"), gov.str("message")).flatten.mkString(": ") match
-          case "" => resp.str("error").orElse(c.str("message")).getOrElse("no rows in the answer")
-          case e  => e)))
+        Left(
+          (List(gov.str("code"), gov.str("message")).flatten.mkString(": ") match
+            case "" => resp.str("error").orElse(c.str("message"))
+            case e  => Some(e)
+          ).fold(MediaPlugin.missing("rows"))(MediaPlugin.said(Name, Problem.Plugin.Claim.Failed, _))
+        )
 
   extension (c: Cursor)
     private def labelled(field: String): List[(Label, String)] =
@@ -115,7 +121,7 @@ object Smithsonian:
       .str("record_ID")
       .orElse(c.str("url").map(_.split(":", 2).last))
       .orElse(c.str("id"))
-      .toRight(Problem.Unclassified(Legacy.Text("no record id")))
+      .toRight(MediaPlugin.missing("id"))
       .map { key =>
         val title = c.str("title").orElse(dnr.downField("title").str("content")).getOrElse(key)
         val page = dnr
@@ -140,15 +146,8 @@ object Smithsonian:
         val cc0 = media.find(m => m.downField("usage").str("access").exists(_.equalsIgnoreCase("CC0")))
         val rights: Either[Problem, MediaRights] = cc0 match
           case Some(_) => Right(MediaRights.cc0(maker.map(MediaRights.Author(_)), MediaRights.Credit(credit)))
-          case None if media.isEmpty => Left(Problem.Unclassified(Legacy.Text("no image on the record")))
-          case None                  =>
-            val stated = media.flatMap(m => m.downField("usage").str("access")).distinct
-            Left(
-              Problem.Unclassified(
-                Legacy
-                  .Text(s"no CC0 image (usage.access ${if stated.isEmpty then "missing" else stated.mkString(", ")})")
-              )
-            )
+          case None if media.isEmpty => Left(MediaPlugin.rejected(Name, key, Problem.Plugin.Refusal.NoImage))
+          case None                  => Left(MediaPlugin.rejected(Name, key, Problem.Plugin.Refusal.Restricted))
         def resource(m: Cursor, label: String) =
           m.downField("resources")
             .focus

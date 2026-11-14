@@ -1,6 +1,6 @@
 package com.histmersion
 package plugins.media
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.plugin.*
 import com.histmersion.upstreams.wikidata.{WikidataEntities, WikidataItem, WikidataStatement}
@@ -28,7 +28,11 @@ final class WikidataPictures(media: MediaSettings, licences: LicenceReader) exte
 
   def search(place: MediaPlace, http: Plugin.Http) =
     Left(
-      Problem.Unclassified(Legacy.Text("the Wikidata pictures are found for a batch of targets at once"))
+      MediaPlugin.said(
+        "media-wikidata",
+        Problem.Plugin.Claim.Unavailable,
+        "the Wikidata pictures are found for a batch of targets at once"
+      )
     )
 
   /** One target as the import asks it: what it is, its id and its Wikidata item. */

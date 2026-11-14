@@ -4,7 +4,7 @@ import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.JsonCodec.given
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.OpenSide
 import com.histmersion.api.catalogue.{Period as ApiPeriod, Place}
@@ -65,16 +65,16 @@ object PluginGazetteers:
     */
   def input(p: GazetteerPlace, credit: Attribution.Credit): Either[Problem, Place.Input] =
     try
-      if p == null then Left(Problem.Unclassified(Legacy.Text("a place that is null")))
+      if p == null then Left(Problem.Invalid.Missing.here(Problem.Field("place")))
       else
         val id = Option(p.id).map(_.value).getOrElse("")
-        def named(why: Problem): Problem = Problem.Unclassified(Legacy.Text(s"place '$id': ${why.sentence}"))
-        if id.trim.isEmpty then Left(Problem.Unclassified(Legacy.Text("a place with no id")))
+        def named(why: Problem): Problem = why.within(Problem.Field(id))
+        if id.trim.isEmpty then Left(Problem.Invalid.Missing.here(Problem.Field("id")))
         else if Option(p.kind).forall(_.value.trim.isEmpty) then
-          Left(named(Problem.Unclassified(Legacy.Text("no kind"))))
+          Left(named(Problem.Invalid.Missing.here(Problem.Field("kind"))))
         else
           for
-            label <- Option(p.label).toRight(named(Problem.Unclassified(Legacy.Text("no label"))))
+            label <- Option(p.label).toRight(named(Problem.Invalid.Missing.here(Problem.Field("label"))))
             geometry <- json(Option(p.geometry).flatten.map(_.value), FieldName("geometry")).left.map(named)
             properties <- json(Option(p.properties).flatten.map(_.value), FieldName("properties")).left.map(named)
             period <- span(Option(p.period).flatten, Option(p.open).flatten).left.map(named)
@@ -98,18 +98,10 @@ object PluginGazetteers:
               relations
             )
     catch
-      case NonFatal(e) =>
-        Left(
-          Problem.Unclassified(
-            Legacy.Text(
-              s"a place the host cannot read (${e.getClass.getSimpleName}) — is the plugin built against plugin SPI " +
-                s"${Spi.Version}?"
-            )
-          )
-        )
+      case NonFatal(e) => Left(Problem.from(e, Problem.Where("reading a plugin's place"), Problem.Internal.Id.mint()))
 
   private def name(n: GazetteerName): Either[Problem, Place.Name] =
-    if n == null || Option(n.name).isEmpty then Left(Problem.Unclassified(Legacy.Text("a name that is null")))
+    if n == null || Option(n.name).isEmpty then Left(Problem.Invalid.Missing.here(Problem.Field("name")))
     else
       span(Option(n.period).flatten, Option(n.open).flatten).map((period, open) =>
         Place.Name(
@@ -121,11 +113,16 @@ object PluginGazetteers:
       )
 
   private def relation(r: GazetteerRelation): Either[Problem, Place.Relation] =
-    if r == null then Left(Problem.Unclassified(Legacy.Text("a relation that is null")))
-    else if Option(r.childId).forall(_.value.trim.isEmpty) || Option(r.parentId).forall(_.value.trim.isEmpty) then
-      Left(Problem.Unclassified(Legacy.Text("a relation without both its places")))
+    if r == null then Left(Problem.Invalid.Missing.here(Problem.Field("relation")))
+    else if Option(r.childId).forall(_.value.trim.isEmpty) then
+      Left(Problem.Invalid.Missing(Problem.Field("childId"), Vector(Problem.Field("relation"))))
+    else if Option(r.parentId).forall(_.value.trim.isEmpty) then
+      Left(Problem.Invalid.Missing(Problem.Field("parentId"), Vector(Problem.Field("relation"))))
     else if Option(r.kind).forall(_.value.trim.isEmpty) then
-      Left(Problem.Unclassified(Legacy.Text(s"the relation to '${r.parentId.value}' has no kind")))
+      Left(
+        Problem.Invalid
+          .Missing(Problem.Field("kind"), Vector(Problem.Field("relation"), Problem.Field(s"${r.parentId}")))
+      )
     else
       span(Option(r.period).flatten, Option(r.open).flatten).map((period, open) =>
         Place.Relation(
@@ -147,7 +144,7 @@ object PluginGazetteers:
     for
       p <- SpiValues.optional(period)(SpiValues.periodOf)
       side <- (p, open) match
-        case (None, Some(_)) => Left(Problem.Unclassified(Legacy.Text("an open side without a period")))
+        case (None, Some(_)) => Left(Problem.Invalid.Missing(Problem.Field("period"), Vector(Problem.Field("open"))))
         case _               => Right(open.map(openSide))
     yield (
       p.map(v =>
@@ -170,7 +167,8 @@ object PluginGazetteers:
       case Some(t) =>
         RawJson.parse(t) match
           case Right(j) if j.isObject => Right(Some(t))
-          case _ => Left(Problem.Unclassified(Legacy.Text(s"its ${what.value} is not a JSON object")))
+          case _                      =>
+            Left(Problem.Io.Corrupt(Problem.Io.Format.Json, Problem.Where(s"$what"), Problem.Io.Damage.Undecodable))
 
   /** Every element converted, or the first refusal. */
   private def all[A, B](as: List[A])(f: A => Either[Problem, B]): Either[Problem, List[B]] =

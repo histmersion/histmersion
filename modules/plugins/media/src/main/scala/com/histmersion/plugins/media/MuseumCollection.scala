@@ -1,6 +1,6 @@
 package com.histmersion
 package plugins.media
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.plugin.*
 import io.github.iltotore.iron.constraint.any.Pure
@@ -29,7 +29,7 @@ abstract class MuseumCollection(
     Either.cond(
       conf.enabled.value,
       (),
-      Problem.Unclassified(Legacy.Text(s"${provider.value} is switched off (${key.value}.enabled = false)"))
+      Problem.Refused.Disabled(Problem.Refused.Feature(s"$provider"), Problem.SettingKey(s"histmersion.$key.enabled"))
     )
 
 object MuseumCollection:

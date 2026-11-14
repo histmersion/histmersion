@@ -1,7 +1,7 @@
 package com.histmersion
 package pluginhost
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem, Problems}
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -24,7 +24,13 @@ class SpiBackingSuite extends munit.FunSuite:
       () =>
         new Plugin.Http {
           def get(u: Plugin.Http.Url, h: Map[Header.Name, Header.Value]) =
-            Left(Problem.Unclassified(Legacy.Text("offline")))
+            Left(
+              Problem.Upstream.Unreachable.here(
+                Problem.Upstream.Name("x"),
+                Problem.Upstream.Url("https://x.example"),
+                External.Reported("offline")
+              )
+            )
         },
       ConfigFactory.empty,
       (_, _, _) => (),
@@ -106,7 +112,12 @@ class SpiBackingSuite extends munit.FunSuite:
     val core = new UpstreamQuota:
       def take(purpose: UpstreamQuota.TakePurpose) = {
         taken += purpose.value
-        if taken.size > 1 then Left(Problem.Unclassified(Legacy.Text("spent"))) else Right(())
+        if taken.size > 1 then
+          Left(
+            Problem.Refused
+              .Quota(Problem.Refused.Limit.ProviderQuota, Problem.Refused.Amount(1), Problem.Refused.Amount(1), None)
+          )
+        else Right(())
       }
       def observe(
           status: UpstreamQuota.ObserveStatus,
@@ -120,7 +131,10 @@ class SpiBackingSuite extends munit.FunSuite:
     )
     assert(g.report.ok, g.report.toString)
     assertEquals(p.quota.map(_.take(UpstreamQuota.TakePurpose("lookup"))), Some(Right(())))
-    assertEquals(p.quota.map(_.take(UpstreamQuota.TakePurpose("lookup")).left.map(_.sentence)), Some(Left("spent")))
+    assertEquals(
+      p.quota.map(_.take(UpstreamQuota.TakePurpose("lookup")).left.map(_.sentence)),
+      Some(Left("the provider's quota is spent: 1.0 of 1.0"))
+    )
     assertEquals(taken.toList, List("lookup", "lookup"))
     val other = Metered(Plugin.Context.QuotaUpstream("elsewhere"))
     build(
@@ -140,7 +154,7 @@ class SpiBackingSuite extends munit.FunSuite:
         List("oa-unpaywall", "oa-openalex").foreach(id =>
           asked += id -> ctx.registered(Fetch.Context.RegisteredPluginId(id))
         )
-        Fetch.Miss(Problem.Unclassified(Legacy.Text("nothing")))
+        Fetch.Miss(Problem.NotFound.Copy(Problem.Raw("nothing")))
     val (chain, _) =
       FetchChain.of(
         scala.collection.immutable.ListMap(com.histmersion.util.plugins.Plugin.Id("peer") -> peerAware),
@@ -222,7 +236,13 @@ class SpiBackingSuite extends munit.FunSuite:
       fallback = supplied
     )
     assertEquals(g.report.plugins.head.state, "failed")
-    assert(g.report.plugins.head.error.exists(_.sentence.contains("unknown setting")), g.report.toString)
+    assert(
+      g.report.plugins.head.errors.exists {
+        case Problem.Config.Setting(_, Problem.Config.Fault.NotInDefaults) => true
+        case _                                                             => false
+      },
+      g.report.toString
+    )
 
   // ── first-party status ──────────────────────────────────────────────────────────────────────
 
@@ -244,9 +264,9 @@ class SpiBackingSuite extends munit.FunSuite:
     val third =
       build(List(Volcanoes(Plugin.Info.Id("zq-volcanoes"))), "histmersion.plugins.zq-volcanoes.enabled = true")
     assertEquals(third.report.plugins.head.state, "failed")
-    assert(
-      third.report.plugins.head.error.exists(_.sentence.contains("Histmersion's own event catalogues")),
-      third.report.toString
+    assertEquals(
+      third.report.plugins.head.errors,
+      List(Problem.Conflict.AlreadyExists(Problem.TypeName.named[EventCatalogue], Problem.Raw("gvp")))
     )
     val first = build(
       List(Volcanoes(Plugin.Info.Id("events-gvp"))),
@@ -266,7 +286,7 @@ class SpiBackingSuite extends munit.FunSuite:
       Plugin.Info(Plugin.Info.Id("zq-keyed"), Plugin.Info.Version("1.0.0"), Plugin.Info.SpiVersion(Spi.Version))
     override def defaultsResource = Plugin.DefaultsResource("zq-keyed-defaults.conf")
     def register(c: Keyed, ctx: Plugin.Context) =
-      c.apiKey.fold[Either[Problem, Unit]](Right(()))(s => ctx.secret(s).map(_ => ()))
+      c.apiKey.fold[Either[Problems, Unit]](Right(()))(s => ctx.secret(s).map(_ => ()))
 
   test("a generation gives the host a plugin's secret by its setting, as it resolved it — never another's"):
     val g = build(

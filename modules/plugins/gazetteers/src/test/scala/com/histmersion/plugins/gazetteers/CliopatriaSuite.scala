@@ -1,6 +1,6 @@
 package com.histmersion
 package plugins.gazetteers
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.JsonCodec.given
@@ -130,7 +130,7 @@ class CliopatriaSuite extends munit.FunSuite:
   test("the gazetteer-cliopatria plugin registers the source cliopatria"):
     val h = PluginHarness
       .load(Plugin.Info.Id("gazetteer-cliopatria"), http = HttpMode.Offline, env = Map.empty)
-      .fold(e => fail(e.sentence), identity)
+      .fold(e => fail(e.sentences.mkString("; ")), identity)
     assertEquals(h.gazetteerSources, List("cliopatria"))
 
   // the host's runner names no source: the parents come with the slices, first, as the runner stored them before

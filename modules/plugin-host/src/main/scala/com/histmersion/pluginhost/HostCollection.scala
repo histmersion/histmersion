@@ -1,8 +1,7 @@
 package com.histmersion
 package pluginhost
 
-import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.plugin.*
 
 import scala.util.control.NonFatal
@@ -19,82 +18,69 @@ final class HostCollection(val name: HostCollection.Name, collection: SourceColl
     HostCollection.Description(guardedValue(collection.description.value, ""))
   def capabilities: Set[CollectionCapability] = guardedValue(collection.capabilities, Set(CollectionCapability.Read))
 
-  def reach: Either[Problem, Unit] = guarded(collection.reach)(_.sentence)
-  def search(query: CollectionQuery): Either[Problem, List[CollectionItem]] =
-    guarded(collection.search(query))(_.sentence)
-  def item(id: CollectionId): Either[Problem, Option[CollectionItem]] =
-    guarded(collection.item(id))(_.sentence)
-  def admits(item: CollectionItem): Either[Problem, Unit] = guarded(collection.admits(item))(_.sentence)
+  def reach: Either[Problems, Unit] =
+    try Option(collection.reach).getOrElse(Left(PluginMedia.answeredNothing))
+    catch
+      case e: LinkageError => Left(collectionThrew(e))
+      case NonFatal(e)     => Left(collectionThrew(e))
+  def search(query: CollectionQuery): Either[Problems, List[CollectionItem]] =
+    guarded(collection.search(query))
+  def item(id: CollectionId): Either[Problems, Option[CollectionItem]] =
+    guarded(collection.item(id))
+  def admits(item: CollectionItem): Either[Problems, Unit] = guarded(collection.admits(item))
   def file(
       item: CollectionItem,
       format: Option[SourceCollection.FileFormat]
-  ): Either[Problem, CollectionFile] =
-    guarded(collection.file(item, format))(_.sentence)
-  def original(item: CollectionItem, file: CollectionFile): Either[Problem, FetchedFile] =
-    guarded(collection.original(item, file))(_.sentence)
-  def cover(item: CollectionItem): Either[Problem, Option[FetchedFile]] =
-    guarded(collection.cover(item))(_.sentence)
-  def audit(records: List[CollectionRecord]): Either[Problem, List[CollectionFinding]] =
-    guarded(collection.audit(records))(_.sentence)
+  ): Either[Problems, CollectionFile] =
+    guarded(collection.file(item, format))
+  def original(item: CollectionItem, file: CollectionFile): Either[Problems, FetchedFile] =
+    guarded(collection.original(item, file))
+  def cover(item: CollectionItem): Either[Problems, Option[FetchedFile]] =
+    guarded(collection.cover(item))
+  def audit(records: List[CollectionRecord]): Either[Problems, List[CollectionFinding]] =
+    guarded(collection.audit(records))
 
-  def add(metadata: CollectionMetadata, file: FetchedFile): Either[Problem, CollectionId] =
-    writing(CollectionCapability.Add)(collection.add(metadata, file))(_.sentence)
+  def add(metadata: CollectionMetadata, file: FetchedFile): Either[Problems, CollectionId] =
+    writing(CollectionCapability.Add)(collection.add(metadata, file))
   def replace(
       id: CollectionId,
       key: SourceCollection.ReplaceKey,
       file: FetchedFile
-  ): Either[Problem, HostCollection.Id] =
-    writing(CollectionCapability.Add)(collection.replace(id, key, file))(_.sentence).map(r =>
-      HostCollection.Id(r.value)
-    )
-  def update(id: CollectionId, metadata: CollectionMetadata): Either[Problem, List[CollectionChange]] =
-    writing(CollectionCapability.Update)(collection.update(id, metadata))(_.sentence)
+  ): Either[Problems, HostCollection.Id] =
+    writing(CollectionCapability.Add)(collection.replace(id, key, file)).map(r => HostCollection.Id(r.value))
+  def update(id: CollectionId, metadata: CollectionMetadata): Either[Problems, List[CollectionChange]] =
+    writing(CollectionCapability.Update)(collection.update(id, metadata))
   def updateAll(
       links: List[CollectionLink],
       apply: SourceCollection.UpdateAllApply
-  ): Either[Problem, List[CollectionUpdateEntry]] =
-    if apply.value then writing(CollectionCapability.Update)(collection.updateAll(links, apply))(_.sentence)
-    else guarded(collection.updateAll(links, apply))(_.sentence)
+  ): Either[Problems, List[CollectionUpdateEntry]] =
+    if apply.value then writing(CollectionCapability.Update)(collection.updateAll(links, apply))
+    else guarded(collection.updateAll(links, apply))
   def set(
       id: CollectionId,
       fields: List[(SourceCollection.FieldName, SourceCollection.FieldValue)]
-  ): Either[Problem, Unit] =
-    writing(CollectionCapability.Update)(collection.set(id, fields))(_.sentence)
+  ): Either[Problems, Unit] =
+    writing(CollectionCapability.Update)(collection.set(id, fields))
 
   /** Whether the collection declares `capability`. */
   def can(capability: CollectionCapability): Boolean = capabilities.contains(capability)
 
-  /** The refusal of a write the collection does not declare. */
+  /** The refusal of a write the collection does not declare: the collection's own reason, when it gives one. */
   def readOnly: Problem =
-    Problem.Unclassified(
-      Legacy.Text(
-        s"${title.value} is read-only here: ${guardedValue(collection.readOnlyReason.sentence, "it is read-only")}"
-      )
-    )
+    guardedValue(collection.readOnlyReason, Problem.Refused.Policy(Problem.Refused.Rule.ReadOnly))
 
-  private def writing[E, A](capability: CollectionCapability)(call: => Either[E, A])(
-      text: E => String
-  ): Either[Problem, A] =
-    if can(capability) then guarded(call)(text) else Left(readOnly)
+  private def writing[A](capability: CollectionCapability)(call: => Either[Problems, A]): Either[Problems, A] =
+    if can(capability) then guarded(call) else Left(readOnly)
 
-  private def guarded[E, A](call: => Either[E, A])(text: E => String): Either[Problem, A] =
-    try
-      call match
-        case null => Left(Problem.Unclassified(Legacy.Text(s"source collection '${name.value}' answered nothing")))
-        case r    => r.left.map(e => Problem.Unclassified(Legacy.Text(text(e))))
+  private def guarded[A](call: => Either[Problems, A]): Either[Problems, A] =
+    try Option(call).getOrElse(Left(PluginMedia.answeredNothing))
     catch
-      case e: LinkageError =>
-        Left(
-          Problem.Unclassified(
-            Legacy.Text(s"source collection '${name.value}' failed: ${e.getClass.getSimpleName}: ${e.getMessage}")
-          )
-        )
-      case NonFatal(e) =>
-        Left(
-          Problem.Unclassified(
-            Legacy.Text(s"source collection '${name.value}' failed: ${e.getClass.getSimpleName}: ${e.getMessage}")
-          )
-        )
+      case e: LinkageError => Left(collectionThrew(e))
+      case NonFatal(e)     => Left(collectionThrew(e))
+
+  /** The collection's call threw `e`: logged under its problem's id. */
+  private def collectionThrew(e: Throwable): Problem =
+    Problem.from(e, Problem.Where(s"source collection $name"), Problem.Internal.Id.mint())
 
   private def guardedValue[A](value: => A, otherwise: A): A =
     try Option(value).getOrElse(otherwise)

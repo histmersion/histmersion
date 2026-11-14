@@ -246,7 +246,7 @@ class KeyedCollectionsSuite extends munit.FunSuite:
       r.rejected.map(_.key.value).sorted,
       List(
         "its dcterms:spatial names another place on the map",
-        "not an open licence (http://rightsstatements.org/vocab/NoC-NC/1.0/)"
+        "unknown Licence 'http://rightsstatements.org/vocab/NoC-NC/1.0/'"
       )
     )
     assertEquals(http.requests.size, 1, "a dry run never reads the Record API")
@@ -327,8 +327,8 @@ class KeyedCollectionsSuite extends munit.FunSuite:
     assertEquals(
       r.rejected.map(c => c.key -> c.n).toMap,
       Map(
-        "an excluded provider (OpenUp!)" -> 1,
-        "an excluded data provider (Fixture Herbarium Trust)" -> 1,
+        "europeana (rejected): an excluded provider (OpenUp!)" -> 1,
+        "europeana (rejected): an excluded data provider (Fixture Herbarium Trust)" -> 1,
         "made after 1500 CE" -> 1,
         "no dates on the record" -> 1
       )
@@ -354,7 +354,7 @@ class KeyedCollectionsSuite extends munit.FunSuite:
     val http = si(FakeMediaHttp.json(answer))
     val r = run(collection(Smithsonian), http, List(target(egypt), target(syria)), dryRun = DryOn)
     assertEquals(r.samples, Nil)
-    assert(r.rejected.exists(c => c.key.value == "an excluded unit (NMNHINV)"), r.rejected.toString)
+    assert(r.rejected.exists(c => c.key.value.endsWith("an excluded unit (NMNHINV)")), r.rejected.toString)
     assert(r.rejected.exists(c => c.key.value == "made after 1500 CE"), r.rejected.toString)
     val search = java.net.URLDecoder.decode(http.requests.head._1, "UTF-8")
     assert(search.contains("AND NOT unit_code:(NMNHBIRDS OR "), search)

@@ -4,7 +4,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import io.scalaland.chimney.dsl.*
 
@@ -701,7 +701,7 @@ final class AcquisitionControllers(
             f.licence.map(_.value.trim).filter(_.nonEmpty).fold("")(l => s", licence $l") +
             original.fold("")(h => s" (replacing $h: --refetch)")
         )
-      case Left(e) => steps += step("fetch", skip.isDefined, s"${e.sentence}")
+      case Left(e) => steps += step("fetch", skip.isDefined, e.sentences.mkString("; "))
     if chain.answers.nonEmpty then steps += step("chain", false, chain.answers.map(_.line).mkString("; "))
 
     // a gold open-access work from a publisher that refuses scripts: a download in the browser, on every path
@@ -743,7 +743,7 @@ final class AcquisitionControllers(
         err(
           Problem.Unclassified(
             Legacy.Text(
-              s"${IngestBacklog.NoLegalCopy} ${doi.getOrElse(citekey)}: ${fetched.left.toOption.fold("")(_.sentence)}$answers"
+              s"${IngestBacklog.NoLegalCopy} ${doi.getOrElse(citekey)}: ${fetched.left.toOption.fold("")(_.sentences.mkString("; "))}$answers"
             )
           )
         )
@@ -920,7 +920,7 @@ final class AcquisitionControllers(
         ),
         FetchChain.LegalOnly(true)
       ).left
-        .map(e => err(Problem.Unclassified(Legacy.Text(s"'${item.identifier}': ${e.sentence}"))))
+        .map(e => err(Problem.Unclassified(Legacy.Text(s"'${item.identifier}': ${e.sentences.mkString("; ")}"))))
         .flatMap { f =>
           steps += step("fetch", true, s"archive.org: ${f.bytes.value.length} bytes (${file.name})")
           val spooled = spoolCopy(citekey, f, steps)

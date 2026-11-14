@@ -19,7 +19,7 @@ final case class CollectionInfo(
     description: CollectionInfo.Description,
     capabilities: List[CollectionInfo.Capabilities],
     reachable: CollectionInfo.Reachable,
-    problem: Option[Problem]
+    problems: List[Problem]
 ) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema

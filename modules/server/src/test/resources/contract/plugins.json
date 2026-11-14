@@ -29,7 +29,8 @@
       ],
       "warnings" : [
       ],
-      "error" : null
+      "errors" : [
+      ]
     },
     {
       "id" : "ai-anthropic",
@@ -44,7 +45,8 @@
       ],
       "warnings" : [
       ],
-      "error" : null
+      "errors" : [
+      ]
     },
     {
       "id" : "ai-claude-code",
@@ -59,7 +61,8 @@
       ],
       "warnings" : [
       ],
-      "error" : null
+      "errors" : [
+      ]
     },
     {
       "id" : "ai-codex",
@@ -74,7 +77,8 @@
       ],
       "warnings" : [
       ],
-      "error" : null
+      "errors" : [
+      ]
     },
     {
       "id" : "ai-local",
@@ -89,7 +93,8 @@
       ],
       "warnings" : [
       ],
-      "error" : null
+      "errors" : [
+      ]
     },
     {
       "id" : "ai-openai",
@@ -104,7 +109,8 @@
       ],
       "warnings" : [
       ],
-      "error" : null
+      "errors" : [
+      ]
     },
     {
       "id" : "ai-opencode",
@@ -119,7 +125,8 @@
       ],
       "warnings" : [
       ],
-      "error" : null
+      "errors" : [
+      ]
     },
     {
       "id" : "archive-org",
@@ -135,7 +142,8 @@
       ],
       "warnings" : [
       ],
-      "error" : null
+      "errors" : [
+      ]
     },
     {
       "id" : "arxiv",
@@ -150,7 +158,8 @@
       ],
       "warnings" : [
       ],
-      "error" : null
+      "errors" : [
+      ]
     },
     {
       "id" : "bitwarden",
@@ -180,7 +189,8 @@
       ],
       "warnings" : [
       ],
-      "error" : null
+      "errors" : [
+      ]
     },
     {
       "id" : "calibre",
@@ -215,7 +225,8 @@
       ],
       "warnings" : [
       ],
-      "error" : null
+      "errors" : [
+      ]
     },
     {
       "id" : "events-gvp",
@@ -230,7 +241,8 @@
       ],
       "warnings" : [
       ],
-      "error" : null
+      "errors" : [
+      ]
     },
     {
       "id" : "events-noaa",
@@ -245,7 +257,8 @@
       ],
       "warnings" : [
       ],
-      "error" : null
+      "errors" : [
+      ]
     },
     {
       "id" : "events-wikidata",
@@ -260,7 +273,8 @@
       ],
       "warnings" : [
       ],
-      "error" : null
+      "errors" : [
+      ]
     },
     {
       "id" : "gazetteer-awmc",
@@ -275,7 +289,8 @@
       ],
       "warnings" : [
       ],
-      "error" : null
+      "errors" : [
+      ]
     },
     {
       "id" : "gazetteer-chronontology",
@@ -290,7 +305,8 @@
       ],
       "warnings" : [
       ],
-      "error" : null
+      "errors" : [
+      ]
     },
     {
       "id" : "gazetteer-cliopatria",
@@ -305,7 +321,8 @@
       ],
       "warnings" : [
       ],
-      "error" : null
+      "errors" : [
+      ]
     },
     {
       "id" : "keepassxc",
@@ -355,7 +372,8 @@
       ],
       "warnings" : [
       ],
-      "error" : null
+      "errors" : [
+      ]
     },
     {
       "id" : "media-aic",
@@ -370,7 +388,8 @@
       ],
       "warnings" : [
       ],
-      "error" : null
+      "errors" : [
+      ]
     },
     {
       "id" : "media-cleveland",
@@ -385,7 +404,8 @@
       ],
       "warnings" : [
       ],
-      "error" : null
+      "errors" : [
+      ]
     },
     {
       "id" : "media-depicts",
@@ -400,7 +420,8 @@
       ],
       "warnings" : [
       ],
-      "error" : null
+      "errors" : [
+      ]
     },
     {
       "id" : "media-europeana",
@@ -418,7 +439,8 @@
       ],
       "warnings" : [
       ],
-      "error" : null
+      "errors" : [
+      ]
     },
     {
       "id" : "media-loc",
@@ -433,7 +455,8 @@
       ],
       "warnings" : [
       ],
-      "error" : null
+      "errors" : [
+      ]
     },
     {
       "id" : "media-met",
@@ -448,7 +471,8 @@
       ],
       "warnings" : [
       ],
-      "error" : null
+      "errors" : [
+      ]
     },
     {
       "id" : "media-opencontext",
@@ -463,7 +487,8 @@
       ],
       "warnings" : [
       ],
-      "error" : null
+      "errors" : [
+      ]
     },
     {
       "id" : "media-pleiades",
@@ -478,7 +503,8 @@
       ],
       "warnings" : [
       ],
-      "error" : null
+      "errors" : [
+      ]
     },
     {
       "id" : "media-smithsonian",
@@ -496,7 +522,8 @@
       ],
       "warnings" : [
       ],
-      "error" : null
+      "errors" : [
+      ]
     },
     {
       "id" : "media-wikidata",
@@ -511,7 +538,8 @@
       ],
       "warnings" : [
       ],
-      "error" : null
+      "errors" : [
+      ]
     },
     {
       "id" : "oa-core",
@@ -530,7 +558,8 @@
       ],
       "warnings" : [
       ],
-      "error" : null
+      "errors" : [
+      ]
     },
     {
       "id" : "oa-landing",
@@ -545,7 +574,8 @@
       ],
       "warnings" : [
       ],
-      "error" : null
+      "errors" : [
+      ]
     },
     {
       "id" : "oa-openalex",
@@ -560,7 +590,8 @@
       ],
       "warnings" : [
       ],
-      "error" : null
+      "errors" : [
+      ]
     },
     {
       "id" : "oa-unpaywall",
@@ -579,7 +610,8 @@
       ],
       "warnings" : [
       ],
-      "error" : null
+      "errors" : [
+      ]
     },
     {
       "id" : "pmc",
@@ -595,7 +627,8 @@
       ],
       "warnings" : [
       ],
-      "error" : null
+      "errors" : [
+      ]
     }
   ],
   "warnings" : [

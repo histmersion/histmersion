@@ -104,7 +104,7 @@ class OutboundTlsSuite extends munit.FunSuite:
         HttpPolicy.OsName("Linux")
       )
       .getOrElse(fail("configured"))
-    assert(none.value.contains("holds no PEM certificate"), none)
+    assert(none.value.contains(s"the text data at $empty cannot be decoded"), none)
 
   test("off by default: no custom context, the HTTP client keeps its own"):
     val cfg = AppConfig.load().acquire.tls

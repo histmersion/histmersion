@@ -157,7 +157,12 @@ class PluginCatalogueSuite extends DbSuite:
     val h = CatalogueWiring(Deps(cfg, ds, ds, plugins = generation), http)
     val r = run(h, dry = EventImportRequest.DryRun(false))
     assertEquals((r.records, r.kept, r.created), (2, 2, 2), r.toString)
-    assert(r.failed.contains(EventImportReport.Failed("p1: bad: its dating runs backwards")), r.failed.toString)
+    assert(
+      r.failed.exists(f =>
+        s"$f".startsWith("p1: ") && s"$f".endsWith(".bad: notBefore, beginBy, endFrom, notAfter must be in order")
+      ),
+      r.failed.toString
+    )
     assert(r.failed.contains(EventImportReport.Failed("p2: upstream down")), r.failed.toString)
     assertEquals((r.licence, r.citation), ("CC0-1.0", "Zq et al. (2026)"))
     assertEquals(r.pending, 1, "p2 is still to read")

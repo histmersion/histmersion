@@ -114,7 +114,7 @@ class PmcFetchSuite extends munit.FunSuite:
     )
     val got =
       fetch(c, http, Doi("10.1038/nature25778"))
-        .fold(e => fail(s"${e.sentence}\n" + http.asked.map(_._1).mkString("\n")), identity)
+        .fold(e => fail(s"${e.sentences.mkString("; ")}\n" + http.asked.map(_._1).mkString("\n")), identity)
     assertEquals(got.source, "pmc")
     assertEquals(got.extension, "pdf")
     assertEquals(got.url, Some(s"${c.pmcDataset.url}/PMC6091220.1/PMC6091220.1.pdf"))
@@ -159,8 +159,8 @@ class PmcFetchSuite extends munit.FunSuite:
     val c = cfg
     val http = FakeUpstream(c, routes(c, "europepmc_oa.json", "pmc_dataset_oa.json", Right(Pdf), xml = Left("gone")))
     assertEquals(
-      fetch(c, http, Doi("10.1038/nature25778")).map(_.source).left.map(_.sentence),
-      Left("no legal open-access PDF found")
+      fetch(c, http, Doi("10.1038/nature25778")).map(_.source).left.map(_.sentences.mkString("; ")),
+      Left("no legal open-access PDF found for doi:10.1038/nature25778")
     )
 
   test("an author manuscript with no PDF: arXiv is tried first, then the JATS full text is the copy"):
@@ -173,7 +173,7 @@ class PmcFetchSuite extends munit.FunSuite:
       }.orElse(routes(c, "europepmc_free.json", "pmc_dataset_manuscript.json", Left("no pdf")))
     )
     val got = fetch(c, http, Doi("10.1126/science.aar7711"), arxiv = Some(ArxivId("1805.00001")))
-      .fold(e => fail(e.sentence), identity)
+      .fold(e => fail(e.sentences.mkString("; ")), identity)
     assertEquals(got.source, "pmc")
     assertEquals(got.extension, "xml")
     assertEquals(got.url, Some(s"${c.pmcDataset.url}/PMC6748862.1/PMC6748862.1.xml"))

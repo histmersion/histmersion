@@ -1,7 +1,7 @@
 package com.histmersion
 package plugin
 
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.{Problem, Problems}
 import hearth.kindlings.sconfigderivation.ConfigReader
 import scala.compiletime.deferred
 import hearth.kindlings.sconfigderivation.{ConfigDecodingError, ConfigReader}
@@ -54,9 +54,9 @@ trait Plugin:
 
   /** Called once per generation, only when enabled, after the host decoded the block into `config` and resolved every
     * [[Secret]] in it. Adds the plugin's contributions to `ctx`'s registries. The registries are STAGED: a `Left` (or
-    * an exception) discards everything this plugin added.
+    * an exception) discards everything this plugin added; every problem of the `Left` is reported.
     */
-  def register(config: Config, ctx: Plugin.Context): Either[Problem, Unit]
+  def register(config: Config, ctx: Plugin.Context): Either[Problems, Unit]
 
 object Plugin:
   /** The readers a plugin's config derivation must see: an `${?ENV}` override always arrives as a HOCON STRING, so a
@@ -125,7 +125,7 @@ object Plugin:
     /** A secret's value. Every [[Secret]] inside the decoded config was resolved before [[Plugin.register]] was called,
       * so for those this is a lookup; another one is resolved now. Never log the value.
       */
-    def secret(s: Secret): Either[Problem, Secret.Resolved]
+    def secret(s: Secret): Either[Problems, Secret.Resolved]
 
     /** Named secret backends: `<name>:<ref>` references are resolved by the vault registered as `name`. */
     def secretVaults: Registry[Secret.Vault]

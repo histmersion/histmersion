@@ -20,7 +20,7 @@ object CollectionsMarkdown:
       s"- can: ${c.capabilities.mkString(", ")}\n" +
       s"- reachable: ${
           if (c.reachable) == CollectionInfo.Reachable(true) then "yes"
-          else s"no — ${c.problem.map(_.sentence).getOrElse("unknown")}"
+          else s"no — ${if c.problems.isEmpty then "unknown" else c.problems.map(_.sentence).mkString("; ")}"
         }")
 
   private def who(authors: List[AuthorName]): String =
@@ -115,7 +115,7 @@ object CollectionsMarkdown:
       case r if r.state == CollectionUpdateRow.State("would-change") => (r, "")
       case r if r.state == CollectionUpdateRow.State("updated")      => (r, "written")
       case r if r.state == CollectionUpdateRow.State("failed")       =>
-        (r, s"FAILED: ${r.reason.map(_.sentence).getOrElse("")}")
+        (r, s"FAILED: ${r.reasons.map(_.sentence).mkString("; ")}")
     }
     val table = changing.flatMap { (r, note) =>
       r.changes.map(c =>
@@ -128,7 +128,7 @@ object CollectionsMarkdown:
       case r if r.state == CollectionUpdateRow.State("missing") =>
         s"- ${r.id}: no such Calibre entry (${r.citekeys.mkString(", ")}) — re-push, or clear the source's calibre id"
       case r if r.state == CollectionUpdateRow.State("refused") =>
-        s"- ${r.id} (${r.citekeys.mkString(", ")}): ${r.reason.map(_.sentence).getOrElse("")}"
+        s"- ${r.id} (${r.citekeys.mkString(", ")}): ${r.reasons.map(_.sentence).mkString("; ")}"
     }
     val upToDate = rows.count(_.state == CollectionUpdateRow.State("up-to-date"))
     val head =

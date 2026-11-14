@@ -3,7 +3,7 @@ package plugins.vaults
 import Vaults.{failed, said}
 import Subprocess.{code, firstLine}
 import YubiKey.unprompted
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.util.problem.Text.sentence
 
 import scala.annotation.tailrec
@@ -34,7 +34,7 @@ final class KeePassXcVault(
 
   private def file = Path.of(db.value).getFileName.toString
 
-  def resolve(ref: Secret.Vault.ResolveRef): Either[Problem, Secret.Resolved] =
+  def resolve(ref: Secret.Vault.ResolveRef): Either[Problems, Secret.Resolved] =
     request(ref).flatMap { (entry, attr) =>
       if yubikeys.nonEmpty then
         withYubiKey(s"for '$ref'", entry)(yk =>
@@ -59,7 +59,7 @@ final class KeePassXcVault(
     */
   override def resolveAll(
       refs: List[Secret.Vault.ResolveRef]
-  ): Map[Secret.Vault.ResolveRef, Either[Problem, Secret.Resolved]] =
+  ): Map[Secret.Vault.ResolveRef, Either[Problems, Secret.Resolved]] =
     val asked = refs.distinct
     val requests = asked.map(r => r -> request(r))
     val batched = requests.collect {
@@ -136,8 +136,8 @@ final class KeePassXcVault(
 
   private def session(
       batched: List[(Secret.Vault.ResolveRef, (KeePassXcSession.Entry, Vaults.Field))]
-  ): Map[Secret.Vault.ResolveRef, Either[Problem, Secret.Resolved]] =
-    val opened: Either[Problem, Opened] =
+  ): Map[Secret.Vault.ResolveRef, Either[Problems, Secret.Resolved]] =
+    val opened: Either[Problems, Opened] =
       if yubikeys.nonEmpty then
         withYubiKey(
           s"for ${batched.size} references (${batched.map(_._1).mkString(", ")})",
@@ -160,7 +160,7 @@ final class KeePassXcVault(
     opened match
       case Left(e) =>
         batched
-          .map((r, _) => r -> (Left(e): Either[Problem, Secret.Resolved]))
+          .map((r, _) => r -> (Left(e): Either[Problems, Secret.Resolved]))
           .toMap
       case Right(o) =>
         try readAll(o, batched)
@@ -173,14 +173,14 @@ final class KeePassXcVault(
   private def readAll(
       o: Opened,
       batched: List[(Secret.Vault.ResolveRef, (KeePassXcSession.Entry, Vaults.Field))]
-  ): Map[Secret.Vault.ResolveRef, Either[Problem, Secret.Resolved]] =
+  ): Map[Secret.Vault.ResolveRef, Either[Problems, Secret.Resolved]] =
     val s = o.session
     @tailrec def read(
         rest: List[(Secret.Vault.ResolveRef, (KeePassXcSession.Entry, Vaults.Field))],
-        acc: Map[Secret.Vault.ResolveRef, Either[Problem, Secret.Resolved]],
+        acc: Map[Secret.Vault.ResolveRef, Either[Problems, Secret.Resolved]],
         mark: KeePassXcSession.Segment.From,
         broken: Option[Problem]
-    ): Map[Secret.Vault.ResolveRef, Either[Problem, Secret.Resolved]] =
+    ): Map[Secret.Vault.ResolveRef, Either[Problems, Secret.Resolved]] =
       (rest, broken) match
         case (Nil, _)                    => acc
         case ((ref, _) :: tail, Some(b)) =>
@@ -211,7 +211,7 @@ final class KeePassXcVault(
             case Left(broken)       => read(tail, acc.updated(ref, Left(broken)), mark, Some(broken))
             case Right((seg, next)) =>
               val v = KeePassXcSession.answer(seg, cmd)
-              val result: Either[Problem, Secret.Resolved] =
+              val result: Either[Problems, Secret.Resolved] =
                 if v.value.nonEmpty then Right(v)
                 else
                   s.awaitErr(Processes.Session.AwaitErrLength(errMark), 500.millis)
@@ -243,12 +243,12 @@ final class KeePassXcVault(
 
   /** Each planned key in turn until `attempt` opens the database with it (`Right(Right)`); a failure (`Right(Left)`:
     * KeePassXC's answer) that no other key could fix stops at once, and so does a key not touched in time. Every key
-    * that failed is logged; the answer is the last one's failure (or that none of them is connected). `purpose` says
-    * what the log line asks the touch for.
+    * that failed is logged; the answer is every key's failure, in order (or that none of them is connected). `purpose`
+    * says what the log line asks the touch for.
     */
   private def withYubiKey[A](purpose: String, entry: KeePassXcSession.Entry)(
       attempt: YubiKey.Slot => Either[YubiKey.NoAnswer, Either[Subprocess.Result, A]]
-  ): Either[Problem, A] =
+  ): Either[Problems, A] =
     val found = connected()
     val (planned, absent) = YubiKey.plan(yubikeys, found, lastOpened.get)
     def key(yk: YubiKey.Slot, attempt: Problem.Plugin.Attempt, stderr: Option[Subprocess.Result.Err]): Problem =
@@ -265,34 +265,39 @@ final class KeePassXcVault(
       )
     else
       @annotation.tailrec
-      def go(rest: List[YubiKey.Slot], last: Option[Problem]): Either[Problem, A] = rest match
-        case Nil        => Left(last.getOrElse(name.failed(Problem.Plugin.Retrieval.Locked)))
-        case yk :: more =>
-          log.info(
-            Plugin.Log.Line(
-              s"opening $file with YubiKey ${yk.shown} $purpose — touch your YubiKey if it blinks " +
-                s"(waiting up to ${yubikeyTimeout.toSeconds} s)"
+      def go(rest: List[YubiKey.Slot], failed: Vector[Problem]): Either[Problems, A] =
+        def and(last: Problem): Problems = Problems.from(failed :+ last).getOrElse(last)
+        rest match
+          case Nil =>
+            Left(
+              Problems.from(failed).getOrElse(name.failed(Problem.Plugin.Retrieval.Locked))
             )
-          )
-          attempt(yk) match
-            case Left(YubiKey.NoAnswer.TimedOut(_))  => Left(key(yk, Problem.Plugin.Attempt.NotTouched, None))
-            case Left(YubiKey.NoAnswer.Unusable(of)) => Left(of)
-            case Right(Right(a))                     =>
-              lastOpened.set(Some(yk))
-              Right(a)
-            case Right(Left(r)) =>
-              YubiKey.failure(
-                KeePassXcMessage.parse(KeePassXcMessage.Stderr(r.err.value)),
-                YubiKey.Setting.Entries(entry.value)
-              ) match
-                case YubiKey.Failure.Next(why) =>
-                  val failed = key(yk, why, Some(r.err))
-                  log.info(Plugin.Log.Line(failed.sentence))
-                  go(more, Some(failed))
-                case YubiKey.Failure.NoEntry(missing) =>
-                  Left(name.failed(Problem.Plugin.Retrieval.Absent(Problem.Raw(s"$missing"))))
-                case YubiKey.Failure.Stop(why) => Left(key(yk, why, Some(r.err)))
-      go(planned, None)
+          case yk :: more =>
+            log.info(
+              Plugin.Log.Line(
+                s"opening $file with YubiKey ${yk.shown} $purpose — touch your YubiKey if it blinks " +
+                  s"(waiting up to ${yubikeyTimeout.toSeconds} s)"
+              )
+            )
+            attempt(yk) match
+              case Left(YubiKey.NoAnswer.TimedOut(_))  => Left(and(key(yk, Problem.Plugin.Attempt.NotTouched, None)))
+              case Left(YubiKey.NoAnswer.Unusable(of)) => Left(and(of))
+              case Right(Right(a))                     =>
+                lastOpened.set(Some(yk))
+                Right(a)
+              case Right(Left(r)) =>
+                YubiKey.failure(
+                  KeePassXcMessage.parse(KeePassXcMessage.Stderr(r.err.value)),
+                  YubiKey.Setting.Entries(entry.value)
+                ) match
+                  case YubiKey.Failure.Next(why) =>
+                    val refused = key(yk, why, Some(r.err))
+                    log.info(Plugin.Log.Line(refused.sentence))
+                    go(more, failed :+ refused)
+                  case YubiKey.Failure.NoEntry(missing) =>
+                    Left(name.failed(Problem.Plugin.Retrieval.Absent(Problem.Raw(s"$missing"))))
+                  case YubiKey.Failure.Stop(why) => Left(and(key(yk, why, Some(r.err))))
+      go(planned, Vector.empty)
 
   private def classify(entry: KeePassXcSession.Entry)(err: String): Option[Problem] =
     if err.contains("invalid credentials") || err.contains("wrong key") || err.contains("unable to unlock") ||

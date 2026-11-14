@@ -4,7 +4,7 @@ import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.JsonCodec.given
 import hearth.kindlings.jsoniterjson.Json
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.plugin.*
 import io.github.iltotore.iron.constraint.any.Pure
@@ -40,6 +40,9 @@ final class ArtInstituteCollection(conf: CollectionSettings, thumbPx: ArtInstitu
       )
 
 object ArtInstituteCollection:
+
+  /** The plugin's id: what its problems name. */
+  val Name = "media-aic"
   type ImageId = ImageId.T
   object ImageId extends Newtype[String, Pure]
   type Width = Width.T
@@ -82,7 +85,9 @@ object ArtInstituteCollection:
     c.downField("data").focus.flatMap(_.asArray) match
       case None =>
         Left(
-          Problem.Unclassified(Legacy.Text(c.str("detail").orElse(c.str("error")).getOrElse("no data in the answer")))
+          c.str("detail")
+            .orElse(c.str("error"))
+            .fold(MediaPlugin.missing("data"))(MediaPlugin.said(Name, Problem.Plugin.Claim.Failed, _))
         )
       case Some(rows) => Right(rows.toList.map(r => record(r, iiif, displayPx, thumbPx)))
 
@@ -93,14 +98,14 @@ object ArtInstituteCollection:
       thumbPx: ThumbPx
   ): Either[Problem, MediaItem] =
     val c = json.cursor
-    c.long("id").toRight(Problem.Unclassified(Legacy.Text("no id"))).map { id =>
+    c.long("id").toRight(MediaPlugin.missing("id")).map { id =>
       val title = c.str("title").getOrElse(s"Artwork $id")
       val artist = c.str("artist_title")
       val credit = (List(Some(title), artist).flatten :+ "The Art Institute of Chicago" :+ "CC0").mkString(", ")
       val image = c.str("image_id")
       val rights =
         if !c.bool("is_public_domain").contains(true) then
-          Left(Problem.Unclassified(Legacy.Text("not public domain (is_public_domain is false)")))
+          Left(MediaPlugin.rejected(Name, s"$id", Problem.Plugin.Refusal.Restricted))
         else Right(MediaRights.cc0(artist.map(MediaRights.Author(_)), MediaRights.Credit(credit)))
       MediaItem(
         MediaItem.Key(id.toString),

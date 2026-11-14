@@ -1,5 +1,6 @@
 package com.histmersion
 package plugins.ai
+import com.histmersion.util.problem.{External, Problem}
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -81,7 +82,7 @@ class ChatWireSuite extends munit.FunSuite:
 
   test("an answer: the first choice's text and calls (call_<n>, unknown when unnamed), its usage, its model"):
     assertEquals(
-      ChatAnswer(ChatAnswer.Status(200), ChatAnswer.Body(ok)).turn,
+      chat(ChatAnswer.Status(200), ChatAnswer.Body(ok)).turn,
       Right(
         AiTurn(
           AiTurn.Text(""),
@@ -104,33 +105,46 @@ class ChatWireSuite extends munit.FunSuite:
       )
     )
 
+  private def chat(status: ChatAnswer.Status, body: ChatAnswer.Body) = ChatAnswer(
+    Problem.Upstream.Name("openai"),
+    Problem.Upstream.Url("https://api.example/v1/chat/completions"),
+    status,
+    body
+  )
+
+  /** What the answer said: an error status and its words, or why a success answer cannot be read. */
+  private def said(p: Problem): String = p match
+    case Problem.Upstream.Http(_, _, status, body, _)    => s"$status $body"
+    case Problem.Upstream.BadReply(_, _, _, reported, _) => s"$reported"
+    case other                                           => s"$other"
+
   test("a success answer that cannot be read says why, at the field"):
     assertEquals(
-      ChatAnswer(ChatAnswer.Status(200), ChatAnswer.Body("[]")).turn.left.map(_.legacyText),
+      chat(ChatAnswer.Status(200), ChatAnswer.Body("[]")).turn.left.map(said),
       Left("expected an object")
     )
     assertEquals(
-      ChatAnswer(ChatAnswer.Status(200), ChatAnswer.Body(ok.replace(""""role":"assistant",""", ""))).turn.left
-        .map(_.legacyText),
+      chat(ChatAnswer.Status(200), ChatAnswer.Body(ok.replace(""""role":"assistant",""", ""))).turn.left
+        .map(said),
       Left("choices[0].message.role: missing required field")
     )
 
-  test("an error status: its message; none, the status and body; another shape, its body's first 500 characters"):
+  test("an error status: its message; none, the status and body; another shape, its body's start"):
     assertEquals(
-      ChatAnswer(ChatAnswer.Status(429), ChatAnswer.Body("""{"error":{"message":"slow down"}}""")).turn.left
-        .map(_.legacyText),
-      Left("slow down")
+      chat(ChatAnswer.Status(429), ChatAnswer.Body("""{"error":{"message":"slow down"}}""")).turn.left
+        .map(said),
+      Left("429 slow down")
     )
     assertEquals(
-      ChatAnswer(ChatAnswer.Status(500), ChatAnswer.Body("""{"error":{"type":"server_error"}}""")).turn.left
-        .map(_.legacyText),
-      Left("""statusCode: 500, response: {"error":{"type":"server_error"}}""")
+      chat(ChatAnswer.Status(500), ChatAnswer.Body("""{"error":{"type":"server_error"}}""")).turn.left
+        .map(said),
+      Left("""500 statusCode: 500, response: {"error":{"type":"server_error"}}""")
     )
     assertEquals(
-      ChatAnswer(ChatAnswer.Status(500), ChatAnswer.Body("""{"error":null}""")).turn.left.map(_.legacyText),
-      Left("""{"error":null}""")
+      chat(ChatAnswer.Status(500), ChatAnswer.Body("""{"error":null}""")).turn.left.map(said),
+      Left("""500 {"error":null}""")
     )
     assertEquals(
-      ChatAnswer(ChatAnswer.Status(400), ChatAnswer.Body("x" * 700)).turn.left.map(_.legacyText),
-      Left("x" * 500)
+      chat(ChatAnswer.Status(400), ChatAnswer.Body("x" * 700)).turn.left.map(said),
+      Left("400 " + "x" * External.ReplyExcerpt.Limit)
     )

@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.media.imports
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{reason, sentence}
 
 import hearth.kindlings.optics.syntax.*
 
@@ -120,9 +120,10 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
       val resolve = SearchedCollection.resolveFor(f, named, cfg.sameSiteKm)
       val resolveId = SearchedCollection.resolveIdFor(f, own.getOrElse(placeId(t), Set.empty), byId, cfg.sameSiteKm)
       recs.distinctBy(_.key).map { rec =>
+        val provider = PluginMedia.Provider(col.provider.value)
         val d = PluginMedia
-          .refusal(rec, allow, PluginMedia.Provider(col.provider.value))
-          .map(r => r.problem)
+          .refusal(rec, allow, provider)
+          .map(_.problem(provider, rec.key))
           .toLeft(())
           .flatMap(_ => col.matchesWithIds(rec, info, resolve, resolveId))
         Judged(t, rec, d)
@@ -166,7 +167,7 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
         )
         .sortBy(c => (-c.n.value, c.key.value)),
       byRole = MediaCount.of(kept.map(j => MediaCount.Key(roleOf(j.rec).value))),
-      rejected = MediaCount.of(judged.flatMap(_.decision.left.toOption).map(r => MediaCount.Key(r.sentence))),
+      rejected = MediaCount.of(judged.flatMap(_.decision.left.toOption).map(r => MediaCount.Key(r.reason))),
       samples = samples.take(cfg.samples.value.max(0))
     )
 

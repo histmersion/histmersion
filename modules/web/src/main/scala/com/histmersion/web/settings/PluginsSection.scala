@@ -1,7 +1,6 @@
 package com.histmersion
 package web.settings
 
-import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.Wording
 import com.histmersion.api.plugins.{PluginSet, PluginState, PluginStatus}
 import com.histmersion.api.instance.UiConfig
@@ -22,8 +21,8 @@ object PluginsSection:
   def state(p: PluginStatus): State = PluginState.parse(p.state) match
     case Some(PluginState.Registered) => State("Working")
     case Some(PluginState.Disabled)   => State("Turned off")
-    case Some(PluginState.Failed)     => State(s"Not working: ${p.error.map(_.sentence).getOrElse("no reason given")}")
-    case Some(PluginState.Refused)    => State(s"Not loaded: ${p.error.map(_.sentence).getOrElse("no reason given")}")
+    case Some(PluginState.Failed)     => State(s"Not working: ${p.reasons}")
+    case Some(PluginState.Refused)    => State(s"Not loaded: ${p.reasons}")
     case None                         => State(Wording.humanize(Wording.Id(p.state.value)))
 
   /** What a plugin adds, in words (`source-fetcher:oa-core` → "Finds papers"). Pure. */

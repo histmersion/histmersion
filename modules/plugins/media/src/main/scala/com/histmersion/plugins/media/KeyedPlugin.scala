@@ -1,6 +1,6 @@
 package com.histmersion
 package plugins.media
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.{Problem, Problems}
 
 import com.histmersion.plugin.MediaCollection
 import com.histmersion.plugin.Plugin
@@ -24,9 +24,9 @@ abstract class KeyedPlugin(id: KeyedPlugin.Id, name: KeyedPlugin.Name) extends M
       ctx: Plugin.Context
   ): MediaCollection
 
-  def register(c: KeyedPlugin.Config, ctx: Plugin.Context): Either[Problem, Unit] =
+  def register(c: KeyedPlugin.Config, ctx: Plugin.Context): Either[Problems, Unit] =
     c.apiKey
-      .fold[Either[Problem, Option[KeyedCollection.Key]]](Right(None))(s =>
+      .fold[Either[Problems, Option[KeyedCollection.Key]]](Right(None))(s =>
         ctx
           .secret(s)
           .map(v => Option(v).map(_.value.trim).filter(_.nonEmpty).map(KeyedCollection.Key(_)))

@@ -1,6 +1,6 @@
 package com.histmersion
 package plugin.testkit
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{Problem, Problems}
 
 import com.histmersion.plugin.testkit.internal.ProjectPaths
 import com.histmersion.pluginhost.HttpTransport
@@ -72,25 +72,31 @@ object HttpMode:
     *   - otherwise `Left`, the reason to skip the test: there is nothing to replay, and going to the network was not
     *     asked for.
     */
-  def fromEnv(dir: Path, env: Map[String, String] = sys.env): Either[Problem, HttpMode] =
+  def fromEnv(dir: Path, env: Map[String, String] = sys.env): Either[Problems, HttpMode] =
     choose(ProjectPaths.resolve(dir, sys.props.get(ProjectProperty).map(ProjectPaths.ProjectDir(_))), env)
 
-  private def choose(dir: Path, env: Map[String, String]): Either[Problem, HttpMode] =
+  private def choose(dir: Path, env: Map[String, String]): Either[Problems, HttpMode] =
     env.get(ModeVariable).map(_.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty) match
       case Some("live")   => Right(Live)
       case Some("record") => Right(Record(dir))
       case Some("replay") => Right(Replay(dir))
-      case Some(other) => Left(Problem.Unclassified(Legacy.Text(s"$ModeVariable=$other: one of live, record, replay")))
+      case Some(other)    =>
+        Left(
+          Problem.Invalid.Unknown(
+            Problem.TypeName.named[HttpMode],
+            Problem.Raw(other),
+            Vector(Problem.Raw("live"), Problem.Raw("record"), Problem.Raw("replay")),
+            Vector(Problem.Field(ModeVariable))
+          )
+        )
       case None if Recordings.exist(dir) => Right(Replay(dir))
       case None
           if env.get(LiveVariable).exists(v => Set("1", "true", "yes")(v.trim.toLowerCase(java.util.Locale.ROOT))) =>
         Right(Live)
       case None =>
         Left(
-          Problem.Unclassified(
-            Legacy.Text(
-              s"no recordings in $dir: set $LiveVariable=1 to run against the real site " +
-                s"($ModeVariable=record to keep its answers for an offline replay)"
-            )
+          Problems.of(
+            Problem.Io.Wrong(Problem.Io.Path(s"$dir"), Problem.Io.Kind.Present),
+            Problem.Config.Setting(Problem.SettingKey(LiveVariable), Problem.Config.Fault.Empty)
           )
         )

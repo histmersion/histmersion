@@ -5,7 +5,7 @@ import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.JsonCodec.given
 import hearth.kindlings.jsoniterjson.Json
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 import com.histmersion.plugin.Header
 
 import java.net.URI
@@ -27,11 +27,13 @@ extension (http: Plugin.Http)
           .parse(String(body.value, UTF_8))
           .left
           .map(e =>
-            Problem.Unclassified(
-              Legacy.Text(
-                s"${scala.util.Try(URI.create(url.value).getHost).toOption.flatMap(Option(_)).getOrElse(url.value)}: " +
-                  s"unparseable JSON ($e)"
-              )
+            Problem.Upstream.BadReply.here(
+              Problem.Upstream.Name(
+                scala.util.Try(URI.create(url.value).getHost).toOption.flatMap(Option(_)).getOrElse(s"$url")
+              ),
+              Problem.Upstream.Url(s"$url"),
+              Problem.Upstream.Shape.Json,
+              External.Reported.of(s"$e")
             )
           )
       )

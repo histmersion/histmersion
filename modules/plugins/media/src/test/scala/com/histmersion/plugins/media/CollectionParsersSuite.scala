@@ -1,5 +1,6 @@
 package com.histmersion
 package plugins.media
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.JsonCodec.given
@@ -49,14 +50,14 @@ class CollectionParsersSuite extends munit.FunSuite:
   test(
     "Met: an object's licence from isPublicDomain, astronomical years moved one back, place fields most specific first"
   ):
-    val r = MetCollection.record(fixture("met-object.json")).fold(e => fail(e.legacyText), identity)
+    val r = MetCollection.record(fixture("met-object.json")).fold(e => fail(e.sentence), identity)
     assertEquals(r.key, "252448")
     assertEquals(r.period, Period.span(-1400L, -1201L), "-1399..-1200 astronomical = 1400–1201 BCE")
     assertEquals(r.geography, List("excavation" -> "Mycenae", "country" -> "Greece"))
     assertEquals(r.imageUrl, Some("https://images.metmuseum.org/CRDImages/gr/web-large/DP121403.jpg"))
     assertEquals(r.originalUrl, Some("https://images.metmuseum.org/CRDImages/gr/original/DP121403.jpg"))
     assertEquals((r.role, r.rendition), (None, None), "the collection's role; the host measures the file")
-    val rights = r.rights.fold(e => fail(e.legacyText), identity)
+    val rights = r.rights.fold(e => fail(e.sentence), identity)
     assertEquals((rights.licence, rights.licenceUrl), (Licence("CC0-1.0"), Some(Cc0Url)))
     assertEquals(
       HostLicences.readName(LicenceReader.ReadNameName(rights.licence.value)),
@@ -76,8 +77,8 @@ class CollectionParsersSuite extends munit.FunSuite:
     val rs =
       ClevelandCollection
         .records(fixture("cma-search.json"))
-        .fold(e => fail(e.legacyText), identity)
-        .map(_.fold(e => fail(e.legacyText), identity))
+        .fold(e => fail(e.sentence), identity)
+        .map(_.fold(e => fail(e.sentence), identity))
     assertEquals(rs.size, 4)
     val earring = rs.head
     assertEquals(earring.key, "1916.131")
@@ -113,8 +114,8 @@ class CollectionParsersSuite extends munit.FunSuite:
         CollectionSettings.DisplayPx(843),
         ArtInstituteCollection.ThumbPx(330)
       )
-      .fold(e => fail(e.legacyText), identity)
-      .map(_.fold(e => fail(e.legacyText), identity))
+      .fold(e => fail(e.sentence), identity)
+      .map(_.fold(e => fail(e.sentence), identity))
     val coin = rs.head
     assertEquals(coin.key, "4441")
     assertEquals(coin.geography, List("place_of_origin" -> "Cyprus"))
@@ -149,7 +150,7 @@ class CollectionParsersSuite extends munit.FunSuite:
           CollectionSettings.DisplayPx(1280),
           MediaSettings.ThumbPx(330)
         )
-        .fold(e => fail(e.legacyText), identity)
+        .fold(e => fail(e.sentence), identity)
     assertEquals(r.key, "2007627513")
     assertEquals(r.period, Period.span(1880L, 1880L))
     assertEquals(r.imageUrl.map(_.value.split('/').last), Some("1024.jpg"), "the largest JPEG no wider than display-px")
@@ -218,7 +219,7 @@ class CollectionParsersSuite extends munit.FunSuite:
       "https://commons.wikimedia.org/w/api.php?action=query&format=json&formatversion=2&list=search" +
         "&srnamespace=6&srlimit=10&srsearch=haswbstatement%3AP180%3DQ203729&maxlag=5"
     )
-    val ts = Commons.Depicts.titles(fixture("commons-depicts.json")).fold(e => fail(e.legacyText), identity)
+    val ts = Commons.Depicts.titles(fixture("commons-depicts.json")).fold(e => fail(e.sentence), identity)
     assertEquals(ts.size, 3)
     assert(ts.head.value.startsWith("File:Museum Hattusa"))
     assertEquals(

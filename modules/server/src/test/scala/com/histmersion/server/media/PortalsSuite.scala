@@ -229,7 +229,10 @@ class PortalsSuite extends munit.FunSuite:
     )
     assertEquals(
       r.rejected.map(_.key.value).sorted,
-      List("human remains (Open Context flags them; not shown)", "its dates do not overlap the place's")
+      List(
+        "its dates do not overlap the place's",
+        "open-context (rejected): human remains (Open Context flags them; not shown)"
+      )
     )
     assertEquals(r.byLicence, List(MediaCount(MediaCount.Key("CC-BY-4.0"), MediaCount.N(4))))
     assert(store.saved.isEmpty && store.links.isEmpty && store.checks.isEmpty)
@@ -299,7 +302,10 @@ class PortalsSuite extends munit.FunSuite:
       r.rejected.toString
     )
     assertEquals(r.samples.size, 3)
-    assertEquals(r.rejected.map(_.key.value), List("human remains (Open Context flags them; not shown)"))
+    assertEquals(
+      r.rejected.map(_.key.value),
+      List("open-context (rejected): human remains (Open Context flags them; not shown)")
+    )
 
   test("Open Context: a record from Petra is not filed under the country its context path names"):
     val r = runOc(openContext(), jordan, dryRun = DryOn, PortalStore(facts, named, byId))

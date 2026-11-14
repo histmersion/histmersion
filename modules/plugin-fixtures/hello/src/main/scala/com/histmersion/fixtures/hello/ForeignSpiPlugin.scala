@@ -1,5 +1,5 @@
 package com.histmersion.fixtures.hello
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.{Problem, Problems}
 
 import com.histmersion.plugin.*
 import com.histmersion.plugin.Plugin.Config.given
@@ -14,4 +14,4 @@ final class ForeignSpiPlugin extends Plugin:
     _root_.com.histmersion.plugin.Plugin.Info.Version("0.1.0"),
     _root_.com.histmersion.plugin.Plugin.Info.SpiVersion(Spi.Version + 98)
   )
-  def register(config: HelloConfig, ctx: Plugin.Context): Either[Problem, Unit] = Right(())
+  def register(config: HelloConfig, ctx: Plugin.Context): Either[Problems, Unit] = Right(())

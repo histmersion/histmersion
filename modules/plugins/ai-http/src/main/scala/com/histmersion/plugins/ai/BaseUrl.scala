@@ -1,6 +1,6 @@
 package com.histmersion
 package plugins.ai
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 
 import sttp.model.Uri
 import io.github.iltotore.iron.constraint.any.Pure
@@ -21,10 +21,13 @@ object BaseUrl:
   /** `text` as a base URL, or why not, naming the `setting` it came from. */
 
   def parse(text: ProviderSettings.BaseUrl, setting: Setting): Either[Problem, BaseUrl] =
-    (Uri
+    Uri
       .parse((text).value)
+      .map(BaseUrl(_))
       .left
-      .map(e => s"$setting: $e")
-      .map(BaseUrl(_)))
-      .left
-      .map(refactorError => Problem.Unclassified(Legacy.Text(refactorError)))
+      .map(e =>
+        Problem.Config.Setting(
+          Problem.SettingKey(s"histmersion.$setting"),
+          Problem.Config.Fault.Unreadable(External.Reported.of(s"$e"))
+        )
+      )

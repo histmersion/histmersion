@@ -202,7 +202,7 @@ class FetcherPluginsSuite extends munit.FunSuite:
     val g = generation("histmersion.plugins.oa-core.api-key = \"env:NOT_SET_CORE_KEY\"")
     assertEquals(state(g, "oa-core"), Some("failed"))
     assert(
-      g.report.plugins.find(_.id.value == "oa-core").flatMap(_.error).exists(_.sentence.contains("NOT_SET_CORE_KEY"))
+      g.report.plugins.find(_.id.value == "oa-core").exists(_.errors.exists(_.sentence.contains("NOT_SET_CORE_KEY")))
     )
     assertEquals(chain(g), Today.filterNot(_ == "core"))
 
@@ -372,8 +372,8 @@ class FetcherPluginsSuite extends munit.FunSuite:
       FetchChain(steps, registered = id => g.registered.exists(_.value == id.value))
         .fetch(Some(LandingDoi), None)
         .left
-        .map(_.sentence),
-      Left(FetchChain.NoCopy)
+        .map(_.toVector.map(_.isNotFound)),
+      Left(Vector(true))
     )
     g
 
@@ -429,7 +429,10 @@ class FetcherPluginsSuite extends munit.FunSuite:
         registered = id => g.registered.exists(_.value == id.value)
       )
         .fetch(Some(com.histmersion.domain.library.Doi("10.5281/zenodo.3695551")), None)
-    assertEquals(got.left.map(_.sentence), Left(FetchChain.NoCopy))
+    assertEquals(
+      got.left.map(_.toVector),
+      Left(Vector(Problem.NotFound.Copy(Problem.Raw("doi:10.5281/zenodo.3695551"))))
+    )
     assert(h.asked.contains(s"${host.zenodo.url}/api/records/3695551"), h.asked.mkString("\n"))
     assert(!h.asked.exists(u => u.startsWith(s"${host.unpaywall.url}/") || u.startsWith(s"${host.openalex.url}/")))
 

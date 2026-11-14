@@ -131,7 +131,8 @@ class FetcherTrafficSuite extends munit.FunSuite:
         case Right(f) =>
           s"found by ${outcome.foundBy.fold("?")(_.value)}: ${f.source} ${f.extension} ${f.url.fold("-")(_.value)} " +
             s"${f.bytes.value.length} bytes${f.licence.fold("")(l => s" licence ${l.value}")}\n"
-        case Left(why) => s"no copy: ${why.sentence}\n" + outcome.answers.map(a => s"  ${a.line}\n").mkString)
+        case Left(why) =>
+          s"no copy: ${why.sentences.mkString("; ")}\n" + outcome.answers.map(a => s"  ${a.line}\n").mkString)
     }
     if search then
       wire.out.clear()

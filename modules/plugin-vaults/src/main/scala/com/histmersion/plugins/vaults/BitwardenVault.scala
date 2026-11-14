@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.vaults
 import Vaults.{failed, said}
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.{Problem, Problems}
 
 import scala.annotation.tailrec
 import com.histmersion.plugin.*
@@ -19,7 +19,7 @@ final class BitwardenVault(
     timeout: FiniteDuration
 )(using processes: Processes)
     extends Secret.Vault:
-  def resolve(ref: Secret.Vault.ResolveRef): Either[Problem, Secret.Resolved] =
+  def resolve(ref: Secret.Vault.ResolveRef): Either[Problems, Secret.Resolved] =
     val (item, f) = Vaults.entryAndField(ref, field)
     for
       i <- Subprocess

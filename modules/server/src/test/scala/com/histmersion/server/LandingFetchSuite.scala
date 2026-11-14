@@ -2,7 +2,7 @@ package com.histmersion
 package server
 import com.histmersion.util.json.RawJson
 import hearth.kindlings.jsoniterjson.Json
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{Legacy, Problem, Problems}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.testsupport.ComparedByValue.given
@@ -61,7 +61,9 @@ class LandingFetchSuite extends munit.FunSuite:
       .loadWithUserText(org.ekrich.config.ConfigFactory.empty, text)
       .fold(e => fail(e.sentences.mkString("; ")), identity)
 
-  private def fail2(http: FakeUpstream)(e: Problem) = fail(e.sentence + "\n" + http.asked.mkString("\n"))
+  private def fail2(http: FakeUpstream)(e: Problems) = fail(
+    e.sentences.mkString("; ") + "\n" + http.asked.mkString("\n")
+  )
 
   test("Zenodo: the record page OpenAlex gives as the PDF is resolved by the API to the record's open PDF"):
     val c = cfg
@@ -160,7 +162,7 @@ class LandingFetchSuite extends munit.FunSuite:
       case "https://sa.example-uni.edu/index.php/sa/article/view/12" => bytes(fixture("ojs_journal_synthetic.html"))
       case u if u.contains("/pdf/") || u.contains("/download/")      => Right(Pdf)
     }
-    assertEquals(fetch(c, http, doi).left.map(_.sentence), Left("no legal open-access PDF found"))
+    assertEquals(fetch(c, http, doi).left.map(_.toVector.map(_.isNotFound)), Left(Vector(true)))
     assert(
       !http.asked.exists(u => u.contains("tandfonline.com") || u.contains("journal.example.org")),
       http.asked.mkString("\n")
@@ -247,7 +249,10 @@ class LandingFetchSuite extends munit.FunSuite:
         bytes(fixture("openalex_10_17863_CAM_11325.json"))
       case `page` => Left(s"$page: HTTP 403 bot-protection challenge — treated as no copy")
     }
-    assertEquals(fetch(c, http, Doi("10.17863/CAM.11325")).left.map(_.sentence), Left("no legal open-access PDF found"))
+    assertEquals(
+      fetch(c, http, Doi("10.17863/CAM.11325")).left.map(_.sentences.mkString("; ")),
+      Left("no legal open-access PDF found for doi:10.17863/CAM.11325")
+    )
     assert(!http.asked.exists(_.contains("/bitstreams/")), http.asked.mkString("\n"))
     assert(
       Challenge.isChallenge(

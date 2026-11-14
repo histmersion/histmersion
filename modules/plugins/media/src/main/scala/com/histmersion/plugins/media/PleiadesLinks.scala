@@ -4,7 +4,7 @@ import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.JsonCodec.given
 import hearth.kindlings.jsoniterjson.Json
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.plugin.{GazetteerPlace, Plugin}
 
@@ -23,8 +23,8 @@ object PleiadesLinks:
   def placeUrl(api: CollectionSettings.ApiUrl, id: GazetteerPlace.Id): Plugin.Http.Url =
     Plugin.Http.Url(s"${api.value.stripSuffix("/")}/places/${id.value.enc}/json")
 
-  val OnFlickr: Problem = Problem.Unclassified(Legacy.Text("on Flickr (its API needs a key)"))
-  val Category: Problem = Problem.Unclassified(Legacy.Text("a Commons category, not a file"))
+  val OnFlickr: PleiadesLink.Untaken = PleiadesLink.Untaken.OnFlickr
+  val Category: PleiadesLink.Untaken = PleiadesLink.Untaken.Category
 
   private val Pictures = """(?i).*\.(jpe?g|png|gif|tiff?|webp)$""".r
   private val PictureHosts = List("geograph.org.uk/photo", "panoramio.com/photo", "/photos/", "/image/", "iiif")
@@ -41,7 +41,7 @@ object PleiadesLinks:
     * picture at all (a book, a gazetteer entry). Wikipedia's `File:` pages are asked of Commons too — a file only a
     * Wikipedia holds (a non-free one) is then "missing on Commons".
     */
-  def classify(url: Plugin.Http.Url): Option[Either[Problem, Commons.File.Title]] =
+  def classify(url: Plugin.Http.Url): Option[Either[PleiadesLink.Untaken, Commons.File.Title]] =
     val u = url.value.trim.stripPrefix("=")
     val lower = u.toLowerCase(Locale.ROOT)
     val host = scala.util
@@ -59,27 +59,21 @@ object PleiadesLinks:
           name
             .map(n => Commons.fileTitle(decode(Text(n))))
             .filter(_.value.nonEmpty)
-            .toRight(Problem.Unclassified(Legacy.Text("an unreadable Commons file URL")))
+            .toRight(PleiadesLink.Untaken.UnreadableCommonsUrl)
         )
       else
         filePart.findFirstMatchIn(u) match
           case Some(m) =>
             Some(
-              Right[Problem, Commons.File.Title](Commons.fileTitle(decode(Text(m.group(1)))))
-                .filterOrElse(_.value.nonEmpty, Problem.Unclassified(Legacy.Text("an unreadable Commons file URL")))
+              Right[PleiadesLink.Untaken, Commons.File.Title](Commons.fileTitle(decode(Text(m.group(1)))))
+                .filterOrElse(_.value.nonEmpty, PleiadesLink.Untaken.UnreadableCommonsUrl)
             )
           case None if lower.contains("category:") => Some(Left(Category))
           case None                                => None
     else if host.endsWith("flickr.com") || host.endsWith("staticflickr.com") then Some(Left(OnFlickr))
     else if Pictures.matches(u.split("[?#]").head) || PictureHosts.exists(lower.contains) then
       Some(
-        Left(
-          Problem.Unclassified(
-            Legacy.Text(
-              s"a picture on ${if host.isEmpty then "another site" else host} (no documented keyless licence API)"
-            )
-          )
-        )
+        Left(PleiadesLink.Untaken.Elsewhere(PleiadesLink.Host(host)))
       )
     else None
 
@@ -89,9 +83,8 @@ object PleiadesLinks:
     c.downField("references").focus.flatMap(_.asArray) match
       case None =>
         Left(
-          Problem.Unclassified(
-            Legacy.Text(c.str("message").getOrElse("no references in the answer (not a Pleiades place record)"))
-          )
+          c.str("message")
+            .fold(MediaPlugin.missing("references"))(MediaPlugin.said("media-pleiades", Problem.Plugin.Claim.Failed, _))
         )
       case Some(refs) =>
         Right(

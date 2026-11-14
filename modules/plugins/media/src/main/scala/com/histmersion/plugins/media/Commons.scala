@@ -4,7 +4,7 @@ import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.JsonCodec.given
 import hearth.kindlings.jsoniterjson.Json
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.upstreams.media.MediaText
 import com.histmersion.plugin.*
@@ -18,6 +18,16 @@ import io.github.iltotore.iron.constraint.any.Pure
   * Pure.
   */
 object Commons:
+
+  /** Who answers for Wikimedia Commons in a problem. */
+  val Name = "commons"
+
+  /** The plugin that reads Commons for an event's depictions. */
+  val DepictsName = "media-depicts"
+
+  /** A MediaWiki or Wikidata API's error object, in its words: `<code>: <info>`. */
+  def errorOf(err: Json): String =
+    s"${err.cursor.get[String]("code").getOrElse("error")}: ${err.cursor.get[String]("info").getOrElse("")}".trim
 
   /** The `extmetadata` fields read — and asked for, so the answer stays small. */
 
@@ -80,13 +90,7 @@ object Commons:
     val c = json.cursor
     c.downField("error").focus match
       case Some(err) =>
-        Left(
-          Problem.Unclassified(
-            Legacy.Text(
-              s"${err.cursor.get[String]("code").getOrElse("error")}: ${err.cursor.get[String]("info").getOrElse("")}".trim
-            )
-          )
-        )
+        Left(MediaPlugin.said(Name, Problem.Plugin.Claim.Failed, errorOf(err)))
       case None =>
         val q = c.downField("query")
         val normalized = q
@@ -105,7 +109,7 @@ object Commons:
           val info = h.downField("imageinfo").downArray
           val entry: Either[Problem, File] =
             if h.downField("missing").focus.isDefined || h.downField("invalid").focus.isDefined || info.focus.isEmpty
-            then Left(Problem.Unclassified(Legacy.Text("missing on Commons")))
+            then Left(Problem.NotFound.Entity(Problem.TypeName.named[File], Problem.Raw(title)))
             else
               val i = info
               val meta = i
@@ -142,7 +146,7 @@ object Commons:
                 i.get[Long]("size").toOption.map(File.Size(_)),
                 meta
               ))
-                .toRight(Problem.Unclassified(Legacy.Text("no file URL in the answer")))
+                .toRight(MediaPlugin.missing("url", title))
           (title :: normalized.getOrElse(title, Nil)).map(_ -> entry)
         }
         Right(pages.map((t, e) => File.Title(t) -> e).toMap)
@@ -177,7 +181,7 @@ object Commons:
       )
 
     def search(place: MediaPlace, http: Plugin.Http) = Left(
-      Problem.Unclassified(Legacy.Text("the depictions are about events"))
+      MediaPlugin.said(DepictsName, Problem.Plugin.Claim.Unavailable, "the depictions are about events")
     )
 
     override def searchTargets(places: List[MediaPlace], events: List[MediaEvent], http: Plugin.Http): MediaFound =
@@ -194,7 +198,7 @@ object Commons:
               j.cursor
                 .downField("error")
                 .focus
-                .fold(Right(j))(_ => Left(Problem.Unclassified(Legacy.Text("Wikidata error"))))
+                .fold(Right(j))(err => Left(MediaPlugin.said(DepictsName, Problem.Plugin.Claim.Failed, errorOf(err))))
             }
           }
       val depictedBy = byItem.flatMap(_._2.toOption).map(Depicts.depictedBy).flatMap(_.toList).toMap
@@ -299,13 +303,7 @@ object Commons:
       val c = json.cursor
       c.downField("error").focus match
         case Some(err) =>
-          Left(
-            Problem.Unclassified(
-              Legacy.Text(
-                s"${err.cursor.get[String]("code").getOrElse("error")}: ${err.cursor.get[String]("info").getOrElse("")}".trim
-              )
-            )
-          )
+          Left(MediaPlugin.said(Name, Problem.Plugin.Claim.Failed, errorOf(err)))
         case None =>
           Right(
             c.downField("query")
@@ -430,7 +428,7 @@ object Commons:
         MediaItem.Title(title.value.stripPrefix("File:")),
         MediaItem.PageUrl(""),
         None,
-        Left(Problem.Unclassified(Legacy.Text("no answer from Commons")))
+        Left(Problem.NotFound.Entity(Problem.TypeName.named[File], Problem.Raw(s"$title")))
       )
       answer match
         case None              => bare

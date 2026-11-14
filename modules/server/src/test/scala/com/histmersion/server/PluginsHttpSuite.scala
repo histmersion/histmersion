@@ -72,7 +72,7 @@ class PluginsHttpSuite extends munit.FunSuite:
           assert(body.contains("\"provides\":[\"secret-vault:fake\"]"), body)
           assert(body.contains("fake:portal") && body.contains("env:PLUGINS_HTTP_TOKEN"), body)
           assert(body.contains("value:***"), body)
-          assert(body.contains("histmersion.plugins.typo configures no plugin"), body)
+          assert(body.contains("histmersion.plugins.typo is no setting"), body)
           for leaked <- List("hunter2", "env-secret-value", "v(portal)") do
             assert(!body.contains(leaked), s"$path leaks a secret value: $body")
       finally b.stop()

@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.vaults
 
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.util.problem.{External, Problem}
 import Subprocess.firstLine
 import YubiKey.unprompted
@@ -78,7 +78,7 @@ class VaultsSuite extends munit.FunSuite:
     p.configReader.from(c.root).fold(e => fail(e.toString), identity)
 
   private def registered(p: Plugin, hocon: String, ctx: Ctx): Secret.Vault =
-    p.register(decode(p, hocon), ctx).fold(e => fail(e.sentence), identity)
+    p.register(decode(p, hocon), ctx).fold(e => fail(e.sentences.mkString("; ")), identity)
     assertEquals(ctx.vaults.map(_._1), List(p.info.id))
     ctx.vaults.head._2
 
@@ -238,7 +238,10 @@ class VaultsSuite extends munit.FunSuite:
     )
     val bare = registered(KeePassXcPlugin(), s"""database = "$db"""", Ctx(Map("PATH" -> d.toString)))
     assert(
-      bare.resolve(Secret.Vault.ResolveRef("E")).left.exists(_.sentence.contains("the database is locked")),
+      bare
+        .resolve(Secret.Vault.ResolveRef("E"))
+        .left
+        .exists(_.sentences.mkString("; ").contains("the database is locked")),
       bare.resolve(Secret.Vault.ResolveRef("E"))
     )
 
@@ -250,19 +253,29 @@ class VaultsSuite extends munit.FunSuite:
       s"""database = "$db", password = "env:KP"""",
       Ctx(Map("PATH" -> d.toString), Map(Secret.Ref.Env(Secret.Ref.Env.Name("KP")) -> "nope"))
     )
-    assert(wrong.resolve(Secret.Vault.ResolveRef("E")).left.exists(_.sentence.contains("locked")))
+    assert(wrong.resolve(Secret.Vault.ResolveRef("E")).left.exists(_.sentences.mkString("; ").contains("locked")))
     val v = registered(
       KeePassXcPlugin(),
       s"""database = "$db", password = "env:KP", timeout-seconds = 1""",
       Ctx(Map("PATH" -> d.toString), Map(Secret.Ref.Env(Secret.Ref.Env.Name("KP")) -> "master-pw"))
     )
     assertEquals(
-      v.resolve(Secret.Vault.ResolveRef("missing")).left.map(_.sentence),
+      v.resolve(Secret.Vault.ResolveRef("missing")).left.map(_.sentences.mkString("; ")),
       Left("secret vault keepassxc failed: it holds no 'missing'")
     )
-    assert(v.resolve(Secret.Vault.ResolveRef("slow")).left.exists(_.sentence.contains("did not finish within 1000 ms")))
-    assert(v.resolve(Secret.Vault.ResolveRef("--help")).left.exists(_.sentence.contains("Should start with -")))
-    assert(v.resolve(Secret.Vault.ResolveRef("E#-x")).left.exists(_.sentence.contains("Should start with -")))
+    assert(
+      v.resolve(Secret.Vault.ResolveRef("slow"))
+        .left
+        .exists(_.sentences.mkString("; ").contains("did not finish within 1000 ms"))
+    )
+    assert(
+      v.resolve(Secret.Vault.ResolveRef("--help"))
+        .left
+        .exists(_.sentences.mkString("; ").contains("Should start with -"))
+    )
+    assert(
+      v.resolve(Secret.Vault.ResolveRef("E#-x")).left.exists(_.sentences.mkString("; ").contains("Should start with -"))
+    )
 
   test("keepassxc: registration names what is missing — the database, the tool, a secret"):
     val d = bin()
@@ -272,20 +285,20 @@ class VaultsSuite extends munit.FunSuite:
     assertEquals(reg("", Ctx(Map("PATH" -> d.toString))), Left(Problem.Invalid.Missing.here(Problem.Field("database"))))
     assert(
       reg(s"""database = "${d.resolve("nope.kdbx")}"""", Ctx(Map("PATH" -> d.toString))).left
-        .exists(_.sentence.contains("is not a file"))
+        .exists(_.sentences.mkString("; ").contains("is not a file"))
     )
     assert(
       reg(s"""database = "$db"""", Ctx(Map("PATH" -> d.toString))).left
-        .exists(_.sentence.contains("keepassxc-cli was not found on the PATH"))
+        .exists(_.sentences.mkString("; ").contains("keepassxc-cli was not found on the PATH"))
     )
     fakeKeePassXc(d)
     assert(
       reg(s"""database = "$db", password = "env:UNSET"""", Ctx(Map("PATH" -> d.toString))).left
-        .exists(_.sentence.contains("env:UNSET"))
+        .exists(_.sentences.mkString("; ").contains("env:UNSET"))
     )
     assert(
       reg(s"""database = "$db", key-file = "${d.resolve("nokey")}"""", Ctx(Map("PATH" -> d.toString))).left
-        .exists(_.sentence.contains("nokey is not a file"))
+        .exists(_.sentences.mkString("; ").contains("nokey is not a file"))
     )
 
   // ── KeePassXC + YubiKey ─────────────────────────────────────────────────────────────────────
@@ -484,7 +497,7 @@ class VaultsSuite extends munit.FunSuite:
     val d = bin(); fakeKeePassXcYk(d); fakeYkman(d); plug(d)
     val (v, _) = ykVault(d, "yubikey = [\"2:12345678\", \"1\"]")
     assertEquals(
-      v.resolve(Secret.Vault.ResolveRef("Portal")).left.map(_.sentence),
+      v.resolve(Secret.Vault.ResolveRef("Portal")).left.map(_.sentences.mkString("; ")),
       Left(
         "secret vault keepassxc failed: none of the configured YubiKeys (2:12345678, 1) is connected (ykman sees no YubiKey) — plug one in"
       )
@@ -500,9 +513,11 @@ class VaultsSuite extends munit.FunSuite:
     val (none, _) = ykVault(d2, "ykman = \"\", yubikey = [\"2:12345678\", \"2\"]")
     val err = none.resolve(Secret.Vault.ResolveRef("Portal"))
     assertEquals(
-      err.left.map(_.sentence),
+      err.left.map(_.sentences.mkString("; ")),
       Left(
-        "secret vault keepassxc failed: YubiKey 2: not connected — Error while reading the database: No YubiKey detected"
+        "secret vault keepassxc failed: YubiKey 2:12345678: not connected — Error while reading the database: Could " +
+          "not find hardware key with serial number 12345678. Please plug it in to continue.; secret vault keepassxc " +
+          "failed: YubiKey 2: not connected — Error while reading the database: No YubiKey detected"
       )
     )
 
@@ -512,12 +527,14 @@ class VaultsSuite extends munit.FunSuite:
     val r = v.resolve(Secret.Vault.ResolveRef("Portal"))
     assert(
       r.left.exists(e =>
-        e.sentence.contains("YubiKey 2:1: invalid credentials (the password, key file or YubiKey is wrong)") &&
-          !e.sentence.contains("Please present")
+        e.sentences
+          .mkString("; ")
+          .contains("YubiKey 2:1: invalid credentials (the password, key file or YubiKey is wrong)") &&
+          !e.sentences.mkString("; ").contains("Please present")
       ),
       r
     )
-    assert(!r.left.exists(_.sentence.contains("wrong-pw")))
+    assert(!r.left.exists(_.sentences.mkString("; ").contains("wrong-pw")))
     assertEquals(calls(d).size, 1)
 
   test("yubikey: an attempt nobody answers is killed at yubikey-timeout-seconds and stops the search"):
@@ -526,7 +543,7 @@ class VaultsSuite extends munit.FunSuite:
     val t0 = System.nanoTime
     val r = v.resolve(Secret.Vault.ResolveRef("Portal"))
     assert(
-      r.left.exists(_.sentence == "secret vault keepassxc failed: YubiKey 2:1: not touched in time"),
+      r.left.exists(_.sentences.mkString("; ") == "secret vault keepassxc failed: YubiKey 2:1: not touched in time"),
       r
     )
     assertEquals(calls(d).size, 1)
@@ -552,16 +569,19 @@ class VaultsSuite extends munit.FunSuite:
     val p = KeePassXcPlugin()
     def reg(h: String) = p.register(decode(p, s"""database = "$db", $h"""), Ctx(Map("PATH" -> d.toString)))
     assert(
-      reg("yubikey = [\"2:1\", \"3\"]").left.exists(_.sentence.startsWith("yubikey: '3' is not a YubiKey.Written"))
+      reg("yubikey = [\"2:1\", \"3\"]").left.exists(
+        _.sentences.mkString("; ").startsWith("yubikey: '3' is not a YubiKey.Written")
+      )
     )
     assert(
-      reg(s"""yubikey = "2:1", ykman = "${d.resolve("no-ykman")}"""").left.exists(_.sentence.contains("no-ykman"))
+      reg(s"""yubikey = "2:1", ykman = "${d.resolve("no-ykman")}"""").left
+        .exists(_.sentences.mkString("; ").contains("no-ykman"))
     )
     assertEquals(reg(s"""ykman = "${d.resolve("no-ykman")}"""").isRight, true) // no yubikey: ykman is not looked at
     script(d, "keepassxc-cli", "echo 'Could not find entry with path missing.' >&2\nexit 1\n")
     val (v, _) = ykVault(d, "ykman = \"\", yubikey = [\"2:1\", \"2:2\"]")
     assertEquals(
-      v.resolve(Secret.Vault.ResolveRef("missing")).left.map(_.sentence),
+      v.resolve(Secret.Vault.ResolveRef("missing")).left.map(_.sentences.mkString("; ")),
       Left("secret vault keepassxc failed: it holds no 'missing'")
     )
 
@@ -644,7 +664,7 @@ class VaultsSuite extends munit.FunSuite:
       )
     )
     assertEquals(
-      r.view.mapValues(_.left.map(_.sentence)).toMap,
+      r.view.mapValues(_.left.map(_.sentences.mkString("; "))).toMap,
       Map(
         "A/One" -> Right("secret of A/One"),
         "A/Two words#UserName" -> Right("secret of A/Two words/UserName"),
@@ -656,7 +676,8 @@ class VaultsSuite extends munit.FunSuite:
     assertEquals(ctx.infos.count(_.contains("touch your YubiKey")), 1)
     assert(ctx.infos.exists(_.contains("for 4 references")), ctx.infos)
     assert(
-      !(ctx.infos ++ calls(d) ++ r.values.flatMap(_.left.toOption.map(_.sentence))).exists(_.contains("master-pw"))
+      !(ctx.infos ++ calls(d) ++ r.values.flatMap(_.left.toOption.map(_.sentences.mkString("; "))))
+        .exists(_.contains("master-pw"))
     )
 
   test("keepassxc batch: the first YubiKey absent, the second opens the session; it goes first next time"):
@@ -685,7 +706,11 @@ class VaultsSuite extends munit.FunSuite:
     assertEquals(r.keySet, Set("A", "B"))
     assert(
       r.values.forall(
-        _.left.exists(e => e.sentence.contains("YubiKey 2:1: invalid credentials") && !e.sentence.contains("wrong-pw"))
+        _.left.exists(e =>
+          e.sentences
+            .mkString("; ")
+            .contains("YubiKey 2:1: invalid credentials") && !e.sentences.mkString("; ").contains("wrong-pw")
+        )
       ),
       r
     )
@@ -711,7 +736,7 @@ class VaultsSuite extends munit.FunSuite:
     val bad =
       v.resolveAll(List(Secret.Vault.ResolveRef("-x"), Secret.Vault.ResolveRef("D"), Secret.Vault.ResolveRef("E")))
     assertEquals(
-      bad(Secret.Vault.ResolveRef("-x")).left.map(_.sentence),
+      bad(Secret.Vault.ResolveRef("-x")).left.map(_.sentences.mkString("; ")),
       Left("the entry: '-x' is not a Subprocess.Argument: Should have a minimum length of 1 & !(Should start with -)")
     )
     assertEquals(
@@ -728,7 +753,7 @@ class VaultsSuite extends munit.FunSuite:
       wrong
         .resolveAll(List(Secret.Vault.ResolveRef("A"), Secret.Vault.ResolveRef("B")))
         .values
-        .forall(_.left.exists(_.sentence.contains("the database is locked")))
+        .forall(_.left.exists(_.sentences.mkString("; ").contains("the database is locked")))
     )
 
   test("keepassxc batch against the installed keepassxc-cli and a throwaway database (HISTMERSION_TEST_KEEPASSXC=1)"):
@@ -770,7 +795,7 @@ class VaultsSuite extends munit.FunSuite:
           Secret.Vault.ResolveRef("Three")
         )
       ).view
-        .mapValues(_.left.map(_.sentence))
+        .mapValues(_.left.map(_.sentences.mkString("; ")))
         .toMap,
       Map(
         "G/One" -> Right("first value"),
@@ -808,7 +833,7 @@ class VaultsSuite extends munit.FunSuite:
       List("read", "op://Private/Portal/password", "--account", "me")
     )
     assertEquals(
-      v.resolve(Secret.Vault.ResolveRef("Private/Nope/password")).left.map(_.sentence),
+      v.resolve(Secret.Vault.ResolveRef("Private/Nope/password")).left.map(_.sentences.mkString("; ")),
       Left("secret vault 1password failed: it holds no 'op://Private/Nope/password'")
     )
     val unsigned = registered(OnePasswordPlugin(), "", Ctx(Map("PATH" -> d.toString)))
@@ -816,7 +841,7 @@ class VaultsSuite extends munit.FunSuite:
       unsigned
         .resolve(Secret.Vault.ResolveRef("Private/Portal/password"))
         .left
-        .exists(_.sentence.contains("not signed in"))
+        .exists(_.sentences.mkString("; ").contains("not signed in"))
     )
 
   // ── Bitwarden ───────────────────────────────────────────────────────────────────────────────
@@ -849,15 +874,20 @@ class VaultsSuite extends munit.FunSuite:
       List("get", "username", "item-1", "--nointeraction")
     )
     assertEquals(
-      v.resolve(Secret.Vault.ResolveRef("dup")).left.map(_.sentence),
+      v.resolve(Secret.Vault.ResolveRef("dup")).left.map(_.sentences.mkString("; ")),
       Left("bitwarden (rejected): 'dup' matches more than one item — use its id")
     )
     assertEquals(
-      v.resolve(Secret.Vault.ResolveRef("other")).left.map(_.sentence),
+      v.resolve(Secret.Vault.ResolveRef("other")).left.map(_.sentences.mkString("; ")),
       Left("secret vault bitwarden failed: it holds no 'other'")
     )
     val locked = registered(BitwardenPlugin(), "", Ctx(Map("PATH" -> d.toString)))
-    assert(locked.resolve(Secret.Vault.ResolveRef("item-1")).left.exists(_.sentence.contains("the vault is locked")))
+    assert(
+      locked
+        .resolve(Secret.Vault.ResolveRef("item-1"))
+        .left
+        .exists(_.sentences.mkString("; ").contains("the vault is locked"))
+    )
 
   test("no error text ever carries the value a tool printed"):
     val d = bin()
@@ -865,7 +895,7 @@ class VaultsSuite extends munit.FunSuite:
     val v = registered(BitwardenPlugin(), "", Ctx(Map("PATH" -> d.toString)))
     val r = v.resolve(Secret.Vault.ResolveRef("x"))
     assertEquals(
-      r.left.map(_.sentence),
+      r.left.map(_.sentences.mkString("; ")),
       Left("secret vault bitwarden failed: it could not read 'x' (exit 2) — bad thing")
     )
 

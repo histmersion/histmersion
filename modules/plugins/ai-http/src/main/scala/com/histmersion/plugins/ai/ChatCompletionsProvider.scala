@@ -1,6 +1,6 @@
 package com.histmersion
 package plugins.ai
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.plugin.*
 import io.github.iltotore.iron.constraint.any.Pure
@@ -39,8 +39,9 @@ final class ChatCompletionsProvider(
         keyed match
           case Some((label, variable)) if settings.apiKey.value.isEmpty =>
             Left(
-              Problem.Unclassified(
-                Legacy.Text(s"no ${label.value} API key — set ${variable.value} in the server's environment")
+              Problem.Config.Setting(
+                Problem.SettingKey(s"histmersion.agents.providers.$name.api-key"),
+                Problem.Config.Fault.Unset(Problem.SettingKey(s"$variable"))
               )
             )
           case _ => Right(())
@@ -58,7 +59,12 @@ final class ChatCompletionsProvider(
         ChatRequest.of(request, settings.strictTools).body,
         AiHttp.TimeoutSeconds(math.max(1, settings.timeoutSeconds.value))
       )
-      turn <- ChatAnswer(ChatAnswer.Status(answer.status.value), ChatAnswer.Body(answer.body.value)).turn
+      turn <- ChatAnswer(
+        Problem.Upstream.Name(s"$name"),
+        Problem.Upstream.Url(s"$url"),
+        ChatAnswer.Status(answer.status.value),
+        ChatAnswer.Body(answer.body.value)
+      ).turn
     yield turn
 
 object ChatCompletionsProvider:

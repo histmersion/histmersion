@@ -1,7 +1,7 @@
 package com.histmersion
 package pluginhost
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 import com.histmersion.plugin.EnvVar
 
 import com.histmersion.plugin.Processes
@@ -25,7 +25,7 @@ final class SystemProcesses extends Processes:
     val pb = new ProcessBuilder(argv.map(_.value).asJava)
     env.foreach((k, v) => pb.environment().put(k.value, v.value))
     Try(pb.start()).toEither.left
-      .map(e => Problem.Unclassified(Legacy.Text(s"$tool could not be started: ${e.getMessage}")))
+      .map(e => notStarted(tool, e))
       .flatMap { proc =>
         val out = drain(proc.getInputStream)
         val err = drain(proc.getErrorStream)
@@ -74,7 +74,9 @@ final class SystemProcesses extends Processes:
     /** Write one line to the tool's stdin. */
     def send(line: Processes.Session.SendLine): Either[Problem, Unit] =
       try { in.write((line.value + "\n").getBytes(UTF_8)); in.flush(); Right(()) }
-      catch case e: IOException => Left(Problem.Unclassified(Legacy.Text(s"$tool stopped reading its input")))
+      catch
+        case e: IOException =>
+          Left(Problem.Io.Process(Problem.Io.Tool(s"$tool"), Problem.Io.Ending.NotStarted(External.Reported.of(e))))
 
     /** Wait until `ready` holds for stdout, the tool has exited, or `timeout` passed; true = `ready`. */
     def awaitOut(timeout: FiniteDuration)(
@@ -123,12 +125,16 @@ final class SystemProcesses extends Processes:
       val pb = new ProcessBuilder(argv.map(_.value).asJava)
       env.foreach((k, v) => pb.environment().put(k.value, v.value))
       Try(pb.start()).toEither.left
-        .map(e => Problem.Unclassified(Legacy.Text(s"$tool could not be started: ${e.getMessage}")))
+        .map(e => notStarted(tool, e))
         .map { proc =>
           val s = new Session(proc, tool)
           s.startReaders()
           s
         }
+
+  /** `tool` could not be started or run: what the JDK said. */
+  private def notStarted(tool: String, e: Throwable): Problem =
+    Problem.Io.Process(Problem.Io.Tool(tool), Problem.Io.Ending.NotStarted(External.Reported.of(e)))
 
   private def drain(in: InputStream): () => String =
     val box = new CompletableFuture[String]()
@@ -152,4 +158,4 @@ final class SystemProcesses extends Processes:
       proc.getOutputStream.close()
       val exit = proc.waitFor()
       Result(Result.Exit(exit), Result.Out(out()), Result.Err(err()))
-    }.toEither.left.map(e => Problem.Unclassified(Legacy.Text(s"$tool could not be run: ${e.getMessage}")))
+    }.toEither.left.map(e => notStarted(tool, e))

@@ -1,6 +1,6 @@
 package com.histmersion
 package plugins.vaults
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.{Problem, Problems}
 
 import scala.annotation.tailrec
 import com.histmersion.plugin.*
@@ -16,7 +16,7 @@ final class OnePasswordPlugin extends Plugin:
   val info =
     Plugin.Info(Plugin.Info.Id("1password"), Plugin.Info.Version(Vaults.Version), Plugin.Info.SpiVersion(Spi.Version))
 
-  def register(c: OnePasswordConfig, ctx: Plugin.Context): Either[Problem, Unit] =
+  def register(c: OnePasswordConfig, ctx: Plugin.Context): Either[Problems, Unit] =
     given files: LocalFiles = ctx.files
     given processes: Processes = ctx.processes
     for

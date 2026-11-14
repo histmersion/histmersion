@@ -71,10 +71,10 @@ class OutputSuite extends munit.FunSuite:
       )
     )
     assertEquals(
-      (r.state, r.reason, r.changes.map(_.from)),
+      (r.state, r.reasons, r.changes.map(_.from)),
       (
         Calibre.Json.UpdateRow.State("failed"),
-        Some(Problem.Unclassified(Legacy.Text("locked"))),
+        List(Problem.Unclassified(Legacy.Text("locked"))),
         List(Calibre.Change.From("a"))
       )
     )

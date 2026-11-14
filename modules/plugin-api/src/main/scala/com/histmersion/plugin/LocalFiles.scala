@@ -1,7 +1,7 @@
 package com.histmersion
 package plugin
 
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.{Problem, Problems}
 import java.nio.file.Path
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -20,8 +20,8 @@ trait LocalFiles:
     * single filename, never a path. The supplied path must not escape the callback.
     */
   def staged[A](name: LocalFiles.StagedName, bytes: LocalFiles.Content)(
-      use: Path => Either[Problem, A]
-  ): Either[Problem, A]
+      use: Path => Either[Problems, A]
+  ): Either[Problems, A]
 
 object LocalFiles:
   type Content = Content.T
@@ -43,6 +43,6 @@ object LocalFiles:
     def read(path: Path): Content = unavailable
     def readPrefix(path: Path, length: ReadPrefixLength): Content = unavailable
     def staged[A](name: StagedName, bytes: Content)(
-        use: Path => Either[Problem, A]
-    ): Either[Problem, A] =
+        use: Path => Either[Problems, A]
+    ): Either[Problems, A] =
       Left(Problem.Config.Unavailable(Problem.Config.Capability.LocalFiles))
