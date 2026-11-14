@@ -59,7 +59,7 @@ class CompileArticleSuite extends munit.FunSuite:
       checkExtract(
         ExtractAnswer(
           ExtractAnswer.Relevant(true),
-          Problem.Unclassified(Legacy.Text("tin trade")),
+          Coverage.Rationale("tin trade"),
           List(good, made, conf)
         ),
         Citekey("ck"),
@@ -77,7 +77,7 @@ class CompileArticleSuite extends munit.FunSuite:
     val (kept, warns) = checkExtract(
       ExtractAnswer(
         ExtractAnswer.Relevant(true),
-        Problem.Unclassified(Legacy.Text("tin trade")),
+        Coverage.Rationale("tin trade"),
         List(good, made, conf)
       ),
       Citekey("ck"),
@@ -93,7 +93,7 @@ class CompileArticleSuite extends munit.FunSuite:
   test("extraction: an irrelevant source must say why, and lands in Not used"):
     assert(
       checkExtract(
-        ExtractAnswer(ExtractAnswer.Relevant(false), Problem.Unclassified(Legacy.Text(" ")), Nil),
+        ExtractAnswer(ExtractAnswer.Relevant(false), Coverage.Rationale(" "), Nil),
         Citekey("ck"),
         record,
         minRatio,
@@ -104,7 +104,7 @@ class CompileArticleSuite extends munit.FunSuite:
     val (e, _) = checkExtract(
       ExtractAnswer(
         ExtractAnswer.Relevant(false),
-        Problem.Unclassified(Legacy.Text("about Egypt, not the Aegean")),
+        Coverage.Rationale("about Egypt, not the Aegean"),
         Nil
       ),
       Citekey("ck"),
@@ -113,7 +113,7 @@ class CompileArticleSuite extends munit.FunSuite:
       MaxClaims(10),
       last = Last(false)
     ).toOption.get
-    assertEquals(e.notUsed.map(_.sentence), Some("about Egypt, not the Aegean"))
+    assertEquals(e.notUsed.map(r => s"$r"), Some("about Egypt, not the Aegean"))
 
   private val facts = List(
     SourceFact(Citekey("a2019_tin"), Title("Tin"), Some(Year(2019)), Source.Status.Current),
@@ -132,7 +132,7 @@ class CompileArticleSuite extends munit.FunSuite:
   private val extracted = List(
     Extracted(Citekey("a2019_tin"), List(claim(Citekey("a2019_tin")), claim(Citekey("a2019_tin"))), None),
     Extracted(Citekey("b2024_iso"), List(claim(Citekey("b2024_iso"))), None),
-    Extracted(Citekey("c2001_old"), Nil, Some(Problem.Unclassified(Legacy.Text("about Egypt"))))
+    Extracted(Citekey("c2001_old"), Nil, Some(Coverage.Rationale("about Egypt")))
   )
   private val ev = evidence(
     Goal.Plans.ArticleDraft.Filter("search {topics:[tin]}"),
@@ -153,7 +153,7 @@ class CompileArticleSuite extends munit.FunSuite:
     )
     assertEquals(ev.disputed, List("b2024_iso"))
     assertEquals(ev.claims, Map("a2019_tin" -> 2, "b2024_iso" -> 1, "c2001_old" -> 0))
-    assertEquals(ev.notUsed, List(NotUsed(Citekey("c2001_old"), Problem.Unclassified(Legacy.Text("about Egypt")))))
+    assertEquals(ev.notUsed, List(NotUsed(Citekey("c2001_old"), Coverage.Rationale("about Egypt"))))
     assertEquals(ev.used, List("a2019_tin", "b2024_iso"))
     val text = evidenceText(ev, extracted)
     assert(
