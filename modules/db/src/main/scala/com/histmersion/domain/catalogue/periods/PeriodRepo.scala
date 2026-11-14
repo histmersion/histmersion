@@ -41,7 +41,7 @@ private[periods] object PeriodRepo:
   def children(id: PeriodRow.Id)(using DbCon): Vector[HistoricalPeriod] =
     Sql
       .of(
-        Sql.OfText(s"SELECT $columns FROM periods WHERE parent_id = ? ORDER BY ${RangeSql.start("period")}, label"),
+        Sql.OfText(s"SELECT $columns FROM periods WHERE parent_id = ? ORDER BY ${RangeSql.start("period")}, label, id"),
         Param.S(Param.S.V(id.value))
       )
       .frag
@@ -50,7 +50,7 @@ private[periods] object PeriodRepo:
       .map(_.toPeriod)
 
   /** The periods whose label holds `q` (a literal substring, any case), of the region `region` (any case), overlapping
-    * `from..to` (either bound alone is a span too), by start then label.
+    * `from..to` (either bound alone is a span too), by start, then label, then id.
     */
   def search(
       q: Option[SearchText],
@@ -69,7 +69,7 @@ private[periods] object PeriodRepo:
             AND ($reg::text IS NULL OR lower(region) = lower($reg))
             AND (($from::bigint IS NULL AND $to::bigint IS NULL)
                  OR period && int8range($from::bigint, $to::bigint, '[]'))
-          ORDER BY ${SqlLiteral(RangeSql.start("period"))}, label""".query[PeriodRow].run().map(_.toPeriod)
+          ORDER BY ${SqlLiteral(RangeSql.start("period"))}, label, id""".query[PeriodRow].run().map(_.toPeriod)
 
   def count(using DbCon): RowCount =
     RowCount(sql"SELECT count(*)::int FROM periods".query[Int].run().head)

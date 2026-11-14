@@ -50,6 +50,47 @@ abstract class PeriodServiceContract extends CatalogueStoreSuite:
     assertEquals(p.get(HistoricalPeriod.Id("zzr_orphan")), None)
   }
 
+  stest("periods alike in start and label come by id, whatever order they were written in") { s =>
+    val p = s.periods
+    def tie(id: HistoricalPeriod.Id, label: HistoricalPeriod.Label) =
+      hp(id, Year(-3101), Year(-1200)).modify(_.label).setTo(label)
+    // the first pair written against the order it is read in, the second along it
+    p.write(
+      List(
+        tie(HistoricalPeriod.Id("zzt_b"), HistoricalPeriod.Label("Zzt Bronze Age")),
+        tie(HistoricalPeriod.Id("zzt_a"), HistoricalPeriod.Label("Zzt Bronze Age"))
+      ),
+      Dataset.Seed
+    )
+    p.write(
+      List(
+        tie(HistoricalPeriod.Id("zzt_c"), HistoricalPeriod.Label("Zzt Bronze Age 2")),
+        tie(HistoricalPeriod.Id("zzt_d"), HistoricalPeriod.Label("Zzt Bronze Age 2"))
+      ),
+      Dataset.Seed
+    )
+    val read = ids(p.search(PeriodSearch(Some(PeriodSearch.Text("Zzt")))))
+    assertEquals(read, List("zzt_a", "zzt_b", "zzt_c", "zzt_d"))
+    assertEquals(ids(p.search(PeriodSearch(Some(PeriodSearch.Text("Zzt"))))), read, "the same order on every read")
+    p.write(
+      List(
+        tie(HistoricalPeriod.Id("zzt_root"), HistoricalPeriod.Label("Zzt root"))
+          .modify(_.period)
+          .setTo(Period(Year(-4000), Year(-1000)))
+      ),
+      Dataset.Seed
+    )
+    p.write(
+      List(HistoricalPeriod.Id("zzt_y"), HistoricalPeriod.Id("zzt_x")).map(id =>
+        tie(id, HistoricalPeriod.Label("Zzt part"))
+          .modify(_.parentId)
+          .setTo(Some(HistoricalPeriod.ParentId("zzt_root")))
+      ),
+      Dataset.Seed
+    )
+    assertEquals(ids(p.children(HistoricalPeriod.Id("zzt_root"))), List("zzt_x", "zzt_y"))
+  }
+
   stest("placement names every stored id with its parent; a re-run is idempotent and a re-parent sticks") { s =>
     val p = s.periods
     p.write(tree, Dataset.Seed)

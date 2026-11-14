@@ -19,10 +19,12 @@ import io.github.iltotore.iron.constraint.any.Pure
 trait PeriodService:
   def get(id: HistoricalPeriod.Id): Option[HistoricalPeriod]
 
-  /** A period's parts, by start then label. */
+  /** A period's parts, by start, then label, then id: a total order, so periods alike in start and label (PeriodO holds
+    * several "Bronze Age" from -3101) come in the same order on every read.
+    */
   def children(id: HistoricalPeriod.Id): List[HistoricalPeriod]
 
-  /** The periods a search selects, by start then label. */
+  /** The periods a search selects, by start, then label, then id (the same total order). */
   def search(q: PeriodSearch): List[HistoricalPeriod]
 
   def count(): RowCount
@@ -86,7 +88,7 @@ object PeriodService:
   final class InMemory(state: AtomicReference[CatalogueState]) extends PeriodService:
     private def all: Vector[HistoricalPeriod] = state.get.periods.map(_.period)
     private def ordered(ps: Vector[HistoricalPeriod]): List[HistoricalPeriod] =
-      ps.sortBy(p => (p.period.start.value: Long, p.label.value: String)).toList
+      ps.sortBy(p => (p.period.start.value: Long, p.label.value: String, p.id)).toList
 
     def get(id: HistoricalPeriod.Id): Option[HistoricalPeriod] = all.find(_.id == id)
     def children(id: HistoricalPeriod.Id): List[HistoricalPeriod] = ordered(
