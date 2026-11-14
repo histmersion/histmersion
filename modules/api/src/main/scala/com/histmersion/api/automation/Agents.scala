@@ -65,7 +65,7 @@ object Agents:
                 Invalid.Unknown.here(
                   TypeName.of(com.histmersion.api.automation.ProviderKind.Wire),
                   Raw(s"$p"),
-                  Vector(Raw(s"${ProviderKind.names(known)}"))
+                  ProviderKind.wires(known).map(w => Raw(s"$w"))
                 )
               )
             case Some(_) if m.isEmpty => Left(Invalid.Missing(Field("model"), Vector(Field(s"$t"))))

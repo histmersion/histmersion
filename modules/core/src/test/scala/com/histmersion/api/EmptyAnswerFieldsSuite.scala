@@ -44,18 +44,13 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
   test("probe: an empty title or citekey, and a null year for a record that has one, are problems"):
     val empty = ProbeAnswer(Citekey("huxley1956_catalogue"), com.histmersion.api.library.Title(""), None)
     assertEquals(
-      empty.problems(Some(ProbeAnswer.RecordYear(1956))).map(_.sentence),
-      List(
-        "the title is empty — copy the source's exact title from get_source",
-        "the year is missing — give the source's publication year from get_source"
-      )
+      empty.problems(Some(ProbeAnswer.RecordYear(1956))),
+      List(Problem.Invalid.Missing.here(Problem.Field("title")), Problem.Invalid.Missing.here(Problem.Field("year")))
     )
-    assert(
+    assertEquals(
       ProbeAnswer(Citekey(" "), com.histmersion.api.library.Title("A Catalogue"), Some(Year(1956)))
-        .problems(Some(ProbeAnswer.RecordYear(1956)))
-        .head
-        .sentence
-        .startsWith("the citekey is empty")
+        .problems(Some(ProbeAnswer.RecordYear(1956))),
+      List(Problem.Invalid.Missing.here(Problem.Field("citekey")))
     )
     // a record with no year is rightly answered with null
     assertEquals(
@@ -471,10 +466,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
         FixerAnswer.Notes("")
       )
     )
-    assert(
-      nullText.exists(_.endsWith("a replace with no new text — give the text, or use delete to remove the passage")),
-      nullText
-    )
+    assert(nullText.exists(_.endsWith("text is required")), nullText)
     val noAnchor = problems(
       FixerAnswer(
         List(EditAnswer(Op.Replace, EditAnswer.Anchor(""), Some(Article.Edits.NewText("by ship")))),
@@ -484,7 +476,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
         FixerAnswer.Notes("")
       )
     )
-    assert(noAnchor.exists(_.contains("no anchor")), noAnchor)
+    assert(noAnchor.exists(_.endsWith("anchor is required")), noAnchor)
     val noReason = problems(
       FixerAnswer(
         Nil,

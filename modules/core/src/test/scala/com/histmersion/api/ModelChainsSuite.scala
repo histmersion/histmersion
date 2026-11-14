@@ -1,6 +1,6 @@
 package com.histmersion
 package api
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{Legacy, Problem, Problems}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.testsupport.ComparedByValue.given
@@ -18,6 +18,15 @@ import com.histmersion.api.automation.{Agents, AgentsMarkdown}
 import com.histmersion.api.automation.ModelChains
 
 class ModelChainsSuite extends munit.FunSuite:
+  /** Does any of the problems match `p`? */
+  private def has(problems: Problems)(p: PartialFunction[Problem, Boolean]): Boolean =
+    problems.exists(p.applyOrElse(_, _ => false))
+
+  private def unknownMeasure(unit: String): PartialFunction[Problem, Boolean] = {
+    case Problem.Invalid.Unknown(t, raw, _, _) =>
+      t == Problem.TypeName.named[ModelChains.Measure] && raw == Problem.Raw(unit)
+  }
+
 
   private val Sonnet = ModelRef(ProviderKind.ClaudeCode, ModelRef.Model("sonnet"))
   private val Qwen = ModelRef(ProviderKind.Local, ModelRef.Model("qwen2.5-coder:32b"))
@@ -57,10 +66,10 @@ class ModelChainsSuite extends munit.FunSuite:
     assert(Window.parse(ModelChains.LimitSpec.Window("0h")).isLeft)
     assert(Window.parse(ModelChains.LimitSpec.Window("91d")).isLeft)
     assert(
-      Window
-        .parse(ModelChains.LimitSpec.Window("fortnight"))
-        .left
-        .exists(_.sentences.mkString("; ").contains("not a window"))
+      Window.parse(ModelChains.LimitSpec.Window("fortnight")).left.exists(has(_) {
+        case Problem.Invalid.Unreadable(t, raw, _, _) =>
+          t == Problem.TypeName.of(ModelChains.LimitSpec.Window) && raw == Problem.Raw("fortnight")
+      })
     )
 
   test("limits: tokens with k/M suffixes, usd with a word or a dollar sign"):
@@ -78,20 +87,18 @@ class ModelChainsSuite extends munit.FunSuite:
 
   test("limits: a fractional token count, a bad unit, no window, a non-positive amount are errors"):
     assert(
-      Limit
-        .parse(ModelChains.Limit.Spec("1.5 tokens/5h"))
-        .left
-        .exists(_.sentences.mkString("; ").contains("whole number"))
+      Limit.parse(ModelChains.Limit.Spec("1.5 tokens/5h")).left.exists(has(_) {
+        case Problem.Invalid.Unreadable(t, raw, _, _) =>
+          t == Problem.TypeName.of(ModelChains.LimitSpec.Amount) && raw == Problem.Raw("1.5")
+      })
     )
-    assert(
-      Limit
-        .parse(ModelChains.Limit.Spec("5 euros/day"))
-        .left
-        .exists(_.sentences.mkString("; ").contains("neither tokens nor usd"))
-    )
+    assert(Limit.parse(ModelChains.Limit.Spec("5 euros/day")).left.exists(has(_)(unknownMeasure("euros"))))
     assert(Limit.parse(ModelChains.Limit.Spec("5 usd")).isLeft)
     assert(
-      Limit.parse(ModelChains.Limit.Spec("0 usd/day")).left.exists(_.sentences.mkString("; ").contains("positive"))
+      Limit.parse(ModelChains.Limit.Spec("0 usd/day")).left.exists(has(_) {
+        case Problem.Invalid.Unreadable(t, raw, _, _) =>
+          t == Problem.TypeName.of(ModelChains.LimitSpec.Amount) && raw == Problem.Raw("0")
+      })
     )
     assert(
       Limit
@@ -125,8 +132,22 @@ class ModelChainsSuite extends munit.FunSuite:
         "claude-code:* 2M tokens/5h; nobody:* = 1 usd/day; local:x = 3 bananas/day; local:y = 1 usd/day, reserve 120%"
       )
     ).left.toOption.get
-    List("is not <provider:model", "'nobody'", "neither tokens nor usd", "0 to 99").foreach(m =>
-      assert(e.sentences.mkString("; ").contains(m), e)
+    assert(
+      has(e) { case Problem.Invalid.Unreadable(t, _, _, _) => t == Problem.TypeName.of(ModelChains.Allowance.Spec) },
+      e
+    )
+    assert(
+      has(e) { case Problem.Invalid.Unknown(t, raw, _, _) =>
+        t == Problem.TypeName.of(ProviderKind.Wire) && raw == Problem.Raw("nobody")
+      },
+      e
+    )
+    assert(has(e)(unknownMeasure("bananas")), e)
+    assert(
+      has(e) { case Problem.Invalid.OutOfRange(t, raw, _, _) =>
+        t == Problem.TypeName.of(ModelChains.Allowance.ReservePct) && raw == Problem.Raw("120")
+      },
+      e
     )
     assert(
       parseAllowances(ModelChains.Allowance.Spec("local:x = 1 usd/day; local:x = 2 usd/day")).left

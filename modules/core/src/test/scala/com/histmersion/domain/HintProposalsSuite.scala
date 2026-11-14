@@ -1,6 +1,7 @@
 package com.histmersion
 package domain
 
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -178,5 +179,8 @@ class HintProposalsSuite extends munit.FunSuite:
     assert(chk(HintAnswer(HintAnswer.Action("config"))).left.exists(_.head.sentence.contains("give the settings")))
     assert(
       chk(HintAnswer(HintAnswer.Action("config"), settings = List(HintAnswer.Settings("speed=fast")))).left
-        .exists(_.head.sentence.contains("unknown manager setting"))
+        .exists(_.head match
+          case Problem.Invalid.Undeclared(field, _, at) =>
+            field == Problem.Field("speed") && at == Vector(Problem.Field("config"))
+          case _ => false)
     )

@@ -169,7 +169,7 @@ object ModelChains:
             _ <- Either.cond(
               am._2 == Measure.Usd || am._1.isWhole,
               (),
-              Invalid.Unreadable.here(TypeName.of(Spec), Raw(s"$t"), Vector(Raw("500k tokens/5h"), Raw("5 usd/day")))
+              Invalid.Unreadable.here(TypeName.of(LimitSpec.Amount), Raw(s"${am._1}"), Vector(Raw("500000")))
             )
           yield Limit(am._1, am._2, w)
 
@@ -217,7 +217,7 @@ object ModelChains:
           .map(Provider(_))
           .toRight(
             Invalid.Unknown
-              .here(TypeName.of(ProviderKind.Wire), Raw(s"$p"), Vector(Raw(s"${ProviderKind.names(known)}")))
+              .here(TypeName.of(ProviderKind.Wire), Raw(s"$p"), ProviderKind.wires(known).map(w => Raw(s"$w")))
           )
       else ModelRef.parse(ModelRef.Wire(t), known).map(Model(_))
 

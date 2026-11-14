@@ -689,7 +689,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     val ps2 = fix(bad, last = LastRound(false)).left.toOption.get
     assert(ps2.exists(p => p.startsWith("edit 1 (insertAfter") && p.contains("ghost2020_x")), ps2)
     assert(ps2.exists(_.contains("Sources cited")), ps2)
-    assert(ps2.exists(_.startsWith("edit 3 (replace \"by land\"): the anchor is not in the article")), ps2)
+    assert(ps2.exists(_ == "edit 3 (replace \"by land\"): no Article.Edits.Anchor 'by land'"), ps2)
     val undecided = FixerAnswer(List(gloss), List(Finding.Id("C1")), Nil, Nil, ReviewArticle.FixerAnswer.Notes(""))
     assert(
       fix(undecided, last = LastRound(false)).left.exists(_.exists(_.contains("S1 is neither applied nor rejected")))

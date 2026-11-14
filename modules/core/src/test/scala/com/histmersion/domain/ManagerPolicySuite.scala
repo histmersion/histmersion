@@ -504,7 +504,10 @@ class ManagerPolicySuite extends munit.FunSuite:
       ManagerConfig
         .parse(List(Managers.ManagerConfig.Spec("sweeps=weekly")))
         .left
-        .exists(_.sentences.mkString("; ").contains("unknown Sweep"))
+        .exists(_.exists {
+          case Problem.Invalid.Unknown(_, raw, _, at) => raw == Problem.Raw("weekly") && at == Vector(Problem.Field("sweeps"))
+          case _                                      => false
+        })
     )
     assert(ManagerConfig.parse(List(Managers.ManagerConfig.Spec("auto-ingest=perhaps"))).isLeft)
 

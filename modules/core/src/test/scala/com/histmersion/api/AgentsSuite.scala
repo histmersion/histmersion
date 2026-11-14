@@ -26,6 +26,11 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.api.research.Article
 
 class AgentsSuite extends munit.FunSuite:
+  private def unknownProvider(name: String)(p: Problem): Boolean = p match
+    case Problem.Invalid.Unknown(t, raw, _, _) =>
+      t == Problem.TypeName.of(com.histmersion.api.automation.ProviderKind.Wire) && raw == Problem.Raw(name)
+    case _ => false
+
 
   test("ModelRef: only the first colon separates the provider (Ollama ids carry colons)"):
     assertEquals(
@@ -39,18 +44,27 @@ class AgentsSuite extends munit.FunSuite:
     assertEquals(ModelRef.parse(Agents.ModelRef.Wire("openai:gpt")).map(_.wire), Right("openai:gpt"))
 
   test("ModelRef: unknown provider, no model, no colon are errors"):
-    assert(
-      ModelRef.parse(Agents.ModelRef.Wire("ollama:qwen")).left.exists(_.sentence.contains("unknown provider 'ollama'"))
+    assert(ModelRef.parse(Agents.ModelRef.Wire("ollama:qwen")).left.exists(unknownProvider("ollama")))
+    assertEquals(
+      ModelRef.parse(Agents.ModelRef.Wire("local:")),
+      Left(Problem.Invalid.Missing(Problem.Field("model"), Vector(Problem.Field("local:"))))
     )
-    assert(ModelRef.parse(Agents.ModelRef.Wire("local:")).left.exists(_.sentence.contains("names no model")))
-    assert(ModelRef.parse(Agents.ModelRef.Wire("qwen")).left.exists(_.sentence.contains("provider:model")))
+    assert(ModelRef.parse(Agents.ModelRef.Wire("qwen")).left.exists {
+      case Problem.Invalid.Unreadable(t, raw, _, _) =>
+        t == Problem.TypeName.of(Agents.ModelRef.Wire) && raw == Problem.Raw("qwen")
+      case _ => false
+    })
 
   test("ModelRef: a plugin provider's name parses only while it is registered (known), never a host name"):
     assert(
       ModelRef
         .parse(Agents.ModelRef.Wire("gemini:pro"))
         .left
-        .exists(e => e.sentence.contains("unknown provider 'gemini'") && !e.sentence.contains("gemini,"))
+        .exists(e =>
+          unknownProvider("gemini")(e) && (e match
+            case Problem.Invalid.Unknown(_, _, known, _) => !known.contains(Problem.Raw("gemini"))
+            case _                                       => false)
+        )
     )
     assertEquals(
       ModelRef.parse(
@@ -357,11 +371,19 @@ class AgentsSuite extends munit.FunSuite:
       ModelOverride
         .parse(Agents.ModelOverride.Wire("skeptic"))
         .left
-        .exists(_.sentence.contains("<role>=<provider:model>"))
+        .exists {
+          case Problem.Invalid.Unreadable(_, raw, _, _) => raw == Problem.Raw("skeptic")
+          case _                                        => false
+        }
     )
-    assert(ModelOverride.parse(Agents.ModelOverride.Wire("=local:x")).left.exists(_.sentence.contains("names no role")))
+    assertEquals(
+      ModelOverride.parse(Agents.ModelOverride.Wire("=local:x")),
+      Left(Problem.Invalid.Missing(Problem.Field("role"), Vector(Problem.Field("=local:x"))))
+    )
     assert(
-      ModelOverride.parse(Agents.ModelOverride.Wire("skeptic=")).left.exists(_.sentence.contains("names no model"))
+      ModelOverride.parse(Agents.ModelOverride.Wire("skeptic=")).left.toOption.contains(
+        Problem.Invalid.Missing(Problem.Field("model"), Vector(Problem.Field("skeptic=")))
+      )
     )
 
   test("a run's model for a role: its --model-for, else its --model, else none (the role's chain)"):
