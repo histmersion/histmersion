@@ -1,6 +1,6 @@
 package com.histmersion
 package domain.library.acquisition
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.{Problem, Problems}
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -16,7 +16,7 @@ trait DiscoveryClient:
       since: Option[Year],
       sort: Option[DiscoveryClient.SearchSort],
       limit: DiscoveryClient.SearchLimit
-  ): Either[Problem, List[WorkRef]]
+  ): Either[Problems, List[WorkRef]]
   def meta(doi: Doi): Either[Problem, WorkRef]
 
   /** `(backend, references)` — Crossref's deposited list, falling back to OpenAlex's `referenced_works` resolved to

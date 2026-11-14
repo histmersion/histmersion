@@ -138,7 +138,12 @@ class HotGraphSuite extends munit.FunSuite:
 
   test("a node that would close a cycle, or names a node twice, is refused"):
     withFixture { f =>
-      assert(f.graph.node[Int](Hot.Graph.Def.Name("pool"))(_ => Right(1)).swap.exists(_.sentence.contains("twice")))
+      assert(
+        f.graph
+          .node[Int](Hot.Graph.Def.Name("pool"))(_ => Right(1))
+          .swap
+          .exists(_.sentence.contains("HotNode.Name 'pool' already exists"))
+      )
     }
 
   test("a pinned user keeps its generation: the old value stays open until it lets go"):

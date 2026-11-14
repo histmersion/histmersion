@@ -5,7 +5,7 @@ import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.JsonCodec.given
 import hearth.kindlings.jsoniterjson.Json
 
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.domain.library.acquisition.{RefRow, UpdateNotice, WorkLookup, WorkRef}
 import com.histmersion.upstreams.http.Url
@@ -35,7 +35,7 @@ final class OpenAlexCrossref(cfg: UpstreamSettings, http: Plugin.Http, log: Plug
       since: Option[Year],
       sort: Option[OpenAlexCrossref.SearchSort],
       limit: PageSize
-  ): Either[Problem, List[WorkRef]] =
+  ): Either[Problems, List[WorkRef]] =
     // relevance keeps results ON TOPIC; sorting purely by citations surfaces mega-cited but tangential
     // work. `cited_by_count` comes back either way, so a caller can re-rank the relevant set.
     val order = if sort.map((_).value.trim.toLowerCase).contains("cited") then "cited_by_count:desc"
@@ -58,7 +58,7 @@ final class OpenAlexCrossref(cfg: UpstreamSettings, http: Plugin.Http, log: Plug
       .flatMap { why =>
         // OpenAlex pauses anonymous search under load (HTTP 503); Crossref's search is keyless too
         log.warn(Plugin.Log.Line(s"acquire: OpenAlex search failed (${why.sentence}) — searching Crossref instead"))
-        crossrefSearch(query, from, sort, limit)
+        crossrefSearch(query, from, sort, limit).left.map(why ++ _)
       }
 
   /** Crossref `works?query=`: the same kinds of work (articles, books, chapters) from `from` on, by relevance or by

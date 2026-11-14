@@ -1030,7 +1030,7 @@ class BundleSuite extends DbSuite with Bounded:
       v1.problems.exists(_.value.contains(s"${Bundle.Kind.Goal.file}: sha256")),
       v1.problems.mkString("\n")
     )
-    assert(v1.problems.exists(_.value.contains("does not match its content")), v1.problems.mkString("\n"))
+    assert(v1.problems.exists(_.value.contains("fails its checksum")), v1.problems.mkString("\n"))
     val corrupt = rebuild { case (p, b) =>
       if p.startsWith("blobs/") && b.length > 5 then p -> b.updated(0, (b(0) ^ 1).toByte) else p -> b
     }

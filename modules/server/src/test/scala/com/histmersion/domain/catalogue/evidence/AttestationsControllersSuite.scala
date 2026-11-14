@@ -96,7 +96,7 @@ class AttestationsControllersSuite extends munit.FunSuite:
     )
     assert(
       bad.left.exists(e =>
-        e.message.sentence.startsWith("unknown target type 'planet'") && e.code.exists(_.value == "invalid")
+        e.message.sentence.startsWith("unknown AttestationTarget.Wire 'planet'") && e.code.exists(_.value == "invalid")
       )
     )
     val none = c.create(

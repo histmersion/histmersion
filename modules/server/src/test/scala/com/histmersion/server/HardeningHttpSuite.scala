@@ -113,7 +113,7 @@ class HardeningHttpSuite extends munit.FunSuite:
     withServer { (url, _) =>
       val (ps, pb) = put(s"$url/api/sources/$traversal", """{"title":"pwn"}""")
       assertEquals(ps, 400, pb)
-      assert(pb.contains("citekey"), pb)
+      assert(pb.contains("is not a Citekey"), pb)
       assertEquals(patch(s"$url/api/sources/$traversal", """{"summary":"x"}""")._1, 400)
       assertEquals(post(s"$url/api/sources/$traversal/reocr", "")._1, 400)
       assertEquals(post(s"$url/api/sources/$traversal/assets", """{"assets":[]}""")._1, 400)
@@ -267,7 +267,7 @@ class HardeningHttpSuite extends munit.FunSuite:
         List("/etc", s"${corpus.toString}/../..", "../../../..").foreach { d =>
           val (s, body) = post(s"$url/api/seed", s"""{"dir":"$d"}""")
           assertEquals(s, 400, s"'$d' was not refused: $body")
-          assert(body.contains("outside the configured corpus"), body)
+          assert(body.contains("the directory it is confined to"), body)
         }
 
         // the MCP `ingest` tool's `path` is the same rule (reached here through the handler, since

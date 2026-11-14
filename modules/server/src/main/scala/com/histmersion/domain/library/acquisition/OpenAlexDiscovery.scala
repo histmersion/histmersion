@@ -1,6 +1,6 @@
 package com.histmersion
 package domain.library.acquisition
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.{Problem, Problems}
 
 import com.histmersion.domain.library.acquisition.DiscoveryClient
 import com.histmersion.upstreams
@@ -19,7 +19,7 @@ final class OpenAlexDiscovery(client: OpenAlexCrossref) extends DiscoveryClient:
       since: Option[Year],
       sort: Option[DiscoveryClient.SearchSort],
       limit: DiscoveryClient.SearchLimit
-  ): Either[Problem, List[WorkRef]] =
+  ): Either[Problems, List[WorkRef]] =
     client
       .search(
         OpenAlexCrossref.SearchQuery(query.value),
@@ -27,8 +27,6 @@ final class OpenAlexDiscovery(client: OpenAlexCrossref) extends DiscoveryClient:
         sort.map(s => OpenAlexCrossref.SearchSort(s.value)),
         PageSize(limit.value)
       )
-      .left
-      .map(problem)
       .map(_.map(_.wire))
   def meta(doi: Doi): Either[Problem, WorkRef] =
     client.meta(com.histmersion.plugin.Doi(doi.value)).left.map(problem).map(_.wire)

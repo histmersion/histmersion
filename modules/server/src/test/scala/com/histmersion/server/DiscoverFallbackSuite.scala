@@ -4,7 +4,7 @@ import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -82,7 +82,10 @@ class DiscoverFallbackSuite extends munit.FunSuite:
       def bytes(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
         json(url, headers).map(j => HttpAnswer.Body(j.noSpaces.getBytes("UTF-8")))
     val r = discovery(cfg, dead).search(Search.Query("x"), None, None, DiscoveryClient.SearchLimit(5))
-    assert(r.left.exists(e => e.sentence.contains("openalex") && e.sentence.contains("Crossref")), r.toString)
+    assert(
+      r.left.exists(e => e.sentences.exists(_.contains("openalex")) && e.sentences.exists(_.contains("crossref"))),
+      r.toString
+    )
 
   // ── meta (#599): a gold-OA work read "no OA copy known" whenever OpenAlex's singleton lookup
   // failed and the record came from Crossref, which carries no access information at all ──
