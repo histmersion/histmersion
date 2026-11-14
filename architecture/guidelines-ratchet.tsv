@@ -44,7 +44,7 @@ G44	plugin-fixtures/hello	main	7
 G44	plugin-fixtures/hello-ai	main	16
 G44	plugin-fixtures/hello-deps	main	2
 G44	plugin-fixtures/hello-lib	main	2
-G44	plugin-host	main	257
+G44	plugin-host	main	256
 G44	plugin-host	test	56
 G44	plugin-resolver	main	34
 G44	plugin-resolver	test	38
@@ -252,7 +252,7 @@ G60fromString	core	main	246
 G60fromString	core	test	150
 G60fromString	db	main	82
 G60fromString	db	test	11
-G60fromString	plugin-host	main	121
+G60fromString	plugin-host	main	119
 G60fromString	plugin-host	test	16
 G60fromString	plugin-testkit	main	26
 G60fromString	plugin-testkit	test	9
