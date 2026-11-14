@@ -117,12 +117,12 @@ class BackupSuite extends munit.FunSuite:
     assert(Backup.safeName(Backup.Name("a" * 200 + ".dump")).isLeft)
 
   test("safeName's message says what is wrong"):
-    def unreadable(raw: String) = Backup.safeName(Backup.Name(raw)).left.exists {
-      case Problem.Invalid.Unreadable(_, r, examples, _) => r == Problem.Raw(raw) && examples.nonEmpty
+    def unreadable(name: Backup.Name, raw: Problem.Raw) = Backup.safeName(name).left.exists {
+      case Problem.Invalid.Unreadable(_, r, examples, _) => r == raw && examples.nonEmpty
       case _                                             => false
     }
-    assert(unreadable("../x.dump"))
-    assert(unreadable("x.sql"))
+    assert(unreadable(Backup.Name("../x.dump"), Problem.Raw("../x.dump")))
+    assert(unreadable(Backup.Name("x.sql"), Problem.Raw("x.sql")))
 
   // ── JDBC URL → pg_dump arguments ─────────────────────────────────────────────────────────────
 

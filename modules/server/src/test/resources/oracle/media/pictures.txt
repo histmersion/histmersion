@@ -754,22 +754,22 @@
 == GET /iiif/zqfig2001_tell/fig-a.png/0,0,10,10/full/0/default.png
 404 {
   "code" : null,
-  "message" : "invalid size: 'full'"
+  "message" : "'full' is not a Iiif.Size (e.g. max, 300,, ,200, 300,200, !300,200)"
 }
 == GET /iiif/zqfig2001_tell/fig-a.png/full/90,/0/default.tiff
 404 {
   "code" : null,
-  "message" : "unsupported format: 'tiff' (use jpg or png)"
+  "message" : "'tiff' is not a Iiif.Format (e.g. jpg, png)"
 }
 == GET /iiif/zqfig2001_tell/fig-a.png/nonsense/full/0/default.jpg
 404 {
   "code" : null,
-  "message" : "invalid region: 'nonsense' (expected 'full' or 'x,y,w,h')"
+  "message" : "'nonsense' is not a Iiif.Region (e.g. full, 10,20,300,400)"
 }
 == GET /iiif/zqfig2001_tell/fig-a.png/full/full/90/default.jpg
 404 {
   "code" : null,
-  "message" : "invalid size: 'full'"
+  "message" : "'full' is not a Iiif.Size (e.g. max, 300,, ,200, 300,200, !300,200)"
 }
 == GET /api/media
 200 {
@@ -1854,13 +1854,13 @@
 == GET /source/zqfig2001_tell/assets/nope.png (bytes)
 404 application/json {"message":"No asset 'nope.png' for 'zqfig2001_tell'","code":"not_found"}
 == GET /iiif/zqfig2001_tell/fig-a.png/full/full/0/default.png (bytes)
-404 application/json {"message":"invalid size: 'full'","code":null}
+404 application/json {"message":"'full' is not a Iiif.Size (e.g. max, 300,, ,200, 300,200, !300,200)","code":null}
 == GET /iiif/zqfig2001_tell/fig-a.png/0,0,32,24/full/0/default.jpg (bytes)
-404 application/json {"message":"invalid size: 'full'","code":null}
+404 application/json {"message":"'full' is not a Iiif.Size (e.g. max, 300,, ,200, 300,200, !300,200)","code":null}
 == GET /iiif/zqfig2001_tell/fig-c.jpg/full/60,/0/default.jpg (bytes)
 200 image/jpeg 1634 cf74894459a3477606b531c935ce48690113d68d7dd34264586e106539ffc804
 == GET /iiif/zqfig2001_tell/fig-c.jpg/pct:10,10,50,50/30,20/0/default.png (bytes)
-404 application/json {"message":"invalid region coordinates: 'pct:10,10,50,50' (expected x,y,w,h with w,h > 0)","code":null}
+404 application/json {"message":"'pct:10,10,50,50' is not a Iiif.Region (e.g. full, 10,20,300,400)","code":null}
 == GET /api/media/asset:zqfig2001_tell/fig-c.jpg/thumb (bytes)
 404 application/json {"message":"no such endpoint: /api/media/asset:zqfig2001_tell/fig-c.jpg/thumb","code":null}
 == GET /api/media/asset:zqfig2001_tell/fig-c.jpg/file (bytes)

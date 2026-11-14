@@ -74,8 +74,9 @@ class ListFiltersSuite extends munit.FunSuite:
     )
     assert(
       range(Some(TimeBound("soon")), None, now).left.exists {
-        case Problem.Invalid.Unreadable(_, raw, _, at) => raw == Problem.Raw("soon") && at == Vector(Problem.Field("since"))
-        case _                                         => false
+        case Problem.Invalid.Unreadable(_, raw, _, at) =>
+          raw == Problem.Raw("soon") && at == Vector(Problem.Field("since"))
+        case _ => false
       }
     )
     assertEquals(range(None, None, now), Right((None, None)))

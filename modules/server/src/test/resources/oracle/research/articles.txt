@@ -608,19 +608,19 @@
 == put refused: a bad kind
 400 {
   "code" : "invalid",
-  "message" : "invalid kind 'Not A Kind!' — one of concept, myth, culture, region, timeline, report, index (or another lower-case word)"
+  "message" : "kind: 'Not A Kind!' is not a Article.Kind (e.g. concept, myth, culture, region, timeline, report, index)"
 }
 == put refused: an unknown key
-400 Invalid value for: body (unknown key 'nope'; expected only: title, kind, body, summary, tags, regions, periodStart, periodEnd, filter, reasons)
+400 Invalid value for: body (unknown key 'nope' (one of: title, kind, body, summary, tags, regions, periodStart, periodEnd, filter, reasons))
 == put refused: a reason for no citekey
 400 {
   "code" : "invalid",
-  "message" : "reason for 'not a key!': not a citekey"
+  "message" : "reasons: 'not a key!' is not a Citekey (e.g. anthony2007)"
 }
 == put refused: an overlong reason
 400 {
   "code" : "invalid",
-  "message" : "reason for zralpha1990_walls: 501 characters (at most 500 — one sentence)"
+  "message" : "reasons.zralpha1990_walls: Coverage.Rationale 501 is above 500"
 }
 == put refused: strict, a formatting error
 400 {
@@ -643,7 +643,7 @@ The Zr culture built walls [[zralpha1990_walls]].
 200 {
   "error" : {
     "code" : -32602,
-    "message" : "Invalid arguments: DecodingFailure at .article: unknown key 'nope'; expected only: title, kind, body, summary, tags, regions, periodStart, periodEnd, filter, reasons. Input: {\"slug\":\"zr_x\",\"article\":{\"title\":\"x\",\"nope\":1}}"
+    "message" : "Invalid arguments: DecodingFailure at .article: unknown key 'nope' (one of: title, kind, body, summary, tags, regions, periodStart, periodEnd, filter, reasons). Input: {\"slug\":\"zr_x\",\"article\":{\"title\":\"x\",\"nope\":1}}"
   },
   "id" : 1,
   "jsonrpc" : "2.0"
@@ -1342,7 +1342,7 @@ The Zr culture built walls [[zralpha1990_walls]].
 == GET /api/articles/zr_nothing
 404 {
   "code" : "not_found",
-  "message" : "No article 'zr_nothing'"
+  "message" : "no Article.Slug 'zr_nothing'"
 }
 == tool get_article (all)
 # The walls of Zrtown
@@ -2928,7 +2928,7 @@ _showing 2–3 of 6 — next: offset=3 — full set: limit=6_
 == patch zr_harbour: append to a missing section
 400 {
   "code" : "invalid",
-  "message" : "no heading matching 'No such' in the article body"
+  "message" : "no Article.Section 'No such'"
 }
 == patch zr_harbour: tags add
 200 {
@@ -3930,12 +3930,12 @@ _showing 2–3 of 6 — next: offset=3 — full set: limit=6_
 == patch zr_harbour: refused: a stale ifUpdatedAt
 412 {
   "code" : "precondition_failed",
-  "message" : "'zr_harbour' has moved on: you sent ifUpdatedAt='TS' but the stored updatedAt is 'TS'. Re-read the article and re-apply your patch."
+  "message" : "Article.Slug 'zr_harbour' has moved on: you sent TS, it is now TS"
 }
 == patch zr_harbour: refused: a malformed ifUpdatedAt
 412 {
   "code" : "precondition_failed",
-  "message" : "'zr_harbour' has moved on: you sent ifUpdatedAt='yesterday' but the stored updatedAt is 'TS'. Re-read the article and re-apply your patch."
+  "message" : "Article.Slug 'zr_harbour' has moved on: you sent yesterday, it is now TS"
 }
 == patch zr_harbour: with the current ifUpdatedAt
 200 {
@@ -4098,16 +4098,16 @@ _showing 2–3 of 6 — next: offset=3 — full set: limit=6_
   "message" : "refused (strict): 1 formatting error — body L11:1 error html-tag — `<div>` is never closed — everything after it is inside it · `<div> never closed`"
 }
 == patch zr_harbour: refused: an unknown key
-400 Invalid value for: body (unknown key 'nope'; expected only: title, summary, body, append, section, tags, regions, period, kind, ifUpdatedAt, filter, reasons, critiqueReasons)
+400 Invalid value for: body (unknown key 'nope' (one of: title, summary, body, append, section, tags, regions, period, kind, ifUpdatedAt, filter, reasons, critiqueReasons))
 == patch zr_harbour: refused: a bad kind
 400 {
   "code" : "invalid",
-  "message" : "invalid kind 'Not A Kind!' — one of concept, myth, culture, region, timeline, report, index (or another lower-case word)"
+  "message" : "kind: 'Not A Kind!' is not a Article.Kind (e.g. concept, myth, culture, region, timeline, report, index)"
 }
 == patch zr_nothing: unknown article
 404 {
   "code" : "not_found",
-  "message" : "No article 'zr_nothing'"
+  "message" : "no Article.Slug 'zr_nothing'"
 }
 == patch zr_harbour: filter cleared
 200 {
@@ -4171,7 +4171,7 @@ The end of the dynasty [[zrgamma1975_kings]].
 
 - [[zrgamma1975_kings]] — Zrauthor 1975 · _Kings of Zrland_ · **superseded**
 == tool patch_article refused (stale)
-_'zr_kings' has moved on: you sent ifUpdatedAt='TS' but the stored updatedAt is 'TS'. Re-read the article and re-apply your patch._
+_Article.Slug 'zr_kings' has moved on: you sent TS, it is now TS_
 == GET versions of harbour
 200 [
   {
@@ -4312,7 +4312,7 @@ _'zr_kings' has moved on: you sent ifUpdatedAt='TS' but the stored updatedAt is 
 == GET versions of an unknown article
 400 {
   "code" : "not_found",
-  "message" : "No article 'zr_nothing'"
+  "message" : "no Article.Slug 'zr_nothing'"
 }
 == tool article_versions
 ### 15 version(s) of zr_harbour
@@ -4558,7 +4558,7 @@ The harbour was founded by a hero [[zrbeta2001_harbour]]. See [[zr_walls]] for t
 == GET coverage of zr_nothing
 404 {
   "code" : "not_found",
-  "message" : "No article 'zr_nothing'"
+  "message" : "no Article.Slug 'zr_nothing'"
 }
 == tool article_coverage
 ## Coverage of [[zr_walls]]
@@ -4617,7 +4617,7 @@ _article 'zr_kings' records no filter, so it has no generated coverage — set t
 == GET review of zr_nothing
 404 {
   "code" : "not_found",
-  "message" : "No article 'zr_nothing'"
+  "message" : "no Article.Slug 'zr_nothing'"
 }
 == tool article_review
 ## Review of [[zr_walls]]
@@ -4655,14 +4655,14 @@ No finding recorded.
       "anchor" : "no such passage",
       "index" : 1,
       "op" : "delete",
-      "problem" : "the anchor is not in the article — copy it exactly from the current body (earlier edits included)",
+      "problem" : "no Article.Edits.Anchor 'no such passage'",
       "text" : ""
     }
   ],
   "fatal" : false,
   "kind" : "concept",
   "problems" : [
-    "edit 1 (delete \"no such passage\"): the anchor is not in the article — copy it exactly from the current body (earlier edits included)"
+    "edit 1 (delete \"no such passage\"): no Article.Edits.Anchor 'no such passage'"
   ],
   "slug" : "zr_walls",
   "wordsAfter" : 52,
@@ -4698,12 +4698,12 @@ No finding recorded.
 == check walls: refused: both
 400 {
   "code" : "invalid",
-  "message" : "give `edits` or `body`, not both"
+  "message" : "give exactly one of edits, body"
 }
 == check walls: refused: neither
 400 {
   "code" : "invalid",
-  "message" : "give `edits` (against the stored body) or `body` (a whole draft)"
+  "message" : "give exactly one of edits, body"
 }
 == check a new article's draft
 200 {
@@ -4721,7 +4721,7 @@ No finding recorded.
 == check an unknown article's edits
 404 {
   "code" : "not_found",
-  "message" : "No article 'zr_new'"
+  "message" : "no Article.Slug 'zr_new'"
 }
 == tool check_edits
 ## Check of [[zr_walls]] (concept)
@@ -4822,7 +4822,7 @@ No problems: these are the checks code runs on the answer, and it would pass the
 == lint unknown
 404 {
   "code" : "not_found",
-  "message" : "No article 'zr_nothing'"
+  "message" : "no Article.Slug 'zr_nothing'"
 }
 == export zr_walls
 200 ---
@@ -4892,7 +4892,7 @@ period_end: null
 == export zr_nothing
 404 {
   "code" : "not_found",
-  "message" : "No article 'zr_nothing'"
+  "message" : "no Article.Slug 'zr_nothing'"
 }
 == tool export_article
 ---
@@ -5118,12 +5118,12 @@ _Method: search {tags: ["zr-oracle"]} → 4; statuses: 2 current, 1 contested, 1
 == rename refused: invalid
 400 {
   "code" : "invalid",
-  "message" : "'Bad Slug' is not an article slug (lower-case letters, digits, '_', '.' and '-')"
+  "message" : "article slug: 'Bad Slug' is not a LabelRenames.Label (e.g. sea_peoples)"
 }
 == rename refused: unknown
 404 {
   "code" : "not_found",
-  "message" : "No article 'zr_nothing'"
+  "message" : "no Article.Slug 'zr_nothing'"
 }
 == GET by the old slug
 200 {
@@ -5618,7 +5618,7 @@ _Method: search {tags: ["zr-oracle"]} → 4; statuses: 2 current, 1 contested, 1
 == delete eps refused (cited)
 400 {
   "code" : "invalid",
-  "message" : "'zreps1999_lost' cannot be deleted — cited by article zr_lost (A lost report). Fix those first (remove the citation from each article, re-source the events, let the job finish); there is no override"
+  "message" : "Citekey 'zreps1999_lost' is referred to by 1 DeleteBlocker.Kind.Article"
 }
 == delete the citing article
 200 {
@@ -5628,7 +5628,7 @@ _Method: search {tags: ["zr-oracle"]} → 4; statuses: 2 current, 1 contested, 1
 == delete it again
 404 {
   "code" : "not_found",
-  "message" : "No article 'zr_lost'"
+  "message" : "no Article.Slug 'zr_lost'"
 }
 == delete eps
 200 {

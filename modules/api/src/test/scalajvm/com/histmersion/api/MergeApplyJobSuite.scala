@@ -25,7 +25,6 @@ class MergeApplyJobSuite extends munit.FunSuite:
     External.Reported("java.lang.IllegalStateException: boom")
   )
 
-
   private val result = MergeApplyResult(
     UUID.fromString("00000000-0000-0000-0000-000000000001"),
     Bundle.Instance(UUID.fromString("00000000-0000-0000-0000-000000000002"), Some(Bundle.Instance.Label("work"))),

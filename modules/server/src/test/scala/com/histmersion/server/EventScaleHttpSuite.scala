@@ -100,7 +100,7 @@ class EventScaleHttpSuite extends munit.FunSuite:
           url,
           s"""{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"patch_event","arguments":{"id":"$Id","lat":34.5}}}"""
         )
-        assert(refused.contains("lat and lon go together"), refused)
+        assert(refused.contains("give lat, lon together, or none of them"), refused)
         val (_, md) = mcp(
           url,
           s"""{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"events","arguments":{"query":"Zqes HTTP"}}}"""
@@ -122,7 +122,7 @@ class EventScaleHttpSuite extends munit.FunSuite:
         delete(s"$url/api/events/$geoId")
         val (ws, wb) = put(s"$url/api/events/$geoId", """{"label":"Zqes WKT","geometry":"POINT(36.5 34.55)"}""")
         assertEquals(ws, 400, wb)
-        assert(wb.contains("not WKT"), wb)
+        assert(wb.contains("is not a EventGeometry.Geojson"), wb)
         assertEquals(get(s"$url/api/events/$geoId")._1, 404, "a refused PUT creates nothing")
 
         // the shape is right but PostGIS cannot read the coordinates: its words, still a 400

@@ -22,17 +22,17 @@ object Column:
   extension (problem: Problem)
     /** The frozen sentence of the problem, as a column keeps it. */
     def stored: String = problem match
-      case Invalid.Malformed(t, c, raw, at)    => s"${path(at)}'$raw' is no $t: it fails ${c.name} (${c.description})"
-      case Invalid.Unknown(t, raw, known, at)  => s"${path(at)}unknown $t '$raw'${quotedList(known)}"
-      case Invalid.Unreadable(t, raw, eg, at)  => s"${path(at)}'$raw' is unreadable as $t${quotedExamples(eg)}"
-      case Invalid.Missing(field, at)          => s"${path(at)}$field is required"
-      case Invalid.Undeclared(field, ds, at)   => s"${path(at)}$field is undeclared${quotedList(ds.map(d => Raw(s"$d")))}"
-      case Invalid.Wrapped(t, raw, member, at) => s"${path(at)}'$raw' wraps a $t in $member"
+      case Invalid.Malformed(t, c, raw, at)   => s"${path(at)}'$raw' is no $t: it fails ${c.name} (${c.description})"
+      case Invalid.Unknown(t, raw, known, at) => s"${path(at)}unknown $t '$raw'${quotedList(known)}"
+      case Invalid.Unreadable(t, raw, eg, at) => s"${path(at)}'$raw' is unreadable as $t${quotedExamples(eg)}"
+      case Invalid.Missing(field, at)         => s"${path(at)}$field is required"
+      case Invalid.Undeclared(field, ds, at) => s"${path(at)}$field is undeclared${quotedList(ds.map(d => Raw(s"$d")))}"
+      case Invalid.Wrapped(t, raw, member, at)  => s"${path(at)}'$raw' wraps a $t in $member"
       case Invalid.StoredOn(t, item, owner, at) => s"${path(at)}$t $item is stored on '$owner'"
-      case Invalid.Ambiguous(t, raw, n, at)    => s"${path(at)}$t '$raw' matches $n"
-      case Invalid.Repeated(t, raw, at)        => s"${path(at)}$t '$raw' is repeated"
-      case Invalid.Misplaced(field, under, at) => s"${path(at)}$field belongs under $under"
-      case Invalid.OutOfRange(t, raw, b, at)   =>
+      case Invalid.Ambiguous(t, raw, n, at)     => s"${path(at)}$t '$raw' matches $n"
+      case Invalid.Repeated(t, raw, at)         => s"${path(at)}$t '$raw' is repeated"
+      case Invalid.Misplaced(field, under, at)  => s"${path(at)}$field belongs under $under"
+      case Invalid.OutOfRange(t, raw, b, at)    =>
         s"${path(at)}$t '$raw' is out of [${b.least.mkString}, ${b.greatest.mkString}]"
       case Invalid.Inconsistent(fs, rule, at) => s"${path(at)}${fs.toVector.mkString(", ")} break ${rule.productPrefix}"
       case Invalid.Reference(form, at)        => s"${path(at)}no secret reference: ${form.stored}"
@@ -718,10 +718,10 @@ object Column:
     {
       case UnpricedModel(model, metered, provider) =>
         val read: Option[Option[Config.Metered]] = (Option(metered), Option(provider)) match
-          case (None, None)                  => Some(None)
-          case (Some("ApiKey"), Some(p))     => Some(Some(Config.Metered.ApiKey(Upstream.Name(s"$p"))))
-          case (Some("Opencode"), None)      => Some(Some(Config.Metered.Opencode))
-          case _                             => None
+          case (None, None)              => Some(None)
+          case (Some("ApiKey"), Some(p)) => Some(Some(Config.Metered.ApiKey(Upstream.Name(s"$p"))))
+          case (Some("Opencode"), None)  => Some(Some(Config.Metered.Opencode))
+          case _                         => None
         read.map(Config.Unpriced(Problem.Run.Model(s"$model"), _))
       case _ => None
     },

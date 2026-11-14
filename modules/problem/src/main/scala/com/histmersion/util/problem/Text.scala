@@ -15,16 +15,16 @@ object Text:
   extension (problem: Problem)
     /** The sentence that says what failed. */
     def sentence: String = problem match
-      case Invalid.Malformed(t, c, raw, at)   => s"${path(at)}'$raw' is not a ${t.short}: ${c.description}"
-      case Invalid.Unknown(t, raw, known, at) => s"${path(at)}unknown ${t.short} '$raw'${oneOf(known)}"
-      case Invalid.Unreadable(t, raw, eg, at) => s"${path(at)}'$raw' is not a ${t.short}${forExample(eg)}"
-      case Invalid.Missing(field, at)         => s"${path(at)}$field is required"
-      case Invalid.Undeclared(field, ds, at)  => s"${path(at)}unknown key '$field'${oneOf(ds.map(d => Raw(s"$d")))}"
+      case Invalid.Malformed(t, c, raw, at)    => s"${path(at)}'$raw' is not a ${t.short}: ${c.description}"
+      case Invalid.Unknown(t, raw, known, at)  => s"${path(at)}unknown ${t.short} '$raw'${oneOf(known)}"
+      case Invalid.Unreadable(t, raw, eg, at)  => s"${path(at)}'$raw' is not a ${t.short}${forExample(eg)}"
+      case Invalid.Missing(field, at)          => s"${path(at)}$field is required"
+      case Invalid.Undeclared(field, ds, at)   => s"${path(at)}unknown key '$field'${oneOf(ds.map(d => Raw(s"$d")))}"
       case Invalid.Wrapped(_, raw, member, at) =>
         s"${path(at)}a $raw is not the value itself: give its \"$member\" member"
       case Invalid.StoredOn(_, item, owner, at) =>
         s"${path(at)}$item is stored on '$owner', not here: patch '$owner' to record it"
-      case Invalid.Ambiguous(t, raw, n, at)   =>
+      case Invalid.Ambiguous(t, raw, n, at) =>
         s"${path(at)}the ${t.short} '$raw' matches $n places — quote more of it so it matches one"
       case Invalid.Repeated(t, raw, at)        => s"${path(at)}${t.short} '$raw' is given more than once"
       case Invalid.Misplaced(field, under, at) => s"${path(at)}'$field' belongs under '$under' ($under.$field)"
@@ -114,8 +114,12 @@ object Text:
     def sentences: Vector[String] = problems.toVector.map(_.sentence)
 
   extension (typeName: TypeName)
-    /** A type's name without its package: `Citekey`, `Source.Status`. */
-    def short: String = s"$typeName".split('.').dropWhile(_.headOption.forall(_.isLower)).mkString(".")
+    /** A type's name without its package: `Citekey`, `Source.Status`. A `Wire` newtype is the wire spelling of the type
+      * it is nested in, and is named by that type: `ProviderKind.Wire` is `ProviderKind`.
+      */
+    def short: String =
+      val named = s"$typeName".split('.').toVector.dropWhile(_.headOption.forall(_.isLower))
+      (if named.size > 1 && named.lastOption.contains("Wire") then named.dropRight(1) else named).mkString(".")
 
   /** A code name in words: `MergeApply` is `merge apply`. */
   def words(name: String): String = name.flatMap(c => if c.isUpper then s" ${c.toLower}" else s"$c").trim

@@ -315,7 +315,7 @@ class QueueSuite extends munit.FunSuite:
         Problem.Invalid.Unknown.here(
           Problem.TypeName.of(QueueItem.Status),
           Problem.Raw("pending"),
-          Vector("open", "done", "note").map(Problem.Raw(_))
+          Vector(Problem.Raw("open"), Problem.Raw("done"), Problem.Raw("note"))
         )
       )
     )
@@ -329,8 +329,9 @@ class QueueSuite extends munit.FunSuite:
     val e = Queue.createdAtOf(Some(QueueItem.CreatedAt("yesterday"))).swap.toOption.get
     assert(
       e match
-        case Problem.Invalid.Unreadable(t, raw, _, _) => t == Problem.TypeName.of(QueueItem.CreatedAt) && raw == Problem.Raw("yesterday")
-        case _                                        => false
+        case Problem.Invalid.Unreadable(t, raw, _, _) =>
+          t == Problem.TypeName.of(QueueItem.CreatedAt) && raw == Problem.Raw("yesterday")
+        case _ => false
       ,
       e
     )
@@ -378,28 +379,26 @@ class QueueSuite extends munit.FunSuite:
 
   test("a fulfilled item is ticked off as ingested as [[citekey]], keeping why it was wanted"):
     assertEquals(
-      (Queue.fulfilledReason(None, Citekey("lambert2013_babylonian"))).value,
-      "ingested as [[lambert2013_babylonian]]"
+      Queue.fulfilledReason(None, Citekey("lambert2013_babylonian")),
+      Queue.Rationale("ingested as [[lambert2013_babylonian]]")
     )
     assertEquals(
-      (Queue.fulfilledReason(Some(Queue.Rationale("  ")), Citekey("a2020_b"))).value,
-      "ingested as [[a2020_b]]"
+      Queue.fulfilledReason(Some(Queue.Rationale("  ")), Citekey("a2020_b")),
+      Queue.Rationale("ingested as [[a2020_b]]")
     )
     assertEquals(
       (Queue
         .fulfilledReason(
           Some(Queue.Rationale("Nagy 2001 argues against it")),
           Citekey("finkelberg2000_cypria")
-        ))
-        .value,
-      "Nagy 2001 argues against it · ingested as [[finkelberg2000_cypria]]"
+        )),
+      Queue.Rationale("Nagy 2001 argues against it · ingested as [[finkelberg2000_cypria]]")
     )
     // recording the same source twice adds nothing
     assertEquals(
       (Queue
-        .fulfilledReason(Some(Queue.Rationale("ingested as [[a2020_b]]")), Citekey("a2020_b")))
-        .value,
-      "ingested as [[a2020_b]]"
+        .fulfilledReason(Some(Queue.Rationale("ingested as [[a2020_b]]")), Citekey("a2020_b"))),
+      Queue.Rationale("ingested as [[a2020_b]]")
     )
     assertEquals(
       Queue.fulfil(item(QueueItem.Id(567)), Citekey("lambert2013_babylonian")),

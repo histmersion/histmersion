@@ -138,7 +138,7 @@ class WriteHttpSuite extends munit.FunSuite:
           s"""{"edges":{"add":[{"src":"zz_someone_else","dst":"$dst","kind":"refutes"}]}}"""
         )
         assertEquals(es, 400, eb)
-        assert(eb.contains("is not the patched source"), eb)
+        assert(eb.contains("is stored on '"), eb)
 
         val (os, ob) = patch(s"$url/api/sources/$k", s"""{"edges":{"add":[{"dst":"$dst","kind":"refutes"}]}}""")
         assertEquals(os, 200, ob)
@@ -225,7 +225,7 @@ class WriteHttpSuite extends munit.FunSuite:
         val (s1, b1) = post(s"$url/api/attestations", s"""{"citekey":"$k","targetType":"bogus","targetId":"x"}""")
         assertEquals(s1, 400, b1)
         assert(
-          b1.contains("unknown AttestationTarget.Wire 'bogus' (one of: finding, event, event_dating, place, edge)"),
+          b1.contains("unknown AttestationTarget 'bogus' (one of: finding, event, event_dating, place, edge)"),
           b1
         )
         val (s2, b2) =
@@ -259,10 +259,10 @@ class WriteHttpSuite extends munit.FunSuite:
           s"""{"title":"P","edges":[{"src":"zz_someone_else","dst":"$dst","kind":"refutes"}]}"""
         )
         assertEquals(s1, 400, b1)
-        assert(b1.contains("is not the source being put"), b1)
+        assert(b1.contains("is stored on '"), b1)
         val (s2, b2) = put(s"$url/api/sources/$k", s"""{"title":"P","edges":[{"dst":"$k","kind":"refutes"}]}""")
         assertEquals(s2, 400, b2)
-        assert(b2.contains("self-edge"), b2)
+        assert(b2.contains("src, dst must differ"), b2)
         val (s3, b3) =
           put(s"$url/api/sources/$k", s"""{"title":"P","edges":[{"src":"$k","dst":"$dst","kind":"refutes"}]}""")
         assertEquals(s3, 200, b3)

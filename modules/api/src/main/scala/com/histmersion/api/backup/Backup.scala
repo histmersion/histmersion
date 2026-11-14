@@ -21,8 +21,9 @@ import com.histmersion.api.ByteCount
 import com.histmersion.api.Sha256
 
 object Backup:
-  type ExitCode = ExitCode.T
-  object ExitCode extends Newtype[Int, Pure]
+  /** pg_restore's exit status: a process's exit status, as a problem names it. */
+  type ExitCode = Problem.Io.ExitCode
+  val ExitCode: Problem.Io.ExitCode.type = Problem.Io.ExitCode
   type JdbcUrl = JdbcUrl.T
   object JdbcUrl extends Newtype[String, Pure]
   type Name = Name.T
@@ -176,7 +177,7 @@ object Backup:
         Problem.Io.Process(
           Problem.Io.Tool("pg_restore"),
           Problem.Io.Ending
-            .Exited(Problem.Io.ExitCode(exit.value), External.Stderr.tail(notable.takeRight(5).mkString("\n")))
+            .Exited(exit, External.Stderr.tail(notable.takeRight(5).mkString("\n")))
         )
       )
 

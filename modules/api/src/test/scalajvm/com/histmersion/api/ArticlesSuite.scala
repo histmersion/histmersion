@@ -166,7 +166,9 @@ class ArticlesSuite extends munit.FunSuite:
     assert(
       e match
         case Problem.Conflict.Stale(t, key, sent, _) =>
-          t == Problem.TypeName.of(Article.Slug) && key == Problem.Raw(s"${existing.slug}") && sent == Problem.Conflict.Stamp("older")
+          t == Problem.TypeName.of(Article.Slug) && key == Problem.Raw("sea_peoples") && sent == Problem.Conflict.Stamp(
+            "older"
+          )
         case _ => false
       ,
       e

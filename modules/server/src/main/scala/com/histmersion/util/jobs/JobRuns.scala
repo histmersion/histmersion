@@ -1,7 +1,7 @@
 package com.histmersion
 package util.jobs
-import com.histmersion.util.problem.Text.sentence
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
+import com.histmersion.api.problem.Column
 
 import com.histmersion.util.database.Transactor
 import com.augustnagro.magnum.DbCon
@@ -218,7 +218,7 @@ object JobRuns:
             id,
             Pipeline.Wire(r.row.pipeline.value),
             r.row.model,
-            Problem.Unclassified(Legacy.Text(r.error.fold("")(_.sentence)))
+            r.error.getOrElse(Column.read(""))
           )
         )
         .toVector

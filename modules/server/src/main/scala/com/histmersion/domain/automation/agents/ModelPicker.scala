@@ -111,12 +111,12 @@ final class ModelPicker(
         parseModels(ms.map(m => ModelRef.Model.Spec(m.value)), known())
           .map(_ -> SettingSource.Saved)
           .left
-          .map(m => Problem.Unclassified(Legacy.Text(s"the saved chain of ${role.wire}: $m")))
+          .map(_.at(Problem.Field(s"the saved chain of ${role.wire}")).toNonEmpty.head)
       case None =>
         parseChain(Chain.Spec(cfg.role(role.transformInto[AgentRole])), known())
           .map(_ -> SettingSource.Config)
           .left
-          .map(m => Problem.Unclassified(Legacy.Text(s"agents.roles.${role.wire}: $m")))
+          .map(_.at(Problem.Field(s"agents.roles.${role.wire}")).toNonEmpty.head)
 
   /** The chain a call uses: the run's own model (`--model`) when it names one, else the role's. */
   def chainFor(

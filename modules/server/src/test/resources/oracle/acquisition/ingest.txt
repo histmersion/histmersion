@@ -892,12 +892,12 @@ job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqa_ledger","pr
 == upload with a done item
 400 {
   "code" : null,
-  "message" : "acquisition item 2 is already done"
+  "message" : "Queue.QueueItem.Id '2' is done; this needs open"
 }
 == upload with no such item
 400 {
   "code" : null,
-  "message" : "no acquisition item 99999"
+  "message" : "no Queue.QueueItem.Id '99999'"
 }
 == reocr zqa_upload --quality
 202 {

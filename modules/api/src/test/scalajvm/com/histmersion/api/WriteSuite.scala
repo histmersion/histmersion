@@ -169,7 +169,7 @@ class WriteSuite extends munit.FunSuite:
       r.left.exists(_.message match
         case Problem.Invalid.Unknown(t, raw, known, _) =>
           t == Problem.TypeName.named[Confidence] && raw == Problem.Raw("certain") &&
-          known == Vector("high", "medium", "low", "contested").map(Problem.Raw(_))
+          known == Vector(Problem.Raw("high"), Problem.Raw("medium"), Problem.Raw("low"), Problem.Raw("contested"))
         case _ => false),
       r.toString
     )
@@ -615,12 +615,18 @@ class WriteSuite extends munit.FunSuite:
     val notFound = Api.Error.hasCode(Api.Error.Code(Write.CodeNotFound))
     assert(
       notFound.isDefinedAt(
-        Api.Error(Problem.NotFound.Entity(Problem.TypeName.of(Citekey), Problem.Raw("x")), Some(Api.Error.Code(Write.CodeNotFound)))
+        Api.Error(
+          Problem.NotFound.Entity(Problem.TypeName.of(Citekey), Problem.Raw("x")),
+          Some(Api.Error.Code(Write.CodeNotFound))
+        )
       )
     )
     assert(
       !notFound.isDefinedAt(
-        Api.Error(Problem.Invalid.Missing.here(Problem.Field("ifUpdatedAt")), Some(Api.Error.Code(Write.CodePrecondition)))
+        Api.Error(
+          Problem.Invalid.Missing.here(Problem.Field("ifUpdatedAt")),
+          Some(Api.Error.Code(Write.CodePrecondition))
+        )
       )
     )
     assert(!notFound.isDefinedAt(Api.Error(Problem.Invalid.Missing.here(Problem.Field("title")))))

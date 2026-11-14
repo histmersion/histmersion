@@ -760,7 +760,7 @@ calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,tit
 exit 1
 --- stdout
 --- stderr
-error: no acquisition item 424242
+error: no Queue.QueueItem.Id '424242'
 --- calls
 
 ## histmersion calibre import 5 --no-convert --acquire-item 1

@@ -24,14 +24,14 @@ class SourceDeleteSuite extends munit.FunSuite:
   )
 
   test("the refusal counts the blockers of each kind"):
-    val ck = com.histmersion.util.problem.Problem.TypeName.of(Citekey)
-    val kind = com.histmersion.util.problem.Problem.TypeName.named[DeleteBlocker.Kind]
+    val ck = Problem.TypeName.of(Citekey)
+    val kind = Problem.TypeName.named[DeleteBlocker.Kind]
     def referred(k: DeleteBlocker.Kind, n: Long) =
-      com.histmersion.util.problem.Problem.Conflict.Referenced(
+      Problem.Conflict.Referenced(
         ck,
-        com.histmersion.util.problem.Problem.Raw(s"$Ck"),
-        com.histmersion.util.problem.Problem.TypeName(s"$kind.${k.productPrefix}"),
-        com.histmersion.util.problem.Problem.Count(n)
+        Problem.Raw(s"$Ck"),
+        Problem.TypeName(s"$kind.${k.productPrefix}"),
+        Problem.Count(n)
       )
     assertEquals(
       Source.Delete.refusal(Ck, blocked).toVector,

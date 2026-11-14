@@ -1,6 +1,5 @@
 package com.histmersion
 package domain.automation.worklists
-import com.histmersion.util.problem.Problem
 
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.DbCodec
@@ -8,7 +7,7 @@ import com.augustnagro.magnum.DbCodec
 import java.util.UUID
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.api.automation.Queue
+import BQueueRow.Rationale
 
 /** A work list's item as a bundle reads it (Magnum maps a SELECT's columns positionally). */
 final private[histmersion] case class BQueueRow(
@@ -18,13 +17,16 @@ final private[histmersion] case class BQueueRow(
     text: BQueueRow.Text,
     topic: Option[BQueueRow.Topic],
     status: BQueueRow.Status,
-    reason: Option[Queue.Rationale],
+    reason: Option[Rationale],
     createdAt: BQueueRow.CreatedAt,
     doneAt: Option[BQueueRow.DoneAt],
     updatedAt: BQueueRow.UpdatedAt
 ) derives DbCodec
 
 object BQueueRow:
+  /** Why the item was added or closed, as the row holds it. */
+  type Rationale = Rationale.T
+  object Rationale extends Newtype[String, Pure]
   type List = List.T
   object List extends Newtype[String, Pure]
   type Text = Text.T

@@ -2266,8 +2266,8 @@ the earlier registries compiles unchanged; tested).
 providers (an explicit list: an enum with a parameterised case has none of its own). `ProviderKind.parse`,
 `ModelRef.parse`, `ModelChains.parseChain/parseModels/parseAllowances/parseAllowance` and `Target.parse`
 take `known: Set[String] = Set.empty` — the names plugin providers are registered under. A host name is
-always the host's (a plugin cannot shadow `local`), an unknown one gives today's message ("unknown provider
-'x' in 'x:y' (one of: …)", the plugins' names appended when there are any). The server passes
+always the host's (a plugin cannot shadow `local`), an unknown one gives today's message ("unknown ProviderKind
+'x' (one of: …)", the plugins' names appended when there are any). The server passes
 `BuiltinAi.known(deps.plugins.registries.aiProviders)` — the pinned generation's — wherever it parses: the
 picker (chains, saved chains, `--model`, allowances, cool-downs), `agent models set`, allowances, `--model-for`,
 `agent compare`'s billing and the managers' model overrides. A plugin provider's model is metered

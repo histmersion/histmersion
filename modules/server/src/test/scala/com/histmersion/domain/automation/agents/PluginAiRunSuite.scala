@@ -303,7 +303,7 @@ class PluginAiRunSuite extends DbSuite with RunTranscripts:
           ModelChains.ChainSet(List(ModelChains.ChainEntry.Model("hello-ai:echo")))
         )
         .left
-        .exists(_.message.sentence.contains("unknown provider 'hello-ai'"))
+        .exists(_.message.sentence.contains("unknown ProviderKind 'hello-ai'"))
     )
-    assert(gone.picker.chain(Role.Extractor).left.exists(_.sentence.contains("unknown provider 'hello-ai'")))
+    assert(gone.picker.chain(Role.Extractor).left.exists(_.sentence.contains("unknown ProviderKind 'hello-ai'")))
     assert(!gone.doctor(offline = AgentsControllers.Offline(true)).providers.exists(_.provider.value == "hello-ai"))

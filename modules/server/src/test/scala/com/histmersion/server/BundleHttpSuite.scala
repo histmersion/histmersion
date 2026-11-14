@@ -374,7 +374,7 @@ class BundleHttpSuite extends DbSuite with com.histmersion.db.Bounded:
           jobs.exists(j =>
             j.id.value == cut.value && j.kind.value == MergeApplyJob.JobKind && j.error
               .map(_.sentence)
-              .contains(JobState.Interrupted)
+              .contains("interrupted by a restart")
           ),
           jobs.toString
         )

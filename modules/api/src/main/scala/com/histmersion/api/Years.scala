@@ -39,9 +39,7 @@ object Years:
   private val Examples = Vector(Raw("1300 BCE"), Raw("530 CE"), Raw("-1300"))
 
   /** There is no year 0: 1 BCE is -1, 1 CE is 1. */
-  val NoYearZero: Problem = zero(Raw("0"))
-
-  private def zero(raw: Raw): Problem = Invalid.Unreadable.here(TypeName.of(Year), raw, Vector(Raw("-1"), Raw("1")))
+  val NoYearZero: Problem = Invalid.Unreadable.here(TypeName.of(Year), Raw("0"), Vector(Raw("-1"), Raw("1")))
 
   private val Circa = "^(?:c|ca|circa)\\.?\\s+".r
   private val EraBce = "(?:bce|bc|b\\.c\\.e\\.|b\\.c\\.)"
@@ -71,7 +69,7 @@ object Years:
       case _                  =>
         Left(Invalid.Unreadable.here(TypeName.of(Year), written, Examples))
     parsed.flatMap(y =>
-      if y.value == 0 then Left(zero(written))
+      if y.value == 0 then Left(Invalid.Unreadable.here(TypeName.of(Year), written, Vector(Raw("-1"), Raw("1"))))
       else Right(y)
     )
 

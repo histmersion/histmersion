@@ -90,7 +90,7 @@ object Stopped extends Newtype[String, Pure]:
     case Cause.Failed(text) => Stopped(s"${text.stored}")
 
   /** The stored sentence of a column read as a problem. */
-  def from(stored: Problem): Stopped = Stopped(s"${stored.sentence}")
+  def from(stored: Problem): Stopped = Stopped(s"${stored.stored}")
 
   /** The SQL `LIKE` pattern of the stored sentences that read as a pause for `reason`: the prefix [[of]] writes, then
     * anything. A column filtered by it and a column read by [[cause]] agree on which rows are a pause for `reason`.

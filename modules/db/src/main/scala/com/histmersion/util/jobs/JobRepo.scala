@@ -1,7 +1,6 @@
 package com.histmersion
 package util.jobs
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.problem.Column
 
 import com.histmersion.util.database.given
@@ -332,7 +331,7 @@ object JobRepo:
       queued: RunRow.Status,
       except: List[Run.Id]
   )(using DbCon): (Vector[(Run.Id, Option[RunRow.Origin])], Vector[Run.Id]) =
-    val moved = sql"""UPDATE jobs SET status = $paused, error = ${error.sentence}, updated_at = now()
+    val moved = sql"""UPDATE jobs SET status = $paused, error = $error, updated_at = now()
                       WHERE kind = $kind AND status = $running AND NOT (id = ANY($except::text[]))
                       RETURNING id, origin""".query[(Run.Id, Option[RunRow.Origin])].run()
     val waiting = sql"""SELECT id FROM jobs WHERE kind = $kind AND status = $queued

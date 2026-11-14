@@ -114,7 +114,7 @@ class BasemapHttpSuite extends DbSuite:
       assertEquals(send("POST", s"$url/fetch?bbox=1,2,3", None)._1, 401)
       val (c, b) = send("POST", s"$url/fetch?bbox=1,2,3", Some("k3y"))
       assertEquals(c, 400, b)
-      assert(b.contains("minLon,minLat,maxLon,maxLat"), b)
+      assert(b.contains("is not a Basemap.Focus.Bbox (e.g. 19,34,30,42, world)"), b)
       assertEquals(send("POST", s"$url/fetch?maxZoom=40", Some("k3y"))._1, 400)
 
       // removing: the files go, and the status follows

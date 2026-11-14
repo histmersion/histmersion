@@ -316,8 +316,8 @@ class AssetsJobsSuite extends DbSuite:
 
     assert(Transactor(ds).transact(JobRepo.failInterrupted()).value >= 2)
     assertEquals(
-      Transactor(ds).read(JobRepo.get(Job.Id.assume(running.id.value))).map(_.error.map(_.sentence)),
-      Some(Some(JobState.Interrupted))
+      Transactor(ds).read(JobRepo.get(Job.Id.assume(running.id.value))).map(_.error),
+      Some(Some(Problem.Run.Interrupted))
     )
     assertEquals(
       Transactor(ds).read(JobRepo.get(Job.Id.assume(queued.id.value))).map(_.status),

@@ -97,17 +97,23 @@ class PlaceEditsSuite extends munit.FunSuite:
       assertEquals(e.code, Some(Write.CodeInvalid))
       assert(expected.isDefinedAt(e.message), e.message)
     val geoPoint = Problem.TypeName.named[GeoPoint]
-    refused(add(source = Place.Add.Source("  "))) { case Problem.Invalid.Missing(f, _) if f == Problem.Field("source") => }
+    refused(add(source = Place.Add.Source("  "))) {
+      case Problem.Invalid.Missing(f, _) if f == Problem.Field("source") =>
+    }
     refused(add(kind = Place.Add.Kind("city"))) {
-      case Problem.Invalid.Unknown(t, raw, _, _) if t == Problem.TypeName.of(Place.Add.Kind) && raw == Problem.Raw("city") =>
+      case Problem.Invalid.Unknown(t, raw, _, _)
+          if t == Problem.TypeName.of(Place.Add.Kind) && raw == Problem.Raw("city") =>
     }
     refused(add(lon = Longitude(200))) { case Problem.Invalid.OutOfRange(t, _, _, _) if t == geoPoint => }
     refused(add(lat = Latitude(-91))) { case Problem.Invalid.OutOfRange(t, _, _, _) if t == geoPoint => }
     refused(add(lat = Latitude(Double.NaN))) { case Problem.Invalid.OutOfRange(t, _, _, _) if t == geoPoint => }
     refused(add(label = Place.Add.Label(" "))) { case Problem.Invalid.Missing(f, _) if f == Problem.Field("label") => }
-    refused(add(label = Place.Add.Label("Ἀθῆναι"))) { case Problem.Invalid.Missing(f, _) if f == Problem.Field("id") => }
+    refused(add(label = Place.Add.Label("Ἀθῆναι"))) {
+      case Problem.Invalid.Missing(f, _) if f == Problem.Field("id") =>
+    }
     refused(add().modify(_.id).setTo(Some(Place.Id("Bad Id")))) {
-      case Problem.Invalid.Unreadable(t, raw, _, _) if t == Problem.TypeName.of(Place.Id) && raw == Problem.Raw("Bad Id") =>
+      case Problem.Invalid.Unreadable(t, raw, _, _)
+          if t == Problem.TypeName.of(Place.Id) && raw == Problem.Raw("Bad Id") =>
     }
     refused(add().modify(_.periodStart).setTo(Some(Year(-100))).modify(_.periodEnd).setTo(Some(Year(-200)))) {
       case Problem.Invalid.Inconsistent(_, Problem.Invalid.Exclusion.Ordered, _) =>

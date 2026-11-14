@@ -4,7 +4,6 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
 
 import hearth.kindlings.optics.syntax.*
 
@@ -802,7 +801,7 @@ object AgentRepo:
   /** A cancelled run's open approvals: rejected, so nobody decides for a run that is gone. */
   def closeForRun(jobId: Job.Id, why: Problem)(using DbCon): RowCount =
     RowCount(
-      sql"""UPDATE approvals SET state = ${ApprovalState.Rejected.wire}, result = ${why.sentence}, decided_at = now()
+      sql"""UPDATE approvals SET state = ${ApprovalState.Rejected.wire}, result = $why, decided_at = now()
           WHERE job_id = $jobId AND seq IS NOT NULL AND state = ${ApprovalState.Open.wire}""".update.run()
     )
 

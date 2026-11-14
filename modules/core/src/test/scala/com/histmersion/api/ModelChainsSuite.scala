@@ -22,11 +22,10 @@ class ModelChainsSuite extends munit.FunSuite:
   private def has(problems: Problems)(p: PartialFunction[Problem, Boolean]): Boolean =
     problems.exists(p.applyOrElse(_, _ => false))
 
-  private def unknownMeasure(unit: String): PartialFunction[Problem, Boolean] = {
+  private def unknownMeasure(unit: Problem.Raw): PartialFunction[Problem, Boolean] = {
     case Problem.Invalid.Unknown(t, raw, _, _) =>
-      t == Problem.TypeName.named[ModelChains.Measure] && raw == Problem.Raw(unit)
+      t == Problem.TypeName.named[ModelChains.Measure] && raw == unit
   }
-
 
   private val Sonnet = ModelRef(ProviderKind.ClaudeCode, ModelRef.Model("sonnet"))
   private val Qwen = ModelRef(ProviderKind.Local, ModelRef.Model("qwen2.5-coder:32b"))
@@ -66,10 +65,12 @@ class ModelChainsSuite extends munit.FunSuite:
     assert(Window.parse(ModelChains.LimitSpec.Window("0h")).isLeft)
     assert(Window.parse(ModelChains.LimitSpec.Window("91d")).isLeft)
     assert(
-      Window.parse(ModelChains.LimitSpec.Window("fortnight")).left.exists(has(_) {
-        case Problem.Invalid.Unreadable(t, raw, _, _) =>
+      Window
+        .parse(ModelChains.LimitSpec.Window("fortnight"))
+        .left
+        .exists(has(_) { case Problem.Invalid.Unreadable(t, raw, _, _) =>
           t == Problem.TypeName.of(ModelChains.LimitSpec.Window) && raw == Problem.Raw("fortnight")
-      })
+        })
     )
 
   test("limits: tokens with k/M suffixes, usd with a word or a dollar sign"):
@@ -87,18 +88,22 @@ class ModelChainsSuite extends munit.FunSuite:
 
   test("limits: a fractional token count, a bad unit, no window, a non-positive amount are errors"):
     assert(
-      Limit.parse(ModelChains.Limit.Spec("1.5 tokens/5h")).left.exists(has(_) {
-        case Problem.Invalid.Unreadable(t, raw, _, _) =>
+      Limit
+        .parse(ModelChains.Limit.Spec("1.5 tokens/5h"))
+        .left
+        .exists(has(_) { case Problem.Invalid.Unreadable(t, raw, _, _) =>
           t == Problem.TypeName.of(ModelChains.LimitSpec.Amount) && raw == Problem.Raw("1.5")
-      })
+        })
     )
-    assert(Limit.parse(ModelChains.Limit.Spec("5 euros/day")).left.exists(has(_)(unknownMeasure("euros"))))
+    assert(Limit.parse(ModelChains.Limit.Spec("5 euros/day")).left.exists(has(_)(unknownMeasure(Problem.Raw("euros")))))
     assert(Limit.parse(ModelChains.Limit.Spec("5 usd")).isLeft)
     assert(
-      Limit.parse(ModelChains.Limit.Spec("0 usd/day")).left.exists(has(_) {
-        case Problem.Invalid.Unreadable(t, raw, _, _) =>
+      Limit
+        .parse(ModelChains.Limit.Spec("0 usd/day"))
+        .left
+        .exists(has(_) { case Problem.Invalid.Unreadable(t, raw, _, _) =>
           t == Problem.TypeName.of(ModelChains.LimitSpec.Amount) && raw == Problem.Raw("0")
-      })
+        })
     )
     assert(
       Limit
@@ -142,7 +147,7 @@ class ModelChainsSuite extends munit.FunSuite:
       },
       e
     )
-    assert(has(e)(unknownMeasure("bananas")), e)
+    assert(has(e)(unknownMeasure(Problem.Raw("bananas"))), e)
     assert(
       has(e) { case Problem.Invalid.OutOfRange(t, raw, _, _) =>
         t == Problem.TypeName.of(ModelChains.Allowance.ReservePct) && raw == Problem.Raw("120")

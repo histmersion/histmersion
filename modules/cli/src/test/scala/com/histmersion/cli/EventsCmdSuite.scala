@@ -49,7 +49,9 @@ class EventsCmdSuite extends munit.FunSuite:
     assert(refused("x").contains("nothing to change"))
     assert(refused("x", "--scale", "global").contains("local, regional or auto"))
     assert(refused("x", "--lat", "36.5").contains("give lat, lon together, or none of them"))
-    assert(refused("x", "--lat", "1", "--lon", "2", "--geometry", "{}").contains("give at most one of geometry, lat/lon"))
+    assert(
+      refused("x", "--lat", "1", "--lon", "2", "--geometry", "{}").contains("give at most one of geometry, lat/lon")
+    )
 
   test("the subcommand is registered under `events patch`"):
     assert(Parsing.parses("events", "patch", "x", "--scale", "regional"))

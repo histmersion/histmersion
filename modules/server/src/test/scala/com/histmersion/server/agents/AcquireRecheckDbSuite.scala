@@ -853,8 +853,8 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
       )
     val _ = Transactor(ds).transact(JobRepo.failInterrupted())
     assertEquals(
-      Transactor(ds).read(JobRepo.get(jobKey(j.id))).flatMap(_.error).map(_.sentence),
-      Some(JobState.Interrupted)
+      Transactor(ds).read(JobRepo.get(jobKey(j.id))).flatMap(_.error),
+      Some(Problem.Run.Interrupted)
     )
     val r = a.acquireRecheck.run(RecheckRequest(all = Acquire.Checks.RecheckRequest.All(true)))
     val job = jobOf(r)
@@ -896,7 +896,9 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
         Some(Problem.Unclassified(Legacy.Text(JobState.Interrupted)))
       )
     )
-    assert(a.acquireRecheck.tick(Instant.now()).exists(_.value.contains(s"job ${k.id} (interrupted) resumed")))
+    assert(
+      a.acquireRecheck.tick(Instant.now()).exists(_.value.contains(s"job ${k.id} (interrupted by a restart) resumed"))
+    )
     awaitTrue("the resumed job")(!a.acquireRecheck.jobRunning)
     assertEquals(asked(up).size, 10)
 
