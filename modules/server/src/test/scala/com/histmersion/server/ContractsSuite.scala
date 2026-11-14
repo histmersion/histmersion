@@ -15,7 +15,7 @@ import com.histmersion.server.ArchitectureSuite.{Blank, SourceFile, Violation}
   *     tools, codecs, repositories, SQL, Markdown, JSON, wiring and transformer files; a newtype's own file);
   *   - `concept` (rule 3): a top-level type name defined in more than one file of one layer;
   *   - `derives` (rule 7, G66): a codec, schema or config given written by hand, generic ones included, or a `.derived`
-  *     call;
+  *     call — a CanEqual given is none of them (G67);
   *   - `copy` (rule 8): `.copy(`;
   *   - `one-type` (rule 9): a file with more than one top-level type (a companion, a type alias of a newtype, its
   *     constraint `<Name>Rule` and the cases of a sealed type in its file not counted);
@@ -340,9 +340,31 @@ class ContractsSuite extends munit.FunSuite:
         .all(List(ArchitectureSuite.SourceFile(key, "com.histmersion.x", Blank(code), code)))
         .filter(_.rule == "derives")
         .map(v => (v.count, v.at))
-    assertEquals(lines("core:x/Codecs.scala"), List((9, "core:x/Codecs.scala:2")))
+    assertEquals(lines("core:x/Codecs.scala"), List((8, "core:x/Codecs.scala:2")))
     assertEquals(Rules.genericCodecGivens(code).map(code.substring(0, _).count(_ == '\n') + 1), List(4, 5, 6, 7, 8, 11))
     assertEquals(lines("json:x/Codecs.scala"), Nil)
+
+  test("a CanEqual given is no codec given: CanEqual.derived and a hand-written CanEqual do not count for derives"):
+    val code =
+      """object Equalities:
+        |  given CanEqual[UUID, UUID] = CanEqual.derived
+        |  private given CanEqual[java.nio.file.Path, java.nio.file.Path] = scala.CanEqual.derived
+        |  given [A] => CanEqual[Box[A], Box[A]] = CanEqual.canEqualAny
+        |  inline given CanEqual[T, T] = CanEqual.derived
+        |  given JsonValueCodec[Foo] = make
+        |  val bar = Schema.derived[Bar]
+        |  val baz = ConfigReader.derived[Baz]
+        |""".stripMargin
+    def lines(key: String) =
+      Rules
+        .all(List(ArchitectureSuite.SourceFile(key, "com.histmersion.x", Blank(code), code)))
+        .filter(_.rule == "derives")
+        .map(v => (v.count, v.at))
+    assertEquals(lines("core:x/Equalities.scala"), List((3, "core:x/Equalities.scala:6")))
+    assertEquals(
+      Rules.Derived.findAllMatchIn(code).map(m => code.substring(0, m.start).count(_ == '\n') + 1).toList,
+      List(7, 8)
+    )
 
   test("a type named for an entity and a property is the property, a component of the entity is not"):
     val entities = Set("Approval", "Source", "PeriodO", "Citekey")
@@ -644,6 +666,11 @@ object ContractsSuite:
         i += 1
       h.substring(last)
 
+    /** A `.derived` call of a codec, schema or config type class — `CanEqual.derived` is none of them (G67): CanEqual
+      * only lets the compiler compare, so a hand-written CanEqual given is not a codec given written by hand.
+      */
+    val Derived = "(?<!\\bCanEqual)\\.derived\\b".r
+
     /** The JSON module is the codec library itself: its givens are the base instances (a string, a list) that every
       * derivation builds on, as circe's own were.
       */
@@ -652,7 +679,7 @@ object ContractsSuite:
       else
         val hits =
           HandGiven.findAllMatchIn(s.code).map(_.start) ++ genericCodecGivens(s.code) ++
-            "\\.derived\\b".r.findAllMatchIn(s.code).map(_.start)
+            Derived.findAllMatchIn(s.code).map(_.start)
         counted("derives", s, "codec given written by hand", hits.toList.distinct.sorted)
 
     private def copies(s: SourceFile): List[Violation] =
