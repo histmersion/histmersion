@@ -5,7 +5,7 @@ import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.Newtype
-import com.histmersion.api.research.Coverage.Rationale
+import com.histmersion.api.research.Coverage.{FilterLine, Rationale}
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.catalogue.Period
@@ -160,7 +160,7 @@ object Article:
       com.histmersion.api.research.Coverage(
         slug,
         filter,
-        com.histmersion.api.research.Coverage.FilterLine(filter.line),
+        filter.shownLine,
         total,
         com.histmersion.api.research.Coverage.Checked(read.size),
         read.filter(s => citedSet(s.citekey)),
@@ -657,6 +657,9 @@ object Article:
         from = from,
         to = to
       )
+
+    /** The filter's one line, as a coverage report and a refused filter show it. */
+    def shownLine: FilterLine = FilterLine(line)
 
     def line: String =
       def list(xs: scala.List[String]) = xs.map(Filter.quoted).mkString("[", ", ", "]")

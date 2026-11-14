@@ -1,9 +1,9 @@
 package com.histmersion
 package domain
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.Problem.{Content, Count, Raw}
 import com.histmersion.api.json.NewtypeCodecs.given
-import com.histmersion.api.Plural
 import com.histmersion.api.given
 
 import com.histmersion.util.json.JsonCodec
@@ -76,13 +76,10 @@ object FilterInference:
     Article.Filter.normalise(raw) match
       case Left(m)     => Left(List(m))
       case Right(None) =>
-        Left(List(Problem.Unclassified(Legacy.Text("the filter selects nothing: give a query, topics or tags"))))
+        Left(List(Content.Answer(Content.Requirement.FilterSelects)))
       case Right(Some(f)) =>
         val rationale = Option(a.rationale).forall(_.value.trim.isEmpty)
-        if rationale then
-          Left(
-            List(Problem.Unclassified(Legacy.Text("the rationale is empty — say why these sources are the article's")))
-          )
+        if rationale then Left(List(Content.Answer(Content.Requirement.FilterRationale)))
         else Right(f)
 
   /** Judge filter `f` of article `slug` by what it returns: `total` sources, of which the article's `cited` sources it
@@ -102,29 +99,26 @@ object FilterInference:
   ): Either[List[Problem], Inferred] =
     val missed = cited.filterNot(citedIn)
     val share = if cited.isEmpty then 1.0 else (cited.size - missed.size).toDouble / cited.size
+    val n = total.value
+    val (least, most, leastShare) = (limits.minHits.value, limits.maxHits.value, limits.minCitedShare.value)
+    val line = Raw.of(f.shownLine)
+    def refused(rule: Content.Requirement): Problem = Content.Answer(rule)
     val problems = List(
-      Option.when(total.value < limits.minHits.value)(
-        Problem.Unclassified(
-          Legacy.Text(
-            s"${f.line} returns ${Plural.count(Plural.CountN(total.value.toLong), Plural.CountSingular("source"))}; it must return at least " +
-              s"${limits.minHits} — widen it (fewer topics or tags, a broader query)"
-          )
-        )
+      Option.when(n < least)(
+        refused(Content.Requirement.FilterTooNarrow(line, Count.of(n.toLong), Count.of(least.toLong)))
       ),
-      Option.when(total.value > limits.maxHits.value)(
-        Problem.Unclassified(
-          Legacy.Text(
-            s"${f.line} returns $total sources; at most ${limits.maxHits} — narrow it " +
-              "(add a topic or tag, a sharper query)"
-          )
-        )
+      Option.when(n > most)(
+        refused(Content.Requirement.FilterTooBroad(line, Count.of(n.toLong), Count.of(most.toLong)))
       ),
-      Option.when(share < limits.minCitedShare.value)(
-        Problem.Unclassified(
-          Legacy.Text(
-            f"${f.line} returns ${cited.size - missed.size} of the ${cited.size} sources " +
-              f"the article cites (${share * 100}%.0f%%); it must return at least ${limits.minCitedShare.value * 100}%.0f%% — it misses " +
-              missed.take(12).mkString(", ")
+      Option.when(share < leastShare)(
+        refused(
+          Content.Requirement.FilterMisses(
+            line,
+            Count.of((cited.size - missed.size).toLong),
+            Count.of(cited.size.toLong),
+            Count.of(math.round(share * 100)),
+            Count.of(math.round(leastShare * 100)),
+            missed.take(12).toVector.map(Raw.of(_))
           )
         )
       )

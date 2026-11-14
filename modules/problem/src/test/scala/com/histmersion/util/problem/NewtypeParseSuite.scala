@@ -15,6 +15,9 @@ object NewtypeParseSuite:
   type Label = Label.T
   object Label extends Newtype[String, Pure]
 
+  type Ratio = Ratio.T
+  object Ratio extends Newtype[Double, Pure]
+
 class NewtypeParseSuite extends munit.FunSuite:
   import NewtypeParseSuite.*
   import Problem.*
@@ -25,6 +28,11 @@ class NewtypeParseSuite extends munit.FunSuite:
     assertEquals(Raw.of(Catalogue.Year(-3300)), Raw("-3300"))
     assertEquals(Raw.of(42L), Raw("42"))
     assert(compileErrors("Raw.of(\"plain\")").nonEmpty, "a plain String is no newtype")
+
+  test("Share.of takes a newtype over a Double, and only one"):
+    assertEquals(Share.of(Ratio(0.42)), Share(0.42))
+    assert(compileErrors("Share.of(Catalogue.Year(3))").nonEmpty, "a year is no share")
+    assert(compileErrors("Share.of(0.42)").nonEmpty, "a plain Double is no newtype")
 
   test("a newtype knows its full name, as Hearth names its T"):
     assertEquals(Shelf.typeName.text, "com.histmersion.util.problem.NewtypeParseSuite.Shelf")

@@ -1,6 +1,7 @@
 package com.histmersion
 package domain
 import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem.{Content, Count, Raw, Where}
 import com.histmersion.util.problem.Text.sentence
 
 import hearth.kindlings.optics.syntax.*
@@ -122,21 +123,16 @@ object CompileArticle:
       last: Last
   ): Either[List[Problem], (Extracted, List[Problem])] =
     val checked = a.claims.zipWithIndex.map { (c, i) =>
-      val label = s"claim ${i + 1} (${Option(c.claim).map(_.value).getOrElse("").take(50)})"
-      if Option(c.claim).forall(_.value.trim.isEmpty) then Left(Problem.Unclassified(Legacy.Text(s"$label: no claim")))
+      val at = Where(s"claim ${i + 1} (${Option(c.claim).map(_.value).getOrElse("").take(50)})")
+      if Option(c.claim).forall(_.value.trim.isEmpty) then Left(Content.Proposal(Content.Requirement.NoClaim, at))
       else
         AgentVerify.confidence(Option(c.confidence).getOrElse(com.histmersion.domain.library.Confidence.Wire(""))) match
-          case Left(m)     => Left(Problem.Unclassified(Legacy.Text(s"$label: ${m.sentence}")))
+          case Left(m)     => Left(m.inside(at))
           case Right(conf) =>
             val q = Option(c.quote).map(_.value.trim).getOrElse("")
             val m = AgentVerify.findQuote(AgentProposals.Proposal.Quote(q), record, minRatio)
-            if q.isEmpty then Left(Problem.Unclassified(Legacy.Text(s"$label: no quote")))
-            else if !m.accepted then
-              Left(
-                Problem.Unclassified(
-                  Legacy.Text(s"$label: the quote is not in the record of $citekey — copy it exactly")
-                )
-              )
+            if q.isEmpty then Left(Content.Proposal(Content.Requirement.QuoteGiven, at))
+            else if !m.accepted then Left(Content.Proposal(Content.Requirement.QuoteInRecord(Raw.of(citekey)), at))
             else
               Right(
                 Claim(
@@ -152,19 +148,20 @@ object CompileArticle:
     }
     val claims =
       checked.collect { case Right(c) => c }.distinctBy(c => AgentVerify.normalise(AgentVerify.Text(c.claim.value)))
+    val cap = maxClaims.value
     val tooMany =
-      Option.when(claims.size > maxClaims.value)(
-        Problem.Unclassified(Legacy.Text(s"at most $maxClaims claims per source (you gave ${claims.size})"))
+      Option.when(claims.size > cap)(
+        Content.Answer(Content.Requirement.TooManyClaims(Count.of(cap.toLong), Count.of(claims.size.toLong)))
       )
     val reason = Option(a.reason).map(r => s"$r".trim).filter(_.nonEmpty)
     val noReason =
       Option.when((!a.relevant.value || a.claims.isEmpty) && reason.isEmpty)(
-        Problem.Unclassified(Legacy.Text("say why the record is not used"))
+        Content.Answer(Content.Requirement.ReasonGiven)
       )
     val problems = checked.collect { case Left(m) => m } ++ tooMany.toList ++ noReason.toList
     if problems.nonEmpty && !last.value then Left(problems)
     else
-      val kept = if a.relevant.value then claims.take(maxClaims.value) else Nil
+      val kept = if a.relevant.value then claims.take(cap) else Nil
       val notUsed =
         Option.when(kept.isEmpty)(
           Coverage.Rationale(s"${reason.getOrElse("no claim could be verified in its record")}")
@@ -172,7 +169,7 @@ object CompileArticle:
       Right(
         (
           Extracted(citekey, kept, notUsed),
-          problems.map(p => Problem.Unclassified(Legacy.Text(s"extract $citekey: dropped — ${p.sentence}")))
+          problems.map(_.inside(Where(s"extract $citekey: dropped")))
         )
       )
 
@@ -319,7 +316,7 @@ object CompileArticle:
       Citekey.option(ck.value).flatMap(statusOf).filter(StatedStatuses.contains).flatMap { st =>
         bs.find(_.contains(s"[[$ck]]"))
           .filterNot(_.toLowerCase.contains(st.wire.value))
-          .map(_ => Problem.Unclassified(Legacy.Text(s"the first citation of [[$ck]] does not say it is ${st.wire}")))
+          .map(_ => Content.Answer(Content.Requirement.StatusUnstated(Raw.of(ck), Raw.of(st.wire))))
       }
     }
 

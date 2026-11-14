@@ -117,6 +117,7 @@ class RenderSuite extends munit.FunSuite:
     "Aborted" -> (409, "step draft cannot go on: CheckpointMismatch"),
     "Finding" -> (422, "finding: UncitedParagraph"),
     "Proposal" -> (422, "claims: TooManyClaims 12/15"),
+    "Answer" -> (422, "the answer breaks SummaryGiven"),
     "Unexpected" -> (
       500,
       "backup failed unexpectedly (java.lang.IllegalStateException, problem 3f2a9c1e) — java.lang.IllegalStateException: pg_dump vanished"
@@ -252,7 +253,9 @@ class RenderSuite extends munit.FunSuite:
           Conflict.Hold.Conditional(Raw("S-1a2b"), Raw("keep-left"), Some(Raw("open"))),
           Conflict.Hold.Collides,
           Conflict.Hold.PlanChanged(Raw("7c41e9a2")),
-          Conflict.Hold.TextNotSent(Raw("file"))
+          Conflict.Hold.TextNotSent(Raw("file")),
+          Conflict.Hold.CitekeyOfAnother(Raw("anthony2006")),
+          Conflict.Hold.CitekeyTaken(Raw("guterbock1997"))
         ).map(Conflict.Held(Where("S-3c1e7a2b source anthony2007 — same work?"), _)) ++
         Vector(
           Conflict.Control.OnePiece(Raw("backup")),
@@ -337,7 +340,51 @@ class RenderSuite extends munit.FunSuite:
           Content.Requirement.HoldUntil,
           Content.Requirement.DateGiven(Raw("next week")),
           Content.Requirement.PriorityWithin(Raw("25"), Raw("20")),
-          Content.Requirement.ExistingItems
+          Content.Requirement.ExistingItems,
+          Content.Requirement.FilterSelects,
+          Content.Requirement.FilterRationale,
+          Content.Requirement.PlanRationale,
+          Content.Requirement.ArticleTitle,
+          Content.Requirement.ArticleFilter,
+          Content.Requirement.ArticlesGiven,
+          Content.Requirement.SummaryGiven,
+          Content.Requirement.StatusEvidence,
+          Content.Requirement.NotesGiven,
+          Content.Requirement.ClaimGiven,
+          Content.Requirement.NoClaim,
+          Content.Requirement.QuoteInRecord(Raw("anthony2007")),
+          Content.Requirement.ReasonGiven,
+          Content.Requirement.StatusUnstated(Raw("haak2015"), Raw("contested")),
+          Content.Requirement.QuoteInWindow(Share(0.42)),
+          Content.Requirement.CenturyAsYear(Raw("-11"), Count(11L)),
+          Content.Requirement.PointerPhrase(Raw("this date")),
+          Content.Requirement.PlacesResolve(
+            Count(1L),
+            Count(3L),
+            Count(50L),
+            Vector(Content.Unplaced(Raw("eastern shipping lanes"), Count(2L)), Content.Unplaced(Raw("x: y"), Count(3L)))
+          ),
+          Content.Requirement.TooManyArticles(Count(8L), Count(11L)),
+          Content.Requirement.FilterTooNarrow(Raw("search {topics: [\"tin\"]}"), Count(1L), Count(5L)),
+          Content.Requirement.FilterTooNarrow(Raw("search {query: \"it's: done 3/4\"}"), Count(3L), Count(5L)),
+          Content.Requirement.FilterTooBroad(Raw("search {query: \"bronze\"}"), Count(900L), Count(400L)),
+          Content.Requirement
+            .FilterMisses(
+              Raw("search {tags: [\"tin\"]}"),
+              Count(2L),
+              Count(5L),
+              Count(40L),
+              Count(60L),
+              Vector(Raw("a1"), Raw("b2"))
+            ),
+          Content.Requirement.FilterMisses(
+            Raw("search {tags: ['x' y]}"),
+            Count(0L),
+            Count(1L),
+            Count(0L),
+            Count(60L),
+            Vector.empty
+          )
         ).map(Content.Proposal(_, Where("findings"))) ++
         Vector(
           Content.Proposal(Content.Requirement.QuoteInRecords(Vector(Raw("a: b"))), Where("proposal for x: y")),

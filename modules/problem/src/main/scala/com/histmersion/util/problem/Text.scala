@@ -92,6 +92,7 @@ object Text:
       case Problem.Run.Aborted(step, cause)     => s"step $step cannot go on: ${words(cause.productPrefix)}"
       case Content.Finding(cause)               => cause.said
       case Content.Proposal(rule, at)           => s"$at: ${rule.said}"
+      case Content.Answer(rule)                 => rule.said
       case Internal.Unexpected(id, where, e, r) => s"$where failed unexpectedly ($e, problem $id) — $r"
       case Unclassified(text)                   => s"$text"
       case Stored.Unrecognised(text)            => s"$text"
@@ -281,6 +282,25 @@ object Text:
   private def forExample(examples: Vector[Raw]): String =
     if examples.isEmpty then "" else s" (e.g. ${examples.mkString(", ")})"
 
+  /** A share to two decimals: `0.42`. */
+  extension (share: Share)
+    private def twoDecimals: String = s"${BigDecimal(s"$share".toDouble).setScale(2, BigDecimal.RoundingMode.HALF_UP)}"
+
+  /** `1st`, `2nd`, `11th`, `23rd`. */
+  private def ordinal(n: Long): String =
+    val suffix =
+      if n % 100 >= 11 && n % 100 <= 13 then "th"
+      else
+        n % 10 match
+          case 1 => "st"
+          case 2 => "nd"
+          case 3 => "rd"
+          case _ => "th"
+    s"$n$suffix"
+
+  /** `1 source`, `3 sources`. */
+  extension (n: Count) private def sources: String = if s"$n" == "1" then s"$n source" else s"$n sources"
+
   private def oneOf(known: Vector[Raw]): String = if known.isEmpty then "" else s" (one of: ${known.mkString(", ")})"
 
   extension (bounds: Invalid.Bounds)
@@ -455,6 +475,10 @@ object Text:
           "planned — plan again, review it, and apply that plan"
       case Conflict.Hold.TextNotSent(decided) =>
         s"$subject: $decided — the merged text was not sent (the CLI reads the file)"
+      case Conflict.Hold.CitekeyOfAnother(citekey) =>
+        s"$subject: '$citekey' is a citekey (or an old one) of another source here — merge under the other citekey"
+      case Conflict.Hold.CitekeyTaken(citekey) =>
+        s"$subject: '$citekey' is already a citekey (or an old one) here or in the bundle"
 
   extension (ending: Io.Ending)
     private def said: String = ending match
@@ -626,3 +650,40 @@ object Text:
       case Content.Requirement.DateGiven(stated) => s"'$stated' is not a date (2026-11-01)"
       case Content.Requirement.PriorityWithin(stated, max) => s"priority $stated is outside ±$max"
       case Content.Requirement.ExistingItems               => "none of the items it names exists"
+      case Content.Requirement.FilterSelects               => "the filter selects nothing: give a query, topics or tags"
+      case Content.Requirement.FilterRationale => "the rationale is empty — say why these sources are the article's"
+      case Content.Requirement.PlanRationale   => "the rationale is empty — say how the articles cover the area"
+      case Content.Requirement.ArticleTitle    => "it has no title"
+      case Content.Requirement.ArticleFilter   => "it has no filter: give a query, topics or tags"
+      case Content.Requirement.SummaryGiven    => "the summary is empty"
+      case Content.Requirement.StatusEvidence  => "the status evidence is empty — say, from the text, why that status"
+      case Content.Requirement.NotesGiven      => "the notes are empty"
+      case Content.Requirement.ClaimGiven      => "the claim is empty"
+      case Content.Requirement.NoClaim         => "no claim"
+      case Content.Requirement.QuoteInRecord(citekey) =>
+        s"the quote is not in the record of $citekey — copy it exactly"
+      case Content.Requirement.ReasonGiven                     => "say why the record is not used"
+      case Content.Requirement.StatusUnstated(citekey, status) =>
+        s"the first citation of [[$citekey]] does not say it is $status"
+      case Content.Requirement.QuoteInWindow(best) =>
+        s"the quote is not in the text (best match ${best.twoDecimals}) — copy it exactly"
+      case Content.Requirement.CenturyAsYear(year, century) =>
+        val c = s"$century".toLong
+        s"the year $year looks like a century stored as a year: '${ordinal(c)} century' is the years " +
+          s"${(c - 1) * 100 + 1}–${c * 100} (BCE negative); a year below 100 needs the text to state it (e.g. '79 CE')"
+      case Content.Requirement.PointerPhrase(phrase) =>
+        s"'$phrase' only makes sense next to the table: a finding must stand alone on the map: name the date/event " +
+          "instead of pointing at the table"
+      case Content.Requirement.PlacesResolve(resolved, total, least, missing) =>
+        val names = missing.map(u => s"'${u.place}' (finding ${u.finding})").mkString(", ")
+        s"only $resolved of $total places resolve to a gazetteer place (at least $least% must); not found: $names — " +
+          "give a place name the gazetteer knows (a site, city or region), or leave place null for a non-spatial claim"
+      case Content.Requirement.ArticlesGiven                       => "the plan proposes no article"
+      case Content.Requirement.TooManyArticles(cap, gave)          => s"at most $cap articles (you gave $gave)"
+      case Content.Requirement.FilterTooNarrow(line, total, least) =>
+        s"$line returns ${total.sources}; it must return at least $least — widen it (fewer topics or tags, a broader query)"
+      case Content.Requirement.FilterTooBroad(line, total, most) =>
+        s"$line returns $total sources; at most $most — narrow it (add a topic or tag, a sharper query)"
+      case Content.Requirement.FilterMisses(line, returned, cited, share, least, missed) =>
+        s"$line returns $returned of the $cited sources the article cites ($share%); it must return at least $least% " +
+          s"— it misses ${missed.mkString(", ")}"

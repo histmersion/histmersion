@@ -1,6 +1,7 @@
 package com.histmersion
 package domain
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.Problem.{Content, Count, Field, Where}
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -123,14 +124,14 @@ object PlanArticles:
     val kept = a.articles
       .foldLeft(Vector.empty[Candidate]) { (acc, x) =>
         Articles.slugOf(Article.Slug(Option(x.slug).fold("")(_.value))) match
-          case Left(m) => problems += Problem.Unclassified(Legacy.Text(s"article '${x.slug}': ${m.sentence}")); acc
+          case Left(m) => problems += m.within(Field(s"article '${x.slug}'")); acc
           case Right(s) if Option(x.title).forall(_.value.trim.isEmpty) =>
-            problems += Problem.Unclassified(Legacy.Text(s"article '$s' has no title")); acc
+            problems += Content.Proposal(Content.Requirement.ArticleTitle, Where(s"article '$s'")); acc
           case Right(s) if acc.exists(_.slug == s) => dropped += ArticlePlan.Dropped(s"'$s' proposed twice"); acc
           case Right(s)                            =>
             val kind = x.kind.map(_.value.trim).filter(_.nonEmpty).getOrElse("concept")
             Articles.kindOf(Article.Kind.Wire(kind)) match
-              case Left(m)  => problems += Problem.Unclassified(Legacy.Text(s"article '$s': ${m.sentence}")); acc
+              case Left(m)  => problems += m.within(Field(s"article '$s'")); acc
               case Right(k) =>
                 Article.Filter.normalise(
                   Article.Filter(
@@ -139,12 +140,9 @@ object PlanArticles:
                     tags = x.tags.map(t => Article.Filter.Tags(t.value))
                   )
                 ) match
-                  case Left(m)     => problems += Problem.Unclassified(Legacy.Text(s"article '$s': ${m.sentence}")); acc
+                  case Left(m)     => problems += m.within(Field(s"article '$s'")); acc
                   case Right(None) =>
-                    problems += Problem.Unclassified(
-                      Legacy.Text(s"article '$s' has no filter: give a query, topics or tags")
-                    );
-                    acc
+                    problems += Content.Proposal(Content.Requirement.ArticleFilter, Where(s"article '$s'")); acc
                   case Right(Some(f)) =>
                     acc :+ Candidate(
                       s,
@@ -155,17 +153,18 @@ object PlanArticles:
                     )
       }
       .toList
-    if kept.size > maxArticles.value then
-      problems += Problem.Unclassified(Legacy.Text(s"at most $maxArticles articles (you gave ${kept.size})"))
-    if a.articles.isEmpty then problems += Problem.Unclassified(Legacy.Text("the plan proposes no article"))
+    val cap = maxArticles.value
+    if kept.size > cap then
+      problems += Content.Answer(Content.Requirement.TooManyArticles(Count.of(cap.toLong), Count.of(kept.size.toLong)))
+    if a.articles.isEmpty then problems += Content.Answer(Content.Requirement.ArticlesGiven)
     if Option(a.rationale).forall(_.value.trim.isEmpty) then
-      problems += Problem.Unclassified(Legacy.Text("the rationale is empty — say how the articles cover the area"))
+      problems += Content.Answer(Content.Requirement.PlanRationale)
     val ps = problems.result()
     if ps.nonEmpty && !last.value then Left(ps)
     else
       Right(
         (
-          kept.take(maxArticles.value),
+          kept.take(cap),
           dropped.result() ++ ps.map(p => ArticlePlan.Dropped(s"not proposed: ${p.sentence}"))
         )
       )

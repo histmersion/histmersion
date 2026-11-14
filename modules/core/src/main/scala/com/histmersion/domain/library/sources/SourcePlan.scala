@@ -382,7 +382,10 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
               .get(wire(ck))
               .orElse(in.labels.aliases.get(wire(ck)))
               .exists(o => !leftUid.contains(o))
-          then Left(Problem.Conflict.AlreadyExists(Problem.TypeName.named[Citekey], Problem.Raw(s"$ck")))
+          then
+            Left(
+              Problem.Conflict.Held(Problem.Where.of(i.id), Problem.Conflict.Hold.CitekeyOfAnother(Problem.Raw(s"$ck")))
+            )
           else Right(())
         )
       case km.RenameRight | km.RenameLeft =>
@@ -398,7 +401,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
               )
             )
           else if labelsHere(wire(ck)) then
-            Left(Problem.Conflict.AlreadyExists(Problem.TypeName.named[Citekey], Problem.Raw(s"$ck")))
+            Left(Problem.Conflict.Held(Problem.Where.of(i.id), Problem.Conflict.Hold.CitekeyTaken(Problem.Raw(s"$ck"))))
           else Right(())
         )
       case _ => None

@@ -36,7 +36,7 @@ class CasesSuite extends munit.FunSuite:
 
   test("there are eleven groups and two cases outside them"):
     assertEquals(Group.values.length, 13)
-    assertEquals(examples.size, 63)
+    assertEquals(examples.size, 64)
 
   test("an exception becomes an internal problem with its class and its message's first line, cut to 300"):
     val long = "x" * 400
@@ -60,6 +60,19 @@ class CasesSuite extends munit.FunSuite:
     assert(s"${External.Stderr.tail("a" * 600 + "end\n")}".endsWith("end"))
     assertEquals(s"${External.ReplyExcerpt.head("b" * 300)}".length, External.ReplyExcerpt.Limit)
     assertEquals(s"${External.ModelSaid.of("c" * 300)}".length, External.ModelSaid.Limit)
+
+  test(
+    "a problem found inside a part of an answer starts with that part, a proposal's place and an input's path alike"
+  ):
+    val finding = Where("finding 2 (Tin came by sea.)")
+    assertEquals(
+      (Content.Proposal(Content.Requirement.HistoricalReckoning, Where("period")): Problem).inside(finding),
+      Content.Proposal(Content.Requirement.HistoricalReckoning, Where("finding 2 (Tin came by sea.): period"))
+    )
+    assertEquals(
+      (Invalid.Missing.here(Field("quote")): Problem).inside(finding),
+      Invalid.Missing(Field("quote"), Vector(Field("finding 2 (Tin came by sea.)")))
+    )
 
   test("a problem found in a field of the request gets the field in front of its path"):
     val missing: Problem = Invalid.Missing.here(Field("dst"))
