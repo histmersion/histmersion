@@ -77,7 +77,7 @@ class RenderSuite extends munit.FunSuite:
     "Reload" -> (503, "reloading the settings failed at Close in plugins"),
     "Cycle" -> (503, "reload cycle: db → lease → db"),
     "Load" -> (500, "plugin media-met did not load: NullComponent"),
-    "Rejected" -> (422, "media-smithsonian did not take 'edanmdm:nmnhanthro_8371234': NoImage"),
+    "Rejected" -> (422, "media-met did not take '248284': NotOpen isPublicDomain is false"),
     "Vault" -> (500, "secret vault keepassxc failed: TimedOut 20000 ms"),
     "Dependency" -> (
       409,
@@ -180,7 +180,8 @@ class RenderSuite extends munit.FunSuite:
           Config.Fault.Literal,
           Config.Fault.Substituted,
           Config.Fault.Included(Io.Path("/etc/histmersion/extra.conf")),
-          Config.Fault.NotReadBack
+          Config.Fault.NotReadBack,
+          Config.Fault.KeyNeeded(External.PluginSaid("an api.data.gov key"))
         )
           .map(Config.Setting(SettingKey("a.b"), _)) ++
         Vector(
@@ -250,7 +251,18 @@ class RenderSuite extends munit.FunSuite:
         Conflict.Activity.values.toVector.map(Conflict.Busy(_)) ++
         Invalid.Exclusion.values.toVector
           .map(Invalid.Inconsistent.here(NonEmptyVector.of(Field("a"), Field("b")), _)) ++
-        Plugin.Refusal.values.toVector.map(Plugin.Rejected(Plugin.Id("p"), Raw("item 1"), _)) ++
+        Vector(
+          Plugin.Refusal.NoLicence,
+          Plugin.Refusal.NoImage,
+          Plugin.Refusal.NoName,
+          Plugin.Refusal.NoLocation,
+          Plugin.Refusal.NoDate,
+          Plugin.Refusal.Duplicate,
+          Plugin.Refusal.Restricted,
+          Plugin.Refusal.LicenceNotAllowed(Raw("cc-by-nc")),
+          Plugin.Refusal.NotOpen(Field("share_license_status"), Vector.empty),
+          Plugin.Refusal.NoOpenImage(Field("usage.access"), Vector(Raw("Usage conditions apply"), Raw("CC BY")))
+        ).map(Plugin.Rejected(Plugin.Id("p"), Raw("item 1"), _)) ++
         Upstream.Shape.values.toVector.map(
           Upstream.BadReply.here(Upstream.Name("x"), Upstream.Url("https://x.example"), _, External.Reported("eof"))
         ) ++

@@ -1,7 +1,7 @@
 package com.histmersion
 package cli
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import hearth.kindlings.optics.syntax.*
 
@@ -360,11 +360,12 @@ final class PluginOps(using console: Console)(
           }" +
           (if p.provides.isEmpty then "" else s" · provides ${p.provides.mkString(", ")}")
       )
-      p.error.foreach(e =>
+      p.error.foreach { e =>
         Cli.out.println(
-          s"  with its defaults alone it does not register: ${e.sentence} (it may need settings under histmersion.plugins.${p.id})"
+          s"  with its defaults alone it does not register (it may need settings under histmersion.plugins.${p.id}):"
         )
-      )
+        e.sentences.foreach(s => Cli.out.println(s"    - $s"))
+      }
       if p.access.contains("unauthorised") then
         Cli.out.println(
           "  its access is UNAUTHORISED: it runs only with histmersion.acquire.allow-unauthorised = true, never on the legal-only path"

@@ -100,7 +100,15 @@ object ClevelandCollection:
         val rights =
           if c.str("share_license_status").exists(_.equalsIgnoreCase("CC0")) then
             Right(MediaRights.cc0(creator.map(MediaRights.Author(_)), MediaRights.Credit(credit)))
-          else Left(MediaPlugin.rejected(Name, acc, Problem.Plugin.Refusal.Restricted))
+          else
+            Left(
+              MediaPlugin
+                .rejected(
+                  Name,
+                  acc,
+                  MediaPlugin.notOpen(Problem.Field("share_license_status"), c.str("share_license_status"))
+                )
+            )
         val img = c.downField("images")
         def url(size: String) = img.downField(size).downField("url").focus.flatMap(_.asString)
         val geo = c.str("find_spot").map("find_spot" -> _).toList ++ c.strs("culture").map("culture" -> _)

@@ -57,7 +57,7 @@ object Column:
       case Config.Reload(stage, scope)        => s"reloading the settings failed at ${stage.productPrefix} in $scope"
       case Config.Cycle(scopes)               => s"reload cycle: ${scopes.toVector.mkString(CycleArrow)}"
       case Plugin.Load(plugin, fault)         => s"plugin $plugin did not load: ${fault.stored}"
-      case Plugin.Rejected(plugin, item, why) => s"$plugin did not take '$item': ${why.productPrefix}"
+      case Plugin.Rejected(plugin, item, why) => s"$plugin did not take '$item': ${why.stored}"
       case Plugin.Vault(vault, failure)       => s"secret vault $vault failed: ${failure.stored}"
       case Plugin.Dependency(p, m, want, has) => s"$p needs $m $want; it ships $has"
       case Plugin.Said(plugin, claim, text)   => s"$plugin says (${claim.productPrefix}): $text"
@@ -148,6 +148,15 @@ object Column:
     Plugin.Fault.Duplicate,
     Plugin.Fault.NoProvider
   )
+  private val Refusals = Vector(
+    Plugin.Refusal.NoLicence,
+    Plugin.Refusal.NoImage,
+    Plugin.Refusal.NoName,
+    Plugin.Refusal.NoLocation,
+    Plugin.Refusal.NoDate,
+    Plugin.Refusal.Duplicate,
+    Plugin.Refusal.Restricted
+  )
   private val VaultFailures =
     Vector(Plugin.Retrieval.NoVault, Plugin.Retrieval.NoEntry, Plugin.Retrieval.EmptyValue, Plugin.Retrieval.Locked)
   private val Blocks = Vector(
@@ -194,7 +203,15 @@ object Column:
       case Config.Fault.Credential(v)    => s"Credential${v.fold("")(n => s" $n")}"
       case Config.Fault.Included(file)   => s"Included $file"
       case Config.Fault.Rejected(u, st)  => s"Rejected $u/$st"
+      case Config.Fault.KeyNeeded(needs) => s"KeyNeeded — $needs"
       case other                         => other.productPrefix
+
+  extension (refusal: Plugin.Refusal)
+    private def stored: String = refusal match
+      case Plugin.Refusal.LicenceNotAllowed(family)  => s"LicenceNotAllowed $family"
+      case Plugin.Refusal.NotOpen(field, stated)     => s"NotOpen $field is ${stated.mkString(ListSeparator)}"
+      case Plugin.Refusal.NoOpenImage(field, stated) => s"NoOpenImage $field is ${stated.mkString(ListSeparator)}"
+      case other                                     => other.productPrefix
 
   extension (fault: Plugin.Fault)
     private def stored: String = fault match
@@ -275,7 +292,8 @@ object Column:
   private val UnreadAt = "(?s)^'(.*)' exit (-?\\d+) — (.*)$".r
   private val KeyTried = "(?s)^(\\S+) (\\w+)(?: — (.*))?$".r
   private val ListSeparator = ", "
-  private val NotTaken = "(?s)^(\\S+) did not take '(.*)': (\\w+)$".r
+  private val NotTaken = "(?s)^(\\S+) did not take '(.*)': (\\w+)(?: (.*))?$".r
+  private val FieldStates = "(?s)^(\\S+) is (.*)$".r
   private val VaultFailed = "(?s)^secret vault (\\S+) failed: (\\w+)(?: (.*))?$".r
   private val Says = "(?s)^(\\S+) says \\((\\w+)\\): (.*)$".r
   private val PausedFor = "^paused for (\\w+)(?: until (\\S+))?$".r
@@ -514,6 +532,8 @@ object Column:
           case ("Included", Some(f))           => Some(Config.Fault.Included(Io.Path(s"$f")))
           case ("Rejected", Some(Pair(u, st))) =>
             Upstream.Status.read(st).map(Config.Fault.Rejected(Upstream.Name(s"$u"), _))
+          case ("KeyNeeded", Some(n)) if n.startsWith("— ") =>
+            Some(Config.Fault.KeyNeeded(External.PluginSaid(s"${n.stripPrefix("— ")}")))
           case (_, None) => word(Faults, fault)
           case _         => None
         read.map(Config.Setting(SettingKey(s"$key"), _))
@@ -559,8 +579,16 @@ object Column:
       case _ => None
     },
     {
-      case NotTaken(plugin, item, refusal) =>
-        word(Plugin.Refusal.values.toSeq, refusal).map(Plugin.Rejected(Plugin.Id(s"$plugin"), Raw(s"$item"), _))
+      case NotTaken(plugin, item, refusal, argument) =>
+        val read: Option[Plugin.Refusal] = (refusal, Option(argument)) match
+          case ("LicenceNotAllowed", Some(family))           => Some(Plugin.Refusal.LicenceNotAllowed(Raw(s"$family")))
+          case ("NotOpen", Some(FieldStates(field, stated))) =>
+            Some(Plugin.Refusal.NotOpen(Field(s"$field"), raws(stated)))
+          case ("NoOpenImage", Some(FieldStates(field, stated))) =>
+            Some(Plugin.Refusal.NoOpenImage(Field(s"$field"), raws(stated)))
+          case (_, None) => word(Refusals, refusal)
+          case _         => None
+        read.map(Plugin.Rejected(Plugin.Id(s"$plugin"), Raw(s"$item"), _))
       case _ => None
     },
     {

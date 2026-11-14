@@ -27,7 +27,7 @@ object Text:
       case Conflict.Renamed(t, asked, now)     => s"${t.short} '$asked' was renamed to '$now' — write to '$now' instead"
       case Conflict.Stale(t, key, sent, now)   => s"${t.short} '$key' has moved on: you sent $sent, it is now $now"
       case Conflict.WrongState(t, key, is, ws) => s"${t.short} '$key' is $is; this needs ${ws.mkString(" or ")}"
-      case Conflict.Busy(activity)             => s"${activity.named} is still running"
+      case Conflict.Busy(activity)             => activity.running
       case Conflict.Referenced(t, key, by, n)  => s"${t.short} '$key' is referred to by $n ${by.short}"
       case Refused.Policy(rule)                => rule.said
       case Refused.Quota(limit, used, cap, at) => s"${limit.named} is spent: $used of $cap${until(at)}"
@@ -57,7 +57,7 @@ object Text:
       case Plugin.Dependency(plugin, module, want, ships) =>
         s"$plugin needs $module $want, but this Histmersion ships $ships — build the plugin against $ships " +
           s"(the histmersion-plugin-platform POM), or install a Histmersion that ships $want"
-      case Plugin.Rejected(plugin, item, why)   => s"$plugin did not take $item: ${words(why.productPrefix)}"
+      case Plugin.Rejected(plugin, item, why)   => s"$plugin did not take $item: ${why.said}"
       case Plugin.Vault(vault, failure)         => s"secret vault $vault failed: ${failure.said}"
       case Plugin.Said(plugin, claim, text)     => s"$plugin (${words(claim.productPrefix)}): $text"
       case Problem.Run.Paused(reason, at)       => s"paused for ${words(reason.productPrefix)}${until(at)}"
@@ -74,10 +74,11 @@ object Text:
       case Stored.Unrecognised(text)            => s"$text"
 
     /** The sentence without the one item or input path it names: what a report counts problems of a kind by (every
-      * record a collection refused as restricted is one reason, not one sentence per record).
+      * record a collection refused as restricted is one reason, not one sentence per record; the report is about one
+      * collection, so a refusal's reason does not name it again).
       */
     def reason: String = problem match
-      case Plugin.Rejected(plugin, _, why)       => s"$plugin did not take it: ${words(why.productPrefix)}"
+      case Plugin.Rejected(_, _, why)            => why.said
       case NotFound.Entity(t, _)                 => s"no such ${t.short}"
       case Invalid.Malformed(t, c, raw, _)       => Invalid.Malformed(t, c, raw, Vector.empty).sentence
       case Invalid.Unknown(t, raw, known, _)     => Invalid.Unknown(t, raw, known, Vector.empty).sentence
@@ -134,9 +135,10 @@ object Text:
         s"a secret is a reference ($ReferenceForms); '$name' is not a vault name ([a-z0-9][a-z0-9-]*)"
 
   extension (activity: Conflict.Activity)
-    private def named: String = activity match
-      case Conflict.Activity.CalibreGui => "the Calibre GUI"
-      case other                        => s"a ${words(other.productPrefix)}"
+    private def running: String = activity match
+      case Conflict.Activity.CalibreGui =>
+        "the Calibre GUI is running — quit it first (calibredb needs exclusive access to the library)"
+      case other => s"a ${words(other.productPrefix)} is still running"
 
   extension (rule: Refused.Rule)
     private def said: String = rule match
@@ -228,6 +230,9 @@ object Text:
           "in the file itself"
       case Config.Fault.Included(file) => s"is set in $file, which the settings file includes: change it there"
       case Config.Fault.NotReadBack    => "did not read back as it was written"
+      case Config.Fault.KeyNeeded(n)   =>
+        s"holds no key, and the plugin needs $n: set it to a secret reference (\"env:<NAME>\" or a vault's, e.g. " +
+          "\"keepassxc:<entry>#password\"); it was not asked"
 
   extension (kind: Config.ValueKind)
     private def said: String = kind match
@@ -256,6 +261,15 @@ object Text:
         "it holds no plugin (no META-INF/services/com.histmersion.plugin.Plugin provider)"
       case Plugin.Fault.Taken(by) => s"its id is already provided by $by"
       case other                  => words(other.productPrefix)
+
+  extension (refusal: Plugin.Refusal)
+    private def said: String = refusal match
+      case Plugin.Refusal.LicenceNotAllowed(f)     => s"licence $f not allowed"
+      case Plugin.Refusal.NotOpen(field, stated)   => s"not Open Access ($field is ${statedOr(stated)})"
+      case Plugin.Refusal.NoOpenImage(field, said) => s"no CC0 image ($field is ${statedOr(said)})"
+      case other                                   => words(other.productPrefix)
+
+  private def statedOr(stated: Vector[Raw]): String = if stated.isEmpty then "missing" else stated.mkString(", ")
 
   extension (failure: Plugin.Retrieval)
     private def said: String = failure match

@@ -213,7 +213,8 @@ class ProviderPluginsSuite extends munit.FunSuite:
   private def keyedEntry(g: Generation, name: Registries.MediaCollectionsKey) = g.registries.mediaCollections.get(name)
 
   private val noKey =
-    "histmersion.plugins.media-smithsonian.api-key is empty"
+    "histmersion.plugins.media-smithsonian.api-key holds no key, and the plugin needs an api.data.gov key: set it to a " +
+      "secret reference (\"env:<NAME>\" or a vault's, e.g. \"keepassxc:<entry>#password\"); it was not asked"
 
   test("keyed: off by default the import says it is off and what it needs; it is still a reserved name"):
     val c = ServerPlugins.offline.registries.mediaCollections
@@ -280,7 +281,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
     assertEquals(keyedEntry(g, smithsonian).map(_.check), Some(Right(())))
     assert(
       keyedEntry(g, europeana).exists(
-        _.check.left.exists(_.sentence.contains("histmersion.plugins.media-europeana.api-key is empty"))
+        _.check.left.exists(_.sentence.contains("histmersion.plugins.media-europeana.api-key holds no key"))
       ),
       "a blank value is no key"
     )

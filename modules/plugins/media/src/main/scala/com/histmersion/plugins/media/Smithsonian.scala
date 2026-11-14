@@ -147,7 +147,16 @@ object Smithsonian:
         val rights: Either[Problem, MediaRights] = cc0 match
           case Some(_) => Right(MediaRights.cc0(maker.map(MediaRights.Author(_)), MediaRights.Credit(credit)))
           case None if media.isEmpty => Left(MediaPlugin.rejected(Name, key, Problem.Plugin.Refusal.NoImage))
-          case None                  => Left(MediaPlugin.rejected(Name, key, Problem.Plugin.Refusal.Restricted))
+          case None                  =>
+            val stated = media.flatMap(m => m.downField("usage").str("access")).distinct
+            Left(
+              MediaPlugin.rejected(
+                Name,
+                key,
+                Problem.Plugin.Refusal
+                  .NoOpenImage(Problem.Field("usage.access"), stated.toVector.map(v => Problem.Raw(s"$v")))
+              )
+            )
         def resource(m: Cursor, label: String) =
           m.downField("resources")
             .focus

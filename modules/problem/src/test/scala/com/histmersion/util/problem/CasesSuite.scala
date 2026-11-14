@@ -97,14 +97,45 @@ class CasesSuite extends munit.FunSuite:
 
   test("a reason is the sentence without the item or the input path, so that a report counts alike refusals once"):
     import Text.reason
-    val a = Plugin.Rejected(Plugin.Id("media-met"), Raw("248284"), Plugin.Refusal.Restricted)
-    val b = Plugin.Rejected(Plugin.Id("media-met"), Raw("1"), Plugin.Refusal.Restricted)
-    assertEquals(a.reason, "media-met did not take it: restricted")
+    val notOpen = Plugin.Refusal.NotOpen(Field("isPublicDomain"), Vector(Raw("false")))
+    val a = Plugin.Rejected(Plugin.Id("media-met"), Raw("248284"), notOpen)
+    val b = Plugin.Rejected(Plugin.Id("media-met"), Raw("1"), notOpen)
+    assertEquals(a.reason, "not Open Access (isPublicDomain is false)")
+    assertEquals(a.sentence, "media-met did not take 248284: not Open Access (isPublicDomain is false)")
     assertEquals(a.reason, b.reason)
+    val usage = Plugin.Refusal.NoOpenImage(Field("usage.access"), Vector(Raw("Usage conditions apply")))
+    assertEquals(
+      Plugin.Rejected(Plugin.Id("media-smithsonian"), Raw("k"), usage).reason,
+      "no CC0 image (usage.access is Usage conditions apply)"
+    )
+    assertEquals(
+      Plugin.Rejected(Plugin.Id("zq"), Raw("k"), Plugin.Refusal.LicenceNotAllowed(Raw("cc-by-nc"))).reason,
+      "licence cc-by-nc not allowed"
+    )
+    assertEquals(
+      Plugin.Rejected(Plugin.Id("zq"), Raw("k"), Plugin.Refusal.NotOpen(Field("rights"), Vector.empty)).reason,
+      "not Open Access (rights is missing)"
+    )
     assertEquals(Invalid.Missing(Field("credit"), Vector(Field("k1"))).reason, "credit is required")
     assertEquals(NotFound.Entity(TypeName("x.Commons.File"), Raw("File:A.jpg")).reason, "no such Commons.File")
     val other: Problem = Conflict.Busy(Conflict.Activity.Backup)
     assertEquals(other.reason, other.sentence)
+
+  test("a busy Calibre GUI says to quit it; a key a plugin needs says which setting and what key"):
+    assertEquals(
+      Conflict.Busy(Conflict.Activity.CalibreGui).sentence,
+      "the Calibre GUI is running — quit it first (calibredb needs exclusive access to the library)"
+    )
+    assertEquals(
+      Config
+        .Setting(
+          SettingKey("histmersion.plugins.media-smithsonian.api-key"),
+          Config.Fault.KeyNeeded(External.PluginSaid("an api.data.gov key"))
+        )
+        .sentence,
+      "histmersion.plugins.media-smithsonian.api-key holds no key, and the plugin needs an api.data.gov key: set it to " +
+        "a secret reference (\"env:<NAME>\" or a vault's, e.g. \"keepassxc:<entry>#password\"); it was not asked"
+    )
 
   test("only a missing entity or copy is not found"):
     assertEquals(examples.filter(_.isNotFound).map(_.productPrefix), Vector("Entity", "Copy"))

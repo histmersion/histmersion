@@ -157,7 +157,8 @@ object LocCollection:
               MediaPlugin.rejected(
                 Name,
                 s"$key",
-                if advisory.isEmpty then Problem.Plugin.Refusal.NoLicence else Problem.Plugin.Refusal.Restricted
+                if advisory.isEmpty then Problem.Plugin.Refusal.NoLicence
+                else MediaPlugin.notOpen(Problem.Field("rights_advisory"), Some(advisory))
               )
             )
           else if period.isEmpty then Left(MediaPlugin.rejected(Name, s"$key", Problem.Plugin.Refusal.NoDate))

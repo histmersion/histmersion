@@ -1,7 +1,7 @@
 package com.histmersion
 package server.plugins
 
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.util.plugins.PluginSetResource
@@ -97,12 +97,12 @@ class PluginToolSuite extends munit.FunSuite:
     val foreign = variant(hello, d.resolve("foreign.jar"), Some("com.histmersion.fixtures.hello.ForeignSpiPlugin\n"))
     val f = RelinkPlugins.describe(foreign, loader)
     assertEquals(f.plugins.map(p => (p.id, p.spiVersion)), List(("foreign-spi", Spi.Version + 98)))
-    assert(f.plugins.head.error.exists(_.sentence.contains("SPI")), f.plugins.head.error)
+    assert(f.plugins.head.error.exists(_.sentences.exists(_.contains("SPI"))), f.plugins.head.error)
     val none = variant(hello, d.resolve("none.jar"), None)
     assertEquals(RelinkPlugins.describe(none, loader).plugins, Nil)
     val broken = variant(hello, d.resolve("broken.jar"), Some("com.histmersion.fixtures.hello.NoSuchPlugin\n"))
     val b = RelinkPlugins.describe(broken, loader)
-    assert(b.plugins.headOption.flatMap(_.error).exists(_.sentence.contains("NoSuchPlugin")), b)
+    assert(b.plugins.headOption.flatMap(_.error).exists(_.sentences.exists(_.contains("NoSuchPlugin"))), b)
 
   test("duplicates: a class the kit or an earlier plugin already has, named with its owner"):
     def classes(names: String*) = names.map(RelinkPlugins.ClassName(_)).toSet
@@ -206,9 +206,11 @@ class PluginToolSuite extends munit.FunSuite:
       )
       val without = RelinkPlugins.describe(helloDeps, loader).plugins.head
       assert(
-        without.error.exists(e =>
-          e.sentence.contains("class com.histmersion.fixtures.hellolib.Shout") && e.sentence.contains("is missing") &&
-            e.sentence.contains("histmersion plugin add")
+        without.error.exists(
+          _.sentences.exists(e =>
+            e.contains("class com.histmersion.fixtures.hellolib.Shout") && e.contains("is missing") &&
+              e.contains("histmersion plugin add")
+          )
         ),
         without.error
       )
