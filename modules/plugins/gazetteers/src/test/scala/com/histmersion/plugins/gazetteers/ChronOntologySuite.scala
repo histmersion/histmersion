@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.gazetteers
 
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.plugin.*
@@ -107,5 +107,5 @@ class ChronOntologySuite extends munit.FunSuite:
   test("the gazetteer-chronontology plugin registers the source chronontology"):
     val h = PluginHarness
       .load(Plugin.Info.Id("gazetteer-chronontology"), http = HttpMode.Offline, env = Map.empty)
-      .fold(e => fail(e.sentence), identity)
+      .fold(e => fail(e.sentences.mkString("; ")), identity)
     assertEquals(h.gazetteerSources, List("chronontology"))

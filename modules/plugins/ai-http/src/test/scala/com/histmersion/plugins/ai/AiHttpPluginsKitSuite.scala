@@ -1,6 +1,7 @@
 package com.histmersion
 package plugins.ai
-import com.histmersion.util.problem.{External, Legacy, Problem}
+import com.histmersion.util.problem.Text.{sentence, sentences}
+import com.histmersion.util.problem.{External, Problem}
 
 import com.histmersion.plugin.*
 import com.histmersion.plugin.testkit.{PluginHarness, ScriptedAiHttp}
@@ -15,7 +16,7 @@ import com.histmersion.domain.CoreQuota
 class AiHttpPluginsKitSuite extends munit.FunSuite:
 
   private def load(id: Plugin.Info.Id, env: Map[String, String] = Map.empty, config: String = "") =
-    PluginHarness.load(id, config, env = env).fold(e => fail(e.legacyText), identity)
+    PluginHarness.load(id, config, env = env).fold(e => fail(e.sentences.mkString("; ")), identity)
 
   private val keys = Map("ANTHROPIC_API_KEY" -> "k-test", "OPENAI_API_KEY" -> "k-test")
 
@@ -73,7 +74,7 @@ class AiHttpPluginsKitSuite extends munit.FunSuite:
   test("a provider plugin has no setting the host owns: a base URL in its block is refused"):
     val refused =
       PluginHarness.load(Plugin.Info.Id("ai-openai"), "base-url = \"http://127.0.0.1:1/v1\"", env = Map.empty)
-    assert(refused.left.exists(_.legacyText.contains("unknown setting")), refused.toString)
+    assert(refused.left.exists(_.sentences.mkString.contains("is no setting of the plugin")), refused.toString)
 
   test("without a key the hosted providers refuse every model, saying where the key goes; a local server needs none"):
     assertEquals(
@@ -81,16 +82,16 @@ class AiHttpPluginsKitSuite extends munit.FunSuite:
         .aiTurn(Registries.AiProvidersKey("anthropic"), request())
         .check
         .left
-        .map(_.legacyText),
-      Left("no Anthropic API key — set ANTHROPIC_API_KEY in the server's environment")
+        .map(_.sentence),
+      Left("histmersion.agents.providers.anthropic.api-key reads ANTHROPIC_API_KEY, which is not set")
     )
     assertEquals(
       load(Plugin.Info.Id("ai-openai"))
         .aiTurn(Registries.AiProvidersKey("openai"), request())
         .check
         .left
-        .map(_.legacyText),
-      Left("no OpenAI API key — set OPENAI_API_KEY in the server's environment")
+        .map(_.sentence),
+      Left("histmersion.agents.providers.openai.api-key reads OPENAI_API_KEY, which is not set")
     )
     val http = ScriptedAiHttp(json(AiHttp.Response.Body(chatAnswer)))
     val local = load(Plugin.Info.Id("ai-local")).aiTurn(Registries.AiProvidersKey("local"), request(), http)
@@ -146,7 +147,12 @@ class AiHttpPluginsKitSuite extends munit.FunSuite:
       r.turn,
       Some(
         Left(
-          Problem.Unclassified(Legacy.Text("Rate limit reached"))
+          Problem.Upstream.Http.here(
+            Problem.Upstream.Name("openai"),
+            Problem.Upstream.Url("https://api.openai.com/v1/chat/completions"),
+            Problem.Upstream.Status(429),
+            External.ReplyExcerpt("Rate limit reached")
+          )
         )
       )
     )

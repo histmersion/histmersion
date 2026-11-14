@@ -5,7 +5,7 @@ import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.JsonCodec.given
 import hearth.kindlings.jsoniterjson.Json
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 
 import com.histmersion.plugin.AiMessage
 import com.histmersion.plugin.AiTurn
@@ -95,7 +95,14 @@ object AnthropicRequest:
       case Nil                       => Right(acc.reverse)
       case (id, name, input) :: tail =>
         RawJson.parse((input).value).flatMap(_.as[Map[String, Json]]) match
-          case Left(e)  => Left(Problem.Unclassified(Legacy.Text(s"$e")))
+          case Left(e) =>
+            Left(
+              Problem.Io.Corrupt(
+                Problem.Io.Format.Json,
+                Problem.Where(s"the input of tool call $id"),
+                Problem.Io.Damage.Unreadable(External.Reported.of(s"$e"))
+              )
+            )
           case Right(m) =>
             val use = Json.obj(
               "id" -> Json.fromString((id).value),

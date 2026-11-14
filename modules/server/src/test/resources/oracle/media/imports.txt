@@ -329,12 +329,12 @@ report: {
   "rejected" : [
     {
       "allowed" : true,
-      "key" : "names another place on the map",
+      "key" : "media-met did not take it: restricted",
       "n" : 1
     },
     {
       "allowed" : true,
-      "key" : "not Open Access (isPublicDomain is false)",
+      "key" : "names another place on the map",
       "n" : 1
     }
   ],
@@ -469,7 +469,7 @@ report: {
     },
     {
       "allowed" : true,
-      "key" : "not public domain (is_public_domain is false)",
+      "key" : "media-aic did not take it: restricted",
       "n" : 1
     }
   ],
@@ -648,12 +648,12 @@ report: {
   "rejected" : [
     {
       "allowed" : true,
-      "key" : "human remains (Open Context flags them; not shown)",
+      "key" : "its dates do not overlap the place's",
       "n" : 1
     },
     {
       "allowed" : true,
-      "key" : "its dates do not overlap the place's",
+      "key" : "open-context (rejected): human remains (Open Context flags them; not shown)",
       "n" : 1
     }
   ],
@@ -795,7 +795,7 @@ report: {
     },
     {
       "allowed" : true,
-      "key" : "not an open licence (http://rightsstatements.org/vocab/NoC-NC/1.0/)",
+      "key" : "unknown Licence 'http://rightsstatements.org/vocab/NoC-NC/1.0/'",
       "n" : 1
     }
   ],
@@ -1072,12 +1072,12 @@ report: {
   "rejected" : [
     {
       "allowed" : true,
-      "key" : "names another place on the map",
+      "key" : "media-met did not take it: restricted",
       "n" : 1
     },
     {
       "allowed" : true,
-      "key" : "not Open Access (isPublicDomain is false)",
+      "key" : "names another place on the map",
       "n" : 1
     }
   ],
@@ -1224,7 +1224,7 @@ report: {
     },
     {
       "allowed" : true,
-      "key" : "not public domain (is_public_domain is false)",
+      "key" : "media-aic did not take it: restricted",
       "n" : 1
     }
   ],
@@ -1436,12 +1436,12 @@ report: {
   "rejected" : [
     {
       "allowed" : true,
-      "key" : "human remains (Open Context flags them; not shown)",
+      "key" : "its dates do not overlap the place's",
       "n" : 1
     },
     {
       "allowed" : true,
-      "key" : "its dates do not overlap the place's",
+      "key" : "open-context (rejected): human remains (Open Context flags them; not shown)",
       "n" : 1
     }
   ],
@@ -1599,7 +1599,7 @@ report: {
     },
     {
       "allowed" : true,
-      "key" : "not an open licence (http://rightsstatements.org/vocab/NoC-NC/1.0/)",
+      "key" : "unknown Licence 'http://rightsstatements.org/vocab/NoC-NC/1.0/'",
       "n" : 1
     }
   ],
@@ -2017,7 +2017,7 @@ report: {
     },
     {
       "allowed" : true,
-      "key" : "licence all-rights-reserved not allowed for zq-search",
+      "key" : "zq-search did not take it: licence not allowed",
       "n" : 3
     },
     {
@@ -2106,7 +2106,7 @@ report: {
     },
     {
       "allowed" : true,
-      "key" : "licence all-rights-reserved not allowed for zq-search",
+      "key" : "zq-search did not take it: licence not allowed",
       "n" : 1
     }
   ],

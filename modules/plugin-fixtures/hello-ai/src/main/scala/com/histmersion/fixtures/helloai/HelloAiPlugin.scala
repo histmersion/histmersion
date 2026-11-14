@@ -1,5 +1,5 @@
 package com.histmersion.fixtures.helloai
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.{Problem, Problems}
 
 import com.histmersion.plugin.*
 import com.histmersion.plugin.Plugin.Config.given
@@ -12,9 +12,9 @@ final class HelloAiPlugin extends Plugin:
     _root_.com.histmersion.plugin.Plugin.Info.SpiVersion(Spi.Version)
   )
 
-  def register(config: HelloAiConfig, ctx: Plugin.Context): Either[Problem, Unit] =
+  def register(config: HelloAiConfig, ctx: Plugin.Context): Either[Problems, Unit] =
     config.token
-      .fold[Either[Problem, Boolean]](Right(false))(t => ctx.secret(t).map(_.value.nonEmpty))
+      .fold[Either[Problems, Boolean]](Right(false))(t => ctx.secret(t).map(_.value.nonEmpty))
       .flatMap { hasToken =>
         ctx.log.info(
           _root_.com.histmersion.plugin.Plugin.Log.Line(

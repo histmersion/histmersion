@@ -1,7 +1,7 @@
 package com.histmersion
 package pluginhost
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 import com.histmersion.util.problem.Text.sentence
 import hearth.kindlings.optics.syntax.*
 
@@ -46,7 +46,7 @@ object PluginMedia:
   def refusal(rec: MediaRecord, allow: LicencePolicy, provider: Provider): Option[Refusal] =
     rec.rights match
       case _ if rec.withheld.isDefined =>
-        rec.withheld.map(w => Refusal.Withheld(Problem.Unclassified(Legacy.Text(w.value))))
+        rec.withheld.map(w => Refusal.Withheld(External.PluginSaid.of(w.value)))
       case Left(why)                            => Some(Refusal.Unreadable(why))
       case Right(r) if !allow.allows(r.licence) => Some(Refusal.LicenceNotAllowed(r.licence.family, provider))
       case Right(_) if rec.imageUrl.isEmpty     => Some(Refusal.NoImage)
@@ -55,7 +55,7 @@ object PluginMedia:
   /** Why a record may not be kept. */
   enum Refusal derives CanEqual:
     /** The plugin withheld it, with its reason. */
-    case Withheld(why: Problem)
+    case Withheld(why: External.PluginSaid)
 
     /** The host cannot read its rights statement. */
     case Unreadable(why: Problem)
@@ -66,13 +66,19 @@ object PluginMedia:
     /** It has no image to keep. */
     case NoImage
 
-    /** The sentence for a person. */
-    def problem: Problem = this match
-      case Withheld(why)                     => why
-      case Unreadable(why)                   => why
-      case LicenceNotAllowed(family, source) =>
-        Problem.Unclassified(Legacy.Text(s"licence ${family.wire} not allowed for $source"))
-      case NoImage => Problem.Unclassified(Legacy.Text("no image"))
+    /** The refusal of `item`, a record of the collection `provider`, as a problem. */
+    def problem(provider: Provider, item: MediaRecord.Key): Problem =
+      val plugin = Problem.Plugin.Id(s"$provider")
+      this match
+        case Withheld(why)                => Problem.Plugin.Said(plugin, Problem.Plugin.Claim.Rejected, why)
+        case Unreadable(why)              => why
+        case LicenceNotAllowed(_, source) =>
+          Problem.Plugin.Rejected(
+            Problem.Plugin.Id(s"$source"),
+            Problem.Raw(s"$item"),
+            Problem.Plugin.Refusal.LicenceNotAllowed
+          )
+        case NoImage => Problem.Plugin.Rejected(plugin, Problem.Raw(s"$item"), Problem.Plugin.Refusal.NoImage)
 
   /** The run's polite client as the plugin's HTTP: its pace, its User-Agent, Retry-After honoured, a challenge the end
     * of the request.
@@ -88,24 +94,23 @@ object PluginMedia:
 
   /** A plugin's answer to a request, or what it threw as a failure of that call (one that needed no answer). */
   def guardHttp[A](a: => Either[Problem, A]): Either[Problem, A] =
-    try
-      Option(a).getOrElse(
-        Left(Problem.Unclassified(Legacy.Text("the plugin answered nothing")))
-      )
+    try Option(a).getOrElse(Left(answeredNothing))
     catch
       case e: InterruptedException => throw e
-      case NonFatal(e)             =>
-        Left(
-          Problem.Unclassified(Legacy.Text(s"the plugin failed: ${e.getClass.getSimpleName}: ${e.getMessage}"))
-        )
+      case NonFatal(e)             => Left(threw(e))
+
+  /** A plugin answered `null` where the SPI promises an answer. */
+  val answeredNothing: Problem = Problem.Invalid.Missing.here(Problem.Field("the plugin's answer"))
+
+  /** A plugin's call threw `e`: logged under its problem's id. */
+  def threw(e: Throwable): Problem = Problem.from(e, Problem.Where("the plugin"), Problem.Internal.Id.mint())
 
   /** A plugin's answer, or what it threw as a failure of that call. */
   def guard[A](a: => Either[Problem, A]): Either[Problem, A] =
-    try Option(a).getOrElse(Left(Problem.Unclassified(Legacy.Text("the plugin answered nothing"))))
+    try Option(a).getOrElse(Left(answeredNothing))
     catch
       case e: InterruptedException => throw e
-      case NonFatal(e)             =>
-        Left(Problem.Unclassified(Legacy.Text(s"the plugin failed: ${e.getClass.getSimpleName}: ${e.getMessage}")))
+      case NonFatal(e)             => Left(threw(e))
 
   /** Pure: the record a plugin's item becomes; its rights read by the HOST ([[rights]]). A period its type would refuse
     * makes the record unreadable (its rights a `Left` naming the value, so it is never kept), as does a record the host
@@ -117,17 +122,10 @@ object PluginMedia:
       try SpiValues.optional(it.period)(SpiValues.periodOf)
       catch
         case NonFatal(e) =>
-          Left(
-            Problem.Unclassified(
-              Legacy.Text(
-                s"a period the host cannot read (${e.getClass.getSimpleName}) — is the plugin " +
-                  s"built against plugin SPI ${Spi.Version}?"
-              )
-            )
-          )
+          Left(Problem.from(e, Problem.Where(s"reading the period of $key"), Problem.Internal.Id.mint()))
     val stated: Either[Problem, MediaRights] =
       Option(it.rights)
-        .getOrElse(Left(Problem.Unclassified(Legacy.Text("no rights statement"))))
+        .getOrElse(Left(Problem.Invalid.Missing(Problem.Field("rights"), Vector(Problem.Field(key)))))
     MediaRecord(
       MediaRecord.Key(key),
       MediaRecord.Title(it.title.value.trim),
@@ -136,7 +134,7 @@ object PluginMedia:
       it.thumbUrl.map(_.value.trim).filter(_.nonEmpty).map(MediaRecord.ThumbUrl(_)),
       it.originalUrl.map(_.value.trim).filter(_.nonEmpty).map(MediaRecord.OriginalUrl(_)),
       period.left
-        .map(why => Problem.Unclassified(Legacy.Text(s"$key: ${why.sentence}")))
+        .map(_.within(Problem.Field(key)))
         .flatMap(_ => stated.flatMap(rights)),
       it.geography.map((field, value) =>
         MediaRecord.Geography.Field(field.value) -> MediaRecord.Geography.Value(value.value)
@@ -166,7 +164,7 @@ object PluginMedia:
           .filter(_.family != Licence.Family.Unknown)
           .getOrElse(byStatement)
     val credit = Option(r.credit).map(_.value).getOrElse("").trim
-    if credit.isEmpty then Left(Problem.Unclassified(Legacy.Text("no credit line")))
+    if credit.isEmpty then Left(Problem.Invalid.Missing.here(Problem.Field("credit")))
     else
       Right(
         Attribution(

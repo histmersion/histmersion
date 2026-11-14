@@ -1,12 +1,12 @@
 package com.histmersion
 package plugins.media
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.{Problem, Problems}
 
 /** `media-met`: `histmersion media import met` — The Metropolitan Museum of Art's Open Access objects. */
 import com.histmersion.plugin.Plugin
 import com.histmersion.plugin.Registry
 final class MetPlugin extends MediaPlugin("media-met"):
   type Config = MediaPlugin.Config
-  def register(c: MediaPlugin.Config, ctx: Plugin.Context): Either[Problem, Unit] =
+  def register(c: MediaPlugin.Config, ctx: Plugin.Context): Either[Problems, Unit] =
     ctx.mediaCollections
       .add(Registry.AddId("met"), MetCollection(c.media.met))

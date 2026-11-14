@@ -1,6 +1,6 @@
 package com.histmersion
 package plugins.fetchers
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.{Problem, Problems}
 
 import com.histmersion.upstreams.archiveorg.ArchiveOrg
 import com.histmersion.plugin.Plugin
@@ -11,7 +11,7 @@ import com.histmersion.plugin.Registry
   */
 final class ArchiveOrgPlugin extends FetcherPlugin("archive-org"):
   type Config = HostAcquire
-  def register(c: HostAcquire, ctx: Plugin.Context): Either[Problem, Unit] =
+  def register(c: HostAcquire, ctx: Plugin.Context): Either[Problems, Unit] =
     lazy val archive = ArchiveOrg(c.acquire.archiveOrg, ctx.http)
     ctx.sourceFetchers
       .add(Registry.AddId("archive-org"), ArchiveOrgFetcher(() => archive))

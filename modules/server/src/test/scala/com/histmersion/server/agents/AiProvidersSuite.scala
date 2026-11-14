@@ -202,8 +202,7 @@ class AiProvidersSuite extends munit.FunSuite:
     assert(
       taken.report.plugins
         .find(_.id.value == "zq-ai")
-        .flatMap(_.error)
-        .exists(_.sentence.contains("'local' is already registered")),
+        .exists(_.errors.exists(_.sentence.contains("AiProvider 'local' already exists"))),
       taken.report.toString
     )
     assert(
@@ -216,13 +215,15 @@ class AiProvidersSuite extends munit.FunSuite:
     assert(
       free.report.plugins
         .find(_.id.value == "zq-ai")
-        .flatMap(_.error)
-        .exists(_.sentence.contains("one of Histmersion's own AI providers")),
+        .exists(_.errors.exists(_.sentence.contains("AiProvider 'local' already exists"))),
       free.report.toString
     )
     assert(!free.registries.aiProviders.contains(Registries.AiProvidersKey("local")))
     val bad = build(List(AiPlugin(Registry.AddId("Not_Kebab"), p)), on())
-    assert(bad.report.plugins.head.error.exists(_.sentence.contains("an AI provider name is")), bad.report.toString)
+    assert(
+      bad.report.plugins.head.errors.exists(_.sentence.contains("'Not_Kebab' is not a RegistryName")),
+      bad.report.toString
+    )
 
   test("reload: only an HTTP provider's own agents.providers.<name> rebuilds an AI built-in; so does its own block"):
     val g1 = build(builtins :+ AiPlugin(Registry.AddId("gemini"), Scripted(Nil)), on())
@@ -261,11 +262,11 @@ class AiProvidersSuite extends munit.FunSuite:
     // the HTTP providers' own checks over the settings the host supplied them (no key in reference.conf), as they read
     assertEquals(
       f(app.agents, ModelRef(ProviderKind.Anthropic, Agents.ModelRef.Model("m/x"))).left.toOption.map(_.sentence),
-      Some("no Anthropic API key — set ANTHROPIC_API_KEY in the server's environment")
+      Some("histmersion.agents.providers.anthropic.api-key reads ANTHROPIC_API_KEY, which is not set")
     )
     assertEquals(
       f(app.agents, ModelRef(ProviderKind.OpenAI, Agents.ModelRef.Model("m/x"))).left.toOption.map(_.sentence),
-      Some("no OpenAI API key — set OPENAI_API_KEY in the server's environment")
+      Some("histmersion.agents.providers.openai.api-key reads OPENAI_API_KEY, which is not set")
     )
     // the command-line runtimes: exactly what the host's own factory says
     BuiltinAi.runtimes.foreach { k =>
@@ -463,7 +464,7 @@ class AiProvidersSuite extends munit.FunSuite:
     )
     assert(thrown.getMessage.contains("IllegalStateException: boom"), thrown.getMessage)
     val nul = intercept[java.io.IOException](PluginAiClient(ref, Scripted(List(_ => null)), AiHttp.Offline).run(call()))
-    assert(nul.getMessage.contains("null"), nul.getMessage)
+    assert(nul.getMessage.contains("answer is required"), nul.getMessage)
 
   test(
     "pure: an answer becomes sttp-ai's — stop reasons, usage never negative, the configured model when none is named"

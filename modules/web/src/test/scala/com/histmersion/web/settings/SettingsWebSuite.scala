@@ -171,11 +171,14 @@ class SettingsWebSuite extends munit.FunSuite:
             PluginStatus.SpiVersion(2),
             enabled = PluginStatus.Enabled(true),
             state = PluginState.Wire("failed"),
-            error = Some(Problem.Unclassified(Legacy.Text("no key")))
+            errors = List(
+              Problem.Config.Setting(Problem.SettingKey("histmersion.plugins.x.api-key"), Problem.Config.Fault.Empty),
+              Problem.Plugin.Vault(Problem.Plugin.Id("keepassxc"), Problem.Plugin.Retrieval.NoVault)
+            )
           )
         )
         .value
-        .contains("no key")
+        .startsWith("Not working: histmersion.plugins.x.api-key is empty; secret vault keepassxc failed")
     )
 
   test("what a plugin adds, in words"):

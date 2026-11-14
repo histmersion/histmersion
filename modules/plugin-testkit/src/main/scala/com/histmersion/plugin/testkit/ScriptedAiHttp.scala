@@ -1,6 +1,6 @@
 package com.histmersion
 package plugin.testkit
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.plugin.Header
 
@@ -50,7 +50,7 @@ final class ScriptedAiHttp(answers: Either[Problem, AiHttp.Response]*) extends A
 
   private def next(r: AiHttpRequest): Either[Problem, AiHttp.Response] = synchronized {
     seen += r
-    if left.isEmpty then Left(Problem.Unclassified(Legacy.Text("no scripted answer")))
+    if left.isEmpty then Left(Problem.NotFound.Entity(Problem.TypeName.named[StubAnswer], Problem.Raw(s"${r.url}")))
     else left.dequeue()
   }
 

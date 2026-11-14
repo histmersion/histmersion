@@ -1,5 +1,5 @@
 package com.histmersion.fixtures.hello
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.{Problem, Problems}
 
 import com.histmersion.plugin.*
 import com.histmersion.plugin.Plugin.Config.given
@@ -15,7 +15,7 @@ final class HelloPlugin extends Plugin:
     _root_.com.histmersion.plugin.Plugin.Info.SpiVersion(Spi.Version)
   )
 
-  def register(config: HelloConfig, ctx: Plugin.Context): Either[Problem, Unit] =
+  def register(config: HelloConfig, ctx: Plugin.Context): Either[Problems, Unit] =
     scala.util
       .Try(
         Class

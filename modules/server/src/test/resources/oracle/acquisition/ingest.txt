@@ -497,7 +497,7 @@ job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqarx2021_prepr
       "step" : "metadata"
     },
     {
-      "detail" : "no legal open-access PDF found",
+      "detail" : "no legal open-access PDF found for doi:10.5555/zq.closed",
       "ok" : false,
       "step" : "fetch"
     },
@@ -568,7 +568,7 @@ job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqarx2021_prepr
       "step" : "metadata"
     },
     {
-      "detail" : "no legal open-access PDF found",
+      "detail" : "no legal open-access PDF found for doi:10.5555/zq.gold",
       "ok" : false,
       "step" : "fetch"
     },
@@ -644,7 +644,7 @@ job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqarx2021_prepr
       "step" : "metadata"
     },
     {
-      "detail" : "no legal open-access PDF found",
+      "detail" : "no legal open-access PDF found for doi:10.5555/zq.closed",
       "ok" : false,
       "step" : "fetch"
     },
@@ -722,7 +722,7 @@ job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqarx2021_prepr
       "step" : "metadata"
     },
     {
-      "detail" : "no legal open-access PDF found",
+      "detail" : "no legal open-access PDF found for doi:10.5555/zq.unknown",
       "ok" : false,
       "step" : "fetch"
     },
@@ -794,7 +794,7 @@ job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqarx2021_prepr
       "step" : "metadata"
     },
     {
-      "detail" : "no legal open-access PDF found",
+      "detail" : "no legal open-access PDF found for doi:10.5555/zq.ref1",
       "ok" : false,
       "step" : "fetch"
     },
@@ -940,7 +940,7 @@ A later reply on Zqtell
 **Reference edges:** 0
 
 - ✓ **metadata** — A later reply on Zqtell (2024), 1 citation(s)
-- ✗ **fetch** — no legal open-access PDF found
+- ✗ **fetch** — no legal open-access PDF found for doi:10.5555/zq.later
 - ✗ **chain** — archive-org: no copy — archive.org identifier is required; unpaywall: no copy — no Copy '10.5555/zq.later'; core: no copy — CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — no Copy '10.5555/zq.later'; pmc: no copy — no Copy '10.5555/zq.later'; arxiv: no copy — arxiv is required; landing: no copy — no Copy '10.5555/zq.later'; pmc-text: no copy — no Copy '10.5555/zq.later'; zq-shelf: no copy — the zq shelf has only one work
 - ✗ **references** — 0 reference(s), 0 resolve to stored sources
 - ✓ **store** — created source from metadata — no file was acquired, so there is nothing to convert
@@ -973,7 +973,7 @@ A closed study of Zqtell
 **Reference edges:** 0
 
 - ✓ **metadata** — A closed study of Zqtell (2021), 5 citation(s)
-- ✗ **fetch** — no legal open-access PDF found
+- ✗ **fetch** — no legal open-access PDF found for doi:10.5555/zq.closed
 - ✗ **chain** — archive-org: no copy — archive.org identifier is required; unpaywall: no copy — no Copy '10.5555/zq.closed'; core: no copy — CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — no Copy '10.5555/zq.closed'; pmc: no copy — no Copy '10.5555/zq.closed'; arxiv: no copy — arxiv is required; landing: no copy — no Copy '10.5555/zq.closed'; pmc-text: no copy — no Copy '10.5555/zq.closed'; zq-shelf: no copy — the zq shelf has only one work
 - ✗ **references** — 0 reference(s), 0 resolve to stored sources
 - ✓ **store** — updated source from metadata — no file was acquired, so there is nothing to convert
@@ -1342,7 +1342,7 @@ _Re-run with `--apply` to write this verdict to the source's `status`._
       "step" : "metadata"
     },
     {
-      "detail" : "no legal open-access PDF found",
+      "detail" : "no legal open-access PDF found for doi:10.5555/zq.closed",
       "ok" : false,
       "step" : "fetch"
     },
@@ -1420,7 +1420,7 @@ _Re-run with `--apply` to write this verdict to the source's `status`._
       "step" : "legal-only"
     },
     {
-      "detail" : "no legal open-access PDF found",
+      "detail" : "no legal open-access PDF found for doi:10.5555/zq.cited",
       "ok" : false,
       "step" : "fetch"
     },

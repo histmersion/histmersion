@@ -244,7 +244,7 @@ class CollectionsServiceSuite extends munit.FunSuite:
     )
     val ro = service(Shelf(writes = false))
       .push(Caller.Local, CollectionsService.CollectionName("calibre"), CollectionPushRequest(Citekey("zz_new")))
-    assertEquals(ro.left.map(_.message).left.map(_.sentence), Left("Calibre is read-only here: write-back is off"))
+    assertEquals(ro.left.map(_.message).left.map(_.sentence), Left("write-back is off"))
     assertEquals(
       service(Shelf(writes = false)).collection(CollectionsService.CollectionName("calibre")).map(_.capabilities),
       Right(List("read"))

@@ -1,12 +1,12 @@
 package com.histmersion
 package plugins.media
 
-import com.histmersion.util.problem.Text.sentences
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.JsonCodec.given
 import hearth.kindlings.jsoniterjson.Json
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -77,7 +77,7 @@ class CommonsParsersSuite extends munit.FunSuite:
 
   test("imageinfo: files by the title asked (normalised too), missing files as Left, URLs untracked"):
     val m = Commons.imageInfo(imageinfo).toOption.get
-    assertEquals(m(Commons.File.Title("File:Gone.jpg")).left.map(_.legacyText), Left("missing on Commons"))
+    assertEquals(m(Commons.File.Title("File:Gone.jpg")).left.map(_.sentence), Left("no Commons.File 'File:Gone.jpg'"))
     val a = m(Commons.File.Title("File:A.jpg")).toOption.get
     assertEquals(
       m(Commons.File.Title("File:a.jpg")),
@@ -92,7 +92,7 @@ class CommonsParsersSuite extends munit.FunSuite:
 
   test("imageinfo: an API error is a Left for the whole answer"):
     val err = RawJson.parse("""{"error":{"code":"maxlag","info":"Waiting: 6 seconds lagged."}}""").toOption.get
-    assertEquals(Commons.imageInfo(err).left.toOption.map(_.legacyText.takeWhile(_ != ':')), Some("maxlag"))
+    assertEquals(Commons.imageInfo(err).left.toOption.map(_.sentence.takeWhile(_ != ':')), Some("commons (failed)"))
 
   // ── rights ───────────────────────────────────────────────────────────────────────────────────
 
@@ -182,18 +182,34 @@ class CommonsParsersSuite extends munit.FunSuite:
       .Files(http, media, HostLicences)
       .items(List(Commons.File.Title("File:Gone.jpg"), Commons.File.Title("File:Other.jpg")))
     assertEquals(failed, Nil)
-    assertEquals(items(Commons.File.Title("File:Gone.jpg")).rights.left.map(_.legacyText), Left("missing on Commons"))
     assertEquals(
-      items(Commons.File.Title("File:Other.jpg")).rights.left.map(_.legacyText),
-      Left("no answer from Commons")
+      items(Commons.File.Title("File:Gone.jpg")).rights.left.map(_.sentence),
+      Left("no Commons.File 'File:Gone.jpg'")
+    )
+    assertEquals(
+      items(Commons.File.Title("File:Other.jpg")).rights.left.map(_.sentence),
+      Left("no Commons.File 'File:Other.jpg'")
     )
     val down = new Plugin.Http {
       def get(url: Plugin.Http.Url, headers: Map[Header.Name, Header.Value]) =
-        Left(Problem.Unclassified(Legacy.Text("HTTP 503")))
+        Left(
+          Problem.Upstream.Http.here(
+            Problem.Upstream.Name("commons"),
+            Problem.Upstream.Url("https://commons.example"),
+            Problem.Upstream.Status(503),
+            External.ReplyExcerpt("")
+          )
+        )
     }
     val (none, lines) = Commons.Files(down, media, HostLicences).items(List(Commons.File.Title("File:A.jpg")))
-    assertEquals(none(Commons.File.Title("File:A.jpg")).rights.left.map(_.legacyText), Left("no answer from Commons"))
-    assertEquals(lines.map(l => s"${l.line}"), List("Commons File:A.jpg…: HTTP 503"))
+    assertEquals(
+      none(Commons.File.Title("File:A.jpg")).rights.left.map(_.sentence),
+      Left("no Commons.File 'File:A.jpg'")
+    )
+    assertEquals(
+      lines.map(l => s"${l.line}"),
+      List("Commons File:A.jpg…: commons answered HTTP 503 at https://commons.example — ")
+    )
 
   // ── roles ────────────────────────────────────────────────────────────────────────────────────
 

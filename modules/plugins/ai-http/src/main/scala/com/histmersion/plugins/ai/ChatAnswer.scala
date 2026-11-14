@@ -5,7 +5,7 @@ import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.JsonCodec.given
 import com.histmersion.util.json.Cursor
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 
 import com.histmersion.plugin.{AiStop, AiTurn, AiUsage}
 import com.histmersion.plugin.AiTool
@@ -14,23 +14,35 @@ import com.histmersion.plugin.AiMessage
 
 /** What an OpenAI-compatible chat-completions API answered, read as these providers have always read it: the first
   * choice's text and tool calls (a call without an id is `call_<n>`, without a name `unknown`), its finish reason, the
-  * usage with its cached prompt and reasoning tokens; or the failure — an error status by the error's message (else the
-  * first 500 characters of its body), a success answer that cannot be read by why.
+  * usage with its cached prompt and reasoning tokens; or the failure — an error status answered by `provider` at `url`
+  * with the error's message (else the start of its body), a success answer that cannot be read by why.
   */
-final case class ChatAnswer(status: ChatAnswer.Status, body: ChatAnswer.Body):
+final case class ChatAnswer(
+    provider: Problem.Upstream.Name,
+    url: Problem.Upstream.Url,
+    status: ChatAnswer.Status,
+    body: ChatAnswer.Body
+):
 
-  /** The turn the answer says, or the failure's description. */
+  /** The turn the answer says, or the failure. */
   def turn: Either[Problem, AiTurn] =
     if (status).value / 100 != 2 then
       Left(
-        ChatAnswer.errorMessage(ChatAnswer.Status((status).value), ChatAnswer.Body((body).value))
+        Problem.Upstream.Http.here(
+          provider,
+          url,
+          Problem.Upstream.Status((status).value),
+          External.ReplyExcerpt.head(ChatAnswer.errorMessage(ChatAnswer.Status((status).value), body))
+        )
       )
     else
       RawJson
         .parse((body).value)
         .flatMap(ChatAnswer.response(_))
         .left
-        .map((refactorCallback => Problem.Unclassified(Legacy.Text(refactorCallback))))
+        .map(why =>
+          Problem.Upstream.BadReply.here(provider, url, Problem.Upstream.Shape.Json, External.Reported.of(why))
+        )
 
 object ChatAnswer:
   /** Why the provider stopped the first choice: the `finish_reason` values its API documents, and any other as it came.
@@ -72,24 +84,24 @@ object ChatAnswer:
   /** An error status's description: the `error.message`; for an error without one, the status and the body; for an
     * answer of another shape, its body's start.
     */
-  def errorMessage(status: Status, body: Body): Problem =
+  def errorMessage(status: Status, body: Body): String =
     val fallback = (body).value.take(MaxRawErrorBody)
     RawJson.parse((body).value).toOption.flatMap(_.asObject).flatMap(_("error")) match
       case Some(node) =>
         error(node) match
           case Right(Some(message)) => message
-          case Right(None)          => Problem.Unclassified(Legacy.Text(s"statusCode: $status, response: $body"))
-          case Left(_)              => Problem.Unclassified(Legacy.Text(fallback))
-      case None => Problem.Unclassified(Legacy.Text(fallback))
+          case Right(None)          => s"statusCode: $status, response: $body"
+          case Left(_)              => fallback
+      case None => fallback
 
-  private val error: Cursor.Read[Option[Problem]] = Cursor.Read { c =>
+  private val error: Cursor.Read[Option[String]] = Cursor.Read { c =>
     for
       _ <- c.anObject
       m <- c.downField("message").as[Option[String]]
       _ <- c.downField("type").as[Option[String]]
       _ <- c.downField("param").as[Option[String]]
       _ <- c.downField("code").as[Option[String]]
-    yield (m).map(refactorValue => Problem.Unclassified(Legacy.Text(refactorValue)))
+    yield m
   }
 
   /** A field with a default: missing or null is the default, anything else must decode. */

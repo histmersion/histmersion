@@ -1,6 +1,6 @@
 package com.histmersion
 package plugins.gazetteers
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.{Problem, Problems}
 
 import com.histmersion.plugin.{Plugin, Spi}
 import com.histmersion.plugin.Registry
@@ -13,7 +13,7 @@ trait GazetteerPlugin(id: String, name: String, source: DownloadedGazetteer) ext
   type Config = GazetteerSettings
   val info: Plugin.Info =
     Plugin.Info(Plugin.Info.Id(id), Plugin.Info.Version(GazetteerPlugin.Version), Plugin.Info.SpiVersion(Spi.Version))
-  def register(c: GazetteerSettings, ctx: Plugin.Context): Either[Problem, Unit] =
+  def register(c: GazetteerSettings, ctx: Plugin.Context): Either[Problems, Unit] =
     ctx.gazetteerSources.add(Registry.AddId(name), source)
 
 object GazetteerPlugin:

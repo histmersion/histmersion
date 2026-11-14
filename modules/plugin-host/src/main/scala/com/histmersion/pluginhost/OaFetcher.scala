@@ -1,6 +1,6 @@
 package com.histmersion
 package pluginhost
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{Problem, Problems}
 
 import com.histmersion.plugin.{Access, FetchedFile, WorkKey}
 import com.histmersion.domain.library.Doi
@@ -13,21 +13,22 @@ import io.github.iltotore.iron.constraint.any.Pure
   * PMC's JATS full text (when there is no PDF anywhere).
   */
 trait OaFetcher:
-  def fetch(doi: Option[Doi], arxiv: Option[ArxivId]): Either[Problem, FetchedFile]
+  def fetch(doi: Option[Doi], arxiv: Option[ArxivId]): Either[Problems, FetchedFile]
 
   /** [[fetch]] through the LEGAL sources only — never an `Access.Unauthorised` fetcher, whatever
     * `acquire.allow-unauthorised` says (a watcher's auto-ingest). An implementation that can run one must override it;
     * one that cannot (a test's fixture) is legal as it is.
     */
-  def fetchLegal(doi: Option[Doi], arxiv: Option[ArxivId]): Either[Problem, FetchedFile] = fetch(doi, arxiv)
+  def fetchLegal(doi: Option[Doi], arxiv: Option[ArxivId]): Either[Problems, FetchedFile] = fetch(doi, arxiv)
 
   /** A work by every identifier the caller has ([[WorkKey]]). An implementation that reads only a DOI and an arXiv id
     * (a test's fixture) has no copy of anything else.
     */
-  def fetchWork(work: WorkKey, legalOnly: FetchChain.LegalOnly): Either[Problem, FetchedFile] =
+  def fetchWork(work: WorkKey, legalOnly: FetchChain.LegalOnly): Either[Problems, FetchedFile] =
     val doi = work.doi.map(d => Doi.assume(d.value))
     val arxiv = work.arxiv.map(a => ArxivId(a.value))
-    if work.doi.isEmpty && work.arxiv.isEmpty then Left(Problem.Unclassified(Legacy.Text(FetchChain.NoCopy)))
+    if work.doi.isEmpty && work.arxiv.isEmpty then
+      Left(Problem.NotFound.Copy(Problem.Raw(s"${FetchChain.describe(work)}")))
     else if legalOnly.value then fetchLegal(doi, arxiv)
     else fetch(doi, arxiv)
 

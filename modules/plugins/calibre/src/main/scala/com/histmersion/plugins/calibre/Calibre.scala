@@ -3,7 +3,7 @@ package plugins.calibre
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.JsonCodec.given
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem, Problems}
 
 import com.histmersion.plugin.EnvVar
 
@@ -31,6 +31,7 @@ import com.histmersion.plugin.Plugin
   * set, which additionally refuse to run while the GUI is open.
   */
 final class Calibre(cfg: Calibre.Library, shell: Shell)(using files: LocalFiles):
+  import Calibre.{said, Book}
 
   private def libArgs: List[Calibre.Argument] = Calibre.argv("--with-library", cfg.library.value)
 
@@ -44,14 +45,14 @@ final class Calibre(cfg: Calibre.Library, shell: Shell)(using files: LocalFiles)
   def search(
       query: CollectionQuery.Text,
       limit: Calibre.SearchLimit = Calibre.SearchLimit(20)
-  ): Either[Problem, List[Calibre.Book]] =
+  ): Either[Problems, List[Calibre.Book]] =
     viaCalibredb(Some(query), limit.value).orElse(viaSqlite(Some(query), None, limit.value))
 
   /** The whole library (read-only), for the audit: one listing instead of a call per entry. */
-  def all(limit: Calibre.AllLimit = Calibre.AllLimit(1000000)): Either[Problem, List[Calibre.Book]] =
+  def all(limit: Calibre.AllLimit = Calibre.AllLimit(1000000)): Either[Problems, List[Calibre.Book]] =
     viaCalibredb(None, limit.value).orElse(viaSqlite(None, None, limit.value))
 
-  def byId(id: Calibre.Book.Id): Either[Problem, Option[Calibre.Book]] =
+  def byId(id: Calibre.Book.Id): Either[Problems, Option[Calibre.Book]] =
     viaCalibredb(Some(CollectionQuery.Text(s"id:$id")), 1)
       .map(_.find(_.id == id))
       .orElse(viaSqlite(None, Some(id), 1).map(_.headOption))
@@ -59,7 +60,7 @@ final class Calibre(cfg: Calibre.Library, shell: Shell)(using files: LocalFiles)
   private def viaCalibredb(
       query: Option[CollectionQuery.Text],
       limit: Int
-  ): Either[Problem, List[Calibre.Book]] =
+  ): Either[Problems, List[Calibre.Book]] =
     val cmd = Calibre.argv(cfg.calibredb.value, "list") ++ libArgs ++
       Calibre.argv(
         "--for-machine",
@@ -74,7 +75,7 @@ final class Calibre(cfg: Calibre.Library, shell: Shell)(using files: LocalFiles)
       query: Option[CollectionQuery.Text],
       id: Option[Calibre.Book.Id],
       limit: Int
-  ): Either[Problem, List[Calibre.Book]] =
+  ): Either[Problems, List[Calibre.Book]] =
     val where = id match
       case Some(n) => s"b.id = ${n.value}"
       case None    =>
@@ -96,16 +97,20 @@ final class Calibre(cfg: Calibre.Library, shell: Shell)(using files: LocalFiles)
     * the whole reason this pipeline pushes metadata at all is that Calibre's own metadata sources key on ISBN and
     * cannot identify a journal article.
     */
-  def add(file: Path, meta: Calibre.Push): Either[Problem, Calibre.Book.Id] =
+  def add(file: Path, meta: Calibre.Push): Either[Problems, Calibre.Book.Id] =
     for
       _ <- Calibre.guard(meta.title, meta.authors)
       _ <- Either.cond(!guiRunning, (), GuiRunning)
-      _ <- Either.cond(files.isFile(file), (), Problem.Unclassified(Legacy.Text(s"no such file: $file")))
+      _ <- Either.cond(files.isFile(file), (), Problem.Io.Wrong(Problem.Io.Path(s"$file"), Problem.Io.Kind.File))
       out <- shell.run(addCmd(file, meta))
       id <- Calibre
         .parseAddedId(out)
         .toRight(
-          Problem.Unclassified(Legacy.Text(s"calibredb add did not report a new id: ${out.value.trim.take(200)}"))
+          Problem.Io.Corrupt(
+            Problem.Io.Format.Text,
+            Problem.Where("calibredb add's answer"),
+            Problem.Io.Damage.Unreadable(External.Reported.of(out.value.trim))
+          )
         )
       _ <- setMetadata(id, meta)
     yield id
@@ -118,11 +123,11 @@ final class Calibre(cfg: Calibre.Library, shell: Shell)(using files: LocalFiles)
   def update(
       id: Calibre.Book.Id,
       meta: Calibre.Push
-  ): Either[Problem, List[Calibre.Change]] =
+  ): Either[Problems, List[Calibre.Change]] =
     for
       _ <- Calibre.guard(meta.title, Calibre.normaliseAuthors(meta.authors))
       _ <- Either.cond(!guiRunning, (), GuiRunning)
-      cur <- byId(id).flatMap(_.toRight(Problem.Unclassified(Legacy.Text(s"there is no Calibre entry $id"))))
+      cur <- byId(id).flatMap(_.toRight(Problem.NotFound.Entity(Problem.TypeName.of(Book.Id), Problem.Raw(s"$id"))))
       changes <- Calibre.updatePlan(meta, cur)
       _ <- write(id, changes)
     yield changes
@@ -131,7 +136,7 @@ final class Calibre(cfg: Calibre.Library, shell: Shell)(using files: LocalFiles)
     * write the entries that would change. An entry linked from more than one record (a chapter and its volume) is left
     * alone — which record it should show is a decision for a person, `calibre update <citekey>`.
     */
-  def updateAll(linked: List[LinkedRecord], apply: Calibre.UpdateAllApply): Either[Problem, List[UpdateEntry]] =
+  def updateAll(linked: List[LinkedRecord], apply: Calibre.UpdateAllApply): Either[Problems, List[UpdateEntry]] =
     for
       _ <- Either.cond(!apply.value || !guiRunning, (), GuiRunning)
       books <- all()
@@ -149,35 +154,32 @@ final class Calibre(cfg: Calibre.Library, shell: Shell)(using files: LocalFiles)
     }
 
   /** One `set_metadata` with the planned fields; nothing at all when there are none. */
-  private def write(id: Calibre.Book.Id, changes: List[Calibre.Change]): Either[Problem, Unit] =
+  private def write(id: Calibre.Book.Id, changes: List[Calibre.Change]): Either[Problems, Unit] =
     if changes.isEmpty then Right(())
     else shell.run(Calibre.setMetadataCmd(cfg.calibredb, libArgs, id, changes)).map(_ => ())
 
-  private val GuiRunning: Problem =
-    Problem.Unclassified(
-      Legacy.Text("the Calibre GUI is running — quit it first (calibredb needs exclusive access to the library)")
-    )
+  private val GuiRunning: Problem = Problem.Conflict.Busy(Problem.Conflict.Activity.CalibreGui)
 
   /** Set named fields on an existing entry — the explicit, reviewed counterpart of [[update]] (`enrich-calibre` applies
     * approved fixes with it). Same guards as every other write.
     */
-  def set(id: Calibre.Book.Id, fields: List[(Calibre.Field.Name, Calibre.Field.Value)]): Either[Problem, Unit] =
+  def set(id: Calibre.Book.Id, fields: List[(Calibre.Field.Name, Calibre.Field.Value)]): Either[Problems, Unit] =
     for
       cmd <- Calibre.setCmd(cfg.calibredb, libArgs, id, fields)
       _ <- Either.cond(!guiRunning, (), GuiRunning)
-      _ <- byId(id).flatMap(_.toRight(Problem.Unclassified(Legacy.Text(s"there is no Calibre entry $id"))))
+      _ <- byId(id).flatMap(_.toRight(Problem.NotFound.Entity(Problem.TypeName.of(Book.Id), Problem.Raw(s"$id"))))
       _ <- shell.run(cmd)
     yield ()
 
   /** Replace the file of an EXISTING entry: `calibredb add_format`, which replaces the entry's format of the same type.
     * Unlike [[add]] it never creates an entry, so the link stays valid.
     */
-  def replaceFormat(id: Calibre.Book.Id, file: Path): Either[Problem, CollectionFile.Format] =
+  def replaceFormat(id: Calibre.Book.Id, file: Path): Either[Problems, CollectionFile.Format] =
     for
       fmt <- Calibre.formatOf(file)
       _ <- Either.cond(!guiRunning, (), GuiRunning)
-      _ <- Either.cond(files.isFile(file), (), Problem.Unclassified(Legacy.Text(s"no such file: $file")))
-      _ <- byId(id).flatMap(_.toRight(Problem.Unclassified(Legacy.Text(s"there is no Calibre entry $id"))))
+      _ <- Either.cond(files.isFile(file), (), Problem.Io.Wrong(Problem.Io.Path(s"$file"), Problem.Io.Kind.File))
+      _ <- byId(id).flatMap(_.toRight(Problem.NotFound.Entity(Problem.TypeName.of(Book.Id), Problem.Raw(s"$id"))))
       _ <- shell.run(Calibre.replaceFormatCmd(cfg.calibredb, libArgs, id, file))
     yield fmt
 
@@ -189,7 +191,7 @@ final class Calibre(cfg: Calibre.Library, shell: Shell)(using files: LocalFiles)
       (if meta.tags.isEmpty then Nil else Calibre.argv("--tags", meta.tags.mkString(",")))
 
   /** The fields `calibredb add` cannot set. Best-effort: a failure here leaves a usable entry. */
-  private def setMetadata(id: Calibre.Book.Id, meta: Calibre.Push): Either[Problem, Unit] =
+  private def setMetadata(id: Calibre.Book.Id, meta: Calibre.Push): Either[Problems, Unit] =
     val fields = List(
       meta.publisher.map("publisher:" + _),
       meta.year.map(y => s"pubdate:$y-01-01"),
@@ -203,7 +205,7 @@ final class Calibre(cfg: Calibre.Library, shell: Shell)(using files: LocalFiles)
         .run(cmd)
         .map(_ => ())
         .left
-        .map(e => Problem.Unclassified(Legacy.Text(s"added as $id but metadata was not set: ${e.legacyText}")))
+        .map(e => Problems.of(said(s"added as $id, but its metadata was not set"), e))
 
 /** The PURE half: parsing what the two readers print, the metadata guard, and SQL assembly. */
 
@@ -236,24 +238,27 @@ object Calibre:
     */
   private val Blank = Set("", "unknown", "unknown author", "untitled", "n/a", "?", "none")
 
+  /** `tool`'s answer is not JSON: what the reader said. */
+  private def unreadable(tool: String, e: Any): Problem =
+    Problem.Io.Corrupt(
+      Problem.Io.Format.Json,
+      Problem.Where(s"$tool's answer"),
+      Problem.Io.Damage.Unreadable(External.Reported.of(s"$e"))
+    )
+
   private[calibre] def isBlank(s: String): Boolean = Blank.contains(Option(s).getOrElse("").trim.toLowerCase)
 
   /** The metadata guard, shared by `import` (Calibre → corpus) and `push` (corpus → Calibre). */
-  def guard(title: Push.Title, authors: List[Author]): Either[Problem, Unit] =
+  def guard(title: Push.Title, authors: List[Author]): Either[Problems, Unit] =
     val missing = List(
       Option.when(isBlank(title.value))("title"),
       Option.when(authors.forall(a => isBlank(a.value)))("author")
-    ).flatten
-    Either.cond(
-      missing.isEmpty,
-      (),
-      Problem.Unclassified(
-        Legacy.Text(
-          s"empty or Unknown ${missing.mkString(" and ")} — fix the metadata first; " +
-            "an untitled / Unknown-Author entry is unfindable and must not be created"
-        )
-      )
-    )
+    ).flatten.map(f => Problem.Invalid.Missing.here(Problem.Field(f)))
+    Problems.from(missing.toVector).toLeft(())
+
+  /** What the plugin says in its own words: what a failure left behind, how to fix the library's settings. */
+  def said(text: String): Problem =
+    Problem.Plugin.Said(Problem.Plugin.Id("calibre"), Problem.Plugin.Claim.Failed, External.PluginSaid.of(text))
 
   // ── import: citekeys and where they land ─────────────────────────────────────────────────────
 
@@ -261,12 +266,17 @@ object Calibre:
   val ReplaceableFormats: List[CollectionFile.Format] =
     List(CollectionFile.Format("pdf"), CollectionFile.Format("epub"))
 
-  def formatOf(file: Path): Either[Problem, CollectionFile.Format] =
+  def formatOf(file: Path): Either[Problems, CollectionFile.Format] =
     val ext = CollectionFile.Format(file.getFileName.toString.reverse.takeWhile(_ != '.').reverse.toLowerCase)
     Either.cond(
       ReplaceableFormats.contains(ext),
       ext,
-      Problem.Unclassified(Legacy.Text(s"'${file.getFileName}' is not a ${ReplaceableFormats.mkString(" or ")} file"))
+      Problem.Invalid.Unknown(
+        Problem.TypeName.named[CollectionFile],
+        Problem.Raw(s"$ext"),
+        ReplaceableFormats.toVector.map(f => Problem.Raw(s"$f")),
+        Vector(Problem.Field(s"${file.getFileName}"))
+      )
     )
 
   /** `calibredb add_format` replaces the entry's existing format of the same type (that is its default;
@@ -298,7 +308,7 @@ object Calibre:
   def updatePlan(
       meta: Push,
       current: Book
-  ): Either[Problem, List[Change]] =
+  ): Either[Problems, List[Change]] =
     val authors = normaliseAuthors(meta.authors)
     guard(meta.title, authors).map { _ =>
       def empty(v: Option[String]) = v.forall(s => isBlank(s) || s.trim == "-")
@@ -463,30 +473,33 @@ object Calibre:
       libArgs: List[Argument],
       id: Book.Id,
       fields: List[(Field.Name, Field.Value)]
-  ): Either[Problem, List[Argument]] =
+  ): Either[Problems, List[Argument]] =
     val unknown = fields.map(_._1).filterNot(SettableFields.contains)
     def value(k: Field.Name) = fields.collectFirst { case (`k`, v) => v }
     for
       _ <- Either.cond(
         fields.nonEmpty,
         (),
-        Problem.Unclassified(Legacy.Text("nothing to set — pass --field <name>:<value>"))
+        Problem.Invalid.Missing.here(Problem.Field("--field"))
       )
       _ <- Either.cond(
         unknown.isEmpty,
         (),
-        Problem.Unclassified(
-          Legacy.Text(s"cannot set ${unknown.mkString(", ")} — settable: ${SettableFields.mkString(", ")}")
+        Problem.Invalid.Unknown(
+          Problem.TypeName.of(Field.Name),
+          Problem.Raw(unknown.mkString(", ")),
+          SettableFields.toVector.map(f => Problem.Raw(s"$f")),
+          Vector(Problem.Field("--field"))
         )
       )
-      _ <- value(Field.Name("title")).fold[Either[Problem, Unit]](Right(()))(t =>
-        Either.cond(!isBlank(t.value), (), Problem.Unclassified(Legacy.Text("refusing a blank or Unknown title")))
+      _ <- value(Field.Name("title")).fold[Either[Problems, Unit]](Right(()))(t =>
+        Either.cond(!isBlank(t.value), (), Problem.Invalid.Missing.here(Problem.Field("title")))
       )
-      _ <- value(Field.Name("authors")).fold[Either[Problem, Unit]](Right(()))(a =>
+      _ <- value(Field.Name("authors")).fold[Either[Problems, Unit]](Right(()))(a =>
         Either.cond(
           a.value.split("&").map(_.trim).forall(x => !isBlank(x)),
           (),
-          Problem.Unclassified(Legacy.Text("refusing a blank or Unknown author"))
+          Problem.Invalid.Missing.here(Problem.Field("authors"))
         )
       )
     yield argv(calibredb.value, "set_metadata") ++ libArgs ++ argv(id.toString) ++
@@ -503,13 +516,13 @@ object Calibre:
   /** `calibredb list --for-machine`: authors as `A & B`, tags/formats as arrays, identifiers as an object, formats as
     * ABSOLUTE paths.
     */
-  def parseMachineJson(out: Processes.Result.Out): Either[Problem, List[Book]] =
+  def parseMachineJson(out: Processes.Result.Out): Either[Problems, List[Book]] =
     if out.value.trim.isEmpty then Right(Nil) // no match: nothing is printed at all
     else
       RawJson
         .parse(out.value)
         .left
-        .map(e => Problem.Unclassified(Legacy.Text(s"calibredb returned unparseable JSON: $e")))
+        .map(e => unreadable("calibredb", e))
         .map(_.asArray.toList.flatten.flatMap { j =>
           val c = j.cursor
           c.downField("id").as[Int].toOption.map { id =>
@@ -567,14 +580,14 @@ object Calibre:
   def parseSqliteJson(
       out: Processes.Result.Out,
       libraryDir: Library.Value
-  ): Either[Problem, List[Book]] =
+  ): Either[Problems, List[Book]] =
     // `sqlite3 -json` prints NOTHING for an empty result, not `[]` — that was "exhausted input"
     if out.value.trim.isEmpty then Right(Nil)
     else
       RawJson
         .parse(out.value)
         .left
-        .map(e => Problem.Unclassified(Legacy.Text(s"sqlite3 returned unparseable JSON: $e")))
+        .map(e => unreadable("sqlite3", e))
         .map(_.asArray.toList.flatten.flatMap { j =>
           val c = j.cursor
           def s(f: String) = c.downField(f).as[String].toOption.map(_.trim).filter(_.nonEmpty)

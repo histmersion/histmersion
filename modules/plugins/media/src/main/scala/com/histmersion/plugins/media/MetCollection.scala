@@ -4,7 +4,7 @@ import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.JsonCodec.given
 import hearth.kindlings.jsoniterjson.Json
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.plugin.*
 import io.github.iltotore.iron.constraint.any.Pure
@@ -44,6 +44,9 @@ final class MetCollection(conf: CollectionSettings)
       )
 
 object MetCollection:
+
+  /** The plugin's id: what its problems name. */
+  val Name = "media-met"
   type ObjectId = ObjectId.T
   object ObjectId extends Newtype[Long, Pure]
   type Year = Year.T
@@ -72,7 +75,7 @@ object MetCollection:
     val c = json.cursor
     c.str("message")
       .filter(_ => c.downField("objectIDs").focus.isEmpty)
-      .map(m => Left(Problem.Unclassified(Legacy.Text(m))))
+      .map(m => Left(MediaPlugin.said(Name, Problem.Plugin.Claim.Failed, m)))
       .getOrElse(
         Right(
           c.downField("objectIDs")
@@ -97,29 +100,33 @@ object MetCollection:
   /** Pure: one object. Not public domain → its rights are a `Left`. */
   def record(json: Json): Either[Problem, MediaItem] =
     val c = json.cursor
-    c.long("objectID").toRight(Problem.Unclassified(Legacy.Text(c.str("message").getOrElse("no objectID")))).map { id =>
-      val title = c.str("title").orElse(c.str("objectName")).getOrElse(s"Object $id")
-      val artist = c.str("artistDisplayName")
-      val page = c.str("objectURL").getOrElse(s"https://www.metmuseum.org/art/collection/search/$id")
-      val credit = (List(Some(title), artist).flatten :+ "The Metropolitan Museum of Art" :+ "CC0").mkString(", ")
-      val rights: Either[Problem, MediaRights] =
-        if c.bool("isPublicDomain").contains(true) then
-          Right(MediaRights.cc0(artist.map(MediaRights.Author(_)), MediaRights.Credit(credit)))
-        else Left(Problem.Unclassified(Legacy.Text("not Open Access (isPublicDomain is false)")))
-      val period = Period
-        .range(
-          c.long("objectBeginDate").map(d => year(Year(d)).value),
-          c.long("objectEndDate").map(d => year(Year(d)).value)
-        )
-        .filterNot(_ == Period.point(com.histmersion.plugin.Year(-1)))
-      MediaItem(
-        MediaItem.Key(id.toString),
-        MediaItem.Title(title),
-        MediaItem.PageUrl(page),
-        c.str("primaryImageSmall").orElse(c.str("primaryImage")).map(MediaItem.ImageUrl(_)),
-        rights,
-        originalUrl = c.str("primaryImage").map(MediaItem.OriginalUrl(_)),
-        geography = GeographyFields.flatMap(f => c.str(f.value).map(v => f -> MediaItem.Geography.Value(v))),
-        period = period
+    c.long("objectID")
+      .toRight(
+        c.str("message").fold(MediaPlugin.missing("objectID"))(MediaPlugin.said(Name, Problem.Plugin.Claim.Failed, _))
       )
-    }
+      .map { id =>
+        val title = c.str("title").orElse(c.str("objectName")).getOrElse(s"Object $id")
+        val artist = c.str("artistDisplayName")
+        val page = c.str("objectURL").getOrElse(s"https://www.metmuseum.org/art/collection/search/$id")
+        val credit = (List(Some(title), artist).flatten :+ "The Metropolitan Museum of Art" :+ "CC0").mkString(", ")
+        val rights: Either[Problem, MediaRights] =
+          if c.bool("isPublicDomain").contains(true) then
+            Right(MediaRights.cc0(artist.map(MediaRights.Author(_)), MediaRights.Credit(credit)))
+          else Left(MediaPlugin.rejected(Name, s"$id", Problem.Plugin.Refusal.Restricted))
+        val period = Period
+          .range(
+            c.long("objectBeginDate").map(d => year(Year(d)).value),
+            c.long("objectEndDate").map(d => year(Year(d)).value)
+          )
+          .filterNot(_ == Period.point(com.histmersion.plugin.Year(-1)))
+        MediaItem(
+          MediaItem.Key(id.toString),
+          MediaItem.Title(title),
+          MediaItem.PageUrl(page),
+          c.str("primaryImageSmall").orElse(c.str("primaryImage")).map(MediaItem.ImageUrl(_)),
+          rights,
+          originalUrl = c.str("primaryImage").map(MediaItem.OriginalUrl(_)),
+          geography = GeographyFields.flatMap(f => c.str(f.value).map(v => f -> MediaItem.Geography.Value(v))),
+          period = period
+        )
+      }

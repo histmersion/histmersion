@@ -1,7 +1,8 @@
 package com.histmersion
 package pluginhost
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.util.problem.Text.sentence
+import FetchChain.describe
 
 import com.histmersion.plugin.{Access, Fetch, FetchedFile, SourceFetcher, WorkKey}
 
@@ -37,16 +38,16 @@ final class FetchChain(
   /** The fetchers in the order they run, with their access — what `--self-check` and the log show. */
   def plan: List[(FetchChain.Step.Id, Access)] = steps.map(s => s.id -> s.fetcher.access)
 
-  def fetch(doi: Option[Doi], arxiv: Option[ArxivId]): Either[Problem, FetchedFile] =
+  def fetch(doi: Option[Doi], arxiv: Option[ArxivId]): Either[Problems, FetchedFile] =
     fetchWork(workOf(doi, arxiv), FetchChain.LegalOnly(false))
 
-  override def fetchLegal(doi: Option[Doi], arxiv: Option[ArxivId]): Either[Problem, FetchedFile] =
+  override def fetchLegal(doi: Option[Doi], arxiv: Option[ArxivId]): Either[Problems, FetchedFile] =
     fetchWork(workOf(doi, arxiv), FetchChain.LegalOnly(true))
 
   private def workOf(doi: Option[Doi], arxiv: Option[ArxivId]): WorkKey =
     WorkKey(doi = doi.flatMap(SpiValues.doi), arxiv = arxiv.map(a => WorkKey.Arxiv(a.value)))
 
-  override def fetchWork(work: WorkKey, legalOnly: FetchChain.LegalOnly): Either[Problem, FetchedFile] =
+  override def fetchWork(work: WorkKey, legalOnly: FetchChain.LegalOnly): Either[Problems, FetchedFile] =
     fetchWorkExplained(work, legalOnly).file
 
   override def fetchWorkExplained(work: WorkKey, legalOnly: FetchChain.LegalOnly): FetchChain.Outcome =
@@ -58,12 +59,9 @@ final class FetchChain(
     tried.collectFirst { case (id, Fetch.Found(f)) => id -> f } match
       case Some((id, f)) => FetchChain.Outcome(Right(f), Nil, Some(FetchChain.Outcome.FoundBy(id.value)))
       case None          =>
-        val refused = tried.collect { case (id, Fetch.Refused(why)) => s"${id.value}: ${why.sentence}" }.toList
+        val refused = tried.collect { case (_, Fetch.Refused(why)) => why }.toList
         FetchChain.Outcome(
-          Left(
-            Problem.Unclassified(Legacy.Text(FetchChain.NoCopy + (if refused.isEmpty then ""
-                                                                  else refused.mkString(" (", "; ", ")"))))
-          ),
+          Left(Problems.of(Problem.NotFound.Copy(Problem.Raw(s"${describe(work)}")), refused*)),
           tried.toList.collect {
             case (id, Fetch.Miss(why)) =>
               FetchChain.Answer(
@@ -103,9 +101,7 @@ final class FetchChain(
       try s.fetcher.fetch(work, ctx)
       catch
         case NonFatal(e) =>
-          Fetch.Miss(
-            Problem.Unclassified(Legacy.Text(s"${s.id.value} failed: ${e.getClass.getSimpleName}: ${e.getMessage}"))
-          )
+          Fetch.Miss(Problem.from(e, Problem.Where(s"fetcher ${s.id}"), Problem.Internal.Id.mint()))
     answer match
       case Fetch.Found(f) if f.extension.value.equalsIgnoreCase("pdf") && !FetchChain.looksLikePdf(f.bytes) =>
         log.info(
@@ -113,7 +109,13 @@ final class FetchChain(
             s"acquire: ${s.id.value}: ${f.url.map(_.value).getOrElse("its copy")} is ${f.bytes.value.length} bytes that are not a PDF — no copy"
           )
         )
-        Fetch.Miss(Problem.Unclassified(Legacy.Text("not a PDF")))
+        Fetch.Miss(
+          Problem.Io.Corrupt(
+            Problem.Io.Format.Pdf,
+            Problem.Where(f.url.fold(s"${describe(work)}")(u => s"$u")),
+            Problem.Io.Damage.Undecodable
+          )
+        )
       case Fetch.Refused(why) =>
         log.info(HostLog.Line(s"acquire: ${s.id.value} refused ${FetchChain.describe(work).value}: ${why.sentence}"))
         answer
@@ -131,8 +133,11 @@ object FetchChain:
   type AllowUnauthorised = AllowUnauthorised.T
   object AllowUnauthorised extends Newtype[Boolean, Pure]
 
-  /** What every failed fetch says (the ingest step and the acquisition list read it). */
-  val NoCopy = "no legal open-access PDF found"
+  /** The setting that lets an unauthorised fetcher run. */
+  val AllowUnauthorisedKey = "histmersion.acquire.allow-unauthorised"
+
+  /** The setting that orders the fetchers. */
+  val ChainKey = "histmersion.acquire.chain"
 
   /** One registered fetcher under its id. */
   final case class Step(id: Step.Id, fetcher: SourceFetcher)
@@ -164,7 +169,7 @@ object FetchChain:
     * each fetcher that ran, in chain order; the fetcher that found the copy.
     */
   final case class Outcome(
-      file: Either[Problem, FetchedFile],
+      file: Either[Problems, FetchedFile],
       answers: List[Answer],
       foundBy: Option[Outcome.FoundBy] = None
   )
@@ -198,14 +203,7 @@ object FetchChain:
     val (ids, unknown) = order(registered.keys.toList, chain)
     val off = ids
       .filter(id => registered(id).access == Access.Unauthorised && !allowUnauthorised.value)
-      .map(id =>
-        Problem.Unclassified(
-          Legacy.Text(
-            s"acquire: ${id.value} obtains copies without the rights holder's authorisation and stays off " +
-              "(acquire.allow-unauthorised = false)"
-          )
-        )
-      )
+      .map(id => Problem.Refused.Disabled(Problem.Refused.Feature(s"$id"), Problem.SettingKey(AllowUnauthorisedKey)))
     val known: Set[String] = plugins.map(_.value)
     (
       FetchChain(
@@ -225,17 +223,11 @@ object FetchChain:
       chain: List[com.histmersion.util.plugins.Plugin.Id]
   ): (List[com.histmersion.util.plugins.Plugin.Id], List[Problem]) =
     val listed = chain.distinct
-    val notes = listed.filterNot(registered.contains) match
-      case Nil     => Nil
-      case missing =>
-        List(
-          Problem.Unclassified(
-            Legacy.Text(
-              s"acquire.chain names ${missing.map(id => s"'${id.value}'").mkString(", ")}, which no " +
-                "enabled plugin registered — skipped"
-            )
-          )
-        )
+    val notes = listed
+      .filterNot(registered.contains)
+      .map(id =>
+        Problem.Config.Setting(Problem.SettingKey(ChainKey), Problem.Config.Fault.Unknown(Problem.Raw(s"$id")))
+      )
     (listed.filter(registered.contains) ++ registered.filterNot(listed.contains), notes)
 
   /** Pure: the legal gate. Open and subscription fetchers always run; an unauthorised one only when the deployment

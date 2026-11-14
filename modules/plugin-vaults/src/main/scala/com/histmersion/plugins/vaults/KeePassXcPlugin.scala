@@ -1,6 +1,6 @@
 package com.histmersion
 package plugins.vaults
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.{Problem, Problems}
 
 import scala.annotation.tailrec
 import com.histmersion.plugin.*
@@ -17,7 +17,7 @@ final class KeePassXcPlugin extends Plugin:
   val info =
     Plugin.Info(Plugin.Info.Id("keepassxc"), Plugin.Info.Version(Vaults.Version), Plugin.Info.SpiVersion(Spi.Version))
 
-  def register(c: KeePassXcConfig, ctx: Plugin.Context): Either[Problem, Unit] =
+  def register(c: KeePassXcConfig, ctx: Plugin.Context): Either[Problems, Unit] =
     given files: LocalFiles = ctx.files
     given processes: Processes = ctx.processes
     val home = ctx.env(EnvVar.Name("HOME"))

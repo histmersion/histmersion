@@ -1,15 +1,15 @@
 package com.histmersion
 package plugins.fetchers
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.{Problem, Problems}
 
 /** `oa-core`: CORE's download URLs for a DOI, with an API key, through the server's CORE budget. */
 import com.histmersion.plugin.Plugin
 import com.histmersion.plugin.Registry
 final class CorePlugin extends FetcherPlugin("oa-core"):
   type Config = CoreConfig
-  def register(c: CoreConfig, ctx: Plugin.Context): Either[Problem, Unit] =
+  def register(c: CoreConfig, ctx: Plugin.Context): Either[Problems, Unit] =
     c.apiKey
-      .fold[Either[Problem, Option[OpenAccess.CoreKey]]](
+      .fold[Either[Problems, Option[OpenAccess.CoreKey]]](
         Right(c.acquire.core.key.map(k => OpenAccess.CoreKey(k.value)))
       )(s =>
         ctx

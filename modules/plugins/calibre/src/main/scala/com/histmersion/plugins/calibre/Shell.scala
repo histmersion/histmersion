@@ -1,6 +1,6 @@
 package com.histmersion
 package plugins.calibre
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 
 import scala.jdk.CollectionConverters.*
 import com.histmersion.plugin.Processes
@@ -27,8 +27,9 @@ object Shell:
           if result.exit.value == 0 then Right(result.out)
           else
             Left(
-              Problem.Unclassified(
-                Legacy.Text(s"${cmd.head.value} exited ${result.exit.value}: ${result.err.value.trim.take(400)}")
+              Problem.Io.Process(
+                Problem.Io.Tool(s"${cmd.head}"),
+                Problem.Io.Ending.Exited(Problem.Io.ExitCode(result.exit.value), External.Stderr.tail(result.err.value))
               )
             )
         )

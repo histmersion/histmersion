@@ -1,6 +1,6 @@
 package com.histmersion
 package plugins.media
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.plugin.*
 
@@ -29,13 +29,18 @@ final class PleiadesPictures(media: MediaSettings, licences: LicenceReader) exte
     Either.cond(
       conf.enabled.value,
       (),
-      Problem.Unclassified(
-        Legacy.Text("Pleiades (linked Commons files) is switched off (media.pleiades.enabled = false)")
+      Problem.Refused.Disabled(
+        Problem.Refused.Feature("Pleiades (linked Commons files)"),
+        Problem.SettingKey("histmersion.media.pleiades.enabled")
       )
     )
 
   def search(place: MediaPlace, http: Plugin.Http) = Left(
-    Problem.Unclassified(Legacy.Text("the Pleiades pictures are found for a batch of places"))
+    MediaPlugin.said(
+      "media-pleiades",
+      Problem.Plugin.Claim.Unavailable,
+      "the Pleiades pictures are found for a batch of places"
+    )
   )
 
   private def placeTarget(p: MediaPlace): MediaTarget.Id =
@@ -92,7 +97,7 @@ final class PleiadesPictures(media: MediaSettings, licences: LicenceReader) exte
         } ++ judged,
       notTaken = read
         .flatMap(_._3.flatMap(_._2.toOption.toList.flatten.flatMap(_.file.left.toOption)))
-        .map(why => MediaFound.NotTaken(s"${why.legacyText}"))
+        .map(why => MediaFound.NotTaken(why.words))
     )
 
   override def completeAll(items: List[MediaItem], http: Plugin.Http): MediaCompleted =

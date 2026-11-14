@@ -60,7 +60,7 @@ found by archive-org: archive_org pdf https://archive.org/download/zqbook/zqbook
 GET https://archive.org/metadata/zqlent
   User-Agent: histmersion/0.1
   -> 200
-no copy: no legal open-access PDF found (archive-org: the item is lending-only: borrow it on its site)
+no copy: no legal open-access PDF found for archive.org:zqlent; the item is lending-only: borrow it on its site
   archive-org: refused — the item is lending-only: borrow it on its site
   unpaywall: no copy — doi is required
   core: no copy — doi is required
@@ -86,7 +86,7 @@ GET https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI:%2210.1/no
 GET https://api.datacite.org/dois/10.1/none
   User-Agent: histmersion/0.1
   -> 404
-no copy: no legal open-access PDF found
+no copy: no legal open-access PDF found for doi:10.1/none
   archive-org: no copy — archive.org identifier is required
   unpaywall: no copy — no Copy '10.1/none'
   core: no copy — no Copy '10.1/none'
@@ -193,7 +193,7 @@ GET https://api.datacite.org/dois/10.9999/landing.1
 GET https://repo-d.example.org/item/1
   User-Agent: histmersion/0.1
   -> 404
-no copy: no legal open-access PDF found
+no copy: no legal open-access PDF found for doi:10.9999/landing.1
   archive-org: no copy — archive.org identifier is required
   unpaywall: no copy — no Copy '10.9999/landing.1'
   core: no copy — no Copy '10.9999/landing.1'
@@ -232,7 +232,7 @@ GET https://api.datacite.org/dois/10.9999/landing.1
 GET https://repo-d.example.org/item/1
   User-Agent: histmersion/0.1
   -> 404
-no copy: no legal open-access PDF found
+no copy: no legal open-access PDF found for doi:10.9999/landing.1
   archive-org: no copy — archive.org identifier is required
   unpaywall: no copy — no Copy '10.9999/landing.1'
   core: no copy — no Copy '10.9999/landing.1'
@@ -271,7 +271,7 @@ GET https://api.datacite.org/dois/10.9999/landing.1
 GET https://repo-d.example.org/item/1
   User-Agent: histmersion/0.1
   -> 404
-no copy: no legal open-access PDF found
+no copy: no legal open-access PDF found for doi:10.9999/landing.1
   archive-org: no copy — archive.org identifier is required
   unpaywall: no copy — no Copy '10.9999/landing.1'
   core: no copy — no Copy '10.9999/landing.1'
@@ -304,7 +304,7 @@ GET https://api.datacite.org/dois/10.9999/landing.1
 GET https://repo-d.example.org/item/1
   User-Agent: histmersion/0.1
   -> 404
-no copy: no legal open-access PDF found
+no copy: no legal open-access PDF found for doi:10.9999/landing.1
   archive-org: no copy — archive.org identifier is required
   core: no copy — no Copy '10.9999/landing.1'
   openalex: no copy — no Copy '10.9999/landing.1'
@@ -336,7 +336,7 @@ GET https://api.datacite.org/dois/10.9999/landing.1
 GET https://repo-d.example.org/item/1
   User-Agent: histmersion/0.1
   -> 404
-no copy: no legal open-access PDF found
+no copy: no legal open-access PDF found for doi:10.9999/landing.1
   archive-org: no copy — archive.org identifier is required
   unpaywall: no copy — no Copy '10.9999/landing.1'
   core: no copy — no Copy '10.9999/landing.1'
@@ -362,7 +362,7 @@ GET https://api.datacite.org/dois/10.9999/landing.1
 GET https://repo-d.example.org/item/1
   User-Agent: histmersion/0.1
   -> 404
-no copy: no legal open-access PDF found
+no copy: no legal open-access PDF found for doi:10.9999/landing.1
   archive-org: no copy — archive.org identifier is required
   core: no copy — no Copy '10.9999/landing.1'
   pmc: no copy — no Copy '10.9999/landing.1'
@@ -383,7 +383,7 @@ GET https://zenodo.org/api/records/3695551
 GET https://api.datacite.org/dois/10.5281/zenodo.3695551
   User-Agent: histmersion/0.1
   -> 404
-no copy: no legal open-access PDF found
+no copy: no legal open-access PDF found for doi:10.5281/zenodo.3695551
   archive-org: no copy — archive.org identifier is required
   core: no copy — no Copy '10.5281/zenodo.3695551'
   pmc: no copy — no Copy '10.5281/zenodo.3695551'
@@ -414,7 +414,7 @@ GET https://api.datacite.org/dois/10.9999/landing.1
 GET https://repo-d.example.org/item/1
   User-Agent: histmersion/0.1
   -> 404
-no copy: no legal open-access PDF found
+no copy: no legal open-access PDF found for doi:10.9999/landing.1
   archive-org: no copy — archive.org identifier is required
   unpaywall: no copy — no Copy '10.9999/landing.1'
   core: no copy — no Copy '10.9999/landing.1'
@@ -453,7 +453,7 @@ GET https://api.datacite.org/dois/10.9999/landing.1
 GET https://repo-d.example.org/item/1
   User-Agent: histmersion/0.1
   -> 404
-no copy: no legal open-access PDF found
+no copy: no legal open-access PDF found for doi:10.9999/landing.1
   archive-org: no copy — archive.org identifier is required
   unpaywall: no copy — no Copy '10.9999/landing.1'
   core: no copy — no Copy '10.9999/landing.1'
@@ -547,7 +547,7 @@ GET https://publikationen.uni-tuebingen.de/xmlui/handle/10900/73561
 GET https://publikationen.uni-tuebingen.de/xmlui/bitstream/10900/73561/1/StTrMonograph5_Becks_Blum.pdf
   User-Agent: histmersion/0.1
   -> 404
-no copy: no legal open-access PDF found
+no copy: no legal open-access PDF found for doi:10.15496/publikation-14969
   archive-org: no copy — archive.org identifier is required
   unpaywall: no copy — no Copy '10.15496/publikation-14969'
   core: no copy — no Copy '10.15496/publikation-14969'
@@ -607,7 +607,7 @@ GET https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI:%2210.9999
 GET https://repo-u.example.org/item/1
   User-Agent: histmersion/0.1
   -> 404
-no copy: no legal open-access PDF found
+no copy: no legal open-access PDF found for doi:10.9999/landing.1
   archive-org: no copy — archive.org identifier is required
   unpaywall: no copy — no Copy '10.9999/landing.1'
   core: no copy — no Copy '10.9999/landing.1'
@@ -677,7 +677,7 @@ GET https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI:%2210.1/co
 GET https://api.datacite.org/dois/10.1/core
   User-Agent: histmersion/0.1
   -> 404
-no copy: no legal open-access PDF found
+no copy: no legal open-access PDF found for doi:10.1/core
   archive-org: no copy — archive.org identifier is required
   unpaywall: no copy — no Copy '10.1/core'
   openalex: no copy — no Copy '10.1/core'
@@ -708,7 +708,7 @@ GET https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI:%2210.1/co
 GET https://api.datacite.org/dois/10.1/core
   User-Agent: histmersion/0.1
   -> 404
-no copy: no legal open-access PDF found
+no copy: no legal open-access PDF found for doi:10.1/core
   archive-org: no copy — archive.org identifier is required
   unpaywall: no copy — no Copy '10.1/core'
   core: no copy — histmersion.plugins.oa-core.api-key is empty
@@ -736,7 +736,7 @@ budget: lookups 0 searches 0
 ## arxiv, pmc and archive-org switched off
 chain: unpaywall, core, openalex, landing
 ### arxiv:2101.00001
-no copy: no legal open-access PDF found
+no copy: no legal open-access PDF found for arxiv:2101.00001
   unpaywall: no copy — doi is required
   core: no copy — doi is required
   openalex: no copy — doi is required
@@ -755,7 +755,7 @@ GET https://api.openalex.org/works/https://doi.org/10.1038/nature25778?select=id
 GET https://api.datacite.org/dois/10.1038/nature25778
   User-Agent: histmersion/0.1
   -> 404
-no copy: no legal open-access PDF found
+no copy: no legal open-access PDF found for doi:10.1038/nature25778
   unpaywall: no copy — no Copy '10.1038/nature25778'
   core: no copy — no Copy '10.1038/nature25778'
   openalex: no copy — no Copy '10.1038/nature25778'

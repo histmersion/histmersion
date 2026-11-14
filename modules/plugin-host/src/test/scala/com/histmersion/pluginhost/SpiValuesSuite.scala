@@ -1,6 +1,9 @@
 package com.histmersion
 package pluginhost
 
+import com.histmersion.util.problem.Problem
+import com.histmersion.{Latitude as HostLatitude, Longitude as HostLongitude}
+import com.histmersion.domain.library.Doi as HostDoi
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -65,20 +68,20 @@ class SpiValuesSuite extends munit.FunSuite:
 
   test("from a plugin: a value its type refuses is a Left naming it, never an exception"):
     assertEquals(
-      SpiValues.latitudeOf(Latitude(95.0)).left.map(_.sentence),
-      Left("latitude 95.0 is not between -90 and 90")
+      SpiValues.latitudeOf(Latitude(95.0)),
+      Left(Problem.Invalid.malformed(HostLatitude.refused(95.0)))
     )
     assertEquals(
-      SpiValues.longitudeOf(Longitude(200.0)).left.map(_.sentence),
-      Left("longitude 200.0 is not between -180 and 180")
+      SpiValues.longitudeOf(Longitude(200.0)),
+      Left(Problem.Invalid.malformed(HostLongitude.refused(200.0)))
     )
     assertEquals(
-      SpiValues.doiOf(Doi("nature14317")).left.map(_.sentence),
-      Left("DOI 'nature14317' is not a DOI (10.<registrant>/<suffix>)")
+      SpiValues.doiOf(Doi("nature14317")),
+      Left(Problem.Invalid.malformed(HostDoi.refused("nature14317")))
     )
     assertEquals(
-      SpiValues.wikidataOf(WikidataId("q12")).left.map(_.sentence),
-      Left("Wikidata id 'q12' is not a Wikidata item (Q and its number)")
+      SpiValues.wikidataOf(WikidataId("q12")),
+      Left(Problem.Invalid.malformed(Wikidata.Id.refused("q12")))
     )
     assertEquals(SpiValues.optional(Some(Latitude(-91.0)))(SpiValues.latitudeOf).isLeft, true)
     assertEquals(SpiValues.optional(Option.empty[Latitude])(SpiValues.latitudeOf), Right(None))
@@ -112,7 +115,7 @@ class SpiValuesSuite extends munit.FunSuite:
     assertEquals(
       offGlobe.warnings,
       List(
-        "q-1: catalogue 'zq': latitude 95.0 is not between -90 and 90, left out",
+        s"q-1: catalogue 'zq': ${Problem.Invalid.malformed(HostLatitude.refused(95.0)).sentence}, left out",
         "q-1: catalogue 'zq': a position needs both latitude and longitude, left out"
       )
     )
@@ -123,7 +126,7 @@ class SpiValuesSuite extends munit.FunSuite:
     assertEquals((noItem.record.lat, noItem.record.wikidata), (Some(36.4), None))
     assertEquals(
       noItem.warnings,
-      List("q-1: catalogue 'zq': Wikidata id 'Troy' is not a Wikidata item (Q and its number), left out")
+      List(s"q-1: catalogue 'zq': ${Problem.Invalid.malformed(Wikidata.Id.refused("Troy")).sentence}, left out")
     )
     val half = PluginEvents.record(CatalogRecord.Provider("zq"), event.modify(_.lon).setTo(None)).toOption.get
     assertEquals((half.record.lat, half.record.lon), (None, None))
@@ -135,7 +138,7 @@ class SpiValuesSuite extends munit.FunSuite:
         .record(CatalogRecord.Provider("zq"), event.modify(_.notBefore).setTo(Some(Year(-1180))))
         .left
         .map(_.sentence),
-      Left("q-1: its dating runs backwards")
+      Left("zq.q-1: notBefore, beginBy, endFrom, notAfter must be in order")
     )
 
   test("a value left out is a warning, a value kept none"):
@@ -143,7 +146,7 @@ class SpiValuesSuite extends munit.FunSuite:
     assertEquals((doi.map(d => d.value: String), why), (Some("10.1/x"), None))
     assertEquals(
       SpiValues.kept(Some(Doi("x")))(SpiValues.doiOf) match { case (d, w) => (d, w.map(_.sentence)) },
-      (None, Some("DOI 'x' is not a DOI (10.<registrant>/<suffix>)"))
+      (None, Some(Problem.Invalid.malformed(HostDoi.refused("x")).sentence))
     )
     assertEquals(SpiValues.kept(Option.empty[Doi])(SpiValues.doiOf), (None, None))
 
@@ -151,10 +154,10 @@ class SpiValuesSuite extends munit.FunSuite:
     val legacy = event.modify(_.notBefore).setTo(Some(java.lang.Long.valueOf(-1200L)).asInstanceOf[Option[Year]])
     val got = PluginEvents.record(CatalogRecord.Provider("zq"), legacy)
     assert(
-      got.left.exists(w =>
-        w.sentence.startsWith("q-1: catalogue 'zq' handed over a record the host cannot read") &&
-          w.sentence.contains("plugin SPI 2")
-      ),
+      got.left.exists {
+        case Problem.Internal.Unexpected(_, where, _, _) => where == Problem.Where("reading record q-1 of catalogue zq")
+        case _                                           => false
+      },
       got.toString
     )
 
@@ -176,7 +179,10 @@ class SpiValuesSuite extends munit.FunSuite:
     val broken = PluginMedia.record(item.modify(_.period).setTo(Some("1999").asInstanceOf[Option[Period]]))
     assertEquals(broken.period, None)
     assert(
-      broken.rights.left.exists(_.sentence.startsWith("k1: a period the host cannot read")),
+      broken.rights.left.exists {
+        case Problem.Internal.Unexpected(_, where, _, _) => where == Problem.Where("reading the period of k1")
+        case _                                           => false
+      },
       broken.rights.toString
     )
 

@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.calibre
 
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.plugin.EnvVar
 
 import com.histmersion.plugin.{Plugin, Spi}
@@ -20,7 +20,7 @@ final class CalibrePlugin extends Plugin:
     Plugin.Info.Version(CalibrePlugin.Version),
     Plugin.Info.SpiVersion(Spi.Version)
   )
-  def register(c: Calibre.Settings, ctx: Plugin.Context): Either[Problem, Unit] =
+  def register(c: Calibre.Settings, ctx: Plugin.Context): Either[Problems, Unit] =
     given files: LocalFiles = ctx.files
     given processes: Processes = ctx.processes
     ctx.sourceCollections

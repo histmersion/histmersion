@@ -1,7 +1,7 @@
 package com.histmersion
 package plugins.media
 
-import com.histmersion.util.problem.Text.sentences
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -84,7 +84,7 @@ class MediaPluginsKitSuite extends munit.FunSuite:
       "api-url = \"https://elsewhere.example\"",
       http = HttpMode.Offline
     )
-    assert(refused.left.exists(_.legacyText.contains("unknown setting")), refused.toString)
+    assert(refused.left.exists(_.sentences.mkString.contains("is no setting of the plugin")), refused.toString)
 
   test("media-met: a search at the host's endpoint, each object read, judged as the server judges it"):
     val api = media.met.apiUrl
@@ -115,8 +115,8 @@ class MediaPluginsKitSuite extends munit.FunSuite:
     )
     assertEquals(r.kept.map(v => (v.key, v.licence)), List(("252448", Some("CC0-1.0"))))
     assertEquals(
-      r.verdicts.find(_.key.value == "248284").flatMap(_.refused).map(_.legacyText),
-      Some("not Open Access (isPublicDomain is false)")
+      r.verdicts.find(_.key.value == "248284").flatMap(_.refused).map(_.sentence),
+      Some("media-met did not take 248284: restricted")
     )
     assertEquals(
       r.verdicts.count(_.item.isEmpty),
@@ -172,14 +172,14 @@ class MediaPluginsKitSuite extends munit.FunSuite:
     assertEquals(on.contributions.mediaCollections, List("europeana"))
     val off =
       PluginHarness.load(Plugin.Info.Id("media-europeana"), "enabled = false", http = HttpMode.Offline, env = Map.empty)
-    assert(off.left.exists(_.legacyText.contains("disabled")), off.toString)
+    assert(off.left.exists(_.sentences.mkString.contains("is switched off")), off.toString)
     val unset = PluginHarness.load(
       Plugin.Info.Id("media-europeana"),
       "api-key = \"env:ZQMT_NOT_SET\"",
       http = HttpMode.Offline,
       env = Map.empty
     )
-    assert(unset.left.exists(_.legacyText.contains("ZQMT_NOT_SET")), unset.toString)
+    assert(unset.left.exists(_.sentences.mkString.contains("ZQMT_NOT_SET")), unset.toString)
 
   test("each collection's roles are ones the host stores"):
     val h = load(Plugin.Info.Id("media-wikidata"))

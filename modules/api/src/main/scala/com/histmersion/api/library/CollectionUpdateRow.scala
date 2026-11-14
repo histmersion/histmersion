@@ -18,7 +18,7 @@ final case class CollectionUpdateRow(
     citekeys: List[CollectionUpdateRow.Citekeys],
     state: CollectionUpdateRow.State,
     changes: List[CollectionFieldChange],
-    reason: Option[Problem]
+    reasons: List[Problem]
 ) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema

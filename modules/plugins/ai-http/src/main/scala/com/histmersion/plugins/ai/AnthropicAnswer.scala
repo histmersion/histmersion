@@ -5,7 +5,7 @@ import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.JsonCodec.given
 import com.histmersion.util.json.Cursor
 import hearth.kindlings.jsoniterjson.Json
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 
 import com.histmersion.plugin.{AiStop, AiTurn, AiUsage}
 import com.histmersion.plugin.AiTool
@@ -16,18 +16,31 @@ import io.github.iltotore.iron.constraint.any.Pure
   * the input), or the failure — an error status's body as it came, an error in a success answer by its message, an
   * answer that is neither by why it cannot be read as an error.
   */
-final case class AnthropicAnswer(status: AnthropicAnswer.Status, body: AnthropicAnswer.Body):
+final case class AnthropicAnswer(
+    provider: Problem.Upstream.Name,
+    url: Problem.Upstream.Url,
+    status: AnthropicAnswer.Status,
+    body: AnthropicAnswer.Body
+):
 
-  /** The turn the answer says, or the failure's description. */
+  /** The turn the answer says, or the failure: `provider`'s answer at `url`, its words the start of the body. */
   def turn: Either[Problem, AiTurn] =
-    if (status).value / 100 != 2 then Left(Problem.Unclassified(Legacy.Text((body).value)))
+    def answered(said: String) =
+      Problem.Upstream.Http.here(
+        provider,
+        url,
+        Problem.Upstream.Status((status).value),
+        External.ReplyExcerpt.head(said)
+      )
+    if (status).value / 100 != 2 then Left(answered((body).value))
     else
       RawJson.parse((body).value).flatMap(AnthropicAnswer.message(_)) match
         case Right(turn) => Right(turn)
         case Left(_)     =>
           RawJson.parse((body).value).flatMap(AnthropicAnswer.error(_)) match
-            case Right(message) => Left(message)
-            case Left(e)        => Left(Problem.Unclassified(Legacy.Text(e)))
+            case Right(message) => Left(answered(message))
+            case Left(e)        =>
+              Left(Problem.Upstream.BadReply.here(provider, url, Problem.Upstream.Shape.Json, External.Reported.of(e)))
 
 object AnthropicAnswer:
 
@@ -37,19 +50,19 @@ object AnthropicAnswer:
   object Body extends Newtype[String, Pure]
 
   /** An error answer's message: `{"error": {"type": …, "message": …}}`. */
-  val error: Cursor.Read[Problem] = Cursor.Read { c =>
+  val error: Cursor.Read[String] = Cursor.Read { c =>
     for
       _ <- c.anObject
       m <- c.downField("error").read(errorDetail)
     yield m
   }
 
-  private val errorDetail: Cursor.Read[Problem] = Cursor.Read { c =>
+  private val errorDetail: Cursor.Read[String] = Cursor.Read { c =>
     for
       _ <- c.anObject
       _ <- c.downField("type").as[String]
       m <- c.downField("message").as[String]
-    yield Problem.Unclassified(Legacy.Text(m))
+    yield m
   }
 
   /** One content block: its text, or its tool call, or neither (a thinking block, an image …); a block of an unknown

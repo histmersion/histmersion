@@ -213,8 +213,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
   private def keyedEntry(g: Generation, name: Registries.MediaCollectionsKey) = g.registries.mediaCollections.get(name)
 
   private val noKey =
-    "Smithsonian Open Access objects needs an api.data.gov key: set histmersion.plugins.media-smithsonian.api-key " +
-      "to a secret reference (\"env:<NAME>\" or a vault's, e.g. \"keepassxc:<entry>#password\"); it was not asked"
+    "histmersion.plugins.media-smithsonian.api-key is empty"
 
   test("keyed: off by default the import says it is off and what it needs; it is still a reserved name"):
     val c = ServerPlugins.offline.registries.mediaCollections
@@ -280,7 +279,9 @@ class ProviderPluginsSuite extends munit.FunSuite:
     assert(g.report.ok, g.report.toString)
     assertEquals(keyedEntry(g, smithsonian).map(_.check), Some(Right(())))
     assert(
-      keyedEntry(g, europeana).exists(_.check.left.exists(_.sentence.contains("needs a Europeana personal API key"))),
+      keyedEntry(g, europeana).exists(
+        _.check.left.exists(_.sentence.contains("histmersion.plugins.media-europeana.api-key is empty"))
+      ),
       "a blank value is no key"
     )
     assert(!g.report.toString.contains("si-secret-123"), "the report shows the reference, never the value")
@@ -292,7 +293,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
     )
     assertEquals(
       keyedEntry(off, smithsonian).map(_.check.left.map(_.sentence)),
-      Some(Left("Smithsonian Open Access objects is switched off (media.smithsonian.enabled = false)"))
+      Some(Left("Smithsonian Open Access objects is switched off (histmersion.media.smithsonian.enabled)"))
     )
     // an unresolvable reference fails that plugin alone, naming the reference
     val missing = ServerPlugins.offlineWith(
@@ -304,7 +305,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
     )
     val st = missing.report.plugins.find(_.id.value == "media-smithsonian").get
     assertEquals(st.state, "failed")
-    assert(st.error.exists(_.sentence.contains("HISTMERSION_TEST_NOT_SET")), st.toString)
+    assert(st.errors.exists(_.sentence.contains("HISTMERSION_TEST_NOT_SET")), st.toString)
     assert(
       missing.registries.mediaCollections.contains(Registries.MediaCollectionsKey("europeana")),
       "the other one is untouched"
@@ -369,7 +370,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
     assert(
       dup.report.plugins
         .find(_.id.value == "zq-plugin")
-        .exists(_.error.exists(_.sentence.contains("'met' is already registered")))
+        .exists(_.errors.exists(_.sentence.contains("MediaCollection 'met' already exists")))
     )
     assert(
       dup.registries.mediaCollections
@@ -397,18 +398,18 @@ class ProviderPluginsSuite extends munit.FunSuite:
       )
       val st = g.report.plugins.find(_.id.value == "zq-plugin").get
       assertEquals(st.state, "failed", name)
-      assert(st.error.exists(_.sentence.contains("one of Histmersion's own media providers")), st.toString)
+      assert(st.errors.exists(_.sentence.contains("already exists")), st.toString)
     val cat =
       build(List(Portal(catalogue = Registry.AddId("volcano"))), portalOn).report.plugins
         .find(_.id.value == "zq-plugin")
         .get
-    assert(cat.error.exists(_.sentence.contains("one of Histmersion's own event catalogues")), cat.toString)
+    assert(cat.errors.exists(_.sentence.contains("EventCatalogue 'volcano' already exists")), cat.toString)
     val role =
       build(List(Portal(role = MediaItem.Role("cover"))), portalOn).report.plugins.find(_.id.value == "zq-plugin").get
     assert(
-      role.error.exists(
+      role.errors.exists(
         _.sentence.contains(
-          "role 'cover' is not one of aerial-view, depiction, image, locator-map, map, object, plan, route-map"
+          "unknown MediaItem.Role 'cover' (one of: aerial-view, depiction, image, locator-map, map, object, plan, route-map)"
         )
       ),
       role.toString
@@ -516,7 +517,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
     )
     assertEquals(
       rights(Licence("CC BY 4.0"), credit = MediaRights.Credit("  ")).left.map(_.sentence),
-      Left("no credit line")
+      Left("credit is required")
     )
     // whatever the family, the allowlist decides; unknown and all-rights-reserved never pass
     assert(
@@ -568,10 +569,10 @@ class ProviderPluginsSuite extends munit.FunSuite:
 
   test("a plugin's failure is a value, never an exception through the import"):
     assertEquals(
-      PluginMedia.guard[Int](throw IllegalStateException("boom")).left.map(_.sentence),
-      Left("the plugin failed: IllegalStateException: boom")
+      PluginMedia.guard[Int](throw IllegalStateException("boom")).left.map(_.sentence.takeWhile(_ != ',')),
+      Left("the plugin failed unexpectedly (java.lang.IllegalStateException")
     )
-    assertEquals(PluginMedia.guard[Int](null).left.map(_.sentence), Left("the plugin answered nothing"))
+    assertEquals(PluginMedia.guard[Int](null).left.map(_.sentence), Left("the plugin's answer is required"))
 
   test("a catalogue's record is checked by the host before it is stored"):
     val ok = CatalogueEvent(
@@ -605,27 +606,27 @@ class ProviderPluginsSuite extends munit.FunSuite:
       PluginEvents
         .record(CatalogRecord.Provider("x"), ok.modify(_.wikidata).setTo(Some(WikidataId("not-an-item"))))
         .map(_.warnings),
-      Right(List("q-1: catalogue 'x': Wikidata id 'not-an-item' is not a Wikidata item (Q and its number), left out"))
+      Right(List("q-1: catalogue 'x': 'not-an-item' is not a Wikidata.Id: Should match Q[1-9][0-9]*, left out"))
     )
     assertEquals(
       PluginEvents
         .record(CatalogRecord.Provider("x"), ok.modify(_.id).setTo(CatalogueEvent.Id(" ")))
         .left
         .map(_.sentence),
-      Left("a record without an id")
+      Left("x: id is required")
     )
     assertEquals(
       PluginEvents
         .record(CatalogRecord.Provider("x"), ok.modify(_.label).setTo(CatalogueEvent.Label("")))
         .left
         .map(_.sentence),
-      Left("q-1: no label")
+      Left("x.q-1: label is required")
     )
     assert(
       PluginEvents
         .record(CatalogRecord.Provider("x"), ok.modify(_.historicity).setTo(CatalogueEvent.Historicity("certain")))
         .left
-        .exists(_.sentence.contains("historicity 'certain'"))
+        .exists(_.sentence.contains("unknown CatalogueEvent.Historicity 'certain'"))
     )
     assertEquals(
       PluginEvents
@@ -635,13 +636,13 @@ class ProviderPluginsSuite extends munit.FunSuite:
         )
         .left
         .map(_.sentence),
-      Left("q-1: its dating runs backwards")
+      Left("x.q-1: notBefore, beginBy, endFrom, notAfter must be in order")
     )
     assertEquals(
       PluginEvents
         .record(CatalogRecord.Provider("x"), ok.modify(_.lat).setTo(Some(Latitude(95.0))))
         .map(c => (c.record.lat, c.warnings.head)),
-      Right((None, "q-1: catalogue 'x': latitude 95.0 is not between -90 and 90, left out"))
+      Right((None, "q-1: catalogue 'x': '95.0' is not a Latitude: Should be included in [-90.0, 90.0], left out"))
     )
     assertEquals(
       PluginEvents

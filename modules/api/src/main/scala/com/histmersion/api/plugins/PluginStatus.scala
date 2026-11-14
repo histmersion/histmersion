@@ -2,6 +2,7 @@ package com.histmersion
 package api.plugins
 
 import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -19,12 +20,17 @@ final case class PluginStatus(
     provides: List[PluginStatus.Provides] = Nil,
     settings: List[PluginSetting] = Nil,
     warnings: List[PluginStatus.Warnings] = Nil,
-    error: Option[Problem] = None
+    errors: List[Problem] = Nil
 ) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema
 
 object PluginStatus:
+  extension (status: PluginStatus)
+    /** Every reason the plugin failed or was refused for, in order, as one line. */
+    def reasons: String =
+      if status.errors.isEmpty then "no reason given" else status.errors.map(_.sentence).mkString("; ")
+
   export PluginDescription.{Id, SpiVersion, Version}
   type Enabled = Enabled.T
   object Enabled extends Newtype[Boolean, Pure]

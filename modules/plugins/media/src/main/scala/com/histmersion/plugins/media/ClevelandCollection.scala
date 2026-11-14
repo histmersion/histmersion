@@ -4,7 +4,7 @@ import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.JsonCodec.given
 import hearth.kindlings.jsoniterjson.Json
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.plugin.*
 
@@ -37,6 +37,9 @@ final class ClevelandCollection(conf: CollectionSettings)
       .flatMap(j => ClevelandCollection.records(j).unreadableEach)
 
 object ClevelandCollection:
+
+  /** The plugin's id: what its problems name. */
+  val Name = "media-cleveland"
   val Fields: String = List(
     "id",
     "accession_number",
@@ -70,7 +73,9 @@ object ClevelandCollection:
     c.downField("data").focus.flatMap(_.asArray) match
       case None =>
         Left(
-          Problem.Unclassified(Legacy.Text(c.str("detail").orElse(c.str("message")).getOrElse("no data in the answer")))
+          c.str("detail")
+            .orElse(c.str("message"))
+            .fold(MediaPlugin.missing("data"))(MediaPlugin.said(Name, Problem.Plugin.Claim.Failed, _))
         )
       case Some(rows) => Right(rows.toList.map(record))
 
@@ -78,7 +83,7 @@ object ClevelandCollection:
     val c = json.cursor
     c.str("accession_number")
       .orElse(c.str("id"))
-      .toRight(Problem.Unclassified(Legacy.Text("no accession number")))
+      .toRight(MediaPlugin.missing("accession_number"))
       .map { acc =>
         val title = c.str("title").getOrElse(acc)
         val creator = c
@@ -95,13 +100,7 @@ object ClevelandCollection:
         val rights =
           if c.str("share_license_status").exists(_.equalsIgnoreCase("CC0")) then
             Right(MediaRights.cc0(creator.map(MediaRights.Author(_)), MediaRights.Credit(credit)))
-          else
-            Left(
-              Problem.Unclassified(
-                Legacy
-                  .Text(s"not Open Access (share_license_status ${c.str("share_license_status").getOrElse("missing")})")
-              )
-            )
+          else Left(MediaPlugin.rejected(Name, acc, Problem.Plugin.Refusal.Restricted))
         val img = c.downField("images")
         def url(size: String) = img.downField(size).downField("url").focus.flatMap(_.asString)
         val geo = c.str("find_spot").map("find_spot" -> _).toList ++ c.strs("culture").map("culture" -> _)

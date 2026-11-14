@@ -1,7 +1,7 @@
 package com.histmersion
 package plugin.testkit.internal
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.plugin.Plugin
 import com.histmersion.domain.CoreQuota
@@ -216,7 +216,7 @@ final private[testkit] class Wire(mode: HttpMode, scrub: Scrubber):
     recorded.get(key) match
       case None =>
         missing += HttpTransport.Url(url)
-        Left(Problem.Unclassified(Legacy.Text(s"$url: no recording in $dir")))
+        Left(Problem.NotFound.Entity(Problem.TypeName.named[RecordedExchange], Problem.Raw(s"$url")))
       case Some(answers) =>
         val n = served.getOrElse(key, 0)
         served(key) = n + 1
@@ -227,7 +227,13 @@ final private[testkit] class Wire(mode: HttpMode, scrub: Scrubber):
             Right(HttpAnswer(code, e.headers.toMap, HttpAnswer.Body(body)))
           case (None, error) =>
             Left(
-              Problem.Unclassified(Legacy.Text(error.getOrElse(s"$url: recorded with neither a status nor an error")))
+              Problem.Upstream.Unreachable.here(
+                Problem.Upstream.Name(
+                  s"${scala.util.Try(java.net.URI.create(url).getHost).toOption.flatMap(Option(_)).getOrElse(url)}"
+                ),
+                Problem.Upstream.Url(s"$url"),
+                External.Reported.of(error.getOrElse("recorded with neither a status nor an error"))
+              )
             )
   }
 

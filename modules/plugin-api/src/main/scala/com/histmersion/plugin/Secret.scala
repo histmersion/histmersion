@@ -1,7 +1,7 @@
 package com.histmersion
 package plugin
 
-import com.histmersion.util.problem.{Problem, Raised}
+import com.histmersion.util.problem.{Problem, Problems, Raised}
 import hearth.kindlings.sconfigderivation.{ConfigDecodingError, ConfigReader}
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -112,11 +112,11 @@ object Secret:
 
   /** A secret backend (KeePassXC, 1Password, Bitwarden, …), registered by a plugin under its [[name]]: the host hands
     * it the part of a `<name>:<ref>` reference after the colon. `Left` names what went wrong (locked, no such entry,
-    * the tool is missing) and NEVER contains the value.
+    * the tool is missing; every try that failed, when it tried several) and NEVER contains the value.
     */
   trait Vault:
     def name: Vault.Name
-    def resolve(ref: Vault.ResolveRef): Either[Problem, Secret.Resolved]
+    def resolve(ref: Vault.ResolveRef): Either[Problems, Secret.Resolved]
 
     /** Several references at once: the host asks for every reference of this vault that the plugins of one config
       * generation (a server start, a `config reload`) hold, in ONE call, before it registers them. The answer has an
@@ -127,7 +127,7 @@ object Secret:
       */
     def resolveAll(
         refs: List[Vault.ResolveRef]
-    ): Map[Vault.ResolveRef, Either[Problem, Secret.Resolved]] =
+    ): Map[Vault.ResolveRef, Either[Problems, Secret.Resolved]] =
       refs.distinct.map(r => r -> resolve(r)).toMap
 
   object Vault:

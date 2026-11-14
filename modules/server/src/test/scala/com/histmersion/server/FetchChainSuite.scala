@@ -1,7 +1,7 @@
 package com.histmersion
 package server
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -62,14 +62,16 @@ class FetchChainSuite extends munit.FunSuite:
       (List("a", "b"), Nil)
     )
 
-  test("order: a listed id nothing registered is skipped, with one note naming every such id"):
+  test("order: a listed id nothing registered is skipped, with a note naming each such id"):
     val (ids, notes) = FetchChain.order(
       List(com.histmersion.util.plugins.Plugin.Id("a")),
       CommaList("x, a , , y, x").entries.flatMap(e => com.histmersion.util.plugins.Plugin.Id.option(e.value))
     )
     assertEquals(ids, List("a"))
-    assertEquals(notes.size, 1)
-    assert(notes.head.sentence.contains("'x', 'y'"), notes.head)
+    assertEquals(
+      notes.map(_.sentence),
+      List("x", "y").map(id => s"histmersion.acquire.chain has an unknown value '$id'")
+    )
 
   test("the legal gate: open and subscription always run; unauthorised only when allowed, never on the legal path"):
     for
@@ -133,14 +135,19 @@ class FetchChainSuite extends munit.FunSuite:
     assertEquals(got.map(_.source), Right("b"))
     assertEquals((a.calls.get, b.calls.get, c.calls.get), (1, 1, 0))
 
-  test("nothing found: the message ingest has always reported"):
+  /** Is it the chain's "no copy"? */
+  private def copy(p: Problem): Boolean = p match
+    case Problem.NotFound.Copy(_) => true
+    case _                        => false
+
+  test("nothing found: no copy of the work"):
     assertEquals(
-      FetchChain(List(FetchChain.Step.Id("a") -> miss())).fetch(Some(FetchedDoi), None).left.map(_.sentence),
-      Left(FetchChain.NoCopy)
+      FetchChain(List(FetchChain.Step.Id("a") -> miss())).fetch(Some(FetchedDoi), None).left.map(_.toVector.map(copy)),
+      Left(Vector(true))
     )
     assertEquals(
-      FetchChain(Nil).fetch(Some(com.histmersion.domain.library.Doi("10.1234/x")), None).left.map(_.sentence),
-      Left(FetchChain.NoCopy)
+      FetchChain(Nil).fetch(Some(com.histmersion.domain.library.Doi("10.1234/x")), None).left.map(_.toVector),
+      Left(Vector(Problem.NotFound.Copy(Problem.Raw("doi:10.1234/x"))))
     )
 
   test("a 'PDF' that is not one is no copy: the chain moves on"):
@@ -172,7 +179,8 @@ class FetchChainSuite extends munit.FunSuite:
     val no = Fake(Access.Open, (_, _) => Fetch.Refused(Problem.Unclassified(Legacy.Text("lending-only"))))
     val r = FetchChain(List(FetchChain.Step.Id("no") -> no, FetchChain.Step.Id("a") -> miss()))
       .fetchLegal(Some(FetchedDoi), None)
-    assertEquals(r.left.map(_.sentence), Left(s"${FetchChain.NoCopy} (no: lending-only)"))
+    assertEquals(r.left.map(_.toVector.map(p => copy(p) -> p.sentence).drop(1)), Left(Vector(false -> "lending-only")))
+    assert(r.left.exists(_.toVector.headOption.exists(copy)), r)
     assertEquals(no.calls.get, 1)
 
   test("no copy: each fetcher that ran gives its answer, in chain order; a copy needs none"):
@@ -190,14 +198,22 @@ class FetchChainSuite extends munit.FunSuite:
         FetchChain.Step.Id("u") -> off
       )
     ).fetchWorkExplained(doi, legalOnly = FetchChain.LegalOnly(false))
-    assertEquals(got.file.left.map(_.sentence), Left(s"${FetchChain.NoCopy} (no: bot challenge)"))
+    assertEquals(
+      got.file.left.map(_.toVector.map(p => copy(p) -> p.sentence).drop(1)),
+      Left(Vector(false -> "bot challenge"))
+    )
     assertEquals(
       got.answers.map(_.line),
       List(
         "a: no copy — no record",
         "no: refused — bot challenge",
-        "boom: no copy — boom failed: IllegalStateException: bang"
+        got.answers(2).line
       )
+    )
+    assert(
+      s"${got.answers(2).line}"
+        .startsWith("boom: no copy — fetcher boom failed unexpectedly (java.lang.IllegalStateException"),
+      got.answers(2).line
     )
     val hit = FetchChain(
       List(FetchChain.Step.Id("a") -> miss(), FetchChain.Step.Id("b") -> found(FetchedFile.Source("b")))
@@ -211,8 +227,8 @@ class FetchChainSuite extends munit.FunSuite:
     )
     val off = unauthorised
     assertEquals(
-      FetchChain(List(FetchChain.Step.Id("u") -> off)).fetch(Some(FetchedDoi), None).left.map(_.sentence),
-      Left(FetchChain.NoCopy)
+      FetchChain(List(FetchChain.Step.Id("u") -> off)).fetch(Some(FetchedDoi), None).left.map(_.toVector.map(copy)),
+      Left(Vector(true))
     )
     assertEquals(off.calls.get, 0)
     val legal = unauthorised
@@ -220,8 +236,8 @@ class FetchChainSuite extends munit.FunSuite:
       FetchChain(List(FetchChain.Step.Id("u") -> legal), allowUnauthorised = FetchChain.AllowUnauthorised(true))
         .fetchLegal(Some(FetchedDoi), None)
         .left
-        .map(_.sentence),
-      Left(FetchChain.NoCopy)
+        .map(_.toVector.map(copy)),
+      Left(Vector(true))
     )
     assertEquals(legal.calls.get, 0)
     val on = unauthorised
@@ -294,6 +310,6 @@ class FetchChainSuite extends munit.FunSuite:
     assertEquals(chain.plan.map(_._1), List("a", "b", "u"))
     assertEquals(notes.size, 2, notes.map(_.sentence).mkString("\n"))
     assert(notes.exists(_.sentence.contains("'gone'")))
-    assert(notes.exists(n => n.sentence.contains("u ") && n.sentence.contains("stays off")))
+    assert(notes.exists(_.sentence == "u is switched off (histmersion.acquire.allow-unauthorised)"), notes)
     val (_, allowed) = FetchChain.of(regs, Nil, allowUnauthorised = FetchChain.AllowUnauthorised(true))
     assertEquals(allowed, Nil)

@@ -753,7 +753,9 @@ class AcquireHandlerSuite extends DbSuite:
       Some("unpaywall: no copy — no open-access location; oapen: refused — 20.500.12657/23223: bot challenge")
     )
     assert(
-      r.steps.exists(s => s.step == Ingest.Step.Value("fetch") && s.detail.value.contains("oapen: 20.500.12657/23223")),
+      r.steps.exists(s =>
+        s.step == Ingest.Step.Value("fetch") && s.detail.value.contains("20.500.12657/23223: bot challenge")
+      ),
       r.steps.toString
     )
     wipe("zzacq_ingested")

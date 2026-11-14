@@ -1,7 +1,7 @@
 package com.histmersion
 package pluginhost
-import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.{External, Problem, Problems}
+import com.histmersion.util.problem.Text.sentences
 
 import com.histmersion.domain.HttpPolicy
 import com.histmersion.config.TlsConfig
@@ -31,28 +31,48 @@ object OutboundTls:
 
   /** A command → its standard output (the seam a test replaces). */
 
-  type Run = List[String] => Either[String, String]
+  type Run = List[String] => Either[Problem, String]
+
+  /** How long a command may run. */
+  private val Wait = 30L
 
   /** Runs a command, waiting at most 30 s. */
   val run: Run = cmd =>
+    val tool = Problem.Io.Tool(cmd.headOption.getOrElse(""))
     try
       val p = new ProcessBuilder(cmd*).redirectErrorStream(false).start()
       val out = Using.resource(p.getInputStream)(in => new String(in.readAllBytes(), StandardCharsets.UTF_8))
-      if !p.waitFor(30, TimeUnit.SECONDS) then
+      if !p.waitFor(Wait, TimeUnit.SECONDS) then
         p.destroyForcibly()
-        Left(s"${cmd.mkString(" ")} did not finish")
-      else if p.exitValue != 0 then Left(s"${cmd.mkString(" ")} exited ${p.exitValue}")
+        Left(Problem.Io.Process(tool, Problem.Io.Ending.TimedOut(Problem.Millis(TimeUnit.SECONDS.toMillis(Wait)))))
+      else if p.exitValue != 0 then
+        val err = Using.resource(p.getErrorStream)(in => new String(in.readAllBytes(), StandardCharsets.UTF_8))
+        Left(
+          Problem.Io.Process(
+            tool,
+            Problem.Io.Ending.Exited(Problem.Io.ExitCode(p.exitValue), External.Stderr.tail(err))
+          )
+        )
       else Right(out)
-    catch case e: Exception => Left(s"${cmd.headOption.getOrElse("")}: ${e.getMessage}")
+    catch case e: Exception => Left(Problem.Io.Process(tool, Problem.Io.Ending.NotStarted(External.Reported.of(e))))
 
   /** A file's text (the seam a test replaces). */
-  type Read = Path => Either[String, String]
+  type Read = Path => Either[Problem, String]
 
   val read: Read = p =>
-    if !Files.isRegularFile(p) then Left(s"$p is not a file")
+    if !Files.isRegularFile(p) then Left(Problem.Io.Wrong(Problem.Io.Path(s"$p"), Problem.Io.Kind.File))
     else
       try Right(Files.readString(p, StandardCharsets.ISO_8859_1)) // PEM is ASCII; never fail on a stray byte
-      catch case e: Exception => Left(s"$p: ${e.getMessage}")
+      catch
+        case e: Exception =>
+          Left(Problem.Io.File(Problem.Io.Access.Read, Problem.Io.Path(s"$p"), External.Reported.of(e)))
+
+  /** None of `paths` is there: each one (an empty list names no path). */
+  private def noneOf(paths: List[String]): Problems =
+    val missing = (if paths.isEmpty then List("") else paths).map(p =>
+      Problem.Io.Wrong(Problem.Io.Path(p), Problem.Io.Kind.Present)
+    )
+    Problems.of(missing.head, missing.tail*)
 
   /** The X.509 certificates in a PEM text; a block that does not parse is skipped. */
   def certificates(pem: HttpPolicy.PemText): List[X509Certificate] =
@@ -66,27 +86,26 @@ object OutboundTls:
       )
 
   /** The roots one source adds (none for [[HttpPolicy.Trust.Jdk]], which is the base). */
-  def roots(t: HttpPolicy.Trust, run: Run = run, read: Read = read): Either[Problem, List[X509Certificate]] = t match
+  def roots(t: HttpPolicy.Trust, run: Run = run, read: Read = read): Either[Problems, List[X509Certificate]] = t match
     case HttpPolicy.Trust.Jdk              => Right(Nil)
     case HttpPolicy.Trust.Keychains(paths) =>
       val found = paths.filter(p => Files.exists(Path.of(p.value)))
-      if found.isEmpty then
-        Left(Problem.Unclassified(Legacy.Text(s"none of the keychains ${paths.map(_.value).mkString(", ")} exists")))
+      if found.isEmpty then Left(noneOf(paths.map(p => s"$p")))
       else
-        run(List("/usr/bin/security", "find-certificate", "-a", "-p") ++ found.map(_.value)).left
-          .map((text => Problem.Unclassified(Legacy.Text(text))))
+        run(List("/usr/bin/security", "find-certificate", "-a", "-p") ++ found.map(_.value))
           .map(text => certificates(HttpPolicy.PemText(text)))
     case HttpPolicy.Trust.Bundle(paths) =>
       paths
         .map(p => Path.of(p.value))
         .find(Files.isRegularFile(_))
-        .toRight(Problem.Unclassified(Legacy.Text(s"no CA bundle at ${paths.map(_.value).mkString(", ")}")))
-        .flatMap(read(_).left.map((text => Problem.Unclassified(Legacy.Text(text)))))
+        .toRight(noneOf(paths.map(p => s"$p")))
+        .flatMap(read(_))
         .map(text => certificates(HttpPolicy.PemText(text)))
     case HttpPolicy.Trust.PemFile(path) =>
-      read(Path.of(path.value)).left.map((text => Problem.Unclassified(Legacy.Text(text)))).flatMap { text =>
+      read(Path.of(path.value)).flatMap { text =>
         val cs = certificates(HttpPolicy.PemText(text))
-        if cs.isEmpty then Left(Problem.Unclassified(Legacy.Text(s"${path.value} holds no PEM certificate")))
+        if cs.isEmpty then
+          Left(Problem.Io.Corrupt(Problem.Io.Format.Text, Problem.Where(s"$path"), Problem.Io.Damage.Undecodable))
         else Right(cs)
       }
 
@@ -140,7 +159,7 @@ object OutboundTls:
       val extra = got.flatMap(_._2.toOption).flatten
       val notes = got.map {
         case (s, Right(cs)) => s"${describe(s)}: ${cs.size} root(s)"
-        case (s, Left(e))   => s"${describe(s)}: NOT used (${e.sentence})"
+        case (s, Left(e))   => s"${describe(s)}: NOT used (${e.sentences.mkString("; ")})"
       }
       context(extra) -> Summary(s"acquire TLS trusts the JDK's roots + ${notes.mkString("; ")}")
     }

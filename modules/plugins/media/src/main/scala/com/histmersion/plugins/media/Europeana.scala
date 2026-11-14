@@ -5,7 +5,7 @@ import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.JsonCodec.given
 import com.histmersion.util.json.Cursor
 import hearth.kindlings.jsoniterjson.Json
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.plugin.*
 
@@ -25,6 +25,9 @@ import io.github.iltotore.iron.constraint.any.Pure
   * documents); the provider's file (`edmIsShownBy`) is recorded as the original. Pure.
   */
 object Europeana:
+
+  /** The plugin's id: what its problems name. */
+  val Name = "media-europeana"
   type Clause = Clause.T
   object Clause extends Newtype[String, Pure]
   type Field = Field.T
@@ -158,6 +161,10 @@ object Europeana:
     * LangMaps (`[{"def": "Athens"}]`) — English and language-less values first.
     */
   extension (c: Cursor)
+    /** Europeana's own words when it answers `success: false`. */
+    private def errorOf: Option[String] =
+      Option(List(c.str("error"), c.str("message")).flatten.distinct.mkString(": ")).filter(_.nonEmpty)
+
     private def langValues(field: Field): List[String] =
       def ofJson(j: Json): List[String] =
         j.asString.toList ++ j.asArray.toList.flatten.flatMap(ofJson) ++ j.asObject.toList.flatMap { o =>
@@ -177,14 +184,12 @@ object Europeana:
   ): Either[Problem, List[Either[Problem, MediaItem]]] =
     val c = json.cursor
     if c.bool("success").contains(false) then
-      Left(List(c.str("error"), c.str("message")).flatten.distinct.mkString(": ") match
-        case "" => Problem.Unclassified(Legacy.Text("the search failed"))
-        case e  => Problem.Unclassified(Legacy.Text(e)))
+      Left(MediaPlugin.said(Name, Problem.Plugin.Claim.Failed, c.errorOf.getOrElse("the search failed")))
     else
       c.downField("items").focus.flatMap(_.asArray) match
         case Some(items)                              => Right(items.toList.map(record(_, api, licences, ex)))
         case None if c.long("totalResults").isDefined => Right(Nil)
-        case None => Left(Problem.Unclassified(Legacy.Text("no items in the answer")))
+        case None                                     => Left(MediaPlugin.missing("items"))
 
   /** Pure: one search item; one of an excluded aggregator or institution ([[Exclusions]]) is withheld with that reason.
     */
@@ -195,7 +200,7 @@ object Europeana:
       ex: Exclusions = Exclusions.none
   ): Either[Problem, MediaItem] =
     val c = json.cursor
-    c.str("id").filter(_.startsWith("/")).toRight(Problem.Unclassified(Legacy.Text("no Europeana id"))).map { id =>
+    c.str("id").filter(_.startsWith("/")).toRight(MediaPlugin.missing("id")).map { id =>
       val title =
         c.langValues(Field("title")).headOption.orElse(c.langValues(Field("dcTitleLangAware")).headOption).getOrElse(id)
       val creator = c.langValues(Field("dcCreator")).filterNot(isUri).headOption
@@ -207,11 +212,14 @@ object Europeana:
           .flatMap(v => previewSource(Preview(v)).map(_.value))
           .orElse(shownBy)
       val rights: Either[Problem, MediaRights] = c.langValues(Field("rights")).headOption match
-        case None    => Left(Problem.Unclassified(Legacy.Text("no rights statement on the record")))
+        case None    => Left(MediaPlugin.rejected(Name, id, Problem.Plugin.Refusal.NoLicence))
         case Some(u) =>
           val lic = licences.readUrl(LicenceReader.ReadUrlUrl(u))
           if lic.family.value == Licence.Read.Unknown then
-            Left(Problem.Unclassified(Legacy.Text(s"not an open licence ($u)")))
+            Left(
+              Problem.Invalid
+                .Unknown(Problem.TypeName.named[Licence], Problem.Raw(u), Vector.empty, Vector(Problem.Field(id)))
+            )
           else
             Right(
               MediaRights(
@@ -266,7 +274,7 @@ object Europeana:
   ): Either[Problem, MediaItem] =
     val c = json.cursor
     if c.bool("success").contains(false) then
-      Left(Problem.Unclassified(Legacy.Text(List(c.str("error"), c.str("message")).flatten.distinct.mkString(": "))))
+      Left(MediaPlugin.said(Name, Problem.Plugin.Claim.Failed, c.errorOf.getOrElse("the record failed")))
     else
       val obj = c.downField("object")
       val aggs = obj.downField("aggregations").focus.flatMap(_.asArray).toList.flatten.map(_.cursor)
@@ -281,8 +289,8 @@ object Europeana:
           .flatMap(_.langValues(Field("dcType")))
           .map(Exclusions.Types(_))
       val firstAggregation: Either[Problem, Cursor] = excludedType(types, ex) match
-        case Some(t) => Left(Problem.Unclassified(Legacy.Text(s"an excluded type (${t.value})")))
-        case None    => aggs.headOption.toRight(Problem.Unclassified(Legacy.Text("no aggregation on the record")))
+        case Some(t) => Left(MediaPlugin.said(Name, Problem.Plugin.Claim.Rejected, s"an excluded type ($t)"))
+        case None    => aggs.headOption.toRight(MediaPlugin.missing("aggregations"))
       firstAggregation.flatMap { agg =>
         val shownBy = agg.str("edmIsShownBy").orElse(agg.langValues(Field("edmIsShownBy")).headOption)
         val resource = agg
@@ -300,11 +308,16 @@ object Europeana:
         rec.rights.flatMap { r =>
           val searched = licences.readUrl(LicenceReader.ReadUrlUrl(r.licence.value))
           stated.map(u => licences.readUrl(LicenceReader.ReadUrlUrl(u))) match
-            case None => Left(Problem.Unclassified(Legacy.Text("no licence on the full record")))
+            case None => Left(MediaPlugin.rejected(Name, s"${rec.key}", Problem.Plugin.Refusal.NoLicence))
             case Some(l) if l.id != searched.id =>
-              Left(Problem.Unclassified(Legacy.Text(s"the full record's licence (${
-                  if l.id.value.isEmpty then "unreadable" else l.id.value
-                }) differs from the search's (${searched.id.value})")))
+              Left(
+                MediaPlugin.said(
+                  Name,
+                  Problem.Plugin.Claim.Rejected,
+                  s"the full record's licence (${if l.id.value.isEmpty then "unreadable" else l.id.value}) differs " +
+                    s"from the search's (${searched.id.value})"
+                )
+              )
             case Some(_) => Right(rec.copy(originalUrl = shownBy.map(MediaItem.OriginalUrl(_)).orElse(rec.originalUrl)))
         }
       }

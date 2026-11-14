@@ -1,7 +1,8 @@
 package com.histmersion
 package pluginhost
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
+import com.histmersion.util.problem.Text.sentences
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -32,7 +33,12 @@ class HostCollectionSuite extends munit.FunSuite:
       FetchedFile(FetchedFile.Source("t"), None, FetchedFile.Bytes(Array[Byte](1)), FetchedFile.Extension("pdf"))
     )
     override def add(metadata: CollectionMetadata, file: FetchedFile) = Right(CollectionId("written"))
-    override def readOnlyReason = Problem.Unclassified(Legacy.Text("the shelf is full"))
+    override def readOnlyReason =
+      Problem.Plugin.Said(
+        Problem.Plugin.Id("zq-shelf"),
+        Problem.Plugin.Claim.Rejected,
+        External.PluginSaid("the shelf is full")
+      )
 
   final private case class NoSettings() derives ConfigReader
 
@@ -51,7 +57,13 @@ class HostCollectionSuite extends munit.FunSuite:
         () =>
           new Plugin.Http {
             def get(u: Plugin.Http.Url, h: Map[Header.Name, Header.Value]) =
-              Left(Problem.Unclassified(Legacy.Text("offline")))
+              Left(
+                Problem.Upstream.Unreachable.here(
+                  Problem.Upstream.Name("x"),
+                  Problem.Upstream.Url("https://x.example"),
+                  External.Reported("offline")
+                )
+              )
           },
         ConfigFactory.empty,
         (_, _, _) => ()
@@ -67,7 +79,9 @@ class HostCollectionSuite extends munit.FunSuite:
   test("Histmersion's own collection names are kept for the first-party plugins"):
     val third = build(ShelfPlugin(Plugin.Info.Id("zq-shelf"), Registry.AddId("calibre")))
     assert(
-      third.report.plugins.head.error.exists(_.sentence.contains("Histmersion's own source collections")),
+      third.report.plugins.head.errors == List(
+        Problem.Conflict.AlreadyExists(Problem.TypeName.named[SourceCollection], Problem.Raw("calibre"))
+      ),
       third.report
     )
     val first = build(
@@ -87,10 +101,17 @@ class HostCollectionSuite extends munit.FunSuite:
         ),
         FetchedFile(FetchedFile.Source("t"), None, FetchedFile.Bytes(Array[Byte](1)), FetchedFile.Extension("pdf"))
       ).left
-        .map(_.sentence),
-      Left("Shelf is read-only here: the shelf is full")
+        .map(_.sentences),
+      Left(Vector("zq-shelf (rejected): the shelf is full"))
     )
-    assert(c.item(CollectionId("boom")).left.exists(_.sentence.contains("source collection 'shelf' failed")))
+    assert(
+      c.item(CollectionId("boom"))
+        .left
+        .exists(_.exists {
+          case Problem.Internal.Unexpected(_, where, _, _) => where == Problem.Where("source collection shelf")
+          case _                                           => false
+        })
+    )
     assertEquals(c.search(CollectionQuery(None)).map(_.size), Right(1))
     assert(
       c.updateAll(Nil, apply = SourceCollection.UpdateAllApply(false)).isLeft,

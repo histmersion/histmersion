@@ -6,7 +6,8 @@
     ],
     "description" : "archive.org's public texts (lending-only items are refused)",
     "name" : "archive-org",
-    "problem" : null,
+    "problems" : [
+    ],
     "reachable" : true,
     "title" : "archive.org"
   },
@@ -18,7 +19,8 @@
     ],
     "description" : "The Calibre library at TMP/calibre-library: read with calibredb (sqlite3 while the GUI holds it), written back with calibredb",
     "name" : "calibre",
-    "problem" : null,
+    "problems" : [
+    ],
     "reachable" : true,
     "title" : "Calibre"
   }
@@ -32,7 +34,8 @@
   ],
   "description" : "The Calibre library at TMP/calibre-library: read with calibredb (sqlite3 while the GUI holds it), written back with calibredb",
   "name" : "calibre",
-  "problem" : null,
+  "problems" : [
+  ],
   "reachable" : true,
   "title" : "Calibre"
 }
@@ -453,7 +456,7 @@
 == calibre push zqa_upload
 400 {
   "code" : null,
-  "message" : "empty or Unknown author — fix the metadata first; an untitled / Unknown-Author entry is unfindable and must not be created"
+  "message" : "author is required"
 }
 == calibre push zqa_nodoi (no original)
 400 {

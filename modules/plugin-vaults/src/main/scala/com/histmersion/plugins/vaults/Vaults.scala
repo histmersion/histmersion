@@ -1,6 +1,6 @@
 package com.histmersion
 package plugins.vaults
-import com.histmersion.util.problem.{External, Problem}
+import com.histmersion.util.problem.{External, Problem, Problems}
 import Subprocess.{code, firstLine}
 
 import scala.annotation.tailrec
@@ -48,8 +48,8 @@ object Vaults:
   private[vaults] def optional(
       s: Option[Secret],
       ctx: Plugin.Context
-  ): Either[Problem, Option[Secret.Resolved]] =
-    s.fold[Either[Problem, Option[Secret.Resolved]]](Right(None))(secret => ctx.secret(secret).map(Some(_)))
+  ): Either[Problems, Option[Secret.Resolved]] =
+    s.fold[Either[Problems, Option[Secret.Resolved]]](Right(None))(secret => ctx.secret(secret).map(Some(_)))
 
   /** Pure: `~/x` against HOME. */
   private[vaults] def expand(p: Path, home: Option[EnvVar.Value]): Path =
@@ -61,7 +61,7 @@ object Vaults:
       ref: Secret.Vault.ResolveRef,
       r: Either[Problem, Subprocess.Result],
       classify: String => Option[Problem]
-  ): Either[Problem, Secret.Resolved] =
+  ): Either[Problems, Secret.Resolved] =
     r.flatMap { res =>
       if res.exit.value == 0 then
         val v = Subprocess.value(res.out).value

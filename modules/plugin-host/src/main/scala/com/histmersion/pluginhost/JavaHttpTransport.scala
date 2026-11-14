@@ -1,7 +1,7 @@
 package com.histmersion
 package pluginhost
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 import com.histmersion.plugin.Plugin
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
@@ -51,7 +51,12 @@ final class JavaHttpTransport(
       .toEither
       .left
       .map(e =>
-        Problem.Unclassified(Legacy.Text(s"${url.value} unreachable: ${e.getClass.getSimpleName}: ${e.getMessage}"))
+        Problem.Upstream.Unreachable.here(
+          Problem.Upstream
+            .Name(scala.util.Try(URI.create(url.value).getHost).toOption.flatMap(Option(_)).getOrElse(s"$url")),
+          Problem.Upstream.Url(s"$url"),
+          External.Reported.of(e)
+        )
       )
 
 object JavaHttpTransport:

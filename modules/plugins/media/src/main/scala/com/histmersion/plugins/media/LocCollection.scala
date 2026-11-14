@@ -4,7 +4,7 @@ import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.JsonCodec.given
 import hearth.kindlings.jsoniterjson.Json
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.plugin.*
 
@@ -55,6 +55,9 @@ final class LocCollection(conf: CollectionSettings, thumbPx: LocCollection.Thumb
       )
 
 object LocCollection:
+
+  /** The plugin's id: what its problems name. */
+  val Name = "media-loc"
   type Date = Date.T
   object Date extends Newtype[String, Pure]
 
@@ -84,7 +87,7 @@ object LocCollection:
   def results(json: Json): Either[Problem, List[MediaItem.Key]] =
     val c = json.cursor
     c.downField("results").focus.flatMap(_.asArray) match
-      case None     => Left(Problem.Unclassified(Legacy.Text("no results in the answer")))
+      case None     => Left(MediaPlugin.missing("results"))
       case Some(rs) =>
         Right(rs.toList.flatMap { r =>
           val h = r.cursor
@@ -109,7 +112,7 @@ object LocCollection:
       thumbPx: MediaSettings.ThumbPx
   ): Either[Problem, MediaItem] =
     val item = json.cursor.downField("item")
-    if item.focus.isEmpty then Left(Problem.Unclassified(Legacy.Text("no item in the answer")))
+    if item.focus.isEmpty then Left(MediaPlugin.missing("item"))
     else
       val c = item
       val id = c
@@ -117,7 +120,7 @@ object LocCollection:
         .flatMap(u => itemId(Plugin.Http.Url(u)))
         .orElse(c.str("url").flatMap(u => itemId(Plugin.Http.Url(u))))
         .orElse(c.str("library_of_congress_control_number").map(MediaItem.Key(_)))
-      id.toRight(Problem.Unclassified(Legacy.Text("no item id"))).map { key =>
+      id.toRight(MediaPlugin.missing("id", "item")).map { key =>
         val title = c.str("title").getOrElse(key.value)
         val advisory = (c.strs("rights_advisory") ++ c.strs("rights")).mkString(" ")
         val date = c.str("date").orElse(c.strs("dates").headOption)
@@ -150,11 +153,19 @@ object LocCollection:
         val original = files.sortBy(-_._2).headOption.map(_._1)
         val rights: Either[Problem, MediaRights] =
           if !advisory.toLowerCase(Locale.ROOT).contains(NoKnown) then
-            Left(Problem.Unclassified(Legacy.Text(if advisory.isEmpty then "no rights statement"
-            else "rights not \"No known restrictions\"")))
-          else if period.isEmpty then Left(Problem.Unclassified(Legacy.Text("no date on the map")))
+            Left(
+              MediaPlugin.rejected(
+                Name,
+                s"$key",
+                if advisory.isEmpty then Problem.Plugin.Refusal.NoLicence else Problem.Plugin.Refusal.Restricted
+              )
+            )
+          else if period.isEmpty then Left(MediaPlugin.rejected(Name, s"$key", Problem.Plugin.Refusal.NoDate))
           else if period.exists(_.end.value > maxYear.value) then
-            Left(Problem.Unclassified(Legacy.Text(s"made after ${maxYear.value} (may be in copyright)")))
+            Left(
+              MediaPlugin
+                .said(Name, Problem.Plugin.Claim.Rejected, s"made after ${maxYear.value} (may be in copyright)")
+            )
           else
             Right(
               MediaRights.publicDomain(

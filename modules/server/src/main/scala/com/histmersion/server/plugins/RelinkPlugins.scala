@@ -159,6 +159,10 @@ object RelinkPlugins:
 
   def sha256(p: Path): Sha256 = Sha256(digestHex(p))
 
+  /** The jar `jar`'s plugins could not even be listed: why, as the plugin host words it. */
+  private def jarFailed(jar: Path, e: Throwable): String =
+    Problem.Plugin.Load(Problem.Plugin.Id(s"${jar.getFileName}"), PluginHost.failure(e)).sentence
+
   private def kitSha256(p: Path): com.histmersion.Sha256 = com.histmersion.Sha256.applyUnsafe(digestHex(p))
 
   private def digestHex(p: Path): String =
@@ -192,12 +196,14 @@ object RelinkPlugins:
             instance.flatMap(PluginHost.described) match
               case Right(p) => dryRun(p)
               case Left(e)  =>
-                unloadable(s"${prov.`type`().getName}: ${PluginHost.failure(e).sentence}")
+                unloadable(
+                  Problem.Plugin.Load(Problem.Plugin.Id(s"${prov.`type`().getName}"), PluginHost.failure(e)).sentence
+                )
           }
       catch
         case e: java.util.ServiceConfigurationError =>
-          List(unloadable(PluginHost.failure(e).sentence))
-        case e: LinkageError => List(unloadable(PluginHost.failure(e).sentence))
+          List(unloadable(jarFailed(abs, e)))
+        case e: LinkageError => List(unloadable(jarFailed(abs, e)))
     PluginJar(PluginJar.File(abs.getFileName.toString), sha256(abs), plugins)
 
   private def unloadable(error: String): PluginDescription =
@@ -249,7 +255,7 @@ object RelinkPlugins:
       st.map(_.provides).getOrElse(Nil),
       access,
       st.filter(s => s.state == PluginState.Failed.wire || s.state == PluginState.Refused.wire)
-        .flatMap(_.error)
+        .flatMap(_.errors.headOption)
     )
 
   // ── check ─────────────────────────────────────────────────────────────────────────────────────

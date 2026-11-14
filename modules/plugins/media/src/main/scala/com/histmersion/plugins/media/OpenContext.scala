@@ -5,7 +5,7 @@ import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.JsonCodec.given
 import com.histmersion.util.json.Cursor
 import hearth.kindlings.jsoniterjson.Json
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.plugin.*
 
@@ -21,6 +21,9 @@ import io.github.iltotore.iron.constraint.any.Pure
   * whose subject is human remains, is not shown whatever its licence. Pure.
   */
 object OpenContext:
+
+  /** The plugin's id: what its problems name. */
+  val Name = "media-opencontext"
   type Cite = Cite.T
   object Cite extends Newtype[String, Pure]
   type ContextLabel = ContextLabel.T
@@ -85,9 +88,9 @@ object OpenContext:
       case None if c.long("totalResults").isDefined => Right(Nil)
       case None                                     =>
         Left(
-          Problem.Unclassified(
-            Legacy.Text(c.str("error").orElse(c.str("message")).getOrElse("no results in the answer"))
-          )
+          c.str("error")
+            .orElse(c.str("message"))
+            .fold(MediaPlugin.missing("results"))(MediaPlugin.said(Name, Problem.Plugin.Claim.Failed, _))
         )
 
   /** Pure: one search record. Its rights are its own licence (or why it has none). */
@@ -96,7 +99,7 @@ object OpenContext:
     c.str("uri")
       .flatMap(u => uuidOf(Plugin.Http.Url(u)))
       .orElse(c.str("href").flatMap(u => uuidOf(Plugin.Http.Url(u))))
-      .toRight(Problem.Unclassified(Legacy.Text("no media uri")))
+      .toRight(MediaPlugin.missing("media"))
       .map { uuid =>
         val title = c.str("label").getOrElse(uuid.value)
         val context = c.str("context label").getOrElse("")
@@ -108,11 +111,18 @@ object OpenContext:
         val licUrl = c.strs("License [URI]").headOption
         val licLabel = c.strs("License").headOption.getOrElse("")
         val rights: Either[Problem, MediaRights] = licUrl match
-          case None    => Left(Problem.Unclassified(Legacy.Text("no licence on the record")))
+          case None    => Left(MediaPlugin.rejected(Name, s"$uuid", Problem.Plugin.Refusal.NoLicence))
           case Some(u) =>
             val lic = licences.readUrl(LicenceReader.ReadUrlUrl(u))
             if lic.family.value == Licence.Read.Unknown then
-              Left(Problem.Unclassified(Legacy.Text(s"licence not readable ($u)")))
+              Left(
+                Problem.Invalid.Unknown(
+                  Problem.TypeName.named[Licence],
+                  Problem.Raw(u),
+                  Vector.empty,
+                  Vector(Problem.Field(s"$uuid"))
+                )
+              )
             else
               Right(
                 MediaRights(
@@ -257,24 +267,27 @@ object OpenContext:
       .toList
       .flatten
       .flatMap(l => l.cursor.str("label"))
-    if !c.str("category").forall(_ == "oc-gen:image") then Left(Problem.Unclassified(Legacy.Text("not an image")))
+    if !c.str("category").forall(_ == "oc-gen:image") then
+      Left(MediaPlugin.rejected(Name, s"${rec.key}", Problem.Plugin.Refusal.NoImage))
     else if subjects.exists(_.toLowerCase(Locale.ROOT).contains(HumanRemains)) then
-      Left(Problem.Unclassified(Legacy.Text(Withheld)))
+      Left(MediaPlugin.said(Name, Problem.Plugin.Claim.Rejected, Withheld))
     else
       rec.rights.flatMap { r =>
         val searched = licences.readUrl(LicenceReader.ReadUrlUrl(r.licence.value))
         stated.headOption.map(u => licences.readUrl(LicenceReader.ReadUrlUrl(u))) match
-          case None                           => Left(Problem.Unclassified(Legacy.Text("no licence on the media item")))
+          case None => Left(MediaPlugin.rejected(Name, s"${rec.key}", Problem.Plugin.Refusal.NoLicence))
           case Some(l) if l.id != searched.id =>
             Left(
-              Problem.Unclassified(
-                Legacy.Text(s"the media item's licence (${l.id}) differs from the search's (${searched.id})")
+              MediaPlugin.said(
+                Name,
+                Problem.Plugin.Claim.Rejected,
+                s"the media item's licence (${l.id}) differs from the search's (${searched.id})"
               )
             )
           case Some(_) =>
             file("oc-gen:preview")
               .orElse(file("oc-gen:thumbnail"))
-              .toRight(Problem.Unclassified(Legacy.Text("no preview file on the media item")))
+              .toRight(MediaPlugin.missing("oc-gen:preview", s"${rec.key}"))
               .map { preview =>
                 rec.copy(
                   imageUrl = Some(MediaItem.ImageUrl(preview)),

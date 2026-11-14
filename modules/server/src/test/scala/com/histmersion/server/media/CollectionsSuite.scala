@@ -234,7 +234,7 @@ class CollectionsSuite extends munit.FunSuite:
     )
     assertEquals(
       r.rejected.map(_.key.value).sorted,
-      List("names another place on the map", "not Open Access (isPublicDomain is false)")
+      List("media-met did not take it: restricted", "names another place on the map")
     )
     assertEquals(
       r.byLicence,
@@ -333,7 +333,7 @@ class CollectionsSuite extends munit.FunSuite:
       List(("108896", "place_of_origin = Cyprus; 500–401 BCE within 1200–300 BCE"))
     )
     assert(dry.rejected.exists(_.key.value == "its dates do not overlap the place's"), dry.rejected.toString)
-    assert(dry.rejected.exists(_.key.value.startsWith("not public domain")), dry.rejected.toString)
+    assert(dry.rejected.exists(_.key.value == "media-aic did not take it: restricted"), dry.rejected.toString)
     val r = run(FakeMediaHttp.builtin(Aic), aic(), List(target(cyprus)), dryRun = DryOff, store, conv)
     assertEquals(r.stored, 1)
     val a = store.saved(ProviderAsset.Key("108896"))._2
@@ -366,7 +366,7 @@ class CollectionsSuite extends munit.FunSuite:
     }
     val store = CollStore(facts, named)
     val r = run(FakeMediaHttp.builtin(Loc), http, List(target(mycenae)), dryRun = DryOff, store)
-    assertEquals(r.rejected.map(_.key), List("made after 1928 (may be in copyright)"))
+    assertEquals(r.rejected.map(_.key), List("media-loc (rejected): made after 1928 (may be in copyright)"))
     assertEquals(
       store.links.toList.map(l => (l._3, l._4, l._6)),
       List(("pleiades_570491", MediaRole.Map, Some("location = mycenae; map of 1880–1880 CE")))

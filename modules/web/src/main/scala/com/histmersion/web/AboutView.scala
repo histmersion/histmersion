@@ -175,7 +175,7 @@ object AboutView:
             Some(s"v${p.version}"),
             Option.when(p.provides.nonEmpty)(p.provides.mkString(", ")),
             Option.when(p.settings.nonEmpty)(p.settings.map(s => s"${s.key} = ${s.value}").mkString(", ")),
-            p.error.map(_.sentence),
+            Option.when(p.errors.nonEmpty)(p.errors.map(_.sentence).mkString("; ")),
             Option.when(p.warnings.nonEmpty)(p.warnings.mkString("; "))
           ).flatten.mkString(" · ")
           Row(

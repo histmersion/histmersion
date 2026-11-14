@@ -1,7 +1,7 @@
 package com.histmersion
 package plugin.testkit.internal
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.plugin.*
 import hearth.kindlings.sconfigderivation.ConfigReader
 
@@ -14,7 +14,7 @@ final private[testkit] class TestVaults(
   val info = Plugin.Info(id, Plugin.Info.Version("0"), Plugin.Info.SpiVersion(Spi.Version))
   override given configReader: ConfigReader[Unit] = new ConfigReader[Unit]:
     def from(v: org.ekrich.config.ConfigValue) = Right(())
-  def register(config: Unit, ctx: Plugin.Context): Either[Problem, Unit] =
+  def register(config: Unit, ctx: Plugin.Context): Either[Problems, Unit] =
     values.toList
       .foldLeft[Either[Problem, Unit]](Right(())) { case (acc, (vault, refs)) =>
         acc.flatMap(_ =>
@@ -25,7 +25,10 @@ final private[testkit] class TestVaults(
               def resolve(ref: Secret.Vault.ResolveRef) =
                 refs
                   .get(Secret.Ref.Vault.Ref(ref.value))
-                  .toRight(Problem.Unclassified(Legacy.Text(s"the test gives no secret ${vault.value}:${ref.value}")))
+                  .toRight(
+                    Problem.Plugin
+                      .Vault(Problem.Plugin.Id(s"$vault"), Problem.Plugin.Retrieval.Absent(Problem.Raw(s"$ref")))
+                  )
           )
         )
       }

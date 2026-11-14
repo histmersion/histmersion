@@ -1,6 +1,6 @@
 package com.histmersion
 package plugins.ai
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 
 import com.histmersion.plugin.*
 import io.github.iltotore.iron.constraint.any.Pure
@@ -29,7 +29,10 @@ final class AnthropicProvider(settings: ProviderSettings) extends AiProvider:
         Either.cond(
           settings.apiKey.value.nonEmpty,
           (),
-          Problem.Unclassified(Legacy.Text("no Anthropic API key — set ANTHROPIC_API_KEY in the server's environment"))
+          Problem.Config.Setting(
+            Problem.SettingKey("histmersion.agents.providers.anthropic.api-key"),
+            Problem.Config.Fault.Unset(Problem.SettingKey("ANTHROPIC_API_KEY"))
+          )
         )
       )
 
@@ -50,6 +53,8 @@ final class AnthropicProvider(settings: ProviderSettings) extends AiProvider:
         AiHttp.TimeoutSeconds(math.max(1, settings.timeoutSeconds.value))
       )
       turn <- AnthropicAnswer(
+        Problem.Upstream.Name("anthropic"),
+        Problem.Upstream.Url(s"$url"),
         AnthropicAnswer.Status(answer.status.value),
         AnthropicAnswer.Body(answer.body.value)
       ).turn
@@ -86,8 +91,10 @@ object AnthropicProvider:
     (!WithoutStructuredOutput(WithoutStructuredOutputValue((model).value)))
 
   def noStructuredOutput(model: AiTurn.Request.Model): Problem =
-    Problem.Unclassified(
-      Legacy.Text(
+    Problem.Plugin.Said(
+      Problem.Plugin.Id("ai-http"),
+      Problem.Plugin.Claim.Unavailable,
+      External.PluginSaid.of(
         s"UnsupportedModelForStructuredOutputException: Model '${model.value}' does not support structured output. " +
           "Structured output is only supported by Claude 4.1+ models (e.g., claude-sonnet-4-5, claude-opus-4-1-20250805)."
       )

@@ -1,7 +1,7 @@
 package com.histmersion
 package plugin
 
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.util.problem.{External, Problem}
 
@@ -61,7 +61,7 @@ class SourceCollectionSpiSuite extends munit.FunSuite:
       ((EarlyContext.sourceCollections
         .add(Registry.AddId("shelf"), Shelf))
         .left
-        .map(refactorError3 => (refactorError3).sentence): Either[String, Unit]),
+        .map(refactorError3 => refactorError3.sentences.mkString("; ")): Either[String, Unit]),
       Left("this server has no source collections")
     )
 
@@ -89,14 +89,17 @@ class SourceCollectionSpiSuite extends munit.FunSuite:
       FetchedFile(FetchedFile.Source("test"), None, FetchedFile.Bytes(Array[Byte](1)), FetchedFile.Extension("pdf"))
     val id = CollectionId("b1")
     assertEquals(
-      ((Shelf.add(meta, file)).left.map(refactorError => (refactorError).sentence): Either[String, CollectionId]),
+      ((Shelf
+        .add(meta, file))
+        .left
+        .map(refactorError => refactorError.sentences.mkString("; ")): Either[String, CollectionId]),
       Left("the collection is read-only")
     )
     assertEquals(
       (((Shelf
         .replace(id, SourceCollection.ReplaceKey("k"), file))
         .left
-        .map(refactorError4 => (refactorError4).sentence))
+        .map(refactorError4 => refactorError4.sentences.mkString("; ")))
         .map(refactorValue2 => (refactorValue2).value): Either[String, String]),
       Left("the collection is read-only")
     )
@@ -104,7 +107,7 @@ class SourceCollectionSpiSuite extends munit.FunSuite:
       ((Shelf
         .update(id, meta))
         .left
-        .map(refactorError2 => (refactorError2).sentence): Either[String, List[CollectionChange]]),
+        .map(refactorError2 => refactorError2.sentences.mkString("; ")): Either[String, List[CollectionChange]]),
       Left("the collection is read-only")
     )
     assertEquals(

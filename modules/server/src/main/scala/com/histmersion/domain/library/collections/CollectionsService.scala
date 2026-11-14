@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.collections
-import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.{Legacy, Problem, Problems}
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import hearth.kindlings.optics.syntax.*
 
@@ -183,7 +183,7 @@ object CollectionsService:
     private def fail(message: String): Api.Error = Api.Error(Problem.Unclassified(Legacy.Text(message)))
     private def usage(message: String): Api.Error =
       Api.Error(Problem.Unclassified(Legacy.Text(message)), Some(Api.Error.Code(CollectionsApi.Usage)))
-    private def failed(problem: Problem): Api.Error = fail(problem.sentence)
+    private def failed(problems: Problems): Api.Error = fail(problems.sentences.mkString("; "))
 
     private def apiKey(ck: com.histmersion.domain.library.Citekey): Citekey = Citekey(ck.value)
 
@@ -223,7 +223,7 @@ object CollectionsService:
           .filter(c.can)
           .map(k => CollectionInfo.Capabilities(k.toString.toLowerCase(java.util.Locale.ROOT))),
         CollectionInfo.Reachable(reach.isRight),
-        reach.left.toOption
+        reach.left.toOption.toList.flatMap(_.toVector)
       )
 
     def collections(): List[CollectionInfo] =
@@ -404,7 +404,10 @@ object CollectionsService:
     ): CollectionCover =
       c.cover(item) match
         case Left(why) =>
-          CollectionCover(CollectionCover.Line(s"$ck: ${why.sentence}"), warning = CollectionCover.Warning(true))
+          CollectionCover(
+            CollectionCover.Line(s"$ck: ${why.sentences.mkString("; ")}"),
+            warning = CollectionCover.Warning(true)
+          )
         case Right(Some(fc)) =>
           library.putCover(
             SourceCoverParams(
@@ -614,7 +617,7 @@ object CollectionsService:
         e.keys.map(k => CollectionUpdateRow.Citekeys(k.value)),
         CollectionUpdateRow.State(state),
         cs,
-        reason
+        reason.toList.flatMap(_.toVector)
       )
 
     def set(caller: Caller, name: CollectionName, req: CollectionSetRequest): Either[Api.Error, CollectionSetDone] =

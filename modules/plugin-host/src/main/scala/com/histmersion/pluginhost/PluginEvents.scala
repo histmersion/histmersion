@@ -1,7 +1,7 @@
 package com.histmersion
 package pluginhost
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{NonEmptyVector, Problem}
 import com.histmersion.util.problem.Text.sentence
 import hearth.kindlings.optics.syntax.*
 
@@ -211,11 +211,10 @@ object PluginEvents:
 
   /** A plugin's answer, or what it threw as a failure of that call. */
   def guard[A](a: => Either[Problem, A]): Either[Problem, A] =
-    try Option(a).getOrElse(Left(Problem.Unclassified(Legacy.Text("the plugin answered nothing"))))
+    try Option(a).getOrElse(Left(PluginMedia.answeredNothing))
     catch
       case e: InterruptedException => throw e
-      case NonFatal(e)             =>
-        Left(Problem.Unclassified(Legacy.Text(s"the plugin failed: ${e.getClass.getSimpleName}: ${e.getMessage}")))
+      case NonFatal(e)             => Left(PluginMedia.threw(e))
 
   /** Pure: the record a plugin's event becomes under catalogue `provider`, or why it is refused: no id or label, a
     * historicity that is none of the host's, a year a `Year` refuses or a dating that runs backwards (named with the
@@ -227,14 +226,8 @@ object PluginEvents:
     try checked(provider, e)
     catch
       case NonFatal(x) =>
-        Left(
-          Problem.Unclassified(
-            Legacy.Text(
-              s"${safe(e.id.value).getOrElse("a record")}: catalogue '${provider.value}' handed over a record the host cannot read " +
-                s"(${x.getClass.getSimpleName}: ${x.getMessage}) — is the plugin built against plugin SPI ${Spi.Version}?"
-            )
-          )
-        )
+        val record = safe(e.id.value).fold("a record")(id => s"record $id")
+        Left(Problem.from(x, Problem.Where(s"reading $record of catalogue $provider"), Problem.Internal.Id.mint()))
 
   private def checked(provider: CatalogRecord.Provider, e: CatalogueEvent): Either[Problem, Kept[CatalogRecord]] =
     val id = Option(e.id).map(_.value).getOrElse("").trim
@@ -243,7 +236,7 @@ object PluginEvents:
       SpiValues
         .optional(a)(f)
         .left
-        .map(why => Problem.Unclassified(Legacy.Text(s"$id: catalogue '${provider.value}': ${why.sentence}")))
+        .map(_.within(Problem.Field(id)).within(Problem.Field(s"$provider")))
     def left(why: String) = Kept.Warnings(s"$id: catalogue '${provider.value}': $why, left out")
     val (lat0, latWhy) = SpiValues.kept(e.lat)(SpiValues.latitudeOf)
     val (lon0, lonWhy) = SpiValues.kept(e.lon)(SpiValues.longitudeOf)
@@ -252,14 +245,16 @@ object PluginEvents:
     val (lat, lon) = if half.isDefined then (None, None) else (lat0, lon0)
     val warnings =
       List(latWhy.map(_.sentence), lonWhy.map(_.sentence), half, wikidataWhy.map(_.sentence)).flatten.map(left)
-    if id.isEmpty then Left(Problem.Unclassified(Legacy.Text("a record without an id")))
-    else if label.isEmpty then Left(Problem.Unclassified(Legacy.Text(s"$id: no label")))
+    val at = Vector(Problem.Field(s"$provider"), Problem.Field(id))
+    if id.isEmpty then Left(Problem.Invalid.Missing(Problem.Field("id"), Vector(Problem.Field(s"$provider"))))
+    else if label.isEmpty then Left(Problem.Invalid.Missing(Problem.Field("label"), at))
     else if !Historicity.all.exists(_.value == e.historicity.value) then
       Left(
-        Problem.Unclassified(
-          Legacy.Text(
-            s"$id: historicity '${e.historicity.value}' is none of ${Historicity.all.map(_.value).mkString(", ")}"
-          )
+        Problem.Invalid.Unknown(
+          Problem.TypeName.of(CatalogueEvent.Historicity),
+          Problem.Raw(s"${e.historicity}"),
+          Historicity.all.toVector.map(h => Problem.Raw(s"$h")),
+          at
         )
       )
     else
@@ -273,7 +268,16 @@ object PluginEvents:
         _ <- Either.cond(
           !points.zip(points.drop(1)).exists((a, b) => a > b),
           (),
-          Problem.Unclassified(Legacy.Text(s"$id: its dating runs backwards"))
+          Problem.Invalid.Inconsistent(
+            NonEmptyVector.of(
+              Problem.Field("notBefore"),
+              Problem.Field("beginBy"),
+              Problem.Field("endFrom"),
+              Problem.Field("notAfter")
+            ),
+            Problem.Invalid.Exclusion.Ordered,
+            at
+          )
         )
       yield
         def long(y: Option[com.histmersion.Year]) = y.map(v => com.histmersion.api.catalogue.Year(v.value.toLong))

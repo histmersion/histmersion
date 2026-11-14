@@ -1,6 +1,6 @@
 package com.histmersion
 package plugins.media
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.plugin.*
 import io.github.iltotore.iron.constraint.any.Pure
@@ -40,15 +40,16 @@ abstract class KeyedCollection(
 
   override def check: Either[Problem, Unit] =
     if !conf.enabled.value then
-      Left(Problem.Unclassified(Legacy.Text(s"${title.value} is switched off (${settings.value}.enabled = false)")))
+      Left(
+        Problem.Refused
+          .Disabled(Problem.Refused.Feature(s"$title"), Problem.SettingKey(s"histmersion.$settings.enabled"))
+      )
     else
       key
         .toRight(
-          Problem.Unclassified(
-            Legacy.Text(
-              s"${title.value} needs ${needs.value}: set histmersion.plugins.${plugin.value}.api-key to a secret " +
-                "reference (\"env:<NAME>\" or a vault's, e.g. \"keepassxc:<entry>#password\"); it was not asked"
-            )
+          Problem.Config.Setting(
+            Problem.SettingKey(s"histmersion.plugins.$plugin.api-key"),
+            Problem.Config.Fault.Empty
           )
         )
         .map(_ => ())

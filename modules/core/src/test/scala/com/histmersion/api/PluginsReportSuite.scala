@@ -2,7 +2,7 @@ package com.histmersion
 package api
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -55,10 +55,12 @@ class PluginsReportSuite extends munit.FunSuite:
     PluginState.Wire(PluginState.Failed.wire.value),
     warnings =
       List(PluginStatus.Warnings("histmersion.plugins.portal.token: a secret written into the config (value:***)")),
-    error = Some(
-      Problem.Unclassified(
-        Legacy.Text("histmersion.plugins.portal.token: environment variable PORTAL_TOKEN is not set")
-      )
+    errors = List(
+      Problem.Config.Setting(
+        Problem.SettingKey("histmersion.plugins.portal"),
+        Problem.Config.Fault.Unset(Problem.SettingKey("PORTAL_TOKEN"))
+      ),
+      Problem.Plugin.Vault(Problem.Plugin.Id("keepassxc"), Problem.Plugin.Retrieval.NoVault)
     )
   )
   private val alien = PluginStatus(
@@ -67,7 +69,10 @@ class PluginsReportSuite extends munit.FunSuite:
     PluginStatus.SpiVersion(0),
     enabled = PluginStatus.Enabled(false),
     PluginState.Wire(PluginState.Refused.wire.value),
-    error = Some(Problem.Unclassified(Legacy.Text("old: built for SPI 0, this host speaks 1")))
+    errors = List(
+      Problem.Plugin
+        .Load(Problem.Plugin.Id("old"), Problem.Plugin.Fault.SpiMismatch(Problem.Raw("0"), Problem.Raw("1")))
+    )
   )
 
   test("states have wire names and parse back"):
@@ -87,9 +92,14 @@ class PluginsReportSuite extends munit.FunSuite:
     assertEquals(PluginsMarkdown.line(off), "bitwarden 0.1.0 — disabled")
     assertEquals(
       PluginsMarkdown.line(broken),
-      "portal 2.0.0 — FAILED: histmersion.plugins.portal.token: environment variable PORTAL_TOKEN is not set"
+      "portal 2.0.0 — FAILED: histmersion.plugins.portal reads PORTAL_TOKEN, which is not set; secret vault " +
+        "keepassxc failed: no vault of that name is registered (enable the plugin that provides it)"
     )
-    assertEquals(PluginsMarkdown.line(alien), "old 0.0.1 — REFUSED: old: built for SPI 0, this host speaks 1")
+    assertEquals(
+      PluginsMarkdown.line(alien),
+      "old 0.0.1 — REFUSED: plugin old did not load: it was built against plugin SPI 0; this Histmersion speaks SPI 1 " +
+        "— rebuild the plugin against SPI 1"
+    )
 
   test("histmersion about lists the plugins and their warnings"):
     val md = AboutMarkdown.render(
@@ -195,7 +205,11 @@ class PluginsReportSuite extends munit.FunSuite:
 
   test("the report crosses the wire; an About or UiConfig from a server without plugins still decodes"):
     val r = PluginsReport(PluginsReport.SpiVersion(1), List(vault, broken), List(PluginsReport.Warnings("w")))
-    assertEquals(RawJson.decode[PluginsReport](r.asJson.noSpaces), Right(r))
+    // a problem inside a record crosses the wire as its sentence until the api's records carry the typed problem
+    val back = RawJson.decode[PluginsReport](r.asJson.noSpaces)
+    assertEquals(back.map(_.plugins.map(_.reasons)), Right(r.plugins.map(_.reasons)))
+    assertEquals(back.map(_.plugins.map(_.errors.size)), Right(List(0, 2)))
+    assertEquals(back.map(_.warnings), Right(r.warnings))
     val about = About(
       About.Name("histmersion"),
       BuildStamp(BuildStamp.Version("1")),

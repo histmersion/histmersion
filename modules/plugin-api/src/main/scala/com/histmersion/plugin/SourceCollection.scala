@@ -1,7 +1,7 @@
 package com.histmersion
 package plugin
 
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.{Problem, Problems}
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A collection of sources — a local Calibre library, archive.org's texts, a folder of PDFs — that the host searches
@@ -32,18 +32,19 @@ trait SourceCollection:
   def readOnlyReason: Problem = Problem.Refused.Policy(Problem.Refused.Rule.ReadOnly)
 
   /** Whether the collection can be reached from here: `Left` says what is missing (the library's folder, a permission
-    * the operating system has not granted, a mount). The host asks before it runs an operation and in its diagnostics.
+    * the operating system has not granted, a mount), every cause it found. The host asks before it runs an operation
+    * and in its diagnostics.
     */
-  def reach: Either[Problem, Unit] = Right(())
+  def reach: Either[Problems, Unit] = Right(())
 
   /** The items a search answers, in the collection's order. */
-  def search(query: CollectionQuery): Either[Problem, List[CollectionItem]]
+  def search(query: CollectionQuery): Either[Problems, List[CollectionItem]]
 
   /** One item by its id; `Right(None)` when the collection has no such item. */
-  def item(id: CollectionId): Either[Problem, Option[CollectionItem]]
+  def item(id: CollectionId): Either[Problems, Option[CollectionItem]]
 
   /** Whether `item`'s metadata is good enough to make a source of; `Left` says what to fix first. */
-  def admits(item: CollectionItem): Either[Problem, Unit] = Right(())
+  def admits(item: CollectionItem): Either[Problems, Unit] = Right(())
 
   /** The file of `item` an import takes: `format` when asked for and present, else the collection's own preference;
     * `Left` when the item has no file the host can convert. Reads nothing.
@@ -51,16 +52,16 @@ trait SourceCollection:
   def file(
       item: CollectionItem,
       format: Option[SourceCollection.FileFormat]
-  ): Either[Problem, CollectionFile]
+  ): Either[Problems, CollectionFile]
 
   /** The bytes of `file` of `item`. */
-  def original(item: CollectionItem, file: CollectionFile): Either[Problem, FetchedFile]
+  def original(item: CollectionItem, file: CollectionFile): Either[Problems, FetchedFile]
 
   /** The cover the collection keeps for `item`, when it keeps one; `Right(None)` when it has none. */
-  def cover(item: CollectionItem): Either[Problem, Option[FetchedFile]] = Right(None)
+  def cover(item: CollectionItem): Either[Problems, Option[FetchedFile]] = Right(None)
 
   /** Add `file` as a new item described by `metadata`; the new item's id. */
-  def add(metadata: CollectionMetadata, file: FetchedFile): Either[Problem, CollectionId] =
+  def add(metadata: CollectionMetadata, file: FetchedFile): Either[Problems, CollectionId] =
     Left(readOnlyReason)
 
   /** Replace the file of the same format in item `id` with `file` (the original of the host's source `key`), keeping
@@ -70,14 +71,14 @@ trait SourceCollection:
       id: CollectionId,
       key: SourceCollection.ReplaceKey,
       file: FetchedFile
-  ): Either[Problem, SourceCollection.FileFormat] =
+  ): Either[Problems, SourceCollection.FileFormat] =
     Left(readOnlyReason)
 
   /** Bring item `id` in line with `metadata`; the fields written (none when it already agrees). */
   def update(
       id: CollectionId,
       metadata: CollectionMetadata
-  ): Either[Problem, List[CollectionChange]] =
+  ): Either[Problems, List[CollectionChange]] =
     Left(readOnlyReason)
 
   /** Plan the update of every linked item at once (against one reading of the collection), and with `apply` write the
@@ -86,18 +87,18 @@ trait SourceCollection:
   def updateAll(
       links: List[CollectionLink],
       apply: SourceCollection.UpdateAllApply
-  ): Either[Problem, List[CollectionUpdateEntry]] =
+  ): Either[Problems, List[CollectionUpdateEntry]] =
     Left(readOnlyReason)
 
   /** Set named fields on item `id`, as `name -> value` pairs in the collection's own field names. */
   def set(
       id: CollectionId,
       fields: List[(SourceCollection.FieldName, SourceCollection.FieldValue)]
-  ): Either[Problem, Unit] =
+  ): Either[Problems, Unit] =
     Left(readOnlyReason)
 
   /** Compare every linked item with the host's record of it; the items that disagree, in id order. */
-  def audit(records: List[CollectionRecord]): Either[Problem, List[CollectionFinding]] =
+  def audit(records: List[CollectionRecord]): Either[Problems, List[CollectionFinding]] =
     Right(Nil)
 
 object SourceCollection:
