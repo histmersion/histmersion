@@ -23,9 +23,9 @@ class NewtypeParseSuite extends munit.FunSuite:
     assertEquals(Shelf.typeName.text, "com.histmersion.util.problem.NewtypeParseSuite.Shelf")
     assertEquals(Catalogue.Year.typeName.text, "com.histmersion.util.problem.NewtypeParseSuite.Catalogue.Year")
 
-  /** Hearth's name of `Interval.Closed[-5000, 3000]`: Iron's alias followed to what it stands for. */
+  /** Hearth's name of `Interval.Closed[-5000, 3000]`: Iron's aliases followed to what they stand for, applied. */
   private val ClosedYears =
-    "DescribedAs[([V >: scala.Nothing <: scala.Any] => DescribedAs[Greater[V] | StrictEqual[V], compileTime.+[\"Should be greater than or equal to \", V]])[-5000] & ([V >: scala.Nothing <: scala.Any] => DescribedAs[Less[V] | StrictEqual[V], compileTime.+[\"Should be less than or equal to \", V]])[3000], \"Should be included in [-5000, 3000]\"]"
+    "DescribedAs[DescribedAs[Greater[-5000] | StrictEqual[-5000], compileTime.+[\"Should be greater than or equal to \", -5000]] & DescribedAs[Less[3000] | StrictEqual[3000], compileTime.+[\"Should be less than or equal to \", 3000]], \"Should be included in [-5000, 3000]\"]"
 
   test("a newtype knows its Iron constraint by Hearth's name and by Iron's description"):
     assertEquals(Shelf.constraint, Newtype.Constraint("Match[\"[a-z]+\"]", "Should match [a-z]+"))
@@ -55,7 +55,7 @@ class NewtypeParseSuite extends munit.FunSuite:
             TypeName("com.histmersion.util.problem.NewtypeParseSuite.Catalogue.Year"),
             Constraint(
               Constraint.Name(
-                "DescribedAs[([V >: scala.Nothing <: scala.Any] => DescribedAs[Greater[V] | StrictEqual[V], compileTime.+[\"Should be greater than or equal to \", V]])[-5000] & ([V >: scala.Nothing <: scala.Any] => DescribedAs[Less[V] | StrictEqual[V], compileTime.+[\"Should be less than or equal to \", V]])[3000], \"Should be included in [-5000, 3000]\"]"
+                "DescribedAs[DescribedAs[Greater[-5000] | StrictEqual[-5000], compileTime.+[\"Should be greater than or equal to \", -5000]] & DescribedAs[Less[3000] | StrictEqual[3000], compileTime.+[\"Should be less than or equal to \", 3000]], \"Should be included in [-5000, 3000]\"]"
               ),
               Constraint.Description("Should be included in [-5000, 3000]")
             ),

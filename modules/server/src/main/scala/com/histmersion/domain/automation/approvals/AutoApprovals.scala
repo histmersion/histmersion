@@ -12,6 +12,8 @@ import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.*
 import com.histmersion.domain.AutopilotPolicy.{DraftFacts, GoalPlanFacts, PlannedFacts, Verdict}
 import com.histmersion.api.automation.Goal.Plans.DraftMode
+// the api's enum itself, not Agents' export of it: Chimney on Hearth 0.4.4 does not match its cases through the export
+import com.histmersion.api.automation.Approval.Kind as ApiApprovalKind
 import com.histmersion.api.automation.Managers.{Feed, ManagerEvent}
 import com.histmersion.api.automation.Queue.{QueueAdd, QueueItem}
 import com.histmersion.domain.automation.goals.FocusRepo
@@ -262,4 +264,4 @@ final class AutoApprovals(
   def config: AgentsConfig = cfg
   def slugExists(slug: ApprovalChecks.Slug): Boolean = Slug.option(slug.value).exists(agents.host.articleExists)
   def autoApprovedSince(kind: Approval.Kind, since: Instant): List[ApprovalInfo] = agents.approvalStore
-    .autoApprovedSince(io.scalaland.chimney.Transformer.derive[Approval.Kind, ApprovalKind].transform(kind), since)
+    .autoApprovedSince(io.scalaland.chimney.Transformer.derive[Approval.Kind, ApiApprovalKind].transform(kind), since)
