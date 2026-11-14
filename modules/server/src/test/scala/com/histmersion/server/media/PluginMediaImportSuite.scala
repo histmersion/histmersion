@@ -132,7 +132,7 @@ class PluginMediaImportSuite extends DbSuite:
               spi.MediaItem.Geography.Value("Zqpl Nowhere")
             ),
             Left(
-              Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text("a record the API could not describe")))
+              Problem.Unclassified(Legacy.Text("a record the API could not describe"))
             )
           )
         }

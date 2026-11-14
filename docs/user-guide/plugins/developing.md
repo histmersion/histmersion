@@ -333,8 +333,10 @@ under a licence compatible with the AGPL ([Legal notice](../legal.md)).
 - **Secrets are typed.** A credential field is a `Secret` (a reference: `env:NAME`, `<vault>:<ref>`,
   `value:…`). Its `toString` never shows a value. The host finds every `Secret` in your decoded config
   and resolves it before `register`.
-- **Failures are values.** Return `Left(message)`, `Fetch.Miss(why)`, `AiFailure.Error(…)`; the host
-  catches exceptions and reads them as failures, but do not rely on it.
+- **Failures are values.** Return `Left(problem)` or `Fetch.Miss(why)` with a case of the closed
+  `Problem` (`com.histmersion.util.problem`); a failed request of the host's `Http` or `AiHttp` is
+  already one (`Problem.Upstream.*`, with the URL and the status it answered). The host catches
+  exceptions and reads them as failures, but do not rely on it.
 
 ```mermaid
 flowchart LR
@@ -473,12 +475,12 @@ final class HelloAiPlugin extends Plugin:
 
 An `AiProvider` (`AiProvider.scala`) answers **one model call at a time**:
 
-- `turn(request: AiTurn.Request, http: AiHttp): Either[AiFailure, AiTurn]` — the request carries the
+- `turn(request: AiTurn.Request, http: AiHttp): Either[Problem, AiTurn]` — the request carries the
   model id, the system prompt, the conversation so far, the tools offered on this call, the JSON
   schema the final answer must match, and the output-token cap. The answer is text and/or tool calls,
   why it stopped, and token usage.
-- `AiFailure.LimitReached` tells the host that the plan behind the model hit its usage limit: the
-  host passes the model over and tries the chain's next one.
+- `Left(Problem.Upstream.Limited(name, until))` tells the host that the plan behind the model hit its
+  usage limit: the host passes the model over and tries the chain's next one.
 - `check(model)` (can this model run now? spends nothing), `models(http)` (a free listing for
   `agent doctor`), `doctor(online, http)` (its own checks), `capabilities` (tools, structured output),
   `spendsPersonalPlan` (refused while the server listens beyond loopback).

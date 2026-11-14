@@ -4,7 +4,7 @@ import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.JsonCodec.given
 import hearth.kindlings.jsoniterjson.Json
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 import com.histmersion.plugin.Plugin
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -15,13 +15,18 @@ final class CatalogueJson(http: Plugin.Http):
   def apply(url: Plugin.Http.Url): Either[Problem, Json] =
     http
       .get(url)
-      .left
-      .map(_.problem)
       .flatMap(b =>
         RawJson
           .parse(String(b.value, "UTF-8"))
           .left
-          .map(e => Problem.Unclassified(Legacy.Text(s"${CatalogueJson.host(url).value}: unparseable JSON ($e)")))
+          .map(e =>
+            Problem.Upstream.BadReply(
+              Problem.Upstream.Name(s"${CatalogueJson.host(url)}"),
+              Problem.Upstream.Url(s"$url"),
+              Problem.Upstream.Shape.Json,
+              External.Reported.of(s"$e")
+            )
+          )
       )
 
 object CatalogueJson:

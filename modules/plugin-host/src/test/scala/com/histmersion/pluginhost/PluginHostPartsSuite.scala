@@ -1,7 +1,7 @@
 package com.histmersion
 package pluginhost
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -15,7 +15,6 @@ import com.histmersion.plugin.EventCatalogue
 import com.histmersion.plugin.CataloguePage
 import com.histmersion.plugin.AiMessage
 import com.histmersion.plugin.AiProvider
-import com.histmersion.plugin.AiFailure
 import com.histmersion.domain.CoreQuota
 import com.histmersion.domain.HttpPolicy
 
@@ -73,7 +72,7 @@ class PluginHostPartsSuite extends munit.FunSuite:
 
   private val offline = new Plugin.Http:
     def get(url: Plugin.Http.Url, headers: Map[Header.Name, Header.Value]) = Left(
-      Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text("offline")))
+      Problem.Unclassified(Legacy.Text("offline"))
     )
 
   test("a part is read page by page until no next page, a repeat, a part done or a full run"):
@@ -126,15 +125,15 @@ class PluginHostPartsSuite extends munit.FunSuite:
     )
     assertEquals(
       PluginAi.turn(throwing, request, AiHttp.Offline),
-      Left(AiFailure.Error(Problem.Unclassified(Legacy.Text("IllegalStateException: boom"))))
+      Left(Problem.Unclassified(Legacy.Text("IllegalStateException: boom")))
     )
     assertEquals(
       PluginAi.turn(nulls, request, AiHttp.Offline),
-      Left(AiFailure.Error(Problem.Unclassified(Legacy.Text("the provider answered null"))))
+      Left(Problem.Unclassified(Legacy.Text("the provider answered null")))
     )
 
   /** Answers in turn, recording each request's headers. */
-  final private class Scripted(answers: Either[Plugin.Http.Failure, HttpAnswer]*) extends HttpTransport:
+  final private class Scripted(answers: Either[Problem, HttpAnswer]*) extends HttpTransport:
     private val left = scala.collection.mutable.Queue(answers*)
     val sent = List.newBuilder[Map[String, String]]
     def get(url: HttpTransport.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
@@ -181,28 +180,29 @@ class PluginHostPartsSuite extends munit.FunSuite:
         .bytes(HttpTransport.Url("https://x.example/b"))
     assert(
       got.left.exists {
-        case Plugin.Http.Failure.Status(code, why) =>
-          code == Plugin.HttpResponse.Status.Forbidden && why.sentence.contains("bot-protection challenge")
-        case _ => false
+        case Problem.Upstream.Challenged(_, _, code, _) => code == Problem.Upstream.Status.Forbidden
+        case _                                          => false
       },
       got.toString
     )
     val down = Scripted(
-      Left(Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text("x unreachable")))),
-      Left(Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text("x unreachable"))))
+      Left(Problem.Unclassified(Legacy.Text("x unreachable"))),
+      Left(Problem.Unclassified(Legacy.Text("x unreachable")))
     )
     assertEquals(
       PolicyHttp(HttpPolicy.UserAgent("ua"), down, tries = PolicyHttp.Tries(2), sleep = _ => (), log = quiet)
         .bytes(HttpTransport.Url("https://x.example/c")),
-      Left(Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text("x unreachable"))))
+      Left(Problem.Unclassified(Legacy.Text("x unreachable")))
     )
     val missing = Scripted(answer(HttpAnswer.Code(404), "no such work"))
     assertEquals(
       PolicyHttp(HttpPolicy.UserAgent("ua"), missing, log = quiet).bytes(HttpTransport.Url("https://x.example/d")),
       Left(
-        Plugin.Http.Failure.Status(
-          Plugin.HttpResponse.Status.NotFound,
-          Problem.Unclassified(Legacy.Text("https://x.example/d: HTTP 404 no such work"))
+        Problem.Upstream.Http(
+          Problem.Upstream.Name("x.example"),
+          Problem.Upstream.Url("https://x.example/d"),
+          Problem.Upstream.Status.NotFound,
+          External.ReplyExcerpt("no such work")
         )
       )
     )

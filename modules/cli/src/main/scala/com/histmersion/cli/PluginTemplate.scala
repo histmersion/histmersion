@@ -436,7 +436,7 @@ object PluginTemplate:
       |  file's name.
       |- `register` adds to the context's registries and returns `Right(())`, or `Left(why)`. A `Left` or an
       |  exception discards everything it added.
-      |- Failures are values (`Left`, `Fetch.Miss`, `AiFailure.Error`), never exceptions.
+      |- Failures are values (`Left` with a `Problem`, `Fetch.Miss`), never exceptions.
       |- Use `ctx.http` for every request; never open a socket of your own.
       |- A credential is a `Secret` field in the config (a reference such as `env:NAME`); never log a value.
       |- No mutable state shared between calls: the server may call a fetcher from several threads at once.

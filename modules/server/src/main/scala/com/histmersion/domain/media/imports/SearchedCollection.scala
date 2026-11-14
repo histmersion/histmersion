@@ -26,7 +26,7 @@ trait SearchedCollection:
   def search(
       fetch: Polite,
       place: PlaceFacts
-  ): Either[Plugin.Http.Failure, List[Either[Plugin.Http.Failure, MediaRecord]]]
+  ): Either[Problem, List[Either[Problem, MediaRecord]]]
 
   /** Why a record is tied to the place, or why not. */
   def matches(

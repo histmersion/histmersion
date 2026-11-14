@@ -55,6 +55,8 @@ object Answer:
       case _: Refused.Disabled       => StatusCode.Forbidden
       case _: Upstream.Http          => StatusCode.BadGateway
       case _: Upstream.Unreachable   => StatusCode.BadGateway
+      case _: Upstream.Challenged    => StatusCode.BadGateway
+      case _: Upstream.Limited       => StatusCode.TooManyRequests
       case _: Upstream.BadReply      => StatusCode.BadGateway
       case _: Upstream.Timeout       => StatusCode.GatewayTimeout
       case _: Io                     => StatusCode.InternalServerError
@@ -73,6 +75,7 @@ object Answer:
     /** When a refused request may be sent again: the end of a spent allowance, when it is known. */
     def retryAfter: Option[EpochMs] = problem match
       case Refused.Quota(_, _, _, until) => until
+      case Upstream.Limited(_, until)    => until
       case _                             => None
 
     /** The problem as the body lists it: its group, its case, its fields and its sentence. */

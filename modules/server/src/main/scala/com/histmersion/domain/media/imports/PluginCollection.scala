@@ -45,7 +45,7 @@ final class PluginCollection(
   def search(
       fetch: Polite,
       place: PlaceFacts
-  ): Either[Plugin.Http.Failure, List[Either[Plugin.Http.Failure, MediaRecord]]] =
+  ): Either[Problem, List[Either[Problem, MediaRecord]]] =
     PluginMedia
       .guardHttp(col.search(PluginCollection.place(place), PluginMedia.http(fetch)))
       .map(_.map(_.map { it =>

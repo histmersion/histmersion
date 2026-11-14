@@ -1,10 +1,11 @@
 package com.histmersion
 package plugins.gazetteers
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.JsonCodec.given
 import hearth.kindlings.jsoniterjson.JsonObject
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 
 import com.histmersion.plugin.*
 
@@ -28,9 +29,18 @@ trait DownloadedGazetteer extends GazetteerSource:
   /** The dataset's text: one request, answered 200, unpacked when the address names a zip. */
   def download(http: Plugin.Http): Either[Problem, DownloadedGazetteer.Text] =
     http.fetch(url) match
-      case Left(e) => Left(Problem.Unclassified(Legacy.Text(s"download failed: ${e.problem.legacyText}")))
+      case Left(e)                           => Left(e)
       case Right(r) if r.status.value != 200 =>
-        Left(Problem.Unclassified(Legacy.Text(s"HTTP ${r.status.value} from ${url.value}")))
+        Left(
+          Problem.Upstream.Http(
+            Problem.Upstream.Name(
+              s"${scala.util.Try(java.net.URI.create(s"$url").getHost).toOption.flatMap(Option(_)).getOrElse(s"$url")}"
+            ),
+            Problem.Upstream.Url(s"$url"),
+            r.status,
+            External.ReplyExcerpt.head(new String(r.body.value.take(300), "UTF-8"))
+          )
+        )
       case Right(r) =>
         if url.value.endsWith(".zip") then DownloadedGazetteer.unzip(r.body)
         else Right(DownloadedGazetteer.Text(String(r.body.value, UTF_8)))
@@ -71,6 +81,14 @@ object DownloadedGazetteer:
         else if e.isDirectory || e.getName.startsWith("__MACOSX") then usable(zis.getNextEntry)
         else Some(e)
       usable(zis.getNextEntry) match
-        case None    => Left(Problem.Unclassified(Legacy.Text("zip contains no usable file")))
+        case None    => Left(Problem.Invalid.Missing(Problem.Field("a usable file in the zip")))
         case Some(_) => Right(Text(String(zis.readAllBytes(), UTF_8)))
-    catch case e: Exception => Left(Problem.Unclassified(Legacy.Text(s"unzip failed: ${e.getMessage}")))
+    catch
+      case e: Exception =>
+        Left(
+          Problem.Io.Corrupt(
+            Problem.Io.Format.Zip,
+            Problem.Where("the download"),
+            Problem.Io.Damage.Unreadable(External.Reported.of(e))
+          )
+        )

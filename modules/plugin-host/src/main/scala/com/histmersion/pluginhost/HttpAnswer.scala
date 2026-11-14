@@ -1,6 +1,7 @@
 package com.histmersion
 package pluginhost
 
+import com.histmersion.util.problem.Problem
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.Locale
 import scala.jdk.CollectionConverters.*
@@ -29,4 +30,4 @@ object HttpAnswer:
   object Code extends Newtype[Int, Pure]:
     extension (c: Code)
       /** The status as the plugin SPI states it. */
-      def status: Plugin.HttpResponse.Status = Plugin.HttpResponse.Status(c.value)
+      def status: Problem.Upstream.Status = Problem.Upstream.Status(c.value)

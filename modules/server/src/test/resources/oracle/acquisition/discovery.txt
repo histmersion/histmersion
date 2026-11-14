@@ -515,7 +515,7 @@
 == meta 10.5555/zq.unknown
 400 {
   "code" : null,
-  "message" : "http://127.0.0.1:PORT/crossref/works/10.5555/zq.unknown?mailto=oracle@example.org: HTTP 404 not found"
+  "message" : "127.0.0.1 answered HTTP 404 at http://127.0.0.1:PORT/crossref/works/10.5555/zq.unknown?mailto=oracle@example.org — not found"
 }
   > GET /openalex/works/https://doi.org/10.5555/zq.unknown?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
   > GET /crossref/works/10.5555/zq.unknown?mailto=oracle@example.org

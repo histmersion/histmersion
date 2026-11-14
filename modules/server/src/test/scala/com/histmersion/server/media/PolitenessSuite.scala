@@ -2,12 +2,14 @@ package com.histmersion
 package server.media
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.config.MediaConfig
+import com.histmersion.plugin.Plugin
 import com.histmersion.domain.CoreQuota
 import com.histmersion.pluginhost.{HttpAnswer, HttpTransport, Polite, Politeness}
 
@@ -150,12 +152,12 @@ class PolitenessSuite extends munit.FunSuite:
     assertEquals(slept.toList, List(5000L))
     assertEquals(http.requests.size, 2)
 
-  test("a provider that keeps saying 429 is given up on after max-retries, with the reason"):
+  test("a provider that keeps saying 429 is given up on after max-retries: its last answer is the failure"):
     val http = FakeMediaHttp(_ => FakeMediaHttp.json("{}", Map("retry-after" -> "1"), code = 429))
     val (p, slept) = FakeMediaHttp.polite(http, FakeMediaHttp.cfg.modify(_.maxRetries).setTo(MediaConfig.MaxRetries(2)))
     assertEquals(
-      p.get(HttpTransport.Url("https://commons.wikimedia.org/w/api.php")).left.toOption.map(_.problem),
-      Some(Problem.Unclassified(Legacy.Text("commons.wikimedia.org: HTTP 429 after 2 retries")))
+      p.get(HttpTransport.Url("https://commons.wikimedia.org/w/api.php")).left.toOption.map(_.sentence),
+      Some("commons.wikimedia.org answered HTTP 429 at https://commons.wikimedia.org/w/api.php — {}")
     )
     assertEquals(http.requests.size, 3)
     assertEquals(slept.toList, List(1000L, 1000L))
@@ -201,7 +203,9 @@ class PolitenessSuite extends munit.FunSuite:
     assertEquals(p.intervalMs(metHost), 1000L)
     assertEquals(http.requests.size, 5)
 
-  test("when the backoff steps run out the 403 stands, saying how long it waited; without steps it is final at once"):
+  test(
+    "when the backoff steps run out the 403 stands (how long it waited is logged); without steps it is final at once"
+  ):
     val always = FakeMediaHttp(_ => FakeMediaHttp.json("{}", code = 403))
     val (p, slept) = FakeMediaHttp.polite(
       always,
@@ -209,15 +213,15 @@ class PolitenessSuite extends munit.FunSuite:
       List(Polite.RefusalBackoffMs(60000L), Polite.RefusalBackoffMs(300000L))
     )
     assertEquals(
-      p.get(metUrl(1)).left.toOption.map(_.problem),
-      Some(Problem.Unclassified(Legacy.Text(s"$metHost: HTTP 403 (still, after waiting 360 s)")))
+      p.get(metUrl(1)).left.toOption.flatMap(_.answered),
+      Some(Problem.Upstream.Status.Forbidden)
     )
     assertEquals((always.requests.size, slept.toList), (3, List(60000L, 300000L)))
     val once = FakeMediaHttp(_ => FakeMediaHttp.json("{}", code = 403))
     val (q, none) = FakeMediaHttp.polite(once)
     assertEquals(
-      q.get(metUrl(1)).left.toOption.map(_.problem),
-      Some(Problem.Unclassified(Legacy.Text(s"$metHost: HTTP 403")))
+      q.get(metUrl(1)).left.toOption.flatMap(_.answered),
+      Some(Problem.Upstream.Status.Forbidden)
     )
     assertEquals((once.requests.size, none.toList), (1, Nil))
 

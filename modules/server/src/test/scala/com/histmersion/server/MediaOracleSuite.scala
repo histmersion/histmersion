@@ -1040,7 +1040,7 @@ class MediaOracleSuite extends DbSuite:
             it(MediaItem.Key("s1"), spi.Licence("CC0-1.0"), MediaItem.Geography.Value(place.label.value)),
             it(MediaItem.Key("s2"), spi.Licence("All rights reserved"), MediaItem.Geography.Value(place.label.value)),
             it(MediaItem.Key("s3"), spi.Licence("CC BY 4.0"), MediaItem.Geography.Value("Nowhere at all")),
-            Left(Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text("an unreadable record"))))
+            Left(Problem.Unclassified(Legacy.Text("an unreadable record")))
           )
         }
 

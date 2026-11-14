@@ -5,7 +5,7 @@ import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.JsonCodec.given
 import hearth.kindlings.jsoniterjson.{Json, JsonObject}
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 import com.histmersion.plugin.*
 
 /** Named historical periods from ChronOntology (DAI).
@@ -29,40 +29,48 @@ object ChronOntology extends DownloadedGazetteer:
     RawJson
       .parse(text.value)
       .left
-      .map(e => Problem.Unclassified(Legacy.Text(s"invalid JSON: $e")))
+      .map(e =>
+        Problem.Io.Corrupt(
+          Problem.Io.Format.Json,
+          Problem.Where("the ChronOntology periods"),
+          Problem.Io.Damage.Unreadable(External.Reported.of(s"$e"))
+        )
+      )
       .flatMap { doc =>
         val results = doc.asObject
           .flatMap(_("results"))
           .flatMap(_.asArray)
           .map(_.toList)
-          .toRight(Problem.Unclassified(Legacy.Text("expected {results: [...]}")))
+          .toRight(Problem.Invalid.Missing(Problem.Field("results")))
         results.map(_.flatMap(r => readResult(r).toOption))
       }
 
   def readResult(j: Json): Either[Problem, GazetteerPlace] =
-    j.asObject.toRight(Problem.Unclassified(Legacy.Text("result is not a JSON object"))).flatMap { wrapper =>
-      val res = wrapper("resource").flatMap(_.asObject).getOrElse(JsonObject.empty)
-      val id = strField(res, "id").getOrElse("")
-      if id.isEmpty then Left(Problem.Unclassified(Legacy.Text("result has no id")))
-      else
-        val label = bestName(res)
-        if label.value.isEmpty then Left(Problem.Unclassified(Legacy.Text(s"period $id has no name")))
+    j.asObject.toRight(Problem.Invalid.Missing(Problem.Field("object"), Vector(Problem.Field("result")))).flatMap {
+      wrapper =>
+        val res = wrapper("resource").flatMap(_.asObject).getOrElse(JsonObject.empty)
+        val id = strField(res, "id").getOrElse("")
+        if id.isEmpty then Left(Problem.Invalid.Missing(Problem.Field("id"), Vector(Problem.Field("result"))))
         else
-          val regions = extractRegions(wrapper)
-          val props = JsonObject.fromIterable(
-            List("chronontologyId" -> Json.fromString(id)) ++
-              regions.headOption.map(r => "region" -> Json.fromString(r)).toList
-          )
-          Right(
-            GazetteerPlace(
-              id = GazetteerPlace.Id(s"chrono_$id"),
-              label = GazetteerPlace.Label(label.value),
-              kind = extractKind(res),
-              period = extractPeriod(res),
-              properties = Some(GazetteerPlace.Properties(Json.fromJsonObject(props).noSpaces)),
-              names = allNames(res).map(n => GazetteerName(n._1, n._2))
+          val label = bestName(res)
+          if label.value.isEmpty then
+            Left(Problem.Invalid.Missing(Problem.Field("name"), Vector(Problem.Field(s"period $id"))))
+          else
+            val regions = extractRegions(wrapper)
+            val props = JsonObject.fromIterable(
+              List("chronontologyId" -> Json.fromString(id)) ++
+                regions.headOption.map(r => "region" -> Json.fromString(r)).toList
             )
-          )
+            Right(
+              GazetteerPlace(
+                id = GazetteerPlace.Id(s"chrono_$id"),
+                label = GazetteerPlace.Label(label.value),
+                kind = extractKind(res),
+                period = extractPeriod(res),
+                properties = Some(GazetteerPlace.Properties(Json.fromJsonObject(props).noSpaces)),
+                names = allNames(res).map(n => GazetteerName(n._1, n._2))
+              )
+            )
     }
 
   private def bestName(res: JsonObject): GazetteerName.Name =

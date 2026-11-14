@@ -27,7 +27,7 @@ final class OpenContextCollection(conf: CollectionSettings, licences: LicenceRea
   def search(
       place: MediaPlace,
       http: Plugin.Http
-  ): Either[Plugin.Http.Failure, List[Either[Plugin.Http.Failure, MediaItem]]] =
+  ): Either[Problem, List[Either[Problem, MediaItem]]] =
     http
       .askJson(OpenContext.searchUrl(conf.apiUrl, place.label, conf.candidates))
       .flatMap(j => OpenContext.records(j, licences).unreadableEach)
@@ -35,6 +35,4 @@ final class OpenContextCollection(conf: CollectionSettings, licences: LicenceRea
   override def complete(item: MediaItem, http: Plugin.Http): Either[Problem, MediaItem] =
     http
       .askJson(OpenContext.itemUrl(conf.apiUrl, OpenContext.Uuid(item.key.value)))
-      .left
-      .map(_.problem)
       .flatMap(j => OpenContext.item(j, item, licences))

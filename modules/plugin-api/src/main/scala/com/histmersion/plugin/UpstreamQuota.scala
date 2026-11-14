@@ -42,8 +42,8 @@ object UpstreamQuota:
   /** No limit: every call may go, nothing is kept. What a host without a budget for the upstream lends. */
   type TakePurpose = TakePurpose.T
   object TakePurpose extends Newtype[String, Pure]
-  type ObserveStatus = Plugin.HttpResponse.Status
-  val ObserveStatus: Plugin.HttpResponse.Status.type = Plugin.HttpResponse.Status
+  type ObserveStatus = Problem.Upstream.Status
+  val ObserveStatus: Problem.Upstream.Status.type = Problem.Upstream.Status
   type WaitingUntil = WaitingUntil.T
   object WaitingUntil extends Newtype[String, Pure]
 

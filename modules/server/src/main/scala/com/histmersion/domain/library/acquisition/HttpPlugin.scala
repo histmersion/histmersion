@@ -30,12 +30,13 @@ final class HttpPlugin(http: Http) extends Plugin.Http:
       .map(failure)
       .map(a =>
         Plugin.HttpResponse(
-          Plugin.HttpResponse.Status(a.code.value),
+          Problem.Upstream.Status(a.code.value),
           a.headers.map((k, v) => Header.Name(k.value) -> Header.Value(v.value)),
           Plugin.HttpResponse.Body(a.body.value)
         )
       )
 
-  private def failure(f: Http.Failure): Plugin.Http.Failure = f match
-    case Http.Failure.Status(code, why) => Plugin.Http.Failure.Status(code.status, why)
-    case Http.Failure.Transport(why)    => Plugin.Http.Failure.Transport(why)
+  /** The problem the plugin sees: it carries the status itself when the host's answer had one. */
+  private def failure(f: Http.Failure): Problem = f match
+    case Http.Failure.Status(_, why) => why
+    case Http.Failure.Transport(why) => why

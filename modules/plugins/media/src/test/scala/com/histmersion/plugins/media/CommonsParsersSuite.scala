@@ -189,11 +189,11 @@ class CommonsParsersSuite extends munit.FunSuite:
     )
     val down = new Plugin.Http {
       def get(url: Plugin.Http.Url, headers: Map[Header.Name, Header.Value]) =
-        Left(Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text("HTTP 503"))))
+        Left(Problem.Unclassified(Legacy.Text("HTTP 503")))
     }
     val (none, lines) = Commons.Files(down, media, HostLicences).items(List(Commons.File.Title("File:A.jpg")))
     assertEquals(none(Commons.File.Title("File:A.jpg")).rights.left.map(_.legacyText), Left("no answer from Commons"))
-    assertEquals(lines.map(_.legacyText), List("Commons File:A.jpg…: HTTP 503"))
+    assertEquals(lines.map(l => s"${l.line}"), List("Commons File:A.jpg…: HTTP 503"))
 
   // ── roles ────────────────────────────────────────────────────────────────────────────────────
 

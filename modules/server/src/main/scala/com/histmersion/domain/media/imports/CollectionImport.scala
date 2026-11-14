@@ -75,16 +75,16 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
         case Some(f)            =>
           col.search(fetch, f) match
             case Left(e) =>
-              failed += s"$providerTitle search for ${t.id} (${t.label}): ${e.problem.sentence}"
-              if e.refused then
+              failed += s"$providerTitle search for ${t.id} (${t.label}): ${e.sentence}"
+              if e.accessRefused then
                 refused = true
                 failed += s"$providerTitle refused the request; the rest of this batch was not asked"
               None
             case Right(rs) =>
               val errors = rs.collect { case Left(e) => e }
-              errors.foreach(e => failed += s"${t.id}: ${e.problem.sentence}")
+              errors.foreach(e => failed += s"${t.id}: ${e.sentence}")
               // a refusal of one of its records ends the batch too (#2561): the rest would be refused alike
-              if errors.exists(_.refused) then
+              if errors.exists(_.accessRefused) then
                 refused = true
                 failed += s"$providerTitle refused the request; the rest of this batch was not asked"
                 None
@@ -317,9 +317,7 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
   ] =
     rec.imageUrl
       .toRight("no image")
-      .flatMap(u =>
-        fetch.file(HttpTransport.Url(u.value), Polite.Mime("image/jpeg")).left.map(f => s"${f.problem.sentence}")
-      )
+      .flatMap(u => fetch.file(HttpTransport.Url(u.value), Polite.Mime("image/jpeg")).left.map(f => s"${f.sentence}"))
       .flatMap { (bytes, mime) =>
         if bytes.value.length.toLong > cfg.maxBytes.value then
           Left(s"rendition of ${bytes.value.length} bytes is larger than media.max-bytes")
@@ -339,7 +337,7 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
                 )
               case Right(_)  => None
               case Left(why) =>
-                scribe.warn(s"media: thumbnail of ${col.provider} ${rec.key} not fetched: ${why.problem.sentence}");
+                scribe.warn(s"media: thumbnail of ${col.provider} ${rec.key} not fetched: ${why.sentence}");
                 None
           }
           val made = own.orElse(

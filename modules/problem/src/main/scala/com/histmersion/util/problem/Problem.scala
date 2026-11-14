@@ -85,6 +85,11 @@ object Problem:
     /** A length of time written in decimal digits of milliseconds. */
     def read(digits: String): Option[Millis] = digits.toLongOption.map(Millis(_))
 
+    extension (m: Millis)
+      /** The length as a duration. */
+      def duration: scala.concurrent.duration.FiniteDuration =
+        scala.concurrent.duration.FiniteDuration(s"$m".toLong, "ms")
+
   /** A moment, as milliseconds since 1970-01-01T00:00Z (the same on the JVM and in the browser). */
   type EpochMs = EpochMs.T
   object EpochMs extends Newtype[Long, Pure]:
@@ -253,6 +258,9 @@ object Problem:
       /** The collection is read-only: it takes no new items and rewrites none. */
       case ReadOnly
 
+      /** The item is only lent (borrowed on its site), never downloaded. */
+      case LendingOnly
+
     /** The allowances a request can spend. */
     enum Limit derives CanEqual:
       case DailySpend, MonthlySpend, RunSpend, ProviderQuota, RateLimit, PlanAllowance
@@ -272,17 +280,45 @@ object Problem:
 
   object Upstream:
 
-    /** `upstream` answered `status` at `url`; `body` is the start of what it said. */
-    final case class Http(upstream: Name, url: Url, status: Status, body: External.ReplyExcerpt) extends Upstream
+    /** `upstream` answered `status` at `url`; `body` is the start of what it said. `at`: the part of what was asked
+      * (`object 7`) the request was for, when it was one of several.
+      */
+    final case class Http(
+        upstream: Name,
+        url: Url,
+        status: Status,
+        body: External.ReplyExcerpt,
+        at: Vector[Field] = Vector.empty
+    ) extends Upstream
+
+    /** `upstream` answered `status` at `url` with a bot-protection challenge, not the page: taken as no answer. */
+    final case class Challenged(upstream: Name, url: Url, status: Status, at: Vector[Field] = Vector.empty)
+        extends Upstream
+
+    /** `upstream` (a model's plan) reports its own usage limit reached, until `until` when it said: the next model of
+      * the chain is asked meanwhile.
+      */
+    final case class Limited(upstream: Name, until: Option[EpochMs]) extends Upstream
 
     /** `upstream` could not be reached at `url`. */
-    final case class Unreachable(upstream: Name, url: Url, reported: External.Reported) extends Upstream
+    final case class Unreachable(
+        upstream: Name,
+        url: Url,
+        reported: External.Reported,
+        at: Vector[Field] = Vector.empty
+    ) extends Upstream
 
     /** `upstream` did not answer at `url` within `after`. */
-    final case class Timeout(upstream: Name, url: Url, after: Millis) extends Upstream
+    final case class Timeout(upstream: Name, url: Url, after: Millis, at: Vector[Field] = Vector.empty) extends Upstream
 
     /** `upstream` answered at `url`, but not with `expected`. */
-    final case class BadReply(upstream: Name, url: Url, expected: Shape, reported: External.Reported) extends Upstream
+    final case class BadReply(
+        upstream: Name,
+        url: Url,
+        expected: Shape,
+        reported: External.Reported,
+        at: Vector[Field] = Vector.empty
+    ) extends Upstream
 
     /** The service, by the name its settings and plugin use (`openalex`, `core`, the Histmersion server itself). */
     type Name = Name.T
@@ -297,6 +333,17 @@ object Problem:
     object Status extends Newtype[Int, Pure]:
       /** A status written in decimal digits. */
       def read(digits: String): Option[Status] = digits.toIntOption.map(Status(_))
+
+      val NotFound: Status = Status(404)
+      val Unauthorized: Status = Status(401)
+      val Forbidden: Status = Status(403)
+
+      extension (s: Status)
+        /** 401 or 403: the upstream wants a key or does not take the client. */
+        def refusesAccess: Boolean = s == Unauthorized || s == Forbidden
+
+        /** 404: the upstream has no such page. */
+        def isNotFound: Boolean = s == NotFound
 
     /** What a reply was expected to be. */
     enum Shape derives CanEqual:
@@ -347,7 +394,7 @@ object Problem:
       case Inside(directory: Path)
 
     enum Format derives CanEqual:
-      case Bundle, Tar, Json, Png, PmTiles, Pdf, Image, Text, Hocon, Yaml, Xml, Kit
+      case Bundle, Tar, Json, Png, PmTiles, Pdf, Image, Text, Hocon, Yaml, Xml, Kit, Zip
 
     /** What is wrong with the data. */
     enum Damage derives CanEqual:
@@ -432,6 +479,9 @@ object Problem:
         * variable that holds it instead, when it has one.
         */
       case Credential(variable: Option[SettingKey])
+
+      /** `upstream` refused the key or password it holds: it answered `status` (401, 403). */
+      case Rejected(upstream: Upstream.Name, status: Upstream.Status)
 
       /** It holds `value:` (the credential itself, in the file) and the person did not confirm it. */
       case Literal
@@ -713,7 +763,19 @@ object Problem:
       case _: NotFound => true
       case _           => false
 
-    /** The same problem, found in `field` of the request: an input's path gets `field` in front. */
+    /** The HTTP status an upstream answered, when it answered one. */
+    def answered: Option[Upstream.Status] = problem match
+      case Upstream.Http(_, _, status, _, _)                   => Some(status)
+      case Upstream.Challenged(_, _, status, _)                => Some(status)
+      case Config.Setting(_, Config.Fault.Rejected(_, status)) => Some(status)
+      case _                                                   => None
+
+    /** Did an upstream refuse the client (401, 403: a key wanted, a bot challenge)? Asking again is refused alike. */
+    def accessRefused: Boolean = answered.exists(_.refusesAccess)
+
+    /** The same problem, found in `field` of the request: an input's path, or the part of a request an upstream failed
+      * on, gets `field` in front.
+      */
     def within(field: Field): Problem = problem match
       case Invalid.Malformed(t, c, raw, at)   => Invalid.Malformed(t, c, raw, field +: at)
       case Invalid.Unknown(t, raw, known, at) => Invalid.Unknown(t, raw, known, field +: at)
@@ -721,6 +783,11 @@ object Problem:
       case Invalid.OutOfRange(t, raw, b, at)  => Invalid.OutOfRange(t, raw, b, field +: at)
       case Invalid.Inconsistent(fs, rule, at) => Invalid.Inconsistent(fs, rule, field +: at)
       case Invalid.Reference(form, at)        => Invalid.Reference(form, field +: at)
+      case Upstream.Http(n, url, st, b, at)   => Upstream.Http(n, url, st, b, field +: at)
+      case Upstream.Unreachable(n, u, r, at)  => Upstream.Unreachable(n, u, r, field +: at)
+      case Upstream.Challenged(n, u, st, at)  => Upstream.Challenged(n, u, st, field +: at)
+      case Upstream.Timeout(n, u, after, at)  => Upstream.Timeout(n, u, after, field +: at)
+      case Upstream.BadReply(n, u, e, r, at)  => Upstream.BadReply(n, u, e, r, field +: at)
       case other                              => other
 
   // ---- one of each ------------------------------------------------------------------------------------------
@@ -777,6 +844,12 @@ object Problem:
       Refused.Quota(Refused.Limit.DailySpend, Refused.Amount(5.25), Refused.Amount(4.5), Some(EpochMs(1762732800000L))),
       Refused.Disabled(Refused.Feature("events-gvp"), SettingKey("histmersion.events.gvp.enabled")),
       Upstream.Http(core, url, Upstream.Status(429), External.ReplyExcerpt("{\"message\":\"rate limited\"}")),
+      Upstream.Challenged(
+        Upstream.Name("archive-org"),
+        Upstream.Url("https://archive.org/download/x/x.pdf"),
+        Upstream.Status(403)
+      ),
+      Upstream.Limited(Upstream.Name("claude"), Some(EpochMs(1762732800000L))),
       Upstream.Unreachable(core, url, reported),
       Upstream.Timeout(core, url, Millis(30000L)),
       Upstream.BadReply(core, url, Upstream.Shape.Json, External.Reported("expected json value got '<html>' (line 1)")),

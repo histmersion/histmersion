@@ -35,9 +35,9 @@ final class KitFetcherPlugin extends Plugin:
                   case Some(doi) =>
                     val url = s"${c.baseUrl.stripSuffix("/")}/$doi.pdf" + key.fold("")(k => s"?key=$k")
                     ctx.http.get(Plugin.Http.Url(url)) match
-                      case Left(Plugin.Http.Failure.Status(code, why)) if code.refusesAccess => Fetch.Refused(why)
-                      case Left(why)                                                         => Fetch.Miss(why.problem)
-                      case Right(bytes)                                                      =>
+                      case Left(why) if why.accessRefused => Fetch.Refused(why)
+                      case Left(why)                      => Fetch.Miss(why)
+                      case Right(bytes)                   =>
                         fc.log.info(Plugin.Log.Line(s"$doi: licence CC-BY-4.0"))
                         Fetch.Found(
                           FetchedFile(
@@ -83,7 +83,7 @@ final class KitMediaPlugin extends Plugin:
                       )
                     case _ =>
                       Left(
-                        Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text(s"unreadable record '$line'")))
+                        Problem.Unclassified(Legacy.Text(s"unreadable record '$line'"))
                       )
                 }
               )
@@ -106,8 +106,6 @@ final class KitEventsPlugin extends Plugin:
           def read(part: EventCatalogue.ReadPart, q: CatalogueQuery, http: Plugin.Http) =
             http
               .get(Plugin.Http.Url(s"${c.baseUrl}/$part"))
-              .left
-              .map(_.problem)
               .map { b =>
                 val events =
                   new String(b.value, UTF_8).linesIterator.toList.map(_.split('|')).collect {
@@ -150,8 +148,6 @@ final class KitAiPlugin extends Plugin:
                     AiHttp.PostBody(r.model.value),
                     AiHttp.TimeoutSeconds(30)
                   )
-                  .left
-                  .map(e => AiFailure.Error(e.reported))
                   .map(resp => AiTurn(AiTurn.Text(resp.body.value)))
           )
       }

@@ -29,7 +29,9 @@ class DocQuotedSentencesSuite extends munit.FunSuite:
     assert(failures.isEmpty, failures.mkString("\n"))
 
   test("a shape: … is any text, a lone capital letter one value, the rest itself"):
-    assert(Shape.matches("'X' is not a Citekey: Should match …", "'Gimbutas 1956' is not a Citekey: Should match [a-z]+"))
+    assert(
+      Shape.matches("'X' is not a Citekey: Should match …", "'Gimbutas 1956' is not a Citekey: Should match [a-z]+")
+    )
     assert(Shape.matches("p needs X Y", "p needs m 1.0"))
     assert(!Shape.matches("invalid citekey 'X' …", "'Gimbutas 1956' is not a Citekey: Should match [a-z]+"))
     assert(!Shape.matches("CORE not asked: …", "CORE asked to wait until 2026-01-01T00:00:00Z (HTTP 429)"))
@@ -57,8 +59,10 @@ object DocQuotedSentencesSuite:
   val Rendered: Vector[String] =
     (Problem.examples ++ Quoted).map(_.sentence) ++
       CoreQuota.Purpose.values.toVector.map(p =>
-        CoreQuota.Refusal.OverBudget(p, CoreQuota.Refusal.OverBudget.Spent(6), CoreQuota.Refusal.OverBudget.Cap(6))
-          .describe.toString
+        CoreQuota.Refusal
+          .OverBudget(p, CoreQuota.Refusal.OverBudget.Spent(6), CoreQuota.Refusal.OverBudget.Cap(6))
+          .describe
+          .toString
       )
 
   final case class Quote(file: String, quote: String, sentence: String) derives CanEqual

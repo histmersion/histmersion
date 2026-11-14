@@ -33,7 +33,6 @@ import com.histmersion.util.storage.Resources
 import com.histmersion.util.system.JvmHome
 import com.histmersion.pluginhost.Registries
 import com.histmersion.plugin.AiProvider
-import com.histmersion.plugin.AiFailure
 import com.histmersion.util.plugins.HostProvided
 import com.histmersion.plugin.Plugin
 import com.histmersion.config.ServerConfig
@@ -64,7 +63,7 @@ class AiProvidersSuite extends munit.FunSuite:
   private given JvmHome = JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
   private val offline = new Plugin.Http:
     def get(url: Plugin.Http.Url, headers: Map[Header.Name, Header.Value]) =
-      Left(Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text("offline"))))
+      Left(Problem.Unclassified(Legacy.Text("offline")))
 
   /** The registry's providers as the engine reads them: keyed by plugin id. */
   private def providersOf(
@@ -100,7 +99,7 @@ class AiProvidersSuite extends munit.FunSuite:
 
   /** What a scripted provider was asked, turn by turn. */
   final private class Scripted(
-      answers: List[AiTurn.Request => Either[AiFailure, AiTurn]],
+      answers: List[AiTurn.Request => Either[Problem, AiTurn]],
       override val spendsPersonalPlan: AiProvider.SpendsPersonalPlan = AiProvider.SpendsPersonalPlan(false),
       checked: Either[Problem, Unit] = Right(())
   ) extends AiProvider:
@@ -111,7 +110,7 @@ class AiProvidersSuite extends munit.FunSuite:
       asked += r
       answers
         .lift(asked.size - 1)
-        .getOrElse((_: AiTurn.Request) => Left(AiFailure.Error(Problem.Unclassified(Legacy.Text("script exhausted")))))(
+        .getOrElse((_: AiTurn.Request) => Left(Problem.Unclassified(Legacy.Text("script exhausted"))))(
           r
         )
 
@@ -445,10 +444,7 @@ class AiProvidersSuite extends munit.FunSuite:
     val limited = Scripted(
       List(_ =>
         Left(
-          AiFailure.LimitReached(
-            Problem.Unclassified(Legacy.Text("usage limit reached")),
-            Some(AiFailure.LimitReached.UntilEpochMs(4102444800000L))
-          )
+          Problem.Upstream.Limited(Problem.Upstream.Name("scripted"), Some(Problem.EpochMs(4102444800000L)))
         )
       )
     )
@@ -457,7 +453,7 @@ class AiProvidersSuite extends munit.FunSuite:
     val err = intercept[java.io.IOException](
       PluginAiClient(
         ref,
-        Scripted(List(_ => Left(AiFailure.Error(Problem.Unclassified(Legacy.Text("HTTP 500")))))),
+        Scripted(List(_ => Left(Problem.Unclassified(Legacy.Text("HTTP 500"))))),
         AiHttp.Offline
       ).run(call())
     )
@@ -506,7 +502,7 @@ class AiProvidersSuite extends munit.FunSuite:
 
   /** A provider that asks for the loop's notes and verbatim failures, as the HTTP built-ins do. */
   final private class Wired(
-      answers: List[AiTurn.Request => Either[AiFailure, AiTurn]],
+      answers: List[AiTurn.Request => Either[Problem, AiTurn]],
       checked: Either[Problem, Unit]
   ) extends AiProvider:
     val title = AiProvider.Title("Wired")
@@ -521,7 +517,7 @@ class AiProvidersSuite extends munit.FunSuite:
       asked += r
       answers
         .lift(asked.size - 1)
-        .getOrElse((_: AiTurn.Request) => Left(AiFailure.Error(Problem.Unclassified(Legacy.Text("script exhausted")))))(
+        .getOrElse((_: AiTurn.Request) => Left(Problem.Unclassified(Legacy.Text("script exhausted"))))(
           r
         )
 
@@ -581,9 +577,7 @@ class AiProvidersSuite extends munit.FunSuite:
     )
     // a verbatim failure is the run's whole error text; its check's refusal is not prefixed with the model
     val failing = Wired(
-      List(_ =>
-        Left(AiFailure.Error(Problem.Unclassified(Legacy.Text("RuntimeException: Claude API error: Overloaded"))))
-      ),
+      List(_ => Left(Problem.Unclassified(Legacy.Text("RuntimeException: Claude API error: Overloaded")))),
       Right(())
     )
     assertEquals(
@@ -603,7 +597,7 @@ class AiProvidersSuite extends munit.FunSuite:
     )
     assertEquals(refused.left.toOption.map(_.sentence), Some("no Gemini key — set GEMINI_KEY"))
     // any other provider's error names the model and the exception, as before
-    val other = Scripted(List(_ => Left(AiFailure.Error(Problem.Unclassified(Legacy.Text("HTTP 500"))))))
+    val other = Scripted(List(_ => Left(Problem.Unclassified(Legacy.Text("HTTP 500")))))
     assertEquals(
       AgentsControllers
         .attempt(ref)(PluginAiClient(ref, other, AiHttp.Offline).run(call()))

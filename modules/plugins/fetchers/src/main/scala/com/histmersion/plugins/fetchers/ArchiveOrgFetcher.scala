@@ -1,6 +1,6 @@
 package com.histmersion
 package plugins.fetchers
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.plugin.{Access, Fetch, SourceFetcher, WorkKey}
 import com.histmersion.upstreams.parse.AcquireParse
@@ -15,21 +15,22 @@ final class ArchiveOrgFetcher(client: () => ArchiveOrg) extends SourceFetcher:
   val access: Access = Access.Open
   def fetch(work: WorkKey, ctx: Fetch.Context): Fetch =
     work.archive match
-      case None     => Fetch.Miss(Problem.Unclassified(Legacy.Text("archive-org needs an archive.org identifier")))
+      case None     => Fetch.Miss(Problem.Invalid.Missing(Problem.Field("archive.org identifier")))
       case Some(id) =>
         val archive = client()
         archive.info(ArchiveId(id.value)) match
           case Left(e)                               => Fetch.Miss(e)
           case Right(item) if item.lendingOnly.value =>
             Fetch.Refused(
-              Problem.Unclassified(
-                Legacy.Text(s"'${item.identifier}' is a lending-only item — borrow it on archive.org")
-              )
+              Problem.Refused.Policy(Problem.Refused.Rule.LendingOnly)
             )
           case Right(item) =>
             AcquireParse.pickArchiveFile(item.files, work.format.map(f => AcquireParse.WantedFileKind(f.value))) match
               case None =>
-                Fetch.Miss(Problem.Unclassified(Legacy.Text(s"'${item.identifier}' has no epub/pdf file to download")))
+                Fetch.Miss(
+                  Problem.NotFound
+                    .Entity(Problem.TypeName("com.histmersion.plugin.Copy"), Problem.Raw(s"${item.identifier}"))
+                )
               case Some(file) =>
                 archive
                   .download(ArchiveId(item.identifier.value), ArchiveOrg.DownloadFile(file.name.value))

@@ -5,7 +5,7 @@ import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.JsonCodec.given
 import hearth.kindlings.jsoniterjson.{Json, JsonObject}
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 import com.histmersion.plugin.*
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -45,68 +45,77 @@ object Cliopatria extends DownloadedGazetteer:
     RawJson
       .parse(text.value)
       .left
-      .map(e => Problem.Unclassified(Legacy.Text(s"invalid JSON: $e")))
+      .map(e =>
+        Problem.Io.Corrupt(
+          Problem.Io.Format.Json,
+          Problem.Where("the Cliopatria polities"),
+          Problem.Io.Damage.Unreadable(External.Reported.of(s"$e"))
+        )
+      )
       .flatMap { doc =>
         val features = doc.asObject
           .flatMap(_("features"))
           .flatMap(_.asArray)
           .map(_.toList)
           .orElse(doc.asArray.map(_.toList))
-          .toRight(Problem.Unclassified(Legacy.Text("not a GeoJSON FeatureCollection")))
+          .toRight(Problem.Invalid.Missing(Problem.Field("features")))
         features.map(_.zipWithIndex.flatMap((f, i) => readFeature(f, Ordinal(i)).toOption))
       }
 
   def readFeature(j: Json, ordinal: Ordinal): Either[Problem, GazetteerPlace] =
-    j.asObject.toRight(Problem.Unclassified(Legacy.Text(s"feature #$ordinal is not a JSON object"))).flatMap { f =>
-      val props = f("properties").flatMap(_.asObject).getOrElse(JsonObject.empty)
-      val rawName = str(props, "Name").fold("")(_.value)
-      if rawName.isEmpty then Left(Problem.Unclassified(Legacy.Text(s"feature #$ordinal has no Name")))
-      else
-        val from = numYear(props, "FromYear")
-        val to = numYear(props, "ToYear")
-        val slug = slugify(GazetteerName.Name(rawName))
-        val sliceId = (from, to) match
-          case (Some(a), Some(b)) => s"cliopatria_${slug}_${a}_$b"
-          case _                  => s"cliopatria_${slug}_$ordinal"
-        val parentId = s"cliopatria_$slug"
-        val period = for a <- from; b <- to; p <- span(a, b) yield p
-        val geom = f("geometry").filterNot(_.isNull).map(g => GazetteerPlace.Geometry(g.noSpaces))
+    j.asObject
+      .toRight(Problem.Invalid.Missing(Problem.Field("object"), Vector(Problem.Field(s"feature #$ordinal"))))
+      .flatMap { f =>
+        val props = f("properties").flatMap(_.asObject).getOrElse(JsonObject.empty)
+        val rawName = str(props, "Name").fold("")(_.value)
+        if rawName.isEmpty then
+          Left(Problem.Invalid.Missing(Problem.Field("Name"), Vector(Problem.Field(s"feature #$ordinal"))))
+        else
+          val from = numYear(props, "FromYear")
+          val to = numYear(props, "ToYear")
+          val slug = slugify(GazetteerName.Name(rawName))
+          val sliceId = (from, to) match
+            case (Some(a), Some(b)) => s"cliopatria_${slug}_${a}_$b"
+            case _                  => s"cliopatria_${slug}_$ordinal"
+          val parentId = s"cliopatria_$slug"
+          val period = for a <- from; b <- to; p <- span(a, b) yield p
+          val geom = f("geometry").filterNot(_.isNull).map(g => GazetteerPlace.Geometry(g.noSpaces))
 
-        val wikidata = str(props, "Wikidata").filter(_.value.nonEmpty)
-        val wikipedia = str(props, "Wikipedia").filter(_.value.nonEmpty)
-        val memberOf = str(props, "MemberOf").filter(_.value.nonEmpty)
-        val seshatId = str(props, "SeshatID").filter(_.value.nonEmpty)
-        val leftover = JsonObject.fromIterable(
-          wikidata.map(w => "wikidata" -> Json.fromString(w.value)).toList ++
-            wikipedia.map(w => "wikipedia" -> Json.fromString(w.value)).toList ++
-            seshatId.map(s => "seshatId" -> Json.fromString(s.value)).toList ++
-            memberOf.map(m => "memberOf" -> Json.fromString(m.value)).toList
-        )
-        val relations = List(
-          GazetteerRelation(GazetteerRelation.ChildId(sliceId), GazetteerRelation.ParentId(parentId), PartOf, period)
-        ) ++
-          memberOf.map(m =>
-            GazetteerRelation(
-              GazetteerRelation.ChildId(sliceId),
-              GazetteerRelation.ParentId(s"cliopatria_${slugify(GazetteerName.Name(m.value))}"),
-              PartOf,
-              period
+          val wikidata = str(props, "Wikidata").filter(_.value.nonEmpty)
+          val wikipedia = str(props, "Wikipedia").filter(_.value.nonEmpty)
+          val memberOf = str(props, "MemberOf").filter(_.value.nonEmpty)
+          val seshatId = str(props, "SeshatID").filter(_.value.nonEmpty)
+          val leftover = JsonObject.fromIterable(
+            wikidata.map(w => "wikidata" -> Json.fromString(w.value)).toList ++
+              wikipedia.map(w => "wikipedia" -> Json.fromString(w.value)).toList ++
+              seshatId.map(s => "seshatId" -> Json.fromString(s.value)).toList ++
+              memberOf.map(m => "memberOf" -> Json.fromString(m.value)).toList
+          )
+          val relations = List(
+            GazetteerRelation(GazetteerRelation.ChildId(sliceId), GazetteerRelation.ParentId(parentId), PartOf, period)
+          ) ++
+            memberOf.map(m =>
+              GazetteerRelation(
+                GazetteerRelation.ChildId(sliceId),
+                GazetteerRelation.ParentId(s"cliopatria_${slugify(GazetteerName.Name(m.value))}"),
+                PartOf,
+                period
+              )
+            )
+          Right(
+            GazetteerPlace(
+              id = GazetteerPlace.Id(sliceId),
+              label = GazetteerPlace.Label(rawName),
+              kind = Polity,
+              geometry = geom,
+              period = period,
+              properties =
+                Some(leftover).filter(_.nonEmpty).map(l => GazetteerPlace.Properties(Json.fromJsonObject(l).noSpaces)),
+              names = List(GazetteerName(GazetteerName.Name(rawName))),
+              relations = relations
             )
           )
-        Right(
-          GazetteerPlace(
-            id = GazetteerPlace.Id(sliceId),
-            label = GazetteerPlace.Label(rawName),
-            kind = Polity,
-            geometry = geom,
-            period = period,
-            properties =
-              Some(leftover).filter(_.nonEmpty).map(l => GazetteerPlace.Properties(Json.fromJsonObject(l).noSpaces)),
-            names = List(GazetteerName(GazetteerName.Name(rawName))),
-            relations = relations
-          )
-        )
-    }
+      }
 
   /** Build parent-concept entries (no geometry) from the distinct polity names. These serve as the grouping nodes so
     * `places children cliopatria_sumerian_city_states` returns all time-slices. A concept spans its slices: from the

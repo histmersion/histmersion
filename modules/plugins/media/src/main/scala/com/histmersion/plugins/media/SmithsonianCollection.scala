@@ -1,6 +1,7 @@
 package com.histmersion
 package plugins.media
 
+import com.histmersion.util.problem.Problem
 import com.histmersion.plugin.*
 
 /** `smithsonian`: the Smithsonian's Open Access API (an api.data.gov key, sent as a header): one search by the place's
@@ -28,7 +29,7 @@ final class SmithsonianCollection(conf: CollectionSettings, key: Option[KeyedCol
   def search(
       place: MediaPlace,
       http: Plugin.Http
-  ): Either[Plugin.Http.Failure, List[Either[Plugin.Http.Failure, MediaItem]]] =
+  ): Either[Problem, List[Either[Problem, MediaItem]]] =
     http
       .askJson(
         Smithsonian.searchUrl(conf.apiUrl, place.label, conf.candidates, units),

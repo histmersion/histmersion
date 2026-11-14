@@ -1,6 +1,7 @@
 package com.histmersion
 package plugins.fetchers
 
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.plugin.Header
 
 import com.histmersion.plugin.FetchedFile
@@ -25,7 +26,7 @@ final class Downloads(http: Plugin.Http):
         )
         None
       case Left(e) =>
-        log.info(Plugin.Log.Line(s"$source fetch failed (${e.problem.legacyText})"))
+        log.info(Plugin.Log.Line(s"$source fetch failed (${e.sentence})"))
         None
 
 object Downloads:

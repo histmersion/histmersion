@@ -49,7 +49,7 @@ trait MediaCollection:
   def search(
       place: MediaPlace,
       http: Plugin.Http
-  ): Either[Plugin.Http.Failure, List[Either[Plugin.Http.Failure, MediaItem]]]
+  ): Either[Problem, List[Either[Problem, MediaItem]]]
 
   /** An item about to be stored, completed by what a search does not answer (its files, the licence read again from the
     * full record). Only items the host decided to store pay for it; the host judges the completed item's licence again.
@@ -67,8 +67,8 @@ trait MediaCollection:
   def asks: Set[MediaTarget] = Set(MediaTarget.Places)
 
   /** The records a search for `event` answers ([[asks]] must name events); none by default. */
-  def searchEvent(event: MediaEvent, http: Plugin.Http): Either[Plugin.Http.Failure, List[
-    Either[Plugin.Http.Failure, MediaItem]
+  def searchEvent(event: MediaEvent, http: Plugin.Http): Either[Problem, List[
+    Either[Problem, MediaItem]
   ]] = Right(Nil)
 
   /** Whether it can be asked now — a key configured, its own switch on — asked before an import: its refusal is the
@@ -107,8 +107,8 @@ trait MediaCollection:
       read = MediaFound.Read(asked.map(_._2.fold(_ => 0, _.size)).sum),
       failed = asked.flatMap((t, r) =>
         r.fold(
-          e => List(MediaFound.Failed(s"$title search for ${t.id}: ${e.problem.sentence}")),
-          _.collect { case Left(e) => MediaFound.Failed(s"${t.id}: ${e.problem.sentence}") }
+          e => List(MediaFound.Failed(MediaFound.Failed.About(s"$title search for ${t.id}"), e)),
+          _.collect { case Left(e) => MediaFound.Failed(MediaFound.Failed.About(s"${t.id}"), e) }
         )
       )
     )
@@ -120,7 +120,7 @@ trait MediaCollection:
     val done = items.map(it => it.key -> complete(it, http))
     MediaCompleted(
       done.collect { case (k, Right(it)) => k -> it }.toMap,
-      done.collect { case (k, Left(e)) => MediaCompleted.Failed(s"$k: ${e.sentence}") }
+      done.collect { case (k, Left(e)) => MediaFound.Failed(MediaFound.Failed.About(s"$k"), e) }
     )
 
 object MediaCollection:

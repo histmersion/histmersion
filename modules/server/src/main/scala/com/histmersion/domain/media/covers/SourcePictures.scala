@@ -151,9 +151,9 @@ final class SourcePictures(
             OpenLibrary.CoverSize(c.size.value)
           )
           val got = fetch.file(HttpTransport.Url(url.value), Polite.Mime("image/jpeg")) match
-            case Left(Plugin.Http.Failure.Status(code, _)) if code.isNotFound => refused("Open Library has no cover")
-            case Left(why)                                                    =>
-              Left(CoverRefusal.Failed(SourcePictures.OpenLibraryText(s"Open Library: ${why.problem.sentence}")))
+            case Left(why) if why.answered.exists(_.isNotFound) => refused("Open Library has no cover")
+            case Left(why)                                      =>
+              Left(CoverRefusal.Failed(SourcePictures.OpenLibraryText(s"Open Library: ${why.sentence}")))
             case Right((bytes, _)) if bytes.value.length > cfg.maxBytes.value =>
               refused(s"cover of ${bytes.value.length} bytes is larger than media.max-bytes")
             case Right((bytes, mime)) if !mime.value.startsWith("image/") =>

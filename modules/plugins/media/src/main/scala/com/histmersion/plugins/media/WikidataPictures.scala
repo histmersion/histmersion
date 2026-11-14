@@ -28,9 +28,7 @@ final class WikidataPictures(media: MediaSettings, licences: LicenceReader) exte
 
   def search(place: MediaPlace, http: Plugin.Http) =
     Left(
-      Plugin.Http.Failure.Transport(
-        Problem.Unclassified(Legacy.Text("the Wikidata pictures are found for a batch of targets at once"))
-      )
+      Problem.Unclassified(Legacy.Text("the Wikidata pictures are found for a batch of targets at once"))
     )
 
   /** One target as the import asks it: what it is, its id and its Wikidata item. */
@@ -63,8 +61,6 @@ final class WikidataPictures(media: MediaSettings, licences: LicenceReader) exte
       )
       ids -> http
         .askJson(Plugin.Http.Url(asked.value))
-        .left
-        .map(_.problem)
         .flatMap(j => WikidataEntities.items(j, props, Problem.Upstream.Url(s"$asked")))
     }
     val items = answers.flatMap(_._2.toOption).flatMap(_.toList).toMap
@@ -101,8 +97,8 @@ final class WikidataPictures(media: MediaSettings, licences: LicenceReader) exte
       unanswered = targets.filter(t => unanswered(t.qid)).map(_.target).toSet,
       read = MediaFound.Read(items.size),
       failed = answers.collect { case (ids, Left(e)) =>
-        MediaFound.Failed(s"Wikidata ${ids.head}…: ${e.legacyText}")
-      } ++ judged.map(j => MediaFound.Failed(j.legacyText)),
+        MediaFound.Failed(MediaFound.Failed.About(s"Wikidata ${ids.head}…"), e)
+      } ++ judged,
       categories = targets
         .filter(_.target.kind == MediaTarget.Places)
         .flatMap(t =>

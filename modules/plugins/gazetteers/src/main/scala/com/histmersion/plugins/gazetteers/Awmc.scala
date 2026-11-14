@@ -5,7 +5,7 @@ import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.JsonCodec.given
 import hearth.kindlings.jsoniterjson.{Json, JsonObject}
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 import com.histmersion.plugin.*
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -38,48 +38,57 @@ object Awmc extends DownloadedGazetteer:
     RawJson
       .parse(text.value)
       .left
-      .map(e => Problem.Unclassified(Legacy.Text(s"invalid JSON: $e")))
+      .map(e =>
+        Problem.Io.Corrupt(
+          Problem.Io.Format.Json,
+          Problem.Where("the AWMC places"),
+          Problem.Io.Damage.Unreadable(External.Reported.of(s"$e"))
+        )
+      )
       .flatMap { doc =>
         val features = doc.asObject
           .flatMap(_("features"))
           .flatMap(_.asArray)
           .map(_.toList)
           .orElse(doc.asArray.map(_.toList))
-          .toRight(Problem.Unclassified(Legacy.Text("not a GeoJSON FeatureCollection")))
+          .toRight(Problem.Invalid.Missing(Problem.Field("features")))
         features.map(_.zipWithIndex.flatMap((f, i) => readFeature(f, Ordinal(i)).toOption))
       }
 
   def readFeature(j: Json, ordinal: Ordinal): Either[Problem, GazetteerPlace] =
-    j.asObject.toRight(Problem.Unclassified(Legacy.Text(s"feature #$ordinal is not a JSON object"))).flatMap { f =>
-      val props = f("properties").flatMap(_.asObject).getOrElse(JsonObject.empty)
-      def text(keys: String*): Option[String] = str(props, keys*).map(_.value)
-      val title = text("TITLE", "title", "name", "NAME").getOrElse("")
-      if title.isEmpty then Left(Problem.Unclassified(Legacy.Text(s"feature #$ordinal has no TITLE")))
-      else
-        val pType = text("P_TYPE", "TYPE", "type").getOrElse("region")
-        val pid = text("PID")
-        val slug = slugify(GazetteerName.Name(title)).value
-        val id = pid.map(p => s"awmc_pleiades_$p").getOrElse(s"awmc_$slug")
-        val geom = f("geometry").filterNot(_.isNull).map(_.noSpaces)
+    j.asObject
+      .toRight(Problem.Invalid.Missing(Problem.Field("object"), Vector(Problem.Field(s"feature #$ordinal"))))
+      .flatMap { f =>
+        val props = f("properties").flatMap(_.asObject).getOrElse(JsonObject.empty)
+        def text(keys: String*): Option[String] = str(props, keys*).map(_.value)
+        val title = text("TITLE", "title", "name", "NAME").getOrElse("")
+        if title.isEmpty then
+          Left(Problem.Invalid.Missing(Problem.Field("TITLE"), Vector(Problem.Field(s"feature #$ordinal"))))
+        else
+          val pType = text("P_TYPE", "TYPE", "type").getOrElse("region")
+          val pid = text("PID")
+          val slug = slugify(GazetteerName.Name(title)).value
+          val id = pid.map(p => s"awmc_pleiades_$p").getOrElse(s"awmc_$slug")
+          val geom = f("geometry").filterNot(_.isNull).map(_.noSpaces)
 
-        val leftover = JsonObject.fromIterable(
-          pid.map("pleiadesId" -> Json.fromString(_)).toList ++
-            List("awmcType" -> Json.fromString(pType)) ++
-            text("NOTES", "notes").map("notes" -> Json.fromString(_)).toList ++
-            text("CREATOR", "creator").map("creator" -> Json.fromString(_)).toList
-        )
-        Right(
-          GazetteerPlace(
-            id = GazetteerPlace.Id(id),
-            label = GazetteerPlace.Label(title),
-            kind = kindOf(GazetteerPlace.Kind(pType)),
-            geometry = geom.map(g => GazetteerPlace.Geometry(g)),
-            properties =
-              Some(leftover).filter(_.nonEmpty).map(o => GazetteerPlace.Properties(Json.fromJsonObject(o).noSpaces)),
-            names = List(GazetteerName(GazetteerName.Name(title)))
+          val leftover = JsonObject.fromIterable(
+            pid.map("pleiadesId" -> Json.fromString(_)).toList ++
+              List("awmcType" -> Json.fromString(pType)) ++
+              text("NOTES", "notes").map("notes" -> Json.fromString(_)).toList ++
+              text("CREATOR", "creator").map("creator" -> Json.fromString(_)).toList
           )
-        )
-    }
+          Right(
+            GazetteerPlace(
+              id = GazetteerPlace.Id(id),
+              label = GazetteerPlace.Label(title),
+              kind = kindOf(GazetteerPlace.Kind(pType)),
+              geometry = geom.map(g => GazetteerPlace.Geometry(g)),
+              properties =
+                Some(leftover).filter(_.nonEmpty).map(o => GazetteerPlace.Properties(Json.fromJsonObject(o).noSpaces)),
+              names = List(GazetteerName(GazetteerName.Name(title)))
+            )
+          )
+      }
 
   /** The map's kind of an AWMC type: a mountain, plain, island or labelled feature is a `feature`, anything else a
     * `region`.

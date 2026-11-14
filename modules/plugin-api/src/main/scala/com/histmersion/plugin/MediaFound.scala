@@ -1,6 +1,8 @@
 package com.histmersion
 package plugin
 
+import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.Text.sentence
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a collection with its own targets' pictures ([[MediaMatchRule.Own]]) found for a batch of targets.
@@ -15,7 +17,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * @param read
   *   how many records it read (items, place records), for the report
   * @param failed
-  *   what went wrong, one line each, for the report
+  *   what went wrong, each with what it was for, for the report
   * @param notTaken
   *   the links it found but cannot take, each as its reason ("on Flickr (its API needs a key)"), counted in the report
   * @param categories
@@ -34,8 +36,19 @@ final case class MediaFound(
 object MediaFound:
   type Read = Read.T
   object Read extends Newtype[Int, Pure]
-  type Failed = Failed.T
-  object Failed extends Newtype[String, Pure]
+
+  /** One thing that went wrong, and what it was for: a target (`pleiades_1`), a target's search (`Met search for
+    * pleiades_1`), a batch (`Wikidata Q1…`), one file.
+    */
+  final case class Failed(about: Failed.About, problem: Problem) derives CanEqual:
+    /** The report's line: what it was for, then the problem's sentence. */
+    def line: Failed.Line = Failed.Line(s"$about: ${problem.sentence}")
+
+  object Failed:
+    type About = About.T
+    object About extends Newtype[String, Pure]
+    type Line = Line.T
+    object Line extends Newtype[String, Pure]
   type NotTaken = NotTaken.T
   object NotTaken extends Newtype[String, Pure]
 

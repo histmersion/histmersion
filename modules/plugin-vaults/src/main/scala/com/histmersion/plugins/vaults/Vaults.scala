@@ -59,10 +59,10 @@ object Vaults:
   private[vaults] def answer(
       vault: Secret.Vault.Name,
       ref: Secret.Vault.ResolveRef,
-      r: Either[Processes.Failure, Subprocess.Result],
+      r: Either[Problem, Subprocess.Result],
       classify: String => Option[Problem]
   ): Either[Problem, Secret.Resolved] =
-    r.left.map(_.problem).flatMap { res =>
+    r.flatMap { res =>
       if res.exit.value == 0 then
         val v = Subprocess.value(res.out).value
         if v.isEmpty then Left(vault.failed(Problem.Plugin.Retrieval.Blank(Problem.Raw(s"$ref"))))

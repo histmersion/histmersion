@@ -49,9 +49,9 @@ final class KeePassXcVault(
     }
 
   /** Why the host's process runner gave no answer, as a try with a YubiKey sees it. */
-  private def noAnswer(failure: Processes.Failure): YubiKey.NoAnswer = failure match
-    case Processes.Failure.TimedOut(_, after) => YubiKey.NoAnswer.TimedOut(after)
-    case Processes.Failure.NotStarted(why)    => YubiKey.NoAnswer.Unusable(why)
+  private def noAnswer(failure: Problem): YubiKey.NoAnswer = failure match
+    case Problem.Io.Process(_, Problem.Io.Ending.TimedOut(after)) => YubiKey.NoAnswer.TimedOut(after.duration)
+    case why                                                      => YubiKey.NoAnswer.Unusable(why)
 
   /** Every reference through ONE `keepassxc-cli open` session ([[KeePassXcSession]]): one unlock, one YubiKey touch. A
     * single reference (or one whose entry holds a line break) is read as [[resolve]] reads it; a failed unlock is every
@@ -238,7 +238,7 @@ final class KeePassXcVault(
           )
           log.info(Plugin.Log.Line(s"${failed.sentence}: trying the YubiKeys in order"));
           None
-        case Left(why) => log.info(Plugin.Log.Line(s"${why.problem.sentence}: trying the YubiKeys in order")); None
+        case Left(why) => log.info(Plugin.Log.Line(s"${why.sentence}: trying the YubiKeys in order")); None
     }
 
   /** Each planned key in turn until `attempt` opens the database with it (`Right(Right)`); a failure (`Right(Left)`:

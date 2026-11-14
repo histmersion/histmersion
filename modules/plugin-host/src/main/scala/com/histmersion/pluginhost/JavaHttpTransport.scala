@@ -29,7 +29,7 @@ final class JavaHttpTransport(
   def get(
       url: HttpTransport.Url,
       headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
-  ): Either[Plugin.Http.Failure, HttpAnswer] =
+  ): Either[Problem, HttpAnswer] =
     scala.util
       .Try {
         val b = HttpRequest
@@ -51,9 +51,7 @@ final class JavaHttpTransport(
       .toEither
       .left
       .map(e =>
-        Plugin.Http.Failure.Transport(
-          Problem.Unclassified(Legacy.Text(s"${url.value} unreachable: ${e.getClass.getSimpleName}: ${e.getMessage}"))
-        )
+        Problem.Unclassified(Legacy.Text(s"${url.value} unreachable: ${e.getClass.getSimpleName}: ${e.getMessage}"))
       )
 
 object JavaHttpTransport:

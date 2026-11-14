@@ -1,5 +1,5 @@
 package com.histmersion.fixtures.helloai
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 
 import com.histmersion.Newtype
 import com.histmersion.plugin.*
@@ -16,7 +16,11 @@ final class HelloAiProvider(replies: List[Reply], hasToken: HelloAiProvider.HasT
     Either.cond(
       model.value != "broken",
       (),
-      Problem.Unclassified(Legacy.Text("the model 'broken' cannot be built (a test of the check)"))
+      Problem.Plugin.Said(
+        Problem.Plugin.Id("hello-ai"),
+        Problem.Plugin.Claim.Unavailable,
+        External.PluginSaid.of("the model 'broken' cannot be built (a test of the check)")
+      )
     )
 
   override def models(http: AiHttp): Either[Problem, List[AiProvider.ModelName]] =
@@ -38,7 +42,7 @@ final class HelloAiProvider(replies: List[Reply], hasToken: HelloAiProvider.HasT
       )
     )
 
-  def turn(request: AiTurn.Request, http: AiHttp): Either[AiFailure, AiTurn] =
+  def turn(request: AiTurn.Request, http: AiHttp): Either[Problem, AiTurn] =
     val usage = Some(
       AiUsage(
         input = _root_.com.histmersion.plugin.AiUsage.Input((100).toLong),
@@ -47,17 +51,17 @@ final class HelloAiProvider(replies: List[Reply], hasToken: HelloAiProvider.HasT
     )
     if request.model == _root_.com.histmersion.plugin.AiTurn.Request.Model("limited") then
       Left(
-        AiFailure.LimitReached(
-          Problem.Unclassified(Legacy.Text("hello-ai: usage limit reached"))
-        )
+        Problem.Upstream.Limited(Problem.Upstream.Name("hello-ai"), None)
       )
     else
       val schema = request.answerSchema.fold("")(_.value)
       replies.find(r => schema.contains(r.when.value)) match
         case None =>
           Left(
-            AiFailure.Error(
-              Problem.Unclassified(Legacy.Text(s"no scripted reply for this step (${replies.size} repl(ies))"))
+            Problem.Plugin.Said(
+              Problem.Plugin.Id("hello-ai"),
+              Problem.Plugin.Claim.Failed,
+              External.PluginSaid.of(s"no scripted reply for this step (${replies.size} repl(ies))")
             )
           )
         case Some(r) =>

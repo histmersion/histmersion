@@ -388,7 +388,10 @@ class CollectionsSuite extends munit.FunSuite:
     )
     val store = CollStore(facts, named)
     val r = run(FakeMediaHttp.builtin(Loc), http, List(target(mycenae), target(greece)), dryRun = DryOff, store)
-    assert(r.failed.exists(f => f.value.contains("HTTP 403") && f.value.contains("bot challenge")), r.failed.toString)
+    assert(
+      r.failed.exists(f => f.value.contains("HTTP 403") && f.value.contains("bot-protection challenge")),
+      r.failed.toString
+    )
     assertEquals(http.requests.size, 1, "asked once, not retried, and not asked again for the next place")
     assert(store.checks.isEmpty)
 

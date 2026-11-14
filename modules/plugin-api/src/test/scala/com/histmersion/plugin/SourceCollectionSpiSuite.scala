@@ -14,8 +14,8 @@ class SourceCollectionSpiSuite extends munit.FunSuite:
     def get(
         url: Plugin.Http.Url,
         headers: Map[Header.Name, Header.Value]
-    ): Either[Plugin.Http.Failure, Plugin.HttpResponse.Body] =
-      Left(Plugin.Http.Failure.Transport(Problem.Config.Unavailable(Problem.Config.Capability.Network)))
+    ): Either[Problem, Plugin.HttpResponse.Body] =
+      Left(Problem.Config.Unavailable(Problem.Config.Capability.Network))
 
   private object EarlyContext extends Plugin.Context:
     def http = Bodies

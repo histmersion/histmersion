@@ -59,8 +59,6 @@ trait Plugin:
   def register(config: Config, ctx: Plugin.Context): Either[Problem, Unit]
 
 object Plugin:
-  import Http.Failure
-
   /** The readers a plugin's config derivation must see: an `${?ENV}` override always arrives as a HOCON STRING, so a
     * number or boolean setting has to accept a numeric or boolean string too — the same givens `core/Config.scala`
     * declares for Histmersion's own settings. A plugin imports them where it derives (`import
@@ -189,7 +187,9 @@ object Plugin:
     type QuotaUpstream = QuotaUpstream.T
     object QuotaUpstream extends Newtype[String, Pure]
 
-  /** The host's HTTP client, as a plugin sees it. Failures are `Left(message)`, never exceptions. */
+  /** The host's HTTP client, as a plugin sees it. A request that gave no answer to use is `Left` with the upstream's
+    * problem ([[Problem.Upstream]]: the status it answered, a bot challenge, no answer at all), never an exception.
+    */
   trait Http:
     /** One GET under the host's outbound policy (its User-Agent, `Retry-After`, a slow-down asked again, a bot
       * challenge ending the request): the body of a 2xx answer, or why there is none.
@@ -197,7 +197,7 @@ object Plugin:
     def get(
         url: Http.Url,
         headers: Map[Header.Name, Header.Value] = Map.empty
-    ): Either[Failure, HttpResponse.Body]
+    ): Either[Problem, HttpResponse.Body]
 
     /** One GET with the host's identity, answered as it came — its status and headers, a slow-down or an error answer
       * included — and never asked again: for an upstream whose own budget decides when to ask again (an
@@ -209,37 +209,12 @@ object Plugin:
     def fetch(
         url: Http.Url,
         headers: Map[Header.Name, Header.Value] = Map.empty
-    ): Either[Failure, HttpResponse] =
-      get(url, headers).map(HttpResponse(HttpResponse.Status(200), Map.empty, _))
+    ): Either[Problem, HttpResponse] =
+      get(url, headers).map(HttpResponse(Problem.Upstream.Status(200), Map.empty, _))
 
   object Http:
     type Url = Url.T
     object Url extends Newtype[String, Pure]
-
-    /** Why a request gave no answer to use, whichever of the host's calls it was. */
-    enum Failure derives CanEqual:
-      /** The upstream answered and the host gave up on the answer: a refusal (401, 403: a key wanted, a bot challenge),
-        * a missing page (404), a slow-down it left alone, any other error status. `problem` names the host and what it
-        * said.
-        */
-      case Status(code: HttpResponse.Status, problem: Problem)
-
-      /** No usable answer: the host could not reach the upstream, or the answer was not what was asked for. */
-      case Transport(problem: Problem)
-
-      /** The sentence for a person. */
-      def problem: Problem
-
-      /** Did the upstream refuse the request (401, 403: a key wanted, a bot challenge)? Asking again is refused alike.
-        */
-      def refused: Boolean = this match
-        case Status(code, _) => code.refusesAccess
-        case Transport(_)    => false
-
-      /** The same failure, found at `field` of what was asked (`item 7`): an input's path gets `field` in front. */
-      def within(field: Problem.Field): Failure = this match
-        case Status(code, why) => Status(code, why.within(field))
-        case Transport(why)    => Transport(why.within(field))
 
   /** One HTTP answer as it came: its status, its headers (names in lower case, the first value of each) and its body.
     *
@@ -251,7 +226,7 @@ object Plugin:
     *   the answer's bytes
     */
   final case class HttpResponse(
-      status: HttpResponse.Status,
+      status: Problem.Upstream.Status,
       headers: Map[Header.Name, Header.Value],
       body: HttpResponse.Body
   ):
@@ -262,18 +237,6 @@ object Plugin:
   object HttpResponse:
     type Body = Body.T
     object Body extends Newtype[Array[Byte], Pure]
-
-    type Status = Status.T
-    object Status extends Newtype[Int, Pure]:
-      val NotFound: Status = Status(404)
-      val Unauthorized: Status = Status(401)
-      val Forbidden: Status = Status(403)
-
-      extension (s: Status)
-        /** 401 or 403: the upstream wants a key or does not take the client. */
-        def refusesAccess: Boolean = s == Unauthorized || s == Forbidden
-
-        def isNotFound: Boolean = s == NotFound
 
   /** @param id
     *   the config key (`histmersion.plugins.<id>`) and the name in logs and reports; kebab-case, `[a-z0-9][a-z0-9-]*`

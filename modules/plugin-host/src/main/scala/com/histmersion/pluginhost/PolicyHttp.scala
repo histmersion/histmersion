@@ -1,7 +1,7 @@
 package com.histmersion
 package pluginhost
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.plugin.Header
 
@@ -53,30 +53,25 @@ final class PolicyHttp(
   def bytes(
       url: HttpTransport.Url,
       headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue] = Map.empty
-  ): Either[Plugin.Http.Failure, HttpAnswer.Body] =
+  ): Either[Problem, HttpAnswer.Body] =
     val sent = identified(headers)
     def again(
         n: HttpPolicy.Attempt,
         ms: HttpPolicy.Step.Wait.Ms,
         why: String
-    ): Either[Plugin.Http.Failure, HttpAnswer.Body] =
+    ): Either[Problem, HttpAnswer.Body] =
       log.warn(HostLog.Line(s"acquire: $why — retrying $url in ${ms}ms"))
       sleep(ms)
       attempt(HttpPolicy.Attempt(n.value + 1))
-    def attempt(n: HttpPolicy.Attempt): Either[Plugin.Http.Failure, HttpAnswer.Body] =
+    def attempt(n: HttpPolicy.Attempt): Either[Problem, HttpAnswer.Body] =
       transport.get(url, sent) match
         case Left(unreachable) =>
-          if n.value < maxRetries.value then again(n, HttpPolicy.backoffMs(n), unreachable.problem.sentence)
+          if n.value < maxRetries.value then again(n, HttpPolicy.backoffMs(n), unreachable.sentence)
           else Left(unreachable)
         case Right(answer) =>
           val code = HttpPolicy.StatusCode(answer.code.value)
           if Challenge.isChallenge(code, answer.headers, Challenge.Body(answer.body.value)) then
-            Left(
-              Plugin.Http.Failure.Status(
-                answer.code.status,
-                Problem.Unclassified(Legacy.Text(s"$url: HTTP $code bot-protection challenge — treated as no copy"))
-              )
-            )
+            Left(Problem.Upstream.Challenged(url.upstream, url.address, answer.code.status))
           else
             HttpPolicy.decide(
               code,
@@ -86,22 +81,11 @@ final class PolicyHttp(
               maxRetryAfterSeconds,
               clock()
             ) match
-              case HttpPolicy.Step.Accept                                    => Right(answer.body)
-              case HttpPolicy.Step.Wait(ms, why)                             => again(n, ms, why.sentence)
-              case HttpPolicy.Step.GiveUp(why) if HttpPolicy.Throttled(code) =>
-                Left(
-                  Plugin.Http.Failure
-                    .Status(answer.code.status, Problem.Unclassified(Legacy.Text(s"$url failed: ${why.sentence}")))
-                )
-              case HttpPolicy.Step.GiveUp(_) =>
-                Left(
-                  Plugin.Http.Failure.Status(
-                    answer.code.status,
-                    Problem.Unclassified(
-                      Legacy.Text(s"$url: HTTP $code ${new String(answer.body.value.take(200), "UTF-8")}")
-                    )
-                  )
-                )
+              case HttpPolicy.Step.Accept        => Right(answer.body)
+              case HttpPolicy.Step.Wait(ms, why) => again(n, ms, why.sentence)
+              case HttpPolicy.Step.GiveUp(why)   =>
+                if HttpPolicy.Throttled(code) then log.warn(HostLog.Line(s"acquire: $url — ${why.sentence}; giving up"))
+                Left(url.answered(answer.code.status, answer.body.value))
     attempt(HttpPolicy.Attempt(0))
 
   /** One GET with the policy's identity and NO retry: the answer as it came, a slow-down or an error included, with its
@@ -111,7 +95,7 @@ final class PolicyHttp(
   def once(
       url: HttpTransport.Url,
       headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue] = Map.empty
-  ): Either[Plugin.Http.Failure, HttpAnswer] =
+  ): Either[Problem, HttpAnswer] =
     transport.get(url, identified(headers))
 
   /** The client as the plugin SPI lends it: plugins get bytes, and parse what they asked for; a call an upstream's

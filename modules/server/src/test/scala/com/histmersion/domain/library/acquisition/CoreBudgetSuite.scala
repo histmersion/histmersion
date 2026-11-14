@@ -184,8 +184,8 @@ class CoreBudgetSuite extends munit.FunSuite:
       // the job's report says why core had nothing, and the next step was asked
       assertEquals(out.answers.map(_.fetcher), List("core", "next"))
       val refused = out.answers.head.why match
-        case Problem.Upstream.Http(name, _, status, _) => s"$name" == "core" && s"$status" == "429"
-        case _                                         => false
+        case Problem.Upstream.Http(name, _, status, _, _) => s"$name" == "core" && s"$status" == "429"
+        case _                                            => false
       assert(refused, out.answers.head.why)
       assertEquals(core.asked.size, 1)
       // until then neither use asks CORE
@@ -218,11 +218,11 @@ class CoreBudgetSuite extends munit.FunSuite:
       val cfg = acquire(core, key = "k-host")
       val g = generation(cfg, budget)
       core.script.add(Reply(200, Map("X-RateLimit-Limit" -> "25", "X-RateLimit-Remaining" -> "0")))
-      assertEquals(missWhy(lookup(g)), "core has no copy of 10.1/x")
+      assertEquals(missWhy(lookup(g)), "no Copy '10.1/x'")
       assert(missWhy(lookup(g)).contains("X-RateLimit-Remaining 0 of 25"))
       assertEquals(core.asked.size, 1)
       clock.advance(61)
-      assertEquals(missWhy(lookup(g)), "core has no copy of 10.1/x")
+      assertEquals(missWhy(lookup(g)), "no Copy '10.1/x'")
       assertEquals(core.asked.size, 2)
     }
 
@@ -263,7 +263,7 @@ class CoreBudgetSuite extends munit.FunSuite:
       // the next UTC day starts afresh
       clock.advance(24 * 3600)
       assert(idx.unavailable.isEmpty)
-      assertEquals(missWhy(lookup(g)), "core has no copy of 10.1/x")
+      assertEquals(missWhy(lookup(g)), "no Copy '10.1/x'")
     }
 
   test("the budget outlives a restart: what was spent and a block are read back from its store"):
@@ -329,7 +329,7 @@ class CoreBudgetSuite extends munit.FunSuite:
       val off = generation(acquire(core, key = "k-plain", user = "histmersion.plugins.oa-core.enabled = false"), budget)
       assert(coreIndex(keyed, off, budget).isDefined)
       val none = generation(acquire(core), budget)
-      assert(missWhy(lookup(none)).contains("needs CORE's API key"))
+      assert(missWhy(lookup(none)).contains("histmersion.plugins.oa-core.api-key is empty"))
       assertEquals(coreIndex(acquire(core), none, budget), None)
       assertEquals(core.asked.size, 2)
     }

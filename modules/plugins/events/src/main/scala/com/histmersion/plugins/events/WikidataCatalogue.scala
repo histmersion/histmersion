@@ -5,7 +5,7 @@ import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.JsonCodec.given
 import com.histmersion.util.json.Cursor
 import hearth.kindlings.jsoniterjson.Json
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.plugin.*
 import com.histmersion.upstreams.wikidata.WikidataClasses
@@ -40,7 +40,13 @@ final class WikidataCatalogue(cfg: WikidataSettings) extends EventCatalogue:
   ): Either[Problem, CataloguePage] =
     classes.find((qid, _) => part.value == s"class:$qid") match
       case None =>
-        Left(Problem.Unclassified(Legacy.Text(s"'$part' is no class of the configured events.wikidata.classes")))
+        Left(
+          Problem.Invalid.Unknown(
+            Problem.TypeName("com.histmersion.plugins.events.WikidataCatalogue.Class"),
+            Problem.Raw(s"$part"),
+            classes.map((qid, _) => Problem.Raw(s"class:$qid")).toVector
+          )
+        )
       case Some((qid, kind)) =>
         val q = WikidataCatalogue.sparql(
           qid,
@@ -129,7 +135,7 @@ object WikidataCatalogue:
     */
   def parse(json: Json, kind: CatalogueEvent.Kind): Either[Problem, List[CatalogueEvent]] =
     json.cursor.downField("results").downField("bindings").focus.flatMap(_.asArray) match
-      case None       => Left(Problem.Unclassified(Legacy.Text("no results in the answer")))
+      case None       => Left(Problem.Invalid.Missing(Problem.Field("results")))
       case Some(rows) =>
         val bs = rows.toList.map(_.cursor)
         Right(bs.groupBy(b => binding(b, "item").getOrElse("")).toList.filter(_._1.nonEmpty).sortBy(_._1).flatMap {

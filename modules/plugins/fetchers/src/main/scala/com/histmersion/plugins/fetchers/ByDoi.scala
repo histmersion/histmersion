@@ -1,6 +1,6 @@
 package com.histmersion
 package plugins.fetchers
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.plugin.{Access, Doi, Fetch, FetchedFile, SourceFetcher, WorkKey}
 import io.github.iltotore.iron.constraint.any.Pure
@@ -12,9 +12,11 @@ final class ByDoi(step: ByDoi.Step, copy: (Fetch.Context, Doi) => Option[Fetched
   val access: Access = Access.Open
   def fetch(work: WorkKey, ctx: Fetch.Context): Fetch =
     work.doi
-      .fold[Fetch](Fetch.Miss(Problem.Unclassified(Legacy.Text(s"${step.value} needs a DOI"))))(d =>
+      .fold[Fetch](Fetch.Miss(Problem.Invalid.Missing(Problem.Field("doi"))))(d =>
         copy(ctx, d).fold[Fetch](
-          Fetch.Miss(Problem.Unclassified(Legacy.Text(s"${step.value} has no copy of ${d.value}")))
+          Fetch.Miss(
+            Problem.NotFound.Entity(Problem.TypeName("com.histmersion.plugin.Copy"), Problem.Raw(s"${d.value}"))
+          )
         )(Fetch.Found(_))
       )
 

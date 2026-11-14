@@ -27,10 +27,8 @@ final class SttpHttp(policy: PolicyHttp) extends Http:
   ): Either[Http.Failure, HttpAnswer] =
     policy.once(HttpTransport.Url(url.value), headers).left.map(failure)
 
-  private def failure(f: Plugin.Http.Failure): Http.Failure = f match
-    case Plugin.Http.Failure.Status(code, why) =>
-      Http.Failure.Status(HttpAnswer.Code(code.value), why)
-    case Plugin.Http.Failure.Transport(why) => Http.Failure.Transport(why)
+  private def failure(why: Problem): Http.Failure =
+    why.answered.fold(Http.Failure.Transport(why))(code => Http.Failure.Status(HttpAnswer.Code(code.value), why))
 
   def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Failure, Http.Text] =
     bytes(url, headers).map(b => Http.Text(new String(b.value, "UTF-8")))

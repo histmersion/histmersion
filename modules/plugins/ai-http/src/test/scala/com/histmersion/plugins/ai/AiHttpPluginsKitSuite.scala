@@ -1,6 +1,6 @@
 package com.histmersion
 package plugins.ai
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Legacy, Problem}
 
 import com.histmersion.plugin.*
 import com.histmersion.plugin.testkit.{PluginHarness, ScriptedAiHttp}
@@ -146,28 +146,20 @@ class AiHttpPluginsKitSuite extends munit.FunSuite:
       r.turn,
       Some(
         Left(
-          AiFailure.Error(Problem.Unclassified(Legacy.Text("RuntimeException: OpenAI API error: Rate limit reached")))
+          Problem.Unclassified(Legacy.Text("Rate limit reached"))
         )
       )
     )
 
-  test("a client that cannot connect is described as the providers always described it"):
-    val http = ScriptedAiHttp(Left(AiHttp.Failure.Connect(Problem.Unclassified(Legacy.Text("ConnectException: ")))))
-    val r = load(Plugin.Info.Id("ai-anthropic"), keys).aiTurn(Registries.AiProvidersKey("anthropic"), request(), http)
-    assertEquals(
-      r.turn,
-      Some(
-        Left(
-          AiFailure.Error(
-            Problem.Unclassified(
-              Legacy.Text(
-                "ConnectException: Exception when sending request: POST https://api.anthropic.com/v1/messages"
-              )
-            )
-          )
-        )
-      )
+  test("a client that cannot connect: the host's problem, with the URL, is the provider's failure"):
+    val unreachable = Problem.Upstream.Unreachable(
+      Problem.Upstream.Name("api.anthropic.com"),
+      Problem.Upstream.Url("https://api.anthropic.com/v1/messages"),
+      External.Reported("java.net.ConnectException: refused")
     )
+    val http = ScriptedAiHttp(Left(unreachable))
+    val r = load(Plugin.Info.Id("ai-anthropic"), keys).aiTurn(Registries.AiProvidersKey("anthropic"), request(), http)
+    assertEquals(r.turn, Some(Left(unreachable)))
 
   test("the providers ask for the loop's notes and verbatim failures, and offer tools"):
     val settings = ProviderSettings(

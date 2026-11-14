@@ -1,10 +1,11 @@
 package com.histmersion
 package plugins.fetchers
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.JsonCodec.given
 import hearth.kindlings.jsoniterjson.Json
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.plugin.{Fetch, FetchedFile, SourceFetcher, UpstreamQuota, WorkKey}
 import com.histmersion.upstreams.http.json
@@ -76,7 +77,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
     def fetch(work: WorkKey, ctx: Fetch.Context): Fetch =
       work.doi
         .map(d => OaRecords.Doi(d.value))
-        .fold[Fetch](Fetch.Miss(Problem.Unclassified(Legacy.Text("core needs a DOI"))))(corePdf(ctx, _, key, quota))
+        .fold[Fetch](Fetch.Miss(Problem.Invalid.Missing(Problem.Field("doi"))))(corePdf(ctx, _, key, quota))
 
   val openalex: SourceFetcher = ByDoi(ByDoi.Step("openalex"), (ctx, d) => openalexOa(ctx, records(ctx, d)))
 
@@ -111,7 +112,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
   ): Fetch =
     key.fold[Fetch](
       Fetch.Miss(
-        Problem.Unclassified(Legacy.Text("core needs CORE's API key (plugins.oa-core.api-key or acquire.core.api-key)"))
+        Problem.Config.Setting(Problem.SettingKey("histmersion.plugins.oa-core.api-key"), Problem.Config.Fault.Empty)
       )
     ) { key =>
       CoreApi(cfg.core, http, quota).searchWorks(
@@ -122,15 +123,17 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
       ) match
         case Left(skip @ CoreFailure.Skipped(_)) => Fetch.Miss(skip.message)
         case Left(CoreFailure.Failed(why))       =>
-          ctx.log.info(Plugin.Log.Line(s"CORE lookup failed (${why.legacyText})"))
-          Fetch.Miss(Problem.Unclassified(Legacy.Text(s"core has no copy of $doi")))
+          ctx.log.info(Plugin.Log.Line(s"CORE lookup failed (${why.sentence})"))
+          Fetch.Miss(Problem.NotFound.Entity(Problem.TypeName("com.histmersion.plugin.Copy"), Problem.Raw(s"$doi")))
         case Right(json) =>
           AcquireParse
             .coreDownloadUrls(json)
             .iterator
             .flatMap(u => downloads.pdf(ctx.log, FetchedFile.Source("core"), Plugin.Http.Url(u.value)))
             .nextOption()
-            .fold(Fetch.Miss(Problem.Unclassified(Legacy.Text(s"core has no copy of $doi"))))(Fetch.Found(_))
+            .fold(
+              Fetch.Miss(Problem.NotFound.Entity(Problem.TypeName("com.histmersion.plugin.Copy"), Problem.Raw(s"$doi")))
+            )(Fetch.Found(_))
     }
 
   private def openalexOa(ctx: Fetch.Context, r: OaRecords): Option[FetchedFile] =
@@ -248,7 +251,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
         val source = FetchedFile.Source(if oaPub then "publisher" else "repository")
         http.get(Plugin.Http.Url(c.url.value)) match
           case Left(e) =>
-            ctx.log.info(Plugin.Log.Line(s"landing: ${c.url} failed (${e.problem.legacyText})")); None
+            ctx.log.info(Plugin.Log.Line(s"landing: ${c.url} failed (${e.sentence})")); None
           case Right(b) if Downloads.looksLikePdf(FetchedFile.Bytes(b.value)) =>
             Some(
               FetchedFile(

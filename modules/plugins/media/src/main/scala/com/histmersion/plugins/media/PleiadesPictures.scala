@@ -35,9 +35,7 @@ final class PleiadesPictures(media: MediaSettings, licences: LicenceReader) exte
     )
 
   def search(place: MediaPlace, http: Plugin.Http) = Left(
-    Plugin.Http.Failure.Transport(
-      Problem.Unclassified(Legacy.Text("the Pleiades pictures are found for a batch of places"))
-    )
+    Problem.Unclassified(Legacy.Text("the Pleiades pictures are found for a batch of places"))
   )
 
   private def placeTarget(p: MediaPlace): MediaTarget.Id =
@@ -52,9 +50,7 @@ final class PleiadesPictures(media: MediaSettings, licences: LicenceReader) exte
       (
         p,
         pids,
-        pids.map(pid =>
-          pid -> http.askJson(PleiadesLinks.placeUrl(conf.apiUrl, pid)).left.map(_.problem).flatMap(PleiadesLinks.links)
-        )
+        pids.map(pid => pid -> http.askJson(PleiadesLinks.placeUrl(conf.apiUrl, pid)).flatMap(PleiadesLinks.links))
       )
     }
     // 2. the Commons files, at most per-place; the rest counted by reason
@@ -82,10 +78,18 @@ final class PleiadesPictures(media: MediaSettings, licences: LicenceReader) exte
       read = MediaFound.Read(read.map(_._3.count(_._2.isRight)).sum),
       failed = read
         .flatMap { (p, pids, answers) =>
-          (if pids.isEmpty then List(s"place ${p.id.value} (${p.label.value}): no Pleiades id") else Nil) ++
-            answers.collect { case (pid, Left(e)) => s"Pleiades place ${pid.value} (${p.id.value}): ${e.legacyText}" }
-        }
-        .map(MediaFound.Failed(_)) ++ judged.map(j => MediaFound.Failed(j.legacyText)),
+          (if pids.isEmpty then
+             List(
+               MediaFound.Failed(
+                 MediaFound.Failed.About(s"place ${p.id.value} (${p.label.value})"),
+                 Problem.Invalid.Missing(Problem.Field("Pleiades id"))
+               )
+             )
+           else Nil) ++
+            answers.collect { case (pid, Left(e)) =>
+              MediaFound.Failed(MediaFound.Failed.About(s"Pleiades place ${pid.value} (${p.id.value})"), e)
+            }
+        } ++ judged,
       notTaken = read
         .flatMap(_._3.flatMap(_._2.toOption.toList.flatten.flatMap(_.file.left.toOption)))
         .map(why => MediaFound.NotTaken(s"${why.legacyText}"))

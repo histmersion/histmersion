@@ -15,20 +15,20 @@ class SpiAdditionsSuite extends munit.FunSuite:
     def get(
         url: Plugin.Http.Url,
         headers: Map[Header.Name, Header.Value]
-    ): Either[Plugin.Http.Failure, Plugin.HttpResponse.Body] =
+    ): Either[Problem, Plugin.HttpResponse.Body] =
       if (url).value.endsWith("/missing") then
         Left(
-          Plugin.Http.Failure
-            .Status(
-              Plugin.HttpResponse.Status.NotFound,
-              Problem.Plugin
-                .Said(Problem.Plugin.Id("test"), Problem.Plugin.Claim.Failed, External.PluginSaid.of(s"$url: HTTP 404"))
-            )
+          Problem.Upstream.Http(
+            Problem.Upstream.Name("x.example"),
+            Problem.Upstream.Url(s"$url"),
+            Problem.Upstream.Status.NotFound,
+            External.ReplyExcerpt.head("no such page")
+          )
         )
       else Right(Plugin.HttpResponse.Body(s"body of $url".getBytes("UTF-8")))
 
   test("Plugin.Http.fetch from a host that has only bodies: status 200, no headers, or the same Left"):
-    val r = Bodies.fetch(Plugin.Http.Url("https://x.example/a")).fold(e => fail((e.problem).sentence), identity)
+    val r = Bodies.fetch(Plugin.Http.Url("https://x.example/a")).fold(e => fail((e).sentence), identity)
     assertEquals(
       ({
         val refactorTuple7 = (r.status, r.headers, String((r.body).value, "UTF-8"));
@@ -47,14 +47,14 @@ class SpiAdditionsSuite extends munit.FunSuite:
         .fetch(Plugin.Http.Url("https://x.example/missing"))
         .map(_.status))
         .left
-        .map(refactorError => (refactorError.problem).sentence))
+        .map(refactorError => (refactorError).sentence))
         .map(refactorValue => (refactorValue).value): Either[String, Int]),
-      Left("test (failed): https://x.example/missing: HTTP 404")
+      Left("x.example answered HTTP 404 at https://x.example/missing — no such page")
     )
 
   test("a response's header is found in any case"):
     val r = Plugin.HttpResponse(
-      Plugin.HttpResponse.Status(429),
+      Problem.Upstream.Status(429),
       Map {
         val refactorTuple = "x-ratelimit-remaining" -> "0";
         (Header.Name(refactorTuple._1), Header.Value(refactorTuple._2))
@@ -149,9 +149,7 @@ class SpiAdditionsSuite extends munit.FunSuite:
     val early = new AiProvider:
       def title = AiProvider.Title("Early")
       def turn(request: AiTurn.Request, http: AiHttp) = Left(
-        AiFailure.Error(
-          Problem.Plugin.Said(Problem.Plugin.Id("test"), Problem.Plugin.Claim.Failed, External.PluginSaid.of("none"))
-        )
+        Problem.Plugin.Said(Problem.Plugin.Id("test"), Problem.Plugin.Claim.Failed, External.PluginSaid.of("none"))
       )
     assertEquals(
       early.capabilities,
@@ -226,7 +224,7 @@ class SpiAdditionsSuite extends munit.FunSuite:
     val role = MediaCollection.Object
     def search(place: MediaPlace, http: Plugin.Http) =
       if place.label == MediaPlace.Label("Nowhere") then
-        Left(Plugin.Http.Failure.Transport(Problem.Config.Unavailable(Problem.Config.Capability.Network)))
+        Left(Problem.Config.Unavailable(Problem.Config.Capability.Network))
       else
         Right(
           List(
@@ -243,12 +241,10 @@ class SpiAdditionsSuite extends munit.FunSuite:
               )
             ),
             Left(
-              Plugin.Http.Failure.Transport(
-                Problem.Plugin.Said(
-                  Problem.Plugin.Id("test"),
-                  Problem.Plugin.Claim.Failed,
-                  External.PluginSaid.of("one record unreadable")
-                )
+              Problem.Plugin.Said(
+                Problem.Plugin.Id("test"),
+                Problem.Plugin.Claim.Failed,
+                External.PluginSaid.of("one record unreadable")
               )
             )
           )
@@ -304,7 +300,7 @@ class SpiAdditionsSuite extends munit.FunSuite:
     assertEquals(found.unanswered, Set(b), "a failed search is not recorded as asked")
     assertEquals(((found.read).value: Int), 2)
     assertEquals(
-      ((found.failed).map(refactorValue3 => (refactorValue3).value): List[String]),
+      found.failed.map(f => s"${f.line}"),
       List("a: test (failed): one record unreadable", "Portal objects search for b: this server has no network")
     )
     assertEquals((found.notTaken, found.categories), (Nil, Nil))
@@ -342,7 +338,12 @@ class SpiAdditionsSuite extends munit.FunSuite:
       failing.completeAll(items, Bodies),
       MediaCompleted(
         Map { val refactorTuple5 = "k2" -> items(1); (MediaItem.Key(refactorTuple5._1), refactorTuple5._2) },
-        List(MediaCompleted.Failed("k1: test (failed): gone"))
+        List(
+          MediaFound.Failed(
+            MediaFound.Failed.About("k1"),
+            Problem.Plugin.Said(Problem.Plugin.Id("test"), Problem.Plugin.Claim.Failed, External.PluginSaid.of("gone"))
+          )
+        )
       )
     )
 

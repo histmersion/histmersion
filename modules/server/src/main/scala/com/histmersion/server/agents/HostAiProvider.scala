@@ -14,12 +14,10 @@ import com.histmersion.domain.Title
 final case class HostAiProvider(plugin: HostAiProvider.Plugin, kind: ProviderKind) extends AiProvider, HostOwned:
   def title: AiProvider.Title =
     AiProvider.Title(BuiltinAi.titles.getOrElse(kind, Title(kind.wire.value)).value)
-  def turn(request: AiTurn.Request, http: AiHttp): Either[AiFailure, AiTurn] =
+  def turn(request: AiTurn.Request, http: AiHttp): Either[Problem, AiTurn] =
     Left(
-      AiFailure.Error(
-        Problem.Unclassified(
-          Legacy.Text(s"${kind.wire} is Histmersion's own provider; it is run by the host, not through the SPI")
-        )
+      Problem.Unclassified(
+        Legacy.Text(s"${kind.wire} is Histmersion's own provider; it is run by the host, not through the SPI")
       )
     )
 

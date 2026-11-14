@@ -177,7 +177,7 @@ object Commons:
       )
 
     def search(place: MediaPlace, http: Plugin.Http) = Left(
-      Plugin.Http.Failure.Transport(Problem.Unclassified(Legacy.Text("the depictions are about events")))
+      Problem.Unclassified(Legacy.Text("the depictions are about events"))
     )
 
     override def searchTargets(places: List[MediaPlace], events: List[MediaEvent], http: Plugin.Http): MediaFound =
@@ -190,7 +190,7 @@ object Commons:
         if !media.depicts.depictedBy.value || asked.isEmpty then Nil
         else
           qids.grouped(wikidata.batch.value.max(1)).toList.map { ids =>
-            ids -> http.askJson(entitiesUrl(ids, wikidata)).left.map(_.problem).flatMap { j =>
+            ids -> http.askJson(entitiesUrl(ids, wikidata)).flatMap { j =>
               j.cursor
                 .downField("error")
                 .focus
@@ -203,8 +203,6 @@ object Commons:
         val asked = entitiesUrl(ids, wikidata)
         ids -> http
           .askJson(asked)
-          .left
-          .map(_.problem)
           .flatMap(WikidataEntities.items(_, Set(WikidataStatement.Property("P18")), Problem.Upstream.Url(s"$asked")))
       }
       val workImage: Map[WikidataId, File.Title] = workAnswers
@@ -225,8 +223,6 @@ object Commons:
           q,
           http
             .askJson(Depicts.searchUrl(media.commons.apiUrl, q, media.depicts.searchLimit, media.commons.maxlag))
-            .left
-            .map(_.problem)
             .flatMap(Depicts.titles)
         )
       }
@@ -260,12 +256,15 @@ object Commons:
         asked = asked.map((e, _) => eventTarget(e)),
         unanswered = asked.filter((_, q) => unanswered(q)).map((e, _) => eventTarget(e)).toSet,
         read = MediaFound.Read(depictedBy.size + workImage.size),
-        failed = (byItem.collect { case (ids, Left(err)) => s"Wikidata ${ids.head.value}…: ${err.legacyText}" } ++
-          workAnswers.collect { case (ids, Left(err)) => s"Wikidata works ${ids.head.value}…: ${err.legacyText}" } ++
+        failed = byItem.collect { case (ids, Left(err)) =>
+          MediaFound.Failed(MediaFound.Failed.About(s"Wikidata ${ids.head.value}…"), err)
+        } ++
+          workAnswers.collect { case (ids, Left(err)) =>
+            MediaFound.Failed(MediaFound.Failed.About(s"Wikidata works ${ids.head.value}…"), err)
+          } ++
           searches.collect { case (e, q, Left(err)) =>
-            s"Commons search for ${e.id.value} (${q.value}): ${err.legacyText}"
-          })
-          .map(MediaFound.Failed(_)) ++ judged.map(j => MediaFound.Failed(j.legacyText))
+            MediaFound.Failed(MediaFound.Failed.About(s"Commons search for ${e.id.value} (${q.value})"), err)
+          } ++ judged
       )
 
     private def eventTarget(e: MediaEvent): MediaTarget.Id =
@@ -403,18 +402,16 @@ object Commons:
         titles: List[File.Title],
         width: File.Width,
         meta: ImageInfoUrlMeta
-    ): (Map[File.Title, Either[Problem, File]], List[Problem]) =
+    ): (Map[File.Title, Either[Problem, File]], List[MediaFound.Failed]) =
       val answers = titles
         .grouped(media.commons.batch.value.max(1))
         .toList
         .map { batch =>
           http
             .askJson(imageInfoUrl(media.commons.apiUrl, batch, width, media.commons.maxlag, meta))
-            .left
-            .map(_.problem)
             .flatMap(Commons.imageInfo)
             .left
-            .map(e => Problem.Unclassified(Legacy.Text(s"Commons ${batch.head.value}…: ${e.legacyText}")))
+            .map(e => MediaFound.Failed(MediaFound.Failed.About(s"Commons ${batch.head.value}…"), e))
         }
       (answers.flatMap(_.toOption).flatMap(_.toList).toMap, answers.flatMap(_.left.toOption))
 
@@ -423,7 +420,7 @@ object Commons:
       * Commons marks non-free, whose licence is unreadable or all rights reserved, or whose licence requires an author
       * it does not name, is withheld with that reason.
       */
-    def items(titles: List[File.Title]): (Map[File.Title, MediaItem], List[Problem]) =
+    def items(titles: List[File.Title]): (Map[File.Title, MediaItem], List[MediaFound.Failed]) =
       val (infos, failed) = imageInfo(titles, File.Width(media.displayPx.value), ImageInfoUrlMeta(true))
       (titles.map(t => t -> item(t, infos.get(t))).toMap, failed)
 
@@ -508,7 +505,7 @@ object Commons:
             )
           }
         }.toMap,
-        failed.map(f => MediaCompleted.Failed(f.legacyText))
+        failed
       )
 
   /** `histmersion.media.commons`: the action API, titles per `imageinfo` call, and `maxlag`. */
