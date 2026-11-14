@@ -1113,7 +1113,7 @@ Mirror: the next full `histmersion export` removes `sources/zqbeta2001_cove.md`.
 == delete zqeps1999_cited: refused
 400 {
   "code" : "invalid",
-  "message" : "'zqeps1999_cited' cannot be deleted — cited by article zq_article (Zq walls); primary source of event zq_siege (The siege of Zqtell). Fix those first (remove the citation from each article, re-source the events, let the job finish); there is no override"
+  "message" : "Citekey 'zqeps1999_cited' is referred to by 1 DeleteBlocker.Kind.Article"
 }
 == delete zqnone2000_x: unknown
 404 {

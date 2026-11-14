@@ -6,15 +6,15 @@ import io.github.iltotore.iron.RefinedType
 
 import java.sql.{PreparedStatement, ResultSet, SQLException}
 
-import util.problem.Text.sentence
-import util.problem.{Legacy, Problem}
+import util.problem.Problem
+import com.histmersion.api.problem.Column
+import com.histmersion.api.problem.Column.stored
 
 /** The column codec of every newtype, from its base type's. A value its constraint refuses fails the read, naming the
   * column and the value: the stored data breaks a rule the code relies on, and that should be loud. NULL passes
   * through, for `Option`'s codec to read as `None`.
   *
-  * Until the stored columns go through the frozen wording (G60), a [[Problem]] column holds the sentence the String
-  * `Problem` newtypes held, and reads back as that unclassified text.
+  * A [[Problem]] column holds the frozen wording of the api's `Column` renderer and reads back through it (G60).
   */
 object NewtypeColumns:
   given column: [T] => (m: RefinedType.Mirror[T]) => (base: DbCodec[m.BaseType]) => DbCodec[T] = new DbCodec[T]:
@@ -49,7 +49,15 @@ object NewtypeColumns:
       def writeSingle(entity: List[T], ps: PreparedStatement, pos: Int): Unit =
         base.writeSingle(entity.map(_.asInstanceOf[m.BaseType]), ps, pos)
 
+  /** A problem column holds the problem's frozen stored sentence ([[Column]]) and reads back through it: a text no case
+    * writes (an older version's) is `Stored.Unrecognised` and writes back bare. An unclassified problem is kept as its
+    * words alone, so it reads back as the text it was.
+    */
   given problemColumn: DbCodec[Problem] = DbCodec.StringCodec.biMap(
-    text => Option(text).map(t => Problem.Unclassified(Legacy.Text(t))).orNull,
-    problem => Option(problem).map(_.sentence).orNull
+    text => Option(text).map(Column.read).orNull,
+    problem =>
+      Option(problem).map {
+        case Problem.Unclassified(text) => s"$text"
+        case other                      => other.stored
+      }.orNull
   )

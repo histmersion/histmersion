@@ -5,7 +5,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import io.scalaland.chimney.dsl.*
 
 import hearth.kindlings.optics.syntax.*
@@ -82,7 +82,7 @@ final class PlanPools(
         (
           Floors.Empty,
           PoolStatus.FloorsSource("saved"),
-          Some(Problem.Unclassified(Legacy.Text(s"saved floors do not parse: $m")))
+          Some(Problem.Unclassified(Legacy.Text(s"saved floors do not parse: ${m.sentences.mkString("; ")}")))
         )
       case None =>
         Floors.parse(poolCfg(p)._1) match
@@ -91,7 +91,7 @@ final class PlanPools(
             (
               Floors.Empty,
               PoolStatus.FloorsSource("config"),
-              Some(Problem.Unclassified(Legacy.Text(s"agents.quota.${p.wire}.floors: $m")))
+              Some(Problem.Unclassified(Legacy.Text(s"agents.quota.${p.wire}.floors: ${m.sentences.mkString("; ")}")))
             )
 
   def rules(p: PoolId): Rules =

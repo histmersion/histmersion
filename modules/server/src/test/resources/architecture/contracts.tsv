@@ -782,7 +782,7 @@ unwrap	api:api/WebPaths.scala	.value outside a boundary	3
 unwrap	api:api/WireEnum.scala	.value outside a boundary	2
 unwrap	api:api/Wording.scala	.value outside a boundary	19
 unwrap	api:api/YearFmt.scala	.value outside a boundary	5
-unwrap	api:api/Years.scala	.value outside a boundary	19
+unwrap	api:api/Years.scala	.value outside a boundary	16
 unwrap	api:api/aliases/AliasKinds.scala	.value outside a boundary	1
 unwrap	api:api/aliases/Aliases.scala	.value outside a boundary	7
 unwrap	api:api/aliases/LabelRenames.scala	.value outside a boundary	2
@@ -889,7 +889,7 @@ unwrap	api:api/library/Rename.scala	.value outside a boundary	10
 unwrap	api:api/library/RepairAcquire.scala	.value outside a boundary	6
 unwrap	api:api/library/SearchResult.scala	.value outside a boundary	4
 unwrap	api:api/library/Sort.scala	.value outside a boundary	2
-unwrap	api:api/library/Source.scala	.value outside a boundary	43
+unwrap	api:api/library/Source.scala	.value outside a boundary	42
 unwrap	api:api/library/Tree.scala	.value outside a boundary	33
 unwrap	api:api/maintenance/Storage.scala	.value outside a boundary	21
 unwrap	api:api/maintenance/Vacuum.scala	.value outside a boundary	7
@@ -907,12 +907,12 @@ unwrap	api:api/personal/ItemKey.scala	.value outside a boundary	1
 unwrap	api:api/personal/MapZoom.scala	.value outside a boundary	1
 unwrap	api:api/personal/Note.scala	.value outside a boundary	3
 unwrap	api:api/personal/PersonalIds.scala	.value outside a boundary	2
-unwrap	api:api/personal/Target.scala	.value outside a boundary	8
+unwrap	api:api/personal/Target.scala	.value outside a boundary	6
 unwrap	api:api/personal/ViewState.scala	.value outside a boundary	1
 unwrap	api:api/plugins/PluginSet.scala	.value outside a boundary	2
 unwrap	api:api/plugins/PluginState.scala	.value outside a boundary	1
 unwrap	api:api/research/Article.scala	.value outside a boundary	128
-unwrap	api:api/research/Articles.scala	.value outside a boundary	27
+unwrap	api:api/research/Articles.scala	.value outside a boundary	26
 unwrap	api:api/research/Coverage.scala	.value outside a boundary	4
 unwrap	api:api/research/CritiquePairing.scala	.value outside a boundary	23
 unwrap	api:api/research/CritiqueReason.scala	.value outside a boundary	2

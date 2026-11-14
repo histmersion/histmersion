@@ -1,7 +1,7 @@
 package com.histmersion
 package util.jobs
 import com.histmersion.util.problem.Text.sentence
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -78,7 +78,7 @@ abstract class JobRunsContract(name: String) extends DbSuite:
         id,
         RunRow.Status("running"),
         RunRow.Status("failed"),
-        Some(Problem.Unclassified(Legacy.Text("boom"))),
+        Some(Problem.Stored.Unrecognised(Problem.Stored.Text("boom"))),
         None,
         None
       )
@@ -99,13 +99,13 @@ abstract class JobRunsContract(name: String) extends DbSuite:
       Kind,
       RunRow.Status("running"),
       RunRow.Status("paused"),
-      Problem.Unclassified(Legacy.Text("interrupted")),
+      Problem.Run.Interrupted,
       RunRow.Status("queued"),
       List(kept)
     )
     assertEquals(paused, Vector(a -> Some("manager")))
     assertEquals(queued, Vector(b, c))
-    assertEquals(row(r, a)._1 -> row(r, a)._2.map(_.sentence), "paused" -> Some("interrupted"))
+    assertEquals(row(r, a)._1 -> row(r, a)._2, "paused" -> Some(Problem.Run.Interrupted))
     assertEquals(row(r, kept)._1, "running")
   }
 
@@ -122,7 +122,7 @@ abstract class JobRunsContract(name: String) extends DbSuite:
         soon,
         RunRow.Status("running"),
         RunRow.Status("paused"),
-        Some(Problem.Unclassified(Legacy.Text("allowance: x"))),
+        Some(Problem.Stored.Unrecognised(Problem.Stored.Text("allowance: x"))),
         None,
         Some(now.minusSeconds(60))
       )
@@ -133,7 +133,7 @@ abstract class JobRunsContract(name: String) extends DbSuite:
         later,
         RunRow.Status("running"),
         RunRow.Status("paused"),
-        Some(Problem.Unclassified(Legacy.Text("allowance: y"))),
+        Some(Problem.Stored.Unrecognised(Problem.Stored.Text("allowance: y"))),
         None,
         Some(now.plusSeconds(3600))
       )
@@ -144,7 +144,7 @@ abstract class JobRunsContract(name: String) extends DbSuite:
         held,
         RunRow.Status("running"),
         RunRow.Status("paused"),
-        Some(Problem.Unclassified(Legacy.Text("plan-quota: z"))),
+        Some(Problem.Stored.Unrecognised(Problem.Stored.Text("plan-quota: z"))),
         None,
         None
       )
@@ -154,8 +154,8 @@ abstract class JobRunsContract(name: String) extends DbSuite:
     assertEquals(
       r.pausedWaiting(Kind, RunRow.Status("paused"), now).map(r => (r._1, r._4)).toSet,
       Set(
-        (held, Problem.Unclassified(Legacy.Text("plan-quota: z"))),
-        (later, Problem.Unclassified(Legacy.Text("allowance: y")))
+        (held, Problem.Stored.Unrecognised(Problem.Stored.Text("plan-quota: z"))),
+        (later, Problem.Stored.Unrecognised(Problem.Stored.Text("allowance: y")))
       )
     )
     assert(r.resumeAt(Kind, later, RunRow.Status("paused"), now.minusSeconds(1)))

@@ -26,11 +26,10 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.api.research.Article
 
 class AgentsSuite extends munit.FunSuite:
-  private def unknownProvider(name: String)(p: Problem): Boolean = p match
+  private def unknownProvider(name: Problem.Raw)(p: Problem): Boolean = p match
     case Problem.Invalid.Unknown(t, raw, _, _) =>
-      t == Problem.TypeName.of(com.histmersion.api.automation.ProviderKind.Wire) && raw == Problem.Raw(name)
+      t == Problem.TypeName.of(com.histmersion.api.automation.ProviderKind.Wire) && raw == name
     case _ => false
-
 
   test("ModelRef: only the first colon separates the provider (Ollama ids carry colons)"):
     assertEquals(
@@ -44,7 +43,7 @@ class AgentsSuite extends munit.FunSuite:
     assertEquals(ModelRef.parse(Agents.ModelRef.Wire("openai:gpt")).map(_.wire), Right("openai:gpt"))
 
   test("ModelRef: unknown provider, no model, no colon are errors"):
-    assert(ModelRef.parse(Agents.ModelRef.Wire("ollama:qwen")).left.exists(unknownProvider("ollama")))
+    assert(ModelRef.parse(Agents.ModelRef.Wire("ollama:qwen")).left.exists(unknownProvider(Problem.Raw("ollama"))))
     assertEquals(
       ModelRef.parse(Agents.ModelRef.Wire("local:")),
       Left(Problem.Invalid.Missing(Problem.Field("model"), Vector(Problem.Field("local:"))))
@@ -61,7 +60,7 @@ class AgentsSuite extends munit.FunSuite:
         .parse(Agents.ModelRef.Wire("gemini:pro"))
         .left
         .exists(e =>
-          unknownProvider("gemini")(e) && (e match
+          unknownProvider(Problem.Raw("gemini"))(e) && (e match
             case Problem.Invalid.Unknown(_, _, known, _) => !known.contains(Problem.Raw("gemini"))
             case _                                       => false)
         )
@@ -381,9 +380,13 @@ class AgentsSuite extends munit.FunSuite:
       Left(Problem.Invalid.Missing(Problem.Field("role"), Vector(Problem.Field("=local:x"))))
     )
     assert(
-      ModelOverride.parse(Agents.ModelOverride.Wire("skeptic=")).left.toOption.contains(
-        Problem.Invalid.Missing(Problem.Field("model"), Vector(Problem.Field("skeptic=")))
-      )
+      ModelOverride
+        .parse(Agents.ModelOverride.Wire("skeptic="))
+        .left
+        .toOption
+        .contains(
+          Problem.Invalid.Missing(Problem.Field("model"), Vector(Problem.Field("skeptic=")))
+        )
     )
 
   test("a run's model for a role: its --model-for, else its --model, else none (the role's chain)"):

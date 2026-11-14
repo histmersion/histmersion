@@ -17964,7 +17964,7 @@ _unsupported unit='nonsense' — use sources, findings or starts_
 == POST /api/query SELECT 1; SELECT 2
 400 {
   "code" : null,
-  "message" : "2 statements were given — `query` runs exactly ONE; drop the ';'-separated batch and ask again"
+  "message" : "a query runs exactly one statement: drop the ';'-separated batch and ask again"
 }
 == POST /api/query DELETE FROM sources
 400 {
@@ -17974,7 +17974,7 @@ _unsupported unit='nonsense' — use sources, findings or starts_
 == POST /api/query SET TRANSACTION READ WRITE
 400 {
   "code" : null,
-  "message" : "'SET' is not allowed here — `query` runs ONE read-only statement (SELECT, or a WITH that only reads); transaction and session control are refused"
+  "message" : "unknown Query.Statement 'SET' (one of: SELECT, WITH)"
 }
 == POST /api/query WITH x AS (DELETE FROM sources RETURNING 1) SELECT * FROM x
 400 {
@@ -17994,7 +17994,7 @@ _unsupported unit='nonsense' — use sources, findings or starts_
 == POST /api/query 
 400 {
   "code" : null,
-  "message" : "empty statement"
+  "message" : "sql is required"
 }
 == tool query
 ### 2 row(s) · N ms

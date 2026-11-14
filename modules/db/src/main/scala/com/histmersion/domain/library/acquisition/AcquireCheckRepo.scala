@@ -1,7 +1,6 @@
 package com.histmersion
 package domain.library.acquisition
 import com.histmersion.util.problem.Problem
-import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.domain.AcquireRecheck
 
@@ -91,7 +90,7 @@ private[acquisition] object AcquireCheckRepo:
     val o = outcome.wire
     val _ =
       sql"""INSERT INTO acquire_checks (item_id, checked_at, generation, outcome, reason)
-            VALUES ($item, to_timestamp($ms::float8), $generation, $o, ${reason.sentence})
+            VALUES ($item, to_timestamp($ms::float8), $generation, $o, $reason)
             ON CONFLICT (item_id) DO UPDATE SET checked_at = EXCLUDED.checked_at, generation = EXCLUDED.generation,
               outcome = EXCLUDED.outcome, reason = EXCLUDED.reason, checks = acquire_checks.checks + 1""".update.run()
 

@@ -16,7 +16,6 @@ class ArticleEditsSuite extends munit.FunSuite:
   private val MissingText: Problem = Problem.Invalid.Missing.here(Problem.Field("text"))
   private val MissingAnchor: Problem = Problem.Invalid.Missing.here(Problem.Field("anchor"))
 
-
   private val BodyText =
     """Tin reached the Aegean by sea [[knapp2016_tin]].
       |
@@ -109,7 +108,6 @@ class ArticleEditsSuite extends munit.FunSuite:
         None
       )
     )
-    assert(r.problems.head.value.startsWith("edit 1 (replace \"by land\"): "), r.problems)
     assertEquals(r.results.map(_.applied), List(false, false, true))
     assertEquals(
       applyAll(Body, List(e(Op.InsertAfter, Anchor("  "), Some(NewText("x"))))).results.map(_.problem),

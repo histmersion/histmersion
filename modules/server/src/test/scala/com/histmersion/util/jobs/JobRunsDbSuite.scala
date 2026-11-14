@@ -1,6 +1,6 @@
 package com.histmersion
 package util.jobs
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.config.AppConfig
 import com.histmersion.util.database.Transactor
@@ -42,7 +42,7 @@ class JobRunsDbSuite extends JobRunsContract("db"):
     )
     (
       RunRow.Status(status),
-      error.map((text => Problem.Unclassified(Legacy.Text(text)))),
+      error.map((text => Problem.Stored.Unrecognised(Problem.Stored.Text(text)))),
       progress.map(JobRunState.Progress(_)),
       origin.map(RunRow.Origin(_))
     )

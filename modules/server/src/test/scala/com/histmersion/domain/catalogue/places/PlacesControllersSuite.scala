@@ -111,7 +111,7 @@ class PlacesControllersSuite extends munit.FunSuite:
     assert(
       c.importPlaces(Caller.Local, None, Some(Dataset.Wire("other")), doc)
         .left
-        .exists(_.message.sentence.contains("seed or local"))
+        .exists(_.message.sentence.contains("unknown Dataset 'other' (one of: "))
     )
     assert(c.importPlaces(Caller.Local, None, None, PlacesControllers.DatasetBody("not json")).isLeft)
 

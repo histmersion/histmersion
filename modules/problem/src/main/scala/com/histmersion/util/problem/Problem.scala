@@ -174,7 +174,8 @@ object Problem:
       /** The problem of the request as a whole: no path into it. */
       def here(typeName: TypeName, raw: Raw, member: Field): Wrapped = Wrapped(typeName, raw, member, Vector.empty)
 
-    /** `item`, a value of `typeName`, is stored on `owner`, not on the value the request writes: it is written there. */
+    /** `item`, a value of `typeName`, is stored on `owner`, not on the value the request writes: it is written there.
+      */
     final case class StoredOn(typeName: TypeName, item: Raw, owner: Raw, at: Vector[Field]) extends Invalid
 
     object StoredOn:

@@ -49,7 +49,8 @@ object CritiqueReason:
   object Spec extends Newtype[String, Pure]
 
   def parse(s: Spec): Either[Problem, CritiqueReason] =
-    val i = (s).value.indexOf('=')
+    val text = s"$s"
+    val i = text.indexOf('=')
     if i < 0 then
       Left(
         Problem.Invalid.Unreadable.here(
@@ -60,8 +61,8 @@ object CritiqueReason:
       )
     else
       CritiqueRef
-        .parse(CritiqueRef.Wire((s).value.take(i)))
-        .map(r => CritiqueReason(r.src, r.dst, Coverage.Rationale(s"${(s).value.drop(i + 1).trim}")))
+        .parse(CritiqueRef.Wire(text.take(i)))
+        .map(r => CritiqueReason(r.src, r.dst, Coverage.Rationale(text.drop(i + 1).trim)))
 
   def tidy(r: CritiqueReason): Either[Problem, CritiqueReason] =
     val text = Option(r.reason).map(w => s"$w".trim.replaceAll("\\s+", " ")).getOrElse("")

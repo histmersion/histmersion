@@ -9,7 +9,9 @@ import com.histmersion.util.data.exchange.BundleScope
 import com.histmersion.util.data.exchange.BundleSql.*
 
 import com.augustnagro.magnum.*
+import io.scalaland.chimney.dsl.*
 import com.histmersion.api.exchange.Bundle
+import com.histmersion.api.automation.Queue
 
 /** What a bundle carries of the work lists: their items, read as the bundle's lines by uid, and the import's step that
   * writes them.
@@ -30,7 +32,7 @@ private[worklists] object QueueBundleRepo:
           Bundle.QueueItem.Text(r.text.value),
           r.topic.map(t => Bundle.QueueItem.Topic(t.value)),
           Bundle.QueueItem.Status(r.status.value),
-          r.reason,
+          r.reason.transformInto[Option[Queue.Rationale]],
           Bundle.QueueItem.CreatedAt(r.createdAt.value),
           r.doneAt.map(d => Bundle.QueueItem.DoneAt(d.value)),
           Bundle.QueueItem.UpdatedAt(r.updatedAt.value)

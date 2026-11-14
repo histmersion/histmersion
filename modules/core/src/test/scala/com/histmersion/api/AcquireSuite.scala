@@ -286,7 +286,10 @@ class AcquireSuite extends munit.FunSuite:
     assertEquals(rows.size, 3)
     assertEquals(rows.head.doi, "10.1177/1758835919874651")
     assertEquals(rows.head.nature, Some("Retraction"))
-    assert(rows.head.reason.exists(_.value.contains("Duplication of Image")))
+    assertEquals(
+      rows.head.reason,
+      Some(Acquire.RetractionRow.Account("+Concerns/Issues About Data;+Duplication of Image"))
+    )
     // the second row's Notes column contains a comma AND a newline inside quotes
     assertEquals(rows(1).doi, "10.1038/nature00000") // lower-cased by normalizeDoi
     assertEquals(rows(2).doi, "10.1126/science.yyy") // resolver prefix stripped

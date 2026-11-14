@@ -352,11 +352,11 @@
   "message" : "'Bad Key' is not a Citekey: Should match (?!.*\\.\\.)[a-z][a-z0-9_.-]{1,120}"
 }
 == put refused: an unknown key
-400 Invalid value for: body (unknown key 'nope'; expected only: title, authors, doi, year, venue, status, topics, regions, tags, periodStart, periodEnd, summary, body, notes, citedByCount, influentialCitations, provenance, calibreId, findings, edges)
+400 Invalid value for: body (unknown key 'nope' (one of: title, authors, doi, year, venue, status, topics, regions, tags, periodStart, periodEnd, summary, body, notes, citedByCount, influentialCitations, provenance, calibreId, findings, edges))
 == put refused: an edge from another source
 400 {
   "code" : "invalid",
-  "message" : "edges: src 'zqgamma1975_kings' is not the source being put 'zqx2000_x'. An edge is stored on its source: patch 'zqgamma1975_kings' to record 'zqgamma1975_kings' --references--> 'zqbeta2001_cove' (src may be omitted; it defaults to the source being put)"
+  "message" : "edges: 'zqgamma1975_kings' --references--> 'zqbeta2001_cove' is stored on 'zqgamma1975_kings', not here: patch 'zqgamma1975_kings' to record it"
 }
 == put refused: strict, a formatting error
 400 {

@@ -1838,21 +1838,21 @@ _No source 'zqnone2000_x'_
   }
 }
 == PATCH zqgamma1975_kings: refused: an unknown key
-400 Invalid value for: body (unknown key 'status' — 'status' belongs under 'metadata' (metadata.status); expected only: metadata, summary, body, notes, topics, regions, period, tags, findings, edges, ifUpdatedAt)
+400 Invalid value for: body (unknown key 'status' (one of: metadata, summary, body, notes, topics, regions, period, tags, findings, edges, ifUpdatedAt); 'status' belongs under 'metadata' (metadata.status))
 == PATCH zqgamma1975_kings: refused: a stale token
 412 {
   "code" : "precondition_failed",
-  "message" : "'zqgamma1975_kings' has moved on: you sent ifUpdatedAt='TS' but the stored updatedAt is 'TS'. Re-read the source and re-apply your patch."
+  "message" : "Citekey 'zqgamma1975_kings' has moved on: you sent TS, it is now TS"
 }
 == PATCH zqgamma1975_kings: refused: an edge from another source
 400 {
   "code" : "invalid",
-  "message" : "edges.add: src 'zqalpha1990_tell' is not the patched source 'zqgamma1975_kings'. An edge is stored on its source: patch 'zqalpha1990_tell' to record 'zqalpha1990_tell' --references--> 'zqbeta2001_cove' (src may be omitted; it defaults to the patched source)"
+  "message" : "edges.add: 'zqalpha1990_tell' --references--> 'zqbeta2001_cove' is stored on 'zqalpha1990_tell', not here: patch 'zqalpha1990_tell' to record it"
 }
 == PATCH zqgamma1975_kings: refused: a self edge
 400 {
   "code" : "invalid",
-  "message" : "edges.add: 'zqgamma1975_kings' --references--> itself is a self-edge; dst must be another source"
+  "message" : "edges.add: src, dst must differ"
 }
 == PATCH strict, a formatting error
 400 {
@@ -2104,7 +2104,7 @@ Kings, again; see [[zqalpha1990_tell]].
 200 {
   "error" : {
     "code" : -32602,
-    "message" : "Invalid arguments: DecodingFailure at .patch: unknown key 'nope'; expected only: metadata, summary, body, notes, topics, regions, period, tags, findings, edges, ifUpdatedAt. Input: {\"citekey\":\"zqgamma1975_kings\",\"patch\":{\"nope\":1}}"
+    "message" : "Invalid arguments: DecodingFailure at .patch: unknown key 'nope' (one of: metadata, summary, body, notes, topics, regions, period, tags, findings, edges, ifUpdatedAt). Input: {\"citekey\":\"zqgamma1975_kings\",\"patch\":{\"nope\":1}}"
   },
   "id" : 1,
   "jsonrpc" : "2.0"

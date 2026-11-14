@@ -488,7 +488,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     assert(paused.nonEmpty)
     val r = connect(ds)(AgentRepo.get(run.id)).get
     assertEquals(r.status, "paused")
-    assertEquals(r.error.map(_.sentence), Some("interrupted"))
+    assertEquals(r.error, Some(Problem.Run.Interrupted))
 
   // ── P2: upstream checks, the acquisition item, approvals, trace pruning ─────────────────────────
 
@@ -632,7 +632,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
       a.startRun(
         RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget, acquireItem = Some(Queue.QueueItem.Id(-7)))
       ).left
-        .exists(_.message.sentence.contains("no acquisition item"))
+        .exists(_.message.sentence.contains("no Queue.QueueItem.Id '-7'"))
     )
 
   test("approvals: approving applies the change once, a second decision is a conflict, rejecting changes nothing"):
@@ -994,7 +994,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     )
     assert(
       refused(ModelOverride(Agents.ModelOverride.Role("extractor"), Agents.ModelOverride.Model("haiku"))).left
-        .exists(_.contains("is not provider:model"))
+        .exists(_.contains("'haiku' is not a Agents.ModelRef"))
     )
     assert(
       refused(ModelOverride(Agents.ModelOverride.Role("extractor"), Agents.ModelOverride.Model("local:unpriced"))).left
@@ -1009,7 +1009,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     )
     assertEquals(
       ModelOverride.parse(Agents.ModelOverride.Wire("fixer")).left.map(_.sentence),
-      Left("'fixer' is not <role>=<provider:model>")
+      Left("'fixer' is not a Agents.ModelOverride (e.g. reviewer=claude-code:opus)")
     )
     val ok = a
       .startRun(
@@ -1462,7 +1462,12 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     val (n, _) = a.engine.reconcile()
     assert(n.value >= 3, n)
     val after = List(mine, sched, mgr).map(r => connect(ds)(AgentRepo.get(r.id)).get)
-    assert(after.forall(r => r.status.value == "paused" && r.error.map(_.sentence).contains("interrupted")), after)
+    assert(
+      after.forall(r =>
+        r.status.value == "paused" && r.error.contains(Problem.Run.Interrupted)
+      ),
+      after
+    )
     assertEquals(after.map(_.resumeAt.isDefined), List(false, true, true))
     val due = a.engine.resumeDue(java.time.Instant.now().plusSeconds(120))
     assert(due.contains(sched.id) && due.contains(mgr.id) && !due.contains(mine.id), due)

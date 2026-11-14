@@ -426,9 +426,9 @@ class IngestHttpSuite extends munit.FunSuite:
       val task = addItem(url, "zzfulfil a task, not a book", list = "tasks")
 
       for (bad, why) <- List(
-          done -> "already done",
-          task -> "not the acquisition list",
-          999999 -> "no acquisition item"
+          done -> "is done; this needs open",
+          task -> "is tasks; this needs acquire",
+          999999 -> "no Queue.QueueItem.Id '999999'"
         )
       do
         val (st, body) = upload(s"$url/api/ingest?citekey=zz_fulfil_bad&force=true&acquireItem=$bad", pdf)

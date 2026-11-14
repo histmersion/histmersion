@@ -129,7 +129,7 @@ class CritiquesSuite extends munit.FunSuite:
         ("smith1987_dying>frazer1922_golden", List("refutes"), CritiqueState.Addressed, true, true)
       )
     )
-    assertEquals(pairs.head.reason.map(_.value), Some("The article cites it for the calendar only."))
+    assertEquals(pairs.head.reason, Some(Coverage.Rationale("The article cites it for the calendar only.")))
     assertEquals(
       pairs.last.dst,
       CritiqueSide(
@@ -390,8 +390,8 @@ class CritiquesSuite extends munit.FunSuite:
       Right(CritiqueReason(Citekey("a2000_x"), Citekey("b2001_y"), Coverage.Rationale("Not the point.")))
     )
     assertEquals(
-      CritiqueReason.parse(CritiqueReason.Spec("a2000_x>b2001_y=")).map(_.reason.value),
-      Right("")
+      CritiqueReason.parse(CritiqueReason.Spec("a2000_x>b2001_y=")).map(_.reason),
+      Right(Coverage.Rationale(""))
     )
     assert(CritiqueReason.parse(CritiqueReason.Spec("a2000_x>b2001_y")).isLeft)
     assert(
@@ -402,8 +402,8 @@ class CritiquesSuite extends munit.FunSuite:
     assertEquals(
       CritiqueReason
         .tidy(CritiqueReason(Citekey(" A "), Citekey("b"), Coverage.Rationale(" one\n line ")))
-        .map(r => (r.src, r.reason.value)),
-      Right(("a", "one line"))
+        .map(r => (r.src, r.reason)),
+      Right((Citekey("a"), Coverage.Rationale("one line")))
     )
     assert(
       Article

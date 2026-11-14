@@ -318,14 +318,12 @@ object Place:
     private val LangShape = "^[a-z]{2,3}(-[a-z0-9]{2,8})*$".r
     private val IdShape = "^[a-z0-9][a-z0-9_.-]*$".r
 
-    private def invalid(problem: Problem) = Api.Error(problem, Some(Api.Error.Code(Write.CodeInvalid)))
-
     def name(raw: Name.Value): Either[Api.Error, Name.Value] =
       val n = (raw).value.trim.replaceAll("\\s+", " ")
-      if n.isEmpty then Left(invalid(Invalid.Missing.here(Field("name"))))
+      if n.isEmpty then Left(Write.invalid(Invalid.Missing.here(Field("name"))))
       else if n.length > MaxName then
         Left(
-          invalid(
+          Write.invalid(
             Invalid.OutOfRange.here(
               TypeName.of(Name.Value),
               Raw.of(n.length.toLong),
@@ -343,7 +341,7 @@ object Place:
         case Some(l) if LangShape.matches(l) => Right(Name.Lang(l))
         case Some(l)                         =>
           Left(
-            invalid(
+            Write.invalid(
               Invalid.Unreadable
                 .here(TypeName.of(Name.Lang), Raw(s"$l"), Vector(Raw("en"), Raw("grc"), Raw("pl"), Raw("sr-latn")))
             )
@@ -357,23 +355,25 @@ object Place:
       val kind = in.kind.value.trim.toLowerCase(java.util.Locale.ROOT)
       val id = in.id.map(_.value).map(_.trim).filter(_.nonEmpty).getOrElse(defaultId(Label(label)).value)
       for
-        _ <- Either.cond(label.nonEmpty, (), invalid(Invalid.Missing.here(Field("label"))))
+        _ <- Either.cond(label.nonEmpty, (), Write.invalid(Invalid.Missing.here(Field("label"))))
         _ <- Either.cond(
           Kind.all.contains(kind),
           (),
-          invalid(Invalid.Unknown.here(TypeName.of(Add.Kind), Raw(s"$kind"), Kind.all.toVector.map(k => Raw(s"$k"))))
+          Write.invalid(
+            Invalid.Unknown.here(TypeName.of(Add.Kind), Raw(s"$kind"), Kind.all.toVector.map(k => Raw(s"$k")))
+          )
         )
-        _ <- Either.cond(id != LocalPrefix, (), invalid(Invalid.Missing.here(Field("id"))))
+        _ <- Either.cond(id != LocalPrefix, (), Write.invalid(Invalid.Missing.here(Field("id"))))
         _ <- Either.cond(
           IdShape.matches(id),
           (),
-          invalid(Invalid.Unreadable.here(TypeName.of(Id), Raw(s"$id"), Vector(Raw("pleiades_579885"))))
+          Write.invalid(Invalid.Unreadable.here(TypeName.of(Id), Raw(s"$id"), Vector(Raw("pleiades_579885"))))
         )
         _ <- Either.cond(
           in.lon.value >= -180 && in.lon.value <= 180 && in.lat.value >= -90 && in.lat.value <= 90 &&
             !in.lon.value.isNaN && !in.lat.value.isNaN,
           (),
-          invalid(
+          Write.invalid(
             Invalid.OutOfRange.here(
               TypeName.named[GeoPoint],
               Raw(s"${in.lat}, ${in.lon}"),
@@ -384,7 +384,7 @@ object Place:
         _ <- Either.cond(
           in.source.value.trim.nonEmpty,
           (),
-          invalid(Invalid.Missing.here(Field("source")))
+          Write.invalid(Invalid.Missing.here(Field("source")))
         )
         period <- (in.periodStart, in.periodEnd) match
           case (None, None)                 => Right(None)
@@ -393,7 +393,7 @@ object Place:
           case (None, Some(b))              => Right(Some(Period(b, b)))
           case (Some(a), Some(b))           =>
             Left(
-              invalid(
+              Write.invalid(
                 Invalid.Inconsistent
                   .here(NonEmptyVector.of(Field("periodStart"), Field("periodEnd")), Invalid.Exclusion.Ordered)
               )
@@ -829,8 +829,6 @@ object Place:
 
     val MaxReason = 500
 
-    private def invalid(problem: Problem) = Api.Error(problem, Some(Api.Error.Code(Write.CodeInvalid)))
-
     def edit(in: OverrideSet): Either[Api.Error, OverrideEdit] =
       val kind = in.kind.map(_.value.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty)
       val reason = in.reason.map(r => s"$r".trim.replaceAll("\\s+", " ")).filter(_.nonEmpty)
@@ -839,7 +837,7 @@ object Place:
       if (in.reset) == OverrideSet.Reset(true) then
         if kind.isDefined || period.isDefined || asked then
           Left(
-            invalid(
+            Write.invalid(
               Invalid.Inconsistent.here(
                 NonEmptyVector.of(Field("reset"), Field("kind"), Field("period"), Field("point")),
                 Invalid.Exclusion.AtMostOne
@@ -852,7 +850,7 @@ object Place:
           _ <- Either.cond(
             kind.isDefined || period.isDefined || asked,
             (),
-            invalid(
+            Write.invalid(
               Invalid.Inconsistent.here(
                 NonEmptyVector.of(Field("kind"), Field("period"), Field("point"), Field("reset")),
                 Invalid.Exclusion.AtLeastOne
@@ -867,7 +865,7 @@ object Place:
                    if lat.value.isNaN || lon.value.isNaN || lat.value < -90 || lat.value > 90 || lon.value < -180 || lon.value > 180
                    then
                      Left(
-                       invalid(
+                       Write.invalid(
                          Invalid.OutOfRange.here(
                            TypeName.named[GeoPoint],
                            Raw(s"$lat, $lon"),
@@ -875,11 +873,11 @@ object Place:
                          )
                        )
                      )
-                   else if reason.isEmpty then Left(invalid(Invalid.Missing.here(Field("reason"))))
+                   else if reason.isEmpty then Left(Write.invalid(Invalid.Missing.here(Field("reason"))))
                    else Right(Some(GeoPoint(lon, lat)))
                  case _ =>
                    Left(
-                     invalid(
+                     Write.invalid(
                        Invalid.Inconsistent
                          .here(NonEmptyVector.of(Field("pointLat"), Field("pointLon")), Invalid.Exclusion.Together)
                      )
@@ -889,7 +887,7 @@ object Place:
             Either.cond(
               Kind.all.contains(k),
               (),
-              invalid(
+              Write.invalid(
                 Invalid.Unknown
                   .here(TypeName.of(OverrideEdit.Put.Kind), Raw(s"$k"), Kind.all.toVector.map(x => Raw(s"$x")))
               )
@@ -898,7 +896,7 @@ object Place:
           _ <- period match
             case Some((Some(a), Some(b))) if a > b =>
               Left(
-                invalid(
+                Write.invalid(
                   Invalid.Inconsistent
                     .here(NonEmptyVector.of(Field("periodStart"), Field("periodEnd")), Invalid.Exclusion.Ordered)
                 )
@@ -907,7 +905,7 @@ object Place:
           _ <- Either.cond(
             reason.forall(_.length <= MaxReason),
             (),
-            invalid(
+            Write.invalid(
               Invalid.OutOfRange
                 .here(TypeName.of(Rationale), Raw("reason"), Invalid.Bounds(None, Some(Raw.of(MaxReason.toLong))))
             )
@@ -924,7 +922,7 @@ object Place:
       Either.cond(
         r.forall(_.length <= MaxReason),
         r.map(text => Rationale(s"$text")),
-        invalid(
+        Write.invalid(
           Invalid.OutOfRange
             .here(TypeName.of(Rationale), Raw("reason"), Invalid.Bounds(None, Some(Raw.of(MaxReason.toLong))))
         )

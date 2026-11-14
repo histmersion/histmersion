@@ -626,8 +626,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     assertEquals(
       retryPoints(retry),
       List(
-        "edit 1 (replace \"Tin came to the Aegean by sea\"): the anchor is not in the article — " +
-          "copy it exactly from the current body (earlier edits included)",
+        "edit 1 (replace \"Tin came to the Aegean by sea\"): no Article.Edits.Anchor 'Tin came to the Aegean by sea'",
         "you list R1 as applied, but no edit changed the article"
       )
     )

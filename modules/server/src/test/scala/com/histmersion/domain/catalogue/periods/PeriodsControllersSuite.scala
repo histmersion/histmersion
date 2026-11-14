@@ -76,7 +76,7 @@ class PeriodsControllersSuite extends munit.FunSuite:
     assert(
       c.importDataset(Caller.Local, Nil, Some(PeriodImports.Dataset("other")), PeriodImports.DatasetBody(dump))
         .left
-        .exists(_.message.sentence.contains("seed or local"))
+        .exists(_.message.sentence.contains("unknown Dataset 'other' (one of: "))
     )
     val dead =
       controllers(download = _ => Left(Problem.Unclassified(Legacy.Text("HTTP 503 from https://periodo.test/dump"))))

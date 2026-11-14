@@ -210,6 +210,6 @@ class JobControlServiceSuite extends DbSuite:
     )
     val _ = Transactor(ds).transact(JobRepo.failInterrupted())
     assertEquals(
-      Transactor(ds).read(JobRepo.get(jobId(p))).map(j => (j.status, j.error.map(_.sentence))),
-      Some(("failed", Some("interrupted")))
+      Transactor(ds).read(JobRepo.get(jobId(p))).map(j => (j.status, j.error)),
+      Some(("failed", Some(Problem.Run.Interrupted)))
     )

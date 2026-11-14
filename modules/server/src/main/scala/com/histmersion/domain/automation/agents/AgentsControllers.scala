@@ -446,7 +446,7 @@ final class AgentsControllers(
     Agents.Prices
       .parse(Agents.Prices.Wire(cfg.prices.value))
       .left
-      .map(m => Problem.Unclassified(Legacy.Text(s"agents.prices: $m")))
+      .map(_.at(Problem.Field("agents.prices")).toNonEmpty.head)
 
   /** A model that can run: on a plan pool or PRICED (an unpriced metered model is refused, never treated as free), and
     * with a client its provider can build (a hosted provider needs its key; `claude-code` a loopback server).
@@ -845,7 +845,7 @@ final class AgentsControllers(
           _ <- ModelChains
             .parseChain(ModelChains.Chain.Spec(o.model.value), knownPluginNames)
             .left
-            .map(e => Api.Error(Problem.Unclassified(Legacy.Text(s"--model-for ${r.wire}: $e"))))
+            .map(e => Api.Error(e.at(Problem.Field(s"--model-for ${r.wire}")).toNonEmpty.head))
         yield m + (r -> ModelName(o.model.value.trim))
       }
     }

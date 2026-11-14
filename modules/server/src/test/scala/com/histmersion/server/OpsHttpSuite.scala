@@ -144,10 +144,10 @@ class OpsHttpSuite extends DbSuite:
       // listing ever returns, and a malformed created_at was a 500 from `?::timestamptz`.
       val (badS, badB) = post(s"$url/api/queue/acquire", """{"text":"zzhttp bad","status":"pending"}""")
       assertEquals(badS, 400, badB)
-      assert(badB.contains("unknown status 'pending'"), badB)
+      assert(badB.contains("unknown Queue.QueueItem.Status 'pending'"), badB)
       val (cs2, cb2) = post(s"$url/api/queue/acquire", """{"text":"zzhttp bad date","createdAt":"yesterday"}""")
       assertEquals(cs2, 400, cb2)
-      assert(cb2.contains("ISO-8601"), cb2)
+      assert(cb2.contains("is not a Queue.QueueItem.CreatedAt"), cb2)
       assertEquals(patch(s"$url/api/queue/items/$id", """{"status":"pending"}""")._1, 400)
       // the web UI's editor: a blank text is refused, a blank topic clears it, and the rest stays
       val (es2, eb2) = post(s"$url/api/queue/tasks", """{"text":"zzhttp edit me","topic":"Books"}""")
@@ -155,7 +155,7 @@ class OpsHttpSuite extends DbSuite:
       val eid = """"id"\s*:\s*(\d+)""".r.findFirstMatchIn(eb2).map(_.group(1).toInt).getOrElse(fail(eb2))
       val (bt, btb) = patch(s"$url/api/queue/items/$eid", """{"text":"   "}""")
       assertEquals(bt, 400, btb)
-      assert(btb.contains("text is empty"), btb)
+      assert(btb.contains("text is required"), btb)
       val (et, etb) = patch(s"$url/api/queue/items/$eid", """{"text":"zzhttp edited","topic":""}""")
       assertEquals(et, 200, etb)
       assert(etb.contains("\"text\":\"zzhttp edited\"") && !etb.contains("\"topic\":\"Books\""), etb)

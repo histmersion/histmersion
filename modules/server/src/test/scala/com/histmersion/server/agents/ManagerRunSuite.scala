@@ -630,7 +630,10 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
     val (b, _) = handlers(PanelClient(Model))
     b.engine.reconcile()
     val r = connect(ds)(AgentRepo.get(run)).get
-    assertEquals((r.status, r.error.map(_.sentence), r.resumeAt.isDefined), ("paused", Some("interrupted"), true))
+    assertEquals(
+      (r.status, r.error, r.resumeAt.isDefined),
+      ("paused", Some(Problem.Run.Interrupted), true)
+    )
     b.managers.tick(t0)
     assertEquals(item(ManagerItem.Target("zzagent_b1")).status, "active", "a paused run keeps its item active")
     assert(b.engine.resumeDue(Instant.now().plusSeconds(120)).contains(ApiIds.run(run)))

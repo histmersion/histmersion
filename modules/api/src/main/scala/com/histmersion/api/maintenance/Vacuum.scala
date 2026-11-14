@@ -24,8 +24,6 @@ object Vacuum:
   /** A table name as Postgres stores an unquoted identifier: lower case letters, digits, `_`. */
   private val TableShape = "^[a-z_][a-z0-9_]{0,62}$".r
 
-  private def invalid(problem: Problem) = Api.Error(problem, Some(Api.Error.Code(Write.CodeInvalid)))
-
   def plan(in: Request, defaults: List[Table], existing: Set[Table]): Either[Api.Error, VacuumPlan] =
     val asked =
       in.tables.flatMap(_.value.split(",").toList).map(_.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty)
@@ -34,16 +32,16 @@ object Vacuum:
        else asked).distinct
     val shape = tables.filterNot(TableShape.matches)
     val absent = tables.filterNot(existing.map(_.value).contains)
-    if tables.isEmpty then Left(invalid(Problem.Invalid.Missing.here(Problem.Field("tables"))))
+    if tables.isEmpty then Left(Write.invalid(Problem.Invalid.Missing.here(Problem.Field("tables"))))
     else if shape.nonEmpty then
       Left(
-        invalid(
+        Write.invalid(
           Problem.Invalid.Unreadable
             .here(Problem.TypeName.of(Table), Problem.Raw(s"${shape.mkString(", ")}"), Vector(Problem.Raw("sources")))
         )
       )
     else if absent.nonEmpty then
-      Left(invalid(Problem.NotFound.Entity(Problem.TypeName.of(Table), Problem.Raw(s"${absent.mkString(", ")}"))))
+      Left(Write.invalid(Problem.NotFound.Entity(Problem.TypeName.of(Table), Problem.Raw(s"${absent.mkString(", ")}"))))
     else Right(VacuumPlan(in.analyze, (tables).map(refactorValue2 => Request.Tables(refactorValue2))))
 
   def statement(table: Table, analyze: Request.Analyze): String =

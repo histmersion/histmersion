@@ -64,7 +64,7 @@
 == places add, refused
 400 {
   "code" : "invalid",
-  "message" : "the label is empty"
+  "message" : "label is required"
 }
 == places build-hierarchy
 200 {
@@ -1286,7 +1286,7 @@
 == attestation refused
 400 {
   "code" : "invalid",
-  "message" : "unknown AttestationTarget.Wire 'planet' (one of: finding, event, event_dating, place, edge)"
+  "message" : "unknown AttestationTarget 'planet' (one of: finding, event, event_dating, place, edge)"
 }
 == attestation missing source
 404 {

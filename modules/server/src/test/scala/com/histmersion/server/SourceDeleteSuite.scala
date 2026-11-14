@@ -330,7 +330,12 @@ class SourceDeleteSuite extends DbSuite:
         .swap
         .getOrElse(fail("the delete was not refused"))
       assert(
-        e.message.sentence.contains(s"cited by article $slug") && e.message.sentence.contains("no override"),
+        e.message match
+          case Problem.Conflict.Referenced(_, key, _, count) =>
+            key == Problem.Raw(s"$DelCk") &&
+            count == Problem.Count(1L)
+          case _ => false
+        ,
         e.message
       )
       assert(SourceFixtures.load(ds, DelCk).isDefined, "a refused delete deleted")

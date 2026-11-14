@@ -110,7 +110,7 @@ class MapRegionsSuite extends munit.FunSuite:
         dryRun = Basemap.FetchQuery.DryRun(true)
       ).left.exists {
         case Problem.Invalid.Inconsistent(_, Problem.Invalid.Exclusion.Ordered, _) => true
-        case _                                                                    => false
+        case _                                                                     => false
       }
     )
     assert(

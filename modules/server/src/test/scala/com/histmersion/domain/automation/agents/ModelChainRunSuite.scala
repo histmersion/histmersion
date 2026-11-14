@@ -390,7 +390,7 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
       again
         .setChain(Agents.Role.Wire("extractor"), ChainSet(List(ModelChains.ChainEntry.Model("ollama:x"))))
         .left
-        .exists(_.message.sentence.contains("unknown provider"))
+        .exists(_.message.sentence.contains("unknown ProviderKind 'ollama'"))
     )
     assert(
       again
@@ -407,19 +407,19 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
           )
         )
         .left
-        .exists(_.message.sentence.contains("not a window"))
+        .exists(_.message.sentence.contains("is not a ModelChains.LimitSpec.Window"))
     )
     assert(
       again
         .setAllowance(AllowanceSet(allowanceTarget(A), Nil, ModelChains.AllowanceSet.ReservePct(120)))
         .left
-        .exists(_.message.sentence.contains("0 to 99"))
+        .exists(_.message.sentence.contains("not between 0 and 99"))
     )
     assert(
       again
         .setAllowance(AllowanceSet(ModelChains.AllowanceSet.Target("nobody:*"), Nil))
         .left
-        .exists(_.message.sentence.contains("unknown provider"))
+        .exists(_.message.sentence.contains("unknown ProviderKind 'nobody'"))
     )
 
   test("a saved chain decides which model a run uses; an unready chained model is shown, not refused"):
