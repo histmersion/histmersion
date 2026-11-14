@@ -4,7 +4,8 @@ import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{Problem, Problems}
+import com.histmersion.util.problem.Problem.{Field, Invalid, Raw, TypeName}
 
 import hearth.kindlings.optics.syntax.*
 
@@ -53,19 +54,13 @@ object Agents:
       val t = (s).value.trim
       t.indexOf(':') match
         case -1 =>
-          Left(
-            Problem.Unclassified(Legacy.Text(s"'$t' is not provider:model (provider: ${ProviderKind.names(known)})"))
-          )
+          Left(Invalid.Unreadable.here(TypeName.of(Wire), Raw(s"$t"), Vector(Raw("claude-code:opus"), Raw("openai:gpt-5"))))
         case i =>
           val (p, m) = (t.substring(0, i), t.substring(i + 1).trim)
           ProviderKind.parse(com.histmersion.api.automation.ProviderKind.Wire(p), known) match
             case None =>
-              Left(
-                Problem.Unclassified(
-                  Legacy.Text(s"unknown provider '$p' in '$t' (one of: ${ProviderKind.names(known)})")
-                )
-              )
-            case Some(_) if m.isEmpty => Left(Problem.Unclassified(Legacy.Text(s"'$t' names no model")))
+              Left(Invalid.Unknown.here(TypeName.of(com.histmersion.api.automation.ProviderKind.Wire), Raw(s"$p"), Vector(Raw(s"${ProviderKind.names(known)}"))))
+            case Some(_) if m.isEmpty => Left(Invalid.Missing(Field("model"), Vector(Field(s"$t"))))
             case Some(k)              => Right(ModelRef(k, Model(m)))
 
   /** `input` counts all prompt tokens, cached ones included (the provider-normalised convention sttp-ai uses);
@@ -150,26 +145,28 @@ object Agents:
 
     private[Agents] val Million = BigDecimal(1000000)
 
-    def parse(s: Wire): Either[Problem, Map[ModelRef.Model, Price]] =
+    def parse(s: Wire): Either[Problems, Map[ModelRef.Model, Price]] =
       val entries = (s).value.split(";").toList.map(_.trim).filter(_.nonEmpty)
       val parsed = entries.map { e =>
         e.lastIndexOf('=') match
-          case -1 => Left(s"'$e' is not <model>=<input>/<output>")
+          case -1 => Left(Invalid.Unreadable.here(TypeName.of(Wire), Raw(s"$e"), Vector(Raw("claude-opus=15/75"))))
           case i  =>
             val model = e.substring(0, i).trim
             val nums = e.substring(i + 1).split("/").toList.map(_.trim)
             val dec = nums.map(n => scala.util.Try(BigDecimal(n)).toOption.filter(_ >= 0))
-            if model.isEmpty then Left(s"'$e' names no model")
-            else if dec.exists(_.isEmpty) then Left(s"'$e': prices must be non-negative numbers")
+            if model.isEmpty then Left(Invalid.Missing(Field("model"), Vector(Field(s"$e"))))
+            else if dec.exists(_.isEmpty) then
+              Left(Invalid.OutOfRange(TypeName.named[Price], Raw(s"$e"), Invalid.Bounds(Some(Raw("0")), None), Vector.empty))
             else
               dec.flatten match
                 case List(in, out)         => Right(ModelRef.Model(model) -> Price(in, out))
                 case List(in, out, cr, cw) => Right(ModelRef.Model(model) -> Price(in, out, Some(cr), Some(cw)))
-                case _ => Left(s"'$e': give 2 prices (input/output) or 4 (input/output/cache-read/cache-write)")
+                case _ =>
+                  Left(Invalid.Unreadable.here(TypeName.of(Wire), Raw(s"$e"), Vector(Raw("m=3/15"), Raw("m=3/15/0.3/3.75"))))
       }
       parsed.collect { case Left(m) => m } match
         case Nil  => Right(parsed.collect { case Right(kv) => kv }.toMap)
-        case errs => Left(Problem.Unclassified(Legacy.Text(errs.mkString("; "))))
+        case errs => Left(Problems.from(errs.toVector).getOrElse(errs.head))
 
     /** An unpriced model is an error, never zero: sttp-ai's `PriceTable` counts an unknown model as free, so it would
       * never trip a cost budget.
@@ -179,8 +176,6 @@ object Agents:
         .get(model)
         .toRight(unpriced(model))
         .map(_.cost(u)))
-        .left
-        .map(refactorError => Problem.Unclassified(Legacy.Text(refactorError)))
 
     def billing(
         prices: Map[ModelRef.Model, Price],
@@ -193,16 +188,12 @@ object Agents:
           prices
             .get(m.model)
             .map(Billing.Metered(_))
-            .toRight(Problem.Unclassified(Legacy.Text(unpriced(m.model) + metered(m))))
+            .toRight(unpriced(m.model))
 
-    private def unpriced(model: ModelRef.Model): String =
-      (s"model '$model' has no price — add it to agents.prices (HISTMERSION_AGENTS_PRICES), e.g. \"$model=0/0\" for a free local model")
+    /** The model has no price in `agents.prices`: an error, never a price of zero. */
+    private def unpriced(model: ModelRef.Model): Problem =
+      Problem.NotFound.Entity(TypeName.named[Price], Raw(s"$model"))
 
-    private def metered(m: ModelRef): String = m.provider match
-      case ProviderKind.ClaudeCode => (" (claude-code is set to use an API key, so it bills the API, not the plan)")
-      case ProviderKind.Codex      => (" (codex is set to use an API key, so it bills the API, not the plan)")
-      case ProviderKind.Opencode   => (" (an opencode model is metered unless it is openai/… on a ChatGPT login)")
-      case _                       => ("")
 
   val JobKind = AgentJobKinds.Agent.kind.value
 
@@ -272,13 +263,13 @@ object Agents:
     /** A strict-schema provider sends `""` and `null` where it has nothing; they must not pass. */
     def problems(recordYear: Option[ProbeAnswer.RecordYear]): List[Problem] = List(
       Option.when(Option(citekey).forall(_.value.trim.isEmpty))(
-        Problem.Unclassified(Legacy.Text("the citekey is empty — give the source's citekey"))
+        Invalid.Missing.here(Field("citekey"))
       ),
       Option.when(Option(title).forall(_.value.trim.isEmpty))(
-        Problem.Unclassified(Legacy.Text("the title is empty — copy the source's exact title from get_source"))
+        Invalid.Missing.here(Field("title"))
       ),
       Option.when(year.isEmpty && recordYear.isDefined)(
-        Problem.Unclassified(Legacy.Text("the year is missing — give the source's publication year from get_source"))
+        Invalid.Missing.here(Field("year"))
       )
     ).flatten
 
@@ -392,12 +383,12 @@ object Agents:
 
     def parse(s: Wire): Either[Problem, ModelOverride] =
       (s).value.indexOf('=') match
-        case -1 => Left(Problem.Unclassified(Legacy.Text(s"'${(s).value.trim}' is not <role>=<provider:model>")))
+        case -1 => Left(Invalid.Unreadable.here(TypeName.of(Wire), Raw(s"${(s).value.trim}"), Vector(Raw("reviewer=claude-code:opus"))))
         case i  =>
           val (r, m) =
             ((s).value.substring(0, i).trim.toLowerCase(java.util.Locale.ROOT), (s).value.substring(i + 1).trim)
-          if r.isEmpty then Left(Problem.Unclassified(Legacy.Text(s"'${(s).value.trim}' names no role")))
-          else if m.isEmpty then Left(Problem.Unclassified(Legacy.Text(s"'${(s).value.trim}' names no model")))
+          if r.isEmpty then Left(Invalid.Missing(Field("role"), Vector(Field(s"${(s).value.trim}"))))
+          else if m.isEmpty then Left(Invalid.Missing(Field("model"), Vector(Field(s"${(s).value.trim}"))))
           else Right(ModelOverride(AgentRole.Wire(r), Model(m)))
 
   final case class RunParams(

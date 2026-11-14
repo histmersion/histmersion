@@ -18,7 +18,7 @@ private[acquisition] object AssessmentRepo:
 
   final private case class RwRow(
       nature: Option[RetractionNotice.Nature],
-      reason: Option[Problem],
+      reason: Option[RetractionNotice.Account],
       date: Option[RetractionNotice.Date]
   ) derives DbCodec
 

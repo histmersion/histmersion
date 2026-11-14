@@ -241,7 +241,7 @@ object PlacesCmd:
                 kind.map(Place.OverrideSet.Kind(_)),
                 from.map(Year(_)),
                 to.map(Year(_)),
-                reason.map((text => Problem.Unclassified(Legacy.Text(text)))),
+                reason.map((text => Place.Rationale(text))),
                 Place.OverrideSet.Reset(reset),
                 point.map(_._1),
                 point.map(_._2)
@@ -252,10 +252,10 @@ object PlacesCmd:
         case Command.Merge(id, into, reason) =>
           c.mergePlace(
             Place.Id(id),
-            Place.MergeIn(Place.Id(into), reason.map((text => Problem.Unclassified(Legacy.Text(text)))))
+            Place.MergeIn(Place.Id(into), reason.map((text => Place.Rationale(text))))
           ).map(r => Cli.out.println(PlacesMarkdown.placeGone(r)))
         case Command.Rm(id, reason) =>
-          c.removePlace(Place.Id(id), Place.RemoveIn(reason.map((text => Problem.Unclassified(Legacy.Text(text))))))
+          c.removePlace(Place.Id(id), Place.RemoveIn(reason.map((text => Place.Rationale(text)))))
             .map(r => Cli.out.println(PlacesMarkdown.placeGone(r)))
         case Command.Add(label, kind, lon, lat, source, id, names, lang, from, to) =>
           c.addPlace(

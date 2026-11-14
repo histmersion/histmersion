@@ -677,6 +677,8 @@ final class BasemapService(
       )
       _ <- Basemap
         .parseDrop(Basemap.DropRule.Spec(cfg.vector.drop.value))
+        .left
+        .map(_.toNonEmpty.head)
     yield Ask(
       if focus.isDefined then List(Basemap.Layer.Terrain) else ls,
       focus.fold(b)(_._2),

@@ -2,7 +2,8 @@ package com.histmersion
 package api.media
 import hearth.kindlings.jsoniterjson.Json
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.Problem.{Invalid, Raw, TypeName}
 
 import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -67,9 +68,9 @@ object Iiif:
               h <- hs.toIntOption.filter(_ > 0)
             yield Pixels(Pixels.X(x), Pixels.Y(y), Pixels.W(w), Pixels.H(h)))
               .toRight(
-                Problem.Unclassified(Legacy.Text(s"invalid region coordinates: '$s' (expected x,y,w,h with w,h > 0)"))
+                Invalid.Unreadable.here(TypeName.named[Region], Raw(s"$s"), Vector(Raw("full"), Raw("10,20,300,400")))
               )
-          case _ => Left(Problem.Unclassified(Legacy.Text(s"invalid region: '$s' (expected 'full' or 'x,y,w,h')")))
+          case _ => Left(Invalid.Unreadable.here(TypeName.named[Region], Raw(s"$s"), Vector(Raw("full"), Raw("10,20,300,400"))))
 
   enum Size derives CanEqual:
     case Max
@@ -112,33 +113,33 @@ object Iiif:
             case List(ws, hs) =>
               (for w <- ws.toIntOption.filter(_ > 0); h <- hs.toIntOption.filter(_ > 0)
               yield BestFit(BestFit.W(w), BestFit.H(h)))
-                .toRight(Problem.Unclassified(Legacy.Text(s"invalid best-fit size: '$s'")))
-            case _ => Left(Problem.Unclassified(Legacy.Text(s"invalid size: '$s'")))
+                .toRight(Invalid.Unreadable.here(TypeName.named[Size], Raw(s"$s"), Vector(Raw("max"), Raw("300,"), Raw(",200"), Raw("300,200"), Raw("!300,200"))))
+            case _ => Left(Invalid.Unreadable.here(TypeName.named[Size], Raw(s"$s"), Vector(Raw("max"), Raw("300,"), Raw(",200"), Raw("300,200"), Raw("!300,200"))))
         case _ if t.endsWith(",") =>
           t.dropRight(1)
             .toIntOption
             .filter(_ > 0)
             .map(w => Width(Width.W(w)))
-            .toRight(Problem.Unclassified(Legacy.Text(s"invalid width size: '$s'")))
+            .toRight(Invalid.Unreadable.here(TypeName.named[Size], Raw(s"$s"), Vector(Raw("max"), Raw("300,"), Raw(",200"), Raw("300,200"), Raw("!300,200"))))
         case _ if t.startsWith(",") =>
           t.drop(1)
             .toIntOption
             .filter(_ > 0)
             .map(h => Height(Height.H(h)))
-            .toRight(Problem.Unclassified(Legacy.Text(s"invalid height size: '$s'")))
+            .toRight(Invalid.Unreadable.here(TypeName.named[Size], Raw(s"$s"), Vector(Raw("max"), Raw("300,"), Raw(",200"), Raw("300,200"), Raw("!300,200"))))
         case _ =>
           t.split(",").toList match
             case List(ws, hs) =>
               (for w <- ws.toIntOption.filter(_ > 0); h <- hs.toIntOption.filter(_ > 0)
               yield Exact(Exact.W(w), Exact.H(h)))
-                .toRight(Problem.Unclassified(Legacy.Text(s"invalid exact size: '$s'")))
-            case _ => Left(Problem.Unclassified(Legacy.Text(s"invalid size: '$s'")))
+                .toRight(Invalid.Unreadable.here(TypeName.named[Size], Raw(s"$s"), Vector(Raw("max"), Raw("300,"), Raw(",200"), Raw("300,200"), Raw("!300,200"))))
+            case _ => Left(Invalid.Unreadable.here(TypeName.named[Size], Raw(s"$s"), Vector(Raw("max"), Raw("300,"), Raw(",200"), Raw("300,200"), Raw("!300,200"))))
 
   def parseFormat(s: ArchiveFile.Format.Wire): Either[Problem, Format] =
     (s).value.trim.toLowerCase match
       case "jpg" | "jpeg" => Right(Format("jpg"))
       case "png"          => Right(Format("png"))
-      case other          => Left(Problem.Unclassified(Legacy.Text(s"unsupported format: '$other' (use jpg or png)")))
+      case other          => Left(Invalid.Unreadable.here(TypeName.of(Format), Raw(s"$other"), Vector(Raw("jpg"), Raw("png"))))
 
   def contentType(format: Format): Api.ContentType = format.value match
     case "png" => Api.ContentType("image/png")

@@ -238,7 +238,7 @@ class ArticleCoverageHttpSuite extends DbSuite:
         assertEquals(
           reasoned.coverage.toList
             .flatMap(_.critiques)
-            .map(p => (p.ref.wire, p.state, p.reason.map(_.sentence), p.reasonBy)),
+            .map(p => (p.ref.wire, p.state, p.reason.map(_.value), p.reasonBy)),
           List(
             (
               s"$Critic>$Cited2",

@@ -1,7 +1,7 @@
 package com.histmersion
 package api.checks
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -330,8 +330,10 @@ object Lint:
       val unknown = wanted.filter(w => rule(Rule.Name(w)).isEmpty)
       if unknown.nonEmpty then
         Left(
-          Problem.Unclassified(
-            Legacy.Text(s"unknown lint rule(s): ${unknown.mkString(", ")} — known rules: ${names.mkString(", ")}")
+          Problem.Invalid.Unknown.here(
+            Problem.TypeName.of(Rule.Name),
+            Problem.Raw(s"${unknown.mkString(", ")}"),
+            names.toVector.map(n => Problem.Raw(s"$n"))
           )
         )
       else

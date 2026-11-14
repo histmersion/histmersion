@@ -463,7 +463,7 @@ object ReviewLedger:
                   Reviewer.Wire("fixer"),
                   round,
                   run,
-                  Closure.Note(a.reason.sentence),
+                  Closure.Note(s"${a.reason}"),
                   Closure.Quote(a.pair.wire.value)
                 )
               )

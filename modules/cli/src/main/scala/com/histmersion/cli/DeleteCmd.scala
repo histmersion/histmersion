@@ -68,7 +68,7 @@ object DeleteCmd:
         // a refused dry run is not a success: a script that goes on to `--apply` would fail anyway
         if d.refused then
           Left(
-            Cli.Error(Source.Delete.refusal(d.citekey, d.blockers), exitCode = ExitCode.Refused)
+            Cli.Error(Source.Delete.refusal(d.citekey, d.blockers).toNonEmpty.head, exitCode = ExitCode.Refused)
           )
         else if d.filesFailed.nonEmpty then
           Left(

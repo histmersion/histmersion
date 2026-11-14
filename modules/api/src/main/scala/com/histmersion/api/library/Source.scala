@@ -1,6 +1,6 @@
 package com.histmersion
 package api.library
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{NonEmptyVector, Problem, Problems}
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.api.exchange.MergeIssue
@@ -197,16 +197,17 @@ object Source:
     def refusal(
         ck: com.histmersion.api.library.Citekey,
         blockers: List[DeleteBlocker]
-    ): Problem =
-      val groups = blockers.groupBy(_.kind).toList.sortBy(_._1.ordinal).map { (k, bs) =>
-        s"${k.label} ${bs.map(b => b.id.value + b.title.fold("")(t => s" ($t)")).mkString(", ")}"
-      }
-      Problem.Unclassified(
-        Legacy.Text(
-          s"'$ck' cannot be deleted — ${groups.mkString("; ")}. Fix those first (remove the citation from " +
-            "each article, re-source the events, let the job finish); there is no override"
+    ): Problems =
+      val kind = Problem.TypeName.named[DeleteBlocker.Kind]
+      val referred = blockers.groupBy(_.kind).toVector.sortBy(_._1.ordinal).map { (k, bs) =>
+        Problem.Conflict.Referenced(
+          Problem.TypeName.of(com.histmersion.api.library.Citekey),
+          Problem.Raw(s"$ck"),
+          Problem.TypeName(s"$kind.${k.productPrefix}"),
+          Problem.Count.of(bs.size.toLong)
         )
-      )
+      }
+      Problems.from(referred).getOrElse(Problem.Conflict.WrongState(Problem.TypeName.of(com.histmersion.api.library.Citekey), Problem.Raw(s"$ck"), Problem.Conflict.State("blocked"), Vector.empty))
 
     def logText(d: Deletion): LogText =
       def short(p: DeletePart) = p match
@@ -666,10 +667,10 @@ object Source:
           .find(e => e.dst == citekey || aliases.contains(e.dst))
           .fold(Right(()))(e =>
             Left(
-              Problem.Unclassified(
-                Legacy.Text(
-                  s"edges: '${e.dst}' --${Edge.Kind.wireOf(e.kind)}--> itself is a self-edge; dst must be another source"
-                )
+              Problem.Invalid.Inconsistent(
+                NonEmptyVector.of(Problem.Field("src"), Problem.Field("dst")),
+                Problem.Invalid.Exclusion.Distinct,
+                Vector(Problem.Field("edges"))
               )
             )
           )
@@ -705,11 +706,11 @@ object Source:
           if want.value == actual then Right(())
           else
             Left(
-              Problem.Unclassified(
-                Legacy.Text(
-                  s"'${existing.citekey}' has moved on: you sent ifUpdatedAt='$want' but the stored " +
-                    s"updatedAt is '$actual'. Re-read the source and re-apply your patch."
-                )
+              Problem.Conflict.Stale(
+                Problem.TypeName.of(com.histmersion.api.library.Citekey),
+                Problem.Raw(s"${existing.citekey}"),
+                Problem.Conflict.Stamp(s"$want"),
+                Problem.Conflict.Stamp(s"$actual")
               )
             )
 
@@ -783,10 +784,10 @@ object Source:
           .find(_.dst == citekey)
           .fold(Right(()))(e =>
             Left(
-              Problem.Unclassified(
-                Legacy.Text(
-                  s"edges.add: '${e.dst}' --${Edge.Kind.wireOf(e.kind)}--> itself is a self-edge; dst must be another source"
-                )
+              Problem.Invalid.Inconsistent(
+                NonEmptyVector.of(Problem.Field("src"), Problem.Field("dst")),
+                Problem.Invalid.Exclusion.Distinct,
+                Vector(Problem.Field("edges"), Problem.Field("add"))
               )
             )
           )
@@ -804,12 +805,10 @@ object Source:
       in.src.map(s => com.histmersion.api.library.Citekey(s.value.trim)).filter(_.value.nonEmpty) match
         case Some(other) if other != citekey && !aliases.contains(other) =>
           Left(
-            Problem.Unclassified(
-              Legacy.Text(
-                s"$part: src '$other' is not the $role '$citekey'. An edge is stored on its " +
-                  s"source: patch '$other' to record '$other' --${Edge.Kind.wireOf(in.kind)}--> '${in.dst}' " +
-                  s"(src may be omitted; it defaults to the $role)"
-              )
+            Problem.Invalid.Inconsistent(
+              NonEmptyVector.of(Problem.Field("src"), Problem.Field("citekey")),
+              Problem.Invalid.Exclusion.Same,
+              Vector(Problem.Field(s"$part"))
             )
           )
         case _ => Right(Edge(citekey, Citekey(in.dst.value.trim), in.kind))
@@ -824,18 +823,21 @@ object Source:
       }
       if both.nonEmpty then
         Left(
-          Problem.Unclassified(
-            Legacy.Text(
-              s"metadata: ${both.map(MetadataField.wireOf).mkString(", ")} is both set and cleared in one patch"
-            )
+          Problem.Invalid.Repeated(
+            Problem.TypeName.named[MetadataField],
+            Problem.Raw(s"${both.map(MetadataField.wireOf).mkString(", ")}"),
+            Vector(Problem.Field("metadata"))
           )
         )
       else
         m.calibreId.map(_.value.trim) match
           case Some(id) if !id.matches("[0-9]+") =>
             Left(
-              Problem.Unclassified(
-                Legacy.Text(s"metadata.calibreId: '$id' is not a Calibre id (the entry's number, e.g. 1805)")
+              Problem.Invalid.Unreadable(
+                Problem.TypeName.of(CalibreId),
+                Problem.Raw(s"$id"),
+                Vector(Problem.Raw("1805")),
+                Vector(Problem.Field("metadata"), Problem.Field("calibreId"))
               )
             )
           case _ => Right(())
@@ -887,8 +889,11 @@ object Source:
             .fromString(_root_.com.histmersion.api.library.Confidence.Wire(c))
             .map(Some(_))
             .toRight(
-              Problem.Unclassified(
-                Legacy.Text(s"$what: confidence '$c' is not one of ${Confidence.values.map(_.wire).mkString("|")}")
+              Problem.Invalid.Unknown(
+                Problem.TypeName.named[Confidence],
+                Problem.Raw(s"$c"),
+                Confidence.values.toVector.map(v => Problem.Raw(s"${v.wire}")),
+                Vector(Problem.Field(s"$what"))
               )
             )
 
@@ -900,20 +905,33 @@ object Source:
         case (_, Some(b)) if !sane(b)     => Left(outOfRange(what, "period_end", b))
         case (Some(a), Some(b)) if a <= b => Right(Some(Period(a, b)))
         case (Some(a), Some(b))           =>
-          Left(Problem.Unclassified(Legacy.Text(s"$what: period_start ($a) must not be after period_end ($b)")))
+          Left(
+            Problem.Invalid.Inconsistent(
+              NonEmptyVector.of(Problem.Field("period_start"), Problem.Field("period_end")),
+              Problem.Invalid.Exclusion.Ordered,
+              Vector(Problem.Field(s"$what"))
+            )
+          )
         case (None, None) => Right(None)
-        case _ => Left(Problem.Unclassified(Legacy.Text(s"$what: give both period_start and period_end, or neither")))
+        case _ =>
+          Left(
+            Problem.Invalid.Inconsistent(
+              NonEmptyVector.of(Problem.Field("period_start"), Problem.Field("period_end")),
+              Problem.Invalid.Exclusion.Together,
+              Vector(Problem.Field(s"$what"))
+            )
+          )
 
     private[api] def outOfRange(
         what: String,
         field: String,
         v: Year
     ): Problem =
-      Problem.Unclassified(
-        Legacy.Text(
-          s"$what: $field ($v) is outside the representable range " +
-            s"[${Filter.Earliest}, ${Filter.Latest}] — deep time is signed YEARS, BCE negative"
-        )
+      Problem.Invalid.OutOfRange(
+        Problem.TypeName.of(Year),
+        Problem.Raw(s"$v"),
+        Problem.Invalid.Bounds(Some(Problem.Raw(s"${Filter.Earliest}")), Some(Problem.Raw(s"${Filter.Latest}"))),
+        Vector(Problem.Field(s"$what"), Problem.Field(s"$field"))
       )
 
     private[api] def supersededEdgeCheck(
@@ -923,13 +941,7 @@ object Source:
       if status == Status.Superseded && !edges.exists(_.kind == com.histmersion.api.library.Edge.Kind.SupersededBy)
       then
         Left(
-          Problem.Unclassified(
-            Legacy.Text(
-              "status=superseded requires a superseded_by edge — add one with edges.add " +
-                "(e.g. {\"edges\":{\"add\":[{\"dst\":\"newer_source\",\"kind\":\"superseded_by\"}]}}, " +
-                "or the CLI flag --add-edge superseded_by:newer_source)"
-            )
-          )
+          Problem.Invalid.Missing(Problem.Field("superseded_by"), Vector(Problem.Field("edges"), Problem.Field("add")))
         )
       else Right(())
 

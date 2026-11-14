@@ -577,7 +577,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     assert(run.warnings.exists(_.value.contains("year 2019 differs from the upstream record's 2020")), run.warnings)
     val done = QueueRows.get(ds, item.id).get
     assertEquals(done.status, Queue.Done)
-    assert(done.reason.exists(_.sentence.contains(Ck.value)), done)
+    assert(done.reason.exists(_.value.contains(Ck.value)), done)
     val log = h.workListView
       .list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll(true))
       .toOption

@@ -4,7 +4,7 @@ import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.Cursor
 import hearth.kindlings.jsoniterjson.Json
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 import sttp.tapir.*
 import com.histmersion.api.json.TapirJson.*
@@ -2764,7 +2764,7 @@ object Api:
 
     def splice(readme: Readme, index: Markdown): Either[Problem, Readme] =
       val (b, e) = ((readme).value.indexOf(Begin), (readme).value.indexOf(End))
-      if b < 0 || e < b then Left(Problem.Unclassified(Legacy.Text(s"$Page has no $Begin … $End block")))
+      if b < 0 || e < b then Left(Problem.Invalid.Missing(Problem.Field(s"$Begin"), Vector(Problem.Field(s"$Page"))))
       else
         Right(
           Readme(

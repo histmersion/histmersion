@@ -1,6 +1,6 @@
 package com.histmersion.api.research
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{NonEmptyVector, Problem}
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.Newtype
@@ -415,18 +415,14 @@ object Article:
       val anchor = Option(a.anchor).getOrElse(Anchor(""))
       val text = Option(a.text).flatten.getOrElse(NewText(""))
       if anchor.value.trim.isEmpty then
-        Left(Problem.Unclassified(Legacy.Text("no anchor — copy the passage the edit is about from the body")))
+        Left(Problem.Invalid.Missing.here(Problem.Field("anchor")))
       else
         a.op match
           case Op.Delete                             => Right(Edit.Delete(anchor))
           case Op.Replace if text.value.trim.isEmpty =>
-            Left(
-              Problem.Unclassified(
-                Legacy.Text("a replace with no new text — give the text, or use delete to remove the passage")
-              )
-            )
+            Left(Problem.Invalid.Missing.here(Problem.Field("text")))
           case Op.Replace                   => Right(Edit.Replace(anchor, text))
-          case _ if text.value.trim.isEmpty => Left(Problem.Unclassified(Legacy.Text("no text to insert")))
+          case _ if text.value.trim.isEmpty => Left(Problem.Invalid.Missing.here(Problem.Field("text")))
           case Op.InsertAfter               => Right(Edit.InsertAfter(anchor, text))
           case Op.InsertBefore              => Right(Edit.InsertBefore(anchor, text))
 
@@ -490,10 +486,10 @@ object Article:
         case scala.List(i) => Right((i, Offset((i).value + a.length)))
         case _ :: _ :: _   =>
           Left(
-            Problem.Unclassified(
-              Legacy.Text(
-                s"the anchor occurs ${occurrences(text, (a)).size} times — quote more of the passage so it occurs once"
-              )
+            Problem.Invalid.Ambiguous.here(
+              Problem.TypeName.of(Anchor),
+              Problem.Raw(s"$a"),
+              Problem.Count.of(occurrences(text, (a)).size.toLong)
             )
           )
         case Nil =>
@@ -504,18 +500,10 @@ object Article:
               val last = (i).value + na.length - 1
               Right((Offset(pos((i).value)), Offset(pos(last) + 1)))
             case Nil =>
-              Left(
-                Problem.Unclassified(
-                  Legacy.Text(
-                    "the anchor is not in the article — copy it exactly from the current body (earlier edits included)"
-                  )
-                )
-              )
+              Left(Problem.NotFound.Entity(Problem.TypeName.of(Anchor), Problem.Raw(s"$a")))
             case more =>
               Left(
-                Problem.Unclassified(
-                  Legacy.Text(s"the anchor occurs ${more.size} times — quote more of the passage so it occurs once")
-                )
+                Problem.Invalid.Ambiguous.here(Problem.TypeName.of(Anchor), Problem.Raw(s"$a"), Problem.Count.of(more.size.toLong))
               )
 
     private def cut(text: Body, s: Offset, e: Offset): Body =
@@ -581,8 +569,9 @@ object Article:
       def draft: Either[Problem, Draft] =
         (edits, body.filter(_.value.trim.nonEmpty)) match
           case (Nil, None) =>
-            Left(Problem.Unclassified(Legacy.Text("give `edits` (against the stored body) or `body` (a whole draft)")))
-          case (_ :: _, Some(_)) => Left(Problem.Unclassified(Legacy.Text("give `edits` or `body`, not both")))
+            Left(Problem.Invalid.Inconsistent.here(NonEmptyVector.of(Problem.Field("edits"), Problem.Field("body")), Problem.Invalid.Exclusion.OneOf))
+          case (_ :: _, Some(_)) =>
+            Left(Problem.Invalid.Inconsistent.here(NonEmptyVector.of(Problem.Field("edits"), Problem.Field("body")), Problem.Invalid.Exclusion.OneOf))
           case (es, None)        => Right(Draft.Edits(es))
           case (Nil, Some(b))    => Right(Draft.Body(b))
     object ArticleCheckRequest:
@@ -721,20 +710,27 @@ object Article:
       )
       if unknown.nonEmpty then
         Left(
-          Problem.Unclassified(
-            Legacy.Text(
-              s"unknown status ${unknown.map(s => s"'$s'").mkString(", ")} — one of ${Source.Status.values.map(_.wire).mkString(", ")}"
-            )
+          Problem.Invalid.Unknown(
+            Problem.TypeName.named[Source.Status],
+            Problem.Raw(s"${unknown.mkString(", ")}"),
+            Source.Status.values.toVector.map(v => Problem.Raw(s"${v.wire}")),
+            Vector(Problem.Field("filter"), Problem.Field("status"))
           )
         )
       else if tidy.from.zip(tidy.to).exists((a, b) => a > b) then
         Left(
-          Problem.Unclassified(Legacy.Text(s"the filter's from (${tidy.from.get}) is after its to (${tidy.to.get})"))
+          Problem.Invalid.Inconsistent(
+            NonEmptyVector.of(Problem.Field("from"), Problem.Field("to")),
+            Problem.Invalid.Exclusion.Ordered,
+            Vector(Problem.Field("filter"))
+          )
         )
       else if tidy.isEmpty && tidy.extraQueries.nonEmpty then
         Left(
-          Problem.Unclassified(
-            Legacy.Text("extraQueries without a filter: give the query, topics or tags the article is compiled from")
+          Problem.Invalid.Inconsistent(
+            NonEmptyVector.of(Problem.Field("query"), Problem.Field("topics"), Problem.Field("tags")),
+            Problem.Invalid.Exclusion.AtLeastOne,
+            Vector(Problem.Field("filter"))
           )
         )
       else Right(Option.when(!tidy.isEmpty)(tidy))

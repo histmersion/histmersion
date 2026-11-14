@@ -2,7 +2,7 @@ package com.histmersion
 package api.personal
 import com.histmersion.api.given
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -55,9 +55,9 @@ object Note:
     /** A note's text as given, with Unix line ends and no trailing space; refused when empty or too long. */
     def tidy(raw: Text): Either[Problem, Text] =
       val t = raw.value.replace("\r\n", "\n").stripTrailing
-      if t.trim.isEmpty then Left(Problem.Unclassified(Legacy.Text("a note needs some text")))
+      if t.trim.isEmpty then Left(Problem.Invalid.Missing.here(Problem.Field("text")))
       else if t.length > MaxChars then
-        Left(Problem.Unclassified(Legacy.Text(s"a note is at most $MaxChars characters (this one: ${t.length})")))
+        Left(Problem.Invalid.OutOfRange.here(Problem.TypeName.of(Text), Problem.Raw.of(t.length.toLong), Problem.Invalid.Bounds(None, Some(Problem.Raw.of(MaxChars.toLong)))))
       else Right(Text(t))
     given JsonValueCodec[Text] = JsonCodec.mapped[Text, String](_.value, b => Right(Text(b)))
     given Schema[Text] = Schema.string[Text]

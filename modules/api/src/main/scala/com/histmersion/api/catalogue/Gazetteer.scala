@@ -5,7 +5,7 @@ import com.histmersion.util.json.RawJson
 import hearth.kindlings.jsoniterjson.{Json, JsonObject}
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import hearth.kindlings.optics.syntax.*
 
@@ -269,7 +269,7 @@ object Gazetteer:
     Lpf.readFeature(j, Place.KindValue(Place.Kind.Site), ordinal).flatMap { in =>
       val f = j.asObject.getOrElse(JsonObject.empty)
       val raw = str(f, "@id", "id").orElse(f("properties").flatMap(_.asObject).flatMap(str(_, "@id", "id", "pid")))
-      raw.toRight(Problem.Unclassified(Legacy.Text(s"feature #$ordinal has no @id"))).map { ref =>
+      raw.toRight(Problem.Invalid.Missing(Problem.Field("@id"), Vector(Problem.Field(s"features"), Problem.Field(s"$ordinal")))).map { ref =>
         val own = ExternalId.parse(ExternalId.Reference(ref))
         val names = readNames(f)
         val label = in.place.label.value
@@ -322,8 +322,8 @@ object Gazetteer:
         .toMap
     def get(k: String): Option[String] = (row.get((k)).filter(_.nonEmpty)).map(refactorValue19 => (refactorValue19))
     (get(("id")), get(("title"))) match
-      case (None, _)                => Left(Problem.Unclassified(Legacy.Text(s"line $line: no id")))
-      case (_, None)                => Left(Problem.Unclassified(Legacy.Text(s"line $line: no title")))
+      case (None, _)                => Left(Problem.Invalid.Missing(Problem.Field("id"), Vector(Problem.Field(s"line $line"))))
+      case (_, None)                => Left(Problem.Invalid.Missing(Problem.Field("title"), Vector(Problem.Field(s"line $line"))))
       case (Some(ref), Some(title)) =>
         val own = ExternalId.parse(ExternalId.Reference(ref))
         val variants = get(("variants")).toList.flatMap((_).split(";").toList).map(_.trim).filter(_.nonEmpty).map { v =>

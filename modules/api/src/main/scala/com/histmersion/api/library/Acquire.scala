@@ -1,7 +1,7 @@
 package com.histmersion
 package api.library
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.api.{Csv, LatinFold}
@@ -270,13 +270,13 @@ object Acquire:
 
   final case class RetractionRow(
       doi: Doi,
-      reason: Option[Problem],
+      reason: Option[RetractionRow.Account],
       date: Option[RetractionRow.Date],
       nature: Option[RetractionRow.Nature]
   )
 
   object RetractionRow:
-    export RetractionNotice.{Date, Nature}
+    export RetractionNotice.{Account, Date, Nature}
 
   private val DoiCore = """10\.\d{4,9}/[-._;()/:A-Za-z0-9<>\[\]]+""".r
 
@@ -318,7 +318,7 @@ object Acquire:
           col(r, "OriginalPaperDOI").flatMap(normalizeDoi).map { doi =>
             RetractionRow(
               Doi(doi),
-              col(r, "Reason").map(x => Problem.Unclassified(Legacy.Text(x))),
+              col(r, "Reason").map(x => RetractionRow.Account(x)),
               col(r, "RetractionDate").map(x => RetractionRow.Date(x)),
               col(r, "RetractionNature").map(x => RetractionRow.Nature(x))
             )

@@ -1,7 +1,7 @@
 package com.histmersion
 package api.library
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -182,31 +182,23 @@ object Query:
 
   def check(sql: Statement): Either[Problem, Statement] =
     val text = (sql).value.trim
-    if text.isEmpty then Left(Problem.Unclassified(Legacy.Text("empty statement")))
+    if text.isEmpty then Left(Problem.Invalid.Missing.here(Problem.Field("sql")))
     else
       statements(text) match
-        case Nil        => Left(Problem.Unclassified(Legacy.Text("empty statement")))
+        case Nil        => Left(Problem.Invalid.Missing.here(Problem.Field("sql")))
         case one :: Nil =>
           val kw = leadingKeyword(one)
           if Forbidden.contains((kw)) then
             Left(
-              Problem.Unclassified(
-                Legacy.Text(
-                  s"'$kw' is not allowed here — `query` runs ONE read-only statement (SELECT, or a " +
-                    "WITH that only reads); transaction and session control are refused"
-                )
+              Problem.Invalid.Unknown.here(
+                Problem.TypeName.of(Statement),
+                Problem.Raw(s"$kw"),
+                Vector(Problem.Raw("SELECT"), Problem.Raw("WITH"))
               )
             )
           else Right(one)
-        case many =>
-          Left(
-            Problem.Unclassified(
-              Legacy.Text(
-                s"${many.size} statements were given — `query` runs exactly ONE; " +
-                  "drop the ';'-separated batch and ask again"
-              )
-            )
-          )
+        case _ =>
+          Left(Problem.Refused.Policy(Problem.Refused.Rule.OneStatement))
 
   private def cell(v: Option[Query.MarkdownTableRows]): String =
     v.map(_.value).getOrElse("NULL").replace("|", "\\|").linesIterator.mkString(" ").trim

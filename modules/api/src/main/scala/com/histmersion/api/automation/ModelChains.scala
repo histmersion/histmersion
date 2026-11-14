@@ -1,7 +1,8 @@
 package com.histmersion
 package api.automation
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{Problem, Problems}
+import com.histmersion.util.problem.Problem.{Field, Invalid, Raw, TypeName}
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.util.json.JsonCodec
@@ -26,7 +27,7 @@ object ModelChains:
   def parseChain(
       s: Chain.Spec,
       known: Set[ProviderKind.Plugin.Name] = Set.empty
-  ): Either[Problem, List[ModelRef]] =
+  ): Either[Problems, List[ModelRef]] =
     val parts = (s).value.split('>').toList.map(_.trim)
     if parts.forall(_.isEmpty) then Right(Nil)
     else
@@ -37,16 +38,16 @@ object ModelChains:
   def parseModels(
       refs: List[ModelRef.Model.Spec],
       known: Set[ProviderKind.Plugin.Name] = Set.empty
-  ): Either[Problem, List[ModelRef]] =
+  ): Either[Problems, List[ModelRef]] =
     val parsed = refs.map((_).value.trim).filter(_.nonEmpty).map(r => ModelRef.parse(ModelRef.Wire(r), known))
     parsed.collect { case Left(m) => m } match
       case Nil =>
         val ms = parsed.collect { case Right(m) => m }
         val dup = ms.diff(ms.distinct).map(_.wire).distinct
-        if dup.nonEmpty then
-          Left(Problem.Unclassified(Legacy.Text(s"a chain names a model twice: ${dup.mkString(", ")}")))
-        else Right(ms)
-      case errs => Left(Problem.Unclassified(Legacy.Text(errs.map(_.sentence).mkString("; "))))
+        Problems
+          .from(dup.toVector.map(d => Invalid.Repeated.here(TypeName.named[ModelRef], Raw(s"$d"))))
+          .toLeft(ms)
+      case errs => Left(Problems.from(errs.toVector).getOrElse(errs.head))
 
   def chainText(ms: List[ModelRef]): String = (ms.map(_.wire).mkString(" > "))
 
@@ -95,12 +96,16 @@ object ModelChains:
       secs match
         case None =>
           Left(
-            Problem.Unclassified(
-              Legacy.Text(s"'$s' is not a window (hour, day, week, month, or <n>m|h|d|w such as 5h or 7d)")
+            Invalid.Unreadable.here(
+              TypeName.of(LimitSpec.Window),
+              Raw(s"$s"),
+              Vector(Raw("hour"), Raw("day"), Raw("week"), Raw("month"), Raw("5h"), Raw("7d"))
             )
           )
         case Some(x) if x < 60 || x > MaxSeconds.value =>
-          Left(Problem.Unclassified(Legacy.Text(s"window '$s' must be between 1 minute and 90 days")))
+          Left(
+            Invalid.OutOfRange.here(TypeName.of(LimitSpec.Window), Raw(s"$s"), Invalid.Bounds(Some(Raw("1m")), Some(Raw("90d"))))
+          )
         case Some(x) => Right(Window(Seconds(x)))
 
   final case class Limit(amount: BigDecimal, measure: Measure, window: Window):
@@ -131,17 +136,13 @@ object ModelChains:
         .toOption
         .map(_ * mult)
         .filter(_ > 0)
-        .toRight(Problem.Unclassified(Legacy.Text(s"'$raw' is not a positive amount")))
+        .toRight(Invalid.Unreadable.here(TypeName.of(LimitSpec.Amount), Raw(s"$raw"), Vector(Raw("500k"), Raw("5"), Raw("$5"))))
 
     def parse(s: Spec): Either[Problem, Limit] =
       val t = (s).value.trim
       t.lastIndexOf('/') match
         case -1 =>
-          Left(
-            Problem.Unclassified(
-              Legacy.Text(s"'$t' is not <amount> tokens|usd/<window> (e.g. 500k tokens/5h, 5 usd/day)")
-            )
-          )
+          Left(Invalid.Unreadable.here(TypeName.of(Spec), Raw(s"$t"), Vector(Raw("500k tokens/5h"), Raw("5 usd/day"))))
         case i =>
           val (lhs, win) = (t.substring(0, i).trim, t.substring(i + 1))
           val words = lhs.split("\\s+").toList.filter(_.nonEmpty)
@@ -150,21 +151,19 @@ object ModelChains:
             case List(a, m)                   =>
               Measure
                 .parse(Measure.Wire(m))
-                .toRight(Problem.Unclassified(Legacy.Text(s"'$m' is neither tokens nor usd")))
+                .toRight(
+                  Invalid.Unknown.here(TypeName.named[Measure], Raw(s"$m"), Measure.values.toVector.map(v => Raw(s"${v.wire}")))
+                )
                 .flatMap(me => amount((a)).map(_ -> me))
             case _ =>
-              Left(
-                Problem.Unclassified(
-                  Legacy.Text(s"'$t' is not <amount> tokens|usd/<window> (e.g. 500k tokens/5h, 5 usd/day)")
-                )
-              )
+              Left(Invalid.Unreadable.here(TypeName.of(Spec), Raw(s"$t"), Vector(Raw("500k tokens/5h"), Raw("5 usd/day"))))
           for
             am <- parsed
             w <- Window.parse(LimitSpec.Window(win))
             _ <- Either.cond(
               am._2 == Measure.Usd || am._1.isWhole,
               (),
-              Problem.Unclassified(Legacy.Text(s"'$t': a token count is a whole number"))
+              Invalid.Unreadable.here(TypeName.of(Spec), Raw(s"$t"), Vector(Raw("500k tokens/5h"), Raw("5 usd/day")))
             )
           yield Limit(am._1, am._2, w)
 
@@ -175,12 +174,12 @@ object ModelChains:
         a <- Either.cond(
           amt > 0 && !amt.isNaN && !amt.isInfinite,
           BigDecimal(amt),
-          Problem.Unclassified(Legacy.Text(s"a limit's amount must be positive, not $amt"))
+          Invalid.OutOfRange.here(TypeName.of(LimitSpec.Amount), Raw(s"$amt"), Invalid.Bounds(Some(Raw("0")), None))
         )
         _ <- Either.cond(
           s.measure == Measure.Usd || a.isWhole,
           (),
-          Problem.Unclassified(Legacy.Text(s"a token count is a whole number, not $amt"))
+          Invalid.Unreadable.here(TypeName.of(LimitSpec.Amount), Raw(s"$amt"), Vector(Raw("500000")))
         )
       yield Limit(a, s.measure, w)
 
@@ -211,7 +210,7 @@ object ModelChains:
           .parse(com.histmersion.api.automation.ProviderKind.Wire(p), known)
           .map(Provider(_))
           .toRight(
-            Problem.Unclassified(Legacy.Text(s"unknown provider '$p' in '$t' (one of: ${ProviderKind.names(known)})"))
+            Invalid.Unknown.here(TypeName.of(ProviderKind.Wire), Raw(s"$p"), Vector(Raw(s"${ProviderKind.names(known)}")))
           )
       else ModelRef.parse(ModelRef.Wire(t), known).map(Model(_))
 
@@ -232,28 +231,23 @@ object ModelChains:
 
     def of(target: Target, limits: List[Limit], reservePct: OfReservePct): Either[Problem, Allowance] =
       if (reservePct).value < 0 || (reservePct).value > 99 then
-        Left(Problem.Unclassified(Legacy.Text(s"a reserve is 0 to 99 %, not $reservePct")))
+        Left(Invalid.OutOfRange.here(TypeName.of(ReservePct), Raw(s"$reservePct"), Invalid.Bounds(Some(Raw("0")), Some(Raw("99")))))
       else
         val windows =
           limits.groupBy(l => (l.measure, l.window.seconds)).collect { case (k, ls) if ls.size > 1 => ls.head }
         if windows.nonEmpty then
-          Left(
-            Problem.Unclassified(
-              Legacy.Text(
-                s"${target.wire}: two limits on the same measure and window (${windows.map(_.text).mkString(", ")})"
-              )
-            )
-          )
+          Left(Invalid.Repeated(TypeName.named[Limit], Raw(s"${windows.head.text}"), Vector(Field(s"${target.wire}"))))
         else Right(Allowance(target, limits, reservePct))
 
   def parseAllowances(
       s: Allowance.Spec,
       known: Set[ProviderKind.Plugin.Name] = Set.empty
-  ): Either[Problem, List[Allowance]] =
+  ): Either[Problems, List[Allowance]] =
     val entries = (s).value.split(';').toList.map(_.trim).filter(_.nonEmpty)
     val parsed = entries.map { e =>
       e.indexOf('=') match
-        case -1 => Left(Problem.Unclassified(Legacy.Text(s"'$e' is not <provider:model or provider:*> = <limits>")))
+        case -1 =>
+          Left(Invalid.Unreadable.here(TypeName.of(Allowance.Spec), Raw(s"$e"), Vector(Raw("claude-code:* = 5 usd/day"))))
         case i  =>
           parseAllowance(
             Target.Spec(e.substring(0, i)),
@@ -265,16 +259,14 @@ object ModelChains:
       case Nil =>
         val as = parsed.collect { case Right(a) => a }
         val dup = as.groupBy(_.target.wire).collect { case (t, xs) if xs.size > 1 => t }
-        if dup.nonEmpty then
-          Left(Problem.Unclassified(Legacy.Text(s"an allowance is given twice for ${dup.mkString(", ")}")))
-        else Right(as)
-      case errs => Left(Problem.Unclassified(Legacy.Text(errs.map(_.sentence).mkString("; "))))
+        Problems.from(dup.toVector.map(d => Invalid.Repeated.here(TypeName.of(Target.Wire), Raw(s"$d")))).toLeft(as)
+      case errs => Left(errs.reduce(_ ++ _))
 
   def parseAllowance(
       target: Target.Spec,
       items: List[Limit.Spec],
       known: Set[ProviderKind.Plugin.Name] = Set.empty
-  ): Either[Problem, Allowance] =
+  ): Either[Problems, Allowance] =
     val ts = items.map((_).value.trim).filter(_.nonEmpty)
     val (reserves, limits) = ts.partition(_.toLowerCase(java.util.Locale.ROOT).startsWith("reserve"))
     for
@@ -282,10 +274,10 @@ object ModelChains:
       rs <- reserves match
         case Nil      => Right(Allowance.ReservePct(0))
         case r :: Nil => parseReserve(Allowance.ReserveSpec(r.drop("reserve".length)))
-        case _        => Left(Problem.Unclassified(Legacy.Text(s"${t.wire}: more than one reserve")))
+        case _        => Left(Invalid.Repeated(TypeName.of(Allowance.ReservePct), Raw("reserve"), Vector(Field(s"${t.wire}"))))
       ls <- limits.map(l => Limit.parse(Limit.Spec(l))).partitionMap(identity) match
         case (Nil, ok) => Right(ok)
-        case (errs, _) => Left(Problem.Unclassified(Legacy.Text(s"${t.wire}: ${errs.map(_.sentence).mkString("; ")}")))
+        case (errs, _) => Left(errs.reduce[Problems](_ ++ _).at(Field(s"${t.wire}")))
       a <- Allowance.of(t, ls, rs)
     yield a
 
@@ -296,9 +288,7 @@ object ModelChains:
       .stripSuffix("%")
       .trim
       .toIntOption
-      .toRight(s"'${(s).value.trim}' is not a reserve percentage"))
-      .left
-      .map(refactorError4 => Problem.Unclassified(Legacy.Text(refactorError4))))
+      .toRight(Invalid.Unreadable.here(TypeName.of(Allowance.ReservePct), Raw(s"${(s).value.trim}"), Vector(Raw("reserve 20%"))))))
       .map(refactorValue15 => Allowance.ReservePct(refactorValue15))
 
   final case class Spend(at: Spend.At, tokens: Spend.Tokens, usd: BigDecimal)

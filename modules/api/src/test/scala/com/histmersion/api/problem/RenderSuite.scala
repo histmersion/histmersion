@@ -28,7 +28,11 @@ class RenderSuite extends munit.FunSuite:
       400,
       "unknown com.histmersion.domain.library.Source.Status 'dubious' (one of: 'current', 'contested')"
     ),
+    "Unreadable" -> (400, "from: '13oo BCE' is unreadable as com.histmersion.Year (e.g. '1300 BCE', '530 CE', '-1300')"),
     "Missing" -> (400, "rationale is required"),
+    "Ambiguous" -> (400, "edits / 0: com.histmersion.api.research.Article.Edits.Anchor 'the Hittite texts' matches 2"),
+    "Repeated" -> (400, "chain / com.histmersion.api.automation.Agents.ModelRef 'claude:opus' is repeated"),
+    "Misplaced" -> (400, "status belongs under metadata"),
     "OutOfRange" -> (400, "com.histmersion.Latitude '91' is out of [-90, 90]"),
     "Inconsistent" -> (400, "lat, lon break Together"),
     "Reference" -> (400, "plugins / api-key: no secret reference: EnvName '1PASSWORD'"),
@@ -234,7 +238,8 @@ class RenderSuite extends munit.FunSuite:
           Content.Requirement.NoYearZero,
           Content.Requirement.CitesNoSource,
           Content.Requirement.UnknownCitekey,
-          Content.Requirement.OutsidePeriod
+          Content.Requirement.OutsidePeriod,
+          Content.Requirement.StandIn
         ).map(Content.Proposal(_, Where("findings"))) ++
         Vector(Io.Ending.TimedOut(Millis(5L)), Io.Ending.NotStarted(reported)).map(Io.Process(Io.Tool("pg_dump"), _)) ++
         Io.Access.values.toVector.map(Io.File(_, Io.Path("/a b/c"), reported)) ++
@@ -270,6 +275,7 @@ class RenderSuite extends munit.FunSuite:
         Run.PauseReason.values.toVector.map(Run.Paused(_, None)) ++
         Vector(
           Invalid.Unknown.here(TypeName("a.B"), Raw("x"), Vector.empty),
+          Invalid.Unreadable.here(TypeName("a.B"), Raw("x"), Vector.empty),
           Invalid.OutOfRange.here(TypeName("a.B"), Raw("x"), Invalid.Bounds(None, Some(Raw("9")))),
           Conflict.WrongState(TypeName("a.B"), Raw("k"), Conflict.State("done"), Vector.empty),
           Run.NoModel(Run.Role("writer"), Vector.empty),

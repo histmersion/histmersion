@@ -288,7 +288,7 @@ final class AgentsControllers(
       r <- cli.trees
         .generate(knownTools, rts, AgentTrees.out(req.out.map(_.value), site.userPaths))
         .left
-        .map(e => Api.Error(e))
+        .map(e => Api.Error(e.toNonEmpty.head))
     yield r
 
   // ── plan pools ─────────────────────────────────────────────────────────────────────────────────
@@ -446,7 +446,7 @@ final class AgentsControllers(
     Agents.Prices
       .parse(Agents.Prices.Wire(cfg.prices.value))
       .left
-      .map(m => Problem.Unclassified(Legacy.Text(s"agents.prices: ${m.sentence}")))
+      .map(m => Problem.Unclassified(Legacy.Text(s"agents.prices: ${m}")))
 
   /** A model that can run: on a plan pool or PRICED (an unpriced metered model is refused, never treated as free), and
     * with a client its provider can build (a hosted provider needs its key; `claude-code` a loopback server).
@@ -566,7 +566,7 @@ final class AgentsControllers(
       ms <- ModelChains
         .parseModels(in.models.map(m => ModelRef.Model.Spec(m.value)), knownPluginNames)
         .left
-        .map(e => Api.Error(e))
+        .map(e => Api.Error(e.toNonEmpty.head))
       _ <- Either.cond(
         ms.nonEmpty,
         (),
@@ -594,7 +594,7 @@ final class AgentsControllers(
       t <- ModelChains.Target
         .parse(ModelChains.Target.Spec(in.target.value), knownPluginNames)
         .left
-        .map(e => Api.Error(e))
+        .map(e => Api.Error(e.toNonEmpty.head))
       ls <- in.limits.map(ModelChains.Limit.fromSpec).partitionMap(identity) match
         case (Nil, ok) => Right(ok)
         case (errs, _) => Left(Api.Error(Problem.Unclassified(Legacy.Text(errs.map(_.sentence).mkString("; ")))))
@@ -746,7 +746,7 @@ final class AgentsControllers(
       _ <- p.roles.foldLeft[Either[Api.Error, Unit]](Right(())) { (acc, role) =>
         acc.flatMap(_ =>
           runnable(role, over.get(role).orElse(req.model.map(m => ModelName(m.value)))).left
-            .map(e => Api.Error(e))
+            .map(e => Api.Error(e.toNonEmpty.head))
         )
       }
       // and an override for a role the pipeline only reaches through a chained run (compile-article's
@@ -845,7 +845,7 @@ final class AgentsControllers(
           _ <- ModelChains
             .parseChain(ModelChains.Chain.Spec(o.model.value), knownPluginNames)
             .left
-            .map(e => Api.Error(Problem.Unclassified(Legacy.Text(s"--model-for ${r.wire}: ${e.sentence}"))))
+            .map(e => Api.Error(Problem.Unclassified(Legacy.Text(s"--model-for ${r.wire}: ${e}"))))
         yield m + (r -> ModelName(o.model.value.trim))
       }
     }

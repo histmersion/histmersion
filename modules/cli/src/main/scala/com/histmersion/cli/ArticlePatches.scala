@@ -167,7 +167,7 @@ object ArticlePatches:
   /** Each `--critique-reason src>dst=text` sets the reason of one critique-checklist pair, `src>dst=` removes it; added
     * to those of `--json`.
     */
-  def withCritiques(p: Article.Patch, reasons: List[Problem]): Either[Cli.Error, Article.Patch] =
+  def withCritiques(p: Article.Patch, reasons: List[CritiqueReason.Spec]): Either[Cli.Error, Article.Patch] =
     reasons
       .traverse(r =>
         CritiqueReason

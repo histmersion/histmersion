@@ -1,7 +1,8 @@
 package com.histmersion
 package api.automation
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.Problem.{Field, Invalid, Raw, TypeName}
 import com.histmersion.util.problem.Text.sentence
 
 import hearth.kindlings.optics.syntax.*
@@ -17,6 +18,10 @@ import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.api.library.Citekey
 
 object Queue:
+
+  /** Why an item is on a list, or how it was closed: a rationale, not a failure. */
+  type Rationale = Rationale.T
+  object Rationale extends Newtype[String, Pure]
   type Export = Export.T
   object Export extends Newtype[String, Pure]
   type FileText = FileText.T
@@ -38,7 +43,7 @@ object Queue:
       text: QueueItem.Text,
       topic: Option[QueueItem.Topic],
       status: QueueItem.Status,
-      reason: Option[Problem] = None,
+      reason: Option[Rationale] = None,
       createdAt: Option[QueueItem.CreatedAt] = None,
       doneAt: Option[QueueItem.DoneAt] = None,
       goal: Option[Goal.Slug] = None,
@@ -81,7 +86,7 @@ object Queue:
       text: QueueItem.Text,
       topic: Option[QueueItem.Topic] = None,
       status: Option[QueueItem.Status] = None,
-      reason: Option[Problem] = None,
+      reason: Option[Rationale] = None,
       createdAt: Option[QueueAdd.CreatedAt] = None,
       goal: Option[Goal.Slug] = None,
       job: Option[SpatialHierarchyResult.Job.Id] = None
@@ -96,7 +101,7 @@ object Queue:
       status: Option[QueueItem.Status] = None,
       text: Option[QueueItem.Text] = None,
       topic: Option[QueueItem.Topic] = None,
-      reason: Option[Problem] = None,
+      reason: Option[Rationale] = None,
       goal: Option[Goal.Slug] = None,
       closedBy: Option[QueuePatch.ClosedBy] = None
   ) derives StrictJson,
@@ -163,19 +168,19 @@ object Queue:
       case None                            => Right(None)
       case Some(s) if Statuses.contains(s) => Right(Some(s))
       case Some(s)                         =>
-        Left(Problem.Unclassified(Legacy.Text(s"unknown status '$s' — one of: ${Statuses.mkString(", ")}")))
+        Left(Invalid.Unknown.here(TypeName.of(QueueItem.Status), Raw(s"$s"), Statuses.toVector.map(x => Raw(s"$x"))))
 
   def textOf(raw: Option[QueueItem.Text]): Either[Problem, Option[QueueItem.Text]] =
     raw match
-      case Some(t) if (t).value.trim.isEmpty => Left(Problem.Unclassified(Legacy.Text("queue item text is empty")))
+      case Some(t) if (t).value.trim.isEmpty => Left(Invalid.Missing.here(Field("text")))
       case other                             => Right(other)
 
-  def fulfilledReason(prev: Option[Problem], citekey: Citekey): Problem =
+  def fulfilledReason(prev: Option[Rationale], citekey: Citekey): Rationale =
     val tag = s"ingested as [[$citekey]]"
-    prev.map((_).sentence.trim).filter(_.nonEmpty) match
-      case Some(p) if p.contains(tag) => Problem.Unclassified(Legacy.Text(p))
-      case Some(p)                    => Problem.Unclassified(Legacy.Text(s"$p · $tag"))
-      case None                       => Problem.Unclassified(Legacy.Text(tag))
+    prev.map(r => s"$r".trim).filter(_.nonEmpty) match
+      case Some(p) if p.contains(tag) => Rationale(s"$p")
+      case Some(p)                    => Rationale(s"$p · $tag")
+      case None                       => Rationale(s"$tag")
 
   def fulfil(item: QueueItem, citekey: Citekey, by: Option[QueueItem.ClosedBy] = None): QueuePatch =
     QueuePatch(
@@ -186,13 +191,11 @@ object Queue:
 
   def fulfillable(id: QueueItem.Id, found: Option[QueueItem]): Either[Problem, QueueItem] =
     found match
-      case None => Left(Problem.Unclassified(Legacy.Text(s"no acquisition item $id")))
+      case None => Left(Problem.NotFound.Entity(TypeName.of(QueueItem.Id), Raw(s"$id")))
       case Some(i) if i.list != Kind.Acquire.label =>
-        Left(Problem.Unclassified(Legacy.Text(s"item $id is on the ${i.list} list, not the acquisition list")))
-      case Some(i) if i.status == QueueItem.Status(Done) =>
-        Left(Problem.Unclassified(Legacy.Text(s"acquisition item $id is already done")))
+        Left(Problem.Conflict.WrongState(TypeName.of(QueueItem.Id), Raw(s"$id"), Problem.Conflict.State(s"${i.list}"), Vector(Problem.Conflict.State(s"${Kind.Acquire.label}"))))
       case Some(i) if i.status != QueueItem.Status(Open) =>
-        Left(Problem.Unclassified(Legacy.Text(s"item $id is not an open acquisition item")))
+        Left(Problem.Conflict.WrongState(TypeName.of(QueueItem.Id), Raw(s"$id"), Problem.Conflict.State(s"${i.status}"), Vector(Problem.Conflict.State(s"$Open"))))
       case Some(i) => Right(i)
 
   def itemGoals(own: List[(QueueItem.Id, GoalRef)], linked: List[(QueueItem.Id, GoalRef)]): List[ItemGoals] =
@@ -219,7 +222,7 @@ object Queue:
       .modify(_.topic)
       .setTo(clearable(p.topic, cur.topic)(t => (t).value, x => QueueItem.Topic(x)))
       .modify(_.reason)
-      .setTo(clearable(p.reason, cur.reason)(t => (t).sentence, x => Problem.Unclassified(Legacy.Text(x))))
+      .setTo(clearable(p.reason, cur.reason)(t => s"$t", x => Rationale(s"$x")))
       .modify(_.goal)
       .setTo(clearable(p.goal, cur.goal)(t => (t).value, x => Goal.Slug(x)))
       .modify(_.closedBy)
@@ -229,14 +232,14 @@ object Queue:
     raw.map((_).value.trim).filter(_.nonEmpty) match
       case None    => Right(None)
       case Some(s) =>
-        ((scala.util
+        scala.util
           .Try(java.time.Instant.parse(s))
           .toEither
           .map(i => Some(i.toString))
           .left
-          .map(_ => s"created_at '$s' is not an ISO-8601 instant (e.g. 2026-08-25T00:00:00Z)"))
-          .left
-          .map(refactorError => Problem.Unclassified(Legacy.Text(refactorError))))
+          .map(_ =>
+            Invalid.Unreadable(TypeName.of(QueueItem.CreatedAt), Raw(s"$s"), Vector(Raw("2026-08-25T00:00:00Z")), Vector(Field("createdAt")))
+          )
           .map(refactorValue2 => (refactorValue2).map(refactorValue3 => QueueItem.CreatedAt(refactorValue3)))
 
   val Sep = " > "
@@ -432,7 +435,7 @@ object Queue:
         val lines = is.sortBy(_.id).map { i =>
           val box =
             if !(kind.checkboxes).value then "" else if i.status == QueueItem.Status(Done) then "[x] " else "[ ] "
-          val why = i.reason.map(r => s" — _${r.sentence}_").getOrElse("")
+          val why = i.reason.map(r => s" — _${r}_").getOrElse("")
           s"- $box${(i.text).value.linesIterator.mkString(" ")}$why  `#${i.id}`" +
             notes.get(i.id).fold("")(n => s"\n  - _${n.sentence}_")
         }

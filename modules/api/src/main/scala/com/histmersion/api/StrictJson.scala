@@ -3,8 +3,9 @@ package api
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
 
-import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.{Problem, Problems}
+import com.histmersion.util.problem.Problem.{Field, Invalid, Raw, TypeName}
+import com.histmersion.util.problem.Text.sentences
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReader, JsonValueCodec, JsonWriter}
 import hearth.kindlings.jsoniterjson.Json
 import sttp.tapir.{Schema, SchemaType}
@@ -38,29 +39,19 @@ object StrictJson:
             in.decodeError(s"expected an object with keys ${known.mkString(", ")}; got ${jsonKind(json)}")
           case Some(o) =>
             problems(o.keys.toList.map(k => FieldName(k)), s) match
-              case Some(msg) => in.decodeError(msg.sentence)
+              case Some(refused) => in.decodeError(refused.sentences.mkString("; "))
               case None      => json.as[A](using derived).fold(in.decodeError, identity)
 
-  def problems(keys: List[FieldName], s: Schema[?]): Option[Problem] =
+  /** The keys `s` does not take, each with the keys it takes, and where a key belongs that the record holds deeper. */
+  def problems(keys: List[FieldName], s: Schema[?]): Option[Problems] =
     val known = fieldNames(s)
     val unknown = keys.filterNot(known.contains).distinct
-    Option.when(unknown.nonEmpty) {
-      val nested = nestedFields(s)
-      val hints = unknown.flatMap(k =>
-        nested.collectFirst {
-          case (path, f) if f == k =>
-            s"'$k' belongs under '$path' ($path.$k)"
-        }
-      )
-      val noun = s"unknown ${Plural.noun(Plural.Count((unknown.size).toLong), Plural.Noun.Singular("key"))}"
-      Problem.Unclassified(
-        Legacy.Text(
-          s"$noun ${unknown.map(k => s"'$k'").mkString(", ")}" +
-            (if hints.isEmpty then "" else s" — ${hints.mkString("; ")}") +
-            s"; expected only: ${known.mkString(", ")}"
-        )
-      )
-    }
+    val nested = nestedFields(s)
+    val taken = known.toVector.map(k => Raw(s"$k"))
+    Problems.from(unknown.toVector.flatMap { k =>
+      Invalid.Unknown.here(TypeName.of(FieldName), Raw(s"$k"), taken) +:
+        nested.collectFirst { case (path, f) if f == k => Invalid.Misplaced.here(Field(s"$k"), Field(s"$path")) }.toVector
+    })
 
   def fieldNames(s: Schema[?]): List[FieldName] = s.schemaType match
     case p: SchemaType.SProduct[?] => p.fields.map(f => FieldName(f.name.encodedName))

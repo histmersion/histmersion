@@ -467,7 +467,7 @@ final class Engine(
                 RunState.Paused,
                 error = Some(
                   Stopped.write(
-                    Stopped.Cause.Paused(reason, Problem.Unclassified(Legacy.Text(why.sentence.take(1000))))
+                    Stopped.Cause.Paused(reason, Stopped.Detail(why.sentence.take(1000)))
                   )
                 ),
                 resumeAt = at
@@ -618,7 +618,7 @@ final class Engine(
               Stopped.write(
                 Stopped.Cause.Paused(
                   PauseReason.Requested,
-                  Problem.Unclassified(Legacy.Text("paused before it started"))
+                  Stopped.Detail("paused before it started")
                 )
               )
             )

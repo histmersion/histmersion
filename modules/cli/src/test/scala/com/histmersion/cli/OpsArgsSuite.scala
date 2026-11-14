@@ -40,7 +40,7 @@ class OpsArgsSuite extends munit.FunSuite:
           (list, text, topic),
           (Queue.Kind.Label("tasks"), Queue.QueueItem.Text("enrich x"), Some(Queue.QueueItem.Topic("Backlog")))
         )
-        assertEquals(reason.sentence, "why")
+        assertEquals(reason.value, "why")
       case other => fail(s"${other.toString}")
 
   test("`add` without text is a usage error, not an empty item"):

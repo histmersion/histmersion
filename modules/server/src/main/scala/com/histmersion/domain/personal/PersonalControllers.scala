@@ -87,7 +87,7 @@ final class PersonalControllers(
 
   private def target(t: Target, allowed: Set[MarkKind], what: String): Either[Api.Error, MarkTarget] =
     Target
-      .check(t, allowed, what)
+      .check(t, allowed, Problem.Field(what))
       .flatMap(MarkTarget.zoomChecked(_))
       .flatMap(
         MarkTarget

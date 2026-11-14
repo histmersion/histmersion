@@ -2,7 +2,7 @@ package com.histmersion
 package api.personal
 import com.histmersion.api.given
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -53,7 +53,7 @@ object Bookmark:
     def tidy(raw: Option[Label]): Either[Problem, Option[Label]] =
       raw.map(_.value.trim.replaceAll("\\s+", " ")).filter(_.nonEmpty) match
         case Some(l) if l.length > MaxChars =>
-          Left(Problem.Unclassified(Legacy.Text(s"a bookmark's name is at most $MaxChars characters")))
+          Left(Problem.Invalid.OutOfRange.here(Problem.TypeName.of(Label), Problem.Raw("name"), Problem.Invalid.Bounds(None, Some(Problem.Raw.of(MaxChars.toLong)))))
         case other => Right(other.map(Label(_)))
     given JsonValueCodec[Label] = JsonCodec.mapped[Label, String](_.value, b => Right(Label(b)))
     given Schema[Label] = Schema.string[Label]

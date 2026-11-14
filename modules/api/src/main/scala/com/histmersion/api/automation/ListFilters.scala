@@ -1,7 +1,8 @@
 package com.histmersion
 package api.automation
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{NonEmptyVector, Problem}
+import com.histmersion.util.problem.Problem.{Field, Invalid, Raw, TypeName}
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.api.exchange.MergeIssue
@@ -316,7 +317,8 @@ object ListFilters:
 
   def known(what: FacetName, vs: List[Term], known: Seq[Term]): Either[Problem, List[Term]] =
     vs.find(v => !known.contains(v)) match
-      case Some(v) => Left(Problem.Unclassified(Legacy.Text(s"unknown $what '$v' (one of: ${known.mkString(", ")})")))
+      case Some(v) =>
+        Left(Invalid.Unknown(TypeName.of(Term), Raw(s"$v"), known.toVector.map(k => Raw(s"$k")), Vector(Field(s"$what"))))
       case None    => Right((vs).map(refactorValue34 => Term((refactorValue34).value)))
 
   private val Relative = """(\d{1,6})\s*([dhm])""".r
@@ -332,18 +334,12 @@ object ListFilters:
           .Try(LocalDate.parse(d))
           .toOption
           .map(day => (if (end) == (true) then day.plusDays(1) else day).atStartOfDay(ZoneOffset.UTC).toInstant)
-          .toRight(Problem.Unclassified(Legacy.Text(s"'$s' is not a date")))
+          .toRight(Invalid.Unreadable.here(TypeName.of(TimeBound), Raw(s"$s"), Vector(Raw("2026-10-01"), Raw("2026-10-01T12:00:00Z"), Raw("7d"), Raw("12h"), Raw("30m"))))
       case _ =>
         scala.util
           .Try(Instant.parse((s).value.trim))
           .toOption
-          .toRight(
-            Problem.Unclassified(
-              Legacy.Text(
-                s"'$s' is neither a date (2026-10-01), an instant (2026-10-01T12:00:00Z) nor a time ago (7d, 12h, 30m)"
-              )
-            )
-          )
+          .toRight(Invalid.Unreadable.here(TypeName.of(TimeBound), Raw(s"$s"), Vector(Raw("2026-10-01"), Raw("2026-10-01T12:00:00Z"), Raw("7d"), Raw("12h"), Raw("30m"))))
 
   def range(
       since: Option[TimeBound],
@@ -355,18 +351,18 @@ object ListFilters:
         timeBound(_, end = (false), now)
           .map(Some(_))
           .left
-          .map(m => Problem.Unclassified(Legacy.Text(s"since: ${m.sentence}")))
+          .map(_.within(Field("since")))
       )
       u <- until.fold(Right(None))(
         timeBound(_, end = (true), now)
           .map(Some(_))
           .left
-          .map(m => Problem.Unclassified(Legacy.Text(s"until: ${m.sentence}")))
+          .map(_.within(Field("until")))
       )
       _ <- Either.cond(
         s.zip(u).forall((a, b) => a.isBefore(b)),
         (),
-        Problem.Unclassified(Legacy.Text("since must lie before until"))
+        Invalid.Inconsistent.here(NonEmptyVector.of(Field("since"), Field("until")), Invalid.Exclusion.Ordered)
       )
     yield (s, u)
 

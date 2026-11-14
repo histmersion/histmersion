@@ -1,7 +1,8 @@
 package com.histmersion
 package api.backup
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
+import com.histmersion.util.problem.Problem.{Field, Invalid, Raw, TypeName}
 
 import java.time.Instant
 import java.time.ZoneOffset
@@ -89,18 +90,12 @@ object Backup:
 
   def safeName(raw: Name): Either[Problem, Result.File] =
     val n = Option(raw).map((_).value.trim).getOrElse("")
-    if n.isEmpty then Left(Problem.Unclassified(Legacy.Text("no backup file given")))
+    val example = Vector(Raw(s"histmersion-2026-11-01$Extension"))
+    if n.isEmpty then Left(Invalid.Missing.here(Field("file")))
     else if n.length > 128 then
-      Left(Problem.Unclassified(Legacy.Text(s"backup file name is too long (${n.length} chars)")))
-    else if !n.endsWith(Extension) then Left(Problem.Unclassified(Legacy.Text(s"'$n' is not a $Extension file")))
-    else if n.length == Extension.length then
-      Left(Problem.Unclassified(Legacy.Text(s"'$n' has no name before $Extension")))
-    else if !Safe.matches(n) then
-      Left(
-        Problem.Unclassified(
-          Legacy.Text(s"'$n' is not a plain backup file name — no directories, no '..', letters/digits/._- only")
-        )
-      )
+      Left(Invalid.OutOfRange.here(TypeName.of(Result.File), Raw.of(n.length.toLong), Invalid.Bounds(None, Some(Raw("128")))))
+    else if !n.endsWith(Extension) || n.length == Extension.length || !Safe.matches(n) then
+      Left(Invalid.Unreadable.here(TypeName.of(Result.File), Raw(s"$n"), example))
     else Right(Result.File(n))
 
   /** Absent `host`/`port` let libpq decide (its own defaults, `PGHOST`, `PGPORT`). */
@@ -124,7 +119,8 @@ object Backup:
 
   def parseJdbc(url: JdbcUrl): Either[Problem, PgTarget] =
     val u = Option(url).map((_).value.trim).getOrElse("")
-    if !u.startsWith(JdbcScheme) then Left(Problem.Unclassified(Legacy.Text(s"not a PostgreSQL JDBC URL: '$u'")))
+    val jdbc = Vector(Raw("jdbc:postgresql://127.0.0.1:5432/histmersion"))
+    if !u.startsWith(JdbcScheme) then Left(Invalid.Unreadable.here(TypeName.named[PgTarget], Raw(s"$u"), jdbc))
     else
       val rest = u.drop(JdbcScheme.length).takeWhile(_ != '?')
       val (authority, db) =
@@ -145,14 +141,12 @@ object Backup:
         case Some(p) =>
           ((p.toIntOption
             .map(Some(_))
-            .toRight(s"'$p' is not a port number in '$u'"))
-            .left
-            .map(refactorError => Problem.Unclassified(Legacy.Text(refactorError))))
+            .toRight(Invalid.Unreadable.here(TypeName.of(PgTarget.Port), Raw(s"$p"), Vector(Raw("5432"))))))
             .map(refactorValue2 => (refactorValue2).map(refactorValue3 => PgTarget.Port(refactorValue3)))
       for
         name <- Some(db.trim)
           .filter(_.nonEmpty)
-          .toRight(Problem.Unclassified(Legacy.Text(s"JDBC URL has no database name: '$u'")))
+          .toRight(Invalid.Unreadable.here(TypeName.named[PgTarget], Raw(s"$u"), jdbc))
         p <- port
       yield PgTarget(
         (Some(host).filter(_.nonEmpty)).map(refactorValue10 => PgTarget.Host(refactorValue10)),
@@ -175,19 +169,24 @@ object Backup:
     val completed = output.exists(l => IgnoredErrors.findFirstMatchIn((l).value).isDefined)
     if exit == ExitCode(0) || completed then Right((notable).map(refactorValue9 => Outcome(refactorValue9)))
     else
-      Left(Problem.Unclassified(Legacy.Text(s"pg_restore failed (exit $exit): ${notable.takeRight(5).mkString("; ")}")))
+      Left(
+        Problem.Io.Process(
+          Problem.Io.Tool("pg_restore"),
+          Problem.Io.Ending.Exited(Problem.Io.ExitCode(exit.value), External.Stderr.tail(notable.takeRight(5).mkString("\n")))
+        )
+      )
 
   val CodeMaintenance = "maintenance"
 
   def maintenance(op: String): Api.Error =
     Api.Error(
-      Problem.Unclassified(Legacy.Text(s"$op is unavailable: a restore is in progress on this server")),
+      Problem.Conflict.Busy(Problem.Conflict.Activity.Restore),
       Some(Api.Error.Code(CodeMaintenance))
     )
 
   def missing(file: Result.File): Api.Error =
     Api.Error(
-      Problem.Unclassified(Legacy.Text(s"no backup named '$file' in the backups directory")),
+      Problem.NotFound.Entity(TypeName.of(Result.File), Raw(s"$file")),
       Some(Api.Error.Code(Write.CodeNotFound))
     )
 
