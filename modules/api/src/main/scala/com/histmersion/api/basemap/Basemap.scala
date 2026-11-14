@@ -1,6 +1,7 @@
 package com.histmersion
 package api.basemap
-import com.histmersion.util.problem.{NonEmptyVector, Problem, Problems}
+import com.histmersion.util.nonempty.NonEmptyVector
+import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.util.problem.Problem.{Field, Invalid, Raw, TypeName}
 
 import com.histmersion.api.BBox

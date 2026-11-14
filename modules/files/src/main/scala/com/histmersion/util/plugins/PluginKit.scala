@@ -1,9 +1,11 @@
 package com.histmersion
 package util.plugins
 import com.histmersion.util.json.RawJson
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.api.json.NewtypeCodecs.given
 
+import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.util.problem.{External, Problem}
 
 import com.histmersion.api.given
@@ -83,6 +85,31 @@ object PluginKit:
     )
 
   def renderJars(js: List[PluginJar]): String = js.asJson.withoutNulls.spaces2
+
+  /** A plugin file an earlier version wrote (`plugin-set.json`, the plugins index, a jar list) in the form this one
+    * reads: each plugin's `error` that holds one problem bare is put in a list, and nothing else is touched. `None`
+    * when the text is in that form already; a `Left` when it is no JSON, and then it is left as it is.
+    */
+  def listedProblems(text: String, where: String): Either[Problem, Option[String]] =
+    RawJson.parse(text).left.map(e => unreadable(where, s"$e")).map { json =>
+      val listed = withListedErrors(json, underPlugins = false)
+      Option.unless(listed.noSpaces == json.noSpaces)(listed.spaces2)
+    }
+
+  /** `json` with every plugin's bare `error` (an object in a `plugins` list) in a list. */
+  private def withListedErrors(json: Json, underPlugins: Boolean): Json =
+    json.arrayOrObject(
+      json,
+      elements => Json.Arr(elements.map(withListedErrors(_, underPlugins))),
+      obj =>
+        Json.fromFields(obj.toList.map {
+          case ("error", bare) if underPlugins && bare.asArray.isEmpty && bare.noSpaces != "null" =>
+            "error" -> Json.Arr(Vector(bare))
+          case ("plugins", plugins) =>
+            "plugins" -> plugins.mapArray(_.map(withListedErrors(_, underPlugins = true)))
+          case (key, value) => key -> withListedErrors(value, underPlugins = false)
+        })
+    )
 
   // ── status ────────────────────────────────────────────────────────────────────────────────────
 
@@ -319,7 +346,8 @@ object PluginKit:
     none ++ jar.plugins.flatMap { p =>
       // a provider that could not be loaded has no id, version or SPI to compare: its error is the reason
       if p.id.isEmpty then
-        p.error.fold(List(Problem.Plugin.Load(file, Problem.Plugin.Fault.BadDescriptor)))(_.toVector.toList)
+        p.error
+          .fold(List(Problem.Plugin.Load(file, Problem.Plugin.Fault.BadDescriptor)))(NonEmptyVector.toVector(_).toList)
       else
         val id = Problem.Plugin.Id(s"${p.id}")
         val spi = Option

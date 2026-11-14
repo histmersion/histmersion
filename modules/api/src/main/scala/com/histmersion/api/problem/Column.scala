@@ -1,13 +1,14 @@
 package com.histmersion
 package api
 package problem
+import com.histmersion.util.nonempty.NonEmptyVector
 
 import java.time.Instant
 
 import scala.util.Try
 import scala.util.matching.Regex
 
-import util.problem.{External, Legacy, NonEmptyVector, Problem}
+import util.problem.{External, Legacy, Problem}
 import util.problem.Problem.*
 
 /** How a problem is kept in a text column (`jobs.error`, `status_note`, …), and how a column's text is read back.

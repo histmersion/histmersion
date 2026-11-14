@@ -1,11 +1,12 @@
 package com.histmersion
 package cli
+import com.histmersion.util.nonempty.NonEmptyVector
 
 import com.histmersion.api.Api
 import com.histmersion.api.aliases.LabelRename
 import com.histmersion.api.library.Filter
 import com.histmersion.api.research.{Article, ReviewGoal}
-import com.histmersion.util.problem.{NonEmptyVector, Problem}
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.console.Console
 import io.github.iltotore.iron.constraint.any.Pure
 

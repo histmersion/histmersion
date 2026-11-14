@@ -710,6 +710,11 @@ object ContractsSuite:
     /** The JSON module, below the api: the codecs and raw JSON every client and plugin shares (G62). */
     private val SharedJson = "com.histmersion.util.json."
 
+    /** The non-empty vector's module, below the problem module (G66): the type `Problems` and the contract's lists of
+      * at least one element are made of, which the clients share as they share the problem module.
+      */
+    private val SharedNonEmpty = "com.histmersion.util.nonempty."
+
     /** The closed Problem's renderers (the sentence, the answer, the stored column): the problem module's edge, kept in
       * the api only because every layer that renders sees it; a domain file may render a problem through them.
       */
@@ -722,7 +727,7 @@ object ContractsSuite:
           .findAllMatchIn(s.code)
           .filterNot(n =>
             n.group(1) == "api" || n.group(1) == "web" || s.code.startsWith(SharedProblem, n.start) ||
-              s.code.startsWith(SharedJson, n.start)
+              s.code.startsWith(SharedJson, n.start) || s.code.startsWith(SharedNonEmpty, n.start)
           )
         val own = if m == "api" && !s.pkg.startsWith("com.histmersion.api") then List(0) else Nil
         counted("layer", s, "the client names a package outside api", outside.map(_.start).toList.take(1)) ++

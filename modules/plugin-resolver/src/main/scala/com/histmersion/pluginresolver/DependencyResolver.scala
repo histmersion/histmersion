@@ -1,7 +1,8 @@
 package com.histmersion
 package pluginresolver
+import com.histmersion.util.nonempty.NonEmptyVector
 
-import com.histmersion.util.problem.{NonEmptyVector, Problem, Problems}
+import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.util.problem.Problems.traverseAll
 import com.histmersion.util.problem.Text.{sentence, sentences}
 import java.nio.charset.StandardCharsets.UTF_8

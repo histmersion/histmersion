@@ -79,7 +79,11 @@ object JsonCodec:
     new JsonCodec[A]:
       def nullValue: A = reads.nullValue
       def decodeValue(in: JsonReader, default: A): A =
-        val a = reads.decodeValue(in, default)
+        // a collection's own refusal (a NonEmptyVector read from an empty list) reaches the derived codec as an
+        // IllegalArgumentException, not as a decoding error: it is one, where the reader stands
+        val a =
+          try reads.decodeValue(in, default)
+          catch case refused: IllegalArgumentException => in.decodeError(s"${refused.getMessage}")
         missing(a).foreach(field => in.decodeError(s"missing required field: $field"))
         a
       def encodeValue(x: A, out: JsonWriter): Unit = writes.encodeValue(x, out)

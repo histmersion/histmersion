@@ -1,6 +1,7 @@
 package com.histmersion.api.research
+import com.histmersion.util.nonempty.NonEmptyVector
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
-import com.histmersion.util.problem.{NonEmptyVector, Problem}
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.Newtype

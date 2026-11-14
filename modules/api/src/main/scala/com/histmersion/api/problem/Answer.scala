@@ -1,6 +1,7 @@
 package com.histmersion
 package api
 package problem
+import com.histmersion.util.nonempty.NonEmptyVector
 import util.json.RawJson.*
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import hearth.kindlings.jsoniterjson.{Json, JsonObject}
@@ -11,7 +12,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import sttp.model.StatusCode
 
 import json.NewtypeCodecs.given
-import util.problem.{NonEmptyVector, Problem, Problems}
+import util.problem.{Problem, Problems}
 import util.problem.Problem.*
 import Answer.Entry
 import util.problem.Text.sentence
@@ -105,12 +106,7 @@ object Answer:
       read
         .collectFirst { case Left(failure) => failure }
         .toLeft(read.collect { case Right(problem) => problem })
-        .flatMap(all =>
-          NonEmptyVector
-            .from(all)
-            .map[Problems](nev => if nev.size == 1 then nev.head else nev)
-            .toRight("no problems")
-        )
+        .flatMap(all => Problems.from(all).toRight("no problems"))
 
   extension (entry: Entry)
     /** The problem one entry of the body names. */
@@ -136,9 +132,6 @@ object Answer:
         }
 
   // ---- the derived codecs of the cases' fields ----------------------------------------------------------------
-
-  private given [A: JsonValueCodec] => JsonValueCodec[NonEmptyVector[A]] =
-    JsonCodec.mapped[NonEmptyVector[A], Vector[A]](_.toVector, NonEmptyVector.from(_).toRight("an empty list"))
 
   // code words as strings (`"Read"`), a case's defaults honoured
 

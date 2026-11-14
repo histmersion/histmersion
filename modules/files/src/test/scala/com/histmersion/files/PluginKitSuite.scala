@@ -1,5 +1,6 @@
 package com.histmersion
 package files
+import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.util.problem.{External, Problem, Problems}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
@@ -64,14 +65,22 @@ class PluginKitSuite extends munit.FunSuite:
     )
     assert(parseSet("{").isLeft)
 
-  test("a description keeps every problem its plugin met; one an earlier version wrote as a sentence still reads"):
+  test("a description keeps every problem its plugin met, as a list; a bare one is the earlier form, rewritten once"):
     def jar(error: String) =
       s"""[{"file":"p.jar","sha256":"11","plugins":[{"id":"p","version":"1","spiVersion":1,"error":$error}]}]"""
     def errors(text: String) = parseJars(text).map(_.flatMap(_.plugins.flatMap(_.error.toList.flatMap(_.sentences))))
-    assertEquals(errors(jar("\"it needs a key\"")), Right(List("it needs a key")))
     assertEquals(errors(jar("[\"one\",\"two\"]")), Right(List("one", "two")))
-    val one = parseJars(jar("\"it needs a key\"")).map(renderJars)
-    assert(one.exists(_.replaceAll("\\s", "").contains("\"error\":[\"itneedsakey\"]")), s"one problem is a list: $one")
+    assert(errors(jar("\"it needs a key\"")).isLeft, "today's reader does not read the bare form")
+    assert(errors(jar("[]")).isLeft, "an empty list of problems is no problem list")
+    val rewritten = listedProblems(jar("\"it needs a key\""), "jars")
+    assertEquals(rewritten.map(_.map(errors)), Right(Some(Right(List("it needs a key")))))
+    assertEquals(listedProblems(jar("[\"one\"]"), "jars"), Right(None), "a list is left as it is")
+    assertEquals(
+      listedProblems("""{"jars":[],"error":"not a plugin's"}""", "set"),
+      Right(None),
+      "only a plugin's error"
+    )
+    assert(listedProblems("{", "set").isLeft, "no JSON, no rewrite")
     val two = PluginJar(
       PluginJar.File("p.jar"),
       Sha256("11"),
@@ -81,7 +90,7 @@ class PluginKitSuite extends munit.FunSuite:
           PluginDescription.Version("1"),
           PluginDescription.SpiVersion(1),
           error = Some(
-            Problems.of(
+            NonEmptyVector.of(
               Problem.Plugin.Load(Problem.Plugin.Id("p"), Problem.Plugin.Fault.NullComponent),
               Problem.Plugin.Load(Problem.Plugin.Id("p"), Problem.Plugin.Fault.Duplicate)
             )
@@ -334,8 +343,10 @@ class PluginKitSuite extends munit.FunSuite:
               PluginDescription.Version(""),
               PluginDescription.SpiVersion(0),
               error = Some(
-                Problem.Plugin
-                  .Said(Problem.Plugin.Id("test"), Problem.Plugin.Claim.Failed, External.PluginSaid.of("boom"))
+                NonEmptyVector.of(
+                  Problem.Plugin
+                    .Said(Problem.Plugin.Id("test"), Problem.Plugin.Claim.Failed, External.PluginSaid.of("boom"))
+                )
               )
             )
           )
@@ -361,12 +372,18 @@ class PluginKitSuite extends munit.FunSuite:
           PluginDescription.Version(""),
           PluginDescription.SpiVersion(0),
           error = Some(
-            Problem.Plugin.Said(Problem.Plugin.Id("test"), Problem.Plugin.Claim.Failed, External.PluginSaid.of(foreign))
+            NonEmptyVector.of(
+              Problem.Plugin
+                .Said(Problem.Plugin.Id("test"), Problem.Plugin.Claim.Failed, External.PluginSaid.of(foreign))
+            )
           )
         )
       )
     )
-    assertEquals(refusals(broken, PluginSet.SpiVersion(2), Map.empty), broken.plugins.flatMap(_.error))
+    assertEquals(
+      refusals(broken, PluginSet.SpiVersion(2), Map.empty),
+      broken.plugins.flatMap(_.error.toList.flatMap(NonEmptyVector.toVector(_)))
+    )
     val missing = PluginJar(
       PluginJar.File("m.jar"),
       Sha256("1"),
@@ -376,10 +393,12 @@ class PluginKitSuite extends munit.FunSuite:
           PluginDescription.Version(""),
           PluginDescription.SpiVersion(0),
           error = Some(
-            Problem.Plugin.Said(
-              Problem.Plugin.Id("test"),
-              Problem.Plugin.Claim.Failed,
-              External.PluginSaid.of("class x.Y is missing")
+            NonEmptyVector.of(
+              Problem.Plugin.Said(
+                Problem.Plugin.Id("test"),
+                Problem.Plugin.Claim.Failed,
+                External.PluginSaid.of("class x.Y is missing")
+              )
             )
           )
         )
@@ -387,7 +406,7 @@ class PluginKitSuite extends munit.FunSuite:
     )
     assertEquals(
       refusals(missing, PluginSet.SpiVersion(2), Map(PluginDescription.Id("") -> "other.jar")),
-      missing.plugins.flatMap(_.error)
+      missing.plugins.flatMap(_.error.toList.flatMap(NonEmptyVector.toVector(_)))
     )
 
   test("kit manifest: SHA256SUMS round trip; verify names missing, changed and extra files"):

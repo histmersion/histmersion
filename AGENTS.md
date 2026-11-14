@@ -76,6 +76,11 @@ plugin-fixtures/hello-ai ─ a TEST AI-provider plugin jar (scripted, no network
 plugin-fixtures/hello-lib + hello-deps ─ a TEST plugin with a dependency of its own, in a fixture Maven repo
 plugin-resolver ── resolves user plugins' dependencies (coursier): relink kit tools/, never on a class path; depends on console
 chimney-iron ── a Chimney macro extension (newtype → newtype); compile-time only, consumed `% Provided`
+nonempty ── `util.nonempty.NonEmptyVector`, the one collection of at least one element (JVM + JS, standard library only);
+              the problem module builds `Problems` on it
+nonempty-derivation ── a Hearth `IsCollectionProvider` for it (`META-INF/services`): Kindlings derives its codecs and
+              schemas as a list that is refused when empty; compile-time only, consumed `% Provided` by every module that
+              derives a codec or schema (JVM and JS), never in a binary
 chimney-iron-tests ─ its proof suites, compiled as a consumer compiles them
 ```
 

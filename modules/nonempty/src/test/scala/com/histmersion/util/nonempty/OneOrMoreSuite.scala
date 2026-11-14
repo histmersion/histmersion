@@ -1,5 +1,5 @@
 package com.histmersion
-package util.problem
+package util.nonempty
 
 class OneOrMoreSuite extends munit.FunSuite:
 

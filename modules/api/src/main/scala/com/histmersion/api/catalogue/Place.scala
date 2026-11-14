@@ -1,9 +1,10 @@
 package com.histmersion
 package api.catalogue
+import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 
-import com.histmersion.util.problem.{NonEmptyVector, Problem}
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Problem.{Field, Invalid, Raw, TypeName}
 import com.histmersion.util.problem.Text.sentence
 

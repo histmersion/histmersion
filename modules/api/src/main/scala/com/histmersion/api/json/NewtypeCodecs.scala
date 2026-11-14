@@ -3,12 +3,12 @@ package api.json
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonValueCodec}
 import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
-import sttp.tapir.{Schema, Validator}
+import sttp.tapir.Schema
 
 import hearth.kindlings.jsoniterjson.Json
 import util.json.{JsonCodec, RawJson}
 import util.problem.Text.sentence
-import util.problem.{Legacy, NonEmptyVector, Problem}
+import util.problem.{Legacy, Problem}
 import util.json.RawJson.*
 
 /** The JSON codec, key codec and tapir schema of every newtype (`type X = X.T; object X extends Newtype[Base, C]`),
@@ -44,32 +44,6 @@ object NewtypeCodecs:
     JsonCodec.text(_.sentence, text => Right(Problem.Unclassified(Legacy.Text(text))))
 
   given problemSchema: Schema[Problem] = Schema.schemaForString.as[Problem]
-
-  /** One value or several (`Problems` is one problem or several), always written as a list, as its schema says. A
-    * single value written bare — as an earlier version wrote a field that held one value — reads as a list of one.
-    */
-  given oneOrMore: [A] => (one: JsonValueCodec[A]) => JsonValueCodec[A | NonEmptyVector[A]] =
-    // at run time several values are the vector itself, and one value is never a vector
-    def all(values: A | NonEmptyVector[A]): Vector[A] = values.asInstanceOf[Matchable] match
-      case several: Vector[?] => several.asInstanceOf[Vector[A]]
-      case single             => Vector(single.asInstanceOf[A])
-    def of(read: Vector[A]): Option[A | NonEmptyVector[A]] =
-      if read.size == 1 then read.headOption else NonEmptyVector.from(read)
-    JsonCodec.mapped[A | NonEmptyVector[A], Json](
-      values => Json.Arr(all(values).map(_.asJson(using one))),
-      json =>
-        json.asArray.fold(json.as(using one).map(a => a: A | NonEmptyVector[A])) { elements =>
-          val read = elements.map(_.as(using one))
-          read
-            .collectFirst { case Left(failure) => failure }
-            .toLeft(read.collect { case Right(a) => a })
-            .flatMap(as => of(as).toRight("an empty list"))
-        }
-    )
-
-  /** A non-empty list of the values: what [[oneOrMore]] writes. */
-  given oneOrMoreSchema: [A] => (one: Schema[A]) => Schema[A | NonEmptyVector[A]] =
-    Schema.schemaForIterable[A, Vector].validate(Validator.minSize[A, Vector](1)).as[A | NonEmptyVector[A]]
 
   /** Any JSON value (as tapir's circe module described circe's `Json`). */
   given jsonSchema: Schema[Json] = Schema.any

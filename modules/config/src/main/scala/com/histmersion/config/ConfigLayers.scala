@@ -1,7 +1,8 @@
 package com.histmersion
 package config
+import com.histmersion.util.nonempty.NonEmptyVector
 
-import com.histmersion.util.problem.{External, NonEmptyVector, Problem, Problems, Raised}
+import com.histmersion.util.problem.{External, Problem, Problems, Raised}
 import scala.annotation.tailrec
 import org.ekrich.config.{
   Config,

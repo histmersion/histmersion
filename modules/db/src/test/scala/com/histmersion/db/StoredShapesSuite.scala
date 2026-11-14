@@ -1,5 +1,6 @@
 package com.histmersion
 package db
+import com.histmersion.util.nonempty.NonEmptyVector
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
@@ -42,7 +43,7 @@ import com.histmersion.api.research.Article
 import com.histmersion.domain.AgentProposals
 import com.histmersion.domain.ReviewLedger.Ledger
 import com.histmersion.domain.automation.approvals.ProposalEvidence
-import com.histmersion.util.problem.{NonEmptyVector, Problem}
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.plugins.PluginKit
 import com.histmersion.api.plugins.{PluginJar, PluginSet}
 import StoredCodecs.{sameJson, BundleCodec, Codec, JsonAst, JsonSamples}
@@ -169,21 +170,33 @@ object StoredShapesSuite:
             Option.unless(sameJson(again, text))(s"writes $again")
     )
 
-  /** The same file as an earlier version wrote it (`file-<name>-<earlier>`, kept as captured): each line must read as
-    * the value of the line beside it in today's fixture, which is what it writes again.
+  /** The same file as an earlier version wrote it (`file-<name>-<earlier>`, kept as captured), which the server
+    * rewrites once at its start (`rewrite`): each line, rewritten, must read with today's reader as the value of the
+    * line beside it in today's fixture, which is what it writes again. Nothing reads the earlier form itself.
     */
-  def earlierFile[A](name: String, earlier: String, render: A => String, parse: String => Either[Problem, A]): Shape =
+  def earlierFile[A](
+      name: String,
+      earlier: String,
+      rewrite: String => Either[Problem, Option[String]],
+      render: A => String,
+      parse: String => Either[Problem, A]
+  ): Shape =
     def text(line: String) = line.replace("\\n", "\n")
+    def rewritten(line: String): Either[Problem, String] = rewrite(text(line)).map(_.getOrElse(text(line)))
     Shape(
       s"file-$name-$earlier",
       () => (),
-      l => parse(text(l)).left.toOption.map(e => s"does not decode: $e"),
+      l =>
+        rewrite(text(l)) match
+          case Left(e)                                  => Some(s"is not rewritten: $e")
+          case Right(Some(_)) if parse(text(l)).isRight => Some("today's reader still reads the earlier form")
+          case Right(_) => rewritten(l).flatMap(parse).left.toOption.map(e => s"does not decode once rewritten: $e"),
       Some(
         Dropped(
           s"file-$name",
           (d, f) =>
-            parse(text(d)).map(render) match
-              case Left(e)      => Some(s"does not decode: $e")
+            rewritten(d).flatMap(parse).map(render) match
+              case Left(e)      => Some(s"does not decode once rewritten: $e")
               case Right(again) => Option.unless(sameJson(again, text(f)))(s"reads as $again, not as $f")
         )
       )
@@ -291,10 +304,29 @@ object StoredShapesSuite:
         PluginKit.renderIndex,
         PluginKit.parseIndex
       ),
-      // a plugin's problems were written bare when there was one; they are a list now, and the bare form still reads
-      earlierFile[PluginSet]("plugin-set", "bare", PluginKit.renderSet, PluginKit.parseSet),
-      earlierFile[List[PluginJar]]("plugin-jars", "bare", PluginKit.renderJars, PluginKit.parseJars),
-      earlierFile[PluginKit.Index]("plugin-index", "bare", PluginKit.renderIndex, PluginKit.parseIndex),
+      // a plugin's problems were written bare when there was one; the server rewrites such a file once into the list
+      // form today's reader reads
+      earlierFile[PluginSet](
+        "plugin-set",
+        "bare",
+        PluginKit.listedProblems(_, "plugin-set.json"),
+        PluginKit.renderSet,
+        PluginKit.parseSet
+      ),
+      earlierFile[List[PluginJar]](
+        "plugin-jars",
+        "bare",
+        PluginKit.listedProblems(_, "the plugin description"),
+        PluginKit.renderJars,
+        PluginKit.parseJars
+      ),
+      earlierFile[PluginKit.Index](
+        "plugin-index",
+        "bare",
+        PluginKit.listedProblems(_, "the plugins index"),
+        PluginKit.renderIndex,
+        PluginKit.parseIndex
+      ),
       file[PluginKit.KitManifest](
         "kit-manifest",
         73,
