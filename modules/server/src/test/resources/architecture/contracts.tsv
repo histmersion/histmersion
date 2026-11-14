@@ -99,7 +99,7 @@ derives	api:api/exchange/MergeDecision.scala	codec given written by hand	2
 derives	api:api/exchange/MergeJobState.scala	codec given written by hand	2
 derives	api:api/exchange/PlanMatches.scala	codec given written by hand	2
 derives	api:api/jobs/JobDetail.scala	codec given written by hand	3
-derives	api:api/json/NewtypeCodecs.scala	codec given written by hand	3
+derives	api:api/json/NewtypeCodecs.scala	codec given written by hand	6
 derives	api:api/library/CandidateSweep.scala	codec given written by hand	2
 derives	api:api/library/CollectionEntry.scala	codec given written by hand	2
 derives	api:api/library/DeleteBlocker.scala	codec given written by hand	2
@@ -137,6 +137,7 @@ derives	config:config/ItemCount.scala	codec given written by hand	1
 derives	config:config/MatchScore.scala	codec given written by hand	1
 derives	config:config/MediaPluginCollectionsConfig.scala	codec given written by hand	2
 derives	config:config/Minutes.scala	codec given written by hand	1
+derives	config:config/NewtypeReaders.scala	codec given written by hand	1
 derives	config:config/Percent.scala	codec given written by hand	1
 derives	config:config/Seconds.scala	codec given written by hand	1
 derives	config:config/ServiceUrl.scala	codec given written by hand	1
@@ -198,8 +199,8 @@ derives	db:domain/research/articles/CoverageRepo.scala	codec given written by ha
 derives	db:util/data/exchange/BundleRepo.scala	codec given written by hand	2
 derives	db:util/data/exchange/MergeState.scala	codec given written by hand	1
 derives	db:util/database/Codecs.scala	codec given written by hand	1
-derives	db:util/database/NewtypeColumns.scala	codec given written by hand	1
-derives	plugin-api:plugin/Plugin.scala	codec given written by hand	5
+derives	db:util/database/NewtypeColumns.scala	codec given written by hand	3
+derives	plugin-api:plugin/Plugin.scala	codec given written by hand	6
 derives	plugin-api:plugin/Secret.scala	codec given written by hand	1
 derives	plugin-host:pluginhost/PluginHost.scala	codec given written by hand	1
 derives	plugin-resolver:pluginresolver/DependencyResolver.scala	codec given written by hand	1
