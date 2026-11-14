@@ -23,6 +23,7 @@ import com.histmersion.domain.ReviewArticle
 import com.histmersion.domain.research.Slug
 import com.histmersion.domain.ReviewLedger
 import com.histmersion.domain.automation.Run
+import com.histmersion.api.research.Coverage
 
 /** The critique checklist in the review (docs/research-review-convergence.md §6.8), pure: what a missing-critique MAJOR
   * is held to in each kind of pass, the skeptic's rulings on the open pairs, the fixer's set-asides and how the ledger
@@ -38,7 +39,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
       src: Citekey,
       dst: Citekey,
       state: CritiqueState = CritiqueState.Open,
-      reason: Option[Problem] = None
+      reason: Option[Coverage.Rationale] = None
   ) =
     CritiquePair(
       side(src, cited = CritiqueSide.Cited(false)),
@@ -56,7 +57,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
       Citekey("jones2001_myth"),
       Citekey("frazer1922_golden"),
       CritiqueState.Reasoned,
-      Some(Problem.Unclassified(Legacy.Text("cited for the calendar only")))
+      Some(Coverage.Rationale("cited for the calendar only"))
     )
   private val pairs = List(open1, open2, done, aside)
 
@@ -426,7 +427,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
           CritiqueReason(
             Citekey("brown1999_rites"),
             Citekey("frazer1922_golden"),
-            Problem.Unclassified(Legacy.Text("It is cited for the seasons only."))
+            Coverage.Rationale("It is cited for the seasons only.")
           )
         ),
         Nil,
@@ -616,12 +617,12 @@ class ReviewCritiqueSuite extends munit.FunSuite:
         SetAside(
           ReviewArticle.SetAside.Id("S1"),
           CritiqueRef(Citekey("smith1987_dying"), Citekey("frazer1922_golden")),
-          Problem.Unclassified(Legacy.Text("Cited for the date only."))
+          Coverage.Rationale("Cited for the date only.")
         ),
         SetAside(
           ReviewArticle.SetAside.Id("S2"),
           CritiqueRef(Citekey("brown1999_rites"), Citekey("frazer1922_golden")),
-          Problem.Unclassified(Legacy.Text("Off the point."))
+          Coverage.Rationale("Off the point.")
         )
       )
     )
@@ -633,7 +634,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
         CritiqueReason(
           Citekey("brown1999_rites"),
           Citekey("frazer1922_golden"),
-          Problem.Unclassified(Legacy.Text("No finding names it."))
+          Coverage.Rationale("No finding names it.")
         )
       )
     )

@@ -1,8 +1,7 @@
 package com.histmersion
 package api.research
 
-import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Problem
 
 import hearth.kindlings.optics.syntax.*
 
@@ -17,7 +16,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 final case class CritiqueReason(
     src: Citekey,
     dst: Citekey,
-    reason: Problem,
+    reason: Coverage.Rationale,
     by: Option[CritiqueReason.By] = None
 ) derives JsonCodec:
   def ref: CritiqueRef = CritiqueRef(src, dst)
@@ -45,25 +44,28 @@ object CritiqueReason:
 
   val MaxChars: Int = Coverage.Reason.MaxChars
 
-  def parse(s: Problem): Either[Problem, CritiqueReason] =
-    val i = (s).sentence.indexOf('=')
+  /** A reason as the command line writes it: `<src>><dst>=<why>`. */
+  type Spec = Spec.T
+  object Spec extends Newtype[String, Pure]
+
+  def parse(s: Spec): Either[Problem, CritiqueReason] =
+    val i = (s).value.indexOf('=')
     if i < 0 then
-      Left(
-        Problem.Unclassified(
-          Legacy.Text(s"'${s.sentence}': write it as <src>><dst>=<why> (an empty why removes the reason)")
-        )
-      )
+      Left(Problem.Invalid.Unreadable.here(Problem.TypeName.of(Spec), Problem.Raw(s"$s"), Vector(Problem.Raw("a1999>b2001=it concerns the dating only"))))
     else
       CritiqueRef
-        .parse(CritiqueRef.Wire((s).sentence.take(i)))
-        .map(r => CritiqueReason(r.src, r.dst, Problem.Unclassified(Legacy.Text((s).sentence.drop(i + 1).trim))))
+        .parse(CritiqueRef.Wire((s).value.take(i)))
+        .map(r => CritiqueReason(r.src, r.dst, Coverage.Rationale(s"${(s).value.drop(i + 1).trim}")))
 
   def tidy(r: CritiqueReason): Either[Problem, CritiqueReason] =
-    val text = Option(r.reason).map((_).sentence.trim.replaceAll("\\s+", " ")).getOrElse("")
+    val text = Option(r.reason).map(w => s"$w".trim.replaceAll("\\s+", " ")).getOrElse("")
     if text.length > MaxChars then
       Left(
-        Problem.Unclassified(
-          Legacy.Text(s"reason for ${r.ref.wire}: ${text.length} characters (at most $MaxChars — one sentence)")
+        Problem.Invalid.OutOfRange(
+          Problem.TypeName.of(Coverage.Rationale),
+          Problem.Raw.of(text.length.toLong),
+          Problem.Invalid.Bounds(None, Some(Problem.Raw.of(MaxChars.toLong))),
+          Vector(Problem.Field("reason"), Problem.Field(s"${r.ref.wire}"))
         )
       )
     else
@@ -73,5 +75,5 @@ object CritiqueReason:
           .modify(_.dst)
           .setTo(Citekey(r.dst.value.trim.toLowerCase(java.util.Locale.ROOT)))
           .modify(_.reason)
-          .setTo(Problem.Unclassified(Legacy.Text(text)))
+          .setTo(Coverage.Rationale(s"$text"))
       )

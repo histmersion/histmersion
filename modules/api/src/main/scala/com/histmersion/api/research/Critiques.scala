@@ -112,7 +112,7 @@ object Critiques:
       .map { case ((src, dst), es) =>
         val ref = CritiqueRef(src, dst)
         val together = units.exists(u => u(src) && u(dst))
-        val stored = reasons.find(r => r.ref.same(ref) && (r.reason).sentence.trim.nonEmpty)
+        val stored = reasons.find(r => r.ref.same(ref) && s"${r.reason}".trim.nonEmpty)
         val state =
           if together then CritiqueState.Addressed
           else if stored.isDefined then CritiqueState.Reasoned
@@ -198,7 +198,7 @@ object Critiques:
         "\n\nSet aside with a reason:\n\n" +
           reasoned
             .map(p =>
-              s"- ${p.line} — ${p.reason.fold("")(r => (r).sentence)}${p.reasonBy.fold("")(b => s" _(by $b)_")}"
+              s"- ${p.line} — ${p.reason.fold("")(r => s"$r")}${p.reasonBy.fold("")(b => s" _(by $b)_")}"
             )
             .mkString("\n")
       Markdown(
@@ -249,7 +249,7 @@ object Critiques:
           "\n\nSet aside with a stored reason (not open; challenge a wrong reason as a finding, with the record's sentence):\n" +
             reasoned
               .take(math.max(0, (maxReasoned).value))
-              .map(p => s"- ${p.ref.wire}: ${p.reason.fold("")(r => (r).sentence).take(200)}")
+              .map(p => s"- ${p.ref.wire}: ${p.reason.fold("")(r => s"$r").take(200)}")
               .mkString("\n") +
             (if reasoned.size > (maxReasoned).value then s"\n(+${reasoned.size - (maxReasoned).value} more)" else "")
       (Prompt(s"${summary(pairs)}.\n\n$openPart$reasonPart"), shown)

@@ -1,6 +1,7 @@
 package com.histmersion
 package api.basemap
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{NonEmptyVector, Problem, Problems}
+import com.histmersion.util.problem.Problem.{Field, Invalid, Raw, TypeName}
 
 import com.histmersion.api.BBox
 import com.histmersion.api.given
@@ -37,14 +38,14 @@ object Basemap:
     Either.cond(
       n.matches("[a-z0-9][a-z0-9-]{0,40}"),
       Focus.Name(n),
-      Problem.Unclassified(Legacy.Text(s"'$s' is not a focus region name (letters, digits and -)"))
+      Invalid.Unreadable.here(TypeName.of(Focus.Name), Raw(s"$s"), Vector(Raw("aegean")))
     )
 
   def focusRegion(spec: Focus.Spec): Either[Problem, (Focus.Name, BBox)] =
     (spec).value.trim.split("\\s+", 2).toList match
       case n :: b :: Nil =>
         for name <- validFocusName(Focus.Name(n)); box <- validBBox(Focus.Bbox(b.replace(" ", ""))) yield (name, box)
-      case _ => Left(Problem.Unclassified(Legacy.Text(s"'$spec' is not \"name minLon,minLat,maxLon,maxLat\"")))
+      case _ => Left(Invalid.Unreadable.here(TypeName.of(Focus.Spec), Raw(s"$spec"), Vector(Raw("aegean 19,34,30,42"))))
 
   def focusNameOf(b: BBox): Focus.Name =
     def f(d: Double) = java.math
@@ -81,11 +82,16 @@ object Basemap:
   def validBBox(s: Focus.Bbox): Either[Problem, BBox] =
     if (s).value.trim.equalsIgnoreCase("world") then Right(World)
     else
-      BBox.parse(s).toRight(Problem.Unclassified(Legacy.Text(s"'$s' is not minLon,minLat,maxLon,maxLat"))).flatMap { b =>
+      BBox.parse(s).toRight(Invalid.Unreadable.here(TypeName.of(Focus.Bbox), Raw(s"$s"), Vector(Raw("19,34,30,42"), Raw("world")))).flatMap { b =>
         if (b.minLon).value >= (b.maxLon).value || (b.minLat).value >= (b.maxLat).value then
-          Left(Problem.Unclassified(Legacy.Text(s"'$s': west must be < east and south < north")))
+          Left(
+            Invalid.Inconsistent.here(
+              NonEmptyVector.of(Field("minLon"), Field("maxLon"), Field("minLat"), Field("maxLat")),
+              Invalid.Exclusion.Ordered
+            )
+          )
         else if (b.minLon).value < -180 || (b.maxLon).value > 180 || (b.minLat).value < -90 || (b.maxLat).value > 90
-        then Left(Problem.Unclassified(Legacy.Text(s"'$s' is outside the world")))
+        then Left(Invalid.OutOfRange.here(TypeName.named[BBox], Raw(s"$s"), Invalid.Bounds(Some(Raw("-180,-90")), Some(Raw("180,90")))))
         else Right(b)
       }
 
@@ -107,7 +113,7 @@ object Basemap:
     type Spare = Spare.T
     object Spare extends Newtype[String, Pure]
 
-  def parseDrop(s: DropRule.Spec): Either[Problem, List[DropRule]] =
+  def parseDrop(s: DropRule.Spec): Either[Problems, List[DropRule]] =
     val parts = (s).value.split(";").toList.map(_.trim).filter(_.nonEmpty).map(_.split("\\s+").toList)
     val rules = parts.map { words =>
       val kinds = words.tail
@@ -123,13 +129,13 @@ object Basemap:
     val dup = rules.groupBy(_.layer).collect { case (l, rs) if rs.size > 1 => l }
     val mixed = rules.filter(r => r.drop.nonEmpty && r.spare.nonEmpty).map(_.layer)
     if dup.nonEmpty then
-      Left(Problem.Unclassified(Legacy.Text(s"basemap.vector.drop names ${dup.mkString(", ")} twice")))
+      Left(Problems.from(dup.toVector.map(l => Invalid.Repeated(TypeName.of(DropRule.Layer), Raw(s"$l"), Vector(Field("basemap.vector.drop"))))).getOrElse(Invalid.Missing.here(Field("basemap.vector.drop"))))
     else if mixed.nonEmpty then
       Left(
-        Problem.Unclassified(
-          Legacy.Text(
-            s"basemap.vector.drop: ${mixed.mkString(", ")} both drops kinds and spares kinds (+kind) — one or the other"
-          )
+        Invalid.Inconsistent(
+          NonEmptyVector.of(Field("kind"), Field("+kind")),
+          Invalid.Exclusion.AtMostOne,
+          Vector(Field("basemap.vector.drop"), Field(s"${mixed.mkString(", ")}"))
         )
       )
     else Right(rules)
@@ -159,7 +165,7 @@ object Basemap:
       val kinds = kindPart.map(_.split("\\|").toList.map(_.trim).filter(_.nonEmpty))
       val kindsOk = kinds.forall(ks => ks.nonEmpty && ks.forall(KindName.matches))
       head.split(":", 2).toList match
-        case _ if !kindsOk => Left(s"'$p': kinds are `~kind|kind`")
+        case _ if !kindsOk => Left(Invalid.Unreadable.here(TypeName.of(Subset.Spec), Raw(s"$p"), Vector(Raw("water~ocean|lake"))))
         case l :: g :: Nil =>
           val codes = g.toList.map { case 'p' => 1; case 'l' => 2; case 'a' => 3; case _ => 0 }
           Either.cond(
@@ -168,7 +174,7 @@ object Basemap:
               (codes.toSet).map(refactorValue3 => Read.Geoms(refactorValue3)),
               kinds.fold(Set.empty[Read.Kinds])(ks => ks.toSet.map(refactorValue4 => Read.Kinds(refactorValue4)))
             ),
-            s"'$p': geometries are p, l and a"
+            Invalid.Unreadable.here(TypeName.of(Subset.Spec), Raw(s"$p"), Vector(Raw("roads:l"), Raw("water:pa")))
           )
         case l :: Nil if l.nonEmpty =>
           Right(
@@ -177,7 +183,7 @@ object Basemap:
               kinds.fold(Set.empty[Read.Kinds])(ks => ks.toSet.map(refactorValue11 => Read.Kinds(refactorValue11)))
             )
           )
-        case _ => Left(s"'$p' is not layer[:geometries][~kind|kind]")
+        case _ => Left(Invalid.Unreadable.here(TypeName.of(Subset.Spec), Raw(s"$p"), Vector(Raw("roads"), Raw("roads:l"), Raw("water~ocean|lake"))))
     }
     ((parsed
       .collectFirst { case Left(e) => e }
@@ -185,9 +191,7 @@ object Basemap:
         parsed
           .collect { case Right(kv) => kv }
           .groupMapReduce(_._1)(_._2)(_.merge(_))
-      ))
-      .left
-      .map(refactorError => Problem.Unclassified(Legacy.Text(refactorError))))
+      )))
       .map(refactorValue6 =>
         (refactorValue6).iterator.map { case (refactorKey, refactorItem) =>
           (Layer.Wire(refactorKey), refactorItem)
@@ -334,8 +338,10 @@ object Basemap:
           parse(Wire(other))
             .map(List(_))
             .toRight(
-              Problem.Unclassified(
-                Legacy.Text(s"unknown base-map layer '$s' (vector, terrain, labels, bathymetry or all)")
+              Invalid.Unknown.here(
+                TypeName.named[Layer],
+                Raw(s"$s"),
+                (values.toVector.map(l => Raw(s"${l.wire}")) :+ Raw("all"))
               )
             )
 

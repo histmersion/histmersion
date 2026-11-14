@@ -34,6 +34,7 @@ import com.histmersion.api.Write
 import com.histmersion.api.library.Citekey
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.api.automation.Activity
+import com.histmersion.api.research.Coverage
 
 /** Representative values of every record an agent step stores as JSON (the run's checkpoints and the patches it
   * writes), every case and optional field among them. Their encodings are the golden files under `golden/checkpoints/`,
@@ -313,13 +314,13 @@ object CheckpointGolden:
         CritiqueReason(
           Citekey("doe2001_tin"),
           Citekey("smith1987_tin"),
-          Problem.Unclassified(Legacy.Text("Not about the route.")),
+          Coverage.Rationale("Not about the route."),
           Some(Activity.Actor("skeptic (agent run 1234abcd)"))
         ),
         CritiqueReason(
           Citekey("roe1990_tin"),
           Citekey("smith1987_tin"),
-          Problem.Unclassified(Legacy.Text("Not material."))
+          Coverage.Rationale("Not material.")
         )
       )
     ) ::

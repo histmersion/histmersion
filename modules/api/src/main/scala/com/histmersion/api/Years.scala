@@ -3,8 +3,8 @@ package api
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.json.RawJson.asLong
 
-import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.Problem.{Invalid, Raw, TypeName}
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
 
@@ -35,7 +35,13 @@ object Years:
 
   def shift(h: Years.ShiftH, d: Shift): Year = fromAstronomical(Astronomical(toAstronomical(h).value + d.value))
 
-  val NoYearZero: Problem = Problem.Unclassified(Legacy.Text("there is no year 0 (1 BCE is -1, 1 CE is 1)"))
+  /** How a year is written: what a refusal shows. */
+  private val Examples = Vector(Raw("1300 BCE"), Raw("530 CE"), Raw("-1300"))
+
+  /** There is no year 0: 1 BCE is -1, 1 CE is 1. */
+  val NoYearZero: Problem = zero(Raw("0"))
+
+  private def zero(raw: Raw): Problem = Invalid.Unreadable.here(TypeName.of(Year), raw, Vector(Raw("-1"), Raw("1")))
 
   private val Circa = "^(?:c|ca|circa)\\.?\\s+".r
   private val EraBce = "(?:bce|bc|b\\.c\\.e\\.|b\\.c\\.)"
@@ -49,25 +55,23 @@ object Years:
       .replace(",", "")
       .trim
     def isBce(era: Era.Wire) = (era).value.matches(EraBce)
+    val written = Raw(s"${(raw).value.trim}")
     def signed(num: String, era: Option[Era.Wire]): Either[Problem, Year] =
-      (num).toLongOption.toRight(Problem.Unclassified(Legacy.Text(s"'${(raw).value.trim}' is not a year"))).flatMap { n =>
+      (num).toLongOption.toRight(Invalid.Unreadable.here(TypeName.of(Year), written, Examples)).flatMap { n =>
         era match
           case None                => Right(Year(n))
           case Some(e) if isBce(e) => Right(Year(-math.abs(n)))
           case Some(_) if n < 0    =>
-            Left(
-              Problem
-                .Unclassified(Legacy.Text(s"'${(raw).value.trim}': a CE year is positive; write the BCE year instead"))
-            )
+            Left(Invalid.OutOfRange.here(TypeName.of(Year), written, Invalid.Bounds(Some(Raw("1")), None)))
           case Some(_) => Right(Year(n))
       }
     val parsed = t match
       case Typed(num, era)    => signed((num), Option(Era.Wire(era)))
       case EraFirst(era, num) => signed((num), Some(Era.Wire(era)))
       case _                  =>
-        Left(Problem.Unclassified(Legacy.Text(s"'${(raw).value.trim}' is not a year (e.g. 1300 BCE, 530 CE, -1300)")))
+        Left(Invalid.Unreadable.here(TypeName.of(Year), written, Examples))
     parsed.flatMap(y =>
-      if y.value == 0 then Left(Problem.Unclassified(Legacy.Text(s"'${(raw).value.trim}': ${NoYearZero.sentence}")))
+      if y.value == 0 then Left(zero(written))
       else Right(y)
     )
 

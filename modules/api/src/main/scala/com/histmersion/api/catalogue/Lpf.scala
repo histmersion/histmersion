@@ -4,7 +4,7 @@ import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
 import hearth.kindlings.jsoniterjson.{Json, JsonObject}
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 
 import com.histmersion.api.{OpenSide, Span, Years}
 import com.histmersion.api.given
@@ -255,7 +255,7 @@ object Lpf:
       .sortBy(r => (r.parentId.value, r.kind.value))
 
   def readFeature(j: Json, defaultKind: Place.KindValue, ordinal: Int): Either[Problem, Place.Input] =
-    j.asObject.toRight(Problem.Unclassified(Legacy.Text(s"feature #$ordinal is not a JSON object"))).flatMap { f =>
+    j.asObject.toRight(Problem.Io.Corrupt(Problem.Io.Format.Json, Problem.Where(s"feature #$ordinal"), Problem.Io.Damage.Undecodable)).flatMap { f =>
       val props = f("properties").flatMap(_.asObject).getOrElse(JsonObject.empty)
       val label = str(props, "title", "name", "NAME", "label", "ADMIN", "NAME_LONG", "toponym")
         .orElse(str(f, "title", "label"))
@@ -269,7 +269,7 @@ object Lpf:
       val id = str(f, "@id", "id")
         .orElse(str(props, "@id", "id", "pid"))
         .getOrElse(if label.nonEmpty then slug(label) else s"feature_$ordinal")
-      if id.isEmpty then Left(Problem.Unclassified(Legacy.Text(s"feature #$ordinal has no id and no title")))
+      if id.isEmpty then Left(Problem.Invalid.Missing(Problem.Field("id"), Vector(Problem.Field("features"), Problem.Field(s"$ordinal"))))
       else
         val kind = str(props, "kind")
           .flatMap(parseKind)
@@ -321,7 +321,7 @@ object Lpf:
     RawJson
       .parse((json))
       .left
-      .map(e => Problem.Unclassified(Legacy.Text(s"invalid JSON: $e")))
+      .map(e => Problem.Io.Corrupt(Problem.Io.Format.Json, Problem.Where("LPF"), Problem.Io.Damage.Unreadable(External.Reported.of(s"$e"))))
       .flatMap { doc =>
         val found: Option[List[Json]] =
           doc.asArray
@@ -334,7 +334,7 @@ object Lpf:
             )
         val features: Either[Problem, List[Json]] =
           found.toRight(
-            Problem.Unclassified(Legacy.Text("not a FeatureCollection: no `features` array and not a feature"))
+            Problem.Invalid.Missing.here(Problem.Field("features"))
           )
         features.flatMap { fs =>
           val parsed = fs.zipWithIndex.map((f, i) => readFeature(f, defaultKind, (i)))

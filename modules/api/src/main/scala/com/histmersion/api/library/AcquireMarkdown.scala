@@ -122,7 +122,7 @@ object AcquireMarkdown:
         "\n\n**Retraction Watch**\n" + a.retractionWatch
           .map { n =>
             s"- ${n.nature.getOrElse("notice")}${n.date.map(d => s" ($d)").getOrElse("")}" +
-              n.reason.map(r => s" — ${r.sentence}").getOrElse("")
+              n.reason.map(r => s" — $r").getOrElse("")
           }
           .mkString("\n")
 

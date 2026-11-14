@@ -5,7 +5,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.histmersion.util.json.JsonCodec
 
 import com.histmersion.util.problem.Text.sentence
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.api.WireEnumValues
 import sttp.tapir.Schema
@@ -99,14 +99,14 @@ object MergeDecision:
     Kind.values.find(d => Kind.wireOf(d) == Kind.Wire(k)) match
       case None =>
         Left(
-          Problem.Unclassified(Legacy.Text(s"'$s' is not a decision (${Kind.values.map(Kind.wireOf).mkString(", ")})"))
+          Problem.Invalid.Unknown.here(Problem.TypeName.named[Kind], Problem.Raw(s"$s"), Kind.values.toVector.map(k => Problem.Raw(s"${Kind.wireOf(k)}")))
         )
       case Some(d) if ((d.takesArgument) == (true)) && arg.forall(_.isEmpty) =>
         Left(
-          Problem.Unclassified(Legacy.Text(s"'$s': ${Kind.wireOf(d)} needs an argument (${Kind.wireOf(d)}:<value>)"))
+          Problem.Invalid.Missing(Problem.Field("argument"), Vector(Problem.Field(s"$s")))
         )
       case Some(d) if !((d.takesArgument) == (true)) && arg.isDefined =>
-        Left(Problem.Unclassified(Legacy.Text(s"'$s': ${Kind.wireOf(d)} takes no argument")))
+        Left(Problem.Invalid.Unreadable.here(Problem.TypeName.named[Kind], Problem.Raw(s"$s"), Vector(Problem.Raw(s"${Kind.wireOf(d)}"))))
       case Some(d) => Right(MergeDecision(d, (arg.filter(_.nonEmpty)).map(refactorValue => Argument(refactorValue))))
 
   given JsonValueCodec[MergeDecision] = JsonCodec.mapped[MergeDecision, String](

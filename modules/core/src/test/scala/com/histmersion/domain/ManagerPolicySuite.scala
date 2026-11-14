@@ -1,7 +1,7 @@
 package com.histmersion
 package domain
 
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -504,7 +504,7 @@ class ManagerPolicySuite extends munit.FunSuite:
       ManagerConfig
         .parse(List(Managers.ManagerConfig.Spec("sweeps=weekly")))
         .left
-        .exists(_.sentence.contains("not a sweep"))
+        .exists(_.sentences.mkString("; ").contains("unknown Sweep"))
     )
     assert(ManagerConfig.parse(List(Managers.ManagerConfig.Spec("auto-ingest=perhaps"))).isLeft)
 

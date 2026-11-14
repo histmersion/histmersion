@@ -2,6 +2,7 @@ package com.histmersion
 package util.jobs
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
+import com.histmersion.api.problem.Column
 
 import com.histmersion.util.database.given
 
@@ -236,7 +237,7 @@ object JobRepo:
     */
   def failInterrupted(except: List[Job.Id] = Nil)(using DbCon): RowCount =
     RowCount(
-      sql"""UPDATE jobs SET status = ${JobState.Failed.wire}, error = ${JobState.InterruptedSentence.sentence},
+      sql"""UPDATE jobs SET status = ${JobState.Failed.wire}, error = ${JobState.Interrupted},
                           progress = NULL, updated_at = now()
           WHERE status IN (${JobState.Running.wire}, ${JobState.Queued.wire}, ${JobState.Paused.wire})
             AND kind <> ${AgentJobKinds.Agent.kind}
@@ -389,12 +390,10 @@ object JobRepo:
           MergeApplyJob.OfBundle(bundle),
           MergeApplyJob.OfPlanHash(plan),
           MergeApplyJob.OfElapsedMs(math.max(0L, ms)),
-          error
-            .map((text => Problem.Unclassified(Legacy.Text(text))))
-            .map(p =>
-              if p == JobState.InterruptedSentence then MergeApplyJob.Failure.Interrupted
-              else MergeApplyJob.Failure.Other(p)
-            ),
+          error.map(text =>
+            if text == JobState.Interrupted then MergeApplyJob.Failure.Interrupted
+            else MergeApplyJob.Failure.Other(Column.read(text))
+          ),
           result.flatMap(r => Jsonb.read[MergeApplyResult](Jsonb.JsonText(r)))
         )
       }

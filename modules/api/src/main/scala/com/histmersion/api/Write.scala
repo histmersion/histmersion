@@ -1,7 +1,7 @@
 package com.histmersion
 package api
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Citekey
 import hearth.kindlings.jsoniterderivation.JsoniterConfig
@@ -32,7 +32,7 @@ object Write:
     Api.Error(message, Some(code))
 
   def notFound(citekey: Citekey): Api.Error =
-    Api.Error(Problem.Unclassified(Legacy.Text(s"No source '$citekey'")), Some(Api.Error.Code(CodeNotFound)))
+    Api.Error(Problem.NotFound.Entity(Problem.TypeName.of(Citekey), Problem.Raw(s"$citekey")), Some(Api.Error.Code(CodeNotFound)))
 
   def applyList(current: List[ListItem], p: ListPatch): List[ListItem] =
     val base = p.replace.getOrElse(current)

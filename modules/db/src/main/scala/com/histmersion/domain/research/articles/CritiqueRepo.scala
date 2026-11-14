@@ -15,6 +15,7 @@ import com.histmersion.api.Api
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.research.Slug
 import com.histmersion.api.library.Citekey
+import com.histmersion.api.research.Coverage
 
 /** The critique checklist's stored reasons (V091): why one disagreement between two sources does not bear on an
   * article. The checklist itself is computed (`core.Critiques`); only the reasons are stored. Every method runs on the
@@ -35,7 +36,7 @@ private[articles] object CritiqueRepo:
         CritiqueReason(
           Citekey(s),
           Citekey(d),
-          Problem.Unclassified(Legacy.Text(r)),
+          Coverage.Rationale(r),
           Some(CritiqueReason.By(b))
         )
       )
@@ -45,7 +46,7 @@ private[articles] object CritiqueRepo:
     case Set(
         src: com.histmersion.domain.library.Citekey,
         dst: com.histmersion.domain.library.Citekey,
-        reason: Problem,
+        reason: Coverage.Rationale,
         by: By
     )
     case Remove(a: com.histmersion.domain.library.Citekey, b: com.histmersion.domain.library.Citekey)
@@ -83,7 +84,7 @@ private[articles] object CritiqueRepo:
                     Some(Api.Error.Code(Write.CodeInvalid))
                   )
                 )
-              case (Some(a), Some(b)) if r.reason.sentence.isEmpty => Right(done :+ Change.Remove(a, b))
+              case (Some(a), Some(b)) if s"${r.reason}".isEmpty => Right(done :+ Change.Remove(a, b))
               case (Some(a), Some(b))                              =>
                 val dirs = sql"""SELECT src, dst FROM edges WHERE kind = ANY($kinds::text[])
                                  AND ((src = $a AND dst = $b) OR (src = $b AND dst = $a))"""
@@ -131,7 +132,7 @@ private[articles] object CritiqueRepo:
                 WHERE slug = $slug AND ((src = $a AND dst = $b) OR (src = $b AND dst = $a))""".update.run()
         case Change.Set(s, d, reason, who) =>
           sql"DELETE FROM article_critique_reasons WHERE slug = $slug AND src = $d AND dst = $s".update.run()
-          sql"""INSERT INTO article_critique_reasons (slug, src, dst, reason, set_by) VALUES ($slug, $s, $d, ${reason.sentence}, $who)
+          sql"""INSERT INTO article_critique_reasons (slug, src, dst, reason, set_by) VALUES ($slug, $s, $d, $reason, $who)
                 ON CONFLICT (slug, src, dst) DO UPDATE SET reason = EXCLUDED.reason, set_by = EXCLUDED.set_by, set_at = now()""".update
             .run()
       }.sum)

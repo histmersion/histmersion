@@ -15,7 +15,7 @@ final case class CritiquePair(
     kinds: List[CritiquePair.Kinds],
     dst: CritiqueSide,
     state: CritiqueState,
-    reason: Option[Problem] = None,
+    reason: Option[Coverage.Rationale] = None,
     reasonBy: Option[CritiquePair.ReasonBy] = None
 ) derives JsonCodec,
       KindlingsSchema,

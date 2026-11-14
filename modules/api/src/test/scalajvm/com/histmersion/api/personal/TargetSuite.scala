@@ -2,6 +2,7 @@ package com.histmersion
 package api.personal
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -24,24 +25,24 @@ class TargetSuite extends munit.FunSuite:
   test("check keeps the fields a kind uses and drops the rest"):
     val messy = Target(ItemKind.Source, Some(ItemKey("  zz_a ")), lat = Some(Latitude(1)), view = Some(ViewState("x")))
     assertEquals(
-      Target.check(messy, ItemKind.Bookmarkable, "bookmark"),
+      Target.check(messy, ItemKind.Bookmarkable, Problem.Field("bookmark")),
       Right(Target.item(ItemKind.Source, ItemKey("zz_a")))
     )
     assertEquals(
-      Target.check(point.modify(_.id).setTo(Some(ItemKey("x"))), ItemKind.Notable, "note").map(_.id),
+      Target.check(point.modify(_.id).setTo(Some(ItemKey("x"))), ItemKind.Notable, Problem.Field("note")).map(_.id),
       Right(None)
     )
-    assert(Target.check(Target(ItemKind.Period, from = Some(Year(-1))), ItemKind.Bookmarkable, "bookmark").isLeft)
-    assert(Target.check(Target(ItemKind.View), ItemKind.Bookmarkable, "bookmark").isLeft)
-    assert(Target.check(Target(ItemKind.View, view = Some(ViewState("#a=1"))), ItemKind.Notable, "note").isLeft)
+    assert(Target.check(Target(ItemKind.Period, from = Some(Year(-1))), ItemKind.Bookmarkable, Problem.Field("bookmark")).isLeft)
+    assert(Target.check(Target(ItemKind.View), ItemKind.Bookmarkable, Problem.Field("bookmark")).isLeft)
+    assert(Target.check(Target(ItemKind.View, view = Some(ViewState("#a=1"))), ItemKind.Notable, Problem.Field("note")).isLeft)
     assertEquals(
       Target
-        .check(Target(ItemKind.View, view = Some(ViewState("#a=1"))), ItemKind.Bookmarkable, "bookmark")
+        .check(Target(ItemKind.View, view = Some(ViewState("#a=1"))), ItemKind.Bookmarkable, Problem.Field("bookmark"))
         .map(_.view.map(v => v.value: String)),
       Right(Some("a=1"))
     )
     assert(
-      Target.check(Target(ItemKind.View, view = Some(ViewState("a" * 8193))), ItemKind.Bookmarkable, "bookmark").isLeft
+      Target.check(Target(ItemKind.View, view = Some(ViewState("a" * 8193))), ItemKind.Bookmarkable, Problem.Field("bookmark")).isLeft
     )
 
   test("where a target is, in words"):

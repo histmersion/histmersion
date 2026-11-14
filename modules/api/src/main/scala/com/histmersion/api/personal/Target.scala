@@ -2,7 +2,8 @@ package com.histmersion
 package api.personal
 import com.histmersion.api.given
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{NonEmptyVector, Problem}
+import com.histmersion.util.problem.Problem.{Field, Invalid, Raw, TypeName}
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.YearFmt
@@ -51,17 +52,18 @@ object Target:
   def item(kind: ItemKind, key: com.histmersion.api.personal.ItemKey): Target =
     Target(kind, Some(ItemKey((key).value.trim)))
 
-  def check(t: Target, allowed: Set[ItemKind], what: String): Either[Problem, Target] =
+  def check(t: Target, allowed: Set[ItemKind], what: Field): Either[Problem, Target] =
     val years = (t.from, t.to) match
       case (Some(a), Some(b)) if a > b =>
-        Left(Problem.Unclassified(Legacy.Text(s"the period ends (${YearFmt(b)}) before it starts (${YearFmt(a)})")))
+        Left(Invalid.Inconsistent.here(NonEmptyVector.of(Field("from"), Field("to")), Invalid.Exclusion.Ordered))
       case _ => Right(())
     if !allowed.contains(t.kind) then
       Left(
-        Problem.Unclassified(
-          Legacy.Text(
-            s"a $what cannot be left on a ${t.kind.label.value.toLowerCase}; it can be on: ${ItemKind.values.filter(allowed).map(_.wire).mkString(", ")}"
-          )
+        Invalid.Unknown(
+          TypeName.named[ItemKind],
+          Raw(s"${t.kind.wire}"),
+          ItemKind.values.toVector.filter(allowed).map(k => Raw(s"${k.wire}")),
+          Vector(what)
         )
       )
     else
@@ -70,22 +72,18 @@ object Target:
           case k if k.isItem =>
             t.id.map(_.value.trim).filter(_.nonEmpty) match
               case None =>
-                Left(Problem.Unclassified(Legacy.Text(s"a $what on a ${k.label.value.toLowerCase} names it (its id)")))
+                Left(Invalid.Missing(Field("id"), Vector(what)))
               case Some(key) => Right(Target(k, Some(ItemKey(key))))
           case ItemKind.Point =>
             if t.lat.isEmpty || t.lon.isEmpty then
-              Left(Problem.Unclassified(Legacy.Text(s"a $what on the map names the point (lat and lon)")))
+              Left(Invalid.Missing(Field(if t.lat.isEmpty then "lat" else "lon"), Vector(what)))
             else Right(Target(ItemKind.Point, lat = t.lat, lon = t.lon, zoom = t.zoom, from = t.from, to = t.to))
           case ItemKind.View =>
             val view = t.view.map(_.value.trim.stripPrefix("#"))
             if view.exists(_.length > ViewState.MaxChars) then
-              Left(Problem.Unclassified(Legacy.Text(s"a saved view is at most ${ViewState.MaxChars} characters")))
+              Left(Invalid.OutOfRange(TypeName.of(ViewState), Raw.of(view.fold(0L)(_.length.toLong)), Invalid.Bounds(None, Some(Raw.of(ViewState.MaxChars.toLong))), Vector(what)))
             else if view.isEmpty && t.lat.isEmpty then
-              Left(
-                Problem.Unclassified(
-                  Legacy.Text("a saved view holds the filters (view) or the map's position (lat, lon)")
-                )
-              )
+              Left(Invalid.Inconsistent(NonEmptyVector.of(Field("view"), Field("lat")), Invalid.Exclusion.AtLeastOne, Vector(what)))
             else
               Right(
                 Target(
@@ -100,7 +98,7 @@ object Target:
               )
           case _ =>
             if t.from.isEmpty || t.to.isEmpty then
-              Left(Problem.Unclassified(Legacy.Text(s"a $what on a period names its years (from and to)")))
+              Left(Invalid.Missing(Field(if t.from.isEmpty then "from" else "to"), Vector(what)))
             else Right(Target(ItemKind.Period, from = t.from, to = t.to))
       }
 

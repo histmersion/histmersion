@@ -330,7 +330,7 @@ class AcquireHandlerSuite extends DbSuite:
         List(
           Acquire.RetractionRow(
             Doi("10.1177/zzretracted"),
-            Some(Problem.Unclassified(Legacy.Text("+Duplication of Image"))),
+            Some(RetractionNotice.Account("+Duplication of Image")),
             Some(RetractionNotice.Date("12/15/2021 0:00")),
             Some(RetractionNotice.Nature("Retraction"))
           )
@@ -423,7 +423,7 @@ class AcquireHandlerSuite extends DbSuite:
           Acquire
             .RetractionRow(
               Doi("10.1177/zzretracted2"),
-              Some(Problem.Unclassified(Legacy.Text("+Duplication"))),
+              Some(RetractionNotice.Account("+Duplication")),
               Some(RetractionNotice.Date("12/15/2021 0:00")),
               Some(RetractionNotice.Nature("Retraction"))
             )

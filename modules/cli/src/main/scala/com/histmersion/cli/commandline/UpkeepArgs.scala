@@ -19,6 +19,7 @@ import com.histmersion.cli.CommandLine.{given, *}
 import com.histmersion.util.problem.{NonEmptyVector, Problem}
 import org.rogach.scallop.*
 import scala.util.chaining.*
+import com.histmersion.api.automation.Queue
 
 /** The command line of [[Ops]]. */
 object UpkeepArgs:
@@ -128,7 +129,7 @@ object UpkeepArgs:
             list,
             Queue.QueueItem.Text(text_()),
             topic_.toOption.map(Queue.QueueItem.Topic(_)),
-            reason_.toOption.map(t => Problem.Unclassified(Legacy.Text(t))),
+            reason_.toOption.map(t => Queue.Rationale(t)),
             json_()
           )
         )

@@ -24,7 +24,11 @@ object Column:
     def stored: String = problem match
       case Invalid.Malformed(t, c, raw, at)   => s"${path(at)}'$raw' is no $t: it fails ${c.name} (${c.description})"
       case Invalid.Unknown(t, raw, known, at) => s"${path(at)}unknown $t '$raw'${quotedList(known)}"
+      case Invalid.Unreadable(t, raw, eg, at) => s"${path(at)}'$raw' is unreadable as $t${quotedExamples(eg)}"
       case Invalid.Missing(field, at)         => s"${path(at)}$field is required"
+      case Invalid.Ambiguous(t, raw, n, at)   => s"${path(at)}$t '$raw' matches $n"
+      case Invalid.Repeated(t, raw, at)       => s"${path(at)}$t '$raw' is repeated"
+      case Invalid.Misplaced(field, under, at) => s"${path(at)}$field belongs under $under"
       case Invalid.OutOfRange(t, raw, b, at)  =>
         s"${path(at)}$t '$raw' is out of [${b.least.mkString}, ${b.greatest.mkString}]"
       case Invalid.Inconsistent(fs, rule, at) => s"${path(at)}${fs.toVector.mkString(", ")} break ${rule.productPrefix}"
@@ -92,6 +96,9 @@ object Column:
 
   private def quotedList(values: Vector[Raw]): String =
     if values.isEmpty then "" else values.map(v => s"'$v'").mkString(" (one of: ", ", ", ")")
+
+  private def quotedExamples(values: Vector[Raw]): String =
+    if values.isEmpty then "" else values.map(v => s"'$v'").mkString(" (e.g. ", ", ", ")")
 
   private def quotedListOf(written: String | Null): Vector[Raw] =
     Option(written).fold(Vector.empty)(_.split("', '", -1).toVector.map(v => Raw(s"$v")))
@@ -169,7 +176,8 @@ object Column:
     Content.Requirement.NoYearZero,
     Content.Requirement.CitesNoSource,
     Content.Requirement.UnknownCitekey,
-    Content.Requirement.OutsidePeriod
+    Content.Requirement.OutsidePeriod,
+    Content.Requirement.StandIn
   )
 
   extension (form: Invalid.Form)
@@ -252,6 +260,10 @@ object Column:
 
   private val MalformedAt = s"(?s)^$Prefix'(.*)' is no (\\S+): it fails (.+) \\((.*)\\)$$".r
   private val UnknownAt = s"(?s)^${Prefix}unknown (\\S+) '(.*?)'(?: \\(one of: '(.*)'\\))?$$".r
+  private val UnreadableAt = s"(?s)^$Prefix'(.*?)' is unreadable as (\\S+)(?: \\(e\\.g\\. '(.*)'\\))?$$".r
+  private val MisplacedAt = s"(?s)^$Prefix(\\S+) belongs under (\\S+)$$".r
+  private val RepeatedAt = s"(?s)^$Prefix(\\S+) '(.*)' is repeated$$".r
+  private val AmbiguousAt = s"(?s)^$Prefix(\\S+) '(.*)' matches (\\d+)$$".r
   private val MissingAt = s"(?s)^$Prefix(\\S+) is required$$".r
   private val OutOfRangeAt = s"(?s)^$Prefix(\\S+) '(.*)' is out of \\[(.*?), (.*?)\\]$$".r
   private val InconsistentAt = s"(?s)^$Prefix(.+) break (\\w+)$$".r
@@ -323,6 +335,24 @@ object Column:
     {
       case UnknownAt(at, t, raw, known) =>
         Some(Invalid.Unknown(TypeName(s"$t"), Raw(s"$raw"), quotedListOf(known), pathOf(at)))
+      case _ => None
+    },
+    {
+      case UnreadableAt(at, raw, t, eg) =>
+        Some(Invalid.Unreadable(TypeName(s"$t"), Raw(s"$raw"), quotedListOf(eg), pathOf(at)))
+      case _ => None
+    },
+    {
+      case MisplacedAt(at, field, under) => Some(Invalid.Misplaced(Field(s"$field"), Field(s"$under"), pathOf(at)))
+      case _                             => None
+    },
+    {
+      case RepeatedAt(at, t, raw) => Some(Invalid.Repeated(TypeName(s"$t"), Raw(s"$raw"), pathOf(at)))
+      case _                      => None
+    },
+    {
+      case AmbiguousAt(at, t, raw, n) =>
+        Count.read(n).map(count => Invalid.Ambiguous(TypeName(s"$t"), Raw(s"$raw"), count, pathOf(at)))
       case _ => None
     },
     {

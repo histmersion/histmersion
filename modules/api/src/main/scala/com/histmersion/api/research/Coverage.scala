@@ -2,6 +2,7 @@ package com.histmersion
 package api.research
 
 import com.histmersion.util.json.JsonCodec
+import com.histmersion.util.problem.Problem
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.StatusCount
@@ -84,15 +85,24 @@ object Coverage:
 
     val MaxChars = 500
 
-    def merge(current: Map[Citekey, Rationale], stated: List[Reason]): Either[String, Map[Citekey, Rationale]] =
-      stated.foldLeft[Either[String, Map[Citekey, Rationale]]](Right(current)) { (acc, r) =>
+    def merge(current: Map[Citekey, Rationale], stated: List[Reason]): Either[Problem, Map[Citekey, Rationale]] =
+      stated.foldLeft[Either[Problem, Map[Citekey, Rationale]]](Right(current)) { (acc, r) =>
         acc.flatMap { m =>
           val ck =
             Option(r.citekey).map(_.value.trim.stripPrefix("[[").stripSuffix("]]").trim.toLowerCase).getOrElse("")
           val text = Option(r.reason).map(w => s"$w".trim.replaceAll("\\s+", " ")).getOrElse("")
-          if !((Article.Links.isCitekeyShaped((ck))) == (true)) then Left(s"reason for '${r.citekey}': not a citekey")
+          val at = Vector(Problem.Field("reasons"))
+          if !((Article.Links.isCitekeyShaped((ck))) == (true)) then
+            Left(Problem.Invalid.Unreadable(Problem.TypeName.of(Citekey), Problem.Raw(s"${r.citekey}"), Vector(Problem.Raw("anthony2007")), at))
           else if text.length > MaxChars then
-            Left(s"reason for $ck: ${text.length} characters (at most $MaxChars — one sentence)")
+            Left(
+              Problem.Invalid.OutOfRange(
+                Problem.TypeName.of(Rationale),
+                Problem.Raw.of(text.length.toLong),
+                Problem.Invalid.Bounds(None, Some(Problem.Raw.of(MaxChars.toLong))),
+                at :+ Problem.Field(s"$ck")
+              )
+            )
           else if text.isEmpty then Right(m - Citekey(ck))
           else Right(m.updated(Citekey(ck), Rationale(s"$text")))
         }

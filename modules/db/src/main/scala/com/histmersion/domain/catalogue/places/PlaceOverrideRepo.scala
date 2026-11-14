@@ -16,6 +16,7 @@ import com.histmersion.api.Api
 import com.histmersion.api.catalogue.Place
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
+import com.histmersion.api.catalogue.Place.Rationale as PlaceRationale
 
 /** A person's kind, period and point for a place (V080, V081): `histmersion places set`, MCP `place_override`.
   *
@@ -248,7 +249,7 @@ private[places] object PlaceOverrideRepo:
     * nor a finding it is the ONLY place of — and remember the removal, so no seed import brings it back
     * (`place_removals`, V080).
     */
-  def remove(id: BPlaceRow.Id, reason: Option[Problem])(using DbCon): Either[Api.Error, Place.Gone] =
+  def remove(id: BPlaceRow.Id, reason: Option[PlaceRationale])(using DbCon): Either[Api.Error, Place.Gone] =
     labelOf(id)
       .toRight(
         Api

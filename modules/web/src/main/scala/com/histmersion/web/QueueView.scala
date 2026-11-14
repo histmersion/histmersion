@@ -280,7 +280,7 @@ object QueueView:
           reason = Some(d.reason.sentence.trim)
             .filter(_ => sp.reasons)
             .filter(_.nonEmpty)
-            .map((text => Problem.Unclassified(Legacy.Text(text))))
+            .map((text => Queue.Rationale(text)))
         )
       )
 
@@ -673,8 +673,8 @@ object QueueView:
           case _            => div(cls := "item-text", segments(UiLabels.Text(item.text.value)).map(render))
         },
         item.reason
-          .filter(_.sentence.trim.nonEmpty)
-          .map(r => div(cls := "item-reason muted", segments(UiLabels.Text(r.sentence)).map(render))),
+          .filter(w => s"$w".trim.nonEmpty)
+          .map(r => div(cls := "item-reason muted", segments(UiLabels.Text(s"$r")).map(render))),
         item.doneAt.filter(_ => done).map(d => div(cls := "item-reason muted", s"done ${d.value.take(10)}")),
         check
           .filter(_ => !done)

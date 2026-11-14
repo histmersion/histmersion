@@ -150,7 +150,7 @@ object OpsTools:
               QueueAdd(
                 Queue.QueueItem.Text(text),
                 in.topic.map(Queue.QueueItem.Topic(_)),
-                reason = in.reason.map((text => Problem.Unclassified(Legacy.Text(text))))
+                reason = in.reason.map((text => Queue.Rationale(text)))
               )
             )
             added match

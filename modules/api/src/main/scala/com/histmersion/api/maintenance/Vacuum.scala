@@ -1,6 +1,6 @@
 package com.histmersion
 package api.maintenance
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.api.Write
 import com.histmersion.api.backup.Backup
@@ -24,8 +24,7 @@ object Vacuum:
   /** A table name as Postgres stores an unquoted identifier: lower case letters, digits, `_`. */
   private val TableShape = "^[a-z_][a-z0-9_]{0,62}$".r
 
-  private def invalid(msg: String) =
-    Api.Error(Problem.Unclassified(Legacy.Text(msg)), Some(Api.Error.Code(Write.CodeInvalid)))
+  private def invalid(problem: Problem) = Api.Error(problem, Some(Api.Error.Code(Write.CodeInvalid)))
 
   def plan(in: Request, defaults: List[Table], existing: Set[Table]): Either[Api.Error, VacuumPlan] =
     val asked =
@@ -35,9 +34,9 @@ object Vacuum:
        else asked).distinct
     val shape = tables.filterNot(TableShape.matches)
     val absent = tables.filterNot(existing.map(_.value).contains)
-    if tables.isEmpty then Left(invalid("no table to vacuum: name one, or set maintenance.vacuum-tables"))
-    else if shape.nonEmpty then Left(invalid(s"not a table name: ${shape.mkString(", ")}"))
-    else if absent.nonEmpty then Left(invalid(s"no such table: ${absent.mkString(", ")}"))
+    if tables.isEmpty then Left(invalid(Problem.Invalid.Missing.here(Problem.Field("tables"))))
+    else if shape.nonEmpty then Left(invalid(Problem.Invalid.Unreadable.here(Problem.TypeName.of(Table), Problem.Raw(s"${shape.mkString(", ")}"), Vector(Problem.Raw("sources")))))
+    else if absent.nonEmpty then Left(invalid(Problem.NotFound.Entity(Problem.TypeName.of(Table), Problem.Raw(s"${absent.mkString(", ")}"))))
     else Right(VacuumPlan(in.analyze, (tables).map(refactorValue2 => Request.Tables(refactorValue2))))
 
   def statement(table: Table, analyze: Request.Analyze): String =

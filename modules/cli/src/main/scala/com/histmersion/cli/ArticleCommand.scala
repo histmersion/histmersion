@@ -12,6 +12,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import java.nio.file.Path
 
 import ArticleCommand.{Draft, Edit, Fix}
+import com.histmersion.api.research.CritiqueReason
 
 /** What `histmersion article …` was asked to do, every argument already a typed value: the command line's parser
   * ([[commandline.ArticleArgs]]) builds one, and [[ArticleCli.Perform]] carries it out against a server.
@@ -31,7 +32,7 @@ enum ArticleCommand extends Cli.Command derives CanEqual:
       strict: Cli.Strict,
       filter: ArticlePatches.FilterFlags,
       reasons: List[ArticlePatches.ReasonText],
-      critiques: List[Problem]
+      critiques: List[CritiqueReason.Spec]
   )
   case Lint(slug: ReviewGoal.Slug, fix: Fix, json: Cli.JsonOutput)
   case Check(slug: ReviewGoal.Slug, draft: Draft, kind: Option[Article.Kind.Wire], json: Cli.JsonOutput)

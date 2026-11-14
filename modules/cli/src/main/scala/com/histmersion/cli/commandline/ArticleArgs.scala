@@ -12,6 +12,7 @@ import com.histmersion.util.problem.{Legacy, Problem}
 import org.rogach.scallop.*
 
 import java.nio.file.Path
+import com.histmersion.api.research.CritiqueReason
 
 /** `histmersion article …` on the command line: the compiled wiki's commands, parsed into [[ArticleCommand]]. */
 object ArticleArgs extends CommandLine.Entry:
@@ -162,7 +163,7 @@ object ArticleArgs extends CommandLine.Entry:
             ArticlePatches.FilterFlags.Clear(clearFilter.getOrElse(false))
           ),
           reason.getOrElse(Nil),
-          critiqueReason.getOrElse(Nil).map(text => Problem.Unclassified(Legacy.Text(text)))
+          critiqueReason.getOrElse(Nil).map(text => CritiqueReason.Spec(text))
         )
       )
 

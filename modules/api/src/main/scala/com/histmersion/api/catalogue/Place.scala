@@ -3,7 +3,8 @@ package api.catalogue
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{NonEmptyVector, Problem}
+import com.histmersion.util.problem.Problem.{Field, Invalid, Raw, TypeName}
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.api.{Ascii, WireEnumValues}
@@ -37,6 +38,10 @@ final case class Place(
   def bounds: (Option[Year], Option[Year]) = OpenSide.bounds(period, open)
 
 object Place:
+
+  /** Why a person merged, removed or overrode a place, or where a point comes from: a rationale, not a failure. */
+  type Rationale = Rationale.T
+  object Rationale extends Newtype[String, Pure]
   type Depth = Depth.T
   object Depth extends Newtype[Int, Pure]
   type Detail = Detail.T
@@ -313,13 +318,12 @@ object Place:
     private val LangShape = "^[a-z]{2,3}(-[a-z0-9]{2,8})*$".r
     private val IdShape = "^[a-z0-9][a-z0-9_.-]*$".r
 
-    private def invalid(msg: String) =
-      Api.Error(Problem.Unclassified(Legacy.Text(msg)), Some(Api.Error.Code(Write.CodeInvalid)))
+    private def invalid(problem: Problem) = Api.Error(problem, Some(Api.Error.Code(Write.CodeInvalid)))
 
     def name(raw: Name.Value): Either[Api.Error, Name.Value] =
       val n = (raw).value.trim.replaceAll("\\s+", " ")
-      if n.isEmpty then Left(invalid("the name is empty"))
-      else if n.length > MaxName then Left(invalid(s"a place name is at most $MaxName characters"))
+      if n.isEmpty then Left(invalid(Invalid.Missing.here(Field("name"))))
+      else if n.length > MaxName then Left(invalid(Invalid.OutOfRange.here(TypeName.of(Name.Value), Raw.of(n.length.toLong), Invalid.Bounds(None, Some(Raw.of(MaxName.toLong))))))
       else Right(Name.Value(n))
 
     val MaxName = 200
@@ -328,7 +332,7 @@ object Place:
       raw.map((_).value.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty) match
         case None                            => Right(Name.Lang(""))
         case Some(l) if LangShape.matches(l) => Right(Name.Lang(l))
-        case Some(l)                         => Left(invalid(s"'$l' is not a language tag (e.g. en, grc, pl, sr-latn)"))
+        case Some(l)                         => Left(invalid(Invalid.Unreadable.here(TypeName.of(Name.Lang), Raw(s"$l"), Vector(Raw("en"), Raw("grc"), Raw("pl"), Raw("sr-latn")))))
 
     def defaultId(label: Label): Id =
       Id(LocalPrefix + Geocode.key(label.value).value.replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", "").take(64))
@@ -338,35 +342,35 @@ object Place:
       val kind = in.kind.value.trim.toLowerCase(java.util.Locale.ROOT)
       val id = in.id.map(_.value).map(_.trim).filter(_.nonEmpty).getOrElse(defaultId(Label(label)).value)
       for
-        _ <- Either.cond(label.nonEmpty, (), invalid("the label is empty"))
+        _ <- Either.cond(label.nonEmpty, (), invalid(Invalid.Missing.here(Field("label"))))
         _ <- Either.cond(
           Kind.all.contains(kind),
           (),
-          invalid(s"kind '$kind' is not one of ${Kind.all.mkString(", ")}")
+          invalid(Invalid.Unknown.here(TypeName.of(Add.Kind), Raw(s"$kind"), Kind.all.toVector.map(k => Raw(s"$k"))))
         )
-        _ <- Either.cond(id != LocalPrefix, (), invalid(s"'$label' gives no id — pass one (`id`)"))
+        _ <- Either.cond(id != LocalPrefix, (), invalid(Invalid.Missing.here(Field("id"))))
         _ <- Either.cond(
           IdShape.matches(id),
           (),
-          invalid(s"'$id' is not a place id (lower-case letters, digits, '_', '.' and '-')")
+          invalid(Invalid.Unreadable.here(TypeName.of(Id), Raw(s"$id"), Vector(Raw("pleiades_579885"))))
         )
         _ <- Either.cond(
           in.lon.value >= -180 && in.lon.value <= 180 && in.lat.value >= -90 && in.lat.value <= 90 &&
             !in.lon.value.isNaN && !in.lat.value.isNaN,
           (),
-          invalid(s"(${in.lon}, ${in.lat}) is not a longitude/latitude")
+          invalid(Invalid.OutOfRange.here(TypeName.named[GeoPoint], Raw(s"${in.lat}, ${in.lon}"), Invalid.Bounds(Some(Raw("-90, -180")), Some(Raw("90, 180")))))
         )
         _ <- Either.cond(
           in.source.value.trim.nonEmpty,
           (),
-          invalid("say where the coordinates come from (`source`): a gazetteer id, a map, a publication")
+          invalid(Invalid.Missing.here(Field("source")))
         )
         period <- (in.periodStart, in.periodEnd) match
           case (None, None)                 => Right(None)
           case (Some(a), Some(b)) if a <= b => Right(Some(Period(a, b)))
           case (Some(a), None)              => Right(Some(Period(a, a)))
           case (None, Some(b))              => Right(Some(Period(b, b)))
-          case (Some(a), Some(b))           => Left(invalid(s"the period starts ($a) after it ends ($b)"))
+          case (Some(a), Some(b))           => Left(invalid(Invalid.Inconsistent.here(NonEmptyVector.of(Field("periodStart"), Field("periodEnd")), Invalid.Exclusion.Ordered)))
         l <- lang(in.lang)
         extra <- in.names.foldLeft[Either[Api.Error, List[Name.Value]]](Right(Nil))((acc, n) =>
           acc.flatMap(ns => name(n).map(ns :+ _))
@@ -622,7 +626,7 @@ object Place:
     type Native = Native.T
     object Native extends Newtype[Boolean, Pure]
 
-  final case class MergeIn(into: Id, reason: Option[Problem] = None) derives StrictJson
+  final case class MergeIn(into: Id, reason: Option[Rationale] = None) derives StrictJson
   object MergeIn:
 
     given Schema[MergeIn] = KindlingsSchema
@@ -696,7 +700,7 @@ object Place:
       periodStart: Option[Year],
       periodEnd: Option[Year],
       periodSet: Override.PeriodSet,
-      reason: Option[Problem],
+      reason: Option[Rationale],
       sourceKind: Override.SourceKind,
       sourcePeriodStart: Option[Year],
       sourcePeriodEnd: Option[Year],
@@ -756,7 +760,7 @@ object Place:
     case Put(
         kind: Option[Put.Kind],
         period: Option[(Option[Year], Option[Year])],
-        reason: Option[Problem],
+        reason: Option[Rationale],
         point: Option[GeoPoint] = None
     )
 
@@ -769,7 +773,7 @@ object Place:
       kind: Option[OverrideSet.Kind] = None,
       periodStart: Option[Year] = None,
       periodEnd: Option[Year] = None,
-      reason: Option[Problem] = None,
+      reason: Option[Rationale] = None,
       reset: OverrideSet.Reset = OverrideSet.Reset(false),
       pointLat: Option[Latitude] = None,
       pointLon: Option[Longitude] = None
@@ -798,24 +802,23 @@ object Place:
 
     val MaxReason = 500
 
-    private def invalid(msg: String) =
-      Api.Error(Problem.Unclassified(Legacy.Text(msg)), Some(Api.Error.Code(Write.CodeInvalid)))
+    private def invalid(problem: Problem) = Api.Error(problem, Some(Api.Error.Code(Write.CodeInvalid)))
 
     def edit(in: OverrideSet): Either[Api.Error, OverrideEdit] =
       val kind = in.kind.map(_.value.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty)
-      val reason = in.reason.map(_.sentence.trim.replaceAll("\\s+", " ")).filter(_.nonEmpty)
+      val reason = in.reason.map(r => s"$r".trim.replaceAll("\\s+", " ")).filter(_.nonEmpty)
       val period = Option.when(in.periodStart.isDefined || in.periodEnd.isDefined)((in.periodStart, in.periodEnd))
       val asked = in.pointLat.isDefined || in.pointLon.isDefined
       if (in.reset) == OverrideSet.Reset(true) then
         if kind.isDefined || period.isDefined || asked then
-          Left(invalid("`reset` drops the override — pass no kind, period or point with it"))
+          Left(invalid(Invalid.Inconsistent.here(NonEmptyVector.of(Field("reset"), Field("kind"), Field("period"), Field("point")), Invalid.Exclusion.AtMostOne)))
         else Right(OverrideEdit.Reset)
       else
         for
           _ <- Either.cond(
             kind.isDefined || period.isDefined || asked,
             (),
-            invalid("say what to set: a kind, a period (periodStart/periodEnd), a point (pointLat/pointLon), or reset")
+            invalid(Invalid.Inconsistent.here(NonEmptyVector.of(Field("kind"), Field("period"), Field("point"), Field("reset")), Invalid.Exclusion.AtLeastOne))
           )
           point <-
             (if !asked then Right(None)
@@ -823,45 +826,40 @@ object Place:
                (in.pointLat, in.pointLon) match
                  case (Some(lat), Some(lon)) =>
                    if lat.value.isNaN || lon.value.isNaN || lat.value < -90 || lat.value > 90 || lon.value < -180 || lon.value > 180
-                   then Left(invalid(s"($lat, $lon) is not a latitude/longitude"))
+                   then Left(invalid(Invalid.OutOfRange.here(TypeName.named[GeoPoint], Raw(s"$lat, $lon"), Invalid.Bounds(Some(Raw("-90, -180")), Some(Raw("90, 180"))))))
                    else if reason.isEmpty then
-                     Left(
-                       invalid(
-                         "say where the point comes from (`reason`): a gazetteer value such as a Pleiades " +
-                           "representative point or a Wikidata coordinate — never an estimate"
-                       )
-                     )
+                     Left(invalid(Invalid.Missing.here(Field("reason"))))
                    else Right(Some(GeoPoint(lon, lat)))
-                 case _ => Left(invalid("a point needs both pointLat and pointLon"))
+                 case _ => Left(invalid(Invalid.Inconsistent.here(NonEmptyVector.of(Field("pointLat"), Field("pointLon")), Invalid.Exclusion.Together)))
             ): Either[Api.Error, Option[GeoPoint]]
           _ <- kind.fold(Right(()))(k =>
             Either.cond(
               Kind.all.contains(k),
               (),
-              invalid(s"kind '$k' is not one of ${Kind.all.mkString(", ")}")
+              invalid(Invalid.Unknown.here(TypeName.of(OverrideEdit.Put.Kind), Raw(s"$k"), Kind.all.toVector.map(x => Raw(s"$x"))))
             )
           )
           _ <- period match
-            case Some((Some(a), Some(b))) if a > b => Left(invalid(s"the period starts ($a) after it ends ($b)"))
+            case Some((Some(a), Some(b))) if a > b => Left(invalid(Invalid.Inconsistent.here(NonEmptyVector.of(Field("periodStart"), Field("periodEnd")), Invalid.Exclusion.Ordered)))
             case _                                 => Right(())
           _ <- Either.cond(
             reason.forall(_.length <= MaxReason),
             (),
-            invalid(s"a reason is at most $MaxReason characters")
+            invalid(Invalid.OutOfRange.here(TypeName.of(Rationale), Raw("reason"), Invalid.Bounds(None, Some(Raw.of(MaxReason.toLong)))))
           )
         yield OverrideEdit.Put(
           kind.map(OverrideEdit.Put.Kind(_)),
           period,
-          reason.map((text => Problem.Unclassified(Legacy.Text(text)))),
+          reason.map(text => Rationale(s"$text")),
           point
         )
 
-    def reason(raw: Option[Problem]): Either[Api.Error, Option[Problem]] =
-      val r = raw.map((_).sentence.trim.replaceAll("\\s+", " ")).filter(_.nonEmpty)
+    def reason(raw: Option[Rationale]): Either[Api.Error, Option[Rationale]] =
+      val r = raw.map(x => s"$x".trim.replaceAll("\\s+", " ")).filter(_.nonEmpty)
       Either.cond(
         r.forall(_.length <= MaxReason),
-        (r).map(refactorValue10 => Problem.Unclassified(Legacy.Text(refactorValue10))),
-        invalid(s"a reason is at most $MaxReason characters")
+        r.map(text => Rationale(s"$text")),
+        invalid(Invalid.OutOfRange.here(TypeName.of(Rationale), Raw("reason"), Invalid.Bounds(None, Some(Raw.of(MaxReason.toLong)))))
       )
 
     def parsePoint(raw: PointText): Either[Problem, (Latitude, Longitude)] =
@@ -872,18 +870,10 @@ object Place:
                 if !lat.isNaN && !lon.isNaN && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180 =>
               Right((Latitude(lat), Longitude(lon)))
             case (Some(_), Some(_)) =>
-              Left(
-                Problem.Unclassified(
-                  Legacy.Text(s"'$raw' is not a latitude,longitude (latitude −90..90, longitude −180..180)")
-                )
-              )
+              Left(Invalid.OutOfRange.here(TypeName.of(PointText), Raw(s"$raw"), Invalid.Bounds(Some(Raw("-90,-180")), Some(Raw("90,180")))))
             case _ =>
-              Left(
-                Problem.Unclassified(
-                  Legacy.Text(s"'$raw' is not a latitude,longitude pair of numbers, e.g. 37.95,58.21")
-                )
-              )
-        case _ => Left(Problem.Unclassified(Legacy.Text(s"'$raw' is not latitude,longitude, e.g. 37.95,58.21")))
+              Left(Invalid.Unreadable.here(TypeName.of(PointText), Raw(s"$raw"), Vector(Raw("37.95,58.21"))))
+        case _ => Left(Invalid.Unreadable.here(TypeName.of(PointText), Raw(s"$raw"), Vector(Raw("37.95,58.21"))))
 
     def pointText(lat: Latitude, lon: Longitude): PointText =
       PointText(
@@ -1019,7 +1009,7 @@ object Place:
       )
     val partOfKinds: Set[Kind] = Set(Kind(PartOf), Kind(PartOfAdmin), Kind(PartOfRegional), Kind(PartOfPhysical))
 
-  final case class RemoveIn(reason: Option[Problem] = None)
+  final case class RemoveIn(reason: Option[Rationale] = None)
       derives StrictJson,
         KindlingsSchema,
         com.histmersion.api.json.Schema

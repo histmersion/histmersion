@@ -344,7 +344,7 @@ final class ManagersControllers(
                   agents.knownProviders.map(i => com.histmersion.api.automation.ProviderKind.Plugin.Name(i.value))
                 )
                 .left
-                .map(e => error(Problem.Unclassified(Legacy.Text(s"models ${o.role}: ${e.sentence}"))))
+                .map(e => error(Problem.Unclassified(Legacy.Text(s"models ${o.role}: ${e}"))))
                 .map(_ => ())
             )
         )

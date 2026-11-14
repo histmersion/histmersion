@@ -111,12 +111,12 @@ final class ModelPicker(
         parseModels(ms.map(m => ModelRef.Model.Spec(m.value)), known())
           .map(_ -> SettingSource.Saved)
           .left
-          .map(m => Problem.Unclassified(Legacy.Text(s"the saved chain of ${role.wire}: ${m.sentence}")))
+          .map(m => Problem.Unclassified(Legacy.Text(s"the saved chain of ${role.wire}: ${m}")))
       case None =>
         parseChain(Chain.Spec(cfg.role(role.transformInto[AgentRole])), known())
           .map(_ -> SettingSource.Config)
           .left
-          .map(m => Problem.Unclassified(Legacy.Text(s"agents.roles.${role.wire}: ${m.sentence}")))
+          .map(m => Problem.Unclassified(Legacy.Text(s"agents.roles.${role.wire}: ${m}")))
 
   /** The chain a call uses: the run's own model (`--model`) when it names one, else the role's. */
   def chainFor(
@@ -124,7 +124,7 @@ final class ModelPicker(
       overrideRef: Option[AgentsControllers.ModelName]
   ): Either[Problem, List[ModelRef]] =
     overrideRef.map(_.value.trim).filter(_.nonEmpty) match
-      case Some(ref) => parseChain(Chain.Spec(ref), known())
+      case Some(ref) => parseChain(Chain.Spec(ref), known()).left.map(_.toNonEmpty.head)
       case None      =>
         chain(role).map(_._1).flatMap { ms =>
           Either.cond(
@@ -166,7 +166,7 @@ final class ModelPicker(
   def allowances: (List[Effective], List[String]) =
     val (fromConfig, problem) = parseAllowances(Allowance.Spec(cfg.allowances.value), known()) match
       case Right(as) => (as.map(a => Effective(a.target.wire, Right(a), SettingSource.Config)), Nil)
-      case Left(m)   => (Nil, List(s"agents.allowances: ${m.sentence}"))
+      case Left(m)   => (Nil, List(s"agents.allowances: ${m}"))
     val saved = Transactor(ds).read(ModelSettingsRepo.allowances).map { s =>
       val a = for
         t <- Target.parse(Target.Spec(s.target.value), known())

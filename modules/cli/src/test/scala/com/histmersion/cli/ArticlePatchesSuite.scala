@@ -206,8 +206,8 @@ class ArticlePatchesSuite extends munit.FunSuite:
       .withCritiques(
         base,
         List(
-          Problem.Unclassified(Legacy.Text("smith1987_dying>frazer1922_golden=cited for the calendar only")),
-          Problem.Unclassified(Legacy.Text("[[jones2001_myth]] -> lee1990_ritual="))
+          CritiqueReason.Spec("smith1987_dying>frazer1922_golden=cited for the calendar only"),
+          CritiqueReason.Spec("[[jones2001_myth]] -> lee1990_ritual=")
         )
       )
       .toOption
@@ -215,18 +215,18 @@ class ArticlePatchesSuite extends munit.FunSuite:
     assertEquals(
       p.critiqueReasons,
       List(
-        CritiqueReason(Citekey("a2000_x"), Citekey("b2001_y"), Problem.Unclassified(Legacy.Text("from json"))),
+        CritiqueReason(Citekey("a2000_x"), Citekey("b2001_y"), Coverage.Rationale("from json")),
         CritiqueReason(
           Citekey("smith1987_dying"),
           Citekey("frazer1922_golden"),
-          Problem.Unclassified(Legacy.Text("cited for the calendar only"))
+          Coverage.Rationale("cited for the calendar only")
         ),
-        CritiqueReason(Citekey("jones2001_myth"), Citekey("lee1990_ritual"), Problem.Unclassified(Legacy.Text("")))
+        CritiqueReason(Citekey("jones2001_myth"), Citekey("lee1990_ritual"), Coverage.Rationale(""))
       )
     )
     assertEquals(ArticlePatches.withCritiques(base, Nil).toOption.get, base)
     val bad =
-      ArticlePatches.withCritiques(Article.Patch(), List(Problem.Unclassified(Legacy.Text("smith1987_dying=no pair"))))
+      ArticlePatches.withCritiques(Article.Patch(), List(CritiqueReason.Spec("smith1987_dying=no pair")))
     assert(
       bad.left.exists(e => e.message.sentence.startsWith("--critique-reason:") && e.exitCode == ExitCode.Usage),
       bad

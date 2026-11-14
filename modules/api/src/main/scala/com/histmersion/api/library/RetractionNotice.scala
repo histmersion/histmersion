@@ -12,13 +12,16 @@ import io.github.iltotore.iron.constraint.any.Pure
 
 final case class RetractionNotice(
     nature: Option[RetractionNotice.Nature],
-    reason: Option[Problem],
+    reason: Option[RetractionNotice.Account],
     date: Option[RetractionNotice.Date]
 ) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema
 
 object RetractionNotice:
+  /** Why the work was retracted, in Retraction Watch's words: outside text, not a failure. */
+  type Account = Account.T
+  object Account extends Newtype[String, Pure]
   type Nature = Nature.T
   object Nature extends Newtype[String, Pure]
   type Date = Date.T

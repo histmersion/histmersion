@@ -1,7 +1,7 @@
 package com.histmersion
 package api.catalogue
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 
 import hearth.kindlings.optics.syntax.*
 
@@ -65,7 +65,7 @@ object PeriodO:
     RawJson
       .parse(json)
       .left
-      .map(e => Problem.Unclassified(Legacy.Text(s"not JSON: $e")))
+      .map(e => Problem.Io.Corrupt(Problem.Io.Format.Json, Problem.Where("PeriodO dataset"), Problem.Io.Damage.Unreadable(External.Reported.of(s"$e"))))
       .flatMap { doc =>
         val c = doc.cursor
         val overlay = c.downField("histmersion")
@@ -80,11 +80,11 @@ object PeriodO:
             .fromWire(PresetRegion.Wire(r))
             .map(PeriodODataset.PresetsKey(id) -> _)
             .toRight(
-              Problem.Unclassified(
-                Legacy.Text(
-                  s"$id: no preset region '$r' (known: " +
-                    PresetRegion.values.map(_.wire).mkString(", ") + ")"
-                )
+              Problem.Invalid.Unknown(
+                Problem.TypeName.named[PresetRegion],
+                Problem.Raw(s"$r"),
+                PresetRegion.values.toVector.map(v => Problem.Raw(s"${v.wire}")),
+                Vector(Problem.Field("presets"), Problem.Field(s"$id"))
               )
             )
         )
@@ -93,7 +93,7 @@ object PeriodO:
             .downField("authorities")
             .focus
             .flatMap(_.asObject)
-            .toRight(Problem.Unclassified(Legacy.Text("not a PeriodO dataset: no `authorities` object")))
+            .toRight(Problem.Invalid.Missing.here(Problem.Field("authorities")))
           ps <- presets.collectFirst { case Left(e) => e }.toLeft(presets.collect { case Right(p) => p }.toMap)
         yield
           val read = auths.fields.toList.map((id, a) => authority(HistoricalPeriod.Id(id), a.cursor))

@@ -1,7 +1,7 @@
 package com.histmersion
 package api.exchange
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -43,7 +43,7 @@ object MergeResolutions:
             )
           )
         case _ =>
-          Left(Problem.Unclassified(Legacy.Text(s"--resolve $s: expected ID=decision, e.g. S-3c1e7a2b=keep-left")))
+          Left(Problem.Invalid.Unreadable(Problem.TypeName.named[MergeResolutions], Problem.Raw(s"$s"), Vector(Problem.Raw("S-3c1e7a2b=keep-left")), Vector(Problem.Field("resolve"))))
 
     def template(p: MergePlan, current: MergeResolutions): Template =
       val chosen = current.resolve.map(r => r.issue.value -> r.decision).toMap

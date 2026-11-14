@@ -441,7 +441,7 @@ object CompileArticle:
       else if citesAllKeys(r.citekey.value) then
         Some(s"a reason for [[${r.citekey}]], which the draft cites (a reason is only for a source it leaves out)")
       else if s"${r.reason}".isEmpty then Some(s"an empty reason for [[${r.citekey}]]")
-      else Coverage.Reason.merge(Map.empty, List(r)).left.toOption
+      else Coverage.Reason.merge(Map.empty, List(r)).left.toOption.map(_.sentence)
     }
     val writerReasons = stated
       .filter(r => inFilterKeys(r.citekey.value) && !citesAllKeys(r.citekey.value) && s"${r.reason}".nonEmpty)

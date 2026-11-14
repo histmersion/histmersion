@@ -1,7 +1,6 @@
 package com.histmersion
 package api.jobs
 
-import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
@@ -18,7 +17,6 @@ object JobState:
   val Interrupted = "interrupted"
 
   /** The sentence a restart leaves in a job it cut short. */
-  val InterruptedSentence: Problem = Problem.Unclassified(Legacy.Text(Interrupted))
 
   def parse(s: Wire): Option[JobState] =
     values.find(_.wire == Wire((s).value.trim.toLowerCase))
