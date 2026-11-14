@@ -20,7 +20,7 @@ object SeaFloorSource:
     values
       .find(_.wire.value == s.value.trim.toLowerCase(java.util.Locale.ROOT))
       .toRight(
-        Problem.Invalid.Unknown(
+        Problem.Invalid.Unknown.here(
           Problem.TypeName.named[SeaFloorSource],
           Problem.Raw(s"$s"),
           values.toVector.map(v => Problem.Raw(s"${v.wire}"))

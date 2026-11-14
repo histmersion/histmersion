@@ -148,13 +148,13 @@ class RenderSuite extends munit.FunSuite:
     )
 
   test("the status of several problems is the first one's; a spent allowance says when to retry"):
-    val many: Problems = Problems.of(NotFound.Entity(TypeName("x.Y"), Raw("k")), Invalid.Missing(Field("f")))
+    val many: Problems = Problems.of(NotFound.Entity(TypeName("x.Y"), Raw("k")), Invalid.Missing.here(Field("f")))
     assertEquals(many.status.code, 404)
     assertEquals(
       examples.collect { case q: Refused.Quota => q.retryAfter },
       Vector(Some(EpochMs(1762732800000L)))
     )
-    assertEquals(Invalid.Missing(Field("f")).retryAfter, None)
+    assertEquals(Invalid.Missing.here(Field("f")).retryAfter, None)
 
   test("the code words of every enum with fields read back from a column"):
     val reported = External.Reported("x: y")
@@ -187,7 +187,7 @@ class RenderSuite extends munit.FunSuite:
           Invalid.Form.EnvName(Raw("1X")),
           Invalid.Form.NoEntry(Raw("keepassxc")),
           Invalid.Form.VaultName(Raw("Bad Vault"))
-        ).map(Invalid.Reference(_)) ++
+        ).map(Invalid.Reference.here(_)) ++
         Vector(
           Io.Damage.Unreadable(reported),
           Io.Damage.Newer(Raw("2"), Raw("1"))
@@ -247,8 +247,8 @@ class RenderSuite extends munit.FunSuite:
         Refused.Rule.values.toVector.map(Refused.Policy(_)) ++
         Run.PauseReason.values.toVector.map(Run.Paused(_, None)) ++
         Vector(
-          Invalid.Unknown(TypeName("a.B"), Raw("x"), Vector.empty),
-          Invalid.OutOfRange(TypeName("a.B"), Raw("x"), Invalid.Bounds(None, Some(Raw("9")))),
+          Invalid.Unknown.here(TypeName("a.B"), Raw("x"), Vector.empty),
+          Invalid.OutOfRange.here(TypeName("a.B"), Raw("x"), Invalid.Bounds(None, Some(Raw("9")))),
           Conflict.WrongState(TypeName("a.B"), Raw("k"), Conflict.State("done"), Vector.empty),
           Run.NoModel(Run.Role("writer"), Vector.empty),
           Refused.Quota(Refused.Limit.RateLimit, Refused.Amount(1.5), Refused.Amount(2.5), None)

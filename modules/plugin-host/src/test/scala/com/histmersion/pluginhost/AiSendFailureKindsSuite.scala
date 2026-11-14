@@ -19,7 +19,7 @@ class AiSendFailureKindsSuite extends munit.FunSuite:
       new java.net.http.HttpTimeoutException("request timed out"),
       new java.net.SocketTimeoutException("x"),
       new java.util.concurrent.TimeoutException("x")
-    ).foreach(e => assertEquals(failed(e), Problem.Upstream.Timeout(name, at, Problem.Millis(30000L)), e.toString))
+    ).foreach(e => assertEquals(failed(e), Problem.Upstream.Timeout.here(name, at, Problem.Millis(30000L)), e.toString))
 
   test("anything else is an unreachable upstream, with the exception's own words and never the request"):
     List(
@@ -28,7 +28,9 @@ class AiSendFailureKindsSuite extends munit.FunSuite:
       new java.io.EOFException("EOF reached while reading"),
       new IllegalArgumentException("URI with undefined scheme"),
       new NullPointerException()
-    ).foreach(e => assertEquals(failed(e), Problem.Upstream.Unreachable(name, at, External.Reported.of(e)), e.toString))
+    ).foreach(e =>
+      assertEquals(failed(e), Problem.Upstream.Unreachable.here(name, at, External.Reported.of(e)), e.toString)
+    )
     assertEquals(
       failed(new java.net.ConnectException("refused")).toString.contains("java.net.ConnectException: refused"),
       true

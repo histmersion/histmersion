@@ -14,7 +14,7 @@ class AttestationTargetSuite extends munit.FunSuite:
     assertEquals(
       AttestationTarget.check(AttestationTarget.Wire("bogus")),
       Left(
-        Problem.Invalid.Unknown(
+        Problem.Invalid.Unknown.here(
           Problem.TypeName("com.histmersion.domain.catalogue.AttestationTarget.Wire"),
           Problem.Raw("bogus"),
           Vector("finding", "event", "event_dating", "place", "edge").map(r => Problem.Raw(s"$r"))

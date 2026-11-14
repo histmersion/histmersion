@@ -40,7 +40,7 @@ class NewtypeParseSuite extends munit.FunSuite:
     assertEquals(
       Shelf.parse("Top 1"),
       Left(
-        Invalid.Malformed(
+        Invalid.Malformed.here(
           TypeName("com.histmersion.util.problem.NewtypeParseSuite.Shelf"),
           Constraint(Constraint.Name("Match[\"[a-z]+\"]"), Constraint.Description("Should match [a-z]+")),
           Raw("Top 1")
@@ -51,7 +51,7 @@ class NewtypeParseSuite extends munit.FunSuite:
       Catalogue.Year.parse(9999).left.map(_.toVector),
       Left(
         Vector(
-          Invalid.Malformed(
+          Invalid.Malformed.here(
             TypeName("com.histmersion.util.problem.NewtypeParseSuite.Catalogue.Year"),
             Constraint(
               Constraint.Name(

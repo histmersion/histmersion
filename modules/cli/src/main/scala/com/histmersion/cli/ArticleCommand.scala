@@ -78,7 +78,7 @@ object ArticleCommand:
       case (None, Some(b)) => Right(Draft.Body(b))
       case _               =>
         Left(
-          Problem.Invalid.Inconsistent(
+          Problem.Invalid.Inconsistent.here(
             NonEmptyVector.of(Problem.Field("--edits-file"), Problem.Field("--body-file")),
             Problem.Invalid.Exclusion.OneOf
           )

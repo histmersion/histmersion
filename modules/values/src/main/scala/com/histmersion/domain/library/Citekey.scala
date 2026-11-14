@@ -20,7 +20,7 @@ object Citekey extends Newtype[String, CitekeyRule]:
 
   def parse(raw: String): Either[Problem, Citekey] =
     val s = Option(raw).map((_).trim).getOrElse("")
-    if s.isEmpty then Left(Problem.Invalid.Missing(Problem.Field("citekey")))
+    if s.isEmpty then Left(Problem.Invalid.Missing.here(Problem.Field("citekey")))
     else checked(s).left.map(Problem.Invalid.malformed)
 
   /** Is `raw` a citekey as it stands — for the places that classify rather than reject (a `[[link]]` target). */

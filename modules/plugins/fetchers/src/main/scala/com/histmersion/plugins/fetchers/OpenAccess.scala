@@ -77,7 +77,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
     def fetch(work: WorkKey, ctx: Fetch.Context): Fetch =
       work.doi
         .map(d => OaRecords.Doi(d.value))
-        .fold[Fetch](Fetch.Miss(Problem.Invalid.Missing(Problem.Field("doi"))))(corePdf(ctx, _, key, quota))
+        .fold[Fetch](Fetch.Miss(Problem.Invalid.Missing.here(Problem.Field("doi"))))(corePdf(ctx, _, key, quota))
 
   val openalex: SourceFetcher = ByDoi(ByDoi.Step("openalex"), (ctx, d) => openalexOa(ctx, records(ctx, d)))
 

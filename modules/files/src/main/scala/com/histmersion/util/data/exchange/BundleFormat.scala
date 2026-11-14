@@ -75,7 +75,7 @@ object BundleFormat:
         else
           json.asObject.toRight(damaged(TheLine, Problem.Io.Damage.Undecodable)).flatMap { obj =>
             obj("rev").flatMap(_.asString) match
-              case None                       => Left(Problem.Invalid.Missing(Problem.Field("rev")))
+              case None                       => Left(Problem.Invalid.Missing.here(Problem.Field("rev")))
               case Some(r) if r == revOf(obj) => Right(())
               case Some(r)                    => Left(damaged(s"rev $r", Problem.Io.Damage.Checksum))
           }

@@ -45,7 +45,7 @@ object Subprocess:
     val t = Option((tool).value).getOrElse("").trim
     def runnable(p: Path) =
       files.isFile(p) && files.isExecutable(p)
-    if t.isEmpty then Left(Problem.Invalid.Missing(Problem.Field("cli")))
+    if t.isEmpty then Left(Problem.Invalid.Missing.here(Problem.Field("cli")))
     else if t.contains('/') then
       val p = Path.of(t)
       if runnable(p) then Right(Vaults.Path(p.toString))

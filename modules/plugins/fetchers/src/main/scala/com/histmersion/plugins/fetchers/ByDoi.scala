@@ -12,7 +12,7 @@ final class ByDoi(step: ByDoi.Step, copy: (Fetch.Context, Doi) => Option[Fetched
   val access: Access = Access.Open
   def fetch(work: WorkKey, ctx: Fetch.Context): Fetch =
     work.doi
-      .fold[Fetch](Fetch.Miss(Problem.Invalid.Missing(Problem.Field("doi"))))(d =>
+      .fold[Fetch](Fetch.Miss(Problem.Invalid.Missing.here(Problem.Field("doi"))))(d =>
         copy(ctx, d).fold[Fetch](
           Fetch.Miss(
             Problem.NotFound.Entity(Problem.TypeName("com.histmersion.plugin.Copy"), Problem.Raw(s"${d.value}"))

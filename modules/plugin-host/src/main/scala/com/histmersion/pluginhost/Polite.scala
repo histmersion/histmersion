@@ -119,7 +119,8 @@ final class Polite(
         .parse(a.text.value)
         .left
         .map(e =>
-          Problem.Upstream.BadReply(url.upstream, url.address, Problem.Upstream.Shape.Json, External.Reported.of(s"$e"))
+          Problem.Upstream.BadReply
+            .here(url.upstream, url.address, Problem.Upstream.Shape.Json, External.Reported.of(s"$e"))
         )
     )
 

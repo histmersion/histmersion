@@ -62,7 +62,7 @@ class CasesSuite extends munit.FunSuite:
     assertEquals(s"${External.ModelSaid.of("c" * 300)}".length, External.ModelSaid.Limit)
 
   test("a problem found in a field of the request gets the field in front of its path"):
-    val missing: Problem = Invalid.Missing(Field("dst"))
+    val missing: Problem = Invalid.Missing.here(Field("dst"))
     assertEquals(
       missing.within(Field("edges")).within(Field("patch")),
       Invalid.Missing(Field("dst"), Vector(Field("patch"), Field("edges")))
@@ -72,7 +72,8 @@ class CasesSuite extends munit.FunSuite:
 
   test("an upstream's failure on one part of what was asked names that part, in its sentence too"):
     val url = Upstream.Url("https://met.example/objects/7")
-    val gone: Problem = Upstream.Http(Upstream.Name("met"), url, Upstream.Status(404), External.ReplyExcerpt("gone"))
+    val gone: Problem =
+      Upstream.Http.here(Upstream.Name("met"), url, Upstream.Status(404), External.ReplyExcerpt("gone"))
     val found = gone.within(Field("object 7"))
     assertEquals(
       found,

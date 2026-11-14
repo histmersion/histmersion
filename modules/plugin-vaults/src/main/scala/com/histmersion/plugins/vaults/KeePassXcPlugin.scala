@@ -26,7 +26,7 @@ final class KeePassXcPlugin extends Plugin:
         .map(_.trim)
         .filter(_.nonEmpty)
         .map(d => Vaults.expand(Vaults.Path(d), home))
-        .toRight(Problem.Invalid.Missing(Problem.Field("database")))
+        .toRight(Problem.Invalid.Missing.here(Problem.Field("database")))
       _ <- Either.cond(
         files.isFile(Path.of(db.value)),
         (),

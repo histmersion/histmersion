@@ -82,7 +82,7 @@ final class PleiadesPictures(media: MediaSettings, licences: LicenceReader) exte
              List(
                MediaFound.Failed(
                  MediaFound.Failed.About(s"place ${p.id.value} (${p.label.value})"),
-                 Problem.Invalid.Missing(Problem.Field("Pleiades id"))
+                 Problem.Invalid.Missing.here(Problem.Field("Pleiades id"))
                )
              )
            else Nil) ++

@@ -58,7 +58,7 @@ object Cliopatria extends DownloadedGazetteer:
           .flatMap(_.asArray)
           .map(_.toList)
           .orElse(doc.asArray.map(_.toList))
-          .toRight(Problem.Invalid.Missing(Problem.Field("features")))
+          .toRight(Problem.Invalid.Missing.here(Problem.Field("features")))
         features.map(_.zipWithIndex.flatMap((f, i) => readFeature(f, Ordinal(i)).toOption))
       }
 

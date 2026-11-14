@@ -33,7 +33,7 @@ object SafePath:
   def confine(base: Option[Base], candidate: Candidate): Either[Problem, Path] =
     val root = base.map(_.value.trim).filter(_.nonEmpty)
     val raw = Option(candidate).map(_.value.trim).getOrElse("")
-    if raw.isEmpty then Left(Problem.Invalid.Missing(Problem.Field("path")))
+    if raw.isEmpty then Left(Problem.Invalid.Missing.here(Problem.Field("path")))
     else
       root match
         case None      => Right(Paths.get(raw).toAbsolutePath.normalize)

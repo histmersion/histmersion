@@ -15,7 +15,7 @@ final class ArchiveOrgFetcher(client: () => ArchiveOrg) extends SourceFetcher:
   val access: Access = Access.Open
   def fetch(work: WorkKey, ctx: Fetch.Context): Fetch =
     work.archive match
-      case None     => Fetch.Miss(Problem.Invalid.Missing(Problem.Field("archive.org identifier")))
+      case None     => Fetch.Miss(Problem.Invalid.Missing.here(Problem.Field("archive.org identifier")))
       case Some(id) =>
         val archive = client()
         archive.info(ArchiveId(id.value)) match

@@ -89,5 +89,9 @@ final class HostAiHttp extends AiHttp:
     e match
       case _: java.util.concurrent.TimeoutException | _: java.net.http.HttpTimeoutException |
           _: java.net.SocketTimeoutException =>
-        Problem.Upstream.Timeout(asked.upstream, asked.address, Problem.Millis.of(math.max(1, timeoutSeconds).seconds))
-      case _ => Problem.Upstream.Unreachable(asked.upstream, asked.address, External.Reported.of(e))
+        Problem.Upstream.Timeout.here(
+          asked.upstream,
+          asked.address,
+          Problem.Millis.of(math.max(1, timeoutSeconds).seconds)
+        )
+      case _ => Problem.Upstream.Unreachable.here(asked.upstream, asked.address, External.Reported.of(e))

@@ -41,7 +41,7 @@ final class WikidataCatalogue(cfg: WikidataSettings) extends EventCatalogue:
     classes.find((qid, _) => part.value == s"class:$qid") match
       case None =>
         Left(
-          Problem.Invalid.Unknown(
+          Problem.Invalid.Unknown.here(
             Problem.TypeName("com.histmersion.plugins.events.WikidataCatalogue.Class"),
             Problem.Raw(s"$part"),
             classes.map((qid, _) => Problem.Raw(s"class:$qid")).toVector
@@ -135,7 +135,7 @@ object WikidataCatalogue:
     */
   def parse(json: Json, kind: CatalogueEvent.Kind): Either[Problem, List[CatalogueEvent]] =
     json.cursor.downField("results").downField("bindings").focus.flatMap(_.asArray) match
-      case None       => Left(Problem.Invalid.Missing(Problem.Field("results")))
+      case None       => Left(Problem.Invalid.Missing.here(Problem.Field("results")))
       case Some(rows) =>
         val bs = rows.toList.map(_.cursor)
         Right(bs.groupBy(b => binding(b, "item").getOrElse("")).toList.filter(_._1.nonEmpty).sortBy(_._1).flatMap {

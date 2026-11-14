@@ -5,11 +5,12 @@ class AccumulationSuite extends munit.FunSuite:
   import Problem.*
   import Problems.traverseAll
 
-  private val a: Problem = Invalid.Missing(Field("a"))
-  private val b: Problem = Invalid.Missing(Field("b"))
+  private val a: Problem = Invalid.Missing.here(Field("a"))
+  private val b: Problem = Invalid.Missing.here(Field("b"))
   private val c: Problem = NotFound.Entity(TypeName("x.Y"), Raw("c"))
 
-  private def check(n: Int): Either[Problems, Int] = if n > 0 then Right(n) else Left(Invalid.Missing(Field(s"n$n")))
+  private def check(n: Int): Either[Problems, Int] =
+    if n > 0 then Right(n) else Left(Invalid.Missing.here(Field(s"n$n")))
 
   test("one problem and many fold to their own sides and list in order"):
     val one: Problems = a
@@ -38,18 +39,18 @@ class AccumulationSuite extends munit.FunSuite:
 
   test("and runs both sides and keeps the failures of both"):
     assertEquals(check(1).and(check(2)), Right((1, 2)))
-    assertEquals(check(0).and(check(2)).left.map(_.toVector), Left(Vector(Invalid.Missing(Field("n0")))))
-    assertEquals(check(1).and(check(-1)).left.map(_.toVector), Left(Vector(Invalid.Missing(Field("n-1")))))
+    assertEquals(check(0).and(check(2)).left.map(_.toVector), Left(Vector(Invalid.Missing.here(Field("n0")))))
+    assertEquals(check(1).and(check(-1)).left.map(_.toVector), Left(Vector(Invalid.Missing.here(Field("n-1")))))
     assertEquals(
       check(0).and(check(-1)).left.map(_.toVector),
-      Left(Vector(Invalid.Missing(Field("n0")), Invalid.Missing(Field("n-1"))))
+      Left(Vector(Invalid.Missing.here(Field("n0")), Invalid.Missing.here(Field("n-1"))))
     )
 
   test("a tuple of checks gives all its values or every problem"):
     assertEquals((check(1), check(2), check(3)).allOrProblems, Right((1, 2, 3)))
     assertEquals(
       (check(0), check(2), check(-2), check(4)).allOrProblems.left.map(_.toVector),
-      Left(Vector(Invalid.Missing(Field("n0")), Invalid.Missing(Field("n-2"))))
+      Left(Vector(Invalid.Missing.here(Field("n0")), Invalid.Missing.here(Field("n-2"))))
     )
     assertEquals(
       (check(1), check(2), check(3), check(4), check(5), check(6), check(7), check(8)).allOrProblems,
@@ -60,14 +61,18 @@ class AccumulationSuite extends munit.FunSuite:
     assertEquals(List(1, 2, 3).traverseAll(check), Right(Vector(1, 2, 3)))
     assertEquals(
       List(1, 0, 3, -1).traverseAll(check).left.map(_.toVector),
-      Left(Vector(Invalid.Missing(Field("n0")), Invalid.Missing(Field("n-1"))))
+      Left(Vector(Invalid.Missing.here(Field("n0")), Invalid.Missing.here(Field("n-1"))))
     )
-    assertEquals(List(1, 0).traverseAll(check), Left(Invalid.Missing(Field("n0"))), "one failure stays one problem")
+    assertEquals(
+      List(1, 0).traverseAll(check),
+      Left(Invalid.Missing.here(Field("n0"))),
+      "one failure stays one problem"
+    )
     assertEquals(List.empty[Int].traverseAll(check), Right(Vector.empty))
 
   test("problems compare as values of Problems: one with one, many with many"):
     val one: Problems = a
-    val same: Problems = Invalid.Missing(Field("a"))
+    val same: Problems = Invalid.Missing.here(Field("a"))
     val many: Problems = Problems.of(a)
     assert(one == same)
     assert(one != many)

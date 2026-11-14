@@ -16,7 +16,7 @@ class ProblemLinesSuite extends munit.FunSuite:
   }
 
   test("a value with a space is quoted, so the line splits back into its fields"):
-    val p = Problem.Upstream.Unreachable(
+    val p = Problem.Upstream.Unreachable.here(
       Problem.Upstream.Name("core"),
       Problem.Upstream.Url("https://core.ac.uk"),
       External.Reported("java.io.IOException: reset \"by peer\"")

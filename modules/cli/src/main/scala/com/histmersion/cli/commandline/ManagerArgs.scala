@@ -238,7 +238,7 @@ object ManagerArgs:
 
     def command: Either[Problem, Cli.Command] =
       id_.toOption
-        .toRight(Problem.Invalid.Missing(Problem.Field("id")))
+        .toRight(Problem.Invalid.Missing.here(Problem.Field("id")))
         .map(ManagerCmd.Command.Manager(_, ManagerCmd.ManagerVerb.Show))
 
   /** One verb of `agent manager <id>`: `declare` declares its options and returns the verb to read after parsing. */
@@ -247,7 +247,7 @@ object ManagerArgs:
   ) extends Leaf(s"$Agent manager <id>", name, help):
     private val verb = declare(this)
     def command: Either[Problem, Cli.Command] =
-      id().toRight(Problem.Invalid.Missing(Problem.Field("id"))).map(ManagerCmd.Command.Manager(_, verb()))
+      id().toRight(Problem.Invalid.Missing.here(Problem.Field("id"))).map(ManagerCmd.Command.Manager(_, verb()))
 
   final private class LeafCreate()
       extends Leaf(

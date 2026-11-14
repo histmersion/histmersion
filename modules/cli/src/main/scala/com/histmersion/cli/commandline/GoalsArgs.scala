@@ -111,7 +111,7 @@ object GoalsArgs:
         case List((kind, ref)) => Right(GoalsCmd.Command.Link(slug_(), kind, ref, note_.toOption))
         case _                 =>
           Left(
-            Problem.Invalid.Inconsistent(
+            Problem.Invalid.Inconsistent.here(
               NonEmptyVector.of(
                 Problem.Field("--source"),
                 Problem.Field("--article"),
@@ -172,7 +172,7 @@ object GoalsArgs:
           Right(GoalsCmd.Command.Schedule(slug_(), kind_(), GoalsCmd.ScheduleChange.Set(cron, off, budget_.toOption)))
         case (true, _) =>
           Left(
-            Problem.Invalid.Inconsistent(
+            Problem.Invalid.Inconsistent.here(
               NonEmptyVector.of(
                 Problem.Field("--remove"),
                 Problem.Field("--cron"),
@@ -184,7 +184,7 @@ object GoalsArgs:
           )
         case (false, None) =>
           Left(
-            Problem.Invalid.Inconsistent(
+            Problem.Invalid.Inconsistent.here(
               NonEmptyVector.of(Problem.Field("--remove"), Problem.Field("--cron")),
               Problem.Invalid.Exclusion.OneOf
             )
