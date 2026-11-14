@@ -167,7 +167,7 @@ class ResearchOverviewSuite extends munit.FunSuite:
         Autopilot.FocusWaiting(
           Autopilot.FocusWaiting.Slug("a"),
           Autopilot.FocusWaiting.Code("person"),
-          Problem.Unclassified(Legacy.Text("an approval only a person decides"))
+          Autopilot.Rationale("an approval only a person decides")
         )
       )
     )

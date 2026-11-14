@@ -10,6 +10,7 @@ import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
+import com.histmersion.api.automation.Managers
 import com.histmersion.api.automation.Managers.{HintEffect, ManagerConfig}
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -31,7 +32,7 @@ object HintProposals:
 
   final case class HintAnswer(
       action: HintAnswer.Action,
-      why: Problem = Problem.Unclassified(Legacy.Text("")),
+      why: Managers.Rationale = Managers.Rationale(""),
       targets: List[HintAnswer.Targets] = Nil,
       tag: Option[HintAnswer.Tag] = None,
       until: Option[HintAnswer.Until] = None,
@@ -161,5 +162,5 @@ object HintProposals:
   /** What the step checkpoints: the proposal that passed (None: nothing asked for, or nothing passed), why, and the
     * warnings.
     */
-  final case class Proposed(effect: Option[HintEffect], why: Problem, problems: List[Description] = Nil)
+  final case class Proposed(effect: Option[HintEffect], why: Managers.Rationale, problems: List[Description] = Nil)
       derives JsonCodec

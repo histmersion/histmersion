@@ -118,7 +118,7 @@ class MediaPortalsSuite extends munit.FunSuite:
           Set(MediaRecord.Geography.Field("context"))
         )
         .left
-        .map(_.sentence),
+        .map(w => s"$w"),
       Left("its context names another place on the map")
     )
     assertEquals(
@@ -135,7 +135,7 @@ class MediaPortalsSuite extends munit.FunSuite:
           Set(MediaRecord.Geography.Field("context"))
         )
         .left
-        .map(_.sentence),
+        .map(w => s"$w"),
       Left("its dates do not overlap the place's")
     )
 
@@ -159,7 +159,7 @@ class MediaPortalsSuite extends munit.FunSuite:
           Set(MediaRecord.Geography.Field("context"))
         )
         .left
-        .map(_.sentence),
+        .map(w => s"$w"),
       Left("its place id names another place on the map")
     )
     assertEquals(
@@ -172,7 +172,7 @@ class MediaPortalsSuite extends munit.FunSuite:
           Set(MediaRecord.Geography.Field("context"))
         )
         .left
-        .map(_.sentence),
+        .map(w => s"$w"),
       Left("its place id is ambiguous on the map")
     )
 
@@ -194,7 +194,7 @@ class MediaPortalsSuite extends munit.FunSuite:
       MediaMatch
         .withIds(rec(Nil, geo, None), petra, idsOnMap, withPetra, Set(MediaRecord.Geography.Field("context")))
         .left
-        .map(_.sentence),
+        .map(w => s"$w"),
       Left("no dates on the record")
     )
 
@@ -219,6 +219,6 @@ class MediaPortalsSuite extends munit.FunSuite:
       MediaMatch
         .withIds(rec(Nil, geo), petra, idsOnMap, twoNames, Set(MediaRecord.Geography.Field("context")))
         .left
-        .map(_.sentence),
+        .map(w => s"$w"),
       Left("its context name is ambiguous on the map")
     )

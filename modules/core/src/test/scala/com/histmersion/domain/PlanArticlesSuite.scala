@@ -14,6 +14,7 @@ import com.histmersion.domain.PlanArticles.Limits
 import com.histmersion.api.research.Article
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.automation.Goal
+import com.histmersion.api.research.Article.Plans
 
 /** propose-articles' code checks: the shape of each proposed article, then the seeding rules — a free slug, a filter
   * returning at least minSources, less than maxOverlap shared with any article of the area or with a proposal kept
@@ -26,7 +27,7 @@ class PlanArticlesSuite extends munit.FunSuite:
       topics: List[ArticleAnswer.Topics],
       title: ArticleAnswer.Title = ArticleAnswer.Title("T")
   ) =
-    ArticleAnswer(slug, title, None, None, topics, Nil, Problem.Unclassified(Legacy.Text("why")))
+    ArticleAnswer(slug, title, None, None, topics, Nil, Plans.ArticlePlan.Rationale("why"))
 
   private def slug(s: String) = ArticleAnswer.Slug(s)
   private def topics(ts: String*) = ts.toList.map(ArticleAnswer.Topics(_))
@@ -88,7 +89,7 @@ class PlanArticlesSuite extends munit.FunSuite:
       Article.Title(slug.value),
       Article.Kind.Wire("concept"),
       Article.Filter(topics = List(topic)),
-      Problem.Unclassified(Legacy.Text("w"))
+      Plans.ArticlePlan.Rationale("w")
     )
     val plan = verify(
       Goal.Slug("goal"),

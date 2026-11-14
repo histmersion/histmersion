@@ -1,7 +1,8 @@
 package com.histmersion
 package api.automation
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{Problem, Problems}
+import com.histmersion.util.problem.Problems.traverseAll
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.util.json.JsonCodec
@@ -16,6 +17,12 @@ import io.github.iltotore.iron.constraint.any.Pure
   * window plus its reset, so a plan is governed by floors rather than budgets.
   */
 object PlanQuota:
+
+  /** Why a plan's pool is blocked, a window is not usable or a reading is not taken: the narration of a decision (a
+    * provider's own refusal among them), not a failure of the request.
+    */
+  type Rationale = Rationale.T
+  object Rationale extends Newtype[String, Pure]
   type Now = Now.T
   object Now extends Newtype[Long, Pure]
   type PoolIdText = PoolIdText.T
@@ -138,21 +145,33 @@ object PlanQuota:
     val ByKindValue: Floor.type = Floor
 
     val Empty: Floors = Floors(Map.empty)
-    def parse(s: Wire): Either[Problem, Floors] =
+    def parse(s: Wire): Either[Problems, Floors] =
       val items = (s).value.split(',').toList.map(_.trim).filter(_.nonEmpty)
-      val parsed = items.map { i =>
-        i.indexOf('=') match
-          case -1 => Left(s"'$i' is not <window>=<percent>")
-          case n  =>
-            val (k, v) = (i.substring(0, n).trim, i.substring(n + 1).trim.stripSuffix("%").trim)
-            v.toIntOption
-              .filter(p => p >= 0 && p <= 100)
-              .toRight(s"'$i': a floor is a percentage 0-100")
-              .flatMap(p => Either.cond(k.nonEmpty && !k.exists(_.isWhitespace), k -> p, s"'$i' names no window"))
-      }
-      parsed.collect { case Left(m) => m } match
-        case Nil  => Right(Floors(parsed.collect { case Right((k, v)) => ByKindKey(k) -> Floor(v) }.toMap))
-        case errs => Left(Problem.Unclassified(Legacy.Text(errs.mkString("; "))))
+      items
+        .traverseAll { i =>
+          val at = Vector(Problem.Field(s"$i"))
+          i.indexOf('=') match
+            case -1 => Left(Problem.Invalid.Missing(Problem.Field("percent"), at))
+            case n  =>
+              val (k, v) = (i.substring(0, n).trim, i.substring(n + 1).trim.stripSuffix("%").trim)
+              val floor = v.toIntOption
+                .filter(p => p >= 0 && p <= 100)
+                .toRight(
+                  Problem.Invalid.OutOfRange(
+                    Problem.TypeName.of(Floor),
+                    Problem.Raw(s"$v"),
+                    Problem.Invalid.Bounds(Some(Problem.Raw("0")), Some(Problem.Raw("100"))),
+                    at
+                  )
+                )
+              val window = Either.cond(
+                k.nonEmpty && !k.exists(_.isWhitespace),
+                ByKindKey(k),
+                Problem.Invalid.Missing(Problem.Field("window"), at)
+              )
+              (window, floor).allOrProblems.map((key, percent) => key -> Floor(percent))
+        }
+        .map(pairs => Floors(pairs.toMap))
 
   final case class Rules(
       floors: Floors,
@@ -176,7 +195,7 @@ object PlanQuota:
       leftPct: WindowState.LeftPct,
       stale: WindowState.Stale,
       usable: WindowState.Usable,
-      why: Option[Problem]
+      why: Option[Rationale]
   )
 
   object WindowState:
@@ -190,7 +209,7 @@ object PlanQuota:
   enum Verdict derives CanEqual:
     case Usable(note: Option[Usable.Note])
 
-    case Blocked(reason: Problem, until: Option[Blocked.Until])
+    case Blocked(reason: Rationale, until: Option[Blocked.Until])
 
     def usable: Boolean = (this.isInstanceOf[Usable])
 
@@ -232,13 +251,13 @@ object PlanQuota:
       WindowStatus.LeftPct(left),
       WindowState.Stale(stale),
       WindowState.Usable(why.isEmpty),
-      (why).map(refactorValue4 => Problem.Unclassified(Legacy.Text(refactorValue4)))
+      why.map(w => Rationale(s"$w"))
     )
 
   def verdict(
       readings: List[Reading],
       held: PoolStatus.Held,
-      refusal: Option[(Problem, Option[Verdict.Blocked.Until])],
+      refusal: Option[(Rationale, Option[Verdict.Blocked.Until])],
       rules: Rules,
       now: VerdictNow,
       model: Option[PlanQuota.VerdictModel] = None
@@ -248,13 +267,13 @@ object PlanQuota:
     val earliest = blocking.flatMap(_.reading.resetsAt).minOption
     val v =
       if (held).value then
-        Verdict.Blocked(Problem.Unclassified(Legacy.Text("held: a person paused all agent use of this plan")), None)
+        Verdict.Blocked(Rationale("held: a person paused all agent use of this plan"), None)
       else
         refusal.filter(_._2.forall(_.value > now.value)) match
           case Some((why, until))        => Verdict.Blocked(why, until)
           case None if blocking.nonEmpty =>
             Verdict.Blocked(
-              Problem.Unclassified(Legacy.Text(blocking.flatMap(_.why).map(_.sentence).mkString("; "))),
+              Rationale(blocking.flatMap(_.why).mkString("; ")),
               earliest
             )
           case None if states.isEmpty =>
@@ -278,8 +297,8 @@ object PlanQuota:
 
   enum Login derives CanEqual:
     case Present(detail: Present.Detail)
-    case Missing(why: Problem)
-    case Unknown(why: Problem)
+    case Missing(why: Rationale)
+    case Unknown(why: Rationale)
 
   object Login:
     object Present:
@@ -311,7 +330,7 @@ object PlanQuota:
   def refreshNeed(
       readings: List[Reading],
       held: PoolStatus.Held,
-      refusal: Option[(Problem, Option[Verdict.Blocked.Until])],
+      refusal: Option[(Rationale, Option[Verdict.Blocked.Until])],
       rules: Rules,
       now: RefreshNeedNow,
       model: Option[PlanQuota.RefreshNeedModel] = None
@@ -343,14 +362,14 @@ object PlanQuota:
       minGapMs: PlanQuota.RefreshDecisionMinGapMs,
       now: RefreshDecisionNow,
       force: Boolean = (false)
-  ): Either[Problem, Option[RefreshNeed]] =
+  ): Either[Rationale, Option[RefreshNeed]] =
     login match
-      case _ if !(enabled)    => Left(Problem.Unclassified(Legacy.Text("refresh is off for this pool")))
-      case Login.Missing(why) => Left(Problem.Unclassified(Legacy.Text(s"no login: ${why.sentence}")))
+      case _ if !(enabled)    => Left(Rationale("refresh is off for this pool"))
+      case Login.Missing(why) => Left(Rationale(s"no login: $why"))
       case _ if (force)       => Right(need)
-      case _ if need.isEmpty  => Left(Problem.Unclassified(Legacy.Text("the reading decides by itself")))
+      case _ if need.isEmpty  => Left(Rationale("the reading decides by itself"))
       case _ if ((throttled(lastAttempt, minGapMs, now)) == (true)) =>
-        Left(Problem.Unclassified(Legacy.Text("a fresh reading was taken (or tried) less than stale-minutes ago")))
+        Left(Rationale("a fresh reading was taken (or tried) less than stale-minutes ago"))
       case _ => Right(need)
 
   final case class WindowStatus(
@@ -365,7 +384,7 @@ object PlanQuota:
       observedAt: WindowStatus.ObservedAt,
       ageSeconds: WindowStatus.AgeSeconds,
       source: WindowStatus.Source,
-      why: Option[Problem] = None
+      why: Option[Rationale] = None
   ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
@@ -400,7 +419,7 @@ object PlanQuota:
       floorsSource: PoolStatus.FloorsSource,
       held: PoolStatus.Held,
       usable: PoolStatus.Usable,
-      reason: Option[Problem],
+      reason: Option[Rationale],
       until: Option[PoolStatus.Until],
       maxCallsInFlight: PoolStatus.MaxCallsInFlight,
       windows: List[WindowStatus],
@@ -517,7 +536,7 @@ object PlanQuota:
     type Now = Now.T
     object Now extends Newtype[String, Pure]
 
-  final case class Cooldown(model: Cooldown.Model, until: Cooldown.Until, reason: Problem)
+  final case class Cooldown(model: Cooldown.Model, until: Cooldown.Until, reason: Rationale)
       derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
@@ -573,7 +592,7 @@ object PlanQuota:
 
   final case class GuardAnswer(
       allow: GuardAnswer.Allow,
-      reason: Option[Problem] = None,
+      reason: Option[Rationale] = None,
       resetsAt: Option[GuardAnswer.ResetsAt] = None
   ) derives JsonCodec,
         KindlingsSchema,

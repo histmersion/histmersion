@@ -25,6 +25,10 @@ import com.histmersion.domain.automation.Goal
   */
 object AcquisitionSweepRules:
 
+  /** Why a candidate belongs to the goal, in the ranking model's words: what it said, not a failure. */
+  type Rationale = Rationale.T
+  object Rationale extends Newtype[String, Pure]
+
   type Limit = Limit.T
   object Limit extends Newtype[Int, Pure]
   type Allowance = Allowance.T
@@ -92,7 +96,7 @@ object AcquisitionSweepRules:
     )
 
   /** The ranking model's answer: which candidates belong to the goal. */
-  final case class Pick(doi: Pick.DoiText, why: Problem) derives JsonCodec
+  final case class Pick(doi: Pick.DoiText, why: Rationale) derives JsonCodec
   object Pick:
     type DoiText = DoiText.T
     object DoiText extends Newtype[String, Pure]
@@ -118,7 +122,7 @@ object AcquisitionSweepRules:
       r: Ranking,
       offered: List[Candidate],
       last: LastAttempt
-  ): Either[List[Problem], (List[(Candidate, Problem)], List[Dropped])] =
+  ): Either[List[Problem], (List[(Candidate, Rationale)], List[Dropped])] =
     val byDoi = offered.map(c => c.doi -> c).toMap
     val parsed = r.picks.map(p => (p, Doi.normalize(p.doi.value).flatMap(byDoi.get)))
     val problems = parsed.collect { case (p, None) =>
@@ -126,7 +130,7 @@ object AcquisitionSweepRules:
     }
     val kept = parsed
       .collect { case (p, Some(c)) =>
-        (c, Problem.Unclassified(Legacy.Text(Option(p.why).map(_.sentence.trim).getOrElse(""))))
+        (c, Rationale(Option(p.why).fold("")(w => s"$w".trim)))
       }
       .distinctBy(_._1.doi)
     if problems.nonEmpty && !last.value then Left(problems)
@@ -168,11 +172,11 @@ object AcquisitionSweepRules:
   /** The acquisition item a picked candidate becomes (the DOI as a resolver URL, so
     * [[com.histmersion.domain.Scheduling.dois]] finds it).
     */
-  def acquireText(c: Candidate, goal: Goal.Slug, why: Problem): AcquireText =
+  def acquireText(c: Candidate, goal: Goal.Slug, why: Rationale): AcquireText =
     val who = c.authors.headOption.map(a => if c.authors.size > 1 then s"$a et al." else a.value)
     val head = List(who, c.year.map(y => s"($y)")).flatten.mkString(" ")
     val oa = if c.isOa.value then " (open access)" else ""
-    val reason = Option(why).map(_.sentence.trim).filter(_.nonEmpty).fold("")(w => s": $w")
+    val reason = Option(why).map(w => s"$w".trim).filter(_.nonEmpty).fold("")(w => s": $w")
     AcquireText(
       s"${if head.isEmpty then "" else s"$head. "}${c.title}. https://doi.org/${c.doi}$oa — for goal $goal$reason"
     )

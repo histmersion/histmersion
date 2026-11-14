@@ -42,7 +42,7 @@ object PlanArticles:
       query: Option[ArticleAnswer.Query] = None,
       topics: List[ArticleAnswer.Topics] = Nil,
       tags: List[ArticleAnswer.Tags] = Nil,
-      why: Problem = Problem.Unclassified(Legacy.Text(""))
+      why: ArticlePlan.Rationale = ArticlePlan.Rationale("")
   ) derives JsonCodec
   object ArticleAnswer:
     type Slug = Slug.T
@@ -102,7 +102,7 @@ object PlanArticles:
       title: Article.Title,
       kind: Article.Kind.Wire,
       filter: Article.Filter,
-      why: Problem
+      why: ArticlePlan.Rationale
   )
 
   /** The share of `mine` that `theirs` holds already (0 when `mine` is empty). */
@@ -151,7 +151,7 @@ object PlanArticles:
                       Article.Title(x.title.value.trim),
                       k,
                       f,
-                      Problem.Unclassified(Legacy.Text(Option(x.why).map(_.sentence.trim).getOrElse("")))
+                      ArticlePlan.Rationale(Option(x.why).fold("")(w => s"$w".trim))
                     )
       }
       .toList

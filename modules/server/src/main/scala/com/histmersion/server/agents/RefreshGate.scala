@@ -1,6 +1,5 @@
 package com.histmersion
 package server.agents
-import com.histmersion.util.problem.Problem
 
 import com.histmersion.api.automation.PlanQuota.*
 
@@ -19,9 +18,9 @@ final class RefreshGate:
   /** Run `body` alone for `p`, given the pool's last attempt. A `Right` is an attempt (successful or not), stamped `at`
     * for the throttle; a `Left` is "not taken", and leaves the stamp alone.
     */
-  def exclusive[A](p: PoolId, at: => Long)(
-      body: Option[RefreshGate.Instant] => Either[Problem, A]
-  ): Either[Problem, A] =
+  def exclusive[E, A](p: PoolId, at: => Long)(
+      body: Option[RefreshGate.Instant] => Either[E, A]
+  ): Either[E, A] =
     val lock = locks.computeIfAbsent(p, _ => ReentrantLock())
     lock.lockInterruptibly()
     try

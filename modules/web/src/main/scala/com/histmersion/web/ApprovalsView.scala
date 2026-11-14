@@ -214,7 +214,7 @@ object ApprovalsView:
               a(href := s"https://doi.org/${w.doi}", target := "_blank", rel := "noopener", w.doi.value),
               if w.inCorpus.value then span(" — in the corpus as ", w.citekey.fold(span("?"))(ck => SourceLink(ck)))
               else span(cls := "muted", if w.isOa.value then " — to acquire (open access)" else " — to acquire"),
-              Option(w.why.sentence).filter(_.nonEmpty).map(y => div(cls := "muted", y))
+              Option(s"${w.why}").filter(_.nonEmpty).map(y => div(cls := "muted", y))
             )
           })
         )

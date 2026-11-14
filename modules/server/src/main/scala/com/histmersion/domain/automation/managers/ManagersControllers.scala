@@ -45,6 +45,7 @@ import com.histmersion.domain.automation.agents.RunService
 import com.histmersion.domain.research.Slug
 import com.histmersion.domain.automation.ScheduleKind
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.automation.Managers
 
 /** The ONE implementation of the process-manager operations (docs/research-process-managers.md §5): REST
   * ([[AgentsRoutes]]), the MCP tool `manager` ([[AgentsTools]]) and the CLI (over REST) call these. Reading and
@@ -596,7 +597,7 @@ final class ManagersControllers(
           val h = Hold(
             in.until.map(_.value.trim).filter(_.nonEmpty).map(Hold.Until(_)),
             in.untilSource.map(_.value.trim).filter(_.nonEmpty).map(Hold.UntilSource(_)),
-            Problem.Unclassified(Legacy.Text(in.reason.fold("held by a person")(_.sentence)))
+            Managers.Rationale(in.reason.fold("held by a person")(w => s"$w"))
           )
           for
             _ <- h.until.fold[Either[Api.Error, Unit]](Right(()))(u =>
@@ -622,7 +623,7 @@ final class ManagersControllers(
             s"${i.target}: held" +
               h.until.fold("")(u => s" until $u") + h.untilSource.fold("")(s =>
                 s" until $s exists"
-              ) + s" — ${h.reason.sentence}"
+              ) + s" — ${h.reason}"
           )
         case "release" if i.hold.exists(_.focus.isDefined) && agents.focus.inForce =>
           val g = i.hold.flatMap(_.focus).fold("")(_.value)
@@ -653,8 +654,8 @@ final class ManagersControllers(
           // an active item's run is cancelled first; the item is then stopped as skipped
           i.runId.filter(_ => i.status == ItemStatus.Active.wire).foreach(r => agents.engine.cancel(runIdOf(r)))
           val why = in.reason
-            .filter(_.sentence.trim.nonEmpty)
-            .fold("skipped by a person")(r => s"skipped by a person: ${r.sentence}")
+            .filter(w => s"$w".trim.nonEmpty)
+            .fold("skipped by a person")(r => s"skipped by a person: ${r}")
           Either
             .cond(
               transact(ds)(
@@ -944,7 +945,7 @@ final class ManagersControllers(
         val hold = Hold(
           e.until.map(u => Hold.Until(u.value)),
           e.untilSource.map(u => Hold.UntilSource(u.value)),
-          Problem.Unclassified(Legacy.Text(s"hint #$hintId: ${text.value.take(200)}")),
+          Managers.Rationale(s"hint #$hintId: ${text.value.take(200)}"),
           Some(Hold.Hint(hintId.value))
         )
         val added = named.filterNot(t => open.exists(_.target == t)).flatMap { t =>

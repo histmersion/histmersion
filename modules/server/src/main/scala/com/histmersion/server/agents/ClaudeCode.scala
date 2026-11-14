@@ -225,7 +225,7 @@ object ClaudeCode:
             .map(PlanPools.claudeReadings(_, PlanQuota.Source.Run, PlanQuota.Now(now)))
             .getOrElse(Nil)
           pools.record(PlanQuota.PoolId.ClaudePlan, rs)
-          pools.blocked(PlanQuota.PoolId.ClaudePlan, None).map(b => CliProcess.Run.Stopped(b._1.sentence))
+          pools.blocked(PlanQuota.PoolId.ClaudePlan, None).map(b => CliProcess.Run.Stopped(s"${b._1}"))
         }
 
   /** A turn the quota-guard mod aborted: not an error result, but `terminal_reason: "aborted_streaming"` with an empty

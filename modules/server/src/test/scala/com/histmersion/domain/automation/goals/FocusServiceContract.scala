@@ -10,6 +10,7 @@ import com.histmersion.domain.automation.{EngineStores, EngineStoreSuite}
 
 import java.time.Instant
 import com.histmersion.domain.automation.Goal
+import com.histmersion.domain.GoalFocus
 
 /** The contract the focus's reads and records keep: every goal with what the focus recorded; the goals of linked
   * sources and articles; each goal's last stop and its sources.
@@ -38,20 +39,20 @@ abstract class FocusServiceContract extends EngineStoreSuite:
       f(s).goals().map(g => (g.slug, g.active, g.pinned, g.priority, g.parent)),
       List(("zz-a", false, false, 0, None), ("zz-b", false, false, 0, Some("zz-a")))
     )
-    f(s).joined(Goal.Slug("zz-a"), Problem.Unclassified(Legacy.Text("pinned")), t)
+    f(s).joined(Goal.Slug("zz-a"), GoalFocus.Rationale("pinned"), t)
     assert(f(s).pin(Goal.Slug("zz-a"), pinned = FocusRepo.GoalRow.Pinned(true)))
     assert(f(s).priority(Goal.Slug("zz-b"), FocusRepo.GoalRow.Priority(5)))
     assert(!f(s).pin(Goal.Slug("zz-none"), pinned = FocusRepo.GoalRow.Pinned(true)))
     assert(!f(s).priority(Goal.Slug("zz-none"), FocusRepo.GoalRow.Priority(1)))
     val Some(a) = f(s).goals().find(_.slug.value == "zz-a"): @unchecked
     assertEquals(
-      (a.active, a.pinned, a.since, a.why.map(_.sentence)),
+      (a.active, a.pinned, a.since, a.why.map(w => s"$w")),
       (true, true, Some("2026-11-03T06:00:00Z"), Some("pinned"))
     )
-    f(s).left(Goal.Slug("zz-a"), Problem.Unclassified(Legacy.Text("done")), t.plusSeconds(60))
+    f(s).left(Goal.Slug("zz-a"), GoalFocus.Rationale("done"), t.plusSeconds(60))
     val Some(a2) = f(s).goals().find(_.slug.value == "zz-a"): @unchecked
     assertEquals(
-      (a2.active, a2.leftAt, a2.leftWhy.map(_.sentence), a2.pinned),
+      (a2.active, a2.leftAt, a2.leftWhy.map(w => s"$w"), a2.pinned),
       (false, Some("2026-11-03T06:01:00Z"), Some("done"), true)
     )
     assertEquals(f(s).goals().find(_.slug.value == "zz-b").map(_.priority), Some(5))
@@ -119,7 +120,7 @@ abstract class FocusServiceContract extends EngineStoreSuite:
       reopen = false
     )
     assert(s.managers.settle(i1, ItemStatus.Failed, ManagerItem.Outcome("the model gave up"), List(ItemStatus.Pending)))
-    assertEquals(f(s).lastStops().view.mapValues(_.sentence).toMap, Map("zz-a" -> "the model gave up"))
+    assertEquals(f(s).lastStops().view.mapValues(w => s"$w").toMap, Map("zz-a" -> "the model gave up"))
     val (i2, _) = s.managers.upsert(
       ManagerInfo.Id("seed:zz-a"),
       ManagerItem.Kind(PlanGoalItem),

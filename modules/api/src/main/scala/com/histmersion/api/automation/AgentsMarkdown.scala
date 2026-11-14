@@ -107,12 +107,12 @@ object AgentsMarkdown:
   def pool(p: PlanQuota.PoolStatus): String =
     val state =
       if !((p.available) == PlanQuota.PoolStatus.Available(true)) then
-        s"**${p.reason.map(_.sentence).getOrElse("unavailable: no login")}**"
+        s"**${p.reason.map(r => s"$r").getOrElse("unavailable: no login")}**"
       else if (p.held) == PlanQuota.PoolStatus.Held(true) then "**held** — no agent use until released"
       else if (p.usable) == PlanQuota.PoolStatus.Usable(true) then
-        "usable" + p.reason.fold("")(r => s" (${r.sentence})")
+        "usable" + p.reason.fold("")(r => s" (${r})")
       else
-        s"**paused** — ${p.reason.map(_.sentence).getOrElse("below its floor")}" + p.until.fold("")(u =>
+        s"**paused** — ${p.reason.map(r => s"$r").getOrElse("below its floor")}" + p.until.fold("")(u =>
           s"; frees at $u"
         )
     val windows =
@@ -172,7 +172,7 @@ object AgentsMarkdown:
       else
         "\n\n## Cooling down\n\n" + q.cooldowns
           .map(c =>
-            s"- `${c.model}` — ${c.reason.sentence}; skipped until ${c.until} " +
+            s"- `${c.model}` — ${c.reason}; skipped until ${c.until} " +
               "unless a reading of its plan taken since says it is usable (`histmersion agent quota refresh <pool>`)"
           )
           .mkString("\n")
@@ -422,7 +422,7 @@ object AgentsMarkdown:
       else if (w.isOa) == Goal.Plans.PlannedWork.IsOa(true) then "to acquire (open access)"
       else "to acquire"
       s"- ${w.title.getOrElse(w.doi)} (${w.year.fold("n.d.")(_.toString)}) doi:${w.doi} — $where${
-          if w.why.sentence.isEmpty then "" else s": ${w.why.sentence}"
+          if s"${w.why}".isEmpty then "" else s": ${w.why}"
         }"
     }
     val dropped = p.dropped.map(d => s"- dropped: $d")

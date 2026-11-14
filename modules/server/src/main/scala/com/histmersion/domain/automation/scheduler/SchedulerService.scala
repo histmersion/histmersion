@@ -407,7 +407,7 @@ final class SchedulerService(
           Started.JobType(x.c.jobType.wire.value),
           Started.Target(x.c.target.value),
           x.c.goal.map(g => Goal.Slug(g.value)),
-          Problem.Unclassified(Legacy.Text(why.value))
+          AgentScheduler.Rationale(why.value)
         )
       ),
       waits.take(shown).map(wire),
@@ -441,13 +441,13 @@ final class SchedulerService(
       Waiting.Priority(sc.effective.value),
       Waiting.WaitedMinutes(sc.waitedMinutes.value),
       Waiting.Code(w.code.value),
-      Problem.Unclassified(Legacy.Text(w.why.render)),
+      AgentScheduler.Rationale(w.why.render),
       w.behind.map(b => Waiting.Behind(b.value)),
       Waiting.Position(w.position.value)
     )
 
   private def say(base: WhyInfo, code: String, why: String): WhyInfo =
-    base.modify(_.code).setTo(WhyInfo.Code(code)).modify(_.why).setTo(Problem.Unclassified(Legacy.Text(why)))
+    base.modify(_.code).setTo(WhyInfo.Code(code)).modify(_.why).setTo(AgentScheduler.Rationale(why))
 
   /** Why one item (its id, or a target among the open items) is where it is. */
   def why(ref: ManagerItem.Ref, now: Instant = Instant.now(agents.clock)): Either[Api.Error, WhyInfo] =
@@ -514,7 +514,7 @@ final class SchedulerService(
                             case None =>
                               base
                                 .modify(_.why)
-                                .setTo(Problem.Unclassified(Legacy.Text("not looked at yet: the next pass decides it")))
+                                .setTo(AgentScheduler.Rationale("not looked at yet: the next pass decides it"))
           case Some(ItemStatus.Held) =>
             i.hold match
               case Some(hd) if hd.untilApproval.isDefined =>
@@ -527,7 +527,7 @@ final class SchedulerService(
                 say(
                   base,
                   AgentScheduler.Code.Held,
-                  s"held: ${hd.reason.sentence}" +
+                  s"held: ${hd.reason}" +
                     hd.until.fold("")(u => s" (until $u)") + hd.untilSource
                       .fold("")(u => s" (until $u is in the corpus)")
                 )
@@ -614,7 +614,7 @@ final class SchedulerService(
         paused.getOrElse(ManagerLight.Goal(g.slug.value), Nil).map(id => Stalls.Facts.Paused(id.value)),
         Stalls.Facts.Draining(draining),
         waits.getOrElse(Some(Candidate.Goal(g.slug.value)), Nil),
-        stops.get(slug).map(w => Stalls.Facts.LastStop(w.sentence)),
+        stops.get(slug).map(w => Stalls.Facts.LastStop(s"$w")),
         Stalls.Facts.Sources(sources.get(slug).fold(0)(_.value)),
         Stalls.Facts.NoCandidates(sweeps.get(slug).exists(_.value.contains("no new candidates"))),
         Stalls.Facts.Open(

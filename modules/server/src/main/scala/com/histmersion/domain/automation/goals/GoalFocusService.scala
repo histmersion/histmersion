@@ -19,7 +19,7 @@ import com.histmersion.api.automation.Autopilot.*
 import com.histmersion.domain.GoalFocus.Facts
 import com.histmersion.domain.GoalFocus.Plan
 import com.histmersion.domain.GoalFocus.Work
-import com.histmersion.api.automation.Manager
+import com.histmersion.api.automation.{Autopilot, Manager, Managers}
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.api.automation.Queue.QueueAdd
 
@@ -117,7 +117,7 @@ final class GoalFocusService(
       facts: List[Facts],
       work: List[FocusRepo.WorkRow],
       titles: Map[Goal.Slug, FocusRepo.GoalRow.Title],
-      left: Map[Goal.Slug, (Option[FocusRepo.GoalRow.LeftAt], Option[Problem])],
+      left: Map[Goal.Slug, (Option[FocusRepo.GoalRow.LeftAt], Option[GoalFocus.Rationale])],
       openPlans: RowCount
   )
 
@@ -156,7 +156,7 @@ final class GoalFocusService(
       agents.workflows.linked(),
       agents.workflows.finished(),
       Transactor(ds).read(FocusRepo.compileOpen).map((g, n) => g -> Facts.CompileOpen(n.value)),
-      agents.focusStore.lastStops().map((g, why) => g -> Facts.LastStop(why.sentence))
+      agents.focusStore.lastStops().map((g, why) => g -> Facts.LastStop(s"$why"))
     )
     Read(
       facts,
@@ -188,7 +188,7 @@ final class GoalFocusService(
       if released.value + cleared.value == 0 then Nil
       else
         val line =
-          s"autopilot focus: not in force (${notInForce.sentence}): ${count(released.value, "item")} released, " +
+          s"autopilot focus: not in force ($notInForce): ${count(released.value, "item")} released, " +
             s"${count(cleared.value, "goal")} no longer active"
         log(line)
         List(line)
@@ -201,8 +201,8 @@ final class GoalFocusService(
       if changes.nonEmpty then log(s"autopilot focus: ${changes.mkString("; ")}".take(1000))
       changes
 
-  private def notInForce: Problem =
-    Problem.Unclassified(Legacy.Text("the central scheduler admits the work (agents.scheduler.strategy)"))
+  private def notInForce: GoalFocus.Rationale =
+    GoalFocus.Rationale("the central scheduler admits the work (agents.scheduler.strategy)")
 
   /** The goal's manager an event about it goes to: its seeding manager, else its watcher. */
   private def managerOf(goal: Goal.Slug): Option[ManagerInfo.Id] =
@@ -218,13 +218,13 @@ final class GoalFocusService(
   private def record(plan: Plan, r: Read, now: Instant): List[String] =
     val joined = plan.joined.flatMap(g => plan.active.find(_.slug == g)).map { p =>
       agents.focusStore.joined(p.slug, p.why, now)
-      event(p.slug, s"focus: active — ${p.why.sentence}")
+      event(p.slug, s"focus: active — ${p.why}")
       s"+${p.slug.value} (${p.stage.wire.value})"
     }
     val left = plan.left.map { (g, why) =>
       agents.focusStore.left(g, why, now)
-      event(g, s"focus: no longer active — ${why.sentence}")
-      s"-${g.value} (${why.sentence})"
+      event(g, s"focus: no longer active — ${why}")
+      s"-${g.value} (${why})"
     }
     joined ++ left
 
@@ -246,7 +246,7 @@ final class GoalFocusService(
       hs.hold.filter((id, goal, why) =>
         agents.managerStore.focusHold(
           ManagerItem.Id(id.value),
-          Hold(reason = why, focus = Some(Hold.Focus(goal.value)))
+          Hold(reason = Managers.Rationale(s"$why"), focus = Some(Hold.Focus(goal.value)))
         )
       )
     val released =
@@ -254,7 +254,7 @@ final class GoalFocusService(
       else agents.managerStore.focusRelease(hs.release.map(id => ManagerItem.Id(id.value))).value
     val heldBy = held.groupBy((id, _, _) => mgr.getOrElse(id, ""))
     heldBy.toList.sortBy(_._1).foreach { (m, xs) =>
-      emit(ManagerInfo.Id(m), Feed.Held, s"focus: ${count(xs.size, "item")} held — ${xs.head._3.sentence}")
+      emit(ManagerInfo.Id(m), Feed.Held, s"focus: ${count(xs.size, "item")} held — ${xs.head._3}")
     }
     hs.release.groupBy(id => mgr.getOrElse(id, "")).toList.sortBy(_._1).foreach { (m, xs) =>
       emit(ManagerInfo.Id(m), Feed.Held, s"focus: ${count(xs.size, "item")} released — its goal is active")
@@ -363,7 +363,7 @@ final class GoalFocusService(
         FocusGoal.Title(r.titles.get(p.slug).fold("")(_.value)),
         FocusGoal.Status(f.fold("")(_.status.value)),
         FocusGoal.Stage(p.stage.wire.value),
-        p.why,
+        Autopilot.Rationale(s"${p.why}"),
         FocusGoal.Pinned(p.pinned.value),
         FocusGoal.Priority(f.fold(0)(_.priority.value)),
         p.since.map(s => FocusGoal.Since(s.value)),
@@ -399,7 +399,7 @@ final class GoalFocusService(
         FocusWaiting(
           FocusWaiting.Slug(s.value),
           FocusWaiting.Code(c.value),
-          w,
+          Autopilot.Rationale(s"$w"),
           FocusWaiting.Pinned(byGoal.get(s).exists(_.pinned.value))
         )
       ),

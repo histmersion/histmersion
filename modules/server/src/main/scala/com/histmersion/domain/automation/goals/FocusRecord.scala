@@ -1,6 +1,6 @@
 package com.histmersion
 package domain.automation.goals
-import com.histmersion.util.problem.Problem
+import com.histmersion.domain.GoalFocus
 
 import java.time.Instant
 import io.github.iltotore.iron.constraint.any.Pure
@@ -11,9 +11,9 @@ final case class FocusRecord(
     pinned: FocusRecord.Pinned,
     priority: FocusRecord.Priority,
     since: Option[Instant],
-    why: Option[Problem],
+    why: Option[GoalFocus.Rationale],
     leftAt: Option[Instant],
-    leftWhy: Option[Problem]
+    leftWhy: Option[GoalFocus.Rationale]
 )
 
 object FocusRecord:

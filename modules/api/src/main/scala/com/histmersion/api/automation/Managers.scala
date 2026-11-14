@@ -19,6 +19,10 @@ import com.histmersion.api.library.AuthorName
 import com.histmersion.api.library.Source
 
 object Managers:
+  /** Why a manager proposes, holds or changes an item: the narration of a decision, not a failure. */
+  type Rationale = Rationale.T
+  object Rationale extends Newtype[String, Pure]
+
   object Usd:
     type Amount = Amount.T
     object Amount extends Newtype[Double, Pure]
@@ -163,7 +167,7 @@ object Managers:
       title: Article.Title,
       kind: Article.Kind.Wire,
       filter: Article.Filter,
-      why: Problem = Problem.Unclassified(Legacy.Text(""))
+      why: Rationale = Rationale("")
   ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
@@ -523,7 +527,7 @@ object Managers:
   final case class Hold(
       until: Option[Hold.Until] = None,
       untilSource: Option[Hold.UntilSource] = None,
-      reason: Problem = Problem.Unclassified(Legacy.Text("")),
+      reason: Rationale = Rationale(""),
       hint: Option[Hold.Hint] = None,
       untilApproval: Option[Hold.UntilApproval] = None,
       focus: Option[Hold.Focus] = None
@@ -601,7 +605,7 @@ object Managers:
       authors: List[AuthorName] = Nil,
       venue: Option[Source.Venue] = None,
       goals: List[Goal.Slug] = Nil,
-      why: Problem = Problem.Unclassified(Legacy.Text("")),
+      why: Rationale = Rationale(""),
       foundBy: Option[OaWork.FoundBy] = None,
       acquireText: Option[OaWork.AcquireText] = None
   ) derives JsonCodec,
@@ -710,7 +714,7 @@ object Managers:
       text: HintProposal.Text,
       effect: HintEffect,
       by: HintProposal.By = HintProposal.By(""),
-      why: Problem = Problem.Unclassified(Legacy.Text(""))
+      why: Rationale = Rationale("")
   ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
@@ -855,7 +859,7 @@ object Managers:
       priority: Option[ItemPatch.Priority] = None,
       until: Option[ItemPatch.Until] = None,
       untilSource: Option[ItemPatch.UntilSource] = None,
-      reason: Option[Problem] = None
+      reason: Option[Rationale] = None
   ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema

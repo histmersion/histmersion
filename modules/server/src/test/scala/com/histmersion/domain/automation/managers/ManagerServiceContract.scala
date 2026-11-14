@@ -12,6 +12,7 @@ import java.time.Instant
 import com.histmersion.domain.automation.Goal
 import com.histmersion.util.jobs.{Job, RunRow}
 import com.histmersion.domain.library.Doi
+import com.histmersion.api.automation.Managers
 
 /** The contract the managers keep: made once, their settings; items added once and brought back, held and released (for
   * a person, for the focus), settled and dispatched; events; the reads over every manager at once.
@@ -121,7 +122,7 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
       m(s).itemFor(ManagerInfo.Id("review"), ManagerItem.Kind("article-review"), ManagerItem.Target("zz-b")).map(_.id),
       Some(b)
     )
-    assert(m(s).hold(a, Hold(reason = Problem.Unclassified(Legacy.Text("a person")))))
+    assert(m(s).hold(a, Hold(reason = Managers.Rationale("a person"))))
     assertEquals(m(s).forPerson(), 1)
     assert(m(s).release(a))
     assert(!m(s).release(a), "not held any more")
@@ -269,17 +270,17 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
         ._1
     )
     assert(
-      m(s).focusHold(ids(0), Hold(reason = Problem.Unclassified(Legacy.Text("focus")), focus = Some(Hold.Focus("zz"))))
+      m(s).focusHold(ids(0), Hold(reason = Managers.Rationale("focus"), focus = Some(Hold.Focus("zz"))))
     )
     assert(
-      m(s).focusHold(ids(1), Hold(reason = Problem.Unclassified(Legacy.Text("focus")), focus = Some(Hold.Focus("zz"))))
+      m(s).focusHold(ids(1), Hold(reason = Managers.Rationale("focus"), focus = Some(Hold.Focus("zz"))))
     )
     assert(
       !m(s)
-        .focusHold(ids(1), Hold(reason = Problem.Unclassified(Legacy.Text("again")), focus = Some(Hold.Focus("zz")))),
+        .focusHold(ids(1), Hold(reason = Managers.Rationale("again"), focus = Some(Hold.Focus("zz")))),
       "not pending"
     )
-    assert(m(s).hold(ids(2), Hold(reason = Problem.Unclassified(Legacy.Text("a person")))))
+    assert(m(s).hold(ids(2), Hold(reason = Managers.Rationale("a person"))))
     assertEquals(m(s).focusHeldCount(), 2)
     assertEquals(m(s).forPerson(), 1, "the focus's holds wait for nobody")
     assertEquals(
@@ -429,7 +430,7 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
             reopen = false
           )
           ._1,
-        Hold(reason = Problem.Unclassified(Legacy.Text("p")))
+        Hold(reason = Managers.Rationale("p"))
       )
     )
     assertEquals(m(s).personHeldByGoal(), Map("zz-g" -> 1))

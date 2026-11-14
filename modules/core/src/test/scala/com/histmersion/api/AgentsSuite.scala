@@ -272,7 +272,7 @@ class AgentsSuite extends munit.FunSuite:
           Some(Year(2020)),
           citekey = Some(Citekey("x2020_y")),
           inCorpus = PlannedWork.InCorpus(true),
-          why = Problem.Unclassified(Legacy.Text("core"))
+          why = Goal.Rationale("core")
         )
       ),
       List(Plan.Dropped("10.1000/z: not verified upstream"))

@@ -63,7 +63,7 @@ class MediaCollectionsSuite extends munit.FunSuite:
       Right("excavation = Mykénai; 1400–1200 BCE within 1600–1100 BCE")
     )
     assertEquals(
-      MediaMatch.museum(r, greece, onMap).left.map(_.sentence),
+      MediaMatch.museum(r, greece, onMap).left.map(w => s"$w"),
       Left("names another place on the map"),
       "an object from Mycenae is not filed under Greece too"
     )
@@ -75,11 +75,11 @@ class MediaCollectionsSuite extends munit.FunSuite:
 
   test("museum rule: uncertain and ambiguous values, missing or disjoint dates are never matched"):
     assertEquals(
-      MediaMatch.museum(rec(List("culture" -> "Mycenae ?")), mycenae, onMap).left.map(_.sentence),
+      MediaMatch.museum(rec(List("culture" -> "Mycenae ?")), mycenae, onMap).left.map(w => s"$w"),
       Left("no place on the record")
     )
     assertEquals(
-      MediaMatch.museum(rec(List("culture" -> "probably Mycenae")), mycenae, onMap).left.map(_.sentence),
+      MediaMatch.museum(rec(List("culture" -> "probably Mycenae")), mycenae, onMap).left.map(w => s"$w"),
       Left("no place on the record")
     )
     val thebes = MediaMatch.PlaceInfo(
@@ -89,18 +89,18 @@ class MediaCollectionsSuite extends munit.FunSuite:
       DeepTime.span(DeepTime.SignedYear(-1600L), DeepTime.SignedYear(-1100L))
     )
     assertEquals(
-      MediaMatch.museum(rec(List("city" -> "Thebes")), thebes, onMap).left.map(_.sentence),
+      MediaMatch.museum(rec(List("city" -> "Thebes")), thebes, onMap).left.map(w => s"$w"),
       Left("its place name is ambiguous on the map")
     )
     assertEquals(
-      MediaMatch.museum(rec(List("excavation" -> "Mycenae"), None), mycenae, onMap).left.map(_.sentence),
+      MediaMatch.museum(rec(List("excavation" -> "Mycenae"), None), mycenae, onMap).left.map(w => s"$w"),
       Left("no dates on the record")
     )
     assertEquals(
       MediaMatch
         .museum(rec(List("excavation" -> "Mycenae")), mycenae.modify(_.period).setTo(None), onMap)
         .left
-        .map(_.sentence),
+        .map(w => s"$w"),
       Left("the place has no period to compare")
     )
     assertEquals(
@@ -111,11 +111,11 @@ class MediaCollectionsSuite extends munit.FunSuite:
           onMap
         )
         .left
-        .map(_.sentence),
+        .map(w => s"$w"),
       Left("its dates do not overlap the place's")
     )
     assertEquals(
-      MediaMatch.museum(rec(List("excavation" -> "Mycenae, Tomb 5")), mycenae, onMap).left.map(_.sentence),
+      MediaMatch.museum(rec(List("excavation" -> "Mycenae, Tomb 5")), mycenae, onMap).left.map(w => s"$w"),
       Left("its place is not on the map"),
       "whole value against whole name: never a substring"
     )
@@ -136,7 +136,7 @@ class MediaCollectionsSuite extends munit.FunSuite:
           Year(1928)
         )
         .left
-        .map(_.sentence),
+        .map(w => s"$w"),
       Left("made after 1928")
     )
     assertEquals(
@@ -153,7 +153,7 @@ class MediaCollectionsSuite extends munit.FunSuite:
           Year(1928)
         )
         .left
-        .map(_.sentence),
+        .map(w => s"$w"),
       Left("its place name is ambiguous on the map")
     )
 

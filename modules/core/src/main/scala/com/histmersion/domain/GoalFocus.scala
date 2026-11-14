@@ -1,8 +1,6 @@
 package com.histmersion
 package domain
 
-import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.Plural
@@ -172,11 +170,15 @@ object GoalFocus:
     type OpenPersonPlans = OpenPersonPlans.T
     object OpenPersonPlans extends Newtype[Int, Pure]
 
+  /** Why a goal is where it is, or why an item waits: the narration of a decision that succeeded, not a failure. */
+  type Rationale = Rationale.T
+  object Rationale extends Newtype[String, Pure]
+
   /** Where a goal stands: finished, a candidate at a stage, or waiting (a code and why). */
   enum Fit derives CanEqual:
     case Finished
     case Candidate(stage: Stage)
-    case Waits(code: Fit.Waits.Code, why: Problem)
+    case Waits(code: Fit.Waits.Code, why: Rationale)
 
   object Fit:
     object Waits:
@@ -195,7 +197,7 @@ object GoalFocus:
   final case class Pick(
       slug: Goal.Slug,
       stage: Stage,
-      why: Problem,
+      why: Rationale,
       pinned: Facts.Pinned = Facts.Pinned(false),
       since: Option[Facts.Since] = None
   )
@@ -207,8 +209,8 @@ object GoalFocus:
       active: List[Pick] = Nil,
       queue: List[Pick] = Nil,
       joined: List[Goal.Slug] = Nil,
-      left: List[(Goal.Slug, Problem)] = Nil,
-      waiting: List[(Goal.Slug, Fit.Waits.Code, Problem)] = Nil
+      left: List[(Goal.Slug, Rationale)] = Nil,
+      waiting: List[(Goal.Slug, Fit.Waits.Code, Rationale)] = Nil
   ):
     lazy val activeSet: Set[Goal.Slug] = active.map(_.slug).toSet
 
@@ -280,21 +282,17 @@ object GoalFocus:
     else Stage.Gathering
 
   /** The stage in words, with the numbers behind it. */
-  def stageWhy(f: Facts, st: Stage, minSources: Settings.MinSources): Problem = st match
+  def stageWhy(f: Facts, st: Stage, minSources: Settings.MinSources): Rationale = st match
     case Stage.Reviewing =>
-      Problem.Unclassified(
-        Legacy.Text(s"${f.unreviewed} of ${counted(f.articles.value, "article")} still to pass review")
-      )
+      Rationale(s"${f.unreviewed} of ${counted(f.articles.value, "article")} still to pass review")
     case Stage.Compiling =>
-      Problem.Unclassified(Legacy.Text(s"${counted(f.compileOpen.value, "approved article")} to compile"))
+      Rationale(s"${counted(f.compileOpen.value, "approved article")} to compile")
     case Stage.Ready =>
-      Problem.Unclassified(
-        Legacy.Text(
+      Rationale(
           s"${counted(f.sources.value, "source")} (at least ${math.max(1, minSources.value)}), no article yet"
         )
-      )
     case Stage.Gathering =>
-      Problem.Unclassified(Legacy.Text(s"${counted(f.sources.value, "source")}: still gathering its plan and sources"))
+      Rationale(s"${counted(f.sources.value, "source")}: still gathering its plan and sources")
 
   /** Where one goal stands now. A parent with unfinished sub-goals counts only its plan; a goal whose model-using items
     * all wait for a person (an approval only a person decides, or a person's hold), or that has none left (stopped:
@@ -311,23 +309,19 @@ object GoalFocus:
       if runnable.isEmpty && open.nonEmpty then
         Fit.Waits(
           Code.Children,
-          Problem.Unclassified(
-            Legacy.Text(s"waits for its ${counted(open.size, "unfinished sub-goal")} before its own articles")
-          )
+          Rationale(s"waits for its ${counted(open.size, "unfinished sub-goal")} before its own articles")
         )
       else if f.work.isEmpty then
         f.lastStop match
           case Some(o) =>
             Fit.Waits(
               Code.Stuck,
-              Problem.Unclassified(Legacy.Text(s"stuck: its last item stopped — ${o.value.take(300)}"))
+              Rationale(s"stuck: its last item stopped — ${o.value.take(300)}")
             )
           case None =>
             Fit.Waits(
               Code.Idle,
-              Problem.Unclassified(
-                Legacy.Text("idle: nothing for a model to do until its cron fires or new sources arrive")
-              )
+              Rationale("idle: nothing for a model to do until its cron fires or new sources arrive")
             )
       else if runnable.isEmpty then
         val ids = (allowed ++ allowed
@@ -335,19 +329,17 @@ object GoalFocus:
         if ids.nonEmpty then
           Fit.Waits(
             Code.Person,
-            Problem.Unclassified(Legacy.Text(s"waits for a person: ${ids.map(i => s"approval #$i").mkString(", ")}"))
+            Rationale(s"waits for a person: ${ids.map(i => s"approval #$i").mkString(", ")}")
           )
-        else Fit.Waits(Code.Held, Problem.Unclassified(Legacy.Text("its items are held by a person")))
+        else Fit.Waits(Code.Held, Rationale("its items are held by a person"))
       else if !f.active.value && !f.pinned.value && s.plansByPerson.value && s.max.value > 0 && s.openPersonPlans.value >= s.max.value &&
         runnable.forall(w => w.kind.value == PlanGoalItem && w.status == ItemStatus.Pending.wire)
       then
         Fit.Waits(
           Code.Plans,
-          Problem.Unclassified(
-            Legacy.Text(
+          Rationale(
               s"its next step is a goal plan, and ${counted(s.openPersonPlans.value, "goal plan")} already wait for a person"
             )
-          )
         )
       else Fit.Candidate(stage(f, s.minSources))
 
@@ -383,19 +375,17 @@ object GoalFocus:
   private def key(f: Facts, st: Stage, k: Int): Key =
     (st.rank.value, k, -f.priority.value, -f.sources.value, f.createdAt.value, f.slug.value)
 
-  private def pickWhy(f: Facts, st: Stage, k: (Int, Option[Goal.Slug]), minSources: Settings.MinSources): Problem =
+  private def pickWhy(f: Facts, st: Stage, k: (Int, Option[Goal.Slug]), minSources: Settings.MinSources): Rationale =
     val near = k match
       case (0, Some(s)) if f.parent.contains(s) => List(s"a sub-goal of $s (active)")
       case (0, Some(s)) => List(s"a sibling of $s (active): one parent's sub-goals are finished before another's")
       case (1, Some(s)) => List(s"in the same tree as $s (active)")
       case _            => Nil
-    Problem.Unclassified(
-      Legacy.Text(
-        (List(s"${st.wire}: ${stageWhy(f, st, minSources).sentence}") ++ near ++
+    Rationale(
+        (List(s"${st.wire}: ${stageWhy(f, st, minSources)}") ++ near ++
           Option.when(f.priority.value != 0)(s"priority ${f.priority}").toList ++
           Option.when(f.createdAt.value.nonEmpty)(s"created ${f.createdAt.value.take(10)}").toList).mkString("; ")
       )
-    )
 
   /** One pass of the focus over every goal. Pins are always active; the goals active before keep their slots while they
     * are candidates (the cap lowered: the worst go back to the queue first); free slots go to the best candidates one
@@ -423,8 +413,8 @@ object GoalFocus:
     def fill(
         chosen: List[Facts],
         pool: List[Facts],
-        acc: List[(Facts, Problem)]
-    ): (List[Facts], List[(Facts, Problem)]) =
+        acc: List[(Facts, Rationale)]
+    ): (List[Facts], List[(Facts, Rationale)]) =
       if chosen.size >= cap || pool.isEmpty then (chosen, acc)
       else
         val best = pool.minBy(g => key(g, stageOf(g.slug), kin(g, chosen, rootOf)._1))
@@ -442,9 +432,9 @@ object GoalFocus:
     @annotation.tailrec
     def preempt(
         chosen: List[Facts],
-        fresh: List[(Facts, Problem)],
-        swaps: List[(Goal.Slug, Problem)]
-    ): (List[Facts], List[(Facts, Problem)], List[(Goal.Slug, Problem)]) =
+        fresh: List[(Facts, Rationale)],
+        swaps: List[(Goal.Slug, Rationale)]
+    ): (List[Facts], List[(Facts, Rationale)], List[(Goal.Slug, Rationale)]) =
       val pool = cands.map(_._1).filterNot(g => chosen.exists(_.slug == g.slug))
       val urgent = pool.filter(g => stageOf(g.slug).rank <= Stage.Compiling.rank)
       val victims = chosen.filter(g => !g.pinned.value && stageOf(g.slug) == Stage.Gathering)
@@ -454,18 +444,18 @@ object GoalFocus:
         val in = urgent.minBy(g => key(g, stageOf(g.slug), kin(g, rest, rootOf)._1))
         val out = victims.maxBy(staticKey)
         val left = chosen.filterNot(_.slug == out.slug)
-        val why = Problem.Unclassified(Legacy.Text(s"${pickWhy(
+        val why = Rationale(s"${pickWhy(
             in,
             stageOf(in.slug),
             kin(in, left, rootOf),
             s.minSources
-          ).sentence}; took the slot of ${out.slug} (still gathering)"))
+          )}; took the slot of ${out.slug} (still gathering)")
         preempt(
           left :+ in,
           fresh.filterNot(_._1.slug == out.slug) :+ (in -> why),
-          swaps :+ (out.slug -> Problem.Unclassified(Legacy.Text(s"gave its slot to ${in.slug}, which has articles to ${
+          swaps :+ (out.slug -> Rationale(s"gave its slot to ${in.slug}, which has articles to ${
               if stageOf(in.slug) == Stage.Reviewing then "review" else "compile"
-            }")))
+            }"))
         )
     val (chosen, fresh, swaps) = preempt(chosen1, fresh1, Nil)
     val freshWhy = fresh.map((g, w) => g.slug -> w).toMap
@@ -473,17 +463,13 @@ object GoalFocus:
       val st = stageOf(g.slug)
       val why =
         if g.pinned.value then
-          Problem.Unclassified(
-            Legacy.Text(s"pinned by a person; ${st.wire}: ${stageWhy(g, st, s.minSources).sentence}")
-          )
+          Rationale(s"pinned by a person; ${st.wire}: ${stageWhy(g, st, s.minSources)}")
         else
           freshWhy.getOrElse(
             g.slug,
-            Problem.Unclassified(
-              Legacy.Text(
-                s"active${g.since.fold("")(t => s" since $t")}, kept until it is reviewed; ${st.wire}: ${stageWhy(g, st, s.minSources).sentence}"
+            Rationale(
+                s"active${g.since.fold("")(t => s" since $t")}, kept until it is reviewed; ${st.wire}: ${stageWhy(g, st, s.minSources)}"
               )
-            )
           )
       Pick(g.slug, st, why, g.pinned, if g.active.value then g.since else None)
     }
@@ -508,15 +494,14 @@ object GoalFocus:
     val swapped = swaps.toMap
     val left = goals.filter(g => g.active.value && !chosen.exists(_.slug == g.slug)).map { g =>
       val why = fits.find(_._1.slug == g.slug).map(_._2) match
-        case Some(Fit.Finished)    => Problem.Unclassified(Legacy.Text(s"it is ${g.status}"))
+        case Some(Fit.Finished)    => Rationale(s"it is ${g.status}")
         case Some(Fit.Waits(_, w)) => w
         case _                     =>
           swapped.getOrElse(
             g.slug,
             if displaced.exists(_.slug == g.slug) then
-              Problem
-                .Unclassified(Legacy.Text(s"the cap of $cap active goals is full (lowered, or a pin took the slot)"))
-            else Problem.Unclassified(Legacy.Text("back in the queue"))
+              Rationale(s"the cap of $cap active goals is full (lowered, or a pin took the slot)")
+            else Rationale("back in the queue")
           )
       g.slug -> why
     }
@@ -537,7 +522,7 @@ object GoalFocus:
   )
 
   /** What the holds change: items to hold (id, goal, reason) and focus holds to release. */
-  final case class Holds(hold: List[(Work.ItemId, Goal.Slug, Problem)] = Nil, release: List[Work.ItemId] = Nil)
+  final case class Holds(hold: List[(Work.ItemId, Goal.Slug, Rationale)] = Nil, release: List[Work.ItemId] = Nil)
 
   /** The reason a focus hold carries (it starts with `focus:`; the items window and the status show it). */
   val HoldPrefix = "focus:"
@@ -553,23 +538,19 @@ object GoalFocus:
     val decided = items.map { i =>
       val unfinished = i.goals.filter(g => bySlug.get(g).exists(f => !finished(f.status)))
       val actives = unfinished.filter(plan.activeSet)
-      val wait: Option[(Goal.Slug, Problem)] =
+      val wait: Option[(Goal.Slug, Rationale)] =
         if !usesModel(i.kind) || unfinished.isEmpty || i.person.value then None
         else if actives.nonEmpty then
           if actives.exists(g => !openKids.contains(g) || i.kind.value == PlanGoalItem) then None
           else
             Some(
-              actives.head -> Problem.Unclassified(
-                Legacy.Text(s"$HoldPrefix goal ${actives.head} waits for its sub-goals before its own ${i.kind}")
-              )
+              actives.head -> Rationale(s"$HoldPrefix goal ${actives.head} waits for its sub-goals before its own ${i.kind}")
             )
         else
           Some(
-            unfinished.head -> Problem.Unclassified(
-              Legacy.Text(
+            unfinished.head -> Rationale(
                 s"$HoldPrefix waits until goal ${unfinished.head} is one of the active goals (agents.autopilot.max-active-goals)"
               )
-            )
           )
       (i, wait)
     }

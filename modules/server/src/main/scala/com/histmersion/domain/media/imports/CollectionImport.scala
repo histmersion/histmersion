@@ -43,7 +43,7 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
   final private case class Judged(
       target: Target,
       rec: MediaRecord,
-      decision: Either[Problem, MediaMatch.Basis]
+      decision: Either[MediaMatch.Unmatched, MediaMatch.Basis]
   )
 
   /** The role a record's picture plays: its own, else the collection's. */
@@ -123,7 +123,7 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
         val provider = PluginMedia.Provider(col.provider.value)
         val d = PluginMedia
           .refusal(rec, allow, provider)
-          .map(_.problem(provider, rec.key))
+          .map(r => MediaMatch.Unmatched(s"${r.problem(provider, rec.key).reason}"))
           .toLeft(())
           .flatMap(_ => col.matchesWithIds(rec, info, resolve, resolveId))
         Judged(t, rec, d)
@@ -167,7 +167,7 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
         )
         .sortBy(c => (-c.n.value, c.key.value)),
       byRole = MediaCount.of(kept.map(j => MediaCount.Key(roleOf(j.rec).value))),
-      rejected = MediaCount.of(judged.flatMap(_.decision.left.toOption).map(r => MediaCount.Key(r.reason))),
+      rejected = MediaCount.of(judged.flatMap(_.decision.left.toOption).map(r => MediaCount.Key(s"$r"))),
       samples = samples.take(cfg.samples.value.max(0))
     )
 
@@ -226,9 +226,9 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
             .complete(fetch, j.rec)
             .filterOrElse(
               _.rights.exists(r => allow.allows(r.licence)),
-              Problem.Unclassified(Legacy.Text("licence not allowed on the full record"))
+              MediaMatch.Unmatched("licence not allowed on the full record")
             )
-          completed.left.map(_.sentence).flatMap(rec => download(rec).map(d => (rec, d))) match
+          completed.left.map(w => s"$w").flatMap(rec => download(rec).map(d => (rec, d))) match
             case Left(why)                          => failed += s"${col.provider} ${j.rec.key}: $why"
             case Right((rec, (bytes, mime, thumb))) =>
               val rights = rightsOf(rec)

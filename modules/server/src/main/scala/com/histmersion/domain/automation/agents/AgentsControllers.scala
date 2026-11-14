@@ -318,7 +318,7 @@ final class AgentsControllers(
           PlanQuota.Cooldown(
             PlanQuota.Cooldown.Model(m.value),
             PlanQuota.Cooldown.Until(u.toString),
-            Problem.Unclassified(Legacy.Text(ModelPicker.CoolingWhy))
+            PlanQuota.Rationale(ModelPicker.CoolingWhy)
           )
         )
     )
@@ -344,7 +344,7 @@ final class AgentsControllers(
           PlanQuota.Floors
             .parse(PlanQuota.Floors.Wire(t))
             .left
-            .map(e => Api.Error(e))
+            .map(e => Api.Error(e.toNonEmpty.head))
             .map(fs => Some(Some(fs.text)))
         case None => Right(None)
       _ = in.hold.foreach(h => pools.hold(p, PlanQuotaRepo.Pool.Held(h.value)))
@@ -398,7 +398,7 @@ final class AgentsControllers(
                     PlanQuota.PoolRefreshed(
                       p.wire,
                       PlanQuota.PoolRefreshed.Refreshed(false),
-                      PlanQuota.PoolRefreshed.Detail(s"not read: ${why.sentence}"),
+                      PlanQuota.PoolRefreshed.Detail(s"not read: ${why}"),
                       st
                     )
               )

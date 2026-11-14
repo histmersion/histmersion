@@ -60,31 +60,31 @@ class AcquisitionSweepRulesSuite extends munit.FunSuite:
     val ok = checkRanking(
       Ranking(
         List(
-          Pick(Pick.DoiText("https://doi.org/10.1000/A"), Problem.Unclassified(Legacy.Text("fits"))),
-          Pick(Pick.DoiText("10.1000/a"), Problem.Unclassified(Legacy.Text("twice")))
+          Pick(Pick.DoiText("https://doi.org/10.1000/A"), AcquisitionSweepRules.Rationale("fits")),
+          Pick(Pick.DoiText("10.1000/a"), AcquisitionSweepRules.Rationale("twice"))
         )
       ),
       List(c),
       last = LastAttempt(false)
     )
-    assertEquals(ok.map(_._1.map((c, p) => (c, p.sentence))), Right(List((c, "fits"))))
+    assertEquals(ok.map(_._1.map((c, p) => (c, s"${p}"))), Right(List((c, "fits"))))
     assert(
       checkRanking(
-        Ranking(List(Pick(Pick.DoiText("10.9999/zzz"), Problem.Unclassified(Legacy.Text("invented"))))),
+        Ranking(List(Pick(Pick.DoiText("10.9999/zzz"), AcquisitionSweepRules.Rationale("invented")))),
         List(c),
         last = LastAttempt(false)
       ).isLeft
     )
     assertEquals(
       checkRanking(
-        Ranking(List(Pick(Pick.DoiText("10.9999/zzz"), Problem.Unclassified(Legacy.Text("invented"))))),
+        Ranking(List(Pick(Pick.DoiText("10.9999/zzz"), AcquisitionSweepRules.Rationale("invented")))),
         List(c),
         last = LastAttempt(true)
       ).map(_._1),
       Right(Nil)
     )
     assertEquals(
-      acquireText(c, Goal.Slug("g"), Problem.Unclassified(Legacy.Text("fits"))),
+      acquireText(c, Goal.Slug("g"), AcquisitionSweepRules.Rationale("fits")),
       "(2020). A. https://doi.org/10.1000/a (open access) — for goal g: fits"
     )
 

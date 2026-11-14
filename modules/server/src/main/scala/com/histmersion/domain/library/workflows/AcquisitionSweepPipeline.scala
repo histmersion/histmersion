@@ -323,7 +323,7 @@ final class AcquisitionSweepPipeline(
           goal,
           Goal.LinkKind.Source,
           GoalLink.Ref(r.citekey.value),
-          Some(GoalLink.Note(s"ingested by a watcher sweep: ${p.why.sentence}".take(500)))
+          Some(GoalLink.Note(s"ingested by a watcher sweep: ${p.why}".take(500)))
         )
       ctx.run.managerId.foreach(mid =>
         agents.managerStore.event(
@@ -376,7 +376,7 @@ final class AcquisitionSweepPipeline(
         c.authors,
         c.venue,
         List(com.histmersion.api.automation.Goal.Slug(goal.value)),
-        p.why,
+        Managers.Rationale(s"${p.why}"),
         Some(Managers.OaWork.FoundBy(ctx.run.id.value))
       )
       ctx.write(
@@ -424,7 +424,7 @@ object AcquisitionSweepPipeline:
       stored: Map[Doi, Source.Candidate.Id] = Map.empty
   ) derives JsonCodec
 
-  final case class Picked(candidate: Candidate, why: Problem) derives JsonCodec
+  final case class Picked(candidate: Candidate, why: AcquisitionSweepRules.Rationale) derives JsonCodec
 
   /** A pick the watcher's auto-ingest brought in (`citekey` the new source's). */
   final case class Ingested(doi: Doi, citekey: Citekey) derives JsonCodec

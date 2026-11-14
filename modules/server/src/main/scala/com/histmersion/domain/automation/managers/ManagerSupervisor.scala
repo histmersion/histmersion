@@ -55,6 +55,7 @@ import com.histmersion.domain.automation.goals.GoalRow
 import com.histmersion.util.jobs.JobRow
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.domain.automation.goals.BGoalLinkRow
+import com.histmersion.api.automation.Managers
 
 /** The process managers' supervisor (docs/research-process-managers.md §3): a daemon thread that ticks every
   * `agents.managers.tick-seconds`, and at once when a manager's run settles ([[Engine.onSettled]] → [[nudge]]). One
@@ -367,7 +368,7 @@ final class ManagerSupervisor(
           kind.afterDone(this, m, item, Some(run), out)
       case Next.Wait(approval, note) =>
         val hold = Hold(
-          reason = Problem.Unclassified(Legacy.Text(note.value)),
+          reason = Managers.Rationale(note.value),
           untilApproval = Some(Hold.UntilApproval(approval.value))
         )
         if Transactor(ds).transact(
@@ -496,7 +497,7 @@ final class ManagerSupervisor(
         val id = seedId(Goal.Ref(goal.value))
         val _ = ensure(Kind.Seed, id.transformInto[ManagerLight.Id], Some(DomainGoal.Slug.assume(goal.value)))
         val added = plan.articles.count { p =>
-          val spec = ArticleSpec(p.title, p.kind, p.filter, p.why)
+          val spec = ArticleSpec(p.title, p.kind, p.filter, Managers.Rationale(s"${p.why}"))
           agents.managerStore
             .upsert(
               id,

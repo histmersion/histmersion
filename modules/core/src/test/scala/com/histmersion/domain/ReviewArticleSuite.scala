@@ -1533,20 +1533,20 @@ class ReviewArticleSuite extends munit.FunSuite:
       Nil,
       ReviewArticle.FixerAnswer.Notes(""),
       wontFix = List(
-        WontFixAnswer(ReviewArticle.WontFixAnswer.Id("R1"), Problem.Unclassified(Legacy.Text("wordy, but exact")))
+        WontFixAnswer(ReviewArticle.WontFixAnswer.Id("R1"), ReviewArticle.Rationale("wordy, but exact"))
       )
     )
     assertEquals(
       fix(ok, last = LastRound(false)).map(_._1.wontFix),
-      Right(List(WontFix(ReviewArticle.WontFix.Id("R1"), Problem.Unclassified(Legacy.Text("wordy, but exact")))))
+      Right(List(WontFix(ReviewArticle.WontFix.Id("R1"), ReviewArticle.Rationale("wordy, but exact"))))
     )
     val bad = ok
       .modify(_.wontFix)
       .setTo(
         List(
-          WontFixAnswer(ReviewArticle.WontFixAnswer.Id("S1"), Problem.Unclassified(Legacy.Text("no"))),
-          WontFixAnswer(ReviewArticle.WontFixAnswer.Id("R9"), Problem.Unclassified(Legacy.Text("x"))),
-          WontFixAnswer(ReviewArticle.WontFixAnswer.Id("R1"), Problem.Unclassified(Legacy.Text(" ")))
+          WontFixAnswer(ReviewArticle.WontFixAnswer.Id("S1"), ReviewArticle.Rationale("no")),
+          WontFixAnswer(ReviewArticle.WontFixAnswer.Id("R9"), ReviewArticle.Rationale("x")),
+          WontFixAnswer(ReviewArticle.WontFixAnswer.Id("R1"), ReviewArticle.Rationale(" "))
         )
       )
     val ps = fix(bad, last = LastRound(false)).left.toOption.get
@@ -1609,7 +1609,7 @@ class ReviewArticleSuite extends munit.FunSuite:
         List(
           WontFixAnswer(
             ReviewArticle.WontFixAnswer.Id("R8"),
-            Problem.Unclassified(Legacy.Text("recording the filter is not an edit"))
+            ReviewArticle.Rationale("recording the filter is not an edit")
           )
         )
       )

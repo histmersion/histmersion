@@ -490,7 +490,7 @@ object AgentsTools:
                       Managers.ItemPatch.Action("hold"),
                       until = in.until.map(Managers.ItemPatch.Until(_)),
                       untilSource = in.untilSource.map(Managers.ItemPatch.UntilSource(_)),
-                      reason = in.text.map((text => Problem.Unclassified(Legacy.Text(text))))
+                      reason = in.text.map(text => Managers.Rationale(s"$text"))
                     )
                   )
                 )

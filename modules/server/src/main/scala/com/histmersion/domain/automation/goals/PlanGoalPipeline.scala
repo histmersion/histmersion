@@ -261,7 +261,7 @@ final class PlanGoalPipeline(
         slug,
         DomainGoal.LinkKind.Source,
         GoalLink.Ref(w.citekey.get.value),
-        Option(w.why).filter(_.sentence.nonEmpty).map(y => GoalLink.Note(y.sentence))
+        Option(w.why).filter(w => s"$w".nonEmpty).map(y => GoalLink.Note(s"$y"))
       )
     )
     val items = outside.flatMap { w =>
