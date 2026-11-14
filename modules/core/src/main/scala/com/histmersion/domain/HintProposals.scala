@@ -1,7 +1,8 @@
 package com.histmersion
 package domain
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.Problem.{Content, Invalid, Raw, Where}
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.given
@@ -37,7 +38,7 @@ object HintProposals:
       tag: Option[HintAnswer.Tag] = None,
       until: Option[HintAnswer.Until] = None,
       untilSource: Option[HintAnswer.UntilSource] = None,
-      priority: Option[HintAnswer.Priority] = None,
+      priority: Option[HintEffect.Priority] = None,
       settings: List[HintAnswer.Settings] = Nil
   ) derives JsonCodec
   object HintAnswer:
@@ -51,8 +52,6 @@ object HintProposals:
     object Until extends Newtype[String, Pure]
     type UntilSource = UntilSource.T
     object UntilSource extends Newtype[String, Pure]
-    type Priority = Priority.T
-    object Priority extends Newtype[Int, Pure]
     type Settings = Settings.T
     object Settings extends Newtype[String, Pure]
 
@@ -89,6 +88,8 @@ object HintProposals:
       last: Last
   ): Either[List[Problem], (Option[HintEffect], List[Description])] =
     val action = Option(a.action).map(_.value.trim.toLowerCase).getOrElse("")
+    // the step the answer asked for, as it wrote it
+    val at = Where.of(a.action)
     val targets = a.targets.map(_.value.trim).filter(_.nonEmpty).distinct.map(Item(_))
     val (good, unknown) = targets.partition(known)
     val tag = a.tag.map(_.value.trim).filter(_.nonEmpty)
@@ -98,15 +99,16 @@ object HintProposals:
     else if !HintEffect.Proposable.contains(action) then
       fail(
         List(
-          Problem.Unclassified(
-            Legacy.Text(s"'${a.action}' is not an action (one of: none, ${HintEffect.Proposable.mkString(", ")})")
+          Invalid.Unknown.here(
+            Problem.TypeName.of(HintAnswer.Action),
+            Raw.of(a.action),
+            ("none" +: HintEffect.Proposable.toVector).map(Raw(_))
           )
         )
       )
     else if action == HintEffect.Config then
       val kvs = a.settings.map(_.value.trim).filter(_.nonEmpty)
-      if kvs.isEmpty then
-        fail(List(Problem.Unclassified(Legacy.Text("config: give the settings to change as key=value"))))
+      if kvs.isEmpty then fail(List(Content.Proposal(Content.Requirement.SettingsGiven, at)))
       else
         ManagerConfig.parse(kvs.map(ManagerConfig.Spec(_))) match
           case Left(e)  => fail(e.at(Problem.Field("config")).toVector.toList)
@@ -114,31 +116,35 @@ object HintProposals:
     else
       val problems = List(
         Option.when(unknown.nonEmpty && !last.value)(
-          Problem.Unclassified(
-            Legacy.Text(s"not among the manager's items: ${unknown.mkString(", ")} — name them exactly as listed")
-          )
+          Content.Proposal(Content.Requirement.KnownItems(unknown.toVector.map(Raw.of(_))), Where("targets"))
         ),
         Option.when(good.isEmpty && unknown.isEmpty && tag.isEmpty && item.isEmpty)(
-          Problem.Unclassified(Legacy.Text(s"$action: name the items (targets) or a tag"))
+          Content.Proposal(Content.Requirement.ItemsNamed, at)
         ),
         Option.when(
           action == HintEffect.HoldAction && a.until.forall(_.value.trim.isEmpty) && a.untilSource.forall(
             _.value.trim.isEmpty
           )
-        )(Problem.Unclassified(Legacy.Text("hold: give `until` (a date) or `untilSource` (a DOI or citekey)"))),
+        )(Content.Proposal(Content.Requirement.HoldUntil, at)),
         a.until
           .map(_.value.trim)
           .filter(_.nonEmpty)
-          .filter(u => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(u)).isEmpty)
-          .map(u => Problem.Unclassified(Legacy.Text(s"hold: '$u' is not a date (2026-11-01)"))),
+          .map(ManagerPolicy.InstantText(_))
+          .filter(ManagerPolicy.parseInstant(_).isEmpty)
+          .map(u => Content.Proposal(Content.Requirement.DateGiven(Raw.of(u)), Where("hold"))),
         a.priority
           .map(_.value)
           .filter(p => p < -MaxPriority || p > MaxPriority)
-          .map(p => Problem.Unclassified(Legacy.Text(s"prioritise: priority $p is outside ±$MaxPriority")))
+          .map(p =>
+            Content.Proposal(
+              Content.Requirement.PriorityWithin(Raw.of(p.toLong), Raw.of(MaxPriority.toLong)),
+              Where("prioritise")
+            )
+          )
       ).flatten
       if problems.nonEmpty then fail(problems)
       else if good.isEmpty && tag.isEmpty && item.isEmpty then
-        fail(List(Problem.Unclassified(Legacy.Text(s"$action: none of the items it names exists"))))
+        fail(List(Content.Proposal(Content.Requirement.ExistingItems, at)))
       else
         Right(
           (
@@ -149,8 +155,7 @@ object HintProposals:
                 tag.map(HintEffect.Tag(_)),
                 until = a.until.map(_.value.trim).filter(_.nonEmpty).map(HintEffect.Until(_)),
                 untilSource = a.untilSource.map(_.value.trim).filter(_.nonEmpty).map(HintEffect.UntilSource(_)),
-                priority =
-                  a.priority.filter(_ => action == HintEffect.Prioritise).map(p => HintEffect.Priority(p.value))
+                priority = a.priority.filter(_ => action == HintEffect.Prioritise)
               )
             ),
             Option

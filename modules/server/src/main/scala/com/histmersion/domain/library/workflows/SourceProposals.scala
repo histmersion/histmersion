@@ -11,7 +11,7 @@ import com.histmersion.api.automation.ListFilters
 import com.histmersion.config.AgentsConfig
 import com.histmersion.domain.AgentProposals
 import com.histmersion.domain.AgentProposals.Proposal
-import com.histmersion.domain.AgentProposals.Route
+import com.histmersion.domain.AgentProposals.{Route, Unneeded}
 import com.histmersion.domain.automation.agents.*
 
 import com.histmersion.api.automation.Approval
@@ -82,8 +82,12 @@ final class SourceProposals(
       cfg.approvals.statusMode.transformInto[Approval.Mode],
       cfg.approvals.edgeMode.transformInto[Approval.Mode]
     ) match
-      case Route.Skip(why) => Outcome.Skipped(Problem.Unclassified(Legacy.Text(s"${p.describe} (${why.sentence})")))
-      case Route.Apply     =>
+      case Route.Skip(why) =>
+        val said = why match
+          case Unneeded.Already(status)    => s"already ${status.fold("?")(_.wire)}"
+          case Unneeded.NotSourceChange(k) => s"${k.wire} is not a source change"
+        Outcome.Skipped(Problem.Unclassified(Legacy.Text(s"${p.describe} ($said)")))
+      case Route.Apply =>
         apply(p) match
           case Left(m)  => Outcome.Failed(Problem.Unclassified(Legacy.Text(s"${p.describe}: ${m.sentence}")))
           case Right(w) =>

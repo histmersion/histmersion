@@ -19,6 +19,13 @@ class NewtypeParseSuite extends munit.FunSuite:
   import NewtypeParseSuite.*
   import Problem.*
 
+  test("Raw.of shows any newtype's value as its base value's text, and a number as its digits"):
+    assertEquals(Raw.of(Shelf("top")), Raw("top"))
+    assertEquals(Raw.of(Label("  as written ")), Raw("  as written "))
+    assertEquals(Raw.of(Catalogue.Year(-3300)), Raw("-3300"))
+    assertEquals(Raw.of(42L), Raw("42"))
+    assert(compileErrors("Raw.of(\"plain\")").nonEmpty, "a plain String is no newtype")
+
   test("a newtype knows its full name, as Hearth names its T"):
     assertEquals(Shelf.typeName.text, "com.histmersion.util.problem.NewtypeParseSuite.Shelf")
     assertEquals(Catalogue.Year.typeName.text, "com.histmersion.util.problem.NewtypeParseSuite.Catalogue.Year")

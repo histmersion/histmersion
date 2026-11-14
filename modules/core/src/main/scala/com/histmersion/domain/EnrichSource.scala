@@ -1,8 +1,9 @@
 package com.histmersion
 package domain
 
-import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.{Legacy, Problem, Problems}
+import com.histmersion.util.problem.Problem.{Field, Invalid, Raw}
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.StoredIdCodecs.given
 import scala.annotation.tailrec
@@ -425,19 +426,24 @@ object EnrichSource:
     }
 
   /** Turn a stated period into signed years, or say why not. A point (no end) is `start..start`. */
-  def convert(p: StatedPeriod, maxAbsYear: MaxAbsYear, within: Option[Period]): Either[Problem, Period] =
+  def convert(p: StatedPeriod, maxAbsYear: MaxAbsYear, within: Option[Period]): Either[Problems, Period] =
+    // a unit the model wrote that is none of the four, named back to it as it wrote it
+    def unit(stated: YearUnit.Wire): Either[Problem, YearUnit] =
+      YearUnit
+        .parse(stated)
+        .toRight(
+          Invalid.Unknown
+            .here(Problem.TypeName.named[YearUnit], Raw.of(stated), YearUnit.values.toVector.map(u => Raw.of(u.wire)))
+            .within(Field("period"))
+        )
     for
-      su <- YearUnit
-        .parse(p.start.unit)
-        .toRight(Problem.Unclassified(Legacy.Text(s"unknown unit '${p.start.unit}' (BCE, CE, calBP or BP)")))
-      eu <- YearUnit
-        .parse(p.end.unit)
-        .toRight(Problem.Unclassified(Legacy.Text(s"unknown unit '${p.end.unit}' (BCE, CE, calBP or BP)")))
+      su <- unit(p.start.unit)
+      eu <- unit(p.end.unit)
       s <- toSignedYear(p.start.value, su)
       e <- toSignedYear(p.end.value, eu)
-      _ <- periodProblems(PeriodStart(s.value), PeriodEnd(e.value), maxAbsYear, within) match
-        case Nil => Right(())
-        case ps  => Left(Problem.Unclassified(Legacy.Text(ps.map(_.sentence).mkString("; "))))
+      _ <- Problems
+        .from(periodProblems(PeriodStart(s.value), PeriodEnd(e.value), maxAbsYear, within).toVector)
+        .toLeft(())
     yield Period(Year(s.value), Year(e.value))
 
   /** `classify`: status in the vocabulary, a summary, a convertible and sane period, and the status's evidence unless
@@ -459,10 +465,7 @@ object EnrichSource:
     )
     val problems = status.left.toOption.toList ++
       summary.fold(List(Problem.Unclassified(Legacy.Text("the summary is empty"))))(_ => Nil) ++
-      period
-        .flatMap(_.left.toOption)
-        .map(m => Problem.Unclassified(Legacy.Text(s"period: ${m.sentence}")))
-        .toList ++ noEvidence
+      period.flatMap(_.left.toOption).toList.flatMap(_.toVector) ++ noEvidence
         .map((text => Problem.Unclassified(Legacy.Text(text))))
         .toList
     val fatal = status.isLeft || summary.isEmpty
@@ -480,7 +483,10 @@ object EnrichSource:
             status.toOption.get,
             Classified.StatusEvidence(evidence)
           ),
-          (period.flatMap(_.left.toOption).map(m => s"period dropped: ${m.sentence}").toList ++ noEvidence.toList)
+          (period
+            .flatMap(_.left.toOption)
+            .map(m => s"period dropped — ${m.sentences.mkString("; ")}")
+            .toList ++ noEvidence.toList)
             .map(Description(_))
         )
       )
@@ -665,7 +671,7 @@ object EnrichSource:
     val checked = f.findings.zip(quotes).zipWithIndex.map { case ((p, quote), i) =>
       val label = s"finding ${i + 1} (${p.claim.value.take(60)})"
       val conf = AgentVerify.confidence(p.confidence)
-      val per: Either[Problem, Option[Period]] = (p.start, p.end) match
+      val per: Either[Problems, Option[Period]] = (p.start, p.end) match
         case (None, None)    => Right(None)
         case (Some(s), e)    => convert(StatedPeriod(s, e.getOrElse(s)), maxAbsYear, None).map(Some(_))
         case (None, Some(e)) => convert(StatedPeriod(e, e), maxAbsYear, None).map(Some(_))
@@ -675,7 +681,7 @@ object EnrichSource:
           s"the quote is not in the text (best match ${BigDecimal(quote.ratio.value).setScale(2, BigDecimal.RoundingMode.HALF_UP)}) — copy it exactly"
         ),
         conf.left.toOption.map(_.sentence),
-        per.left.toOption.map(m => s"period: ${m.sentence}")
+        per.left.toOption.map(_.sentences.mkString("; "))
       ).flatten
       // the guards' problems: sent back like the others, but never a reason to drop the finding
       val said = List(Some(p.claim.value), Some(p.quote.value), p.periodName.map(_.value)).flatten.mkString("\n")
@@ -744,7 +750,7 @@ object EnrichSource:
     val text = Option(n.notes.value).map(_.trim).getOrElse("")
     if text.isEmpty then Left(List(Problem.Unclassified(Legacy.Text("the notes are empty"))))
     else
-      linkProblems(LinkProblemsText(text), isCitekey, isSlug) match
+      linkProblems(LinkProblemsText(text), Problem.Where("notes"), isCitekey, isSlug) match
         case Nil => Right(Description(text))
         case ps  => Left(ps)
 

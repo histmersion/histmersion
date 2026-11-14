@@ -1,7 +1,8 @@
 package com.histmersion
 package domain
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.Problem.{Content, Invalid, Raw, Where}
 import com.histmersion.api.Years
 import com.histmersion.api.catalogue.Period
 
@@ -156,15 +157,23 @@ object AgentVerify:
     Source.Status.values
       .find(_.wire.value == s.value.trim.toLowerCase(java.util.Locale.ROOT))
       .toRight(
-        Problem.Unclassified(
-          Legacy.Text(s"'$s' is not a status (one of: ${Source.Status.values.map(_.wire).mkString(", ")})")
+        Invalid.Unknown.here(
+          Problem.TypeName.named[Source.Status],
+          Raw.of(s),
+          Source.Status.values.toVector.map(v => Raw.of(v.wire))
         )
       )
 
   def confidence(s: com.histmersion.domain.library.Confidence.Wire): Either[Problem, Confidence] =
     Confidence
       .fromString(Confidence.Wire(s.value.trim))
-      .toRight(Problem.Unclassified(Legacy.Text(s"'$s' is not a confidence (one of: high, medium, low, contested)")))
+      .toRight(
+        Invalid.Unknown.here(
+          Problem.TypeName.named[Confidence],
+          Raw.of(s),
+          Confidence.values.toVector.map(c => Raw.of(c.wire))
+        )
+      )
 
   /** `[[x]]` targets in a text. */
   def wikilinks(text: Text): List[Wikilink] =
@@ -177,17 +186,20 @@ object AgentVerify:
   /** Every problem with a text's links: a target that is neither a citekey nor an article slug, and escaped links
     * (`\[\[…\]\]`), which render as text and link nothing.
     */
-  def linkProblems(text: LinkProblemsText, isCitekey: Citekey => Boolean, isSlug: Slug => Boolean): List[Problem] =
+  def linkProblems(
+      text: LinkProblemsText,
+      at: Where,
+      isCitekey: Citekey => Boolean,
+      isSlug: Slug => Boolean
+  ): List[Problem] =
     val escaped =
-      Option.when(text.value.contains("\\[\\["))(
-        Problem.Unclassified(Legacy.Text("escaped link brackets (\\[\\[…\\]\\]) link nothing"))
-      )
+      Option.when(text.value.contains("\\[\\["))(Content.Proposal(Content.Requirement.UnescapedLinks, at))
     val dangling = wikilinks(text)
       .filterNot(t =>
         Citekey.option(t.value).exists(isCitekey) ||
           Slug.option(t.value).exists(isSlug)
       )
-      .map(t => Problem.Unclassified(Legacy.Text(s"[[$t]] is neither a citekey nor an article")))
+      .map(t => Content.Proposal(Content.Requirement.LinkTarget(Raw.of(t)), at))
     escaped.toList ++ dangling
 
   // ── years and periods ────────────────────────────────────────────────────────────────────────
@@ -219,19 +231,18 @@ object AgentVerify:
     */
   def toSignedYear(value: ToSignedYearValue, unit: YearUnit): Either[Problem, SignedYear] = unit match
     case YearUnit.BCE if value.value <= 0 =>
-      Left(Problem.Unclassified(Legacy.Text(s"$value BCE: a BCE year is a positive number")))
+      Left(Content.Proposal(Content.Requirement.PositiveBce(Raw.of(value)), PeriodAt))
     case YearUnit.CE if value.value <= 0 =>
-      Left(Problem.Unclassified(Legacy.Text(s"$value CE: there is no year 0 (or a negative CE year); use BCE")))
+      Left(Content.Proposal(Content.Requirement.CeFromOne(Raw.of(value)), PeriodAt))
     case YearUnit.BCE   => Right(SignedYear(-value.value))
     case YearUnit.CE    => Right(SignedYear(value.value))
     case YearUnit.CalBP =>
       Right(SignedYear(Years.fromAstronomical(Years.Astronomical(1950L - value.value)).value))
     case YearUnit.BP =>
-      Left(
-        Problem.Unclassified(
-          Legacy.Text(s"$value BP is an uncalibrated radiocarbon age; it cannot be stored as a calendar year")
-        )
-      )
+      Left(Content.Proposal(Content.Requirement.Calibrated(Raw.of(value)), PeriodAt))
+
+  /** Where a proposal's period is: the answer field its years are stated in. */
+  val PeriodAt: Where = Where("period")
 
   /** A proposed period's problems (empty = sane): start after end, a year 0, a year beyond `maxAbsYear`, and — when the
     * source has a period of its own — a finding outside it.
@@ -243,16 +254,24 @@ object AgentVerify:
       within: Option[Period] = None
   ): List[Problem] =
     List(
-      Option.when(start.value > end.value)(Problem.Unclassified(Legacy.Text(s"starts ($start) after it ends ($end)"))),
+      Option.when(start.value > end.value)(
+        Content.Proposal(
+          Content.Requirement.StartBeforeEnd(Raw.of(start), Raw.of(end)),
+          PeriodAt
+        )
+      ),
       Option.when(start.value == 0 || end.value == 0)(
-        Problem.Unclassified(Legacy.Text("year 0 does not exist (1 BCE is -1, 1 CE is 1)"))
+        Content.Proposal(Content.Requirement.HistoricalReckoning, PeriodAt)
       ),
       Option.when(math.abs(start.value) > maxAbsYear.value || math.abs(end.value) > maxAbsYear.value)(
-        Problem.Unclassified(Legacy.Text(s"a year beyond ±$maxAbsYear"))
+        Content.Proposal(Content.Requirement.YearWithin(Raw.of(maxAbsYear)), PeriodAt)
       ),
       within.flatMap(p =>
         Option.when(start.value < p.start.value || end.value > p.end.value)(
-          Problem.Unclassified(Legacy.Text(s"$start..$end lies outside the source's own period ${p.start}..${p.end}"))
+          Content.Proposal(
+            Content.Requirement.WithinSourcePeriod(Raw.of(start), Raw.of(end), Raw.of(p.start), Raw.of(p.end)),
+            PeriodAt
+          )
         )
       )
     ).flatten
