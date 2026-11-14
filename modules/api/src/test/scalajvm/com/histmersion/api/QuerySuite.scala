@@ -1,6 +1,7 @@
 package com.histmersion
 package api
 
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -163,8 +164,10 @@ class QuerySuite extends munit.FunSuite:
     assertEquals(Query.check(Statement("  select count(*) from sources  ")), Right("select count(*) from sources"))
 
   test("SET TRANSACTION READ WRITE; SELECT … is REFUSED (the disarming batch)"):
-    val e = Query.check(Statement("SET TRANSACTION READ WRITE; select * from sources")).left.toOption.get
-    assert(e.sentence.contains("2 statements"), e)
+    assertEquals(
+      Query.check(Statement("SET TRANSACTION READ WRITE; select * from sources")),
+      Left(Problem.Refused.Policy(Problem.Refused.Rule.OneStatement))
+    )
 
   test("SELECT 1; SELECT 2 is refused — one statement means one"):
     assert(Query.check(Statement("select 1; select 2")).isLeft)
@@ -192,8 +195,8 @@ class QuerySuite extends munit.FunSuite:
     assert(Query.check(Statement("with x as (select 1) select * from x")).isRight)
 
   test("empty stays empty"):
-    assertEquals(Query.check(Statement("   ")).left.map(_.sentence), Left("empty statement"))
-    assertEquals(Query.check(Statement(" ; ; ")).left.map(_.sentence), Left("empty statement"))
+    assertEquals(Query.check(Statement("   ")), Left(Problem.Invalid.Missing.here(Problem.Field("sql"))))
+    assertEquals(Query.check(Statement(" ; ; ")), Left(Problem.Invalid.Missing.here(Problem.Field("sql"))))
 
   test("nested leading comments cannot hide transaction or session control"):
     val prefixes = List(

@@ -50,7 +50,7 @@ object MergeApplyJob:
     case Other(problem: Problem)
 
   /** A restart cut the apply short: its transaction was committed or rolled back as a whole, never half applied. */
-  val InterruptedText: Problem = Problem.Run.Interrupted
+  val InterruptedText: Problem = Problem.Run.CutShort(Problem.Conflict.Activity.MergeApply)
 
   def of(
       id: SpatialHierarchyResult.Job.Id,
@@ -72,7 +72,7 @@ object MergeApplyJob:
             bundle,
             planHash,
             elapsedMs,
-            error = Some(Problem.NotFound.Entity(Problem.TypeName.named[MergeApplyResult], Problem.Raw(s"$id")))
+            error = Some(Problem.Run.Unrecorded(Problem.Conflict.Activity.MergeApply))
           )
         )(r =>
           MergeApplyJob(

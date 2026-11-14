@@ -26,6 +26,9 @@ object Column:
       case Invalid.Unknown(t, raw, known, at)  => s"${path(at)}unknown $t '$raw'${quotedList(known)}"
       case Invalid.Unreadable(t, raw, eg, at)  => s"${path(at)}'$raw' is unreadable as $t${quotedExamples(eg)}"
       case Invalid.Missing(field, at)          => s"${path(at)}$field is required"
+      case Invalid.Undeclared(field, ds, at)   => s"${path(at)}$field is undeclared${quotedList(ds.map(d => Raw(s"$d")))}"
+      case Invalid.Wrapped(t, raw, member, at) => s"${path(at)}'$raw' wraps a $t in $member"
+      case Invalid.StoredOn(t, item, owner, at) => s"${path(at)}$t $item is stored on '$owner'"
       case Invalid.Ambiguous(t, raw, n, at)    => s"${path(at)}$t '$raw' matches $n"
       case Invalid.Repeated(t, raw, at)        => s"${path(at)}$t '$raw' is repeated"
       case Invalid.Misplaced(field, under, at) => s"${path(at)}$field belongs under $under"
@@ -60,6 +63,7 @@ object Column:
       case Config.Unavailable(capability)     => s"this server has no ${capability.productPrefix}"
       case Config.Reload(stage, scope)        => s"reloading the settings failed at ${stage.productPrefix} in $scope"
       case Config.Cycle(scopes)               => s"reload cycle: ${scopes.toVector.mkString(CycleArrow)}"
+      case Config.Unpriced(model, metered)    => s"model $model is unpriced${metered.fold("")(m => s" (${m.stored})")}"
       case Plugin.Load(plugin, fault)         => s"plugin $plugin did not load: ${fault.stored}"
       case Plugin.Rejected(plugin, item, why) => s"$plugin did not take '$item': ${why.stored}"
       case Plugin.Vault(vault, failure)       => s"secret vault $vault failed: ${failure.stored}"
@@ -69,6 +73,8 @@ object Column:
       case Problem.Run.NoModel(role, tried)   => s"no model of the $role chain can run${passedOver(tried)}"
       case Problem.Run.Blocked(block)         => s"held back: ${block.stored}"
       case Problem.Run.Interrupted            => "interrupted"
+      case Problem.Run.CutShort(activity)     => s"cut short: ${activity.productPrefix}"
+      case Problem.Run.Unrecorded(activity)   => s"unrecorded: ${activity.productPrefix}"
       case Problem.Run.Cancelled(by)          => s"cancelled by ${by.productPrefix}"
       case Problem.Run.Draining(since)        => s"draining since ${since.iso}"
       case Problem.Run.Aborted(step, cause)   => s"step $step cannot go on: ${cause.productPrefix}"
@@ -244,6 +250,11 @@ object Column:
         s"Key $key ${attempt.productPrefix}${stderr.fold("")(e => s" — $e")}"
       case other => other.productPrefix
 
+  extension (metered: Config.Metered)
+    private def stored: String = metered match
+      case Config.Metered.ApiKey(provider) => s"ApiKey $provider"
+      case Config.Metered.Opencode         => "Opencode"
+
   extension (block: Problem.Run.Block)
     private def stored: String = block match
       case Problem.Run.Block.PoolFull(pool) => s"PoolFull $pool"
@@ -265,6 +276,9 @@ object Column:
   private val RepeatedAt = s"(?s)^$Prefix(\\S+) '(.*)' is repeated$$".r
   private val AmbiguousAt = s"(?s)^$Prefix(\\S+) '(.*)' matches (\\d+)$$".r
   private val MissingAt = s"(?s)^$Prefix(\\S+) is required$$".r
+  private val UndeclaredAt = s"(?s)^$Prefix(\\S+) is undeclared(?: \\(one of: '(.*)'\\))?$$".r
+  private val WrappedAt = s"(?s)^$Prefix'(.*)' wraps a (\\S+) in (\\S+)$$".r
+  private val StoredOnAt = s"(?s)^$Prefix(\\S+) (.+) is stored on '(.*)'$$".r
   private val OutOfRangeAt = s"(?s)^$Prefix(\\S+) '(.*)' is out of \\[(.*?), (.*?)\\]$$".r
   private val InconsistentAt = s"(?s)^$Prefix(.+) break (\\w+)$$".r
   private val ReferenceAt = s"(?s)^${Prefix}no secret reference: (\\w+)(?: '(.*)')?$$".r
@@ -316,6 +330,9 @@ object Column:
   private val CannotGoOn = "(?s)^step (.+) cannot go on: (\\w+)$".r
   private val FindingOf = "^finding: (\\w+)$".r
   private val ProposalAt = "(?s)^(.+): (\\w+)(?: (\\d+)/(\\d+))?$".r
+  private val UnpricedModel = "(?s)^model (\\S+) is unpriced(?: \\((\\w+)(?: (\\S+))?\\))?$".r
+  private val CutShortBy = "^cut short: (\\w+)$".r
+  private val UnrecordedBy = "^unrecorded: (\\w+)$".r
   private val Crashed = "(?s)^(.+) failed unexpectedly \\((\\S+), problem (\\S+)\\) — (.*)$".r
   private val UnclassifiedText = "(?s)^unclassified: (.*)$".r
 
@@ -358,6 +375,21 @@ object Column:
     {
       case MissingAt(at, field) => Some(Invalid.Missing(Field(s"$field"), pathOf(at)))
       case _                    => None
+    },
+    {
+      case UndeclaredAt(at, field, declared) =>
+        Some(Invalid.Undeclared(Field(s"$field"), quotedListOf(declared).map(d => Field(s"$d")), pathOf(at)))
+      case _ => None
+    },
+    {
+      case WrappedAt(at, raw, t, member) =>
+        Some(Invalid.Wrapped(TypeName(s"$t"), Raw(s"$raw"), Field(s"$member"), pathOf(at)))
+      case _ => None
+    },
+    {
+      case StoredOnAt(at, t, item, owner) =>
+        Some(Invalid.StoredOn(TypeName(s"$t"), Raw(s"$item"), Raw(s"$owner"), pathOf(at)))
+      case _ => None
     },
     {
       case OutOfRangeAt(at, t, raw, least, greatest) =>
@@ -674,6 +706,24 @@ object Column:
     {
       case "interrupted" => Some(Problem.Run.Interrupted)
       case _             => None
+    },
+    {
+      case CutShortBy(activity) => word(Conflict.Activity.values.toSeq, activity).map(Problem.Run.CutShort(_))
+      case _                    => None
+    },
+    {
+      case UnrecordedBy(activity) => word(Conflict.Activity.values.toSeq, activity).map(Problem.Run.Unrecorded(_))
+      case _                      => None
+    },
+    {
+      case UnpricedModel(model, metered, provider) =>
+        val read: Option[Option[Config.Metered]] = (Option(metered), Option(provider)) match
+          case (None, None)                  => Some(None)
+          case (Some("ApiKey"), Some(p))     => Some(Some(Config.Metered.ApiKey(Upstream.Name(s"$p"))))
+          case (Some("Opencode"), None)      => Some(Some(Config.Metered.Opencode))
+          case _                             => None
+        read.map(Config.Unpriced(Problem.Run.Model(s"$model"), _))
+      case _ => None
     },
     {
       case CancelledBy(actor) => word(Problem.Run.Actor.values.toSeq, actor).map(Problem.Run.Cancelled(_))

@@ -188,7 +188,7 @@ object Agents:
     def cost(prices: Map[ModelRef.Model, Price], model: Prices.CostModel, u: Usage): Either[Problem, BigDecimal] =
       (prices
         .get(model)
-        .toRight(unpriced(model))
+        .toRight(unpriced(model, None))
         .map(_.cost(u)))
 
     def billing(
@@ -202,11 +202,18 @@ object Agents:
           prices
             .get(m.model)
             .map(Billing.Metered(_))
-            .toRight(unpriced(m.model))
+            .toRight(unpriced(m.model, metered(m)))
 
     /** The model has no price in `agents.prices`: an error, never a price of zero. */
-    private def unpriced(model: ModelRef.Model): Problem =
-      Problem.NotFound.Entity(TypeName.named[Price], Raw(s"$model"))
+    private def unpriced(model: ModelRef.Model, metered: Option[Problem.Config.Metered]): Problem =
+      Problem.Config.Unpriced(Problem.Run.Model(s"$model"), metered)
+
+    /** Why a model of a provider that can run on a plan is billed by the token, when it is one. */
+    private def metered(m: ModelRef): Option[Problem.Config.Metered] = m.provider match
+      case p @ (ProviderKind.ClaudeCode | ProviderKind.Codex) =>
+        Some(Problem.Config.Metered.ApiKey(Problem.Upstream.Name(s"${p.wire}")))
+      case ProviderKind.Opencode => Some(Problem.Config.Metered.Opencode)
+      case _                     => None
 
   val JobKind = AgentJobKinds.Agent.kind.value
 

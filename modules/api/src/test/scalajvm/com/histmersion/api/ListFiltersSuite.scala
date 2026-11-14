@@ -1,6 +1,7 @@
 package com.histmersion
 package api
 
+import com.histmersion.util.problem.{NonEmptyVector, Problem}
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -62,11 +63,21 @@ class ListFiltersSuite extends munit.FunSuite:
       range(Some(TimeBound("2026-10-01")), Some(TimeBound("2026-10-01")), now).map(_._2),
       Right(Some(Instant.parse("2026-10-02T00:00:00Z")))
     )
-    assert(
-      range(Some(TimeBound("2026-10-05")), Some(TimeBound("2026-10-01")), now).left
-        .exists(_.sentence.contains("before"))
+    assertEquals(
+      range(Some(TimeBound("2026-10-05")), Some(TimeBound("2026-10-01")), now),
+      Left(
+        Problem.Invalid.Inconsistent.here(
+          NonEmptyVector.of(Problem.Field("since"), Problem.Field("until")),
+          Problem.Invalid.Exclusion.Ordered
+        )
+      )
     )
-    assert(range(Some(TimeBound("soon")), None, now).left.exists(_.sentence.startsWith("since:")))
+    assert(
+      range(Some(TimeBound("soon")), None, now).left.exists {
+        case Problem.Invalid.Unreadable(_, raw, _, at) => raw == Problem.Raw("soon") && at == Vector(Problem.Field("since"))
+        case _                                         => false
+      }
+    )
     assertEquals(range(None, None, now), Right((None, None)))
 
   test("a closed vocabulary names the first unknown value and the words allowed"):
@@ -75,8 +86,15 @@ class ListFiltersSuite extends munit.FunSuite:
       Right(List("edge"))
     )
     assertEquals(
-      known(FacetName("kind"), List(Term("edge"), Term("bogus")), List(Term("edge"))).left.map(_.sentence),
-      Left("unknown kind 'bogus' (one of: edge)")
+      known(FacetName("kind"), List(Term("edge"), Term("bogus")), List(Term("edge"))),
+      Left(
+        Problem.Invalid.Unknown(
+          Problem.TypeName.of(Term),
+          Problem.Raw("bogus"),
+          Vector(Problem.Raw("edge")),
+          Vector(Problem.Field("kind"))
+        )
+      )
     )
 
   test("who decided an approval, from its note and its result"):

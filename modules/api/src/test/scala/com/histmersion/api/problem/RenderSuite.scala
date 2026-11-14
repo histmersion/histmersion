@@ -33,8 +33,14 @@ class RenderSuite extends munit.FunSuite:
       "from: '13oo BCE' is unreadable as com.histmersion.Year (e.g. '1300 BCE', '530 CE', '-1300')"
     ),
     "Missing" -> (400, "rationale is required"),
+    "Undeclared" -> (400, "staus is undeclared (one of: 'status', 'tags')"),
+    "Wrapped" -> (400, "geometry: 'Feature' wraps a com.histmersion.api.catalogue.EventGeometry.Geojson in geometry"),
+    "StoredOn" -> (
+      400,
+      "edges / add: com.histmersion.api.library.Edge 'kristiansen2005' --refutes--> 'gimbutas1956' is stored on 'kristiansen2005'"
+    ),
     "Ambiguous" -> (400, "edits / 0: com.histmersion.api.research.Article.Edits.Anchor 'the Hittite texts' matches 2"),
-    "Repeated" -> (400, "chain / com.histmersion.api.automation.Agents.ModelRef 'claude:opus' is repeated"),
+    "Repeated" -> (400, "chain: com.histmersion.api.automation.Agents.ModelRef 'claude:opus' is repeated"),
     "Misplaced" -> (400, "status belongs under metadata"),
     "OutOfRange" -> (400, "com.histmersion.Latitude '91' is out of [-90, 90]"),
     "Inconsistent" -> (400, "lat, lon break Together"),
@@ -97,6 +103,9 @@ class RenderSuite extends munit.FunSuite:
     "Interrupted" -> (409, "interrupted"),
     "Cancelled" -> (409, "cancelled by Person"),
     "Draining" -> (409, "draining since 2025-11-10T00:00:00Z"),
+    "Unpriced" -> (503, "model claude-opus-5-5 is unpriced (ApiKey claude-code)"),
+    "CutShort" -> (409, "cut short: MergeApply"),
+    "Unrecorded" -> (409, "unrecorded: MergeApply"),
     "Aborted" -> (409, "step draft cannot go on: CheckpointMismatch"),
     "Finding" -> (422, "finding: UncitedParagraph"),
     "Proposal" -> (422, "claims: TooManyClaims 12/15"),
@@ -237,6 +246,13 @@ class RenderSuite extends munit.FunSuite:
         ) ++
         Vector(Run.Block.SpendCap, Run.Block.Draining, Run.Block.OutsideWindow, Run.Block.Waiting)
           .map(Run.Blocked(_)) ++
+        Vector(
+          Config.Unpriced(Run.Model("local:llama"), None),
+          Config.Unpriced(Run.Model("openai/gpt-6"), Some(Config.Metered.Opencode)),
+          Invalid.Undeclared.here(Field("x"), Vector.empty),
+          Invalid.Wrapped.here(TypeName("a.B"), Raw("FeatureCollection"), Field("features"))
+        ) ++
+        Conflict.Activity.values.toVector.flatMap(a => Vector(Run.CutShort(a), Run.Unrecorded(a))) ++
         Vector(
           Content.Requirement.NoYearZero,
           Content.Requirement.CitesNoSource,

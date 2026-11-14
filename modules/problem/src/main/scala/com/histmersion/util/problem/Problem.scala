@@ -160,6 +160,27 @@ object Problem:
       /** The problem of the request as a whole: no path into it. */
       def here(typeName: TypeName, raw: Raw, count: Count): Ambiguous = Ambiguous(typeName, raw, count, Vector.empty)
 
+    /** `field` is no field the request takes; `declared` are the ones it takes. */
+    final case class Undeclared(field: Field, declared: Vector[Field], at: Vector[Field]) extends Invalid
+
+    object Undeclared:
+      /** The problem of the request as a whole: no path into it. */
+      def here(field: Field, declared: Vector[Field]): Undeclared = Undeclared(field, declared, Vector.empty)
+
+    /** `raw` is no value of `typeName` but a wrapper around one: the value is its member `member`. */
+    final case class Wrapped(typeName: TypeName, raw: Raw, member: Field, at: Vector[Field]) extends Invalid
+
+    object Wrapped:
+      /** The problem of the request as a whole: no path into it. */
+      def here(typeName: TypeName, raw: Raw, member: Field): Wrapped = Wrapped(typeName, raw, member, Vector.empty)
+
+    /** `item`, a value of `typeName`, is stored on `owner`, not on the value the request writes: it is written there. */
+    final case class StoredOn(typeName: TypeName, item: Raw, owner: Raw, at: Vector[Field]) extends Invalid
+
+    object StoredOn:
+      /** The problem of the request as a whole: no path into it. */
+      def here(typeName: TypeName, item: Raw, owner: Raw): StoredOn = StoredOn(typeName, item, owner, Vector.empty)
+
     /** `field` is required and was not given, or was empty. */
     final case class Missing(field: Field, at: Vector[Field]) extends Invalid
 
@@ -534,6 +555,19 @@ object Problem:
     /** The parts a reload rebuilds depend on each other in a cycle: `scopes`, the first one again at the end. */
     final case class Cycle(scopes: NonEmptyVector[Scope]) extends Config
 
+    /** `model` has no price in the agents' price table: an unpriced model is refused, never taken as free. `metered`:
+      * why a model of a plan's provider is billed by the token here, when that is why it needs a price.
+      */
+    final case class Unpriced(model: Run.Model, metered: Option[Metered]) extends Config
+
+    /** Why a model of a provider that can run on a plan is billed by the token. */
+    enum Metered derives CanEqual:
+      /** `provider` is set to use an API key, so it bills the API, not the plan. */
+      case ApiKey(provider: Upstream.Name)
+
+      /** An opencode model is metered unless it is `openai/…` on a ChatGPT login. */
+      case Opencode
+
     /** What is wrong with a setting. */
     enum Fault derives CanEqual:
       /** It has no value, or an empty one. */
@@ -732,6 +766,14 @@ object Problem:
     /** A restart cut it short. */
     case object Interrupted extends Run
 
+    /** A restart cut `activity` short. It commits or rolls back as a whole, never half applied: its own listing tells
+      * whether it took effect.
+      */
+    final case class CutShort(activity: Conflict.Activity) extends Run
+
+    /** `activity` finished, but its result was not recorded: its own listing tells what it did. */
+    final case class Unrecorded(activity: Conflict.Activity) extends Run
+
     /** `by` cancelled it. */
     final case class Cancelled(by: Actor) extends Run
 
@@ -899,6 +941,9 @@ object Problem:
       case Invalid.Unknown(t, raw, known, at) => Invalid.Unknown(t, raw, known, field +: at)
       case Invalid.Unreadable(t, raw, eg, at) => Invalid.Unreadable(t, raw, eg, field +: at)
       case Invalid.Missing(f, at)             => Invalid.Missing(f, field +: at)
+      case Invalid.Undeclared(f, ds, at)      => Invalid.Undeclared(f, ds, field +: at)
+      case Invalid.Wrapped(t, raw, m, at)     => Invalid.Wrapped(t, raw, m, field +: at)
+      case Invalid.StoredOn(t, i, o, at)      => Invalid.StoredOn(t, i, o, field +: at)
       case Invalid.Ambiguous(t, raw, n, at)   => Invalid.Ambiguous(t, raw, n, field +: at)
       case Invalid.Repeated(t, raw, at)       => Invalid.Repeated(t, raw, field +: at)
       case Invalid.Misplaced(f, under, at)    => Invalid.Misplaced(f, under, field +: at)
@@ -942,6 +987,19 @@ object Problem:
         Vector(Field("from"))
       ),
       Invalid.Missing.here(Field("rationale")),
+      Invalid.Undeclared.here(Field("staus"), Vector(Field("status"), Field("tags"))),
+      Invalid.Wrapped(
+        TypeName("com.histmersion.api.catalogue.EventGeometry.Geojson"),
+        Raw("Feature"),
+        Field("geometry"),
+        Vector(Field("geometry"))
+      ),
+      Invalid.StoredOn(
+        TypeName("com.histmersion.api.library.Edge"),
+        Raw("'kristiansen2005' --refutes--> 'gimbutas1956'"),
+        Raw("kristiansen2005"),
+        Vector(Field("edges"), Field("add"))
+      ),
       Invalid.Ambiguous(
         TypeName("com.histmersion.api.research.Article.Edits.Anchor"),
         Raw("the Hittite texts"),
@@ -1014,6 +1072,7 @@ object Problem:
       Config.Unavailable(Config.Capability.Originals),
       Config.Reload(Config.Stage.Close, Config.Scope("plugins")),
       Config.Cycle(NonEmptyVector.of(Config.Scope("db"), Config.Scope("lease"), Config.Scope("db"))),
+      Config.Unpriced(Run.Model("claude-opus-5-5"), Some(Config.Metered.ApiKey(Upstream.Name("claude-code")))),
       Plugin.Load(Plugin.Id("media-met"), Plugin.Fault.NullComponent),
       Plugin.Rejected(
         Plugin.Id("media-met"),
@@ -1036,6 +1095,8 @@ object Problem:
       Run.NoModel(Run.Role("reviewer"), Vector(Run.Model("claude-opus-5-5"), Run.Model("gpt-6"))),
       Run.Blocked(Run.Block.PoolFull(Run.Pool("review"))),
       Run.Interrupted,
+      Run.CutShort(Conflict.Activity.MergeApply),
+      Run.Unrecorded(Conflict.Activity.MergeApply),
       Run.Cancelled(Run.Actor.Person),
       Run.Draining(EpochMs(1762732800000L)),
       Run.Aborted(Run.Step("draft"), Run.AbortCause.CheckpointMismatch),

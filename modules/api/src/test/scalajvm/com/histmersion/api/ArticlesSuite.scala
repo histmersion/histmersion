@@ -1,6 +1,7 @@
 package com.histmersion
 package api
 
+import com.histmersion.util.problem.{NonEmptyVector, Problem}
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -76,11 +77,13 @@ class ArticlesSuite extends munit.FunSuite:
           )
         )
         .left
-        .toOption
-        .get
-        .sentence
-        .contains("must not be after"),
-      true
+        .toOption,
+      Some(
+        Problem.Invalid.Inconsistent.here(
+          NonEmptyVector.of(Problem.Field("periodStart"), Problem.Field("periodEnd")),
+          Problem.Invalid.Exclusion.Ordered
+        )
+      )
     )
 
   test("put needs both period bounds or neither"):
@@ -160,8 +163,14 @@ class ArticlesSuite extends munit.FunSuite:
     assertEquals(Articles.precondition(existing, Article.Patch(ifUpdatedAt = existing.updatedAt)), Right(()))
     val e =
       Articles.precondition(existing, Article.Patch(ifUpdatedAt = Some(Article.UpdatedAt("older")))).left.toOption.get
-    assert(e.sentence.contains("has moved on"), e)
-    assert(e.sentence.contains("Re-read"), e)
+    assert(
+      e match
+        case Problem.Conflict.Stale(t, key, sent, _) =>
+          t == Problem.TypeName.of(Article.Slug) && key == Problem.Raw(s"${existing.slug}") && sent == Problem.Conflict.Stamp("older")
+        case _ => false
+      ,
+      e
+    )
 
   // ── kinds ────────────────────────────────────────────────────────────────────────────────────
   test("a wiki directory maps to the singular kind it holds"):
@@ -301,7 +310,10 @@ class ArticlesSuite extends munit.FunSuite:
     val body = Article.Body("# Title\n\n## Sources\n\nData.")
     val result = Articles.appendUnderSection(body, Article.Section("## Missing"), Article.Prose("New content."))
     assert(result.isLeft)
-    assert(result.left.toOption.get.sentence.contains("no heading matching"))
+    assertEquals(
+      result.left.toOption,
+      Some(Problem.NotFound.Entity(Problem.TypeName.of(Article.Section), Problem.Raw("## Missing")))
+    )
 
   test("appendUnderSection appends at the end when the section is the last heading"):
     val body = Article.Body("# Title\n\n## Last Section\n\nSome content.")

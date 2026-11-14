@@ -19,6 +19,11 @@ object Text:
       case Invalid.Unknown(t, raw, known, at) => s"${path(at)}unknown ${t.short} '$raw'${oneOf(known)}"
       case Invalid.Unreadable(t, raw, eg, at) => s"${path(at)}'$raw' is not a ${t.short}${forExample(eg)}"
       case Invalid.Missing(field, at)         => s"${path(at)}$field is required"
+      case Invalid.Undeclared(field, ds, at)  => s"${path(at)}unknown key '$field'${oneOf(ds.map(d => Raw(s"$d")))}"
+      case Invalid.Wrapped(_, raw, member, at) =>
+        s"${path(at)}a $raw is not the value itself: give its \"$member\" member"
+      case Invalid.StoredOn(_, item, owner, at) =>
+        s"${path(at)}$item is stored on '$owner', not here: patch '$owner' to record it"
       case Invalid.Ambiguous(t, raw, n, at)   =>
         s"${path(at)}the ${t.short} '$raw' matches $n places — quote more of it so it matches one"
       case Invalid.Repeated(t, raw, at)        => s"${path(at)}${t.short} '$raw' is given more than once"
@@ -56,6 +61,9 @@ object Text:
       case Config.Reload(stage, scope)    => s"reloading the settings failed at ${words(stage.productPrefix)} ($scope)"
       case Config.Cycle(scopes)           =>
         s"the parts a reload rebuilds depend on each other in a cycle: ${scopes.toVector.mkString(" → ")}"
+      case Config.Unpriced(model, metered) =>
+        s"model '$model' has no price — add it to agents.prices (HISTMERSION_AGENTS_PRICES), e.g. \"$model=0/0\" for " +
+          s"a free local model${metered.fold("")(m => s" (${m.said})")}"
       case Plugin.Load(plugin, Plugin.Fault.SignerChanged(pinned, seen)) =>
         s"plugin $plugin did not load: it was installed signed by $pinned, this jar is signed by $seen — remove the " +
           s"plugin first with `histmersion plugin rm $plugin` to trust the new key"
@@ -70,6 +78,8 @@ object Text:
       case Problem.Run.NoModel(role, tried)     => s"no model of the $role chain can run${triedModels(tried)}"
       case Problem.Run.Blocked(block)           => s"held back: ${block.said}"
       case Problem.Run.Interrupted              => "interrupted by a restart"
+      case Problem.Run.CutShort(activity)       => activity.cutShort
+      case Problem.Run.Unrecorded(activity)     => activity.unrecorded
       case Problem.Run.Cancelled(by)            => s"cancelled by ${words(by.productPrefix)}"
       case Problem.Run.Draining(since)          => s"stopped while the autopilot drains (since ${since.iso})"
       case Problem.Run.Aborted(step, cause)     => s"step $step cannot go on: ${words(cause.productPrefix)}"
@@ -90,6 +100,9 @@ object Text:
       case Invalid.Unknown(t, raw, known, _)     => Invalid.Unknown(t, raw, known, Vector.empty).sentence
       case Invalid.Unreadable(t, raw, eg, _)     => Invalid.Unreadable(t, raw, eg, Vector.empty).sentence
       case Invalid.Missing(field, _)             => Invalid.Missing(field, Vector.empty).sentence
+      case Invalid.Undeclared(field, ds, _)      => Invalid.Undeclared(field, ds, Vector.empty).sentence
+      case Invalid.Wrapped(t, raw, member, _)    => Invalid.Wrapped(t, raw, member, Vector.empty).sentence
+      case Invalid.StoredOn(t, item, owner, _)   => Invalid.StoredOn(t, item, owner, Vector.empty).sentence
       case Invalid.Ambiguous(t, raw, n, _)       => Invalid.Ambiguous(t, raw, n, Vector.empty).sentence
       case Invalid.Repeated(t, raw, _)           => Invalid.Repeated(t, raw, Vector.empty).sentence
       case Invalid.Misplaced(field, under, _)    => Invalid.Misplaced(field, under, Vector.empty).sentence
@@ -154,6 +167,30 @@ object Text:
       case Conflict.Activity.CalibreGui =>
         "the Calibre GUI is running — quit it first (calibredb needs exclusive access to the library)"
       case other => s"a ${words(other.productPrefix)} is still running"
+
+  extension (activity: Conflict.Activity)
+    /** The command that lists what the activity did, when it has one. */
+    private def listing: Option[String] = activity match
+      case Conflict.Activity.MergeApply => Some("`histmersion merge list`")
+      case _                            => None
+
+    private def cutShort: String = activity match
+      case Conflict.Activity.MergeApply =>
+        "the server stopped while this merge apply ran — its transaction was committed or rolled back as a whole, " +
+          "never half applied; `histmersion merge list` shows whether it was applied, and planning the bundle again " +
+          "shows what is left"
+      case other =>
+        s"the server stopped while a ${words(other.productPrefix)} ran — it was committed or rolled back as a whole, " +
+          s"never half applied${other.listing.fold("")(l => s"; $l shows whether it took effect")}"
+
+    private def unrecorded: String =
+      s"the ${words(activity.productPrefix)} finished but its result was not recorded" +
+        activity.listing.fold("")(l => s" — $l shows what was applied")
+
+  extension (metered: Config.Metered)
+    private def said: String = metered match
+      case Config.Metered.ApiKey(provider) => s"$provider is set to use an API key, so it bills the API, not the plan"
+      case Config.Metered.Opencode         => "an opencode model is metered unless it is openai/… on a ChatGPT login"
 
   extension (rule: Refused.Rule)
     private def said: String = rule match
