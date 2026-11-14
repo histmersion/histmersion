@@ -179,6 +179,9 @@ object Problem:
       /** Each no greater than the next (a start before its end). */
       case Ordered
 
+      /** All of them the same value. */
+      case Same
+
     /** How a text fails to be a secret's reference. */
     enum Form derives CanEqual:
       /** It names no scheme: a bare value. */
@@ -207,6 +210,9 @@ object Problem:
 
     /** No value of `typeName` has the key `key`. */
     final case class Entity(typeName: TypeName, key: Raw) extends NotFound
+
+    /** No fetcher found a legal open-access copy of `work` (its DOI or arXiv id). */
+    final case class Copy(work: Raw) extends NotFound
 
   /** The request is valid, but the stored state does not allow it now. */
   sealed trait Conflict extends Problem
@@ -285,6 +291,9 @@ object Problem:
 
       /** The client reads ranges of a file, never a whole one. */
       case RangesOnly
+
+      /** A plugin adds to the host's registries only from inside its `register`, never after it returned. */
+      case RegistrationOver
 
     /** The allowances a request can spend. */
     enum Limit derives CanEqual:
@@ -519,6 +528,9 @@ object Problem:
       /** It is no setting Histmersion knows: it is ignored. */
       case Undeclared
 
+      /** It is no setting of the plugin whose block it is in: the plugin's defaults do not declare it. */
+      case NotInDefaults
+
       /** It is outside the `histmersion` block, where no setting is: it is ignored. */
       case OutsideRoot
 
@@ -599,6 +611,12 @@ object Problem:
       /** It was built against plugin SPI `built`; this version speaks `speaks`. */
       case SpiMismatch(built: Raw, speaks: Raw)
 
+      /** It was built against a plugin SPI other than `speaks`, the one this version speaks, which cannot be told. */
+      case ForeignSpi(speaks: Raw)
+
+      /** It needs the class `name`, which no jar has: its library was neither shipped nor installed with it. */
+      case MissingClass(name: Raw)
+
       /** It was installed signed by `pinned`; this jar is signed by `seen`. */
       case SignerChanged(pinned: Signer, seen: Signer)
 
@@ -610,7 +628,7 @@ object Problem:
 
     /** Why a plugin did not take an item. */
     enum Refusal derives CanEqual:
-      case NoLicence, NoImage, NoName, NoLocation, NoDate, Duplicate, Restricted
+      case NoLicence, NoImage, NoName, NoLocation, NoDate, Duplicate, Restricted, LicenceNotAllowed
 
     /** How a vault failed. */
     enum Retrieval derives CanEqual:
@@ -866,6 +884,7 @@ object Problem:
       Invalid.Inconsistent.here(NonEmptyVector.of(Field("lat"), Field("lon")), Invalid.Exclusion.Together),
       Invalid.Reference(Invalid.Form.EnvName(Raw("1PASSWORD")), Vector(Field("plugins"), Field("api-key"))),
       NotFound.Entity(citekey, Raw("anthony2007")),
+      NotFound.Copy(Raw("doi:10.1017/S0003598X00000001")),
       Conflict.AlreadyExists(TypeName("com.histmersion.domain.catalogue.Place.Id"), Raw("pleiades_579885")),
       Conflict.Renamed(citekey, Raw("anthony2006"), Raw("anthony2007")),
       Conflict.Stale(

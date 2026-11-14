@@ -5,7 +5,7 @@ import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 
-import util.problem.{External, Problem, Problems}
+import util.problem.{External, NonEmptyVector, Problem, Problems}
 import util.problem.Problem.*
 import Column.stored
 import Answer.{answer, decoded, entry, problem, retryAfter, status}
@@ -33,6 +33,7 @@ class RenderSuite extends munit.FunSuite:
     "Inconsistent" -> (400, "lat, lon break Together"),
     "Reference" -> (400, "plugins / api-key: no secret reference: EnvName '1PASSWORD'"),
     "Entity" -> (404, "no com.histmersion.domain.library.Citekey 'anthony2007'"),
+    "Copy" -> (404, "no open-access copy of 'doi:10.1017/S0003598X00000001'"),
     "AlreadyExists" -> (409, "com.histmersion.domain.catalogue.Place.Id 'pleiades_579885' already exists"),
     "Renamed" -> (409, "com.histmersion.domain.library.Citekey 'anthony2006' was renamed to 'anthony2007'"),
     "Stale" -> (
@@ -171,6 +172,7 @@ class RenderSuite extends munit.FunSuite:
           Config.Fault.WrongKind(Config.ValueKind.Number, Config.ValueKind.Text),
           Config.Fault.Unreadable(reported),
           Config.Fault.Undeclared,
+          Config.Fault.NotInDefaults,
           Config.Fault.OutsideRoot,
           Config.Fault.Credential(None),
           Config.Fault.Credential(Some(SettingKey("ANTHROPIC_API_KEY"))),
@@ -202,6 +204,8 @@ class RenderSuite extends munit.FunSuite:
           Plugin.Fault.Duplicate,
           Plugin.Fault.Threw(reported),
           Plugin.Fault.SpiMismatch(Raw("7"), Raw("1")),
+          Plugin.Fault.ForeignSpi(Raw("2")),
+          Plugin.Fault.MissingClass(Raw("org.example.Lib")),
           Plugin.Fault.SignerChanged(Plugin.Signer("ABCD 1234"), Plugin.Signer("EF01")),
           Plugin.Fault.NoProvider,
           Plugin.Fault.Taken(Raw("other.jar"))
@@ -244,6 +248,12 @@ class RenderSuite extends munit.FunSuite:
           Io.Kind.Inside(Io.Path("/srv/corpus"))
         ).map(Io.Wrong(Io.Path("/x"), _)) ++
         Conflict.Activity.values.toVector.map(Conflict.Busy(_)) ++
+        Invalid.Exclusion.values.toVector
+          .map(Invalid.Inconsistent.here(NonEmptyVector.of(Field("a"), Field("b")), _)) ++
+        Plugin.Refusal.values.toVector.map(Plugin.Rejected(Plugin.Id("p"), Raw("item 1"), _)) ++
+        Upstream.Shape.values.toVector.map(
+          Upstream.BadReply.here(Upstream.Name("x"), Upstream.Url("https://x.example"), _, External.Reported("eof"))
+        ) ++
         Refused.Rule.values.toVector.map(Refused.Policy(_)) ++
         Run.PauseReason.values.toVector.map(Run.Paused(_, None)) ++
         Vector(
@@ -265,6 +275,17 @@ class RenderSuite extends munit.FunSuite:
           )
         }
     variants.foreach(v => assertEquals(Column.read(v.stored), v, v.stored))
+
+  test("English names what an answer should have been as a noun, and every reply shape differently"):
+    def said(shape: Upstream.Shape) =
+      Upstream.BadReply
+        .here(Upstream.Name("x"), Upstream.Url("https://x.example/f"), shape, External.Reported("eof"))
+        .sentence
+    assertEquals(said(Upstream.Shape.Range), "x's answer at https://x.example/f is not a byte range — eof")
+    assertEquals(said(Upstream.Shape.Json), "x's answer at https://x.example/f is not JSON — eof")
+    assertEquals(said(Upstream.Shape.Image), "x's answer at https://x.example/f is not an image — eof")
+    assertEquals(Upstream.Shape.values.map(said).distinct.length, Upstream.Shape.values.length)
+    assert(Upstream.Shape.values.forall(s => !said(s).contains(s" ${s.productPrefix} ")))
 
   test("a text no case writes reads as it was, and writes back the same"):
     List(
