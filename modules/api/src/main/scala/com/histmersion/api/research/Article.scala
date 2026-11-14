@@ -1125,7 +1125,7 @@ object Article:
       val as = p.articles.map { a =>
         val ov = a.overlapWith.fold("")(o => f" · overlaps [[$o]] ${(a.overlap).value * 100}%.0f%%")
         s"- `${a.slug}` — ${a.title} (${a.kind}) · ${a.filter.line} → ${Plural.count(Plural.Count((a.hits).value.toLong), Plural.CountSingular("source"))}$ov" +
-          Option(a.why).filter(w => s"$w".nonEmpty).fold("")(w => s": ${w}")
+          Option(a.why).filter(w => s"$w".nonEmpty).fold("")(w => s": $w")
       }
       val dropped = p.dropped.map(d => s"- dropped: $d")
       Markdown(

@@ -885,8 +885,7 @@ class ReviewLedgerSuite extends munit.FunSuite:
           ReviewArticle.Fix.Notes(""),
           ReviewArticle.Fix.WordsBefore(1),
           ReviewArticle.Fix.WordsAfter(1),
-          wontFix =
-            List(ReviewArticle.WontFix(ReviewArticle.WontFix.Id("C1"), ReviewArticle.Rationale("fine")))
+          wontFix = List(ReviewArticle.WontFix(ReviewArticle.WontFix.Id("C1"), ReviewArticle.Rationale("fine")))
         ),
         ReviewLedger.ApplyFixRun("4b43b0ae-e356-24cd-95b9-10189b3dc231"),
         ReviewLedger.ApplyFixRound(1)

@@ -435,7 +435,7 @@ final class AutopilotService(
           case Right(_) =>
             val from = status(slug)
             status(slug) = Goal.StatusValue(to.value)
-            val line = s"goal $slug: $from → $to (${why})"
+            val line = s"goal $slug: $from → $to ($why)"
             mine
               .find(_.kind.value == Kind.Seed.wire.value)
               .orElse(mine.headOption)

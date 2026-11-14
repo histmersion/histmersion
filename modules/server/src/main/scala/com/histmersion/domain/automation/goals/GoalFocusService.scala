@@ -223,8 +223,8 @@ final class GoalFocusService(
     }
     val left = plan.left.map { (g, why) =>
       agents.focusStore.left(g, why, now)
-      event(g, s"focus: no longer active — ${why}")
-      s"-${g.value} (${why})"
+      event(g, s"focus: no longer active — $why")
+      s"-${g.value} ($why)"
     }
     joined ++ left
 

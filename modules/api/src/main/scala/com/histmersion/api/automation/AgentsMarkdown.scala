@@ -109,8 +109,7 @@ object AgentsMarkdown:
       if !((p.available) == PlanQuota.PoolStatus.Available(true)) then
         s"**${p.reason.map(r => s"$r").getOrElse("unavailable: no login")}**"
       else if (p.held) == PlanQuota.PoolStatus.Held(true) then "**held** — no agent use until released"
-      else if (p.usable) == PlanQuota.PoolStatus.Usable(true) then
-        "usable" + p.reason.fold("")(r => s" (${r})")
+      else if (p.usable) == PlanQuota.PoolStatus.Usable(true) then "usable" + p.reason.fold("")(r => s" ($r)")
       else
         s"**paused** — ${p.reason.map(r => s"$r").getOrElse("below its floor")}" + p.until.fold("")(u =>
           s"; frees at $u"

@@ -398,7 +398,7 @@ final class AgentsControllers(
                     PlanQuota.PoolRefreshed(
                       p.wire,
                       PlanQuota.PoolRefreshed.Refreshed(false),
-                      PlanQuota.PoolRefreshed.Detail(s"not read: ${why}"),
+                      PlanQuota.PoolRefreshed.Detail(s"not read: $why"),
                       st
                     )
               )
