@@ -93,7 +93,14 @@ object Coverage:
           val text = Option(r.reason).map(w => s"$w".trim.replaceAll("\\s+", " ")).getOrElse("")
           val at = Vector(Problem.Field("reasons"))
           if !((Article.Links.isCitekeyShaped((ck))) == (true)) then
-            Left(Problem.Invalid.Unreadable(Problem.TypeName.of(Citekey), Problem.Raw(s"${r.citekey}"), Vector(Problem.Raw("anthony2007")), at))
+            Left(
+              Problem.Invalid.Unreadable(
+                Problem.TypeName.of(Citekey),
+                Problem.Raw(s"${r.citekey}"),
+                Vector(Problem.Raw("anthony2007")),
+                at
+              )
+            )
           else if text.length > MaxChars then
             Left(
               Problem.Invalid.OutOfRange(

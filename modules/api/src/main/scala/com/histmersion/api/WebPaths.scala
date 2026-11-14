@@ -27,8 +27,8 @@ object WebPaths:
     Set(Segment("acquire"), Segment("tasks"), Segment("log"), Segment("merge"), Segment("about"), Segment("storage"))
 
   def isApp(segments: List[Segment]): Boolean = segments match
-    case Nil                                             => (true)
-    case first :: _ if Places(Segment((first).value))    => (true)
-    case List(first, _) if Items(Segment((first).value)) => (true)
-    case List(first) if SavedLinks(Segment((first).value))   => (true)
-    case _                                               => (false)
+    case Nil                                               => (true)
+    case first :: _ if Places(Segment((first).value))      => (true)
+    case List(first, _) if Items(Segment((first).value))   => (true)
+    case List(first) if SavedLinks(Segment((first).value)) => (true)
+    case _                                                 => (false)

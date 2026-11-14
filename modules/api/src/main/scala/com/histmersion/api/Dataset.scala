@@ -20,7 +20,8 @@ object Dataset:
       case Some(s) =>
         parse(Wire(s)).toRight(
           Api.Error(
-            Problem.Invalid.Unknown.here(Problem.TypeName.of(Wire), Problem.Raw(s"$s"), values.toVector.map(d => Problem.Raw(s"${d.wire}"))),
+            Problem.Invalid.Unknown
+              .here(Problem.TypeName.of(Wire), Problem.Raw(s"$s"), values.toVector.map(d => Problem.Raw(s"${d.wire}"))),
             Some(Api.Error.Code(Write.CodeInvalid))
           )
         )

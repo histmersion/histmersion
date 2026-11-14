@@ -193,9 +193,23 @@ object Queue:
     found match
       case None => Left(Problem.NotFound.Entity(TypeName.of(QueueItem.Id), Raw(s"$id")))
       case Some(i) if i.list != Kind.Acquire.label =>
-        Left(Problem.Conflict.WrongState(TypeName.of(QueueItem.Id), Raw(s"$id"), Problem.Conflict.State(s"${i.list}"), Vector(Problem.Conflict.State(s"${Kind.Acquire.label}"))))
+        Left(
+          Problem.Conflict.WrongState(
+            TypeName.of(QueueItem.Id),
+            Raw(s"$id"),
+            Problem.Conflict.State(s"${i.list}"),
+            Vector(Problem.Conflict.State(s"${Kind.Acquire.label}"))
+          )
+        )
       case Some(i) if i.status != QueueItem.Status(Open) =>
-        Left(Problem.Conflict.WrongState(TypeName.of(QueueItem.Id), Raw(s"$id"), Problem.Conflict.State(s"${i.status}"), Vector(Problem.Conflict.State(s"$Open"))))
+        Left(
+          Problem.Conflict.WrongState(
+            TypeName.of(QueueItem.Id),
+            Raw(s"$id"),
+            Problem.Conflict.State(s"${i.status}"),
+            Vector(Problem.Conflict.State(s"$Open"))
+          )
+        )
       case Some(i) => Right(i)
 
   def itemGoals(own: List[(QueueItem.Id, GoalRef)], linked: List[(QueueItem.Id, GoalRef)]): List[ItemGoals] =
@@ -238,7 +252,12 @@ object Queue:
           .map(i => Some(i.toString))
           .left
           .map(_ =>
-            Invalid.Unreadable(TypeName.of(QueueItem.CreatedAt), Raw(s"$s"), Vector(Raw("2026-08-25T00:00:00Z")), Vector(Field("createdAt")))
+            Invalid.Unreadable(
+              TypeName.of(QueueItem.CreatedAt),
+              Raw(s"$s"),
+              Vector(Raw("2026-08-25T00:00:00Z")),
+              Vector(Field("createdAt"))
+            )
           )
           .map(refactorValue2 => (refactorValue2).map(refactorValue3 => QueueItem.CreatedAt(refactorValue3)))
 

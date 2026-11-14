@@ -1,7 +1,6 @@
 package com.histmersion
 package api.jobs
 
-
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
 enum JobState derives CanEqual:

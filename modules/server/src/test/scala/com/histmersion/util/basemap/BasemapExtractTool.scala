@@ -206,7 +206,9 @@ object BasemapExtractTool:
     )
     orDie(BasemapFetch.download(http, plan, work, pace, note, _ => Right(())))
     val drop =
-      Basemap.parseDrop(Basemap.DropRule.Spec(cfg.vector.drop.value)).fold(p => sys.error(p.sentences.mkString("; ")), identity)
+      Basemap
+        .parseDrop(Basemap.DropRule.Spec(cfg.vector.drop.value))
+        .fold(p => sys.error(p.sentences.mkString("; ")), identity)
     val rules = if keepAll then Map.empty[Mvt.LayerName, Mvt.Rule] else BasemapService.mvtRules(drop)
     val meta = BasemapFetch.localMetadata(
       plan,

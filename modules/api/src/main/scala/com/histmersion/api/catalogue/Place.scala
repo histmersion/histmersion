@@ -323,7 +323,16 @@ object Place:
     def name(raw: Name.Value): Either[Api.Error, Name.Value] =
       val n = (raw).value.trim.replaceAll("\\s+", " ")
       if n.isEmpty then Left(invalid(Invalid.Missing.here(Field("name"))))
-      else if n.length > MaxName then Left(invalid(Invalid.OutOfRange.here(TypeName.of(Name.Value), Raw.of(n.length.toLong), Invalid.Bounds(None, Some(Raw.of(MaxName.toLong))))))
+      else if n.length > MaxName then
+        Left(
+          invalid(
+            Invalid.OutOfRange.here(
+              TypeName.of(Name.Value),
+              Raw.of(n.length.toLong),
+              Invalid.Bounds(None, Some(Raw.of(MaxName.toLong)))
+            )
+          )
+        )
       else Right(Name.Value(n))
 
     val MaxName = 200
@@ -332,7 +341,13 @@ object Place:
       raw.map((_).value.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty) match
         case None                            => Right(Name.Lang(""))
         case Some(l) if LangShape.matches(l) => Right(Name.Lang(l))
-        case Some(l)                         => Left(invalid(Invalid.Unreadable.here(TypeName.of(Name.Lang), Raw(s"$l"), Vector(Raw("en"), Raw("grc"), Raw("pl"), Raw("sr-latn")))))
+        case Some(l)                         =>
+          Left(
+            invalid(
+              Invalid.Unreadable
+                .here(TypeName.of(Name.Lang), Raw(s"$l"), Vector(Raw("en"), Raw("grc"), Raw("pl"), Raw("sr-latn")))
+            )
+          )
 
     def defaultId(label: Label): Id =
       Id(LocalPrefix + Geocode.key(label.value).value.replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", "").take(64))
@@ -358,7 +373,13 @@ object Place:
           in.lon.value >= -180 && in.lon.value <= 180 && in.lat.value >= -90 && in.lat.value <= 90 &&
             !in.lon.value.isNaN && !in.lat.value.isNaN,
           (),
-          invalid(Invalid.OutOfRange.here(TypeName.named[GeoPoint], Raw(s"${in.lat}, ${in.lon}"), Invalid.Bounds(Some(Raw("-90, -180")), Some(Raw("90, 180")))))
+          invalid(
+            Invalid.OutOfRange.here(
+              TypeName.named[GeoPoint],
+              Raw(s"${in.lat}, ${in.lon}"),
+              Invalid.Bounds(Some(Raw("-90, -180")), Some(Raw("90, 180")))
+            )
+          )
         )
         _ <- Either.cond(
           in.source.value.trim.nonEmpty,
@@ -370,7 +391,13 @@ object Place:
           case (Some(a), Some(b)) if a <= b => Right(Some(Period(a, b)))
           case (Some(a), None)              => Right(Some(Period(a, a)))
           case (None, Some(b))              => Right(Some(Period(b, b)))
-          case (Some(a), Some(b))           => Left(invalid(Invalid.Inconsistent.here(NonEmptyVector.of(Field("periodStart"), Field("periodEnd")), Invalid.Exclusion.Ordered)))
+          case (Some(a), Some(b))           =>
+            Left(
+              invalid(
+                Invalid.Inconsistent
+                  .here(NonEmptyVector.of(Field("periodStart"), Field("periodEnd")), Invalid.Exclusion.Ordered)
+              )
+            )
         l <- lang(in.lang)
         extra <- in.names.foldLeft[Either[Api.Error, List[Name.Value]]](Right(Nil))((acc, n) =>
           acc.flatMap(ns => name(n).map(ns :+ _))
@@ -811,14 +838,26 @@ object Place:
       val asked = in.pointLat.isDefined || in.pointLon.isDefined
       if (in.reset) == OverrideSet.Reset(true) then
         if kind.isDefined || period.isDefined || asked then
-          Left(invalid(Invalid.Inconsistent.here(NonEmptyVector.of(Field("reset"), Field("kind"), Field("period"), Field("point")), Invalid.Exclusion.AtMostOne)))
+          Left(
+            invalid(
+              Invalid.Inconsistent.here(
+                NonEmptyVector.of(Field("reset"), Field("kind"), Field("period"), Field("point")),
+                Invalid.Exclusion.AtMostOne
+              )
+            )
+          )
         else Right(OverrideEdit.Reset)
       else
         for
           _ <- Either.cond(
             kind.isDefined || period.isDefined || asked,
             (),
-            invalid(Invalid.Inconsistent.here(NonEmptyVector.of(Field("kind"), Field("period"), Field("point"), Field("reset")), Invalid.Exclusion.AtLeastOne))
+            invalid(
+              Invalid.Inconsistent.here(
+                NonEmptyVector.of(Field("kind"), Field("period"), Field("point"), Field("reset")),
+                Invalid.Exclusion.AtLeastOne
+              )
+            )
           )
           point <-
             (if !asked then Right(None)
@@ -826,26 +865,52 @@ object Place:
                (in.pointLat, in.pointLon) match
                  case (Some(lat), Some(lon)) =>
                    if lat.value.isNaN || lon.value.isNaN || lat.value < -90 || lat.value > 90 || lon.value < -180 || lon.value > 180
-                   then Left(invalid(Invalid.OutOfRange.here(TypeName.named[GeoPoint], Raw(s"$lat, $lon"), Invalid.Bounds(Some(Raw("-90, -180")), Some(Raw("90, 180"))))))
-                   else if reason.isEmpty then
-                     Left(invalid(Invalid.Missing.here(Field("reason"))))
+                   then
+                     Left(
+                       invalid(
+                         Invalid.OutOfRange.here(
+                           TypeName.named[GeoPoint],
+                           Raw(s"$lat, $lon"),
+                           Invalid.Bounds(Some(Raw("-90, -180")), Some(Raw("90, 180")))
+                         )
+                       )
+                     )
+                   else if reason.isEmpty then Left(invalid(Invalid.Missing.here(Field("reason"))))
                    else Right(Some(GeoPoint(lon, lat)))
-                 case _ => Left(invalid(Invalid.Inconsistent.here(NonEmptyVector.of(Field("pointLat"), Field("pointLon")), Invalid.Exclusion.Together)))
+                 case _ =>
+                   Left(
+                     invalid(
+                       Invalid.Inconsistent
+                         .here(NonEmptyVector.of(Field("pointLat"), Field("pointLon")), Invalid.Exclusion.Together)
+                     )
+                   )
             ): Either[Api.Error, Option[GeoPoint]]
           _ <- kind.fold(Right(()))(k =>
             Either.cond(
               Kind.all.contains(k),
               (),
-              invalid(Invalid.Unknown.here(TypeName.of(OverrideEdit.Put.Kind), Raw(s"$k"), Kind.all.toVector.map(x => Raw(s"$x"))))
+              invalid(
+                Invalid.Unknown
+                  .here(TypeName.of(OverrideEdit.Put.Kind), Raw(s"$k"), Kind.all.toVector.map(x => Raw(s"$x")))
+              )
             )
           )
           _ <- period match
-            case Some((Some(a), Some(b))) if a > b => Left(invalid(Invalid.Inconsistent.here(NonEmptyVector.of(Field("periodStart"), Field("periodEnd")), Invalid.Exclusion.Ordered)))
-            case _                                 => Right(())
+            case Some((Some(a), Some(b))) if a > b =>
+              Left(
+                invalid(
+                  Invalid.Inconsistent
+                    .here(NonEmptyVector.of(Field("periodStart"), Field("periodEnd")), Invalid.Exclusion.Ordered)
+                )
+              )
+            case _ => Right(())
           _ <- Either.cond(
             reason.forall(_.length <= MaxReason),
             (),
-            invalid(Invalid.OutOfRange.here(TypeName.of(Rationale), Raw("reason"), Invalid.Bounds(None, Some(Raw.of(MaxReason.toLong)))))
+            invalid(
+              Invalid.OutOfRange
+                .here(TypeName.of(Rationale), Raw("reason"), Invalid.Bounds(None, Some(Raw.of(MaxReason.toLong))))
+            )
           )
         yield OverrideEdit.Put(
           kind.map(OverrideEdit.Put.Kind(_)),
@@ -859,7 +924,10 @@ object Place:
       Either.cond(
         r.forall(_.length <= MaxReason),
         r.map(text => Rationale(s"$text")),
-        invalid(Invalid.OutOfRange.here(TypeName.of(Rationale), Raw("reason"), Invalid.Bounds(None, Some(Raw.of(MaxReason.toLong)))))
+        invalid(
+          Invalid.OutOfRange
+            .here(TypeName.of(Rationale), Raw("reason"), Invalid.Bounds(None, Some(Raw.of(MaxReason.toLong))))
+        )
       )
 
     def parsePoint(raw: PointText): Either[Problem, (Latitude, Longitude)] =
@@ -870,7 +938,13 @@ object Place:
                 if !lat.isNaN && !lon.isNaN && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180 =>
               Right((Latitude(lat), Longitude(lon)))
             case (Some(_), Some(_)) =>
-              Left(Invalid.OutOfRange.here(TypeName.of(PointText), Raw(s"$raw"), Invalid.Bounds(Some(Raw("-90,-180")), Some(Raw("90,180")))))
+              Left(
+                Invalid.OutOfRange.here(
+                  TypeName.of(PointText),
+                  Raw(s"$raw"),
+                  Invalid.Bounds(Some(Raw("-90,-180")), Some(Raw("90,180")))
+                )
+              )
             case _ =>
               Left(Invalid.Unreadable.here(TypeName.of(PointText), Raw(s"$raw"), Vector(Raw("37.95,58.21"))))
         case _ => Left(Invalid.Unreadable.here(TypeName.of(PointText), Raw(s"$raw"), Vector(Raw("37.95,58.21"))))

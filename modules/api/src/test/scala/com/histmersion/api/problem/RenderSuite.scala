@@ -28,7 +28,10 @@ class RenderSuite extends munit.FunSuite:
       400,
       "unknown com.histmersion.domain.library.Source.Status 'dubious' (one of: 'current', 'contested')"
     ),
-    "Unreadable" -> (400, "from: '13oo BCE' is unreadable as com.histmersion.Year (e.g. '1300 BCE', '530 CE', '-1300')"),
+    "Unreadable" -> (
+      400,
+      "from: '13oo BCE' is unreadable as com.histmersion.Year (e.g. '1300 BCE', '530 CE', '-1300')"
+    ),
     "Missing" -> (400, "rationale is required"),
     "Ambiguous" -> (400, "edits / 0: com.histmersion.api.research.Article.Edits.Anchor 'the Hittite texts' matches 2"),
     "Repeated" -> (400, "chain / com.histmersion.api.automation.Agents.ModelRef 'claude:opus' is repeated"),

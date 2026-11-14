@@ -207,7 +207,16 @@ object Source:
           Problem.Count.of(bs.size.toLong)
         )
       }
-      Problems.from(referred).getOrElse(Problem.Conflict.WrongState(Problem.TypeName.of(com.histmersion.api.library.Citekey), Problem.Raw(s"$ck"), Problem.Conflict.State("blocked"), Vector.empty))
+      Problems
+        .from(referred)
+        .getOrElse(
+          Problem.Conflict.WrongState(
+            Problem.TypeName.of(com.histmersion.api.library.Citekey),
+            Problem.Raw(s"$ck"),
+            Problem.Conflict.State("blocked"),
+            Vector.empty
+          )
+        )
 
     def logText(d: Deletion): LogText =
       def short(p: DeletePart) = p match
@@ -913,7 +922,7 @@ object Source:
             )
           )
         case (None, None) => Right(None)
-        case _ =>
+        case _            =>
           Left(
             Problem.Invalid.Inconsistent(
               NonEmptyVector.of(Problem.Field("period_start"), Problem.Field("period_end")),

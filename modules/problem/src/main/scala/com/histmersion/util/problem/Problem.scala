@@ -948,7 +948,11 @@ object Problem:
         Count(2L),
         Vector(Field("edits"), Field("0"))
       ),
-      Invalid.Repeated(TypeName("com.histmersion.api.automation.Agents.ModelRef"), Raw("claude:opus"), Vector(Field("chain"))),
+      Invalid.Repeated(
+        TypeName("com.histmersion.api.automation.Agents.ModelRef"),
+        Raw("claude:opus"),
+        Vector(Field("chain"))
+      ),
       Invalid.Misplaced.here(Field("status"), Field("metadata")),
       Invalid.OutOfRange
         .here(TypeName("com.histmersion.Latitude"), Raw("91"), Invalid.Bounds(Some(Raw("-90")), Some(Raw("90")))),

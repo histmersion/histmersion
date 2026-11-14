@@ -255,64 +255,71 @@ object Lpf:
       .sortBy(r => (r.parentId.value, r.kind.value))
 
   def readFeature(j: Json, defaultKind: Place.KindValue, ordinal: Int): Either[Problem, Place.Input] =
-    j.asObject.toRight(Problem.Io.Corrupt(Problem.Io.Format.Json, Problem.Where(s"feature #$ordinal"), Problem.Io.Damage.Undecodable)).flatMap { f =>
-      val props = f("properties").flatMap(_.asObject).getOrElse(JsonObject.empty)
-      val label = str(props, "title", "name", "NAME", "label", "ADMIN", "NAME_LONG", "toponym")
-        .orElse(str(f, "title", "label"))
-        .orElse(
-          f("names")
-            .flatMap(_.asArray)
-            .flatMap(_.headOption)
-            .flatMap(n => n.asString.orElse(n.asObject.flatMap(str(_, "toponym", "name"))))
-        )
-        .getOrElse("")
-      val id = str(f, "@id", "id")
-        .orElse(str(props, "@id", "id", "pid"))
-        .getOrElse(if label.nonEmpty then slug(label) else s"feature_$ordinal")
-      if id.isEmpty then Left(Problem.Invalid.Missing(Problem.Field("id"), Vector(Problem.Field("features"), Problem.Field(s"$ordinal"))))
-      else
-        val kind = str(props, "kind")
-          .flatMap(parseKind)
+    j.asObject
+      .toRight(
+        Problem.Io.Corrupt(Problem.Io.Format.Json, Problem.Where(s"feature #$ordinal"), Problem.Io.Damage.Undecodable)
+      )
+      .flatMap { f =>
+        val props = f("properties").flatMap(_.asObject).getOrElse(JsonObject.empty)
+        val label = str(props, "title", "name", "NAME", "label", "ADMIN", "NAME_LONG", "toponym")
+          .orElse(str(f, "title", "label"))
           .orElse(
-            f("types")
-              .orElse(props("types"))
+            f("names")
               .flatMap(_.asArray)
-              .map(_.toList)
-              .getOrElse(Nil)
-              .flatMap(t => t.asString.orElse(t.asObject.flatMap(str(_, "label", "identifier", "sourceLabel"))))
-              .flatMap(parseKind)
-              .headOption
+              .flatMap(_.headOption)
+              .flatMap(n => n.asString.orElse(n.asObject.flatMap(str(_, "toponym", "name"))))
           )
-          .orElse(
-            str(props, "featureType", "feature_type", "TYPE").flatMap(parseKind)
+          .getOrElse("")
+        val id = str(f, "@id", "id")
+          .orElse(str(props, "@id", "id", "pid"))
+          .getOrElse(if label.nonEmpty then slug(label) else s"feature_$ordinal")
+        if id.isEmpty then
+          Left(
+            Problem.Invalid.Missing(Problem.Field("id"), Vector(Problem.Field("features"), Problem.Field(s"$ordinal")))
           )
-          .getOrElse(defaultKind)
-        val (period, open) = OpenSide.split(
-          f("when")
-            .flatMap(parseWhen)
-            .orElse(props("when").flatMap(parseWhen))
-            .orElse(propertyPeriod(props))
-            .getOrElse(Span.always)
-        )
-        val leftover = props.filterKeys(k => !OwnKeys.contains(k))
-        Right(
-          Place.Input(
-            Place(
-              id = Place.Id(id),
-              label = Place.Label(if label.nonEmpty then label else id),
-              kind = kind,
-              geometry = f("geometry").filterNot(_.isNull).map(g => Place.Geometry(g.noSpaces)),
-              period = period,
-              source = str(props, "source", "citation").orElse(str(f, "source")).map(Place.Source(_)),
-              properties =
-                Some(leftover).filter(_.nonEmpty).map(o => Place.Properties(Json.fromJsonObject(o).noSpaces)),
-              open = open
-            ),
-            readNames(f, props, if label.nonEmpty then label else id),
-            readRelations(id, f, props)
+        else
+          val kind = str(props, "kind")
+            .flatMap(parseKind)
+            .orElse(
+              f("types")
+                .orElse(props("types"))
+                .flatMap(_.asArray)
+                .map(_.toList)
+                .getOrElse(Nil)
+                .flatMap(t => t.asString.orElse(t.asObject.flatMap(str(_, "label", "identifier", "sourceLabel"))))
+                .flatMap(parseKind)
+                .headOption
+            )
+            .orElse(
+              str(props, "featureType", "feature_type", "TYPE").flatMap(parseKind)
+            )
+            .getOrElse(defaultKind)
+          val (period, open) = OpenSide.split(
+            f("when")
+              .flatMap(parseWhen)
+              .orElse(props("when").flatMap(parseWhen))
+              .orElse(propertyPeriod(props))
+              .getOrElse(Span.always)
           )
-        )
-    }
+          val leftover = props.filterKeys(k => !OwnKeys.contains(k))
+          Right(
+            Place.Input(
+              Place(
+                id = Place.Id(id),
+                label = Place.Label(if label.nonEmpty then label else id),
+                kind = kind,
+                geometry = f("geometry").filterNot(_.isNull).map(g => Place.Geometry(g.noSpaces)),
+                period = period,
+                source = str(props, "source", "citation").orElse(str(f, "source")).map(Place.Source(_)),
+                properties =
+                  Some(leftover).filter(_.nonEmpty).map(o => Place.Properties(Json.fromJsonObject(o).noSpaces)),
+                open = open
+              ),
+              readNames(f, props, if label.nonEmpty then label else id),
+              readRelations(id, f, props)
+            )
+          )
+      }
 
   def parse(
       json: String,
@@ -321,7 +328,13 @@ object Lpf:
     RawJson
       .parse((json))
       .left
-      .map(e => Problem.Io.Corrupt(Problem.Io.Format.Json, Problem.Where("LPF"), Problem.Io.Damage.Unreadable(External.Reported.of(s"$e"))))
+      .map(e =>
+        Problem.Io.Corrupt(
+          Problem.Io.Format.Json,
+          Problem.Where("LPF"),
+          Problem.Io.Damage.Unreadable(External.Reported.of(s"$e"))
+        )
+      )
       .flatMap { doc =>
         val found: Option[List[Json]] =
           doc.asArray

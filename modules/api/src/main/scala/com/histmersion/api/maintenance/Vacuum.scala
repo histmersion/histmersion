@@ -35,8 +35,15 @@ object Vacuum:
     val shape = tables.filterNot(TableShape.matches)
     val absent = tables.filterNot(existing.map(_.value).contains)
     if tables.isEmpty then Left(invalid(Problem.Invalid.Missing.here(Problem.Field("tables"))))
-    else if shape.nonEmpty then Left(invalid(Problem.Invalid.Unreadable.here(Problem.TypeName.of(Table), Problem.Raw(s"${shape.mkString(", ")}"), Vector(Problem.Raw("sources")))))
-    else if absent.nonEmpty then Left(invalid(Problem.NotFound.Entity(Problem.TypeName.of(Table), Problem.Raw(s"${absent.mkString(", ")}"))))
+    else if shape.nonEmpty then
+      Left(
+        invalid(
+          Problem.Invalid.Unreadable
+            .here(Problem.TypeName.of(Table), Problem.Raw(s"${shape.mkString(", ")}"), Vector(Problem.Raw("sources")))
+        )
+      )
+    else if absent.nonEmpty then
+      Left(invalid(Problem.NotFound.Entity(Problem.TypeName.of(Table), Problem.Raw(s"${absent.mkString(", ")}"))))
     else Right(VacuumPlan(in.analyze, (tables).map(refactorValue2 => Request.Tables(refactorValue2))))
 
   def statement(table: Table, analyze: Request.Analyze): String =

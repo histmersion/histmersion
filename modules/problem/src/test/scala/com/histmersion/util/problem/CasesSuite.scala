@@ -117,7 +117,8 @@ class CasesSuite extends munit.FunSuite:
       "not Open Access (rights is missing)"
     )
     assertEquals(Invalid.Missing(Field("credit"), Vector(Field("k1"))).reason, "credit is required")
-    val year = Invalid.Unreadable(TypeName("com.histmersion.Year"), Raw("x"), Vector(Raw("1300 BCE")), Vector(Field("from")))
+    val year =
+      Invalid.Unreadable(TypeName("com.histmersion.Year"), Raw("x"), Vector(Raw("1300 BCE")), Vector(Field("from")))
     assertEquals(year.sentence, "from: 'x' is not a Year (e.g. 1300 BCE)")
     assertEquals(year.reason, "'x' is not a Year (e.g. 1300 BCE)")
     assertEquals(NotFound.Entity(TypeName("x.Commons.File"), Raw("File:A.jpg")).reason, "no such Commons.File")

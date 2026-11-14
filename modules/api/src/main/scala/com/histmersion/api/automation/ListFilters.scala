@@ -318,8 +318,10 @@ object ListFilters:
   def known(what: FacetName, vs: List[Term], known: Seq[Term]): Either[Problem, List[Term]] =
     vs.find(v => !known.contains(v)) match
       case Some(v) =>
-        Left(Invalid.Unknown(TypeName.of(Term), Raw(s"$v"), known.toVector.map(k => Raw(s"$k")), Vector(Field(s"$what"))))
-      case None    => Right((vs).map(refactorValue34 => Term((refactorValue34).value)))
+        Left(
+          Invalid.Unknown(TypeName.of(Term), Raw(s"$v"), known.toVector.map(k => Raw(s"$k")), Vector(Field(s"$what")))
+        )
+      case None => Right((vs).map(refactorValue34 => Term((refactorValue34).value)))
 
   private val Relative = """(\d{1,6})\s*([dhm])""".r
   private val DateOnly = """(\d{4}-\d{2}-\d{2})""".r
@@ -334,12 +336,24 @@ object ListFilters:
           .Try(LocalDate.parse(d))
           .toOption
           .map(day => (if (end) == (true) then day.plusDays(1) else day).atStartOfDay(ZoneOffset.UTC).toInstant)
-          .toRight(Invalid.Unreadable.here(TypeName.of(TimeBound), Raw(s"$s"), Vector(Raw("2026-10-01"), Raw("2026-10-01T12:00:00Z"), Raw("7d"), Raw("12h"), Raw("30m"))))
+          .toRight(
+            Invalid.Unreadable.here(
+              TypeName.of(TimeBound),
+              Raw(s"$s"),
+              Vector(Raw("2026-10-01"), Raw("2026-10-01T12:00:00Z"), Raw("7d"), Raw("12h"), Raw("30m"))
+            )
+          )
       case _ =>
         scala.util
           .Try(Instant.parse((s).value.trim))
           .toOption
-          .toRight(Invalid.Unreadable.here(TypeName.of(TimeBound), Raw(s"$s"), Vector(Raw("2026-10-01"), Raw("2026-10-01T12:00:00Z"), Raw("7d"), Raw("12h"), Raw("30m"))))
+          .toRight(
+            Invalid.Unreadable.here(
+              TypeName.of(TimeBound),
+              Raw(s"$s"),
+              Vector(Raw("2026-10-01"), Raw("2026-10-01T12:00:00Z"), Raw("7d"), Raw("12h"), Raw("30m"))
+            )
+          )
 
   def range(
       since: Option[TimeBound],
