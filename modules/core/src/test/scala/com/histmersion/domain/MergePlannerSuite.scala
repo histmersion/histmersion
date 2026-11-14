@@ -202,7 +202,12 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
     assertEquals(r.resolutionErrors.size, 5, r.resolutionErrors.mkString("\n"))
     // a rename must be a free citekey
     val taken = plan(res = resolve(coll.id -> MergeResolution.Decision("rename-right:page1959_history"))).plan
-    assert(taken.resolutionErrors.exists(_.sentence.contains("already exists")), taken.resolutionErrors.toString)
+    assert(
+      taken.resolutionErrors.exists(
+        _.sentence == s"${coll.id}: 'page1959_history' is already a citekey (or an old one) here or in the bundle"
+      ),
+      taken.resolutionErrors.toString
+    )
 
   test("an id goes stale when a record it is about changes; the resolution is reported, not re-applied"):
     val p0 = plan().plan

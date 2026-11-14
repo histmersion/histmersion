@@ -79,6 +79,17 @@ object Problem:
       */
     def of[T](value: T)(using RefinedType.Mirror[T]): Where = Where(s"$value")
 
+  /** A share between 0 and 1 (`0.42`: 42 of every hundred), shown to two decimals. */
+  type Share = Share.T
+  object Share extends Newtype[Double, Pure]:
+    /** The share a value of any newtype over a `Double` holds (`Share.of(quote.ratio)`): unwrapped here, like
+      * [[Raw.of]].
+      */
+    def of[T](ratio: T)(using RefinedType.Mirror[T] { type BaseType = Double }): Share = Share(s"$ratio".toDouble)
+
+    /** A share written in decimal digits. */
+    def read(digits: String): Option[Share] = digits.toDoubleOption.map(Share(_))
+
   /** A count of things. */
   type Count = Count.T
   object Count extends Newtype[Long, Pure]:
@@ -392,6 +403,14 @@ object Problem:
 
       /** The decision `decided` needs the merged text, which was not sent. */
       case TextNotSent(decided: Raw)
+
+      /** A `map` resolution names `citekey`, which is a citekey (or an old one) of another source here: the merge goes
+        * under the other citekey.
+        */
+      case CitekeyOfAnother(citekey: Raw)
+
+      /** A rename resolution names `citekey`, which is already a citekey (or an old one) here or in the bundle. */
+      case CitekeyTaken(citekey: Raw)
 
     /** A version of a value as the store writes it: a time or a revision, in its wire spelling. */
     type Stamp = Stamp.T
@@ -969,6 +988,13 @@ object Problem:
     /** An agent's proposal breaks `rule` at `at`. */
     final case class Proposal(rule: Requirement, at: Where) extends Content
 
+    /** An agent's answer as a whole breaks `rule` (an empty summary, too few places that resolve): no one part of it.
+      */
+    final case class Answer(rule: Requirement) extends Content
+
+    /** A place a finding names (`finding`, counted from 1) that no gazetteer place matches. */
+    final case class Unplaced(place: Raw, finding: Count) derives CanEqual
+
     enum Flaw derives CanEqual:
       case HandWrittenSourcesCited, UncitedParagraph, UnknownCitekey, FormattingIntroduced, MissingSection
 
@@ -1061,6 +1087,76 @@ object Problem:
 
       /** None of the items a hint names exists. */
       case ExistingItems
+
+      /** A proposed filter selects nothing: it needs a query, topics or tags. */
+      case FilterSelects
+
+      /** A filter's rationale is empty: it says why these sources are the article's. */
+      case FilterRationale
+
+      /** An article plan's rationale is empty: it says how the articles cover the area. */
+      case PlanRationale
+
+      /** A proposed article has no title. */
+      case ArticleTitle
+
+      /** A proposed article has no filter: it needs a query, topics or tags. */
+      case ArticleFilter
+
+      /** A classification gives no summary. */
+      case SummaryGiven
+
+      /** A status other than `unassessed` comes with no evidence: the text's reason for it. */
+      case StatusEvidence
+
+      /** The notes are empty. */
+      case NotesGiven
+
+      /** A finding's claim is empty. */
+      case ClaimGiven
+
+      /** An extraction's claim says nothing. */
+      case NoClaim
+
+      /** A claim's quote is not in the record of `citekey`: it is copied exactly. */
+      case QuoteInRecord(citekey: Raw)
+
+      /** A record judged irrelevant (or giving no claim) does not say why it is not used. */
+      case ReasonGiven
+
+      /** The first citation of `citekey` does not state its status `status` (the writing guide's rule 2). */
+      case StatusUnstated(citekey: Raw, status: Raw)
+
+      /** A finding's quote is not in the text it was read from; the best stretch matched `best` of its words. */
+      case QuoteInWindow(best: Share)
+
+      /** The year `year` is almost surely the `century`th century stored as a year. */
+      case CenturyAsYear(year: Raw, century: Count)
+
+      /** The claim says `phrase`, which only makes sense next to a table: a finding stands alone on the map. */
+      case PointerPhrase(phrase: Raw)
+
+      /** Only `resolved` of `total` named places resolve to a gazetteer place, fewer than `least` per cent; `missing`
+        * did not.
+        */
+      case PlacesResolve(resolved: Count, total: Count, least: Count, missing: Vector[Unplaced])
+
+      /** An article plan proposes no article. */
+      case ArticlesGiven
+
+      /** At most `cap` articles; the plan gave `gave`. */
+      case TooManyArticles(cap: Count, gave: Count)
+
+      /** The filter `line` returns `total` sources, fewer than `least`: it is widened. */
+      case FilterTooNarrow(line: Raw, total: Count, least: Count)
+
+      /** The filter `line` returns `total` sources, more than `most`: it is narrowed. */
+      case FilterTooBroad(line: Raw, total: Count, most: Count)
+
+      /** The filter `line` returns `returned` of the `cited` sources the article cites (`share` per cent), fewer than
+        * `least` per cent: it misses `missed` (the first twelve).
+        */
+      case FilterMisses(line: Raw, returned: Count, cited: Count, share: Count, least: Count, missed: Vector[Raw])
 
   /** Something that should not happen happened: a bug, or a fault of the platform. */
   sealed trait Internal extends Problem
@@ -1180,6 +1276,14 @@ object Problem:
       case Upstream.Timeout(n, u, after, at)  => Upstream.Timeout(n, u, after, field +: at)
       case Upstream.BadReply(n, u, e, r, at)  => Upstream.BadReply(n, u, e, r, field +: at)
       case other                              => other
+
+    /** The same problem, found inside `where` (a finding, a claim of an answer): a proposal's place and an input's path
+      * get it in front, so that the sentence starts `where: `.
+      */
+    def inside(where: Where): Problem = problem match
+      case Content.Proposal(rule, at) => Content.Proposal(rule, Where(s"$where: $at"))
+      case Content.Answer(rule)       => Content.Proposal(rule, where)
+      case other                      => other.within(Field(s"$where"))
 
   // ---- one of each ------------------------------------------------------------------------------------------
 
@@ -1339,6 +1443,7 @@ object Problem:
       Run.Aborted(Run.Step("draft"), Run.AbortCause.CheckpointMismatch),
       Content.Finding(Content.Flaw.UncitedParagraph),
       Content.Proposal(Content.Requirement.TooManyClaims(Count(12L), Count(15L)), Where("claims")),
+      Content.Answer(Content.Requirement.SummaryGiven),
       Internal.Unexpected(
         Internal.Id("3f2a9c1e"),
         Where("backup"),

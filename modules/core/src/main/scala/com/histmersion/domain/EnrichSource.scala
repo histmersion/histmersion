@@ -1,8 +1,8 @@
 package com.histmersion
 package domain
 
-import com.histmersion.util.problem.{Legacy, Problem, Problems}
-import com.histmersion.util.problem.Problem.{Field, Invalid, Raw}
+import com.histmersion.util.problem.{Problem, Problems}
+import com.histmersion.util.problem.Problem.{Content, Field, Invalid, Raw, Share, Where}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.StoredIdCodecs.given
@@ -461,13 +461,11 @@ object EnrichSource:
     // a status other than unassessed is a proposal a person may weigh: it needs its evidence
     val evidence = Option(c.statusEvidence.value).map(_.trim).getOrElse("")
     val noEvidence = Option.when(status.exists(_ != Source.Status.Unassessed) && evidence.isEmpty)(
-      "the status evidence is empty — say, from the text, why that status"
+      Content.Answer(Content.Requirement.StatusEvidence)
     )
     val problems = status.left.toOption.toList ++
-      summary.fold(List(Problem.Unclassified(Legacy.Text("the summary is empty"))))(_ => Nil) ++
-      period.flatMap(_.left.toOption).toList.flatMap(_.toVector) ++ noEvidence
-        .map((text => Problem.Unclassified(Legacy.Text(text))))
-        .toList
+      summary.fold(List(Content.Answer(Content.Requirement.SummaryGiven)))(_ => Nil) ++
+      period.flatMap(_.left.toOption).toList.flatMap(_.toVector) ++ noEvidence.toList
     val fatal = status.isLeft || summary.isEmpty
     if problems.isEmpty || (last.value && !fatal) then
       val clean = (l: List[String]) => l.map(_.trim).filter(_.nonEmpty).distinct
@@ -486,7 +484,7 @@ object EnrichSource:
           (period
             .flatMap(_.left.toOption)
             .map(m => s"period dropped — ${m.sentences.mkString("; ")}")
-            .toList ++ noEvidence.toList)
+            .toList ++ noEvidence.map(_.sentence).toList)
             .map(Description(_))
         )
       )
@@ -574,16 +572,6 @@ object EnrichSource:
     val n = math.abs(year.value).toString
     s"(?i)(?:\\b$Era\\s*$n(?!\\d)|(?<!\\d)$n\\s*$Era(?![A-Za-z]))".r.findFirstIn(text.value).isDefined
 
-  private def ordinal(n: Long): String =
-    val suffix = if n % 100 >= 11 && n % 100 <= 13 then "th"
-    else
-      n % 10 match
-        case 1 => "st"
-        case 2 => "nd"
-        case 3 => "rd"
-        case _ => "th"
-    s"$n$suffix"
-
   /** A year below 100 that is almost surely a century stored as a year (#1424): the finding mentions a century and the
     * year is not inside one it mentions ("1st century" = 1..100 is right), or the source's own period starts at least
     * `gap` years after it. A year the text states with its era ("79 CE") is valid. The problem names the century as
@@ -595,7 +583,7 @@ object EnrichSource:
       text: CenturyAsYearText,
       within: Option[Period],
       gap: FindingGuards.CenturyGapYears
-  ): Option[Description] =
+  ): Option[Content.Requirement] =
     val centuries = centuriesMentioned(text)
     def inMentioned(y: Year) = centuries.exists { c =>
       val a = math.abs(y.value)
@@ -611,10 +599,7 @@ object EnrichSource:
         .orElse(centuries.headOption)
         .map(_.value.toLong)
         .getOrElse(math.abs(y.value))
-      Description(
-        s"the year $y looks like a century stored as a year: '${ordinal(c)} century' is the years " +
-          s"${(c - 1) * 100 + 1}–${c * 100} (BCE negative); a year below 100 needs the text to state it (e.g. '79 CE')"
-      )
+      Content.Requirement.CenturyAsYear(Raw.of(y), Problem.Count.of(c))
     }
 
   /** The first of `phrases` (lowercase) the claim contains as whole words, if any. */
@@ -631,18 +616,20 @@ object EnrichSource:
     * do, listing the names that did not.
     */
   def placementProblem(
-      named: List[(Count, FindingProposal.Place, Boolean)],
+      named: List[(Problem.Count, FindingProposal.Place, Boolean)],
       minShare: FindingGuards.MinPlacedShare
   ): Option[Problem] =
     val total = named.size
     val resolved = named.count(_._3)
-    Option.when(total > 0 && minShare.value > 0 && resolved.toDouble < minShare.value * total) {
-      val missing = named.filterNot(_._3).map((i, p, _) => s"'$p' (finding $i)").mkString(", ")
-      val pct = BigDecimal(minShare.value * 100).setScale(0, BigDecimal.RoundingMode.HALF_UP)
-      Problem.Unclassified(
-        Legacy.Text(
-          s"only $resolved of $total places resolve to a gazetteer place (at least $pct% must); not found: $missing — " +
-            "give a place name the gazetteer knows (a site, city or region), or leave place null for a non-spatial claim"
+    val least = minShare.value
+    Option.when(total > 0 && least > 0 && resolved.toDouble < least * total) {
+      val missing = named.filterNot(_._3).toVector.map((i, p, _) => Content.Unplaced(Raw.of(p), i))
+      Content.Answer(
+        Content.Requirement.PlacesResolve(
+          Problem.Count.of(resolved.toLong),
+          Problem.Count.of(total.toLong),
+          Problem.Count.of(math.round(least * 100)),
+          missing
         )
       )
     }
@@ -669,30 +656,28 @@ object EnrichSource:
     val windowBody = AgentVerify.SourceBody(window.text.value)
     val quotes = f.findings.map(p => findQuote(p.quote, windowBody, minRatio))
     val checked = f.findings.zip(quotes).zipWithIndex.map { case ((p, quote), i) =>
-      val label = s"finding ${i + 1} (${p.claim.value.take(60)})"
+      val at = Where(s"finding ${i + 1} (${p.claim.value.take(60)})")
       val conf = AgentVerify.confidence(p.confidence)
       val per: Either[Problems, Option[Period]] = (p.start, p.end) match
         case (None, None)    => Right(None)
         case (Some(s), e)    => convert(StatedPeriod(s, e.getOrElse(s)), maxAbsYear, None).map(Some(_))
         case (None, Some(e)) => convert(StatedPeriod(e, e), maxAbsYear, None).map(Some(_))
       val issues = List(
-        Option.when(p.claim.value.trim.isEmpty)("the claim is empty"),
+        Option.when(p.claim.value.trim.isEmpty)(Content.Proposal(Content.Requirement.ClaimGiven, at)),
         Option.when(!quote.accepted)(
-          s"the quote is not in the text (best match ${BigDecimal(quote.ratio.value).setScale(2, BigDecimal.RoundingMode.HALF_UP)}) — copy it exactly"
+          Content.Proposal(Content.Requirement.QuoteInWindow(Share.of(quote.ratio)), at)
         ),
-        conf.left.toOption.map(_.sentence),
-        per.left.toOption.map(_.sentences.mkString("; "))
-      ).flatten
+        conf.left.toOption.map(_.inside(at))
+      ).flatten ++ per.left.toOption.toList.flatMap(_.toVector).map(_.inside(at))
       // the guards' problems: sent back like the others, but never a reason to drop the finding
       val said = List(Some(p.claim.value), Some(p.quote.value), p.periodName.map(_.value)).flatten.mkString("\n")
       val century =
         per.toOption.flatten.flatMap(pd => centuryAsYear(pd.start, pd.end, Text(said), within, guards.centuryGapYears))
-      val pointer = pointerPhrase(p.claim, guards.pointerPhrases).map(ph =>
-        s"'$ph' only makes sense next to the table: a finding must stand alone on the map: name the date/event instead of pointing at the table"
-      )
-      val soft = (century.map(_.value).toList ++ pointer.toList).map(m => s"$label: $m")
+      val pointer =
+        pointerPhrase(p.claim, guards.pointerPhrases).map(ph => Content.Requirement.PointerPhrase(Raw.of(ph)))
+      val soft: List[Problem] = (century.toList ++ pointer.toList).map(Content.Proposal(_, at))
       val result =
-        if issues.nonEmpty then Left(s"$label: ${issues.mkString("; ")}")
+        if issues.nonEmpty then Left(issues)
         else
           Right(
             VerifiedFinding(
@@ -711,18 +696,17 @@ object EnrichSource:
       (result, soft, per.toOption.flatten)
     }
     val results = checked.map(_._1)
-    val rejected = results.collect { case Left(m) => m }
+    val rejected = results.collect { case Left(ps) => ps }.flatten
     // the placement guard asks the gazetteer only while the answer can still be sent back, or once on
     // the last attempt for the warning; a finding with no place is a non-spatial claim and does not count
     val named = f.findings.zip(checked).zipWithIndex.flatMap { case ((p, (_, _, per)), i) =>
       p.place.map(pl => FindingProposal.Place(pl.value.trim)).filter(_.value.nonEmpty).map { name =>
         val kind = p.placeKind.map(Geocode.KindHint.parse).getOrElse(Geocode.KindHint.Unknown)
-        (Count(i + 1), name, guards.resolves(name, kind, per))
+        (Problem.Count.of(i + 1L), name, guards.resolves(name, kind, per))
       }
     }
-    val soft = checked.flatMap(_._2) ++ placementProblem(named, guards.minPlacedShare).map(_.sentence).toList
-    if (rejected.nonEmpty || soft.nonEmpty) && !last.value then
-      Left((rejected ++ soft).map((text => Problem.Unclassified(Legacy.Text(text)))))
+    val soft = checked.flatMap(_._2) ++ placementProblem(named, guards.minPlacedShare).toList
+    if (rejected.nonEmpty || soft.nonEmpty) && !last.value then Left(rejected ++ soft)
     else
       val norm = existingClaims.map(c => normalised(c.value))
       val kept = results
@@ -741,14 +725,15 @@ object EnrichSource:
             Some(VerifiedFindings.Proposed(f.findings.size)),
             Some(VerifiedFindings.QuoteFailed(quotes.count(!_.accepted)))
           ),
-          (rejected.map(m => s"dropped $m") ++ outside ++ soft.map(m => s"kept $m")).map(Description(_))
+          (rejected.map(p => s"dropped ${p.sentence}") ++ outside ++ soft.map(p => s"kept ${p.sentence}"))
+            .map(Description(_))
         )
       )
 
   /** `notes`: non-empty, and every `[[link]]` names a citekey or an article. */
   def checkNotes(n: Notes, isCitekey: Citekey => Boolean, isSlug: Slug => Boolean): Either[List[Problem], Description] =
     val text = Option(n.notes.value).map(_.trim).getOrElse("")
-    if text.isEmpty then Left(List(Problem.Unclassified(Legacy.Text("the notes are empty"))))
+    if text.isEmpty then Left(List(Content.Answer(Content.Requirement.NotesGiven)))
     else
       linkProblems(LinkProblemsText(text), Problem.Where("notes"), isCitekey, isSlug) match
         case Nil => Right(Description(text))

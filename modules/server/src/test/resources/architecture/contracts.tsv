@@ -939,12 +939,12 @@ unwrap	core:domain/AutopilotPolicy.scala	.value outside a boundary	96
 unwrap	core:domain/BrowserDownload.scala	.value outside a boundary	19
 unwrap	core:domain/CodexRetention.scala	.value outside a boundary	13
 unwrap	core:domain/CompareRuns.scala	.value outside a boundary	18
-unwrap	core:domain/CompileArticle.scala	.value outside a boundary	68
+unwrap	core:domain/CompileArticle.scala	.value outside a boundary	67
 unwrap	core:domain/CoreQuota.scala	.value outside a boundary	37
 unwrap	core:domain/Cron.scala	.value outside a boundary	11
 unwrap	core:domain/DeepTime.scala	.value outside a boundary	5
-unwrap	core:domain/EnrichSource.scala	.value outside a boundary	80
-unwrap	core:domain/FilterInference.scala	.value outside a boundary	14
+unwrap	core:domain/EnrichSource.scala	.value outside a boundary	76
+unwrap	core:domain/FilterInference.scala	.value outside a boundary	11
 unwrap	core:domain/GoalFocus.scala	.value outside a boundary	59
 unwrap	core:domain/Highlight.scala	.value outside a boundary	3
 unwrap	core:domain/HintProposals.scala	.value outside a boundary	13
@@ -955,7 +955,7 @@ unwrap	core:domain/ManagerPolicy.scala	.value outside a boundary	66
 unwrap	core:domain/MergeFold.scala	.value outside a boundary	29
 unwrap	core:domain/MergePlanner.scala	.value outside a boundary	114
 unwrap	core:domain/PassageFinder.scala	.value outside a boundary	14
-unwrap	core:domain/PlanArticles.scala	.value outside a boundary	24
+unwrap	core:domain/PlanArticles.scala	.value outside a boundary	23
 unwrap	core:domain/PlanGoal.scala	.value outside a boundary	41
 unwrap	core:domain/PlanReadSchedule.scala	.value outside a boundary	2
 unwrap	core:domain/ReviewArticle.scala	.value outside a boundary	196

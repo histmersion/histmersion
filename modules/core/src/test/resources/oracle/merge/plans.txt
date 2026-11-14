@@ -8557,7 +8557,7 @@ bodies wanted:
   "problems" : [
   ],
   "resolutionErrors" : [
-    "citekey 'kuhrt1995_ancient' already exists",
+    "S-1587dc99: 'kuhrt1995_ancient' is already a citekey (or an old one) here or in the bundle",
     "S-a9c61009: unknown citekey 'guterbock1997_hittite' (one of: page1959_history, page2024_history)"
   ],
   "resolved" : 0,
@@ -10008,7 +10008,7 @@ bodies wanted:
   "problems" : [
   ],
   "resolutionErrors" : [
-    "citekey 'latacz2023_troy' already exists"
+    "S-1587dc99: 'latacz2023_troy' is already a citekey (or an old one) here or in the bundle"
   ],
   "resolved" : 1,
   "changes" : 18

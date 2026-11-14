@@ -85,6 +85,7 @@ object Column:
       case Problem.Run.Aborted(step, cause)   => s"step $step cannot go on: ${cause.productPrefix}"
       case Content.Finding(cause)             => s"finding: ${cause.productPrefix}"
       case Content.Proposal(rule, at)         => s"$at: ${rule.stored}"
+      case Content.Answer(rule)               => s"the answer breaks ${rule.stored}"
       case Internal.Unexpected(id, where, e, r) => s"$where failed unexpectedly ($e, problem $id) — $r"
       case Unclassified(text)                   => s"unclassified: $text"
       case Stored.Unrecognised(text)            => s"$text"
@@ -219,7 +220,19 @@ object Column:
     Content.Requirement.ItemsNamed,
     Content.Requirement.HoldUntil,
     Content.Requirement.ExistingItems,
-    Content.Requirement.HistoricalReckoning
+    Content.Requirement.HistoricalReckoning,
+    Content.Requirement.FilterSelects,
+    Content.Requirement.FilterRationale,
+    Content.Requirement.PlanRationale,
+    Content.Requirement.ArticleTitle,
+    Content.Requirement.ArticleFilter,
+    Content.Requirement.ArticlesGiven,
+    Content.Requirement.SummaryGiven,
+    Content.Requirement.StatusEvidence,
+    Content.Requirement.NotesGiven,
+    Content.Requirement.ClaimGiven,
+    Content.Requirement.NoClaim,
+    Content.Requirement.ReasonGiven
   )
 
   extension (form: Invalid.Form)
@@ -267,6 +280,8 @@ object Column:
         case Conflict.Hold.Conditional(on, when, now) => Vector(s"$on", s"$when") ++ now.map(n => s"$n")
         case Conflict.Hold.PlanChanged(sent)          => Vector(s"$sent")
         case Conflict.Hold.TextNotSent(decided)       => Vector(s"$decided")
+        case Conflict.Hold.CitekeyOfAnother(citekey)  => Vector(s"$citekey")
+        case Conflict.Hold.CitekeyTaken(citekey)      => Vector(s"$citekey")
         case _                                        => Vector.empty
       (hold.productPrefix +: (if args.isEmpty then Vector.empty else Vector(args.mkString(HoldSeparator))))
         .mkString(" ")
@@ -334,6 +349,7 @@ object Column:
   extension (rule: Content.Requirement)
     private def stored: String = rule match
       case Content.Requirement.TooManyClaims(cap, gave)   => s"TooManyClaims $cap/$gave"
+      case Content.Requirement.TooManyArticles(cap, gave) => s"TooManyArticles $cap/$gave"
       case Content.Requirement.QuoteInRecords(records)    => s"QuoteInRecords ${records.mkString(ListSeparator)}"
       case Content.Requirement.KnownCitekey(stated)       => s"KnownCitekey '$stated'"
       case Content.Requirement.PositiveBce(stated)        => s"PositiveBce '$stated'"
@@ -343,11 +359,22 @@ object Column:
       case Content.Requirement.YearWithin(greatest)       => s"YearWithin '$greatest'"
       case Content.Requirement.WithinSourcePeriod(start, end, ownStart, ownEnd) =>
         s"WithinSourcePeriod '$start'..'$end' in '$ownStart'..'$ownEnd'"
-      case Content.Requirement.LinkTarget(target)          => s"LinkTarget '$target'"
-      case Content.Requirement.KnownItems(unknown)         => s"KnownItems ${unknown.mkString(ListSeparator)}"
-      case Content.Requirement.DateGiven(stated)           => s"DateGiven '$stated'"
-      case Content.Requirement.PriorityWithin(stated, max) => s"PriorityWithin '$stated' in '$max'"
-      case other                                           => other.productPrefix
+      case Content.Requirement.LinkTarget(target)                  => s"LinkTarget '$target'"
+      case Content.Requirement.KnownItems(unknown)                 => s"KnownItems ${unknown.mkString(ListSeparator)}"
+      case Content.Requirement.DateGiven(stated)                   => s"DateGiven '$stated'"
+      case Content.Requirement.PriorityWithin(stated, max)         => s"PriorityWithin '$stated' in '$max'"
+      case Content.Requirement.FilterTooNarrow(line, total, least) => s"FilterTooNarrow $total/$least '$line'"
+      case Content.Requirement.QuoteInWindow(best)                 => s"QuoteInWindow $best"
+      case Content.Requirement.CenturyAsYear(year, century)        => s"CenturyAsYear $century '$year'"
+      case Content.Requirement.PointerPhrase(phrase)               => s"PointerPhrase '$phrase'"
+      case Content.Requirement.QuoteInRecord(citekey)              => s"QuoteInRecord '$citekey'"
+      case Content.Requirement.StatusUnstated(citekey, status)     => s"StatusUnstated '$citekey' in '$status'"
+      case Content.Requirement.PlacesResolve(resolved, total, least, missing) =>
+        s"PlacesResolve $resolved/$total $least ${missing.map(u => s"${u.finding}:${u.place}").mkString(HoldSeparator)}"
+      case Content.Requirement.FilterTooBroad(line, total, most) => s"FilterTooBroad $total/$most '$line'"
+      case Content.Requirement.FilterMisses(line, returned, cited, share, least, missed) =>
+        s"FilterMisses $returned/$cited $share/$least '$line' ${missed.mkString(ListSeparator)}"
+      case other => other.productPrefix
 
   // ---- the readers: one per frozen sentence; a reader's case counts only if it writes the text back -------------
 
@@ -408,6 +435,11 @@ object Column:
   private val UnreadAt = "(?s)^'(.*)' exit (-?\\d+) — (.*)$".r
   private val KeyTried = "(?s)^(\\S+) (\\w+)(?: — (.*))?$".r
   private val ListSeparator = ", "
+  private val CenturyOf = "(?s)^(\\d+) '(.*)'$".r
+  private val PlacesOf = "(?s)^(\\d+)/(\\d+) (\\d+) (.*)$".r
+  private val UnplacedOf = "(?s)^(\\d+):(.*)$".r
+  private val CountedLine = "(?s)^(\\d+)/(\\d+) '(.*)'$".r
+  private val MissedLine = "(?s)^(\\d+)/(\\d+) (\\d+)/(\\d+) '(.*)' (.*)$".r
   private val NotTaken = "(?s)^(\\S+) did not take '(.*)': (\\w+)(?: (.*))?$".r
   private val FieldStates = "(?s)^(\\S+) is (.*)$".r
   private val VaultFailed = "(?s)^secret vault (\\S+) failed: (\\w+)(?: (.*))?$".r
@@ -419,8 +451,36 @@ object Column:
   private val DrainingSince = "^draining since (\\S+)$".r
   private val CannotGoOn = "(?s)^step (.+) cannot go on: (\\w+)$".r
   private val FindingOf = "^finding: (\\w+)$".r
+  private val AnswerBreaks = "(?s)^the answer breaks (.*)$".r
   private val ProposalAt = "(?s)^(.+): (\\w+)(?: (\\d+)/(\\d+))?$".r
-  private val ProposalWith = "(?s)^(.+): (\\w+) (.*)$".r
+
+  /** The requirements stored with what was written after their name: the place is read up to the first of them, as what
+    * follows is free text (a filter's line, a quote) that may hold a colon.
+    */
+  private val WrittenRules = Vector(
+    "QuoteInRecords",
+    "KnownCitekey",
+    "PositiveBce",
+    "CeFromOne",
+    "Calibrated",
+    "LinkTarget",
+    "StartBeforeEnd",
+    "YearWithin",
+    "WithinSourcePeriod",
+    "KnownItems",
+    "DateGiven",
+    "PriorityWithin",
+    "FilterTooNarrow",
+    "FilterTooBroad",
+    "FilterMisses",
+    "QuoteInWindow",
+    "CenturyAsYear",
+    "PointerPhrase",
+    "QuoteInRecord",
+    "StatusUnstated",
+    "PlacesResolve"
+  )
+  private val ProposalWith = s"(?s)^(.+?): (${WrittenRules.mkString("|")}) (.*)$$".r
   private val OneQuoted = "(?s)^'(.*)'$".r
   private val TwoQuoted = "(?s)^'(.*)'(\\.\\.| in )'(.*)'$".r
   private val FourQuoted = "(?s)^'(.*)'\\.\\.'(.*)' in '(.*)'\\.\\.'(.*)'$".r
@@ -528,6 +588,8 @@ object Column:
           case ("Conditional", Vector(on, when, now)) => Some(Conflict.Hold.Conditional(on, when, Some(now)))
           case ("PlanChanged", Vector(sent))          => Some(Conflict.Hold.PlanChanged(sent))
           case ("TextNotSent", Vector(decided))       => Some(Conflict.Hold.TextNotSent(decided))
+          case ("CitekeyOfAnother", Vector(citekey))  => Some(Conflict.Hold.CitekeyOfAnother(citekey))
+          case ("CitekeyTaken", Vector(citekey))      => Some(Conflict.Hold.CitekeyTaken(citekey))
           case (other, Vector())                      => word(Holds, other)
           case _                                      => None
         hold.map(Conflict.Held(Where(s"$subject"), _))
@@ -874,17 +936,23 @@ object Column:
       case _ => None
     },
     {
-      case FindingOf(cause) => word(Content.Flaw.values.toSeq, cause).map(Content.Finding(_))
-      case _                => None
+      case FindingOf(cause)   => word(Content.Flaw.values.toSeq, cause).map(Content.Finding(_))
+      case AnswerBreaks(rule) =>
+        read(s"answer: $rule") match
+          case Content.Proposal(r, _) => Some(Content.Answer(r))
+          case _                      => None
+      case _ => None
     },
     {
       case ProposalAt(at, rule, cap, gave) =>
         val read: Option[Content.Requirement] = (Option(cap), Option(gave)) match
-          case (Some(c), Some(g)) if rule == "TooManyClaims" =>
+          case (Some(c), Some(g)) if rule == "TooManyClaims" || rule == "TooManyArticles" =>
             for
               cc <- Count.read(c)
               gc <- Count.read(g)
-            yield Content.Requirement.TooManyClaims(cc, gc)
+            yield
+              if rule == "TooManyClaims" then Content.Requirement.TooManyClaims(cc, gc)
+              else Content.Requirement.TooManyArticles(cc, gc)
           case (None, None) => word(ProposalRules, rule)
           case _            => None
         read.map(Content.Proposal(_, Where(s"$at")))
@@ -921,10 +989,60 @@ object Column:
               case FourQuoted(a, b, c, d) =>
                 Some(Content.Requirement.WithinSourcePeriod(Raw(s"$a"), Raw(s"$b"), Raw(s"$c"), Raw(s"$d")))
               case _ => None
-          case "KnownItems"     => Some(Content.Requirement.KnownItems(raws(written)))
-          case "DateGiven"      => one.map(Content.Requirement.DateGiven(_))
-          case "PriorityWithin" => two.map(Content.Requirement.PriorityWithin(_, _))
-          case _                => None
+          case "KnownItems"                         => Some(Content.Requirement.KnownItems(raws(written)))
+          case "DateGiven"                          => one.map(Content.Requirement.DateGiven(_))
+          case "PriorityWithin"                     => two.map(Content.Requirement.PriorityWithin(_, _))
+          case "FilterTooNarrow" | "FilterTooBroad" =>
+            written match
+              case CountedLine(n, bound, line) =>
+                for
+                  nc <- Count.read(n)
+                  bc <- Count.read(bound)
+                yield
+                  if rule == "FilterTooNarrow" then Content.Requirement.FilterTooNarrow(Raw(s"$line"), nc, bc)
+                  else Content.Requirement.FilterTooBroad(Raw(s"$line"), nc, bc)
+              case _ => None
+          case "QuoteInWindow" => Share.read(written).map(Content.Requirement.QuoteInWindow(_))
+          case "CenturyAsYear" =>
+            written match
+              case CenturyOf(century, year) =>
+                Count.read(century).map(Content.Requirement.CenturyAsYear(Raw(s"$year"), _))
+              case _ => None
+          case "PointerPhrase"  => one.map(Content.Requirement.PointerPhrase(_))
+          case "QuoteInRecord"  => one.map(Content.Requirement.QuoteInRecord(_))
+          case "StatusUnstated" => two.map(Content.Requirement.StatusUnstated(_, _))
+          case "PlacesResolve"  =>
+            written match
+              case PlacesOf(resolved, total, least, missing) =>
+                val unplaced = missing.split(" \\| ", -1).toVector.filter(_.nonEmpty).map {
+                  case UnplacedOf(n, place) => Count.read(n).map(Content.Unplaced(Raw(s"$place"), _))
+                  case _                    => None
+                }
+                for
+                  r <- Count.read(resolved)
+                  t <- Count.read(total)
+                  l <- Count.read(least)
+                  if unplaced.forall(_.isDefined)
+                yield Content.Requirement.PlacesResolve(r, t, l, unplaced.flatten)
+              case _ => None
+          case "FilterMisses" =>
+            written match
+              case MissedLine(returned, cited, share, least, line, missed) =>
+                for
+                  r <- Count.read(returned)
+                  c <- Count.read(cited)
+                  sh <- Count.read(share)
+                  l <- Count.read(least)
+                yield Content.Requirement.FilterMisses(
+                  Raw(s"$line"),
+                  r,
+                  c,
+                  sh,
+                  l,
+                  raws(missed)
+                )
+              case _ => None
+          case _ => None
         read.map(Content.Proposal(_, Where(s"$at")))
       case _ => None
     },
