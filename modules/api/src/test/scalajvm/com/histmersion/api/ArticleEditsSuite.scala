@@ -4,7 +4,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.api.research.Article.Edits.*
 import com.histmersion.api.research.Article
@@ -13,6 +13,9 @@ import com.histmersion.api.research.Article
   * normalised), the order they apply in, and skipped edits.
   */
 class ArticleEditsSuite extends munit.FunSuite:
+  private val MissingText: Problem = Problem.Invalid.Missing.here(Problem.Field("text"))
+  private val MissingAnchor: Problem = Problem.Invalid.Missing.here(Problem.Field("anchor"))
+
 
   private val BodyText =
     """Tin reached the Aegean by sea [[knapp2016_tin]].
@@ -65,19 +68,19 @@ class ArticleEditsSuite extends munit.FunSuite:
     for t <- List(None, Some(NewText("")), Some(NewText("   "))) do
       val r = applyAll(Body, List(e(Op.Replace, Anchor("by sea"), t)))
       assertEquals(r.body, Body, s"text ${t.fold("null")(x => s"'${x.value}'")}: nothing changed")
-      assert(
-        r.problems.head.value
-          .endsWith("a replace with no new text — give the text, or use delete to remove the passage"),
-        r.problems
-      )
-    assert(applyAll(Body, List(EditAnswer(Op.Delete, Anchor(null), None))).problems.head.value.contains("no anchor"))
-    assert(
-      applyAll(Body, List(e(Op.InsertBefore, Anchor("by sea"), None))).problems.head.value.endsWith("no text to insert")
+      assertEquals(r.results.map(_.problem), List(Some(MissingText)), r.problems)
+    assertEquals(
+      applyAll(Body, List(EditAnswer(Op.Delete, Anchor(null), None))).results.map(_.problem),
+      List(Some(MissingAnchor))
+    )
+    assertEquals(
+      applyAll(Body, List(e(Op.InsertBefore, Anchor("by sea"), None))).results.map(_.problem),
+      List(Some(MissingText))
     )
     // from the wire: "text": null decodes as absent
     val js = """[{"op":"replace","anchor":"by sea","text":null}]"""
     val decoded = RawJson.decode[List[EditAnswer]](js).fold(e => fail(e), identity)
-    assert(applyAll(Body, decoded).problems.head.value.contains("a replace with no new text"))
+    assertEquals(applyAll(Body, decoded).results.map(_.problem), List(Some(MissingText)))
 
   test("an anchor is matched with whitespace normalised, and nothing else"):
     val wrapped = Article.Body("Tin reached the Aegean\nby sea [[knapp2016_tin]].")
@@ -97,18 +100,24 @@ class ArticleEditsSuite extends munit.FunSuite:
       )
     )
     assertEquals(r.body, BodyText.replace("Tin reached", "Tin metal reached"), "the third edit still applies")
-    val ps = r.problems.map(_.value)
-    assertEquals(ps.size, 2, ps)
-    assert(ps.head.startsWith("edit 1 (replace \"by land\"): the anchor is not in the article"), ps.head)
-    assert(ps(1).startsWith("edit 2 (delete \"[[knapp2016_tin]].\"): the anchor occurs 3 times"), ps(1))
-    assertEquals(r.results.map(_.applied), List(false, false, true))
-    assert(
-      applyAll(Body, List(e(Op.InsertAfter, Anchor("  "), Some(NewText("x"))))).problems.head.value
-        .contains("no anchor")
+    val anchor = Problem.TypeName.of(Anchor)
+    assertEquals(
+      r.results.map(_.problem),
+      List(
+        Some(Problem.NotFound.Entity(anchor, Problem.Raw("by land"))),
+        Some(Problem.Invalid.Ambiguous.here(anchor, Problem.Raw("[[knapp2016_tin]]."), Problem.Count.of(3L))),
+        None
+      )
     )
-    assert(
-      applyAll(Body, List(e(Op.InsertAfter, Anchor("by sea"), Some(NewText(" "))))).problems.head.value
-        .endsWith("no text to insert")
+    assert(r.problems.head.value.startsWith("edit 1 (replace \"by land\"): "), r.problems)
+    assertEquals(r.results.map(_.applied), List(false, false, true))
+    assertEquals(
+      applyAll(Body, List(e(Op.InsertAfter, Anchor("  "), Some(NewText("x"))))).results.map(_.problem),
+      List(Some(MissingAnchor))
+    )
+    assertEquals(
+      applyAll(Body, List(e(Op.InsertAfter, Anchor("by sea"), Some(NewText(" "))))).results.map(_.problem),
+      List(Some(MissingText))
     )
 
   test("edits apply in order: a later anchor is looked up in the text the earlier ones produced"):
@@ -130,11 +139,14 @@ class ArticleEditsSuite extends munit.FunSuite:
       es,
       a =>
         Option.when(a.text.exists(_.value.contains("ghost")))(
-          Problem.Unclassified(Legacy.Text("its text is refused: ghost"))
+          Problem.Content.Proposal(Problem.Content.Requirement.UnknownCitekey, Problem.Where("text"))
         )
     )
     assertEquals(r.body, BodyText.replace("Two dates", "Three dates"))
-    assertEquals(r.problems, List("edit 1 (insertAfter \"by sea\"): its text is refused: ghost"))
+    assertEquals(
+      r.problems,
+      List("edit 1 (insertAfter \"by sea\"): text: it names a source that is not in the corpus")
+    )
 
   test("a check request is edits or a body, not both and not neither"):
     assert(ArticleCheckRequest().draft.isLeft)

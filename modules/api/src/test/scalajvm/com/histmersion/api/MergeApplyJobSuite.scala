@@ -1,7 +1,7 @@
 package com.histmersion
 package api
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -18,6 +18,13 @@ import com.histmersion.api.exchange.MergePlan
   * forever — and how it is written for a person.
   */
 class MergeApplyJobSuite extends munit.FunSuite:
+  private val Crash: Problem = Problem.Internal.Unexpected(
+    Problem.Internal.Id("3f2a9c1e"),
+    Problem.Where("merge apply"),
+    Problem.Internal.ExceptionName("java.lang.IllegalStateException"),
+    External.Reported("java.lang.IllegalStateException: boom")
+  )
+
 
   private val result = MergeApplyResult(
     UUID.fromString("00000000-0000-0000-0000-000000000001"),
@@ -48,6 +55,7 @@ class MergeApplyJobSuite extends munit.FunSuite:
   test("a row a restart failed is interrupted, and says nothing was half applied"):
     val j = of(JobState.Failed, error = Some(MergeApplyJob.Failure.Interrupted))
     assertEquals(j.state, MergeJobState.Interrupted)
+    assertEquals(j.error, Some(Problem.Run.CutShort(Problem.Conflict.Activity.MergeApply)))
     assert(
       j.error.exists(e => e.sentence.contains("never half applied") && e.sentence.contains("merge list")),
       j.error.toString
@@ -56,20 +64,15 @@ class MergeApplyJobSuite extends munit.FunSuite:
 
   test("a crash is failed with its reason; done without a recorded report is failed, not done"):
     assertEquals(
-      of(
-        JobState.Failed,
-        error = Some(MergeApplyJob.Failure.Other(Problem.Unclassified(Legacy.Text("merge apply crashed: boom"))))
-      ).error.map(_.sentence),
-      Some("merge apply crashed: boom")
+      of(JobState.Failed, error = Some(MergeApplyJob.Failure.Other(Crash))).error,
+      Some(Crash)
     )
     assertEquals(
-      of(
-        JobState.Failed,
-        error = Some(MergeApplyJob.Failure.Other(Problem.Unclassified(Legacy.Text("merge apply crashed: boom"))))
-      ).state,
+      of(JobState.Failed, error = Some(MergeApplyJob.Failure.Other(Crash))).state,
       MergeJobState.Failed
     )
     assertEquals(of(JobState.Done).state, MergeJobState.Failed)
+    assertEquals(of(JobState.Done).error, Some(Problem.Run.Unrecorded(Problem.Conflict.Activity.MergeApply)))
 
   test("the jobs list names what a merge apply is about: its plan"):
     val j = JobInfo(

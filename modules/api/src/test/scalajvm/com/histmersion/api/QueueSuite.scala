@@ -1,7 +1,7 @@
 package com.histmersion
 package api
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -309,9 +309,16 @@ class QueueSuite extends munit.FunSuite:
     assertEquals(Queue.statusOf(Some(QueueItem.Status("  OPEN "))), Right(Some("open")))
     assertEquals(Queue.statusOf(None), Right(None))
     assertEquals(Queue.statusOf(Some(QueueItem.Status(""))), Right(None))
-    val e = Queue.statusOf(Some(QueueItem.Status("pending"))).swap.toOption.get
-    assert(e.sentence.contains("unknown status 'pending'"), e)
-    assert(e.sentence.contains("open, done, note"), e)
+    assertEquals(
+      Queue.statusOf(Some(QueueItem.Status("pending"))),
+      Left(
+        Problem.Invalid.Unknown.here(
+          Problem.TypeName.of(QueueItem.Status),
+          Problem.Raw("pending"),
+          Vector("open", "done", "note").map(Problem.Raw(_))
+        )
+      )
+    )
 
   test("created_at must be an ISO instant — it is cast to timestamptz in SQL"):
     assertEquals(
@@ -320,7 +327,13 @@ class QueueSuite extends munit.FunSuite:
     )
     assertEquals(Queue.createdAtOf(None), Right(None))
     val e = Queue.createdAtOf(Some(QueueItem.CreatedAt("yesterday"))).swap.toOption.get
-    assert(e.sentence.contains("not an ISO-8601 instant"), e)
+    assert(
+      e match
+        case Problem.Invalid.Unreadable(t, raw, _, _) => t == Problem.TypeName.of(QueueItem.CreatedAt) && raw == Problem.Raw("yesterday")
+        case _                                        => false
+      ,
+      e
+    )
     assert(Queue.createdAtOf(Some(QueueItem.CreatedAt("2026-08-25"))).isLeft, "a bare date is not an instant")
     assert(Queue.createdAtOf(Some(QueueItem.CreatedAt("'); drop table queue_items --"))).isLeft)
 
@@ -351,7 +364,7 @@ class QueueSuite extends munit.FunSuite:
   test("a patched text may be absent but never blank"):
     assertEquals(Queue.textOf(None), Right(None))
     assertEquals(Queue.textOf(Some(QueueItem.Text("a thing"))), Right(Some("a thing")))
-    assertEquals(Queue.textOf(Some(QueueItem.Text(" \n "))).left.map(_.sentence), Left("queue item text is empty"))
+    assertEquals(Queue.textOf(Some(QueueItem.Text(" \n "))), Left(Problem.Invalid.Missing.here(Problem.Field("text"))))
 
   // ── fulfilling an acquisition item ─────────────────────────────────────────────────────────────
 
@@ -398,19 +411,31 @@ class QueueSuite extends munit.FunSuite:
 
   test("an upload may name only an existing, open acquisition item"):
     assertEquals(Queue.fulfillable(QueueItem.Id(7), Some(item(QueueItem.Id(7)))), Right(item(QueueItem.Id(7))))
-    assertEquals(Queue.fulfillable(QueueItem.Id(7), None).left.map(_.sentence), Left("no acquisition item 7"))
+    val itemId = Problem.TypeName.of(QueueItem.Id)
     assertEquals(
-      Queue
-        .fulfillable(QueueItem.Id(7), Some(item(QueueItem.Id(7), list = QueueItem.List("tasks"))))
-        .left
-        .map(_.sentence),
-      Left("item 7 is on the tasks list, not the acquisition list")
+      Queue.fulfillable(QueueItem.Id(7), None),
+      Left(Problem.NotFound.Entity(itemId, Problem.Raw("7")))
     )
     assertEquals(
-      Queue
-        .fulfillable(QueueItem.Id(7), Some(item(QueueItem.Id(7), status = QueueItem.Status(Done))))
-        .left
-        .map(_.sentence),
-      Left("acquisition item 7 is already done")
+      Queue.fulfillable(QueueItem.Id(7), Some(item(QueueItem.Id(7), list = QueueItem.List("tasks")))),
+      Left(
+        Problem.Conflict.WrongState(
+          itemId,
+          Problem.Raw("7"),
+          Problem.Conflict.State("tasks"),
+          Vector(Problem.Conflict.State("acquire"))
+        )
+      )
+    )
+    assertEquals(
+      Queue.fulfillable(QueueItem.Id(7), Some(item(QueueItem.Id(7), status = QueueItem.Status(Done)))),
+      Left(
+        Problem.Conflict.WrongState(
+          itemId,
+          Problem.Raw("7"),
+          Problem.Conflict.State("done"),
+          Vector(Problem.Conflict.State("open"))
+        )
+      )
     )
     assert(Queue.fulfillable(QueueItem.Id(7), Some(item(QueueItem.Id(7), status = QueueItem.Status(Note)))).isLeft)

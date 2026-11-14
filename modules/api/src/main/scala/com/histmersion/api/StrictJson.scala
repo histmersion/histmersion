@@ -4,7 +4,7 @@ import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
 
 import com.histmersion.util.problem.{Problem, Problems}
-import com.histmersion.util.problem.Problem.{Field, Invalid, Raw, TypeName}
+import com.histmersion.util.problem.Problem.{Field, Invalid}
 import com.histmersion.util.problem.Text.sentences
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReader, JsonValueCodec, JsonWriter}
 import hearth.kindlings.jsoniterjson.Json
@@ -47,9 +47,9 @@ object StrictJson:
     val known = fieldNames(s)
     val unknown = keys.filterNot(known.contains).distinct
     val nested = nestedFields(s)
-    val taken = known.toVector.map(k => Raw(s"$k"))
+    val taken = known.toVector.map(k => Field(s"$k"))
     Problems.from(unknown.toVector.flatMap { k =>
-      Invalid.Unknown.here(TypeName.of(FieldName), Raw(s"$k"), taken) +:
+      Invalid.Undeclared.here(Field(s"$k"), taken) +:
         nested.collectFirst {
           case (path, f) if f == k => Invalid.Misplaced.here(Field(s"$k"), Field(s"$path"))
         }.toVector

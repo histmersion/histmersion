@@ -5,7 +5,7 @@ import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -92,23 +92,29 @@ class PlaceEditsSuite extends munit.FunSuite:
     assertEquals((r.place.id, r.place.period), (Place.Id("my.place-1"), Some(Period(Year(-700), Year(-700)))))
 
   test("a hand-added place needs a source, a known kind, real coordinates, a usable id and an ordered period"):
-    def refused(in: Place.Add, says: String) =
+    def refused(in: Place.Add)(expected: PartialFunction[Problem, Unit]) =
       val e = Place.Edits.toInput(in).swap.toOption.getOrElse(fail(s"accepted: $in"))
       assertEquals(e.code, Some(Write.CodeInvalid))
-      assert(e.message.sentence.contains(says), e.message)
-    refused(add(source = Place.Add.Source("  ")), "where the coordinates come from")
-    refused(add(kind = Place.Add.Kind("city")), "kind 'city'")
-    refused(add(lon = Longitude(200)), "longitude/latitude")
-    refused(add(lat = Latitude(-91)), "longitude/latitude")
-    refused(add(lat = Latitude(Double.NaN)), "longitude/latitude")
-    refused(add(label = Place.Add.Label(" ")), "label is empty")
-    refused(add(label = Place.Add.Label("Ἀθῆναι")), "gives no id")
-    refused(add().modify(_.id).setTo(Some(Place.Id("Bad Id"))), "is not a place id")
-    refused(
-      add().modify(_.periodStart).setTo(Some(Year(-100))).modify(_.periodEnd).setTo(Some(Year(-200))),
-      "starts (-100) after it ends (-200)"
-    )
-    refused(add().modify(_.lang).setTo(Some(Place.Add.Lang("??"))), "language tag")
+      assert(expected.isDefinedAt(e.message), e.message)
+    val geoPoint = Problem.TypeName.named[GeoPoint]
+    refused(add(source = Place.Add.Source("  "))) { case Problem.Invalid.Missing(f, _) if f == Problem.Field("source") => }
+    refused(add(kind = Place.Add.Kind("city"))) {
+      case Problem.Invalid.Unknown(t, raw, _, _) if t == Problem.TypeName.of(Place.Add.Kind) && raw == Problem.Raw("city") =>
+    }
+    refused(add(lon = Longitude(200))) { case Problem.Invalid.OutOfRange(t, _, _, _) if t == geoPoint => }
+    refused(add(lat = Latitude(-91))) { case Problem.Invalid.OutOfRange(t, _, _, _) if t == geoPoint => }
+    refused(add(lat = Latitude(Double.NaN))) { case Problem.Invalid.OutOfRange(t, _, _, _) if t == geoPoint => }
+    refused(add(label = Place.Add.Label(" "))) { case Problem.Invalid.Missing(f, _) if f == Problem.Field("label") => }
+    refused(add(label = Place.Add.Label("Ἀθῆναι"))) { case Problem.Invalid.Missing(f, _) if f == Problem.Field("id") => }
+    refused(add().modify(_.id).setTo(Some(Place.Id("Bad Id")))) {
+      case Problem.Invalid.Unreadable(t, raw, _, _) if t == Problem.TypeName.of(Place.Id) && raw == Problem.Raw("Bad Id") =>
+    }
+    refused(add().modify(_.periodStart).setTo(Some(Year(-100))).modify(_.periodEnd).setTo(Some(Year(-200)))) {
+      case Problem.Invalid.Inconsistent(_, Problem.Invalid.Exclusion.Ordered, _) =>
+    }
+    refused(add().modify(_.lang).setTo(Some(Place.Add.Lang("??")))) {
+      case Problem.Invalid.Unreadable(t, _, _, _) if t == Problem.TypeName.of(Place.Name.Lang) =>
+    }
 
   test("the CSV export is the supplement's format, quoted where it must be"):
     val csv = Place.Edits.csv(

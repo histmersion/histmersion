@@ -76,14 +76,7 @@ object EventGeometry:
           j.asObject.flatMap(_("type")).flatMap(_.asString) match
             case Some(tp) if GeometryTypes(Type(tp))          => Right(Geojson(t))
             case Some(tp @ ("Feature" | "FeatureCollection")) =>
-              Left(
-                Invalid.Unknown(
-                  TypeName.of(Type),
-                  Raw(s"$tp"),
-                  GeometryTypes.toVector.sorted.map(k => Raw(s"$k")),
-                  Vector(Field("geometry"))
-                )
-              )
+              Left(Invalid.Wrapped(TypeName.of(Geojson), Raw(s"$tp"), Field("geometry"), Vector(Field("geometry"))))
             case Some(tp) =>
               Left(
                 Invalid.Unknown(

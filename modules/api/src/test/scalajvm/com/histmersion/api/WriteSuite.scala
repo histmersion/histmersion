@@ -3,7 +3,7 @@ package api
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{NonEmptyVector, Problem}
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -166,9 +166,11 @@ class WriteSuite extends munit.FunSuite:
       FindingsPatch(add = List(Finding.Input(Finding.Claim("x"), confidence = Some(Confidence.Wire("certain")))))
     val r = Source.Write.applyPatch(existing, Source.Patch(findings = Some(bad)))
     assert(
-      r.left.exists(m =>
-        m.message.sentence.contains("confidence 'certain'") && m.message.sentence.contains("high|medium|low|contested")
-      ),
+      r.left.exists(_.message match
+        case Problem.Invalid.Unknown(t, raw, known, _) =>
+          t == Problem.TypeName.named[Confidence] && raw == Problem.Raw("certain") &&
+          known == Vector("high", "medium", "low", "contested").map(Problem.Raw(_))
+        case _ => false),
       r.toString
     )
     val ok = Source.Write.applyPatch(
@@ -261,8 +263,16 @@ class WriteSuite extends munit.FunSuite:
     val json = """{"edges":{"add":[{"src":"kassian2024_rebuttal","dst":"haak2015_massive","kind":"refutes"}]}}"""
     val p = RawJson.decode[Source.Patch](json).toOption.get
     val e = Source.Write.applyPatch(existing, p).swap.toOption.get
-    assert(e.message.sentence.contains("src 'kassian2024_rebuttal' is not the patched source"), e)
-    assert(e.message.sentence.contains("patch 'kassian2024_rebuttal'"), e)
+    assertEquals(
+      e.message,
+      Problem.Invalid.StoredOn(
+        Problem.TypeName.named[Edge],
+        Problem.Raw("'kassian2024_rebuttal' --refutes--> 'haak2015_massive'"),
+        Problem.Raw("kassian2024_rebuttal"),
+        Vector(Problem.Field("edges.add"))
+      )
+    )
+    assert(e.message.sentence.contains("patch 'kassian2024_rebuttal' to record it"), e)
     val rm =
       EdgesPatch(remove = List(Edge.Input(Citekey("anthony2007_horse"), Edge.Kind.References, Some(Citekey("other")))))
     assert(Source.Write.applyEdges(Citekey(ck), existing.edges, rm).swap.toOption.get.sentence.contains("edges.remove"))
@@ -340,12 +350,27 @@ class WriteSuite extends munit.FunSuite:
       .toOption
       .get
     val e = Source.Write.applyPut(Citekey(ck), in).swap.toOption.get
-    assert(e.sentence.contains("src 'kassian2024_rebuttal' is not the source being put"), e)
+    assert(
+      e match
+        case Problem.Invalid.StoredOn(_, _, owner, _) => owner == Problem.Raw("kassian2024_rebuttal")
+        case _                                        => false
+      ,
+      e
+    )
 
   test("put: a self-edge is refused, including one to an old citekey of this source"):
     val self =
       Source.Put(title = Title("T"), edges = List(Edge.Input(Citekey(ck), Edge.Kind.Challenges)))
-    assert(Source.Write.applyPut(Citekey(ck), self).swap.toOption.get.sentence.contains("self-edge"))
+    assertEquals(
+      Source.Write.applyPut(Citekey(ck), self).swap.toOption,
+      Some(
+        Problem.Invalid.Inconsistent(
+          NonEmptyVector.of(Problem.Field("src"), Problem.Field("dst")),
+          Problem.Invalid.Exclusion.Distinct,
+          Vector(Problem.Field("edges"))
+        )
+      )
+    )
     val viaAlias =
       Source.Put(title = Title("T"), edges = List(Edge.Input(Citekey("old_key"), Edge.Kind.Challenges)))
     assert(Source.Write.applyPut(Citekey(ck), viaAlias, (Set("old_key")).map(Citekey.apply)).isLeft)
@@ -370,7 +395,14 @@ class WriteSuite extends munit.FunSuite:
   test("a period bound outside [Earliest, Latest] is a 400, not a stored sentinel"):
     val put = Source.Put(title = Title("T"), periodStart = Some(Year(Long.MinValue + 1)), periodEnd = Some(Year(-1200)))
     val e = Source.Write.applyPut(Citekey("zz_range"), put).swap.toOption.get
-    assert(e.sentence.contains("outside the representable range"), e)
+    assert(
+      e match
+        case Problem.Invalid.OutOfRange(t, _, _, at) =>
+          t == Problem.TypeName.of(Year) && at.lastOption.contains(Problem.Field("period_start"))
+        case _ => false
+      ,
+      e
+    )
     assert(
       Source.Write
         .applyPut(
@@ -475,7 +507,13 @@ class WriteSuite extends munit.FunSuite:
     val p = Source.Patch(metadata =
       Some(MetadataPatch(doi = (Some("10.1/x")).map(Doi.apply), clear = List(MetadataField.Doi)))
     )
-    assert(Source.Write.applyPatch(existing, p).swap.toOption.get.message.sentence.contains("both set and cleared"))
+    assertEquals(
+      Source.Write.applyPatch(existing, p).swap.toOption.map(_.message),
+      Some(
+        Problem.Invalid
+          .Repeated(Problem.TypeName.named[MetadataField], Problem.Raw("doi"), Vector(Problem.Field("metadata")))
+      )
+    )
 
   test("metadata: the encoder omits absent fields, so a round trip never turns absent into a clear"):
     import com.histmersion.util.json.RawJson.*
@@ -489,23 +527,33 @@ class WriteSuite extends munit.FunSuite:
     val p = Source.Patch(metadata = Some(MetadataPatch(calibreId = Some(Source.CalibreId("1806")))))
     assertEquals(Source.Write.applyPatch(existing, p).map(_.calibreId), Right(Some("1806")))
     val bad = Source.Patch(metadata = Some(MetadataPatch(calibreId = Some(Source.CalibreId("abc")))))
-    assert(Source.Write.applyPatch(existing, bad).swap.toOption.get.message.sentence.contains("not a Calibre id"))
+    assertEquals(
+      Source.Write.applyPatch(existing, bad).swap.toOption.map(_.message),
+      Some(
+        Problem.Invalid.Unreadable(
+          Problem.TypeName.of(Source.CalibreId),
+          Problem.Raw("abc"),
+          Vector(Problem.Raw("1805")),
+          Vector(Problem.Field("metadata"), Problem.Field("calibreId"))
+        )
+      )
+    )
 
   // ── #813: an unknown or misplaced key is refused, naming the key and the expected shape ─────────
   test("strict: an unknown top-level key in a patch is refused, with the keys that are accepted"):
     val e = RawJson.decode[Source.Patch]("""{"tagz":{"add":["x"]},"summary":"s"}""").swap.toOption.get
-    assert(e.contains("unknown key 'tagz'"), e)
-    assert(e.contains("expected only: metadata, summary, body, notes"), e)
+    assert(e.contains("unknown key 'tagz' (one of: metadata, summary, body, notes"), e)
 
   test("strict: a key that belongs in a nested part says where it goes"):
     val e = RawJson.decode[Source.Patch]("""{"status":"current","title":"T"}""").swap.toOption.get
-    assert(e.contains("unknown keys 'status', 'title'"), e)
+    assert(e.contains("unknown key 'status' (one of: metadata, "), e)
+    assert(e.contains("unknown key 'title' (one of: metadata, "), e)
     assert(e.contains("'status' belongs under 'metadata' (metadata.status)"), e)
     assert(e.contains("'title' belongs under 'metadata' (metadata.title)"), e)
 
   test("strict: nested parts are strict too, and the message carries the path"):
     val tags = RawJson.decode[Source.Patch]("""{"tags":{"items":["x"]}}""").swap.toOption.get
-    assert(tags.contains("tags: unknown key 'items'; expected only: add, remove, replace"), tags)
+    assert(tags.contains("tags: unknown key 'items' (one of: add, remove, replace)"), tags)
     val f = RawJson.decode[Source.Patch]("""{"findings":{"add":[{"claim":"c","date":-1200}]}}""").swap.toOption.get
     assert(f.contains("unknown key 'date'"), f)
     assert(f.contains("findings.add"), f)
@@ -567,13 +615,13 @@ class WriteSuite extends munit.FunSuite:
     val notFound = Api.Error.hasCode(Api.Error.Code(Write.CodeNotFound))
     assert(
       notFound.isDefinedAt(
-        Api.Error(Problem.Unclassified(Legacy.Text("no such source")), Some(Api.Error.Code(Write.CodeNotFound)))
+        Api.Error(Problem.NotFound.Entity(Problem.TypeName.of(Citekey), Problem.Raw("x")), Some(Api.Error.Code(Write.CodeNotFound)))
       )
     )
     assert(
       !notFound.isDefinedAt(
-        Api.Error(Problem.Unclassified(Legacy.Text("stale")), Some(Api.Error.Code(Write.CodePrecondition)))
+        Api.Error(Problem.Invalid.Missing.here(Problem.Field("ifUpdatedAt")), Some(Api.Error.Code(Write.CodePrecondition)))
       )
     )
-    assert(!notFound.isDefinedAt(Api.Error(Problem.Unclassified(Legacy.Text("plain 400")))))
+    assert(!notFound.isDefinedAt(Api.Error(Problem.Invalid.Missing.here(Problem.Field("title")))))
     assert(!notFound.isDefinedAt("not an ApiError"))

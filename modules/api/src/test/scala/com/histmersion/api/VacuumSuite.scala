@@ -3,6 +3,7 @@ package api
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
 
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -60,8 +61,10 @@ class VacuumSuite extends munit.FunSuite:
       Left(Some(Write.CodeInvalid))
     )
     assertEquals(
-      refused(List(Vacuum.Request.Tables("nope"))).left.map((code, why) => (code, why.sentence)),
-      Left((Some(Write.CodeInvalid), "no such table: nope"))
+      refused(List(Vacuum.Request.Tables("nope"))),
+      Left(
+        (Some(Write.CodeInvalid), Problem.NotFound.Entity(Problem.TypeName.of(Vacuum.Table), Problem.Raw("nope")))
+      )
     )
     assertEquals(refused(Nil, Nil).left.map(_._1), Left(Some(Write.CodeInvalid)))
 

@@ -814,9 +814,10 @@ object Source:
       in.src.map(s => com.histmersion.api.library.Citekey(s.value.trim)).filter(_.value.nonEmpty) match
         case Some(other) if other != citekey && !aliases.contains(other) =>
           Left(
-            Problem.Invalid.Inconsistent(
-              NonEmptyVector.of(Problem.Field("src"), Problem.Field("citekey")),
-              Problem.Invalid.Exclusion.Same,
+            Problem.Invalid.StoredOn(
+              Problem.TypeName.named[Edge],
+              Problem.Raw(s"'$other' --${Edge.Kind.wireOf(in.kind)}--> '${in.dst}'"),
+              Problem.Raw(s"$other"),
               Vector(Problem.Field(s"$part"))
             )
           )
