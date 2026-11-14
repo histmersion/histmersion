@@ -28,7 +28,7 @@ final class JobSourceReferrer extends SourceReferrer:
       sql"""SELECT id, kind FROM jobs
             WHERE status IN ('queued', 'running', 'paused', 'waiting')
               AND (citekey = ANY($keys::text[]) OR (target_kind = 'source' AND target_id = ANY($keys::text[])))
-            ORDER BY created_at"""
+            ORDER BY created_at, id"""
         .query[(DeleteBlocker.Id, DeleteBlocker.Title)]
         .run()
         .toList

@@ -426,8 +426,8 @@ private[articles] object ArticleRepo:
   )(using DbCon): Article.List =
     val where = listWhere(filter, scope, kind, text)
     val order = text.map(t => Search.Query(t.value.trim)).filter(_.value.nonEmpty) match
-      case Some(t) => Sql.raw(Sql.Text("ORDER BY ts_rank_cd(a.tsv, ")) ++ tsQuery(t) ++ ") DESC, a.title"
-      case None    => Sql.raw(Sql.Text("ORDER BY a.kind, a.title"))
+      case Some(t) => Sql.raw(Sql.Text("ORDER BY ts_rank_cd(a.tsv, ")) ++ tsQuery(t) ++ ") DESC, a.title, a.slug"
+      case None    => Sql.raw(Sql.Text("ORDER BY a.kind, a.title, a.slug"))
     val kinds = Article.List.byKind(
       (Sql.raw(Sql.Text("SELECT a.kind, count(*)::int FROM articles a WHERE ")) ++ where ++ " GROUP BY a.kind").frag
         .query[(String, Int)]
@@ -497,7 +497,7 @@ private[articles] object ArticleRepo:
         Sql.Text(s"""SELECT v.id, v.slug, left(v.summary, 200),
             $VerToken, $VerCreated,
             array_length(regexp_split_to_array(trim(v.body), '\\s+'), 1)
-            FROM article_versions v WHERE v.slug = ? ORDER BY v.created_at DESC LIMIT ?"""),
+            FROM article_versions v WHERE v.slug = ? ORDER BY v.created_at DESC, v.id DESC LIMIT ?"""),
         Param.S(Param.S.V(slug.value)),
         Param.I(Param.I.V(limit.value))
       )

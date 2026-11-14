@@ -24,6 +24,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.domain.catalogue.Event
 import com.histmersion.api.catalogue.EventSummary
 import com.histmersion.api.library.Citekey
+import com.histmersion.api.catalogue.Event as ApiEvent
 
 /** The contract the events keep: every field read back, with its datings, edges (both ends) and participants in their
   * order; the list narrowed by text, kind, historicity, period and tier, in time order and paged; the map drawing the
@@ -149,6 +150,39 @@ abstract class EventServiceContract extends CatalogueStoreSuite:
       Nil
     )
     assertEquals(ids(all.modify(_.text).setTo(Some(EventSelection.Text("100%")))), Nil, "a % is literal")
+  }
+
+  stest("events alike in start and label come by id, whatever order they were written in") { s =>
+    val e = s.events
+    def tie(id: Event.Id, label: EventSummary.Label, parent: Option[ApiEvent.Id]) =
+      e.put(
+        id,
+        EventPut(
+          label,
+          EventSummary.Kind("battle"),
+          span(Year(-1200), Year(-1190)),
+          geometry = Some(point),
+          parentId = parent
+        )
+      )
+    // the first pair written against the order it is read in, the second along it
+    tie(Event.Id("zzt_b"), EventSummary.Label("Zzt battle"), None)
+    tie(Event.Id("zzt_a"), EventSummary.Label("Zzt battle"), None)
+    tie(Event.Id("zzt_c"), EventSummary.Label("Zzt battle 2"), None)
+    tie(Event.Id("zzt_d"), EventSummary.Label("Zzt battle 2"), None)
+    val zzt = EventSelection(Filter()).modify(_.text).setTo(Some(EventSelection.Text("Zzt")))
+    def listed = e.list(zzt, PageSize(50), Offset(0)).events.map(_.id)
+    assertEquals(listed, List("zzt_a", "zzt_b", "zzt_c", "zzt_d"))
+    assertEquals(listed, listed, "the same order on every read")
+    assertEquals(e.list(zzt, PageSize(1), Offset(1)).events.map(_.id), List("zzt_b"), "a page cuts the same order")
+    assertEquals(
+      e.geo(zzt, PageSize(100), GeoTolerance(0.01)).events.map(_.id),
+      List("zzt_a", "zzt_b", "zzt_c", "zzt_d")
+    )
+    tie(Event.Id("zzt_root"), EventSummary.Label("Zzt root"), None)
+    tie(Event.Id("zzt_y"), EventSummary.Label("Zzt part"), Some(ApiEvent.Id("zzt_root")))
+    tie(Event.Id("zzt_x"), EventSummary.Label("Zzt part"), Some(ApiEvent.Id("zzt_root")))
+    assertEquals(e.get(Event.Id("zzt_root")).toList.flatMap(_.children.map(_.id)), List("zzt_x", "zzt_y"))
   }
 
   stest("the map: placed and well dated drawn, the unplaced and the imprecise counted") { s =>

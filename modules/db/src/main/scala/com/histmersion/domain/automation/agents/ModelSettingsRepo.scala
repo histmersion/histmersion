@@ -95,7 +95,7 @@ private[agents] object ModelSettingsRepo:
             FROM agent_steps
             WHERE kind = 'llm' AND finished_at > now() - make_interval(secs => ${seconds.value.toDouble})
               AND (model = ANY($models::text[]) OR model LIKE ANY($likes::text[]))
-            ORDER BY finished_at"""
+            ORDER BY finished_at, job_id, seq, attempt"""
         .query[(Long, Long, BigDecimal)]
         .run()
         .map((at, t, c) => Spend(Spend.At(at), Spend.Tokens(t), c))

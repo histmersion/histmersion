@@ -189,6 +189,57 @@ class ContractsSuite extends munit.FunSuite:
     val found = Rules.caseDefaults(SourceFile.all("problem"))
     assertEquals(found.map(v => s"${v.at}: ${v.detail}"), Nil)
 
+  test("every ORDER BY of the code's SQL orders totally, or is reviewed in architecture/total-order.tsv"):
+    val file = ArchitectureSuite.Resources.resolve("total-order.tsv")
+    val partial = TotalOrder.partial(SqlModules.flatMap(SourceFile.all(_)), TotalOrder.migrationKeys())
+    val reviewed = Files
+      .readAllLines(file, UTF_8)
+      .asScala
+      .filterNot(l => l.startsWith("#") || l.isBlank)
+      .map(_.split('\t').take(2).mkString("\t"))
+      .toList
+    val unreviewed = partial.filterNot(c => reviewed.contains(c.row))
+    val stale = reviewed.filterNot(r => partial.exists(_.row == r))
+    assert(
+      unreviewed.isEmpty && stale.isEmpty,
+      (unreviewed.map(c => s"ORDER BY with ties at ${c.file}:${c.line}: end it with a unique key — ${c.text}") ++
+        stale.map(r => s"orders totally now — remove it from architecture/total-order.tsv: $r")).mkString("\n")
+    )
+
+  test("an ORDER BY orders totally when its terms and pinned columns cover a unique key of a table it reads"):
+    val keys = TotalOrder.keys(
+      """CREATE TABLE public.events (
+        |    id text NOT NULL,
+        |    label text NOT NULL
+        |);
+        |ALTER TABLE ONLY public.events
+        |    ADD CONSTRAINT events_pkey PRIMARY KEY (id);
+        |ALTER TABLE ONLY public.event_datings
+        |    ADD CONSTRAINT event_datings_pkey PRIMARY KEY (event_id, citekey);
+        |CREATE UNIQUE INDEX places_wikidata ON public.places USING btree (wikidata);
+        |""".stripMargin
+    )
+    assertEquals(keys("events"), List(Set("id")))
+    assertEquals(keys("places"), List(Set("wikidata")))
+    def total(clause: String, statement: String) = TotalOrder.total(clause, statement, keys)
+    assert(total("e.label, e.id", "SELECT * FROM events e WHERE true"))
+    assert(!total("e.label", "SELECT * FROM events e WHERE true"), "a label is no key")
+    assert(!total("x.label, x.id", "SELECT * FROM events e JOIN other x ON true"), "the id of another table")
+    assert(total("citekey", "SELECT * FROM event_datings WHERE event_id = $id"), "the rest of the key pinned")
+    assert(!total("citekey", "SELECT * FROM event_datings WHERE event_id = ANY($ids)"), "ANY pins nothing")
+    assert(total("lower(p.name), p.wikidata DESC NULLS LAST", "SELECT * FROM places p"))
+    assert(total("""e.id COLLATE "C"""", "SELECT * FROM events e"))
+    val code =
+      """object Repo:
+        |  // ORDER BY label in a comment
+        |  def a = sql\"\"\"SELECT id FROM events e
+        |              WHERE e.label = $l ORDER BY e.label, e.id LIMIT $n\"\"\"
+        |  def b = sql"SELECT id FROM events ORDER BY label"
+        |""".stripMargin
+    val source = SourceFile("db:x/Repo.scala", "com.histmersion.x", Blank(code), code)
+    assertEquals(TotalOrder.clauses(source.key, source.raw).map(_._1.text), List("e.label, e.id", "label"))
+    assertEquals(TotalOrder.partial(List(source), keys).map(c => (c.line, c.text)), List((5, "label")))
+
   test("a default parameter of a case is found, in a class or an enum case, on one line or several"):
     val code =
       """object Cases:
@@ -289,6 +340,9 @@ object ContractsSuite:
         "plugin-fixtures/hello-deps",
         "plugin-fixtures/hello-lib"
       )
+
+  /** The modules whose code writes SQL. */
+  val SqlModules: List[String] = List("db", "server")
 
   val Modules: List[String] = List(
     "problem",

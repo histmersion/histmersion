@@ -430,7 +430,7 @@ object FilterSql:
           // reader, ids so `findingWhy` can say WHICH place chip the finding satisfied. Arrays, not
           // joined strings: a place label routinely contains a comma.
           " ARRAY(SELECT p.label FROM finding_places fp JOIN places p ON p.id = fp.place_id" +
-          " WHERE fp.finding_id = f.id ORDER BY p.label)," +
+          " WHERE fp.finding_id = f.id ORDER BY p.label, p.id)," +
           " ARRAY(SELECT fp.place_id FROM finding_places fp WHERE fp.finding_id = f.id ORDER BY fp.place_id)" +
           s" FROM findings f WHERE f.citekey IN (${List.fill(citekeys.size)("?").mkString(", ")})" +
           " ORDER BY f.citekey, f.id"

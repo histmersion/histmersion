@@ -50,7 +50,7 @@ private[places] object PlaceBundleRepo:
     if ids.isEmpty then Vector.empty
     else
       val names = sql"""SELECT place_id, name, lang, ${SqlLiteral(rangeCols("period"))} FROM place_names
-                        WHERE place_id = ANY($ids::text[]) AND import_source = '' ORDER BY place_id, name COLLATE "C", lang COLLATE "C""""
+                        WHERE place_id = ANY($ids::text[]) AND import_source = '' ORDER BY place_id, name COLLATE "C", lang COLLATE "C", import_ref COLLATE "C""""
         .query[BPlaceNameRow]
         .run()
         .groupBy(n => BPlaceRow.Id(n.placeId.value))

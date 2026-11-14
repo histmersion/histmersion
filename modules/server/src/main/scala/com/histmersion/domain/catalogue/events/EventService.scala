@@ -182,7 +182,9 @@ object EventService:
       sel.placeId.forall(p => e.placeId.contains(p))
 
     private def ordered(es: Vector[HeldEvent]): Vector[HeldEvent] =
-      es.sortBy(e => (e.timeSpan.notBefore.orElse(e.timeSpan.beginBy).fold((1, 0L))(y => (0, y.value)), e.label.value))
+      es.sortBy(e =>
+        (e.timeSpan.notBefore.orElse(e.timeSpan.beginBy).fold((1, 0L))(y => (0, y.value)), e.label.value, e.id)
+      )
 
     private def summaryOf(s: CatalogueState, e: HeldEvent): EventSummary = e.summary(attested(s, e.id))
 

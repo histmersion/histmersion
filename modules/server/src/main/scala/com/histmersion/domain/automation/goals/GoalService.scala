@@ -409,7 +409,7 @@ object GoalService:
     def links(goal: com.histmersion.domain.automation.Goal.Slug): List[GoalLink] =
       state.get.links
         .filter(_.goal.value == goal.value)
-        .sortBy(l => (kindOrder(l.kind), l.createdAt, l.ref.value))
+        .sortBy(l => (kindOrder(l.kind), l.createdAt, l.ref.value, l.kind.wire))
         .toList
         .map(l =>
           GoalLink(

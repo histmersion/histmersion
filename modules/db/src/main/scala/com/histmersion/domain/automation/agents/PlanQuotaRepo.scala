@@ -47,7 +47,7 @@ object PlanQuotaRepo:
   def readings(pool: PoolId)(using DbCon): List[Reading] =
     sql"""SELECT limit_id, kind, model, used_pct, (extract(epoch FROM resets_at) * 1000)::bigint, rejected,
                  (extract(epoch FROM observed_at) * 1000)::bigint, source
-          FROM plan_quota_readings WHERE pool = ${pool.wire} ORDER BY limit_id, kind"""
+          FROM plan_quota_readings WHERE pool = ${pool.wire} ORDER BY limit_id, kind, model"""
       .query[(String, String, String, Double, Option[Long], Boolean, Long, String)]
       .run()
       .toList

@@ -1,0 +1,51 @@
+# file	ORDER BY clause	why its order is total, or why ties do not matter — reviewed by a person; ContractsSuite holds it exact both ways
+db:domain/automation/agents/AgentRepo.scala	id	approvals, read through a shared projection: id is their key
+db:domain/automation/agents/AgentRepo.scala	id	approvals, read through a shared projection: id is their key
+db:domain/automation/goals/FocusRepo.scala	l.goal_slug	goal_links of one kind and one ref (l.ref = i.target): goal_slug completes the key
+db:domain/automation/goals/GoalBundleRepo.scala	u.uid, u.kind COLLATE "C"	a goal's schedules and watches, one row per goal (uid) and kind
+db:domain/catalogue/events/EventRepo.scala	coalesce(e.not_before, e.begin_by), e.label, e.id	e is events (EventSql.fromEvents): id is its key
+db:domain/catalogue/events/EventRepo.scala	coalesce(e.not_before, e.begin_by), e.label, e.id	e is events (EventSql.fromEvents): id is its key
+db:domain/catalogue/events/EventRepo.scala	coalesce(e.not_before, e.begin_by), e.label, e.id	e is events (EventSql.fromEvents): id is its key
+db:domain/catalogue/evidence/LeadRepo.scala	(${EventSql.TierSql}) = '${EventTier.Catalogue}' DESC	continues on the next lines and ends with e.id, the events' key
+db:domain/catalogue/places/GazetteerRepo.scala	d.pid, d.scheme, d.eid, d.ref	the order rows are inserted in; ON CONFLICT settles a clash whatever it is
+db:domain/catalogue/places/Geocoder.scala	n.citekey, n.id	n is a CTE of findings: id is the finding's key
+db:domain/catalogue/places/PlaceRepo.scala	n.name	string_agg of DISTINCT names: equal names are one value
+db:domain/catalogue/places/PlaceRepo.scala	n.name	string_agg of DISTINCT names: equal names are one value
+db:domain/catalogue/places/PlaceRepo.scala	(lower(m.name) = lower($exact)) DESC, length(m.name), m.name	LIMIT 1 of a name: rows tied on it read the same name
+db:domain/catalogue/places/PlaceRepo.scala	${rank("")}	rank(...) ends with the place's id
+db:domain/catalogue/places/PlaceRepo.scala	${rank("l.")}	rank(...) ends with the place's id
+db:domain/catalogue/places/PointAreaRepo.scala	a.id	a is a CTE of places: id is its key
+db:domain/library/acquisition/CandidateRepo.scala	CASE state WHEN 'new' THEN 0 WHEN 'seen' THEN 1 WHEN 'queued' THEN 2 ELSE 3 END, state	GROUP BY state: one row per state
+db:domain/library/search/FilterSql.scala	s.cited_by_count DESC NULLS LAST, s.citekey	s is sources: citekey is its key
+db:domain/library/search/FilterSql.scala	${RangeSql.start("s.period")} ASC NULLS LAST, s.citekey	s is sources: citekey is its key
+db:domain/library/search/FilterSql.scala	s.year DESC NULLS LAST, s.citekey	s is sources: citekey is its key
+db:domain/library/search/FilterSql.scala	s.year ASC NULLS LAST, s.citekey	s is sources: citekey is its key
+db:domain/library/search/FilterSql.scala	lower(s.title) ASC, s.citekey	s is sources: citekey is its key
+db:domain/library/search/FilterSql.scala		the relevance rank, then cited_by_count, then s.citekey, the sources' key
+db:domain/library/search/FilterSql.scala	fp.place_id	finding_places of one finding (fp.finding_id = f.id): place_id completes the key
+db:domain/library/search/FilterSql.scala	v	mode() WITHIN GROUP (ORDER BY v): rows tied on v hold the same value
+db:domain/library/search/FilterSql.scala	count(DISTINCT s.citekey) DESC, lower(v) ASC	GROUP BY lower(v): one row per lower(v)
+db:domain/library/search/QueryRepo.scala	t.table_name, c.ordinal_position	information_schema of one schema: a table's name and a column's position are a key
+db:domain/library/search/Search.scala	CASE WHEN fts_b.heading ~* '	a source's chunks (its citekey pinned) ranked, then their ord: the chunks' key
+db:domain/library/search/Search.scala	citekey, CASE WHEN heading ~* '	DISTINCT ON (citekey), then rank, then ord: the chunks' key (citekey, ord)
+db:domain/library/search/Search.scala	citekey, CASE WHEN heading ~* '	citekey, rank, then ord: the chunks' key (citekey, ord)
+db:domain/library/sources/SourceBundleRepo.scala	i.value COLLATE "C"	array_agg ORDER BY the value: rows tied on it hold the same value
+db:domain/library/sources/SourceRepo.scala	count(*) DESC, citekey	GROUP BY citekey: one row per citekey
+db:domain/library/sources/SourceRepo.scala	min(ord)	headings grouped over disjoint ords: min(ord) differs between groups
+db:domain/media/assets/MediaRepo.scala	array_position(${MediaRole.all}::text[], role), own DESC, rank, uid	hits hold one row per asset: uid is unique in them
+db:domain/media/assets/MediaRepo.scala	2 DESC, 1	GROUP BY 1: column 1 is unique
+db:domain/media/figures/FigureRepo.scala	2 DESC, 1	GROUP BY a.citekey: column 1 is unique
+db:domain/media/imports/ImportRepo.scala	(pl.relation = 'exact_match') DESC, pl.external_id	LIMIT 1 over place_links of one place and scheme: external_id completes the key
+db:domain/media/imports/ImportRepo.scala	l.qid, u.s DESC, u.n DESC, u.place_id	used holds one row per place: DISTINCT ON (qid) settled by place_id
+db:domain/media/imports/ImportRepo.scala	pl.external_id	LIMIT 1 over place_links of one place and scheme: external_id completes the key
+db:domain/research/articles/ArticleCheckRepo.scala	1, 2, 3	columns 1, 2, 3 are src, kind, dst: the edges' key
+db:domain/research/articles/CoverageRepo.scala	1, 2, 3	columns 1, 2, 3 are src, kind, dst: the edges' key
+db:util/data/diagnostics/StatsRepo.scala	2 DESC, 1	pg_class of the user schemas, grouped by relation: column 1 is unique
+db:util/data/exchange/BundleRepo.scala	installed_rank DESC	flyway_schema_history: installed_rank is its key (Flyway's table, not in the migrations)
+db:util/database/Db.scala	relname	pg_stat_user_tables of one schema: relname is unique in it
+db:util/database/Keyset.scala	${alias}created_at DESC, ${alias}id DESC	created_at, then id, the key, behind the caller's alias
+db:util/database/ListSql.scala	2 DESC, 1	GROUP BY 1: column 1 is unique
+db:util/database/Migrate.scala	string_to_array(version, '.')::int[] DESC	LIMIT 1 of Flyway's versions: a version is applied once
+db:util/database/Migrate.scala	string_to_array(version, '.')::int[] DESC	LIMIT 1 of Flyway's versions: a version is applied once
+server:domain/activity/ActivityRepo.scala	t DESC, (kind || ':' || rid) COLLATE "C" DESC	kind and rid name one row of the merged activity
+server:util/identity/RecordTable.scala	start, hops DESC	DISTINCT ON (start): an alias chain has one record per hop count
