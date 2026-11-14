@@ -252,7 +252,7 @@ Same three lists (`acquire` = what the **user** must obtain · `tasks` = the age
 
 The CLI's read verb is the **bare list name** — `histmersion queue tasks`, not `histmersion queue show tasks`
 (that errors). MCP's is `action: "list"` — `"show"` errors with
-`_unknown action 'show' — use list, add or done_`. There is no MCP `rm`/`export`/`import`; the code
+`_unknown action 'show' — use list, add, done or recheck_`. There is no MCP `rm`/`export`/`import`; the code
 stream is aligning them (`docs/plan.md` §6).
 
 ## Rules
