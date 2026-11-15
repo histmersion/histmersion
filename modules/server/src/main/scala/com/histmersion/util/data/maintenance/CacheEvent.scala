@@ -2,7 +2,7 @@ package com.histmersion
 package util.data.maintenance
 
 /** What makes a cache stale. */
-enum CacheEvent derives CanEqual:
+enum CacheEvent:
   /** A restore replaced the rows it was derived from: it is cleared. */
   case Restored
 

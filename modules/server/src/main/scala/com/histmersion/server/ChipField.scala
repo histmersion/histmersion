@@ -9,7 +9,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** A metadata dimension a chip filters the web UI by. `hashKey` is the web UI's URL-hash key, so a chip is a link that
   * works in the modal, on a standalone page and pasted anywhere.
   */
-enum ChipField(val hashKey: ChipField.HashKey) derives CanEqual:
+enum ChipField(val hashKey: ChipField.HashKey):
   case Topic extends ChipField(ChipField.HashKey("topic"))
   case Place extends ChipField(ChipField.HashKey("place"))
   case Tag extends ChipField(ChipField.HashKey("tag"))

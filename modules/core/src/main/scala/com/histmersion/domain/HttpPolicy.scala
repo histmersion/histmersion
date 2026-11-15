@@ -49,7 +49,7 @@ object HttpPolicy:
   object Attempt extends Newtype[Int, Pure]
 
   /** What to do with an answer. */
-  enum Step derives CanEqual:
+  enum Step:
     case Accept
     case Wait(ms: Step.Wait.Ms, why: Problem)
     case GiveUp(why: Problem)

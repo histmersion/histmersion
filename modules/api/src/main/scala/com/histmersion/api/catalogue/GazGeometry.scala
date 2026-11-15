@@ -2,7 +2,7 @@ package com.histmersion
 package api.catalogue
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
-enum GazGeometry derives CanEqual:
+enum GazGeometry:
   case GeoJson(text: GeoJson.Text)
   case Wkt(text: Wkt.Text)
 

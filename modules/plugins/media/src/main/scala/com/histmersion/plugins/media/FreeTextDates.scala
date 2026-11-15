@@ -18,7 +18,7 @@ object FreeTextDates:
   private val Part =
     """^(?:(?:late|early|mid|middle|first half of|second half of|end of|beginning of)[\s-]+)?(?:the\s+)?([0-9]{1,5})(?:st|nd|rd|th)?(?:\s*(century|centuries|millennium|millennia))?(?:\s*(bce|bc|ce|ad))?$""".r
 
-  private enum Unit derives CanEqual:
+  private enum Unit:
     case Year, Century, Millennium
 
   final private case class Bound(n: Long, unit: Option[Unit], ordinal: Boolean, bce: Option[Boolean])

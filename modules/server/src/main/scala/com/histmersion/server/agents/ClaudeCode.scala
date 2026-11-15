@@ -59,7 +59,7 @@ object ClaudeCode:
   /** How the step's prompt reaches the CLI: as the generated plugin's agent (with its role settings), or — no generated
     * tree — as a system prompt file.
     */
-  enum Launch derives CanEqual:
+  enum Launch:
     case Agent(pluginDir: Launch.Agent.PluginDir, name: Launch.Agent.Name, settings: Launch.Agent.Settings)
     case SystemPrompt(file: Launch.SystemPrompt.File)
 

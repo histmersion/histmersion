@@ -88,7 +88,7 @@ object YubiKey:
     (ordered, absent)
 
   /** What one failed attempt means. */
-  enum Failure derives CanEqual:
+  enum Failure:
     /** This key is not there or did not answer: the next one may. */
     case Next(attempt: Problem.Plugin.Attempt)
 
@@ -99,7 +99,7 @@ object YubiKey:
     case NoEntry(entry: Setting.Entries)
 
   /** Why one try with one key gave no answer at all from KeePassXC. */
-  enum NoAnswer derives CanEqual:
+  enum NoAnswer:
     /** It did not answer within `waited`: nobody touched the key. */
     case TimedOut(waited: scala.concurrent.duration.FiniteDuration)
 

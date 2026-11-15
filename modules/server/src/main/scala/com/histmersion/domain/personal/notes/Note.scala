@@ -55,7 +55,7 @@ object Note:
     Note(stored.id, target, stored.text, title, stored.createdAt, stored.updatedAt)
 
   /** Why a note's text was not changed: there is no such note, or it changed since the person read it. */
-  enum EditRefused derives CanEqual:
+  enum EditRefused:
     case Missing
     case Changed(now: MarkTime)
 

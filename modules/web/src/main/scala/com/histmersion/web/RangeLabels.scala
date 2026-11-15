@@ -30,7 +30,7 @@ object RangeLabels:
   final case class Label(text: UiLabels.Text, x: ScreenPixels, w: ElementSize):
     def end: ScreenPixels = ScreenPixels(x.value + w.value)
 
-  enum Placement derives CanEqual:
+  enum Placement:
     case Inside(from: Label, to: Label)
     case Outside(from: Label, to: Label)
     case Joined(label: Label)

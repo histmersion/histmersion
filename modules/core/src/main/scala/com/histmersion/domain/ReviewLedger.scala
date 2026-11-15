@@ -77,7 +77,7 @@ object ReviewLedger:
     given JsonValueCodec[Status] = WireEnum.codec
 
   /** Where a lesson came from: a rejection the fixer proved, or a reviewer's re-check. */
-  enum LessonSource(val wire: WireEnumValues.Wire) derives CanEqual:
+  enum LessonSource(val wire: WireEnumValues.Wire):
     case Rejection extends LessonSource(WireEnumValues.Wire("rejection"))
     case Recheck extends LessonSource(WireEnumValues.Wire("recheck"))
 
@@ -554,7 +554,7 @@ object ReviewLedger:
     s"${e.id} ${e.finding.severity.wire}$at: ${e.finding.problem.value.trim.take(140)} → $how"
 
   /** How much of the open findings a prompt shows: in full, one line each, or not at all. */
-  enum OpenStyle derives CanEqual:
+  enum OpenStyle:
     case Full, Lines, Omit
 
   /** The ledger as a prompt shows it (inside `<review-ledger>`): the open findings (`style`; with `only`, just that

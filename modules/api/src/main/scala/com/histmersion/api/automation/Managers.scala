@@ -39,7 +39,7 @@ object Managers:
   export Manager.State as State
   export com.histmersion.api.automation.ItemStatus
 
-  enum ItemOrigin(val wire: ItemOrigin.Wire) derives CanEqual:
+  enum ItemOrigin(val wire: ItemOrigin.Wire):
     case Selection extends ItemOrigin(ItemOrigin.Wire("selection"))
     case Person extends ItemOrigin(ItemOrigin.Wire("person"))
     case Chain extends ItemOrigin(ItemOrigin.Wire("chain"))

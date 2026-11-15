@@ -693,7 +693,7 @@ object BaseMaps:
   /** Which side of its button the panel opens on: under it, its top `top` px from the window's top; or over it, its
     * bottom `bottom` px from the window's bottom.
     */
-  enum PanelSide derives CanEqual:
+  enum PanelSide:
     case Below(top: Double)
     case Above(bottom: Double)
 

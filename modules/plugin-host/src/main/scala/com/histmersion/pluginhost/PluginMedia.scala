@@ -53,7 +53,7 @@ object PluginMedia:
       case Right(_)                             => None
 
   /** Why a record may not be kept. */
-  enum Refusal derives CanEqual:
+  enum Refusal:
     /** The plugin withheld it, with its reason. */
     case Withheld(why: External.PluginSaid)
 

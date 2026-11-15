@@ -12,7 +12,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Source
 
 /** Where an import writes, once the citekey is known. */
-enum ImportTarget derives CanEqual:
+enum ImportTarget:
   /** No record has this citekey yet. */
   case Create
 

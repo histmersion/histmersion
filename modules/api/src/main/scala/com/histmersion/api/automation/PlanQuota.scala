@@ -206,7 +206,7 @@ object PlanQuota:
     type Usable = Usable.T
     object Usable extends Newtype[Boolean, Pure]
 
-  enum Verdict derives CanEqual:
+  enum Verdict:
     case Usable(note: Option[Usable.Note])
 
     case Blocked(reason: Rationale, until: Option[Blocked.Until])
@@ -294,7 +294,7 @@ object PlanQuota:
     def parse(s: Wire): Option[RefreshMode] =
       values.find(_.wire == Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
 
-  enum Login derives CanEqual:
+  enum Login:
     case Present(detail: Present.Detail)
     case Missing(why: Rationale)
     case Unknown(why: Rationale)
@@ -304,7 +304,7 @@ object PlanQuota:
       type Detail = Detail.T
       object Detail extends Newtype[String, Pure]
 
-  enum RefreshNeed(val text: RefreshNeed.Text) derives CanEqual:
+  enum RefreshNeed(val text: RefreshNeed.Text):
     case StaleOnly extends RefreshNeed(RefreshNeed.Text("the reading is stale"))
 
     case NoReading extends RefreshNeed(RefreshNeed.Text("no reading yet"))
@@ -313,7 +313,7 @@ object PlanQuota:
     type Text = Text.T
     object Text extends Newtype[String, Pure]
 
-  enum RefreshTrigger(val wire: RefreshTrigger.Wire) derives CanEqual:
+  enum RefreshTrigger(val wire: RefreshTrigger.Wire):
     case Pick extends RefreshTrigger(RefreshTrigger.Wire("pick"))
 
     case Paused extends RefreshTrigger(RefreshTrigger.Wire("paused-run"))

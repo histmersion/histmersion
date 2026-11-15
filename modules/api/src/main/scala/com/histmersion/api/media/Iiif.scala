@@ -39,7 +39,7 @@ object Iiif:
   val Protocol = "http://iiif.io/api/image"
   val Profile = "level1"
 
-  enum Region derives CanEqual:
+  enum Region:
     case Full
     case Pixels(x: Pixels.X, y: Pixels.Y, w: Pixels.W, h: Pixels.H)
 
@@ -73,7 +73,7 @@ object Iiif:
           case _ =>
             Left(Invalid.Unreadable.here(TypeName.named[Region], Raw(s"$s"), Vector(Raw("full"), Raw("10,20,300,400"))))
 
-  enum Size derives CanEqual:
+  enum Size:
     case Max
     case ScaleUp // ^max
     case Width(w: Width.W) // w,

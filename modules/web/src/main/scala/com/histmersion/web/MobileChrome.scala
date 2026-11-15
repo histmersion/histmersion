@@ -27,11 +27,11 @@ object MobileChrome:
 
   /** A drawer: which edge it comes from. */
 
-  enum Drawer(val edge: Edge) derives CanEqual:
+  enum Drawer(val edge: Edge):
     case Filters extends Drawer(Edge.Left)
     case MapTools extends Drawer(Edge.Right)
 
-  enum Edge derives CanEqual:
+  enum Edge:
     case Left, Right
 
   // ── pure ──────────────────────────────────────────────────────────────────────────────────────

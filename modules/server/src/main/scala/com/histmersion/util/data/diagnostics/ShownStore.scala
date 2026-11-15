@@ -10,7 +10,7 @@ enum ShownStore(
     val key: ShownStore.Key,
     val label: ShownStore.Label,
     val group: ShownStore.Group
-) derives CanEqual:
+):
   case DatabaseCluster
       extends ShownStore(
         Location.DatabaseCluster,

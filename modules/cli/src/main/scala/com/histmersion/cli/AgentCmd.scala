@@ -65,7 +65,7 @@ object AgentCmd:
     */
 
   /** `agent quota floors <pool>`: the floors to save, or back to config. */
-  enum QuotaFloorsChange derives CanEqual:
+  enum QuotaFloorsChange:
     case Set(floors: String)
     case Reset
 

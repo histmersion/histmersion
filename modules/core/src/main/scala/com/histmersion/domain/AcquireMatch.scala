@@ -48,7 +48,7 @@ object AcquireMatch:
   type DecideAuthors = AuthorName
   val DecideAuthors: AuthorName.type = AuthorName
 
-  enum Decision derives CanEqual:
+  enum Decision:
     /** The item names the source's DOI: it is closed. */
     case Close(item: Queue.QueueItem)
 

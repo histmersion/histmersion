@@ -45,7 +45,7 @@ object MergeApplyJob:
   /** Why a stored row failed: a restart cut it short (the store keeps that as its own sentence), or it ended with a
     * reason of its own.
     */
-  enum Failure derives CanEqual:
+  enum Failure:
     case Interrupted
     case Other(problem: Problem)
 

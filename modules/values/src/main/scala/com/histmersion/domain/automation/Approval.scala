@@ -103,7 +103,7 @@ object Approval:
     * applied the moment it was proposed, by an `agents.approvals.*` mode of `auto` (its result starts [[AutoResult]]);
     * `Person` = everything else that is decided.
     */
-  enum DecidedBy(val wire: DecidedBy.Wire, val describe: DecidedBy.Describe) derives CanEqual:
+  enum DecidedBy(val wire: DecidedBy.Wire, val describe: DecidedBy.Describe):
     case Person extends DecidedBy(DecidedBy.Wire("person"), DecidedBy.Describe("decided by a person"))
     case Autopilot
         extends DecidedBy(DecidedBy.Wire("autopilot"), DecidedBy.Describe("decided by the autopilot's checks"))

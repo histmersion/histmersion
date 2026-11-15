@@ -14,7 +14,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * then); `Unavailable` is a configuration problem (no chain, no priced or buildable model) and fails the step as
   * before chains existed.
   */
-enum PickFailure derives CanEqual:
+enum PickFailure:
   case Unavailable(message: Problem)
   case Exhausted(
       message: Problem,

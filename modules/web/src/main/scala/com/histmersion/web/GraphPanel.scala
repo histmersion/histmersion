@@ -52,7 +52,7 @@ object GraphPanel:
 
   // ── the component ──────────────────────────────────────────────────────────────────────────────
 
-  private enum Load derives CanEqual:
+  private enum Load:
     case Loading
     case Failed(message: Problem)
     case Loaded(g: Source.Graph)

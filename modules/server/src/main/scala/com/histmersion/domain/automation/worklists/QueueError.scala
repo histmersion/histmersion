@@ -2,7 +2,7 @@ package com.histmersion
 package domain.automation.worklists
 
 /** Why a change to a work-list item was refused. */
-enum QueueError derives CanEqual:
+enum QueueError:
   case NotFound(id: QueueItemId)
 
   def message: String = this match

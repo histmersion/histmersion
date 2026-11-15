@@ -77,7 +77,7 @@ object Newtype:
 
   /** The full name of a type as source code writes it: `com.histmersion.domain.library.Citekey`, `a.b.Approval.Kind`.
     */
-  final case class TypeName(text: String) derives CanEqual
+  final case class TypeName(text: String)
 
   object TypeName:
     /** A newtype's name from Hearth's name of its `T`: `a.b.Citekey.T`, or `a.b.File$package.Citekey.T` for a companion
@@ -87,7 +87,7 @@ object Newtype:
       TypeName(named.plainPrint.stripSuffix(".T").split('.').filterNot(_.endsWith("$package")).mkString("."))
 
   /** An Iron constraint: its type as Hearth names it (`Match["[a-z]+"]`) and Iron's own description of it. */
-  final case class Constraint(name: String, description: String) derives CanEqual
+  final case class Constraint(name: String, description: String)
 
   object Constraint:
     /** Iron's packages, left out of a constraint's name: `Match["[a-z]+"]`, not its full path. */
@@ -98,4 +98,4 @@ object Newtype:
       Constraint(IronPackages.replaceAllIn(named.plainPrint, ""), description)
 
   /** A raw input that is no value of a newtype: the type, the constraint it fails and the input as given. */
-  final case class Refusal(typeName: TypeName, constraint: Constraint, raw: String) derives CanEqual
+  final case class Refusal(typeName: TypeName, constraint: Constraint, raw: String)

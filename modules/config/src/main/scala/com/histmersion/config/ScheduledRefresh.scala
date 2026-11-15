@@ -7,7 +7,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** How often a plan pool is read while the autopilot is on and queued work wants it, besides the reading a run's own
   * pick takes.
   */
-enum ScheduledRefresh derives CanEqual:
+enum ScheduledRefresh:
   case Off
   case Every(interval: RefreshIntervalMinutes)
 

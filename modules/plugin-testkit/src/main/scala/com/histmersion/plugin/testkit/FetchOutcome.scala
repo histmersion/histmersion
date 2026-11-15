@@ -9,7 +9,7 @@ import java.nio.file.Path
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What the acquisition chain made of one work, after the server's own checks of each answer. */
-enum FetchOutcome derives CanEqual:
+enum FetchOutcome:
   /** A copy: the fetcher that found it, the file as the server would store it, and where the harness wrote it when
     * asked to.
     */

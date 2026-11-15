@@ -279,7 +279,7 @@ object Supervisor:
   private val processes: Processes = Processes()
 
   /** What became of a plugin file at the start. */
-  enum PluginFile derives CanEqual:
+  enum PluginFile:
     /** It is not there, or already in the form this version reads. */
     case Kept
 

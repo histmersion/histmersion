@@ -56,7 +56,7 @@ object AgentVerify:
   /** How a proposed quote was found in the body. `ratio` is the share of the quote's words found in order inside one
     * stretch of the body (1.0 = verbatim after normalisation).
     */
-  enum QuoteMatch derives CanEqual:
+  enum QuoteMatch:
     case Verbatim
     case Fuzzy(matched: QuoteMatch.Fuzzy.Matched)
     case Missing(best: QuoteMatch.Missing.Best)
@@ -207,7 +207,7 @@ object AgentVerify:
   /** How a model states a year. It never converts; code does. `BP` is RAW (uncalibrated) radiocarbon years, which
     * cannot be turned into a calendar year without a calibration curve.
     */
-  enum YearUnit(val wire: YearUnit.Wire) derives CanEqual:
+  enum YearUnit(val wire: YearUnit.Wire):
     case BCE extends YearUnit(YearUnit.Wire("BCE"))
     case CE extends YearUnit(YearUnit.Wire("CE"))
     case CalBP extends YearUnit(YearUnit.Wire("calBP"))

@@ -843,7 +843,7 @@ object McpTools:
       .modify(_.all)(_.description("List every default, info line and match, not only the first few"))
 
   /** What the `merges` tool does. */
-  enum MergesAction derives CanEqual:
+  enum MergesAction:
     case List, Show, Ledger
   object MergesAction:
     def parse(raw: Option[String]): Option[MergesAction] =

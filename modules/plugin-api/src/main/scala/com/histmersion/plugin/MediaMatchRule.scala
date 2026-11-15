@@ -6,7 +6,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** How the host ties an item to a place. The rules themselves are the host's; a collection only chooses which one fits
   * its records.
   */
-enum MediaMatchRule derives CanEqual:
+enum MediaMatchRule:
   /** A museum object: the most specific place field naming any place on the map decides — it must name this place and
     * no other — and the object's dates must overlap the place's period.
     */

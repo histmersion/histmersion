@@ -4,7 +4,7 @@ package plugin
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One entry of the conversation so far, oldest first. */
-enum AiMessage derives CanEqual:
+enum AiMessage:
   /** The user's message — the step's prompt, with the untrusted data in it. */
   case User(text: AiMessage.User.Text)
 

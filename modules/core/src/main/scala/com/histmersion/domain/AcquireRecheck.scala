@@ -139,7 +139,7 @@ object AcquireRecheck:
           case other                          => Action.Fetch(doi, other.map(_.citekey))
 
   /** What a check found, as stored (`acquire_checks.outcome`). */
-  enum Outcome(val wire: Outcome.Wire) derives CanEqual:
+  enum Outcome(val wire: Outcome.Wire):
     /** In the corpus with its original: closed. */
     case Closed extends Outcome(Outcome.Wire("closed"))
 

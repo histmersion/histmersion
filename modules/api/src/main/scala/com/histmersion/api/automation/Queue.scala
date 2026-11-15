@@ -370,7 +370,7 @@ object Queue:
     case Kind.Log =>
       Preamble("# 📓 LOG — project worklog\n\nWhat was done and when, newest first.\n\n---")
 
-  private enum Block derives CanEqual:
+  private enum Block:
     case Heading(line: String)
     case Item(lines: String)
     case Note(lines: String)

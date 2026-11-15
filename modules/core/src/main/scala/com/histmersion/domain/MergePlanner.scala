@@ -489,7 +489,7 @@ object MergePlanner:
     case Live, Conditional, Dropped
 
   /** What M4 merges by itself, decided before the resolutions. */
-  private enum Merges derives CanEqual:
+  private enum Merges:
     /** This collection's article already contains the bundle's text: ours stays. */
     case ArticleKeep
 

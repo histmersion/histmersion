@@ -10,7 +10,7 @@ import com.histmersion.domain.library.Isbn
   */
 object CoverChoice:
 
-  enum Pick derives CanEqual:
+  enum Pick:
     case Calibre(path: Pick.Calibre.Path)
     case OpenLibrary(kind: Pick.OpenLibrary.Kind, id: Pick.OpenLibrary.Id)
 

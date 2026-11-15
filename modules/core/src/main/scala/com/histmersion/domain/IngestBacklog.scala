@@ -136,7 +136,7 @@ object IngestBacklog:
   /** What a failed ingest of a backlog item leads to: the acquisition list (the legal chain has no file for it, or it
     * failed `maxFailures` times), or another try after the backoff.
     */
-  enum Failure derives CanEqual:
+  enum Failure:
     case ToAcquire(why: Problem)
     case Retry(notBefore: Instant, failures: Failure.Retry.Failures, why: Problem)
 
@@ -245,7 +245,7 @@ object IngestBacklog:
     type WatcherAutoIngest = WatcherAutoIngest.T
     object WatcherAutoIngest extends Newtype[Boolean, Pure]
 
-  enum RepairAction derives CanEqual:
+  enum RepairAction:
     /** Into the watcher's ingest backlog; the acquisition item leaves the list. */
     case Move
 

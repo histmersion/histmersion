@@ -231,7 +231,7 @@ object Backup:
     type Pruned = Pruned.T
     object Pruned extends Newtype[String, Pure]
 
-  enum State derives CanEqual:
+  enum State:
     case Running, Done, Failed
     def wire: State.Wire = State.Wire(toString.toLowerCase(java.util.Locale.ROOT))
 

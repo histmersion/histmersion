@@ -179,7 +179,7 @@ object BundleEntities:
       Problem.NotFound.Dangling(kind.typeName, Problem.Raw(s"$uid"), Problem.Where(s"$from"), within)
 
   /** What a blob is for. */
-  enum BlobUse derives CanEqual:
+  enum BlobUse:
     case Body(sourceUid: UUID)
     case Original(sourceUid: UUID, ext: Bundle.Source.OriginalExt)
     case VersionBody(versionUid: UUID)

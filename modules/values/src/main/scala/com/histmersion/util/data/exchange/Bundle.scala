@@ -15,7 +15,7 @@ object Bundle:
   /** The kinds of entity a bundle carries one line per uid of — and what a tombstone says was deleted. Wire names are
     * kebab-case (`article-version`), as the V031 trigger writes them.
     */
-  enum Kind derives CanEqual:
+  enum Kind:
     case Source, Finding, Article, ArticleVersion, Asset, AssetLink, Attestation, Event, Goal, QueueItem
 
     /** A place or a named period added HERE (`dataset = 'local'`); the bundled seeds every instance imports itself are

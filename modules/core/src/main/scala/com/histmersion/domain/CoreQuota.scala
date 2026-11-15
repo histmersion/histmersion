@@ -135,7 +135,7 @@ object CoreQuota:
     def fresh(day: LocalDate): State = State(day, LookupTokens(0), SearchTokens(0), None, None)
 
   /** Why a call is not made. */
-  enum Refusal derives CanEqual:
+  enum Refusal:
     case Blocked(until: Instant, why: Refusal.Blocked.Why)
     case OverBudget(purpose: Purpose, spent: Refusal.OverBudget.Spent, cap: Refusal.OverBudget.Cap)
     case Paced(waitMs: Refusal.Paced.WaitMs)

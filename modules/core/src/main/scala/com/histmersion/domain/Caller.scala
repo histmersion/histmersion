@@ -5,7 +5,7 @@ import com.histmersion.UserId
 import com.histmersion.domain.automation.Run
 
 /** Who asks for an operation: a person, or an automated workflow run acting through the same service methods. */
-enum Caller derives CanEqual:
+enum Caller:
   case Person(user: UserId, role: Caller.Role)
   case Automation(run: Run.Id)
 
@@ -17,7 +17,7 @@ enum Caller derives CanEqual:
 object Caller:
 
   /** What a person may do, each role everything the one before it may and more. */
-  enum Role derives CanEqual:
+  enum Role:
     case Reader, Contributor, Researcher, Admin
 
     def includes(other: Role): Boolean = ordinal >= other.ordinal

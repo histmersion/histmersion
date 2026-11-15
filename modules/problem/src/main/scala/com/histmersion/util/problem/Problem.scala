@@ -19,7 +19,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * Several failures at once are [[Problems]]: one `Problem` or a [[NonEmptyVector]] of them. A case's name is its
   * `productPrefix`, its fields' names its `productElementNames`.
   */
-sealed trait Problem extends Product, Serializable derives CanEqual
+sealed trait Problem extends Product, Serializable
 
 object Problem:
 
@@ -40,7 +40,7 @@ object Problem:
   /** An Iron constraint a value failed: its type as written and Iron's description of it. */
   import Constraint.{Description, Name}
 
-  final case class Constraint(name: Name, description: Description) derives CanEqual
+  final case class Constraint(name: Name, description: Description)
 
   object Constraint:
     /** The constraint's type as source code writes it: `Match["[a-z]+"]`, `Interval.Closed[0, 9]`. */
@@ -237,10 +237,10 @@ object Problem:
       def here(form: Form): Reference = Reference(form, Vector.empty)
 
     /** The least and the greatest value taken, either open. */
-    final case class Bounds(least: Option[Raw], greatest: Option[Raw]) derives CanEqual
+    final case class Bounds(least: Option[Raw], greatest: Option[Raw])
 
     /** How fields given together must relate. */
-    enum Exclusion derives CanEqual:
+    enum Exclusion:
       /** All of them or none. */
       case Together
 
@@ -263,7 +263,7 @@ object Problem:
       case Distinct
 
     /** How a text fails to be a secret's reference. */
-    enum Form derives CanEqual:
+    enum Form:
       /** It names no scheme: a bare value. */
       case Bare
 
@@ -298,7 +298,7 @@ object Problem:
     final case class Dangling(typeName: TypeName, key: Raw, from: Where, within: Scope) extends NotFound
 
     /** Where a referred-to record is looked for. */
-    enum Scope derives CanEqual:
+    enum Scope:
       /** In the bundle that holds the reference. */
       case Bundle
 
@@ -340,7 +340,7 @@ object Problem:
     final case class Job(job: Raw, status: State, control: Control) extends Conflict
 
     /** Why a job cannot be paused, cancelled or resumed. */
-    enum Control derives CanEqual:
+    enum Control:
       /** A job of `kind` runs as one piece and ends by itself: it is never paused or cancelled. */
       case OnePiece(kind: Raw)
 
@@ -365,7 +365,7 @@ object Problem:
       case NotPaused
 
     /** Why a merge does not carry something out. */
-    enum Hold derives CanEqual:
+    enum Hold:
       /** No decision settles the issue yet. */
       case Open
 
@@ -425,7 +425,7 @@ object Problem:
       def of[T](value: T)(using RefinedType.Mirror[T]): State = State(s"$value")
 
     /** The work that holds the store or a resource while it runs. */
-    enum Activity derives CanEqual:
+    enum Activity:
       case Backup, Restore, Vacuum, Reindex, MergeApply, BundleImport, Seed, Migration, CalibreGui
 
   /** The operation is not allowed, though it is valid and the state allows it. */
@@ -443,7 +443,7 @@ object Problem:
     final case class Disabled(feature: Feature, setting: SettingKey) extends Refused
 
     /** The rules a request can break. */
-    enum Rule derives CanEqual:
+    enum Rule:
       /** The request needs a live run token. */
       case RunTokenRequired
 
@@ -478,7 +478,7 @@ object Problem:
       case RegistrationOver
 
     /** The allowances a request can spend. */
-    enum Limit derives CanEqual:
+    enum Limit:
       case DailySpend, MonthlySpend, RunSpend, ProviderQuota, RateLimit, PlanAllowance
 
     /** An amount of an allowance: money, calls or tokens, as its limit counts them. */
@@ -584,7 +584,7 @@ object Problem:
         def isNotFound: Boolean = s == NotFound
 
     /** What a reply was expected to be. */
-    enum Shape derives CanEqual:
+    enum Shape:
       case Json, Xml, Html, Text, Image, Document, Archive, Problems, Range
 
   /** A file, a process or the database failed under the operation. */
@@ -611,7 +611,7 @@ object Problem:
     final case class Entry(archive: Format, entry: Path, fault: Fault) extends Io
 
     /** What is wrong with an entry of an archive. */
-    enum Fault derives CanEqual:
+    enum Fault:
       /** The archive holds no such entry. */
       case Missing
 
@@ -640,7 +640,7 @@ object Problem:
       case Differs(measure: Measure, listed: Raw, found: Raw)
 
     /** What a manifest lists of an entry. */
-    enum Measure derives CanEqual:
+    enum Measure:
       case Sha256, Bytes, Lines, Entries
 
     /** A path on a file system, as text: the browser has no file system type. */
@@ -657,21 +657,21 @@ object Problem:
       /** An exit status written in decimal digits. */
       def read(digits: String): Option[ExitCode] = digits.toIntOption.map(ExitCode(_))
 
-    enum Access derives CanEqual:
+    enum Access:
       case Read, Write, Create, Delete, Move, List
 
     /** What a path should be. `Listed`: named by the manifest it is checked against. `OnPath`: found on the `PATH`. */
-    enum Kind derives CanEqual:
+    enum Kind:
       case File, Directory, Present, Absent, Executable, Listed, OnPath
 
       /** Inside `directory`, the one the operation is confined to. */
       case Inside(directory: Path)
 
-    enum Format derives CanEqual:
+    enum Format:
       case Bundle, Tar, Json, Png, PmTiles, Pdf, Image, Text, Hocon, Yaml, Xml, Kit, Zip
 
     /** What is wrong with the data. */
-    enum Damage derives CanEqual:
+    enum Damage:
       case Checksum, Truncated, Undecodable
 
       /** It holds `found` units where `expected` belong. */
@@ -687,7 +687,7 @@ object Problem:
       case Schema(found: Count, reads: Count)
 
     /** How a process ended that did not end well. */
-    enum Ending derives CanEqual:
+    enum Ending:
       /** It exited with `code`; `stderr` is the end of what it wrote to its standard error. */
       case Exited(code: ExitCode, stderr: External.Stderr)
 
@@ -697,7 +697,7 @@ object Problem:
       /** It could not be started. */
       case NotStarted(reported: External.Reported)
 
-    enum DbOp derives CanEqual:
+    enum DbOp:
       case Connect, Query, Migrate, Backup, Restore
 
   /** The service's settings do not allow the operation. */
@@ -723,7 +723,7 @@ object Problem:
     final case class Unpriced(model: Run.Model, metered: Option[Metered]) extends Config
 
     /** Why a model of a provider that can run on a plan is billed by the token. */
-    enum Metered derives CanEqual:
+    enum Metered:
       /** `provider` is set to use an API key, so it bills the API, not the plan. */
       case ApiKey(provider: Upstream.Name)
 
@@ -731,7 +731,7 @@ object Problem:
       case Opencode
 
     /** What is wrong with a setting. */
-    enum Fault derives CanEqual:
+    enum Fault:
       /** It has no value, or an empty one. */
       case Empty
 
@@ -792,16 +792,16 @@ object Problem:
       case KeyNeeded(needs: External.PluginSaid)
 
     /** The kinds of value a setting holds. */
-    enum ValueKind derives CanEqual:
+    enum ValueKind:
       case Text, Number, Flag, List, Block, Null
 
     /** What a server (or the host a plugin runs in) may lack. */
-    enum Capability derives CanEqual:
+    enum Capability:
       case Originals, AcquisitionChain, Runtimes, Converter, Gazetteer, Basemap, Agents, Calibre, Processes, LocalFiles,
         MediaImport, EventCatalogues, AiProviders, GazetteerImport, SourceCollections, Network
 
     /** The stages of a settings reload. */
-    enum Stage derives CanEqual:
+    enum Stage:
       case Parse, Plan, Close, Start
 
     /** The part of the running service a reload rebuilds, by its name. */
@@ -839,7 +839,7 @@ object Problem:
     object Signer extends Newtype[String, Pure]
 
     /** Why a plugin did not load. */
-    enum Fault derives CanEqual:
+    enum Fault:
       case Missing, NullComponent, BadDescriptor, VersionMismatch, Duplicate
 
       /** Loading it threw. */
@@ -864,7 +864,7 @@ object Problem:
       case Taken(by: Raw)
 
     /** Why a plugin did not take an item. */
-    enum Refusal derives CanEqual:
+    enum Refusal:
       case NoLicence, NoImage, NoName, NoLocation, NoDate, Duplicate, Restricted
 
       /** Its licence is of the family `family`, which the collection's allowlist does not hold. */
@@ -877,7 +877,7 @@ object Problem:
       case NoOpenImage(field: Field, stated: Vector[Raw])
 
     /** How a vault failed. */
-    enum Retrieval derives CanEqual:
+    enum Retrieval:
       case NoVault, NoEntry, EmptyValue, Locked
 
       /** It did not answer within `after`. */
@@ -904,11 +904,11 @@ object Problem:
       case Key(key: Raw, attempt: Attempt, stderr: Option[External.Stderr])
 
     /** How one try with a hardware key failed. */
-    enum Attempt derives CanEqual:
+    enum Attempt:
       case NotConnected, NotTouched, WrongCredentials, ChallengeFailed, Refused
 
     /** The kinds of failure a plugin may report in its own words. */
-    enum Claim derives CanEqual:
+    enum Claim:
       case Unavailable, Rejected, Misconfigured, Failed
 
   /** A run of the workflow engine stopped or cannot go on. */
@@ -945,7 +945,7 @@ object Problem:
     /** It cannot go on at `step`: `cause`. */
     final case class Aborted(step: Step, cause: AbortCause) extends Run
 
-    enum PauseReason derives CanEqual:
+    enum PauseReason:
       case Requested, Allowance, Budget, Provider, Approval, Schedule
 
     /** An agent role, in its wire spelling. */
@@ -965,16 +965,16 @@ object Problem:
     object Pool extends Newtype[String, Pure]
 
     /** Why the scheduler holds a run back. */
-    enum Block derives CanEqual:
+    enum Block:
       /** `pool` runs as many as it may. */
       case PoolFull(pool: Pool)
 
       case SpendCap, Draining, OutsideWindow, Waiting
 
-    enum Actor derives CanEqual:
+    enum Actor:
       case Person, Automation, Server
 
-    enum AbortCause derives CanEqual:
+    enum AbortCause:
       case Disappeared, CheckpointMismatch, VersionChanged
 
   /** Content written by a person or a model breaks a rule of the writing. */
@@ -993,12 +993,12 @@ object Problem:
     final case class Answer(rule: Requirement) extends Content
 
     /** A place a finding names (`finding`, counted from 1) that no gazetteer place matches. */
-    final case class Unplaced(place: Raw, finding: Count) derives CanEqual
+    final case class Unplaced(place: Raw, finding: Count)
 
-    enum Flaw derives CanEqual:
+    enum Flaw:
       case HandWrittenSourcesCited, UncitedParagraph, UnknownCitekey, FormattingIntroduced, MissingSection
 
-    enum Requirement derives CanEqual:
+    enum Requirement:
       case NoYearZero, CitesNoSource, UnknownCitekey, OutsidePeriod
 
       /** A stand-in (placeholder, TODO, lorem ipsum) where the text belongs. */

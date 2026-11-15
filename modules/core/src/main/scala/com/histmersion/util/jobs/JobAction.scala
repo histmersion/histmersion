@@ -6,7 +6,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** What a person asks of a job: pause it (it stops after the part it is on and keeps its progress), resume it (it goes
   * on with the parts it had not done), or cancel it (it stops and is recorded as cancelled).
   */
-enum JobAction(val wire: JobAction.Wire) derives CanEqual:
+enum JobAction(val wire: JobAction.Wire):
   case Pause extends JobAction(JobAction.Wire("pause"))
   case Resume extends JobAction(JobAction.Wire("resume"))
   case Cancel extends JobAction(JobAction.Wire("cancel"))

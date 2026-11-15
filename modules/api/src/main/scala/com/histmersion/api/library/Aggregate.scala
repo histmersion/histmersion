@@ -50,7 +50,7 @@ object Aggregate:
       val first = BigInt(Math.floorDiv(lo.value, size.value)) * size.value
       ((BigInt(hi.value) - first) / size.value) + 1
 
-  enum Counting derives CanEqual:
+  enum Counting:
     case Overlap, Starts
 
   object Counting:

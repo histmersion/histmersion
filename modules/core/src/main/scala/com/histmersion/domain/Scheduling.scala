@@ -30,7 +30,7 @@ object Scheduling:
     * for the next tick.
     */
 
-  enum Decision derives CanEqual:
+  enum Decision:
     case Start
     case Skip(reason: Problem)
     case Defer(reason: Problem)

@@ -10,7 +10,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** Which of the runtime's own web tools a role may use: none, Histmersion's own `discover` (OpenAlex, Crossref,
   * Wikipedia references — still MCP only), or the runtime's web search / fetch.
   */
-enum WebAccess(val wire: WebAccess.Wire) derives CanEqual:
+enum WebAccess(val wire: WebAccess.Wire):
   case None extends WebAccess(WebAccess.Wire("none"))
   case Discover extends WebAccess(WebAccess.Wire("discover"))
   case WebSearch extends WebAccess(WebAccess.Wire("search"))

@@ -113,7 +113,7 @@ object PluginKit:
 
   // ── status ────────────────────────────────────────────────────────────────────────────────────
 
-  enum Verdict derives CanEqual:
+  enum Verdict:
     /** The plugins directory is what the installed binary was linked with, and the server runs it. */
     case UpToDate
 
@@ -228,7 +228,7 @@ object PluginKit:
       case plain(g, a, v) => Right(Coordinates(Coordinates.Group(g), Coordinates.Artifact(a), Coordinates.Version(v)))
       case other          => Left(Problem.Invalid.malformed(Coordinates.Written.refused(other)))
 
-  enum Origin derives CanEqual:
+  enum Origin:
     case File(path: Origin.File.Path)
     case Url(url: Origin.Url.Value)
     case Maven(coordinates: Coordinates)

@@ -11,7 +11,7 @@ import scala.jdk.CollectionConverters.*
 /** The name a runtime gives one of Histmersion's MCP tools: Claude Code `mcp__histmersion__get_source`, opencode
   * `histmersion_get_source`, Codex and the direct API the bare `get_source`.
   */
-enum ToolStyle derives CanEqual:
+enum ToolStyle:
   case Claude, Opencode, Bare
 
   def tool(name: ToolUse.Tool): String = this match

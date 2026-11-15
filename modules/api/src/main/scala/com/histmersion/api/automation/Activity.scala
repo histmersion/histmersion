@@ -42,7 +42,7 @@ object Activity:
 
     def parse(s: Wire): Option[EntryKind] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
 
-  enum Writer(val wire: Writer.Wire) derives CanEqual:
+  enum Writer(val wire: Writer.Wire):
     case Agent extends Writer(Writer.Wire("agent"))
     case Job extends Writer(Writer.Wire("job"))
 

@@ -176,7 +176,7 @@ object Store:
   /** Why a store operation did not happen. `message` is what callers show; it names the path where the operation
     * failed, as the file system said.
     */
-  enum Error(val message: Problem) derives CanEqual:
+  enum Error(val message: Problem):
     case NotFound(where: Error.NotFound.Where) extends Error(Problem.Unclassified(Legacy.Text(s"$where: no such file")))
     case NotAFile(where: Error.NotAFile.Where) extends Error(Problem.Unclassified(Legacy.Text(s"$where is not a file")))
     case Failed(reason: Problem) extends Error(reason)

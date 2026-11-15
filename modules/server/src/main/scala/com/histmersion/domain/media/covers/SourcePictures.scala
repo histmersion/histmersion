@@ -396,7 +396,7 @@ object SourcePictures:
   /** Why no Open Library cover was kept: nothing to ask or to keep (`Skipped`), or Open Library could not be asked
     * (`Failed`, reported as an error).
     */
-  enum CoverRefusal derives CanEqual:
+  enum CoverRefusal:
     case Skipped(why: OpenLibraryText)
     case Failed(why: OpenLibraryText)
 

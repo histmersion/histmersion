@@ -190,7 +190,7 @@ object ModelChains:
       yield Limit(a, s.measure, w)
 
   /** `claude-code:*` covers every model of the provider: a Claude plan is one pool, whichever model spends it. */
-  enum Target derives CanEqual:
+  enum Target:
     case Model(ref: ModelRef)
     case Provider(kind: ProviderKind)
 
@@ -405,7 +405,7 @@ object ModelChains:
     object Target extends Newtype[String, Pure]
     export Allowance.ReservePct
 
-  enum SettingSource(val wire: SettingSource.Wire) derives CanEqual:
+  enum SettingSource(val wire: SettingSource.Wire):
     case Config extends SettingSource(SettingSource.Wire("config"))
     case Saved extends SettingSource(SettingSource.Wire("saved"))
 

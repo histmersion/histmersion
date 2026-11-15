@@ -4,7 +4,7 @@ package api.library
 import com.histmersion.api.{Ascii, WireEnumValues}
 import io.github.iltotore.iron.constraint.any.Pure
 
-enum MatchMethod derives CanEqual:
+enum MatchMethod:
   /** The same uid. */
   case Uid
 

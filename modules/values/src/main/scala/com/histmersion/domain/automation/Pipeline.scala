@@ -8,7 +8,7 @@ enum Pipeline(
     val targetKind: TargetKind,
     val roles: List[AgentRole],
     val describe: Pipeline.Describe
-) derives CanEqual:
+):
   case EnrichSource
       extends Pipeline(
         Pipeline.Wire("enrich-source"),

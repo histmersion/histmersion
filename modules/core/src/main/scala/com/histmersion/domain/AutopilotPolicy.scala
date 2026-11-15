@@ -87,7 +87,7 @@ object AutopilotPolicy:
   type Rationale = Rationale.T
   object Rationale extends Newtype[String, Pure]
 
-  enum Verdict derives CanEqual:
+  enum Verdict:
     case Approve(reason: Rationale)
     case Reject(reason: Rationale)
     case Leave(why: Rationale)
@@ -526,7 +526,7 @@ object AutopilotPolicy:
     object ExtendMinNew extends Newtype[Int, Pure]
 
   /** One change `ensure` asks for. */
-  enum Step derives CanEqual:
+  enum Step:
     /** Create the goal's seeding manager, active, with its cron (and a plan-goal item before its first proposal when
       * the goal has no plan).
       */

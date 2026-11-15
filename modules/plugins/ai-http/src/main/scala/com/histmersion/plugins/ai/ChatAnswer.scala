@@ -50,7 +50,7 @@ object ChatAnswer:
   type FinishText = FinishText.T
   object FinishText extends Newtype[String, Pure]
 
-  enum FinishReason derives CanEqual:
+  enum FinishReason:
     case Stop, Length, ToolCalls, ContentFilter, FunctionCall
     case Other(raw: FinishText)
 

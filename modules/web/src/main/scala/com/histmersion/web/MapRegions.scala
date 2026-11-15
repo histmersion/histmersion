@@ -23,7 +23,7 @@ object MapRegions:
 
   /** What a region's download holds. */
 
-  enum Content(val label: Content.Label) derives CanEqual:
+  enum Content(val label: Content.Label):
     /** Every layer of the map for the box: it takes the place of the region downloaded now. */
     case Map extends Content(Content.Label("the map, every layer (in place of the region downloaded now)"))
 
