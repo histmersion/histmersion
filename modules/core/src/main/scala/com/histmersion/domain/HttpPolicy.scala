@@ -1,7 +1,6 @@
 package com.histmersion
 package domain
 
-import com.histmersion.util.problem.{Legacy, Problem}
 import java.time.{Instant, ZonedDateTime}
 import java.time.format.DateTimeFormatter
 import io.github.iltotore.iron.constraint.any.Pure
@@ -51,13 +50,43 @@ object HttpPolicy:
   /** What to do with an answer. */
   enum Step:
     case Accept
-    case Wait(ms: Step.Wait.Ms, why: Problem)
-    case GiveUp(why: Problem)
+    case Wait(ms: Step.Wait.Ms, why: Rationale)
+    case GiveUp(why: Rationale)
+
+  /** Why the policy waits or gives up: the account of its step, for the log, not a failure (the request's failure is
+    * the answer's own).
+    */
+  enum Rationale:
+    /** The answer's status `code` asks to slow down (429, 502, 503, 504). */
+    case SlowDownStatus(code: StatusCode)
+
+    /** The answer asks to slow down although its code does not, in its own word (MediaWiki's `maxlag`). */
+    case SlowedDown(word: SlowDown)
+
+    /** As `why`, after `retries` retries. */
+    case Retried(why: Rationale, retries: MaxRetries)
+
+    /** As `why`, and asked to wait `asked`, longer than the policy waits at once. */
+    case WaitTooLong(why: Rationale, asked: Step.Wait.Ms)
+
+    /** The answer's status `code` is an error that is not asked again. */
+    case Failed(code: StatusCode)
+
+    /** The account as the log shows it. */
+    def said: String = this match
+      case SlowDownStatus(code)    => s"HTTP $code"
+      case SlowedDown(word)        => s"$word"
+      case Retried(why, retries)   => s"${why.said} after $retries retries"
+      case WaitTooLong(why, asked) => s"${why.said}: asked to wait ${asked.seconds} s"
+      case Failed(code)            => s"HTTP $code"
 
   object Step:
     object Wait:
       type Ms = Ms.T
-      object Ms extends Newtype[Long, Pure]
+      object Ms extends Newtype[Long, Pure]:
+        extension (ms: Ms)
+          /** The wait in whole seconds, rounded down. */
+          def seconds: Long = ms.value / 1000L
 
   /** The answers that mean "try again later". */
   val Throttled: Set[StatusCode] = Set(StatusCode(429), StatusCode(502), StatusCode(503), StatusCode(504))
@@ -108,14 +137,13 @@ object HttpPolicy:
       slowDown: Option[SlowDown] = None
   ): Step =
     if Throttled(code) || slowDown.isDefined then
-      val why = slowDown.fold(s"HTTP $code")(_.value)
+      val why = slowDown.fold(Rationale.SlowDownStatus(code))(Rationale.SlowedDown(_))
       val wait = retryAfterMs(retryAfter, now).getOrElse(backoffMs(attempt)).value.max(0L)
-      if attempt.value >= maxRetries.value then
-        Step.GiveUp(Problem.Unclassified(Legacy.Text(s"$why after $maxRetries retries")))
+      if attempt.value >= maxRetries.value then Step.GiveUp(Rationale.Retried(why, maxRetries))
       else if wait > maxRetryAfterSeconds.value.toLong * 1000L then
-        Step.GiveUp(Problem.Unclassified(Legacy.Text(s"$why: asked to wait ${wait / 1000} s")))
-      else Step.Wait(Step.Wait.Ms(wait), Problem.Unclassified(Legacy.Text(why)))
-    else if code.value >= 400 then Step.GiveUp(Problem.Unclassified(Legacy.Text(s"HTTP $code")))
+        Step.GiveUp(Rationale.WaitTooLong(why, Step.Wait.Ms(wait)))
+      else Step.Wait(Step.Wait.Ms(wait), why)
+    else if code.value >= 400 then Step.GiveUp(Rationale.Failed(code))
     else Step.Accept
 
   // ── trust (#1568) ────────────────────────────────────────────────────────────────────────────────

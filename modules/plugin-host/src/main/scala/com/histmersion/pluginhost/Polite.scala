@@ -84,7 +84,7 @@ final class Polite(
         ) match
           case HttpPolicy.Step.Accept        => Right(a)
           case HttpPolicy.Step.Wait(ms, why) =>
-            log.info(HostLog.Line(s"media: ${why.sentence} from ${h.value} — waiting ${ms.value} ms"))
+            log.info(HostLog.Line(s"media: ${why.said} from ${h.value} — waiting ${ms.value} ms"))
             sleep(Polite.IntervalMs(ms.value))
             attempt(HttpPolicy.Attempt(n.value + 1), refusals)
           case HttpPolicy.Step.GiveUp(why) if a.code.value == 403 && refusals < refusalBackoffMs.size =>
@@ -92,7 +92,7 @@ final class Polite(
             slowdown(h) = (slowdown.getOrElse(h, 1) * 2).min(Polite.MaxSlowdown)
             log.warn(
               HostLog.Line(
-                s"media: ${why.sentence} from ${h.value} — taken as rate limiting: waiting ${ms.value} ms, then asking at " +
+                s"media: ${why.said} from ${h.value} — taken as rate limiting: waiting ${ms.value} ms, then asking at " +
                   s"${intervalMs(h).value} ms between requests"
               )
             )
@@ -102,7 +102,7 @@ final class Polite(
             val waited = if a.code.value == 403 && refusals > 0 then
               s" (still, after waiting ${refusalBackoffMs.take(refusals).map(_.value).sum / 1000} s)"
             else ""
-            log.warn(HostLog.Line(s"media: ${why.sentence} from ${h.value}$waited — giving up"))
+            log.warn(HostLog.Line(s"media: ${why.said} from ${h.value}$waited — giving up"))
             Left(url.answered(a.code.status, a.body.value))
       }
     attempt(HttpPolicy.Attempt(0), 0)

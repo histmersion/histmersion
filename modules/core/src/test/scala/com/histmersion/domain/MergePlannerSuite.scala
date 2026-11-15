@@ -208,6 +208,32 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
       taken.resolutionErrors.toString
     )
 
+  test("a map resolution under a citekey of another source here is held, with the hint to merge under the other one"):
+    val in0 = input()
+    // page2024_history is the bundle's side of the gate, and an old citekey of another source here (Harrison's)
+    val in1 = in0
+      .modify(_.labels.aliases)
+      .setTo(in0.labels.aliases + (Citekey("page2024_history") -> uid("h-themis")))
+    val gate = issue(plan(in1).plan, Issue.Kind.SameWork, IssueSide.Label("page2024_history"))
+    val held = plan(in1, resolve(gate.id -> MergeResolution.Decision("map:page2024_history"))).plan
+    assertEquals(
+      held.resolutionErrors.collect { case h: Problem.Conflict.Held => h },
+      List(
+        Problem.Conflict.Held(
+          Problem.Where.of(gate.id),
+          Problem.Conflict.Hold.CitekeyOfAnother(Problem.Raw("page2024_history"))
+        )
+      ),
+      held.resolutionErrors.mkString("\n")
+    )
+    assertEquals(
+      held.resolutionErrors.map(_.sentence),
+      List(
+        s"${gate.id}: 'page2024_history' is a citekey (or an old one) of another source here — merge under the other citekey"
+      )
+    )
+    assertEquals(held.resolved, 0)
+
   test("an id goes stale when a record it is about changes; the resolution is reported, not re-applied"):
     val p0 = plan().plan
     val doi = issue(p0, Issue.Kind.DoiDiffers, IssueSide.Label("kuhrt1995_near"))

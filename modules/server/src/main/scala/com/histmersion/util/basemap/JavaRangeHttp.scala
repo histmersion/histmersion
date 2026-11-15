@@ -1,7 +1,6 @@
 package com.histmersion
 package util.basemap
 import com.histmersion.util.problem.{External, Problem}
-import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.util.storage.Reservation
 
@@ -61,9 +60,9 @@ final class JavaRangeHttp(
             RetryPolicy.RetryAfterCap(300),
             Instant.now(clock)
           ) match
-            case Some(RetryWait(ms, why)) =>
+            case Some(RetryWait(ms, asked)) =>
               resp.body.close()
-              scribe.warn(s"basemap: ${why.sentence} — asking $url again in ${ms}ms")
+              scribe.warn(s"basemap: HTTP $asked — asking $url again in ${ms}ms")
               sleep(ms)
               attempt(n + 1)
             case None => Right(resp)

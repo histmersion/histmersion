@@ -1,11 +1,10 @@
 package com.histmersion
 package util.basemap
-import com.histmersion.util.problem.Problem
 
 import io.github.iltotore.iron.constraint.any.Pure
 
-/** How long to wait before asking a provider again, and why (for the log). */
-final case class RetryWait(ms: RetryWait.Ms, why: Problem)
+/** How long to wait before asking a provider again, and the status that asked to slow down (for the log). */
+final case class RetryWait(ms: RetryWait.Ms, asked: RangeHttp.StatusCode)
 
 object RetryWait:
   type Ms = Ms.T
