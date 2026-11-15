@@ -19,9 +19,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.{ApprovalKind, Pipeline, Role, RunInfo, RunRequest}
 import com.histmersion.domain.CompileArticle.*
-import com.histmersion.api.automation.Goal.Plans.{ArticleDraft, LinkKind}
-// by its own path, not through the export in Goal.Plans: Kindlings 0.3.4 (Hearth 0.4.4) refuses a field typed so
-import com.histmersion.api.research.DraftMode
+import com.histmersion.api.automation.Goal.Plans.{ArticleDraft, DraftMode, LinkKind}
 import com.histmersion.api.automation.Queue.QueueAdd
 import com.histmersion.domain.automation.goals.GoalService
 import com.histmersion.api.VocabularyCodecs.given
