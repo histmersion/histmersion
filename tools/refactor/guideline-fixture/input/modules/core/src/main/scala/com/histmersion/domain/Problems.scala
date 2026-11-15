@@ -6,16 +6,22 @@ import io.github.iltotore.iron.constraint.any.Pure
 import io.github.iltotore.iron.constraint.string.Match
 
 type Note = Note.T
-object Note extends RefinedType[String, Pure]
+object Note extends RefinedType[String, Pure]:
+  /** The note a value of any newtype holds: unwrapped in the companion, the place G44 allows. */
+  def of[T](value: T)(using RefinedType.Mirror[T]): Note = Note(s"$value") // no finding: inside the companion
 
 type Shelf = Shelf.T
 object Shelf extends RefinedType[String, Match["[a-z]+"]]
 
 object Failures:
   def plain(name: String): Problem = Problem("cannot open") // assert: GuidelineInventory.G60fromString (no G44: a literal)
-  def interpolated(name: String): Problem = Problem(s"cannot open $name") // assert: GuidelineInventory.G60fromString (no G44: Pure, interpolated)
-  def formatted(n: Int): Problem = Problem(f"cannot open $n%03d") // assert: GuidelineInventory.G60fromString (no G44: Pure, interpolated)
-  def other(name: String): Note = Note(s"seen $name") // no finding: any Pure newtype
+  def interpolated(name: String): Problem = Problem(s"cannot open $name") // assert: GuidelineInventory
+  def formatted(n: Int): Problem = Problem(f"cannot open $n%03d") // assert: GuidelineInventory
+  def other(name: String): Note = Note(s"seen $name") // assert: GuidelineInventory.G44
+  def ofNewtype(label: String, c: Citekey): Note = Note(s"$c") // assert: GuidelineInventory.G44
+  def literalSplices: Note = Note(s"seen ${"x"} ${3}") // no finding: every splice a literal
+  def noSplice: Note = Note(s"seen") // no finding: nothing spliced
+  def throughOf(label: String, c: Citekey): Note = Note.of(c) // no finding: the companion unwraps
   def spliced(c: Citekey): Problem = Problem(s"no source ${c.value}") // assert: GuidelineInventory.G44
   def refined(name: String): Shelf = Shelf.assume(s"top-$name") // assert: GuidelineInventory.G44
   def computed(name: String): Problem = Problem.assume(name + "!") // assert: GuidelineInventory.G44
