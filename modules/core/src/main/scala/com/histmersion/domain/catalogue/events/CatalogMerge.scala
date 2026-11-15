@@ -1,6 +1,5 @@
 package com.histmersion
 package domain.catalogue.events
-import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.api.{TimeSpan, Years}
 import com.histmersion.api.catalogue.{CatalogRecord, EventGeo, EventTaxonomy, Geocode}
@@ -18,6 +17,10 @@ import com.histmersion.api.catalogue.EventSummary
 
 object CatalogMerge:
 
+  /** What matched a record to an event, or why it is new: the account of the merge's decision, not a failure. */
+  type Rationale = Rationale.T
+  object Rationale extends Newtype[String, Pure]
+
   /** How close two records of the same kind must be to be one event: their outer spans overlap once each is widened by
     * `years`, and their points are within `km`.
     */
@@ -34,8 +37,8 @@ object CatalogMerge:
     * share it). `why` says what matched.
     */
   enum Placement:
-    case Existing(eventId: Event.Id, why: Problem)
-    case New(eventId: Event.Id, why: Problem)
+    case Existing(eventId: Event.Id, why: Rationale)
+    case New(eventId: Event.Id, why: Rationale)
     def eventId: Event.Id
 
   private def outer(ts: TimeSpan): Option[(Year, Year)] = ts.outer
@@ -131,15 +134,13 @@ object CatalogMerge:
         byKey
           .get(r.key)
           .map(
-            Placement.Existing(_, Problem.Unclassified(Legacy.Text(s"${r.provider} ${r.providerId} already recorded")))
+            Placement.Existing(_, Rationale(s"${r.provider} ${r.providerId} already recorded"))
           )
           .orElse(
             r.wikidata
               .flatMap(q => byWd.get(q))
               .flatMap(es => best(es)(ofStored(r)))
-              .map(e =>
-                Placement.Existing(e.id, Problem.Unclassified(Legacy.Text(s"same Wikidata item ${r.wikidata.get}")))
-              )
+              .map(e => Placement.Existing(e.id, Rationale(s"same Wikidata item ${r.wikidata.get}")))
           )
           .orElse(
             best(
@@ -153,9 +154,7 @@ object CatalogMerge:
                 Placement
                   .Existing(
                     e.id,
-                    Problem.Unclassified(
-                      Legacy.Text(s"same ${canonical(r.kind.value)} at the same time and place as '${e.id}'")
-                    )
+                    Rationale(s"same ${canonical(r.kind.value)} at the same time and place as '${e.id}'")
                   )
               )
           )
@@ -180,14 +179,14 @@ object CatalogMerge:
           )
           .map {
             case Placement.Existing(id, _) =>
-              Placement.Existing(id, Problem.Unclassified(Legacy.Text("merged with another record of this run")))
+              Placement.Existing(id, Rationale("merged with another record of this run"))
             case Placement.New(id, _) =>
-              Placement.New(id, Problem.Unclassified(Legacy.Text("merged with another catalogue's record of it")))
+              Placement.New(id, Rationale("merged with another catalogue's record of it"))
           }
       val p = storedMatch
         .orElse(runMatch)
         .getOrElse(
-          Placement.New(Event.Id.assume(CatalogRecord.eventId(r).value), Problem.Unclassified(Legacy.Text("new")))
+          Placement.New(Event.Id.assume(CatalogRecord.eventId(r).value), Rationale("new"))
         )
       acc :+ ((i, r, p))
     }

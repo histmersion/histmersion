@@ -1,8 +1,6 @@
 package com.histmersion
 package domain
 
-import com.histmersion.util.problem.{Legacy, Problem}
-
 class PlanReadScheduleSuite extends munit.FunSuite:
 
   test(
@@ -24,22 +22,22 @@ class PlanReadScheduleSuite extends munit.FunSuite:
     assertEquals(read(newest = minutesAgo(180)), ScheduledRead.Due, "exactly the interval: due")
     assertEquals(
       read(newest = minutesAgo(60)),
-      ScheduledRead.NotDue(Problem.Unclassified(Legacy.Text("read 60 min ago (every 180 min)")))
+      ScheduledRead.NotDue(PlanReadSchedule.Rationale("read 60 min ago (every 180 min)"))
     )
     assertEquals(
       read(attempt = minutesAgo(5)),
-      ScheduledRead.NotDue(Problem.Unclassified(Legacy.Text("read 5 min ago (every 180 min)"))),
+      ScheduledRead.NotDue(PlanReadSchedule.Rationale("read 5 min ago (every 180 min)")),
       "a failed attempt counts like a reading: no retry before the interval"
     )
     assertEquals(
       read(schedule = ReadSchedule.Off),
-      ScheduledRead.NotDue(Problem.Unclassified(Legacy.Text("the schedule is off")))
+      ScheduledRead.NotDue(PlanReadSchedule.Rationale("the schedule is off"))
     )
     assertEquals(
       read(autopilotOn = PlanReadSchedule.AutopilotOn(false)),
-      ScheduledRead.NotDue(Problem.Unclassified(Legacy.Text("the autopilot is off")))
+      ScheduledRead.NotDue(PlanReadSchedule.Rationale("the autopilot is off"))
     )
     assertEquals(
       read(wanted = PlanReadSchedule.Wanted(false)),
-      ScheduledRead.NotDue(Problem.Unclassified(Legacy.Text("no queued work wants the pool")))
+      ScheduledRead.NotDue(PlanReadSchedule.Rationale("no queued work wants the pool"))
     )

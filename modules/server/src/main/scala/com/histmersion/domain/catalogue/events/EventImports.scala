@@ -331,9 +331,7 @@ final class EventImports(
         val s =
           store.save(
             batch
-              .map((id, _, b, _) =>
-                b -> CatalogMerge.Placement.Existing(id, Problem.Unclassified(Legacy.Text("re-derived")))
-              )
+              .map((id, _, b, _) => b -> CatalogMerge.Placement.Existing(id, CatalogMerge.Rationale("re-derived")))
           )
         updated += s.updated.value
         counts = counts + s.corrections

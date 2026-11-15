@@ -1,9 +1,8 @@
 package com.histmersion
 package domain
 
-import com.histmersion.util.problem.Problem
-import io.github.iltotore.iron.constraint.any.Pure
-
 enum ScheduledRead:
   case Due
-  case NotDue(why: Problem)
+
+  /** Not due yet, and why: the account of the schedule's decision, not a failure. */
+  case NotDue(why: PlanReadSchedule.Rationale)
