@@ -2,7 +2,7 @@ package com.histmersion
 package api
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -416,7 +416,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
     val ok = List(
       NotMaterialAnswer(
         ReviewArticle.NotMaterialAnswer.Pair("brown1999_rites > frazer1922_golden"),
-        Problem.Unclassified(Legacy.Text("  It is cited for the\nseasons only. "))
+        ReviewArticle.Rationale("  It is cited for the\nseasons only. ")
       )
     )
     val (rs, ps, ws) = checkNotMaterial(ok, fs, pass1, last = ReviewArticle.CheckNotMaterialLast(false))
@@ -448,19 +448,19 @@ class ReviewCritiqueSuite extends munit.FunSuite:
     val bad = List(
       NotMaterialAnswer(
         ReviewArticle.NotMaterialAnswer.Pair("lee1990_ritual>frazer1922_golden"),
-        Problem.Unclassified(Legacy.Text("x"))
+        ReviewArticle.Rationale("x")
       ),
       NotMaterialAnswer(
         ReviewArticle.NotMaterialAnswer.Pair("smith1987_dying>frazer1922_golden"),
-        Problem.Unclassified(Legacy.Text("x"))
+        ReviewArticle.Rationale("x")
       ),
       NotMaterialAnswer(
         ReviewArticle.NotMaterialAnswer.Pair("zz2000_a>zz2001_b"),
-        Problem.Unclassified(Legacy.Text("x"))
+        ReviewArticle.Rationale("x")
       ),
       NotMaterialAnswer(
         ReviewArticle.NotMaterialAnswer.Pair("brown1999_rites>frazer1922_golden"),
-        Problem.Unclassified(Legacy.Text(" "))
+        ReviewArticle.Rationale(" ")
       )
     )
     val (rs4, _, ws4) = checkNotMaterial(bad, fs, pass1, last = ReviewArticle.CheckNotMaterialLast(true))
@@ -487,7 +487,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
       List(
         NotMaterialAnswer(
           ReviewArticle.NotMaterialAnswer.Pair("brown1999_rites>frazer1922_golden"),
-          Problem.Unclassified(Legacy.Text("Off the article's question."))
+          ReviewArticle.Rationale("Off the article's question.")
         )
       )
     )
@@ -511,7 +511,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
       .setTo(
         a.notMaterial :+ NotMaterialAnswer(
           ReviewArticle.NotMaterialAnswer.Pair("smith1987_dying>frazer1922_golden"),
-          Problem.Unclassified(Legacy.Text("Off the question."))
+          ReviewArticle.Rationale("Off the question.")
         )
       )
     assertEquals(
@@ -595,17 +595,17 @@ class ReviewCritiqueSuite extends munit.FunSuite:
         SetAsideAnswer(
           ReviewArticle.SetAsideAnswer.Id("S1"),
           None,
-          Problem.Unclassified(Legacy.Text("Cited for the date only."))
+          ReviewArticle.Rationale("Cited for the date only.")
         ),
         SetAsideAnswer(
           ReviewArticle.SetAsideAnswer.Id("S2"),
           Some(CritiqueRef.Wire("brown1999_rites>frazer1922_golden")),
-          Problem.Unclassified(Legacy.Text("Off the point."))
+          ReviewArticle.Rationale("Off the point.")
         ),
         SetAsideAnswer(
           ReviewArticle.SetAsideAnswer.Id(""),
           Some(CritiqueRef.Wire("frazer1922_golden>brown1999_rites")),
-          Problem.Unclassified(Legacy.Text("No finding names it."))
+          ReviewArticle.Rationale("No finding names it.")
         )
       ),
       byId,
@@ -640,20 +640,20 @@ class ReviewCritiqueSuite extends munit.FunSuite:
     )
     val (none, noPair, bad) = checkSetAside(
       List(
-        SetAsideAnswer(ReviewArticle.SetAsideAnswer.Id("R1"), None, Problem.Unclassified(Legacy.Text("x"))),
-        SetAsideAnswer(ReviewArticle.SetAsideAnswer.Id("S2"), None, Problem.Unclassified(Legacy.Text("x"))),
+        SetAsideAnswer(ReviewArticle.SetAsideAnswer.Id("R1"), None, ReviewArticle.Rationale("x")),
+        SetAsideAnswer(ReviewArticle.SetAsideAnswer.Id("S2"), None, ReviewArticle.Rationale("x")),
         SetAsideAnswer(
           ReviewArticle.SetAsideAnswer.Id("S1"),
           Some(CritiqueRef.Wire("zz2000_a>zz2001_b")),
-          Problem.Unclassified(Legacy.Text("x"))
+          ReviewArticle.Rationale("x")
         ),
-        SetAsideAnswer(ReviewArticle.SetAsideAnswer.Id("S1"), None, Problem.Unclassified(Legacy.Text(""))),
-        SetAsideAnswer(ReviewArticle.SetAsideAnswer.Id("S9"), None, Problem.Unclassified(Legacy.Text("x"))),
-        SetAsideAnswer(ReviewArticle.SetAsideAnswer.Id(""), None, Problem.Unclassified(Legacy.Text("x"))),
+        SetAsideAnswer(ReviewArticle.SetAsideAnswer.Id("S1"), None, ReviewArticle.Rationale("")),
+        SetAsideAnswer(ReviewArticle.SetAsideAnswer.Id("S9"), None, ReviewArticle.Rationale("x")),
+        SetAsideAnswer(ReviewArticle.SetAsideAnswer.Id(""), None, ReviewArticle.Rationale("x")),
         SetAsideAnswer(
           ReviewArticle.SetAsideAnswer.Id(""),
           Some(CritiqueRef.Wire("zz2000_a>zz2001_b")),
-          Problem.Unclassified(Legacy.Text("x"))
+          ReviewArticle.Rationale("x")
         )
       ),
       byId,
@@ -691,7 +691,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
         SetAsideAnswer(
           ReviewArticle.SetAsideAnswer.Id("S1"),
           None,
-          Problem.Unclassified(Legacy.Text("Cited for the date only."))
+          ReviewArticle.Rationale("Cited for the date only.")
         )
       )
     )

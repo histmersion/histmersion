@@ -2,7 +2,7 @@ package com.histmersion
 package api
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.testsupport.ComparedByValue.given
@@ -596,7 +596,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
           SetAsideAnswer(
             ReviewArticle.SetAsideAnswer.Id(""),
             Some(CritiqueRef.Wire("zz2021_crit>zz2020_new")),
-            Problem.Unclassified(Legacy.Text("The critique concerns its dating, not the ore source cited here."))
+            ReviewArticle.Rationale("The critique concerns its dating, not the ore source cited here.")
           )
         )
       )

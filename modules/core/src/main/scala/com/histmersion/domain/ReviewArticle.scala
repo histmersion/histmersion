@@ -453,7 +453,7 @@ object ReviewArticle:
   /** The skeptic's ruling that one open checklist pair does not bear on the article: code stores the reason (the pair
     * becomes `reasoned`, §6.8).
     */
-  final case class NotMaterialAnswer(pair: NotMaterialAnswer.Pair, reason: Problem) derives JsonCodec
+  final case class NotMaterialAnswer(pair: NotMaterialAnswer.Pair, reason: Rationale) derives JsonCodec
   object NotMaterialAnswer:
     type Pair = CritiqueRef.Wire
     val Pair: CritiqueRef.Wire.type = CritiqueRef.Wire
@@ -604,7 +604,7 @@ object ReviewArticle:
   final case class SetAsideAnswer(
       id: SetAsideAnswer.Id,
       pair: Option[SetAsideAnswer.Pair] = None,
-      reason: Problem
+      reason: Rationale
   ) derives JsonCodec
   object SetAsideAnswer:
     type Id = SetAside.Id
@@ -1960,7 +1960,7 @@ object ReviewArticle:
   ): (List[CritiqueReason], List[String], List[String]) =
     val named = fs.filter(f => f.major && isMissingCritique(f)).flatMap(_.pair)
     val results = as.map { a =>
-      val reason = Option(a.reason).map(_.sentence.trim.replaceAll("\\s+", " ")).getOrElse("")
+      val reason = Option(a.reason).map(w => s"$w".trim.replaceAll("\\s+", " ")).getOrElse("")
       CritiqueRef.parse(Option(a.pair).getOrElse(CritiqueRef.Wire(""))).left.map(_.sentence).flatMap { ref =>
         Critiques.find(rule.pairs, ref) match
           case None               => Left(s"not material ${ref.wire}: not a pair of the critique checklist")
@@ -2586,7 +2586,7 @@ object ReviewArticle:
       byId: Map[SetAside.Id, Finding],
       critiques: List[CritiquePair]
   ): (List[SetAside], List[CritiqueReason], List[String]) =
-    def reasonOf(a: SetAsideAnswer) = Option(a.reason).map(_.sentence.trim.replaceAll("\\s+", " ")).getOrElse("")
+    def reasonOf(a: SetAsideAnswer) = Option(a.reason).map(w => s"$w".trim.replaceAll("\\s+", " ")).getOrElse("")
     def held(label: String, r: CritiqueRef, reason: String): Either[String, CritiquePair] =
       Critiques.find(critiques, r) match
         case None => Left(s"$label: ${r.wire} is not a pair of the article's critique checklist (no recorded edge)")
