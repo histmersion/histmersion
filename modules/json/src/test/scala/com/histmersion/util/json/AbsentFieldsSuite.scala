@@ -53,12 +53,19 @@ class AbsentFieldsSuite extends munit.FunSuite:
       Right(Shape("a", Some("n"), Inner("w"), List("t"), 1, List("x")))
     )
 
-  test(
-    "an empty list where the default is not empty reads as the default, so a record's collection defaults are empty"
-  ):
-    // jsoniter-scala's rule, which Kindlings follows: what is written as [] does not read back as empty
+  test("an empty list where the default is not empty reads as empty: what is written as [] reads back"):
+    // Kindlings' withEmptyCollectionsAsEmpty (jsoniter-scala would read the default)
     assertEquals(
       RawJson.decode[Shape]("""{"name":"a","inner":{"word":"w"},"tags":[],"more":[]}""").map(_.more),
+      Right(Nil)
+    )
+    val empty = Shape("a", None, Inner("w"), Nil, more = Nil)
+    assertEquals(RawJson.decode[Shape](empty.asJson.noSpaces), Right(empty))
+
+  test("an absent or null collection with a default takes the default"):
+    assertEquals(RawJson.decode[Shape]("""{"name":"a","inner":{"word":"w"},"tags":[]}""").map(_.more), Right(List("m")))
+    assertEquals(
+      RawJson.decode[Shape]("""{"name":"a","inner":{"word":"w"},"tags":[],"more":null}""").map(_.more),
       Right(List("m"))
     )
 
