@@ -11,6 +11,7 @@ import com.histmersion.api.text.SafeName
 
 import hearth.kindlings.optics.syntax.*
 import java.util.UUID
+import com.histmersion.api.exchange.Bundle.uidEquality
 
 /** How a merge plan treats the figures of the sources and their links: a figure belongs to its source, a link to its
   * figure's; in a pair of sources that fold, the same bytes are one figure, a name the survivor has gets the other
@@ -18,8 +19,6 @@ import java.util.UUID
   * is one; a figure added under a name another figure of its source has here arrives renamed.
   */
 final class AssetPlan(in: MergePlanner.Input) extends PlanRun:
-  private given CanEqual[UUID, UUID] = CanEqual.derived
-
   private val assetSource = in.foreign.assets.map(a => a.uid -> a.sourceUid).toMap
   private val linkAsset = in.foreign.assetLinks.map(l => l.uid -> l.assetUid).toMap
   private val assetLine =

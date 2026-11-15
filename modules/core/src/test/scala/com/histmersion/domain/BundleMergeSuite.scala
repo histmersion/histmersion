@@ -15,13 +15,12 @@ import com.histmersion.util.data.exchange.BundlePlan
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.library.Citekey
+import com.histmersion.api.exchange.Bundle.uidEquality
 
 /** The merge's side of the `.hmx` bundle: localizing the event-catalogue sets, folding two events, and the import
   * decisions.
   */
 class BundleMergeSuite extends munit.FunSuite:
-  private given CanEqual[UUID, UUID] = CanEqual.derived
-
   private val U1 = UUID.fromString("01920000-0000-7000-8000-000000000001")
   private val U2 = UUID.fromString("01920000-0000-7000-8000-000000000002")
   private val U3 = UUID.fromString("01920000-0000-7000-8000-000000000003")

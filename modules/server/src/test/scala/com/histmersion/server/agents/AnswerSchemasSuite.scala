@@ -29,8 +29,6 @@ import com.histmersion.domain.automation.agents.LlmCall
   * [[AnswerSchemas.all]] and [[LibraryAnswers.all ++ ResearchAnswers.all]], not a hand-picked schema.
   */
 class AnswerSchemasSuite extends munit.FunSuite:
-  private given CanEqual[Json, Json] = CanEqual.derived
-
   /** Every step schema the server sends: the engine's, the library's and research's. */
   private val allSchemas = AnswerSchemas.all ++ LibraryAnswers.all ++ ResearchAnswers.all
 

@@ -7,6 +7,7 @@ import java.time.{Instant, ZoneId, ZoneOffset}
 import java.time.zone.ZoneRulesProvider
 import scala.util.Try
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.time.TimeEquality.offsetEquality
 
 /** The binary's time zones come from the JDK's own tzdb (`lib/tzdb.dat`, which native-image embeds). The build excludes
   * `scala-java-time-tzdb` — a time-zone database for Scala.js that scribe's perfolation drags onto the JVM class path,
@@ -16,8 +17,6 @@ import io.github.iltotore.iron.constraint.any.Pure
   * binary linked without the data fails the check instead of the first query.
   */
 object TimeZoneCheck:
-  private given CanEqual[ZoneOffset, ZoneOffset] = CanEqual.derived
-
   type Report = Report.T
   object Report extends Newtype[String, Pure]
 

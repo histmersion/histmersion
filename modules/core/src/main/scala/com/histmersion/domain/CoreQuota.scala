@@ -9,6 +9,7 @@ import java.time.{Instant, LocalDate, OffsetDateTime, ZoneOffset}
 import java.time.format.DateTimeFormatter
 import scala.util.Try
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.time.TimeEquality.dayEquality
 
 /** The budget Histmersion keeps for CORE's API (api.core.ac.uk), shared by its two uses: the `core` step of the
   * acquisition chain (a PDF lookup by DOI) and the `core` index of the new-source search (a goal's saved query). Pure:
@@ -28,8 +29,6 @@ import io.github.iltotore.iron.constraint.any.Pure
   *     leave the ingests without CORE.
   */
 object CoreQuota:
-  private given CanEqual[LocalDate, LocalDate] = CanEqual.derived
-
   type Cap = Cap.T
   object Cap extends Newtype[Int, Pure]
   type Cost = Cost.T

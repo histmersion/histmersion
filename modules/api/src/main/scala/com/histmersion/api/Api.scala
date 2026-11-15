@@ -157,6 +157,13 @@ object Api:
     type Action = Action.T
     object Action extends Newtype[String, Pure]
   object HttpMethod:
+
+    /** Two sttp methods compare with `==` and `!=`, also under `-language:strictEquality`: both clients (the CLI's and
+      * the web page's) tell a write from a read by its method. The one such instance, imported by name
+      * (`Api.HttpMethod.equality`) where methods are compared.
+      */
+    given equality: CanEqual[sttp.model.Method, sttp.model.Method] = CanEqual.derived
+
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
   object Facets:

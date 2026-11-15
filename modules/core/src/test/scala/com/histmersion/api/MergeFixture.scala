@@ -24,14 +24,13 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.util.text.MinHash
 import com.histmersion.util.data.exchange.BundlePlan
 import com.histmersion.api.exchange.IssueSide
+import com.histmersion.api.exchange.Bundle.uidEquality
 
 /** A crafted pair of collections, in memory (docs/research-merge-import.md §8): "work" exported a bundle, "home" plans
   * it. One case per row of the scenario catalogue the pure planner can see. The database twin of this fixture is
   * `db.MergeSuite`.
   */
 object MergeFixture:
-  private given CanEqual[UUID, UUID] = CanEqual.derived
-
   private def settings(c: MergeConfig): MergeSettings =
     MergeSettings(
       MergeSettings.AutoMerge(c.autoMerge.value),

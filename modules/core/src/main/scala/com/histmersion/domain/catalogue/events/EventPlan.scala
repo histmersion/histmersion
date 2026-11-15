@@ -14,6 +14,7 @@ import hearth.kindlings.optics.syntax.*
 import java.util.UUID
 import com.histmersion.api.exchange.MergeTally
 import com.histmersion.api.catalogue.Year
+import com.histmersion.api.exchange.Bundle.uidEquality
 
 /** How a merge plan treats events: one changed on both sides, or added under an id an event here has, is one when its
   * dating and place agree (its datings and participants unioned), else a question; one added on both sides under two
@@ -21,8 +22,6 @@ import com.histmersion.api.catalogue.Year
   * be one; an event whose place this gazetteer lacks cannot be written.
   */
 final class EventPlan(in: MergePlanner.Input) extends PlanRun:
-  private given CanEqual[UUID, UUID] = CanEqual.derived
-
   import EventPlan.*
 
   private val km = MergeDecision.Kind
@@ -153,8 +152,6 @@ final class EventPlan(in: MergePlanner.Input) extends PlanRun:
       )
 
 object EventPlan:
-  private given CanEqual[UUID, UUID] = CanEqual.derived
-
   private val SlugShape = "^[a-z0-9][a-z0-9_.-]*$".r
 
   /** Two events with one id that say the same about when and where (§5.4): they are one. */

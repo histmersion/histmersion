@@ -32,6 +32,7 @@ import com.histmersion.Sha256
 import com.histmersion.api.library.{Citekey, Finding}
 import com.histmersion.api.research.ReviewGoal
 import com.histmersion.domain.catalogue.evidence.TextAnchor
+import com.histmersion.api.exchange.Bundle.uidEquality
 
 /** What this collection knows that a merge plan needs (docs/research-merge-import.md §5–§6, milestone M3): the plan's
   * input stage — its rows, labels, ledger, redirects, article histories and OCR bodies, and what each kind's merge
@@ -39,8 +40,6 @@ import com.histmersion.domain.catalogue.evidence.TextAnchor
   * two together.
   */
 object MergeState:
-  private given CanEqual[UUID, UUID] = CanEqual.derived
-
   private def ids(us: Iterable[UUID]): List[String] = us.iterator.map(_.toString).toList.distinct
 
   def load(

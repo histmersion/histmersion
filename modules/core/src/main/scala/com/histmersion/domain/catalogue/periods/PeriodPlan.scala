@@ -20,14 +20,13 @@ import hearth.kindlings.optics.syntax.*
 import java.util.UUID
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.exchange.MergeTally
+import com.histmersion.api.exchange.Bundle.uidEquality
 
 /** How a merge plan treats named periods of this collection's own: one id added on both sides is one period when its
   * span and label agree, else a question; one under another id here is one when its label and span are (the database
   * compared them: `periodMatches`); what points at a matched one by id points at ours.
   */
 final class PeriodPlan(in: MergePlanner.Input) extends PlanRun:
-  private given CanEqual[UUID, UUID] = CanEqual.derived
-
   import PeriodPlan.*
 
   private val km = MergeDecision.Kind

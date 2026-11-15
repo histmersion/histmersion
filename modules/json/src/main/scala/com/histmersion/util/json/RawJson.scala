@@ -21,6 +21,12 @@ import hearth.kindlings.jsoniterjson.{Json, JsonNumber, JsonObject}
 // Every read and write here is jsoniter's reentrant one: a codec (a record read through raw JSON, a job's detail) calls
 // these from inside another read or write, and the plain ones share one reader and writer per thread.
 object RawJson:
+
+  /** Two JSON values compare with `==` and `!=` (Kindlings' AST is case classes: structural equality), also under
+    * `-language:strictEquality`; the one such instance, imported by name (`RawJson.equality`) where JSON is compared.
+    */
+  given equality: CanEqual[Json, Json] = CanEqual.derived
+
   given codec: JsonValueCodec[Json] = new JsonValueCodec[Json]:
     def nullValue: Json = Json.Null
     def decodeValue(in: JsonReader, default: Json): Json = read(in)

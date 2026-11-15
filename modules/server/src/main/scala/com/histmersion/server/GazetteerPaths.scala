@@ -7,6 +7,7 @@ import com.histmersion.config.{AppConfig, UserPaths}
 import java.nio.file.{Files, Path}
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.automation.agents.AgentTrees
+import com.histmersion.config.UserPaths.pathEquality
 
 /** Where the gazetteer's files are, resolved from the config: the pinned extracts (a CACHE, rebuilt or copied, pinned
   * by sha256: the XDG cache directory), the Linked Places drop folder, the manifest of the pins, and `legacy`, where
@@ -21,8 +22,6 @@ final case class GazetteerPaths(extracts: Path, lpf: Path, manifest: Path, legac
     else Right(GazetteerPaths.ManifestText(Files.readString(manifest)))
 
 object GazetteerPaths:
-  private given CanEqual[Path, Path] = CanEqual.derived
-
   type ConfiguredPath = ConfiguredPath.T
   object ConfiguredPath extends Newtype[String, Pure]
   type EnvName = EnvName.T

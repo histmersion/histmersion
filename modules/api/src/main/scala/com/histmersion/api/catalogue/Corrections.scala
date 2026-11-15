@@ -1,6 +1,7 @@
 package com.histmersion
 package api.catalogue
 import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson.equality
 import com.histmersion.util.json.RawJson
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.api.given
@@ -16,8 +17,6 @@ object Corrections:
     case Retire
 
     case Conflict
-
-  private given CanEqual[Json, Json] = CanEqual.derived
 
   def reconcile(value: Json, upstreamThen: Json, upstreamNow: Json): Outcome =
     if upstreamNow == value then Outcome.Retire

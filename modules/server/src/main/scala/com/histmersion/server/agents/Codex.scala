@@ -25,10 +25,9 @@ import scala.jdk.CollectionConverters.*
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.ByteCount
 import com.histmersion.api.backup.Backup
+import com.histmersion.config.UserPaths.pathEquality
 
 object Codex:
-  private given CanEqual[Path, Path] = CanEqual.derived
-
   type SchemaJson = SchemaJson.T
   object SchemaJson extends Newtype[String, Pure]
 

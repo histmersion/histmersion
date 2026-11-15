@@ -25,6 +25,13 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.library.Doi
 object Bundle:
+
+  /** Two uids compare with `==` and `!=`, also under `-language:strictEquality`: a uid names one entity across
+    * instances, and a merge matches the entities of two bundles by it. The one such instance, imported by name
+    * (`Bundle.uidEquality`) where uids are compared.
+    */
+  given uidEquality: CanEqual[UUID, UUID] = CanEqual.derived
+
   type ChangedCount = ChangedCount.T
   object ChangedCount extends Newtype[Int, Pure]
   type Name = Name.T

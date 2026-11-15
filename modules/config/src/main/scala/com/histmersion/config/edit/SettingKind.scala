@@ -20,6 +20,12 @@ enum SettingKind(val wire: SettingKind.Wire, val describe: SettingKind.Describe)
   case Any extends SettingKind(SettingKind.Wire("any"), SettingKind.Describe("a value"))
 
 object SettingKind:
+
+  /** Two kinds of HOCON value compare with `==` and `!=`, also under `-language:strictEquality`: a setting's kind is
+    * checked against the kind its key expects, by the config layers and by the plugin host. The one such instance on
+    * the server's side, imported by name (`SettingKind.valueTypeEquality`) where kinds are compared.
+    */
+  given valueTypeEquality: CanEqual[ConfigValueType, ConfigValueType] = CanEqual.derived
   extension (kind: SettingKind)
     /** The kind as a problem names it. */
     def valueKind: Problem.Config.ValueKind = kind match

@@ -17,6 +17,7 @@ import com.histmersion.util.storage.Stores
 import com.histmersion.util.storage.Resources
 import com.histmersion.util.system.JvmHome
 import com.histmersion.domain.automation.Pipeline
+import com.histmersion.config.UserPaths.pathEquality
 
 /** What the automation engine is fed and what it generates, recorded on the code before the engine took contributions:
   * the agent definitions generator's trees for every runtime, written into a scratch directory (every file's path, size
@@ -25,8 +26,6 @@ import com.histmersion.domain.automation.Pipeline
   * `oracle/automation/`.
   */
 class AutomationOracleSuite extends munit.FunSuite:
-  private given CanEqual[Path, Path] = CanEqual.derived
-
   private given Stores = Stores.disk
   private given Resources = Resources.classpath(getClass.getClassLoader)
   private given java.time.Clock = java.time.Clock.systemUTC()

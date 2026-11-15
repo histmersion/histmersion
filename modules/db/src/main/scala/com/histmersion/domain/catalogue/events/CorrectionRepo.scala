@@ -11,6 +11,7 @@ import com.histmersion.util.database.given_DbCodec_List
 import com.histmersion.api.catalogue.Correction
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.api.checks.Lint
+import com.histmersion.util.json.RawJson.equality
 
 /** CORRECTIONS BY HAND ([[Corrections]]): a person's value for one field of a target an importer writes, with what
   * upstream said then and at the last refresh. Generic over the target kind; the events are the first target
@@ -18,8 +19,6 @@ import com.histmersion.api.checks.Lint
   * the caller's transaction.
   */
 private[events] object CorrectionRepo:
-  private given CanEqual[Json, Json] = CanEqual.derived
-
   private val Cols =
     "c.id, c.target_kind, c.target_id, c.field, c.value::text, c.upstream_value::text, c.status, c.upstream, " +
       "c.upstream_now::text, c.created_at::text, c.checked_at::text"

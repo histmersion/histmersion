@@ -21,6 +21,13 @@ final case class UserPaths(environment: Environment, osName: UserPaths.OsName):
   def configFile: Option[Path] = UserPaths.configFile(environment.lookup)
 
 object UserPaths:
+
+  /** Two paths compare with `==` and `!=`, also under `-language:strictEquality` (as `Path.equals` compares them: the
+    * same text on the same file system, not the same file). The one such instance on the server's side, imported by
+    * name (`UserPaths.pathEquality`) where paths are compared.
+    */
+  given pathEquality: CanEqual[java.nio.file.Path, java.nio.file.Path] = CanEqual.derived
+
   type BasemapDir = BasemapDir.T
   object BasemapDir extends Newtype[String, Pure]
   type Lookup = Environment.VariablesKey => Option[Environment.VariablesValue]
