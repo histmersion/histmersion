@@ -398,8 +398,8 @@ agent.
   The ingest step takes the open-access picks within today's allowance (`Scheduling.ingestOa`: the same order and
   cap as `ingestPicks`, and it keeps the failures); the backlog step parks the open-access picks not ingested
   (past the cap, or failed for another reason than a missing legal file); the queue step gets only the closed
-  picks and the ones the legal chain has no file for (`IngestBacklog.NoLegalCopy`, the prefix
-  `AcquireHandlers.ingestLegal` answers with).
+  picks and the ones the legal chain has no file for (`IngestBacklog.isNoLegalCopy`: the `NotFound.Copy`
+  `AcquireHandlers.ingestLegal` refuses with).
 - **The backlog first.** At dispatch a sweep's allowance is `IngestBacklog.sweepAllowance(own, shared, ownBacklog,
   allBacklog)`: what is left of its own cap after its own pending entries, and of the shared cap after every
   pending entry of a watcher that drains; so new finds wait behind the backlog. The `started` event says how many
@@ -564,8 +564,9 @@ in the corpus with their text (they should simply be closed).
   created. The order: never checked first, then the oldest check, then the item id. A copy found is handed to the
   OCR job, and the job closes the item when it stores the text (every import closes the items naming its DOI —
   so the item is not closed before its text exists; if the conversion fails, the next due pass tries again). The
-  refusal now carries each fetcher's answer (`no legal open-access copy of <doi>: <message> — unpaywall: no copy —
-  …; landing: refused — …`), which the backlog's acquisition items also show.
+  refusal is the typed `NotFound.Copy` carrying each fetcher's answer (`no legal open-access PDF found for <doi> —
+  unpaywall: no copy — …; landing: refused — …`), which the backlog's acquisition items also show; a refusal an
+  earlier version stored (`no legal open-access copy of <doi>: …`) reads back as it was and still counts as no copy.
 - **Caps** (`AcquireRecheck.allowance`): at most `per-pass` (3) a pass and `per-day` (40) a UTC day (closures
   aside); under the autopilot's shared daily legal ingest allowance (`agents.autopilot.ingest-per-day`) only what
   the watchers' pending backlog leaves of it, and at most `share-percent` (25) of the cap — so the backlog and the

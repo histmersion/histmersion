@@ -151,9 +151,7 @@ class AcquireRecheckSuite extends munit.FunSuite:
 
   test("a failed legal ingest: no legal copy, or no answer"):
     assertEquals(
-      failure(
-        Problem.Unclassified(Legacy.Text(s"${IngestBacklog.NoLegalCopy} 10.1/x: no legal open-access PDF found"))
-      ),
+      failure(Problem.NotFound.Copy(Problem.Raw("10.1/x"), Vector.empty)),
       Outcome.NoCopy
     )
     assertEquals(failure(Problem.Unclassified(Legacy.Text("HTTP 503 from the converter"))), Outcome.Failed)
@@ -162,9 +160,33 @@ class AcquireRecheckSuite extends munit.FunSuite:
   test("the reason: the day, what was found and what each fetcher answered"):
     val msg = s"${IngestBacklog.NoLegalCopy} 10.1/x: no legal open-access PDF found — unpaywall: no copy — none; " +
       "landing: refused — bot-protection 403"
+    val copy = Problem.NotFound.Copy(
+      Problem.Raw("10.1/x"),
+      Vector(
+        Problem.NotFound.Answer(
+          Problem.NotFound.Fetcher("unpaywall"),
+          Problem.NotFound.Kind.Miss,
+          Problem.NotFound.Copy(Problem.Raw("doi:10.1/x"), Vector.empty)
+        ),
+        Problem.NotFound.Answer(
+          Problem.NotFound.Fetcher("landing"),
+          Problem.NotFound.Kind.Refused,
+          Problem.Upstream.Challenged(
+            Problem.Upstream.Name("landing"),
+            Problem.Upstream.Url("https://x.example/f"),
+            Problem.Upstream.Status(403),
+            Vector.empty
+          )
+        )
+      )
+    )
+    val said = "unpaywall: no copy — no legal open-access PDF found for doi:10.1/x; " +
+      "landing: refused — landing answered HTTP 403 at https://x.example/f with a bot-protection challenge, not the page"
+    assertEquals(answers(copy), ReplyText(said))
+    assertEquals(noCopy(now, copy).said, s"checked 2026-10-27: no legal copy ($said)")
     assertEquals(
-      answers(Problem.Unclassified(Legacy.Text(msg))),
-      "unpaywall: no copy — none; landing: refused — bot-protection 403"
+      noCopy(now, Problem.NotFound.Copy(Problem.Raw("10.1/x"), Vector.empty)).said,
+      "checked 2026-10-27: no legal copy (no legal open-access PDF found for 10.1/x)"
     )
     assertEquals(
       (reason(now, Outcome.NoCopy, Detail(msg))).said,

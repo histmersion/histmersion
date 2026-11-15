@@ -1,6 +1,7 @@
 package com.histmersion
 package server.agents
 
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -187,8 +188,8 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
     text(ns.map(n => s"""{"doi":"${doi(n)}","why":"fits $n"}""").mkString("""{"picks":[""", ",", "]}"))
 
   /** The fixture's legal ingest: stores the source, unless the DOI has no legal copy. */
-  private def legalIngest(h: ServerWiring, noCopy: Set[String] = Set.empty)(d: String): Either[String, Ingest.Report] =
-    if noCopy.contains(d) then Left(s"${IngestBacklog.NoLegalCopy} $d: no fetcher had it")
+  private def legalIngest(h: ServerWiring, noCopy: Set[String] = Set.empty)(d: String): Either[Problem, Ingest.Report] =
+    if noCopy.contains(d) then Left(Problem.NotFound.Copy(Problem.Raw(d), Vector.empty))
     else
       val ck = ck0(d)
       assert(

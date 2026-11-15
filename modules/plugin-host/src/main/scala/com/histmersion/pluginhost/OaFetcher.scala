@@ -28,7 +28,7 @@ trait OaFetcher:
     val doi = work.doi.map(d => Doi.assume(d.value))
     val arxiv = work.arxiv.map(a => ArxivId(a.value))
     if work.doi.isEmpty && work.arxiv.isEmpty then
-      Left(Problem.NotFound.Copy(Problem.Raw(s"${FetchChain.describe(work)}")))
+      Left(Problem.NotFound.Copy(Problem.Raw(s"${FetchChain.describe(work)}"), Vector.empty))
     else if legalOnly.value then fetchLegal(doi, arxiv)
     else fetch(doi, arxiv)
 

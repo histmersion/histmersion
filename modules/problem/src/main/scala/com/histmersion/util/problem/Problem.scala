@@ -400,8 +400,27 @@ object Problem:
     /** No value of `typeName` has the key `key`. */
     final case class Entity(typeName: TypeName, key: Raw) extends NotFound
 
-    /** No fetcher found a legal open-access copy of `work` (its DOI or arXiv id). */
-    final case class Copy(work: Raw) extends NotFound
+    /** No fetcher found a legal open-access copy of `work` (its DOI or arXiv id); `answers` is what each fetcher of the
+      * chain answered, in the order they ran (empty when the chain's answers are reported apart).
+      */
+    final case class Copy(work: Raw, answers: Vector[Answer]) extends NotFound
+
+    /** What one fetcher of the chain answered when it brought no copy ([[Copy]]): it had none, or it refused, and
+      * `why`.
+      */
+    final case class Answer(fetcher: Fetcher, kind: Kind, why: Problem)
+
+    /** A fetcher's id (`unpaywall`, `landing`). */
+    type Fetcher = Fetcher.T
+    object Fetcher extends Newtype[String, Pure]
+
+    /** How a fetcher came back without a copy. */
+    enum Kind:
+      /** It looked and found no copy. */
+      case Miss
+
+      /** It would not fetch the copy (a challenge, a lending-only item, a licence). */
+      case Refused
 
     /** No `typeName` `key` is `within` the place it is looked for, and `from` refers to it. */
     final case class Dangling(typeName: TypeName, key: Raw, from: Where, within: Scope) extends NotFound
@@ -1555,7 +1574,7 @@ object Problem:
         Vector(Field("cron"))
       ),
       NotFound.Entity(citekey, Raw("anthony2007")),
-      NotFound.Copy(Raw("doi:10.1017/S0003598X00000001")),
+      NotFound.Copy(Raw("doi:10.1017/S0003598X00000001"), Vector.empty),
       NotFound.Dangling(
         TypeName("com.histmersion.api.exchange.Bundle.Kind.Source"),
         Raw("0193f1c4-7b2a-7c3e-9d41-5e6f7a8b9c0d"),

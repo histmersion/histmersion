@@ -39,7 +39,7 @@ object Column:
       case Invalid.Reference(form, at)        => s"${path(at)}no secret reference: ${form.stored}"
       case Invalid.Broken(rule, at)           => s"${path(at)}breaks ${rule.stored}"
       case NotFound.Entity(t, key)            => s"no $t '$key'"
-      case NotFound.Copy(work)                => s"no open-access copy of '$work'"
+      case NotFound.Copy(work, answers)       => s"no open-access copy of '$work'${answeredStored(answers)}"
       case NotFound.Dangling(t, key, from, in)    => s"no $t '$key' in ${in.productPrefix}, referred to by $from"
       case Conflict.Held(subject, hold)           => s"held ${hold.stored}: $subject"
       case Conflict.Job(job, status, control)     => s"job '$job' is $status: ${control.stored}"
@@ -106,6 +106,16 @@ object Column:
 
   private def pathOf(written: String | Null): Vector[Field] =
     Option(written).fold(Vector.empty)(_.split(PathSeparator, -1).toVector.map(f => Field(s"$f")))
+
+  /** The chain's answers after a missing copy, each answer's problem in its frozen sentence. A text with answers reads
+    * back as [[Problem.Stored.Unrecognised]]: the answers' problems are not parsed back.
+    */
+  private def answeredStored(answers: Vector[NotFound.Answer]): String =
+    if answers.isEmpty then ""
+    else
+      answers
+        .map(a => s"${a.fetcher}: ${a.kind.productPrefix} — ${a.why.stored}")
+        .mkString(" — ", "; ", "")
 
   private def quotedList(values: Vector[Raw]): String =
     if values.isEmpty then "" else values.map(v => s"'$v'").mkString(" (one of: ", ", ", ")")
@@ -534,7 +544,7 @@ object Column:
   private val JobControl = "(?s)^job '(.*)' is (\\S*): (\\w+)(?: (.*))?$".r
   private val EntryOf = "(?s)^(\\w+) entry (.+?): (\\w+)(?: (.*))?$".r
   private val Differing = "(?s)^(\\w+) (\\S*)/(\\S*)$".r
-  private val NoCopy = "(?s)^no open-access copy of '(.*)'$".r
+  private val NoCopy = "(?s)^no open-access copy of '([^']*)'$".r
   private val Exists = "(?s)^(\\S+) '(.*)' already exists$".r
   private val RenamedTo = "(?s)^(\\S+) '(.*)' was renamed to '(.*)'$".r
   private val MovedOn = "(?s)^(\\S+) '(.*)' has moved on: sent (.*), stored (.*)$".r
@@ -770,7 +780,7 @@ object Column:
       case _                => None
     },
     {
-      case NoCopy(work) => Some(NotFound.Copy(Raw(s"$work")))
+      case NoCopy(work) => Some(NotFound.Copy(Raw(s"$work"), Vector.empty))
       case _            => None
     },
     {
