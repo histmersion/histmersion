@@ -35,6 +35,7 @@ import com.histmersion.api.library.Source
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.library.AuthorName
+import com.histmersion.api.exchange.Bundle.uidEquality
 
 /** How a merge plan treats the sources themselves (docs/research-merge-import.md §5.2–§5.3): the bundle's sources
   * matched with the ones here ([[SourceMatcher]]), the question whether a pair is one work, the fields of a pair that
@@ -42,8 +43,6 @@ import com.histmersion.api.library.AuthorName
   * a pair folded field by field, a source renamed, how each was matched, and the final lines.
   */
 final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
-  private given CanEqual[UUID, UUID] = CanEqual.derived
-
   import SourcePlan.*
 
   private val km = MergeDecision.Kind
@@ -483,8 +482,6 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
   }
 
 object SourcePlan:
-  private given CanEqual[UUID, UUID] = CanEqual.derived
-
   private def wire(ck: String): com.histmersion.api.library.Citekey = com.histmersion.api.library.Citekey(ck)
 
   private val PairKinds: Set[MergeIssue.Kind] = Set(

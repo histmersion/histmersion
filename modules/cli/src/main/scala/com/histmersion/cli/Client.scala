@@ -94,6 +94,7 @@ import com.histmersion.api.catalogue.Event
 import com.histmersion.api.instance.CorpusCounts
 import com.histmersion.api.media.AssetLinks
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.Api.HttpMethod.equality
 
 /** Typed HTTP client over the `Api` contract: each call is derived from the same Tapir endpoint the server interprets,
   * so request/response shapes cannot drift. Sync (java.net.http), native-safe. `token` is the
@@ -478,8 +479,6 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
   def fillFigureLicences(apply: Api.Apply): Either[Cli.Error, FigureLicenceFill] = call(Api.fillFigureLicences)(apply)
 
 object Client:
-  private given CanEqual[sttp.model.Method, sttp.model.Method] = CanEqual.derived
-
   type HttpStatus = HttpStatus.T
   object HttpStatus extends Newtype[Int, Pure]
   type Write = Write.T

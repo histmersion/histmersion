@@ -31,6 +31,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Sha256
 import com.histmersion.pluginhost.DiskLocalFiles
 import com.histmersion.pluginhost.SystemProcesses
+import com.histmersion.config.UserPaths.pathEquality
 
 /** The JVM-side tool of the relink kit (docs/research-plugins.md §7.4): run by `bin/histmersion-relink` and the JVM
   * launcher with the kit's jars on the class path, as [[pluginTool]] — never part of the server's native image (nothing
@@ -59,8 +60,6 @@ import com.histmersion.pluginhost.SystemProcesses
   sys.exit(RelinkPlugins.exitCode(args.toList.map(RelinkPlugins.Argument(_)))(using Console.system).value)
 
 object RelinkPlugins:
-  private given CanEqual[Path, Path] = CanEqual.derived
-
   type Argument = Argument.T
   object Argument extends Newtype[String, Pure]
   type ClassName = ClassName.T

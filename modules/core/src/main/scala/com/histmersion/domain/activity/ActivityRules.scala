@@ -9,13 +9,12 @@ import com.histmersion.api.automation.Activity.{Entry, EntryKind, Show, Writer}
 import java.time.Instant
 import scala.annotation.tailrec
 import com.histmersion.api.Api
+import com.histmersion.util.time.TimeEquality.instantEquality
 
 /** What the activity list's filters mean, entry by entry, and how a page of it is cut: the rules the database's query
   * follows in SQL, and the in-memory list follows here. Pure.
   */
 object ActivityRules:
-  private given CanEqual[Instant, Instant] = CanEqual.derived
-
   /** The statuses of a run or job that is going now. */
   val RunningStates: Set[Entry.State] = Set(Entry.State("running"))
 

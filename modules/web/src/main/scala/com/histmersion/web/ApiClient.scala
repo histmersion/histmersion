@@ -99,10 +99,9 @@ import com.histmersion.api.Jobs
 import com.histmersion.api.automation.AgentRole
 import com.histmersion.api.automation.Approval
 import com.histmersion.api.automation.ItemStatus
+import com.histmersion.api.Api.HttpMethod.equality
 
 object ApiClient:
-  private given CanEqual[Method, Method] = CanEqual.derived
-
   type Url = Url.T
   object Url extends Newtype[String, Pure]
 

@@ -30,6 +30,7 @@ import scala.util.Try
 import scala.util.control.NonFatal
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.plugins.PluginKit
+import com.histmersion.config.edit.SettingKind.valueTypeEquality
 
 /** The host side of the SPI (docs/research-plugins.md §2–§3.7): ServiceLoader discovery, the config contract (each
   * plugin's block layered over its own defaults resource, type-checked by key, decoded with the plugin's own reader),
@@ -37,8 +38,6 @@ import com.histmersion.util.plugins.PluginKit
   * succeeded.
   */
 object PluginHost:
-  private given CanEqual[ConfigValueType, ConfigValueType] = CanEqual.derived
-
   type ClassName = ClassName.T
   object ClassName extends Newtype[String, Pure]
   type ConfigPath = ConfigPath.T

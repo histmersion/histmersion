@@ -39,14 +39,13 @@ import com.histmersion.api.exchange.MergeIssue as Issue
 import com.histmersion.api.RegisteredPlanMatches
 import com.histmersion.api.library.Citekey
 import com.histmersion.domain.catalogue.evidence.TextAnchor
+import com.histmersion.api.exchange.Bundle.uidEquality
 
 /** `merge plan` as a pure function over the crafted fixture (docs/research-merge-import.md §8): the whole issue list in
   * one run, conditional issues, resolutions (stale, invalid, partial), the editions policy, and the properties —
   * determinism, stable ids, monotone resolution.
   */
 class MergePlannerSuite extends munit.FunSuite with Bounded:
-  private given CanEqual[java.util.UUID, java.util.UUID] = CanEqual.derived
-
   private def plan(in: MergePlanner.Input = input(), res: MergeResolutions = MergeResolutions()): MergePlanner.Result =
     MergePlanner.plan(in, sketches, res, cfg, List(CataloguePlan, LibraryPlan, ResearchPlan))
 

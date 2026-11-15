@@ -58,6 +58,7 @@ import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.api.exchange.Bundle
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.exchange.PlanMatches
+import com.histmersion.api.exchange.Bundle.uidEquality
 
 /** `merge plan` as a pure function (docs/research-merge-import.md §5–§6, milestones M3–M5): of the bundle's entities,
   * what this collection knows (its rows, labels, ledger, redirects, tombstones, article histories and remembered
@@ -93,8 +94,6 @@ import com.histmersion.api.exchange.PlanMatches
   * records do not change, and a resolution whose id is no longer in the plan is reported, never re-applied.
   */
 object MergePlanner:
-  private given CanEqual[UUID, UUID] = CanEqual.derived
-
   type IssueExtra = IssueExtra.T
   object IssueExtra extends Newtype[String, Pure]
 

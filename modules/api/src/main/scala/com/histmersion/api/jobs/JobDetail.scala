@@ -8,6 +8,7 @@ import com.histmersion.api.given
 import com.histmersion.util.json.JsonCodec
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson.equality
 import sttp.tapir.SchemaType.SProductField
 import sttp.tapir.{FieldName, Schema}
 import io.github.iltotore.iron.constraint.any.Pure
@@ -58,7 +59,6 @@ object JobDetail:
     * when a job records none, and how it reads and writes. The jobs keep a detail as these fields' JSON
     * ([[JobDetail]]); the kinds' registry lists every field in the order the detail shows them.
     */
-  private given CanEqual[Json, Json] = CanEqual.derived
 
   final class Field[A](val name: Field.Name, val default: A)(using
       codec: JsonValueCodec[A],

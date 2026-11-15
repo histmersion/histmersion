@@ -19,13 +19,12 @@ import com.histmersion.util.system.JvmHome
 import com.histmersion.api.automation.PlanQuota
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.config.ServerConfig
+import com.histmersion.server.agents.CliOutcomes.finishEquality
 
 /** The pure half of the `claude-code` provider: the argument vector, the environment, the MCP config, and the
   * `stream-json` output read back into sttp-ai's result types.
   */
 object ClaudeCode:
-  private given CanEqual[FinishReason, FinishReason] = CanEqual.derived
-
   type Argument = Argument.T
   object Argument extends Newtype[String, Pure]
   type ModelId = ModelRef.Model

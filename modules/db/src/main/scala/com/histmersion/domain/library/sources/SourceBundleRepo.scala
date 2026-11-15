@@ -37,6 +37,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Source
 import com.histmersion.domain.library.sources.referrers.SourceReferrers
 import com.histmersion.util.ocr.Chunker
+import com.histmersion.api.exchange.Bundle.uidEquality
 
 /** The sources as a bundle carries them (docs/research-merge-import.md §4): each source with its findings, its edges in
   * and out, its parked edges, its old citekeys and its assessment, read out in a deterministic order (by uid; owned
@@ -44,8 +45,6 @@ import com.histmersion.util.ocr.Chunker
   * and stored original as their blobs arrive.
   */
 private[sources] object SourceBundleRepo:
-  private given CanEqual[UUID, UUID] = CanEqual.derived
-
   // ── out ──────────────────────────────────────────────────────────────────────────────────────
 
   def sources(scope: BundleScope)(using DbCon): Vector[BSourceRow] =

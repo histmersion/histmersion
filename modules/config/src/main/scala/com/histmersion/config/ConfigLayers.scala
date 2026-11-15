@@ -23,6 +23,7 @@ import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.config.edit.SettingKind.valueTypeEquality
 
 /** Reading `reference.conf`, the user config file and the environment into one HOCON tree, with the precedence
   * ENVIRONMENT > USER FILE > reference.conf.
@@ -39,8 +40,6 @@ import io.github.iltotore.iron.constraint.any.Pure
   * reference.conf.
   */
 private[config] object ConfigLayers:
-  private given CanEqual[ConfigValueType, ConfigValueType] = CanEqual.derived
-
   def reference: Config = ConfigFactory.parseResources("reference.conf")
 
   /** The env-override layer: `histmersion.<key> = <value of its variable>` for every key of `reference` whose `${?VAR}`

@@ -15,6 +15,7 @@ import com.histmersion.api.given
 import com.histmersion.domain.automation.Goal
 import com.histmersion.api.exchange.Bundle
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.json.RawJson.equality
 
 /** How two records that are one are folded into one (docs/research-merge-import.md §5.4, milestones M4–M5): goals,
   * queue items and articles, and the small rules every kind's folds share (a source's and a finding's are the library's
@@ -25,8 +26,6 @@ import io.github.iltotore.iron.constraint.any.Pure
   * Left is this collection, right the bundle — as everywhere in the merge.
   */
 object MergeFold:
-  private given CanEqual[Json, Json] = CanEqual.derived
-
   type ArticleBody = ArticleBody.T
   object ArticleBody extends Newtype[String, Pure]
   type ConflictCount = ConflictCount.T

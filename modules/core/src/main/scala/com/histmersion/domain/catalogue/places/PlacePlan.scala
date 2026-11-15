@@ -18,6 +18,7 @@ import com.histmersion.util.data.exchange.PlanRun
 import hearth.kindlings.optics.syntax.*
 import java.util.UUID
 import com.histmersion.api.exchange.Bundle
+import com.histmersion.api.exchange.Bundle.uidEquality
 
 /** How a merge plan treats places of this collection's own: one the bundle renamed is renamed here too — unless its new
   * id is a different place's here, then ours keeps its id and what the bundle points at the new id points at ours; one
@@ -25,8 +26,6 @@ import com.histmersion.api.exchange.Bundle
   * when its label and geometry are (the database compared them: `placeMatches`).
   */
 final class PlacePlan(in: MergePlanner.Input) extends PlanRun:
-  private given CanEqual[UUID, UUID] = CanEqual.derived
-
   import PlacePlan.*
 
   private val km = MergeDecision.Kind
@@ -145,8 +144,6 @@ final class PlacePlan(in: MergePlanner.Input) extends PlanRun:
       )
 
 object PlacePlan:
-  private given CanEqual[UUID, UUID] = CanEqual.derived
-
   /** Events and places point at places by id: a bundle place matched to one here under another id is pointed at under
     * that id. Pure.
     */

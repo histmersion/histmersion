@@ -19,6 +19,7 @@ import com.histmersion.util.text.Anchor
 import hearth.kindlings.optics.syntax.*
 import java.util.UUID
 import com.histmersion.api.exchange.Bundle
+import com.histmersion.api.exchange.Bundle.uidEquality
 
 /** How a merge plan treats attestations: they travel with the sources they quote. When a pair of sources that are one
   * keeps one OCR body, the attestations that point into the other are found again in it (re-anchored) — under each
@@ -26,8 +27,6 @@ import com.histmersion.api.exchange.Bundle
   * question (drop it, or keep it without a place). One already here (the same target and quote) is one.
   */
 final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
-  private given CanEqual[UUID, UUID] = CanEqual.derived
-
   import AttestationPlan.*
 
   private val km = MergeDecision.Kind

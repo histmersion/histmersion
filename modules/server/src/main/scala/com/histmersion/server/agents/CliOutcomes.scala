@@ -12,7 +12,11 @@ import com.histmersion.domain.automation.agents.LlmCall
 import com.histmersion.api.automation.Agents
 
 object CliOutcomes:
-  private given CanEqual[FinishReason, FinishReason] = CanEqual.derived
+  /** Two sttp-ai finish reasons compare with `==` and `!=`, also under `-language:strictEquality`: a CLI agent's
+    * outcome is read for its answer only when it stopped naturally. The one such instance, imported by name
+    * (`CliOutcomes.finishEquality`) where finish reasons are compared.
+    */
+  given finishEquality: CanEqual[FinishReason, FinishReason] = CanEqual.derived
 
   /** The answer as the step's schema: the final text is JSON (code fences tolerated), a `null` field the same as an
     * absent one.

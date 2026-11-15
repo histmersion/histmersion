@@ -43,6 +43,7 @@ import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.personal.UnreadPage
 import com.histmersion.api.catalogue.LeadFacts
+import com.histmersion.util.json.RawJson.equality
 
 /** The events: dated happenings with their datings by source, their relations to each other and their participants,
   * listed by a selection, drawn on the map, written by hand, renamed and deleted.
@@ -88,8 +89,6 @@ trait EventService:
   def delete(id: Event.Id): Boolean
 
 object EventService:
-  private given CanEqual[Json, Json] = CanEqual.derived
-
   def apply(db: Transactor, related: EventSourceFilter): EventService = Implementation(db, related)
 
   private def missing(id: Event.Id) =

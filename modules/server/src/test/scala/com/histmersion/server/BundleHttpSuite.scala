@@ -43,14 +43,13 @@ import com.histmersion.util.database.Transactor
 import com.histmersion.util.jobs.JobRepo
 import com.histmersion.util.data.exchange.MergeRepo
 import com.histmersion.util.data.exchange.MergeRow
+import com.histmersion.api.exchange.Bundle.uidEquality
 
 /** The portable bundle over real HTTP: `GET/PUT /api/instance`, `GET /api/bundle`, `POST /api/bundle/verify` and
   * `POST /api/bundle/import` — the wiring, the write gate, the download name, and an instance importing its own bundle
   * changing nothing. The behaviour in depth is `db.BundleSuite`'s. Skipped without HISTMERSION_TEST_DB_URL.
   */
 class BundleHttpSuite extends DbSuite with com.histmersion.db.Bounded:
-  private given CanEqual[java.util.UUID, java.util.UUID] = CanEqual.derived
-
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 

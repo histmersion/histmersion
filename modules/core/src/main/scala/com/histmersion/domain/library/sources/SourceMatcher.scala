@@ -20,6 +20,7 @@ import java.util.UUID
 import com.histmersion.api.exchange.Bundle
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
+import com.histmersion.api.exchange.Bundle.uidEquality
 
 /** Is a bundle's source the same work as one here? (docs/research-merge-import.md §5.2, stages B–D.) Pure.
   *
@@ -34,8 +35,6 @@ import com.histmersion.domain.library.Citekey
   * classified: auto-merge, needs-decision, or new.
   */
 object SourceMatcher:
-  private given CanEqual[UUID, UUID] = CanEqual.derived
-
   /** A number written out in the evidence text: a weight or a similarity. */
   type Figure = Figure.T
   object Figure extends Newtype[Double, Pure]

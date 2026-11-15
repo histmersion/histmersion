@@ -31,6 +31,7 @@ import com.histmersion.api.exchange.MergeTally
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
+import com.histmersion.api.exchange.Bundle.uidEquality
 
 /** How a merge plan treats findings (docs/research-merge-import.md §5.4): a finding belongs to its source; inside a
   * pair of sources that are (or may be) one, each of the bundle's findings is matched with at most one here — the same
@@ -39,8 +40,6 @@ import com.histmersion.api.catalogue.Latitude
   * here arrives under the next free one.
   */
 final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
-  private given CanEqual[UUID, UUID] = CanEqual.derived
-
   import FindingPlan.*
 
   private val km = MergeDecision.Kind

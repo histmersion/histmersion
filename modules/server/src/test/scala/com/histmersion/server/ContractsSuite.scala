@@ -3,6 +3,7 @@ package server
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
+import scala.annotation.tailrec
 import scala.jdk.CollectionConverters.*
 
 import com.histmersion.server.ArchitectureSuite.{Blank, SourceFile, Violation}
@@ -51,6 +52,10 @@ import com.histmersion.server.ArchitectureSuite.{Blank, SourceFile, Violation}
   *     temporary `Unclassified`; the text a column held (`Stored.Text`) is the stored reader's, and no finding;
   *   - `unrecognised` (G60, no exception allowed): `Stored.Unrecognised` built in main code anywhere but the stored
   *     column's reader (`api.problem.Column`) and the cases' own file — a sentence no case writes is read, never made.
+  *
+  * Besides the listed rules, a foreign type's `CanEqual` (`given CanEqual[UUID, UUID]`) is defined in one file,
+  * imported by name where it is needed (G67): only the types of [[CrossLayerEqualities]], whose users share no module,
+  * have two.
   *
   * Besides the listed rules, two hold with no exception at all: a module G60 has classified ([[Classified]]) holds no
   * `Unclassified`, `legacyText` or `Legacy.Text`, in its main or its test code; and no case of the problem module has a
@@ -366,6 +371,32 @@ class ContractsSuite extends munit.FunSuite:
       List(7, 8)
     )
 
+  test("a foreign type's CanEqual is defined in one file, but where its users share no module"):
+    assertEquals(Rules.equalityTwice(sources), CrossLayerEqualities)
+
+  test("a CanEqual given of one type with itself is found, its package left out; a lifted or mixed one is not"):
+    val code =
+      """object Equalities:
+        |  given uid: CanEqual[java.util.UUID, java.util.UUID] = CanEqual.derived
+        |  private given CanEqual[UUID, UUID] = CanEqual.derived
+        |    given CanEqual[java.nio.file.WatchEvent.Kind[?], java.nio.file.WatchEvent.Kind[?]] = CanEqual.derived
+        |  given [A] => CanEqual[Box[A], Box[A]] = CanEqual.canEqualAny
+        |  given CanEqual[Int, Long] = CanEqual.derived
+        |  def f(using CanEqual[K, K]) = 1
+        |""".stripMargin
+    assertEquals(
+      Rules.equalityGivens(code).map((t, at) => (t, code.substring(0, at).count(_ == '\n') + 1)),
+      List(("UUID", 2), ("UUID", 3), ("WatchEvent.Kind[?]", 4))
+    )
+    def file(key: String) = ArchitectureSuite.SourceFile(key, "com.histmersion.x", Blank(code), code)
+    assertEquals(
+      Rules.equalityTwice(List(file("core:x/A.scala"), file("db:x/B.scala"))),
+      Map(
+        "UUID" -> List("core:x/A.scala", "db:x/B.scala"),
+        "WatchEvent.Kind[?]" -> List("core:x/A.scala", "db:x/B.scala")
+      )
+    )
+
   test("a type named for an entity and a property is the property, a component of the entity is not"):
     val entities = Set("Approval", "Source", "PeriodO", "Citekey")
     assertEquals(Rules.propertyOf("ApprovalKind", entities), Some("Approval"))
@@ -417,6 +448,16 @@ object ContractsSuite:
     "plugins/fetchers",
     "plugins/gazetteers",
     "plugins/media"
+  )
+
+  /** The foreign types whose `CanEqual` is defined in two files, because their users share no module that could hold it
+    * (G67): the server's config and the vault plugin (on the plugin SPI alone, which the config does not see) both
+    * compare HOCON value kinds; the server and the plugin resolver (a tool of the relink kit, never on the server's
+    * class path, below the config) both compare paths.
+    */
+  val CrossLayerEqualities: Map[String, List[String]] = Map(
+    "ConfigValueType" -> List("config:config/edit/SettingKind.scala", "plugin-vaults:plugins/vaults/YubiKey.scala"),
+    "Path" -> List("config:config/UserPaths.scala", "plugin-resolver:pluginresolver/DependencyResolver.scala")
   )
 
   /** The layer a module belongs to: a concept may have one type per layer. */
@@ -681,6 +722,46 @@ object ContractsSuite:
           HandGiven.findAllMatchIn(s.code).map(_.start) ++ genericCodecGivens(s.code) ++
             Derived.findAllMatchIn(s.code).map(_.start)
         counted("derives", s, "codec given written by hand", hits.toList.distinct.sorted)
+
+    private val EqualityGiven =
+      "(?m)^[ \\t]*(?:(?:private|protected|inline)(?:\\[\\w+\\])?\\s+)*given\\s+(?:\\w+\\s*:\\s*)?CanEqual\\[".r
+
+    /** A type argument without its package (`java.util.UUID` is `UUID`) or spaces. */
+    private def simpleType(t: String): String = t.replaceAll("\\s", "").replaceFirst("^(?:[a-z]\\w*\\.)+", "")
+
+    /** The type arguments of the brackets opened just before `from`, split at their top-level commas. */
+    private def typeArgs(code: String, from: Int): List[String] =
+      @tailrec def loop(i: Int, depth: Int, start: Int, acc: List[String]): List[String] =
+        if i >= code.length then Nil
+        else
+          code(i) match
+            case '[' | '('         => loop(i + 1, depth + 1, start, acc)
+            case ']' if depth == 0 => (code.substring(start, i) :: acc).reverse
+            case ']' | ')'         => loop(i + 1, depth - 1, start, acc)
+            case ',' if depth == 0 => loop(i + 1, depth, i + 1, code.substring(start, i) :: acc)
+            case _                 => loop(i + 1, depth, start, acc)
+      loop(from, 0, from, Nil)
+
+    /** Each `given CanEqual[X, X]` of one type with itself: the type (its package left out) and where the given starts.
+      * A lifted one (`given [A] => CanEqual[F[A], F[A]]`) is a type class's, not a foreign type's, and is not one.
+      */
+    def equalityGivens(code: String): List[(String, Int)] =
+      EqualityGiven
+        .findAllMatchIn(code)
+        .flatMap(m =>
+          typeArgs(code, m.end).map(simpleType) match
+            case List(a, b) if a == b => Some(a -> m.start)
+            case _                    => None
+        )
+        .toList
+
+    /** Each type whose `CanEqual[X, X]` is given in more than one file: the type and those files. */
+    def equalityTwice(sources: List[SourceFile]): Map[String, List[String]] =
+      sources
+        .flatMap(s => equalityGivens(s.code).map((t, _) => t -> s.key))
+        .distinct
+        .groupMap(_._1)(_._2)
+        .collect { case (t, files) if files.size > 1 => t -> files.sorted }
 
     private def copies(s: SourceFile): List[Violation] =
       counted("copy", s, ".copy(", "\\.copy\\(".r.findAllMatchIn(s.code).map(_.start).toList)

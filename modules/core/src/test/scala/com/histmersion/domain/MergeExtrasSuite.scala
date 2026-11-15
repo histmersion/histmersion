@@ -29,14 +29,13 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.exchange.IssueField
 import com.histmersion.api.research.Article
+import com.histmersion.api.exchange.Bundle.uidEquality
 
 /** What the merge carries and decides beyond M4–M5 (docs/research-merge-import.md §7.8): places and named periods of a
   * collection's own, events matched across two ids, a goal's plan, links and schedules (#881), old article slugs, and
   * the detail the review screen shows beside an issue.
   */
 class MergeExtrasSuite extends munit.FunSuite with Bounded:
-  private given CanEqual[java.util.UUID, java.util.UUID] = CanEqual.derived
-
   private val At = "2026-10-01T09:00:00.000000Z"
 
   private def run(
