@@ -1,6 +1,5 @@
 package com.histmersion
 package domain.catalogue.events
-import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -40,7 +39,7 @@ abstract class EventImportServiceContract extends CatalogueStoreSuite:
   private def placeNew(r: CatalogRecord) =
     r -> CatalogMerge.Placement.New(
       Event.Id.applyUnsafe(CatalogRecord.eventId(r).value),
-      Problem.Unclassified(Legacy.Text("new"))
+      CatalogMerge.Rationale("new")
     )
 
   stest("a record makes its event, writing it again refreshes it, an event made by hand is only filled") { s =>
@@ -66,7 +65,7 @@ abstract class EventImportServiceContract extends CatalogueStoreSuite:
       im.save(
         List(
           record(CatalogRecord.ProviderId("2"), CatalogRecord.Label("Zz other name")) -> CatalogMerge.Placement
-            .Existing(Event.Id("zz_hand"), Problem.Unclassified(Legacy.Text("matched")))
+            .Existing(Event.Id("zz_hand"), CatalogMerge.Rationale("matched"))
         )
       )
     assertEquals((filled.created, filled.updated), (0, 0))

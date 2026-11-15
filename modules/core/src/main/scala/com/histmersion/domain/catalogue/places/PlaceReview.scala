@@ -1,7 +1,5 @@
 package com.histmersion
 package domain.catalogue.places
-import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.domain.*
 
@@ -35,6 +33,10 @@ import io.github.iltotore.iron.constraint.any.Pure
   * Anything else is left as it is.
   */
 object PlaceReview:
+
+  /** Why a place is proposed for a change or a review: the account of the lint's decision, not a failure. */
+  type Rationale = Rationale.T
+  object Rationale extends Newtype[String, Pure]
 
   /** Pleiades types that make a place an administrative unit. */
   val PolityTypes: Set[Evidence.FeatureTypes] =
@@ -122,7 +124,7 @@ object PlaceReview:
         from: Place.Kind.Wire,
         to: Place.Kind.Wire,
         period: Option[Period],
-        reason: Problem,
+        reason: Rationale,
         evidence: List[Proposal.EvidenceLine]
     )
 
@@ -132,12 +134,12 @@ object PlaceReview:
         label: Evidence.Label,
         into: Evidence.Id,
         intoLabel: Evidence.Label,
-        reason: Problem,
+        reason: Rationale,
         evidence: List[Proposal.EvidenceLine]
     )
 
     /** Nothing automatic: a person decides. */
-    case Review(id: Evidence.Id, label: Evidence.Label, reason: Problem, evidence: List[Proposal.EvidenceLine])
+    case Review(id: Evidence.Id, label: Evidence.Label, reason: Rationale, evidence: List[Proposal.EvidenceLine])
 
     def id: Evidence.Id
 
@@ -151,11 +153,11 @@ object PlaceReview:
         case Reclassify(_, label, from, to, period, reason, evidence) =>
           val per =
             period.fold("")(p => s", period ${periodText(p)}")
-          Proposal.Line(s"$label: $from → $to$per — ${reason.sentence}${ev(evidence)}")
+          Proposal.Line(s"$label: $from → $to$per — $reason${ev(evidence)}")
         case Merge(_, label, into, intoLabel, reason, evidence) =>
-          Proposal.Line(s"$label: merge into $into $intoLabel — ${reason.sentence}${ev(evidence)}")
+          Proposal.Line(s"$label: merge into $into $intoLabel — $reason${ev(evidence)}")
         case Review(_, label, reason, evidence) =>
-          Proposal.Line(s"$label: review — ${reason.sentence}${ev(evidence)}")
+          Proposal.Line(s"$label: review — $reason${ev(evidence)}")
 
     /** Does `--fix` act on it? */
     def fixable: Boolean = this match
@@ -204,7 +206,7 @@ object PlaceReview:
   def propose(e: Evidence, candidates: List[Candidate] = Nil): Option[Proposal] =
     val types = e.featureTypes.map(t => Evidence.FeatureTypes(t.value.trim.toLowerCase(java.util.Locale.ROOT))).toSet
     val ev = evidenceOf(e)
-    def to(kind: Place.Kind.Wire, reason: Problem, period: Option[Period] = None) =
+    def to(kind: Place.Kind.Wire, reason: Rationale, period: Option[Period] = None) =
       Option.when(kind != e.kind || period.isDefined)(
         Proposal.Reclassify(e.id, e.label, e.kind, kind, period, reason, ev)
       )
@@ -218,7 +220,7 @@ object PlaceReview:
                 e.label,
                 c.id,
                 c.label,
-                Problem.Unclassified(Legacy.Text(s"withdrawn by Pleiades as a duplicate of '$x'")),
+                Rationale(s"withdrawn by Pleiades as a duplicate of '$x'"),
                 ev
               )
             )
@@ -227,9 +229,7 @@ object PlaceReview:
               Proposal.Review(
                 e.id,
                 e.label,
-                Problem.Unclassified(
-                  Legacy.Text(s"withdrawn by Pleiades as a duplicate of '$x'; no seed place has that name")
-                ),
+                Rationale(s"withdrawn by Pleiades as a duplicate of '$x'; no seed place has that name"),
                 ev
               )
             )
@@ -238,10 +238,8 @@ object PlaceReview:
               Proposal.Review(
                 e.id,
                 e.label,
-                Problem.Unclassified(
-                  Legacy.Text(
-                    s"withdrawn by Pleiades as a duplicate of '$x'; ${cs.size} seed places have that name (${cs.map(_.id).mkString(", ")})"
-                  )
+                Rationale(
+                  s"withdrawn by Pleiades as a duplicate of '$x'; ${cs.size} seed places have that name (${cs.map(_.id).mkString(", ")})"
                 ),
                 ev
               )
@@ -251,7 +249,7 @@ object PlaceReview:
           Proposal.Review(
             e.id,
             e.label,
-            Problem.Unclassified(Legacy.Text("withdrawn by Pleiades, with no replacement named")),
+            Rationale("withdrawn by Pleiades, with no replacement named"),
             ev
           )
         )
@@ -282,19 +280,19 @@ object PlaceReview:
                   e.kind,
                   Place.Kind.Wire(Place.Kind.Polity),
                   write,
-                  Problem.Unclassified(Legacy.Text(note)),
+                  Rationale(note),
                   ev
                 )
             )
         else if types.intersect(PeopleTypes).nonEmpty && !keepSite then
           to(
             Place.Kind.Wire(Place.Kind.People),
-            Problem.Unclassified(Legacy.Text("a people or civic tribe — a group of persons, not a territory"))
+            Rationale("a people or civic tribe — a group of persons, not a territory")
           )
         else if settled.nonEmpty && !RegionAside.matches(e.label.value) then
           to(
             Place.Kind.Wire(Place.Kind.Site),
-            Problem.Unclassified(Legacy.Text(s"a settlement (${settled.toList.sorted.mkString(", ")}), not a region"))
+            Rationale(s"a settlement (${settled.toList.sorted.mkString(", ")}), not a region")
           )
         else if e.kind.value != Place.Kind.Polity && e.items.exists(_.itemClass.contains(WikidataPolity)) then
           // Wikidata files Brittany and Messenia as historical countries too: evidence, not a verdict
@@ -302,9 +300,7 @@ object PlaceReview:
             Proposal.Review(
               e.id,
               e.label,
-              Problem.Unclassified(
-                Legacy.Text("the linked Wikidata item is a historical country — a polity, or a region named after one")
-              ),
+              Rationale("the linked Wikidata item is a historical country — a polity, or a region named after one"),
               ev
             )
           )

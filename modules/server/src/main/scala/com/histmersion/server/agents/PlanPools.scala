@@ -270,7 +270,7 @@ final class PlanPools(
         last.map(l => java.time.Instant.ofEpochMilli(l.value)),
         now
       ) match
-        case ScheduledRead.NotDue(why) => Left(PlanQuota.Rationale(s"${why.sentence}"))
+        case ScheduledRead.NotDue(why) => Left(why.transformInto[PlanQuota.Rationale])
         case ScheduledRead.Due         =>
           PlanQuota
             .refreshDecision(
