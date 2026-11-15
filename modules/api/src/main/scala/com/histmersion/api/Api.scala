@@ -2722,7 +2722,7 @@ object Api:
     val InvalidCitekey: Code = Code("invalid_citekey")
 
     /** The field of a source a refused patch is about, as the code the refusal carries. */
-    enum Field(val code: Code) derives CanEqual:
+    enum Field(val code: Code):
       case Period extends Field(Code("invalid_period"))
       case Status extends Field(Code("invalid_status"))
 

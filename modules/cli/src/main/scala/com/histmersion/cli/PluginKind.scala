@@ -7,8 +7,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** The extension point a new plugin contributes to: its name on the command line, the suffix of the contributed class's
   * name, and what `histmersion plugin add` reports it provides.
   */
-enum PluginKind(val name: PluginKind.Name, val classSuffix: PluginKind.ClassSuffix, val provides: PluginKind.Provides)
-    derives CanEqual:
+enum PluginKind(val name: PluginKind.Name, val classSuffix: PluginKind.ClassSuffix, val provides: PluginKind.Provides):
   case SourceFetcher
       extends PluginKind(
         PluginKind.Name("source-fetcher"),

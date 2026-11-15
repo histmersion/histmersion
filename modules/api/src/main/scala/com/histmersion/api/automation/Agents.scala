@@ -134,7 +134,7 @@ object Agents:
       val n = (d: BigDecimal) => d.bigDecimal.stripTrailingZeros.toPlainString
       ((List(input, output) ++ cacheRead.zip(cacheWrite).toList.flatMap((r, w) => List(r, w))).map(n).mkString("/"))
 
-  enum Billing derives CanEqual:
+  enum Billing:
     case Plan(pool: PlanQuota.PoolId)
     case Metered(price: Price)
 
@@ -240,7 +240,7 @@ object Agents:
     given JsonValueCodec[PauseReason] = WireEnum.codec
     given Schema[PauseReason] = WireEnum.schema
 
-  enum StepKind(val wire: StepKind.Wire) derives CanEqual:
+  enum StepKind(val wire: StepKind.Wire):
     case Code extends StepKind(StepKind.Wire("code"))
     case Llm extends StepKind(StepKind.Wire("llm"))
 

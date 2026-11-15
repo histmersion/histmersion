@@ -28,7 +28,7 @@ object ConfigReload:
     if merged.hasPath(Root) then merged.withOnlyPath(Root) else ConfigFactory.empty
 
   /** Why a setting takes effect only at a restart: the part of the server it sizes or binds is built once. */
-  enum SetOnce(val said: String) derives CanEqual:
+  enum SetOnce(val said: String):
     case Listener extends SetOnce("the listener is bound once")
     case RequestTimeout extends SetOnce("the listener's request timeout is set when it is bound")
     case ShutdownGrace extends SetOnce("the listener's shutdown grace is set when it is bound")

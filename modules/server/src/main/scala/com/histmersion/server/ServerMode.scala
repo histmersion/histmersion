@@ -5,7 +5,7 @@ package server
   * an ERROR that ends the process before anything is opened: once, `--help` started a real server against the live
   * database (docs/research-plugins.md §10.3).
   */
-enum ServerMode derives CanEqual:
+enum ServerMode:
   /** No arguments: run the server. */
   case Serve
 

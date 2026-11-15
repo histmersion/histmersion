@@ -15,7 +15,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** Why a run stopped before its pipeline finished. A value, threaded through the pipeline's for-comprehension: a step
   * either produces its output or halts the run.
   */
-enum Halt derives CanEqual:
+enum Halt:
   /** `resumeAt`: when the run may go on by itself (an allowance window freeing); None = a person resumes it. */
   case Pause(reason: PauseReason, detail: Problem, resumeAt: Option[java.time.Instant] = None)
   case Cancel

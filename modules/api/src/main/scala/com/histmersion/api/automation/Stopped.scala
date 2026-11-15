@@ -17,7 +17,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 type Stopped = Stopped.T
 object Stopped extends Newtype[String, Pure]:
 
-  enum Cause derives CanEqual:
+  enum Cause:
 
     /** A run that stopped for `reason` and waits for a person, an allowance or a clock: stored `<reason>: <detail>`.
       */

@@ -20,7 +20,7 @@ object Year extends Newtype[Int, Pure]
 type PageSize = PageSize.T
 object PageSize extends Newtype[Int, Pure]
 
-enum SourceStatus derives CanEqual:
+enum SourceStatus:
   case Current
   case Contested(by: Citekey)
   case Superseded(by: Citekey)

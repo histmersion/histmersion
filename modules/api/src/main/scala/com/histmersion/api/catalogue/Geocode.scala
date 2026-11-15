@@ -79,7 +79,7 @@ object Geocode:
     val spaced = b.result().replaceAll(" {2,}", " ").dropWhile(_ == ' ').reverse.dropWhile(_ == ' ').reverse
     if spaced.startsWith("the ") then Key(spaced.drop(4)) else Key(spaced)
 
-  enum Approximation derives CanEqual:
+  enum Approximation:
     case Qualifier(dropped: Qualifier.Dropped)
 
     case OnlyWithin(missing: OnlyWithin.Missing)

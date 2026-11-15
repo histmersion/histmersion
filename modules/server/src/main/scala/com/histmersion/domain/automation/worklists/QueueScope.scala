@@ -4,7 +4,7 @@ package domain.automation.worklists
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Which items of a list a listing shows. Every scope reads in id order; only [[All]] shows the `note` blocks. */
-enum QueueScope derives CanEqual:
+enum QueueScope:
   /** The open items. */
   case Open
 

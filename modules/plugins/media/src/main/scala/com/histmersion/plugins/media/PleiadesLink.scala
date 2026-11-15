@@ -25,7 +25,7 @@ object PleiadesLink:
   object Host extends Newtype[String, Pure]
 
   /** Why a referenced picture is not taken: words for the person, not a failure. */
-  enum Untaken derives CanEqual:
+  enum Untaken:
     /** On Flickr, whose API needs a key. */
     case OnFlickr
 

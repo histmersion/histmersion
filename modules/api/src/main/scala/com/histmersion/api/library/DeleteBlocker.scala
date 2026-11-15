@@ -26,7 +26,7 @@ object DeleteBlocker:
   type Title = Title.T
   object Title extends Newtype[String, Pure]
 
-  enum Kind(val wire: Kind.Wire, val label: Kind.Label) derives CanEqual:
+  enum Kind(val wire: Kind.Wire, val label: Kind.Label):
     case Article extends Kind(Kind.Wire("article"), Kind.Label("cited by article"))
     case Event extends Kind(Kind.Wire("event"), Kind.Label("primary source of event"))
     case EventEdge extends Kind(Kind.Wire("event-edge"), Kind.Label("source of event relation"))

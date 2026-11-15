@@ -19,7 +19,7 @@ object IdentLink:
   type Id = Id.T
   object Id extends Newtype[String, Pure]
 
-  enum Resolved derives CanEqual:
+  enum Resolved:
     case Source(ref: com.histmersion.api.library.Source.Ref)
     case Article(slug: com.histmersion.api.research.Article.Slug, title: com.histmersion.api.research.Article.Title)
 

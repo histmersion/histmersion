@@ -80,7 +80,7 @@ object AcquireCmd:
   /** Everything this stream adds to `histmersion`, in one value so `Cli` gains a single line. */
 
   /** What `ingest` brings in: a file on this machine (uploaded) or an identifier the server fetches. */
-  enum IngestTarget derives CanEqual:
+  enum IngestTarget:
     case File(path: Path)
     case Identifier(id: String)
 

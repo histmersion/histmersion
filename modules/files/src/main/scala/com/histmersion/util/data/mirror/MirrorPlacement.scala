@@ -8,7 +8,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * `<dir>/<kind>/<slug>.md`, the bookkeeping in `<dir>/meta/`. Paths are relative names; the client resolves them under
   * the directories it was given.
   */
-enum MirrorPlacement derives CanEqual:
+enum MirrorPlacement:
   /** `<dir>/<directory>/<id>.md`: one directory of their own. */
   case InDirectory(name: MirrorPlacement.Directory)
 

@@ -6,7 +6,7 @@ import com.histmersion.util.storage.Location
 import com.histmersion.util.storage.Store
 
 /** Where a cache is held. */
-enum CacheHolding derives CanEqual:
+enum CacheHolding:
   /** In the server's memory, lost with the process. */
   case InMemory
 

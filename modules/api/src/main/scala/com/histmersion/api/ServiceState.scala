@@ -7,7 +7,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** The converter reports free text (`ok`, `busy: 2 jobs`, `degraded: …`), so a wording never seen before reads as
   * [[ServiceState.Unknown]] at worst.
   */
-enum ServiceState derives CanEqual:
+enum ServiceState:
   case Ok, Busy, Down, Unknown
 
   def label: ServiceState.Wire = this match

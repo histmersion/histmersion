@@ -246,7 +246,7 @@ object FindingPlan:
     extension (d: Distance) def within(limit: MergeSettings.FindingWithinKm): Boolean = d.value <= limit.value
 
   /** How a bundle finding of a merged pair relates to this collection's findings of the survivor. */
-  enum Match derives CanEqual:
+  enum Match:
     /** The same claim (and a compatible time and place): one finding. */
     case Same(right: Bundle.Finding, left: Bundle.Finding)
 

@@ -169,7 +169,7 @@ object SchedulerPolicy:
     object Because extends Newtype[String, Pure]
 
     /** Which spend cap was reached. */
-    enum SpendCap derives CanEqual:
+    enum SpendCap:
       /** `agents.budgets.daily-usd`: all agents' spend today. */
       case Daily(limit: Usd)
 
@@ -187,11 +187,11 @@ object SchedulerPolicy:
             "it starts again tomorrow (UTC)"
 
     /** What another item must finish first. */
-    enum Precondition derives CanEqual:
+    enum Precondition:
       case Plan, Filter
 
     /** Why `start` did not start an item. */
-    enum Refusal derives CanEqual:
+    enum Refusal:
       case TargetWritten, NotStartable, Settled, Gone
 
       def render: String = this match

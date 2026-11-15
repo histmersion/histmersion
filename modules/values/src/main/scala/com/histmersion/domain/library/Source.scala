@@ -11,7 +11,7 @@ object Source:
   type Text = Text.T
   object Text extends Newtype[String, Pure]
 
-  enum Status derives CanEqual:
+  enum Status:
     case Foundational, Current, Contested, Superseded, Debunked, Retracted, Unassessed
 
     /** The wire / storage spelling (`current`), as the JSON codec writes it. */

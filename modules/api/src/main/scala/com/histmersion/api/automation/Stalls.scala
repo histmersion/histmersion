@@ -93,7 +93,7 @@ object Stalls:
     object Detail extends Newtype[String, Pure]
 
     /** What stands in the way of a wait: a spend cap, plan pools below their floors, or anything else. */
-    enum Why derives CanEqual:
+    enum Why:
       case Budget(detail: Detail)
       case Starved(detail: Detail)
       case Other(detail: Detail)

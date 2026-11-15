@@ -21,7 +21,7 @@ object ExitCode extends Newtype[Int, Pure]:
   val Unreachable: ExitCode = ExitCode(3)
 
   /** Where the CLI met a failure: that, not the failure's group, decides the exit code. */
-  enum Origin derives CanEqual:
+  enum Origin:
     /** The CLI found it itself: a bad flag, an unreadable local file, the server out of reach. */
     case Local
 

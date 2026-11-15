@@ -3,7 +3,7 @@ package domain.library
 
 import com.histmersion.WireEnumValues
 import io.github.iltotore.iron.constraint.any.Pure
-enum MatchOutcome derives CanEqual:
+enum MatchOutcome:
   /** The same record here (by uid or ledger): imported as an update, if anything. */
   case Same
 

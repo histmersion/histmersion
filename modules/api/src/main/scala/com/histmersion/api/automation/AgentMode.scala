@@ -35,7 +35,7 @@ object AgentMode:
   def of(autopilotOn: Step.Autopilot.On, draining: Step.Drain.On): AgentMode =
     if !(autopilotOn).value then Paused else if (draining).value then Finishing else Working
 
-  enum Step derives CanEqual:
+  enum Step:
     case Autopilot(on: Autopilot.On)
     case Drain(on: Drain.On)
 

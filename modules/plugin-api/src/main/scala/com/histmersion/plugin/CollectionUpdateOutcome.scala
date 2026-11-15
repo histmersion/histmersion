@@ -5,7 +5,7 @@ import com.histmersion.util.problem.Problems
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What [[SourceCollection.updateAll]] does, or did, to one item. */
-enum CollectionUpdateOutcome derives CanEqual:
+enum CollectionUpdateOutcome:
   /** A dry run: these fields would change. */
   case Change(changes: List[CollectionChange])
 

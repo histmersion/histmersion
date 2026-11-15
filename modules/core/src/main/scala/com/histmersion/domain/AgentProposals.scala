@@ -71,7 +71,7 @@ object AgentProposals:
     object Quote extends Newtype[String, Pure]
 
   /** What becomes of a proposal. */
-  enum Route derives CanEqual:
+  enum Route:
     /** Applied by code now: the fill rule, or a kind configured `auto`. */
     case Apply
 
@@ -82,7 +82,7 @@ object AgentProposals:
     case Skip(reason: Unneeded)
 
   /** Why a proposal needs nothing done. */
-  enum Unneeded derives CanEqual:
+  enum Unneeded:
     /** The source already has the proposed status (`status`; None: it has none, and none is proposed). */
     case Already(status: Option[Source.Status])
 

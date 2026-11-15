@@ -345,7 +345,7 @@ object Article:
 
     export Article.{Body as ApplyOneText, Body as LocateText, Body as OccurrencesText}
 
-    enum Op(val wire: Op.Wire) derives CanEqual:
+    enum Op(val wire: Op.Wire):
       case Replace extends Op(Op.Wire("replace"))
 
       case InsertAfter extends Op(Op.Wire("insertAfter"))
@@ -389,7 +389,7 @@ object Article:
           )
         )
 
-    enum Edit derives CanEqual:
+    enum Edit:
       def anchor: Anchor
       case Replace(anchor: Replace.Anchor, text: Replace.Text)
       case InsertAfter(anchor: InsertAfter.Anchor, text: InsertAfter.Text)
@@ -554,7 +554,7 @@ object Article:
               case Left(p)  => loop(tail, ((number) + 1), cur, acc :+ base.copy(problem = Some(p)))
       loop(edits, (1), body, Vector.empty)
 
-    enum Draft derives CanEqual:
+    enum Draft:
       case Edits(edits: scala.List[EditAnswer])
       case Body(text: Draft.Body.Text)
 
@@ -765,7 +765,7 @@ object Article:
     type Strict = Strict.T
     object Strict extends Newtype[Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  enum Kind derives CanEqual:
+  enum Kind:
     case Concept, Myth, Culture, Region, Timeline, Report, Index
 
   object Kind:

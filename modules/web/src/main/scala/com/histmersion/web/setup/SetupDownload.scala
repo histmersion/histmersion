@@ -4,7 +4,7 @@ package web.setup
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What the setup downloads when it is finished — nothing before. */
-enum SetupDownload(val label: SetupDownload.Label) derives CanEqual:
+enum SetupDownload(val label: SetupDownload.Label):
   case Map(area: SetupDownload.Map.Area) extends SetupDownload(SetupDownload.Label("The background map"))
   case Boundaries extends SetupDownload(SetupDownload.Label("Historical boundaries, regions and named periods"))
   case Events extends SetupDownload(SetupDownload.Label("Volcanic eruptions, earthquakes and tsunamis"))

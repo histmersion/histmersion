@@ -732,7 +732,7 @@ object Calibre:
   /** Where a push takes its file from: `--file`, else the host-side original under `cli.calibre.originals-dir`, else
     * the original the server stored (downloaded for the push).
     */
-  enum PushFile derives CanEqual:
+  enum PushFile:
     case Given(path: Path)
     case Local(path: Path)
     case Server
@@ -1030,7 +1030,7 @@ object Calibre:
     val To: CollectionFieldChange.To.type = CollectionFieldChange.To
 
   /** A field `calibre update` writes, by its `calibredb set_metadata --field` name. */
-  enum Field(val name: Field.Name) derives CanEqual:
+  enum Field(val name: Field.Name):
     case Title extends Field(Field.Name("title"))
     case Authors extends Field(Field.Name("authors"))
     case Pubdate extends Field(Field.Name("pubdate"))

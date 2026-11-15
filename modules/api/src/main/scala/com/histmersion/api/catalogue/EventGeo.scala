@@ -60,7 +60,7 @@ object EventGeo:
     object Description extends Newtype[String, Pure]
 
   /** An end of a time span. */
-  enum Side derives CanEqual:
+  enum Side:
     case Start, End
 
   /** The end of `ts` no date records, when the other end is recorded: a fact about the event, not a failure. */

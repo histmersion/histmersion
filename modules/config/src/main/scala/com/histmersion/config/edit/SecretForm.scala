@@ -6,7 +6,7 @@ import com.histmersion.util.problem.Problem
 /** What a credential's setting holds, as far as it may be told: whether one is set and how it is referred to — never
   * the value.
   */
-enum SecretForm(val wire: String, val describe: String) derives CanEqual:
+enum SecretForm(val wire: String, val describe: String):
   case Unset extends SecretForm("unset", "not set")
 
   /** `env:<NAME>`: the server's environment variable. */

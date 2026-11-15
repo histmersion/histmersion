@@ -5,7 +5,7 @@ import scala.jdk.CollectionConverters.*
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Where `calibre import` writes, once the citekey is known (#714). */
-enum ImportTarget derives CanEqual:
+enum ImportTarget:
   /** No record has this citekey yet. */
   case Create
 

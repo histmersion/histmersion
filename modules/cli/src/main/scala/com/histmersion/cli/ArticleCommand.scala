@@ -18,7 +18,7 @@ import com.histmersion.api.research.CritiqueReason
 /** What `histmersion article …` was asked to do, every argument already a typed value: the command line's parser
   * ([[commandline.ArticleArgs]]) builds one, and [[ArticleCli.Perform]] carries it out against a server.
   */
-enum ArticleCommand extends Cli.Command derives CanEqual:
+enum ArticleCommand extends Cli.Command:
   case Listing(
       text: Option[Api.ArticleQuery.Text],
       kind: Option[Api.ArticleQuery.Kind],
@@ -66,10 +66,10 @@ object ArticleCommand:
       regions: Option[ArticlePatches.CsvText],
       period: Option[ArticlePatches.FilterFlags.Period],
       ifUpdatedAt: Option[Article.UpdatedAt]
-  ) derives CanEqual
+  )
 
   /** What `check` dry-runs: a list of edits, or a whole draft body. */
-  enum Draft derives CanEqual:
+  enum Draft:
     case Edits(file: Path)
     case Body(file: Path)
 

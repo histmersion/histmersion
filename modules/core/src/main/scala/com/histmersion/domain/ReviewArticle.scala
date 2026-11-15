@@ -156,7 +156,7 @@ object ReviewArticle:
     given Schema[Severity] = WireEnum.schema
 
   /** An article's (or one reviewer's) verdict, ordered: the worst one wins. */
-  enum Verdict(val wire: Verdict.Wire, val rank: Verdict.Rank) derives CanEqual:
+  enum Verdict(val wire: Verdict.Wire, val rank: Verdict.Rank):
     case Pass extends Verdict(Verdict.Wire("PASS"), Verdict.Rank(0))
     case Minor extends Verdict(Verdict.Wire("MINOR"), Verdict.Rank(1))
     case Major extends Verdict(Verdict.Wire("MAJOR"), Verdict.Rank(2))

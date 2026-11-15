@@ -40,7 +40,7 @@ object MediaFound:
   /** One thing that went wrong, and what it was for: a target (`pleiades_1`), a target's search (`Met search for
     * pleiades_1`), a batch (`Wikidata Q1…`), one file.
     */
-  final case class Failed(about: Failed.About, problem: Problem) derives CanEqual:
+  final case class Failed(about: Failed.About, problem: Problem):
     /** The report's line: what it was for, then the problem's sentence. */
     def line: Failed.Line = Failed.Line(s"$about: ${problem.sentence}")
 

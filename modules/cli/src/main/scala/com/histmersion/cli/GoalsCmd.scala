@@ -19,7 +19,7 @@ import com.histmersion.util.console.Console
 object GoalsCmd:
 
   /** What `goals schedule` does to the schedule. */
-  enum ScheduleChange derives CanEqual:
+  enum ScheduleChange:
     case Remove
     case Set(cron: String, off: Boolean, budget: Option[Double])
 

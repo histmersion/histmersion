@@ -3,7 +3,7 @@ package domain.library
 
 import com.histmersion.{Ascii, WireEnumValues}
 import io.github.iltotore.iron.constraint.any.Pure
-enum EditionsPolicy derives CanEqual:
+enum EditionsPolicy:
   /** Merge them (the year issue then takes the earliest year). */
   case Merge
 

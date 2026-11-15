@@ -203,7 +203,7 @@ object MergeFold:
   // ── articles (§5.4) ─────────────────────────────────────────────────────────────────────────
 
   /** What two versions of one article come to, given what each side's history holds. */
-  enum ArticleOutcome derives CanEqual:
+  enum ArticleOutcome:
     /** The same text. */
     case Same
 

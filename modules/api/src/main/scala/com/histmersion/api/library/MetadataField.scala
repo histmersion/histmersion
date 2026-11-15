@@ -8,7 +8,7 @@ import com.histmersion.api.WireEnum
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
 
-enum MetadataField derives CanEqual:
+enum MetadataField:
   case Year, Venue, Doi, Provenance, CalibreId
 
 object MetadataField:

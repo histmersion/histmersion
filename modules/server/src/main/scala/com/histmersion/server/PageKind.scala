@@ -13,7 +13,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** Which standalone page a document is — the web bundle's page entry point reads it from `<body data-page>` to wire
   * that page's behaviour (link previews, match navigation).
   */
-enum PageKind(val wire: PageKind.Wire) derives CanEqual:
+enum PageKind(val wire: PageKind.Wire):
   case Source extends PageKind(PageKind.Wire("source"))
   case Article extends PageKind(PageKind.Wire("article"))
 

@@ -4,7 +4,7 @@ package util.process
 import com.histmersion.util.storage.Store
 
 /** Where a child process's output goes. */
-enum ProcessOutput derives CanEqual:
+enum ProcessOutput:
   /** Read by the launcher ([[RunningProcess.output]], or the lines of [[Processes.run]]). */
   case Piped
 

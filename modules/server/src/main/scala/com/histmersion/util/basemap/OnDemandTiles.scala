@@ -335,6 +335,6 @@ object OnDemandTiles:
   /** Where tiles are read from: a PMTiles planet archive (range requests), or a tile URL with `{z}/{x}/{y}` (one GET a
     * tile; a 404 is "none").
     */
-  enum Source derives CanEqual:
+  enum Source:
     case Planet(url: () => RangeHttp.Url)
     case Template(url: () => UrlTemplate)

@@ -122,7 +122,7 @@ object GuidelineRatchetSuite:
   /** A count's place: the inventory's rule, the module (`modules/<module>/src/…`) and whether the file is a test. */
   final case class Key(rule: String, module: String, scope: String) derives CanEqual
 
-  final case class Finding(rule: String, module: String, path: String, line: Int, detail: String) derives CanEqual:
+  final case class Finding(rule: String, module: String, path: String, line: Int, detail: String):
     def key: Key = Key(rule, module, if path.contains("/src/test/") then "test" else "main")
 
   object Finding:

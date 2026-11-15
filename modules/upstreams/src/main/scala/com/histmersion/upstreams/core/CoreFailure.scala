@@ -3,7 +3,7 @@ package upstreams.core
 import com.histmersion.util.problem.Problem
 
 import io.github.iltotore.iron.constraint.any.Pure
-enum CoreFailure derives CanEqual:
+enum CoreFailure:
   /** Not asked, or refused for its rate: the budget or CORE itself said to wait. */
   case Skipped(why: Problem)
 

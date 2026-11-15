@@ -29,7 +29,7 @@ object Ops:
   // ── queue ───────────────────────────────────────────────────────────────────────────────────
 
   /** What `histmersion queue …` was asked to do. */
-  enum QueueCmd extends Cli.Command derives CanEqual:
+  enum QueueCmd extends Cli.Command:
     case Show(list: Queue.Kind.Label, all: Boolean, json: Cli.JsonOutput)
     case Add(
         list: Queue.Kind.Label,

@@ -36,7 +36,7 @@ object CommandLine:
       def printed: String = help.value
 
   /** What the command line asks for. */
-  enum Outcome derives CanEqual:
+  enum Outcome:
     case Run(server: Option[Client.ServerUrl], token: Option[Client.Token], command: Cli.Command)
     case Help(text: HelpText)
     case Failed(problem: Problem, help: HelpText)

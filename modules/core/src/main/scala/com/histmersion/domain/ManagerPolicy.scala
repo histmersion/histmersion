@@ -174,7 +174,7 @@ object ManagerPolicy:
   // ── the cron (phase 3) ─────────────────────────────────────────────────────────────────────────
 
   /** What a manager's cron does at a tick. */
-  enum CronStep derives CanEqual:
+  enum CronStep:
     /** Nothing: no cron, or not due yet. */
     case Idle
 
@@ -237,7 +237,7 @@ object ManagerPolicy:
   def dayStart(now: Instant): Instant = now.truncatedTo(java.time.temporal.ChronoUnit.DAYS)
 
   /** What the next step of an item is, once its run settled. */
-  enum Next derives CanEqual:
+  enum Next:
     /** Run it again (not before `notBefore`). */
     case Again(notBefore: Option[Instant], state: ItemState, note: ItemNote)
 
@@ -276,7 +276,7 @@ object ManagerPolicy:
     * waits for a person's decision on approval `id`, or it ended without doing its work (`task`: what a person should
     * look at, if anything).
     */
-  enum StepFacts derives CanEqual:
+  enum StepFacts:
     case Finished(outcome: ItemOutcome)
     case Waiting(approval: ApprovalId, what: ItemNote)
     case NotDone(outcome: ItemOutcome, task: Option[ItemTask])

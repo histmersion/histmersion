@@ -2,7 +2,7 @@ package com.histmersion
 package util.jobs
 
 /** What answering a [[JobAction]] on one job takes. */
-enum JobControlStep derives CanEqual:
+enum JobControlStep:
   /** An agent run: its own pause, resume or cancel. */
   case Run(action: JobAction)
 

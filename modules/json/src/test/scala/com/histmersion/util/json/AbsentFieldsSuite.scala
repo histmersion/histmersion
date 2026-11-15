@@ -21,12 +21,12 @@ object Shape:
   /** The same record read as an MCP tool's arguments, where an unknown key is refused. */
   val strict: JsonCodec[Shape] = JsonCodec.derived[Shape](using JsonCodec.Unknown.Refused)
 
-enum Kind derives JsonCodec, CanEqual:
+enum Kind derives JsonCodec:
   case Plain
   case Named(name: String)
 
 /** Code words, as the problems' cases have them: no codec of their own, written by the record's. */
-enum Code derives CanEqual:
+enum Code:
   case Read, Write
 
 final case class Coded(code: Code)

@@ -23,7 +23,7 @@ final class IronNewtypePairs(using val quotes: Quotes):
     def refinedTypeShown: String =
       s"${withoutPackageObjects(base.show)} :| ${withoutPackageObjects(constraint.show)}"
 
-  enum NewtypePair derives CanEqual:
+  enum NewtypePair:
     case SameRefinedType(from: IronNewtype, to: IronNewtype)
     case DifferentConstraints(from: IronNewtype, to: IronNewtype)
     case NotSameNamedNewtypes

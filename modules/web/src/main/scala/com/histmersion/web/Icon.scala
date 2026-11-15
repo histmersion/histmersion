@@ -17,7 +17,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** Inline SVG icons drawn with `currentColor`, so they follow the button's text colour (and its active state) instead
   * of the platform's emoji font. 24×24 stroke paths.
   */
-enum Icon(val paths: List[String]) derives CanEqual:
+enum Icon(val paths: List[String]):
   /** Stacked sheets: the map's layers (and, on a phone, the drawer that holds them). */
   case Layers
       extends Icon(List("M12 3.5l8.5 4.5-8.5 4.5-8.5-4.5z", "M3.5 12l8.5 4.5 8.5-4.5", "M3.5 16l8.5 4.5 8.5-4.5"))

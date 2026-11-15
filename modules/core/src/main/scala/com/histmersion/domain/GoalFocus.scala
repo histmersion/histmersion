@@ -175,7 +175,7 @@ object GoalFocus:
   object Rationale extends Newtype[String, Pure]
 
   /** Where a goal stands: finished, a candidate at a stage, or waiting (a code and why). */
-  enum Fit derives CanEqual:
+  enum Fit:
     case Finished
     case Candidate(stage: Stage)
     case Waits(code: Fit.Waits.Code, why: Rationale)

@@ -5,7 +5,7 @@ import com.histmersion.util.problem.Problem
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One fetcher's answer for one work. */
-enum Fetch derives CanEqual:
+enum Fetch:
   /** A copy. */
   case Found(file: FetchedFile)
 

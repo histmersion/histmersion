@@ -114,7 +114,7 @@ object PlaceReview:
   final case class Candidate(id: Evidence.Id, label: Evidence.Label, kind: Place.Kind.Wire)
 
   /** What to do with one place. */
-  enum Proposal derives CanEqual:
+  enum Proposal:
     /** Change the kind (and, for a polity, the period). */
     case Reclassify(
         id: Evidence.Id,

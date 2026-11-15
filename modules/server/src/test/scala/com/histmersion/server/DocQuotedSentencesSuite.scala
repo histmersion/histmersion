@@ -65,7 +65,7 @@ object DocQuotedSentencesSuite:
           .toString
       )
 
-  final case class Quote(file: String, quote: String, sentence: String) derives CanEqual
+  final case class Quote(file: String, quote: String, sentence: String)
 
   object Quote:
     def read(rows: List[String]): List[Quote] =

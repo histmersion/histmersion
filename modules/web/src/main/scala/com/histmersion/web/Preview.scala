@@ -923,7 +923,7 @@ object Preview:
   // ── a PINNED card: a click (or Enter) keeps it still, so its links can be followed ──────────────
 
   /** Where a pinned card is anchored, as the viewport sees it now. */
-  enum Anchor derives CanEqual:
+  enum Anchor:
     /** Beside a point — a place on the map, where its hover card was. */
     case At(x: Anchor.At.X, y: Anchor.At.Y)
 

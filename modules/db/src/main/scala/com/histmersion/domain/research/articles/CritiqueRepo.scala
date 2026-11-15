@@ -42,7 +42,7 @@ private[articles] object CritiqueRepo:
       )
 
   /** One checked change: set `reason` on the edge's direction, or remove the pair's reason. */
-  private enum Change derives CanEqual:
+  private enum Change:
     case Set(
         src: com.histmersion.domain.library.Citekey,
         dst: com.histmersion.domain.library.Citekey,

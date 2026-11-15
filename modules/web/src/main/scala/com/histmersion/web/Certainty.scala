@@ -10,7 +10,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * pip of its own in the legend), never as high: the map read a missing confidence as high, the most certain look for
   * the claim it knew least about. Pure.
   */
-enum Certainty derives CanEqual:
+enum Certainty:
   case Stated(level: Confidence)
   case Unstated
 

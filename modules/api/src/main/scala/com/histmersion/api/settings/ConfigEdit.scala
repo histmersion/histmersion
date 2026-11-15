@@ -14,7 +14,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 
 object ConfigEdit:
 
-  enum Source(val wire: Source.Wire, val label: Source.Label) derives CanEqual:
+  enum Source(val wire: Source.Wire, val label: Source.Label):
     case Default extends Source(Source.Wire("default"), Source.Label("the default"))
     case File extends Source(Source.Wire("file"), Source.Label("the settings file"))
     case Environment extends Source(Source.Wire("environment"), Source.Label("an environment variable"))

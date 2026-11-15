@@ -2,7 +2,7 @@ package com.histmersion
 package api.plugins
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
-enum PluginState derives CanEqual:
+enum PluginState:
   case Registered
 
   case Disabled

@@ -106,7 +106,7 @@ object ManagerCmd:
     c.call(ManagersApi.patchItem)((id, t, p)).map(i => Cli.out.println(ManagersMarkdown.item(i)))
 
   /** What `agent autopilot` was asked to do. */
-  enum AutopilotVerb derives CanEqual:
+  enum AutopilotVerb:
     case Status
     case On
     case Off
@@ -117,7 +117,7 @@ object ManagerCmd:
     case Mode(mode: String)
 
   /** What `agent manager <id> …` was asked to do. */
-  enum ManagerVerb derives CanEqual:
+  enum ManagerVerb:
     case Show
     case Status(json: Cli.JsonOutput)
     case Items(status: Option[String], offset: Option[Int], limit: Option[Int], json: Cli.JsonOutput)
