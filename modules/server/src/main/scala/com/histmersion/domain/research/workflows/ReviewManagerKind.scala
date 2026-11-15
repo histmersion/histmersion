@@ -302,7 +302,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
         slug => site.articles.recordedFilter(slug).isDefined,
         slug => c.hasItem(manager, ManagerPolicy.ItemKind.InferFilter, ManagerContext.ItemTarget(slug.value))
       )
-      val hints = c.hints(manager).filter(_.effect.exists(_.action.value == HintEffect.Prioritise))
+      val hints = c.hints(manager).filter(_.effect.exists(_.action == HintEffect.Verb.Prioritise.word))
       val added = picks.flatMap { p =>
         val prio = boosted(c, p.target, p.priority, hints)
         val boost = if prio != p.priority then s", priority $prio by a hint" else ""

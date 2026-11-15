@@ -186,12 +186,12 @@ class ManagerPolicySuite extends munit.FunSuite:
     assert(!released(Hold(reason = Managers.Rationale("person")), now, _ => true))
 
   test("hint effects match by target, tag, topic or goal; notes are live and in scope"):
-    val e = HintEffect(HintEffect.Action(HintEffect.Prioritise), tag = Some(HintEffect.Tag("Tin Trade")))
+    val e = HintEffect(HintEffect.Verb.Prioritise.word, tag = Some(HintEffect.Tag("Tin Trade")))
     assert(matches(e, ManagerPolicy.Candidate.Target("x"), List(ManagerPolicy.Tag("tin trade")), Nil, Nil))
     assert(!matches(e, ManagerPolicy.Candidate.Target("x"), List(ManagerPolicy.Tag("copper")), Nil, Nil))
     assert(
       matches(
-        HintEffect(HintEffect.Action(HintEffect.Skip), targets = List(Managers.HintEffect.Targets("tin"))),
+        HintEffect(HintEffect.Verb.Skip.word, targets = List(Managers.HintEffect.Targets("tin"))),
         ManagerPolicy.Candidate.Target("TIN"),
         Nil,
         Nil,
@@ -200,7 +200,7 @@ class ManagerPolicySuite extends munit.FunSuite:
     )
     assert(
       matches(
-        HintEffect(HintEffect.Action(HintEffect.HoldAction), goal = Some(Goal.Slug("g"))),
+        HintEffect(HintEffect.Verb.Hold.word, goal = Some(Goal.Slug("g"))),
         ManagerPolicy.Candidate.Target("x"),
         Nil,
         Nil,

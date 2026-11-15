@@ -915,7 +915,7 @@ unwrap	core:domain/EnrichSource.scala	.value outside a boundary	76
 unwrap	core:domain/FilterInference.scala	.value outside a boundary	11
 unwrap	core:domain/GoalFocus.scala	.value outside a boundary	59
 unwrap	core:domain/Highlight.scala	.value outside a boundary	3
-unwrap	core:domain/HintProposals.scala	.value outside a boundary	13
+unwrap	core:domain/HintProposals.scala	.value outside a boundary	12
 unwrap	core:domain/HttpPolicy.scala	.value outside a boundary	12
 unwrap	core:domain/IngestBacklog.scala	.value outside a boundary	21
 unwrap	core:domain/JsonRead.scala	.value outside a boundary	1
@@ -1096,7 +1096,7 @@ unwrap	server:domain/automation/managers/ManagerDefaultsViews.scala	.value outsi
 unwrap	server:domain/automation/managers/ManagerKindDefinition.scala	.value outside a boundary	2
 unwrap	server:domain/automation/managers/ManagerService.scala	.value outside a boundary	231
 unwrap	server:domain/automation/managers/ManagerSupervisor.scala	.value outside a boundary	89
-unwrap	server:domain/automation/managers/ManagersControllers.scala	.value outside a boundary	119
+unwrap	server:domain/automation/managers/ManagersControllers.scala	.value outside a boundary	116
 unwrap	server:domain/automation/scheduler/SchedulerService.scala	.value outside a boundary	150
 unwrap	server:domain/automation/workflows/Pipelines.scala	.value outside a boundary	7
 unwrap	server:domain/automation/workflows/Workflows.scala	.value outside a boundary	6
@@ -1265,7 +1265,7 @@ unwrap	server:domain/research/workflows/ProposeArticlesPipeline.scala	.value out
 unwrap	server:domain/research/workflows/ResearchWorkflow.scala	.value outside a boundary	4
 unwrap	server:domain/research/workflows/ReviewArticlePipeline.scala	.value outside a boundary	93
 unwrap	server:domain/research/workflows/ReviewLedgerService.scala	.value outside a boundary	6
-unwrap	server:domain/research/workflows/ReviewManagerKind.scala	.value outside a boundary	94
+unwrap	server:domain/research/workflows/ReviewManagerKind.scala	.value outside a boundary	93
 unwrap	server:domain/research/workflows/SeedManagerKind.scala	.value outside a boundary	64
 unwrap	server:server/ArticleHtml.scala	.value outside a boundary	9
 unwrap	server:server/AuthHandler.scala	.value outside a boundary	3

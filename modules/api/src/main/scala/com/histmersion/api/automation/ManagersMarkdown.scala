@@ -98,7 +98,7 @@ object ManagersMarkdown:
     if p.events.isEmpty then ("_No events._") else (p.events.map(e => s"- ${event(e)}").mkString("\n"))
 
   def effect(e: HintEffect): String =
-    if e.action == HintEffect.Action(HintEffect.Config) then (s"settings: ${e.config.fold("none")(configLine)}")
+    if e.action == HintEffect.Verb.Config.word then (s"settings: ${e.config.fold("none")(configLine)}")
     else
       e.action.value + (e.targets ++ e.tag.map(t => s"tag $t") ++ e.topic.map(t => s"topic $t") ++
         e.goal.map(g => s"goal $g")).mkString(" ", ", ", "") + e.until.fold("")(u => s" until $u") +

@@ -788,53 +788,58 @@ final class ManagersControllers(
       item: Option[ManagerItem],
       proposal: Boolean
   ): Either[Api.Error, HintEffect] =
-    val a = e.action.value.trim.toLowerCase
-    val allowed = if proposal then HintEffect.Proposable else HintEffect.Actions
-    if !allowed.contains(a) then
-      Left(
-        error(
-          if !proposal && a == HintEffect.Config then
-            Problem.Unclassified(
-              Legacy.Text(
-                s"unknown hint action '${e.action}' (one of: ${allowed.mkString(", ")}) — change the settings with the manager's config instead"
+    val allowed = if proposal then HintEffect.Verb.Proposable else HintEffect.Verb.Actions
+    val verb = HintEffect.Action.verb(e.action)
+    def oneOf = allowed.map(_.word).mkString(", ")
+    verb.filter(allowed.contains) match
+      case None =>
+        Left(
+          error(
+            if !proposal && verb.contains(HintEffect.Verb.Config) then
+              Problem.Unclassified(
+                Legacy.Text(
+                  s"unknown hint action '${e.action}' (one of: $oneOf) — change the settings with the manager's config instead"
+                )
               )
-            )
-          else
-            Problem.Unclassified(Legacy.Text(s"unknown hint action '${e.action}' (one of: ${allowed.mkString(", ")})"))
-        )
-      )
-    else if a == HintEffect.Config then
-      e.config
-        .filter(c => ManagersMarkdown.configLine(c) != "the defaults")
-        .toRight(Api.Error(Problem.Unclassified(Legacy.Text("a config action names the settings it changes"))))
-        .flatMap(c => validate(kindOf(m), m.config.merge(c)).map(_ => e.modify(_.action).setTo(HintEffect.Action(a))))
-    else if e.targets.isEmpty && e.tag.isEmpty && e.topic.isEmpty && e.goal.isEmpty && item.isEmpty then
-      Left(
-        error(
-          Problem.Unclassified(
-            Legacy.Text("a structured hint names its targets, a tag, a topic or a goal (or is about one item)")
+            else Problem.Unclassified(Legacy.Text(s"unknown hint action '${e.action}' (one of: $oneOf)"))
           )
         )
-      )
-    else if a == HintEffect.HoldAction && e.until.isEmpty && e.untilSource.isEmpty then
-      Left(
-        Api.Error(
-          Problem.Unclassified(Legacy.Text("a hold hint needs `until` (a date) or `untilSource` (a DOI or citekey)"))
+      case Some(HintEffect.Verb.Config) =>
+        e.config
+          .filter(c => ManagersMarkdown.configLine(c) != "the defaults")
+          .toRight(Api.Error(Problem.Unclassified(Legacy.Text("a config action names the settings it changes"))))
+          .flatMap(c =>
+            validate(kindOf(m), m.config.merge(c)).map(_ => e.modify(_.action).setTo(HintEffect.Verb.Config.word))
+          )
+      case Some(_) if e.targets.isEmpty && e.tag.isEmpty && e.topic.isEmpty && e.goal.isEmpty && item.isEmpty =>
+        Left(
+          error(
+            Problem.Unclassified(
+              Legacy.Text("a structured hint names its targets, a tag, a topic or a goal (or is about one item)")
+            )
+          )
         )
-      )
-    else if e.until.exists(u => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(u.value)).isEmpty) then
-      Left(
-        error(
-          Problem.Unclassified(Legacy.Text(s"'${e.until.fold("")(_.value)}' is not a date (2026-11-01) or an instant"))
+      case Some(HintEffect.Verb.Hold) if e.until.isEmpty && e.untilSource.isEmpty =>
+        Left(
+          Api.Error(
+            Problem.Unclassified(Legacy.Text("a hold hint needs `until` (a date) or `untilSource` (a DOI or citekey)"))
+          )
         )
-      )
-    else
-      Right(
-        e.modify(_.action)
-          .setTo(HintEffect.Action(a))
-          .modify(_.targets)
-          .setTo((e.targets ++ item.map(i => HintEffect.Targets(i.target.value)).toList).distinct)
-      )
+      case Some(_) if e.until.exists(u => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(u.value)).isEmpty) =>
+        Left(
+          error(
+            Problem.Unclassified(
+              Legacy.Text(s"'${e.until.fold("")(_.value)}' is not a date (2026-11-01) or an instant")
+            )
+          )
+        )
+      case Some(v) =>
+        Right(
+          e.modify(_.action)
+            .setTo(v.word)
+            .modify(_.targets)
+            .setTo((e.targets ++ item.map(i => HintEffect.Targets(i.target.value)).toList).distinct)
+        )
 
   /** A model's effect, recorded for a person: an open `hint-effect` approval about the manager. */
   private def proposeEffect(
@@ -878,8 +883,8 @@ final class ManagersControllers(
         ht.itemId.flatMap(i => agents.managerStore.item(ManagerItem.Id(i.value))),
         proposal = true
       ).left.map(_.message.sentence)
-      w <- e.action.value match
-        case HintEffect.Config =>
+      w <- HintEffect.Action.verb(e.action) match
+        case Some(HintEffect.Verb.Config) =>
           val c = m.config.merge(e.config.getOrElse(ManagerConfig()))
           val _ = agents.managerStore.setConfig(
             m.id,
@@ -928,8 +933,8 @@ final class ManagersControllers(
         )
       })
     }
-    val n = e.action.value match
-      case HintEffect.Prioritise =>
+    val n = HintEffect.Action.verb(e.action) match
+      case Some(HintEffect.Verb.Prioritise) =>
         val p = e.priority.fold(ManagerSupervisor.HintPriority)(_.value)
         val added = named.filterNot(t => open.exists(_.target == t)).count { t =>
           agents.managerStore.upsert(m.id, kind, t, ItemOrigin.Hint, ManagerItem.Priority(p), reopen = true)
@@ -939,7 +944,7 @@ final class ManagersControllers(
           Transactor(ds).transact(ManagerRepo.setPriority(i.id, ManagerItem.Priority(math.max(i.priority.value, p))))
         )
         matched.size + added
-      case HintEffect.HoldAction =>
+      case Some(HintEffect.Verb.Hold) =>
         val hold = Hold(
           e.until.map(u => Hold.Until(u.value)),
           e.untilSource.map(u => Hold.UntilSource(u.value)),
@@ -952,7 +957,7 @@ final class ManagersControllers(
           agents.managerStore.item(id).filter(_.status == ItemStatus.Pending.wire)
         }
         (matched ++ added).count(i => transact(ds)(ManagerRepo.hold(i.id, hold)))
-      case HintEffect.Skip =>
+      case Some(HintEffect.Verb.Skip) =>
         matched.count(i =>
           transact(ds)(
             ManagerRepo.settle(

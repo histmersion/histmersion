@@ -856,7 +856,7 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
         Managers.HintAdd.Text("e3 first"),
         effect = Some(
           HintEffect(
-            HintEffect.Action(HintEffect.Prioritise),
+            HintEffect.Verb.Prioritise.word,
             targets = List(Managers.HintEffect.Targets("zzagent_e3")),
             priority = Some(Managers.HintEffect.Priority(7))
           )
@@ -870,7 +870,7 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
         Managers.HintAdd.Text("wait for the new edition"),
         effect = Some(
           HintEffect(
-            HintEffect.Action(HintEffect.HoldAction),
+            HintEffect.Verb.Hold.word,
             targets = List(Managers.HintEffect.Targets("zzagent_e1")),
             until = Some(HintEffect.Until("2027-01-01"))
           )
@@ -883,7 +883,7 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
       ReviewLight,
       HintAdd(
         Managers.HintAdd.Text("not this one"),
-        effect = Some(HintEffect(HintEffect.Action(HintEffect.Skip), tag = Some(SkipTag)))
+        effect = Some(HintEffect(HintEffect.Verb.Skip.word, tag = Some(SkipTag)))
       )
     )
     assertEquals(item(ManagerItem.Target("zzagent_e2")).status, "stopped")
