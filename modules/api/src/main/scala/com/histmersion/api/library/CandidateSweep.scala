@@ -1,6 +1,5 @@
 package com.histmersion
 package api.library
-import com.github.plokhotnyuk.jsoniter_scala.core.JsonKeyCodec
 import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import com.histmersion.api.given
@@ -30,8 +29,7 @@ object CandidateSweep:
   type Again = Again.T
   object Again extends Newtype[Int, Pure]
   type SkippedKey = SkippedKey.T
-  object SkippedKey extends Newtype[String, Pure]:
-    given JsonKeyCodec[T] = JsonCodec.key[T](_.value, k => Right((SkippedKey(_))(k)))
+  object SkippedKey extends Newtype[String, Pure]
   type SkippedValue = SkippedValue.T
   object SkippedValue extends Newtype[Int, Pure]
   type Unseen = Unseen.T
