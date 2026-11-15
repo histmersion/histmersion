@@ -2685,6 +2685,16 @@
         "description" : "Plan the import of another Histmersion collection's bundle into this one (read-only: it decides nothing and writes nothing). Lists EVERY issue in one run — two citekeys for one work, one citekey for two works, differing DOIs/years/statuses, records changed on both sides, articles that diverged — each with a stable id (`S-3c1e7a2b`), the evidence, and the decisions it allows (left = this collection, right = the bundle). `bundle` is the sha256 of a bundle uploaded to the server (the user runs `histmersion merge plan <file>`, which uploads it and prints the sha256). `resolve` maps issue ids to decisions (`keep-left`, `keep-right`, `both`, `map:<citekey>`, …) to see what would remain; `editions` is merge|separate. Present the plan to the user; scholarly decisions (statuses, editions, articles) are theirs — never resolve them on their behalf.",
         "inputSchema" : {
           "$schema" : "https://json-schema.org/draft/2020-12/schema",
+          "$defs" : {
+            "Map_String" : {
+              "title" : "Map_String",
+              "description" : "Issue id → decision, e.g. {\"S-3c1e7a2b\": \"map:guterbock1997_hittite\"}",
+              "type" : "object",
+              "additionalProperties" : {
+                "type" : "string"
+              }
+            }
+          },
           "title" : "MergePlanInput",
           "type" : "object",
           "required" : [
@@ -2696,11 +2706,7 @@
               "type" : "string"
             },
             "resolve" : {
-              "description" : "Issue id → decision, e.g. {\"S-3c1e7a2b\": \"map:guterbock1997_hittite\"}",
-              "type" : "object",
-              "additionalProperties" : {
-                "type" : "string"
-              }
+              "$ref" : "#/$defs/Map_String"
             },
             "editions" : {
               "description" : "merge | separate: answers every year-gap (edition) question at once",
