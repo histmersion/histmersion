@@ -1,5 +1,5 @@
 rule	module	path	line	detail
-G3misplaced	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	19	Failures.spliced(c: Citekey)
+G3misplaced	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	25	Failures.spliced(c: Citekey)
 G3misplaced	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	10	Sources.describe(s: Source)
 G3misplaced	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	13	Sources.same(a: Citekey)
 G3misplaced	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	15	Sources.titled(t: Title)
@@ -25,10 +25,14 @@ G44	core	modules/core/src/main/scala/com/histmersion/domain/Branching.scala	13	v
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Literals.scala	13	construct:Citekey.applyUnsafe;expr
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Literals.scala	14	construct:Year.apply;expr
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Policy.scala	26	value:Wire
-G44	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	19	value:Citekey
-G44	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	20	construct:Shelf.assume;expr
-G44	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	21	construct:Problem.assume;expr
-G44	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	22	construct:Problem.applyUnsafe;expr
+G44	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	18	construct:Problem.apply;interpolation
+G44	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	19	construct:Problem.apply;interpolation
+G44	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	20	construct:Note.apply;interpolation
+G44	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	21	construct:Note.apply;interpolation:newtype
+G44	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	25	value:Citekey
+G44	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	26	construct:Shelf.assume;expr
+G44	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	27	construct:Problem.assume;expr
+G44	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	28	construct:Problem.applyUnsafe;expr
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	10	value:Citekey
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	11	value:Citekey
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	20	construct:Citekey.option;expr
@@ -79,10 +83,10 @@ G49	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	11	co
 G49	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	11	lambda:find;Citekey
 G49	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	34	lambda:map;Citekey
 G49	core	modules/core/src/main/scala/com/histmersion/domain/TextBranches.scala	41	arg-of-contains;Detail
-G55positional	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	43	newtype:LookupResult
-G55positional	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	45	alias:Round1Result
-G55positional	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	46	alias:MergeArg2
-G55positional	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	47	alias:HeaderPart1
+G55positional	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	49	newtype:LookupResult
+G55positional	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	51	alias:Round1Result
+G55positional	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	52	alias:MergeArg2
+G55positional	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	53	alias:HeaderPart1
 G58raw	db	modules/db/src/main/scala/com/histmersion/util/database/Queries.scala	6	operator:raw
 G58raw	db	modules/db/src/main/scala/com/histmersion/util/database/Queries.scala	6	text:Text
 G58raw	db	modules/db/src/main/scala/com/histmersion/util/database/Queries.scala	7	operator:of
@@ -94,8 +98,8 @@ G58raw	db	modules/db/src/main/scala/com/histmersion/util/database/Queries.scala	
 G58raw	db	modules/db/src/main/scala/com/histmersion/util/database/Queries.scala	11	operator:raw
 G58raw	db	modules/db/src/main/scala/com/histmersion/util/database/Queries.scala	11	text:Text.applyUnsafe
 G5problem	core	modules/core/src/main/scala/com/histmersion/domain/Problem.scala	8	a second top-level Problem: domain/Problem.
-G5problem	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	26	domain/Problems$package.ReviewProblem.
-G5problem	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	30	domain/Check.Why.
+G5problem	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	32	domain/Problems$package.ReviewProblem.
+G5problem	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	36	domain/Check.Why.
 G5problem	core	modules/core/src/main/scala/com/histmersion/domain/review/Problem.scala	9	a second top-level Problem: domain/review/Problem.
 G5textBranch	core	modules/core/src/main/scala/com/histmersion/domain/Branching.scala	6	contains:Problem
 G5textBranch	core	modules/core/src/main/scala/com/histmersion/domain/Branching.scala	7	startsWith:Problem
@@ -118,12 +122,12 @@ G5textBranch	core	modules/core/src/main/scala/com/histmersion/domain/TextBranche
 G5textBranch	core	modules/core/src/main/scala/com/histmersion/domain/TextBranches.scala	38	match:field:note
 G5textBranch	core	modules/core/src/main/scala/com/histmersion/domain/TextBranches.scala	41	contains-in:Detail
 G60external	core	modules/core/src/main/scala/com/histmersion/util/problem/External.scala	13	value:Reported
-G60fromString	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	15	domain/Problem.apply;literal
-G60fromString	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	16	domain/Problem.apply;interpolation
-G60fromString	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	17	domain/Problem.apply;interpolation
+G60fromString	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	17	domain/Problem.apply;literal
+G60fromString	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	18	domain/Problem.apply;interpolation
 G60fromString	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	19	domain/Problem.apply;interpolation
-G60fromString	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	21	domain/Problem.assume;expression
-G60fromString	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	22	domain/Problem.applyUnsafe;interpolation
+G60fromString	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	25	domain/Problem.apply;interpolation
+G60fromString	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	27	domain/Problem.assume;expression
+G60fromString	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	28	domain/Problem.applyUnsafe;interpolation
 G60fromString	core	modules/core/src/main/scala/com/histmersion/util/problem/Problem.scala	12	Unclassified;literal
 G60fromString	core	modules/core/src/main/scala/com/histmersion/util/problem/Problem.scala	13	Unclassified;interpolation
 G60fromString	core	modules/core/src/main/scala/com/histmersion/util/problem/Problem.scala	14	Unclassified;expression
