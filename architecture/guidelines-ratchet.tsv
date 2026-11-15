@@ -251,7 +251,7 @@ G60fromString	api	main	2
 G60fromString	api	test	9
 G60fromString	cli	main	134
 G60fromString	cli	test	15
-G60fromString	core	test	51
+G60fromString	core	test	32
 G60fromString	db	main	77
 G60fromString	db	test	5
 G60fromString	problem	main	2
