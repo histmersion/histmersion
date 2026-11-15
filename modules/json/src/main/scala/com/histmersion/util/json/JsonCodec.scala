@@ -37,11 +37,11 @@ object JsonCodec:
     JsoniterConfig.default.withCirceLikeObjectEncoding.withRequireCollectionFields
       .withSkipUnexpectedFields(unknown == Unknown.Skipped)
 
-  /** What a schema derived beside a codec is told of it (Kindlings' Tapir schemas read it): a field with a default may
-    * be absent, as the codec reads it. Kindlings derives that from `transientDefault`, which the codecs leave off (they
-    * write every field).
+  /** What a schema derived beside a codec is told of it (Kindlings' Tapir schemas read it): the codecs' own config, so
+    * a field is optional exactly where the decoder accepts it absent (an `Option`, a field with a default) and required
+    * where it does not (any other field, a collection without a default included).
     */
-  val schemas: JsoniterConfig = JsoniterConfig.default.withTransientDefault
+  val schemas: JsoniterConfig = config(Unknown.Skipped)
 
   inline def derived[A](using unknown: Unknown): JsonCodec[A] =
     of(KindlingsJsonValueCodec.derived[A](using config(unknown)))
