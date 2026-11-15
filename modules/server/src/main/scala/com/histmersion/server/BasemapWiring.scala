@@ -88,8 +88,8 @@ object BasemapWiring:
         HttpPolicy.MaxRetryAfterSeconds(maxRetryAfterSeconds.value),
         now
       ) match
-        case HttpPolicy.Step.Wait(ms, why) => Some(RetryWait(RetryWait.Ms(ms.value), why))
-        case _                             => None
+        case HttpPolicy.Step.Wait(ms, _) => Some(RetryWait(RetryWait.Ms(ms.value), code))
+        case _                           => None
 
   /** The fetch as one of the server's background jobs: behind its write guard, pinned to the caller's generation, and
     * stoppable by a person.

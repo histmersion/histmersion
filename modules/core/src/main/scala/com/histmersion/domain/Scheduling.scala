@@ -1,7 +1,6 @@
 package com.histmersion
 package domain
 
-import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.automation.AgentsMarkdown
 import com.histmersion.api.given
 
@@ -32,8 +31,31 @@ object Scheduling:
 
   enum Decision:
     case Start
-    case Skip(reason: Problem)
-    case Defer(reason: Problem)
+    case Skip(reason: Rationale)
+    case Defer(reason: Rationale)
+
+  /** Why a due schedule starts no run now: the account of the scheduler's decision, not a failure. */
+  enum Rationale:
+    /** Its previous run has not settled: it is `state`. */
+    case Unsettled(state: Run.State)
+
+    /** Today's agent spend, `spent` USD, reached `agents.budgets.daily-usd`. */
+    case DailySpent(spent: BigDecimal)
+
+    /** This month's agent spend, `spent` USD, reached `agents.budgets.monthly-usd`. */
+    case MonthlySpent(spent: BigDecimal)
+
+    /** `active` runs are queued or running already (`agents.max-concurrent-runs`). */
+    case Busy(active: ActiveCount)
+
+    /** The account as a person reads it. */
+    def said: String = this match
+      case Unsettled(state)  => s"its previous run is still ${state.wire}"
+      case DailySpent(spent) =>
+        s"today's agent spend (${AgentsMarkdown.usd(spent.toDouble)} USD) reached agents.budgets.daily-usd"
+      case MonthlySpent(spent) =>
+        s"this month's agent spend (${AgentsMarkdown.usd(spent.toDouble)} USD) reached agents.budgets.monthly-usd"
+      case Busy(active) => s"$active run(s) already queued or running (agents.max-concurrent-runs)"
 
   /** A run that has not settled: a schedule does not start another beside it. */
   def unsettled(s: Run.State): Boolean = !s.isTerminal
@@ -52,28 +74,11 @@ object Scheduling:
       maxConcurrent: MaxConcurrent
   ): Decision =
     previous.filter(unsettled) match
-      case Some(s) => Decision.Skip(Problem.Unclassified(Legacy.Text(s"its previous run is still ${s.wire}")))
+      case Some(s) => Decision.Skip(Rationale.Unsettled(s))
       case None    =>
-        if spentDay >= BigDecimal(dailyUsd.value) then
-          Decision.Skip(
-            Problem.Unclassified(
-              Legacy.Text(
-                s"today's agent spend (${AgentsMarkdown.usd(spentDay.toDouble)} USD) reached agents.budgets.daily-usd"
-              )
-            )
-          )
-        else if spentMonth >= BigDecimal(monthlyUsd.value) then
-          Decision.Skip(
-            Problem.Unclassified(
-              Legacy.Text(
-                s"this month's agent spend (${AgentsMarkdown.usd(spentMonth.toDouble)} USD) reached agents.budgets.monthly-usd"
-              )
-            )
-          )
-        else if active.value >= math.max(1, maxConcurrent.value) then
-          Decision.Defer(
-            Problem.Unclassified(Legacy.Text(s"$active run(s) already queued or running (agents.max-concurrent-runs)"))
-          )
+        if spentDay >= BigDecimal(dailyUsd.value) then Decision.Skip(Rationale.DailySpent(spentDay))
+        else if spentMonth >= BigDecimal(monthlyUsd.value) then Decision.Skip(Rationale.MonthlySpent(spentMonth))
+        else if active.value >= math.max(1, maxConcurrent.value) then Decision.Defer(Rationale.Busy(active))
         else Decision.Start
 
   /** The cost cap of a scheduled run: the schedule's own, else the goal's, else the server default. */

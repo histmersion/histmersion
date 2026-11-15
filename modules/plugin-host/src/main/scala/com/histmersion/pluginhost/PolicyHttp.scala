@@ -82,9 +82,9 @@ final class PolicyHttp(
               clock()
             ) match
               case HttpPolicy.Step.Accept        => Right(answer.body)
-              case HttpPolicy.Step.Wait(ms, why) => again(n, ms, why.sentence)
+              case HttpPolicy.Step.Wait(ms, why) => again(n, ms, why.said)
               case HttpPolicy.Step.GiveUp(why)   =>
-                if HttpPolicy.Throttled(code) then log.warn(HostLog.Line(s"acquire: $url — ${why.sentence}; giving up"))
+                if HttpPolicy.Throttled(code) then log.warn(HostLog.Line(s"acquire: $url — ${why.said}; giving up"))
                 Left(url.answered(answer.code.status, answer.body.value))
     attempt(HttpPolicy.Attempt(0))
 
