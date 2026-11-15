@@ -193,7 +193,7 @@ object MergeMarkdown:
     val lines = List(
       i.left.map(s => s"here `${s.label}`" + s.lines.map(l => s" · $l").mkString),
       i.right.map(s => s"bundle `${s.label}`" + s.lines.map(l => s" · $l").mkString),
-      Option.when(i.why.nonEmpty)("why " + i.why.map(_.sentence).mkString(" · ")),
+      Option.when(i.why.nonEmpty)("why " + i.why.mkString(" · ")),
       Option.when(i.options.nonEmpty)(
         "decide " + i.options.map(k => s"`${MergeDecision.Kind.wireOf(k)}${argHint(i, k)}`").mkString(" | ") +
           i.suggested.filter(_ => i.decision.isEmpty).fold("")(s => s" (suggested `${s.wire}`)")
