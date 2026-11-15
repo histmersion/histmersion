@@ -61,6 +61,9 @@ object Problem:
     /** A number given as input. */
     def of(number: Long): Raw = Raw(s"$number")
 
+    /** An input as a column wrote it, read back. */
+    def read(written: String): Raw = Raw(written)
+
     /** A value of any newtype as it was given — a model's answer field, a parsed year — shown back as its base value's
       * text (`Raw.of(answer.citekey)`). The newtype stays a concept up to here: this companion is the one place it is
       * unwrapped. Iron's mirror, which every newtype's companion gives, keeps plain values out.
@@ -96,6 +99,10 @@ object Problem:
     /** `number` things. */
     def of(number: Long): Count = Count(number)
 
+    /** The count a value of any newtype over a whole number holds (`Count.of(gap)`): unwrapped here, like [[Raw.of]].
+      */
+    def of[T](value: T)(using RefinedType.Mirror[T] { type BaseType <: Long | Int }): Count = Count(s"$value".toLong)
+
     /** A count written in decimal digits. */
     def read(digits: String): Option[Count] = digits.toLongOption.map(Count(_))
 
@@ -104,6 +111,11 @@ object Problem:
   object Millis extends Newtype[Long, Pure]:
     /** The length of `duration`. */
     def of(duration: scala.concurrent.duration.FiniteDuration): Millis = Millis(duration.toMillis)
+
+    /** The length a value of any newtype over whole milliseconds holds (`Millis.of(timeoutMs)`): unwrapped here, like
+      * [[Raw.of]].
+      */
+    def of[T](value: T)(using RefinedType.Mirror[T] { type BaseType <: Long | Int }): Millis = Millis(s"$value".toLong)
 
     /** A length of time written in decimal digits of milliseconds. */
     def read(digits: String): Option[Millis] = digits.toLongOption.map(Millis(_))
@@ -235,6 +247,106 @@ object Problem:
     object Reference:
       /** The problem of the request as a whole: no path into it. */
       def here(form: Form): Reference = Reference(form, Vector.empty)
+
+    /** The input breaks `rule`, a rule of the operation's own: a cron's five fields, a tile inside its grid, two runs
+      * of one pipeline.
+      */
+    final case class Broken(rule: Rule, at: Vector[Field]) extends Invalid
+
+    object Broken:
+      /** The problem of the request as a whole: no path into it. */
+      def here(rule: Rule): Broken = Broken(rule, Vector.empty)
+
+    /** A field of a cron expression, in its order: minute, hour, day of month, month, day of week. */
+    enum CronPart derives CanEqual:
+      case Minute, Hour, DayOfMonth, Month, DayOfWeek
+
+    /** How one field of a cron expression is not one. */
+    enum CronFlaw derives CanEqual:
+      /** `stated` is not a number from `least` to `greatest`. */
+      case NotNumber(stated: Raw, least: Count, greatest: Count)
+
+      /** The step `stated` (after a `/`) is not a positive number. */
+      case Step(stated: Raw)
+
+      /** `stated` has more than one `/`. */
+      case Slashes(stated: Raw)
+
+      /** The range `stated` runs backwards. */
+      case Backwards(stated: Raw)
+
+      /** `stated` is not a range (`a-b`). */
+      case NotRange(stated: Raw)
+
+    enum Rule derives CanEqual:
+      /** `stated` is not a cron expression: it has not five fields and is none of the `shortcuts`. */
+      case CronFields(stated: Raw, shortcuts: Vector[Raw])
+
+      /** The cron `stated` has a `part` that is not one: `flaw`. */
+      case CronField(stated: Raw, part: CronPart, flaw: CronFlaw)
+
+      /** The cron `stated` never fires. */
+      case CronNeverFires(stated: Raw)
+
+      /** The cron `stated` fires every `gap` minutes, more often than every `least`. */
+      case CronTooOften(stated: Raw, gap: Count, least: Count)
+
+      /** A map tile's zoom `zoom` is outside 0 to `greatest`. */
+      case ZoomWithin(zoom: Count, greatest: Count)
+
+      /** The map tile `x`/`y` is outside the grid of zoom `zoom`. */
+      case TileWithin(x: Count, y: Count, zoom: Count)
+
+      /** An identifier is empty: it is a DOI, an arXiv id or a citekey. */
+      case IdentifierGiven
+
+      /** `stated` is neither a DOI, an arXiv id nor a citekey. */
+      case IdentifierKind(stated: Raw)
+
+      /** `stated` is not a page of the activity list (`<instant>~<key>`). */
+      case ActivityPage(stated: Raw)
+
+      /** `stated` is not a page of the activity list: its time is not an instant. */
+      case ActivityPageTime(stated: Raw)
+
+      /** `stated` is no event catalogue; `known` are. */
+      case EventCatalogue(stated: Raw, known: Vector[Raw])
+
+      /** A rename names `citekey`, which the source already has. */
+      case CitekeyUnchanged(citekey: Raw)
+
+      /** A rename names `citekey`, a valid citekey that a `[[link]]` would read as an article's slug. */
+      case CitekeyLinkShaped(citekey: Raw)
+
+      /** The asset `asset` is not valid base64: `reported`. */
+      case AssetBase64(asset: Raw, reported: External.Reported)
+
+      /** The asset `asset` is empty. */
+      case AssetEmpty(asset: Raw)
+
+      /** The asset `asset` has `bytes` bytes, more than the `limit` (`limits.asset-bytes`). */
+      case AssetBytes(asset: Raw, bytes: Count, limit: Count)
+
+      /** A comparison is given fewer than two runs. */
+      case RunsCompared
+
+      /** A comparison is given one run twice. */
+      case RunRepeated
+
+      /** The run `run` is of the pipeline `pipeline`, the first run `first` of `firstPipeline`. */
+      case RunsPipeline(run: Raw, pipeline: Raw, first: Raw, firstPipeline: Raw)
+
+      /** The run `run` is on the target `target`, the first run `first` on `firstTarget`. */
+      case RunsTarget(run: Raw, target: Raw, first: Raw, firstTarget: Raw)
+
+      /** A passage search is given no words. */
+      case QueryGiven
+
+      /** A passage regex ran longer than `limit` over the body. */
+      case RegexTime(limit: Millis)
+
+      /** `pattern` is not a valid regex: `description`, at `position` when the regex engine names one. */
+      case RegexValid(description: External.Reported, position: Option[Count], pattern: Raw)
 
     /** The least and the greatest value taken, either open. */
     final case class Bounds(least: Option[Raw], greatest: Option[Raw])
@@ -1270,6 +1382,7 @@ object Problem:
       case Invalid.OutOfRange(t, raw, b, at)  => Invalid.OutOfRange(t, raw, b, field +: at)
       case Invalid.Inconsistent(fs, rule, at) => Invalid.Inconsistent(fs, rule, field +: at)
       case Invalid.Reference(form, at)        => Invalid.Reference(form, field +: at)
+      case Invalid.Broken(rule, at)           => Invalid.Broken(rule, field +: at)
       case Upstream.Http(n, url, st, b, at)   => Upstream.Http(n, url, st, b, field +: at)
       case Upstream.Unreachable(n, u, r, at)  => Upstream.Unreachable(n, u, r, field +: at)
       case Upstream.Challenged(n, u, st, at)  => Upstream.Challenged(n, u, st, field +: at)
@@ -1344,6 +1457,14 @@ object Problem:
         .here(TypeName("com.histmersion.Latitude"), Raw("91"), Invalid.Bounds(Some(Raw("-90")), Some(Raw("90")))),
       Invalid.Inconsistent.here(NonEmptyVector.of(Field("lat"), Field("lon")), Invalid.Exclusion.Together),
       Invalid.Reference(Invalid.Form.EnvName(Raw("1PASSWORD")), Vector(Field("plugins"), Field("api-key"))),
+      Invalid.Broken(
+        Invalid.Rule.CronField(
+          Raw("61 * * * *"),
+          Invalid.CronPart.Minute,
+          Invalid.CronFlaw.NotNumber(Raw("61"), Count(0L), Count(59L))
+        ),
+        Vector(Field("cron"))
+      ),
       NotFound.Entity(citekey, Raw("anthony2007")),
       NotFound.Copy(Raw("doi:10.1017/S0003598X00000001")),
       NotFound.Dangling(

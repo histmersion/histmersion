@@ -36,7 +36,7 @@ class CasesSuite extends munit.FunSuite:
 
   test("there are eleven groups and two cases outside them"):
     assertEquals(Group.values.length, 13)
-    assertEquals(examples.size, 64)
+    assertEquals(examples.size, 65)
 
   test("an exception becomes an internal problem with its class and its message's first line, cut to 300"):
     val long = "x" * 400

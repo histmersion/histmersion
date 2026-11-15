@@ -1,7 +1,7 @@
 package com.histmersion
 package domain
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.Plural
 import com.histmersion.api.automation.Manager as ApiManager
@@ -204,11 +204,9 @@ object ManagerPolicy:
       c.shortestGapMinutes(now).filter(_.value < minIntervalMinutes.value) match
         case Some(gap) =>
           Left(
-            Problem.Unclassified(
-              Legacy.Text(
-                s"'$text' would fire every $gap minute(s); the least is $minIntervalMinutes " +
-                  "(agents.scheduler.min-interval-minutes)"
-              )
+            Problem.Invalid.Broken.here(
+              Problem.Invalid.Rule
+                .CronTooOften(Problem.Raw.of(text), Problem.Count.of(gap), Problem.Count.of(minIntervalMinutes))
             )
           )
         case None => Right(c)

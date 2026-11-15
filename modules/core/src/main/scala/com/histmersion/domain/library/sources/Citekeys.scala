@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.sources
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.Problem.{Invalid, Raw}
 
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.given
@@ -23,16 +24,11 @@ object Citekeys:
     */
   def renameTo(oldCk: Citekey, newRaw: RenameToNewRaw): Either[Problem, Citekey] =
     Citekey.parse(newRaw.value).flatMap { ck =>
-      if ck.value == oldCk.value.trim then
-        Left(Problem.Unclassified(Legacy.Text(s"'$ck' is already the citekey of that source")))
+      if ck.value == oldCk.value.trim then Left(Invalid.Broken.here(Invalid.Rule.CitekeyUnchanged(Raw.of(ck))))
       else if !WikiLinks.isCitekeyShaped(ck.value) then
         Left(
-          Problem.Unclassified(
-            Legacy.Text(
-              s"'$ck' is a valid citekey but not a LINK-shaped one — `[[$ck]]` would resolve to an " +
-                "article, not the source. Use lower-case letters, digits and '_' with a four-digit year or an " +
-                "underscore (e.g. page1959_history)"
-            )
+          Invalid.Broken.here(
+            Invalid.Rule.CitekeyLinkShaped(Raw.of(ck))
           )
         )
       else Right(ck)

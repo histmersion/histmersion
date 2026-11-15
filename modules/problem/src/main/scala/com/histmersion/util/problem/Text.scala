@@ -32,6 +32,7 @@ object Text:
       case Invalid.OutOfRange(t, raw, b, at)   => s"${path(at)}${t.noun} $raw is ${b.range}"
       case Invalid.Inconsistent(fs, rule, at)  => s"${path(at)}${rule.of(fs)}"
       case Invalid.Reference(form, at)         => s"${path(at)}${form.said}"
+      case Invalid.Broken(rule, at)            => s"${path(at)}${rule.said}"
       case NotFound.Entity(t, key) if t.short == "Citekey" => s"No source '$key'"
       case NotFound.Entity(t, key)                         => s"no ${t.noun} '$key'"
       case NotFound.Copy(work)                             => s"no legal open-access PDF found for $work"
@@ -115,6 +116,7 @@ object Text:
       case Invalid.Repeated(t, raw, _)           => Invalid.Repeated(t, raw, Vector.empty).sentence
       case Invalid.Misplaced(field, under, _)    => Invalid.Misplaced(field, under, Vector.empty).sentence
       case Invalid.OutOfRange(t, raw, bounds, _) => Invalid.OutOfRange(t, raw, bounds, Vector.empty).sentence
+      case Invalid.Broken(rule, _)               => rule.said
       case other                                 => other.sentence
 
   extension (problems: Problems)
@@ -309,6 +311,55 @@ object Text:
       case Invalid.Bounds(Some(least), None)           => s"below $least"
       case Invalid.Bounds(None, Some(greatest))        => s"above $greatest"
       case Invalid.Bounds(None, None)                  => "out of range"
+
+  extension (rule: Invalid.Rule)
+    private def said: String = rule match
+      case Invalid.Rule.CronFields(stated, shortcuts) =>
+        s"'$stated' is not a cron expression: give five fields (minute hour day-of-month month day-of-week, in UTC) " +
+          s"or one of ${shortcuts.mkString(", ")}"
+      case Invalid.Rule.CronField(stated, part, flaw)    => s"'$stated': ${words(part.productPrefix)}: ${flaw.said}"
+      case Invalid.Rule.CronNeverFires(stated)           => s"'$stated' never fires"
+      case Invalid.Rule.CronTooOften(stated, gap, least) =>
+        s"'$stated' would fire every $gap minute(s); the least is $least (agents.scheduler.min-interval-minutes)"
+      case Invalid.Rule.ZoomWithin(zoom, greatest) => s"zoom $zoom is outside 0..$greatest"
+      case Invalid.Rule.TileWithin(x, y, zoom)     => s"tile $x/$y is outside the grid of zoom $zoom"
+      case Invalid.Rule.IdentifierGiven            => "empty identifier — give a DOI, arxiv:<id>, or a citekey"
+      case Invalid.Rule.IdentifierKind(stated)     => s"'$stated' is neither a DOI, an arXiv id, nor a citekey"
+      case Invalid.Rule.ActivityPage(stated)       => s"'$stated' is not a page of the activity list"
+      case Invalid.Rule.ActivityPageTime(stated)   =>
+        s"'$stated' is not a page of the activity list (its time is not an instant)"
+      case Invalid.Rule.EventCatalogue(stated, known) =>
+        s"unknown event catalogue '$stated' (one of: ${known.mkString(", ")})"
+      case Invalid.Rule.CitekeyUnchanged(citekey)  => s"'$citekey' is already the citekey of that source"
+      case Invalid.Rule.CitekeyLinkShaped(citekey) =>
+        s"'$citekey' is a valid citekey but not a LINK-shaped one — `[[$citekey]]` would resolve to an " +
+          "article, not the source. Use lower-case letters, digits and '_' with a four-digit year or an " +
+          "underscore (e.g. page1959_history)"
+      case Invalid.Rule.AssetBase64(asset, reported)    => s"asset '$asset': not valid base64 ($reported)"
+      case Invalid.Rule.AssetEmpty(asset)               => s"asset '$asset': empty"
+      case Invalid.Rule.AssetBytes(asset, bytes, limit) =>
+        s"asset '$asset': $bytes bytes exceeds the $limit-byte limit (limits.asset-bytes)"
+      case Invalid.Rule.RunsCompared                              => "give at least two runs to compare"
+      case Invalid.Rule.RunRepeated                               => "a run is given twice"
+      case Invalid.Rule.RunsPipeline(run, pipeline, first, other) =>
+        s"run $run is $pipeline, run $first $other: compare runs of one pipeline"
+      case Invalid.Rule.RunsTarget(run, target, first, other) =>
+        s"run $run is on $target, run $first on $other: compare runs on one target"
+      case Invalid.Rule.QueryGiven       => "the query is empty — give the words to find"
+      case Invalid.Rule.RegexTime(limit) =>
+        s"the regex ran longer than $limit ms over this body — make it more specific " +
+          "(anchor it, avoid nested repetition like (a+)+)"
+      case Invalid.Rule.RegexValid(description, position, pattern) =>
+        s"not a valid regex: $description${position.fold("")(p => s" at position $p")} in `$pattern` " +
+          "(leave regex off to match the text literally)"
+
+  extension (flaw: Invalid.CronFlaw)
+    private def said: String = flaw match
+      case Invalid.CronFlaw.NotNumber(stated, least, greatest) => s"'$stated' is not a number from $least to $greatest"
+      case Invalid.CronFlaw.Step(stated)                       => s"step '$stated' must be a positive number"
+      case Invalid.CronFlaw.Slashes(stated)                    => s"'$stated' has more than one '/'"
+      case Invalid.CronFlaw.Backwards(stated)                  => s"range '$stated' runs backwards"
+      case Invalid.CronFlaw.NotRange(stated)                   => s"'$stated' is not a range"
 
   extension (rule: Invalid.Exclusion)
     private def of(fields: NonEmptyVector[Field]): String =
