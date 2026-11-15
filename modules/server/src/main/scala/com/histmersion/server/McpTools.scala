@@ -129,7 +129,7 @@ final class McpTools(
               in.authors.map(IngestMeta.Authors(_)),
               in.year.map(Year(_)),
               in.doi.flatMap(Doi.normalize),
-              in.acquireItem.map(AcquireCheckRow.Item(_))
+              in.acquireItem.map(AcquireCheckRow.Id(_))
             )
           ) match
           case Right(a) =>

@@ -26,7 +26,7 @@ private[acquisition] object AcquireCheckRepo:
 
   private def row(
       t: (
-          AcquireCheckRow.Item,
+          AcquireCheckRow.Id,
           CheckedAtMs,
           AcquireRecheck.LastCheck.Generation,
           AcquireRecheck.Outcome.Wire,
@@ -37,14 +37,14 @@ private[acquisition] object AcquireCheckRepo:
     AcquireCheckRow(t._1, Instant.ofEpochMilli(t._2.value), t._3, t._4, t._5, t._6)
 
   /** The checks of these items (any that has none is absent). */
-  def of(items: List[AcquireCheckRow.Item])(using DbCon): Map[AcquireCheckRow.Item, AcquireCheckRow] =
+  def of(items: List[AcquireCheckRow.Id])(using DbCon): Map[AcquireCheckRow.Id, AcquireCheckRow] =
     if items.isEmpty then Map.empty
     else
       val ids = items.distinct.map(_.toString)
       sql"$Select WHERE item_id::text = ANY($ids::text[])"
         .query[
           (
-              AcquireCheckRow.Item,
+              AcquireCheckRow.Id,
               CheckedAtMs,
               AcquireRecheck.LastCheck.Generation,
               AcquireRecheck.Outcome.Wire,
@@ -58,11 +58,11 @@ private[acquisition] object AcquireCheckRepo:
         .toMap
 
   /** The checks of every OPEN acquisition item. */
-  def open()(using DbCon): Map[AcquireCheckRow.Item, AcquireCheckRow] =
+  def open()(using DbCon): Map[AcquireCheckRow.Id, AcquireCheckRow] =
     sql"""$Select WHERE item_id IN (SELECT id FROM queue_items WHERE list = 'acquire' AND status = 'open')"""
       .query[
         (
-            AcquireCheckRow.Item,
+            AcquireCheckRow.Id,
             CheckedAtMs,
             AcquireRecheck.LastCheck.Generation,
             AcquireRecheck.Outcome.Wire,
@@ -77,7 +77,7 @@ private[acquisition] object AcquireCheckRepo:
 
   /** Record one check of `item` (its previous one replaced, the count kept). */
   def record(
-      item: AcquireCheckRow.Item,
+      item: AcquireCheckRow.Id,
       at: Instant,
       generation: AcquireRecheck.LastCheck.Generation,
       outcome: AcquireRecheck.Outcome,

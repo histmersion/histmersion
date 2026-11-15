@@ -11,7 +11,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * was checked.
   */
 final case class AcquireCheckRow(
-    item: AcquireCheckRow.Item,
+    item: AcquireCheckRow.Id,
     at: Instant,
     generation: AcquireRecheck.LastCheck.Generation,
     outcome: AcquireRecheck.Outcome.Wire,
@@ -27,8 +27,9 @@ final case class AcquireCheckRow(
     )
 
 object AcquireCheckRow:
-  type Item = Item.T
-  object Item extends Newtype[Int, Pure]
+  /** The acquisition item's id (its queue item's). */
+  type Id = Id.T
+  object Id extends Newtype[Int, Pure]
   type Checks = Checks.T
   object Checks extends Newtype[Int, Pure]
 

@@ -714,7 +714,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
       Run.Id("1feffdd6-4fb2-79cf-4978-543444f78922"),
       Run.State.Done,
       None,
-      StepFacts.Redo(ManagerPolicy.ItemOutcome("the draft was rejected")),
+      StepFacts.Redo(ManagerPolicy.Outcome("the draft was rejected")),
       now
     ) match
       case Next.Retry(at, f, note) if f.value == 1 => assert(at.isAfter(now) && note.value.contains("again"), note)
@@ -728,7 +728,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
       Run.Id("1feffdd6-4fb2-79cf-4978-543444f78922"),
       Run.State.Done,
       None,
-      StepFacts.Redo(ManagerPolicy.ItemOutcome("the draft was rejected")),
+      StepFacts.Redo(ManagerPolicy.Outcome("the draft was rejected")),
       now
     ) match
       case Next.Stop(o, Some(task), _) => assert(o.value.contains("2 attempts") && task.value.contains("[[x]]"), task)

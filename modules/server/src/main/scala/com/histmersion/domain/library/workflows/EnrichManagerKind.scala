@@ -47,7 +47,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
   def fire(c: ManagerContext, m: ManagerInfo, now: Instant): List[ManagerKindDefinition.FirePhrase] = Nil
 
   def facts(c: ManagerContext, item: ManagerItem, run: Run.Id): StepFacts =
-    StepFacts.Finished(ManagerPolicy.ItemOutcome("enriched"))
+    StepFacts.Finished(ManagerPolicy.Outcome("enriched"))
 
   def target(
       m: ManagerInfo,

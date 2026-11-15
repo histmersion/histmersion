@@ -44,10 +44,10 @@ abstract class AcquireCheckServiceContract extends AcquisitionStoreSuite:
       .copy(ocrMarkdown = body)
 
   stest("a check is replaced with its count kept; the open items' checks; counted since a time") { s =>
-    val open = AcquireCheckRow.Item(
+    val open = AcquireCheckRow.Id(
       s.queues.add(Queue.Kind.Acquire, Queue.QueueAdd(Queue.QueueItem.Text("Get 10.5555/zq.a"))).id.value
     )
-    val done = AcquireCheckRow.Item(
+    val done = AcquireCheckRow.Id(
       s.queues.add(Queue.Kind.Acquire, Queue.QueueAdd(Queue.QueueItem.Text("Get 10.5555/zq.b"))).id.value
     )
     s.checks.record(

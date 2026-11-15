@@ -103,9 +103,9 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
     item.kind.value match
       case AcquisitionSweep | CurrencyCheck =>
         StepFacts.Finished(
-          ManagerPolicy.ItemOutcome(closeLine(c, run).getOrElse(s"${item.kind} done — ${c.progress(run)}").take(1000))
+          ManagerPolicy.Outcome(closeLine(c, run).getOrElse(s"${item.kind} done — ${c.progress(run)}").take(1000))
         )
-      case _ => StepFacts.Finished(ManagerPolicy.ItemOutcome("enriched"))
+      case _ => StepFacts.Finished(ManagerPolicy.Outcome("enriched"))
 
   /** What the sweep found, as the watcher's own event (the run's worklog line, and the works it picked). */
   override def afterDone(

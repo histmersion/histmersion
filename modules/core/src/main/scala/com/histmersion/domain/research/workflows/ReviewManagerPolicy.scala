@@ -180,9 +180,9 @@ object ReviewManagerPolicy:
           val task = taskText.fold(s"review manager stopped [[$slug]]: $why (agent run ${run.value.take(8)})")(t =>
             s"$t — review manager stopped: $why"
           )
-          Next.Stop(ManagerPolicy.ItemOutcome(s"stopped: $why"), Some(ManagerPolicy.ItemTask(task.take(2000))), st)
+          Next.Stop(ManagerPolicy.Outcome(s"stopped: $why"), Some(ManagerPolicy.ItemTask(task.take(2000))), st)
         if f.openMajors.value == 0 then
-          Next.Done(ManagerPolicy.ItemOutcome(s"converged after ${counted(attempts.value, "run")}"), st)
+          Next.Done(ManagerPolicy.Outcome(s"converged after ${counted(attempts.value, "run")}"), st)
         else if churn then
           stop(
             s"omission churn — every open MAJOR (${f.openMajors}) is a missing-critique finding and the open critique " +
@@ -208,13 +208,13 @@ object ReviewManagerPolicy:
             )
           )
       case Run.State.Cancelled =>
-        Next.Stop(ManagerPolicy.ItemOutcome("stopped: its run was cancelled"), None, state.modify(_.before).setTo(None))
+        Next.Stop(ManagerPolicy.Outcome("stopped: its run was cancelled"), None, state.modify(_.before).setTo(None))
       case _ => // failed (or anything else terminal)
         val n = failures.value + 1
         val why = error.map(_.sentence).filter(_.nonEmpty).fold("")(e => s": ${e.take(300)}")
         if n >= s.maxFailures.value then
           Next.Stop(
-            ManagerPolicy.ItemOutcome(s"stopped: ${counted(n, "failed run")}$why"),
+            ManagerPolicy.Outcome(s"stopped: ${counted(n, "failed run")}$why"),
             Some(
               ManagerPolicy.ItemTask(
                 s"review manager stopped [[$slug]] after ${counted(n, "failed run")}$why (agent run ${run.value.take(8)})"

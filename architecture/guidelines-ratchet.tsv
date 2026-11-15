@@ -66,7 +66,7 @@ G44	plugins/media	main	103
 G44	plugins/media	test	57
 G44	problem	main	5
 G44	problem	test	1
-G44	server	main	10618
+G44	server	main	10610
 G44	server	test	3973
 G44	upstreams	main	147
 G44	upstreams	test	44
@@ -234,7 +234,7 @@ G49	plugins/gazetteers	main	21
 G49	plugins/gazetteers	test	30
 G49	plugins/media	main	103
 G49	plugins/media	test	15
-G49	server	main	4036
+G49	server	main	4030
 G49	server	test	1112
 G49	upstreams	main	42
 G49	upstreams	test	17

@@ -32,6 +32,7 @@ import com.histmersion.domain.library.Doi
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.domain.automation.worklists.WorkListControllers
 import io.github.iltotore.iron.constraint.any.Pure
+import io.scalaland.chimney.dsl.*
 
 /** The acquisition list's LEGAL RE-CHECK (docs/research-process-managers.md "As built: the acquisition list's
   * re-check"), a model-free pass of the managers' tick like the ingest backlog's drain, every
@@ -121,12 +122,12 @@ final class AcquireRecheckService(
       site.queues.list(Queue.Kind.Acquire, QueueScope.Open).toList.filter(i => only.forall(_.value == i.id.value))
     val dois = items.map(i => i.id.value -> orderedDois(i.text)).toMap
     val held = checks.heldByDoi(dois.values.flatMap(_.headOption).toList)
-    val last = checks.of(items.map(i => AcquireCheckRow.Item(i.id.value)))
+    val last = checks.of(items.map(_.id.transformInto[AcquireCheckRow.Id]))
     items.map(i =>
       Facts(
         i,
         AcquireRecheck.action(dois.getOrElse(i.id.value, Nil), held.get),
-        last.get(AcquireCheckRow.Item(i.id.value))
+        last.get(i.id.transformInto[AcquireCheckRow.Id])
       )
     )
 
@@ -590,7 +591,7 @@ final class AcquireRecheckService(
         None
       case Right(_) =>
         checks.record(
-          AcquireCheckRow.Item(f.item.id.value),
+          f.item.id.transformInto[AcquireCheckRow.Id],
           now,
           generation,
           Outcome.Closed,
@@ -630,7 +631,7 @@ final class AcquireRecheckService(
             (Outcome.Failed, s"${e.getClass.getSimpleName}: ${e.getMessage}", into.map(apiCk), None)
     val why =
       noCopy.fold(AcquireRecheck.reason(now, outcome, AcquireRecheck.Detail(detail)))(AcquireRecheck.noCopy(now, _))
-    checks.record(AcquireCheckRow.Item(f.item.id.value), now, generation, outcome, why)
+    checks.record(f.item.id.transformInto[AcquireCheckRow.Id], now, generation, outcome, why)
     Tried(
       RecheckRow(
         RecheckRow.Item(f.item.id.value),

@@ -2,6 +2,9 @@ package com.histmersion
 package server.views
 
 import io.scalaland.chimney.dsl.*
+import WorkListView.given
+import io.scalaland.chimney.Transformer
+import com.histmersion.domain.AcquireRecheck
 
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.views.QueueListing
@@ -56,15 +59,15 @@ final class WorkListView(
         if k != Kind.Acquire then Nil
         else
           acquireChecks
-            .of(items.map(i => AcquireCheckRow.Item(i.id.value)))
+            .of(items.map(_.id.transformInto[AcquireCheckRow.Id]))
             .values
             .toList
             .sortBy[Int](_.item.value)
             .map(r =>
               Acquire.Checks.AcquireCheck(
-                Queue.QueueItem.Id(r.item.value),
+                r.item.transformInto[Queue.QueueItem.Id],
                 Acquire.Checks.AcquireCheck.CheckedAt(r.at.toString),
-                Acquire.Checks.AcquireCheck.Outcome(r.outcome.value),
+                r.outcome.transformInto[Acquire.Checks.AcquireCheck.Outcome],
                 r.reason.transformInto[Acquire.Checks.AcquireCheck.Rationale],
                 r.checks.transformInto[Acquire.Checks.AcquireCheck.Checks]
               )
@@ -87,5 +90,11 @@ final class WorkListView(
     }
 
 object WorkListView:
+
+  /** A check's outcome as the listing carries it: the stored wire spelling, unchanged. The names differ (the core
+    * enum's `Outcome.Wire`, the record's `Outcome`), so chimney-iron's same-name pairing does not apply.
+    */
+  given Transformer[AcquireRecheck.Outcome.Wire, Acquire.Checks.AcquireCheck.Outcome] = wire =>
+    Acquire.Checks.AcquireCheck.Outcome(wire.value)
   type IncludeAll = IncludeAll.T
   object IncludeAll extends Newtype[Boolean, Pure]
