@@ -489,7 +489,7 @@ object Article:
             Problem.Invalid.Ambiguous.here(
               Problem.TypeName.of(Anchor),
               Problem.Raw(s"$a"),
-              Problem.Count.of(occurrences(text, (a)).size.toLong)
+              Problem.Count(occurrences(text, (a)).size.toLong)
             )
           )
         case Nil =>
@@ -504,7 +504,7 @@ object Article:
             case more =>
               Left(
                 Problem.Invalid.Ambiguous
-                  .here(Problem.TypeName.of(Anchor), Problem.Raw(s"$a"), Problem.Count.of(more.size.toLong))
+                  .here(Problem.TypeName.of(Anchor), Problem.Raw(s"$a"), Problem.Count(more.size.toLong))
               )
 
     private def cut(text: Body, s: Offset, e: Offset): Body =

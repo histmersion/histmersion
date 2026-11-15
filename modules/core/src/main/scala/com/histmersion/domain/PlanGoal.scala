@@ -196,14 +196,14 @@ object PlanGoal:
 
     if goals.size > caps.subGoals.value then
       problems += Content.Answer(
-        Content.Requirement.TooManySubGoals(Count.of(caps.subGoals), Count.of(goals.size.toLong))
+        Content.Requirement.TooManySubGoals(Count.of(caps.subGoals), Count(goals.size.toLong))
       )
     if queries.size > caps.queries.value then
       problems += Content.Answer(
-        Content.Requirement.TooManyQueries(Count.of(caps.queries), Count.of(queries.size.toLong))
+        Content.Requirement.TooManyQueries(Count.of(caps.queries), Count(queries.size.toLong))
       )
     if works.size > caps.works.value then
-      problems += Content.Answer(Content.Requirement.TooManyWorks(Count.of(caps.works), Count.of(works.size.toLong)))
+      problems += Content.Answer(Content.Requirement.TooManyWorks(Count.of(caps.works), Count(works.size.toLong)))
     if goals.isEmpty && queries.isEmpty && works.isEmpty && a.subGoals.isEmpty && a.queries.isEmpty && a.works.isEmpty
     then problems += Content.Answer(Content.Requirement.PlanGiven)
 

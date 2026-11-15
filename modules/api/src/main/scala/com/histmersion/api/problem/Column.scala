@@ -128,7 +128,7 @@ object Column:
 
   extension (at: EpochMs) private def iso: String = s"${Instant.ofEpochMilli(s"$at".toLong)}"
 
-  private def momentOf(iso: String): Option[EpochMs] = Try(Instant.parse(iso).toEpochMilli).toOption.map(EpochMs.of)
+  private def momentOf(iso: String): Option[EpochMs] = Try(Instant.parse(iso).toEpochMilli).toOption.map(EpochMs(_))
 
   private def until(at: Option[EpochMs]): String = at.fold("")(t => s" until ${t.iso}")
 

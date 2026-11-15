@@ -157,7 +157,7 @@ object CompileArticle:
     val cap = maxClaims.value
     val tooMany =
       Option.when(claims.size > cap)(
-        Content.Answer(Content.Requirement.TooManyClaims(Count.of(cap.toLong), Count.of(claims.size.toLong)))
+        Content.Answer(Content.Requirement.TooManyClaims(Count(cap.toLong), Count(claims.size.toLong)))
       )
     val reason = Option(a.reason).map(r => s"$r".trim).filter(_.nonEmpty)
     val noReason =

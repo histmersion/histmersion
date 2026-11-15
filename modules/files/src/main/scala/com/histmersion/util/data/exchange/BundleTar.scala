@@ -32,7 +32,7 @@ object BundleTar:
   def header(name: Entry.Name, size: ByteCount): Either[Problem, Array[Byte]] =
     val nameBytes = name.value.getBytes(UTF_8)
     if nameBytes.length > MaxName then
-      Left(damaged(s"$name", Problem.Io.Damage.Length(Problem.Count.of(MaxName), Problem.Count.of(nameBytes.length))))
+      Left(damaged(s"$name", Problem.Io.Damage.Length(Problem.Count(MaxName), Problem.Count(nameBytes.length))))
     else if size.value < 0 || size > MaxSize then
       Left(
         Problem.Invalid.OutOfRange(
@@ -72,7 +72,7 @@ object BundleTar:
   /** Parse a header block. `Right(None)` is the end-of-archive (an all-zero block). Pure. */
   def parseHeader(h: Array[Byte]): Either[Problem, Option[Entry]] =
     if h.length != Block then
-      Left(damaged("a header", Problem.Io.Damage.Length(Problem.Count.of(Block), Problem.Count.of(h.length))))
+      Left(damaged("a header", Problem.Io.Damage.Length(Problem.Count(Block), Problem.Count(h.length))))
     else if h.forall(_ == 0) then Right(None)
     else
       def field(off: Int, len: Int): String =
@@ -114,7 +114,7 @@ object BundleTar:
         body(counted)
         val declared = size.value
         if counted.count != declared then
-          Left(damaged(s"$name", Problem.Io.Damage.Length(Problem.Count.of(declared), Problem.Count.of(counted.count))))
+          Left(damaged(s"$name", Problem.Io.Damage.Length(Problem.Count(declared), Problem.Count(counted.count))))
         else
           gz.write(new Array[Byte](padding(size)))
           Right(())

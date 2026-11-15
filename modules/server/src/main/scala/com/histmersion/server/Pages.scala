@@ -44,8 +44,6 @@ object Pages:
   private def chips(field: ChipField, values: List[String]): String =
     HtmlRender.chips(field, values.map(HtmlRender.Label(_))).value
 
-  private def html(s: String): HtmlRender.Html = HtmlRender.Html(s)
-
   // ── prose ────────────────────────────────────────────────────────────────────────────────────
 
   /** Markdown with every `[[wikilink]]` replaced by its typed anchor (raw inline HTML, which flexmark passes through).
@@ -56,7 +54,7 @@ object Pages:
       links: WikiLinks.Occurrence.Target => Option[LinkTarget],
       number: Citekey => Option[Int] = _ => None
   ): HtmlRender.Html =
-    html(
+    HtmlRender.Html(
       Article.Links
         .rewriteLinks(WikiLinks.Body(md.value)) { (t, explicit, written) =>
           val own = explicit.map(_.value).filter(_.nonEmpty)
@@ -98,7 +96,7 @@ object Pages:
     * when the text is clean.
     */
   def formatNotice(issues: List[FormatIssue], what: String, slug: Option[Article.Slug]): HtmlRender.Html =
-    if issues.isEmpty then html("")
+    if issues.isEmpty then HtmlRender.Html("")
     else
       val errs = issues.count(_.severity == FormatSeverity.Error)
       val level = if errs > 0 then "has-errors" else "has-warnings"
@@ -121,7 +119,7 @@ object Pages:
         else
           val which = if fixable == issues.size then "all of them" else s"$fixable of them"
           s"""<p class="fi-tip"><code>$how</code> repairs $which without changing a word.</p>"""
-      html(
+      HtmlRender.Html(
         s"""<details class="format-notice $level"><summary>$what may not display correctly: """ +
           s"""${FormatMarkdown.problems(
               FormatReport.IssueCount(issues.size)
@@ -179,7 +177,7 @@ object Pages:
               .normalizeBody(AssetLinks.NormalizeBodyMd(text.value), AssetLinks.NormalizeBodyTitle(r.title.value))
               .value
           )}</div>"""
-    html(
+    HtmlRender.Html(
       s"""<h1>${esc(r.title.value)}</h1>""" +
         s"""<p class="src-byline">$byline</p>""" +
         s"""<p class="src-ident"><span class="lbl">$ident</span> ${HtmlRender.identifier(r).value}</p>""" +
@@ -207,7 +205,7 @@ object Pages:
         s"""<h2 id="$anchor">$title (${cs.size})</h2><ul class="citations">${cs
             .map(c => citation(c).value)
             .mkString}</ul>"""
-    html(
+    HtmlRender.Html(
       block(Anchor("cites"), "Cites", cites) +
         block(Anchor("cited-by"), "Cited by", citedBy)
     )
@@ -217,18 +215,20 @@ object Pages:
 
   def citation(c: Citation): HtmlRender.Html = c match
     case Citation.ToSource(r, kind) =>
-      html(
+      HtmlRender.Html(
         s"""<li>${kindLabel(kind)}${sourceRef(r, readable(r))} <i>${esc(r.title.value)}</i> """ +
           s"""${HtmlRender.statusBadge(r.status).value} <span class="ident">${HtmlRender
               .identifier(r)
               .value}</span></li>"""
       )
     case Citation.ToArticle(a, kind) =>
-      html(
+      HtmlRender.Html(
         s"""<li>${kindLabel(kind.getOrElse(Edge.Kind.Wire("article")))}${HtmlRender.articleRef(a).value}</li>"""
       )
     case Citation.Unresolved(id, kind) =>
-      html(s"""<li>${kindLabel(kind)}${dangling(id.value)} <span class="muted">not in the corpus yet</span></li>""")
+      HtmlRender.Html(
+        s"""<li>${kindLabel(kind)}${dangling(id.value)} <span class="muted">not in the corpus yet</span></li>"""
+      )
 
   // ── article page ─────────────────────────────────────────────────────────────────────────────
 
@@ -260,7 +260,7 @@ object Pages:
       esc(YearFmt.period(a.periodStart, a.periodEnd)),
       chips(ChipField.Tag, a.tags.map(_.value))
     ).filter(_.nonEmpty)
-    html(
+    HtmlRender.Html(
       s"""<h1>${esc(heading.map(_.value).getOrElse(a.title.value))}</h1>""" +
         (if meta.isEmpty then "" else s"""<p class="article-meta-line">${meta.mkString(" · ")}</p>""") +
         p.review.fold("")(r => reviewLine(r).value) +
@@ -275,7 +275,7 @@ object Pages:
 
   /** An article's review state as a badge, its meaning on hover. */
   def reviewBadge(b: ReviewBadge): HtmlRender.Html =
-    html(
+    HtmlRender.Html(
       s"""<span class="job-state review-state state-${b.state.wire}" title="${esc(b.detail.value)}">${esc(
           Wording.capitalize(b.label.value)
         )}</span>"""
@@ -288,7 +288,7 @@ object Pages:
     val status = g.status.value
     val meaning =
       Goal.Stages.meaning(Goal.Stage(status)).fold("")(m => s""" title="${esc(s"$status: ${m.value}")}"""")
-    html(
+    HtmlRender.Html(
       s"""<a class="goal-ref" href="/research/goals/${esc(HtmlAtoms.segment(g.slug.value))}" title="${esc(
           g.slug.value
         )}">""" +
@@ -309,7 +309,7 @@ object Pages:
     else
       s""" <span class="muted">· ${if r.goals.size == 1 then "goal" else "goals"}:</span> """ +
         r.goals.map(g => goalBadgeLink(g).value).mkString(""" <span class="muted">·</span> """)
-    html(
+    HtmlRender.Html(
       s"""<p class="article-review-line"><span class="muted">review:</span> ${reviewBadge(r.badge).value}$goals</p>"""
     )
 
@@ -317,7 +317,7 @@ object Pages:
     * summary saying how many there were and how many are open.
     */
   def reviewHistory(r: Article.ReviewView): HtmlRender.Html =
-    if r.rounds.isEmpty then html("")
+    if r.rounds.isEmpty then HtmlRender.Html("")
     else
       val all = r.rounds.flatMap(_.findings)
       val runs = r.rounds.map(_.run).distinct.size
@@ -344,7 +344,9 @@ object Pages:
         }
         s"""<h3>Run ${rd.runNumber}, round ${rd.round}$when</h3><ul class="review-findings">${items.mkString}</ul>"""
       }
-      html(s"""<details class="review-history"><summary>${esc(summary)}</summary>${rounds.mkString}</details>""")
+      HtmlRender.Html(
+        s"""<details class="review-history"><summary>${esc(summary)}</summary>${rounds.mkString}</details>"""
+      )
 
   /** The footer's entries: every numbered source (in number order), then the article's other cited sources — including
     * a stored citekey that is not in the corpus, shown as such.
@@ -398,7 +400,7 @@ object Pages:
     numbered ++ rest
 
   def sourcesCited(entries: List[CitedEntry]): HtmlRender.Html =
-    if entries.isEmpty then html("")
+    if entries.isEmpty then HtmlRender.Html("")
     else
       val items = entries.map { e =>
         val id = e.number.fold("")(n => s""" id="cite-$n"""")
@@ -420,12 +422,12 @@ object Pages:
               )}</i>$status""" +
               s""" <span class="ident">$ident</span></li>"""
       }
-      html(
+      HtmlRender.Html(
         s"""<h2 id="sources-cited">Sources cited (${entries.size})</h2><ol class="sources-cited">${items.mkString}</ol>"""
       )
 
   def backlinks(rows: List[Backlink]): HtmlRender.Html =
-    if rows.isEmpty then html("")
+    if rows.isEmpty then HtmlRender.Html("")
     else
       val items = rows.map { b =>
         val label = b.title.map(_.value).filter(_.trim.nonEmpty).getOrElse(display(b.id.value))
@@ -434,4 +436,4 @@ object Pages:
           else HtmlAtoms.articleLink(ReviewGoal.Slug(b.id.value), label)
         s"<li>$link</li>"
       }
-      html(s"""<h2>Backlinks (${rows.size})</h2><ul class="backlinks">${items.mkString}</ul>""")
+      HtmlRender.Html(s"""<h2>Backlinks (${rows.size})</h2><ul class="backlinks">${items.mkString}</ul>""")

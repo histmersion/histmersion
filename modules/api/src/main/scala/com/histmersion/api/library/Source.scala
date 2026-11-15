@@ -205,7 +205,7 @@ object Source:
           Problem.TypeName.of(Citekey),
           Problem.Raw(s"$ck"),
           Problem.TypeName(s"$kind.${k.productPrefix}"),
-          Problem.Count.of(bs.size.toLong)
+          Problem.Count(bs.size.toLong)
         )
       }
       Problems

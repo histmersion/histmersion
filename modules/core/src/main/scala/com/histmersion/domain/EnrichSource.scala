@@ -599,7 +599,7 @@ object EnrichSource:
         .orElse(centuries.headOption)
         .map(_.value.toLong)
         .getOrElse(math.abs(y.value))
-      Content.Requirement.CenturyAsYear(Raw.of(y), Problem.Count.of(c))
+      Content.Requirement.CenturyAsYear(Raw.of(y), Problem.Count(c))
     }
 
   /** The first of `phrases` (lowercase) the claim contains as whole words, if any. */
@@ -626,9 +626,9 @@ object EnrichSource:
       val missing = named.filterNot(_._3).toVector.map((i, p, _) => Content.Unplaced(Raw.of(p), i))
       Content.Answer(
         Content.Requirement.PlacesResolve(
-          Problem.Count.of(resolved.toLong),
-          Problem.Count.of(total.toLong),
-          Problem.Count.of(math.round(least * 100)),
+          Problem.Count(resolved.toLong),
+          Problem.Count(total.toLong),
+          Problem.Count(math.round(least * 100)),
           missing
         )
       )
@@ -702,7 +702,7 @@ object EnrichSource:
     val named = f.findings.zip(checked).zipWithIndex.flatMap { case ((p, (_, _, per)), i) =>
       p.place.map(pl => FindingProposal.Place(pl.value.trim)).filter(_.value.nonEmpty).map { name =>
         val kind = p.placeKind.map(Geocode.KindHint.parse).getOrElse(Geocode.KindHint.Unknown)
-        (Problem.Count.of(i + 1L), name, guards.resolves(name, kind, per))
+        (Problem.Count(i + 1L), name, guards.resolves(name, kind, per))
       }
     }
     val soft = checked.flatMap(_._2) ++ placementProblem(named, guards.minPlacedShare).toList
