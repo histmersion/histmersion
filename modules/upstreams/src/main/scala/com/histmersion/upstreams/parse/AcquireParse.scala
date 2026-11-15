@@ -62,7 +62,7 @@ object AcquireParse:
     (json.asObject
       .map { o =>
         val words = o.toList.flatMap { (w, positions) =>
-          positions.asArray.toList.flatten.flatMap(_.asNumber).flatMap(_.asInt).map(_ -> w)
+          positions.asArray.toList.flatten.flatMap(_.asNumber).flatMap(_.toInt).map(_ -> w)
         }
         words.sortBy(_._1).map(_._2).mkString(" ")
       }
@@ -184,7 +184,7 @@ object AcquireParse:
       .flatMap(_.asArray)
       .flatMap(_.headOption)
       .flatMap(_.asNumber)
-      .flatMap(_.asInt)
+      .flatMap(_.toInt)
     WorkRef(
       doi = c.str("DOI").flatMap(doiOf),
       title = title,

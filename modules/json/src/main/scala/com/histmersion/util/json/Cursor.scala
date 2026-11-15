@@ -67,7 +67,7 @@ final case class Cursor(focus: Option[Json], at: Vector[Either[String, Int]] = V
 
   /** The whole number here, written as a number or as a string. */
   def integer: Option[Long] =
-    focus.flatMap(j => j.asNumber.flatMap(RawJson.asLong).orElse(j.asString.flatMap(_.trim.toLongOption)))
+    focus.flatMap(j => j.asNumber.flatMap(_.toLong).orElse(j.asString.flatMap(_.trim.toLongOption)))
 
   /** The whole number here, if it is an `Int` (see [[integer]]). */
   def whole: Option[Int] = integer.filter(_.isValidInt).map(_.toInt)

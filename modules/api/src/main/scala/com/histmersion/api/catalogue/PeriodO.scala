@@ -117,7 +117,7 @@ object PeriodO:
               .flatMap(
                 (
                     refactorCallback2 =>
-                      (refactorCallback2.asInt).map(refactorValue3 => PeriodODataset.Version(refactorValue3))
+                      (refactorCallback2.toInt).map(refactorValue3 => PeriodODataset.Version(refactorValue3))
                 )
               )
           )
