@@ -46,6 +46,12 @@ object CompileArticle:
   type Written = Written.T
   object Written extends Newtype[Boolean, Pure]
 
+  /** Why a compile run's write did what it did (`created`, `the draft was rejected`, the dry-run note): an outcome, not
+    * a failure. Its JSON is the same string the checkpointed `write` step holds.
+    */
+  type Rationale = Rationale.T
+  object Rationale extends Newtype[String, Pure]
+
   given citekeyKey: JsonKeyCodec[Citekey] =
     JsonCodec.key[Citekey](_.value, k => Citekey.option(k).toRight(s"not a citekey: '$k'"))
 
@@ -527,12 +533,12 @@ object CompileArticle:
       )
 
   /** The log line of a compile run. */
-  def logLine(d: ArticleDraft, written: Written, why: Problem, review: Option[Run.Id], runId: Run.Id): LogLine =
+  def logLine(d: ArticleDraft, written: Written, why: Rationale, review: Option[Run.Id], runId: Run.Id): LogLine =
     val what = d.mode match
       case DraftMode.Create => s"compiled a new article from ${d.cited.size} source(s)"
       case DraftMode.Extend =>
         s"appended a section${d.section.fold("")(s => s" under '$s'")} citing ${d.cited.size} source(s)"
-    val outcome = if written.value then what else s"nothing written — ${why.sentence}"
+    val outcome = if written.value then what else s"nothing written — $why"
     LogLine(
       s"compile-article [[${d.slug}]]: $outcome${review.fold("")(r => s"; review run ${r.value.take(8)} started")} (agent run ${runId.value.take(8)})"
     )

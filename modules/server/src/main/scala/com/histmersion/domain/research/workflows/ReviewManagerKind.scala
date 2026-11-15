@@ -1,7 +1,6 @@
 package com.histmersion
 package domain.research.workflows
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
 
 import hearth.kindlings.optics.syntax.*
 
@@ -237,8 +236,8 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
       case ArticleExtend =>
         CompileArticlePipeline.written(c, run) match
           case Some(w) if w.written.value =>
-            StepFacts.Finished(ManagerPolicy.ItemOutcome(s"extended (${w.why.sentence})"))
-          case Some(w) => StepFacts.Finished(ManagerPolicy.ItemOutcome(s"nothing appended: ${w.why.sentence}"))
+            StepFacts.Finished(ManagerPolicy.ItemOutcome(s"extended (${w.why})"))
+          case Some(w) => StepFacts.Finished(ManagerPolicy.ItemOutcome(s"nothing appended: ${w.why}"))
           case None    => StepFacts.Finished(ManagerPolicy.ItemOutcome(s"nothing to extend — $progress"))
       case _ => StepFacts.Finished(ManagerPolicy.ItemOutcome("enriched"))
 

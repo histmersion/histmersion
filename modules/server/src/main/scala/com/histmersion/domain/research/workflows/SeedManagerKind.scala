@@ -3,7 +3,6 @@ package domain.research.workflows
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
 
 import hearth.kindlings.optics.syntax.*
 
@@ -80,7 +79,7 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
       case ArticleCompile =>
         CompileArticlePipeline.written(c, run) match
           case Some(w) if w.written.value =>
-            StepFacts.Finished(ManagerPolicy.ItemOutcome(s"compiled (${w.why.sentence})"))
+            StepFacts.Finished(ManagerPolicy.ItemOutcome(s"compiled (${w.why})"))
           case Some(w) =>
             // a draft the autopilot's checks rejected is compiled again (a new draft may pass them)
             c.approvalsOf(run, Approval.Kind.ArticlePublish)
@@ -94,7 +93,7 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
                   )
                 )
               case None =>
-                StepFacts.NotDone(ManagerPolicy.ItemOutcome(s"stopped: no article written — ${w.why.sentence}"), None)
+                StepFacts.NotDone(ManagerPolicy.ItemOutcome(s"stopped: no article written — ${w.why}"), None)
           case None => StepFacts.NotDone(ManagerPolicy.ItemOutcome(s"stopped: nothing compiled — $progress"), None)
       case PlanGoalItem =>
         // a blocking approval: the run ends only once its plan was decided

@@ -1,7 +1,6 @@
 package com.histmersion
 package domain
 
-import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -533,7 +532,7 @@ class CompileArticleSuite extends munit.FunSuite:
       logLine(
         d,
         written = Written(true),
-        Problem.Unclassified(Legacy.Text("created")),
+        Rationale("created"),
         Some(Run.Id("abcdef12-fc74-0955-ef4d-fad670250ff4")),
         Run.Id("bc1cc32f-a9bb-9592-ac46-36b5b5c5da01")
       ).value.contains(
@@ -544,7 +543,7 @@ class CompileArticleSuite extends munit.FunSuite:
       logLine(
         d,
         written = Written(false),
-        Problem.Unclassified(Legacy.Text("the draft was rejected")),
+        Rationale("the draft was rejected"),
         None,
         Run.Id("4b43b0ae-e356-24cd-95b9-10189b3dc231")
       ).value.contains(
