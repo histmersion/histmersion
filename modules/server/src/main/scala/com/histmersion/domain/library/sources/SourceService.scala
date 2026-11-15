@@ -1,6 +1,6 @@
 package com.histmersion
 package domain.library.sources
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{Legacy, Problem, Raised}
 
 import com.histmersion.api.Write
 import com.histmersion.domain.Caller
@@ -240,25 +240,34 @@ object SourceService:
     private def av(ck: Citekey): LibraryState.AliasesValue = LibraryState.AliasesValue(ck.value)
     private def tk(ck: Citekey): LibraryState.AliasTombstones = LibraryState.AliasTombstones(ck.value)
     private def fk(id: Finding.Id): LibraryState.Stored.FindingUidsKey = LibraryState.Stored.FindingUidsKey(id.value)
-    private def held(raw: String): Citekey = Citekey.assume(raw)
+
+    /** A citekey this library is handed (an api source's) or holds (a key of its state), parsed: one that is none is
+      * [[Citekey.parse]]'s problem.
+      */
+    private def held(raw: String): Either[Problem, Citekey] = Citekey.parse(raw)
+
+    /** [[held]] where the answer has no room for a problem (a lookup, a listing, the write inside the state's update):
+      * a key that is no citekey is raised as its problem ([[Raised]]), as the database would refuse the row.
+      */
+    private def heldKey(raw: String): Citekey = held(raw).fold(problem => throw Raised(problem), identity)
     private def apiKey(ck: Citekey): ApiCitekey = ApiCitekey(ck.value)
     private def invalid(message: String): Api.Error =
       Api.Error(Problem.Unclassified(Legacy.Text(message)), Some(Api.Error.Code(Write.CodeInvalid)))
 
     private def currentIn(st: LibraryState, id: Citekey): Option[Citekey] =
-      if st.sources.contains(sk(id)) then Some(id) else st.aliases.get(ak(id)).map(v => held(v.value))
+      if st.sources.contains(sk(id)) then Some(id) else st.aliases.get(ak(id)).map(v => heldKey(v.value))
 
     def current(id: Citekey): Option[Citekey] = currentIn(state.get, id)
-    def aliasOf(citekey: Citekey): Option[Citekey] = state.get.aliases.get(ak(citekey)).map(v => held(v.value))
+    def aliasOf(citekey: Citekey): Option[Citekey] = state.get.aliases.get(ak(citekey)).map(v => heldKey(v.value))
     def aliasesOf(citekey: Citekey): Set[Citekey] =
-      state.get.aliases.collect { case (a, ck) if ck.value == citekey.value => held(a.value) }.toSet
+      state.get.aliases.collect { case (a, ck) if ck.value == citekey.value => heldKey(a.value) }.toSet
     def aliases: List[Source.Alias] =
       state.get.aliases.toList
         .sortBy[String](_._1.value)
         .map((alias, citekey) => Source.Alias(Source.Alias.Value(alias.value), ApiCitekey(citekey.value)))
-    def citekeys: List[Citekey] = state.get.sources.keys.toList.sortBy[String](_.value).map(k => held(k.value))
+    def citekeys: List[Citekey] = state.get.sources.keys.toList.sortBy[String](_.value).map(k => heldKey(k.value))
     def updatedAtMillis: Map[Citekey, CitekeyMillis.Millis] =
-      state.get.sources.map((k, x) => held(k.value) -> CitekeyMillis.Millis(x.updatedAt.toEpochMilli))
+      state.get.sources.map((k, x) => heldKey(k.value) -> CitekeyMillis.Millis(x.updatedAt.toEpochMilli))
     def calibreId(citekey: Citekey): Option[FullSourceRow.CalibreId] =
       state.get.sources.get(sk(citekey)).flatMap(_.source.calibreId).map(c => FullSourceRow.CalibreId(c.value))
 
@@ -349,9 +358,9 @@ object SourceService:
         .filter(_.nonEmpty)
         .distinct
         .flatMap { t =>
-          val exact = st.sources.keys.filter(_.value == t).map(k => held(k.value) -> 0)
-          val short = st.sources.keys.filter(_.value.startsWith(t + "_")).map(k => held(k.value) -> 2)
-          val old = st.aliases.collectFirst { case (a, v) if a.value == t => held(v.value) -> 1 }
+          val exact = st.sources.keys.filter(_.value == t).map(k => heldKey(k.value) -> 0)
+          val short = st.sources.keys.filter(_.value.startsWith(t + "_")).map(k => heldKey(k.value) -> 2)
+          val old = st.aliases.collectFirst { case (a, v) if a.value == t => heldKey(v.value) -> 1 }
           val cands = (exact ++ short ++ old).toList
           if cands.isEmpty then None
           else
@@ -414,7 +423,7 @@ object SourceService:
       * edges that named it promoted.
       */
     private def written(st: LibraryState, s: Source, at: Instant): LibraryState =
-      val ck = held(s.citekey.value)
+      val ck = heldKey(s.citekey.value)
       st.aliases.get(ak(ck)).foreach { now =>
         throw IllegalStateException(s"'${ck.value}' was renamed to '${now.value}' — write to '${now.value}' instead")
       }
@@ -639,7 +648,7 @@ object SourceService:
         case Some(x) =>
           val ck = requested
           val aliases =
-            st.aliases.collect { case (a, c) if c.value == ck.value => held(a.value) }.toList.sortBy[String](_.value)
+            st.aliases.collect { case (a, c) if c.value == ck.value => heldKey(a.value) }.toList.sortBy[String](_.value)
           val edgesIn = st.edges
             .filter(e => e.dst.value == ck.value && e.src.value != ck.value)
             .toList
@@ -730,7 +739,7 @@ object SourceService:
     def citekeyOfDoi(doi: Doi): Option[Citekey] =
       val d = doi.value.trim.toLowerCase
       state.get.sources.toList.sortBy[String](_._1.value).collectFirst {
-        case (ck, x) if x.source.doi.exists(_.value.toLowerCase == d) => held(ck.value)
+        case (ck, x) if x.source.doi.exists(_.value.toLowerCase == d) => heldKey(ck.value)
       }
 
     def doiIndex: Map[Doi, Citekey] =
@@ -740,7 +749,7 @@ object SourceService:
           x.source.doi
             .filter(_.value.nonEmpty)
             .flatMap(d => Doi.option(d.value.toLowerCase))
-            .map(_ -> held(ck.value))
+            .map(_ -> heldKey(ck.value))
         )
         .toMap
 
@@ -762,7 +771,7 @@ object SourceService:
 
     def holderOf(sha256: Sha256): Option[Citekey] =
       state.get.sources.toList.sortBy[String](_._1.value).collectFirst {
-        case (ck, x) if x.sha256.contains(sha256) => held(ck.value)
+        case (ck, x) if x.sha256.contains(sha256) => heldKey(ck.value)
       }
 
     def originals(citekeys: List[Citekey]): Map[Citekey, Sha256] =

@@ -2,6 +2,8 @@ package com.histmersion
 package domain.library.sources
 
 import com.histmersion.testsupport.ComparedByValue.given
+import com.histmersion.util.problem.{Problems, Raised}
+import com.histmersion.api.library.Citekey as ApiCitekey
 
 import hearth.kindlings.optics.syntax.*
 
@@ -54,7 +56,7 @@ abstract class SourceServiceContract extends LibraryStoreSuite:
       Some(Confidence.High)
     )
 
-  private def source(ck: Citekey, title: Title, findings: List[Finding] = Nil, edges: List[Edge] = Nil): Source =
+  protected def source(ck: Citekey, title: Title, findings: List[Finding] = Nil, edges: List[Edge] = Nil): Source =
     Source(
       api(ck),
       title,
@@ -447,5 +449,14 @@ abstract class SourceServiceContract extends LibraryStoreSuite:
     assertEquals(s.sources.calibrePushMeta(A).flatMap(_.calibreId), Some("17"))
   }
 
-class SourceServiceInMemorySuite extends SourceServiceContract with LibraryStoreSuite.InMemory
+class SourceServiceInMemorySuite extends SourceServiceContract with LibraryStoreSuite.InMemory:
+
+  stest("a source handed with a citekey that is none is refused with the citekey's problem, and nothing is written") {
+    s =>
+      val bad = source(Citekey("zqbad1990_x"), Title("Bad")).modify(_.citekey).setTo(ApiCitekey("Not a citekey"))
+      val refused = intercept[Raised](s.sources.put(bad, Caller.Local))
+      assertEquals[Problems, Problems](refused.problems, Citekey.parse("Not a citekey").swap.toOption.get)
+      assertEquals(s.sources.citekeys, Nil)
+  }
+
 class SourceServiceDbSuite extends SourceServiceContract with LibraryStoreSuite.OnDatabase
