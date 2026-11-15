@@ -87,7 +87,6 @@ object HintProposals:
       item: Option[Item],
       last: Last
   ): Either[List[Problem], (Option[HintEffect], List[Description])] =
-    val action = Option(a.action).map(_.value.trim.toLowerCase).getOrElse("")
     // the step the answer asked for, as it wrote it
     val at = Where.of(a.action)
     val targets = a.targets.map(_.value.trim).filter(_.nonEmpty).distinct.map(Item(_))
@@ -95,74 +94,78 @@ object HintProposals:
     val tag = a.tag.map(_.value.trim).filter(_.nonEmpty)
     def fail(ps: List[Problem]): Either[List[Problem], (Option[HintEffect], List[Description])] =
       if last.value then Right((None, ps.map(p => Description(s"nothing proposed: ${p.sentence}")))) else Left(ps)
-    if action == "none" || action.isEmpty then Right((None, Nil))
-    else if !HintEffect.Proposable.contains(action) then
-      fail(
-        List(
-          Invalid.Unknown.here(
-            Problem.TypeName.of(HintAnswer.Action),
-            Raw.of(a.action),
-            ("none" +: HintEffect.Proposable.toVector).map(Raw(_))
-          )
-        )
-      )
-    else if action == HintEffect.Config then
-      val kvs = a.settings.map(_.value.trim).filter(_.nonEmpty)
-      if kvs.isEmpty then fail(List(Content.Proposal(Content.Requirement.SettingsGiven, at)))
-      else
-        ManagerConfig.parse(kvs.map(ManagerConfig.Spec(_))) match
-          case Left(e)  => fail(e.at(Problem.Field("config")).toVector.toList)
-          case Right(c) => Right((Some(HintEffect(HintEffect.Action(HintEffect.Config), config = Some(c))), Nil))
+    if HintEffect.Action.none(a.action) then Right((None, Nil))
     else
-      val problems = List(
-        Option.when(unknown.nonEmpty && !last.value)(
-          Content.Proposal(Content.Requirement.KnownItems(unknown.toVector.map(Raw.of(_))), Where("targets"))
-        ),
-        Option.when(good.isEmpty && unknown.isEmpty && tag.isEmpty && item.isEmpty)(
-          Content.Proposal(Content.Requirement.ItemsNamed, at)
-        ),
-        Option.when(
-          action == HintEffect.HoldAction && a.until.forall(_.value.trim.isEmpty) && a.untilSource.forall(
-            _.value.trim.isEmpty
-          )
-        )(Content.Proposal(Content.Requirement.HoldUntil, at)),
-        a.until
-          .map(_.value.trim)
-          .filter(_.nonEmpty)
-          .map(ManagerPolicy.InstantText(_))
-          .filter(ManagerPolicy.parseInstant(_).isEmpty)
-          .map(u => Content.Proposal(Content.Requirement.DateGiven(Raw.of(u)), Where("hold"))),
-        a.priority
-          .map(_.value)
-          .filter(p => p < -MaxPriority || p > MaxPriority)
-          .map(p =>
-            Content.Proposal(
-              Content.Requirement.PriorityWithin(Raw.of(p.toLong), Raw.of(MaxPriority.toLong)),
-              Where("prioritise")
+      HintEffect.Action.verb(a.action).filter(HintEffect.Verb.Proposable.contains) match
+        case None =>
+          fail(
+            List(
+              Invalid.Unknown.here(
+                Problem.TypeName.of(HintAnswer.Action),
+                Raw.of(a.action),
+                (HintEffect.Verb.NoAction +: HintEffect.Verb.Proposable.map(_.word)).map(Raw.of(_))
+              )
             )
           )
-      ).flatten
-      if problems.nonEmpty then fail(problems)
-      else if good.isEmpty && tag.isEmpty && item.isEmpty then
-        fail(List(Content.Proposal(Content.Requirement.ExistingItems, at)))
-      else
-        Right(
-          (
-            Some(
-              HintEffect(
-                HintEffect.Action(action),
-                (good ++ item.filterNot(good.contains).toList).map(i => HintEffect.Targets(i.value)),
-                tag.map(HintEffect.Tag(_)),
-                until = a.until.map(_.value.trim).filter(_.nonEmpty).map(HintEffect.Until(_)),
-                untilSource = a.untilSource.map(_.value.trim).filter(_.nonEmpty).map(HintEffect.UntilSource(_)),
-                priority = a.priority.filter(_ => action == HintEffect.Prioritise)
-              )
+        case Some(HintEffect.Verb.Config) =>
+          val kvs = a.settings.map(_.value.trim).filter(_.nonEmpty)
+          if kvs.isEmpty then fail(List(Content.Proposal(Content.Requirement.SettingsGiven, at)))
+          else
+            ManagerConfig.parse(kvs.map(ManagerConfig.Spec(_))) match
+              case Left(e)  => fail(e.at(Problem.Field("config")).toVector.toList)
+              case Right(c) => Right((Some(HintEffect(HintEffect.Verb.Config.word, config = Some(c))), Nil))
+        case Some(verb) =>
+          val problems = List(
+            Option.when(unknown.nonEmpty && !last.value)(
+              Content.Proposal(Content.Requirement.KnownItems(unknown.toVector.map(Raw.of(_))), Where("targets"))
             ),
-            Option
-              .when(unknown.nonEmpty)(Description(s"dropped, not among the manager's items: ${unknown.mkString(", ")}"))
-              .toList
-          )
-        )
+            Option.when(good.isEmpty && unknown.isEmpty && tag.isEmpty && item.isEmpty)(
+              Content.Proposal(Content.Requirement.ItemsNamed, at)
+            ),
+            Option.when(
+              verb == HintEffect.Verb.Hold && a.until.forall(_.value.trim.isEmpty) && a.untilSource.forall(
+                _.value.trim.isEmpty
+              )
+            )(Content.Proposal(Content.Requirement.HoldUntil, at)),
+            a.until
+              .map(_.value.trim)
+              .filter(_.nonEmpty)
+              .map(ManagerPolicy.InstantText(_))
+              .filter(ManagerPolicy.parseInstant(_).isEmpty)
+              .map(u => Content.Proposal(Content.Requirement.DateGiven(Raw.of(u)), Where("hold"))),
+            a.priority
+              .map(_.value)
+              .filter(p => p < -MaxPriority || p > MaxPriority)
+              .map(p =>
+                Content.Proposal(
+                  Content.Requirement.PriorityWithin(Raw.of(p.toLong), Raw.of(MaxPriority.toLong)),
+                  Where("prioritise")
+                )
+              )
+          ).flatten
+          if problems.nonEmpty then fail(problems)
+          else if good.isEmpty && tag.isEmpty && item.isEmpty then
+            fail(List(Content.Proposal(Content.Requirement.ExistingItems, at)))
+          else
+            Right(
+              (
+                Some(
+                  HintEffect(
+                    verb.word,
+                    (good ++ item.filterNot(good.contains).toList).map(i => HintEffect.Targets(i.value)),
+                    tag.map(HintEffect.Tag(_)),
+                    until = a.until.map(_.value.trim).filter(_.nonEmpty).map(HintEffect.Until(_)),
+                    untilSource = a.untilSource.map(_.value.trim).filter(_.nonEmpty).map(HintEffect.UntilSource(_)),
+                    priority = a.priority.filter(_ => verb == HintEffect.Verb.Prioritise)
+                  )
+                ),
+                Option
+                  .when(unknown.nonEmpty)(
+                    Description(s"dropped, not among the manager's items: ${unknown.mkString(", ")}")
+                  )
+                  .toList
+              )
+            )
 
   /** What the step checkpoints: the proposal that passed (None: nothing asked for, or nothing passed), why, and the
     * warnings.

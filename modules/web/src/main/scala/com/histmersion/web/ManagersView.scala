@@ -336,29 +336,31 @@ object ManagersView:
       suggest: Managers.HintAdd.Suggest = Managers.HintAdd.Suggest(false)
   ): Either[Managers.HintAdd.Text, HintAdd] =
     val t = text.value.trim
-    val a = action.value.trim.toLowerCase
+    val none = HintEffect.Action.none(action)
     val itemText = Option(item.value.trim).filter(_.nonEmpty).map(HintAdd.Item(_))
     if t.isEmpty then Left(Managers.HintAdd.Text("a hint needs text"))
-    else if suggest.value && a.nonEmpty && a != "none" then
+    else if suggest.value && !none then
       Left(Managers.HintAdd.Text("choose an action, or let the model suggest one — not both"))
     else if suggest.value then Right(HintAdd(HintAdd.Text(t), itemText, Some(once), suggest = Some(suggest)))
-    else if a.isEmpty || a == "none" then Right(HintAdd(HintAdd.Text(t), itemText, Some(once)))
-    else if !HintEffect.Actions.contains(a) then Left(Managers.HintAdd.Text(s"unknown action $a"))
+    else if none then Right(HintAdd(HintAdd.Text(t), itemText, Some(once)))
     else
-      val e = HintEffect(
-        HintEffect.Action(a),
-        list(targets.value, ",").getOrElse(Nil).map(HintEffect.Targets(_)),
-        Option(tag.value.trim).filter(_.nonEmpty).map(HintEffect.Tag(_)),
-        None,
-        None,
-        Option(until.value.trim).filter(_.nonEmpty).map(HintEffect.Until(_)),
-        Option(untilSource.value.trim).filter(_.nonEmpty).map(HintEffect.UntilSource(_))
-      )
-      if a == HintEffect.HoldAction && e.until.isEmpty && e.untilSource.isEmpty then
-        Left(Managers.HintAdd.Text("hold: give a date or a source"))
-      else if e.targets.isEmpty && e.tag.isEmpty && item.value.trim.isEmpty then
-        Left(Managers.HintAdd.Text(s"$a: name the articles or a tag"))
-      else Right(HintAdd(HintAdd.Text(t), itemText, Some(once), Some(e)))
+      HintEffect.Action.verb(action).filter(HintEffect.Verb.Actions.contains) match
+        case None       => Left(Managers.HintAdd.Text(s"unknown action $action"))
+        case Some(verb) =>
+          val e = HintEffect(
+            verb.word,
+            list(targets.value, ",").getOrElse(Nil).map(HintEffect.Targets(_)),
+            Option(tag.value.trim).filter(_.nonEmpty).map(HintEffect.Tag(_)),
+            None,
+            None,
+            Option(until.value.trim).filter(_.nonEmpty).map(HintEffect.Until(_)),
+            Option(untilSource.value.trim).filter(_.nonEmpty).map(HintEffect.UntilSource(_))
+          )
+          if verb == HintEffect.Verb.Hold && e.until.isEmpty && e.untilSource.isEmpty then
+            Left(Managers.HintAdd.Text("hold: give a date or a source"))
+          else if e.targets.isEmpty && e.tag.isEmpty && item.value.trim.isEmpty then
+            Left(Managers.HintAdd.Text(s"${verb.word}: name the articles or a tag"))
+          else Right(HintAdd(HintAdd.Text(t), itemText, Some(once), Some(e)))
 
   // ── the page buttons: Review, Extend, Enrich ────────────────────────────────────────────────────
 
@@ -1713,9 +1715,8 @@ object ManagersView:
               select(
                 cls := "field",
                 aria.label := "action",
-                List("none", HintEffect.Prioritise, HintEffect.HoldAction, HintEffect.Skip).map(a =>
-                  option(value := a, a)
-                ),
+                // the select's own spellings (the DOM takes text); `hint` reads them back as verbs
+                List("none", "prioritise", "hold", "skip").map(a => option(value := a, a)),
                 controlled(value <-- action.signal, onChange.mapToValue --> action.writer)
               )
             ),
@@ -1738,7 +1739,7 @@ object ManagersView:
                     controlled(value <-- tag.signal, onInput.mapToValue --> tag.writer)
                   ),
                   Option
-                    .when(a == HintEffect.HoldAction)(
+                    .when(HintEffect.Action.verb(HintEffect.Action(a)).contains(HintEffect.Verb.Hold))(
                       List(
                         input(
                           typ := "text",
