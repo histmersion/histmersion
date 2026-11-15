@@ -24,7 +24,7 @@ G3misplaced	server	test	70
 G3misplaced	upstreams	main	56
 G3misplaced	values	main	4
 G3misplaced	web	main	923
-G44	api	main	4587
+G44	api	main	4585
 G44	api	test	716
 G44	chimney-iron-tests	test	10
 G44	cli	main	364
@@ -304,7 +304,7 @@ G9prefixRole	chimney-iron-tests	test	10
 G9prefixRole	cli	main	3
 G9prefixRole	cli	test	29
 G9prefixRole	config	main	2
-G9prefixRole	config	test	8
+G9prefixRole	config	test	7
 G9prefixRole	core	main	2
 G9prefixRole	core	test	57
 G9prefixRole	db	main	1
