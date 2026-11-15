@@ -155,7 +155,7 @@ object PlanArticles:
       .toList
     val cap = maxArticles.value
     if kept.size > cap then
-      problems += Content.Answer(Content.Requirement.TooManyArticles(Count.of(cap.toLong), Count.of(kept.size.toLong)))
+      problems += Content.Answer(Content.Requirement.TooManyArticles(Count(cap.toLong), Count(kept.size.toLong)))
     if a.articles.isEmpty then problems += Content.Answer(Content.Requirement.ArticlesGiven)
     if Option(a.rationale).forall(_.value.trim.isEmpty) then
       problems += Content.Answer(Content.Requirement.PlanRationale)

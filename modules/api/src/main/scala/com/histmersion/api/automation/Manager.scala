@@ -50,8 +50,7 @@ object Manager:
     object Wire extends Newtype[String, Pure]
 
     type Detail = Detail.T
-    object Detail extends Newtype[String, Pure]:
-      def read(text: String): Detail = Detail(text)
+    object Detail extends Newtype[String, Pure]
 
     /** What a manager's line is about; the prefix is the text every line of the kind starts with. */
     enum Kind(val wire: Wire, val prefix: String, val exact: Boolean) derives CanEqual:
@@ -69,7 +68,7 @@ object Manager:
     object Kind:
       def parse(s: Wire): Option[Kind] = values.find(_.wire == s)
 
-    def apply(kind: Kind, detail: String = ""): Status = Status(kind.wire, Detail.read(detail))
+    def apply(kind: Kind, detail: String = ""): Status = Status(kind.wire, Detail(detail))
 
     extension (s: Status)
       /** The kind of the line; a kind this version does not know reads as [[Kind.Other]]. */
@@ -85,4 +84,4 @@ object Manager:
       */
     def parse(text: String): Status =
       val kind = Kind.values.find(k => k != Kind.Other && k.matches(text)).getOrElse(Kind.Other)
-      Status(kind.wire, Detail.read(text.drop(kind.prefix.length)))
+      Status(kind.wire, Detail(text.drop(kind.prefix.length)))

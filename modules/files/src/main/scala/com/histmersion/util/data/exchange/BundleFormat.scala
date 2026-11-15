@@ -157,7 +157,7 @@ object BundleFormat:
             Problem.Io.Corrupt(
               Problem.Io.Format.Bundle,
               ManifestAt,
-              Problem.Io.Damage.Schema(Problem.Count.of(b.toLong), Problem.Count.of(s.toLong))
+              Problem.Io.Damage.Schema(Problem.Count(b.toLong), Problem.Count(s.toLong))
             )
           )
         case (None, _) =>

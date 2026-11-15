@@ -110,7 +110,7 @@ object Cron:
     def num(s: String): Either[Invalid.CronFlaw, Int] =
       s.toIntOption
         .filter(n => n >= f.min && n <= f.max)
-        .toRight(Invalid.CronFlaw.NotNumber(Raw(s), Count.of(f.min.toLong), Count.of(f.max.toLong)))
+        .toRight(Invalid.CronFlaw.NotNumber(Raw(s), Count(f.min.toLong), Count(f.max.toLong)))
     val parts = raw.split(",", -1).toList
     val each = parts.map { part =>
       val (range, step) = part.split("/", -1).toList match

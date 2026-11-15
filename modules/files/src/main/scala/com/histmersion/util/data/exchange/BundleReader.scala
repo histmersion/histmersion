@@ -112,7 +112,7 @@ object BundleReader:
     val refs = entities.blobRefs
     val missing = refs.keys.toList.sorted
       .filterNot(blobs.contains)
-      .map(sha => entry(Bundle.blobPath(sha), Problem.Io.Fault.Dangling(Problem.Count.of(refs(sha).size.toLong))))
+      .map(sha => entry(Bundle.blobPath(sha), Problem.Io.Fault.Dangling(Problem.Count(refs(sha).size.toLong))))
     val unused = blobs.keys.toList.sorted
       .filterNot(refs.contains)
       .map(sha => entry(Bundle.blobPath(sha), Problem.Io.Fault.Unreferenced))

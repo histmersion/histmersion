@@ -70,8 +70,6 @@ final class AgentDoctor(
   private def ok(n: String, d: String) = check(CheckLevel.Ok, n, d)
   private def warn(n: String, d: String) = check(CheckLevel.Warn, n, d)
   private def fail(n: String, d: String) = check(CheckLevel.Fail, n, d)
-  private def cmd(text: String): ProcessLaunch.Command = ProcessLaunch.Command(text)
-  private def envKey(text: String): ProcessLaunch.EnvironmentKey = ProcessLaunch.EnvironmentKey(text)
 
   def report(online: DoctorReport.Online): DoctorReport =
     val chains = Role.values.toList.map(r => r -> picker.chain(r))
@@ -284,13 +282,26 @@ final class AgentDoctor(
         )
     val childEnv: Map[ProcessLaunch.EnvironmentKey, Option[ProcessLaunch.EnvironmentValue]] =
       (if cc.useApiKey.value then Map.empty
-       else Map(envKey("ANTHROPIC_API_KEY") -> None, envKey("ANTHROPIC_AUTH_TOKEN") -> None)) ++
+       else
+         Map(
+           ProcessLaunch.EnvironmentKey("ANTHROPIC_API_KEY") -> None,
+           ProcessLaunch.EnvironmentKey("ANTHROPIC_AUTH_TOKEN") -> None
+         )
+      ) ++
         Option(cc.configDir.value.trim)
           .filter(_.nonEmpty)
-          .map(d => envKey("CLAUDE_CONFIG_DIR") -> Some(ProcessLaunch.EnvironmentValue(AgentTrees.expandIn(d, paths))))
+          .map(d =>
+            ProcessLaunch.EnvironmentKey("CLAUDE_CONFIG_DIR") -> Some(
+              ProcessLaunch.EnvironmentValue(AgentTrees.expandIn(d, paths))
+            )
+          )
           .toMap
     val version =
-      runCommand(List(cmd(cc.command.value), cmd("--version")), childEnv, cfg.doctorTimeoutSeconds).flatMap {
+      runCommand(
+        List(ProcessLaunch.Command(cc.command.value), ProcessLaunch.Command("--version")),
+        childEnv,
+        cfg.doctorTimeoutSeconds
+      ).flatMap {
         case (code, out) if code.value == 0 => Right(out.value)
         case (code, out) => Left(Problem.Unclassified(Legacy.Text(s"exit ${code.value}: ${out.value.take(300)}")))
       }
@@ -304,7 +315,11 @@ final class AgentDoctor(
       v => ok("executable", s"${cc.command}: ${v.trim.linesIterator.nextOption().getOrElse("")}")
     )
     val auth = version.toOption.map { _ =>
-      runCommand(List(cmd(cc.command.value), cmd("auth"), cmd("status")), childEnv, cfg.doctorTimeoutSeconds) match
+      runCommand(
+        List(ProcessLaunch.Command(cc.command.value), ProcessLaunch.Command("auth"), ProcessLaunch.Command("status")),
+        childEnv,
+        cfg.doctorTimeoutSeconds
+      ) match
         case Left(why) =>
           level("login", s"'claude auth status' failed: ${why.sentence} — log in with `claude` → /login")
         // exit 1 = not logged in; the JSON says so either way
@@ -370,7 +385,7 @@ final class AgentDoctor(
       level: (String, String) => DoctorCheck,
       hint: String
   ): DoctorCheck =
-    runCommand(List(command, cmd("--version")), env, cfg.doctorTimeoutSeconds) match
+    runCommand(List(command, ProcessLaunch.Command("--version")), env, cfg.doctorTimeoutSeconds) match
       case Right((c, out)) if c.value == 0 =>
         ok("executable", s"${command.value}: ${out.value.trim.linesIterator.nextOption().getOrElse("")}")
       case Right((c, out)) =>
@@ -389,8 +404,11 @@ final class AgentDoctor(
     }.toList
     List(
       version(
-        cmd(cc.command.value),
-        Map(envKey("OPENAI_API_KEY") -> None, envKey("CODEX_API_KEY") -> None),
+        ProcessLaunch.Command(cc.command.value),
+        Map(
+          ProcessLaunch.EnvironmentKey("OPENAI_API_KEY") -> None,
+          ProcessLaunch.EnvironmentKey("CODEX_API_KEY") -> None
+        ),
         level,
         "install the Codex CLI or set agents.providers.codex.command"
       )
@@ -407,7 +425,12 @@ final class AgentDoctor(
     val oc = cfg.providers.opencode
     val level = if models.nonEmpty then fail else warn
     List(
-      version(cmd(oc.command.value), Map.empty, level, "install opencode or set agents.providers.opencode.command"),
+      version(
+        ProcessLaunch.Command(oc.command.value),
+        Map.empty,
+        level,
+        "install opencode or set agents.providers.opencode.command"
+      ),
       agentTools,
       generated("opencode"),
       if oc.chatgptLogin.value then ok("plan pool", "its openai/… models draw on the ChatGPT plan pool")

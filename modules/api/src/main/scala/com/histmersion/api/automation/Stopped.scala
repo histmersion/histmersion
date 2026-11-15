@@ -61,13 +61,11 @@ object Stopped extends Newtype[String, Pure]:
 
   /** What the step put in front of a pause for want of a model. */
   type Lead = Lead.T
-  object Lead extends Newtype[String, Pure]:
-    def read(text: String): Lead = Lead(text)
+  object Lead extends Newtype[String, Pure]
 
   /** What follows `are` in a pause for want of a model: why no model can run and when one may. */
   type Rest = Rest.T
-  object Rest extends Newtype[String, Pure]:
-    def read(text: String): Rest = Rest(text)
+  object Rest extends Newtype[String, Pure]
 
   /** The words a pause for want of a model starts with (after any lead), up to the role. */
   val AllModelsFor = "all models for role "
@@ -112,9 +110,9 @@ object Stopped extends Newtype[String, Pure]:
         val name = afterLead.takeWhile(_ != ' ')
         val rest = afterLead.drop(name.length)
         AgentRole
-          .parse(AgentRole.Wire.read(name))
+          .parse(AgentRole.Wire(name))
           .filter(_ => rest.startsWith(Are))
-          .map(role => Cause.Exhausted(reason, Lead.read(sentence.take(at)), role, Rest.read(rest.drop(Are.length))))
+          .map(role => Cause.Exhausted(reason, Lead(sentence.take(at)), role, Rest(rest.drop(Are.length))))
       }
       .flatten
 

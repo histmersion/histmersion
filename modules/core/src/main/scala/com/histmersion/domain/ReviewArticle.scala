@@ -684,15 +684,12 @@ object ReviewArticle:
       */
     object Problem extends Newtype[String, Pure]:
       type Section = Section.T
-      object Section extends Newtype[String, Pure]:
-        def read(text: String): Section = Section(text)
+      object Section extends Newtype[String, Pure]
       type Count = Count.T
       object Count extends Newtype[Int, Pure]:
-        def read(n: Int): Count = Count(n)
         extension (c: Count) def toInt: Int = c.value
       type Rest = Rest.T
-      object Rest extends Newtype[String, Pure]:
-        def read(text: String): Rest = Rest(text)
+      object Rest extends Newtype[String, Pure]
 
       /** A mechanical finding's problem by what it says. */
       enum Cause derives CanEqual:
@@ -787,20 +784,20 @@ object ReviewArticle:
             case "a hand-written Sources cited section (the page generates it)" => Cause.HandWrittenSourcesCited
             case MissingRe(alts)                                                =>
               Cause.MissingSection(
-                alts.split(" or ").toList.map(a => Section.read(a.stripPrefix("'").stripSuffix("'")))
+                alts.split(" or ").toList.map(a => Section(a.stripPrefix("'").stripSuffix("'")))
               )
             case UnplacedRe(listed, more) =>
               val cks = keys(listed)
               Cause.UnplacedSources(
-                Count.read(cks.size + Option(more).fold(0)(_.toInt)),
+                Count(cks.size + Option(more).fold(0)(_.toInt)),
                 cks.map(ck => ApiCitekey(ck))
               )
             case "a hand-written Not used section: the page generates it from the article's filter and its reasons" =>
               Cause.HandWrittenNotUsed
             case "a hand-written Method note: the page generates it (the filter, its counts, the statuses, the edges)" =>
               Cause.HandWrittenMethod
-            case FillerRe(matches) => Cause.Filler(Rest.read(matches))
-            case TermsRe(n, rest)  => Cause.TermCount(Count.read(n.toInt), Rest.read(rest))
+            case FillerRe(matches) => Cause.Filler(Rest(matches))
+            case TermsRe(n, rest)  => Cause.TermCount(Count(n.toInt), Rest(rest))
             case _                 => Cause.Other(p)
           if of(read).value == text then read else Cause.Other(p)
 
@@ -1177,7 +1174,7 @@ object ReviewArticle:
           Finding.Kind("language"),
           Finding.Where("body"),
           Finding.Quote(""),
-          Finding.Problem.of(Finding.Problem.Cause.Filler(Finding.Problem.Rest.read(i.detail.fillerMatches))),
+          Finding.Problem.of(Finding.Problem.Cause.Filler(Finding.Problem.Rest(i.detail.fillerMatches))),
           Finding.Fix("rewrite the sentence")
         )
       )
@@ -1255,7 +1252,7 @@ object ReviewArticle:
           Finding.Kind("section"),
           Finding.Where("headings"),
           Finding.Quote(""),
-          Finding.Problem.of(Finding.Problem.Cause.MissingSection(alts.map(Finding.Problem.Section.read))),
+          Finding.Problem.of(Finding.Problem.Cause.MissingSection(alts.map(Finding.Problem.Section(_)))),
           Finding.Fix("add the section")
         )
       )
@@ -1305,7 +1302,7 @@ object ReviewArticle:
           (
             Severity.Major,
             Finding.Problem.of(
-              Finding.Problem.Cause.UnplacedSources(Finding.Problem.Count.read(d.citekeys.size), d.citekeys.take(40))
+              Finding.Problem.Cause.UnplacedSources(Finding.Problem.Count(d.citekeys.size), d.citekeys.take(40))
             ),
             "cite each one where its record bears on the question, or give its reason in `reasons` (read the record first)"
           )

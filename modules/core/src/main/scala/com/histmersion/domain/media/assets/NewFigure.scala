@@ -48,7 +48,7 @@ object NewFigure:
         if raw.isEmpty then Left(Invalid.Broken.here(Invalid.Rule.AssetEmpty(Raw.of(name))))
         else if raw.length > maxBytes.value then
           Left(
-            Invalid.Broken.here(Invalid.Rule.AssetBytes(Raw.of(name), Count.of(raw.length.toLong), Count.of(maxBytes)))
+            Invalid.Broken.here(Invalid.Rule.AssetBytes(Raw.of(name), Count(raw.length.toLong), Count.of(maxBytes)))
           )
         else
           // a client may omit the dimensions (the seed path does); read them off the header

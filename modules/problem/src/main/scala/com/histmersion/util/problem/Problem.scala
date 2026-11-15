@@ -93,9 +93,6 @@ object Problem:
   /** A count of things. */
   type Count = Count.T
   object Count extends Newtype[Long, Pure]:
-    /** `number` things. */
-    def of(number: Long): Count = Count(number)
-
     /** The count a value of any newtype over a whole number holds (`Count.of(gap)`): unwrapped here, like [[Raw.of]].
       */
     def of[T](value: T)(using RefinedType.Mirror[T] { type BaseType <: Long | Int }): Count = Count(s"$value".toLong)
@@ -124,9 +121,7 @@ object Problem:
 
   /** A moment, as milliseconds since 1970-01-01T00:00Z (the same on the JVM and in the browser). */
   type EpochMs = EpochMs.T
-  object EpochMs extends Newtype[Long, Pure]:
-    /** The moment `millis` milliseconds after 1970-01-01T00:00Z. */
-    def of(millis: Long): EpochMs = EpochMs(millis)
+  object EpochMs extends Newtype[Long, Pure]
 
   /** A setting's key: `histmersion.agents.budgets.daily-usd`. */
   type SettingKey = SettingKey.T

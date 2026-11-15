@@ -44,8 +44,6 @@ import com.histmersion.config.Environment
   */
 object Supervisor:
 
-  private def command(text: String): ProcessLaunch.Command = ProcessLaunch.Command(text)
-
   final case class Layout(home: Path, data: Path):
     def pgBin: Path = home.resolve("pg").resolve("bin")
     def projData: Path = home.resolve("pg").resolve("share").resolve("proj")
@@ -90,7 +88,7 @@ object Supervisor:
       port: RuntimeConfig.PgPort,
       settings: List[(String, String)] = Nil
   ): ProcessLaunch.Command =
-    command(
+    ProcessLaunch.Command(
       (s"-p ${port.value} -c listen_addresses=127.0.0.1 -c unix_socket_directories=''" ::
         settings.map((k, v) => s"-c $k=$v")).mkString(" ")
     )
@@ -101,17 +99,17 @@ object Supervisor:
       settings: List[(String, String)] = Nil
   ): List[ProcessLaunch.Command] =
     List(
-      command(l.pgBin.resolve("pg_ctl").toString),
-      command("-D"),
-      command(l.cluster.toString),
-      command("-l"),
-      command(l.logs.resolve("postgres.log").toString),
-      command("-w"),
-      command("-t"),
-      command("300"),
-      command("-o"),
+      ProcessLaunch.Command(l.pgBin.resolve("pg_ctl").toString),
+      ProcessLaunch.Command("-D"),
+      ProcessLaunch.Command(l.cluster.toString),
+      ProcessLaunch.Command("-l"),
+      ProcessLaunch.Command(l.logs.resolve("postgres.log").toString),
+      ProcessLaunch.Command("-w"),
+      ProcessLaunch.Command("-t"),
+      ProcessLaunch.Command("300"),
+      ProcessLaunch.Command("-o"),
       pgOptions(port, settings),
-      command("start")
+      ProcessLaunch.Command("start")
     )
 
   private val MB = 1024L * 1024L
@@ -175,39 +173,39 @@ object Supervisor:
 
   private[server] def pgStop(l: Layout): List[ProcessLaunch.Command] =
     List(
-      command(l.pgBin.resolve("pg_ctl").toString),
-      command("-D"),
-      command(l.cluster.toString),
-      command("-m"),
-      command("fast"),
-      command("-w"),
-      command("stop")
+      ProcessLaunch.Command(l.pgBin.resolve("pg_ctl").toString),
+      ProcessLaunch.Command("-D"),
+      ProcessLaunch.Command(l.cluster.toString),
+      ProcessLaunch.Command("-m"),
+      ProcessLaunch.Command("fast"),
+      ProcessLaunch.Command("-w"),
+      ProcessLaunch.Command("stop")
     )
 
   private[server] def initdb(l: Layout, user: DbConfig.User, pwFile: Path): List[ProcessLaunch.Command] =
     List(
-      command(l.pgBin.resolve("initdb").toString),
-      command("-D"),
-      command(l.cluster.toString),
-      command("-U"),
-      command(user.value),
-      command("--auth=scram-sha-256"),
-      command(s"--pwfile=$pwFile"),
-      command("-E"),
-      command("UTF8"),
-      command("--locale=C")
+      ProcessLaunch.Command(l.pgBin.resolve("initdb").toString),
+      ProcessLaunch.Command("-D"),
+      ProcessLaunch.Command(l.cluster.toString),
+      ProcessLaunch.Command("-U"),
+      ProcessLaunch.Command(user.value),
+      ProcessLaunch.Command("--auth=scram-sha-256"),
+      ProcessLaunch.Command(s"--pwfile=$pwFile"),
+      ProcessLaunch.Command("-E"),
+      ProcessLaunch.Command("UTF8"),
+      ProcessLaunch.Command("--locale=C")
     )
 
   private[server] def converterCmd(l: Layout, port: RuntimeConfig.ConverterPort): List[ProcessLaunch.Command] =
     List(
-      command(l.python.toString),
-      command("-m"),
-      command("uvicorn"),
-      command("app:app"),
-      command("--host"),
-      command("127.0.0.1"),
-      command("--port"),
-      command(port.value.toString)
+      ProcessLaunch.Command(l.python.toString),
+      ProcessLaunch.Command("-m"),
+      ProcessLaunch.Command("uvicorn"),
+      ProcessLaunch.Command("app:app"),
+      ProcessLaunch.Command("--host"),
+      ProcessLaunch.Command("127.0.0.1"),
+      ProcessLaunch.Command("--port"),
+      ProcessLaunch.Command(port.value.toString)
     )
 
   /** The configuration with every endpoint and directory pointed at the bundle. Settings the user changed explicitly (a
@@ -363,10 +361,10 @@ object Supervisor:
     if fresh then initCluster(l, cfg.db.user, cfg.db.password)
     if run(
         List(
-          command(l.pgBin.resolve("pg_ctl").toString),
-          command("-D"),
-          command(l.cluster.toString),
-          command("status")
+          ProcessLaunch.Command(l.pgBin.resolve("pg_ctl").toString),
+          ProcessLaunch.Command("-D"),
+          ProcessLaunch.Command(l.cluster.toString),
+          ProcessLaunch.Command("status")
         ),
         l
       )._1 == 0

@@ -106,7 +106,7 @@ class ArticleEditsSuite extends munit.FunSuite:
       r.results.map(_.problem),
       List(
         Some(Problem.Content.Proposal(Problem.Content.Requirement.AnchorInArticle, Problem.Where("anchor"))),
-        Some(Problem.Invalid.Ambiguous.here(anchor, Problem.Raw("[[knapp2016_tin]]."), Problem.Count.of(3L))),
+        Some(Problem.Invalid.Ambiguous.here(anchor, Problem.Raw("[[knapp2016_tin]]."), Problem.Count(3L))),
         None
       )
     )

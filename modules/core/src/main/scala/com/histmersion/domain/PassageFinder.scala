@@ -111,7 +111,7 @@ object PassageFinder:
       try Right(Pattern.compile(fold(q.value), flags))
       catch
         case e: PatternSyntaxException =>
-          val at = Option.when(e.getIndex >= 0)(Count.of(e.getIndex.toLong))
+          val at = Option.when(e.getIndex >= 0)(Count(e.getIndex.toLong))
           Left(
             Invalid.Broken.here(Invalid.Rule.RegexValid(External.Reported.of(e.getDescription), at, Raw(e.getPattern)))
           )

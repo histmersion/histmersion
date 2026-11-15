@@ -155,8 +155,6 @@ object PluginHost:
         )
       )
 
-  private def setting(path: String): Problem.SettingKey = Problem.SettingKey(path)
-
   /** The kind of value a setting holds, in the problem's words. */
   private def kindOf(t: ConfigValueType): Problem.Config.ValueKind = t match
     case ConfigValueType.OBJECT  => Problem.Config.ValueKind.Block
@@ -204,7 +202,8 @@ object PluginHost:
       listed
         .filterNot(ids.contains)
         .map(id =>
-          Problem.Config.Setting(setting(s"$Root.$OrderKey"), Problem.Config.Fault.Unknown(Problem.Raw(s"$id")))
+          Problem.Config
+            .Setting(Problem.SettingKey(s"$Root.$OrderKey"), Problem.Config.Fault.Unknown(Problem.Raw(s"$id")))
         )
     (listed.filter(ids.contains) ++ ids.filterNot(listed.contains).sorted, unknown)
 
@@ -218,14 +217,16 @@ object PluginHost:
   def configuredOrder(user: Config, env: Config): Either[Problem, List[Plugin.Info.Id]] =
     val path = s"$Root.$OrderKey"
     Try(user.withFallback(env).resolve()).toEither.left
-      .map(e => Problem.Config.Setting(setting(path), Problem.Config.Fault.Unreadable(External.Reported.of(e))))
+      .map(e =>
+        Problem.Config.Setting(Problem.SettingKey(path), Problem.Config.Fault.Unreadable(External.Reported.of(e)))
+      )
       .flatMap { c =>
         if !c.hasPath(path) then Right(Nil)
         else
           Try(c.getStringList(path).asScala.toList.map(_.trim).filter(_.nonEmpty).map(Plugin.Info.Id(_))).toEither.left
             .map(_ =>
               Problem.Config.Setting(
-                setting(path),
+                Problem.SettingKey(path),
                 Problem.Config.Fault.WrongKind(Problem.Config.ValueKind.List, kindOf(c.getValue(path).valueType))
               )
             )
@@ -271,7 +272,7 @@ object PluginHost:
       Right(trimmed.toConfig)
     catch
       case e: ConfigException =>
-        Left(Problem.Config.Setting(setting(path), Problem.Config.Fault.Unreadable(External.Reported.of(e))))
+        Left(Problem.Config.Setting(Problem.SettingKey(path), Problem.Config.Fault.Unreadable(External.Reported.of(e))))
 
   /** Pure: `enabled` of an effective block — a boolean or a boolean string (env); absent = disabled. */
   def enabled(block: Config, id: Plugin.Info.Id): Either[Problem, Boolean] =
@@ -284,7 +285,7 @@ object PluginHost:
         .toRight(
           Problem.Config
             .Setting(
-              setting(s"$Root.$id.enabled"),
+              Problem.SettingKey(s"$Root.$id.enabled"),
               Problem.Config.Fault.WrongKind(Problem.Config.ValueKind.Flag, kindOf(v.valueType))
             )
         )
@@ -304,11 +305,14 @@ object PluginHost:
         val k = ConfigUtil.joinPath(keys.map(_.value).asJava)
         def text = Option(v.unwrapped).map(_.toString.trim).getOrElse("")
         def wrong(want: Problem.Config.ValueKind) =
-          Problem.Config.Setting(setting(s"$path.$k"), Problem.Config.Fault.WrongKind(want, kindOf(v.valueType)))
+          Problem.Config.Setting(
+            Problem.SettingKey(s"$path.$k"),
+            Problem.Config.Fault.WrongKind(want, kindOf(v.valueType))
+          )
         if k == "enabled" then
           Option.unless(v.valueType == BOOLEAN || text.toBooleanOption.isDefined)(wrong(Problem.Config.ValueKind.Flag))
         else if !Try(defaults.hasPathOrNull(k)).getOrElse(false) then
-          Some(Problem.Config.Setting(setting(s"$path.$k"), Problem.Config.Fault.NotInDefaults))
+          Some(Problem.Config.Setting(Problem.SettingKey(s"$path.$k"), Problem.Config.Fault.NotInDefaults))
         else if defaults.getIsNull(k) then None
         else
           val (ok, want) = defaults.getValue(k).valueType match
@@ -721,7 +725,7 @@ object PluginHost:
       case Left(e)  => (Nil, List(e))
     val (ordered, orderWarn) = order(accepted.map(_.info.id), configured)
     val unknown = unknownBlocks(user, infos.map(_.id).toSet)
-      .map(id => Problem.Config.Setting(setting(s"$Root.$id"), Problem.Config.Fault.Undeclared))
+      .map(id => Problem.Config.Setting(Problem.SettingKey(s"$Root.$id"), Problem.Config.Fault.Undeclared))
     val warnings = discoveryErrors ++ orderErr ++ orderWarn ++ unknown
     warnings.foreach(w => services.log(HostServices.PluginId(""), true, HostServices.Line(w.sentence)))
 
@@ -850,7 +854,8 @@ object PluginHost:
         .map(pr =>
           pr.p.info.id -> pr.secrets
             .flatMap(sec =>
-              secrets(sec.ref, vaultsOf(registries), setting(s"$Root.${pr.p.info.id}")).toOption.map(sec.ref -> _)
+              secrets(sec.ref, vaultsOf(registries), Problem.SettingKey(s"$Root.${pr.p.info.id}")).toOption
+                .map(sec.ref -> _)
             )
             .toMap
         )
@@ -867,7 +872,8 @@ object PluginHost:
   ): (PluginStatus, Registries) =
     val p = pr.p
     val id = p.info.id
-    def resolved(s: Secret): Either[Problems, SecretValue] = secrets(s.ref, vaultsOf(regs), setting(s"$Root.$id"))
+    def resolved(s: Secret): Either[Problems, SecretValue] =
+      secrets(s.ref, vaultsOf(regs), Problem.SettingKey(s"$Root.$id"))
     val literal = pr.secrets.exists(_.ref.isInstanceOf[Secret.Ref.Value])
     val warns = if !literal then Nil
     else

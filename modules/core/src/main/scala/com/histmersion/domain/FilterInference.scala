@@ -105,19 +105,19 @@ object FilterInference:
     def refused(rule: Content.Requirement): Problem = Content.Answer(rule)
     val problems = List(
       Option.when(n < least)(
-        refused(Content.Requirement.FilterTooNarrow(line, Count.of(n.toLong), Count.of(least.toLong)))
+        refused(Content.Requirement.FilterTooNarrow(line, Count(n.toLong), Count(least.toLong)))
       ),
       Option.when(n > most)(
-        refused(Content.Requirement.FilterTooBroad(line, Count.of(n.toLong), Count.of(most.toLong)))
+        refused(Content.Requirement.FilterTooBroad(line, Count(n.toLong), Count(most.toLong)))
       ),
       Option.when(share < leastShare)(
         refused(
           Content.Requirement.FilterMisses(
             line,
-            Count.of((cited.size - missed.size).toLong),
-            Count.of(cited.size.toLong),
-            Count.of(math.round(share * 100)),
-            Count.of(math.round(leastShare * 100)),
+            Count((cited.size - missed.size).toLong),
+            Count(cited.size.toLong),
+            Count(math.round(share * 100)),
+            Count(math.round(leastShare * 100)),
             missed.take(12).toVector.map(Raw.of(_))
           )
         )
