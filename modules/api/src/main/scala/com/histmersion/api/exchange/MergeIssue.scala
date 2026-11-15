@@ -3,8 +3,6 @@ package api.exchange
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 
-import com.histmersion.util.problem.Problem
-
 import com.histmersion.api.{Ascii, WireEnumValues}
 import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -16,6 +14,7 @@ import com.histmersion.api.Plural
 import com.histmersion.api.automation.Goal
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
+import MergeIssue.Rationale
 
 final case class MergeIssue(
     id: MergeIssue.Id,
@@ -25,7 +24,7 @@ final case class MergeIssue(
     title: MergeIssue.Title,
     left: Option[IssueSide] = None,
     right: Option[IssueSide] = None,
-    why: List[Problem] = Nil,
+    why: List[Rationale] = Nil,
     options: List[MergeDecision.Kind] = Nil,
     suggested: Option[MergeDecision] = None,
     condition: Option[IssueCondition] = None,
@@ -44,6 +43,10 @@ object MergeIssue:
   object Id extends Newtype[String, Pure]
   type Title = Title.T
   object Title extends Newtype[String, Pure]
+
+  /** Why the planner raises an issue or suggests a choice: the account of its decision, not a failure. */
+  type Rationale = Rationale.T
+  object Rationale extends Newtype[String, Pure]
 
   enum Kind derives CanEqual:
     /** Two sources may be one work (a score between the thresholds, or a hard flag such as two different DOIs or years

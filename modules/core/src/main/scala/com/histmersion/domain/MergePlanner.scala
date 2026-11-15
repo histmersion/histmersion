@@ -4,7 +4,7 @@ import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.JsonObject
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import hearth.kindlings.jsoniterjson.Json
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.exchange.MergeIssue
 import com.histmersion.api.exchange.MergeDecision
@@ -610,9 +610,7 @@ object MergePlanner:
                 sourcesByUid.get(o).map(MergeIssue.Detail.side),
                 src.map(MergeIssue.Detail.side),
                 List(
-                  Problem.Unclassified(
-                    Legacy.Text("keep-left drops the bundle's old citekey; this collection's meaning stays")
-                  )
+                  MergeIssue.Rationale("keep-left drops the bundle's old citekey; this collection's meaning stays")
                 ),
                 if asCitekey then List(km.KeepLeft) else lr,
                 Some(MergeDecision.of(km.KeepLeft)),
@@ -852,16 +850,13 @@ object MergePlanner:
                     Some(IssueSide(IssueSide.Label(l), o)),
                     Some(IssueSide(IssueSide.Label(l), f)),
                     List(
-                      Problem
-                        .Unclassified(Legacy.Text("keep-left leaves the bundle's record out (and whatever needs it)"))
+                      MergeIssue.Rationale("keep-left leaves the bundle's record out (and whatever needs it)")
                     ) ++
                       Option
                         .when(options.contains(km.RenameRight))(
-                          Problem.Unclassified(
-                            Legacy.Text(
-                              "keep-right makes them one, the bundle's fields winning; " +
-                                "rename-right keeps both, the bundle's under a new id"
-                            )
+                          MergeIssue.Rationale(
+                            "keep-right makes them one, the bundle's fields winning; " +
+                              "rename-right keeps both, the bundle's under a new id"
                           )
                         )
                         .toList,
@@ -997,7 +992,7 @@ object MergePlanner:
                 List(IssueSide.Lines(s"\"${a.title}\" · ${a.body.value.length} characters"))
               )
             ),
-            List(Problem.Unclassified(Legacy.Text(s"both: the bundle's becomes ${bothSlug(f, a.slug)}"))),
+            List(MergeIssue.Rationale(s"both: the bundle's becomes ${bothSlug(f, a.slug)}")),
             List(km.KeepLeft, km.KeepRight, km.Both, km.File),
             detail = mine.map(m => IssueDetail(text = Some(articleText(base, m.body, rawArticle(f).body))))
           )
@@ -1089,7 +1084,7 @@ object MergePlanner:
                 )
               ),
               List(
-                Problem.Unclassified(Legacy.Text("the plan approved later wins when both say when; here they do not"))
+                MergeIssue.Rationale("the plan approved later wins when both say when; here they do not")
               ),
               lr,
               detail = Some(
