@@ -151,16 +151,16 @@ final class EventImports(
           val judged = recs.map { r =>
             val span = r.timeSpan.outer
             val why =
-              if span.exists(_._1.value > to.value) then Left(Problem.Unclassified(Legacy.Text(s"after $to")))
+              if span.exists(_._1.value > to.value) then Left(EventProviders.Rationale.After(to))
               else if from.exists(f => span.exists(_._2.value < f.value)) then
-                Left(Problem.Unclassified(Legacy.Text(s"before ${from.get}")))
+                Left(EventProviders.Rationale.Before(from.get))
               else EventProviders.keep(r, th)
             r -> why
           }
           val room = (limit - report.kept.value).max(0)
           val kept0 = judged.collect { case (r, Right(_)) => r }
           val kept = kept0.take(room)
-          val skipped = judged.collect { case (_, Left(w)) => EventCount.Key(w.sentence) } ++
+          val skipped = judged.collect { case (_, Left(w)) => EventCount.Key(w.said) } ++
             List.fill(kept0.size - kept.size)(EventCount.Key("over --limit"))
           val named = if dryRun || provider != CatalogProvider.Wikidata then kept else withNames(kept, report)
           val placed = CatalogMerge.place(named, known, ec.tolerance)
@@ -386,7 +386,8 @@ final class EventImports(
               EventProviders.WikidataEvents
                 .namesUrl(ec.wikidata.apiUrl.value, batch.map(_.value), ec.wikidata.languageList.map(_.value))
             )
-          ).flatMap(EventProviders.WikidataEvents.names)
+          ).toOption
+            .flatMap(EventProviders.WikidataEvents.names)
             .getOrElse(Map.empty)
             .toList
         }

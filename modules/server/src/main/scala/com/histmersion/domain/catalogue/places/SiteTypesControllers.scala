@@ -63,7 +63,7 @@ final class SiteTypesControllers(
           .flatMap { b =>
             c.json(HttpTransport.Url(WikidataEntities.url(api, b, maxlag).value))
               .toOption
-              .flatMap(j => EventProviders.WikidataEvents.claims(j, prop).toOption)
+              .flatMap(j => EventProviders.WikidataEvents.claims(j, prop))
               .getOrElse(Map.empty)
               .toList
           }
