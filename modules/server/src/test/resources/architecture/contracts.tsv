@@ -188,7 +188,7 @@ derives	server:domain/catalogue/places/PlacesTools.scala	codec given written by 
 derives	server:domain/library/LibraryTools.scala	codec given written by hand	24
 derives	server:domain/library/acquisition/AcquisitionTools.scala	codec given written by hand	2
 derives	server:domain/library/search/QueryTools.scala	codec given written by hand	2
-derives	server:domain/library/workflows/AcquisitionSweepPipeline.scala	codec given written by hand	2
+derives	server:domain/library/workflows/AcquisitionSweepPipeline.scala	codec given written by hand	1
 derives	server:domain/library/workflows/AgentFacetsInput.scala	codec given written by hand	2
 derives	server:domain/library/workflows/AgentGetSourceInput.scala	codec given written by hand	2
 derives	server:domain/library/workflows/AgentSearchInput.scala	codec given written by hand	2
@@ -890,7 +890,7 @@ unwrap	api:api/text/WikiLinks.scala	.value outside a boundary	11
 unwrap	api:api/views/AutopilotStatus.scala	.value outside a boundary	1
 unwrap	api:api/views/EventDetail.scala	.value outside a boundary	1
 unwrap	core:domain/AcquireMatch.scala	.value outside a boundary	18
-unwrap	core:domain/AcquireRecheck.scala	.value outside a boundary	28
+unwrap	core:domain/AcquireRecheck.scala	.value outside a boundary	26
 unwrap	core:domain/AgentProposals.scala	.value outside a boundary	10
 unwrap	core:domain/AgentVerify.scala	.value outside a boundary	37
 unwrap	core:domain/ArticleReviewStatus.scala	.value outside a boundary	35
@@ -901,7 +901,7 @@ unwrap	core:domain/BrowserDownload.scala	.value outside a boundary	19
 unwrap	core:domain/CodexRetention.scala	.value outside a boundary	13
 unwrap	core:domain/CompareRuns.scala	.value outside a boundary	18
 unwrap	core:domain/CompileArticle.scala	.value outside a boundary	67
-unwrap	core:domain/CoreQuota.scala	.value outside a boundary	37
+unwrap	core:domain/CoreQuota.scala	.value outside a boundary	36
 unwrap	core:domain/Cron.scala	.value outside a boundary	11
 unwrap	core:domain/DeepTime.scala	.value outside a boundary	5
 unwrap	core:domain/EnrichSource.scala	.value outside a boundary	76
@@ -1189,7 +1189,7 @@ unwrap	server:domain/library/sources/SourceService.scala	.value outside a bounda
 unwrap	server:domain/library/sources/SourcesControllers.scala	.value outside a boundary	60
 unwrap	server:domain/library/sources/SourcesData.scala	.value outside a boundary	9
 unwrap	server:domain/library/workflows/AcquireRecheckService.scala	.value outside a boundary	117
-unwrap	server:domain/library/workflows/AcquisitionSweepPipeline.scala	.value outside a boundary	47
+unwrap	server:domain/library/workflows/AcquisitionSweepPipeline.scala	.value outside a boundary	46
 unwrap	server:domain/library/workflows/AgentGetSourceInput.scala	.value outside a boundary	3
 unwrap	server:domain/library/workflows/AgentUpstream.scala	.value outside a boundary	20
 unwrap	server:domain/library/workflows/CurrencyCheckPipeline.scala	.value outside a boundary	14
@@ -1307,7 +1307,7 @@ unwrap	server:server/views/FormatView.scala	.value outside a boundary	9
 unwrap	server:server/views/JobListView.scala	.value outside a boundary	8
 unwrap	server:server/views/PlaceCardView.scala	.value outside a boundary	2
 unwrap	server:server/views/ResolveView.scala	.value outside a boundary	2
-unwrap	server:server/views/WorkListView.scala	.value outside a boundary	17
+unwrap	server:server/views/WorkListView.scala	.value outside a boundary	16
 unwrap	server:util/basemap/BasemapFetch.scala	.value outside a boundary	113
 unwrap	server:util/basemap/BasemapLabels.scala	.value outside a boundary	64
 unwrap	server:util/basemap/BasemapService.scala	.value outside a boundary	308

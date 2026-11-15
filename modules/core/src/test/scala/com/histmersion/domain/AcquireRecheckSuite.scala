@@ -2,7 +2,6 @@ package com.histmersion
 package domain
 
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -168,7 +167,7 @@ class AcquireRecheckSuite extends munit.FunSuite:
       "unpaywall: no copy — none; landing: refused — bot-protection 403"
     )
     assertEquals(
-      (reason(now, Outcome.NoCopy, Detail(msg))).sentence,
+      (reason(now, Outcome.NoCopy, Detail(msg))).said,
       "checked 2026-10-27: no legal copy (unpaywall: no copy — none; landing: refused — bot-protection 403)"
     )
     assertEquals(
@@ -176,22 +175,22 @@ class AcquireRecheckSuite extends munit.FunSuite:
         now,
         Outcome.NoCopy,
         Detail(s"${IngestBacklog.NoLegalCopy} 10.1/x: no legal open-access PDF found")
-      )).sentence,
+      )).said,
       "checked 2026-10-27: no legal copy (no legal open-access PDF found)"
     )
     assertEquals(
-      (reason(now, Outcome.Closed, AcquireRecheck.Detail("a2020_x"))).sentence,
+      (reason(now, Outcome.Closed, AcquireRecheck.Detail("a2020_x"))).said,
       "checked 2026-10-27: in the corpus with its original as [[a2020_x]] — closed"
     )
     assert(
-      reason(now, Outcome.Fetched, AcquireRecheck.Detail("unpaywall")).sentence
+      reason(now, Outcome.Fetched, AcquireRecheck.Detail("unpaywall")).said
         .contains("a legal copy found (unpaywall)")
     )
     assertEquals(
-      (reason(now, Outcome.Failed, AcquireRecheck.Detail("HTTP 503"))).sentence,
+      (reason(now, Outcome.Failed, AcquireRecheck.Detail("HTTP 503"))).said,
       "checked 2026-10-27: no answer (HTTP 503)"
     )
-    assert(reason(now, Outcome.NoCopy, Detail(msg + ("; x" * 400))).sentence.length <= 500)
+    assert(reason(now, Outcome.NoCopy, Detail(msg + ("; x" * 400))).said.length <= 500)
 
   test("a pass's allowance: the day's cap, the pass's, and the shared allowance after the backlog, within the share"):
     assertEquals(allowance(settings, checkedToday = AcquireRecheck.CheckedToday(0), shared = None), 3, "the pass's cap")

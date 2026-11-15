@@ -379,7 +379,7 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
     val picks = select(
       majors = List(Slug("a") -> ReviewFacts.OpenMajors(3), Slug("b") -> ReviewFacts.OpenMajors(1)),
       unreviewed = List(Slug("c"), Slug("a")),
-      stale = List(Slug("d") -> Problem.Unclassified(Legacy.Text("old"))),
+      stale = List(Slug("d") -> Staleness.Old(ReviewSettings.StaleAfterDays(90))),
       batch = ReviewSettings.RefillBatch(10),
       inferFilter = ReviewSettings.InferFilter(true),
       hasFilter = Set(Slug("a"), Slug("d")),
@@ -395,7 +395,8 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
         (ArticleReview, "d", StalePriority)
       )
     )
-    assert(picks.find(_.target == Slug("d")).get.why.sentence.startsWith("stale"))
+    assertEquals(picks.find(_.target == Slug("d")).get.why.said, "stale: last converged over 90 days ago")
+    assertEquals(picks.find(_.target == Slug("a")).get.why.said, "3 open MAJORs")
     // the batch counts reviews; inferFilter off adds none
     assertEquals(
       select(
@@ -413,7 +414,7 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
   test("staleWhy: older than N days, or its filter gained sources; 0 days = never"):
     val at = now.minus(java.time.Duration.ofDays(100))
     assertEquals(
-      staleWhy(at, now, ReviewSettings.StaleAfterDays(90), None, None).map(_.sentence),
+      staleWhy(at, now, ReviewSettings.StaleAfterDays(90), None, None).map(_.said),
       Some("last converged over 90 days ago")
     )
     assertEquals(
@@ -423,7 +424,7 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
         ReviewSettings.StaleAfterDays(90),
         Some(ReviewManagerPolicy.FilterHits(4)),
         Some(ReviewManagerPolicy.FilterHits(6))
-      ).map(_.sentence),
+      ).map(_.said),
       Some("its filter gained 2 sources")
     )
     assertEquals(

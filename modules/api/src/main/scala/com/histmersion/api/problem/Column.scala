@@ -455,6 +455,7 @@ object Column:
       case Content.Requirement.TooManyArticles(cap, gave) => s"TooManyArticles $cap/$gave"
       case Content.Requirement.QuoteInRecords(records)    => s"QuoteInRecords ${records.mkString(ListSeparator)}"
       case Content.Requirement.KnownCitekey(stated)       => s"KnownCitekey '$stated'"
+      case Content.Requirement.ListedCandidate(stated)    => s"ListedCandidate '$stated'"
       case Content.Requirement.PositiveBce(stated)        => s"PositiveBce '$stated'"
       case Content.Requirement.CeFromOne(stated)          => s"CeFromOne '$stated'"
       case Content.Requirement.Calibrated(stated)         => s"Calibrated '$stated'"
@@ -563,6 +564,7 @@ object Column:
   private val WrittenRules = Vector(
     "QuoteInRecords",
     "KnownCitekey",
+    "ListedCandidate",
     "PositiveBce",
     "CeFromOne",
     "Calibrated",
@@ -1087,6 +1089,7 @@ object Column:
         val read: Option[Content.Requirement] = rule match
           case "QuoteInRecords"     => Some(Content.Requirement.QuoteInRecords(raws(written)))
           case "KnownCitekey"       => one.map(Content.Requirement.KnownCitekey(_))
+          case "ListedCandidate"    => one.map(Content.Requirement.ListedCandidate(_))
           case "PositiveBce"        => one.map(Content.Requirement.PositiveBce(_))
           case "CeFromOne"          => one.map(Content.Requirement.CeFromOne(_))
           case "Calibrated"         => one.map(Content.Requirement.Calibrated(_))

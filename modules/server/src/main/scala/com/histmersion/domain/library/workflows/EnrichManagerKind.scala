@@ -111,15 +111,15 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
             val (todo, done) = cks.distinct.map(ck => ck -> enrichedWhy(c, ck)).partition(_._2.isEmpty)
             (
               todo.map(t => ManagerContext.ItemTarget(t._1.value)),
-              done.map((ck, why) => ManagerKindDefinition.ExpandSkipped(s"[[$ck]]: ${why.fold("")(_.sentence)}"))
+              done.map((ck, why) => ManagerKindDefinition.ExpandSkipped(s"[[$ck]]: ${why.fold("")(_.said)}"))
             )
           }
       }
 
   /** Why a source counts as enriched already (findings, notes, a live enrich run), if it does. */
-  private def enrichedWhy(c: ManagerContext, ck: Citekey): Option[Problem] =
+  private def enrichedWhy(c: ManagerContext, ck: Citekey): Option[AutoEnrich.Rationale] =
     site.sources.get(ck, body = SourcesControllers.GetBody(false)).toOption match
-      case None      => Some(Problem.Unclassified(Legacy.Text("no such source")))
+      case None      => Some(AutoEnrich.Rationale.NoSource)
       case Some(src) =>
         val runs = priorRuns(c, Citekey.assume(src.source.citekey.value))
         AutoEnrich.enrichedBy(
@@ -253,7 +253,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
               )
               .flatten
             enriched match
-              case Some(why) => settle(ItemStatus.Done, s"already enriched: ${why.sentence}")
+              case Some(why) => settle(ItemStatus.Done, s"already enriched: ${why.said}")
               case None      =>
                 c.start(
                   m,

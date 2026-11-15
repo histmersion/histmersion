@@ -272,7 +272,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
       h.workListView.list(WorkListControllers.KindOfList("acquire"), all = WorkListView.IncludeAll(false)).toOption.get
     val day = java.time.LocalDate.now(java.time.ZoneOffset.UTC)
     assertEquals(
-      listing.checks.find(_.item == none).map(_.reason).map(_.sentence),
+      listing.checks.find(_.item == none).map(_.reason),
       Some(s"checked $day: no legal copy (unpaywall: no copy — none; landing: refused — bot-protection 403)")
     )
     assertEquals(listing.checks.find(_.item == meta).map(_.outcome), Some(Fetched))
@@ -513,7 +513,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
         .checks(ds)
         .of(List(checkItem(closed)))
         .get(checkItem(closed))
-        .map(_.reason.sentence)
+        .map(r => s"${r.reason}")
         .getOrElse("")
     assert(why.contains("no legal copy (unpaywall: no copy — no open-access location)"), why)
     assertEquals(
@@ -597,7 +597,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
             Instant.now().minusSeconds(3600),
             AcquireRecheck.LastCheck.Generation("g1"),
             AcquireRecheck.Outcome.NoCopy,
-            Problem.Unclassified(Legacy.Text("x"))
+            AcquireRecheck.reason(Instant.now(), AcquireRecheck.Outcome.NoCopy, AcquireRecheck.Detail("x"))
           )
       )
     assertEquals(
@@ -661,7 +661,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
       checks.values.map(_.outcome.value).toList.sorted,
       List(Failed, Fetched, NoCopy, NoCopy, NoCopy, NoCopy)
     )
-    assert(checks(checkItem(ids(3))).reason.sentence.contains("no answer (HTTP 429"), checks(checkItem(ids(3))).reason)
+    assert(s"${checks(checkItem(ids(3))).reason}".contains("no answer (HTTP 429"), checks(checkItem(ids(3))).reason)
     assertEquals(a.acquireRecheck.fetchedToday(Instant.now()), 1)
     assertEquals(
       a.autopilot.ingestedToday(Instant.now()).value - ingestedBefore.value,
@@ -848,7 +848,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
             since.plusSeconds(60),
             AcquireRecheck.LastCheck.Generation("g1"),
             AcquireRecheck.Outcome.NoCopy,
-            Problem.Unclassified(Legacy.Text("x"))
+            AcquireRecheck.reason(Instant.now(), AcquireRecheck.Outcome.NoCopy, AcquireRecheck.Detail("x"))
           )
       )
     val _ = Transactor(ds).transact(JobRepo.failInterrupted())

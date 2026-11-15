@@ -469,7 +469,7 @@ object Source:
       method: MatchMethod,
       outcome: MatchOutcome,
       score: Option[Match.Score] = None,
-      why: List[Problem] = Nil,
+      why: List[MergeIssue.Rationale] = Nil,
       issue: Option[Match.Issue] = None
   ) derives JsonCodec,
         KindlingsSchema,

@@ -1,7 +1,5 @@
 package com.histmersion
 package domain.library.acquisition
-import com.histmersion.util.problem.{Legacy, Problem}
-
 import com.histmersion.api.library.{Candidates, WorkRef}
 import com.histmersion.domain.library.Doi
 import io.github.iltotore.iron.constraint.any.Pure
@@ -14,6 +12,16 @@ object CandidateDedupe:
   object FoundBy extends Newtype[String, Pure]
   type SkipCount = SkipCount.T
   object SkipCount extends Newtype[Int, Pure]
+
+  /** Why a found work is left out: the account of the dedupe's choice, not a failure. */
+  enum LeftOut derives CanEqual:
+    case NoDoi, Retracted, Known
+
+    /** The reason as the search's report counts it. */
+    def said: String = this match
+      case NoDoi     => "no DOI"
+      case Retracted => "retracted"
+      case Known     => "in the corpus or queued"
 
   /** An arXiv preprint without a DOI gets arXiv's DataCite DOI (`10.48550/arxiv.<id>`), so the same preprint from two
     * indexes is one.
@@ -28,14 +36,14 @@ object CandidateDedupe:
   def dedupe(
       found: List[(FoundBy, WorkRef)],
       known: Set[Doi]
-  ): (List[(Doi, WorkRef, List[FoundBy])], Map[Problem, SkipCount]) =
+  ): (List[(Doi, WorkRef, List[FoundBy])], Map[LeftOut, SkipCount]) =
     val kept = scala.collection.mutable.LinkedHashMap.empty[Doi, (WorkRef, List[FoundBy])]
-    val skipped = scala.collection.mutable.Map.empty[String, Int].withDefaultValue(0)
+    val skipped = scala.collection.mutable.Map.empty[LeftOut, Int].withDefaultValue(0)
     found.foreach { (by, w) =>
       keyOf(w) match
-        case None                           => skipped("no DOI") += 1
-        case Some(_) if w.isRetracted.value => skipped("retracted") += 1
-        case Some(k) if known.contains(k)   => skipped("in the corpus or queued") += 1
+        case None                           => skipped(LeftOut.NoDoi) += 1
+        case Some(_) if w.isRetracted.value => skipped(LeftOut.Retracted) += 1
+        case Some(k) if known.contains(k)   => skipped(LeftOut.Known) += 1
         case Some(k)                        =>
           kept.get(k) match
             case Some((first, bys)) =>
@@ -44,5 +52,5 @@ object CandidateDedupe:
     }
     (
       kept.toList.map { case (k, (w, bys)) => (k, w, bys) },
-      skipped.toMap.map((reason, n) => Problem.Unclassified(Legacy.Text(reason)) -> SkipCount(n))
+      skipped.toMap.map((reason, n) => reason -> SkipCount(n))
     )

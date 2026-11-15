@@ -1,7 +1,6 @@
 package com.histmersion
 package domain
 
-import com.histmersion.util.problem.{Legacy, Problem}
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.library.UpstreamQuota
 
@@ -93,11 +92,50 @@ object CoreQuota:
     object MaxWaitSeconds extends Newtype[Int, Pure]
 
   /** CORE asked not to be called until `until`; `why` says what it answered. */
-  final case class Block(until: Instant, why: Block.Why)
+  final case class Block(until: Instant, why: Block.Rationale)
 
   object Block:
-    type Why = Why.T
-    object Why extends Newtype[String, Pure]
+    /** Why CORE is not asked: what it answered, the account of the block, not a failure. Kept in
+      * `upstream_quota.blocked_why` as its [[said]] text, and read back by [[Rationale.read]].
+      */
+    enum Rationale derives CanEqual:
+      /** It answered HTTP 429. */
+      case Throttled
+
+      /** Its `X-RateLimit-Remaining` header said 0 of `limit` (when it said the limit). */
+      case Exhausted(limit: Option[Window.Limit])
+
+      /** A stored block that kept no reason. */
+      case Unstated
+
+      /** A reason an earlier version stored in other words, kept as it was. */
+      case Stored(text: Rationale.Text)
+
+      /** The reason as the surfaces show it and the column keeps it. */
+      def said: String = this match
+        case Throttled        => "HTTP 429"
+        case Exhausted(limit) => s"X-RateLimit-Remaining 0 of ${limit.fold("?")(l => s"$l")}"
+        case Unstated         => "asked to wait"
+        case Stored(text)     => s"$text"
+
+    object Rationale:
+      /** The words of a reason as an earlier version stored them. */
+      type Text = Text.T
+      object Text extends Newtype[String, Pure]
+
+      private val ExhaustedOf = "X-RateLimit-Remaining 0 of (\\d+|\\?)".r
+
+      /** The reason a column's text says: the case that writes it back, else the text kept as it was. */
+      def read(written: String): Rationale = written match
+        case "HTTP 429"         => Throttled
+        case "asked to wait"    => Unstated
+        case ExhaustedOf("?")   => Exhausted(None)
+        case ExhaustedOf(limit) =>
+          limit.toIntOption
+            .map(Window.Limit(_))
+            .filter(l => s"$l" == limit)
+            .fold(Stored(Text(written)))(l => Exhausted(Some(l)))
+        case other => Stored(Text(other))
 
   /** What the last answer's rate-limit headers said. */
   final case class Window(limit: Option[Window.Limit], remaining: Option[Window.Remaining], at: Instant)
@@ -136,12 +174,12 @@ object CoreQuota:
 
   /** Why a call is not made. */
   enum Refusal:
-    case Blocked(until: Instant, why: Refusal.Blocked.Why)
+    case Blocked(until: Instant, why: Block.Rationale)
     case OverBudget(purpose: Purpose, spent: Refusal.OverBudget.Spent, cap: Refusal.OverBudget.Cap)
     case Paced(waitMs: Refusal.Paced.WaitMs)
 
     def describe: Description = this match
-      case Blocked(until, why)       => Description(s"CORE asked to wait until $until ($why)")
+      case Blocked(until, why)       => Description(s"CORE asked to wait until $until (${why.said})")
       case OverBudget(p, spent, cap) =>
         Description(
           s"CORE's daily budget for ${p.label} is spent ($spent of $cap tokens today, UTC; acquire.core." +
@@ -154,9 +192,6 @@ object CoreQuota:
         )
 
   object Refusal:
-    object Blocked:
-      export Block.Why
-
     object OverBudget:
       export CoreQuota.{Cap, Spent}
 
@@ -245,9 +280,8 @@ object CoreQuota:
     val pause = now.plusSeconds(limits.exhaustedPauseSeconds.value.toLong.max(1L))
     val until = retry.filter(_.isAfter(now)).getOrElse(pause)
     val why =
-      if code.value == 429 then Some(Block.Why("HTTP 429"))
-      else if window.remaining.exists(_.value == 0) then
-        Some(Block.Why(s"X-RateLimit-Remaining 0 of ${window.limit.fold("?")(_.toString)}"))
+      if code.value == 429 then Some(Block.Rationale.Throttled)
+      else if window.remaining.exists(_.value == 0) then Some(Block.Rationale.Exhausted(window.limit))
       else None
     val block = why.map(Block(until, _)) match
       case Some(b) => Some(s.block.filter(_.until.isAfter(b.until)).getOrElse(b))
@@ -281,7 +315,7 @@ object CoreQuota:
       UpstreamQuota.SearchDailyTokens(limits.searchDailyTokens.value),
       UpstreamQuota.PerMinute(limits.perMinute.value),
       b.map(x => UpstreamQuota.BlockedUntil(x.until.toString)),
-      b.map(x => Problem.Unclassified(Legacy.Text(x.why.value))),
+      b.map(x => UpstreamQuota.BlockedBy(x.why.said)),
       s.window.flatMap(_.limit).map(l => UpstreamQuota.RateLimit(l.value)),
       s.window.flatMap(_.remaining).map(m => UpstreamQuota.RateRemaining(m.value)),
       s.window.map(w => UpstreamQuota.ObservedAt(w.at.toString))

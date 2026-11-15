@@ -29,7 +29,7 @@ import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.StoredIdCodecs.given
 import com.histmersion.api.automation.{AgentsMarkdown, Managers, Queue}
-import com.histmersion.api.library.{Candidates, Source, WorkRef}
+import com.histmersion.api.library.{Candidates, CandidateSweep, Source, WorkRef}
 import com.histmersion.domain.automation.agents.AgentsControllers
 import com.histmersion.domain.automation.goals.GoalService
 import com.histmersion.domain.automation.Goal
@@ -173,9 +173,9 @@ final class AcquisitionSweepPipeline(
       )
     yield line
 
-  private def skippedText(m: Map[Problem, AcquisitionSweepRules.SkipCount]): String =
+  private def skippedText(m: Map[CandidateSweep.SkippedKey, AcquisitionSweepRules.SkipCount]): String =
     if m.isEmpty then "none left out"
-    else m.toList.sortBy(_._1.sentence).map((k, n) => s"$n ${k.sentence}").mkString(", ")
+    else m.toList.map((k, n) => (s"$k", n)).sortBy(_._1).map((k, n) => s"$n $k").mkString(", ")
 
   /** The DOIs in a watcher's ingest backlog that this goal found already (a pick another goal found joins that entry,
     * so it is offered to this goal's ranking too).
@@ -231,12 +231,11 @@ final class AcquisitionSweepPipeline(
             g.notes,
             queries,
             cands,
-            sw.skipped.map((k, n) =>
-              Problem.Unclassified(Legacy.Text(k.value)) -> AcquisitionSweepRules.SkipCount(n.value)
-            ) ++
+            sw.skipped.map((k, n) => k -> AcquisitionSweepRules.SkipCount(n.value)) ++
               Option
                 .when(gone.nonEmpty)(
-                  Problem.Unclassified(Legacy.Text("already queued")) -> AcquisitionSweepRules.SkipCount(gone.size)
+                  CandidateSweep.SkippedKey(AcquisitionSweepRules.LeftOut.AlreadyQueued.said) ->
+                    AcquisitionSweepRules.SkipCount(gone.size)
                 )
                 .toMap,
             stored = open.map(c => Doi.assume(c.doi.value) -> c.id).toMap
@@ -270,7 +269,13 @@ final class AcquisitionSweepPipeline(
           queuedDois().keySet ++ backlogged(goal),
           AcquisitionSweepRules.Limit(cfg.scheduler.sweepCandidates.value)
         )
-      Found(g.title, g.notes, queries, cands, skipped)
+      Found(
+        g.title,
+        g.notes,
+        queries,
+        cands,
+        skipped.map((reason, n) => CandidateSweep.SkippedKey(reason.said) -> n)
+      )
     }
 
   private def rankInput(goal: Goal.Slug, f: Found): String =
@@ -405,7 +410,6 @@ final class AcquisitionSweepPipeline(
     }
 
 object AcquisitionSweepPipeline:
-  given JsonKeyCodec[Problem] = JsonCodec.key[Problem](_.sentence, k => Right(Problem.Unclassified(Legacy.Text(k))))
   given JsonKeyCodec[Doi] = JsonCodec.key[Doi](_.value, k => Right((Doi.assume(_))(k)))
 
   /** What an acquisition sweep picked (its `rank` step's checked answer). */
@@ -420,7 +424,7 @@ object AcquisitionSweepPipeline:
       notes: Option[com.histmersion.api.automation.Goal.Notes],
       queries: List[Search.Query],
       candidates: List[Candidate],
-      skipped: Map[Problem, AcquisitionSweepRules.SkipCount],
+      skipped: Map[CandidateSweep.SkippedKey, AcquisitionSweepRules.SkipCount],
       stored: Map[Doi, Source.Candidate.Id] = Map.empty
   ) derives JsonCodec
 

@@ -682,7 +682,7 @@ object QueueView:
             div(
               cls := "item-reason muted",
               title := s"checked ${c.checks} time(s)",
-              segments(UiLabels.Text(c.reason.sentence)).map(render)
+              segments(UiLabels.Text(s"${c.reason}")).map(render)
             )
           ),
         Option.when(goals.nonEmpty)(

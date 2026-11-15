@@ -1,7 +1,7 @@
 package com.histmersion
 package domain
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 import scala.annotation.tailrec
 import com.histmersion.api.Plural
@@ -137,13 +137,30 @@ object IngestBacklog:
     * failed `maxFailures` times), or another try after the backoff.
     */
   enum Failure:
-    case ToAcquire(why: Problem)
-    case Retry(notBefore: Instant, failures: Failure.Retry.Failures, why: Problem)
+    case ToAcquire(why: Rationale)
+    case Retry(notBefore: Instant, failures: Failure.Retry.Failures, why: Rationale)
 
   object Failure:
     object Retry:
       type Failures = Failures.T
       object Failures extends Newtype[Int, Pure]
+
+  /** Why the item goes where it goes: the account of the backlog's decision about the ingest's failure. */
+  enum Rationale:
+    /** The ingest failed with `problem`. */
+    case Failed(problem: Problem)
+
+    /** The ingest failed with `problem`, the `tries`th time: the item gives up. */
+    case GaveUp(problem: Problem, tries: Plural.Count)
+
+    /** The account as the item's outcome and the manager's feed show it. */
+    def said: String =
+      def words(problem: Problem): String =
+        Option(problem).map(_.sentence.trim).filter(_.nonEmpty).getOrElse("the ingest failed").take(500)
+      this match
+        case Failed(problem)        => words(problem)
+        case GaveUp(problem, tries) =>
+          s"${words(problem)} (${Plural.count(tries, Plural.CountSingular("try"), Plural.CountPlural("tries"))})"
 
   def onFailure(
       message: Problem,
@@ -153,23 +170,16 @@ object IngestBacklog:
       maxBackoffMinutes: ManagerPolicy.ReviewSettings.MaxBackoffMinutes,
       now: Instant
   ): Failure =
-    val why = Option(message).map(_.sentence.trim).filter(_.nonEmpty).getOrElse("the ingest failed").take(500)
-    if startsWithNoLegalCopy(why) then Failure.ToAcquire(Problem.Unclassified(Legacy.Text(why)))
+    val failed = Rationale.Failed(message)
+    if startsWithNoLegalCopy(failed.said) then Failure.ToAcquire(failed)
     else
       val n = math.max(0, failures.value) + 1
-      if n >= math.max(1, maxFailures.value) then
-        Failure.ToAcquire(
-          Problem.Unclassified(
-            Legacy.Text(
-              s"$why (${Plural.count(Plural.CountN(n.toLong), Plural.CountSingular("try"), Plural.CountPlural("tries"))})"
-            )
-          )
-        )
+      if n >= math.max(1, maxFailures.value) then Failure.ToAcquire(Rationale.GaveUp(message, Plural.CountN(n.toLong)))
       else
         Failure.Retry(
           now.plus(ManagerPolicy.backoff(backoffMinutes, maxBackoffMinutes, ManagerPolicy.Next.Retry.Failures(n))),
           Failure.Retry.Failures(n),
-          Problem.Unclassified(Legacy.Text(why))
+          failed
         )
 
   /** One watcher's share of the drain: its backlog, its own daily cap, and what is left of it today. */
@@ -253,18 +263,32 @@ object IngestBacklog:
     case Remove(citekey: Citekey)
 
     /** It stays on the list, with why. */
-    case Keep(why: Problem)
+    case Keep(why: RepairRationale)
+
+  /** Why an item stays on the acquisition list: the account of the repair's decision, not a failure. */
+  enum RepairRationale:
+    /** The sweep's ranking did not mark the work open access. */
+    case NoLegalCopyKnown
+
+    /** The watcher `watcher` that found it no longer exists. */
+    case WatcherGone(watcher: RepairFacts.Watcher)
+
+    /** The watcher `watcher` that found it does not auto-ingest. */
+    case WatcherManual(watcher: RepairFacts.Watcher)
+
+    /** The account as the repair's report shows it. */
+    def said: String = this match
+      case NoLegalCopyKnown       => "no legal open-access copy known: it stays on the acquisition list"
+      case WatcherGone(watcher)   => s"its watcher $watcher no longer exists"
+      case WatcherManual(watcher) => s"its watcher $watcher does not auto-ingest"
 
   def repairAction(f: RepairFacts): RepairAction =
-    if !f.isOa.value then
-      RepairAction.Keep(
-        Problem.Unclassified(Legacy.Text("no legal open-access copy known: it stays on the acquisition list"))
-      )
+    if !f.isOa.value then RepairAction.Keep(RepairRationale.NoLegalCopyKnown)
     else
       f.inCorpus match
         case Some(ck)                       => RepairAction.Remove(ck)
         case None if !f.watcherExists.value =>
-          RepairAction.Keep(Problem.Unclassified(Legacy.Text(s"its watcher ${f.watcher} no longer exists")))
+          RepairAction.Keep(RepairRationale.WatcherGone(f.watcher))
         case None if !f.watcherAutoIngest.value =>
-          RepairAction.Keep(Problem.Unclassified(Legacy.Text(s"its watcher ${f.watcher} does not auto-ingest")))
+          RepairAction.Keep(RepairRationale.WatcherManual(f.watcher))
         case None => RepairAction.Move

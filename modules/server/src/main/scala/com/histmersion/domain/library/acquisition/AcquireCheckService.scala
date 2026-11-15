@@ -1,6 +1,5 @@
 package com.histmersion
 package domain.library.acquisition
-import com.histmersion.util.problem.Problem
 
 import com.histmersion.api.automation.Queue
 import com.histmersion.domain.AcquireRecheck
@@ -30,7 +29,7 @@ trait AcquireCheckService:
       at: Instant,
       generation: AcquireRecheck.LastCheck.Generation,
       outcome: AcquireRecheck.Outcome,
-      reason: Problem
+      reason: AcquireRecheck.Rationale
   ): Unit
 
   /** How many checks since `since`, per outcome. */
@@ -51,7 +50,7 @@ object AcquireCheckService:
         at: Instant,
         generation: AcquireRecheck.LastCheck.Generation,
         outcome: AcquireRecheck.Outcome,
-        reason: Problem
+        reason: AcquireRecheck.Rationale
     ): Unit =
       db.transact(AcquireCheckRepo.record(item, at, generation, outcome, reason))
     def countSince(since: Instant): Map[AcquireRecheck.Outcome.Wire, RowCount] =
@@ -71,13 +70,16 @@ object AcquireCheckService:
         at: Instant,
         generation: AcquireRecheck.LastCheck.Generation,
         outcome: AcquireRecheck.Outcome,
-        reason: Problem
+        reason: AcquireRecheck.Rationale
     ): Unit =
       val _ = state.updateAndGet(
         _.modify(_.checks).using { cs =>
           val key = AcquisitionState.ChecksKey(item.value)
           val n = cs.get(key).fold(AcquireCheckRow.Checks(1))(c => AcquireCheckRow.Checks(c.checks.value + 1))
-          cs.updated(key, AcquireCheckRow(item, at, generation, outcome.wire, reason, n))
+          cs.updated(
+            key,
+            AcquireCheckRow(item, at, generation, outcome.wire, AcquireCheckRow.Rationale(reason.said), n)
+          )
         }
       )
     def countSince(since: Instant): Map[AcquireRecheck.Outcome.Wire, RowCount] =

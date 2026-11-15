@@ -2,7 +2,7 @@ package com.histmersion
 package domain
 
 import com.histmersion.util.problem.Text.sentence
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.jobs.JobState
@@ -165,10 +165,12 @@ object AcquireRecheck:
   /** What each fetcher answered, from the legal ingest's refusal (`no legal open-access copy of <doi>: <the chain's
     * message> — <fetcher>: <answer>; …`): the answers when there are any, else the message.
     */
-  def answers(message: Problem): ReplyText =
-    val m = Option(message).fold("")(_.sentence.trim)
+  def answers(message: Problem): ReplyText = replies(Option(message).fold("")(_.sentence.trim))
+
+  /** The fetchers' answers in a legal ingest's refusal, as [[answers]] reads them from its text `m`. */
+  private def replies(m: String): ReplyText =
     val rest =
-      if !IngestBacklog.isNoLegalCopy(message) then m
+      if !m.startsWith(IngestBacklog.NoLegalCopy) then m
       else
         m.indexOf(": ") match
           case -1 => ""
@@ -178,18 +180,45 @@ object AcquireRecheck:
       case i  => rest.drop(i + 3).trim
     ReplyText(replies)
 
-  /** The short reason an item carries: `checked 2026-10-27: no legal copy (unpaywall: no copy — none; …)`. */
-  def reason(at: Instant, outcome: Outcome, detail: Detail): Problem =
+  /** Why an item carries what it carries after a check on `day`: the account of the re-check, not a failure. */
+  enum Rationale:
+    /** In the corpus with its original, as `citekey`: the item closes. */
+    case Closed(day: LocalDate, citekey: Detail)
+
+    /** A legal copy was found at `source`: it is converting. */
+    case Fetched(day: LocalDate, source: Detail)
+
+    /** No legal copy; the fetchers answered `replies` (empty when they said nothing). */
+    case NoCopy(day: LocalDate, replies: ReplyText)
+
+    /** No answer: the chain said `detail` (empty when it said nothing). */
+    case Failed(day: LocalDate, detail: Detail)
+
+    /** The short reason an item carries, at most 500 characters: `checked 2026-10-27: no legal copy (unpaywall: no copy
+      * — none; …)`.
+      */
+    def said: String =
+      def trimmed(detail: Detail): String = Option(detail).fold("")(d => s"$d".trim)
+      val text = this match
+        case Closed(day, citekey) =>
+          s"checked $day: in the corpus with its original as [[${trimmed(citekey)}]] — closed"
+        case Fetched(day, source) =>
+          s"checked $day: a legal copy found (${trimmed(source)}) — converting; the item closes once it is stored"
+        case NoCopy(day, replies) =>
+          s"checked $day: no legal copy" + (if s"$replies".isEmpty then "" else s" ($replies)")
+        case Failed(day, detail) =>
+          val d = trimmed(detail)
+          s"checked $day: no answer (${if d.isEmpty then "the ingest failed" else d})"
+      text.take(500)
+
+  /** The reason an item carries after a check at `at` that ended `outcome`, the fetcher's or chain's words `detail`. */
+  def reason(at: Instant, outcome: Outcome, detail: Detail): Rationale =
     val day = LocalDate.ofInstant(at, ZoneOffset.UTC)
-    val d = Option(detail).fold("")(_.value.trim)
-    val text = outcome match
-      case Outcome.Closed  => s"checked $day: in the corpus with its original as [[$d]] — closed"
-      case Outcome.Fetched => s"checked $day: a legal copy found ($d) — converting; the item closes once it is stored"
-      case Outcome.NoCopy  =>
-        val a = answers(Problem.Unclassified(Legacy.Text(d)))
-        s"checked $day: no legal copy" + (if a.value.isEmpty then "" else s" ($a)")
-      case Outcome.Failed => s"checked $day: no answer (${if d.isEmpty then "the ingest failed" else d})"
-    Problem.Unclassified(Legacy.Text(text.take(500)))
+    outcome match
+      case Outcome.Closed  => Rationale.Closed(day, detail)
+      case Outcome.Fetched => Rationale.Fetched(day, detail)
+      case Outcome.NoCopy  => Rationale.NoCopy(day, replies(Option(detail).fold("")(d => s"$d".trim)))
+      case Outcome.Failed  => Rationale.Failed(day, detail)
 
   /** What the shared daily legal ingest allowance leaves the re-check (the autopilot's: absent when it is off or has no
     * cap): what is `left` of the `cap` today, the watchers' backlog waiting for it, and what the re-check fetched

@@ -2,7 +2,6 @@ package com.histmersion
 package domain.library.sources
 
 import com.histmersion.util.problem.Problem
-import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.api.exchange.MergeIssue
 import com.histmersion.api.exchange.MergeDecision
@@ -133,7 +132,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
           Some(MergeIssue.Detail.side(p.left.source)),
           Some(MergeIssue.Detail.side(p.right.source)),
           (ev.why
-            .map(_.sentence) ++ p.alsoLike.take(3).map((ck, sc) => s"also resembles $ck (score ${signedScore(sc)})"))
+            .map(_.said) ++ p.alsoLike.take(3).map((ck, sc) => s"also resembles $ck (score ${signedScore(sc)})"))
             .map(MergeIssue.Rationale(_)),
           List(km.Map, km.Both),
           Option.when(ev.score.value >= cfg.autoMerge.value)(
@@ -456,7 +455,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
             if ev.strongKey then MatchMethod.StrongKey else MatchMethod.Score,
             MatchOutcome.AutoMerge,
             Some(Source.Match.Score(ev.score.value)),
-            ev.why
+            ev.why.map(r => MergeIssue.Rationale(r.said))
           )
         )
       case SourceFate.Gate(p, g) =>
@@ -470,7 +469,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
             MatchMethod.Score,
             MatchOutcome.NeedsDecision,
             Some(Source.Match.Score(ev.score.value)),
-            ev.why,
+            ev.why.map(r => MergeIssue.Rationale(r.said)),
             Some(Source.Match.Issue(g.value))
           )
         )

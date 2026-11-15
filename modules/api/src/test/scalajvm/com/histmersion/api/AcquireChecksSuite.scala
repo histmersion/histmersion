@@ -1,7 +1,6 @@
 package com.histmersion
 package api
 
-import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -32,10 +31,8 @@ class AcquireChecksSuite extends munit.FunSuite:
     Queue.QueueItem.Id(7),
     Acquire.Checks.AcquireCheck.CheckedAt("2026-10-27T10:00:00Z"),
     Acquire.Checks.AcquireCheck.Outcome(NoCopy),
-    Problem.Unclassified(
-      Legacy.Text(
-        "checked 2026-10-27: no legal copy (unpaywall: no copy — none; landing: refused — bot-protection 403)"
-      )
+    Acquire.Checks.AcquireCheck.Rationale(
+      "checked 2026-10-27: no legal copy (unpaywall: no copy — none; landing: refused — bot-protection 403)"
     ),
     Acquire.Checks.AcquireCheck.Checks(2)
   )

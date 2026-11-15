@@ -57,7 +57,11 @@ trait ManagerContext:
       target: ManagerContext.ItemTarget
   ): Option[ManagerItem]
   def hasItem(id: ManagerLight.Id, kind: ManagerContext.ItemKind, target: ManagerContext.ItemTarget): Boolean
-  def restale(itemId: ManagerContext.ItemId, priority: ManagerContext.Priority, why: Problem): Boolean
+  def restale(
+      itemId: ManagerContext.ItemId,
+      priority: ManagerContext.Priority,
+      why: ManagerItem.Outcome
+  ): Boolean
   def pending(id: ManagerLight.Id): RowCount
   def openKeys(id: ManagerLight.Id): List[(ManagerContext.ItemKind, ManagerContext.ItemTarget)]
   def evaluated(

@@ -42,7 +42,7 @@ class AcquisitionSweepRulesSuite extends munit.FunSuite:
       List((com.histmersion.domain.library.Doi("10.1000/a"), Candidate.Query("q1")))
     )
     assertEquals(
-      skipped.map((k, v) => k.sentence -> v),
+      skipped.map((k, v) => k.said -> v),
       Map("in the corpus" -> 1, "already queued" -> 1, "no DOI" -> 1, "retracted" -> 1, "over the sweep limit" -> 1)
     )
 

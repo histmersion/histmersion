@@ -228,7 +228,7 @@ final class CandidateSearch(
           CandidateSweep.Added(added),
           CandidateSweep.Again(again),
           skipped
-            .map((reason, n) => CandidateSweep.SkippedKey(reason.sentence) -> CandidateSweep.SkippedValue(n.value)),
+            .map((reason, n) => CandidateSweep.SkippedKey(reason.said) -> CandidateSweep.SkippedValue(n.value)),
           unseen,
           CandidateSweep.DryRun(dryRun.value),
           notes

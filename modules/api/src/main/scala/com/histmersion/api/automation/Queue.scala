@@ -3,7 +3,6 @@ package api.automation
 
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Problem.{Field, Invalid, Raw, TypeName}
-import com.histmersion.util.problem.Text.sentence
 
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.util.json.JsonCodec
@@ -444,7 +443,7 @@ object Queue:
   def markdown(
       kind: Kind,
       items: List[QueueItem],
-      notes: Map[QueueItem.Id, Problem] = Map.empty
+      notes: Map[QueueItem.Id, Acquire.Checks.AcquireCheck.Rationale] = Map.empty
   ): Markdown =
     val shown = items.filterNot(_.status == QueueItem.Status(Note))
     if shown.isEmpty then Markdown(s"_${kind.label}: nothing queued._")
@@ -461,7 +460,7 @@ object Queue:
             if !(kind.checkboxes).value then "" else if i.status == QueueItem.Status(Done) then "[x] " else "[ ] "
           val why = i.reason.map(r => s" — _${r}_").getOrElse("")
           s"- $box${(i.text).value.linesIterator.mkString(" ")}$why  `#${i.id}`" +
-            notes.get(i.id).fold("")(n => s"\n  - _${n.sentence}_")
+            notes.get(i.id).fold("")(n => s"\n  - _${n}_")
         }
         s"\n\n**$head**\n${lines.mkString("\n")}"
       }

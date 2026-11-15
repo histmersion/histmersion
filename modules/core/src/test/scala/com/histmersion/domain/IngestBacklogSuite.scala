@@ -4,7 +4,6 @@ import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
 
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -197,7 +196,7 @@ class IngestBacklogSuite extends munit.FunSuite:
       ManagerPolicy.ReviewSettings.MaxBackoffMinutes(360),
       now
     ) match
-      case Failure.ToAcquire(why) => assert(why.sentence.startsWith(NoLegalCopy), why)
+      case Failure.ToAcquire(why) => assert(why.said.startsWith(NoLegalCopy), why)
       case other                  => fail(s"expected the acquisition list, got $other")
     assertEquals(
       onFailure(
@@ -211,7 +210,7 @@ class IngestBacklogSuite extends munit.FunSuite:
       Failure.Retry(
         now.plusSeconds(15 * 60),
         IngestBacklog.Failure.Retry.Failures(1),
-        Problem.Unclassified(Legacy.Text("timeout"))
+        IngestBacklog.Rationale.Failed(Problem.Unclassified(Legacy.Text("timeout")))
       )
     )
     assertEquals(
@@ -226,7 +225,7 @@ class IngestBacklogSuite extends munit.FunSuite:
       Failure.Retry(
         now.plusSeconds(30 * 60),
         IngestBacklog.Failure.Retry.Failures(2),
-        Problem.Unclassified(Legacy.Text("timeout"))
+        IngestBacklog.Rationale.Failed(Problem.Unclassified(Legacy.Text("timeout")))
       )
     )
     onFailure(
@@ -237,7 +236,7 @@ class IngestBacklogSuite extends munit.FunSuite:
       ManagerPolicy.ReviewSettings.MaxBackoffMinutes(360),
       now
     ) match
-      case Failure.ToAcquire(why) => assertEquals((why).sentence, "timeout (3 tries)")
+      case Failure.ToAcquire(why) => assertEquals(why.said, "timeout (3 tries)")
       case other                  => fail(s"expected the acquisition list, got $other")
     assert(
       onFailure(
@@ -335,7 +334,7 @@ class IngestBacklogSuite extends munit.FunSuite:
       "closed: never touched"
     )
     assert(repairAction(f.modify(_.watcherAutoIngest).setTo(IngestBacklog.RepairFacts.WatcherAutoIngest(false))) match
-      case RepairAction.Keep(why) => why.sentence.contains("does not auto-ingest")
+      case RepairAction.Keep(why) => why.said.contains("does not auto-ingest")
       case _                      => false)
     assert(
       repairAction(f.modify(_.watcherExists).setTo(IngestBacklog.RepairFacts.WatcherExists(false)))

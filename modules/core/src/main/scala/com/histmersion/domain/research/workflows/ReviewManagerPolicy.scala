@@ -1,6 +1,6 @@
 package com.histmersion
 package domain.research.workflows
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 
 import hearth.kindlings.optics.syntax.*
@@ -231,13 +231,52 @@ object ReviewManagerPolicy:
 
   // ── selection (the review manager's refill) ────────────────────────────────────────────────────
 
+  import Pick.Rationale
+
   /** One item the selection adds: its kind, target (the article's slug), priority, and why (for the event). */
   final case class Pick(
       kind: ManagerPolicy.ItemKind,
       target: Slug,
       priority: ManagerPolicy.Candidate.Priority,
-      why: Problem
-  )
+      why: Rationale
+  ):
+    /** The item's outcome when a stale article is selected again: why. */
+    def outcome: ManagerItem.Outcome = ManagerItem.Outcome(why.said)
+
+  object Pick:
+    /** Why the selection picks an article: the account of the refill, not a failure. */
+    enum Rationale:
+      /** It has `majors` open MAJOR findings. */
+      case OpenMajors(majors: ReviewFacts.OpenMajors)
+
+      /** It was never reviewed. */
+      case NeverReviewed
+
+      /** It converged, and is due again as `why` says. */
+      case Stale(why: Staleness)
+
+      /** It records no coverage filter (an infer-filter item comes first). */
+      case NoFilter
+
+      /** The account as the manager's event and its item's outcome show it. */
+      def said: String = this match
+        case OpenMajors(majors) => counted(majors.value, "open MAJOR").value
+        case NeverReviewed      => "never reviewed"
+        case Stale(why)         => s"stale: ${why.said}"
+        case NoFilter           => "it records no coverage filter"
+
+  /** Why a converged article is due again. */
+  enum Staleness:
+    /** Its filter returns `now` sources, more than the `converged` it returned when it converged. */
+    case Gained(converged: FilterHits, now: FilterHits)
+
+    /** It converged more than `days` days ago. */
+    case Old(days: ReviewSettings.StaleAfterDays)
+
+    /** The reason as the selection shows it. */
+    def said: String = this match
+      case Gained(converged, now) => s"its filter gained ${counted(now.value - converged.value, "source")}"
+      case Old(days)              => s"last converged over $days days ago"
 
   /** The priorities of what the selection picks: open MAJORs, never reviewed, stale (a person's enqueue is 10, a
     * chained review 2 — both above).
@@ -254,7 +293,7 @@ object ReviewManagerPolicy:
   def select(
       majors: List[(Slug, ReviewFacts.OpenMajors)],
       unreviewed: List[Slug],
-      stale: List[(Slug, Problem)],
+      stale: List[(Slug, Staleness)],
       batch: ReviewSettings.RefillBatch,
       inferFilter: ReviewSettings.InferFilter,
       hasFilter: Slug => Boolean,
@@ -266,7 +305,7 @@ object ReviewManagerPolicy:
           ManagerPolicy.ItemKind.ArticleReview,
           slug,
           MajorsPriority,
-          Problem.Unclassified(Legacy.Text(counted(n.value, "open MAJOR").value))
+          Pick.Rationale.OpenMajors(n)
         )
       ) ++
         unreviewed.map(slug =>
@@ -274,7 +313,7 @@ object ReviewManagerPolicy:
             ManagerPolicy.ItemKind.ArticleReview,
             slug,
             UnreviewedPriority,
-            Problem.Unclassified(Legacy.Text("never reviewed"))
+            Pick.Rationale.NeverReviewed
           )
         ) ++
         stale.map((slug, why) =>
@@ -282,7 +321,7 @@ object ReviewManagerPolicy:
             ManagerPolicy.ItemKind.ArticleReview,
             slug,
             StalePriority,
-            Problem.Unclassified(Legacy.Text(s"stale: ${why.sentence}"))
+            Pick.Rationale.Stale(why)
           )
         ))
         .foldLeft(Vector.empty[Pick])((acc, p) => if acc.exists(_.target == p.target) then acc else acc :+ p)
@@ -294,7 +333,7 @@ object ReviewManagerPolicy:
           ManagerPolicy.ItemKind.InferFilter,
           p.target,
           p.priority,
-          Problem.Unclassified(Legacy.Text("it records no coverage filter"))
+          Pick.Rationale.NoFilter
         )
       )
       infer.toList :+ p
@@ -309,16 +348,12 @@ object ReviewManagerPolicy:
       days: ReviewSettings.StaleAfterDays,
       hitsThen: Option[FilterHits],
       hitsNow: Option[FilterHits]
-  ): Option[Problem] =
+  ): Option[Staleness] =
     if days.value <= 0 then None
     else
-      val gained = hitsThen.zip(hitsNow).collect { case (a, b) if b > a => b.value - a.value }
-      gained
-        .map(n => s"its filter gained ${counted(n, "source")}")
+      hitsThen
+        .zip(hitsNow)
+        .collect { case (a, b) if b > a => Staleness.Gained(a, b) }
         .orElse(
-          Option
-            .when(!convergedAt.plus(Duration.ofDays(days.value.toLong)).isAfter(now))(
-              s"last converged over $days days ago"
-            )
+          Option.when(!convergedAt.plus(Duration.ofDays(days.value.toLong)).isAfter(now))(Staleness.Old(days))
         )
-        .map((text => Problem.Unclassified(Legacy.Text(text))))

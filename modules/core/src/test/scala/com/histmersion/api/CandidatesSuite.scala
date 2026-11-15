@@ -84,7 +84,7 @@ class CandidatesSuite extends munit.FunSuite:
     )
     assertEquals(kept.head._2.authors, List(AuthorName("Ann")), "the first record, filled from the others")
     assertEquals(
-      skipped.map((k, v) => k.sentence -> v),
+      skipped.map((k, v) => k.said -> v),
       Map("no DOI" -> 1, "retracted" -> 1, "in the corpus or queued" -> 1)
     )
 

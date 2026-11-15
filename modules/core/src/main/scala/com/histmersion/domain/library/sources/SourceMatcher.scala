@@ -1,7 +1,5 @@
 package com.histmersion
 package domain.library.sources
-import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.api.exchange.EditionsPolicy
 
@@ -18,6 +16,7 @@ import com.histmersion.util.text.{Fingerprint, MinHash}
 
 import java.util.UUID
 import com.histmersion.api.exchange.Bundle
+import com.histmersion.api.catalogue.Year
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.exchange.Bundle.uidEquality
@@ -66,6 +65,8 @@ object SourceMatcher:
     type Label = Label.T
     object Label extends Newtype[String, Pure]
 
+  import Evidence.{Rationale, Reason}
+
   /** The evidence about one pair. `parts` is the score's waterfall, in the order it was added up. */
   final case class Evidence(
       strong: List[Evidence.Strong],
@@ -73,14 +74,11 @@ object SourceMatcher:
       yearGap: Evidence.YearGap,
       titleDiffers: Evidence.TitleDiffers,
       authors: AuthorAgreement,
-      parts: List[(Problem, Evidence.Weight)]
+      parts: List[(Reason, Evidence.Weight)]
   ):
     def score: Evidence.Score = Evidence.Score(parts.map(_._2.value).sum)
     def strongKey: Boolean = strong.nonEmpty
-    def why: List[Problem] =
-      strong.map(k => Problem.Unclassified(Legacy.Text(s"$k equal (strong key)"))) ++ parts.map((l, w) =>
-        Problem.Unclassified(Legacy.Text(s"${l.sentence} (${signed(w)})"))
-      )
+    def why: List[Rationale] = strong.map(Rationale.StrongKey(_)) ++ parts.map((r, w) => Rationale.Part(r, w))
 
   object Evidence:
     /** The sum of the weights of the parts. */
@@ -100,6 +98,73 @@ object SourceMatcher:
     /** What a comparison adds to the score. */
     type Weight = Weight.T
     object Weight extends Newtype[Double, Pure]
+
+    /** What one field comparison found: a part of the score's waterfall. */
+    enum Reason:
+      case TitleSame, MainTitleSame
+
+      /** The titles' Jaro-Winkler similarity is `jaroWinkler`, at least the setting's. */
+      case TitlesSimilar(jaroWinkler: Figure)
+
+      /** The titles' words overlap by `jaccard` (Jaccard), at least the setting's. */
+      case TitleWordsOverlap(jaccard: Figure)
+
+      case TitlesDiffer, AuthorsSame, FirstAuthorSame, AuthorsOverlap, NoAuthorInCommon, YearSame, YearsOneApart
+
+      /** The years are `right` (the bundle's) and `left` (here's), and one side speaks of a reprint or edition. */
+      case YearsReprint(right: Year, left: Year)
+
+      /** The years are `right` (the bundle's) and `left` (here's), two or more apart. */
+      case YearsApart(right: Year, left: Year)
+
+      case VenueSame, VenuesDiffer, BodySame
+
+      /** The OCR bodies' MinHash similarity is `minHash`: alike, partly alike, or different. */
+      case BodiesAlike(minHash: Figure)
+      case BodiesPartlyAlike(minHash: Figure)
+      case BodiesDiffer(minHash: Figure)
+
+      /** `label`, a citekey of one side, is an old citekey (alias) of the other. */
+      case OldCitekey(label: Side.Label)
+
+      /** The part of the score this comparison is: it adds `weight`. */
+      private[SourceMatcher] def weighs(weight: Double): (Reason, Weight) = (this, Weight(weight))
+
+      /** The comparison as the evidence lists it. */
+      def said: String = this match
+        case TitleSame                 => "title the same"
+        case MainTitleSame             => "main title the same, the subtitle differs"
+        case TitlesSimilar(jw)         => s"titles similar (Jaro-Winkler ${fixed(jw, Decimals(2))})"
+        case TitleWordsOverlap(tj)     => s"title words overlap (Jaccard ${fixed(tj, Decimals(2))})"
+        case TitlesDiffer              => "titles differ"
+        case AuthorsSame               => "authors the same"
+        case FirstAuthorSame           => "first author the same"
+        case AuthorsOverlap            => "authors overlap"
+        case NoAuthorInCommon          => "no author in common"
+        case YearSame                  => "year the same"
+        case YearsOneApart             => "years one apart"
+        case YearsReprint(right, left) => s"years $right and $left, a reprint or edition"
+        case YearsApart(right, left)   => s"years $right and $left"
+        case VenueSame                 => "venue the same"
+        case VenuesDiffer              => "venues differ"
+        case BodySame                  => "the same OCR body"
+        case BodiesAlike(j)            => s"OCR bodies alike (MinHash ${fixed(j, Decimals(2))})"
+        case BodiesPartlyAlike(j)      => s"OCR bodies partly alike (MinHash ${fixed(j, Decimals(2))})"
+        case BodiesDiffer(j)           => s"OCR bodies differ (MinHash ${fixed(j, Decimals(2))})"
+        case OldCitekey(label)         => s"'$label' is an old citekey of the other"
+
+    /** Why a pair matches or not, line by line: the account of the matcher's decision, not a failure. */
+    enum Rationale:
+      /** The two sides share the strong key `key`: a match whatever the score. */
+      case StrongKey(key: Strong)
+
+      /** A comparison found `reason`, which adds `weight` to the score. */
+      case Part(reason: Reason, weight: Weight)
+
+      /** The line as the merge plan shows it. */
+      def said: String = this match
+        case StrongKey(key)       => s"$key equal (strong key)"
+        case Part(reason, weight) => s"${reason.said} (${signed(weight)})"
 
   /** `x` with `places` decimals, a dot whatever the JVM's locale. */
   def fixed(x: Figure, places: Decimals): Written = Written(s"%.${places}f".formatLocal(java.util.Locale.ROOT, x.value))
@@ -161,9 +226,6 @@ object SourceMatcher:
       years(b).contains(y.value)
     ) || says(a) || says(b)
 
-  private def part(reason: String, weight: Double): (Problem, Evidence.Weight) =
-    (Problem.Unclassified(Legacy.Text(reason)), Evidence.Weight(weight))
-
   private def venueFingerprint(s: Bundle.Source): Option[Fingerprint] =
     s.venue.map(v => MergeText.fingerprint(MergeText.Text(v.value))).filter(_.value.nonEmpty)
 
@@ -187,63 +249,63 @@ object SourceMatcher:
       )
     val jw = MergeText.jaroWinkler(MergeText.words(titleText(r)), MergeText.words(titleText(l)))
     val tj = MergeText.jaccard(MergeText.tokens(titleText(r)).toSet, MergeText.tokens(titleText(l)).toSet)
-    val title: (Problem, Evidence.Weight) =
-      if fr.value.nonEmpty && fr == fl then part("title the same", w.titleFingerprint.value)
+    val title: (Evidence.Reason, Evidence.Weight) =
+      if fr.value.nonEmpty && fr == fl then Evidence.Reason.TitleSame.weighs(w.titleFingerprint.value)
       else if mr.value.nonEmpty && (mr == ml || mr == fl || fr == ml) then
-        part("main title the same, the subtitle differs", w.titleMain.value)
+        Evidence.Reason.MainTitleSame.weighs(w.titleMain.value)
       else if jw.value >= w.titleSimilarAtLeast.value then
-        part(s"titles similar (Jaro-Winkler ${fixed(Figure(jw.value), Decimals(2))})", w.titleSimilar.value)
+        Evidence.Reason.TitlesSimilar(Figure(jw.value)).weighs(w.titleSimilar.value)
       else if tj.value >= w.titleTokensAtLeast.value then
-        part(s"title words overlap (Jaccard ${fixed(Figure(tj.value), Decimals(2))})", w.titleTokens.value)
-      else part("titles differ", w.titleDiffers.value)
+        Evidence.Reason.TitleWordsOverlap(Figure(tj.value)).weighs(w.titleTokens.value)
+      else Evidence.Reason.TitlesDiffer.weighs(w.titleDiffers.value)
 
     // authors
     val ag = MergeText.authors(authorsOf(r), authorsOf(l))
-    val authors: Option[(Problem, Evidence.Weight)] = ag match
-      case AuthorAgreement.Same        => Some(part("authors the same", w.authorsSame.value))
-      case AuthorAgreement.FirstAuthor => Some(part("first author the same", w.authorsFirst.value))
-      case AuthorAgreement.Overlap     => Some(part("authors overlap", w.authorsOverlap.value))
-      case AuthorAgreement.Disjoint    => Some(part("no author in common", w.authorsDisjoint.value))
+    val authors: Option[(Evidence.Reason, Evidence.Weight)] = ag match
+      case AuthorAgreement.Same        => Some(Evidence.Reason.AuthorsSame.weighs(w.authorsSame.value))
+      case AuthorAgreement.FirstAuthor => Some(Evidence.Reason.FirstAuthorSame.weighs(w.authorsFirst.value))
+      case AuthorAgreement.Overlap     => Some(Evidence.Reason.AuthorsOverlap.weighs(w.authorsOverlap.value))
+      case AuthorAgreement.Disjoint    => Some(Evidence.Reason.NoAuthorInCommon.weighs(w.authorsDisjoint.value))
       case AuthorAgreement.Unknown     => None
 
     // year
     val gap = r.year.zip(l.year).map((a, b) => math.abs(a.value - b.value))
-    val year: Option[(Problem, Evidence.Weight)] = gap.map {
-      case 0L                            => part("year the same", w.yearEqual.value)
-      case 1L                            => part("years one apart", w.yearNear.value)
+    val year: Option[(Evidence.Reason, Evidence.Weight)] = gap.map {
+      case 0L                            => Evidence.Reason.YearSame.weighs(w.yearEqual.value)
+      case 1L                            => Evidence.Reason.YearsOneApart.weighs(w.yearNear.value)
       case _ if reprintHint(right, left) =>
-        part(s"years ${r.year.get} and ${l.year.get}, a reprint or edition", w.yearReprint.value)
-      case _ => part(s"years ${r.year.get} and ${l.year.get}", w.yearFar.value)
+        Evidence.Reason.YearsReprint(r.year.get, l.year.get).weighs(w.yearReprint.value)
+      case _ => Evidence.Reason.YearsApart(r.year.get, l.year.get).weighs(w.yearFar.value)
     }
 
     // venue
-    val venue: Option[(Problem, Evidence.Weight)] =
+    val venue: Option[(Evidence.Reason, Evidence.Weight)] =
       venueFingerprint(r)
         .zip(venueFingerprint(l))
         .map((a, b) =>
-          if a == b then part("venue the same", w.venueEqual.value) else part("venues differ", w.venueDiffers.value)
+          if a == b then Evidence.Reason.VenueSame.weighs(w.venueEqual.value)
+          else Evidence.Reason.VenuesDiffer.weighs(w.venueDiffers.value)
         )
 
     // body
-    val body: Option[(Problem, Evidence.Weight)] =
+    val body: Option[(Evidence.Reason, Evidence.Weight)] =
       (r.bodySha256, l.bodySha256) match
-        case (Some(a), Some(b)) if a == b => Some(part("the same OCR body", w.bodySame.value))
+        case (Some(a), Some(b)) if a == b => Some(Evidence.Reason.BodySame.weighs(w.bodySame.value))
         case (Some(a), Some(b))           =>
           sketches.get(a).zip(sketches.get(b)).map((x, y) => x.similarity(y).value).flatMap { j =>
-            if j >= w.bodySameAtLeast.value then
-              Some(part(s"OCR bodies alike (MinHash ${fixed(Figure(j), Decimals(2))})", w.bodySame.value))
+            if j >= w.bodySameAtLeast.value then Some(Evidence.Reason.BodiesAlike(Figure(j)).weighs(w.bodySame.value))
             else if j >= w.bodyEditionAtLeast.value then
-              Some(part(s"OCR bodies partly alike (MinHash ${fixed(Figure(j), Decimals(2))})", w.bodyEdition.value))
+              Some(Evidence.Reason.BodiesPartlyAlike(Figure(j)).weighs(w.bodyEdition.value))
             else if j < w.bodyDiffersBelow.value then
-              Some(part(s"OCR bodies differ (MinHash ${fixed(Figure(j), Decimals(2))})", w.bodyDiffers.value))
+              Some(Evidence.Reason.BodiesDiffer(Figure(j)).weighs(w.bodyDiffers.value))
             else None
           }
         case _ => None
 
     // a citekey of one side is an old citekey of the other
-    val alias: Option[(Problem, Evidence.Weight)] =
+    val alias: Option[(Evidence.Reason, Evidence.Weight)] =
       val shared = (right.aliasLabels.intersect(left.labels) ++ left.aliasLabels.intersect(right.labels)).toList.sorted
-      shared.headOption.map(a => part(s"'$a' is an old citekey of the other", w.alias.value))
+      shared.headOption.map(a => Evidence.Reason.OldCitekey(a).weighs(w.alias.value))
 
     Evidence(
       strong,

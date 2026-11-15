@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.workflows
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.Problem.{Content, Raw}
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.domain.library.Doi
@@ -37,6 +38,18 @@ object AcquisitionSweepRules:
   object LastAttempt extends Newtype[Boolean, Pure]
   type SkipCount = SkipCount.T
   object SkipCount extends Newtype[Int, Pure]
+
+  /** Why a found work is not offered to the ranking: the account of the sweep's choice, not a failure. */
+  enum LeftOut derives CanEqual:
+    case NoDoi, Retracted, InCorpus, AlreadyQueued, OverLimit
+
+    /** The reason as the sweep's report counts it. */
+    def said: String = this match
+      case NoDoi         => "no DOI"
+      case Retracted     => "retracted"
+      case InCorpus      => "in the corpus"
+      case AlreadyQueued => "already queued"
+      case OverLimit     => "over the sweep limit"
   type Dropped = Dropped.T
   object Dropped extends Newtype[String, Pure]
   type AcquireText = AcquireText.T
@@ -66,15 +79,15 @@ object AcquisitionSweepRules:
       found: List[(Candidate.Query, WorkRef)],
       queued: Set[Doi],
       max: Limit
-  ): (List[Candidate], Map[Problem, SkipCount]) =
+  ): (List[Candidate], Map[LeftOut, SkipCount]) =
     val seen = scala.collection.mutable.LinkedHashMap.empty[Doi, Candidate] // insertion-ordered dedupe
-    val skipped = scala.collection.mutable.Map.empty[String, Int].withDefaultValue(0)
+    val skipped = scala.collection.mutable.Map.empty[LeftOut, Int].withDefaultValue(0)
     found.foreach { (q, w) =>
       w.doi.flatMap(d => Doi.normalize(d.value)) match
-        case None                           => skipped("no DOI") += 1
-        case Some(_) if w.isRetracted.value => skipped("retracted") += 1
-        case Some(_) if w.inDb.value        => skipped("in the corpus") += 1
-        case Some(d) if queued.contains(d)  => skipped("already queued") += 1
+        case None                           => skipped(LeftOut.NoDoi) += 1
+        case Some(_) if w.isRetracted.value => skipped(LeftOut.Retracted) += 1
+        case Some(_) if w.inDb.value        => skipped(LeftOut.InCorpus) += 1
+        case Some(d) if queued.contains(d)  => skipped(LeftOut.AlreadyQueued) += 1
         case Some(d) if seen.contains(d)    => ()
         case Some(d)                        =>
           seen(d) = Candidate(
@@ -89,11 +102,8 @@ object AcquisitionSweepRules:
           )
     }
     val all = seen.values.toList
-    if all.size > max.value then skipped("over the sweep limit") += all.size - max.value
-    (
-      all.take(max.value),
-      skipped.toMap.map((reason, count) => Problem.Unclassified(Legacy.Text(reason)) -> SkipCount(count))
-    )
+    if all.size > max.value then skipped(LeftOut.OverLimit) += all.size - max.value
+    (all.take(max.value), skipped.toMap.map((reason, count) => reason -> SkipCount(count)))
 
   /** The ranking model's answer: which candidates belong to the goal. */
   final case class Pick(doi: Pick.DoiText, why: Rationale) derives JsonCodec
@@ -126,7 +136,7 @@ object AcquisitionSweepRules:
     val byDoi = offered.map(c => c.doi -> c).toMap
     val parsed = r.picks.map(p => (p, Doi.normalize(p.doi.value).flatMap(byDoi.get)))
     val problems = parsed.collect { case (p, None) =>
-      Problem.Unclassified(Legacy.Text(s"'${p.doi}' is not one of the listed candidates"))
+      Content.Answer(Content.Requirement.ListedCandidate(Raw.of(p.doi)))
     }
     val kept = parsed
       .collect { case (p, Some(c)) =>

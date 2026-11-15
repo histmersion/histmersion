@@ -18,7 +18,7 @@ abstract class UpstreamQuotaServiceContract extends AcquisitionStoreSuite:
       LocalDate.of(2026, 10, 26),
       CoreQuota.State.LookupTokens(5),
       CoreQuota.State.SearchTokens(2),
-      Some(CoreQuota.Block(Instant.parse("2026-10-26T19:00:00Z"), CoreQuota.Block.Why("HTTP 429"))),
+      Some(CoreQuota.Block(Instant.parse("2026-10-26T19:00:00Z"), CoreQuota.Block.Rationale.Throttled)),
       Some(
         CoreQuota.Window(
           Some(CoreQuota.Window.Limit(25)),
