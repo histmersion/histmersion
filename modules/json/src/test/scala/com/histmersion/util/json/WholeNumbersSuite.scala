@@ -1,8 +1,8 @@
 package com.histmersion
 package util.json
 
-/** A whole number however a source writes it: Kindlings' `JsonNumber.toLong` and `toInt` read `-546.0` and `5e2` as
-  * the whole numbers they are (a Cliopatria year is written `-546.0`), and refuse a fraction or a value out of range.
+/** A whole number however a source writes it: Kindlings' `JsonNumber.toLong` and `toInt` read `-546.0` and `5e2` as the
+  * whole numbers they are (a Cliopatria year is written `-546.0`), and refuse a fraction or a value out of range.
   */
 class WholeNumbersSuite extends munit.FunSuite:
 
