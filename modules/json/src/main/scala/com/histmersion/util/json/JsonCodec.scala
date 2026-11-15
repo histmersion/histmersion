@@ -31,10 +31,11 @@ object JsonCodec:
     given default: Unknown = Skipped
 
   /** How a derived codec reads and writes: every field written, `None` as `null`; an absent collection without a
-    * default is missing, as any other required field.
+    * default is missing, as any other required field; an empty collection (`[]`, `{}`) is read as empty even where the
+    * field's default is not, so that what is written reads back.
     */
   def config(unknown: Unknown): JsoniterConfig =
-    JsoniterConfig.default.withCirceLikeObjectEncoding.withRequireCollectionFields
+    JsoniterConfig.default.withCirceLikeObjectEncoding.withRequireCollectionFields.withEmptyCollectionsAsEmpty
       .withSkipUnexpectedFields(unknown == Unknown.Skipped)
 
   /** What a schema derived beside a codec is told of it (Kindlings' Tapir schemas read it): the codecs' own config, so
