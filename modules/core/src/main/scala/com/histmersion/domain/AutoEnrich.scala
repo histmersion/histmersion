@@ -1,7 +1,7 @@
 package com.histmersion
 package domain
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.Plural
 import com.histmersion.api.given
@@ -35,7 +35,32 @@ object AutoEnrich:
 
   enum Skip derives CanEqual:
     case Off
-    case Enriched(why: Problem)
+    case Enriched(why: Rationale)
+
+  /** Why a source counts as enriched already, or is not enriched: the account of the decision not to queue it. */
+  enum Rationale:
+    /** It has `findings` findings. */
+    case HasFindings(findings: FindingCount)
+
+    /** It has notes. */
+    case HasNotes
+
+    /** Its earlier `enrich-source` run `run` is `state` (neither failed nor cancelled). */
+    case RunLive(run: PriorRun.Id, state: Run.State)
+
+    /** No source has the citekey. */
+    case NoSource
+
+    /** The account as a job's progress note and the manager's items show it. */
+    def said: String = this match
+      case HasFindings(findings) =>
+        s"it already has ${Plural.count(Plural.CountN(findings.value.toLong), Plural.CountSingular("finding"))}"
+      case HasNotes            => "it already has notes"
+      case RunLive(run, state) => s"enrich-source run $run is ${state.wire}"
+      case NoSource            => "no such source"
+
+    /** The job's progress note: enrichment is not queued, and why. */
+    def notQueued: Note = Note(s"enrichment not queued: $said")
 
   /** One earlier `enrich-source` run of the source: its id and state. */
   final case class PriorRun(id: PriorRun.Id, state: Run.State)
@@ -56,22 +81,15 @@ object AutoEnrich:
     else enrichedBy(findings, notes, runs).map(Skip.Enriched(_)).toLeft(())
 
   /** Why the source counts as already enriched, if it does. */
-  def enrichedBy(findings: FindingCount, notes: Option[Notes], runs: List[PriorRun]): Option[Problem] =
+  def enrichedBy(findings: FindingCount, notes: Option[Notes], runs: List[PriorRun]): Option[Rationale] =
     val live = runs.find(r => r.state != Run.State.Failed && r.state != Run.State.Cancelled)
-    if findings.value > 0 then
-      Some(
-        Problem.Unclassified(
-          Legacy.Text(
-            s"it already has ${Plural.count(Plural.CountN(findings.value.toLong), Plural.CountSingular("finding"))}"
-          )
-        )
-      )
-    else if notes.exists(_.value.trim.nonEmpty) then Some(Problem.Unclassified(Legacy.Text("it already has notes")))
-    else live.map(r => Problem.Unclassified(Legacy.Text(s"enrich-source run ${r.id} is ${r.state.wire}")))
+    if findings.value > 0 then Some(Rationale.HasFindings(findings))
+    else if notes.exists(_.value.trim.nonEmpty) then Some(Rationale.HasNotes)
+    else live.map(r => Rationale.RunLive(r.id, r.state))
 
   /** The job's progress note for what happened. */
   def queued(runId: Run.Id): Note = Note(s"enrichment queued: run $runId")
-  def notQueued(why: Problem): Note = Note(s"enrichment not queued: ${why.sentence}")
+  def notQueued(problem: Problem): Note = Note(s"enrichment not queued: ${problem.sentence}")
 
   /** The note when the source went to the enrich manager (docs/research-process-managers.md, phase 2): its item, and —
     * unless the manager is active — that nothing runs until a person resumes it.
@@ -84,4 +102,4 @@ object AutoEnrich:
 
   def note(skip: Skip): Option[Note] = skip match
     case Skip.Off           => None
-    case Skip.Enriched(why) => Some(notQueued(why))
+    case Skip.Enriched(why) => Some(why.notQueued)

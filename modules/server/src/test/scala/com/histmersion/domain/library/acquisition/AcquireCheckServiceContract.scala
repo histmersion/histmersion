@@ -1,6 +1,5 @@
 package com.histmersion
 package domain.library.acquisition
-import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -56,21 +55,21 @@ abstract class AcquireCheckServiceContract extends AcquisitionStoreSuite:
       T0,
       AcquireRecheck.LastCheck.Generation("g1"),
       AcquireRecheck.Outcome.NoCopy,
-      Problem.Unclassified(Legacy.Text("no copy"))
+      AcquireRecheck.reason(T0, AcquireRecheck.Outcome.NoCopy, AcquireRecheck.Detail("no copy"))
     )
     s.checks.record(
       open,
       T0.plusSeconds(60),
       AcquireRecheck.LastCheck.Generation("g2"),
       AcquireRecheck.Outcome.Fetched,
-      Problem.Unclassified(Legacy.Text("fetched"))
+      AcquireRecheck.reason(T0, AcquireRecheck.Outcome.NoCopy, AcquireRecheck.Detail("fetched"))
     )
     s.checks.record(
       done,
       T0.plusSeconds(120),
       AcquireRecheck.LastCheck.Generation("g2"),
       AcquireRecheck.Outcome.Closed,
-      Problem.Unclassified(Legacy.Text("held"))
+      AcquireRecheck.reason(T0, AcquireRecheck.Outcome.NoCopy, AcquireRecheck.Detail("held"))
     )
     val _ = s.queues.patch(
       QueueItemId(done.value),

@@ -535,7 +535,7 @@ final class AcquireRecheckService(
             RecheckRow.Item(f.item.id.value),
             doiOf(f).map(apiDoi),
             RecheckRow.Action(if i < picks.size then WouldTry else Due),
-            RecheckRow.Detail(f.last.fold("never checked")(l => s"last ${l.reason.sentence}")),
+            RecheckRow.Detail(f.last.fold("never checked")(l => s"last ${l.reason}")),
             into.map(apiCk)
           )
         } ++ (if in.id.isDefined then noDoi else Nil)
@@ -631,7 +631,7 @@ final class AcquireRecheckService(
         RecheckRow.Item(f.item.id.value),
         doi.map(apiDoi),
         RecheckRow.Action(outcome.wire.value),
-        RecheckRow.Detail(why.sentence),
+        RecheckRow.Detail(why.said),
         ck
       ),
       outcome,

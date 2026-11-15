@@ -675,14 +675,15 @@ object Text:
       case Content.Requirement.QuoteGiven              => "no quote"
       case Content.Requirement.QuoteInRecords(records) =>
         s"the quote is not in the record of ${records.mkString(" or ")}"
-      case Content.Requirement.KnownCitekey(stated) => s"'$stated' is not a citekey"
-      case Content.Requirement.EvidenceGiven        => "no evidence given"
-      case Content.Requirement.StatusNamed          => "a status change names no status"
-      case Content.Requirement.NotUnassessed        => "unassessed is not a change to propose"
-      case Content.Requirement.EdgeTarget           => "the edge target is not a citekey"
-      case Content.Requirement.NoSelfEdge           => "an edge from a source to itself"
-      case Content.Requirement.PositiveBce(stated)  => s"$stated BCE: a BCE year is a positive number"
-      case Content.Requirement.CeFromOne(stated)    =>
+      case Content.Requirement.KnownCitekey(stated)    => s"'$stated' is not a citekey"
+      case Content.Requirement.ListedCandidate(stated) => s"'$stated' is not one of the listed candidates"
+      case Content.Requirement.EvidenceGiven           => "no evidence given"
+      case Content.Requirement.StatusNamed             => "a status change names no status"
+      case Content.Requirement.NotUnassessed           => "unassessed is not a change to propose"
+      case Content.Requirement.EdgeTarget              => "the edge target is not a citekey"
+      case Content.Requirement.NoSelfEdge              => "an edge from a source to itself"
+      case Content.Requirement.PositiveBce(stated)     => s"$stated BCE: a BCE year is a positive number"
+      case Content.Requirement.CeFromOne(stated)       =>
         s"$stated CE: there is no year 0 (or a negative CE year); use BCE"
       case Content.Requirement.Calibrated(stated) =>
         s"$stated BP is an uncalibrated radiocarbon age; it cannot be stored as a calendar year"

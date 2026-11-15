@@ -1,6 +1,5 @@
 package com.histmersion
 package domain.library.acquisition
-import com.histmersion.util.problem.Problem
 
 import com.histmersion.domain.AcquireRecheck
 
@@ -31,7 +30,7 @@ private[acquisition] object AcquireCheckRepo:
           CheckedAtMs,
           AcquireRecheck.LastCheck.Generation,
           AcquireRecheck.Outcome.Wire,
-          Problem,
+          AcquireCheckRow.Rationale,
           AcquireCheckRow.Checks
       )
   ): AcquireCheckRow =
@@ -49,7 +48,7 @@ private[acquisition] object AcquireCheckRepo:
               CheckedAtMs,
               AcquireRecheck.LastCheck.Generation,
               AcquireRecheck.Outcome.Wire,
-              Problem,
+              AcquireCheckRow.Rationale,
               AcquireCheckRow.Checks
           )
         ]
@@ -67,7 +66,7 @@ private[acquisition] object AcquireCheckRepo:
             CheckedAtMs,
             AcquireRecheck.LastCheck.Generation,
             AcquireRecheck.Outcome.Wire,
-            Problem,
+            AcquireCheckRow.Rationale,
             AcquireCheckRow.Checks
         )
       ]
@@ -82,7 +81,7 @@ private[acquisition] object AcquireCheckRepo:
       at: Instant,
       generation: AcquireRecheck.LastCheck.Generation,
       outcome: AcquireRecheck.Outcome,
-      reason: Problem
+      reason: AcquireRecheck.Rationale
   )(using
       DbCon
   ): Unit =
@@ -90,7 +89,7 @@ private[acquisition] object AcquireCheckRepo:
     val o = outcome.wire
     val _ =
       sql"""INSERT INTO acquire_checks (item_id, checked_at, generation, outcome, reason)
-            VALUES ($item, to_timestamp($ms::float8), $generation, $o, $reason)
+            VALUES ($item, to_timestamp($ms::float8), $generation, $o, ${reason.said})
             ON CONFLICT (item_id) DO UPDATE SET checked_at = EXCLUDED.checked_at, generation = EXCLUDED.generation,
               outcome = EXCLUDED.outcome, reason = EXCLUDED.reason, checks = acquire_checks.checks + 1""".update.run()
 

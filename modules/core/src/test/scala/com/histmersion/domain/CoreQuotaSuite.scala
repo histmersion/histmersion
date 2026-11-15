@@ -64,12 +64,12 @@ class CoreQuotaSuite extends munit.FunSuite:
       t0
     )
     val until = Instant.parse("2026-10-26T18:52:11Z")
-    assertEquals(s.block, Some(Block(until, CoreQuota.Block.Why("HTTP 429"))))
+    assertEquals(s.block, Some(Block(until, CoreQuota.Block.Rationale.Throttled)))
     assertEquals(s.window.map(w => (w.limit, w.remaining)), Some((Some(25), Some(0))))
     Purpose.values.foreach { p =>
       assertEquals(
         reserve(s, limits, p, t0.plusSeconds(60)).left.toOption,
-        Some(Refusal.Blocked(until, CoreQuota.Refusal.Blocked.Why("HTTP 429")))
+        Some(Refusal.Blocked(until, CoreQuota.Block.Rationale.Throttled))
       )
     }
     val after = reserve(s, limits, Purpose.Lookup, until.plusSeconds(1))
@@ -87,7 +87,10 @@ class CoreQuotaSuite extends munit.FunSuite:
       ),
       t0
     )
-    assertEquals(s.block, Some(Block(t0.plusSeconds(60), CoreQuota.Block.Why("X-RateLimit-Remaining 0 of 10"))))
+    assertEquals(
+      s.block,
+      Some(Block(t0.plusSeconds(60), CoreQuota.Block.Rationale.Exhausted(Some(CoreQuota.Window.Limit(10)))))
+    )
     val plain429 = observe(fresh, limits, CoreQuota.StatusCode(429), Map.empty, t0)
     assertEquals(plain429.block.map(_.until), Some(t0.plusSeconds(60)))
     // the standard Retry-After header counts when CORE's own is missing
@@ -235,7 +238,7 @@ class CoreQuotaSuite extends munit.FunSuite:
       ("core", "2026-10-26", 1, 1, 10, 6, 3)
     )
     assertEquals(
-      (v.blockedUntil, v.blockedWhy.map(_.sentence), v.rateLimit, v.rateRemaining),
+      (v.blockedUntil, v.blockedWhy, v.rateLimit, v.rateRemaining),
       (Some("2026-10-26T18:52:11Z"), Some("HTTP 429"), Some(25), Some(0))
     )
     assertEquals(view(s, limits, Instant.parse("2026-10-26T19:00:00Z")).blockedUntil, None)
@@ -257,4 +260,4 @@ class CoreQuotaSuite extends munit.FunSuite:
         .contains("acquire.core.daily-tokens")
     )
     assert(Refusal.Paced(Refusal.Paced.WaitMs(4_200L)).describe.value.contains("5 s"))
-    assert(Refusal.Blocked(t0, CoreQuota.Refusal.Blocked.Why("HTTP 429")).describe.value.contains("HTTP 429"))
+    assert(Refusal.Blocked(t0, CoreQuota.Block.Rationale.Throttled).describe.value.contains("HTTP 429"))

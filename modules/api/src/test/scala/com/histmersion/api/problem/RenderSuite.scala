@@ -321,6 +321,7 @@ class RenderSuite extends munit.FunSuite:
           Content.Requirement.QuoteGiven,
           Content.Requirement.QuoteInRecords(Vector(Raw("anthony2007"), Raw("haak2015"))),
           Content.Requirement.KnownCitekey(Raw("Anthony 2007")),
+          Content.Requirement.ListedCandidate(Raw("10.1000/invented")),
           Content.Requirement.EvidenceGiven,
           Content.Requirement.StatusNamed,
           Content.Requirement.NotUnassessed,

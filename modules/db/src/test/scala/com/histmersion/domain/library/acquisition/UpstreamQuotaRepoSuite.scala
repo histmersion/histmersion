@@ -42,7 +42,7 @@ class UpstreamQuotaRepoSuite extends DbSuite:
       LocalDate.of(2026, 10, 26),
       CoreQuota.State.LookupTokens(12),
       CoreQuota.State.SearchTokens(34),
-      Some(CoreQuota.Block(Instant.parse("2026-10-26T18:52:11Z"), CoreQuota.Block.Why("HTTP 429"))),
+      Some(CoreQuota.Block(Instant.parse("2026-10-26T18:52:11Z"), CoreQuota.Block.Rationale.Throttled)),
       Some(
         CoreQuota.Window(
           Some(CoreQuota.Window.Limit(25)),

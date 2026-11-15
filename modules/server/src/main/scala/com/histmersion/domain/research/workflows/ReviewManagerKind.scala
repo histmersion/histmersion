@@ -311,7 +311,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
           .flatMap(_._3) match
           case Some(itemId) =>
             Option
-              .when(c.restale(itemId, prio, p.why))(s"${p.target} (${p.why.sentence}$boost)")
+              .when(c.restale(itemId, prio, p.outcome))(s"${p.target} (${p.why.said}$boost)")
           case None =>
             val (_, isNew) = c.upsert(
               manager,
@@ -323,7 +323,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
             )
             val label =
               if p.kind == ManagerPolicy.ItemKind.ArticleReview then p.target.value else s"${p.target} [${p.kind}]"
-            Option.when(isNew)(s"$label (${p.why.sentence}$boost)")
+            Option.when(isNew)(s"$label (${p.why.said}$boost)")
       }
       if added.nonEmpty then
         c.event(
@@ -416,7 +416,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
       goal: Option[Goal.Slug],
       room: Int,
       now: Instant
-  ): List[(Slug, Problem, Option[ManagerContext.ItemId])] =
+  ): List[(Slug, ReviewManagerPolicy.Staleness, Option[ManagerContext.ItemId])] =
     val last = Option(lastStale.get(m.id.value)).map(_.longValue).getOrElse(Long.MinValue)
     val every = math.max(1, cfg.managers.review.staleScanMinutes.value).toLong * 60000L
     if s.staleAfterDays.value <= 0 || (last != Long.MinValue && now.toEpochMilli - last < every) then Nil

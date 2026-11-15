@@ -615,7 +615,7 @@ object ManagerRepo:
   /** A converged item selected again because it went stale: pending at `priority` (exactly: the lowest), its runs
     * counted from zero, its run history dropped (a new cycle), why in its outcome.
     */
-  def restale(itemId: ItemRow.Id, priority: ItemRow.Priority, why: Problem)(using DbCon): Boolean =
+  def restale(itemId: ItemRow.Id, priority: ItemRow.Priority, why: ItemRow.Outcome)(using DbCon): Boolean =
     sql"""UPDATE manager_items SET status = 'pending', attempts = 0, failures = 0, not_before = NULL, hold = NULL,
                                    priority = $priority, origin = ${ItemOrigin.Selection.wire}, outcome = $why,
                                    state = state - 'history', updated_at = now()

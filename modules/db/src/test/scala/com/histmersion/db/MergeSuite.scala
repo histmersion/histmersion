@@ -692,12 +692,14 @@ class MergeSuite extends DbSuite with Bounded:
     // the ISBN and the near-identical OCR are what matched them
     val matched = RegisteredPlanMatches.kind.all(p.sources)
     assert(
-      matched.exists(m => m.rightCitekey.value == "west1997_east" && m.why.exists(_.sentence.startsWith("ISBN"))),
+      matched.exists(m =>
+        m.rightCitekey.value == "west1997_east" && m.why.contains(MergeIssue.Rationale("ISBN equal (strong key)"))
+      ),
       matched.toString
     )
     assert(
       matched.exists(m =>
-        m.rightCitekey.value == "olsen2015_penelope" && m.why.exists(_.sentence.contains("OCR bodies alike"))
+        m.rightCitekey.value == "olsen2015_penelope" && m.why.exists(w => s"$w".contains("OCR bodies alike"))
       ),
       matched.find(_.rightCitekey.value == "olsen2015_penelope").toString
     )

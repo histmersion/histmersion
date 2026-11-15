@@ -65,8 +65,8 @@ final class WorkListView(
                 Queue.QueueItem.Id(r.item.value),
                 Acquire.Checks.AcquireCheck.CheckedAt(r.at.toString),
                 Acquire.Checks.AcquireCheck.Outcome(r.outcome.value),
-                r.reason,
-                Acquire.Checks.AcquireCheck.Checks(r.checks.value)
+                r.reason.transformInto[Acquire.Checks.AcquireCheck.Rationale],
+                r.checks.transformInto[Acquire.Checks.AcquireCheck.Checks]
               )
             )
       val linked = goals

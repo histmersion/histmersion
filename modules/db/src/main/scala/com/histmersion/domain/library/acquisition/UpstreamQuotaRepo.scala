@@ -28,7 +28,12 @@ private[acquisition] object UpstreamQuotaRepo:
           LocalDate.parse(day),
           CoreQuota.State.LookupTokens(lookups),
           CoreQuota.State.SearchTokens(searches),
-          until.map(u => CoreQuota.Block(Instant.ofEpochMilli(u), CoreQuota.Block.Why(why.getOrElse("asked to wait")))),
+          until.map(u =>
+            CoreQuota.Block(
+              Instant.ofEpochMilli(u),
+              why.fold(CoreQuota.Block.Rationale.Unstated)(CoreQuota.Block.Rationale.read)
+            )
+          ),
           at.map(t =>
             CoreQuota.Window(
               limit.map(CoreQuota.Window.Limit(_)),
@@ -42,7 +47,7 @@ private[acquisition] object UpstreamQuotaRepo:
   def save(upstream: ProviderKind.Wire, s: CoreQuota.State)(using DbCon): Unit =
     val day = s.day.toString
     val until = s.block.map(_.until.toEpochMilli.toDouble / 1000)
-    val why = s.block.map(_.why)
+    val why = s.block.map(_.why.said)
     val limit = s.window.flatMap(_.limit)
     val remaining = s.window.flatMap(_.remaining)
     val at = s.window.map(_.at.toEpochMilli.toDouble / 1000)

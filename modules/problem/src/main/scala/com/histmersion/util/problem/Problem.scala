@@ -1137,6 +1137,9 @@ object Problem:
       /** `stated` is no citekey of the corpus. */
       case KnownCitekey(stated: Raw)
 
+      /** `stated`, a DOI a ranking picked, is not one of the candidates it was offered (a model inventing a work). */
+      case ListedCandidate(stated: Raw)
+
       /** The proposal says nothing about why. */
       case EvidenceGiven
 

@@ -1,7 +1,6 @@
 package com.histmersion
 package domain.library.workflows
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
 
 import hearth.kindlings.optics.syntax.*
 
@@ -369,7 +368,7 @@ final class OaBacklog(
                     ManagerItem.Failures(n.value),
                     nb,
                     ManagerItem.Outcome(
-                      s"not ingested (${n.value} of ${s.maxFailures}): ${why.sentence}; again after $nb"
+                      s"not ingested (${n.value} of ${s.maxFailures}): ${why.said}; again after $nb"
                     )
                   )
                 then
@@ -379,7 +378,7 @@ final class OaBacklog(
                     None,
                     ManagerEvent.Kind(Feed.Evaluated),
                     ManagerEvent.Text(
-                      s"$doi (ingest backlog): not ingested (${n.value} of ${s.maxFailures}): ${why.sentence}; again after $nb"
+                      s"$doi (ingest backlog): not ingested (${n.value} of ${s.maxFailures}): ${why.said}; again after $nb"
                     )
                   )
 
@@ -390,9 +389,9 @@ final class OaBacklog(
                   case Some(id) =>
                     settle(
                       ItemStatus.Stopped,
-                      s"to the acquisition list (#$id): ${why.sentence}",
+                      s"to the acquisition list (#$id): ${why.said}",
                       Feed.Evaluated,
-                      s"$doi (ingest backlog): to the acquisition list (#$id): ${why.sentence}",
+                      s"$doi (ingest backlog): to the acquisition list (#$id): ${why.said}",
                       Drained.Queued(id)
                     )
                   case None => Drained.Lost
@@ -505,7 +504,7 @@ final class OaBacklog(
           backlogItem.map(i => RepairRow.BacklogItem(i.value))
         )
       IngestBacklog.repairAction(facts) match
-        case RepairAction.Keep(why)  => row(Keep, why.sentence)
+        case RepairAction.Keep(why)  => row(Keep, why.said)
         case RepairAction.Remove(ck) =>
           if !dryRun then
             goals.foreach(g =>

@@ -85,15 +85,15 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
     val byRight = RegisteredPlanMatches.kind.all(p.sources).map(m => m.rightCitekey -> m).toMap
     assertEquals(byRight(Citekey("kuhrt1995_near")).method, MatchMethod.StrongKey)
     assert(
-      byRight(Citekey("kuhrt1995_near")).why.exists(_.sentence.contains("sha256")),
+      byRight(Citekey("kuhrt1995_near")).why.contains(MergeIssue.Rationale("original file sha256 equal (strong key)")),
       byRight(Citekey("kuhrt1995_near")).why.toString
     )
     assertEquals(byRight(Citekey("bryce2005_kingdom")).leftCitekey, Some("bryce2005_kingdom_hittites"))
     assertEquals(byRight(Citekey("guterbock1997_perspectives")).outcome, MatchOutcome.AutoMerge)
     assertEquals(byRight(Citekey("guterbock1997_perspectives")).leftCitekey, Some("guterbock1997_hittite"))
-    assert(!byRight(Citekey("guterbock1997_perspectives")).why.exists(_.sentence.toLowerCase.contains("doi")))
+    assert(!byRight(Citekey("guterbock1997_perspectives")).why.exists(w => s"$w".toLowerCase.contains("doi")))
     assertEquals(byRight(Citekey("latacz2023_troy")).leftCitekey, Some("latacz2004_troy"))
-    assert(byRight(Citekey("latacz2023_troy")).why.exists(_.sentence.contains("old citekey")))
+    assert(byRight(Citekey("latacz2023_troy")).why.exists(w => s"$w".contains("old citekey")))
     assertEquals(byRight(Citekey("harrison1903_prolegomena")).leftCitekey, Some("harrison1903_prolegomena_greek"))
     assertEquals(byRight(Citekey("olsen2015_penelope")).outcome, MatchOutcome.AutoMerge)
     assertEquals(byRight(Citekey("page2024_history")).outcome, MatchOutcome.NeedsDecision)

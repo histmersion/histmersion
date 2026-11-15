@@ -995,10 +995,14 @@ final class ManagerSupervisor(
   def restale(
       itemId: ManagerContext.ItemId,
       priority: ManagerContext.Priority,
-      why: Problem
+      why: ManagerItem.Outcome
   ): Boolean =
     Transactor(ds).transact(
-      ManagerRepo.restale(ManagerItem.Id(itemId.value), priority.transformInto[ManagerItem.Priority], why)
+      ManagerRepo.restale(
+        ManagerItem.Id(itemId.value),
+        priority.transformInto[ManagerItem.Priority],
+        why
+      )
     )
   def pending(id: ManagerLight.Id): RowCount =
     RowCount(connect(ds)(ManagerRepo.counts(id.transformInto[ManagerInfo.Id])).pending.value)
