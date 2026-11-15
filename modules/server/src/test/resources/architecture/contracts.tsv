@@ -13,8 +13,6 @@ copy	api:api/Api.scala	.copy(	1
 copy	api:api/automation/Managers.scala	.copy(	24
 copy	api:api/catalogue/EventTaxonomy.scala	.copy(	1
 copy	api:api/jobs/JobDetail.scala	.copy(	1
-copy	api:api/library/CandidateSweep.scala	.copy(	1
-copy	api:api/library/CollectionEntry.scala	.copy(	1
 copy	api:api/library/SearchMarkdown.scala	.copy(	1
 copy	api:api/library/Source.scala	.copy(	4
 copy	api:api/maintenance/Storage.scala	.copy(	1
@@ -99,8 +97,6 @@ derives	api:api/exchange/MergeJobState.scala	codec given written by hand	2
 derives	api:api/exchange/PlanMatches.scala	codec given written by hand	2
 derives	api:api/jobs/JobDetail.scala	codec given written by hand	2
 derives	api:api/json/NewtypeCodecs.scala	codec given written by hand	6
-derives	api:api/library/CandidateSweep.scala	codec given written by hand	2
-derives	api:api/library/CollectionEntry.scala	codec given written by hand	2
 derives	api:api/library/DeleteBlocker.scala	codec given written by hand	2
 derives	api:api/library/DeletePart.scala	codec given written by hand	2
 derives	api:api/library/Finding.scala	codec given written by hand	2
@@ -833,10 +829,8 @@ unwrap	api:api/jobs/JobKinds.scala	.value outside a boundary	4
 unwrap	api:api/jobs/JobState.scala	.value outside a boundary	1
 unwrap	api:api/library/Acquire.scala	.value outside a boundary	30
 unwrap	api:api/library/Aggregate.scala	.value outside a boundary	27
-unwrap	api:api/library/CandidateSweep.scala	.value outside a boundary	2
 unwrap	api:api/library/Candidates.scala	.value outside a boundary	6
 unwrap	api:api/library/CitationLint.scala	.value outside a boundary	15
-unwrap	api:api/library/CollectionEntry.scala	.value outside a boundary	2
 unwrap	api:api/library/Confidence.scala	.value outside a boundary	3
 unwrap	api:api/library/CorrespondingSource.scala	.value outside a boundary	2
 unwrap	api:api/library/DeleteBlocker.scala	.value outside a boundary	2

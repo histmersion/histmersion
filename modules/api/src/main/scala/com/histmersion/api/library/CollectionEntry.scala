@@ -1,7 +1,6 @@
 package com.histmersion
 package api.library
 import com.histmersion.api.given
-import com.github.plokhotnyuk.jsoniter_scala.core.JsonKeyCodec
 import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -32,8 +31,7 @@ object CollectionEntry:
   type Tags = Tags.T
   object Tags extends Newtype[String, Pure]
   type IdentifiersKey = IdentifiersKey.T
-  object IdentifiersKey extends Newtype[String, Pure]:
-    given JsonKeyCodec[T] = JsonCodec.key[T](_.value, k => Right((IdentifiersKey(_))(k)))
+  object IdentifiersKey extends Newtype[String, Pure]
   type IdentifiersValue = IdentifiersValue.T
   object IdentifiersValue extends Newtype[String, Pure]
   type Formats = Formats.T
