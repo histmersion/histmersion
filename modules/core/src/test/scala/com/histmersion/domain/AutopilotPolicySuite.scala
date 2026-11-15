@@ -24,6 +24,7 @@ import com.histmersion.domain.automation.Manager
 import com.histmersion.domain.automation.Pipeline
 import com.histmersion.domain.automation.Run
 import com.histmersion.api.automation.Managers
+import com.histmersion.domain.ManagerPolicy.Item
 
 /** The autopilot's pure rules (docs/research-process-managers.md "As built: the autopilot"): the checked auto approvals
   * and their caps, the goal-status advance, the managers every goal has, the spread crons, the extend threshold, the
@@ -640,16 +641,16 @@ class AutopilotPolicySuite extends munit.FunSuite:
   test("waitsFor: a goal's article proposal waits for its plan-goal item"):
     assert(
       ManagerPolicy.waitsFor(
-        ManagerPolicy.ItemKind.ProposeArticles,
+        Item.Kind.ProposeArticles,
         ManagerPolicy.Candidate.Target("g"),
-        List((ManagerPolicy.ItemKind.PlanGoalItem, ManagerPolicy.Candidate.Target("g")))
+        List((Item.Kind.PlanGoalItem, ManagerPolicy.Candidate.Target("g")))
       )
     )
     assert(
       !ManagerPolicy.waitsFor(
-        ManagerPolicy.ItemKind.ProposeArticles,
+        Item.Kind.ProposeArticles,
         ManagerPolicy.Candidate.Target("h"),
-        List((ManagerPolicy.ItemKind.PlanGoalItem, ManagerPolicy.Candidate.Target("g")))
+        List((Item.Kind.PlanGoalItem, ManagerPolicy.Candidate.Target("g")))
       )
     )
     assertEquals(itemKindOf(Kind.Seed, com.histmersion.api.ItemKind.Word("plan-goal")), Some(PlanGoalItem))
@@ -662,29 +663,29 @@ class AutopilotPolicySuite extends munit.FunSuite:
   test("blocks: an article waits for any run on it; a goal's item only for a run of its own pipeline"):
     assert(
       ManagerPolicy.blocks(
-        ManagerPolicy.ItemKind.ArticleReview,
+        Item.Kind.ArticleReview,
         Pipeline.Wire("review-article"),
         List(Pipeline.Wire("compile-article"))
       )
     )
-    assert(!ManagerPolicy.blocks(ManagerPolicy.ItemKind.ArticleReview, Pipeline.Wire("review-article"), Nil))
+    assert(!ManagerPolicy.blocks(Item.Kind.ArticleReview, Pipeline.Wire("review-article"), Nil))
     assert(
       !ManagerPolicy.blocks(
-        ManagerPolicy.ItemKind.AcquisitionSweep,
+        Item.Kind.AcquisitionSweep,
         Pipeline.Wire("acquisition-sweep"),
         List(Pipeline.Wire("plan-goal"), Pipeline.Wire("propose-articles"))
       )
     )
     assert(
       ManagerPolicy.blocks(
-        ManagerPolicy.ItemKind.AcquisitionSweep,
+        Item.Kind.AcquisitionSweep,
         Pipeline.Wire("acquisition-sweep"),
         List(Pipeline.Wire("acquisition-sweep"))
       )
     )
     assert(
       !ManagerPolicy.blocks(
-        ManagerPolicy.ItemKind.ProposeArticles,
+        Item.Kind.ProposeArticles,
         Pipeline.Wire("propose-articles"),
         List(Pipeline.Wire("currency-check"))
       )
@@ -714,7 +715,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
       Run.Id("1feffdd6-4fb2-79cf-4978-543444f78922"),
       Run.State.Done,
       None,
-      StepFacts.Redo(ManagerPolicy.Outcome("the draft was rejected")),
+      StepFacts.Redo(Item.Outcome("the draft was rejected")),
       now
     ) match
       case Next.Retry(at, f, note) if f.value == 1 => assert(at.isAfter(now) && note.value.contains("again"), note)
@@ -728,7 +729,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
       Run.Id("1feffdd6-4fb2-79cf-4978-543444f78922"),
       Run.State.Done,
       None,
-      StepFacts.Redo(ManagerPolicy.Outcome("the draft was rejected")),
+      StepFacts.Redo(Item.Outcome("the draft was rejected")),
       now
     ) match
       case Next.Stop(o, Some(task), _) => assert(o.value.contains("2 attempts") && task.value.contains("[[x]]"), task)

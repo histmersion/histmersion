@@ -34,8 +34,6 @@ object ManagerPolicy:
   object InFlightCount extends Newtype[Int, Pure]
   type InstantText = InstantText.T
   object InstantText extends Newtype[String, Pure]
-  type ItemId = ItemId.T
-  object ItemId extends Newtype[Long, Pure]
   type MaxConcurrent = MaxConcurrent.T
   object MaxConcurrent extends Newtype[Int, Pure]
   type MinIntervalMinutes = MinIntervalMinutes.T
@@ -62,27 +60,32 @@ object ManagerPolicy:
   object Attempts extends Newtype[Int, Pure]
   type ApprovalId = ApprovalId.T
   object ApprovalId extends Newtype[Long, Pure]
-  type ItemNote = ItemNote.T
-  object ItemNote extends Newtype[String, Pure]
 
-  /** What became of a manager's item, as its row and the manager's feed show it. */
-  type Outcome = Outcome.T
-  object Outcome extends Newtype[String, Pure]
+  /** A manager's item: its id, what it does, the note it carries, what became of it and the task it left. */
+  object Item:
+    type Id = Id.T
+    object Id extends Newtype[Long, Pure]
+    type Note = Note.T
+    object Note extends Newtype[String, Pure]
 
-  type ItemTask = ItemTask.T
-  object ItemTask extends Newtype[String, Pure]
+    /** What became of a manager's item, as its row and the manager's feed show it. */
+    type Outcome = Outcome.T
+    object Outcome extends Newtype[String, Pure]
 
-  /** What an item of a manager does: reviews an article, infers its coverage filter, plans a goal, proposes its
-    * articles, sweeps for acquisitions or checks currency.
-    */
-  type ItemKind = ItemKind.T
-  object ItemKind extends Newtype[String, Pure]:
-    val ArticleReview: ItemKind = ItemKind(Managers.ArticleReview)
-    val InferFilter: ItemKind = ItemKind(Managers.InferFilter)
-    val ProposeArticles: ItemKind = ItemKind(Managers.ProposeArticles)
-    val PlanGoalItem: ItemKind = ItemKind(Managers.PlanGoalItem)
-    val AcquisitionSweep: ItemKind = ItemKind(Managers.AcquisitionSweep)
-    val CurrencyCheck: ItemKind = ItemKind(Managers.CurrencyCheck)
+    type Task = Task.T
+    object Task extends Newtype[String, Pure]
+
+    /** What an item of a manager does: reviews an article, infers its coverage filter, plans a goal, proposes its
+      * articles, sweeps for acquisitions or checks currency.
+      */
+    type Kind = Kind.T
+    object Kind extends Newtype[String, Pure]:
+      val ArticleReview: Kind = Kind(Managers.ArticleReview)
+      val InferFilter: Kind = Kind(Managers.InferFilter)
+      val ProposeArticles: Kind = Kind(Managers.ProposeArticles)
+      val PlanGoalItem: Kind = Kind(Managers.PlanGoalItem)
+      val AcquisitionSweep: Kind = Kind(Managers.AcquisitionSweep)
+      val CurrencyCheck: Kind = Kind(Managers.CurrencyCheck)
 
   /** The count of `n` `singular` (`3 runs`). */
   private[domain] def counted(n: Int, singular: String): Plural.Phrase =
@@ -240,21 +243,21 @@ object ManagerPolicy:
   /** What the next step of an item is, once its run settled. */
   enum Next:
     /** Run it again (not before `notBefore`). */
-    case Again(notBefore: Option[Instant], state: ItemState, note: ItemNote)
+    case Again(notBefore: Option[Instant], state: ItemState, note: Item.Note)
 
     /** It reached its end. */
-    case Done(outcome: Outcome, state: ItemState)
+    case Done(outcome: Item.Outcome, state: ItemState)
 
     /** It stops here; `task` is the backlog line a person acts on (None: nothing to act on). */
-    case Stop(outcome: Outcome, task: Option[ItemTask], state: ItemState)
+    case Stop(outcome: Item.Outcome, task: Option[Item.Task], state: ItemState)
 
     /** Its run failed: try again after the backoff (`failures` counted). */
-    case Retry(notBefore: Instant, failures: Next.Retry.Failures, note: ItemNote)
+    case Retry(notBefore: Instant, failures: Next.Retry.Failures, note: Item.Note)
 
     /** Its run left a proposal for a person (approval `approval`): the item is held until it is decided, then settled
       * with the decision — never run again for it.
       */
-    case Wait(approval: ApprovalId, note: ItemNote)
+    case Wait(approval: ApprovalId, note: Item.Note)
 
   object Next:
     object Retry:
@@ -278,14 +281,14 @@ object ManagerPolicy:
     * look at, if anything).
     */
   enum StepFacts:
-    case Finished(outcome: Outcome)
-    case Waiting(approval: ApprovalId, what: ItemNote)
-    case NotDone(outcome: Outcome, task: Option[ItemTask])
+    case Finished(outcome: Item.Outcome)
+    case Waiting(approval: ApprovalId, what: Item.Note)
+    case NotDone(outcome: Item.Outcome, task: Option[Item.Task])
 
     /** Its work was refused by a check that a new run may pass (a draft the autopilot's checks rejected): run it again
       * after the backoff, counted as a failure, stopped with a task after `maxFailures`.
       */
-    case Redo(outcome: Outcome)
+    case Redo(outcome: Item.Outcome)
 
   /** Evaluate a one-run item (`label` = its kind, for the texts) after its run settled `status`: done → finished, held
     * for an approval, or stopped; failed → retried after the backoff, stopped with a task after `maxFailures`;
@@ -308,14 +311,14 @@ object ManagerPolicy:
         facts match
           case StepFacts.Finished(o)      => Next.Done(o, state)
           case StepFacts.Waiting(id, w)   => Next.Wait(id, w)
-          case StepFacts.NotDone(o, task) => Next.Stop(o, task.map(t => ItemTask(t.value.take(2000))), state)
+          case StepFacts.NotDone(o, task) => Next.Stop(o, task.map(t => Item.Task(t.value.take(2000))), state)
           case StepFacts.Redo(o)          =>
             val n = failures.value + 1
             if n >= s.maxFailures.value then
               Next.Stop(
-                Outcome(s"stopped: $o (${counted(n, "attempt")})"),
+                Item.Outcome(s"stopped: $o (${counted(n, "attempt")})"),
                 Some(
-                  ItemTask(
+                  Item.Task(
                     s"$label manager item stopped [[$target]]: $o, ${counted(n, "attempt")} (agent run ${run.value.take(8)})"
                       .take(2000)
                   )
@@ -326,17 +329,17 @@ object ManagerPolicy:
               Next.Retry(
                 now.plus(backoff(s.backoffMinutes, s.maxBackoffMinutes, Next.Retry.Failures(n))),
                 Next.Retry.Failures(n),
-                ItemNote(s"$o ($n of ${s.maxFailures}); again")
+                Item.Note(s"$o ($n of ${s.maxFailures}); again")
               )
-      case Run.State.Cancelled => Next.Stop(Outcome("stopped: its run was cancelled"), None, state)
+      case Run.State.Cancelled => Next.Stop(Item.Outcome("stopped: its run was cancelled"), None, state)
       case _                   =>
         val n = failures.value + 1
         val why = error.map(_.sentence).filter(_.nonEmpty).fold("")(e => s": ${e.take(300)}")
         if n >= s.maxFailures.value then
           Next.Stop(
-            Outcome(s"stopped: ${counted(n, "failed run")}$why"),
+            Item.Outcome(s"stopped: ${counted(n, "failed run")}$why"),
             Some(
-              ItemTask(
+              Item.Task(
                 s"$label manager item stopped [[$target]] after ${counted(n, "failed run")}$why (agent run ${run.value.take(8)})"
               )
             ),
@@ -346,7 +349,7 @@ object ManagerPolicy:
           Next.Retry(
             now.plus(backoff(s.backoffMinutes, s.maxBackoffMinutes, Next.Retry.Failures(n))),
             Next.Retry.Failures(n),
-            ItemNote(s"run failed ($n of ${s.maxFailures})$why")
+            Item.Note(s"run failed ($n of ${s.maxFailures})$why")
           )
 
   /** How an approval a held item waits for was decided, as its outcome (None: still open). */
@@ -359,13 +362,13 @@ object ManagerPolicy:
     * still open (pending, held or active), a goal's article proposal while its plan-goal item is? `open` = the
     * manager's open items (kind, target).
     */
-  def waitsFor(kind: ItemKind, target: Candidate.Target, open: List[(ItemKind, Candidate.Target)]): Boolean =
-    (kind == ItemKind.ArticleReview && open.contains((ItemKind.InferFilter, target))) ||
-      (kind == ItemKind.ProposeArticles && open.contains((ItemKind.PlanGoalItem, target)))
+  def waitsFor(kind: Item.Kind, target: Candidate.Target, open: List[(Item.Kind, Candidate.Target)]): Boolean =
+    (kind == Item.Kind.ArticleReview && open.contains((Item.Kind.InferFilter, target))) ||
+      (kind == Item.Kind.ProposeArticles && open.contains((Item.Kind.PlanGoalItem, target)))
 
   /** The item kinds whose target is a goal. */
-  val GoalKinds: Set[ItemKind] =
-    Set(ItemKind.PlanGoalItem, ItemKind.ProposeArticles, ItemKind.AcquisitionSweep, ItemKind.CurrencyCheck)
+  val GoalKinds: Set[Item.Kind] =
+    Set(Item.Kind.PlanGoalItem, Item.Kind.ProposeArticles, Item.Kind.AcquisitionSweep, Item.Kind.CurrencyCheck)
 
   /** Must an item of `kind` (whose pipeline is `pipeline`) wait for the unsettled runs on its target (their pipelines)?
     * On an article or a source: any of them (one writer at a time). On a goal — its plan, its article proposal, its
@@ -373,7 +376,7 @@ object ManagerPolicy:
     * and acquisition items), so a plan waiting days for a person does not stop its watcher, nor a sweep the proposal
     * (which waits for the plan through [[waitsFor]]).
     */
-  def blocks(kind: ItemKind, pipeline: Pipeline.Wire, unsettled: Seq[Pipeline.Wire]): Boolean =
+  def blocks(kind: Item.Kind, pipeline: Pipeline.Wire, unsettled: Seq[Pipeline.Wire]): Boolean =
     if GoalKinds(kind) then unsettled.contains(pipeline) else unsettled.nonEmpty
 
   // ── dispatch ───────────────────────────────────────────────────────────────────────────────────
@@ -512,7 +515,7 @@ object ManagerPolicy:
   /** The notes a run is given: the manager's live standing hints and unconsumed once-hints, manager-wide or about this
     * item, oldest first.
     */
-  def notesFor(hints: List[ManagerHint], itemId: ItemId): List[ManagerHint] =
+  def notesFor(hints: List[ManagerHint], itemId: Item.Id): List[ManagerHint] =
     hints
       .filter(h => h.retiredAt.isEmpty && h.itemId.forall(_.value == itemId.value) && h.text.value.trim.nonEmpty)
       .sortBy(h => h.id.value: Long)

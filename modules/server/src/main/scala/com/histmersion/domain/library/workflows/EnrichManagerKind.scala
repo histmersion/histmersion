@@ -29,6 +29,7 @@ import com.histmersion.domain.automation.Run
 import com.histmersion.domain.ManagerPolicy
 import com.histmersion.domain.library.sources.SourcesControllers
 import com.histmersion.domain.research.Slug
+import com.histmersion.domain.ManagerPolicy.Item
 
 /** The `enrich` manager kind (library-wide: source-enrich items, what `agents.auto-enrich` feeds), registered by this
   * transition adapter until the library contributes it: a source already enriched is settled without a run, unless a
@@ -47,7 +48,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
   def fire(c: ManagerContext, m: ManagerInfo, now: Instant): List[ManagerKindDefinition.FirePhrase] = Nil
 
   def facts(c: ManagerContext, item: ManagerItem, run: Run.Id): StepFacts =
-    StepFacts.Finished(ManagerPolicy.Outcome("enriched"))
+    StepFacts.Finished(Item.Outcome("enriched"))
 
   def target(
       m: ManagerInfo,

@@ -31,6 +31,7 @@ import com.histmersion.util.jobs.Job
 import com.histmersion.util.jobs.RunRow
 import com.histmersion.api.automation.Run
 import com.histmersion.domain.automation.worklists.WorkListControllers
+import com.histmersion.domain.ManagerPolicy.Item
 
 /** The stall report tells a wait by its kind of reason only; the sentence is made from the case. */
 private given waitWhyToStall: Transformer[SchedulerPolicy.Block.Why, Stalls.SchedWait.Why] =
@@ -195,7 +196,7 @@ final class SchedulerService(
         if items.exists(i => i.kind.value == ArticleReview || i.kind.value == ProposeArticles) then
           agents.managerStore
             .openKeys(m.id)
-            .map((k, t) => (ManagerPolicy.ItemKind(k.value), t.transformInto[ManagerPolicy.Candidate.Target]))
+            .map((k, t) => (Item.Kind(k.value), t.transformInto[ManagerPolicy.Candidate.Target]))
         else Nil
       val over = m.config.models.getOrElse(Nil)
       val memo =

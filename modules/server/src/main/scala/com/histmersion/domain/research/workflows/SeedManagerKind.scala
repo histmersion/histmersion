@@ -36,6 +36,7 @@ import com.histmersion.api.automation.Goal
 import com.histmersion.domain.automation.Run
 import com.histmersion.domain.automation.Approval
 import com.histmersion.domain.research.articles.ArticlesControllers
+import com.histmersion.domain.ManagerPolicy.Item
 
 /** The `seed:<goal>` manager kind (propose-articles, then one article-compile item per article a person approved — a
   * compiled article is queued for the review manager — and the goal's plan), as research contributes it: over its
@@ -74,12 +75,12 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
         c.approvalFacts(
           run,
           Approval.Kind.ArticlePlan,
-          ManagerPolicy.Outcome(s"no article proposed — $progress")
+          Item.Outcome(s"no article proposed — $progress")
         )
       case ArticleCompile =>
         CompileArticlePipeline.written(c, run) match
           case Some(w) if w.written.value =>
-            StepFacts.Finished(ManagerPolicy.Outcome(s"compiled (${w.why})"))
+            StepFacts.Finished(Item.Outcome(s"compiled (${w.why})"))
           case Some(w) =>
             // a draft the autopilot's checks rejected is compiled again (a new draft may pass them)
             c.approvalsOf(run, Approval.Kind.ArticlePublish)
@@ -87,21 +88,21 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
               .filter(a => a.state == ApprovalState.Rejected.wire && a.note.exists(_.byAutopilot)) match
               case Some(a) =>
                 StepFacts.Redo(
-                  ManagerPolicy.Outcome(
+                  Item.Outcome(
                     s"draft rejected by the autopilot's checks (approval #${a.id}: " +
                       a.note.fold("")(_.withoutAutopilotMark.value).take(300) + ")"
                   )
                 )
               case None =>
-                StepFacts.NotDone(ManagerPolicy.Outcome(s"stopped: no article written — ${w.why}"), None)
-          case None => StepFacts.NotDone(ManagerPolicy.Outcome(s"stopped: nothing compiled — $progress"), None)
+                StepFacts.NotDone(Item.Outcome(s"stopped: no article written — ${w.why}"), None)
+          case None => StepFacts.NotDone(Item.Outcome(s"stopped: nothing compiled — $progress"), None)
       case PlanGoalItem =>
         // a blocking approval: the run ends only once its plan was decided
         c.approvalsOf(run, Approval.Kind.GoalPlan).lastOption match
-          case None    => StepFacts.Finished(ManagerPolicy.Outcome(s"nothing planned — $progress"))
+          case None    => StepFacts.Finished(Item.Outcome(s"nothing planned — $progress"))
           case Some(a) =>
             StepFacts.Finished(
-              ManagerPolicy.Outcome(
+              Item.Outcome(
                 s"plan #${a.id} " + ManagerPolicy
                   .decided(
                     Approval.State.Wire(a.state.value),
@@ -110,7 +111,7 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
                   .fold(a.state.value)(_.value)
               )
             )
-      case _ => StepFacts.Finished(ManagerPolicy.Outcome("enriched"))
+      case _ => StepFacts.Finished(Item.Outcome("enriched"))
 
   /** A compiled article is linked to its research area and queued for the review manager; an approved plan becomes
     * compile items; an approved goal plan may have created sub-goals.

@@ -229,7 +229,7 @@ class ManagerPolicySuite extends munit.FunSuite:
         retiredAt = Some(Managers.ManagerHint.RetiredAt("x"))
       )
     )
-    assertEquals(notesFor(hs, ManagerPolicy.ItemId(7)).map(_.text), List("a", "b"))
+    assertEquals(notesFor(hs, Item.Id(7)).map(_.text), List("a", "b"))
 
   test("status line: paused, starved, at capacity, pending, idle"):
     val chain = SchedulerPolicy.Block.Chain("skeptic chain below its plan floor")
@@ -328,13 +328,13 @@ class ManagerPolicySuite extends munit.FunSuite:
 
   test("waitsFor: an article's review waits while its infer-filter item is open; nothing else waits"):
     val open = List(
-      ItemKind.InferFilter -> Candidate.Target("a"),
-      ItemKind.ArticleReview -> Candidate.Target("a"),
-      ItemKind.ArticleReview -> Candidate.Target("b")
+      Item.Kind.InferFilter -> Candidate.Target("a"),
+      Item.Kind.ArticleReview -> Candidate.Target("a"),
+      Item.Kind.ArticleReview -> Candidate.Target("b")
     )
-    assert(waitsFor(ItemKind.ArticleReview, ManagerPolicy.Candidate.Target("a"), open))
-    assert(!waitsFor(ItemKind.ArticleReview, ManagerPolicy.Candidate.Target("b"), open))
-    assert(!waitsFor(ItemKind.InferFilter, ManagerPolicy.Candidate.Target("a"), open))
+    assert(waitsFor(Item.Kind.ArticleReview, ManagerPolicy.Candidate.Target("a"), open))
+    assert(!waitsFor(Item.Kind.ArticleReview, ManagerPolicy.Candidate.Target("b"), open))
+    assert(!waitsFor(Item.Kind.InferFilter, ManagerPolicy.Candidate.Target("a"), open))
 
   test("evaluateStep: done → finished, held for an approval, or stopped; failed backs off then stops; cancelled stops"):
     def ev(st: RunState, f: StepFacts, failures: Next.Retry.Failures = Next.Retry.Failures(0)) =
@@ -351,25 +351,25 @@ class ManagerPolicySuite extends munit.FunSuite:
         now
       )
     assertEquals(
-      ev(Run.State.Done, StepFacts.Finished(ManagerPolicy.Outcome("ok"))),
-      Next.Done(ManagerPolicy.Outcome("ok"), ItemState())
+      ev(Run.State.Done, StepFacts.Finished(Item.Outcome("ok"))),
+      Next.Done(Item.Outcome("ok"), ItemState())
     )
     assertEquals(
-      ev(Run.State.Done, StepFacts.Waiting(ManagerPolicy.ApprovalId(7), ManagerPolicy.ItemNote("waits"))),
-      Next.Wait(ManagerPolicy.ApprovalId(7), ManagerPolicy.ItemNote("waits"))
+      ev(Run.State.Done, StepFacts.Waiting(ManagerPolicy.ApprovalId(7), Item.Note("waits"))),
+      Next.Wait(ManagerPolicy.ApprovalId(7), Item.Note("waits"))
     )
     assertEquals(
-      ev(Run.State.Done, StepFacts.NotDone(ManagerPolicy.Outcome("no"), None)),
-      Next.Stop(ManagerPolicy.Outcome("no"), None, ItemState())
+      ev(Run.State.Done, StepFacts.NotDone(Item.Outcome("no"), None)),
+      Next.Stop(Item.Outcome("no"), None, ItemState())
     )
-    ev(Run.State.Failed, StepFacts.Finished(ManagerPolicy.Outcome("x"))) match
+    ev(Run.State.Failed, StepFacts.Finished(Item.Outcome("x"))) match
       case Next.Retry(nb, failures, _) if failures == Next.Retry.Failures(1) =>
         assertEquals(nb, now.plusSeconds(15 * 60))
       case other => fail(other.toString)
-    ev(Run.State.Failed, StepFacts.Finished(ManagerPolicy.Outcome("x")), failures = Next.Retry.Failures(2)) match
+    ev(Run.State.Failed, StepFacts.Finished(Item.Outcome("x")), failures = Next.Retry.Failures(2)) match
       case Next.Stop(o, Some(t), _) => assert(o.value.contains("3 failed runs") && t.value.contains("[[tin]]"), t)
       case other                    => fail(other.toString)
-    assert(ev(Run.State.Cancelled, StepFacts.Finished(ManagerPolicy.Outcome("x"))).isInstanceOf[Next.Stop])
+    assert(ev(Run.State.Cancelled, StepFacts.Finished(Item.Outcome("x"))).isInstanceOf[Next.Stop])
 
   test("decided: an open approval is not decided; a decided one reads with its result"):
     assertEquals(decided(Approval.State.Wire("open"), None), None)

@@ -39,6 +39,7 @@ import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.automation.managers.ManagerRepo
 import com.histmersion.api.research.Articles
 import com.histmersion.api.research.Article
+import com.histmersion.domain.ManagerPolicy.Item
 
 /** The `review` manager kind (library-wide: article-review, infer-filter and article-extend items), research's: the
   * review's own evaluation over the article's review ledger, the selection that refills the queue (open MAJORs,
@@ -117,7 +118,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
           )
         )
     }
-    val task = ledger.flatMap(ReviewLedger.taskText(_, run)).map(t => ManagerPolicy.ItemTask(t.value))
+    val task = ledger.flatMap(ReviewLedger.taskText(_, run)).map(t => Item.Task(t.value))
     ReviewManagerPolicy.evaluateReview(
       s,
       slug,
@@ -152,7 +153,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
             notBefore,
             None,
             state,
-            Some(ManagerPolicy.Outcome(note.value))
+            Some(Item.Outcome(note.value))
           )
         then
           c.event(
@@ -176,7 +177,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
             None,
             Option.when(failed)(ManagerContext.FailureCount(item.failures.value + 1)),
             state,
-            Some(ManagerPolicy.Outcome(text))
+            Some(Item.Outcome(text))
           )
         then
           c.event(
@@ -195,7 +196,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
   private def fileTask(
       slug: Slug,
       ledger: Option[ReviewLedger.Ledger],
-      text: ManagerPolicy.ItemTask
+      text: Item.Task
   ): Option[Queue.QueueItem.Id] =
     val open = ledger
       .flatMap(_.task)
@@ -231,15 +232,15 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
         c.approvalFacts(
           run,
           Approval.Kind.ArticleFilter,
-          ManagerPolicy.Outcome(s"no filter proposed — $progress")
+          Item.Outcome(s"no filter proposed — $progress")
         )
       case ArticleExtend =>
         CompileArticlePipeline.written(c, run) match
           case Some(w) if w.written.value =>
-            StepFacts.Finished(ManagerPolicy.Outcome(s"extended (${w.why})"))
-          case Some(w) => StepFacts.Finished(ManagerPolicy.Outcome(s"nothing appended: ${w.why}"))
-          case None    => StepFacts.Finished(ManagerPolicy.Outcome(s"nothing to extend — $progress"))
-      case _ => StepFacts.Finished(ManagerPolicy.Outcome("enriched"))
+            StepFacts.Finished(Item.Outcome(s"extended (${w.why})"))
+          case Some(w) => StepFacts.Finished(Item.Outcome(s"nothing appended: ${w.why}"))
+          case None    => StepFacts.Finished(Item.Outcome(s"nothing to extend — $progress"))
+      case _ => StepFacts.Finished(Item.Outcome("enriched"))
 
   /** An extended article is reviewed again. */
   override def afterDone(
@@ -299,14 +300,14 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
         s.refillBatch,
         s.inferFilter,
         slug => site.articles.recordedFilter(slug).isDefined,
-        slug => c.hasItem(manager, ManagerPolicy.ItemKind.InferFilter, ManagerContext.ItemTarget(slug.value))
+        slug => c.hasItem(manager, Item.Kind.InferFilter, ManagerContext.ItemTarget(slug.value))
       )
       val hints = c.hints(manager).filter(_.effect.exists(_.action == HintEffect.Verb.Prioritise.word))
       val added = picks.flatMap { p =>
         val prio = boosted(c, p.target, p.priority, hints)
         val boost = if prio != p.priority then s", priority $prio by a hint" else ""
         stale
-          .find((slug, _, item) => p.kind == ManagerPolicy.ItemKind.ArticleReview && slug == p.target && item.isDefined)
+          .find((slug, _, item) => p.kind == Item.Kind.ArticleReview && slug == p.target && item.isDefined)
           .flatMap(_._3) match
           case Some(itemId) =>
             Option
@@ -321,7 +322,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
               reopen = ManagerContext.UpsertReopen(false)
             )
             val label =
-              if p.kind == ManagerPolicy.ItemKind.ArticleReview then p.target.value else s"${p.target} [${p.kind}]"
+              if p.kind == Item.Kind.ArticleReview then p.target.value else s"${p.target} [${p.kind}]"
             Option.when(isNew)(s"$label (${p.why.said}$boost)")
       }
       if added.nonEmpty then
@@ -499,10 +500,10 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
       val on = m.config.inferFilter.fold(cfg.managers.review.inferFilter.value)(_.value)
       val has = site.articles.recordedFilter(Slug.assume(target.value)).isDefined
       val manager = ManagerLight.Id(m.id.value)
-      if on && !has && !c.hasItem(manager, ManagerPolicy.ItemKind.InferFilter, target) then
+      if on && !has && !c.hasItem(manager, Item.Kind.InferFilter, target) then
         val (fid, _) = c.upsert(
           manager,
-          ManagerPolicy.ItemKind.InferFilter,
+          Item.Kind.InferFilter,
           target,
           ItemOrigin.Chain,
           priority,
@@ -533,7 +534,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
     item.kind.value match
       case ArticleReview =>
         if ManagerPolicy.waitsFor(
-            ManagerPolicy.ItemKind.ArticleReview,
+            Item.Kind.ArticleReview,
             ManagerPolicy.Candidate.Target(item.target.value),
             c.openKeys(manager)
           )
