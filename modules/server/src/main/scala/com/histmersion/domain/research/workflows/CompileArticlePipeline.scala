@@ -2,7 +2,7 @@ package com.histmersion
 package domain.research.workflows
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 
 import hearth.kindlings.optics.syntax.*
@@ -347,7 +347,7 @@ final class CompileArticlePipeline(
         site.workLists.add(WorkListControllers.ListName("tasks"), item).map(_ => ())
       )(Right(()))
     if !decided.approved.value then
-      Right(Written(written = Written.Value(false), Problem.Unclassified(Legacy.Text("the draft was rejected")), None))
+      Right(Written(written = Written.Value(false), Rationale("the draft was rejected"), None))
     else
       d.mode match
         case DraftMode.Create =>
@@ -356,7 +356,7 @@ final class CompileArticlePipeline(
             Right(
               Written(
                 written = Written.Value(false),
-                Problem.Unclassified(Legacy.Text("the slug was taken meanwhile")),
+                Rationale("the slug was taken meanwhile"),
                 None
               )
             )
@@ -375,12 +375,12 @@ final class CompileArticlePipeline(
                 .put(s.slug, put)
                 .left
                 .map(_.message.sentence)
-                .map(_ => Written(written = Written.Value(true), Problem.Unclassified(Legacy.Text("created")), None))
+                .map(_ => Written(written = Written.Value(true), Rationale("created"), None))
             )(
               Right(
                 Written(
                   written = Written.Value(false),
-                  Problem.Unclassified(Legacy.Text(AgentsMarkdown.DryRunNote)),
+                  Rationale(AgentsMarkdown.DryRunNote),
                   None
                 )
               )
@@ -405,7 +405,7 @@ final class CompileArticlePipeline(
               Right(
                 Written(
                   written = Written.Value(false),
-                  Problem.Unclassified(Legacy.Text(AgentsMarkdown.DryRunNote)),
+                  Rationale(AgentsMarkdown.DryRunNote),
                   None
                 )
               )
@@ -413,7 +413,7 @@ final class CompileArticlePipeline(
               Right(
                 Written(
                   written = Written.Value(true),
-                  Problem.Unclassified(Legacy.Text("appended")),
+                  Rationale("appended"),
                   site.articleStore.latestVersion(s.slug).map(v => Written.PreviousVersion(v.value))
                 )
               )
@@ -424,7 +424,7 @@ final class CompileArticlePipeline(
               Right(
                 Written(
                   written = Written.Value(false),
-                  Problem.Unclassified(Legacy.Text("the article changed meanwhile")),
+                  Rationale("the article changed meanwhile"),
                   None
                 )
               )
@@ -519,7 +519,7 @@ object CompileArticlePipeline:
   ) derives JsonCodec
 
   /** What the write did; `previousVersion` holds the text an extension replaced (undo from it). */
-  final case class Written(written: Written.Value, why: Problem, previousVersion: Option[Written.PreviousVersion])
+  final case class Written(written: Written.Value, why: Rationale, previousVersion: Option[Written.PreviousVersion])
       derives JsonCodec
 
   object Written:
