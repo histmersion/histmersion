@@ -19779,6 +19779,7 @@
           "target",
           "source",
           "reservePct",
+          "limits",
           "usable"
         ],
         "properties" : {
@@ -19986,7 +19987,8 @@
         "type" : "object",
         "required" : [
           "query",
-          "count"
+          "count",
+          "items"
         ],
         "properties" : {
           "query" : {
@@ -20010,6 +20012,8 @@
         "required" : [
           "slug",
           "kind",
+          "edits",
+          "problems",
           "fatal",
           "wordsBefore",
           "wordsAfter",
@@ -20242,6 +20246,8 @@
         "required" : [
           "target",
           "isRetracted",
+          "retractionWatch",
+          "crossrefUpdates",
           "flagged",
           "verdict",
           "recommendation"
@@ -20958,7 +20964,9 @@
         "type" : "object",
         "required" : [
           "citekey",
-          "title"
+          "title",
+          "authors",
+          "topics"
         ],
         "properties" : {
           "citekey" : {
@@ -21010,7 +21018,8 @@
         "title" : "CalibreGaps",
         "type" : "object",
         "required" : [
-          "count"
+          "count",
+          "gaps"
         ],
         "properties" : {
           "count" : {
@@ -21144,7 +21153,9 @@
         "title" : "CandidateList",
         "type" : "object",
         "required" : [
-          "state"
+          "state",
+          "candidates",
+          "counts"
         ],
         "properties" : {
           "goal" : {
@@ -21179,6 +21190,7 @@
         "title" : "CandidateMark",
         "type" : "object",
         "required" : [
+          "ids",
           "state"
         ],
         "properties" : {
@@ -21216,9 +21228,11 @@
         "type" : "object",
         "required" : [
           "goal",
+          "watches",
           "found",
           "added",
           "again",
+          "skipped",
           "unseen"
         ],
         "properties" : {
@@ -21361,6 +21375,9 @@
       "ChainSet" : {
         "title" : "ChainSet",
         "type" : "object",
+        "required" : [
+          "models"
+        ],
         "properties" : {
           "models" : {
             "type" : "array",
@@ -21420,6 +21437,7 @@
         "title" : "CollectionAudit",
         "type" : "object",
         "required" : [
+          "findings",
           "checked"
         ],
         "properties" : {
@@ -21455,7 +21473,11 @@
         "type" : "object",
         "required" : [
           "id",
-          "title"
+          "title",
+          "authors",
+          "tags",
+          "identifiers",
+          "formats"
         ],
         "properties" : {
           "id" : {
@@ -21536,6 +21558,8 @@
         "required" : [
           "citekey",
           "title",
+          "authors",
+          "topics",
           "original",
           "counted"
         ],
@@ -21597,7 +21621,8 @@
         "required" : [
           "count",
           "uncounted",
-          "total"
+          "total",
+          "gaps"
         ],
         "properties" : {
           "count" : {
@@ -21698,7 +21723,9 @@
           "name",
           "title",
           "description",
-          "reachable"
+          "capabilities",
+          "reachable",
+          "problems"
         ],
         "properties" : {
           "name" : {
@@ -21805,7 +21832,8 @@
         "title" : "CollectionRecordView",
         "type" : "object",
         "required" : [
-          "title"
+          "title",
+          "authors"
         ],
         "properties" : {
           "title" : {
@@ -21827,6 +21855,7 @@
         "title" : "CollectionSearch",
         "type" : "object",
         "required" : [
+          "entries",
           "total"
         ],
         "properties" : {
@@ -21846,7 +21875,8 @@
         "title" : "CollectionSetDone",
         "type" : "object",
         "required" : [
-          "id"
+          "id",
+          "fields"
         ],
         "properties" : {
           "id" : {
@@ -21864,7 +21894,8 @@
         "title" : "CollectionSetRequest",
         "type" : "object",
         "required" : [
-          "id"
+          "id",
+          "fields"
         ],
         "properties" : {
           "id" : {
@@ -21883,7 +21914,8 @@
         "type" : "object",
         "required" : [
           "gaps",
-          "applied"
+          "applied",
+          "pushes"
         ],
         "properties" : {
           "gaps" : {
@@ -21904,6 +21936,7 @@
         "title" : "CollectionUpdateAll",
         "type" : "object",
         "required" : [
+          "rows",
           "applied"
         ],
         "properties" : {
@@ -21935,7 +21968,10 @@
         "type" : "object",
         "required" : [
           "id",
-          "state"
+          "citekeys",
+          "state",
+          "changes",
+          "reasons"
         ],
         "properties" : {
           "id" : {
@@ -21970,6 +22006,7 @@
         "required" : [
           "citekey",
           "id",
+          "changed",
           "title"
         ],
         "properties" : {
@@ -21995,7 +22032,9 @@
         "type" : "object",
         "required" : [
           "pipeline",
-          "target"
+          "target",
+          "runs",
+          "steps"
         ],
         "properties" : {
           "pipeline" : {
@@ -22107,6 +22146,7 @@
         "title" : "ContradictionsResult",
         "type" : "object",
         "required" : [
+          "rows",
           "total"
         ],
         "properties" : {
@@ -22281,6 +22321,9 @@
       "Counters" : {
         "title" : "Counters",
         "type" : "object",
+        "required" : [
+          "boards"
+        ],
         "properties" : {
           "boards" : {
             "type" : "array",
@@ -22298,7 +22341,10 @@
         "type" : "object",
         "required" : [
           "findings",
+          "articles",
+          "sources",
           "links",
+          "columns",
           "edgesPromoted"
         ],
         "properties" : {
@@ -22402,7 +22448,15 @@
           "filter",
           "filterLine",
           "total",
-          "checked"
+          "checked",
+          "cited",
+          "notUsed",
+          "citedOutside",
+          "statuses",
+          "edges",
+          "searches",
+          "reasons",
+          "drift"
         ],
         "properties" : {
           "slug" : {
@@ -22489,7 +22543,8 @@
         "type" : "object",
         "required" : [
           "query",
-          "total"
+          "total",
+          "cited"
         ],
         "properties" : {
           "query" : {
@@ -22531,6 +22586,7 @@
         "type" : "object",
         "required" : [
           "src",
+          "kinds",
           "dst",
           "state"
         ],
@@ -22881,7 +22937,11 @@
         "required" : [
           "citekey",
           "title",
-          "status"
+          "authors",
+          "status",
+          "topics",
+          "regions",
+          "tags"
         ],
         "properties" : {
           "citekey" : {
@@ -23018,7 +23078,8 @@
         "type" : "object",
         "required" : [
           "query",
-          "count"
+          "count",
+          "works"
         ],
         "properties" : {
           "query" : {
@@ -23061,7 +23122,9 @@
         "type" : "object",
         "required" : [
           "enabled",
-          "online"
+          "online",
+          "providers",
+          "checks"
         ],
         "properties" : {
           "enabled" : {
@@ -23128,7 +23191,8 @@
         "title" : "Drift",
         "type" : "object",
         "required" : [
-          "kind"
+          "kind",
+          "citekeys"
         ],
         "properties" : {
           "kind" : {
@@ -23343,7 +23407,8 @@
           "placesResolved",
           "datedFindings",
           "summaryChars",
-          "notesChars"
+          "notesChars",
+          "uniqueClaims"
         ],
         "properties" : {
           "findings" : {
@@ -24144,7 +24209,8 @@
         "type" : "object",
         "required" : [
           "eventId",
-          "label"
+          "label",
+          "candidates"
         ],
         "properties" : {
           "eventId" : {
@@ -24216,7 +24282,8 @@
         "title" : "EventList",
         "type" : "object",
         "required" : [
-          "total"
+          "total",
+          "events"
         ],
         "properties" : {
           "total" : {
@@ -24242,6 +24309,9 @@
       "EventPage" : {
         "title" : "EventPage",
         "type" : "object",
+        "required" : [
+          "events"
+        ],
         "properties" : {
           "events" : {
             "type" : "array",
@@ -24424,7 +24494,8 @@
         "title" : "EventRederiveReport",
         "type" : "object",
         "required" : [
-          "dryRun"
+          "dryRun",
+          "providers"
         ],
         "properties" : {
           "dryRun" : {
@@ -25137,7 +25208,8 @@
           "target",
           "backend",
           "count",
-          "edgesAdded"
+          "edgesAdded",
+          "followups"
         ],
         "properties" : {
           "target" : {
@@ -25261,7 +25333,8 @@
         "title" : "FormatReport",
         "type" : "object",
         "required" : [
-          "subject"
+          "subject",
+          "issues"
         ],
         "properties" : {
           "subject" : {
@@ -25304,6 +25377,7 @@
         "type" : "object",
         "required" : [
           "dir",
+          "runtimes",
           "files",
           "written",
           "removed",
@@ -25391,7 +25465,8 @@
         "title" : "GeoHitPage",
         "type" : "object",
         "required" : [
-          "total"
+          "total",
+          "hits"
         ],
         "properties" : {
           "total" : {
@@ -25682,7 +25757,9 @@
         "type" : "object",
         "required" : [
           "root",
-          "depth"
+          "depth",
+          "nodes",
+          "links"
         ],
         "properties" : {
           "root" : {
@@ -25935,7 +26012,9 @@
         "title" : "Hit",
         "type" : "object",
         "required" : [
-          "source"
+          "source",
+          "matched",
+          "why"
         ],
         "properties" : {
           "source" : {
@@ -26069,7 +26148,11 @@
           "from",
           "dryRun",
           "applied",
-          "blobs"
+          "counts",
+          "blobs",
+          "problems",
+          "conflicts",
+          "notes"
         ],
         "properties" : {
           "bundleId" : {
@@ -26618,7 +26701,8 @@
         "title" : "ItemGoals",
         "type" : "object",
         "required" : [
-          "item"
+          "item",
+          "goals"
         ],
         "properties" : {
           "item" : {
@@ -26637,6 +26721,7 @@
         "title" : "ItemPage",
         "type" : "object",
         "required" : [
+          "items",
           "total",
           "offset",
           "limit"
@@ -27225,6 +27310,7 @@
         "title" : "LintFixResult",
         "type" : "object",
         "required" : [
+          "applied",
           "edgesResolved",
           "sourcesReindexed",
           "chunksWritten",
@@ -27302,6 +27388,9 @@
       "LintReport" : {
         "title" : "LintReport",
         "type" : "object",
+        "required" : [
+          "rules"
+        ],
         "properties" : {
           "rules" : {
             "type" : "array",
@@ -27323,7 +27412,8 @@
         "required" : [
           "rule",
           "description",
-          "count"
+          "count",
+          "items"
         ],
         "properties" : {
           "rule" : {
@@ -27348,7 +27438,8 @@
         "title" : "List",
         "type" : "object",
         "required" : [
-          "total"
+          "total",
+          "articles"
         ],
         "properties" : {
           "total" : {
@@ -27380,6 +27471,9 @@
       "List1" : {
         "title" : "List",
         "type" : "object",
+        "required" : [
+          "events"
+        ],
         "properties" : {
           "events" : {
             "type" : "array",
@@ -27401,7 +27495,8 @@
         "title" : "List",
         "type" : "object",
         "required" : [
-          "total"
+          "total",
+          "attestations"
         ],
         "properties" : {
           "total" : {
@@ -27428,7 +27523,8 @@
         "title" : "List",
         "type" : "object",
         "required" : [
-          "total"
+          "total",
+          "goals"
         ],
         "properties" : {
           "total" : {
@@ -27455,7 +27551,8 @@
         "title" : "List",
         "type" : "object",
         "required" : [
-          "total"
+          "total",
+          "links"
         ],
         "properties" : {
           "total" : {
@@ -27482,7 +27579,8 @@
         "title" : "List",
         "type" : "object",
         "required" : [
-          "total"
+          "total",
+          "corrections"
         ],
         "properties" : {
           "total" : {
@@ -27501,7 +27599,8 @@
         "title" : "List",
         "type" : "object",
         "required" : [
-          "total"
+          "total",
+          "leads"
         ],
         "properties" : {
           "total" : {
@@ -27548,7 +27647,8 @@
           "b",
           "aMajors",
           "bMajors",
-          "shared"
+          "shared",
+          "pairs"
         ],
         "properties" : {
           "a" : {
@@ -28005,6 +28105,7 @@
           "schemaVersion",
           "bundleId",
           "instance",
+          "files",
           "blobs",
           "reference"
         ],
@@ -28128,7 +28229,9 @@
         "type" : "object",
         "required" : [
           "id",
-          "claim"
+          "claim",
+          "tags",
+          "why"
         ],
         "properties" : {
           "id" : {
@@ -28373,6 +28476,10 @@
       "MediaFacets" : {
         "title" : "MediaFacets",
         "type" : "object",
+        "required" : [
+          "providers",
+          "licences"
+        ],
         "properties" : {
           "providers" : {
             "type" : "array",
@@ -28656,7 +28763,8 @@
         "title" : "MediaList",
         "type" : "object",
         "required" : [
-          "total"
+          "total",
+          "items"
         ],
         "properties" : {
           "total" : {
@@ -29109,6 +29217,9 @@
       "MergeLedger" : {
         "title" : "MergeLedger",
         "type" : "object",
+        "required" : [
+          "entries"
+        ],
         "properties" : {
           "query" : {
             "type" : "string"
@@ -29138,6 +29249,10 @@
           "schemaVersion",
           "planHash",
           "matches",
+          "issues",
+          "info",
+          "problems",
+          "resolutionErrors",
           "resolved"
         ],
         "properties" : {
@@ -29436,7 +29551,8 @@
         "title" : "ModReport",
         "type" : "object",
         "required" : [
-          "source"
+          "source",
+          "rateLimits"
         ],
         "properties" : {
           "source" : {
@@ -29506,7 +29622,10 @@
         "type" : "object",
         "required" : [
           "enabled",
-          "maxConcurrentRuns"
+          "roles",
+          "pipelines",
+          "maxConcurrentRuns",
+          "problems"
         ],
         "properties" : {
           "enabled" : {
@@ -29996,6 +30115,9 @@
       "Page" : {
         "title" : "Page",
         "type" : "object",
+        "required" : [
+          "entries"
+        ],
         "properties" : {
           "entries" : {
             "type" : "array",
@@ -30049,7 +30171,8 @@
         "type" : "object",
         "required" : [
           "offset",
-          "text"
+          "text",
+          "matches"
         ],
         "properties" : {
           "offset" : {
@@ -30080,6 +30203,7 @@
           "matches",
           "capped",
           "total",
+          "passages",
           "bodyChars"
         ],
         "properties" : {
@@ -30344,6 +30468,8 @@
         "type" : "object",
         "required" : [
           "place",
+          "parents",
+          "children",
           "findings"
         ],
         "properties" : {
@@ -30780,11 +30906,13 @@
           "pool",
           "title",
           "kind",
+          "covers",
           "floors",
           "floorsSource",
           "held",
           "usable",
-          "maxCallsInFlight"
+          "maxCallsInFlight",
+          "windows"
         ],
         "properties" : {
           "pool" : {
@@ -30916,6 +31044,7 @@
           "model",
           "rawAnswer",
           "matchesRecord",
+          "toolCalls",
           "iterations",
           "finish",
           "usage",
@@ -31013,7 +31142,9 @@
         "type" : "object",
         "required" : [
           "provider",
-          "used"
+          "used",
+          "models",
+          "checks"
         ],
         "properties" : {
           "provider" : {
@@ -31351,6 +31482,8 @@
         "title" : "QueryResult",
         "type" : "object",
         "required" : [
+          "columns",
+          "rows",
           "rowCount",
           "truncated",
           "elapsedMs"
@@ -31506,7 +31639,8 @@
         "title" : "QueueListing",
         "type" : "object",
         "required" : [
-          "list"
+          "list",
+          "items"
         ],
         "properties" : {
           "list" : {
@@ -31560,6 +31694,9 @@
         "title" : "QuotaInfo",
         "type" : "object",
         "required" : [
+          "plans",
+          "metered",
+          "fallthrough",
           "now"
         ],
         "properties" : {
@@ -31604,6 +31741,9 @@
       "QuotaRefreshed" : {
         "title" : "QuotaRefreshed",
         "type" : "object",
+        "required" : [
+          "pools"
+        ],
         "properties" : {
           "pools" : {
             "type" : "array",
@@ -32055,7 +32195,8 @@
           "backend",
           "count",
           "resolved",
-          "edgesAdded"
+          "edgesAdded",
+          "references"
         ],
         "properties" : {
           "target" : {
@@ -32232,6 +32373,7 @@
         "title" : "Removed",
         "type" : "object",
         "required" : [
+          "removed",
           "bytes"
         ],
         "properties" : {
@@ -32427,7 +32569,8 @@
         "required" : [
           "citekey",
           "created",
-          "edgesAdded"
+          "edgesAdded",
+          "steps"
         ],
         "properties" : {
           "citekey" : {
@@ -32623,6 +32766,7 @@
         "type" : "object",
         "required" : [
           "citekey",
+          "authors",
           "title",
           "status"
         ],
@@ -32921,7 +33065,8 @@
         "required" : [
           "run",
           "runNumber",
-          "round"
+          "round",
+          "findings"
         ],
         "properties" : {
           "run" : {
@@ -32950,7 +33095,10 @@
         "title" : "ReviewSide",
         "type" : "object",
         "required" : [
-          "rounds"
+          "rounds",
+          "reviewers",
+          "kinds",
+          "majors"
         ],
         "properties" : {
           "verdict" : {
@@ -33050,7 +33198,8 @@
         "type" : "object",
         "required" : [
           "role",
-          "source"
+          "source",
+          "models"
         ],
         "properties" : {
           "role" : {
@@ -33099,7 +33248,8 @@
         "title" : "Row",
         "type" : "object",
         "required" : [
-          "claim"
+          "claim",
+          "tags"
         ],
         "properties" : {
           "claim" : {
@@ -33152,7 +33302,9 @@
           "slug",
           "title",
           "kind",
-          "body"
+          "body",
+          "tags",
+          "regions"
         ],
         "properties" : {
           "slug" : {
@@ -33204,6 +33356,9 @@
         "type" : "object",
         "required" : [
           "id",
+          "citekeys",
+          "codes",
+          "labels",
           "record"
         ],
         "properties" : {
@@ -33243,7 +33398,9 @@
         "title" : "RunDetail",
         "type" : "object",
         "required" : [
-          "run"
+          "run",
+          "steps",
+          "messages"
         ],
         "properties" : {
           "run" : {
@@ -33550,6 +33707,7 @@
           "id",
           "status",
           "dryRun",
+          "modelFor",
           "usage",
           "costUsd",
           "seconds",
@@ -33753,7 +33911,8 @@
         "type" : "object",
         "required" : [
           "name",
-          "kind"
+          "kind",
+          "columns"
         ],
         "properties" : {
           "name" : {
@@ -33773,6 +33932,9 @@
       "SchemaTables" : {
         "title" : "SchemaTables",
         "type" : "object",
+        "required" : [
+          "tables"
+        ],
         "properties" : {
           "tables" : {
             "type" : "array",
@@ -33788,7 +33950,9 @@
         "required" : [
           "citekey",
           "title",
-          "status"
+          "status",
+          "topics",
+          "regions"
         ],
         "properties" : {
           "citekey" : {
@@ -33848,7 +34012,8 @@
         "title" : "SearchResult",
         "type" : "object",
         "required" : [
-          "total"
+          "total",
+          "hits"
         ],
         "properties" : {
           "total" : {
@@ -33912,6 +34077,7 @@
         "type" : "object",
         "required" : [
           "imported",
+          "failed",
           "edgesResolved"
         ],
         "properties" : {
@@ -34273,6 +34439,7 @@
           "available",
           "dir",
           "bbox",
+          "layers",
           "fetchCommand"
         ],
         "properties" : {
@@ -34438,7 +34605,8 @@
         "title" : "StepRow",
         "type" : "object",
         "required" : [
-          "name"
+          "name",
+          "runs"
         ],
         "properties" : {
           "name" : {
@@ -34456,6 +34624,9 @@
         "title" : "StepSide",
         "type" : "object",
         "required" : [
+          "models",
+          "actual",
+          "billing",
           "usage",
           "costUsd",
           "seconds",
@@ -34570,7 +34741,9 @@
         "required" : [
           "slug",
           "title",
-          "kind"
+          "kind",
+          "tags",
+          "regions"
         ],
         "properties" : {
           "slug" : {
@@ -34769,7 +34942,8 @@
         "required" : [
           "from",
           "to",
-          "bucket"
+          "bucket",
+          "buckets"
         ],
         "properties" : {
           "from" : {
@@ -35071,6 +35245,7 @@
         "title" : "UnreadPage",
         "type" : "object",
         "required" : [
+          "rows",
           "total"
         ],
         "properties" : {
@@ -35151,7 +35326,8 @@
         "type" : "object",
         "required" : [
           "sha256",
-          "bytes"
+          "bytes",
+          "problems"
         ],
         "properties" : {
           "sha256" : {
@@ -35256,7 +35432,8 @@
         "title" : "VacuumPlan",
         "type" : "object",
         "required" : [
-          "analyze"
+          "analyze",
+          "tables"
         ],
         "properties" : {
           "analyze" : {
@@ -35275,7 +35452,8 @@
         "type" : "object",
         "required" : [
           "ok",
-          "blobsChecked"
+          "blobsChecked",
+          "problems"
         ],
         "properties" : {
           "ok" : {
@@ -35365,7 +35543,9 @@
         "title" : "View",
         "type" : "object",
         "required" : [
-          "article"
+          "article",
+          "backlinks",
+          "sourcesCited"
         ],
         "properties" : {
           "article" : {
@@ -35526,7 +35706,9 @@
         "required" : [
           "article",
           "url",
-          "doiCount"
+          "doiCount",
+          "dois",
+          "arxiv"
         ],
         "properties" : {
           "article" : {
@@ -35621,7 +35803,8 @@
         "title" : "WithFindings",
         "type" : "object",
         "required" : [
-          "source"
+          "source",
+          "findings"
         ],
         "properties" : {
           "source" : {
@@ -35737,6 +35920,9 @@
       "Write" : {
         "title" : "Write",
         "type" : "object",
+        "required" : [
+          "changes"
+        ],
         "properties" : {
           "changes" : {
             "type" : "array",
