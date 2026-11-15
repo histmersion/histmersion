@@ -21244,11 +21244,7 @@
             "format" : "int32"
           },
           "skipped" : {
-            "type" : "object",
-            "additionalProperties" : {
-              "type" : "integer",
-              "format" : "int32"
-            }
+            "$ref" : "#/components/schemas/Map_T_T"
           },
           "unseen" : {
             "type" : "integer",
@@ -21488,10 +21484,7 @@
             }
           },
           "identifiers" : {
-            "type" : "object",
-            "additionalProperties" : {
-              "type" : "string"
-            }
+            "$ref" : "#/components/schemas/Map_T_T1"
           },
           "formats" : {
             "type" : "array",
@@ -28113,6 +28106,21 @@
             "type" : "number",
             "format" : "double"
           }
+        }
+      },
+      "Map_T_T" : {
+        "title" : "Map_T_T",
+        "type" : "object",
+        "additionalProperties" : {
+          "type" : "integer",
+          "format" : "int32"
+        }
+      },
+      "Map_T_T1" : {
+        "title" : "Map_T_T",
+        "type" : "object",
+        "additionalProperties" : {
+          "type" : "string"
         }
       },
       "Match" : {

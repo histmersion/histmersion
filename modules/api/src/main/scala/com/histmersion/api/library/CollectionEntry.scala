@@ -4,7 +4,6 @@ import com.histmersion.api.given
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonKeyCodec
 import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
-import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.catalogue.Year
 import io.github.iltotore.iron.constraint.any.Pure
@@ -26,8 +25,6 @@ final case class CollectionEntry(
       com.histmersion.api.json.Schema
 
 object CollectionEntry:
-  given Schema[Map[IdentifiersKey, IdentifiersValue]] =
-    Schema.schemaForMap[IdentifiersKey, IdentifiersValue](_.value).copy(name = None, isOptional = true)
   type Id = Id.T
   object Id extends Newtype[String, Pure]
   type Publisher = Publisher.T

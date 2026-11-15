@@ -3,7 +3,6 @@ package api.library
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonKeyCodec
 import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
-import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
@@ -22,9 +21,6 @@ final case class CandidateSweep(
       KindlingsSchema,
       com.histmersion.api.json.Schema
 object CandidateSweep:
-
-  given Schema[Map[SkippedKey, SkippedValue]] =
-    Schema.schemaForMap[SkippedKey, SkippedValue](_.value).copy(name = None, isOptional = true)
 
   export com.histmersion.api.research.ReviewGoal.Slug as Goal
   type Found = Found.T

@@ -240,6 +240,10 @@ lazy val nonEmptyDerivation = projectMatrix
     libraryDependencies ++= Seq(
       "com.kubuszok" %% "hearth" % V.hearth,
       compilerPlugin("com.kubuszok" %% "hearth-cross-quotes" % V.hearth),
+      // (verification branch) Kindlings' IsValueType provider for Iron: a newtype's opaque `T` is a value type of its
+      // base, so a derived schema or codec of a map keyed by a newtype needs no hand-written instance. Compile time
+      // only, like this module: it reaches every deriving module through the same `% Provided` dependency
+      "com.kubuszok" %% "kindlings-iron-integration" % V.kindlings,
       // its suite derives as a consumer does: a codec and a schema of a record holding a NonEmptyVector
       "com.softwaremill.sttp.tapir" %% "tapir-core" % V.tapir % Test,
       "com.kubuszok" %% "kindlings-tapir-schema-derivation" % V.kindlings % Test
