@@ -9,6 +9,8 @@ import com.histmersion.api.{Plural, Wording}
 import com.histmersion.api.automation.Manager
 import com.histmersion.api.automation.Managers.*
 import com.raquo.laminar.api.L.*
+import com.histmersion.api.WireEnumValues
+import com.histmersion.web.ui.Choices
 import org.scalajs.dom
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -1653,6 +1655,10 @@ object ManagersView:
       )
     )
 
+  /** The hint box's action: none, or one of the verbs a person's hint may ask for. */
+  private val HintChoices: Choices[Option[HintEffect.Verb]] =
+    Choices.optional(WireEnumValues.Wire.of(HintEffect.Verb.NoAction), HintEffect.Verb.Actions)
+
   private def hintBox(
       id: Managers.ManagerInfo.Id,
       busy: Signal[Boolean],
@@ -1661,7 +1667,7 @@ object ManagersView:
     val text = Var("")
     val item = Var("")
     val once = Var(false)
-    val action = Var("none")
+    val action = Var(Option.empty[HintEffect.Verb])
     val targets = Var("")
     val tag = Var("")
     val until = Var("")
@@ -1715,13 +1721,12 @@ object ManagersView:
               select(
                 cls := "field",
                 aria.label := "action",
-                // the select's own spellings (the DOM takes text); `hint` reads them back as verbs
-                List("none", "prioritise", "hold", "skip").map(a => option(value := a, a)),
-                controlled(value <-- action.signal, onChange.mapToValue --> action.writer)
+                HintChoices.options,
+                HintChoices.bound(action)
               )
             ),
             child.maybe <-- action.signal.map(a =>
-              Option.when(a != "none")(
+              Option.when(a.isDefined)(
                 div(
                   cls := "form-row",
                   input(
@@ -1739,7 +1744,7 @@ object ManagersView:
                     controlled(value <-- tag.signal, onInput.mapToValue --> tag.writer)
                   ),
                   Option
-                    .when(HintEffect.Action.verb(HintEffect.Action(a)).contains(HintEffect.Verb.Hold))(
+                    .when(a.contains(HintEffect.Verb.Hold))(
                       List(
                         input(
                           typ := "text",
@@ -1773,7 +1778,7 @@ object ManagersView:
                   HintAdd.Text(text.now()),
                   HintAdd.Item(item.now()),
                   HintAdd.Once(once.now()),
-                  HintEffect.Action(action.now()),
+                  action.now().fold(HintEffect.Verb.NoAction)(_.word),
                   HintEffect.Targets(targets.now()),
                   HintEffect.Tag(tag.now()),
                   HintEffect.Until(until.now()),
