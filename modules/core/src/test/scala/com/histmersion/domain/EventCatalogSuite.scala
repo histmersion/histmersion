@@ -1,7 +1,6 @@
 package com.histmersion
 package domain
 
-import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -138,7 +137,7 @@ class EventCatalogSuite extends munit.FunSuite:
       EventProviders
         .keep(erup(Latitude(37), Longitude(25), None).modify(_.lat).setTo(None: Option[Latitude]), t)
         .left
-        .map(_.sentence),
+        .map(_.said),
       Left("no position")
     )
     assertEquals(
@@ -148,8 +147,12 @@ class EventCatalogSuite extends munit.FunSuite:
           t.modify(_.area).setTo(BBox.parse(BBox.Text("0,0,10,10")))
         )
         .left
-        .map(_.sentence),
+        .map(_.said),
       Left("outside --bbox")
+    )
+    assertEquals(
+      EventProviders.keep(erup(Latitude(-10), Longitude(120), Some(CatalogRecord.Vei(3))), t).left.map(_.said),
+      Left("VEI below 4 outside the region")
     )
 
   test("thresholds over the default region, the world: a small eruption or quake anywhere is kept"):

@@ -495,7 +495,7 @@ class EventLinksSuite extends munit.FunSuite:
       .get
     assertEquals(
       EventProviders.WikidataEvents.claims(js, EventProviders.WikidataProperty("P31")),
-      Right(Map("Q1" -> List("Q755017"), "Q2" -> Nil))
+      Some(Map("Q1" -> List("Q755017"), "Q2" -> Nil))
     )
     val names = RawJson
       .parse("""{"entities":{"Q1":{"labels":{"en":{"value":"Siege of X"},"de":{"value":"Belagerung von X"}},
@@ -504,5 +504,5 @@ class EventLinksSuite extends munit.FunSuite:
       .get
     assertEquals(
       EventProviders.WikidataEvents.names(names).map(_("Q1").toSet),
-      Right(Set("Siege of X", "Belagerung von X", "X siege"))
+      Some(Set("Siege of X", "Belagerung von X", "X siege"))
     )

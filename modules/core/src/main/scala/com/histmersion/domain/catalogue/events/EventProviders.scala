@@ -3,7 +3,7 @@ package domain.catalogue.events
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.domain.DeepTime.SignedYear
 
 import com.histmersion.api.BBox
 import com.histmersion.api.catalogue.{CatalogRecord, EventTaxonomy}
@@ -41,14 +41,16 @@ object EventProviders:
       s"$api?action=wbgetentities&format=json&formatversion=2&props=labels%7Caliases" +
         s"&languages=${enc(langs.mkString("|"))}&ids=${enc(ids.mkString("|"))}"
 
-    /** Pure: each item's labels and aliases in the asked languages, distinct. */
-    def names(json: Json): Either[Problem, Map[String, List[String]]] =
+    /** Pure: each item's labels and aliases in the asked languages, distinct; None when Wikidata answered with an error
+      * object instead (no caller reads its words: a batch that fails adds no names).
+      */
+    def names(json: Json): Option[Map[String, List[String]]] =
       val c = json.cursor
       c.downField("error").focus match
-        case Some(err) => Left(Problem.Unclassified(Legacy.Text(err.cursor.get[String]("info").getOrElse("error"))))
-        case None      =>
+        case Some(_) => None
+        case None    =>
           val ents = c.downField("entities").focus.flatMap(_.asObject).map(_.toList).getOrElse(Nil)
-          Right(ents.map { (id, e) =>
+          Some(ents.map { (id, e) =>
             val labels = e.cursor
               .downField("labels")
               .focus
@@ -70,13 +72,13 @@ object EventProviders:
     /** Pure: the P31 classes of each item of a `wbgetentities` (props=claims) answer — what a site's type is refined
       * from ([[SiteTypes.wikidata]]); P279 likewise for a class.
       */
-    def claims(json: Json, property: WikidataProperty): Either[Problem, Map[String, List[String]]] =
+    def claims(json: Json, property: WikidataProperty): Option[Map[String, List[String]]] =
       val c = json.cursor
       c.downField("error").focus match
-        case Some(err) => Left(Problem.Unclassified(Legacy.Text(err.cursor.get[String]("info").getOrElse("error"))))
-        case None      =>
+        case Some(_) => None
+        case None    =>
           val ents = c.downField("entities").focus.flatMap(_.asObject).map(_.toList).getOrElse(Nil)
-          Right(ents.map { (id, e) =>
+          Some(ents.map { (id, e) =>
             val sts = e.cursor.downField("claims").downField(property.value).focus.flatMap(_.asArray).toList.flatten
             id -> sts
               .filterNot(_.cursor.get[String]("rank").toOption.contains("deprecated"))
@@ -125,29 +127,65 @@ object EventProviders:
     val suffix = s" @ $scope"
     recorded.collect { case k if k.endsWith(suffix) => k.dropRight(suffix.length) }
 
-  def keep(r: CatalogRecord, t: Thresholds): Either[Problem, Unit] =
+  /** Why a record is left out of an import: the account of the judgement, not a failure. */
+  enum Rationale:
+    /** It lies outside the `--bbox` asked for. */
+    case OutsideArea
+
+    /** An eruption below the region's VEI floor `min`. */
+    case VeiBelowRegion(min: Thresholds.RegionVei)
+
+    /** An eruption outside the region, below the VEI floor `min` there. */
+    case VeiBelowOutside(min: Thresholds.OutsideVei)
+
+    /** An earthquake below the region's magnitude floor `min`. */
+    case MagnitudeBelowRegion(min: Thresholds.RegionMagnitude)
+
+    /** An earthquake outside the region, below the magnitude floor `min` there. */
+    case MagnitudeBelowOutside(min: Thresholds.OutsideMagnitude)
+
+    /** It has no position: it cannot be drawn or matched in space. */
+    case NoPosition
+
+    /** It starts after `to`, the last year asked for. */
+    case After(to: SignedYear)
+
+    /** It ends before `from`, the first year asked for. */
+    case Before(from: SignedYear)
+
+    /** The reason as the import's report counts it. */
+    def said: String = this match
+      case OutsideArea                => "outside --bbox"
+      case VeiBelowRegion(min)        => s"VEI below $min"
+      case VeiBelowOutside(min)       => s"VEI below $min outside the region"
+      case MagnitudeBelowRegion(min)  => s"magnitude below $min"
+      case MagnitudeBelowOutside(min) => s"magnitude below $min outside the region"
+      case NoPosition                 => "no position"
+      case After(to)                  => s"after $to"
+      case Before(from)               => s"before $from"
+
+  def keep(r: CatalogRecord, t: Thresholds): Either[Rationale, Unit] =
     (r.lat, r.lon) match
       case (Some(la), Some(lo)) =>
         def in(b: BBox) = b.contains(lo, la)
         val inRegion = t.region.forall(in)
-        if t.area.exists(b => !in(b)) then Left(Problem.Unclassified(Legacy.Text("outside --bbox")))
+        if t.area.exists(b => !in(b)) then Left(Rationale.OutsideArea)
         else
           r.kind.value match
             case EventTaxonomy.Eruption =>
               val min = if inRegion then t.regionVei.value else t.outsideVei.value
               if min > 0 && r.vei.forall(_.value < min) then
                 Left(
-                  Problem.Unclassified(Legacy.Text(s"VEI below $min${if inRegion then "" else " outside the region"}"))
+                  if inRegion then Rationale.VeiBelowRegion(t.regionVei) else Rationale.VeiBelowOutside(t.outsideVei)
                 )
               else Right(())
             case EventTaxonomy.Earthquake =>
               val min = if inRegion then t.regionMagnitude.value else t.outsideMagnitude.value
               if min > 0 && r.magnitude.forall(_.value < min) then
                 Left(
-                  Problem.Unclassified(
-                    Legacy.Text(s"magnitude below $min${if inRegion then "" else " outside the region"}")
-                  )
+                  if inRegion then Rationale.MagnitudeBelowRegion(t.regionMagnitude)
+                  else Rationale.MagnitudeBelowOutside(t.outsideMagnitude)
                 )
               else Right(())
             case _ => Right(())
-      case _ => Left(Problem.Unclassified(Legacy.Text("no position")))
+      case _ => Left(Rationale.NoPosition)

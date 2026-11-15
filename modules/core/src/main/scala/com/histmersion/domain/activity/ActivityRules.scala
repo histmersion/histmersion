@@ -1,8 +1,7 @@
 package com.histmersion
 package domain.activity
 
-import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Problem.{Invalid, Raw, TypeName}
 import com.histmersion.api.automation.{Activity, ListFilters}
 import com.histmersion.api.automation.Activity.{Entry, EntryKind, Show, Writer}
 
@@ -87,7 +86,6 @@ object ActivityRules:
       before: Option[ActivityCursor.Wire],
       now: Instant
   ): Either[Api.Error, ActivityQuery] =
-    def bad(m: String) = Api.Error(Problem.Unclassified(Legacy.Text(m)))
     for
       s <- show
         .map(_.value.trim)
@@ -95,16 +93,20 @@ object ActivityRules:
         .fold(Right(Show.Everything))(w =>
           Show
             .parse(Show.Wire(w))
-            .toRight(bad(s"unknown kind '$w' — one of: ${Show.values.map(_.wire).mkString(", ")}"))
+            .toRight(
+              Api.Error(
+                Invalid.Unknown.here(TypeName.of(Show.Wire), Raw(w), Show.values.toVector.map(s => Raw.of(s.wire)))
+              )
+            )
         )
       t <- since
         .map(v => ListFilters.TimeBound(v.value.trim))
         .filter(_.value.nonEmpty)
-        .fold(Right(None))(v => ListFilters.timeBound(v, end = false, now).map(Some(_)).left.map(p => bad(p.sentence)))
+        .fold(Right(None))(v => ListFilters.timeBound(v, end = false, now).map(Some(_)).left.map(Api.Error(_)))
       c <- before
         .map(w => ActivityCursor.Wire(w.value.trim))
         .filter(_.value.nonEmpty)
-        .fold(Right(None))(v => ActivityCursor.parse(v).map(Some(_)).left.map(p => bad(p.sentence)))
+        .fold(Right(None))(v => ActivityCursor.parse(v).map(Some(_)).left.map(Api.Error(_)))
     yield ActivityQuery(
       s,
       t,
