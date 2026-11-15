@@ -426,7 +426,7 @@ object ReviewLedger:
               status = Status.Rejected,
               claimed = Entry.Claimed(false),
               closed = Some(
-                Closure(Reviewer.Wire("fixer"), round, run, Closure.Note(r.reason.sentence), r.quote, Some(r.citekey))
+                Closure(Reviewer.Wire("fixer"), round, run, Closure.Note(s"${r.reason}"), r.quote, Some(r.citekey))
               )
             )
           )
@@ -472,7 +472,7 @@ object ReviewLedger:
     )
     learn(
       setAside,
-      f.rejected.map(r => Lesson.Text(s"[[${r.citekey}]]: ${r.reason.sentence}")),
+      f.rejected.map(r => Lesson.Text(s"[[${r.citekey}]]: ${r.reason}")),
       LessonSource.Rejection,
       run,
       round

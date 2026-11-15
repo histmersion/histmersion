@@ -386,8 +386,53 @@ class RenderSuite extends munit.FunSuite:
             Count(0L),
             Count(60L),
             Vector.empty
-          )
+          ),
+          Content.Requirement.TextGiven,
+          Content.Requirement.KnownHeading(Raw("Open: questions")),
+          Content.Requirement.NoSourcesCited,
+          Content.Requirement.ParagraphCited(
+            Raw(
+              "Tin came by sea, 'it' says: the ingots of Uluburun weigh about ten tonnes, and their lead isotopes point to the Taurus and beyond"
+            )
+          ),
+          Content.Requirement.StillUncited(Raw("Tin came by sea.")),
+          Content.Requirement.SectionPresent(Vector(Raw("unresolved"), Raw("open questions"))),
+          Content.Requirement.NoFiller(Raw("it is worth noting, delve (+2 more)")),
+          Content.Requirement.ClaimTabled(Raw("anthony2007")),
+          Content.Requirement.TitleGiven,
+          Content.Requirement.ArticleSummary,
+          Content.Requirement.NotUsedGenerated,
+          Content.Requirement.MethodGenerated,
+          Content.Requirement.NotUsedHandWritten,
+          Content.Requirement.MethodHandWritten,
+          Content.Requirement.ReasonForTabled(Raw("haak2015")),
+          Content.Requirement.ReasonForUncited(Raw("haak2015")),
+          Content.Requirement.ReasonText(Raw("haak2015")),
+          Content.Requirement.TabledAccounted(Raw("knapp2016_tin")),
+          Content.Requirement.BodyGiven,
+          Content.Requirement
+            .FormatClean(Raw("unclosed-fence"), Raw("a code fence is not closed: 'x' y"), Raw("```a b")),
+          Content.Requirement.FormatClean(Raw("bad-table"), Raw("a row has 3 cells, the header 2"), Raw("")),
+          Content.Requirement.SubGoalTitle(Raw("tin-trade")),
+          Content.Requirement.QueryGiven,
+          Content.Requirement.QueryWithin(
+            Raw(
+              "bronze age tin trade routes 'east' of the Taurus, from Afghanistan to the Aegean, by caravan and by sea"
+            ),
+            Count(60L)
+          ),
+          Content.Requirement.DoiGiven(Raw("doi: 10/x")),
+          Content.Requirement.TooManySubGoals(Count(5L), Count(7L)),
+          Content.Requirement.TooManyQueries(Count(8L), Count(9L)),
+          Content.Requirement.TooManyWorks(Count(12L), Count(20L)),
+          Content.Requirement.PlanGiven,
+          Content.Requirement.GoalPlanRationale
         ).map(Content.Proposal(_, Where("findings"))) ++
+        Vector(
+          Content.Answer(Content.Requirement.TooManyWorks(Count(12L), Count(20L))),
+          Content.Answer(Content.Requirement.FormatClean(Raw("r"), Raw("m: n"), Raw("a 1:b"))),
+          Content.Proposal(Content.Requirement.ParagraphCited(Raw("a: b")), Where("self-check"))
+        ) ++
         Vector(
           Content.Proposal(Content.Requirement.QuoteInRecords(Vector(Raw("a: b"))), Where("proposal for x: y")),
           Content.Proposal(Content.Requirement.StartBeforeEnd(Raw("1 in 2"), Raw("3")), Where("period"))

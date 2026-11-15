@@ -1270,6 +1270,95 @@ object Problem:
         */
       case FilterMisses(line: Raw, returned: Count, cited: Count, share: Count, least: Count, missed: Vector[Raw])
 
+      /** A draft's text is empty. */
+      case TextGiven
+
+      /** An extend names `section`, a heading the article does not have: it names an existing one, or none. */
+      case KnownHeading(section: Raw)
+
+      /** A draft writes a Sources cited section, which the page generates. */
+      case NoSourcesCited
+
+      /** A paragraph of a draft cites no source; `opening` is the paragraph's start (its first 80 characters show). */
+      case ParagraphCited(opening: Raw)
+
+      /** A revised body still holds a paragraph that cites no source; `opening` is its start, as for
+        * [[ParagraphCited]].
+        */
+      case StillUncited(opening: Raw)
+
+      /** A compulsory section is missing; any of `alternatives` would do (the writing guide's rule 4). */
+      case SectionPresent(alternatives: Vector[Raw])
+
+      /** The text uses banned filler: `matches`, as the lint lists them. */
+      case NoFiller(matches: Raw)
+
+      /** A draft cites `citekey`, none of whose claims is in the claim table. */
+      case ClaimTabled(citekey: Raw)
+
+      /** A new article's draft gives no title. */
+      case TitleGiven
+
+      /** A new article's draft gives no summary: one or two sentences on what the article answers. */
+      case ArticleSummary
+
+      /** A draft writes a Not used section, which code generates from the filter and the stated reasons. */
+      case NotUsedGenerated
+
+      /** A draft writes a `_Method_` note, which code generates from the filter. */
+      case MethodGenerated
+
+      /** A revised body holds a hand-written Not used section, which the page generates. */
+      case NotUsedHandWritten
+
+      /** A revised body holds a hand-written Method note, which the page generates. */
+      case MethodHandWritten
+
+      /** A draft gives a reason for `citekey`, which is not a source of the claim table. */
+      case ReasonForTabled(citekey: Raw)
+
+      /** A draft gives a reason for `citekey`, which it cites: a reason is only for a source it leaves out. */
+      case ReasonForUncited(citekey: Raw)
+
+      /** A draft gives an empty reason for `citekey`. */
+      case ReasonText(citekey: Raw)
+
+      /** `citekey` has claims in the claim table, but the draft neither cites it nor gives a reason. */
+      case TabledAccounted(citekey: Raw)
+
+      /** A revised body is empty. */
+      case BodyGiven
+
+      /** The Markdown lint's `rule` finds an error in the text: `message`, at `excerpt` (empty when it shows none). */
+      case FormatClean(rule: Raw, message: Raw, excerpt: Raw)
+
+      /** A sub-goal `slug` of a goal plan has no title. */
+      case SubGoalTitle(slug: Raw)
+
+      /** A goal plan gives an empty search query. */
+      case QueryGiven
+
+      /** A goal plan's search query `query` is longer than `most` characters (its first 40 show). */
+      case QueryWithin(query: Raw, most: Count)
+
+      /** `stated` is no DOI (`10.xxxx/…`). */
+      case DoiGiven(stated: Raw)
+
+      /** At most `cap` sub-goals; the plan gave `gave`. */
+      case TooManySubGoals(cap: Count, gave: Count)
+
+      /** At most `cap` search queries; the plan gave `gave`. */
+      case TooManyQueries(cap: Count, gave: Count)
+
+      /** At most `cap` works; the plan gave `gave`. */
+      case TooManyWorks(cap: Count, gave: Count)
+
+      /** A goal plan proposes nothing: no sub-goal, query or work. */
+      case PlanGiven
+
+      /** A goal plan's rationale is empty: it says how the plan covers the goal. */
+      case GoalPlanRationale
+
   /** Something that should not happen happened: a bug, or a fault of the platform. */
   sealed trait Internal extends Problem
 

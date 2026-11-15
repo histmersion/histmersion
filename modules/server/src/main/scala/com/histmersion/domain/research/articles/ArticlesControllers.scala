@@ -193,12 +193,13 @@ final class ArticlesControllers(
         MarkdownLint
           .ofArticle(MarkdownLint.Scan.Text(text.value), None, ck => links(WikiLinks.Occurrence.Target(ck.value)))
           .filter(_.severity == FormatSeverity.Error)
-          .map { i =>
-            s"${i.rule.wire} — ${i.message}" + (if i.excerpt.value.isEmpty then ""
-                                                else s" · `${i.excerpt.value.replace("`", "'")}`")
-          }
-          .distinct
-          .map((text => Problem.Unclassified(Legacy.Text(text)))),
+          .map(i =>
+            Problem.Content.Answer(
+              Problem.Content.Requirement
+                .FormatClean(Problem.Raw.of(i.rule.wire), Problem.Raw.of(i.message), Problem.Raw.of(i.excerpt))
+            )
+          )
+          .distinct,
       generated
     )
 

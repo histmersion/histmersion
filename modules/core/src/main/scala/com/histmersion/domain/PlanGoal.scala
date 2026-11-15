@@ -1,7 +1,8 @@
 package com.histmersion
 package domain
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.Problem.{Content, Count, Field, Raw, Where}
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.StoredIdCodecs.given
@@ -146,17 +147,17 @@ object PlanGoal:
       caps: Caps,
       last: LastRound
   ): Either[List[Problem], (Proposed, List[Problem])] =
-    val problems = List.newBuilder[String]
+    val problems = List.newBuilder[Problem]
     val dropped = List.newBuilder[String]
 
     val goals = a.subGoals
       .foldLeft(Vector.empty[PlannedGoal]) { (acc, g) =>
         Slug
           .parse(Option(g.slug).fold("")(_.value))
-          .flatMap(s => Goal.Slug.either(s.value).left.map((text => Problem.Unclassified(Legacy.Text(text))))) match
-          case Left(m)                                                  => problems += s"sub-goal: ${m.sentence}"; acc
+          .flatMap(s => Goal.Slug.parse(s.value)) match
+          case Left(m) => problems ++= m.toVector.map(_.within(Field("sub-goal"))); acc
           case Right(s) if Option(g.title).forall(_.value.trim.isEmpty) =>
-            problems += s"sub-goal '$s' has no title"; acc
+            problems += Content.Answer(Content.Requirement.SubGoalTitle(Raw.of(s))); acc
           case Right(s) if s == goal                           => dropped += s"sub-goal '$s' is the goal itself"; acc
           case Right(s) if acc.exists(_.slug.value == s.value) => dropped += s"sub-goal '$s' proposed twice"; acc
           case Right(s) if goalExists(s)                       => dropped += s"sub-goal '$s' is already a goal"; acc
@@ -174,9 +175,9 @@ object PlanGoal:
     val queries = a.queries
       .map(q => Option(q).fold("")(_.value.trim.replaceAll("\\s+", " ")))
       .foldLeft(Vector.empty[String]) { (acc, q) =>
-        if q.isEmpty then { problems += "an empty query"; acc }
+        if q.isEmpty then { problems += Content.Answer(Content.Requirement.QueryGiven); acc }
         else if q.length > caps.queryChars.value then {
-          problems += s"query '${q.take(40)}…' is longer than ${caps.queryChars} characters"; acc
+          problems += Content.Answer(Content.Requirement.QueryWithin(Raw(q), Count.of(caps.queryChars))); acc
         } else if acc.exists(_.equalsIgnoreCase(q)) then acc
         else if known.contains(q.toLowerCase) then { dropped += s"query '$q' is already linked to the goal"; acc }
         else acc :+ q
@@ -186,33 +187,40 @@ object PlanGoal:
     val works = a.works
       .foldLeft(Vector.empty[ProposedWork]) { (acc, w) =>
         Doi.normalize(Option(w.doi).fold("")(_.value)) match
-          case None                              => problems += s"'${w.doi}' is not a DOI (10.xxxx/…)"; acc
+          case None => problems += Content.Answer(Content.Requirement.DoiGiven(Raw.of(w.doi))); acc
           case Some(d) if acc.exists(_.doi == d) => acc
           case Some(d)                           =>
             acc :+ ProposedWork(d, Rationale(Option(w.why).fold("")(r => s"$r".trim)))
       }
       .toList
 
-    if goals.size > caps.subGoals.value then problems += s"at most ${caps.subGoals} sub-goals (you gave ${goals.size})"
-    if queries.size > caps.queries.value then problems += s"at most ${caps.queries} queries (you gave ${queries.size})"
-    if works.size > caps.works.value then problems += s"at most ${caps.works} works (you gave ${works.size})"
+    if goals.size > caps.subGoals.value then
+      problems += Content.Answer(
+        Content.Requirement.TooManySubGoals(Count.of(caps.subGoals), Count.of(goals.size.toLong))
+      )
+    if queries.size > caps.queries.value then
+      problems += Content.Answer(
+        Content.Requirement.TooManyQueries(Count.of(caps.queries), Count.of(queries.size.toLong))
+      )
+    if works.size > caps.works.value then
+      problems += Content.Answer(Content.Requirement.TooManyWorks(Count.of(caps.works), Count.of(works.size.toLong)))
     if goals.isEmpty && queries.isEmpty && works.isEmpty && a.subGoals.isEmpty && a.queries.isEmpty && a.works.isEmpty
-    then problems += "the plan proposes nothing: give sub-goals, queries or works"
+    then problems += Content.Answer(Content.Requirement.PlanGiven)
 
     if Option(a.rationale).forall(_.value.trim.isEmpty) then
-      problems += "the rationale is empty — say how the plan covers the goal"
+      problems += Content.Answer(Content.Requirement.GoalPlanRationale)
 
     val ps = problems.result()
-    if ps.nonEmpty && !last.value then Left(ps.map((text => Problem.Unclassified(Legacy.Text(text)))))
+    if ps.nonEmpty && !last.value then Left(ps)
     else
       val kept = Proposed(
         Proposed.Rationale(Option(a.rationale).fold("")(_.value.trim)),
         goals.take(caps.subGoals.value),
         queries.take(caps.queries.value).map(Proposed.Queries(_)),
         works.take(caps.works.value),
-        (dropped.result() ++ ps).map(Proposed.Dropped(_))
+        (dropped.result() ++ ps.map(_.sentence)).map(Proposed.Dropped(_))
       )
-      Right((kept, ps.map(p => Problem.Unclassified(Legacy.Text(s"plan: dropped — $p")))))
+      Right((kept, ps.map(_.inside(Where("plan: dropped")))))
 
   // ── the upstream check (§14: DOIs are verified before a person sees them) ───────────────────────
 

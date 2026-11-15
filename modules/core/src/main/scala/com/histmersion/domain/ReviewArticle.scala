@@ -2,7 +2,8 @@ package com.histmersion
 package domain
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.Problem.{Content, Raw}
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.StoredIdCodecs.given
@@ -528,7 +529,7 @@ object ReviewArticle:
 
   final case class RejectionAnswer(
       id: RejectionAnswer.Id,
-      reason: Problem,
+      reason: Rationale,
       citekey: RejectionAnswer.Citekey,
       quote: RejectionAnswer.Quote
   ) derives JsonCodec
@@ -712,6 +713,15 @@ object ReviewArticle:
         /** The cold reader's count of undefined terms; `rest` is what follows "N terms " in the sentence. */
         case TermCount(count: Count, rest: Rest)
 
+        /** A Not used section written by hand (the page generates it from the filter and the reasons). */
+        case HandWrittenNotUsed
+
+        /** A `_Method_` note written by hand (the page generates it). */
+        case HandWrittenMethod
+
+        /** Banned filler: `matches`, as the lint lists them. */
+        case Filler(matches: Rest)
+
         /** Any other sentence, as written. */
         case Other(text: Problem)
 
@@ -719,6 +729,7 @@ object ReviewArticle:
       private val UnplacedRe =
         """^\d+ sources? the filter returns (?:is|are) neither cited nor given a reason: (.+?)(?: \(\+(\d+) more\))?$""".r
       private val KeyRe = """\[\[([^\[\]]+)\]\]""".r
+      private val FillerRe = """^banned filler — (.*)$""".r
       private val TermsRe = """^(\d+) terms ((?:are )?undefined\b.*)$""".r
 
       /** The listed citekeys of a sentence, when it is only a comma-separated list of them. */
@@ -742,8 +753,28 @@ object ReviewArticle:
                 if more > 0 then s" (+$more more)" else ""
               }"
           )
+        case Cause.HandWrittenNotUsed =>
+          Problem("a hand-written Not used section: the page generates it from the article's filter and its reasons")
+        case Cause.HandWrittenMethod =>
+          Problem("a hand-written Method note: the page generates it (the filter, its counts, the statuses, the edges)")
+        case Cause.Filler(matches)    => Problem(s"banned filler — $matches")
         case Cause.TermCount(n, rest) => Problem(s"$n terms $rest")
         case Cause.Other(text)        => text
+
+      extension (c: Cause)
+        /** The problem a draft or a revision shows for a mechanical finding of this cause, when it shows one: a
+          * hand-written Sources cited or Not used section or Method note, banned filler, a missing section.
+          */
+        def shown: Option[util.problem.Problem] =
+          import util.problem.Problem.{Content, Raw}
+          c match
+            case Cause.HandWrittenSourcesCited => Some(Content.Finding(Content.Flaw.HandWrittenSourcesCited))
+            case Cause.HandWrittenNotUsed      => Some(Content.Answer(Content.Requirement.NotUsedHandWritten))
+            case Cause.HandWrittenMethod       => Some(Content.Answer(Content.Requirement.MethodHandWritten))
+            case Cause.Filler(matches)         => Some(Content.Answer(Content.Requirement.NoFiller(Raw.of(matches))))
+            case Cause.MissingSection(alts)    =>
+              Some(Content.Answer(Content.Requirement.SectionPresent(alts.toVector.map(Raw.of(_)))))
+            case _ => None
 
       extension (p: Problem)
         /** What the sentence says. A sentence is only read as a cause when writing that cause gives the sentence back
@@ -764,8 +795,13 @@ object ReviewArticle:
                 Count.read(cks.size + Option(more).fold(0)(_.toInt)),
                 cks.map(ck => ApiCitekey(ck))
               )
-            case TermsRe(n, rest) => Cause.TermCount(Count.read(n.toInt), Rest.read(rest))
-            case _                => Cause.Other(p)
+            case "a hand-written Not used section: the page generates it from the article's filter and its reasons" =>
+              Cause.HandWrittenNotUsed
+            case "a hand-written Method note: the page generates it (the filter, its counts, the statuses, the edges)" =>
+              Cause.HandWrittenMethod
+            case FillerRe(matches) => Cause.Filler(Rest.read(matches))
+            case TermsRe(n, rest)  => Cause.TermCount(Count.read(n.toInt), Rest.read(rest))
+            case _                 => Cause.Other(p)
           if of(read).value == text then read else Cause.Other(p)
 
         /** The sentence up to its first colon: what stays the same when only the detail after it changes (a coverage
@@ -955,7 +991,7 @@ object ReviewArticle:
 
   final case class Rejection(
       id: Rejection.Id,
-      reason: Problem,
+      reason: Rationale,
       citekey: com.histmersion.domain.library.Citekey,
       quote: Rejection.Quote,
       ratio: Rejection.Ratio
@@ -1141,7 +1177,7 @@ object ReviewArticle:
           Finding.Kind("language"),
           Finding.Where("body"),
           Finding.Quote(""),
-          Finding.Problem(s"banned filler — ${i.detail.fillerMatches}"),
+          Finding.Problem.of(Finding.Problem.Cause.Filler(Finding.Problem.Rest.read(i.detail.fillerMatches))),
           Finding.Fix("rewrite the sentence")
         )
       )
@@ -1193,9 +1229,7 @@ object ReviewArticle:
               CoverageKind,
               Finding.Where(h),
               Finding.Quote(s"## $h"),
-              Finding.Problem(
-                "a hand-written Not used section: the page generates it from the article's filter and its reasons"
-              ),
+              Finding.Problem.of(Finding.Problem.Cause.HandWrittenNotUsed),
               Finding.Fix("delete the section; give each left-out source's reason in `reasons` instead")
             )
           ) ++
@@ -1209,9 +1243,7 @@ object ReviewArticle:
                 CoverageKind,
                 Finding.Where("Method"),
                 Finding.Quote(l.take(200)),
-                Finding.Problem(
-                  "a hand-written Method note: the page generates it (the filter, its counts, the statuses, the edges)"
-                ),
+                Finding.Problem.of(Finding.Problem.Cause.HandWrittenMethod),
                 Finding.Fix("delete the note")
               )
             )
@@ -2276,46 +2308,40 @@ object ReviewArticle:
       draft: Article.Edits.Draft,
       corpus: BodyCorpus
   ): Article.Edits.ArticleCheck =
-    def links(t: String): List[String] =
+    def links(t: String): List[Problem] =
       AgentVerify
         .linkProblems(AgentVerify.LinkProblemsText(t), Problem.Where("text"), corpus.isCitekey, corpus.isTarget)
-        .map(_.sentence)
     val applied = draft match
       case Article.Edits.Draft.Edits(es) =>
         Article.Edits.applyAll(
           before,
           es,
-          a =>
-            a.text
-              .flatMap(t => links(t.value).headOption)
-              .map(p => Problem.Unclassified(Legacy.Text(s"its text is refused: $p")))
+          a => a.text.flatMap(t => links(t.value).headOption).map(_.inside(Problem.Where("its text is refused")))
         )
       case Article.Edits.Draft.Body(t) => Article.Edits.Applied(Fix.Body(t.value.trim), Nil)
     val body = applied.body
-    val bodyProblems =
-      if body.value.trim.isEmpty then List("the body is empty")
+    val bodyProblems: List[Problem] =
+      if body.value.trim.isEmpty then List(Content.Answer(Content.Requirement.BodyGiven))
       else
         val again = mechanical(slug, kind, body, corpus.isTarget, corpus.generated)
         val formatBefore = corpus.formatErrors(before).toSet
         links(body.value) ++
           again
             .filter(_.problem.isHandWrittenSourcesCited)
-            .map(_.problem.value) ++
-          again.filter(_.kind == CoverageKind).map(_.problem.value) ++
+            .flatMap(_.problem.cause.shown) ++
+          again.filter(_.kind == CoverageKind).flatMap(_.problem.cause.shown) ++
           again
             .filter(_.problem.isUncitedParagraph)
             .take(3)
-            .map(f => s"still ${f.problem}: \"${f.quote.value.take(80)}\"") ++
-          again.filter(_.kind.value == "language").map(_.problem.value) ++
-          corpus.formatErrors(body).filterNot(formatBefore).map(e => s"formatting: ${e.sentence}")
+            .map(f => Content.Answer(Content.Requirement.StillUncited(Raw.of(f.quote)))) ++
+          again.filter(_.kind.value == "language").flatMap(_.problem.cause.shown) ++
+          corpus.formatErrors(body).filterNot(formatBefore).map(_.inside(Problem.Where("formatting")))
     val fatal = body.value.trim.isEmpty || links(body.value).toSet.diff(links(before.value).toSet).nonEmpty
     Article.Edits.ArticleCheck(
       Article.Slug(slug.value),
       kind,
       applied.results,
-      applied.problems.map(p => Problem.Unclassified(Legacy.Text(p.value))) ++ bodyProblems.map(
-        (text => Problem.Unclassified(Legacy.Text(text)))
-      ),
+      applied.results.flatMap(r => r.problem.map(_.inside(Problem.Where(r.label)))) ++ bodyProblems,
       Article.Edits.ArticleCheck.Fatal(fatal),
       Article.Edits.ArticleCheck.WordsBefore(words(before.value)),
       Article.Edits.ArticleCheck.WordsAfter(words(body.value)),
@@ -2390,7 +2416,7 @@ object ReviewArticle:
           Left(id -> s"$id is a mechanical check; it cannot be rejected, only fixed")
         case Some(f) if f.reviewer == Reviewer.ColdReader =>
           Left(id -> s"$id is a reader's confusion; it cannot be rejected — define or restructure instead")
-        case Some(_) if Option(r.reason).forall(_.sentence.trim.isEmpty) =>
+        case Some(_) if Option(r.reason).forall(w => s"$w".trim.isEmpty) =>
           Left(id -> s"rejection of $id gives no reason — say why the finding is wrong")
         case Some(_) =>
           com.histmersion.domain.library.Citekey.option(ckText).filter(isCitekey) match
@@ -2403,7 +2429,7 @@ object ReviewArticle:
                   Right(
                     Rejection(
                       id,
-                      Problem.Unclassified(Legacy.Text(r.reason.sentence.trim)),
+                      Rationale(s"${r.reason}".trim),
                       ck,
                       Rejection.Quote(q),
                       qm.ratio
