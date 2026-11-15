@@ -282,25 +282,25 @@ object Column:
         for
           least <- Count.read(l)
           greatest <- Count.read(g)
-        yield Invalid.CronFlaw.NotNumber(Raw.read(s), least, greatest)
-      case Vector("Step", s)      => Some(Invalid.CronFlaw.Step(Raw.read(s)))
-      case Vector("Slashes", s)   => Some(Invalid.CronFlaw.Slashes(Raw.read(s)))
-      case Vector("Backwards", s) => Some(Invalid.CronFlaw.Backwards(Raw.read(s)))
-      case Vector("NotRange", s)  => Some(Invalid.CronFlaw.NotRange(Raw.read(s)))
+        yield Invalid.CronFlaw.NotNumber(Raw(s), least, greatest)
+      case Vector("Step", s)      => Some(Invalid.CronFlaw.Step(Raw(s)))
+      case Vector("Slashes", s)   => Some(Invalid.CronFlaw.Slashes(Raw(s)))
+      case Vector("Backwards", s) => Some(Invalid.CronFlaw.Backwards(Raw(s)))
+      case Vector("NotRange", s)  => Some(Invalid.CronFlaw.NotRange(Raw(s)))
       case _                      => None
     written match
-      case Vector("CronFields", s, eg)   => Some(CronFields(Raw.read(s), raws(eg)))
+      case Vector("CronFields", s, eg)   => Some(CronFields(Raw(s), raws(eg)))
       case "CronField" +: s +: p +: flaw =>
         for
           part <- word(Invalid.CronPart.values.toSeq, p)
           f <- flawOf(flaw)
-        yield CronField(Raw.read(s), part, f)
-      case Vector("CronNeverFires", s)     => Some(CronNeverFires(Raw.read(s)))
+        yield CronField(Raw(s), part, f)
+      case Vector("CronNeverFires", s)     => Some(CronNeverFires(Raw(s)))
       case Vector("CronTooOften", s, g, l) =>
         for
           gap <- Count.read(g)
           least <- Count.read(l)
-        yield CronTooOften(Raw.read(s), gap, least)
+        yield CronTooOften(Raw(s), gap, least)
       case Vector("ZoomWithin", z, g) =>
         for
           zoom <- Count.read(z)
@@ -313,29 +313,29 @@ object Column:
           zoom <- Count.read(z)
         yield TileWithin(cx, cy, zoom)
       case Vector("IdentifierGiven")      => Some(IdentifierGiven)
-      case Vector("IdentifierKind", s)    => Some(IdentifierKind(Raw.read(s)))
-      case Vector("ActivityPage", s)      => Some(ActivityPage(Raw.read(s)))
-      case Vector("ActivityPageTime", s)  => Some(ActivityPageTime(Raw.read(s)))
-      case Vector("EventCatalogue", s, k) => Some(EventCatalogue(Raw.read(s), raws(k)))
-      case Vector("CitekeyUnchanged", c)  => Some(CitekeyUnchanged(Raw.read(c)))
-      case Vector("CitekeyLinkShaped", c) => Some(CitekeyLinkShaped(Raw.read(c)))
-      case Vector("AssetBase64", a, r)    => Some(AssetBase64(Raw.read(a), External.Reported.of(r)))
-      case Vector("AssetEmpty", a)        => Some(AssetEmpty(Raw.read(a)))
+      case Vector("IdentifierKind", s)    => Some(IdentifierKind(Raw(s)))
+      case Vector("ActivityPage", s)      => Some(ActivityPage(Raw(s)))
+      case Vector("ActivityPageTime", s)  => Some(ActivityPageTime(Raw(s)))
+      case Vector("EventCatalogue", s, k) => Some(EventCatalogue(Raw(s), raws(k)))
+      case Vector("CitekeyUnchanged", c)  => Some(CitekeyUnchanged(Raw(c)))
+      case Vector("CitekeyLinkShaped", c) => Some(CitekeyLinkShaped(Raw(c)))
+      case Vector("AssetBase64", a, r)    => Some(AssetBase64(Raw(a), External.Reported.of(r)))
+      case Vector("AssetEmpty", a)        => Some(AssetEmpty(Raw(a)))
       case Vector("AssetBytes", a, b, l)  =>
         for
           bytes <- Count.read(b)
           limit <- Count.read(l)
-        yield AssetBytes(Raw.read(a), bytes, limit)
+        yield AssetBytes(Raw(a), bytes, limit)
       case Vector("RunsCompared")             => Some(RunsCompared)
       case Vector("RunRepeated")              => Some(RunRepeated)
-      case Vector("RunsPipeline", r, p, f, o) => Some(RunsPipeline(Raw.read(r), Raw.read(p), Raw.read(f), Raw.read(o)))
-      case Vector("RunsTarget", r, t, f, o)   => Some(RunsTarget(Raw.read(r), Raw.read(t), Raw.read(f), Raw.read(o)))
+      case Vector("RunsPipeline", r, p, f, o) => Some(RunsPipeline(Raw(r), Raw(p), Raw(f), Raw(o)))
+      case Vector("RunsTarget", r, t, f, o)   => Some(RunsTarget(Raw(r), Raw(t), Raw(f), Raw(o)))
       case Vector("QueryGiven")               => Some(QueryGiven)
       case Vector("RegexTime", l)             => Millis.read(l).map(RegexTime(_))
       case "RegexValid" +: d +: at +: regex if regex.nonEmpty =>
         // the pattern is written last, so a ` | ` in it (an alternation) reads back as the pattern's own
         val position = if at.isEmpty then Some(None) else Count.read(at).map(Some(_))
-        position.map(RegexValid(External.Reported.of(d), _, Raw.read(regex.mkString(HoldSeparator))))
+        position.map(RegexValid(External.Reported.of(d), _, Raw(regex.mkString(HoldSeparator))))
       case _ => None
 
   extension (form: Invalid.Form)
