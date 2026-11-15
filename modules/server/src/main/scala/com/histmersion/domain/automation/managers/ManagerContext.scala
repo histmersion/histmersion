@@ -21,6 +21,7 @@ import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.domain.ManagerPolicy
 import com.histmersion.domain.automation.goals.BGoalLinkRow
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.ManagerPolicy.Item
 
 /** What the supervisor gives a [[ManagerKindDefinition]]: its managers' items, events and hints, the runs and approvals
   * they left, and the engine's mechanics of starting, retrying and settling an item. Every write is the one the
@@ -118,7 +119,7 @@ trait ManagerContext:
   def approvalsOf(run: Run.Id, kind: Approval.Kind): List[ApprovalInfo]
 
   /** [[StepFacts]] from the approval of `kind` a run opened: none, open (the item waits for it), or decided. */
-  def approvalFacts(run: Run.Id, kind: Approval.Kind, none: ManagerPolicy.Outcome): StepFacts
+  def approvalFacts(run: Run.Id, kind: Approval.Kind, none: Item.Outcome): StepFacts
   def unsettledOn(target: ManagerContext.ItemTarget): Seq[RunInfo]
   def runsFor(p: Pipeline, target: ManagerContext.ItemTarget): Seq[RunInfo]
   def slugExists(slug: Slug): Boolean
@@ -199,10 +200,10 @@ trait ManagerContext:
 object ManagerContext:
   type FailureCount = ManagerPolicy.Next.Retry.Failures
   val FailureCount: ManagerPolicy.Next.Retry.Failures.type = ManagerPolicy.Next.Retry.Failures
-  type ItemId = ManagerPolicy.ItemId
-  val ItemId: ManagerPolicy.ItemId.type = ManagerPolicy.ItemId
-  type ItemKind = ManagerPolicy.ItemKind
-  val ItemKind: ManagerPolicy.ItemKind.type = ManagerPolicy.ItemKind
+  type ItemId = Item.Id
+  val ItemId: Item.Id.type = Item.Id
+  type ItemKind = Item.Kind
+  val ItemKind: Item.Kind.type = Item.Kind
   type ItemTarget = ManagerPolicy.Candidate.Target
   val ItemTarget: ManagerPolicy.Candidate.Target.type = ManagerPolicy.Candidate.Target
   type Limit = Limit.T
@@ -215,12 +216,12 @@ object ManagerContext:
   object EventText extends Newtype[String, Pure]
   type UpsertReopen = UpsertReopen.T
   object UpsertReopen extends Newtype[Boolean, Pure]
-  type EvaluatedOutcome = ManagerPolicy.Outcome
-  val EvaluatedOutcome: ManagerPolicy.Outcome.type = ManagerPolicy.Outcome
-  type SettleNowWhy = ManagerPolicy.Outcome
-  val SettleNowWhy: ManagerPolicy.Outcome.type = ManagerPolicy.Outcome
-  type RetryNote = ManagerPolicy.ItemNote
-  val RetryNote: ManagerPolicy.ItemNote.type = ManagerPolicy.ItemNote
+  type EvaluatedOutcome = Item.Outcome
+  val EvaluatedOutcome: Item.Outcome.type = Item.Outcome
+  type SettleNowWhy = Item.Outcome
+  val SettleNowWhy: Item.Outcome.type = Item.Outcome
+  type RetryNote = Item.Note
+  val RetryNote: Item.Note.type = Item.Note
   type StartWhat = StartWhat.T
   object StartWhat extends Newtype[String, Pure]
   type TickLine = TickLine.T

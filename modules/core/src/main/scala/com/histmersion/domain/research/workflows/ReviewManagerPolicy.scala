@@ -16,6 +16,7 @@ import com.histmersion.domain.automation.Run
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.research.Slug
 import com.histmersion.api.automation.Agents
+import com.histmersion.domain.ManagerPolicy.Item
 
 /** The review manager's pure rules (docs/research-process-managers.md §3.4): its settings over research's defaults,
   * what to do with a review item after its run settled — the stop rules over the article's review ledger —, the
@@ -144,7 +145,7 @@ object ReviewManagerPolicy:
       status: Run.State,
       error: Option[Problem],
       facts: Option[ReviewFacts],
-      taskText: Option[ManagerPolicy.ItemTask],
+      taskText: Option[Item.Task],
       now: Instant
   ): Next =
     status match
@@ -180,9 +181,9 @@ object ReviewManagerPolicy:
           val task = taskText.fold(s"review manager stopped [[$slug]]: $why (agent run ${run.value.take(8)})")(t =>
             s"$t — review manager stopped: $why"
           )
-          Next.Stop(ManagerPolicy.Outcome(s"stopped: $why"), Some(ManagerPolicy.ItemTask(task.take(2000))), st)
+          Next.Stop(Item.Outcome(s"stopped: $why"), Some(Item.Task(task.take(2000))), st)
         if f.openMajors.value == 0 then
-          Next.Done(ManagerPolicy.Outcome(s"converged after ${counted(attempts.value, "run")}"), st)
+          Next.Done(Item.Outcome(s"converged after ${counted(attempts.value, "run")}"), st)
         else if churn then
           stop(
             s"omission churn — every open MAJOR (${f.openMajors}) is a missing-critique finding and the open critique " +
@@ -202,21 +203,21 @@ object ReviewManagerPolicy:
           Next.Again(
             Option.when(s.cooldownMinutes.value > 0)(now.plusSeconds(s.cooldownMinutes.value.toLong * 60L)),
             st,
-            ManagerPolicy.ItemNote(
+            Item.Note(
               s"${counted(f.openMajors.value, "open MAJOR")}$pairs after run $attempts; again" +
                 (if s.cooldownMinutes.value > 0 then s" after a ${s.cooldownMinutes}-minute cooldown" else "")
             )
           )
       case Run.State.Cancelled =>
-        Next.Stop(ManagerPolicy.Outcome("stopped: its run was cancelled"), None, state.modify(_.before).setTo(None))
+        Next.Stop(Item.Outcome("stopped: its run was cancelled"), None, state.modify(_.before).setTo(None))
       case _ => // failed (or anything else terminal)
         val n = failures.value + 1
         val why = error.map(_.sentence).filter(_.nonEmpty).fold("")(e => s": ${e.take(300)}")
         if n >= s.maxFailures.value then
           Next.Stop(
-            ManagerPolicy.Outcome(s"stopped: ${counted(n, "failed run")}$why"),
+            Item.Outcome(s"stopped: ${counted(n, "failed run")}$why"),
             Some(
-              ManagerPolicy.ItemTask(
+              Item.Task(
                 s"review manager stopped [[$slug]] after ${counted(n, "failed run")}$why (agent run ${run.value.take(8)})"
               )
             ),
@@ -226,7 +227,7 @@ object ReviewManagerPolicy:
           Next.Retry(
             now.plus(ManagerPolicy.backoff(s.backoffMinutes, s.maxBackoffMinutes, Next.Retry.Failures(n))),
             Next.Retry.Failures(n),
-            ManagerPolicy.ItemNote(s"run failed ($n of ${s.maxFailures})$why")
+            Item.Note(s"run failed ($n of ${s.maxFailures})$why")
           )
 
   // ── selection (the review manager's refill) ────────────────────────────────────────────────────
@@ -235,7 +236,7 @@ object ReviewManagerPolicy:
 
   /** One item the selection adds: its kind, target (the article's slug), priority, and why (for the event). */
   final case class Pick(
-      kind: ManagerPolicy.ItemKind,
+      kind: Item.Kind,
       target: Slug,
       priority: ManagerPolicy.Candidate.Priority,
       why: Rationale
@@ -302,7 +303,7 @@ object ReviewManagerPolicy:
     val reviews =
       (majors.map((slug, n) =>
         Pick(
-          ManagerPolicy.ItemKind.ArticleReview,
+          Item.Kind.ArticleReview,
           slug,
           MajorsPriority,
           Pick.Rationale.OpenMajors(n)
@@ -310,7 +311,7 @@ object ReviewManagerPolicy:
       ) ++
         unreviewed.map(slug =>
           Pick(
-            ManagerPolicy.ItemKind.ArticleReview,
+            Item.Kind.ArticleReview,
             slug,
             UnreviewedPriority,
             Pick.Rationale.NeverReviewed
@@ -318,7 +319,7 @@ object ReviewManagerPolicy:
         ) ++
         stale.map((slug, why) =>
           Pick(
-            ManagerPolicy.ItemKind.ArticleReview,
+            Item.Kind.ArticleReview,
             slug,
             StalePriority,
             Pick.Rationale.Stale(why)
@@ -330,7 +331,7 @@ object ReviewManagerPolicy:
     reviews.flatMap { p =>
       val infer = Option.when(inferFilter.value && !hasFilter(p.target) && !inferredBefore(p.target))(
         Pick(
-          ManagerPolicy.ItemKind.InferFilter,
+          Item.Kind.InferFilter,
           p.target,
           p.priority,
           Pick.Rationale.NoFilter

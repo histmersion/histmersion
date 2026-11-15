@@ -33,6 +33,7 @@ import com.histmersion.domain.automation.Run
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.automation.Goal
 import com.histmersion.api.library.UpstreamQuota
+import com.histmersion.domain.ManagerPolicy.Item
 
 /** The `watch:<goal>` manager kind (an acquisition-sweep and a currency-check item, re-opened by its cron; a sweep
   * ingests legal open-access picks when it opted in, within its daily cap), registered by this transition adapter until
@@ -103,9 +104,9 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
     item.kind.value match
       case AcquisitionSweep | CurrencyCheck =>
         StepFacts.Finished(
-          ManagerPolicy.Outcome(closeLine(c, run).getOrElse(s"${item.kind} done — ${c.progress(run)}").take(1000))
+          Item.Outcome(closeLine(c, run).getOrElse(s"${item.kind} done — ${c.progress(run)}").take(1000))
         )
-      case _ => StepFacts.Finished(ManagerPolicy.Outcome("enriched"))
+      case _ => StepFacts.Finished(Item.Outcome("enriched"))
 
   /** What the sweep found, as the watcher's own event (the run's worklog line, and the works it picked). */
   override def afterDone(

@@ -25,6 +25,7 @@ import com.histmersion.api.automation.Managers
 import com.histmersion.api.automation.Agents
 import com.histmersion.domain.ReviewLedger
 import com.histmersion.domain.ReviewArticle
+import com.histmersion.domain.ManagerPolicy.Item
 
 /** The review manager's pure rules (docs/research-process-managers.md §3.4): every stop rule over the review ledger,
   * the settings over research's defaults, the selection and when an article is stale.
@@ -78,7 +79,7 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
       attempts: ManagerPolicy.Attempts = ManagerPolicy.Attempts(1),
       status: RunState = RunState.Done,
       fs: Option[ReviewFacts] = facts(ReviewFacts.OpenMajors(2)),
-      task: Option[ManagerPolicy.ItemTask] = Some(ManagerPolicy.ItemTask("review-article [[tin]]: 2 open MAJORs — …")),
+      task: Option[Item.Task] = Some(Item.Task("review-article [[tin]]: 2 open MAJORs — …")),
       failures: Next.Retry.Failures = Next.Retry.Failures(0),
       error: Option[Problem] = None
   ) =

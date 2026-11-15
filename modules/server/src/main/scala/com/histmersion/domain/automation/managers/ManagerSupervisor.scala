@@ -56,6 +56,7 @@ import com.histmersion.util.jobs.JobRow
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.domain.automation.goals.BGoalLinkRow
 import com.histmersion.api.automation.Managers
+import com.histmersion.domain.ManagerPolicy.Item
 
 /** The process managers' supervisor (docs/research-process-managers.md §3): a daemon thread that ticks every
   * `agents.managers.tick-seconds`, and at once when a manager's run settles ([[Engine.onSettled]] → [[nudge]]). One
@@ -447,7 +448,7 @@ final class ManagerSupervisor(
   /** The approval of `kind` a run opened: none (nothing passed its checks), open (the item waits for it), or decided
     * already (approved automatically, say).
     */
-  def approvalFacts(run: DomainRun.Id, kind: DomainApproval.Kind, none: ManagerPolicy.Outcome): StepFacts =
+  def approvalFacts(run: DomainRun.Id, kind: DomainApproval.Kind, none: Item.Outcome): StepFacts =
     agents.approvalStore
       .approvalsOf(run.transformInto[Job.Id], Some(kind.transformInto[Approval.Kind]))
       .lastOption match
@@ -455,10 +456,10 @@ final class ManagerSupervisor(
       case Some(a) if a.state == ApprovalState.Open.wire =>
         StepFacts.Waiting(
           ManagerPolicy.ApprovalId(a.id.value),
-          ManagerPolicy.ItemNote(s"approval #${a.id} waits for a person")
+          Item.Note(s"approval #${a.id} waits for a person")
         )
       case Some(a) =>
-        StepFacts.Finished(ManagerPolicy.Outcome(s"approval #${a.id} " + decidedAs(a).getOrElse(a.state.value)))
+        StepFacts.Finished(Item.Outcome(s"approval #${a.id} " + decidedAs(a).getOrElse(a.state.value)))
 
   /** A review item for `slug` in review manager `id`, from a chain (priority 2): added, or a settled one re-opened.
     */
@@ -812,7 +813,7 @@ final class ManagerSupervisor(
             m,
             item,
             ItemStatus.Cancelled,
-            ManagerPolicy.Outcome(s"'${item.kind}' items are not driven by a ${m.kind} manager")
+            Item.Outcome(s"'${item.kind}' items are not driven by a ${m.kind} manager")
           )
 
   /** Create, mark and submit one run: ONE transaction (the run row, the item's compare-and-set, the hints it reached,
@@ -842,7 +843,7 @@ final class ManagerSupervisor(
       case Right(pr) =>
         val hints = ManagerPolicy.notesFor(
           Transactor(ds).read(ManagerRepo.hints(m.id, live = true)),
-          ManagerPolicy.ItemId(item.id.value)
+          Item.Id(item.id.value)
         )
         val notes = hints.map(h => RunParams.Notes(h.text.value.trim))
         val params = tweak(pr.params).copy(notes = Option.when(notes.nonEmpty)(notes))
@@ -924,7 +925,7 @@ final class ManagerSupervisor(
     override def items: List[ManagerContext.ItemKind] = Nil
     def fire(c: ManagerContext, m: ManagerInfo, now: Instant): List[ManagerKindDefinition.FirePhrase] = Nil
     def facts(c: ManagerContext, item: ManagerItem, run: DomainRun.Id): StepFacts =
-      StepFacts.Finished(ManagerPolicy.Outcome("enriched"))
+      StepFacts.Finished(Item.Outcome("enriched"))
     def dispatch(
         c: ManagerContext,
         m: ManagerInfo,
