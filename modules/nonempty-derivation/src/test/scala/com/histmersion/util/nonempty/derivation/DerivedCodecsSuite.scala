@@ -2,7 +2,7 @@ package com.histmersion
 package util.nonempty.derivation
 
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
-import sttp.tapir.SchemaType
+import sttp.tapir.{Schema, SchemaType, Validator}
 
 import com.histmersion.util.json.{JsonCodec, RawJson}
 import com.histmersion.util.json.RawJson.*
@@ -35,3 +35,25 @@ class DerivedCodecsSuite extends munit.FunSuite:
       case SchemaType.SProduct(fields) => fields.find(_.name.name == "items").map(_.schema)
       case _                           => None
     assert(items.exists(_.schemaType.isInstanceOf[SchemaType.SArray[?, ?]]), s"$items")
+
+  /** The `minSize`s of a validator, through `all` and `mapped`/`contramap`, as the documentation interpreters see them. */
+  private def minSizes(v: Validator[?]): List[Int] = v match
+    case Validator.MinSize(n)     => List(n)
+    case Validator.All(vs)        => vs.toList.flatMap(minSizes)
+    case Validator.Mapped(w, _)   => minSizes(w)
+    case _                        => Nil
+
+  private def field(name: String): Option[Schema[?]] = summon[KindlingsSchema[Box]].schema.schemaType match
+    case SchemaType.SProduct(fields) => fields.find(_.name.name == name).map(_.schema)
+    case _                           => None
+
+  test("the schema says the list is required and has at least one element (minItems 1), as the reader does"):
+    val items = field("items")
+    assert(items.exists(!_.isOptional), s"$items")
+    assertEquals(items.map(s => minSizes(s.validator)), Some(List(1)))
+
+  test("an optional non-empty vector is optional, and still has at least one element when present"):
+    val more = field("more")
+    assert(more.exists(_.isOptional), s"$more")
+    val present = more.map(_.schemaType).collect { case SchemaType.SOption(element) => element }
+    assertEquals(present.map(s => minSizes(s.validator)), Some(List(1)))
