@@ -4,7 +4,6 @@ package config
 import org.ekrich.config.{Config, ConfigFactory, ConfigRenderOptions}
 
 import scala.jdk.CollectionConverters.*
-import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
 

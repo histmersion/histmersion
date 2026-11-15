@@ -138,7 +138,6 @@ config:config/MediaWikidataConfig.scala	media
 config:config/MergeConfig.scala	util.data.exchange
 config:config/MergeWeights.scala	util.data.exchange
 config:config/Minutes.scala	values
-config:config/NewtypeReaders.scala	config
 config:config/OpencodeConfig.scala	automation.agents
 config:config/PassageLimits.scala	library.sources
 config:config/Percent.scala	values

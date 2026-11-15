@@ -134,7 +134,6 @@ derives	config:config/ItemCount.scala	codec given written by hand	1
 derives	config:config/MatchScore.scala	codec given written by hand	1
 derives	config:config/MediaPluginCollectionsConfig.scala	codec given written by hand	2
 derives	config:config/Minutes.scala	codec given written by hand	1
-derives	config:config/NewtypeReaders.scala	codec given written by hand	1
 derives	config:config/Percent.scala	codec given written by hand	1
 derives	config:config/Seconds.scala	codec given written by hand	1
 derives	config:config/ServiceUrl.scala	codec given written by hand	1
