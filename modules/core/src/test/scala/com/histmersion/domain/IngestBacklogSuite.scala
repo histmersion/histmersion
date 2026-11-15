@@ -13,6 +13,7 @@ import com.histmersion.api.given
 import com.histmersion.config.given
 
 import com.histmersion.domain.IngestBacklog.*
+import com.histmersion.api.problem.Column
 import com.histmersion.api.automation.Managers.*
 
 import java.time.Instant
@@ -184,19 +185,50 @@ class IngestBacklogSuite extends munit.FunSuite:
     assertEquals(place(None, None, None, None), Placement.New)
 
   test(
+    "a refusal an earlier version stored ('no legal open-access copy of …') reads back as it was and still means no legal copy"
+  ):
+    val stored = scala.io.Source
+      .fromResource("stored-texts/no-legal-copy.txt")(using scala.io.Codec.UTF8)
+      .getLines()
+      .filter(_.nonEmpty)
+      .toList
+    assert(stored.nonEmpty)
+    stored.foreach { text =>
+      val read = Column.read(text)
+      assertEquals(read, Problem.Stored.Unrecognised(Problem.Stored.Text(text)))
+      assertEquals(Column.stored(read), text, "it writes the same text again")
+      assert(isNoLegalCopy(read), text)
+      assertEquals(AcquireRecheck.failure(read), AcquireRecheck.Outcome.NoCopy, text)
+      onFailure(
+        read,
+        IngestBacklog.Failure.Retry.Failures(0),
+        ManagerPolicy.ReviewSettings.MaxFailures(3),
+        ManagerPolicy.ReviewSettings.BackoffMinutes(15),
+        ManagerPolicy.ReviewSettings.MaxBackoffMinutes(360),
+        now
+      ) match
+        case Failure.ToAcquire(why) => assertEquals(why.said, text)
+        case other                  => fail("expected the acquisition list", clues(other))
+    }
+    assertEquals(
+      AcquireRecheck.answers(Column.read(stored(1))),
+      AcquireRecheck.ReplyText("unpaywall: no copy — none")
+    )
+
+  test(
     "a failed ingest: no legal copy → the acquisition list at once; another failure → again after the backoff, the list after max-failures"
   ):
-    assert(isNoLegalCopy(Problem.Unclassified(Legacy.Text("no legal open-access copy of 10.1/x: nothing found"))))
+    assert(isNoLegalCopy(Problem.NotFound.Copy(Problem.Raw("10.1/x"), Vector.empty)))
     assert(!isNoLegalCopy(Problem.Unclassified(Legacy.Text("HTTP 503 from the converter"))))
     onFailure(
-      Problem.Unclassified(Legacy.Text("no legal open-access copy of 10.1/x")),
+      Problem.NotFound.Copy(Problem.Raw("10.1/x"), Vector.empty),
       IngestBacklog.Failure.Retry.Failures(0),
       ManagerPolicy.ReviewSettings.MaxFailures(3),
       ManagerPolicy.ReviewSettings.BackoffMinutes(15),
       ManagerPolicy.ReviewSettings.MaxBackoffMinutes(360),
       now
     ) match
-      case Failure.ToAcquire(why) => assert(why.said.startsWith(NoLegalCopy), why)
+      case Failure.ToAcquire(why) => assertEquals(why.said, "no legal open-access PDF found for 10.1/x")
       case other                  => fail(s"expected the acquisition list, got $other")
     assertEquals(
       onFailure(

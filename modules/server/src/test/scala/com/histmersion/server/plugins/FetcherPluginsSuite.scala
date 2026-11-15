@@ -431,7 +431,7 @@ class FetcherPluginsSuite extends munit.FunSuite:
         .fetch(Some(com.histmersion.domain.library.Doi("10.5281/zenodo.3695551")), None)
     assertEquals(
       got.left.map(_.toVector),
-      Left(Vector(Problem.NotFound.Copy(Problem.Raw("doi:10.5281/zenodo.3695551"))))
+      Left(Vector(Problem.NotFound.Copy(Problem.Raw("doi:10.5281/zenodo.3695551"), Vector.empty)))
     )
     assert(h.asked.contains(s"${host.zenodo.url}/api/records/3695551"), h.asked.mkString("\n"))
     assert(!h.asked.exists(u => u.startsWith(s"${host.unpaywall.url}/") || u.startsWith(s"${host.openalex.url}/")))

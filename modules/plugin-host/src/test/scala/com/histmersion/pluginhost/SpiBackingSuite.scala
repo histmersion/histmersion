@@ -154,7 +154,7 @@ class SpiBackingSuite extends munit.FunSuite:
         List("oa-unpaywall", "oa-openalex").foreach(id =>
           asked += id -> ctx.registered(Fetch.Context.RegisteredPluginId(id))
         )
-        Fetch.Miss(Problem.NotFound.Copy(Problem.Raw("nothing")))
+        Fetch.Miss(Problem.NotFound.Copy(Problem.Raw("nothing"), Vector.empty))
     val (chain, _) =
       FetchChain.of(
         scala.collection.immutable.ListMap(com.histmersion.util.plugins.Plugin.Id("peer") -> peerAware),

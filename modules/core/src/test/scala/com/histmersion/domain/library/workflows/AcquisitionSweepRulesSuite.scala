@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.workflows
 import com.histmersion.util.problem.Text.sentence
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -107,13 +107,13 @@ class AcquisitionSweepRulesSuite extends munit.FunSuite:
   ):
     val picks = List("a" -> true, "b" -> false, "c" -> true, "d" -> true, "e" -> true)
     val (ok, ko) = AcquisitionSweepRules.ingestOa(picks, (_: (String, Boolean))._2, Allowance(2)) { (n, _) =>
-      if n == "c" then Left(Problem.Unclassified(Legacy.Text("no legal open-access copy of c")))
+      if n == "c" then Left(Problem.NotFound.Copy(Problem.Raw("c"), Vector.empty))
       else Right(n.toUpperCase)
     }
     assertEquals(ok.map(_._2), List("A", "D"))
     assertEquals(
       ko.map((p, why) => (p._1, why)).map((a, p) => (a, p.sentence)),
-      List("c" -> "no legal open-access copy of c")
+      List("c" -> "no legal open-access PDF found for c")
     )
     assertEquals(
       AcquisitionSweepRules.ingestOa(picks, (_: (String, Boolean))._2, Allowance(0))(p => Right(p._1)),

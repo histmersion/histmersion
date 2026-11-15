@@ -1,0 +1,4 @@
+no legal open-access copy of 10.1/x: no legal open-access PDF found for doi:10.1/x
+no legal open-access copy of 10.1/x: no legal open-access PDF found for doi:10.1/x — unpaywall: no copy — none
+no legal open-access copy of 10.1/x: no legal open-access PDF found for doi:10.1/x; landing challenged with HTTP 403 at https://x.example/f — unpaywall: no copy — none; landing: refused — bot-protection 403
+no legal open-access copy of zz2020_meta: skipped: `zz2020_meta` already has 0123abcd — `--refetch` fetches and converts it again

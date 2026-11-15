@@ -116,9 +116,10 @@ final class StubUpstream extends AgentUpstream:
     Right(DiscoverResult(DiscoverResult.Query(query.value), DiscoverResult.Count(ws.size), ws))
 
   /** A watcher's legal ingest: what `onIngest` answers (nothing connected by default). */
-  @volatile var onIngest: String => Either[String, Ingest.Report] = _ => Left("not stubbed")
+  @volatile var onIngest: String => Either[Problem, Ingest.Report] = _ =>
+    Left(Problem.Unclassified(Legacy.Text("not stubbed")))
   override def ingestLegal(doi: Doi) = {
-    calls.add(s"ingest $doi"); onIngest(doi.value).left.map((text => Problem.Unclassified(Legacy.Text(text))))
+    calls.add(s"ingest $doi"); onIngest(doi.value)
   }
 
   /** The deterministic candidate search: what each goal's sweep finds (not connected unless set). */

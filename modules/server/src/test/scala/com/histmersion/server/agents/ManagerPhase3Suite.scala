@@ -1,6 +1,7 @@
 package com.histmersion
 package server.agents
 
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -172,8 +173,8 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
     )
 
   /** The fixture's legal ingest: stores the source (as an ingest would) unless the DOI has no legal copy. */
-  private def legalIngest(h: ServerWiring, noCopy: Set[String])(doi: String): Either[String, Ingest.Report] =
-    if noCopy.contains(doi) then Left(s"no legal open-access copy of $doi")
+  private def legalIngest(h: ServerWiring, noCopy: Set[String])(doi: String): Either[Problem, Ingest.Report] =
+    if noCopy.contains(doi) then Left(Problem.NotFound.Copy(Problem.Raw(doi), Vector.empty))
     else
       val ck = Citekey.assume("zzagent" + doi.replaceAll("[^a-z0-9]", ""))
       assert(

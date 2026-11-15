@@ -614,17 +614,22 @@ final class AcquireRecheckService(
     val (doi, into) = f.action match
       case Action.Fetch(d, i) => (Some(d), i)
       case _                  => (None, None)
-    val (outcome, detail, ck) = doi match
-      case None    => (Outcome.Failed, "no DOI in its text", None)
+    val (outcome, detail, ck, noCopy) = doi match
+      case None    => (Outcome.Failed, "no DOI in its text", None, None)
       case Some(d) =>
         try
           upstream().ingestLegalInto(d, into) match
-            case Right(r) => (Outcome.Fetched, r.pdf.fold("no file")(_.source.value), Some(r.citekey))
-            case Left(m)  => (AcquireRecheck.failure(m), m.sentence, into.map(apiCk))
+            case Right(r) => (Outcome.Fetched, r.pdf.fold("no file")(_.source.value), Some(r.citekey), None)
+            case Left(m)  =>
+              AcquireRecheck.failure(m) match
+                case Outcome.NoCopy => (Outcome.NoCopy, m.sentence, into.map(apiCk), Some(m))
+                case outcome        => (outcome, m.sentence, into.map(apiCk), None)
         catch
           case e: InterruptedException => throw e
-          case e: Exception => (Outcome.Failed, s"${e.getClass.getSimpleName}: ${e.getMessage}", into.map(apiCk))
-    val why = AcquireRecheck.reason(now, outcome, AcquireRecheck.Detail(detail))
+          case e: Exception            =>
+            (Outcome.Failed, s"${e.getClass.getSimpleName}: ${e.getMessage}", into.map(apiCk), None)
+    val why =
+      noCopy.fold(AcquireRecheck.reason(now, outcome, AcquireRecheck.Detail(detail)))(AcquireRecheck.noCopy(now, _))
     checks.record(AcquireCheckRow.Item(f.item.id.value), now, generation, outcome, why)
     Tried(
       RecheckRow(

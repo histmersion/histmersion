@@ -34,16 +34,19 @@ object IngestBacklog:
   type TotalBacklog = TotalBacklog.T
   object TotalBacklog extends Newtype[Int, Pure]
 
-  /** How the legal chain says a work has no legal file (`AcquisitionControllers.ingestLegal`): such a work goes to the
-    * acquisition list at once; any other failure is tried again later.
+  /** How an earlier version's legal chain said a work has no legal file, as the text it stored begins: such a stored
+    * text reads back as [[Problem.Stored.Unrecognised]] and still counts as no legal copy.
     */
-
   val NoLegalCopy = "no legal open-access copy of"
 
-  def isNoLegalCopy(message: Problem): Boolean =
-    Option(message).exists(m => startsWithNoLegalCopy(m.sentence))
-
-  private def startsWithNoLegalCopy(text: String): Boolean = text.trim.startsWith(NoLegalCopy)
+  /** Has the legal chain no legal file for the work (`AcquisitionControllers.ingestLegal` refuses with
+    * [[Problem.NotFound.Copy]], or an earlier version stored [[NoLegalCopy]]): such a work goes to the acquisition list
+    * at once; any other failure is tried again later.
+    */
+  def isNoLegalCopy(message: Problem): Boolean = message match
+    case _: Problem.NotFound.Copy            => true
+    case stored: Problem.Stored.Unrecognised => stored.sentence.trim.startsWith(NoLegalCopy)
+    case _                                   => false
 
   /** What a watcher's next sweep may ingest of its NEW finds: what is left of its own allowance (`own`) and of the
     * shared one (`shared`, the autopilot's; None = no shared cap), each after the backlog that drains under it first —
@@ -171,7 +174,7 @@ object IngestBacklog:
       now: Instant
   ): Failure =
     val failed = Rationale.Failed(message)
-    if startsWithNoLegalCopy(failed.said) then Failure.ToAcquire(failed)
+    if isNoLegalCopy(message) then Failure.ToAcquire(failed)
     else
       val n = math.max(0, failures.value) + 1
       if n >= math.max(1, maxFailures.value) then Failure.ToAcquire(Rationale.GaveUp(message, Plural.CountN(n.toLong)))

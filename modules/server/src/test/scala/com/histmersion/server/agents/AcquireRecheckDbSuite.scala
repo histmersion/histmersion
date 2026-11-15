@@ -117,14 +117,38 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
   override def beforeEach(context: BeforeEach): Unit = clean()
   override def afterEach(context: AfterEach): Unit = clean()
 
+  /** The legal chain's refusal for `d`: unpaywall had no copy, and the landing page refused when `landingRefused`. */
+  private def noCopy(d: Doi, landingRefused: Boolean = false): Problem =
+    Problem.NotFound.Copy(
+      Problem.Raw.of(d),
+      Vector(
+        Problem.NotFound.Answer(
+          Problem.NotFound.Fetcher("unpaywall"),
+          Problem.NotFound.Kind.Miss,
+          Problem.NotFound.Copy(Problem.Raw(s"doi:$d"), Vector.empty)
+        )
+      ) ++ Option
+        .when(landingRefused)(
+          Problem.NotFound.Answer(
+            Problem.NotFound.Fetcher("landing"),
+            Problem.NotFound.Kind.Refused,
+            Problem.Upstream.Challenged(
+              Problem.Upstream.Name("landing"),
+              Problem.Upstream.Url("https://landing.example/f"),
+              Problem.Upstream.Status(403),
+              Vector.empty
+            )
+          )
+        )
+        .toVector
+    )
+
   /** The fixture's legal ingest: what `answer` says for each DOI; records the DOI and the source it was asked into. */
   final private class RecheckUpstream extends AgentUpstream:
     @volatile var generation = AcquireRecheck.LastCheck.Generation("g1")
     @volatile var answer: (Doi, Option[Citekey]) => Either[Problem, Ingest.Report] = (d, _) =>
       Left(
-        Problem.Unclassified(
-          Legacy.Text(s"${IngestBacklog.NoLegalCopy} $d: no legal open-access PDF found — unpaywall: no copy — none")
-        )
+        noCopy(d)
       )
     val asked = java.util.concurrent.ConcurrentLinkedQueue[(Doi, Option[Citekey])]()
     def meta(doi: Doi) = Left(Problem.Unclassified(Legacy.Text("not stubbed")))
@@ -235,11 +259,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
       if d.value == doi("meta") then found(d, into.get)
       else
         Left(
-          Problem.Unclassified(
-            Legacy.Text(
-              s"${IngestBacklog.NoLegalCopy} $d: no legal open-access PDF found — unpaywall: no copy — none; landing: refused — bot-protection 403"
-            )
-          )
+          noCopy(d, landingRefused = true)
         )
     val r = passNow(a, RecheckRequest(limit = Some(Acquire.Checks.RecheckRequest.Limit(10))))
       .fold(e => fail(e.message.sentence), identity)
@@ -273,7 +293,10 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     val day = java.time.LocalDate.now(java.time.ZoneOffset.UTC)
     assertEquals(
       listing.checks.find(_.item == none).map(_.reason),
-      Some(s"checked $day: no legal copy (unpaywall: no copy — none; landing: refused — bot-protection 403)")
+      Some(
+        s"checked $day: no legal copy (unpaywall: no copy — no legal open-access PDF found for doi:${doi("none")}; " +
+          "landing: refused — landing answered HTTP 403 at https://landing.example/f with a bot-protection challenge, not the page)"
+      )
     )
     assertEquals(listing.checks.find(_.item == meta).map(_.outcome), Some(Fetched))
     assert(listing.markdown.map(_.value).getOrElse("").contains(s"_checked $day: no legal copy"))
@@ -548,9 +571,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
       started.countDown()
       val _ = release.await(30, java.util.concurrent.TimeUnit.SECONDS)
       Left(
-        Problem.Unclassified(
-          Legacy.Text(s"${IngestBacklog.NoLegalCopy} $d: no legal open-access PDF found — unpaywall: no copy — none")
-        )
+        noCopy(d)
       )
 
   private val tightCfg = baseCfg
@@ -626,9 +647,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
         Left(Problem.Unclassified(Legacy.Text("HTTP 429 Too Many Requests from api.example.invalid")))
       else
         Left(
-          Problem.Unclassified(
-            Legacy.Text(s"${IngestBacklog.NoLegalCopy} $d: no legal open-access PDF found — unpaywall: no copy — none")
-          )
+          noCopy(d)
         )
     val r = a.acquireRecheck.run(
       RecheckRequest(all = Acquire.Checks.RecheckRequest.All(true), by = Some(Acquire.Checks.RecheckRequest.By("test")))
@@ -778,8 +797,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
       "the status names it"
     )
     val _ = transact(ds)(AutopilotRepo.setDrain(on = false, AutopilotRepo.Row.ChangedBy("test")))
-    up.answer = (d, _) =>
-      Left(Problem.Unclassified(Legacy.Text(s"${IngestBacklog.NoLegalCopy} $d: no legal open-access PDF found")))
+    up.answer = (d, _) => Left(Problem.NotFound.Copy(Problem.Raw.of(d), Vector.empty))
     val resumed = a.acquireRecheck.tick(Instant.now())
     assert(
       resumed.exists(_.value.contains(s"job ${job.id} (${Stopped.DrainingText}) resumed as job")),

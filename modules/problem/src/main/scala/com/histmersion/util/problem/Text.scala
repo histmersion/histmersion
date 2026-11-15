@@ -35,11 +35,11 @@ object Text:
       case Invalid.Broken(rule, at)            => s"${path(at)}${rule.said}"
       case NotFound.Entity(t, key) if t.short == "Citekey" => s"No source '$key'"
       case NotFound.Entity(t, key)                         => s"no ${t.noun} '$key'"
-      case NotFound.Copy(work)                             => s"no legal open-access PDF found for $work"
-      case NotFound.Dangling(t, key, from, within)         => within.missed(t, key, from)
-      case Conflict.Held(subject, hold)                    => hold.said(subject)
-      case Conflict.Job(job, status, control)              => control.said(job, status)
-      case Conflict.AlreadyExists(t, key)                  => s"${t.noun} '$key' already exists"
+      case NotFound.Copy(work, answers)            => s"no legal open-access PDF found for $work${answered(answers)}"
+      case NotFound.Dangling(t, key, from, within) => within.missed(t, key, from)
+      case Conflict.Held(subject, hold)            => hold.said(subject)
+      case Conflict.Job(job, status, control)      => control.said(job, status)
+      case Conflict.AlreadyExists(t, key)          => s"${t.noun} '$key' already exists"
       case Conflict.Renamed(t, asked, now)   => s"${t.noun} '$asked' was renamed to '$now' — write to '$now' instead"
       case Conflict.Stale(t, key, sent, now) =>
         s"${t.noun} '$key' has moved on: you sent $sent, it is now $now — read it again and re-apply your change"
@@ -495,6 +495,20 @@ object Text:
       case Io.Measure.Bytes   => s"holds $found bytes"
       case Io.Measure.Lines   => s"holds $found lines"
       case Io.Measure.Entries => s"holds $found entries"
+
+  /** The chain's answers after a missing copy: ` — unpaywall: no copy — none; landing: refused — …`. */
+  private def answered(answers: Vector[NotFound.Answer]): String =
+    if answers.isEmpty then "" else answers.map(_.line).mkString(" — ", "; ", "")
+
+  extension (answer: NotFound.Answer)
+    /** One fetcher's answer as the ingest report and the acquisition list show it: `oapen: no copy — no record`. */
+    def line: String = s"${answer.fetcher}: ${answer.kind.label} — ${answer.why.sentence}"
+
+  extension (kind: NotFound.Kind)
+    /** The words for how a fetcher came back: `no copy`, `refused`. */
+    def label: String = kind match
+      case NotFound.Kind.Miss    => "no copy"
+      case NotFound.Kind.Refused => "refused"
 
   extension (scope: NotFound.Scope)
     private def missed(t: TypeName, key: Raw, from: Where): String = scope match

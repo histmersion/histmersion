@@ -61,7 +61,7 @@ final class FetchChain(
       case None          =>
         val refused = tried.collect { case (_, Fetch.Refused(why)) => why }.toList
         FetchChain.Outcome(
-          Left(Problems.of(Problem.NotFound.Copy(Problem.Raw(s"${describe(work)}")), refused*)),
+          Left(Problems.of(Problem.NotFound.Copy(Problem.Raw(s"${describe(work)}"), Vector.empty), refused*)),
           tried.toList.collect {
             case (id, Fetch.Miss(why)) =>
               FetchChain.Answer(

@@ -1,7 +1,7 @@
 package com.histmersion
 package domain
 
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{line, sentence}
 import com.histmersion.util.problem.Problem
 import hearth.kindlings.optics.syntax.*
 
@@ -32,7 +32,9 @@ object AcquireRecheck:
   type ProgressLine = ProgressLine.T
   object ProgressLine extends Newtype[String, Pure]
   type ReplyText = ReplyText.T
-  object ReplyText extends Newtype[String, Pure]
+  object ReplyText extends Newtype[String, Pure]:
+    /** The fetchers' answers as the reason shows them: `unpaywall: no copy — …; landing: refused — …`. */
+    def of(answers: Vector[Problem.NotFound.Answer]): ReplyText = ReplyText(answers.map(_.line).mkString("; "))
 
   /** `acquire.recheck.*` as the rules read them: on or off, how many days an item's check holds, at most how many items
     * a day and a pass, the minutes between passes, the share (percent) of the shared daily legal ingest allowance the
@@ -162,12 +164,21 @@ object AcquireRecheck:
   def failure(message: Problem): Outcome =
     if IngestBacklog.isNoLegalCopy(message) then Outcome.NoCopy else Outcome.Failed
 
-  /** What each fetcher answered, from the legal ingest's refusal (`no legal open-access copy of <doi>: <the chain's
-    * message> — <fetcher>: <answer>; …`): the answers when there are any, else the message.
+  /** What each fetcher answered, from the legal ingest's refusal ([[Problem.NotFound.Copy]]'s answers; from an earlier
+    * version's stored text `no legal open-access copy of <doi>: <the chain's message> — <fetcher>: <answer>; …`, the
+    * part after the message): the answers when there are any, else the message.
     */
-  def answers(message: Problem): ReplyText = replies(Option(message).fold("")(_.sentence.trim))
+  def answers(message: Problem): ReplyText = message match
+    case Problem.NotFound.Copy(_, said) if said.nonEmpty => ReplyText.of(said)
+    case other                                           => replies(other.sentence.trim)
 
-  /** The fetchers' answers in a legal ingest's refusal, as [[answers]] reads them from its text `m`. */
+  /** The reason an item carries after a check at `at` whose legal ingest found no legal copy (`message`): the fetchers'
+    * [[answers]].
+    */
+  def noCopy(at: Instant, message: Problem): Rationale =
+    Rationale.NoCopy(LocalDate.ofInstant(at, ZoneOffset.UTC), answers(message))
+
+  /** The fetchers' answers in an earlier version's stored refusal, as [[answers]] reads them from its text `m`. */
   private def replies(m: String): ReplyText =
     val rest =
       if !m.startsWith(IngestBacklog.NoLegalCopy) then m

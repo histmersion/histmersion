@@ -137,7 +137,7 @@ class FetchChainSuite extends munit.FunSuite:
 
   /** Is it the chain's "no copy"? */
   private def copy(p: Problem): Boolean = p match
-    case Problem.NotFound.Copy(_) => true
+    case _: Problem.NotFound.Copy => true
     case _                        => false
 
   test("nothing found: no copy of the work"):
@@ -147,7 +147,7 @@ class FetchChainSuite extends munit.FunSuite:
     )
     assertEquals(
       FetchChain(Nil).fetch(Some(com.histmersion.domain.library.Doi("10.1234/x")), None).left.map(_.toVector),
-      Left(Vector(Problem.NotFound.Copy(Problem.Raw("doi:10.1234/x"))))
+      Left(Vector(Problem.NotFound.Copy(Problem.Raw("doi:10.1234/x"), Vector.empty)))
     )
 
   test("a 'PDF' that is not one is no copy: the chain moves on"):

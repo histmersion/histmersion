@@ -539,6 +539,47 @@ class RenderSuite extends munit.FunSuite:
     assertEquals(Upstream.Shape.values.map(said).distinct.length, Upstream.Shape.values.length)
     assert(Upstream.Shape.values.forall(s => !said(s).contains(s" ${s.productPrefix} ")))
 
+  test("a missing copy with the chain's answers lists them, in its sentence and in its stored sentence"):
+    val copy = NotFound.Copy(
+      Raw("10.1/x"),
+      Vector(
+        NotFound.Answer(
+          NotFound.Fetcher("unpaywall"),
+          NotFound.Kind.Miss,
+          NotFound.Copy(Raw("doi:10.1/x"), Vector.empty)
+        ),
+        NotFound.Answer(
+          NotFound.Fetcher("landing"),
+          NotFound.Kind.Refused,
+          Upstream.Challenged(
+            Upstream.Name("landing"),
+            Upstream.Url("https://x.example/f"),
+            Upstream.Status(403),
+            Vector.empty
+          )
+        )
+      )
+    )
+    assertEquals(
+      copy.sentence,
+      "no legal open-access PDF found for 10.1/x — unpaywall: no copy — no legal open-access PDF found for doi:10.1/x; " +
+        "landing: refused — landing answered HTTP 403 at https://x.example/f with a bot-protection challenge, not the page"
+    )
+    assertEquals(
+      copy.stored,
+      "no open-access copy of '10.1/x' — unpaywall: Miss — no open-access copy of 'doi:10.1/x'; " +
+        "landing: Refused — landing challenged with HTTP 403 at https://x.example/f"
+    )
+    assert(
+      Column.read(copy.stored) match
+        case _: Stored.Unrecognised => true
+        case _                      => false
+      ,
+      "the answers are not parsed back"
+    )
+    assertEquals(Column.read(copy.stored).stored, copy.stored)
+    assertEquals(copy.status.code, 404)
+
   test("a text no case writes reads as it was, and writes back the same"):
     List(
       "cancelled",

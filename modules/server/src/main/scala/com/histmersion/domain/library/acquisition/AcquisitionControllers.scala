@@ -737,14 +737,11 @@ final class AcquisitionControllers(
 
     // a watcher's auto-ingest brings a work in only WITH its legal file: no metadata-only source
     if path.needsFile.value && fetched.isLeft then
-      val answers =
-        Option.when(chain.answers.nonEmpty)(chain.answers.map(_.line).mkString(" — ", "; ", "")).getOrElse("")
       Left(
         err(
-          Problem.Unclassified(
-            Legacy.Text(
-              s"${IngestBacklog.NoLegalCopy} ${doi.getOrElse(citekey)}: ${fetched.left.toOption.fold("")(_.sentences.mkString("; "))}$answers"
-            )
+          Problem.NotFound.Copy(
+            doi.fold(Problem.Raw.of(citekey))(Problem.Raw.of(_)),
+            chain.answers.map(_.transformInto[Problem.NotFound.Answer]).toVector
           )
         )
       )
