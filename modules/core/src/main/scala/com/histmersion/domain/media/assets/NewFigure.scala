@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.media.assets
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
+import com.histmersion.util.problem.Problem.{Count, Invalid, Raw}
 
 import com.histmersion.api.media.{AssetInput, AssetLinks, ImageSize}
 
@@ -42,14 +43,12 @@ object NewFigure:
       .Try(java.util.Base64.getDecoder.decode(in.base64.value.trim))
       .toEither
       .left
-      .map(e => Problem.Unclassified(Legacy.Text(s"asset '$name': not valid base64 (${e.getMessage})")))
+      .map(e => Invalid.Broken.here(Invalid.Rule.AssetBase64(Raw.of(name), External.Reported.of(s"${e.getMessage}"))))
       .flatMap { raw =>
-        if raw.isEmpty then Left(Problem.Unclassified(Legacy.Text(s"asset '$name': empty")))
+        if raw.isEmpty then Left(Invalid.Broken.here(Invalid.Rule.AssetEmpty(Raw.of(name))))
         else if raw.length > maxBytes.value then
           Left(
-            Problem.Unclassified(
-              Legacy.Text(s"asset '$name': ${raw.length} bytes exceeds the $maxBytes-byte limit (limits.asset-bytes)")
-            )
+            Invalid.Broken.here(Invalid.Rule.AssetBytes(Raw.of(name), Count.of(raw.length.toLong), Count.of(maxBytes)))
           )
         else
           // a client may omit the dimensions (the seed path does); read them off the header

@@ -46,6 +46,7 @@ class RenderSuite extends munit.FunSuite:
     "OutOfRange" -> (400, "com.histmersion.Latitude '91' is out of [-90, 90]"),
     "Inconsistent" -> (400, "lat, lon break Together"),
     "Reference" -> (400, "plugins / api-key: no secret reference: EnvName '1PASSWORD'"),
+    "Broken" -> (400, "cron: breaks CronField | 61 * * * * | Minute | NotNumber | 61 | 0 | 59"),
     "Entity" -> (404, "no com.histmersion.domain.library.Citekey 'anthony2007'"),
     "Copy" -> (404, "no open-access copy of 'doi:10.1017/S0003598X00000001'"),
     "Dangling" -> (
@@ -421,6 +422,41 @@ class RenderSuite extends munit.FunSuite:
           Upstream.BadReply.here(Upstream.Name("x"), Upstream.Url("https://x.example"), _, External.Reported("eof"))
         ) ++
         Refused.Rule.values.toVector.map(Refused.Policy(_)) ++
+        Vector(
+          Invalid.Rule.CronFields(Raw("every day"), Vector(Raw("@daily"), Raw("@hourly"))),
+          Invalid.Rule.CronField(Raw("*/0 * * * *"), Invalid.CronPart.Minute, Invalid.CronFlaw.Step(Raw("0"))),
+          Invalid.Rule.CronField(Raw("0 1/2/3 * * *"), Invalid.CronPart.Hour, Invalid.CronFlaw.Slashes(Raw("1/2/3"))),
+          Invalid.Rule
+            .CronField(Raw("0 0 9-3 * *"), Invalid.CronPart.DayOfMonth, Invalid.CronFlaw.Backwards(Raw("9-3"))),
+          Invalid.Rule.CronField(Raw("0 0 * 1-2-3 *"), Invalid.CronPart.Month, Invalid.CronFlaw.NotRange(Raw("1-2-3"))),
+          Invalid.Rule.CronField(
+            Raw("0 0 * * 8"),
+            Invalid.CronPart.DayOfWeek,
+            Invalid.CronFlaw.NotNumber(Raw("8"), Count(0L), Count(7L))
+          ),
+          Invalid.Rule.CronNeverFires(Raw("0 0 31 2 *")),
+          Invalid.Rule.CronTooOften(Raw("* * * * *"), Count(1L), Count(5L)),
+          Invalid.Rule.ZoomWithin(Count(23L), Count(14L)),
+          Invalid.Rule.TileWithin(Count(9L), Count(2L), Count(3L)),
+          Invalid.Rule.IdentifierGiven,
+          Invalid.Rule.IdentifierKind(Raw("Gimbutas 1956")),
+          Invalid.Rule.ActivityPage(Raw("yesterday")),
+          Invalid.Rule.ActivityPageTime(Raw("noon~job:7")),
+          Invalid.Rule.EventCatalogue(Raw("usgs"), Vector(Raw("gvp"), Raw("noaa"), Raw("wikidata"))),
+          Invalid.Rule.CitekeyUnchanged(Raw("anthony2007")),
+          Invalid.Rule.CitekeyLinkShaped(Raw("Anthony-2007")),
+          Invalid.Rule.AssetBase64(Raw("fig1.png"), External.Reported("Illegal base64 character 2d")),
+          Invalid.Rule.AssetEmpty(Raw("fig1.png")),
+          Invalid.Rule.AssetBytes(Raw("fig1.png"), Count(9000000L), Count(5000000L)),
+          Invalid.Rule.RunsCompared,
+          Invalid.Rule.RunRepeated,
+          Invalid.Rule.RunsPipeline(Raw("1a2b"), Raw("enrich"), Raw("3c4d"), Raw("review")),
+          Invalid.Rule.RunsTarget(Raw("1a2b"), Raw("anthony2007"), Raw("3c4d"), Raw("haak2015")),
+          Invalid.Rule.QueryGiven,
+          Invalid.Rule.RegexTime(Millis(2000L)),
+          Invalid.Rule.RegexValid(External.Reported("Unclosed group"), Some(Count(7L)), Raw("(bronze")),
+          Invalid.Rule.RegexValid(External.Reported("Dangling meta character '*'"), None, Raw("*tin | copper"))
+        ).map(Invalid.Broken.here(_)) ++
         Run.PauseReason.values.toVector.map(Run.Paused(_, None)) ++
         Vector(
           Invalid.Unknown.here(TypeName("a.B"), Raw("x"), Vector.empty),

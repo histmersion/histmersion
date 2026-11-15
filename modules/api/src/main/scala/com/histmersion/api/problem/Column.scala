@@ -37,6 +37,7 @@ object Column:
         s"${path(at)}$t '$raw' is out of [${b.least.mkString}, ${b.greatest.mkString}]"
       case Invalid.Inconsistent(fs, rule, at) => s"${path(at)}${fs.toVector.mkString(", ")} break ${rule.productPrefix}"
       case Invalid.Reference(form, at)        => s"${path(at)}no secret reference: ${form.stored}"
+      case Invalid.Broken(rule, at)           => s"${path(at)}breaks ${rule.stored}"
       case NotFound.Entity(t, key)            => s"no $t '$key'"
       case NotFound.Copy(work)                => s"no open-access copy of '$work'"
       case NotFound.Dangling(t, key, from, in)    => s"no $t '$key' in ${in.productPrefix}, referred to by $from"
@@ -234,6 +235,108 @@ object Column:
     Content.Requirement.NoClaim,
     Content.Requirement.ReasonGiven
   )
+
+  /** A rule's name, then what it holds, each after the hold separator; a list's items after the list separator. */
+  extension (rule: Invalid.Rule)
+    private def stored: String =
+      val held: Vector[String] = rule match
+        case Invalid.Rule.CronFields(stated, shortcuts)      => Vector(s"$stated", shortcuts.mkString(ListSeparator))
+        case Invalid.Rule.CronField(stated, part, flaw)      => Vector(s"$stated", part.productPrefix) ++ flaw.held
+        case Invalid.Rule.CronNeverFires(stated)             => Vector(s"$stated")
+        case Invalid.Rule.CronTooOften(stated, gap, least)   => Vector(s"$stated", s"$gap", s"$least")
+        case Invalid.Rule.ZoomWithin(zoom, greatest)         => Vector(s"$zoom", s"$greatest")
+        case Invalid.Rule.TileWithin(x, y, zoom)             => Vector(s"$x", s"$y", s"$zoom")
+        case Invalid.Rule.IdentifierKind(stated)             => Vector(s"$stated")
+        case Invalid.Rule.ActivityPage(stated)               => Vector(s"$stated")
+        case Invalid.Rule.ActivityPageTime(stated)           => Vector(s"$stated")
+        case Invalid.Rule.EventCatalogue(stated, known)      => Vector(s"$stated", known.mkString(ListSeparator))
+        case Invalid.Rule.CitekeyUnchanged(citekey)          => Vector(s"$citekey")
+        case Invalid.Rule.CitekeyLinkShaped(citekey)         => Vector(s"$citekey")
+        case Invalid.Rule.AssetBase64(asset, reported)       => Vector(s"$asset", s"$reported")
+        case Invalid.Rule.AssetEmpty(asset)                  => Vector(s"$asset")
+        case Invalid.Rule.AssetBytes(asset, bytes, limit)    => Vector(s"$asset", s"$bytes", s"$limit")
+        case Invalid.Rule.RunsPipeline(run, p, first, fp)    => Vector(s"$run", s"$p", s"$first", s"$fp")
+        case Invalid.Rule.RunsTarget(run, t, first, ft)      => Vector(s"$run", s"$t", s"$first", s"$ft")
+        case Invalid.Rule.RegexTime(limit)                   => Vector(s"$limit")
+        case Invalid.Rule.RegexValid(description, at, regex) =>
+          Vector(s"$description", at.fold("")(p => s"$p"), s"$regex")
+        case Invalid.Rule.IdentifierGiven | Invalid.Rule.RunsCompared | Invalid.Rule.RunRepeated |
+            Invalid.Rule.QueryGiven =>
+          Vector.empty
+      (rule.productPrefix +: held).mkString(HoldSeparator)
+
+  extension (flaw: Invalid.CronFlaw)
+    private def held: Vector[String] = flaw match
+      case Invalid.CronFlaw.NotNumber(stated, least, greatest) =>
+        Vector("NotNumber", s"$stated", s"$least", s"$greatest")
+      case Invalid.CronFlaw.Step(stated)      => Vector("Step", s"$stated")
+      case Invalid.CronFlaw.Slashes(stated)   => Vector("Slashes", s"$stated")
+      case Invalid.CronFlaw.Backwards(stated) => Vector("Backwards", s"$stated")
+      case Invalid.CronFlaw.NotRange(stated)  => Vector("NotRange", s"$stated")
+
+  /** The rule a column wrote, from its name and what it held. */
+  private def ruleOf(written: Vector[String]): Option[Invalid.Rule] =
+    import Invalid.Rule.*
+    def flawOf(held: Vector[String]): Option[Invalid.CronFlaw] = held match
+      case Vector("NotNumber", s, l, g) =>
+        for
+          least <- Count.read(l)
+          greatest <- Count.read(g)
+        yield Invalid.CronFlaw.NotNumber(Raw.read(s), least, greatest)
+      case Vector("Step", s)      => Some(Invalid.CronFlaw.Step(Raw.read(s)))
+      case Vector("Slashes", s)   => Some(Invalid.CronFlaw.Slashes(Raw.read(s)))
+      case Vector("Backwards", s) => Some(Invalid.CronFlaw.Backwards(Raw.read(s)))
+      case Vector("NotRange", s)  => Some(Invalid.CronFlaw.NotRange(Raw.read(s)))
+      case _                      => None
+    written match
+      case Vector("CronFields", s, eg)   => Some(CronFields(Raw.read(s), raws(eg)))
+      case "CronField" +: s +: p +: flaw =>
+        for
+          part <- word(Invalid.CronPart.values.toSeq, p)
+          f <- flawOf(flaw)
+        yield CronField(Raw.read(s), part, f)
+      case Vector("CronNeverFires", s)     => Some(CronNeverFires(Raw.read(s)))
+      case Vector("CronTooOften", s, g, l) =>
+        for
+          gap <- Count.read(g)
+          least <- Count.read(l)
+        yield CronTooOften(Raw.read(s), gap, least)
+      case Vector("ZoomWithin", z, g) =>
+        for
+          zoom <- Count.read(z)
+          greatest <- Count.read(g)
+        yield ZoomWithin(zoom, greatest)
+      case Vector("TileWithin", x, y, z) =>
+        for
+          cx <- Count.read(x)
+          cy <- Count.read(y)
+          zoom <- Count.read(z)
+        yield TileWithin(cx, cy, zoom)
+      case Vector("IdentifierGiven")      => Some(IdentifierGiven)
+      case Vector("IdentifierKind", s)    => Some(IdentifierKind(Raw.read(s)))
+      case Vector("ActivityPage", s)      => Some(ActivityPage(Raw.read(s)))
+      case Vector("ActivityPageTime", s)  => Some(ActivityPageTime(Raw.read(s)))
+      case Vector("EventCatalogue", s, k) => Some(EventCatalogue(Raw.read(s), raws(k)))
+      case Vector("CitekeyUnchanged", c)  => Some(CitekeyUnchanged(Raw.read(c)))
+      case Vector("CitekeyLinkShaped", c) => Some(CitekeyLinkShaped(Raw.read(c)))
+      case Vector("AssetBase64", a, r)    => Some(AssetBase64(Raw.read(a), External.Reported.of(r)))
+      case Vector("AssetEmpty", a)        => Some(AssetEmpty(Raw.read(a)))
+      case Vector("AssetBytes", a, b, l)  =>
+        for
+          bytes <- Count.read(b)
+          limit <- Count.read(l)
+        yield AssetBytes(Raw.read(a), bytes, limit)
+      case Vector("RunsCompared")             => Some(RunsCompared)
+      case Vector("RunRepeated")              => Some(RunRepeated)
+      case Vector("RunsPipeline", r, p, f, o) => Some(RunsPipeline(Raw.read(r), Raw.read(p), Raw.read(f), Raw.read(o)))
+      case Vector("RunsTarget", r, t, f, o)   => Some(RunsTarget(Raw.read(r), Raw.read(t), Raw.read(f), Raw.read(o)))
+      case Vector("QueryGiven")               => Some(QueryGiven)
+      case Vector("RegexTime", l)             => Millis.read(l).map(RegexTime(_))
+      case "RegexValid" +: d +: at +: regex if regex.nonEmpty =>
+        // the pattern is written last, so a ` | ` in it (an alternation) reads back as the pattern's own
+        val position = if at.isEmpty then Some(None) else Count.read(at).map(Some(_))
+        position.map(RegexValid(External.Reported.of(d), _, Raw.read(regex.mkString(HoldSeparator))))
+      case _ => None
 
   extension (form: Invalid.Form)
     private def stored: String = form match
@@ -489,8 +592,14 @@ object Column:
   private val UnrecordedBy = "^unrecorded: (\\w+)$".r
   private val Crashed = "(?s)^(.+) failed unexpectedly \\((\\S+), problem (\\S+)\\) — (.*)$".r
   private val UnclassifiedText = "(?s)^unclassified: (.*)$".r
+  private val BrokenAt = s"(?s)^${Prefix}breaks (.*)$$".r
 
   private val Readers: List[String => Option[Problem]] = List(
+    {
+      case BrokenAt(at, written) =>
+        ruleOf(written.split(Regex.quote(HoldSeparator), -1).toVector).map(Invalid.Broken(_, pathOf(at)))
+      case _ => None
+    },
     {
       case MalformedAt(at, raw, t, name, description) =>
         Some(

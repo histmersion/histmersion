@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.catalogue.maptiles
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.Problem.{Count, Invalid}
 
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -56,9 +57,10 @@ object TileCoord:
 
   /** The tile `z`/`x`/`y`, when the grid has it and `z` is no deeper than `maxZoom`. */
   def of(z: Z, x: X, y: Y, maxZoom: Z): Either[Problem, TileCoord] =
-    if z.value < 0 || z > maxZoom then Left(Problem.Unclassified(Legacy.Text(s"zoom $z is outside 0..$maxZoom")))
+    if z.value < 0 || z > maxZoom then
+      Left(Invalid.Broken.here(Invalid.Rule.ZoomWithin(Count.of(z), Count.of(maxZoom))))
     else if x.value < 0 || y.value < 0 || x.value >= (1L << z.value) || y.value >= (1L << z.value) then
-      Left(Problem.Unclassified(Legacy.Text(s"tile $x/$y is outside the grid of zoom $z")))
+      Left(Invalid.Broken.here(Invalid.Rule.TileWithin(Count.of(x), Count.of(y), Count.of(z))))
     else Right(new TileCoord(z, x, y))
 
   /** Pure: a point's place on the unit square of Web Mercator (0..1 east and south), its latitude held inside

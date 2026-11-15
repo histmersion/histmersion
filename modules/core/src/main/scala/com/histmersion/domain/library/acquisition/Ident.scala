@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.Problem.{Invalid, Raw}
 
 import com.histmersion.domain.library.{ArxivId, Doi as DoiValue}
 import io.github.iltotore.iron.constraint.any.Pure
@@ -41,13 +42,13 @@ object Ident:
 
   def parse(raw: Written): Either[Problem, Ident] =
     val s = Option(raw.value).getOrElse("").trim
-    if s.isEmpty then Left(Problem.Unclassified(Legacy.Text("empty identifier — give a DOI, arxiv:<id>, or a citekey")))
+    if s.isEmpty then Left(Invalid.Broken.here(Invalid.Rule.IdentifierGiven))
     else
       doi(Written(s))
         .map(Doi(_))
         .orElse(arxiv(Written(s)).map(Arxiv(_)))
         .orElse(Option.when(isCitekey(Citekey.Value(s)))(Citekey(Citekey.Value(s))))
-        .toRight(Problem.Unclassified(Legacy.Text(s"'$s' is neither a DOI, an arXiv id, nor a citekey")))
+        .toRight(Invalid.Broken.here(Invalid.Rule.IdentifierKind(Raw.of(raw))))
 
   /** Deliberately permissive: the corpus holds hand-written keys and keys of older conventions that the generator would
     * not produce, so the store, not a regular expression, decides whether a citekey exists.

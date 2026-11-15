@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.activity
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.Problem.{Invalid, Raw}
 
 import java.time.Instant
 import io.github.iltotore.iron.constraint.any.Pure
@@ -25,7 +26,5 @@ object ActivityCursor:
           .Try(Instant.parse(at))
           .toOption
           .map(ActivityCursor(_, Key(key)))
-          .toRight(
-            Problem.Unclassified(Legacy.Text(s"'$s' is not a page of the activity list (its time is not an instant)"))
-          )
-      case _ => Left(Problem.Unclassified(Legacy.Text(s"'$s' is not a page of the activity list")))
+          .toRight(Invalid.Broken.here(Invalid.Rule.ActivityPageTime(Raw.of(s))))
+      case _ => Left(Invalid.Broken.here(Invalid.Rule.ActivityPage(Raw.of(s))))
