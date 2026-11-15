@@ -36,12 +36,13 @@ class DerivedCodecsSuite extends munit.FunSuite:
       case _                           => None
     assert(items.exists(_.schemaType.isInstanceOf[SchemaType.SArray[?, ?]]), s"$items")
 
-  /** The `minSize`s of a validator, through `all` and `mapped`/`contramap`, as the documentation interpreters see them. */
+  /** The `minSize`s of a validator, through `all` and `mapped`/`contramap`, as the documentation interpreters see them.
+    */
   private def minSizes(v: Validator[?]): List[Int] = v match
-    case Validator.MinSize(n)     => List(n)
-    case Validator.All(vs)        => vs.toList.flatMap(minSizes)
-    case Validator.Mapped(w, _)   => minSizes(w)
-    case _                        => Nil
+    case Validator.MinSize(n)   => List(n)
+    case Validator.All(vs)      => vs.toList.flatMap(minSizes)
+    case Validator.Mapped(w, _) => minSizes(w)
+    case _                      => Nil
 
   private def field(name: String): Option[Schema[?]] = summon[KindlingsSchema[Box]].schema.schemaType match
     case SchemaType.SProduct(fields) => fields.find(_.name.name == name).map(_.schema)
