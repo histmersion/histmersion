@@ -174,8 +174,8 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     (a, h, up)
 
   private def doi(n: String) = s"10.5555/zzrecheck.$n"
-  private def checkItem(i: Queue.QueueItem.Id): AcquireCheckRow.Item =
-    AcquireCheckRow.Item(i.value)
+  private def checkItem(i: Queue.QueueItem.Id): AcquireCheckRow.Id =
+    AcquireCheckRow.Id(i.value)
   private def jobKey(id: SpatialHierarchyResult.Job.Id): Job.Id =
     Job.Id.applyUnsafe(id.value)
   private def item(h: ServerWiring, n: String): Queue.QueueItem.Id =

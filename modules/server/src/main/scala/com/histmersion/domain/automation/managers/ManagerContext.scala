@@ -118,7 +118,7 @@ trait ManagerContext:
   def approvalsOf(run: Run.Id, kind: Approval.Kind): List[ApprovalInfo]
 
   /** [[StepFacts]] from the approval of `kind` a run opened: none, open (the item waits for it), or decided. */
-  def approvalFacts(run: Run.Id, kind: Approval.Kind, none: ManagerPolicy.ItemOutcome): StepFacts
+  def approvalFacts(run: Run.Id, kind: Approval.Kind, none: ManagerPolicy.Outcome): StepFacts
   def unsettledOn(target: ManagerContext.ItemTarget): Seq[RunInfo]
   def runsFor(p: Pipeline, target: ManagerContext.ItemTarget): Seq[RunInfo]
   def slugExists(slug: Slug): Boolean
@@ -215,10 +215,10 @@ object ManagerContext:
   object EventText extends Newtype[String, Pure]
   type UpsertReopen = UpsertReopen.T
   object UpsertReopen extends Newtype[Boolean, Pure]
-  type EvaluatedOutcome = ManagerPolicy.ItemOutcome
-  val EvaluatedOutcome: ManagerPolicy.ItemOutcome.type = ManagerPolicy.ItemOutcome
-  type SettleNowWhy = ManagerPolicy.ItemOutcome
-  val SettleNowWhy: ManagerPolicy.ItemOutcome.type = ManagerPolicy.ItemOutcome
+  type EvaluatedOutcome = ManagerPolicy.Outcome
+  val EvaluatedOutcome: ManagerPolicy.Outcome.type = ManagerPolicy.Outcome
+  type SettleNowWhy = ManagerPolicy.Outcome
+  val SettleNowWhy: ManagerPolicy.Outcome.type = ManagerPolicy.Outcome
   type RetryNote = ManagerPolicy.ItemNote
   val RetryNote: ManagerPolicy.ItemNote.type = ManagerPolicy.ItemNote
   type StartWhat = StartWhat.T

@@ -353,7 +353,7 @@ final class ManagerSupervisor(
               None,
               None,
               state,
-              Some(ManagerItem.Outcome(outcome.value))
+              Some(outcome.transformInto[ManagerItem.Outcome])
             )
           )
         then
@@ -447,7 +447,7 @@ final class ManagerSupervisor(
   /** The approval of `kind` a run opened: none (nothing passed its checks), open (the item waits for it), or decided
     * already (approved automatically, say).
     */
-  def approvalFacts(run: DomainRun.Id, kind: DomainApproval.Kind, none: ManagerPolicy.ItemOutcome): StepFacts =
+  def approvalFacts(run: DomainRun.Id, kind: DomainApproval.Kind, none: ManagerPolicy.Outcome): StepFacts =
     agents.approvalStore
       .approvalsOf(run.transformInto[Job.Id], Some(kind.transformInto[Approval.Kind]))
       .lastOption match
@@ -458,7 +458,7 @@ final class ManagerSupervisor(
           ManagerPolicy.ItemNote(s"approval #${a.id} waits for a person")
         )
       case Some(a) =>
-        StepFacts.Finished(ManagerPolicy.ItemOutcome(s"approval #${a.id} " + decidedAs(a).getOrElse(a.state.value)))
+        StepFacts.Finished(ManagerPolicy.Outcome(s"approval #${a.id} " + decidedAs(a).getOrElse(a.state.value)))
 
   /** A review item for `slug` in review manager `id`, from a chain (priority 2): added, or a settled one re-opened.
     */
@@ -812,7 +812,7 @@ final class ManagerSupervisor(
             m,
             item,
             ItemStatus.Cancelled,
-            ManagerPolicy.ItemOutcome(s"'${item.kind}' items are not driven by a ${m.kind} manager")
+            ManagerPolicy.Outcome(s"'${item.kind}' items are not driven by a ${m.kind} manager")
           )
 
   /** Create, mark and submit one run: ONE transaction (the run row, the item's compare-and-set, the hints it reached,
@@ -924,7 +924,7 @@ final class ManagerSupervisor(
     override def items: List[ManagerContext.ItemKind] = Nil
     def fire(c: ManagerContext, m: ManagerInfo, now: Instant): List[ManagerKindDefinition.FirePhrase] = Nil
     def facts(c: ManagerContext, item: ManagerItem, run: DomainRun.Id): StepFacts =
-      StepFacts.Finished(ManagerPolicy.ItemOutcome("enriched"))
+      StepFacts.Finished(ManagerPolicy.Outcome("enriched"))
     def dispatch(
         c: ManagerContext,
         m: ManagerInfo,

@@ -12,20 +12,21 @@ import hearth.kindlings.optics.syntax.*
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.domain.library.Doi
+import io.scalaland.chimney.dsl.*
 
 /** The acquisition list's re-check: one record per acquisition item that was checked, and what the corpus holds of the
   * DOIs the items name.
   */
 trait AcquireCheckService:
   /** The checks of these items (any that has none is absent). */
-  def of(items: List[AcquireCheckRow.Item]): Map[AcquireCheckRow.Item, AcquireCheckRow]
+  def of(items: List[AcquireCheckRow.Id]): Map[AcquireCheckRow.Id, AcquireCheckRow]
 
   /** The checks of every OPEN acquisition item. */
-  def open: Map[AcquireCheckRow.Item, AcquireCheckRow]
+  def open: Map[AcquireCheckRow.Id, AcquireCheckRow]
 
   /** Record one check of `item`, its previous one replaced and the count kept. */
   def record(
-      item: AcquireCheckRow.Item,
+      item: AcquireCheckRow.Id,
       at: Instant,
       generation: AcquireRecheck.LastCheck.Generation,
       outcome: AcquireRecheck.Outcome,
@@ -42,11 +43,11 @@ object AcquireCheckService:
   def apply(db: Transactor): AcquireCheckService = Implementation(db)
 
   final private class Implementation(db: Transactor) extends AcquireCheckService:
-    def of(items: List[AcquireCheckRow.Item]): Map[AcquireCheckRow.Item, AcquireCheckRow] =
+    def of(items: List[AcquireCheckRow.Id]): Map[AcquireCheckRow.Id, AcquireCheckRow] =
       db.read(AcquireCheckRepo.of(items))
-    def open: Map[AcquireCheckRow.Item, AcquireCheckRow] = db.read(AcquireCheckRepo.open())
+    def open: Map[AcquireCheckRow.Id, AcquireCheckRow] = db.read(AcquireCheckRepo.open())
     def record(
-        item: AcquireCheckRow.Item,
+        item: AcquireCheckRow.Id,
         at: Instant,
         generation: AcquireRecheck.LastCheck.Generation,
         outcome: AcquireRecheck.Outcome,
@@ -60,13 +61,13 @@ object AcquireCheckService:
   /** The checks in memory; the acquisition list is the work lists' `queues`, the sources the library's `sources`. */
   final class InMemory(state: AtomicReference[AcquisitionState], queues: QueueService, sources: SourceService)
       extends AcquireCheckService:
-    def of(items: List[AcquireCheckRow.Item]): Map[AcquireCheckRow.Item, AcquireCheckRow] =
+    def of(items: List[AcquireCheckRow.Id]): Map[AcquireCheckRow.Id, AcquireCheckRow] =
       state.get.checks.values.filter(r => items.contains(r.item)).map(r => r.item -> r).toMap
-    def open: Map[AcquireCheckRow.Item, AcquireCheckRow] =
-      val ids = queues.list(Queue.Kind.Acquire, QueueScope.Open).map(i => AcquireCheckRow.Item(i.id.value)).toSet
+    def open: Map[AcquireCheckRow.Id, AcquireCheckRow] =
+      val ids = queues.list(Queue.Kind.Acquire, QueueScope.Open).map(_.id.transformInto[AcquireCheckRow.Id]).toSet
       state.get.checks.values.filter(r => ids(r.item)).map(r => r.item -> r).toMap
     def record(
-        item: AcquireCheckRow.Item,
+        item: AcquireCheckRow.Id,
         at: Instant,
         generation: AcquireRecheck.LastCheck.Generation,
         outcome: AcquireRecheck.Outcome,

@@ -152,7 +152,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
             notBefore,
             None,
             state,
-            Some(ManagerPolicy.ItemOutcome(note.value))
+            Some(ManagerPolicy.Outcome(note.value))
           )
         then
           c.event(
@@ -176,7 +176,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
             None,
             Option.when(failed)(ManagerContext.FailureCount(item.failures.value + 1)),
             state,
-            Some(ManagerPolicy.ItemOutcome(text))
+            Some(ManagerPolicy.Outcome(text))
           )
         then
           c.event(
@@ -231,15 +231,15 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
         c.approvalFacts(
           run,
           Approval.Kind.ArticleFilter,
-          ManagerPolicy.ItemOutcome(s"no filter proposed — $progress")
+          ManagerPolicy.Outcome(s"no filter proposed — $progress")
         )
       case ArticleExtend =>
         CompileArticlePipeline.written(c, run) match
           case Some(w) if w.written.value =>
-            StepFacts.Finished(ManagerPolicy.ItemOutcome(s"extended (${w.why})"))
-          case Some(w) => StepFacts.Finished(ManagerPolicy.ItemOutcome(s"nothing appended: ${w.why}"))
-          case None    => StepFacts.Finished(ManagerPolicy.ItemOutcome(s"nothing to extend — $progress"))
-      case _ => StepFacts.Finished(ManagerPolicy.ItemOutcome("enriched"))
+            StepFacts.Finished(ManagerPolicy.Outcome(s"extended (${w.why})"))
+          case Some(w) => StepFacts.Finished(ManagerPolicy.Outcome(s"nothing appended: ${w.why}"))
+          case None    => StepFacts.Finished(ManagerPolicy.Outcome(s"nothing to extend — $progress"))
+      case _ => StepFacts.Finished(ManagerPolicy.Outcome("enriched"))
 
   /** An extended article is reviewed again. */
   override def afterDone(

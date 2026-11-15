@@ -64,8 +64,11 @@ object ManagerPolicy:
   object ApprovalId extends Newtype[Long, Pure]
   type ItemNote = ItemNote.T
   object ItemNote extends Newtype[String, Pure]
-  type ItemOutcome = ItemOutcome.T
-  object ItemOutcome extends Newtype[String, Pure]
+
+  /** What became of a manager's item, as its row and the manager's feed show it. */
+  type Outcome = Outcome.T
+  object Outcome extends Newtype[String, Pure]
+
   type ItemTask = ItemTask.T
   object ItemTask extends Newtype[String, Pure]
 
@@ -240,10 +243,10 @@ object ManagerPolicy:
     case Again(notBefore: Option[Instant], state: ItemState, note: ItemNote)
 
     /** It reached its end. */
-    case Done(outcome: ItemOutcome, state: ItemState)
+    case Done(outcome: Outcome, state: ItemState)
 
     /** It stops here; `task` is the backlog line a person acts on (None: nothing to act on). */
-    case Stop(outcome: ItemOutcome, task: Option[ItemTask], state: ItemState)
+    case Stop(outcome: Outcome, task: Option[ItemTask], state: ItemState)
 
     /** Its run failed: try again after the backoff (`failures` counted). */
     case Retry(notBefore: Instant, failures: Next.Retry.Failures, note: ItemNote)
@@ -275,14 +278,14 @@ object ManagerPolicy:
     * look at, if anything).
     */
   enum StepFacts:
-    case Finished(outcome: ItemOutcome)
+    case Finished(outcome: Outcome)
     case Waiting(approval: ApprovalId, what: ItemNote)
-    case NotDone(outcome: ItemOutcome, task: Option[ItemTask])
+    case NotDone(outcome: Outcome, task: Option[ItemTask])
 
     /** Its work was refused by a check that a new run may pass (a draft the autopilot's checks rejected): run it again
       * after the backoff, counted as a failure, stopped with a task after `maxFailures`.
       */
-    case Redo(outcome: ItemOutcome)
+    case Redo(outcome: Outcome)
 
   /** Evaluate a one-run item (`label` = its kind, for the texts) after its run settled `status`: done → finished, held
     * for an approval, or stopped; failed → retried after the backoff, stopped with a task after `maxFailures`;
@@ -310,7 +313,7 @@ object ManagerPolicy:
             val n = failures.value + 1
             if n >= s.maxFailures.value then
               Next.Stop(
-                ItemOutcome(s"stopped: $o (${counted(n, "attempt")})"),
+                Outcome(s"stopped: $o (${counted(n, "attempt")})"),
                 Some(
                   ItemTask(
                     s"$label manager item stopped [[$target]]: $o, ${counted(n, "attempt")} (agent run ${run.value.take(8)})"
@@ -325,13 +328,13 @@ object ManagerPolicy:
                 Next.Retry.Failures(n),
                 ItemNote(s"$o ($n of ${s.maxFailures}); again")
               )
-      case Run.State.Cancelled => Next.Stop(ItemOutcome("stopped: its run was cancelled"), None, state)
+      case Run.State.Cancelled => Next.Stop(Outcome("stopped: its run was cancelled"), None, state)
       case _                   =>
         val n = failures.value + 1
         val why = error.map(_.sentence).filter(_.nonEmpty).fold("")(e => s": ${e.take(300)}")
         if n >= s.maxFailures.value then
           Next.Stop(
-            ItemOutcome(s"stopped: ${counted(n, "failed run")}$why"),
+            Outcome(s"stopped: ${counted(n, "failed run")}$why"),
             Some(
               ItemTask(
                 s"$label manager item stopped [[$target]] after ${counted(n, "failed run")}$why (agent run ${run.value.take(8)})"

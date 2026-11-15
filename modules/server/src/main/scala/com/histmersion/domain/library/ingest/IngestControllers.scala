@@ -105,7 +105,7 @@ final class IngestControllers(
       authors: List[IngestMeta.Authors],
       year: Option[Year],
       doi: Option[Doi],
-      acquireItem: Option[AcquireCheckRow.Item] = None
+      acquireItem: Option[AcquireCheckRow.Id] = None
   ): Either[Api.Error, Ingest.Accepted] =
     def params(name: Ingest.Params.Filename) =
       Ingest.Params(

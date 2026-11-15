@@ -351,25 +351,25 @@ class ManagerPolicySuite extends munit.FunSuite:
         now
       )
     assertEquals(
-      ev(Run.State.Done, StepFacts.Finished(ManagerPolicy.ItemOutcome("ok"))),
-      Next.Done(ManagerPolicy.ItemOutcome("ok"), ItemState())
+      ev(Run.State.Done, StepFacts.Finished(ManagerPolicy.Outcome("ok"))),
+      Next.Done(ManagerPolicy.Outcome("ok"), ItemState())
     )
     assertEquals(
       ev(Run.State.Done, StepFacts.Waiting(ManagerPolicy.ApprovalId(7), ManagerPolicy.ItemNote("waits"))),
       Next.Wait(ManagerPolicy.ApprovalId(7), ManagerPolicy.ItemNote("waits"))
     )
     assertEquals(
-      ev(Run.State.Done, StepFacts.NotDone(ManagerPolicy.ItemOutcome("no"), None)),
-      Next.Stop(ManagerPolicy.ItemOutcome("no"), None, ItemState())
+      ev(Run.State.Done, StepFacts.NotDone(ManagerPolicy.Outcome("no"), None)),
+      Next.Stop(ManagerPolicy.Outcome("no"), None, ItemState())
     )
-    ev(Run.State.Failed, StepFacts.Finished(ManagerPolicy.ItemOutcome("x"))) match
+    ev(Run.State.Failed, StepFacts.Finished(ManagerPolicy.Outcome("x"))) match
       case Next.Retry(nb, failures, _) if failures == Next.Retry.Failures(1) =>
         assertEquals(nb, now.plusSeconds(15 * 60))
       case other => fail(other.toString)
-    ev(Run.State.Failed, StepFacts.Finished(ManagerPolicy.ItemOutcome("x")), failures = Next.Retry.Failures(2)) match
+    ev(Run.State.Failed, StepFacts.Finished(ManagerPolicy.Outcome("x")), failures = Next.Retry.Failures(2)) match
       case Next.Stop(o, Some(t), _) => assert(o.value.contains("3 failed runs") && t.value.contains("[[tin]]"), t)
       case other                    => fail(other.toString)
-    assert(ev(Run.State.Cancelled, StepFacts.Finished(ManagerPolicy.ItemOutcome("x"))).isInstanceOf[Next.Stop])
+    assert(ev(Run.State.Cancelled, StepFacts.Finished(ManagerPolicy.Outcome("x"))).isInstanceOf[Next.Stop])
 
   test("decided: an open approval is not decided; a decided one reads with its result"):
     assertEquals(decided(Approval.State.Wire("open"), None), None)
