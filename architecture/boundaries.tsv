@@ -70,7 +70,6 @@ modules/config/src/main/scala/com/histmersion/config/AppConfig.scala	config	read
 modules/config/src/main/scala/com/histmersion/config/Config.scala	config	reads each HOCON setting into its typed value, accepting numbers written as strings
 modules/config/src/main/scala/com/histmersion/config/ConfigLayers.scala	config	layers reference.conf, the user file and the environment as HOCON
 modules/config/src/main/scala/com/histmersion/config/EnvOverrides.scala	config	applies HISTMERSION_* environment variables as HOCON overrides
-modules/config/src/main/scala/com/histmersion/config/NewtypeReaders.scala	config	reads a setting as a newtype from its base type's reader
 modules/config/src/main/scala/com/histmersion/config/edit/ConfigFileWriter.scala	config	writes a changed setting into the user's config file text and moves it into place
 modules/config/src/main/scala/com/histmersion/config/edit/ConfigSchema.scala	config	reads reference.conf into the list of settings the config file may hold
 modules/config/src/main/scala/com/histmersion/config/edit/ConfigTextEdit.scala	config	edits the HOCON text of the config file, keeping comments and layout

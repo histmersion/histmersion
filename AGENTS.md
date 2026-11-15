@@ -147,7 +147,7 @@ Adding an operation to a feature in its own package:
 1. The owner's package — a newtype for every new kind of value (rule 1), on its entity's companion when it is one
    of the entity's properties (`Approval.Kind`). Its JSON, schema, column, setting and CLI argument
    come from the generic instances (`util.json.NewtypeCodecs`, `util.database.NewtypeColumns`,
-   `config.NewtypeReaders`, the converter in `cli.CommandLine`); add a round-trip test.
+   the converter in `cli.CommandLine`; a setting is derived through kindlings-iron-integration); add a round-trip test.
 2. `api.<domain>` — the input and output records, an entity's on the entity's companion (`Source.Patch`), `derives JsonCodec,
    KindlingsSchema`; the Tapir endpoint in the feature's endpoints object, added to `Api.all` in its place (route
    matching and `tools/list` depend on the order); how the output renders as Markdown. Every surface returns
