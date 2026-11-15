@@ -191,16 +191,6 @@ object RawJson:
       if o.contains(key) then JsonObject(o.fields.map((k, v) => if k == key then k -> value else k -> v))
       else o.add(key, value)
 
-  extension (n: JsonNumber)
-    /** The number as a `Long` if it is a whole one in range, however written (`-546`, `-546.0`, `5e2`), as circe read
-      * it; Kindlings' `toLong` reads only an integer literal.
-      */
-    def asLong: Option[Long] =
-      n.toBigDecimal.flatMap(d => scala.util.Try(d.toBigIntExact).toOption.flatten).filter(_.isValidLong).map(_.toLong)
-
-    /** The number as an `Int` if it is a whole one in range, however written (see [[asLong]]). */
-    def asInt: Option[Int] = n.asLong.filter(_.isValidInt).map(_.toInt)
-
   extension (companion: Json.type)
     def fromFields(fields: Iterable[(String, Json)]): Json = Json.Obj(JsonObject.fromIterable(fields))
 

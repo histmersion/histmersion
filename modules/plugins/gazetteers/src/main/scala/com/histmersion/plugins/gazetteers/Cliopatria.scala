@@ -150,5 +150,5 @@ object Cliopatria extends DownloadedGazetteer:
 
   private def numYear(o: JsonObject, key: String): Option[DownloadedGazetteer.Year] =
     o(key)
-      .flatMap(j => j.asNumber.flatMap(_.asLong).orElse(j.asString.flatMap(_.toLongOption)))
+      .flatMap(j => j.asNumber.flatMap(_.toLong).orElse(j.asString.flatMap(_.toLongOption)))
       .map(DownloadedGazetteer.Year(_))

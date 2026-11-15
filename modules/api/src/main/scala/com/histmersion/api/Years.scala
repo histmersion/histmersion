@@ -1,7 +1,6 @@
 package com.histmersion
 package api
 import hearth.kindlings.jsoniterjson.Json
-import com.histmersion.util.json.RawJson.asLong
 
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Problem.{Invalid, Raw, TypeName}
@@ -84,7 +83,7 @@ object Years:
 
   def fromJson(j: Json, text: Text => Option[Year]): Option[Year] =
     (j.asNumber
-      .flatMap(_.asLong)
+      .flatMap(_.toLong)
       .orElse(j.asString.flatMap {
         val refactorFunction = text;
         (refactorValue) => (refactorFunction(Text(refactorValue))).map(refactorValue2 => (refactorValue2).value)

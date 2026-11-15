@@ -83,7 +83,7 @@ object MetCollection:
             .flatMap(_.asArray)
             .toList
             .flatten
-            .flatMap(_.asNumber.flatMap(_.asLong))
+            .flatMap(_.asNumber.flatMap(_.toLong))
             .map(ObjectId(_))
         )
       )
