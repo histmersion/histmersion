@@ -61,9 +61,6 @@ object Problem:
     /** A number given as input. */
     def of(number: Long): Raw = Raw(s"$number")
 
-    /** An input as a column wrote it, read back. */
-    def read(written: String): Raw = Raw(written)
-
     /** A value of any newtype as it was given — a model's answer field, a parsed year — shown back as its base value's
       * text (`Raw.of(answer.citekey)`). The newtype stays a concept up to here: this companion is the one place it is
       * unwrapped. Iron's mirror, which every newtype's companion gives, keeps plain values out.
