@@ -2,7 +2,6 @@ package com.histmersion
 package domain
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 
-import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.StoredIdCodecs.given
@@ -693,11 +692,17 @@ object ReviewLedger:
       ids
     )
 
+  import Regression.Rationale
+
   /** One closed finding a revision would reopen, and why. */
-  final case class Regression(id: Regression.Id, why: Problem) derives JsonCodec:
-    def line: String = s"$id (closed): ${why.sentence}"
+  final case class Regression(id: Regression.Id, why: Rationale) derives JsonCodec:
+    def line: String = s"$id (closed): $why"
 
   object Regression:
+
+    /** Why the revision reopens the finding: the guard's account of what it found, not a failure. */
+    type Rationale = Rationale.T
+    object Rationale extends Newtype[String, Pure]
 
     type Id = Finding.Id
     val Id: Finding.Id.type = Finding.Id
@@ -733,16 +738,14 @@ object ReviewLedger:
         .map(r =>
           Regression(
             e.id,
-            Problem.Unclassified(
-              Legacy.Text(
-                s"[[${r.src}]] and [[${r.dst}]] are no longer cited in one paragraph — the critique it answered is open again"
-              )
+            Rationale(
+              s"[[${r.src}]] and [[${r.dst}]] are no longer cited in one paragraph — the critique it answered is open again"
             )
           )
         )
       val q = Option(e.finding.quote.value).map(_.trim).getOrElse("")
       val back = Option.when(q.length >= 12 && !in(q, before) && in(q, after))(
-        Regression(e.id, Problem.Unclassified(Legacy.Text(s"the text it fixed is back: \"${q.take(100)}\"")))
+        Regression(e.id, Rationale(s"the text it fixed is back: \"${q.take(100)}\""))
       )
       val lost = e.closed.toList
         .flatMap(c => AgentVerify.wikilinks(AgentVerify.Text(c.quote.value)))
@@ -752,7 +755,7 @@ object ReviewLedger:
         .map(ck =>
           Regression(
             e.id,
-            Problem.Unclassified(Legacy.Text(s"[[$ck]], which its fix cites, is cited nowhere any more"))
+            Rationale(s"[[$ck]], which its fix cites, is cited nowhere any more")
           )
         )
       (pair.toList ++ back.toList ++ lost).take(1)

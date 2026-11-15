@@ -315,14 +315,13 @@ class ReviewConvergenceSuite extends munit.FunSuite:
     )
     assertEquals(guard(l, tinBefore, split, together, cites, minRatio).map(_.id), List("S1"))
     assert(
-      guard(l, tinBefore, split, together, cites, minRatio).head.why.sentence
-        .contains("no longer cited in one paragraph")
+      s"${guard(l, tinBefore, split, together, cites, minRatio).head.why}".contains("no longer cited in one paragraph")
     )
     val back = ReviewArticle.Fix.Body(
       tinBefore.value.replace("The date of the wreck is about 1320 BCE", "The date of the wreck is argued")
     )
     assertEquals(
-      guard(l, tinBefore, back, together, cites, minRatio).map(r => (r.id, r.why.sentence.take(24))),
+      guard(l, tinBefore, back, together, cites, minRatio).map(r => (r.id, s"${r.why}".take(24))),
       List(("R1", "the text it fixed is bac"))
     )
     val dropped = ReviewArticle.Fix.Body(
