@@ -18,6 +18,8 @@ import com.histmersion.api.Paging
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.automation.Manager
 import com.histmersion.api.automation.Activity
+import com.histmersion.api.WireEnumValues
+import com.histmersion.web.ui.Choices
 
 /** The managers window's pure parts: the badge, the item actions per status, the settings form, the hint box, the pager
   * and the window keys.
@@ -751,3 +753,20 @@ class DrainLineSuite extends munit.FunSuite:
         .value
         .startsWith("Paused since t2")
     )
+
+  private val hintActions = Choices.optional(WireEnumValues.Wire.of(HintEffect.Verb.NoAction), HintEffect.Verb.Actions)
+
+  test("the hint box's action select: an option's text reads back as the choice it spells, none or a hint's verb"):
+    assertEquals(hintActions.read("none"), Some(None))
+    assertEquals(hintActions.read("prioritise"), Some(Some(HintEffect.Verb.Prioritise)))
+    assertEquals(hintActions.read("hold"), Some(Some(HintEffect.Verb.Hold)))
+    assertEquals(hintActions.read("skip"), Some(Some(HintEffect.Verb.Skip)))
+
+  test("the hint box's action select reads a text no offered choice spells as nothing: config is not a person's hint"):
+    assertEquals(hintActions.read("config"), None)
+    assertEquals(hintActions.read("Hold"), None)
+    assertEquals(hintActions.read(""), None)
+
+  test("the hint box's action select offers none first, then the verbs in order"):
+    assertEquals(hintActions.all, Vector(None) ++ HintEffect.Verb.Actions.map(Some(_)))
+    assertEquals(Choices.of(HintEffect.Verb.Actions).read("skip"), Some(HintEffect.Verb.Skip))
