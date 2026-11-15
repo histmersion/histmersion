@@ -1,13 +1,15 @@
 package com.histmersion
 package config
 
-import com.histmersion.config.NewtypeReaders.given
 import com.histmersion.domain.research.Slug
 import com.histmersion.Year
 import hearth.kindlings.sconfigderivation.ConfigReader
 import org.ekrich.config.ConfigValueFactory
 import com.histmersion.util.plugins.Plugin
 
+/** A newtype setting has no reader of its own: Kindlings derives it (kindlings-iron-integration makes a newtype's `T` a
+  * value type of its base), with the constraint checked.
+  */
 class NewtypeReadersSuite extends munit.FunSuite:
 
   private def read[T: ConfigReader](raw: AnyRef) = summon[ConfigReader[T]].from(ConfigValueFactory.fromAnyRef(raw))

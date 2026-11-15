@@ -1,7 +1,6 @@
 package com.histmersion
 package config
 
-import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 import com.histmersion.domain.automation.Pipeline
 import io.github.iltotore.iron.constraint.any.Pure
