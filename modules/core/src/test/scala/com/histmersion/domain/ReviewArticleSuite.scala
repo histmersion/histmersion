@@ -4,7 +4,7 @@ import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.json.RawJson
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -602,7 +602,13 @@ class ReviewArticleSuite extends munit.FunSuite:
       isCk,
       isTarget,
       t =>
-        if t.value.contains("| a | b |") then List(Problem.Unclassified(Legacy.Text("table-not-rendered — a table")))
+        if t.value.contains("| a | b |") then
+          List(
+            Problem.Content.Answer(
+              Problem.Content.Requirement
+                .FormatClean(Problem.Raw("table-not-rendered"), Problem.Raw("a table"), Problem.Raw(""))
+            )
+          )
         else Nil
     )
   private def fix(a: FixerAnswer, last: LastRound, before: Article.Body = Article.Body(Good)) =
@@ -626,7 +632,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       List(
         RejectionAnswer(
           ReviewArticle.RejectionAnswer.Id("S1"),
-          Problem.Unclassified(Legacy.Text("the record says so")),
+          ReviewArticle.Rationale("the record says so"),
           ReviewArticle.RejectionAnswer.Citekey("knapp2016_tin"),
           ReviewArticle.RejectionAnswer.Quote("carried ten tons of copper and one ton of tin")
         )
@@ -654,13 +660,13 @@ class ReviewArticleSuite extends munit.FunSuite:
       List(
         RejectionAnswer(
           ReviewArticle.RejectionAnswer.Id("S1"),
-          Problem.Unclassified(Legacy.Text("no")),
+          ReviewArticle.Rationale("no"),
           ReviewArticle.RejectionAnswer.Citekey("knapp2016_tin"),
           ReviewArticle.RejectionAnswer.Quote("the ship sank in a storm off Lycia in 1320 BCE")
         ),
         RejectionAnswer(
           ReviewArticle.RejectionAnswer.Id("C1"),
-          Problem.Unclassified(Legacy.Text("it is clear")),
+          ReviewArticle.Rationale("it is clear"),
           ReviewArticle.RejectionAnswer.Citekey("knapp2016_tin"),
           ReviewArticle.RejectionAnswer.Quote("ten tons of copper")
         )
@@ -743,7 +749,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       List(
         RejectionAnswer(
           ReviewArticle.RejectionAnswer.Id("S1"),
-          Problem.Unclassified(Legacy.Text("no")),
+          ReviewArticle.Rationale("no"),
           ReviewArticle.RejectionAnswer.Citekey("knapp2016_tin"),
           ReviewArticle.RejectionAnswer.Quote("nothing like this is in it")
         )
@@ -1530,7 +1536,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       List(
         RejectionAnswer(
           ReviewArticle.RejectionAnswer.Id("S1"),
-          Problem.Unclassified(Legacy.Text("the record says so")),
+          ReviewArticle.Rationale("the record says so"),
           ReviewArticle.RejectionAnswer.Citekey("knapp2016_tin"),
           ReviewArticle.RejectionAnswer.Quote("carried ten tons of copper and one ton of tin")
         )
@@ -1592,7 +1598,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       List(
         RejectionAnswer(
           ReviewArticle.RejectionAnswer.Id("S1"),
-          Problem.Unclassified(Legacy.Text("the record says so")),
+          ReviewArticle.Rationale("the record says so"),
           ReviewArticle.RejectionAnswer.Citekey("knapp2016_tin"),
           ReviewArticle.RejectionAnswer.Quote("carried ten tons of copper and one ton of tin")
         )

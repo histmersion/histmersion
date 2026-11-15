@@ -3,7 +3,7 @@ package domain
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -258,7 +258,7 @@ class ReviewLedgerSuite extends munit.FunSuite:
       List(
         Rejection(
           ReviewArticle.Rejection.Id("S1"),
-          Problem.Unclassified(Legacy.Text("the record dates it")),
+          ReviewArticle.Rationale("the record dates it"),
           Citekey("ck2019"),
           ReviewArticle.Rejection.Quote("Its cargo dates to 1320 BCE."),
           ReviewArticle.Rejection.Ratio(1.0)
@@ -306,7 +306,7 @@ class ReviewLedgerSuite extends munit.FunSuite:
           List(
             Rejection(
               ReviewArticle.Rejection.Id("S1"),
-              Problem.Unclassified(Legacy.Text("dated")),
+              ReviewArticle.Rationale("dated"),
               Citekey("ck"),
               ReviewArticle.Rejection.Quote("q"),
               ReviewArticle.Rejection.Ratio(1.0)
@@ -778,7 +778,7 @@ class ReviewLedgerSuite extends munit.FunSuite:
           List(
             Rejection(
               ReviewArticle.Rejection.Id("S1"),
-              Problem.Unclassified(Legacy.Text("dated")),
+              ReviewArticle.Rationale("dated"),
               Citekey("ck"),
               ReviewArticle.Rejection.Quote("q"),
               ReviewArticle.Rejection.Ratio(1.0)
@@ -874,7 +874,7 @@ class ReviewLedgerSuite extends munit.FunSuite:
           List(
             Rejection(
               ReviewArticle.Rejection.Id("S1"),
-              Problem.Unclassified(Legacy.Text("dated")),
+              ReviewArticle.Rationale("dated"),
               Citekey("ck"),
               ReviewArticle.Rejection.Quote("q"),
               ReviewArticle.Rejection.Ratio(1.0)

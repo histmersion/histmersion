@@ -233,7 +233,19 @@ object Column:
     Content.Requirement.NotesGiven,
     Content.Requirement.ClaimGiven,
     Content.Requirement.NoClaim,
-    Content.Requirement.ReasonGiven
+    Content.Requirement.ReasonGiven,
+    Content.Requirement.TextGiven,
+    Content.Requirement.NoSourcesCited,
+    Content.Requirement.TitleGiven,
+    Content.Requirement.ArticleSummary,
+    Content.Requirement.NotUsedGenerated,
+    Content.Requirement.MethodGenerated,
+    Content.Requirement.NotUsedHandWritten,
+    Content.Requirement.MethodHandWritten,
+    Content.Requirement.BodyGiven,
+    Content.Requirement.QueryGiven,
+    Content.Requirement.PlanGiven,
+    Content.Requirement.GoalPlanRationale
   )
 
   /** A rule's name, then what it holds, each after the hold separator; a list's items after the list separator. */
@@ -326,12 +338,12 @@ object Column:
           bytes <- Count.read(b)
           limit <- Count.read(l)
         yield AssetBytes(Raw(a), bytes, limit)
-      case Vector("RunsCompared")             => Some(RunsCompared)
-      case Vector("RunRepeated")              => Some(RunRepeated)
-      case Vector("RunsPipeline", r, p, f, o) => Some(RunsPipeline(Raw(r), Raw(p), Raw(f), Raw(o)))
-      case Vector("RunsTarget", r, t, f, o)   => Some(RunsTarget(Raw(r), Raw(t), Raw(f), Raw(o)))
-      case Vector("QueryGiven")               => Some(QueryGiven)
-      case Vector("RegexTime", l)             => Millis.read(l).map(RegexTime(_))
+      case Vector("RunsCompared")                             => Some(RunsCompared)
+      case Vector("RunRepeated")                              => Some(RunRepeated)
+      case Vector("RunsPipeline", r, p, f, o)                 => Some(RunsPipeline(Raw(r), Raw(p), Raw(f), Raw(o)))
+      case Vector("RunsTarget", r, t, f, o)                   => Some(RunsTarget(Raw(r), Raw(t), Raw(f), Raw(o)))
+      case Vector("QueryGiven")                               => Some(QueryGiven)
+      case Vector("RegexTime", l)                             => Millis.read(l).map(RegexTime(_))
       case "RegexValid" +: d +: at +: regex if regex.nonEmpty =>
         // the pattern is written last, so a ` | ` in it (an alternation) reads back as the pattern's own
         val position = if at.isEmpty then Some(None) else Count.read(at).map(Some(_))
@@ -451,8 +463,26 @@ object Column:
 
   extension (rule: Content.Requirement)
     private def stored: String = rule match
-      case Content.Requirement.TooManyClaims(cap, gave)   => s"TooManyClaims $cap/$gave"
-      case Content.Requirement.TooManyArticles(cap, gave) => s"TooManyArticles $cap/$gave"
+      case Content.Requirement.TooManyClaims(cap, gave)            => s"TooManyClaims $cap/$gave"
+      case Content.Requirement.TooManyArticles(cap, gave)          => s"TooManyArticles $cap/$gave"
+      case Content.Requirement.TooManySubGoals(cap, gave)          => s"TooManySubGoals $cap/$gave"
+      case Content.Requirement.TooManyQueries(cap, gave)           => s"TooManyQueries $cap/$gave"
+      case Content.Requirement.TooManyWorks(cap, gave)             => s"TooManyWorks $cap/$gave"
+      case Content.Requirement.KnownHeading(section)               => s"KnownHeading '$section'"
+      case Content.Requirement.ParagraphCited(opening)             => s"ParagraphCited '$opening'"
+      case Content.Requirement.StillUncited(opening)               => s"StillUncited '$opening'"
+      case Content.Requirement.SectionPresent(alts)                => s"SectionPresent ${alts.mkString(ListSeparator)}"
+      case Content.Requirement.NoFiller(matches)                   => s"NoFiller '$matches'"
+      case Content.Requirement.ClaimTabled(citekey)                => s"ClaimTabled '$citekey'"
+      case Content.Requirement.ReasonForTabled(citekey)            => s"ReasonForTabled '$citekey'"
+      case Content.Requirement.ReasonForUncited(citekey)           => s"ReasonForUncited '$citekey'"
+      case Content.Requirement.ReasonText(citekey)                 => s"ReasonText '$citekey'"
+      case Content.Requirement.TabledAccounted(citekey)            => s"TabledAccounted '$citekey'"
+      case Content.Requirement.FormatClean(rule, message, excerpt) =>
+        s"FormatClean '${Vector(rule, excerpt, message).mkString("', '")}'"
+      case Content.Requirement.SubGoalTitle(slug)         => s"SubGoalTitle '$slug'"
+      case Content.Requirement.QueryWithin(query, most)   => s"QueryWithin '$query' in '$most'"
+      case Content.Requirement.DoiGiven(stated)           => s"DoiGiven '$stated'"
       case Content.Requirement.QuoteInRecords(records)    => s"QuoteInRecords ${records.mkString(ListSeparator)}"
       case Content.Requirement.KnownCitekey(stated)       => s"KnownCitekey '$stated'"
       case Content.Requirement.ListedCandidate(stated)    => s"ListedCandidate '$stated'"
@@ -583,7 +613,21 @@ object Column:
     "PointerPhrase",
     "QuoteInRecord",
     "StatusUnstated",
-    "PlacesResolve"
+    "PlacesResolve",
+    "KnownHeading",
+    "ParagraphCited",
+    "StillUncited",
+    "SectionPresent",
+    "NoFiller",
+    "ClaimTabled",
+    "ReasonForTabled",
+    "ReasonForUncited",
+    "ReasonText",
+    "TabledAccounted",
+    "FormatClean",
+    "SubGoalTitle",
+    "QueryWithin",
+    "DoiGiven"
   )
   private val ProposalWith = s"(?s)^(.+?): (${WrittenRules.mkString("|")}) (.*)$$".r
   private val OneQuoted = "(?s)^'(.*)'$".r
@@ -1057,13 +1101,18 @@ object Column:
     {
       case ProposalAt(at, rule, cap, gave) =>
         val read: Option[Content.Requirement] = (Option(cap), Option(gave)) match
-          case (Some(c), Some(g)) if rule == "TooManyClaims" || rule == "TooManyArticles" =>
+          case (Some(c), Some(g)) =>
             for
               cc <- Count.read(c)
               gc <- Count.read(g)
-            yield
-              if rule == "TooManyClaims" then Content.Requirement.TooManyClaims(cc, gc)
-              else Content.Requirement.TooManyArticles(cc, gc)
+              capped <- rule match
+                case "TooManyClaims"   => Some(Content.Requirement.TooManyClaims(cc, gc))
+                case "TooManyArticles" => Some(Content.Requirement.TooManyArticles(cc, gc))
+                case "TooManySubGoals" => Some(Content.Requirement.TooManySubGoals(cc, gc))
+                case "TooManyQueries"  => Some(Content.Requirement.TooManyQueries(cc, gc))
+                case "TooManyWorks"    => Some(Content.Requirement.TooManyWorks(cc, gc))
+                case _                 => None
+            yield capped
           case (None, None) => word(ProposalRules, rule)
           case _            => None
         read.map(Content.Proposal(_, Where(s"$at")))
@@ -1136,6 +1185,27 @@ object Column:
                   l <- Count.read(least)
                   if unplaced.forall(_.isDefined)
                 yield Content.Requirement.PlacesResolve(r, t, l, unplaced.flatten)
+              case _ => None
+          case "KnownHeading"     => one.map(Content.Requirement.KnownHeading(_))
+          case "ParagraphCited"   => one.map(Content.Requirement.ParagraphCited(_))
+          case "StillUncited"     => one.map(Content.Requirement.StillUncited(_))
+          case "SectionPresent"   => Some(Content.Requirement.SectionPresent(raws(written)))
+          case "NoFiller"         => one.map(Content.Requirement.NoFiller(_))
+          case "ClaimTabled"      => one.map(Content.Requirement.ClaimTabled(_))
+          case "ReasonForTabled"  => one.map(Content.Requirement.ReasonForTabled(_))
+          case "ReasonForUncited" => one.map(Content.Requirement.ReasonForUncited(_))
+          case "ReasonText"       => one.map(Content.Requirement.ReasonText(_))
+          case "TabledAccounted"  => one.map(Content.Requirement.TabledAccounted(_))
+          case "SubGoalTitle"     => one.map(Content.Requirement.SubGoalTitle(_))
+          case "DoiGiven"         => one.map(Content.Requirement.DoiGiven(_))
+          case "QueryWithin"      =>
+            two.flatMap((query, most) => Count.read(s"$most").map(Content.Requirement.QueryWithin(query, _)))
+          case "FormatClean" =>
+            written match
+              case OneQuoted(fields) =>
+                quotedListOf(fields) match
+                  case Vector(rule, excerpt, message) => Some(Content.Requirement.FormatClean(rule, message, excerpt))
+                  case _                              => None
               case _ => None
           case "FilterMisses" =>
             written match

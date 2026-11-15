@@ -900,7 +900,7 @@ unwrap	core:domain/AutopilotPolicy.scala	.value outside a boundary	96
 unwrap	core:domain/BrowserDownload.scala	.value outside a boundary	19
 unwrap	core:domain/CodexRetention.scala	.value outside a boundary	13
 unwrap	core:domain/CompareRuns.scala	.value outside a boundary	18
-unwrap	core:domain/CompileArticle.scala	.value outside a boundary	67
+unwrap	core:domain/CompileArticle.scala	.value outside a boundary	64
 unwrap	core:domain/CoreQuota.scala	.value outside a boundary	36
 unwrap	core:domain/Cron.scala	.value outside a boundary	11
 unwrap	core:domain/DeepTime.scala	.value outside a boundary	5
@@ -919,7 +919,7 @@ unwrap	core:domain/PassageFinder.scala	.value outside a boundary	14
 unwrap	core:domain/PlanArticles.scala	.value outside a boundary	23
 unwrap	core:domain/PlanGoal.scala	.value outside a boundary	41
 unwrap	core:domain/PlanReadSchedule.scala	.value outside a boundary	2
-unwrap	core:domain/ReviewArticle.scala	.value outside a boundary	196
+unwrap	core:domain/ReviewArticle.scala	.value outside a boundary	191
 unwrap	core:domain/ReviewLedger.scala	.value outside a boundary	68
 unwrap	core:domain/SchedulerPolicy.scala	.value outside a boundary	54
 unwrap	core:domain/Scheduling.scala	.value outside a boundary	5
@@ -1248,7 +1248,7 @@ unwrap	server:domain/research/articles/ArticleCitedSources.scala	.value outside 
 unwrap	server:domain/research/articles/ArticleMirrorNote.scala	.value outside a boundary	2
 unwrap	server:domain/research/articles/ArticleReadable.scala	.value outside a boundary	4
 unwrap	server:domain/research/articles/ArticleService.scala	.value outside a boundary	73
-unwrap	server:domain/research/articles/ArticlesControllers.scala	.value outside a boundary	96
+unwrap	server:domain/research/articles/ArticlesControllers.scala	.value outside a boundary	94
 unwrap	server:domain/research/articles/ArticlesData.scala	.value outside a boundary	7
 unwrap	server:domain/research/articles/PageBuilder.scala	.value outside a boundary	45
 unwrap	server:domain/research/articles/lint/SourceTextFormatting.scala	.value outside a boundary	5

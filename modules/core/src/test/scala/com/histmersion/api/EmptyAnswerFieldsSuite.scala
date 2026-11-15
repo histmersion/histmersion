@@ -2,7 +2,7 @@ package com.histmersion
 package api
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.research.Coverage
 import com.histmersion.api.automation.Goal.Rationale as WorkRationale
@@ -490,7 +490,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
         List(
           RejectionAnswer(
             RejectionAnswer.Id("S1"),
-            Problem.Unclassified(Legacy.Text(" ")),
+            ReviewArticle.Rationale(" "),
             RejectionAnswer.Citekey("a2019_tin"),
             RejectionAnswer.Quote("The Uluburun ship carried ten tons of copper and one ton of tin.")
           )
