@@ -107,9 +107,10 @@ object ArchitectureSuite:
   val Unplaced = "?"
 
   /** One Scala source: `key` is `<module>:<path under com/histmersion>`, `code` its text with comments and string
-    * literals blanked (line breaks kept, so offsets still give line numbers), `raw` the text as written.
+    * literals blanked (line breaks kept, so offsets still give line numbers), `raw` the text as written, `root` the
+    * source directory it sits in (`scala`, or `scalajvm`/`scalajs` for one platform's copy, which shares the key).
     */
-  final case class SourceFile(key: String, pkg: String, code: String, raw: String):
+  final case class SourceFile(key: String, pkg: String, code: String, raw: String, root: String):
     def lineOf(index: Int): Int = code.substring(0, index).count(_ == '\n') + 1
 
   object SourceFile:
@@ -132,7 +133,13 @@ object ArchitectureSuite:
               Files.walk(base).iterator.asScala.filter(_.toString.endsWith(".scala")).toList.map { p =>
                 val text = Files.readString(p, UTF_8)
                 val pkg = "(?m)^package ([\\w.]+)".r.findAllMatchIn(text).map(_.group(1)).mkString(".")
-                SourceFile(s"$module:$prefix${base.relativize(p).toString.replace('\\', '/')}", pkg, Blank(text), text)
+                SourceFile(
+                  s"$module:$prefix${base.relativize(p).toString.replace('\\', '/')}",
+                  pkg,
+                  Blank(text),
+                  text,
+                  root.getFileName.toString
+                )
               }
           }
           .sortBy(_.key)

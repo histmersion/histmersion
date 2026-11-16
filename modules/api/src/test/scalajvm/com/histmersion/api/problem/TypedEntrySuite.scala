@@ -39,5 +39,6 @@ class TypedEntrySuite extends munit.FunSuite:
 
   test("the typed entry RelayedSuite reads in the browser is the one the server writes"):
     // `Invalid.Missing` of `rationale` as the server writes it; RelayedSuite (Scala.js) holds the same text
-    val missing = """{"group":"Invalid","case":"Missing","data":{"field":"rationale","at":[]},"text":"rationale is required"}"""
+    val missing =
+      """{"group":"Invalid","case":"Missing","data":{"field":"rationale","at":[]},"text":"rationale is required"}"""
     assertEquals((Invalid.Missing.here(Field("rationale")): Problem).asJson.noSpaces, missing)

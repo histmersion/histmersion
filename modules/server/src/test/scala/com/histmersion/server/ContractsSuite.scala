@@ -51,7 +51,11 @@ import com.histmersion.server.ArchitectureSuite.{Blank, SourceFile, Violation}
   *     free text or an unnamed number where a newtype or an enum says what it is. A ratchet whose one row is the
   *     temporary `Unclassified`; the text a column held (`Stored.Text`) is the stored reader's, and no finding;
   *   - `unrecognised` (G60, no exception allowed): `Stored.Unrecognised` built in main code anywhere but the stored
-  *     column's reader (`api.problem.Column`) and the cases' own file — a sentence no case writes is read, never made.
+  *     column's reader (`api.problem.Column`) and the cases' own file — a sentence no case writes is read, never made;
+  *   - `relayed` (G60, no exception allowed): `Problem.Relayed` built in main code anywhere but the browser's decoder
+  *     (the Scala.js `api.problem.ProblemJson`), the shared entry builder it needs (`api.problem.Answer`) and the
+  *     cases' own file — a problem known only by its sentence; built on the JVM, a typed problem would silently become
+  *     text.
   *
   * Besides the listed rules, a foreign type's `CanEqual` (`given CanEqual[UUID, UUID]`) is defined in one file,
   * imported by name where it is needed (G67): only the types of [[CrossLayerEqualities]], whose users share no module,
@@ -124,7 +128,13 @@ class ContractsSuite extends munit.FunSuite:
   test("a case of a sealed type is one with its parent however its header is laid out"):
     def oneType(text: String): List[String] =
       val file =
-        ArchitectureSuite.SourceFile("core:x/Shape.scala", "com.histmersion.x", ArchitectureSuite.Blank(text), text)
+        ArchitectureSuite.SourceFile(
+          "core:x/Shape.scala",
+          "com.histmersion.x",
+          ArchitectureSuite.Blank(text),
+          text,
+          "scala"
+        )
       Rules.all(List(file)).filter(_.rule == "one-type").map(_.detail)
     val oneLine = "sealed trait Shape\nfinal case class Circle(r: Int = 1) extends Shape\nobject Other\n"
     val broken =
@@ -134,7 +144,7 @@ class ContractsSuite extends munit.FunSuite:
 
   test("scallop's configuration is declared only in the command-line core and its adapters"):
     def hits(key: String, text: String): List[String] =
-      val file = ArchitectureSuite.SourceFile(key, "com.histmersion.cli", ArchitectureSuite.Blank(text), text)
+      val file = ArchitectureSuite.SourceFile(key, "com.histmersion.cli", ArchitectureSuite.Blank(text), text, "scala")
       Rules.all(List(file)).filter(_.rule == "scallop").map(_.file)
     val code =
       "object X:\n  class C extends ScallopConf(Nil):\n    val a = opt[String](\"a\")\n    val b = trailArg[Int]()\n"
@@ -182,7 +192,7 @@ class ContractsSuite extends munit.FunSuite:
         "Length.found: Count"
       )
     )
-    val file = ArchitectureSuite.SourceFile(Rules.ProblemFile, "com.histmersion.util.problem", code, code)
+    val file = ArchitectureSuite.SourceFile(Rules.ProblemFile, "com.histmersion.util.problem", code, code, "scala")
     assertEquals(
       Rules.all(List(file)).filter(_.rule == "problem-field").map(_.detail),
       List("Said.plugin: String", "Said.count: Int", "Unclassified.text: Legacy.Text", "Length.expected: Long")
@@ -245,7 +255,7 @@ class ContractsSuite extends munit.FunSuite:
         |              WHERE e.label = $l ORDER BY e.label, e.id LIMIT $n\"\"\"
         |  def b = sql"SELECT id FROM events ORDER BY label"
         |""".stripMargin
-    val source = SourceFile("db:x/Repo.scala", "com.histmersion.x", Blank(code), code)
+    val source = SourceFile("db:x/Repo.scala", "com.histmersion.x", Blank(code), code, "scala")
     assertEquals(TotalOrder.clauses(source.key, source.raw).map(_._1.text), List("e.label, e.id", "label"))
     assertEquals(TotalOrder.partial(List(source), keys).map(c => (c.line, c.text)), List((5, "label")))
 
@@ -262,7 +272,7 @@ class ContractsSuite extends munit.FunSuite:
         |    case D(x: Int = 1)
         |    case F(x: Int)
         |""".stripMargin
-    val file = ArchitectureSuite.SourceFile("problem:x/Cases.scala", "com.histmersion.x", Blank(code), code)
+    val file = ArchitectureSuite.SourceFile("problem:x/Cases.scala", "com.histmersion.x", Blank(code), code, "scala")
     assertEquals(
       Rules.caseDefaults(List(file)).map(v => (v.at, v.detail)),
       List(
@@ -283,7 +293,7 @@ class ContractsSuite extends munit.FunSuite:
         |  val d = "Unclassified in a string"
         |  val e = Problem.Invalid.Missing(Problem.Field("ok"))
         |""".stripMargin
-    val file = ArchitectureSuite.SourceFile("values:x/Sites.scala", "com.histmersion.x", Blank(code), code)
+    val file = ArchitectureSuite.SourceFile("values:x/Sites.scala", "com.histmersion.x", Blank(code), code, "scala")
     assertEquals(
       Rules.unclassified(List(file)).map(v => (v.at, v.detail)),
       List(
@@ -305,11 +315,33 @@ class ContractsSuite extends munit.FunSuite:
         |""".stripMargin
     def found(key: String) =
       Rules
-        .all(List(ArchitectureSuite.SourceFile(key, "com.histmersion.x", Blank(code), code)))
+        .all(List(ArchitectureSuite.SourceFile(key, "com.histmersion.x", Blank(code), code, "scala")))
         .filter(_.rule == "unrecognised")
     assertEquals(found("server:x/Reads.scala").map(v => (v.count, v.at)), List((1, "server:x/Reads.scala:2")))
     assertEquals(found("api:api/problem/Column.scala"), Nil)
     assertEquals(found("problem:util/problem/Problem.scala"), Nil)
+
+  test("Problem.Relayed is built in main code only by the browser's decoder and the entry builder it needs"):
+    val code =
+      """object Reads:
+        |  def read(s: Sentence): Problem = Problem.Relayed(s)
+        |  def shown(p: Problem) = p match
+        |    case Relayed(sentence) => s"$sentence"
+        |    case other             => "x"
+        |  val group = Problem.Group.Relayed
+        |""".stripMargin
+    def found(key: String, root: String) =
+      Rules
+        .all(List(ArchitectureSuite.SourceFile(key, "com.histmersion.x", Blank(code), code, root)))
+        .filter(_.rule == "relayed")
+    assertEquals(found("server:x/Reads.scala", "scala").map(v => (v.count, v.at)), List((1, "server:x/Reads.scala:2")))
+    assertEquals(found("api:api/problem/ProblemJson.scala", "scalajs"), Nil)
+    assertEquals(found("api:api/problem/Answer.scala", "scala"), Nil)
+    assertEquals(found("problem:util/problem/Problem.scala", "scala"), Nil)
+    assertEquals(
+      found("api:api/problem/ProblemJson.scala", "scalajvm").map(v => (v.count, v.at)),
+      List((1, "api:api/problem/ProblemJson.scala:2"))
+    )
 
   test("a type pattern on the problems' NonEmptyVector is a violation outside the problem module"):
     val code =
@@ -321,7 +353,7 @@ class ContractsSuite extends munit.FunSuite:
         |""".stripMargin
     def found(key: String) =
       Rules
-        .all(List(ArchitectureSuite.SourceFile(key, "com.histmersion.x", code, code)))
+        .all(List(ArchitectureSuite.SourceFile(key, "com.histmersion.x", code, code, "scala")))
         .filter(_.rule == "nonempty-pattern")
     assertEquals(found("server:x/Answers.scala").map(v => (v.count, v.at)), List((1, "server:x/Answers.scala:3")))
     assertEquals(found("problem:util/problem/Answers.scala"), Nil)
@@ -345,7 +377,7 @@ class ContractsSuite extends munit.FunSuite:
         |""".stripMargin
     def lines(key: String) =
       Rules
-        .all(List(ArchitectureSuite.SourceFile(key, "com.histmersion.x", Blank(code), code)))
+        .all(List(ArchitectureSuite.SourceFile(key, "com.histmersion.x", Blank(code), code, "scala")))
         .filter(_.rule == "derives")
         .map(v => (v.count, v.at))
     assertEquals(lines("core:x/Codecs.scala"), List((8, "core:x/Codecs.scala:2")))
@@ -365,7 +397,7 @@ class ContractsSuite extends munit.FunSuite:
         |""".stripMargin
     def lines(key: String) =
       Rules
-        .all(List(ArchitectureSuite.SourceFile(key, "com.histmersion.x", Blank(code), code)))
+        .all(List(ArchitectureSuite.SourceFile(key, "com.histmersion.x", Blank(code), code, "scala")))
         .filter(_.rule == "derives")
         .map(v => (v.count, v.at))
     assertEquals(lines("core:x/Equalities.scala"), List((3, "core:x/Equalities.scala:6")))
@@ -391,7 +423,7 @@ class ContractsSuite extends munit.FunSuite:
       Rules.equalityGivens(code).map((t, at) => (t, code.substring(0, at).count(_ == '\n') + 1)),
       List(("UUID", 2), ("UUID", 3), ("WatchEvent.Kind[?]", 4))
     )
-    def file(key: String) = ArchitectureSuite.SourceFile(key, "com.histmersion.x", Blank(code), code)
+    def file(key: String) = ArchitectureSuite.SourceFile(key, "com.histmersion.x", Blank(code), code, "scala")
     assertEquals(
       Rules.equalityTwice(List(file("core:x/A.scala"), file("db:x/B.scala"))),
       Map(
@@ -513,6 +545,13 @@ object ContractsSuite:
             "Stored.Unrecognised built outside the stored column's reader",
             if Unrecognisers(s.key) then Nil
             else Unrecognised.findAllMatchIn(s.code).filterNot(m => inPattern(s.code, m.start)).map(_.start).toList
+          )
+          ++ counted(
+            "relayed",
+            s,
+            "Problem.Relayed built outside the browser's decoder",
+            if Relayers((s.key, s.root)) then Nil
+            else Relayed.findAllMatchIn(s.code).filterNot(m => inPattern(s.code, m.start)).map(_.start).toList
           )
       ) ++ concept(sources) ++ helper(sources) ++ prefix(sources) ++ problemFields(sources)
 
@@ -975,6 +1014,16 @@ object ContractsSuite:
     /** The files that may build `Stored.Unrecognised`: the stored column's reader and the cases' own file. */
     private val Unrecognisers: Set[String] = Set(ProblemFile, "api:api/problem/Column.scala")
     private val Unrecognised = "\\bUnrecognised\\s*\\(".r
+
+    /** The files, by key and source root, that may build `Problem.Relayed`: the browser's decoder (the Scala.js copy
+      * only; the JVM's `ProblemJson` shares its key), the shared entry builder it needs and the cases' own file.
+      */
+    private val Relayers: Set[(String, String)] = Set(
+      ProblemFile -> "scala",
+      "api:api/problem/Answer.scala" -> "scala",
+      "api:api/problem/ProblemJson.scala" -> "scalajs"
+    )
+    private val Relayed = "\\bRelayed\\s*\\(".r
 
     /** Is `at` inside a `case … =>` pattern on its line (a match, not a construction)? */
     private def inPattern(code: String, at: Int): Boolean =
