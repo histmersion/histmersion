@@ -1,0 +1,375 @@
+package com.histmersion
+package api
+package problem
+import com.histmersion.util.nonempty.NonEmptyVector
+import com.histmersion.util.json.RawJson
+
+import util.problem.{External, Problem}
+import util.problem.Problem.*
+import Column.stored
+import util.problem.Text.sentence
+import json.NewtypeCodecs.{list, problemCodec}
+
+/** A column's text read back on the JVM: every case's frozen sentence reads as the case, in a column and written bare in
+  * a record by an earlier version. The browser reads no column ([[SentenceReaders]]).
+  */
+class ReadBackSuite extends munit.FunSuite:
+
+  examples.foreach { p =>
+    test(s"${p.group.productPrefix}.${p.productPrefix}: its frozen stored sentence reads back as the case"):
+      assertEquals(Column.read(p.stored), p)
+  }
+
+  test("a problem written bare by an earlier version reads through the column reader"):
+    // the frozen sentence of a case reads as that case, which is written typed from then on
+    assertEquals(RawJson.decode[Problem]("\"interrupted\""), Right(Problem.Run.Interrupted))
+    assertEquals(
+      RawJson.decode[List[Problem]]("[\"cancelled by Person\"]"),
+      Right(List(Run.Cancelled(Run.Actor.Person)))
+    )
+
+  test(
+    "the code words of every enum with fields read back from a column; no English sentence shows a type's code name"
+  ):
+    val reported = External.Reported("x: y")
+    val variants: Vector[Problem] =
+      Vector(Io.Damage.Checksum, Io.Damage.Truncated, Io.Damage.Undecodable)
+        .map(Io.Corrupt(Io.Format.Tar, Where("entry 3"), _)) ++
+        Vector(Config.Fault.Empty, Config.Fault.NoSecret, Config.Fault.Unset(SettingKey("HOME")))
+          .map(Config.Setting(SettingKey("a.b"), _)) ++
+        Vector(
+          Config.Fault.Malformed(Raw("x y")),
+          Config.Fault.Unknown(Raw("z")),
+          Config.Fault.Conflicts(SettingKey("c.d")),
+          Config.Fault.Block,
+          Config.Fault.WrongKind(Config.ValueKind.Number, Config.ValueKind.Text),
+          Config.Fault.Unreadable(reported),
+          Config.Fault.Undeclared,
+          Config.Fault.NotInDefaults,
+          Config.Fault.OutsideRoot,
+          Config.Fault.Credential(None),
+          Config.Fault.Credential(Some(SettingKey("ANTHROPIC_API_KEY"))),
+          Config.Fault.Rejected(Upstream.Name("europeana"), Upstream.Status(401)),
+          Config.Fault.Literal,
+          Config.Fault.Substituted,
+          Config.Fault.Included(Io.Path("/etc/histmersion/extra.conf")),
+          Config.Fault.NotReadBack,
+          Config.Fault.KeyNeeded(External.PluginSaid("an api.data.gov key"))
+        )
+          .map(Config.Setting(SettingKey("a.b"), _)) ++
+        Vector(
+          Invalid.Form.Bare,
+          Invalid.Form.EmptyValue,
+          Invalid.Form.EnvName(Raw("1X")),
+          Invalid.Form.NoEntry(Raw("keepassxc")),
+          Invalid.Form.VaultName(Raw("Bad Vault"))
+        ).map(Invalid.Reference.here(_)) ++
+        Vector(
+          Io.Damage.Unreadable(reported),
+          Io.Damage.Newer(Raw("2"), Raw("1")),
+          Io.Damage.Schema(Count(54L), Count(53L))
+        ).map(Io.Corrupt(Io.Format.Json, Where("kit.json"), _)) ++
+        Vector(
+          Io.Fault.Missing,
+          Io.Fault.Omitted,
+          Io.Fault.Unlisted,
+          Io.Fault.Repeated,
+          Io.Fault.Foreign,
+          Io.Fault.Ahead(Io.Path("manifest.json")),
+          Io.Fault.Unreferenced,
+          Io.Fault.Dangling(Count(1L)),
+          Io.Fault.Dangling(Count(2L))
+        ).map(Io.Entry(Io.Format.Bundle, Io.Path("blobs/ab12"), _)) ++
+        Io.Measure.values.toVector.map(m =>
+          Io.Entry(Io.Format.Bundle, Io.Path("blobs/"), Io.Fault.Differs(m, Raw("ab12"), Raw("cd34")))
+        ) ++
+        NotFound.Scope.values.toVector.map(
+          NotFound.Dangling(TypeName("com.histmersion.api.exchange.Bundle.Kind.Place"), Raw("x_1"), Where("event e"), _)
+        ) ++
+        Vector(
+          Conflict.Hold.Open,
+          Conflict.Hold.SameWork(Raw("anthony2006"), Raw("title and year")),
+          Conflict.Hold.Folds(Raw("S-1a2b"), Raw("map:anthony2006"), Raw("anthony2006")),
+          Conflict.Hold.Merges,
+          Conflict.Hold.Renames,
+          Conflict.Hold.Renumbers,
+          Conflict.Hold.Carries(Raw("keep-right")),
+          Conflict.Hold.Stale,
+          Conflict.Hold.Conditional(Raw("S-1a2b"), Raw("keep-left"), None),
+          Conflict.Hold.Conditional(Raw("S-1a2b"), Raw("keep-left"), Some(Raw("open"))),
+          Conflict.Hold.Collides,
+          Conflict.Hold.PlanChanged(Raw("7c41e9a2")),
+          Conflict.Hold.TextNotSent(Raw("file")),
+          Conflict.Hold.CitekeyOfAnother(Raw("anthony2006")),
+          Conflict.Hold.CitekeyTaken(Raw("guterbock1997"))
+        ).map(Conflict.Held(Where("S-3c1e7a2b source anthony2007 — same work?"), _)) ++
+        Vector(
+          Conflict.Control.OnePiece(Raw("backup")),
+          Conflict.Control.Unrecognised,
+          Conflict.Control.Ended,
+          Conflict.Control.AlreadyPaused,
+          Conflict.Control.NotStarted,
+          Conflict.Control.PausedBeforeRestart,
+          Conflict.Control.NotPaused
+        ).map(Conflict.Job(Raw("j: 1"), Conflict.State("running"), _)) ++
+        Io.Format.values.toVector.map(Io.Corrupt(_, Where("x"), Io.Damage.Checksum)) ++
+        Config.Capability.values.toVector.map(Config.Unavailable(_)) ++
+        Vector(
+          Plugin.Fault.Missing,
+          Plugin.Fault.NullComponent,
+          Plugin.Fault.BadDescriptor,
+          Plugin.Fault.VersionMismatch,
+          Plugin.Fault.Duplicate,
+          Plugin.Fault.Threw(reported),
+          Plugin.Fault.SpiMismatch(Raw("7"), Raw("1")),
+          Plugin.Fault.ForeignSpi(Raw("2")),
+          Plugin.Fault.MissingClass(Raw("org.example.Lib")),
+          Plugin.Fault.SignerChanged(Plugin.Signer("ABCD 1234"), Plugin.Signer("EF01")),
+          Plugin.Fault.NoProvider,
+          Plugin.Fault.Taken(Raw("other.jar"))
+        ).map(Plugin.Load(Plugin.Id("p"), _)) ++
+        Vector(
+          Plugin.Retrieval.NoVault,
+          Plugin.Retrieval.NoEntry,
+          Plugin.Retrieval.EmptyValue,
+          Plugin.Retrieval.Locked,
+          Plugin.Retrieval.Failed(External.Stderr("locked")),
+          Plugin.Retrieval.Blank(Raw("db/entry")),
+          Plugin.Retrieval.Absent(Raw("op://vault/item")),
+          Plugin.Retrieval.Unread(Raw("db/entry"), Io.ExitCode(1), External.Stderr("Error: locked")),
+          Plugin.Retrieval.NoKey(Vector(Raw("2"), Raw("1:123")), Vector.empty),
+          Plugin.Retrieval.NoKey(Vector(Raw("2:9")), Vector(Raw("123"), Raw("456"))),
+          Plugin.Retrieval.Key(Raw("2:9"), Plugin.Attempt.NotTouched, None),
+          Plugin.Retrieval.Key(Raw("1"), Plugin.Attempt.WrongCredentials, Some(External.Stderr("Error: invalid")))
+        ).map(Plugin.Vault(Plugin.Id("v"), _)) ++
+        Plugin.Attempt.values.toVector.map(a =>
+          Plugin.Vault(Plugin.Id("v"), Plugin.Retrieval.Key(Raw("2"), a, None))
+        ) ++
+        Vector(Run.Block.SpendCap, Run.Block.Draining, Run.Block.OutsideWindow, Run.Block.Waiting)
+          .map(Run.Blocked(_)) ++
+        Vector(
+          Config.Unpriced(Run.Model("local:llama"), None),
+          Config.Unpriced(Run.Model("openai/gpt-6"), Some(Config.Metered.Opencode)),
+          Invalid.Undeclared.here(Field("x"), Vector.empty),
+          Invalid.Wrapped.here(TypeName("a.B"), Raw("FeatureCollection"), Field("features"))
+        ) ++
+        Conflict.Activity.values.toVector.flatMap(a => Vector(Run.CutShort(a), Run.Unrecorded(a))) ++
+        Vector(
+          Content.Requirement.NoYearZero,
+          Content.Requirement.CitesNoSource,
+          Content.Requirement.UnknownCitekey,
+          Content.Requirement.OutsidePeriod,
+          Content.Requirement.StandIn,
+          Content.Requirement.ExactTitle,
+          Content.Requirement.ReplaceText,
+          Content.Requirement.AnchorInArticle,
+          Content.Requirement.QuoteGiven,
+          Content.Requirement.QuoteInRecords(Vector(Raw("anthony2007"), Raw("haak2015"))),
+          Content.Requirement.KnownCitekey(Raw("Anthony 2007")),
+          Content.Requirement.ListedCandidate(Raw("10.1000/invented")),
+          Content.Requirement.EvidenceGiven,
+          Content.Requirement.StatusNamed,
+          Content.Requirement.NotUnassessed,
+          Content.Requirement.EdgeTarget,
+          Content.Requirement.NoSelfEdge,
+          Content.Requirement.PositiveBce(Raw("-3300")),
+          Content.Requirement.CeFromOne(Raw("0")),
+          Content.Requirement.Calibrated(Raw("3270")),
+          Content.Requirement.StartBeforeEnd(Raw("-1500"), Raw("-1600")),
+          Content.Requirement.HistoricalReckoning,
+          Content.Requirement.YearWithin(Raw("3000000")),
+          Content.Requirement.WithinSourcePeriod(Raw("-3000"), Raw("-2900"), Raw("-1700"), Raw("-1200")),
+          Content.Requirement.LinkTarget(Raw("ie-migration")),
+          Content.Requirement.UnescapedLinks,
+          Content.Requirement.SettingsGiven,
+          Content.Requirement.KnownItems(Vector(Raw("goal one"), Raw("ie-migrations"))),
+          Content.Requirement.ItemsNamed,
+          Content.Requirement.HoldUntil,
+          Content.Requirement.DateGiven(Raw("next week")),
+          Content.Requirement.PriorityWithin(Raw("25"), Raw("20")),
+          Content.Requirement.ExistingItems,
+          Content.Requirement.FilterSelects,
+          Content.Requirement.FilterRationale,
+          Content.Requirement.PlanRationale,
+          Content.Requirement.ArticleTitle,
+          Content.Requirement.ArticleFilter,
+          Content.Requirement.ArticlesGiven,
+          Content.Requirement.SummaryGiven,
+          Content.Requirement.StatusEvidence,
+          Content.Requirement.NotesGiven,
+          Content.Requirement.ClaimGiven,
+          Content.Requirement.NoClaim,
+          Content.Requirement.QuoteInRecord(Raw("anthony2007")),
+          Content.Requirement.ReasonGiven,
+          Content.Requirement.StatusUnstated(Raw("haak2015"), Raw("contested")),
+          Content.Requirement.QuoteInWindow(Share(0.42)),
+          Content.Requirement.CenturyAsYear(Raw("-11"), Count(11L)),
+          Content.Requirement.PointerPhrase(Raw("this date")),
+          Content.Requirement.PlacesResolve(
+            Count(1L),
+            Count(3L),
+            Count(50L),
+            Vector(Content.Unplaced(Raw("eastern shipping lanes"), Count(2L)), Content.Unplaced(Raw("x: y"), Count(3L)))
+          ),
+          Content.Requirement.TooManyArticles(Count(8L), Count(11L)),
+          Content.Requirement.FilterTooNarrow(Raw("search {topics: [\"tin\"]}"), Count(1L), Count(5L)),
+          Content.Requirement.FilterTooNarrow(Raw("search {query: \"it's: done 3/4\"}"), Count(3L), Count(5L)),
+          Content.Requirement.FilterTooBroad(Raw("search {query: \"bronze\"}"), Count(900L), Count(400L)),
+          Content.Requirement
+            .FilterMisses(
+              Raw("search {tags: [\"tin\"]}"),
+              Count(2L),
+              Count(5L),
+              Count(40L),
+              Count(60L),
+              Vector(Raw("a1"), Raw("b2"))
+            ),
+          Content.Requirement.FilterMisses(
+            Raw("search {tags: ['x' y]}"),
+            Count(0L),
+            Count(1L),
+            Count(0L),
+            Count(60L),
+            Vector.empty
+          ),
+          Content.Requirement.TextGiven,
+          Content.Requirement.KnownHeading(Raw("Open: questions")),
+          Content.Requirement.NoSourcesCited,
+          Content.Requirement.ParagraphCited(
+            Raw(
+              "Tin came by sea, 'it' says: the ingots of Uluburun weigh about ten tonnes, and their lead isotopes point to the Taurus and beyond"
+            )
+          ),
+          Content.Requirement.StillUncited(Raw("Tin came by sea.")),
+          Content.Requirement.SectionPresent(Vector(Raw("unresolved"), Raw("open questions"))),
+          Content.Requirement.NoFiller(Raw("it is worth noting, delve (+2 more)")),
+          Content.Requirement.ClaimTabled(Raw("anthony2007")),
+          Content.Requirement.TitleGiven,
+          Content.Requirement.ArticleSummary,
+          Content.Requirement.NotUsedGenerated,
+          Content.Requirement.MethodGenerated,
+          Content.Requirement.NotUsedHandWritten,
+          Content.Requirement.MethodHandWritten,
+          Content.Requirement.ReasonForTabled(Raw("haak2015")),
+          Content.Requirement.ReasonForUncited(Raw("haak2015")),
+          Content.Requirement.ReasonText(Raw("haak2015")),
+          Content.Requirement.TabledAccounted(Raw("knapp2016_tin")),
+          Content.Requirement.BodyGiven,
+          Content.Requirement
+            .FormatClean(Raw("unclosed-fence"), Raw("a code fence is not closed: 'x' y"), Raw("```a b")),
+          Content.Requirement.FormatClean(Raw("bad-table"), Raw("a row has 3 cells, the header 2"), Raw("")),
+          Content.Requirement.SubGoalTitle(Raw("tin-trade")),
+          Content.Requirement.QueryGiven,
+          Content.Requirement.QueryWithin(
+            Raw(
+              "bronze age tin trade routes 'east' of the Taurus, from Afghanistan to the Aegean, by caravan and by sea"
+            ),
+            Count(60L)
+          ),
+          Content.Requirement.DoiGiven(Raw("doi: 10/x")),
+          Content.Requirement.TooManySubGoals(Count(5L), Count(7L)),
+          Content.Requirement.TooManyQueries(Count(8L), Count(9L)),
+          Content.Requirement.TooManyWorks(Count(12L), Count(20L)),
+          Content.Requirement.PlanGiven,
+          Content.Requirement.GoalPlanRationale
+        ).map(Content.Proposal(_, Where("findings"))) ++
+        Vector(
+          Content.Answer(Content.Requirement.TooManyWorks(Count(12L), Count(20L))),
+          Content.Answer(Content.Requirement.FormatClean(Raw("r"), Raw("m: n"), Raw("a 1:b"))),
+          Content.Proposal(Content.Requirement.ParagraphCited(Raw("a: b")), Where("self-check"))
+        ) ++
+        Vector(
+          Content.Proposal(Content.Requirement.QuoteInRecords(Vector(Raw("a: b"))), Where("proposal for x: y")),
+          Content.Proposal(Content.Requirement.StartBeforeEnd(Raw("1 in 2"), Raw("3")), Where("period"))
+        ) ++
+        Vector(Io.Ending.TimedOut(Millis(5L)), Io.Ending.NotStarted(reported)).map(Io.Process(Io.Tool("pg_dump"), _)) ++
+        Io.Access.values.toVector.map(Io.File(_, Io.Path("/a b/c"), reported)) ++
+        Vector(
+          Io.Kind.File,
+          Io.Kind.Directory,
+          Io.Kind.Present,
+          Io.Kind.Absent,
+          Io.Kind.Executable,
+          Io.Kind.Listed,
+          Io.Kind.OnPath,
+          Io.Kind.Inside(Io.Path("/srv/corpus"))
+        ).map(Io.Wrong(Io.Path("/x"), _)) ++
+        Conflict.Activity.values.toVector.map(Conflict.Busy(_)) ++
+        Invalid.Exclusion.values.toVector
+          .map(Invalid.Inconsistent.here(NonEmptyVector.of(Field("a"), Field("b")), _)) ++
+        Vector(
+          Plugin.Refusal.NoLicence,
+          Plugin.Refusal.NoImage,
+          Plugin.Refusal.NoName,
+          Plugin.Refusal.NoLocation,
+          Plugin.Refusal.NoDate,
+          Plugin.Refusal.Duplicate,
+          Plugin.Refusal.Restricted,
+          Plugin.Refusal.LicenceNotAllowed(Raw("cc-by-nc")),
+          Plugin.Refusal.NotOpen(Field("share_license_status"), Vector.empty),
+          Plugin.Refusal.NoOpenImage(Field("usage.access"), Vector(Raw("Usage conditions apply"), Raw("CC BY")))
+        ).map(Plugin.Rejected(Plugin.Id("p"), Raw("item 1"), _)) ++
+        Upstream.Shape.values.toVector.map(
+          Upstream.BadReply.here(Upstream.Name("x"), Upstream.Url("https://x.example"), _, External.Reported("eof"))
+        ) ++
+        Refused.Rule.values.toVector.map(Refused.Policy(_)) ++
+        Vector(
+          Invalid.Rule.CronFields(Raw("every day"), Vector(Raw("@daily"), Raw("@hourly"))),
+          Invalid.Rule.CronField(Raw("*/0 * * * *"), Invalid.CronPart.Minute, Invalid.CronFlaw.Step(Raw("0"))),
+          Invalid.Rule.CronField(Raw("0 1/2/3 * * *"), Invalid.CronPart.Hour, Invalid.CronFlaw.Slashes(Raw("1/2/3"))),
+          Invalid.Rule
+            .CronField(Raw("0 0 9-3 * *"), Invalid.CronPart.DayOfMonth, Invalid.CronFlaw.Backwards(Raw("9-3"))),
+          Invalid.Rule.CronField(Raw("0 0 * 1-2-3 *"), Invalid.CronPart.Month, Invalid.CronFlaw.NotRange(Raw("1-2-3"))),
+          Invalid.Rule.CronField(
+            Raw("0 0 * * 8"),
+            Invalid.CronPart.DayOfWeek,
+            Invalid.CronFlaw.NotNumber(Raw("8"), Count(0L), Count(7L))
+          ),
+          Invalid.Rule.CronNeverFires(Raw("0 0 31 2 *")),
+          Invalid.Rule.CronTooOften(Raw("* * * * *"), Count(1L), Count(5L)),
+          Invalid.Rule.ZoomWithin(Count(23L), Count(14L)),
+          Invalid.Rule.TileWithin(Count(9L), Count(2L), Count(3L)),
+          Invalid.Rule.IdentifierGiven,
+          Invalid.Rule.IdentifierKind(Raw("Gimbutas 1956")),
+          Invalid.Rule.ActivityPage(Raw("yesterday")),
+          Invalid.Rule.ActivityPageTime(Raw("noon~job:7")),
+          Invalid.Rule.EventCatalogue(Raw("usgs"), Vector(Raw("gvp"), Raw("noaa"), Raw("wikidata"))),
+          Invalid.Rule.CitekeyUnchanged(Raw("anthony2007")),
+          Invalid.Rule.CitekeyLinkShaped(Raw("Anthony-2007")),
+          Invalid.Rule.AssetBase64(Raw("fig1.png"), External.Reported("Illegal base64 character 2d")),
+          Invalid.Rule.AssetEmpty(Raw("fig1.png")),
+          Invalid.Rule.AssetBytes(Raw("fig1.png"), Count(9000000L), Count(5000000L)),
+          Invalid.Rule.RunsCompared,
+          Invalid.Rule.RunRepeated,
+          Invalid.Rule.RunsPipeline(Raw("1a2b"), Raw("enrich"), Raw("3c4d"), Raw("review")),
+          Invalid.Rule.RunsTarget(Raw("1a2b"), Raw("anthony2007"), Raw("3c4d"), Raw("haak2015")),
+          Invalid.Rule.QueryGiven,
+          Invalid.Rule.RegexTime(Millis(2000L)),
+          Invalid.Rule.RegexValid(External.Reported("Unclosed group"), Some(Count(7L)), Raw("(bronze")),
+          Invalid.Rule.RegexValid(External.Reported("Dangling meta character '*'"), None, Raw("*tin | copper"))
+        ).map(Invalid.Broken.here(_)) ++
+        Run.PauseReason.values.toVector.map(Run.Paused(_, None)) ++
+        Vector(
+          Invalid.Unknown.here(TypeName("a.B"), Raw("x"), Vector.empty),
+          Invalid.Unreadable.here(TypeName("a.B"), Raw("x"), Vector.empty),
+          Invalid.OutOfRange.here(TypeName("a.B"), Raw("x"), Invalid.Bounds(None, Some(Raw("9")))),
+          Conflict.WrongState(TypeName("a.B"), Raw("k"), Conflict.State("done"), Vector.empty),
+          Run.NoModel(Run.Role("writer"), Vector.empty),
+          Refused.Quota(Refused.Limit.RateLimit, Refused.Amount(1.5), Refused.Amount(2.5), None)
+        ) ++ {
+          val (met, url, at) =
+            (Upstream.Name("met"), Upstream.Url("https://met.example/objects/7"), Vector(Field("object 7")))
+          Vector(
+            Upstream.Http(met, url, Upstream.Status(404), External.ReplyExcerpt("gone"), at),
+            Upstream.Unreachable(met, url, External.Reported("reset"), at),
+            Upstream.Challenged(met, url, Upstream.Status(403), at),
+            Upstream.Limited(met, None),
+            Upstream.Timeout(met, url, Millis(5L), at),
+            Upstream.BadReply(met, url, Upstream.Shape.Json, External.Reported("eof"), at)
+          )
+        }
+    variants.foreach(v => assertEquals(Column.read(v.stored), v, v.stored))
+    (examples ++ variants).filterNot(_.group == Group.Stored).map(_.sentence).foreach { s =>
+      assertEquals(testsupport.TypeNamesShown.in(s), None, s"a type's code name in: $s")
+    }
+
