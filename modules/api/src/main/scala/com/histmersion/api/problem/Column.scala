@@ -60,10 +60,12 @@ object Column:
       case Conflict.Referenced(t, key, by, n)     => s"$t '$key' is referred to by $n $by"
       case Refused.Policy(rule)                   => s"refused: ${rule.productPrefix}"
       case Refused.Quota(limit, used, cap, at)    => s"${limit.productPrefix} is spent: $used of $cap${until(at)}"
-      case Refused.Disabled(feature, setting)     => s"$feature is switched off by $setting"
+      case Refused.Disabled(feature, setting, v)  =>
+        s"$feature is switched off by $setting${v.fold("")(variable => s"; $variable=true switches it on")}"
       case Upstream.Http(name, url, st, body, at) => s"${path(at)}$name answered HTTP $st at $url — $body"
       case Upstream.Challenged(name, url, st, at) => s"${path(at)}$name challenged with HTTP $st at $url"
       case Upstream.Limited(name, at)             => s"$name is limited${until(at)}"
+      case Upstream.Unasked(why)                  => s"$NotAskedThisSweep${why.stored}"
       case Upstream.Unreachable(name, url, r, at) => s"${path(at)}cannot reach $name at $url — $r"
       case Upstream.Timeout(name, url, after, at) => s"${path(at)}$name did not answer at $url within $after ms"
       case Upstream.BadReply(name, url, s, r, at) => s"${path(at)}$name's answer at $url is not ${s.productPrefix} — $r"
@@ -142,6 +144,9 @@ object Column:
 
   private val CycleArrow = " → "
 
+  /** What a sweep's watch stores when its index was left out of the sweep, before why. */
+  private val NotAskedThisSweep = "not asked this sweep — "
+
   private val HoldSeparator = " | "
   private val ListSeparator = ", "
 
@@ -176,14 +181,17 @@ object Column:
         case Invalid.Rule.Base64Decodable(reported)               => Vector(s"$reported")
         case Invalid.Rule.RegionWithin(x, y, w, h, width, height) =>
           Vector(s"$x", s"$y", s"$w", s"$h", s"$width", s"$height")
+        case Invalid.Rule.HintConfig(allowed)               => Vector(allowed.mkString(ListSeparator))
+        case Invalid.Rule.RoundsWithin(stated, least, cap)  => Vector(s"$stated", s"$least", s"$cap")
+        case Invalid.Rule.RoleUsed(owner, name, role, used) =>
+          Vector(owner.productPrefix, s"$name", s"$role", used.mkString(ListSeparator))
         case Invalid.Rule.IdentifierGiven | Invalid.Rule.RunsCompared | Invalid.Rule.RunRepeated |
             Invalid.Rule.QueryGiven | Invalid.Rule.UpstreamRecord | Invalid.Rule.UploadGiven |
             Invalid.Rule.PathOrBase64 | Invalid.Rule.ServerSees | Invalid.Rule.OriginalForReocr |
             Invalid.Rule.OriginalForDownload | Invalid.Rule.Frontmatter | Invalid.Rule.NoteCitekey |
             Invalid.Rule.FilterRecorded | Invalid.Rule.ReviewLibraryWide | Invalid.Rule.EnrichLibraryWide |
             Invalid.Rule.SeedGoal | Invalid.Rule.WatchGoal | Invalid.Rule.EnrichCron | Invalid.Rule.HintSettings |
-            Invalid.Rule.HintUntil | Invalid.Rule.HintTargets | Invalid.Rule.CronGiven | Invalid.Rule.ChainGiven |
-            Invalid.Rule.HintConfig =>
+            Invalid.Rule.HintUntil | Invalid.Rule.HintTargets | Invalid.Rule.CronGiven | Invalid.Rule.ChainGiven =>
           Vector.empty
       (rule.productPrefix +: held).mkString(HoldSeparator)
 
@@ -545,25 +553,31 @@ object Column:
             bytes <- Count.read(b)
             limit <- Count.read(l)
           yield InlineBytes(bytes, limit)
-        case Vector("Base64Decodable", r)               => Some(Base64Decodable(External.Reported.of(r)))
-        case Vector("PathOrBase64")                     => Some(PathOrBase64)
-        case Vector("ServerSees")                       => Some(ServerSees)
-        case Vector("OriginalForReocr")                 => Some(OriginalForReocr)
-        case Vector("OriginalForDownload")              => Some(OriginalForDownload)
-        case Vector("Frontmatter")                      => Some(Frontmatter)
-        case Vector("NoteCitekey")                      => Some(NoteCitekey)
-        case Vector("FilterRecorded")                   => Some(FilterRecorded)
-        case Vector("ReviewLibraryWide")                => Some(ReviewLibraryWide)
-        case Vector("EnrichLibraryWide")                => Some(EnrichLibraryWide)
-        case Vector("SeedGoal")                         => Some(SeedGoal)
-        case Vector("WatchGoal")                        => Some(WatchGoal)
-        case Vector("EnrichCron")                       => Some(EnrichCron)
-        case Vector("HintSettings")                     => Some(HintSettings)
-        case Vector("HintUntil")                        => Some(HintUntil)
-        case Vector("HintTargets")                      => Some(HintTargets)
-        case Vector("CronGiven")                        => Some(CronGiven)
-        case Vector("ChainGiven")                       => Some(ChainGiven)
-        case Vector("HintConfig")                       => Some(HintConfig)
+        case Vector("Base64Decodable", r)    => Some(Base64Decodable(External.Reported.of(r)))
+        case Vector("PathOrBase64")          => Some(PathOrBase64)
+        case Vector("ServerSees")            => Some(ServerSees)
+        case Vector("OriginalForReocr")      => Some(OriginalForReocr)
+        case Vector("OriginalForDownload")   => Some(OriginalForDownload)
+        case Vector("Frontmatter")           => Some(Frontmatter)
+        case Vector("NoteCitekey")           => Some(NoteCitekey)
+        case Vector("FilterRecorded")        => Some(FilterRecorded)
+        case Vector("ReviewLibraryWide")     => Some(ReviewLibraryWide)
+        case Vector("EnrichLibraryWide")     => Some(EnrichLibraryWide)
+        case Vector("SeedGoal")              => Some(SeedGoal)
+        case Vector("WatchGoal")             => Some(WatchGoal)
+        case Vector("EnrichCron")            => Some(EnrichCron)
+        case Vector("HintSettings")          => Some(HintSettings)
+        case Vector("HintUntil")             => Some(HintUntil)
+        case Vector("HintTargets")           => Some(HintTargets)
+        case Vector("CronGiven")             => Some(CronGiven)
+        case Vector("ChainGiven")            => Some(ChainGiven)
+        case Vector("HintConfig", allowed)   => Some(HintConfig(raws(allowed)))
+        case Vector("RoundsWithin", s, l, c) =>
+          for
+            stated <- Count.read(s)
+            least <- Count.read(l)
+            cap <- Count.read(c)
+          yield RoundsWithin(stated, least, cap)
         case Vector("RegionWithin", x, y, w, h, wd, ht) =>
           for
             cx <- Count.read(x)
@@ -650,6 +664,7 @@ object Column:
     private val SwitchedOff = "(?s)^(.+) is switched off by (\\S+)$".r
     private val Answered = s"(?s)^$Prefix(\\S+) answered HTTP (\\d+) at (\\S+) — (.*)$$".r
     private val ChallengedAt = s"(?s)^$Prefix(\\S+) challenged with HTTP (\\d+) at (\\S+)$$".r
+    private val NotAsked = s"(?s)^$NotAskedThisSweep(.*)$$".r
     private val LimitedTill = "^(\\S+) is limited(?: until (\\S+))?$".r
     private val CannotReach = s"(?s)^${Prefix}cannot reach (\\S+) at (\\S+) — (.*)$$".r
     private val NoAnswer = s"(?s)^$Prefix(\\S+) did not answer at (\\S+) within (\\d+) ms$$".r
@@ -996,7 +1011,7 @@ object Column:
       },
       {
         case SwitchedOff(feature, setting) =>
-          Some(Refused.Disabled(Refused.Feature(s"$feature"), SettingKey(s"$setting")))
+          Some(Refused.Disabled(Refused.Feature(s"$feature"), SettingKey(s"$setting"), None))
         case _ => None
       },
       {
@@ -1015,6 +1030,10 @@ object Column:
             .read(status)
             .map(Upstream.Challenged(Upstream.Name(s"$name"), Upstream.Url(s"$url"), _, pathOf(at)))
         case _ => None
+      },
+      {
+        case NotAsked(why) => Some(Upstream.Unasked(read(why)))
+        case _             => None
       },
       {
         case LimitedTill(name, at) => untilOf(at).map(Upstream.Limited(Upstream.Name(s"$name"), _))

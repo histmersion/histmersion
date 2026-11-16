@@ -9,6 +9,7 @@ import java.sql.{PreparedStatement, ResultSet, SQLException}
 import util.problem.Problem
 import com.histmersion.api.problem.Column
 import com.histmersion.api.problem.Column.stored
+import com.histmersion.api.problem.Answer.relayed
 
 /** The column codec of every newtype, from its base type's. A value its constraint refuses fails the read, naming the
   * column and the value: the stored data breaks a rule the code relies on, and that should be loud. NULL passes
@@ -51,13 +52,15 @@ object NewtypeColumns:
 
   /** A problem column holds the problem's frozen stored sentence ([[Column]]) and reads back through it: a text no case
     * writes (an older version's) is `Stored.Unrecognised` and writes back bare. An unclassified problem is kept as its
-    * words alone, so it reads back as the text it was.
+    * words alone, so it reads back as the text it was; so is the unclassified why of an index left out of a sweep (a
+    * watch's `last_error`: `not asked this sweep — <why>`, as the versions before the typed problem stored it).
     */
   given problemColumn: DbCodec[Problem] = DbCodec.StringCodec.biMap(
     text => Option(text).map(Column.read).orNull,
     problem =>
       Option(problem).map {
-        case Problem.Unclassified(text) => s"$text"
-        case other                      => other.stored
+        case Problem.Unclassified(text)                          => s"$text"
+        case Problem.Upstream.Unasked(why: Problem.Unclassified) => Problem.Upstream.Unasked(why.relayed).stored
+        case other                                               => other.stored
       }.orNull
   )

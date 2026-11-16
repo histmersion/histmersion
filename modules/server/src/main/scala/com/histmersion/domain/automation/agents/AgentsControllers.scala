@@ -433,7 +433,11 @@ final class AgentsControllers(
       Left(
         Api.Error(
           Problem.Refused
-            .Disabled(Problem.Refused.Feature("the embedded agent runtime"), Problem.SettingKey("agents.enabled"))
+            .Disabled(
+              Problem.Refused.Feature("the embedded agent runtime"),
+              Problem.SettingKey("agents.enabled"),
+              Some(Problem.SettingKey("HISTMERSION_AGENTS_ENABLED"))
+            )
         )
       )
 
@@ -829,10 +833,13 @@ final class AgentsControllers(
             roles.contains(r),
             (),
             Api.Error(
-              Problem.Invalid.Unknown(
-                Problem.TypeName.of(Role.Wire),
-                Problem.Raw.of(r.wire),
-                roles.toVector.map(v => Problem.Raw.of(v.wire)),
+              Problem.Invalid.Broken(
+                Problem.Invalid.Rule.RoleUsed(
+                  Problem.Invalid.RoleOwner.Pipeline,
+                  Problem.Raw.of(p.wire),
+                  Problem.Raw.of(r.wire),
+                  roles.toVector.map(v => Problem.Raw.of(v.wire))
+                ),
                 Vector(Problem.Field("--model-for"))
               )
             )

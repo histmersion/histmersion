@@ -15,7 +15,13 @@ import json.NewtypeCodecs.{list, problemCodec}
   */
 class ReadBackSuite extends munit.FunSuite:
 
-  examples.filter(_.group != Group.Relayed).foreach { p =>
+  /** A relayed problem is known by its sentence only, inside another case too: it reads back as that text. */
+  private def relayed(p: Problem): Boolean = p match
+    case _: Relayed                   => true
+    case Upstream.Unasked(_: Relayed) => true
+    case _                            => false
+
+  examples.filterNot(relayed).foreach { p =>
     test(s"${p.group.productPrefix}.${p.productPrefix}: its frozen stored sentence reads back as the case"):
       assertEquals(Column.read(p.stored), p)
   }
@@ -46,6 +52,38 @@ class ReadBackSuite extends munit.FunSuite:
       val read = Column.read(text)
       assert(read.group != Group.Stored, s"$text reads as $read")
       assertEquals(read.stored, text)
+    }
+
+  test("a watch's last error stored as 'not asked this sweep — <why>' reads as the index left out, and writes back"):
+    // the text the versions before the typed problem stored, and the one stored now while CORE's why is unclassified
+    val text = "not asked this sweep — CORE's daily budget for searches is spent (6 of 6 tokens today, UTC; " +
+      "acquire.core.search-daily-tokens)"
+    val read = Upstream.Unasked(
+      Stored.Unrecognised(
+        Stored.Text(
+          "CORE's daily budget for searches is spent (6 of 6 tokens today, UTC; acquire.core.search-daily-tokens)"
+        )
+      )
+    )
+    assertEquals(Column.read(text), read)
+    assertEquals(Column.read(text).stored, text)
+
+  test("a refusal no column stores, whose reader would rebuild its raw input from text, reads back as the text it is"):
+    // RoleUsed and a Disabled that names its environment variable are only ever answered, never stored; their stored
+    // text writes back byte for byte all the same
+    Vector[Problem](
+      Invalid.Broken(
+        Invalid.Rule.RoleUsed(Invalid.RoleOwner.Pipeline, Raw("enrich-source"), Raw("skeptic"), Vector(Raw("writer"))),
+        Vector(Field("--model-for"))
+      ),
+      Refused.Disabled(
+        Refused.Feature("the embedded agent runtime"),
+        SettingKey("agents.enabled"),
+        Some(SettingKey("HISTMERSION_AGENTS_ENABLED"))
+      )
+    ).foreach { p =>
+      assertEquals(Column.read(p.stored).group, Group.Stored)
+      assertEquals(Column.read(p.stored).stored, p.stored)
     }
 
   test("a problem written bare by an earlier version reads through the column reader"):
@@ -401,7 +439,8 @@ class ReadBackSuite extends munit.FunSuite:
           Invalid.Rule.HintTargets,
           Invalid.Rule.CronGiven,
           Invalid.Rule.ChainGiven,
-          Invalid.Rule.HintConfig
+          Invalid.Rule.HintConfig(Vector(Raw("prioritise"), Raw("hold"), Raw("skip"))),
+          Invalid.Rule.RoundsWithin(Count(9L), Count(2L), Count(6L))
         ).map(Invalid.Broken.here(_)) ++
         Invalid.Purpose.values.toVector.map(p => Invalid.Broken(Invalid.Rule.DoiRecorded(p), Vector(Field("'k'")))) ++
         Vector(
@@ -430,6 +469,10 @@ class ReadBackSuite extends munit.FunSuite:
             Upstream.Unreachable(met, url, External.Reported("reset"), at),
             Upstream.Challenged(met, url, Upstream.Status(403), at),
             Upstream.Limited(met, None),
+            Upstream.Unasked(Upstream.Limited(met, None)),
+            Upstream.Unasked(
+              Refused.Quota(Refused.Limit.ProviderQuota, Refused.Amount(6.5), Refused.Amount(6.5), None)
+            ),
             Upstream.Timeout(met, url, Millis(5L), at),
             Upstream.BadReply(met, url, Upstream.Shape.Json, External.Reported("eof"), at)
           )

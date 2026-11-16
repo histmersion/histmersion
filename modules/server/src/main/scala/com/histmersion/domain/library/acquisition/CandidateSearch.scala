@@ -128,7 +128,7 @@ final class CandidateSearch(
           leftOut.get(i.name).orElse(i.unavailable.map(_ -> 0)) match
             case Some((why, n)) =>
               leftOut.update(i.name, (why, n + 1))
-              Left(why)
+              Left(Problem.Upstream.Unasked(why))
             case None =>
               val got = i.search(Search.Query(w.subject.value), since, ScholarlyIndex.Limit(c.perWatch.value))
               got.left.foreach(_ => i.unavailable.foreach(why => leftOut.update(i.name, (why, 0))))

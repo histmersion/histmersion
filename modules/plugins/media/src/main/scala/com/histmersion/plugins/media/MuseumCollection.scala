@@ -29,7 +29,8 @@ abstract class MuseumCollection(
     Either.cond(
       conf.enabled.value,
       (),
-      Problem.Refused.Disabled(Problem.Refused.Feature(s"$provider"), Problem.SettingKey(s"histmersion.$key.enabled"))
+      Problem.Refused
+        .Disabled(Problem.Refused.Feature(s"$provider"), Problem.SettingKey(s"histmersion.$key.enabled"), None)
     )
 
 object MuseumCollection:

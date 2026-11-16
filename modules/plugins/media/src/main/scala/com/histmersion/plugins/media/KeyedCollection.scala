@@ -42,7 +42,7 @@ abstract class KeyedCollection(
     if !conf.enabled.value then
       Left(
         Problem.Refused
-          .Disabled(Problem.Refused.Feature(s"$title"), Problem.SettingKey(s"histmersion.$settings.enabled"))
+          .Disabled(Problem.Refused.Feature(s"$title"), Problem.SettingKey(s"histmersion.$settings.enabled"), None)
       )
     else
       key

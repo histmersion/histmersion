@@ -61,7 +61,8 @@ object BuiltinCatalogues:
           Left(
             Problem.Refused.Disabled(
               Problem.Refused.Feature(s"${e.title} ($name)"),
-              Problem.SettingKey(s"histmersion.plugins.${e.plugin}.enabled")
+              Problem.SettingKey(s"histmersion.plugins.${e.plugin}.enabled"),
+              None
             )
           )
         case None =>

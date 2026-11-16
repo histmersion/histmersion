@@ -1086,7 +1086,7 @@ refused: this import is about places: name one with --place
 ## cleveland, switched off
 refused: Cleveland Museum of Art objects (cleveland) is switched off (histmersion.plugins.media-cleveland.enabled = false)
 ## met, switched off
-refused: The Metropolitan Museum of Art is switched off (histmersion.media.met.enabled)
+refused: The Metropolitan Museum of Art is switched off (histmersion.media.met.enabled = false)
 ## europeana, switched off
 refused: histmersion.plugins.media-europeana.api-key holds no key, and the plugin needs a Europeana personal API key: set it to a secret reference ("env:<NAME>" or a vault's, e.g. "keepassxc:<entry>#password"); it was not asked
 ## smithsonian, switched off

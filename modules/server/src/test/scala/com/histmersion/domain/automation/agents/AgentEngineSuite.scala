@@ -990,7 +990,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     )
     assert(
       refused(ModelOverride(ModelOverride.Role("skeptic"), overrideModel(Haiku))).left
-        .exists(_.contains("unknown agent role 'skeptic'"))
+        .exists(_.contains("--model-for: enrich-source uses no skeptic role (its roles: "))
     )
     assert(
       refused(ModelOverride(Agents.ModelOverride.Role("extractor"), Agents.ModelOverride.Model("haiku"))).left

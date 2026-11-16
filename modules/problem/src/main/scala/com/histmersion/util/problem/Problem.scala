@@ -452,8 +452,24 @@ object Problem:
       /** A role's chain names at least one model. */
       case ChainGiven
 
-      /** A hint does not change settings: a manager's config does. */
-      case HintConfig
+      /** A hint does not change settings: a manager's config does. `allowed` are the actions a hint takes. */
+      case HintConfig(allowed: Vector[Raw])
+
+      /** A manager's `rounds` (`stated`) is outside `least` to `cap`, the cap `agents.review.rounds-cap` sets. */
+      case RoundsWithin(stated: Count, least: Count, cap: Count)
+
+      /** `role` is no role the `owner` named `name` uses (a pipeline, or a manager of that kind): `roles` are the ones
+        * it uses, none when it calls no model.
+        */
+      case RoleUsed(owner: RoleOwner, name: Raw, role: Raw, roles: Vector[Raw])
+
+    /** What uses the agent roles a model is set for. */
+    enum RoleOwner derives CanEqual:
+      /** An agent pipeline, by its name: `--model-for` sets a model for one of its roles. */
+      case Pipeline
+
+      /** A manager, by its kind: its config's `models` sets a model for one of the roles its runs use. */
+      case Manager
 
     /** What a work's DOI is looked up for. */
     enum Purpose derives CanEqual:
@@ -732,8 +748,10 @@ object Problem:
     /** `limit` is spent: `used` of `cap`, until `until` when that is known. */
     final case class Quota(limit: Limit, used: Amount, cap: Amount, until: Option[EpochMs]) extends Refused
 
-    /** `feature` is switched off by `setting`. */
-    final case class Disabled(feature: Feature, setting: SettingKey) extends Refused
+    /** `feature` is switched off: `setting` is `false`. `variable`: the environment variable that switches it on, when
+      * the refusal names one.
+      */
+    final case class Disabled(feature: Feature, setting: SettingKey, variable: Option[SettingKey]) extends Refused
 
     /** The rules a request can break. */
     enum Rule:
@@ -819,6 +837,11 @@ object Problem:
       * the chain is asked meanwhile.
       */
     final case class Limited(upstream: Name, until: Option[EpochMs]) extends Upstream
+
+    /** The service was not asked in this sweep: `why` it may not be asked now (its budget spent, it asked to wait). It
+      * is asked again in the next sweep.
+      */
+    final case class Unasked(why: Problem) extends Upstream
 
     /** `upstream` could not be reached at `url`. */
     final case class Unreachable(
@@ -1809,7 +1832,7 @@ object Problem:
       Conflict.Job(Raw("0193f1c4"), Conflict.State("queued"), Conflict.Control.NotStarted),
       Refused.Policy(Refused.Rule.RunTokenRequired),
       Refused.Quota(Refused.Limit.DailySpend, Refused.Amount(5.25), Refused.Amount(4.5), Some(EpochMs(1762732800000L))),
-      Refused.Disabled(Refused.Feature("events-gvp"), SettingKey("histmersion.events.gvp.enabled")),
+      Refused.Disabled(Refused.Feature("events-gvp"), SettingKey("histmersion.events.gvp.enabled"), None),
       Upstream.Http.here(core, url, Upstream.Status(429), External.ReplyExcerpt("{\"message\":\"rate limited\"}")),
       Upstream.Challenged.here(
         Upstream.Name("archive-org"),
@@ -1817,6 +1840,7 @@ object Problem:
         Upstream.Status(403)
       ),
       Upstream.Limited(Upstream.Name("claude"), Some(EpochMs(1762732800000L))),
+      Upstream.Unasked(Relayed(Sentence("CORE asked to wait until 2025-11-10T00:00:00Z"))),
       Upstream.Unreachable.here(core, url, reported),
       Upstream.Timeout.here(core, url, Millis(30000L)),
       Upstream.BadReply

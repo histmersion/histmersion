@@ -774,7 +774,11 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
       b.managing
         .addHint(ApiIds.manager(Enrich), HintAdd(HintAdd.Text("x"), suggest = Some(HintAdd.Suggest(true))))
         .left
-        .exists(_.problems.sentences.mkString("; ").contains("switched off (agents.enabled)"))
+        .exists(
+          _.problems.sentences
+            .mkString("; ")
+            .contains("switched off (agents.enabled = false) — set HISTMERSION_AGENTS_ENABLED=true on the server")
+        )
     )
     assertEquals(Transactor(ds).read(ManagerRepo.hints(Enrich, live = false)).size, before)
 

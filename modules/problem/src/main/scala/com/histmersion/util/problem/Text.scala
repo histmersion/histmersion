@@ -61,13 +61,15 @@ object Text:
       case Conflict.Busy(activity)             => activity.running
       case Conflict.Referenced(t, key, by, n)  =>
         s"${t.noun} '$key' is referred to by ${by.counted(n)} — remove those references first (there is no override)"
-      case Refused.Policy(rule)                   => rule.said
-      case Refused.Quota(limit, used, cap, at)    => s"${limit.named} is spent: $used of $cap${until(at)}"
-      case Refused.Disabled(feature, setting)     => s"$feature is switched off ($setting)"
+      case Refused.Policy(rule)                         => rule.said
+      case Refused.Quota(limit, used, cap, at)          => s"${limit.named} is spent: $used of $cap${until(at)}"
+      case Refused.Disabled(feature, setting, variable) =>
+        s"$feature is switched off ($setting = false)${variable.fold("")(v => s" — set $v=true on the server to use it")}"
       case Upstream.Http(name, url, st, body, at) => s"${path(at)}$name answered HTTP $st at $url — $body"
       case Upstream.Challenged(name, url, st, at) =>
         s"${path(at)}$name answered HTTP $st at $url with a bot-protection challenge, not the page"
       case Upstream.Limited(name, at)             => s"$name's usage limit is reached${until(at)}"
+      case Upstream.Unasked(why)                  => s"not asked this sweep — ${why.sentence}"
       case Upstream.Unreachable(name, url, r, at) => s"${path(at)}cannot reach $name at $url — $r"
       case Upstream.Timeout(name, url, after, at) => s"${path(at)}$name did not answer at $url within $after ms"
       case Upstream.BadReply(name, url, s, r, at) =>
@@ -424,8 +426,16 @@ object Text:
         "give `cron` to set a schedule (or `remove: true`)"
       case Invalid.Rule.ChainGiven =>
         "a chain needs at least one provider:model (reset the role to go back to config)"
-      case Invalid.Rule.HintConfig =>
-        "unknown hint action 'config' — change the settings with the manager's config instead"
+      case Invalid.Rule.HintConfig(allowed) =>
+        s"unknown hint action 'config'${oneOf(allowed)} — change the settings with the manager's config instead"
+      case Invalid.Rule.RoundsWithin(_, least, cap) =>
+        s"rounds must be between $least and $cap (agents.review.rounds-cap)"
+      case Invalid.Rule.RoleUsed(Invalid.RoleOwner.Pipeline, name, role, roles) =>
+        s"$name uses no $role role (its roles: ${
+            if roles.isEmpty then "none — it calls no model" else roles.mkString(", ")
+          })"
+      case Invalid.Rule.RoleUsed(Invalid.RoleOwner.Manager, kind, role, roles) =>
+        s"'$role' is not a role a $kind manager runs (${roles.mkString(", ")})"
 
   extension (year: Invalid.Year)
     /** The year as a reader writes it: `900 BCE`, `530 CE`; there is no year 0, which is read as 1 BCE. */

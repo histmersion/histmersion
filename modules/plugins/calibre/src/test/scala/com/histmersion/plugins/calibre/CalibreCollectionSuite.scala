@@ -185,7 +185,12 @@ class CalibreCollectionSuite extends munit.FunSuite:
     refusals.foreach(r =>
       assert(
         r.left.exists(
-          _.sentences.mkString("; ").contains("write-back is switched off (histmersion.plugins.calibre.write-back)")
+          _.sentences
+            .mkString("; ")
+            .contains(
+              "write-back is switched off (histmersion.plugins.calibre.write-back = false) — set " +
+                "HISTMERSION_PLUGIN_CALIBRE_WRITE_BACK=true on the server to use it"
+            )
         ),
         r
       )

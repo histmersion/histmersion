@@ -175,7 +175,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
         .left
         .toOption
         .map(_.sentence),
-      Some("NOAA NCEI Natural Hazards (noaa) is switched off (histmersion.plugins.events-noaa.enabled)")
+      Some("NOAA NCEI Natural Hazards (noaa) is switched off (histmersion.plugins.events-noaa.enabled = false)")
     )
     // the environment switches one off too
     val e = ServerPlugins.offlineWith(
@@ -298,7 +298,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
     )
     assertEquals(
       keyedEntry(off, smithsonian).map(_.check.left.map(_.sentence)),
-      Some(Left("Smithsonian Open Access objects is switched off (histmersion.media.smithsonian.enabled)"))
+      Some(Left("Smithsonian Open Access objects is switched off (histmersion.media.smithsonian.enabled = false)"))
     )
     // an unresolvable reference fails that plugin alone, naming the reference
     val missing = ServerPlugins.offlineWith(

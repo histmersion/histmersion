@@ -310,6 +310,6 @@ class FetchChainSuite extends munit.FunSuite:
     assertEquals(chain.plan.map(_._1), List("a", "b", "u"))
     assertEquals(notes.size, 2, notes.map(_.sentence).mkString("\n"))
     assert(notes.exists(_.sentence.contains("'gone'")))
-    assert(notes.exists(_.sentence == "u is switched off (histmersion.acquire.allow-unauthorised)"), notes)
+    assert(notes.exists(_.sentence == "u is switched off (histmersion.acquire.allow-unauthorised = false)"), notes)
     val (_, allowed) = FetchChain.of(regs, Nil, allowUnauthorised = FetchChain.AllowUnauthorised(true))
     assertEquals(allowed, Nil)

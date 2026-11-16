@@ -1694,7 +1694,9 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
           modelFor = List(ModelOverride(Agents.ModelOverride.Role("writer"), HaikuOverride))
         )
       ).left
-        .exists(_.problems.sentences.mkString("; ").contains("unknown agent role 'writer'"))
+        .exists(
+          _.problems.sentences.mkString("; ").contains("--model-for: review-article uses no writer role (its roles: ")
+        )
     )
 
   test("compare: two review-article runs — verdicts, findings per reviewer and kind, the major findings they share"):

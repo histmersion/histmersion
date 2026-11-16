@@ -318,18 +318,17 @@ final class ManagersControllers(
     c.models
       .getOrElse(Nil)
       .foldLeft[Either[Api.Error, Unit]](
-        Either.cond(
-          c.rounds.forall(r => r.value >= 2 && r.value <= agents.roundsCap.value),
-          (),
-          error(
-            Problem.Invalid.OutOfRange(
-              Problem.TypeName.of(ManagerConfig.Rounds),
-              Problem.Raw(c.rounds.fold("")(r => s"$r")),
-              Problem.Invalid.Bounds(Some(Problem.Raw.of(2L)), Some(Problem.Raw.of(agents.roundsCap))),
-              Vector(Problem.Field("rounds"))
+        c.rounds
+          .filterNot(r => r.value >= 2 && r.value <= agents.roundsCap.value)
+          .map(r =>
+            error(
+              Problem.Invalid.Broken.here(
+                Problem.Invalid.Rule
+                  .RoundsWithin(Problem.Count.of(r), Problem.Count(2L), Problem.Count.of(agents.roundsCap))
+              )
             )
           )
-        )
+          .toLeft(())
       ) { (acc, o) =>
         acc.flatMap(_ =>
           Role
@@ -337,10 +336,13 @@ final class ManagersControllers(
             .filter(roles.contains)
             .toRight(
               error(
-                Problem.Invalid.Unknown(
-                  Problem.TypeName.of(Role.Wire),
-                  Problem.Raw.of(o.role),
-                  roles.toVector.map(r => Problem.Raw.of(r.wire)),
+                Problem.Invalid.Broken(
+                  Problem.Invalid.Rule.RoleUsed(
+                    Problem.Invalid.RoleOwner.Manager,
+                    Problem.Raw.of(k.wire),
+                    Problem.Raw.of(o.role),
+                    roles.toVector.map(r => Problem.Raw.of(r.wire))
+                  ),
                   Vector(Problem.Field("models"))
                 )
               )
@@ -863,7 +865,9 @@ final class ManagersControllers(
         Left(
           error(
             if !proposal && verb.contains(HintEffect.Verb.Config) then
-              Problem.Invalid.Broken.here(Problem.Invalid.Rule.HintConfig)
+              Problem.Invalid.Broken.here(
+                Problem.Invalid.Rule.HintConfig(allowed.toVector.map(v => Problem.Raw.of(v.word)))
+              )
             else
               Problem.Invalid.Unknown.here(
                 Problem.TypeName.of(HintEffect.Action),

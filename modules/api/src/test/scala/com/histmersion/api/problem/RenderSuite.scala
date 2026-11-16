@@ -89,6 +89,7 @@ class RenderSuite extends munit.FunSuite:
     ),
     "Challenged" -> (502, "archive-org challenged with HTTP 403 at https://archive.org/download/x/x.pdf"),
     "Limited" -> (429, "claude is limited until 2025-11-10T00:00:00Z"),
+    "Unasked" -> (500, "not asked this sweep — CORE asked to wait until 2025-11-10T00:00:00Z"),
     "Unreachable" -> (
       502,
       "cannot reach core at https://api.core.ac.uk/v3/search/works — java.io.IOException: connection reset"
@@ -282,3 +283,60 @@ class RenderSuite extends munit.FunSuite:
       assertEquals(Column.read(text), Stored.Unrecognised(Stored.Text(s"$text")))
       assertEquals(Column.read(text).stored, text)
     }
+
+  test("the hints a refusal gave before its case was typed are in its sentence, word for word"):
+    val agentsOff = Refused.Disabled(
+      Refused.Feature("the embedded agent runtime"),
+      SettingKey("agents.enabled"),
+      Some(SettingKey("HISTMERSION_AGENTS_ENABLED"))
+    )
+    assertEquals(
+      agentsOff.sentence,
+      "the embedded agent runtime is switched off (agents.enabled = false) — set HISTMERSION_AGENTS_ENABLED=true on " +
+        "the server to use it"
+    )
+    assertEquals(agentsOff.status.code, 403)
+    assertEquals(
+      Refused
+        .Disabled(
+          Refused.Feature("NOAA NCEI Natural Hazards (noaa)"),
+          SettingKey("histmersion.plugins.events-noaa.enabled"),
+          None
+        )
+        .sentence,
+      "NOAA NCEI Natural Hazards (noaa) is switched off (histmersion.plugins.events-noaa.enabled = false)"
+    )
+    assertEquals(
+      Invalid.Broken.here(Invalid.Rule.RoundsWithin(Count(9L), Count(2L), Count(6L))).sentence,
+      "rounds must be between 2 and 6 (agents.review.rounds-cap)"
+    )
+    val (modelFor, models, skeptic, used) =
+      (Vector(Field("--model-for")), Vector(Field("models")), Raw("skeptic"), Vector(Raw("extractor"), Raw("writer")))
+    assertEquals(
+      Invalid
+        .Broken(Invalid.Rule.RoleUsed(Invalid.RoleOwner.Pipeline, Raw("enrich-source"), skeptic, used), modelFor)
+        .sentence,
+      "--model-for: enrich-source uses no skeptic role (its roles: extractor, writer)"
+    )
+    assertEquals(
+      Invalid
+        .Broken(Invalid.Rule.RoleUsed(Invalid.RoleOwner.Pipeline, Raw("seed-goal"), skeptic, Vector.empty), modelFor)
+        .sentence,
+      "--model-for: seed-goal uses no skeptic role (its roles: none — it calls no model)"
+    )
+    assertEquals(
+      Invalid.Broken(Invalid.Rule.RoleUsed(Invalid.RoleOwner.Manager, Raw("enrich"), skeptic, used), models).sentence,
+      "models: 'skeptic' is not a role a enrich manager runs (extractor, writer)"
+    )
+    assertEquals(
+      Invalid.Broken
+        .here(Invalid.Rule.HintConfig(Vector(Raw("prioritise"), Raw("hold"), Raw("skip"))))
+        .sentence,
+      "unknown hint action 'config' (one of: prioritise, hold, skip) — change the settings with the manager's config " +
+        "instead"
+    )
+
+  test("a watch left out of a sweep says so before why, in its sentence and its stored text"):
+    val unasked = Upstream.Unasked(Relayed(Sentence("CORE asked to wait")))
+    assertEquals(unasked.stored, "not asked this sweep — CORE asked to wait")
+    assertEquals(unasked.sentence, "not asked this sweep — CORE asked to wait")

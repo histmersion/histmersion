@@ -62,6 +62,7 @@ object Answer:
       case _: Upstream.Unreachable        => StatusCode.BadGateway
       case _: Upstream.Challenged         => StatusCode.BadGateway
       case _: Upstream.Limited            => StatusCode.TooManyRequests
+      case Upstream.Unasked(why)          => why.status
       case _: Upstream.BadReply           => StatusCode.BadGateway
       case _: Upstream.Timeout            => StatusCode.GatewayTimeout
       case Io.Wrong(_, Io.Kind.Inside(_)) => StatusCode.Forbidden
@@ -83,6 +84,7 @@ object Answer:
     def retryAfter: Option[EpochMs] = problem match
       case Refused.Quota(_, _, _, until) => until
       case Upstream.Limited(_, until)    => until
+      case Upstream.Unasked(why)         => why.retryAfter
       case _                             => None
 
     /** The problem as the body lists it: its group, its case, its fields and its sentence. */
