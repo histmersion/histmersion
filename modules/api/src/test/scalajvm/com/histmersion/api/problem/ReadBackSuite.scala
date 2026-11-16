@@ -130,7 +130,8 @@ class ReadBackSuite extends munit.FunSuite:
           Conflict.Hold.TextNotSent(Raw("file")),
           Conflict.Hold.CitekeyOfAnother(Raw("anthony2006")),
           Conflict.Hold.CitekeyTaken(Raw("guterbock1997")),
-          Conflict.Hold.StoredAs(Raw("anthony2007"))
+          Conflict.Hold.StoredAs(Raw("anthony2007")),
+          Conflict.Hold.Focus(Raw("bronze-age"))
         ).map(Conflict.Held(Where("S-3c1e7a2b source anthony2007 — same work?"), _)) ++
         Vector(
           Conflict.Control.OnePiece(Raw("backup")),
@@ -389,7 +390,18 @@ class ReadBackSuite extends munit.FunSuite:
           Invalid.Rule.Frontmatter,
           Invalid.Rule.NoteCitekey,
           Invalid.Rule.FilterRecorded,
-          Invalid.Rule.RegionWithin(Count(10L), Count(20L), Count(5L), Count(5L), Count(8L), Count(8L))
+          Invalid.Rule.RegionWithin(Count(10L), Count(20L), Count(5L), Count(5L), Count(8L), Count(8L)),
+          Invalid.Rule.ReviewLibraryWide,
+          Invalid.Rule.EnrichLibraryWide,
+          Invalid.Rule.SeedGoal,
+          Invalid.Rule.WatchGoal,
+          Invalid.Rule.EnrichCron,
+          Invalid.Rule.HintSettings,
+          Invalid.Rule.HintUntil,
+          Invalid.Rule.HintTargets,
+          Invalid.Rule.CronGiven,
+          Invalid.Rule.ChainGiven,
+          Invalid.Rule.HintConfig
         ).map(Invalid.Broken.here(_)) ++
         Invalid.Purpose.values.toVector.map(p => Invalid.Broken(Invalid.Rule.DoiRecorded(p), Vector(Field("'k'")))) ++
         Vector(

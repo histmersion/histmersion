@@ -1,5 +1,6 @@
 package com.histmersion
 package util.jobs
+import com.histmersion.util.problem.ProblemLog
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.util.database.Transactor
@@ -96,13 +97,12 @@ final class JobPool(
       case e: InterruptedException => throw e
       case e: Throwable            =>
         // a worker must outlive one bad job: record the failure and take the next id
-        scribe.error(s"job $id failed unexpectedly: ${e.getMessage}", e)
         val _ = Transactor(ds).transact(
           JobRepo.transition(
             id,
             JobState.Running,
             JobState.Failed,
-            error = Some(Problem.Unclassified(Legacy.Text(s"${e.getClass.getSimpleName}: ${e.getMessage}")))
+            error = Some(ProblemLog.unexpected(e, Problem.Where(s"job $id")))
           )
         )
 

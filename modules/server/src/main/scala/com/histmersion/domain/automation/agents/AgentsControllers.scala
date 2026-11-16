@@ -4,7 +4,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.writeToString
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.Cursor
 import com.histmersion.util.json.RawJson
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{Legacy, Problem, Problems}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import io.scalaland.chimney.dsl.*
@@ -274,17 +274,12 @@ final class AgentsControllers(
       rts <- req.runtimes
         .map(r => AgentRuntime.parse(AgentRuntime.Wire(r.value)).filter(AgentRuntime.Generated.contains).toRight(r))
         .partitionMap(identity) match
-        case (Nil, ok) => Right(if ok.isEmpty then AgentRuntime.Generated else ok)
-        case (bad, _)  =>
-          Left(
-            Api.Error(
-              Problem.Unclassified(
-                Legacy.Text(
-                  s"unknown runtime(s) ${bad.mkString(", ")} (one of: ${AgentRuntime.Generated.map(_.wire).mkString(", ")})"
-                )
-              )
-            )
-          )
+        case (Nil, ok)          => Right(if ok.isEmpty then AgentRuntime.Generated else ok)
+        case (first :: more, _) =>
+          val known = AgentRuntime.Generated.toVector.map(r => Problem.Raw.of(r.wire))
+          def unknown(r: GenerateRequest.Runtimes): Problem =
+            Problem.Invalid.Unknown.here(Problem.TypeName.of(AgentRuntime.Wire), Problem.Raw.of(r), known)
+          Left(Api.Error(Problems.of(unknown(first), more.map(unknown)*)))
       r <- cli.trees
         .generate(knownTools, rts, AgentTrees.out(req.out.map(_.value), site.userPaths))
         .left
@@ -328,8 +323,10 @@ final class AgentsControllers(
       .parse(raw)
       .toRight(
         Api.Error(
-          Problem.Unclassified(
-            Legacy.Text(s"unknown pool '$raw' (one of: ${PlanQuota.PoolId.values.map(_.wire).mkString(", ")})")
+          Problem.Invalid.Unknown.here(
+            Problem.TypeName.of(PlanQuota.PoolId.Wire),
+            Problem.Raw.of(raw),
+            PlanQuota.PoolId.values.toVector.map(v => Problem.Raw.of(v.wire))
           )
         )
       )
@@ -352,7 +349,7 @@ final class AgentsControllers(
       st <- pools
         .statuses(covers)
         .find(_.pool == p.wire)
-        .toRight(Api.Error(Problem.Unclassified(Legacy.Text(s"no pool ${p.wire}"))))
+        .toRight(Api.Error(Problem.NotFound.Entity(Problem.TypeName.of(PlanQuota.PoolId.Wire), Problem.Raw.of(p.wire))))
     yield st
 
   /** `PUT /api/agents/quota/fallthrough/{role}`. */
@@ -435,9 +432,8 @@ final class AgentsControllers(
     else
       Left(
         Api.Error(
-          Problem.Unclassified(
-            Legacy.Text("embedded agents are off — set HISTMERSION_AGENTS_ENABLED=true on the server to use them")
-          )
+          Problem.Refused
+            .Disabled(Problem.Refused.Feature("the embedded agent runtime"), Problem.SettingKey("agents.enabled"))
         )
       )
 
@@ -546,7 +542,11 @@ final class AgentsControllers(
       .parse(raw)
       .toRight(
         Api.Error(
-          Problem.Unclassified(Legacy.Text(s"unknown role '$raw' (one of: ${Role.values.map(_.wire).mkString(", ")})"))
+          Problem.Invalid.Unknown.here(
+            Problem.TypeName.of(Role.Wire),
+            Problem.Raw.of(raw),
+            Role.values.toVector.map(v => Problem.Raw.of(v.wire))
+          )
         )
       )
 
@@ -554,7 +554,7 @@ final class AgentsControllers(
     picker
       .roleChains(PlanQuotaRepo.EpochMillis(clock.millis()))
       .find(_.role.value == role.wire.value)
-      .toRight(Api.Error(Problem.Unclassified(Legacy.Text(s"no role ${role.wire}"))))
+      .toRight(Api.Error(Problem.NotFound.Entity(Problem.TypeName.of(Role.Wire), Problem.Raw.of(role.wire))))
 
   /** `PUT /api/agents/models/{role}` — the role's chain, saved over `agents.roles.<role>`. Every model must be a
     * `provider:model`; one that is not priced or buildable yet is accepted and shown as not ready (a price or key may
@@ -570,11 +570,7 @@ final class AgentsControllers(
       _ <- Either.cond(
         ms.nonEmpty,
         (),
-        Api.Error(
-          Problem.Unclassified(
-            Legacy.Text("a chain needs at least one provider:model (reset the role to go back to config)")
-          )
-        )
+        Api.Error(Problem.Invalid.Broken.here(Problem.Invalid.Rule.ChainGiven))
       )
       _ = Transactor(ds).transact(ModelSettingsRepo.setChain(ModelSettingsRepo.ChainRole(r.wire.value), ms.map(_.wire)))
       c <- chainOf(r)
@@ -596,8 +592,8 @@ final class AgentsControllers(
         .left
         .map(e => Api.Error(e))
       ls <- in.limits.map(ModelChains.Limit.fromSpec).partitionMap(identity) match
-        case (Nil, ok) => Right(ok)
-        case (errs, _) => Left(Api.Error(Problem.Unclassified(Legacy.Text(errs.map(_.sentence).mkString("; ")))))
+        case (Nil, ok)          => Right(ok)
+        case (first :: more, _) => Left(Api.Error(Problems.of(first, more*)))
       a <- ModelChains.Allowance.of(t, ls, in.reservePct).left.map(e => Api.Error(e))
       _ = Transactor(ds).transact(
         ModelSettingsRepo.setAllowance(
@@ -609,7 +605,9 @@ final class AgentsControllers(
       st <- picker
         .allowanceStatuses(PlanQuotaRepo.EpochMillis(clock.millis()))
         .find(_.target.value == t.wire.value)
-        .toRight(Api.Error(Problem.Unclassified(Legacy.Text(s"the allowance of ${t.wire} was not recorded"))))
+        .toRight(
+          Api.Error(Problem.NotFound.Entity(Problem.TypeName.of(ModelChains.Target.Wire), Problem.Raw.of(t.wire)))
+        )
     yield st
 
   /** `DELETE /api/agents/allowances?target=…` — the saved allowance goes; config's (if any) applies again. */
@@ -734,8 +732,10 @@ final class AgentsControllers(
         .parse(Pipeline.Wire(req.pipeline.value))
         .toRight(
           Api.Error(
-            Problem.Unclassified(
-              Legacy.Text(s"unknown pipeline '${req.pipeline}' (one of: ${Pipeline.values.map(_.wire).mkString(", ")})")
+            Problem.Invalid.Unknown.here(
+              Problem.TypeName.of(Pipeline.Wire),
+              Problem.Raw.of(req.pipeline),
+              Pipeline.values.toVector.map(v => Problem.Raw.of(v.wire))
             )
           )
         )
@@ -817,9 +817,11 @@ final class AgentsControllers(
             .parse(o.role)
             .toRight(
               Api.Error(
-                Problem.Unclassified(
-                  Legacy
-                    .Text(s"--model-for: unknown role '${o.role}' (one of: ${Role.values.map(_.wire).mkString(", ")})")
+                Problem.Invalid.Unknown(
+                  Problem.TypeName.of(Role.Wire),
+                  Problem.Raw.of(o.role),
+                  Role.values.toVector.map(v => Problem.Raw.of(v.wire)),
+                  Vector(Problem.Field("--model-for"))
                 )
               )
             )
@@ -827,20 +829,21 @@ final class AgentsControllers(
             roles.contains(r),
             (),
             Api.Error(
-              Problem.Unclassified(
-                Legacy.Text(
-                  s"--model-for: ${p.wire} uses no ${r.wire} role " +
-                    s"(its roles: ${
-                        if roles.isEmpty then "none — it calls no model" else roles.map(_.wire).mkString(", ")
-                      })"
-                )
+              Problem.Invalid.Unknown(
+                Problem.TypeName.of(Role.Wire),
+                Problem.Raw.of(r.wire),
+                roles.toVector.map(v => Problem.Raw.of(v.wire)),
+                Vector(Problem.Field("--model-for"))
               )
             )
           )
           _ <- Either.cond(
             !m.contains(r),
             (),
-            Api.Error(Problem.Unclassified(Legacy.Text(s"--model-for: the ${r.wire} role is given twice")))
+            Api.Error(
+              Problem.Invalid
+                .Repeated(Problem.TypeName.of(Role.Wire), Problem.Raw.of(r.wire), Vector(Problem.Field("--model-for")))
+            )
           )
           _ <- ModelChains
             .parseChain(ModelChains.Chain.Spec(o.model.value), knownPluginNames)
@@ -860,7 +863,10 @@ final class AgentsControllers(
           .get(Managers.ManagerInfo.Id(raw.value.trim))
           .map(m => AgentsControllers.Target(m.id.value))
           .toRight(
-            Api.Error(Problem.Unclassified(Legacy.Text(s"No manager '$raw'")), Some(Api.Error.Code(Write.CodeNotFound)))
+            Api.Error(
+              Problem.NotFound.Entity(Problem.TypeName.of(Managers.ManagerInfo.Id), Problem.Raw.of(raw)),
+              Some(Api.Error.Code(Write.CodeNotFound))
+            )
           )
       )
 
@@ -893,7 +899,17 @@ final class AgentsControllers(
   /** Budgets are stored to the micro-dollar (numeric(12,6)): anything smaller would round to 0. */
   private def positive(v: PositiveAmount, what: String): Either[Api.Error, PositiveAmount] =
     if v.value >= 0.000001 then Right(v)
-    else Left(Api.Error(Problem.Unclassified(Legacy.Text(s"$what must be at least 0.000001"))))
+    else
+      Left(
+        Api.Error(
+          Problem.Invalid.OutOfRange(
+            Problem.TypeName.of(PositiveAmount),
+            Problem.Raw.of(v),
+            Problem.Invalid.Bounds(Some(Problem.Raw("0.000001")), None),
+            Vector(Problem.Field(what))
+          )
+        )
+      )
 
   private def notFound(message: Problem): Api.Error =
     Api.Error(message, Some(Api.Error.Code(Write.CodeNotFound)))
@@ -909,8 +925,10 @@ final class AgentsControllers(
       case Some(st) if RunState.parse(RunState.Wire(st.value)).isEmpty =>
         Left(
           Api.Error(
-            Problem.Unclassified(
-              Legacy.Text(s"unknown status '$st' (one of: ${RunState.values.map(_.wire).mkString(", ")})")
+            Problem.Invalid.Unknown.here(
+              Problem.TypeName.of(RunQuery.Status),
+              Problem.Raw.of(st),
+              RunState.values.toVector.map(v => Problem.Raw.of(v.wire))
             )
           )
         )
@@ -1033,8 +1051,10 @@ final class AgentsControllers(
       case other    =>
         Left(
           Api.Error(
-            Problem.Unclassified(
-              Legacy.Text(s"unknown action '$other' (one of: ${List("pause", "resume", "cancel").mkString(", ")})")
+            Problem.Invalid.Unknown.here(
+              Problem.TypeName.of(Agents.Action),
+              Problem.Raw(other),
+              Vector(Problem.Raw("pause"), Problem.Raw("resume"), Problem.Raw("cancel"))
             )
           )
         )
@@ -1131,12 +1151,19 @@ final class AgentsControllers(
           ref.toIntOption
             .flatMap(i => site.queues.get(QueueItemId(i)))
             .map(i => GoalLink.Ref(i.id.toString))
-            .toRight(notFound(Problem.Unclassified(Legacy.Text(s"No queue item '$ref'"))))
+            .toRight(notFound(Problem.NotFound.Entity(Problem.TypeName.of(QueueItemId), Problem.Raw(ref))))
         case LinkKind.Query =>
           Either.cond(
             ref.nonEmpty && ref.length <= cfg.plan.queryChars.value,
             GoalLink.Ref(ref),
-            Api.Error(Problem.Unclassified(Legacy.Text(s"a query is 1 to ${cfg.plan.queryChars} characters")))
+            Api.Error(
+              Problem.Invalid.OutOfRange(
+                Problem.TypeName.of(GoalLink.Ref),
+                Problem.Raw.of(ref.length.toLong),
+                Problem.Invalid.Bounds(Some(Problem.Raw.of(1L)), Some(Problem.Raw.of(cfg.plan.queryChars))),
+                Vector(Problem.Field("query"))
+              )
+            )
           )
       _ = goals.link(
         slug,
@@ -1147,7 +1174,7 @@ final class AgentsControllers(
       l <- goals
         .links(slug)
         .find(l => l.kind == in.kind && l.ref == r)
-        .toRight(Api.Error(Problem.Unclassified(Legacy.Text(s"the link to $r was not recorded"))))
+        .toRight(Api.Error(Problem.NotFound.Entity(Problem.TypeName.of(GoalLink.Ref), Problem.Raw.of(r))))
     yield l
 
   def removeGoalLink(slug: DomainGoal.Slug, kind: LinkKind.Wire, ref: BGoalLinkRow.Ref): Either[Api.Error, Removed] =
@@ -1157,8 +1184,10 @@ final class AgentsControllers(
         .parse(kind)
         .toRight(
           Api.Error(
-            Problem.Unclassified(
-              Legacy.Text(s"unknown link kind '$kind' (one of: ${LinkKind.values.map(_.wire).mkString(", ")})")
+            Problem.Invalid.Unknown.here(
+              Problem.TypeName.of(LinkKind.Wire),
+              Problem.Raw.of(kind),
+              LinkKind.values.toVector.map(v => Problem.Raw.of(v.wire))
             )
           )
         )
@@ -1171,8 +1200,10 @@ final class AgentsControllers(
       .parse(kind)
       .toRight(
         Api.Error(
-          Problem.Unclassified(
-            Legacy.Text(s"unknown schedule '$kind' (one of: ${ScheduleKind.values.map(_.wire).mkString(", ")})")
+          Problem.Invalid.Unknown.here(
+            Problem.TypeName.of(ScheduleKind.Wire),
+            Problem.Raw.of(kind),
+            ScheduleKind.values.toVector.map(v => Problem.Raw.of(v.wire))
           )
         )
       )
@@ -1267,15 +1298,15 @@ final class AgentsControllers(
           val answer = res.finalAnswer.toOption
           val problems =
             res.finalAnswer.fold(
-              f => List(Engine.answerProblem(f, res.finishReason).sentence),
-              _.problems(src.year.map(y => ProbeAnswer.RecordYear(y.value.toInt))).map(_.sentence)
+              f => List(Engine.answerProblem(f, res.finishReason)),
+              _.problems(src.year.map(y => ProbeAnswer.RecordYear(y.value.toInt)))
             )
           val toolCalls = calls ++ res.toolCalls.toList.map(c => s"${c.toolName} ${c.input}")
           if problems.nonEmpty && attempt < maxAttempts then
             go(
               attempt + 1,
               ask + Prompt.retry(
-                problems.map((text => Problem.Unclassified(Legacy.Text(text)))),
+                problems,
                 answer.map(a => writeToString(a))
               ),
               use,
@@ -1298,7 +1329,7 @@ final class AgentsControllers(
                 usage = use,
                 costUsd = Some(ProbeResult.CostUsd(billing.cost(use).toDouble)),
                 millis = ProbeResult.Millis(t0.elapsed.toMillis),
-                problems = problems.map(ProbeResult.Problems(_)),
+                problems = problems.map(p => ProbeResult.Problems(p.sentence)),
                 attempts = ProbeResult.Attempts(attempt)
               )
             )

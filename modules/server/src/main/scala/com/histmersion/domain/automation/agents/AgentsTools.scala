@@ -4,7 +4,8 @@ import com.histmersion.util.mcp.ChimpJson
 import com.histmersion.util.mcp.ChimpJson.given
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.Cursor
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{Problem, Problems}
+import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.domain.automation.workflows.Pipelines
@@ -247,8 +248,11 @@ object AgentsTools:
             kind
               .toRight(
                 Api.Error(
-                  Problem
-                    .Unclassified(Legacy.Text(s"unknown link kind '${in.kind}' (source, article, query, queue-item)"))
+                  Problem.Invalid.Unknown.here(
+                    Problem.TypeName.of(Goal.Plans.LinkKind.Wire),
+                    Problem.Raw(in.kind),
+                    Goal.Plans.LinkKind.values.toVector.map(v => Problem.Raw.of(v.wire))
+                  )
                 )
               )
               .flatMap { k =>
@@ -290,7 +294,7 @@ object AgentsTools:
             case (Some(g), Some(k)) =>
               in.cron
                 .toRight(
-                  Api.Error(Problem.Unclassified(Legacy.Text("give `cron` to set a schedule (or `remove: true`)")))
+                  Api.Error(Problem.Invalid.Broken.here(Problem.Invalid.Rule.CronGiven))
                 )
                 .flatMap(c =>
                   AgentsControllers
@@ -312,7 +316,11 @@ object AgentsTools:
             case _            =>
               Left(
                 Api.Error(
-                  Problem.Unclassified(Legacy.Text("give both `goal` and `kind`, or neither to list the schedules"))
+                  Problem.Invalid.Inconsistent
+                    .here(
+                      NonEmptyVector.of(Problem.Field("goal"), Problem.Field("kind")),
+                      Problem.Invalid.Exclusion.Together
+                    )
                 )
               )
           ToolResult.text(out.fold(McpOut.refusal, identity))
@@ -358,7 +366,15 @@ object AgentsTools:
                 .map(AgentsMarkdown.refreshed)
             case _ if in.pool.exists(_.trim.nonEmpty) =>
               if in.hold.isEmpty && in.floors.isEmpty then
-                Left(Api.Error(Problem.Unclassified(Legacy.Text("with `pool`, give `hold` and/or `floors`"))))
+                Left(
+                  Api.Error(
+                    Problem.Invalid.Inconsistent(
+                      NonEmptyVector.of(Problem.Field("hold"), Problem.Field("floors")),
+                      Problem.Invalid.Exclusion.AtLeastOne,
+                      Vector(Problem.Field("pool"))
+                    )
+                  )
+                )
               else
                 a.setPool(
                   PlanQuota.PoolIdText(in.pool.get.trim),
@@ -390,12 +406,15 @@ object AgentsTools:
                       ModelChains.Allowance.ReservePct(in.reservePct)
                     )
                   ).map(AgentsMarkdown.allowance)
-                case (errs, _) =>
-                  Left(Api.Error(Problem.Unclassified(Legacy.Text(errs.map(_.sentence).mkString("; ")))))
+                case (first :: more, _) => Left(Api.Error(Problems.of(first, more*)))
             case _ =>
               Left(
                 Api.Error(
-                  Problem.Unclassified(Legacy.Text("give `role` (with `models`) or `target` (with `limits`), not both"))
+                  Problem.Invalid.Inconsistent
+                    .here(
+                      NonEmptyVector.of(Problem.Field("role"), Problem.Field("target")),
+                      Problem.Invalid.Exclusion.OneOf
+                    )
                 )
               )
           ToolResult.text(out.fold(McpOut.refusal, identity))
@@ -442,7 +461,7 @@ object AgentsTools:
           def target = in.target
             .map(_.trim)
             .filter(_.nonEmpty)
-            .toRight(Api.Error(Problem.Unclassified(Legacy.Text(s"`${in.action}` needs `target`"))))
+            .toRight(Api.Error(Problem.Invalid.Missing(Problem.Field("target"), Vector(Problem.Field(in.action)))))
           val out: Either[Api.Error, String] = in.action.trim.toLowerCase match
             case "list"  => Right(ManagersMarkdown.list(m.list))
             case "show"  => m.get(id).map(ManagersMarkdown.detail)
@@ -499,7 +518,7 @@ object AgentsTools:
               in.text
                 .map(_.trim)
                 .filter(_.nonEmpty)
-                .toRight(Api.Error(Problem.Unclassified(Legacy.Text("`hint` needs `text`"))))
+                .toRight(Api.Error(Problem.Invalid.Missing(Problem.Field("text"), Vector(Problem.Field("hint")))))
                 .flatMap(t =>
                   m.addHint(
                     id,
@@ -532,7 +551,16 @@ object AgentsTools:
               in.mode
                 .map(_.trim)
                 .filter(_.nonEmpty)
-                .toRight(Api.Error(Problem.Unclassified(Legacy.Text("`mode` needs `mode`: working, finish or pause"))))
+                .toRight(
+                  Api.Error(
+                    Problem.Invalid.Unknown(
+                      Problem.TypeName.of(AgentMode.ModeSet.Mode),
+                      Problem.Raw(""),
+                      AgentMode.values.toVector.map(v => Problem.Raw.of(v.wire)),
+                      Vector(Problem.Field("mode"))
+                    )
+                  )
+                )
                 .flatMap(md =>
                   m.setMode(AgentMode.ModeSet(AgentMode.ModeSet.Mode(md), Some(AgentMode.ModeSet.By("mcp"))))
                 )
@@ -552,11 +580,24 @@ object AgentsTools:
             case other =>
               Left(
                 Api.Error(
-                  Problem.Unclassified(
-                    Legacy.Text(
-                      s"unknown action '$other' (list, show, create, pause, resume, enqueue, hold, hint, autopilot, mode, " +
-                        "drain, repair-acquire, focus)"
-                    )
+                  Problem.Invalid.Unknown.here(
+                    Problem.TypeName.of(Agents.Action),
+                    Problem.Raw(other),
+                    Vector(
+                      "list",
+                      "show",
+                      "create",
+                      "pause",
+                      "resume",
+                      "enqueue",
+                      "hold",
+                      "hint",
+                      "autopilot",
+                      "mode",
+                      "drain",
+                      "repair-acquire",
+                      "focus"
+                    ).map(Problem.Raw(_))
                   )
                 )
               )
@@ -595,14 +636,16 @@ object AgentsTools:
               in.item
                 .map(_.trim)
                 .filter(_.nonEmpty)
-                .toRight(Api.Error(Problem.Unclassified(Legacy.Text("`why` needs `item`"))))
+                .toRight(Api.Error(Problem.Invalid.Missing(Problem.Field("item"), Vector(Problem.Field("why")))))
                 .flatMap(i => m.schedulerWhy(Managers.ManagerItem.Ref(i)))
                 .map(AgentSchedulerMarkdown.why)
             case "strategy" =>
               in.strategy
                 .map(_.trim)
                 .filter(_.nonEmpty)
-                .toRight(Api.Error(Problem.Unclassified(Legacy.Text("`strategy` needs `strategy`"))))
+                .toRight(
+                  Api.Error(Problem.Invalid.Missing(Problem.Field("strategy"), Vector(Problem.Field("strategy"))))
+                )
                 .flatMap(n =>
                   m.setScheduler(
                     AgentScheduler.SchedulerSet(
@@ -616,7 +659,11 @@ object AgentsTools:
             case other    =>
               Left(
                 Api.Error(
-                  Problem.Unclassified(Legacy.Text(s"unknown action '$other' (status, queue, why, strategy, stalls)"))
+                  Problem.Invalid.Unknown.here(
+                    Problem.TypeName.of(Agents.Action),
+                    Problem.Raw(other),
+                    Vector("status", "queue", "why", "strategy", "stalls").map(Problem.Raw(_))
+                  )
                 )
               )
           ToolResult.text(out.fold(McpOut.refusal, identity))

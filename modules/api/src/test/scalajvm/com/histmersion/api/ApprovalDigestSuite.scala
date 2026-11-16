@@ -2,6 +2,7 @@ package com.histmersion
 package api
 
 import com.histmersion.util.problem.Problem
+import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.automation.ApprovalDigest.*
@@ -98,11 +99,13 @@ class ApprovalDigestSuite extends munit.FunSuite:
             List(
               BulkFailed(
                 BulkFailed.Id(3),
-                Problem.Conflict.WrongState(
-                  Problem.TypeName("Approval"),
-                  Problem.Raw("3"),
-                  Problem.Conflict.State("rejected"),
-                  Vector(Problem.Conflict.State("pending"))
+                NonEmptyVector.of(
+                  Problem.Conflict.WrongState(
+                    Problem.TypeName("Approval"),
+                    Problem.Raw("3"),
+                    Problem.Conflict.State("rejected"),
+                    Vector(Problem.Conflict.State("pending"))
+                  )
                 )
               )
             ),

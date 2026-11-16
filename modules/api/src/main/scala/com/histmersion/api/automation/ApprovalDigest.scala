@@ -2,6 +2,7 @@ package com.histmersion
 package api.automation
 
 import com.histmersion.util.problem.Problem
+import com.histmersion.util.nonempty.NonEmptyVector
 
 import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -95,7 +96,7 @@ object ApprovalDigest:
     type By = By.T
     object By extends Newtype[String, Pure]
 
-  final case class BulkFailed(id: BulkFailed.Id, error: Problem)
+  final case class BulkFailed(id: BulkFailed.Id, problems: NonEmptyVector[Problem])
       derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema

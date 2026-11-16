@@ -384,7 +384,7 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
       again
         .setChain(Agents.Role.Wire("narrator"), ChainSet(List(chainModel(A))))
         .left
-        .exists(_.problems.sentences.mkString("; ").contains("unknown role"))
+        .exists(_.problems.sentences.mkString("; ").contains("role 'narrator'"))
     )
     assert(
       again

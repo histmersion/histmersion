@@ -1,5 +1,6 @@
 package com.histmersion
 package util.jobs
+import com.histmersion.util.problem.ProblemLog
 import com.histmersion.util.problem.{Legacy, Problem, Problems}
 
 import com.histmersion.util.database.Transactor
@@ -69,8 +70,8 @@ object BackgroundJob:
 
   /** What a thrown exception tells a job's error line. Pure. */
   def describe(e: Throwable): Problem = e match
-    case _: InterruptedException => Problem.Unclassified(Legacy.Text("interrupted"))
-    case _                       => Problem.Unclassified(Legacy.Text(s"${e.getClass.getSimpleName}: ${e.getMessage}"))
+    case _: InterruptedException => Problem.Run.Interrupted
+    case _                       => ProblemLog.unexpected(e, Problem.Where("a background job"))
 
   /** How a run of a job's body ended, for its row: done or failed with its outcome, or stopped by a person (a job whose
     * body ended by itself after a stop was asked ends as it ended). Pure.
@@ -161,11 +162,8 @@ object BackgroundJob:
         val (out, thrown) =
           try (body(job, report), None)
           catch
-            case s: JobStopped => (Outcome.failed(Problem.Unclassified(Legacy.Text("stopped"))), Some(s.stop))
-            case e: Throwable  =>
-              if !e.isInstanceOf[InterruptedException] then
-                scribe.error(s"$kind job ${job.id} died: ${e.getMessage}", e)
-              (Outcome.failed(describe(e)), None)
+            case s: JobStopped => (Outcome.failed(Problem.Run.Cancelled(Problem.Run.Actor.Person)), Some(s.stop))
+            case e: Throwable  => (Outcome.failed(describe(e)), None)
         val asked = stops.flatMap(_.requestedFor(id))
         stops.foreach(_.answered(id))
         val _ = ending(out, thrown, asked) match

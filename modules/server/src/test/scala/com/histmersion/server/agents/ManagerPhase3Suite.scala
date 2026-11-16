@@ -247,7 +247,7 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
       a.managing
         .create(ManagerCreate(ManagerCreate.Kind("watch"), Some(GoalSlug)))
         .left
-        .exists(_.problems.sentences.mkString("; ").contains("exists already"))
+        .exists(_.problems.sentences.mkString("; ").contains("already exists"))
     )
     assert(
       a.managing
@@ -774,7 +774,7 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
       b.managing
         .addHint(ApiIds.manager(Enrich), HintAdd(HintAdd.Text("x"), suggest = Some(HintAdd.Suggest(true))))
         .left
-        .exists(_.problems.sentences.mkString("; ").contains("agents are off"))
+        .exists(_.problems.sentences.mkString("; ").contains("switched off (agents.enabled)"))
     )
     assertEquals(Transactor(ds).read(ManagerRepo.hints(Enrich, live = false)).size, before)
 

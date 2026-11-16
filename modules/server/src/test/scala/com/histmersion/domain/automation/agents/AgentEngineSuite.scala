@@ -438,7 +438,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     assert(
       a.startRun(RunRequest(Agents.RunRequest.Pipeline("summarise"), ApiTarget))
         .left
-        .exists(_.problems.sentences.mkString("; ").contains("unknown pipeline"))
+        .exists(_.problems.sentences.mkString("; ").contains("pipeline 'summarise'"))
     )
     assert(
       a.startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), Agents.RunRequest.Target("zzagent_nope")))
@@ -985,12 +985,12 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
         .map(_.problems.sentences.mkString("; "))
     assert(
       refused(ModelOverride(ModelOverride.Role("editor"), overrideModel(Haiku))).left
-        .exists(_.contains("unknown role 'editor'")),
+        .exists(_.contains("unknown agent role 'editor'")),
       refused(ModelOverride(ModelOverride.Role("editor"), overrideModel(Haiku)))
     )
     assert(
       refused(ModelOverride(ModelOverride.Role("skeptic"), overrideModel(Haiku))).left
-        .exists(_.contains("enrich-source uses no skeptic role"))
+        .exists(_.contains("unknown agent role 'skeptic'"))
     )
     assert(
       refused(ModelOverride(Agents.ModelOverride.Role("extractor"), Agents.ModelOverride.Model("haiku"))).left
@@ -1005,7 +1005,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
         ModelOverride(ModelOverride.Role("extractor"), overrideModel(Haiku)),
         ModelOverride(ModelOverride.Role("Extractor"), overrideModel(Model))
       ).left
-        .exists(_.contains("given twice"))
+        .exists(_.contains("is given more than once"))
     )
     assertEquals(
       ModelOverride.parse(Agents.ModelOverride.Wire("fixer")).left.map(_.sentence),

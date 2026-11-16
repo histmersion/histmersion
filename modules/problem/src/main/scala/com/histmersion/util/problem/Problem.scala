@@ -422,6 +422,39 @@ object Problem:
       /** The region `x`, `y`, `w`, `h` asked of an image `width` by `height` starts outside it. */
       case RegionWithin(x: Count, y: Count, w: Count, h: Count, width: Count, height: Count)
 
+      /** The review manager is library-wide: it takes no goal. */
+      case ReviewLibraryWide
+
+      /** The enrich manager is library-wide: it takes no goal. */
+      case EnrichLibraryWide
+
+      /** A seeding manager is for one research area: it needs its goal. */
+      case SeedGoal
+
+      /** A watcher is for one research area: it needs its goal. */
+      case WatchGoal
+
+      /** The enrich manager has no schedule: the ingests and the Enrich buttons feed it. */
+      case EnrichCron
+
+      /** A hint that changes a manager's settings names them. */
+      case HintSettings
+
+      /** A hold hint names when the hold ends. */
+      case HintUntil
+
+      /** A structured hint names what it acts on. */
+      case HintTargets
+
+      /** A schedule is set with its cron. */
+      case CronGiven
+
+      /** A role's chain names at least one model. */
+      case ChainGiven
+
+      /** A hint does not change settings: a manager's config does. */
+      case HintConfig
+
     /** What a work's DOI is looked up for. */
     enum Purpose derives CanEqual:
       /** Its record upstream. */
@@ -668,6 +701,9 @@ object Problem:
 
       /** The same file is stored already, as the original of `citekey`. */
       case StoredAs(citekey: Raw)
+
+      /** The autopilot's focus holds it: goal `goal` is not one of the active goals. */
+      case Focus(goal: Raw)
 
     /** A version of a value as the store writes it: a time or a revision, in its wire spelling. */
     type Stamp = Stamp.T

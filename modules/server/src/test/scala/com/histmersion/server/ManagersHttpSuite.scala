@@ -120,7 +120,7 @@ class ManagersHttpSuite extends DbSuite:
           url,
           """{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"manager","arguments":{"action":"create","kind":"enrich"}}}"""
         )
-        assert(created.contains("exists already"), created)
+        assert(created.contains("already exists"), created)
         val (_, listed) = mcp(
           url,
           """{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"manager","arguments":{"action":"list"}}}"""

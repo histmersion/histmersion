@@ -180,7 +180,10 @@ object Column:
             Invalid.Rule.QueryGiven | Invalid.Rule.UpstreamRecord | Invalid.Rule.UploadGiven |
             Invalid.Rule.PathOrBase64 | Invalid.Rule.ServerSees | Invalid.Rule.OriginalForReocr |
             Invalid.Rule.OriginalForDownload | Invalid.Rule.Frontmatter | Invalid.Rule.NoteCitekey |
-            Invalid.Rule.FilterRecorded =>
+            Invalid.Rule.FilterRecorded | Invalid.Rule.ReviewLibraryWide | Invalid.Rule.EnrichLibraryWide |
+            Invalid.Rule.SeedGoal | Invalid.Rule.WatchGoal | Invalid.Rule.EnrichCron | Invalid.Rule.HintSettings |
+            Invalid.Rule.HintUntil | Invalid.Rule.HintTargets | Invalid.Rule.CronGiven | Invalid.Rule.ChainGiven |
+            Invalid.Rule.HintConfig =>
           Vector.empty
       (rule.productPrefix +: held).mkString(HoldSeparator)
 
@@ -237,6 +240,7 @@ object Column:
         case Conflict.Hold.CitekeyOfAnother(citekey)  => Vector(s"$citekey")
         case Conflict.Hold.CitekeyTaken(citekey)      => Vector(s"$citekey")
         case Conflict.Hold.StoredAs(citekey)          => Vector(s"$citekey")
+        case Conflict.Hold.Focus(goal)                => Vector(s"$goal")
         case _                                        => Vector.empty
       (hold.productPrefix +: (if args.isEmpty then Vector.empty else Vector(args.mkString(HoldSeparator))))
         .mkString(" ")
@@ -549,6 +553,17 @@ object Column:
         case Vector("Frontmatter")                      => Some(Frontmatter)
         case Vector("NoteCitekey")                      => Some(NoteCitekey)
         case Vector("FilterRecorded")                   => Some(FilterRecorded)
+        case Vector("ReviewLibraryWide")                => Some(ReviewLibraryWide)
+        case Vector("EnrichLibraryWide")                => Some(EnrichLibraryWide)
+        case Vector("SeedGoal")                         => Some(SeedGoal)
+        case Vector("WatchGoal")                        => Some(WatchGoal)
+        case Vector("EnrichCron")                       => Some(EnrichCron)
+        case Vector("HintSettings")                     => Some(HintSettings)
+        case Vector("HintUntil")                        => Some(HintUntil)
+        case Vector("HintTargets")                      => Some(HintTargets)
+        case Vector("CronGiven")                        => Some(CronGiven)
+        case Vector("ChainGiven")                       => Some(ChainGiven)
+        case Vector("HintConfig")                       => Some(HintConfig)
         case Vector("RegionWithin", x, y, w, h, wd, ht) =>
           for
             cx <- Count.read(x)
@@ -853,6 +868,7 @@ object Column:
             case ("CitekeyOfAnother", Vector(citekey))  => Some(Conflict.Hold.CitekeyOfAnother(citekey))
             case ("CitekeyTaken", Vector(citekey))      => Some(Conflict.Hold.CitekeyTaken(citekey))
             case ("StoredAs", Vector(citekey))          => Some(Conflict.Hold.StoredAs(citekey))
+            case ("Focus", Vector(goal))                => Some(Conflict.Hold.Focus(goal))
             case (other, Vector())                      => word(Holds, other)
             case _                                      => None
           hold.map(Conflict.Held(Where(s"$subject"), _))

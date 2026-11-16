@@ -1,5 +1,6 @@
 package com.histmersion
 package server.agents
+import com.histmersion.util.problem.ProblemLog
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
@@ -503,11 +504,7 @@ object AgentDoctor:
     catch
       case e: InterruptedException => throw e
       case e: Exception            =>
-        Left(
-          Problem.Unclassified(
-            Legacy.Text(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}".take(300))
-          )
-        )
+        Left(ProblemLog.unexpected(e, Problem.Where("the agent doctor's probe")))
 
   /** `{"data":[{"id":…},…]}` → the ids. */
   def modelIds(body: Output): Either[Problem, List[ModelRef.Model]] =
@@ -546,8 +543,4 @@ object AgentDoctor:
     catch
       case e: InterruptedException => throw e
       case e: Exception            =>
-        Left(
-          Problem.Unclassified(
-            Legacy.Text(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}".take(300))
-          )
-        )
+        Left(ProblemLog.unexpected(e, Problem.Where("the agent doctor's probe")))

@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.automation.managers
 import com.histmersion.util.json.RawJson.*
-import com.histmersion.util.problem.{Legacy, Problem, Problems}
+import com.histmersion.util.problem.{Problem, Problems}
+import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import hearth.kindlings.optics.syntax.*
@@ -123,7 +124,7 @@ final class ManagersControllers(
     agents.managerStore
       .get(ManagerInfo.Id(id.value.trim))
       .map(m => withEffective(m, backlogs()))
-      .toRight(notFound(Problem.Unclassified(Legacy.Text(s"No manager '$id'"))))
+      .toRight(notFound(Problem.NotFound.Entity(Problem.TypeName.of(ManagerLight.Id), Problem.Raw.of(id))))
 
   def list: List[ManagerInfo] =
     lazy val snap = backlogs()
@@ -172,7 +173,7 @@ final class ManagersControllers(
           agents.managerStore
             .create(infoId, k, g, state, in.config, c.map(x => ManagerInfo.Cron(x.text.value)), c.flatMap(_.next(now))),
           (),
-          conflict(Problem.Unclassified(Legacy.Text(s"the manager '$id' exists already")))
+          conflict(Problem.Conflict.AlreadyExists(Problem.TypeName.of(ManagerLight.Id), Problem.Raw.of(id)))
         )
         _ = record(
           infoId,
@@ -192,27 +193,27 @@ final class ManagersControllers(
       case None =>
         Left(
           error(
-            Problem.Unclassified(
-              Legacy.Text(s"unknown manager kind '${in.kind}' (one of: ${Kind.values.map(_.wire).mkString(", ")})")
+            Problem.Invalid.Unknown.here(
+              Problem.TypeName.of(ManagerCreate.Kind),
+              Problem.Raw.of(in.kind),
+              Kind.values.toVector.map(k => Problem.Raw.of(k.wire))
             )
           )
         )
       case Some(Kind.Review) if goal.isDefined =>
         Left(
           error(
-            Problem.Unclassified(
-              Legacy.Text("the review manager is library-wide: give no goal (narrow it with config includeGoal)")
-            )
+            Problem.Invalid.Broken.here(Problem.Invalid.Rule.ReviewLibraryWide)
           )
         )
       case Some(Kind.Review)                   => make(Kind.Review, ManagerLight.Id(ReviewId), None)
       case Some(Kind.Enrich) if goal.isDefined =>
-        Left(Api.Error(Problem.Unclassified(Legacy.Text("the enrich manager is library-wide: give no goal"))))
+        Left(Api.Error(Problem.Invalid.Broken.here(Problem.Invalid.Rule.EnrichLibraryWide)))
       case Some(Kind.Enrich) => make(Kind.Enrich, ManagerLight.Id(EnrichId), None)
       case Some(Kind.Seed)   =>
         for
           g <- goal.toRight(
-            Api.Error(Problem.Unclassified(Legacy.Text("a seeding manager is for one research area: give its goal")))
+            Api.Error(Problem.Invalid.Broken.here(Problem.Invalid.Rule.SeedGoal))
           )
           slug <- DomainGoal.Slug
             .option(g)
@@ -228,7 +229,7 @@ final class ManagersControllers(
       case Some(Kind.Watch) =>
         for
           g <- goal.toRight(
-            Api.Error(Problem.Unclassified(Legacy.Text("a watcher is for one research area: give its goal")))
+            Api.Error(Problem.Invalid.Broken.here(Problem.Invalid.Rule.WatchGoal))
           )
           slug <- DomainGoal.Slug
             .option(g)
@@ -298,9 +299,7 @@ final class ManagersControllers(
     if k == Kind.Enrich then
       Left(
         Api.Error(
-          Problem.Unclassified(
-            Legacy.Text("the enrich manager has no cron: the ingests and the Enrich buttons feed it")
-          )
+          Problem.Invalid.Broken.here(Problem.Invalid.Rule.EnrichCron)
         )
       )
     else
@@ -323,8 +322,12 @@ final class ManagersControllers(
           c.rounds.forall(r => r.value >= 2 && r.value <= agents.roundsCap.value),
           (),
           error(
-            Problem
-              .Unclassified(Legacy.Text(s"rounds must be between 2 and ${agents.roundsCap} (agents.review.rounds-cap)"))
+            Problem.Invalid.OutOfRange(
+              Problem.TypeName.of(ManagerConfig.Rounds),
+              Problem.Raw(c.rounds.fold("")(r => s"$r")),
+              Problem.Invalid.Bounds(Some(Problem.Raw.of(2L)), Some(Problem.Raw.of(agents.roundsCap))),
+              Vector(Problem.Field("rounds"))
+            )
           )
         )
       ) { (acc, o) =>
@@ -334,10 +337,11 @@ final class ManagersControllers(
             .filter(roles.contains)
             .toRight(
               error(
-                Problem.Unclassified(
-                  Legacy.Text(
-                    s"models: '${o.role}' is not a role a ${k.wire} manager runs (${roles.map(_.wire).mkString(", ")})"
-                  )
+                Problem.Invalid.Unknown(
+                  Problem.TypeName.of(Role.Wire),
+                  Problem.Raw.of(o.role),
+                  roles.toVector.map(r => Problem.Raw.of(r.wire)),
+                  Vector(Problem.Field("models"))
                 )
               )
             )
@@ -418,7 +422,7 @@ final class ManagersControllers(
           val cancelled = inFlight(lightId(m)).count(r => agents.engine.cancel(runIdOf(r.id)).isRight)
           val items =
             Transactor(ds).transact(
-              ManagerRepo.cancelOpen(m.id, Problem.Unclassified(Legacy.Text("the manager was stopped")))
+              ManagerRepo.cancelOpen(m.id, Problem.Run.Cancelled(Problem.Run.Actor.Person))
             )
           record(
             m.id,
@@ -429,7 +433,12 @@ final class ManagersControllers(
           )
           manager(lightId(m))
         case other =>
-          Left(error(Problem.Unclassified(Legacy.Text(s"unknown action '$other' (one of: ${Actions.mkString(", ")})"))))
+          Left(
+            error(
+              Problem.Invalid.Unknown
+                .here(Problem.TypeName.of(ActionsValue), Problem.Raw(other), Actions.toVector.map(Problem.Raw.of(_)))
+            )
+          )
     }
 
   // ── items ──────────────────────────────────────────────────────────────────────────────────────
@@ -449,8 +458,10 @@ final class ManagersControllers(
             .map(Some(_))
             .toRight(
               error(
-                Problem.Unclassified(
-                  Legacy.Text(s"unknown item status '$s' (one of: ${ItemStatus.values.map(_.wire).mkString(", ")})")
+                Problem.Invalid.Unknown.here(
+                  Problem.TypeName.of(ItemStatus.Wire),
+                  Problem.Raw(s),
+                  ItemStatus.values.toVector.map(v => Problem.Raw.of(v.wire))
                 )
               )
             )
@@ -473,7 +484,7 @@ final class ManagersControllers(
             i
           }
       )
-      .toRight(notFound(Problem.Unclassified(Legacy.Text(s"No item '$ref' of manager ${m.id}"))))
+      .toRight(notFound(Problem.NotFound.Entity(Problem.TypeName.of(ManagerItem.Ref), Problem.Raw.of(ref))))
 
   /** A target as an item of `kind` names it: an article's slug, a source's citekey, the goal (a seeding manager's own).
     * A compile item is never added by hand: it comes from an approved plan.
@@ -485,7 +496,13 @@ final class ManagersControllers(
   ): Either[Api.Error, ManagerContext.ItemTarget] =
     kinds.find(_.items.contains(kind)) match
       case Some(k) => k.target(m, kind, raw)
-      case None    => Left(error(Problem.Unclassified(Legacy.Text(s"unknown item kind '$kind'"))))
+      case None    =>
+        Left(
+          error(
+            Problem.Invalid.Unknown
+              .here(Problem.TypeName.of(ManagerContext.ItemKind), Problem.Raw.of(kind), Vector.empty)
+          )
+        )
 
   /** Add (or bring back) a target: `in.kind` names the item kind (`review`, `extend`, `filter`, `enrich`, `propose`, or
     * the kind itself; blank = the manager's default). An article's review whose article records no filter brings an
@@ -500,8 +517,10 @@ final class ManagersControllers(
       m <- manager(id)
       kind <- itemKindOf(kindOf(m), com.histmersion.api.ItemKind.Word(in.kind.value)).toRight(
         error(
-          Problem.Unclassified(
-            Legacy.Text(s"manager ${m.id} drives ${itemKinds(kindOf(m)).mkString(", ")} items, not '${in.kind}'")
+          Problem.Invalid.Unknown.here(
+            Problem.TypeName.of(EnqueueRequest.Kind),
+            Problem.Raw.of(in.kind),
+            itemKinds(kindOf(m)).toVector.map(Problem.Raw.of(_))
           )
         )
       )
@@ -529,7 +548,7 @@ final class ManagersControllers(
         .foreach(_.added(supervisor, m, itemKind, target, ManagerContext.Priority(prio)))
       item <- agents.managerStore
         .item(itemId)
-        .toRight(notFound(Problem.Unclassified(Legacy.Text(s"item $itemId vanished"))))
+        .toRight(notFound(Problem.NotFound.Entity(Problem.TypeName.of(ManagerItem.Id), Problem.Raw.of(itemId))))
     yield
       supervisor.nudge()
       item
@@ -543,10 +562,10 @@ final class ManagersControllers(
       case None =>
         Left(
           error(
-            Problem.Unclassified(
-              Legacy.Text(
-                s"nothing manages '${in.kind}' items (one of: ${EnqueueKind.values.map(_.wire).mkString(", ")})"
-              )
+            Problem.Invalid.Unknown.here(
+              Problem.TypeName.of(EnqueueRequest.Kind),
+              Problem.Raw.of(in.kind),
+              EnqueueKind.values.toVector.map(k => Problem.Raw.of(k.wire))
             )
           )
         )
@@ -610,14 +629,25 @@ final class ManagersControllers(
               ManagerPolicy
                 .parseInstant(ManagerPolicy.InstantText(u.value))
                 .map(_ => ())
-                .toRight(error(Problem.Unclassified(Legacy.Text(s"'$u' is not a date (2026-11-01) or an instant"))))
+                .toRight(
+                  error(
+                    Problem.Invalid.Unreadable
+                      .here(Problem.TypeName.of(Hold.Until), Problem.Raw.of(u), Vector(Problem.Raw("2026-11-01")))
+                  )
+                )
             )
             _ <- Either.cond(
               transact(ds)(ManagerRepo.hold(i.id, h)),
               (),
               conflict(
-                Problem.Unclassified(
-                  Legacy.Text(s"item #${i.id} is ${i.status}; only a pending or held item can be held")
+                Problem.Conflict.WrongState(
+                  Problem.TypeName.of(ManagerItem.Id),
+                  Problem.Raw.of(i.id),
+                  Problem.Conflict.State.of(i.status),
+                  Vector(
+                    Problem.Conflict.State.of(ItemStatus.Pending.wire),
+                    Problem.Conflict.State.of(ItemStatus.Held.wire)
+                  )
                 )
               )
             )
@@ -633,12 +663,7 @@ final class ManagersControllers(
           val g = i.hold.flatMap(_.focus).fold("")(_.value)
           Left(
             conflict(
-              Problem.Unclassified(
-                Legacy.Text(
-                  s"item #${i.id} is held by the autopilot's focus: goal $g is not one of the active goals. Pin " +
-                    s"it to run it now (histmersion agent autopilot focus pin $g), or raise the cap (focus max <n>)"
-                )
-              )
+              Problem.Conflict.Held(Problem.Where(s"item #${i.id}"), Problem.Conflict.Hold.Focus(Problem.Raw(g)))
             )
           )
         case "release" =>
@@ -646,11 +671,18 @@ final class ManagersControllers(
             .cond(
               transact(ds)(ManagerRepo.release(i.id)),
               (),
-              conflict(Problem.Unclassified(Legacy.Text(s"item #${i.id} is ${i.status}, not held")))
+              conflict(
+                Problem.Conflict.WrongState(
+                  Problem.TypeName.of(ManagerItem.Id),
+                  Problem.Raw.of(i.id),
+                  Problem.Conflict.State.of(i.status),
+                  Vector(Problem.Conflict.State.of(ItemStatus.Held.wire))
+                )
+              )
             )
             .map(_ => record(m.id, Some(i.id), None, Feed.Held, s"${i.target}: released by a person"))
         case "priority" =>
-          in.priority.toRight(Api.Error(Problem.Unclassified(Legacy.Text("give `priority`")))).map { p =>
+          in.priority.toRight(Api.Error(Problem.Invalid.Missing.here(Problem.Field("priority")))).map { p =>
             Transactor(ds).transact(ManagerRepo.setPriority(i.id, p.transformInto[ManagerItem.Priority]))
             record(m.id, Some(i.id), None, Feed.Hint, s"${i.target}: priority $p")
           }
@@ -672,7 +704,18 @@ final class ManagersControllers(
                   )
               ),
               (),
-              conflict(Problem.Unclassified(Legacy.Text(s"item #${i.id} is ${i.status} already")))
+              conflict(
+                Problem.Conflict.WrongState(
+                  Problem.TypeName.of(ManagerItem.Id),
+                  Problem.Raw.of(i.id),
+                  Problem.Conflict.State.of(i.status),
+                  Vector(
+                    Problem.Conflict.State.of(ItemStatus.Pending.wire),
+                    Problem.Conflict.State.of(ItemStatus.Held.wire),
+                    Problem.Conflict.State.of(ItemStatus.Active.wire)
+                  )
+                )
+              )
             )
             .map(_ => record(m.id, Some(i.id), i.runId.map(runIdOf), Feed.Stopped, s"${i.target}: $why"))
         case "reopen" =>
@@ -681,21 +724,33 @@ final class ManagersControllers(
               Transactor(ds).transact(ManagerRepo.reopen(i.id)),
               (),
               conflict(
-                Problem.Unclassified(Legacy.Text(s"item #${i.id} is ${i.status}; only a settled item can be re-opened"))
+                Problem.Conflict.WrongState(
+                  Problem.TypeName.of(ManagerItem.Id),
+                  Problem.Raw.of(i.id),
+                  Problem.Conflict.State.of(i.status),
+                  Vector(
+                    Problem.Conflict.State.of(ItemStatus.Done.wire),
+                    Problem.Conflict.State.of(ItemStatus.Failed.wire),
+                    Problem.Conflict.State.of(ItemStatus.Stopped.wire),
+                    Problem.Conflict.State.of(ItemStatus.Cancelled.wire)
+                  )
+                )
               )
             )
             .map(_ => record(m.id, Some(i.id), None, Feed.Evaluated, s"${i.target}: re-opened by a person"))
         case other =>
           Left(
             error(
-              Problem.Unclassified(
-                Legacy.Text(s"unknown item action '$other' (one of: ${ItemPatch.Actions.mkString(", ")})")
+              Problem.Invalid.Unknown.here(
+                Problem.TypeName.of(ItemPatch.Action),
+                Problem.Raw(other),
+                ItemPatch.Actions.toVector.map(Problem.Raw(_))
               )
             )
           )
       out <- agents.managerStore
         .item(i.id)
-        .toRight(notFound(Problem.Unclassified(Legacy.Text(s"item ${i.id} vanished"))))
+        .toRight(notFound(Problem.NotFound.Entity(Problem.TypeName.of(ManagerItem.Id), Problem.Raw.of(i.id))))
     yield
       supervisor.nudge()
       withRuns(List(out)).head
@@ -720,7 +775,7 @@ final class ManagersControllers(
       text <- Option(in.text.value.trim)
         .filter(_.nonEmpty)
         .map(ManagerHint.Text(_))
-        .toRight(error(Problem.Unclassified(Legacy.Text("a hint needs text"))))
+        .toRight(error(Problem.Invalid.Missing.here(Problem.Field("text"))))
       item <- in.item
         .map(_.value.trim)
         .filter(_.nonEmpty)
@@ -731,7 +786,13 @@ final class ManagersControllers(
       _ <- Either.cond(
         !(suggest && eff.isDefined),
         (),
-        error(Problem.Unclassified(Legacy.Text("`suggest` asks a model for the action: give no effect with it")))
+        error(
+          Problem.Invalid.Inconsistent
+            .here(
+              NonEmptyVector.of(Problem.Field("suggest"), Problem.Field("effect")),
+              Problem.Invalid.Exclusion.AtMostOne
+            )
+        )
       )
       // a suggestion needs a run that can start: checked before the hint is recorded
       _ <-
@@ -779,7 +840,7 @@ final class ManagersControllers(
       )
       out <- Transactor(ds)
         .read(ManagerRepo.hint(hint.id))
-        .toRight(notFound(Problem.Unclassified(Legacy.Text(s"hint ${hint.id} vanished"))))
+        .toRight(notFound(Problem.NotFound.Entity(Problem.TypeName.of(ManagerHint.Id), Problem.Raw.of(hint.id))))
     yield
       supervisor.nudge()
       out
@@ -802,40 +863,41 @@ final class ManagersControllers(
         Left(
           error(
             if !proposal && verb.contains(HintEffect.Verb.Config) then
-              Problem.Unclassified(
-                Legacy.Text(
-                  s"unknown hint action '${e.action}' (one of: $oneOf) — change the settings with the manager's config instead"
-                )
+              Problem.Invalid.Broken.here(Problem.Invalid.Rule.HintConfig)
+            else
+              Problem.Invalid.Unknown.here(
+                Problem.TypeName.of(HintEffect.Action),
+                Problem.Raw.of(e.action),
+                allowed.toVector.map(v => Problem.Raw.of(v.word))
               )
-            else Problem.Unclassified(Legacy.Text(s"unknown hint action '${e.action}' (one of: $oneOf)"))
           )
         )
       case Some(HintEffect.Verb.Config) =>
         e.config
           .filter(c => ManagersMarkdown.configLine(c) != "the defaults")
-          .toRight(Api.Error(Problem.Unclassified(Legacy.Text("a config action names the settings it changes"))))
+          .toRight(Api.Error(Problem.Invalid.Broken.here(Problem.Invalid.Rule.HintSettings)))
           .flatMap(c =>
             validate(kindOf(m), m.config.merge(c)).map(_ => e.modify(_.action).setTo(HintEffect.Verb.Config.word))
           )
       case Some(_) if e.targets.isEmpty && e.tag.isEmpty && e.topic.isEmpty && e.goal.isEmpty && item.isEmpty =>
         Left(
           error(
-            Problem.Unclassified(
-              Legacy.Text("a structured hint names its targets, a tag, a topic or a goal (or is about one item)")
-            )
+            Problem.Invalid.Broken.here(Problem.Invalid.Rule.HintTargets)
           )
         )
       case Some(HintEffect.Verb.Hold) if e.until.isEmpty && e.untilSource.isEmpty =>
         Left(
           Api.Error(
-            Problem.Unclassified(Legacy.Text("a hold hint needs `until` (a date) or `untilSource` (a DOI or citekey)"))
+            Problem.Invalid.Broken.here(Problem.Invalid.Rule.HintUntil)
           )
         )
       case Some(_) if e.until.exists(u => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(u.value)).isEmpty) =>
         Left(
           error(
-            Problem.Unclassified(
-              Legacy.Text(s"'${e.until.fold("")(_.value)}' is not a date (2026-11-01) or an instant")
+            Problem.Invalid.Unreadable.here(
+              Problem.TypeName.of(HintEffect.Until),
+              Problem.Raw(e.until.fold("")(_.value)),
+              Vector(Problem.Raw("2026-11-01"))
             )
           )
         )
@@ -1054,7 +1116,7 @@ final class ManagersControllers(
             m.nextTickAt.flatMap(t => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(t.value)))
           else cron.next(now)
           val _ = agents.managerStore.setConfig(id, c, Some(ManagerInfo.Cron(cron.text.value)), next)
-          if !in.enabled.value then cancelSweep(m, sw, Problem.Unclassified(Legacy.Text("its schedule was turned off")))
+          if !in.enabled.value then cancelSweep(m, sw, ManagerItem.Outcome("its schedule was turned off"))
           record(
             id,
             None,
@@ -1100,7 +1162,7 @@ final class ManagersControllers(
           m.cron,
           m.nextTickAt.flatMap(t => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(t.value)))
         )
-        cancelSweep(m, sw, Problem.Unclassified(Legacy.Text("its schedule was removed")))
+        cancelSweep(m, sw, ManagerItem.Outcome("its schedule was removed"))
         record(
           m.id,
           None,
@@ -1114,7 +1176,7 @@ final class ManagersControllers(
     Goal.Plans.Removed(Goal.Plans.Removed.Value(legacy || fromWatcher))
 
   /** A sweep the watcher no longer runs: its pending or held item is cancelled (a running one finishes). */
-  private def cancelSweep(m: ManagerInfo, sw: Sweep, why: Problem): Unit =
+  private def cancelSweep(m: ManagerInfo, sw: Sweep, why: ManagerItem.Outcome): Unit =
     m.goal
       .flatMap(g => agents.managerStore.itemFor(m.id, ManagerItem.Kind(sw.itemKind.value), ManagerItem.Target(g.value)))
       .foreach { i =>
@@ -1122,11 +1184,11 @@ final class ManagersControllers(
             ManagerRepo.settle(
               i.id,
               ItemStatus.Cancelled,
-              ManagerItem.Outcome(why.sentence),
+              why,
               List(ItemStatus.Pending, ItemStatus.Held)
             )
           )
-        then record(m.id, Some(i.id), None, Feed.Stopped, s"${i.target} (${i.kind}): ${why.sentence}")
+        then record(m.id, Some(i.id), None, Feed.Stopped, s"${i.target} (${i.kind}): $why")
       }
 
   // ── the autopilot ──────────────────────────────────────────────────────────────────────────────
@@ -1171,8 +1233,10 @@ final class ManagersControllers(
       .parse(in.mode)
       .toRight(
         error(
-          Problem.Unclassified(
-            Legacy.Text(s"unknown mode '${in.mode}' — one of: ${AgentMode.values.map(_.wire).mkString(", ")}")
+          Problem.Invalid.Unknown.here(
+            Problem.TypeName.of(AgentMode.ModeSet.Mode),
+            Problem.Raw.of(in.mode),
+            AgentMode.values.toVector.map(v => Problem.Raw.of(v.wire))
           )
         )
       )

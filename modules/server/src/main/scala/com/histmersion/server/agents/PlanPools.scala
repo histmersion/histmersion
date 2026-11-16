@@ -1,5 +1,6 @@
 package com.histmersion
 package server.agents
+import com.histmersion.util.problem.ProblemLog
 import com.histmersion.util.json.RawJson
 import com.histmersion.api.json.NewtypeCodecs.given
 import hearth.kindlings.jsoniterjson.Json
@@ -565,11 +566,7 @@ object PlanPools:
     catch
       case e: InterruptedException => throw e
       case e: Exception            =>
-        Left(
-          Problem.Unclassified(
-            Legacy.Text(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}".take(300))
-          )
-        )
+        Left(ProblemLog.unexpected(e, Problem.Where("the plan pools' quota read")))
 
   /** The model whose OWN runtime spends the pool needs that runtime's login: claude-code on the Claude plan, codex on
     * the ChatGPT plan (opencode on a ChatGPT login signs in by itself).
@@ -885,11 +882,7 @@ object PlanPools:
       case e: java.util.concurrent.TimeoutException =>
         Left(Problem.Unclassified(Legacy.Text(s"codex app-server did not answer within $timeoutSeconds s")))
       case e: Exception =>
-        Left(
-          Problem.Unclassified(
-            Legacy.Text(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}".take(300))
-          )
-        )
+        Left(ProblemLog.unexpected(e, Problem.Where("the plan pools' quota read")))
 
   /** The three messages of a read — and the only ones Histmersion ever sends the app-server. */
   val ReadRequests: List[String] = List(

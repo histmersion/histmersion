@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.library.workflows
+import com.histmersion.util.problem.ProblemLog
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
 
@@ -181,14 +182,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
     catch
       case e: InterruptedException => throw e
       case e: Exception            =>
-        scribe.warn(s"auto-enrich of $citekey failed: ${e.getClass.getSimpleName}: ${e.getMessage}")
-        Some(
-          AutoEnrich.notQueued(
-            Problem.Unclassified(
-              Legacy.Text(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}".take(300))
-            )
-          )
-        )
+        Some(AutoEnrich.notQueued(ProblemLog.unexpected(e, Problem.Where(s"the auto-enrich of $citekey"))))
 
   private val autoEnrichLock = new Object
 

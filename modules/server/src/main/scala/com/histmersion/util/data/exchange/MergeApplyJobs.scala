@@ -1,5 +1,6 @@
 package com.histmersion
 package util.data.exchange
+import com.histmersion.util.problem.ProblemLog
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.api.backup.Backup
@@ -48,9 +49,7 @@ final class MergeApplyJobs(runs: MergeApplyRuns, waitSeconds: => Int, carrier: W
             .Try(run())
             .toEither
             .left
-            .map(e =>
-              Problem.Unclassified(Legacy.Text(s"merge apply crashed: ${e.getClass.getSimpleName}: ${e.getMessage}"))
-            )
+            .map(e => ProblemLog.unexpected(e, Problem.Where("merge apply")))
             .flatten
           try runs.finish(id, outcome)
           catch case e: Exception => scribe.error(s"merge apply $id: could not record its end: ${e.getMessage}", e)

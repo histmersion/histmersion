@@ -1,6 +1,6 @@
 package com.histmersion
 package domain.automation.approvals
-import com.histmersion.util.problem.{Legacy, Problem, Problems}
+import com.histmersion.util.problem.{Problem, Problems}
 
 import com.histmersion.api.automation.Agents.ApprovalInfo
 import com.histmersion.domain.automation.Approval
@@ -34,4 +34,11 @@ object ApprovalEffects:
     def applySubject(a: ApprovalInfo): Either[Problem, String] =
       subjects.find(s => Approval.Kind.parse(Approval.Kind.Wire(a.kind.value)).contains(s.kind)) match
         case Some(s) => s.apply(a)
-        case None    => Left(Problem.Unclassified(Legacy.Text(s"no domain applies a ${a.kind} approval")))
+        case None    =>
+          Left(
+            Problem.Invalid.Unknown.here(
+              Problem.TypeName.of(Approval.Kind.Wire),
+              Problem.Raw.of(a.kind),
+              subjects.toVector.map(s => Problem.Raw.of(s.kind.wire))
+            )
+          )

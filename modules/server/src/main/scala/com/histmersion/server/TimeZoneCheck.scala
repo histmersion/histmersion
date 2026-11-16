@@ -1,5 +1,6 @@
 package com.histmersion
 package server
+import com.histmersion.util.problem.ProblemLog
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
 
@@ -78,7 +79,7 @@ object TimeZoneCheck:
 
   /** The check against this JDK (or binary). */
   def jdk(): (Boolean, Report) =
-    def err(t: Throwable) = Problem.Unclassified(Legacy.Text(s"${t.getClass.getSimpleName}: ${t.getMessage}"))
+    def err(t: Throwable) = ProblemLog.unexpected(t, Problem.Where("the time-zone check"))
     val ids = Try(ZoneId.getAvailableZoneIds.size).getOrElse(0)
     val version = Try(ZoneRulesProvider.getVersions("Europe/Warsaw").lastKey).toOption
     report(

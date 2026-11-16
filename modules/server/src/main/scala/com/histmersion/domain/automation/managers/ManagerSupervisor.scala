@@ -1,6 +1,6 @@
 package com.histmersion
 package domain.automation.managers
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import hearth.kindlings.optics.syntax.*
@@ -939,7 +939,12 @@ final class ManagerSupervisor(
         itemKind: ManagerContext.ItemKind,
         raw: ManagerItem.Target
     ): Either[Api.Error, ManagerContext.ItemTarget] =
-      Left(Api.Error(Problem.Unclassified(Legacy.Text(s"unknown item kind '$itemKind'"))))
+      Left(
+        Api.Error(
+          Problem.Invalid.Unknown
+            .here(Problem.TypeName.of(ManagerContext.ItemKind), Problem.Raw.of(itemKind), Vector.empty)
+        )
+      )
     def pipelineOf(itemKind: ManagerContext.ItemKind): Pipeline = ManagerSupervisor.this.pipelineOf(itemKind)
     def defaults(cfg: AgentsConfig, m: ManagerDefaults): ManagerConfig = ManagerConfig()
 

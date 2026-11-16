@@ -404,6 +404,28 @@ object Text:
           "article patch <slug> --filter-query … (or --filter-topics/--filter-tags), or patch_article with `filter`"
       case Invalid.Rule.RegionWithin(x, y, w, h, width, height) =>
         s"region ($x,$y,$w,$h) is outside image bounds (${width}x$height)"
+      case Invalid.Rule.ReviewLibraryWide =>
+        "the review manager is library-wide: give no goal (narrow it with config includeGoal)"
+      case Invalid.Rule.EnrichLibraryWide =>
+        "the enrich manager is library-wide: give no goal"
+      case Invalid.Rule.SeedGoal =>
+        "a seeding manager is for one research area: give its goal"
+      case Invalid.Rule.WatchGoal =>
+        "a watcher is for one research area: give its goal"
+      case Invalid.Rule.EnrichCron =>
+        "the enrich manager has no cron: the ingests and the Enrich buttons feed it"
+      case Invalid.Rule.HintSettings =>
+        "a config action names the settings it changes"
+      case Invalid.Rule.HintUntil =>
+        "a hold hint needs `until` (a date) or `untilSource` (a DOI or citekey)"
+      case Invalid.Rule.HintTargets =>
+        "a structured hint names its targets, a tag, a topic or a goal (or is about one item)"
+      case Invalid.Rule.CronGiven =>
+        "give `cron` to set a schedule (or `remove: true`)"
+      case Invalid.Rule.ChainGiven =>
+        "a chain needs at least one provider:model (reset the role to go back to config)"
+      case Invalid.Rule.HintConfig =>
+        "unknown hint action 'config' — change the settings with the manager's config instead"
 
   extension (year: Invalid.Year)
     /** The year as a reader writes it: `900 BCE`, `530 CE`; there is no year 0, which is read as 1 BCE. */
@@ -630,6 +652,9 @@ object Text:
         s"$subject: '$citekey' is a citekey (or an old one) of another source here — merge under the other citekey"
       case Conflict.Hold.CitekeyTaken(citekey) =>
         s"$subject: '$citekey' is already a citekey (or an old one) here or in the bundle"
+      case Conflict.Hold.Focus(goal) =>
+        s"$subject is held by the autopilot's focus: goal $goal is not one of the active goals. Pin it to run it now " +
+          s"(histmersion agent autopilot focus pin $goal), or raise the cap (focus max <n>)"
       case Conflict.Hold.StoredAs(citekey) =>
         s"$subject is already stored as '$citekey' — pass force to ingest it again under a different citekey"
 

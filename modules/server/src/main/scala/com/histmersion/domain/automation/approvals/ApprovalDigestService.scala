@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.automation.approvals
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
+import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import io.scalaland.chimney.dsl.*
@@ -81,13 +82,22 @@ final class ApprovalDigestService(
     for
       d <- Decision
         .parse(Decision.Wire(b.decision.value))
-        .toRight(Api.Error(Problem.Unclassified(Legacy.Text(s"unknown decision '${b.decision}' (approve or reject)"))))
+        .toRight(
+          Api.Error(
+            Problem.Invalid.Unknown.here(
+              Problem.TypeName.of(Decision.Wire),
+              Problem.Raw.of(b.decision),
+              Decision.values.toVector.map(d => Problem.Raw.of(d.wire))
+            )
+          )
+        )
       _ <- Either.cond(
         b.kind.exists(_.value.trim.nonEmpty) || b.subject.exists(_.value.trim.nonEmpty) || b.ids.nonEmpty,
         (),
         Api.Error(
-          Problem.Unclassified(
-            Legacy.Text("give a kind, a subject or ids: a bulk decision never takes every open approval")
+          Problem.Invalid.Inconsistent.here(
+            NonEmptyVector.of(Problem.Field("kind"), Problem.Field("subject"), Problem.Field("ids")),
+            Problem.Invalid.Exclusion.AtLeastOne
           )
         )
       )
@@ -99,8 +109,10 @@ final class ApprovalDigestService(
             .parse(ApprovalKind.Wire(k))
             .toRight(
               Api.Error(
-                Problem.Unclassified(
-                  Legacy.Text(s"unknown approval kind '$k' (${ApprovalKind.values.map(_.wire).mkString(", ")})")
+                Problem.Invalid.Unknown.here(
+                  Problem.TypeName.of(ApprovalKind.Wire),
+                  Problem.Raw(k),
+                  ApprovalKind.values.toVector.map(v => Problem.Raw.of(v.wire))
                 )
               )
             )
@@ -136,7 +148,7 @@ final class ApprovalDigestService(
         val bad = done.collect { case (id, Left(e)) =>
           BulkFailed(
             BulkFailed.Id(id.value),
-            Problem.Unclassified(Legacy.Text(e.problems.sentences.mkString("; ").take(300)))
+            e.problems
           )
         }
         val left = agents.approvalStore.openLight().size

@@ -1,7 +1,7 @@
 package com.histmersion
 package api.automation
 
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentences
 import com.histmersion.api.Plural
 import com.histmersion.api.given
 object ApprovalDigestMarkdown:
@@ -43,5 +43,8 @@ object ApprovalDigestMarkdown:
                                                                                                                                              "") +
       (if r.decided.isEmpty then "" else s"\n\n- ${r.decided.map(i => s"#$i").mkString(", ")}") +
       (if r.failed.isEmpty then ""
-       else "\n\n## Not decided\n\n" + r.failed.map(f => s"- #${f.id}: ${f.error.sentence}").mkString("\n")) +
+       else
+         "\n\n## Not decided\n\n" + r.failed
+           .map(f => s"- #${f.id}: ${f.problems.sentences.mkString("; ")}")
+           .mkString("\n")) +
       s"\n\n${Plural.count(Plural.CountN(r.left.value.toLong), Plural.CountSingular("open approval"))} left."

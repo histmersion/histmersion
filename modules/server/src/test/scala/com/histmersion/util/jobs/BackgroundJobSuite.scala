@@ -43,8 +43,10 @@ class BackgroundJobSuite extends DbSuite:
         .sentence,
       "a vacuum job is already running (job 42) — see `histmersion jobs`"
     )
-    assertEquals((BackgroundJob.describe(InterruptedException())).sentence, "interrupted")
-    assertEquals((BackgroundJob.describe(IllegalStateException("boom"))).sentence, "IllegalStateException: boom")
+    assertEquals((BackgroundJob.describe(InterruptedException())).sentence, "interrupted by a restart")
+    assert(
+      BackgroundJob.describe(IllegalStateException("boom")).sentence.endsWith("java.lang.IllegalStateException: boom")
+    )
 
   // ── on a test database ────────────────────────────────────────────────────────────────────────
   private val testDb = TestDb.url
@@ -111,4 +113,5 @@ class BackgroundJobSuite extends DbSuite:
       )
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     val failed = await(x.id)
-    assertEquals((failed.status, failed.error.map(_.sentence)), ("failed", Some("IllegalStateException: boom")))
+    assertEquals(failed.status, "failed")
+    assert(failed.error.exists(_.sentence.endsWith("java.lang.IllegalStateException: boom")), failed.error)
