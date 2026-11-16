@@ -12,9 +12,9 @@ object Dependencies {
     val jsoniter =
       "2.42.3" // com.github.plokhotnyuk.jsoniter-scala — the JSON codecs (what Kindlings 0.3.4 brings; tapir 1.14.0 is on 2.41)
     val kindlings =
-      "0.3.4-13-gd72850d-SNAPSHOT" // com.kubuszok — (verification snapshot) Hearth-based jsoniter / tapir-schema / sconfig derivation
+      "0.3.4-67-g607aa56-SNAPSHOT" // com.kubuszok — (verification snapshot) Hearth-based jsoniter / tapir-schema / sconfig derivation
     val hearth =
-      "0.4.4-6-gb8ae5aa-SNAPSHOT" // com.kubuszok — the macro commons the Kindlings snapshot is built on (its version)
+      "0.4.4-13-g9038396-SNAPSHOT" // com.kubuszok — the macro commons the Kindlings snapshot is built on (its version)
     val scallop =
       "6.0.1" // org.rogach — the CLI parser (no dependency but the Scala library)
     val ox = "1.0.2" // direct-style concurrency (via tapir-netty-server-sync); 1.0+ dropped
