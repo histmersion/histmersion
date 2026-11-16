@@ -36,17 +36,24 @@ object Column:
       case Invalid.OutOfRange(t, raw, b, at)    =>
         s"${path(at)}$t '$raw' is out of [${b.least.mkString}, ${b.greatest.mkString}]"
       case Invalid.Inconsistent(fs, rule, at) => s"${path(at)}${fs.toVector.mkString(", ")} break ${rule.productPrefix}"
-      case Invalid.Reference(form, at)        => s"${path(at)}no secret reference: ${form.stored}"
-      case Invalid.Broken(rule, at)           => s"${path(at)}breaks ${rule.stored}"
-      case NotFound.Entity(t, key)            => s"no $t '$key'"
-      case NotFound.Copy(work, answers)       => s"no open-access copy of '$work'${answeredStored(answers)}"
+      case Invalid.Inverted(start, end, at)   => s"${path(at)}the period would start in $start after it ends in $end"
+      case Invalid.OutOfTime(year, least, greatest, at)  => s"${path(at)}year $year is beyond [$least, $greatest]"
+      case Invalid.Unparsable(format, where, damage, at) =>
+        s"${path(at)}the ${format.productPrefix} input at $where is damaged: ${damage.stored}"
+      case Invalid.Reference(form, at)            => s"${path(at)}no secret reference: ${form.stored}"
+      case Invalid.Broken(rule, at)               => s"${path(at)}breaks ${rule.stored}"
+      case NotFound.Entity(t, key)                => s"no $t '$key'"
+      case NotFound.Listed(t, key, listing)       => s"no $t '$key' listed by ${listing.productPrefix}"
+      case NotFound.Copy(work, answers)           => s"no open-access copy of '$work'${answeredStored(answers)}"
       case NotFound.Dangling(t, key, from, in)    => s"no $t '$key' in ${in.productPrefix}, referred to by $from"
       case Conflict.Held(subject, hold)           => s"held ${hold.stored}: $subject"
       case Conflict.Job(job, status, control)     => s"job '$job' is $status: ${control.stored}"
       case Conflict.AlreadyExists(t, key)         => s"$t '$key' already exists"
       case Conflict.Renamed(t, asked, now)        => s"$t '$asked' was renamed to '$now'"
       case Conflict.Aliased(t, key, of)           => s"$t '$key' is an old key of '$of'"
-      case Conflict.Retired(t, key)               => s"$t '$key' was removed"
+      case Conflict.OldKey(t, asked, now, action) => s"${action.productPrefix} by an old key: $t '$asked' is now '$now'"
+      case Conflict.Collides(t, key, by)          => s"$t '$key' already exists; '$by' collides"
+      case Conflict.Claimed(t, key, clash)        => s"$t '$key' is claimed: ${clash.stored}"
       case Conflict.Stale(t, key, sent, now)      => s"$t '$key' has moved on: sent $sent, stored $now"
       case Conflict.WrongState(t, key, is, ws)    => s"$t '$key' is $is; it needs ${ws.mkString(" or ")}"
       case Conflict.Busy(activity)                => s"${activity.productPrefix} is still running"
@@ -162,10 +169,16 @@ object Column:
         case Invalid.Rule.RegexTime(limit)                   => Vector(s"$limit")
         case Invalid.Rule.RegexValid(description, at, regex) =>
           Vector(s"$description", at.fold("")(p => s"$p"), s"$regex")
+        case Invalid.Rule.MergeId(stated) => Vector(s"$stated")
         case Invalid.Rule.IdentifierGiven | Invalid.Rule.RunsCompared | Invalid.Rule.RunRepeated |
             Invalid.Rule.QueryGiven =>
           Vector.empty
       (rule.productPrefix +: held).mkString(HoldSeparator)
+
+  extension (clash: Conflict.Clash)
+    private def stored: String = clash match
+      case Conflict.Clash.OldKeyOf(of) => s"${clash.productPrefix} '$of'"
+      case other                       => other.productPrefix
 
   extension (flaw: Invalid.CronFlaw)
     private def held: Vector[String] = flaw match
@@ -504,6 +517,7 @@ object Column:
           yield TileWithin(cx, cy, zoom)
         case Vector("IdentifierGiven")      => Some(IdentifierGiven)
         case Vector("IdentifierKind", s)    => Some(IdentifierKind(Raw(s)))
+        case Vector("MergeId", s)           => Some(MergeId(Raw(s)))
         case Vector("ActivityPage", s)      => Some(ActivityPage(Raw(s)))
         case Vector("ActivityPageTime", s)  => Some(ActivityPageTime(Raw(s)))
         case Vector("EventCatalogue", s, k) => Some(EventCatalogue(Raw(s), raws(k)))
@@ -555,6 +569,14 @@ object Column:
     private val InconsistentAt = s"(?s)^$Prefix(.+) break (\\w+)$$".r
     private val ReferenceAt = s"(?s)^${Prefix}no secret reference: (\\w+)(?: '(.*)')?$$".r
     private val NoEntity = "(?s)^no (\\S+) '(.*)'$".r
+    private val NoListed = "(?s)^no (\\S+) '(.*)' listed by (\\w+)$".r
+    private val InvertedAt = s"(?s)^${Prefix}the period would start in (-?\\d+) after it ends in (-?\\d+)$$".r
+    private val BeyondAt = s"(?s)^${Prefix}year (-?\\d+) is beyond \\[(-?\\d+), (-?\\d+)\\]$$".r
+    private val UnparsableAt =
+      s"(?s)^${Prefix}the (\\w+) input at (.+?) is damaged: (\\w+)(?: (\\d+)/(\\d+)| — (.*))?$$".r
+    private val ByOldKey = "(?s)^(\\w+) by an old key: (\\S+) '(.*)' is now '(.*)'$".r
+    private val CollidesWith = "(?s)^(\\S+) '(.*)' already exists; '(.*)' collides$".r
+    private val ClaimedBy = "(?s)^(\\S+) '(.*)' is claimed: (\\w+)(?: '(.*)')?$".r
     private val DanglingIn = "(?s)^no (\\S+) '(.*)' in (\\w+), referred to by (.*)$".r
     private val HeldBy = "(?s)^held (\\w+)(?: (.*?))?: (.*)$".r
     private val JobControl = "(?s)^job '(.*)' is (\\S*): (\\w+)(?: (.*))?$".r
@@ -564,7 +586,6 @@ object Column:
     private val Exists = "(?s)^(\\S+) '(.*)' already exists$".r
     private val RenamedTo = "(?s)^(\\S+) '(.*)' was renamed to '(.*)'$".r
     private val OldKey = "(?s)^(\\S+) '(.*)' is an old key of '(.*)'$".r
-    private val WasRemoved = "(?s)^(\\S+) '(.*)' was removed$".r
     private val MovedOn = "(?s)^(\\S+) '(.*)' has moved on: sent (.*), stored (.*)$".r
     private val InState = "(?s)^(\\S+) '(.*)' is (\\S+); it needs (.*)$".r
     private val Running = "^(\\w+) is still running$".r
@@ -666,6 +687,24 @@ object Column:
     private val Crashed = "(?s)^(.+) failed unexpectedly \\((\\S+), problem (\\S+)\\) — (.*)$".r
     private val UnclassifiedText = "(?s)^unclassified: (.*)$".r
     private val BrokenAt = s"(?s)^${Prefix}breaks (.*)$$".r
+
+    /** A damage as [[Io.Damage.stored]] wrote it: its name, then two counts or what the reader reported. */
+    private def damageOf(damage: String, expected: String, found: String, reported: String): Option[Io.Damage] =
+      (Option(expected), Option(found), Option(reported)) match
+        case (Some(e), Some(f), None) if damage == "Length" =>
+          for
+            ec <- Count.read(e)
+            fc <- Count.read(f)
+          yield Io.Damage.Length(ec, fc)
+        case (Some(e), Some(f), None) if damage == "Newer"  => Some(Io.Damage.Newer(Raw(s"$e"), Raw(s"$f")))
+        case (Some(e), Some(f), None) if damage == "Schema" =>
+          for
+            ec <- Count.read(e)
+            fc <- Count.read(f)
+          yield Io.Damage.Schema(ec, fc)
+        case (None, None, Some(r)) if damage == "Unreadable" => Some(Io.Damage.Unreadable(External.Reported(s"$r")))
+        case (None, None, None)                              => word(Damages, damage)
+        case _                                               => None
 
     private val Readers: List[String => Option[Problem]] = List(
       {
@@ -798,6 +837,56 @@ object Column:
         case _                => None
       },
       {
+        case NoListed(t, key, listing) =>
+          word(NotFound.Listing.values.toSeq, listing).map(NotFound.Listed(TypeName(s"$t"), Raw(s"$key"), _))
+        case _ => None
+      },
+      {
+        case InvertedAt(at, start, end) =>
+          for
+            s <- Invalid.Year.read(start)
+            e <- Invalid.Year.read(end)
+          yield Invalid.Inverted(s, e, pathOf(at))
+        case _ => None
+      },
+      {
+        case BeyondAt(at, year, least, greatest) =>
+          for
+            y <- Invalid.Year.read(year)
+            l <- Invalid.Year.read(least)
+            g <- Invalid.Year.read(greatest)
+          yield Invalid.OutOfTime(y, l, g, pathOf(at))
+        case _ => None
+      },
+      {
+        case UnparsableAt(at, format, where, damage, expected, found, reported) =>
+          for
+            f <- word(Io.Format.values.toSeq, format)
+            d <- damageOf(damage, expected, found, reported)
+          yield Invalid.Unparsable(f, Where(s"$where"), d, pathOf(at))
+        case _ => None
+      },
+      {
+        case ByOldKey(action, t, asked, now) =>
+          word(Conflict.Action.values.toSeq, action)
+            .map(Conflict.OldKey(TypeName(s"$t"), Raw(s"$asked"), Raw(s"$now"), _))
+        case _ => None
+      },
+      {
+        case CollidesWith(t, key, by) => Some(Conflict.Collides(TypeName(s"$t"), Raw(s"$key"), Raw(s"$by")))
+        case _                        => None
+      },
+      {
+        case ClaimedBy(t, key, clash, of) =>
+          val read: Option[Conflict.Clash] = (clash, Option(of)) match
+            case ("OldKeyOf", Some(o)) => Some(Conflict.Clash.OldKeyOf(Raw(s"$o")))
+            case ("Taken", None)       => Some(Conflict.Clash.Taken)
+            case ("Removed", None)     => Some(Conflict.Clash.Removed)
+            case _                     => None
+          read.map(Conflict.Claimed(TypeName(s"$t"), Raw(s"$key"), _))
+        case _ => None
+      },
+      {
         case NoCopy(work) => Some(NotFound.Copy(Raw(s"$work"), Vector.empty))
         case _            => None
       },
@@ -811,10 +900,6 @@ object Column:
       },
       {
         case OldKey(t, key, of) => Some(Conflict.Aliased(TypeName(s"$t"), Raw(s"$key"), Raw(s"$of")))
-        case _                  => None
-      },
-      {
-        case WasRemoved(t, key) => Some(Conflict.Retired(TypeName(s"$t"), Raw(s"$key")))
         case _                  => None
       },
       {
@@ -920,24 +1005,9 @@ object Column:
       },
       {
         case Damaged(format, at, damage, expected, found, reported) =>
-          val read: Option[Io.Damage] = (Option(expected), Option(found), Option(reported)) match
-            case (Some(e), Some(f), None) if damage == "Length" =>
-              for
-                ec <- Count.read(e)
-                fc <- Count.read(f)
-              yield Io.Damage.Length(ec, fc)
-            case (Some(e), Some(f), None) if damage == "Newer"  => Some(Io.Damage.Newer(Raw(s"$e"), Raw(s"$f")))
-            case (Some(e), Some(f), None) if damage == "Schema" =>
-              for
-                ec <- Count.read(e)
-                fc <- Count.read(f)
-              yield Io.Damage.Schema(ec, fc)
-            case (None, None, Some(r)) if damage == "Unreadable" => Some(Io.Damage.Unreadable(External.Reported(s"$r")))
-            case (None, None, None)                              => word(Damages, damage)
-            case _                                               => None
           for
             f <- word(Io.Format.values.toSeq, format)
-            d <- read
+            d <- damageOf(damage, expected, found, reported)
           yield Io.Corrupt(f, Where(s"$at"), d)
         case _ => None
       },

@@ -1,5 +1,6 @@
 package com.histmersion
 package values
+import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.util.problem.Problem
 
@@ -17,13 +18,8 @@ class ValuesSuite extends munit.FunSuite:
     )
     assertEquals(Period.from(Year(-3100), Year(-3300)), Left(Period.Error.EndsBeforeStart(Year(-3100), Year(-3300))))
     assertEquals(
-      Period.Error.EndsBeforeStart(Year(-3100), Year(-3300)).message,
-      Problem.Invalid.OutOfRange(
-        Problem.TypeName("Year"),
-        Problem.Raw("-3300"),
-        Problem.Invalid.Bounds(Some(Problem.Raw("-3100")), None),
-        Vector(Problem.Field("end"))
-      )
+      Period.Error.EndsBeforeStart(Year(-3100), Year(-3300)).message.sentence,
+      "the period would start (3100 BCE) after it ends (3300 BCE)"
     )
     assert(Period.point(Year(-1200)).isPoint && !Period.from(Year(1), Year(2)).toOption.get.isPoint)
     assert(compileErrors("Period(Year(1), Year(2))").nonEmpty, "only through from or point")

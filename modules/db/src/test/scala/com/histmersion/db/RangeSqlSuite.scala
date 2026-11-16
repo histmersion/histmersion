@@ -84,7 +84,8 @@ class RangeSqlSuite extends DbSuite:
     assert(
       r.exists(
         _.left.exists(e =>
-          e.problems.sentences.mkString("; ") == "goal 'g'.periodStart: signed year -900 is above -1000" && e.code
+          e.problems.sentences
+            .mkString("; ") == "goal 'g': the period would start (900 BCE) after it ends (1000 BCE)" && e.code
             .contains(Write.CodeInvalid)
         )
       ),

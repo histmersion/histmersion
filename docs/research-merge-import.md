@@ -550,7 +550,9 @@ Before anything is written, every blocking problem is collected: a label (citeke
 id, slug, event id, goal slug, asset name) that a different local row has, a renamed article/event/
 goal (no rename path yet), a required reference to nothing, a missing blob, a missing gazetteer
 place, a newer format or schema. A source renamed on the other side is renamed here first through
-the ordinary `rename` (findings, links and the alias follow). The ledger keeps one row per foreign
+the ordinary `rename` (findings, links and the alias follow). A rename or a delete that names a source by one of
+its old citekeys is refused and names the current one (`'zqold1990_x' is an old citekey of 'zqnew1990_x' — rename
+'zqnew1990_x' instead`). The ledger keeps one row per foreign
 uid; a KEPT row leaves the old ancestor in place (ours has changes theirs lacks), so a later change
 over there is the conflict it is. An import that changes nothing writes nothing — not even a
 `merges` row. Derived state is rebuilt for what changed (FTS chunks, `finding_places`,

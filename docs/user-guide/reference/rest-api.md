@@ -9,7 +9,8 @@ the single definition the server interprets and the CLI derives its client from.
 
 **Errors.** Every endpoint fails the same way: the body is `{"problems": [{group, case, data, text}, …], "code"?}` —
 one or more problems, each with its group and case, its fields (`data`) and its English sentence (`text`) — and the
-status is the first problem's group's: 400 invalid input, 403 refused (a policy, a path outside the directory it is
+status is the first problem's group's: 400 invalid input (a request body that is not a document of its format
+included), 403 refused (a policy, a path outside the directory it is
 confined to, a feature switched off), 404 not found, 409 a conflict (taken, renamed, an old key of another, the wrong
 state, referred to), 412 changed since `ifUpdatedAt`, 422 content or a plugin's item refused, 429 an allowance spent
 (with `Retry-After` when its end is known), 500 a failure of the server or of a file, 502/504 an upstream failed or did
@@ -184,7 +185,7 @@ GeoNames/Wikidata place is on no time-sliced map.
 | `POST` | `/api/places/{id}/merge` | `{"into": …, "reason": …}` | `PlaceGone` — the place is `into`: findings, links, children, events, attestations and asset links move, it is deleted, its id resolves to `into`; no seed import re-creates it |
 | `POST` | `/api/places/{id}/remove` | `{"reason": …}` | `PlaceGone` — delete a place nothing refers to (refused while an event, attestation, asset link, child, hand-added name or a finding with no other place does); no seed import re-creates it |
 | `POST` | `/api/places` | `PlaceAdd{label, kind, lon, lat, source, id?, names[], lang?, periodStart?, periodEnd?}` | `PlaceSummary` — a point place of this collection's own (`dataset = local`, id `local_<label>` by default); `source` is required; refused when the id is taken |
-| `POST` | `/api/places/import` | `kind`, `dataset` (`local` — the default: this collection's own, carried in a bundle — or `seed`) + an **LPF or GeoJSON FeatureCollection** body | upsert; `{places, names, relations, failed}` |
+| `POST` | `/api/places/import` | `kind`, `dataset` (`local` — the default: this collection's own, carried in a bundle — or `seed`) + an **LPF or GeoJSON FeatureCollection** body | upsert; `{places, names, relations, failed}`; 400 when the body is not one |
 | `POST` | `/api/places/rebuild` | — | re-materialise `finding_places`; `{links, byGeometry, byName, located, unlocated, places}` |
 | `GET` | `/api/acquire/discover` | `q`, `since`, `sort`, `limit`, `notInDb` | `DiscoverResult` — OpenAlex search, hits marked `inDb` |
 | `GET` | `/api/acquire/meta` | `id` (DOI) | `WorkRef` — normalised metadata (OpenAlex, Crossref fallback) |

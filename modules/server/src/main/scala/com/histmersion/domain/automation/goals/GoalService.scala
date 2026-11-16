@@ -236,12 +236,13 @@ object GoalService:
     private def refused(problem: Problem, code: String): Api.Error = Api.Error(problem, Some(Api.Error.Code(code)))
 
     /** As [[RangeSql.merge]] refuses it: the start, above the end. */
-    private def inverted[Y](slug: DomainGoal.Slug, a: Y, b: Y)(using RefinedType.Mirror[Y]): Problem =
-      Problem.Invalid.OutOfRange(
-        Problem.TypeName.of(SignedYear),
-        Problem.Raw.of(a),
-        Problem.Invalid.Bounds(None, Some(Problem.Raw.of(b))),
-        Vector(Problem.Field(s"goal '${slug.value}'"), Problem.Field("periodStart"))
+    private def inverted[Y](slug: DomainGoal.Slug, a: Y, b: Y)(using
+        RefinedType.Mirror[Y] { type BaseType <: Long | Int }
+    ): Problem =
+      Problem.Invalid.Inverted(
+        Problem.Invalid.Year.of(a),
+        Problem.Invalid.Year.of(b),
+        Vector(Problem.Field(s"goal '${slug.value}'"))
       )
 
     def get(slug: com.histmersion.domain.automation.Goal.Slug): Option[Goal] = goals.get(key(slug)).map(shown)

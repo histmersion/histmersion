@@ -236,6 +236,31 @@ object Problem:
       def here(typeName: TypeName, raw: Raw, bounds: Bounds): OutOfRange =
         OutOfRange(typeName, raw, bounds, Vector.empty)
 
+    /** A period would start in `start`, after it ends in `end`. */
+    final case class Inverted(start: Year, end: Year, at: Vector[Field]) extends Invalid
+
+    object Inverted:
+      /** The problem of the request as a whole: no path into it. */
+      def here(start: Year, end: Year): Inverted = Inverted(start, end, Vector.empty)
+
+    /** `year` is outside the years the corpus can hold, `least` to `greatest`. */
+    final case class OutOfTime(year: Year, least: Year, greatest: Year, at: Vector[Field]) extends Invalid
+
+    /** The document a request carried is no document of its `format`: at `where` it has `damage`. A request's own body
+      * is the caller's input, so it is refused as invalid; a damaged file of the server's own is [[Io.Corrupt]].
+      */
+    final case class Unparsable(format: Io.Format, where: Where, damage: Io.Damage, at: Vector[Field]) extends Invalid
+
+    /** A year of deep time, signed: 3300 BCE is `-3300`, 530 CE is `530`. A reader sees it as `3300 BCE`, `530 CE`. */
+    type Year = Year.T
+    object Year extends Newtype[Long, Pure]:
+      /** A year written in decimal digits, signed. */
+      def read(digits: String): Option[Year] = digits.toLongOption.map(Year(_))
+
+      /** The year a value of any newtype over a whole number holds (`Year.of(start)`): unwrapped here, like [[Raw.of]].
+        */
+      def of[T](value: T)(using RefinedType.Mirror[T] { type BaseType <: Long | Int }): Year = Year(s"$value".toLong)
+
     /** The `fields` given break `rule` together, though each is a value on its own. */
     final case class Inconsistent(fields: NonEmptyVector[Field], rule: Exclusion, at: Vector[Field]) extends Invalid
 
@@ -352,6 +377,9 @@ object Problem:
       /** `pattern` is not a valid regex: `description`, at `position` when the regex engine names one. */
       case RegexValid(description: External.Reported, position: Option[Count], pattern: Raw)
 
+      /** `stated` is not a merge's id, nor the first characters of one (hexadecimal digits and dashes). */
+      case MergeId(stated: Raw)
+
     /** The least and the greatest value taken, either open. */
     final case class Bounds(least: Option[Raw], greatest: Option[Raw])
 
@@ -429,6 +457,14 @@ object Problem:
       /** It would not fetch the copy (a challenge, a lending-only item, a licence). */
       case Refused
 
+    /** No value of `typeName` has the key `key`; `listing` is the command that lists the keys there are. */
+    final case class Listed(typeName: TypeName, key: Raw, listing: Listing) extends NotFound
+
+    /** A command that lists the values of a kind, named where one is not found. */
+    enum Listing:
+      /** `histmersion merge list`: the merges, by id. */
+      case Merges
+
     /** No `typeName` `key` is `within` the place it is looked for, and `from` refers to it. */
     final case class Dangling(typeName: TypeName, key: Raw, from: Where, within: Scope) extends NotFound
 
@@ -457,8 +493,29 @@ object Problem:
     /** `key` is an old key of `of` and still resolves to it, so it cannot name another value. */
     final case class Aliased(typeName: TypeName, key: Raw, of: Raw) extends Conflict
 
-    /** `key` was the key of a value that was removed, and is not given to another. */
-    final case class Retired(typeName: TypeName, key: Raw) extends Conflict
+    /** `asked` is an old key of `now`: `action` is done to the value by its key now, not by an old one. */
+    final case class OldKey(typeName: TypeName, asked: Raw, now: Raw, action: Action) extends Conflict
+
+    /** A value of `typeName` with the key `key` exists already, and `by` would take that key too. */
+    final case class Collides(typeName: TypeName, key: Raw, by: Raw) extends Conflict
+
+    /** `key`, the key the caller chose for a new value of `typeName`, is not free (`clash`): another must be chosen. */
+    final case class Claimed(typeName: TypeName, key: Raw, clash: Clash) extends Conflict
+
+    /** What is done to a value that needs it named by its key now. */
+    enum Action:
+      case Delete, Rename
+
+    /** Why a key chosen for a new value is not free. */
+    enum Clash:
+      /** A value has it. */
+      case Taken
+
+      /** A value that was removed had it. */
+      case Removed
+
+      /** It is an old key of `of`, and still resolves to it. */
+      case OldKeyOf(of: Raw)
 
     /** The value changed since the caller read it: `sent` is the version the caller had, `stored` the one there is. */
     final case class Stale(typeName: TypeName, key: Raw, sent: Stamp, stored: Stamp) extends Conflict
@@ -1483,6 +1540,13 @@ object Problem:
       case _: NotFound => true
       case _           => false
 
+    /** The problem as the caller's input caused it: a damaged document the request itself carried is invalid input
+      * ([[Invalid.Unparsable]]), not a damaged file of the server's ([[Io.Corrupt]]); any other problem is as it is.
+      */
+    def input: Problem = problem match
+      case Io.Corrupt(format, where, damage) => Invalid.Unparsable(format, where, damage, Vector.empty)
+      case other                             => other
+
     /** The HTTP status an upstream answered, when it answered one. */
     def answered: Option[Upstream.Status] = problem match
       case Upstream.Http(_, _, status, _, _)                   => Some(status)
@@ -1508,6 +1572,9 @@ object Problem:
       case Invalid.Repeated(t, raw, at)       => Invalid.Repeated(t, raw, field +: at)
       case Invalid.Misplaced(f, under, at)    => Invalid.Misplaced(f, under, field +: at)
       case Invalid.OutOfRange(t, raw, b, at)  => Invalid.OutOfRange(t, raw, b, field +: at)
+      case Invalid.Inverted(start, end, at)   => Invalid.Inverted(start, end, field +: at)
+      case Invalid.OutOfTime(y, least, g, at) => Invalid.OutOfTime(y, least, g, field +: at)
+      case Invalid.Unparsable(f, w, d, at)    => Invalid.Unparsable(f, w, d, field +: at)
       case Invalid.Inconsistent(fs, rule, at) => Invalid.Inconsistent(fs, rule, field +: at)
       case Invalid.Reference(form, at)        => Invalid.Reference(form, field +: at)
       case Invalid.Broken(rule, at)           => Invalid.Broken(rule, field +: at)
@@ -1584,6 +1651,19 @@ object Problem:
       Invalid.OutOfRange
         .here(TypeName("Latitude"), Raw("91"), Invalid.Bounds(Some(Raw("-90")), Some(Raw("90")))),
       Invalid.Inconsistent.here(NonEmptyVector.of(Field("lat"), Field("lon")), Invalid.Exclusion.Together),
+      Invalid.Inverted(Invalid.Year(-900L), Invalid.Year(-1000L), Vector(Field("goal 'g'"))),
+      Invalid.OutOfTime(
+        Invalid.Year(6000L),
+        Invalid.Year(-5000L),
+        Invalid.Year(3000L),
+        Vector(Field("source"), Field("period_start"))
+      ),
+      Invalid.Unparsable(
+        Io.Format.Json,
+        Where("LPF"),
+        Io.Damage.Unreadable(External.Reported("expected '\"' or '}', offset: 0x00000002")),
+        Vector.empty
+      ),
       Invalid.Reference(Invalid.Form.EnvName(Raw("1PASSWORD")), Vector(Field("plugins"), Field("api-key"))),
       Invalid.Broken(
         Invalid.Rule.CronField(
@@ -1595,6 +1675,7 @@ object Problem:
       ),
       NotFound.Entity(citekey, Raw("anthony2007")),
       NotFound.Copy(Raw("doi:10.1017/S0003598X00000001"), Vector.empty),
+      NotFound.Listed(TypeName("MergeRepo.MergeIdOrPrefix"), Raw("0193f1"), NotFound.Listing.Merges),
       NotFound.Dangling(
         TypeName("Bundle.Kind.Source"),
         Raw("0193f1c4-7b2a-7c3e-9d41-5e6f7a8b9c0d"),
@@ -1604,7 +1685,9 @@ object Problem:
       Conflict.AlreadyExists(TypeName("Place.Id"), Raw("pleiades_579885")),
       Conflict.Renamed(citekey, Raw("anthony2006"), Raw("anthony2007")),
       Conflict.Aliased(TypeName("Place.Id"), Raw("pleiades_579885"), Raw("pleiades_579886")),
-      Conflict.Retired(TypeName("Place.Id"), Raw("local_gornji_grad")),
+      Conflict.OldKey(citekey, Raw("anthony2006"), Raw("anthony2007"), Conflict.Action.Delete),
+      Conflict.Collides(TypeName("Finding.Id"), Raw("anthony2007#1"), Raw("anthony2007")),
+      Conflict.Claimed(TypeName("Place.Id"), Raw("local_zzn_arkona"), Conflict.Clash.OldKeyOf(Raw("local_arkona"))),
       Conflict.Stale(
         citekey,
         Raw("anthony2007"),

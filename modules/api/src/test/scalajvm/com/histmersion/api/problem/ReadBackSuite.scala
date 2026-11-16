@@ -374,8 +374,19 @@ class ReadBackSuite extends munit.FunSuite:
           Invalid.Rule.QueryGiven,
           Invalid.Rule.RegexTime(Millis(2000L)),
           Invalid.Rule.RegexValid(External.Reported("Unclosed group"), Some(Count(7L)), Raw("(bronze")),
-          Invalid.Rule.RegexValid(External.Reported("Dangling meta character '*'"), None, Raw("*tin | copper"))
+          Invalid.Rule.RegexValid(External.Reported("Dangling meta character '*'"), None, Raw("*tin | copper")),
+          Invalid.Rule.MergeId(Raw("not hex!"))
         ).map(Invalid.Broken.here(_)) ++
+        Vector(
+          Invalid.Inverted.here(Invalid.Year(1400L), Invalid.Year(-1500L)),
+          Invalid.Inverted(Invalid.Year(-1400L), Invalid.Year(-1500L), Vector(Field("asset 'x/y.jpg'"))),
+          Invalid.OutOfTime(Invalid.Year(-6000L), Invalid.Year(-5000L), Invalid.Year(3000L), Vector.empty),
+          Invalid.Unparsable(Io.Format.Json, Where("feature #3"), Io.Damage.Undecodable, Vector(Field("body"))),
+          Invalid.Unparsable(Io.Format.Json, Where("policy"), Io.Damage.Length(Count(3L), Count(2L)), Vector.empty),
+          Conflict.OldKey(TypeName("Citekey"), Raw("a1990"), Raw("b1990"), Conflict.Action.Rename),
+          Conflict.Claimed(TypeName("Place.Id"), Raw("x"), Conflict.Clash.Taken),
+          Conflict.Claimed(TypeName("Place.Id"), Raw("x"), Conflict.Clash.Removed)
+        ) ++
         Run.PauseReason.values.toVector.map(Run.Paused(_, None)) ++
         Vector(
           Invalid.Unknown.here(TypeName("a.B"), Raw("x"), Vector.empty),

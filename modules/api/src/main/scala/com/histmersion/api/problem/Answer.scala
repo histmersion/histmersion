@@ -48,7 +48,9 @@ object Answer:
       case _: Conflict.AlreadyExists      => StatusCode.Conflict
       case _: Conflict.Renamed            => StatusCode.Conflict
       case _: Conflict.Aliased            => StatusCode.Conflict
-      case _: Conflict.Retired            => StatusCode.Conflict
+      case _: Conflict.OldKey             => StatusCode.Conflict
+      case _: Conflict.Collides           => StatusCode.Conflict
+      case _: Conflict.Claimed            => StatusCode.Conflict
       case _: Conflict.WrongState         => StatusCode.Conflict
       case _: Conflict.Referenced         => StatusCode.Conflict
       case _: Conflict.Held               => StatusCode.Conflict

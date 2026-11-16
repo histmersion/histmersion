@@ -46,10 +46,17 @@ class RenderSuite extends munit.FunSuite:
     "Misplaced" -> (400, "status belongs under metadata"),
     "OutOfRange" -> (400, "Latitude '91' is out of [-90, 90]"),
     "Inconsistent" -> (400, "lat, lon break Together"),
+    "Inverted" -> (400, "goal 'g': the period would start in -900 after it ends in -1000"),
+    "OutOfTime" -> (400, "source / period_start: year 6000 is beyond [-5000, 3000]"),
+    "Unparsable" -> (
+      400,
+      "the Json input at LPF is damaged: Unreadable — expected '\"' or '}', offset: 0x00000002"
+    ),
     "Reference" -> (400, "plugins / api-key: no secret reference: EnvName '1PASSWORD'"),
     "Broken" -> (400, "cron: breaks CronField | 61 * * * * | Minute | NotNumber | 61 | 0 | 59"),
     "Entity" -> (404, "no Citekey 'anthony2007'"),
     "Copy" -> (404, "no open-access copy of 'doi:10.1017/S0003598X00000001'"),
+    "Listed" -> (404, "no MergeRepo.MergeIdOrPrefix '0193f1' listed by Merges"),
     "Dangling" -> (
       404,
       "no Bundle.Kind.Source '0193f1c4-7b2a-7c3e-9d41-5e6f7a8b9c0d' in BundleOrHere, referred to by finding anthony2007#1"
@@ -60,7 +67,9 @@ class RenderSuite extends munit.FunSuite:
     "AlreadyExists" -> (409, "Place.Id 'pleiades_579885' already exists"),
     "Renamed" -> (409, "Citekey 'anthony2006' was renamed to 'anthony2007'"),
     "Aliased" -> (409, "Place.Id 'pleiades_579885' is an old key of 'pleiades_579886'"),
-    "Retired" -> (409, "Place.Id 'local_gornji_grad' was removed"),
+    "OldKey" -> (409, "Delete by an old key: Citekey 'anthony2006' is now 'anthony2007'"),
+    "Collides" -> (409, "Finding.Id 'anthony2007#1' already exists; 'anthony2007' collides"),
+    "Claimed" -> (409, "Place.Id 'local_zzn_arkona' is claimed: OldKeyOf 'local_arkona'"),
     "Stale" -> (
       412,
       "Citekey 'anthony2007' has moved on: sent 2026-11-01T10:00:00Z, stored 2026-11-02T08:30:00Z"

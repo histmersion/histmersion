@@ -90,8 +90,7 @@ object MergeRepo:
     if p.isEmpty || !p.forall(c => c.isDigit || (c >= 'a' && c <= 'f') || c == '-') then
       Left(
         Api.Error(
-          Problem.Invalid.Unreadable
-            .here(Problem.TypeName.of(MergeIdOrPrefix), Problem.Raw.of(idOrPrefix), Vector.empty),
+          Problem.Invalid.Broken.here(Problem.Invalid.Rule.MergeId(Problem.Raw.of(idOrPrefix))),
           Some(Api.Error.Code(Write.CodeInvalid))
         )
       )
@@ -111,7 +110,11 @@ object MergeRepo:
         case Nil     =>
           Left(
             Api.Error(
-              Problem.NotFound.Entity(Problem.TypeName.of(MergeIdOrPrefix), Problem.Raw.of(idOrPrefix)),
+              Problem.NotFound.Listed(
+                Problem.TypeName.of(MergeIdOrPrefix),
+                Problem.Raw.of(idOrPrefix),
+                Problem.NotFound.Listing.Merges
+              ),
               Some(Api.Error.Code(Write.CodeNotFound))
             )
           )

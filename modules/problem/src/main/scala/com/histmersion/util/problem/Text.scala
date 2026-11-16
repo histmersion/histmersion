@@ -30,11 +30,19 @@ object Text:
       case Invalid.Repeated(t, raw, at)        => s"${path(at)}${t.noun} '$raw' is given more than once"
       case Invalid.Misplaced(field, under, at) => s"${path(at)}'$field' belongs under '$under' ($under.$field)"
       case Invalid.OutOfRange(t, raw, b, at)   => s"${path(at)}${t.noun} $raw is ${b.range}"
-      case Invalid.Inconsistent(fs, rule, at)  => s"${path(at)}${rule.of(fs)}"
-      case Invalid.Reference(form, at)         => s"${path(at)}${form.said}"
-      case Invalid.Broken(rule, at)            => s"${path(at)}${rule.said}"
+      case Invalid.Inverted(start, end, at)    =>
+        s"${path(at)}the period would start (${start.era}) after it ends (${end.era})"
+      case Invalid.OutOfTime(year, least, greatest, at) =>
+        s"${path(at)}${year.era} is outside the representable range [${least.era}, ${greatest.era}] — deep time is " +
+          "signed YEARS, BCE negative"
+      case Invalid.Unparsable(format, where, damage, at) =>
+        s"${path(at)}the ${words(format.productPrefix)} data at $where ${damage.said}"
+      case Invalid.Inconsistent(fs, rule, at)              => s"${path(at)}${rule.of(fs)}"
+      case Invalid.Reference(form, at)                     => s"${path(at)}${form.said}"
+      case Invalid.Broken(rule, at)                        => s"${path(at)}${rule.said}"
       case NotFound.Entity(t, key) if t.short == "Citekey" => s"No source '$key'"
       case NotFound.Entity(t, key)                         => s"no ${t.noun} '$key'"
+      case NotFound.Listed(t, key, listing)                => s"no ${t.noun} '$key' (${listing.command} lists them)"
       case NotFound.Copy(work, answers)            => s"no legal open-access PDF found for $work${answered(answers)}"
       case NotFound.Dangling(t, key, from, within) => within.missed(t, key, from)
       case Conflict.Held(subject, hold)            => hold.said(subject)
@@ -43,7 +51,10 @@ object Text:
       case Conflict.Renamed(t, asked, now) => s"${t.noun} '$asked' was renamed to '$now' — write to '$now' instead"
       case Conflict.Aliased(t, key, of)    =>
         s"'$key' is an old ${t.noun} of '$of' and still resolves to it — pick another"
-      case Conflict.Retired(t, key)          => s"'$key' is the ${t.noun} of a record that was removed — choose another"
+      case Conflict.OldKey(t, asked, now, action) =>
+        s"'$asked' is an old ${t.noun} of '$now' — ${words(action.productPrefix)} '$now' instead"
+      case Conflict.Collides(t, key, by)     => s"${t.noun} '$key' already exists — '$by' would collide with it"
+      case Conflict.Claimed(t, key, clash)   => clash.said(t, key)
       case Conflict.Stale(t, key, sent, now) =>
         s"${t.noun} '$key' has moved on: you sent $sent, it is now $now — read it again and re-apply your change"
       case Conflict.WrongState(t, key, is, ws) => s"${t.noun} '$key' is $is; this needs ${ws.mkString(" or ")}"
@@ -120,6 +131,9 @@ object Text:
       case Invalid.Repeated(t, raw, _)           => Invalid.Repeated(t, raw, Vector.empty).sentence
       case Invalid.Misplaced(field, under, _)    => Invalid.Misplaced(field, under, Vector.empty).sentence
       case Invalid.OutOfRange(t, raw, bounds, _) => Invalid.OutOfRange(t, raw, bounds, Vector.empty).sentence
+      case Invalid.Inverted(start, end, _)       => Invalid.Inverted(start, end, Vector.empty).sentence
+      case Invalid.OutOfTime(year, least, g, _)  => Invalid.OutOfTime(year, least, g, Vector.empty).sentence
+      case Invalid.Unparsable(f, where, d, _)    => Invalid.Unparsable(f, where, d, Vector.empty).sentence
       case Invalid.Broken(rule, _)               => rule.said
       case other                                 => other.sentence
 
@@ -356,6 +370,41 @@ object Text:
       case Invalid.Rule.RegexValid(description, position, pattern) =>
         s"not a valid regex: $description${position.fold("")(p => s" at position $p")} in `$pattern` " +
           "(leave regex off to match the text literally)"
+      case Invalid.Rule.MergeId(stated) =>
+        s"'$stated' is not a merge id (the id `merge list` prints, or its first characters)"
+
+  extension (year: Invalid.Year)
+    /** The year as a reader writes it: `900 BCE`, `530 CE`; there is no year 0, which is read as 1 BCE. */
+    def era: String =
+      val signed = s"$year".toLong
+      if signed < 0 then s"${-signed} BCE" else if signed == 0 then "1 BCE" else s"$signed CE"
+
+  extension (listing: NotFound.Listing)
+    /** The command, as a reader types it. */
+    private def command: String = listing match
+      case NotFound.Listing.Merges => "`histmersion merge list`"
+
+  extension (clash: Conflict.Clash)
+    /** Why a key chosen for a new value is not free, naming the key by its own word and the value by its type's (a
+      * `Place.Id` is the `id` of a `place`), and that another must be chosen.
+      */
+    private def said(typeName: TypeName, key: Raw): String =
+      val (own, owner) = typeName.parts
+      clash match
+        case Conflict.Clash.Taken        => s"'$key' is already the $own of ${a(owner)} — choose another $own"
+        case Conflict.Clash.Removed      => s"'$key' is the $own of ${a(owner)} that was removed — choose another $own"
+        case Conflict.Clash.OldKeyOf(of) =>
+          s"'$key' is an old $own of '$of' and still resolves to it — choose another $own"
+
+  extension (typeName: TypeName)
+    /** A key type's own word and the word of the type it is the key of: `Place.Id` is (`id`, `place`); a type nested in
+      * nothing is the key of a `record`.
+      */
+    private def parts: (String, String) =
+      val named = s"$typeName".split('.').toVector.filter(_.nonEmpty).dropWhile(_.headOption.forall(_.isLower))
+      val own = named.lastOption.fold(s"$typeName".toLowerCase)(o => nounWords(o).mkString(" "))
+      val owner = named.dropRight(1).lastOption.fold("record")(o => nounWords(o).map(singular).mkString(" "))
+      (own, owner)
 
   extension (flaw: Invalid.CronFlaw)
     private def said: String = flaw match

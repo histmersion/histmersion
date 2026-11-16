@@ -37,7 +37,7 @@ class CasesSuite extends munit.FunSuite:
 
   test("there are eleven groups and three cases outside them"):
     assertEquals(Group.values.length, 14)
-    assertEquals(examples.size, 68)
+    assertEquals(examples.size, 74)
 
   test("a relayed problem is its sentence"):
     assertEquals((Relayed(Sentence("the server is reindexing")): Problem).sentence, "the server is reindexing")
@@ -158,5 +158,5 @@ class CasesSuite extends munit.FunSuite:
         "a secret reference (\"env:<NAME>\" or a vault's, e.g. \"keepassxc:<entry>#password\"); it was not asked"
     )
 
-  test("only a missing entity, copy or referred-to record is not found"):
-    assertEquals(examples.filter(_.isNotFound).map(_.productPrefix), Vector("Entity", "Copy", "Dangling"))
+  test("only a missing entity, a listed one, a copy or a referred-to record is not found"):
+    assertEquals(examples.filter(_.isNotFound).map(_.productPrefix), Vector("Entity", "Copy", "Listed", "Dangling"))

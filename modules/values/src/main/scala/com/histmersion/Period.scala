@@ -17,9 +17,4 @@ object Period:
 
     def message: Problem = this match
       case EndsBeforeStart(s, e) =>
-        Problem.Invalid.OutOfRange(
-          Problem.TypeName.of(Year),
-          Problem.Raw(s"$e"),
-          Problem.Invalid.Bounds(Some(Problem.Raw(s"$s")), None),
-          Vector(Problem.Field("end"))
-        )
+        Problem.Invalid.Inverted.here(Problem.Invalid.Year.of(s), Problem.Invalid.Year.of(e))

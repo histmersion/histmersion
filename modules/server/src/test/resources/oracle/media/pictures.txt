@@ -317,21 +317,16 @@
   "code" : "invalid",
   "problems" : [
     {
-      "case" : "OutOfRange",
+      "case" : "Inverted",
       "data" : {
         "at" : [
-          "asset 'zqfig2001_tell/fig-c.jpg'",
-          "periodStart"
+          "asset 'zqfig2001_tell/fig-c.jpg'"
         ],
-        "bounds" : {
-          "greatest" : "-1500",
-          "least" : null
-        },
-        "raw" : "-1400",
-        "typeName" : "DeepTime.SignedYear"
+        "end" : -1500,
+        "start" : -1400
       },
       "group" : "Invalid",
-      "text" : "asset 'zqfig2001_tell/fig-c.jpg'.periodStart: signed year -1400 is above -1500"
+      "text" : "asset 'zqfig2001_tell/fig-c.jpg': the period would start (1400 BCE) after it ends (1500 BCE)"
     }
   ]
 }

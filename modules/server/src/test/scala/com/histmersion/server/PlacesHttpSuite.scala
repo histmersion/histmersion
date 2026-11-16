@@ -143,10 +143,7 @@ class PlacesHttpSuite extends DbSuite:
       assert(tb.contains("\"depth\":2"), tb) // world > land > polity
 
       assertEquals(get(s"$url/api/places/zzh_nope")._1, 404)
-      assertEquals(
-        post(s"$url/api/places/import", "{ not json")._1,
-        500
-      ) // Io.Corrupt (G60 step 5: a request body read as a file)
+      assertEquals(post(s"$url/api/places/import", "{ not json")._1, 400, "a body that is not JSON is invalid input")
       assertEquals(post(s"$url/api/places/import?kind=nonsense", doc.value)._1, 400)
 
       b.stop()
@@ -401,7 +398,7 @@ class PlacesHttpSuite extends DbSuite:
       assert(second.contains("`local_zzn_arkona`"), second)
       val refusedMcp =
         mcp("add_place", """{"label":"Zzn Arkona","kind":"site","lon":140.3,"lat":-20.3,"source":"fixture"}""")
-      assert(refusedMcp.contains("already exists"), refusedMcp)
+      assert(refusedMcp.contains("is already the id of a place — choose another id"), refusedMcp)
 
       wipe()
       b.stop()

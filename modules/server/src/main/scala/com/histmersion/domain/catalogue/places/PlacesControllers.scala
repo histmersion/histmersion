@@ -142,7 +142,7 @@ final class PlacesControllers(
       else
         for
           set <- Dataset.ofParam(dataset)
-          in <- Lpf.parse(body.value, ApiPlace.KindValue(k)).left.map(e => Api.Error(e))
+          in <- Lpf.parse(body.value, ApiPlace.KindValue(k)).left.map(e => Api.Error(e.input))
         yield places.importPlaces(in, set)
 
   /** `POST /api/places/{id}/names` (#987) — a name a person gives a place, stored as MANUAL: no re-seed deletes it. */

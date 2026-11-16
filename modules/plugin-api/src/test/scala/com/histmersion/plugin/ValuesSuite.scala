@@ -27,7 +27,7 @@ class ValuesSuite extends munit.FunSuite:
         .from(Year(-1600), Year(-1700)))
         .left
         .map(refactorError => (refactorError).sentence): Either[String, Period]),
-      Left("end: year -1700 is below -1600")
+      Left("the period would start (1600 BCE) after it ends (1700 BCE)")
     )
 
   // The SPI's values are unconstrained: the host validates them where they enter (SpiValuesSuite in plugin-host,

@@ -490,7 +490,12 @@ private[sources] object SourceRepo:
       Left(aliasTarget(oldCk) match
         case Some(now) =>
           Api.Error(
-            Problem.Conflict.Renamed(Problem.TypeName.of(Citekey), Problem.Raw.of(oldCk), Problem.Raw.of(now)),
+            Problem.Conflict.OldKey(
+              Problem.TypeName.of(Citekey),
+              Problem.Raw.of(oldCk),
+              Problem.Raw.of(now),
+              Problem.Conflict.Action.Rename
+            ),
             Some(Api.Error.Code(Write.CodeInvalid))
           )
         case None => Write.notFound(apiCitekey(oldCk)))
@@ -515,7 +520,8 @@ private[sources] object SourceRepo:
             case Some(id) =>
               Left(
                 Api.Error(
-                  Problem.Conflict.AlreadyExists(Problem.TypeName.of(Finding.Id), Problem.Raw(s"$id")),
+                  Problem.Conflict
+                    .Collides(Problem.TypeName.of(Finding.Id), Problem.Raw(s"$id"), Problem.Raw.of(newCk)),
                   Some(Api.Error.Code(Write.CodeInvalid))
                 )
               )

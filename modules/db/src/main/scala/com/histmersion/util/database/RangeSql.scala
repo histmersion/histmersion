@@ -100,11 +100,10 @@ object RangeSql:
         case (Some(a), Some(b)) if a > b =>
           Left(
             Api.Error(
-              Problem.Invalid.OutOfRange(
-                Problem.TypeName.of(DeepTime.SignedYear),
-                Problem.Raw.of(a),
-                Problem.Invalid.Bounds(None, Some(Problem.Raw.of(b))),
-                Vector(Problem.Field(what), Problem.Field("periodStart"))
+              Problem.Invalid.Inverted(
+                Problem.Invalid.Year.of(a),
+                Problem.Invalid.Year.of(b),
+                Vector(Problem.Field(what))
               ),
               Some(Api.Error.Code(Write.CodeInvalid))
             )

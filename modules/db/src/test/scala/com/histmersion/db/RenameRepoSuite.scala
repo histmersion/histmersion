@@ -454,13 +454,23 @@ class RenameRepoSuite extends DbSuite:
     assert(SourceFixtures.rename(ds, Other, RenameToNewRaw("zzrnb2019_other")).isRight)
     refused(Old, RenameToNewRaw(Other.value), Some(Write.CodeInvalid), "old citekey of 'zzrnb2019_other'")
     // renaming an old key names what it points to
-    refused(Other, RenameToNewRaw(New.value), Some(Write.CodeInvalid), "write to 'zzrnb2019_other' instead")
+    refused(
+      Other,
+      RenameToNewRaw(New.value),
+      Some(Write.CodeInvalid),
+      s"'$Other' is an old citekey of 'zzrnb2019_other' — rename 'zzrnb2019_other' instead"
+    )
     // a finding id under the new name already taken (by a source that broke the convention)
     connect(ds)(
       sql"""INSERT INTO findings (id, citekey, claim) VALUES (${New.value + "#9"}, 'zzrnb2019_other', 'x')""".update
         .run()
     )
-    refused(Old, RenameToNewRaw(New.value), Some(Write.CodeInvalid), s"finding id '$New#9'")
+    refused(
+      Old,
+      RenameToNewRaw(New.value),
+      Some(Write.CodeInvalid),
+      s"finding id '$New#9' already exists — '$New' would collide with it"
+    )
     // nothing moved
     assertEquals(SourceFixtures.get(ds, Old).map(_._1.citekey.value), Some(Old.value: String))
     assertEquals(SourceFixtures.aliasOf(ds, Old), None)

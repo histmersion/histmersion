@@ -1235,24 +1235,24 @@ private[places] object PlaceRepo:
     if taken then
       Left(
         Api.Error(
-          Problem.Conflict.AlreadyExists(Problem.TypeName.of(Place.Id), Problem.Raw.of(id)),
+          Problem.Conflict.Claimed(Problem.TypeName.of(Place.Id), Problem.Raw.of(id), Problem.Conflict.Clash.Taken),
           Some(Api.Error.Code(Write.CodeInvalid))
         )
       )
     else if gone then
       Left(
         Api.Error(
-          Problem.Conflict.Retired(Problem.TypeName.of(Place.Id), Problem.Raw.of(id)),
+          Problem.Conflict.Claimed(Problem.TypeName.of(Place.Id), Problem.Raw.of(id), Problem.Conflict.Clash.Removed),
           Some(Api.Error.Code(Write.CodeInvalid))
         )
       )
     else if alias.isDefined then
       Left(
         Api.Error(
-          Problem.Conflict.Aliased(
+          Problem.Conflict.Claimed(
             Problem.TypeName.of(Place.Id),
             Problem.Raw.of(id),
-            Problem.Raw(s"${alias.get}")
+            Problem.Conflict.Clash.OldKeyOf(Problem.Raw(s"${alias.get}"))
           ),
           Some(Api.Error.Code(Write.CodeInvalid))
         )

@@ -399,11 +399,15 @@ class WriteSuite extends munit.FunSuite:
     val e = Source.Write.applyPut(Citekey("zz_range"), put).swap.toOption.get
     assert(
       e match
-        case Problem.Invalid.OutOfRange(t, _, _, at) =>
-          t == Problem.TypeName.of(Year) && at.lastOption.contains(Problem.Field("period_start"))
-        case _ => false
+        case Problem.Invalid.OutOfTime(_, _, _, at) => at.lastOption.contains(Problem.Field("period_start"))
+        case _                                      => false
       ,
       e
+    )
+    assertEquals(
+      e.sentence,
+      "source.period_start: 9223372036854775807 BCE is outside the representable range " +
+        "[1000000000 BCE, 1000000000 CE] — deep time is signed YEARS, BCE negative"
     )
     assert(
       Source.Write

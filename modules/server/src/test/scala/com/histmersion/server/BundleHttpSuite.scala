@@ -267,7 +267,16 @@ class BundleHttpSuite extends DbSuite with com.histmersion.db.Bounded:
         val d = get(s"$url/api/merges/${mid.toString.take(8)}")
         assertEquals(d.statusCode, 200, String(d.body, "UTF-8"))
         assertEquals(decode[MergeDetail](String(d.body, "UTF-8")).merge.backup, Some("histmersion-x.dump"))
-        assertEquals(get(s"$url/api/merges/ffffffff-0000").statusCode, 404)
+        val none = get(s"$url/api/merges/ffffffff-0000")
+        assertEquals(none.statusCode, 404)
+        assert(String(none.body, "UTF-8").contains("(`histmersion merge list` lists them)"), String(none.body, "UTF-8"))
+        val notAnId = get(s"$url/api/merges/not-hex")
+        assertEquals(notAnId.statusCode, 400)
+        assert(
+          String(notAnId.body, "UTF-8")
+            .contains("'not-hex' is not a merge id (the id `merge list` prints, or its first characters)"),
+          String(notAnId.body, "UTF-8")
+        )
         val led = decode[MergeLedger](String(get(s"$url/api/merges/ledger?uid=zzmerge2020_ledger").body, "UTF-8"))
         assertEquals(led.entries.map(e => (e.label, e.decision)), List((Some("zzmerge2020_ledger"), "FastForward")))
         assertEquals(led.redirects.map(_.uid), List(src))

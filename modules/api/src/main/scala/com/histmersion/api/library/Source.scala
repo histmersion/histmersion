@@ -938,10 +938,10 @@ object Source:
         field: String,
         v: Year
     ): Problem =
-      Problem.Invalid.OutOfRange(
-        Problem.TypeName.of(Year),
-        Problem.Raw(s"$v"),
-        Problem.Invalid.Bounds(Some(Problem.Raw(s"${Filter.Earliest}")), Some(Problem.Raw(s"${Filter.Latest}"))),
+      Problem.Invalid.OutOfTime(
+        Problem.Invalid.Year.of(v),
+        Problem.Invalid.Year.of(Filter.Earliest),
+        Problem.Invalid.Year.of(Filter.Latest),
         Vector(Problem.Field(s"$what"), Problem.Field(s"$field"))
       )
 
