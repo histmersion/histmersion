@@ -26029,7 +26029,7 @@
           "why" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/Problem"
+              "type" : "string"
             }
           }
         }
@@ -28271,7 +28271,7 @@
           "why" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/Problem"
+              "type" : "string"
             }
           },
           "places" : {

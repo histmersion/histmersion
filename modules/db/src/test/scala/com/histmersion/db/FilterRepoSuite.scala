@@ -264,10 +264,10 @@ class FilterRepoSuite extends DbSuite:
     assertEquals(keys(r), List("zzf_alpha")) // gamma has the tag but no finding in that window
     val hit = find(r, "zzf_alpha")
     assertEquals(hit.matched.map(_.id), List("zzf_alpha#0"))
-    assertEquals(hit.matched.head.why.map(_.sentence), List("period"))
+    assertEquals(hit.matched.head.why.map(w => s"$w"), List("period"))
     assertEquals(hit.matched.head.regionName, Some("Ugarit"))
-    assert(hit.why.map(_.sentence).contains("tag: sea-peoples"), hit.why.toString)
-    assert(hit.why.map(_.sentence).contains("period: 1300 BCE–1100 BCE"), hit.why.toString)
+    assert(hit.why.map(w => s"$w").contains("tag: sea-peoples"), hit.why.toString)
+    assert(hit.why.map(w => s"$w").contains("period: 1300 BCE–1100 BCE"), hit.why.toString)
 
   test("a source matches a period through its findings even when itself undated"):
     val r = run(Filter(period = Some(Period(Year(-1000), Year(-950)))))
@@ -289,7 +289,7 @@ class FilterRepoSuite extends DbSuite:
       List("zzf_alpha", "zzf_beta")
     )
     assertEquals(
-      find(run(Filter(authors = List(Filter.Authors("cline")))), "zzf_alpha").why.map(_.sentence),
+      find(run(Filter(authors = List(Filter.Authors("cline")))), "zzf_alpha").why.map(w => s"$w"),
       List("author: Eric H. Cline")
     )
     // the row carries its authors, for a table of sources
@@ -318,7 +318,7 @@ class FilterRepoSuite extends DbSuite:
   test("free text matches title, summary or body; why says which"):
     val r = run(Filter(q = Some(Filter.Q("Steppe horses"))))
     assertEquals(keys(r), List("zzf_beta"))
-    assert(find(r, "zzf_beta").why.map(_.sentence).contains("title matches 'Steppe horses'"))
+    assert(find(r, "zzf_beta").why.map(w => s"$w").contains("title matches 'Steppe horses'"))
     assertEquals(find(r, "zzf_beta").matched, Nil) // q is not a finding-level criterion
 
   test("status and publication-year filters"):

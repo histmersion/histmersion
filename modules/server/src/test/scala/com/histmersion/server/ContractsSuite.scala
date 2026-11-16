@@ -58,9 +58,10 @@ import com.histmersion.server.ArchitectureSuite.{Blank, SourceFile, Violation}
   * have two.
   *
   * Besides the listed rules, two hold with no exception at all: a module G60 has classified ([[Classified]]) holds no
-  * `Unclassified`, `legacyText` or `Legacy.Text`, in its main or its test code; and no case of the problem module has a
-  * default parameter — a caller states every field (an empty path through a named constructor such as `here`), so no
-  * value is filled in that the caller did not choose.
+  * `Unclassified`, `legacyText` or `Legacy.Text`, in its main or its test code (the api's problem renderers keep
+  * exactly the sites [[UnclassifiedKept]] counts until step 7); and no case of the problem module has a default
+  * parameter — a caller states every field (an empty path through a named constructor such as `here`), so no value is
+  * filled in that the caller did not choose.
   *
   * The violations that exist today are listed in `architecture/contracts.tsv`, exact both ways (a new violation fails,
   * a row nothing violates any more fails, a count must match); each step of the refactor shrinks the list.
@@ -189,7 +190,9 @@ class ContractsSuite extends munit.FunSuite:
 
   test("the modules G60 has classified hold no unclassified problem, in main or test code"):
     val found = Rules.unclassified(Classified.flatMap(m => SourceFile.all(m) ++ SourceFile.all(m, "test")))
-    assertEquals(found.map(v => s"${v.at}: ${v.detail}"), Nil)
+    val (kept, rest) = found.partition(v => UnclassifiedKept.contains(v.file))
+    assertEquals(rest.map(v => s"${v.at}: ${v.detail}"), Nil)
+    assertEquals(kept.groupMapReduce(_.file)(_ => 1)(_ + _), UnclassifiedKept)
 
   test("no case of the problem module has a default parameter"):
     val found = Rules.caseDefaults(SourceFile.all("problem"))
@@ -408,7 +411,8 @@ class ContractsSuite extends munit.FunSuite:
 object ContractsSuite:
 
   /** The modules G60 has classified: none of their sites builds `Problem.Unclassified` any more (step 2 the leaf
-    * layers, step 3 the plugin host, the testkit and the bundled plugins; each later step adds its own).
+    * layers, step 3 the plugin host, the testkit and the bundled plugins, step 4 the api but [[UnclassifiedKept]]; each
+    * later step adds its own).
     */
   val Classified: List[String] =
     List("values", "config", "files", "plugin-api", "plugin-resolver", "upstreams", "plugin-vaults") ++
@@ -419,7 +423,15 @@ object ContractsSuite:
         "plugin-fixtures/hello-ai",
         "plugin-fixtures/hello-deps",
         "plugin-fixtures/hello-lib"
-      )
+      ) ++
+      List("api")
+
+  /** The sites a classified module keeps until G60 step 7 removes the temporary case, by file, exactly: the closed
+    * Problem's own renderers in the api, which must name every case (the wire entry and its codecs, the frozen column
+    * sentence and its reader). RenderSuite's row for the case is a string literal, which the check does not see.
+    */
+  val UnclassifiedKept: Map[String, Int] =
+    Map("api:api/problem/Answer.scala" -> 4, "api:api/problem/Column.scala" -> 4)
 
   /** The modules whose code writes SQL. */
   val SqlModules: List[String] = List("db", "server")

@@ -248,11 +248,10 @@ G58raw	server	test	49
 G5problem	api	main	3
 G5problem	core	main	1
 G60fromString	api	main	1
-G60fromString	api	test	9
 G60fromString	cli	main	134
 G60fromString	cli	test	15
 G60fromString	core	test	25
-G60fromString	db	main	77
+G60fromString	db	main	75
 G60fromString	db	test	5
 G60fromString	problem	main	2
 G60fromString	server	main	675

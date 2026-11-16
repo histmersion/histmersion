@@ -3,7 +3,7 @@ package api
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -93,13 +93,11 @@ class SourceDeleteSuite extends munit.FunSuite:
         .value
         .contains("is linked and is NOT touched")
     )
+    val noLibrary = Problem.Io.Wrong(Problem.Io.Path("/x"), Problem.Io.Kind.Directory)
     val un = Source.Delete
-      .calibreLine(
-        Some(Source.CalibreId("1885")),
-        Some(CalibreEntryCheck.Unchecked(Problem.Unclassified(Legacy.Text("no Calibre library at /x"))))
-      )
+      .calibreLine(Some(Source.CalibreId("1885")), Some(CalibreEntryCheck.Unchecked(noLibrary)))
       .value
-    assert(un.contains("could not be checked: no Calibre library at /x") && !un.contains("is linked and"), un)
+    assert(un.contains(s"could not be checked: ${noLibrary.sentence}") && !un.contains("is linked and"), un)
     assertEquals(Source.Delete.calibreLine(None, Some(CalibreEntryCheck.Missing)), "Calibre: no linked entry.")
     val gone = Source.Delete.markdown(done, Some(CalibreEntryCheck.Missing)).value
     assert(gone.contains("entry 1693 no longer exists in the library") && !gone.contains("NOT touched"), gone)

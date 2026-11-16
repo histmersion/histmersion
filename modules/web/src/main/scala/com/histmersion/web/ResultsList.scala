@@ -289,7 +289,7 @@ object ResultsList:
       Some(period.value).filter(_.nonEmpty)
     ).flatten.map(Fmt.esc).mkString(" · ")
 
-    val why = h.why.filterNot(w => "(?i)^period\\b".r.findFirstIn(w.sentence).isDefined)
+    val why = h.why.filterNot(w => "(?i)^period\\b".r.findFirstIn(s"$w").isDefined)
     val matched = h.matched
     val shownMatches = matched.take(2)
 
@@ -311,7 +311,7 @@ object ResultsList:
           div(cls := "snip", onMountCallback(ctx => ctx.thisNode.ref.innerHTML = snippetHtml(UiLabels.Text(s.value))))
         )
         .getOrElse(emptyNode),
-      if why.nonEmpty then ul(cls := "why", why.map(w => li(w.sentence)))
+      if why.nonEmpty then ul(cls := "why", why.map(w => li(s"$w")))
       else emptyNode,
       if matched.nonEmpty then
         div(
@@ -319,7 +319,7 @@ object ResultsList:
           span(cls := "lbl", "matches:"),
           ul(
             shownMatches.map { m =>
-              val mwhy = m.why.filterNot(w => "(?i)^period\\b".r.findFirstIn(w.sentence).isDefined)
+              val mwhy = m.why.filterNot(w => "(?i)^period\\b".r.findFirstIn(s"$w").isDefined)
               li(
                 span(cls := "claim", Fmt.clip(m.claim.value, Markdown.CharLimit(160))),
                 Fmt.periodStr(m.periodStart, m.periodEnd).value match
@@ -329,7 +329,7 @@ object ResultsList:
                   .filter(_.value.nonEmpty)
                   .map(r => span(cls := "rg", s" ${Fmt.display(UiLabels.Text(r.value))}"))
                   .getOrElse(emptyNode),
-                if mwhy.nonEmpty then span(cls := "mwhy", s" ${mwhy.map(_.sentence).mkString(", ")}") else emptyNode
+                if mwhy.nonEmpty then span(cls := "mwhy", s" ${mwhy.mkString(", ")}") else emptyNode
               )
             } ++ (if matched.length > shownMatches.length then
                     List(li(cls := "more-matches", s"+${matched.length - shownMatches.length} more"))

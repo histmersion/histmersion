@@ -2,7 +2,7 @@ package com.histmersion
 package api
 
 import com.histmersion.util.problem.Text.sentence
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 /** The critique checklist (docs/research-review-convergence.md §6.8), pure: the paragraphs "the same paragraph" is

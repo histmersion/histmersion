@@ -1,7 +1,7 @@
 package com.histmersion
 package api
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -171,10 +171,10 @@ class FilterSuite extends munit.FunSuite:
         Some(Year(-1185)),
         None,
         List(Finding.Tags("destruction")),
-        List(Problem.Unclassified(Legacy.Text("period")), Problem.Unclassified(Legacy.Text("bbox")))
+        List(Hit.Rationale("period"), Hit.Rationale("bbox"))
       )
     ),
-    List(Problem.Unclassified(Legacy.Text("tag: sea-peoples")))
+    List(Hit.Rationale("tag: sea-peoples"))
   )
 
   test("searchResults renders a matches: sub-list with claim, place, period and why"):

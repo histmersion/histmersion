@@ -4,7 +4,7 @@ import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
 
 import com.histmersion.util.problem.Text.sentence
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.catalogue.Period

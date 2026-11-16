@@ -527,7 +527,7 @@ class FilterSqlSuite extends munit.FunSuite:
       period = Some(Period(Year(-1200), Year(-1000)))
     )
     assertEquals(
-      FilterSql.sourceWhy(f, row).map(_.sentence),
+      FilterSql.sourceWhy(f, row).map(w => s"$w"),
       List(
         "title matches 'Collapsed'",
         "tag: sea-peoples",
@@ -543,7 +543,7 @@ class FilterSqlSuite extends munit.FunSuite:
   test("sourceWhy reports a body-only text match"):
     val f = Filter(q = Some(Filter.Q("Ugarit")))
     assertEquals(
-      FilterSql.sourceWhy(f, row.modify(_.bodyHit).setTo(true)).map(_.sentence),
+      FilterSql.sourceWhy(f, row.modify(_.bodyHit).setTo(true)).map(w => s"$w"),
       List("full text matches 'Ugarit'")
     )
 
@@ -555,12 +555,12 @@ class FilterSqlSuite extends munit.FunSuite:
 
   test("sourceWhy explains a phrase query, whose words are never in the text verbatim"):
     val f = Filter(q = Some(Filter.Q("\"year civilization\"")))
-    assertEquals(FilterSql.sourceWhy(f, row).map(_.sentence), List("title matches '\"year civilization\"'"))
+    assertEquals(FilterSql.sourceWhy(f, row).map(w => s"$w"), List("title matches '\"year civilization\"'"))
     // every word must be there: a half-match is not claimed as a title match
     assertEquals(FilterSql.sourceWhy(Filter(q = Some(Filter.Q("civilization pottery"))), row), Nil)
     // an excluded term is not something the source "matches"
     assertEquals(
-      FilterSql.sourceWhy(Filter(q = Some(Filter.Q("collapsed -pottery"))), row).map(_.sentence),
+      FilterSql.sourceWhy(Filter(q = Some(Filter.Q("collapsed -pottery"))), row).map(w => s"$w"),
       List("title matches 'collapsed -pottery'")
     )
 
@@ -581,11 +581,11 @@ class FilterSqlSuite extends munit.FunSuite:
         )
       )
     assertEquals(
-      FilterSql.sourceWhy(Filter(tags = List(Filter.Tags("trade, long-distance"))), r).map(_.sentence),
+      FilterSql.sourceWhy(Filter(tags = List(Filter.Tags("trade, long-distance"))), r).map(w => s"$w"),
       List("tag: trade, long-distance")
     )
     assertEquals(
-      FilterSql.sourceWhy(Filter(authors = List(Filter.Authors("stocker"))), r).map(_.sentence),
+      FilterSql.sourceWhy(Filter(authors = List(Filter.Authors("stocker"))), r).map(w => s"$w"),
       List("author: Stocker, Sharon R.")
     )
     // …and a tag that is merely a PIECE of one does not match
@@ -608,7 +608,7 @@ class FilterSqlSuite extends munit.FunSuite:
       List(Finding.Match.Places("Ugarit, Syria"))
     )
     assertEquals(
-      FilterSql.findingWhy(Filter(tags = List(Filter.Tags("trade, long-distance"))), m).map(_.sentence),
+      FilterSql.findingWhy(Filter(tags = List(Filter.Tags("trade, long-distance"))), m).map(w => s"$w"),
       List("tag: trade, long-distance")
     )
     assertEquals(FilterSql.findingWhy(Filter(tags = List(Filter.Tags("trade"))), m), Nil)
@@ -650,7 +650,7 @@ class FilterSqlSuite extends munit.FunSuite:
       bbox = Some(BBox(Longitude(30.0), Latitude(30.0), Longitude(40.0), Latitude(40.0)))
     )
     assertEquals(
-      FilterSql.findingWhy(f, m).map(_.sentence),
+      FilterSql.findingWhy(f, m).map(w => s"$w"),
       List("period", "bbox", "place: ugarit", "tag: destruction")
     )
 
@@ -668,13 +668,13 @@ class FilterSqlSuite extends munit.FunSuite:
   test("findingWhy: bbox needs a point; the antimeridian rule matches both sides"):
     val f = Filter(bbox = Some(BBox(Longitude(170.0), Latitude(-20.0), Longitude(-170.0), Latitude(-5.0))))
     assertEquals(
-      FilterSql.findingWhy(f, fm(None, Some(Longitude(178.0)), Some(Latitude(-17.7)), None, None, Nil)).map(_.sentence),
+      FilterSql.findingWhy(f, fm(None, Some(Longitude(178.0)), Some(Latitude(-17.7)), None, None, Nil)).map(w => s"$w"),
       List("bbox")
     )
     assertEquals(
       FilterSql
         .findingWhy(f, fm(None, Some(Longitude(-172.0)), Some(Latitude(-13.8)), None, None, Nil))
-        .map(_.sentence),
+        .map(w => s"$w"),
       List("bbox")
     )
     assertEquals(FilterSql.findingWhy(f, fm(None, Some(Longitude(0.0)), Some(Latitude(-13.8)), None, None, Nil)), Nil)

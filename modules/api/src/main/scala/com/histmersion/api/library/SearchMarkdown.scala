@@ -1,6 +1,5 @@
 package com.histmersion
 package api.library
-import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.OffsetPage
 import com.histmersion.api.Markdown.*
 import com.histmersion.api.catalogue.Year
@@ -58,7 +57,7 @@ object SearchMarkdown:
         ).filter(_.nonEmpty).mkString(" · ")
         val per = YearFmt.period(h.periodStart, h.periodEnd)
         val metaLine = if per.nonEmpty then s"$meta · $per" else meta
-        val why = if hit.why.isEmpty then "" else s"\n  why: ${hit.why.map(_.sentence).mkString(" · ")}"
+        val why = if hit.why.isEmpty then "" else s"\n  why: ${hit.why.mkString(" · ")}"
         val summary = h.summary.map(s => s"\n  ${s.value.trim.take(240)}").getOrElse("")
         val matched =
           if hit.matched.isEmpty then ""
@@ -66,7 +65,7 @@ object SearchMarkdown:
             val items = hit.matched.map { m =>
               val loc = located(m.regionName.map(_.value), m.lat, m.lon)
               val p = YearFmt.period(m.periodStart, m.periodEnd)
-              val tail = List(loc, p, m.why.map(_.sentence).mkString(", ")).filter(_.nonEmpty).mkString(" · ")
+              val tail = List(loc, p, m.why.mkString(", ")).filter(_.nonEmpty).mkString(" · ")
               s"\n    - ${m.claim.value.trim}${if tail.nonEmpty then s"  \n      _${tail}_" else ""}"
             }
             s"\n  matches:${items.mkString}"
@@ -87,7 +86,7 @@ object SearchMarkdown:
           h.status.wire.value,
           per
         ).filter(_.nonEmpty).mkString(" · ")
-        val why = hit.why.headOption.map(w => s" — ${w.sentence}").getOrElse("")
+        val why = hit.why.headOption.map(w => s" — $w").getOrElse("")
         s"- **${h.citekey}** — ${h.title}  \n  _${meta}_$why"
       }
       val header = OffsetPage.header(result.page, ("source(s)"))

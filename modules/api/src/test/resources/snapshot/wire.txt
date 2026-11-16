@@ -171,7 +171,7 @@ zq notes
 ### Backup failed
 
 - **file:** zq.dump
-- **error:** zq error
+- **error:** pg_dump exited with 1 — zq error
 
 ## event
 # Zq eruption
