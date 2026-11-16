@@ -1093,7 +1093,6 @@ unwrap	server:domain/automation/managers/ManagersControllers.scala	.value outsid
 unwrap	server:domain/automation/scheduler/SchedulerService.scala	.value outside a boundary	150
 unwrap	server:domain/automation/workflows/Pipelines.scala	.value outside a boundary	7
 unwrap	server:domain/automation/workflows/Workflows.scala	.value outside a boundary	6
-unwrap	server:domain/automation/worklists/QueueError.scala	.value outside a boundary	1
 unwrap	server:domain/automation/worklists/QueueService.scala	.value outside a boundary	11
 unwrap	server:domain/automation/worklists/WorkListControllers.scala	.value outside a boundary	11
 unwrap	server:domain/automation/worklists/WorkListState.scala	.value outside a boundary	28
@@ -1104,7 +1103,7 @@ unwrap	server:domain/catalogue/events/EventImportService.scala	.value outside a 
 unwrap	server:domain/catalogue/events/EventImports.scala	.value outside a boundary	65
 unwrap	server:domain/catalogue/events/EventImportsControllers.scala	.value outside a boundary	18
 unwrap	server:domain/catalogue/events/EventService.scala	.value outside a boundary	157
-unwrap	server:domain/catalogue/events/EventsControllers.scala	.value outside a boundary	21
+unwrap	server:domain/catalogue/events/EventsControllers.scala	.value outside a boundary	19
 unwrap	server:domain/catalogue/events/EventsData.scala	.value outside a boundary	3
 unwrap	server:domain/catalogue/events/EventsSettings.scala	.value outside a boundary	12
 unwrap	server:domain/catalogue/events/HeldEvent.scala	.value outside a boundary	17
@@ -1138,7 +1137,7 @@ unwrap	server:domain/catalogue/places/SiteTypeService.scala	.value outside a bou
 unwrap	server:domain/catalogue/places/SiteTypesControllers.scala	.value outside a boundary	30
 unwrap	server:domain/library/acquisition/AcquireCheckService.scala	.value outside a boundary	8
 unwrap	server:domain/library/acquisition/AcquireSettings.scala	.value outside a boundary	9
-unwrap	server:domain/library/acquisition/AcquisitionControllers.scala	.value outside a boundary	187
+unwrap	server:domain/library/acquisition/AcquisitionControllers.scala	.value outside a boundary	184
 unwrap	server:domain/library/acquisition/ArxivIndex.scala	.value outside a boundary	4
 unwrap	server:domain/library/acquisition/AssessmentService.scala	.value outside a boundary	7
 unwrap	server:domain/library/acquisition/CandidateSearch.scala	.value outside a boundary	36
@@ -1158,7 +1157,7 @@ unwrap	server:domain/library/acquisition/OpenAlexIndex.scala	.value outside a bo
 unwrap	server:domain/library/acquisition/RetractionWatch.scala	.value outside a boundary	2
 unwrap	server:domain/library/acquisition/SemanticScholar.scala	.value outside a boundary	12
 unwrap	server:domain/library/acquisition/Spool.scala	.value outside a boundary	3
-unwrap	server:domain/library/acquisition/SttpHttp.scala	.value outside a boundary	7
+unwrap	server:domain/library/acquisition/SttpHttp.scala	.value outside a boundary	6
 unwrap	server:domain/library/acquisition/UpstreamQuotaService.scala	.value outside a boundary	4
 unwrap	server:domain/library/acquisition/UpstreamRecords.scala	.value outside a boundary	13
 unwrap	server:domain/library/acquisition/Wikipedia.scala	.value outside a boundary	7
@@ -1171,7 +1170,7 @@ unwrap	server:domain/library/collections/GapOriginal.scala	.value outside a boun
 unwrap	server:domain/library/collections/ImportTarget.scala	.value outside a boundary	11
 unwrap	server:domain/library/findings/FindingsControllers.scala	.value outside a boundary	5
 unwrap	server:domain/library/ingest/IngestControllers.scala	.value outside a boundary	36
-unwrap	server:domain/library/ingest/IngestQueue.scala	.value outside a boundary	34
+unwrap	server:domain/library/ingest/IngestQueue.scala	.value outside a boundary	33
 unwrap	server:domain/library/ingest/QueuedIngest.scala	.value outside a boundary	11
 unwrap	server:domain/library/ingest/SeedImport.scala	.value outside a boundary	10
 unwrap	server:domain/library/ingest/SkeletonIngest.scala	.value outside a boundary	17
@@ -1185,8 +1184,8 @@ unwrap	server:domain/library/sources/SourceMedia.scala	.value outside a boundary
 unwrap	server:domain/library/sources/SourceMirrorNote.scala	.value outside a boundary	2
 unwrap	server:domain/library/sources/SourcePassages.scala	.value outside a boundary	10
 unwrap	server:domain/library/sources/SourceReadable.scala	.value outside a boundary	10
-unwrap	server:domain/library/sources/SourceService.scala	.value outside a boundary	168
-unwrap	server:domain/library/sources/SourcesControllers.scala	.value outside a boundary	60
+unwrap	server:domain/library/sources/SourceService.scala	.value outside a boundary	157
+unwrap	server:domain/library/sources/SourcesControllers.scala	.value outside a boundary	59
 unwrap	server:domain/library/sources/SourcesData.scala	.value outside a boundary	9
 unwrap	server:domain/library/workflows/AcquireRecheckService.scala	.value outside a boundary	113
 unwrap	server:domain/library/workflows/AcquisitionSweepPipeline.scala	.value outside a boundary	46
@@ -1230,7 +1229,7 @@ unwrap	server:domain/media/links/AssetLinkService.scala	.value outside a boundar
 unwrap	server:domain/media/links/AssetLinksControllers.scala	.value outside a boundary	10
 unwrap	server:domain/personal/MarkTarget.scala	.value outside a boundary	24
 unwrap	server:domain/personal/MarkTime.scala	.value outside a boundary	3
-unwrap	server:domain/personal/PersonalControllers.scala	.value outside a boundary	22
+unwrap	server:domain/personal/PersonalControllers.scala	.value outside a boundary	20
 unwrap	server:domain/personal/PersonalState.scala	.value outside a boundary	2
 unwrap	server:domain/personal/PersonalUuid.scala	.value outside a boundary	1
 unwrap	server:domain/personal/SearchWords.scala	.value outside a boundary	2
@@ -1242,7 +1241,7 @@ unwrap	server:domain/personal/notes/Note.scala	.value outside a boundary	7
 unwrap	server:domain/personal/notes/NoteService.scala	.value outside a boundary	3
 unwrap	server:domain/personal/reading/ReadMark.scala	.value outside a boundary	4
 unwrap	server:domain/personal/reading/ReadingService.scala	.value outside a boundary	6
-unwrap	server:domain/personal/reading/ReadingShow.scala	.value outside a boundary	3
+unwrap	server:domain/personal/reading/ReadingShow.scala	.value outside a boundary	2
 unwrap	server:domain/personal/seen/SeenService.scala	.value outside a boundary	2
 unwrap	server:domain/research/articles/ArticleCitedSources.scala	.value outside a boundary	1
 unwrap	server:domain/research/articles/ArticleMirrorNote.scala	.value outside a boundary	2

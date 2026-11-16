@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.catalogue.events
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 import io.scalaland.chimney.dsl.*
 import com.histmersion.api.exchange.Bundle
@@ -103,8 +103,10 @@ final class EventsControllers(
       case Some(v) if EventScale.parse(v).isEmpty =>
         Left(
           invalid(
-            Problem.Unclassified(
-              Legacy.Text(s"scale '$v' is not ${(EventScale.all.map(_.value) :+ EventScale.Auto).mkString(" | ")}")
+            Problem.Invalid.Unknown.here(
+              Problem.TypeName.of(EventSummary.Scale),
+              Problem.Raw.of(v),
+              EventScale.all.toVector.map(Problem.Raw.of(_)) :+ Problem.Raw(EventScale.Auto)
             )
           )
         )
@@ -122,7 +124,7 @@ final class EventsControllers(
           .flatMap(gj =>
             events
               .geometryError(EventDetailRow.Geometry(gj.value))
-              .map(m => Problem.Unclassified(Legacy.Text(s"geometry is not a valid GeoJSON geometry: ${m.sentence}")))
+              .map(_.within(Problem.Field("geometry")))
               .toLeft(())
           )
           .left
@@ -133,7 +135,10 @@ final class EventsControllers(
     q.map(_.value.trim) match
       case Some(v) if v.nonEmpty && !Wikidata.isQid(v) =>
         Left(
-          invalid(Problem.Unclassified(Legacy.Text(s"wikidata '$v' is not a Wikidata item id (Q followed by digits)")))
+          invalid(
+            Problem.Invalid.Unreadable
+              .here(Problem.TypeName.of(EventPatch.Wikidata), Problem.Raw(v), Vector(Problem.Raw("Q1234")))
+          )
         )
       case _ => Right(())
 
@@ -182,12 +187,7 @@ final class EventsControllers(
       from =>
         LabelRenames
           .validate(Bundle.Kind.Event, LabelRenames.Label(from.value), LabelRenames.Label(req.to.value))
-          .flatMap(l =>
-            Event.Id
-              .either(l.value)
-              .left
-              .map(why => invalid(Problem.Unclassified(Legacy.Text(s"'${l.value}' is not an event id: $why"))))
-          )
+          .flatMap(l => Event.Id.parse(l.value).left.map(p => Api.Error(p, Some(Api.Error.Code(Write.CodeInvalid)))))
     ).map((from, to) => LabelRenamed(Bundle.Kind.Event, LabelRenamed.From(from.value), LabelRenamed.To(to.value)))
 
   def rename(

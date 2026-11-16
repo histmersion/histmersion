@@ -1,6 +1,6 @@
 package com.histmersion
 package domain.catalogue.events
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.api.{BBox, YearFmt}
@@ -67,7 +67,7 @@ final class EventImports(
 
   /** The catalogue an import names among the registered ones, or why none. */
   def resolve(asked: CatalogRecord.Provider): Either[Problem, CatalogRecord.Provider] =
-    BuiltinCatalogues.resolve(asked, registered()).left.map(why => Problem.Unclassified(Legacy.Text(why)))
+    BuiltinCatalogues.resolve(asked, registered())
 
   /** The catalogue a re-derivation names: a built-in one even while it is switched off (its records are still there),
     * else a registered one.

@@ -393,12 +393,18 @@
   "code" : null,
   "problems" : [
     {
-      "case" : "Unclassified",
+      "case" : "Broken",
       "data" : {
-        "text" : "give a search query"
+        "at" : [
+        ],
+        "rule" : {
+          "QueryGiven" : {
+            
+          }
+        }
       },
-      "group" : "Unclassified",
-      "text" : "give a search query"
+      "group" : "Invalid",
+      "text" : "the query is empty — give the words to find"
     }
   ]
 }
@@ -516,12 +522,19 @@
   "code" : null,
   "problems" : [
     {
-      "case" : "Unclassified",
+      "case" : "Broken",
       "data" : {
-        "text" : "'zqa_nodoi' has no DOI recorded — nothing to look up upstream"
+        "at" : [
+          "'zqa_nodoi'"
+        ],
+        "rule" : {
+          "DoiRecorded" : {
+            "purpose" : "Lookup"
+          }
+        }
       },
-      "group" : "Unclassified",
-      "text" : "'zqa_nodoi' has no DOI recorded — nothing to look up upstream"
+      "group" : "Invalid",
+      "text" : "'zqa_nodoi': no DOI recorded — nothing to look up upstream"
     }
   ]
 }
@@ -640,12 +653,19 @@
   "code" : null,
   "problems" : [
     {
-      "case" : "Unclassified",
+      "case" : "Broken",
       "data" : {
-        "text" : "no DOI for 'zqa_nodoi' — a reference list needs one"
+        "at" : [
+          "'zqa_nodoi'"
+        ],
+        "rule" : {
+          "DoiRecorded" : {
+            "purpose" : "References"
+          }
+        }
       },
-      "group" : "Unclassified",
-      "text" : "no DOI for 'zqa_nodoi' — a reference list needs one"
+      "group" : "Invalid",
+      "text" : "'zqa_nodoi': no DOI — a reference list needs one"
     }
   ]
 }
@@ -901,12 +921,19 @@
   "code" : null,
   "problems" : [
     {
-      "case" : "Unclassified",
+      "case" : "Broken",
       "data" : {
-        "text" : "no DOI for 'zqa_nodoi' — an assessment needs one"
+        "at" : [
+          "'zqa_nodoi'"
+        ],
+        "rule" : {
+          "DoiRecorded" : {
+            "purpose" : "Assessment"
+          }
+        }
       },
-      "group" : "Unclassified",
-      "text" : "no DOI for 'zqa_nodoi' — an assessment needs one"
+      "group" : "Invalid",
+      "text" : "'zqa_nodoi': no DOI — an assessment needs one"
     }
   ]
 }

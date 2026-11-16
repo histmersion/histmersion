@@ -352,12 +352,23 @@ _…205 more chars — pass offset=50_
   "code" : null,
   "problems" : [
     {
-      "case" : "Unclassified",
+      "case" : "Unknown",
       "data" : {
-        "text" : "unknown section 'nonsense' — one of: summary, findings, notes, toc, body, all"
+        "at" : [
+        ],
+        "known" : [
+          "summary",
+          "findings",
+          "notes",
+          "toc",
+          "body",
+          "all"
+        ],
+        "raw" : "nonsense",
+        "typeName" : "Source.Section"
       },
-      "group" : "Unclassified",
-      "text" : "unknown section 'nonsense' — one of: summary, findings, notes, toc, body, all"
+      "group" : "Invalid",
+      "text" : "unknown source section 'nonsense' (one of: summary, findings, notes, toc, body, all)"
     }
   ]
 }
@@ -2266,11 +2277,17 @@ _n.d. · unassessed_
   "code" : null,
   "problems" : [
     {
-      "case" : "Unclassified",
+      "case" : "Broken",
       "data" : {
-        "text" : "no YAML frontmatter in the note"
+        "at" : [
+        ],
+        "rule" : {
+          "Frontmatter" : {
+            
+          }
+        }
       },
-      "group" : "Unclassified",
+      "group" : "Invalid",
       "text" : "no YAML frontmatter in the note"
     }
   ]

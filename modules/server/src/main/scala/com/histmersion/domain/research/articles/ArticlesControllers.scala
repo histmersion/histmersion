@@ -67,7 +67,7 @@ final class ArticlesControllers(
     sources: SourcesControllers,
     sourceStore: SourceService,
     filters: SearchFilters,
-    ledgers: Slug => Either[String, Option[ReviewLedger.Ledger]],
+    ledgers: Slug => Either[Problem, Option[ReviewLedger.Ledger]],
     articleLeads: (ArticleEventLead.Body, List[Citekey], Option[Period]) => List[ArticleEventLead],
     note: Slug => Either[Api.Error, com.histmersion.domain.research.Article.Note],
     current: (AliasKind, AliasTable.Id) => AliasTable.Id,
@@ -274,7 +274,7 @@ final class ArticlesControllers(
     * rather than an empty history.
     */
   def reviewOf(slug: Slug): Either[Api.Error, Article.ReviewView] =
-    ledgers(slug).left.map(e => Api.Error(Problem.Unclassified(Legacy.Text(e)))).map { ledger =>
+    ledgers(slug).left.map(Api.Error(_)).map { ledger =>
       val (facts, updatedAt) =
         reviewState.facts(List(slug)).getOrElse(slug, (ArticleReviewStatus.Facts(), None))
       val starts =
@@ -320,13 +320,7 @@ final class ArticlesControllers(
     store.load(store.canonical(slug)).toRight(notFound(slug)).flatMap { a =>
       coverageOf(a).toRight(
         error(
-          Problem.Unclassified(
-            Legacy.Text(
-              s"article '${a.slug}' records no filter, so it has no generated coverage — " +
-                s"set the filter it is compiled from: histmersion article patch ${a.slug} --filter-query … (or --filter-topics/--filter-tags), " +
-                "or patch_article with `filter`"
-            )
-          ),
+          Problem.Invalid.Broken(Problem.Invalid.Rule.FilterRecorded, Vector(Problem.Field(s"article '${a.slug}'"))),
           Write.CodeNotFound
         )
       )
@@ -615,7 +609,7 @@ final class ArticlesControllers(
           LabelRenames.Label(from.value),
           LabelRenames.Label(req.to.value)
         )
-        to <- Slug.either(label.value).left.map(why => error(Problem.Unclassified(Legacy.Text(why)), Write.CodeInvalid))
+        to <- Slug.parse(label.value).left.map(p => Api.Error(p, Some(Api.Error.Code(Write.CodeInvalid))))
         rewritten <- store.rename(from, to, Caller.Local)
       yield LabelRenamed(
         Bundle.Kind.Article,
@@ -653,7 +647,10 @@ final class ArticlesControllers(
       store
         .version(Slug.assume(v.article.slug.value), versionId)
         .toRight(
-          error(Problem.Unclassified(Legacy.Text(s"No version $versionId for article '$slug'")), Write.CodeNotFound)
+          error(
+            Problem.NotFound.Entity(Problem.TypeName.of(ArticleRepo.VersionId), Problem.Raw.of(versionId)),
+            Write.CodeNotFound
+          )
         )
     )
 
@@ -670,7 +667,7 @@ final class ArticlesControllers(
     val fallbackSlug = Article.Slug(req.slug.map(_.value.trim).filter(_.nonEmpty).getOrElse(""))
     val fallbackKind = Article.Kind.Wire(req.kind.map(_.value.trim).filter(_.nonEmpty).getOrElse(Articles.Kinds.head))
     ArticleNote.parse(req.text.value, fallbackSlug, fallbackKind) match
-      case None         => Left(Api.Error(Problem.Unclassified(Legacy.Text("no YAML frontmatter in the article note"))))
+      case None         => Left(Api.Error(Problem.Invalid.Broken.here(Problem.Invalid.Rule.Frontmatter)))
       case Some(parsed) =>
         Slug
           .parse(parsed.slug.value)

@@ -1,6 +1,6 @@
 package com.histmersion
 package domain.library.acquisition
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.domain.automation.goals.GoalService
@@ -123,44 +123,48 @@ final class CandidateSearch(
         // an index that may not be asked now (CORE's budget spent, CORE asked to wait) is left out of the rest
         // of this sweep: its watches keep their watermarks and are read next time
         val leftOut =
-          scala.collection.mutable.LinkedHashMap.empty[ScholarlyIndex.Name, (String, Int)] // this sweep's tally
-        def query(i: ScholarlyIndex, w: CandidateWatch, since: LocalDate): Either[String, List[WorkRef]] =
-          leftOut.get(i.name).orElse(i.unavailable.map(p => p.sentence -> 0)) match
+          scala.collection.mutable.LinkedHashMap.empty[ScholarlyIndex.Name, (Problem, Int)] // this sweep's tally
+        def query(i: ScholarlyIndex, w: CandidateWatch, since: LocalDate): Either[Problem, List[WorkRef]] =
+          leftOut.get(i.name).orElse(i.unavailable.map(_ -> 0)) match
             case Some((why, n)) =>
               leftOut.update(i.name, (why, n + 1))
-              Left(s"not asked this sweep — $why")
+              Left(why)
             case None =>
               val got = i.search(Search.Query(w.subject.value), since, ScholarlyIndex.Limit(c.perWatch.value))
-              got.left.foreach(_ => i.unavailable.foreach(why => leftOut.update(i.name, (why.sentence, 0))))
-              got.left.map(_.sentence)
+              got.left.foreach(_ => i.unavailable.foreach(why => leftOut.update(i.name, (why, 0))))
+              got
         val read = (base ++ authorWatches).map { w =>
           val since = Candidates.since(
             w.watermark.map(m => Candidates.Watermark(m.value)),
             now,
             Candidates.Lookback(c.lookbackDays.value)
           )
-          val got: Either[String, List[WorkRef]] = Candidates.WatchKind.parse(w.kind) match
+          val got: Either[Problem, List[WorkRef]] = Candidates.WatchKind.parse(w.kind) match
             case Some(Candidates.WatchKind.Query) =>
               byIndex
                 .get(ScholarlyIndex.Name(w.index.value))
-                .toRight(s"index '${w.index}' is not configured")
+                .toRight(Problem.NotFound.Entity(Problem.TypeName.of(ScholarlyIndex.Name), Problem.Raw.of(w.index)))
                 .flatMap(query(_, w, since))
             case Some(Candidates.WatchKind.Citing) =>
               Doi
-                .either(w.subject.value)
-                .flatMap(doi =>
-                  alerts.citing(doi, since, CitationAlerts.CitingLimit(c.perWatch.value)).left.map(_.sentence)
-                )
-            case Some(Candidates.WatchKind.Author) =>
-              alerts
-                .byAuthor(
-                  CitationAlerts.ByAuthorAuthorId(w.subject.value),
-                  since,
-                  CitationAlerts.ByAuthorLimit(c.perWatch.value)
-                )
+                .checked(w.subject.value)
                 .left
-                .map(_.sentence)
-            case None => Left(s"unknown watch kind '${w.kind}'")
+                .map(Problem.Invalid.malformed)
+                .flatMap(doi => alerts.citing(doi, since, CitationAlerts.CitingLimit(c.perWatch.value)))
+            case Some(Candidates.WatchKind.Author) =>
+              alerts.byAuthor(
+                CitationAlerts.ByAuthorAuthorId(w.subject.value),
+                since,
+                CitationAlerts.ByAuthorLimit(c.perWatch.value)
+              )
+            case None =>
+              Left(
+                Problem.Invalid.Unknown.here(
+                  Problem.TypeName.of(Candidates.WatchKind.Wire),
+                  Problem.Raw.of(w.kind),
+                  Candidates.WatchKind.values.toVector.map(k => Problem.Raw.of(k.wire))
+                )
+              )
           (w, since, got)
         }
         val found = read.flatMap { (w, _, got) =>
@@ -204,13 +208,13 @@ final class CandidateSearch(
             candidates.recordWatch(
               w,
               mark,
-              got.left.toOption.map(e => Problem.Unclassified(Legacy.Text(e.take(500)))),
+              got.left.toOption,
               lastFound
             )
           w.modify(_.watermark)
             .setTo(if dryRun.value then w.watermark else mark.orElse(w.watermark))
             .modify(_.lastError)
-            .setTo(got.left.toOption.map((text => Problem.Unclassified(Legacy.Text(text)))))
+            .setTo(got.left.toOption)
             .modify(_.lastFound)
             .setTo(lastFound)
         }
@@ -220,7 +224,7 @@ final class CandidateSearch(
           .fold(CandidateSweep.Unseen(0))(n => CandidateSweep.Unseen(n.count.value))
         val notes = leftOut.toList.map { case (index, (why, n)) =>
           CandidateSweep.Notes(
-            s"$index not asked this sweep: $why — ${Plural.count(Plural.CountN(n), Plural.CountSingular("watch"), Plural.CountPlural("watches"))} left unread, which keep their " +
+            s"$index not asked this sweep: ${why.sentence} — ${Plural.count(Plural.CountN(n), Plural.CountSingular("watch"), Plural.CountPlural("watches"))} left unread, which keep their " +
               "watermarks and are read next sweep"
           )
         }

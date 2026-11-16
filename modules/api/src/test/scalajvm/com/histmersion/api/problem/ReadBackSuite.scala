@@ -129,7 +129,8 @@ class ReadBackSuite extends munit.FunSuite:
           Conflict.Hold.PlanChanged(Raw("7c41e9a2")),
           Conflict.Hold.TextNotSent(Raw("file")),
           Conflict.Hold.CitekeyOfAnother(Raw("anthony2006")),
-          Conflict.Hold.CitekeyTaken(Raw("guterbock1997"))
+          Conflict.Hold.CitekeyTaken(Raw("guterbock1997")),
+          Conflict.Hold.StoredAs(Raw("anthony2007"))
         ).map(Conflict.Held(Where("S-3c1e7a2b source anthony2007 — same work?"), _)) ++
         Vector(
           Conflict.Control.OnePiece(Raw("backup")),
@@ -375,8 +376,22 @@ class ReadBackSuite extends munit.FunSuite:
           Invalid.Rule.RegexTime(Millis(2000L)),
           Invalid.Rule.RegexValid(External.Reported("Unclosed group"), Some(Count(7L)), Raw("(bronze")),
           Invalid.Rule.RegexValid(External.Reported("Dangling meta character '*'"), None, Raw("*tin | copper")),
-          Invalid.Rule.MergeId(Raw("not hex!"))
+          Invalid.Rule.MergeId(Raw("not hex!")),
+          Invalid.Rule.UpstreamRecord,
+          Invalid.Rule.UploadGiven,
+          Invalid.Rule.UploadBytes(Count(300L), Count(200L)),
+          Invalid.Rule.InlineBytes(Count(30L), Count(20L)),
+          Invalid.Rule.Base64Decodable(External.Reported("Illegal base64 character 2d")),
+          Invalid.Rule.PathOrBase64,
+          Invalid.Rule.ServerSees,
+          Invalid.Rule.OriginalForReocr,
+          Invalid.Rule.OriginalForDownload,
+          Invalid.Rule.Frontmatter,
+          Invalid.Rule.NoteCitekey,
+          Invalid.Rule.FilterRecorded,
+          Invalid.Rule.RegionWithin(Count(10L), Count(20L), Count(5L), Count(5L), Count(8L), Count(8L))
         ).map(Invalid.Broken.here(_)) ++
+        Invalid.Purpose.values.toVector.map(p => Invalid.Broken(Invalid.Rule.DoiRecorded(p), Vector(Field("'k'")))) ++
         Vector(
           Invalid.Inverted.here(Invalid.Year(1400L), Invalid.Year(-1500L)),
           Invalid.Inverted(Invalid.Year(-1400L), Invalid.Year(-1500L), Vector(Field("asset 'x/y.jpg'"))),

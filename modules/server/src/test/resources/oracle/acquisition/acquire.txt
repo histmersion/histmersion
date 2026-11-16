@@ -129,12 +129,13 @@
   "code" : "not_found",
   "problems" : [
     {
-      "case" : "Unclassified",
+      "case" : "Entity",
       "data" : {
-        "text" : "No queue item #7"
+        "key" : "7",
+        "typeName" : "QueueItemId"
       },
-      "group" : "Unclassified",
-      "text" : "No queue item #7"
+      "group" : "NotFound",
+      "text" : "no queue item id '7'"
     }
   ]
 }
@@ -667,10 +668,10 @@ A Zq atlas (buy)
       "lastError" : {
         "case" : "Unclassified",
         "data" : {
-          "text" : "not asked this sweep — CORE's daily budget for searches is spent (6 of 6 tokens today, UTC; acquire.core.search-daily-tokens)"
+          "text" : "CORE's daily budget for searches is spent (6 of 6 tokens today, UTC; acquire.core.search-daily-tokens)"
         },
         "group" : "Unclassified",
-        "text" : "not asked this sweep — CORE's daily budget for searches is spent (6 of 6 tokens today, UTC; acquire.core.search-daily-tokens)"
+        "text" : "CORE's daily budget for searches is spent (6 of 6 tokens today, UTC; acquire.core.search-daily-tokens)"
       },
       "lastFound" : 0,
       "lastRun" : null,
@@ -758,10 +759,10 @@ A Zq atlas (buy)
       "lastError" : {
         "case" : "Unclassified",
         "data" : {
-          "text" : "not asked this sweep — CORE's daily budget for searches is spent (6 of 6 tokens today, UTC; acquire.core.search-daily-tokens)"
+          "text" : "CORE's daily budget for searches is spent (6 of 6 tokens today, UTC; acquire.core.search-daily-tokens)"
         },
         "group" : "Unclassified",
-        "text" : "not asked this sweep — CORE's daily budget for searches is spent (6 of 6 tokens today, UTC; acquire.core.search-daily-tokens)"
+        "text" : "CORE's daily budget for searches is spent (6 of 6 tokens today, UTC; acquire.core.search-daily-tokens)"
       },
       "lastFound" : 0,
       "lastRun" : null,
@@ -925,12 +926,21 @@ A Zq atlas (buy)
   "code" : "invalid",
   "problems" : [
     {
-      "case" : "Unclassified",
+      "case" : "Unknown",
       "data" : {
-        "text" : "unknown state 'maybe' (new, seen, queued, dismissed)"
+        "at" : [
+        ],
+        "known" : [
+          "new",
+          "seen",
+          "queued",
+          "dismissed"
+        ],
+        "raw" : "maybe",
+        "typeName" : "Candidates.State"
       },
-      "group" : "Unclassified",
-      "text" : "unknown state 'maybe' (new, seen, queued, dismissed)"
+      "group" : "Invalid",
+      "text" : "unknown candidate state 'maybe' (one of: new, seen, queued, dismissed)"
     }
   ]
 }
@@ -979,12 +989,21 @@ A Zq atlas (buy)
   "code" : "invalid",
   "problems" : [
     {
-      "case" : "Unclassified",
+      "case" : "Unknown",
       "data" : {
-        "text" : "unknown state 'wrong' (new, seen, queued, dismissed)"
+        "at" : [
+        ],
+        "known" : [
+          "new",
+          "seen",
+          "queued",
+          "dismissed"
+        ],
+        "raw" : "wrong",
+        "typeName" : "Candidates.State"
       },
-      "group" : "Unclassified",
-      "text" : "unknown state 'wrong' (new, seen, queued, dismissed)"
+      "group" : "Invalid",
+      "text" : "unknown candidate state 'wrong' (one of: new, seen, queued, dismissed)"
     }
   ]
 }
@@ -1050,10 +1069,10 @@ A Zq atlas (buy)
       "lastError" : {
         "case" : "Unclassified",
         "data" : {
-          "text" : "not asked this sweep — CORE's daily budget for searches is spent (6 of 6 tokens today, UTC; acquire.core.search-daily-tokens)"
+          "text" : "CORE's daily budget for searches is spent (6 of 6 tokens today, UTC; acquire.core.search-daily-tokens)"
         },
         "group" : "Unclassified",
-        "text" : "not asked this sweep — CORE's daily budget for searches is spent (6 of 6 tokens today, UTC; acquire.core.search-daily-tokens)"
+        "text" : "CORE's daily budget for searches is spent (6 of 6 tokens today, UTC; acquire.core.search-daily-tokens)"
       },
       "lastFound" : 0,
       "lastRun" : null,
@@ -1117,7 +1136,7 @@ Counts: 2 new, 1 seen.
 - crossref query `zq tin trade`: 2 found (reads from DAY next)
 - europepmc query `zq tin trade`: 0 found (reads from DAY next)
 - arxiv query `zq tin trade`: 0 found (reads from DAY next)
-- core query `zq tin trade`: not read — not asked this sweep — CORE's daily budget for searches is spent (6 of 6 tokens today, UTC; acquire.core.search-daily-tokens)
+- core query `zq tin trade`: not read — CORE's daily budget for searches is spent (6 of 6 tokens today, UTC; acquire.core.search-daily-tokens)
 - openalex citing `10.5555/zq.cited`: 1 found (reads from DAY next)
   > GET /openalex/works/https://doi.org/10.5555/zq.cited?select=id,authorships&mailto=oracle@example.org
   > GET /openalex/works?search=zq+tin+trade&filter=from_publication_date:DAY,type:article%7Cbook%7Cbook-chapter&per-page=25&sort=publication_date:desc&select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index&mailto=oracle@example.org

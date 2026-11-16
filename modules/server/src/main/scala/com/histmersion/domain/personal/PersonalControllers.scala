@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.personal
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import io.scalaland.chimney.dsl.*
 import com.histmersion.api.{Paging, Write}
 import com.histmersion.api.automation.Activity
@@ -48,17 +48,13 @@ final class PersonalControllers(
 ):
 
   private def bad(why: Problem): Api.Error = Api.Error(why)
-  private def missing(what: String): Api.Error =
-    Api.Error(Problem.Unclassified(Legacy.Text(s"No $what")), Some(Api.Error.Code(Write.CodeNotFound)))
+  private def missing(typeName: Problem.TypeName, key: Problem.Raw): Api.Error =
+    Api.Error(Problem.NotFound.Entity(typeName, key), Some(Api.Error.Code(Write.CodeNotFound)))
   private def now(): MarkTime = MarkTime.at(Instant.now(clock))
 
   private def person(caller: Caller): Either[Api.Error, UserId] =
     caller.person.toRight(
-      bad(
-        Problem.Unclassified(
-          Legacy.Text("bookmarks, notes and read marks are a person's own; an automated run has none")
-        )
-      )
+      bad(Problem.Refused.Policy(Problem.Refused.Rule.PersonOnly))
     )
 
   private def kindOf(raw: Option[MarkKind.Wire], allowed: Set[MarkKind]): Either[Api.Error, Option[MarkKind]] =
@@ -71,8 +67,10 @@ final class PersonalControllers(
           .map(Some(_))
           .toRight(
             bad(
-              Problem.Unclassified(
-                Legacy.Text(s"kind '$k': one of ${MarkKind.values.filter(allowed).map(_.wire.value).mkString(", ")}")
+              Problem.Invalid.Unknown.here(
+                Problem.TypeName.of(MarkKind.Wire),
+                Problem.Raw(k),
+                MarkKind.values.toVector.filter(allowed).map(m => Problem.Raw.of(m.wire))
               )
             )
           )
@@ -92,7 +90,7 @@ final class PersonalControllers(
       .flatMap(
         MarkTarget
           .fromWire(_)
-          .toRight(Problem.Unclassified(Legacy.Text(s"a $what on a ${t.kind.label.value.toLowerCase} names it")))
+          .toRight(Problem.Invalid.Missing(Problem.Field("id"), Vector(what)))
       )
       .left
       .map(bad)
@@ -128,7 +126,9 @@ final class PersonalControllers(
         user <- person(caller)
         bid <- com.histmersion.domain.personal.bookmarks.Bookmark.idOf(id).left.map(p => bad(p))
         label <- Bookmark.Label.tidy(in.label).left.map(p => bad(p))
-        b <- bookmarks.rename(user, bid, label, now()).toRight(missing(s"bookmark $id"))
+        b <- bookmarks
+          .rename(user, bid, label, now())
+          .toRight(missing(Problem.TypeName.of(WireBookmark.Id), Problem.Raw.of(id)))
       yield b.wire
 
   def removeBookmark(caller: Caller, id: WireBookmark.Id): Either[Api.Error, WireBookmark] =
@@ -136,7 +136,9 @@ final class PersonalControllers(
       for
         user <- person(caller)
         bid <- com.histmersion.domain.personal.bookmarks.Bookmark.idOf(id).left.map(p => bad(p))
-        b <- bookmarks.remove(user, bid, now()).toRight(missing(s"bookmark $id"))
+        b <- bookmarks
+          .remove(user, bid, now())
+          .toRight(missing(Problem.TypeName.of(WireBookmark.Id), Problem.Raw.of(id)))
       yield b.wire
 
   // ── notes ───────────────────────────────────────────────────────────────────────────────────────
@@ -159,7 +161,7 @@ final class PersonalControllers(
     for
       user <- person(caller)
       nid <- Note.idOf(id).left.map(p => bad(p))
-      n <- notes.get(user, nid).toRight(missing(s"note $id"))
+      n <- notes.get(user, nid).toRight(missing(Problem.TypeName.of(WireNote.Id), Problem.Raw.of(id)))
     yield n.wire
 
   def addNote(caller: Caller, in: com.histmersion.api.personal.Note.New): Either[Api.Error, WireNote] =
@@ -182,11 +184,14 @@ final class PersonalControllers(
         text <- com.histmersion.api.personal.Note.Text.tidy(in.text).left.map(p => bad(p))
         n <- edited(user, nid, text, in.ifUpdatedAt.map(_.value.trim).filter(_.nonEmpty).map(MarkTime.Iso(_))).left
           .map {
-            case Note.EditRefused.Missing      => missing(s"note $id")
+            case Note.EditRefused.Missing      => missing(Problem.TypeName.of(WireNote.Id), Problem.Raw.of(id))
             case Note.EditRefused.Changed(was) =>
               Api.Error(
-                Problem.Unclassified(
-                  Legacy.Text(s"the note changed since it was opened (now ${was.iso}); open it again")
+                Problem.Conflict.Stale(
+                  Problem.TypeName.of(WireNote.Id),
+                  Problem.Raw.of(id),
+                  Problem.Conflict.Stamp(s"${in.ifUpdatedAt.fold("")(_.value.trim)}"),
+                  Problem.Conflict.Stamp(s"${was.iso}")
                 ),
                 Some(Api.Error.Code(Write.CodePrecondition))
               )
@@ -213,7 +218,7 @@ final class PersonalControllers(
       for
         user <- person(caller)
         nid <- Note.idOf(id).left.map(p => bad(p))
-        n <- notes.remove(user, nid, now()).toRight(missing(s"note $id"))
+        n <- notes.remove(user, nid, now()).toRight(missing(Problem.TypeName.of(WireNote.Id), Problem.Raw.of(id)))
       yield n.wire
 
   // ── read marks ──────────────────────────────────────────────────────────────────────────────────
@@ -234,8 +239,10 @@ final class PersonalControllers(
     if !MarkKind.Readable.contains(kind) then
       Left(
         bad(
-          Problem.Unclassified(
-            Legacy.Text(s"only sources and articles are marked read, not a ${kind.label.value.toLowerCase}")
+          Problem.Invalid.Unknown.here(
+            Problem.TypeName.of(MarkKind.Wire),
+            Problem.Raw.of(kind.wire),
+            MarkKind.values.toVector.filter(MarkKind.Readable).map(m => Problem.Raw.of(m.wire))
           )
         )
       )
@@ -243,7 +250,7 @@ final class PersonalControllers(
       Option(key.value.trim)
         .filter(_.nonEmpty)
         .map(ItemKey(_))
-        .toRight(bad(Problem.Unclassified(Legacy.Text("which one? (its id)"))))
+        .toRight(bad(Problem.Invalid.Missing.here(Problem.Field("id"))))
 
   def setRead(caller: Caller, in: ReadMark.Set): Either[Api.Error, WireReadMark] =
     maintenance.guard(WriteGate.OperationName("set_read")):

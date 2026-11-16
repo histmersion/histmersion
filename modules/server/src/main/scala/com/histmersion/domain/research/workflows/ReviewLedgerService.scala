@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.research.workflows
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.domain.ReviewLedger.Ledger
 import com.histmersion.domain.research.ResearchState
@@ -16,7 +17,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 trait ReviewLedgerService:
 
   /** The article's ledger; None when it has none yet. A stored one that no longer decodes is an error. */
-  def get(slug: Slug): Either[String, Option[Ledger]]
+  def get(slug: Slug): Either[Problem, Option[Ledger]]
 
   /** Write the ledger (insert or replace). The article must exist. */
   def put(ledger: Ledger): Unit
@@ -31,7 +32,7 @@ object ReviewLedgerService:
   def apply(db: Transactor): ReviewLedgerService = Implementation(db)
 
   final private class Implementation(db: Transactor) extends ReviewLedgerService:
-    def get(slug: Slug): Either[String, Option[Ledger]] = db.read(ReviewLedgerRepo.get(slug))
+    def get(slug: Slug): Either[Problem, Option[Ledger]] = db.read(ReviewLedgerRepo.get(slug))
     def put(ledger: Ledger): Unit = db.transact(ReviewLedgerRepo.put(ledger))
     def passedReview(reviewId: ReviewId): Set[Slug] =
       db.read(ReviewLedgerRepo.passedReview(ReviewLedgerRepo.ReviewId(reviewId.value)))
@@ -41,7 +42,7 @@ object ReviewLedgerService:
     * database's reference to the article refuses it.
     */
   final class InMemory(state: AtomicReference[ResearchState]) extends ReviewLedgerService:
-    def get(slug: Slug): Either[String, Option[Ledger]] = Right(
+    def get(slug: Slug): Either[Problem, Option[Ledger]] = Right(
       state.get.ledgers.get(ResearchState.LedgersKey(slug.value))
     )
 

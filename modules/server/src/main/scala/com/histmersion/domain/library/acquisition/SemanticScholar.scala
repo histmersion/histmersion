@@ -1,6 +1,6 @@
 package com.histmersion
 package domain.library.acquisition
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.domain.library.acquisition.wire
@@ -33,19 +33,19 @@ final class SemanticScholar(cfg: AcquireConfig, http: Http) extends CitationsCli
   ): Either[Problem, (CitationsClient.Backend, List[FollowupRow])] =
     val semantic = CitationsClient.Backend("semantic-scholar")
     val openalex = CitationsClient.Backend("openalex")
-    val found: Either[String, (CitationsClient.Backend, List[FollowupRow])] = work.doi match
+    val found: Either[Problem, (CitationsClient.Backend, List[FollowupRow])] = work.doi match
       case Some(doi) =>
         s2(doi.value, since, limit.value) match
           case Right(rows) if rows.nonEmpty => Right((semantic, rows))
           case Right(_)                     => openalexCiting(work, since, limit.value).map((openalex, _))
           case Left(err)                    =>
-            scribe.warn(s"acquire: Semantic Scholar unavailable ($err) — using OpenAlex citations")
+            scribe.warn(s"acquire: Semantic Scholar unavailable (${err.sentence}) — using OpenAlex citations")
             openalexCiting(work, since, limit.value).map((openalex, _))
       case None => openalexCiting(work, since, limit.value).map((openalex, _))
-    found.left.map((text => Problem.Unclassified(Legacy.Text(text))))
+    found
 
-  private def s2(doi: String, since: Option[Year], limit: Int): Either[String, List[FollowupRow]] =
-    def page(offset: Offset, acc: List[FollowupRow]): Either[String, List[FollowupRow]] =
+  private def s2(doi: String, since: Option[Year], limit: Int): Either[Problem, List[FollowupRow]] =
+    def page(offset: Offset, acc: List[FollowupRow]): Either[Problem, List[FollowupRow]] =
       if acc.size >= limit then Right(acc)
       else
         http
@@ -59,8 +59,6 @@ final class SemanticScholar(cfg: AcquireConfig, http: Http) extends CitationsCli
             ),
             headers
           )
-          .left
-          .map(_.sentence)
           .flatMap { j =>
             val rows = AcquireParse.s2Citations(j).map(_.wire)
             val kept = acc ++ rows.filter(r => since.forall(y => r.year.forall(_.value >= y.value)))
@@ -70,7 +68,7 @@ final class SemanticScholar(cfg: AcquireConfig, http: Http) extends CitationsCli
           }
     page(Offset(0), Nil)
 
-  private def openalexCiting(work: WorkRef, since: Option[Year], limit: Int): Either[String, List[FollowupRow]] =
+  private def openalexCiting(work: WorkRef, since: Option[Year], limit: Int): Either[Problem, List[FollowupRow]] =
     work.openalexId match
       case None     => Right(Nil)
       case Some(id) =>
@@ -87,6 +85,4 @@ final class SemanticScholar(cfg: AcquireConfig, http: Http) extends CitationsCli
               "mailto" -> cfg.mailto.value
             )
           )
-          .left
-          .map(_.sentence)
           .map(AcquireParse.openalexCitations(_).map(_.wire))

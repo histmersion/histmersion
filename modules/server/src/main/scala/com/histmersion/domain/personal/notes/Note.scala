@@ -1,6 +1,6 @@
 package com.histmersion
 package domain.personal.notes
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.api.personal.Note as WireNote
 import com.histmersion.domain.personal.PersonalState.StoredNote
@@ -47,7 +47,11 @@ object Note:
     Either.cond(
       PersonalUuid.matches(PersonalUuid.Text(id)),
       WireNote.Id(id),
-      Problem.Unclassified(Legacy.Text(s"not a note id: '$raw'"))
+      Problem.Invalid.Unreadable.here(
+        Problem.TypeName.of(WireNote.Id),
+        Problem.Raw.of(raw),
+        Vector(Problem.Raw("0193f1c4-7b2a-7c3e-9d41-5e6f7a8b9c0d"))
+      )
     )
 
   def of(stored: StoredNote, described: Map[ItemRef, Described]): Note =

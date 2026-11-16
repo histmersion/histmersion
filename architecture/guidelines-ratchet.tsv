@@ -32,7 +32,7 @@ G44	cli	test	92
 G44	config	main	175
 G44	config	test	51
 G44	core	main	2848
-G44	core	test	1012
+G44	core	test	1011
 G44	db	main	497
 G44	db	test	1522
 G44	files	main	224
@@ -66,7 +66,7 @@ G44	plugins/media	main	103
 G44	plugins/media	test	57
 G44	problem	main	5
 G44	problem	test	1
-G44	server	main	10628
+G44	server	main	10584
 G44	server	test	3973
 G44	upstreams	main	147
 G44	upstreams	test	44
@@ -74,7 +74,7 @@ G44	values	main	181
 G44	values	test	24
 G44	web	main	4913
 G44	web	test	889
-G44conversion	server	main	1254
+G44conversion	server	main	1238
 G44plaindef	api	main	34
 G44plaindef	cli	main	6
 G44plaindef	config	main	1
@@ -92,7 +92,7 @@ G45boundary	cli	main	1014
 G45boundary	config	main	63
 G45boundary	console	main	4
 G45boundary	core	main	10
-G45boundary	db	main	2103
+G45boundary	db	main	2102
 G45boundary	files	main	59
 G45boundary	plugin-host	main	305
 G45boundary	plugin-resolver	main	33
@@ -104,7 +104,7 @@ G45boundary	plugins/events	main	171
 G45boundary	plugins/gazetteers	main	60
 G45boundary	plugins/media	main	376
 G45boundary	problem	main	1
-G45boundary	server	main	384
+G45boundary	server	main	381
 G45boundary	upstreams	main	167
 G45boundary	web	main	111
 G46	api	main	83
@@ -234,7 +234,7 @@ G49	plugins/gazetteers	main	21
 G49	plugins/gazetteers	test	30
 G49	plugins/media	main	103
 G49	plugins/media	test	15
-G49	server	main	4030
+G49	server	main	4023
 G49	server	test	1112
 G49	upstreams	main	42
 G49	upstreams	test	17
@@ -250,11 +250,11 @@ G5problem	core	main	1
 G60fromString	api	main	1
 G60fromString	cli	main	134
 G60fromString	cli	test	15
-G60fromString	core	test	25
-G60fromString	db	main	16
+G60fromString	core	test	23
+G60fromString	db	main	15
 G60fromString	db	test	5
 G60fromString	problem	main	2
-G60fromString	server	main	625
+G60fromString	server	main	534
 G60fromString	server	test	181
 G60fromString	web	main	57
 G60fromString	web	test	21

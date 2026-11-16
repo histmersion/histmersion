@@ -170,8 +170,12 @@ class ProviderPluginsSuite extends munit.FunSuite:
       Some("Met objects (met) is switched off (histmersion.plugins.media-met.enabled = false)")
     )
     assertEquals(
-      BuiltinCatalogues.resolve(CatalogProviderInfo.Id("ncei"), providers(g.registries.eventCatalogues)).left.toOption,
-      Some("NOAA NCEI Natural Hazards (noaa) is switched off (histmersion.plugins.events-noaa.enabled = false)")
+      BuiltinCatalogues
+        .resolve(CatalogProviderInfo.Id("ncei"), providers(g.registries.eventCatalogues))
+        .left
+        .toOption
+        .map(_.sentence),
+      Some("NOAA NCEI Natural Hazards (noaa) is switched off (histmersion.plugins.events-noaa.enabled)")
     )
     // the environment switches one off too
     val e = ServerPlugins.offlineWith(
@@ -199,7 +203,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
     assertEquals(BuiltinCatalogues.resolve(CatalogProviderInfo.Id("Smithsonian"), e), Right("gvp"))
     assertEquals(BuiltinCatalogues.resolve(CatalogProviderInfo.Id("wd"), e), Right("wikidata"))
     assertEquals(
-      BuiltinCatalogues.resolve(CatalogProviderInfo.Id("usgs"), e),
+      BuiltinCatalogues.resolve(CatalogProviderInfo.Id("usgs"), e).left.map(_.sentence),
       Left("unknown event catalogue 'usgs' (one of: gvp, noaa, wikidata)")
     )
 

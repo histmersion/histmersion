@@ -169,9 +169,18 @@ object Column:
         case Invalid.Rule.RegexTime(limit)                   => Vector(s"$limit")
         case Invalid.Rule.RegexValid(description, at, regex) =>
           Vector(s"$description", at.fold("")(p => s"$p"), s"$regex")
-        case Invalid.Rule.MergeId(stated) => Vector(s"$stated")
+        case Invalid.Rule.MergeId(stated)                         => Vector(s"$stated")
+        case Invalid.Rule.DoiRecorded(purpose)                    => Vector(purpose.productPrefix)
+        case Invalid.Rule.UploadBytes(bytes, limit)               => Vector(s"$bytes", s"$limit")
+        case Invalid.Rule.InlineBytes(bytes, limit)               => Vector(s"$bytes", s"$limit")
+        case Invalid.Rule.Base64Decodable(reported)               => Vector(s"$reported")
+        case Invalid.Rule.RegionWithin(x, y, w, h, width, height) =>
+          Vector(s"$x", s"$y", s"$w", s"$h", s"$width", s"$height")
         case Invalid.Rule.IdentifierGiven | Invalid.Rule.RunsCompared | Invalid.Rule.RunRepeated |
-            Invalid.Rule.QueryGiven =>
+            Invalid.Rule.QueryGiven | Invalid.Rule.UpstreamRecord | Invalid.Rule.UploadGiven |
+            Invalid.Rule.PathOrBase64 | Invalid.Rule.ServerSees | Invalid.Rule.OriginalForReocr |
+            Invalid.Rule.OriginalForDownload | Invalid.Rule.Frontmatter | Invalid.Rule.NoteCitekey |
+            Invalid.Rule.FilterRecorded =>
           Vector.empty
       (rule.productPrefix +: held).mkString(HoldSeparator)
 
@@ -227,6 +236,7 @@ object Column:
         case Conflict.Hold.TextNotSent(decided)       => Vector(s"$decided")
         case Conflict.Hold.CitekeyOfAnother(citekey)  => Vector(s"$citekey")
         case Conflict.Hold.CitekeyTaken(citekey)      => Vector(s"$citekey")
+        case Conflict.Hold.StoredAs(citekey)          => Vector(s"$citekey")
         case _                                        => Vector.empty
       (hold.productPrefix +: (if args.isEmpty then Vector.empty else Vector(args.mkString(HoldSeparator))))
         .mkString(" ")
@@ -515,9 +525,39 @@ object Column:
             cy <- Count.read(y)
             zoom <- Count.read(z)
           yield TileWithin(cx, cy, zoom)
-        case Vector("IdentifierGiven")      => Some(IdentifierGiven)
-        case Vector("IdentifierKind", s)    => Some(IdentifierKind(Raw(s)))
-        case Vector("MergeId", s)           => Some(MergeId(Raw(s)))
+        case Vector("IdentifierGiven")   => Some(IdentifierGiven)
+        case Vector("IdentifierKind", s) => Some(IdentifierKind(Raw(s)))
+        case Vector("MergeId", s)        => Some(MergeId(Raw(s)))
+        case Vector("DoiRecorded", p)    => word(Invalid.Purpose.values.toSeq, p).map(DoiRecorded(_))
+        case Vector("UpstreamRecord")    => Some(UpstreamRecord)
+        case Vector("UploadGiven")       => Some(UploadGiven)
+        case Vector("UploadBytes", b, l) =>
+          for
+            bytes <- Count.read(b)
+            limit <- Count.read(l)
+          yield UploadBytes(bytes, limit)
+        case Vector("InlineBytes", b, l) =>
+          for
+            bytes <- Count.read(b)
+            limit <- Count.read(l)
+          yield InlineBytes(bytes, limit)
+        case Vector("Base64Decodable", r)               => Some(Base64Decodable(External.Reported.of(r)))
+        case Vector("PathOrBase64")                     => Some(PathOrBase64)
+        case Vector("ServerSees")                       => Some(ServerSees)
+        case Vector("OriginalForReocr")                 => Some(OriginalForReocr)
+        case Vector("OriginalForDownload")              => Some(OriginalForDownload)
+        case Vector("Frontmatter")                      => Some(Frontmatter)
+        case Vector("NoteCitekey")                      => Some(NoteCitekey)
+        case Vector("FilterRecorded")                   => Some(FilterRecorded)
+        case Vector("RegionWithin", x, y, w, h, wd, ht) =>
+          for
+            cx <- Count.read(x)
+            cy <- Count.read(y)
+            cw <- Count.read(w)
+            ch <- Count.read(h)
+            width <- Count.read(wd)
+            height <- Count.read(ht)
+          yield RegionWithin(cx, cy, cw, ch, width, height)
         case Vector("ActivityPage", s)      => Some(ActivityPage(Raw(s)))
         case Vector("ActivityPageTime", s)  => Some(ActivityPageTime(Raw(s)))
         case Vector("EventCatalogue", s, k) => Some(EventCatalogue(Raw(s), raws(k)))
@@ -812,6 +852,7 @@ object Column:
             case ("TextNotSent", Vector(decided))       => Some(Conflict.Hold.TextNotSent(decided))
             case ("CitekeyOfAnother", Vector(citekey))  => Some(Conflict.Hold.CitekeyOfAnother(citekey))
             case ("CitekeyTaken", Vector(citekey))      => Some(Conflict.Hold.CitekeyTaken(citekey))
+            case ("StoredAs", Vector(citekey))          => Some(Conflict.Hold.StoredAs(citekey))
             case (other, Vector())                      => word(Holds, other)
             case _                                      => None
           hold.map(Conflict.Held(Where(s"$subject"), _))

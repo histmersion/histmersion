@@ -829,7 +829,7 @@ calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,tit
 exit 2
 --- stdout
 --- stderr
-error: no original stored for 'zzcal_missing' — the server keeps uploads in <spool>; pass the file yourself (--file) — or set cli.calibre.originals-dir (HISTMERSION_CALIBRE_ORIGINALS_DIR) to a directory holding <citekey>/paper.pdf
+error: 'zzcal_missing': no original stored — the server keeps uploads in its spool directory (converter.spool-dir); pass the file yourself (--file) — or set cli.calibre.originals-dir (HISTMERSION_CALIBRE_ORIGINALS_DIR) to a directory holding <citekey>/paper.pdf
 --- calls
 
 ## histmersion calibre push zzcal_pushme
@@ -879,7 +879,7 @@ calibredb "add_format" "--with-library" "<library>" "1" "<tmp>/zzcal_linked.pdf"
 exit 2
 --- stdout
 --- stderr
-error: no original stored for 'zzcal_missing' — the server keeps uploads in <spool>; pass the file yourself (--file)
+error: 'zzcal_missing': no original stored — the server keeps uploads in its spool directory (converter.spool-dir); pass the file yourself (--file)
 --- calls
 
 ## histmersion calibre push zzcal_nolink --replace
@@ -893,7 +893,7 @@ error: 'zzcal_nolink' is not linked to a Calibre entry — `histmersion calibre 
 exit 2
 --- stdout
 --- stderr
-error: no original stored for 'zzcal_nolink' — the server keeps uploads in <spool>; pass the file yourself (--file) — or set cli.calibre.originals-dir (HISTMERSION_CALIBRE_ORIGINALS_DIR) to a directory holding <citekey>/paper.pdf
+error: 'zzcal_nolink': no original stored — the server keeps uploads in its spool directory (converter.spool-dir); pass the file yourself (--file) — or set cli.calibre.originals-dir (HISTMERSION_CALIBRE_ORIGINALS_DIR) to a directory holding <citekey>/paper.pdf
 --- calls
 
 ## histmersion calibre push zzcal_nolink   [cli.calibre.originals-dir set]

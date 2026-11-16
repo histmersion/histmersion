@@ -1,6 +1,6 @@
 package com.histmersion
 package domain.personal.bookmarks
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.api.personal.Bookmark as WireBookmark
 import com.histmersion.domain.personal.PersonalState.StoredBookmark
@@ -47,7 +47,11 @@ object Bookmark:
     Either.cond(
       PersonalUuid.matches(PersonalUuid.Text(id)),
       WireBookmark.Id(id),
-      Problem.Unclassified(Legacy.Text(s"not a bookmark id: '$raw'"))
+      Problem.Invalid.Unreadable.here(
+        Problem.TypeName.of(WireBookmark.Id),
+        Problem.Raw.of(raw),
+        Vector(Problem.Raw("0193f1c4-7b2a-7c3e-9d41-5e6f7a8b9c0d"))
+      )
     )
 
   def of(stored: StoredBookmark, described: Map[ItemRef, Described]): Bookmark =

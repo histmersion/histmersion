@@ -128,7 +128,12 @@ object Acquire:
     */
   val BrowserDownloadTopic = "browser download"
 
-  def browserDownloadText(work: WorkRef, doi: Doi, citekey: Citekey, refusals: List[Problem] = Nil): Option[Outcome] =
+  def browserDownloadText(
+      work: WorkRef,
+      doi: Doi,
+      citekey: Citekey,
+      refusals: List[Problem.NotFound.Answer] = Nil
+  ): Option[Outcome] =
     Option.when(((work.isOa) == Source.Candidate.IsOa(true))) {
       val who =
         work.authors.map(_.value).headOption.map(a => if work.authors.map(_.value).size > 1 then s"$a et al." else a)
@@ -140,7 +145,11 @@ object Acquire:
         .map(_.value.trim)
         .filter(u => u.nonEmpty && !u.toLowerCase.contains((doi).value.toLowerCase))
         .fold("")(u => s" at $u")
-      val said = refusals.map((_).sentence.trim).filter(_.nonEmpty).distinct.mkString("; ")
+      val said = refusals
+        .map(r => (r.fetcher, r.why.sentence.trim))
+        .collect { case (fetcher, why) if why.nonEmpty => s"$fetcher: $why" }
+        .distinct
+        .mkString("; ")
       Outcome(
         s"${if head.isEmpty then "" else s"$head. "}$title. https://doi.org/$doi — $oa$at, but no script may download " +
           s"it: download it in the browser${

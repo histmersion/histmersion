@@ -248,7 +248,7 @@ class MediaHttpSuite extends DbSuite:
       try
         val (bad, bb) = send("PATCH", s"$url/api/events/$EventId", """{"wikidata":"132564"}""")
         assertEquals(bad, 400, bb)
-        assert(bb.contains("not a Wikidata item id"), bb)
+        assert(bb.contains("(e.g. Q1234)"), bb)
         val (ok, ob) = send("PATCH", s"$url/api/events/$EventId", """{"wikidata":"Q132564"}""")
         assertEquals(ok, 200, ob)
         assertEquals(

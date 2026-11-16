@@ -967,12 +967,20 @@
   "code" : "invalid",
   "problems" : [
     {
-      "case" : "Unclassified",
+      "case" : "Unknown",
       "data" : {
-        "text" : "scale 'huge' is not local | regional | auto"
+        "at" : [
+        ],
+        "known" : [
+          "local",
+          "regional",
+          "auto"
+        ],
+        "raw" : "huge",
+        "typeName" : "EventSummary.Scale"
       },
-      "group" : "Unclassified",
-      "text" : "scale 'huge' is not local | regional | auto"
+      "group" : "Invalid",
+      "text" : "unknown event summary scale 'huge' (one of: local, regional, auto)"
     }
   ]
 }

@@ -3,7 +3,7 @@ package domain.library.acquisition
 import com.histmersion.util.json.RawJson
 import hearth.kindlings.jsoniterjson.Json
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 import io.scalaland.chimney.dsl.*
 import com.histmersion.config.AcquireConfig
 
@@ -19,13 +19,16 @@ final class SttpHttp(policy: PolicyHttp) extends Http:
       url: Http.Url,
       headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
   ): Either[Problem, HttpAnswer.Body] =
-    policy.bytes(HttpTransport.Url(url.value), headers)
+    policy.bytes(transport(url), headers)
 
   override def once(
       url: Http.Url,
       headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
   ): Either[Problem, HttpAnswer] =
-    policy.once(HttpTransport.Url(url.value), headers)
+    policy.once(transport(url), headers)
+
+  /** The URL as the host's client takes it. */
+  private def transport(url: Http.Url): HttpTransport.Url = HttpTransport.Url(url.value)
 
   def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Problem, Http.Text] =
     bytes(url, headers).map(b => Http.Text(new String(b.value, "UTF-8")))
@@ -35,7 +38,11 @@ final class SttpHttp(policy: PolicyHttp) extends Http:
       RawJson
         .parse(s.value)
         .left
-        .map(e => Problem.Unclassified(Legacy.Text(s"$url returned unparseable JSON: $e")))
+        .map(e =>
+          val asked = transport(url)
+          Problem.Upstream.BadReply
+            .here(asked.upstream, asked.address, Problem.Upstream.Shape.Json, External.Reported.of(s"$e"))
+        )
     )
 
 object SttpHttp:

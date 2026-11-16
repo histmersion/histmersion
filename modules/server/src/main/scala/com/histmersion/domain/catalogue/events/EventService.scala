@@ -4,7 +4,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.json.RawJson
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 
 import com.histmersion.api.catalogue.EventEntry
 
@@ -301,13 +301,23 @@ object EventService:
 
     def geometryError(geojson: EventDetailRow.Geometry): Option[Problem] =
       RawJson.parse(geojson.value) match
-        case Left(e)  => Some(Problem.Unclassified(Legacy.Text(e)))
+        case Left(e)  => Some(geometryUnreadable(External.Reported.of(e)))
         case Right(j) =>
           val c = j.cursor
           c.get[String]("type").toOption match
-            case None => Some(Problem.Unclassified(Legacy.Text("unknown GeoJSON type")))
+            case None => Some(geometryUnreadable(External.Reported("unknown GeoJSON type")))
             case Some(t) if c.downField("coordinates").succeeded || t == "GeometryCollection" => None
-            case Some(_) => Some(Problem.Unclassified(Legacy.Text("Unable to find 'coordinates' in GeoJSON string")))
+            case Some(_)                                                                      =>
+              Some(geometryUnreadable(External.Reported("Unable to find 'coordinates' in GeoJSON string")))
+
+    /** What PostGIS says of a GeoJSON geometry it cannot read, as the database's check reports it. */
+    private def geometryUnreadable(reported: External.Reported): Problem =
+      Problem.Invalid.Unparsable(
+        Problem.Io.Format.Json,
+        Problem.Where("GeoJSON geometry"),
+        Problem.Io.Damage.Unreadable(reported),
+        Vector.empty
+      )
 
     /** The corrections a person's `fields` make on an event an import created, recorded as the database does. */
     private def withCorrections(s: CatalogueState, id: Event.Id, fields: Map[String, Json]): CatalogueState =
@@ -461,16 +471,14 @@ object EventService:
       else if exists(newId) then
         Left(
           Api.Error(
-            Problem.Unclassified(Legacy.Text(s"'$newId' is already the id of another event")),
+            Problem.Conflict.AlreadyExists(Problem.TypeName.of(Event.Id), Problem.Raw.of(newId)),
             Some(Api.Error.Code(Write.CodeInvalid))
           )
         )
       else if aliasOf.exists(_.value != oldId.value) then
         Left(
           Api.Error(
-            Problem.Unclassified(
-              Legacy.Text(s"'$newId' is an old id of '${aliasOf.get}' and still resolves to it — pick another")
-            ),
+            Problem.Conflict.Aliased(Problem.TypeName.of(Event.Id), Problem.Raw.of(newId), Problem.Raw.of(aliasOf.get)),
             Some(Api.Error.Code(Write.CodeInvalid))
           )
         )

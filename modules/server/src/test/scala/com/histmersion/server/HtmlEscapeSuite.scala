@@ -61,7 +61,7 @@ class HtmlEscapeSuite extends munit.FunSuite:
       // 13: an unmatched /api/* path is a JSON 404, not the web UI with a 200
       val (s3, b3) = get(s"$url/api/no_such_thing")
       assertEquals(s3, 404)
-      assert(b3.contains("no such endpoint"), b3)
+      assert(b3.contains("endpoint '/api/no_such_thing'"), b3)
       assert(!b3.contains("<!doctype html>"), b3.take(200))
 
       // …and an unmatched non-api GET is a 404 too, while the root still serves the web UI

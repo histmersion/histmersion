@@ -2,7 +2,7 @@ package com.histmersion
 package domain.media.assets
 import hearth.kindlings.jsoniterjson.Json
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 import io.scalaland.chimney.dsl.*
 import com.histmersion.api.Write
 
@@ -24,6 +24,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * `baseUrl` is this server's public URL, read at each request.
   */
 final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers.BaseUrl):
+  import IiifControllers.Filename
 
   /** Serve the IIIF info.json for an asset. Returns the JSON document or a left with an error. */
   def info(citekey: Citekey, name: AssetService.AssetName): Either[Api.Error, Json] =
@@ -31,14 +32,11 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
     assets.figure(citekey, safeName) match
       case None =>
         Left(
-          Api.Error(
-            Problem.Unclassified(Legacy.Text(s"No asset '$safeName' for '$citekey'")),
-            Some(Api.Error.Code(Write.CodeNotFound))
-          )
+          Api.Error(noAsset(citekey, safeName), Some(Api.Error.Code(Write.CodeNotFound)))
         )
       case Some((_, bytes)) =>
         decodeImage(bytes) match
-          case None => Left(Api.Error(Problem.Unclassified(Legacy.Text(s"Asset '$safeName' is not a decodable image"))))
+          case None      => Left(Api.Error(undecodable(safeName)))
           case Some(img) =>
             val id = s"${baseUrl()}/iiif/${enc(citekey.value)}/${enc(safeName.value)}"
             Right(Iiif.infoJson(Iiif.ImageId(id), ImageSize.Width(img.getWidth), ImageSize.Height(img.getHeight)))
@@ -74,8 +72,10 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
       case _ =>
         Left(
           Api.Error(
-            Problem.Unclassified(
-              Legacy.Text(s"invalid IIIF filename: '$filename' (expected 'default.jpg' or 'default.png')")
+            Problem.Invalid.Unreadable.here(
+              Problem.TypeName.of(Filename),
+              Problem.Raw.of(filename),
+              Vector(Problem.Raw("default.jpg"), Problem.Raw("default.png"))
             )
           )
         )
@@ -86,7 +86,10 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
       case "0" => Right(())
       case _   =>
         Left(
-          Api.Error(Problem.Unclassified(Legacy.Text(s"unsupported rotation: '$s' (only '0' is supported at Level 1)")))
+          Api.Error(
+            Problem.Invalid.Unknown
+              .here(Problem.TypeName.of(Iiif.Rotation), Problem.Raw.of(s), Vector(Problem.Raw("0")))
+          )
         )
 
   /** Load the asset, decode it, apply transforms, and encode to the output format. */
@@ -100,17 +103,20 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
     assets.figure(citekey, name) match
       case None =>
         Left(
-          Api.Error(
-            Problem.Unclassified(Legacy.Text(s"No asset '$name' for '$citekey'")),
-            Some(Api.Error.Code(Write.CodeNotFound))
-          )
+          Api.Error(noAsset(citekey, name), Some(Api.Error.Code(Write.CodeNotFound)))
         )
       case Some((_, bytes)) =>
         decodeImage(bytes) match
           case None =>
-            Left(Api.Error(Problem.Unclassified(Legacy.Text(s"Asset '$name' is not a decodable image"))))
+            Left(Api.Error(undecodable(name)))
           case Some(img) =>
             applyRegion(img, region).flatMap(applySize(_, size)).flatMap(encode(_, format))
+
+  private def noAsset(citekey: Citekey, name: AssetService.AssetName): Problem =
+    Problem.NotFound.Entity(Problem.TypeName.of(AssetService.AssetName), Problem.Raw(s"$citekey/$name"))
+
+  private def undecodable(name: AssetService.AssetName): Problem =
+    Problem.Io.Corrupt(Problem.Io.Format.Image, Problem.Where(s"asset '$name'"), Problem.Io.Damage.Undecodable)
 
   /** Decode raw bytes into a BufferedImage. Returns None when ImageIO cannot read them. */
   private def decodeImage(bytes: AssetService.Bytes): Option[BufferedImage] =
@@ -132,7 +138,16 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
         if cx >= imgW || cy >= imgH then
           Left(
             Api.Error(
-              Problem.Unclassified(Legacy.Text(s"region ($x,$y,$w,$h) is outside image bounds (${imgW}x$imgH)"))
+              Problem.Invalid.Broken.here(
+                Problem.Invalid.Rule.RegionWithin(
+                  Problem.Count.of(xr),
+                  Problem.Count.of(yr),
+                  Problem.Count.of(wr),
+                  Problem.Count.of(hr),
+                  Problem.Count(imgW.toLong),
+                  Problem.Count(imgH.toLong)
+                )
+              )
             )
           )
         else Right(img.getSubimage(cx, cy, cw, ch))
@@ -205,7 +220,16 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
         rgb
       else img
     val written = ImageIO.write(toEncode, if format.value == "jpg" then "JPEG" else "PNG", out)
-    if !written then Left(Api.Error(Problem.Unclassified(Legacy.Text(s"cannot encode image as $format"))))
+    if !written then
+      Left(
+        Api.Error(
+          Problem.Io.File(
+            Problem.Io.Access.Write,
+            Problem.Io.Path(s"default.$format"),
+            External.Reported("no image writer took the image")
+          )
+        )
+      )
     else Right((AssetService.Bytes(out.toByteArray), AssetService.Mime(Iiif.contentType(format).value)))
 
   private def enc(s: String): String =

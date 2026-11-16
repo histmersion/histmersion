@@ -1,6 +1,6 @@
 package com.histmersion
 package domain.personal.reading
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -20,5 +20,12 @@ object ReadingShow:
       .fold[Either[Problem, ReadingShow]](Right(Read))(t =>
         values
           .find(_.wire.value == t)
-          .toRight(Problem.Unclassified(Legacy.Text(s"show '$t': one of ${values.map(_.wire.value).mkString(", ")}")))
+          .toRight(
+            Problem.Invalid.Unknown(
+              Problem.TypeName.of(Wire),
+              Problem.Raw(t),
+              values.toVector.map(v => Problem.Raw.of(v.wire)),
+              Vector(Problem.Field("show"))
+            )
+          )
       )

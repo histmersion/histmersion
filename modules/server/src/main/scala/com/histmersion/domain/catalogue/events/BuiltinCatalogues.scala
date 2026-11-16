@@ -2,6 +2,7 @@ package com.histmersion
 package domain.catalogue.events
 
 import com.histmersion.pluginhost.{PluginEvents, SpiValues}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.api.catalogue.CatalogProviderInfo
 import com.histmersion.plugin.*
@@ -51,15 +52,27 @@ object BuiltinCatalogues:
   def resolve(
       asked: CatalogProviderInfo.Id,
       catalogues: ListMap[CatalogProviderInfo.Id, EventCatalogue]
-  ): Either[String, CatalogProviderInfo.Id] =
+  ): Either[Problem, CatalogProviderInfo.Id] =
     val name = canonical(asked)
     if catalogues.contains(name) then Right(name)
     else
       entries.find(_.name == name) match
-        case Some(e) => Left(s"${e.title} ($name) is switched off (histmersion.plugins.${e.plugin}.enabled = false)")
-        case None    =>
+        case Some(e) =>
           Left(
-            s"unknown event catalogue '${asked.value.trim}' (one of: ${ordered(catalogues.keys.toList).mkString(", ")})"
+            Problem.Refused.Disabled(
+              Problem.Refused.Feature(s"${e.title} ($name)"),
+              Problem.SettingKey(s"histmersion.plugins.${e.plugin}.enabled")
+            )
+          )
+        case None =>
+          Left(
+            Problem.Invalid.Broken.here(
+              Problem.Invalid.Rule
+                .EventCatalogue(
+                  Problem.Raw(asked.value.trim),
+                  ordered(catalogues.keys.toList).toVector.map(Problem.Raw.of(_))
+                )
+            )
           )
 
   /** A catalogue's terms as the card and the list show them: a registered one's, else a first-party one's (records of a

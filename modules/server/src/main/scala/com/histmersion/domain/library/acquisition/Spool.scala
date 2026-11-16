@@ -1,7 +1,6 @@
 package com.histmersion
 package domain.library.acquisition
-import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.api.text.SafeName
 import com.histmersion.util.storage.{ByteSource, Store}
@@ -23,17 +22,7 @@ final class Spool(store: Store):
   def write(citekey: Citekey, extension: Spool.Extension, bytes: Spool.Bytes): Either[Problem, Store.Key] =
     Store.Key
       .of(citekey.value, s"paper.${SafeName.of(extension.value)}")
-      .left
-      .map(_ =>
-        Problem.Unclassified(Legacy.Text(s"could not spool the file: '$citekey' would escape the spool directory"))
-      )
-      .flatMap(key =>
-        store
-          .write(key, ByteSource.Content(bytes.value))
-          .left
-          .map(e => Problem.Unclassified(Legacy.Text(s"could not spool the file: ${e.message.sentence}")))
-          .map(_ => key)
-      )
+      .flatMap(key => store.write(key, ByteSource.Content(bytes.value)).left.map(_.message).map(_ => key))
 
   /** The fetched file at `key`, when it is there. */
   def get(key: Store.Key): Option[Blob] = store.get(key)

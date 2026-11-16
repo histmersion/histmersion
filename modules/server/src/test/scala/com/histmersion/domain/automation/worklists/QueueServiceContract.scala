@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.automation.worklists
 import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -149,8 +150,8 @@ abstract class QueueServiceContract(name: String) extends DbSuite:
   qtest("patching or deleting an unknown id is a not-found value, not an exception") { q =>
     val nope = QueueItemId(987654321)
     assertEquals(
-      q.patch(nope, QueuePatch(status = Some(status(Done)))).left.map(_.message),
-      Left("No queue item #987654321")
+      q.patch(nope, QueuePatch(status = Some(status(Done)))).left.map(_.problem.sentence),
+      Left("no queue item id '987654321'")
     )
     assertEquals(q.delete(nope), Left(QueueError.NotFound(nope)))
   }
@@ -238,7 +239,7 @@ abstract class QueueServiceContract(name: String) extends DbSuite:
     assertEquals((added.goal, added.createdBy, added.closedBy), (Some("zz-links-goal"), Some("zz-run-1"), None))
     val done =
       q.patch(id(added), Queue.fulfil(added, Citekey("drake2012"), Some(QueueItem.ClosedBy("zz-job-9"))))
-        .fold(e => fail(e.message), identity)
+        .fold(e => fail(e.problem.sentence), identity)
     assertEquals((done.status, done.closedBy, done.createdBy), (Done, Some("zz-job-9"), Some("zz-run-1")))
     assertEquals(q.patch(id(added), QueuePatch(status = Some(status(Open)))).map(_.closedBy), Right(None))
   }

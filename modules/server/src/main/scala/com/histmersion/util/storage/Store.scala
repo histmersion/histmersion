@@ -213,7 +213,7 @@ object Store:
 
     /** A name made of one segment or several, each checked. */
     def of(segments: String*): Either[Problem, Key] =
-      either(segments.filter(_.nonEmpty).mkString("/")).left.map((text => Problem.Unclassified(Legacy.Text(text))))
+      checked(segments.filter(_.nonEmpty).mkString("/")).left.map(Problem.Invalid.malformed)
 
     extension (key: Key)
       def isRoot: Boolean = key.value.isEmpty

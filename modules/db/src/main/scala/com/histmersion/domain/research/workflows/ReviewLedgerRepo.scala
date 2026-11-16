@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.research.workflows
 
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.{External, Problem}
+import com.histmersion.util.json.RawJson
 import com.histmersion.util.database.Jsonb
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.domain.ReviewLedger.Ledger
@@ -21,14 +22,20 @@ private[workflows] object ReviewLedgerRepo:
     * than start over and lose its history).
     */
 
-  def get(slug: Slug)(using DbCon): Either[String, Option[Ledger]] =
+  def get(slug: Slug)(using DbCon): Either[Problem, Option[Ledger]] =
     sql"SELECT ledger::text FROM review_ledgers WHERE slug = $slug".query[String].run().headOption match
       case None       => Right(None)
       case Some(json) =>
-        Jsonb
-          .decode[Ledger](Jsonb.JsonText(json))
+        RawJson
+          .decode[Ledger](json)
           .left
-          .map(e => s"the review ledger of '$slug' does not decode: ${e.sentence}")
+          .map(e =>
+            Problem.Io.Corrupt(
+              Problem.Io.Format.Json,
+              Problem.Where(s"the review ledger of '$slug'"),
+              Problem.Io.Damage.Unreadable(External.Reported.of(e))
+            )
+          )
           .map(Some(_))
 
   /** Write the ledger (insert or replace). The article must exist. */

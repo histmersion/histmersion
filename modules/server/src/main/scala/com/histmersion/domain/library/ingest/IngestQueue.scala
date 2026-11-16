@@ -11,7 +11,7 @@ import io.scalaland.chimney.dsl.*
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.AcquireMatch
 import com.histmersion.domain.Caller
-import com.histmersion.domain.automation.worklists.QueueItemId
+import com.histmersion.domain.automation.worklists.{QueueError, QueueItemId}
 import com.histmersion.domain.automation.worklists.QueueScope
 import com.histmersion.domain.automation.worklists.QueueService
 import com.histmersion.domain.library.sources.SourceService
@@ -154,9 +154,9 @@ final class IngestQueue(
   /** A conversion's figures → storable ones, failing the whole batch on the first unusable payload. */
   private def decode(in: List[AssetInput]): Either[Api.Error, List[NewFigure]] =
     ByteCount
-      .either(cfg().limits.assetBytes.value)
+      .checked(cfg().limits.assetBytes.value)
       .left
-      .map(why => Api.Error(Problem.Unclassified(Legacy.Text(why))))
+      .map(refusal => Api.Error(Problem.Invalid.malformed(refusal)))
       .flatMap { max =>
         in.foldLeft[Either[Api.Error, List[NewFigure]]](Right(Nil)) { (acc, a) =>
           acc.flatMap(xs => NewFigure.of(a, max).left.map(p => Api.Error(p)).map(xs :+ _))
@@ -304,7 +304,7 @@ final class IngestQueue(
             )
           ) match
             case Right(_) => s"ticked off acquisition item $id"
-            case Left(e)  => warning(e.message)
+            case Left(e)  => warning(e.problem.sentence)
     catch
       // Storage failures are not Left(ApiError). The source is already committed; preserve its
       // successful job and report the bookkeeping failure, without swallowing interruption.
@@ -331,14 +331,27 @@ final class IngestQueue(
               .describe(
                 d,
                 id =>
+                  val itemId = QueueItemId(id.value)
                   queues
-                    .get(QueueItemId(id.value))
-                    .filter(_.status == Queue.QueueItem.Status(Queue.Open))
-                    .toRight(Problem.Unclassified(Legacy.Text("it was no longer open")))
+                    .get(itemId)
+                    .toRight(QueueError.NotFound(itemId).problem)
+                    .flatMap(item =>
+                      val open = Queue.QueueItem.Status(Queue.Open)
+                      if item.status == open then Right(item)
+                      else
+                        Left(
+                          Problem.Conflict.WrongState(
+                            Problem.TypeName.of(QueueItemId),
+                            Problem.Raw.of(id),
+                            Problem.Conflict.State.of(item.status),
+                            Vector(Problem.Conflict.State.of(open))
+                          )
+                        )
+                    )
                     .flatMap(item =>
                       queues
                         .patch(
-                          QueueItemId(id.value),
+                          itemId,
                           Queue.fulfil(
                             item,
                             com.histmersion.api.library.Citekey(citekey.value),
@@ -346,7 +359,7 @@ final class IngestQueue(
                           )
                         )
                         .left
-                        .map(e => Problem.Unclassified(Legacy.Text(e.message)))
+                        .map(_.problem)
                     )
                     .map(_ => ())
               )

@@ -1,6 +1,6 @@
 package com.histmersion
 package domain.library.sources
-import com.histmersion.util.problem.{Legacy, Problem, Raised}
+import com.histmersion.util.problem.{Problem, Raised}
 
 import com.histmersion.api.Write
 import com.histmersion.domain.Caller
@@ -251,8 +251,7 @@ object SourceService:
       */
     private def heldKey(raw: String): Citekey = held(raw).fold(problem => throw Raised(problem), identity)
     private def apiKey(ck: Citekey): ApiCitekey = ApiCitekey(ck.value)
-    private def invalid(message: String): Api.Error =
-      Api.Error(Problem.Unclassified(Legacy.Text(message)), Some(Api.Error.Code(Write.CodeInvalid)))
+    private def invalid(problem: Problem): Api.Error = Api.Error(problem, Some(Api.Error.Code(Write.CodeInvalid)))
 
     private def currentIn(st: LibraryState, id: Citekey): Option[Citekey] =
       if st.sources.contains(sk(id)) then Some(id) else st.aliases.get(ak(id)).map(v => heldKey(v.value))
@@ -534,19 +533,34 @@ object SourceService:
       if !st.sources.contains(sk(from)) then
         Left(st.aliases.get(ak(from)) match
           case Some(now) =>
-            invalid(s"'${from.value}' is an old citekey of '${now.value}' — rename '${now.value}' instead")
+            invalid(
+              Problem.Conflict
+                .OldKey(
+                  Problem.TypeName.of(Citekey),
+                  Problem.Raw.of(from),
+                  Problem.Raw(s"$now"),
+                  Problem.Conflict.Action.Rename
+                )
+            )
           case None => Write.notFound(apiKey(from)))
-      else if st.sources.contains(sk(to)) then Left(invalid(s"'${to.value}' is already the citekey of another source"))
+      else if st.sources.contains(sk(to)) then
+        Left(invalid(Problem.Conflict.AlreadyExists(Problem.TypeName.of(Citekey), Problem.Raw.of(to))))
       else
         st.aliases.get(ak(to)) match
           case Some(other) if other.value != from.value =>
             Left(
-              invalid(s"'${to.value}' is an old citekey of '${other.value}' and still resolves to it — pick another")
+              invalid(
+                Problem.Conflict.Aliased(Problem.TypeName.of(Citekey), Problem.Raw.of(to), Problem.Raw(s"$other"))
+              )
             )
           case back =>
             idTaken match
               case Some(id) =>
-                Left(invalid(s"finding id '${id.value}' already exists — '${to.value}' would collide with it"))
+                Left(
+                  invalid(
+                    Problem.Conflict.Collides(Problem.TypeName.of(Finding.Id), Problem.Raw.of(id), Problem.Raw.of(to))
+                  )
+                )
               case None =>
                 val unaliased =
                   if back.isDefined then
@@ -643,7 +657,15 @@ object SourceService:
         case None =>
           Left(st.aliases.get(ak(requested)) match
             case Some(now) =>
-              invalid(s"'${requested.value}' is an old citekey of '${now.value}' — delete '${now.value}' instead")
+              invalid(
+                Problem.Conflict
+                  .OldKey(
+                    Problem.TypeName.of(Citekey),
+                    Problem.Raw.of(requested),
+                    Problem.Raw(s"$now"),
+                    Problem.Conflict.Action.Delete
+                  )
+              )
             case None => Write.notFound(apiKey(requested)))
         case Some(x) =>
           val ck = requested

@@ -686,12 +686,19 @@ job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqarx2021_prepr
   "code" : null,
   "problems" : [
     {
-      "case" : "Unclassified",
+      "case" : "Broken",
       "data" : {
-        "text" : "no upstream record for '10.5555/zq.unknown' (OpenAlex and Crossref both miss it) — check the identifier, or pass --citekey to create the source anyway and fill the metadata in by hand"
+        "at" : [
+          "'10.5555/zq.unknown'"
+        ],
+        "rule" : {
+          "UpstreamRecord" : {
+            
+          }
+        }
       },
-      "group" : "Unclassified",
-      "text" : "no upstream record for '10.5555/zq.unknown' (OpenAlex and Crossref both miss it) — check the identifier, or pass --citekey to create the source anyway and fill the metadata in by hand"
+      "group" : "Invalid",
+      "text" : "'10.5555/zq.unknown': no upstream record (OpenAlex and Crossref both miss it) — check the identifier, or pass --citekey to create the source anyway and fill the metadata in by hand"
     }
   ]
 }
@@ -874,12 +881,17 @@ job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqa_upload","pr
   "code" : "conflict",
   "problems" : [
     {
-      "case" : "Unclassified",
+      "case" : "Held",
       "data" : {
-        "text" : "this file is already stored as 'zqa_upload' (sha256 ba3491d4b404…) — pass force to ingest it again under a different citekey"
+        "hold" : {
+          "StoredAs" : {
+            "citekey" : "zqa_upload"
+          }
+        },
+        "subject" : "this file (sha256 ba3491d4b404…)"
       },
-      "group" : "Unclassified",
-      "text" : "this file is already stored as 'zqa_upload' (sha256 ba3491d4b404…) — pass force to ingest it again under a different citekey"
+      "group" : "Conflict",
+      "text" : "this file (sha256 ba3491d4b404…) is already stored as 'zqa_upload' — pass force to ingest it again under a different citekey"
     }
   ]
 }
@@ -896,11 +908,17 @@ job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqa_dup","progr
   "code" : null,
   "problems" : [
     {
-      "case" : "Unclassified",
+      "case" : "Broken",
       "data" : {
-        "text" : "the upload is empty"
+        "at" : [
+        ],
+        "rule" : {
+          "UploadGiven" : {
+            
+          }
+        }
       },
-      "group" : "Unclassified",
+      "group" : "Invalid",
       "text" : "the upload is empty"
     }
   ]
@@ -995,12 +1013,19 @@ job: 200 {"id":"UUID","kind":"reocr","status":"done","citekey":"zqa_upload","pro
   "code" : null,
   "problems" : [
     {
-      "case" : "Unclassified",
+      "case" : "Broken",
       "data" : {
-        "text" : "no original stored for 'zqa_nodoi' — the server keeps uploads in TMP/acq-spool; re-run `histmersion ingest <file> --citekey zqa_nodoi --force`"
+        "at" : [
+          "'zqa_nodoi'"
+        ],
+        "rule" : {
+          "OriginalForReocr" : {
+            
+          }
+        }
       },
-      "group" : "Unclassified",
-      "text" : "no original stored for 'zqa_nodoi' — the server keeps uploads in TMP/acq-spool; re-run `histmersion ingest <file> --citekey zqa_nodoi --force`"
+      "group" : "Invalid",
+      "text" : "'zqa_nodoi': no original stored — the server keeps uploads in its spool directory (converter.spool-dir); re-run `histmersion ingest <file> --citekey <citekey> --force`"
     }
   ]
 }
@@ -1026,12 +1051,19 @@ job: 200 {"id":"UUID","kind":"reocr","status":"done","citekey":"zqa_upload","pro
   "code" : "not_found",
   "problems" : [
     {
-      "case" : "Unclassified",
+      "case" : "Broken",
       "data" : {
-        "text" : "no original stored for 'zqa_nodoi' — the server keeps uploads in TMP/acq-spool; pass the file yourself (--file)"
+        "at" : [
+          "'zqa_nodoi'"
+        ],
+        "rule" : {
+          "OriginalForDownload" : {
+            
+          }
+        }
       },
-      "group" : "Unclassified",
-      "text" : "no original stored for 'zqa_nodoi' — the server keeps uploads in TMP/acq-spool; pass the file yourself (--file)"
+      "group" : "Invalid",
+      "text" : "'zqa_nodoi': no original stored — the server keeps uploads in its spool directory (converter.spool-dir); pass the file yourself (--file)"
     }
   ]
 }
@@ -1041,7 +1073,7 @@ job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqa_mcp","progr
 == mcp ingest (neither)
 _give either `path` (a file the SERVER can see) or `base64` (the document itself)_
 == mcp ingest path outside
-_the server cannot see a file at '/no/such/zq.pdf' (paths are resolved INSIDE the server, not on your machine) — use `base64`, or `histmersion ingest <file>` from the host_
+_'/no/such/zq.pdf': the server cannot see a file there (paths are resolved INSIDE the server, not on your machine) — use `base64`, or `histmersion ingest <file>` from the host_
 == mcp ingest_doi
 ### Ingested `zqlater2024_later`
 

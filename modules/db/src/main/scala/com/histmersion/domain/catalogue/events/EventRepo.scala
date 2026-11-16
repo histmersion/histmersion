@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.catalogue.events
 import hearth.kindlings.jsoniterjson.Json
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 
 import hearth.kindlings.optics.syntax.*
 
@@ -256,14 +256,16 @@ private[events] object EventRepo:
       finally st.close()
     catch
       case e: java.sql.SQLException =>
+        val reported = Option(e.getMessage)
+          .map(_.linesIterator.next().trim)
+          .filter(_.nonEmpty)
+          .getOrElse(e.getClass.getSimpleName)
         Some(
-          Problem.Unclassified(
-            Legacy.Text(
-              Option(e.getMessage)
-                .map(_.linesIterator.next().trim)
-                .filter(_.nonEmpty)
-                .getOrElse(e.getClass.getSimpleName)
-            )
+          Problem.Invalid.Unparsable(
+            Problem.Io.Format.Json,
+            Problem.Where("GeoJSON geometry"),
+            Problem.Io.Damage.Unreadable(External.Reported.of(reported)),
+            Vector.empty
           )
         )
 

@@ -380,6 +380,62 @@ object Problem:
       /** `stated` is not a merge's id, nor the first characters of one (hexadecimal digits and dashes). */
       case MergeId(stated: Raw)
 
+      /** The work has no DOI recorded, and `purpose` needs one. */
+      case DoiRecorded(purpose: Purpose)
+
+      /** No upstream (OpenAlex, Crossref) has a record of the work: there is nothing to name a new source after. */
+      case UpstreamRecord
+
+      /** An upload with no bytes. */
+      case UploadGiven
+
+      /** An upload of `bytes`, over the `limit` the server takes (`limits.upload-bytes`). */
+      case UploadBytes(bytes: Count, limit: Count)
+
+      /** A document handed inline of `bytes`, over the `limit` the server takes inline (`limits.inline-bytes`). */
+      case InlineBytes(bytes: Count, limit: Count)
+
+      /** A document handed inline is not base64: `reported`. */
+      case Base64Decodable(reported: External.Reported)
+
+      /** A document is handed as a path the server can see or inline as base64: neither was given. */
+      case PathOrBase64
+
+      /** The path names no file the server can see: paths are resolved inside the server. */
+      case ServerSees
+
+      /** The source has no stored original to convert again. */
+      case OriginalForReocr
+
+      /** The source has no stored original to hand out. */
+      case OriginalForDownload
+
+      /** A note to import has no YAML frontmatter. */
+      case Frontmatter
+
+      /** A note to import names no citekey, in its frontmatter or beside it. */
+      case NoteCitekey
+
+      /** The article records no filter, so it has no generated coverage. */
+      case FilterRecorded
+
+      /** The region `x`, `y`, `w`, `h` asked of an image `width` by `height` starts outside it. */
+      case RegionWithin(x: Count, y: Count, w: Count, h: Count, width: Count, height: Count)
+
+    /** What a work's DOI is looked up for. */
+    enum Purpose derives CanEqual:
+      /** Its record upstream. */
+      case Lookup
+
+      /** Its deposited reference list. */
+      case References
+
+      /** Its retraction and correction notices. */
+      case Assessment
+
+      /** The works that cite it. */
+      case Citations
+
     /** The least and the greatest value taken, either open. */
     final case class Bounds(least: Option[Raw], greatest: Option[Raw])
 
@@ -610,6 +666,9 @@ object Problem:
       /** A rename resolution names `citekey`, which is already a citekey (or an old one) here or in the bundle. */
       case CitekeyTaken(citekey: Raw)
 
+      /** The same file is stored already, as the original of `citekey`. */
+      case StoredAs(citekey: Raw)
+
     /** A version of a value as the store writes it: a time or a revision, in its wire spelling. */
     type Stamp = Stamp.T
     object Stamp extends Newtype[String, Pure]
@@ -674,6 +733,9 @@ object Problem:
 
       /** A plugin adds to the host's registries only from inside its `register`, never after it returned. */
       case RegistrationOver
+
+      /** Bookmarks, notes and read marks belong to a person: an automated run has none. */
+      case PersonOnly
 
     /** The allowances a request can spend. */
     enum Limit:
@@ -996,7 +1058,7 @@ object Problem:
     /** What a server (or the host a plugin runs in) may lack. */
     enum Capability:
       case Originals, AcquisitionChain, Runtimes, Converter, Gazetteer, Basemap, Agents, Calibre, Processes, LocalFiles,
-        MediaImport, EventCatalogues, AiProviders, GazetteerImport, SourceCollections, Network
+        MediaImport, EventCatalogues, AiProviders, GazetteerImport, SourceCollections, Network, CitationAlerts
 
     /** The stages of a settings reload. */
     enum Stage:

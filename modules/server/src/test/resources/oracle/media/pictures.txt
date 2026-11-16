@@ -877,12 +877,13 @@
   "code" : "not_found",
   "problems" : [
     {
-      "case" : "Unclassified",
+      "case" : "Entity",
       "data" : {
-        "text" : "No asset 'nope.png' for 'zqfig2001_tell'"
+        "key" : "zqfig2001_tell/nope.png",
+        "typeName" : "AssetService.AssetName"
       },
-      "group" : "Unclassified",
-      "text" : "No asset 'nope.png' for 'zqfig2001_tell'"
+      "group" : "NotFound",
+      "text" : "no asset name 'zqfig2001_tell/nope.png'"
     }
   ]
 }
@@ -2085,17 +2086,17 @@
 == GET /iiif/zqfig2001_tell/fig-c.jpg/pct:10,10,50,50/30,20/0/default.png (bytes)
 400 application/json {"problems":[{"group":"Invalid","case":"Unreadable","data":{"typeName":"Iiif.Region","raw":"pct:10,10,50,50","examples":["full","10,20,300,400"],"at":[]},"text":"'pct:10,10,50,50' is not an IIIF region (e.g. full, 10,20,300,400)"}],"code":null}
 == GET /api/media/asset:zqfig2001_tell/fig-c.jpg/thumb (bytes)
-404 application/json {"problems":[{"group":"Unclassified","case":"Unclassified","data":{"text":"no such endpoint: /api/media/asset:zqfig2001_tell/fig-c.jpg/thumb"},"text":"no such endpoint: /api/media/asset:zqfig2001_tell/fig-c.jpg/thumb"}],"code":null}
+404 application/json {"problems":[{"group":"NotFound","case":"Entity","data":{"typeName":"HttpApi.Endpoint","key":"/api/media/asset:zqfig2001_tell/fig-c.jpg/thumb"},"text":"no HTTP api endpoint '/api/media/asset:zqfig2001_tell/fig-c.jpg/thumb'"}],"code":null}
 == GET /api/media/asset:zqfig2001_tell/fig-c.jpg/file (bytes)
-404 application/json {"problems":[{"group":"Unclassified","case":"Unclassified","data":{"text":"no such endpoint: /api/media/asset:zqfig2001_tell/fig-c.jpg/file"},"text":"no such endpoint: /api/media/asset:zqfig2001_tell/fig-c.jpg/file"}],"code":null}
+404 application/json {"problems":[{"group":"NotFound","case":"Entity","data":{"typeName":"HttpApi.Endpoint","key":"/api/media/asset:zqfig2001_tell/fig-c.jpg/file"},"text":"no HTTP api endpoint '/api/media/asset:zqfig2001_tell/fig-c.jpg/file'"}],"code":null}
 == GET /api/media/asset:zqfig2001_tell/fig-a.png/thumb (bytes)
-404 application/json {"problems":[{"group":"Unclassified","case":"Unclassified","data":{"text":"no such endpoint: /api/media/asset:zqfig2001_tell/fig-a.png/thumb"},"text":"no such endpoint: /api/media/asset:zqfig2001_tell/fig-a.png/thumb"}],"code":null}
+404 application/json {"problems":[{"group":"NotFound","case":"Entity","data":{"typeName":"HttpApi.Endpoint","key":"/api/media/asset:zqfig2001_tell/fig-a.png/thumb"},"text":"no HTTP api endpoint '/api/media/asset:zqfig2001_tell/fig-a.png/thumb'"}],"code":null}
 == GET /api/media/asset:calibre:5/thumb (bytes)
-404 application/json {"problems":[{"group":"Unclassified","case":"Unclassified","data":{"text":"no such endpoint: /api/media/asset:calibre:5/thumb"},"text":"no such endpoint: /api/media/asset:calibre:5/thumb"}],"code":null}
+404 application/json {"problems":[{"group":"NotFound","case":"Entity","data":{"typeName":"HttpApi.Endpoint","key":"/api/media/asset:calibre:5/thumb"},"text":"no HTTP api endpoint '/api/media/asset:calibre:5/thumb'"}],"code":null}
 == GET /api/media/asset:calibre:5/file (bytes)
-404 application/json {"problems":[{"group":"Unclassified","case":"Unclassified","data":{"text":"no such endpoint: /api/media/asset:calibre:5/file"},"text":"no such endpoint: /api/media/asset:calibre:5/file"}],"code":null}
+404 application/json {"problems":[{"group":"NotFound","case":"Entity","data":{"typeName":"HttpApi.Endpoint","key":"/api/media/asset:calibre:5/file"},"text":"no HTTP api endpoint '/api/media/asset:calibre:5/file'"}],"code":null}
 == GET /api/media/not-a-uid/file (bytes)
-404 application/json {"problems":[{"group":"Unclassified","case":"Unclassified","data":{"text":"no such endpoint: /api/media/not-a-uid/file"},"text":"no such endpoint: /api/media/not-a-uid/file"}],"code":null}
+404 application/json {"problems":[{"group":"NotFound","case":"Entity","data":{"typeName":"HttpApi.Endpoint","key":"/api/media/not-a-uid/file"},"text":"no HTTP api endpoint '/api/media/not-a-uid/file'"}],"code":null}
 == tool assets {"citekey":"zqfig2001_tell"}
 ### 3 asset(s) · zqfig2001_tell
 

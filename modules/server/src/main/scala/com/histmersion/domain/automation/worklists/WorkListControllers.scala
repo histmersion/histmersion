@@ -99,4 +99,4 @@ object WorkListControllers:
 
   def error(e: QueueError): Api.Error = e match
     case QueueError.NotFound(_) =>
-      Api.Error(Problem.Unclassified(Legacy.Text(s"${e.message}")), Some(Api.Error.Code(Write.CodeNotFound)))
+      Api.Error(e.problem, Some(Api.Error.Code(Write.CodeNotFound)))

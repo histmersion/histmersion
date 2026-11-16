@@ -79,7 +79,7 @@ class WorkListControllersSuite extends munit.FunSuite:
     )
     assertEquals(
       c.delete(QueueItemId(42)).left.map(e => (e.problems.sentences.mkString("; "), e.code)),
-      Left(("No queue item #42", Some("not_found")))
+      Left(("no queue item id '42'", Some("not_found")))
     )
 
   test("an import counts the items and the notes apart; the export renders what was imported"):

@@ -4475,12 +4475,13 @@ _article slug 'zr_kings' has moved on: you sent TS, it is now TS — read it aga
   "code" : "not_found",
   "problems" : [
     {
-      "case" : "Unclassified",
+      "case" : "Entity",
       "data" : {
-        "text" : "No version 999999 for article 'zr_harbour'"
+        "key" : "999999",
+        "typeName" : "ArticleRepo.VersionId"
       },
-      "group" : "Unclassified",
-      "text" : "No version 999999 for article 'zr_harbour'"
+      "group" : "NotFound",
+      "text" : "no version id '999999'"
     }
   ]
 }
@@ -4735,12 +4736,19 @@ The harbour was founded by a hero [[zrbeta2001_harbour]]. See [[zr_walls]] for t
   "code" : "not_found",
   "problems" : [
     {
-      "case" : "Unclassified",
+      "case" : "Broken",
       "data" : {
-        "text" : "article 'zr_harbour' records no filter, so it has no generated coverage — set the filter it is compiled from: histmersion article patch zr_harbour --filter-query … (or --filter-topics/--filter-tags), or patch_article with `filter`"
+        "at" : [
+          "article 'zr_harbour'"
+        ],
+        "rule" : {
+          "FilterRecorded" : {
+            
+          }
+        }
       },
-      "group" : "Unclassified",
-      "text" : "article 'zr_harbour' records no filter, so it has no generated coverage — set the filter it is compiled from: histmersion article patch zr_harbour --filter-query … (or --filter-topics/--filter-tags), or patch_article with `filter`"
+      "group" : "Invalid",
+      "text" : "article 'zr_harbour': records no filter, so it has no generated coverage — set the filter it is compiled from: histmersion article patch <slug> --filter-query … (or --filter-topics/--filter-tags), or patch_article with `filter`"
     }
   ]
 }
@@ -4749,12 +4757,19 @@ The harbour was founded by a hero [[zrbeta2001_harbour]]. See [[zr_walls]] for t
   "code" : "not_found",
   "problems" : [
     {
-      "case" : "Unclassified",
+      "case" : "Broken",
       "data" : {
-        "text" : "article 'zr_kings' records no filter, so it has no generated coverage — set the filter it is compiled from: histmersion article patch zr_kings --filter-query … (or --filter-topics/--filter-tags), or patch_article with `filter`"
+        "at" : [
+          "article 'zr_kings'"
+        ],
+        "rule" : {
+          "FilterRecorded" : {
+            
+          }
+        }
       },
-      "group" : "Unclassified",
-      "text" : "article 'zr_kings' records no filter, so it has no generated coverage — set the filter it is compiled from: histmersion article patch zr_kings --filter-query … (or --filter-topics/--filter-tags), or patch_article with `filter`"
+      "group" : "Invalid",
+      "text" : "article 'zr_kings': records no filter, so it has no generated coverage — set the filter it is compiled from: histmersion article patch <slug> --filter-query … (or --filter-topics/--filter-tags), or patch_article with `filter`"
     }
   ]
 }
@@ -4804,7 +4819,7 @@ The filter returns 4 sources. 3 of them are cited above; the other one is listed
 
 _Method: search {tags: ["zr-oracle"]} → 4; statuses: 2 current, 1 contested, 1 superseded; none debunked or retracted; further search "harbour" → 5 (cited: [[zralpha1990_walls]], [[zrbeta2001_harbour]], [[zrgamma1975_kings]]); further search "kings of zrland" → 1 (cited: [[zrgamma1975_kings]]); disagreement edges touching the cited sources: [[zrbeta2001_harbour]] challenges [[zralpha1990_walls]]; [[zrgamma1975_kings]] refutes [[zrbeta2001_harbour]]; [[zrgamma1975_kings]] superseded_by [[zralpha1990_walls]]; disagreements checked: 3 pairs — 1 addressed, 1 reasoned, 1 open._
 == tool article_coverage (no filter)
-_article 'zr_kings' records no filter, so it has no generated coverage — set the filter it is compiled from: histmersion article patch zr_kings --filter-query … (or --filter-topics/--filter-tags), or patch_article with `filter`_
+_article 'zr_kings': records no filter, so it has no generated coverage — set the filter it is compiled from: histmersion article patch <slug> --filter-query … (or --filter-topics/--filter-tags), or patch_article with `filter`_
 == GET review of zr_walls
 200 {
   "approvals" : [
@@ -5361,12 +5376,18 @@ _Method: search {tags: ["zr-oracle"]} → 4; statuses: 2 current, 1 contested, 1
   "code" : null,
   "problems" : [
     {
-      "case" : "Unclassified",
+      "case" : "Broken",
       "data" : {
-        "text" : "no YAML frontmatter in the article note"
+        "at" : [
+        ],
+        "rule" : {
+          "Frontmatter" : {
+            
+          }
+        }
       },
-      "group" : "Unclassified",
-      "text" : "no YAML frontmatter in the article note"
+      "group" : "Invalid",
+      "text" : "no YAML frontmatter in the note"
     }
   ]
 }

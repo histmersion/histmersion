@@ -64,7 +64,7 @@ class EventScaleHttpSuite extends munit.FunSuite:
         // a value that is no scale is refused, and nothing changes
         val (bs, bb) = patch(s"$url/api/events/$Id", """{"scale":"global"}""")
         assertEquals(bs, 400, bb)
-        assert(bb.contains("local | regional | auto"), bb)
+        assert(bb.contains("(one of: local, regional, auto)"), bb)
         assertEquals(put(s"$url/api/events/$Id", """{"label":"x","scale":"planet"}""")._1, 400)
 
         val (s1, b1) = patch(s"$url/api/events/$Id", """{"scale":"regional"}""")
@@ -131,7 +131,7 @@ class EventScaleHttpSuite extends munit.FunSuite:
           """{"label":"Zqes bad","geometry":"{\"type\":\"Point\",\"coordinates\":\"x\"}"}"""
         )
         assertEquals(cs, 400, cb)
-        assert(cb.contains("not a valid GeoJSON geometry"), cb)
+        assert(cb.contains("geometry: the json data at GeoJSON geometry cannot be read"), cb)
 
         val (ok, okb) = put(
           s"$url/api/events/$geoId",

@@ -474,10 +474,10 @@
     {
       "case" : "Unclassified",
       "data" : {
-        "text" : "no original stored for 'zqa_nodoi' — the server keeps uploads in TMP/acq-spool; pass the file yourself (--file) — or set cli.calibre.originals-dir (HISTMERSION_CALIBRE_ORIGINALS_DIR) to a directory holding <citekey>/paper.pdf"
+        "text" : "'zqa_nodoi': no original stored — the server keeps uploads in its spool directory (converter.spool-dir); pass the file yourself (--file) — or set cli.calibre.originals-dir (HISTMERSION_CALIBRE_ORIGINALS_DIR) to a directory holding <citekey>/paper.pdf"
       },
       "group" : "Unclassified",
-      "text" : "no original stored for 'zqa_nodoi' — the server keeps uploads in TMP/acq-spool; pass the file yourself (--file) — or set cli.calibre.originals-dir (HISTMERSION_CALIBRE_ORIGINALS_DIR) to a directory holding <citekey>/paper.pdf"
+      "text" : "'zqa_nodoi': no original stored — the server keeps uploads in its spool directory (converter.spool-dir); pass the file yourself (--file) — or set cli.calibre.originals-dir (HISTMERSION_CALIBRE_ORIGINALS_DIR) to a directory holding <citekey>/paper.pdf"
     }
   ]
 }

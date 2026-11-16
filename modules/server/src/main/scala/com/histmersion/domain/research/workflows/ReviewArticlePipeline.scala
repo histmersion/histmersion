@@ -312,7 +312,7 @@ final class ReviewArticlePipeline(
   // ── the ledger ─────────────────────────────────────────────────────────────────────────────────
 
   private def load(slug: Slug): Either[String, Ledger] =
-    ledgers.get(slug).map(_.getOrElse(Ledger(slug)))
+    ledgers.get(slug).left.map(_.sentence).map(_.getOrElse(Ledger(slug)))
 
   /** Write the ledger through the run's gate (a dry run keeps it in memory only). */
   private def persist(ctx: RunCtx, l: Ledger): Ledger =

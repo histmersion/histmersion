@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
+import com.histmersion.plugin.WorkKey
 
 import com.histmersion.upstreams.parse.AcquireParse
 import com.histmersion.upstreams.http.Url
@@ -13,7 +14,13 @@ final class Wikipedia(cfg: AcquireConfig, http: Http) extends WikiClient:
   def refs(articleUrl: WikiClient.ArticleUrl): Either[Problem, WikirefsResult] =
     AcquireParse
       .wikiPageTitle(Http.Url(articleUrl.value))
-      .toRight(Problem.Unclassified(Legacy.Text(s"'$articleUrl' is not a Wikipedia article URL")))
+      .toRight(
+        Problem.Invalid.Unreadable.here(
+          Problem.TypeName.of(WikiClient.ArticleUrl),
+          Problem.Raw.of(articleUrl),
+          Vector(Problem.Raw("https://en.wikipedia.org/wiki/Bronze_Age_collapse"))
+        )
+      )
       .flatMap { page =>
         http
           .json(
@@ -30,7 +37,7 @@ final class Wikipedia(cfg: AcquireConfig, http: Http) extends WikiClient:
           .flatMap { j =>
             AcquireParse
               .wikiText(j)
-              .toRight(Problem.Unclassified(Legacy.Text(s"Wikipedia returned no wikitext for '$page'")))
+              .toRight(Problem.NotFound.Entity(Problem.TypeName.of(WorkKey.Title), Problem.Raw.of(page)))
               .map { text =>
                 val (dois, arxiv) = AcquireParse.wikiRefs(text)
                 WikirefsResult(

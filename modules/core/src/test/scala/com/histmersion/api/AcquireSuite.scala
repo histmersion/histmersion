@@ -1,6 +1,6 @@
 package com.histmersion
 package api
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.testsupport.ComparedByValue.given
@@ -362,23 +362,20 @@ class AcquireSuite extends munit.FunSuite:
       isOa = WorkRef.IsOa(true),
       oaStatus = Some(WorkRef.OaStatus("gold"))
     )
-    val refusal = Problem.Unclassified(
-      Legacy.Text(
-        "oapen: an openly licensed copy exists but could not be downloaded: 20.500.12657/23223 " +
-          "(https://library.oapen.org/handle/20.500.12657/23223), licence CC BY 4.0"
-      )
+    val refusal = Problem.NotFound.Answer(
+      Problem.NotFound.Fetcher("oapen"),
+      Problem.NotFound.Kind.Refused,
+      Problem.Refused.Policy(Problem.Refused.Rule.LendingOnly)
     )
+    val said = "oapen: the item is lending-only: borrow it on its site"
     val text = Acquire
       .browserDownloadText(
         w,
         com.histmersion.api.library.Doi("10.1515/zz"),
         Citekey("k"),
-        List(refusal, refusal, Problem.Unclassified(Legacy.Text(" ")))
+        List(refusal, refusal, refusal.copy(why = Problem.Relayed(Problem.Sentence(" "))))
       )
       .getOrElse(fail("an item"))
       .value
-    assert(
-      text.contains(s"download it in the browser (${refusal.sentence}), then histmersion ingest <file> --citekey k"),
-      text
-    )
-    assertEquals(text.sliding(refusal.sentence.length).count(_ == refusal.sentence), 1, "each refusal once")
+    assert(text.contains(s"download it in the browser ($said), then histmersion ingest <file> --citekey k"), text)
+    assertEquals(text.sliding(said.length).count(_ == said), 1, "each refusal once")

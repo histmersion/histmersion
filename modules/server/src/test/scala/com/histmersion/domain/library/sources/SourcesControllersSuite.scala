@@ -155,7 +155,7 @@ class SourcesControllersSuite extends munit.FunSuite:
     assert(
       c.markdown(Walls90, SourcesControllers.MarkdownFullText(false), Some(Source.Section.Wire("nonsense")))
         .left
-        .exists(_.problems.sentences.mkString("; ").startsWith("unknown section"))
+        .exists(_.problems.sentences.mkString("; ").startsWith("unknown source section 'nonsense' (one of: summary"))
     )
     assertEquals(
       c.passages(Api.PassagesQuery(com.histmersion.api.library.Citekey("zqa1990_walls"), Api.PassagesQuery.Q("gate")))

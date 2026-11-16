@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.sources
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import io.scalaland.chimney.dsl.*
 import com.histmersion.api.aliases.AliasKinds
 
@@ -199,7 +199,9 @@ final class SourcesControllers(
   private def notAnAlias(ck: Citekey): Either[Api.Error, Citekey] =
     sources.aliasOf(ck) match
       case Some(now) =>
-        Left(Write.invalid(Problem.Unclassified(Legacy.Text(s"'$ck' was renamed to '$now' — write to '$now' instead"))))
+        Left(
+          Write.invalid(Problem.Conflict.Renamed(Problem.TypeName.of(Citekey), Problem.Raw.of(ck), Problem.Raw.of(now)))
+        )
       case None => Right(ck)
 
   /** Seed ONE note from raw text (the host-side path of `histmersion seed`, for a corpus dir the SERVER cannot see).
@@ -210,13 +212,10 @@ final class SourcesControllers(
       SourceNote.Text(req.text.value),
       req.citekey.getOrElse(com.histmersion.api.library.Citekey(""))
     ) match
-      case None         => Left(Api.Error(Problem.Unclassified(Legacy.Text("no YAML frontmatter in the note"))))
+      case None         => Left(Api.Error(Problem.Invalid.Broken.here(Problem.Invalid.Rule.Frontmatter)))
       case Some(parsed) =>
         val raw = parsed.citekey
-        if raw.value.isEmpty then
-          Left(
-            Api.Error(Problem.Unclassified(Legacy.Text("note has no citekey (none in the frontmatter, none supplied)")))
-          )
+        if raw.value.isEmpty then Left(Api.Error(Problem.Invalid.Broken.here(Problem.Invalid.Rule.NoteCitekey)))
         else
           Citekey.parse(raw.value) match
             case Left(problem) => Left(Write.invalid(problem))
@@ -340,10 +339,10 @@ final class SourcesControllers(
     if badSection then
       Left(
         Api.Error(
-          Problem.Unclassified(
-            Legacy.Text(
-              s"unknown section '${section.map(_.value).getOrElse("")}' — one of: ${Source.Section.all.map(_.value).mkString(", ")}"
-            )
+          Problem.Invalid.Unknown.here(
+            Problem.TypeName.of(Source.Section.Wire),
+            Problem.Raw(section.fold("")(_.value)),
+            Source.Section.all.toVector.map(Problem.Raw.of(_))
           )
         )
       )

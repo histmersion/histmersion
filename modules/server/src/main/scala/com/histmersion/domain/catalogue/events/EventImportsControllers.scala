@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.catalogue.events
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import io.scalaland.chimney.dsl.*
 import com.histmersion.api.{BBox, Write}
 import com.histmersion.api.catalogue.{
@@ -49,7 +49,16 @@ final class EventImportsControllers(
         case Some(b) =>
           BBox
             .parse(BBox.Text(b))
-            .toRight(invalid(Problem.Unclassified(Legacy.Text(s"--bbox '$b' is not minLon,minLat,maxLon,maxLat"))))
+            .toRight(
+              invalid(
+                Problem.Invalid.Unreadable(
+                  Problem.TypeName.of(BBox.Text),
+                  Problem.Raw(b),
+                  Vector(Problem.Raw("minLon,minLat,maxLon,maxLat")),
+                  Vector(Problem.Field("--bbox"))
+                )
+              )
+            )
             .map(Some(_))
         case None => Right(None)
       job <- jobs.start(
@@ -102,7 +111,15 @@ final class EventImportsControllers(
   ): Either[Api.Error, Correction.List] =
     status.map(_.value.trim.toLowerCase).filter(_.nonEmpty) match
       case Some(s) if !Correction.Status.all.exists(_.value == s) =>
-        Left(invalid(Problem.Unclassified(Legacy.Text(s"status '$s' is not ${Correction.Status.all.mkString(" | ")}"))))
+        Left(
+          invalid(
+            Problem.Invalid.Unknown.here(
+              Problem.TypeName.of(Correction.StatusValue),
+              Problem.Raw(s),
+              Correction.Status.all.toVector.map(Problem.Raw.of(_))
+            )
+          )
+        )
       case st =>
         Right(
           corrections.list(

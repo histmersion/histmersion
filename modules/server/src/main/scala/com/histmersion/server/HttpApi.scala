@@ -2,7 +2,8 @@ package com.histmersion
 package server
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.Cursor
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{Problem, Problems}
+import io.github.iltotore.iron.constraint.any.Pure
 
 import sttp.tapir.*
 import sttp.tapir.server.ServerEndpoint
@@ -87,6 +88,7 @@ final class HttpApi(
     acquire: AcquisitionControllers,
     collections: CollectionsControllers
 ):
+  import HttpApi.Endpoint
 
   private val rest: List[ServerEndpoint[Any, Identity]] = List(
     Api.version.serverLogicSuccess[Identity](_ => h.instance.version),
@@ -351,7 +353,7 @@ final class HttpApi(
       .errorOut(statusCode(StatusCode.NotFound))
       .errorOut(jsonBody[Api.Error])
       .serverLogic[Identity](p =>
-        Left(Api.Error(Problem.Unclassified(Legacy.Text(s"no such endpoint: /api/${p.mkString("/")}"))))
+        Left(Api.Error(Problem.NotFound.Entity(Problem.TypeName.of(Endpoint), Problem.Raw(s"/api/${p.mkString("/")}"))))
       )
 
   /** The web UI, at its own pages' addresses only ([[WebPaths]]). It used to have no path input at all, so every
@@ -403,14 +405,16 @@ final class HttpApi(
       List(sourcePage, static, apiNotFound, index)
 
 object HttpApi:
+  /** The path of an endpoint under `/api`, as a request named it. */
+  type Endpoint = Endpoint.T
+  object Endpoint extends Newtype[String, Pure]
+
   /** A request value the domain refuses is the caller's mistake: a 400 that says which value and why. */
-  private def refused[A](what: String, checked: Either[String, A]): Either[Api.Error, A] =
-    checked.left.map(why =>
-      Api.Error(Problem.Unclassified(Legacy.Text(s"invalid $what: $why")), Some(Api.Error.Code(Write.CodeInvalid)))
-    )
+  private def refused[A](parsed: Either[Problems, A]): Either[Api.Error, A] =
+    parsed.left.map(problems => Api.Error(problems, Some(Api.Error.Code(Write.CodeInvalid))))
 
   private def citekey(ck: com.histmersion.api.library.Citekey): Either[Api.Error, Citekey] =
-    refused("citekey", Citekey.either(ck.value))
+    refused(Citekey.parse(ck.value))
 
   private def jobId(id: String): Either[Api.Error, Job.Id] =
     Job.Id
@@ -424,13 +428,13 @@ object HttpApi:
       )
 
   private def goalSlug(slug: String): Either[Api.Error, Goal.Slug] =
-    refused("goal", Goal.Slug.either(slug))
+    refused(Goal.Slug.parse(slug))
 
   private def placeId(id: String): Either[Api.Error, Place.Id] =
-    refused("place id", Place.Id.either(id))
+    refused(Place.Id.parse(id))
 
   private def eventId(id: String): Either[Api.Error, Event.Id] =
-    refused("event id", Event.Id.either(id))
+    refused(Event.Id.parse(id))
 
   private def articleSlug(slug: String): Either[Api.Error, Slug] =
-    refused("article slug", Slug.either(slug))
+    refused(Slug.parse(slug))

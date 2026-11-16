@@ -1787,12 +1787,20 @@
   "code" : "invalid",
   "problems" : [
     {
-      "case" : "Unclassified",
+      "case" : "Unknown",
       "data" : {
-        "text" : "status 'open' is not active | agreed | conflict"
+        "at" : [
+        ],
+        "known" : [
+          "active",
+          "agreed",
+          "conflict"
+        ],
+        "raw" : "open",
+        "typeName" : "Correction.StatusValue"
       },
-      "group" : "Unclassified",
-      "text" : "status 'open' is not active | agreed | conflict"
+      "group" : "Invalid",
+      "text" : "unknown status value 'open' (one of: active, agreed, conflict)"
     }
   ]
 }
@@ -2156,4 +2164,4 @@ fought below the walls
 - **gvp_13879** (An eruption, named by a person) · active · description: “edited” (was “Confirmed Eruption at Santorini; VEI 7” in gvp)
 - **gvp_13879** (An eruption, named by a person) · active · label: “An eruption, named by a person” (was “Eruption of Santorini” in gvp)
 == tool event_corrections {"status":"open"}
-_status 'open' is not active | agreed | conflict_
+_unknown status value 'open' (one of: active, agreed, conflict)_

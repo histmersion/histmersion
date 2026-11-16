@@ -3,8 +3,7 @@ package domain.library.acquisition
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
-import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.{External, Problem}
 
 import com.histmersion.domain.library.acquisition.wire
 
@@ -22,7 +21,7 @@ import com.histmersion.domain.library.Doi
 /** OpenAlex: search by publication date, `cites:` and `authorships.author.id:` filters. */
 final class OpenAlexIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex with CitationAlerts:
   val name = ScholarlyIndex.Name("openalex")
-  private def works(filter: String, limit: Int, search: Option[Search.Query]): Either[String, List[WorkRef]] =
+  private def works(filter: String, limit: Int, search: Option[Search.Query]): Either[Problem, List[WorkRef]] =
     http
       .json(
         Url(
@@ -38,41 +37,36 @@ final class OpenAlexIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex
           ))*
         )
       )
-      .left
-      .map(_.sentence)
       .map(AcquireParse.openalexWorks(_).map(_.wire))
 
   def search(query: Search.Query, since: LocalDate, limit: ScholarlyIndex.Limit) =
-    works(s"from_publication_date:$since,type:article|book|book-chapter", limit.value, Some(query)).left
-      .map((text => Problem.Unclassified(Legacy.Text(text))))
+    works(s"from_publication_date:$since,type:article|book|book-chapter", limit.value, Some(query))
 
-  private def work(doi: Doi): Either[String, Json] =
-    http
-      .json(
-        Url(
-          Http.Url(s"${cfg.openalex.url}/works/https://doi.org/$doi"),
-          Url.UrlPath(""),
-          "select" -> "id,authorships",
-          "mailto" -> cfg.mailto.value
-        )
-      )
-      .left
-      .map(_.sentence)
+  private def workUrl(doi: Doi): Http.Url = Http.Url(s"${cfg.openalex.url}/works/https://doi.org/$doi")
+
+  private def work(doi: Doi): Either[Problem, Json] =
+    http.json(Url(workUrl(doi), Url.UrlPath(""), "select" -> "id,authorships", "mailto" -> cfg.mailto.value))
 
   def citing(doi: Doi, since: LocalDate, limit: CitationAlerts.CitingLimit) =
     work(doi)
-      .flatMap(j => j.cursor.get[String]("id"))
+      .flatMap(j =>
+        j.cursor
+          .get[String]("id")
+          .left
+          .map(e =>
+            Problem.Upstream.BadReply.here(
+              Problem.Upstream.Name("openalex"),
+              Problem.Upstream.Url(s"${workUrl(doi)}"),
+              Problem.Upstream.Shape.Json,
+              External.Reported.of(e)
+            )
+          )
+      )
       .map(_.split("/").last)
       .flatMap(id => works(s"cites:$id,from_publication_date:$since", limit.value, None))
-      .left
-      .map((text => Problem.Unclassified(Legacy.Text(text))))
 
   def authors(doi: Doi) =
-    work(doi)
-      .map(j => Candidates.openalexAuthorIds(j).map(id => AuthorName(id.value)))
-      .left
-      .map((text => Problem.Unclassified(Legacy.Text(text))))
+    work(doi).map(j => Candidates.openalexAuthorIds(j).map(id => AuthorName(id.value)))
 
   def byAuthor(authorId: CitationAlerts.ByAuthorAuthorId, since: LocalDate, limit: CitationAlerts.ByAuthorLimit) =
-    works(s"authorships.author.id:$authorId,from_publication_date:$since", limit.value, None).left
-      .map((text => Problem.Unclassified(Legacy.Text(text))))
+    works(s"authorships.author.id:$authorId,from_publication_date:$since", limit.value, None)

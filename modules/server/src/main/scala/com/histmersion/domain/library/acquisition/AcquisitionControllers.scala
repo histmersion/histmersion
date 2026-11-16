@@ -3,7 +3,7 @@ package domain.library.acquisition
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
-import com.histmersion.util.problem.{Legacy, Problem, Problems}
+import com.histmersion.util.problem.{Problem, ProblemLog, Problems}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import io.scalaland.chimney.dsl.*
@@ -69,7 +69,7 @@ import com.histmersion.domain.Title
 import com.histmersion.api.ByteCount
 import com.histmersion.domain.AcquireMatch
 import com.histmersion.util.jobs.Job
-import com.histmersion.plugin.WorkKey
+import com.histmersion.plugin.{FetchedFile, WorkKey}
 import com.histmersion.domain.AcquireRecheck
 
 /** Every acquisition & assessment operation (stream 2.6): discovery, a paper's references and follow-ups, its
@@ -115,7 +115,7 @@ final class AcquisitionControllers(
     * other's error.
     */
   private val rwRunning = java.util.concurrent.atomic.AtomicBoolean(false)
-  private val rwError = java.util.concurrent.atomic.AtomicReference[Option[String]](None)
+  private val rwError = java.util.concurrent.atomic.AtomicReference[Option[Problem]](None)
 
   private def err(problems: Problems): Api.Error = Api.Error(problems)
 
@@ -124,11 +124,19 @@ final class AcquisitionControllers(
 
   private def held(k: com.histmersion.api.library.Citekey): Boolean = Citekey.option(k.value).exists(sources.exists)
 
+  /** The work `work` has no DOI, which `purpose` needs. */
+  private def noDoi(work: Problem.Field, purpose: Problem.Invalid.Purpose): Problem =
+    Problem.Invalid.Broken(Problem.Invalid.Rule.DoiRecorded(purpose), Vector(work))
+
+  private def unknownState(raw: Problem.Raw): Problem =
+    Problem.Invalid.Unknown.here(
+      Problem.TypeName.of(Candidates.State.Wire),
+      raw,
+      Candidates.State.values.toVector.map(s => Problem.Raw.of(s.wire))
+    )
+
   private def goalSlug(raw: String): Either[Api.Error, Goal.Slug] =
-    Goal.Slug
-      .either(raw)
-      .left
-      .map(_ => Write.invalid(Problem.Unclassified(Legacy.Text(s"invalid goal '$raw'"))))
+    Goal.Slug.parse(raw).left.map(err)
 
   // ── deterministic new-source search (#3761) ──────────────────────────────────────────────────
 
@@ -157,12 +165,7 @@ final class AcquisitionControllers(
       s <- Candidates.State
         .parse(Candidates.State.Wire(st))
         .toRight(
-          Api.Error(
-            Problem.Unclassified(
-              Legacy.Text(s"unknown state '$st' (${Candidates.State.values.map(_.wire.value).mkString(", ")})")
-            ),
-            Some(Api.Error.Code(Write.CodeInvalid))
-          )
+          Api.Error(unknownState(Problem.Raw(st)), Some(Api.Error.Code(Write.CodeInvalid)))
         )
       g <- goal
         .map(_.value.trim)
@@ -204,14 +207,7 @@ final class AcquisitionControllers(
       Candidates.State
         .parse(Candidates.State.Wire(m.state.value))
         .toRight(
-          Api.Error(
-            Problem.Unclassified(
-              Legacy.Text(
-                s"unknown state '${m.state.value}' (${Candidates.State.values.map(_.wire.value).mkString(", ")})"
-              )
-            ),
-            Some(Api.Error.Code(Write.CodeInvalid))
-          )
+          Api.Error(unknownState(Problem.Raw.of(m.state)), Some(Api.Error.Code(Write.CodeInvalid)))
         )
         .map(s =>
           CandidateMarked(
@@ -231,7 +227,7 @@ final class AcquisitionControllers(
       notInDb: Boolean
   ): Either[Api.Error, DiscoverResult] =
     val query = q.value.trim
-    if query.isEmpty then Left(err(Problem.Unclassified(Legacy.Text("give a search query"))))
+    if query.isEmpty then Left(err(Problem.Invalid.Broken.here(Problem.Invalid.Rule.QueryGiven)))
     else
       discovery
         .search(
@@ -273,7 +269,7 @@ final class AcquisitionControllers(
             s.doi
               .flatMap(d => Doi.option(d.value))
               .toRight(
-                err(Problem.Unclassified(Legacy.Text(s"'$k' has no DOI recorded — nothing to look up upstream")))
+                err(noDoi(Problem.Field(s"'$k'"), Problem.Invalid.Purpose.Lookup))
               )
               .flatMap(discovery.meta(_).left.map(e => err(e)))
               .map(mark(_, sources.doiIndex))
@@ -321,7 +317,7 @@ final class AcquisitionControllers(
   def refs(req: RefsRequest): Either[Api.Error, RefsResult] =
     target(req.id.value).flatMap { t =>
       t.doi
-        .toRight(err(Problem.Unclassified(Legacy.Text(s"no DOI for '${req.id}' — a reference list needs one"))))
+        .toRight(err(noDoi(Problem.Field(s"'${req.id}'"), Problem.Invalid.Purpose.References)))
         .flatMap { doi =>
           discovery.references(doi).left.map(e => err(e)).map { (backend, rows) =>
             val resolved = resolveRefs(rows)
@@ -380,70 +376,69 @@ final class AcquisitionControllers(
   /** `store = false` (an agent's dry run, #992): the verdict is computed but not recorded. */
   private def assessNow(req: AssessRequest, store: Boolean = true): Either[Api.Error, Assessment] =
     target(req.id.value).flatMap { t =>
-      t.doi.toRight(err(Problem.Unclassified(Legacy.Text(s"no DOI for '${req.id}' — an assessment needs one")))).map {
-        doi =>
-          val rw = assessments.retractionsFor(doi)
-          val updates = discovery.updates(doi).getOrElse(Nil)
-          val work = discovery.meta(doi).toOption
-          val stored = t.citekey.flatMap(sources.load)
-          val cited = work.flatMap(_.citedByCount).orElse(stored.flatMap(_.citedByCount))
-          val citedCount = cited.map(c => Acquire.CitedByCount(c.value))
-          val influential = stored.flatMap(_.influentialCitations)
-          val year = work.flatMap(_.year).orElse(stored.flatMap(_.year))
-          val d = acq.defaults
-          val verdict = Acquire.verdict(
-            rw,
-            updates,
-            work.exists(_.isRetracted.value),
-            citedCount,
-            year,
-            Acquire.CitationThreshold(d.wellCitedAt.value),
-            Acquire.CitationThreshold(d.lowCitedAt.value),
-            Year(d.staleBefore.value.toLong)
-          )
+      t.doi.toRight(err(noDoi(Problem.Field(s"'${req.id}'"), Problem.Invalid.Purpose.Assessment))).map { doi =>
+        val rw = assessments.retractionsFor(doi)
+        val updates = discovery.updates(doi).getOrElse(Nil)
+        val work = discovery.meta(doi).toOption
+        val stored = t.citekey.flatMap(sources.load)
+        val cited = work.flatMap(_.citedByCount).orElse(stored.flatMap(_.citedByCount))
+        val citedCount = cited.map(c => Acquire.CitedByCount(c.value))
+        val influential = stored.flatMap(_.influentialCitations)
+        val year = work.flatMap(_.year).orElse(stored.flatMap(_.year))
+        val d = acq.defaults
+        val verdict = Acquire.verdict(
+          rw,
+          updates,
+          work.exists(_.isRetracted.value),
+          citedCount,
+          year,
+          Acquire.CitationThreshold(d.wellCitedAt.value),
+          Acquire.CitationThreshold(d.lowCitedAt.value),
+          Year(d.staleBefore.value.toLong)
+        )
 
-          val checkedAt = t.citekey.filter(_ => store).map { ck =>
-            assessments.record(
-              AssessmentRecord(
-                ck,
-                AssessmentRecord.Verdict(verdict.value),
-                AssessmentRecord.Retracted(verdict == Acquire.Verdicts.Retracted),
-                noticesJson(rw, updates),
-                cited.map(c => AssessmentRecord.CitedBy(c.value)),
-                influential.map(i => AssessmentRecord.Influential(i.value))
-              )
+        val checkedAt = t.citekey.filter(_ => store).map { ck =>
+          assessments.record(
+            AssessmentRecord(
+              ck,
+              AssessmentRecord.Verdict(verdict.value),
+              AssessmentRecord.Retracted(verdict == Acquire.Verdicts.Retracted),
+              noticesJson(rw, updates),
+              cited.map(c => AssessmentRecord.CitedBy(c.value)),
+              influential.map(i => AssessmentRecord.Influential(i.value))
             )
-          }
-          val decision = for
-            ck <- t.citekey if req.apply.value
-            cur <- stored
-            d <- Acquire.statusDecision(verdict, cur.status, req.forceStatus.value)
-          yield ck -> d
-          val applied = decision.flatMap {
-            case (ck, Right(status)) =>
-              setStatus(ck, status.transformInto[com.histmersion.domain.library.Source.Status]).toOption
-                .map(_ => status.wire)
-            case (_, Left(_)) => None
-          }
-          val kept = decision.flatMap(_._2.left.toOption)
-
-          Assessment(
-            target = Assessment.Target(req.id.value),
-            doi = Some(com.histmersion.api.library.Doi(doi.value)),
-            citekey = t.citekey.map(c => com.histmersion.api.library.Citekey(c.value)),
-            year = year,
-            citedByCount = citedCount,
-            influentialCitations = influential.map(i => Assessment.InfluentialCitations(i.value)),
-            isRetracted = Assessment.IsRetracted(verdict == Acquire.Verdicts.Retracted),
-            retractionWatch = rw,
-            crossrefUpdates = updates,
-            flagged = Assessment.Flagged(Acquire.flagged(verdict)),
-            verdict = verdict,
-            recommendation = Assessment.Recommendation(Acquire.recommendation(verdict, citedCount).value),
-            applied = applied.map(w => Assessment.Applied(w.value)),
-            checkedAt = checkedAt.map(c => Assessment.CheckedAt(c.value)),
-            kept = kept
           )
+        }
+        val decision = for
+          ck <- t.citekey if req.apply.value
+          cur <- stored
+          d <- Acquire.statusDecision(verdict, cur.status, req.forceStatus.value)
+        yield ck -> d
+        val applied = decision.flatMap {
+          case (ck, Right(status)) =>
+            setStatus(ck, status.transformInto[com.histmersion.domain.library.Source.Status]).toOption
+              .map(_ => status.wire)
+          case (_, Left(_)) => None
+        }
+        val kept = decision.flatMap(_._2.left.toOption)
+
+        Assessment(
+          target = Assessment.Target(req.id.value),
+          doi = Some(com.histmersion.api.library.Doi(doi.value)),
+          citekey = t.citekey.map(c => com.histmersion.api.library.Citekey(c.value)),
+          year = year,
+          citedByCount = citedCount,
+          influentialCitations = influential.map(i => Assessment.InfluentialCitations(i.value)),
+          isRetracted = Assessment.IsRetracted(verdict == Acquire.Verdicts.Retracted),
+          retractionWatch = rw,
+          crossrefUpdates = updates,
+          flagged = Assessment.Flagged(Acquire.flagged(verdict)),
+          verdict = verdict,
+          recommendation = Assessment.Recommendation(Acquire.recommendation(verdict, citedCount).value),
+          applied = applied.map(w => Assessment.Applied(w.value)),
+          checkedAt = checkedAt.map(c => Assessment.CheckedAt(c.value)),
+          kept = kept
+        )
       }
     }
 
@@ -469,7 +464,7 @@ final class AcquisitionControllers(
         retractionWatch.csv() match
           case Left(e) =>
             scribe.warn(s"acquire: Retraction Watch refresh failed — ${e.sentence}")
-            rwError.set(Some(e.sentence))
+            rwError.set(Some(e))
           case Right(csv) =>
             val n = assessments.replaceRetractionWatch(
               Acquire.parseRetractionWatch(csv.value)
@@ -477,8 +472,7 @@ final class AcquisitionControllers(
             scribe.info(s"acquire: Retraction Watch refreshed — $n row(s)")
       catch
         case e: Throwable =>
-          scribe.error(s"acquire: Retraction Watch refresh crashed: ${e.getMessage}", e)
-          rwError.set(Some(e.getMessage))
+          rwError.set(Some(ProblemLog.unexpected(e, Problem.Where("the Retraction Watch refresh"))))
       finally rwRunning.set(false))
       val _ = Thread.ofVirtual().name("retraction-watch-refresh").start(() => work.run())
       Right(retractionsStatus.modify(_.running).setTo(RetractionsUpdate.Running(true)))
@@ -491,7 +485,7 @@ final class AcquisitionControllers(
       RetractionsUpdate.Rows(assessments.retractionCount.value),
       RetractionsUpdate.Source(acq.retractionWatch.csvUrl.value),
       running = RetractionsUpdate.Running(rwRunning.get),
-      error = rwError.get.map((text => Problem.Unclassified(Legacy.Text(text))))
+      error = rwError.get
     )
 
   // ── followups ───────────────────────────────────────────────────────────────────────────────
@@ -499,7 +493,7 @@ final class AcquisitionControllers(
   private def followupsNow(req: FollowupsRequest): Either[Api.Error, FollowupsResult] =
     target(req.id.value).flatMap { t =>
       t.doi
-        .toRight(err(Problem.Unclassified(Legacy.Text(s"no DOI for '${req.id}' — the citation graph is keyed by DOI"))))
+        .toRight(err(noDoi(Problem.Field(s"'${req.id}'"), Problem.Invalid.Purpose.Citations)))
         .flatMap { doi =>
           val work =
             discovery.meta(doi).getOrElse(WorkRef(doi = (Some(doi)).map(d => com.histmersion.api.library.Doi(d.value))))
@@ -613,12 +607,7 @@ final class AcquisitionControllers(
       if work.flatMap(_.title).isEmpty && citekey.isEmpty then
         Left(
           err(
-            Problem.Unclassified(
-              Legacy.Text(
-                s"no upstream record for '${req.id}' (OpenAlex and Crossref both miss it) — check the " +
-                  "identifier, or pass --citekey to create the source anyway and fill the metadata in by hand"
-              )
-            )
+            Problem.Invalid.Broken(Problem.Invalid.Rule.UpstreamRecord, Vector(Problem.Field(s"'${req.id}'")))
           )
         )
       else
@@ -672,24 +661,16 @@ final class AcquisitionControllers(
       arxiv.map(a => com.histmersion.upstreams.ArxivId(a.value)),
       work.map(_.upstream)
     )
-    val chain = skip match
-      case Some(have) =>
-        FetchChain.Outcome(
-          Left(
-            Problem.Unclassified(
-              Legacy.Text(s"skipped: `$citekey` already has $have — `--refetch` fetches and converts it again")
-            )
-          ),
-          Nil
-        )
-      case None => oa.fetchWorkExplained(key, FetchChain.LegalOnly(path.legalChain.value))
+    val chain = Option.when(skip.isEmpty)(oa.fetchWorkExplained(key, FetchChain.LegalOnly(path.legalChain.value)))
+    val answers = chain.fold(Nil)(_.answers)
     if skip.isEmpty && path == IngestPath.PersonLegal && acq.allowUnauthorised.value then
       steps += step(
         "legal-only",
         true,
         "the legal chain only: the fetchers the config marks unauthorised were not asked"
       )
-    val fetched = chain.file
+    // a skipped fetch is no failure: the step says why nothing was fetched
+    val fetched: Either[Option[Problems], FetchedFile] = chain.fold(Left(None))(_.file.left.map(Some(_)))
     fetched match
       case Right(f) =>
         steps += step(
@@ -701,8 +682,12 @@ final class AcquisitionControllers(
             f.licence.map(_.value.trim).filter(_.nonEmpty).fold("")(l => s", licence $l") +
             original.fold("")(h => s" (replacing $h: --refetch)")
         )
-      case Left(e) => steps += step("fetch", skip.isDefined, e.sentences.mkString("; "))
-    if chain.answers.nonEmpty then steps += step("chain", false, chain.answers.map(_.line).mkString("; "))
+      case Left(e) =>
+        val detail = skip.fold(e.fold("")(_.sentences.mkString("; ")))(have =>
+          s"skipped: `$citekey` already has $have — `--refetch` fetches and converts it again"
+        )
+        steps += step("fetch", skip.isDefined, detail)
+    if answers.nonEmpty then steps += step("chain", false, answers.map(_.line).mkString("; "))
 
     // a gold open-access work from a publisher that refuses scripts: a download in the browser, on every path
     val browserOnly = Option
@@ -741,7 +726,7 @@ final class AcquisitionControllers(
         err(
           Problem.NotFound.Copy(
             doi.fold(Problem.Raw.of(citekey))(Problem.Raw.of(_)),
-            chain.answers.map(_.transformInto[Problem.NotFound.Answer]).toVector
+            answers.map(_.transformInto[Problem.NotFound.Answer]).toVector
           )
         )
       )
@@ -796,9 +781,9 @@ final class AcquisitionControllers(
               w,
               com.histmersion.api.library.Doi(d.value),
               com.histmersion.api.library.Citekey(citekey.value),
-              chain.answers
+              answers
                 .filter(_.kind == FetchChain.Answer.Kind.Refused)
-                .map(a => Problem.Unclassified(Legacy.Text(s"${a.fetcher}: ${a.why.sentence}")))
+                .map(_.transformInto[Problem.NotFound.Answer])
             )
           do
             // an item already naming the DOI was reported just above
@@ -917,7 +902,7 @@ final class AcquisitionControllers(
         ),
         FetchChain.LegalOnly(true)
       ).left
-        .map(e => err(Problem.Unclassified(Legacy.Text(s"'${item.identifier}': ${e.sentences.mkString("; ")}"))))
+        .map(err)
         .flatMap { f =>
           steps += step("fetch", true, s"archive.org: ${f.bytes.value.length} bytes (${file.name})")
           val spooled = spoolCopy(citekey, f, steps)

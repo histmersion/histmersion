@@ -372,6 +372,38 @@ object Text:
           "(leave regex off to match the text literally)"
       case Invalid.Rule.MergeId(stated) =>
         s"'$stated' is not a merge id (the id `merge list` prints, or its first characters)"
+      case Invalid.Rule.DoiRecorded(Invalid.Purpose.Lookup)     => "no DOI recorded — nothing to look up upstream"
+      case Invalid.Rule.DoiRecorded(Invalid.Purpose.References) => "no DOI — a reference list needs one"
+      case Invalid.Rule.DoiRecorded(Invalid.Purpose.Assessment) => "no DOI — an assessment needs one"
+      case Invalid.Rule.DoiRecorded(Invalid.Purpose.Citations)  => "no DOI — the citation graph is keyed by DOI"
+      case Invalid.Rule.UpstreamRecord                          =>
+        "no upstream record (OpenAlex and Crossref both miss it) — check the identifier, or pass --citekey to " +
+          "create the source anyway and fill the metadata in by hand"
+      case Invalid.Rule.UploadGiven               => "the upload is empty"
+      case Invalid.Rule.UploadBytes(bytes, limit) =>
+        s"upload is $bytes bytes, over the $limit-byte limit (limits.upload-bytes)"
+      case Invalid.Rule.InlineBytes(bytes, limit) =>
+        s"payload is $bytes bytes, over the $limit-byte limit (limits.inline-bytes) — pass `path` instead, or " +
+          "upload with `histmersion ingest`"
+      case Invalid.Rule.Base64Decodable(reported) => s"base64 payload is not decodable: $reported"
+      case Invalid.Rule.PathOrBase64              =>
+        "give either `path` (a file the SERVER can see) or `base64` (the document itself)"
+      case Invalid.Rule.ServerSees =>
+        "the server cannot see a file there (paths are resolved INSIDE the server, not on your machine) — use " +
+          "`base64`, or `histmersion ingest <file>` from the host"
+      case Invalid.Rule.OriginalForReocr =>
+        "no original stored — the server keeps uploads in its spool directory (converter.spool-dir); re-run " +
+          "`histmersion ingest <file> --citekey <citekey> --force`"
+      case Invalid.Rule.OriginalForDownload =>
+        "no original stored — the server keeps uploads in its spool directory (converter.spool-dir); pass the file " +
+          "yourself (--file)"
+      case Invalid.Rule.Frontmatter    => "no YAML frontmatter in the note"
+      case Invalid.Rule.NoteCitekey    => "note has no citekey (none in the frontmatter, none supplied)"
+      case Invalid.Rule.FilterRecorded =>
+        "records no filter, so it has no generated coverage — set the filter it is compiled from: histmersion " +
+          "article patch <slug> --filter-query … (or --filter-topics/--filter-tags), or patch_article with `filter`"
+      case Invalid.Rule.RegionWithin(x, y, w, h, width, height) =>
+        s"region ($x,$y,$w,$h) is outside image bounds (${width}x$height)"
 
   extension (year: Invalid.Year)
     /** The year as a reader writes it: `900 BCE`, `530 CE`; there is no year 0, which is read as 1 BCE. */
@@ -483,6 +515,7 @@ object Text:
       case Refused.Rule.RangesOnly        => "this client reads ranges of a file, never a whole file"
       case Refused.Rule.RegistrationOver  =>
         "registration is over: a plugin adds to a registry only from inside its register"
+      case Refused.Rule.PersonOnly => "bookmarks, notes and read marks are a person's own; an automated run has none"
 
   extension (limit: Refused.Limit)
     private def named: String = limit match
@@ -597,6 +630,8 @@ object Text:
         s"$subject: '$citekey' is a citekey (or an old one) of another source here — merge under the other citekey"
       case Conflict.Hold.CitekeyTaken(citekey) =>
         s"$subject: '$citekey' is already a citekey (or an old one) here or in the bundle"
+      case Conflict.Hold.StoredAs(citekey) =>
+        s"$subject is already stored as '$citekey' — pass force to ingest it again under a different citekey"
 
   extension (ending: Io.Ending)
     private def said: String = ending match
