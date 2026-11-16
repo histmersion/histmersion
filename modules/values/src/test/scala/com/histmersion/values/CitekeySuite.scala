@@ -39,7 +39,7 @@ class CitekeySuite extends munit.FunSuite:
   test("no citekey is Malformed, naming the type, its constraint and the input; an empty one is Missing"):
     Citekey.parse("Bad Key!") match
       case Left(Problem.Invalid.Malformed(t, c, raw, _)) =>
-        assertEquals(t, Problem.TypeName("com.histmersion.domain.library.Citekey"))
+        assertEquals(t, Problem.TypeName("Citekey"))
         assertEquals(raw, Problem.Raw("Bad Key!"))
         assert(s"${c.name}".contains("[a-z][a-z0-9_.-]{1,120}"), c)
       case other => fail(s"not malformed: $other")

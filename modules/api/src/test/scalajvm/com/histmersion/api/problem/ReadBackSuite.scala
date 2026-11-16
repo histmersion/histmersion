@@ -10,8 +10,8 @@ import Column.stored
 import util.problem.Text.sentence
 import json.NewtypeCodecs.{list, problemCodec}
 
-/** A column's text read back on the JVM: every case's frozen sentence reads as the case, in a column and written bare in
-  * a record by an earlier version. The browser reads no column ([[SentenceReaders]]).
+/** A column's text read back on the JVM: every case's frozen sentence reads as the case, in a column and written bare
+  * in a record by an earlier version. The browser reads no column ([[SentenceReaders]]).
   */
 class ReadBackSuite extends munit.FunSuite:
 
@@ -19,6 +19,29 @@ class ReadBackSuite extends munit.FunSuite:
     test(s"${p.group.productPrefix}.${p.productPrefix}: its frozen stored sentence reads back as the case"):
       assertEquals(Column.read(p.stored), p)
   }
+
+  test("a text stored when a problem named its type in full reads back as its case, and writes back the same"):
+    List(
+      "edges / dst: 'Gimbutas 1956' is no com.histmersion.domain.library.Citekey: it fails Match[\"[a-z][a-z0-9_-]*\"] (Should match [a-z][a-z0-9_-]*)",
+      "unknown com.histmersion.domain.library.Source.Status 'dubious' (one of: 'current', 'contested')",
+      "from: '13oo BCE' is unreadable as com.histmersion.Year (e.g. '1300 BCE', '530 CE', '-1300')",
+      "geometry: 'Feature' wraps a com.histmersion.api.catalogue.EventGeometry.Geojson in geometry",
+      "edges / add: com.histmersion.api.library.Edge 'kristiansen2005' --refutes--> 'gimbutas1956' is stored on 'kristiansen2005'",
+      "edits / 0: com.histmersion.api.research.Article.Edits.Anchor 'the Hittite texts' matches 2",
+      "chain: com.histmersion.api.automation.Agents.ModelRef 'claude:opus' is repeated",
+      "com.histmersion.Latitude '91' is out of [-90, 90]",
+      "no com.histmersion.domain.library.Citekey 'anthony2007'",
+      "no com.histmersion.api.exchange.Bundle.Kind.Source '0193f1c4-7b2a-7c3e-9d41-5e6f7a8b9c0d' in BundleOrHere, referred to by finding anthony2007#1",
+      "com.histmersion.domain.catalogue.Place.Id 'pleiades_579885' already exists",
+      "com.histmersion.domain.library.Citekey 'anthony2006' was renamed to 'anthony2007'",
+      "com.histmersion.domain.library.Citekey 'anthony2007' has moved on: sent 2026-11-01T10:00:00Z, stored 2026-11-02T08:30:00Z",
+      "com.histmersion.util.jobs.Job.Id '412' is running; it needs paused or failed",
+      "com.histmersion.domain.catalogue.Place.Id 'pleiades_579885' is referred to by 3 com.histmersion.domain.library.Finding"
+    ).foreach { text =>
+      val read = Column.read(text)
+      assert(read.group != Group.Stored, s"$text reads as $read")
+      assertEquals(read.stored, text)
+    }
 
   test("a problem written bare by an earlier version reads through the column reader"):
     // the frozen sentence of a case reads as that case, which is written typed from then on
@@ -84,7 +107,7 @@ class ReadBackSuite extends munit.FunSuite:
           Io.Entry(Io.Format.Bundle, Io.Path("blobs/"), Io.Fault.Differs(m, Raw("ab12"), Raw("cd34")))
         ) ++
         NotFound.Scope.values.toVector.map(
-          NotFound.Dangling(TypeName("com.histmersion.api.exchange.Bundle.Kind.Place"), Raw("x_1"), Where("event e"), _)
+          NotFound.Dangling(TypeName("Bundle.Kind.Place"), Raw("x_1"), Where("event e"), _)
         ) ++
         Vector(
           Conflict.Hold.Open,
@@ -372,4 +395,3 @@ class ReadBackSuite extends munit.FunSuite:
     (examples ++ variants).filterNot(_.group == Group.Stored).map(_.sentence).foreach { s =>
       assertEquals(testsupport.TypeNamesShown.in(s), None, s"a type's code name in: $s")
     }
-

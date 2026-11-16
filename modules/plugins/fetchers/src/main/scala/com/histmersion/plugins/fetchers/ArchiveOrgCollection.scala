@@ -40,7 +40,7 @@ final class ArchiveOrgCollection(client: () => ArchiveOrg) extends SourceCollect
       )
       .map(ArchiveOrgCollection.collectionFile)
       .toRight(
-        Problem.NotFound.Entity(Problem.TypeName("com.histmersion.plugin.Copy"), Problem.Raw(s"${item.id.value}"))
+        Problem.NotFound.Entity(Problem.TypeName("Copy"), Problem.Raw(s"${item.id.value}"))
       )
 
   def original(item: CollectionItem, file: CollectionFile): Either[Problem, FetchedFile] =

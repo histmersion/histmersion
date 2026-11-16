@@ -359,7 +359,7 @@
         "name" : "Match[\"(?!.*\\\\.\\\\.)[a-z][a-z0-9_.-]{1,120}\"]"
       },
       "raw" : "Bad Key",
-      "typeName" : "com.histmersion.domain.library.Citekey"
+      "typeName" : "Citekey"
     },
     "group" : "Invalid",
     "text" : "'Bad Key' is not a citekey: Should match (?!.*\\.\\.)[a-z][a-z0-9_.-]{1,120}"
@@ -378,7 +378,7 @@
       ],
       "item" : "'zqgamma1975_kings' --references--> 'zqbeta2001_cove'",
       "owner" : "zqgamma1975_kings",
-      "typeName" : "com.histmersion.api.library.Edge"
+      "typeName" : "Edge"
     },
     "group" : "Invalid",
     "text" : "edges: 'zqgamma1975_kings' --references--> 'zqbeta2001_cove' is stored on 'zqgamma1975_kings', not here: patch 'zqgamma1975_kings' to record it"

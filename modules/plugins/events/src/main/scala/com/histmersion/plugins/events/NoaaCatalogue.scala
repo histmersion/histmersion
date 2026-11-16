@@ -53,7 +53,7 @@ final class NoaaCatalogue(cfg: NoaaSettings) extends EventCatalogue:
       case other =>
         Left(
           Problem.Invalid.Unknown.here(
-            Problem.TypeName("com.histmersion.plugins.events.NoaaCatalogue.Page"),
+            Problem.TypeName("NoaaCatalogue.Page"),
             Problem.Raw(s"$other"),
             Vector.empty
           )

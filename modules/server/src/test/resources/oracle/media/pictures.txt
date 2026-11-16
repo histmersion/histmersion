@@ -871,7 +871,7 @@
         "!300,200"
       ],
       "raw" : "full",
-      "typeName" : "com.histmersion.api.media.Iiif.Size"
+      "typeName" : "Iiif.Size"
     },
     "group" : "Invalid",
     "text" : "'full' is not an IIIF size (e.g. max, 300,, ,200, 300,200, !300,200)"
@@ -890,7 +890,7 @@
         "png"
       ],
       "raw" : "tiff",
-      "typeName" : "com.histmersion.api.media.Iiif.Format"
+      "typeName" : "Iiif.Format"
     },
     "group" : "Invalid",
     "text" : "'tiff' is not an IIIF format (e.g. jpg, png)"
@@ -909,7 +909,7 @@
         "10,20,300,400"
       ],
       "raw" : "nonsense",
-      "typeName" : "com.histmersion.api.media.Iiif.Region"
+      "typeName" : "Iiif.Region"
     },
     "group" : "Invalid",
     "text" : "'nonsense' is not an IIIF region (e.g. full, 10,20,300,400)"
@@ -931,7 +931,7 @@
         "!300,200"
       ],
       "raw" : "full",
-      "typeName" : "com.histmersion.api.media.Iiif.Size"
+      "typeName" : "Iiif.Size"
     },
     "group" : "Invalid",
     "text" : "'full' is not an IIIF size (e.g. max, 300,, ,200, 300,200, !300,200)"
@@ -2034,13 +2034,13 @@
 == GET /source/zqfig2001_tell/assets/nope.png (bytes)
 404 application/json {"message":{"group":"Unclassified","case":"Unclassified","data":{"text":"No asset 'nope.png' for 'zqfig2001_tell'"},"text":"No asset 'nope.png' for 'zqfig2001_tell'"},"code":"not_found"}
 == GET /iiif/zqfig2001_tell/fig-a.png/full/full/0/default.png (bytes)
-404 application/json {"message":{"group":"Invalid","case":"Unreadable","data":{"typeName":"com.histmersion.api.media.Iiif.Size","raw":"full","examples":["max","300,",",200","300,200","!300,200"],"at":[]},"text":"'full' is not an IIIF size (e.g. max, 300,, ,200, 300,200, !300,200)"},"code":null}
+404 application/json {"message":{"group":"Invalid","case":"Unreadable","data":{"typeName":"Iiif.Size","raw":"full","examples":["max","300,",",200","300,200","!300,200"],"at":[]},"text":"'full' is not an IIIF size (e.g. max, 300,, ,200, 300,200, !300,200)"},"code":null}
 == GET /iiif/zqfig2001_tell/fig-a.png/0,0,32,24/full/0/default.jpg (bytes)
-404 application/json {"message":{"group":"Invalid","case":"Unreadable","data":{"typeName":"com.histmersion.api.media.Iiif.Size","raw":"full","examples":["max","300,",",200","300,200","!300,200"],"at":[]},"text":"'full' is not an IIIF size (e.g. max, 300,, ,200, 300,200, !300,200)"},"code":null}
+404 application/json {"message":{"group":"Invalid","case":"Unreadable","data":{"typeName":"Iiif.Size","raw":"full","examples":["max","300,",",200","300,200","!300,200"],"at":[]},"text":"'full' is not an IIIF size (e.g. max, 300,, ,200, 300,200, !300,200)"},"code":null}
 == GET /iiif/zqfig2001_tell/fig-c.jpg/full/60,/0/default.jpg (bytes)
 200 image/jpeg 1634 cf74894459a3477606b531c935ce48690113d68d7dd34264586e106539ffc804
 == GET /iiif/zqfig2001_tell/fig-c.jpg/pct:10,10,50,50/30,20/0/default.png (bytes)
-404 application/json {"message":{"group":"Invalid","case":"Unreadable","data":{"typeName":"com.histmersion.api.media.Iiif.Region","raw":"pct:10,10,50,50","examples":["full","10,20,300,400"],"at":[]},"text":"'pct:10,10,50,50' is not an IIIF region (e.g. full, 10,20,300,400)"},"code":null}
+404 application/json {"message":{"group":"Invalid","case":"Unreadable","data":{"typeName":"Iiif.Region","raw":"pct:10,10,50,50","examples":["full","10,20,300,400"],"at":[]},"text":"'pct:10,10,50,50' is not an IIIF region (e.g. full, 10,20,300,400)"},"code":null}
 == GET /api/media/asset:zqfig2001_tell/fig-c.jpg/thumb (bytes)
 404 application/json {"message":{"group":"Unclassified","case":"Unclassified","data":{"text":"no such endpoint: /api/media/asset:zqfig2001_tell/fig-c.jpg/thumb"},"text":"no such endpoint: /api/media/asset:zqfig2001_tell/fig-c.jpg/thumb"},"code":null}
 == GET /api/media/asset:zqfig2001_tell/fig-c.jpg/file (bytes)

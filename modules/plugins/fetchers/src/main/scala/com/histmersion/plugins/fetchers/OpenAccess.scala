@@ -124,7 +124,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
         case Left(skip @ CoreFailure.Skipped(_)) => Fetch.Miss(skip.message)
         case Left(CoreFailure.Failed(why))       =>
           ctx.log.info(Plugin.Log.Line(s"CORE lookup failed (${why.sentence})"))
-          Fetch.Miss(Problem.NotFound.Entity(Problem.TypeName("com.histmersion.plugin.Copy"), Problem.Raw(s"$doi")))
+          Fetch.Miss(Problem.NotFound.Entity(Problem.TypeName("Copy"), Problem.Raw(s"$doi")))
         case Right(json) =>
           AcquireParse
             .coreDownloadUrls(json)
@@ -132,7 +132,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
             .flatMap(u => downloads.pdf(ctx.log, FetchedFile.Source("core"), Plugin.Http.Url(u.value)))
             .nextOption()
             .fold(
-              Fetch.Miss(Problem.NotFound.Entity(Problem.TypeName("com.histmersion.plugin.Copy"), Problem.Raw(s"$doi")))
+              Fetch.Miss(Problem.NotFound.Entity(Problem.TypeName("Copy"), Problem.Raw(s"$doi")))
             )(Fetch.Found(_))
     }
 

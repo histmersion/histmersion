@@ -409,7 +409,7 @@ class ConfigSuite extends munit.FunSuite:
     val e = intercept[Raised](AppConfig.load(env("HISTMERSION_AGENTS_CHATGPT_PLAN_REFRESH_EVERY_MINUTES" -> "-1")))
     e.problems.toVector match
       case Vector(Problem.Invalid.Malformed(t, _, raw, _)) =>
-        assertEquals((s"$t", s"$raw"), ("com.histmersion.config.RefreshIntervalMinutes", "-1"))
+        assertEquals((s"$t", s"$raw"), ("RefreshIntervalMinutes", "-1"))
       case other => fail(s"not refused: $other")
     assert(e.getMessage.contains("'-1' is not a refresh interval in minutes"), e.getMessage)
 
@@ -437,7 +437,7 @@ class ConfigSuite extends munit.FunSuite:
     assertEquals(ScheduledRefresh.fromMinutes(Minutes(30)).map(minutes), Right(Some(30)))
     ScheduledRefresh.fromMinutes(Minutes(-5)) match
       case Left(Problem.Invalid.Malformed(t, _, raw, _)) =>
-        assertEquals((s"$t", s"$raw"), ("com.histmersion.config.RefreshIntervalMinutes", "-5"))
+        assertEquals((s"$t", s"$raw"), ("RefreshIntervalMinutes", "-5"))
       case other => fail(s"not refused: $other")
 
   private def minutes(s: ScheduledRefresh): Option[Int] = s match

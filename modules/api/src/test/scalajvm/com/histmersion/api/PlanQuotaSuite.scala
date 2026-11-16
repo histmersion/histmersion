@@ -74,7 +74,7 @@ class PlanQuotaSuite extends munit.FunSuite:
       Left(
         Vector(
           Problem.Invalid.OutOfRange(
-            Problem.TypeName("com.histmersion.api.automation.PlanQuota.Floors.Floor"),
+            Problem.TypeName("PlanQuota.Floors.Floor"),
             Problem.Raw("130"),
             Problem.Invalid.Bounds(Some(Problem.Raw("0")), Some(Problem.Raw("100"))),
             Vector(Problem.Field("five_hour=130"))

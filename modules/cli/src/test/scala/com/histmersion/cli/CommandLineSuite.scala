@@ -133,7 +133,7 @@ class CommandLineSuite extends munit.FunSuite:
         assertEquals(
           p,
           Problem.Invalid.Unknown.here(
-            Problem.TypeName("com.histmersion.cli.CommandLine.OptionName"),
+            Problem.TypeName("CommandLine.OptionName"),
             Problem.Raw("--bogus"),
             Vector(Problem.Raw("--json"), Problem.Raw("--parts"))
           )
@@ -144,13 +144,13 @@ class CommandLineSuite extends munit.FunSuite:
   test("a value its newtype's base type cannot read is Malformed, naming the newtype and the argument"):
     problem("version", "sea_peoples", "forty-two") match
       case Problem.Invalid.Malformed(t, _, raw, at) =>
-        assertEquals(t, Problem.TypeName("com.histmersion.api.research.Article.VersionId"))
+        assertEquals(t, Problem.TypeName("Article.VersionId"))
         assertEquals(raw, Problem.Raw("forty-two"))
         assertEquals(at, Vector(Problem.Field("id")))
       case other => fail(s"${other.toString}")
     problem("list", "--limit", "many") match
       case Problem.Invalid.Malformed(t, _, raw, at) =>
-        assertEquals(t, Problem.TypeName("com.histmersion.api.library.Filter.Limit"))
+        assertEquals(t, Problem.TypeName("Filter.Limit"))
         assertEquals((raw, at), (Problem.Raw("many"), Vector(Problem.Field("limit"))))
       case other => fail(s"${other.toString}")
 

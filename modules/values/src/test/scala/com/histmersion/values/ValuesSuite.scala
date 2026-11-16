@@ -19,7 +19,7 @@ class ValuesSuite extends munit.FunSuite:
     assertEquals(
       Period.Error.EndsBeforeStart(Year(-3100), Year(-3300)).message,
       Problem.Invalid.OutOfRange(
-        Problem.TypeName("com.histmersion.Year"),
+        Problem.TypeName("Year"),
         Problem.Raw("-3300"),
         Problem.Invalid.Bounds(Some(Problem.Raw("-3100")), None),
         Vector(Problem.Field("end"))

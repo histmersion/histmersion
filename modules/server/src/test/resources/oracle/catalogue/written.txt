@@ -1350,7 +1350,7 @@
         "edge"
       ],
       "raw" : "planet",
-      "typeName" : "com.histmersion.domain.catalogue.AttestationTarget.Wire"
+      "typeName" : "AttestationTarget"
     },
     "group" : "Invalid",
     "text" : "unknown attestation target 'planet' (one of: finding, event, event_dating, place, edge)"
@@ -1363,7 +1363,7 @@
     "case" : "Entity",
     "data" : {
       "key" : "zznone1900_x",
-      "typeName" : "com.histmersion.api.library.Citekey"
+      "typeName" : "Citekey"
     },
     "group" : "NotFound",
     "text" : "No source 'zznone1900_x'"

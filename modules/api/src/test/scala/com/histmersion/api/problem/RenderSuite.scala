@@ -24,50 +24,50 @@ class RenderSuite extends munit.FunSuite:
   private val Frozen: Map[String, (Int, String)] = Map(
     "Malformed" -> (
       400,
-      "edges / dst: 'Gimbutas 1956' is no com.histmersion.domain.library.Citekey: it fails Match[\"[a-z][a-z0-9_-]*\"] (Should match [a-z][a-z0-9_-]*)"
+      "edges / dst: 'Gimbutas 1956' is no Citekey: it fails Match[\"[a-z][a-z0-9_-]*\"] (Should match [a-z][a-z0-9_-]*)"
     ),
     "Unknown" -> (
       400,
-      "unknown com.histmersion.domain.library.Source.Status 'dubious' (one of: 'current', 'contested')"
+      "unknown Source.Status 'dubious' (one of: 'current', 'contested')"
     ),
     "Unreadable" -> (
       400,
-      "from: '13oo BCE' is unreadable as com.histmersion.Year (e.g. '1300 BCE', '530 CE', '-1300')"
+      "from: '13oo BCE' is unreadable as Year (e.g. '1300 BCE', '530 CE', '-1300')"
     ),
     "Missing" -> (400, "rationale is required"),
     "Undeclared" -> (400, "staus is undeclared (one of: 'status', 'tags')"),
-    "Wrapped" -> (400, "geometry: 'Feature' wraps a com.histmersion.api.catalogue.EventGeometry.Geojson in geometry"),
+    "Wrapped" -> (400, "geometry: 'Feature' wraps a EventGeometry.Geojson in geometry"),
     "StoredOn" -> (
       400,
-      "edges / add: com.histmersion.api.library.Edge 'kristiansen2005' --refutes--> 'gimbutas1956' is stored on 'kristiansen2005'"
+      "edges / add: Edge 'kristiansen2005' --refutes--> 'gimbutas1956' is stored on 'kristiansen2005'"
     ),
-    "Ambiguous" -> (400, "edits / 0: com.histmersion.api.research.Article.Edits.Anchor 'the Hittite texts' matches 2"),
-    "Repeated" -> (400, "chain: com.histmersion.api.automation.Agents.ModelRef 'claude:opus' is repeated"),
+    "Ambiguous" -> (400, "edits / 0: Article.Edits.Anchor 'the Hittite texts' matches 2"),
+    "Repeated" -> (400, "chain: Agents.ModelRef 'claude:opus' is repeated"),
     "Misplaced" -> (400, "status belongs under metadata"),
-    "OutOfRange" -> (400, "com.histmersion.Latitude '91' is out of [-90, 90]"),
+    "OutOfRange" -> (400, "Latitude '91' is out of [-90, 90]"),
     "Inconsistent" -> (400, "lat, lon break Together"),
     "Reference" -> (400, "plugins / api-key: no secret reference: EnvName '1PASSWORD'"),
     "Broken" -> (400, "cron: breaks CronField | 61 * * * * | Minute | NotNumber | 61 | 0 | 59"),
-    "Entity" -> (404, "no com.histmersion.domain.library.Citekey 'anthony2007'"),
+    "Entity" -> (404, "no Citekey 'anthony2007'"),
     "Copy" -> (404, "no open-access copy of 'doi:10.1017/S0003598X00000001'"),
     "Dangling" -> (
       404,
-      "no com.histmersion.api.exchange.Bundle.Kind.Source '0193f1c4-7b2a-7c3e-9d41-5e6f7a8b9c0d' in BundleOrHere, referred to by finding anthony2007#1"
+      "no Bundle.Kind.Source '0193f1c4-7b2a-7c3e-9d41-5e6f7a8b9c0d' in BundleOrHere, referred to by finding anthony2007#1"
     ),
     "Held" -> (409, "held SameWork anthony2006 | doi: source anthony2007"),
     "Job" -> (409, "job '0193f1c4' is queued: NotStarted"),
     "Entry" -> (500, "Bundle entry entities/sources.ndjson: Differs Lines 4/3"),
-    "AlreadyExists" -> (409, "com.histmersion.domain.catalogue.Place.Id 'pleiades_579885' already exists"),
-    "Renamed" -> (409, "com.histmersion.domain.library.Citekey 'anthony2006' was renamed to 'anthony2007'"),
+    "AlreadyExists" -> (409, "Place.Id 'pleiades_579885' already exists"),
+    "Renamed" -> (409, "Citekey 'anthony2006' was renamed to 'anthony2007'"),
     "Stale" -> (
       412,
-      "com.histmersion.domain.library.Citekey 'anthony2007' has moved on: sent 2026-11-01T10:00:00Z, stored 2026-11-02T08:30:00Z"
+      "Citekey 'anthony2007' has moved on: sent 2026-11-01T10:00:00Z, stored 2026-11-02T08:30:00Z"
     ),
-    "WrongState" -> (409, "com.histmersion.util.jobs.Job.Id '412' is running; it needs paused or failed"),
+    "WrongState" -> (409, "Job.Id '412' is running; it needs paused or failed"),
     "Busy" -> (503, "Backup is still running"),
     "Referenced" -> (
       409,
-      "com.histmersion.domain.catalogue.Place.Id 'pleiades_579885' is referred to by 3 com.histmersion.domain.library.Finding"
+      "Place.Id 'pleiades_579885' is referred to by 3 Finding"
     ),
     "Policy" -> (403, "refused: RunTokenRequired"),
     "Quota" -> (429, "DailySpend is spent: 5.25 of 4.5 until 2025-11-10T00:00:00Z"),

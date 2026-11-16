@@ -15,6 +15,6 @@ final class ArxivFetcher(cfg: UpstreamSettings, http: () => Plugin.Http) extends
       Downloads(http())
         .pdf(ctx.log, FetchedFile.Source("arxiv"), Plugin.Http.Url(s"${cfg.arxiv.url}/pdf/$id"))
         .fold[Fetch](
-          Fetch.Miss(Problem.NotFound.Entity(Problem.TypeName("com.histmersion.plugin.Copy"), Problem.Raw(s"$id")))
+          Fetch.Miss(Problem.NotFound.Entity(Problem.TypeName("Copy"), Problem.Raw(s"$id")))
         )(Fetch.Found(_))
     }

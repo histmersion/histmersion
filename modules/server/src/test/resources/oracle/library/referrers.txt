@@ -287,7 +287,7 @@
         "name" : "Match[\"(?!.*\\\\.\\\\.)[a-z][a-z0-9_.-]{1,120}\"]"
       },
       "raw" : "ZQ bad",
-      "typeName" : "com.histmersion.domain.library.Citekey"
+      "typeName" : "Citekey"
     },
     "group" : "Invalid",
     "text" : "'ZQ bad' is not a citekey: Should match (?!.*\\.\\.)[a-z][a-z0-9_.-]{1,120}"
@@ -402,7 +402,7 @@
     "case" : "Entity",
     "data" : {
       "key" : "zqnone2000_x",
-      "typeName" : "com.histmersion.api.library.Citekey"
+      "typeName" : "Citekey"
     },
     "group" : "NotFound",
     "text" : "No source 'zqnone2000_x'"
@@ -1158,10 +1158,10 @@ Mirror: the next full `histmersion export` removes `sources/zqbeta2001_cove.md`.
   "message" : {
     "case" : "Referenced",
     "data" : {
-      "by" : "com.histmersion.api.library.DeleteBlocker.Kind.Article",
+      "by" : "DeleteBlocker.Kind.Article",
       "count" : 1,
       "key" : "zqeps1999_cited",
-      "typeName" : "com.histmersion.api.library.Citekey"
+      "typeName" : "Citekey"
     },
     "group" : "Conflict",
     "text" : "citekey 'zqeps1999_cited' is referred to by 1 article — remove those references first (there is no override)"
@@ -1174,7 +1174,7 @@ Mirror: the next full `histmersion export` removes `sources/zqbeta2001_cove.md`.
     "case" : "Entity",
     "data" : {
       "key" : "zqnone2000_x",
-      "typeName" : "com.histmersion.api.library.Citekey"
+      "typeName" : "Citekey"
     },
     "group" : "NotFound",
     "text" : "No source 'zqnone2000_x'"

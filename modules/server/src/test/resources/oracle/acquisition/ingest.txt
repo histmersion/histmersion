@@ -850,7 +850,7 @@ job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqarx2021_prepr
         "name" : "Match[\"(?!.*\\\\.\\\\.)[a-z][a-z0-9_.-]{1,120}\"]"
       },
       "raw" : "../escape",
-      "typeName" : "com.histmersion.domain.library.Citekey"
+      "typeName" : "Citekey"
     },
     "group" : "Invalid",
     "text" : "'../escape' is not a citekey: Should match (?!.*\\.\\.)[a-z][a-z0-9_.-]{1,120}"
@@ -910,7 +910,7 @@ job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqa_dup","progr
         "name" : "Match[\"(?!.*\\\\.\\\\.)[a-z][a-z0-9_.-]{1,120}\"]"
       },
       "raw" : "Bad Key",
-      "typeName" : "com.histmersion.domain.library.Citekey"
+      "typeName" : "Citekey"
     },
     "group" : "Invalid",
     "text" : "'Bad Key' is not a citekey: Should match (?!.*\\.\\.)[a-z][a-z0-9_.-]{1,120}"
@@ -946,7 +946,7 @@ job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqa_ledger","pr
     "data" : {
       "is" : "done",
       "key" : "2",
-      "typeName" : "com.histmersion.api.automation.Queue.QueueItem.Id",
+      "typeName" : "Queue.QueueItem.Id",
       "wanted" : [
         "open"
       ]
@@ -962,7 +962,7 @@ job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqa_ledger","pr
     "case" : "Entity",
     "data" : {
       "key" : "99999",
-      "typeName" : "com.histmersion.api.automation.Queue.QueueItem.Id"
+      "typeName" : "Queue.QueueItem.Id"
     },
     "group" : "NotFound",
     "text" : "no queue item id '99999'"
@@ -995,7 +995,7 @@ job: 200 {"id":"UUID","kind":"reocr","status":"done","citekey":"zqa_upload","pro
     "case" : "Entity",
     "data" : {
       "key" : "zqa_missing",
-      "typeName" : "com.histmersion.api.library.Citekey"
+      "typeName" : "Citekey"
     },
     "group" : "NotFound",
     "text" : "No source 'zqa_missing'"

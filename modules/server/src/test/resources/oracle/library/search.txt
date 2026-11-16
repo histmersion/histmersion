@@ -18754,7 +18754,7 @@ _unsupported unit='nonsense' — use sources, findings or starts_
         "WITH"
       ],
       "raw" : "SET",
-      "typeName" : "com.histmersion.api.library.Query.Statement"
+      "typeName" : "Query.Statement"
     },
     "group" : "Invalid",
     "text" : "unknown query statement 'SET' (one of: SELECT, WITH)"

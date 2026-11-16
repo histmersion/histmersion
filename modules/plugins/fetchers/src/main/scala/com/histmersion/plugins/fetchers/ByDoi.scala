@@ -15,7 +15,7 @@ final class ByDoi(step: ByDoi.Step, copy: (Fetch.Context, Doi) => Option[Fetched
       .fold[Fetch](Fetch.Miss(Problem.Invalid.Missing.here(Problem.Field("doi"))))(d =>
         copy(ctx, d).fold[Fetch](
           Fetch.Miss(
-            Problem.NotFound.Entity(Problem.TypeName("com.histmersion.plugin.Copy"), Problem.Raw(s"${d.value}"))
+            Problem.NotFound.Entity(Problem.TypeName("Copy"), Problem.Raw(s"${d.value}"))
           )
         )(Fetch.Found(_))
       )

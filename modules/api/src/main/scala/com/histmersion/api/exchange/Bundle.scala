@@ -60,7 +60,7 @@ object Bundle:
     def issueLetter: String = Kind.letterOf(this)
 
     /** The kind as a problem names the type of its record: a reader reads it as the kind's own name (`source`). */
-    def typeName: Problem.TypeName = Problem.TypeName(s"com.histmersion.api.exchange.Bundle.Kind.$productPrefix")
+    def typeName: Problem.TypeName = Problem.TypeName(s"Bundle.Kind.$productPrefix")
 
   object Kind:
     type Wire = Wire.T

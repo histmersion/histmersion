@@ -613,7 +613,7 @@
         "name" : "Match[\"[a-z0-9][a-z0-9_.-]{0,120}\"]"
       },
       "raw" : "Bad Slug",
-      "typeName" : "com.histmersion.domain.research.Slug"
+      "typeName" : "Slug"
     },
     "group" : "Invalid",
     "text" : "'Bad Slug' is not a slug: Should match [a-z0-9][a-z0-9_.-]{0,120}"
@@ -638,7 +638,7 @@
         "index"
       ],
       "raw" : "Not A Kind!",
-      "typeName" : "com.histmersion.api.research.Article.Kind.Wire"
+      "typeName" : "Article.Kind"
     },
     "group" : "Invalid",
     "text" : "kind: 'Not A Kind!' is not an article kind (e.g. concept, myth, culture, region, timeline, report, index)"
@@ -659,7 +659,7 @@
         "anthony2007"
       ],
       "raw" : "not a key!",
-      "typeName" : "com.histmersion.api.library.Citekey"
+      "typeName" : "Citekey"
     },
     "group" : "Invalid",
     "text" : "reasons: 'not a key!' is not a citekey (e.g. anthony2007)"
@@ -680,7 +680,7 @@
         "least" : null
       },
       "raw" : "501",
-      "typeName" : "com.histmersion.api.research.Coverage.Rationale"
+      "typeName" : "Coverage.Rationale"
     },
     "group" : "Invalid",
     "text" : "reasons.zralpha1990_walls: coverage rationale 501 is above 500"
@@ -1417,7 +1417,7 @@ The Zr culture built walls [[zralpha1990_walls]].
     "case" : "Entity",
     "data" : {
       "key" : "zr_nothing",
-      "typeName" : "com.histmersion.api.research.Article.Slug"
+      "typeName" : "Article.Slug"
     },
     "group" : "NotFound",
     "text" : "no article slug 'zr_nothing'"
@@ -3011,7 +3011,7 @@ _showing 2–3 of 6 — next: offset=3 — full set: limit=6_
     "case" : "Entity",
     "data" : {
       "key" : "No such",
-      "typeName" : "com.histmersion.api.research.Article.Section"
+      "typeName" : "Article.Section"
     },
     "group" : "NotFound",
     "text" : "no article section 'No such'"
@@ -4023,7 +4023,7 @@ _showing 2–3 of 6 — next: offset=3 — full set: limit=6_
       "key" : "zr_harbour",
       "sent" : "TS",
       "stored" : "TS",
-      "typeName" : "com.histmersion.api.research.Article.Slug"
+      "typeName" : "Article.Slug"
     },
     "group" : "Conflict",
     "text" : "article slug 'zr_harbour' has moved on: you sent TS, it is now TS — read it again and re-apply your change"
@@ -4038,7 +4038,7 @@ _showing 2–3 of 6 — next: offset=3 — full set: limit=6_
       "key" : "zr_harbour",
       "sent" : "yesterday",
       "stored" : "TS",
-      "typeName" : "com.histmersion.api.research.Article.Slug"
+      "typeName" : "Article.Slug"
     },
     "group" : "Conflict",
     "text" : "article slug 'zr_harbour' has moved on: you sent yesterday, it is now TS — read it again and re-apply your change"
@@ -4232,7 +4232,7 @@ _showing 2–3 of 6 — next: offset=3 — full set: limit=6_
         "index"
       ],
       "raw" : "Not A Kind!",
-      "typeName" : "com.histmersion.api.research.Article.Kind.Wire"
+      "typeName" : "Article.Kind"
     },
     "group" : "Invalid",
     "text" : "kind: 'Not A Kind!' is not an article kind (e.g. concept, myth, culture, region, timeline, report, index)"
@@ -4245,7 +4245,7 @@ _showing 2–3 of 6 — next: offset=3 — full set: limit=6_
     "case" : "Entity",
     "data" : {
       "key" : "zr_nothing",
-      "typeName" : "com.histmersion.api.research.Article.Slug"
+      "typeName" : "Article.Slug"
     },
     "group" : "NotFound",
     "text" : "no article slug 'zr_nothing'"
@@ -4465,7 +4465,7 @@ _article slug 'zr_kings' has moved on: you sent TS, it is now TS — read it aga
     "case" : "Entity",
     "data" : {
       "key" : "zr_nothing",
-      "typeName" : "com.histmersion.api.research.Article.Slug"
+      "typeName" : "Article.Slug"
     },
     "group" : "NotFound",
     "text" : "no article slug 'zr_nothing'"
@@ -4733,7 +4733,7 @@ The harbour was founded by a hero [[zrbeta2001_harbour]]. See [[zr_walls]] for t
     "case" : "Entity",
     "data" : {
       "key" : "zr_nothing",
-      "typeName" : "com.histmersion.api.research.Article.Slug"
+      "typeName" : "Article.Slug"
     },
     "group" : "NotFound",
     "text" : "no article slug 'zr_nothing'"
@@ -4800,7 +4800,7 @@ _article 'zr_kings' records no filter, so it has no generated coverage — set t
     "case" : "Entity",
     "data" : {
       "key" : "zr_nothing",
-      "typeName" : "com.histmersion.api.research.Article.Slug"
+      "typeName" : "Article.Slug"
     },
     "group" : "NotFound",
     "text" : "no article slug 'zr_nothing'"
@@ -4973,7 +4973,7 @@ No finding recorded.
     "case" : "Entity",
     "data" : {
       "key" : "zr_new",
-      "typeName" : "com.histmersion.api.research.Article.Slug"
+      "typeName" : "Article.Slug"
     },
     "group" : "NotFound",
     "text" : "no article slug 'zr_new'"
@@ -5082,7 +5082,7 @@ No problems: these are the checks code runs on the answer, and it would pass the
     "case" : "Entity",
     "data" : {
       "key" : "zr_nothing",
-      "typeName" : "com.histmersion.api.research.Article.Slug"
+      "typeName" : "Article.Slug"
     },
     "group" : "NotFound",
     "text" : "no article slug 'zr_nothing'"
@@ -5160,7 +5160,7 @@ period_end: null
     "case" : "Entity",
     "data" : {
       "key" : "zr_nothing",
-      "typeName" : "com.histmersion.api.research.Article.Slug"
+      "typeName" : "Article.Slug"
     },
     "group" : "NotFound",
     "text" : "no article slug 'zr_nothing'"
@@ -5421,7 +5421,7 @@ _Method: search {tags: ["zr-oracle"]} → 4; statuses: 2 current, 1 contested, 1
         "sea_peoples"
       ],
       "raw" : "Bad Slug",
-      "typeName" : "com.histmersion.api.aliases.LabelRenames.Label"
+      "typeName" : "LabelRenames.Label"
     },
     "group" : "Invalid",
     "text" : "article slug: 'Bad Slug' is not a label (e.g. sea_peoples)"
@@ -5434,7 +5434,7 @@ _Method: search {tags: ["zr-oracle"]} → 4; statuses: 2 current, 1 contested, 1
     "case" : "Entity",
     "data" : {
       "key" : "zr_nothing",
-      "typeName" : "com.histmersion.api.research.Article.Slug"
+      "typeName" : "Article.Slug"
     },
     "group" : "NotFound",
     "text" : "no article slug 'zr_nothing'"
@@ -5936,10 +5936,10 @@ _Method: search {tags: ["zr-oracle"]} → 4; statuses: 2 current, 1 contested, 1
   "message" : {
     "case" : "Referenced",
     "data" : {
-      "by" : "com.histmersion.api.library.DeleteBlocker.Kind.Article",
+      "by" : "DeleteBlocker.Kind.Article",
       "count" : 1,
       "key" : "zreps1999_lost",
-      "typeName" : "com.histmersion.api.library.Citekey"
+      "typeName" : "Citekey"
     },
     "group" : "Conflict",
     "text" : "citekey 'zreps1999_lost' is referred to by 1 article — remove those references first (there is no override)"
@@ -5957,7 +5957,7 @@ _Method: search {tags: ["zr-oracle"]} → 4; statuses: 2 current, 1 contested, 1
     "case" : "Entity",
     "data" : {
       "key" : "zr_lost",
-      "typeName" : "com.histmersion.api.research.Article.Slug"
+      "typeName" : "Article.Slug"
     },
     "group" : "NotFound",
     "text" : "no article slug 'zr_lost'"
