@@ -55,7 +55,7 @@ class HotPlanSuite extends munit.FunSuite:
     )
     def cycle(names: String*): Problem =
       Problem.Config.Cycle(NonEmptyVector.of(names.head, names.tail*).map(n => Problem.Config.Scope(s"$n")))
-    val name = Problem.TypeName("com.histmersion.config.HotNode.Name")
+    val name = Problem.TypeName("HotNode.Name")
     assertEquals(HotPlan.order(cyc).swap.map(_.toVector), Right(Vector(cycle("a", "c", "b", "a"))))
     assertEquals(
       HotPlan.order(List(HotNode(HotNode.Name("a"), List(HotNode.Deps("a")), Nil))).swap.map(_.toVector),

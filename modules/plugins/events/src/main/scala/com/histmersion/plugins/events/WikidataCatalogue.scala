@@ -42,7 +42,7 @@ final class WikidataCatalogue(cfg: WikidataSettings) extends EventCatalogue:
       case None =>
         Left(
           Problem.Invalid.Unknown.here(
-            Problem.TypeName("com.histmersion.plugins.events.WikidataCatalogue.Class"),
+            Problem.TypeName("WikidataCatalogue.Class"),
             Problem.Raw(s"$part"),
             classes.map((qid, _) => Problem.Raw(s"class:$qid")).toVector
           )

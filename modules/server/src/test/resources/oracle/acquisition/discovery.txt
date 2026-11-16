@@ -528,7 +528,7 @@
     "case" : "Entity",
     "data" : {
       "key" : "zqa_missing",
-      "typeName" : "com.histmersion.api.library.Citekey"
+      "typeName" : "Citekey"
     },
     "group" : "NotFound",
     "text" : "No source 'zqa_missing'"

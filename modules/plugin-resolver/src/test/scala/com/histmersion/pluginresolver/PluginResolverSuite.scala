@@ -200,7 +200,7 @@ class PluginResolverSuite extends munit.FunSuite:
       Some(
         Vector(
           Problem.Invalid.Unknown.here(
-            Problem.TypeName("com.histmersion.pluginresolver.Resolver.Argument"),
+            Problem.TypeName("Resolver.Argument"),
             Problem.Raw("--nope"),
             Vector("--kit", "--lib", "--histmersion-repo", "--repo", "--check").map(r => Problem.Raw(s"$r"))
           )

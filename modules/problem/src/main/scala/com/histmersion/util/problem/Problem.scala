@@ -25,11 +25,19 @@ object Problem:
 
   // ---- what failed: shared by the groups ------------------------------------------------------------------------
 
-  /** The full name of the type a value failed to be, as the compiler wrote it (`com.histmersion.domain.Citekey`). */
+  /** The name of the type a value failed to be, without its package (`Citekey`, `Source.Status`): what the wire and new
+    * stored texts carry, so moving a type to another package changes neither. A `Wire` type is the wire spelling of the
+    * type it is nested in and is named by it (`ProviderKind.Wire` is `ProviderKind`). Texts stored before kept the full
+    * name (`com.histmersion.domain.library.Citekey`) and read back with it.
+    */
   type TypeName = TypeName.T
   object TypeName extends Newtype[String, Pure]:
-    /** The name the newtype module captured. */
-    def of(name: Newtype.TypeName): TypeName = TypeName(s"${name.text}")
+    /** The name the newtype module captured (a full name), without its package. */
+    def of(name: Newtype.TypeName): TypeName =
+      val named = name.text.split('.').toVector.dropWhile(_.headOption.forall(_.isLower))
+      TypeName(
+        (if named.size > 1 && named.lastOption.contains("Wire") then named.dropRight(1) else named).mkString(".")
+      )
 
     /** The name of a newtype, as Hearth names its `T` where it is asked. */
     def of[A, C](newtype: Newtype[A, C])(using Named[newtype.T]): TypeName = of(newtype.typeName)
@@ -1505,7 +1513,7 @@ object Problem:
 
   /** One value of every case, with every field set: what the renderers' tables are checked over. */
   val examples: Vector[Problem] =
-    val citekey = TypeName("com.histmersion.domain.library.Citekey")
+    val citekey = TypeName("Citekey")
     val core = Upstream.Name("core")
     val url = Upstream.Url("https://api.core.ac.uk/v3/search/works")
     val reported = External.Reported("java.io.IOException: connection reset")
@@ -1520,12 +1528,12 @@ object Problem:
         Vector(Field("edges"), Field("dst"))
       ),
       Invalid.Unknown.here(
-        TypeName("com.histmersion.domain.library.Source.Status"),
+        TypeName("Source.Status"),
         Raw("dubious"),
         Vector(Raw("current"), Raw("contested"))
       ),
       Invalid.Unreadable(
-        TypeName("com.histmersion.Year"),
+        TypeName("Year"),
         Raw("13oo BCE"),
         Vector(Raw("1300 BCE"), Raw("530 CE"), Raw("-1300")),
         Vector(Field("from"))
@@ -1533,31 +1541,31 @@ object Problem:
       Invalid.Missing.here(Field("rationale")),
       Invalid.Undeclared.here(Field("staus"), Vector(Field("status"), Field("tags"))),
       Invalid.Wrapped(
-        TypeName("com.histmersion.api.catalogue.EventGeometry.Geojson"),
+        TypeName("EventGeometry.Geojson"),
         Raw("Feature"),
         Field("geometry"),
         Vector(Field("geometry"))
       ),
       Invalid.StoredOn(
-        TypeName("com.histmersion.api.library.Edge"),
+        TypeName("Edge"),
         Raw("'kristiansen2005' --refutes--> 'gimbutas1956'"),
         Raw("kristiansen2005"),
         Vector(Field("edges"), Field("add"))
       ),
       Invalid.Ambiguous(
-        TypeName("com.histmersion.api.research.Article.Edits.Anchor"),
+        TypeName("Article.Edits.Anchor"),
         Raw("the Hittite texts"),
         Count(2L),
         Vector(Field("edits"), Field("0"))
       ),
       Invalid.Repeated(
-        TypeName("com.histmersion.api.automation.Agents.ModelRef"),
+        TypeName("Agents.ModelRef"),
         Raw("claude:opus"),
         Vector(Field("chain"))
       ),
       Invalid.Misplaced.here(Field("status"), Field("metadata")),
       Invalid.OutOfRange
-        .here(TypeName("com.histmersion.Latitude"), Raw("91"), Invalid.Bounds(Some(Raw("-90")), Some(Raw("90")))),
+        .here(TypeName("Latitude"), Raw("91"), Invalid.Bounds(Some(Raw("-90")), Some(Raw("90")))),
       Invalid.Inconsistent.here(NonEmptyVector.of(Field("lat"), Field("lon")), Invalid.Exclusion.Together),
       Invalid.Reference(Invalid.Form.EnvName(Raw("1PASSWORD")), Vector(Field("plugins"), Field("api-key"))),
       Invalid.Broken(
@@ -1571,12 +1579,12 @@ object Problem:
       NotFound.Entity(citekey, Raw("anthony2007")),
       NotFound.Copy(Raw("doi:10.1017/S0003598X00000001"), Vector.empty),
       NotFound.Dangling(
-        TypeName("com.histmersion.api.exchange.Bundle.Kind.Source"),
+        TypeName("Bundle.Kind.Source"),
         Raw("0193f1c4-7b2a-7c3e-9d41-5e6f7a8b9c0d"),
         Where("finding anthony2007#1"),
         NotFound.Scope.BundleOrHere
       ),
-      Conflict.AlreadyExists(TypeName("com.histmersion.domain.catalogue.Place.Id"), Raw("pleiades_579885")),
+      Conflict.AlreadyExists(TypeName("Place.Id"), Raw("pleiades_579885")),
       Conflict.Renamed(citekey, Raw("anthony2006"), Raw("anthony2007")),
       Conflict.Stale(
         citekey,
@@ -1585,16 +1593,16 @@ object Problem:
         Conflict.Stamp("2026-11-02T08:30:00Z")
       ),
       Conflict.WrongState(
-        TypeName("com.histmersion.util.jobs.Job.Id"),
+        TypeName("Job.Id"),
         Raw("412"),
         Conflict.State("running"),
         Vector(Conflict.State("paused"), Conflict.State("failed"))
       ),
       Conflict.Busy(Conflict.Activity.Backup),
       Conflict.Referenced(
-        TypeName("com.histmersion.domain.catalogue.Place.Id"),
+        TypeName("Place.Id"),
         Raw("pleiades_579885"),
-        TypeName("com.histmersion.domain.library.Finding"),
+        TypeName("Finding"),
         Count(3L)
       ),
       Conflict.Held(Where("source anthony2007"), Conflict.Hold.SameWork(Raw("anthony2006"), Raw("doi"))),

@@ -34,7 +34,7 @@ class ResolutionSuite extends munit.FunSuite:
       case Left(Vector(Problem.Invalid.Malformed(t, _, raw, _))) =>
         assertEquals(
           (s"$t", s"$raw"),
-          ("com.histmersion.pluginresolver.ModuleCoordinates.Written", "io.circe:circe-core_3")
+          ("ModuleCoordinates.Written", "io.circe:circe-core_3")
         )
       case other => fail(s"not malformed: $other")
 

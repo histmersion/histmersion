@@ -17,8 +17,8 @@ class SlugSuite extends munit.FunSuite:
     def refused(raw: String) = Slug.parse(raw) match
       case Left(Problem.Invalid.Malformed(t, _, r, _)) => Some((s"$t", s"$r"))
       case _                                           => None
-    assertEquals(refused("Bad Slug"), Some(("com.histmersion.domain.research.Slug", "Bad Slug")))
-    assertEquals(refused(""), Some(("com.histmersion.domain.research.Slug", "")))
-    assertEquals(refused("_lead"), Some(("com.histmersion.domain.research.Slug", "_lead")))
+    assertEquals(refused("Bad Slug"), Some(("Slug", "Bad Slug")))
+    assertEquals(refused(""), Some(("Slug", "")))
+    assertEquals(refused("_lead"), Some(("Slug", "_lead")))
     assert(Slug.parse("a" * 121).isRight)
     assert(Slug.parse("a" * 122).isLeft)

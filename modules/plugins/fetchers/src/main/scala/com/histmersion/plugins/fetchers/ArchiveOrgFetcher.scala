@@ -29,7 +29,7 @@ final class ArchiveOrgFetcher(client: () => ArchiveOrg) extends SourceFetcher:
               case None =>
                 Fetch.Miss(
                   Problem.NotFound
-                    .Entity(Problem.TypeName("com.histmersion.plugin.Copy"), Problem.Raw(s"${item.identifier}"))
+                    .Entity(Problem.TypeName("Copy"), Problem.Raw(s"${item.identifier}"))
                 )
               case Some(file) =>
                 archive

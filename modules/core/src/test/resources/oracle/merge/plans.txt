@@ -7106,7 +7106,7 @@ bodies wanted:
       "group" : "Invalid",
       "case" : "Unreadable",
       "data" : {
-        "typeName" : "com.histmersion.domain.library.Citekey",
+        "typeName" : "Citekey",
         "raw" : "Smith-2019",
         "examples" : [
           "anthony2007",
@@ -7122,7 +7122,7 @@ bodies wanted:
       "group" : "Invalid",
       "case" : "Unknown",
       "data" : {
-        "typeName" : "com.histmersion.domain.library.Citekey",
+        "typeName" : "Citekey",
         "raw" : "nonsense",
         "known" : [
           "page1959_history",
@@ -8616,7 +8616,7 @@ bodies wanted:
       "group" : "Invalid",
       "case" : "Unknown",
       "data" : {
-        "typeName" : "com.histmersion.domain.library.Citekey",
+        "typeName" : "Citekey",
         "raw" : "guterbock1997_hittite",
         "known" : [
           "page1959_history",

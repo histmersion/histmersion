@@ -56,7 +56,7 @@ class NewtypeParseSuite extends munit.FunSuite:
       Shelf.parse("Top 1"),
       Left(
         Invalid.Malformed.here(
-          TypeName("com.histmersion.util.problem.NewtypeParseSuite.Shelf"),
+          TypeName("NewtypeParseSuite.Shelf"),
           Constraint(Constraint.Name("Match[\"[a-z]+\"]"), Constraint.Description("Should match [a-z]+")),
           Raw("Top 1")
         )
@@ -67,7 +67,7 @@ class NewtypeParseSuite extends munit.FunSuite:
       Left(
         Vector(
           Invalid.Malformed.here(
-            TypeName("com.histmersion.util.problem.NewtypeParseSuite.Catalogue.Year"),
+            TypeName("NewtypeParseSuite.Catalogue.Year"),
             Constraint(
               Constraint.Name(
                 "DescribedAs[DescribedAs[Greater[-5000] | StrictEqual[-5000], compileTime.+[\"Should be greater than or equal to \", -5000]] & DescribedAs[Less[3000] | StrictEqual[3000], compileTime.+[\"Should be less than or equal to \", 3000]], \"Should be included in [-5000, 3000]\"]"

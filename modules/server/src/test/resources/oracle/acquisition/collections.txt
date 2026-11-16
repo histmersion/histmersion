@@ -681,7 +681,7 @@
         "name" : "Match[\"(?!.*\\\\.\\\\.)[a-z][a-z0-9_.-]{1,120}\"]"
       },
       "raw" : "No Key",
-      "typeName" : "com.histmersion.domain.library.Citekey"
+      "typeName" : "Citekey"
     },
     "group" : "Invalid",
     "text" : "'No Key' is not a citekey: Should match (?!.*\\.\\.)[a-z][a-z0-9_.-]{1,120}"
@@ -700,7 +700,7 @@
     "case" : "Entity",
     "data" : {
       "key" : "zqa_missing",
-      "typeName" : "com.histmersion.api.library.Citekey"
+      "typeName" : "Citekey"
     },
     "group" : "NotFound",
     "text" : "No source 'zqa_missing'"

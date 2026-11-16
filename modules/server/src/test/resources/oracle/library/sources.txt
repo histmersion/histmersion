@@ -1904,7 +1904,7 @@ _No source 'zqnone2000_x'_
       "key" : "zqgamma1975_kings",
       "sent" : "TS",
       "stored" : "TS",
-      "typeName" : "com.histmersion.api.library.Citekey"
+      "typeName" : "Citekey"
     },
     "group" : "Conflict",
     "text" : "citekey 'zqgamma1975_kings' has moved on: you sent TS, it is now TS — read it again and re-apply your change"
@@ -1921,7 +1921,7 @@ _No source 'zqnone2000_x'_
       ],
       "item" : "'zqalpha1990_tell' --references--> 'zqbeta2001_cove'",
       "owner" : "zqalpha1990_tell",
-      "typeName" : "com.histmersion.api.library.Edge"
+      "typeName" : "Edge"
     },
     "group" : "Invalid",
     "text" : "edges.add: 'zqalpha1990_tell' --references--> 'zqbeta2001_cove' is stored on 'zqalpha1990_tell', not here: patch 'zqalpha1990_tell' to record it"
@@ -1966,7 +1966,7 @@ _No source 'zqnone2000_x'_
     "case" : "Entity",
     "data" : {
       "key" : "zqnone2000_x",
-      "typeName" : "com.histmersion.api.library.Citekey"
+      "typeName" : "Citekey"
     },
     "group" : "NotFound",
     "text" : "No source 'zqnone2000_x'"
