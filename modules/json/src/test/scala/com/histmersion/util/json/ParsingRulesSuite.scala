@@ -5,10 +5,10 @@ package util.json
 enum Colour derives CanEqual:
   case Red, Blue
 
-/** What raw JSON accepts and how it writes a number back, as Kindlings 0.3.4-67's `JsonNumber` decides: a number
-  * outside the JSON grammar (`+1`, `01`, `1.`, `.5`) is refused, `-0` keeps its sign, and raw JSON is read by our own
-  * reader, so Kindlings' depth limit of 128 (its `Json` codec's) does not apply to it. And how a derived codec reads an
-  * enum case: as the object it writes (`{"Red":{}}`), not as a bare string, unless it is derived with words.
+/** What raw JSON accepts and how it writes a number back, as Kindlings 0.4.0's `JsonNumber` decides: a number outside
+  * the JSON grammar (`+1`, `01`, `1.`, `.5`) is refused, `-0` keeps its sign, and raw JSON is read by our own reader,
+  * so Kindlings' depth limit of 128 (its `Json` codec's) does not apply to it. And how a derived codec reads an enum
+  * case: as the object it writes (`{"Red":{}}`), not as a bare string, unless it is derived with words.
   */
 class ParsingRulesSuite extends munit.FunSuite:
   import RawJson.noSpaces
