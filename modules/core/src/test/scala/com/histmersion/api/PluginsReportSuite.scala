@@ -205,11 +205,7 @@ class PluginsReportSuite extends munit.FunSuite:
 
   test("the report crosses the wire; an About or UiConfig from a server without plugins still decodes"):
     val r = PluginsReport(PluginsReport.SpiVersion(1), List(vault, broken), List(PluginsReport.Warnings("w")))
-    // a problem inside a record crosses the wire as its sentence until the api's records carry the typed problem
-    val back = RawJson.decode[PluginsReport](r.asJson.noSpaces)
-    assertEquals(back.map(_.plugins.map(_.reasons)), Right(r.plugins.map(_.reasons)))
-    assertEquals(back.map(_.plugins.map(_.errors.size)), Right(List(0, 2)))
-    assertEquals(back.map(_.warnings), Right(r.warnings))
+    assertEquals(RawJson.decode[PluginsReport](r.asJson.noSpaces), Right(r))
     val about = About(
       About.Name("histmersion"),
       BuildStamp(BuildStamp.Version("1")),

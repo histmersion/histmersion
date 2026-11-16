@@ -85,7 +85,14 @@
 == acquire add (blank)
 400 {
   "code" : null,
-  "message" : "queue item text is empty"
+  "message" : {
+    "case" : "Unclassified",
+    "data" : {
+      "text" : "queue item text is empty"
+    },
+    "group" : "Unclassified",
+    "text" : "queue item text is empty"
+  }
 }
 == acquire done
 200 {
@@ -118,7 +125,14 @@
 == acquire rm (again)
 404 {
   "code" : "not_found",
-  "message" : "No queue item #7"
+  "message" : {
+    "case" : "Unclassified",
+    "data" : {
+      "text" : "No queue item #7"
+    },
+    "group" : "Unclassified",
+    "text" : "No queue item #7"
+  }
 }
 == acquire list
 200 {
@@ -646,7 +660,14 @@ A Zq atlas (buy)
       "goal" : "zqa-goal",
       "index" : "core",
       "kind" : "query",
-      "lastError" : "not asked this sweep — CORE's daily budget for searches is spent (6 of 6 tokens today, UTC; acquire.core.search-daily-tokens)",
+      "lastError" : {
+        "case" : "Unclassified",
+        "data" : {
+          "text" : "not asked this sweep — CORE's daily budget for searches is spent (6 of 6 tokens today, UTC; acquire.core.search-daily-tokens)"
+        },
+        "group" : "Unclassified",
+        "text" : "not asked this sweep — CORE's daily budget for searches is spent (6 of 6 tokens today, UTC; acquire.core.search-daily-tokens)"
+      },
       "lastFound" : 0,
       "lastRun" : null,
       "subject" : "zq tin trade",
@@ -729,7 +750,14 @@ A Zq atlas (buy)
       "goal" : "zqa-goal",
       "index" : "core",
       "kind" : "query",
-      "lastError" : "not asked this sweep — CORE's daily budget for searches is spent (6 of 6 tokens today, UTC; acquire.core.search-daily-tokens)",
+      "lastError" : {
+        "case" : "Unclassified",
+        "data" : {
+          "text" : "not asked this sweep — CORE's daily budget for searches is spent (6 of 6 tokens today, UTC; acquire.core.search-daily-tokens)"
+        },
+        "group" : "Unclassified",
+        "text" : "not asked this sweep — CORE's daily budget for searches is spent (6 of 6 tokens today, UTC; acquire.core.search-daily-tokens)"
+      },
       "lastFound" : 0,
       "lastRun" : null,
       "subject" : "zq tin trade",
@@ -756,7 +784,14 @@ A Zq atlas (buy)
 == sweep (no such goal)
 400 {
   "code" : "not_found",
-  "message" : "no goal 'zqa-none'"
+  "message" : {
+    "case" : "Unclassified",
+    "data" : {
+      "text" : "no goal 'zqa-none'"
+    },
+    "group" : "Unclassified",
+    "text" : "no goal 'zqa-none'"
+  }
 }
 == candidates
 200 {
@@ -879,7 +914,14 @@ A Zq atlas (buy)
 == mark (bad state)
 400 {
   "code" : "invalid",
-  "message" : "unknown state 'maybe' (new, seen, queued, dismissed)"
+  "message" : {
+    "case" : "Unclassified",
+    "data" : {
+      "text" : "unknown state 'maybe' (new, seen, queued, dismissed)"
+    },
+    "group" : "Unclassified",
+    "text" : "unknown state 'maybe' (new, seen, queued, dismissed)"
+  }
 }
 == candidates --state seen
 200 {
@@ -924,7 +966,14 @@ A Zq atlas (buy)
 == candidates --state wrong
 400 {
   "code" : "invalid",
-  "message" : "unknown state 'wrong' (new, seen, queued, dismissed)"
+  "message" : {
+    "case" : "Unclassified",
+    "data" : {
+      "text" : "unknown state 'wrong' (new, seen, queued, dismissed)"
+    },
+    "group" : "Unclassified",
+    "text" : "unknown state 'wrong' (new, seen, queued, dismissed)"
+  }
 }
 == sweep again (CORE's budget spent)
 200 {
@@ -985,7 +1034,14 @@ A Zq atlas (buy)
       "goal" : "zqa-goal",
       "index" : "core",
       "kind" : "query",
-      "lastError" : "not asked this sweep — CORE's daily budget for searches is spent (6 of 6 tokens today, UTC; acquire.core.search-daily-tokens)",
+      "lastError" : {
+        "case" : "Unclassified",
+        "data" : {
+          "text" : "not asked this sweep — CORE's daily budget for searches is spent (6 of 6 tokens today, UTC; acquire.core.search-daily-tokens)"
+        },
+        "group" : "Unclassified",
+        "text" : "not asked this sweep — CORE's daily budget for searches is spent (6 of 6 tokens today, UTC; acquire.core.search-daily-tokens)"
+      },
       "lastFound" : 0,
       "lastRun" : null,
       "subject" : "zq tin trade",

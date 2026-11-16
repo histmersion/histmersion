@@ -11,6 +11,7 @@ import util.problem.Problem.*
 import Column.stored
 import Answer.{answer, decoded, entry, problem, retryAfter, status}
 import util.problem.Text.{sentence, sentences}
+import json.NewtypeCodecs.{list, problemCodec}
 
 /** Every case of [[Problem]], through every renderer the api owns: its HTTP status, its English sentence, its frozen
   * stored sentence (which reads back as the case) and its JSON (which decodes back to the case). The renderers' matches
@@ -151,7 +152,41 @@ class RenderSuite extends munit.FunSuite:
       assertEquals(s"${e.`case`}", p.productPrefix)
       assertEquals(s"${e.text}", p.sentence)
       assertEquals(RawJson.decode[Answer.Entry](e.asJson.noSpaces).flatMap(_.problem), Right(p))
+
+    test(s"${p.group.productPrefix}.${p.productPrefix}: inside a record, typed with its sentence, and read back"):
+      val written = (p: Problem).asJson
+      p match
+        case u: Stored.Unrecognised => assertEquals(written, Json.fromString(u.stored))
+        case _                      => assertEquals(written, p.entry.asJson)
+      assertEquals(RawJson.decode[Problem](written.noSpaces), Right(p))
   }
+
+  test("a problem inside a record keeps the type of the problems it carries"):
+    val copy: Problem = NotFound.Copy(
+      Raw("10.1/x"),
+      Vector(NotFound.Answer(NotFound.Fetcher("core"), NotFound.Kind.Refused, Problem.Run.Interrupted))
+    )
+    val written = copy.asJson.noSpaces
+    assert(written.contains("\"why\":{\"group\":\"Run\",\"case\":\"Interrupted\""), written)
+    assertEquals(RawJson.decode[Problem](written), Right(copy))
+
+  test("a problem written bare by an earlier version reads through the column reader, and an unknown one stays bare"):
+    // the frozen sentence of a case reads as that case, which is written typed from then on
+    assertEquals(RawJson.decode[Problem]("\"interrupted\""), Right(Problem.Run.Interrupted))
+    assertEquals(
+      RawJson.decode[List[Problem]]("[\"cancelled by Person\"]"),
+      Right(List(Run.Cancelled(Run.Actor.Person)))
+    )
+    // any other text (an English sentence, an old message) is the stored text as it was, written back byte for byte
+    List("converter down", "no legal open-access PDF found for 10.1/x", "").foreach { text =>
+      val bare = Json.fromString(text).noSpaces
+      val read = RawJson.decode[Problem](bare)
+      read match
+        case Right(unrecognised: Stored.Unrecognised) => assertEquals(unrecognised.stored, text)
+        case other                                    => fail(s"$bare reads as $other")
+      assertEquals(read.map(_.asJson.noSpaces), Right(bare))
+    }
+    assert(RawJson.decode[Problem]("""{"group":"Run","case":"Nope","data":{},"text":"x"}""").isLeft)
 
   test("English sentences tell the cases apart"):
     assertEquals(examples.map(_.sentence).distinct.size, examples.size)

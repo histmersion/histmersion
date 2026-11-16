@@ -116,7 +116,14 @@
 == GET /api/sources/zznone1900_x/passages?q=x
 404 {
   "code" : "not_found",
-  "message" : "No source 'zznone1900_x'"
+  "message" : {
+    "case" : "Unclassified",
+    "data" : {
+      "text" : "No source 'zznone1900_x'"
+    },
+    "group" : "Unclassified",
+    "text" : "No source 'zznone1900_x'"
+  }
 }
 == tool passages {"citekey":"zzhill1990_battle","query":"Zzport"}
 ## Passages: "Zzport" in `zzhill1990_battle`

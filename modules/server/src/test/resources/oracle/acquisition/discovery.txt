@@ -391,7 +391,14 @@
 == discover (blank)
 400 {
   "code" : null,
-  "message" : "give a search query"
+  "message" : {
+    "case" : "Unclassified",
+    "data" : {
+      "text" : "give a search query"
+    },
+    "group" : "Unclassified",
+    "text" : "give a search query"
+  }
 }
 == meta 10.5555/zq.open
 200 {
@@ -505,17 +512,44 @@
 == meta zqa_nodoi
 400 {
   "code" : null,
-  "message" : "'zqa_nodoi' has no DOI recorded — nothing to look up upstream"
+  "message" : {
+    "case" : "Unclassified",
+    "data" : {
+      "text" : "'zqa_nodoi' has no DOI recorded — nothing to look up upstream"
+    },
+    "group" : "Unclassified",
+    "text" : "'zqa_nodoi' has no DOI recorded — nothing to look up upstream"
+  }
 }
 == meta zqa_missing
 400 {
   "code" : "not_found",
-  "message" : "No source 'zqa_missing'"
+  "message" : {
+    "case" : "Entity",
+    "data" : {
+      "key" : "zqa_missing",
+      "typeName" : "com.histmersion.api.library.Citekey"
+    },
+    "group" : "NotFound",
+    "text" : "No source 'zqa_missing'"
+  }
 }
 == meta 10.5555/zq.unknown
 400 {
   "code" : null,
-  "message" : "127.0.0.1 answered HTTP 404 at http://127.0.0.1:PORT/crossref/works/10.5555/zq.unknown?mailto=oracle@example.org — not found"
+  "message" : {
+    "case" : "Http",
+    "data" : {
+      "at" : [
+      ],
+      "body" : "not found",
+      "status" : 404,
+      "upstream" : "127.0.0.1",
+      "url" : "http://127.0.0.1:PORT/crossref/works/10.5555/zq.unknown?mailto=oracle@example.org"
+    },
+    "group" : "Upstream",
+    "text" : "127.0.0.1 answered HTTP 404 at http://127.0.0.1:PORT/crossref/works/10.5555/zq.unknown?mailto=oracle@example.org — not found"
+  }
 }
   > GET /openalex/works/https://doi.org/10.5555/zq.unknown?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
   > GET /crossref/works/10.5555/zq.unknown?mailto=oracle@example.org
@@ -596,7 +630,14 @@
 == refs zqa_nodoi
 400 {
   "code" : null,
-  "message" : "no DOI for 'zqa_nodoi' — a reference list needs one"
+  "message" : {
+    "case" : "Unclassified",
+    "data" : {
+      "text" : "no DOI for 'zqa_nodoi' — a reference list needs one"
+    },
+    "group" : "Unclassified",
+    "text" : "no DOI for 'zqa_nodoi' — a reference list needs one"
+  }
 }
 == followups zqa_cited
 200 {
@@ -848,12 +889,32 @@
 == assess zqa_nodoi
 400 {
   "code" : null,
-  "message" : "no DOI for 'zqa_nodoi' — an assessment needs one"
+  "message" : {
+    "case" : "Unclassified",
+    "data" : {
+      "text" : "no DOI for 'zqa_nodoi' — an assessment needs one"
+    },
+    "group" : "Unclassified",
+    "text" : "no DOI for 'zqa_nodoi' — an assessment needs one"
+  }
 }
 == assess (bad id)
 400 {
   "code" : null,
-  "message" : "'not an id!' is neither a DOI, an arXiv id, nor a citekey"
+  "message" : {
+    "case" : "Broken",
+    "data" : {
+      "at" : [
+      ],
+      "rule" : {
+        "IdentifierKind" : {
+          "stated" : "not an id!"
+        }
+      }
+    },
+    "group" : "Invalid",
+    "text" : "'not an id!' is neither a DOI, an arXiv id, nor a citekey"
+  }
 }
 == mcp discover query
 ### 3 work(s) for “zq tin”
