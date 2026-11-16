@@ -1,8 +1,9 @@
 package com.histmersion
 package domain.catalogue.places
 
-import com.histmersion.util.problem.Text.sentence
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
+import com.histmersion.plugin.GazetteerSource
+import com.histmersion.util.problem.ProblemLog.line
 import io.scalaland.chimney.dsl.*
 import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.api.jobs.{JobDetail, JobInfo, JobKinds}
@@ -30,7 +31,7 @@ final class GazetteerControllers(
   private val slot = BackgroundJob.Slot()
 
   /** A places job: `about` says what it does (the jobs list shows it), `run` answers its summary or why it failed. */
-  private def job(kind: Job.Kind, about: String)(run: => Either[String, String]): Either[Api.Error, JobInfo] =
+  private def job(kind: Job.Kind, about: String)(run: => Either[Problem, String]): Either[Api.Error, JobInfo] =
     BackgroundJob.start(
       ds,
       kind,
@@ -42,10 +43,8 @@ final class GazetteerControllers(
       progress(JobInfo.Progress(about))
       scribe.info(s"[import] $about…")
       val r = run
-      r.fold(e => scribe.error(s"[import] $about failed: $e"), ok => scribe.info(s"[import] $about: $ok"))
-      BackgroundJob.Outcome.of(
-        r.left.map((text => Problem.Unclassified(Legacy.Text(text)))).map(BackgroundJob.Outcome.Summary(_))
-      )
+      r.fold(e => scribe.error(s"[import] $about failed: ${e.line}"), ok => scribe.info(s"[import] $about: $ok"))
+      BackgroundJob.Outcome.of(r.map(BackgroundJob.Outcome.Summary(_)))
     )
 
   /** `POST /api/places/fetch?source=cliopatria` — download, transform and upsert an external gazetteer. Idempotent:
@@ -64,10 +63,10 @@ final class GazetteerControllers(
         imports
           .source(
             BuiltinGazetteers.Entry.Name(name),
-            Problem.Unclassified(
-              Legacy.Text(
-                s"unknown source '$source' (available: ${(imports.available.map(_.value) :+ NaturalEarthLand.name).mkString(", ")})"
-              )
+            Problem.Invalid.Unknown.here(
+              Problem.TypeName.named[GazetteerSource],
+              Problem.Raw.of(source),
+              imports.available.toVector.map(Problem.Raw.of(_)) :+ Problem.Raw(NaturalEarthLand.name)
             )
           )
           .left
@@ -78,8 +77,6 @@ final class GazetteerControllers(
               job(Job.Kind.assume(PlacesJobKinds.PlacesFetch.kind.value), s"fetch $name")(
                 imports
                   .fetch(src, dryRun = GazetteerControllers.DryRun(false))
-                  .left
-                  .map(_.sentence)
                   .map(r =>
                     s"${r.places} places, ${r.names} names, ${r.relations} relations" +
                       (if r.failed.nonEmpty then s", ${r.failed.size} failed" else "")
@@ -96,8 +93,6 @@ final class GazetteerControllers(
       job(Job.Kind.assume(PlacesJobKinds.PlacesFetch.kind.value), "fetch land")(
         imports
           .land(dryRun = GazetteerControllers.DryRun(false))
-          .left
-          .map(_.sentence)
           .map(r => s"${r.places} polities clipped${r.failed.mkString(" ", "; ", "")}".trim)
       ).map(j => importStarted(j))
 

@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.catalogue.places
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import io.scalaland.chimney.dsl.*
 import com.histmersion.api.exchange.Bundle
 
@@ -66,7 +66,12 @@ final class PlacesControllers(
       case Some(p) if GeoPick.parse(p).isEmpty =>
         Left(
           Api.Error(
-            Problem.Unclassified(Legacy.Text(s"unknown pick '$p': one of ${GeoPick.values.map(_.wire).mkString(", ")}"))
+            Problem.Invalid.Unknown(
+              Problem.TypeName.of(GeoPick.Wire),
+              Problem.Raw.of(p),
+              GeoPick.values.toVector.map(v => Problem.Raw.of(v.wire)),
+              Vector(Problem.Field("pick"))
+            )
           )
         )
       case p =>
@@ -137,7 +142,14 @@ final class PlacesControllers(
       val k = kind.map(_.value.trim.toLowerCase).filter(_.nonEmpty).getOrElse(Place.Kind.Region)
       if !Place.Kind.all.contains(Place.Kind.Wire(k)) then
         Left(
-          Api.Error(Problem.Unclassified(Legacy.Text(s"unknown kind '$k' (one of: ${Place.Kind.all.mkString(", ")})")))
+          Api.Error(
+            Problem.Invalid.Unknown(
+              Problem.TypeName.of(Place.Kind.Wire),
+              Problem.Raw(k),
+              Place.Kind.all.toVector.map(Problem.Raw.of(_)),
+              Vector(Problem.Field("kind"))
+            )
+          )
         )
       else
         for
@@ -251,11 +263,11 @@ final class PlacesControllers(
           .validate(Bundle.Kind.Place, LabelRenames.Label(from.value), LabelRenames.Label(req.to.value))
           .flatMap(to =>
             Place.Id
-              .either(to.value)
+              .checked(to.value)
               .left
-              .map(why =>
+              .map(refusal =>
                 Api.Error(
-                  Problem.Unclassified(Legacy.Text(s"'${to.value}' is not a place id: $why")),
+                  Problem.Invalid.malformed(refusal).within(Problem.Field("to")),
                   Some(Api.Error.Code(Write.CodeInvalid))
                 )
               )

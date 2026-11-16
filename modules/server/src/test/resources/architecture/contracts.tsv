@@ -1121,7 +1121,7 @@ unwrap	server:domain/catalogue/periods/PeriodService.scala	.value outside a boun
 unwrap	server:domain/catalogue/periods/PeriodsControllers.scala	.value outside a boundary	5
 unwrap	server:domain/catalogue/periods/PeriodsData.scala	.value outside a boundary	2
 unwrap	server:domain/catalogue/places/BuiltinGazetteers.scala	.value outside a boundary	3
-unwrap	server:domain/catalogue/places/GazetteerControllers.scala	.value outside a boundary	9
+unwrap	server:domain/catalogue/places/GazetteerControllers.scala	.value outside a boundary	8
 unwrap	server:domain/catalogue/places/GazetteerImport.scala	.value outside a boundary	2
 unwrap	server:domain/catalogue/places/GazetteerImports.scala	.value outside a boundary	15
 unwrap	server:domain/catalogue/places/GazetteerLoad.scala	.value outside a boundary	84
@@ -1131,7 +1131,7 @@ unwrap	server:domain/catalogue/places/NaturalEarthLand.scala	.value outside a bo
 unwrap	server:domain/catalogue/places/PlaceGeometry.scala	.value outside a boundary	8
 unwrap	server:domain/catalogue/places/PlaceMap.scala	.value outside a boundary	2
 unwrap	server:domain/catalogue/places/PlaceService.scala	.value outside a boundary	152
-unwrap	server:domain/catalogue/places/PlacesControllers.scala	.value outside a boundary	33
+unwrap	server:domain/catalogue/places/PlacesControllers.scala	.value outside a boundary	32
 unwrap	server:domain/catalogue/places/PlacesData.scala	.value outside a boundary	21
 unwrap	server:domain/catalogue/places/SiteTypeService.scala	.value outside a boundary	18
 unwrap	server:domain/catalogue/places/SiteTypesControllers.scala	.value outside a boundary	30

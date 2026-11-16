@@ -1576,12 +1576,23 @@
   "code" : null,
   "problems" : [
     {
-      "case" : "Unclassified",
+      "case" : "Unknown",
       "data" : {
-        "text" : "unknown pick 'nonsense': one of mid, start, end, earliest, latest"
+        "at" : [
+          "pick"
+        ],
+        "known" : [
+          "mid",
+          "start",
+          "end",
+          "earliest",
+          "latest"
+        ],
+        "raw" : "nonsense",
+        "typeName" : "GeoPick"
       },
-      "group" : "Unclassified",
-      "text" : "unknown pick 'nonsense': one of mid, start, end, earliest, latest"
+      "group" : "Invalid",
+      "text" : "pick: unknown geo pick 'nonsense' (one of: mid, start, end, earliest, latest)"
     }
   ]
 }

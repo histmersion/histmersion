@@ -110,7 +110,7 @@ class PlacesControllersSuite extends munit.FunSuite:
     assert(
       c.importPlaces(Caller.Local, Some(Place.Kind.Wire("nonsense")), None, doc)
         .left
-        .exists(_.problems.sentences.mkString("; ").contains("unknown kind"))
+        .exists(_.problems.sentences.mkString("; ").contains("kind: unknown place kind"))
     )
     assert(
       c.importPlaces(Caller.Local, None, Some(Dataset.Wire("other")), doc)
@@ -155,7 +155,7 @@ class PlacesControllersSuite extends munit.FunSuite:
     assert(
       c.shapes(Api.PlacesGeoQuery(pick = Some(GeoPick.Wire("nonsense"))))
         .left
-        .exists(_.problems.sentences.mkString("; ").contains("unknown pick"))
+        .exists(_.problems.sentences.mkString("; ").contains("pick: unknown geo pick '"))
     )
     assert(c.shapes(Api.PlacesGeoQuery(kind = Some(com.histmersion.api.catalogue.Place.Kind.Wire("region")))).isRight)
     assertEquals(

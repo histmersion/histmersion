@@ -1,6 +1,6 @@
 package com.histmersion
 package domain.catalogue.places
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{Problem, ProblemLog}
 
 import hearth.kindlings.optics.syntax.*
 
@@ -77,4 +77,4 @@ object ImportRunner:
       scribe.info(s"[import] rebuilding finding_places…")
       val _ = geometry.rebuildFindingPlaces(toleranceKm)
       Right(total)
-    catch case e: Exception => Left(Problem.Unclassified(Legacy.Text(s"upsert failed: ${e.getMessage}")))
+    catch case e: Exception => Left(ProblemLog.unexpected(e, Problem.Where("place upsert")))

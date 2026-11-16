@@ -1,6 +1,6 @@
 package com.histmersion
 package domain.catalogue.places
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.plugin.GazetteerSource
 import com.histmersion.pluginhost.Registries
@@ -75,8 +75,10 @@ object BuiltinGazetteers:
       entries
         .find(_.name == name)
         .fold(unknown)(e =>
-          Problem.Unclassified(
-            Legacy.Text(s"${e.title} ($name) is switched off (histmersion.plugins.${e.plugin}.enabled = false)")
+          Problem.Refused.Disabled(
+            Problem.Refused.Feature(s"${e.title} ($name)"),
+            Problem.SettingKey(s"histmersion.plugins.${e.plugin}.enabled"),
+            None
           )
         )
     }

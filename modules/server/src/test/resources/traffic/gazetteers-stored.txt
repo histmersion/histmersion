@@ -119,4 +119,4 @@ place_relations:
 {"kind":"part_of","period":"(,)","child_id":"cliopatria_phrygia_undated_3","parent_id":"cliopatria_phrygia_undated"}
 ## names
 init.fetch-sources: cliopatria, awmc, chronontology, land, periodo, geonames, wikidata, lpf, tgn
-places fetch nowhere: Left(Error(unknown source 'nowhere' (available: cliopatria, awmc, chronontology, land),None))
+places fetch nowhere: Left(Error(unknown gazetteer source 'nowhere' (one of: cliopatria, awmc, chronontology, land),None))
