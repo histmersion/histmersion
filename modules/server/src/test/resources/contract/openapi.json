@@ -20035,7 +20035,7 @@
           "problems" : {
             "type" : "array",
             "items" : {
-              "type" : "string"
+              "$ref" : "#/components/schemas/Problem"
             }
           },
           "fatal" : {
@@ -20919,7 +20919,7 @@
             "format" : "int64"
           },
           "error" : {
-            "type" : "string"
+            "$ref" : "#/components/schemas/Problem"
           }
         }
       },
@@ -21304,7 +21304,7 @@
             "type" : "string"
           },
           "lastError" : {
-            "type" : "string"
+            "$ref" : "#/components/schemas/Problem"
           },
           "lastFound" : {
             "type" : "integer",
@@ -21359,7 +21359,7 @@
             "type" : "boolean"
           },
           "problem" : {
-            "type" : "string"
+            "$ref" : "#/components/schemas/Problem"
           },
           "freesAt" : {
             "type" : "string"
@@ -21709,7 +21709,7 @@
             "$ref" : "#/components/schemas/Accepted"
           },
           "jobError" : {
-            "type" : "string"
+            "$ref" : "#/components/schemas/Problem"
           },
           "jobErrorCode" : {
             "type" : "string"
@@ -21749,7 +21749,7 @@
           "problems" : {
             "type" : "array",
             "items" : {
-              "type" : "string"
+              "$ref" : "#/components/schemas/Problem"
             }
           }
         }
@@ -21995,7 +21995,7 @@
           "reasons" : {
             "type" : "array",
             "items" : {
-              "type" : "string"
+              "$ref" : "#/components/schemas/Problem"
             }
           }
         }
@@ -23348,7 +23348,7 @@
             "type" : "string"
           },
           "problem" : {
-            "type" : "string"
+            "$ref" : "#/components/schemas/Problem"
           }
         }
       },
@@ -23554,7 +23554,7 @@
             "type" : "string"
           },
           "error" : {
-            "type" : "string"
+            "$ref" : "#/components/schemas/Problem"
           },
           "endedAt" : {
             "type" : "string"
@@ -23601,7 +23601,7 @@
         ],
         "properties" : {
           "message" : {
-            "type" : "string"
+            "$ref" : "#/components/schemas/Problem"
           },
           "code" : {
             "type" : "string"
@@ -26029,7 +26029,7 @@
           "why" : {
             "type" : "array",
             "items" : {
-              "type" : "string"
+              "$ref" : "#/components/schemas/Problem"
             }
           }
         }
@@ -26181,7 +26181,7 @@
           "problems" : {
             "type" : "array",
             "items" : {
-              "type" : "string"
+              "$ref" : "#/components/schemas/Problem"
             }
           },
           "conflicts" : {
@@ -26904,7 +26904,7 @@
             "type" : "string"
           },
           "error" : {
-            "type" : "string"
+            "$ref" : "#/components/schemas/Problem"
           },
           "sha256" : {
             "type" : "string"
@@ -27138,7 +27138,7 @@
             }
           },
           "error" : {
-            "type" : "string"
+            "$ref" : "#/components/schemas/Problem"
           },
           "onDemand" : {
             "$ref" : "#/components/schemas/OnDemand"
@@ -28271,7 +28271,7 @@
           "why" : {
             "type" : "array",
             "items" : {
-              "type" : "string"
+              "$ref" : "#/components/schemas/Problem"
             }
           },
           "places" : {
@@ -28952,7 +28952,7 @@
             "$ref" : "#/components/schemas/MergeApplyResult"
           },
           "error" : {
-            "type" : "string"
+            "$ref" : "#/components/schemas/Problem"
           }
         }
       },
@@ -29031,7 +29031,7 @@
           "problems" : {
             "type" : "array",
             "items" : {
-              "type" : "string"
+              "$ref" : "#/components/schemas/Problem"
             }
           },
           "issues" : {
@@ -29303,13 +29303,13 @@
           "problems" : {
             "type" : "array",
             "items" : {
-              "type" : "string"
+              "$ref" : "#/components/schemas/Problem"
             }
           },
           "resolutionErrors" : {
             "type" : "array",
             "items" : {
-              "type" : "string"
+              "$ref" : "#/components/schemas/Problem"
             }
           },
           "resolved" : {
@@ -30688,7 +30688,7 @@
             "type" : "array",
             "minItems" : 1,
             "items" : {
-              "type" : "string"
+              "$ref" : "#/components/schemas/Problem"
             }
           }
         }
@@ -30833,7 +30833,7 @@
           "errors" : {
             "type" : "array",
             "items" : {
-              "type" : "string"
+              "$ref" : "#/components/schemas/Problem"
             }
           }
         }
@@ -31099,6 +31099,41 @@
           }
         }
       },
+      "Problem" : {
+        "title" : "Problem",
+        "oneOf" : [
+          {
+            "$ref" : "#/components/schemas/ProblemEntry"
+          },
+          {
+            "type" : "string"
+          }
+        ]
+      },
+      "ProblemEntry" : {
+        "title" : "ProblemEntry",
+        "type" : "object",
+        "required" : [
+          "group",
+          "case",
+          "data",
+          "text"
+        ],
+        "properties" : {
+          "group" : {
+            "type" : "string"
+          },
+          "case" : {
+            "type" : "string"
+          },
+          "data" : {
+            
+          },
+          "text" : {
+            "type" : "string"
+          }
+        }
+      },
       "ProposedArticle" : {
         "title" : "ProposedArticle",
         "type" : "object",
@@ -31187,7 +31222,7 @@
             "type" : "string"
           },
           "error" : {
-            "type" : "string"
+            "$ref" : "#/components/schemas/Problem"
           }
         }
       },
@@ -32823,7 +32858,7 @@
             "type" : "string"
           },
           "why" : {
-            "type" : "string"
+            "$ref" : "#/components/schemas/Problem"
           }
         }
       },
@@ -32913,7 +32948,7 @@
             "type" : "boolean"
           },
           "error" : {
-            "type" : "string"
+            "$ref" : "#/components/schemas/Problem"
           }
         }
       },
@@ -33218,7 +33253,7 @@
             "type" : "string"
           },
           "problem" : {
-            "type" : "string"
+            "$ref" : "#/components/schemas/Problem"
           }
         }
       },
@@ -33240,7 +33275,7 @@
             "type" : "boolean"
           },
           "problem" : {
-            "type" : "string"
+            "$ref" : "#/components/schemas/Problem"
           }
         }
       },
@@ -33446,7 +33481,7 @@
             "type" : "string"
           },
           "error" : {
-            "type" : "string"
+            "$ref" : "#/components/schemas/Problem"
           },
           "model" : {
             "type" : "string"
@@ -34406,7 +34441,7 @@
             "type" : "string"
           },
           "error" : {
-            "type" : "string"
+            "$ref" : "#/components/schemas/Problem"
           },
           "pruned" : {
             "type" : "array",
@@ -34571,7 +34606,7 @@
             "format" : "double"
           },
           "error" : {
-            "type" : "string"
+            "$ref" : "#/components/schemas/Problem"
           },
           "output" : {
             "type" : "string"
@@ -35343,7 +35378,7 @@
           "problems" : {
             "type" : "array",
             "items" : {
-              "type" : "string"
+              "$ref" : "#/components/schemas/Problem"
             }
           }
         }
@@ -35469,7 +35504,7 @@
           "problems" : {
             "type" : "array",
             "items" : {
-              "type" : "string"
+              "$ref" : "#/components/schemas/Problem"
             }
           }
         }

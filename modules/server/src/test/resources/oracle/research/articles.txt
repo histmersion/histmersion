@@ -603,29 +603,100 @@
 == put refused: a bad slug
 400 {
   "code" : "invalid",
-  "message" : "'Bad Slug' is not a slug: Should match [a-z0-9][a-z0-9_.-]{0,120}"
+  "message" : {
+    "case" : "Malformed",
+    "data" : {
+      "at" : [
+      ],
+      "constraint" : {
+        "description" : "Should match [a-z0-9][a-z0-9_.-]{0,120}",
+        "name" : "Match[\"[a-z0-9][a-z0-9_.-]{0,120}\"]"
+      },
+      "raw" : "Bad Slug",
+      "typeName" : "com.histmersion.domain.research.Slug"
+    },
+    "group" : "Invalid",
+    "text" : "'Bad Slug' is not a slug: Should match [a-z0-9][a-z0-9_.-]{0,120}"
+  }
 }
 == put refused: a bad kind
 400 {
   "code" : "invalid",
-  "message" : "kind: 'Not A Kind!' is not an article kind (e.g. concept, myth, culture, region, timeline, report, index)"
+  "message" : {
+    "case" : "Unreadable",
+    "data" : {
+      "at" : [
+        "kind"
+      ],
+      "examples" : [
+        "concept",
+        "myth",
+        "culture",
+        "region",
+        "timeline",
+        "report",
+        "index"
+      ],
+      "raw" : "Not A Kind!",
+      "typeName" : "com.histmersion.api.research.Article.Kind.Wire"
+    },
+    "group" : "Invalid",
+    "text" : "kind: 'Not A Kind!' is not an article kind (e.g. concept, myth, culture, region, timeline, report, index)"
+  }
 }
 == put refused: an unknown key
 400 Invalid value for: body (unknown key 'nope' (one of: title, kind, body, summary, tags, regions, periodStart, periodEnd, filter, reasons))
 == put refused: a reason for no citekey
 400 {
   "code" : "invalid",
-  "message" : "reasons: 'not a key!' is not a citekey (e.g. anthony2007)"
+  "message" : {
+    "case" : "Unreadable",
+    "data" : {
+      "at" : [
+        "reasons"
+      ],
+      "examples" : [
+        "anthony2007"
+      ],
+      "raw" : "not a key!",
+      "typeName" : "com.histmersion.api.library.Citekey"
+    },
+    "group" : "Invalid",
+    "text" : "reasons: 'not a key!' is not a citekey (e.g. anthony2007)"
+  }
 }
 == put refused: an overlong reason
 400 {
   "code" : "invalid",
-  "message" : "reasons.zralpha1990_walls: coverage rationale 501 is above 500"
+  "message" : {
+    "case" : "OutOfRange",
+    "data" : {
+      "at" : [
+        "reasons",
+        "zralpha1990_walls"
+      ],
+      "bounds" : {
+        "greatest" : "500",
+        "least" : null
+      },
+      "raw" : "501",
+      "typeName" : "com.histmersion.api.research.Coverage.Rationale"
+    },
+    "group" : "Invalid",
+    "text" : "reasons.zralpha1990_walls: coverage rationale 501 is above 500"
+  }
 }
 == put refused: strict, a formatting error
 400 {
   "code" : "invalid",
-  "message" : "refused (strict): 2 formatting errors — body L1:1 error html-tag — `<div>` is never closed — everything after it is inside it · `<div> never closed`; summary L1:1 error html-tag — `<div>` is never closed — everything after it is inside it · `<div> never closed`"
+  "message" : {
+    "case" : "Unclassified",
+    "data" : {
+      "text" : "refused (strict): 2 formatting errors — body L1:1 error html-tag — `<div>` is never closed — everything after it is inside it · `<div> never closed`; summary L1:1 error html-tag — `<div>` is never closed — everything after it is inside it · `<div> never closed`"
+    },
+    "group" : "Unclassified",
+    "text" : "refused (strict): 2 formatting errors — body L1:1 error html-tag — `<div>` is never closed — everything after it is inside it · `<div> never closed`; summary L1:1 error html-tag — `<div>` is never closed — everything after it is inside it · `<div> never closed`"
+  }
 }
 == tool put_article (a culture)
 # The Zr culture
@@ -1342,7 +1413,15 @@ The Zr culture built walls [[zralpha1990_walls]].
 == GET /api/articles/zr_nothing
 404 {
   "code" : "not_found",
-  "message" : "no article slug 'zr_nothing'"
+  "message" : {
+    "case" : "Entity",
+    "data" : {
+      "key" : "zr_nothing",
+      "typeName" : "com.histmersion.api.research.Article.Slug"
+    },
+    "group" : "NotFound",
+    "text" : "no article slug 'zr_nothing'"
+  }
 }
 == tool get_article (all)
 # The walls of Zrtown
@@ -2928,7 +3007,15 @@ _showing 2–3 of 6 — next: offset=3 — full set: limit=6_
 == patch zr_harbour: append to a missing section
 400 {
   "code" : "invalid",
-  "message" : "no article section 'No such'"
+  "message" : {
+    "case" : "Entity",
+    "data" : {
+      "key" : "No such",
+      "typeName" : "com.histmersion.api.research.Article.Section"
+    },
+    "group" : "NotFound",
+    "text" : "no article section 'No such'"
+  }
 }
 == patch zr_harbour: tags add
 200 {
@@ -3930,12 +4017,32 @@ _showing 2–3 of 6 — next: offset=3 — full set: limit=6_
 == patch zr_harbour: refused: a stale ifUpdatedAt
 412 {
   "code" : "precondition_failed",
-  "message" : "article slug 'zr_harbour' has moved on: you sent TS, it is now TS — read it again and re-apply your change"
+  "message" : {
+    "case" : "Stale",
+    "data" : {
+      "key" : "zr_harbour",
+      "sent" : "TS",
+      "stored" : "TS",
+      "typeName" : "com.histmersion.api.research.Article.Slug"
+    },
+    "group" : "Conflict",
+    "text" : "article slug 'zr_harbour' has moved on: you sent TS, it is now TS — read it again and re-apply your change"
+  }
 }
 == patch zr_harbour: refused: a malformed ifUpdatedAt
 412 {
   "code" : "precondition_failed",
-  "message" : "article slug 'zr_harbour' has moved on: you sent yesterday, it is now TS — read it again and re-apply your change"
+  "message" : {
+    "case" : "Stale",
+    "data" : {
+      "key" : "zr_harbour",
+      "sent" : "yesterday",
+      "stored" : "TS",
+      "typeName" : "com.histmersion.api.research.Article.Slug"
+    },
+    "group" : "Conflict",
+    "text" : "article slug 'zr_harbour' has moved on: you sent yesterday, it is now TS — read it again and re-apply your change"
+  }
 }
 == patch zr_harbour: with the current ifUpdatedAt
 200 {
@@ -4095,19 +4202,54 @@ _showing 2–3 of 6 — next: offset=3 — full set: limit=6_
 == patch zr_harbour: refused: strict, a formatting error
 400 {
   "code" : "invalid",
-  "message" : "refused (strict): 1 formatting error — body L11:1 error html-tag — `<div>` is never closed — everything after it is inside it · `<div> never closed`"
+  "message" : {
+    "case" : "Unclassified",
+    "data" : {
+      "text" : "refused (strict): 1 formatting error — body L11:1 error html-tag — `<div>` is never closed — everything after it is inside it · `<div> never closed`"
+    },
+    "group" : "Unclassified",
+    "text" : "refused (strict): 1 formatting error — body L11:1 error html-tag — `<div>` is never closed — everything after it is inside it · `<div> never closed`"
+  }
 }
 == patch zr_harbour: refused: an unknown key
 400 Invalid value for: body (unknown key 'nope' (one of: title, summary, body, append, section, tags, regions, period, kind, ifUpdatedAt, filter, reasons, critiqueReasons))
 == patch zr_harbour: refused: a bad kind
 400 {
   "code" : "invalid",
-  "message" : "kind: 'Not A Kind!' is not an article kind (e.g. concept, myth, culture, region, timeline, report, index)"
+  "message" : {
+    "case" : "Unreadable",
+    "data" : {
+      "at" : [
+        "kind"
+      ],
+      "examples" : [
+        "concept",
+        "myth",
+        "culture",
+        "region",
+        "timeline",
+        "report",
+        "index"
+      ],
+      "raw" : "Not A Kind!",
+      "typeName" : "com.histmersion.api.research.Article.Kind.Wire"
+    },
+    "group" : "Invalid",
+    "text" : "kind: 'Not A Kind!' is not an article kind (e.g. concept, myth, culture, region, timeline, report, index)"
+  }
 }
 == patch zr_nothing: unknown article
 404 {
   "code" : "not_found",
-  "message" : "no article slug 'zr_nothing'"
+  "message" : {
+    "case" : "Entity",
+    "data" : {
+      "key" : "zr_nothing",
+      "typeName" : "com.histmersion.api.research.Article.Slug"
+    },
+    "group" : "NotFound",
+    "text" : "no article slug 'zr_nothing'"
+  }
 }
 == patch zr_harbour: filter cleared
 200 {
@@ -4307,12 +4449,27 @@ _article slug 'zr_kings' has moved on: you sent TS, it is now TS — read it aga
 == GET an unknown version
 400 {
   "code" : "not_found",
-  "message" : "No version 999999 for article 'zr_harbour'"
+  "message" : {
+    "case" : "Unclassified",
+    "data" : {
+      "text" : "No version 999999 for article 'zr_harbour'"
+    },
+    "group" : "Unclassified",
+    "text" : "No version 999999 for article 'zr_harbour'"
+  }
 }
 == GET versions of an unknown article
 400 {
   "code" : "not_found",
-  "message" : "no article slug 'zr_nothing'"
+  "message" : {
+    "case" : "Entity",
+    "data" : {
+      "key" : "zr_nothing",
+      "typeName" : "com.histmersion.api.research.Article.Slug"
+    },
+    "group" : "NotFound",
+    "text" : "no article slug 'zr_nothing'"
+  }
 }
 == tool article_versions
 ### 15 version(s) of zr_harbour
@@ -4548,17 +4705,39 @@ The harbour was founded by a hero [[zrbeta2001_harbour]]. See [[zr_walls]] for t
 == GET coverage of zr_harbour
 404 {
   "code" : "not_found",
-  "message" : "article 'zr_harbour' records no filter, so it has no generated coverage — set the filter it is compiled from: histmersion article patch zr_harbour --filter-query … (or --filter-topics/--filter-tags), or patch_article with `filter`"
+  "message" : {
+    "case" : "Unclassified",
+    "data" : {
+      "text" : "article 'zr_harbour' records no filter, so it has no generated coverage — set the filter it is compiled from: histmersion article patch zr_harbour --filter-query … (or --filter-topics/--filter-tags), or patch_article with `filter`"
+    },
+    "group" : "Unclassified",
+    "text" : "article 'zr_harbour' records no filter, so it has no generated coverage — set the filter it is compiled from: histmersion article patch zr_harbour --filter-query … (or --filter-topics/--filter-tags), or patch_article with `filter`"
+  }
 }
 == GET coverage of zr_kings
 404 {
   "code" : "not_found",
-  "message" : "article 'zr_kings' records no filter, so it has no generated coverage — set the filter it is compiled from: histmersion article patch zr_kings --filter-query … (or --filter-topics/--filter-tags), or patch_article with `filter`"
+  "message" : {
+    "case" : "Unclassified",
+    "data" : {
+      "text" : "article 'zr_kings' records no filter, so it has no generated coverage — set the filter it is compiled from: histmersion article patch zr_kings --filter-query … (or --filter-topics/--filter-tags), or patch_article with `filter`"
+    },
+    "group" : "Unclassified",
+    "text" : "article 'zr_kings' records no filter, so it has no generated coverage — set the filter it is compiled from: histmersion article patch zr_kings --filter-query … (or --filter-topics/--filter-tags), or patch_article with `filter`"
+  }
 }
 == GET coverage of zr_nothing
 404 {
   "code" : "not_found",
-  "message" : "no article slug 'zr_nothing'"
+  "message" : {
+    "case" : "Entity",
+    "data" : {
+      "key" : "zr_nothing",
+      "typeName" : "com.histmersion.api.research.Article.Slug"
+    },
+    "group" : "NotFound",
+    "text" : "no article slug 'zr_nothing'"
+  }
 }
 == tool article_coverage
 ## Coverage of [[zr_walls]]
@@ -4617,7 +4796,15 @@ _article 'zr_kings' records no filter, so it has no generated coverage — set t
 == GET review of zr_nothing
 404 {
   "code" : "not_found",
-  "message" : "no article slug 'zr_nothing'"
+  "message" : {
+    "case" : "Entity",
+    "data" : {
+      "key" : "zr_nothing",
+      "typeName" : "com.histmersion.api.research.Article.Slug"
+    },
+    "group" : "NotFound",
+    "text" : "no article slug 'zr_nothing'"
+  }
 }
 == tool article_review
 ## Review of [[zr_walls]]
@@ -4655,14 +4842,38 @@ No finding recorded.
       "anchor" : "no such passage",
       "index" : 1,
       "op" : "delete",
-      "problem" : "anchor: it is not in the article — copy it exactly from the current body (earlier edits included)",
+      "problem" : {
+        "case" : "Proposal",
+        "data" : {
+          "at" : "anchor",
+          "rule" : {
+            "AnchorInArticle" : {
+              
+            }
+          }
+        },
+        "group" : "Content",
+        "text" : "anchor: it is not in the article — copy it exactly from the current body (earlier edits included)"
+      },
       "text" : ""
     }
   ],
   "fatal" : false,
   "kind" : "concept",
   "problems" : [
-    "edit 1 (delete \"no such passage\"): anchor: it is not in the article — copy it exactly from the current body (earlier edits included)"
+    {
+      "case" : "Proposal",
+      "data" : {
+        "at" : "edit 1 (delete \"no such passage\"): anchor",
+        "rule" : {
+          "AnchorInArticle" : {
+            
+          }
+        }
+      },
+      "group" : "Content",
+      "text" : "edit 1 (delete \"no such passage\"): anchor: it is not in the article — copy it exactly from the current body (earlier edits included)"
+    }
   ],
   "slug" : "zr_walls",
   "wordsAfter" : 52,
@@ -4676,7 +4887,18 @@ No finding recorded.
   "fatal" : false,
   "kind" : "concept",
   "problems" : [
-    "banned filler — it is important to note"
+    {
+      "case" : "Answer",
+      "data" : {
+        "rule" : {
+          "NoFiller" : {
+            "matches" : "it is important to note"
+          }
+        }
+      },
+      "group" : "Content",
+      "text" : "banned filler — it is important to note"
+    }
   ],
   "slug" : "zr_walls",
   "wordsAfter" : 11,
@@ -4698,12 +4920,38 @@ No finding recorded.
 == check walls: refused: both
 400 {
   "code" : "invalid",
-  "message" : "give exactly one of edits, body"
+  "message" : {
+    "case" : "Inconsistent",
+    "data" : {
+      "at" : [
+      ],
+      "fields" : [
+        "edits",
+        "body"
+      ],
+      "rule" : "OneOf"
+    },
+    "group" : "Invalid",
+    "text" : "give exactly one of edits, body"
+  }
 }
 == check walls: refused: neither
 400 {
   "code" : "invalid",
-  "message" : "give exactly one of edits, body"
+  "message" : {
+    "case" : "Inconsistent",
+    "data" : {
+      "at" : [
+      ],
+      "fields" : [
+        "edits",
+        "body"
+      ],
+      "rule" : "OneOf"
+    },
+    "group" : "Invalid",
+    "text" : "give exactly one of edits, body"
+  }
 }
 == check a new article's draft
 200 {
@@ -4721,7 +4969,15 @@ No finding recorded.
 == check an unknown article's edits
 404 {
   "code" : "not_found",
-  "message" : "no article slug 'zr_new'"
+  "message" : {
+    "case" : "Entity",
+    "data" : {
+      "key" : "zr_new",
+      "typeName" : "com.histmersion.api.research.Article.Slug"
+    },
+    "group" : "NotFound",
+    "text" : "no article slug 'zr_new'"
+  }
 }
 == tool check_edits
 ## Check of [[zr_walls]] (concept)
@@ -4822,7 +5078,15 @@ No problems: these are the checks code runs on the answer, and it would pass the
 == lint unknown
 404 {
   "code" : "not_found",
-  "message" : "no article slug 'zr_nothing'"
+  "message" : {
+    "case" : "Entity",
+    "data" : {
+      "key" : "zr_nothing",
+      "typeName" : "com.histmersion.api.research.Article.Slug"
+    },
+    "group" : "NotFound",
+    "text" : "no article slug 'zr_nothing'"
+  }
 }
 == export zr_walls
 200 ---
@@ -4892,7 +5156,15 @@ period_end: null
 == export zr_nothing
 404 {
   "code" : "not_found",
-  "message" : "no article slug 'zr_nothing'"
+  "message" : {
+    "case" : "Entity",
+    "data" : {
+      "key" : "zr_nothing",
+      "typeName" : "com.histmersion.api.research.Article.Slug"
+    },
+    "group" : "NotFound",
+    "text" : "no article slug 'zr_nothing'"
+  }
 }
 == tool export_article
 ---
@@ -4976,7 +5248,14 @@ _Method: search {tags: ["zr-oracle"]} → 4; statuses: 2 current, 1 contested, 1
 == backlinks of zrnone2000_x
 404 {
   "code" : null,
-  "message" : "No source 'zrnone2000_x'"
+  "message" : {
+    "case" : "Unclassified",
+    "data" : {
+      "text" : "No source 'zrnone2000_x'"
+    },
+    "group" : "Unclassified",
+    "text" : "No source 'zrnone2000_x'"
+  }
 }
 == resolve zr_walls
 200 {
@@ -5031,7 +5310,14 @@ _Method: search {tags: ["zr-oracle"]} → 4; statuses: 2 current, 1 contested, 1
 == import a note: new, no frontmatter
 400 {
   "code" : null,
-  "message" : "no YAML frontmatter in the article note"
+  "message" : {
+    "case" : "Unclassified",
+    "data" : {
+      "text" : "no YAML frontmatter in the article note"
+    },
+    "group" : "Unclassified",
+    "text" : "no YAML frontmatter in the article note"
+  }
 }
 == import a note: a new article
 200 {
@@ -5113,17 +5399,46 @@ _Method: search {tags: ["zr-oracle"]} → 4; statuses: 2 current, 1 contested, 1
 == rename refused: taken
 400 {
   "code" : "invalid",
-  "message" : "'zr_harbour' is already the slug of another article"
+  "message" : {
+    "case" : "Unclassified",
+    "data" : {
+      "text" : "'zr_harbour' is already the slug of another article"
+    },
+    "group" : "Unclassified",
+    "text" : "'zr_harbour' is already the slug of another article"
+  }
 }
 == rename refused: invalid
 400 {
   "code" : "invalid",
-  "message" : "article slug: 'Bad Slug' is not a label (e.g. sea_peoples)"
+  "message" : {
+    "case" : "Unreadable",
+    "data" : {
+      "at" : [
+        "article slug"
+      ],
+      "examples" : [
+        "sea_peoples"
+      ],
+      "raw" : "Bad Slug",
+      "typeName" : "com.histmersion.api.aliases.LabelRenames.Label"
+    },
+    "group" : "Invalid",
+    "text" : "article slug: 'Bad Slug' is not a label (e.g. sea_peoples)"
+  }
 }
 == rename refused: unknown
 404 {
   "code" : "not_found",
-  "message" : "no article slug 'zr_nothing'"
+  "message" : {
+    "case" : "Entity",
+    "data" : {
+      "key" : "zr_nothing",
+      "typeName" : "com.histmersion.api.research.Article.Slug"
+    },
+    "group" : "NotFound",
+    "text" : "no article slug 'zr_nothing'"
+  }
 }
 == GET by the old slug
 200 {
@@ -5618,7 +5933,17 @@ _Method: search {tags: ["zr-oracle"]} → 4; statuses: 2 current, 1 contested, 1
 == delete eps refused (cited)
 400 {
   "code" : "invalid",
-  "message" : "citekey 'zreps1999_lost' is referred to by 1 article — remove those references first (there is no override)"
+  "message" : {
+    "case" : "Referenced",
+    "data" : {
+      "by" : "com.histmersion.api.library.DeleteBlocker.Kind.Article",
+      "count" : 1,
+      "key" : "zreps1999_lost",
+      "typeName" : "com.histmersion.api.library.Citekey"
+    },
+    "group" : "Conflict",
+    "text" : "citekey 'zreps1999_lost' is referred to by 1 article — remove those references first (there is no override)"
+  }
 }
 == delete the citing article
 200 {
@@ -5628,7 +5953,15 @@ _Method: search {tags: ["zr-oracle"]} → 4; statuses: 2 current, 1 contested, 1
 == delete it again
 404 {
   "code" : "not_found",
-  "message" : "no article slug 'zr_lost'"
+  "message" : {
+    "case" : "Entity",
+    "data" : {
+      "key" : "zr_lost",
+      "typeName" : "com.histmersion.api.research.Article.Slug"
+    },
+    "group" : "NotFound",
+    "text" : "no article slug 'zr_lost'"
+  }
 }
 == delete eps
 200 {

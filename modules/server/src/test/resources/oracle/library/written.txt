@@ -349,19 +349,52 @@
 == put refused: a bad citekey
 400 {
   "code" : "invalid",
-  "message" : "'Bad Key' is not a citekey: Should match (?!.*\\.\\.)[a-z][a-z0-9_.-]{1,120}"
+  "message" : {
+    "case" : "Malformed",
+    "data" : {
+      "at" : [
+      ],
+      "constraint" : {
+        "description" : "Should match (?!.*\\.\\.)[a-z][a-z0-9_.-]{1,120}",
+        "name" : "Match[\"(?!.*\\\\.\\\\.)[a-z][a-z0-9_.-]{1,120}\"]"
+      },
+      "raw" : "Bad Key",
+      "typeName" : "com.histmersion.domain.library.Citekey"
+    },
+    "group" : "Invalid",
+    "text" : "'Bad Key' is not a citekey: Should match (?!.*\\.\\.)[a-z][a-z0-9_.-]{1,120}"
+  }
 }
 == put refused: an unknown key
 400 Invalid value for: body (unknown key 'nope' (one of: title, authors, doi, year, venue, status, topics, regions, tags, periodStart, periodEnd, summary, body, notes, citedByCount, influentialCitations, provenance, calibreId, findings, edges))
 == put refused: an edge from another source
 400 {
   "code" : "invalid",
-  "message" : "edges: 'zqgamma1975_kings' --references--> 'zqbeta2001_cove' is stored on 'zqgamma1975_kings', not here: patch 'zqgamma1975_kings' to record it"
+  "message" : {
+    "case" : "StoredOn",
+    "data" : {
+      "at" : [
+        "edges"
+      ],
+      "item" : "'zqgamma1975_kings' --references--> 'zqbeta2001_cove'",
+      "owner" : "zqgamma1975_kings",
+      "typeName" : "com.histmersion.api.library.Edge"
+    },
+    "group" : "Invalid",
+    "text" : "edges: 'zqgamma1975_kings' --references--> 'zqbeta2001_cove' is stored on 'zqgamma1975_kings', not here: patch 'zqgamma1975_kings' to record it"
+  }
 }
 == put refused: strict, a formatting error
 400 {
   "code" : "invalid",
-  "message" : "refused (strict): 1 formatting error — notes L1:1 error html-tag — `<div>` is never closed — everything after it is inside it · `<div> never closed`"
+  "message" : {
+    "case" : "Unclassified",
+    "data" : {
+      "text" : "refused (strict): 1 formatting error — notes L1:1 error html-tag — `<div>` is never closed — everything after it is inside it · `<div> never closed`"
+    },
+    "group" : "Unclassified",
+    "text" : "refused (strict): 1 formatting error — notes L1:1 error html-tag — `<div>` is never closed — everything after it is inside it · `<div> never closed`"
+  }
 }
 == article citing alpha, its short form, epsilon
 200 {

@@ -5,6 +5,10 @@ import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.testsupport.ComparedByValue.given
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.api.json.NewtypeCodecs.given
+import hearth.kindlings.jsoniterjson.Json
 
 import hearth.kindlings.optics.syntax.*
 
@@ -992,6 +996,22 @@ class BundleSuite extends DbSuite with Bounded:
     assert(r.problems.exists(_.sentence.contains("article zzb_topic")), r.problems.mkString("\n"))
     assert(r.issues.exists(i => i.kind == Issue.Kind.ArticleDiverged && i.open), r.issues.toString)
     assert(java.util.Arrays.equals(exportOf(c, sc), before), "a refused import wrote something")
+    // the import's result (a job's stored result) keeps its problems typed, and a result an earlier version stored
+    // with each problem as a bare string still reads: as the stored text, written back bare
+    val written = r.asJson
+    assertEquals(RawJson.decode[Bundle.ImportResult](written.noSpaces), Right(r))
+    val bare =
+      written.mapObject(_.updated("problems", Json.Arr(r.problems.toVector.map(p => Json.fromString(p.sentence)))))
+    val earlier = RawJson.decode[Bundle.ImportResult](bare.noSpaces)
+    assertEquals(earlier.map(_.problems.map(_.sentence)), Right(r.problems.map(_.sentence)))
+    assert(
+      earlier.toOption.toList.flatMap(_.problems).forall {
+        case _: Problem.Stored.Unrecognised => true
+        case _                              => false
+      },
+      earlier.toString
+    )
+    assertEquals(earlier.map(_.asJson.noSpaces), Right(bare.noSpaces))
 
   test("M2: a dry run reports and writes nothing"):
     val (a, b) = (fresh("dra"), fresh("drb"))

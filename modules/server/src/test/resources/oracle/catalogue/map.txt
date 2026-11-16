@@ -4418,7 +4418,14 @@
 == GET /api/aggregate?by=nonsense
 400 {
   "code" : null,
-  "message" : "unsupported by='nonsense' — use time | region | time,region | region,time"
+  "message" : {
+    "case" : "Unclassified",
+    "data" : {
+      "text" : "unsupported by='nonsense' — use time | region | time,region | region,time"
+    },
+    "group" : "Unclassified",
+    "text" : "unsupported by='nonsense' — use time | region | time,region | region,time"
+  }
 }
 == tool geo_when {"places":["zz_land"]}
 ### 4 finding(s)
@@ -4733,6 +4740,6 @@ media/11/1225/781?text=Zz 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934c
 media/11/1225/781?kind=figure 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "0054f2844cab6400f53f07d4"
 media/11/1225/781?provider=source 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "c4ca65743e71f888e97f4016"
 media/11/1225/781?license=none 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "a7632843388b9c7db8209ea2"
-nonsense/0/0/0 400 79 b46720bddb2fee7a9698572b5d985a8ad26a9eb317459a21ee91578d878e032e -
-sites/40/0/0 400 50 a904f954130f5231ad72c0e4915887c32e104b61ad44140adebf9bf206616771 -
-sites/2/9/0 400 64 febbd1dbd3a5fa3aeb5a5b688cff380b1d79a645b214c49cb7827f4e8786fc64 -
+nonsense/0/0/0 400 205 edd3388c133600d45094ecc216e23bd2c63dab0cec331f60e521215df766a23a -
+sites/40/0/0 400 147 d97440f06028988e2006e5796ac2c90c1e5cb53c0c46fa14862fa0aff0e88d64 -
+sites/2/9/0 400 175 362049502274b5a3c2a6c681b3ab881abb6cf1090a9d19a562bac5c5885ea34b -

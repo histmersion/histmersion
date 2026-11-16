@@ -1736,7 +1736,14 @@
 == GET /api/events/zz_gone
 404 {
   "code" : "not_found",
-  "message" : "No event 'zz_gone'"
+  "message" : {
+    "case" : "Unclassified",
+    "data" : {
+      "text" : "No event 'zz_gone'"
+    },
+    "group" : "Unclassified",
+    "text" : "No event 'zz_gone'"
+  }
 }
 == GET /api/events/corrections
 200 {
@@ -1775,7 +1782,14 @@
 == GET /api/events/corrections?status=open
 400 {
   "code" : "invalid",
-  "message" : "status 'open' is not active | agreed | conflict"
+  "message" : {
+    "case" : "Unclassified",
+    "data" : {
+      "text" : "status 'open' is not active | agreed | conflict"
+    },
+    "group" : "Unclassified",
+    "text" : "status 'open' is not active | agreed | conflict"
+  }
 }
 == GET /api/events/corrections?limit=1&offset=0
 200 {

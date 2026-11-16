@@ -174,9 +174,30 @@
         "year" : 1990
       },
       "why" : [
-        "title matches 'walls'",
-        "summary matches 'walls'",
-        "full text matches 'walls'"
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "title matches 'walls'"
+          },
+          "group" : "Unclassified",
+          "text" : "title matches 'walls'"
+        },
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "summary matches 'walls'"
+          },
+          "group" : "Unclassified",
+          "text" : "summary matches 'walls'"
+        },
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "full text matches 'walls'"
+          },
+          "group" : "Unclassified",
+          "text" : "full text matches 'walls'"
+        }
       ]
     }
   ],
@@ -214,7 +235,14 @@
         "year" : 1990
       },
       "why" : [
-        "full text matches '\"sea peoples\"'"
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "full text matches '\"sea peoples\"'"
+          },
+          "group" : "Unclassified",
+          "text" : "full text matches '\"sea peoples\"'"
+        }
       ]
     }
   ],
@@ -252,7 +280,14 @@
         "year" : 1990
       },
       "why" : [
-        "full text matches 'tin -islands'"
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "full text matches 'tin -islands'"
+          },
+          "group" : "Unclassified",
+          "text" : "full text matches 'tin -islands'"
+        }
       ]
     }
   ],
@@ -288,7 +323,14 @@
         "year" : 1975
       },
       "why" : [
-        "full text matches 'tin or kings'"
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "full text matches 'tin or kings'"
+          },
+          "group" : "Unclassified",
+          "text" : "full text matches 'tin or kings'"
+        }
       ]
     },
     {
@@ -318,7 +360,14 @@
         "year" : 1990
       },
       "why" : [
-        "full text matches 'tin or kings'"
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "full text matches 'tin or kings'"
+          },
+          "group" : "Unclassified",
+          "text" : "full text matches 'tin or kings'"
+        }
       ]
     },
     {
@@ -347,7 +396,14 @@
         "year" : 2001
       },
       "why" : [
-        "full text matches 'tin or kings'"
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "full text matches 'tin or kings'"
+          },
+          "group" : "Unclassified",
+          "text" : "full text matches 'tin or kings'"
+        }
       ]
     }
   ],
@@ -385,7 +441,14 @@
             "zq-trade"
           ],
           "why" : [
-            "tag: zq-trade"
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "tag: zq-trade"
+              },
+              "group" : "Unclassified",
+              "text" : "tag: zq-trade"
+            }
           ]
         }
       ],
@@ -434,7 +497,14 @@
             "zq-trade"
           ],
           "why" : [
-            "tag: zq-trade"
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "tag: zq-trade"
+              },
+              "group" : "Unclassified",
+              "text" : "tag: zq-trade"
+            }
           ]
         }
       ],
@@ -461,7 +531,14 @@
         "year" : 2001
       },
       "why" : [
-        "tag: zq-trade"
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "tag: zq-trade"
+          },
+          "group" : "Unclassified",
+          "text" : "tag: zq-trade"
+        }
       ]
     }
   ],
@@ -491,7 +568,14 @@
             "zq-trade"
           ],
           "why" : [
-            "tag: zq-trade"
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "tag: zq-trade"
+              },
+              "group" : "Unclassified",
+              "text" : "tag: zq-trade"
+            }
           ]
         }
       ],
@@ -519,7 +603,14 @@
         "year" : 1990
       },
       "why" : [
-        "tag: zq-oracle"
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "tag: zq-oracle"
+          },
+          "group" : "Unclassified",
+          "text" : "tag: zq-oracle"
+        }
       ]
     },
     {
@@ -541,7 +632,14 @@
             "zq-trade"
           ],
           "why" : [
-            "tag: zq-trade"
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "tag: zq-trade"
+              },
+              "group" : "Unclassified",
+              "text" : "tag: zq-trade"
+            }
           ]
         }
       ],
@@ -568,8 +666,22 @@
         "year" : 2001
       },
       "why" : [
-        "tag: zq-trade",
-        "tag: zq-oracle"
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "tag: zq-trade"
+          },
+          "group" : "Unclassified",
+          "text" : "tag: zq-trade"
+        },
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "tag: zq-oracle"
+          },
+          "group" : "Unclassified",
+          "text" : "tag: zq-oracle"
+        }
       ]
     }
   ],
@@ -615,8 +727,22 @@
         "year" : 1990
       },
       "why" : [
-        "author: Zqwriter, Bo",
-        "author: Zqwriter, Bo"
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "author: Zqwriter, Bo"
+          },
+          "group" : "Unclassified",
+          "text" : "author: Zqwriter, Bo"
+        },
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "author: Zqwriter, Bo"
+          },
+          "group" : "Unclassified",
+          "text" : "author: Zqwriter, Bo"
+        }
       ]
     },
     {
@@ -645,8 +771,22 @@
         "year" : 2001
       },
       "why" : [
-        "author: Zqwriter, Bo",
-        "author: Zqwriter, Bo"
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "author: Zqwriter, Bo"
+          },
+          "group" : "Unclassified",
+          "text" : "author: Zqwriter, Bo"
+        },
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "author: Zqwriter, Bo"
+          },
+          "group" : "Unclassified",
+          "text" : "author: Zqwriter, Bo"
+        }
       ]
     }
   ],
@@ -684,7 +824,14 @@
         "year" : 1990
       },
       "why" : [
-        "author: Zqauthor, Ann"
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "author: Zqauthor, Ann"
+          },
+          "group" : "Unclassified",
+          "text" : "author: Zqauthor, Ann"
+        }
       ]
     },
     {
@@ -712,7 +859,14 @@
         "year" : 1975
       },
       "why" : [
-        "author: Zqauthor, Ann"
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "author: Zqauthor, Ann"
+          },
+          "group" : "Unclassified",
+          "text" : "author: Zqauthor, Ann"
+        }
       ]
     }
   ],
@@ -742,7 +896,14 @@
             "zq-trade"
           ],
           "why" : [
-            "place: Zqcove"
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "place: Zqcove"
+              },
+              "group" : "Unclassified",
+              "text" : "place: Zqcove"
+            }
           ]
         }
       ],
@@ -791,7 +952,14 @@
             "zq-trade"
           ],
           "why" : [
-            "place: Zqcove"
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "place: Zqcove"
+              },
+              "group" : "Unclassified",
+              "text" : "place: Zqcove"
+            }
           ]
         }
       ],
@@ -847,7 +1015,14 @@
             "zq-claim"
           ],
           "why" : [
-            "place: Zqland"
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "place: Zqland"
+              },
+              "group" : "Unclassified",
+              "text" : "place: Zqland"
+            }
           ]
         },
         {
@@ -867,7 +1042,14 @@
             "zq-trade"
           ],
           "why" : [
-            "place: Zqland"
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "place: Zqland"
+              },
+              "group" : "Unclassified",
+              "text" : "place: Zqland"
+            }
           ]
         },
         {
@@ -887,7 +1069,14 @@
             "zq-claim"
           ],
           "why" : [
-            "place: Zqland"
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "place: Zqland"
+              },
+              "group" : "Unclassified",
+              "text" : "place: Zqland"
+            }
           ]
         }
       ],
@@ -936,7 +1125,14 @@
             "zq-trade"
           ],
           "why" : [
-            "place: Zqland"
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "place: Zqland"
+              },
+              "group" : "Unclassified",
+              "text" : "place: Zqland"
+            }
           ]
         }
       ],
@@ -983,7 +1179,14 @@
             "zq-claim"
           ],
           "why" : [
-            "place: Zqland"
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "place: Zqland"
+              },
+              "group" : "Unclassified",
+              "text" : "place: Zqland"
+            }
           ]
         }
       ],
@@ -1030,7 +1233,14 @@
             "zq-claim"
           ],
           "why" : [
-            "place: Zqland"
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "place: Zqland"
+              },
+              "group" : "Unclassified",
+              "text" : "place: Zqland"
+            }
           ]
         }
       ],
@@ -1085,7 +1295,14 @@
             "zq-claim"
           ],
           "why" : [
-            "place: Zqtell"
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "place: Zqtell"
+              },
+              "group" : "Unclassified",
+              "text" : "place: Zqtell"
+            }
           ]
         },
         {
@@ -1105,7 +1322,14 @@
             "zq-claim"
           ],
           "why" : [
-            "place: Zqtell"
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "place: Zqtell"
+              },
+              "group" : "Unclassified",
+              "text" : "place: Zqtell"
+            }
           ]
         }
       ],
@@ -1154,7 +1378,14 @@
             "zq-claim"
           ],
           "why" : [
-            "place: Zqtell"
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "place: Zqtell"
+              },
+              "group" : "Unclassified",
+              "text" : "place: Zqtell"
+            }
           ]
         }
       ],
@@ -1208,7 +1439,14 @@
             "zq-claim"
           ],
           "why" : [
-            "place: Zqisles"
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "place: Zqisles"
+              },
+              "group" : "Unclassified",
+              "text" : "place: Zqisles"
+            }
           ]
         }
       ],
@@ -1264,7 +1502,14 @@
             "zq-claim"
           ],
           "why" : [
-            "place: Zqland"
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "place: Zqland"
+              },
+              "group" : "Unclassified",
+              "text" : "place: Zqland"
+            }
           ]
         },
         {
@@ -1284,7 +1529,14 @@
             "zq-trade"
           ],
           "why" : [
-            "place: Zqland"
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "place: Zqland"
+              },
+              "group" : "Unclassified",
+              "text" : "place: Zqland"
+            }
           ]
         },
         {
@@ -1304,7 +1556,14 @@
             "zq-claim"
           ],
           "why" : [
-            "place: Zqland"
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "place: Zqland"
+              },
+              "group" : "Unclassified",
+              "text" : "place: Zqland"
+            }
           ]
         }
       ],
@@ -1353,7 +1612,14 @@
             "zq-trade"
           ],
           "why" : [
-            "place: Zqland"
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "place: Zqland"
+              },
+              "group" : "Unclassified",
+              "text" : "place: Zqland"
+            }
           ]
         },
         {
@@ -1372,7 +1638,14 @@
             "zq-claim"
           ],
           "why" : [
-            "place: Zqisles"
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "place: Zqisles"
+              },
+              "group" : "Unclassified",
+              "text" : "place: Zqisles"
+            }
           ]
         }
       ],
@@ -1419,7 +1692,14 @@
             "zq-claim"
           ],
           "why" : [
-            "place: Zqland"
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "place: Zqland"
+              },
+              "group" : "Unclassified",
+              "text" : "place: Zqland"
+            }
           ]
         }
       ],
@@ -1466,7 +1746,14 @@
             "zq-claim"
           ],
           "why" : [
-            "place: Zqland"
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "place: Zqland"
+              },
+              "group" : "Unclassified",
+              "text" : "place: Zqland"
+            }
           ]
         }
       ],
@@ -1529,7 +1816,14 @@
         "year" : 1990
       },
       "why" : [
-        "topic: bronze age"
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "topic: bronze age"
+          },
+          "group" : "Unclassified",
+          "text" : "topic: bronze age"
+        }
       ]
     },
     {
@@ -1558,7 +1852,14 @@
         "year" : 2001
       },
       "why" : [
-        "topic: bronze age"
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "topic: bronze age"
+          },
+          "group" : "Unclassified",
+          "text" : "topic: bronze age"
+        }
       ]
     }
   ],
@@ -1595,7 +1896,14 @@
         "year" : 2001
       },
       "why" : [
-        "status: contested"
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "status: contested"
+          },
+          "group" : "Unclassified",
+          "text" : "status: contested"
+        }
       ]
     }
   ],
@@ -1632,7 +1940,14 @@
         "year" : 2001
       },
       "why" : [
-        "status: contested"
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "status: contested"
+          },
+          "group" : "Unclassified",
+          "text" : "status: contested"
+        }
       ]
     },
     {
@@ -1660,7 +1975,14 @@
         "year" : 1975
       },
       "why" : [
-        "status: superseded"
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "status: superseded"
+          },
+          "group" : "Unclassified",
+          "text" : "status: superseded"
+        }
       ]
     }
   ],
@@ -1698,7 +2020,14 @@
         "year" : 1990
       },
       "why" : [
-        "year: 1990"
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "year: 1990"
+          },
+          "group" : "Unclassified",
+          "text" : "year: 1990"
+        }
       ]
     },
     {
@@ -1727,7 +2056,14 @@
         "year" : 2001
       },
       "why" : [
-        "year: 2001"
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "year: 2001"
+          },
+          "group" : "Unclassified",
+          "text" : "year: 2001"
+        }
       ]
     },
     {
@@ -1755,7 +2091,14 @@
         "year" : 2010
       },
       "why" : [
-        "year: 2010"
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "year: 2010"
+          },
+          "group" : "Unclassified",
+          "text" : "year: 2010"
+        }
       ]
     },
     {
@@ -1783,7 +2126,14 @@
         "year" : 1999
       },
       "why" : [
-        "year: 1999"
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "year: 1999"
+          },
+          "group" : "Unclassified",
+          "text" : "year: 1999"
+        }
       ]
     }
   ],
@@ -1821,7 +2171,14 @@
         "year" : 1990
       },
       "why" : [
-        "year: 1990"
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "year: 1990"
+          },
+          "group" : "Unclassified",
+          "text" : "year: 1990"
+        }
       ]
     },
     {
@@ -1850,7 +2207,14 @@
         "year" : 2001
       },
       "why" : [
-        "year: 2001"
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "year: 2001"
+          },
+          "group" : "Unclassified",
+          "text" : "year: 2001"
+        }
       ]
     },
     {
@@ -1878,7 +2242,14 @@
         "year" : 1999
       },
       "why" : [
-        "year: 1999"
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "year: 1999"
+          },
+          "group" : "Unclassified",
+          "text" : "year: 1999"
+        }
       ]
     }
   ],
@@ -1908,7 +2279,14 @@
             "zq-trade"
           ],
           "why" : [
-            "period"
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "period"
+              },
+              "group" : "Unclassified",
+              "text" : "period"
+            }
           ]
         }
       ],
@@ -1936,7 +2314,14 @@
         "year" : 1990
       },
       "why" : [
-        "period: 1700 BCE–1100 BCE"
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "period: 1700 BCE–1100 BCE"
+          },
+          "group" : "Unclassified",
+          "text" : "period: 1700 BCE–1100 BCE"
+        }
       ]
     },
     {
@@ -1958,7 +2343,14 @@
             "zq-trade"
           ],
           "why" : [
-            "period"
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "period"
+              },
+              "group" : "Unclassified",
+              "text" : "period"
+            }
           ]
         }
       ],
@@ -1985,7 +2377,14 @@
         "year" : 2001
       },
       "why" : [
-        "period: 1700 BCE–1100 BCE"
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "period: 1700 BCE–1100 BCE"
+          },
+          "group" : "Unclassified",
+          "text" : "period: 1700 BCE–1100 BCE"
+        }
       ]
     },
     {
@@ -2013,7 +2412,14 @@
         "year" : 2010
       },
       "why" : [
-        "period: 1700 BCE–1100 BCE"
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "period: 1700 BCE–1100 BCE"
+          },
+          "group" : "Unclassified",
+          "text" : "period: 1700 BCE–1100 BCE"
+        }
       ]
     },
     {
@@ -2041,7 +2447,14 @@
         "year" : 1999
       },
       "why" : [
-        "period: 1700 BCE–1100 BCE"
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "period: 1700 BCE–1100 BCE"
+          },
+          "group" : "Unclassified",
+          "text" : "period: 1700 BCE–1100 BCE"
+        }
       ]
     },
     {
@@ -2063,7 +2476,14 @@
             "zq-claim"
           ],
           "why" : [
-            "period"
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "period"
+              },
+              "group" : "Unclassified",
+              "text" : "period"
+            }
           ]
         }
       ],
@@ -2089,7 +2509,14 @@
         "year" : 1975
       },
       "why" : [
-        "period: 1700 BCE–1100 BCE"
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "period: 1700 BCE–1100 BCE"
+          },
+          "group" : "Unclassified",
+          "text" : "period: 1700 BCE–1100 BCE"
+        }
       ]
     }
   ],
@@ -2119,7 +2546,14 @@
             "zq-claim"
           ],
           "why" : [
-            "period"
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "period"
+              },
+              "group" : "Unclassified",
+              "text" : "period"
+            }
           ]
         }
       ],
@@ -2147,7 +2581,14 @@
         "year" : 1990
       },
       "why" : [
-        "period: 1700 BCE–1100 BCE"
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "period: 1700 BCE–1100 BCE"
+          },
+          "group" : "Unclassified",
+          "text" : "period: 1700 BCE–1100 BCE"
+        }
       ]
     },
     {
@@ -2176,7 +2617,14 @@
         "year" : 2001
       },
       "why" : [
-        "period: 1700 BCE–1100 BCE"
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "period: 1700 BCE–1100 BCE"
+          },
+          "group" : "Unclassified",
+          "text" : "period: 1700 BCE–1100 BCE"
+        }
       ]
     },
     {
@@ -2204,7 +2652,14 @@
         "year" : 2010
       },
       "why" : [
-        "period: 1700 BCE–1100 BCE"
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "period: 1700 BCE–1100 BCE"
+          },
+          "group" : "Unclassified",
+          "text" : "period: 1700 BCE–1100 BCE"
+        }
       ]
     },
     {
@@ -2232,7 +2687,14 @@
         "year" : 1999
       },
       "why" : [
-        "period: 1700 BCE–1100 BCE"
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "period: 1700 BCE–1100 BCE"
+          },
+          "group" : "Unclassified",
+          "text" : "period: 1700 BCE–1100 BCE"
+        }
       ]
     },
     {
@@ -2260,7 +2722,14 @@
         "year" : 1975
       },
       "why" : [
-        "period: 1700 BCE–1100 BCE"
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "period: 1700 BCE–1100 BCE"
+          },
+          "group" : "Unclassified",
+          "text" : "period: 1700 BCE–1100 BCE"
+        }
       ]
     }
   ],
@@ -2290,7 +2759,14 @@
             "zq-claim"
           ],
           "why" : [
-            "period"
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "period"
+              },
+              "group" : "Unclassified",
+              "text" : "period"
+            }
           ]
         }
       ],
@@ -2318,7 +2794,14 @@
         "year" : 1990
       },
       "why" : [
-        "period: 1700 BCE–1100 BCE"
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "period: 1700 BCE–1100 BCE"
+          },
+          "group" : "Unclassified",
+          "text" : "period: 1700 BCE–1100 BCE"
+        }
       ]
     },
     {
@@ -2347,7 +2830,14 @@
         "year" : 2001
       },
       "why" : [
-        "period: 1700 BCE–1100 BCE"
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "period: 1700 BCE–1100 BCE"
+          },
+          "group" : "Unclassified",
+          "text" : "period: 1700 BCE–1100 BCE"
+        }
       ]
     },
     {
@@ -2375,7 +2865,14 @@
         "year" : 2010
       },
       "why" : [
-        "period: 1700 BCE–1100 BCE"
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "period: 1700 BCE–1100 BCE"
+          },
+          "group" : "Unclassified",
+          "text" : "period: 1700 BCE–1100 BCE"
+        }
       ]
     },
     {
@@ -2403,7 +2900,14 @@
         "year" : 1999
       },
       "why" : [
-        "period: 1700 BCE–1100 BCE"
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "period: 1700 BCE–1100 BCE"
+          },
+          "group" : "Unclassified",
+          "text" : "period: 1700 BCE–1100 BCE"
+        }
       ]
     },
     {
@@ -2425,7 +2929,14 @@
             "zq-claim"
           ],
           "why" : [
-            "period"
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "period"
+              },
+              "group" : "Unclassified",
+              "text" : "period"
+            }
           ]
         }
       ],
@@ -2451,7 +2962,14 @@
         "year" : 1975
       },
       "why" : [
-        "period: 1700 BCE–1100 BCE"
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "period: 1700 BCE–1100 BCE"
+          },
+          "group" : "Unclassified",
+          "text" : "period: 1700 BCE–1100 BCE"
+        }
       ]
     }
   ],
@@ -2481,7 +2999,14 @@
             "zq-claim"
           ],
           "why" : [
-            "bbox"
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "bbox"
+              },
+              "group" : "Unclassified",
+              "text" : "bbox"
+            }
           ]
         },
         {
@@ -2501,7 +3026,14 @@
             "zq-claim"
           ],
           "why" : [
-            "bbox"
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "bbox"
+              },
+              "group" : "Unclassified",
+              "text" : "bbox"
+            }
           ]
         }
       ],
@@ -2549,7 +3081,14 @@
             "zq-claim"
           ],
           "why" : [
-            "bbox"
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "bbox"
+              },
+              "group" : "Unclassified",
+              "text" : "bbox"
+            }
           ]
         }
       ],
@@ -2596,7 +3135,14 @@
             "zq-claim"
           ],
           "why" : [
-            "bbox"
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "bbox"
+              },
+              "group" : "Unclassified",
+              "text" : "bbox"
+            }
           ]
         }
       ],
@@ -2650,7 +3196,14 @@
             "zq-claim"
           ],
           "why" : [
-            "bbox"
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "bbox"
+              },
+              "group" : "Unclassified",
+              "text" : "bbox"
+            }
           ]
         }
       ],
@@ -3481,9 +4034,30 @@
         "year" : 1990
       },
       "why" : [
-        "title matches 'zqtell'",
-        "summary matches 'zqtell'",
-        "full text matches 'zqtell'"
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "title matches 'zqtell'"
+          },
+          "group" : "Unclassified",
+          "text" : "title matches 'zqtell'"
+        },
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "summary matches 'zqtell'"
+          },
+          "group" : "Unclassified",
+          "text" : "summary matches 'zqtell'"
+        },
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "full text matches 'zqtell'"
+          },
+          "group" : "Unclassified",
+          "text" : "full text matches 'zqtell'"
+        }
       ]
     },
     {
@@ -3511,7 +4085,14 @@
         "year" : 2010
       },
       "why" : [
-        "full text matches 'zqtell'"
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "full text matches 'zqtell'"
+          },
+          "group" : "Unclassified",
+          "text" : "full text matches 'zqtell'"
+        }
       ]
     },
     {
@@ -3539,7 +4120,14 @@
         "year" : 1975
       },
       "why" : [
-        "full text matches 'zqtell'"
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "full text matches 'zqtell'"
+          },
+          "group" : "Unclassified",
+          "text" : "full text matches 'zqtell'"
+        }
       ]
     }
   ],
@@ -3850,9 +4438,30 @@
             "zq-trade"
           ],
           "why" : [
-            "period",
-            "place: Zqland",
-            "tag: zq-trade"
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "period"
+              },
+              "group" : "Unclassified",
+              "text" : "period"
+            },
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "place: Zqland"
+              },
+              "group" : "Unclassified",
+              "text" : "place: Zqland"
+            },
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "tag: zq-trade"
+              },
+              "group" : "Unclassified",
+              "text" : "tag: zq-trade"
+            }
           ]
         },
         {
@@ -3871,7 +4480,14 @@
             "zq-claim"
           ],
           "why" : [
-            "period"
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "period"
+              },
+              "group" : "Unclassified",
+              "text" : "period"
+            }
           ]
         }
       ],
@@ -3898,10 +4514,38 @@
         "year" : 2001
       },
       "why" : [
-        "full text matches 'tin'",
-        "tag: zq-trade",
-        "status: contested",
-        "period: 1700 BCE–1100 BCE"
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "full text matches 'tin'"
+          },
+          "group" : "Unclassified",
+          "text" : "full text matches 'tin'"
+        },
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "tag: zq-trade"
+          },
+          "group" : "Unclassified",
+          "text" : "tag: zq-trade"
+        },
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "status: contested"
+          },
+          "group" : "Unclassified",
+          "text" : "status: contested"
+        },
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "period: 1700 BCE–1100 BCE"
+          },
+          "group" : "Unclassified",
+          "text" : "period: 1700 BCE–1100 BCE"
+        }
       ]
     }
   ],
@@ -3931,9 +4575,30 @@
             "zq-claim"
           ],
           "why" : [
-            "period",
-            "bbox",
-            "place: Zqtell"
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "period"
+              },
+              "group" : "Unclassified",
+              "text" : "period"
+            },
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "bbox"
+              },
+              "group" : "Unclassified",
+              "text" : "bbox"
+            },
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "place: Zqtell"
+              },
+              "group" : "Unclassified",
+              "text" : "place: Zqtell"
+            }
           ]
         },
         {
@@ -3953,8 +4618,22 @@
             "zq-trade"
           ],
           "why" : [
-            "period",
-            "bbox"
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "period"
+              },
+              "group" : "Unclassified",
+              "text" : "period"
+            },
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "bbox"
+              },
+              "group" : "Unclassified",
+              "text" : "bbox"
+            }
           ]
         },
         {
@@ -3974,9 +4653,30 @@
             "zq-claim"
           ],
           "why" : [
-            "period",
-            "bbox",
-            "place: Zqtell"
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "period"
+              },
+              "group" : "Unclassified",
+              "text" : "period"
+            },
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "bbox"
+              },
+              "group" : "Unclassified",
+              "text" : "bbox"
+            },
+            {
+              "case" : "Unclassified",
+              "data" : {
+                "text" : "place: Zqtell"
+              },
+              "group" : "Unclassified",
+              "text" : "place: Zqtell"
+            }
           ]
         }
       ],
@@ -4004,10 +4704,38 @@
         "year" : 1990
       },
       "why" : [
-        "title matches 'walls'",
-        "summary matches 'walls'",
-        "full text matches 'walls'",
-        "period: 1700 BCE–1100 BCE"
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "title matches 'walls'"
+          },
+          "group" : "Unclassified",
+          "text" : "title matches 'walls'"
+        },
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "summary matches 'walls'"
+          },
+          "group" : "Unclassified",
+          "text" : "summary matches 'walls'"
+        },
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "full text matches 'walls'"
+          },
+          "group" : "Unclassified",
+          "text" : "full text matches 'walls'"
+        },
+        {
+          "case" : "Unclassified",
+          "data" : {
+            "text" : "period: 1700 BCE–1100 BCE"
+          },
+          "group" : "Unclassified",
+          "text" : "period: 1700 BCE–1100 BCE"
+        }
       ]
     }
   ],
@@ -4497,7 +5225,14 @@
 == GET /api/facets?field=nonsense
 400 {
   "code" : null,
-  "message" : "unknown facet field 'nonsense' (one of: tags, authors, places, topics, status, provenance)"
+  "message" : {
+    "case" : "Unclassified",
+    "data" : {
+      "text" : "unknown facet field 'nonsense' (one of: tags, authors, places, topics, status, provenance)"
+    },
+    "group" : "Unclassified",
+    "text" : "unknown facet field 'nonsense' (one of: tags, authors, places, topics, status, provenance)"
+  }
 }
 == GET /api/findings
 200 [
@@ -17396,17 +18131,38 @@
 == GET /api/aggregate?by=nonsense
 400 {
   "code" : null,
-  "message" : "unsupported by='nonsense' — use time | region | time,region | region,time"
+  "message" : {
+    "case" : "Unclassified",
+    "data" : {
+      "text" : "unsupported by='nonsense' — use time | region | time,region | region,time"
+    },
+    "group" : "Unclassified",
+    "text" : "unsupported by='nonsense' — use time | region | time,region | region,time"
+  }
 }
 == GET /api/aggregate?unit=nonsense
 400 {
   "code" : null,
-  "message" : "unsupported unit='nonsense' — use sources, findings or starts"
+  "message" : {
+    "case" : "Unclassified",
+    "data" : {
+      "text" : "unsupported unit='nonsense' — use sources, findings or starts"
+    },
+    "group" : "Unclassified",
+    "text" : "unsupported unit='nonsense' — use sources, findings or starts"
+  }
 }
 == GET /api/aggregate?from=-1000000000000&to=1000000000000&size=1
 400 {
   "code" : null,
-  "message" : "that window needs 3001 buckets of 1 year(s), over the 2000 allowed (ui.max-buckets) — narrow `from`/`to`"
+  "message" : {
+    "case" : "Unclassified",
+    "data" : {
+      "text" : "that window needs 3001 buckets of 1 year(s), over the 2000 allowed (ui.max-buckets) — narrow `from`/`to`"
+    },
+    "group" : "Unclassified",
+    "text" : "that window needs 3001 buckets of 1 year(s), over the 2000 allowed (ui.max-buckets) — narrow `from`/`to`"
+  }
 }
 == tool search {"query":"tin"}
 ### 2 source(s)
@@ -17964,37 +18720,95 @@ _unsupported unit='nonsense' — use sources, findings or starts_
 == POST /api/query SELECT 1; SELECT 2
 400 {
   "code" : null,
-  "message" : "a query runs exactly one statement: drop the ';'-separated batch and ask again"
+  "message" : {
+    "case" : "Policy",
+    "data" : {
+      "rule" : "OneStatement"
+    },
+    "group" : "Refused",
+    "text" : "a query runs exactly one statement: drop the ';'-separated batch and ask again"
+  }
 }
 == POST /api/query DELETE FROM sources
 400 {
   "code" : null,
-  "message" : "ERROR: cannot execute DELETE in a read-only transaction"
+  "message" : {
+    "case" : "Unclassified",
+    "data" : {
+      "text" : "ERROR: cannot execute DELETE in a read-only transaction"
+    },
+    "group" : "Unclassified",
+    "text" : "ERROR: cannot execute DELETE in a read-only transaction"
+  }
 }
 == POST /api/query SET TRANSACTION READ WRITE
 400 {
   "code" : null,
-  "message" : "unknown query statement 'SET' (one of: SELECT, WITH)"
+  "message" : {
+    "case" : "Unknown",
+    "data" : {
+      "at" : [
+      ],
+      "known" : [
+        "SELECT",
+        "WITH"
+      ],
+      "raw" : "SET",
+      "typeName" : "com.histmersion.api.library.Query.Statement"
+    },
+    "group" : "Invalid",
+    "text" : "unknown query statement 'SET' (one of: SELECT, WITH)"
+  }
 }
 == POST /api/query WITH x AS (DELETE FROM sources RETURNING 1) SELECT * FROM x
 400 {
   "code" : null,
-  "message" : "ERROR: cannot execute SELECT in a read-only transaction"
+  "message" : {
+    "case" : "Unclassified",
+    "data" : {
+      "text" : "ERROR: cannot execute SELECT in a read-only transaction"
+    },
+    "group" : "Unclassified",
+    "text" : "ERROR: cannot execute SELECT in a read-only transaction"
+  }
 }
 == POST /api/query SELECT pg_read_file('/etc/hosts')
 400 {
   "code" : null,
-  "message" : "ERROR: permission denied for function pg_read_file"
+  "message" : {
+    "case" : "Unclassified",
+    "data" : {
+      "text" : "ERROR: permission denied for function pg_read_file"
+    },
+    "group" : "Unclassified",
+    "text" : "ERROR: permission denied for function pg_read_file"
+  }
 }
 == POST /api/query SELECT nonsense FROM nowhere
 400 {
   "code" : null,
-  "message" : "ERROR: relation \"nowhere\" does not exist   Position: 22"
+  "message" : {
+    "case" : "Unclassified",
+    "data" : {
+      "text" : "ERROR: relation \"nowhere\" does not exist   Position: 22"
+    },
+    "group" : "Unclassified",
+    "text" : "ERROR: relation \"nowhere\" does not exist   Position: 22"
+  }
 }
 == POST /api/query 
 400 {
   "code" : null,
-  "message" : "sql is required"
+  "message" : {
+    "case" : "Missing",
+    "data" : {
+      "at" : [
+      ],
+      "field" : "sql"
+    },
+    "group" : "Invalid",
+    "text" : "sql is required"
+  }
 }
 == tool query
 ### 2 row(s) · N ms

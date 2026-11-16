@@ -458,7 +458,14 @@
 == load, unknown source
 400 {
   "code" : "invalid",
-  "message" : "unknown gazetteer source 'nowhere' (available: geonames, wikidata, lpf, tgn)"
+  "message" : {
+    "case" : "Unclassified",
+    "data" : {
+      "text" : "unknown gazetteer source 'nowhere' (available: geonames, wikidata, lpf, tgn)"
+    },
+    "group" : "Unclassified",
+    "text" : "unknown gazetteer source 'nowhere' (available: geonames, wikidata, lpf, tgn)"
+  }
 }
 == sources after
 200 [

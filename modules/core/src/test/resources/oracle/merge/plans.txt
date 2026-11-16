@@ -7102,9 +7102,51 @@ bodies wanted:
   "problems" : [
   ],
   "resolutionErrors" : [
-    "S-1587dc99: 'Smith-2019' is not a citekey (e.g. anthony2007, guterbock1997_hittite)",
-    "S-a9c61009: unknown citekey 'nonsense' (one of: page1959_history, page2024_history)",
-    "S-00000000: not an issue of this plan — stale (the records changed since it was decided) or never one"
+    {
+      "group" : "Invalid",
+      "case" : "Unreadable",
+      "data" : {
+        "typeName" : "com.histmersion.domain.library.Citekey",
+        "raw" : "Smith-2019",
+        "examples" : [
+          "anthony2007",
+          "guterbock1997_hittite"
+        ],
+        "at" : [
+          "S-1587dc99"
+        ]
+      },
+      "text" : "S-1587dc99: 'Smith-2019' is not a citekey (e.g. anthony2007, guterbock1997_hittite)"
+    },
+    {
+      "group" : "Invalid",
+      "case" : "Unknown",
+      "data" : {
+        "typeName" : "com.histmersion.domain.library.Citekey",
+        "raw" : "nonsense",
+        "known" : [
+          "page1959_history",
+          "page2024_history"
+        ],
+        "at" : [
+          "S-a9c61009"
+        ]
+      },
+      "text" : "S-a9c61009: unknown citekey 'nonsense' (one of: page1959_history, page2024_history)"
+    },
+    {
+      "group" : "Conflict",
+      "case" : "Held",
+      "data" : {
+        "subject" : "S-00000000",
+        "hold" : {
+          "Stale" : {
+            
+          }
+        }
+      },
+      "text" : "S-00000000: not an issue of this plan — stale (the records changed since it was decided) or never one"
+    }
   ],
   "resolved" : 0,
   "changes" : 16
@@ -8557,8 +8599,35 @@ bodies wanted:
   "problems" : [
   ],
   "resolutionErrors" : [
-    "S-1587dc99: 'kuhrt1995_ancient' is already a citekey (or an old one) here or in the bundle",
-    "S-a9c61009: unknown citekey 'guterbock1997_hittite' (one of: page1959_history, page2024_history)"
+    {
+      "group" : "Conflict",
+      "case" : "Held",
+      "data" : {
+        "subject" : "S-1587dc99",
+        "hold" : {
+          "CitekeyTaken" : {
+            "citekey" : "kuhrt1995_ancient"
+          }
+        }
+      },
+      "text" : "S-1587dc99: 'kuhrt1995_ancient' is already a citekey (or an old one) here or in the bundle"
+    },
+    {
+      "group" : "Invalid",
+      "case" : "Unknown",
+      "data" : {
+        "typeName" : "com.histmersion.domain.library.Citekey",
+        "raw" : "guterbock1997_hittite",
+        "known" : [
+          "page1959_history",
+          "page2024_history"
+        ],
+        "at" : [
+          "S-a9c61009"
+        ]
+      },
+      "text" : "S-a9c61009: unknown citekey 'guterbock1997_hittite' (one of: page1959_history, page2024_history)"
+    }
   ],
   "resolved" : 0,
   "changes" : 16
@@ -10008,7 +10077,19 @@ bodies wanted:
   "problems" : [
   ],
   "resolutionErrors" : [
-    "S-1587dc99: 'latacz2023_troy' is already a citekey (or an old one) here or in the bundle"
+    {
+      "group" : "Conflict",
+      "case" : "Held",
+      "data" : {
+        "subject" : "S-1587dc99",
+        "hold" : {
+          "CitekeyTaken" : {
+            "citekey" : "latacz2023_troy"
+          }
+        }
+      },
+      "text" : "S-1587dc99: 'latacz2023_troy' is already a citekey (or an old one) here or in the bundle"
+    }
   ],
   "resolved" : 1,
   "changes" : 18
@@ -24402,9 +24483,45 @@ bodies wanted:
   "problems" : [
   ],
   "resolutionErrors" : [
-    "S-153e442f: not an issue of this plan — stale (the records changed since it was decided) or never one",
-    "S-68b4298a: not an issue of this plan — stale (the records changed since it was decided) or never one",
-    "S-de15c141: not an issue of this plan — stale (the records changed since it was decided) or never one"
+    {
+      "group" : "Conflict",
+      "case" : "Held",
+      "data" : {
+        "subject" : "S-153e442f",
+        "hold" : {
+          "Stale" : {
+            
+          }
+        }
+      },
+      "text" : "S-153e442f: not an issue of this plan — stale (the records changed since it was decided) or never one"
+    },
+    {
+      "group" : "Conflict",
+      "case" : "Held",
+      "data" : {
+        "subject" : "S-68b4298a",
+        "hold" : {
+          "Stale" : {
+            
+          }
+        }
+      },
+      "text" : "S-68b4298a: not an issue of this plan — stale (the records changed since it was decided) or never one"
+    },
+    {
+      "group" : "Conflict",
+      "case" : "Held",
+      "data" : {
+        "subject" : "S-de15c141",
+        "hold" : {
+          "Stale" : {
+            
+          }
+        }
+      },
+      "text" : "S-de15c141: not an issue of this plan — stale (the records changed since it was decided) or never one"
+    }
   ],
   "resolved" : 4,
   "changes" : 18

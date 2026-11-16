@@ -684,7 +684,14 @@ job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqarx2021_prepr
 == ingest 10.5555/zq.unknown
 400 {
   "code" : null,
-  "message" : "no upstream record for '10.5555/zq.unknown' (OpenAlex and Crossref both miss it) — check the identifier, or pass --citekey to create the source anyway and fill the metadata in by hand"
+  "message" : {
+    "case" : "Unclassified",
+    "data" : {
+      "text" : "no upstream record for '10.5555/zq.unknown' (OpenAlex and Crossref both miss it) — check the identifier, or pass --citekey to create the source anyway and fill the metadata in by hand"
+    },
+    "group" : "Unclassified",
+    "text" : "no upstream record for '10.5555/zq.unknown' (OpenAlex and Crossref both miss it) — check the identifier, or pass --citekey to create the source anyway and fill the metadata in by hand"
+  }
 }
   > GET /openalex/works/https://doi.org/10.5555/zq.unknown?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
   > GET /crossref/works/10.5555/zq.unknown?mailto=oracle@example.org
@@ -833,7 +840,21 @@ job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqarx2021_prepr
 == ingest (bad citekey)
 400 {
   "code" : "invalid",
-  "message" : "'../escape' is not a citekey: Should match (?!.*\\.\\.)[a-z][a-z0-9_.-]{1,120}"
+  "message" : {
+    "case" : "Malformed",
+    "data" : {
+      "at" : [
+      ],
+      "constraint" : {
+        "description" : "Should match (?!.*\\.\\.)[a-z][a-z0-9_.-]{1,120}",
+        "name" : "Match[\"(?!.*\\\\.\\\\.)[a-z][a-z0-9_.-]{1,120}\"]"
+      },
+      "raw" : "../escape",
+      "typeName" : "com.histmersion.domain.library.Citekey"
+    },
+    "group" : "Invalid",
+    "text" : "'../escape' is not a citekey: Should match (?!.*\\.\\.)[a-z][a-z0-9_.-]{1,120}"
+  }
 }
   > GET /openalex/works/https://doi.org/10.5555/zq.closed?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
 == upload zqa_upload
@@ -847,7 +868,14 @@ job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqa_upload","pr
 == upload the same bytes as zqa_dup
 409 {
   "code" : "conflict",
-  "message" : "this file is already stored as 'zqa_upload' (sha256 ba3491d4b404…) — pass force to ingest it again under a different citekey"
+  "message" : {
+    "case" : "Unclassified",
+    "data" : {
+      "text" : "this file is already stored as 'zqa_upload' (sha256 ba3491d4b404…) — pass force to ingest it again under a different citekey"
+    },
+    "group" : "Unclassified",
+    "text" : "this file is already stored as 'zqa_upload' (sha256 ba3491d4b404…) — pass force to ingest it again under a different citekey"
+  }
 }
 == upload the same bytes as zqa_dup --force
 202 {
@@ -860,12 +888,33 @@ job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqa_dup","progr
 == upload (empty)
 400 {
   "code" : null,
-  "message" : "the upload is empty"
+  "message" : {
+    "case" : "Unclassified",
+    "data" : {
+      "text" : "the upload is empty"
+    },
+    "group" : "Unclassified",
+    "text" : "the upload is empty"
+  }
 }
 == upload (bad citekey)
 400 {
   "code" : "invalid_citekey",
-  "message" : "'Bad Key' is not a citekey: Should match (?!.*\\.\\.)[a-z][a-z0-9_.-]{1,120}"
+  "message" : {
+    "case" : "Malformed",
+    "data" : {
+      "at" : [
+      ],
+      "constraint" : {
+        "description" : "Should match (?!.*\\.\\.)[a-z][a-z0-9_.-]{1,120}",
+        "name" : "Match[\"(?!.*\\\\.\\\\.)[a-z][a-z0-9_.-]{1,120}\"]"
+      },
+      "raw" : "Bad Key",
+      "typeName" : "com.histmersion.domain.library.Citekey"
+    },
+    "group" : "Invalid",
+    "text" : "'Bad Key' is not a citekey: Should match (?!.*\\.\\.)[a-z][a-z0-9_.-]{1,120}"
+  }
 }
 == acquire add (an item an upload fulfils)
 200 {
@@ -892,12 +941,32 @@ job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqa_ledger","pr
 == upload with a done item
 400 {
   "code" : null,
-  "message" : "queue item id '2' is done; this needs open"
+  "message" : {
+    "case" : "WrongState",
+    "data" : {
+      "is" : "done",
+      "key" : "2",
+      "typeName" : "com.histmersion.api.automation.Queue.QueueItem.Id",
+      "wanted" : [
+        "open"
+      ]
+    },
+    "group" : "Conflict",
+    "text" : "queue item id '2' is done; this needs open"
+  }
 }
 == upload with no such item
 400 {
   "code" : null,
-  "message" : "no queue item id '99999'"
+  "message" : {
+    "case" : "Entity",
+    "data" : {
+      "key" : "99999",
+      "typeName" : "com.histmersion.api.automation.Queue.QueueItem.Id"
+    },
+    "group" : "NotFound",
+    "text" : "no queue item id '99999'"
+  }
 }
 == reocr zqa_upload --quality
 202 {
@@ -910,19 +979,41 @@ job: 200 {"id":"UUID","kind":"reocr","status":"done","citekey":"zqa_upload","pro
 == reocr zqa_nodoi (no original)
 400 {
   "code" : null,
-  "message" : "no original stored for 'zqa_nodoi' — the server keeps uploads in TMP/acq-spool; re-run `histmersion ingest <file> --citekey zqa_nodoi --force`"
+  "message" : {
+    "case" : "Unclassified",
+    "data" : {
+      "text" : "no original stored for 'zqa_nodoi' — the server keeps uploads in TMP/acq-spool; re-run `histmersion ingest <file> --citekey zqa_nodoi --force`"
+    },
+    "group" : "Unclassified",
+    "text" : "no original stored for 'zqa_nodoi' — the server keeps uploads in TMP/acq-spool; re-run `histmersion ingest <file> --citekey zqa_nodoi --force`"
+  }
 }
 == reocr zqa_missing
 404 {
   "code" : "not_found",
-  "message" : "No source 'zqa_missing'"
+  "message" : {
+    "case" : "Entity",
+    "data" : {
+      "key" : "zqa_missing",
+      "typeName" : "com.histmersion.api.library.Citekey"
+    },
+    "group" : "NotFound",
+    "text" : "No source 'zqa_missing'"
+  }
 }
 == original zqa_upload
 200 12327 bytes, sha256 ba3491d4b4046fe3, attachment; filename="zqa_upload.pdf"
 == original zqa_nodoi
 404 {
   "code" : "not_found",
-  "message" : "no original stored for 'zqa_nodoi' — the server keeps uploads in TMP/acq-spool; pass the file yourself (--file)"
+  "message" : {
+    "case" : "Unclassified",
+    "data" : {
+      "text" : "no original stored for 'zqa_nodoi' — the server keeps uploads in TMP/acq-spool; pass the file yourself (--file)"
+    },
+    "group" : "Unclassified",
+    "text" : "no original stored for 'zqa_nodoi' — the server keeps uploads in TMP/acq-spool; pass the file yourself (--file)"
+  }
 }
 == mcp ingest base64
 queued job `UUID` for **zqa_mcp** — poll `job_status` with that id
@@ -1133,7 +1224,14 @@ _Re-run with `--apply` to write this verdict to the source's `status`._
 == job (unknown)
 404 {
   "code" : "not_found",
-  "message" : "No job 'UUID'"
+  "message" : {
+    "case" : "Unclassified",
+    "data" : {
+      "text" : "No job 'UUID'"
+    },
+    "group" : "Unclassified",
+    "text" : "No job 'UUID'"
+  }
 }
 == unauthorised fetcher asked
 0 time(s)

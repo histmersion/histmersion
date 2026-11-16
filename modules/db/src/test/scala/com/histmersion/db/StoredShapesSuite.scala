@@ -136,6 +136,35 @@ object StoredShapesSuite:
       )
     )
 
+  /** The same column as an earlier version wrote it (`<name>-<earlier>`, kept as written then), which today's codec
+    * still reads: each line must decode and write the line beside it in `<name>-typed`, which reads back and writes
+    * itself again.
+    */
+  def earlierColumn[A](name: String, earlier: String)(using c: Codec[A]): List[Shape] =
+    def roundTrip(line: String): Option[String] =
+      c.decode(line) match
+        case Left(e)  => Some(s"does not decode: $e")
+        case Right(a) =>
+          val again = c.write(a, false)
+          Option.unless(sameJson(again, line))(s"writes $again")
+    List(
+      Shape(s"$name-typed", () => (), roundTrip),
+      Shape(
+        s"$name-$earlier",
+        () => (),
+        line => c.decode(line).left.toOption.map(e => s"does not decode: $e"),
+        Some(
+          Dropped(
+            s"$name-typed",
+            (d, f) =>
+              c.decode(d).map(c.write(_, false)) match
+                case Left(e)      => Some(s"does not decode: $e")
+                case Right(again) => Option.unless(sameJson(again, f))(s"reads as $again, not as $f")
+          )
+        )
+      )
+    )
+
   /** A bundle file's line: a stamped record's rev must check, and the record must write the same bytes again. */
   def bundle[A](name: String, salt: Int, gen: => Gen[A], stamped: Boolean = true)(using c: BundleCodec[A]): Shape =
     def line(a: A) = if stamped then c.stamp(a) else c.line(a)
@@ -341,7 +370,10 @@ object StoredShapesSuite:
         PluginKit.parseKit
       ),
       anyJson
-    )
+    ) ++
+      // a problem in a record was a bare string before it was typed (G60 step 4): the frozen sentence of a case reads
+      // as that case and is written typed, any other text reads as the stored text and is written back bare
+      earlierColumn[MergeApplyResult]("jobs-result-merge-apply", "bare")
 
   /** A job's detail: each field its kinds' owners declare, set or left at its default. */
   private def jobDetail: Gen[JobDetail] =

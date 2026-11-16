@@ -3,13 +3,16 @@ package api.json
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonValueCodec}
 import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
-import sttp.tapir.Schema
+import sttp.tapir.{Schema, SchemaType}
+import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 
 import hearth.kindlings.jsoniterjson.Json
 import util.json.{JsonCodec, RawJson}
-import util.problem.Text.sentence
-import util.problem.{Legacy, Problem}
+import util.problem.Problem
 import util.json.RawJson.*
+import api.problem.{Answer, Column}
+import api.problem.Answer.{entry, problem}
+import api.problem.Column.stored
 
 /** The JSON codec, key codec and tapir schema of every newtype (`type X = X.T; object X extends Newtype[Base, C]`),
   * from its base type's: the same JSON and the same schema, with the constraint checked on decoding. Importing its
@@ -19,8 +22,7 @@ import util.json.RawJson.*
   * there is nothing to check, and not calling Iron's `either` keeps every companion's runtime constraint out of the web
   * page's bundle.
   *
-  * Until the wire carries problems as cases (G60 step 5), a [[Problem]] in a wire record is the string its sentence is,
-  * as the String `Problem` newtypes it replaced were: the same JSON and schema, read back as the unclassified text.
+  * A [[Problem]] in a wire record is written typed, as a failed request's body lists one ([[Answer.Entry]]).
   */
 object NewtypeCodecs:
   export JsonCodec.given
@@ -40,10 +42,33 @@ object NewtypeCodecs:
   given schema: [T] => (m: RefinedType.Mirror[T]) => (base: Schema[m.BaseType]) => Schema[T] =
     base.as[T]
 
+  /** A problem in a wire record: its group, its case, its fields and its English sentence (`{"group", "case", "data",
+    * "text"}`, an [[Answer.Entry]]), so a reader keeps its type and a person still reads the sentence.
+    *
+    * A bare string is how records carried a problem before (G60 step 4), in stored and checkpointed JSON too: it reads
+    * as the case whose frozen column sentence it is ([[Column.read]]), any other text as
+    * [[Problem.Stored.Unrecognised]], which is written back as the same bare string, so such a record keeps its bytes.
+    */
   given problemCodec: JsonValueCodec[Problem] =
-    JsonCodec.text(_.sentence, text => Right(Problem.Unclassified(Legacy.Text(text))))
+    JsonCodec.mapped[Problem, Json](
+      {
+        case unrecognised: Problem.Stored.Unrecognised => Json.fromString(unrecognised.stored)
+        case typed                                     => typed.entry.asJson
+      },
+      json => json.asString.fold(json.as[Answer.Entry].flatMap(_.problem))(text => Right(Column.read(text)))
+    )
 
-  given problemSchema: Schema[Problem] = Schema.schemaForString.as[Problem]
+  /** A problem's schema: the typed entry (named `ProblemEntry`, apart from the other records called `Entry`), or the
+    * bare string an unrecognised stored text is written as.
+    */
+  given problemSchema: Schema[Problem] =
+    Schema(
+      SchemaType.SCoproduct[Problem](
+        List(Schema.schemaForString, summon[KindlingsSchema[Answer.Entry]].schema.name(Schema.SName("ProblemEntry"))),
+        None
+      )(_ => None),
+      Some(Schema.SName("Problem"))
+    )
 
   /** Any JSON value (as tapir's circe module described circe's `Json`). */
   given jsonSchema: Schema[Json] = Schema.any
