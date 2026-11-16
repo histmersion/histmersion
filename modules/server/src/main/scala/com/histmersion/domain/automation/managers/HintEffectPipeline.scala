@@ -1,8 +1,8 @@
 package com.histmersion
 package domain.automation.managers
 import com.histmersion.util.json.RawJson.*
-import com.histmersion.util.problem.Text.sentence
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Text.{sentence, sentences}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.database.Transactor
@@ -95,7 +95,7 @@ final class HintEffectPipeline(
             )
           )
           .left
-          .map(_.sentence)
+          .map(_.sentences.mkString("; "))
           .map(_.value)
       )
     yield PipelineDef.Summary(closed)

@@ -63,7 +63,7 @@ class MediaTrafficSuite extends DbSuite:
     val handlers = MediaWiring(Deps(loaded.config, ds, ds, plugins = plugins), wire, MediaWire.Thumbs())
 
     def report(r: Either[Api.Error, MediaImportReport]): String =
-      r.fold(e => s"refused: ${e.message.sentence}\n", r => s"report: ${r.asJson.noSpaces}\n")
+      r.fold(e => s"refused: ${e.problems.sentences.mkString("; ")}\n", r => s"report: ${r.asJson.noSpaces}\n")
 
     def run(name: String, req: MediaImportRequest): Unit =
       val r = handlers.imports.importMedia(req)
@@ -76,7 +76,7 @@ class MediaTrafficSuite extends DbSuite:
 
     def job(name: MediaItem.Provider, req: MediaImportRequest): Unit =
       handlers.imports.importJob(req) match
-        case Left(e)  => sb ++= s"## job $name\n" + wire.take() + s"refused: ${e.message.sentence}\n"
+        case Left(e)  => sb ++= s"## job $name\n" + wire.take() + s"refused: ${e.problems.sentences.mkString("; ")}\n"
         case Right(j) =>
           val end = until(j.id, 600)
           sb ++= s"## job $name\n" + wire.take() +

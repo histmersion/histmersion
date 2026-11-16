@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.personal
 
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.Write
@@ -54,17 +54,17 @@ class PersonalControllersSuite extends munit.FunSuite:
     assert(
       c.addBookmark(me, Bookmark.New(Target(ItemKind.Source)))
         .left
-        .exists(_.message.sentence.endsWith("id is required"))
+        .exists(_.problems.sentences.mkString("; ").endsWith("id is required"))
     )
     assert(
       c.addBookmark(me, Bookmark.New(Target(ItemKind.Point, lat = Some(Latitude(1)))))
         .left
-        .exists(_.message.sentence.endsWith("lon is required"))
+        .exists(_.problems.sentences.mkString("; ").endsWith("lon is required"))
     )
     assert(
       c.addBookmark(me, Bookmark.New(Target(ItemKind.Period, from = Some(Year(-1000)), to = Some(Year(-1200)))))
         .left
-        .exists(_.message.sentence.contains("from, to must be in order"))
+        .exists(_.problems.sentences.mkString("; ").contains("from, to must be in order"))
     )
     val p = c.addBookmark(
       me,
@@ -84,12 +84,12 @@ class PersonalControllersSuite extends munit.FunSuite:
     assert(
       c.addNote(me, Note.New(Target(ItemKind.View, view = Some(ViewState("a=b"))), Note.Text("x")))
         .left
-        .exists(_.message.sentence.contains("unknown item kind 'view'"))
+        .exists(_.problems.sentences.mkString("; ").contains("unknown item kind 'view'"))
     )
     assert(
       c.addNote(me, Note.New(Target.item(ItemKind.Source, ItemKey("zz")), Note.Text("   ")))
         .left
-        .exists(_.message.sentence.endsWith("text is required"))
+        .exists(_.problems.sentences.mkString("; ").endsWith("text is required"))
     )
     val n = c.addNote(
       me,
@@ -108,7 +108,10 @@ class PersonalControllersSuite extends munit.FunSuite:
     )
     val stale = c.editNote(me, n.id, Note.Edit(Note.Text("three"), Some(n.updatedAt)))
     assertEquals(stale.left.map(_.code), Left(Some(Write.CodePrecondition)))
-    assert(stale.left.exists(_.message.sentence.contains("2026-10-30T12:01:00.000000Z")), stale.toString)
+    assert(
+      stale.left.exists(_.problems.sentences.mkString("; ").contains("2026-10-30T12:01:00.000000Z")),
+      stale.toString
+    )
     assertEquals(
       c.editNote(me, n.id, Note.Edit(Note.Text("four"), Some(Note.At("yesterday")))).left.map(_.code),
       Left(Some(Write.CodePrecondition))

@@ -6,7 +6,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.Cursor
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -205,7 +205,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
       a: AgentsControllers,
       req: RunRequest = RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget)
   ): RunInfo =
-    val run = a.startRun(req).fold(e => fail(e.message.sentence), identity)
+    val run = a.startRun(req).fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     a.engine.execute(runId(run.id))
     connect(ds)(AgentRepo.get(run.id)).get
 
@@ -422,7 +422,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
       off
         .startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget))
         .left
-        .exists(_.message.sentence.contains("off"))
+        .exists(_.problems.sentences.mkString("; ").contains("off"))
     )
     val (a, _) = handlers(c)
     assert(
@@ -433,12 +433,12 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
           model = Some(Agents.RunRequest.Model("local:unpriced"))
         )
       ).left
-        .exists(_.message.sentence.contains("has no price"))
+        .exists(_.problems.sentences.mkString("; ").contains("has no price"))
     )
     assert(
       a.startRun(RunRequest(Agents.RunRequest.Pipeline("summarise"), ApiTarget))
         .left
-        .exists(_.message.sentence.contains("unknown pipeline"))
+        .exists(_.problems.sentences.mkString("; ").contains("unknown pipeline"))
     )
     assert(
       a.startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), Agents.RunRequest.Target("zzagent_nope")))
@@ -620,19 +620,19 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     assert(
       a.startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget, fix = Some(RunRequest.Fix(true))))
         .left
-        .exists(_.message.sentence.contains("review-article"))
+        .exists(_.problems.sentences.mkString("; ").contains("review-article"))
     )
     assert(
       a.startRun(
         RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget, rounds = Some(RunRequest.Rounds(2)))
       ).left
-        .exists(_.message.sentence.contains("review-article"))
+        .exists(_.problems.sentences.mkString("; ").contains("review-article"))
     )
     assert(
       a.startRun(
         RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget, acquireItem = Some(Queue.QueueItem.Id(-7)))
       ).left
-        .exists(_.message.sentence.contains("no queue item id '-7'"))
+        .exists(_.problems.sentences.mkString("; ").contains("no queue item id '-7'"))
     )
 
   test("approvals: approving applies the change once, a second decision is a conflict, rejecting changes nothing"):
@@ -785,7 +785,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     val (a, h) = handlers(c); seed(h)
     val run = a
       .startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     val seen = mutable.ListBuffer.empty[Decided]
     val racing = new PipelineDef:
       def pipeline: Pipeline = Pipeline.EnrichSource
@@ -825,7 +825,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     val (a, h) = handlers(c); seed(h)
     val run = a
       .startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     val entered = java.util.concurrent.CountDownLatch(1)
     val blocking = new PipelineDef:
       def pipeline: Pipeline = Pipeline.EnrichSource
@@ -982,7 +982,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     def refused(o: ModelOverride*) =
       a.startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget, modelFor = o.toList))
         .left
-        .map(_.message.sentence)
+        .map(_.problems.sentences.mkString("; "))
     assert(
       refused(ModelOverride(ModelOverride.Role("editor"), overrideModel(Haiku))).left
         .exists(_.contains("unknown role 'editor'")),
@@ -1019,7 +1019,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
           modelFor = List(ModelOverride(ModelOverride.Role("Extractor"), ModelOverride.Model(s" ${Haiku.wire} ")))
         )
       )
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(ok.params.overrides, List(ModelOverride(ModelOverride.Role("extractor"), overrideModel(Haiku))))
     assertEquals(
       (ok.modelFor(Role.Extractor).map(_.value: String), ok.modelFor(Role.Writer).map(_.value: String)),
@@ -1049,7 +1049,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     val (a, h) = handlersFor((_, _) => Right(client), cfg); seed(h)
     val run = a
       .startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     // one LLM step of the pipeline's own agent, so the fake's one answer fits it
     val notesOnly = new PipelineDef:
       def pipeline: Pipeline = Pipeline.EnrichSource
@@ -1110,7 +1110,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     val (a, h) = handlersFor((_, _) => Right(client), cfg); seed(h)
     val run = a
       .startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     val notesOnly = new PipelineDef:
       def pipeline: Pipeline = Pipeline.EnrichSource
       def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
@@ -1169,7 +1169,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
       )
     )
     assertEquals((r1.status, r2.status), ("done", "done"), s"${r1.error} ${r2.error}")
-    val cmp = a.compare(List(runId(r1.id), runId(r2.id))).fold(e => fail(e.message.sentence), identity)
+    val cmp = a.compare(List(runId(r1.id), runId(r2.id))).fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(
       (cmp.pipeline, cmp.target.value: String, cmp.runs.map(_.id.value: String)),
       ("enrich-source", Ck, List(r1.id.value: String, r2.id.value: String))
@@ -1254,7 +1254,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
       md
     )
     // what cannot be compared is refused
-    assert(a.compare(List(runId(r1.id))).left.exists(_.message.sentence.contains("at least two")))
+    assert(a.compare(List(runId(r1.id))).left.exists(_.problems.sentences.mkString("; ").contains("at least two")))
     assert(
       a.compare(List(runId(r1.id), Run.Id("00000000-0000-0000-0000-000000000000")))
         .left
@@ -1303,7 +1303,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     val (a, h) = handlersFor((_, _) => Right(client), cfg); seed(h)
     val run = a
       .startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     Engine(ds, a.engine.cfg, a, a.engine.workflows.replaced(PipelineWorkflow.of(pipeline, a.definitions)))
       .execute(runId(run.id))
     (a, run.id)
@@ -1347,7 +1347,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     val (a, h) = handlersFor((_, _) => Right(c)); seed(h)
     val run = a
       .startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     Engine(ds, a.engine.cfg, a, a.engine.workflows.replaced(PipelineWorkflow.of(notesOnly(), a.definitions)))
       .execute(runId(run.id))
     assertEquals(connect(ds)(AgentRepo.get(run.id)).map(_.status), Some("done"))
@@ -1390,7 +1390,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
           ApiTarget,
           budgetTokens = Some(RunRequest.BudgetTokens(400000L))
         )
-      ).fold(e => fail(e.message.sentence), identity)
+      ).fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     Engine(ds, a.engine.cfg, a, a.engine.workflows.replaced(PipelineWorkflow.of(twoNotes, a.definitions)))
       .execute(runId(run.id))
     assertEquals(
@@ -1417,7 +1417,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
           ApiTarget,
           budgetTokens = Some(RunRequest.BudgetTokens(300000L))
         )
-      ).fold(e => fail(e.message.sentence), identity)
+      ).fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     Engine(ds, a2.engine.cfg, a2, a2.engine.workflows.replaced(PipelineWorkflow.of(twoNotes, a2.definitions)))
       .execute(runId(run2.id))
     assertEquals(connect(ds)(AgentRepo.get(run2.id)).map(_.status), Some("paused"))
@@ -1426,7 +1426,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     val (a, h) = handlersFor((_, _) => Right(ScriptedClient(Model))); seed(h)
     val enrich = a
       .startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(enrich.budgetTokens, 400000L)
     assertEquals(
       evalCfg.agents.budgets.runTokensFor(com.histmersion.domain.automation.Pipeline.Wire("review-article")),

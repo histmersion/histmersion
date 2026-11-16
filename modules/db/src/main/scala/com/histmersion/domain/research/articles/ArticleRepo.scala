@@ -3,7 +3,7 @@ package domain.research.articles
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 
 import hearth.kindlings.optics.syntax.*
@@ -236,18 +236,14 @@ private[articles] object ArticleRepo:
     else if exists(newSlug) then
       Left(
         Api.Error(
-          Problem.Unclassified(Legacy.Text(s"'${newSlug.value}' is already the slug of another article")),
+          Problem.Conflict.AlreadyExists(Problem.TypeName.of(Slug), Problem.Raw.of(newSlug)),
           Some(Api.Error.Code(Write.CodeInvalid))
         )
       )
     else if aliasOf.exists(_ != oldSlug) then
       Left(
         Api.Error(
-          Problem.Unclassified(
-            Legacy.Text(
-              s"'${newSlug.value}' is an old slug of '${aliasOf.get.value}' and still resolves to it — pick another"
-            )
-          ),
+          Problem.Conflict.Aliased(Problem.TypeName.of(Slug), Problem.Raw.of(newSlug), Problem.Raw.of(aliasOf.get)),
           Some(Api.Error.Code(Write.CodeInvalid))
         )
       )

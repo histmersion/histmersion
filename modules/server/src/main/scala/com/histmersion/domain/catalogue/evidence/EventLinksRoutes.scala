@@ -1,6 +1,6 @@
 package com.histmersion
 package domain.catalogue.evidence
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.api.{Api, Write}
 import com.histmersion.api.catalogue.EventsApi
@@ -21,7 +21,7 @@ object EventLinksRoutes:
         .option(id.value)
         .toRight(
           Api.Error(
-            Problem.Unclassified(Legacy.Text(s"No event '${id.value}'")),
+            Problem.NotFound.Entity(Problem.TypeName.of(Event.Id), Problem.Raw(s"${id.value}")),
             Some(Api.Error.Code(Write.CodeNotFound))
           )
         )

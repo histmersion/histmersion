@@ -1,6 +1,6 @@
 package com.histmersion
 package domain.automation.agents
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.api.automation.Agents.*
 import com.histmersion.api.automation.Stopped
@@ -315,7 +315,7 @@ object RunService:
     ): Either[Problem, (Vector[RunInfo], Boolean)] =
       val cursors = before.toList ++ upTo.toList.map(u => AgentRepo.PageCursor(u.value))
       cursors.find(c => runOf(c).isEmpty) match
-        case Some(c) => Left(Problem.Unclassified(Legacy.Text(s"No agent run '${c.value}' to page from")))
+        case Some(c) => Left(Problem.NotFound.Entity(Problem.TypeName.of(Run.Id), Problem.Raw.of(c)))
         case None    =>
           val ordering = summon[Ordering[(Instant, Long)]]
           val all = newest(runs.filter(matches(q, "")))

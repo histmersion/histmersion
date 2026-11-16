@@ -210,7 +210,7 @@ class PluginAiRunSuite extends DbSuite with RunTranscripts:
     )
     val run = a
       .startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     a.engine.execute(runId(run.id))
     connect(ds)(AgentRepo.get(run.id)).get
 
@@ -303,7 +303,7 @@ class PluginAiRunSuite extends DbSuite with RunTranscripts:
           ModelChains.ChainSet(List(ModelChains.ChainEntry.Model("hello-ai:echo")))
         )
         .left
-        .exists(_.message.sentence.contains("unknown provider kind 'hello-ai'"))
+        .exists(_.problems.sentences.mkString("; ").contains("unknown provider kind 'hello-ai'"))
     )
     assert(gone.picker.chain(Role.Extractor).left.exists(_.sentence.contains("unknown provider kind 'hello-ai'")))
     assert(!gone.doctor(offline = AgentsControllers.Offline(true)).providers.exists(_.provider.value == "hello-ai"))

@@ -2,7 +2,7 @@ package com.histmersion
 package domain.automation.managers
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import hearth.kindlings.optics.syntax.*
 
@@ -214,7 +214,9 @@ final class ManagersControllers(
           g <- goal.toRight(
             Api.Error(Problem.Unclassified(Legacy.Text("a seeding manager is for one research area: give its goal")))
           )
-          slug <- DomainGoal.Slug.option(g).toRight(notFound(Problem.Unclassified(Legacy.Text(s"No goal '$g'"))))
+          slug <- DomainGoal.Slug
+            .option(g)
+            .toRight(notFound(Problem.NotFound.Entity(Problem.TypeName.of(Goal.Slug), Problem.Raw(s"$g"))))
           gl <- host.goal(slug)
           m <- make(Kind.Seed, seedId(Goal.Ref(gl.slug.value)).transformInto[ManagerLight.Id], Some(slug))
           _ <- addItem(
@@ -228,7 +230,9 @@ final class ManagersControllers(
           g <- goal.toRight(
             Api.Error(Problem.Unclassified(Legacy.Text("a watcher is for one research area: give its goal")))
           )
-          slug <- DomainGoal.Slug.option(g).toRight(notFound(Problem.Unclassified(Legacy.Text(s"No goal '$g'"))))
+          slug <- DomainGoal.Slug
+            .option(g)
+            .toRight(notFound(Problem.NotFound.Entity(Problem.TypeName.of(Goal.Slug), Problem.Raw(s"$g"))))
           gl <- host.goal(slug)
           m <- make(
             Kind.Watch,
@@ -559,7 +563,9 @@ final class ManagersControllers(
       case Some(EnqueueKind.Seed) =>
         val text = in.target.value.trim
         for
-          slug <- DomainGoal.Slug.option(text).toRight(notFound(Problem.Unclassified(Legacy.Text(s"No goal '$text'"))))
+          slug <- DomainGoal.Slug
+            .option(text)
+            .toRight(notFound(Problem.NotFound.Entity(Problem.TypeName.of(Goal.Slug), Problem.Raw(s"$text"))))
           g <- host.goal(slug)
           id = seedId(Goal.Ref(g.slug.value))
           _ = supervisor.ensure(Kind.Seed, id.transformInto[ManagerLight.Id], Some(slug))
@@ -871,7 +877,7 @@ final class ManagersControllers(
     */
   def applyProposal(p: HintProposal): Either[String, String] =
     for
-      m <- manager(p.managerId.transformInto[ManagerLight.Id]).left.map(_.message.sentence)
+      m <- manager(p.managerId.transformInto[ManagerLight.Id]).left.map(_.problems.sentences.mkString("; "))
       ht <- Transactor(ds)
         .read(ManagerRepo.hint(ManagerHint.Id(p.hint.value)))
         .filter(_.managerId == m.id)
@@ -882,7 +888,7 @@ final class ManagersControllers(
         p.effect,
         ht.itemId.flatMap(i => agents.managerStore.item(ManagerItem.Id(i.value))),
         proposal = true
-      ).left.map(_.message.sentence)
+      ).left.map(_.problems.sentences.mkString("; "))
       w <- HintEffect.Action.verb(e.action) match
         case Some(HintEffect.Verb.Config) =>
           val c = m.config.merge(e.config.getOrElse(ManagerConfig()))

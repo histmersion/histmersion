@@ -1066,24 +1066,24 @@ private[places] object PlaceRepo:
     if !exists(oldId) then
       Left(
         Api.Error(
-          Problem.Unclassified(Legacy.Text(s"No place '${oldId.value}'")),
+          Problem.NotFound.Entity(Problem.TypeName.of(Place.Id), Problem.Raw(s"${oldId.value}")),
           Some(Api.Error.Code(Write.CodeNotFound))
         )
       )
     else if exists(newId) then
       Left(
         Api.Error(
-          Problem.Unclassified(Legacy.Text(s"'${newId.value}' is already the id of another place")),
+          Problem.Conflict.AlreadyExists(Problem.TypeName.of(Place.Id), Problem.Raw.of(newId)),
           Some(Api.Error.Code(Write.CodeInvalid))
         )
       )
     else if aliasOf.exists(_ != oldId) then
       Left(
         Api.Error(
-          Problem.Unclassified(
-            Legacy.Text(
-              s"'${newId.value}' is an old id of '${aliasOf.get.value}' and still resolves to it — pick another"
-            )
+          Problem.Conflict.Aliased(
+            Problem.TypeName.of(Place.Id),
+            Problem.Raw.of(newId),
+            Problem.Raw.of(aliasOf.get)
           ),
           Some(Api.Error.Code(Write.CodeInvalid))
         )
@@ -1139,7 +1139,10 @@ private[places] object PlaceRepo:
     labelOf(id)
       .toRight(
         Api
-          .Error(Problem.Unclassified(Legacy.Text(s"No place '${id.value}'")), Some(Api.Error.Code(Write.CodeNotFound)))
+          .Error(
+            Problem.NotFound.Entity(Problem.TypeName.of(Place.Id), Problem.Raw(s"${id.value}")),
+            Some(Api.Error.Code(Write.CodeNotFound))
+          )
       )
       .map { label =>
         val before =
@@ -1169,7 +1172,10 @@ private[places] object PlaceRepo:
     labelOf(id)
       .toRight(
         Api
-          .Error(Problem.Unclassified(Legacy.Text(s"No place '${id.value}'")), Some(Api.Error.Code(Write.CodeNotFound)))
+          .Error(
+            Problem.NotFound.Entity(Problem.TypeName.of(Place.Id), Problem.Raw(s"${id.value}")),
+            Some(Api.Error.Code(Write.CodeNotFound))
+          )
       )
       .flatMap { label =>
         sql"SELECT bool_or(manual) FROM place_names WHERE place_id = $id AND name = $name AND lang = $lang HAVING count(*) > 0"
@@ -1229,22 +1235,24 @@ private[places] object PlaceRepo:
     if taken then
       Left(
         Api.Error(
-          Problem.Unclassified(Legacy.Text(s"'${id.value}' is already the id of a place — choose another id")),
+          Problem.Conflict.AlreadyExists(Problem.TypeName.of(Place.Id), Problem.Raw.of(id)),
           Some(Api.Error.Code(Write.CodeInvalid))
         )
       )
     else if gone then
       Left(
         Api.Error(
-          Problem.Unclassified(Legacy.Text(s"'${id.value}' is the id of a place that was removed — choose another id")),
+          Problem.Conflict.Retired(Problem.TypeName.of(Place.Id), Problem.Raw.of(id)),
           Some(Api.Error.Code(Write.CodeInvalid))
         )
       )
     else if alias.isDefined then
       Left(
         Api.Error(
-          Problem.Unclassified(
-            Legacy.Text(s"'${id.value}' is an old id of '${alias.get}' and still resolves to it — choose another id")
+          Problem.Conflict.Aliased(
+            Problem.TypeName.of(Place.Id),
+            Problem.Raw.of(id),
+            Problem.Raw(s"${alias.get}")
           ),
           Some(Api.Error.Code(Write.CodeInvalid))
         )
@@ -1255,7 +1263,7 @@ private[places] object PlaceRepo:
         .query[Place.Summary]
         .run()
         .headOption
-        .toRight(Api.Error(Problem.Unclassified(Legacy.Text(s"place '${id.value}' was not stored"))))
+        .toRight(Api.Error(Problem.NotFound.Entity(Problem.TypeName.of(Place.Id), Problem.Raw.of(id))))
 
   /** How many places the gazetteer holds — 0 on a fresh install (the first-run import, #720). */
   def count()(using DbCon): RowCount =

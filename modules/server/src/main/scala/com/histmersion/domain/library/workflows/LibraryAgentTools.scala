@@ -4,7 +4,7 @@ import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.jsoniterderivation.JsoniterConfig
 import com.histmersion.domain.automation.agents.SttpAiJson.given
 
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.library.SearchMarkdown
@@ -75,7 +75,7 @@ final class LibraryAgentTools(site: => LibrarySite, upstream: () => AgentUpstrea
             bodyChars(in.chars)
           )
           .fold(
-            e => s"No source '${in.citekey}': ${e.message.sentence}",
+            e => s"No source '${in.citekey}': ${e.problems.sentences.mkString("; ")}",
             md =>
               section.map(_.value.toLowerCase) match
                 case None | Some("all") =>
@@ -132,7 +132,7 @@ final class LibraryAgentTools(site: => LibrarySite, upstream: () => AgentUpstrea
             facetsIn.toFilter
           )
           .fold(
-            e => e.message.sentence,
+            e => e.problems.sentences.mkString("; "),
             fs => cap(SearchMarkdown.facets(facetsIn.field, fs.toVector), max, "narrow it with `prefix`")
           )
       }
@@ -159,7 +159,7 @@ final class LibraryAgentTools(site: => LibrarySite, upstream: () => AgentUpstrea
       ) { in =>
         site.query
           .run(Query.QueryRequest(Query.QueryRequest.Sql(in.sql.value)))
-          .fold(e => e.message.sentence, r => LibraryAgentTools.queryResult(r, caps.queryMaxRows, max))
+          .fold(e => e.problems.sentences.mkString("; "), r => LibraryAgentTools.queryResult(r, caps.queryMaxRows, max))
       }
     },
     contribution(LibraryAgentTools.Followups) {

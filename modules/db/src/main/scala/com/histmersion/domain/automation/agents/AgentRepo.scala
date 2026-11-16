@@ -3,7 +3,7 @@ package domain.automation.agents
 import com.histmersion.api.json.NewtypeCodecs.given
 import hearth.kindlings.jsoniterjson.Json
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import hearth.kindlings.optics.syntax.*
 
@@ -235,7 +235,7 @@ object AgentRepo:
       upTo: Option[PageCursor]
   )(using DbCon): Either[Problem, (Vector[RunInfo], Boolean)] =
     (before.toList ++ upTo.toList).find(c => !Keyset.existsOn("jobs", str(c.value))) match
-      case Some(c) => Left(Problem.Unclassified(Legacy.Text(s"No agent run '${c.value}' to page from")))
+      case Some(c) => Left(Problem.NotFound.Entity(Problem.TypeName.of(Run.Id), Problem.Raw.of(c)))
       case None    =>
         val (rows, more) = Keyset.pageOn[RunRow](
           runFrom,
@@ -662,7 +662,7 @@ object AgentRepo:
       c.value.trim.toLongOption
         .map(lng(_))
         .filter(Keyset.existsOn("approvals", _))
-        .toRight(Problem.Unclassified(Legacy.Text(s"No approval '${c.value}' to page from")))
+        .toRight(Problem.NotFound.Entity(Problem.TypeName.of(Approval.Id), Problem.Raw.of(c)))
     for
       b <- before.fold(Right(None))(cursor(_).map(Some(_)))
       u <- upTo.fold(Right(None))(cursor(_).map(Some(_)))

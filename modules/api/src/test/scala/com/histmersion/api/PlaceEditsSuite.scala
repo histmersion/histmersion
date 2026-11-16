@@ -6,7 +6,7 @@ import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson
 
 import com.histmersion.util.problem.Problem
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -63,7 +63,7 @@ class PlaceEditsSuite extends munit.FunSuite:
       .setTo(Some(Year(-1300)))
       .modify(_.periodEnd)
       .setTo(Some(Year(-1100)))
-    val r = Place.Edits.toInput(in).fold(e => fail(e.message.sentence), identity)
+    val r = Place.Edits.toInput(in).fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(r.place.id, Place.Id("local_gornji_grad"))
     assertEquals(r.place.kind, Place.Kind.Site)
     assertEquals(r.place.period, Some(Period(Year(-1300), Year(-1100))))
@@ -95,7 +95,7 @@ class PlaceEditsSuite extends munit.FunSuite:
     def refused(in: Place.Add)(expected: PartialFunction[Problem, Unit]) =
       val e = Place.Edits.toInput(in).swap.toOption.getOrElse(fail(s"accepted: $in"))
       assertEquals(e.code, Some(Write.CodeInvalid))
-      assert(expected.isDefinedAt(e.message), e.message)
+      assert(expected.isDefinedAt(e.problems.head), e.problems.head)
     val geoPoint = Problem.TypeName.named[GeoPoint]
     refused(add(source = Place.Add.Source("  "))) {
       case Problem.Invalid.Missing(f, _) if f == Problem.Field("source") =>

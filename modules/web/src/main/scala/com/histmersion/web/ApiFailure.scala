@@ -1,7 +1,7 @@
 package com.histmersion
 package web
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
@@ -16,7 +16,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** A request the server answered with an error status: the status and the server's own message. `unauthorized` is a
   * write refused by the API-key gate; `conflict` a stale `ifUpdatedAt`.
   */
-final case class ApiFailure(status: ApiFailure.Status, error: Api.Error) extends Exception(error.message.sentence):
+final case class ApiFailure(status: ApiFailure.Status, error: Api.Error)
+    extends Exception(error.problems.sentences.mkString("; ")):
   def unauthorized: Boolean = status.value == 401 || status.value == 403
   def conflict: Boolean = status.value == 412
   def duplicate: Boolean = status.value == 409

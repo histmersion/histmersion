@@ -66,7 +66,10 @@ final class ImportsControllers(
           Place.Id
             .either(p)
             .left
-            .map(_ => ImportsControllers.error(Problem.Unclassified(Legacy.Text(s"No place '$p'")), Write.CodeNotFound))
+            .map(_ =>
+              ImportsControllers
+                .error(Problem.NotFound.Entity(Problem.TypeName.of(Place.Id), Problem.Raw(s"$p")), Write.CodeNotFound)
+            )
             .map(Some(_))
         case None => Right(None)
       event <- req.event.map(_.value.trim).filter(_.nonEmpty) match
@@ -74,7 +77,10 @@ final class ImportsControllers(
           Event.Id
             .either(e)
             .left
-            .map(_ => ImportsControllers.error(Problem.Unclassified(Legacy.Text(s"No event '$e'")), Write.CodeNotFound))
+            .map(_ =>
+              ImportsControllers
+                .error(Problem.NotFound.Entity(Problem.TypeName.of(Event.Id), Problem.Raw(s"$e")), Write.CodeNotFound)
+            )
             .map(Some(_))
         case _ => Right(None)
     yield (place, event)

@@ -270,7 +270,7 @@ object ArticleArgs extends CommandLine.Entry:
       LabelRenames
         .validate(Bundle.Kind.Article, from(), to())
         .left
-        .map(_.message)
+        .map(_.problems.head)
         .map(t =>
           ArticleCommand.Rename(
             ReviewGoal.Slug(from().value.trim),

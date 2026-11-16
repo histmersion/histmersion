@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.approvals
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import io.scalaland.chimney.dsl.*
 
@@ -134,7 +134,10 @@ final class ApprovalDigestService(
         )
         val ok = done.collect { case (id, Right(_)) => id }
         val bad = done.collect { case (id, Left(e)) =>
-          BulkFailed(BulkFailed.Id(id.value), Problem.Unclassified(Legacy.Text(e.message.sentence.take(300))))
+          BulkFailed(
+            BulkFailed.Id(id.value),
+            Problem.Unclassified(Legacy.Text(e.problems.sentences.mkString("; ").take(300)))
+          )
         }
         val left = agents.approvalStore.openLight().size
         if ok.nonEmpty then

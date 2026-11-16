@@ -2,7 +2,7 @@ package com.histmersion
 package domain.research.workflows
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.scalaland.chimney.dsl.*
@@ -91,7 +91,7 @@ final class ProposeArticlesPipeline(
     yield PipelineDef.Summary(closed)
 
   private def log(ctx: RunCtx, line: PlanArticles.LogLine): Either[String, String] =
-    Pipelines.log(site.workLists, ctx, Pipelines.LogLine(line.value)).left.map(_.sentence).map(_.value)
+    Pipelines.log(site.workLists, ctx, Pipelines.LogLine(line.value)).left.map(_.sentences.mkString("; ")).map(_.value)
 
   private def limits(ctx: RunCtx): PlanArticles.Limits =
     val p = ctx.run.params
@@ -126,7 +126,7 @@ final class ProposeArticlesPipeline(
     (up ++ down(slug, 0)).distinct.filterNot(_ == slug)
 
   private def load(slug: Goal.Slug): Either[String, Loaded] =
-    site.goal(slug).left.map(_.message.sentence).map { g =>
+    site.goal(slug).left.map(_.problems.sentences.mkString("; ")).map { g =>
       val goal = Goal.Slug.assume(g.slug.value)
       val links = goals.links(goal)
       val area = goal :: family(goal)

@@ -1,7 +1,7 @@
 package com.histmersion
 package server
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -156,7 +156,7 @@ class CritiqueReasonsSuite extends DbSuite:
     // refused, nothing written: no edge, an unknown citekey, a reason too long — and the whole patch with them
     assert(
       patch(CritiqueReason(LoneRef, FrazerRef, Coverage.Rationale("y"))).left
-        .exists(_.message.sentence.contains("no challenges/refutes/updates/superseded_by edge"))
+        .exists(_.problems.sentences.mkString("; ").contains("no challenges/refutes/updates/superseded_by edge"))
     )
     assert(
       patch(
@@ -165,7 +165,7 @@ class CritiqueReasonsSuite extends DbSuite:
           FrazerRef,
           Coverage.Rationale("y")
         )
-      ).left.exists(_.message.sentence.contains("is not a citekey"))
+      ).left.exists(_.problems.sentences.mkString("; ").contains("unknown citekey"))
     )
     assert(patch(CritiqueReason(BrownRef, FrazerRef, Coverage.Rationale("z" * 501))).isLeft)
     assert(

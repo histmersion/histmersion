@@ -1,6 +1,6 @@
 package com.histmersion
 package util.storage
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import java.io.InputStream
 import io.github.iltotore.iron.constraint.any.Pure
@@ -28,7 +28,7 @@ object ContentStore:
   val none: ContentStore = new ContentStore:
     def find(sha256: Sha256): Option[(ByteSource, Ext)] = None
     def store(sha256: Sha256, ext: Ext, in: InputStream): Either[Problem, Unit] =
-      Left(Problem.Unclassified(Legacy.Text("this server stores no originals")))
+      Left(Problem.Config.Unavailable(Problem.Config.Capability.Originals))
 
   /** An extension safe in a file name: short and alphanumeric, else `bin`. Pure. */
   def safeExt(ext: Ext): Ext =

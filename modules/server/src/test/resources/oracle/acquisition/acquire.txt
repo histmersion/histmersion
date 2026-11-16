@@ -85,14 +85,16 @@
 == acquire add (blank)
 400 {
   "code" : null,
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
+  "problems" : [
+    {
+      "case" : "Unclassified",
+      "data" : {
+        "text" : "queue item text is empty"
+      },
+      "group" : "Unclassified",
       "text" : "queue item text is empty"
-    },
-    "group" : "Unclassified",
-    "text" : "queue item text is empty"
-  }
+    }
+  ]
 }
 == acquire done
 200 {
@@ -125,14 +127,16 @@
 == acquire rm (again)
 404 {
   "code" : "not_found",
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
+  "problems" : [
+    {
+      "case" : "Unclassified",
+      "data" : {
+        "text" : "No queue item #7"
+      },
+      "group" : "Unclassified",
       "text" : "No queue item #7"
-    },
-    "group" : "Unclassified",
-    "text" : "No queue item #7"
-  }
+    }
+  ]
 }
 == acquire list
 200 {
@@ -784,16 +788,19 @@ A Zq atlas (buy)
   > GET /openalex/works/https://doi.org/10.5555/zq.cited?select=id,authorships&mailto=oracle@example.org
   > GET /openalex/works?filter=cites:W1661078230,from_publication_date:DAY&per-page=25&sort=publication_date:desc&select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index&mailto=oracle@example.org
 == sweep (no such goal)
-400 {
+404 {
   "code" : "not_found",
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
-      "text" : "no goal 'zqa-none'"
-    },
-    "group" : "Unclassified",
-    "text" : "no goal 'zqa-none'"
-  }
+  "problems" : [
+    {
+      "case" : "Entity",
+      "data" : {
+        "key" : "zqa-none",
+        "typeName" : "Goal.Slug"
+      },
+      "group" : "NotFound",
+      "text" : "no goal slug 'zqa-none'"
+    }
+  ]
 }
 == candidates
 200 {
@@ -916,14 +923,16 @@ A Zq atlas (buy)
 == mark (bad state)
 400 {
   "code" : "invalid",
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
+  "problems" : [
+    {
+      "case" : "Unclassified",
+      "data" : {
+        "text" : "unknown state 'maybe' (new, seen, queued, dismissed)"
+      },
+      "group" : "Unclassified",
       "text" : "unknown state 'maybe' (new, seen, queued, dismissed)"
-    },
-    "group" : "Unclassified",
-    "text" : "unknown state 'maybe' (new, seen, queued, dismissed)"
-  }
+    }
+  ]
 }
 == candidates --state seen
 200 {
@@ -968,14 +977,16 @@ A Zq atlas (buy)
 == candidates --state wrong
 400 {
   "code" : "invalid",
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
+  "problems" : [
+    {
+      "case" : "Unclassified",
+      "data" : {
+        "text" : "unknown state 'wrong' (new, seen, queued, dismissed)"
+      },
+      "group" : "Unclassified",
       "text" : "unknown state 'wrong' (new, seen, queued, dismissed)"
-    },
-    "group" : "Unclassified",
-    "text" : "unknown state 'wrong' (new, seen, queued, dismissed)"
-  }
+    }
+  ]
 }
 == sweep again (CORE's budget spent)
 200 {

@@ -1,7 +1,7 @@
 package com.histmersion
 package db
 
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -225,7 +225,9 @@ class RenameRepoSuite extends DbSuite:
       sql"""INSERT INTO place_footprints (place_id, role, geom, citekey)
             VALUES ($Place, 'core', ST_GeomFromText('POINT(32 39)', 4326), $Old)""".update.run()
 
-    val counts = SourceFixtures.rename(ds, Old, RenameToNewRaw(New.value)).fold(e => fail(e.message.sentence), identity)
+    val counts = SourceFixtures
+      .rename(ds, Old, RenameToNewRaw(New.value))
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
 
     // the source and everything with a foreign key
     assert(SourceFixtures.get(ds, Old).isEmpty)
@@ -356,7 +358,9 @@ class RenameRepoSuite extends DbSuite:
 
   test("after a rename the old citekey keeps working as a link target, an edge target and a patch target"):
     put(source(Old)); put(source(Other))
-    val _ = SourceFixtures.rename(ds, Old, RenameToNewRaw(New.value)).fold(e => fail(e.message.sentence), identity)
+    val _ = SourceFixtures
+      .rename(ds, Old, RenameToNewRaw(New.value))
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     // an article written LATER with the old key links the source, recorded under the new key
     val _ = ArticleFixtures.put(
       ds,
@@ -439,18 +443,18 @@ class RenameRepoSuite extends DbSuite:
       SourceFixtures.rename(ds, from, to) match
         case Right(_) => fail(s"$from → $to should be refused")
         case Left(e)  =>
-          assertEquals(e.code, code, e.message)
-          assert(e.message.sentence.contains(says), e.message)
+          assertEquals(e.code, code, e.problems.head)
+          assert(e.problems.sentences.mkString("; ").contains(says), e.problems.head)
     refused(Old, RenameToNewRaw(Old.value), Some(Write.CodeInvalid), "already the citekey")
     refused(Old, RenameToNewRaw("Not A Key"), Some(Write.CodeInvalid), "is not a citekey")
     refused(Old, RenameToNewRaw("zzrn-2011"), Some(Write.CodeInvalid), "LINK-shaped")
     refused(Citekey("zzrn2000_missing"), RenameToNewRaw(New.value), Some(Write.CodeNotFound), "zzrn2000_missing")
-    refused(Old, RenameToNewRaw(Other.value), Some(Write.CodeInvalid), "already the citekey of another source")
+    refused(Old, RenameToNewRaw(Other.value), Some(Write.CodeInvalid), s"citekey '$Other' already exists")
     // a new key that is an OLD key of another source
     assert(SourceFixtures.rename(ds, Other, RenameToNewRaw("zzrnb2019_other")).isRight)
     refused(Old, RenameToNewRaw(Other.value), Some(Write.CodeInvalid), "old citekey of 'zzrnb2019_other'")
     // renaming an old key names what it points to
-    refused(Other, RenameToNewRaw(New.value), Some(Write.CodeInvalid), "rename 'zzrnb2019_other' instead")
+    refused(Other, RenameToNewRaw(New.value), Some(Write.CodeInvalid), "write to 'zzrnb2019_other' instead")
     // a finding id under the new name already taken (by a source that broke the convention)
     connect(ds)(
       sql"""INSERT INTO findings (id, citekey, claim) VALUES (${New.value + "#9"}, 'zzrnb2019_other', 'x')""".update

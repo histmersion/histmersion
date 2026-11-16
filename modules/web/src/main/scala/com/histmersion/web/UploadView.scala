@@ -1,7 +1,7 @@
 package com.histmersion
 package web
 
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import hearth.kindlings.optics.syntax.*
 
 import com.raquo.laminar.api.L.*
@@ -223,9 +223,10 @@ object UploadView:
             progress.set(None)
             r.fold(
               {
-                case af: ApiFailure if af.unauthorized => errors.set(List(Field.Form -> af.error.message.sentence))
-                case af: ApiFailure                    => errors.set(List(fieldOf(af) -> af.error.message.sentence))
-                case e                                 => errors.set(List(Field.Form -> e.getMessage))
+                case af: ApiFailure if af.unauthorized =>
+                  errors.set(List(Field.Form -> af.error.problems.sentences.mkString("; ")))
+                case af: ApiFailure => errors.set(List(fieldOf(af) -> af.error.problems.sentences.mkString("; ")))
+                case e              => errors.set(List(Field.Form -> e.getMessage))
               },
               ok =>
                 // the item is NOT ticked off here: the OCR job does that when it succeeds

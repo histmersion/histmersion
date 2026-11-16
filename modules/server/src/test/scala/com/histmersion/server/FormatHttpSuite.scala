@@ -235,7 +235,7 @@ class FormatHttpSuite extends DbSuite with com.histmersion.db.Bounded:
       assert(gb.contains("\"zz_fmt_place_b\""), gb)
       // a filter on the old id is answered, not refused or emptied by an unknown place
       assertEquals(get(s"$url/api/sources?place=zz_fmt_place_a")._1, 200)
-      assertEquals(post(s"$url/api/places/zz_fmt_place_other/rename", """{"to":"zz_fmt_place_a"}""")._1, 400)
+      assertEquals(post(s"$url/api/places/zz_fmt_place_other/rename", """{"to":"zz_fmt_place_a"}""")._1, 409)
       assertEquals(post(s"$url/api/places/zz_fmt_place_b/rename", """{"to":"Not An Id"}""")._1, 400)
       val (_, m) = mcp(url, "rename_label", """{"kind":"place","from":"zz_fmt_place_b","to":"zz_fmt_place_c"}""")
       assert(m.contains("Place renamed"), m)

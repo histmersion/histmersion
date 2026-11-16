@@ -2,7 +2,7 @@ package com.histmersion
 package domain.research.workflows
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.problem.Problem
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.domain.automation.agents.*
@@ -84,7 +84,7 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
   // ── steps ──────────────────────────────────────────────────────────────────────────────────────
 
   private def load(slug: Slug): Either[String, Loaded] =
-    site.articles.get(slug).left.map(_.message.sentence).map { v =>
+    site.articles.get(slug).left.map(_.problems.sentences.mkString("; ")).map { v =>
       val a = v.article
       val canonical = Slug.assume(a.slug.value)
       val stored = site.articleStore.load(canonical)
@@ -182,21 +182,25 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
         cfg.approvals.filterMode match
           case Approval.Mode.Auto =>
             ctx.write(s"record the coverage filter of [[$slug]]", p.asJson)(
-              site.articles.patch(slug, Article.Patch(filter = Some(p.filter))).left.map(_.message.sentence).map { _ =>
-                val a = ctx.approvalStore.openSubject(
-                  jobId,
-                  ApprovalKind.ArticleFilter,
-                  subject,
-                  ApprovalService.Payload(json),
-                  ApprovalState.Approved,
-                  Some(
-                    ApprovalService.SubjectOutcome(
-                      s"applied automatically (agents.approvals.article-filter): ${p.filter.line}"
+              site.articles
+                .patch(slug, Article.Patch(filter = Some(p.filter)))
+                .left
+                .map(_.problems.sentences.mkString("; "))
+                .map { _ =>
+                  val a = ctx.approvalStore.openSubject(
+                    jobId,
+                    ApprovalKind.ArticleFilter,
+                    subject,
+                    ApprovalService.Payload(json),
+                    ApprovalState.Approved,
+                    Some(
+                      ApprovalService.SubjectOutcome(
+                        s"applied automatically (agents.approvals.article-filter): ${p.filter.line}"
+                      )
                     )
                   )
-                )
-                Recorded(Some(a.id), applied = true, Recorded.Line(s"filter recorded: $what"))
-              }
+                  Recorded(Some(a.id), applied = true, Recorded.Line(s"filter recorded: $what"))
+                }
             )(
               Right(
                 Recorded(
@@ -229,7 +233,7 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
             )
 
   private def log(ctx: RunCtx, line: FilterInference.LogLine): Either[String, String] =
-    Pipelines.log(site.workLists, ctx, Pipelines.LogLine(line.value)).left.map(_.sentence).map(_.value)
+    Pipelines.log(site.workLists, ctx, Pipelines.LogLine(line.value)).left.map(_.sentences.mkString("; ")).map(_.value)
 
 object InferFilterPipeline:
   /** How many of the most used topics and tags the model is shown, how many cited sources by title, and how much of the
@@ -288,7 +292,7 @@ object InferFilterPipeline:
     */
   def applyProposal(articles: ArticlesControllers, store: ArticleService, p: FilterProposal): Either[String, String] =
     Slug.parse(p.slug.value).left.map(_.sentence).flatMap { slug =>
-      articles.get(slug).left.map(_.message.sentence).flatMap { v =>
+      articles.get(slug).left.map(_.problems.sentences.mkString("; ")).flatMap { v =>
         val canonical = Slug.assume(v.article.slug.value)
         val has = store.load(canonical).flatMap(_.filter)
         if has.isDefined then
@@ -297,7 +301,7 @@ object InferFilterPipeline:
           articles
             .patch(canonical, Article.Patch(filter = Some(p.filter)))
             .left
-            .map(_.message.sentence)
+            .map(_.problems.sentences.mkString("; "))
             .map(_ => s"filter of [[${v.article.slug}]] recorded: ${p.filter.line}")
       }
     }

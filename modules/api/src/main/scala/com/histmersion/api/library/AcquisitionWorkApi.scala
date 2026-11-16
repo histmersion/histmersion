@@ -9,19 +9,18 @@ import com.histmersion.api.Api
   * re-check. Their errors are the managers'.
   */
 object AcquisitionWorkApi:
-  import ManagersApi.errors
 
   lazy val repairAcquire: PublicEndpoint[RepairAcquire.RepairRequest, Api.Error, RepairAcquire.RepairResult, Any] =
     endpoint.post
       .in("api" / "agents" / "autopilot" / "repair-acquire")
-      .errorOut(errors)
+      .errorOut(Api.problemOut)
       .in(jsonBody[RepairAcquire.RepairRequest])
       .out(jsonBody[RepairAcquire.RepairResult])
 
   lazy val acquireRecheck: PublicEndpoint[Acquire.Checks.RecheckRequest, Api.Error, Acquire.Checks.RecheckResult, Any] =
     endpoint.post
       .in("api" / "queue" / "acquire" / "recheck")
-      .errorOut(errors)
+      .errorOut(Api.problemOut)
       .in(jsonBody[Acquire.Checks.RecheckRequest])
       .out(jsonBody[Acquire.Checks.RecheckResult])
 

@@ -233,7 +233,7 @@ abstract class RunServiceContract extends EngineStoreSuite:
           before = Some(AgentRepo.PageCursor("00000000-0000-0000-0000-000000000000"))
         )
         .left
-        .exists(_.sentence.contains("No agent run"))
+        .exists(_.isNotFound)
     )
     def page(q: RunQuery) = r(s).page(q, RunQuery.Limit(10), None, None).map(_._1.map(_.id.value: String))
     assertEquals(page(RunQuery(status = List(RunQuery.Status("running")))), Right(Vector(c)))

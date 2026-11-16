@@ -585,7 +585,7 @@ class AiProvidersSuite extends munit.FunSuite:
       AgentsControllers
         .attempt(ref)(PluginAiClient(ref, failing, AiHttp.Offline).run(call()))
         .left
-        .map(_.message)
+        .map(_.problems.head)
         .left
         .map(_.sentence),
       Left("the call to gemini:pro failed: RuntimeException: Claude API error: Overloaded")
@@ -603,7 +603,7 @@ class AiProvidersSuite extends munit.FunSuite:
       AgentsControllers
         .attempt(ref)(PluginAiClient(ref, other, AiHttp.Offline).run(call()))
         .left
-        .map(_.message)
+        .map(_.problems.head)
         .left
         .map(_.sentence),
       Left("the call to gemini:pro failed: IOException: gemini:pro: HTTP 500")

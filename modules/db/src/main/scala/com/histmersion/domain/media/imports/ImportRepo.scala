@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.media.imports
+import com.histmersion.domain.catalogue.{Event as CatalogueEvent, Place as CataloguePlace}
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.domain.media.assets.PictureTarget
@@ -111,7 +112,7 @@ private[imports] object ImportRepo:
     ) match
       case (Some(pid), _) =>
         sql"SELECT label FROM places WHERE id = $pid".query[Target.Label].run().headOption match
-          case None        => Left(Problem.Unclassified(Legacy.Text(s"No place '${pid.value}'")))
+          case None        => Left(Problem.NotFound.Entity(Problem.TypeName.of(CataloguePlace.Id), Problem.Raw.of(pid)))
           case Some(label) =>
             placeQid(pid)
               .map(q => List(Target(Place, Target.Id(pid.value), q, label)))
@@ -121,7 +122,7 @@ private[imports] object ImportRepo:
           .query[(Target.Label, Option[Target.Qid])]
           .run()
           .headOption match
-          case None                   => Left(Problem.Unclassified(Legacy.Text(s"No event '${eid.value}'")))
+          case None => Left(Problem.NotFound.Entity(Problem.TypeName.of(CatalogueEvent.Id), Problem.Raw.of(eid)))
           case Some((label, Some(q))) => Right(List(Target(Event, Target.Id(eid.value), q, label)))
           case Some((label, None))    =>
             Left(
@@ -224,7 +225,7 @@ private[imports] object ImportRepo:
           Left(Problem.Unclassified(Legacy.Text("this import is about events: name one with --event")))
         else
           sql"SELECT label FROM places WHERE id = $pid".query[Target.Label].run().headOption match
-            case None => Left(Problem.Unclassified(Legacy.Text(s"No place '${pid.value}'")))
+            case None => Left(Problem.NotFound.Entity(Problem.TypeName.of(CataloguePlace.Id), Problem.Raw.of(pid)))
             case Some(l) if pleiadesOnly.value && pleiadesIdsIn(List(pid)).isEmpty =>
               Left(
                 Problem.Unclassified(
@@ -242,7 +243,7 @@ private[imports] object ImportRepo:
             .query[(Target.Label, Option[Target.Qid])]
             .run()
             .headOption match
-            case None                   => Left(Problem.Unclassified(Legacy.Text(s"No event '${eid.value}'")))
+            case None => Left(Problem.NotFound.Entity(Problem.TypeName.of(CatalogueEvent.Id), Problem.Raw.of(eid)))
             case Some((label, Some(q))) => Right(List(Target(Event, Target.Id(eid.value), q, label)))
             case Some((label, None))    =>
               Left(

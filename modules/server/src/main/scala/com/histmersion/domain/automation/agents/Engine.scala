@@ -676,7 +676,10 @@ final class Engine(
     agents.runs
       .get(id)
       .toRight(
-        Api.Error(Problem.Unclassified(Legacy.Text(s"No agent run '$id'")), Some(Api.Error.Code(Write.CodeNotFound)))
+        Api.Error(
+          Problem.NotFound.Entity(Problem.TypeName.of(Run.Id), Problem.Raw(s"$id")),
+          Some(Api.Error.Code(Write.CodeNotFound))
+        )
       )
 
   private def withRun[A](id: Run.Id)(f: RunInfo => Either[Api.Error, A]): Either[Api.Error, A] = get(id).flatMap(f)

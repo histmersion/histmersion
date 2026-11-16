@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.catalogue.evidence
 
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -101,7 +101,7 @@ abstract class AttestationServiceContract extends CatalogueStoreSuite:
     assert(
       a.patch(Attestation.Id(third.id.value + 100), Attestation.Patch(note = Some(Attestation.Note("x"))))
         .left
-        .exists(_.message.sentence.contains("No attestation"))
+        .exists(_.problems.sentences.mkString("; ").contains("No attestation"))
     )
     assert(a.delete(second.id))
     assert(!a.delete(second.id))

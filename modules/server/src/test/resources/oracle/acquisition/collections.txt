@@ -456,26 +456,30 @@
 == calibre push zqa_upload
 400 {
   "code" : null,
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
+  "problems" : [
+    {
+      "case" : "Unclassified",
+      "data" : {
+        "text" : "author is required"
+      },
+      "group" : "Unclassified",
       "text" : "author is required"
-    },
-    "group" : "Unclassified",
-    "text" : "author is required"
-  }
+    }
+  ]
 }
 == calibre push zqa_nodoi (no original)
-400 {
+404 {
   "code" : "not_found",
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
+  "problems" : [
+    {
+      "case" : "Unclassified",
+      "data" : {
+        "text" : "no original stored for 'zqa_nodoi' — the server keeps uploads in TMP/acq-spool; pass the file yourself (--file) — or set cli.calibre.originals-dir (HISTMERSION_CALIBRE_ORIGINALS_DIR) to a directory holding <citekey>/paper.pdf"
+      },
+      "group" : "Unclassified",
       "text" : "no original stored for 'zqa_nodoi' — the server keeps uploads in TMP/acq-spool; pass the file yourself (--file) — or set cli.calibre.originals-dir (HISTMERSION_CALIBRE_ORIGINALS_DIR) to a directory holding <citekey>/paper.pdf"
-    },
-    "group" : "Unclassified",
-    "text" : "no original stored for 'zqa_nodoi' — the server keeps uploads in TMP/acq-spool; pass the file yourself (--file) — or set cli.calibre.originals-dir (HISTMERSION_CALIBRE_ORIGINALS_DIR) to a directory holding <citekey>/paper.pdf"
-  }
+    }
+  ]
 }
 == calibre sync (dry)
 200 {
@@ -671,21 +675,23 @@
 == acquire calibre meta (bad)
 400 {
   "code" : "invalid",
-  "message" : {
-    "case" : "Malformed",
-    "data" : {
-      "at" : [
-      ],
-      "constraint" : {
-        "description" : "Should match (?!.*\\.\\.)[a-z][a-z0-9_.-]{1,120}",
-        "name" : "Match[\"(?!.*\\\\.\\\\.)[a-z][a-z0-9_.-]{1,120}\"]"
+  "problems" : [
+    {
+      "case" : "Malformed",
+      "data" : {
+        "at" : [
+        ],
+        "constraint" : {
+          "description" : "Should match (?!.*\\.\\.)[a-z][a-z0-9_.-]{1,120}",
+          "name" : "Match[\"(?!.*\\\\.\\\\.)[a-z][a-z0-9_.-]{1,120}\"]"
+        },
+        "raw" : "No Key",
+        "typeName" : "Citekey"
       },
-      "raw" : "No Key",
-      "typeName" : "Citekey"
-    },
-    "group" : "Invalid",
-    "text" : "'No Key' is not a citekey: Should match (?!.*\\.\\.)[a-z][a-z0-9_.-]{1,120}"
-  }
+      "group" : "Invalid",
+      "text" : "'No Key' is not a citekey: Should match (?!.*\\.\\.)[a-z][a-z0-9_.-]{1,120}"
+    }
+  ]
 }
 == acquire calibre pushed zqa_cited
 200 {
@@ -694,17 +700,19 @@
   "ok" : true
 }
 == acquire calibre pushed zqa_missing
-400 {
+404 {
   "code" : "not_found",
-  "message" : {
-    "case" : "Entity",
-    "data" : {
-      "key" : "zqa_missing",
-      "typeName" : "Citekey"
-    },
-    "group" : "NotFound",
-    "text" : "No source 'zqa_missing'"
-  }
+  "problems" : [
+    {
+      "case" : "Entity",
+      "data" : {
+        "key" : "zqa_missing",
+        "typeName" : "Citekey"
+      },
+      "group" : "NotFound",
+      "text" : "No source 'zqa_missing'"
+    }
+  ]
 }
 == archive search zq
 200 {
@@ -793,14 +801,16 @@
 == archive import zqlent (lending only)
 400 {
   "code" : null,
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
+  "problems" : [
+    {
+      "case" : "Unclassified",
+      "data" : {
+        "text" : "'zqlent' is a lending-only item — borrow it on archive.org; it is not downloadable here (no DRM circumvention)"
+      },
+      "group" : "Unclassified",
       "text" : "'zqlent' is a lending-only item — borrow it on archive.org; it is not downloadable here (no DRM circumvention)"
-    },
-    "group" : "Unclassified",
-    "text" : "'zqlent' is a lending-only item — borrow it on archive.org; it is not downloadable here (no DRM circumvention)"
-  }
+    }
+  ]
 }
   > GET /archive/metadata/zqlent
 == archive import zqbook

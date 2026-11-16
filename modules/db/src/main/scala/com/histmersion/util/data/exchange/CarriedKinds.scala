@@ -1,6 +1,6 @@
 package com.histmersion
 package util.data.exchange
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.api.exchange.Bundle
@@ -50,17 +50,16 @@ object CarriedKinds:
 
   def of(kinds: List[CarriedKind]): Either[List[Problem], CarriedKinds] =
     val entries = kinds.map(_.entry.value)
-    val missing =
-      Bundle.Files.all.filterNot(entries.contains).map(e => s"no carried kind writes $e")
-    val twice = entries.diff(entries.distinct).distinct.map(e => s"$e is carried twice")
-    val unknown = entries
-      .filterNot(Bundle.Files.all.contains)
-      .map(e => s"$e is not a file of the bundle format")
+    def entry(e: String, fault: Problem.Io.Fault): Problem =
+      Problem.Io.Entry(Problem.Io.Format.Bundle, Problem.Io.Path(e), fault)
+    val missing = Bundle.Files.all.filterNot(entries.contains).map(entry(_, Problem.Io.Fault.Missing))
+    val twice = entries.diff(entries.distinct).distinct.map(entry(_, Problem.Io.Fault.Repeated))
+    val unknown = entries.filterNot(Bundle.Files.all.contains).map(entry(_, Problem.Io.Fault.Foreign))
     val problems = missing ++ twice ++ unknown
     Either.cond(
       problems.isEmpty,
       new CarriedKinds(kinds.sortBy(k => Bundle.Files.all.indexOf(k.entry.value))),
-      problems.map((text => Problem.Unclassified(Legacy.Text(text))))
+      problems
     )
 
   /** The registry's kinds; an inconsistent registry is a programming error, found at start. */

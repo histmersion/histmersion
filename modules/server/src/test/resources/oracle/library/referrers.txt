@@ -263,53 +263,60 @@
   }
 }
 == refused: taken (zqalpha1991_walls → zqbeta2001_cove)
-400 {
+409 {
   "code" : "invalid",
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
-      "text" : "'zqbeta2001_cove' is already the citekey of another source"
-    },
-    "group" : "Unclassified",
-    "text" : "'zqbeta2001_cove' is already the citekey of another source"
-  }
+  "problems" : [
+    {
+      "case" : "AlreadyExists",
+      "data" : {
+        "key" : "zqbeta2001_cove",
+        "typeName" : "Citekey"
+      },
+      "group" : "Conflict",
+      "text" : "citekey 'zqbeta2001_cove' already exists"
+    }
+  ]
 }
 == refused: invalid (zqalpha1991_walls → ZQ bad)
 400 {
   "code" : "invalid",
-  "message" : {
-    "case" : "Malformed",
-    "data" : {
-      "at" : [
-      ],
-      "constraint" : {
-        "description" : "Should match (?!.*\\.\\.)[a-z][a-z0-9_.-]{1,120}",
-        "name" : "Match[\"(?!.*\\\\.\\\\.)[a-z][a-z0-9_.-]{1,120}\"]"
+  "problems" : [
+    {
+      "case" : "Malformed",
+      "data" : {
+        "at" : [
+        ],
+        "constraint" : {
+          "description" : "Should match (?!.*\\.\\.)[a-z][a-z0-9_.-]{1,120}",
+          "name" : "Match[\"(?!.*\\\\.\\\\.)[a-z][a-z0-9_.-]{1,120}\"]"
+        },
+        "raw" : "ZQ bad",
+        "typeName" : "Citekey"
       },
-      "raw" : "ZQ bad",
-      "typeName" : "Citekey"
-    },
-    "group" : "Invalid",
-    "text" : "'ZQ bad' is not a citekey: Should match (?!.*\\.\\.)[a-z][a-z0-9_.-]{1,120}"
-  }
+      "group" : "Invalid",
+      "text" : "'ZQ bad' is not a citekey: Should match (?!.*\\.\\.)[a-z][a-z0-9_.-]{1,120}"
+    }
+  ]
 }
 == refused: not link-shaped (zqalpha1991_walls → zqwalls)
 400 {
   "code" : "invalid",
-  "message" : {
-    "case" : "Broken",
-    "data" : {
-      "at" : [
-      ],
-      "rule" : {
-        "CitekeyLinkShaped" : {
-          "citekey" : "zqwalls"
+  "problems" : [
+    {
+      "case" : "Broken",
+      "data" : {
+        "at" : [
+        ],
+        "rule" : {
+          "CitekeyLinkShaped" : {
+            "citekey" : "zqwalls"
+          }
         }
-      }
-    },
-    "group" : "Invalid",
-    "text" : "'zqwalls' is a valid citekey but not a LINK-shaped one — `[[zqwalls]]` would resolve to an article, not the source. Use lower-case letters, digits and '_' with a four-digit year or an underscore (e.g. page1959_history)"
-  }
+      },
+      "group" : "Invalid",
+      "text" : "'zqwalls' is a valid citekey but not a LINK-shaped one — `[[zqwalls]]` would resolve to an article, not the source. Use lower-case letters, digits and '_' with a four-digit year or an underscore (e.g. page1959_history)"
+    }
+  ]
 }
 == refused: the same (zqalpha1991_walls → zqalpha1991_walls)
 200 {
@@ -398,15 +405,17 @@
 == refused: unknown (zqnone2000_x → zqnone2001_x)
 404 {
   "code" : "not_found",
-  "message" : {
-    "case" : "Entity",
-    "data" : {
-      "key" : "zqnone2000_x",
-      "typeName" : "Citekey"
-    },
-    "group" : "NotFound",
-    "text" : "No source 'zqnone2000_x'"
-  }
+  "problems" : [
+    {
+      "case" : "Entity",
+      "data" : {
+        "key" : "zqnone2000_x",
+        "typeName" : "Citekey"
+      },
+      "group" : "NotFound",
+      "text" : "No source 'zqnone2000_x'"
+    }
+  ]
 }
 == rows after the rename
 ## sources 7 rows
@@ -1153,32 +1162,36 @@ Mirror: the next full `histmersion export` removes `sources/zqbeta2001_cove.md`.
   "title" : "A Cited Survey"
 }
 == delete zqeps1999_cited: refused
-400 {
+409 {
   "code" : "invalid",
-  "message" : {
-    "case" : "Referenced",
-    "data" : {
-      "by" : "DeleteBlocker.Kind.Article",
-      "count" : 1,
-      "key" : "zqeps1999_cited",
-      "typeName" : "Citekey"
-    },
-    "group" : "Conflict",
-    "text" : "citekey 'zqeps1999_cited' is referred to by 1 article — remove those references first (there is no override)"
-  }
+  "problems" : [
+    {
+      "case" : "Referenced",
+      "data" : {
+        "by" : "DeleteBlocker.Kind.Article",
+        "count" : 1,
+        "key" : "zqeps1999_cited",
+        "typeName" : "Citekey"
+      },
+      "group" : "Conflict",
+      "text" : "citekey 'zqeps1999_cited' is referred to by 1 article — remove those references first (there is no override)"
+    }
+  ]
 }
 == delete zqnone2000_x: unknown
 404 {
   "code" : "not_found",
-  "message" : {
-    "case" : "Entity",
-    "data" : {
-      "key" : "zqnone2000_x",
-      "typeName" : "Citekey"
-    },
-    "group" : "NotFound",
-    "text" : "No source 'zqnone2000_x'"
-  }
+  "problems" : [
+    {
+      "case" : "Entity",
+      "data" : {
+        "key" : "zqnone2000_x",
+        "typeName" : "Citekey"
+      },
+      "group" : "NotFound",
+      "text" : "No source 'zqnone2000_x'"
+    }
+  ]
 }
 == delete zqalpha1991_walls: an old citekey
 200 {
@@ -1335,14 +1348,17 @@ Mirror: the next full `histmersion export` removes `sources/zqbeta2001_cove.md`.
 == GET the deleted
 404 {
   "code" : null,
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
+  "problems" : [
+    {
+      "case" : "Entity",
+      "data" : {
+        "key" : "zqdelta2010_gone",
+        "typeName" : "Citekey"
+      },
+      "group" : "NotFound",
       "text" : "No source 'zqdelta2010_gone'"
-    },
-    "group" : "Unclassified",
-    "text" : "No source 'zqdelta2010_gone'"
-  }
+    }
+  ]
 }
 == rows after the delete
 ## sources 6 rows

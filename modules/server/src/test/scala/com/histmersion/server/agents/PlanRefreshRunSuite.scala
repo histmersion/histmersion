@@ -5,7 +5,7 @@ import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -236,7 +236,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
   private def startAndRun(a: AgentsControllers): RunInfo =
     val run = a
       .startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), CkTarget))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     a.engine.execute(ApiIds.run(run.id))
     connect(ds)(AgentRepo.get(run.id)).get
 
@@ -544,7 +544,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
     Thread.sleep(5)
     val refreshed = a
       .refreshQuota(QuotaRefresh(Some(PlanQuota.PoolId.Wire("claude-plan"))))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(refreshed.lifted.map(_.value: String), List(Plan.wire.value: String))
     assert(AgentsMarkdown.refreshed(refreshed).contains("Back in use"), AgentsMarkdown.refreshed(refreshed))
     assertEquals(a.quota.cooldowns, Nil)
@@ -595,7 +595,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
     assert(!entry.usable.value && entry.problem.exists(_.sentence.contains("no login")), entry)
     val forced = a
       .refreshQuota(QuotaRefresh(Some(PlanQuota.PoolId.Wire("claude-plan"))))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assert(!forced.pools.head.refreshed.value && forced.pools.head.detail.value.contains("no login"), forced)
     assertEquals(reads.probes.get(), 0)
     // logged in with an API key where the plan is wanted is no plan login either

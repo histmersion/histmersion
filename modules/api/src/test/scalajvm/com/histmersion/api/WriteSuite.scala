@@ -4,7 +4,8 @@ import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
 
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.{Problem, Problems}
+import sttp.model.StatusCode
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -612,23 +613,19 @@ class WriteSuite extends munit.FunSuite:
       RawJson.decode[Source.Patch]("""{"metadata":{"isbn":null}}""").swap.toOption.get.contains("unknown key 'isbn'")
     )
 
-  test("ApiError.hasCode selects an error output by its code, and nothing else (#829)"):
-    val notFound = Api.Error.hasCode(Api.Error.Code(Write.CodeNotFound))
-    assert(
-      notFound.isDefinedAt(
-        Api.Error(
-          Problem.NotFound.Entity(Problem.TypeName.of(Citekey), Problem.Raw("x")),
-          Some(Api.Error.Code(Write.CodeNotFound))
-        )
-      )
-    )
-    assert(
-      !notFound.isDefinedAt(
-        Api.Error(
-          Problem.Invalid.Missing.here(Problem.Field("ifUpdatedAt")),
-          Some(Api.Error.Code(Write.CodePrecondition))
-        )
-      )
-    )
-    assert(!notFound.isDefinedAt(Api.Error(Problem.Invalid.Missing.here(Problem.Field("title")))))
-    assert(!notFound.isDefinedAt("not an ApiError"))
+  test("an error answers with its first problem's status; a code a site still gives keeps its own until step 7"):
+    val (key, stamp) = (Problem.Raw("x"), Problem.Conflict.Stamp("2026-11-01T10:00:00Z"))
+    val title = Problem.Invalid.Missing.here(Problem.Field("title"))
+    val missing = Problem.NotFound.Entity(Problem.TypeName.of(Citekey), key)
+    val stale = Problem.Conflict.Stale(Problem.TypeName.of(Citekey), key, stamp, stamp)
+    val (invalid, notFound) = (Some(Api.Error.Code(Write.CodeInvalid)), Some(Api.Error.Code(Write.CodeNotFound)))
+    assertEquals(Api.Error(missing, invalid).status, StatusCode.NotFound)
+    assertEquals(Api.Error(title).status, StatusCode.BadRequest)
+    assertEquals(Api.Error(title, notFound).status, StatusCode.NotFound)
+    assertEquals(Api.Error(title, invalid).status, StatusCode.BadRequest)
+    assertEquals(Api.Error(Problems.of(stale, missing)).status, StatusCode.PreconditionFailed)
+    val two = Api.Error(Problems.of(title, missing), None)
+    assertEquals(two.problems.size, 2)
+    val json = two.asJson.noSpaces
+    assert(json.startsWith("""{"problems":[{"""), json)
+    assertEquals(RawJson.decode[Api.Error](json), Right(two))

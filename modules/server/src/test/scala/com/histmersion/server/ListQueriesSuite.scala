@@ -1,7 +1,7 @@
 package com.histmersion
 package server
 
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalState}
@@ -52,19 +52,19 @@ class ListQueriesSuite extends munit.FunSuite:
       ListQueries
         .approvals(ApprovalFilter(state = Some(Approval.State.Wire("pending"))))
         .left
-        .exists(_.message.sentence.contains("unknown state 'pending'"))
+        .exists(_.problems.sentences.mkString("; ").contains("unknown state 'pending'"))
     )
     assert(
       ListQueries
         .approvals(ApprovalFilter(kind = List(Approval.Kind.Wire("goal-plan"), Approval.Kind.Wire("bogus"))))
         .left
-        .exists(_.message.sentence.contains("kind: unknown list filter term 'bogus'"))
+        .exists(_.problems.sentences.mkString("; ").contains("kind: unknown list filter term 'bogus'"))
     )
     assert(
       ListQueries
         .approvals(ApprovalFilter(decidedBy = List(Approval.DecidedBy.Wire("robot"))))
         .left
-        .exists(_.message.sentence.contains("person, autopilot, auto"))
+        .exists(_.problems.sentences.mkString("; ").contains("person, autopilot, auto"))
     )
 
   test("runs: states, pipelines and origins are checked, managers and models pass, dates are read once"):
@@ -105,25 +105,25 @@ class ListQueriesSuite extends munit.FunSuite:
       ListQueries
         .runs(RunFilter(status = List(RunFilter.Status("stuck"))), now)
         .left
-        .exists(_.message.sentence.contains("unknown list filter term 'stuck'"))
+        .exists(_.problems.sentences.mkString("; ").contains("unknown list filter term 'stuck'"))
     )
     assert(
       ListQueries
         .runs(RunFilter(pipeline = List(RunFilter.Pipeline("write-novel"))), now)
         .left
-        .exists(_.message.sentence.contains("unknown list filter term"))
+        .exists(_.problems.sentences.mkString("; ").contains("unknown list filter term"))
     )
     assert(
       ListQueries
         .runs(RunFilter(origin = List(Agents.Origin.Wire("cron"))), now)
         .left
-        .exists(_.message.sentence.contains("unknown list filter term"))
+        .exists(_.problems.sentences.mkString("; ").contains("unknown list filter term"))
     )
     assert(
       ListQueries
         .runs(RunFilter(since = Some(RunFilter.Since("last week"))), now)
         .left
-        .exists(_.message.sentence.startsWith("since:"))
+        .exists(_.problems.sentences.mkString("; ").startsWith("since:"))
     )
 
   test("jobs: states are checked, any kind passes (plugins add their own)"):

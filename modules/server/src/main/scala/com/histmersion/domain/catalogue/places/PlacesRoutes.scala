@@ -1,6 +1,6 @@
 package com.histmersion
 package domain.catalogue.places
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.api.{Api, Dataset, Write}
 import com.histmersion.api.catalogue.{ManualPlaceName, Place as ApiPlace}
@@ -19,7 +19,10 @@ import com.histmersion.api.catalogue.Gazetteer
   */
 object PlacesRoutes:
   private def missing(id: ApiPlace.Id): Api.Error =
-    Api.Error(Problem.Unclassified(Legacy.Text(s"No place '$id'")), Some(Api.Error.Code(Write.CodeNotFound)))
+    Api.Error(
+      Problem.NotFound.Entity(Problem.TypeName.of(Place.Id), Problem.Raw(s"$id")),
+      Some(Api.Error.Code(Write.CodeNotFound))
+    )
 
   private def exact(id: ApiPlace.Id): Either[Api.Error, Place.Id] = Place.Id.either(id.value).left.map(_ => missing(id))
 

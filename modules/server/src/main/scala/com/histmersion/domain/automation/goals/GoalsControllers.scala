@@ -27,7 +27,10 @@ final class GoalsControllers(
     maintenance: WriteGate
 ):
   private def notFound(slug: com.histmersion.domain.automation.Goal.Slug) =
-    Api.Error(Problem.Unclassified(Legacy.Text(s"No goal '${slug.value}'")), Some(Api.Error.Code(Write.CodeNotFound)))
+    Api.Error(
+      Problem.NotFound.Entity(Problem.TypeName.of(Goal.Slug), Problem.Raw(s"${slug.value}")),
+      Some(Api.Error.Code(Write.CodeNotFound))
+    )
 
   def list(q: Api.GoalQuery): Goal.List = goals.page(
     q.status.map(s => com.histmersion.domain.automation.Goal.Status.Wire(s.value)),

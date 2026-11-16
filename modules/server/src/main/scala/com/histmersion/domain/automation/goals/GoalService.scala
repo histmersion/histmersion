@@ -1,6 +1,8 @@
 package com.histmersion
 package domain.automation.goals
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.domain.DeepTime.SignedYear
+import io.github.iltotore.iron.RefinedType
+import com.histmersion.util.problem.Problem
 
 import io.scalaland.chimney.dsl.*
 
@@ -231,8 +233,16 @@ object GoalService:
       case com.histmersion.domain.automation.Goal.LinkKind.Article     => 1
       case com.histmersion.domain.automation.Goal.LinkKind.SearchQuery => 2
       case _                                                           => 3
-    private def refused(message: String, code: String): Api.Error =
-      Api.Error(Problem.Unclassified(Legacy.Text(message)), Some(Api.Error.Code(code)))
+    private def refused(problem: Problem, code: String): Api.Error = Api.Error(problem, Some(Api.Error.Code(code)))
+
+    /** As [[RangeSql.merge]] refuses it: the start, above the end. */
+    private def inverted[Y](slug: DomainGoal.Slug, a: Y, b: Y)(using RefinedType.Mirror[Y]): Problem =
+      Problem.Invalid.OutOfRange(
+        Problem.TypeName.of(SignedYear),
+        Problem.Raw.of(a),
+        Problem.Invalid.Bounds(None, Some(Problem.Raw.of(b))),
+        Vector(Problem.Field(s"goal '${slug.value}'"), Problem.Field("periodStart"))
+      )
 
     def get(slug: com.histmersion.domain.automation.Goal.Slug): Option[Goal] = goals.get(key(slug)).map(shown)
     def all(): List[Goal] = goals.values.toList.sortBy(_.goal.slug.value).map(shown)
@@ -242,10 +252,7 @@ object GoalService:
       (in.periodStart, in.periodEnd) match
         case (Some(a), Some(b)) if a > b =>
           Left(
-            refused(
-              s"goal '${slug.value}': the period would start (${YearFmt(a)}) after it ends (${YearFmt(b)})",
-              Write.CodeInvalid
-            )
+            refused(inverted(slug, a, b), Write.CodeInvalid)
           )
         case (start, end) =>
           val at = now
@@ -289,7 +296,7 @@ object GoalService:
       )
 
     private def notFound(slug: com.histmersion.domain.automation.Goal.Slug) =
-      refused(s"No goal '${slug.value}'", Write.CodeNotFound)
+      refused(Problem.NotFound.Entity(Problem.TypeName.of(Goal.Slug), Problem.Raw.of(slug)), Write.CodeNotFound)
 
     def patch(slug: com.histmersion.domain.automation.Goal.Slug, p: Goal.Patch): Either[Api.Error, Unit] =
       goals.get(key(slug)).toRight(notFound(slug)).flatMap { r =>
@@ -299,10 +306,7 @@ object GoalService:
         (start, end) match
           case (Some(a), Some(b)) if a > b =>
             Left(
-              refused(
-                s"goal '${slug.value}': the period would start (${YearFmt(a)}) after it ends (${YearFmt(b)})",
-                Write.CodeInvalid
-              )
+              refused(inverted(slug, a, b), Write.CodeInvalid)
             )
           case _ =>
             val changed = g
@@ -354,11 +358,17 @@ object GoalService:
       val aliasOf = state.get.goalAliases.get(AutomationState.GoalAliasesKey(now)).map(_.value)
       if !goals.contains(key(oldSlug)) then Left(notFound(oldSlug))
       else if goals.contains(key(newSlug)) then
-        Left(refused(s"'$now' is already the slug of another goal", Write.CodeInvalid))
+        Left(
+          refused(
+            Problem.Conflict.AlreadyExists(Problem.TypeName.of(Goal.Slug), Problem.Raw.of(newSlug)),
+            Write.CodeInvalid
+          )
+        )
       else if aliasOf.exists(_ != old) then
         Left(
           refused(
-            s"'$now' is an old slug of '${aliasOf.get}' and still resolves to it — pick another",
+            Problem.Conflict
+              .Aliased(Problem.TypeName.of(Goal.Slug), Problem.Raw.of(newSlug), Problem.Raw(s"${aliasOf.get}")),
             Write.CodeInvalid
           )
         )

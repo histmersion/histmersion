@@ -1,7 +1,7 @@
 package com.histmersion
 package db
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -308,7 +308,10 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
     // the city is the only place of both findings once the Regio is a region
     val _ = put(kind = Some(Place.OverrideEdit.Put.Kind(DPlace.Kind.Region)))
     val refused = PlaceFixtures.remove(ds, City, None)
-    assert(refused.left.exists(_.message.sentence.contains("2 finding(s) it is the only place of")), refused.toString)
+    assert(
+      refused.left.exists(_.problems.sentences.mkString("; ").contains("2 finding(s) it is the only place of")),
+      refused.toString
+    )
     val road =
       Place(
         Place.Id("zzpo_road"),
@@ -326,7 +329,7 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
       PlaceFixtures
         .remove(ds, com.histmersion.domain.catalogue.Place.Id("zzpo_road"), None)
         .left
-        .exists(_.message.sentence.contains("1 name(s) added by hand"))
+        .exists(_.problems.sentences.mkString("; ").contains("1 name(s) added by hand"))
     )
     val _ = PlaceFixtures.removeName(ds, DPlace.Id("zzpo_road"), PlaceFixtures.Name("Zzpo Via"), PlaceFixtures.Lang(""))
     val r = PlaceFixtures

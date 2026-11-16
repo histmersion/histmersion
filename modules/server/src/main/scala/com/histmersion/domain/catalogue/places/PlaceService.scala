@@ -205,7 +205,10 @@ object PlaceService:
     private def parentIs(r: Place.Relation, id: Place.Id): Boolean = r.parentId.value == id.value
     private def parentOf(r: Place.Relation): Place.Id = Place.Id(r.parentId.value)
     private def notFound(id: String): Api.Error =
-      Api.Error(Problem.Unclassified(Legacy.Text(s"No place '$id'")), Some(Api.Error.Code(Write.CodeNotFound)))
+      Api.Error(
+        Problem.NotFound.Entity(Problem.TypeName.of(Place.Id), Problem.Raw(s"$id")),
+        Some(Api.Error.Code(Write.CodeNotFound))
+      )
     private def invalid(message: String): Api.Error =
       Api.Error(Problem.Unclassified(Legacy.Text(message)), Some(Api.Error.Code(Write.CodeInvalid)))
 

@@ -13,7 +13,6 @@ object PersonalApi:
   type Search = Search.T
   object Search extends Newtype[String, Pure]
 
-  private def errors = Api.writeErrors
   private def kindQuery =
     query[Option[String]]("kind").description("only these: " + ItemKind.values.map(_.wire).mkString(", "))
   private def wordsQuery = query[Option[String]]("q").description("words its name, its label or its text holds")
@@ -27,7 +26,7 @@ object PersonalApi:
       .in(kindQuery)
       .in(wordsQuery)
       .in(limitQuery)
-      .errorOut(errors)
+      .errorOut(Api.problemOut)
       .out(jsonBody[List[Bookmark]]))
       .mapIn[(Option[ItemKind.Wire], Option[Search], Option[Int])](
         (refactorDecoded10: (Option[String], Option[String], Option[Int])) =>
@@ -45,13 +44,13 @@ object PersonalApi:
       )
 
   lazy val addBookmark: PublicEndpoint[Bookmark.New, Api.Error, Bookmark, Any] =
-    endpoint.post.in("api" / "bookmarks").in(jsonBody[Bookmark.New]).errorOut(errors).out(jsonBody[Bookmark])
+    endpoint.post.in("api" / "bookmarks").in(jsonBody[Bookmark.New]).errorOut(Api.problemOut).out(jsonBody[Bookmark])
 
   lazy val editBookmark: PublicEndpoint[(Bookmark.Id, Bookmark.Edit), Api.Error, Bookmark, Any] =
     (endpoint.patch
       .in("api" / "bookmarks" / path[String]("id"))
       .in(jsonBody[Bookmark.Edit])
-      .errorOut(errors)
+      .errorOut(Api.problemOut)
       .out(jsonBody[Bookmark]))
       .mapIn[(Bookmark.Id, Bookmark.Edit)]((refactorDecoded11: (String, Bookmark.Edit)) =>
         (Bookmark.Id((refactorDecoded11)._1), (refactorDecoded11)._2)
@@ -60,7 +59,7 @@ object PersonalApi:
   lazy val removeBookmark: PublicEndpoint[Bookmark.Id, Api.Error, Bookmark, Any] =
     (endpoint.delete
       .in("api" / "bookmarks" / path[String]("id"))
-      .errorOut(errors)
+      .errorOut(Api.problemOut)
       .out(jsonBody[Bookmark]))
       .mapIn[Bookmark.Id]((refactorDecoded12: String) => Bookmark.Id(refactorDecoded12))(
         (refactorEncoded12: Bookmark.Id) => (refactorEncoded12).value
@@ -75,7 +74,7 @@ object PersonalApi:
       .in(query[Option[String]]("id").description("the item's key"))
       .in(wordsQuery)
       .in(limitQuery)
-      .errorOut(errors)
+      .errorOut(Api.problemOut)
       .out(jsonBody[List[Note]]))
       .mapIn[(Option[ItemKind.Wire], Option[ItemKey], Option[Search], Option[Int])](
         (refactorDecoded4: (Option[String], Option[String], Option[String], Option[Int])) =>
@@ -97,20 +96,20 @@ object PersonalApi:
   lazy val note: PublicEndpoint[Note.Id, Api.Error, Note, Any] =
     (endpoint.get
       .in("api" / "notes" / path[String]("id"))
-      .errorOut(errors)
+      .errorOut(Api.problemOut)
       .out(jsonBody[Note]))
       .mapIn[Note.Id]((refactorDecoded5: String) => Note.Id(refactorDecoded5))((refactorEncoded5: Note.Id) =>
         (refactorEncoded5).value
       )
 
   lazy val addNote: PublicEndpoint[Note.New, Api.Error, Note, Any] =
-    endpoint.post.in("api" / "notes").in(jsonBody[Note.New]).errorOut(errors).out(jsonBody[Note])
+    endpoint.post.in("api" / "notes").in(jsonBody[Note.New]).errorOut(Api.problemOut).out(jsonBody[Note])
 
   lazy val editNote: PublicEndpoint[(Note.Id, Note.Edit), Api.Error, Note, Any] =
     (endpoint.patch
       .in("api" / "notes" / path[String]("id"))
       .in(jsonBody[Note.Edit])
-      .errorOut(errors)
+      .errorOut(Api.problemOut)
       .out(jsonBody[Note]))
       .mapIn[(Note.Id, Note.Edit)]((refactorDecoded6: (String, Note.Edit)) =>
         (Note.Id((refactorDecoded6)._1), (refactorDecoded6)._2)
@@ -119,7 +118,7 @@ object PersonalApi:
   lazy val removeNote: PublicEndpoint[Note.Id, Api.Error, Note, Any] =
     (endpoint.delete
       .in("api" / "notes" / path[String]("id"))
-      .errorOut(errors)
+      .errorOut(Api.problemOut)
       .out(jsonBody[Note]))
       .mapIn[Note.Id]((refactorDecoded7: String) => Note.Id(refactorDecoded7))((refactorEncoded7: Note.Id) =>
         (refactorEncoded7).value
@@ -133,7 +132,7 @@ object PersonalApi:
       .in(kindQuery)
       .in(query[Option[String]]("show").description("read (default), opened or all"))
       .in(limitQuery)
-      .errorOut(errors)
+      .errorOut(Api.problemOut)
       .out(jsonBody[List[ReadMark]]))
       .mapIn[(Option[ItemKind.Wire], Option[Activity.Show.Wire], Option[Int])](
         (refactorDecoded17: (Option[String], Option[String], Option[Int])) =>
@@ -151,10 +150,14 @@ object PersonalApi:
       )
 
   lazy val setRead: PublicEndpoint[ReadMark.Set, Api.Error, ReadMark, Any] =
-    endpoint.put.in("api" / "reading").in(jsonBody[ReadMark.Set]).errorOut(errors).out(jsonBody[ReadMark])
+    endpoint.put.in("api" / "reading").in(jsonBody[ReadMark.Set]).errorOut(Api.problemOut).out(jsonBody[ReadMark])
 
   lazy val opened: PublicEndpoint[ReadOpened, Api.Error, ReadMark, Any] =
-    endpoint.post.in("api" / "reading" / "opened").in(jsonBody[ReadOpened]).errorOut(errors).out(jsonBody[ReadMark])
+    endpoint.post
+      .in("api" / "reading" / "opened")
+      .in(jsonBody[ReadOpened])
+      .errorOut(Api.problemOut)
+      .out(jsonBody[ReadMark])
 
   lazy val unread
       : PublicEndpoint[(Option[ItemKind.Wire], Option[Int], Option[UnreadPage.Offset]), Api.Error, UnreadPage, Any] =
@@ -163,7 +166,7 @@ object PersonalApi:
       .in(kindQuery)
       .in(limitQuery)
       .in(query[Option[Int]]("offset").description("the first row of the page"))
-      .errorOut(errors)
+      .errorOut(Api.problemOut)
       .out(jsonBody[UnreadPage]))
       .mapIn[(Option[ItemKind.Wire], Option[Int], Option[UnreadPage.Offset])](
         (refactorDecoded18: (Option[String], Option[Int], Option[Int])) =>

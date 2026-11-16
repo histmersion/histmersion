@@ -146,8 +146,7 @@ object TilesApi:
           v.ifNoneMatch.map(_.value)
         )
       )
-      .errorOut(statusCode(StatusCode.BadRequest))
-      .errorOut(jsonBody[Api.Error])
+      .errorOut(Api.problemOut)
       .out(
         byteArrayBody
           .and(header[String](HeaderNames.ContentType))

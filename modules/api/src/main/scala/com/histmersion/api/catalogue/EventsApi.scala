@@ -27,7 +27,7 @@ object EventsApi:
     endpoint.post
       .in("api" / "events" / "import")
       .in(jsonBody[EventImportRequest])
-      .errorOut(Api.writeErrors)
+      .errorOut(Api.problemOut)
       .out(statusCode(StatusCode.Accepted))
       .out(jsonBody[JobInfo])
 
@@ -35,7 +35,7 @@ object EventsApi:
     endpoint.post
       .in("api" / "events" / "rederive")
       .in(jsonBody[EventRederiveRequest])
-      .errorOut(Api.writeErrors)
+      .errorOut(Api.problemOut)
       .out(statusCode(StatusCode.Accepted))
       .out(jsonBody[JobInfo])
 
@@ -51,7 +51,7 @@ object EventsApi:
       .in(query[Option[String]]("event"))
       .in(query[Option[Int]]("limit"))
       .in(query[Option[Int]]("offset"))
-      .errorOut(Api.writeErrors)
+      .errorOut(Api.problemOut)
       .out(jsonBody[Correction.List]))
       .mapIn[(Option[Event.Id], Option[EventCorrection.Status], Option[UnreadPage.Offset], Option[EventList.Limit])](
         (refactorDecoded4: (Option[String], Option[String], Option[Int], Option[Int])) =>
@@ -79,28 +79,28 @@ object EventsApi:
   lazy val catalogues: PublicEndpoint[Unit, Api.Error, List[CatalogProviderInfo], Any] =
     endpoint.get
       .in("api" / "events" / "catalogues")
-      .errorOut(jsonBody[Api.Error])
+      .errorOut(Api.problemOut)
       .out(jsonBody[List[CatalogProviderInfo]])
 
   lazy val leads: PublicEndpoint[Api.EventQuery, Api.Error, EventLead.List, Any] =
     endpoint.get
       .in("api" / "events" / "leads")
       .in(eventQuery)
-      .errorOut(jsonBody[Api.Error])
+      .errorOut(Api.problemOut)
       .out(jsonBody[EventLead.List])
 
   lazy val candidatesJob: PublicEndpoint[EventCandidatesRequest, Api.Error, JobInfo, Any] =
     endpoint.post
       .in("api" / "events" / "candidates")
       .in(jsonBody[EventCandidatesRequest])
-      .errorOut(Api.writeErrors)
+      .errorOut(Api.problemOut)
       .out(statusCode(StatusCode.Accepted))
       .out(jsonBody[JobInfo])
 
   lazy val links: PublicEndpoint[Event.Id, Api.Error, EventLinkList, Any] =
     (endpoint.get
       .in("api" / "events" / path[String]("id") / "links")
-      .errorOut(Api.writeErrors)
+      .errorOut(Api.problemOut)
       .out(jsonBody[EventLinkList]))
       .mapIn[Event.Id]((refactorDecoded2: String) => Event.Id(refactorDecoded2))((refactorEncoded2: Event.Id) =>
         (refactorEncoded2).value
@@ -110,7 +110,7 @@ object EventsApi:
     (endpoint.post
       .in("api" / "events" / path[String]("id") / "links")
       .in(jsonBody[EventLinksRequest])
-      .errorOut(Api.writeErrors)
+      .errorOut(Api.problemOut)
       .out(jsonBody[EventLinksResult]))
       .mapIn[(Event.Id, EventLinksRequest)]((refactorDecoded3: (String, EventLinksRequest)) =>
         (Event.Id((refactorDecoded3)._1), (refactorDecoded3)._2)
@@ -120,7 +120,7 @@ object EventsApi:
     endpoint.post
       .in("api" / "site-types" / "refine")
       .in(jsonBody[SiteTypes.Request])
-      .errorOut(Api.writeErrors)
+      .errorOut(Api.problemOut)
       .out(statusCode(StatusCode.Accepted))
       .out(jsonBody[JobInfo])
 

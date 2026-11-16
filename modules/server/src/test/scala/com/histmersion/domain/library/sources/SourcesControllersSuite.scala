@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.sources
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -120,7 +120,7 @@ class SourcesControllersSuite extends munit.FunSuite:
     assertEquals(
       c.put(Walls90, put.modify(_.notes).setTo(Div), strict = SourcesControllers.PutStrict(true))
         .left
-        .map(_.message)
+        .map(_.problems.head)
         .left
         .map(_.sentence),
       Left("refused (strict)")
@@ -155,7 +155,7 @@ class SourcesControllersSuite extends munit.FunSuite:
     assert(
       c.markdown(Walls90, SourcesControllers.MarkdownFullText(false), Some(Source.Section.Wire("nonsense")))
         .left
-        .exists(_.message.sentence.startsWith("unknown section"))
+        .exists(_.problems.sentences.mkString("; ").startsWith("unknown section"))
     )
     assertEquals(
       c.passages(Api.PassagesQuery(com.histmersion.api.library.Citekey("zqa1990_walls"), Api.PassagesQuery.Q("gate")))
@@ -182,7 +182,7 @@ class SourcesControllersSuite extends munit.FunSuite:
     assertEquals(c.get(Walls90).isRight, true)
     val gone = c.delete(Walls90, Source.DeleteRequest(apply = Source.DeleteRequest.Apply(true))).toOption.get
     assertEquals((gone.applied, gone.filesFailed, removed.get), (true, Nil, List("/spool/zqa1990_walls.pdf")))
-    assertEquals(c.get(Walls90).left.map(_.message).left.map(_.sentence), Left("No source 'zqa1990_walls'"))
+    assertEquals(c.get(Walls90).left.map(_.problems.head).left.map(_.sentence), Left("No source 'zqa1990_walls'"))
 
   test("a held lock refuses every write"):
     val gate = WriteGate()
@@ -200,4 +200,4 @@ class SourcesControllersSuite extends munit.FunSuite:
         )
       )
     )
-    assertEquals(held.fold(e => fail(e.message.sentence), identity), List.fill(6)(true))
+    assertEquals(held.fold(e => fail(e.problems.sentences.mkString("; ")), identity), List.fill(6)(true))

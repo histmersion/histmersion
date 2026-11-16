@@ -47,7 +47,12 @@ class MirrorSuite extends munit.FunSuite:
     )
     assertEquals(mirror.note(ResearchData.ArticleNotes, MirrorPlacement.RecordId("zz")), Right("article zz"))
     assertEquals(
-      mirror.note(ResearchData.ArticleNotes, MirrorPlacement.RecordId("gone")).left.map(_.message).left.map(_.sentence),
+      mirror
+        .note(ResearchData.ArticleNotes, MirrorPlacement.RecordId("gone"))
+        .left
+        .map(_.problems.head)
+        .left
+        .map(_.sentence),
       Left("no such article")
     )
 

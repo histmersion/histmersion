@@ -59,6 +59,8 @@ class RenderSuite extends munit.FunSuite:
     "Entry" -> (500, "Bundle entry entities/sources.ndjson: Differs Lines 4/3"),
     "AlreadyExists" -> (409, "Place.Id 'pleiades_579885' already exists"),
     "Renamed" -> (409, "Citekey 'anthony2006' was renamed to 'anthony2007'"),
+    "Aliased" -> (409, "Place.Id 'pleiades_579885' is an old key of 'pleiades_579886'"),
+    "Retired" -> (409, "Place.Id 'local_gornji_grad' was removed"),
     "Stale" -> (
       412,
       "Citekey 'anthony2007' has moved on: sent 2026-11-01T10:00:00Z, stored 2026-11-02T08:30:00Z"
@@ -124,7 +126,7 @@ class RenderSuite extends munit.FunSuite:
       500,
       "backup failed unexpectedly (java.lang.IllegalStateException, problem 3f2a9c1e) — java.lang.IllegalStateException: pg_dump vanished"
     ),
-    "Unclassified" -> (500, "unclassified: cannot open the bundle"),
+    "Unclassified" -> (400, "unclassified: cannot open the bundle"),
     "Unrecognised" -> (500, "merge apply crashed: NullPointerException"),
     "Relayed" -> (500, "the server is reindexing")
   )

@@ -15,7 +15,7 @@ object CollectionsApi:
   type Query = Query.T
   object Query extends Newtype[String, Pure]
 
-  private lazy val base = endpoint.in("api" / "collections").errorOut(jsonBody[Api.Error])
+  private lazy val base = endpoint.in("api" / "collections").errorOut(Api.problemOut)
   private def named = base.in(path[String]("name").description("the collection's name: calibre, archive-org, …"))
 
   lazy val collections: PublicEndpoint[Unit, Api.Error, List[CollectionInfo], Any] =

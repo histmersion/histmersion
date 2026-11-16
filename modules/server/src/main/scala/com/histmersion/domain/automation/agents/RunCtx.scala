@@ -5,7 +5,7 @@ import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.domain.automation.approvals.Decided
 import com.histmersion.domain.automation.managers.Zero
@@ -509,14 +509,16 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
                 Usage.Zero,
                 billing,
                 None,
-                Some(e.message.sentence),
+                Some(e.problems.sentences.mkString("; ")),
                 started,
                 Nil
               )
               Left(
                 Halt.Pause(
                   PauseReason.Provider,
-                  Problem.Unclassified(Legacy.Text(s"$name: ${e.message.sentence} — fix the provider, then resume"))
+                  Problem.Unclassified(
+                    Legacy.Text(s"$name: ${e.problems.sentences.mkString("; ")} — fix the provider, then resume")
+                  )
                 )
               )
             case Right(res) =>

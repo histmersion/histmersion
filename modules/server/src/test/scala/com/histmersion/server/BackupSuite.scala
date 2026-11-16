@@ -1,7 +1,7 @@
 package com.histmersion
 package server
 
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -130,8 +130,8 @@ class BackupSuite extends munit.FunSuite:
     )
     val err = svc.create(Instant.now())
     assert(err.isLeft, err.toString)
-    assert(err.left.exists(_.message.sentence.contains("pg_dump")), err.toString)
-    assert(err.left.exists(_.message.sentence.contains("HISTMERSION_PG_BIN_DIR")), err.toString)
+    assert(err.left.exists(_.problems.sentences.mkString("; ").contains("pg_dump")), err.toString)
+    assert(err.left.exists(_.problems.sentences.mkString("; ").contains("HISTMERSION_PG_BIN_DIR")), err.toString)
   }
 
   // ── the timeout that could never fire ────────────────────────────────────────────────────────
@@ -165,7 +165,7 @@ class BackupSuite extends munit.FunSuite:
     val elapsed = (System.nanoTime() - started) / 1000000L
 
     assert(r.isLeft, r.toString)
-    assert(r.left.exists(_.message.sentence.contains("timed out")), r.toString)
+    assert(r.left.exists(_.problems.sentences.mkString("; ").contains("timed out")), r.toString)
     assert(elapsed < 15000, s"the timeout took ${elapsed}ms to fire — it never fired before")
     // …and the half-written archive is not left behind in the listing
     assertEquals(svc.list, Right(Nil))
@@ -185,7 +185,7 @@ class BackupSuite extends munit.FunSuite:
     )
     val r = svc.create(Instant.now())
     assert(r.isLeft, r.toString)
-    val msg = r.swap.toOption.get.message.sentence
+    val msg = r.swap.toOption.get.problems.sentences.mkString("; ")
     assert(msg.contains("exit 3"), msg)
     assert(msg.contains("one") && msg.contains("two"), s"stderr is merged into stdout: $msg")
     Files.deleteIfExists(fake)
@@ -242,7 +242,8 @@ class BackupSuite extends munit.FunSuite:
             .setTo(BackupsConfig.Keep(3))
         )
     )
-    val r = svc.create(Instant.parse("2026-09-26T12:00:00Z")).fold(e => fail(e.message.sentence), identity)
+    val r =
+      svc.create(Instant.parse("2026-09-26T12:00:00Z")).fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(r.pruned, List("histmersion-20260101T000000Z.dump", "histmersion-20260102T000000Z.dump"))
     val left = Files.list(d).map(_.getFileName.toString).toList.asScala.toSet - "bin"
     assertEquals(
@@ -264,7 +265,7 @@ class BackupSuite extends munit.FunSuite:
         )
       )
       .create(Instant.now())
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(r.pruned, Nil)
     assertEquals(Files.list(d).filter(_.toString.endsWith(".dump")).count(), 8L)
     cleanBin(bin)

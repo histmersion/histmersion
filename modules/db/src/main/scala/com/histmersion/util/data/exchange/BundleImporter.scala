@@ -1,7 +1,7 @@
 package com.histmersion
 package util.data.exchange
 import com.histmersion.util.json.RawJson.*
-import com.histmersion.util.problem.{Legacy, Problem, Problems}
+import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.util.problem.Text.sentence
 
 import hearth.kindlings.optics.syntax.*
@@ -258,8 +258,11 @@ object BundleImporter:
                 val bytes = tar.readAll()
                 val actual = BundleFormat.sha256Hex(bytes)
                 if actual.value != sha.value then
-                  failures += Problem.Unclassified(
-                    Legacy.Text(s"blob ${sha.value}: its content hashes to ${actual.value}")
+                  failures += Problem.Io.Entry(
+                    Problem.Io.Format.Bundle,
+                    Problem.Io.Path(s"${sha.value}"),
+                    Problem.Io.Fault
+                      .Differs(Problem.Io.Measure.Sha256, Problem.Raw(s"${sha.value}"), Problem.Raw(s"${actual.value}"))
                   )
                 else
                   held.foreach(_(bytes))
@@ -426,7 +429,7 @@ object BundleImporter:
                 )
               )
             )
-            .getOrElse(throw ImportAbort(List(Problem.Unclassified(Legacy.Text("the merge wrote nothing")))))
+            .getOrElse(throw ImportAbort(List(Problem.Run.Unrecorded(Problem.Conflict.Activity.MergeApply))))
           MergeRepo.redirect(ap.folds, mergeId)
           MergeRepo.remember(ap.remember.map((id, d) => MergeRepo.DecisionKey(id.value) -> d), mergeId)
           val (reviews, logEntry) = followUps.recordIn(

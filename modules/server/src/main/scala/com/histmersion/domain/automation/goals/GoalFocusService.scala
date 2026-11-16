@@ -419,7 +419,10 @@ final class GoalFocusService(
     def goal: Either[Api.Error, String] =
       in.goal.map(_.value.trim).filter(_.nonEmpty).toRight(error(s"`${in.action.value}` needs `goal`"))
     def missing(g: String) =
-      Api.Error(Problem.Unclassified(Legacy.Text(s"no goal '$g'")), Some(Api.Error.Code(Write.CodeNotFound)))
+      Api.Error(
+        Problem.NotFound.Entity(Problem.TypeName.of(Goal.Slug), Problem.Raw(s"$g")),
+        Some(Api.Error.Code(Write.CodeNotFound))
+      )
     def known(g: String): Either[Api.Error, Goal.Slug] = Goal.Slug.either(g).left.map(_ => missing(g))
     val done: Either[Api.Error, String] = in.action.value.trim.toLowerCase match
       case "pin" | "unpin" =>

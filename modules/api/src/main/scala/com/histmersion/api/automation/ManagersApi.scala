@@ -16,21 +16,7 @@ object ManagersApi:
 
   import Managers.*
 
-  /** The managers' errors: 404 for a missing one, 409 for a run in the way, 400 otherwise. */
-  lazy val errors =
-    oneOf[Api.Error](
-      oneOfVariantValueMatcher(StatusCode.NotFound, jsonBody[Api.Error])(
-        (Api.Error.hasCode(Api.Error.Code(Write.CodeNotFound))).andThen(refactorResult => ((refactorResult) == (true)))
-      ),
-      oneOfVariantValueMatcher(StatusCode.Conflict, jsonBody[Api.Error])(
-        (Api.Error
-          .hasCode(Api.Error.Code(AgentsApi.CodeConflict)))
-          .andThen(refactorResult2 => ((refactorResult2) == (true)))
-      ),
-      oneOfDefaultVariant(statusCode(StatusCode.BadRequest).and(jsonBody[Api.Error]))
-    )
-
-  private lazy val base = endpoint.in("api" / "agents" / "managers").errorOut(errors)
+  private lazy val base = endpoint.in("api" / "agents" / "managers").errorOut(Api.problemOut)
   private lazy val one = base.in(path[String]("id"))
 
   lazy val list: PublicEndpoint[Unit, Api.Error, List[ManagerInfo], Any] =
@@ -204,21 +190,24 @@ object ManagersApi:
   lazy val enqueue: PublicEndpoint[EnqueueRequest, Api.Error, EnqueueResult, Any] =
     endpoint.post
       .in("api" / "agents" / "enqueue")
-      .errorOut(errors)
+      .errorOut(Api.problemOut)
       .in(jsonBody[EnqueueRequest])
       .out(jsonBody[EnqueueResult])
 
   lazy val focus: PublicEndpoint[Unit, Api.Error, Autopilot.FocusInfo, Any] =
-    endpoint.get.in("api" / "agents" / "autopilot" / "focus").errorOut(errors).out(jsonBody[Autopilot.FocusInfo])
+    endpoint.get
+      .in("api" / "agents" / "autopilot" / "focus")
+      .errorOut(Api.problemOut)
+      .out(jsonBody[Autopilot.FocusInfo])
 
   lazy val setFocus: PublicEndpoint[Autopilot.FocusSet, Api.Error, Autopilot.FocusInfo, Any] =
     endpoint.post
       .in("api" / "agents" / "autopilot" / "focus")
-      .errorOut(errors)
+      .errorOut(Api.problemOut)
       .in(jsonBody[Autopilot.FocusSet])
       .out(jsonBody[Autopilot.FocusInfo])
 
-  private lazy val sched = endpoint.in("api" / "agents" / "scheduler").errorOut(errors)
+  private lazy val sched = endpoint.in("api" / "agents" / "scheduler").errorOut(Api.problemOut)
 
   lazy val scheduler: PublicEndpoint[Option[Scheduler.Limit], Api.Error, AgentScheduler.SchedulerStatus, Any] =
     (sched.get
@@ -242,19 +231,22 @@ object ManagersApi:
       )
 
   lazy val digest: PublicEndpoint[Unit, Api.Error, ApprovalDigest.Digest, Any] =
-    endpoint.get.in("api" / "agents" / "approvals" / "digest").errorOut(errors).out(jsonBody[ApprovalDigest.Digest])
+    endpoint.get
+      .in("api" / "agents" / "approvals" / "digest")
+      .errorOut(Api.problemOut)
+      .out(jsonBody[ApprovalDigest.Digest])
 
   lazy val decideAll: PublicEndpoint[ApprovalDigest.BulkDecide, Api.Error, ApprovalDigest.BulkResult, Any] =
     endpoint.post
       .in("api" / "agents" / "approvals" / "decide")
-      .errorOut(errors)
+      .errorOut(Api.problemOut)
       .in(jsonBody[ApprovalDigest.BulkDecide])
       .out(jsonBody[ApprovalDigest.BulkResult])
 
   lazy val stalls: PublicEndpoint[Option[Stalls.Limit], Api.Error, Stalls.StallReport, Any] =
     (endpoint.get
       .in("api" / "agents" / "stalls")
-      .errorOut(errors)
+      .errorOut(Api.problemOut)
       .in(query[Option[Int]]("days"))
       .out(jsonBody[Stalls.StallReport]))
       .mapIn[Option[Stalls.Limit]]((refactorDecoded28: Option[Int]) =>

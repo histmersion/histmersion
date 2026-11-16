@@ -1,7 +1,7 @@
 package com.histmersion
 package util.basemap
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -177,7 +177,9 @@ class BasemapServiceSuite extends DbSuite:
     val dir = Files.createTempDirectory("basemap")
     val (svc, v, _) = service(dir)
     val j = await(
-      svc.fetch(Basemap.FetchQuery(dryRun = Basemap.FetchQuery.DryRun(true))).fold(e => fail(e.message.sentence), _.id)
+      svc
+        .fetch(Basemap.FetchQuery(dryRun = Basemap.FetchQuery.DryRun(true)))
+        .fold(e => fail(e.problems.sentences.mkString("; ")), _.id)
     )
     assert(j.succeeded, j.toString)
     assert(
@@ -195,7 +197,7 @@ class BasemapServiceSuite extends DbSuite:
   test("a fetch writes every layer; the status and the tiles follow; rm removes them"):
     val dir = Files.createTempDirectory("basemap")
     val (svc, _, _) = service(dir)
-    val j = await(svc.fetch(Basemap.FetchQuery()).fold(e => fail(e.message.sentence), _.id))
+    val j = await(svc.fetch(Basemap.FetchQuery()).fold(e => fail(e.problems.sentences.mkString("; ")), _.id))
     assert(j.succeeded, j.toString)
     val st = svc.status
     locally {
@@ -232,7 +234,7 @@ class BasemapServiceSuite extends DbSuite:
           Basemap.tileX(Longitude(21), Basemap.Zoom(5)),
           Basemap.tileY(Latitude(40), Basemap.Zoom(5))
         )
-        .fold(e => fail(e.message.sentence), identity)
+        .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals((ncode.code, nenc), (200, Some("gzip")))
     assertEquals(Mvt.kinds(plain(nb), Mvt.LayerName("physical")), Right(List("range")))
     assertEquals(Mvt.kinds(plain(nb), Mvt.LayerName("rivers")), Right(List("river")))
@@ -240,7 +242,7 @@ class BasemapServiceSuite extends DbSuite:
     assert(!Files.exists(dir.resolve(".vector.part")), "the parts are removed once assembled")
     val (bytes, mime, enc, _, code) = svc
       .tile(Basemap.Layer.Wire("vector"), Basemap.Zoom(4), Basemap.Tile.Column(9), Basemap.Tile.Row(6))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals((mime, enc, code.code), ("application/vnd.mapbox-vector-tile", Some("gzip"), 200))
     val layers = Mvt.layerNames(plain(bytes)).toOption.get
     assert(!layers.contains(Mvt.LayerName("roads")) && !layers.contains(Mvt.LayerName("places")), layers.toString)
@@ -261,7 +263,7 @@ class BasemapServiceSuite extends DbSuite:
           Basemap.Tile.Row(6),
           Some(Basemap.Subset.Spec("water:p,earth"))
         )
-        .fold(e => fail(e.message.sentence), identity)
+        .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals((scode.code, senc), (200, Some("gzip")))
     val st4 = plain(sb)
     assertEquals(Mvt.layerNames(st4), Right(List("earth", "water")))
@@ -304,7 +306,7 @@ class BasemapServiceSuite extends DbSuite:
       Right(None),
       "an image is never cut"
     )
-    val gone = svc.remove(Basemap.RemoveQuery()).fold(e => fail(e.message.sentence), identity)
+    val gone = svc.remove(Basemap.RemoveQuery()).fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     // the four layers, and the map cache the tile outside the region filled
     assertEquals(
       gone.removed.map(r => Path.of(r.value).getFileName.toString).sorted,
@@ -319,7 +321,7 @@ class BasemapServiceSuite extends DbSuite:
       await(
         svc
           .fetch(Basemap.FetchQuery(layer = Basemap.FetchQuery.Layer("vector")))
-          .fold(e => fail(e.message.sentence), _.id)
+          .fold(e => fail(e.problems.sentences.mkString("; ")), _.id)
       ).succeeded
     )
     val before = svc.status
@@ -332,14 +334,14 @@ class BasemapServiceSuite extends DbSuite:
     val dry = await(
       svc
         .fetch(Basemap.FetchQuery(layer = Basemap.FetchQuery.Layer("labels"), dryRun = Basemap.FetchQuery.DryRun(true)))
-        .fold(e => fail(e.message.sentence), _.id)
+        .fold(e => fail(e.problems.sentences.mkString("; ")), _.id)
     )
     assert(dry.progress.exists(_.value.contains("would download 2 files")), dry.progress.toString)
     assert(!Files.exists(dir.resolve("labels.pmtiles")))
     val j = await(
       svc
         .fetch(Basemap.FetchQuery(layer = Basemap.FetchQuery.Layer("labels")))
-        .fold(e => fail(e.message.sentence), _.id)
+        .fold(e => fail(e.problems.sentences.mkString("; ")), _.id)
     )
     assert(j.succeeded, j.toString)
     assert(j.progress.exists(_.value.contains("labels (Natural Earth): 2 names in")), j.progress.toString)
@@ -361,7 +363,7 @@ class BasemapServiceSuite extends DbSuite:
         .fetch(
           Basemap.FetchQuery(layer = Basemap.FetchQuery.Layer("vector"), keepAll = Basemap.FetchQuery.KeepAll(true))
         )
-        .fold(e => fail(e.message.sentence), _.id)
+        .fold(e => fail(e.problems.sentences.mkString("; ")), _.id)
     )
     assert(j.succeeded, j.toString)
     val st = svc.status
@@ -369,7 +371,7 @@ class BasemapServiceSuite extends DbSuite:
     assert(!st.hints.exists(_.value.contains("--layer vector")), st.hints.toString)
     val (bytes, _, _, _, _) = svc
       .tile(Basemap.Layer.Wire("vector"), Basemap.Zoom(4), Basemap.Tile.Column(9), Basemap.Tile.Row(6))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assert(Mvt.layerNames(plain(bytes)).toOption.get.contains(Mvt.LayerName("roads")))
 
   test(
@@ -386,7 +388,7 @@ class BasemapServiceSuite extends DbSuite:
       await(
         svc
           .fetch(Basemap.FetchQuery(layer = Basemap.FetchQuery.Layer("vector")))
-          .fold(e => fail(e.message.sentence), _.id)
+          .fold(e => fail(e.problems.sentences.mkString("; ")), _.id)
       ).succeeded
     )
     val st = svc.status
@@ -407,7 +409,7 @@ class BasemapServiceSuite extends DbSuite:
           .fetch(
             Basemap.FetchQuery(layer = Basemap.FetchQuery.Layer("vector"), keepAll = Basemap.FetchQuery.KeepAll(true))
           )
-          .fold(e => fail(e.message.sentence), _.id)
+          .fold(e => fail(e.problems.sentences.mkString("; ")), _.id)
       ).succeeded
     )
     val all = svc.status
@@ -422,7 +424,7 @@ class BasemapServiceSuite extends DbSuite:
     val j = await(
       svc
         .fetch(Basemap.FetchQuery(layer = Basemap.FetchQuery.Layer("vector")))
-        .fold(e => fail(e.message.sentence), _.id)
+        .fold(e => fail(e.problems.sentences.mkString("; ")), _.id)
     )
     assert(!j.succeeded)
     assert(j.error.exists(e => e.sentence.contains("refused") && e.sentence.contains("min-free-gb")), j.error.toString)
@@ -435,7 +437,7 @@ class BasemapServiceSuite extends DbSuite:
       await(
         svc
           .fetch(Basemap.FetchQuery(layer = Basemap.FetchQuery.Layer("terrain")))
-          .fold(e => fail(e.message.sentence), _.id)
+          .fold(e => fail(e.problems.sentences.mkString("; ")), _.id)
       ).succeeded
     )
     val base = svc.status.layers.find(_.layer == Basemap.Layer.Wire("terrain")).get
@@ -447,14 +449,16 @@ class BasemapServiceSuite extends DbSuite:
           .fetch(
             Basemap.FetchQuery(focus = Some(Basemap.Focus.Name("crete")), dryRun = Basemap.FetchQuery.DryRun(true))
           )
-          .fold(e => fail(e.message.sentence), _.id)
+          .fold(e => fail(e.problems.sentences.mkString("; ")), _.id)
       )
     assert(
       dry.progress.exists(p => p.value.contains("focus 'crete'") && p.value.contains("would download")),
       dry.progress.toString
     )
     val j = await(
-      svc.fetch(Basemap.FetchQuery(focus = Some(Basemap.Focus.Name("crete")))).fold(e => fail(e.message.sentence), _.id)
+      svc
+        .fetch(Basemap.FetchQuery(focus = Some(Basemap.Focus.Name("crete"))))
+        .fold(e => fail(e.problems.sentences.mkString("; ")), _.id)
     )
     assert(j.succeeded, j.toString)
     val st = svc.status.layers.find(_.layer == Basemap.Layer.Wire("terrain")).get
@@ -470,7 +474,7 @@ class BasemapServiceSuite extends DbSuite:
           Basemap.tileX(Longitude(24.5), Basemap.Zoom(5)),
           Basemap.tileY(Latitude(35.2), Basemap.Zoom(5))
         )
-        .fold(e => fail(e.message.sentence), identity)
+        .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(
       (fcode.code, fmime, String(fb.value)),
       (
@@ -483,7 +487,7 @@ class BasemapServiceSuite extends DbSuite:
     // elsewhere at zoom 5: read now from the provider, then cached
     val (ob, _, _, _, ocode) = svc
       .tile(Basemap.Layer.Wire("terrain"), Basemap.Zoom(5), Basemap.Tile.Column(0), Basemap.Tile.Row(0))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals((ocode.code, String(ob.value)), (200, "RIFF5/0/0"))
     assertEquals(svc.status.layers.find(_.layer == Basemap.Layer.Wire("terrain")).get.onDemand.map(_.tiles), Some(1L))
     // deeper than on-demand goes: none
@@ -504,7 +508,7 @@ class BasemapServiceSuite extends DbSuite:
               bbox = Some(BBox.Text("22.5,37.4,23.2,37.9"))
             )
           )
-          .fold(e => fail(e.message.sentence), _.id)
+          .fold(e => fail(e.problems.sentences.mkString("; ")), _.id)
       ).succeeded
     )
     assertEquals(
@@ -524,11 +528,11 @@ class BasemapServiceSuite extends DbSuite:
     )
     val f = svc
       .remove(Basemap.RemoveQuery(Basemap.RemoveQuery.Layer("none"), focus = Some(Basemap.Focus.Name("crete"))))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(f.removed.map(r => java.nio.file.Path.of(r.value).getFileName.toString), List("crete.pmtiles"))
     val c = svc
       .remove(Basemap.RemoveQuery(Basemap.RemoveQuery.Layer("none"), cache = Basemap.RemoveQuery.Cache(true)))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(c.removed.size, 1)
     assertEquals(svc.status.layers.find(_.layer == Basemap.Layer.Wire("terrain")).get.onDemand.map(_.tiles), Some(0L))
     assert(svc.status.layers.find(_.layer == Basemap.Layer.Wire("terrain")).get.present.value, "the extract stays")
@@ -548,14 +552,14 @@ class BasemapServiceSuite extends DbSuite:
         .fetch(
           Basemap.FetchQuery(layer = Basemap.FetchQuery.Layer("bathymetry"), dryRun = Basemap.FetchQuery.DryRun(true))
         )
-        .fold(e => fail(e.message.sentence), _.id)
+        .fold(e => fail(e.problems.sentences.mkString("; ")), _.id)
     )
     assert(dry.progress.exists(_.value.contains("bathymetry (zoom 0–3): would download")), dry.progress.toString)
     val before = BasemapServiceSuite.seaGets.get
     val j = await(
       svc
         .fetch(Basemap.FetchQuery(layer = Basemap.FetchQuery.Layer("bathymetry")))
-        .fold(e => fail(e.message.sentence), _.id)
+        .fold(e => fail(e.problems.sentences.mkString("; ")), _.id)
     )
     assert(j.succeeded, j.toString)
     val asked = BasemapServiceSuite.seaGets.get - before
@@ -572,7 +576,7 @@ class BasemapServiceSuite extends DbSuite:
     assert(sea.attribution.value.contains("ETOPO1"), sea.attribution)
     val (b, mime, _, _, code) = svc
       .tile(Basemap.Layer.Wire("bathymetry"), Basemap.Zoom(3), Basemap.Tile.Column(4), Basemap.Tile.Row(3))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals((code.code, mime, String(b.value)), (200, "image/png", "PNG3/4/3"))
     assertEquals(
       svc
@@ -663,7 +667,7 @@ class BasemapServiceSuite extends DbSuite:
         .fetch(
           Basemap.FetchQuery(layer = Basemap.FetchQuery.Layer("bathymetry"), dryRun = Basemap.FetchQuery.DryRun(true))
         )
-        .fold(e => fail(e.message.sentence), _.id)
+        .fold(e => fail(e.problems.sentences.mkString("; ")), _.id)
     )
     assert(dry.succeeded, dry.toString)
     // rows 196–219 (latitudes 41–35) of 720 bytes, in requests of at most 1 MB: one
@@ -680,7 +684,7 @@ class BasemapServiceSuite extends DbSuite:
     val j = await(
       svc
         .fetch(Basemap.FetchQuery(layer = Basemap.FetchQuery.Layer("bathymetry")))
-        .fold(e => fail(e.message.sentence), _.id)
+        .fold(e => fail(e.problems.sentences.mkString("; ")), _.id)
     )
     assert(j.succeeded, j.toString)
     assertEquals(grid.downloads.get, 1)
@@ -695,7 +699,9 @@ class BasemapServiceSuite extends DbSuite:
     )
     def elevation(z: Basemap.Zoom, x: Basemap.Tile.Column, y: Basemap.Tile.Row, px: Int, py: Int): Float =
       val (b, mime, _, _, code) =
-        svc.tile(Basemap.Layer.Wire("bathymetry"), z, x, y).fold(e => fail(e.message.sentence), identity)
+        svc
+          .tile(Basemap.Layer.Wire("bathymetry"), z, x, y)
+          .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
       assertEquals((code.code, mime), (200, "image/png"))
       val (m, w) = TerrariumPng.decode(Png.PngBytes(b.value)).fold(e => fail(e.sentence), identity)
       m(py * w.value + px)
@@ -727,14 +733,14 @@ class BasemapServiceSuite extends DbSuite:
       await(
         svc
           .fetch(Basemap.FetchQuery(layer = Basemap.FetchQuery.Layer("vector")))
-          .fold(e => fail(e.message.sentence), _.id)
+          .fold(e => fail(e.problems.sentences.mkString("; ")), _.id)
       ).succeeded
     )
     assert(
       await(
         svc
           .fetch(Basemap.FetchQuery(layer = Basemap.FetchQuery.Layer("bathymetry")))
-          .fold(e => fail(e.message.sentence), _.id)
+          .fold(e => fail(e.problems.sentences.mkString("; ")), _.id)
       ).succeeded
     )
     val vec = svc.status.layers.find(_.layer == Basemap.Layer.Wire("vector")).get
@@ -746,7 +752,7 @@ class BasemapServiceSuite extends DbSuite:
     val asked = v.requests.get
     val (b, mime, enc, _, code) = svc
       .tile(Basemap.Layer.Wire("vector"), Basemap.Zoom(3), Basemap.Tile.Column(0), Basemap.Tile.Row(0))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals((code.code, mime, enc), (200, "application/vnd.mapbox-vector-tile", Some("gzip")))
     val text = String(plain(b).value, "ISO-8859-1")
     assert(text.contains("earth") && !text.contains("highway"), "thinned as the download is: the roads dropped")
@@ -790,7 +796,7 @@ class BasemapServiceSuite extends DbSuite:
     val gets = BasemapServiceSuite.seaGets.get
     val (sb, smime, _, _, scode) = svc
       .tile(Basemap.Layer.Wire("bathymetry"), Basemap.Zoom(3), Basemap.Tile.Column(1), Basemap.Tile.Row(1))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals((scode.code, smime, String(sb.value)), (200, "image/png", "PNG3/1/1"))
     assertEquals(
       svc
@@ -802,7 +808,7 @@ class BasemapServiceSuite extends DbSuite:
     // the caches are removed with the others
     val c = svc
       .remove(Basemap.RemoveQuery(Basemap.RemoveQuery.Layer("none"), cache = Basemap.RemoveQuery.Cache(true)))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(c.removed.map(r => Path.of(r.value).getFileName.toString).sorted, List("sea-cache", "vector-cache"))
     // switched off: nothing outside the region
     val dir2 = Files.createTempDirectory("basemap")
@@ -811,7 +817,7 @@ class BasemapServiceSuite extends DbSuite:
       await(
         off
           .fetch(Basemap.FetchQuery(layer = Basemap.FetchQuery.Layer("vector")))
-          .fold(e => fail(e.message.sentence), _.id)
+          .fold(e => fail(e.problems.sentences.mkString("; ")), _.id)
       ).succeeded
     )
     val n = v2.requests.get
@@ -836,7 +842,7 @@ class BasemapServiceSuite extends DbSuite:
             dryRun = Basemap.FetchQuery.DryRun(true)
           )
         )
-        .fold(e => fail(e.message.sentence), _.id)
+        .fold(e => fail(e.problems.sentences.mkString("; ")), _.id)
     )
     assert(j.succeeded, j.toString)
     // zooms 0–2 of the world: 1 + 4 + 16 tiles

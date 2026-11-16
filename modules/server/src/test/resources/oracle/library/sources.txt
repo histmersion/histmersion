@@ -171,14 +171,17 @@
 == GET /api/sources/zqnone2000_x
 404 {
   "code" : null,
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
+  "problems" : [
+    {
+      "case" : "Entity",
+      "data" : {
+        "key" : "zqnone2000_x",
+        "typeName" : "Citekey"
+      },
+      "group" : "NotFound",
       "text" : "No source 'zqnone2000_x'"
-    },
-    "group" : "Unclassified",
-    "text" : "No source 'zqnone2000_x'"
-  }
+    }
+  ]
 }
 == GET /api/sources/zqalpha1990_tell/view
 200 # The Walls of Zqtell
@@ -345,16 +348,18 @@ _…205 more chars — pass offset=50_
 ## Mentioned in articles (1)
 - [Zq walls](/article/zq_article)
 == GET /api/sources/zqalpha1990_tell/view?section=nonsense
-404 {
+400 {
   "code" : null,
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
+  "problems" : [
+    {
+      "case" : "Unclassified",
+      "data" : {
+        "text" : "unknown section 'nonsense' — one of: summary, findings, notes, toc, body, all"
+      },
+      "group" : "Unclassified",
       "text" : "unknown section 'nonsense' — one of: summary, findings, notes, toc, body, all"
-    },
-    "group" : "Unclassified",
-    "text" : "unknown section 'nonsense' — one of: summary, findings, notes, toc, body, all"
-  }
+    }
+  ]
 }
 == GET /api/sources/zqalpha1990_tell/view?offset=5&chars=30&fullText=true
 200 # The Walls of Zqtell
@@ -534,52 +539,59 @@ _…220 more chars — pass offset=35_
 == GET /api/sources/zqalpha1990_tell/passages?q=%5B&regex=true
 400 {
   "code" : "invalid",
-  "message" : {
-    "case" : "Broken",
-    "data" : {
-      "at" : [
-      ],
-      "rule" : {
-        "RegexValid" : {
-          "description" : "Unclosed character class",
-          "pattern" : "[",
-          "position" : 0
+  "problems" : [
+    {
+      "case" : "Broken",
+      "data" : {
+        "at" : [
+        ],
+        "rule" : {
+          "RegexValid" : {
+            "description" : "Unclosed character class",
+            "pattern" : "[",
+            "position" : 0
+          }
         }
-      }
-    },
-    "group" : "Invalid",
-    "text" : "not a valid regex: Unclosed character class at position 0 in `[` (leave regex off to match the text literally)"
-  }
+      },
+      "group" : "Invalid",
+      "text" : "not a valid regex: Unclosed character class at position 0 in `[` (leave regex off to match the text literally)"
+    }
+  ]
 }
 == GET /api/sources/zqalpha1990_tell/passages?q=
 400 {
   "code" : "invalid",
-  "message" : {
-    "case" : "Broken",
-    "data" : {
-      "at" : [
-      ],
-      "rule" : {
-        "QueryGiven" : {
-          
+  "problems" : [
+    {
+      "case" : "Broken",
+      "data" : {
+        "at" : [
+        ],
+        "rule" : {
+          "QueryGiven" : {
+            
+          }
         }
-      }
-    },
-    "group" : "Invalid",
-    "text" : "the query is empty — give the words to find"
-  }
+      },
+      "group" : "Invalid",
+      "text" : "the query is empty — give the words to find"
+    }
+  ]
 }
 == GET /api/sources/zqnone2000_x/passages?q=x
 404 {
   "code" : "not_found",
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
+  "problems" : [
+    {
+      "case" : "Entity",
+      "data" : {
+        "key" : "zqnone2000_x",
+        "typeName" : "Citekey"
+      },
+      "group" : "NotFound",
       "text" : "No source 'zqnone2000_x'"
-    },
-    "group" : "Unclassified",
-    "text" : "No source 'zqnone2000_x'"
-  }
+    }
+  ]
 }
 == GET /api/sources/zqalpha1990_tell/export
 200 ---
@@ -666,14 +678,17 @@ Notes on The Walls of Zqtell.
 == GET /api/sources/zqnone2000_x/articles
 404 {
   "code" : null,
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
+  "problems" : [
+    {
+      "case" : "Entity",
+      "data" : {
+        "key" : "zqnone2000_x",
+        "typeName" : "Citekey"
+      },
+      "group" : "NotFound",
       "text" : "No source 'zqnone2000_x'"
-    },
-    "group" : "Unclassified",
-    "text" : "No source 'zqnone2000_x'"
-  }
+    }
+  ]
 }
 == GET /api/resolve/zqalpha1990_tell
 200 {
@@ -1898,79 +1913,89 @@ _No source 'zqnone2000_x'_
 == PATCH zqgamma1975_kings: refused: a stale token
 412 {
   "code" : "precondition_failed",
-  "message" : {
-    "case" : "Stale",
-    "data" : {
-      "key" : "zqgamma1975_kings",
-      "sent" : "TS",
-      "stored" : "TS",
-      "typeName" : "Citekey"
-    },
-    "group" : "Conflict",
-    "text" : "citekey 'zqgamma1975_kings' has moved on: you sent TS, it is now TS — read it again and re-apply your change"
-  }
+  "problems" : [
+    {
+      "case" : "Stale",
+      "data" : {
+        "key" : "zqgamma1975_kings",
+        "sent" : "TS",
+        "stored" : "TS",
+        "typeName" : "Citekey"
+      },
+      "group" : "Conflict",
+      "text" : "citekey 'zqgamma1975_kings' has moved on: you sent TS, it is now TS — read it again and re-apply your change"
+    }
+  ]
 }
 == PATCH zqgamma1975_kings: refused: an edge from another source
 400 {
   "code" : "invalid",
-  "message" : {
-    "case" : "StoredOn",
-    "data" : {
-      "at" : [
-        "edges.add"
-      ],
-      "item" : "'zqalpha1990_tell' --references--> 'zqbeta2001_cove'",
-      "owner" : "zqalpha1990_tell",
-      "typeName" : "Edge"
-    },
-    "group" : "Invalid",
-    "text" : "edges.add: 'zqalpha1990_tell' --references--> 'zqbeta2001_cove' is stored on 'zqalpha1990_tell', not here: patch 'zqalpha1990_tell' to record it"
-  }
+  "problems" : [
+    {
+      "case" : "StoredOn",
+      "data" : {
+        "at" : [
+          "edges.add"
+        ],
+        "item" : "'zqalpha1990_tell' --references--> 'zqbeta2001_cove'",
+        "owner" : "zqalpha1990_tell",
+        "typeName" : "Edge"
+      },
+      "group" : "Invalid",
+      "text" : "edges.add: 'zqalpha1990_tell' --references--> 'zqbeta2001_cove' is stored on 'zqalpha1990_tell', not here: patch 'zqalpha1990_tell' to record it"
+    }
+  ]
 }
 == PATCH zqgamma1975_kings: refused: a self edge
 400 {
   "code" : "invalid",
-  "message" : {
-    "case" : "Inconsistent",
-    "data" : {
-      "at" : [
-        "edges",
-        "add"
-      ],
-      "fields" : [
-        "src",
-        "dst"
-      ],
-      "rule" : "Distinct"
-    },
-    "group" : "Invalid",
-    "text" : "edges.add: src, dst must differ"
-  }
+  "problems" : [
+    {
+      "case" : "Inconsistent",
+      "data" : {
+        "at" : [
+          "edges",
+          "add"
+        ],
+        "fields" : [
+          "src",
+          "dst"
+        ],
+        "rule" : "Distinct"
+      },
+      "group" : "Invalid",
+      "text" : "edges.add: src, dst must differ"
+    }
+  ]
 }
 == PATCH strict, a formatting error
 400 {
   "code" : "invalid",
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
+  "problems" : [
+    {
+      "case" : "Unclassified",
+      "data" : {
+        "text" : "refused (strict): 1 formatting error — notes L1:1 error html-tag — `<div>` is never closed — everything after it is inside it · `<div> never closed`"
+      },
+      "group" : "Unclassified",
       "text" : "refused (strict): 1 formatting error — notes L1:1 error html-tag — `<div>` is never closed — everything after it is inside it · `<div> never closed`"
-    },
-    "group" : "Unclassified",
-    "text" : "refused (strict): 1 formatting error — notes L1:1 error html-tag — `<div>` is never closed — everything after it is inside it · `<div> never closed`"
-  }
+    }
+  ]
 }
 == PATCH an unknown source
 404 {
   "code" : "not_found",
-  "message" : {
-    "case" : "Entity",
-    "data" : {
-      "key" : "zqnone2000_x",
-      "typeName" : "Citekey"
-    },
-    "group" : "NotFound",
-    "text" : "No source 'zqnone2000_x'"
-  }
+  "problems" : [
+    {
+      "case" : "Entity",
+      "data" : {
+        "key" : "zqnone2000_x",
+        "typeName" : "Citekey"
+      },
+      "group" : "NotFound",
+      "text" : "No source 'zqnone2000_x'"
+    }
+  ]
 }
 == notes with a formatting problem (no strict)
 200 {
@@ -2239,14 +2264,16 @@ _n.d. · unassessed_
 == import a note, refused
 400 {
   "code" : null,
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
+  "problems" : [
+    {
+      "case" : "Unclassified",
+      "data" : {
+        "text" : "no YAML frontmatter in the note"
+      },
+      "group" : "Unclassified",
       "text" : "no YAML frontmatter in the note"
-    },
-    "group" : "Unclassified",
-    "text" : "no YAML frontmatter in the note"
-  }
+    }
+  ]
 }
 == GET the imported note
 200 {

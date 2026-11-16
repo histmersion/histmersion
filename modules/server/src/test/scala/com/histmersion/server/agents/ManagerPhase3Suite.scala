@@ -2,7 +2,7 @@ package com.histmersion
 package server.agents
 
 import com.histmersion.util.problem.Problem
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -228,7 +228,7 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
     val now = Instant.parse("2026-10-17T12:00:00Z")
     val m = a.managing
       .create(ManagerCreate(ManagerCreate.Kind("watch"), Some(GoalSlug)), now)
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(
       (m.id, m.kind, m.goal.map(_.value: String), m.state, m.cron),
       (watchId(ref(Goal)), "watch", Some(Goal), "paused", Some("@weekly"))
@@ -247,13 +247,13 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
       a.managing
         .create(ManagerCreate(ManagerCreate.Kind("watch"), Some(GoalSlug)))
         .left
-        .exists(_.message.sentence.contains("exists already"))
+        .exists(_.problems.sentences.mkString("; ").contains("exists already"))
     )
     assert(
       a.managing
         .create(ManagerCreate(ManagerCreate.Kind("watch")))
         .left
-        .exists(_.message.sentence.contains("give its goal"))
+        .exists(_.problems.sentences.mkString("; ").contains("give its goal"))
     )
     assertEquals(a.managers.tick(now).filter(_.value.contains("started")), Nil, "paused: nothing starts")
     assertEquals(connect(ds)(AgentRepo.forManager(m.id)), Vector.empty)
@@ -292,10 +292,10 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
         ),
         now
       )
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     a.managing
       .action(ApiIds.manager(m.id), ManagersControllers.Action("resume"), None)
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     val out = a.managers.tick(now)
     val sweep = item(m.id, SweepKind)
     assertEquals(sweep.status, "active", out.mkString("\n"))
@@ -373,7 +373,7 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
     up.found = Map(Query -> List(work("10.5555/zzagent.f", "F", oa = Open)))
     a.managing
       .patchItem(ApiIds.manager(m.id), ManagerItem.Ref(sweep.id.toString), ItemPatch(ItemPatch.Action("reopen")))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     a.managers.tick(now)
     val again = connect(ds)(AgentRepo.get(item(m.id, SweepKind).runId.get)).get
     assertEquals(again.params.autoIngest, None, "the daily cap is spent")
@@ -403,7 +403,7 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
           ManagerConfig(sweeps = Some(List(Sweep.Wire("acquisition"))))
         )
       )
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(
       Transactor(ds).read(ManagerRepo.itemPage(m.id, None, Offset(0), PageSize(10)))._1.map(_.kind),
       List(AcquisitionSweep),
@@ -411,7 +411,7 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
     )
     a.managing
       .action(ApiIds.manager(m.id), ManagersControllers.Action("resume"), None)
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     a.managers.tick(Instant.now())
     val run = connect(ds)(AgentRepo.get(item(m.id, SweepKind).runId.get)).get
     assertEquals(run.params.autoIngest, None)
@@ -440,7 +440,7 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
         ),
         t0
       )
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     // settle both items by hand (skip), as if they ran
     List(SweepKind, CurrencyKind).foreach(k =>
       a.managing
@@ -449,13 +449,13 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
           ManagerItem.Ref(item(m.id, k).id.toString),
           ItemPatch(ItemPatch.Action("skip"))
         )
-        .fold(e => fail(e.message.sentence), identity)
+        .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     )
     val sunday = Instant.parse("2026-10-18T00:00:30Z")
     assertEquals(a.managers.tick(sunday).filter(_.value.contains("cron")), Nil, "paused: its cron does not fire")
     a.managing
       .action(ApiIds.manager(m.id), ManagersControllers.Action("resume"), None)
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(
       a.managers.tick(Instant.parse("2026-10-17T13:00:00Z")).filter(_.value.contains("cron")),
       Nil,
@@ -501,19 +501,19 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
       a.managing
         .update(ApiIds.manager(Review), ManagerUpdate(cron = Some(ManagerUpdate.Cron("*/5 * * * *"))), t0)
         .left
-        .exists(_.message.sentence.contains("min-interval"))
+        .exists(_.problems.sentences.mkString("; ").contains("min-interval"))
     )
     assert(
       a.managing
         .update(ApiIds.manager(Review), ManagerUpdate(cron = Some(ManagerUpdate.Cron("nope"))), t0)
         .left
-        .exists(_.message.sentence.contains("five fields"))
+        .exists(_.problems.sentences.mkString("; ").contains("five fields"))
     )
     assert(
       a.managing
         .update(ApiIds.manager(Enrich), ManagerUpdate(cron = Some(ManagerUpdate.Cron("@daily"))), t0)
         .left
-        .exists(_.message.sentence.contains("no cron"))
+        .exists(_.problems.sentences.mkString("; ").contains("no cron"))
     )
     val r = a.managing
       .update(
@@ -524,18 +524,18 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
         ),
         t0
       )
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals((r.cron, r.nextTickAt), (Some("@daily"), Some("2026-10-18T00:00:00Z")))
     a.managing
       .action(ApiIds.manager(Review), ManagersControllers.Action("resume"), None)
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     val out = a.managers.tick(Instant.parse("2026-10-18T00:01:00Z"))
     assert(out.map(_.value).contains("review: cron fired"), out)
     assert(events(Review, CronKind).head.text.value.contains("selection refilled"))
     // cleared: no cron, no next firing
     val cleared = a.managing
       .update(ApiIds.manager(Review), ManagerUpdate(cron = Some(ManagerUpdate.Cron(""))), t0)
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals((cleared.cron, cleared.nextTickAt), (None, None))
 
   // ── LLM-proposed hint effects, person-confirmed ────────────────────────────────────────────────
@@ -566,7 +566,7 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
             Some(EnqueueRequest.Priority(0))
           )
         )
-        .fold(e => fail(e.message.sentence), identity)
+        .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     )
 
   private def enrichItem(ck: Citekey): ManagerItem =
@@ -594,7 +594,7 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
           propose = Some(HintAdd.Propose(true))
         )
       )
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(hint.effect, None, "not applied")
     assertEquals(enrichItem(CkA).status, "pending")
     val ap = openHintApprovals(a)
@@ -611,7 +611,7 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
     // approve: applied through the same path as a person's own hold, and recorded on the hint
     val decided = a
       .decide(ApiIds.approval(ap.head.id), Approval.Outcome("approve"), DecisionRequest())
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(decided.state, "approved")
     assert(decided.result.exists(_.value.contains("hold")), decided.result)
     assertEquals((enrichItem(CkA).status, enrichItem(CkA).hold.flatMap(_.until)), ("held", Some("2026-12-01")))
@@ -628,7 +628,7 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
           propose = Some(HintAdd.Propose(true))
         )
       )
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     val ap2 = openHintApprovals(a).head
     assertEquals(
       a.decide(ApiIds.approval(ap2.id), Approval.Outcome("reject"), DecisionRequest()).map(_.state),
@@ -656,7 +656,7 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
           )
         )
         .left
-        .exists(_.message.sentence.contains("config instead"))
+        .exists(_.problems.sentences.mkString("; ").contains("config instead"))
     )
     assert(
       a.managing
@@ -674,7 +674,7 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
           )
         )
         .left
-        .exists(_.message.sentence.contains("rounds"))
+        .exists(_.problems.sentences.mkString("; ").contains("rounds"))
     )
     a.managing
       .addHint(
@@ -690,7 +690,7 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
           propose = Some(HintAdd.Propose(true))
         )
       )
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(
       a.managing.get(ApiIds.manager(Enrich)).toOption.get.manager.config.maxRuns,
       None,
@@ -726,7 +726,7 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
         ApiIds.manager(Enrich),
         HintAdd(HintAdd.Text("please leave A alone until December"), suggest = Some(HintAdd.Suggest(true)))
       )
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     val run = connect(ds)(AgentRepo.list(None, PageSize(20))).find(_.pipeline.value == "hint-effect").get
     assertEquals(
       (run.target, run.origin, run.params.hint.map(_.value)),
@@ -774,7 +774,7 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
       b.managing
         .addHint(ApiIds.manager(Enrich), HintAdd(HintAdd.Text("x"), suggest = Some(HintAdd.Suggest(true))))
         .left
-        .exists(_.message.sentence.contains("agents are off"))
+        .exists(_.problems.sentences.mkString("; ").contains("agents are off"))
     )
     assertEquals(Transactor(ds).read(ManagerRepo.hints(Enrich, live = false)).size, before)
 
@@ -792,7 +792,7 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
           ManagerConfig(sweeps = Some(List(Sweep.Wire("currency"))), dailyUsd = Some(ManagerConfig.DailyUsd(0.01)))
         )
       )
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     // a run of this manager that already cost 0.02 USD today (and one plan-billed step: 0 USD, tokens only)
     val spent = com.augustnagro.magnum.transact(ds)(
       TestRuns.createIn(
@@ -822,7 +822,7 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
     assert(ManagersMarkdown.line(info).contains("today 0.0200 of 0.0100 USD, 6.5k tokens"), ManagersMarkdown.line(info))
     a.managing
       .action(ApiIds.manager(m.id), ManagersControllers.Action("resume"), None)
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     val now = Instant.now()
     assertEquals(a.managers.tick(now).filter(_.value.contains("started")), Nil)
     assertEquals(item(m.id, CurrencyKind).status, "pending")
@@ -845,7 +845,7 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
           Some(ManagerConfig(sweeps = Some(List(Sweep.Wire("currency"))), dailyUsd = Some(ManagerConfig.DailyUsd(1.0))))
         )
       )
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     a.managers.tick(now)
     assertEquals(item(m.id, CurrencyKind).status, "active")
     // a manager without a cap of its own takes agents.managers.daily-usd (0 = none)

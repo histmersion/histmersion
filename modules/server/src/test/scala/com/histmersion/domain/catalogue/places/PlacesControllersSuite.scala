@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.catalogue.places
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -90,7 +90,7 @@ class PlacesControllersSuite extends munit.FunSuite:
     val (c, _) = controllers()
     val r = c
       .importPlaces(Caller.Local, Some(Place.Kind.Wire("site")), Some(Dataset.Wire("seed")), doc)
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals((r.places, r.relations), (2, 1))
     assertEquals(
       c.search(Some(PlaceService.SearchQ("zzcl")), None, None).map(_.id).toSet,
@@ -103,16 +103,19 @@ class PlacesControllersSuite extends munit.FunSuite:
       Right(("zzcl_hill", "zzcl_mound"))
     )
     assertEquals(c.get(Place.Id("zzcl_hill"), None).map(_.place.id), Right("zzcl_mound"), "the old id answers")
-    assertEquals(c.links(Place.Id("zzcl_none")).left.map(_.message).left.map(_.sentence), Left("No place 'zzcl_none'"))
+    assertEquals(
+      c.links(Place.Id("zzcl_none")).left.map(_.problems.head).left.map(_.sentence),
+      Left("no place id 'zzcl_none'")
+    )
     assert(
       c.importPlaces(Caller.Local, Some(Place.Kind.Wire("nonsense")), None, doc)
         .left
-        .exists(_.message.sentence.contains("unknown kind"))
+        .exists(_.problems.sentences.mkString("; ").contains("unknown kind"))
     )
     assert(
       c.importPlaces(Caller.Local, None, Some(Dataset.Wire("other")), doc)
         .left
-        .exists(_.message.sentence.contains("unknown dataset 'other' (one of: "))
+        .exists(_.problems.sentences.mkString("; ").contains("unknown dataset 'other' (one of: "))
     )
     assert(c.importPlaces(Caller.Local, None, None, PlacesControllers.DatasetBody("not json")).isLeft)
 
@@ -152,7 +155,7 @@ class PlacesControllersSuite extends munit.FunSuite:
     assert(
       c.shapes(Api.PlacesGeoQuery(pick = Some(GeoPick.Wire("nonsense"))))
         .left
-        .exists(_.message.sentence.contains("unknown pick"))
+        .exists(_.problems.sentences.mkString("; ").contains("unknown pick"))
     )
     assert(c.shapes(Api.PlacesGeoQuery(kind = Some(com.histmersion.api.catalogue.Place.Kind.Wire("region")))).isRight)
     assertEquals(

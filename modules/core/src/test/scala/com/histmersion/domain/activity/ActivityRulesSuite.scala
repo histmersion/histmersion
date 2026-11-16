@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.activity
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -161,7 +161,7 @@ class ActivityRulesSuite extends munit.FunSuite:
       ActivityRules
         .query(Some(Show.Wire("everything else")), None, None, None, None, now)
         .left
-        .exists(_.message.sentence.contains("running"))
+        .exists(_.problems.sentences.mkString("; ").contains("running"))
     )
     assert(ActivityRules.query(None, Some(ListFilters.TimeBound("last week")), None, None, None, now).isLeft)
     assert(ActivityRules.query(None, None, None, None, Some(ActivityCursor.Wire("nope")), now).isLeft)

@@ -1,7 +1,7 @@
 package com.histmersion
 package util.data.exchange
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -33,7 +33,9 @@ class MergeApplyJobsSuite extends munit.FunSuite:
 
   test("done within the wait: the answer is its report"):
     val jobs = MergeApplyJobs(MergeApplyRuns.InMemory(), 5)
-    val j = jobs.start(sha('b'), plan('a'))(() => Right(result)).fold(e => fail(e.message.sentence), identity)
+    val j = jobs
+      .start(sha('b'), plan('a'))(() => Right(result))
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(j.state, MergeJobState.Done)
     assertEquals(j.result, Some(result))
     assertEquals(status(jobs, j.job).map(_.state), Some(MergeJobState.Done))
@@ -46,10 +48,13 @@ class MergeApplyJobsSuite extends munit.FunSuite:
         release.await()
         Left(Problem.Unclassified(Legacy.Text("nothing to apply")))
       }
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(j.state, MergeJobState.Running)
     assert(
-      jobs.start(sha('c'), plan('d'))(() => Right(result)).left.exists(_.message.sentence.contains("still running"))
+      jobs
+        .start(sha('c'), plan('d'))(() => Right(result))
+        .left
+        .exists(_.problems.sentences.mkString("; ").contains("still running"))
     )
     release.countDown()
     val ended = Iterator
@@ -62,7 +67,7 @@ class MergeApplyJobsSuite extends munit.FunSuite:
     val jobs = MergeApplyJobs(MergeApplyRuns.InMemory(), 5)
     val j = jobs
       .start(sha('b'), plan('a'))(() => throw IllegalStateException("boom"))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(j.state, MergeJobState.Failed)
     assert(j.error.exists(_.sentence.contains("boom")), j.toString)
     assertEquals(jobs.status(Job.Id.applyUnsafe(UUID.randomUUID().toString)), None)

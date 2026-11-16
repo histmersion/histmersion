@@ -1,7 +1,7 @@
 package com.histmersion
 package db
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -167,7 +167,7 @@ class AssetsJobsSuite extends DbSuite:
           MediaTarget.TargetId("hattusa")
         )
       )
-      .fold(e => fail(e.message.sentence), _ => ())
+      .fold(e => fail(e.problems.sentences.mkString("; ")), _ => ())
     AssetLinkFixtures
       .create(
         ds,
@@ -179,7 +179,7 @@ class AssetsJobsSuite extends DbSuite:
           MediaTarget.TargetId("troy")
         )
       )
-      .fold(e => fail(e.message.sentence), _ => ())
+      .fold(e => fail(e.problems.sentences.mkString("; ")), _ => ())
     AssetLinkFixtures
       .create(
         ds,
@@ -191,7 +191,7 @@ class AssetsJobsSuite extends DbSuite:
           MediaTarget.TargetId("mycenae")
         )
       )
-      .fold(e => fail(e.message.sentence), _ => ())
+      .fold(e => fail(e.problems.sentences.mkString("; ")), _ => ())
     // re-OCR: fig-1 re-rendered under its name, fig-2's picture now numbered fig-4, fig-3 gone
     AssetFixtures.replace(
       ds,

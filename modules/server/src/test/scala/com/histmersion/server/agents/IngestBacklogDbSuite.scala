@@ -2,7 +2,7 @@ package com.histmersion
 package server.agents
 
 import com.histmersion.util.problem.Problem
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -244,7 +244,7 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
           paused = Some(ManagerCreate.Paused(false))
         )
       )
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     m
 
   private def sweepRun(mid: ManagerInfo.Id, goal: DomainGoal.Slug): RunInfo =
@@ -318,7 +318,8 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
     // the same day: the allowance is spent, nothing drains; the status says when it will
     b.managers.tick(now)
     assertEquals(ingestCalls(upb).size, 20)
-    val info = b.managing.get(ApiIds.manager(m.id)).fold(e => fail(e.message.sentence), identity).manager
+    val info =
+      b.managing.get(ApiIds.manager(m.id)).fold(e => fail(e.problems.sentences.mkString("; ")), identity).manager
     assertEquals((info.backlog, info.backlogDays), (10, Some(1)))
     assert(
       ManagersMarkdown.line(info).contains("10 legal open-access works in the ingest backlog (~1 more day"),
@@ -340,7 +341,7 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
         ),
         ItemPatch(ItemPatch.Action("reopen"))
       )
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     b.managers.tick(now)
     val again = sweepRun(m.id, Goal)
     assertEquals(
@@ -492,7 +493,7 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
     assertEquals((st.backlog, st.backlogDays), (4, Some(2)), "2 a day from tomorrow")
     a.managing
       .action(ApiIds.manager(w2.id), ManagersControllers.Action("pause"), None)
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     val tomorrow = now.plus(1, ChronoUnit.DAYS)
     (1 to 3).foreach(_ => a.managers.tick(tomorrow))
     assertEquals(ingestCalls(up).drop(2), List(s"ingest ${doi("a3")}"), "w2 paused: its backlog waits")
@@ -549,7 +550,7 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
         ApiIds.manager(m.id),
         ManagerUpdate(Some(m.config.copy(autoIngest = Some(ManagerConfig.AutoIngest(true)))))
       )
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
 
     val dry = a.oaBacklog.repair(RepairRequest(dryRun = RepairRequest.DryRun(true), Some(Activity.Actor("test"))))
     assertEquals(
@@ -609,7 +610,7 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
     assertEquals(a.oaBacklog.repair(RepairRequest(dryRun = RepairRequest.DryRun(true))).backlog, 1)
     val on = a.managing
       .setAutopilot(AutopilotSet(on = AutopilotSet.On(true), Some(AutopilotSet.By("test"))))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(on.backlog, 1)
     // a person can reprioritise or skip an entry like any item, by its DOI
     val i = a.managing
@@ -618,7 +619,7 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
         ManagerItem.Ref(doi("q")),
         ItemPatch(ItemPatch.Action("priority"), priority = Some(ItemPatch.Priority(5)))
       )
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals((i.kind, i.priority), (OaIngest, 5))
     assert(
       a.managing
@@ -633,5 +634,5 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
         ApiIds.manager(m.id),
         EnqueueRequest(EnqueueRequest.Kind("ingest"), EnqueueRequest.Target(s"https://doi.org/${doi("r")}"))
       )
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals((added.kind, added.target), (OaIngest, doi("r")))

@@ -8,26 +8,11 @@ import com.histmersion.api.Api
 
 object ConfigEditApi:
 
-  private def errors =
-    oneOf[Api.Error](
-      oneOfVariantValueMatcher(StatusCode.Conflict, jsonBody[Api.Error])(
-        (Api.Error
-          .hasCode(Api.Error.Code(ConfigEdit.CodeChanged)))
-          .andThen(refactorResult => ((refactorResult) == (true)))
-      ),
-      oneOfVariantValueMatcher(StatusCode.ServiceUnavailable, jsonBody[Api.Error])(
-        (Api.Error
-          .hasCode(Api.Error.Code(ConfigEdit.CodeUnavailable)))
-          .andThen(refactorResult4 => ((refactorResult4) == (true)))
-      ),
-      oneOfDefaultVariant(statusCode(StatusCode.BadRequest).and(jsonBody[Api.Error]))
-    )
-
   lazy val get: PublicEndpoint[Option[ConfigEdit.Page.Selector], Api.Error, ConfigEdit.Page, Any] =
     (endpoint.get
       .in("api" / "settings")
       .in(query[Option[String]]("prefix"))
-      .errorOut(errors)
+      .errorOut(Api.problemOut)
       .out(jsonBody[ConfigEdit.Page]))
       .mapIn[Option[ConfigEdit.Page.Selector]]((refactorDecoded2: Option[String]) =>
         (refactorDecoded2).map(refactorElement3 => ConfigEdit.Page.Selector(refactorElement3))
@@ -39,10 +24,10 @@ object ConfigEditApi:
     endpoint.post
       .in("api" / "settings")
       .in(jsonBody[ConfigEdit.Write])
-      .errorOut(errors)
+      .errorOut(Api.problemOut)
       .out(jsonBody[ConfigEdit.Written])
 
   lazy val restart: PublicEndpoint[Unit, Api.Error, ConfigEdit.Restart, Any] =
-    endpoint.post.in("api" / "server" / "restart").errorOut(errors).out(jsonBody[ConfigEdit.Restart])
+    endpoint.post.in("api" / "server" / "restart").errorOut(Api.problemOut).out(jsonBody[ConfigEdit.Restart])
 
   lazy val all: List[AnyEndpoint] = List(get, write, restart)

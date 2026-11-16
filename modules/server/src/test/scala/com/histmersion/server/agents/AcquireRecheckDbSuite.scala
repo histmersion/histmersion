@@ -1,7 +1,7 @@
 package com.histmersion
 package server.agents
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -262,7 +262,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
           noCopy(d, landingRefused = true)
         )
     val r = passNow(a, RecheckRequest(limit = Some(Acquire.Checks.RecheckRequest.Limit(10))))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals((r.closed, r.fetched, r.noCopy, r.failed), (1, 1, 1, 0), r.toString)
     assertEquals(
       asked(up).toSet,
@@ -310,7 +310,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     )
     // again at once: nothing is due (checked within every-days), nothing is asked
     val again = passNow(a, RecheckRequest(limit = Some(Acquire.Checks.RecheckRequest.Limit(10))))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals((again.due, again.closed), (0, 0))
     assertEquals(asked(up).size, 2)
 
@@ -332,13 +332,13 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     up.generation = AcquireRecheck.LastCheck.Generation("g2") // a new fetcher, a new key
     val dry = a.acquireRecheck
       .run(RecheckRequest(dryRun = Acquire.Checks.RecheckRequest.DryRun(true)))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(dry.due, 2)
     assertEquals(asked(up).size, 2, "a dry run asks no fetcher")
     assertEquals(dry.rows.map(_.action).distinct, List(WouldTry))
     val byId = a.acquireRecheck
       .run(RecheckRequest(id = Some(RecheckRequest.Id(one.value))))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(byId.rows.map(_.item.value), List(one.value))
     assertEquals(asked(up).size, 3)
     assertEquals(AcquisitionTesting.checks(ds).of(List(checkItem(one))).get(checkItem(one)).map(_.checks), Some(2))
@@ -512,7 +512,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     )
     val oa = item(h, "oa"); val closed = item(h, "closed")
     val r = passNow(a, RecheckRequest(limit = Some(Acquire.Checks.RecheckRequest.Limit(10))))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(unauthorisedAsked.get, 0, "a fetcher the config marks unauthorised is never asked")
     assertEquals((r.fetched, r.noCopy), (1, 1), r.toString)
     assertEquals(
@@ -547,7 +547,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
   // ── the re-check job ───────────────────────────────────────────────────────────────────────────
 
   private def jobOf(r: Either[Api.Error, RecheckResult]): JobInfo =
-    r.fold(e => fail(e.message.sentence), res => res.job.getOrElse(fail(s"not a job: $res")))
+    r.fold(e => fail(e.problems.sentences.mkString("; ")), res => res.job.getOrElse(fail(s"not a job: $res")))
 
   /** The job once it ended (it runs on its own thread) and its slot is free. */
   private def ended(a: AgentsControllers, id: SpatialHierarchyResult.Job.Id): JobInfo =
@@ -724,7 +724,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     (1 to 5).foreach(i => item(h, s"l$i"))
     val one = a.acquireRecheck
       .run(RecheckRequest(limit = Some(Acquire.Checks.RecheckRequest.Limit(1))))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals((one.job, one.noCopy), (None, 1), "at most one: the pass at once")
     val r = a.acquireRecheck.run(RecheckRequest(limit = Some(Acquire.Checks.RecheckRequest.Limit(3))))
     val job = jobOf(r)
@@ -750,7 +750,9 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     val second = a.acquireRecheck.run(RecheckRequest(all = Acquire.Checks.RecheckRequest.All(true)))
     assert(
       second.left.exists(e =>
-        e.message.sentence.contains(s"job ${job.id}") && e.code.exists(_.value == AgentsApi.CodeConflict)
+        e.problems.sentences.mkString("; ").contains(s"job ${job.id}") && e.code.exists(
+          _.value == AgentsApi.CodeConflict
+        )
       ),
       second.toString
     )
@@ -758,7 +760,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
       a.acquireRecheck
         .run(RecheckRequest(id = Some(RecheckRequest.Id(ids.last.value))))
         .left
-        .exists(_.message.sentence.contains(job.id.value)),
+        .exists(_.problems.sentences.mkString("; ").contains(job.id.value)),
       "nor one item"
     )
     assertEquals(a.acquireRecheck.tick(Instant.now()), Nil, "no scheduled pass while the job runs")

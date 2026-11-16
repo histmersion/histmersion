@@ -37,7 +37,7 @@ class CasesSuite extends munit.FunSuite:
 
   test("there are eleven groups and three cases outside them"):
     assertEquals(Group.values.length, 14)
-    assertEquals(examples.size, 66)
+    assertEquals(examples.size, 68)
 
   test("a relayed problem is its sentence"):
     assertEquals((Relayed(Sentence("the server is reindexing")): Problem).sentence, "the server is reindexing")

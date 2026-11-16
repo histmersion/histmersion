@@ -1,7 +1,7 @@
 package com.histmersion
 package server.instance
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.util.database.Transactor
 
@@ -68,7 +68,7 @@ final class InstanceControllers(
           StorageLocations.install,
           c,
           Some(diagnostics),
-          backups.list.left.map(_.message.sentence),
+          backups.list.left.map(_.problems.sentences.mkString("; ")),
           MeasureBudget.of(
             MeasureBudget.MaxEntries(c.storage.maxEntries.value.toLong),
             MeasureBudget.MaxMillis(c.storage.maxMillis.value.toLong)
@@ -120,7 +120,7 @@ final class InstanceControllers(
       )
     )
     val counts = attempt("store counts")(corpusCounts)
-    val listed = backups.list.left.map(e => s"backups: ${e.message.sentence}")
+    val listed = backups.list.left.map(e => s"backups: ${e.problems.sentences.mkString("; ")}")
     val last = listed.toOption.flatMap(_.headOption)
     val age = last
       .flatMap(b => Try(Instant.parse(b.createdAt.value)).toOption)

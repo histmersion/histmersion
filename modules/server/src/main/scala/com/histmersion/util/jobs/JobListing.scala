@@ -1,8 +1,9 @@
 package com.histmersion
 package util.jobs
+import com.histmersion.util.jobs.Job
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.Cursor
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.util.database.Transactor
 
@@ -25,7 +26,12 @@ final class JobListing(ds: DataSource, cfg: () => AppConfig):
   def job(id: Job.Id): Either[Api.Error, JobInfo] =
     Transactor(ds)
       .read(JobRepo.get(id))
-      .toRight(Api.Error(Problem.Unclassified(Legacy.Text(s"No job '$id'")), Some(Api.Error.Code(Write.CodeNotFound))))
+      .toRight(
+        Api.Error(
+          Problem.NotFound.Entity(Problem.TypeName.of(Job.Id), Problem.Raw(s"$id")),
+          Some(Api.Error.Code(Write.CodeNotFound))
+        )
+      )
 
   def jobs(status: Option[JobState.Wire], limit: Option[PageSize]): List[JobInfo] =
     val c = cfg()

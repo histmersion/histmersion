@@ -1,7 +1,7 @@
 package com.histmersion
 package web
 import com.histmersion.util.problem.Problem
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import hearth.kindlings.optics.syntax.*
 
@@ -205,9 +205,11 @@ object SourceEditor:
                     case f: ApiFailure if f.conflict =>
                       errors.set(List(Field.Form -> ConflictMessage))
                       load()
-                    case f: ApiFailure if f.unauthorized => errors.set(List(Field.Form -> f.error.message.sentence))
-                    case f: ApiFailure => errors.set(List(Field.of(f.error) -> f.error.message.sentence))
-                    case e             => errors.set(List(Field.Form -> e.getMessage))
+                    case f: ApiFailure if f.unauthorized =>
+                      errors.set(List(Field.Form -> f.error.problems.sentences.mkString("; ")))
+                    case f: ApiFailure =>
+                      errors.set(List(Field.of(f.error) -> f.error.problems.sentences.mkString("; ")))
+                    case e => errors.set(List(Field.Form -> e.getMessage))
                   },
                   sw =>
                     orig.set(Some(sw.source))

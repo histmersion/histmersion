@@ -38,7 +38,8 @@ final class PlacesControllers(
   private def modernFrom: DeepTime.SignedYear = DeepTime.SignedYear(cfg().places.modernFrom.value)
   private def tolKm: GeocodeSettings.ToleranceKm = GeocodeSettings.ToleranceKm(cfg().places.pointToleranceKm.value)
   private def page(raw: Int): PageSize = PageSize.applyUnsafe(math.max(1, raw))
-  private def notFound(id: String): Api.Error = Api.Error(Problem.Unclassified(Legacy.Text(s"No place '$id'")))
+  private def notFound(id: String): Api.Error =
+    Api.Error(Problem.NotFound.Entity(Problem.TypeName.of(Place.Id), Problem.Raw(s"$id")))
 
   /** A place's id now: an old id (renamed, V055 — e.g. by a merge that followed a rename made in the other collection)
     * resolves to the place it names, as an old citekey does.

@@ -17,22 +17,11 @@ object AgentsApi:
 
   import Agents.*
 
-  private lazy val base = endpoint.in("api" / "agents").errorOut(jsonBody[Api.Error])
-
-  private lazy val agentErrors =
-    oneOf[Api.Error](
-      oneOfVariantValueMatcher(StatusCode.NotFound, jsonBody[Api.Error])(
-        (Api.Error.hasCode(Api.Error.Code(Write.CodeNotFound))).andThen(refactorResult => ((refactorResult) == (true)))
-      ),
-      oneOfVariantValueMatcher(StatusCode.Conflict, jsonBody[Api.Error])(
-        (Api.Error.hasCode(Api.Error.Code(CodeConflict))).andThen(refactorResult4 => ((refactorResult4) == (true)))
-      ),
-      oneOfDefaultVariant(statusCode(StatusCode.BadRequest).and(jsonBody[Api.Error]))
-    )
+  private lazy val base = endpoint.in("api" / "agents").errorOut(Api.problemOut)
 
   val CodeConflict = "conflict"
 
-  private lazy val writeBase = endpoint.in("api" / "agents").errorOut(agentErrors)
+  private lazy val writeBase = endpoint.in("api" / "agents").errorOut(Api.problemOut)
 
   lazy val models: PublicEndpoint[Unit, Api.Error, ModelsInfo, Any] =
     base.get.in("models").out(jsonBody[ModelsInfo])
@@ -125,7 +114,7 @@ object AgentsApi:
   lazy val run: PublicEndpoint[RunInfo.Id, Api.Error, RunDetail, Any] =
     (endpoint.get
       .in("api" / "agents" / "runs" / path[String]("id"))
-      .errorOut(agentErrors)
+      .errorOut(Api.problemOut)
       .out(jsonBody[RunDetail]))
       .mapIn[RunInfo.Id]((refactorDecoded6: String) => RunInfo.Id(refactorDecoded6))((refactorEncoded6: RunInfo.Id) =>
         (refactorEncoded6).value
@@ -135,7 +124,7 @@ object AgentsApi:
     (endpoint.get
       .in("api" / "agents" / "compare")
       .in(query[List[String]]("id"))
-      .errorOut(agentErrors)
+      .errorOut(Api.problemOut)
       .out(jsonBody[RunCompare.Comparison]))
       .mapIn[List[RunInfo.Id]]((refactorDecoded24: List[String]) =>
         (refactorDecoded24).map(refactorElement29 => RunInfo.Id(refactorElement29))
@@ -185,7 +174,7 @@ object AgentsApi:
       .in(query[Option[Int]]("limit"))
       .in(query[Option[String]]("before"))
       .in(query[Option[String]]("upTo"))
-      .errorOut(agentErrors)
+      .errorOut(Api.problemOut)
       .out(jsonBody[List[ApprovalInfo]])
       .out(Paging.headers))
       .mapIn[
@@ -225,7 +214,7 @@ object AgentsApi:
 
   import com.histmersion.api.automation.Goal.Plans.*
 
-  private lazy val goalBase = endpoint.in("api" / "goals" / path[String]("slug")).errorOut(agentErrors)
+  private lazy val goalBase = endpoint.in("api" / "goals" / path[String]("slug")).errorOut(Api.problemOut)
 
   lazy val goalView: PublicEndpoint[ReviewGoal.Slug, Api.Error, GoalView, Any] =
     (goalBase.get

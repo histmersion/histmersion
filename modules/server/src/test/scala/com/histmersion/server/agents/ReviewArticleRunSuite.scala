@@ -4,7 +4,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.json.RawJson
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -333,7 +333,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     )
 
   private def start(a: AgentsControllers, req: RunRequest): RunInfo =
-    val run = a.startRun(req).fold(e => fail(e.message.sentence), identity)
+    val run = a.startRun(req).fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     a.engine.execute(ApiIds.run(run.id))
     connect(ds)(AgentRepo.get(run.id)).get
 
@@ -975,7 +975,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
           rounds = Some(Agents.RunRequest.Rounds(99))
         )
       ).left
-        .exists(_.message.sentence.contains("rounds"))
+        .exists(_.problems.sentences.mkString("; ").contains("rounds"))
     )
     val noSkeptic = baseCfg
       .modify(_.agents)
@@ -986,7 +986,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     assert(
       b.startRun(RunRequest(Agents.RunRequest.Pipeline("review-article"), SlugTarget))
         .left
-        .exists(_.message.sentence.contains("skeptic"))
+        .exists(_.problems.sentences.mkString("; ").contains("skeptic"))
     )
 
   // ── the review ledger (docs/research-review-convergence.md §6) ───────────────────────────────────
@@ -1694,7 +1694,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
           modelFor = List(ModelOverride(Agents.ModelOverride.Role("writer"), HaikuOverride))
         )
       ).left
-        .exists(_.message.sentence.contains("review-article uses no writer role"))
+        .exists(_.problems.sentences.mkString("; ").contains("review-article uses no writer role"))
     )
 
   test("compare: two review-article runs — verdicts, findings per reviewer and kind, the major findings they share"):
@@ -1729,7 +1729,9 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       )
     )
     assertEquals((r1.status, r2.status), ("done", "done"))
-    val cmp = a.compare(List(ApiIds.run(r1.id), ApiIds.run(r2.id))).fold(e => fail(e.message.sentence), identity)
+    val cmp = a
+      .compare(List(ApiIds.run(r1.id), ApiIds.run(r2.id)))
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(
       cmp.steps.find(_.name.value == "rules-1").get.runs.map(_.map(_.models.map(_.value: String))),
       List(Some(List(Model.wire.value: String)), Some(List(Haiku.wire.value: String)))

@@ -73,14 +73,24 @@ private[articles] object CritiqueRepo:
               case (None, _) =>
                 Left(
                   Api.Error(
-                    Problem.Unclassified(Legacy.Text(s"critique reason ${r.ref.wire}: '${r.src}' is not a citekey")),
+                    Problem.Invalid.Unknown(
+                      Problem.TypeName.of(Citekey),
+                      Problem.Raw(s"${r.src}"),
+                      Vector.empty,
+                      Vector(Problem.Field("reasons"), Problem.Field(s"${r.ref.wire}"))
+                    ),
                     Some(Api.Error.Code(Write.CodeInvalid))
                   )
                 )
               case (_, None) =>
                 Left(
                   Api.Error(
-                    Problem.Unclassified(Legacy.Text(s"critique reason ${r.ref.wire}: '${r.dst}' is not a citekey")),
+                    Problem.Invalid.Unknown(
+                      Problem.TypeName.of(Citekey),
+                      Problem.Raw(s"${r.dst}"),
+                      Vector.empty,
+                      Vector(Problem.Field("reasons"), Problem.Field(s"${r.ref.wire}"))
+                    ),
                     Some(Api.Error.Code(Write.CodeInvalid))
                   )
                 )

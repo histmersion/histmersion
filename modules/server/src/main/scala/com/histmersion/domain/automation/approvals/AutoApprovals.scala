@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.approvals
-import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import io.scalaland.chimney.dsl.*
 
@@ -150,7 +150,7 @@ final class AutoApprovals(
           DecisionRequest(Some(DecisionRequest.Note(note.value)))
         ) match
           case Left(e) =>
-            scribe.info(s"autopilot: $what not decided: ${e.message.sentence}")
+            scribe.info(s"autopilot: $what not decided: ${e.problems.sentences.mkString("; ")}")
             Nil
           case Right(d) =>
             val text =

@@ -64,16 +64,18 @@
 == places add, refused
 400 {
   "code" : "invalid",
-  "message" : {
-    "case" : "Missing",
-    "data" : {
-      "at" : [
-      ],
-      "field" : "label"
-    },
-    "group" : "Invalid",
-    "text" : "label is required"
-  }
+  "problems" : [
+    {
+      "case" : "Missing",
+      "data" : {
+        "at" : [
+        ],
+        "field" : "label"
+      },
+      "group" : "Invalid",
+      "text" : "label is required"
+    }
+  ]
 }
 == places build-hierarchy
 200 {
@@ -142,14 +144,16 @@
 == places name remove, imported
 400 {
   "code" : "invalid",
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
+  "problems" : [
+    {
+      "case" : "Unclassified",
+      "data" : {
+        "text" : "'Zzhügel' is a name the gazetteer seed or an imported source gives 'Zzhill' [zz_hill], not one added by hand — removing it would last only until the next import"
+      },
+      "group" : "Unclassified",
       "text" : "'Zzhügel' is a name the gazetteer seed or an imported source gives 'Zzhill' [zz_hill], not one added by hand — removing it would last only until the next import"
-    },
-    "group" : "Unclassified",
-    "text" : "'Zzhügel' is a name the gazetteer seed or an imported source gives 'Zzhill' [zz_hill], not one added by hand — removing it would last only until the next import"
-  }
+    }
+  ]
 }
 == places override kind and period
 200 {
@@ -359,45 +363,51 @@
 == figures
 400 {
   "code" : null,
-  "message" : {
-    "case" : "Broken",
-    "data" : {
-      "at" : [
-      ],
-      "rule" : {
-        "AssetBase64" : {
-          "asset" : "fig2.png",
-          "reported" : "Input byte array has incorrect ending byte at 16"
+  "problems" : [
+    {
+      "case" : "Broken",
+      "data" : {
+        "at" : [
+        ],
+        "rule" : {
+          "AssetBase64" : {
+            "asset" : "fig2.png",
+            "reported" : "Input byte array has incorrect ending byte at 16"
+          }
         }
-      }
-    },
-    "group" : "Invalid",
-    "text" : "asset 'fig2.png': not valid base64 (Input byte array has incorrect ending byte at 16)"
-  }
+      },
+      "group" : "Invalid",
+      "text" : "asset 'fig2.png': not valid base64 (Input byte array has incorrect ending byte at 16)"
+    }
+  ]
 }
 == figure placed
-400 {
+404 {
   "code" : "not_found",
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
+  "problems" : [
+    {
+      "case" : "Unclassified",
+      "data" : {
+        "text" : "No asset 'zzhill1990_battle/fig1.png'"
+      },
+      "group" : "Unclassified",
       "text" : "No asset 'zzhill1990_battle/fig1.png'"
-    },
-    "group" : "Unclassified",
-    "text" : "No asset 'zzhill1990_battle/fig1.png'"
-  }
+    }
+  ]
 }
 == figure placed 2
-400 {
+404 {
   "code" : "not_found",
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
+  "problems" : [
+    {
+      "case" : "Unclassified",
+      "data" : {
+        "text" : "No asset 'zzhill1990_battle/fig2.png'"
+      },
+      "group" : "Unclassified",
       "text" : "No asset 'zzhill1990_battle/fig2.png'"
-    },
-    "group" : "Unclassified",
-    "text" : "No asset 'zzhill1990_battle/fig2.png'"
-  }
+    }
+  ]
 }
 == event battle
 200 {
@@ -955,14 +965,16 @@
 == event refused
 400 {
   "code" : "invalid",
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
+  "problems" : [
+    {
+      "case" : "Unclassified",
+      "data" : {
+        "text" : "scale 'huge' is not local | regional | auto"
+      },
+      "group" : "Unclassified",
       "text" : "scale 'huge' is not local | regional | auto"
-    },
-    "group" : "Unclassified",
-    "text" : "scale 'huge' is not local | regional | auto"
-  }
+    }
+  ]
 }
 == event patch
 200 {
@@ -1337,37 +1349,41 @@
 == attestation refused
 400 {
   "code" : "invalid",
-  "message" : {
-    "case" : "Unknown",
-    "data" : {
-      "at" : [
-      ],
-      "known" : [
-        "finding",
-        "event",
-        "event_dating",
-        "place",
-        "edge"
-      ],
-      "raw" : "planet",
-      "typeName" : "AttestationTarget"
-    },
-    "group" : "Invalid",
-    "text" : "unknown attestation target 'planet' (one of: finding, event, event_dating, place, edge)"
-  }
+  "problems" : [
+    {
+      "case" : "Unknown",
+      "data" : {
+        "at" : [
+        ],
+        "known" : [
+          "finding",
+          "event",
+          "event_dating",
+          "place",
+          "edge"
+        ],
+        "raw" : "planet",
+        "typeName" : "AttestationTarget"
+      },
+      "group" : "Invalid",
+      "text" : "unknown attestation target 'planet' (one of: finding, event, event_dating, place, edge)"
+    }
+  ]
 }
 == attestation missing source
 404 {
   "code" : "not_found",
-  "message" : {
-    "case" : "Entity",
-    "data" : {
-      "key" : "zznone1900_x",
-      "typeName" : "Citekey"
-    },
-    "group" : "NotFound",
-    "text" : "No source 'zznone1900_x'"
-  }
+  "problems" : [
+    {
+      "case" : "Entity",
+      "data" : {
+        "key" : "zznone1900_x",
+        "typeName" : "Citekey"
+      },
+      "group" : "NotFound",
+      "text" : "No source 'zznone1900_x'"
+    }
+  ]
 }
 == attestation patch
 200 {

@@ -80,7 +80,7 @@ object SettingsViews:
     )
 
   def error(e: SettingError): Api.Error =
-    def refusal(code: String) = Api.Error(e.message.toNonEmpty.head, Some(Api.Error.Code(code)))
+    def refusal(code: String) = Api.Error(e.message, Some(Api.Error.Code(code)))
     e match
       case SettingError.Changed(_, _)                  => refusal(ConfigEdit.CodeChanged)
       case SettingError.NoFile(_) | SettingError.Io(_) => refusal(ConfigEdit.CodeUnavailable)

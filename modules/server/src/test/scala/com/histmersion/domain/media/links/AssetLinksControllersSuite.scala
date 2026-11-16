@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.media.links
 
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.aliases.AliasKinds
@@ -62,7 +62,7 @@ class AssetLinksControllersSuite extends munit.FunSuite:
       List(1L)
     )
     assertEquals(
-      c.delete(AssetLinkService.LinkId(9L)).left.map(_.message).left.map(_.sentence),
+      c.delete(AssetLinkService.LinkId(9L)).left.map(_.problems.head).left.map(_.sentence),
       Left("No asset link #9")
     )
     assertEquals(
@@ -89,5 +89,5 @@ class AssetLinksControllersSuite extends munit.FunSuite:
         )
       )
     )
-    val (a, b) = held.fold(e => fail(e.message.sentence), identity)
+    val (a, b) = held.fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assert(a.isLeft && b.isLeft, (a, b))

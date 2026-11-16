@@ -20,6 +20,6 @@ final class SourceProposalEffect(sources: => SourcesControllers) extends Proposa
           sources
             .patch(p.citekey, p.patch)
             .left
-            .map(e => e.message)
+            .map(e => e.problems.head)
             .map(_ => p.describe.value)
       )

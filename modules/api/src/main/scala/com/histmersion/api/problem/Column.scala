@@ -45,6 +45,8 @@ object Column:
       case Conflict.Job(job, status, control)     => s"job '$job' is $status: ${control.stored}"
       case Conflict.AlreadyExists(t, key)         => s"$t '$key' already exists"
       case Conflict.Renamed(t, asked, now)        => s"$t '$asked' was renamed to '$now'"
+      case Conflict.Aliased(t, key, of)           => s"$t '$key' is an old key of '$of'"
+      case Conflict.Retired(t, key)               => s"$t '$key' was removed"
       case Conflict.Stale(t, key, sent, now)      => s"$t '$key' has moved on: sent $sent, stored $now"
       case Conflict.WrongState(t, key, is, ws)    => s"$t '$key' is $is; it needs ${ws.mkString(" or ")}"
       case Conflict.Busy(activity)                => s"${activity.productPrefix} is still running"
@@ -561,6 +563,8 @@ object Column:
     private val NoCopy = "(?s)^no open-access copy of '([^']*)'$".r
     private val Exists = "(?s)^(\\S+) '(.*)' already exists$".r
     private val RenamedTo = "(?s)^(\\S+) '(.*)' was renamed to '(.*)'$".r
+    private val OldKey = "(?s)^(\\S+) '(.*)' is an old key of '(.*)'$".r
+    private val WasRemoved = "(?s)^(\\S+) '(.*)' was removed$".r
     private val MovedOn = "(?s)^(\\S+) '(.*)' has moved on: sent (.*), stored (.*)$".r
     private val InState = "(?s)^(\\S+) '(.*)' is (\\S+); it needs (.*)$".r
     private val Running = "^(\\w+) is still running$".r
@@ -804,6 +808,14 @@ object Column:
       {
         case RenamedTo(t, asked, now) => Some(Conflict.Renamed(TypeName(s"$t"), Raw(s"$asked"), Raw(s"$now")))
         case _                        => None
+      },
+      {
+        case OldKey(t, key, of) => Some(Conflict.Aliased(TypeName(s"$t"), Raw(s"$key"), Raw(s"$of")))
+        case _                  => None
+      },
+      {
+        case WasRemoved(t, key) => Some(Conflict.Retired(TypeName(s"$t"), Raw(s"$key")))
+        case _                  => None
       },
       {
         case MovedOn(t, key, sent, now) =>

@@ -4,7 +4,7 @@ import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.jsoniterderivation.JsoniterConfig
 import com.histmersion.domain.automation.agents.SttpAiJson.given
 
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.domain.automation.agents.ToolResultCap
 
 import com.histmersion.api.research.{Article, ArticleMarkdown}
@@ -45,7 +45,7 @@ final class ResearchAgentTools(articles: => ArticlesControllers, caps: => AgentT
           .map(_ => Articles.notFound(in.slug))
           .flatMap(articles.get(_))
           .fold(
-            e => s"No article '${in.slug}': ${e.message.sentence}",
+            e => s"No article '${in.slug}': ${e.problems.sentences.mkString("; ")}",
             v =>
               cap(
                 ArticleMarkdown.article(

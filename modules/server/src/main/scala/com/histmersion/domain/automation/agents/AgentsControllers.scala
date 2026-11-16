@@ -5,7 +5,7 @@ import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.Cursor
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import io.scalaland.chimney.dsl.*
 
@@ -247,7 +247,7 @@ final class AgentsControllers(
             scribe.info(
               s"agent runtimes generated in ${r.dir}: ${r.files} file(s), ${r.written} changed, ${r.removed} removed"
             )
-          case Left(e) => scribe.warn(s"agent runtimes not generated: ${e.message.sentence}")
+          case Left(e) => scribe.warn(s"agent runtimes not generated: ${e.problems.sentences.mkString("; ")}")
       managers.ensureDefaults()
       val paused = java.util.concurrent.atomic.AtomicInteger(0)
       lease.start { () =>
@@ -876,7 +876,10 @@ final class AgentsControllers(
         .either(raw)
         .left
         .map(_ =>
-          Api.Error(Problem.Unclassified(Legacy.Text(s"No goal '$raw'")), Some(Api.Error.Code(Write.CodeNotFound)))
+          Api.Error(
+            Problem.NotFound.Entity(Problem.TypeName.of(Goal.Slug), Problem.Raw(s"$raw")),
+            Some(Api.Error.Code(Write.CodeNotFound))
+          )
         )
     if p.targetKind == TargetKind.Goal then slug(target.value).map(Some(_))
     else
@@ -977,7 +980,7 @@ final class AgentsControllers(
   def run(id: DomainRun.Id): Either[Api.Error, RunDetail] =
     runs
       .get(id)
-      .toRight(notFound(Problem.Unclassified(Legacy.Text(s"No agent run '$id'"))))
+      .toRight(notFound(Problem.NotFound.Entity(Problem.TypeName.of(DomainRun.Id), Problem.Raw(s"$id"))))
       .map(r =>
         RunDetail(
           r,
@@ -997,7 +1000,7 @@ final class AgentsControllers(
         acc.flatMap(rs =>
           runs
             .get(id)
-            .toRight(notFound(Problem.Unclassified(Legacy.Text(s"No agent run '$id'"))))
+            .toRight(notFound(Problem.NotFound.Entity(Problem.TypeName.of(DomainRun.Id), Problem.Raw(s"$id"))))
             .map(r => rs :+ RunDetail(r, runs.steps(Job.Id.assume(id.value), AgentRepo.OutputChars(Int.MaxValue)), Nil))
         )
       }
@@ -1213,7 +1216,7 @@ final class AgentsControllers(
       ck <- Citekey
         .either(req.citekey.value)
         .left
-        .map(_ => notFound(Problem.Unclassified(Legacy.Text(s"No source '${req.citekey}'"))))
+        .map(_ => notFound(Problem.NotFound.Entity(Problem.TypeName.of(Citekey), Problem.Raw(s"${req.citekey}"))))
       src <- host.probeSubject(ck)
       picked <- picker.pick(Role.Probe, req.model.map(m => ModelName(m.value))).left.map {
         case PickFailure.Unavailable(m)     => Api.Error(m)
@@ -1325,7 +1328,10 @@ object AgentsControllers:
       .either(raw)
       .left
       .map(_ =>
-        Api.Error(Problem.Unclassified(Legacy.Text(s"No agent run '$raw'")), Some(Api.Error.Code(Write.CodeNotFound)))
+        Api.Error(
+          Problem.NotFound.Entity(Problem.TypeName.of(DomainRun.Id), Problem.Raw(s"$raw")),
+          Some(Api.Error.Code(Write.CodeNotFound))
+        )
       )
 
   /** The run ids a request names (comma-separated ones too). */
@@ -1344,7 +1350,10 @@ object AgentsControllers:
       .either(raw)
       .left
       .map(_ =>
-        Api.Error(Problem.Unclassified(Legacy.Text(s"No goal '$raw'")), Some(Api.Error.Code(Write.CodeNotFound)))
+        Api.Error(
+          Problem.NotFound.Entity(Problem.TypeName.of(Goal.Slug), Problem.Raw(s"$raw")),
+          Some(Api.Error.Code(Write.CodeNotFound))
+        )
       )
 
   /** The server's providers over one [[CliRuntime]]. */

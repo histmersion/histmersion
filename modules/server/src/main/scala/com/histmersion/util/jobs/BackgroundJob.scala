@@ -225,7 +225,7 @@ object BackgroundJob:
     if !slot.claim(Work("resuming")) then
       // the paused job keeps its way to go on: it can be resumed once the other one ends
       stops.foreach(_.pausedWith(idOf(job), () => resume(ds, job, kind, slot, what, busyCode, pins, stops, body)))
-      Left(busy(what, slot.current, busyCode).message)
+      Left(busy(what, slot.current, busyCode).problems.head)
     else
       launch(ds, job, kind, slot, what, busyCode, pins, stops, JobState.Paused, body)
       Right(())

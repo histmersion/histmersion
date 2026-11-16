@@ -84,7 +84,7 @@ class CalibrePushSuite extends munit.FunSuite:
           else if path.endsWith("/original") then
             (
               404,
-              """{"message":"no original stored for 'zz_none' — pass the file yourself (--file)","code":"not_found"}""",
+              """{"problems":["no original stored for 'zz_none' — pass the file yourself (--file)"],"code":"not_found"}""",
               List("Content-Type" -> "application/json")
             )
           else if path == "/api/acquire/calibre/pushed" then

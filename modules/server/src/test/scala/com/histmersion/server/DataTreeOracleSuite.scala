@@ -257,7 +257,7 @@ class DataTreeOracleSuite extends DbSuite:
       if j.isTerminal || left == 0 then j else { Thread.sleep(25); await(id, left - 1) }
     val svc = BasemapWiring.service(Deps(cfg, ds), () => router, _ => ByteCount.applyUnsafe(Long.MaxValue / 4))
     def fetched(q: Basemap.FetchQuery): Unit =
-      val j = await(svc.fetch(q).fold(e => fail(e.message.sentence), _.id))
+      val j = await(svc.fetch(q).fold(e => fail(e.problems.sentences.mkString("; ")), _.id))
       assert(j.succeeded, j.toString)
     fetched(Basemap.FetchQuery())
     fetched(Basemap.FetchQuery(focus = Some(Basemap.Focus.Name("crete"))))

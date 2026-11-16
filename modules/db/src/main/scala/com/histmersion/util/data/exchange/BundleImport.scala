@@ -1,8 +1,9 @@
 package com.histmersion
 package util.data.exchange
+import com.histmersion.util.nonempty.NonEmptyVector
 
-import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -168,11 +169,7 @@ object BundleImport:
         localLabel.get(uid(a)).filter(old => !old.equals(label(a))).foreach { old =>
           importing(MergeRepo.Importing(false))
           rename(old, label(a)).left
-            .foreach(e =>
-              throw ImportAbort(
-                List(Problem.Unclassified(Legacy.Text(s"$what $old → ${label(a)}: ${e.message.sentence}")))
-              )
-            )
+            .foreach(e => throw ImportAbort(NonEmptyVector.toVector(e.problems).toList))
           importing(MergeRepo.Importing(true))
         }
       }

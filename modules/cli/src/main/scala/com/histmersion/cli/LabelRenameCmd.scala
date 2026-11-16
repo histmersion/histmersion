@@ -36,7 +36,7 @@ object LabelRenameCmd:
     LabelRenames
       .validate(kind, LabelRenames.Label(from), LabelRenames.Label(to))
       .left
-      .map(_.message)
+      .map(_.problems.head)
       .map(t => Rename(kind, from.trim, LabelRename.To(t.value), json))
 
   /** The help line of the `rename` subcommand of `kind`. */

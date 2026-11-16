@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.goals
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.util.database.RangeSql
 
@@ -97,7 +97,7 @@ object GoalRepo:
       if !exists then
         Left(
           Api.Error(
-            Problem.Unclassified(Legacy.Text(s"No goal '${slug.value}'")),
+            Problem.NotFound.Entity(Problem.TypeName.of(Goal.Slug), Problem.Raw(s"${slug.value}")),
             Some(Api.Error.Code(Write.CodeNotFound))
           )
         )
@@ -158,24 +158,24 @@ object GoalRepo:
     if !exists(oldSlug) then
       Left(
         Api.Error(
-          Problem.Unclassified(Legacy.Text(s"No goal '${oldSlug.value}'")),
+          Problem.NotFound.Entity(Problem.TypeName.of(Goal.Slug), Problem.Raw(s"${oldSlug.value}")),
           Some(Api.Error.Code(Write.CodeNotFound))
         )
       )
     else if exists(newSlug) then
       Left(
         Api.Error(
-          Problem.Unclassified(Legacy.Text(s"'${newSlug.value}' is already the slug of another goal")),
+          Problem.Conflict.AlreadyExists(Problem.TypeName.of(Goal.Slug), Problem.Raw.of(newSlug)),
           Some(Api.Error.Code(Write.CodeInvalid))
         )
       )
     else if aliasOf.exists(_ != oldSlug) then
       Left(
         Api.Error(
-          Problem.Unclassified(
-            Legacy.Text(
-              s"'${newSlug.value}' is an old slug of '${aliasOf.get.value}' and still resolves to it — pick another"
-            )
+          Problem.Conflict.Aliased(
+            Problem.TypeName.of(Goal.Slug),
+            Problem.Raw.of(newSlug),
+            Problem.Raw.of(aliasOf.get)
           ),
           Some(Api.Error.Code(Write.CodeInvalid))
         )

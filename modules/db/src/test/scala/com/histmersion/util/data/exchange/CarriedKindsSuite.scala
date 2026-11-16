@@ -42,9 +42,9 @@ class CarriedKindsSuite extends munit.FunSuite:
       CarriedKinds.of(sources :: odd :: withoutTombstones).left.toOption.map(_.map(_.sentence)),
       Some(
         List(
-          s"no carried kind writes ${com.histmersion.api.exchange.Bundle.Files.Tombstones}",
-          s"${com.histmersion.api.exchange.Bundle.Kind.Source.file} is carried twice",
-          "entities/odd.ndjson is not a file of the bundle format"
+          s"the bundle holds no ${com.histmersion.api.exchange.Bundle.Files.Tombstones}",
+          s"${com.histmersion.api.exchange.Bundle.Kind.Source.file} appears twice in the bundle",
+          "entities/odd.ndjson is not a file a bundle holds"
         )
       )
     )

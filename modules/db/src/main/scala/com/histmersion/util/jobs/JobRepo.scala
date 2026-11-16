@@ -1,6 +1,7 @@
 package com.histmersion
 package util.jobs
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.jobs.Job
+import com.histmersion.util.problem.Problem
 import com.histmersion.api.problem.Column
 
 import com.histmersion.util.database.given
@@ -180,7 +181,7 @@ object JobRepo:
       upTo: Option[PageCursor]
   )(using DbCon): Either[Problem, (Vector[JobInfo], Boolean)] =
     (before.toList ++ upTo.toList).find(c => !Keyset.existsOn("jobs", Param.S(Param.S.V(c.value)))) match
-      case Some(c) => Left(Problem.Unclassified(Legacy.Text(s"No job '${c.value}' to page from")))
+      case Some(c) => Left(Problem.NotFound.Entity(Problem.TypeName.of(Job.Id), Problem.Raw.of(c)))
       case None    =>
         val (rows, more) = Keyset.pageOn[JobRow](
           select,

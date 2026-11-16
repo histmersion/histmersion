@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.catalogue.evidence
 import com.histmersion.util.mcp.ChimpJson.given
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import chimp.server.*
@@ -71,7 +71,7 @@ object EventLinksTools:
                   .option(raw)
                   .toRight(
                     Api.Error(
-                      Problem.Unclassified(Legacy.Text(s"No event '$raw'")),
+                      Problem.NotFound.Entity(Problem.TypeName.of(Event.Id), Problem.Raw(s"$raw")),
                       Some(Api.Error.Code(Write.CodeNotFound))
                     )
                   )

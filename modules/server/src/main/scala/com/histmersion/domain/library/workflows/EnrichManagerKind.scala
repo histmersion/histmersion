@@ -58,7 +58,8 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
     itemKind.value match
       case SourceEnrich =>
         Citekey.option(raw.value.trim) match
-          case None     => Left(Api.Error(Problem.Unclassified(Legacy.Text(s"No source '${raw.value.trim}'"))))
+          case None =>
+            Left(Api.Error(Problem.NotFound.Entity(Problem.TypeName.of(Citekey), Problem.Raw(s"${raw.value.trim}"))))
           case Some(ck) =>
             site.sources
               .get(ck, body = SourcesControllers.GetBody(false))
@@ -75,7 +76,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
     val text = raw.value
     val asSource = Citekey
       .option(text)
-      .toRight(Api.Error(Problem.Unclassified(Legacy.Text(s"No source '$text'"))))
+      .toRight(Api.Error(Problem.NotFound.Entity(Problem.TypeName.of(Citekey), Problem.Raw(s"$text"))))
       .flatMap(ck => site.sources.get(ck, body = SourcesControllers.GetBody(false)))
     asSource
       .map(s =>
@@ -89,7 +90,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
           .orElse(
             com.histmersion.domain.automation.Goal.Slug
               .option(text)
-              .toRight(Api.Error(Problem.Unclassified(Legacy.Text(s"No goal '$text'"))))
+              .toRight(Api.Error(Problem.NotFound.Entity(Problem.TypeName.of(Goal.Slug), Problem.Raw(s"$text"))))
               .flatMap(slug =>
                 a.host
                   .goal(slug)
@@ -151,7 +152,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
     try
       autoEnrichLock.synchronized {
         site.sources.get(citekey, body = SourcesControllers.GetBody(false)) match
-          case Left(e)    => Some(AutoEnrich.notQueued(e.message))
+          case Left(e)    => Some(AutoEnrich.notQueued(e.problems.head))
           case Right(src) =>
             val ck = Citekey.assume(src.source.citekey.value)
             // a dry run wrote nothing: it neither enriched the source nor stands for a run that will
@@ -172,7 +173,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
                     Origin.FromIngest,
                     None
                   ).fold(
-                    e => AutoEnrich.notQueued(e.message),
+                    e => AutoEnrich.notQueued(e.problems.head),
                     r => AutoEnrich.queued(Run.Id.assume(r.id.value))
                   )
                 )

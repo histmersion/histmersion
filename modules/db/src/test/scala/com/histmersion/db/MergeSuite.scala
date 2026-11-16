@@ -1232,16 +1232,18 @@ class MergeSuite extends DbSuite with Bounded:
     val first = importInto(b, exportOf(a, sa), sb)
     assert(first.applied.value, first.problems.mkString("\n"))
     transact(a) {
-      ArticleFixtures.renameIn(Slug("zz_old_slug"), Slug("zz_new_slug")).fold(e => fail(e.message.sentence), identity)
+      ArticleFixtures
+        .renameIn(Slug("zz_old_slug"), Slug("zz_new_slug"))
+        .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
       EventFixtures
         .renameIn(BEventRow.Id("zz_old_event"), BEventRow.Id("zz_new_event"))
-        .fold(e => fail(e.message.sentence), identity)
+        .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
       GoalRepo
         .renameIn(
           com.histmersion.domain.automation.Goal.Slug("zz_old_goal"),
           com.histmersion.domain.automation.Goal.Slug("zz_new_goal")
         )
-        .fold(e => fail(e.message.sentence), identity)
+        .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     }
     // the rename rewrote the link in the other article over there
     assertEquals(ArticleFixtures.load(a, Slug("zz_linker")).map(_.body), Some("See [[zz_new_slug]]."))

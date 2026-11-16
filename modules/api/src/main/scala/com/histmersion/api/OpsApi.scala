@@ -19,23 +19,13 @@ object OpsApi:
   import com.histmersion.api.library.Query.{QueryRequest, QueryResult, SchemaTables}
   import com.histmersion.api.automation.Queue.{QueueAdd, QueueImport, QueueImported, QueueItem, QueuePatch}
 
-  private lazy val base = endpoint.in("api").errorOut(jsonBody[Api.Error])
-
-  private lazy val opsErrors =
-    oneOf[Api.Error](
-      oneOfVariantValueMatcher(StatusCode.NotFound, jsonBody[Api.Error])(
-        (Api.Error
-          .hasCode(Api.Error.Code(Write.CodeNotFound)))
-          .andThen(refactorResult2 => ((refactorResult2) == (true)))
-      ),
-      oneOfDefaultVariant(statusCode(StatusCode.BadRequest).and(jsonBody[Api.Error]))
-    )
+  private lazy val base = endpoint.in("api").errorOut(Api.problemOut)
 
   lazy val lint: PublicEndpoint[List[Lint.Wire], Api.Error, LintReport, Any] =
     (endpoint.get
       .in("api" / "lint")
       .in(sttp.tapir.query[List[String]]("rule"))
-      .errorOut(opsErrors)
+      .errorOut(Api.problemOut)
       .out(jsonBody[LintReport]))
       .mapIn[List[Lint.Wire]]((refactorDecoded10: List[String]) =>
         (refactorDecoded10).map(refactorElement9 => Lint.Wire(refactorElement9))
@@ -58,7 +48,7 @@ object OpsApi:
     (endpoint.patch
       .in("api" / "queue" / "items" / path[Int]("id"))
       .in(jsonBody[QueuePatch])
-      .errorOut(opsErrors)
+      .errorOut(Api.problemOut)
       .out(jsonBody[QueueItem]))
       .mapIn[(Queue.Id, QueuePatch)]((refactorDecoded12: (Int, QueuePatch)) =>
         (Queue.Id((refactorDecoded12)._1), (refactorDecoded12)._2)
@@ -67,7 +57,7 @@ object OpsApi:
   lazy val queueDelete: PublicEndpoint[Queue.Id, Api.Error, QueueItem, Any] =
     (endpoint.delete
       .in("api" / "queue" / "items" / path[Int]("id"))
-      .errorOut(opsErrors)
+      .errorOut(Api.problemOut)
       .out(jsonBody[QueueItem]))
       .mapIn[Queue.Id]((refactorDecoded4: Int) => Queue.Id(refactorDecoded4))((refactorEncoded4: Queue.Id) =>
         (refactorEncoded4).value
@@ -84,7 +74,7 @@ object OpsApi:
           .query[Option[String]]("job")
           .description("only the items this agent run or background job wrote or ticked off (its id)")
       )
-      .errorOut(opsErrors)
+      .errorOut(Api.problemOut)
       .out(jsonBody[QueueListing]))
       .mapIn[(Queue.Wire, Boolean, Option[Queue.Wire], Option[Queue.Wire])](
         (refactorDecoded5: (String, Boolean, Option[String], Option[String])) =>
@@ -107,7 +97,7 @@ object OpsApi:
     (endpoint.post
       .in("api" / "queue" / path[String]("list"))
       .in(jsonBody[QueueAdd])
-      .errorOut(opsErrors)
+      .errorOut(Api.problemOut)
       .out(jsonBody[QueueItem]))
       .mapIn[(Queue.Wire, QueueAdd)]((refactorDecoded15: (String, QueueAdd)) =>
         (Queue.Wire((refactorDecoded15)._1), (refactorDecoded15)._2)
@@ -116,7 +106,7 @@ object OpsApi:
   lazy val queueExport: PublicEndpoint[Queue.Wire, Api.Error, Queue.Export, Any] =
     (endpoint.get
       .in("api" / "queue" / path[String]("list") / "export")
-      .errorOut(opsErrors)
+      .errorOut(Api.problemOut)
       .out(stringBody))
       .mapIn[Queue.Wire]((refactorDecoded7: String) => Queue.Wire(refactorDecoded7))((refactorEncoded7: Queue.Wire) =>
         (refactorEncoded7).value
@@ -129,7 +119,7 @@ object OpsApi:
     (endpoint.post
       .in("api" / "queue" / path[String]("list") / "import")
       .in(jsonBody[QueueImport])
-      .errorOut(opsErrors)
+      .errorOut(Api.problemOut)
       .out(jsonBody[QueueImported]))
       .mapIn[(Queue.Wire, QueueImport)]((refactorDecoded18: (String, QueueImport)) =>
         (Queue.Wire((refactorDecoded18)._1), (refactorDecoded18)._2)

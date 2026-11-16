@@ -3,7 +3,7 @@ package domain.automation.goals
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
 
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -92,7 +92,7 @@ abstract class GoalServiceContract extends EngineStoreSuite:
           com.histmersion.domain.automation.Goal.Slug("zz-c"),
           Goal.Put(Goal.Title("C"), periodStart = Some(Year(100)), periodEnd = Some(Year(-100)))
         )
-      assert(bad.left.exists(_.message.sentence.contains("goal 'zz-c'")), bad)
+      assert(bad.left.exists(_.problems.sentences.mkString("; ").contains("goal 'zz-c'")), bad)
       assertEquals(g(s).get(com.histmersion.domain.automation.Goal.Slug("zz-c")), None)
   }
 
@@ -411,7 +411,7 @@ abstract class GoalServiceContract extends EngineStoreSuite:
       g(s)
         .patch(com.histmersion.domain.automation.Goal.Slug("zz-none"), Goal.Patch(title = Some(Goal.Title("x"))))
         .left
-        .exists(_.message.sentence.contains("zz-none"))
+        .exists(_.problems.sentences.mkString("; ").contains("zz-none"))
     )
   }
 
@@ -475,7 +475,7 @@ abstract class GoalServiceContract extends EngineStoreSuite:
           com.histmersion.domain.automation.Goal.Slug("zz-old")
         )
         .left
-        .exists(_.message.sentence.contains("old slug of 'zz-new'"))
+        .exists(_.problems.sentences.mkString("; ").contains("is an old goal slug of 'zz-new'"))
     )
     assert(g(s).delete(com.histmersion.domain.automation.Goal.Slug("zz-other")))
     assert(!g(s).delete(com.histmersion.domain.automation.Goal.Slug("zz-other")))

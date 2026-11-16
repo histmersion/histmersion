@@ -82,7 +82,7 @@ final class QueuedIngest(ingest: IngestControllers, sources: SourceService, spoo
         upload
       )
       .left
-      .map(e => e.message)
+      .map(e => e.problems.head)
       .map(a =>
         base
           .modify(_.jobId)

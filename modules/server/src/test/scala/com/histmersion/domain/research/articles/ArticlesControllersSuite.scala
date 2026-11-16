@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.research.articles
 import com.histmersion.util.problem.Problem
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -225,5 +225,5 @@ class ArticlesControllersSuite extends munit.FunSuite:
         )
       )
     )
-    assertEquals(held.fold(e => fail(e.message.sentence), identity), List.fill(6)(true))
+    assertEquals(held.fold(e => fail(e.problems.sentences.mkString("; ")), identity), List.fill(6)(true))
     assertEquals(c.store.slugs, List("zr_walls"))

@@ -37,40 +37,45 @@ object Answer:
   object Case extends Newtype[String, Pure]
 
   extension (problem: Problem)
-    /** The status of a response that fails with this problem. */
+    /** The status of a response that fails with this problem. A path outside the directory it is confined to is one the
+      * caller chose: refused (403), not a failure of the server.
+      */
     def status: StatusCode = problem match
-      case _: Invalid                => StatusCode.BadRequest
-      case _: NotFound               => StatusCode.NotFound
-      case _: Conflict.Stale         => StatusCode.PreconditionFailed
-      case _: Conflict.Busy          => StatusCode.ServiceUnavailable
-      case _: Conflict.AlreadyExists => StatusCode.Conflict
-      case _: Conflict.Renamed       => StatusCode.Conflict
-      case _: Conflict.WrongState    => StatusCode.Conflict
-      case _: Conflict.Referenced    => StatusCode.Conflict
-      case _: Conflict.Held          => StatusCode.Conflict
-      case _: Conflict.Job           => StatusCode.Conflict
-      case _: Refused.Policy         => StatusCode.Forbidden
-      case _: Refused.Quota          => StatusCode.TooManyRequests
-      case _: Refused.Disabled       => StatusCode.Forbidden
-      case _: Upstream.Http          => StatusCode.BadGateway
-      case _: Upstream.Unreachable   => StatusCode.BadGateway
-      case _: Upstream.Challenged    => StatusCode.BadGateway
-      case _: Upstream.Limited       => StatusCode.TooManyRequests
-      case _: Upstream.BadReply      => StatusCode.BadGateway
-      case _: Upstream.Timeout       => StatusCode.GatewayTimeout
-      case _: Io                     => StatusCode.InternalServerError
-      case _: Config                 => StatusCode.ServiceUnavailable
-      case _: Plugin.Load            => StatusCode.InternalServerError
-      case _: Plugin.Vault           => StatusCode.InternalServerError
-      case _: Plugin.Rejected        => StatusCode.UnprocessableEntity
-      case _: Plugin.Dependency      => StatusCode.Conflict
-      case Plugin.Said(_, claim, _)  => claim.status
-      case _: Problem.Run            => StatusCode.Conflict
-      case _: Content                => StatusCode.UnprocessableEntity
-      case _: Internal               => StatusCode.InternalServerError
-      case _: Unclassified           => StatusCode.InternalServerError
-      case _: Stored                 => StatusCode.InternalServerError
-      case _: Relayed                => StatusCode.InternalServerError
+      case _: Invalid                     => StatusCode.BadRequest
+      case _: NotFound                    => StatusCode.NotFound
+      case _: Conflict.Stale              => StatusCode.PreconditionFailed
+      case _: Conflict.Busy               => StatusCode.ServiceUnavailable
+      case _: Conflict.AlreadyExists      => StatusCode.Conflict
+      case _: Conflict.Renamed            => StatusCode.Conflict
+      case _: Conflict.Aliased            => StatusCode.Conflict
+      case _: Conflict.Retired            => StatusCode.Conflict
+      case _: Conflict.WrongState         => StatusCode.Conflict
+      case _: Conflict.Referenced         => StatusCode.Conflict
+      case _: Conflict.Held               => StatusCode.Conflict
+      case _: Conflict.Job                => StatusCode.Conflict
+      case _: Refused.Policy              => StatusCode.Forbidden
+      case _: Refused.Quota               => StatusCode.TooManyRequests
+      case _: Refused.Disabled            => StatusCode.Forbidden
+      case _: Upstream.Http               => StatusCode.BadGateway
+      case _: Upstream.Unreachable        => StatusCode.BadGateway
+      case _: Upstream.Challenged         => StatusCode.BadGateway
+      case _: Upstream.Limited            => StatusCode.TooManyRequests
+      case _: Upstream.BadReply           => StatusCode.BadGateway
+      case _: Upstream.Timeout            => StatusCode.GatewayTimeout
+      case Io.Wrong(_, Io.Kind.Inside(_)) => StatusCode.Forbidden
+      case _: Io                          => StatusCode.InternalServerError
+      case _: Config                      => StatusCode.ServiceUnavailable
+      case _: Plugin.Load                 => StatusCode.InternalServerError
+      case _: Plugin.Vault                => StatusCode.InternalServerError
+      case _: Plugin.Rejected             => StatusCode.UnprocessableEntity
+      case _: Plugin.Dependency           => StatusCode.Conflict
+      case Plugin.Said(_, claim, _)       => claim.status
+      case _: Problem.Run                 => StatusCode.Conflict
+      case _: Content                     => StatusCode.UnprocessableEntity
+      case _: Internal                    => StatusCode.InternalServerError
+      case _: Unclassified                => StatusCode.BadRequest
+      case _: Stored                      => StatusCode.InternalServerError
+      case _: Relayed                     => StatusCode.InternalServerError
 
     /** When a refused request may be sent again: the end of a spent allowance, when it is known. */
     def retryAfter: Option[EpochMs] = problem match

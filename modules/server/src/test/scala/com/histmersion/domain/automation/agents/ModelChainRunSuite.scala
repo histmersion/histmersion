@@ -4,7 +4,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -207,7 +207,7 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
   private def startAndRun(a: AgentsControllers): RunInfo =
     val run = a
       .startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     a.engine.execute(runId(run.id))
     connect(ds)(AgentRepo.get(run.id)).get
 
@@ -333,7 +333,7 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
     )
     val saved = a
       .setChain(Agents.Role.Wire("extractor"), ChainSet(List(chainModel(B), chainModel(A))))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(
       (saved.source, saved.active.map(_.value: String), saved.models.map(_.model.value: String)),
       ("saved", Some(B.wire), List(B.wire, A.wire))
@@ -346,7 +346,7 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
           ModelChains.AllowanceSet.ReservePct(20)
         )
       )
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals((st.source, st.reservePct, st.limits.map(_.limit)), ("saved", 20, List("2M tokens/5h")))
     // a new process sees the same
     val (again, _) =
@@ -384,19 +384,19 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
       again
         .setChain(Agents.Role.Wire("narrator"), ChainSet(List(chainModel(A))))
         .left
-        .exists(_.message.sentence.contains("unknown role"))
+        .exists(_.problems.sentences.mkString("; ").contains("unknown role"))
     )
     assert(
       again
         .setChain(Agents.Role.Wire("extractor"), ChainSet(List(ModelChains.ChainEntry.Model("ollama:x"))))
         .left
-        .exists(_.message.sentence.contains("unknown provider kind 'ollama'"))
+        .exists(_.problems.sentences.mkString("; ").contains("unknown provider kind 'ollama'"))
     )
     assert(
       again
         .setChain(Agents.Role.Wire("extractor"), ChainSet(Nil))
         .left
-        .exists(_.message.sentence.contains("at least one"))
+        .exists(_.problems.sentences.mkString("; ").contains("at least one"))
     )
     assert(
       again
@@ -407,19 +407,19 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
           )
         )
         .left
-        .exists(_.message.sentence.contains("is not a limit window"))
+        .exists(_.problems.sentences.mkString("; ").contains("is not a limit window"))
     )
     assert(
       again
         .setAllowance(AllowanceSet(allowanceTarget(A), Nil, ModelChains.AllowanceSet.ReservePct(120)))
         .left
-        .exists(_.message.sentence.contains("not between 0 and 99"))
+        .exists(_.problems.sentences.mkString("; ").contains("not between 0 and 99"))
     )
     assert(
       again
         .setAllowance(AllowanceSet(ModelChains.AllowanceSet.Target("nobody:*"), Nil))
         .left
-        .exists(_.message.sentence.contains("unknown provider kind 'nobody'"))
+        .exists(_.problems.sentences.mkString("; ").contains("unknown provider kind 'nobody'"))
     )
 
   test("a saved chain decides which model a run uses; an unready chained model is shown, not refused"):
@@ -430,7 +430,7 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
         Agents.Role.Wire("extractor"),
         ChainSet(List(ModelChains.ChainEntry.Model("local:zzUnpriced"), chainModel(B)))
       )
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(c.models.map(e => (e.model.value: String, e.ready)), List(("local:zzUnpriced", false), (B.wire, true)))
     assert(c.models.head.problem.exists(_.sentence.contains("has no price")), c)
     val run = startAndRun(a)

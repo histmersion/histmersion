@@ -2,7 +2,7 @@ package com.histmersion
 package domain.library.ingest
 
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.api.jobs.JobInfo
 
@@ -258,7 +258,7 @@ final class IngestQueue(
     // NUL bytes occur in OCR output and Postgres `text` rejects them
     val body = Source.OcrMarkdown(doc.markdown.value.filterNot(_.toInt == 0))
     val assets = doc.images.map(i => AssetInput(i.name, i.mime, i.base64, i.width, i.height, i.sha256))
-    decode(assets).left.map(_.message.sentence).flatMap { stored =>
+    decode(assets).left.map(_.problems.sentences.mkString("; ")).flatMap { stored =>
       jobs.progress(jobId, JobRow.Progress(s"storing ${stored.size} asset(s)"))
       val written =
         if sources.load(citekey).isDefined then
@@ -266,7 +266,7 @@ final class IngestQueue(
             .patch(citekey, Source.Patch(body = Some(body)), Caller.Local)
             .map(_ => ())
             .left
-            .map(_.message.sentence)
+            .map(_.problems.sentences.mkString("; "))
         else
           Source.Write
             .applyPut(job.params.citekey, skeleton(job.params, body))

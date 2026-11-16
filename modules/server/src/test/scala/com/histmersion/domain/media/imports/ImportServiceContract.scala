@@ -27,7 +27,7 @@ abstract class ImportServiceContract extends MediaStoreSuite:
         None
       ).left
         .map(_.sentence),
-      Left("No place 'zq_p'")
+      Left("no place id 'zq_p'")
     )
     assertEquals(
       i.targets(
@@ -39,7 +39,7 @@ abstract class ImportServiceContract extends MediaStoreSuite:
         None
       ).left
         .map(_.sentence),
-      Left("No event 'zq_e'")
+      Left("no event id 'zq_e'")
     )
     assertEquals(
       i.targets(
@@ -93,7 +93,7 @@ abstract class ImportServiceContract extends MediaStoreSuite:
         ImportService.PleiadesOnly(true)
       ).left
         .map(_.sentence),
-      Left("No place 'zq_p'")
+      Left("no place id 'zq_p'")
     )
     assertEquals(
       i.collectionTargets(

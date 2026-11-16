@@ -154,7 +154,7 @@ class ArchiveTrafficSuite extends DbSuite:
       val a = answer
       sb ++= s"## $name\n" + wire.out.result() + a + "\n\n"
     def show[A: JsonValueCodec](r: Either[Api.Error, A]): String =
-      r.fold(e => s"refused: ${e.message.sentence}", _.asJson.spaces2)
+      r.fold(e => s"refused: ${e.problems.sentences.mkString("; ")}", _.asJson.spaces2)
     step("archive search bronze")(show(surface.search(Search.Query("bronze"), None)))
     step("archive search bronze --rows 2")(
       show(surface.search(Search.Query("bronze"), Some(CollectionsService.Limit(2))))

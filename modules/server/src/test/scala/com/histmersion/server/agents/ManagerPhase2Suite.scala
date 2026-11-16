@@ -3,7 +3,7 @@ package server.agents
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -279,10 +279,10 @@ class ManagerPhase2Suite extends DbSuite with RunTranscripts:
           )
         )
       )
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     a.managing
       .action(ApiIds.manager(Review), ManagersControllers.Action("resume"), None)
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     val out = a.managers.tick(t0)
     assert(out.exists(_.value.contains("selected 2")), out)
     val inf = item(Review, InferKind, ManagerItem.Target("zzagent_f1"))
@@ -360,7 +360,7 @@ class ManagerPhase2Suite extends DbSuite with RunTranscripts:
     )
     val r = a.managing
       .enqueue(EnqueueRequest(EnqueueRequest.Kind("review"), EnqueueRequest.Target("zzagent_f2")))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     a.managing.update(ApiIds.manager(Review), ManagerUpdate(Some(ManagerConfig(includeTags = Some(List(IncludeTag))))))
     assertEquals(r.items.map(_.kind), List(ArticleReview))
     assertEquals(item(Review, InferKind, ManagerItem.Target("zzagent_f2")).priority, 10, "at the review's priority")
@@ -411,7 +411,7 @@ class ManagerPhase2Suite extends DbSuite with RunTranscripts:
     val m =
       a.managing
         .create(ManagerCreate(ManagerCreate.Kind("seed"), Some(GoalSlug), paused = Some(ManagerCreate.Paused(false))))
-        .fold(e => fail(e.message.sentence), identity)
+        .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals((m.id, m.kind, m.goal.map(_.value: String)), (seedId(ref(Goal)), "seed", Some(Goal)))
     assert(a.managing.create(ManagerCreate(ManagerCreate.Kind("seed"), Some(GoalSlug))).isLeft, "one per area")
     a.managers.tick(t0)
@@ -477,7 +477,7 @@ class ManagerPhase2Suite extends DbSuite with RunTranscripts:
     val (a, h) = handlers(c); seed(h)
     val r = a.managing
       .enqueue(EnqueueRequest(EnqueueRequest.Kind("seed"), EnqueueRequest.Target("zzagent-goal2")))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals((r.managerId, r.items.map(_.kind)), (seedId(ref(Goal)), List(ProposeArticles)))
     assertEquals(connect(ds)(ManagerRepo.get(seedId(ref(Goal)))).map(_.state), Some("paused"))
     a.managing.action(ApiIds.manager(seedId(ref(Goal))), ManagersControllers.Action("resume"), None)
@@ -534,7 +534,7 @@ class ManagerPhase2Suite extends DbSuite with RunTranscripts:
     )
     val r = a.managing
       .enqueue(EnqueueRequest(EnqueueRequest.Kind("enrich"), EnqueueRequest.Target("zzagent_e1")))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(r.items.map(_.target.value: String), List(Ck2))
     assert(r.skipped.exists(_.value.contains(Ck.value)), r.skipped)
     a.managers.tick(t0)
@@ -620,7 +620,7 @@ class ManagerPhase2Suite extends DbSuite with RunTranscripts:
     )
     val r = a.managing
       .enqueue(EnqueueRequest(EnqueueRequest.Kind("extend"), EnqueueRequest.Target("zzagent_x1")))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals((r.managerId, r.items.map(i => (i.kind, i.priority))), (Review, List((ArticleExtend, 10))))
     a.managing.update(ApiIds.manager(Review), ManagerUpdate(Some(ManagerConfig(includeTags = Some(List(IncludeTag))))))
     a.managing.action(ApiIds.manager(Review), ManagersControllers.Action("resume"), None)

@@ -3,7 +3,7 @@ package server
 
 import com.histmersion.api.research.Coverage
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -183,7 +183,9 @@ class SourceDeleteSuite extends DbSuite:
       )
     )
     put(source(OtherCk, edges = Nil))
-    SourceFixtures.rename(ds, OldCk, Citekeys.RenameToNewRaw(Del)).fold(e => fail(e.message.sentence), _ => ())
+    SourceFixtures
+      .rename(ds, OldCk, Citekeys.RenameToNewRaw(Del))
+      .fold(e => fail(e.problems.sentences.mkString("; ")), _ => ())
     put(
       source(
         OtherCk,
@@ -248,7 +250,9 @@ class SourceDeleteSuite extends DbSuite:
     "the dry run lists every part, the parked edges, the aliases, the files and the Calibre id — and changes nothing"
   ):
     seed()
-    val d = h.library.sources.delete(DelCk, Source.DeleteRequest()).fold(e => fail(e.message.sentence), identity)
+    val d = h.library.sources
+      .delete(DelCk, Source.DeleteRequest())
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assert(!d.applied.value && !d.refused, d.toString)
     assertEquals(d.title, s"Title $Old")
     import com.histmersion.api.library.DeletePart.*
@@ -319,7 +323,9 @@ class SourceDeleteSuite extends DbSuite:
           None
         )
       )
-      val dry = h.library.sources.delete(DelCk, Source.DeleteRequest()).fold(e => fail(e.message.sentence), identity)
+      val dry = h.library.sources
+        .delete(DelCk, Source.DeleteRequest())
+        .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
       assertEquals(
         dry.blockers.map(b => (b.kind, b.id.value: String)),
         List((DeleteBlocker.Kind.Article, slug.value: String)),
@@ -330,13 +336,13 @@ class SourceDeleteSuite extends DbSuite:
         .swap
         .getOrElse(fail("the delete was not refused"))
       assert(
-        e.message match
+        e.problems.head match
           case Problem.Conflict.Referenced(_, key, _, count) =>
             key == Problem.Raw(s"$DelCk") &&
             count == Problem.Count(1L)
           case _ => false
         ,
-        e.message
+        e.problems.head
       )
       assert(SourceFixtures.load(ds, DelCk).isDefined, "a refused delete deleted")
       ArticleFixtures.delete(
@@ -350,7 +356,9 @@ class SourceDeleteSuite extends DbSuite:
     connect(ds):
       sql"UPDATE events SET citekey = $Del WHERE id = $Event".update.run()
       sql"INSERT INTO jobs (id, kind, citekey, status) VALUES ('zzdel_job', 'ingest', $Old, 'running')".update.run()
-    val d = h.library.sources.delete(DelCk, Source.DeleteRequest()).fold(e => fail(e.message.sentence), identity)
+    val d = h.library.sources
+      .delete(DelCk, Source.DeleteRequest())
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(d.blockers.map(_.kind), List(DeleteBlocker.Kind.Event, DeleteBlocker.Kind.Job))
     assert(h.library.sources.delete(DelCk, Source.DeleteRequest(apply = Source.DeleteRequest.Apply(true))).isLeft)
     assert(SourceFixtures.load(ds, DelCk).isDefined)
@@ -375,7 +383,7 @@ class SourceDeleteSuite extends DbSuite:
     val theUid = uid(Del)
     val d = h.library.sources
       .delete(DelCk, Source.DeleteRequest(apply = Source.DeleteRequest.Apply(true)))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assert(d.applied.value && d.filesFailed.isEmpty, d.toString)
     assertEquals(d.calibreId, Some("1693"), "Calibre's id is reported, never touched")
 
@@ -447,7 +455,7 @@ class SourceDeleteSuite extends DbSuite:
     connect(ds)(sql"UPDATE sources SET sha256 = $Sha WHERE citekey = $Twin".update.run(): Unit)
     val d = h.library.sources
       .delete(DelCk, Source.DeleteRequest(apply = Source.DeleteRequest.Apply(true)))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assert(!d.files.map(_.value).contains(spool.resolve(s"$Sha.pdf").toString), d.files.toString)
     assert(Files.exists(spool.resolve(s"$Sha.pdf")))
 

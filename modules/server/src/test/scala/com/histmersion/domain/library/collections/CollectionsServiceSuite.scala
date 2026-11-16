@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.collections
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -164,7 +164,7 @@ class CollectionsServiceSuite extends munit.FunSuite:
         Some(CollectionsService.Limit(1)),
         unlinked = CollectionsService.SearchUnlinked(true)
       )
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals((r.entries.map(_.id), r.total), (List("3"), 2))
     assertEquals(
       service(Shelf(writes = true))
@@ -184,7 +184,7 @@ class CollectionsServiceSuite extends munit.FunSuite:
     val lib = Library()
     val p = service(shelf, lib)
       .push(Caller.Local, CollectionsService.CollectionName("calibre"), CollectionPushRequest(Citekey("zz_new")))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals((p.id, p.title), ("9", "Title of zz_new"))
     assertEquals(shelf.written.toList, List("add zz_new Title of zz_new pdf 3"))
     assertEquals(lib.pushedIds.toList, List("zz_new" -> "9"))
@@ -193,7 +193,10 @@ class CollectionsServiceSuite extends munit.FunSuite:
       CollectionsService.CollectionName("calibre"),
       CollectionPushRequest(Citekey("zz_none"))
     )
-    assert(none.left.exists(_.message.sentence.endsWith("to a directory holding <citekey>/paper.pdf")), none)
+    assert(
+      none.left.exists(_.problems.sentences.mkString("; ").endsWith("to a directory holding <citekey>/paper.pdf")),
+      none
+    )
 
   test("update-all is given every linked source, in citekey order; the audit counts the linked entries"):
     val shelf = Shelf(writes = true)
@@ -203,17 +206,19 @@ class CollectionsServiceSuite extends munit.FunSuite:
         CollectionsService.CollectionName("calibre"),
         apply = CollectionsService.UpdateAllApply(false)
       )
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(shelf.written.toList, List("updateAll 99:zz_lost,2:zz_two false"))
     assertEquals(u.rows.map(_.state).distinct, List("up-to-date"))
     val a =
-      service(shelf).audit(CollectionsService.CollectionName("calibre")).fold(e => fail(e.message.sentence), identity)
+      service(shelf)
+        .audit(CollectionsService.CollectionName("calibre"))
+        .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals((a.checked, a.findings.map(f => (f.id, f.codes, f.fix))), (2, List(("99", List("Missing"), None))))
 
   test("gaps count only a source with an original that is not in Calibre already"):
     val g = service(Shelf(writes = true))
       .gaps(CollectionsService.CollectionName("calibre"), None)
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(
       g.gaps.map(r => (r.citekey, r.original, r.counted)),
       List(("zz_a", "stored", true), ("zz_b", "none", false), ("zz_c", "unknown", true), ("zz_d", "stored", false))
@@ -240,11 +245,11 @@ class CollectionsServiceSuite extends munit.FunSuite:
       other
         .audit(CollectionsService.CollectionName("shelf"))
         .left
-        .exists(_.message.sentence.contains("links sources to Calibre only"))
+        .exists(_.problems.sentences.mkString("; ").contains("links sources to Calibre only"))
     )
     val ro = service(Shelf(writes = false))
       .push(Caller.Local, CollectionsService.CollectionName("calibre"), CollectionPushRequest(Citekey("zz_new")))
-    assertEquals(ro.left.map(_.message).left.map(_.sentence), Left("write-back is off"))
+    assertEquals(ro.left.map(_.problems.head).left.map(_.sentence), Left("write-back is off"))
     assertEquals(
       service(Shelf(writes = false)).collection(CollectionsService.CollectionName("calibre")).map(_.capabilities),
       Right(List("read"))

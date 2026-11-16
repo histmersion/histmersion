@@ -1,5 +1,6 @@
 package com.histmersion
 package util.jobs
+import com.histmersion.util.jobs.Job
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
 
@@ -25,7 +26,10 @@ trait JobControlService:
 
 object JobControlService:
   private def notFound(id: Job.Id) =
-    Api.Error(Problem.Unclassified(Legacy.Text(s"No job '$id'")), Some(Api.Error.Code(Write.CodeNotFound)))
+    Api.Error(
+      Problem.NotFound.Entity(Problem.TypeName.of(Job.Id), Problem.Raw(s"$id")),
+      Some(Api.Error.Code(Write.CodeNotFound))
+    )
   private def conflict(why: String) =
     Api.Error(Problem.Unclassified(Legacy.Text(why)), Some(Api.Error.Code(JobActions.CodeConflict)))
 

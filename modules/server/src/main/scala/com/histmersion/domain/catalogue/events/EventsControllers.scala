@@ -140,7 +140,10 @@ final class EventsControllers(
   private def now(id: Event.Id): Event.Id = current(AliasKinds.EventRecords, id)
 
   def get(id: Event.Id): Either[Api.Error, EventEntry] =
-    events.get(now(id)).map(card).toRight(notFound(Problem.Unclassified(Legacy.Text(s"No event '$id'"))))
+    events
+      .get(now(id))
+      .map(card)
+      .toRight(notFound(Problem.NotFound.Entity(Problem.TypeName.of(Event.Id), Problem.Raw(s"$id"))))
 
   /** A put to an old id replaces the event it was renamed to, never creates a second one under the old id. */
   def put(caller: Caller, id: Event.Id, in: EventPut): Either[Api.Error, EventEntry] =
@@ -166,7 +169,7 @@ final class EventsControllers(
         Right(
           EventDeleted(com.histmersion.api.catalogue.Event.Id(to.value), EventDeleted.Deleted(true))
         )
-      else Left(notFound(Problem.Unclassified(Legacy.Text(s"No event '$id'"))))
+      else Left(notFound(Problem.NotFound.Entity(Problem.TypeName.of(Event.Id), Problem.Raw(s"$id"))))
 
   /** `POST /api/events/{id}/rename` — a new id (`to` checks the one asked for against the current one); the old one
     * keeps resolving. Answers the event's id before and after.

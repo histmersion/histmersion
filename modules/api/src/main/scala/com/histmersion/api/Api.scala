@@ -4,7 +4,9 @@ import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.Cursor
 import hearth.kindlings.jsoniterjson.Json
 
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.{Problem, Problems}
+import com.histmersion.util.nonempty.NonEmptyVector
+import com.histmersion.api.problem.Answer
 import com.histmersion.util.problem.Text.sentence
 import sttp.tapir.*
 import com.histmersion.api.json.TapirJson.*
@@ -87,7 +89,7 @@ import com.histmersion.api.media.{
   SourceCoverParams
 }
 import com.histmersion.api.research.{Backlink, Coverage}
-import com.histmersion.api.settings.{ConfigEditApi, ReloadReport}
+import com.histmersion.api.settings.{ConfigEdit, ConfigEditApi, ReloadReport}
 import com.histmersion.api.views.{AutopilotApi, EventDetail, PlaceDetail, ResolvedId}
 import com.histmersion.api.catalogue.EventGeo
 import com.histmersion.api.catalogue.Gazetteer
@@ -217,10 +219,7 @@ object Api:
 
     def write(v: FindingsQuery): (Filter, Option[String]) = (v.filter, v.region.map(_.value))
 
-  private lazy val base = endpoint.in("api").errorOut(jsonBody[Error])
-
-  /** A `def`, not a `val`: endpoints defined above `writeErrors` use it too. */
-  private def writeBase = endpoint.in("api").errorOut(writeErrors)
+  private lazy val base = endpoint.in("api").errorOut(problemOut)
 
   /** The parameter names are fixed: saved links, the web UI and the CLI rely on them. */
   lazy val filterQuery: EndpointInput[Filter] =
@@ -361,8 +360,7 @@ object Api:
     (base.get
       .in("sources" / path[String]("citekey"))
       .in(query[Boolean]("body").default(true))
-      .out(jsonBody[Source.WithFindings])
-      .errorOut(statusCode(StatusCode.NotFound)))
+      .out(jsonBody[Source.WithFindings]))
       .mapIn[(com.histmersion.api.library.Citekey, SourceViewQuery.FullText)]((refactorDecoded109: (String, Boolean)) =>
         (
           com.histmersion.api.library.Citekey((refactorDecoded109)._1),
@@ -375,8 +373,7 @@ object Api:
   lazy val sourceArticles: PublicEndpoint[com.histmersion.api.library.Citekey, Error, List[Backlink], Any] =
     (base.get
       .in("sources" / path[String]("citekey") / "articles")
-      .out(jsonBody[List[Backlink]])
-      .errorOut(statusCode(StatusCode.NotFound)))
+      .out(jsonBody[List[Backlink]]))
       .mapIn[com.histmersion.api.library.Citekey]((refactorDecoded4: String) =>
         com.histmersion.api.library.Citekey(refactorDecoded4)
       )((refactorEncoded4: com.histmersion.api.library.Citekey) => (refactorEncoded4).value)
@@ -430,8 +427,7 @@ object Api:
           v.chars.map(_.value)
         )
       )
-      .errorOut(statusCode(StatusCode.NotFound))
-      .errorOut(jsonBody[Error])
+      .errorOut(problemOut)
       .out(stringBody))
       .mapOut[_root_.com.histmersion.api.library.Source.View]((refactorDecoded: _root_.java.lang.String) =>
         _root_.com.histmersion.api.library.Source.View(refactorDecoded)
@@ -475,7 +471,7 @@ object Api:
           context.map(PassagesQuery.Context(_))
         )
       }(v => (v.citekey.value, v.q.value, v.regex.value, v.limit.map(_.value), v.context.map(_.value)))
-      .errorOut(writeErrors)
+      .errorOut(problemOut)
       .out(jsonBody[PassageResult])
 
   lazy val findings: PublicEndpoint[FindingsQuery, Error, List[GeoHit], Any] =
@@ -637,10 +633,10 @@ object Api:
       )
 
   lazy val seed: PublicEndpoint[SeedRequest, Error, SeedResult, Any] =
-    writeBase.post.in("seed").in(jsonBody[SeedRequest]).out(jsonBody[SeedResult])
+    base.post.in("seed").in(jsonBody[SeedRequest]).out(jsonBody[SeedResult])
 
   lazy val reindex: PublicEndpoint[(Option[Reindex.Scope], Option[Reindex.Limit]), Error, ReindexResult, Any] =
-    (writeBase.post
+    (base.post
       .in("reindex")
       .in(query[Option[String]]("after"))
       .in(query[Option[Int]]("limit"))
@@ -681,20 +677,6 @@ object Api:
         )
       )
 
-  private[api] def writeErrors =
-    oneOf[Error](
-      oneOfVariantValueMatcher(StatusCode.NotFound, jsonBody[Error])(
-        (Error.hasCode(Error.Code(Write.CodeNotFound))).andThen(refactorResult => ((refactorResult) == (true)))
-      ),
-      oneOfVariantValueMatcher(StatusCode.ServiceUnavailable, jsonBody[Error])(
-        (Error.hasCode(Error.Code(Backup.CodeMaintenance))).andThen(refactorResult2 => ((refactorResult2) == (true)))
-      ),
-      oneOfVariantValueMatcher(StatusCode.PreconditionFailed, jsonBody[Error])(
-        (Error.hasCode(Error.Code(Write.CodePrecondition))).andThen(refactorResult3 => ((refactorResult3) == (true)))
-      ),
-      oneOfDefaultVariant(statusCode(StatusCode.BadRequest).and(jsonBody[Error]))
-    )
-
   private def strictQuery = query[Boolean]("strict")
     .default(false)
     .description("refuse the write when its Markdown has a formatting error (default: report only)")
@@ -705,7 +687,7 @@ object Api:
       .in("api" / "sources" / path[String]("citekey"))
       .in(jsonBody[Source.Put])
       .in(strictQuery)
-      .errorOut(writeErrors)
+      .errorOut(problemOut)
       .out(jsonBody[Source.WithFindings]))
       .mapIn[(com.histmersion.api.library.Citekey, Source.Put, Overwrite)](
         (refactorDecoded10: (String, Source.Put, Boolean)) =>
@@ -724,7 +706,7 @@ object Api:
       .in("api" / "sources" / path[String]("citekey"))
       .in(jsonBody[Source.Patch])
       .in(strictQuery)
-      .errorOut(writeErrors)
+      .errorOut(problemOut)
       .out(jsonBody[Source.WithFindings]))
       .mapIn[(com.histmersion.api.library.Citekey, Source.Patch, Apply)](
         (refactorDecoded117: (String, Source.Patch, Boolean)) =>
@@ -740,7 +722,7 @@ object Api:
   lazy val lintSource: PublicEndpoint[com.histmersion.api.library.Citekey, Error, FormatReport, Any] =
     (endpoint.get
       .in("api" / "sources" / path[String]("citekey") / "lint")
-      .errorOut(writeErrors)
+      .errorOut(problemOut)
       .out(jsonBody[FormatReport]))
       .mapIn[com.histmersion.api.library.Citekey]((refactorDecoded118: String) =>
         com.histmersion.api.library.Citekey(refactorDecoded118)
@@ -749,7 +731,7 @@ object Api:
   lazy val fixSourceFormat: PublicEndpoint[com.histmersion.api.library.Citekey, Error, FormatReport, Any] =
     (endpoint.post
       .in("api" / "sources" / path[String]("citekey") / "lint" / "fix")
-      .errorOut(writeErrors)
+      .errorOut(problemOut)
       .out(jsonBody[FormatReport]))
       .mapIn[com.histmersion.api.library.Citekey]((refactorDecoded13: String) =>
         com.histmersion.api.library.Citekey(refactorDecoded13)
@@ -757,7 +739,7 @@ object Api:
 
   lazy val renameSource
       : PublicEndpoint[(com.histmersion.api.library.Citekey, Rename.Request), Error, Source.Renamed, Any] =
-    (writeBase.post
+    (base.post
       .in("sources" / path[String]("citekey") / "rename")
       .in(jsonBody[Rename.Request])
       .out(jsonBody[Source.Renamed]))
@@ -769,7 +751,7 @@ object Api:
 
   lazy val deleteSource
       : PublicEndpoint[(com.histmersion.api.library.Citekey, Source.DeleteRequest), Error, Source.Deletion, Any] =
-    (writeBase.post
+    (base.post
       .in("sources" / path[String]("citekey") / "delete")
       .in(jsonBody[Source.DeleteRequest])
       .out(jsonBody[Source.Deletion]))
@@ -784,12 +766,12 @@ object Api:
     base.get.in("source-aliases").out(jsonBody[List[Source.Alias]])
 
   lazy val importNote: PublicEndpoint[NoteImport, Error, SeedResult, Any] =
-    writeBase.post.in("sources" / "import").in(jsonBody[NoteImport]).out(jsonBody[SeedResult])
+    base.post.in("sources" / "import").in(jsonBody[NoteImport]).out(jsonBody[SeedResult])
 
   lazy val exportSource: PublicEndpoint[com.histmersion.api.library.Citekey, Error, Source.Export, Any] =
     (endpoint.get
       .in("api" / "sources" / path[String]("citekey") / "export")
-      .errorOut(writeErrors)
+      .errorOut(problemOut)
       .out(stringBody))
       .mapIn[com.histmersion.api.library.Citekey]((refactorDecoded16: String) =>
         com.histmersion.api.library.Citekey(refactorDecoded16)
@@ -809,20 +791,20 @@ object Api:
       )
 
   lazy val resolveEdges: PublicEndpoint[Unit, Error, EdgesResolved, Any] =
-    writeBase.post.in("edges" / "resolve").out(jsonBody[EdgesResolved])
+    base.post.in("edges" / "resolve").out(jsonBody[EdgesResolved])
 
   lazy val configReload: PublicEndpoint[Unit, Error, ReloadReport, Any] =
-    writeBase.post.in("config" / "reload").out(jsonBody[ReloadReport])
+    base.post.in("config" / "reload").out(jsonBody[ReloadReport])
 
   lazy val backup: PublicEndpoint[Unit, Error, Backup.Status, Any] =
-    writeBase.post.in("backup").out(jsonBody[Backup.Status])
+    base.post.in("backup").out(jsonBody[Backup.Status])
 
   /** A job, not a request: Postgres cannot run `VACUUM` inside a transaction. */
   lazy val maintenanceVacuum: PublicEndpoint[Vacuum.Request, Error, JobInfo, Any] =
-    writeBase.post.in("maintenance" / "vacuum").in(jsonBody[Vacuum.Request]).out(jsonBody[JobInfo])
+    base.post.in("maintenance" / "vacuum").in(jsonBody[Vacuum.Request]).out(jsonBody[JobInfo])
 
   lazy val backupStatus: PublicEndpoint[Unit, Error, Backup.Status, Any] =
-    endpoint.get.in("api" / "backup" / "status").errorOut(writeErrors).out(jsonBody[Backup.Status])
+    endpoint.get.in("api" / "backup" / "status").errorOut(problemOut).out(jsonBody[Backup.Status])
 
   lazy val backups: PublicEndpoint[Unit, Error, List[Backup.Info], Any] =
     base.get.in("backups").out(jsonBody[List[Backup.Info]])
@@ -830,26 +812,26 @@ object Api:
   lazy val downloadBackup: PublicEndpoint[Backup.Name, Error, TapirFile, Any] =
     (endpoint.get
       .in("api" / "backups" / path[String]("file"))
-      .errorOut(writeErrors)
+      .errorOut(problemOut)
       .out(fileBody))
       .mapIn[Backup.Name]((refactorDecoded: String) => Backup.Name(refactorDecoded))((refactorEncoded: Backup.Name) =>
         (refactorEncoded).value
       )
 
   lazy val restore: PublicEndpoint[RestoreRequest, Error, RestoreResult, Any] =
-    writeBase.post.in("restore").in(jsonBody[RestoreRequest]).out(jsonBody[RestoreResult])
+    base.post.in("restore").in(jsonBody[RestoreRequest]).out(jsonBody[RestoreResult])
 
   lazy val instance: PublicEndpoint[Unit, Error, InstanceInfo, Any] =
     base.get.in("instance").out(jsonBody[InstanceInfo])
 
   lazy val setInstance: PublicEndpoint[InstanceLabel, Error, InstanceInfo, Any] =
-    writeBase.put.in("instance").in(jsonBody[InstanceLabel]).out(jsonBody[InstanceInfo])
+    base.put.in("instance").in(jsonBody[InstanceLabel]).out(jsonBody[InstanceInfo])
 
   lazy val exportBundle: PublicEndpoint[Option[Bundle.Name], Error, (TapirFile, FileName), Any] =
     (endpoint.get
       .in("api" / "bundle")
       .in(query[Option[String]]("since"))
-      .errorOut(writeErrors)
+      .errorOut(problemOut)
       .out(fileBody)
       .out(header[String](sttp.model.HeaderNames.ContentDisposition)))
       .mapIn[Option[Bundle.Name]]((refactorDecoded: Option[String]) =>
@@ -860,11 +842,11 @@ object Api:
       )((refactorEncoded: (TapirFile, FileName)) => (refactorEncoded._1, (refactorEncoded._2).value))
 
   lazy val verifyBundle: PublicEndpoint[TapirFile, Error, Bundle.VerifyResult, Any] =
-    writeBase.post.in("bundle" / "verify").in(fileBody).out(jsonBody[Bundle.VerifyResult])
+    base.post.in("bundle" / "verify").in(fileBody).out(jsonBody[Bundle.VerifyResult])
 
   /** Not an MCP tool: its input is a file upload, which an MCP call cannot carry. */
   lazy val importBundle: PublicEndpoint[(Apply, TapirFile), Error, Bundle.ImportResult, Any] =
-    (writeBase.post
+    (base.post
       .in("bundle" / "import")
       .in(query[Boolean]("dryRun").default(false))
       .in(fileBody)
@@ -877,19 +859,19 @@ object Api:
     * set, and a request carries one body.
     */
   lazy val uploadBundle: PublicEndpoint[TapirFile, Error, Bundle.Upload, Any] =
-    writeBase.post.in("bundle" / "upload").in(fileBody).out(jsonBody[Bundle.Upload])
+    base.post.in("bundle" / "upload").in(fileBody).out(jsonBody[Bundle.Upload])
 
   lazy val mergePlan: PublicEndpoint[MergePlan.Request, Error, MergePlan, Any] =
-    writeBase.post.in("merge" / "plan").in(jsonBody[MergePlan.Request]).out(jsonBody[MergePlan])
+    base.post.in("merge" / "plan").in(jsonBody[MergePlan.Request]).out(jsonBody[MergePlan])
 
   lazy val mergeImport: PublicEndpoint[MergeImportRequest, Error, Bundle.ImportResult, Any] =
-    writeBase.post.in("merge" / "import").in(jsonBody[MergeImportRequest]).out(jsonBody[Bundle.ImportResult])
+    base.post.in("merge" / "import").in(jsonBody[MergeImportRequest]).out(jsonBody[Bundle.ImportResult])
 
   lazy val mergeApply: PublicEndpoint[MergeApplyRequest, Error, MergeApplyJob, Any] =
-    writeBase.post.in("merge" / "apply").in(jsonBody[MergeApplyRequest]).out(jsonBody[MergeApplyJob])
+    base.post.in("merge" / "apply").in(jsonBody[MergeApplyRequest]).out(jsonBody[MergeApplyJob])
 
   lazy val mergeApplyStatus: PublicEndpoint[Merge.Id, Error, MergeApplyJob, Any] =
-    (writeBase.get
+    (base.get
       .in("merge" / "apply" / path[String]("job"))
       .out(jsonBody[MergeApplyJob]))
       .mapIn[Merge.Id]((refactorDecoded23: String) => Merge.Id(refactorDecoded23))((refactorEncoded23: Merge.Id) =>
@@ -897,7 +879,7 @@ object Api:
       )
 
   lazy val mergeSession: PublicEndpoint[Merge.Id, Error, MergeSession, Any] =
-    (writeBase.get
+    (base.get
       .in("merge" / "sessions" / path[String]("bundle"))
       .out(jsonBody[MergeSession]))
       .mapIn[Merge.Id]((refactorDecoded130: String) => Merge.Id(refactorDecoded130))((refactorEncoded130: Merge.Id) =>
@@ -905,7 +887,7 @@ object Api:
       )
 
   lazy val putMergeSession: PublicEndpoint[(Merge.Id, MergeResolutions), Error, MergeSession, Any] =
-    (writeBase.put
+    (base.put
       .in("merge" / "sessions" / path[String]("bundle"))
       .in(jsonBody[MergeResolutions])
       .out(jsonBody[MergeSession]))
@@ -916,7 +898,7 @@ object Api:
       )
 
   lazy val parseResolutions: PublicEndpoint[Merge.Id, Error, MergeResolutions, Any] =
-    (writeBase.post
+    (base.post
       .in("merge" / "resolutions")
       .in(stringBody)
       .out(jsonBody[MergeResolutions]))
@@ -937,7 +919,7 @@ object Api:
 
   lazy val mergeLedger
       : PublicEndpoint[(Option[Merge.Id], Option[Merge.Entity], Option[Merge.Limit]), Error, MergeLedger, Any] =
-    (writeBase.get
+    (base.get
       .in("merges" / "ledger")
       .in(query[Option[String]]("uid"))
       .in(query[Option[String]]("merge"))
@@ -959,7 +941,7 @@ object Api:
       )
 
   lazy val mergeDetail: PublicEndpoint[Merge.Id, Error, MergeDetail, Any] =
-    (writeBase.get
+    (base.get
       .in("merges" / path[String]("id"))
       .out(jsonBody[MergeDetail]))
       .mapIn[Merge.Id]((refactorDecoded29: String) => Merge.Id(refactorDecoded29))((refactorEncoded29: Merge.Id) =>
@@ -989,7 +971,7 @@ object Api:
       .out(jsonBody[Article.List])
 
   lazy val renameArticle: PublicEndpoint[(ReviewGoal.Slug, LabelRename), Error, LabelRenamed, Any] =
-    (writeBase.post
+    (base.post
       .in("articles" / path[String]("slug") / "rename")
       .in(jsonBody[LabelRename])
       .out(jsonBody[LabelRenamed]))
@@ -1007,7 +989,7 @@ object Api:
           .default(false)
           .description("leave out the formatting lint and the coverage (a hover card's read)")
       )
-      .errorOut(writeErrors)
+      .errorOut(problemOut)
       .out(jsonBody[Article.View]))
       .mapIn[(ReviewGoal.Slug, Article.FullText)]((refactorDecoded137: (String, Boolean)) =>
         (ReviewGoal.Slug((refactorDecoded137)._1), Article.FullText((refactorDecoded137)._2))
@@ -1020,7 +1002,7 @@ object Api:
       .in("api" / "articles" / path[String]("slug"))
       .in(jsonBody[Article.Put])
       .in(strictQuery)
-      .errorOut(writeErrors)
+      .errorOut(problemOut)
       .out(jsonBody[Article.View]))
       .mapIn[(ReviewGoal.Slug, Article.Put, Overwrite)]((refactorDecoded138: (String, Article.Put, Boolean)) =>
         (ReviewGoal.Slug((refactorDecoded138)._1), (refactorDecoded138)._2, Overwrite((refactorDecoded138)._3))
@@ -1033,7 +1015,7 @@ object Api:
       .in("api" / "articles" / path[String]("slug"))
       .in(jsonBody[Article.Patch])
       .in(strictQuery)
-      .errorOut(writeErrors)
+      .errorOut(problemOut)
       .out(jsonBody[Article.View]))
       .mapIn[(ReviewGoal.Slug, Article.Patch, Apply)]((refactorDecoded33: (String, Article.Patch, Boolean)) =>
         (ReviewGoal.Slug((refactorDecoded33)._1), (refactorDecoded33)._2, Apply((refactorDecoded33)._3))
@@ -1044,7 +1026,7 @@ object Api:
   lazy val lintArticle: PublicEndpoint[ReviewGoal.Slug, Error, FormatReport, Any] =
     (endpoint.get
       .in("api" / "articles" / path[String]("slug") / "lint")
-      .errorOut(writeErrors)
+      .errorOut(problemOut)
       .out(jsonBody[FormatReport]))
       .mapIn[ReviewGoal.Slug]((refactorDecoded140: String) => ReviewGoal.Slug(refactorDecoded140))(
         (refactorEncoded140: ReviewGoal.Slug) => (refactorEncoded140).value
@@ -1053,7 +1035,7 @@ object Api:
   lazy val fixArticleFormat: PublicEndpoint[ReviewGoal.Slug, Error, FormatReport, Any] =
     (endpoint.post
       .in("api" / "articles" / path[String]("slug") / "lint" / "fix")
-      .errorOut(writeErrors)
+      .errorOut(problemOut)
       .out(jsonBody[FormatReport]))
       .mapIn[ReviewGoal.Slug]((refactorDecoded35: String) => ReviewGoal.Slug(refactorDecoded35))(
         (refactorEncoded35: ReviewGoal.Slug) => (refactorEncoded35).value
@@ -1068,7 +1050,7 @@ object Api:
     (endpoint.post
       .in("api" / "articles" / path[String]("slug") / "check")
       .in(jsonBody[Article.Edits.ArticleCheckRequest])
-      .errorOut(writeErrors)
+      .errorOut(problemOut)
       .out(jsonBody[Article.Edits.ArticleCheck]))
       .mapIn[(ReviewGoal.Slug, Article.Edits.ArticleCheckRequest)](
         (refactorDecoded142: (String, Article.Edits.ArticleCheckRequest)) =>
@@ -1080,7 +1062,7 @@ object Api:
   lazy val articleCoverage: PublicEndpoint[ReviewGoal.Slug, Error, Coverage, Any] =
     (endpoint.get
       .in("api" / "articles" / path[String]("slug") / "coverage")
-      .errorOut(writeErrors)
+      .errorOut(problemOut)
       .out(jsonBody[Coverage]))
       .mapIn[ReviewGoal.Slug]((refactorDecoded37: String) => ReviewGoal.Slug(refactorDecoded37))(
         (refactorEncoded37: ReviewGoal.Slug) => (refactorEncoded37).value
@@ -1089,7 +1071,7 @@ object Api:
   lazy val articleReview: PublicEndpoint[ReviewGoal.Slug, Error, Article.ReviewView, Any] =
     (endpoint.get
       .in("api" / "articles" / path[String]("slug") / "review")
-      .errorOut(writeErrors)
+      .errorOut(problemOut)
       .out(jsonBody[Article.ReviewView]))
       .mapIn[ReviewGoal.Slug]((refactorDecoded38: String) => ReviewGoal.Slug(refactorDecoded38))(
         (refactorEncoded38: ReviewGoal.Slug) => (refactorEncoded38).value
@@ -1098,7 +1080,7 @@ object Api:
   lazy val deleteArticle: PublicEndpoint[ReviewGoal.Slug, Error, Article.Deleted, Any] =
     (endpoint.delete
       .in("api" / "articles" / path[String]("slug"))
-      .errorOut(writeErrors)
+      .errorOut(problemOut)
       .out(jsonBody[Article.Deleted]))
       .mapIn[ReviewGoal.Slug]((refactorDecoded145: String) => ReviewGoal.Slug(refactorDecoded145))(
         (refactorEncoded145: ReviewGoal.Slug) => (refactorEncoded145).value
@@ -1107,7 +1089,7 @@ object Api:
   lazy val exportArticle: PublicEndpoint[ReviewGoal.Slug, Error, Article.Export, Any] =
     (endpoint.get
       .in("api" / "articles" / path[String]("slug") / "export")
-      .errorOut(writeErrors)
+      .errorOut(problemOut)
       .out(stringBody))
       .mapIn[ReviewGoal.Slug]((refactorDecoded146: String) => ReviewGoal.Slug(refactorDecoded146))(
         (refactorEncoded146: ReviewGoal.Slug) => (refactorEncoded146).value
@@ -1400,8 +1382,7 @@ object Api:
     (base.get
       .in("places" / path[String]("id") / "children")
       .in(query[Option[Long]]("asOf"))
-      .out(jsonBody[List[Place.Summary]])
-      .errorOut(statusCode(StatusCode.NotFound)))
+      .out(jsonBody[List[Place.Summary]]))
       .mapIn[(Place.Id, Option[AggregateQuery.AsOf])]((refactorDecoded45: (String, Option[Long])) =>
         (
           Place.Id((refactorDecoded45)._1),
@@ -1417,8 +1398,7 @@ object Api:
       .in("places" / path[String]("id") / "tree")
       .in(query[Option[Long]]("asOf"))
       .in(query[Option[Int]]("depth"))
-      .out(jsonBody[List[Place.TreeRow]])
-      .errorOut(statusCode(StatusCode.NotFound)))
+      .out(jsonBody[List[Place.TreeRow]]))
       .mapIn[(Place.Id, Option[AggregateQuery.AsOf], Option[Place.Depth])](
         (refactorDecoded152: (String, Option[Long], Option[Int])) =>
           (
@@ -1440,8 +1420,7 @@ object Api:
       .in("places" / path[String]("id"))
       .in(query[Option[Long]]("asOf"))
       .in(query[Option[Boolean]]("counts"))
-      .out(jsonBody[PlaceDetail])
-      .errorOut(statusCode(StatusCode.NotFound)))
+      .out(jsonBody[PlaceDetail]))
       .mapIn[(Place.Id, Option[AggregateQuery.AsOf], Option[Place.Detail])](
         (refactorDecoded47: (String, Option[Long], Option[Boolean])) =>
           (
@@ -1461,8 +1440,7 @@ object Api:
     (base.get
       .in("places" / path[String]("id") / "footprints")
       .in(query[Option[Long]]("asOf"))
-      .out(jsonBody[List[Place.Footprint]])
-      .errorOut(statusCode(StatusCode.NotFound)))
+      .out(jsonBody[List[Place.Footprint]]))
       .mapIn[(Place.Id, Option[AggregateQuery.AsOf])]((refactorDecoded154: (String, Option[Long])) =>
         (
           Place.Id((refactorDecoded154)._1),
@@ -1478,8 +1456,7 @@ object Api:
   lazy val placeLinks: PublicEndpoint[Place.Id, Error, List[Place.Link], Any] =
     (base.get
       .in("places" / path[String]("id") / "links")
-      .out(jsonBody[List[Place.Link]])
-      .errorOut(statusCode(StatusCode.NotFound)))
+      .out(jsonBody[List[Place.Link]]))
       .mapIn[Place.Id]((refactorDecoded49: String) => Place.Id(refactorDecoded49))((refactorEncoded49: Place.Id) =>
         (refactorEncoded49).value
       )
@@ -1536,14 +1513,13 @@ object Api:
   lazy val period: PublicEndpoint[Period.Id, Error, Period.Detail, Any] =
     (base.get
       .in("periods" / path[String]("id"))
-      .out(jsonBody[Period.Detail])
-      .errorOut(statusCode(StatusCode.NotFound)))
+      .out(jsonBody[Period.Detail]))
       .mapIn[Period.Id]((refactorDecoded157: String) => Period.Id(refactorDecoded157))(
         (refactorEncoded157: Period.Id) => (refactorEncoded157).value
       )
 
   lazy val seedPeriods: PublicEndpoint[Overwrite, Error, Period.ImportResult, Any] =
-    (writeBase.post
+    (base.post
       .in("periods" / "seed")
       .in(query[Boolean]("replace").default(false))
       .out(jsonBody[Period.ImportResult]))
@@ -1557,7 +1533,7 @@ object Api:
     Period.ImportResult,
     Any
   ] =
-    (writeBase.post
+    (base.post
       .in("periods" / "import")
       .in(query[List[String]]("collection"))
       .in(query[Option[String]]("dataset"))
@@ -1589,7 +1565,7 @@ object Api:
     Period.ImportResult,
     Any
   ] =
-    (writeBase.post
+    (base.post
       .in("periods" / "fetch")
       .in(query[String]("source"))
       .in(query[List[String]]("collection"))
@@ -1608,7 +1584,7 @@ object Api:
       )
 
   lazy val init: PublicEndpoint[Overwrite, Error, JobInfo, Any] =
-    (writeBase.post
+    (base.post
       .in("init")
       .in(query[Boolean]("fetch").default(false))
       .out(jsonBody[JobInfo]))
@@ -1622,7 +1598,7 @@ object Api:
     Place.ImportResult,
     Any
   ] =
-    (writeBase.post
+    (base.post
       .in("places" / "import")
       .in(query[Option[String]]("kind"))
       .in(query[Option[String]]("dataset"))
@@ -1644,10 +1620,10 @@ object Api:
       )
 
   lazy val rebuildPlaces: PublicEndpoint[Unit, Error, Place.RebuildResult, Any] =
-    writeBase.post.in("places" / "rebuild").out(jsonBody[Place.RebuildResult])
+    base.post.in("places" / "rebuild").out(jsonBody[Place.RebuildResult])
 
   lazy val fetchExternalPlaces: PublicEndpoint[(ExternalPlaces.Source, Apply), Error, Place.ImportResult, Any] =
-    (writeBase.post
+    (base.post
       .in("places" / "fetch")
       .in(query[String]("source"))
       .in(query[Boolean]("dryRun"))
@@ -1663,7 +1639,7 @@ object Api:
     base.get.in("places" / "sources").out(jsonBody[List[Gazetteer.SourceInfo]])
 
   lazy val loadPlaces: PublicEndpoint[(ExternalPlaces.Source, Apply), Error, JobInfo, Any] =
-    (writeBase.post
+    (base.post
       .in("places" / "load")
       .in(query[String]("source"))
       .in(query[Boolean]("apply").default(false))
@@ -1687,7 +1663,7 @@ object Api:
       )
 
   lazy val addPlaceName: PublicEndpoint[(Place.Id, Place.NameAdd), Error, Place.NameChanged, Any] =
-    (writeBase.post
+    (base.post
       .in("places" / path[String]("id") / "names")
       .in(jsonBody[Place.NameAdd])
       .out(jsonBody[Place.NameChanged]))
@@ -1696,7 +1672,7 @@ object Api:
       )((refactorEncoded60: (Place.Id, Place.NameAdd)) => (((refactorEncoded60)._1).value, (refactorEncoded60)._2))
 
   lazy val removePlaceName: PublicEndpoint[(Place.Id, Place.NameRemove), Error, Place.NameChanged, Any] =
-    (writeBase.post
+    (base.post
       .in("places" / path[String]("id") / "names" / "remove")
       .in(jsonBody[Place.NameRemove])
       .out(jsonBody[Place.NameChanged]))
@@ -1719,7 +1695,7 @@ object Api:
       )
 
   lazy val setPlaceOverride: PublicEndpoint[(Place.Id, Place.OverrideSet), Error, Place.OverrideChanged, Any] =
-    (writeBase.post
+    (base.post
       .in("places" / path[String]("id") / "override")
       .in(jsonBody[Place.OverrideSet])
       .out(jsonBody[Place.OverrideChanged]))
@@ -1730,7 +1706,7 @@ object Api:
       )
 
   lazy val mergePlace: PublicEndpoint[(Place.Id, Place.MergeIn), Error, Place.Gone, Any] =
-    (writeBase.post
+    (base.post
       .in("places" / path[String]("id") / "merge")
       .in(jsonBody[Place.MergeIn])
       .out(jsonBody[Place.Gone]))
@@ -1739,7 +1715,7 @@ object Api:
       )((refactorEncoded64: (Place.Id, Place.MergeIn)) => (((refactorEncoded64)._1).value, (refactorEncoded64)._2))
 
   lazy val removePlace: PublicEndpoint[(Place.Id, Place.RemoveIn), Error, Place.Gone, Any] =
-    (writeBase.post
+    (base.post
       .in("places" / path[String]("id") / "remove")
       .in(jsonBody[Place.RemoveIn])
       .out(jsonBody[Place.Gone]))
@@ -1748,10 +1724,10 @@ object Api:
       )((refactorEncoded171: (Place.Id, Place.RemoveIn)) => (((refactorEncoded171)._1).value, (refactorEncoded171)._2))
 
   lazy val addPlace: PublicEndpoint[Place.Add, Error, Place.Summary, Any] =
-    writeBase.post.in("places").in(jsonBody[Place.Add]).out(jsonBody[Place.Summary])
+    base.post.in("places").in(jsonBody[Place.Add]).out(jsonBody[Place.Summary])
 
   lazy val buildHierarchy: PublicEndpoint[Unit, Error, SpatialHierarchyResult, Any] =
-    writeBase.post.in("places" / "build-hierarchy").out(jsonBody[SpatialHierarchyResult])
+    base.post.in("places" / "build-hierarchy").out(jsonBody[SpatialHierarchyResult])
 
   final case class EventQuery(
       filter: Filter = Filter(),
@@ -1854,7 +1830,7 @@ object Api:
       .out(jsonBody[EventGeo.List])
 
   lazy val renameEvent: PublicEndpoint[(Event.Uid, LabelRename), Error, LabelRenamed, Any] =
-    (writeBase.post
+    (base.post
       .in("events" / path[String]("id") / "rename")
       .in(jsonBody[LabelRename])
       .out(jsonBody[LabelRenamed]))
@@ -1865,7 +1841,7 @@ object Api:
   lazy val getEvent: PublicEndpoint[Event.Uid, Error, EventDetail, Any] =
     (endpoint.get
       .in("api" / "events" / path[String]("id"))
-      .errorOut(writeErrors)
+      .errorOut(problemOut)
       .out(jsonBody[EventDetail]))
       .mapIn[Event.Uid]((refactorDecoded67: String) => Event.Uid(refactorDecoded67))((refactorEncoded67: Event.Uid) =>
         (refactorEncoded67).value
@@ -1875,7 +1851,7 @@ object Api:
     (endpoint.put
       .in("api" / "events" / path[String]("id"))
       .in(jsonBody[EventPut])
-      .errorOut(writeErrors)
+      .errorOut(problemOut)
       .out(jsonBody[EventDetail]))
       .mapIn[(Event.Uid, EventPut)]((refactorDecoded174: (String, EventPut)) =>
         (Event.Uid((refactorDecoded174)._1), (refactorDecoded174)._2)
@@ -1885,7 +1861,7 @@ object Api:
     (endpoint.patch
       .in("api" / "events" / path[String]("id"))
       .in(jsonBody[EventPatch])
-      .errorOut(writeErrors)
+      .errorOut(problemOut)
       .out(jsonBody[EventDetail]))
       .mapIn[(Event.Uid, EventPatch)]((refactorDecoded175: (String, EventPatch)) =>
         (Event.Uid((refactorDecoded175)._1), (refactorDecoded175)._2)
@@ -1894,7 +1870,7 @@ object Api:
   lazy val deleteEvent: PublicEndpoint[Event.Uid, Error, EventDeleted, Any] =
     (endpoint.delete
       .in("api" / "events" / path[String]("id"))
-      .errorOut(writeErrors)
+      .errorOut(problemOut)
       .out(jsonBody[EventDeleted]))
       .mapIn[Event.Uid]((refactorDecoded176: String) => Event.Uid(refactorDecoded176))(
         (refactorEncoded176: Event.Uid) => (refactorEncoded176).value
@@ -1948,7 +1924,7 @@ object Api:
   lazy val getAttestation: PublicEndpoint[Attestation.Id, Error, Attestation, Any] =
     (endpoint.get
       .in("api" / "attestations" / path[Long]("id"))
-      .errorOut(writeErrors)
+      .errorOut(problemOut)
       .out(jsonBody[Attestation]))
       .mapIn[Attestation.Id]((refactorDecoded71: Long) => Attestation.Id(refactorDecoded71))(
         (refactorEncoded71: Attestation.Id) => (refactorEncoded71).value
@@ -1958,14 +1934,14 @@ object Api:
     endpoint.post
       .in("api" / "attestations")
       .in(jsonBody[Attestation.Put])
-      .errorOut(writeErrors)
+      .errorOut(problemOut)
       .out(jsonBody[Attestation])
 
   lazy val patchAttestation: PublicEndpoint[(Attestation.Id, Attestation.Patch), Error, Attestation, Any] =
     (endpoint.patch
       .in("api" / "attestations" / path[Long]("id"))
       .in(jsonBody[Attestation.Patch])
-      .errorOut(writeErrors)
+      .errorOut(problemOut)
       .out(jsonBody[Attestation]))
       .mapIn[(Attestation.Id, Attestation.Patch)]((refactorDecoded72: (Long, Attestation.Patch)) =>
         (Attestation.Id((refactorDecoded72)._1), (refactorDecoded72)._2)
@@ -1976,7 +1952,7 @@ object Api:
   lazy val deleteAttestation: PublicEndpoint[Attestation.Id, Error, Attestation.Deleted, Any] =
     (endpoint.delete
       .in("api" / "attestations" / path[Long]("id"))
-      .errorOut(writeErrors)
+      .errorOut(problemOut)
       .out(jsonBody[Attestation.Deleted]))
       .mapIn[Attestation.Id]((refactorDecoded179: Long) => Attestation.Id(refactorDecoded179))(
         (refactorEncoded179: Attestation.Id) => (refactorEncoded179).value
@@ -2007,7 +1983,7 @@ object Api:
       .out(jsonBody[Goal.List])
 
   lazy val renameGoal: PublicEndpoint[(Goal.Uid, LabelRename), Error, LabelRenamed, Any] =
-    (writeBase.post
+    (base.post
       .in("goals" / path[String]("slug") / "rename")
       .in(jsonBody[LabelRename])
       .out(jsonBody[LabelRenamed]))
@@ -2016,7 +1992,7 @@ object Api:
       )((refactorEncoded180: (Goal.Uid, LabelRename)) => (((refactorEncoded180)._1).value, (refactorEncoded180)._2))
 
   lazy val renamePlace: PublicEndpoint[(Place.Id, LabelRename), Error, LabelRenamed, Any] =
-    (writeBase.post
+    (base.post
       .in("places" / path[String]("id") / "rename")
       .in(jsonBody[LabelRename])
       .out(jsonBody[LabelRenamed]))
@@ -2027,7 +2003,7 @@ object Api:
   lazy val getGoal: PublicEndpoint[Goal.Uid, Error, Goal, Any] =
     (endpoint.get
       .in("api" / "goals" / path[String]("slug"))
-      .errorOut(writeErrors)
+      .errorOut(problemOut)
       .out(jsonBody[Goal]))
       .mapIn[Goal.Uid]((refactorDecoded182: String) => Goal.Uid(refactorDecoded182))((refactorEncoded182: Goal.Uid) =>
         (refactorEncoded182).value
@@ -2037,7 +2013,7 @@ object Api:
     (endpoint.put
       .in("api" / "goals" / path[String]("slug"))
       .in(jsonBody[Goal.Put])
-      .errorOut(writeErrors)
+      .errorOut(problemOut)
       .out(jsonBody[Goal]))
       .mapIn[(Goal.Uid, Goal.Put)]((refactorDecoded183: (String, Goal.Put)) =>
         (Goal.Uid((refactorDecoded183)._1), (refactorDecoded183)._2)
@@ -2047,7 +2023,7 @@ object Api:
     (endpoint.patch
       .in("api" / "goals" / path[String]("slug"))
       .in(jsonBody[Goal.Patch])
-      .errorOut(writeErrors)
+      .errorOut(problemOut)
       .out(jsonBody[Goal]))
       .mapIn[(Goal.Uid, Goal.Patch)]((refactorDecoded78: (String, Goal.Patch)) =>
         (Goal.Uid((refactorDecoded78)._1), (refactorDecoded78)._2)
@@ -2056,7 +2032,7 @@ object Api:
   lazy val deleteGoal: PublicEndpoint[Goal.Uid, Error, Goal.Deleted, Any] =
     (endpoint.delete
       .in("api" / "goals" / path[String]("slug"))
-      .errorOut(writeErrors)
+      .errorOut(problemOut)
       .out(jsonBody[Goal.Deleted]))
       .mapIn[Goal.Uid]((refactorDecoded185: String) => Goal.Uid(refactorDecoded185))((refactorEncoded185: Goal.Uid) =>
         (refactorEncoded185).value
@@ -2068,7 +2044,7 @@ object Api:
   lazy val agentStateGet: PublicEndpoint[AgentState.Key, Error, AgentStateEntry, Any] =
     (endpoint.get
       .in("api" / "agent-state" / path[String]("key"))
-      .errorOut(writeErrors)
+      .errorOut(problemOut)
       .out(jsonBody[AgentStateEntry]))
       .mapIn[AgentState.Key]((refactorDecoded80: String) => AgentState.Key(refactorDecoded80))(
         (refactorEncoded80: AgentState.Key) => (refactorEncoded80).value
@@ -2078,7 +2054,7 @@ object Api:
     (endpoint.put
       .in("api" / "agent-state" / path[String]("key"))
       .in(jsonBody[AgentStatePut])
-      .errorOut(writeErrors)
+      .errorOut(problemOut)
       .out(jsonBody[AgentStateEntry]))
       .mapIn[(AgentState.Key, AgentStatePut)]((refactorDecoded187: (String, AgentStatePut)) =>
         (AgentState.Key((refactorDecoded187)._1), (refactorDecoded187)._2)
@@ -2089,22 +2065,11 @@ object Api:
   lazy val agentStateDelete: PublicEndpoint[AgentState.Key, Error, AgentStateDeleted, Any] =
     (endpoint.delete
       .in("api" / "agent-state" / path[String]("key"))
-      .errorOut(writeErrors)
+      .errorOut(problemOut)
       .out(jsonBody[AgentStateDeleted]))
       .mapIn[AgentState.Key]((refactorDecoded82: String) => AgentState.Key(refactorDecoded82))(
         (refactorEncoded82: AgentState.Key) => (refactorEncoded82).value
       )
-
-  private lazy val ingestErrors =
-    oneOf[Error](
-      oneOfVariantValueMatcher(StatusCode.Conflict, jsonBody[Error])(
-        (Error.hasCode(Error.Code(Ingest.CodeConflict))).andThen(refactorResult4 => ((refactorResult4) == (true)))
-      ),
-      oneOfVariantValueMatcher(StatusCode.NotFound, jsonBody[Error])(
-        (Error.hasCode(Error.Code(Write.CodeNotFound))).andThen(refactorResult5 => ((refactorResult5) == (true)))
-      ),
-      oneOfDefaultVariant(statusCode(StatusCode.BadRequest).and(jsonBody[Error]))
-    )
 
   /** Query parameters, not a multipart part list: tapir's netty server has no multipart request-body support
     * (`RawBodyType.MultipartBody` throws `UnsupportedOperationException`), so the document travels as the raw body.
@@ -2156,7 +2121,7 @@ object Api:
       .in("api" / "ingest")
       .in(ingestParams)
       .in(fileBody)
-      .errorOut(ingestErrors)
+      .errorOut(problemOut)
       .out(statusCode(StatusCode.Accepted))
       .out(jsonBody[Ingest.Accepted])
 
@@ -2164,7 +2129,7 @@ object Api:
     (endpoint.post
       .in("api" / "sources" / path[String]("citekey") / "reocr")
       .in(query[Boolean]("quality").default(false))
-      .errorOut(ingestErrors)
+      .errorOut(problemOut)
       .out(statusCode(StatusCode.Accepted))
       .out(jsonBody[Ingest.Accepted]))
       .mapIn[(com.histmersion.api.library.Citekey, Overwrite)]((refactorDecoded189: (String, Boolean)) =>
@@ -2176,7 +2141,7 @@ object Api:
   lazy val original: PublicEndpoint[com.histmersion.api.library.Citekey, Error, (TapirFile, FileName), Any] =
     (endpoint.get
       .in("api" / "sources" / path[String]("citekey") / "original")
-      .errorOut(ingestErrors)
+      .errorOut(problemOut)
       .out(fileBody)
       .out(header[String](sttp.model.HeaderNames.ContentDisposition)))
       .mapIn[com.histmersion.api.library.Citekey]((refactorDecoded: String) =>
@@ -2189,8 +2154,7 @@ object Api:
   lazy val job: PublicEndpoint[SpatialHierarchyResult.Job.Id, Error, JobInfo, Any] =
     (base.get
       .in("jobs" / path[String]("id"))
-      .out(jsonBody[JobInfo])
-      .errorOut(statusCode(StatusCode.NotFound)))
+      .out(jsonBody[JobInfo]))
       .mapIn[SpatialHierarchyResult.Job.Id]((refactorDecoded192: String) =>
         SpatialHierarchyResult.Job.Id(refactorDecoded192)
       )((refactorEncoded192: SpatialHierarchyResult.Job.Id) => (refactorEncoded192).value)
@@ -2198,19 +2162,7 @@ object Api:
   lazy val jobControl: PublicEndpoint[(SpatialHierarchyResult.Job.Id, JobControl.Action), Error, JobInfo, Any] =
     (endpoint.post
       .in("api" / "jobs" / path[String]("id") / path[String]("action"))
-      .errorOut(
-        oneOf[Error](
-          oneOfVariantValueMatcher(StatusCode.NotFound, jsonBody[Error])(
-            (Error.hasCode(Error.Code(Write.CodeNotFound))).andThen(refactorResult6 => ((refactorResult6) == (true)))
-          ),
-          oneOfVariantValueMatcher(StatusCode.Conflict, jsonBody[Error])(
-            (Error
-              .hasCode(Error.Code(JobActions.CodeConflict)))
-              .andThen(refactorResult9 => ((refactorResult9) == (true)))
-          ),
-          oneOfDefaultVariant(statusCode(StatusCode.BadRequest).and(jsonBody[Error]))
-        )
-      )
+      .errorOut(problemOut)
       .out(jsonBody[JobInfo]))
       .mapIn[(SpatialHierarchyResult.Job.Id, JobControl.Action)]((refactorDecoded: (String, String)) =>
         (SpatialHierarchyResult.Job.Id(refactorDecoded._1), JobControl.Action(refactorDecoded._2))
@@ -2327,7 +2279,7 @@ object Api:
     (endpoint.post
       .in("api" / "sources" / path[String]("citekey") / "assets")
       .in(jsonBody[List[AssetInput]])
-      .errorOut(ingestErrors)
+      .errorOut(problemOut)
       .out(jsonBody[AssetsStored]))
       .mapIn[(Assets.Owner, List[AssetInput])]((refactorDecoded90: (String, List[AssetInput])) =>
         (Assets.Owner((refactorDecoded90)._1), (refactorDecoded90)._2)
@@ -2338,8 +2290,7 @@ object Api:
   lazy val asset: PublicEndpoint[(Bundle.Asset.Uid, Bundle.Asset.Variant), Error, (FileBytes, ContentType), Any] =
     (endpoint.get
       .in("source" / path[String]("citekey") / "assets" / path[String]("name"))
-      .errorOut(statusCode(StatusCode.NotFound))
-      .errorOut(jsonBody[Error])
+      .errorOut(problemOut)
       .out(byteArrayBody)
       .out(header[String](sttp.model.HeaderNames.ContentType))
       .out(header(sttp.model.Header(sttp.model.HeaderNames.CacheControl, Ingest.AssetCacheControl))))
@@ -2499,8 +2450,7 @@ object Api:
   lazy val mediaShow: PublicEndpoint[Bundle.Asset.Uid, Error, MediaItem, Any] =
     (base.get
       .in("media" / path[String]("uid"))
-      .out(jsonBody[MediaItem])
-      .errorOut(statusCode(StatusCode.NotFound)))
+      .out(jsonBody[MediaItem]))
       .mapIn[Bundle.Asset.Uid]((refactorDecoded95: String) => Bundle.Asset.Uid(refactorDecoded95))(
         (refactorEncoded95: Bundle.Asset.Uid) => (refactorEncoded95).value
       )
@@ -2526,7 +2476,7 @@ object Api:
       .out(jsonBody[JobInfo])
 
   lazy val putSourceCover: PublicEndpoint[(SourceCoverParams, FileBytes), Error, MediaItem, Any] =
-    (writeBase.put
+    (base.put
       .in("media" / "sources" / path[String]("citekey") / "cover")
       .in(query[String]("provider").default(MediaProvider.Calibre))
       .in(query[String]("key"))
@@ -2557,8 +2507,7 @@ object Api:
   lazy val mediaThumb: PublicEndpoint[Bundle.Asset.Uid, Error, (FileBytes, ContentType), Any] =
     (endpoint.get
       .in("media" / path[String]("uid") / "thumb")
-      .errorOut(statusCode(StatusCode.NotFound))
-      .errorOut(jsonBody[Error])
+      .errorOut(problemOut)
       .out(byteArrayBody)
       .out(header[String](sttp.model.HeaderNames.ContentType))
       .out(header(sttp.model.Header(sttp.model.HeaderNames.CacheControl, Ingest.MediaCacheControl))))
@@ -2574,8 +2523,7 @@ object Api:
   lazy val mediaFile: PublicEndpoint[Bundle.Asset.Uid, Error, (FileBytes, ContentType), Any] =
     (endpoint.get
       .in("media" / path[String]("uid") / "file")
-      .errorOut(statusCode(StatusCode.NotFound))
-      .errorOut(jsonBody[Error])
+      .errorOut(problemOut)
       .out(byteArrayBody)
       .out(header[String](sttp.model.HeaderNames.ContentType))
       .out(header(sttp.model.Header(sttp.model.HeaderNames.CacheControl, Ingest.MediaCacheControl))))
@@ -2640,8 +2588,7 @@ object Api:
   lazy val iiifInfo: PublicEndpoint[(Bundle.Asset.Uid, Bundle.Asset.Variant), Error, Json, Any] =
     (endpoint.get
       .in("iiif" / path[String]("citekey") / path[String]("name") / "info.json")
-      .errorOut(statusCode(StatusCode.NotFound))
-      .errorOut(jsonBody[Error])
+      .errorOut(problemOut)
       .out(jsonBody[Json])
       .out(header(sttp.model.Header(sttp.model.HeaderNames.AccessControlAllowOrigin, "*"))))
       .mapIn[(Bundle.Asset.Uid, Bundle.Asset.Variant)]((refactorDecoded104: (String, String)) =>
@@ -2665,8 +2612,7 @@ object Api:
           path[String]("region") / path[String]("size") / path[String]("rotation") /
           path[String]("filename")
       )
-      .errorOut(statusCode(StatusCode.NotFound))
-      .errorOut(jsonBody[Error])
+      .errorOut(problemOut)
       .out(byteArrayBody)
       .out(header[String](sttp.model.HeaderNames.ContentType))
       .out(header(sttp.model.Header(sttp.model.HeaderNames.AccessControlAllowOrigin, "*")))
@@ -2705,15 +2651,21 @@ object Api:
         (((refactorEncoded212)._1).value, ((refactorEncoded212)._2).value)
       )
 
-  final case class Error(message: Problem, code: Option[Error.Code] = None)
+  /** A failed request: its problems, the first deciding the status ([[status]]), and the code a client places the
+    * refusal by (the citekey, the field of a patch, a collection's usage). The body is
+    * `{"problems": [...], "code": ...}`.
+    */
+  final case class Error(problems: NonEmptyVector[Problem], code: Option[Error.Code])
       derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
   object Error:
 
-    /** Tapir hands the matcher an `Any`, and under `-source:future` a constructor pattern on `Any` warns (it is not
-      * `Matchable`), so the value is checked with a type test.
-      */
+    /** A request that failed with `problems`. */
+    def apply(problems: Problems): Error = Error(problems.toNonEmpty, None)
+
+    /** A request that failed with `problems`, with the code a client places the refusal by. */
+    def apply(problems: Problems, code: Option[Code]): Error = Error(problems.toNonEmpty, code)
 
     type Code = Code.T
     object Code extends Newtype[String, Pure]
@@ -2728,7 +2680,8 @@ object Api:
 
     extension (e: Error)
       /** The server answered "not found" (an unknown citekey, id or slug). */
-      def isNotFound: Boolean = e.code.contains(Code(Write.CodeNotFound))
+      def isNotFound: Boolean =
+        NonEmptyVector.toVector(e.problems).exists(_.isNotFound) || e.code.contains(Code(Write.CodeNotFound))
 
       /** The server refused the citekey of the request. */
       def isInvalidCitekey: Boolean = e.code.contains(InvalidCitekey)
@@ -2736,8 +2689,32 @@ object Api:
       /** The field of the source the server refused a patch for, when the refusal names one. */
       def field: Option[Field] = e.code.flatMap(c => Field.values.find(_.code == c))
 
-    def hasCode(code: Code): PartialFunction[Any, Boolean] =
-      case e if e.isInstanceOf[Error] && e.asInstanceOf[Error].code.contains(code) => (true)
+      /** The status of the answer: the first problem's, by its group ([[Answer.status]]). TEMPORARY (G60 step 5, goes
+        * with the codes in step 7): a site that still gives a code answering other than 400 keeps that code's status
+        * ([[CodeStatus]]), as the six hand-written error outputs answered it.
+        */
+      def status: StatusCode = e.code.flatMap(c => CodeStatus.get(s"$c")).getOrElse(Answer.status(e.problems.head))
+
+    /** TEMPORARY (G60 step 5): the codes the six error outputs answered other than 400 by, and their statuses; and a
+      * refused settings change (`settings_refused`), whose problems are the proposed settings' (`Config.Setting`, which
+      * answers 503 for a server whose own settings are broken), answered 400 as the request's fault.
+      */
+    private val CodeStatus: Map[String, StatusCode] = Map(
+      Write.CodeNotFound -> StatusCode.NotFound,
+      Write.CodePrecondition -> StatusCode.PreconditionFailed,
+      Backup.CodeMaintenance -> StatusCode.ServiceUnavailable,
+      AgentsApi.CodeConflict -> StatusCode.Conflict,
+      ConfigEdit.CodeChanged -> StatusCode.Conflict,
+      ConfigEdit.CodeRefused -> StatusCode.BadRequest,
+      ConfigEdit.CodeUnavailable -> StatusCode.ServiceUnavailable,
+      BasemapApi.Busy -> StatusCode.Conflict
+    )
+
+  /** The error output of every endpoint: the status from the problems ([[Error.status]]), the body the [[Error]]. */
+  lazy val problemOut: EndpointOutput[Error] =
+    statusCode
+      .and(jsonBody[Error])
+      .map[Error]((answered: (StatusCode, Error)) => answered._2)((e: Error) => (e.status, e))
 
   object Index:
     type Current = Current.T

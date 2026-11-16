@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.workflows
 import com.histmersion.util.json.RawJson.*
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.{Problem, Problems}
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.domain.automation.agents.RunCtx
@@ -47,12 +47,12 @@ private[histmersion] object Pipelines:
     )
 
   /** Add `line` to the worklog; answers the line. */
-  def log(workLists: WorkListControllers, ctx: RunCtx, line: LogLine): Either[Problem, LogLine] =
+  def log(workLists: WorkListControllers, ctx: RunCtx, line: LogLine): Either[Problems, LogLine] =
     val entry = Pipelines.entry(ctx, EntryText(line.value))
     ctx.write("log line", entry.asJson)(
       workLists
         .add(WorkListControllers.ListName("log"), entry)
         .left
-        .map(e => e.message)
+        .map(e => e.problems)
         .map(_ => line)
     )(Right(line))

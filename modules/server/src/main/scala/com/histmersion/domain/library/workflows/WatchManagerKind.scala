@@ -164,7 +164,7 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
         val g = Option(raw.value.trim).filter(_.nonEmpty).orElse(m.goal.map(_.value)).getOrElse("")
         Goal.Slug
           .option(g)
-          .toRight(Api.Error(Problem.Unclassified(Legacy.Text(s"No goal '$g'"))))
+          .toRight(Api.Error(Problem.NotFound.Entity(Problem.TypeName.of(Goal.Slug), Problem.Raw(s"$g"))))
           .flatMap(work.agents.host.goal(_))
           .map(_.slug)
           .flatMap(s =>

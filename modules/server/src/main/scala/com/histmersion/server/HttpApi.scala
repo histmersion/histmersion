@@ -416,7 +416,12 @@ object HttpApi:
     Job.Id
       .either(id)
       .left
-      .map(_ => Api.Error(Problem.Unclassified(Legacy.Text(s"No job '$id'")), Some(Api.Error.Code(Write.CodeNotFound))))
+      .map(_ =>
+        Api.Error(
+          Problem.NotFound.Entity(Problem.TypeName.of(Job.Id), Problem.Raw(s"$id")),
+          Some(Api.Error.Code(Write.CodeNotFound))
+        )
+      )
 
   private def goalSlug(slug: String): Either[Api.Error, Goal.Slug] =
     refused("goal", Goal.Slug.either(slug))

@@ -306,7 +306,7 @@ object BundleService:
               resolutions,
               MergeSettingsViews.settings(cfg.merge),
               planHash,
-              () => w.backup().fold(e => Left(e.message), f => Right(f.value)),
+              () => w.backup().fold(e => Left(e.problems.head), f => Right(f.value)),
               w.carried,
               w.rules,
               w.followUps

@@ -1,7 +1,7 @@
 package com.histmersion
 package util.data.exchange
 
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -30,7 +30,7 @@ class BundleControllersSuite extends munit.FunSuite:
       BundleControllers
         .since(Some(BundleScope.Since.At("yesterday")))
         .left
-        .exists(_.message.sentence.contains("ISO-8601"))
+        .exists(_.problems.sentences.mkString("; ").contains("ISO-8601"))
     )
     assert(BundleControllers.since(Some(BundleScope.Since.At("2026-10-03"))).isLeft)
 

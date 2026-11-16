@@ -86,7 +86,10 @@ final class McpTools(
     refusedValue(what, raw, Write.CodeInvalid)
 
   private def noSuchJob(raw: String): Api.Error =
-    Api.Error(Problem.Unclassified(Legacy.Text(s"No job '$raw'")), Some(Api.Error.Code(Write.CodeNotFound)))
+    Api.Error(
+      Problem.NotFound.Entity(Problem.TypeName.of(Job.Id), Problem.Raw(s"$raw")),
+      Some(Api.Error.Code(Write.CodeNotFound))
+    )
 
   private val ping =
     tool("ping")

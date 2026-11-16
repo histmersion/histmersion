@@ -465,7 +465,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
     )
     val _ = ArticleFixtures
       .rename(work, Slug("zz_first_slug"), Slug("zz_second_slug"))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     val _ = PlaceFixtures.upsertPlaces(work, List(site("zz_kadesh", Place.Label("Kadesh"), 36.51, 34.56)), Dataset.Seed)
     val _ = PlaceFixtures.upsertPlaces(home, List(site("zz_kadesh", Place.Label("Kadesh"), 36.51, 34.56)), Dataset.Seed)
     EventFixtures.put(
@@ -505,14 +505,14 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
     assert(m.redirects.value >= 1 && m.ledgerRows.value >= 2, m.toString)
     val d = Transactor(home)
       .read(MergeRepo.detail(MergeRepo.MergeIdOrPrefix(m.id.toString.take(8))))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(d.applied.map(_.tally.eventsMerged), Some(1))
     assertEquals(d.merge.backup, Some("stub.dump"))
     val evUid = connect(home)(sql"SELECT uid FROM events WHERE id = 'kadesh_1274'".query[java.util.UUID].run().head)
     val led =
       Transactor(home)
         .read(MergeRepo.ledger(Some(MergeRepo.UidText(evUid.toString)), None, PageSize(50), TestExchange.rules))
-        .fold(e => fail(e.message.sentence), identity)
+        .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(led.entries.map(_.label), List(Some("kadesh_1274")))
     assertEquals(led.redirects.map(_.uid), List(evUid))
     assert(Transactor(home).read(MergeRepo.detail(MergeRepo.MergeIdOrPrefix("zzzz"))).isLeft)
@@ -533,7 +533,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
       EventFixtures
         .rename(ds, BEventRow.Id("zz_ev_other"), BEventRow.Id("zz_ev_a"))
         .left
-        .exists(_.message.sentence.contains("old id of 'zz_ev_b'"))
+        .exists(_.problems.sentences.mkString("; ").contains("is an old event id of 'zz_ev_b'"))
     )
     assert(EventFixtures.rename(ds, BEventRow.Id("zz_ev_b"), BEventRow.Id("zz_ev_a")).isRight)
     assertEquals(EventFixtures.renamedTo(ds, BEventRow.Id("zz_ev_a")), None)
@@ -737,7 +737,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
           com.histmersion.domain.catalogue.Place.Id("zz_pl_a")
         )
         .left
-        .exists(_.message.sentence.contains("old id of 'zz_pl_b'"))
+        .exists(_.problems.sentences.mkString("; ").contains("is an old place id of 'zz_pl_b'"))
     )
     assert(
       PlaceFixtures
@@ -747,7 +747,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
           com.histmersion.domain.catalogue.Place.Id("zz_pl_other")
         )
         .left
-        .exists(_.message.sentence.contains("already the id"))
+        .exists(_.problems.sentences.mkString("; ").contains("already exists"))
     )
     assert(
       PlaceFixtures

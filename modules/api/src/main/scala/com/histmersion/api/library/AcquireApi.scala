@@ -19,7 +19,7 @@ object AcquireApi:
   type Query = Query.T
   object Query extends Newtype[String, Pure]
 
-  private lazy val base = endpoint.in("api" / "acquire").errorOut(jsonBody[Api.Error])
+  private lazy val base = endpoint.in("api" / "acquire").errorOut(Api.problemOut)
 
   lazy val discover
       : PublicEndpoint[(Query, Option[Year], Option[Filter], Option[Limit], Boolean), Api.Error, DiscoverResult, Any] =

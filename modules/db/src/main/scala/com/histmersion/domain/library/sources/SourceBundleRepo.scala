@@ -1,9 +1,10 @@
 package com.histmersion
 package domain.library.sources
+import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.api.json.NewtypeCodecs.given
 import hearth.kindlings.jsoniterjson.Json
-import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import io.scalaland.chimney.dsl.*
 
@@ -182,9 +183,7 @@ private[sources] object SourceBundleRepo:
             referrers
           )
           .left
-          .foreach(e =>
-            throw ImportAbort(List(Problem.Unclassified(Legacy.Text(s"source $from → $to: ${e.message.sentence}"))))
-          )
+          .foreach(e => throw ImportAbort(NonEmptyVector.toVector(e.problems).toList))
         sql"DELETE FROM source_aliases WHERE alias = $from".update.run(): Unit
       }
     }
@@ -201,11 +200,7 @@ private[sources] object SourceBundleRepo:
               referrers
             )
             .left
-            .foreach(e =>
-              throw ImportAbort(
-                List(Problem.Unclassified(Legacy.Text(s"source $old → ${s.citekey}: ${e.message.sentence}")))
-              )
-            )
+            .foreach(e => throw ImportAbort(NonEmptyVector.toVector(e.problems).toList))
         }
       }
       if w.inserts(s.uid) then
@@ -361,7 +356,6 @@ private[sources] object SourceBundleRepo:
               .store(sha, ContentStore.Ext(ext.value), in)
               .left
               .toOption
-              .map(m => Problem.Unclassified(Legacy.Text(s"original $sha: ${m.sentence}")))
           )
         )
       case _ => None

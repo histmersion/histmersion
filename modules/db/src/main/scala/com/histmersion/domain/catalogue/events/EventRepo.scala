@@ -328,7 +328,12 @@ private[events] object EventRepo:
     */
   def patch(id: BEventRow.Id, p: EventPatch)(using DbCon): Either[Api.Error, Unit] =
     if !exists(id) then
-      Left(Api.Error(Problem.Unclassified(Legacy.Text(s"No event '$id'")), Some(Api.Error.Code(Write.CodeNotFound))))
+      Left(
+        Api.Error(
+          Problem.NotFound.Entity(Problem.TypeName.of(Event.Id), Problem.Raw(s"$id")),
+          Some(Api.Error.Code(Write.CodeNotFound))
+        )
+      )
     else
       p.label.foreach(v => sql"UPDATE events SET label = $v WHERE id = $id".update.run())
       p.kind.foreach(v => sql"UPDATE events SET kind = $v WHERE id = $id".update.run())
@@ -391,20 +396,24 @@ private[events] object EventRepo:
   def rename(oldId: BEventRow.Id, newId: BEventRow.Id)(using DbCon): Either[Api.Error, Unit] =
     val aliasOf = sql"SELECT event_id FROM event_aliases WHERE alias = $newId".query[BEventRow.Id].run().headOption
     if !exists(oldId) then
-      Left(Api.Error(Problem.Unclassified(Legacy.Text(s"No event '$oldId'")), Some(Api.Error.Code(Write.CodeNotFound))))
+      Left(
+        Api.Error(
+          Problem.NotFound.Entity(Problem.TypeName.of(Event.Id), Problem.Raw(s"$oldId")),
+          Some(Api.Error.Code(Write.CodeNotFound))
+        )
+      )
     else if exists(newId) then
       Left(
         Api.Error(
-          Problem.Unclassified(Legacy.Text(s"'$newId' is already the id of another event")),
+          Problem.Conflict.AlreadyExists(Problem.TypeName.of(Event.Id), Problem.Raw(s"$newId")),
           Some(Api.Error.Code(Write.CodeInvalid))
         )
       )
     else if aliasOf.exists(_ != oldId) then
       Left(
         Api.Error(
-          Problem.Unclassified(
-            Legacy.Text(s"'$newId' is an old id of '${aliasOf.get}' and still resolves to it — pick another")
-          ),
+          Problem.Conflict
+            .Aliased(Problem.TypeName.of(Event.Id), Problem.Raw(s"$newId"), Problem.Raw(s"${aliasOf.get}")),
           Some(Api.Error.Code(Write.CodeInvalid))
         )
       )

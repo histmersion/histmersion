@@ -4,7 +4,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import hearth.kindlings.optics.syntax.*
 
@@ -95,38 +95,42 @@ final class EnrichSourcePipeline(
   // ── steps ──────────────────────────────────────────────────────────────────────────────────────
 
   private def load(ck: Citekey): Either[String, Loaded] =
-    site.sources.get(ck, body = SourcesControllers.GetBody(true)).left.map(_.message.sentence).flatMap { sw =>
-      val s = sw.source
-      val body = s.ocrMarkdown.map(_.value.trim).getOrElse("")
-      if body.isEmpty then Left(s"$ck has no text — ingest or OCR it first")
-      else
-        Right(
-          Loaded(
-            citekey = Citekey.assume(s.citekey.value),
-            title = Loaded.Title(s.title.value),
-            authors = s.authors.map(a => AuthorName(a.value)),
-            year = s.year.map(y => Year(y.value.toInt)),
-            venue = s.venue.map(v => Loaded.Venue(v.value)),
-            status = s.status.wire,
-            hasSummary = Loaded.HasSummary(s.summary.exists(_.value.trim.nonEmpty)),
-            hasNotes = Loaded.HasNotes(s.notes.exists(_.value.trim.nonEmpty)),
-            hasPeriod = Loaded.HasPeriod(s.periodStart.isDefined),
-            period = for a <- s.periodStart; b <- s.periodEnd yield Period(a, b),
-            topics = s.topics.map(t => Topic(t.value)),
-            regions = s.regions.map(r => Region(r.value)),
-            existingClaims = sw.findings.map(f => Loaded.ExistingClaims(f.claim.value)),
-            updatedAt = s.updatedAt,
-            head = Loaded.Head(body.take(lib.enrich.headChars.value)),
-            windows = windows(
-              SourceBody(body),
-              WindowChars(lib.enrich.windowChars.value),
-              MaxWindows(lib.enrich.maxWindows.value)
-            ),
-            tags = s.tags.map(t => Tag(t.value)),
-            doi = s.doi.flatMap(d => Doi.option(d.value))
+    site.sources
+      .get(ck, body = SourcesControllers.GetBody(true))
+      .left
+      .map(_.problems.sentences.mkString("; "))
+      .flatMap { sw =>
+        val s = sw.source
+        val body = s.ocrMarkdown.map(_.value.trim).getOrElse("")
+        if body.isEmpty then Left(s"$ck has no text — ingest or OCR it first")
+        else
+          Right(
+            Loaded(
+              citekey = Citekey.assume(s.citekey.value),
+              title = Loaded.Title(s.title.value),
+              authors = s.authors.map(a => AuthorName(a.value)),
+              year = s.year.map(y => Year(y.value.toInt)),
+              venue = s.venue.map(v => Loaded.Venue(v.value)),
+              status = s.status.wire,
+              hasSummary = Loaded.HasSummary(s.summary.exists(_.value.trim.nonEmpty)),
+              hasNotes = Loaded.HasNotes(s.notes.exists(_.value.trim.nonEmpty)),
+              hasPeriod = Loaded.HasPeriod(s.periodStart.isDefined),
+              period = for a <- s.periodStart; b <- s.periodEnd yield Period(a, b),
+              topics = s.topics.map(t => Topic(t.value)),
+              regions = s.regions.map(r => Region(r.value)),
+              existingClaims = sw.findings.map(f => Loaded.ExistingClaims(f.claim.value)),
+              updatedAt = s.updatedAt,
+              head = Loaded.Head(body.take(lib.enrich.headChars.value)),
+              windows = windows(
+                SourceBody(body),
+                WindowChars(lib.enrich.windowChars.value),
+                MaxWindows(lib.enrich.maxWindows.value)
+              ),
+              tags = s.tags.map(t => Tag(t.value)),
+              doi = s.doi.flatMap(d => Doi.option(d.value))
+            )
           )
-        )
-    }
+      }
 
   private def meta(l: Loaded): String =
     s"citekey: ${l.citekey}\ntitle: ${l.title}\nauthors: ${l.authors.mkString("; ")}\n" +
@@ -257,7 +261,7 @@ final class EnrichSourcePipeline(
           site.sources
             .patch(ck, p2)
             .left
-            .map(_.message.sentence)
+            .map(_.problems.sentences.mkString("; "))
             .map(_ =>
               Patched(
                 Patched.FindingsAdded(p2.findings.fold(0)(_.add.size)),
@@ -266,7 +270,7 @@ final class EnrichSourcePipeline(
               )
             )
         }
-      case Left(e) => Left(e.message.sentence)
+      case Left(e) => Left(e.problems.sentences.mkString("; "))
 
   // ── upstream: metadata, refs, assess ──────────────────────────────────────────────────────────
 
@@ -393,7 +397,7 @@ final class EnrichSourcePipeline(
     Pipelines
       .log(site.workLists, ctx, Pipelines.LogLine(line))
       .left
-      .map(_.sentence)
+      .map(_.sentences.mkString("; "))
       .map(_ => Closed(Closed.Line(line), lint.map(d => Closed.Lint(d.value)), acquire.map(Closed.Acquire(_))))
 
   /** Tick acquisition item `id` off as fulfilled by `ck` — the same rule an OCR upload follows. It never fails the run:
@@ -408,4 +412,4 @@ final class EnrichSourcePipeline(
           Queue.fulfil(item, com.histmersion.api.library.Citekey(ck.value), Some(Queue.QueueItem.ClosedBy(runId.value)))
         ) match
           case Right(_) => s"ticked off acquisition item $id"
-          case Left(e)  => s"acquisition item $id NOT ticked off: ${e.message.sentence}"
+          case Left(e)  => s"acquisition item $id NOT ticked off: ${e.problems.sentences.mkString("; ")}"

@@ -5705,14 +5705,16 @@
 == GET /api/periods/zz_none
 404 {
   "code" : "not_found",
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
+  "problems" : [
+    {
+      "case" : "Unclassified",
+      "data" : {
+        "text" : "No period 'zz_none'"
+      },
+      "group" : "Unclassified",
       "text" : "No period 'zz_none'"
-    },
-    "group" : "Unclassified",
-    "text" : "No period 'zz_none'"
-  }
+    }
+  ]
 }
 == tool periods {"query":"Zzq"}
 ### 6 period(s)

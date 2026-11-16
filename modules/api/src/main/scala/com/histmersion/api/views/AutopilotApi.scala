@@ -10,29 +10,28 @@ import com.histmersion.api.Api
   * three-way mode, drain. Their errors are the managers'.
   */
 object AutopilotApi:
-  import com.histmersion.api.automation.ManagersApi.errors
 
   lazy val autopilot: PublicEndpoint[Unit, Api.Error, AutopilotStatus, Any] =
-    endpoint.get.in("api" / "agents" / "autopilot").errorOut(errors).out(jsonBody[AutopilotStatus])
+    endpoint.get.in("api" / "agents" / "autopilot").errorOut(Api.problemOut).out(jsonBody[AutopilotStatus])
 
   lazy val setAutopilot: PublicEndpoint[Autopilot.AutopilotSet, Api.Error, AutopilotStatus, Any] =
     endpoint.post
       .in("api" / "agents" / "autopilot")
-      .errorOut(errors)
+      .errorOut(Api.problemOut)
       .in(jsonBody[Autopilot.AutopilotSet])
       .out(jsonBody[AutopilotStatus])
 
   lazy val setMode: PublicEndpoint[AgentMode.ModeSet, Api.Error, AutopilotStatus, Any] =
     endpoint.post
       .in("api" / "agents" / "autopilot" / "mode")
-      .errorOut(errors)
+      .errorOut(Api.problemOut)
       .in(jsonBody[AgentMode.ModeSet])
       .out(jsonBody[AutopilotStatus])
 
   lazy val drain: PublicEndpoint[Autopilot.DrainSet, Api.Error, AutopilotStatus, Any] =
     endpoint.post
       .in("api" / "agents" / "autopilot" / "drain")
-      .errorOut(errors)
+      .errorOut(Api.problemOut)
       .in(jsonBody[Autopilot.DrainSet])
       .out(jsonBody[AutopilotStatus])
 

@@ -316,7 +316,7 @@ class IngestHttpSuite extends munit.FunSuite:
       assert(new String(upTo, "UTF-8").contains(id))
       val (_, older, _) = bytes(s"$url/api/jobs?before=$id&limit=500")
       assert(!new String(older, "UTF-8").contains(id))
-      assertEquals(get(s"$url/api/jobs?before=no-such-job")._1, 400)
+      assertEquals(get(s"$url/api/jobs?before=no-such-job")._1, 404)
 
       Files.deleteIfExists(pdf)
       b.stop()
@@ -425,14 +425,15 @@ class IngestHttpSuite extends munit.FunSuite:
       assertEquals(patch(s"$url/api/queue/items/$done", """{"status":"done"}""")._1, 200)
       val task = addItem(url, "zzfulfil a task, not a book", list = "tasks")
 
-      for (bad, why) <- List(
-          done -> "is done; this needs open",
-          task -> "is tasks; this needs acquire",
-          999999 -> "no queue item id '999999'"
+      // the wrong state of an item is a conflict (409), a missing item is not found (404)
+      for (bad, status, why) <- List(
+          (done, 409, "is done; this needs open"),
+          (task, 409, "is tasks; this needs acquire"),
+          (999999, 404, "no queue item id '999999'")
         )
       do
         val (st, body) = upload(s"$url/api/ingest?citekey=zz_fulfil_bad&force=true&acquireItem=$bad", pdf)
-        assertEquals(st, 400, body)
+        assertEquals(st, status, body)
         assert(body.contains(why), body)
       assertEquals(conv.calls, Nil, "no job ran")
 

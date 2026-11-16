@@ -1,10 +1,11 @@
 package com.histmersion
 package util.database
+import com.histmersion.util.problem.External
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.augustnagro.magnum.*
 import io.github.iltotore.iron.constraint.any.Pure
@@ -33,7 +34,16 @@ object Jsonb:
 
   /** The stored text as an `A`, or why it does not decode. */
   def decode[A: JsonValueCodec](text: JsonText): Either[Problem, A] =
-    RawJson.decode[A](text.value).left.map(e => Problem.Unclassified(Legacy.Text(e)))
+    RawJson
+      .decode[A](text.value)
+      .left
+      .map(e =>
+        Problem.Io.Corrupt(
+          Problem.Io.Format.Json,
+          Problem.Where("a stored JSON column"),
+          Problem.Io.Damage.Unreadable(External.Reported.of(e))
+        )
+      )
 
   /** What is bound into the column: compact JSON, without null fields when `dropNulls`. */
   def write[A: JsonValueCodec](a: A, dropNulls: DropNulls = DropNulls(false)): JsonText =

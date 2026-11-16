@@ -1,7 +1,7 @@
 package com.histmersion
 package server.views
 import com.histmersion.util.mcp.ChimpJson.given
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -160,7 +160,7 @@ object EventCardTools:
                 .option(raw)
                 .toRight(
                   Api.Error(
-                    Problem.Unclassified(Legacy.Text(s"No event '$raw'")),
+                    Problem.NotFound.Entity(Problem.TypeName.of(Event.Id), Problem.Raw(s"$raw")),
                     Some(Api.Error.Code(Write.CodeNotFound))
                   )
                 )
@@ -215,7 +215,7 @@ object EventCardTools:
                 .option(in.id.value)
                 .toRight(
                   Api.Error(
-                    Problem.Unclassified(Legacy.Text(s"No event '${in.id.value}'")),
+                    Problem.NotFound.Entity(Problem.TypeName.of(Event.Id), Problem.Raw(s"${in.id.value}")),
                     Some(Api.Error.Code(Write.CodeNotFound))
                   )
                 )

@@ -151,7 +151,7 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
             val code =
               if e.code.contains(CollectionsApi.Usage) then ExitCode.Usage
               else ExitCode.Refused
-            Left(Cli.Error(e.message, exitCode = code, notFound = e.isNotFound))
+            Left(Cli.Error(e.problems.head, exitCode = code, notFound = e.isNotFound))
           case _ =>
             Left(
               Cli.Error(

@@ -496,7 +496,7 @@ class CatalogueOracleSuite extends DbSuite:
           to = Some(EventImportRequest.To(-1000))
         )
       )
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     val _ = step("events import gvp", awaitJob(url, job.id))
     val imported = connect(ds)(
       sql"SELECT id FROM events WHERE catalogue IS NOT NULL ORDER BY id".query[String].run().toList

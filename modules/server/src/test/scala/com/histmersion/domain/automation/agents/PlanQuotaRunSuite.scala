@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.agents
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -201,7 +201,7 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
   private def startAndRun(a: AgentsControllers): RunInfo =
     val run = a
       .startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     a.engine.execute(runId(run.id))
     connect(ds)(AgentRepo.get(run.id)).get
 
@@ -250,7 +250,7 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
     assertEquals(a.pools.poolOf(Gpt), Some(PoolId.ChatgptPlan))
     a.pools.record(PoolId.ClaudePlan, low())
     a.setPool(PlanQuota.PoolIdText("chatgpt-plan"), PoolSet(hold = Some(PlanQuota.PoolSet.Hold(true))))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     val reset =
       Transactor(ds)
         .read(PlanQuotaRepo.readings(PoolId.ClaudePlan))
@@ -323,7 +323,7 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
     def planUsable = a.models.chains.find(_.role.value == "extractor").get.models.head.usable.value
     assert(planUsable, "no reading: unknown, usable")
     a.setPool(PlanQuota.PoolIdText("claude-plan"), PoolSet(hold = Some(PlanQuota.PoolSet.Hold(true))))
-      .fold(e => fail(e.message.sentence), st => assert(st.held.value && !st.usable.value, st))
+      .fold(e => fail(e.problems.sentences.mkString("; ")), st => assert(st.held.value && !st.usable.value, st))
     assert(!planUsable)
     assertEquals(
       a.picker.pick(Role.Extractor, None).left.toOption.collect { case PickFailure.Exhausted(_, at, r) => (at, r) },
@@ -351,7 +351,7 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
     // floors saved over config
     val st = a
       .setPool(PlanQuota.PoolIdText("claude-plan"), PoolSet(floors = Some(PlanQuota.PoolSet.Floors("five_hour=10"))))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals((st.floors, st.floorsSource), ("five_hour=10", "saved"))
     assert(planUsable, "30% left ≥ 10 + 10")
     assert(
@@ -366,7 +366,7 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
     assert(
       a.setPool(PlanQuota.PoolIdText("nobody-plan"), PoolSet(hold = Some(PlanQuota.PoolSet.Hold(true))))
         .left
-        .exists(_.message.sentence.contains("unknown pool"))
+        .exists(_.problems.sentences.mkString("; ").contains("unknown pool"))
     )
     // the ChatGPT plan refused by the provider
     Transactor(ds).transact(
@@ -424,7 +424,7 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
           budgetTokens = Some(RunRequest.BudgetTokens(1500L))
         )
       )
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     a.engine.execute(runId(run.id))
     val r = connect(ds)(AgentRepo.get(run.id)).get
     assertEquals(r.status, "paused", r.error)
@@ -432,7 +432,7 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
     assertEquals((r.costUsd, r.usage.total), (0.0, 2200L))
     // with room, it finishes on the plan for 0 USD
     a.control(runId(run.id), Agents.Action("resume"), None, Some(AgentsControllers.BudgetTokens(100000L)))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     a.engine.execute(runId(run.id))
     val done = connect(ds)(AgentRepo.get(run.id)).get
     assertEquals((done.status, done.costUsd), ("done", 0.0), done.error)

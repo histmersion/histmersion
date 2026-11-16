@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import hearth.kindlings.optics.syntax.*
 
@@ -164,7 +164,7 @@ class CandidateSearchSuite extends DbSuite:
     val day = LocalDate.of(2026, 10, 24)
     val s = search(List(oa, cr), FakeAlerts(), day)
       .sweep(Goal, dryRun = CandidateSearch.SweepDryRun(false))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals((s.found, s.added, s.again, s.unseen), (5, 2, 0, 2))
     assertEquals(s.skipped, Map("in the corpus or queued" -> 2))
     // the first read looks back acquire.candidates.lookback-days; the watermark is today's after it

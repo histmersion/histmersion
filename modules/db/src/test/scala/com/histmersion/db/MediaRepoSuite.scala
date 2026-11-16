@@ -554,7 +554,7 @@ class MediaRepoSuite extends DbSuite with Bounded:
           refresh = ImportFixtures.Refresh(false)
         )
         .left
-        .exists(_.sentence.contains("No place"))
+        .exists(_.isNotFound)
     )
     assertEquals(
       ImportFixtures

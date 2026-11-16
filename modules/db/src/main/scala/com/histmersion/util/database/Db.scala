@@ -1,7 +1,8 @@
 package com.histmersion
 package util.database
+import com.histmersion.util.problem.External
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -181,4 +182,4 @@ object Db:
       finally c.close()
     catch
       case e: Throwable =>
-        Left(Problem.Unclassified(Legacy.Text(Option(e.getMessage).getOrElse(e.getClass.getSimpleName))))
+        Left(Problem.Io.Database(Problem.Io.DbOp.Connect, External.Reported.of(e)))

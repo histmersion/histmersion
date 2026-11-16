@@ -1,7 +1,7 @@
 package com.histmersion
 package server.agents
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -146,7 +146,7 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
     assert(transact(ds)(GoalLinkRepo.link(Goal, LinkKind.Source, CkRef, None)))
 
   private def start(a: AgentsControllers, req: RunRequest): RunInfo =
-    val run = a.startRun(req).fold(e => fail(e.message.sentence), identity)
+    val run = a.startRun(req).fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     a.engine.execute(ApiIds.run(run.id))
     connect(ds)(AgentRepo.get(run.id)).get
 
@@ -414,7 +414,7 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
         ScheduleSet(com.histmersion.api.automation.Goal.Plans.ScheduleSet.Cron("not cron")),
         Now
       ).left
-        .exists(_.message.sentence.contains("five fields"))
+        .exists(_.problems.sentences.mkString("; ").contains("five fields"))
     )
     assert(
       a.setSchedule(
@@ -423,7 +423,7 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
         ScheduleSet(com.histmersion.api.automation.Goal.Plans.ScheduleSet.Cron("*/5 * * * *")),
         Now
       ).left
-        .exists(_.message.sentence.contains("min-interval"))
+        .exists(_.problems.sentences.mkString("; ").contains("min-interval"))
     )
     assert(
       a.setSchedule(
@@ -590,7 +590,7 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
     up.found = Map("zzagent q" -> List(work(ApiDoi("10.5555/zzagent.z"), ApiTitle("Z"))))
     val id =
       a.startRunAs(RunRequest(Agents.RunRequest.Pipeline("acquisition-sweep"), GoalTarget), Origin.Scheduler, None)
-        .fold(e => fail(e.message.sentence), _.id)
+        .fold(e => fail(e.problems.sentences.mkString("; ")), _.id)
     a.engine.execute(ApiIds.run(id))
     assertEquals(connect(ds)(AgentRepo.get(id)).get.status, "paused")
     def tasks = h.workListView

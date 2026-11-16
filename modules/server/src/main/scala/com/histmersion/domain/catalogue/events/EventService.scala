@@ -92,7 +92,10 @@ object EventService:
   def apply(db: Transactor, related: EventSourceFilter): EventService = Implementation(db, related)
 
   private def missing(id: Event.Id) =
-    Api.Error(Problem.Unclassified(Legacy.Text(s"No event '$id'")), Some(Api.Error.Code(Write.CodeNotFound)))
+    Api.Error(
+      Problem.NotFound.Entity(Problem.TypeName.of(Event.Id), Problem.Raw(s"$id")),
+      Some(Api.Error.Code(Write.CodeNotFound))
+    )
 
   final private class Implementation(db: Transactor, related: EventSourceFilter) extends EventService:
     def list(selection: EventSelection, limit: PageSize, offset: Offset): EventList =

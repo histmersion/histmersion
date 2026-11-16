@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.managers
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import hearth.kindlings.optics.syntax.*
 
@@ -836,7 +836,7 @@ final class ManagerSupervisor(
         .setTo(m.config.models.getOrElse(Nil).filter(o => Role.parse(o.role).exists(roles.contains)))
     agents.prepare(req, None) match
       case Left(e) =>
-        val note = s"not started: ${e.message.sentence}".take(500)
+        val note = s"not started: ${e.problems.sentences.mkString("; ")}".take(500)
         if !agents.managerStore.lastEventOf(m.id, ManagerEvent.Kind(Feed.Starved)).exists(_.text.value == note) then
           recordEvent(m.id, Some(item.id), None, Feed.Starved, note)
         None

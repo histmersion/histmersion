@@ -334,7 +334,7 @@ object CollectionsService:
           record,
           cover,
           conversion.flatMap(_.toOption),
-          conversion.flatMap(_.left.toOption.map(e => e.message)),
+          conversion.flatMap(_.left.toOption.map(e => e.problems.head)),
           conversion.flatMap(_.left.toOption.flatMap(_.code).map(code => CollectionImported.JobErrorCode(code.value)))
         )
 
@@ -421,7 +421,7 @@ object CollectionsService:
             case Right(_) => CollectionCover(CollectionCover.Line("Cover: from the Calibre library"))
             case Left(e)  =>
               CollectionCover(
-                CollectionCover.Line(s"$ck: ${e.message.sentence}"),
+                CollectionCover.Line(s"$ck: ${e.problems.sentences.mkString("; ")}"),
                 warning = CollectionCover.Warning(true)
               )
         case Right(None) =>
@@ -508,7 +508,7 @@ object CollectionsService:
           .left
           .map(e =>
             if hint.isEmpty then e
-            else e.modify(_.message).setTo(Problem.Unclassified(Legacy.Text(e.message.sentence + hint)))
+            else Api.Error(Problem.Unclassified(Legacy.Text(e.problems.sentences.mkString("; ") + hint)), e.code)
           )
         ext <- Ingest
           .dispositionExtension(Ingest.Disposition(o.disposition.value))
@@ -697,7 +697,7 @@ object CollectionsService:
               checked(r.citekey)
                 .flatMap(pushOne(c, _))
                 .fold(
-                  e => CollectionSync.Push(r.citekey, None, Some(e.message)),
+                  e => CollectionSync.Push(r.citekey, None, Some(e.problems.head)),
                   (id, _) => CollectionSync.Push(r.citekey, Some(CollectionSync.Push.Id(id.value)), None)
                 )
             }

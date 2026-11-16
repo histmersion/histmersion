@@ -60,7 +60,10 @@ final class SourcesControllers(
     sources.current(id)
 
   private def notFound(citekey: Citekey): Api.Error =
-    Api.Error(Problem.Unclassified(Legacy.Text(s"No source '$citekey'")), Some(Api.Error.Code(Write.CodeNotFound)))
+    Api.Error(
+      Problem.NotFound.Entity(Problem.TypeName.of(Citekey), Problem.Raw(s"$citekey")),
+      Some(Api.Error.Code(Write.CodeNotFound))
+    )
 
   private def absolute(md: String, citekey: Citekey): String =
     AssetLinks.toAbsolute(AssetLinks.Body(md), apiCk(citekey), AssetLinks.Url(cfg().server.publicUrl.value)).value
@@ -90,7 +93,7 @@ final class SourcesControllers(
           illustration = figures.sourceThumb(ck)
         )
       )
-      .toRight(Api.Error(Problem.Unclassified(Legacy.Text(s"No source '$citekey'"))))
+      .toRight(Api.Error(Problem.NotFound.Entity(Problem.TypeName.of(Citekey), Problem.Raw(s"$citekey"))))
 
   def citekeys: List[Citekey] = sources.citekeys
 
@@ -408,7 +411,7 @@ final class SourcesControllers(
       .flatMap(currentOf)
       .toRight(
         Api.Error(
-          Problem.Unclassified(Legacy.Text(s"No source '${q.citekey}'")),
+          Problem.NotFound.Entity(Problem.TypeName.of(Citekey), Problem.Raw(s"${q.citekey}")),
           Some(Api.Error.Code(Write.CodeNotFound))
         )
       )

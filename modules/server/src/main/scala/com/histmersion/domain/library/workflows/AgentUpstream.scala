@@ -123,7 +123,7 @@ object AgentUpstream:
   type SweepCandidatesDryRun = SweepCandidatesDryRun.T
   object SweepCandidatesDryRun extends Newtype[Boolean, Pure]
 
-  private def problem(e: Api.Error): Problem = e.message
+  private def problem(e: Api.Error): Problem = e.problems.head
 
   /** Not connected (a test, or a server built without the acquisition toolset): every call says so, and the steps that
     * need it record that they were skipped.

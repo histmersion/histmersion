@@ -83,7 +83,10 @@ final class CandidateSearch(
     goals
       .get(goal)
       .toRight(
-        Api.Error(Problem.Unclassified(Legacy.Text(s"no goal '$goal'")), Some(Api.Error.Code(Write.CodeNotFound)))
+        Api.Error(
+          Problem.NotFound.Entity(Problem.TypeName.of(Goal.Slug), Problem.Raw(s"$goal")),
+          Some(Api.Error.Code(Write.CodeNotFound))
+        )
       )
       .map { g =>
         val c = cfg

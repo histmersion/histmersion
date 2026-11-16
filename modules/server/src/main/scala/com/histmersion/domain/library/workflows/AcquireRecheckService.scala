@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.workflows
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.domain.automation.agents.AgentsControllers
 
@@ -356,7 +356,7 @@ final class AcquireRecheckService(
           case Right(job) =>
             Some(Line(s"acquire re-check: job ${j.id} (${stopReason(j)}) resumed as job ${job.id}"))
           case Left(e) =>
-            scribe.warn(s"acquire re-check: job ${j.id} could not be resumed: ${e.message.sentence}")
+            scribe.warn(s"acquire re-check: job ${j.id} could not be resumed: ${e.problems.sentences.mkString("; ")}")
             None
       }
     }
@@ -587,7 +587,7 @@ final class AcquireRecheckService(
       Queue.fulfil(f.item, apiCk(citekey), job.map(j => Queue.QueueItem.ClosedBy(j.value)))
     ) match
       case Left(e) =>
-        scribe.warn(s"acquire re-check: item #${f.item.id} could not be closed: ${e.message.sentence}")
+        scribe.warn(s"acquire re-check: item #${f.item.id} could not be closed: ${e.problems.sentences.mkString("; ")}")
         None
       case Right(_) =>
         checks.record(

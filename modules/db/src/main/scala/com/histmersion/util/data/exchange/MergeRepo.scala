@@ -90,9 +90,8 @@ object MergeRepo:
     if p.isEmpty || !p.forall(c => c.isDigit || (c >= 'a' && c <= 'f') || c == '-') then
       Left(
         Api.Error(
-          Problem.Unclassified(
-            Legacy.Text(s"'$idOrPrefix' is not a merge id (the id `merge list` prints, or its first characters)")
-          ),
+          Problem.Invalid.Unreadable
+            .here(Problem.TypeName.of(MergeIdOrPrefix), Problem.Raw.of(idOrPrefix), Vector.empty),
           Some(Api.Error.Code(Write.CodeInvalid))
         )
       )
@@ -112,7 +111,7 @@ object MergeRepo:
         case Nil     =>
           Left(
             Api.Error(
-              Problem.Unclassified(Legacy.Text(s"no merge '$idOrPrefix' (`histmersion merge list` lists them)")),
+              Problem.NotFound.Entity(Problem.TypeName.of(MergeIdOrPrefix), Problem.Raw.of(idOrPrefix)),
               Some(Api.Error.Code(Write.CodeNotFound))
             )
           )
@@ -172,7 +171,7 @@ object MergeRepo:
           .map(Some(_))
           .toRight(
             Api.Error(
-              Problem.Unclassified(Legacy.Text(s"'$u' is neither a uid nor a citekey here")),
+              Problem.NotFound.Entity(Problem.TypeName.of(UidText), Problem.Raw(s"$u")),
               Some(Api.Error.Code(Write.CodeNotFound))
             )
           )

@@ -266,7 +266,7 @@ class HardeningHttpSuite extends munit.FunSuite:
         // …outside is refused, by every spelling
         List("/etc", s"${corpus.toString}/../..", "../../../..").foreach { d =>
           val (s, body) = post(s"$url/api/seed", s"""{"dir":"$d"}""")
-          assertEquals(s, 400, s"'$d' was not refused: $body")
+          assertEquals(s, 403, s"'$d' was not refused: $body")
           assert(body.contains("the directory it is confined to"), body)
         }
 

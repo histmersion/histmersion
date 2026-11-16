@@ -2,7 +2,7 @@ package com.histmersion
 package domain.automation.goals
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.scalaland.chimney.dsl.*
@@ -122,7 +122,7 @@ final class PlanGoalPipeline(
   // ── steps ──────────────────────────────────────────────────────────────────────────────────────
 
   private def load(slug: DomainGoal.Slug): Either[String, Loaded] =
-    host.goal(slug).left.map(_.message.sentence).map { g =>
+    host.goal(slug).left.map(_.problems.sentences.mkString("; ")).map { g =>
       val links = goals.links(slug)
       val vocab = (field: String) => host.vocabulary(AutomationHost.VocabularyField(field)).take(VocabularySize)
       Loaded(
@@ -169,7 +169,7 @@ final class PlanGoalPipeline(
     plan
 
   private def log(ctx: RunCtx, line: String): Either[String, String] =
-    Pipelines.log(workLists, ctx, Pipelines.LogLine(line)).left.map(_.sentence).map(_.value)
+    Pipelines.log(workLists, ctx, Pipelines.LogLine(line)).left.map(_.sentences.mkString("; ")).map(_.value)
 
   private def runId(ctx: RunCtx): Run.Id =
     Run.Id.assume(ctx.run.id.value)
@@ -238,7 +238,9 @@ final class PlanGoalPipeline(
               )
             ) match
               case Right(_) => true
-              case Left(e)  => ctx.warn(s"apply: sub-goal '${g.slug.value}' not created — ${e.message.sentence}"); false
+              case Left(e)  =>
+                ctx.warn(s"apply: sub-goal '${g.slug.value}' not created — ${e.problems.sentences.mkString("; ")}");
+                false
     }
     plan.queries.foreach(q =>
       goals.link(
@@ -289,7 +291,7 @@ final class PlanGoalPipeline(
             Some(GoalLink.Note(w.doi.value))
           );
           Some(id)
-        case Left(e) => ctx.warn(s"apply: ${w.doi.value} not queued — ${e.message.sentence}"); None
+        case Left(e) => ctx.warn(s"apply: ${w.doi.value} not queued — ${e.problems.sentences.mkString("; ")}"); None
     }
     goals.setPlan(slug, BGoalRow.Plan(plan.asJson.noSpaces))
     log(

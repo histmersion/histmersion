@@ -40,7 +40,10 @@ object Text:
       case Conflict.Held(subject, hold)            => hold.said(subject)
       case Conflict.Job(job, status, control)      => control.said(job, status)
       case Conflict.AlreadyExists(t, key)          => s"${t.noun} '$key' already exists"
-      case Conflict.Renamed(t, asked, now)   => s"${t.noun} '$asked' was renamed to '$now' — write to '$now' instead"
+      case Conflict.Renamed(t, asked, now) => s"${t.noun} '$asked' was renamed to '$now' — write to '$now' instead"
+      case Conflict.Aliased(t, key, of)    =>
+        s"'$key' is an old ${t.noun} of '$of' and still resolves to it — pick another"
+      case Conflict.Retired(t, key)          => s"'$key' is the ${t.noun} of a record that was removed — choose another"
       case Conflict.Stale(t, key, sent, now) =>
         s"${t.noun} '$key' has moved on: you sent $sent, it is now $now — read it again and re-apply your change"
       case Conflict.WrongState(t, key, is, ws) => s"${t.noun} '$key' is $is; this needs ${ws.mkString(" or ")}"

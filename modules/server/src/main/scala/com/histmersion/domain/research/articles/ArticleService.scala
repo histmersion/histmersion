@@ -1,6 +1,6 @@
 package com.histmersion
 package domain.research.articles
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.api.Write
@@ -273,10 +273,10 @@ object ArticleService:
           case None           => Left(Articles.notFound(Article.Slug(slug.value)))
           case Some(existing) =>
             Articles.precondition(existing, patch) match
-              case Left(msg) => Left(refused(msg.sentence, Write.CodePrecondition))
+              case Left(msg) => Left(refused(msg, Write.CodePrecondition))
               case Right(_)  =>
                 Articles.applyPatch(existing, patch) match
-                  case Left(msg)      => Left(refused(msg.sentence, Write.CodeInvalid))
+                  case Left(msg)      => Left(refused(msg, Write.CodeInvalid))
                   case Right(updated) =>
                     critiqueRefusal(patch.critiqueReasons) match
                       case Some(refusal) => Left(refusal)
@@ -292,17 +292,24 @@ object ArticleService:
           case Right((next, stamped)) => if state.compareAndSet(st, next) then Right(stamped) else attempt()
       attempt()
 
-    private def refused(message: String, code: String): Api.Error =
-      Api.Error(Problem.Unclassified(Legacy.Text(message)), Some(Api.Error.Code(code)))
+    private def refused(problem: Problem, code: String): Api.Error = Api.Error(problem, Some(Api.Error.Code(code)))
 
     /** A reason names its two sources by citekey; with no source stored, the first reason is refused as the database
       * refuses it (its text checked first).
       */
     private def critiqueRefusal(reasons: List[CritiqueReason]): Option[Api.Error] =
       val tidy = reasons.map(CritiqueReason.tidy)
-      tidy.collectFirst { case Left(m) => refused(m.sentence, Write.CodeInvalid) }.orElse {
+      tidy.collectFirst { case Left(m) => refused(m, Write.CodeInvalid) }.orElse {
         tidy.collectFirst { case Right(r) =>
-          refused(s"critique reason ${r.ref.wire}: '${r.src}' is not a citekey", Write.CodeInvalid)
+          refused(
+            Problem.Invalid.Unknown(
+              Problem.TypeName.of(Citekey),
+              Problem.Raw(s"${r.src}"),
+              Vector.empty,
+              Vector(Problem.Field("reasons"), Problem.Field(s"${r.ref.wire}"))
+            ),
+            Write.CodeInvalid
+          )
         }
       }
 
@@ -332,11 +339,17 @@ object ArticleService:
         val outcome =
           if !st.articles.contains(articleKey(oldSlug)) then Left(Articles.notFound(Article.Slug(oldSlug.value)))
           else if st.articles.contains(articleKey(newSlug)) then
-            Left(refused(s"'$newSlug' is already the slug of another article", Write.CodeInvalid))
+            Left(
+              refused(
+                Problem.Conflict.AlreadyExists(Problem.TypeName.of(Slug), Problem.Raw.of(newSlug)),
+                Write.CodeInvalid
+              )
+            )
           else if aliasOf.exists(_.value != oldSlug.value) then
             Left(
               refused(
-                s"'$newSlug' is an old slug of '${aliasOf.get}' and still resolves to it — pick another",
+                Problem.Conflict
+                  .Aliased(Problem.TypeName.of(Slug), Problem.Raw.of(newSlug), Problem.Raw(s"${aliasOf.get}")),
                 Write.CodeInvalid
               )
             )

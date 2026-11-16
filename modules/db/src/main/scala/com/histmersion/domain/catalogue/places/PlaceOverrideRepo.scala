@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.catalogue.places
+import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.util.database.given
@@ -76,7 +77,10 @@ private[places] object PlaceOverrideRepo:
     rowOf(id)
       .toRight(
         Api
-          .Error(Problem.Unclassified(Legacy.Text(s"No place '${id.value}'")), Some(Api.Error.Code(Write.CodeNotFound)))
+          .Error(
+            Problem.NotFound.Entity(Problem.TypeName.of(Place.Id), Problem.Raw(s"${id.value}")),
+            Some(Api.Error.Code(Write.CodeNotFound))
+          )
       )
       .flatMap { before =>
         val had = linked(id)
@@ -208,21 +212,25 @@ private[places] object PlaceOverrideRepo:
       case (None, _) =>
         Left(
           Api.Error(
-            Problem.Unclassified(Legacy.Text(s"No place '${from.value}'")),
+            Problem.NotFound.Entity(Problem.TypeName.of(Place.Id), Problem.Raw(s"${from.value}")),
             Some(Api.Error.Code(Write.CodeNotFound))
           )
         )
       case (_, None) =>
         Left(
           Api.Error(
-            Problem.Unclassified(Legacy.Text(s"No place '${into.value}'")),
+            Problem.NotFound.Entity(Problem.TypeName.of(Place.Id), Problem.Raw(s"${into.value}")),
             Some(Api.Error.Code(Write.CodeNotFound))
           )
         )
       case _ if from == into =>
         Left(
           Api.Error(
-            Problem.Unclassified(Legacy.Text("a place cannot be merged into itself")),
+            Problem.Invalid.Inconsistent(
+              NonEmptyVector.of(Problem.Field("from"), Problem.Field("into")),
+              Problem.Invalid.Exclusion.Distinct,
+              Vector.empty
+            ),
             Some(Api.Error.Code(Write.CodeInvalid))
           )
         )
@@ -253,7 +261,10 @@ private[places] object PlaceOverrideRepo:
     labelOf(id)
       .toRight(
         Api
-          .Error(Problem.Unclassified(Legacy.Text(s"No place '${id.value}'")), Some(Api.Error.Code(Write.CodeNotFound)))
+          .Error(
+            Problem.NotFound.Entity(Problem.TypeName.of(Place.Id), Problem.Raw(s"${id.value}")),
+            Some(Api.Error.Code(Write.CodeNotFound))
+          )
       )
       .flatMap { label =>
         def n(q: Frag) = q.query[Int].run().head

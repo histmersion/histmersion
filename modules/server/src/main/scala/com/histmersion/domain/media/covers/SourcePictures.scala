@@ -253,7 +253,7 @@ final class SourcePictures(
             case None =>
               Left(
                 Api.Error(
-                  Problem.Unclassified(Legacy.Text(s"No source '${p.citekey}'")),
+                  Problem.NotFound.Entity(Problem.TypeName.of(Citekey), Problem.Raw(s"${p.citekey}")),
                   Some(Api.Error.Code(Write.CodeNotFound))
                 )
               )

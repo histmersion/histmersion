@@ -2,7 +2,7 @@ package com.histmersion
 package domain.automation.agents
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.Cursor
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 import io.scalaland.chimney.dsl.*
 
@@ -319,7 +319,7 @@ object ApprovalService:
       def cursor(c: String): Either[Problem, ApprovalRecord] =
         c.trim.toLongOption
           .flatMap(id => rows.find(_.id.value == id))
-          .toRight(Problem.Unclassified(Legacy.Text(s"No approval '$c' to page from")))
+          .toRight(Problem.NotFound.Entity(Problem.TypeName.of(Approval.Id), Problem.Raw(s"$c")))
       for
         b <- before.fold(Right(None))(c => cursor(c.value).map(Some(_)))
         u <- upTo.fold(Right(None))(c => cursor(c.value).map(Some(_)))

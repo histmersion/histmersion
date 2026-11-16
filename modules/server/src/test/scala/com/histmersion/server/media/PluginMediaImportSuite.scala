@@ -4,7 +4,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson
 
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.plugin.Header
 
 import com.histmersion.testsupport.ComparedByValue.given
@@ -216,7 +216,7 @@ class PluginMediaImportSuite extends DbSuite:
     val http = fake
     val r = handlers(base, http)
       .importMedia(MediaImportRequest(Collection, place = Some(PlaceId)))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(r.provider, Collection)
     assertEquals(
       r.samples.map(s => (s.key, s.license, s.basis)),
@@ -247,7 +247,7 @@ class PluginMediaImportSuite extends DbSuite:
     val http = fake
     val r = handlers(cfg, http)
       .importMedia(MediaImportRequest(Collection, dryRun = MediaImportRequest.DryRun(false), place = Some(PlaceId)))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals((r.stored, r.linked), (2, 2), r.toString)
     assert(
       r.rejected.exists(c => c.key.value == "licence all-rights-reserved not allowed" && c.n == MediaCount.N(1)),
@@ -298,7 +298,7 @@ class PluginMediaImportSuite extends DbSuite:
       h.imports
         .importMedia(MediaImportRequest(MediaItem.Provider("rijks")))
         .left
-        .exists(_.message.sentence.contains(s"opencontext, $Collection;"))
+        .exists(_.problems.sentences.mkString("; ").contains(s"opencontext, $Collection;"))
     )
     assert(
       handlers(base, fake).importMedia(MediaImportRequest(Collection, event = Some(Event.Id("e1")))).isLeft,
@@ -312,7 +312,7 @@ class PluginMediaImportSuite extends DbSuite:
       h2.imports
         .importMedia(MediaImportRequest(Collection))
         .left
-        .exists(_.message.sentence.contains("unknown media provider 'zq-portal'"))
+        .exists(_.problems.sentences.mkString("; ").contains("unknown media provider 'zq-portal'"))
     )
 
   test("through the server: GET /api/media/providers lists the plugin's collection; about lists what it registered"):

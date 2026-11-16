@@ -1,7 +1,7 @@
 package com.histmersion
 package util.jobs
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -36,7 +36,11 @@ class BackgroundJobSuite extends DbSuite:
 
   test("a refusal names the running job; an exception names its class"):
     assertEquals(
-      (BackgroundJob.busy(BackgroundJob.Work("a vacuum job"), Some(BackgroundJob.Work("job 42"))).message).sentence,
+      (BackgroundJob
+        .busy(BackgroundJob.Work("a vacuum job"), Some(BackgroundJob.Work("job 42")))
+        .problems
+        .head)
+        .sentence,
       "a vacuum job is already running (job 42) — see `histmersion jobs`"
     )
     assertEquals((BackgroundJob.describe(InterruptedException())).sentence, "interrupted")
@@ -72,7 +76,7 @@ class BackgroundJobSuite extends DbSuite:
         progress(JobInfo.Progress(s"working on ${job.kind}"))
         Outcome.done(Outcome.Summary("all done"))
       }
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(j.detail.flatMap(JobDetail.Purpose.of), Some("a test"))
     assert(slot.isRunning, "the slot is held while the job runs")
     assertEquals(
@@ -81,7 +85,7 @@ class BackgroundJobSuite extends DbSuite:
           Outcome.done(Outcome.Summary("no"))
         )
         .left
-        .map(_.message)
+        .map(_.problems.head)
         .left
         .map(_.sentence),
       Left(s"a test job is already running (job ${j.id}) — see `histmersion jobs`")
@@ -98,13 +102,13 @@ class BackgroundJobSuite extends DbSuite:
       .start(ds, Job.Kind("zz-test"), None, slot, BackgroundJob.Work("a test job"))((_, _) =>
         Outcome(Some(Outcome.Summary("half")), Some(Problem.Unclassified(Legacy.Text("disk full"))))
       )
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(await(f.id).error.map(_.sentence), Some("disk full"))
     Thread.sleep(50)
     val x = BackgroundJob
       .start(ds, Job.Kind("zz-test"), None, slot, BackgroundJob.Work("a test job"))((_, _) =>
         throw IllegalStateException("boom")
       )
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     val failed = await(x.id)
     assertEquals((failed.status, failed.error.map(_.sentence)), ("failed", Some("IllegalStateException: boom")))

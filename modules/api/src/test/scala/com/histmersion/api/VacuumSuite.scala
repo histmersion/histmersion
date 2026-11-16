@@ -51,7 +51,7 @@ class VacuumSuite extends munit.FunSuite:
 
   test("a name that is no identifier, or no table of the store, is refused — and so is an empty list"):
     def refused(tables: List[Vacuum.Request.Tables], d: List[Vacuum.Table] = defaults) =
-      Vacuum.plan(Vacuum.Request(tables = tables), d, existing).left.map(e => (e.code, e.message))
+      Vacuum.plan(Vacuum.Request(tables = tables), d, existing).left.map(e => (e.code, e.problems.head))
     assertEquals(
       refused(List(Vacuum.Request.Tables("places; DROP TABLE x"))).left.map(_._1),
       Left(Some(Write.CodeInvalid))

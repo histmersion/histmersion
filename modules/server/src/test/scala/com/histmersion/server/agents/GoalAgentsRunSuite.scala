@@ -3,7 +3,7 @@ package server.agents
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -313,7 +313,7 @@ class GoalAgentsRunSuite extends DbSuite with com.histmersion.db.Bounded with Ru
     )
 
   private def start(a: AgentsControllers, req: RunRequest): RunInfo =
-    val run = a.startRun(req).fold(e => fail(e.message.sentence), identity)
+    val run = a.startRun(req).fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     a.engine.execute(ApiIds.run(run.id))
     connect(ds)(AgentRepo.get(run.id)).get
 
@@ -558,7 +558,7 @@ class GoalAgentsRunSuite extends DbSuite with com.histmersion.db.Bounded with Ru
       ArticleFixtures.load(ds, Slug).flatMap(_.filter),
       Some(Article.Filter(topics = List(Filter.Topics("zzagent_tin"))))
     )
-    val cov = h.research.articles.coverage(Slug).fold(e => fail(e.message.sentence), identity)
+    val cov = h.research.articles.coverage(Slug).fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(
       (cov.total, cov.cited.map(_.citekey.value: String).toSet, cov.notUsed, cov.drift),
       (2, Set(Ck, Ck2), Nil, Nil)
@@ -603,7 +603,7 @@ class GoalAgentsRunSuite extends DbSuite with com.histmersion.db.Bounded with Ru
       first
     )
     assertEquals(h.research.articles.get(Slug).toOption.get.article.body.value.trim, onlyCk.trim)
-    val cov = h.research.articles.coverage(Slug).fold(e => fail(e.message.sentence), identity)
+    val cov = h.research.articles.coverage(Slug).fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(
       cov.notUsed.map(e => (e.source.citekey.value: String, e.reason.map(w => s"$w"))),
       List((Ck2, Some("Its isotope study dates a later trade.")))
@@ -743,12 +743,12 @@ class GoalAgentsRunSuite extends DbSuite with com.histmersion.db.Bounded with Ru
     assert(
       a.startRun(RunRequest(CompileArticle, SlugTarget, title = Some(RunRequest.Title("x"))))
         .left
-        .exists(_.message.sentence.contains("filter"))
+        .exists(_.problems.sentences.mkString("; ").contains("filter"))
     )
     assert(
       a.startRun(RunRequest(CompileArticle, SlugTarget, topics = List(RunRequest.Topics("t"))))
         .left
-        .exists(_.message.sentence.contains("title"))
+        .exists(_.problems.sentences.mkString("; ").contains("title"))
     )
     assert(
       a.startRun(
@@ -774,7 +774,7 @@ class GoalAgentsRunSuite extends DbSuite with com.histmersion.db.Bounded with Ru
     assert(
       a.startRun(RunRequest(EnrichSource, CkTarget, query = Some(RunRequest.Query("q"))))
         .left
-        .exists(_.message.sentence.contains("compile-article"))
+        .exists(_.problems.sentences.mkString("; ").contains("compile-article"))
     )
     assert(a.startRun(RunRequest(PlanGoal, RunRequest.Target("zzagent-nope"))).isLeft)
     assert(
@@ -797,7 +797,7 @@ class GoalAgentsRunSuite extends DbSuite with com.histmersion.db.Bounded with Ru
           topics = List(RunRequest.Topics("t"))
         )
       ).left
-        .exists(_.message.sentence.contains("writer"))
+        .exists(_.problems.sentences.mkString("; ").contains("writer"))
     )
 
   // ── #992: dry runs ───────────────────────────────────────────────────────────────────────────────

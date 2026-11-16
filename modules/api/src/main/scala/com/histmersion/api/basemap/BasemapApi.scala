@@ -24,7 +24,7 @@ object BasemapApi:
   type TileTemplate = TileTemplate.T
   object TileTemplate extends Newtype[String, Pure]
 
-  private lazy val base = endpoint.in("api" / "basemap").errorOut(jsonBody[Api.Error])
+  private lazy val base = endpoint.in("api" / "basemap").errorOut(Api.problemOut)
 
   lazy val status: PublicEndpoint[Unit, Api.Error, Basemap.Status, Any] =
     base.get.out(jsonBody[Basemap.Status])
@@ -63,7 +63,7 @@ object BasemapApi:
             )
           )
       )
-      .errorOut(fetchErrors)
+      .errorOut(Api.problemOut)
       .out(jsonBody[JobInfo])
 
   lazy val remove: PublicEndpoint[Basemap.RemoveQuery, Api.Error, Basemap.Removed, Any] =
@@ -82,7 +82,7 @@ object BasemapApi:
             )
           }(v => (v.layer.value, v.focus.map(_.value), v.cache.value))
       )
-      .errorOut(fetchErrors)
+      .errorOut(Api.problemOut)
       .out(jsonBody[Basemap.Removed])
 
   lazy val tile: PublicEndpoint[
@@ -102,8 +102,7 @@ object BasemapApi:
       .in("api" / "basemap" / path[String]("layer") / path[Int]("z") / path[Long]("x") / path[Long]("y"))
       .in(query[Option[String]]("layers"))
       .in(query[Option[String]]("keys"))
-      .errorOut(statusCode(StatusCode.NotFound))
-      .errorOut(jsonBody[Api.Error])
+      .errorOut(Api.problemOut)
       .out(byteArrayBody)
       .out(header[String](HeaderNames.ContentType))
       .out(header[Option[String]](HeaderNames.ContentEncoding))
@@ -163,19 +162,6 @@ object BasemapApi:
           (refactorEncoded4)._5
         )
       )
-
-  private def fetchErrors =
-    oneOf[Api.Error](
-      oneOfVariantValueMatcher(StatusCode.ServiceUnavailable, jsonBody[Api.Error])(
-        (Api.Error
-          .hasCode(Api.Error.Code(Backup.CodeMaintenance)))
-          .andThen(refactorResult => ((refactorResult) == (true)))
-      ),
-      oneOfVariantValueMatcher(StatusCode.Conflict, jsonBody[Api.Error])(
-        (Api.Error.hasCode(Api.Error.Code(Busy))).andThen(refactorResult2 => ((refactorResult2) == (true)))
-      ),
-      oneOfDefaultVariant(statusCode(StatusCode.BadRequest).and(jsonBody[Api.Error]))
-    )
 
   val Busy = "basemap_busy"
 

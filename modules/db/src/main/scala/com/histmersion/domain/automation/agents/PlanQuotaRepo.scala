@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.agents
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.api.automation.PlanQuota.{PoolId, Reading, RefreshInfo, Source}
 
@@ -88,14 +88,14 @@ object PlanQuotaRepo:
   def pool(p: PoolId)(using DbCon): Pool =
     sql"""SELECT held, floors, refusal, (extract(epoch FROM refusal_until) * 1000)::bigint, plan_type
           FROM plan_pools WHERE pool = ${p.wire}"""
-      .query[(Boolean, Option[String], Option[String], Option[Long], Option[String])]
+      .query[(Boolean, Option[String], Option[Problem], Option[Long], Option[String])]
       .run()
       .headOption
       .map((h, f, r, u, t) =>
         Pool(
           Pool.Held(h),
           f.map(Pool.Floors(_)),
-          r.map((text => Problem.Unclassified(Legacy.Text(text)))),
+          r,
           u.map(Pool.RefusalUntil(_)),
           t.map(Pool.PlanType(_))
         )

@@ -24,8 +24,8 @@ G3misplaced	server	test	70
 G3misplaced	upstreams	main	56
 G3misplaced	values	main	4
 G3misplaced	web	main	923
-G44	api	main	4593
-G44	api	test	716
+G44	api	main	4586
+G44	api	test	715
 G44	chimney-iron-tests	test	10
 G44	cli	main	364
 G44	cli	test	92
@@ -33,7 +33,7 @@ G44	config	main	175
 G44	config	test	51
 G44	core	main	2848
 G44	core	test	1012
-G44	db	main	498
+G44	db	main	497
 G44	db	test	1522
 G44	files	main	224
 G44	files	test	52
@@ -66,7 +66,7 @@ G44	plugins/media	main	103
 G44	plugins/media	test	57
 G44	problem	main	5
 G44	problem	test	1
-G44	server	main	10629
+G44	server	main	10628
 G44	server	test	3973
 G44	upstreams	main	147
 G44	upstreams	test	44
@@ -87,12 +87,12 @@ G44plaindef	server	main	29
 G44plaindef	server	test	1
 G44plaindef	values	main	4
 G44plaindef	web	main	27
-G45boundary	api	main	789
+G45boundary	api	main	784
 G45boundary	cli	main	1014
 G45boundary	config	main	63
 G45boundary	console	main	4
 G45boundary	core	main	10
-G45boundary	db	main	2137
+G45boundary	db	main	2103
 G45boundary	files	main	59
 G45boundary	plugin-host	main	305
 G45boundary	plugin-resolver	main	33
@@ -251,10 +251,10 @@ G60fromString	api	main	1
 G60fromString	cli	main	134
 G60fromString	cli	test	15
 G60fromString	core	test	25
-G60fromString	db	main	75
+G60fromString	db	main	16
 G60fromString	db	test	5
 G60fromString	problem	main	2
-G60fromString	server	main	675
+G60fromString	server	main	625
 G60fromString	server	test	181
 G60fromString	web	main	57
 G60fromString	web	test	21

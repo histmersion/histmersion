@@ -1,7 +1,7 @@
 package com.histmersion
 package server
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -81,7 +81,7 @@ class MaintenanceLockSuite extends DbSuite:
   private def refused(name: String)(f: => Either[Api.Error, ?]): Unit =
     val r = underLock(f)
     val e = r.swap.toOption.getOrElse(fail(s"$name was NOT refused while a restore held the lock"))
-    assertEquals(e.code, Some(Backup.CodeMaintenance), s"$name: ${e.message.sentence}")
+    assertEquals(e.code, Some(Backup.CodeMaintenance), s"$name: ${e.problems.sentences.mkString("; ")}")
 
   private val png =
     AssetInput(

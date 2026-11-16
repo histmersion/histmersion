@@ -94,4 +94,4 @@ final class SkeletonIngest(sources: SourceService) extends IngestJobs:
       )
       .map(_ => ())
       .left
-      .map(e => e.message)
+      .map(e => e.problems.head)

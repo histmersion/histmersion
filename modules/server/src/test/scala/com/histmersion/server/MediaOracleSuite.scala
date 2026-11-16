@@ -1068,7 +1068,10 @@ class MediaOracleSuite extends DbSuite:
     )
     val handlers = MediaWiring(Deps(loaded.config, ds, ds, plugins = plugins), wire, MediaWire.Thumbs())
     def report(r: Either[Api.Error, MediaImportReport]): String =
-      r.fold(e => s"refused: ${e.message.sentence}\n", r => s"report: ${r.asJson.sortedKeys.spaces2}\n")
+      r.fold(
+        e => s"refused: ${e.problems.sentences.mkString("; ")}\n",
+        r => s"report: ${r.asJson.sortedKeys.spaces2}\n"
+      )
     def run(name: String, req: MediaImportRequest): Unit =
       val r = handlers.imports.importMedia(req)
       sb ++= s"## $name\n" + wire.take() + report(r)
@@ -1168,7 +1171,10 @@ class MediaOracleSuite extends DbSuite:
     def covers(name: String, req: MediaCoversRequest): Unit =
       val r = handlers.covers.covers(req)
       sb ++= s"## covers: $name\n" + wire.take() +
-        r.fold(e => s"refused: ${e.message.sentence}\n", r => s"report: ${r.asJson.sortedKeys.spaces2}\n")
+        r.fold(
+          e => s"refused: ${e.problems.sentences.mkString("; ")}\n",
+          r => s"report: ${r.asJson.sortedKeys.spaces2}\n"
+        )
     covers(
       "dry run",
       MediaCoversRequest(

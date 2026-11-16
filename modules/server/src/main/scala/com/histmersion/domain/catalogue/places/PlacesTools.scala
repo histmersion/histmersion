@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.catalogue.places
 import com.histmersion.util.mcp.ChimpJson.given
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.Write
@@ -133,7 +133,10 @@ object PlacesTools:
       .either(raw)
       .left
       .map(_ =>
-        Api.Error(Problem.Unclassified(Legacy.Text(s"No place '$raw'")), Some(Api.Error.Code(Write.CodeNotFound)))
+        Api.Error(
+          Problem.NotFound.Entity(Problem.TypeName.of(Place.Id), Problem.Raw(s"$raw")),
+          Some(Api.Error.Code(Write.CodeNotFound))
+        )
       )
 
   private def year(y: com.histmersion.Year): Year = Year(y.value.toLong)
@@ -163,7 +166,8 @@ object PlacesTools:
           in.id.map(_.value.trim).filter(_.nonEmpty) match
             case Some(raw) =>
               Place.Id.either(raw) match
-                case Left(_)   => McpOut.error(Api.Error(Problem.Unclassified(Legacy.Text(s"No place '$raw'"))))
+                case Left(_) =>
+                  McpOut.error(Api.Error(Problem.NotFound.Entity(Problem.TypeName.of(Place.Id), Problem.Raw(s"$raw"))))
                 case Right(id) =>
                   places.get(id, asOf) match
                     case Right(d) =>

@@ -1,7 +1,8 @@
 package com.histmersion
 package util.database
+import com.histmersion.util.problem.External
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import javax.sql.DataSource
 import org.flywaydb.core.Flyway
@@ -209,14 +210,15 @@ object Migrate:
       .Try(squashHistory(ds))
       .toEither
       .left
-      .map(e => Problem.Unclassified(Legacy.Text(Option(e.getMessage).getOrElse(e.toString))))
+      .map(e => Problem.Io.Database(Problem.Io.DbOp.Migrate, External.Reported.of(e)))
       .flatMap { _ =>
         val r = flyway(ds).validateWithResult()
         if r.validationSuccessful then Right(current(ds).getOrElse(Version("?")))
         else
           Left(
-            Problem.Unclassified(
-              Legacy.Text(
+            Problem.Io.Database(
+              Problem.Io.DbOp.Migrate,
+              External.Reported.of(
                 Option(r.getAllErrorMessages).map(_.trim).filter(_.nonEmpty).getOrElse("schema validation failed")
               )
             )

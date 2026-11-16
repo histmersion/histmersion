@@ -2,7 +2,7 @@ package com.histmersion
 package domain.automation.agents
 import com.histmersion.api.json.NewtypeCodecs.given
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.api.automation.Agents
@@ -66,7 +66,11 @@ private[agents] object ModelSettingsRepo:
           Jsonb
             .decode[List[LimitSpec]](Jsonb.JsonText(json))
             .left
-            .map(e => Problem.Unclassified(Legacy.Text(s"saved limits of $t do not decode: ${e.sentence}"))),
+            .map {
+              case Problem.Io.Corrupt(format, _, damage) =>
+                Problem.Io.Corrupt(format, Problem.Where(s"the saved limits of $t"), damage)
+              case other => other
+            },
           Saved.ReservePct(r)
         )
       }

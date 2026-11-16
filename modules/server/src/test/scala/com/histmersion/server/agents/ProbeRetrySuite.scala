@@ -3,7 +3,7 @@ package server.agents
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -119,7 +119,9 @@ class ProbeRetrySuite extends DbSuite with RunTranscripts:
   test("an empty title and a null year are sent back with the problems; the second answer matches"):
     val c = ScriptedClient(Model)
     c.scripts ++= List(Seq(text(Empty)), Seq(text(Right_)))
-    val r = handlers(c).probe(ProbeRequest(ApiCk, Some(ProbeModel))).fold(e => fail(e.message.sentence), identity)
+    val r = handlers(c)
+      .probe(ProbeRequest(ApiCk, Some(ProbeModel)))
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals((r.attempts, r.problems, r.matchesRecord), (2, Nil, true), r)
     assertEquals(r.usage.input, 200L, "both attempts are counted")
     val retry = c.steps(1).head.history.entries.collectFirst { case ConversationEntry.UserPrompt(p) => p }.get
@@ -133,7 +135,9 @@ class ProbeRetrySuite extends DbSuite with RunTranscripts:
   test("a model that never fills them: the probe reports the answer incomplete, never as matching"):
     val c = ScriptedClient(Model)
     c.scripts ++= List.fill(1 + math.max(0, cfg.agents.step.maxRetries.value))(Seq(text(Empty)))
-    val r = handlers(c).probe(ProbeRequest(ApiCk, Some(ProbeModel))).fold(e => fail(e.message.sentence), identity)
+    val r = handlers(c)
+      .probe(ProbeRequest(ApiCk, Some(ProbeModel)))
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(r.attempts, 1 + math.max(0, cfg.agents.step.maxRetries.value))
     assert(!r.matchesRecord.value)
     assertEquals(r.problems.size, 2, r.problems)
@@ -194,7 +198,9 @@ class ProbeRetrySuite extends DbSuite with RunTranscripts:
   test("claude-code: a prose answer is asked again with why; the typed second answer matches (#915)"):
     val fake = FakeCli.sequence("claude", List(List(ClaudeStreams.Init, Prose), List(ClaudeStreams.Init, Typed)))
     val r =
-      claudeHandlers(fake).probe(ProbeRequest(ApiCk, Some(ProbeModel))).fold(e => fail(e.message.sentence), identity)
+      claudeHandlers(fake)
+        .probe(ProbeRequest(ApiCk, Some(ProbeModel)))
+        .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals((r.model, r.attempts, r.problems, r.matchesRecord), ("claude-code:haiku", 2, Nil, true), r)
     assertEquals(FakeCli.invocations(fake), 2)
     val retry = FakeCli.stdinOf(fake, 2)
@@ -214,7 +220,9 @@ class ProbeRetrySuite extends DbSuite with RunTranscripts:
   test("claude-code: prose every time — no typed answer, and the probe says why"):
     val fake = FakeCli.sequence("claude", List(List(ClaudeStreams.Init, Prose)))
     val r =
-      claudeHandlers(fake).probe(ProbeRequest(ApiCk, Some(ProbeModel))).fold(e => fail(e.message.sentence), identity)
+      claudeHandlers(fake)
+        .probe(ProbeRequest(ApiCk, Some(ProbeModel)))
+        .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(r.attempts, 1 + math.max(0, cfg.agents.step.maxRetries.value))
     assertEquals(FakeCli.invocations(fake), r.attempts)
     assert(r.answer.isEmpty && !r.matchesRecord.value)

@@ -87,7 +87,7 @@ class VacuumHttpSuite extends munit.FunSuite:
         summary
       )
 
-      assertEquals(post(s"$url/api/maintenance/vacuum", """{"tables":["no_such_table"]}""")._1, 400)
+      assertEquals(post(s"$url/api/maintenance/vacuum", """{"tables":["no_such_table"]}""")._1, 404)
       assertEquals(post(s"$url/api/maintenance/vacuum", """{"tables":["places; DROP TABLE places"]}""")._1, 400)
       assertEquals(post(s"$url/api/maintenance/vacuum", """{"full":true}""")._1, 400, "unknown keys are refused")
 

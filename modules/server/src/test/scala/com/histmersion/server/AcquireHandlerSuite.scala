@@ -1,7 +1,7 @@
 package com.histmersion
 package server
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -293,7 +293,7 @@ class AcquireHandlerSuite extends DbSuite:
     val h = handlers(FakeDiscovery(refs = rows))
     val r = h
       .refs(RefsRequest(RefsRequest.Id("zzacq_target"), apply = RefsRequest.Apply(true)))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(r.count, 3)
     assertEquals(r.resolved, 2)
     assertEquals(r.edgesAdded, 2)
@@ -309,7 +309,8 @@ class AcquireHandlerSuite extends DbSuite:
     SourceFixtures.upsert(ds, source("zzacq_target", Some("10.1038/zztest001")), cfg.limits.chunkChars)
     SourceFixtures.upsert(ds, source("zzacq_bydoi", Some("10.1038/zzref001")), cfg.limits.chunkChars)
     val h = handlers(FakeDiscovery(refs = List(RefRow(doi = (Some("10.1038/zzref001")).map(Doi.apply)))))
-    val r = h.refs(RefsRequest(RefsRequest.Id("zzacq_target"))).fold(e => fail(e.message.sentence), identity)
+    val r =
+      h.refs(RefsRequest(RefsRequest.Id("zzacq_target"))).fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(r.resolved, 1)
     assertEquals(r.edgesAdded, 0)
     assertEquals(
@@ -340,7 +341,7 @@ class AcquireHandlerSuite extends DbSuite:
     val h = handlers()
     val a = h
       .assess(AssessRequest(AssessRequest.Id("zzacq_retr"), apply = AssessRequest.Apply(true)))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(a.verdict, Acquire.Verdicts.Retracted)
     assert(a.flagged.value)
     assertEquals(a.retractionWatch.head.date, Some("2021-12-15"))
@@ -363,7 +364,9 @@ class AcquireHandlerSuite extends DbSuite:
         "10.1000/other,Retraction,\"+Fabrication, of data\",1/2/2020 0:00\n"
     val h = handlers(rw = FakeRw(RetractionWatchClient.Csv(csv)))
     assertEquals(h.updateRetractions().map(_.rows), Right(1))
-    val a = h.assess(AssessRequest(AssessRequest.Id("zzacq_ok"))).fold(e => fail(e.message.sentence), identity)
+    val a = h
+      .assess(AssessRequest(AssessRequest.Id("zzacq_ok")))
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(a.verdict, Acquire.Verdicts.Current)
     assertEquals(a.retractionWatch, Nil)
     assertEquals(a.applied, None) // no --apply
@@ -385,7 +388,7 @@ class AcquireHandlerSuite extends DbSuite:
     val h = handlers()
     val a = h
       .assess(AssessRequest(AssessRequest.Id("zzacq_kept"), apply = AssessRequest.Apply(true)))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(a.verdict, Acquire.Verdicts.Current)
     assertEquals((a.applied, a.kept), (None, Some(Source.Status.Contested)))
     assert(AcquireMarkdown.assessment(a).contains("Kept **contested** (set by hand)"))
@@ -402,7 +405,7 @@ class AcquireHandlerSuite extends DbSuite:
           forceStatus = AssessRequest.ForceStatus(true)
         )
       )
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals((f.applied, f.kept), (Some("current"), None))
     assertEquals(
       SourceFixtures.load(ds, com.histmersion.domain.library.Citekey("zzacq_kept")).map(_.status),
@@ -431,7 +434,7 @@ class AcquireHandlerSuite extends DbSuite:
       )
     val r = h
       .assess(AssessRequest(AssessRequest.Id("zzacq_retr2"), apply = AssessRequest.Apply(true)))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(r.applied, Some("retracted"))
     assertEquals(
       SourceFixtures.load(ds, com.histmersion.domain.library.Citekey("zzacq_retr2")).map(_.status),
@@ -463,7 +466,7 @@ class AcquireHandlerSuite extends DbSuite:
     val h = handlers(citations = FakeCitations(rows))
     val r = h
       .followups(FollowupsRequest(FollowupsRequest.Id("zzacq_target"), apply = FollowupsRequest.Apply(true)))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(r.count, 2)
     assertEquals(r.followups.head.proposedKind, Acquire.EdgeKinds.Refutes) // influential first
     assertEquals(r.followups.map(_.citekey), List(Some("zzacq_critic"), None))
@@ -492,11 +495,13 @@ class AcquireHandlerSuite extends DbSuite:
     )
     val h = handlers(FakeDiscovery(hits = hits))
     val all =
-      h.discover(AcquireApi.Query("q"), None, None, None, notInDb = false).fold(e => fail(e.message.sentence), identity)
+      h.discover(AcquireApi.Query("q"), None, None, None, notInDb = false)
+        .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(all.works.map(_.inDb), List(true, false))
     assertEquals(all.works.head.citekey, Some("zzacq_known")) // the STORED key, not the generated one
     val delta =
-      h.discover(AcquireApi.Query("q"), None, None, None, notInDb = true).fold(e => fail(e.message.sentence), identity)
+      h.discover(AcquireApi.Query("q"), None, None, None, notInDb = true)
+        .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(delta.works.map(_.doi), List(Some("10.1038/zzbrandnew")))
 
   // ── ingest ──────────────────────────────────────────────────────────────────────────────────
@@ -510,7 +515,8 @@ class AcquireHandlerSuite extends DbSuite:
     val h =
       handlers(FakeDiscovery(refs = List(RefRow(doi = (Some("10.1038/zzref001")).map(Doi.apply)))), oa = SomePdf())
     val r =
-      h.ingest(Ingest.Request(Ingest.Request.Id("10.1038/zztest001"))).fold(e => fail(e.message.sentence), identity)
+      h.ingest(Ingest.Request(Ingest.Request.Id("10.1038/zztest001")))
+        .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
 
     assertEquals(r.citekey, "zzacq_ingested")
     assert(r.created.value)
@@ -544,7 +550,7 @@ class AcquireHandlerSuite extends DbSuite:
     wipe("zzacq_ingested")
     val r = handlers(oa = SomePdf(FetchedFile.Source("oabooks"), Some(com.histmersion.plugin.Licence(" CC-BY-4.0 "))))
       .ingest(Ingest.Request(Ingest.Request.Id("10.1038/zztest001")))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assert(
       r.steps.exists(s => s.step == Ingest.Step.Value("fetch") && s.detail.value.contains("licence CC-BY-4.0")),
       r.steps.toString
@@ -555,7 +561,7 @@ class AcquireHandlerSuite extends DbSuite:
     val again =
       handlers(oa = SomePdf(FetchedFile.Source("oabooks"), Some(com.histmersion.plugin.Licence("CC-BY-NC-4.0"))))
         .ingest(Ingest.Request(Ingest.Request.Id("10.1038/zztest001"), refetch = Ingest.Request.Refetch(true)))
-        .fold(e => fail(e.message.sentence), identity)
+        .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assert(!again.steps.exists(_.step == Ingest.Step.Value("licence")), again.steps.toString)
     assertEquals(license, Some("CC-BY-4.0"))
     assert(
@@ -586,7 +592,7 @@ class AcquireHandlerSuite extends DbSuite:
       )
     val r = handlers(gold, oa = NoPdf)
       .ingest(Ingest.Request(Ingest.Request.Id("10.1038/zztest001")))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(items.size, 1, items.toString)
     assertEquals(items.head.topic, Some(Acquire.BrowserDownloadTopic))
     assert(
@@ -601,7 +607,7 @@ class AcquireHandlerSuite extends DbSuite:
     // again: the item that names it is reported, no second one
     val _ = handlers(gold, oa = NoPdf)
       .ingest(Ingest.Request(Ingest.Request.Id("10.1038/zztest001")))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(items.size, 1)
     // a closed work, or a watcher's legal-only ingest, adds none
     dropItems(); wipe("zzacq_ingested")
@@ -648,7 +654,7 @@ class AcquireHandlerSuite extends DbSuite:
       )
     val _ = handlers(open, oa = chain)
       .ingest(Ingest.Request(Ingest.Request.Id("10.1038/zztest001")))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(items.size, 1, items.toString)
     assert(
       items.head.text.value.contains(s"download it in the browser (oapen: ${why.sentence}), then histmersion ingest"),
@@ -679,7 +685,7 @@ class AcquireHandlerSuite extends DbSuite:
     // the watcher's legal-only path: no source, but the item, with the location, the DOI, the licence and the command
     val legal =
       handlers(FakeDiscovery(gold), oa = NoPdf).ingestLegal(Ingest.Request(Ingest.Request.Id("10.1038/zztest001")))
-    assert(legal.left.exists(e => IngestBacklog.isNoLegalCopy(e.message)), legal.toString)
+    assert(legal.left.exists(e => IngestBacklog.isNoLegalCopy(e.problems.head)), legal.toString)
     assertEquals(items.map(_.topic), Vector(Some(Acquire.BrowserDownloadTopic)))
     val text = items.head.text
     assert(
@@ -699,7 +705,7 @@ class AcquireHandlerSuite extends DbSuite:
     // a person's ingest of the same work: the item is reported, not doubled
     val r = handlers(FakeDiscovery(gold), oa = NoPdf)
       .ingest(Ingest.Request(Ingest.Request.Id("10.1038/zztest001")))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(items.size, 1)
     assert(
       r.steps.exists(s =>
@@ -747,7 +753,7 @@ class AcquireHandlerSuite extends DbSuite:
     )
     val r = handlers(oa = chain)
       .ingest(Ingest.Request(Ingest.Request.Id("10.1038/zztest001")))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(
       r.steps.find(_.step == Ingest.Step.Value("chain")).map(_.detail),
       Some("unpaywall: no copy — no open-access location; oapen: refused — 20.500.12657/23223: bot challenge")
@@ -780,7 +786,7 @@ class AcquireHandlerSuite extends DbSuite:
       cfg.modify(_.acquire).setTo(cfg.acquire.modify(_.allowUnauthorised).setTo(AcquireConfig.AllowUnauthorised(true)))
     val r = handlers(oa = chain, app = allowing)
       .ingest(Ingest.Request(Ingest.Request.Id("10.1038/zztest001"), legalOnly = Ingest.Request.LegalOnly(true)))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(asked.get, 0, "no fetcher the config marks unauthorised is asked")
     assert(r.steps.exists(_.step == Ingest.Step.Value("legal-only")), r.steps.toString)
     assert(r.dropIn.isDefined, "with no legal copy it is a person's ingest as usual: the drop-in is explained")
@@ -796,7 +802,7 @@ class AcquireHandlerSuite extends DbSuite:
     val legal = handlers(oa = chain, app = allowing).ingestLegal(Ingest.Request(Ingest.Request.Id("10.1038/zztest001")))
     assertEquals(asked.get, 1)
     assert(
-      legal.left.exists(_.message.sentence.contains("unpaywall: no copy — no open-access location")),
+      legal.left.exists(_.problems.sentences.mkString("; ").contains("unpaywall: no copy — no open-access location")),
       legal.toString
     )
     wipe("zzacq_ingested")
@@ -805,7 +811,7 @@ class AcquireHandlerSuite extends DbSuite:
     wipe("zzacq_ingested")
     val r = handlers(oa = NoPdf)
       .ingest(Ingest.Request(Ingest.Request.Id("10.1038/zztest001")))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(r.pdf, None)
     assert(r.dropIn.exists(_.value.contains("--citekey zzacq_ingested")), r.dropIn.toString)
     assert(r.steps.exists(s => s.step == Ingest.Step.Value("fetch") && !s.ok.value))
@@ -832,10 +838,11 @@ class AcquireHandlerSuite extends DbSuite:
     )
     SourceFixtures
       .patch(ds, com.histmersion.domain.library.Citekey("zzacq_ingested"), enriched, cfg.limits.chunkChars)
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
 
     val again =
-      h.ingest(Ingest.Request(Ingest.Request.Id("10.1038/zztest001"))).fold(e => fail(e.message.sentence), identity)
+      h.ingest(Ingest.Request(Ingest.Request.Id("10.1038/zztest001")))
+        .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assert(!again.created.value, "an existing citekey must be updated, not recreated")
     val after =
       SourceFixtures.load(ds, com.histmersion.domain.library.Citekey("zzacq_ingested")).getOrElse(fail("gone"))
@@ -851,7 +858,7 @@ class AcquireHandlerSuite extends DbSuite:
     wipe("zzacq_ingested")
     val _ = handlers(oa = NoPdf)
       .ingest(Ingest.Request(Ingest.Request.Id("10.1038/zztest001")))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     SourceFixtures
       .patch(
         ds,
@@ -859,11 +866,11 @@ class AcquireHandlerSuite extends DbSuite:
         Source.Patch(notes = Some(Source.Notes("Compiled."))),
         cfg.limits.chunkChars
       )
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     val jobs = RecordingJobs(); val pdf = CountingPdf()
     val r = handlers(oa = pdf, jobs = jobs)
       .ingest(Ingest.Request(Ingest.Request.Id("10.16993/zzbay"), citekey = Some(Citekey("zzacq_ingested"))))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(pdf.calls.get, 1)
     assert(
       jobs.files.peek().exists(c => java.nio.file.Files.isRegularFile(java.nio.file.Path.of(c.where.value))),
@@ -884,7 +891,7 @@ class AcquireHandlerSuite extends DbSuite:
     wipe("zzacq_ingested")
     val _ = handlers(oa = NoPdf)
       .ingest(Ingest.Request(Ingest.Request.Id("10.1038/zztest001")))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     SourceFixtures
       .patch(
         ds,
@@ -892,12 +899,12 @@ class AcquireHandlerSuite extends DbSuite:
         Source.Patch(body = Some(Source.OcrMarkdown("# The converted text"))),
         cfg.limits.chunkChars
       )
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     val jobs = RecordingJobs(); val pdf = CountingPdf()
     val r =
       handlers(oa = pdf, jobs = jobs)
         .ingest(Ingest.Request(Ingest.Request.Id("10.1038/zztest001")))
-        .fold(e => fail(e.message.sentence), identity)
+        .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(pdf.calls.get, 0, "nothing fetched")
     assertEquals(jobs.files.toArray.toList, List(None), "no file, so no OCR job")
     val fetch = r.steps.find(_.step == Ingest.Step.Value("fetch")).get
@@ -915,7 +922,7 @@ class AcquireHandlerSuite extends DbSuite:
     // asked for: fetched and handed to the job, which replaces the body
     val again = handlers(oa = pdf, jobs = jobs)
       .ingest(Ingest.Request(Ingest.Request.Id("10.1038/zztest001"), refetch = Ingest.Request.Refetch(true)))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(pdf.calls.get, 1)
     assert(jobs.files.toArray.toList.last.asInstanceOf[Option[FetchedCopy]].isDefined)
     assert(
@@ -958,7 +965,7 @@ class AcquireHandlerSuite extends DbSuite:
     val r = archiveService(item, handlers())
       .archiveImport(Caller.Local, ArchiveImportRequest(ArchiveImportRequest.Id("blackathena")))
     assert(r.isLeft)
-    assert(r.left.exists(_.message.sentence.contains("lending-only")), r.toString)
+    assert(r.left.exists(_.problems.sentences.mkString("; ").contains("lending-only")), r.toString)
     assert(SourceFixtures.load(ds, com.histmersion.domain.library.Citekey("zzacqbernal1987_black")).isEmpty)
 
   test("a public archive.org item is imported with provenance archive_org"):
@@ -999,7 +1006,7 @@ class AcquireHandlerSuite extends DbSuite:
     val chain = FetchChain(List(FetchChain.Step.Id("archive-org") -> byIdentifier))
     val r = archiveService(item, handlers(oa = chain))
       .archiveImport(Caller.Local, ArchiveImportRequest(ArchiveImportRequest.Id("racesofeurope")))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(r.citekey, "zzacqcoon1939_races")
     assertEquals(
       SourceFixtures.load(ds, com.histmersion.domain.library.Citekey("zzacqcoon1939_races")).flatMap(_.provenance),
@@ -1031,7 +1038,7 @@ class AcquireHandlerSuite extends DbSuite:
     // recording the push removes it from the gap list
     gaps()
       .pushed(CalibrePushRequest(Citekey("zzacq_gap"), Source.CalibreId("9999")))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assert(!gaps().gaps(None).gaps.exists(_.citekey == Citekey("zzacq_gap")))
     // … and the push metadata now names the entry, which is what `calibre update` rewrites
     assertEquals(
@@ -1076,7 +1083,7 @@ class AcquireHandlerSuite extends DbSuite:
     assert(
       h.assess(AssessRequest(AssessRequest.Id("this is not an id")))
         .left
-        .exists(_.message.sentence.contains("neither a DOI"))
+        .exists(_.problems.sentences.mkString("; ").contains("neither a DOI"))
     )
     assert(h.refs(RefsRequest(RefsRequest.Id("also not an id"))).isLeft)
     assert(h.ingest(Ingest.Request(Ingest.Request.Id(""))).isLeft)
@@ -1095,7 +1102,7 @@ class AcquireHandlerSuite extends DbSuite:
       def updates(doi: com.histmersion.domain.library.Doi) = Right(Nil)
     val h = handlers(blind)
     val r = h.ingest(Ingest.Request(Ingest.Request.Id("10.1017/zzdoesnotexist")))
-    assert(r.left.exists(_.message.sentence.contains("no upstream record")), r.toString)
+    assert(r.left.exists(_.problems.sentences.mkString("; ").contains("no upstream record")), r.toString)
     assert(
       SourceFixtures.load(ds, com.histmersion.domain.library.Citekey("anonnd")).isEmpty,
       "no junk source may be created"
@@ -1105,7 +1112,7 @@ class AcquireHandlerSuite extends DbSuite:
     wipe("zzacq_manual")
     val forced = h
       .ingest(Ingest.Request(Ingest.Request.Id("10.1017/zzdoesnotexist"), citekey = Some(Citekey("zzacq_manual"))))
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(forced.citekey, "zzacq_manual")
     assert(SourceFixtures.load(ds, com.histmersion.domain.library.Citekey("zzacq_manual")).isDefined)
     wipe("zzacq_manual")

@@ -5,7 +5,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonKeyCodec
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.domain.automation.agents.AgentRepo.StepRecord
 import com.histmersion.domain.automation.agents.Checked
@@ -202,7 +202,7 @@ final class AcquisitionSweepPipeline(
             ctx.warn(s"candidates: ${w.index} ${w.kind} '${w.subject}' not read — ${w.lastError.fold("")(_.sentence)}")
           )
         for
-          g <- agents.host.goal(goal).left.map(_.message.sentence)
+          g <- agents.host.goal(goal).left.map(_.problems.sentences.mkString("; "))
           rows <- upstream()
             .candidates(goal, Candidates.State.New.wire, AgentUpstream.Limit(cfg.scheduler.sweepCandidates.value))
             .left
@@ -255,7 +255,7 @@ final class AcquisitionSweepPipeline(
 
   /** OpenAlex searched live with the goal's queries (the sweep as it was before the candidate search). */
   private def liveDiscover(ctx: RunCtx, goal: Goal.Slug): Either[String, Found] =
-    agents.host.goal(goal).left.map(_.message.sentence).map { g =>
+    agents.host.goal(goal).left.map(_.problems.sentences.mkString("; ")).map { g =>
       val linked = goals.refs(goal, Goal.LinkKind.Query).map(r => Search.Query(r.value))
       val queries = Some(linked).filter(_.nonEmpty).getOrElse(List(Search.Query(g.title.value)))
       val found = queries.flatMap { q =>

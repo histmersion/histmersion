@@ -1,7 +1,7 @@
 package com.histmersion
 package server.agents
 
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -136,9 +136,11 @@ class AutoEnrichRunSuite extends DbSuite with RunTranscripts:
         Ingest.Params(IngestCk, Some(Bundle.Asset.FileName("tin.pdf"))),
         Upload.handed(HandedFile.snapshot(pdf.toFile))
       )
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     def go(n: Int): JobInfo =
-      val j = h.jobs.job(Job.Id.applyUnsafe(accepted.jobId.value)).fold(e => fail(e.message.sentence), identity)
+      val j = h.jobs
+        .job(Job.Id.applyUnsafe(accepted.jobId.value))
+        .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
       if j.isTerminal || n > 600 then j else { Thread.sleep(50); go(n + 1) }
     val j = go(0)
     assertEquals(j.state, JobState.Done, j.toString)

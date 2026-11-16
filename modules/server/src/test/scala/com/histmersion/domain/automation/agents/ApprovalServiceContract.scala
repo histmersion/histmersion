@@ -257,7 +257,7 @@ abstract class ApprovalServiceContract extends EngineStoreSuite:
       a(s)
         .approvalPage(None, ApprovalQuery.Limit(2), Some(ApprovalQuery.Cursor("nope")), None)
         .left
-        .exists(_.sentence.contains("No approval 'nope'"))
+        .exists(_.isNotFound)
     )
     assert(a(s).approvalPage(None, ApprovalQuery.Limit(2), Some(ApprovalQuery.Cursor("999999")), None).isLeft)
     def page(q: ApprovalQuery) = a(s).approvalPage(q, ApprovalQuery.Limit(50), None, None).map(_._1.map(_.id))

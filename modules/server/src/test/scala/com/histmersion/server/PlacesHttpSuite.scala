@@ -143,7 +143,10 @@ class PlacesHttpSuite extends DbSuite:
       assert(tb.contains("\"depth\":2"), tb) // world > land > polity
 
       assertEquals(get(s"$url/api/places/zzh_nope")._1, 404)
-      assertEquals(post(s"$url/api/places/import", "{ not json")._1, 400)
+      assertEquals(
+        post(s"$url/api/places/import", "{ not json")._1,
+        500
+      ) // Io.Corrupt (G60 step 5: a request body read as a file)
       assertEquals(post(s"$url/api/places/import?kind=nonsense", doc.value)._1, 400)
 
       b.stop()
@@ -372,7 +375,7 @@ class PlacesHttpSuite extends DbSuite:
       val (ps, pb) = post(s"$url/api/places", place)
       assertEquals(ps, 200, pb)
       assert(pb.contains("\"id\":\"local_zzn_gornji\""), pb)
-      assertEquals(post(s"$url/api/places", place)._1, 400, "the id is taken")
+      assertEquals(post(s"$url/api/places", place)._1, 409, "the id is taken")
       assertEquals(post(s"$url/api/places", place.replace("fixture map", ""))._1, 400, "no source, no point")
 
       // the MCP tools reach the same handlers
@@ -398,7 +401,7 @@ class PlacesHttpSuite extends DbSuite:
       assert(second.contains("`local_zzn_arkona`"), second)
       val refusedMcp =
         mcp("add_place", """{"label":"Zzn Arkona","kind":"site","lon":140.3,"lat":-20.3,"source":"fixture"}""")
-      assert(refusedMcp.contains("already the id of a place"), refusedMcp)
+      assert(refusedMcp.contains("already exists"), refusedMcp)
 
       wipe()
       b.stop()

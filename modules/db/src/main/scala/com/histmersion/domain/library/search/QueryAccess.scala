@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.search
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.External
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.config.{DbConfig, QueryConfig}
 import com.histmersion.util.database.Db
@@ -88,7 +89,7 @@ object QueryAccess:
       Right(())
     catch
       case e: SQLException =>
-        Left(Problem.Unclassified(Legacy.Text(Option(e.getMessage).getOrElse(e.getClass.getSimpleName))))
+        Left(Problem.Io.Database(Problem.Io.DbOp.Query, External.Reported.of(e)))
     finally
       try c.close()
       catch case _: SQLException => ()

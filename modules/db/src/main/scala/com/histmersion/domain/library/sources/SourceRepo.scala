@@ -1,6 +1,6 @@
 package com.histmersion
 package domain.library.sources
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import hearth.kindlings.optics.syntax.*
 
@@ -490,16 +490,14 @@ private[sources] object SourceRepo:
       Left(aliasTarget(oldCk) match
         case Some(now) =>
           Api.Error(
-            Problem.Unclassified(
-              Legacy.Text(s"'${oldCk.value}' is an old citekey of '${now.value}' — rename '${now.value}' instead")
-            ),
+            Problem.Conflict.Renamed(Problem.TypeName.of(Citekey), Problem.Raw.of(oldCk), Problem.Raw.of(now)),
             Some(Api.Error.Code(Write.CodeInvalid))
           )
         case None => Write.notFound(apiCitekey(oldCk)))
     else if taken(newCk) then
       Left(
         Api.Error(
-          Problem.Unclassified(Legacy.Text(s"'${newCk.value}' is already the citekey of another source")),
+          Problem.Conflict.AlreadyExists(Problem.TypeName.of(Citekey), Problem.Raw.of(newCk)),
           Some(Api.Error.Code(Write.CodeInvalid))
         )
       )
@@ -508,11 +506,7 @@ private[sources] object SourceRepo:
         case Some(other) if other != oldCk =>
           Left(
             Api.Error(
-              Problem.Unclassified(
-                Legacy.Text(
-                  s"'${newCk.value}' is an old citekey of '${other.value}' and still resolves to it — pick another"
-                )
-              ),
+              Problem.Conflict.Aliased(Problem.TypeName.of(Citekey), Problem.Raw.of(newCk), Problem.Raw.of(other)),
               Some(Api.Error.Code(Write.CodeInvalid))
             )
           )
@@ -521,9 +515,7 @@ private[sources] object SourceRepo:
             case Some(id) =>
               Left(
                 Api.Error(
-                  Problem.Unclassified(
-                    Legacy.Text(s"finding id '$id' already exists — '${newCk.value}' would collide with it")
-                  ),
+                  Problem.Conflict.AlreadyExists(Problem.TypeName.of(Finding.Id), Problem.Raw(s"$id")),
                   Some(Api.Error.Code(Write.CodeInvalid))
                 )
               )

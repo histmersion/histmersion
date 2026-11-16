@@ -153,7 +153,7 @@ class RenameHttpSuite extends DbSuite:
       assertEquals(shadow.statusCode, 200, shadow.body)
       assert(shadow.body.contains(s""""citekey":"$New"""") && shadow.body.contains("shadow"), shadow.body)
       assertEquals(get(s"$url/api/sources/$Old").statusCode, 200, "the old key still resolves: no source shadows it")
-      assertEquals(json("POST", s"$url/api/sources/$New/rename", s"""{"newCitekey":"$Other"}""").statusCode, 400)
+      assertEquals(json("POST", s"$url/api/sources/$New/rename", s"""{"newCitekey":"$Other"}""").statusCode, 409)
       assertEquals(json("POST", s"$url/api/sources/zzhttp1900_none/rename", body).statusCode, 404)
       // a PATCH by the old key patches the renamed source
       val patched = json("PATCH", s"$url/api/sources/$Old", """{"summary":"via the alias"}""")

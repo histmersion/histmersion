@@ -1,6 +1,6 @@
 package com.histmersion
 package util.database
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.api.{Write, YearFmt}
 import com.histmersion.util.database.{Param, Sql}
@@ -100,10 +100,11 @@ object RangeSql:
         case (Some(a), Some(b)) if a > b =>
           Left(
             Api.Error(
-              Problem.Unclassified(
-                Legacy.Text(
-                  s"$what: the period would start (${YearFmt(Year(a.value))}) after it ends (${YearFmt(Year(b.value))})"
-                )
+              Problem.Invalid.OutOfRange(
+                Problem.TypeName.of(DeepTime.SignedYear),
+                Problem.Raw.of(a),
+                Problem.Invalid.Bounds(None, Some(Problem.Raw.of(b))),
+                Vector(Problem.Field(what), Problem.Field("periodStart"))
               ),
               Some(Api.Error.Code(Write.CodeInvalid))
             )

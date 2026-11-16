@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.catalogue.evidence
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import io.scalaland.chimney.dsl.*
 import com.histmersion.api.catalogue.EventEntry
 import com.histmersion.domain.catalogue.Place
@@ -85,7 +85,7 @@ final class EventLinksControllers(
   private def eventOrFail(id: Event.Id): Either[Api.Error, EventEntry] =
     events
       .get(events.renamedTo(id).getOrElse(id))
-      .toRight(notFound(Problem.Unclassified(Legacy.Text(s"No event '$id'"))))
+      .toRight(notFound(Problem.NotFound.Entity(Problem.TypeName.of(Event.Id), Problem.Raw(s"$id"))))
 
   /** The names of an event worth searching for. */
   private def namesOf(d: EventEntry): List[String] =
@@ -264,20 +264,20 @@ final class EventLinksControllers(
       case Some(one) =>
         Event.Id
           .option(one)
-          .toRight(notFound(Problem.Unclassified(Legacy.Text(s"No event '$one'"))))
+          .toRight(notFound(Problem.NotFound.Entity(Problem.TypeName.of(Event.Id), Problem.Raw(s"$one"))))
           .flatMap(eventOrFail)
           .flatMap(_ =>
             jobs.start(EventLinksControllers.CandidatesJobKind, JobKinds.Subject(s"candidates of $one"), write = true) {
               (_, _) =>
                 Event.Id
                   .option(one)
-                  .toRight(notFound(Problem.Unclassified(Legacy.Text(s"No event '$one'"))))
+                  .toRight(notFound(Problem.NotFound.Entity(Problem.TypeName.of(Event.Id), Problem.Raw(s"$one"))))
                   .flatMap(eventOrFail)
                   .map(d =>
                     BackgroundJob.Outcome.Summary(s"${compute(d).candidates.size} candidate(s) for ${d.event.id}")
                   )
                   .left
-                  .map(e => e.message)
+                  .map(e => e.problems.head)
             }
           )
       case None =>

@@ -226,39 +226,43 @@
 == figures, refused
 400 {
   "code" : null,
-  "message" : {
-    "case" : "Broken",
-    "data" : {
-      "at" : [
-      ],
-      "rule" : {
-        "AssetBase64" : {
-          "asset" : "bad.png",
-          "reported" : "Illegal base64 character 25"
+  "problems" : [
+    {
+      "case" : "Broken",
+      "data" : {
+        "at" : [
+        ],
+        "rule" : {
+          "AssetBase64" : {
+            "asset" : "bad.png",
+            "reported" : "Illegal base64 character 25"
+          }
         }
-      }
-    },
-    "group" : "Invalid",
-    "text" : "asset 'bad.png': not valid base64 (Illegal base64 character 25)"
-  }
+      },
+      "group" : "Invalid",
+      "text" : "asset 'bad.png': not valid base64 (Illegal base64 character 25)"
+    }
+  ]
 }
 == figures, empty
 400 {
   "code" : null,
-  "message" : {
-    "case" : "Broken",
-    "data" : {
-      "at" : [
-      ],
-      "rule" : {
-        "AssetEmpty" : {
-          "asset" : "none.png"
+  "problems" : [
+    {
+      "case" : "Broken",
+      "data" : {
+        "at" : [
+        ],
+        "rule" : {
+          "AssetEmpty" : {
+            "asset" : "none.png"
+          }
         }
-      }
-    },
-    "group" : "Invalid",
-    "text" : "asset 'none.png': empty"
-  }
+      },
+      "group" : "Invalid",
+      "text" : "asset 'none.png': empty"
+    }
+  ]
 }
 == patch fig-a
 200 {
@@ -311,26 +315,39 @@
 == patch, an end before the start
 400 {
   "code" : "invalid",
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
-      "text" : "asset 'zqfig2001_tell/fig-c.jpg': the period would start (1400 BCE) after it ends (1500 BCE)"
-    },
-    "group" : "Unclassified",
-    "text" : "asset 'zqfig2001_tell/fig-c.jpg': the period would start (1400 BCE) after it ends (1500 BCE)"
-  }
+  "problems" : [
+    {
+      "case" : "OutOfRange",
+      "data" : {
+        "at" : [
+          "asset 'zqfig2001_tell/fig-c.jpg'",
+          "periodStart"
+        ],
+        "bounds" : {
+          "greatest" : "-1500",
+          "least" : null
+        },
+        "raw" : "-1400",
+        "typeName" : "DeepTime.SignedYear"
+      },
+      "group" : "Invalid",
+      "text" : "asset 'zqfig2001_tell/fig-c.jpg'.periodStart: signed year -1400 is above -1500"
+    }
+  ]
 }
 == patch, no such asset
-400 {
+404 {
   "code" : "not_found",
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
+  "problems" : [
+    {
+      "case" : "Unclassified",
+      "data" : {
+        "text" : "No asset 'zqfig2001_tell/nope.png'"
+      },
+      "group" : "Unclassified",
       "text" : "No asset 'zqfig2001_tell/nope.png'"
-    },
-    "group" : "Unclassified",
-    "text" : "No asset 'zqfig2001_tell/nope.png'"
-  }
+    }
+  ]
 }
 == link to a place
 200 {
@@ -388,16 +405,18 @@
   "xywh" : null
 }
 == link, no such asset
-400 {
+404 {
   "code" : "not_found",
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
+  "problems" : [
+    {
+      "case" : "Unclassified",
+      "data" : {
+        "text" : "No asset 'zqfig2001_tell/nope.png'"
+      },
+      "group" : "Unclassified",
       "text" : "No asset 'zqfig2001_tell/nope.png'"
-    },
-    "group" : "Unclassified",
-    "text" : "No asset 'zqfig2001_tell/nope.png'"
-  }
+    }
+  ]
 }
 == link, a bad relation
 500 Internal server error
@@ -418,16 +437,18 @@
   "id" : 7
 }
 == delete a link, again
-400 {
+404 {
   "code" : "not_found",
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
+  "problems" : [
+    {
+      "case" : "Unclassified",
+      "data" : {
+        "text" : "No asset link #999"
+      },
+      "group" : "Unclassified",
       "text" : "No asset link #999"
-    },
-    "group" : "Unclassified",
-    "text" : "No asset link #999"
-  }
+    }
+  ]
 }
 == cover from the Calibre library
 200 {
@@ -465,50 +486,59 @@
 == cover, another provider
 400 {
   "code" : "invalid",
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
+  "problems" : [
+    {
+      "case" : "Unclassified",
+      "data" : {
+        "text" : "a cover is uploaded from calibre only (Open Library's come through `media covers`)"
+      },
+      "group" : "Unclassified",
       "text" : "a cover is uploaded from calibre only (Open Library's come through `media covers`)"
-    },
-    "group" : "Unclassified",
-    "text" : "a cover is uploaded from calibre only (Open Library's come through `media covers`)"
-  }
+    }
+  ]
 }
 == cover, not an image
 400 {
   "code" : "invalid",
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
+  "problems" : [
+    {
+      "case" : "Unclassified",
+      "data" : {
+        "text" : "the cover is not a JPEG, PNG, GIF or WebP image"
+      },
+      "group" : "Unclassified",
       "text" : "the cover is not a JPEG, PNG, GIF or WebP image"
-    },
-    "group" : "Unclassified",
-    "text" : "the cover is not a JPEG, PNG, GIF or WebP image"
-  }
+    }
+  ]
 }
 == cover, no such source
 404 {
   "code" : "not_found",
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
+  "problems" : [
+    {
+      "case" : "Entity",
+      "data" : {
+        "key" : "zqnone1900_x",
+        "typeName" : "Citekey"
+      },
+      "group" : "NotFound",
       "text" : "No source 'zqnone1900_x'"
-    },
-    "group" : "Unclassified",
-    "text" : "No source 'zqnone1900_x'"
-  }
+    }
+  ]
 }
 == cover, empty
 400 {
   "code" : "invalid",
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
+  "problems" : [
+    {
+      "case" : "Unclassified",
+      "data" : {
+        "text" : "the cover is empty"
+      },
+      "group" : "Unclassified",
       "text" : "the cover is empty"
-    },
-    "group" : "Unclassified",
-    "text" : "the cover is empty"
-  }
+    }
+  ]
 }
 == covers and illustrations, a dry run
 200 {
@@ -549,14 +579,16 @@
 == covers over every source, refused
 400 {
   "code" : "invalid",
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
+  "problems" : [
+    {
+      "case" : "Unclassified",
+      "data" : {
+        "text" : "a run over every source is a job: POST /api/media/covers/job"
+      },
+      "group" : "Unclassified",
       "text" : "a run over every source is a job: POST /api/media/covers/job"
-    },
-    "group" : "Unclassified",
-    "text" : "a run over every source is a job: POST /api/media/covers/job"
-  }
+    }
+  ]
 }
 == fill licences, a dry run
 200 {
@@ -666,16 +698,18 @@
   "width" : 120
 }
 == GET /api/sources/zqfig2001_tell/assets/nope.png/detail
-400 {
+404 {
   "code" : "not_found",
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
+  "problems" : [
+    {
+      "case" : "Unclassified",
+      "data" : {
+        "text" : "No asset 'zqfig2001_tell/nope.png'"
+      },
+      "group" : "Unclassified",
       "text" : "No asset 'zqfig2001_tell/nope.png'"
-    },
-    "group" : "Unclassified",
-    "text" : "No asset 'zqfig2001_tell/nope.png'"
-  }
+    }
+  ]
 }
 == GET /api/asset-links
 200 {
@@ -846,96 +880,106 @@
 == GET /iiif/zqfig2001_tell/nope.png/info.json
 404 {
   "code" : "not_found",
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
+  "problems" : [
+    {
+      "case" : "Unclassified",
+      "data" : {
+        "text" : "No asset 'nope.png' for 'zqfig2001_tell'"
+      },
+      "group" : "Unclassified",
       "text" : "No asset 'nope.png' for 'zqfig2001_tell'"
-    },
-    "group" : "Unclassified",
-    "text" : "No asset 'nope.png' for 'zqfig2001_tell'"
-  }
+    }
+  ]
 }
 == GET /iiif/zqfig2001_tell/fig-a.png/0,0,10,10/full/0/default.png
-404 {
+400 {
   "code" : null,
-  "message" : {
-    "case" : "Unreadable",
-    "data" : {
-      "at" : [
-      ],
-      "examples" : [
-        "max",
-        "300,",
-        ",200",
-        "300,200",
-        "!300,200"
-      ],
-      "raw" : "full",
-      "typeName" : "Iiif.Size"
-    },
-    "group" : "Invalid",
-    "text" : "'full' is not an IIIF size (e.g. max, 300,, ,200, 300,200, !300,200)"
-  }
+  "problems" : [
+    {
+      "case" : "Unreadable",
+      "data" : {
+        "at" : [
+        ],
+        "examples" : [
+          "max",
+          "300,",
+          ",200",
+          "300,200",
+          "!300,200"
+        ],
+        "raw" : "full",
+        "typeName" : "Iiif.Size"
+      },
+      "group" : "Invalid",
+      "text" : "'full' is not an IIIF size (e.g. max, 300,, ,200, 300,200, !300,200)"
+    }
+  ]
 }
 == GET /iiif/zqfig2001_tell/fig-a.png/full/90,/0/default.tiff
-404 {
+400 {
   "code" : null,
-  "message" : {
-    "case" : "Unreadable",
-    "data" : {
-      "at" : [
-      ],
-      "examples" : [
-        "jpg",
-        "png"
-      ],
-      "raw" : "tiff",
-      "typeName" : "Iiif.Format"
-    },
-    "group" : "Invalid",
-    "text" : "'tiff' is not an IIIF format (e.g. jpg, png)"
-  }
+  "problems" : [
+    {
+      "case" : "Unreadable",
+      "data" : {
+        "at" : [
+        ],
+        "examples" : [
+          "jpg",
+          "png"
+        ],
+        "raw" : "tiff",
+        "typeName" : "Iiif.Format"
+      },
+      "group" : "Invalid",
+      "text" : "'tiff' is not an IIIF format (e.g. jpg, png)"
+    }
+  ]
 }
 == GET /iiif/zqfig2001_tell/fig-a.png/nonsense/full/0/default.jpg
-404 {
+400 {
   "code" : null,
-  "message" : {
-    "case" : "Unreadable",
-    "data" : {
-      "at" : [
-      ],
-      "examples" : [
-        "full",
-        "10,20,300,400"
-      ],
-      "raw" : "nonsense",
-      "typeName" : "Iiif.Region"
-    },
-    "group" : "Invalid",
-    "text" : "'nonsense' is not an IIIF region (e.g. full, 10,20,300,400)"
-  }
+  "problems" : [
+    {
+      "case" : "Unreadable",
+      "data" : {
+        "at" : [
+        ],
+        "examples" : [
+          "full",
+          "10,20,300,400"
+        ],
+        "raw" : "nonsense",
+        "typeName" : "Iiif.Region"
+      },
+      "group" : "Invalid",
+      "text" : "'nonsense' is not an IIIF region (e.g. full, 10,20,300,400)"
+    }
+  ]
 }
 == GET /iiif/zqfig2001_tell/fig-a.png/full/full/90/default.jpg
-404 {
+400 {
   "code" : null,
-  "message" : {
-    "case" : "Unreadable",
-    "data" : {
-      "at" : [
-      ],
-      "examples" : [
-        "max",
-        "300,",
-        ",200",
-        "300,200",
-        "!300,200"
-      ],
-      "raw" : "full",
-      "typeName" : "Iiif.Size"
-    },
-    "group" : "Invalid",
-    "text" : "'full' is not an IIIF size (e.g. max, 300,, ,200, 300,200, !300,200)"
-  }
+  "problems" : [
+    {
+      "case" : "Unreadable",
+      "data" : {
+        "at" : [
+        ],
+        "examples" : [
+          "max",
+          "300,",
+          ",200",
+          "300,200",
+          "!300,200"
+        ],
+        "raw" : "full",
+        "typeName" : "Iiif.Size"
+      },
+      "group" : "Invalid",
+      "text" : "'full' is not an IIIF size (e.g. max, 300,, ,200, 300,200, !300,200)"
+    }
+  ]
 }
 == GET /api/media
 200 {
@@ -1513,26 +1557,30 @@
 == GET /api/media/not-a-uid
 404 {
   "code" : "not_found",
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
+  "problems" : [
+    {
+      "case" : "Unclassified",
+      "data" : {
+        "text" : "No picture 'not-a-uid'"
+      },
+      "group" : "Unclassified",
       "text" : "No picture 'not-a-uid'"
-    },
-    "group" : "Unclassified",
-    "text" : "No picture 'not-a-uid'"
-  }
+    }
+  ]
 }
 == GET /api/media/UUID
 404 {
   "code" : "not_found",
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
+  "problems" : [
+    {
+      "case" : "Unclassified",
+      "data" : {
+        "text" : "No picture 'UUID'"
+      },
+      "group" : "Unclassified",
       "text" : "No picture 'UUID'"
-    },
-    "group" : "Unclassified",
-    "text" : "No picture 'UUID'"
-  }
+    }
+  ]
 }
 == GET /api/media-geo
 200 [
@@ -2030,29 +2078,29 @@
 == GET /source/zqfig2001_tell/assets/fig-c.jpg (bytes)
 200 image/jpeg 6918 19a8cd6b43d945db1e2168e3e738fad64f53f1d239e03d23fef98805a9053445
 == GET /source/zqfig2001_tell/assets/fig-a-again.png (bytes)
-404 application/json {"message":{"group":"Unclassified","case":"Unclassified","data":{"text":"No asset 'fig-a-again.png' for 'zqfig2001_tell'"},"text":"No asset 'fig-a-again.png' for 'zqfig2001_tell'"},"code":"not_found"}
+404 application/json {"problems":[{"group":"Unclassified","case":"Unclassified","data":{"text":"No asset 'fig-a-again.png' for 'zqfig2001_tell'"},"text":"No asset 'fig-a-again.png' for 'zqfig2001_tell'"}],"code":"not_found"}
 == GET /source/zqfig2001_tell/assets/nope.png (bytes)
-404 application/json {"message":{"group":"Unclassified","case":"Unclassified","data":{"text":"No asset 'nope.png' for 'zqfig2001_tell'"},"text":"No asset 'nope.png' for 'zqfig2001_tell'"},"code":"not_found"}
+404 application/json {"problems":[{"group":"Unclassified","case":"Unclassified","data":{"text":"No asset 'nope.png' for 'zqfig2001_tell'"},"text":"No asset 'nope.png' for 'zqfig2001_tell'"}],"code":"not_found"}
 == GET /iiif/zqfig2001_tell/fig-a.png/full/full/0/default.png (bytes)
-404 application/json {"message":{"group":"Invalid","case":"Unreadable","data":{"typeName":"Iiif.Size","raw":"full","examples":["max","300,",",200","300,200","!300,200"],"at":[]},"text":"'full' is not an IIIF size (e.g. max, 300,, ,200, 300,200, !300,200)"},"code":null}
+400 application/json {"problems":[{"group":"Invalid","case":"Unreadable","data":{"typeName":"Iiif.Size","raw":"full","examples":["max","300,",",200","300,200","!300,200"],"at":[]},"text":"'full' is not an IIIF size (e.g. max, 300,, ,200, 300,200, !300,200)"}],"code":null}
 == GET /iiif/zqfig2001_tell/fig-a.png/0,0,32,24/full/0/default.jpg (bytes)
-404 application/json {"message":{"group":"Invalid","case":"Unreadable","data":{"typeName":"Iiif.Size","raw":"full","examples":["max","300,",",200","300,200","!300,200"],"at":[]},"text":"'full' is not an IIIF size (e.g. max, 300,, ,200, 300,200, !300,200)"},"code":null}
+400 application/json {"problems":[{"group":"Invalid","case":"Unreadable","data":{"typeName":"Iiif.Size","raw":"full","examples":["max","300,",",200","300,200","!300,200"],"at":[]},"text":"'full' is not an IIIF size (e.g. max, 300,, ,200, 300,200, !300,200)"}],"code":null}
 == GET /iiif/zqfig2001_tell/fig-c.jpg/full/60,/0/default.jpg (bytes)
 200 image/jpeg 1634 cf74894459a3477606b531c935ce48690113d68d7dd34264586e106539ffc804
 == GET /iiif/zqfig2001_tell/fig-c.jpg/pct:10,10,50,50/30,20/0/default.png (bytes)
-404 application/json {"message":{"group":"Invalid","case":"Unreadable","data":{"typeName":"Iiif.Region","raw":"pct:10,10,50,50","examples":["full","10,20,300,400"],"at":[]},"text":"'pct:10,10,50,50' is not an IIIF region (e.g. full, 10,20,300,400)"},"code":null}
+400 application/json {"problems":[{"group":"Invalid","case":"Unreadable","data":{"typeName":"Iiif.Region","raw":"pct:10,10,50,50","examples":["full","10,20,300,400"],"at":[]},"text":"'pct:10,10,50,50' is not an IIIF region (e.g. full, 10,20,300,400)"}],"code":null}
 == GET /api/media/asset:zqfig2001_tell/fig-c.jpg/thumb (bytes)
-404 application/json {"message":{"group":"Unclassified","case":"Unclassified","data":{"text":"no such endpoint: /api/media/asset:zqfig2001_tell/fig-c.jpg/thumb"},"text":"no such endpoint: /api/media/asset:zqfig2001_tell/fig-c.jpg/thumb"},"code":null}
+404 application/json {"problems":[{"group":"Unclassified","case":"Unclassified","data":{"text":"no such endpoint: /api/media/asset:zqfig2001_tell/fig-c.jpg/thumb"},"text":"no such endpoint: /api/media/asset:zqfig2001_tell/fig-c.jpg/thumb"}],"code":null}
 == GET /api/media/asset:zqfig2001_tell/fig-c.jpg/file (bytes)
-404 application/json {"message":{"group":"Unclassified","case":"Unclassified","data":{"text":"no such endpoint: /api/media/asset:zqfig2001_tell/fig-c.jpg/file"},"text":"no such endpoint: /api/media/asset:zqfig2001_tell/fig-c.jpg/file"},"code":null}
+404 application/json {"problems":[{"group":"Unclassified","case":"Unclassified","data":{"text":"no such endpoint: /api/media/asset:zqfig2001_tell/fig-c.jpg/file"},"text":"no such endpoint: /api/media/asset:zqfig2001_tell/fig-c.jpg/file"}],"code":null}
 == GET /api/media/asset:zqfig2001_tell/fig-a.png/thumb (bytes)
-404 application/json {"message":{"group":"Unclassified","case":"Unclassified","data":{"text":"no such endpoint: /api/media/asset:zqfig2001_tell/fig-a.png/thumb"},"text":"no such endpoint: /api/media/asset:zqfig2001_tell/fig-a.png/thumb"},"code":null}
+404 application/json {"problems":[{"group":"Unclassified","case":"Unclassified","data":{"text":"no such endpoint: /api/media/asset:zqfig2001_tell/fig-a.png/thumb"},"text":"no such endpoint: /api/media/asset:zqfig2001_tell/fig-a.png/thumb"}],"code":null}
 == GET /api/media/asset:calibre:5/thumb (bytes)
-404 application/json {"message":{"group":"Unclassified","case":"Unclassified","data":{"text":"no such endpoint: /api/media/asset:calibre:5/thumb"},"text":"no such endpoint: /api/media/asset:calibre:5/thumb"},"code":null}
+404 application/json {"problems":[{"group":"Unclassified","case":"Unclassified","data":{"text":"no such endpoint: /api/media/asset:calibre:5/thumb"},"text":"no such endpoint: /api/media/asset:calibre:5/thumb"}],"code":null}
 == GET /api/media/asset:calibre:5/file (bytes)
-404 application/json {"message":{"group":"Unclassified","case":"Unclassified","data":{"text":"no such endpoint: /api/media/asset:calibre:5/file"},"text":"no such endpoint: /api/media/asset:calibre:5/file"},"code":null}
+404 application/json {"problems":[{"group":"Unclassified","case":"Unclassified","data":{"text":"no such endpoint: /api/media/asset:calibre:5/file"},"text":"no such endpoint: /api/media/asset:calibre:5/file"}],"code":null}
 == GET /api/media/not-a-uid/file (bytes)
-404 application/json {"message":{"group":"Unclassified","case":"Unclassified","data":{"text":"no such endpoint: /api/media/not-a-uid/file"},"text":"no such endpoint: /api/media/not-a-uid/file"},"code":null}
+404 application/json {"problems":[{"group":"Unclassified","case":"Unclassified","data":{"text":"no such endpoint: /api/media/not-a-uid/file"},"text":"no such endpoint: /api/media/not-a-uid/file"}],"code":null}
 == tool assets {"citekey":"zqfig2001_tell"}
 ### 3 asset(s) · zqfig2001_tell
 
@@ -2134,22 +2182,22 @@ media/8/153/97?kind=photo 200 244 fd507466b18a6c266c366c9dcb63692284c1ba088f0d69
 media/8/153/97?provider=source 200 244 fd507466b18a6c266c366c9dcb63692284c1ba088f0d6979612e5d204cfbcbb2 "2f647f9c6a9be7ce0511ac91"
 media/8/153/97?license=none 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "3b486803d134354505c5e32b"
 media/8/153/97?license=CC0-1.0 200 244 fd507466b18a6c266c366c9dcb63692284c1ba088f0d6979612e5d204cfbcbb2 "47509550fb3a62ccac57f906"
-media/12/2441/1550 400 147 639d8231e084386d70c3d54065b90ae4faa69f1954d602fc77e7367ebc8bccdd -
-media/12/2441/1550?from=-1350&to=-1320 400 147 639d8231e084386d70c3d54065b90ae4faa69f1954d602fc77e7367ebc8bccdd -
-media/12/2441/1550?from=-1700&to=-1650 400 147 639d8231e084386d70c3d54065b90ae4faa69f1954d602fc77e7367ebc8bccdd -
-media/12/2441/1550?kind=plan 400 147 639d8231e084386d70c3d54065b90ae4faa69f1954d602fc77e7367ebc8bccdd -
-media/12/2441/1550?kind=photo 400 147 639d8231e084386d70c3d54065b90ae4faa69f1954d602fc77e7367ebc8bccdd -
-media/12/2441/1550?provider=source 400 147 639d8231e084386d70c3d54065b90ae4faa69f1954d602fc77e7367ebc8bccdd -
-media/12/2441/1550?license=none 400 147 639d8231e084386d70c3d54065b90ae4faa69f1954d602fc77e7367ebc8bccdd -
-media/12/2441/1550?license=CC0-1.0 400 147 639d8231e084386d70c3d54065b90ae4faa69f1954d602fc77e7367ebc8bccdd -
-media/12/2451/1562 400 147 639d8231e084386d70c3d54065b90ae4faa69f1954d602fc77e7367ebc8bccdd -
-media/12/2451/1562?from=-1350&to=-1320 400 147 639d8231e084386d70c3d54065b90ae4faa69f1954d602fc77e7367ebc8bccdd -
-media/12/2451/1562?from=-1700&to=-1650 400 147 639d8231e084386d70c3d54065b90ae4faa69f1954d602fc77e7367ebc8bccdd -
-media/12/2451/1562?kind=plan 400 147 639d8231e084386d70c3d54065b90ae4faa69f1954d602fc77e7367ebc8bccdd -
-media/12/2451/1562?kind=photo 400 147 639d8231e084386d70c3d54065b90ae4faa69f1954d602fc77e7367ebc8bccdd -
-media/12/2451/1562?provider=source 400 147 639d8231e084386d70c3d54065b90ae4faa69f1954d602fc77e7367ebc8bccdd -
-media/12/2451/1562?license=none 400 147 639d8231e084386d70c3d54065b90ae4faa69f1954d602fc77e7367ebc8bccdd -
-media/12/2451/1562?license=CC0-1.0 400 147 639d8231e084386d70c3d54065b90ae4faa69f1954d602fc77e7367ebc8bccdd -
+media/12/2441/1550 400 150 f63bbb746d5bb962c6f819f1e5a35dc915bec410fa65b5e133340635d17fc802 -
+media/12/2441/1550?from=-1350&to=-1320 400 150 f63bbb746d5bb962c6f819f1e5a35dc915bec410fa65b5e133340635d17fc802 -
+media/12/2441/1550?from=-1700&to=-1650 400 150 f63bbb746d5bb962c6f819f1e5a35dc915bec410fa65b5e133340635d17fc802 -
+media/12/2441/1550?kind=plan 400 150 f63bbb746d5bb962c6f819f1e5a35dc915bec410fa65b5e133340635d17fc802 -
+media/12/2441/1550?kind=photo 400 150 f63bbb746d5bb962c6f819f1e5a35dc915bec410fa65b5e133340635d17fc802 -
+media/12/2441/1550?provider=source 400 150 f63bbb746d5bb962c6f819f1e5a35dc915bec410fa65b5e133340635d17fc802 -
+media/12/2441/1550?license=none 400 150 f63bbb746d5bb962c6f819f1e5a35dc915bec410fa65b5e133340635d17fc802 -
+media/12/2441/1550?license=CC0-1.0 400 150 f63bbb746d5bb962c6f819f1e5a35dc915bec410fa65b5e133340635d17fc802 -
+media/12/2451/1562 400 150 f63bbb746d5bb962c6f819f1e5a35dc915bec410fa65b5e133340635d17fc802 -
+media/12/2451/1562?from=-1350&to=-1320 400 150 f63bbb746d5bb962c6f819f1e5a35dc915bec410fa65b5e133340635d17fc802 -
+media/12/2451/1562?from=-1700&to=-1650 400 150 f63bbb746d5bb962c6f819f1e5a35dc915bec410fa65b5e133340635d17fc802 -
+media/12/2451/1562?kind=plan 400 150 f63bbb746d5bb962c6f819f1e5a35dc915bec410fa65b5e133340635d17fc802 -
+media/12/2451/1562?kind=photo 400 150 f63bbb746d5bb962c6f819f1e5a35dc915bec410fa65b5e133340635d17fc802 -
+media/12/2451/1562?provider=source 400 150 f63bbb746d5bb962c6f819f1e5a35dc915bec410fa65b5e133340635d17fc802 -
+media/12/2451/1562?license=none 400 150 f63bbb746d5bb962c6f819f1e5a35dc915bec410fa65b5e133340635d17fc802 -
+media/12/2451/1562?license=CC0-1.0 400 150 f63bbb746d5bb962c6f819f1e5a35dc915bec410fa65b5e133340635d17fc802 -
 # rows
 ## assets 4 rows
 { "author" : null, "bytes" : 2104, "caption" : null, "citekey" : null, "credit" : "Cover: the local Calibre library", "geom" : null, "height" : 60, "kind" : "photo", "license" : null, "license_url" : null, "mime" : "image/jpeg", "name" : "cover-calibre-5.jpeg", "origin" : "instance:med", "original_url" : null, "period" : null, "provider" : "calibre", "provider_key" : "5", "retrieved_at" : "TS", "sha256" : "0d2c8f27b9f511117f476a6557ac6907c13cea84727db478126a3d12e145eb18", "source_url" : "calibre:book/5", "thumb" : 20, "thumbSha" : "3cc5f044f7a2776b3e40a5ee385f66c8fc4e9eff9288f35ddf8eb303eecb1727", "thumb_height" : 247, "thumb_mime" : "image/jpeg", "thumb_width" : 330, "uid" : "asset:calibre:5", "updated_at" : "TS", "width" : 40 }

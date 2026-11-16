@@ -195,9 +195,12 @@ object ImportService:
       place
         .map(_.value.trim)
         .filter(_.nonEmpty)
-        .map(p => Problem.Unclassified(Legacy.Text(s"No place '$p'")))
+        .map(p => Problem.NotFound.Entity(Problem.TypeName.of(Place.Id), Problem.Raw(s"$p")))
         .orElse(
-          event.map(_.value.trim).filter(_.nonEmpty).map(e => Problem.Unclassified(Legacy.Text(s"No event '$e'")))
+          event
+            .map(_.value.trim)
+            .filter(_.nonEmpty)
+            .map(e => Problem.NotFound.Entity(Problem.TypeName.of(Event.Id), Problem.Raw(s"$e")))
         )
 
     def targets(

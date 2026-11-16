@@ -143,8 +143,8 @@ abstract class ArticleServiceContract extends ResearchStoreSuite:
       Me
     )
     assertEquals(
-      refused.left.map(_.message).left.map(_.sentence),
-      Left("critique reason zra>zrb: 'zra' is not a citekey")
+      refused.left.map(_.problems.head).left.map(_.sentence),
+      Left("reasons.zra>zrb: unknown citekey 'zra'")
     )
     val long = s.articles.patch(
       Walls,

@@ -171,7 +171,7 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
         val g = Option(raw.value.trim).filter(_.nonEmpty).orElse(m.goal.map(_.value)).getOrElse("")
         com.histmersion.domain.automation.Goal.Slug
           .option(g)
-          .toRight(Api.Error(Problem.Unclassified(Legacy.Text(s"No goal '$g'"))))
+          .toRight(Api.Error(Problem.NotFound.Entity(Problem.TypeName.of(Goal.Slug), Problem.Raw(s"$g"))))
           .flatMap(site.goal(_))
           .map(_.slug)
           .flatMap(s =>

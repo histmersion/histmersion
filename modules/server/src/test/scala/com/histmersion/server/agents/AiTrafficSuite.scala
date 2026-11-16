@@ -213,7 +213,7 @@ class AiTrafficSuite extends munit.FunSuite:
         sb ++= up.requests
         outcome match
           case Left(Left(limit)) => sb ++= s"engine: plan limit: ${limit.getMessage} (until ${limit.until})\n"
-          case Left(Right(e))    => sb ++= s"engine: provider error: ${e.message.sentence}\n"
+          case Left(Right(e))    => sb ++= s"engine: provider error: ${e.problems.sentences.mkString("; ")}\n"
           case Right(res)        =>
             sb ++= s"answer: ${res.finalAnswer.fold(af => s"failed: ${Engine.answerProblem(af, res.finishReason).sentence}", a => a.asJson.noSpaces)}\n"
             sb ++= s"raw answer: ${LlmClient.rawAnswer(res.finalAnswer)}\n"

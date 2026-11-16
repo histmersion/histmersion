@@ -4497,14 +4497,16 @@
 == GET /api/facets?field=nonsense
 400 {
   "code" : null,
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
+  "problems" : [
+    {
+      "case" : "Unclassified",
+      "data" : {
+        "text" : "unknown facet field 'nonsense' (one of: tags, authors, places, topics, status, provenance)"
+      },
+      "group" : "Unclassified",
       "text" : "unknown facet field 'nonsense' (one of: tags, authors, places, topics, status, provenance)"
-    },
-    "group" : "Unclassified",
-    "text" : "unknown facet field 'nonsense' (one of: tags, authors, places, topics, status, provenance)"
-  }
+    }
+  ]
 }
 == GET /api/findings
 200 [
@@ -17403,38 +17405,44 @@
 == GET /api/aggregate?by=nonsense
 400 {
   "code" : null,
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
+  "problems" : [
+    {
+      "case" : "Unclassified",
+      "data" : {
+        "text" : "unsupported by='nonsense' — use time | region | time,region | region,time"
+      },
+      "group" : "Unclassified",
       "text" : "unsupported by='nonsense' — use time | region | time,region | region,time"
-    },
-    "group" : "Unclassified",
-    "text" : "unsupported by='nonsense' — use time | region | time,region | region,time"
-  }
+    }
+  ]
 }
 == GET /api/aggregate?unit=nonsense
 400 {
   "code" : null,
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
+  "problems" : [
+    {
+      "case" : "Unclassified",
+      "data" : {
+        "text" : "unsupported unit='nonsense' — use sources, findings or starts"
+      },
+      "group" : "Unclassified",
       "text" : "unsupported unit='nonsense' — use sources, findings or starts"
-    },
-    "group" : "Unclassified",
-    "text" : "unsupported unit='nonsense' — use sources, findings or starts"
-  }
+    }
+  ]
 }
 == GET /api/aggregate?from=-1000000000000&to=1000000000000&size=1
 400 {
   "code" : null,
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
+  "problems" : [
+    {
+      "case" : "Unclassified",
+      "data" : {
+        "text" : "that window needs 3001 buckets of 1 year(s), over the 2000 allowed (ui.max-buckets) — narrow `from`/`to`"
+      },
+      "group" : "Unclassified",
       "text" : "that window needs 3001 buckets of 1 year(s), over the 2000 allowed (ui.max-buckets) — narrow `from`/`to`"
-    },
-    "group" : "Unclassified",
-    "text" : "that window needs 3001 buckets of 1 year(s), over the 2000 allowed (ui.max-buckets) — narrow `from`/`to`"
-  }
+    }
+  ]
 }
 == tool search {"query":"tin"}
 ### 2 source(s)
@@ -17990,97 +17998,111 @@ _unsupported unit='nonsense' — use sources, findings or starts_
   "truncated" : false
 }
 == POST /api/query SELECT 1; SELECT 2
-400 {
+403 {
   "code" : null,
-  "message" : {
-    "case" : "Policy",
-    "data" : {
-      "rule" : "OneStatement"
-    },
-    "group" : "Refused",
-    "text" : "a query runs exactly one statement: drop the ';'-separated batch and ask again"
-  }
+  "problems" : [
+    {
+      "case" : "Policy",
+      "data" : {
+        "rule" : "OneStatement"
+      },
+      "group" : "Refused",
+      "text" : "a query runs exactly one statement: drop the ';'-separated batch and ask again"
+    }
+  ]
 }
 == POST /api/query DELETE FROM sources
 400 {
   "code" : null,
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
+  "problems" : [
+    {
+      "case" : "Unclassified",
+      "data" : {
+        "text" : "ERROR: cannot execute DELETE in a read-only transaction"
+      },
+      "group" : "Unclassified",
       "text" : "ERROR: cannot execute DELETE in a read-only transaction"
-    },
-    "group" : "Unclassified",
-    "text" : "ERROR: cannot execute DELETE in a read-only transaction"
-  }
+    }
+  ]
 }
 == POST /api/query SET TRANSACTION READ WRITE
 400 {
   "code" : null,
-  "message" : {
-    "case" : "Unknown",
-    "data" : {
-      "at" : [
-      ],
-      "known" : [
-        "SELECT",
-        "WITH"
-      ],
-      "raw" : "SET",
-      "typeName" : "Query.Statement"
-    },
-    "group" : "Invalid",
-    "text" : "unknown query statement 'SET' (one of: SELECT, WITH)"
-  }
+  "problems" : [
+    {
+      "case" : "Unknown",
+      "data" : {
+        "at" : [
+        ],
+        "known" : [
+          "SELECT",
+          "WITH"
+        ],
+        "raw" : "SET",
+        "typeName" : "Query.Statement"
+      },
+      "group" : "Invalid",
+      "text" : "unknown query statement 'SET' (one of: SELECT, WITH)"
+    }
+  ]
 }
 == POST /api/query WITH x AS (DELETE FROM sources RETURNING 1) SELECT * FROM x
 400 {
   "code" : null,
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
+  "problems" : [
+    {
+      "case" : "Unclassified",
+      "data" : {
+        "text" : "ERROR: cannot execute SELECT in a read-only transaction"
+      },
+      "group" : "Unclassified",
       "text" : "ERROR: cannot execute SELECT in a read-only transaction"
-    },
-    "group" : "Unclassified",
-    "text" : "ERROR: cannot execute SELECT in a read-only transaction"
-  }
+    }
+  ]
 }
 == POST /api/query SELECT pg_read_file('/etc/hosts')
 400 {
   "code" : null,
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
+  "problems" : [
+    {
+      "case" : "Unclassified",
+      "data" : {
+        "text" : "ERROR: permission denied for function pg_read_file"
+      },
+      "group" : "Unclassified",
       "text" : "ERROR: permission denied for function pg_read_file"
-    },
-    "group" : "Unclassified",
-    "text" : "ERROR: permission denied for function pg_read_file"
-  }
+    }
+  ]
 }
 == POST /api/query SELECT nonsense FROM nowhere
 400 {
   "code" : null,
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
+  "problems" : [
+    {
+      "case" : "Unclassified",
+      "data" : {
+        "text" : "ERROR: relation \"nowhere\" does not exist   Position: 22"
+      },
+      "group" : "Unclassified",
       "text" : "ERROR: relation \"nowhere\" does not exist   Position: 22"
-    },
-    "group" : "Unclassified",
-    "text" : "ERROR: relation \"nowhere\" does not exist   Position: 22"
-  }
+    }
+  ]
 }
 == POST /api/query 
 400 {
   "code" : null,
-  "message" : {
-    "case" : "Missing",
-    "data" : {
-      "at" : [
-      ],
-      "field" : "sql"
-    },
-    "group" : "Invalid",
-    "text" : "sql is required"
-  }
+  "problems" : [
+    {
+      "case" : "Missing",
+      "data" : {
+        "at" : [
+        ],
+        "field" : "sql"
+      },
+      "group" : "Invalid",
+      "text" : "sql is required"
+    }
+  ]
 }
 == tool query
 ### 2 row(s) · N ms

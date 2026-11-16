@@ -688,7 +688,7 @@
               }
             }
           },
-          "404" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -778,7 +778,7 @@
               }
             }
           },
-          "404" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -854,36 +854,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: query parameter q, Invalid value for: query parameter regex, Invalid value for: query parameter limit, Invalid value for: query parameter context",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -920,37 +900,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -987,37 +937,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -1073,7 +993,7 @@
               }
             }
           },
-          "404" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -1129,36 +1049,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body, Invalid value for: query parameter strict",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -1214,36 +1114,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body, Invalid value for: query parameter strict",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -2220,36 +2100,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -2297,36 +2157,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -2374,36 +2214,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -2471,36 +2291,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -2537,37 +2337,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -2624,37 +2394,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -2701,36 +2441,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: query parameter limit",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -2757,37 +2477,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -2814,37 +2504,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -2912,37 +2572,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -2980,36 +2610,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -3047,36 +2657,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -3139,36 +2729,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -3214,37 +2784,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -3283,36 +2823,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -3362,36 +2882,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: query parameter dryRun, Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -3430,36 +2930,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -3497,36 +2977,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -3564,36 +3024,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -3631,36 +3071,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -3697,37 +3117,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -3764,37 +3154,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -3840,36 +3200,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -3906,37 +3246,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -4042,36 +3352,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: query parameter limit",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -4108,37 +3398,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -4186,36 +3446,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -4263,36 +3503,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -4340,36 +3560,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -4417,36 +3617,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -4811,37 +3991,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -4974,37 +4124,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -5041,37 +4161,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -5119,36 +4209,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -5185,37 +4255,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -5252,37 +4292,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -5330,36 +4340,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: query parameter brief",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -5415,36 +4405,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body, Invalid value for: query parameter strict",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -5479,37 +4449,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -5565,36 +4505,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body, Invalid value for: query parameter strict",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -6213,37 +5133,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -6289,36 +5179,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -6353,37 +5223,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -6429,36 +5269,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -6575,36 +5395,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -6643,36 +5443,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: path parameter id",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -6709,36 +5489,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: path parameter id",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -6785,36 +5545,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: path parameter id, Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -6916,37 +5656,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -6992,36 +5702,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -7056,37 +5746,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -7132,36 +5792,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -7228,37 +5868,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -7304,36 +5914,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -7368,37 +5958,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -7502,36 +6062,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -7791,7 +6331,7 @@
               }
             }
           },
-          "404" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -7859,7 +6399,7 @@
               }
             }
           },
-          "404" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -7918,7 +6458,7 @@
               }
             }
           },
-          "404" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -7958,7 +6498,7 @@
               }
             }
           },
-          "404" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -8022,7 +6562,7 @@
               }
             }
           },
-          "404" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -8070,36 +6610,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -8147,36 +6667,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -8224,36 +6724,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -8301,36 +6781,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -8378,36 +6838,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -8462,37 +6902,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -8519,37 +6929,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -8595,36 +6975,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: query parameter source, Invalid value for: query parameter dryRun",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -8671,36 +7031,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: query parameter source, Invalid value for: query parameter apply",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -8727,37 +7067,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -8870,7 +7180,7 @@
               }
             }
           },
-          "404" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -8909,36 +7219,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: query parameter replace",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -8996,37 +7286,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -9075,36 +7335,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: query parameter source",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -9143,36 +7383,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: query parameter fetch",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -9301,26 +7521,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: query parameter citekey, Invalid value for: query parameter quality, Invalid value for: query parameter force, Invalid value for: query parameter year, Invalid value for: query parameter acquireItem, Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -9367,26 +7577,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: query parameter quality",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -9432,27 +7632,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -9489,7 +7669,7 @@
               }
             }
           },
-          "404" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -9534,27 +7714,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -9873,26 +8033,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -10062,7 +8212,7 @@
               }
             }
           },
-          "404" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -10628,36 +8778,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: query parameter key, Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -10839,7 +8969,7 @@
               }
             }
           },
-          "404" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -10891,7 +9021,7 @@
               }
             }
           },
-          "404" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -10943,7 +9073,7 @@
               }
             }
           },
-          "404" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -10996,7 +9126,7 @@
               }
             }
           },
-          "404" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -11094,7 +9224,7 @@
               }
             }
           },
-          "404" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -11158,37 +9288,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -11228,17 +9328,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -11364,16 +9454,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: path parameter id",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -11420,16 +9510,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: path parameter id, Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -11466,17 +9556,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -11524,16 +9604,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -11598,16 +9678,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: query parameter all",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -11653,16 +9733,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -11801,26 +9881,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -11895,26 +9965,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -11952,26 +10012,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -12009,26 +10059,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -12076,26 +10116,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -12170,26 +10200,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -12224,27 +10244,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -12282,26 +10282,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -12337,26 +10327,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: query parameter target",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -12441,26 +10421,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -12698,26 +10668,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -12754,27 +10714,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -12814,27 +10754,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -12898,26 +10818,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: query parameter budgetUsd, Invalid value for: query parameter budgetTokens",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -13053,26 +10963,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: query parameter limit",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -13129,26 +11029,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: path parameter id, Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -13185,27 +11075,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -13253,26 +11123,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -13324,26 +11184,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: query parameter kind, Invalid value for: query parameter ref",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -13399,26 +11249,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -13461,27 +11301,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -13541,27 +11361,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -13597,26 +11397,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -13653,27 +11443,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -13719,26 +11489,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -13773,27 +11533,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -13857,26 +11597,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: query parameter offset, Invalid value for: query parameter limit",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -13922,26 +11652,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -13997,26 +11717,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -14065,26 +11775,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: query parameter all",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -14130,26 +11830,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -14196,26 +11886,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: path parameter hint",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -14271,26 +11951,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: query parameter before, Invalid value for: query parameter limit",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -14344,26 +12014,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: query parameter runs",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -14401,26 +12061,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -14447,27 +12097,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -14503,26 +12133,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -14560,26 +12180,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -14617,26 +12227,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -14674,26 +12274,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -14720,27 +12310,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -14776,26 +12346,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -14834,26 +12394,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: query parameter limit",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -14889,26 +12439,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -14945,27 +12485,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -14992,27 +12512,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -15050,26 +12550,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -15107,26 +12597,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -15165,26 +12645,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: query parameter days",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -15259,16 +12729,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -15306,36 +12776,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -15373,36 +12823,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -15466,36 +12896,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: query parameter limit, Invalid value for: query parameter offset",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -15854,36 +13264,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -15920,37 +13310,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -15996,36 +13356,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -16063,36 +13403,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -17048,26 +14368,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: query parameter cache",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "409" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -17158,26 +14468,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: query parameter maxZoom, Invalid value for: query parameter terrainMaxZoom, Invalid value for: query parameter dryRun, Invalid value for: query parameter keepAll",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "409" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -17288,7 +14588,7 @@
               }
             }
           },
-          "404" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -17658,6 +14958,16 @@
             }
           },
           "400" : {
+            "description" : "Invalid value for: path parameter z, Invalid value for: path parameter x, Invalid value for: path parameter y, Invalid value for: query parameter yearFrom, Invalid value for: query parameter yearTo, Invalid value for: query parameter from, Invalid value for: query parameter to, Invalid value for: query parameter minLon, Invalid value for: query parameter minLat, Invalid value for: query parameter maxLon, Invalid value for: query parameter maxLat, Invalid value for: query parameter limit, Invalid value for: query parameter offset, Invalid value for: query parameter context, Invalid value for: query parameter undated",
+            "content" : {
+              "text/plain" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -17694,27 +15004,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -17750,26 +15040,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "409" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -17796,27 +15076,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -17877,36 +15137,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: query parameter limit",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -17942,36 +15182,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -18008,37 +15228,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -18084,36 +15274,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -18183,36 +15353,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: query parameter limit",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -18248,36 +15398,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -18314,37 +15444,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -18379,37 +15479,7 @@
               }
             }
           },
-          "400" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -18455,36 +15525,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -18545,36 +15595,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: query parameter limit",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -18610,36 +15640,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -18677,36 +15687,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: body",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -18765,36 +15755,16 @@
             }
           },
           "400" : {
-            "description" : "",
+            "description" : "Invalid value for: query parameter limit, Invalid value for: query parameter offset",
             "content" : {
-              "application/json" : {
+              "text/plain" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "type" : "string"
                 }
               }
             }
           },
-          "404" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "412" : {
-            "description" : "",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503" : {
+          "default" : {
             "description" : "",
             "content" : {
               "application/json" : {
@@ -23597,11 +20567,15 @@
         "title" : "Error",
         "type" : "object",
         "required" : [
-          "message"
+          "problems"
         ],
         "properties" : {
-          "message" : {
-            "$ref" : "#/components/schemas/Problem"
+          "problems" : {
+            "type" : "array",
+            "minItems" : 1,
+            "items" : {
+              "$ref" : "#/components/schemas/Problem"
+            }
           },
           "code" : {
             "type" : "string"

@@ -572,26 +572,32 @@
 == GET /api/places/zz_lonely
 404 {
   "code" : null,
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
-      "text" : "No place 'zz_lonely'"
-    },
-    "group" : "Unclassified",
-    "text" : "No place 'zz_lonely'"
-  }
+  "problems" : [
+    {
+      "case" : "Entity",
+      "data" : {
+        "key" : "zz_lonely",
+        "typeName" : "Place.Id"
+      },
+      "group" : "NotFound",
+      "text" : "no place id 'zz_lonely'"
+    }
+  ]
 }
 == GET /api/places/zz_none
 404 {
   "code" : null,
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
-      "text" : "No place 'zz_none'"
-    },
-    "group" : "Unclassified",
-    "text" : "No place 'zz_none'"
-  }
+  "problems" : [
+    {
+      "case" : "Entity",
+      "data" : {
+        "key" : "zz_none",
+        "typeName" : "Place.Id"
+      },
+      "group" : "NotFound",
+      "text" : "no place id 'zz_none'"
+    }
+  ]
 }
 == GET /api/places/zz_land/children
 200 [
@@ -1568,14 +1574,16 @@
 == GET /api/places/geo?pick=nonsense
 400 {
   "code" : null,
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
+  "problems" : [
+    {
+      "case" : "Unclassified",
+      "data" : {
+        "text" : "unknown pick 'nonsense': one of mid, start, end, earliest, latest"
+      },
+      "group" : "Unclassified",
       "text" : "unknown pick 'nonsense': one of mid, start, end, earliest, latest"
-    },
-    "group" : "Unclassified",
-    "text" : "unknown pick 'nonsense': one of mid, start, end, earliest, latest"
-  }
+    }
+  ]
 }
 == tool places {"query":"zz"}
 _No matching places._

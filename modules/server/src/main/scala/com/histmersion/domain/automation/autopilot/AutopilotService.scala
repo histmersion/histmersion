@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.autopilot
 
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import hearth.kindlings.optics.syntax.*
 
 import io.scalaland.chimney.dsl.*
@@ -430,7 +430,7 @@ final class AutopilotService(
       AutopilotPolicy.advance(facts).flatMap { (to, why) =>
         agents.host.patchGoal(slugOf(g), Goal.Patch(status = Some(Goal.StatusValue(to.value)))) match
           case Left(e) =>
-            scribe.warn(s"autopilot: goal $slug not moved to $to: ${e.message.sentence}")
+            scribe.warn(s"autopilot: goal $slug not moved to $to: ${e.problems.sentences.mkString("; ")}")
             None
           case Right(_) =>
             val from = status(slug)
@@ -532,7 +532,7 @@ final class AutopilotService(
 
   private def backup(): Unit =
     val line = agents.host.backup() match
-      case Left(e)    => s"autopilot: the scheduled backup failed: ${e.message.sentence}"
+      case Left(e)    => s"autopilot: the scheduled backup failed: ${e.problems.sentences.mkString("; ")}"
       case Right(st0) =>
         // the request answers `running` after a while: follow the job to its end
         var st = st0 // the job's last status, polled until it settles
@@ -550,7 +550,7 @@ final class AutopilotService(
 
   private def lint(): Unit =
     val line = agents.host.lintFix() match
-      case Left(e)  => s"autopilot: the scheduled lint --fix failed: ${e.message.sentence}"
+      case Left(e)  => s"autopilot: the scheduled lint --fix failed: ${e.problems.sentences.mkString("; ")}"
       case Right(r) =>
         s"autopilot: lint --fix — ${r.edgesResolved} edge(s) resolved, ${r.sourcesReindexed} source(s) re-indexed" +
           (if r.remaining.value > 0 then s", ${r.remaining} left for the next run" else "")

@@ -454,6 +454,12 @@ object Problem:
     /** `asked` was renamed to `now`: write to `now`. */
     final case class Renamed(typeName: TypeName, asked: Raw, now: Raw) extends Conflict
 
+    /** `key` is an old key of `of` and still resolves to it, so it cannot name another value. */
+    final case class Aliased(typeName: TypeName, key: Raw, of: Raw) extends Conflict
+
+    /** `key` was the key of a value that was removed, and is not given to another. */
+    final case class Retired(typeName: TypeName, key: Raw) extends Conflict
+
     /** The value changed since the caller read it: `sent` is the version the caller had, `stored` the one there is. */
     final case class Stale(typeName: TypeName, key: Raw, sent: Stamp, stored: Stamp) extends Conflict
 
@@ -1597,6 +1603,8 @@ object Problem:
       ),
       Conflict.AlreadyExists(TypeName("Place.Id"), Raw("pleiades_579885")),
       Conflict.Renamed(citekey, Raw("anthony2006"), Raw("anthony2007")),
+      Conflict.Aliased(TypeName("Place.Id"), Raw("pleiades_579885"), Raw("pleiades_579886")),
+      Conflict.Retired(TypeName("Place.Id"), Raw("local_gornji_grad")),
       Conflict.Stale(
         citekey,
         Raw("anthony2007"),

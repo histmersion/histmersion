@@ -195,14 +195,16 @@
 == GET /api/attestations/999
 404 {
   "code" : "not_found",
-  "message" : {
-    "case" : "Unclassified",
-    "data" : {
+  "problems" : [
+    {
+      "case" : "Unclassified",
+      "data" : {
+        "text" : "No attestation 999"
+      },
+      "group" : "Unclassified",
       "text" : "No attestation 999"
-    },
-    "group" : "Unclassified",
-    "text" : "No attestation 999"
-  }
+    }
+  ]
 }
 == GET /api/events/zz_battle/links
 200 {

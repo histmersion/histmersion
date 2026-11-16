@@ -3,7 +3,7 @@ package domain.research.workflows
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.Problem
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import hearth.kindlings.optics.syntax.*
 
@@ -177,7 +177,7 @@ final class CompileArticlePipeline(
               f
             )
           )
-        case Left(e) => Left(e.message.sentence)
+        case Left(e) => Left(e.problems.sentences.mkString("; "))
     }
 
   private def isCitekey(ck: Citekey): Boolean = site.sources.get(ck, body = SourcesControllers.GetBody(false)).isRight
@@ -374,7 +374,7 @@ final class CompileArticlePipeline(
               site.articles
                 .put(s.slug, put)
                 .left
-                .map(_.message.sentence)
+                .map(_.problems.sentences.mkString("; "))
                 .map(_ => Written(written = Written.Value(true), Rationale("created"), None))
             )(
               Right(
@@ -428,7 +428,7 @@ final class CompileArticlePipeline(
                   None
                 )
               )
-            case Left(e) => Left(e.message.sentence)
+            case Left(e) => Left(e.problems.sentences.mkString("; "))
 
   /** The independent review (phase 5): a review-article run with fix, started by this one. A refusal (no reviewer model
     * configured) is a warning: the article is written either way.
@@ -452,7 +452,7 @@ final class CompileArticlePipeline(
       ) match
         case Right(r) => Some(r.id.value)
         case Left(e)  =>
-          ctx.warn(s"review: no review-article run started — ${e.message.sentence}; run it by hand")
+          ctx.warn(s"review: no review-article run started — ${e.problems.sentences.mkString("; ")}; run it by hand")
           None
 
   private def close(ctx: RunCtx, d: ArticleDraft, w: Written, review: Option[String]): Either[String, String] =
@@ -483,7 +483,7 @@ final class CompileArticlePipeline(
     )
 
   private def log(ctx: RunCtx, line: String): Either[String, String] =
-    Pipelines.log(site.workLists, ctx, Pipelines.LogLine(line)).left.map(_.sentence).map(_.value)
+    Pipelines.log(site.workLists, ctx, Pipelines.LogLine(line)).left.map(_.sentences.mkString("; ")).map(_.value)
 
 object CompileArticlePipeline:
 
