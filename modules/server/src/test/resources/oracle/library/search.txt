@@ -174,30 +174,9 @@
         "year" : 1990
       },
       "why" : [
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "title matches 'walls'"
-          },
-          "group" : "Unclassified",
-          "text" : "title matches 'walls'"
-        },
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "summary matches 'walls'"
-          },
-          "group" : "Unclassified",
-          "text" : "summary matches 'walls'"
-        },
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "full text matches 'walls'"
-          },
-          "group" : "Unclassified",
-          "text" : "full text matches 'walls'"
-        }
+        "title matches 'walls'",
+        "summary matches 'walls'",
+        "full text matches 'walls'"
       ]
     }
   ],
@@ -235,14 +214,7 @@
         "year" : 1990
       },
       "why" : [
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "full text matches '\"sea peoples\"'"
-          },
-          "group" : "Unclassified",
-          "text" : "full text matches '\"sea peoples\"'"
-        }
+        "full text matches '\"sea peoples\"'"
       ]
     }
   ],
@@ -280,14 +252,7 @@
         "year" : 1990
       },
       "why" : [
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "full text matches 'tin -islands'"
-          },
-          "group" : "Unclassified",
-          "text" : "full text matches 'tin -islands'"
-        }
+        "full text matches 'tin -islands'"
       ]
     }
   ],
@@ -323,14 +288,7 @@
         "year" : 1975
       },
       "why" : [
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "full text matches 'tin or kings'"
-          },
-          "group" : "Unclassified",
-          "text" : "full text matches 'tin or kings'"
-        }
+        "full text matches 'tin or kings'"
       ]
     },
     {
@@ -360,14 +318,7 @@
         "year" : 1990
       },
       "why" : [
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "full text matches 'tin or kings'"
-          },
-          "group" : "Unclassified",
-          "text" : "full text matches 'tin or kings'"
-        }
+        "full text matches 'tin or kings'"
       ]
     },
     {
@@ -396,14 +347,7 @@
         "year" : 2001
       },
       "why" : [
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "full text matches 'tin or kings'"
-          },
-          "group" : "Unclassified",
-          "text" : "full text matches 'tin or kings'"
-        }
+        "full text matches 'tin or kings'"
       ]
     }
   ],
@@ -441,14 +385,7 @@
             "zq-trade"
           ],
           "why" : [
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "tag: zq-trade"
-              },
-              "group" : "Unclassified",
-              "text" : "tag: zq-trade"
-            }
+            "tag: zq-trade"
           ]
         }
       ],
@@ -497,14 +434,7 @@
             "zq-trade"
           ],
           "why" : [
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "tag: zq-trade"
-              },
-              "group" : "Unclassified",
-              "text" : "tag: zq-trade"
-            }
+            "tag: zq-trade"
           ]
         }
       ],
@@ -531,14 +461,7 @@
         "year" : 2001
       },
       "why" : [
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "tag: zq-trade"
-          },
-          "group" : "Unclassified",
-          "text" : "tag: zq-trade"
-        }
+        "tag: zq-trade"
       ]
     }
   ],
@@ -568,14 +491,7 @@
             "zq-trade"
           ],
           "why" : [
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "tag: zq-trade"
-              },
-              "group" : "Unclassified",
-              "text" : "tag: zq-trade"
-            }
+            "tag: zq-trade"
           ]
         }
       ],
@@ -603,14 +519,7 @@
         "year" : 1990
       },
       "why" : [
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "tag: zq-oracle"
-          },
-          "group" : "Unclassified",
-          "text" : "tag: zq-oracle"
-        }
+        "tag: zq-oracle"
       ]
     },
     {
@@ -632,14 +541,7 @@
             "zq-trade"
           ],
           "why" : [
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "tag: zq-trade"
-              },
-              "group" : "Unclassified",
-              "text" : "tag: zq-trade"
-            }
+            "tag: zq-trade"
           ]
         }
       ],
@@ -666,22 +568,8 @@
         "year" : 2001
       },
       "why" : [
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "tag: zq-trade"
-          },
-          "group" : "Unclassified",
-          "text" : "tag: zq-trade"
-        },
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "tag: zq-oracle"
-          },
-          "group" : "Unclassified",
-          "text" : "tag: zq-oracle"
-        }
+        "tag: zq-trade",
+        "tag: zq-oracle"
       ]
     }
   ],
@@ -727,22 +615,8 @@
         "year" : 1990
       },
       "why" : [
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "author: Zqwriter, Bo"
-          },
-          "group" : "Unclassified",
-          "text" : "author: Zqwriter, Bo"
-        },
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "author: Zqwriter, Bo"
-          },
-          "group" : "Unclassified",
-          "text" : "author: Zqwriter, Bo"
-        }
+        "author: Zqwriter, Bo",
+        "author: Zqwriter, Bo"
       ]
     },
     {
@@ -771,22 +645,8 @@
         "year" : 2001
       },
       "why" : [
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "author: Zqwriter, Bo"
-          },
-          "group" : "Unclassified",
-          "text" : "author: Zqwriter, Bo"
-        },
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "author: Zqwriter, Bo"
-          },
-          "group" : "Unclassified",
-          "text" : "author: Zqwriter, Bo"
-        }
+        "author: Zqwriter, Bo",
+        "author: Zqwriter, Bo"
       ]
     }
   ],
@@ -824,14 +684,7 @@
         "year" : 1990
       },
       "why" : [
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "author: Zqauthor, Ann"
-          },
-          "group" : "Unclassified",
-          "text" : "author: Zqauthor, Ann"
-        }
+        "author: Zqauthor, Ann"
       ]
     },
     {
@@ -859,14 +712,7 @@
         "year" : 1975
       },
       "why" : [
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "author: Zqauthor, Ann"
-          },
-          "group" : "Unclassified",
-          "text" : "author: Zqauthor, Ann"
-        }
+        "author: Zqauthor, Ann"
       ]
     }
   ],
@@ -896,14 +742,7 @@
             "zq-trade"
           ],
           "why" : [
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "place: Zqcove"
-              },
-              "group" : "Unclassified",
-              "text" : "place: Zqcove"
-            }
+            "place: Zqcove"
           ]
         }
       ],
@@ -952,14 +791,7 @@
             "zq-trade"
           ],
           "why" : [
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "place: Zqcove"
-              },
-              "group" : "Unclassified",
-              "text" : "place: Zqcove"
-            }
+            "place: Zqcove"
           ]
         }
       ],
@@ -1015,14 +847,7 @@
             "zq-claim"
           ],
           "why" : [
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "place: Zqland"
-              },
-              "group" : "Unclassified",
-              "text" : "place: Zqland"
-            }
+            "place: Zqland"
           ]
         },
         {
@@ -1042,14 +867,7 @@
             "zq-trade"
           ],
           "why" : [
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "place: Zqland"
-              },
-              "group" : "Unclassified",
-              "text" : "place: Zqland"
-            }
+            "place: Zqland"
           ]
         },
         {
@@ -1069,14 +887,7 @@
             "zq-claim"
           ],
           "why" : [
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "place: Zqland"
-              },
-              "group" : "Unclassified",
-              "text" : "place: Zqland"
-            }
+            "place: Zqland"
           ]
         }
       ],
@@ -1125,14 +936,7 @@
             "zq-trade"
           ],
           "why" : [
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "place: Zqland"
-              },
-              "group" : "Unclassified",
-              "text" : "place: Zqland"
-            }
+            "place: Zqland"
           ]
         }
       ],
@@ -1179,14 +983,7 @@
             "zq-claim"
           ],
           "why" : [
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "place: Zqland"
-              },
-              "group" : "Unclassified",
-              "text" : "place: Zqland"
-            }
+            "place: Zqland"
           ]
         }
       ],
@@ -1233,14 +1030,7 @@
             "zq-claim"
           ],
           "why" : [
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "place: Zqland"
-              },
-              "group" : "Unclassified",
-              "text" : "place: Zqland"
-            }
+            "place: Zqland"
           ]
         }
       ],
@@ -1295,14 +1085,7 @@
             "zq-claim"
           ],
           "why" : [
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "place: Zqtell"
-              },
-              "group" : "Unclassified",
-              "text" : "place: Zqtell"
-            }
+            "place: Zqtell"
           ]
         },
         {
@@ -1322,14 +1105,7 @@
             "zq-claim"
           ],
           "why" : [
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "place: Zqtell"
-              },
-              "group" : "Unclassified",
-              "text" : "place: Zqtell"
-            }
+            "place: Zqtell"
           ]
         }
       ],
@@ -1378,14 +1154,7 @@
             "zq-claim"
           ],
           "why" : [
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "place: Zqtell"
-              },
-              "group" : "Unclassified",
-              "text" : "place: Zqtell"
-            }
+            "place: Zqtell"
           ]
         }
       ],
@@ -1439,14 +1208,7 @@
             "zq-claim"
           ],
           "why" : [
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "place: Zqisles"
-              },
-              "group" : "Unclassified",
-              "text" : "place: Zqisles"
-            }
+            "place: Zqisles"
           ]
         }
       ],
@@ -1502,14 +1264,7 @@
             "zq-claim"
           ],
           "why" : [
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "place: Zqland"
-              },
-              "group" : "Unclassified",
-              "text" : "place: Zqland"
-            }
+            "place: Zqland"
           ]
         },
         {
@@ -1529,14 +1284,7 @@
             "zq-trade"
           ],
           "why" : [
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "place: Zqland"
-              },
-              "group" : "Unclassified",
-              "text" : "place: Zqland"
-            }
+            "place: Zqland"
           ]
         },
         {
@@ -1556,14 +1304,7 @@
             "zq-claim"
           ],
           "why" : [
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "place: Zqland"
-              },
-              "group" : "Unclassified",
-              "text" : "place: Zqland"
-            }
+            "place: Zqland"
           ]
         }
       ],
@@ -1612,14 +1353,7 @@
             "zq-trade"
           ],
           "why" : [
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "place: Zqland"
-              },
-              "group" : "Unclassified",
-              "text" : "place: Zqland"
-            }
+            "place: Zqland"
           ]
         },
         {
@@ -1638,14 +1372,7 @@
             "zq-claim"
           ],
           "why" : [
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "place: Zqisles"
-              },
-              "group" : "Unclassified",
-              "text" : "place: Zqisles"
-            }
+            "place: Zqisles"
           ]
         }
       ],
@@ -1692,14 +1419,7 @@
             "zq-claim"
           ],
           "why" : [
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "place: Zqland"
-              },
-              "group" : "Unclassified",
-              "text" : "place: Zqland"
-            }
+            "place: Zqland"
           ]
         }
       ],
@@ -1746,14 +1466,7 @@
             "zq-claim"
           ],
           "why" : [
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "place: Zqland"
-              },
-              "group" : "Unclassified",
-              "text" : "place: Zqland"
-            }
+            "place: Zqland"
           ]
         }
       ],
@@ -1816,14 +1529,7 @@
         "year" : 1990
       },
       "why" : [
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "topic: bronze age"
-          },
-          "group" : "Unclassified",
-          "text" : "topic: bronze age"
-        }
+        "topic: bronze age"
       ]
     },
     {
@@ -1852,14 +1558,7 @@
         "year" : 2001
       },
       "why" : [
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "topic: bronze age"
-          },
-          "group" : "Unclassified",
-          "text" : "topic: bronze age"
-        }
+        "topic: bronze age"
       ]
     }
   ],
@@ -1896,14 +1595,7 @@
         "year" : 2001
       },
       "why" : [
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "status: contested"
-          },
-          "group" : "Unclassified",
-          "text" : "status: contested"
-        }
+        "status: contested"
       ]
     }
   ],
@@ -1940,14 +1632,7 @@
         "year" : 2001
       },
       "why" : [
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "status: contested"
-          },
-          "group" : "Unclassified",
-          "text" : "status: contested"
-        }
+        "status: contested"
       ]
     },
     {
@@ -1975,14 +1660,7 @@
         "year" : 1975
       },
       "why" : [
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "status: superseded"
-          },
-          "group" : "Unclassified",
-          "text" : "status: superseded"
-        }
+        "status: superseded"
       ]
     }
   ],
@@ -2020,14 +1698,7 @@
         "year" : 1990
       },
       "why" : [
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "year: 1990"
-          },
-          "group" : "Unclassified",
-          "text" : "year: 1990"
-        }
+        "year: 1990"
       ]
     },
     {
@@ -2056,14 +1727,7 @@
         "year" : 2001
       },
       "why" : [
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "year: 2001"
-          },
-          "group" : "Unclassified",
-          "text" : "year: 2001"
-        }
+        "year: 2001"
       ]
     },
     {
@@ -2091,14 +1755,7 @@
         "year" : 2010
       },
       "why" : [
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "year: 2010"
-          },
-          "group" : "Unclassified",
-          "text" : "year: 2010"
-        }
+        "year: 2010"
       ]
     },
     {
@@ -2126,14 +1783,7 @@
         "year" : 1999
       },
       "why" : [
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "year: 1999"
-          },
-          "group" : "Unclassified",
-          "text" : "year: 1999"
-        }
+        "year: 1999"
       ]
     }
   ],
@@ -2171,14 +1821,7 @@
         "year" : 1990
       },
       "why" : [
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "year: 1990"
-          },
-          "group" : "Unclassified",
-          "text" : "year: 1990"
-        }
+        "year: 1990"
       ]
     },
     {
@@ -2207,14 +1850,7 @@
         "year" : 2001
       },
       "why" : [
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "year: 2001"
-          },
-          "group" : "Unclassified",
-          "text" : "year: 2001"
-        }
+        "year: 2001"
       ]
     },
     {
@@ -2242,14 +1878,7 @@
         "year" : 1999
       },
       "why" : [
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "year: 1999"
-          },
-          "group" : "Unclassified",
-          "text" : "year: 1999"
-        }
+        "year: 1999"
       ]
     }
   ],
@@ -2279,14 +1908,7 @@
             "zq-trade"
           ],
           "why" : [
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "period"
-              },
-              "group" : "Unclassified",
-              "text" : "period"
-            }
+            "period"
           ]
         }
       ],
@@ -2314,14 +1936,7 @@
         "year" : 1990
       },
       "why" : [
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "period: 1700 BCE–1100 BCE"
-          },
-          "group" : "Unclassified",
-          "text" : "period: 1700 BCE–1100 BCE"
-        }
+        "period: 1700 BCE–1100 BCE"
       ]
     },
     {
@@ -2343,14 +1958,7 @@
             "zq-trade"
           ],
           "why" : [
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "period"
-              },
-              "group" : "Unclassified",
-              "text" : "period"
-            }
+            "period"
           ]
         }
       ],
@@ -2377,14 +1985,7 @@
         "year" : 2001
       },
       "why" : [
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "period: 1700 BCE–1100 BCE"
-          },
-          "group" : "Unclassified",
-          "text" : "period: 1700 BCE–1100 BCE"
-        }
+        "period: 1700 BCE–1100 BCE"
       ]
     },
     {
@@ -2412,14 +2013,7 @@
         "year" : 2010
       },
       "why" : [
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "period: 1700 BCE–1100 BCE"
-          },
-          "group" : "Unclassified",
-          "text" : "period: 1700 BCE–1100 BCE"
-        }
+        "period: 1700 BCE–1100 BCE"
       ]
     },
     {
@@ -2447,14 +2041,7 @@
         "year" : 1999
       },
       "why" : [
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "period: 1700 BCE–1100 BCE"
-          },
-          "group" : "Unclassified",
-          "text" : "period: 1700 BCE–1100 BCE"
-        }
+        "period: 1700 BCE–1100 BCE"
       ]
     },
     {
@@ -2476,14 +2063,7 @@
             "zq-claim"
           ],
           "why" : [
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "period"
-              },
-              "group" : "Unclassified",
-              "text" : "period"
-            }
+            "period"
           ]
         }
       ],
@@ -2509,14 +2089,7 @@
         "year" : 1975
       },
       "why" : [
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "period: 1700 BCE–1100 BCE"
-          },
-          "group" : "Unclassified",
-          "text" : "period: 1700 BCE–1100 BCE"
-        }
+        "period: 1700 BCE–1100 BCE"
       ]
     }
   ],
@@ -2546,14 +2119,7 @@
             "zq-claim"
           ],
           "why" : [
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "period"
-              },
-              "group" : "Unclassified",
-              "text" : "period"
-            }
+            "period"
           ]
         }
       ],
@@ -2581,14 +2147,7 @@
         "year" : 1990
       },
       "why" : [
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "period: 1700 BCE–1100 BCE"
-          },
-          "group" : "Unclassified",
-          "text" : "period: 1700 BCE–1100 BCE"
-        }
+        "period: 1700 BCE–1100 BCE"
       ]
     },
     {
@@ -2617,14 +2176,7 @@
         "year" : 2001
       },
       "why" : [
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "period: 1700 BCE–1100 BCE"
-          },
-          "group" : "Unclassified",
-          "text" : "period: 1700 BCE–1100 BCE"
-        }
+        "period: 1700 BCE–1100 BCE"
       ]
     },
     {
@@ -2652,14 +2204,7 @@
         "year" : 2010
       },
       "why" : [
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "period: 1700 BCE–1100 BCE"
-          },
-          "group" : "Unclassified",
-          "text" : "period: 1700 BCE–1100 BCE"
-        }
+        "period: 1700 BCE–1100 BCE"
       ]
     },
     {
@@ -2687,14 +2232,7 @@
         "year" : 1999
       },
       "why" : [
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "period: 1700 BCE–1100 BCE"
-          },
-          "group" : "Unclassified",
-          "text" : "period: 1700 BCE–1100 BCE"
-        }
+        "period: 1700 BCE–1100 BCE"
       ]
     },
     {
@@ -2722,14 +2260,7 @@
         "year" : 1975
       },
       "why" : [
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "period: 1700 BCE–1100 BCE"
-          },
-          "group" : "Unclassified",
-          "text" : "period: 1700 BCE–1100 BCE"
-        }
+        "period: 1700 BCE–1100 BCE"
       ]
     }
   ],
@@ -2759,14 +2290,7 @@
             "zq-claim"
           ],
           "why" : [
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "period"
-              },
-              "group" : "Unclassified",
-              "text" : "period"
-            }
+            "period"
           ]
         }
       ],
@@ -2794,14 +2318,7 @@
         "year" : 1990
       },
       "why" : [
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "period: 1700 BCE–1100 BCE"
-          },
-          "group" : "Unclassified",
-          "text" : "period: 1700 BCE–1100 BCE"
-        }
+        "period: 1700 BCE–1100 BCE"
       ]
     },
     {
@@ -2830,14 +2347,7 @@
         "year" : 2001
       },
       "why" : [
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "period: 1700 BCE–1100 BCE"
-          },
-          "group" : "Unclassified",
-          "text" : "period: 1700 BCE–1100 BCE"
-        }
+        "period: 1700 BCE–1100 BCE"
       ]
     },
     {
@@ -2865,14 +2375,7 @@
         "year" : 2010
       },
       "why" : [
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "period: 1700 BCE–1100 BCE"
-          },
-          "group" : "Unclassified",
-          "text" : "period: 1700 BCE–1100 BCE"
-        }
+        "period: 1700 BCE–1100 BCE"
       ]
     },
     {
@@ -2900,14 +2403,7 @@
         "year" : 1999
       },
       "why" : [
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "period: 1700 BCE–1100 BCE"
-          },
-          "group" : "Unclassified",
-          "text" : "period: 1700 BCE–1100 BCE"
-        }
+        "period: 1700 BCE–1100 BCE"
       ]
     },
     {
@@ -2929,14 +2425,7 @@
             "zq-claim"
           ],
           "why" : [
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "period"
-              },
-              "group" : "Unclassified",
-              "text" : "period"
-            }
+            "period"
           ]
         }
       ],
@@ -2962,14 +2451,7 @@
         "year" : 1975
       },
       "why" : [
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "period: 1700 BCE–1100 BCE"
-          },
-          "group" : "Unclassified",
-          "text" : "period: 1700 BCE–1100 BCE"
-        }
+        "period: 1700 BCE–1100 BCE"
       ]
     }
   ],
@@ -2999,14 +2481,7 @@
             "zq-claim"
           ],
           "why" : [
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "bbox"
-              },
-              "group" : "Unclassified",
-              "text" : "bbox"
-            }
+            "bbox"
           ]
         },
         {
@@ -3026,14 +2501,7 @@
             "zq-claim"
           ],
           "why" : [
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "bbox"
-              },
-              "group" : "Unclassified",
-              "text" : "bbox"
-            }
+            "bbox"
           ]
         }
       ],
@@ -3081,14 +2549,7 @@
             "zq-claim"
           ],
           "why" : [
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "bbox"
-              },
-              "group" : "Unclassified",
-              "text" : "bbox"
-            }
+            "bbox"
           ]
         }
       ],
@@ -3135,14 +2596,7 @@
             "zq-claim"
           ],
           "why" : [
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "bbox"
-              },
-              "group" : "Unclassified",
-              "text" : "bbox"
-            }
+            "bbox"
           ]
         }
       ],
@@ -3196,14 +2650,7 @@
             "zq-claim"
           ],
           "why" : [
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "bbox"
-              },
-              "group" : "Unclassified",
-              "text" : "bbox"
-            }
+            "bbox"
           ]
         }
       ],
@@ -4034,30 +3481,9 @@
         "year" : 1990
       },
       "why" : [
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "title matches 'zqtell'"
-          },
-          "group" : "Unclassified",
-          "text" : "title matches 'zqtell'"
-        },
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "summary matches 'zqtell'"
-          },
-          "group" : "Unclassified",
-          "text" : "summary matches 'zqtell'"
-        },
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "full text matches 'zqtell'"
-          },
-          "group" : "Unclassified",
-          "text" : "full text matches 'zqtell'"
-        }
+        "title matches 'zqtell'",
+        "summary matches 'zqtell'",
+        "full text matches 'zqtell'"
       ]
     },
     {
@@ -4085,14 +3511,7 @@
         "year" : 2010
       },
       "why" : [
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "full text matches 'zqtell'"
-          },
-          "group" : "Unclassified",
-          "text" : "full text matches 'zqtell'"
-        }
+        "full text matches 'zqtell'"
       ]
     },
     {
@@ -4120,14 +3539,7 @@
         "year" : 1975
       },
       "why" : [
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "full text matches 'zqtell'"
-          },
-          "group" : "Unclassified",
-          "text" : "full text matches 'zqtell'"
-        }
+        "full text matches 'zqtell'"
       ]
     }
   ],
@@ -4438,30 +3850,9 @@
             "zq-trade"
           ],
           "why" : [
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "period"
-              },
-              "group" : "Unclassified",
-              "text" : "period"
-            },
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "place: Zqland"
-              },
-              "group" : "Unclassified",
-              "text" : "place: Zqland"
-            },
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "tag: zq-trade"
-              },
-              "group" : "Unclassified",
-              "text" : "tag: zq-trade"
-            }
+            "period",
+            "place: Zqland",
+            "tag: zq-trade"
           ]
         },
         {
@@ -4480,14 +3871,7 @@
             "zq-claim"
           ],
           "why" : [
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "period"
-              },
-              "group" : "Unclassified",
-              "text" : "period"
-            }
+            "period"
           ]
         }
       ],
@@ -4514,38 +3898,10 @@
         "year" : 2001
       },
       "why" : [
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "full text matches 'tin'"
-          },
-          "group" : "Unclassified",
-          "text" : "full text matches 'tin'"
-        },
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "tag: zq-trade"
-          },
-          "group" : "Unclassified",
-          "text" : "tag: zq-trade"
-        },
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "status: contested"
-          },
-          "group" : "Unclassified",
-          "text" : "status: contested"
-        },
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "period: 1700 BCE–1100 BCE"
-          },
-          "group" : "Unclassified",
-          "text" : "period: 1700 BCE–1100 BCE"
-        }
+        "full text matches 'tin'",
+        "tag: zq-trade",
+        "status: contested",
+        "period: 1700 BCE–1100 BCE"
       ]
     }
   ],
@@ -4575,30 +3931,9 @@
             "zq-claim"
           ],
           "why" : [
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "period"
-              },
-              "group" : "Unclassified",
-              "text" : "period"
-            },
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "bbox"
-              },
-              "group" : "Unclassified",
-              "text" : "bbox"
-            },
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "place: Zqtell"
-              },
-              "group" : "Unclassified",
-              "text" : "place: Zqtell"
-            }
+            "period",
+            "bbox",
+            "place: Zqtell"
           ]
         },
         {
@@ -4618,22 +3953,8 @@
             "zq-trade"
           ],
           "why" : [
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "period"
-              },
-              "group" : "Unclassified",
-              "text" : "period"
-            },
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "bbox"
-              },
-              "group" : "Unclassified",
-              "text" : "bbox"
-            }
+            "period",
+            "bbox"
           ]
         },
         {
@@ -4653,30 +3974,9 @@
             "zq-claim"
           ],
           "why" : [
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "period"
-              },
-              "group" : "Unclassified",
-              "text" : "period"
-            },
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "bbox"
-              },
-              "group" : "Unclassified",
-              "text" : "bbox"
-            },
-            {
-              "case" : "Unclassified",
-              "data" : {
-                "text" : "place: Zqtell"
-              },
-              "group" : "Unclassified",
-              "text" : "place: Zqtell"
-            }
+            "period",
+            "bbox",
+            "place: Zqtell"
           ]
         }
       ],
@@ -4704,38 +4004,10 @@
         "year" : 1990
       },
       "why" : [
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "title matches 'walls'"
-          },
-          "group" : "Unclassified",
-          "text" : "title matches 'walls'"
-        },
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "summary matches 'walls'"
-          },
-          "group" : "Unclassified",
-          "text" : "summary matches 'walls'"
-        },
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "full text matches 'walls'"
-          },
-          "group" : "Unclassified",
-          "text" : "full text matches 'walls'"
-        },
-        {
-          "case" : "Unclassified",
-          "data" : {
-            "text" : "period: 1700 BCE–1100 BCE"
-          },
-          "group" : "Unclassified",
-          "text" : "period: 1700 BCE–1100 BCE"
-        }
+        "title matches 'walls'",
+        "summary matches 'walls'",
+        "full text matches 'walls'",
+        "period: 1700 BCE–1100 BCE"
       ]
     }
   ],

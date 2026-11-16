@@ -1,7 +1,7 @@
 package com.histmersion
 package api
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -111,7 +111,7 @@ class MarkdownSuite extends munit.FunSuite:
       matchedHeading = Some(SearchHit.MatchedHeading("CHAPTER 3"))
     )
     val md = SearchMarkdown.searchResults(
-      SearchResult(RowCount(1), List(Hit(hit, Nil, List(Problem.Unclassified(Legacy.Text("full text matches 'x'"))))))
+      SearchResult(RowCount(1), List(Hit(hit, Nil, List(Hit.Rationale("full text matches 'x'")))))
     )
     assert(md.contains("> _CHAPTER 3_ — …the **Uluburun** wreck…"), md)
 

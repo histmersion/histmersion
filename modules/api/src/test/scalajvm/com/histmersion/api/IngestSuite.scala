@@ -1,7 +1,8 @@
 package com.histmersion
 package api
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 /** Pure tests for the ingest contract (plan §1.8): the four spellings of an image link, the job state machine and the
@@ -294,20 +295,26 @@ class IngestSuite extends munit.FunSuite:
 
   // ── Markdown ─────────────────────────────────────────────────────────────────────────────────
   test("job Markdown names the status, the citekey and the failure"):
+    val converterDown = Problem.Upstream.Unreachable
+      .here(
+        Problem.Upstream.Name("converter"),
+        Problem.Upstream.Url("http://127.0.0.1:8090"),
+        External.Reported("refused")
+      )
     val j = JobInfo(
       SpatialHierarchyResult.Job.Id("abc"),
       JobKinds.Wire(Ingest.KindIngest),
       JobInfo.Status("failed"),
       (Some("ck")).map(Citekey.apply),
       None,
-      Some(Problem.Unclassified(Legacy.Text("converter down"))),
+      Some(converterDown),
       (Some("0123456789abcdef")).map(Sha256.apply),
       JobInfo.CreatedAt("t0"),
       JobInfo.UpdatedAt("t1")
     )
     val out = IngestMarkdown.job(j)
     assert(out.contains("### job abc · ingest"), out)
-    assert(out.contains("**error:** converter down"), out)
+    assert(out.contains(s"**error:** ${converterDown.sentence}"), out)
     assert(out.contains("012345678"), out)
 
   test("job Markdown names the acquisition item a job will tick off, and nothing when there is none"):

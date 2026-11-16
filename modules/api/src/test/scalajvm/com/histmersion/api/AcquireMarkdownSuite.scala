@@ -5,7 +5,7 @@ package api
   * cheap to pin: empty results, the `--apply` hints, and the safety notices that must never silently disappear.
   */
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.library.{

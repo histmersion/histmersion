@@ -410,10 +410,10 @@ class PlaceRepoSuite extends DbSuite:
       .find(_.source.citekey.value == "zzp_src")
       .get
     assert(
-      !hit.matched.exists(_.why.exists(_.sentence.contains("zzp_hattusa"))),
+      !hit.matched.exists(_.why.exists(w => s"$w".contains("zzp_hattusa"))),
       "the id is never shown to a reader: " + hit.matched.flatMap(_.why)
     )
-    val byPlace = hit.matched.filter(_.why.map(_.sentence).contains("place: Hattusa"))
+    val byPlace = hit.matched.filter(_.why.map(w => s"$w").contains("place: Hattusa"))
     assertEquals(byPlace.map(_.id), List("zzp_src#0"), "only the finding actually AT Hattusa")
     assert(byPlace.head.places.contains("Hattusa"), byPlace.head.places)
 

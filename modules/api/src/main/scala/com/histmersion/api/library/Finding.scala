@@ -91,7 +91,7 @@ object Finding:
       periodEnd: Option[Year],
       periodName: Option[PeriodName],
       tags: List[Tags],
-      why: List[Problem],
+      why: List[Hit.Rationale],
       places: List[Match.Places] = Nil
   ) derives JsonCodec,
         KindlingsSchema,
