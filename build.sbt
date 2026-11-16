@@ -1112,6 +1112,8 @@ lazy val server = project
       // semantics — no null check, cast check or bounds check on every access (fastLinkJS keeps them:
       // 31 MB, against 18 MB here), 12 % less heap at load and a whole-range boundaries load 900 → 580 ms
       // (docs/research-web-perf.md). `sbt ~web/fastLinkJS` + Vite stays the quick loop for development.
+      // sbt-scalajs (≥ 1.16) already minifies the full link (`withMinify(true)` is its fullLinkJS default):
+      // 2026-11-16, main.js 23.4 MB minified against 35.6 MB with `withMinify(false)`; fastLinkJS 38.2 MB.
       val _ = (web / Compile / fullLinkJS).value
       val jsDir = (web / Compile / fullLinkJS / scalaJSLinkerOutputDirectory).value
       val src = jsDir / "main.js"
