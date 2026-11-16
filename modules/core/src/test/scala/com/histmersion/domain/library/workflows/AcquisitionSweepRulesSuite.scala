@@ -1,6 +1,6 @@
 package com.histmersion
 package domain.library.workflows
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentences
 import com.histmersion.util.problem.Problem
 
 import com.histmersion.testsupport.ComparedByValue.given
@@ -112,8 +112,8 @@ class AcquisitionSweepRulesSuite extends munit.FunSuite:
     }
     assertEquals(ok.map(_._2), List("A", "D"))
     assertEquals(
-      ko.map((p, why) => (p._1, why)).map((a, p) => (a, p.sentence)),
-      List("c" -> "no legal open-access PDF found for c")
+      ko.map((p, why) => (p._1, why.sentences)),
+      List("c" -> Vector("no legal open-access PDF found for c"))
     )
     assertEquals(
       AcquisitionSweepRules.ingestOa(picks, (_: (String, Boolean))._2, Allowance(0))(p => Right(p._1)),

@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.workflows
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.domain.automation.agents.AgentsControllers
 
@@ -112,7 +112,7 @@ final class SeedService(
   def seed(goal: Goal.Slug): Option[String] =
     acquisition().sweepCandidates(goal, dryRun = AgentUpstream.SweepCandidatesDryRun(false)) match
       case Left(why) =>
-        scribe.info(s"seed before the plan: goal $goal not swept: ${why.sentence}")
+        scribe.info(s"seed before the plan: goal $goal not swept: ${why.sentences.mkString("; ")}")
         None
       case Right(sw) =>
         val fresh = acquisition().candidates(goal, Candidates.State.New.wire, AgentUpstream.Limit(200)).getOrElse(Nil)

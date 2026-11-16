@@ -1,7 +1,7 @@
 package com.histmersion
 package cli
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.domain.media.covers.{CoverChoice, OpenLibrary}
 import com.histmersion.config.*
@@ -101,7 +101,7 @@ object MediaCovers:
                 Api.FileBytes(bytes)
               ) match
                 case Right(_) => Outcome.Uploaded(line)
-                case Left(e)  => Outcome.Failed(MediaCoversReport.Failed(s"$ck: ${e.message.sentence}"))
+                case Left(e) => Outcome.Failed(MediaCoversReport.Failed(s"$ck: ${e.problems.sentences.mkString("; ")}"))
       case Some(CoverChoice.Pick.OpenLibrary(kind, isbn)) if kind.value == "isbn" =>
         Outcome.AskOpenLibrary(ck, MediaCoversRequest.Isbn(isbn.value))
       case Some(CoverChoice.Pick.OpenLibrary(_, _)) =>

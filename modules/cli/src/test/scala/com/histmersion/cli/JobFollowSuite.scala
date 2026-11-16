@@ -1,7 +1,8 @@
 package com.histmersion
 package cli
+import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.config.*
 import com.histmersion.api.jobs.JobInfo
@@ -52,7 +53,7 @@ class JobFollowSuite extends munit.FunSuite:
       clear = () => ()
     )
     assertEquals(r.left.map(_.exitCode), Left(ExitCode.Refused))
-    assert(r.left.exists(_.message.sentence.contains("pdf is encrypted")))
+    assert(r.left.exists(_.problems.sentences.mkString("; ").contains("pdf is encrypted")))
 
   test("an unreadable job state counts as failed, not as success"):
     val r = JobFollow.job(
@@ -77,7 +78,7 @@ class JobFollowSuite extends munit.FunSuite:
 
   private def backup(
       state: Backup.State.Wire,
-      error: Option[Problem] = None,
+      problems: Option[NonEmptyVector[Problem]] = None,
       sha: Option[Sha256] = None
   ) =
     Backup.Status(
@@ -86,12 +87,17 @@ class JobFollowSuite extends munit.FunSuite:
       Backup.Status.DurationMs(1000),
       bytes = sha.map(_ => ByteCount(10L)),
       sha256 = sha,
-      error = error
+      problems = problems
     )
 
   test("a backup that fails exits 2 — it used to exit 1, the usage code"):
     val next =
-      server(backup(Backup.State.Wire("failed"), Some(Problem.Unclassified(Legacy.Text("pg_dump: permission denied")))))
+      server(
+        backup(
+          Backup.State.Wire("failed"),
+          Some(NonEmptyVector.of[Problem](Problem.Unclassified(Legacy.Text("pg_dump: permission denied"))))
+        )
+      )
     val r = JobFollow.backup(
       () => Right(next()),
       backup(Backup.State.Wire("running")),
@@ -100,7 +106,7 @@ class JobFollowSuite extends munit.FunSuite:
       progress = quiet
     )
     assertEquals(r.left.map(_.exitCode), Left(ExitCode.Refused))
-    assert(r.left.exists(_.message.sentence.contains("permission denied")))
+    assert(r.left.exists(_.problems.sentences.mkString("; ").contains("permission denied")))
 
   test("a backup done without a checksum exits 2; done with one is Right"):
     val noSum =

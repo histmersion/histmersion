@@ -1,8 +1,8 @@
 package com.histmersion
 package cli
 import com.histmersion.api.json.NewtypeCodecs.given
-import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.{Legacy, Problem, Problems}
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.api.library.Tree
 
@@ -109,7 +109,10 @@ object Cli:
                   Notes.figures(f, Citekey(ck), FigureBytes, FigureCount) match
                     case Nil => None
                     case fs  =>
-                      c.putAssets(Citekey(ck), fs).left.toOption.map(e => s"$ck (figures): ${e.message.sentence}")
+                      c.putAssets(Citekey(ck), fs)
+                        .left
+                        .toOption
+                        .map(e => s"$ck (figures): ${e.problems.sentences.mkString("; ")}")
               loop(
                 tail,
                 number + 1,
@@ -117,7 +120,8 @@ object Cli:
                 failed ++ r.failed.map(_.value) ++ figureFailure,
                 skipped ++ r.skipped.map(_.value)
               )
-            case Left(e) => loop(tail, number + 1, imported, failed :+ s"$ck: ${e.message.sentence}", skipped)
+            case Left(e) =>
+              loop(tail, number + 1, imported, failed :+ s"$ck: ${e.problems.sentences.mkString("; ")}", skipped)
     val acc = loop(files, 1, 0, Nil, Nil)
     val done =
       c.resolveEdges.map(e => report(acc.modify(_.edgesResolved).setTo(SeedResult.EdgesResolved(e.resolved.value))))
@@ -140,7 +144,7 @@ object Cli:
     */
   private def pruneRenamed(c: Client, sources: Path)(using console: Console): Unit =
     c.sourceAliases match
-      case Left(e)   => err.println(s"  ! could not list renamed citekeys: ${e.message.sentence}")
+      case Left(e)   => err.println(s"  ! could not list renamed citekeys: ${e.problems.sentences.mkString("; ")}")
       case Right(as) =>
         val (failed, removed) = RenameCmd.pruneRenamed(sources, as).partitionMap(identity)
         failed.foreach(f => err.println(s"  ! $f"))
@@ -212,9 +216,10 @@ object Cli:
   /** The exit code is decided here, at the edge. */
   private def runCommand(args: Array[String])(using console: Console): Unit =
     CommandLine.parse(args.toSeq) match
-      case CommandLine.Outcome.Help(text)            => out.println(text); sys.exit(0)
-      case CommandLine.Outcome.Failed(problem, help) =>
-        err.println(s"error: ${problem.sentence}\n\n$help"); sys.exit(ExitCode.Usage.value)
+      case CommandLine.Outcome.Help(text)             => out.println(text); sys.exit(0)
+      case CommandLine.Outcome.Failed(problems, help) =>
+        err.println(s"${problems.sentences.map(s => s"error: $s").mkString("\n")}\n\n$help");
+        sys.exit(ExitCode.Usage.value)
       case CommandLine.Outcome.Run(server, tok, cmd) =>
         finish(server, tok, cmd.run)
 
@@ -226,11 +231,12 @@ object Cli:
     run(new Client(url, token)) match
       case Right(())                     => ()
       case Left(e) if e.workingDirDenied => err.println(WorkingDir.message); sys.exit(e.exitCode.value)
-      case Left(e)                       => err.println(s"error: ${e.message.sentence}"); sys.exit(e.exitCode.value)
+      case Left(e)                       =>
+        e.problems.sentences.foreach(s => err.println(s"error: $s")); sys.exit(e.exitCode.value)
 
   /** A user-facing failure: message + process exit code (1 = usage, 2 = server said no, 3 = unreachable). */
   final case class Error(
-      message: Problem,
+      problems: Problems,
       exitCode: ExitCode = ExitCode.Unreachable,
       notFound: Boolean = false,
       workingDirDenied: Boolean = false
@@ -531,7 +537,7 @@ object Cli:
                     text.value
                   )
                   None
-                case Left(e) => Some(s"$ck: ${e.message.sentence}")
+                case Left(e) => Some(s"$ck: ${e.problems.sentences.mkString("; ")}")
             }
             Cli.out.println(s"exported ${total - failed.size} note(s) to $sources, failed ${failed.size}")
             // a renamed source's note would otherwise linger under its OLD citekey — and a later

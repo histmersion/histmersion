@@ -2,7 +2,7 @@ package com.histmersion
 package cli
 package commandline
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{Legacy, Problem, Problems}
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.catalogue.EventsMarkdown
 import com.histmersion.api.Api
@@ -115,7 +115,7 @@ object EventsArgs:
       "The Wikidata item it is (Q…; \"\" clears) — where `media import` reads its picture"
     )
 
-    def command: Either[Problem, Cli.Command] =
+    def command: Either[Problems, Cli.Command] =
       EventsCmd
         .patch(
           scale_.toOption,
@@ -132,7 +132,7 @@ object EventsArgs:
           wd_.toOption
         )
         .left
-        .map(_.message)
+        .map(_.problems)
         .map(EventsCmd.Command.Patch(id_(), _))
 
   final private class LeafImport()

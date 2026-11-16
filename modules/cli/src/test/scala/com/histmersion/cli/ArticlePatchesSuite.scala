@@ -1,7 +1,7 @@
 package com.histmersion
 package cli
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.api.ListPatch
 import com.histmersion.config.*
@@ -228,6 +228,8 @@ class ArticlePatchesSuite extends munit.FunSuite:
     val bad =
       ArticlePatches.withCritiques(Article.Patch(), List(CritiqueReason.Spec("smith1987_dying=no pair")))
     assert(
-      bad.left.exists(e => e.message.sentence.startsWith("--critique-reason:") && e.exitCode == ExitCode.Usage),
+      bad.left.exists(e =>
+        e.problems.sentences.mkString("; ").startsWith("--critique-reason:") && e.exitCode == ExitCode.Usage
+      ),
       bad
     )

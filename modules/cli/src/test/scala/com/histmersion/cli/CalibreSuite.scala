@@ -756,7 +756,7 @@ class CalibreSuite extends munit.FunSuite:
   test("calibre search takes a query or --unlinked; calibre import takes --acquire-item, but not with --no-convert"):
     def parse(args: String*) = Parsing.parse(args*)
     def refusal(args: String*) = parse(args*) match
-      case Left(CommandLine.Outcome.Failed(p, _)) => p
+      case Left(CommandLine.Outcome.Failed(p, _)) => p.fold(identity)(ps => fail(s"several problems: $ps"))
       case other                                  => fail(s"not refused: ${other.toString}")
     assert(parse("calibre", "search", "troy").isRight)
     assert(parse("calibre", "search", "--unlinked").isRight)

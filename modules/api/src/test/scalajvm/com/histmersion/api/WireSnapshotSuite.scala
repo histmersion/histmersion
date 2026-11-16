@@ -1,5 +1,6 @@
 package com.histmersion
 package api
+import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.util.json.RawJson.*
 
 import com.histmersion.util.problem.{External, Problem}
@@ -449,10 +450,12 @@ class WireSnapshotSuite extends munit.FunSuite:
           Backup.Status.File("zq.dump"),
           Backup.State.Wire("failed"),
           Backup.Status.DurationMs(10),
-          error = Some(
-            Problem.Io.Process(
-              Problem.Io.Tool("pg_dump"),
-              Problem.Io.Ending.Exited(Problem.Io.ExitCode(1), External.Stderr("zq error"))
+          problems = Some(
+            NonEmptyVector.of[Problem](
+              Problem.Io.Process(
+                Problem.Io.Tool("pg_dump"),
+                Problem.Io.Ending.Exited(Problem.Io.ExitCode(1), External.Stderr("zq error"))
+              )
             )
           )
         )

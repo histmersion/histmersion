@@ -1,7 +1,7 @@
 package com.histmersion
 package cli
 
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.config.*
 import java.nio.file.Files
 import com.histmersion.api.exchange.EditionsPolicy
@@ -57,7 +57,7 @@ class MergeCmdSuite extends munit.FunSuite:
           None
         )
       )
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(
       r.resolve.map(x => x.issue -> x.decision).toMap,
       Map(
@@ -74,7 +74,7 @@ class MergeCmdSuite extends munit.FunSuite:
           Some(MergeCmd.ResolutionFlags.Editions("sometimes"))
         )
       )
-    val msg = bad.left.map(_.message.sentence).swap.getOrElse(fail("accepted"))
+    val msg = bad.left.map(_.problems.sentences.mkString("; ")).swap.getOrElse(fail("accepted"))
     assert(
       msg.contains("no such file") && msg.contains("resolve: 'nonsense'") && msg.contains("--editions sometimes"),
       msg
@@ -93,7 +93,7 @@ class MergeCmdSuite extends munit.FunSuite:
           )
         )
       )
-      .fold(e => fail(e.message.sentence), identity)
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(
       r.resolve.map(x => x.issue -> x.text).toMap,
       Map(
@@ -106,4 +106,7 @@ class MergeCmdSuite extends munit.FunSuite:
         List(MergeResolution(MergeResolution.Issue("A-1"), MergeResolution.Decision("file:/no/such/merged.md")))
       )
     )
-    assert(bad.left.exists(_.message.sentence.contains("A-1: file:/no/such/merged.md — no such file")), bad.toString)
+    assert(
+      bad.left.exists(_.problems.sentences.mkString("; ").contains("A-1: file:/no/such/merged.md — no such file")),
+      bad.toString
+    )

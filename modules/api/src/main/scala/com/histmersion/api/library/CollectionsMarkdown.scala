@@ -1,6 +1,6 @@
 package com.histmersion
 package api.library
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.api.Plural
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -101,7 +101,7 @@ object CollectionsMarkdown:
         (if ready.nonEmpty then " Re-run with --apply." else ""))
     else
       val lines = s.pushes.map(p =>
-        p.id.fold(s"  ! ${p.citekey}: ${p.error.map(_.sentence).getOrElse("")}")(id =>
+        p.id.fold(s"  ! ${p.citekey}: ${p.problems.map(_.sentences.mkString("; ")).getOrElse("")}")(id =>
           s"  + ${p.citekey} → Calibre id $id"
         )
       )
@@ -173,7 +173,7 @@ object CollectionsMarkdown:
         if (c.warning) == CollectionCover.Warning(true) then s"warning: cover not stored — ${c.line}" else c.line
       ) ++
       i.job.map(j => s"queued job ${j.jobId} for ${j.citekey}") ++
-      i.jobError.map(e => s"not converted: ${e.sentence}")).mkString("\n"))
+      i.jobProblems.map(e => s"not converted: ${e.sentences.mkString("; ")}")).mkString("\n"))
 
   def linked(l: CollectionLinked): String = (s"linked `${l.citekey}` to Calibre id ${l.id} — ${l.title}")
 

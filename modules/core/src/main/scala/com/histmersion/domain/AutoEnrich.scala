@@ -1,8 +1,8 @@
 package com.histmersion
 package domain
 
-import com.histmersion.util.problem.Problem
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.{Problem, Problems}
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.api.Plural
 import com.histmersion.api.given
 import com.histmersion.domain.automation.Run
@@ -89,7 +89,7 @@ object AutoEnrich:
 
   /** The job's progress note for what happened. */
   def queued(runId: Run.Id): Note = Note(s"enrichment queued: run $runId")
-  def notQueued(problem: Problem): Note = Note(s"enrichment not queued: ${problem.sentence}")
+  def notQueued(problems: Problems): Note = Note(s"enrichment not queued: ${problems.sentences.mkString("; ")}")
 
   /** The note when the source went to the enrich manager (docs/research-process-managers.md, phase 2): its item, and —
     * unless the manager is active — that nothing runs until a person resumes it.

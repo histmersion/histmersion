@@ -36,7 +36,7 @@ object ManagerCmd:
     ManagerConfig
       .parse(kvs.map(ManagerConfig.Spec(_)))
       .left
-      .map(m => Cli.Error(m.toNonEmpty.head, exitCode = ExitCode.Usage))
+      .map(m => Cli.Error(m, exitCode = ExitCode.Usage))
 
   /** The settings `--config` and `config` take. */
   val SettingKeys: String =

@@ -4,7 +4,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import hearth.kindlings.optics.syntax.*
 
@@ -143,7 +143,8 @@ object ArticleCli:
                 failed ++ r.failed.map(_.value),
                 skipped ++ r.skipped.map(_.value)
               )
-            case Left(e) => loop(tail, number + 1, imported, failed :+ s"$name: ${e.message.sentence}", skipped)
+            case Left(e) =>
+              loop(tail, number + 1, imported, failed :+ s"$name: ${e.problems.sentences.mkString("; ")}", skipped)
     loop(fs, 1, 0, Nil, Nil)
 
   /** Write every article to `<dir>/<kind>/<slug>.md`. Returns how many were written. */
@@ -161,7 +162,7 @@ object ArticleCli:
               text.value
             )
             None
-          case Left(e) => Some(s"$slug: ${e.message.sentence}")
+          case Left(e) => Some(s"$slug: ${e.problems.sentences.mkString("; ")}")
       }
       Cli.out.println(s"exported ${total - failed.size} article(s) to $out, failed ${failed.size}")
       failed.take(10).foreach(f => Cli.err.println(s"  ! $f"))

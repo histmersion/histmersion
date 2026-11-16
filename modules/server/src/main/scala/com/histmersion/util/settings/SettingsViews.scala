@@ -1,7 +1,7 @@
 package com.histmersion
 package util.settings
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.api.settings.ConfigEdit
 import com.histmersion.config.edit.*
@@ -56,7 +56,7 @@ object SettingsViews:
           s.credentialShown.map(x => ConfigEdit.Credential.Shown(x.value))
         )
       ),
-      s.locked.map(p => ConfigEdit.Field.Locked(p.sentence))
+      s.locked.map(p => ConfigEdit.Field.Locked(p.sentences.mkString("; ")))
     )
 
   def written(

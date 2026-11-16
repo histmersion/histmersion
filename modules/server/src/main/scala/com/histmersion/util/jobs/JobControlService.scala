@@ -2,7 +2,7 @@ package com.histmersion
 package util.jobs
 import com.histmersion.util.jobs.Job
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.util.database.Transactor
 
@@ -49,7 +49,8 @@ object JobControlService:
         JobControlRules.decide(job, action, stops.canResume(id)).left.map(p => conflict(p.sentence)).flatMap {
           case JobControlStep.Run(a)         => runs(id, a).flatMap(_ => current)
           case JobControlStep.RequestStop(s) => stops.request(id, s); current
-          case JobControlStep.Resume    => stops.resume(id).left.map(p => conflict(p.sentence)).flatMap(_ => current)
+          case JobControlStep.Resume         =>
+            stops.resume(id).left.map(p => conflict(p.sentences.mkString("; "))).flatMap(_ => current)
           case JobControlStep.CancelNow =>
             stops.forget(id)
             Transactor(ds)
@@ -112,7 +113,8 @@ object JobControlService:
         JobControlRules.decide(job, action, stops.canResume(id)).left.map(p => conflict(p.sentence)).flatMap {
           case JobControlStep.Run(a)         => runs(id, a).flatMap(_ => current)
           case JobControlStep.RequestStop(s) => stops.request(id, s); current
-          case JobControlStep.Resume    => stops.resume(id).left.map(p => conflict(p.sentence)).flatMap(_ => current)
+          case JobControlStep.Resume         =>
+            stops.resume(id).left.map(p => conflict(p.sentences.mkString("; "))).flatMap(_ => current)
           case JobControlStep.CancelNow =>
             if JobState.next(job.state, JobState.Cancelled).isEmpty then Left(conflict(s"job $id moved on; look again"))
             else

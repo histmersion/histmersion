@@ -1,7 +1,8 @@
 package com.histmersion
 package api.backup
+import com.histmersion.util.nonempty.NonEmptyVector
 
-import com.histmersion.util.problem.{External, Problem}
+import com.histmersion.util.problem.{External, Problem, Problems}
 import com.histmersion.util.problem.Problem.{Field, Invalid, Raw, TypeName}
 
 import java.time.Instant
@@ -247,7 +248,7 @@ object Backup:
       durationMs: Status.DurationMs,
       bytes: Option[ByteCount] = None,
       sha256: Option[Sha256] = None,
-      error: Option[Problem] = None,
+      problems: Option[NonEmptyVector[Problem]] = None,
       pruned: List[Status.Pruned] = Nil
   ) derives JsonCodec,
         KindlingsSchema,
@@ -265,5 +266,5 @@ object Backup:
       Status(file, State.Running.wire, Result.DurationMs((elapsedMs).value))
     def done(r: Result): Status =
       Status(r.file, State.Done.wire, r.durationMs, Some(r.bytes), Some(r.sha256), pruned = r.pruned)
-    def failed(file: Status.FailedFile, elapsedMs: Result.DurationMs, error: Problem): Status =
-      Status(file, State.Failed.wire, Result.DurationMs((elapsedMs).value), error = Some(error))
+    def failed(file: Status.FailedFile, elapsedMs: Result.DurationMs, problems: Problems): Status =
+      Status(file, State.Failed.wire, Result.DurationMs((elapsedMs).value), problems = Some(problems.toNonEmpty))

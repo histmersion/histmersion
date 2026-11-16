@@ -1,8 +1,8 @@
 package com.histmersion
 package domain
 
-import com.histmersion.util.problem.Text.{line, sentence}
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.Text.{line, sentence, sentences}
+import com.histmersion.util.problem.{Problem, Problems}
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.jobs.JobState
@@ -161,21 +161,22 @@ object AcquireRecheck:
     def parse(s: Wire): Option[Outcome] = values.find(_.wire.value == s.value.trim)
 
   /** A failed legal ingest: no legal copy, or something else in the way. */
-  def failure(message: Problem): Outcome =
+  def failure(message: Problems): Outcome =
     if IngestBacklog.isNoLegalCopy(message) then Outcome.NoCopy else Outcome.Failed
 
   /** What each fetcher answered, from the legal ingest's refusal ([[Problem.NotFound.Copy]]'s answers; from an earlier
     * version's stored text `no legal open-access copy of <doi>: <the chain's message> — <fetcher>: <answer>; …`, the
     * part after the message): the answers when there are any, else the message.
     */
-  def answers(message: Problem): ReplyText = message match
-    case Problem.NotFound.Copy(_, said) if said.nonEmpty => ReplyText.of(said)
-    case other                                           => replies(other.sentence.trim)
+  def answers(message: Problems): ReplyText =
+    message.toVector
+      .collectFirst { case Problem.NotFound.Copy(_, said) if said.nonEmpty => ReplyText.of(said) }
+      .getOrElse(replies(message.sentences.mkString("; ").trim))
 
   /** The reason an item carries after a check at `at` whose legal ingest found no legal copy (`message`): the fetchers'
     * [[answers]].
     */
-  def noCopy(at: Instant, message: Problem): Rationale =
+  def noCopy(at: Instant, message: Problems): Rationale =
     Rationale.NoCopy(LocalDate.ofInstant(at, ZoneOffset.UTC), answers(message))
 
   /** The fetchers' answers in an earlier version's stored refusal, as [[answers]] reads them from its text `m`. */

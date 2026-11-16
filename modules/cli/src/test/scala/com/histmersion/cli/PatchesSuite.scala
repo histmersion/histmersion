@@ -1,7 +1,7 @@
 package com.histmersion
 package cli
 
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.api.ListPatch
 import com.histmersion.config.*
 import com.histmersion.api.library.{EdgesPatch, FindingsPatch, MetadataPatch}
@@ -97,7 +97,7 @@ class PatchesSuite extends munit.FunSuite:
   test("--add-finding with bad JSON is a usage error, not a crash"):
     val e = build(addFindings = List("{nope")).swap.toOption.get
     assertEquals(e.exitCode, ExitCode.Usage)
-    assert(e.message.sentence.contains("--add-finding"), e.message)
+    assert(e.problems.sentences.mkString("; ").contains("--add-finding"), e.problems)
 
   test("--period takes signed years, BCE negative; a malformed one is a usage error"):
     assertEquals(build(period = Some("-3300,-2600")).toOption.get.period, Some(Period.Input(Year(-3300), Year(-2600))))
@@ -135,7 +135,7 @@ class PatchesSuite extends munit.FunSuite:
   test("--add-edge with an unknown kind or no target is a usage error"):
     val bad = build(addEdges = List("disagrees:x")).swap.toOption.get
     assertEquals(bad.exitCode, ExitCode.Usage)
-    assert(bad.message.sentence.contains("unknown edge kind 'disagrees'"), bad.message)
+    assert(bad.problems.sentences.mkString("; ").contains("unknown edge kind 'disagrees'"), bad.problems)
     assert(build(addEdges = List("refutes")).isLeft)
     assert(build(removeEdges = List("refutes:")).isLeft)
 

@@ -1,8 +1,8 @@
 package com.histmersion
 package domain
 
-import com.histmersion.util.problem.Problem
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.{Problem, Problems}
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import scala.annotation.tailrec
 import com.histmersion.api.Plural
 import com.histmersion.api.given
@@ -43,10 +43,11 @@ object IngestBacklog:
     * [[Problem.NotFound.Copy]], or an earlier version stored [[NoLegalCopy]]): such a work goes to the acquisition list
     * at once; any other failure is tried again later.
     */
-  def isNoLegalCopy(message: Problem): Boolean = message match
+  def isNoLegalCopy(message: Problems): Boolean = message.exists {
     case _: Problem.NotFound.Copy            => true
     case stored: Problem.Stored.Unrecognised => stored.sentence.trim.startsWith(NoLegalCopy)
     case _                                   => false
+  }
 
   /** What a watcher's next sweep may ingest of its NEW finds: what is left of its own allowance (`own`) and of the
     * shared one (`shared`, the autopilot's; None = no shared cap), each after the backlog that drains under it first —
@@ -150,23 +151,27 @@ object IngestBacklog:
 
   /** Why the item goes where it goes: the account of the backlog's decision about the ingest's failure. */
   enum Rationale:
-    /** The ingest failed with `problem`. */
-    case Failed(problem: Problem)
+    /** The ingest failed with `problems`. */
+    case Failed(problems: Problems)
 
-    /** The ingest failed with `problem`, the `tries`th time: the item gives up. */
-    case GaveUp(problem: Problem, tries: Plural.Count)
+    /** The ingest failed with `problems`, the `tries`th time: the item gives up. */
+    case GaveUp(problems: Problems, tries: Plural.Count)
 
     /** The account as the item's outcome and the manager's feed show it. */
     def said: String =
-      def words(problem: Problem): String =
-        Option(problem).map(_.sentence.trim).filter(_.nonEmpty).getOrElse("the ingest failed").take(500)
+      def words(problems: Problems): String =
+        Option(problems)
+          .map(_.sentences.map(_.trim).filter(_.nonEmpty).mkString("; "))
+          .filter(_.nonEmpty)
+          .getOrElse("the ingest failed")
+          .take(500)
       this match
         case Failed(problem)        => words(problem)
         case GaveUp(problem, tries) =>
           s"${words(problem)} (${Plural.count(tries, Plural.CountSingular("try"), Plural.CountPlural("tries"))})"
 
   def onFailure(
-      message: Problem,
+      message: Problems,
       failures: Failure.Retry.Failures,
       maxFailures: ManagerPolicy.ReviewSettings.MaxFailures,
       backoffMinutes: ManagerPolicy.ReviewSettings.BackoffMinutes,

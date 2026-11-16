@@ -3,7 +3,7 @@ package cli
 package commandline
 
 import com.histmersion.api.json.NewtypeCodecs.given
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{Legacy, Problem, Problems}
 import com.histmersion.config.*
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.api.automation.{
@@ -325,7 +325,7 @@ object ManagerArgs:
         "The goals active for model work: list | pin <goal> | unpin <goal> | priority <goal> <n> | max <n|default>"
       )(v =>
         val rest = v.args[String]("list|pin|unpin|priority|max [goal] [n]")
-        () => ManagerCmd.focusRequest(rest.getOrElse(Nil)).left.map(_.message).map(ManagerCmd.AutopilotVerb.Focus(_))
+        () => ManagerCmd.focusRequest(rest.getOrElse(Nil)).left.map(_.problems).map(ManagerCmd.AutopilotVerb.Focus(_))
       ),
       LeafAutopilotVerb("mode", "working, finish (current work, then pause) or pause (now)")(v =>
         val m = v.arg[String]("working|finish|pause")
@@ -338,12 +338,12 @@ object ManagerArgs:
     )
 
   final private class LeafAutopilotVerb(name: String, help: String)(
-      declare: LeafAutopilotVerb => () => Either[Problem, ManagerCmd.AutopilotVerb]
+      declare: LeafAutopilotVerb => () => Either[Problems, ManagerCmd.AutopilotVerb]
   ) extends Leaf(s"$Agent autopilot", name, help):
     private val json_ = json()
     private val verb = declare(this)
 
-    def command: Either[Problem, Cli.Command] = verb().map(ManagerCmd.Command.Autopilot(_, json_()))
+    def command: Either[Problems, Cli.Command] = verb().map(ManagerCmd.Command.Autopilot(_, json_()))
 
   // ── scheduler ──────────────────────────────────────────────────────────────────────────────────
 

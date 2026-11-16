@@ -2,7 +2,7 @@ package com.histmersion
 package cli
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import hearth.kindlings.optics.syntax.*
 
@@ -119,5 +119,5 @@ class MediaCmdSuite extends munit.FunSuite:
     ) { (url, _) =>
       val (r, _, _) = run(url, "media", "import", "wikidata")
       assertEquals(r.left.map(_.exitCode), Left(ExitCode.Refused))
-      assert(r.left.exists(_.message.sentence.contains("interrupted")), r.toString)
+      assert(r.left.exists(_.problems.sentences.mkString("; ").contains("interrupted")), r.toString)
     }

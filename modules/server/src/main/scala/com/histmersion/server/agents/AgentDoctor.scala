@@ -5,7 +5,7 @@ import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import io.scalaland.chimney.dsl.*
 
@@ -108,7 +108,7 @@ final class AgentDoctor(
       )
     } ++ plugins(chained, online.value)
     val roleChecks = chains.flatMap {
-      case (r, Left(m))                        => List(fail(s"role ${r.wire}", m.sentence))
+      case (r, Left(m))                        => List(fail(s"role ${r.wire}", m.sentences.mkString("; ")))
       case (r, Right((Nil, _))) if neededBy(r) =>
         List(warn(s"role ${r.wire}", s"no model — ${r.wire} steps are refused"))
       case _ => Nil

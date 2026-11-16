@@ -3,7 +3,7 @@ package domain.automation.approvals
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.Cursor
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import io.scalaland.chimney.dsl.*
 
@@ -227,7 +227,8 @@ final class Approvals(
         case Decision.Approve =>
           apply() match
             case Right(w) => store.settle(id, ApprovalState.Approved, DomainApproval.Outcome(s"applied: $w"))
-            case Left(m)  => store.settle(id, ApprovalState.Failed, DomainApproval.Outcome(m.sentence.take(1000)))
+            case Left(m)  =>
+              store.settle(id, ApprovalState.Failed, DomainApproval.Outcome(m.sentences.mkString("; ").take(1000)))
       out <- store
         .approval(id)
         .toRight(

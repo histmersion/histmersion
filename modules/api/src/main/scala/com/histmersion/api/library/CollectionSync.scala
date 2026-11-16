@@ -1,5 +1,6 @@
 package com.histmersion
 package api.library
+import com.histmersion.util.nonempty.NonEmptyVector
 
 import com.histmersion.api.given
 import com.histmersion.util.problem.Problem
@@ -28,7 +29,7 @@ object CollectionSync:
   final case class Push(
       citekey: Citekey,
       id: Option[Push.Id],
-      error: Option[Problem]
+      problems: Option[NonEmptyVector[Problem]]
   ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema

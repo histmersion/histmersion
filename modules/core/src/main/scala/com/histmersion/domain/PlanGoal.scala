@@ -1,9 +1,9 @@
 package com.histmersion
 package domain
 
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.util.problem.Problem.{Content, Count, Field, Raw, Where}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.StoredIdCodecs.given
 import com.histmersion.api.given
@@ -253,7 +253,7 @@ object PlanGoal:
     object IsRetracted extends Newtype[Boolean, Pure]
 
   /** A work looked up by its DOI (the library's metadata, lent by the composition). */
-  type Lookup = Doi => Either[Problem, Work]
+  type Lookup = Doi => Either[Problems, Work]
 
   def verify(p: Proposed, goal: Goal.Slug, lookup: Lookup): Plan =
     val looked = p.works.map(w => (w, lookup(w.doi)))
@@ -271,7 +271,7 @@ object PlanGoal:
         )
     }
     val dropped = looked.collect {
-      case (w, Left(m))                         => Plan.Dropped(s"${w.doi}: not verified upstream — ${m.sentence}")
+      case (w, Left(m)) => Plan.Dropped(s"${w.doi}: not verified upstream — ${m.sentences.mkString("; ")}")
       case (w, Right(r)) if r.isRetracted.value => Plan.Dropped(s"${w.doi}: retracted upstream")
     }
     Plan(

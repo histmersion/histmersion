@@ -4,7 +4,7 @@ package cli
 import com.histmersion.api.BBox
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.{Filter, Sort}
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{Legacy, Problem, Problems}
 import hearth.typename.TypeName as Named
 import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
@@ -39,7 +39,7 @@ object CommandLine:
   enum Outcome:
     case Run(server: Option[Client.ServerUrl], token: Option[Client.Token], command: Cli.Command)
     case Help(text: HelpText)
-    case Failed(problem: Problem, help: HelpText)
+    case Failed(problems: Problems, help: HelpText)
 
   /** A top-level word of the command line: a command group, or a command of its own. */
   private[cli] trait Entry:
@@ -388,7 +388,7 @@ object CommandLine:
     descr(help)
     helpFormatter = Layout(s"$parent $name")
 
-    def command: Either[Problem, Cli.Command]
+    def command: Either[Problems, Cli.Command]
 
   /** A subcommand that only holds others: `histmersion article`. */
   abstract private[cli] class Group(parent: String, name: String, help: String) extends Subcommand(name) with Declares:

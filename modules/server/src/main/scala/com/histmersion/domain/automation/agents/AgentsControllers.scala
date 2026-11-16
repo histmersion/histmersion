@@ -288,7 +288,7 @@ final class AgentsControllers(
       r <- cli.trees
         .generate(knownTools, rts, AgentTrees.out(req.out.map(_.value), site.userPaths))
         .left
-        .map(e => Api.Error(e.toNonEmpty.head))
+        .map(e => Api.Error(e))
     yield r
 
   // ── plan pools ─────────────────────────────────────────────────────────────────────────────────
@@ -344,7 +344,7 @@ final class AgentsControllers(
           PlanQuota.Floors
             .parse(PlanQuota.Floors.Wire(t))
             .left
-            .map(e => Api.Error(e.toNonEmpty.head))
+            .map(e => Api.Error(e))
             .map(fs => Some(Some(fs.text)))
         case None => Right(None)
       _ = in.hold.foreach(h => pools.hold(p, PlanQuotaRepo.Pool.Held(h.value)))
@@ -566,7 +566,7 @@ final class AgentsControllers(
       ms <- ModelChains
         .parseModels(in.models.map(m => ModelRef.Model.Spec(m.value)), knownPluginNames)
         .left
-        .map(e => Api.Error(e.toNonEmpty.head))
+        .map(e => Api.Error(e))
       _ <- Either.cond(
         ms.nonEmpty,
         (),
@@ -594,7 +594,7 @@ final class AgentsControllers(
       t <- ModelChains.Target
         .parse(ModelChains.Target.Spec(in.target.value), knownPluginNames)
         .left
-        .map(e => Api.Error(e.toNonEmpty.head))
+        .map(e => Api.Error(e))
       ls <- in.limits.map(ModelChains.Limit.fromSpec).partitionMap(identity) match
         case (Nil, ok) => Right(ok)
         case (errs, _) => Left(Api.Error(Problem.Unclassified(Legacy.Text(errs.map(_.sentence).mkString("; ")))))
@@ -746,7 +746,7 @@ final class AgentsControllers(
       _ <- p.roles.foldLeft[Either[Api.Error, Unit]](Right(())) { (acc, role) =>
         acc.flatMap(_ =>
           runnable(role, over.get(role).orElse(req.model.map(m => ModelName(m.value)))).left
-            .map(e => Api.Error(e.toNonEmpty.head))
+            .map(e => Api.Error(e))
         )
       }
       // and an override for a role the pipeline only reaches through a chained run (compile-article's
@@ -845,7 +845,7 @@ final class AgentsControllers(
           _ <- ModelChains
             .parseChain(ModelChains.Chain.Spec(o.model.value), knownPluginNames)
             .left
-            .map(e => Api.Error(e.at(Problem.Field(s"--model-for ${r.wire}")).toNonEmpty.head))
+            .map(e => Api.Error(e.at(Problem.Field(s"--model-for ${r.wire}"))))
         yield m + (r -> ModelName(o.model.value.trim))
       }
     }

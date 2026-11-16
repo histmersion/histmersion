@@ -2,7 +2,7 @@ package com.histmersion
 package domain.library.workflows
 import com.histmersion.util.json.RawJson.*
 
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.scalaland.chimney.dsl.*
 
@@ -81,7 +81,7 @@ final class CurrencyCheckPipeline(
   private def assess(ctx: RunCtx, ts: List[Target]): Assessed =
     val results = ts.filter(_.doi.isDefined).map { t =>
       upstream().assess(t.citekey, apply = AgentUpstream.AssessApply(!ctx.dryRun)) match
-        case Left(m)  => ctx.warn(s"assess ${t.citekey}: ${m.sentence}"); None
+        case Left(m)  => ctx.warn(s"assess ${t.citekey}: ${m.sentences.mkString("; ")}"); None
         case Right(a) =>
           if a.isRetracted.value then ctx.warn(s"assess: [[${t.citekey}]] is RETRACTED — ${a.recommendation}")
           if ctx.dryRun then ctx.write(s"assess [[${t.citekey}]] applied: verdict ${a.verdict}", a.asJson)(())(())
@@ -97,7 +97,7 @@ final class CurrencyCheckPipeline(
         None,
         Some(FollowupsInput.Limit(cfg.scheduler.followupsPerSource.value))
       ) match
-        case Left(m)  => ctx.warn(s"followups ${t.citekey}: ${m.sentence}"); (0, 0, 0)
+        case Left(m)  => ctx.warn(s"followups ${t.citekey}: ${m.sentences.mkString("; ")}"); (0, 0, 0)
         case Right(r) =>
           val acts = r.followups.map(CurrencyCheckRules.currencyAction(t.citekey, _))
           val proposed = acts.collect { case CurrencyAction.Propose(p) => p }.count { p =>

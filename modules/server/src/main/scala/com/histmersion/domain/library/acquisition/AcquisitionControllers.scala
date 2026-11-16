@@ -3,7 +3,7 @@ package domain.library.acquisition
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{Legacy, Problem, Problems}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import io.scalaland.chimney.dsl.*
@@ -117,7 +117,7 @@ final class AcquisitionControllers(
   private val rwRunning = java.util.concurrent.atomic.AtomicBoolean(false)
   private val rwError = java.util.concurrent.atomic.AtomicReference[Option[String]](None)
 
-  private def err(msg: Problem): Api.Error = Api.Error(msg)
+  private def err(problems: Problems): Api.Error = Api.Error(problems)
 
   private def step(name: String, ok: Boolean, detail: String): Ingest.Step =
     Ingest.Step(Ingest.Step.Value(name), Ingest.Step.Ok(ok), Ingest.Step.Detail(detail))
@@ -248,7 +248,7 @@ final class AcquisitionControllers(
           )
         )
         .left
-        .map(e => err(e.toNonEmpty.head))
+        .map(e => err(e))
         .map { works =>
           // ONE index for the whole page: `mark` used to read `lower(doi) -> citekey` for the entire
           // corpus once per RESULT ROW, i.e. 25 full-table scans for one search.

@@ -2,8 +2,8 @@
 {
   "bytes" : "N",
   "durationMs" : "N",
-  "error" : null,
   "file" : "histmersion-STAMP.dump",
+  "problems" : null,
   "pruned" : [
   ],
   "sha256" : "DIGEST",
@@ -12,8 +12,8 @@
 {
   "bytes" : "N",
   "durationMs" : "N",
-  "error" : null,
   "file" : "histmersion-STAMP.dump",
+  "problems" : null,
   "pruned" : [
   ],
   "sha256" : "DIGEST",
@@ -22,8 +22,8 @@
 {
   "bytes" : "N",
   "durationMs" : "N",
-  "error" : null,
   "file" : "histmersion-STAMP.dump",
+  "problems" : null,
   "pruned" : [
     "histmersion-STAMP.dump"
   ],

@@ -334,7 +334,7 @@ object CollectionsService:
           record,
           cover,
           conversion.flatMap(_.toOption),
-          conversion.flatMap(_.left.toOption.map(e => e.problems.head)),
+          conversion.flatMap(_.left.toOption.map(e => e.problems)),
           conversion.flatMap(_.left.toOption.flatMap(_.code).map(code => CollectionImported.JobErrorCode(code.value)))
         )
 
@@ -697,7 +697,7 @@ object CollectionsService:
               checked(r.citekey)
                 .flatMap(pushOne(c, _))
                 .fold(
-                  e => CollectionSync.Push(r.citekey, None, Some(e.problems.head)),
+                  e => CollectionSync.Push(r.citekey, None, Some(e.problems)),
                   (id, _) => CollectionSync.Push(r.citekey, Some(CollectionSync.Push.Id(id.value)), None)
                 )
             }

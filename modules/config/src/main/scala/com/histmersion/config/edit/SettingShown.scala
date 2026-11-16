@@ -1,7 +1,7 @@
 package com.histmersion
 package config.edit
 
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.{Problem, Problems}
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A setting as it may be SHOWN — to a person, a client or an agent: its values as HOCON writes them, and for a
@@ -23,7 +23,7 @@ final case class SettingShown(
     credentialRule: Option[SettingShown.CredentialRule],
     credentialForm: Option[SettingShown.CredentialForm],
     credentialShown: Option[SettingReading.Shown],
-    locked: Option[Problem]
+    locked: Option[Problems]
 )
 
 object SettingShown:
@@ -58,5 +58,5 @@ object SettingShown:
       ),
       credentialForm = r.credential.map(c => CredentialForm(c.wire)),
       credentialShown = r.shown,
-      locked = r.locked.map(_.message.toNonEmpty.head)
+      locked = r.locked.map(_.message)
     )

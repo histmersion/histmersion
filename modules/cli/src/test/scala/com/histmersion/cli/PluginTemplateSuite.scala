@@ -1,7 +1,7 @@
 package com.histmersion
 package cli
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import hearth.kindlings.optics.syntax.*
 
@@ -301,7 +301,12 @@ class PluginTemplateSuite extends munit.FunSuite:
       val written = PluginAuthoring.write(root.resolve("mirror"), files)
       assertEquals(written.map(_.size), Right(files.size))
       assert(Files.isRegularFile(root.resolve("mirror/resources/META-INF/services/com.histmersion.plugin.Plugin")))
-      assert(PluginAuthoring.write(root.resolve("mirror"), files).left.exists(_.message.sentence.contains("not empty")))
+      assert(
+        PluginAuthoring
+          .write(root.resolve("mirror"), files)
+          .left
+          .exists(_.problems.sentences.mkString("; ").contains("not empty"))
+      )
     finally
       Files.walk(root).sorted(java.util.Comparator.reverseOrder()).forEach { p =>
         val _ = Files.deleteIfExists(p)
@@ -339,7 +344,7 @@ class PluginTemplateSuite extends munit.FunSuite:
       val old = PluginAuthoring.repository(None, Right(install), Right(m2))
       assert(
         old.left.exists(e =>
-          e.message.sentence.contains("predates plugin dependencies") && e.exitCode == ExitCode.Usage
+          e.problems.sentences.mkString("; ").contains("predates plugin dependencies") && e.exitCode == ExitCode.Usage
         ),
         old
       )

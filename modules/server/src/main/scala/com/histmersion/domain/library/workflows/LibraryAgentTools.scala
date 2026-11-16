@@ -171,7 +171,7 @@ final class LibraryAgentTools(site: => LibrarySite, upstream: () => AgentUpstrea
         upstream()
           .followups(AgentUpstream.FollowupsId(in.id.value), in.since, in.limit)
           .fold(
-            m => s"followups unavailable: ${m.sentence}",
+            m => s"followups unavailable: ${m.sentences.mkString("; ")}",
             r => cap(AcquireMarkdown.followups(r), max, "ask for fewer papers (`limit`) or recent ones (`since`)")
           )
       }

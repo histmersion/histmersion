@@ -1235,7 +1235,7 @@ class MediaOracleSuite extends DbSuite:
       MediaCovers
         .calibreStep(client, cal, only, refresh, dry, None)
         .fold(
-          e => s"## $name\nrefused: ${e.message.sentence}\n",
+          e => s"## $name\nrefused: ${e.problems.sentences.mkString("; ")}\n",
           (r, asks) =>
             s"## $name\nreport: ${r.asJson.sortedKeys.spaces2}\nasks: ${Json.fromValues(asks.map((c, i) => Json.arr(Json.fromString(c.value), Json.fromString(i.value)))).noSpaces}\n"
         )

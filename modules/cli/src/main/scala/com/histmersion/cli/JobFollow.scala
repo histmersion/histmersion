@@ -1,7 +1,7 @@
 package com.histmersion
 package cli
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.config.*
 import com.histmersion.api.jobs.JobInfo
@@ -92,4 +92,4 @@ object JobFollow:
             ExitCode.Refused
           )
         )
-      case _ => Left(failed(s"backup ${s.file}", s.error.map(_.sentence)))
+      case _ => Left(failed(s"backup ${s.file}", s.problems.map(_.sentences.mkString("; "))))

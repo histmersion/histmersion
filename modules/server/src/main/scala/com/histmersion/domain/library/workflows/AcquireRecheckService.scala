@@ -623,8 +623,8 @@ final class AcquireRecheckService(
             case Right(r) => (Outcome.Fetched, r.pdf.fold("no file")(_.source.value), Some(r.citekey), None)
             case Left(m)  =>
               AcquireRecheck.failure(m) match
-                case Outcome.NoCopy => (Outcome.NoCopy, m.sentence, into.map(apiCk), Some(m))
-                case outcome        => (outcome, m.sentence, into.map(apiCk), None)
+                case Outcome.NoCopy => (Outcome.NoCopy, m.sentences.mkString("; "), into.map(apiCk), Some(m))
+                case outcome        => (outcome, m.sentences.mkString("; "), into.map(apiCk), None)
         catch
           case e: InterruptedException => throw e
           case e: Exception            =>

@@ -1,6 +1,6 @@
 package com.histmersion
 package util.jobs
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{Legacy, Problem, Problems}
 
 import com.histmersion.util.database.Transactor
 
@@ -221,11 +221,11 @@ object BackgroundJob:
       pins: WorkCarrier,
       stops: Option[JobStops],
       body: (JobInfo, JobInfo.Progress => Unit) => Outcome
-  ): Either[Problem, Unit] =
+  ): Either[Problems, Unit] =
     if !slot.claim(Work("resuming")) then
       // the paused job keeps its way to go on: it can be resumed once the other one ends
       stops.foreach(_.pausedWith(idOf(job), () => resume(ds, job, kind, slot, what, busyCode, pins, stops, body)))
-      Left(busy(what, slot.current, busyCode).problems.head)
+      Left(busy(what, slot.current, busyCode).problems)
     else
       launch(ds, job, kind, slot, what, busyCode, pins, stops, JobState.Paused, body)
       Right(())

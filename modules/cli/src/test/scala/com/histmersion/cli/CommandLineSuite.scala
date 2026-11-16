@@ -27,7 +27,7 @@ class CommandLineSuite extends munit.FunSuite:
     case other                                              => fail(s"${args.mkString(" ")}: ${other.toString}")
 
   private def problem(args: String*): Problem = scallop(args*) match
-    case CommandLine.Outcome.Failed(p, _) => p
+    case CommandLine.Outcome.Failed(p, _) => p.fold(identity)(ps => fail(s"several problems: $ps"))
     case other                            => fail(s"${args.mkString(" ")}: ${other.toString}")
 
   private val json = Cli.JsonOutput(false)
@@ -131,7 +131,7 @@ class CommandLineSuite extends munit.FunSuite:
     scallop("get", "sea_peoples", "--bogus") match
       case CommandLine.Outcome.Failed(p, help) =>
         assertEquals(
-          p,
+          p.fold(identity)(ps => fail(s"several problems: $ps")),
           Problem.Invalid.Unknown.here(
             Problem.TypeName("CommandLine.OptionName"),
             Problem.Raw("--bogus"),

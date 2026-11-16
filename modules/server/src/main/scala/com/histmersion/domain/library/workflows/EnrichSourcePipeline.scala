@@ -289,8 +289,8 @@ final class EnrichSourcePipeline(
       case None      =>
         upstream().meta(l.doi.get) match
           case Left(m) =>
-            ctx.warn(s"metadata: not checked — ${m.sentence}")
-            MetaChecked(checked = MetaChecked.Checked(false), Nil, MetaChecked.Note(m.sentence))
+            ctx.warn(s"metadata: not checked — ${m.sentences.mkString("; ")}")
+            MetaChecked(checked = MetaChecked.Checked(false), Nil, MetaChecked.Note(m.sentences.mkString("; ")))
           case Right(w) =>
             val diffs = compareMetadata(l.citekey, Title(l.title.value), l.authors, l.year, w)
             diffs.foreach(d => ctx.warn(s"metadata: $d"))
@@ -305,8 +305,8 @@ final class EnrichSourcePipeline(
       case None      =>
         upstream().refs(l.citekey, apply = AgentUpstream.RefsApply(!ctx.dryRun)) match
           case Left(m) =>
-            ctx.warn(s"refs: ${m.sentence}")
-            Upstreamed(ran = Upstreamed.Ran(false), Upstreamed.Summary(m.sentence))
+            ctx.warn(s"refs: ${m.sentences.mkString("; ")}")
+            Upstreamed(ran = Upstreamed.Ran(false), Upstreamed.Summary(m.sentences.mkString("; ")))
           case Right(r) =>
             if ctx.dryRun then
               ctx.write(
@@ -325,8 +325,8 @@ final class EnrichSourcePipeline(
       case None      =>
         upstream().assess(l.citekey, apply = AgentUpstream.AssessApply(!ctx.dryRun)) match
           case Left(m) =>
-            ctx.warn(s"assess: ${m.sentence}")
-            Upstreamed(ran = Upstreamed.Ran(false), Upstreamed.Summary(m.sentence))
+            ctx.warn(s"assess: ${m.sentences.mkString("; ")}")
+            Upstreamed(ran = Upstreamed.Ran(false), Upstreamed.Summary(m.sentences.mkString("; ")))
           case Right(a) =>
             if a.isRetracted.value then ctx.warn(s"assess: RETRACTED — ${a.recommendation}")
             if ctx.dryRun then ctx.write(s"assess [[${l.citekey}]] applied: verdict ${a.verdict}", a.asJson)(())(())

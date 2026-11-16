@@ -1,7 +1,7 @@
 package com.histmersion
 package cli
 
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.sun.net.httpserver.{HttpExchange, HttpServer}
 import java.net.InetSocketAddress
 import java.nio.file.Files
@@ -66,6 +66,6 @@ class ClientAuthSuite extends munit.FunSuite:
       val dest = Files.createTempFile("zz-backup", ".dump").toFile
       try
         val got = new Client(url).downloadBackup(Backup.Name("x.dump"), dest)
-        assert(got.left.exists(_.message.sentence.contains("API key")), got.toString)
+        assert(got.left.exists(_.problems.sentences.mkString("; ").contains("API key")), got.toString)
       finally dest.delete()
     }

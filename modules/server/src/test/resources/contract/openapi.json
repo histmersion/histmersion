@@ -18678,8 +18678,12 @@
           "job" : {
             "$ref" : "#/components/schemas/Accepted"
           },
-          "jobError" : {
-            "$ref" : "#/components/schemas/Problem"
+          "jobProblems" : {
+            "type" : "array",
+            "minItems" : 1,
+            "items" : {
+              "$ref" : "#/components/schemas/Problem"
+            }
           },
           "jobErrorCode" : {
             "type" : "string"
@@ -28195,8 +28199,12 @@
           "id" : {
             "type" : "string"
           },
-          "error" : {
-            "$ref" : "#/components/schemas/Problem"
+          "problems" : {
+            "type" : "array",
+            "minItems" : 1,
+            "items" : {
+              "$ref" : "#/components/schemas/Problem"
+            }
           }
         }
       },
@@ -31414,8 +31422,12 @@
           "sha256" : {
             "type" : "string"
           },
-          "error" : {
-            "$ref" : "#/components/schemas/Problem"
+          "problems" : {
+            "type" : "array",
+            "minItems" : 1,
+            "items" : {
+              "$ref" : "#/components/schemas/Problem"
+            }
           },
           "pruned" : {
             "type" : "array",

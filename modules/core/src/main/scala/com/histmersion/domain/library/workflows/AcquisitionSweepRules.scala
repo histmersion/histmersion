@@ -1,8 +1,8 @@
 package com.histmersion
 package domain.library.workflows
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.util.problem.Problem.{Content, Raw}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.domain.library.Doi
 
@@ -164,13 +164,13 @@ object AcquisitionSweepRules:
     * the backlog. The open-access picks never offered are the caller's: they wait in the backlog.
     */
   def ingestOa[A, B](picks: List[A], isOa: A => Boolean, allowed: Allowance)(
-      ingest: A => Either[Problem, B]
-  ): (List[(A, B)], List[(A, Problem)]) =
+      ingest: A => Either[Problems, B]
+  ): (List[(A, B)], List[(A, Problems)]) =
     @tailrec def loop(
         rest: List[A],
         ok: Vector[(A, B)],
-        ko: Vector[(A, Problem)]
-    ): (List[(A, B)], List[(A, Problem)]) =
+        ko: Vector[(A, Problems)]
+    ): (List[(A, B)], List[(A, Problems)]) =
       rest match
         case p :: tail if ok.size < allowed.value =>
           ingest(p) match

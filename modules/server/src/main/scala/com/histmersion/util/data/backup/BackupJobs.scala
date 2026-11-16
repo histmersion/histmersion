@@ -72,4 +72,4 @@ final class BackupJobs(
       j.result.get() match
         case Right(r) => Backup.Status.done(r)
         case Left(e)  =>
-          Backup.Status.failed(Backup.Status.FailedFile(j.file.value), elapsed, e.problems.head)
+          Backup.Status.failed(Backup.Status.FailedFile(j.file.value), elapsed, e.problems)

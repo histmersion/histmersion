@@ -152,7 +152,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
     try
       autoEnrichLock.synchronized {
         site.sources.get(citekey, body = SourcesControllers.GetBody(false)) match
-          case Left(e)    => Some(AutoEnrich.notQueued(e.problems.head))
+          case Left(e)    => Some(AutoEnrich.notQueued(e.problems))
           case Right(src) =>
             val ck = Citekey.assume(src.source.citekey.value)
             // a dry run wrote nothing: it neither enriched the source nor stands for a run that will
@@ -173,7 +173,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
                     Origin.FromIngest,
                     None
                   ).fold(
-                    e => AutoEnrich.notQueued(e.problems.head),
+                    e => AutoEnrich.notQueued(e.problems),
                     r => AutoEnrich.queued(Run.Id.assume(r.id.value))
                   )
                 )

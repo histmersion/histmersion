@@ -2,7 +2,7 @@ package com.histmersion
 package cli
 
 import com.histmersion.util.problem.Text.sentence
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.api.exchange.Bundle
 
 import com.histmersion.api.aliases.AliasKinds
@@ -32,11 +32,11 @@ object LabelRenameCmd:
       r.map(x => Output.emit(json, x)(MergeMarkdown.renamed))
 
   /** The rename `kind` asks for, or why the new label is refused. */
-  def rename(kind: Bundle.Kind, from: String, to: String, json: Cli.JsonOutput): Either[Problem, Rename] =
+  def rename(kind: Bundle.Kind, from: String, to: String, json: Cli.JsonOutput): Either[Problems, Rename] =
     LabelRenames
       .validate(kind, LabelRenames.Label(from), LabelRenames.Label(to))
       .left
-      .map(_.problems.head)
+      .map(_.problems)
       .map(t => Rename(kind, from.trim, LabelRename.To(t.value), json))
 
   /** The help line of the `rename` subcommand of `kind`. */

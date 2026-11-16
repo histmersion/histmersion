@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.managers
 import com.histmersion.util.json.RawJson.*
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{Legacy, Problem, Problems}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import hearth.kindlings.optics.syntax.*
@@ -70,7 +70,7 @@ final class ManagersControllers(
       .toList
       .filter(r => st.forall(_ == r.status.value))
 
-  private def error(message: Problem): Api.Error = Api.Error(message)
+  private def error(problems: Problems): Api.Error = Api.Error(problems)
   private def notFound(what: Problem) = Api.Error(what, Some(Api.Error.Code(Write.CodeNotFound)))
   private def conflict(m: Problem) = Api.Error(m, Some(Api.Error.Code(AgentsApi.CodeConflict)))
 
@@ -348,7 +348,7 @@ final class ManagersControllers(
                   agents.knownProviders.map(i => com.histmersion.api.automation.ProviderKind.Plugin.Name(i.value))
                 )
                 .left
-                .map(e => error(e.at(Problem.Field(s"models ${o.role}")).toNonEmpty.head))
+                .map(e => error(e.at(Problem.Field(s"models ${o.role}"))))
                 .map(_ => ())
             )
         )

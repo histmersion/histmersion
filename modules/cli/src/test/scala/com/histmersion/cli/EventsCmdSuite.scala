@@ -1,7 +1,7 @@
 package com.histmersion
 package cli
 
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.api.catalogue.EventPatch
 import com.histmersion.api.catalogue.EventSummary
 import com.histmersion.api.catalogue.Place
@@ -18,7 +18,7 @@ class EventsCmdSuite extends munit.FunSuite:
   private def parse(args: String*): Either[String, (String, EventPatch)] =
     Parsing.parse("events" +: "patch" +: args*) match
       case Right(EventsCmd.Command.Patch(id, p))        => Right((id, p))
-      case Left(CommandLine.Outcome.Failed(problem, _)) => Left(problem.sentence)
+      case Left(CommandLine.Outcome.Failed(problem, _)) => Left(problem.sentences.mkString("; "))
       case other                                        => fail(s"${other.toString}")
 
   test("--scale and --place-id make the patch"):

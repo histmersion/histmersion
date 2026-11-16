@@ -300,7 +300,7 @@ class BackupSuite extends munit.FunSuite:
     val j = jobs(d, bin, waitS = 10)
     val r = j.start(Instant.now())
     assertEquals(r.map(_.stateOf), Right(Some(Backup.State.Failed)), r.toString)
-    assert(r.toOption.flatMap(_.error).exists(_.sentence.contains("connection refused")), r.toString)
+    assert(r.toOption.flatMap(_.problems).exists(_.sentences.mkString("; ").contains("connection refused")), r.toString)
     assertEquals(j.status.flatMap(_.stateOf), Some(Backup.State.Failed))
     cleanBin(bin)
   }

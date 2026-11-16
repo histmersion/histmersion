@@ -8,7 +8,7 @@ import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.library.Filter
 import com.histmersion.api.research.{Article, Articles, ReviewGoal}
 import com.histmersion.cli.CommandLine.{given, *}
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{Legacy, Problem, Problems}
 import org.rogach.scallop.*
 
 import java.nio.file.Path
@@ -266,11 +266,11 @@ object ArticleArgs extends CommandLine.Entry:
     private val to = arg[LabelRenames.Label]("new")
     private val asJson = json()
 
-    def command: Either[Problem, Cli.Command] =
+    def command: Either[Problems, Cli.Command] =
       LabelRenames
         .validate(Bundle.Kind.Article, from(), to())
         .left
-        .map(_.problems.head)
+        .map(_.problems)
         .map(t =>
           ArticleCommand.Rename(
             ReviewGoal.Slug(from().value.trim),

@@ -1175,6 +1175,17 @@ Mirror: the next full `histmersion export` removes `sources/zqbeta2001_cove.md`.
       },
       "group" : "Conflict",
       "text" : "citekey 'zqeps1999_cited' is referred to by 1 article — remove those references first (there is no override)"
+    },
+    {
+      "case" : "Referenced",
+      "data" : {
+        "by" : "DeleteBlocker.Kind.Event",
+        "count" : 1,
+        "key" : "zqeps1999_cited",
+        "typeName" : "Citekey"
+      },
+      "group" : "Conflict",
+      "text" : "citekey 'zqeps1999_cited' is referred to by 1 event — remove those references first (there is no override)"
     }
   ]
 }

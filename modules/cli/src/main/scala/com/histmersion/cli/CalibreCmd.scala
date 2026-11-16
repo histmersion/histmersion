@@ -3,7 +3,7 @@ package cli
 import com.histmersion.cli.AllOrFirst.traverse
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import hearth.kindlings.optics.syntax.*
 
@@ -147,7 +147,7 @@ object CalibreCmd:
         )
       if noConvert then Right(())
       else
-        res.jobError match
+        res.jobProblems match
           case Some(e) =>
             val code = if res.jobErrorCode.contains(CollectionsApi.Usage) then ExitCode.Usage else ExitCode.Refused
             Left(Cli.Error(e, exitCode = code))
@@ -364,7 +364,8 @@ object CalibreCmd:
           .left
           .map(e =>
             if hint.isEmpty then e
-            else e.modify(_.message).setTo(Problem.Unclassified(Legacy.Text(e.message.sentence + hint)))
+            else
+              e.modify(_.problems).setTo(Problem.Unclassified(Legacy.Text(e.problems.sentences.mkString("; ") + hint)))
           )
         ext <- Ingest
           .dispositionExtension(Ingest.Disposition(got._2.value))
@@ -511,7 +512,7 @@ object CalibreCmd:
           val results = ready.map(e => e.gap.citekey -> pushOne(c, e.gap.citekey, None, calibre, originals))
           results.foreach {
             case (ck, Right((id, _))) => Cli.out.println(s"  + $ck → Calibre id $id")
-            case (ck, Left(e))        => Cli.err.println(s"  ! $ck: ${e.message.sentence}")
+            case (ck, Left(e))        => Cli.err.println(s"  ! $ck: ${e.problems.sentences.mkString("; ")}")
           }
           val failed = results.count(_._2.isLeft)
           Cli.out.println(s"pushed ${results.size - failed} source(s), $failed failed$note")
@@ -556,7 +557,8 @@ object CalibreCmd:
           r.pushes.foreach(p =>
             p.id match
               case Some(id) => Cli.out.println(s"  + ${p.citekey} → Calibre id $id")
-              case None     => Cli.err.println(s"  ! ${p.citekey}: ${p.error.map(_.sentence).getOrElse("")}")
+              case None     =>
+                Cli.err.println(s"  ! ${p.citekey}: ${p.problems.map(_.sentences.mkString("; ")).getOrElse("")}")
           )
           val failed = r.pushes.count(_.id.isEmpty)
           Cli.out.println(s"pushed ${r.pushes.size - failed} source(s), $failed failed$note")

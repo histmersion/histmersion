@@ -6,7 +6,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.Cursor
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import hearth.kindlings.optics.syntax.*
 
@@ -215,7 +215,7 @@ object AgentCmd:
               (ApprovalInfo.Id(id), d.wire, DecisionRequest(note.map(DecisionRequest.Note(_))))
             ) match
               case Right(a) => Cli.out.println(AgentsMarkdown.approvalLine(a)); None
-              case Left(e)  => Cli.err.println(s"#$id: ${e.message.sentence}"); Some(e)
+              case Left(e)  => Cli.err.println(s"#$id: ${e.problems.sentences.mkString("; ")}"); Some(e)
           }
           failed match
             case Nil        => Right(())
@@ -223,10 +223,11 @@ object AgentCmd:
             case first :: _ =>
               Left(
                 first
-                  .modify(_.message)
+                  .modify(_.problems)
                   .setTo(
                     Problem.Unclassified(
-                      Legacy.Text(s"${failed.size} of ${ids.size} not decided — ${first.message.sentence}")
+                      Legacy
+                        .Text(s"${failed.size} of ${ids.size} not decided — ${first.problems.sentences.mkString("; ")}")
                     )
                   )
               )

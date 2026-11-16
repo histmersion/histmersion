@@ -1,6 +1,6 @@
 package com.histmersion
 package domain.library.workflows
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{Legacy, Problem, Problems}
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -35,7 +35,7 @@ import com.histmersion.api.Api
   */
 trait AgentUpstream:
   /** Upstream metadata of a DOI. */
-  def meta(doi: Doi): Either[Problem, WorkRef]
+  def meta(doi: Doi): Either[Problems, WorkRef]
 
   /** `refs --apply`: the deposited reference list, written as `references` edges (`apply = false`, a dry run: read,
     * nothing written).
@@ -43,7 +43,7 @@ trait AgentUpstream:
   def refs(
       citekey: Citekey,
       apply: AgentUpstream.RefsApply = AgentUpstream.RefsApply(true)
-  ): Either[Problem, RefsResult]
+  ): Either[Problems, RefsResult]
 
   /** `assess --apply`: the retraction/impact verdict; a retraction overwrites the status (`apply = false`, a dry run:
     * the verdict only — neither applied nor recorded).
@@ -51,30 +51,30 @@ trait AgentUpstream:
   def assess(
       citekey: Citekey,
       apply: AgentUpstream.AssessApply = AgentUpstream.AssessApply(true)
-  ): Either[Problem, Assessment]
+  ): Either[Problems, Assessment]
 
   /** The papers citing a source, read only (never `apply`). */
   def followups(
       id: AgentUpstream.FollowupsId,
       since: Option[Year],
       limit: Option[FollowupsInput.Limit]
-  ): Either[Problem, FollowupsResult]
+  ): Either[Problems, FollowupsResult]
 
   /** An OpenAlex search, each hit marked `inDb` (the discover path). */
-  def discover(query: Search.Query, limit: AgentUpstream.Limit): Either[Problem, DiscoverResult]
+  def discover(query: Search.Query, limit: AgentUpstream.Limit): Either[Problems, DiscoverResult]
 
   /** A watcher's auto-ingest of one DOI: the LEGAL open-access chain only (never an unauthorised fetcher, whatever
     * `acquire.allow-unauthorised` says), refused when no legal file exists (nothing is stored then). Not connected by
     * default: a fixture that does not answer it ingests nothing.
     */
-  def ingestLegal(doi: Doi): Either[Problem, Ingest.Report] = Left(
+  def ingestLegal(doi: Doi): Either[Problems, Ingest.Report] = Left(
     Problem.Unclassified(Legacy.Text("the acquisition toolset is not connected"))
   )
 
   /** The acquisition list's re-check of one DOI: [[ingestLegal]], fetched and converted into the metadata-only source
     * `into` when there is one (its enrichment stays).
     */
-  def ingestLegalInto(doi: Doi, into: Option[Citekey]): Either[Problem, Ingest.Report] = ingestLegal(doi)
+  def ingestLegalInto(doi: Doi, into: Option[Citekey]): Either[Problems, Ingest.Report] = ingestLegal(doi)
 
   /** The legal chain's generation (a digest that changes with a fetcher or a key); "" when not connected. */
   def fetcherGeneration: AcquireRecheck.LastCheck.Generation = AcquireRecheck.LastCheck.Generation("")
@@ -89,7 +89,7 @@ trait AgentUpstream:
   def sweepCandidates(
       goal: Goal.Slug,
       dryRun: AgentUpstream.SweepCandidatesDryRun
-  ): Either[Problem, CandidateSweep] = Left(
+  ): Either[Problems, CandidateSweep] = Left(
     Problem.Unclassified(Legacy.Text("the candidate search is not connected"))
   )
 
@@ -98,7 +98,7 @@ trait AgentUpstream:
       goal: Goal.Slug,
       state: Candidates.State.Wire,
       limit: AgentUpstream.Limit
-  ): Either[Problem, List[Source.Candidate]] = Left(
+  ): Either[Problems, List[Source.Candidate]] = Left(
     Problem.Unclassified(Legacy.Text("the candidate search is not connected"))
   )
 
@@ -106,7 +106,7 @@ trait AgentUpstream:
   def markCandidates(
       ids: List[Source.Candidate.Id],
       state: Candidates.State.Wire
-  ): Either[Problem, RowCount] = Left(
+  ): Either[Problems, RowCount] = Left(
     Problem.Unclassified(Legacy.Text("the candidate search is not connected"))
   )
 
@@ -123,7 +123,7 @@ object AgentUpstream:
   type SweepCandidatesDryRun = SweepCandidatesDryRun.T
   object SweepCandidatesDryRun extends Newtype[Boolean, Pure]
 
-  private def problem(e: Api.Error): Problem = e.problems.head
+  private def problem(e: Api.Error): Problems = e.problems
 
   /** Not connected (a test, or a server built without the acquisition toolset): every call says so, and the steps that
     * need it record that they were skipped.

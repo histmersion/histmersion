@@ -545,7 +545,9 @@ final class AutopilotService(
             s"autopilot: backup ${r.file} (${r.bytes} bytes)" +
               (if r.pruned.isEmpty then "" else s"; pruned ${r.pruned.mkString(", ")}")
           case None =>
-            s"autopilot: the scheduled backup ${st.file} ended ${st.state}${st.error.fold("")(e => s": ${e.sentence}")}"
+            s"autopilot: the scheduled backup ${st.file} ended ${st.state}${st.problems.fold("")(e =>
+                s": ${e.sentences.mkString("; ")}"
+              )}"
     log(line)
 
   private def lint(): Unit =

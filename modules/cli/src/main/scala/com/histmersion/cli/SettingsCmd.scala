@@ -23,7 +23,9 @@ object SettingsCmd:
   ): Either[Cli.Error, A] =
     viaServer match
       case Left(e) if e.exitCode == ExitCode.Unreachable =>
-        Cli.err.println(s"(${e.message.sentence.takeWhile(_ != '(').trim}: the settings file on this machine instead)")
+        Cli.err.println(
+          s"(${e.problems.sentences.mkString("; ").takeWhile(_ != '(').trim}: the settings file on this machine instead)"
+        )
         viaFile
       case other => other
 
@@ -64,7 +66,7 @@ object SettingsCmd:
     private def writer: Either[Cli.Error, ConfigFileWriter] =
       file.map(ConfigFileWriter(_, env, ConfigSchema.reference))
 
-    private def failed(e: SettingError) = Cli.Error(e.message.toNonEmpty.head, ExitCode.Refused)
+    private def failed(e: SettingError) = Cli.Error(e.message, ExitCode.Refused)
 
     def page(prefix: Option[Settings.Prefix]): Either[Cli.Error, ConfigEdit.Page] =
       for
@@ -97,7 +99,7 @@ object SettingsCmd:
                 s.credentialShown.map(v => ConfigEdit.Credential.Shown(v.value))
               )
             ),
-            s.locked.map(v => ConfigEdit.Field.Locked(v.sentence))
+            s.locked.map(v => ConfigEdit.Field.Locked(v.sentences.mkString("; ")))
           )
         )
         ConfigEdit.Page(

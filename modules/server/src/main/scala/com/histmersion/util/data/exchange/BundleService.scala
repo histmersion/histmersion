@@ -200,7 +200,7 @@ object BundleService:
           w.rules
         )
         .left
-        .map(e => Api.Error(e.toNonEmpty.head))
+        .map(e => Api.Error(e))
 
     /** Where an uploaded bundle is kept: `upload-<sha256>.hmx`, content-addressed. */
     private def keyOf(sha: Sha256): Store.Key = Store.Key.applyUnsafe(s"upload-$sha${Bundle.Extension}")
@@ -279,7 +279,7 @@ object BundleService:
             w.rules
           )
           .left
-          .map(e => Api.Error(e.toNonEmpty.head))
+          .map(e => Api.Error(e))
       }
 
     def importKept(

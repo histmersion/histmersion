@@ -4,7 +4,7 @@ import com.histmersion.util.json.RawJson.*
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonKeyCodec
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.json.RawJson
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{Legacy, Problem, Problems}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.domain.automation.agents.AgentRepo.StepRecord
@@ -206,7 +206,7 @@ final class AcquisitionSweepPipeline(
           rows <- upstream()
             .candidates(goal, Candidates.State.New.wire, AgentUpstream.Limit(cfg.scheduler.sweepCandidates.value))
             .left
-            .map(_.sentence)
+            .map(_.sentences.mkString("; "))
         yield
           val queued = queuedDois().keySet ++ backlogged(goal)
           val (gone, open) = rows.partition(c => queued.contains(Doi.assume(c.doi.value)))
@@ -260,7 +260,7 @@ final class AcquisitionSweepPipeline(
       val queries = Some(linked).filter(_.nonEmpty).getOrElse(List(Search.Query(g.title.value)))
       val found = queries.flatMap { q =>
         upstream().discover(q, AgentUpstream.Limit(cfg.scheduler.discoverPerQuery.value)) match
-          case Left(m)  => ctx.warn(s"discover '$q': ${m.sentence}"); Nil
+          case Left(m)  => ctx.warn(s"discover '$q': ${m.sentences.mkString("; ")}"); Nil
           case Right(r) => r.works.map(w => Candidate.Query(q.value) -> w)
       }
       val (cands, skipped) =
@@ -304,7 +304,7 @@ final class AcquisitionSweepPipeline(
       .ingestPicks(picks, (p: Picked) => p.candidate.isOa.value, allowed) { p =>
         ingestOne(ctx, goal, p) match
           case Left(m) =>
-            ctx.warn(s"ingest: ${p.candidate.doi} not ingested, queued instead — ${m.sentence}")
+            ctx.warn(s"ingest: ${p.candidate.doi} not ingested, queued instead — ${m.sentences.mkString("; ")}")
             None
           case Right(i) => Some(i)
       }
@@ -317,7 +317,7 @@ final class AcquisitionSweepPipeline(
       ctx: RunCtx,
       goal: Goal.Slug,
       p: Picked
-  ): Either[Problem, Ingested] =
+  ): Either[Problems, Ingested] =
     val doi = p.candidate.doi
     ctx.write(
       s"ingest $doi (legal open access only) for goal $goal",
@@ -355,13 +355,13 @@ final class AcquisitionSweepPipeline(
   ): Tried =
     val (ok, ko) =
       AcquisitionSweepRules.ingestOa(picks, (p: Picked) => p.candidate.isOa.value, allowed)(ingestOne(ctx, goal, _))
-    ko.foreach((p, why) => ctx.warn(s"ingest: ${p.candidate.doi} not ingested — ${why.sentence}"))
+    ko.foreach((p, why) => ctx.warn(s"ingest: ${p.candidate.doi} not ingested — ${why.sentences.mkString("; ")}"))
     Tried(
       ok.map(_._2),
       ko.map((p, why) =>
         Failed(
           p.candidate.doi,
-          Problem.Unclassified(Legacy.Text(why.sentence.take(500))),
+          Problem.Unclassified(Legacy.Text(why.sentences.mkString("; ").take(500))),
           IngestBacklog.isNoLegalCopy(why)
         )
       )

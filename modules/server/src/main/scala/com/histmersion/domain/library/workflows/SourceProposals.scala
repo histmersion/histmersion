@@ -1,8 +1,8 @@
 package com.histmersion
 package domain.library.workflows
 import com.histmersion.util.json.RawJson.*
-import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.{Legacy, Problem, Problems}
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import io.scalaland.chimney.dsl.*
 
@@ -32,7 +32,7 @@ final class SourceProposals(
     approvals: SourceApprovalService,
     cfg: => AgentsConfig,
     status: Citekey => Option[Source.Status],
-    apply: Proposal => Either[Problem, SourceProposals.Outcome.Applied.What]
+    apply: Proposal => Either[Problems, SourceProposals.Outcome.Applied.What]
 ):
   def proposedBefore(p: Proposal): Boolean = approvals.proposedBefore(
     p.kind,
@@ -89,7 +89,8 @@ final class SourceProposals(
         Outcome.Skipped(Problem.Unclassified(Legacy.Text(s"${p.describe} ($said)")))
       case Route.Apply =>
         apply(p) match
-          case Left(m)  => Outcome.Failed(Problem.Unclassified(Legacy.Text(s"${p.describe}: ${m.sentence}")))
+          case Left(m) =>
+            Outcome.Failed(Problem.Unclassified(Legacy.Text(s"${p.describe}: ${m.sentences.mkString("; ")}")))
           case Right(w) =>
             val _ = record(
               runId,

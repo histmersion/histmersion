@@ -1,7 +1,7 @@
 package com.histmersion
 package cli
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import hearth.kindlings.optics.syntax.*
 
@@ -212,7 +212,10 @@ class PluginCmdSuite extends munit.FunSuite:
 
   test("the plugin commands refuse a server on another machine"):
     val r = PluginCmd.local(new Client(Client.ServerUrl("https://histmersion.example.org")))
-    assert(r.left.exists(e => e.message.sentence.contains("THIS machine") && e.exitCode == ExitCode.Usage), r)
+    assert(
+      r.left.exists(e => e.problems.sentences.mkString("; ").contains("THIS machine") && e.exitCode == ExitCode.Usage),
+      r
+    )
 
   // ── add ───────────────────────────────────────────────────────────────────────────────────────
 
@@ -243,13 +246,15 @@ class PluginCmdSuite extends munit.FunSuite:
       e.describe("hello", "0.1.0", spi = 7)
       val spi = e.ops.add(src.toString, AddOptions(yes = AddOptions.Yes(true)))
       assert(
-        spi.left.exists(_.message.sentence.contains("built against plugin SPI 7; this Histmersion speaks SPI 1")),
+        spi.left.exists(
+          _.problems.sentences.mkString("; ").contains("built against plugin SPI 7; this Histmersion speaks SPI 1")
+        ),
         spi
       )
       e.describe("hello", "0.1.0")
       val sum =
         e.ops.add(src.toString, AddOptions(yes = AddOptions.Yes(true), sha256 = Some(AddOptions.Sha256("0" * 64))))
-      assert(sum.left.exists(_.message.sentence.contains("SHA-256 mismatch")), sum)
+      assert(sum.left.exists(_.problems.sentences.mkString("; ").contains("SHA-256 mismatch")), sum)
       assertEquals(e.installed, Nil)
       // a jar dropped in by hand already provides `portal`
       jarFile(e.plugins, "portal-2.0.jar")
@@ -281,7 +286,9 @@ class PluginCmdSuite extends munit.FunSuite:
         confirm = _ => false
       )
     e.describe("other", "1.0")
-    assert(shy.add(src.toString, AddOptions()).left.exists(_.message.sentence.contains("not installed")))
+    assert(
+      shy.add(src.toString, AddOptions()).left.exists(_.problems.sentences.mkString("; ").contains("not installed"))
+    )
     assertEquals(e.installed, List("hello-0.2.0.jar"))
 
   env.test("add <url>: downloaded with curl from a local server; a 404 is an error"): e =>
@@ -299,7 +306,7 @@ class PluginCmdSuite extends munit.FunSuite:
         e.out
       )
       val missing = e.ops.add(s"$url/dl/none.jar", AddOptions(yes = AddOptions.Yes(true)))
-      assert(missing.left.exists(_.message.sentence.contains("not found")), missing)
+      assert(missing.left.exists(_.problems.sentences.mkString("; ").contains("not found")), missing)
     }
 
   env.test("add group:artifact:version: resolved from the first repository that has it, SHA-1 checked"): e =>
@@ -333,9 +340,9 @@ class PluginCmdSuite extends munit.FunSuite:
       // a corrupted download (the published checksum does not match) is refused
       Files.writeString(dir.resolve("hello_3-0.1.0.jar.sha1"), "0" * 40)
       val bad = e.ops.add("org.example::hello:0.1.0", AddOptions(yes = AddOptions.Yes(true)))
-      assert(bad.left.exists(_.message.sentence.contains("SHA-1 mismatch")), bad)
+      assert(bad.left.exists(_.problems.sentences.mkString("; ").contains("SHA-1 mismatch")), bad)
       val missing = e.ops.add("org.example:nothing:1.0", AddOptions(yes = AddOptions.Yes(true)))
-      assert(missing.left.exists(_.message.sentence.contains("not resolved from")), missing)
+      assert(missing.left.exists(_.problems.sentences.mkString("; ").contains("not resolved from")), missing)
     }
 
   env.test(
@@ -378,7 +385,7 @@ class PluginCmdSuite extends munit.FunSuite:
       val r =
         e.ops.add(jarFile(e.home.getParent.resolve("d"), "p.jar").toString, AddOptions(yes = AddOptions.Yes(true)))
       assertEquals(
-        r.left.map(_.message),
+        r.left.map(_.problems),
         Left(
           Problem.Unclassified(
             Legacy.Text(
@@ -392,7 +399,9 @@ class PluginCmdSuite extends munit.FunSuite:
       val failed =
         e.ops.add(jarFile(e.home.getParent.resolve("d"), "p.jar").toString, AddOptions(yes = AddOptions.Yes(true)))
       assert(
-        failed.left.exists(_.message.sentence.contains("dependencies could not be resolved: could not resolve")),
+        failed.left.exists(
+          _.problems.sentences.mkString("; ").contains("dependencies could not be resolved: could not resolve")
+        ),
         failed
       )
 
@@ -440,7 +449,7 @@ class PluginCmdSuite extends munit.FunSuite:
     val dl = e.home.getParent.resolve("downloads")
     val src = jarFile(dl, "hello.jar")
     val unsigned = e.ops.add(src.toString, AddOptions(yes = AddOptions.Yes(true)))
-    assert(unsigned.left.exists(_.message.sentence.contains("no signature (.asc)")), unsigned)
+    assert(unsigned.left.exists(_.problems.sentences.mkString("; ").contains("no signature (.asc)")), unsigned)
     Files.writeString(dl.resolve("hello.jar.asc"), "good\nsigner=AAAA\n")
     assert(e.ops.add(src.toString, AddOptions(yes = AddOptions.Yes(true))).isRight)
     assertEquals(e.ops.index.jars.map(_.signer), List(Some(PluginKit.Installed.Signer("AAAA"))))
@@ -449,13 +458,13 @@ class PluginCmdSuite extends munit.FunSuite:
     Files.writeString(dl.resolve("hello.jar.asc"), "good\nsigner=BBBB\n")
     e.describe("hello", "0.2.0")
     val other = e.ops.add(src.toString, AddOptions(yes = AddOptions.Yes(true)))
-    assert(other.left.exists(_.message.sentence.contains("signed by AAAA")), other)
+    assert(other.left.exists(_.problems.sentences.mkString("; ").contains("signed by AAAA")), other)
     Files.writeString(dl.resolve("hello.jar.asc"), "forged")
     assert(
       e.ops
         .add(src.toString, AddOptions(yes = AddOptions.Yes(true)))
         .left
-        .exists(_.message.sentence.contains("signature not verified"))
+        .exists(_.problems.sentences.mkString("; ").contains("signature not verified"))
     )
     assert(
       e.ops.add(src.toString, AddOptions(yes = AddOptions.Yes(true), unsigned = AddOptions.Unsigned(true))).isRight,

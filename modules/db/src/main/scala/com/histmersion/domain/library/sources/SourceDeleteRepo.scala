@@ -45,7 +45,7 @@ private[sources] object SourceDeleteRepo:
       if d0.refused then
         Left(
           Api.Error(
-            Source.Delete.refusal(d0.citekey, d0.blockers).toNonEmpty.head,
+            Source.Delete.refusal(d0.citekey, d0.blockers),
             Some(Api.Error.Code(Write.CodeInvalid))
           )
         )
