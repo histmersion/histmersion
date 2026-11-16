@@ -86,6 +86,26 @@ class ArchitectureSuite extends munit.FunSuite:
     assertEquals(Ratchet.risenRules(listed, grown), List("filesystem 3 -> 4"))
     assertEquals(Ratchet.exceptionsFile(listed.reverse), Ratchet.Header :: Ratchet.DirectionNote :: listed)
 
+  test("a file's key names its platform's source root, and the shared root has no marker"):
+    assertEquals(SourceFile.key("api", "scala", "api/problem/Answer.scala"), "api:api/problem/Answer.scala")
+    assertEquals(
+      SourceFile.key("api", "scalajs", "api/problem/ProblemJson.scala"),
+      "api:scalajs:api/problem/ProblemJson.scala"
+    )
+    assertEquals(
+      SourceFile.key("api", "scalajvm", "test/api/AboutSuite.scala"),
+      "api:scalajvm:test/api/AboutSuite.scala"
+    )
+    def file(root: String) =
+      val text = "object Io:\n  val p = Files.exists(q)\n"
+      SourceFile(SourceFile.key("core", root, "x/Io.scala"), "com.histmersion.x", text, text)
+    val (jvm, js) = (file("scalajvm"), file("scalajs"))
+    assertEquals(List(jvm, js).map(_.platformless).distinct, List("core:x/Io.scala"))
+    assertEquals(
+      Rules.all(List(jvm -> "library.sources", js -> "library.sources")).map(_.row),
+      List("filesystem\tcore:scalajvm:x/Io.scala\tFiles.*\t1", "filesystem\tcore:scalajs:x/Io.scala\tFiles.*\t1")
+    )
+
   test("the code a check reads is the same however the formatter breaks a string over lines"):
     def words(text: String): List[String] = Blank(text).split("\\s+").toList.filter(_.nonEmpty)
     val oneLine = "val a = s\"$owner${if (x).value then \" (here)\" else \"\"} until ${y.value}\".size"
@@ -106,17 +126,38 @@ object ArchitectureSuite:
   val Resources: Path = Path.of("modules/server/src/test/resources/architecture")
   val Unplaced = "?"
 
-  /** One Scala source: `key` is `<module>:<path under com/histmersion>`, `code` its text with comments and string
-    * literals blanked (line breaks kept, so offsets still give line numbers), `raw` the text as written, `root` the
-    * source directory it sits in (`scala`, or `scalajvm`/`scalajs` for one platform's copy, which shares the key).
+  /** One Scala source: `key` is its identity in every rule and rule file ([[SourceFile.key]]), `code` its text with
+    * comments and string literals blanked (line breaks kept, so offsets still give line numbers), `raw` the text as
+    * written.
     */
-  final case class SourceFile(key: String, pkg: String, code: String, raw: String, root: String):
+  final case class SourceFile(key: String, pkg: String, code: String, raw: String):
     def lineOf(index: Int): Int = code.substring(0, index).count(_ == '\n') + 1
 
+    /** The module and the path under `com/histmersion`, without the source root: one platform's copy of a file and the
+      * other's (`scalajvm`, `scalajs`) are one definition compiled for two targets, never on one class path together. A
+      * module and a path hold no `:`, so a key of three parts is one with a platform's root.
+      */
+    def platformless: String =
+      key.split(':').toList match
+        case module :: _ :: path :: Nil => s"$module:$path"
+        case _                          => key
+
   object SourceFile:
-    /** The sources of `module`'s `scope` (`main`, or `test`, whose keys are `<module>:test/<path>`). */
-    def all(module: String, scope: String = "main"): List[SourceFile] =
-      val main = Path.of("modules", module, "src", scope)
+    /** The source roots of one platform's copy of a file. The shared root `scala` has no marker in a key. */
+    val PlatformRoots: Set[String] = Set("scalajvm", "scalajs")
+
+    /** A file's key: `<module>:<path under com/histmersion>` in the shared root `scala`
+      * (`api:api/problem/Answer.scala`), `<module>:<root>:<path>` in a platform's root
+      * (`api:scalajs:api/problem/ProblemJson.scala`), so a JVM and a Scala.js file at the same path are two files in
+      * every rule, allow-list and count; a test file's path starts with `test/`
+      * (`api:scalajvm:test/api/AboutSuite.scala`).
+      */
+    def key(module: String, root: String, path: String): String =
+      if PlatformRoots(root) then s"$module:$root:$path" else s"$module:$path"
+
+    /** The sources of `module`'s `scope` (`main`, or `test`) under `modules` (the repository's, or a test's tree). */
+    def all(module: String, scope: String = "main", modules: Path = Path.of("modules")): List[SourceFile] =
+      val main = modules.resolve(module).resolve("src").resolve(scope)
       val prefix = if scope == "main" then "" else s"$scope/"
       if !Files.isDirectory(main) then Nil
       else
@@ -134,11 +175,10 @@ object ArchitectureSuite:
                 val text = Files.readString(p, UTF_8)
                 val pkg = "(?m)^package ([\\w.]+)".r.findAllMatchIn(text).map(_.group(1)).mkString(".")
                 SourceFile(
-                  s"$module:$prefix${base.relativize(p).toString.replace('\\', '/')}",
+                  key(module, root.getFileName.toString, s"$prefix${base.relativize(p).toString.replace('\\', '/')}"),
                   pkg,
                   Blank(text),
-                  text,
-                  root.getFileName.toString
+                  text
                 )
               }
           }
