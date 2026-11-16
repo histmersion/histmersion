@@ -131,16 +131,20 @@ object Problem:
   type EpochMs = EpochMs.T
   object EpochMs extends Newtype[Long, Pure]
 
+  /** A problem's English sentence, as its renderer wrote it: what a [[Relayed]] problem holds. */
+  type Sentence = Sentence.T
+  object Sentence extends Newtype[String, Pure]
+
   /** A setting's key: `histmersion.agents.budgets.daily-usd`. */
   type SettingKey = SettingKey.T
   object SettingKey extends Newtype[String, Pure]
 
-  /** The first word of a case's name: one of the eleven groups (what kind of failure it is), or one of the two cases
-    * outside them (`Unclassified`, `Stored`).
+  /** The first word of a case's name: one of the eleven groups (what kind of failure it is), or one of the three cases
+    * outside them (`Unclassified`, `Stored`, `Relayed`).
     */
   enum Group derives CanEqual:
     case Invalid, NotFound, Conflict, Refused, Upstream, Io, Config, Plugin, Run, Content, Internal, Unclassified,
-      Stored
+      Stored, Relayed
 
   // ---- the groups ---------------------------------------------------------------------------------------------
 
@@ -1430,6 +1434,12 @@ object Problem:
     type Text = Text.T
     object Text extends Newtype[String, Pure]
 
+  /** A problem known only by its sentence, as another program wrote it: how the browser reads the server's typed
+    * entries, since it shows a problem and never tells cases apart, so it links none of the cases' codecs. It is no
+    * case of any group and no code branches on it.
+    */
+  final case class Relayed(sentence: Sentence) extends Problem
+
   // ---- the operations -----------------------------------------------------------------------------------------
 
   /** An exception met at `where`, as a problem under the id `id`: its class and its message, captured once, here. */
@@ -1452,6 +1462,7 @@ object Problem:
       case _: Internal     => Group.Internal
       case _: Unclassified => Group.Unclassified
       case _: Stored       => Group.Stored
+      case _: Relayed      => Group.Relayed
 
     /** TEMPORARY (G60 step 1, counted by `G60fromString`): the words of an [[Unclassified]] problem as its site wrote
       * them, and the [[Text.sentence]] of any other case, for the code that still builds one problem's text into
@@ -1683,7 +1694,8 @@ object Problem:
         External.Reported("java.lang.IllegalStateException: pg_dump vanished")
       ),
       Unclassified(Legacy.Text("cannot open the bundle")),
-      Stored.Unrecognised(Stored.Text("merge apply crashed: NullPointerException"))
+      Stored.Unrecognised(Stored.Text("merge apply crashed: NullPointerException")),
+      Relayed(Sentence("the server is reindexing"))
     )
 
   // ---- Problems: one or many ----------------------------------------------------------------------------------

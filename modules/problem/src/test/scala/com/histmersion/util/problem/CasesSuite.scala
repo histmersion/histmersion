@@ -27,16 +27,20 @@ class CasesSuite extends munit.FunSuite:
       Group.Content -> cases[Content],
       Group.Internal -> cases[Internal],
       Group.Unclassified -> Set("Unclassified"),
-      Group.Stored -> cases[Stored]
+      Group.Stored -> cases[Stored],
+      Group.Relayed -> Set("Relayed")
     )
     val shown = examples.map(p => p.group -> caseOf(p))
     assertEquals(shown.distinct.size, shown.size, "one value per case")
     assertEquals(shown.toSet, all.toList.flatMap((g, cs) => cs.map(g -> _)).toSet)
     assertEquals(cases[Problem], Group.values.map(_.productPrefix).toSet)
 
-  test("there are eleven groups and two cases outside them"):
-    assertEquals(Group.values.length, 13)
-    assertEquals(examples.size, 65)
+  test("there are eleven groups and three cases outside them"):
+    assertEquals(Group.values.length, 14)
+    assertEquals(examples.size, 66)
+
+  test("a relayed problem is its sentence"):
+    assertEquals((Relayed(Sentence("the server is reindexing")): Problem).sentence, "the server is reindexing")
 
   test("an exception becomes an internal problem with its class and its message's first line, cut to 300"):
     val long = "x" * 400

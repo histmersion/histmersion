@@ -90,6 +90,7 @@ object Column:
       case Internal.Unexpected(id, where, e, r) => s"$where failed unexpectedly ($e, problem $id) — $r"
       case Unclassified(text)                   => s"unclassified: $text"
       case Stored.Unrecognised(text)            => s"$text"
+      case Relayed(sentence)                    => s"$sentence"
 
   /** The problem a column's text stands for: the case whose frozen sentence it is, or the text as it was. Only the JVM
     * reads the sentences back ([[SentenceReaders]]): in the browser, which receives problems typed, every text is kept

@@ -51,3 +51,4 @@ object ExitCode extends Newtype[Int, Pure]:
       case _: Internal     => Usage
       case _: Unclassified => Usage
       case _: Stored       => Usage
+      case _: Relayed      => Usage

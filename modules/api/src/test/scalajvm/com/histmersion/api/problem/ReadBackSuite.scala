@@ -15,10 +15,15 @@ import json.NewtypeCodecs.{list, problemCodec}
   */
 class ReadBackSuite extends munit.FunSuite:
 
-  examples.foreach { p =>
+  examples.filter(_.group != Group.Relayed).foreach { p =>
     test(s"${p.group.productPrefix}.${p.productPrefix}: its frozen stored sentence reads back as the case"):
       assertEquals(Column.read(p.stored), p)
   }
+
+  test("a relayed problem is stored as its sentence, which reads back as the text it is"):
+    val relayed = Relayed(Sentence("the server is reindexing"))
+    assertEquals(relayed.stored, "the server is reindexing")
+    assertEquals(Column.read(relayed.stored), Stored.Unrecognised(Stored.Text("the server is reindexing")))
 
   test("a text stored when a problem named its type in full reads back as its case, and writes back the same"):
     List(

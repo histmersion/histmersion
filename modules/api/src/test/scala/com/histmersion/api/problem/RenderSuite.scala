@@ -9,7 +9,7 @@ import hearth.kindlings.jsoniterjson.Json
 import util.problem.{External, Problem, Problems}
 import util.problem.Problem.*
 import Column.stored
-import Answer.{answer, decoded, entry, problem, retryAfter, status}
+import Answer.{answer, decoded, entry, problem, relayedEntry, retryAfter, status}
 import util.problem.Text.{sentence, sentences}
 import json.NewtypeCodecs.{list, problemCodec}
 
@@ -125,7 +125,8 @@ class RenderSuite extends munit.FunSuite:
       "backup failed unexpectedly (java.lang.IllegalStateException, problem 3f2a9c1e) — java.lang.IllegalStateException: pg_dump vanished"
     ),
     "Unclassified" -> (500, "unclassified: cannot open the bundle"),
-    "Unrecognised" -> (500, "merge apply crashed: NullPointerException")
+    "Unrecognised" -> (500, "merge apply crashed: NullPointerException"),
+    "Relayed" -> (500, "the server is reindexing")
   )
 
   test("every case has a row, and every row a case"):
@@ -151,23 +152,19 @@ class RenderSuite extends munit.FunSuite:
       assertEquals(s"${e.`case`}", p.productPrefix)
       assertEquals(s"${e.text}", p.sentence)
       assertEquals(RawJson.decode[Answer.Entry](e.asJson.noSpaces).flatMap(_.problem), Right(p))
-
-    test(s"${p.group.productPrefix}.${p.productPrefix}: inside a record, typed with its sentence, and read back"):
-      val written = (p: Problem).asJson
-      p match
-        case u: Stored.Unrecognised => assertEquals(written, Json.fromString(u.stored))
-        case _                      => assertEquals(written, p.entry.asJson)
-      assertEquals(RawJson.decode[Problem](written.noSpaces), Right(p))
   }
 
-  test("a problem inside a record keeps the type of the problems it carries"):
-    val copy: Problem = NotFound.Copy(
-      Raw("10.1/x"),
-      Vector(NotFound.Answer(NotFound.Fetcher("core"), NotFound.Kind.Refused, Problem.Run.Interrupted))
+  test("a relayed problem is written as the Relayed group and case with no fields, and its sentence"):
+    val relayed = Relayed(Sentence("the server is reindexing"))
+    val written = """{"group":"Relayed","case":"Relayed","data":{},"text":"the server is reindexing"}"""
+    assertEquals(relayed.entry.asJson.noSpaces, written)
+    assertEquals(
+      (Invalid.Missing.here(Field("rationale")): Problem).relayedEntry.asJson.noSpaces,
+      """{"group":"Relayed","case":"Relayed","data":{},"text":"rationale is required"}"""
     )
-    val written = copy.asJson.noSpaces
-    assert(written.contains("\"why\":{\"group\":\"Run\",\"case\":\"Interrupted\""), written)
-    assertEquals(RawJson.decode[Problem](written), Right(copy))
+    assertEquals(relayed.relayedEntry.asJson.noSpaces, written)
+    assertEquals((relayed: Problem).asJson.noSpaces, written)
+    assertEquals(RawJson.decode[Problem](written), Right(relayed))
 
   test("a problem written bare by an earlier version that no case writes stays bare"):
     // any other text (an English sentence, an old message) is the stored text as it was, written back byte for byte
@@ -179,7 +176,6 @@ class RenderSuite extends munit.FunSuite:
         case other                                    => fail(s"$bare reads as $other")
       assertEquals(read.map(_.asJson.noSpaces), Right(bare))
     }
-    assert(RawJson.decode[Problem]("""{"group":"Run","case":"Nope","data":{},"text":"x"}""").isLeft)
 
   test("English sentences tell the cases apart"):
     assertEquals(examples.map(_.sentence).distinct.size, examples.size)

@@ -9,10 +9,8 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import hearth.kindlings.jsoniterjson.Json
 import util.json.{JsonCodec, RawJson}
 import util.problem.Problem
-import util.json.RawJson.*
-import api.problem.{Answer, Column}
-import api.problem.Answer.{entry, problem}
-import api.problem.Column.stored
+import api.problem.{Answer, ProblemJson}
+import api.problem.ProblemJson.json
 
 /** The JSON codec, key codec and tapir schema of every newtype (`type X = X.T; object X extends Newtype[Base, C]`),
   * from its base type's: the same JSON and the same schema, with the constraint checked on decoding. Importing its
@@ -43,20 +41,15 @@ object NewtypeCodecs:
     base.as[T]
 
   /** A problem in a wire record: its group, its case, its fields and its English sentence (`{"group", "case", "data",
-    * "text"}`, an [[Answer.Entry]]), so a reader keeps its type and a person still reads the sentence.
+    * "text"}`, an [[Answer.Entry]]), so a reader keeps its type and a person still reads the sentence. The JVM reads
+    * and writes the case; the browser, which only shows the sentence, reads the `text` alone ([[ProblemJson]]).
     *
     * A bare string is how records carried a problem before (G60 step 4), in stored and checkpointed JSON too: it reads
     * as the case whose frozen column sentence it is ([[Column.read]]), any other text as
     * [[Problem.Stored.Unrecognised]], which is written back as the same bare string, so such a record keeps its bytes.
     */
   given problemCodec: JsonValueCodec[Problem] =
-    JsonCodec.mapped[Problem, Json](
-      {
-        case unrecognised: Problem.Stored.Unrecognised => Json.fromString(unrecognised.stored)
-        case typed                                     => typed.entry.asJson
-      },
-      json => json.asString.fold(json.as[Answer.Entry].flatMap(_.problem))(text => Right(Column.read(text)))
-    )
+    JsonCodec.mapped[Problem, Json](_.json, ProblemJson.read)
 
   /** A problem's schema: the typed entry (named `ProblemEntry`, apart from the other records called `Entry`), or the
     * bare string an unrecognised stored text is written as.

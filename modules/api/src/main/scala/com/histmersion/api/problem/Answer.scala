@@ -14,8 +14,8 @@ import sttp.model.StatusCode
 import json.NewtypeCodecs.given
 import util.problem.{Problem, Problems}
 import util.problem.Problem.*
-import Answer.Entry
 import util.problem.Text.sentence
+import Answer.Entry
 
 /** The body of every failed request: `{"problems": [{"group", "case", "data", "text"}]}`, always a list. `data` is the
   * case's fields as its derived codec writes them; `text` is its English sentence, for `curl` and for clients that do
@@ -35,10 +35,6 @@ object Answer:
   /** The case within the group, by its name (`Malformed`). */
   type Case = Case.T
   object Case extends Newtype[String, Pure]
-
-  /** The English sentence of the problem. */
-  type Sentence = Sentence.T
-  object Sentence extends Newtype[String, Pure]
 
   extension (problem: Problem)
     /** The status of a response that fails with this problem. */
@@ -74,6 +70,7 @@ object Answer:
       case _: Internal               => StatusCode.InternalServerError
       case _: Unclassified           => StatusCode.InternalServerError
       case _: Stored                 => StatusCode.InternalServerError
+      case _: Relayed                => StatusCode.InternalServerError
 
     /** When a refused request may be sent again: the end of a spent allowance, when it is known. */
     def retryAfter: Option[EpochMs] = problem match
@@ -82,9 +79,27 @@ object Answer:
       case _                             => None
 
     /** The problem as the body lists it: its group, its case, its fields and its sentence. */
-    def entry: Entry =
-      val (name, data) = problem.encoded
-      Entry(Group(s"${problem.group.productPrefix}"), Case(s"$name"), data, Sentence(s"${problem.sentence}"))
+    def entry: Entry = problem match
+      case relayed: Relayed => relayed.relayedEntry
+      case typed            =>
+        val (name, data) = typed.encoded
+        entryOf(typed.group, name, data, typed.relayed.sentence)
+
+    /** The problem as only its sentence: a relayed one as it is, any other by its [[util.problem.Text.sentence]]. */
+    def relayed: Relayed = problem match
+      case relayed: Relayed => relayed
+      case typed            => Relayed(Sentence(s"${typed.sentence}"))
+
+    /** The problem as the browser writes it, by its sentence alone: the `Relayed` group and case with no fields, which
+      * reads back as the same [[Relayed]]. Unlike [[entry]] it needs none of the groups' codecs.
+      */
+    def relayedEntry: Entry =
+      val relayed = problem.relayed
+      entryOf(relayed.group, relayed.productPrefix, Json.obj(), relayed.sentence)
+
+  /** An entry of the body: the group and the case by their names. */
+  private def entryOf(group: Problem.Group, name: String, data: Json, sentence: Sentence): Entry =
+    Entry(Group(s"${group.productPrefix}"), Case(s"$name"), data, sentence)
 
   extension (claim: Plugin.Claim)
     private def status: StatusCode = claim match
@@ -130,25 +145,27 @@ object Answer:
           case Problem.Group.Internal     => wrapped.as(using internal)
           case Problem.Group.Unclassified => entry.data.as(using unclassified)
           case Problem.Group.Stored       => wrapped.as(using stored)
+          case Problem.Group.Relayed      => Right(Relayed(entry.text))
         }
 
   // ---- the derived codecs of the cases' fields ----------------------------------------------------------------
 
-  // code words as strings (`"Read"`), a case's defaults honoured
+  // code words as strings (`"Read"`), a case's defaults honoured; lazy, so a page that only writes relayed problems
+  // ([[relayedEntry]]) links none of them
 
-  private val invalid = JsonCodec.derivedWords[Invalid]
-  private val notFound = JsonCodec.derivedWords[NotFound]
-  private val conflict = JsonCodec.derivedWords[Conflict]
-  private val refused = JsonCodec.derivedWords[Refused]
-  private val upstream = JsonCodec.derivedWords[Upstream]
-  private val io = JsonCodec.derivedWords[Io]
-  private val config = JsonCodec.derivedWords[Config]
-  private val plugin = JsonCodec.derivedWords[Plugin]
-  private val run = JsonCodec.derivedWords[Problem.Run]
-  private val content = JsonCodec.derivedWords[Content]
-  private val internal = JsonCodec.derivedWords[Internal]
-  private val unclassified = JsonCodec.derivedWords[Unclassified]
-  private val stored = JsonCodec.derivedWords[Stored]
+  private lazy val invalid = JsonCodec.derivedWords[Invalid]
+  private lazy val notFound = JsonCodec.derivedWords[NotFound]
+  private lazy val conflict = JsonCodec.derivedWords[Conflict]
+  private lazy val refused = JsonCodec.derivedWords[Refused]
+  private lazy val upstream = JsonCodec.derivedWords[Upstream]
+  private lazy val io = JsonCodec.derivedWords[Io]
+  private lazy val config = JsonCodec.derivedWords[Config]
+  private lazy val plugin = JsonCodec.derivedWords[Plugin]
+  private lazy val run = JsonCodec.derivedWords[Problem.Run]
+  private lazy val content = JsonCodec.derivedWords[Content]
+  private lazy val internal = JsonCodec.derivedWords[Internal]
+  private lazy val unclassified = JsonCodec.derivedWords[Unclassified]
+  private lazy val stored = JsonCodec.derivedWords[Stored]
 
   extension (problem: Problem)
     /** The case's name and its fields, as the group's derived codec writes them. */
@@ -167,4 +184,5 @@ object Answer:
         case p: Internal     => p.asJson(using internal).asObject.getOrElse(JsonObject.empty)
         case p: Unclassified => JsonObject("Unclassified" -> p.asJson(using unclassified))
         case p: Stored       => p.asJson(using stored).asObject.getOrElse(JsonObject.empty)
+        case _: Relayed      => JsonObject.empty // never asked: [[entry]] writes a relayed problem itself
       wrapped.toList.headOption.getOrElse(("", Json.obj()))

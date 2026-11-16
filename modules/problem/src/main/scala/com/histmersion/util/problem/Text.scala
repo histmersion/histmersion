@@ -97,6 +97,7 @@ object Text:
       case Internal.Unexpected(id, where, e, r) => s"$where failed unexpectedly ($e, problem $id) — $r"
       case Unclassified(text)                   => s"$text"
       case Stored.Unrecognised(text)            => s"$text"
+      case Relayed(sentence)                    => s"$sentence"
 
     /** The sentence without the one item or input path it names: what a report counts problems of a kind by (every
       * record a collection refused as restricted is one reason, not one sentence per record; the report is about one

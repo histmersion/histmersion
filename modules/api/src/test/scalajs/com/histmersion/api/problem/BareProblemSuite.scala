@@ -26,6 +26,6 @@ class BareProblemSuite extends munit.FunSuite:
       assertEquals(read.map(_.asJson.noSpaces), Right(bare))
     }
 
-  test("a typed problem still reads as its case"):
-    val typed = (Problem.Run.Interrupted: Problem).asJson.noSpaces
-    assertEquals(RawJson.decode[Problem](typed), Right(Problem.Run.Interrupted))
+  test("a typed problem reads as its sentence (RelayedSuite)"):
+    val typed = """{"group":"Run","case":"Interrupted","data":{},"text":"interrupted by a restart"}"""
+    assertEquals(RawJson.decode[Problem](typed), Right(Relayed(Sentence("interrupted by a restart"))))
