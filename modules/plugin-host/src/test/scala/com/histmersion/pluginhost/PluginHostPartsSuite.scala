@@ -256,3 +256,17 @@ class PluginHostPartsSuite extends munit.FunSuite:
       override given configReader: hearth.kindlings.sconfigderivation.ConfigReader[Unit] = null
       def register(config: Unit, ctx: Plugin.Context) = Right(())
     assert(PluginHost.described(old).left.exists(_ eq spi1))
+
+  test("a setting a plugin's block lacks is missing, at histmersion.plugins.<id>.<key>, from a derived reader too"):
+    import hearth.kindlings.sconfigderivation.{ConfigDecodingError, ConfigReader}
+    val id = Plugin.Info.Id("hello")
+    val block = org.ekrich.config.ConfigFactory.parseString("greeting = hi").root
+    val err = ConfigReader[PluginHostPartsSuite.Settings].from(block).swap.getOrElse(fail("read without its key"))
+    val missing = Vector(Problem.Invalid.Missing.here(Problem.Field("histmersion.plugins.hello.contact-email")))
+    assertEquals(PluginHost.describe(id, err).toVector, missing)
+    assertEquals(PluginHost.describe(id, ConfigDecodingError.Missing(Nil, "contact-email")).toVector, missing)
+    assertEquals(missing.head.sentence, "histmersion.plugins.hello.contact-email is required")
+
+object PluginHostPartsSuite:
+  final case class Settings(greeting: String, contactEmail: String)
+      derives hearth.kindlings.sconfigderivation.ConfigReader

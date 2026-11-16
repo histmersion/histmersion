@@ -440,6 +440,25 @@ class ConfigSuite extends munit.FunSuite:
         assertEquals((s"$t", s"$raw"), ("RefreshIntervalMinutes", "-5"))
       case other => fail(s"not refused: $other")
 
+  test("a setting missing from the settings is reported as missing, at its key"):
+    val merged = ConfigLayers
+      .merged(ConfigLayers.reference, org.ekrich.config.ConfigFactory.empty, env())
+      .withoutPath("histmersion.server.port")
+    val missing = Problem.Invalid.Missing.here(Problem.Field("histmersion.server.port"))
+    assertEquals(AppConfig.fromMerged(merged).swap.map(_.toVector), Right(Vector(missing)))
+    assertEquals(missing.sentence, "histmersion.server.port is required")
+
+  test("a missing key is missing whichever way the reader says it: KeyNotFound (derived) or Missing (hand-written)"):
+    import hearth.kindlings.sconfigderivation.ConfigDecodingError
+    val missing = Vector(Problem.Invalid.Missing.here(Problem.Field("histmersion.server.port")))
+    assertEquals(ConfigLayers.describe(ConfigDecodingError.KeyNotFound(List("server"), "port")).toVector, missing)
+    assertEquals(
+      ConfigLayers.describe(ConfigDecodingError.KeyNotFound(List("server"), "port", Set("ports"))).toVector,
+      missing
+    )
+    assertEquals(ConfigLayers.describe(ConfigDecodingError.Missing(List("server"), "port")).toVector, missing)
+    assertEquals(ConfigLayers.describe(ConfigDecodingError.Missing(List("server", "port"), "port")).toVector, missing)
+
   private def minutes(s: ScheduledRefresh): Option[Int] = s match
     case ScheduledRefresh.Every(i) => Some(i.value)
     case ScheduledRefresh.Off      => None
