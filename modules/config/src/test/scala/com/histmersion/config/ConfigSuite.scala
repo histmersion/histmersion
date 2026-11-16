@@ -459,6 +459,19 @@ class ConfigSuite extends munit.FunSuite:
     assertEquals(ConfigLayers.describe(ConfigDecodingError.Missing(List("server"), "port")).toVector, missing)
     assertEquals(ConfigLayers.describe(ConfigDecodingError.Missing(List("server", "port"), "port")).toVector, missing)
 
+  test("user file: a setting of a few named values reads from its plain string, as written before (no `type` block)"):
+    val f = confFile("""histmersion {
+      basemap.bathymetry.source = gebco
+      agents.review.final-panel = always
+      agents.quota.claude-plan.refresh-every-minutes = 0
+    }""")
+    val c = loaded(env(), f).config
+    assertEquals(c.basemap.bathymetry.source, SeaFloorSource.Gebco)
+    assertEquals(c.researchAgents.review.finalPanelMode, FinalPanel.Always)
+    assertEquals(c.agents.quota.claudePlan.refreshEveryMinutes, ScheduledRefresh.Off)
+    val wrong = confFile("histmersion.basemap.bathymetry.source = srtm")
+    assert(AppConfig.loadWithUserFile(env(), Some(wrong)).isLeft, "an unknown sea floor is refused")
+
   private def minutes(s: ScheduledRefresh): Option[Int] = s match
     case ScheduledRefresh.Every(i) => Some(i.value)
     case ScheduledRefresh.Off      => None
