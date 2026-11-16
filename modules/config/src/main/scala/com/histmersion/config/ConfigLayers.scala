@@ -177,10 +177,12 @@ private[config] object ConfigLayers:
       case ConfigDecodingError.CannotConvert(path, _, Some(raised: Raised)) =>
         raised.problems.at(Problem.Field(s"${keyOf(path)}"))
       // a derived reader reports a missing key as KeyNotFound, at the object that lacks it; a hand-written one as Missing
-      case ConfigDecodingError.KeyNotFound(path, key, _) =>
-        Problem.Invalid.Missing.here(Problem.Field(s"${keyOf(ending(path, key))}"))
-      case ConfigDecodingError.Missing(path, key) =>
-        Problem.Invalid.Missing.here(Problem.Field(s"${keyOf(ending(path, key))}"))
+      case e @ (_: ConfigDecodingError.KeyNotFound | _: ConfigDecodingError.Missing) =>
+        val at = e match
+          case ConfigDecodingError.KeyNotFound(path, key, _) => path :+ key
+          case ConfigDecodingError.Missing(path, key)        => ending(path, key)
+          case other                                         => other.path
+        Problem.Invalid.Missing.here(Problem.Field(s"${keyOf(at)}"))
       case ConfigDecodingError.UnknownKey(path, key) =>
         Problem.Config.Setting(Problem.SettingKey(s"${keyOf(ending(path, key))}"), Problem.Config.Fault.Undeclared)
       case e =>

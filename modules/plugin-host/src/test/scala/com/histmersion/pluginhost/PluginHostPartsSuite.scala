@@ -18,6 +18,10 @@ import com.histmersion.plugin.AiProvider
 import com.histmersion.domain.CoreQuota
 import com.histmersion.domain.HttpPolicy
 
+/** A plugin's settings, read by a derived reader. */
+final case class HelloSettings(greeting: String, contactEmail: String)
+    derives hearth.kindlings.sconfigderivation.ConfigReader
+
 /** The parts of the host the server and the plugin testkit share: the media judgement, the catalogue paging, the AI
   * guards and the acquisition client's policy.
   */
@@ -257,16 +261,14 @@ class PluginHostPartsSuite extends munit.FunSuite:
       def register(config: Unit, ctx: Plugin.Context) = Right(())
     assert(PluginHost.described(old).left.exists(_ eq spi1))
 
-  test("a setting a plugin's block lacks is missing, at histmersion.plugins.<id>.<key>, from a derived reader too"):
+  test("a setting a plugin's block lacks has no value, at histmersion.plugins.<id>.<key>, from a derived reader too"):
     import hearth.kindlings.sconfigderivation.{ConfigDecodingError, ConfigReader}
     val id = Plugin.Info.Id("hello")
     val block = org.ekrich.config.ConfigFactory.parseString("greeting = hi").root
-    val err = ConfigReader[PluginHostPartsSuite.Settings].from(block).swap.getOrElse(fail("read without its key"))
-    val missing = Vector(Problem.Invalid.Missing.here(Problem.Field("histmersion.plugins.hello.contact-email")))
+    val err = ConfigReader[HelloSettings].from(block).swap.getOrElse(fail("read without its key"))
+    val missing = Vector(
+      Problem.Config.Setting(Problem.SettingKey("histmersion.plugins.hello.contact-email"), Problem.Config.Fault.Empty)
+    )
     assertEquals(PluginHost.describe(id, err).toVector, missing)
     assertEquals(PluginHost.describe(id, ConfigDecodingError.Missing(Nil, "contact-email")).toVector, missing)
-    assertEquals(missing.head.sentence, "histmersion.plugins.hello.contact-email is required")
-
-object PluginHostPartsSuite:
-  final case class Settings(greeting: String, contactEmail: String)
-      derives hearth.kindlings.sconfigderivation.ConfigReader
+    assertEquals(missing.head.sentence, "histmersion.plugins.hello.contact-email is empty")

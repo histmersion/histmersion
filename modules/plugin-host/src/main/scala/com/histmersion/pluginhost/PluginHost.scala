@@ -345,20 +345,14 @@ object PluginHost:
   def describe(id: Plugin.Info.Id, err: ConfigDecodingError): Problems = err match
     case ConfigDecodingError.Multiple(errs) =>
       errs.toList.map(describe(id, _)).reduce(_ ++ _)
-    // a derived reader reports a missing key as KeyNotFound, at the object that lacks it; a hand-written one as Missing
-    case ConfigDecodingError.KeyNotFound(path, key, _) => missingSetting(id, path, key)
-    case ConfigDecodingError.Missing(path, key)        => missingSetting(id, path, key)
-    case e                                             =>
-      Problems.of(
-        Problem.Config.Setting(
-          Problem.SettingKey((s"$Root.$id" :: e.path).mkString(".")),
-          Problem.Config.Fault.Unreadable(External.Reported.of(e.message))
-        )
-      )
-
-  private def missingSetting(id: Plugin.Info.Id, path: List[String], key: String): Problems =
-    val at = if path.lastOption.contains(key) then path else path :+ key
-    Problems.of(Problem.Invalid.Missing.here(Problem.Field((s"$Root.$id" :: at).mkString("."))))
+    case e =>
+      // a derived reader reports a missing key as KeyNotFound, at the object that lacks it; a hand-written one as Missing
+      val (at, fault) = e match
+        case ConfigDecodingError.KeyNotFound(path, key, _) => (path :+ key, Problem.Config.Fault.Empty)
+        case ConfigDecodingError.Missing(path, key)        =>
+          (if path.lastOption.contains(key) then path else path :+ key, Problem.Config.Fault.Empty)
+        case other => (other.path, Problem.Config.Fault.Unreadable(External.Reported.of(other.message)))
+      Problems.of(Problem.Config.Setting(Problem.SettingKey((s"$Root.$id" :: at).mkString(".")), fault))
 
   /** Decode a plugin's block with the plugin's own reader — the path-dependent type keeps the decoded value tied to the
     * plugin that will receive it, with no cast.
