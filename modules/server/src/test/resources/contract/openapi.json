@@ -21258,7 +21258,7 @@
             "format" : "int32"
           },
           "skipped" : {
-            "$ref" : "#/components/schemas/Map_T_T"
+            "$ref" : "#/components/schemas/Map_SkippedKey_SkippedValue"
           },
           "unseen" : {
             "type" : "integer",
@@ -21506,7 +21506,7 @@
             }
           },
           "identifiers" : {
-            "$ref" : "#/components/schemas/Map_T_T1"
+            "$ref" : "#/components/schemas/Map_IdentifiersKey_IdentifiersValue"
           },
           "formats" : {
             "type" : "array",
@@ -28209,19 +28209,19 @@
           }
         }
       },
-      "Map_T_T" : {
-        "title" : "Map_T_T",
+      "Map_IdentifiersKey_IdentifiersValue" : {
+        "title" : "Map_IdentifiersKey_IdentifiersValue",
+        "type" : "object",
+        "additionalProperties" : {
+          "type" : "string"
+        }
+      },
+      "Map_SkippedKey_SkippedValue" : {
+        "title" : "Map_SkippedKey_SkippedValue",
         "type" : "object",
         "additionalProperties" : {
           "type" : "integer",
           "format" : "int32"
-        }
-      },
-      "Map_T_T1" : {
-        "title" : "Map_T_T",
-        "type" : "object",
-        "additionalProperties" : {
-          "type" : "string"
         }
       },
       "Match" : {
