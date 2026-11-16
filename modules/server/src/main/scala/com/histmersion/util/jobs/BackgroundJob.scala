@@ -118,7 +118,8 @@ object BackgroundJob:
             slot.free()
             throw e
       launch(ds, job, kind, slot, what, busyCode, pins, stops, JobState.Queued, body)
-      Right(Transactor(ds).read(JobRepo.get(idOf(job))).getOrElse(job))
+      // the row as created, not read again: by then its thread may have moved it on, and the answer would vary
+      Right(job)
 
   /** A job row's id, as the database keeps it. */
   private def idOf(job: JobInfo): Job.Id = Job.Id.assume(job.id.value)

@@ -689,6 +689,7 @@ A Zq atlas (buy)
   > GET /openalex/works?search=zq+tin+trade&filter=from_publication_date:DAY,type:article%7Cbook%7Cbook-chapter&per-page=25&sort=publication_date:desc&select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index&mailto=oracle@example.org
   > GET /crossref/works?query=zq+tin+trade&rows=25&sort=created&order=desc&filter=from-created-date:DAY,type:journal-article,type:book,type:book-chapter,type:monograph,type:edited-book&select=DOI,title,author,issued,type,container-title,is-referenced-by-count,abstract&mailto=oracle@example.org
   > GET /europepmc/search?query=(zq+tin+trade)+AND+FIRST_PDATE:%5BDAY+TO+DAY%5D&format=json&resultType=core&pageSize=25&sort=FIRST_PDATE+desc
+  > GET /arxiv-api/query?search_query=all:%22zq+tin+trade%22&sortBy=submittedDate&sortOrder=descending&max_results=25
   > GET /openalex/works/https://doi.org/10.5555/zq.cited?select=id,authorships&mailto=oracle@example.org
   > GET /openalex/works?filter=cites:W1661078230,from_publication_date:DAY&per-page=25&sort=publication_date:desc&select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index&mailto=oracle@example.org
 == sweep
@@ -779,6 +780,7 @@ A Zq atlas (buy)
   > GET /openalex/works?search=zq+tin+trade&filter=from_publication_date:DAY,type:article%7Cbook%7Cbook-chapter&per-page=25&sort=publication_date:desc&select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index&mailto=oracle@example.org
   > GET /crossref/works?query=zq+tin+trade&rows=25&sort=created&order=desc&filter=from-created-date:DAY,type:journal-article,type:book,type:book-chapter,type:monograph,type:edited-book&select=DOI,title,author,issued,type,container-title,is-referenced-by-count,abstract&mailto=oracle@example.org
   > GET /europepmc/search?query=(zq+tin+trade)+AND+FIRST_PDATE:%5BDAY+TO+DAY%5D&format=json&resultType=core&pageSize=25&sort=FIRST_PDATE+desc
+  > GET /arxiv-api/query?search_query=all:%22zq+tin+trade%22&sortBy=submittedDate&sortOrder=descending&max_results=25
   > GET /openalex/works/https://doi.org/10.5555/zq.cited?select=id,authorships&mailto=oracle@example.org
   > GET /openalex/works?filter=cites:W1661078230,from_publication_date:DAY&per-page=25&sort=publication_date:desc&select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index&mailto=oracle@example.org
 == sweep (no such goal)
@@ -1063,6 +1065,7 @@ A Zq atlas (buy)
   > GET /openalex/works?search=zq+tin+trade&filter=from_publication_date:DAY,type:article%7Cbook%7Cbook-chapter&per-page=25&sort=publication_date:desc&select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index&mailto=oracle@example.org
   > GET /crossref/works?query=zq+tin+trade&rows=25&sort=created&order=desc&filter=from-created-date:DAY,type:journal-article,type:book,type:book-chapter,type:monograph,type:edited-book&select=DOI,title,author,issued,type,container-title,is-referenced-by-count,abstract&mailto=oracle@example.org
   > GET /europepmc/search?query=(zq+tin+trade)+AND+FIRST_PDATE:%5BDAY+TO+DAY%5D&format=json&resultType=core&pageSize=25&sort=FIRST_PDATE+desc
+  > GET /arxiv-api/query?search_query=all:%22zq+tin+trade%22&sortBy=submittedDate&sortOrder=descending&max_results=25
   > GET /openalex/works/https://doi.org/10.5555/zq.cited?select=id,authorships&mailto=oracle@example.org
   > GET /openalex/works?filter=cites:W1661078230,from_publication_date:DAY&per-page=25&sort=publication_date:desc&select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index&mailto=oracle@example.org
 == about: the upstream quotas
@@ -1109,6 +1112,7 @@ Counts: 2 new, 1 seen.
   > GET /openalex/works?search=zq+tin+trade&filter=from_publication_date:DAY,type:article%7Cbook%7Cbook-chapter&per-page=25&sort=publication_date:desc&select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index&mailto=oracle@example.org
   > GET /crossref/works?query=zq+tin+trade&rows=25&sort=created&order=desc&filter=from-created-date:DAY,type:journal-article,type:book,type:book-chapter,type:monograph,type:edited-book&select=DOI,title,author,issued,type,container-title,is-referenced-by-count,abstract&mailto=oracle@example.org
   > GET /europepmc/search?query=(zq+tin+trade)+AND+FIRST_PDATE:%5BDAY+TO+DAY%5D&format=json&resultType=core&pageSize=25&sort=FIRST_PDATE+desc
+  > GET /arxiv-api/query?search_query=all:%22zq+tin+trade%22&sortBy=submittedDate&sortOrder=descending&max_results=25
   > GET /openalex/works/https://doi.org/10.5555/zq.cited?select=id,authorships&mailto=oracle@example.org
   > GET /openalex/works?filter=cites:W1661078230,from_publication_date:DAY&per-page=25&sort=publication_date:desc&select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index&mailto=oracle@example.org
 == mcp candidates sweep (no goal)

@@ -320,6 +320,10 @@ class AcquisitionOracleSuite extends DbSuite:
       case "/archive/download/zqbook/zqbook.pdf" => (200, "application/pdf", pdf("zqbook"))
       case _                                     => missing
 
+    /** arXiv's Atom answer with no entry: the candidates' query finds nothing new there. */
+    private val emptyFeed =
+      """<?xml version="1.0" encoding="UTF-8"?><feed xmlns="http://www.w3.org/2005/Atom"><title>arXiv Query</title></feed>"""
+
     var port: Int = 0 // set once the upstreams listen: the fixture names its own files by URL
 
     def answer(path: String, query: String): (Int, String, Array[Byte]) =
@@ -333,6 +337,7 @@ class AcquisitionOracleSuite extends DbSuite:
         case p if p.startsWith("/archive/")   => archive(p)
         case p if p.startsWith("/files/")     => (200, "application/pdf", pdf(p.stripPrefix("/files/")))
         case p if p.startsWith("/arxiv/pdf/") => (200, "application/pdf", pdf("arxiv-" + p.stripPrefix("/arxiv/pdf/")))
+        case "/arxiv-api/query"               => (200, "application/atom+xml", emptyFeed.getBytes(UTF_8))
         case p if p.startsWith("/europepmc/") => js("""{"resultList":{"result":[]}}""")
         case p if p.startsWith("/core/")      => js("""{"totalHits":0,"results":[]}""")
         case _                                => missing
@@ -432,6 +437,7 @@ class AcquisitionOracleSuite extends DbSuite:
        |  datacite.url = "$u/datacite"
        |  doi-handles.url = "$u/handles"
        |  arxiv.url = "$u/arxiv"
+       |  candidates.arxiv-api-url = "$u/arxiv-api/query"
        |  archive-org.url = "$u/archive"
        |  wikipedia.url = "$u/wikipedia"
        |  retraction-watch.csv-url = "$u/rw/retractions.csv"
@@ -448,6 +454,35 @@ class AcquisitionOracleSuite extends DbSuite:
        |}
        |""".stripMargin
 
+  /** The acquisition settings whose URL is not the fixture's: every upstream is a loopback fixture, never the network
+    * (a URL left at its default reached the real arXiv, whose 429s made a sweep slow and its watch's error vary).
+    */
+  private def offFixture(merged: org.ekrich.config.Config, fixture: String): List[String] =
+    merged
+      .getConfig("histmersion.acquire")
+      .entrySet
+      .asScala
+      .toList
+      .flatMap { e =>
+        e.getValue.unwrapped match
+          case url: String if url.matches("(?i)https?://.*") && !url.startsWith(fixture) => List(s"${e.getKey} = $url")
+          case _                                                                         => Nil
+      }
+      .sorted
+
+  test("an acquisition URL off the fixture is found"):
+    val merged = ConfigFactory.parseString(
+      """histmersion.acquire {
+        |  openalex.url = "http://127.0.0.1:4711/openalex"
+        |  candidates.arxiv-api-url = "https://export.arxiv.org/api/query"
+        |  contact-email = "oracle@example.org"
+        |}""".stripMargin
+    )
+    assertEquals(
+      offFixture(merged, "http://127.0.0.1:4711"),
+      List("candidates.arxiv-api-url = https://export.arxiv.org/api/query")
+    )
+
   private def withServer[A](name: String, up: Upstreams, lib: CalibreFixture, allowUnauthorised: Boolean = false)(
       body: String => A
   ): A =
@@ -455,6 +490,8 @@ class AcquisitionOracleSuite extends DbSuite:
     val loaded = AppConfig
       .loadWithUserText(ConfigFactory.parseMap(Map.empty[String, String].asJava), userText(up, lib, allowUnauthorised))
       .fold(e => fail(e.sentences.mkString("; ")), identity)
+    val off = offFixture(loaded.merged, up.url)
+    assert(off.isEmpty, s"upstreams outside the loopback fixture (the network): ${off.mkString(", ")}")
     val c = loaded.config
     val cfg = c
       .modify(_.db)

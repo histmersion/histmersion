@@ -114,6 +114,13 @@ object Composition:
     * (#3765). Here the loops are this scope's, shut down with no quiet period when it ends; tapir's executor is never
     * started unless a stop of its own needs it.
     */
+  /** A request may take `request` end to end: netty's request timeout, and its idle timeout no shorter — a connection
+    * waiting on a long answer reads and writes nothing, and under tapir's 60 s idle default it was closed with no
+    * answer at all (the client read "header parser received no bytes").
+    */
+  private[server] def timeouts(nc: NettyConfig, request: FiniteDuration): NettyConfig =
+    nc.requestTimeout(request).idleTimeout(request)
+
   private def closeAtOnce(nc: NettyConfig)(using Ox): NettyConfig =
     val loops = nc.eventLoopConfig.initEventLoopGroup()
     releaseAfterScope {
@@ -189,8 +196,8 @@ object Composition:
       .host(host.value)
       .port(port.value)
       .modifyConfig(
-        _.requestTimeout(cfg.server.requestTimeoutSeconds.value.seconds)
-      ) // netty default 20 s is shorter than a pg_dump
+        timeouts(_, cfg.server.requestTimeoutSeconds.value.seconds)
+      ) // netty's 20 s is shorter than a pg_dump
       // tapir waits this long on stop for the open connections — idle keep-alive ones included
       .modifyConfig(nc =>
         if cfg.server.shutdownGraceSeconds.value > 0 then
