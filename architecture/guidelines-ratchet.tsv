@@ -19,7 +19,7 @@ G3misplaced	plugins/events	main	1
 G3misplaced	plugins/fetchers	test	1
 G3misplaced	plugins/gazetteers	main	4
 G3misplaced	plugins/media	main	23
-G3misplaced	server	main	354
+G3misplaced	server	main	355
 G3misplaced	server	test	71
 G3misplaced	upstreams	main	56
 G3misplaced	values	main	4
@@ -66,8 +66,8 @@ G44	plugins/media	main	103
 G44	plugins/media	test	57
 G44	problem	main	5
 G44	problem	test	1
-G44	server	main	10460
-G44	server	test	3991
+G44	server	main	10457
+G44	server	test	4002
 G44	upstreams	main	147
 G44	upstreams	test	44
 G44	values	main	181
@@ -87,7 +87,7 @@ G44plaindef	server	main	28
 G44plaindef	server	test	1
 G44plaindef	values	main	4
 G44plaindef	web	main	27
-G45boundary	api	main	931
+G45boundary	api	main	932
 G45boundary	cli	main	1018
 G45boundary	config	main	63
 G45boundary	console	main	4
@@ -167,7 +167,7 @@ G47root	plugin-host	main	2
 G47root	server	main	2
 G47self	api	main	3755
 G47self	cli	main	228
-G47self	config	main	734
+G47self	config	main	736
 G47self	console	main	7
 G47self	core	main	1024
 G47self	db	main	801
@@ -189,7 +189,7 @@ G47self	plugins/events	main	39
 G47self	plugins/fetchers	main	20
 G47self	plugins/gazetteers	main	11
 G47self	plugins/media	main	88
-G47self	server	main	1581
+G47self	server	main	1582
 G47self	server	test	25
 G47self	upstreams	main	122
 G47self	values	main	156
@@ -234,7 +234,7 @@ G49	plugins/gazetteers	main	21
 G49	plugins/gazetteers	test	30
 G49	plugins/media	main	103
 G49	plugins/media	test	15
-G49	server	main	4016
+G49	server	main	4013
 G49	server	test	1112
 G49	upstreams	main	42
 G49	upstreams	test	17
