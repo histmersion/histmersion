@@ -997,7 +997,7 @@ class BundleSuite extends DbSuite with Bounded:
     assert(r.issues.exists(i => i.kind == Issue.Kind.ArticleDiverged && i.open), r.issues.toString)
     assert(java.util.Arrays.equals(exportOf(c, sc), before), "a refused import wrote something")
     // the import's result (a job's stored result) keeps its problems typed, and a result an earlier version stored
-    // with each problem as a bare string still reads: as the stored text, written back bare
+    // with each problem as a bare string still reads: as the stored text, kept whole, written back as its entry
     val written = r.asJson
     assertEquals(RawJson.decode[Bundle.ImportResult](written.noSpaces), Right(r))
     val bare =
@@ -1011,7 +1011,15 @@ class BundleSuite extends DbSuite with Bounded:
       },
       earlier.toString
     )
-    assertEquals(earlier.map(_.asJson.noSpaces), Right(bare.noSpaces))
+    // written back as entries, each with its text whole, which read back as the same
+    val again = earlier.map(_.asJson.noSpaces)
+    assertEquals(again.flatMap(RawJson.decode[Bundle.ImportResult](_)), earlier)
+    assertEquals(
+      again
+        .flatMap(RawJson.parse)
+        .map(_.asObject.flatMap(_("problems")).flatMap(_.asArray).toVector.flatten.map(_.asObject.flatMap(_("text")))),
+      Right(r.problems.toVector.map(p => Some(Json.fromString(p.sentence))))
+    )
 
   test("M2: a dry run reports and writes nothing"):
     val (a, b) = (fresh("dra"), fresh("drb"))

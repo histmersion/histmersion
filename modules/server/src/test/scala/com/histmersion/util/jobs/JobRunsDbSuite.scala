@@ -1,7 +1,8 @@
 package com.histmersion
 package util.jobs
-import com.histmersion.util.problem.Problem
-import com.histmersion.api.problem.Column
+import com.histmersion.util.problem.{Problem, Problems}
+import com.histmersion.util.nonempty.NonEmptyVector
+import com.histmersion.util.database.NewtypeColumns.given
 
 import com.histmersion.config.AppConfig
 import com.histmersion.util.database.Transactor
@@ -37,13 +38,13 @@ class JobRunsDbSuite extends JobRunsContract("db"):
   ): (RunRow.Status, Option[Problem], Option[JobRunState.Progress], Option[RunRow.Origin]) =
     val (status, error, progress, origin) = connect(sources(runs))(
       sql"SELECT status, error, progress, origin FROM jobs WHERE id = ${id.value}"
-        .query[(String, Option[String], Option[String], Option[String])]
+        .query[(String, Option[NonEmptyVector[Problem]], Option[String], Option[String])]
         .run()
         .head
     )
     (
       RunRow.Status(status),
-      error.map(Column.read),
+      error.map(Problems.asOne),
       progress.map(JobRunState.Progress(_)),
       origin.map(RunRow.Origin(_))
     )

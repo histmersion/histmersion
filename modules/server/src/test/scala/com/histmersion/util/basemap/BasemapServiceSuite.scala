@@ -427,7 +427,10 @@ class BasemapServiceSuite extends DbSuite:
         .fold(e => fail(e.problems.sentences.mkString("; ")), _.id)
     )
     assert(!j.succeeded)
-    assert(j.error.exists(e => e.sentence.contains("refused") && e.sentence.contains("min-free-gb")), j.error.toString)
+    assert(
+      j.problems.exists(_.sentences.exists(e => e.contains("refused") && e.contains("min-free-gb"))),
+      j.problems.toString
+    )
     assertEquals(v.downloads.get, 0)
 
   test("the relief deeper than the extract: a focus region kept apart, the rest read on demand and cached; rm of each"):

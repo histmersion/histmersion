@@ -102,7 +102,7 @@ final class JobPool(
             id,
             JobState.Running,
             JobState.Failed,
-            error = Some(ProblemLog.unexpected(e, Problem.Where(s"job $id")))
+            error = Some(ProblemLog.unexpected(e, Problem.Where(s"job $id")).toNonEmpty)
           )
         )
 

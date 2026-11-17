@@ -226,7 +226,7 @@ final class Engine(
       jobKind,
       rowStatus(RunState.Running),
       rowStatus(RunState.Paused),
-      Stopped.write(Stopped.Cause.Interrupted),
+      Stopped.Interrupted.problem,
       rowStatus(RunState.Queued),
       running.keySet.asScala.toList
     )
@@ -280,10 +280,10 @@ final class Engine(
     agents.jobRuns
       .pausedWaiting(jobKind, rowStatus(RunState.Paused), now)
       .toList
-      .filter((_, _, _, error) => Stopped.from(error).cause.pausedOn(PauseReason.PlanQuota))
+      .filter((_, _, _, error) => error.exists(Stopped.of(_).pausedOn(PauseReason.PlanQuota)))
       .flatMap { (id, pipeline, model, error) =>
-        val roles = ModelPicker
-          .pausedRole(error)
+        val roles = error
+          .flatMap(ModelPicker.pausedRole)
           .map(List(_))
           .getOrElse(Pipeline.parse(Pipeline.Wire(pipeline.value)).map(_.roles).getOrElse(Nil))
         val notes = List.newBuilder[String]
@@ -444,11 +444,7 @@ final class Engine(
                 id,
                 RunState.Running,
                 RunState.Paused,
-                error = Some(
-                  Stopped.write(
-                    Stopped.Cause.Paused(reason, Stopped.Detail(why.sentence.take(1000)))
-                  )
-                ),
+                error = Some(Stopped.Paused(reason, why).problem),
                 resumeAt = at
               )
             case Left(Halt.Wait(approval, why)) =>
@@ -587,14 +583,7 @@ final class Engine(
             id,
             RunState.Queued,
             RunState.Paused,
-            error = Some(
-              Stopped.write(
-                Stopped.Cause.Paused(
-                  PauseReason.Requested,
-                  Stopped.Detail("paused before it started")
-                )
-              )
-            )
+            error = Some(Stopped.Paused(PauseReason.Requested, Problem.Run.Unstarted).problem)
           )
             .toRight(conflict(Problem.Run.MovedOn(Problem.Raw.of(id))))
             .flatMap(_ => get(id))

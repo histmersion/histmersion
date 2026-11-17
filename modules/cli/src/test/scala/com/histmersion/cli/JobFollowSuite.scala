@@ -20,7 +20,12 @@ class JobFollowSuite extends munit.FunSuite:
   private given console: com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard
 
   private def job(status: JobInfo.Status, error: Option[Problem] = None) =
-    JobInfo(id = SpatialHierarchyResult.Job.Id("j1"), kind = JobKinds.Wire("ingest"), status = status, error = error)
+    JobInfo(
+      id = SpatialHierarchyResult.Job.Id("j1"),
+      kind = JobKinds.Wire("ingest"),
+      status = status,
+      problems = error.map(NonEmptyVector.of(_))
+    )
 
   /** A fake server answering `answers` in order (the last one repeats). */
   private def server[A](answers: A*): () => A =
@@ -54,6 +59,33 @@ class JobFollowSuite extends munit.FunSuite:
     )
     assertEquals(r.left.map(_.exitCode), Left(ExitCode.Refused))
     assert(r.left.exists(_.problems.sentences.mkString("; ").contains("pdf is encrypted")))
+
+  test("a job that failed with several problems names every one"):
+    val r = JobFollow.job(
+      _ =>
+        Right(
+          job(JobInfo.Status("failed")).copy(problems =
+            Some(
+              NonEmptyVector.of[Problem](
+                Problem.Run.Interrupted,
+                Problem.Conflict.Busy(Problem.Conflict.Activity.Backup)
+              )
+            )
+          )
+        ),
+      SpatialHierarchyResult.Job.Id("j1"),
+      sleep = _ => (),
+      progress = quiet,
+      clear = () => ()
+    )
+    assertEquals(
+      r.left.map(_.problems.sentences),
+      Left(
+        Vector(
+          s"job j1 failed: interrupted by a restart; ${(Problem.Conflict.Busy(Problem.Conflict.Activity.Backup): Problem).sentence}"
+        )
+      )
+    )
 
   test("an unreadable job state counts as failed, not as success"):
     val r = JobFollow.job(

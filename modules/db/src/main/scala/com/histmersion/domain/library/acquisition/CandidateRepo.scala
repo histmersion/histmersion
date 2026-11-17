@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.{Problem, Problems}
+import com.histmersion.util.nonempty.NonEmptyVector
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.util.database.given
@@ -31,7 +32,7 @@ private[acquisition] object CandidateRepo:
       index: CandidateWatch.Index,
       watermark: Option[CandidateWatch.Watermark],
       lastRun: Option[CandidateWatch.LastRun],
-      lastError: Option[Problem],
+      lastError: Option[NonEmptyVector[Problem]],
       lastFound: CandidateWatch.LastFound
   ) derives DbCodec
 
@@ -51,7 +52,7 @@ private[acquisition] object CandidateRepo:
           r.index,
           r.watermark,
           r.lastRun,
-          r.lastError,
+          r.lastError.map(Problems.asOne),
           r.lastFound
         )
       )
@@ -65,9 +66,10 @@ private[acquisition] object CandidateRepo:
       error: Option[Problem],
       found: CandidateWatch.LastFound
   )(using DbCon): Unit =
+    val kept = error.map(NonEmptyVector.of(_))
     val _ =
       sql"""INSERT INTO candidate_watches (goal, kind, subject, index_name, watermark, last_run, last_error, last_found)
-                    VALUES (${w.goal}, ${w.kind}, ${w.subject}, ${w.index}, $watermark::date, now(), $error, $found)
+                    VALUES (${w.goal}, ${w.kind}, ${w.subject}, ${w.index}, $watermark::date, now(), $kept, $found)
                     ON CONFLICT (goal, kind, subject, index_name) DO UPDATE SET
                       watermark = coalesce(EXCLUDED.watermark, candidate_watches.watermark), last_run = now(),
                       last_error = EXCLUDED.last_error, last_found = EXCLUDED.last_found""".update.run()

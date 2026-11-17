@@ -51,12 +51,16 @@ import com.histmersion.server.ArchitectureSuite.{Blank, SourceFile, Violation}
   *     `String`, `Int`, `Long`, `Double` or `Boolean` field, or the free text of an unclassified site (`Legacy.Text`) —
   *     free text or an unnamed number where a newtype or an enum says what it is. A ratchet whose one row is the
   *     temporary `Unclassified`; the text a column held (`Stored.Text`) is the stored reader's, and no finding;
-  *   - `unrecognised` (G60, no exception allowed): `Stored.Unrecognised` built in main code anywhere but the stored
-  *     column's reader (`api.problem.Column`) and the cases' own file — a sentence no case writes is read, never made;
+  *   - `unrecognised` (G60, no exception allowed): `Stored.Unrecognised` built in main code anywhere but the reader of
+  *     what a master version stored (`api.problem.StoredShapes`) and the cases' own file — a text no case reads is
+  *     kept, never made;
   *   - `relayed` (G60, no exception allowed): `Problem.Relayed` built in main code anywhere but the browser's decoder
   *     (the Scala.js `api.problem.ProblemJson`), the shared entry builder it needs (`api.problem.Answer`) and the
   *     cases' own file — a problem known only by its sentence; built on the JVM, a typed problem would silently become
-  *     text.
+  *     text;
+  *   - `first-problem` (G60 step 5, pinned at 0): one problem picked from several (`.toNonEmpty.head`, the head of a
+  *     `problems` list or of the problems' sentences) — a job keeps every problem; only the answer's HTTP status
+  *     (`Answer.status`, whose body lists every problem) picks the first.
   *
   * Besides the listed rules, a foreign type's `CanEqual` (`given CanEqual[UUID, UUID]`) is defined in one file,
   * imported by name where it is needed (G67): only the types of [[CrossLayerEqualities]], whose users share no module,
@@ -309,7 +313,7 @@ class ContractsSuite extends munit.FunSuite:
       )
     )
 
-  test("Stored.Unrecognised is built in main code only by the stored column's reader"):
+  test("Stored.Unrecognised is built in main code only by the reader of the texts a master version stored"):
     val code =
       """object Reads:
         |  def read(s: String): Problem = Stored.Unrecognised(Stored.Text(s))
@@ -322,8 +326,32 @@ class ContractsSuite extends munit.FunSuite:
         .all(List(ArchitectureSuite.SourceFile(key, "com.histmersion.x", Blank(code), code)))
         .filter(_.rule == "unrecognised")
     assertEquals(found("server:x/Reads.scala").map(v => (v.count, v.at)), List((1, "server:x/Reads.scala:2")))
-    assertEquals(found("api:api/problem/Column.scala"), Nil)
+    assertEquals(found("api:api/problem/StoredShapes.scala"), Nil)
     assertEquals(found("problem:util/problem/Problem.scala"), Nil)
+    Vector("api:scalajvm:api/problem/ProblemJson.scala", "api:scalajs:api/problem/ProblemJson.scala").foreach(key =>
+      assertEquals(found(key).map(_.count), List(1), s"$key reads a bare text through StoredShapes or as its sentence")
+    )
+
+  test("a problem picked from several, the rest dropped, is a violation; the answer's status alone may pick one"):
+    val code =
+      """object Jobs:
+        |  def fail(ps: Problems) = Some(ps.toNonEmpty.head)
+        |  def why(e: Api.Error) = e.problems.head
+        |  def first(e: Api.Error) = e.problems
+        |    .headOption
+        |  def line(ps: Problems) = ps.sentences.head
+        |  def picked(ps: NonEmptyVector[Problem]) = NonEmptyVector.toVector(ps).head
+        |  def kept(ps: Problems) = Some(ps.toNonEmpty)
+        |  def every(e: Api.Error) = e.problems.toVector.map(_.sentence)
+        |  // a comment naming problems.head is no pick
+        |  val words = "problems.head"
+        |""".stripMargin
+    def found(key: String) =
+      Rules
+        .all(List(ArchitectureSuite.SourceFile(key, "com.histmersion.x", Blank(code), code)))
+        .filter(_.rule == "first-problem")
+    assertEquals(found("server:x/Jobs.scala").map(v => (v.count, v.at)), List((5, "server:x/Jobs.scala:2")))
+    assertEquals(found("api:api/problem/Answer.scala"), Nil)
 
   test("Problem.Relayed is built in main code only by the browser's decoder and the entry builder it needs"):
     val code =
@@ -492,11 +520,10 @@ object ContractsSuite:
       List("api")
 
   /** The sites a classified module keeps until G60 step 7 removes the temporary case, by file, exactly: the closed
-    * Problem's own renderers in the api, which must name every case (the wire entry and its codecs, the frozen column
-    * sentence and its reader). RenderSuite's row for the case is a string literal, which the check does not see.
+    * Problem's own renderer in the api, which must name every case (the wire entry, which a stored column keeps too,
+    * and its codecs). RenderSuite's row for the case is a string literal, which the check does not see.
     */
-  val UnclassifiedKept: Map[String, Int] =
-    Map("api:api/problem/Answer.scala" -> 4, "api:api/problem/Column.scala" -> 4)
+  val UnclassifiedKept: Map[String, Int] = Map("api:api/problem/Answer.scala" -> 4)
 
   /** The modules whose code writes SQL. */
   val SqlModules: List[String] = List("db", "server")
@@ -585,6 +612,12 @@ object ContractsSuite:
             "Problem.Relayed built outside the browser's decoder",
             if Relayers(s.key) then Nil
             else Relayed.findAllMatchIn(s.code).filterNot(m => inPattern(s.code, m.start)).map(_.start).toList
+          )
+          ++ counted(
+            "first-problem",
+            s,
+            "the first of several problems kept, the rest dropped",
+            if FirstProblemPickers(s.key) then Nil else FirstProblem.findAllMatchIn(s.code).map(_.start).toList
           )
       ) ++ concept(sources) ++ helper(sources) ++ prefix(sources) ++ problemFields(sources)
 
@@ -1047,9 +1080,23 @@ object ContractsSuite:
     private val PrimitiveField =
       "^(?:(?:Option|List|Set|Seq|Vector|NonEmptyVector)\\[)?(?:String|Int|Long|Double|Boolean|Legacy\\.Text)\\]?$".r
 
-    /** The files that may build `Stored.Unrecognised`: the stored column's reader and the cases' own file. */
-    private val Unrecognisers: Set[String] = Set(ProblemFile, "api:api/problem/Column.scala")
+    /** The files that may build `Stored.Unrecognised`: the reader of what a master version stored and the cases' own
+      * file.
+      */
+    private val Unrecognisers: Set[String] = Set(ProblemFile, "api:api/problem/StoredShapes.scala")
     private val Unrecognised = "\\bUnrecognised\\s*\\(".r
+
+    /** One problem picked from several where every one should be kept (a job's stored problems): `.toNonEmpty.head`,
+      * the head of a `problems` list, of the problems' sentences, or of a non-empty vector's elements.
+      */
+    private val FirstProblem =
+      ("\\.toNonEmpty\\s*\\.\\s*head\\b|\\b[pP]roblems\\s*\\.\\s*head(?:Option)?\\b|" +
+        "\\.sentences\\s*\\.\\s*head(?:Option)?\\b|\\bNonEmptyVector\\.toVector\\([^)\\n]*\\)\\s*\\.\\s*head(?:Option)?\\b").r
+
+    /** The files that may pick the first problem, each for a reason that keeps every problem elsewhere: the answer's
+      * HTTP status is the first problem's (`Answer.status`; its body lists every problem).
+      */
+    private val FirstProblemPickers: Set[String] = Set("api:api/problem/Answer.scala")
 
     /** The files that may build `Problem.Relayed`: the browser's decoder (the Scala.js copy only, not the JVM's
       * `ProblemJson` at the same path), the shared entry builder it needs and the cases' own file.

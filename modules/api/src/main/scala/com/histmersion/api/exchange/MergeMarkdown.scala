@@ -1,6 +1,6 @@
 package com.histmersion
 package api.exchange
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.api.library.MatchOutcome
 import com.histmersion.api.{Plural, RegisteredPlanMatches}
 import com.histmersion.api.aliases.LabelRenamed
@@ -118,9 +118,9 @@ object MergeMarkdown:
       case MergeJobState.Running =>
         (s"**Applying** plan ${j.planHash} — job `${j.job}`, ${(j.elapsedMs).value / 1000} s so far (a backup is taken first).")
       case MergeJobState.Failed =>
-        (s"**The merge apply failed** (job `${j.job}`): ${j.error.map(_.sentence).getOrElse("no reason given")}")
+        (s"**The merge apply failed** (job `${j.job}`): ${j.problems.fold("no reason given")(_.sentences.mkString("; "))}")
       case MergeJobState.Interrupted =>
-        (s"**The merge apply was interrupted** (job `${j.job}`): ${j.error.getOrElse(MergeApplyJob.InterruptedText).sentence}")
+        (s"**The merge apply was interrupted** (job `${j.job}`): ${j.problems.fold(MergeApplyJob.InterruptedText.sentence)(_.sentences.mkString("; "))}")
       case MergeJobState.Done => j.result.fold(s"**Done** (job `${j.job}`).")(applied)
 
   def merges(ms: List[MergeInfo]): String =

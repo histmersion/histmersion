@@ -1,6 +1,6 @@
 package com.histmersion
 package util.jobs
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.Problems
 
 import com.histmersion.util.database.Transactor
 
@@ -32,13 +32,15 @@ trait JobRecords:
 
   def get(id: Job.Id): Option[JobInfo]
 
-  /** Compare-and-set `from` → `to` under the state machine; the new state, or `None` when it was refused. */
+  /** Compare-and-set `from` → `to` under the state machine; the new state, or `None` when it was refused. `error`:
+    * every problem the job ended with, each kept.
+    */
   def transition(
       id: Job.Id,
       from: JobState,
       to: JobState,
       progress: Option[JobRow.Progress] = None,
-      error: Option[Problem] = None
+      error: Option[Problems] = None
   ): Option[JobState]
 
   /** Free-text progress on a `running` job. */
@@ -63,8 +65,9 @@ object JobRecords:
         from: JobState,
         to: JobState,
         progress: Option[JobRow.Progress],
-        error: Option[Problem]
-    ): Option[JobState] = Transactor(ds()).transact(JobRepo.transition(id, from, to, progress, error))
+        error: Option[Problems]
+    ): Option[JobState] =
+      Transactor(ds()).transact(JobRepo.transition(id, from, to, progress, error.map(_.toNonEmpty)))
     def progress(id: Job.Id, text: JobRow.Progress): Unit = Transactor(ds()).transact(JobRepo.progress(id, text))
 
   /** The jobs in memory, as the table holds them; `clock` stands in for the database's `now()`. */
@@ -96,7 +99,7 @@ object JobRecords:
         from: JobState,
         to: JobState,
         progress: Option[JobRow.Progress],
-        error: Option[Problem]
+        error: Option[Problems]
     ): Option[JobState] =
       JobState.next(from, to).flatMap { target =>
         val now = clock.instant().toString
@@ -110,8 +113,8 @@ object JobRecords:
                   .setTo(target.wire)
                   .modify(_.progress)
                   .setTo(progress.map(p => JobInfo.Progress(p.value)))
-                  .modify(_.error)
-                  .setTo(error)
+                  .modify(_.problems)
+                  .setTo(error.map(_.toNonEmpty))
                   .modify(_.updatedAt)
                   .setTo(JobInfo.UpdatedAt(now))
               )

@@ -1847,6 +1847,17 @@ object Problem:
     /** The run waits for `reason`, until `until` when that is known. */
     final case class Paused(reason: PauseReason, until: Option[EpochMs]) extends Run
 
+    /** A run stopped for `cause` and waits for a person, an allowance or a clock: `why`, the problem it stopped on. A
+      * job's row keeps it, so the row says what the run waits for.
+      */
+    final case class Halted(cause: PauseCause, why: Problem) extends Run
+
+    /** A queued run was paused before it started. */
+    case object Unstarted extends Run
+
+    /** A queued upload's file was held by the process that a restart ended: its job cannot run. */
+    case object UploadUnheld extends Run
+
     /** No model of `role`'s chain can run: each of its models, passed over and why. */
     final case class NoModel(role: Role, passed: Vector[PassedOver]) extends Run
 
@@ -1986,14 +1997,18 @@ object Problem:
     /** `by` cancelled it. */
     final case class Cancelled(by: Actor) extends Run
 
-    /** The autopilot drains since `since`; it resumes once the drain is lifted. */
-    final case class Draining(since: EpochMs) extends Run
+    /** The autopilot drains (since `since`, when it is known); it resumes once the drain is lifted. */
+    final case class Draining(since: Option[EpochMs]) extends Run
 
     /** It cannot go on at `step`: `cause`. */
     final case class Aborted(step: Step, cause: AbortCause) extends Run
 
     enum PauseReason:
       case Requested, Allowance, Budget, Provider, Approval, Schedule
+
+    /** What a run stopped for (the agents' pause reasons): the word a stopped run's sentence starts with. */
+    enum PauseCause derives CanEqual:
+      case Budget, Interrupted, Requested, Provider, Allowance, PlanQuota, Stalled
 
     /** An agent role, in its wire spelling. */
     type Role = Role.T
@@ -2766,6 +2781,9 @@ object Problem:
         External.PluginSaid("the AWMC server is in maintenance")
       ),
       Run.Paused(Run.PauseReason.Allowance, Some(EpochMs(1762732800000L))),
+      Run.Halted(Run.PauseCause.PlanQuota, Run.Cooling(EpochMs(1762732800000L))),
+      Run.Unstarted,
+      Run.UploadUnheld,
       Run.NoModel(
         Run.Role("reviewer"),
         Vector(
@@ -2874,7 +2892,7 @@ object Problem:
       Run.CutShort(Conflict.Activity.MergeApply),
       Run.Unrecorded(Conflict.Activity.MergeApply),
       Run.Cancelled(Run.Actor.Person),
-      Run.Draining(EpochMs(1762732800000L)),
+      Run.Draining(Some(EpochMs(1762732800000L))),
       Run.Aborted(Run.Step("draft"), Run.AbortCause.CheckpointMismatch),
       Content.Finding(Content.Flaw.UncitedParagraph),
       Content.Proposal(Content.Requirement.TooManyClaims(Count(12L), Count(15L)), Where("claims")),

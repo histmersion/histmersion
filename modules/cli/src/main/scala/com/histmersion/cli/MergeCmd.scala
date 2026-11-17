@@ -2,7 +2,7 @@ package com.histmersion
 package cli
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import hearth.kindlings.optics.syntax.*
 
@@ -145,7 +145,9 @@ object MergeCmd:
       case MergeJobState.Failed =>
         Left(
           Cli.Error(
-            Problem.Unclassified(Legacy.Text(j.error.fold(s"merge apply ${j.job} failed")(_.sentence))),
+            Problem.Unclassified(
+              Legacy.Text(j.problems.fold(s"merge apply ${j.job} failed")(_.sentences.mkString("; ")))
+            ),
             exitCode = ExitCode.Refused
           )
         )
@@ -154,7 +156,9 @@ object MergeCmd:
         Left(
           Cli.Error(
             Problem.Unclassified(
-              Legacy.Text(s"merge apply ${j.job}: ${j.error.fold(MergeApplyJob.InterruptedText.sentence)(_.sentence)}")
+              Legacy.Text(
+                s"merge apply ${j.job}: ${j.problems.fold(MergeApplyJob.InterruptedText.sentence)(_.sentences.mkString("; "))}"
+              )
             ),
             exitCode = ExitCode.Refused
           )

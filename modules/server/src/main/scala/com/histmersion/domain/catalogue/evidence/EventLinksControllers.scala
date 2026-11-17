@@ -277,7 +277,7 @@ final class EventLinksControllers(
                     BackgroundJob.Outcome.Summary(s"${compute(d).candidates.size} candidate(s) for ${d.event.id}")
                   )
                   .left
-                  .map(e => e.problems.head)
+                  .map(e => e.problems)
             }
           )
       case None =>

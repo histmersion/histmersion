@@ -1,7 +1,7 @@
 package com.histmersion
 package web.settings
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.api.{Api, Plural}
 import com.histmersion.web.{ApiClient, Auth, MapRegionsView}
@@ -223,7 +223,7 @@ object DataSection:
           if !j.isTerminal && n < 120 then follow(text, id, n + 1)
           else
             said.set(Some(if j.succeeded then Right(s"$text: ${j.progress.getOrElse("done")}")
-            else Left(s"$text: ${j.error.map(_.sentence).getOrElse(j.status)}")))
+            else Left(s"$text: ${j.problems.fold(s"${j.status}")(_.sentences.mkString("; "))}")))
         }
       }
 

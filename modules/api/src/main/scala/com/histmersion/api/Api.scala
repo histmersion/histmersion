@@ -2693,7 +2693,7 @@ object Api:
         * with the codes in step 7): a site that still gives a code answering other than 400 keeps that code's status
         * ([[CodeStatus]]), as the six hand-written error outputs answered it.
         */
-      def status: StatusCode = e.code.flatMap(c => CodeStatus.get(s"$c")).getOrElse(Answer.status(e.problems.head))
+      def status: StatusCode = e.code.flatMap(c => CodeStatus.get(s"$c")).getOrElse(Answer.status(e.problems: Problems))
 
     /** TEMPORARY (G60 step 5): the codes the six error outputs answered other than 400 by, and their statuses; and a
       * refused settings change (`settings_refused`), whose problems are the proposed settings' (`Config.Setting`, which

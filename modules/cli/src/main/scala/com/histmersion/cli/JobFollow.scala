@@ -56,14 +56,15 @@ object JobFollow:
     fetch(id) match
       case Left(e)  => clear(); Left(e)
       case Right(j) =>
-        val detail = j.progress.map(p => s"$p").orElse(j.error.map(_.sentence)).map(t => s" — $t").getOrElse("")
+        val detail =
+          j.progress.map(p => s"$p").orElse(j.problems.map(_.sentences.mkString("; "))).map(t => s" — $t").getOrElse("")
         progress(s"job $id: ${j.status}$detail (${waited / 1000}s)")
         if !j.isTerminal then
           sleep(Poll.value)
           job(fetch, id, waited + Poll.value, sleep, progress, clear)
         else
           clear()
-          if j.succeeded then Right(j) else Left(failed(s"job $id", j.error.map(_.sentence)))
+          if j.succeeded then Right(j) else Left(failed(s"job $id", j.problems.map(_.sentences.mkString("; "))))
 
   /** Poll a backup the server answered `running` until its archive is written; a failure, or a "done" without a
     * checksum, is `ExitCode.Refused`.

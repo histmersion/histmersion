@@ -1,6 +1,6 @@
 package com.histmersion
 package domain.catalogue
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.Problems
 
 import com.histmersion.api.jobs.{JobDetail, JobInfo}
 import com.histmersion.util.data.maintenance.WriteGate
@@ -25,9 +25,9 @@ final class CatalogueJobs(
 ):
   private val slot = BackgroundJob.Slot()
 
-  /** Start `body` as a job of `kind`; `body` answers the summary, or why the run failed. */
+  /** Start `body` as a job of `kind`; `body` answers the summary, or every problem the run failed with. */
   def start(kind: Job.Kind, describe: JobKinds.Subject, write: Boolean)(
-      body: (JobInfo, JobInfo.Progress => Unit) => Either[Problem, BackgroundJob.Outcome.Summary]
+      body: (JobInfo, JobInfo.Progress => Unit) => Either[Problems, BackgroundJob.Outcome.Summary]
   ): Either[Api.Error, JobInfo] =
     def go: Either[Api.Error, JobInfo] =
       BackgroundJob.start(

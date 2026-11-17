@@ -298,12 +298,12 @@ class AssetsJobsSuite extends DbSuite:
         id,
         JobState.Running,
         JobState.Failed,
-        error = Some(Problem.Unclassified(Legacy.Text("converter unreachable")))
+        error = Some(Problem.Unclassified(Legacy.Text("converter unreachable")).toNonEmpty)
       )
     )
     val f = Transactor(ds).read(JobRepo.get(Job.Id.assume(j.id.value))).get
     assertEquals(f.status, JobState.Failed.wire)
-    assertEquals(f.error.map(_.sentence), Some("converter unreachable"))
+    assertEquals(f.problems.map(_.sentences), Some(Vector("converter unreachable")))
     assert(!f.succeeded)
 
   test("a restart fails whatever was unfinished, and leaves terminal rows alone"):
@@ -316,8 +316,8 @@ class AssetsJobsSuite extends DbSuite:
 
     assert(Transactor(ds).transact(JobRepo.failInterrupted()).value >= 2)
     assertEquals(
-      Transactor(ds).read(JobRepo.get(Job.Id.assume(running.id.value))).map(_.error),
-      Some(Some(Problem.Run.Interrupted))
+      Transactor(ds).read(JobRepo.get(Job.Id.assume(running.id.value))).map(_.problems),
+      Some(Some(Problem.Run.Interrupted.toNonEmpty))
     )
     assertEquals(
       Transactor(ds).read(JobRepo.get(Job.Id.assume(queued.id.value))).map(_.status),

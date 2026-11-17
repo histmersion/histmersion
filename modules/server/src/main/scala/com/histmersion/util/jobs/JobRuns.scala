@@ -1,7 +1,6 @@
 package com.histmersion
 package util.jobs
 import com.histmersion.util.problem.Problem
-import com.histmersion.api.problem.Column
 
 import com.histmersion.util.database.Transactor
 import com.augustnagro.magnum.DbCon
@@ -50,7 +49,7 @@ trait JobRuns:
       kind: Job.Kind,
       paused: RunRow.Status,
       now: Instant
-  ): Vector[(Run.Id, Pipeline.Wire, Option[RunRow.Model], Problem)]
+  ): Vector[(Run.Id, Pipeline.Wire, Option[RunRow.Model], Option[Problem])]
 
   def progress(kind: Job.Kind, id: Run.Id, text: JobRow.Progress): Unit
   def warn(kind: Job.Kind, id: Run.Id, warning: JobRepo.WarningText): Unit
@@ -97,7 +96,7 @@ object JobRuns:
         kind: Job.Kind,
         paused: RunRow.Status,
         now: Instant
-    ): Vector[(Run.Id, Pipeline.Wire, Option[RunRow.Model], Problem)] =
+    ): Vector[(Run.Id, Pipeline.Wire, Option[RunRow.Model], Option[Problem])] =
       db.read(JobRepo.runsPausedUntil(kind, paused, JobRepo.DueAt(now.toString)))
     def progress(kind: Job.Kind, id: Run.Id, text: JobRow.Progress): Unit =
       db.transact(JobRepo.runProgress(kind, id, text))
@@ -209,7 +208,7 @@ object JobRuns:
         kind: Job.Kind,
         paused: RunRow.Status,
         now: Instant
-    ): Vector[(Run.Id, Pipeline.Wire, Option[RunRow.Model], Problem)] =
+    ): Vector[(Run.Id, Pipeline.Wire, Option[RunRow.Model], Option[Problem])] =
       mine(kind)
         .filter((_, r) => r.row.status == paused && r.resumeAt.forall(_.isAfter(now)))
         .sortBy[(Long, Long)]((_, r) => (r.updated.value, r.created.value))
@@ -218,7 +217,7 @@ object JobRuns:
             id,
             Pipeline.Wire(r.row.pipeline.value),
             r.row.model,
-            r.error.getOrElse(Column.read(""))
+            r.error
           )
         )
         .toVector

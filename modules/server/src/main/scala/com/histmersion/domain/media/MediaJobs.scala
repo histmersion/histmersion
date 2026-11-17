@@ -1,6 +1,6 @@
 package com.histmersion
 package domain.media
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{Legacy, Problem, Problems}
 
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.util.data.maintenance.WriteGate
@@ -52,7 +52,7 @@ final class MediaJobs(ds: DataSource, maintenance: WriteGate, pins: WorkCarrier,
     * `body` returns the summary the finished job shows, or why it failed.
     */
   def start(kind: Job.Kind, describe: JobKinds.Subject)(
-      body: (JobInfo.Progress => Unit) => Either[Problem, BackgroundJob.Outcome.Summary]
+      body: (JobInfo.Progress => Unit) => Either[Problems, BackgroundJob.Outcome.Summary]
   ): Either[Api.Error, JobInfo] =
     maintenance.guard(WriteGate.OperationName(kind.value)) {
       BackgroundJob.start(

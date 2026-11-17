@@ -44,6 +44,11 @@ import com.histmersion.domain.AgentProposals
 import com.histmersion.domain.ReviewLedger.Ledger
 import com.histmersion.domain.automation.approvals.ProposalEvidence
 import com.histmersion.util.problem.Problem
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.api.problem.StoredShapes
+import com.histmersion.api.problem.Answer.entry
+import hearth.kindlings.jsoniterjson.{Json, JsonObject}
 import com.histmersion.util.plugins.PluginKit
 import com.histmersion.api.plugins.{PluginJar, PluginSet}
 import StoredCodecs.{sameJson, BundleCodec, Codec, JsonAst, JsonSamples}
@@ -106,8 +111,10 @@ object StoredShapesSuite:
       )
     )
 
-  /** A `jsonb` column of `A`, written by `Jsonb.write`. */
-  def column[A](name: String, salt: Int, gen: => Gen[A])(using c: Codec[A]): Shape =
+  /** A `jsonb` column of `A`, written by `Jsonb.write`. `today` is the line as today's codec writes it back (the line
+    * itself, but where a stored form changed since it was captured).
+    */
+  def column[A](name: String, salt: Int, gen: => Gen[A], today: String => String = identity)(using c: Codec[A]): Shape =
     Shape(
       name,
       () => write(name, samples(gen, salt).map(c.write(_, false))),
@@ -116,8 +123,28 @@ object StoredShapesSuite:
           case Left(e)  => Some(s"does not decode: $e")
           case Right(a) =>
             val again = c.write(a, false)
-            Option.unless(sameJson(again, line))(s"writes $again")
+            Option.unless(sameJson(again, today(line)))(s"writes $again")
     )
+
+  /** A document whose problems (a record's `problems`, a plugin's `error` list) hold bare strings — how a master
+    * version kept a problem's text — as today's codec writes it back: each problem as the entry of the problem its text
+    * reads as ([[StoredShapes]]), its text kept whole. Anything else is as it was.
+    */
+  def problemsAsEntries(document: String): String =
+    def walk(json: Json): Json = json.arrayOrObject(
+      json,
+      items => Json.Arr(items.map(walk)),
+      fields =>
+        Json.Obj(JsonObject.fromIterable(fields.toList.map { (key, value) =>
+          if ProblemKeys(key) then
+            key -> value.mapArray(_.map(p => p.asString.fold(walk(p))(t => StoredShapes.read(t).entry.asJson)))
+          else key -> walk(value)
+        }))
+    )
+    RawJson.parse(document).fold(_ => document, walk(_).noSpaces)
+
+  /** The keys whose arrays hold problems. */
+  private val ProblemKeys = Set("problems", "error")
 
   /** The same column written without its null fields: each line reads as the value of the full line beside it. */
   def droppedColumn[A](name: String, full: String)(using c: Codec[A]): Shape =
@@ -196,7 +223,7 @@ object StoredShapesSuite:
           case Left(e)  => Some(s"does not decode: $e")
           case Right(a) =>
             val again = render(a)
-            Option.unless(sameJson(again, text))(s"writes $again")
+            Option.unless(sameJson(again, problemsAsEntries(text)))(s"writes $again")
     )
 
   /** The same file as an earlier version wrote it (`file-<name>-<earlier>`, kept as captured), which the server
@@ -226,7 +253,8 @@ object StoredShapesSuite:
           (d, f) =>
             rewritten(d).flatMap(parse).map(render) match
               case Left(e)      => Some(s"does not decode once rewritten: $e")
-              case Right(again) => Option.unless(sameJson(again, text(f)))(s"reads as $again, not as $f")
+              case Right(again) =>
+                Option.unless(sameJson(again, problemsAsEntries(text(f))))(s"reads as $again, not as $f")
         )
       )
     )
@@ -257,7 +285,13 @@ object StoredShapesSuite:
       column[JobDetail]("jobs-detail", 19, jobDetail),
       column[RunParams]("jobs-params", 1, Arbitrary.derived[RunParams].arbitrary),
       droppedColumn[RunParams]("jobs-params", "jobs-params"),
-      column[MergeApplyResult]("jobs-result-merge-apply", 2, Arbitrary.derived[MergeApplyResult].arbitrary),
+      // captured when a problem was its text: each reads back, and is written back as its entry
+      column[MergeApplyResult](
+        "jobs-result-merge-apply",
+        2,
+        Arbitrary.derived[MergeApplyResult].arbitrary,
+        problemsAsEntries
+      ),
       column[List[WouldWrite]]("agent-steps-would-write", 3, Arbitrary.derived[List[WouldWrite]].arbitrary),
       column[Goal.Plans.Plan]("approvals-proposal-plan", 4, Arbitrary.derived[Goal.Plans.Plan].arbitrary),
       column[Goal.Plans.ArticleDraft](

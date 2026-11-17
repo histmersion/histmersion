@@ -1145,7 +1145,7 @@ final class ManagerSupervisor(
   /** [[Engine.onSettled]]: a manager's run settled — an event (a stall named as one), and a tick soon. */
   def settled(r: RunInfo): Unit =
     r.managerId.foreach { mid =>
-      val stalled = r.error.exists(e => Stopped.from(e).cause.pausedOn(PauseReason.Stalled))
+      val stalled = r.error.exists(e => Stopped.of(e).pausedOn(PauseReason.Stalled))
       val text =
         s"${r.target}: run ${r.status}" + r.error
           .filter(_.sentence.nonEmpty)

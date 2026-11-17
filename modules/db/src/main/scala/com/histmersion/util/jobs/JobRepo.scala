@@ -1,8 +1,8 @@
 package com.histmersion
 package util.jobs
 import com.histmersion.util.jobs.Job
-import com.histmersion.util.problem.Problem
-import com.histmersion.api.problem.Column
+import com.histmersion.util.problem.{Problem, Problems}
+import com.histmersion.util.nonempty.NonEmptyVector
 
 import com.histmersion.util.database.given
 
@@ -220,7 +220,7 @@ object JobRepo:
       from: JobState,
       to: JobState,
       progress: Option[JobRow.Progress] = None,
-      error: Option[Problem] = None
+      error: Option[NonEmptyVector[Problem]] = None
   )(using DbCon): Option[JobState] =
     JobState.next(from, to).flatMap { target =>
       val updated =
@@ -236,8 +236,9 @@ object JobRepo:
     * swapped back to a database (docs/research-plugins.md §3.6) must not fail its own work there.
     */
   def failInterrupted(except: List[Job.Id] = Nil)(using DbCon): RowCount =
+    val interrupted = NonEmptyVector.of[Problem](Problem.Run.Interrupted)
     RowCount(
-      sql"""UPDATE jobs SET status = ${JobState.Failed.wire}, error = ${JobState.Interrupted},
+      sql"""UPDATE jobs SET status = ${JobState.Failed.wire}, error = $interrupted,
                           progress = NULL, updated_at = now()
           WHERE status IN (${JobState.Running.wire}, ${JobState.Queued.wire}, ${JobState.Paused.wire})
             AND kind <> ${AgentJobKinds.Agent.kind}
@@ -288,7 +289,8 @@ object JobRepo:
       progress: Option[JobRow.Progress],
       resumeAt: Option[ResumeAt]
   )(using DbCon): Boolean =
-    sql"""UPDATE jobs SET status = $to, error = $error, progress = $progress,
+    val kept = error.map(NonEmptyVector.of(_))
+    sql"""UPDATE jobs SET status = $to, error = $kept, progress = $progress,
                           resume_at = $resumeAt::timestamptz, updated_at = now()
           WHERE id = $id AND kind = $kind AND status = $from""".update.run() > 0
 
@@ -298,16 +300,20 @@ object JobRepo:
                                 AND resume_at IS NOT NULL AND resume_at <= $at::timestamptz
           ORDER BY resume_at, created_at, id""".query[Run.Id].run()
 
-  /** The `paused` runs that do not resume by themselves before `at`: (id, pipeline, model, error). */
+  /** The `paused` runs that do not resume by themselves before `at`: (id, pipeline, model, the problem its row keeps).
+    */
   def runsPausedUntil(
       kind: Job.Kind,
       paused: RunRow.Status,
       at: DueAt
-  )(using DbCon): Vector[(Run.Id, Pipeline.Wire, Option[RunRow.Model], Problem)] =
-    sql"""SELECT id, coalesce(pipeline, ''), model, coalesce(error, '') FROM jobs
+  )(using DbCon): Vector[(Run.Id, Pipeline.Wire, Option[RunRow.Model], Option[Problem])] =
+    sql"""SELECT id, coalesce(pipeline, ''), model, error FROM jobs
           WHERE kind = $kind AND status = $paused
             AND (resume_at IS NULL OR resume_at > $at::timestamptz)
-          ORDER BY updated_at, created_at, id""".query[(Run.Id, Pipeline.Wire, Option[RunRow.Model], Problem)].run()
+          ORDER BY updated_at, created_at, id"""
+      .query[(Run.Id, Pipeline.Wire, Option[RunRow.Model], Option[NonEmptyVector[Problem]])]
+      .run()
+      .map((id, pipeline, model, error) => (id, pipeline, model, error.map(Problems.asOne)))
 
   def runProgress(kind: Job.Kind, id: Run.Id, text: JobRow.Progress)(using DbCon): Unit =
     val _ = sql"UPDATE jobs SET progress = $text, updated_at = now() WHERE id = $id AND kind = $kind".update.run()
@@ -332,7 +338,8 @@ object JobRepo:
       queued: RunRow.Status,
       except: List[Run.Id]
   )(using DbCon): (Vector[(Run.Id, Option[RunRow.Origin])], Vector[Run.Id]) =
-    val moved = sql"""UPDATE jobs SET status = $paused, error = $error, updated_at = now()
+    val kept = NonEmptyVector.of(error)
+    val moved = sql"""UPDATE jobs SET status = $paused, error = $kept, updated_at = now()
                       WHERE kind = $kind AND status = $running AND NOT (id = ANY($except::text[]))
                       RETURNING id, origin""".query[(Run.Id, Option[RunRow.Origin])].run()
     val waiting = sql"""SELECT id FROM jobs WHERE kind = $kind AND status = $queued
@@ -362,10 +369,10 @@ object JobRepo:
   /** Record how a merge apply ended: `done` with its report (applied or refused), or `failed` with why. A row a restart
     * already failed is left as it is.
     */
-  def finishMergeApply(id: Job.Id, outcome: Either[Problem, MergeApplyResult])(using DbCon): Unit =
+  def finishMergeApply(id: Job.Id, outcome: Either[Problems, MergeApplyResult])(using DbCon): Unit =
     val (status, error, result) = outcome match
       case Right(r) => (JobState.Done, None, Some(Jsonb.write(r)))
-      case Left(e)  => (JobState.Failed, Some(e), None)
+      case Left(e)  => (JobState.Failed, Some(e.toNonEmpty), None)
     val _ =
       sql"""UPDATE jobs SET status = ${status.wire}, error = $error, result = $result::jsonb, updated_at = now()
             WHERE id = $id AND kind = ${ExchangeJobKinds.MergeApply.kind} AND status = ${JobState.Running.wire}""".update
@@ -380,7 +387,7 @@ object JobRepo:
                                           ELSE updated_at END) - created_at) * 1000)::bigint,
                  error, result::text
           FROM jobs WHERE id = $id AND kind = ${ExchangeJobKinds.MergeApply.kind}"""
-      .query[(String, String, String, String, Long, Option[String], Option[String])]
+      .query[(String, String, String, String, Long, Option[NonEmptyVector[Problem]], Option[String])]
       .run()
       .headOption
       .map { (id, status, bundle, plan, ms, error, result) =>
@@ -390,9 +397,10 @@ object JobRepo:
           MergeApplyJob.OfBundle(bundle),
           MergeApplyJob.OfPlanHash(plan),
           MergeApplyJob.OfElapsedMs(math.max(0L, ms)),
-          error.map(text =>
-            if text == JobState.Interrupted then MergeApplyJob.Failure.Interrupted
-            else MergeApplyJob.Failure.Other(Column.read(text))
+          error.map(problems =>
+            NonEmptyVector.toVector(problems) match
+              case Vector(Problem.Run.Interrupted) => MergeApplyJob.Failure.Interrupted
+              case _                               => MergeApplyJob.Failure.Other(problems)
           ),
           result.flatMap(r => Jsonb.read[MergeApplyResult](Jsonb.JsonText(r)))
         )

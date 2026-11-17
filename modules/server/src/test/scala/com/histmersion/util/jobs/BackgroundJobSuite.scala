@@ -1,6 +1,7 @@
 package com.histmersion
 package util.jobs
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{Legacy, Problem, Problems, Raised}
+import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.testsupport.ComparedByValue.given
@@ -43,10 +44,17 @@ class BackgroundJobSuite extends DbSuite:
         .sentence,
       "a vacuum job is already running (job 42) — see `histmersion jobs`"
     )
-    assertEquals((BackgroundJob.describe(InterruptedException())).sentence, "interrupted by a restart")
+    assertEquals(BackgroundJob.describe(InterruptedException()).sentences, Vector("interrupted by a restart"))
     assert(
-      BackgroundJob.describe(IllegalStateException("boom")).sentence.endsWith("java.lang.IllegalStateException: boom")
+      BackgroundJob
+        .describe(IllegalStateException("boom"))
+        .sentences
+        .mkString
+        .endsWith("java.lang.IllegalStateException: boom")
     )
+    // problems carried through an exception are each kept, not folded into one
+    val two = Problems.of(Problem.Run.Interrupted, Problem.Conflict.Busy(Problem.Conflict.Activity.Backup))
+    assertEquals(BackgroundJob.describe(Raised(two)), two)
 
   // ── on a test database ────────────────────────────────────────────────────────────────────────
   private val testDb = TestDb.url
@@ -94,7 +102,7 @@ class BackgroundJobSuite extends DbSuite:
     )
     go.countDown()
     val done = await(j.id)
-    assertEquals((done.status, done.progress, done.error), ("done", Some("all done"), None))
+    assertEquals((done.status, done.progress, done.problems), ("done", Some("all done"), None))
     Thread.sleep(50)
     assert(!slot.isRunning, "the slot is freed when the job ends")
 
@@ -105,7 +113,20 @@ class BackgroundJobSuite extends DbSuite:
         Outcome(Some(Outcome.Summary("half")), Some(Problem.Unclassified(Legacy.Text("disk full"))))
       )
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
-    assertEquals(await(f.id).error.map(_.sentence), Some("disk full"))
+    assertEquals(await(f.id).problems.map(_.sentences), Some(Vector("disk full")))
+    Thread.sleep(50)
+    val several = BackgroundJob
+      .start(ds, Job.Kind("zz-test"), None, slot, BackgroundJob.Work("a test job"))((_, _) =>
+        Outcome.failed(Problems.of(Problem.Conflict.Busy(Problem.Conflict.Activity.Backup), Problem.Run.Interrupted))
+      )
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
+    assertEquals(
+      await(several.id).problems,
+      Some(
+        NonEmptyVector.of[Problem](Problem.Conflict.Busy(Problem.Conflict.Activity.Backup), Problem.Run.Interrupted)
+      ),
+      "every problem, in order"
+    )
     Thread.sleep(50)
     val x = BackgroundJob
       .start(ds, Job.Kind("zz-test"), None, slot, BackgroundJob.Work("a test job"))((_, _) =>
@@ -114,4 +135,7 @@ class BackgroundJobSuite extends DbSuite:
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     val failed = await(x.id)
     assertEquals(failed.status, "failed")
-    assert(failed.error.exists(_.sentence.endsWith("java.lang.IllegalStateException: boom")), failed.error)
+    assert(
+      failed.problems.exists(_.sentences.exists(_.endsWith("java.lang.IllegalStateException: boom"))),
+      failed.problems
+    )

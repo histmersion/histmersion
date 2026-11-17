@@ -5,8 +5,8 @@ import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{External, Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
-import com.histmersion.api.problem.Column
-import com.histmersion.api.problem.Column.stored
+import com.histmersion.api.problem.Answer.entry
+import com.histmersion.api.json.NewtypeCodecs.problemCodec
 
 import java.io.IOException
 
@@ -130,7 +130,7 @@ class StepFailureSuite extends munit.FunSuite:
     val long = AgentParseError("x" * 5000, RuntimeException("odd"))
     assert(Engine.answerProblem(long, FinishReason.NaturalStop).sentence.length < Engine.AnswerExcerpt + 100)
 
-  test("#941 the decoder's message is kept whole: every line, uncut, in the problem and its stored sentence"):
+  test("#941 the decoder's message is kept whole: every line, uncut, in the problem and its stored entry"):
     val message = "line one of the decoder\n" + ("d" * 1200) + "\nline three"
     val p = Engine.answerProblem(AgentParseError("{nope", AnswerNotJson(message)), FinishReason.NaturalStop)
     p match
@@ -138,7 +138,7 @@ class StepFailureSuite extends munit.FunSuite:
         assertEquals(s"$reported", message)
       case other => fail(s"not a NotJson: $other")
     assert(p.sentence.contains(message), p.sentence)
-    assertEquals(Column.read(p.stored), p)
+    assertEquals(RawJson.decode[Problem](p.entry.asJson.noSpaces), Right(p))
     val thrown = Engine.answerProblem(AgentParseError("x", RuntimeException(message)), FinishReason.NaturalStop)
     assert(thrown.sentence.contains(message), thrown.sentence)
 
@@ -148,7 +148,7 @@ class StepFailureSuite extends munit.FunSuite:
     val p = VerbatimFailure.describe(model, IOException(message))
     assertEquals(p, Problem.Upstream.CallThrew(model, External.Reported(s"IOException: $message")))
     assertEquals(p.sentence, s"the call to anthropic:claude-opus failed: IOException: $message")
-    assertEquals(Column.read(p.stored), p)
+    assertEquals(RawJson.decode[Problem](p.entry.asJson.noSpaces), Right(p))
 
   test("#941 the retry prompt carries the decoder's error and the undecoded answer to amend"):
     val raw = """{"notes": 5}"""

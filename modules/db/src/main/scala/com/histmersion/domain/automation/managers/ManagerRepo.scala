@@ -1,7 +1,10 @@
 package com.histmersion
 package domain.automation.managers
 
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.{Problem, Problems}
+import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.nonempty.NonEmptyVector
+import com.histmersion.util.json.RawJson.*
 
 import com.histmersion.api.automation.Agents.{JobKind, PauseReason, RunState}
 import com.histmersion.api.automation.Manager
@@ -258,13 +261,15 @@ object ManagerRepo:
       str(JobKind)
     ) ++ occupyingOn("j")).frag.query[(Pipeline.Wire, Option[ManagerRow.Goal])].run().toList
 
-  /** The runs that occupy a place ([[running]]'s rule), as a predicate on table (alias) `t` of `jobs`. */
+  /** The runs that occupy a place ([[running]]'s rule), as a predicate on table (alias) `t` of `jobs`. A pause for an
+    * allowance or a plan pool is told by its problem's case and cause (`error @>` the pause's entry), not by its words.
+    */
   private def occupyingOn(t: String): Sql =
     of(
-      s"($t.status IN ('queued', 'running') OR ($t.status = 'paused' AND ($t.resume_at IS NOT NULL OR $t.error LIKE ? " +
-        s"OR $t.error LIKE ?)))",
-      str(Stopped.pausedPattern(PauseReason.Allowance)),
-      str(Stopped.pausedPattern(PauseReason.PlanQuota))
+      s"($t.status IN ('queued', 'running') OR ($t.status = 'paused' AND ($t.resume_at IS NOT NULL OR " +
+        s"$t.error @> ?::jsonb OR $t.error @> ?::jsonb)))",
+      str(Stopped.pausedMatch(PauseReason.Allowance).noSpaces),
+      str(Stopped.pausedMatch(PauseReason.PlanQuota).noSpaces)
     )
 
   /** The item kinds of the last `n` runs the managers started, newest first (what the scheduler's shares count).
@@ -510,9 +515,10 @@ object ManagerRepo:
       val run = i.runId.flatMap(r =>
         (
           sql"SELECT status, error FROM jobs WHERE id = $r"
-            .query[(Agents.RunInfo.Status, Option[Problem])]
+            .query[(Agents.RunInfo.Status, Option[NonEmptyVector[Problem]])]
             .run()
             .headOption
+            .map((status, error) => (status, error.map(Problems.asOne)))
         )
       )
       run match
@@ -635,10 +641,13 @@ object ManagerRepo:
       .run()
       .nonEmpty
 
-  /** Every open item of a manager cancelled (a stop); returns how many. */
+  /** Every open item of a manager cancelled (a stop), its outcome line `why`'s sentence (the outcome is a line of text,
+    * as every other outcome an item keeps); returns how many.
+    */
   def cancelOpen(managerId: ManagerRow.Id, why: Problem)(using DbCon): RowCount =
+    val line = why.sentence
     RowCount(
-      sql"""UPDATE manager_items SET status = 'cancelled', outcome = $why, updated_at = now()
+      sql"""UPDATE manager_items SET status = 'cancelled', outcome = $line, updated_at = now()
           WHERE manager_id = $managerId AND status IN ('pending', 'held', 'active')""".update.run()
     )
 

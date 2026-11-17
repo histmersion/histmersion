@@ -78,7 +78,7 @@ class VacuumHttpSuite extends munit.FunSuite:
         )
       )
       val done = await(url, started.id)
-      assertEquals((done.status, done.error), ("done", None), done.toString)
+      assertEquals((done.status, done.problems), ("done", None), done.toString)
       val summary = done.progress.map(_.value).getOrElse("")
       assert(
         summary.startsWith("place_overrides: ") && summary.contains("; place_removals: ") && summary.contains(

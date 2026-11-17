@@ -404,7 +404,7 @@ final class ManagersControllers(
             inFlight(lightId(m))
               .filter(r =>
                 r.status == RunState.Paused.wire && r.error
-                  .exists(e => Stopped.from(e).cause.pausedOn(PauseReason.Requested))
+                  .exists(e => Stopped.of(e).pausedOn(PauseReason.Requested))
               )
               .count(r => agents.engine.resume(runIdOf(r.id), None, None).isRight)
           else 0

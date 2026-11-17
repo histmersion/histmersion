@@ -291,7 +291,7 @@ modules/server/src/main/scala/com/histmersion/domain/personal/seen/SeenRepo.scal
 modules/server/src/main/scala/com/histmersion/server/instance/UiRepo.scala	sql	reads and writes the ui tables and their row codecs
 modules/problem/src/main/scala/com/histmersion/util/problem/Text.scala	render	writes the English sentence of every problem, the one the HTTP body, the CLI, MCP, the web, the logs and the plugin resolver show
 modules/api/src/main/scala/com/histmersion/api/problem/Answer.scala	render	maps every problem to its HTTP status and to the JSON body that lists the problems with their derived data
-modules/api/src/main/scala/com/histmersion/api/problem/Column.scala	render	writes the frozen sentence a text column keeps for a problem and reads a column's text back as the case
+modules/api/src/main/scala/com/histmersion/api/problem/StoredShapes.scala	json	reads the text a master version stored where a problem is kept back as its case, or keeps it whole
 modules/cli/src/main/scala/com/histmersion/cli/ExitCode.scala	render	maps the problems a command failed with, and where it met them, to the CLI's exit code
 modules/server/src/main/scala/com/histmersion/util/problem/ProblemLog.scala	render	writes a problem's log line: its group and case, its fields by name, its sentence
 modules/json/src/main/scala/com/histmersion/util/json/Cursor.scala	json	walks JSON no record describes and finds where a text broke off

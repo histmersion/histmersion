@@ -1,7 +1,7 @@
 package com.histmersion
 package util.jobs
-import com.histmersion.util.problem.Text.sentence
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Text.{sentence, sentences}
+import com.histmersion.util.problem.{Legacy, Problem, Problems}
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -51,7 +51,7 @@ abstract class JobRecordsContract extends DbSuite:
       Some(JobState.Done)
     )
     val done: Option[JobInfo] = jobs.get(jobId(j))
-    assertEquals(done.map(j => (j.status, j.progress, j.error)), Some(("done", Some("2 page(s)"), None)))
+    assertEquals(done.map(j => (j.status, j.progress, j.problems)), Some(("done", Some("2 page(s)"), None)))
     assertEquals(jobs.get(Job.Id.applyUnsafe("00000000-0000-0000-0000-000000000000")), None)
   }
 
@@ -67,7 +67,18 @@ abstract class JobRecordsContract extends DbSuite:
       ),
       Some(JobState.Failed)
     )
-    assertEquals(jobs.get(jobId(j)).map(j => (j.status, j.error.map(_.sentence))), Some(("failed", Some("offline"))))
+    assertEquals(
+      jobs.get(jobId(j)).map(j => (j.status, j.problems.map(_.sentences))),
+      Some(("failed", Some(Vector("offline"))))
+    )
+  }
+
+  jtest("a job that failed with several problems keeps every one, in order") { jobs =>
+    val j = jobs.create(Job.Kind("reocr"), None, None, None)
+    val _ = jobs.transition(jobId(j), JobState.Queued, JobState.Running)
+    val all = Problems.of(Problem.Conflict.Busy(Problem.Conflict.Activity.Backup), Problem.Run.Interrupted)
+    val _ = jobs.transition(jobId(j), JobState.Running, JobState.Failed, error = Some(all))
+    assertEquals(jobs.get(jobId(j)).flatMap(_.problems), Some(all.toNonEmpty))
   }
 
 class JobRecordsInMemorySuite extends JobRecordsContract:

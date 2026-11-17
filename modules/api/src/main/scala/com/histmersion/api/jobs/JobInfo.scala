@@ -2,6 +2,7 @@ package com.histmersion
 package api.jobs
 
 import com.histmersion.util.problem.Problem
+import com.histmersion.util.nonempty.NonEmptyVector
 
 import io.github.iltotore.iron.constraint.any.Pure
 import io.github.iltotore.iron.*
@@ -15,13 +16,14 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.api.Sha256
 import com.histmersion.api.automation.Queue
 
+/** A job's row. `problems`: every problem a job that failed (or stopped) keeps, in order; none for one that did not. */
 final case class JobInfo(
     id: SpatialHierarchyResult.Job.Id,
     kind: JobKinds.Wire,
     status: JobInfo.Status,
     citekey: Option[Citekey] = None,
     progress: Option[JobInfo.Progress] = None,
-    error: Option[Problem] = None,
+    problems: Option[NonEmptyVector[Problem]] = None,
     sha256: Option[Sha256] = None,
     createdAt: JobInfo.CreatedAt = JobInfo.CreatedAt(""),
     updatedAt: JobInfo.UpdatedAt = JobInfo.UpdatedAt(""),

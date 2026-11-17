@@ -1,6 +1,7 @@
 package com.histmersion
 package server.agents
 import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.testsupport.ComparedByValue.given
@@ -73,6 +74,8 @@ import com.histmersion.util.jobs.JobRow
   * HISTMERSION_TEST_DB_URL.
   */
 class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
+  /** The words a job the drain stopped says, as before its problem was typed. */
+  private val DrainingText = "stopped while the autopilot drains: it resumes once the drain is lifted"
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(120, "s")
@@ -790,7 +793,11 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     assertEquals(a.drain.tick(Instant.now()), Nil, "not drained while the job's item is in flight")
     gate.release.countDown()
     val stopped = ended(a, job.id)
-    assertEquals((stopped.status, stopped.error.map(_.sentence)), (JobState.Failed.wire, Some(Stopped.DrainingText)))
+    assertEquals(
+      (stopped.status, stopped.problems.map(_.sentences)),
+      (JobState.Failed.wire, Some(Vector(DrainingText)))
+    )
+    assertEquals(stopped.problems, Some(NonEmptyVector.of[Problem](Problem.Run.Draining(None))), "typed: resumable")
     assertEquals(asked(up).size, 1, "the item in flight finished, nothing after it")
     assertEquals(a.drain.tick(Instant.now()), List("drained"))
     assertEquals(a.acquireRecheck.tick(Instant.now()), Nil, "no resume while draining")
@@ -802,7 +809,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     up.answer = (d, _) => Left(Problem.NotFound.Copy(Problem.Raw.of(d), Vector.empty))
     val resumed = a.acquireRecheck.tick(Instant.now())
     assert(
-      resumed.exists(_.value.contains(s"job ${job.id} (${Stopped.DrainingText}) resumed as job")),
+      resumed.exists(_.value.contains(s"job ${job.id} ($DrainingText) resumed as job")),
       resumed.toString
     )
     val next = Transactor(ds)
@@ -873,8 +880,8 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
       )
     val _ = Transactor(ds).transact(JobRepo.failInterrupted())
     assertEquals(
-      Transactor(ds).read(JobRepo.get(jobKey(j.id))).flatMap(_.error),
-      Some(Problem.Run.Interrupted)
+      Transactor(ds).read(JobRepo.get(jobKey(j.id))).flatMap(_.problems),
+      Some(NonEmptyVector.of[Problem](Problem.Run.Interrupted))
     )
     val r = a.acquireRecheck.run(RecheckRequest(all = Acquire.Checks.RecheckRequest.All(true)))
     val job = jobOf(r)
@@ -913,7 +920,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
         JobState.Running,
         JobState.Failed,
         None,
-        Some(Problem.Unclassified(Legacy.Text(JobState.Interrupted)))
+        Some(NonEmptyVector.of[Problem](Problem.Run.Interrupted))
       )
     )
     assert(

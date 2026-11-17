@@ -170,20 +170,14 @@ final class IngestQueue(
           id,
           JobState.Queued,
           JobState.Failed,
-          error = Some(
-            Stopped.write(
-              Stopped.Cause.Paused(
-                PauseReason.Interrupted,
-                Stopped.Detail("the upload is no longer held by this process")
-              )
-            )
-          )
+          error = Some(Stopped.Paused(PauseReason.Interrupted, Problem.Run.UploadUnheld).problem)
         )
       case Some(job) =>
         jobs.transition(id, JobState.Queued, JobState.Running, Some(JobRow.Progress("converting"))) match
           case None    => () // someone else claimed it, or it was cancelled — leave the row alone
           case Some(_) =>
-            val converted =
+            // the converter's problem stays typed (Right); the steps that still answer words keep them (Left)
+            val converted: Either[Either[String, Problem], ConvertedDoc] =
               inConverter.add(id)
               try
                 val name = job.file.name
@@ -191,7 +185,7 @@ final class IngestQueue(
                 val where = store.where(job.file)
                 store
                   .get(job.file)
-                  .toRight(s"cannot read the upload at $where: $where")
+                  .toRight(Left(s"cannot read the upload at $where: $where"))
                   .flatMap(blob =>
                     converter
                       .convert(
@@ -200,19 +194,15 @@ final class IngestQueue(
                         ConverterClient.HighQuality(job.params.quality.value)
                       )
                       .left
-                      .map(_.sentence)
+                      .map(Right(_))
                   )
               finally inConverter.remove(id): Unit
-            val outcome = converted.flatMap(doc => store(id, job, doc).map(n => (doc, n)))
+            val outcome = converted.flatMap(doc => store(id, job, doc).left.map(Left(_)).map(n => (doc, n)))
             outcome match
-              case Left(msg) =>
-                scribe.warn(s"job $id failed: $msg")
-                val _ = jobs.transition(
-                  id,
-                  JobState.Running,
-                  JobState.Failed,
-                  error = Some(Problem.Unclassified(Legacy.Text(msg)))
-                )
+              case Left(why) =>
+                val problem = why.fold(words => Problem.Unclassified(Legacy.Text(words)), identity)
+                scribe.warn(s"job $id failed: ${problem.sentence}")
+                val _ = jobs.transition(id, JobState.Running, JobState.Failed, error = Some(problem))
               case Right((doc, n)) =>
                 // the source is written; only now is the item it was acquired for fulfilled. This
                 // worker holds the job in `running`, so the transition below cannot be refused

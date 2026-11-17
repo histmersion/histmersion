@@ -526,6 +526,6 @@ object ModelPicker:
     (earliest.map(_._2), when)
 
   /** The role a `plan-quota`/`allowance` pause names, so a paused run can be asked about just that role again. */
-  def pausedRole(error: Problem): Option[Role] = Stopped.from(error).cause match
-    case Stopped.Cause.Exhausted(_, _, role, _) => Some(role)
-    case _                                      => None
+  def pausedRole(error: Problem): Option[Role] = Stopped.of(error) match
+    case Stopped.Paused(_, why) => Stopped.exhaustedRole(why)
+    case _                      => None

@@ -796,8 +796,8 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
       JobRepo.finishMergeApply(c, Left(Problem.Unclassified(Legacy.Text("merge apply crashed: boom"))))
     )
     assertEquals(
-      applyJob(ds, c).map(j => (j.state, j.error.map(_.sentence))),
-      Some((MergeJobState.Failed, Some("merge apply crashed: boom")))
+      applyJob(ds, c).map(j => (j.state, j.problems.map(_.sentences))),
+      Some((MergeJobState.Failed, Some(Vector("merge apply crashed: boom"))))
     )
     // not a merge apply, or nothing: no answer
     assertEquals(Transactor(ds).read(JobRepo.mergeApply(Job.Id("00000000-0000-0000-0000-000000000000"))), None)

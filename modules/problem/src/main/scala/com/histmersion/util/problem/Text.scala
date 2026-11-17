@@ -183,6 +183,9 @@ object Text:
       case Plugin.Said(plugin, claim, text)   => s"$plugin (${words(claim.productPrefix)}): $text"
       case Problem.Run.Paused(Problem.Run.PauseReason.Requested, None) => "paused on request"
       case Problem.Run.Paused(reason, at)    => s"paused for ${words(reason.productPrefix)}${until(at)}"
+      case Problem.Run.Halted(cause, why)    => s"${cause.word}: ${why.sentence}"
+      case Problem.Run.Unstarted             => "paused before it started"
+      case Problem.Run.UploadUnheld          => "the upload is no longer held by this process"
       case Problem.Run.NoModel(role, passed) =>
         s"no model of the $role chain can run${if passed.isEmpty then "" else s": ${passedOver(passed)}"}"
       case Problem.Run.Exhausted(role, floor, frees, passed) =>
@@ -256,16 +259,17 @@ object Text:
       case Problem.Run.NoLogin(why)            => s"unavailable: no login — $why"
       case Problem.Run.ProbeUnread(exit, said) =>
         s"the probe printed no rate_limit_event (exit $exit${said.fold("")(m => s": $m")})"
-      case Problem.Run.Blocked(block)            => s"held back: ${block.said}"
-      case Problem.Run.Interrupted               => "interrupted by a restart"
-      case Problem.Run.CutShort(activity)        => activity.cutShort
-      case Problem.Run.Unrecorded(activity)      => activity.unrecorded
-      case Problem.Run.Cancelled(by)             => s"cancelled by ${words(by.productPrefix)}"
-      case Problem.Run.Draining(since)           => s"stopped while the autopilot drains (since ${since.iso})"
-      case Problem.Run.Aborted(step, cause)      => s"step $step cannot go on: ${words(cause.productPrefix)}"
-      case Content.Finding(cause)                => cause.said
-      case Content.Proposal(rule, at)            => s"$at: ${rule.said}"
-      case Content.Answer(rule)                  => rule.said
+      case Problem.Run.Blocked(block)        => s"held back: ${block.said}"
+      case Problem.Run.Interrupted           => "interrupted by a restart"
+      case Problem.Run.CutShort(activity)    => activity.cutShort
+      case Problem.Run.Unrecorded(activity)  => activity.unrecorded
+      case Problem.Run.Cancelled(by)         => s"cancelled by ${words(by.productPrefix)}"
+      case Problem.Run.Draining(Some(since)) => s"stopped while the autopilot drains (since ${since.iso})"
+      case Problem.Run.Draining(None)       => "stopped while the autopilot drains: it resumes once the drain is lifted"
+      case Problem.Run.Aborted(step, cause) => s"step $step cannot go on: ${words(cause.productPrefix)}"
+      case Content.Finding(cause)           => cause.said
+      case Content.Proposal(rule, at)       => s"$at: ${rule.said}"
+      case Content.Answer(rule)             => rule.said
       case Content.Undecoded(why, finish, began) =>
         s"${why.said}${finish.fold("")(f => s" ($f)")}${began.fold("")(b => s" — the answer began: $b")}"
       case Internal.Unexpected(id, where, e, r) => s"$where failed unexpectedly ($e, problem $id) — $r"
@@ -300,6 +304,17 @@ object Text:
   extension (problems: Problems)
     /** One sentence per problem, in order. */
     def sentences: Vector[String] = problems.toVector.map(_.sentence)
+
+  extension (cause: Problem.Run.PauseCause)
+    /** The word a stopped run's sentence starts with: the agents' pause reason as the wire spells it (`plan-quota`). */
+    def word: String = cause match
+      case Problem.Run.PauseCause.Budget      => "budget"
+      case Problem.Run.PauseCause.Interrupted => "interrupted"
+      case Problem.Run.PauseCause.Requested   => "requested"
+      case Problem.Run.PauseCause.Provider    => "provider"
+      case Problem.Run.PauseCause.Allowance   => "allowance"
+      case Problem.Run.PauseCause.PlanQuota   => "plan-quota"
+      case Problem.Run.PauseCause.Stalled     => "stalled"
 
   extension (typeName: TypeName)
     /** A type's name without its package: `Citekey`, `Source.Status`. A `Wire` newtype is the wire spelling of the type

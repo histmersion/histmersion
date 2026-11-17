@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.automation.agents
 
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.{Problem, Problems}
+import com.histmersion.util.nonempty.NonEmptyVector
 
 import com.histmersion.api.automation.PlanQuota.{PoolId, Reading, RefreshInfo, Source}
 
@@ -88,14 +89,14 @@ object PlanQuotaRepo:
   def pool(p: PoolId)(using DbCon): Pool =
     sql"""SELECT held, floors, refusal, (extract(epoch FROM refusal_until) * 1000)::bigint, plan_type
           FROM plan_pools WHERE pool = ${p.wire}"""
-      .query[(Boolean, Option[String], Option[Problem], Option[Long], Option[String])]
+      .query[(Boolean, Option[String], Option[NonEmptyVector[Problem]], Option[Long], Option[String])]
       .run()
       .headOption
       .map((h, f, r, u, t) =>
         Pool(
           Pool.Held(h),
           f.map(Pool.Floors(_)),
-          r,
+          r.map(Problems.asOne),
           u.map(Pool.RefusalUntil(_)),
           t.map(Pool.PlanType(_))
         )
@@ -121,8 +122,9 @@ object PlanQuotaRepo:
       planType: Option[Pool.PlanType]
   )(using DbCon): Unit =
     val u = until.map(_.value.toDouble / 1000)
+    val kept = refusal.map(NonEmptyVector.of(_))
     val _ =
-      sql"""INSERT INTO plan_pools (pool, refusal, refusal_until, plan_type) VALUES (${p.wire}, $refusal, to_timestamp($u::float8), $planType)
+      sql"""INSERT INTO plan_pools (pool, refusal, refusal_until, plan_type) VALUES (${p.wire}, $kept, to_timestamp($u::float8), $planType)
             ON CONFLICT (pool) DO UPDATE SET refusal = EXCLUDED.refusal, refusal_until = EXCLUDED.refusal_until,
               plan_type = COALESCE(EXCLUDED.plan_type, plan_pools.plan_type), updated_at = now()""".update.run()
 

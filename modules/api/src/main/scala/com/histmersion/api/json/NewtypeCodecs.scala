@@ -3,7 +3,7 @@ package api.json
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonValueCodec}
 import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
-import sttp.tapir.{Schema, SchemaType}
+import sttp.tapir.Schema
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 
 import hearth.kindlings.jsoniterjson.Json
@@ -44,24 +44,16 @@ object NewtypeCodecs:
     * "text"}`, an [[Answer.Entry]]), so a reader keeps its type and a person still reads the sentence. The JVM reads
     * and writes the case; the browser, which only shows the sentence, reads the `text` alone ([[ProblemJson]]).
     *
-    * A bare string is how records carried a problem before (G60 step 4), in stored and checkpointed JSON too: it reads
-    * as the case whose frozen column sentence it is ([[Column.read]]), any other text as
-    * [[Problem.Stored.Unrecognised]], which is written back as the same bare string, so such a record keeps its bytes.
+    * Every problem is written as its entry, in stored columns and records too. A bare string is how a master version
+    * kept a problem's text, in stored and checkpointed JSON: it reads through [[api.problem.StoredShapes]] (the shapes
+    * a master version wrote; any other text as [[Problem.Stored.Unrecognised]], kept whole).
     */
   given problemCodec: JsonValueCodec[Problem] =
     JsonCodec.mapped[Problem, Json](_.json, ProblemJson.read)
 
-  /** A problem's schema: the typed entry (named `ProblemEntry`, apart from the other records called `Entry`), or the
-    * bare string an unrecognised stored text is written as.
-    */
+  /** A problem's schema: the typed entry (named `Problem`, apart from the other records called `Entry`). */
   given problemSchema: Schema[Problem] =
-    Schema(
-      SchemaType.SCoproduct[Problem](
-        List(Schema.schemaForString, summon[KindlingsSchema[Answer.Entry]].schema.name(Schema.SName("ProblemEntry"))),
-        None
-      )(_ => None),
-      Some(Schema.SName("Problem"))
-    )
+    summon[KindlingsSchema[Answer.Entry]].schema.name(Schema.SName("Problem")).as[Problem]
 
   /** Any JSON value (as tapir's circe module described circe's `Json`). */
   given jsonSchema: Schema[Json] = Schema.any

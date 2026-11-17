@@ -1,7 +1,7 @@
 package com.histmersion
 package web
 import com.histmersion.util.problem.Problem
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.api.ServiceState
 import com.raquo.laminar.api.L.*
@@ -220,7 +220,7 @@ object MapRegionsView:
         ),
         j.detail.flatMap(JobDetail.Purpose.of).map(a => span(cls := "about-detail muted", a.value))
       ),
-      j.error.map(e => p(cls := "form-error", role := "alert", e.sentence)),
+      j.problems.toList.flatMap(_.sentences).map(s => p(cls := "form-error", role := "alert", s)),
       j.progress.filter(_ => !j.isTerminal).map(t => p(cls := "muted map-region-progress", t.value)),
       Option
         .when(j.isTerminal)(j.progress)

@@ -18,6 +18,14 @@ object Problems:
   def from(all: Vector[Problem]): Option[Problems] =
     NonEmptyVector.from(all).map(nev => if nev.size == 1 then nev.head else nev)
 
+  /** Every problem of `all` as one problem, where a reader shows one (a run's, a step's): the problem itself when there
+    * is one, a [[Problem.Run.Failed]] holding each, in order, when there are several. None is left out.
+    */
+  def asOne(all: NonEmptyVector[Problem]): Problem =
+    NonEmptyVector.toVector(all) match
+      case Vector(only) => only
+      case _            => Problem.Run.Failed(all)
+
   extension [A](inputs: Iterable[A])
     /** Every input through `check`: all the values, or every problem, not just the first. */
     def traverseAll[B](check: A => Either[Problems, B]): Either[Problems, Vector[B]] =

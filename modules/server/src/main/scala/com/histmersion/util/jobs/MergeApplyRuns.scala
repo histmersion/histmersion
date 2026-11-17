@@ -1,6 +1,6 @@
 package com.histmersion
 package util.jobs
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.Problems
 
 import com.histmersion.util.database.Transactor
 
@@ -28,7 +28,7 @@ trait MergeApplyRuns:
   def start(bundle: Sha256, planHash: MergeRow.PlanHash): Job.Id
 
   /** How the run ended; a row a restart already failed is left as it is. */
-  def finish(id: Job.Id, outcome: Either[Problem, MergeApplyResult]): Unit
+  def finish(id: Job.Id, outcome: Either[Problems, MergeApplyResult]): Unit
 
   /** One merge apply as the API answers it; `None` for an unknown id (or another kind of job). */
   def status(id: Job.Id): Option[MergeApplyJob]
@@ -41,12 +41,12 @@ object MergeApplyRuns:
     def running: Boolean = Transactor(ds).read(JobRepo.mergeApplyRunning)
     def start(bundle: Sha256, planHash: MergeRow.PlanHash): Job.Id =
       Transactor(ds).transact(JobRepo.startMergeApply(MergeRepo.BundleName(bundle.value), planHash))
-    def finish(id: Job.Id, outcome: Either[Problem, MergeApplyResult]): Unit =
+    def finish(id: Job.Id, outcome: Either[Problems, MergeApplyResult]): Unit =
       Transactor(ds).transact(JobRepo.finishMergeApply(id, outcome))
     def status(id: Job.Id): Option[MergeApplyJob] = Transactor(ds).read(JobRepo.mergeApply(id))
 
   /** One run as the in-memory twin keeps it. */
-  final case class Run(bundle: Sha256, planHash: MergeRow.PlanHash, outcome: Option[Either[Problem, MergeApplyResult]])
+  final case class Run(bundle: Sha256, planHash: MergeRow.PlanHash, outcome: Option[Either[Problems, MergeApplyResult]])
 
   /** The rows in memory, keyed by id; ids are numbered in start order. */
   final class InMemory(state: AtomicReference[Map[Job.Id, Run]] = AtomicReference(Map.empty[Job.Id, Run]))
@@ -59,7 +59,7 @@ object MergeApplyRuns:
       val next = state.updateAndGet(m => m + (idOf(m.size + 1) -> Run(bundle, planHash, None)))
       idOf(next.size)
 
-    def finish(id: Job.Id, outcome: Either[Problem, MergeApplyResult]): Unit =
+    def finish(id: Job.Id, outcome: Either[Problems, MergeApplyResult]): Unit =
       val _ = state.updateAndGet(m =>
         m.get(id).filter(_.outcome.isEmpty).fold(m)(r => m + (id -> r.modify(_.outcome).setTo(Some(outcome))))
       )
@@ -80,7 +80,7 @@ object MergeApplyRuns:
               bundle,
               plan,
               MergeApplyJob.ElapsedMs(0L),
-              Some(MergeApplyJob.Failure.Other(e)),
+              Some(MergeApplyJob.Failure.Other(e.toNonEmpty)),
               None
             )
       }

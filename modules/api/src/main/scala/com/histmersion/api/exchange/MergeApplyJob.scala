@@ -2,6 +2,7 @@ package com.histmersion
 package api.exchange
 
 import com.histmersion.util.problem.Problem
+import com.histmersion.util.nonempty.NonEmptyVector
 
 import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -13,7 +14,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.SpatialHierarchyResult
 
 /** Left is always here and right always the bundle: JabRef's vocabulary (`keep-left`, `keep-right`, `both`), which the
-  * resolution file uses.
+  * resolution file uses. `problems`: every problem an apply that did not finish ended with, in order.
   */
 
 final case class MergeApplyJob(
@@ -23,7 +24,7 @@ final case class MergeApplyJob(
     planHash: MergeApplyJob.PlanHash,
     elapsedMs: MergeApplyJob.ElapsedMs,
     result: Option[MergeApplyResult] = None,
-    error: Option[Problem] = None
+    problems: Option[NonEmptyVector[Problem]] = None
 ) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema
@@ -42,12 +43,12 @@ object MergeApplyJob:
 
   val JobKind = ExchangeJobKinds.MergeApply.kind.value
 
-  /** Why a stored row failed: a restart cut it short (the store keeps that as its own sentence), or it ended with a
-    * reason of its own.
+  /** Why a stored row failed: a restart cut it short (the store keeps that as its own problem), or it ended with
+    * problems of its own, each kept.
     */
   enum Failure:
     case Interrupted
-    case Other(problem: Problem)
+    case Other(problems: NonEmptyVector[Problem])
 
   /** A restart cut the apply short: its transaction was committed or rolled back as a whole, never half applied. */
   val InterruptedText: Problem = Problem.Run.CutShort(Problem.Conflict.Activity.MergeApply)
@@ -72,7 +73,7 @@ object MergeApplyJob:
             bundle,
             planHash,
             elapsedMs,
-            error = Some(Problem.Run.Unrecorded(Problem.Conflict.Activity.MergeApply))
+            problems = Some(NonEmptyVector.of(Problem.Run.Unrecorded(Problem.Conflict.Activity.MergeApply)))
           )
         )(r =>
           MergeApplyJob(
@@ -91,7 +92,7 @@ object MergeApplyJob:
           bundle,
           planHash,
           elapsedMs,
-          error = Some(InterruptedText)
+          problems = Some(NonEmptyVector.of(InterruptedText))
         )
       case JobState.Failed | JobState.Paused | JobState.Cancelled =>
         MergeApplyJob(
@@ -100,8 +101,8 @@ object MergeApplyJob:
           bundle,
           planHash,
           elapsedMs,
-          error = error.map {
-            case Failure.Interrupted   => InterruptedText
-            case Failure.Other(reason) => reason
+          problems = error.map {
+            case Failure.Interrupted     => NonEmptyVector.of(InterruptedText)
+            case Failure.Other(problems) => problems
           }
         )

@@ -3,7 +3,8 @@ package domain.automation.agents
 import com.histmersion.api.json.NewtypeCodecs.given
 import hearth.kindlings.jsoniterjson.Json
 
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.{Problem, Problems}
+import com.histmersion.util.nonempty.NonEmptyVector
 
 import hearth.kindlings.optics.syntax.*
 
@@ -56,7 +57,7 @@ object AgentRepo:
       target: Option[RunInfo.Target],
       status: RunInfo.Status,
       progress: Option[RunInfo.Progress],
-      error: Option[Problem],
+      error: Option[NonEmptyVector[Problem]],
       model: Option[RunInfo.Model],
       budgetUsd: Option[BigDecimal],
       budgetTokens: Option[RunInfo.BudgetTokens],
@@ -94,7 +95,7 @@ object AgentRepo:
       tcr: Usage.CacheRead,
       tcw: Usage.CacheWrite,
       cost: BigDecimal,
-      error: Option[Problem],
+      error: Option[NonEmptyVector[Problem]],
       output: Option[StepInfo.Output],
       startedAt: StepInfo.StartedAt,
       finishedAt: StepInfo.FinishedAt,
@@ -139,7 +140,7 @@ object AgentRepo:
       r.target.getOrElse(RunInfo.Target("")),
       r.status,
       r.progress,
-      r.error,
+      r.error.map(Problems.asOne),
       r.model,
       Usage(r.tin, r.tout, r.tcr, r.tcw),
       RunInfo.CostUsd(r.cost.toDouble),
@@ -159,7 +160,7 @@ object AgentRepo:
       r.managerId,
       r.managerItem,
       r.heartbeatAt,
-      pausedFor = Option.when(r.status == RunState.Paused.wire)(Stopped.pausedFor(r.error)).flatten
+      pausedFor = Option.when(r.status == RunState.Paused.wire)(Stopped.pausedFor(r.error.map(Problems.asOne))).flatten
     )
 
   def get(id: RunInfo.Id)(using DbCon): Option[RunInfo] =
@@ -421,12 +422,13 @@ object AgentRepo:
   def record(jobId: Job.Id, s: StepRecord, messages: List[MessageRecord])(using DbCon): Unit =
     val started = s.startedAt.toString
     val would = Option.when(s.wouldWrite.nonEmpty)(Jsonb.write(s.wouldWrite))
+    val error = s.error.map(NonEmptyVector.of(_))
     sql"""INSERT INTO agent_steps (job_id, seq, attempt, name, kind, status, output, prompt_hash, model,
                                    tokens_in, tokens_out, tokens_cache_read, tokens_cache_write, cost_usd,
                                    error, started_at, finished_at, actual_model, would_write, first_call_tokens, turns)
           VALUES ($jobId, ${s.seq}, ${s.attempt}, ${s.name}, ${s.kind.wire}, ${s.status.wire}, ${s.output}::jsonb,
                   ${s.promptHash}, ${s.model}, ${s.usage.input}, ${s.usage.output}, ${s.usage.cacheRead},
-                  ${s.usage.cacheWrite}, ${s.costUsd}, ${s.error}, $started::timestamptz, now(), ${s.actualModel},
+                  ${s.usage.cacheWrite}, ${s.costUsd}, $error, $started::timestamptz, now(), ${s.actualModel},
                   $would::jsonb, ${s.firstCallTokens}, ${s.turns})""".update.run()
     messages.foreach { m =>
       sql"""INSERT INTO agent_messages (job_id, seq, attempt, n, role, content, tool_name, tool_input,
@@ -453,7 +455,7 @@ object AgentRepo:
         r.promptHash,
         Usage(r.tin, r.tout, r.tcr, r.tcw),
         StepInfo.CostUsd(r.cost.toDouble),
-        r.error,
+        r.error.map(Problems.asOne),
         r.output,
         r.startedAt,
         r.finishedAt,

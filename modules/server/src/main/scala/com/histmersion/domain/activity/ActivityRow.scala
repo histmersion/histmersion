@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.activity
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.{Problem, Problems}
+import com.histmersion.util.nonempty.NonEmptyVector
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.api.automation.Activity
@@ -23,7 +24,7 @@ final private[activity] case class ActivityRow(
     state: Entry.State,
     what: Entry.What,
     text: Entry.Text,
-    error: Option[Problem],
+    error: Option[NonEmptyVector[Problem]],
     endedAt: Option[Entry.EndedAt],
     goal: Option[Goal.Slug],
     job: Option[Entry.Job],
@@ -43,7 +44,7 @@ final private[activity] case class ActivityRow(
     state,
     what,
     text,
-    error,
+    error.map(Problems.asOne),
     endedAt,
     goal,
     job,

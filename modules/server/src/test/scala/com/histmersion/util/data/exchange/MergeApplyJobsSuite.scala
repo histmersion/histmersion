@@ -1,6 +1,6 @@
 package com.histmersion
 package util.data.exchange
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{Legacy, Problem, Problems}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.testsupport.ComparedByValue.given
@@ -61,7 +61,15 @@ class MergeApplyJobsSuite extends munit.FunSuite:
       .continually { Thread.sleep(10); status(jobs, j.job) }
       .take(500)
       .find(_.exists(_.state != MergeJobState.Running))
-    assertEquals(ended.flatten.flatMap(_.error).map(_.sentence), Some("nothing to apply"))
+    assertEquals(ended.flatten.flatMap(_.problems).map(_.sentences), Some(Vector("nothing to apply")))
+
+  test("a run that fails with several problems ends failed with every one"):
+    val jobs = MergeApplyJobs(MergeApplyRuns.InMemory(), 5)
+    val two = Problems.of(Problem.Run.Interrupted, Problem.Conflict.Busy(Problem.Conflict.Activity.Backup))
+    val j =
+      jobs.start(sha('b'), plan('a'))(() => Left(two)).fold(e => fail(e.problems.sentences.mkString("; ")), identity)
+    assertEquals(j.state, MergeJobState.Failed)
+    assertEquals(j.problems, Some(two.toNonEmpty))
 
   test("a run that throws ends failed, with why"):
     val jobs = MergeApplyJobs(MergeApplyRuns.InMemory(), 5)
@@ -69,5 +77,5 @@ class MergeApplyJobsSuite extends munit.FunSuite:
       .start(sha('b'), plan('a'))(() => throw IllegalStateException("boom"))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(j.state, MergeJobState.Failed)
-    assert(j.error.exists(_.sentence.contains("boom")), j.toString)
+    assert(j.problems.exists(_.sentences.exists(_.contains("boom"))), j.toString)
     assertEquals(jobs.status(Job.Id.applyUnsafe(UUID.randomUUID().toString)), None)

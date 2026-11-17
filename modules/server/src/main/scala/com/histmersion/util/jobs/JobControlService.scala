@@ -61,7 +61,7 @@ object JobControlService:
                     job.state,
                     JobState.Cancelled,
                     job.progress.map(p => JobRow.Progress(p.value)),
-                    Some(Problem.Unclassified(Legacy.Text(JobControlRules.CancelledByPerson)))
+                    Some(Problem.Unclassified(Legacy.Text(JobControlRules.CancelledByPerson)).toNonEmpty)
                   )
               )
               .toRight(conflict(s"job $id moved on; look again"))
@@ -100,9 +100,11 @@ object JobControlService:
             m + (key -> j.copy(
               status = to.wire,
               progress = progress.orElse(j.progress),
-              error = Option
-                .when(to == JobState.Cancelled)(Problem.Unclassified(Legacy.Text(JobControlRules.CancelledByPerson)))
-                .orElse(j.error)
+              problems = Option
+                .when(to == JobState.Cancelled)(
+                  Problem.Unclassified(Legacy.Text(JobControlRules.CancelledByPerson)).toNonEmpty
+                )
+                .orElse(j.problems)
             ))
           )
       ): Unit

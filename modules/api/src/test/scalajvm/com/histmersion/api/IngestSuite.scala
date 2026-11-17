@@ -2,6 +2,7 @@ package com.histmersion
 package api
 
 import com.histmersion.util.problem.{External, Problem}
+import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -307,15 +308,27 @@ class IngestSuite extends munit.FunSuite:
       JobInfo.Status("failed"),
       (Some("ck")).map(Citekey.apply),
       None,
-      Some(converterDown),
+      Some(NonEmptyVector.of(converterDown)),
       (Some("0123456789abcdef")).map(Sha256.apply),
       JobInfo.CreatedAt("t0"),
       JobInfo.UpdatedAt("t1")
     )
     val out = IngestMarkdown.job(j)
     assert(out.contains("### job abc · ingest"), out)
-    assert(out.contains(s"**error:** ${converterDown.sentence}"), out)
+    assert(out.contains(s"- **error:** ${converterDown.sentence}"), out)
     assert(out.contains("012345678"), out)
+
+  test("job Markdown lists every problem of a job that failed with several"):
+    val missing = Problem.Invalid.Missing.here(Problem.Field("doi"))
+    val busy = Problem.Conflict.Busy(Problem.Conflict.Activity.Backup)
+    val j = JobInfo(
+      SpatialHierarchyResult.Job.Id("abc"),
+      JobKinds.Wire(Ingest.KindIngest),
+      JobInfo.Status("failed"),
+      problems = Some(NonEmptyVector.of(missing, busy))
+    )
+    assert(IngestMarkdown.job(j).contains(s"- **errors:**\n  - ${missing.sentence}\n  - ${busy.sentence}"))
+    assert(IngestMarkdown.jobs(Vector(j)).contains(s" — ${missing.sentence}; ${busy.sentence} |"))
 
   test("job Markdown names the acquisition item a job will tick off, and nothing when there is none"):
     val j = JobInfo(

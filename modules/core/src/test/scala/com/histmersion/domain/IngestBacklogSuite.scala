@@ -13,7 +13,8 @@ import com.histmersion.api.given
 import com.histmersion.config.given
 
 import com.histmersion.domain.IngestBacklog.*
-import com.histmersion.api.problem.Column
+import com.histmersion.api.problem.StoredShapes
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.automation.Managers.*
 
 import java.time.Instant
@@ -194,9 +195,9 @@ class IngestBacklogSuite extends munit.FunSuite:
       .toList
     assert(stored.nonEmpty)
     stored.foreach { text =>
-      val read = Column.read(text)
+      val read = StoredShapes.read(text)
       assertEquals(read, Problem.Stored.Unrecognised(Problem.Stored.Text(text)))
-      assertEquals(Column.stored(read), text, "it writes the same text again")
+      assertEquals(read.sentence, text, "its text, whole")
       assert(isNoLegalCopy(read), text)
       assertEquals(AcquireRecheck.failure(read), AcquireRecheck.Outcome.NoCopy, text)
       onFailure(
@@ -211,7 +212,7 @@ class IngestBacklogSuite extends munit.FunSuite:
         case other                  => fail("expected the acquisition list", clues(other))
     }
     assertEquals(
-      AcquireRecheck.answers(Column.read(stored(1))),
+      AcquireRecheck.answers(StoredShapes.read(stored(1))),
       AcquireRecheck.ReplyText("unpaywall: no copy — none")
     )
 

@@ -1,6 +1,6 @@
 package com.histmersion
 package web
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.exchange.MergeIssue
@@ -948,7 +948,11 @@ object MergeView:
             s"Applying plan ${j.planHash}: ${j.elapsedMs.value / 1000} s so far — the backup is taken first."
           )
         case Some(j) if j.state == MergeJobState.Failed || j.state == MergeJobState.Interrupted =>
-          p_(cls := "form-error", role := "alert", j.error.map(_.sentence).getOrElse("the merge failed"))
+          div(
+            j.problems
+              .fold(Vector("the merge failed"))(_.sentences)
+              .map(s => p_(cls := "form-error", role := "alert", s))
+          )
         case Some(j) => j.result.fold(emptyNode)(appliedReport)
         case None    => emptyNode
       },

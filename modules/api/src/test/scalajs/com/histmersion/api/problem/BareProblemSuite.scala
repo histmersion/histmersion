@@ -8,22 +8,25 @@ import util.problem.Problem
 import util.problem.Problem.*
 import json.NewtypeCodecs.problemCodec
 
-/** In the browser a problem written bare is kept as it was, even a case's frozen sentence: the page links no column
-  * reader ([[SentenceReaders]]), as the server sends every problem typed.
+/** In the browser a problem written bare is its text as it was, even a master shape: the page reads no stored shape
+  * ([[StoredShapes]] is the JVM's), as the server sends every problem typed. The page writes a problem by its sentence.
   */
 class BareProblemSuite extends munit.FunSuite:
 
-  test("a bare string reads as the text as it was, and writes back bare"):
+  test("a bare string reads as the text as it was, and is written by that text"):
     List(
-      "interrupted" -> Stored.Text("interrupted"),
-      "cancelled by Person" -> Stored.Text("cancelled by Person"),
-      "converter down" -> Stored.Text("converter down"),
-      "" -> Stored.Text("")
+      "interrupted" -> Sentence("interrupted"),
+      "cancelled by Person" -> Sentence("cancelled by Person"),
+      "converter down" -> Sentence("converter down"),
+      "" -> Sentence("")
     ).foreach { (text, kept) =>
       val bare = s"\"$text\""
       val read = RawJson.decode[Problem](bare)
-      assertEquals(read, Right(Stored.Unrecognised(kept)))
-      assertEquals(read.map(_.asJson.noSpaces), Right(bare))
+      assertEquals(read, Right(Relayed(kept)))
+      assertEquals(
+        read.map(_.asJson.noSpaces),
+        Right(s"""{"group":"Relayed","case":"Relayed","data":{},"text":$bare}""")
+      )
     }
 
   test("a typed problem reads as its sentence (RelayedSuite)"):

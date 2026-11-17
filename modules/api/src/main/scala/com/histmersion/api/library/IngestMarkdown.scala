@@ -1,7 +1,7 @@
 package com.histmersion
 package api.library
 
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentences
 import com.histmersion.api.{Paging, Plural}
 import com.histmersion.api.automation.ListFilters
 import com.histmersion.api.catalogue.{PeriodsMarkdown, SkippedPeriod}
@@ -18,7 +18,11 @@ object IngestMarkdown:
       Some(s"- **status:** ${j.status}"),
       j.citekey.map(_.value.toString).map(c => s"- **citekey:** $c"),
       j.progress.filter(_.value.nonEmpty).map(p => s"- **progress:** $p"),
-      j.error.filter(_.sentence.nonEmpty).map(e => s"- **error:** ${e.sentence}"),
+      // every problem the job keeps: one on its `error` line, several each on a line of its own under `errors`
+      j.problems.map(_.sentences.filter(_.nonEmpty)).filter(_.nonEmpty).map {
+        case Vector(one) => s"- **error:** $one"
+        case several     => s"- **errors:**\n${several.map(s => s"  - $s").mkString("\n")}"
+      },
       j.sha256.map(_.value).map(s => s"- **sha256:** ${s.take(12)}…"),
       j.acquireItem.map(i =>
         s"- **acquisition item:** $i" + (j.state match
@@ -55,7 +59,7 @@ object IngestMarkdown:
     else
       val rows = js.map(j =>
         s"| ${j.id} | ${j.kind} | ${JobDetail.subject(j).getOrElse("")} | ${j.status} | " +
-          s"${j.progress.getOrElse("")}${j.error.map(e => s" — ${e.sentence}").getOrElse("")} |"
+          s"${j.progress.getOrElse("")}${j.problems.fold("")(ps => s" — ${ps.sentences.mkString("; ")}")} |"
       )
       val kinds = ListFilters.facetLine(
         ListFilters.FacetName("By kind"),

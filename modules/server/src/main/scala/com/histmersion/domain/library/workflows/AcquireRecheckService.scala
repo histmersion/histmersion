@@ -101,10 +101,10 @@ final class AcquireRecheckService(
 
   private def jobIdOf(job: JobInfo): Job.Id = Job.Id.assume(job.id.value)
 
-  private def stopReason(j: JobInfo): String = j.error.fold("stopped")(_.sentence)
+  private def stopReason(j: JobInfo): String = j.problems.fold("stopped")(_.sentences.mkString("; "))
 
   private def resumable(j: JobInfo): Boolean =
-    j.status == JobState.Failed.wire && j.error.exists(e => Stopped.from(e).cause.resumable)
+    j.status == JobState.Failed.wire && j.problems.exists(e => Stopped.of(e).resumable)
 
   private def countOf(counts: Map[AcquireRecheck.Outcome.Wire, RowCount], o: Outcome): Int =
     counts.get(o.wire).fold(0)(_.value)
@@ -421,12 +421,13 @@ final class AcquireRecheckService(
         )
         report(AcquireRecheck.progressLine(start))
         @annotation.tailrec
-        def loop(left: List[Facts], t: Tally, rows: List[RecheckRow]): (Tally, List[RecheckRow], Option[String]) =
+        def loop(left: List[Facts], t: Tally, rows: List[RecheckRow]): (Tally, List[RecheckRow], Option[Problem]) =
           left match
             case Nil                          => (t, rows, None)
-            case _ if agents.drain.draining   => (t, rows, Some(Stopped.DrainingText))
-            case _ if site.maintenance.active => (t, rows, Some("a restore started; stopped"))
-            case f :: rest                    =>
+            case _ if agents.drain.draining   => (t, rows, Some(Stopped.Draining.problem))
+            case _ if site.maintenance.active =>
+              (t, rows, Some(Problem.Unclassified(Legacy.Text("a restore started; stopped"))))
+            case f :: rest =>
               if Thread.interrupted() then throw InterruptedException()
               if !site.queues.get(QueueItemId(f.item.id.value)).exists(_.status.value == Queue.Open) then
                 loop(rest, t.modify(_.total).using(total => Tally.Total(total.value - 1)), rows)
@@ -452,16 +453,13 @@ final class AcquireRecheckService(
             QueueAdd(
               Queue.QueueItem.Text(
                 (s"${summary(r)} (by $by, job $jobId" +
-                  stop.fold(")")(why => s"; $why)")).take(1000)
+                  stop.fold(")")(why => s"; ${why.sentence})")).take(1000)
               ),
               job = Some(JobInfo.Id(jobId.value))
             )
           )
         stop.fold(BackgroundJob.Outcome.done(BackgroundJob.Outcome.Summary(line.value)))(why =>
-          BackgroundJob.Outcome(
-            Some(BackgroundJob.Outcome.Summary(line.value)),
-            Some(Problem.Unclassified(Legacy.Text(why)))
-          )
+          BackgroundJob.Outcome(Some(BackgroundJob.Outcome.Summary(line.value)), Some(why))
         )
     finally passing.unlock()
 

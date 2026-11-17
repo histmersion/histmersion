@@ -7,7 +7,6 @@ import hearth.kindlings.jsoniterjson.Json
 
 import util.problem.Problem
 import util.problem.Problem.*
-import Column.stored
 import Answer.entry
 import json.NewtypeCodecs.problemCodec
 
@@ -19,9 +18,7 @@ class TypedEntrySuite extends munit.FunSuite:
   examples.foreach { p =>
     test(s"${p.group.productPrefix}.${p.productPrefix}: inside a record, typed with its sentence, and read back"):
       val written = (p: Problem).asJson
-      p match
-        case u: Stored.Unrecognised => assertEquals(written, Json.fromString(u.stored))
-        case _                      => assertEquals(written, p.entry.asJson)
+      assertEquals(written, p.entry.asJson)
       assertEquals(RawJson.decode[Problem](written.noSpaces), Right(p))
   }
 

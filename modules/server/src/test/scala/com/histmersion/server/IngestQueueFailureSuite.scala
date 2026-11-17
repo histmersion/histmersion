@@ -108,8 +108,8 @@ class IngestQueueFailureSuite extends DbSuite:
         attempts += 1
       assert(SourceFixtures.load(ds, key).isDefined, "source must have been stored")
       assertEquals(QueueRows.get(ds, item.id).map(_.status), Some(Queue.Open))
-      assertEquals(job.state, JobState.Done, s"stored source but job error: ${job.error}")
-      assertEquals(job.error, None)
+      assertEquals(job.state, JobState.Done, s"stored source but job problems: ${job.problems}")
+      assertEquals(job.problems, None)
       assert(job.progress.exists(_.value.contains(s"acquisition item ${item.id} NOT ticked off")), job.toString)
     finally
       handler.queue.stop()

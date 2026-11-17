@@ -201,7 +201,7 @@ class BootstrapSuite extends DbSuite:
       .find(_.isTerminal)
       .getOrElse(fail("the init job did not finish"))
     assertEquals(end.state, JobState.Failed)
-    assert(end.error.exists(_.sentence.contains("gazetteer: no gazetteer seed at")), end.toString)
+    assert(end.problems.exists(_.sentences.exists(_.contains("gazetteer: no gazetteer seed at"))), end.toString)
     assert(end.progress.exists(_.value.contains("period presets:")), end.toString) // the periods still went in
     assert(Transactor(ds).read(JobRepo.list(None, PageSize(50))).exists(_.id == job.id), "`histmersion jobs` lists it")
     // #770: the job says what it imports from the start; #771: and which period definitions it left out

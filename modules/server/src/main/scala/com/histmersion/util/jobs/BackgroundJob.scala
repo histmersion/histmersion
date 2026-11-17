@@ -33,9 +33,9 @@ object BackgroundJob:
   type Work = Work.T
   object Work extends Newtype[String, Pure]
 
-  /** How a job ended: its summary (the finished job's progress line) and, when it failed, why. */
+  /** How a job ended: its summary (the finished job's progress line) and, when it failed, every problem why. */
 
-  final case class Outcome(summary: Option[Outcome.Summary], error: Option[Problem] = None):
+  final case class Outcome(summary: Option[Outcome.Summary], error: Option[Problems] = None):
     def failed: Boolean = error.isDefined
 
   object Outcome:
@@ -44,10 +44,10 @@ object BackgroundJob:
     object Summary extends Newtype[String, Pure]
 
     def done(summary: Summary): Outcome = Outcome(Some(summary))
-    def failed(why: Problem): Outcome = Outcome(None, Some(why))
+    def failed(why: Problems): Outcome = Outcome(None, Some(why))
 
-    /** The `Right(summary)` / `Left(why)` the catalogue and gazetteer runs answer. */
-    def of(r: Either[Problem, Summary]): Outcome = r.fold(failed, done)
+    /** The `Right(summary)` / `Left(every problem)` the catalogue and gazetteer runs answer. */
+    def of(r: Either[Problems, Summary]): Outcome = r.fold(failed, done)
 
   /** One kind of work that runs one job at a time. `current` names the running one. `held` may be shared with work of
     * the same kind that is not a job (the media import's one-place runs).
@@ -68,10 +68,10 @@ object BackgroundJob:
       code
     )
 
-  /** What a thrown exception tells a job's error line. Pure. */
-  def describe(e: Throwable): Problem = e match
+  /** What a thrown exception tells a job's error line: every problem it carries. Pure. */
+  def describe(e: Throwable): Problems = e match
     case _: InterruptedException => Problem.Run.Interrupted
-    case r: Raised               => r.problems.fold(identity)(Problem.Run.Failed(_))
+    case r: Raised               => r.problems
     case _                       => ProblemLog.unexpected(e, Problem.Where("a background job"))
 
   /** How a run of a job's body ended, for its row: done or failed with its outcome, or stopped by a person (a job whose
@@ -181,7 +181,7 @@ object BackgroundJob:
                     JobState.Running,
                     JobState.Failed,
                     o.summary.map(m => JobRow.Progress(m.value)),
-                    Some(e)
+                    Some(e.toNonEmpty)
                   )
                 )
           case Left(JobStop.Pause) =>
@@ -201,7 +201,7 @@ object BackgroundJob:
                 JobState.Running,
                 JobState.Cancelled,
                 Some(JobRow.Progress(JobControlRules.stoppedLine(JobStop.Cancel, last.get).value)),
-                Some(Problem.Unclassified(Legacy.Text(JobControlRules.CancelledByPerson)))
+                Some(Problem.Unclassified(Legacy.Text(JobControlRules.CancelledByPerson)).toNonEmpty)
               )
             )
       finally slot.free()

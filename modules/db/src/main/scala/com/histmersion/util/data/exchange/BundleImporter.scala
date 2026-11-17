@@ -294,7 +294,7 @@ object BundleImporter:
       resolutions: MergeResolutions,
       merge: MergeSettings,
       planHash: MergeRow.PlanHash,
-      backup: () => Either[Problem, String],
+      backup: () => Either[Problems, String],
       kinds: CarriedKinds,
       rules: MergeRuleSet,
       followUps: MergeFollowUps
@@ -345,7 +345,7 @@ object BundleImporter:
       resolutions: MergeResolutions,
       merge: MergeSettings,
       planHash: MergeRow.PlanHash,
-      backup: () => Either[Problem, String],
+      backup: () => Either[Problems, String],
       kinds: CarriedKinds,
       rules: MergeRuleSet,
       followUps: MergeFollowUps
@@ -398,7 +398,7 @@ object BundleImporter:
         case Left(e) =>
           base
             .modify(_.problems)
-            .setTo(List(e))
+            .setTo(e.toVector.toList)
         case Right(dump) =>
           writeAll(bundle, input, planned, opts, files, kinds)
           val ap = planned.apply

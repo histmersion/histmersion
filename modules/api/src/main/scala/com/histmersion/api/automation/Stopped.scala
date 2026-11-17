@@ -1,137 +1,119 @@
 package com.histmersion
 package api.automation
-import com.histmersion.util.problem.Problem
-import com.histmersion.api.problem.Column
-import com.histmersion.api.problem.Column.stored
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.nonempty.NonEmptyVector
+import com.histmersion.util.problem.{Problem, Problems}
+import com.histmersion.api.problem.StoredShapes
+import com.histmersion.api.problem.Answer.entry
 
 import com.histmersion.api.automation.Agents.PauseReason
-import com.histmersion.api.jobs.JobState
-import io.github.iltotore.iron.constraint.any.Pure
+import hearth.kindlings.jsoniterjson.Json
 
-/** How a job stopped, as the sentence the `jobs.error` column keeps it. The sentences code writes are the
-  * [[Stopped.Cause]]s; [[Stopped.cause]] reads any stored sentence back (what no writer produces is
-  * [[Stopped.Cause.Failed]]) and [[Stopped.of]] writes a cause as the same sentence, so a row written by an earlier
-  * version reads as it was and one written now reads in an earlier version.
+/** How a job stopped, as the problems its `jobs.error` keeps say it: a pause for a reason ([[Problem.Run.Halted]], with
+  * the problem it stopped on), a restart's cut ([[Problem.Run.Interrupted]]), the autopilot's drain
+  * ([[Problem.Run.Draining]]), or a failure (any other problems). A row a master version wrote as a sentence reads into
+  * the same cases ([[StoredShapes]]); [[problem]] is the problem a stop is stored as, [[Stopped.of]] reads it back.
   */
-type Stopped = Stopped.T
-object Stopped extends Newtype[String, Pure]:
+enum Stopped:
 
-  enum Cause:
+  /** A run that stopped for `reason` and waits for a person, an allowance or a clock: `why`, what it stopped on. */
+  case Paused(reason: PauseReason, why: Problem)
 
-    /** A run that stopped for `reason` and waits for a person, an allowance or a clock: stored `<reason>: <detail>`.
-      */
-    case Paused(reason: PauseReason, detail: Detail)
+  /** A job a restart cut short. */
+  case Interrupted
 
-    /** A pause for want of a model, stored `<reason>: <lead>all models for role <role> are <rest>`: the role is the one
-      * to ask again before the pause's end. `lead` is what the pipeline's step put in front (`enrich: `, or nothing).
-      */
-    case Exhausted(reason: PauseReason, lead: Lead, role: AgentRole, rest: Rest)
+  /** A job the autopilot's drain stopped; a later pass takes it up. */
+  case Draining
 
-    /** A job a restart cut short: stored `interrupted`. */
-    case Interrupted
+  /** Any other problems: a failure, each problem. */
+  case Failed(problems: NonEmptyVector[Problem])
 
-    /** A job the autopilot's drain stopped; a later pass takes it up. */
-    case Draining
+  /** Is this a pause for `reason`? */
+  def pausedOn(reason: PauseReason): Boolean = this match
+    case Paused(r, _) => r == reason
+    case _            => false
 
-    /** Any other sentence: the problem a stored column's text reads as (text no case writes, as it was). */
-    case Failed(text: Problem)
+  /** The reason a run paused for, when its row says it did: its pause, or the restart that cut it short. */
+  def pauseReason: Option[PauseReason] = this match
+    case Paused(r, _) => Some(r)
+    case Interrupted  => Some(PauseReason.Interrupted)
+    case _            => None
 
-    /** Is this a pause for `reason`? */
-    def pausedOn(reason: PauseReason): Boolean = this match
-      case Paused(r, _)          => r == reason
-      case Exhausted(r, _, _, _) => r == reason
-      case _                     => false
+  /** Does a later job take up where this one stopped? Only one a restart or the drain stopped. */
+  def resumable: Boolean = this match
+    case Interrupted | Draining => true
+    case _                      => false
 
-    /** The reason a run paused for, when the sentence says it did: its pause, or the restart that cut it short. */
-    def pauseReason: Option[PauseReason] = this match
-      case Paused(r, _)          => Some(r)
-      case Exhausted(r, _, _, _) => Some(r)
-      case Interrupted           => Some(PauseReason.Interrupted)
-      case _                     => None
+  /** The problem the stop is stored as: one problem, or a failure's every problem in one ([[Problem.Run.Failed]]). */
+  def problem: Problem = this match
+    case Paused(reason, why) => Problem.Run.Halted(causeOf(reason), why)
+    case Interrupted         => Problem.Run.Interrupted
+    case Draining            => Problem.Run.Draining(None)
+    case Failed(problems)    => Problems.asOne(problems)
 
-    /** Does a later job take up where this one stopped? Only one a restart or the drain stopped. */
-    def resumable: Boolean = this match
-      case Interrupted | Draining => true
-      case _                      => false
+  /** The problem's word for a pause reason. */
+  private def causeOf(reason: PauseReason): Problem.Run.PauseCause = reason match
+    case PauseReason.Budget      => Problem.Run.PauseCause.Budget
+    case PauseReason.Interrupted => Problem.Run.PauseCause.Interrupted
+    case PauseReason.Requested   => Problem.Run.PauseCause.Requested
+    case PauseReason.Provider    => Problem.Run.PauseCause.Provider
+    case PauseReason.Allowance   => Problem.Run.PauseCause.Allowance
+    case PauseReason.PlanQuota   => Problem.Run.PauseCause.PlanQuota
+    case PauseReason.Stalled     => Problem.Run.PauseCause.Stalled
 
-  /** What a pause says after its reason: until when, and why, as the step wrote it. */
-  type Detail = Detail.T
-  object Detail extends Newtype[String, Pure]
+object Stopped:
 
-  /** What the step put in front of a pause for want of a model. */
-  type Lead = Lead.T
-  object Lead extends Newtype[String, Pure]
+  /** What one stored problem says. */
+  def of(problem: Problem): Stopped = problem match
+    case Problem.Run.Halted(c, why) => Paused(reasonOf(c), why)
+    case Problem.Run.Interrupted    => Interrupted
+    case Problem.Run.Draining(_)    => Draining
+    case other                      => Failed(NonEmptyVector.of(other))
 
-  /** What follows `are` in a pause for want of a model: why no model can run and when one may. */
-  type Rest = Rest.T
-  object Rest extends Newtype[String, Pure]
-
-  /** The words a pause for want of a model starts with (after any lead), up to the role. */
-  val AllModelsFor = "all models for role "
-
-  /** The words between the role and what follows. */
-  val Are = " are "
-
-  /** The sentence of a job the drain stopped. */
-  val DrainingText = "stopped while the autopilot drains: it resumes once the drain is lifted"
-
-  private def prefix(reason: PauseReason): String = s"${reason.wire}: "
-
-  /** The sentence a cause is stored as. */
-  def of(c: Cause): Stopped = c match
-    case Cause.Paused(reason, detail)              => Stopped(s"${prefix(reason)}$detail")
-    case Cause.Exhausted(reason, lead, role, rest) =>
-      Stopped(s"${prefix(reason)}$lead$AllModelsFor${role.wire}$Are$rest")
-    case Cause.Interrupted  => Stopped(s"${JobState.Interrupted}")
-    case Cause.Draining     => Stopped(s"$DrainingText")
-    case Cause.Failed(text) => Stopped(s"${text.stored}")
-
-  /** The stored sentence of a column read as a problem. */
-  def from(stored: Problem): Stopped = Stopped(s"${stored.stored}")
-
-  /** The SQL `LIKE` pattern of the stored sentences that read as a pause for `reason`: the prefix [[of]] writes, then
-    * anything. A column filtered by it and a column read by [[cause]] agree on which rows are a pause for `reason`.
+  /** What a job's stored problems say: a pause, a restart's cut or a drain is the one problem the row keeps; several
+    * problems are a failure.
     */
-  def pausedPattern(reason: PauseReason): String = s"${prefix(reason)}%"
+  def of(problems: NonEmptyVector[Problem]): Stopped = NonEmptyVector.toVector(problems) match
+    case Vector(one) => of(one)
+    case _           => Failed(problems)
 
-  /** Why a paused run waits, from the sentence its row keeps: a run paused with no sentence was paused by a person. */
+  /** Why a paused run waits, from the problem its row keeps: a run paused with none was paused by a person. */
   def pausedFor(stored: Option[Problem]): Option[PauseReason] =
-    stored.fold(Some(PauseReason.Requested))(from(_).cause.pauseReason)
+    stored.fold(Some(PauseReason.Requested))(of(_).pauseReason)
 
-  /** The sentence of a cause, to store or show. */
-  def write(c: Cause): Problem = of(c).problem
+  /** The role a pause for want of a model names, so a paused run can be asked about just that role again: the chain
+    * whose models are all spent, found in what the run stopped on (inside the step it stopped at, too), or read from a
+    * master version's sentence.
+    */
+  def exhaustedRole(why: Problem): Option[AgentRole] =
+    exhaustedIn(why).flatMap(role => AgentRole.parse(AgentRole.Wire(s"$role")))
 
-  private def exhausted(reason: PauseReason, sentence: String): Option[Cause] =
-    val at = sentence.indexOf(AllModelsFor)
-    Option
-      .when(at >= 0) {
-        val afterLead = sentence.drop(at + AllModelsFor.length)
-        val name = afterLead.takeWhile(_ != ' ')
-        val rest = afterLead.drop(name.length)
-        AgentRole
-          .parse(AgentRole.Wire(name))
-          .filter(_ => rest.startsWith(Are))
-          .map(role => Cause.Exhausted(reason, Lead(sentence.take(at)), role, Rest(rest.drop(Are.length))))
-      }
-      .flatten
+  private def exhaustedIn(why: Problem): Option[Problem.Run.Role] = why match
+    case Problem.Run.Exhausted(role, _, _, _) => Some(role)
+    case Problem.Run.AtStep(_, problems)      =>
+      NonEmptyVector.toVector(problems).iterator.flatMap(exhaustedIn).nextOption()
+    case Problem.Stored.Unrecognised(text) => StoredShapes.exhaustedRole(s"$text")
+    case _                                 => None
 
-  extension (s: Stopped)
-    def problem: Problem = Column.read(s"$s")
+  /** What a job's stored `error` contains when it is a pause for `reason`, as the entry writes it: the SQL `error @>`
+    * operand that tells such a row by its case and its cause, whatever it stopped on.
+    */
+  def pausedMatch(reason: PauseReason): Json =
+    val written = Paused(reason, Problem.Run.Interrupted).problem.entry
+    val cause = written.data.asObject.flatMap(_("cause")).getOrElse(Json.Null)
+    Json.arr(
+      Json.obj(
+        "group" -> Json.fromString(s"${written.group}"),
+        "case" -> Json.fromString(s"${written.`case`}"),
+        "data" -> Json.obj("cause" -> cause)
+      )
+    )
 
-    /** What the sentence says. A sentence is only read as a pause, an interruption or a drain when writing that cause
-      * gives the sentence back exactly, so [[of]] of [[cause]] is always the stored sentence.
-      */
-    def cause: Cause =
-      val text: String = s.value
-      val read: Cause = text match
-        case JobState.Interrupted => Cause.Interrupted
-        case DrainingText         => Cause.Draining
-        case _                    =>
-          PauseReason.values
-            .find(r => text.startsWith(prefix(r)))
-            .fold[Cause](Cause.Failed(s.problem)) { r =>
-              val detail = text.drop(prefix(r).length)
-              exhausted(r, detail).getOrElse(Cause.Paused(r, Detail(s"$detail")))
-            }
-      if of(read).value == text then read else Cause.Failed(s.problem)
+  /** The pause reason a problem's word stands for. */
+  private def reasonOf(cause: Problem.Run.PauseCause): PauseReason = cause match
+    case Problem.Run.PauseCause.Budget      => PauseReason.Budget
+    case Problem.Run.PauseCause.Interrupted => PauseReason.Interrupted
+    case Problem.Run.PauseCause.Requested   => PauseReason.Requested
+    case Problem.Run.PauseCause.Provider    => PauseReason.Provider
+    case Problem.Run.PauseCause.Allowance   => PauseReason.Allowance
+    case Problem.Run.PauseCause.PlanQuota   => PauseReason.PlanQuota
+    case Problem.Run.PauseCause.Stalled     => PauseReason.Stalled

@@ -23888,8 +23888,12 @@
           "progress" : {
             "type" : "string"
           },
-          "error" : {
-            "$ref" : "#/components/schemas/Problem"
+          "problems" : {
+            "type" : "array",
+            "minItems" : 1,
+            "items" : {
+              "$ref" : "#/components/schemas/Problem"
+            }
           },
           "sha256" : {
             "type" : "string"
@@ -25936,8 +25940,12 @@
           "result" : {
             "$ref" : "#/components/schemas/MergeApplyResult"
           },
-          "error" : {
-            "$ref" : "#/components/schemas/Problem"
+          "problems" : {
+            "type" : "array",
+            "minItems" : 1,
+            "items" : {
+              "$ref" : "#/components/schemas/Problem"
+            }
           }
         }
       },
@@ -28086,17 +28094,6 @@
       },
       "Problem" : {
         "title" : "Problem",
-        "oneOf" : [
-          {
-            "$ref" : "#/components/schemas/ProblemEntry"
-          },
-          {
-            "type" : "string"
-          }
-        ]
-      },
-      "ProblemEntry" : {
-        "title" : "ProblemEntry",
         "type" : "object",
         "required" : [
           "group",

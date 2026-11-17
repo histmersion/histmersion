@@ -1,6 +1,7 @@
 package com.histmersion
 package util.jobs
 import com.histmersion.util.problem.Problem
+import com.histmersion.util.nonempty.NonEmptyVector
 
 import com.histmersion.util.database.given
 
@@ -18,7 +19,7 @@ final private[jobs] case class JobRow(
     status: JobRow.Status,
     citekey: Option[JobRow.Citekey],
     progress: Option[JobRow.Progress],
-    error: Option[Problem],
+    error: Option[NonEmptyVector[Problem]],
     sha256: Option[JobRow.Sha256],
     createdAt: JobRow.CreatedAt,
     updatedAt: JobRow.UpdatedAt,

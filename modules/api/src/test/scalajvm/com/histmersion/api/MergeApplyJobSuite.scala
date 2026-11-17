@@ -2,6 +2,7 @@ package com.histmersion
 package api
 
 import com.histmersion.util.problem.{External, Problem}
+import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -54,24 +55,43 @@ class MergeApplyJobSuite extends munit.FunSuite:
   test("a row a restart failed is interrupted, and says nothing was half applied"):
     val j = of(JobState.Failed, error = Some(MergeApplyJob.Failure.Interrupted))
     assertEquals(j.state, MergeJobState.Interrupted)
-    assertEquals(j.error, Some(Problem.Run.CutShort(Problem.Conflict.Activity.MergeApply)))
+    assertEquals(
+      j.problems,
+      Some(NonEmptyVector.of[Problem](Problem.Run.CutShort(Problem.Conflict.Activity.MergeApply)))
+    )
     assert(
-      j.error.exists(e => e.sentence.contains("never half applied") && e.sentence.contains("merge list")),
-      j.error.toString
+      j.problems.exists(ps =>
+        NonEmptyVector
+          .toVector(ps)
+          .exists(e => e.sentence.contains("never half applied") && e.sentence.contains("merge list"))
+      ),
+      j.problems.toString
     )
     assert(MergeMarkdown.applyJob(j).startsWith("**The merge apply was interrupted**"), MergeMarkdown.applyJob(j))
 
   test("a crash is failed with its reason; done without a recorded report is failed, not done"):
     assertEquals(
-      of(JobState.Failed, error = Some(MergeApplyJob.Failure.Other(Crash))).error,
-      Some(Crash)
+      of(JobState.Failed, error = Some(MergeApplyJob.Failure.Other(NonEmptyVector.of(Crash)))).problems,
+      Some(NonEmptyVector.of(Crash))
     )
     assertEquals(
-      of(JobState.Failed, error = Some(MergeApplyJob.Failure.Other(Crash))).state,
+      of(JobState.Failed, error = Some(MergeApplyJob.Failure.Other(NonEmptyVector.of(Crash)))).state,
       MergeJobState.Failed
     )
     assertEquals(of(JobState.Done).state, MergeJobState.Failed)
-    assertEquals(of(JobState.Done).error, Some(Problem.Run.Unrecorded(Problem.Conflict.Activity.MergeApply)))
+    assertEquals(
+      of(JobState.Done).problems,
+      Some(NonEmptyVector.of[Problem](Problem.Run.Unrecorded(Problem.Conflict.Activity.MergeApply)))
+    )
+
+  test("an apply that failed with several problems keeps and shows every one"):
+    val backupRefused = Problem.Conflict.Busy(Problem.Conflict.Activity.Backup)
+    val j = of(JobState.Failed, error = Some(MergeApplyJob.Failure.Other(NonEmptyVector.of(Crash, backupRefused))))
+    assertEquals(j.problems, Some(NonEmptyVector.of(Crash, backupRefused)))
+    assertEquals(
+      MergeMarkdown.applyJob(j),
+      s"**The merge apply failed** (job `j1`): ${Crash.sentence}; ${backupRefused.sentence}"
+    )
 
   test("the jobs list names what a merge apply is about: its plan"):
     val j = JobInfo(

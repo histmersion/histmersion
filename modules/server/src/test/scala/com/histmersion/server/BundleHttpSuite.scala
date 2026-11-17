@@ -4,7 +4,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.histmersion.util.json.RawJson
 
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -374,7 +374,7 @@ class BundleHttpSuite extends DbSuite with com.histmersion.db.Bounded:
         )
         val i = decode[MergeApplyJob](String(get(s"$url/api/merge/apply/$cut").body, "UTF-8"))
         assertEquals((i.state, i.bundle, i.planHash), (MergeJobState.Interrupted, "c" * 64, "feedbeef"))
-        assert(i.error.exists(_.sentence.contains("never half applied")), i.toString)
+        assert(i.problems.exists(_.sentences.exists(_.contains("never half applied"))), i.toString)
         // …and it no longer blocks the next apply
         val sha = decode[Bundle.Upload](post(s"$url/api/bundle/upload", get(s"$url/api/bundle").body).body).sha256
         assertEquals(postJson(s"$url/api/merge/apply", s"""{"bundle":"$sha","planHash":"0badc0de"}""").statusCode, 200)
@@ -382,9 +382,9 @@ class BundleHttpSuite extends DbSuite with com.histmersion.db.Bounded:
         val jobs = decode[List[JobInfo]](String(get(s"$url/api/jobs").body, "UTF-8"))
         assert(
           jobs.exists(j =>
-            j.id.value == cut.value && j.kind.value == MergeApplyJob.JobKind && j.error
-              .map(_.sentence)
-              .contains("interrupted by a restart")
+            j.id.value == cut.value && j.kind.value == MergeApplyJob.JobKind && j.problems
+              .map(_.sentences)
+              .contains(Vector("interrupted by a restart"))
           ),
           jobs.toString
         )

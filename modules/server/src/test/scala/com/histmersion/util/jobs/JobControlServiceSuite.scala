@@ -73,8 +73,8 @@ class JobControlServiceSuite extends DbSuite:
     val mem = JobControlService.InMemory(AtomicReference(Map.empty), stops)
     mem.put(job(P1, BasemapJobKinds.BasemapFetch.kind, JobInfo.Status("paused")))
     assertEquals(
-      mem.control(P1, JobAction.Cancel).map(j => (j.status, j.error.map(_.sentence))),
-      Right(("cancelled", Some("cancelled by a person")))
+      mem.control(P1, JobAction.Cancel).map(j => (j.status, j.problems.map(_.sentences))),
+      Right(("cancelled", Some(Vector("cancelled by a person"))))
     )
     mem.put(job(R1, AcquisitionJobKinds.AcquireRecheck.kind, JobInfo.Status("running")))
     assertEquals(mem.control(R1, JobAction.Cancel).map(_.status), Right("running"))
@@ -184,8 +184,8 @@ class JobControlServiceSuite extends DbSuite:
     parts.release.countDown()
     val cancelled = until(jobId(j), JobInfo.Status("cancelled"))
     assertEquals(
-      (cancelled.error.map(_.sentence), cancelled.progress),
-      (Some("cancelled by a person"), Some("cancelled after: 2/6 parts"))
+      (cancelled.problems.map(_.sentences), cancelled.progress),
+      (Some(Vector("cancelled by a person")), Some("cancelled after: 2/6 parts"))
     )
     assertEquals(parts.ran.get, Vector(1, 2))
     assert(service(stops).control(jobId(j), JobAction.Resume).isLeft)
@@ -220,6 +220,6 @@ class JobControlServiceSuite extends DbSuite:
     )
     val _ = Transactor(ds).transact(JobRepo.failInterrupted())
     assertEquals(
-      Transactor(ds).read(JobRepo.get(jobId(p))).map(j => (j.status, j.error)),
-      Some(("failed", Some(Problem.Run.Interrupted)))
+      Transactor(ds).read(JobRepo.get(jobId(p))).map(j => (j.status, j.problems)),
+      Some(("failed", Some(Problem.Run.Interrupted.toNonEmpty)))
     )

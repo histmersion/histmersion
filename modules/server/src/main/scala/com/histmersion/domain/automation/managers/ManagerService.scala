@@ -322,7 +322,7 @@ object ManagerService:
     private def occupying(r: JobRunState): Boolean =
       r.row.status.value == "queued" || r.row.status.value == "running" ||
         (r.row.status.value == "paused" && (r.resumeAt.isDefined || r.error.exists(e =>
-          val cause = Stopped.from(e).cause
+          val cause = Stopped.of(e)
           cause.pausedOn(PauseReason.Allowance) || cause.pausedOn(PauseReason.PlanQuota)
         )))
     private def runOf(i: ManagerItemRecord): Option[JobRunState] = i.runId.flatMap(jobs.get)

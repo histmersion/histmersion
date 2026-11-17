@@ -1,7 +1,7 @@
 package com.histmersion
 package util.data.exchange
 import com.histmersion.util.problem.ProblemLog
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{Legacy, Problem, Problems}
 
 import com.histmersion.api.backup.Backup
 import com.histmersion.api.exchange.{MergeApplyJob, MergeApplyResult, MergeJobState}
@@ -25,7 +25,7 @@ final class MergeApplyJobs(runs: MergeApplyRuns, waitSeconds: => Int, carrier: W
 
   /** Start `run` on its own thread and wait up to `waitSeconds` for it. */
   def start(bundle: Sha256, planHash: MergeRow.PlanHash)(
-      run: () => Either[Problem, MergeApplyResult]
+      run: () => Either[Problems, MergeApplyResult]
   ): Either[Api.Error, MergeApplyJob] =
     synchronized {
       if runs.running then
@@ -45,7 +45,7 @@ final class MergeApplyJobs(runs: MergeApplyRuns, waitSeconds: => Int, carrier: W
         val done = CompletableFuture[Unit]()
         // on the generation (database) the request was pinned to
         val work = carrier.carryWork { () =>
-          val outcome = scala.util
+          val outcome: Either[Problems, MergeApplyResult] = scala.util
             .Try(run())
             .toEither
             .left
