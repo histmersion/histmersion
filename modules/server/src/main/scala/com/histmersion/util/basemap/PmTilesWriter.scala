@@ -3,6 +3,7 @@ package util.basemap
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 
+import com.histmersion.util.problem.Raised
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.util.storage.{ByteSource, Reservation, Store}
 import com.histmersion.{ByteCount, ByteOffset}
@@ -100,7 +101,7 @@ final class PmTilesWriter(out: Reservation):
       .setTo(ic)
     val headerBytes: Array[Byte] = PmTiles.encodeHeader(header).value
     out.writeAt(ByteOffset.applyUnsafe(0L), ByteSource.Content(headerBytes ++ rootBytes))
-    out.commit().fold(e => throw IOException(e.message.sentence), _.size)
+    out.commit().fold(e => throw Raised(e.message), _.size)
 
   /** Give up: remove what was written. */
   def abort(): Unit =
@@ -113,7 +114,7 @@ object PmTilesWriter:
 
   /** A writer of the archive `key` of `store`, written beside it until [[PmTilesWriter.finish]]. */
   def apply(store: Store, key: Store.Key): PmTilesWriter =
-    new PmTilesWriter(store.reserve(key).fold(e => throw IOException(e.message.sentence), identity))
+    new PmTilesWriter(store.reserve(key).fold(e => throw Raised(e.message), identity))
 
   /** The root directory and the leaf section for `entries`: one root when it fits in the first 16 KiB, else leaves of 4
     * 096 entries (doubled until their index fits). Pure.

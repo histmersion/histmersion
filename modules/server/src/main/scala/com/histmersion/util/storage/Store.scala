@@ -1,6 +1,6 @@
 package com.histmersion
 package util.storage
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.ByteCount
@@ -170,20 +170,24 @@ object Store:
           }
           .toEither
           .left
-          .map(e => Problem.Unclassified(Legacy.Text(s"cannot store it in ${store.where()}: ${e.getMessage}")))
+          .map(e =>
+            Problem.Io.File(Problem.Io.Access.Write, Problem.Io.Path.of(store.where()), External.Reported.of(e))
+          )
           .flatten
 
   /** Why a store operation did not happen. `message` is what callers show; it names the path where the operation
     * failed, as the file system said.
     */
   enum Error(val message: Problem):
-    case NotFound(where: Error.NotFound.Where) extends Error(Problem.Unclassified(Legacy.Text(s"$where: no such file")))
-    case NotAFile(where: Error.NotAFile.Where) extends Error(Problem.Unclassified(Legacy.Text(s"$where is not a file")))
+    case NotFound(where: Error.NotFound.Where)
+        extends Error(Problem.Io.Wrong(Problem.Io.Path.of(where), Problem.Io.Kind.Present))
+    case NotAFile(where: Error.NotAFile.Where)
+        extends Error(Problem.Io.Wrong(Problem.Io.Path.of(where), Problem.Io.Kind.File))
     case Failed(reason: Problem) extends Error(reason)
 
     /** An in-memory store has no file to hand to another program. */
     case NotOnDisk(where: Error.NotOnDisk.Where)
-        extends Error(Problem.Unclassified(Legacy.Text(s"$where is not on disk")))
+        extends Error(Problem.Io.Wrong(Problem.Io.Path.of(where), Problem.Io.Kind.OnDisk))
 
   object Error:
     object NotFound:

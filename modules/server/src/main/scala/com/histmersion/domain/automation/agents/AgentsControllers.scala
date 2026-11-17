@@ -5,7 +5,7 @@ import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.Cursor
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.nonempty.NonEmptyVector
-import com.histmersion.util.problem.{Legacy, Problem, Problems}
+import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import io.scalaland.chimney.dsl.*

@@ -1,7 +1,7 @@
 package com.histmersion
 package util.settings
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.config.AppConfig
 import com.histmersion.config.edit.{ConfigFileState, FileVersion, SettingError, SettingsFile, WriteOutcome}
@@ -30,7 +30,7 @@ final class StoredSettingsFile(store: Store, key: Store.Key, val shown: Settings
       )
     else
       store.get(key) match
-        case None       => Left(SettingError.NoFile(Problem.Unclassified(Legacy.Text(s"$shown is not a file"))))
+        case None       => Left(SettingError.NoFile(Problem.Io.Wrong(Problem.Io.Path.of(shown), Problem.Io.Kind.File)))
         case Some(blob) =>
           try
             val text = ConfigFileState.Text(blob.text().value)
@@ -38,7 +38,7 @@ final class StoredSettingsFile(store: Store, key: Store.Key, val shown: Settings
               file <- store.onDisk(key).left.map(io)
               parsed <- parsed(AppConfig.parseUserFile(file), file.toString)
             yield ConfigFileState(Some(text), FileVersion.of(Some(text)), parsed, AppConfig.writtenIn(file))
-          catch case e: IOException => Left(SettingError.Io(Problem.Unclassified(Legacy.Text(e.getMessage))))
+          catch case e: IOException => Left(SettingError.Io(failed(Problem.Io.Access.Read, e)))
 
   def replace(text: ConfigFileState.Text, existed: SettingsFile.Existed)(
       check: SettingsFile.Staged => Either[SettingError, Unit]
@@ -68,7 +68,7 @@ final class StoredSettingsFile(store: Store, key: Store.Key, val shown: Settings
           yield bak
         }
       }
-    catch case e: IOException => Left(SettingError.Io(Problem.Unclassified(Legacy.Text(e.getMessage))))
+    catch case e: IOException => Left(SettingError.Io(failed(Problem.Io.Access.Write, e)))
 
   private def backup(existed: SettingsFile.Existed): Either[SettingError, Option[WriteOutcome.Backup]] =
     if !existed.value then Right(None)
@@ -83,6 +83,10 @@ final class StoredSettingsFile(store: Store, key: Store.Key, val shown: Settings
   private def parsed(parse: Either[Problem, Option[Config]], where: String): Either[SettingError, Config] =
     parse.left
       .map(m => SettingError.Unreadable(Problem.Unclassified(Legacy.Text(m.sentence.replace(where, shown.value)))))
-      .flatMap(_.toRight(SettingError.Unreadable(Problem.Unclassified(Legacy.Text(s"$shown: no such file")))))
+      .flatMap(_.toRight(SettingError.Unreadable(Problem.Io.Wrong(Problem.Io.Path.of(shown), Problem.Io.Kind.Present))))
 
   private def io(e: Store.Error): SettingError = SettingError.Io(e.message)
+
+  /** `op` on the settings file failed: `e`, as the file system said. */
+  private def failed(op: Problem.Io.Access, e: IOException): Problem =
+    Problem.Io.File(op, Problem.Io.Path.of(shown), External.Reported.of(e))

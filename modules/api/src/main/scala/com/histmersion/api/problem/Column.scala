@@ -93,13 +93,21 @@ object Column:
       case Io.Entry(archive, entry, fault) => s"${archive.productPrefix} entry $entry: ${fault.stored}"
       case Io.Absent(held, path, setting)  =>
         s"no ${held.productPrefix} at $path${setting.fold("")(s => s" (set $s)")}"
-      case Io.Extract(extract, pinning)       => s"extract '$extract' cannot be read: ${pinning.stored}"
-      case Io.Oversize(path, mb, setting)     => s"$path is $mb MB, over $setting"
-      case Config.Setting(key, fault)         => s"$key is wrong: ${fault.stored}"
-      case Config.Unavailable(capability)     => s"this server has no ${capability.productPrefix}"
-      case Config.Reload(stage, scope)        => s"reloading the settings failed at ${stage.productPrefix} in $scope"
-      case Config.Cycle(scopes)               => s"reload cycle: ${scopes.toVector.mkString(CycleArrow)}"
-      case Config.Definition(file, flaw)      => s"definition $file is broken: ${flaw.stored}"
+      case Io.Extract(extract, pinning)     => s"extract '$extract' cannot be read: ${pinning.stored}"
+      case Io.Oversize(path, mb, setting)   => s"$path is $mb MB, over $setting"
+      case Config.Setting(key, fault)       => s"$key is wrong: ${fault.stored}"
+      case Config.Unavailable(capability)   => s"this server has no ${capability.productPrefix}"
+      case Config.Reload(stage, scope)      => s"reloading the settings failed at ${stage.productPrefix} in $scope"
+      case Config.Cycle(scopes)             => s"reload cycle: ${scopes.toVector.mkString(CycleArrow)}"
+      case Config.Definition(file, flaw)    => s"definition $file is broken: ${flaw.stored}"
+      case Config.Unbuilt(scope, why)       => s"part $scope unbuilt (${why.storedEach})"
+      case Config.Unchanged(why)            => s"reload changed nothing (${why.stored})"
+      case Config.Drained(component, drain) =>
+        s"drained ${drain.productPrefix}${drain match
+            case Config.Drain.InUse(s)    => s" $s s"
+            case Config.Drain.Unclosed(s) => s" $s s"
+            case Config.Drain.ClosedInUse => ""
+          }: $component"
       case Config.Unpriced(model, metered)    => s"model $model is unpriced${metered.fold("")(m => s" (${m.stored})")}"
       case Plugin.Load(plugin, fault)         => s"plugin $plugin did not load: ${fault.stored}"
       case Plugin.Rejected(plugin, item, why) => s"$plugin did not take '$item': ${why.stored}"
@@ -585,7 +593,8 @@ object Column:
       Io.Kind.Absent,
       Io.Kind.Executable,
       Io.Kind.Listed,
-      Io.Kind.OnPath
+      Io.Kind.OnPath,
+      Io.Kind.OnDisk
     )
     private val Faults = Vector(
       Config.Fault.Empty,
@@ -969,6 +978,9 @@ object Column:
     private val BudgetSpentAt = "(?s)^budget spent at step (.+)$".r
     private val NoValidAnswerAt = "(?s)^no valid answer at step (.+?) after (\\d+) \\((.*)\\)$".r
     private val HeldPoolOf = " \\| ([^|\\[\\]]+) \\[([^\\]]+)\\]".r
+    private val PartUnbuilt = "(?s)^part (\\S+) unbuilt \\((.*)\\)$".r
+    private val ReloadChangedNothing = "(?s)^reload changed nothing \\((.*)\\)$".r
+    private val DrainedAs = "(?s)^drained (\\w+)(?: (\\d+) s)?: (.*)$".r
     private val DefinitionBroken = "(?s)^definition (.+?) is broken: (.*)$".r
     private val AtModelOf = "(?s)^at model (\\S+) \\((.*)\\)$".r
     private val CallFailedFor = "(?s)^the call to (\\S+) failed \\((.*)\\)$".r
@@ -1257,6 +1269,8 @@ object Column:
       },
       {
         case StepFailed(why)           => whysOf(why).map(Problem.Run.Failed(_))
+        case PartUnbuilt(scope, why)   => whysOf(why).map(Config.Unbuilt(Config.Scope(s"$scope"), _))
+        case ReloadChangedNothing(why) => Some(Config.Unchanged(read(why)))
         case AtModelOf(model, why)     => whysOf(why).map(Problem.Run.AtModel(Problem.Run.Model(s"$model"), _))
         case CallFailedFor(model, why) => Some(Upstream.CallFailed(Upstream.Name(s"$model"), read(why)))
         case CallThrewFor(model, r)    => Some(Upstream.CallThrew(Upstream.Name(s"$model"), External.Reported(s"$r")))
@@ -1318,6 +1332,13 @@ object Column:
             n <- Count.read(sent)
             st <- word(Problem.Run.Ceiling.values.toSeq, setting)
           yield Problem.Run.OutputCapped(Problem.Run.Step(s"$step"), Problem.Run.Model(s"$model"), c, n, st)
+        case DrainedAs(drain, seconds, component) =>
+          val read: Option[Config.Drain] = (drain, Option(seconds)) match
+            case ("InUse", Some(s))    => Count.read(s).map(Config.Drain.InUse(_))
+            case ("Unclosed", Some(s)) => Count.read(s).map(Config.Drain.Unclosed(_))
+            case ("ClosedInUse", None) => Some(Config.Drain.ClosedInUse)
+            case _                     => None
+          read.map(Config.Drained(Raw(s"$component"), _))
         case DefinitionBroken(file, written) =>
           flawOf(written.split(Regex.quote(HoldSeparator), -1).toVector).map(Config.Definition(Raw(s"$file"), _))
         case NoTextIn(source)                                 => Some(Problem.Run.NoText(Raw(s"$source")))

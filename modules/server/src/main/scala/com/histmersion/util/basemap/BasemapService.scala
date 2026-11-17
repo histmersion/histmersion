@@ -4,7 +4,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.json.RawJson
-import com.histmersion.util.problem.{External, Problem, Problems}
+import com.histmersion.util.problem.{External, Problem, Problems, Raised}
 import com.histmersion.util.problem.Text.sentence
 
 import hearth.kindlings.optics.syntax.*
@@ -62,7 +62,7 @@ final class BasemapService(
   def work(l: Basemap.Layer): Store.Key = Store.Key.applyUnsafe(s".${l.wire}.part")
 
   private def done(written: Either[Store.Error, ?]): Unit =
-    written.left.foreach(e => throw IOException(e.message.sentence))
+    written.left.foreach(e => throw Raised(e.message))
 
   private def attribution(l: Basemap.Layer): BasemapFetch.Attribution = BasemapFetch.Attribution(l match
     case Basemap.Layer.Vector     => cfg.vector.attribution.value

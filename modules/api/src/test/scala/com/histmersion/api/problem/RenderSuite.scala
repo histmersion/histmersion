@@ -204,6 +204,9 @@ class RenderSuite extends munit.FunSuite:
     "Cancelled" -> (409, "cancelled by Person"),
     "Draining" -> (409, "draining since 2025-11-10T00:00:00Z"),
     "Unpriced" -> (503, "model claude-opus-5-5 is unpriced (ApiKey claude-code)"),
+    "Unbuilt" -> (503, "part pool unbuilt (this server has no HotGraph)"),
+    "Unchanged" -> (503, "reload changed nothing (part pool unbuilt (reload cycle: db))"),
+    "Drained" -> (503, "drained InUse 10 s: pool (generation 3, 2 pinned)"),
     "Definition" -> (
       503,
       "definition agents/skeptic.md is broken: ToolsUnoffered | patch_source | search, get_source"
@@ -735,6 +738,31 @@ class RenderSuite extends munit.FunSuite:
         "the answer could not be decoded: odd",
       Content.Undecoded(Content.Decoding.NotSchema, Some(External.Reported("iteration limit")), None) ->
         "the answer is not the JSON the schema asks for (iteration limit)"
+    ).foreach((p, want) => assertEquals(p.sentence, want))
+
+  test("the hot graph's and the settings' refusals keep the words and hints they had before their cases were typed"):
+    val pool = Raw("pool (generation 3, 2 pinned)")
+    Vector[(Problem, String)](
+      Config.Unavailable(Config.Capability.HotGraph) -> "hot graph: closed",
+      Config.Unavailable(Config.Capability.Supervisor) ->
+        ("This server was not started by a service that starts it again, so it cannot restart itself. " +
+          "Stop it and start it again yourself."),
+      Config.Unavailable(Config.Capability.SettingsFile) ->
+        ("This server was started without a settings file, so Settings cannot change anything. " +
+          "Set HISTMERSION_CONFIG to the file to use and start it again."),
+      Config.Unbuilt(Config.Scope("pool"), NonEmptyVector.of(Relayed(Sentence("a")), Relayed(Sentence("b")))) ->
+        "pool: a; b",
+      Config.Unchanged(Relayed(Sentence("pool: a"))) -> "config reload: nothing changed — pool: a",
+      Config.Drained(pool, Config.Drain.InUse(Count(10L))) ->
+        "config reload: pool (generation 3, 2 pinned) is still in use after 10 s — it closes when its last user lets go",
+      Config.Drained(
+        pool,
+        Config.Drain.ClosedInUse
+      ) -> "shutdown: closing pool (generation 3, 2 pinned) while still in use",
+      Config.Drained(Raw("pool (generation 3)"), Config.Drain.Unclosed(Count(5L))) ->
+        "pool (generation 3): its scope did not close within 5 s",
+      Io.Wrong(Io.Path("/srv/a.json"), Io.Kind.OnDisk) -> "/srv/a.json is not on disk",
+      Io.Wrong(Io.Path("/srv/a.json"), Io.Kind.File) -> "/srv/a.json is not a file"
     ).foreach((p, want) => assertEquals(p.sentence, want))
 
   test("an agent definition's flaws keep the words they had before their cases were typed"):

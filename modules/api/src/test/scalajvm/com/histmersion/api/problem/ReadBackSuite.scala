@@ -26,6 +26,16 @@ class ReadBackSuite extends munit.FunSuite:
       assertEquals(Column.read(p.stored), p)
   }
 
+  test("a retired part's every drain, and a store's file that is not on disk, are stored and read back"):
+    Vector[Problem](
+      Config.Drained(Raw("pool (generation 3, 2 pinned)"), Config.Drain.InUse(Count(10L))),
+      Config.Drained(Raw("pool (generation 3, 2 pinned)"), Config.Drain.ClosedInUse),
+      Config.Drained(Raw("pool (generation 3)"), Config.Drain.Unclosed(Count(5L))),
+      Config.Unavailable(Config.Capability.Supervisor),
+      Config.Unavailable(Config.Capability.SettingsFile),
+      Io.Wrong(Io.Path("/srv/a.json"), Io.Kind.OnDisk)
+    ).foreach(p => assertEquals(Column.read(p.stored), p))
+
   test("an agent definition's every flaw is stored and reads back as itself"):
     Vector[Config.Flaw](
       Config.Flaw.NoHeader,

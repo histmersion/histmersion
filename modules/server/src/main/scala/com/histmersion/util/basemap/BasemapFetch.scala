@@ -5,7 +5,7 @@ import hearth.kindlings.jsoniterjson.JsonObject
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.json.RawJson
-import com.histmersion.util.problem.{External, Problem}
+import com.histmersion.util.problem.{External, Problem, Raised}
 import com.histmersion.util.problem.Text.sentence
 
 import hearth.kindlings.optics.syntax.*
@@ -388,25 +388,31 @@ object BasemapFetch:
           room(r._2).flatMap { _ =>
             if i > 0 || p.directoryRequests.value > 0 then pace.sleep(pace.gapMs)
             if Thread.interrupted() then throw InterruptedException()
-            Using.resource(work.reserve(chunkKey(r)).fold(e => throw IOException(e.message.sentence), identity)) { part =>
-              http
-                .download(p.source.url, ByteOffset.applyUnsafe(p.header.dataOffset.value + r._1.value), r._2, part)
-                .flatMap { got =>
-                  if got.size != p.remote.size || got.etag != p.remote.etag then
-                    part.discard()
-                    Left(Problem.Upstream.Rebuilt(Problem.Upstream.Url.of(p.source.url)))
-                  else
-                    part.commit().left.map(e => e.message).map { _ =>
-                      done += r._2.value
-                      note(
-                        Note(
-                          s"downloaded ${Backup.humanBytes(com.histmersion.api.ByteCount(done))} of ${Backup.humanBytes(com.histmersion.api.ByteCount(total))} (${p.requests.size - todo.size + i + 1}/${p.requests.size} requests)"
-                        )
-                      )
-                      n + 1
+            work
+              .reserve(chunkKey(r))
+              .left
+              .map(_.message)
+              .flatMap(reserved =>
+                Using.resource(reserved) { part =>
+                  http
+                    .download(p.source.url, ByteOffset.applyUnsafe(p.header.dataOffset.value + r._1.value), r._2, part)
+                    .flatMap { got =>
+                      if got.size != p.remote.size || got.etag != p.remote.etag then
+                        part.discard()
+                        Left(Problem.Upstream.Rebuilt(Problem.Upstream.Url.of(p.source.url)))
+                      else
+                        part.commit().left.map(e => e.message).map { _ =>
+                          done += r._2.value
+                          note(
+                            Note(
+                              s"downloaded ${Backup.humanBytes(com.histmersion.api.ByteCount(done))} of ${Backup.humanBytes(com.histmersion.api.ByteCount(total))} (${p.requests.size - todo.size + i + 1}/${p.requests.size} requests)"
+                            )
+                          )
+                          n + 1
+                        }
                     }
                 }
-            }
+              )
           }
         }
       }
@@ -435,7 +441,12 @@ object BasemapFetch:
       val r = p.requests(i)
       val reader = readers.getOrElseUpdate(
         i,
-        work.get(chunkKey(r)).getOrElse(throw IOException(s"${work.where(chunkKey(r))}: no such file")).reader()
+        work
+          .get(chunkKey(r))
+          .getOrElse(
+            throw Raised(Problem.Io.Wrong(Problem.Io.Path.of(work.where(chunkKey(r))), Problem.Io.Kind.Present))
+          )
+          .reader()
       )
       PmTiles.TileBytes(
         reader.read(ByteOffset.applyUnsafe(offset.value - r._1.value), PmTiles.ByteLength(length.value)).value
@@ -572,9 +583,9 @@ object BasemapFetch:
         .flatMap(f => RawJson.parse(f.text().value).toOption)
         .contains(state)
     then work.list().foreach(f => work.delete(f.key))
-    work.makeDirectory().left.foreach(e => throw IOException(e.message.sentence))
+    work.makeDirectory().left.foreach(e => throw Raised(e.message))
     work
       .write(file, ByteSource.Content(state.noSpaces.getBytes(UTF_8)))
       .left
-      .foreach(e => throw IOException(e.message.sentence))
+      .foreach(e => throw Raised(e.message))
     ChunkCount(work.list().count(_.key.name.value.endsWith(".bin")))

@@ -1,7 +1,7 @@
 package com.histmersion
 package util.settings
 
-import com.histmersion.util.problem.{Legacy, Problem, Problems}
+import com.histmersion.util.problem.{External, Problem, Problems}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.config.{AppConfig, LoadedConfig, SetupConfig}
 import com.histmersion.config.edit.*
@@ -30,6 +30,17 @@ trait SettingsService:
   def setupDue: Boolean
 
 object SettingsService:
+
+  /** The settings text `file` holds does not parse: `e`, the parser's words. */
+  private[settings] def unparsable(
+      file: SettingsSnapshot.File,
+      e: org.ekrich.config.ConfigException
+  ): Problem.Io.Corrupt =
+    Problem.Io.Corrupt(
+      Problem.Io.Format.Hocon,
+      Problem.Where.of(file),
+      Problem.Io.Damage.Unreadable(External.Reported.of(Option(e.getMessage).getOrElse("")))
+    )
   type ConfigPath = ConfigPath.T
   object ConfigPath extends Newtype[String, Pure]
 
@@ -40,14 +51,7 @@ object SettingsService:
   def apply(loaded: () => LoadedConfig, file: () => Option[SettingsFile]): SettingsService =
     Implementation(loaded, file, ConfigSchema.reference)
 
-  private def noFile = SettingError.NoFile(
-    Problem.Unclassified(
-      Legacy.Text(
-        "This server was started without a settings file, so Settings cannot change anything. " +
-          "Set HISTMERSION_CONFIG to the file to use and start it again."
-      )
-    )
-  )
+  private def noFile = SettingError.NoFile(Problem.Config.Unavailable(Problem.Config.Capability.SettingsFile))
 
   /** The snapshot of a file read as `state`, its settings loaded into `loaded` (or why they would not load). */
   private[settings] def snapshot(
@@ -134,7 +138,7 @@ object SettingsService:
           try Right(ConfigFileState(Some(t), FileVersion.of(Some(t)), parse(t), here))
           catch
             case e: org.ekrich.config.ConfigException =>
-              Left(SettingError.Unreadable(Problem.Unclassified(Legacy.Text(e.getMessage))))
+              Left(SettingError.Unreadable(unparsable(path, e)))
 
     private def parse(t: ConfigFileState.Text): Config =
       ConfigFactory.parseString(
@@ -178,7 +182,7 @@ object SettingsService:
                   (try Right(parse(edited.text))
                   catch
                     case e: org.ekrich.config.ConfigException =>
-                      Left(SettingError.Invalid(Problem.Unclassified(Legacy.Text(e.getMessage))))
+                      Left(SettingError.Invalid(unparsable(path, e).input))
                   )
                 _ <- ConfigTextEdit.verify(parsed, here, edited, ConfigTextEdit.intended(edits))
                 _ <- AppConfig

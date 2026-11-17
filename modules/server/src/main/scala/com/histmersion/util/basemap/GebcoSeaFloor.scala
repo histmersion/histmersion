@@ -1,6 +1,6 @@
 package com.histmersion
 package util.basemap
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.{Problem, Raised}
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.{ByteCount, ByteOffset}
@@ -95,32 +95,40 @@ final class GebcoSeaFloor(
       gapMs: BasemapFetch.Pace.GapMs,
       note: GebcoSeaFloor.Note => Unit
   ): Either[Problem, Unit] =
-    work.makeDirectory().left.foreach(e => throw IOException(e.message.sentence))
     val all = p.parts.flatMap(part => part.runs.map(part -> _))
-    all.zipWithIndex.foldLeft[Either[Problem, Unit]](Right(())) { case (acc, ((part, run), i)) =>
-      acc.flatMap { _ =>
-        val f = part.key(run)
-        if work.stat(f).exists(s => s.isFile && s.size.value == run.length.value) then Right(())
-        else
-          if Thread.interrupted() then throw InterruptedException()
-          if i > 0 then Thread.sleep(gapMs.value)
-          note(
-            GebcoSeaFloor.Note(s"reading GEBCO ${part.name}: part ${i + 1} of ${all.size} (${human(run.length.value)})")
-          )
-          Using.resource(work.reserve(f).fold(e => throw IOException(e.message.sentence), identity)) { rows =>
-            http.download(part.url, run.offset, ByteCount.applyUnsafe(run.length.value), rows).flatMap { _ =>
-              Either
-                .cond(
-                  rows.size.value == run.length.value,
-                  (),
-                  Problem.Io.Flaw
-                    .RangeBytes(Problem.Count.of(rows.size), Problem.Count.of(run.length))
-                    .in(Problem.Io.Format.GeoTiff, Problem.Where.of(part.url))
-                )
-                .flatMap(_ => rows.commit().left.map(e => e.message).map(_ => ()))
-            }
-          }
-      }
+    all.zipWithIndex.foldLeft[Either[Problem, Unit]](work.makeDirectory().left.map(_.message)) {
+      case (acc, ((part, run), i)) =>
+        acc.flatMap { _ =>
+          val f = part.key(run)
+          if work.stat(f).exists(s => s.isFile && s.size.value == run.length.value) then Right(())
+          else
+            if Thread.interrupted() then throw InterruptedException()
+            if i > 0 then Thread.sleep(gapMs.value)
+            note(
+              GebcoSeaFloor.Note(
+                s"reading GEBCO ${part.name}: part ${i + 1} of ${all.size} (${human(run.length.value)})"
+              )
+            )
+            work
+              .reserve(f)
+              .left
+              .map(_.message)
+              .flatMap(reserved =>
+                Using.resource(reserved) { rows =>
+                  http.download(part.url, run.offset, ByteCount.applyUnsafe(run.length.value), rows).flatMap { _ =>
+                    Either
+                      .cond(
+                        rows.size.value == run.length.value,
+                        (),
+                        Problem.Io.Flaw
+                          .RangeBytes(Problem.Count.of(rows.size), Problem.Count.of(run.length))
+                          .in(Problem.Io.Format.GeoTiff, Problem.Where.of(part.url))
+                      )
+                      .flatMap(_ => rows.commit().left.map(e => e.message).map(_ => ()))
+                  }
+                }
+              )
+        }
     }
 
   /** Every tile of the plan from the rows in `work`, in tile-id order, handed to `add`. */
@@ -172,7 +180,11 @@ final class GebcoSeaFloor(
     Right(BasemapFetch.TileCount(p.tiles.size.toLong))
 
   private def map(work: Store, f: Store.Key): ByteBuffer =
-    work.get(f).getOrElse(throw IOException(s"${work.where(f)}: no such file")).mapped().order(ByteOrder.LITTLE_ENDIAN)
+    work
+      .get(f)
+      .getOrElse(throw Raised(Problem.Io.Wrong(Problem.Io.Path.of(work.where(f)), Problem.Io.Kind.Present)))
+      .mapped()
+      .order(ByteOrder.LITTLE_ENDIAN)
 
 object GebcoSeaFloor:
   type Column = Column.T

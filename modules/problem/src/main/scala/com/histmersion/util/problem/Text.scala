@@ -107,11 +107,25 @@ object Text:
       case Io.Database(op, reported)       => s"the database refused to ${words(op.productPrefix)} — $reported"
       case Io.Entry(archive, entry, fault) => fault.said(words(archive.productPrefix), entry)
       case Config.Setting(key, fault)      => s"$key ${fault.said}"
-      case Config.Unavailable(capability)  => s"this server has no ${words(capability.productPrefix)}"
-      case Config.Reload(stage, scope)     => s"reloading the settings failed at ${words(stage.productPrefix)} ($scope)"
-      case Config.Cycle(scopes)            =>
+      case Config.Unavailable(Config.Capability.Supervisor) =>
+        "This server was not started by a service that starts it again, so it cannot restart itself. " +
+          "Stop it and start it again yourself."
+      case Config.Unavailable(Config.Capability.SettingsFile) =>
+        "This server was started without a settings file, so Settings cannot change anything. " +
+          "Set HISTMERSION_CONFIG to the file to use and start it again."
+      case Config.Unavailable(Config.Capability.HotGraph) => "hot graph: closed"
+      case Config.Unavailable(capability)                 => s"this server has no ${words(capability.productPrefix)}"
+      case Config.Reload(stage, scope) => s"reloading the settings failed at ${words(stage.productPrefix)} ($scope)"
+      case Config.Cycle(scopes)        =>
         s"the parts a reload rebuilds depend on each other in a cycle: ${scopes.toVector.mkString(" → ")}"
-      case Config.Definition(file, flaw)   => s"$file${flaw.said}"
+      case Config.Definition(file, flaw) => s"$file${flaw.said}"
+      case Config.Unbuilt(scope, why)    => s"$scope: ${why.toVector.map(_.sentence).mkString("; ")}"
+      case Config.Unchanged(why)         => s"config reload: nothing changed — ${why.sentence}"
+      case Config.Drained(component, Config.Drain.InUse(seconds)) =>
+        s"config reload: $component is still in use after $seconds s — it closes when its last user lets go"
+      case Config.Drained(component, Config.Drain.ClosedInUse) => s"shutdown: closing $component while still in use"
+      case Config.Drained(component, Config.Drain.Unclosed(seconds)) =>
+        s"$component: its scope did not close within $seconds s"
       case Config.Unpriced(model, metered) =>
         s"model '$model' has no price — add it to agents.prices (HISTMERSION_AGENTS_PRICES), e.g. \"$model=0/0\" for " +
           s"a free local model${metered.fold("")(m => s" (${m.said})")}"
@@ -694,6 +708,7 @@ object Text:
       case Io.Kind.Executable        => "is not executable"
       case Io.Kind.Listed            => "is not in the manifest"
       case Io.Kind.OnPath            => "was not found on the PATH"
+      case Io.Kind.OnDisk            => "is not on disk"
       case Io.Kind.Inside(directory) => s"is outside $directory, the directory it is confined to"
 
   extension (damage: Io.Damage)

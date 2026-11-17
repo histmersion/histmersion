@@ -37,7 +37,7 @@ class CasesSuite extends munit.FunSuite:
 
   test("there are eleven groups and three cases outside them"):
     assertEquals(Group.values.length, 14)
-    assertEquals(examples.size, 125)
+    assertEquals(examples.size, 128)
 
   test("damage, a flaw or an unread variant placed in a format's data is the corrupt problem of those three"):
     val at = Where("the header")

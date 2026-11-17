@@ -1,6 +1,6 @@
 package com.histmersion
 package util.storage
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 
 import com.histmersion.{ByteCount, ByteOffset, Sha256}
 
@@ -44,11 +44,15 @@ final private[storage] class DiskStore(val location: Location, root: Path) exten
       Files.getLastModifiedTime(p).toInstant
     )
 
-  private def io[A](body: => A): Either[Store.Error, A] =
+  /** `body`, an operation `op` on `key`: a file the system says is missing is [[Store.Error.NotFound]], any other
+    * failure the operation on the key's path, as the file system said.
+    */
+  private def io[A](op: Problem.Io.Access, key: Store.Key)(body: => A): Either[Store.Error, A] =
     try Right(body)
     catch
       case e: NoSuchFileException => Left(Store.Error.NotFound(Blob.Location(e.getMessage)))
-      case e: IOException         => Left(Store.Error.Failed(Problem.Unclassified(Legacy.Text(e.getMessage))))
+      case e: IOException         =>
+        Left(Store.Error.Failed(Problem.Io.File(op, Problem.Io.Path.of(where(key)), External.Reported.of(e))))
 
   def where(key: Store.Key): Blob.Location = Blob.Location(path(key).toString)
 
@@ -90,7 +94,7 @@ final private[storage] class DiskStore(val location: Location, root: Path) exten
       finally r.close()
     }
 
-  def write(key: Store.Key, bytes: ByteSource.Content): Either[Store.Error, Stored] = io {
+  def write(key: Store.Key, bytes: ByteSource.Content): Either[Store.Error, Stored] = io(Problem.Io.Access.Write, key) {
     val p = path(key)
     Option(p.getParent).foreach(Files.createDirectories(_))
     Files.write(
@@ -103,33 +107,36 @@ final private[storage] class DiskStore(val location: Location, root: Path) exten
     stored(p)
   }
 
-  def reserve(key: Store.Key, temp: TempName, throughLink: Store.ThroughLink): Either[Store.Error, Reservation] = io {
-    val asked = path(key)
-    val target = if throughLink.value && Files.isSymbolicLink(asked) then asked.toRealPath() else asked
-    val dir = target.toAbsolutePath.getParent
-    Files.createDirectories(dir)
-    val file = temp match
-      case TempName.Fixed          => target.resolveSibling(target.getFileName.toString + ".tmp")
-      case TempName.Unique         => Files.createTempFile(dir, s".${asked.getFileName}.", ".tmp")
-      case TempName.Suffixed(more) => target.resolveSibling(target.getFileName.toString + more)
-    if temp != TempName.Unique then Files.deleteIfExists(file): Unit
-    DiskStore.FileReservation(key, file, target, asked)
-  }
+  def reserve(key: Store.Key, temp: TempName, throughLink: Store.ThroughLink): Either[Store.Error, Reservation] =
+    io(Problem.Io.Access.Create, key) {
+      val asked = path(key)
+      val target = if throughLink.value && Files.isSymbolicLink(asked) then asked.toRealPath() else asked
+      val dir = target.toAbsolutePath.getParent
+      Files.createDirectories(dir)
+      val file = temp match
+        case TempName.Fixed          => target.resolveSibling(target.getFileName.toString + ".tmp")
+        case TempName.Unique         => Files.createTempFile(dir, s".${asked.getFileName}.", ".tmp")
+        case TempName.Suffixed(more) => target.resolveSibling(target.getFileName.toString + more)
+      if temp != TempName.Unique then Files.deleteIfExists(file): Unit
+      DiskStore.FileReservation(key, file, target, asked)
+    }
 
-  def move(from: Store.Key, to: Store.Key): Either[Store.Error, Unit] = io {
+  def move(from: Store.Key, to: Store.Key): Either[Store.Error, Unit] = io(Problem.Io.Access.Move, from) {
     val t = path(to)
     Option(t.getParent).foreach(Files.createDirectories(_))
     Files.move(path(from), t, StandardCopyOption.REPLACE_EXISTING): Unit
   }
 
-  def copy(from: Store.Key, to: Store.Key, keepAttributes: Store.KeepPermissions): Either[Store.Error, Unit] = io {
-    val options =
-      if keepAttributes.value then List(StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
-      else List(StandardCopyOption.REPLACE_EXISTING)
-    Files.copy(path(from), path(to), options*): Unit
-  }
+  def copy(from: Store.Key, to: Store.Key, keepAttributes: Store.KeepPermissions): Either[Store.Error, Unit] =
+    io(Problem.Io.Access.Write, to) {
+      val options =
+        if keepAttributes.value then List(StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
+        else List(StandardCopyOption.REPLACE_EXISTING)
+      Files.copy(path(from), path(to), options*): Unit
+    }
 
-  def makeDirectory(prefix: Store.Key): Either[Store.Error, Unit] = io(Files.createDirectories(path(prefix)): Unit)
+  def makeDirectory(prefix: Store.Key): Either[Store.Error, Unit] =
+    io(Problem.Io.Access.Create, prefix)(Files.createDirectories(path(prefix)): Unit)
 
   def delete(key: Store.Key): Boolean = Files.deleteIfExists(path(key))
 
@@ -362,7 +369,13 @@ private[storage] object DiskStore:
             Files.getLastModifiedTime(target).toInstant
           )
         )
-      catch case e: IOException => Left(Store.Error.Failed(Problem.Unclassified(Legacy.Text(e.getMessage))))
+      catch
+        case e: IOException =>
+          Left(
+            Store.Error.Failed(
+              Problem.Io.File(Problem.Io.Access.Move, Problem.Io.Path(s"$target"), External.Reported.of(e))
+            )
+          )
 
     def discard(): Unit =
       val _ = Files.deleteIfExists(file)

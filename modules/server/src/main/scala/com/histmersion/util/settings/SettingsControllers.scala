@@ -1,7 +1,7 @@
 package com.histmersion
 package util.settings
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import io.scalaland.chimney.dsl.*
 import com.histmersion.api.settings.{ConfigEdit, ReloadReport}
 import com.histmersion.config.edit.*
@@ -49,10 +49,10 @@ final class SettingsControllers(
         .filter(_.nonEmpty)
         .fold[Either[Api.Error, Option[FileVersion]]](Right(None))(v =>
           FileVersion
-            .either(v)
+            .parse(v)
             .map(Some(_))
             .left
-            .map(_ => Api.Error(Problem.Unclassified(Legacy.Text(s"'$v' is not a settings file's version"))))
+            .map(ps => Api.Error(ps.at(Problem.Field("version"))))
         )
       outcome <- settings
         .write(edits, version, SettingPolicy.LiteralConsent(w.literalConsent.value))

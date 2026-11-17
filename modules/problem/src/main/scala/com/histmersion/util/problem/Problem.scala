@@ -1154,6 +1154,9 @@ object Problem:
     enum Kind:
       case File, Directory, Present, Absent, Executable, Listed, OnPath
 
+      /** On disk: a file another program can be handed (an in-memory store has none). */
+      case OnDisk
+
       /** Inside `directory`, the one the operation is confined to. */
       case Inside(directory: Path)
 
@@ -1383,6 +1386,28 @@ object Problem:
     /** Reloading the settings failed at `stage`, in `scope`. */
     final case class Reload(stage: Stage, scope: Scope) extends Config
 
+    /** The part `scope` of the running service cannot be built: `why`, each problem. */
+    final case class Unbuilt(scope: Scope, why: NonEmptyVector[Problem]) extends Config
+
+    /** A settings reload published nothing: `why`. The running parts stay as they were. */
+    final case class Unchanged(why: Problem) extends Config
+
+    /** The running part `component` (its name, generation and users, as the reload names it) was retired: `drain` says
+      * how its closing went.
+      */
+    final case class Drained(component: Raw, drain: Drain) extends Config
+
+    /** How a retired part's closing went. */
+    enum Drain derives CanEqual:
+      /** It is still in use `seconds` after the reload: it closes when its last user lets go. */
+      case InUse(seconds: Count)
+
+      /** The server shuts down: it is closed while still in use. */
+      case ClosedInUse
+
+      /** Its scope did not close within `seconds`. */
+      case Unclosed(seconds: Count)
+
     /** The parts a reload rebuilds depend on each other in a cycle: `scopes`, the first one again at the end. */
     final case class Cycle(scopes: NonEmptyVector[Scope]) extends Config
 
@@ -1555,6 +1580,15 @@ object Problem:
     enum Capability:
       case Originals, AcquisitionChain, Runtimes, Converter, Gazetteer, Basemap, Agents, Calibre, Processes, LocalFiles,
         MediaImport, EventCatalogues, AiProviders, GazetteerImport, SourceCollections, Network, CitationAlerts
+
+      /** A service that starts the server again when it stops: without one, the server cannot restart itself. */
+      case Supervisor
+
+      /** A settings file the server was started with: without one, Settings cannot change anything. */
+      case SettingsFile
+
+      /** The graph of the parts a reload rebuilds: closed once the server shuts down. */
+      case HotGraph
 
     /** The stages of a settings reload. */
     enum Stage:
@@ -2538,6 +2572,11 @@ object Problem:
       Config.Unavailable(Config.Capability.Originals),
       Config.Reload(Config.Stage.Close, Config.Scope("plugins")),
       Config.Cycle(NonEmptyVector.of(Config.Scope("db"), Config.Scope("lease"), Config.Scope("db"))),
+      Config.Unbuilt(Config.Scope("pool"), NonEmptyVector.of(Config.Unavailable(Config.Capability.HotGraph))),
+      Config.Unchanged(
+        Config.Unbuilt(Config.Scope("pool"), NonEmptyVector.of(Config.Cycle(NonEmptyVector.of(Config.Scope("db")))))
+      ),
+      Config.Drained(Raw("pool (generation 3, 2 pinned)"), Config.Drain.InUse(Count(10L))),
       Config.Unpriced(Run.Model("claude-opus-5-5"), Some(Config.Metered.ApiKey(Upstream.Name("claude-code")))),
       Config.Definition(
         Raw("agents/skeptic.md"),

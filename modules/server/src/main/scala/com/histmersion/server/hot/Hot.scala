@@ -1,6 +1,7 @@
 package com.histmersion
 package server.hot
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.nonempty.NonEmptyVector
+import com.histmersion.util.problem.{Legacy, Problem, ProblemLog, Problems}
 import com.histmersion.util.problem.Text.sentence
 
 import hearth.kindlings.optics.syntax.*
@@ -199,8 +200,11 @@ object Hot:
           v => onPublish(v.asInstanceOf[A])
         )
         for
-          _ <- if closed.get() then Left(Problem.Unclassified(Legacy.Text("hot graph: closed"))) else Right(())
-          _ <- HotPlan.order((defs.get() :+ d).map(_.spec).toList).left.map(_.toNonEmpty.head)
+          _ <- if closed.get() then Left(Closed) else Right(())
+          _ <- HotPlan
+            .order((defs.get() :+ d).map(_.spec).toList)
+            .left
+            .map(ps => Problem.Config.Unbuilt(Problem.Config.Scope(s"$name"), ps.toNonEmpty))
           s = current.get()
           i <- instantiate(d, BuildCtx[C, Any](s.config, None, None, Nil, n => s.nodes(n).value), s.generation)
         yield
@@ -238,16 +242,14 @@ object Hot:
         changed: List[Def.Name],
         forced: Set[Def.Name] = Set.empty,
         drain: FiniteDuration = 10.seconds
-    ): Either[Problem, Outcome] =
+    ): Either[Problems, Outcome] =
       locked {
-        if closed.get() then Left(Problem.Unclassified(Legacy.Text("hot graph: closed")))
+        if closed.get() then Left(Closed)
         else
           val s = current.get()
           val specs = defs.get()
           HotPlan
             .plan(specs.map(_.spec).toList, changed.map(n => ConfigReload.Key(n.value)), forced)
-            .left
-            .map(_.toNonEmpty.head)
             .flatMap { plan =>
               val byName = specs.map(d => d.name -> d).toMap
               val gen = Generation(s.generation.value + 1)
@@ -270,14 +272,14 @@ object Hot:
                   instantiate(d, ctx, gen)
                     .map(i => built.update(name, i))
                     .left
-                    .map(e => Problem.Unclassified(Legacy.Text(s"$name: ${e.sentence}")))
+                    .map(e => Problem.Config.Unbuilt(Problem.Config.Scope(s"$name"), NonEmptyVector.of(e)))
                 }
                 .collectFirst { case Left(e) => e }
               failure match
                 case Some(e) =>
                   // nobody has seen these: close them now, dependents first
                   built.values.toList.reverse.foreach(_.close(log))
-                  log.warn(Problem.Unclassified(Legacy.Text(s"config reload: nothing changed — ${e.sentence}")))
+                  log.warn(Problem.Config.Unchanged(e))
                   Left(e)
                 case None =>
                   val published = Snap(gen, next, s.nodes ++ built)
@@ -326,12 +328,8 @@ object Hot:
           old.filterNot(i => i.isClosed || i.freeBut(if own(i) then Instance.PinCount(1) else Instance.PinCount(0)))
         busy.foreach(i =>
           log.warn(
-            Problem.Unclassified(
-              Legacy.Text(
-                s"config reload: ${i.describe} is still in use after ${bound.toSeconds} s — " +
-                  "it closes when its last user lets go"
-              )
-            )
+            Problem.Config
+              .Drained(Problem.Raw.of(i.describe), Problem.Config.Drain.InUse(Problem.Count(bound.toSeconds)))
           )
         )
         busy.map(_.describe)
@@ -356,10 +354,13 @@ object Hot:
           }).distinct.foreach { i =>
             while !i.free && System.nanoTime() < deadline do Thread.sleep(DrainPollMs)
             if !i.free then
-              log.warn(Problem.Unclassified(Legacy.Text(s"shutdown: closing ${i.describe} while still in use")))
+              log.warn(Problem.Config.Drained(Problem.Raw.of(i.describe), Problem.Config.Drain.ClosedInUse))
             i.close(log)
           }
       }
+
+    /** Why a closed graph takes no node and no reload: the server shuts down. */
+    private val Closed: Problem = Problem.Config.Unavailable(Problem.Config.Capability.HotGraph)
 
     private def locked[A](f: => A): A =
       lock.lock()
@@ -378,19 +379,20 @@ object Hot:
           supervised {
             val r =
               try d.build(ctx)
-              catch
-                case NonFatal(e) =>
-                  Left(Problem.Unclassified(Legacy.Text(Option(e.getMessage).getOrElse(e.getClass.getSimpleName))))
+              catch case NonFatal(e) => Left(ProblemLog.unexpected(e, Problem.Where(s"building ${d.name}")))
             built.complete(r)
             // a failed build ends its scope now, releasing whatever it had acquired
             if r.isRight then release.await()
           }
         catch
           case NonFatal(e) =>
-            if !built.complete(Left(Problem.Unclassified(Legacy.Text(s"its scope failed: ${e.getMessage}")))) then
+            if !built.complete(Left(ProblemLog.unexpected(e, Problem.Where(s"the scope of ${d.name}")))) then
               log.warn(
-                Problem
-                  .Unclassified(Legacy.Text(s"${d.name} (generation $gen): closing its scope failed: ${e.getMessage}"))
+                Problem.from(
+                  e,
+                  Problem.Where(s"closing the scope of ${d.name} (generation $gen)"),
+                  Problem.Internal.Id.mint()
+                )
               )
         finally ended.countDown()
       }
@@ -473,8 +475,9 @@ object Hot:
           release.countDown()
           if !ended.await(CloseWaitSeconds, TimeUnit.SECONDS) then
             log.warn(
-              Problem.Unclassified(
-                Legacy.Text(s"$name (generation $generation): its scope did not close within $CloseWaitSeconds s")
+              Problem.Config.Drained(
+                Problem.Raw(s"$name (generation $generation)"),
+                Problem.Config.Drain.Unclosed(Problem.Count(CloseWaitSeconds))
               )
             )
 

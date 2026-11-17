@@ -128,7 +128,7 @@ final class ServerGraph private (
                     applied.map(k => Hot.Graph.Def.Name(k.value)),
                     drain = math.max(0, app.config.drainSeconds.value).seconds
                   ) match
-                    case Left(e)  => base.modify(_.errors).setTo(List(ReloadReport.Errors(e.sentence)))
+                    case Left(e)  => base.modify(_.errors).setTo(e.sentences.toList.map(ReloadReport.Errors(_)))
                     case Right(o) =>
                       base
                         .modify(_.published)

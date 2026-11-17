@@ -1,7 +1,7 @@
 package com.histmersion
 package util.jobs
 import com.histmersion.util.problem.ProblemLog
-import com.histmersion.util.problem.{Legacy, Problem, Problems}
+import com.histmersion.util.problem.{Legacy, Problem, Problems, Raised}
 
 import com.histmersion.util.database.Transactor
 
@@ -71,6 +71,7 @@ object BackgroundJob:
   /** What a thrown exception tells a job's error line. Pure. */
   def describe(e: Throwable): Problem = e match
     case _: InterruptedException => Problem.Run.Interrupted
+    case r: Raised               => r.problems.fold(identity)(Problem.Run.Failed(_))
     case _                       => ProblemLog.unexpected(e, Problem.Where("a background job"))
 
   /** How a run of a job's body ended, for its row: done or failed with its outcome, or stopped by a person (a job whose
