@@ -1,6 +1,7 @@
 package com.histmersion
 package server.agents
 
+import com.histmersion.util.problem.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.domain.automation.agents.{
@@ -51,19 +52,24 @@ class PromptTrimSuite extends munit.FunSuite:
 
   test("markers that do not pair up, nest or name an audience are reported"):
     assertEquals(AgentDefinitions.markerProblems(AgentDef.Body("<!-- only:writer -->x<!-- /only:writer -->")), Nil)
-    assert(AgentDefinitions.markerProblems(AgentDef.Body("<!-- only:writer -->x")).exists(_.contains("never closed")))
-    assert(
-      AgentDefinitions.markerProblems(AgentDef.Body("x<!-- /only:writer -->")).exists(_.contains("closes nothing"))
+    assertEquals(
+      AgentDefinitions.markerProblems(AgentDef.Body("<!-- only:writer -->x")),
+      List(Problem.Config.Flaw.MarkerUnclosed(Problem.Raw("writer")))
     )
-    assert(
-      AgentDefinitions
-        .markerProblems(AgentDef.Body("<!-- only:writer --><!-- only:headless -->"))
-        .exists(_.contains("opens inside"))
+    assertEquals(
+      AgentDefinitions.markerProblems(AgentDef.Body("x<!-- /only:writer -->")),
+      List(Problem.Config.Flaw.MarkerUnopened(Problem.Raw("writer")))
     )
-    assert(
-      AgentDefinitions
-        .markerProblems(AgentDef.Body("<!-- only:people -->x<!-- /only:people -->"))
-        .exists(_.contains("names no audience"))
+    assertEquals(
+      AgentDefinitions.markerProblems(AgentDef.Body("<!-- only:writer --><!-- only:headless -->")),
+      List(
+        Problem.Config.Flaw.MarkerNested(Problem.Raw("headless"), Problem.Raw("writer")),
+        Problem.Config.Flaw.MarkerUnclosed(Problem.Raw("headless"))
+      )
+    )
+    assertEquals(
+      AgentDefinitions.markerProblems(AgentDef.Body("<!-- only:people -->x<!-- /only:people -->")),
+      List(Problem.Config.Flaw.AudienceUnknown(Problem.Raw("people")))
     )
     assertEquals(
       AgentGenerator.check(

@@ -1,6 +1,6 @@
 package com.histmersion
 package domain.automation.agents
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 
 import com.histmersion.util.storage.{Location, Resources, Store, Stores}
 import java.nio.file.Path
@@ -30,14 +30,12 @@ final class Prompts(overrideDir: Prompts.OverrideDir)(using stores: Stores, reso
         try
           store
             .get(key)
-            .toRight(
-              Problem.Unclassified(Legacy.Text(s"prompt override ${store.where(key)} cannot be read: file disappeared"))
-            )
+            .toRight(Problem.Io.Wrong(Problem.Io.Path.of(store.where(key)), Problem.Io.Kind.Present))
             .map(_.text().value)
         catch
           case e: java.io.IOException =>
             Left(
-              Problem.Unclassified(Legacy.Text(s"prompt override ${store.where(key)} cannot be read: ${e.getMessage}"))
+              Problem.Io.File(Problem.Io.Access.Read, Problem.Io.Path.of(store.where(key)), External.Reported.of(e))
             )
       case None => bundledText(rel)
 

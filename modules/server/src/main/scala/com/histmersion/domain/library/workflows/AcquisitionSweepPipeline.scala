@@ -4,7 +4,7 @@ import com.histmersion.util.json.RawJson.*
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonKeyCodec
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.json.RawJson
-import com.histmersion.util.problem.{Legacy, Problem, Problems}
+import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.domain.automation.agents.AgentRepo.StepRecord
@@ -192,7 +192,7 @@ final class AcquisitionSweepPipeline(
   /** The candidates the deterministic search stored for the goal (#3761): its watches read now from their watermarks
     * (no model), then the unseen ones; the live search below only when that search is not connected (a fixture).
     */
-  private def discover(ctx: RunCtx, goal: Goal.Slug): Either[String, Found] =
+  private def discover(ctx: RunCtx, goal: Goal.Slug): Either[Problems, Found] =
     upstream().sweepCandidates(goal, AgentUpstream.SweepCandidatesDryRun(ctx.dryRun)) match
       case Left(_)   => liveDiscover(ctx, goal)
       case Right(sw) =>
@@ -202,11 +202,9 @@ final class AcquisitionSweepPipeline(
             ctx.warn(s"candidates: ${w.index} ${w.kind} '${w.subject}' not read — ${w.lastError.fold("")(_.sentence)}")
           )
         for
-          g <- agents.host.goal(goal).left.map(_.problems.sentences.mkString("; "))
+          g <- agents.host.goal(goal).left.map(_.problems)
           rows <- upstream()
             .candidates(goal, Candidates.State.New.wire, AgentUpstream.Limit(cfg.scheduler.sweepCandidates.value))
-            .left
-            .map(_.sentences.mkString("; "))
         yield
           val queued = queuedDois().keySet ++ backlogged(goal)
           val (gone, open) = rows.partition(c => queued.contains(Doi.assume(c.doi.value)))
@@ -254,8 +252,8 @@ final class AcquisitionSweepPipeline(
     )(q.size + s.size)
 
   /** OpenAlex searched live with the goal's queries (the sweep as it was before the candidate search). */
-  private def liveDiscover(ctx: RunCtx, goal: Goal.Slug): Either[String, Found] =
-    agents.host.goal(goal).left.map(_.problems.sentences.mkString("; ")).map { g =>
+  private def liveDiscover(ctx: RunCtx, goal: Goal.Slug): Either[Problems, Found] =
+    agents.host.goal(goal).left.map(_.problems).map { g =>
       val linked = goals.refs(goal, Goal.LinkKind.Query).map(r => Search.Query(r.value))
       val queries = Some(linked).filter(_.nonEmpty).getOrElse(List(Search.Query(g.title.value)))
       val found = queries.flatMap { q =>
@@ -361,7 +359,7 @@ final class AcquisitionSweepPipeline(
       ko.map((p, why) =>
         Failed(
           p.candidate.doi,
-          Problem.Unclassified(Legacy.Text(why.sentences.mkString("; ").take(500))),
+          why.fold(identity)(Problem.Run.Failed(_)),
           IngestBacklog.isNoLegalCopy(why)
         )
       )

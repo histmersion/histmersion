@@ -180,17 +180,38 @@ class RenderSuite extends munit.FunSuite:
     ),
     "BudgetSpent" -> (409, "budget spent at step enrich"),
     "NoValidAnswer" -> (409, "no valid answer at step extract after 3 (the answer breaks StandIn)"),
+    "Failed" -> (409, "step failed (no com.histmersion.domain.library.Citekey 'x')"),
+    "Declined" -> (409, "answer rejected (the answer breaks StandIn ¦ the answer breaks SummaryGiven)"),
+    "LimitReached" -> (
+      409,
+      "limit reached, skipped until 2025-11-10T00:00:00Z (claude-code is limited until 2025-11-10T00:00:00Z)"
+    ),
+    "AllowanceReached" -> (409, "allowance reached by anthropic:claude-opus mid-step"),
+    "OutputCapped" -> (
+      409,
+      "output over the cap at step cold-reader-1: claude-code:haiku, cap 4096, sent 4096, StepMaxTokens"
+    ),
+    "NoText" -> (409, "no text in 'anthony2007'"),
+    "NoBody" -> (409, "no body to review in 'yamnaya'"),
     "Blocked" -> (409, "held back: PoolFull review"),
     "Interrupted" -> (409, "interrupted"),
     "Cancelled" -> (409, "cancelled by Person"),
     "Draining" -> (409, "draining since 2025-11-10T00:00:00Z"),
     "Unpriced" -> (503, "model claude-opus-5-5 is unpriced (ApiKey claude-code)"),
+    "Definition" -> (
+      503,
+      "definition agents/skeptic.md is broken: ToolsUnoffered | patch_source | search, get_source"
+    ),
     "CutShort" -> (409, "cut short: MergeApply"),
     "Unrecorded" -> (409, "unrecorded: MergeApply"),
     "Aborted" -> (409, "step draft cannot go on: CheckpointMismatch"),
     "Finding" -> (422, "finding: UncitedParagraph"),
     "Proposal" -> (422, "claims: TooManyClaims 12/15"),
     "Answer" -> (422, "the answer breaks SummaryGiven"),
+    "Undecoded" -> (
+      422,
+      "answer undecodable: Mismatch at .notes — Got value '5' with wrong type, expecting string ‖ finish iteration limit ‖ began {\"notes\": 5}"
+    ),
     "Unexpected" -> (
       500,
       "backup failed unexpectedly (java.lang.IllegalStateException, problem 3f2a9c1e) — java.lang.IllegalStateException: pg_dump vanished"
@@ -662,6 +683,87 @@ class RenderSuite extends munit.FunSuite:
       Run.NoValidAnswer(step, Count(3L), Vector(Relayed(Sentence("a")), Relayed(Sentence("b")))) ->
         "enrich: no valid answer after 3 attempt(s): a; b"
     ).foreach((p, want) => assertEquals(p.sentence, want))
+
+  test("a step's attempts and its preconditions keep the words and hints they had before their cases were typed"):
+    val step = Run.Step("cold-reader-1")
+    val haiku = Run.Model("claude-code:haiku")
+    Vector[(Problem, String)](
+      Run.Failed(NonEmptyVector.of(Relayed(Sentence("a")), Relayed(Sentence("b")))) -> "a; b",
+      Run.Declined(Vector(Relayed(Sentence("a")), Relayed(Sentence("b")))) -> "a; b",
+      Run.Declined(Vector.empty) -> "the answer was rejected",
+      Run.LimitReached(Relayed(Sentence("claude-code:opus reached its usage limit")), EpochMs(1762732800000L)) ->
+        "claude-code:opus reached its usage limit — skipped until 2025-11-10T00:00:00Z",
+      Run.AllowanceReached(Run.Model("anthropic:claude-opus")) ->
+        "anthropic:claude-opus reached its allowance during the step; the chain's next model takes it",
+      Run.OutputCapped(step, haiku, Count(4096L), Count(4096L), Run.CapSetting.StepMaxTokens) ->
+        ("cold-reader-1: claude-code:haiku's answer exceeded the 4096 output-token cap (the step sent 4096) — raise " +
+          "agents.step.max-tokens (HISTMERSION_AGENTS_MAX_TOKENS) (a thinking model's reasoning counts toward it), " +
+          "restart the server, then resume the run"),
+      Run.OutputCapped(step, haiku, Count(4096L), Count(8192L), Run.CapSetting.StepOwn) ->
+        ("cold-reader-1: claude-code:haiku's answer exceeded the 4096 output-token cap (the step sent 8192) — raise " +
+          "the step's own cap (agents.review.fixer-max-tokens or agents.compile.draft-max-tokens) (a thinking " +
+          "model's reasoning counts toward it), restart the server, then resume the run"),
+      Run.NoText(Raw("anthony2007")) -> "anthony2007 has no text — ingest or OCR it first",
+      Run.NoBody(Raw("yamnaya")) -> "article 'yamnaya' has no body to review",
+      Content.Undecoded(
+        Content.Decoding.Mismatch(Raw(".notes"), External.Reported("expected '\"'")),
+        None,
+        Some(External.ModelSaid("{\"notes\": 5}"))
+      ) -> "the answer does not match the schema at .notes: expected '\"' — the answer began: {\"notes\": 5}",
+      Content.Undecoded(
+        Content.Decoding.NotJson(External.Reported("eof")),
+        Some(External.Reported("answered")),
+        None
+      ) ->
+        "the answer is not valid JSON: eof (answered)",
+      Content.Undecoded(Content.Decoding.Unreadable(External.Reported("odd")), None, None) ->
+        "the answer could not be decoded: odd",
+      Content.Undecoded(Content.Decoding.NotSchema, Some(External.Reported("iteration limit")), None) ->
+        "the answer is not the JSON the schema asks for (iteration limit)"
+    ).foreach((p, want) => assertEquals(p.sentence, want))
+
+  test("an agent definition's flaws keep the words they had before their cases were typed"):
+    val skeptic = Raw("agents/skeptic.md")
+    Vector[(Config.Flaw, String)](
+      Config.Flaw.NoHeader -> "agents/skeptic.md: no YAML header (--- … ---)",
+      Config.Flaw.HeaderUnclosed -> "agents/skeptic.md: the YAML header is not closed",
+      Config.Flaw.HeaderNotMapping -> "agents/skeptic.md: the YAML header is not a mapping",
+      Config.Flaw.HeaderUnparsable(External.Reported("mapping values are not allowed here")) ->
+        "agents/skeptic.md: the YAML header does not parse: mapping values are not allowed here",
+      Config.Flaw.NotList(Field("tools.histmersion"), Raw("search")) ->
+        "agents/skeptic.md: tools.histmersion: expected a list, not 'search'",
+      Config.Flaw.NoName -> "agents/skeptic.md: no name",
+      Config.Flaw.NameNotFile(Raw("x")) -> "agents/skeptic.md: name 'x' is not the file's",
+      Config.Flaw.NoDescription -> "agents/skeptic.md: no description",
+      Config.Flaw.RoleUnknown(Vector(Raw("extractor"), Raw("writer"))) ->
+        "agents/skeptic.md: model-role is not one of extractor, writer",
+      Config.Flaw.RoleUnused(Raw("skeptic"), Vector(Raw("writer"))) ->
+        "agents/skeptic.md: role skeptic is no contributed workflow's (one of: writer)",
+      Config.Flaw.ToolsUnoffered(Vector(Raw("patch_source")), Vector(Raw("search"), Raw("get_source"))) ->
+        ("agents/skeptic.md: tools.histmersion names tools an agent cannot be offered: patch_source (one of " +
+          "search, get_source)"),
+      Config.Flaw.WebUnknown -> "agents/skeptic.md: tools.web is none, discover, search or fetch",
+      Config.Flaw.WritesUnknown -> "agents/skeptic.md: writes is none, propose or direct",
+      Config.Flaw.TurnsNotPositive -> "agents/skeptic.md: max-turns is a positive number",
+      Config.Flaw.RuntimesUnknown(Vector(Raw("emacs"))) -> "agents/skeptic.md: unknown runtime(s) emacs",
+      Config.Flaw.InteractiveUnset ->
+        "agents/skeptic.md: an interactive agent needs `interactive: {model, tools}`",
+      Config.Flaw.SkillNotNamed(Raw("trailhead")) -> "agents/skeptic.md: its name is not 'trailhead'",
+      Config.Flaw.IncludeMissing(Raw("writing-guide")) ->
+        "agents/skeptic.md includes 'writing-guide', which is not in agents/_shared/",
+      Config.Flaw.SkillMissing(
+        Raw("trailhead")
+      ) -> "agents/skeptic.md lists skill 'trailhead', which is not in skills/",
+      Config.Flaw.AudienceUnknown(Raw("people")) -> "agents/skeptic.md: names no audience: only:people",
+      Config.Flaw.MarkerUnclosed(Raw("writer")) -> "agents/skeptic.md: only:writer is never closed",
+      Config.Flaw.MarkerNested(Raw("headless"), Raw("writer")) ->
+        "agents/skeptic.md: only:headless opens inside only:writer",
+      Config.Flaw.MarkerUnopened(Raw("writer")) -> "agents/skeptic.md: /only:writer closes nothing open",
+      Config.Flaw.ToolUnknown(Raw("frobnicate")) ->
+        "agents/skeptic.md names {{tool:frobnicate}}, which is not an MCP tool",
+      Config.Flaw.DescriptionLong ->
+        "agents/skeptic.md: the description is over 1,024 characters (opencode refuses it)"
+    ).foreach((flaw, want) => assertEquals(Config.Definition(skeptic, flaw).sentence, want))
 
   test("a watch left out of a sweep says so before why, in its sentence and its stored text"):
     val unasked = Upstream.Unasked(Relayed(Sentence("CORE asked to wait")))

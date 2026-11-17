@@ -1,6 +1,6 @@
 package com.histmersion
 package domain.automation.agents
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.{Problem, Problems}
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -27,6 +27,9 @@ enum Halt:
   case Wait(id: Halt.Wait.Id, what: Halt.Wait.What)
 
 object Halt:
+
+  /** A run that fails with `problems`: one problem as it is, several as one [[Problem.Run.Failed]] holding each. */
+  def failed(problems: Problems): Halt = Fail(problems.fold(identity)(Problem.Run.Failed(_)))
   type WaitId = WaitId.T
   object WaitId extends Newtype[Long, Pure]
   object Wait:

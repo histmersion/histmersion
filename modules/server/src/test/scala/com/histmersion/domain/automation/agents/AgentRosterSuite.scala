@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.automation.agents
 
+import com.histmersion.util.problem.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.server.agents.EngineContributions
@@ -28,7 +29,17 @@ class AgentRosterSuite extends munit.FunSuite:
     val without = roster.modify(_.roles).setTo(roster.roles.filterNot(_ == AgentRole.Skeptic))
     val skeptic = AgentDefinitions(new Prompts(Prompts.OverrideDir("")), without).agentNames
       .map(AgentDefinitions(new Prompts(Prompts.OverrideDir("")), without).agent)
-    val refused = skeptic.collect { case Left(m) if m.contains("is no contributed workflow's") => m }
-    assert(refused.nonEmpty, "the skeptic's definition is refused")
-    assert(refused.forall(_.contains("role skeptic")), refused)
+    val refused = skeptic.collect { case Left(Problem.Config.Definition(file, flaw: Problem.Config.Flaw.RoleUnused)) =>
+      (file, flaw)
+    }
+    assertEquals(
+      refused,
+      List(
+        (
+          Problem.Raw("agents/article-skeptic.md"),
+          Problem.Config.Flaw
+            .RoleUnused(Problem.Raw("skeptic"), without.roles.toVector.map(r => Problem.Raw.of(r.wire)))
+        )
+      )
+    )
     assert(!AgentDefinitions(new Prompts(Prompts.OverrideDir("")), without).agents.isRight)

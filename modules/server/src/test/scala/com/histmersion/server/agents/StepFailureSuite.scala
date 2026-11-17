@@ -42,15 +42,17 @@ class StepFailureSuite extends munit.FunSuite:
     val r = claudeResult(CliProcess.Run.Lines(ClaudeStreams.Init), CliProcess.Run.Lines(OverCap))
     assert(r.finalAnswer.isLeft)
     assertEquals(Engine.outputCapHit(r), Some(4096))
-    val msg = Engine.outputCapMessage(
-      "cold-reader-1",
-      Engine.OutputCapLimit(4096),
-      Engine.Count(4096),
-      AgentsControllers.ModelName("claude-code:haiku"),
-      Engine.capKey(Engine.CapKeyOverridden(false)).value
-    )
+    val msg = Problem.Run
+      .OutputCapped(
+        Problem.Run.Step("cold-reader-1"),
+        Problem.Run.Model("claude-code:haiku"),
+        Problem.Count.of(Engine.OutputCapLimit(4096)),
+        Problem.Count(4096L),
+        Engine.capSetting(Engine.CapKeyOverridden(false))
+      )
+      .sentence
     assert(msg.contains("agents.step.max-tokens (HISTMERSION_AGENTS_MAX_TOKENS)") && msg.contains("resume"), msg)
-    assert(Engine.capKey(Engine.CapKeyOverridden(true)).value.contains("fixer-max-tokens"))
+    assertEquals(Engine.capSetting(Engine.CapKeyOverridden(true)), Problem.Run.CapSetting.StepOwn)
 
   test("#1450 an ordinary error, a usage limit or a good answer is not an output-cap hit"):
     val ok =

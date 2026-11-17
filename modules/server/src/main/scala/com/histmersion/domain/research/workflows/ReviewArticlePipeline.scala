@@ -2,7 +2,7 @@ package com.histmersion
 package domain.research.workflows
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson.*
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{Legacy, Problem, Problems}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import hearth.kindlings.optics.syntax.*
@@ -311,8 +311,8 @@ final class ReviewArticlePipeline(
 
   // ── the ledger ─────────────────────────────────────────────────────────────────────────────────
 
-  private def load(slug: Slug): Either[String, Ledger] =
-    ledgers.get(slug).left.map(_.sentence).map(_.getOrElse(Ledger(slug)))
+  private def load(slug: Slug): Either[Problems, Ledger] =
+    ledgers.get(slug).map(_.getOrElse(Ledger(slug)))
 
   /** Write the ledger through the run's gate (a dry run keeps it in memory only). */
   private def persist(ctx: RunCtx, l: Ledger): Ledger =
@@ -427,7 +427,7 @@ final class ReviewArticlePipeline(
     if rs.nonEmpty then
       val p = Article.Patch(critiqueReasons = rs)
       ctx.write(s"critique reasons of [[$slug]]: ${rs.map(_.ref.wire).mkString(", ")}", p.asJson)(
-        site.articles.patch(slug, p).left.map(_.problems.sentences.mkString("; ")).map(_ => ())
+        site.articles.patch(slug, p).left.map(_.problems).map(_ => ())
       )(Right(())) match
         case Left(m)  => ctx.warn(s"critique reasons not stored: $m")
         case Right(_) => ()
@@ -475,11 +475,11 @@ final class ReviewArticlePipeline(
       slug: Slug,
       unwritten: Option[ReviewArticle.Fix.Body],
       reasons: List[CritiqueReason]
-  ): Either[String, Snapshot] =
-    site.articles.get(slug).left.map(_.problems.sentences.mkString("; ")).flatMap { v =>
+  ): Either[Problems, Snapshot] =
+    site.articles.get(slug).left.map(_.problems).flatMap { v =>
       val a = v.article
       val body = unwritten.getOrElse(a.body)
-      if body.value.trim.isEmpty then Left(s"article '$slug' has no body to review")
+      if body.value.trim.isEmpty then Left(Problem.Run.NoBody(Problem.Raw.of(slug)))
       else
         val cut = body.value.length > cfg.review.articleChars.value
         val text = if cut then ReviewArticle.Fix.Body(body.value.take(cfg.review.articleChars.value)) else body
@@ -939,7 +939,7 @@ final class ReviewArticlePipeline(
   /** The one write of a round: the revised body, guarded by the snapshot's token. A 412 (someone else wrote the article
     * meanwhile) drops this fix — the next round reviews their text — and never overwrites it.
     */
-  private def write(ctx: RunCtx, s: Snapshot, f: Fix, r: Int, after: Ledger): Either[String, ReviewArticle.Patched] =
+  private def write(ctx: RunCtx, s: Snapshot, f: Fix, r: Int, after: Ledger): Either[Problems, ReviewArticle.Patched] =
     val bodyChanged = f.body.value.trim != s.body.value.trim
     if !bodyChanged && f.reasons.isEmpty && f.setAside.isEmpty && f.pairsAside.isEmpty then
       persist(ctx, after)
@@ -974,14 +974,14 @@ final class ReviewArticlePipeline(
         case Left(e) if e.code.contains(Api.Error.Code(Write.CodePrecondition)) =>
           ctx.warn(s"round $r: the article changed while the fixer worked; the fix was not written")
           Right(ReviewArticle.Patched(written = Patched.Written(false), None, conflict = Patched.Conflict(true)))
-        case Left(e) => Left(e.problems.sentences.mkString("; "))
+        case Left(e) => Left(e.problems)
 
   /** Bookkeeping: one `log` line, the article's ONE backlog item listing its open MAJORs (#934) — created, rewritten,
     * or closed when none is left — and the ledger, which keeps the item's id. An open item of the article the ledger
     * lost track of is rewritten rather than duplicated; the per-finding items earlier runs left for it, and any second
     * item, are closed as superseded.
     */
-  private def record(ctx: RunCtx, slug: Slug, end: End): Either[String, String] =
+  private def record(ctx: RunCtx, slug: Slug, end: End): Either[Problems, String] =
     val st = end.state
     val c = st.carry
     val last = st.merged
@@ -1015,7 +1015,7 @@ final class ReviewArticlePipeline(
          s"; ${Plural.count(Plural.CountN(end.deferred.size.toLong), Plural.CountSingular("new MAJOR"))} of the final pass deferred to the next run") +
       s"; ledger ${ledger.entries.count(_.status == ReviewLedger.Status.Fixed)} fixed, ${ledger.open.size} open" +
       (if pairs.isEmpty then "" else s"; critiques ${Critiques.summary(pairs)}")
-    Pipelines.log(site.workLists, ctx, Pipelines.LogLine(line)).left.map(_.sentences.mkString("; ")).map(_.value)
+    Pipelines.log(site.workLists, ctx, Pipelines.LogLine(line)).map(_.value)
 
   private def backlog(ctx: RunCtx, slug: Slug, l: Ledger): Ledger =
     val tasks = Queue.Kind.Tasks.label

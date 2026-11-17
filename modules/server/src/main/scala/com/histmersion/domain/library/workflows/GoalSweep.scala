@@ -3,6 +3,7 @@ package domain.library.workflows
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 
+import com.histmersion.util.problem.Problems
 import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.domain.automation.agents.RunCtx
 import com.histmersion.domain.automation.goals.GoalService
@@ -94,8 +95,8 @@ private[workflows] trait GoalSweep:
             }
         )(Right(true))
 
-  protected def log(ctx: RunCtx, line: String): Either[String, String] =
-    Pipelines.log(site.workLists, ctx, Pipelines.LogLine(line)).left.map(_.sentences.mkString("; ")).map(_.value)
+  protected def log(ctx: RunCtx, line: String): Either[Problems, String] =
+    Pipelines.log(site.workLists, ctx, Pipelines.LogLine(line)).map(_.value)
 
 object GoalSweep:
   type Limit = Limit.T

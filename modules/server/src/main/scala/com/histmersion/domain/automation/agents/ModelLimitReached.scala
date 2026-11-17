@@ -15,5 +15,5 @@ import io.github.iltotore.iron.constraint.any.Pure
 final class ModelLimitReached(
     val model: ModelRef,
     val until: Option[java.time.Instant],
-    message: Problem
-) extends RuntimeException(message.sentence)
+    val reason: Problem
+) extends RuntimeException(reason.sentence)

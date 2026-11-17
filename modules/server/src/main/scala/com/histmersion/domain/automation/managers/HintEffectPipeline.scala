@@ -2,7 +2,7 @@ package com.histmersion
 package domain.automation.managers
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.problem.Text.{sentence, sentences}
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.{Problem, Problems}
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.database.Transactor
@@ -94,20 +94,19 @@ final class HintEffectPipeline(
                 s"(agent run ${ctx.run.id.value.take(8)})"
             )
           )
-          .left
-          .map(_.sentences.mkString("; "))
           .map(_.value)
       )
     yield PipelineDef.Summary(closed)
 
-  private def load(mid: ManagerInfo.Id, hint: Option[ManagerHint.Id]): Either[String, Loaded] =
+  private def load(mid: ManagerInfo.Id, hint: Option[ManagerHint.Id]): Either[Problems, Loaded] =
     for
-      m <- connect(ds)(ManagerRepo.get(mid)).toRight(s"no manager '${mid.value}'")
-      id <- hint.toRight("the run names no hint (RunParams.hint)")
+      m <- connect(ds)(ManagerRepo.get(mid))
+        .toRight(Problem.NotFound.Entity(Problem.TypeName.of(ManagerInfo.Id), Problem.Raw.of(mid)))
+      id <- hint.toRight(Problem.Invalid.Missing.here(Problem.Field("RunParams.hint")))
       ht <- Transactor(ds)
         .read(ManagerRepo.hint(id))
         .filter(_.managerId == m.id)
-        .toRight(s"manager ${mid.value} has no hint #${id.value}")
+        .toRight(Problem.NotFound.Entity(Problem.TypeName.of(ManagerHint.Id), Problem.Raw.of(id)))
     yield
       val (items, _) = Transactor(ds).read(ManagerRepo.itemPage(m.id, None, Offset(0), ItemsShown))
       val lines =
@@ -141,7 +140,7 @@ final class HintEffectPipeline(
   /** The proposal, through the write gate: an open `hint-effect` approval about the manager (and the manager's event).
     * Nothing passed or asked for: nothing is recorded.
     */
-  private def record(ctx: RunCtx, l: Loaded, p: Proposed): Either[String, String] =
+  private def record(ctx: RunCtx, l: Loaded, p: Proposed): Either[Problems, String] =
     p.effect match
       case None =>
         Right(if p.problems.isEmpty then "the hint asks for no structured action"

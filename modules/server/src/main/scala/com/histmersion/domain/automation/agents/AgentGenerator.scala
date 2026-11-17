@@ -3,6 +3,8 @@ package domain.automation.agents
 import com.histmersion.util.json.JsonCodec.given
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
+import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.server.agents.{ClaudeCode, Codex, Opencode, QuotaGuard}
 
@@ -30,19 +32,23 @@ object AgentGenerator:
       skills: Map[SkillDef.Name, SkillDef]
   ):
     def system(d: AgentDef, style: ToolStyle): String =
-      AgentDefinitions.system(d, fragments, skills, style).fold(m => throw IllegalStateException(m), identity)
+      AgentDefinitions
+        .system(d, fragments, skills, style)
+        .fold(ps => throw IllegalStateException(ps.toVector.map(_.sentence).mkString("; ")), identity)
 
   /** Problems that would make a generated tree lie: an include or skill that does not exist, a placeholder naming no
     * MCP tool (`known`), a skill whose name or description runtimes reject.
     */
-  def check(d: Defs, known: Set[String]): List[String] =
+  def check(d: Defs, known: Set[String]): List[Problem] =
+    def definition(file: String, flaw: Problem.Config.Flaw): Problem =
+      Problem.Config.Definition(Problem.Raw(file), flaw)
     val markerProblems =
       (d.agents.map(a => s"agents/${a.name}.md" -> a.body) ++ d.fragments.toList
         .sortBy(_._1.value)
         .map((n, t) => s"agents/_shared/$n.md" -> AgentDef.Body(t.value)))
-        .flatMap((where, text) => AgentDefinitions.markerProblems(text).map(p => s"$where: $p"))
+        .flatMap((where, text) => AgentDefinitions.markerProblems(text).map(definition(where, _)))
     val agentProblems = markerProblems ++ d.agents.flatMap { a =>
-      AgentDefinitions.system(a, d.fragments, d.skills, ToolStyle.Bare).left.toOption.toList ++
+      AgentDefinitions.system(a, d.fragments, d.skills, ToolStyle.Bare).left.toOption.toList.flatMap(_.toVector) ++
         (AgentDefinitions.placeholders(a.body.value) ++ a.include.flatMap(i =>
           d.fragments
             .get(AgentDefinitions.FragmentName(i.value))
@@ -50,15 +56,15 @@ object AgentGenerator:
             .flatMap(f => AgentDefinitions.placeholders(f.value))
         ))
           .filterNot(known)
-          .map(t => s"agents/${a.name}.md names {{tool:$t}}, which is not an MCP tool")
+          .map(t => definition(s"agents/${a.name}.md", Problem.Config.Flaw.ToolUnknown(Problem.Raw(t))))
     }
     val skillProblems = d.skills.values.toList.sortBy(_.name.value).flatMap { s =>
       AgentDefinitions
         .placeholders(s.header.mkString("\n") + "\n" + s.body)
         .filterNot(known)
-        .map(t => s"skills/${s.name}/SKILL.md names {{tool:$t}}, which is not an MCP tool") ++
+        .map(t => definition(s"skills/${s.name}/SKILL.md", Problem.Config.Flaw.ToolUnknown(Problem.Raw(t)))) ++
         Option.when(s.description.length > 1024)(
-          s"skills/${s.name}/SKILL.md: the description is over 1,024 characters (opencode refuses it)"
+          definition(s"skills/${s.name}/SKILL.md", Problem.Config.Flaw.DescriptionLong)
         )
     }
     agentProblems ++ skillProblems

@@ -687,7 +687,7 @@ object AgentsTools:
               .endpoint(List("mcp", "agent", d.name.value))
           )
         case Left(m) =>
-          scribe.warn(s"agent MCP: no endpoint for $n: $m")
+          scribe.warn(s"agent MCP: no endpoint for $n: ${m.sentence}")
           Nil
     }
 

@@ -9,6 +9,7 @@ import sttp.ai.core.agent.{AgentTool, ResponseSchema}
 import sttp.apispec.Schema
 
 import com.histmersion.util.json.RawJson
+import com.histmersion.util.problem.{External, Problem}
 import com.histmersion.util.json.RawJson.*
 
 /** sttp-ai, the agent loop's library, takes circe codecs for a tool's input and a step's typed answer; our records have
@@ -67,10 +68,15 @@ object SttpAiJson:
     RawJson.parse(schema.codec(out).noSpaces).fold(e => throw IllegalStateException(e), identity)
 
   /** Why an answer did not decode, when the decoder said: where (the JSON path) and what, or that it is not JSON. */
-  def decodingFailure(cause: Throwable): Option[String] = cause match
+  def decodingFailure(cause: Throwable): Option[Problem.Content.Decoding] = cause match
     case d: circe.DecodingFailure =>
       val path = circe.CursorOp.opsToPath(d.history)
-      Some(s"the answer does not match the schema at ${if path.isEmpty then "the top level" else path}: ${d.message}")
-    case p: circe.ParsingFailure => Some(s"the answer is not valid JSON: ${p.message}")
-    case n: AnswerNotJson        => Some(s"the answer is not valid JSON: ${n.message}")
+      Some(
+        Problem.Content.Decoding.Mismatch(
+          Problem.Raw(if path.isEmpty then "the top level" else path),
+          External.Reported.of(d.message)
+        )
+      )
+    case p: circe.ParsingFailure => Some(Problem.Content.Decoding.NotJson(External.Reported.of(p.message)))
+    case n: AnswerNotJson        => Some(Problem.Content.Decoding.NotJson(External.Reported.of(n.message)))
     case _                       => None

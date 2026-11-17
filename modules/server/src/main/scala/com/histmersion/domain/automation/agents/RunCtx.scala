@@ -5,7 +5,7 @@ import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.nonempty.NonEmptyVector
-import com.histmersion.util.problem.{External, Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem, ProblemLog, Problems}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.domain.automation.approvals.Decided
@@ -131,7 +131,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
   /** A deterministic step. Its output is checkpointed, so a side effect in `body` (a patch, a queue entry) happens at
     * most once per run.
     */
-  def code[O: JsonValueCodec](name: AgentRepo.StepRecord.Name)(body: => Either[String, O]): Either[Halt, O] =
+  def code[O: JsonValueCodec](name: AgentRepo.StepRecord.Name)(body: => Either[Problems, O]): Either[Halt, O] =
     val seq = claimSeq()
     replay[O](seq, name).getOrElse {
       engine.checkControl(runId).flatMap { _ =>
@@ -142,7 +142,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
           try body
           catch
             case e: InterruptedException => throw e
-            case e: Exception            => Left(s"${e.getClass.getSimpleName}: ${e.getMessage}")
+            case e: Exception            => Left(unexpected(e))
         engine.beat(runId)
         val attempt = AgentRepo.StepRecord.Attempt(engine.agents.runs.attempts(jobId, seq).value + 1)
         val would = drainSkipped()
@@ -182,13 +182,13 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
                 None,
                 Usage.Zero,
                 BigDecimal(0),
-                Some(Problem.Unclassified(Legacy.Text(m.take(2000)))),
+                Some(Problem.Run.Failed(m.toNonEmpty)),
                 started,
                 wouldWrite = would
               ),
               Nil
             )
-            Left(Halt.Fail(Problem.Unclassified(Legacy.Text(s"$name: $m"))))
+            Left(Halt.Fail(Problem.Run.AtStep(Problem.Run.Step.of(name), m.toNonEmpty)))
       }
     }
 
@@ -201,7 +201,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
     * the steps after it run too (and skip their writes).
     */
   def approval(name: AgentRepo.StepRecord.Name, kind: ApprovalKind, subject: ApprovalQuery.Subject, mode: ApprovalMode)(
-      payload: => Either[String, String]
+      payload: => Either[Problems, String]
   ): Either[Halt, Decided] =
     val seq = claimSeq()
     replay[Decided](seq, name).getOrElse {
@@ -246,7 +246,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
               try payload
               catch
                 case e: InterruptedException => throw e
-                case e: Exception            => Left(s"${e.getClass.getSimpleName}: ${e.getMessage}")
+                case e: Exception            => Left(unexpected(e))
             body match
               case Left(m) =>
                 engine.agents.runs.record(
@@ -262,12 +262,12 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
                     None,
                     Usage.Zero,
                     BigDecimal(0),
-                    Some(Problem.Unclassified(Legacy.Text(m.take(2000)))),
+                    Some(Problem.Run.Failed(m.toNonEmpty)),
                     started
                   ),
                   Nil
                 )
-                Left(Halt.Fail(Problem.Unclassified(Legacy.Text(s"$name: $m"))))
+                Left(Halt.Fail(Problem.Run.AtStep(Problem.Run.Step.of(name), m.toNonEmpty)))
               case Right(json) if dryRun =>
                 skipped.add(
                   WouldWrite(
@@ -361,7 +361,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
           d <- defs.agent(agent)
           sys <- defs.system(d, ToolStyle.Bare)
         yield (d, Prompt(Prompt.System(sys), Prompt.User(user.value)))).left
-          .map(m => Halt.Fail(Problem.Unclassified(Legacy.Text(s"$name: $m"))))
+          .map(m => Halt.Fail(Problem.Run.AtStep(Problem.Run.Step.of(name), m.toNonEmpty)))
           .flatMap { (d, prompt) =>
             attempts(
               seq,
@@ -372,7 +372,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
               maxTokens.getOrElse(LlmCall.MaxTokens(cfg.step.maxTokens.value)),
               Engine.stepTurns(d, turns.map(t => AgentDef.MaxTurns(t.value))),
               validate,
-              Engine.capKey(Engine.CapKeyOverridden(maxTokens.isDefined))
+              Engine.capSetting(Engine.CapKeyOverridden(maxTokens.isDefined))
             )
           }
       }
@@ -414,7 +414,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
       maxTokens: RunCtx.MaxTokens,
       turns: AgentDef.MaxTurns,
       validate: (A, RunCtx.LastAttempt, List[ToolUse]) => Either[List[Problem], Checked[O]],
-      capKey: Engine.CapKey
+      capSetting: Problem.Run.CapSetting
   ): Either[Halt, O] =
     val role = agent.role
     val maxAttempts = 1 + math.max(0, cfg.step.maxRetries.value)
@@ -484,7 +484,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
                 Usage.Zero,
                 billing,
                 None,
-                Some(s"${limit.getMessage} — skipped until $until".take(2000)),
+                Some(Problem.Run.LimitReached(limit.reason, Problem.EpochMs(until.toEpochMilli))),
                 started,
                 Nil
               )
@@ -499,7 +499,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
                 Usage.Zero,
                 billing,
                 None,
-                Some(e.problems.sentences.mkString("; ")),
+                Some(Problem.Run.Failed(e.problems)),
                 started,
                 Nil
               )
@@ -527,7 +527,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
                     use,
                     billing,
                     None,
-                    Some("budget exhausted"),
+                    Some(Problem.Run.BudgetSpent(Problem.Run.Step.of(name))),
                     started,
                     msgs,
                     served
@@ -543,9 +543,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
                     use,
                     billing,
                     None,
-                    Some(
-                      s"${client.model.wire} reached its allowance during the step; the chain's next model takes it"
-                    ),
+                    Some(Problem.Run.AllowanceReached(Problem.Run.Model.of(client.model.wire))),
                     started,
                     msgs,
                     served
@@ -553,12 +551,12 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
                   go(attempt + 1, tries, problems, previous, calls)
                 case _ if res.finalAnswer.isLeft && Engine.outputCapHit(res).isDefined =>
                   // the same cap fails the same way again: a configuration error, not a retry (#1450)
-                  val msg = Engine.outputCapMessage(
-                    name.value,
-                    Engine.outputCapHit(res).getOrElse(Engine.OutputCapLimit(maxTokens.value)),
-                    Engine.Count(maxTokens.value),
-                    AgentsControllers.ModelName(client.model.wire.value),
-                    capKey.value
+                  val capped = Problem.Run.OutputCapped(
+                    Problem.Run.Step.of(name),
+                    Problem.Run.Model.of(client.model.wire),
+                    Problem.Count.of(Engine.outputCapHit(res).getOrElse(Engine.OutputCapLimit(maxTokens.value))),
+                    Problem.Count.of(maxTokens),
+                    capSetting
                   )
                   record(
                     seq,
@@ -569,12 +567,12 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
                     use,
                     billing,
                     None,
-                    Some(msg.take(2000)),
+                    Some(capped),
                     started,
                     msgs,
                     served
                   )
-                  Left(Halt.Pause(PauseReason.Provider, Problem.Unclassified(Legacy.Text(msg))))
+                  Left(Halt.Pause(PauseReason.Provider, capped))
                 case _ =>
                   // #941: the decoder's error (path + message) is recorded and goes back with the retry
                   val verdict = res.finalAnswer match
@@ -612,7 +610,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
                         use,
                         billing,
                         rejected,
-                        Some(ps.map(_.sentence).mkString("; ").take(2000)),
+                        Some(Problem.Run.Declined(ps.toVector)),
                         started,
                         msgs,
                         served
@@ -628,6 +626,9 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
                       // instead of redoing its lookups (#941); it is never recorded as the output (jsonb)
                       else go(attempt + 1, tries + 1, ps, rejected.orElse(Engine.undecoded(res.finalAnswer)), calls)
     go(before + 1, before, Nil, None, Nil)
+
+  /** An exception a step's own code threw, logged under a new problem id ([[ProblemLog.unexpected]]). */
+  private def unexpected(e: Exception): Problem = ProblemLog.unexpected(e, Problem.Where(s"agent run ${run.id}"))
 
   /** What the provider said about an attempt that came back: the model that served it, the input of its first model
     * call, its turns.
@@ -652,7 +653,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
       use: Usage,
       billing: Billing,
       output: Option[String],
-      error: Option[String],
+      error: Option[Problem],
       started: java.time.Instant,
       msgs: List[AgentRepo.MessageRecord],
       served: Served = Served.Unknown
@@ -671,7 +672,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
         Some(AgentRepo.StepRecord.Model(client.model.wire.value)),
         use,
         cost,
-        error.map((text => Problem.Unclassified(Legacy.Text(text)))),
+        error,
         started,
         actualModel = served.model,
         firstCallTokens = served.firstCallTokens,

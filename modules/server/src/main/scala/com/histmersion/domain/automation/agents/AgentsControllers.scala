@@ -1265,8 +1265,8 @@ final class AgentsControllers(
 
   private def probeWith(client: LlmClient, billing: Billing, src: ProbeAnswer): Either[Api.Error, ProbeResult] =
     for
-      d <- definitions.agent(StepAgent.Probe).left.map(m => Api.Error(Problem.Unclassified(Legacy.Text(m))))
-      sys <- definitions.system(d, ToolStyle.Bare).left.map(m => Api.Error(Problem.Unclassified(Legacy.Text(m))))
+      d <- definitions.agent(StepAgent.Probe).left.map(Api.Error(_))
+      sys <- definitions.system(d, ToolStyle.Bare).left.map(Api.Error(_))
       r <- probeCall(client, billing, src, d, sys)
     yield r
 

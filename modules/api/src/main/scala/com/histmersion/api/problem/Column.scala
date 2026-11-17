@@ -97,6 +97,7 @@ object Column:
       case Config.Unavailable(capability)     => s"this server has no ${capability.productPrefix}"
       case Config.Reload(stage, scope)        => s"reloading the settings failed at ${stage.productPrefix} in $scope"
       case Config.Cycle(scopes)               => s"reload cycle: ${scopes.toVector.mkString(CycleArrow)}"
+      case Config.Definition(file, flaw)      => s"definition $file is broken: ${flaw.stored}"
       case Config.Unpriced(model, metered)    => s"model $model is unpriced${metered.fold("")(m => s" (${m.stored})")}"
       case Plugin.Load(plugin, fault)         => s"plugin $plugin did not load: ${fault.stored}"
       case Plugin.Rejected(plugin, item, why) => s"$plugin did not take '$item': ${why.stored}"
@@ -137,16 +138,27 @@ object Column:
       case Problem.Run.BudgetSpent(step)                 => s"budget spent at step $step"
       case Problem.Run.NoValidAnswer(step, attempts, ps) =>
         s"no valid answer at step $step after $attempts (${ps.map(_.stored).mkString(WhySeparator)})"
-      case Problem.Run.Blocked(block)           => s"held back: ${block.stored}"
-      case Problem.Run.Interrupted              => "interrupted"
-      case Problem.Run.CutShort(activity)       => s"cut short: ${activity.productPrefix}"
-      case Problem.Run.Unrecorded(activity)     => s"unrecorded: ${activity.productPrefix}"
-      case Problem.Run.Cancelled(by)            => s"cancelled by ${by.productPrefix}"
-      case Problem.Run.Draining(since)          => s"draining since ${since.iso}"
-      case Problem.Run.Aborted(step, cause)     => s"step $step cannot go on: ${cause.productPrefix}"
-      case Content.Finding(cause)               => s"finding: ${cause.productPrefix}"
-      case Content.Proposal(rule, at)           => s"$at: ${rule.stored}"
-      case Content.Answer(rule)                 => s"the answer breaks ${rule.stored}"
+      case Problem.Run.Failed(why)              => s"step failed (${why.storedEach})"
+      case Problem.Run.Declined(ps)             => s"answer rejected (${ps.map(_.stored).mkString(WhySeparator)})"
+      case Problem.Run.LimitReached(why, until) => s"limit reached, skipped until ${until.iso} (${why.stored})"
+      case Problem.Run.AllowanceReached(model)  => s"allowance reached by $model mid-step"
+      case Problem.Run.OutputCapped(step, model, cap, sent, setting) =>
+        s"output over the cap at step $step: $model, cap $cap, sent $sent, ${setting.productPrefix}"
+      case Problem.Run.NoText(source)            => s"no text in '$source'"
+      case Problem.Run.NoBody(article)           => s"no body to review in '$article'"
+      case Problem.Run.Blocked(block)            => s"held back: ${block.stored}"
+      case Problem.Run.Interrupted               => "interrupted"
+      case Problem.Run.CutShort(activity)        => s"cut short: ${activity.productPrefix}"
+      case Problem.Run.Unrecorded(activity)      => s"unrecorded: ${activity.productPrefix}"
+      case Problem.Run.Cancelled(by)             => s"cancelled by ${by.productPrefix}"
+      case Problem.Run.Draining(since)           => s"draining since ${since.iso}"
+      case Problem.Run.Aborted(step, cause)      => s"step $step cannot go on: ${cause.productPrefix}"
+      case Content.Finding(cause)                => s"finding: ${cause.productPrefix}"
+      case Content.Proposal(rule, at)            => s"$at: ${rule.stored}"
+      case Content.Answer(rule)                  => s"the answer breaks ${rule.stored}"
+      case Content.Undecoded(why, finish, began) =>
+        s"answer undecodable: ${why.stored}${finish.fold("")(f => s"$PassedSeparator$FinishedBy$f")}" +
+          began.fold("")(b => s"$PassedSeparator$AnswerBegan$b")
       case Internal.Unexpected(id, where, e, r) => s"$where failed unexpectedly ($e, problem $id) — $r"
       case Unclassified(text)                   => s"unclassified: $text"
       case Stored.Unrecognised(text)            => s"$text"
@@ -211,6 +223,45 @@ object Column:
       case Problem.Run.Frees.At(at, model, held) => s"At ${at.iso} $model${heldStored(held)}"
       case Problem.Run.Frees.Released(held)      => s"Released${heldStored(held.toVector)}"
       case Problem.Run.Frees.Never               => "Never"
+
+  /** A definition's flaw by its name, then what it holds, each after the hold separator; a list's items after the list
+    * separator.
+    */
+  extension (flaw: Config.Flaw)
+    private def stored: String =
+      val held: Vector[String] = flaw match
+        case Config.Flaw.HeaderUnparsable(r)          => Vector(s"$r")
+        case Config.Flaw.NotList(field, value)        => Vector(s"$field", s"$value")
+        case Config.Flaw.NameNotFile(named)           => Vector(s"$named")
+        case Config.Flaw.RoleUnknown(roles)           => Vector(roles.mkString(ListSeparator))
+        case Config.Flaw.RoleUnused(role, roles)      => Vector(s"$role", roles.mkString(ListSeparator))
+        case Config.Flaw.ToolsUnoffered(tools, known) =>
+          Vector(tools.mkString(ListSeparator), known.mkString(ListSeparator))
+        case Config.Flaw.RuntimesUnknown(runtimes)   => Vector(runtimes.mkString(ListSeparator))
+        case Config.Flaw.SkillNotNamed(name)         => Vector(s"$name")
+        case Config.Flaw.IncludeMissing(include)     => Vector(s"$include")
+        case Config.Flaw.SkillMissing(skill)         => Vector(s"$skill")
+        case Config.Flaw.AudienceUnknown(audience)   => Vector(s"$audience")
+        case Config.Flaw.MarkerUnclosed(audience)    => Vector(s"$audience")
+        case Config.Flaw.MarkerNested(audience, out) => Vector(s"$audience", s"$out")
+        case Config.Flaw.MarkerUnopened(audience)    => Vector(s"$audience")
+        case Config.Flaw.ToolUnknown(tool)           => Vector(s"$tool")
+        case Config.Flaw.NoHeader | Config.Flaw.HeaderUnclosed | Config.Flaw.HeaderNotMapping | Config.Flaw.NoName |
+            Config.Flaw.NoDescription | Config.Flaw.WebUnknown | Config.Flaw.WritesUnknown |
+            Config.Flaw.TurnsNotPositive | Config.Flaw.InteractiveUnset | Config.Flaw.DescriptionLong =>
+          Vector.empty
+      (flaw.productPrefix +: held).mkString(HoldSeparator)
+
+  extension (decoding: Content.Decoding)
+    private def stored: String = decoding match
+      case Content.Decoding.Mismatch(path, reported) => s"Mismatch at $path — $reported"
+      case Content.Decoding.NotJson(reported)        => s"NotJson — $reported"
+      case Content.Decoding.Unreadable(reported)     => s"Unreadable — $reported"
+      case Content.Decoding.NotSchema                => "NotSchema"
+
+  /** Before how the call that brought an undecodable answer ended, and before the start of the answer. */
+  private val FinishedBy = "finish "
+  private val AnswerBegan = "began "
 
   private def heldStored(held: Vector[Problem.Run.HeldPool]): String =
     held.map(h => s"$HoldSeparator${h.title} [${h.pool}]").mkString
@@ -635,6 +686,43 @@ object Column:
     )
 
     /** The rule a column wrote, from its name and what it held. */
+    /** A definition's flaw, from what [[Config.Flaw]]'s stored form wrote. */
+    private def flawOf(written: Vector[String]): Option[Config.Flaw] =
+      import Config.Flaw.*
+      written match
+        case Vector("HeaderUnparsable", r)       => Some(HeaderUnparsable(External.Reported(s"$r")))
+        case Vector("NotList", field, value)     => Some(NotList(Field(s"$field"), Raw(s"$value")))
+        case Vector("NameNotFile", named)        => Some(NameNotFile(Raw(s"$named")))
+        case Vector("RoleUnknown", roles)        => Some(RoleUnknown(raws(roles)))
+        case Vector("RoleUnused", role, roles)   => Some(RoleUnused(Raw(s"$role"), raws(roles)))
+        case Vector("ToolsUnoffered", ts, known) => Some(ToolsUnoffered(raws(ts), raws(known)))
+        case Vector("RuntimesUnknown", runtimes) => Some(RuntimesUnknown(raws(runtimes)))
+        case Vector("SkillNotNamed", name)       => Some(SkillNotNamed(Raw(s"$name")))
+        case Vector("IncludeMissing", include)   => Some(IncludeMissing(Raw(s"$include")))
+        case Vector("SkillMissing", skill)       => Some(SkillMissing(Raw(s"$skill")))
+        case Vector("AudienceUnknown", audience) => Some(AudienceUnknown(Raw(s"$audience")))
+        case Vector("MarkerUnclosed", audience)  => Some(MarkerUnclosed(Raw(s"$audience")))
+        case Vector("MarkerNested", audience, o) => Some(MarkerNested(Raw(s"$audience"), Raw(s"$o")))
+        case Vector("MarkerUnopened", audience)  => Some(MarkerUnopened(Raw(s"$audience")))
+        case Vector("ToolUnknown", tool)         => Some(ToolUnknown(Raw(s"$tool")))
+        case Vector(name)                        =>
+          word(
+            Vector(
+              NoHeader,
+              HeaderUnclosed,
+              HeaderNotMapping,
+              NoName,
+              NoDescription,
+              WebUnknown,
+              WritesUnknown,
+              TurnsNotPositive,
+              InteractiveUnset,
+              DescriptionLong
+            ),
+            name
+          )
+        case _ => None
+
     private def ruleOf(written: Vector[String]): Option[Invalid.Rule] =
       import Invalid.Rule.*
       def flawOf(held: Vector[String]): Option[Invalid.CronFlaw] = held match
@@ -878,6 +966,16 @@ object Column:
     private val BudgetSpentAt = "(?s)^budget spent at step (.+)$".r
     private val NoValidAnswerAt = "(?s)^no valid answer at step (.+?) after (\\d+) \\((.*)\\)$".r
     private val HeldPoolOf = " \\| ([^|\\[\\]]+) \\[([^\\]]+)\\]".r
+    private val DefinitionBroken = "(?s)^definition (.+?) is broken: (.*)$".r
+    private val StepFailed = "(?s)^step failed \\((.*)\\)$".r
+    private val AnswerRejected = "(?s)^answer rejected \\((.*)\\)$".r
+    private val LimitReachedUntil = "(?s)^limit reached, skipped until (\\S+) \\((.*)\\)$".r
+    private val AllowanceReachedBy = "^allowance reached by (\\S+) mid-step$".r
+    private val OutputOverCap = "(?s)^output over the cap at step (.+?): (\\S+), cap (\\d+), sent (\\d+), (\\w+)$".r
+    private val NoTextIn = "(?s)^no text in '(.*)'$".r
+    private val NoBodyIn = "(?s)^no body to review in '(.*)'$".r
+    private val Undecodable =
+      "(?s)^answer undecodable: (\\w+)(?: at (.*?))?(?: — (.*?))?(?: ‖ finish (.*?))?(?: ‖ began (.*))?$".r
 
     /** The models a chain passed over, from what [[passedStored]] wrote in the parentheses. */
     private def passedOf(written: String | Null): Option[Vector[Problem.Run.PassedOver]] =
@@ -1152,6 +1250,13 @@ object Column:
         case _                         => None
       },
       {
+        case StepFailed(why)    => whysOf(why).map(Problem.Run.Failed(_))
+        case AnswerRejected(ps) =>
+          Some(Problem.Run.Declined(if ps.isEmpty then Vector.empty else whysOf(ps).fold(Vector.empty)(_.toVector)))
+        case LimitReachedUntil(until, why) => momentOf(until).map(Problem.Run.LimitReached(read(why), _))
+        case _                             => None
+      },
+      {
         case NoValidAnswerAt(step, attempts, ps) =>
           for n <- Count.read(attempts)
           yield Problem.Run.NoValidAnswer(
@@ -1196,8 +1301,33 @@ object Column:
         case "rejected: the run was cancelled" => Some(Problem.Run.Withdrawn)
         case UnsettledAt(step, attempts)       =>
           Count.read(attempts).map(Problem.Run.Unsettled(Problem.Run.Step(s"$step"), _))
-        case BudgetSpentAt(step) => Some(Problem.Run.BudgetSpent(Problem.Run.Step(s"$step")))
-        case _                   => None
+        case BudgetSpentAt(step)       => Some(Problem.Run.BudgetSpent(Problem.Run.Step(s"$step")))
+        case AllowanceReachedBy(model) => Some(Problem.Run.AllowanceReached(Problem.Run.Model(s"$model")))
+        case OutputOverCap(step, model, cap, sent, setting) =>
+          for
+            c <- Count.read(cap)
+            n <- Count.read(sent)
+            st <- word(Problem.Run.CapSetting.values.toSeq, setting)
+          yield Problem.Run.OutputCapped(Problem.Run.Step(s"$step"), Problem.Run.Model(s"$model"), c, n, st)
+        case DefinitionBroken(file, written) =>
+          flawOf(written.split(Regex.quote(HoldSeparator), -1).toVector).map(Config.Definition(Raw(s"$file"), _))
+        case NoTextIn(source)                                 => Some(Problem.Run.NoText(Raw(s"$source")))
+        case NoBodyIn(article)                                => Some(Problem.Run.NoBody(Raw(s"$article")))
+        case Undecodable(kind, path, reported, finish, began) =>
+          val why: Option[Content.Decoding] = (kind, Option(path), Option(reported)) match
+            case ("Mismatch", Some(p), Some(r)) => Some(Content.Decoding.Mismatch(Raw(s"$p"), External.Reported(s"$r")))
+            case ("NotJson", None, Some(r))     => Some(Content.Decoding.NotJson(External.Reported(s"$r")))
+            case ("Unreadable", None, Some(r))  => Some(Content.Decoding.Unreadable(External.Reported(s"$r")))
+            case ("NotSchema", None, None)      => Some(Content.Decoding.NotSchema)
+            case _                              => None
+          why.map(
+            Content.Undecoded(
+              _,
+              Option(finish).map(f => External.Reported(s"$f")),
+              Option(began).map(b => External.ModelSaid(s"$b"))
+            )
+          )
+        case _ => None
       },
       {
         case BrokenAt(at, written) =>

@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.goals
 import com.histmersion.util.json.RawJson.*
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -69,11 +69,7 @@ final class PlanGoalPipeline(
     Transactor(ds).read(GoalRepo.exists(s)) || Transactor(ds).read(GoalRepo.renamedTo(s)).isDefined
 
   def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
-    DomainGoal.Slug
-      .either(ctx.run.target.value)
-      .left
-      .map(_ => Halt.Fail(Problem.Unclassified(Legacy.Text(s"invalid goal slug '${ctx.run.target.value}'"))))
-      .flatMap(runFor(ctx, _))
+    DomainGoal.Slug.parse(ctx.run.target.value).left.map(Halt.failed).flatMap(runFor(ctx, _))
 
   private def runFor(ctx: RunCtx, slug: DomainGoal.Slug): Either[Halt, PipelineDef.Summary] =
     for
@@ -121,8 +117,8 @@ final class PlanGoalPipeline(
 
   // ── steps ──────────────────────────────────────────────────────────────────────────────────────
 
-  private def load(slug: DomainGoal.Slug): Either[String, Loaded] =
-    host.goal(slug).left.map(_.problems.sentences.mkString("; ")).map { g =>
+  private def load(slug: DomainGoal.Slug): Either[Problems, Loaded] =
+    host.goal(slug).left.map(_.problems).map { g =>
       val links = goals.links(slug)
       val vocab = (field: String) => host.vocabulary(AutomationHost.VocabularyField(field)).take(VocabularySize)
       Loaded(
@@ -168,8 +164,8 @@ final class PlanGoalPipeline(
     plan.dropped.foreach(d => ctx.warn(s"verify: ${d.value}"))
     plan
 
-  private def log(ctx: RunCtx, line: String): Either[String, String] =
-    Pipelines.log(workLists, ctx, Pipelines.LogLine(line)).left.map(_.sentences.mkString("; ")).map(_.value)
+  private def log(ctx: RunCtx, line: String): Either[Problems, String] =
+    Pipelines.log(workLists, ctx, Pipelines.LogLine(line)).map(_.value)
 
   private def runId(ctx: RunCtx): Run.Id =
     Run.Id.assume(ctx.run.id.value)
@@ -178,7 +174,7 @@ final class PlanGoalPipeline(
     * queued for acquisition and linked by item. A rejected plan changes nothing. Idempotent (a re-run after a crash
     * finds what it made: goals are upserted, links are keyed, a DOI already in the queue is not added again).
     */
-  private def apply(ctx: RunCtx, slug: DomainGoal.Slug, plan: Plan, d: Decided): Either[String, Applied] =
+  private def apply(ctx: RunCtx, slug: DomainGoal.Slug, plan: Plan, d: Decided): Either[Problems, Applied] =
     if !d.approved.value then
       log(
         ctx,
@@ -214,7 +210,7 @@ final class PlanGoalPipeline(
         )
       )
 
-  private def applyApproved(ctx: RunCtx, slug: DomainGoal.Slug, plan: Plan): Either[String, Applied] =
+  private def applyApproved(ctx: RunCtx, slug: DomainGoal.Slug, plan: Plan): Either[Problems, Applied] =
     val parent = host.goal(slug).toOption
     val created = plan.subGoals.filter { g =>
       DomainGoal.Slug.either(g.slug.value) match

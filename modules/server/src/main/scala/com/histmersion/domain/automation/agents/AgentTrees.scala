@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.agents
 import hearth.kindlings.jsoniterjson.Json
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{Legacy, Problem, Problems}
 
 import com.histmersion.server.agents.ClaudeCode
 
@@ -63,15 +63,13 @@ final class AgentTrees(app: AppConfig, defs: AgentDefinitions, paths: UserPaths 
     )
 
   /** The definitions, loaded and checked; `known` are the MCP tool names placeholders may use. */
-  def load(known: Set[ToolName]): Either[Problem, AgentGenerator.Defs] =
+  def load(known: Set[ToolName]): Either[Problems, AgentGenerator.Defs] =
     for
-      as <- defs.agents.left.map((text => Problem.Unclassified(Legacy.Text(text))))
-      fs <- defs.fragments.left.map((text => Problem.Unclassified(Legacy.Text(text))))
-      ss <- defs.skills.left.map((text => Problem.Unclassified(Legacy.Text(text))))
+      as <- defs.agents
+      fs <- defs.fragments
+      ss <- defs.skills
       d = AgentGenerator.Defs(as, fs, ss)
-      _ <- AgentGenerator.check(d, known.map(t => t.value: String)) match
-        case Nil  => Right(())
-        case errs => Left(Problem.Unclassified(Legacy.Text(errs.mkString("; "))))
+      _ <- Problems.from(AgentGenerator.check(d, known.map(t => t.value: String)).toVector).toLeft(())
     yield d
 
   /** Generate the trees of `runtimes` (all three by default) into `out` (default [[root]]). */
@@ -79,7 +77,7 @@ final class AgentTrees(app: AppConfig, defs: AgentDefinitions, paths: UserPaths 
       known: Set[ToolName],
       runtimes: List[AgentRuntime] = AgentRuntime.Generated,
       out: Option[Path] = None
-  ): Either[Problem, GenerateResult] =
+  ): Either[Problems, GenerateResult] =
     for
       dir <- out
         .orElse(root)

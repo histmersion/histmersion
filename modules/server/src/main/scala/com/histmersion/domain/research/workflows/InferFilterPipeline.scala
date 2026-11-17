@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.research.workflows
 import com.histmersion.util.json.RawJson.*
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -83,8 +83,8 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
 
   // ── steps ──────────────────────────────────────────────────────────────────────────────────────
 
-  private def load(slug: Slug): Either[String, Loaded] =
-    site.articles.get(slug).left.map(_.problems.sentences.mkString("; ")).map { v =>
+  private def load(slug: Slug): Either[Problems, Loaded] =
+    site.articles.get(slug).left.map(_.problems).map { v =>
       val a = v.article
       val canonical = Slug.assume(a.slug.value)
       val stored = site.articleStore.load(canonical)
@@ -163,7 +163,7 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
   /** The proposal, through the write gate: an open approval (manual), or the filter recorded at once with an approval
     * already approved (auto). None passed: nothing is recorded.
     */
-  private def record(ctx: RunCtx, slug: Slug, inf: Inferred): Either[String, Recorded] =
+  private def record(ctx: RunCtx, slug: Slug, inf: Inferred): Either[Problems, Recorded] =
     inf.proposal match
       case None =>
         Right(
@@ -185,7 +185,7 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
               site.articles
                 .patch(slug, Article.Patch(filter = Some(p.filter)))
                 .left
-                .map(_.problems.sentences.mkString("; "))
+                .map(_.problems)
                 .map { _ =>
                   val a = ctx.approvalStore.openSubject(
                     jobId,
@@ -232,8 +232,8 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
               )
             )
 
-  private def log(ctx: RunCtx, line: FilterInference.LogLine): Either[String, String] =
-    Pipelines.log(site.workLists, ctx, Pipelines.LogLine(line.value)).left.map(_.sentences.mkString("; ")).map(_.value)
+  private def log(ctx: RunCtx, line: FilterInference.LogLine): Either[Problems, String] =
+    Pipelines.log(site.workLists, ctx, Pipelines.LogLine(line.value)).map(_.value)
 
 object InferFilterPipeline:
   /** How many of the most used topics and tags the model is shown, how many cited sources by title, and how much of the

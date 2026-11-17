@@ -1,6 +1,6 @@
 package com.histmersion
 package domain.automation.agents
-import com.histmersion.util.problem.{Legacy, Problem, ProblemLog}
+import com.histmersion.util.problem.{External, Problem, ProblemLog}
 import com.histmersion.util.problem.Text.sentence
 
 import hearth.kindlings.optics.syntax.*
@@ -655,8 +655,6 @@ final class Engine(
   * their results — every body truncated to `max` characters.
   */
 object Engine:
-  type CapKey = CapKey.T
-  object CapKey extends Newtype[String, Pure]
   type Count = Count.T
   object Count extends Newtype[Int, Pure]
   type OutputCapLimit = OutputCapLimit.T
@@ -692,13 +690,11 @@ object Engine:
   /** The note of a blocking approval a dry run did not open (it goes on as if approved). */
   val DryRunApproval = "dry run: not recorded; treated as approved"
 
-  /** The config key that sets a step's output cap: `agents.step.max-tokens`, unless the pipeline passed the step its
-    * own cap (the fixer's and the writer's).
+  /** The setting that sets a step's output cap: `agents.step.max-tokens`, unless the pipeline passed the step its own
+    * cap (the fixer's and the writer's).
     */
-  def capKey(overridden: CapKeyOverridden): CapKey =
-    if overridden.value then
-      CapKey("the step's own cap (agents.review.fixer-max-tokens or agents.compile.draft-max-tokens)")
-    else CapKey("agents.step.max-tokens (HISTMERSION_AGENTS_MAX_TOKENS)")
+  def capSetting(overridden: CapKeyOverridden): Problem.Run.CapSetting =
+    if overridden.value then Problem.Run.CapSetting.StepOwn else Problem.Run.CapSetting.StepMaxTokens
 
   private val OutputCap = "exceeded the (\\d+) output token maximum".r
 
@@ -718,17 +714,6 @@ object Engine:
       .map(OutputCapLimit(_))
       .nextOption()
 
-  /** What the run says when [[outputCapHit]]: the cap, the model, the key to raise. */
-  def outputCapMessage(
-      name: String,
-      cap: OutputCapLimit,
-      sent: Count,
-      model: AgentsControllers.ModelName,
-      key: String
-  ): String =
-    s"$name: $model's answer exceeded the $cap output-token cap (the step sent $sent) — raise $key " +
-      "(a thinking model's reasoning counts toward it), restart the server, then resume the run"
-
   /** The raw text of an answer that was JSON but not the typed answer — what a retry hands back to be amended. None for
     * no answer at all, or a decoded one.
     */
@@ -747,24 +732,19 @@ object Engine:
     * or, for no answer at all, how the call ended.
     */
   def answerProblem(f: AgentFailure, finish: FinishReason): Problem =
-    def excerpt(raw: String) =
-      val r = raw.trim
-      if r.isEmpty then "" else s" — the answer began: ${r.take(AnswerExcerpt)}"
-    def why(cause: Throwable): Problem = cause match
-      case d if SttpAiJson.decodingFailure(d).nonEmpty =>
-        Problem.Unclassified(Legacy.Text(SttpAiJson.decodingFailure(d).getOrElse("")))
-      case e =>
-        Problem.Unclassified(
-          Legacy.Text(s"the answer could not be decoded: ${Option(e.getMessage).getOrElse(e.getClass.getSimpleName)}")
-        )
-    f match
-      case AgentParseError(raw, cause) => Problem.Unclassified(Legacy.Text(why(cause).sentence + excerpt(raw)))
-      // sttp-ai's own loop re-asks after an undecodable answer and, out of turns, keeps the last error
-      case AgentIncomplete(raw, fin, Some(cause)) =>
-        Problem.Unclassified(Legacy.Text(s"${why(cause).sentence} (${LlmClient.finish(fin)})${excerpt(raw)}"))
-      case other =>
-        Problem.Unclassified(
-          Legacy.Text(
-            s"the answer is not the JSON the schema asks for (${LlmClient.finish(finish)})${excerpt(other.rawAnswer)}"
+    def began(raw: String): Option[External.ModelSaid] =
+      Option(raw.trim).filter(_.nonEmpty).map(r => External.ModelSaid(r.take(AnswerExcerpt)))
+    def why(cause: Throwable): Problem.Content.Decoding =
+      SttpAiJson
+        .decodingFailure(cause)
+        .getOrElse(
+          Problem.Content.Decoding.Unreadable(
+            External.Reported.of(Option(cause.getMessage).getOrElse(cause.getClass.getSimpleName))
           )
         )
+    def ended(r: FinishReason): Option[External.Reported] = Some(External.Reported.of(LlmClient.finish(r)))
+    f match
+      case AgentParseError(raw, cause) => Problem.Content.Undecoded(why(cause), None, began(raw))
+      // sttp-ai's own loop re-asks after an undecodable answer and, out of turns, keeps the last error
+      case AgentIncomplete(raw, fin, Some(cause)) => Problem.Content.Undecoded(why(cause), ended(fin), began(raw))
+      case other => Problem.Content.Undecoded(Problem.Content.Decoding.NotSchema, ended(finish), began(other.rawAnswer))

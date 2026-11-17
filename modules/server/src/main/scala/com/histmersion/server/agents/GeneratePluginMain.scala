@@ -1,7 +1,7 @@
 package com.histmersion
 package server.agents
 
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.sentences
 import com.histmersion.domain.automation.agents.PluginTree
 
 import java.nio.file.Path
@@ -19,4 +19,7 @@ import com.histmersion.util.storage.Location
   val store = summon[Stores].at(Location.AgentHomes, Path.of(root).toAbsolutePath.normalize)
   PluginTree
     .write(store, EngineContributions.roster)
-    .fold(message => { scribe.error(s"cannot generate the plugin: ${message.sentence}"); sys.exit(1) }, identity)
+    .fold(
+      message => { scribe.error(s"cannot generate the plugin: ${message.sentences.mkString("; ")}"); sys.exit(1) },
+      identity
+    )

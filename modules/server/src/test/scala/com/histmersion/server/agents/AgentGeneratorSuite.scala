@@ -1,7 +1,8 @@
 package com.histmersion
 package server.agents
 
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -123,16 +124,22 @@ class AgentGeneratorSuite extends munit.FunSuite:
     val bad = AgentDefinitions.Markdown(
       "---\nname: x\ndescription: d\nmodel-role: reviewer\ntools:\n  histmersion: [get_source, patch_source]\n---\nbody"
     )
-    assert(
-      AgentDefinitions.parse(AgentDef.Name("x"), bad, ToolboxOrder.names).left.exists(_.contains("patch_source")),
-      AgentDefinitions.parse(AgentDef.Name("x"), bad, ToolboxOrder.names)
+    def refused(name: String, md: AgentDefinitions.Markdown) =
+      AgentDefinitions.parse(AgentDef.Name(name), md, ToolboxOrder.names).left.map(_.sentence)
+    assertEquals(
+      refused("x", bad),
+      Left(
+        "agents/x.md: tools.histmersion names tools an agent cannot be offered: patch_source " +
+          s"(one of ${ToolboxOrder.names.map(_.value).mkString(", ")})"
+      )
     )
-    assert(AgentDefinitions.parse(AgentDef.Name("y"), bad, ToolboxOrder.names).left.exists(_.contains("name 'x'")))
-    assert(
-      AgentDefinitions.parse(AgentDef.Name("x"), AgentDefinitions.Markdown("no header"), ToolboxOrder.names).isLeft
-    )
+    assertEquals(refused("y", bad), Left("agents/y.md: name 'x' is not the file's"))
+    assertEquals(refused("x", AgentDefinitions.Markdown("no header")), Left("agents/x.md: no YAML header (--- … ---)"))
     val noRole = AgentDefinitions.Markdown(bad.value.replace("model-role: reviewer", "model-role: boss"))
-    assert(AgentDefinitions.parse(AgentDef.Name("x"), noRole, ToolboxOrder.names).left.exists(_.contains("model-role")))
+    assertEquals(
+      refused("x", noRole),
+      Left(s"agents/x.md: model-role is not one of ${Role.values.map(_.wire.value).mkString(", ")}")
+    )
 
   test("placeholders render per runtime"):
     val t = "call {{tool:get_source}} then {{tool:*}}"
@@ -375,14 +382,17 @@ class AgentGeneratorSuite extends munit.FunSuite:
   test("the whole tree generates under a server's runtimes dir"):
     val dir = Files.createTempDirectory("hm-gen-all-")
     val rt = CliRuntime(FakeCli.app(dir), EngineContributions.roster)
-    val r = rt.trees.generate(Generated.known(rt.definitions)).fold(m => fail(m.sentence), identity)
+    val r = rt.trees.generate(Generated.known(rt.definitions)).fold(m => fail(m.sentences.mkString("; ")), identity)
     assertEquals(r.runtimes, List("claude-code", "codex", "opencode"))
     assert(Files.isRegularFile(dir.resolve("codex/home/article-skeptic.config.toml")))
     assert(Files.isRegularFile(dir.resolve("opencode/config/agents/enrich-classify.md")))
     assertEquals(rt.trees.codexHome, Some(dir.resolve("codex/home")))
     val unknown = rt.trees.generate(Set(ToolName("get_source")))
     assert(
-      unknown.left.exists(_.sentence.contains("which is not an MCP tool")),
+      unknown.left.exists(_.exists {
+        case Problem.Config.Definition(_, Problem.Config.Flaw.ToolUnknown(_)) => true
+        case _                                                                => false
+      }),
       "a placeholder naming nothing fails generation"
     )
 
@@ -403,7 +413,7 @@ class PluginTreeSuite extends munit.FunSuite:
       .get
 
   test("plugin/ is up to date with agents/ and skills/ (run `just plugin` when this fails)"):
-    val tree = PluginTree.tree(EngineContributions.roster).fold(m => fail(m.sentence), identity)
+    val tree = PluginTree.tree(EngineContributions.roster).fold(m => fail(m.sentences.mkString("; ")), identity)
     val stale = tree.toList.sortBy(_._1.value).collect {
       case (rel, text)
           if !Files.isRegularFile(root.resolve(rel.value)) || Files.readString(root.resolve(rel.value)) != text =>

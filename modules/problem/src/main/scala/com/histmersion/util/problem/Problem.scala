@@ -1375,6 +1375,87 @@ object Problem:
       */
     final case class Unpriced(model: Run.Model, metered: Option[Metered]) extends Config
 
+    /** The agent definition, skill or shared fragment `file` (as the prompts name it: `agents/x.md`) is wrong: `flaw`.
+      */
+    final case class Definition(file: Raw, flaw: Flaw) extends Config
+
+    /** What is wrong with an agent definition, a skill or a shared fragment. */
+    enum Flaw derives CanEqual:
+      /** It does not start with a YAML header (`--- … ---`). */
+      case NoHeader
+
+      /** Its YAML header is not closed. */
+      case HeaderUnclosed
+
+      /** Its YAML header is not a mapping. */
+      case HeaderNotMapping
+
+      /** Its YAML header does not parse: `reported`, the parser's words. */
+      case HeaderUnparsable(reported: External.Reported)
+
+      /** `field` holds `value`, not a list. */
+      case NotList(field: Field, value: Raw)
+
+      /** Its header names no agent. */
+      case NoName
+
+      /** Its header names `named`, not the file's own name. */
+      case NameNotFile(named: Raw)
+
+      /** Its header has no description. */
+      case NoDescription
+
+      /** Its `model-role` is none of `roles`. */
+      case RoleUnknown(roles: Vector[Raw])
+
+      /** Its role `role` is no contributed workflow's: one of `roles` is. */
+      case RoleUnused(role: Raw, roles: Vector[Raw])
+
+      /** `tools.histmersion` names `tools`, which an agent cannot be offered: one of `known` can. */
+      case ToolsUnoffered(tools: Vector[Raw], known: Vector[Raw])
+
+      /** Its `tools.web` is none of none, discover, search or fetch. */
+      case WebUnknown
+
+      /** Its `writes` is none of none, propose or direct. */
+      case WritesUnknown
+
+      /** Its `max-turns` is not a positive number. */
+      case TurnsNotPositive
+
+      /** It names runtimes no runtime is. */
+      case RuntimesUnknown(runtimes: Vector[Raw])
+
+      /** It runs interactively without `interactive: {model, tools}`. */
+      case InteractiveUnset
+
+      /** A skill's header names another skill than `name`, the skill's own. */
+      case SkillNotNamed(name: Raw)
+
+      /** It includes `include`, which is not among the shared fragments. */
+      case IncludeMissing(include: Raw)
+
+      /** It lists skill `skill`, which is not among the skills. */
+      case SkillMissing(skill: Raw)
+
+      /** An audience marker names `audience`, which is no audience. */
+      case AudienceUnknown(audience: Raw)
+
+      /** The marker for `audience` is never closed. */
+      case MarkerUnclosed(audience: Raw)
+
+      /** The marker for `audience` opens inside the one for `outer`. */
+      case MarkerNested(audience: Raw, outer: Raw)
+
+      /** The closing marker for `audience` closes nothing open. */
+      case MarkerUnopened(audience: Raw)
+
+      /** It names `{{tool:tool}}`, which is no MCP tool. */
+      case ToolUnknown(tool: Raw)
+
+      /** A skill's description is over 1,024 characters, which opencode refuses. */
+      case DescriptionLong
+
     /** Why a model of a provider that can run on a plan is billed by the token. */
     enum Metered:
       /** `provider` is set to use an API key, so it bills the API, not the plan. */
@@ -1663,6 +1744,31 @@ object Problem:
     /** Step `step` has no valid answer after `attempts` attempts: the last answer's problems. */
     final case class NoValidAnswer(step: Step, attempts: Count, problems: Vector[Problem]) extends Run
 
+    /** An attempt of a step, or a run, failed: `why`, each problem (as the attempt's record keeps them). */
+    final case class Failed(why: NonEmptyVector[Problem]) extends Run
+
+    /** A model's answer to a step was declined: `problems`, each check it failed (it is amended, or the step gives up).
+      */
+    final case class Declined(problems: Vector[Problem]) extends Run
+
+    /** The model's plan reported its usage limit (`why`, as its runtime said it): the model is skipped until `until`.
+      */
+    final case class LimitReached(why: Problem, until: EpochMs) extends Run
+
+    /** `model` reached its allowance during a step: the chain's next model takes the step. */
+    final case class AllowanceReached(model: Model) extends Run
+
+    /** `model`'s answer to step `step` exceeded its output cap of `cap` tokens (the step sent `sent`): a configuration
+      * error, not a retry — `setting` is raised, the server restarted, then the run resumed.
+      */
+    final case class OutputCapped(step: Step, model: Model, cap: Count, sent: Count, setting: CapSetting) extends Run
+
+    /** Source `source` has no text to read: it is ingested or OCR'd first. */
+    final case class NoText(source: Raw) extends Run
+
+    /** Article `article` has no body to review. */
+    final case class NoBody(article: Raw) extends Run
+
     /** The scheduler holds it back: `block`. */
     final case class Blocked(block: Block) extends Run
 
@@ -1728,6 +1834,14 @@ object Problem:
     enum Cap derives CanEqual:
       case Daily, Monthly
 
+    /** The setting that caps a step's answer. */
+    enum CapSetting derives CanEqual:
+      /** `agents.step.max-tokens`, every step's cap. */
+      case StepMaxTokens
+
+      /** The step's own cap: the fixer's or the writer's. */
+      case StepOwn
+
     /** What a person does to a run. */
     enum Control derives CanEqual:
       case Pause, Resume, Cancel
@@ -1782,6 +1896,26 @@ object Problem:
     /** An agent's answer as a whole breaks `rule` (an empty summary, too few places that resolve): no one part of it.
       */
     final case class Answer(rule: Requirement) extends Content
+
+    /** A model's answer is not the step's typed answer: `why`; `finish`, how the call ended when that says more;
+      * `began`, the start of the answer.
+      */
+    final case class Undecoded(why: Decoding, finish: Option[External.Reported], began: Option[External.ModelSaid])
+        extends Content
+
+    /** Why an answer does not decode. */
+    enum Decoding:
+      /** It is JSON, but not the schema's at `path`: `reported`, the decoder's words. */
+      case Mismatch(path: Raw, reported: External.Reported)
+
+      /** It is not JSON: `reported`, the parser's words. */
+      case NotJson(reported: External.Reported)
+
+      /** The decoder failed otherwise: `reported`. */
+      case Unreadable(reported: External.Reported)
+
+      /** No answer the schema asks for came back. */
+      case NotSchema
 
     /** A place a finding names (`finding`, counted from 1) that no gazetteer place matches. */
     final case class Unplaced(place: Raw, finding: Count)
@@ -2381,6 +2515,10 @@ object Problem:
       Config.Reload(Config.Stage.Close, Config.Scope("plugins")),
       Config.Cycle(NonEmptyVector.of(Config.Scope("db"), Config.Scope("lease"), Config.Scope("db"))),
       Config.Unpriced(Run.Model("claude-opus-5-5"), Some(Config.Metered.ApiKey(Upstream.Name("claude-code")))),
+      Config.Definition(
+        Raw("agents/skeptic.md"),
+        Config.Flaw.ToolsUnoffered(Vector(Raw("patch_source")), Vector(Raw("search"), Raw("get_source")))
+      ),
       Plugin.Load(Plugin.Id("media-met"), Plugin.Fault.NullComponent),
       Plugin.Rejected(
         Plugin.Id("media-met"),
@@ -2478,6 +2616,24 @@ object Problem:
         Count(3L),
         Vector(Content.Answer(Content.Requirement.StandIn))
       ),
+      Run.Failed(NonEmptyVector.of(NotFound.Entity(TypeName("com.histmersion.domain.library.Citekey"), Raw("x")))),
+      Run.Declined(
+        Vector(Content.Answer(Content.Requirement.StandIn), Content.Answer(Content.Requirement.SummaryGiven))
+      ),
+      Run.LimitReached(
+        Upstream.Limited(Upstream.Name("claude-code"), Some(EpochMs(1762732800000L))),
+        EpochMs(1762732800000L)
+      ),
+      Run.AllowanceReached(Run.Model("anthropic:claude-opus")),
+      Run.OutputCapped(
+        Run.Step("cold-reader-1"),
+        Run.Model("claude-code:haiku"),
+        Count(4096L),
+        Count(4096L),
+        Run.CapSetting.StepMaxTokens
+      ),
+      Run.NoText(Raw("anthony2007")),
+      Run.NoBody(Raw("yamnaya")),
       Run.Blocked(Run.Block.PoolFull(Run.Pool("review"))),
       Run.Interrupted,
       Run.CutShort(Conflict.Activity.MergeApply),
@@ -2488,6 +2644,11 @@ object Problem:
       Content.Finding(Content.Flaw.UncitedParagraph),
       Content.Proposal(Content.Requirement.TooManyClaims(Count(12L), Count(15L)), Where("claims")),
       Content.Answer(Content.Requirement.SummaryGiven),
+      Content.Undecoded(
+        Content.Decoding.Mismatch(Raw(".notes"), External.Reported("Got value '5' with wrong type, expecting string")),
+        Some(External.Reported("iteration limit")),
+        Some(External.ModelSaid("{\"notes\": 5}"))
+      ),
       Internal.Unexpected(
         Internal.Id("3f2a9c1e"),
         Where("backup"),

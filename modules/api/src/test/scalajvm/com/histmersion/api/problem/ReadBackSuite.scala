@@ -26,6 +26,51 @@ class ReadBackSuite extends munit.FunSuite:
       assertEquals(Column.read(p.stored), p)
   }
 
+  test("an agent definition's every flaw is stored and reads back as itself"):
+    Vector[Config.Flaw](
+      Config.Flaw.NoHeader,
+      Config.Flaw.HeaderUnclosed,
+      Config.Flaw.HeaderNotMapping,
+      Config.Flaw.HeaderUnparsable(External.Reported("mapping values are not allowed here")),
+      Config.Flaw.NotList(Field("tools.histmersion"), Raw("search")),
+      Config.Flaw.NoName,
+      Config.Flaw.NameNotFile(Raw("x")),
+      Config.Flaw.NoDescription,
+      Config.Flaw.RoleUnknown(Vector(Raw("extractor"), Raw("writer"))),
+      Config.Flaw.RoleUnused(Raw("skeptic"), Vector(Raw("writer"))),
+      Config.Flaw.ToolsUnoffered(Vector(Raw("patch_source"), Raw("put_source")), Vector(Raw("search"))),
+      Config.Flaw.WebUnknown,
+      Config.Flaw.WritesUnknown,
+      Config.Flaw.TurnsNotPositive,
+      Config.Flaw.RuntimesUnknown(Vector(Raw("emacs"))),
+      Config.Flaw.InteractiveUnset,
+      Config.Flaw.SkillNotNamed(Raw("trailhead")),
+      Config.Flaw.IncludeMissing(Raw("writing-guide")),
+      Config.Flaw.SkillMissing(Raw("trailhead")),
+      Config.Flaw.AudienceUnknown(Raw("people")),
+      Config.Flaw.MarkerUnclosed(Raw("writer")),
+      Config.Flaw.MarkerNested(Raw("headless"), Raw("writer")),
+      Config.Flaw.MarkerUnopened(Raw("writer")),
+      Config.Flaw.ToolUnknown(Raw("frobnicate")),
+      Config.Flaw.DescriptionLong
+    ).foreach { flaw =>
+      val p = Config.Definition(Raw("skills/trailhead/SKILL.md"), flaw)
+      assertEquals(Column.read(p.stored), p)
+    }
+
+  test("an undecodable answer's every form is stored and reads back as itself"):
+    Vector[Problem](
+      Content.Undecoded(Content.Decoding.NotSchema, None, None),
+      Content.Undecoded(Content.Decoding.NotJson(External.Reported("eof")), None, Some(External.ModelSaid("{no"))),
+      Content.Undecoded(
+        Content.Decoding.Unreadable(External.Reported("odd")),
+        Some(External.Reported("answered")),
+        None
+      ),
+      Run.Declined(Vector.empty),
+      Run.OutputCapped(Run.Step("draft"), Run.Model("a:b"), Count(1L), Count(2L), Run.CapSetting.StepOwn)
+    ).foreach(p => assertEquals(Column.read(p.stored), p))
+
   test("a relayed problem is stored as its sentence, which reads back as the text it is"):
     val relayed = Relayed(Sentence("the server is reindexing"))
     assertEquals(relayed.stored, "the server is reindexing")

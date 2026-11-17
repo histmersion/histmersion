@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.research.workflows
 import com.histmersion.util.json.RawJson.*
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{Legacy, Problem, Problems}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -68,11 +68,7 @@ final class ProposeArticlesPipeline(
   import ProposeArticlesPipeline.*
 
   def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
-    Goal.Slug
-      .either(ctx.run.target.value)
-      .left
-      .map(m => Halt.Fail(Problem.Unclassified(Legacy.Text(m))))
-      .flatMap(runFor(ctx, _))
+    Goal.Slug.parse(ctx.run.target.value).left.map(Halt.failed).flatMap(runFor(ctx, _))
 
   private def runFor(ctx: RunCtx, goal: Goal.Slug): Either[Halt, PipelineDef.Summary] =
     val runId = ctx.runId
@@ -90,8 +86,8 @@ final class ProposeArticlesPipeline(
       )
     yield PipelineDef.Summary(closed)
 
-  private def log(ctx: RunCtx, line: PlanArticles.LogLine): Either[String, String] =
-    Pipelines.log(site.workLists, ctx, Pipelines.LogLine(line.value)).left.map(_.sentences.mkString("; ")).map(_.value)
+  private def log(ctx: RunCtx, line: PlanArticles.LogLine): Either[Problems, String] =
+    Pipelines.log(site.workLists, ctx, Pipelines.LogLine(line.value)).map(_.value)
 
   private def limits(ctx: RunCtx): PlanArticles.Limits =
     val p = ctx.run.params
@@ -125,8 +121,8 @@ final class ProposeArticlesPipeline(
         }
     (up ++ down(slug, 0)).distinct.filterNot(_ == slug)
 
-  private def load(slug: Goal.Slug): Either[String, Loaded] =
-    site.goal(slug).left.map(_.problems.sentences.mkString("; ")).map { g =>
+  private def load(slug: Goal.Slug): Either[Problems, Loaded] =
+    site.goal(slug).left.map(_.problems).map { g =>
       val goal = Goal.Slug.assume(g.slug.value)
       val links = goals.links(goal)
       val area = goal :: family(goal)
@@ -248,7 +244,7 @@ final class ProposeArticlesPipeline(
   /** The plan as an `article-plan` approval (a person's, or the supervisor's checks — [[AutoApprovals]]), through the
     * write gate.
     */
-  private def record(ctx: RunCtx, goal: Goal.Slug, plan: ArticlePlan): Either[String, Recorded] =
+  private def record(ctx: RunCtx, goal: Goal.Slug, plan: ArticlePlan): Either[Problems, Recorded] =
     if plan.isEmpty then Right(Recorded(None, Recorded.Line("nothing survived the checks; no approval was opened")))
     else
       ctx.write(

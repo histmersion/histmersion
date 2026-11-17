@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.automation.agents
 
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.{External, Problem, Problems}
+import com.histmersion.util.problem.Problems.traverseAll
 import com.histmersion.server.agents.Codex
 
 import scala.annotation.tailrec
@@ -62,20 +63,25 @@ object AgentDefinitions:
 
   /** Audience markers that do not pair up or name no audience — a part that would leak into the wrong prompt.
     */
-  def markerProblems(text: AgentDef.Body): List[String] =
+  def markerProblems(text: AgentDef.Body): List[Problem.Config.Flaw] =
     val ms = Marker.findAllMatchIn(text.value).map(m => (m.group(1) == "/", m.group(2))).toList
     val unknown =
       ms.map(_._2)
         .distinct
         .filterNot(a => Audience.values.exists(_.wire.value == a))
-        .map(a => s"names no audience: only:$a")
-    @tailrec def pair(rest: List[(Boolean, String)], open: Option[String], errs: List[String]): List[String] =
+        .map(a => Problem.Config.Flaw.AudienceUnknown(Problem.Raw(a)))
+    @tailrec def pair(
+        rest: List[(Boolean, String)],
+        open: Option[String],
+        errs: List[Problem.Config.Flaw]
+    ): List[Problem.Config.Flaw] =
       (open, rest) match
-        case (_, Nil)                               => errs ++ open.map(o => s"only:$o is never closed").toList
+        case (_, Nil) => errs ++ open.map(o => Problem.Config.Flaw.MarkerUnclosed(Problem.Raw(o))).toList
         case (None, (false, a) :: tail)             => pair(tail, Some(a), errs)
         case (Some(o), (true, a) :: tail) if o == a => pair(tail, None, errs)
-        case (Some(o), (false, a) :: tail)          => pair(tail, Some(a), errs :+ s"only:$a opens inside only:$o")
-        case (o, (true, a) :: tail)                 => pair(tail, o, errs :+ s"/only:$a closes nothing open")
+        case (Some(o), (false, a) :: tail)          =>
+          pair(tail, Some(a), errs :+ Problem.Config.Flaw.MarkerNested(Problem.Raw(a), Problem.Raw(o)))
+        case (o, (true, a) :: tail) => pair(tail, o, errs :+ Problem.Config.Flaw.MarkerUnopened(Problem.Raw(a)))
     unknown ++ pair(ms, None, Nil)
 
   private val Placeholder = """\{\{tool:([a-z_]+|\*)\}\}""".r
@@ -98,33 +104,40 @@ object AgentDefinitions:
     Placeholder.findAllMatchIn(text).map(_.group(1)).filter(_ != "*").toList.distinct
 
   /** `---\n<yaml>\n---\n<body>` → (yaml, body); the body keeps its leading newline, as written. */
-  def split(md: Markdown): Either[String, (String, String)] =
+  def split(md: Markdown): Either[Problem.Config.Flaw, (String, String)] =
     val t = md.value.replace("\r\n", "\n")
-    if !t.startsWith("---\n") then Left("no YAML header (--- … ---)")
+    if !t.startsWith("---\n") then Left(Problem.Config.Flaw.NoHeader)
     else
       t.indexOf("\n---\n", 3) match
-        case -1 => Left("the YAML header is not closed")
+        case -1 => Left(Problem.Config.Flaw.HeaderUnclosed)
         case i  => Right((t.substring(4, i), t.substring(i + 5)))
 
-  private def yaml(text: String): Either[String, Map[String, Any]] =
+  private def yaml(text: String): Either[Problem.Config.Flaw, Map[String, Any]] =
     try
       Option(Yaml(SafeConstructor(LoaderOptions())).load[Any](text)).map(_.asMatchable) match
         case Some(m: java.util.Map[?, ?]) => Right(m.asScala.toMap.map((k, v) => k.toString -> v))
-        case _                            => Left("the YAML header is not a mapping")
+        case _                            => Left(Problem.Config.Flaw.HeaderNotMapping)
     catch
       case e: Exception =>
-        Left(s"the YAML header does not parse: ${e.getMessage.linesIterator.nextOption().getOrElse("")}")
+        Left(Problem.Config.Flaw.HeaderUnparsable(External.Reported.of(Option(e.getMessage).getOrElse(""))))
 
-  private def strings(v: Any): Either[String, List[String]] = Option(v).map(_.asMatchable) match
-    case None                              => Right(Nil)
-    case Some(l: java.util.List[?])        => Right(l.asScala.toList.map(String.valueOf))
-    case Some(s: String) if s.trim.isEmpty => Right(Nil)
-    case Some(other)                       => Left(s"expected a list, not '$other'")
+  /** A header field that holds a list: none, or its items; `field` names it when it holds something else. */
+  private def strings(field: String, v: Any): Either[Problem.Config.Flaw, List[String]] =
+    Option(v).map(_.asMatchable) match
+      case None                              => Right(Nil)
+      case Some(l: java.util.List[?])        => Right(l.asScala.toList.map(String.valueOf))
+      case Some(s: String) if s.trim.isEmpty => Right(Nil)
+      case Some(other) => Left(Problem.Config.Flaw.NotList(Problem.Field(field), Problem.Raw(s"$other")))
+
+  /** The file a definition, a skill or a fragment is, as the prompts name it. */
+  private[agents] def agentFile(name: AgentDef.Name): Problem.Raw = Problem.Raw(s"agents/$name.md")
+  private def skillFile(name: SkillDef.Name): Problem.Raw = Problem.Raw(s"skills/$name/SKILL.md")
 
   /** Parse one definition. `name` is its file name; the header's `name` must agree. */
-  def parse(name: AgentDef.Name, md: Markdown, known: List[ToolName]): Either[String, AgentDef] =
-    def fail(m: String) = Left(s"agents/$name.md: $m")
-    split(md).flatMap((h, body) => yaml(h).map(_ -> body)).left.map(m => s"agents/$name.md: $m").flatMap { (m, body) =>
+  def parse(name: AgentDef.Name, md: Markdown, known: List[ToolName]): Either[Problem, AgentDef] =
+    val file = agentFile(name)
+    def fail[A](flaw: Problem.Config.Flaw): Either[Problem, A] = Left(Problem.Config.Definition(file, flaw))
+    split(md).flatMap((h, body) => yaml(h).map(_ -> body)).left.flatMap(fail).flatMap { (m, body) =>
       def str(k: String) = m.get(k).map(String.valueOf).map(_.trim).filter(_.nonEmpty)
       val tools = m.get("tools").map(_.asMatchable) match
         case Some(t: java.util.Map[?, ?]) => t.asScala.toMap.map((k, v) => k.toString -> v)
@@ -132,7 +145,7 @@ object AgentDefinitions:
       val interactive = m.get("interactive").map(_.asMatchable) match
         case Some(i: java.util.Map[?, ?]) =>
           val im = i.asScala.toMap.map((k, v) => k.toString -> v)
-          strings(im.getOrElse("tools", null))
+          strings("interactive.tools", im.getOrElse("tools", null))
             .map(ts =>
               Some(
                 InteractiveSpec(
@@ -144,45 +157,52 @@ object AgentDefinitions:
         case _ => Right(None)
       for
         n <- str("name")
-          .toRight("no name")
-          .flatMap(n => Either.cond(n == name.value, n, s"name '$n' is not the file's"))
+          .toRight(Problem.Config.Flaw.NoName)
+          .flatMap(n => Either.cond(n == name.value, n, Problem.Config.Flaw.NameNotFile(Problem.Raw(n))))
           .left
           .flatMap(fail)
-        desc <- str("description").toRight(s"agents/$name.md: no description")
+        desc <- str("description").toRight(Problem.Config.Flaw.NoDescription).left.flatMap(fail)
         role <- str("model-role")
           .flatMap(r => Role.parse(AgentRole.Wire(r)))
-          .toRight(s"agents/$name.md: model-role is not one of ${Role.values.map(_.wire.value).mkString(", ")}")
-        sk <- strings(m.getOrElse("skills", null)).left.flatMap(e => fail(s"skills: $e"))
-        inc <- strings(m.getOrElse("include", null)).left.flatMap(e => fail(s"include: $e"))
-        hm <- strings(tools.getOrElse("histmersion", null)).left.flatMap(e => fail(s"tools.histmersion: $e"))
+          .toRight(Problem.Config.Flaw.RoleUnknown(Role.values.toVector.map(r => Problem.Raw.of(r.wire))))
+          .left
+          .flatMap(fail)
+        sk <- strings("skills", m.getOrElse("skills", null)).left.flatMap(fail)
+        inc <- strings("include", m.getOrElse("include", null)).left.flatMap(fail)
+        hm <- strings("tools.histmersion", tools.getOrElse("histmersion", null)).left.flatMap(fail)
         ts <- hm.map(t => known.find(_.value == t).toRight(t)).partitionMap(identity) match
           case (Nil, ok) => Right(ok)
           case (bad, _)  =>
             fail(
-              s"tools.histmersion names tools an agent cannot be offered: ${bad.mkString(", ")} " +
-                s"(one of ${known.map(_.value).mkString(", ")})"
+              Problem.Config.Flaw
+                .ToolsUnoffered(bad.toVector.map(Problem.Raw(_)), known.toVector.map(Problem.Raw.of(_)))
             )
         web <- WebAccess.values
           .find(w => tools.get("web").map(String.valueOf).getOrElse("none") == w.wire.value)
-          .toRight(s"agents/$name.md: tools.web is none, discover, search or fetch")
+          .toRight(Problem.Config.Flaw.WebUnknown)
+          .left
+          .flatMap(fail)
         wr <- Writes.values
           .find(w => str("writes").getOrElse("none") == w.wire.value)
-          .toRight(s"agents/$name.md: writes is none, propose or direct")
+          .toRight(Problem.Config.Flaw.WritesUnknown)
+          .left
+          .flatMap(fail)
         turns <- str("max-turns")
-          .map(_.toIntOption.filter(_ > 0).toRight(s"agents/$name.md: max-turns is a positive number"))
+          .map(_.toIntOption.filter(_ > 0).toRight(Problem.Config.Flaw.TurnsNotPositive))
           .getOrElse(Right(6))
-        rts <- strings(m.getOrElse("runtimes", null)).left.flatMap(e => fail(s"runtimes: $e")).flatMap { rs =>
+          .left
+          .flatMap(fail)
+        rts <- strings("runtimes", m.getOrElse("runtimes", null)).left.flatMap(fail).flatMap { rs =>
           rs.map(r => AgentRuntime.parse(AgentRuntime.Wire(r)).toRight(r)).partitionMap(identity) match
             case (Nil, ok) if ok.nonEmpty => Right(ok.toSet)
             case (Nil, _)                 => Right(AgentRuntime.values.toSet - AgentRuntime.Interactive)
-            case (bad, _)                 => fail(s"unknown runtime(s) ${bad.mkString(", ")}")
+            case (bad, _)                 => fail(Problem.Config.Flaw.RuntimesUnknown(bad.toVector.map(Problem.Raw(_))))
         }
-        it <- interactive.left.flatMap(e => fail(s"interactive.tools: $e"))
-        _ <- Either.cond(
-          !rts.contains(AgentRuntime.Interactive) || it.isDefined,
-          (),
-          s"agents/$name.md: an interactive agent needs `interactive: {model, tools}`"
-        )
+        it <- interactive.left.flatMap(fail)
+        _ <- Either
+          .cond(!rts.contains(AgentRuntime.Interactive) || it.isDefined, (), Problem.Config.Flaw.InteractiveUnset)
+          .left
+          .flatMap(fail)
       yield AgentDef(
         AgentDef.Name(n),
         AgentDef.Description(desc),
@@ -201,16 +221,20 @@ object AgentDefinitions:
     }
 
   /** Parse one skill (`skills/<name>/SKILL.md`). */
-  def parseSkill(name: SkillDef.Name, md: Markdown): Either[String, SkillDef] =
-    split(md).left.map(m => s"skills/$name/SKILL.md: $m").flatMap { (h, body) =>
-      yaml(h).left.map(m => s"skills/$name/SKILL.md: $m").flatMap { m =>
-        Either.cond(
-          m.get("name").map(String.valueOf).contains(name.value),
-          SkillDef(name, h.split('\n').toList.map(SkillDef.Header(_)), SkillDef.Body(body)),
-          s"skills/$name/SKILL.md: its name is not '$name'"
-        )
+  def parseSkill(name: SkillDef.Name, md: Markdown): Either[Problem, SkillDef] =
+    val file = skillFile(name)
+    split(md)
+      .flatMap { (h, body) =>
+        yaml(h).flatMap { m =>
+          Either.cond(
+            m.get("name").map(String.valueOf).contains(name.value),
+            SkillDef(name, h.split('\n').toList.map(SkillDef.Header(_)), SkillDef.Body(body)),
+            Problem.Config.Flaw.SkillNotNamed(Problem.Raw.of(name))
+          )
+        }
       }
-    }
+      .left
+      .map(Problem.Config.Definition(file, _))
 
   /** The system prompt of a headless run of `d`: its body, its include fragments in order (the writing guide under its
     * heading), then the skills it lists, inlined — a main-thread Claude Code agent never gets its `skills:` preloaded,
@@ -222,13 +246,14 @@ object AgentDefinitions:
       fragments: Map[FragmentName, FragmentBody],
       skills: Map[SkillDef.Name, SkillDef],
       style: ToolStyle
-  ): Either[String, String] =
+  ): Either[Problems, String] =
     val keep = headlessAudience(d)
+    val file = agentFile(d.name)
     val parts = d.include.map { i =>
       val name = if i.value == WritingRules then WritingGuide else i.value
       fragments
         .get(FragmentName(name))
-        .toRight(s"agents/${d.name}.md includes '$i', which is not in agents/_shared/")
+        .toRight(Problem.Config.Definition(file, Problem.Config.Flaw.IncludeMissing(Problem.Raw.of(i))))
         .map(f => forAudience(AgentDef.Body(f.value), keep).value.trim)
         .map(f =>
           if i.value == WritingGuide then s"$GuideHeading\n\n$f"
@@ -238,15 +263,15 @@ object AgentDefinitions:
     } ++ d.skills.map { s =>
       skills
         .get(SkillDef.Name(s.value))
-        .toRight(s"agents/${d.name}.md lists skill '$s', which is not in skills/")
+        .toRight(Problem.Config.Definition(file, Problem.Config.Flaw.SkillMissing(Problem.Raw.of(s))))
         .map(sk => s"# Skill: ${sk.name}\n\n${forAudience(AgentDef.Body(sk.body.value), keep).value.trim}")
     }
-    parts.collect { case Left(m) => m } match
-      case Nil =>
+    Problems.from(parts.collect { case Left(m) => m }.toVector) match
+      case None =>
         Right(
           render((forAudience(d.body, keep).value.trim :: parts.collect { case Right(p) => p }).mkString("\n\n"), style)
         )
-      case errs => Left(errs.mkString("; "))
+      case Some(problems) => Left(problems)
 
   /** Who a headless run of `d` is: a step — and the writer when it includes the whole writing guide. */
   def headlessAudience(d: AgentDef): Set[Audience] =
@@ -284,11 +309,9 @@ final class AgentDefinitions(prompts: Prompts, val roster: AgentRoster):
         AgentDefinitions.FragmentName(r.stripPrefix("_shared/").stripSuffix(".md"))
     }
 
-  def agent(name: AgentDef.Name): Either[String, AgentDef] =
+  def agent(name: AgentDef.Name): Either[Problem, AgentDef] =
     prompts
       .load(SafePath.Candidate(s"$name.md"))
-      .left
-      .map(_.sentence)
       .flatMap(text => AgentDefinitions.parse(name, AgentDefinitions.Markdown(text), tools))
       .flatMap(d =>
         Either.cond(
@@ -298,38 +321,35 @@ final class AgentDefinitions(prompts: Prompts, val roster: AgentRoster):
               .transform(d.role)
           ),
           d,
-          s"agents/$name.md: role ${d.role.wire} is no contributed workflow's " +
-            s"(one of: ${roster.roles.map(_.wire).mkString(", ")})"
+          Problem.Config.Definition(
+            AgentDefinitions.agentFile(name),
+            Problem.Config.Flaw
+              .RoleUnused(Problem.Raw.of(d.role.wire), roster.roles.toVector.map(r => Problem.Raw.of(r.wire)))
+          )
         )
       )
-  def agent(s: StepAgent): Either[String, AgentDef] = agent(AgentDef.Name(s.wire.value))
-  def skill(name: SkillDef.Name): Either[String, SkillDef] =
+  def agent(s: StepAgent): Either[Problem, AgentDef] = agent(AgentDef.Name(s.wire.value))
+  def skill(name: SkillDef.Name): Either[Problem, SkillDef] =
     prompts
       .load(SafePath.Candidate(s"skills/$name/SKILL.md"))
-      .left
-      .map(_.sentence)
       .flatMap(text => AgentDefinitions.parseSkill(name, AgentDefinitions.Markdown(text)))
 
-  def fragments: Either[String, Map[AgentDefinitions.FragmentName, AgentDefinitions.FragmentBody]] =
+  def fragments: Either[Problems, Map[AgentDefinitions.FragmentName, AgentDefinitions.FragmentBody]] =
     all(fragmentNames)(n =>
       prompts
         .load(SafePath.Candidate(s"_shared/$n.md"))
-        .left
-        .map(_.sentence)
         .map(text => n -> AgentDefinitions.FragmentBody(text))
     ).map(_.toMap)
-  def skills: Either[String, Map[SkillDef.Name, SkillDef]] = all(skillNames)(n => skill(n).map(n -> _)).map(_.toMap)
-  def agents: Either[String, List[AgentDef]] = all(agentNames)(agent)
+  def skills: Either[Problems, Map[SkillDef.Name, SkillDef]] = all(skillNames)(n => skill(n).map(n -> _)).map(_.toMap)
+  def agents: Either[Problems, List[AgentDef]] = all(agentNames)(agent)
 
   /** The system prompt `d` runs with in a runtime that names tools `style`'s way. */
-  def system(d: AgentDef, style: ToolStyle): Either[String, String] =
+  def system(d: AgentDef, style: ToolStyle): Either[Problems, String] =
     for
       fs <- fragments
       ss <- skills
       s <- AgentDefinitions.system(d, fs, ss, style)
     yield s
 
-  private def all[A, B](as: List[A])(f: A => Either[String, B]): Either[String, List[B]] =
-    as.map(f).partitionMap(identity) match
-      case (Nil, ok) => Right(ok)
-      case (errs, _) => Left(errs.mkString("; "))
+  private def all[A, B](as: List[A])(f: A => Either[Problem, B]): Either[Problems, List[B]] =
+    as.traverseAll(f).map(_.toList)

@@ -2,7 +2,7 @@ package com.histmersion
 package domain.research.workflows
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import hearth.kindlings.optics.syntax.*
@@ -129,9 +129,9 @@ final class CompileArticlePipeline(
 
   // ── steps ──────────────────────────────────────────────────────────────────────────────────────
 
-  private def snapshot(ctx: RunCtx, target: RunInfo.Target): Either[String, Snap] =
+  private def snapshot(ctx: RunCtx, target: RunInfo.Target): Either[Problems, Snap] =
     val p = ctx.run.params
-    Slug.parse(target.value).left.map(_.sentence).flatMap { slug =>
+    Slug.parse(target.value).flatMap { slug =>
       site.articles.get(slug) match
         case Right(v) =>
           val a = v.article
@@ -177,12 +177,12 @@ final class CompileArticlePipeline(
               f
             )
           )
-        case Left(e) => Left(e.problems.sentences.mkString("; "))
+        case Left(e) => Left(e.problems)
     }
 
   private def isCitekey(ck: Citekey): Boolean = site.sources.get(ck, body = SourcesControllers.GetBody(false)).isRight
 
-  private def filter(ctx: RunCtx, s: Snap): Either[String, Found] =
+  private def filter(ctx: RunCtx, s: Snap): Either[Problems, Found] =
     val af = s.filter.getOrElse(Article.Filter(query = s.query, topics = s.topics, tags = s.tags))
     val f = af.toFilter.copy(limit = Filter.Limit(research.compile.maxSources.value))
     val res = site.search.sources(f)
@@ -335,7 +335,7 @@ final class CompileArticlePipeline(
   /** The one write, only after approval: a new article only while its slug is still free (never an overwrite), an
     * extension appended with the snapshot's token (a 412 drops it, never overwrites).
     */
-  private def write(ctx: RunCtx, s: Snap, d: ArticleDraft, decided: Decided): Either[String, Written] =
+  private def write(ctx: RunCtx, s: Snap, d: ArticleDraft, decided: Decided): Either[Problems, Written] =
     def task(why: String): Unit =
       ctx.warn(why)
       val item = Pipelines.entry(
@@ -374,7 +374,7 @@ final class CompileArticlePipeline(
               site.articles
                 .put(s.slug, put)
                 .left
-                .map(_.problems.sentences.mkString("; "))
+                .map(_.problems)
                 .map(_ => Written(written = Written.Value(true), Rationale("created"), None))
             )(
               Right(
@@ -428,7 +428,7 @@ final class CompileArticlePipeline(
                   None
                 )
               )
-            case Left(e) => Left(e.problems.sentences.mkString("; "))
+            case Left(e) => Left(e.problems)
 
   /** The independent review (phase 5): a review-article run with fix, started by this one. A refusal (no reviewer model
     * configured) is a warning: the article is written either way.
@@ -455,7 +455,7 @@ final class CompileArticlePipeline(
           ctx.warn(s"review: no review-article run started — ${e.problems.sentences.mkString("; ")}; run it by hand")
           None
 
-  private def close(ctx: RunCtx, d: ArticleDraft, w: Written, review: Option[String]): Either[String, String] =
+  private def close(ctx: RunCtx, d: ArticleDraft, w: Written, review: Option[String]): Either[Problems, String] =
     if w.written.value then
       Pipelines
         .goalOf(ctx.run)
@@ -482,8 +482,8 @@ final class CompileArticlePipeline(
         .value
     )
 
-  private def log(ctx: RunCtx, line: String): Either[String, String] =
-    Pipelines.log(site.workLists, ctx, Pipelines.LogLine(line)).left.map(_.sentences.mkString("; ")).map(_.value)
+  private def log(ctx: RunCtx, line: String): Either[Problems, String] =
+    Pipelines.log(site.workLists, ctx, Pipelines.LogLine(line)).map(_.value)
 
 object CompileArticlePipeline:
 

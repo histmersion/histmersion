@@ -3,7 +3,7 @@ package domain.library.workflows
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import hearth.kindlings.optics.syntax.*
@@ -56,7 +56,7 @@ final class EnrichSourcePipeline(
 
   def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
     for
-      ck <- Citekey.either(ctx.run.target.value).left.map(m => Halt.Fail(Problem.Unclassified(Legacy.Text(m))))
+      ck <- Citekey.parse(ctx.run.target.value).left.map(Halt.Fail(_))
       loaded <- ctx.code[Loaded](AgentRepo.StepRecord.Name("load"))(load(ck))
       _ <- ctx.code[MetaChecked](AgentRepo.StepRecord.Name("metadata"))(Right(metadata(ctx, loaded)))
       classified <- ctx.llm[Classification, Classified](
@@ -94,15 +94,15 @@ final class EnrichSourcePipeline(
 
   // ── steps ──────────────────────────────────────────────────────────────────────────────────────
 
-  private def load(ck: Citekey): Either[String, Loaded] =
+  private def load(ck: Citekey): Either[Problems, Loaded] =
     site.sources
       .get(ck, body = SourcesControllers.GetBody(true))
       .left
-      .map(_.problems.sentences.mkString("; "))
+      .map(_.problems)
       .flatMap { sw =>
         val s = sw.source
         val body = s.ocrMarkdown.map(_.value.trim).getOrElse("")
-        if body.isEmpty then Left(s"$ck has no text — ingest or OCR it first")
+        if body.isEmpty then Left(Problem.Run.NoText(Problem.Raw.of(ck)))
         else
           Right(
             Loaded(
@@ -234,7 +234,7 @@ final class EnrichSourcePipeline(
       c: Classified,
       fs: List[Finding.Input],
       notes: String
-  ): Either[String, Patched] =
+  ): Either[Problems, Patched] =
     val (p, fields, proposal) = patch(l, c, fs, Option(notes).filter(_.nonEmpty).map(PatchNotes(_)))
     // a dry run's simulated patch "succeeds": its step says what it would have set
     ctx.write(s"patch [[$ck]]: ${if fields.isEmpty then "nothing new" else fields.mkString(", ")}", p.asJson)(
@@ -261,7 +261,7 @@ final class EnrichSourcePipeline(
           site.sources
             .patch(ck, p2)
             .left
-            .map(_.problems.sentences.mkString("; "))
+            .map(_.problems)
             .map(_ =>
               Patched(
                 Patched.FindingsAdded(p2.findings.fold(0)(_.add.size)),
@@ -270,7 +270,7 @@ final class EnrichSourcePipeline(
               )
             )
         }
-      case Left(e) => Left(e.problems.sentences.mkString("; "))
+      case Left(e) => Left(e.problems)
 
   // ── upstream: metadata, refs, assess ──────────────────────────────────────────────────────────
 
@@ -372,7 +372,7 @@ final class EnrichSourcePipeline(
     * started for ticked off, and a `log` line. Calibre is untouched: a source not in Calibre is already what
     * `histmersion calibre gaps` reports, host-side.
     */
-  private def close(ctx: RunCtx, ck: Citekey, p: Patched, r: StatusRouted): Either[String, Closed] =
+  private def close(ctx: RunCtx, ck: Citekey, p: Patched, r: StatusRouted): Either[Problems, Closed] =
     // a dry run patched nothing: the lint would only describe the source as it was before
     val lint = if ctx.dryRun then Nil
     else
@@ -396,8 +396,6 @@ final class EnrichSourcePipeline(
       acquire.fold("")(a => s"; $a")
     Pipelines
       .log(site.workLists, ctx, Pipelines.LogLine(line))
-      .left
-      .map(_.sentences.mkString("; "))
       .map(_ => Closed(Closed.Line(line), lint.map(d => Closed.Lint(d.value)), acquire.map(Closed.Acquire(_))))
 
   /** Tick acquisition item `id` off as fulfilled by `ck` — the same rule an OCR upload follows. It never fails the run:

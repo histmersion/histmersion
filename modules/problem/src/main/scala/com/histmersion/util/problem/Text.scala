@@ -109,6 +109,7 @@ object Text:
       case Config.Reload(stage, scope)     => s"reloading the settings failed at ${words(stage.productPrefix)} ($scope)"
       case Config.Cycle(scopes)            =>
         s"the parts a reload rebuilds depend on each other in a cycle: ${scopes.toVector.mkString(" → ")}"
+      case Config.Definition(file, flaw)   => s"$file${flaw.said}"
       case Config.Unpriced(model, metered) =>
         s"model '$model' has no price — add it to agents.prices (HISTMERSION_AGENTS_PRICES), e.g. \"$model=0/0\" for " +
           s"a free local model${metered.fold("")(m => s" (${m.said})")}"
@@ -181,16 +182,29 @@ object Text:
         s"$step: no valid answer after $attempts attempt(s)${
             if ps.isEmpty then "" else ps.map(_.sentence).mkString(": ", "; ", "")
           }"
-      case Problem.Run.Blocked(block)           => s"held back: ${block.said}"
-      case Problem.Run.Interrupted              => "interrupted by a restart"
-      case Problem.Run.CutShort(activity)       => activity.cutShort
-      case Problem.Run.Unrecorded(activity)     => activity.unrecorded
-      case Problem.Run.Cancelled(by)            => s"cancelled by ${words(by.productPrefix)}"
-      case Problem.Run.Draining(since)          => s"stopped while the autopilot drains (since ${since.iso})"
-      case Problem.Run.Aborted(step, cause)     => s"step $step cannot go on: ${words(cause.productPrefix)}"
-      case Content.Finding(cause)               => cause.said
-      case Content.Proposal(rule, at)           => s"$at: ${rule.said}"
-      case Content.Answer(rule)                 => rule.said
+      case Problem.Run.Failed(why)        => why.toVector.map(_.sentence).mkString("; ")
+      case Problem.Run.Declined(problems) =>
+        if problems.isEmpty then "the answer was rejected" else problems.map(_.sentence).mkString("; ")
+      case Problem.Run.LimitReached(why, until) => s"${why.sentence} — skipped until ${until.iso}"
+      case Problem.Run.AllowanceReached(model)  =>
+        s"$model reached its allowance during the step; the chain's next model takes it"
+      case Problem.Run.OutputCapped(step, model, cap, sent, setting) =>
+        s"$step: $model's answer exceeded the $cap output-token cap (the step sent $sent) — raise ${setting.said} " +
+          "(a thinking model's reasoning counts toward it), restart the server, then resume the run"
+      case Problem.Run.NoText(source)            => s"$source has no text — ingest or OCR it first"
+      case Problem.Run.NoBody(article)           => s"article '$article' has no body to review"
+      case Problem.Run.Blocked(block)            => s"held back: ${block.said}"
+      case Problem.Run.Interrupted               => "interrupted by a restart"
+      case Problem.Run.CutShort(activity)        => activity.cutShort
+      case Problem.Run.Unrecorded(activity)      => activity.unrecorded
+      case Problem.Run.Cancelled(by)             => s"cancelled by ${words(by.productPrefix)}"
+      case Problem.Run.Draining(since)           => s"stopped while the autopilot drains (since ${since.iso})"
+      case Problem.Run.Aborted(step, cause)      => s"step $step cannot go on: ${words(cause.productPrefix)}"
+      case Content.Finding(cause)                => cause.said
+      case Content.Proposal(rule, at)            => s"$at: ${rule.said}"
+      case Content.Answer(rule)                  => rule.said
+      case Content.Undecoded(why, finish, began) =>
+        s"${why.said}${finish.fold("")(f => s" ($f)")}${began.fold("")(b => s" — the answer began: $b")}"
       case Internal.Unexpected(id, where, e, r) => s"$where failed unexpectedly ($e, problem $id) — $r"
       case Unclassified(text)                   => s"$text"
       case Stored.Unrecognised(text)            => s"$text"
@@ -1022,6 +1036,51 @@ object Text:
         (s"next reset at ${at.iso} ($model), when the run resumes by itself" +: held.map(_.said)).mkString("; ")
       case Problem.Run.Frees.Released(held) => s"no window frees by itself: ${held.toVector.map(_.said).mkString("; ")}"
       case Problem.Run.Frees.Never          => "no window frees by itself — raise or reset the allowance"
+
+  /** What is wrong with a definition, after its file: most after a colon, what it names that is missing without. */
+  extension (flaw: Config.Flaw)
+    private def said: String = flaw match
+      case Config.Flaw.NoHeader                => ": no YAML header (--- … ---)"
+      case Config.Flaw.HeaderUnclosed          => ": the YAML header is not closed"
+      case Config.Flaw.HeaderNotMapping        => ": the YAML header is not a mapping"
+      case Config.Flaw.HeaderUnparsable(r)     => s": the YAML header does not parse: $r"
+      case Config.Flaw.NotList(field, value)   => s": $field: expected a list, not '$value'"
+      case Config.Flaw.NoName                  => ": no name"
+      case Config.Flaw.NameNotFile(named)      => s": name '$named' is not the file's"
+      case Config.Flaw.NoDescription           => ": no description"
+      case Config.Flaw.RoleUnknown(roles)      => s": model-role is not one of ${roles.mkString(", ")}"
+      case Config.Flaw.RoleUnused(role, roles) =>
+        s": role $role is no contributed workflow's (one of: ${roles.mkString(", ")})"
+      case Config.Flaw.ToolsUnoffered(tools, known) =>
+        s": tools.histmersion names tools an agent cannot be offered: ${tools.mkString(", ")} " +
+          s"(one of ${known.mkString(", ")})"
+      case Config.Flaw.WebUnknown                  => ": tools.web is none, discover, search or fetch"
+      case Config.Flaw.WritesUnknown               => ": writes is none, propose or direct"
+      case Config.Flaw.TurnsNotPositive            => ": max-turns is a positive number"
+      case Config.Flaw.RuntimesUnknown(runtimes)   => s": unknown runtime(s) ${runtimes.mkString(", ")}"
+      case Config.Flaw.InteractiveUnset            => ": an interactive agent needs `interactive: {model, tools}`"
+      case Config.Flaw.SkillNotNamed(name)         => s": its name is not '$name'"
+      case Config.Flaw.IncludeMissing(include)     => s" includes '$include', which is not in agents/_shared/"
+      case Config.Flaw.SkillMissing(skill)         => s" lists skill '$skill', which is not in skills/"
+      case Config.Flaw.AudienceUnknown(audience)   => s": names no audience: only:$audience"
+      case Config.Flaw.MarkerUnclosed(audience)    => s": only:$audience is never closed"
+      case Config.Flaw.MarkerNested(audience, out) => s": only:$audience opens inside only:$out"
+      case Config.Flaw.MarkerUnopened(audience)    => s": /only:$audience closes nothing open"
+      case Config.Flaw.ToolUnknown(tool)           => s" names {{tool:$tool}}, which is not an MCP tool"
+      case Config.Flaw.DescriptionLong             => ": the description is over 1,024 characters (opencode refuses it)"
+
+  extension (setting: Problem.Run.CapSetting)
+    private def said: String = setting match
+      case Problem.Run.CapSetting.StepMaxTokens => "agents.step.max-tokens (HISTMERSION_AGENTS_MAX_TOKENS)"
+      case Problem.Run.CapSetting.StepOwn       =>
+        "the step's own cap (agents.review.fixer-max-tokens or agents.compile.draft-max-tokens)"
+
+  extension (decoding: Content.Decoding)
+    private def said: String = decoding match
+      case Content.Decoding.Mismatch(path, reported) => s"the answer does not match the schema at $path: $reported"
+      case Content.Decoding.NotJson(reported)        => s"the answer is not valid JSON: $reported"
+      case Content.Decoding.Unreadable(reported)     => s"the answer could not be decoded: $reported"
+      case Content.Decoding.NotSchema                => "the answer is not the JSON the schema asks for"
 
   extension (held: Problem.Run.HeldPool)
     private def said: String =
