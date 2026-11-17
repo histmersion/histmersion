@@ -1606,7 +1606,7 @@ test('the approvals window: kind chips with the server\'s counts, a picked kind 
   await withPage({ width: 1440, height: 900 }, async page => {
     await page.route('**/api/config', async route => {
       const res = await route.fetch();
-      return route.fulfill({ response: res, json: { ...(await res.json()), agentsEnabled: true, writeKeyRequired: false } });
+      return route.fulfill({ response: res, json: { ...(await res.json()), agentsEnabled: true, keyRequired: false } });
     });
     const asked = [], decided = [];
     await page.route(/\/api\/agents\/approvals(\?|$)/, async route => {
@@ -2248,7 +2248,7 @@ test('autopilot focus: the active goals, the queue and a pin in the managers win
   await withPage({ width: 1440, height: 900 }, async page => {
     await page.route('**/api/config', async route => {
       const res = await route.fetch();
-      return route.fulfill({ response: res, json: { ...(await res.json()), agentsEnabled: true, writeKeyRequired: false } });
+      return route.fulfill({ response: res, json: { ...(await res.json()), agentsEnabled: true, keyRequired: false } });
     });
     const focus = { on: true, max: 2, maxFrom: 'config', held: 6, queued: 3, changes: [],
       active: [

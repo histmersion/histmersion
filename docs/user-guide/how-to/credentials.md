@@ -137,7 +137,7 @@ Bitwarden's session can be kept in KeePassXC, for example.
 | **Smithsonian Open Access** (`media import smithsonian`) | `plugins.media-smithsonian.api-key` | an api.data.gov key, as a secret reference. The plugin is off by default: set `plugins.media-smithsonian.enabled = true` too. Without a key it is listed but not asked |
 | **Europeana** (`media import europeana`) | `plugins.media-europeana.api-key` | your **personal** Europeana API key, as a secret reference. Off by default: set `plugins.media-europeana.enabled = true` too. Without a key it is listed but not asked |
 | **Semantic Scholar** (for `followups`) | `acquire.semantic-scholar.api-key` | optional; a key only raises the rate limit |
-| the server's own **write key** | `auth.api-key` (`HISTMERSION_API_KEY`) | when set, every write must send `Authorization: Bearer <key>`; set it whenever the server listens beyond your computer |
+| the server's own **API key** | `auth.api-key` (`HISTMERSION_API_KEY`) | what every request from an authenticated network — reads too — must send as `Authorization: Bearer <key>`; the server does not start listening beyond your computer without it unless every network that can reach it is trusted ([Who can reach your server](access.md)). The CLI reads it from `HISTMERSION_TOKEN` or `cli.token-file` |
 | **Anthropic** API | `ANTHROPIC_API_KEY` | environment only |
 | **OpenAI** API | `OPENAI_API_KEY` | environment only |
 | a **local** OpenAI-compatible server | `HISTMERSION_AGENTS_LOCAL_API_KEY` | environment only, if your server wants one |

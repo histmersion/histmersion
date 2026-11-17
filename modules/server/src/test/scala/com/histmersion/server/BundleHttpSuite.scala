@@ -36,7 +36,6 @@ import com.histmersion.api.jobs.{JobInfo, JobState}
 import com.histmersion.db.DbSuite
 import com.histmersion.db.TestDb
 import com.histmersion.config.DbConfig
-import com.histmersion.config.AuthConfig
 import com.histmersion.config.BundlesConfig
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.database.Transactor
@@ -63,7 +62,7 @@ class BundleHttpSuite extends DbSuite with com.histmersion.db.Bounded:
       .modify(_.db)
       .setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
       .modify(_.auth)
-      .setTo(base.auth.modify(_.apiKey).setTo(AuthConfig.ApiKey(Key)))
+      .setTo(KeyedLoopback(base.auth, Key))
       .modify(_.bundles)
       .setTo(base.bundles.modify(_.dir).setTo(BundlesConfig.Dir(work.toString)))
 
@@ -76,7 +75,10 @@ class BundleHttpSuite extends DbSuite with com.histmersion.db.Bounded:
     }
 
   private def get(url: String): HttpResponse[Array[Byte]] =
-    http.send(HttpRequest.newBuilder(URI.create(url)).build(), HttpResponse.BodyHandlers.ofByteArray())
+    http.send(
+      HttpRequest.newBuilder(URI.create(url)).header("Authorization", s"Bearer $Key").build(),
+      HttpResponse.BodyHandlers.ofByteArray()
+    )
 
   private def post(url: String, body: Array[Byte], key: Option[String] = Some(Key)): HttpResponse[String] =
     val b = HttpRequest

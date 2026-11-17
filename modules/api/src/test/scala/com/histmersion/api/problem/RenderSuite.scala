@@ -85,6 +85,8 @@ class RenderSuite extends munit.FunSuite:
       "Place.Id 'pleiades_579885' is referred to by 3 Finding"
     ),
     "Policy" -> (403, "refused: RunTokenRequired"),
+    "Unauthenticated" -> (401, "unauthenticated: needs ApiKey"),
+    "Misdirected" -> (421, "misdirected to host 'rebound.example'"),
     "Quota" -> (429, "DailySpend is spent: 5.25 of 4.5 until 2025-11-10T00:00:00Z"),
     "Disabled" -> (403, "events-gvp is switched off by histmersion.events.gvp.enabled"),
     "Space" -> (403, "no room for Gebco | 4200000000 | /srv/histmersion/basemap | 5000000000 | 2000000000"),
@@ -206,6 +208,7 @@ class RenderSuite extends munit.FunSuite:
     "NoLogin" -> (409, "no login: 'claude auth status' says not logged in"),
     "ProbeUnread" -> (409, "probe read no rate limit, exit 1 — Invalid API key"),
     "ApiKeyLogin" -> (503, "api key login api_key_helper"),
+    "Exposed" -> (503, "exposed on '0.0.0.0' to '0.0.0.0/0': Unlisted"),
     "FloorsUnread" -> (503, "floors unread, agents.quota.claude-plan.floors (five_hour is required)"),
     "ReadAt" -> (
       503,
@@ -732,6 +735,7 @@ class RenderSuite extends munit.FunSuite:
           "plan, and another client could spend it"),
       Refused.Policy(Refused.Rule.RunTokenRequired) -> "a live run token is required",
       Refused.Policy(Refused.Rule.TokenOtherAgent) -> "this run token is not for that agent",
+      Refused.Unauthenticated(Refused.Credential.RunToken) -> "a live run token is required",
       Upstream.CallFailed(Upstream.Name("anthropic:claude-opus"), Relayed(Sentence("Overloaded"))) ->
         "the call to anthropic:claude-opus failed: Overloaded",
       Upstream.CallThrew(Upstream.Name("anthropic:claude-opus"), External.Reported("IOException: reset")) ->
@@ -903,3 +907,31 @@ class RenderSuite extends munit.FunSuite:
     val unasked = Upstream.Unasked(Relayed(Sentence("CORE asked to wait")))
     assertEquals(unasked.stored, "not asked this sweep — CORE asked to wait")
     assertEquals(unasked.sentence, "not asked this sweep — CORE asked to wait")
+
+  test("the access refusals name the setting or the header that lets the request in"):
+    Vector[(Problem, String)](
+      Refused.Unauthenticated(Refused.Credential.ApiKey) ->
+        ("this server needs its API key from your network — send it as `Authorization: Bearer <key>` (the CLI " +
+          "reads HISTMERSION_TOKEN or the file cli.token-file names; the web UI asks for it once)"),
+      Refused.Misdirected(Raw("rebound.example")) ->
+        ("this server does not answer to the name 'rebound.example' — if that is its own name, add it to auth.hosts " +
+          "on the server and restart it"),
+      Refused.Policy(Refused.Rule.CrossSite) ->
+        ("a change sent by a page of another site is refused — if that page is this server's own (behind a proxy, " +
+          "or under another name), add its origin to auth.origins on the server and restart it"),
+      Refused.Policy(Refused.Rule.NetworkNotAccepted) ->
+        ("this server does not accept requests from your network — its settings list it neither in " +
+          "auth.trusted-networks nor in auth.authenticated-networks"),
+      Config.Exposed(Raw("0.0.0.0"), Raw("0.0.0.0/0"), Config.Exposure.Unlisted) ->
+        ("server.host = '0.0.0.0' can be reached from 0.0.0.0/0, which neither auth.trusted-networks nor " +
+          "auth.authenticated-networks lists — bind to 127.0.0.1 (HISTMERSION_BIND), or list that network as " +
+          "trusted or as authenticated (with auth.api-key set)"),
+      Config.Exposed(Raw("0.0.0.0"), Raw("::/0"), Config.Exposure.NoKey) ->
+        ("server.host = '0.0.0.0' can be reached from ::/0, which auth.authenticated-networks lists, but " +
+          "auth.api-key is empty — set the key (HISTMERSION_API_KEY), or bind to 127.0.0.1 (HISTMERSION_BIND)")
+    ).foreach((p, want) => assertEquals(p.sentence, want))
+    Vector[Problem](
+      Refused.Unauthenticated(Refused.Credential.RunToken),
+      Refused.Policy(Refused.Rule.CrossSite),
+      Config.Exposed(Raw("::"), Raw("::/0"), Config.Exposure.NoKey)
+    ).foreach(p => assertEquals(Column.read(p.stored), p))

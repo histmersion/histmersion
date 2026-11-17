@@ -1,7 +1,7 @@
 package com.histmersion
 package cli
 import com.histmersion.api.json.NewtypeCodecs.given
-import com.histmersion.util.problem.{Legacy, Problem, Problems}
+import com.histmersion.util.problem.{External, Legacy, Problem, Problems}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.api.library.Tree
@@ -220,19 +220,39 @@ object Cli:
       case CommandLine.Outcome.Failed(problems, help) =>
         err.println(s"${problems.sentences.map(s => s"error: $s").mkString("\n")}\n\n$help");
         sys.exit(ExitCode.Usage.value)
-      case CommandLine.Outcome.Run(server, tok, cmd) =>
-        finish(server, tok, cmd.run)
+      case CommandLine.Outcome.Run(server, cmd) =>
+        finish(server, cmd.run)
 
-  private def finish(server: Option[Client.ServerUrl], tok: Option[Client.Token], run: Client => Either[Error, Unit])(
-      using console: Console
+  private def finish(server: Option[Client.ServerUrl], run: Client => Either[Error, Unit])(using
+      console: Console
   ): Unit =
     val url = server.getOrElse(Client.ServerUrl(Settings.app.cli.serverUrl.value))
-    val token = tok.orElse(Option(System.getenv("HISTMERSION_TOKEN")).filter(_.nonEmpty).map(Client.Token(_)))
+    val token = Client.Token.chosen(Option(System.getenv("HISTMERSION_TOKEN")), tokenFile) match
+      case Right(t) => t
+      case Left(p)  => err.println(s"error: ${p.sentence}"); sys.exit(ExitCode.Usage.value)
     run(new Client(url, token)) match
       case Right(())                     => ()
       case Left(e) if e.workingDirDenied => err.println(WorkingDir.message); sys.exit(e.exitCode.value)
       case Left(e)                       =>
         e.problems.sentences.foreach(s => err.println(s"error: $s")); sys.exit(e.exitCode.value)
+
+  /** The token in the file `cli.token-file` names (none when it names none); a file that does not read is a problem. */
+  private def tokenFile: Either[Problem, Option[Client.Token]] =
+    Option(Settings.app.cli.tokenFile.value.trim).filter(_.nonEmpty) match
+      case None       => Right(None)
+      case Some(name) =>
+        scala.util
+          .Try(Files.readString(Path.of(name)))
+          .toEither
+          .left
+          .map(e =>
+            Problem.Io.File(
+              Problem.Io.Access.Read,
+              Problem.Io.Path(name),
+              External.Reported(s"$e")
+            )
+          )
+          .map(Client.Token.firstLine)
 
   /** A user-facing failure: message + process exit code (1 = usage, 2 = server said no, 3 = unreachable). */
   final case class Error(

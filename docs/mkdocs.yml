@@ -83,6 +83,7 @@ nav:
       - "Process managers and the autopilot": "articles/autopilot.md"
   - "Using your AI assistant": "ai-assistant.md"
   - "How-to guides":
+      - "Who can reach your server": "how-to/access.md"
       - "Credentials and secrets": "how-to/credentials.md"
       - "Open-access papers": "how-to/open-access-papers.md"
       - "Books and Calibre": "how-to/books-and-calibre.md"

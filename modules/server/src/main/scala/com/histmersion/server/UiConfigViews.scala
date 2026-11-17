@@ -15,7 +15,7 @@ object UiConfigViews:
 
   def page(
       ui: UiSettings,
-      writeKeyRequired: UiConfig.WriteKeyRequired,
+      keyRequired: UiConfig.KeyRequired,
       agentsEnabled: UiConfig.AgentsEnabled,
       plugins: PluginsReport,
       baseMapSource: UiConfig.BaseMapSource,
@@ -29,7 +29,7 @@ object UiConfigViews:
       .withFieldComputed(_.time.defaultFrom, u => Year(u.time.defaultFrom.value))
       .withFieldComputed(_.time.defaultTo, u => Year(u.time.defaultTo.value))
       .withFieldComputed(_.mapStart.mode, u => MapStartMode.Wire(u.mapStart.mode.value))
-      .withFieldConst(_.writeKeyRequired, writeKeyRequired)
+      .withFieldConst(_.keyRequired, keyRequired)
       .withFieldConst(_.agentsEnabled, agentsEnabled)
       .withFieldConst(_.plugins, plugins)
       .withFieldConst(_.baseMapSource, baseMapSource)

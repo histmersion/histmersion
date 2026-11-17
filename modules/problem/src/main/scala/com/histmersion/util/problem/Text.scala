@@ -74,6 +74,13 @@ object Text:
       case Refused.Policy(rule)                               => rule.said
       case Refused.Quota(limit, used, cap, at)                => s"${limit.named} is spent: $used of $cap${until(at)}"
       case Refused.Space(work, needs, on, free, least)        => work.refused(needs, on, free, least)
+      case Refused.Unauthenticated(Refused.Credential.ApiKey) =>
+        "this server needs its API key from your network — send it as `Authorization: Bearer <key>` (the CLI " +
+          "reads HISTMERSION_TOKEN or the file cli.token-file names; the web UI asks for it once)"
+      case Refused.Unauthenticated(Refused.Credential.RunToken) => "a live run token is required"
+      case Refused.Misdirected(host)                            =>
+        s"this server does not answer to the name '$host' — if that is its own name, add it to auth.hosts on the " +
+          "server and restart it"
       case Refused.Disabled(feature, setting, variable, None) =>
         s"$feature is switched off ($setting = false)${variable.fold("")(v => s" — set $v=true on the server to use it")}"
       case Refused.Disabled(feature, setting, variable, Some(Refused.Effect.WritesLibrary)) =>
@@ -128,6 +135,13 @@ object Text:
       case Config.Unavailable(Config.Capability.LoginCheck)    => "not checked in this context"
       case Config.ApiKeyLogin(method)                          =>
         s"logged in with an API key ($method), not a Claude plan — log in with your Claude account, or set use-api-key"
+      case Config.Exposed(bind, reach, Config.Exposure.Unlisted) =>
+        s"server.host = '$bind' can be reached from $reach, which neither auth.trusted-networks nor " +
+          "auth.authenticated-networks lists — bind to 127.0.0.1 (HISTMERSION_BIND), or list that network as trusted " +
+          "or as authenticated (with auth.api-key set)"
+      case Config.Exposed(bind, reach, Config.Exposure.NoKey) =>
+        s"server.host = '$bind' can be reached from $reach, which auth.authenticated-networks lists, but auth.api-key " +
+          "is empty — set the key (HISTMERSION_API_KEY), or bind to 127.0.0.1 (HISTMERSION_BIND)"
       case Config.FloorsUnread(Config.FloorsFrom.Saved, why) =>
         s"saved floors do not parse: ${why.toVector.map(_.sentence).mkString("; ")}"
       case Config.FloorsUnread(Config.FloorsFrom.Setting(key), why) =>
@@ -721,6 +735,12 @@ object Text:
         "opencode on a ChatGPT login is refused while the server listens beyond loopback"
       case Refused.Rule.OrdinaryUsageDenied =>
         "the ChatGPT plan does not allow ordinary usage now (ordinaryUsageAllowed: false)"
+      case Refused.Rule.CrossSite =>
+        "a change sent by a page of another site is refused — if that page is this server's own (behind a proxy, or " +
+          "under another name), add its origin to auth.origins on the server and restart it"
+      case Refused.Rule.NetworkNotAccepted =>
+        "this server does not accept requests from your network — its settings list it neither in " +
+          "auth.trusted-networks nor in auth.authenticated-networks"
 
   extension (limit: Refused.Limit)
     private def named: String = limit match

@@ -9,3 +9,4 @@ docs/user-guide/plugins/developing.md	needs com.github.plokhotnyuk.jsoniter-scal
 docs/user-guide/reference/troubleshooting.md	"needs … X, but this Histmersion ships Y"	… needs … X, but this Histmersion ships Y …
 skills/histmersion-query/SKILL.md	`_No source '<key>'_`	No source 'X'
 docs/research-merge-import.md	`'zqold1990_x' is an old citekey of 'zqnew1990_x' — rename 'zqnew1990_x' instead`	'X' is an old citekey of 'Y' — … 'Y' instead
+docs/user-guide/how-to/access.md	server.host = '0.0.0.0' can be reached from 0.0.0.0/0, which neither auth.trusted-networks nor auth.authenticated-networks lists — bind to 127.0.0.1 (HISTMERSION_BIND), or list that network as trusted or as authenticated (with auth.api-key set)	server.host = 'X' can be reached from Y, which neither auth.trusted-networks nor auth.authenticated-networks lists — bind to 127.0.0.1 (HISTMERSION_BIND), or list that network as trusted or as authenticated (with auth.api-key set)

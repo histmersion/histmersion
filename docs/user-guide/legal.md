@@ -56,7 +56,7 @@ terms under which you got them**. In practice:
 - **A personal instance** (the default: it listens only on your own computer) is like your own
   bookshelf. Only you see what is in it.
 - **A shared instance** (opened to your network with `HISTMERSION_BIND` and protected with
-  `HISTMERSION_API_KEY` — see [Installing](getting-started/install.md)) must be reachable **only by
+  `HISTMERSION_API_KEY` — see [Who can reach your server](how-to/access.md)) must be reachable **only by
   people who are themselves entitled to the sources it holds**: for example, members of the same
   institution with the same subscriptions, or people who bought the same books. Do not open an
   instance holding paid or restricted material to the public internet or to people without that

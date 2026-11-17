@@ -1260,9 +1260,8 @@ unwrap	server:domain/research/workflows/ReviewLedgerService.scala	.value outside
 unwrap	server:domain/research/workflows/ReviewManagerKind.scala	.value outside a boundary	93
 unwrap	server:domain/research/workflows/SeedManagerKind.scala	.value outside a boundary	64
 unwrap	server:server/ArticleHtml.scala	.value outside a boundary	9
-unwrap	server:server/AuthHandler.scala	.value outside a boundary	3
 unwrap	server:server/Bootstrap.scala	.value outside a boundary	26
-unwrap	server:server/Composition.scala	.value outside a boundary	28
+unwrap	server:server/Composition.scala	.value outside a boundary	27
 unwrap	server:server/Deps.scala	.value outside a boundary	3
 unwrap	server:server/GazetteerPaths.scala	.value outside a boundary	5
 unwrap	server:server/HtmlRender.scala	.value outside a boundary	30
@@ -1297,7 +1296,7 @@ unwrap	server:server/agents/PlanPools.scala	.value outside a boundary	94
 unwrap	server:server/agents/ServerAutomationHost.scala	.value outside a boundary	33
 unwrap	server:server/agents/ServerEngineSite.scala	.value outside a boundary	1
 unwrap	server:server/hot/Hot.scala	.value outside a boundary	12
-unwrap	server:server/instance/InstanceControllers.scala	.value outside a boundary	28
+unwrap	server:server/instance/InstanceControllers.scala	.value outside a boundary	27
 unwrap	server:server/instance/MaintenanceControllers.scala	.value outside a boundary	14
 unwrap	server:server/instance/SeedControllers.scala	.value outside a boundary	5
 unwrap	server:server/plugins/RelinkPlugins.scala	.value outside a boundary	18

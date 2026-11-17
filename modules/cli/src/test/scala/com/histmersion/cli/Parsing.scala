@@ -5,8 +5,8 @@ package cli
 object Parsing:
   def parse(args: String*): Either[CommandLine.Outcome, Cli.Command] =
     CommandLine.parse(args) match
-      case CommandLine.Outcome.Run(_, _, c) => Right(c)
-      case other                            => Left(other)
+      case CommandLine.Outcome.Run(_, c) => Right(c)
+      case other                         => Left(other)
 
   def parses(args: String*): Boolean = parse(args*).isRight
 

@@ -66,7 +66,9 @@ mistyped value changes **nothing**, and says why.
   `server.request-timeout-seconds` and `server.shutdown-grace-seconds` (the listener is bound once — a second listener would buy little for
   a setting the LaunchAgent and `.mcp.json` also name), `runtime.*` (the bundled Postgres and converter
   are started once), `agents.enabled`, `agents.max-concurrent-runs`, `agents.max-llm-calls-in-flight` and
-  `converter.parallelism` (pool sizes).
+  `converter.parallelism` (pool sizes), and who is let in — `auth.trusted-networks`,
+  `auth.authenticated-networks`, `auth.trusted-as`, `auth.hosts`, `auth.origins` (checked against the bind
+  address once, when the listener is bound; `auth.api-key` itself applies at once).
 - **The environment** is the one read at startup: a reload re-reads the file only.
 
 The report lists the settings applied, the restart-only ones not applied, the components rebuilt, the
@@ -166,7 +168,7 @@ The settings of backups and portable bundles are listed with them, in
 
 | key | env var | default | what |
 |---|---|---|---|
-| `server.host` | `HISTMERSION_BIND` | `0.0.0.0` | bind address. The bundle binds `127.0.0.1` unless `HISTMERSION_BIND` is set. |
+| `server.host` | `HISTMERSION_BIND` | `127.0.0.1` | bind address. Any other is refused at start unless the `auth.*` networks cover every address it can be reached from ([Who can reach your server](../how-to/access.md)) |
 | `server.port` | `HISTMERSION_PORT` | `8000` | listen port |
 | `server.public-url` | `HISTMERSION_PUBLIC_URL` | `http://localhost:8000` | how clients reach the server; used for absolute URLs and to generate `.mcp.json` |
 | `server.request-timeout-seconds` | `HISTMERSION_REQUEST_TIMEOUT` | `1800` | one HTTP request end to end; must cover a `pg_dump`/`pg_restore` (netty's own default, 20 s, is not enough for a backup of the live corpus) |
@@ -256,8 +258,14 @@ The settings of backups and portable bundles are listed with them, in
 | `init.auto` | `HISTMERSION_INIT_AUTO` | `true` | on start, import the bundled gazetteer / period presets into whichever table is EMPTY, as a background job |
 | `init.data-dir` | `HISTMERSION_INIT_DATA_DIR` | `db` | **server-side** directory holding `places/` and `periods/`; a bundled server uses the bundle's own `db/` |
 | `init.fetch-sources` | `HISTMERSION_INIT_FETCH_SOURCES` | `cliopatria,awmc,land,periodo` | what `histmersion init --fetch` downloads, in order |
-| `auth.api-key` | `HISTMERSION_API_KEY` | *(empty)* | when set, every POST/PUT/PATCH/DELETE needs `Authorization: Bearer <key>` (401 otherwise); reads stay open. The web UI asks for the key before offering a write and keeps it in the browser's storage |
+| `auth.api-key` | `HISTMERSION_API_KEY` | *(empty)* | the key a request from an authenticated network sends as `Authorization: Bearer <key>` — reads and writes alike (401 otherwise). Compared in constant time. The web UI asks for it once and keeps it in the browser's storage ([Who can reach your server](../how-to/access.md)) |
+| `auth.trusted-networks` | — | `["127.0.0.0/8", "::1/128"]` | networks (CIDR) whose requests act as `auth.trusted-as` with no key. A tailnet: add `"100.64.0.0/10", "fd7a:115c:a1e0::/48"`. Restart-only |
+| `auth.authenticated-networks` | — | `[]` | networks whose requests need `auth.api-key`. A request from a network neither list holds is refused (403); the longest prefix decides. Restart-only |
+| `auth.trusted-as` | — | `owner` | who a trusted request acts as (`owner`, the one principal so far). Restart-only |
+| `auth.hosts` | — | `[]` | names a request may give in its `Host` header besides `localhost`, `127.0.0.1`, `[::1]`, `server.host` and the host of `server.public-url` (another one: 421). Restart-only |
+| `auth.origins` | — | `[]` | page origins (`https://name[:port]`) that may send changes besides this server's own pages (another page's change: 403). Restart-only |
 | `cli.server-url` | `HISTMERSION_SERVER_URL` | `http://localhost:8000` | where `histmersion` looks for the server |
+| `cli.token-file` | `HISTMERSION_TOKEN_FILE` | *(empty)* | a file whose first line is the API key `histmersion` sends when `HISTMERSION_TOKEN` is not set (`${HOME}/…` in the file works; keep the file readable by you alone). There is no `--token` option |
 | `acquire.contact-email` | `HISTMERSION_ACQUIRE_CONTACT_EMAIL` | *(empty)* — set per install | the **polite-pool** identity Crossref/OpenAlex/Unpaywall ask for, sent only as their `mailto`/`email` parameter — never in a header (`HttpPolicy`). Sent nowhere else. |
 | `acquire.openalex.url` · `crossref.url` · `unpaywall.url` · `arxiv.url` · `archive-org.url` · `wikipedia.url` | `HISTMERSION_ACQUIRE_*_URL` | the public APIs | upstream endpoints; point them at a mirror or a stub to work offline |
 | `acquire.core.api-key` | `HISTMERSION_ACQUIRE_CORE_API_KEY` | *(empty)* | CORE's key as plain text, for both CORE uses; `plugins.oa-core.api-key` (a secret reference) wins over it. Without either, CORE is not asked |

@@ -60,6 +60,8 @@ object Answer:
       case _: Refused.Quota               => StatusCode.TooManyRequests
       case _: Refused.Disabled            => StatusCode.Forbidden
       case _: Refused.Space               => StatusCode.Forbidden
+      case _: Refused.Unauthenticated     => StatusCode.Unauthorized
+      case _: Refused.Misdirected         => StatusCode.MisdirectedRequest
       case _: Upstream.Http               => StatusCode.BadGateway
       case _: Upstream.Unreachable        => StatusCode.BadGateway
       case _: Upstream.Challenged         => StatusCode.BadGateway

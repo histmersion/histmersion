@@ -37,7 +37,7 @@ object CommandLine:
 
   /** What the command line asks for. */
   enum Outcome:
-    case Run(server: Option[Client.ServerUrl], token: Option[Client.Token], command: Cli.Command)
+    case Run(server: Option[Client.ServerUrl], command: Cli.Command)
     case Help(text: HelpText)
     case Failed(problems: Problems, help: HelpText)
 
@@ -416,8 +416,6 @@ object CommandLine:
         "server",
         "Histmersion server URL (default: config cli.serverUrl / $HISTMERSION_SERVER_URL)"
       )
-    private val token = value[Client.Token]("token", "API key for authenticated servers (or $HISTMERSION_TOKEN)")
-
     entries.foreach(e => addSubcommand(e.conf()))
 
     /** Scallop's own errors, typed. Help and version still go through the output and exit hooks. */
@@ -434,7 +432,7 @@ object CommandLine:
             case Some(leaf: Leaf) =>
               leaf.command.fold(
                 problem => Outcome.Failed(problem, HelpText(helpOf(args))),
-                Outcome.Run(server.toOption, token.toOption, _)
+                Outcome.Run(server.toOption, _)
               )
             case _ => Outcome.Failed(Problem.Invalid.Missing.here(Problem.Field("command")), HelpText(helpOf(args)))
 

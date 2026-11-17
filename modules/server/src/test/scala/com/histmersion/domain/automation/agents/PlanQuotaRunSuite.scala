@@ -21,7 +21,7 @@ import com.histmersion.api.automation.Agents.*
 import com.histmersion.api.automation.PlanQuota.*
 import com.histmersion.domain.automation.agents.{AgentRepo, PlanQuotaRepo}
 import com.histmersion.util.database.{Db, Migrate}
-import com.histmersion.server.{Composition, Deps, ServerWiring}
+import com.histmersion.server.{Composition, Deps, KeyedLoopback, ServerWiring}
 import sttp.ai.core.agent.*
 
 import java.net.URI
@@ -552,7 +552,7 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
       )
     val keyed = baseCfg
       .modify(_.auth)
-      .setTo(baseCfg.auth.modify(_.apiKey).setTo(AuthConfig.ApiKey("zz-key")))
+      .setTo(KeyedLoopback(baseCfg.auth, "zz-key"))
       .modify(_.agents)
       .setTo(baseCfg.agents.modify(_.enabled).setTo(AgentsConfig.Enabled(false)))
     @volatile var hs: Option[ServerWiring] = None // the started server's handlers, for a run token
@@ -568,7 +568,9 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
         .start()
       try
         val url = s"http://127.0.0.1:${b.port}"
-        val (gs, gb) = send(HttpRequest.newBuilder(URI.create(s"$url/api/agents/quota")))
+        assertEquals(send(HttpRequest.newBuilder(URI.create(s"$url/api/agents/quota")))._1, 401, "a read needs it too")
+        val (gs, gb) =
+          send(HttpRequest.newBuilder(URI.create(s"$url/api/agents/quota")).header("authorization", "Bearer zz-key"))
         assertEquals(gs, 200, gb)
         assert(gb.contains("\"claude-plan\"") && gb.contains("\"chatgpt-plan\""), gb.take(400))
         assertEquals(

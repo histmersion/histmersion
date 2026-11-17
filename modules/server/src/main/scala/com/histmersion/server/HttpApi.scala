@@ -17,7 +17,8 @@ import com.histmersion.domain.*
 import com.histmersion.server.ArticleHtml
 import com.histmersion.api.basemap.BasemapApi
 import com.histmersion.api.catalogue.TilesApi
-import com.histmersion.api.instance.UiApi
+import com.histmersion.api.instance.{UiApi, UiConfig}
+import com.histmersion.util.access.Admission
 import com.histmersion.api.settings.ConfigEditApi
 import com.histmersion.api.views.AutopilotApi
 import com.histmersion.domain.library.acquisition.AcquisitionControllers
@@ -94,7 +95,12 @@ final class HttpApi(
     Api.version.serverLogicSuccess[Identity](_ => h.instance.version),
     Api.health.serverLogicSuccess[Identity](_ => h.instance.health),
     Api.about.serverLogicSuccess[Identity](_ => h.instance.about()),
-    Api.config.serverLogicSuccess[Identity](_ => h.instance.uiConfig),
+    // the page must send the key unless the access gate let this request in as a trusted network's
+    Api.config
+      .in(extractFromRequest(_.header(Admission.Header)))
+      .serverLogicSuccess[Identity](admitted =>
+        h.instance.uiConfig(UiConfig.KeyRequired(!admitted.contains(Admission.Trusted.wire)))
+      ),
     // the toolbar's counts and "something new" marks: REST only, like `config` (UiApi says why)
     UiApi.counters.serverLogicSuccess[Identity](_ => h.instance.uiCounters),
     UiApi.markSeen.serverLogic[Identity]((board, mark) => h.instance.markSeen(board, mark)),

@@ -23,8 +23,8 @@ class CommandLineSuite extends munit.FunSuite:
   private def scallop(args: String*): CommandLine.Outcome = CommandLine.parse("article" +: args)
 
   private def run(args: String*): ArticleCommand = scallop(args*) match
-    case CommandLine.Outcome.Run(_, _, cmd: ArticleCommand) => cmd
-    case other                                              => fail(s"${args.mkString(" ")}: ${other.toString}")
+    case CommandLine.Outcome.Run(_, cmd: ArticleCommand) => cmd
+    case other                                           => fail(s"${args.mkString(" ")}: ${other.toString}")
 
   private def problem(args: String*): Problem = scallop(args*) match
     case CommandLine.Outcome.Failed(p, _) => p.fold(identity)(ps => fail(s"several problems: $ps"))
@@ -115,12 +115,13 @@ class CommandLineSuite extends munit.FunSuite:
 
   test("the global options before the group"):
     assertEquals(
-      CommandLine.parse(List("--server", "http://h:1", "--token=t", "article", "delete", "sea_peoples")),
-      CommandLine.Outcome.Run(
-        Some(Client.ServerUrl("http://h:1")),
-        Some(Client.Token("t")),
-        ArticleCommand.Delete(slug)
-      )
+      CommandLine.parse(List("--server", "http://h:1", "article", "delete", "sea_peoples")),
+      CommandLine.Outcome.Run(Some(Client.ServerUrl("http://h:1")), ArticleCommand.Delete(slug))
+    )
+
+  test("there is no --token: a key on the command line is visible to every user of the machine"):
+    assert(
+      CommandLine.parse(List("--token=t", "article", "delete", "sea_peoples")).isInstanceOf[CommandLine.Outcome.Failed]
     )
 
   test("a missing positional argument is Missing"):

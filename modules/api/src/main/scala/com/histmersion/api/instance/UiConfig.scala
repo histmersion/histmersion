@@ -28,7 +28,7 @@ final case class UiConfig(
     mapTiles: MapTilesUiConfig = MapTilesUiConfig(),
     countersPollSeconds: UiConfig.CountersPollSeconds = UiConfig.CountersPollSeconds(30),
     jobPollMs: UiConfig.JobPollMs = UiConfig.JobPollMs(1000),
-    writeKeyRequired: UiConfig.WriteKeyRequired = UiConfig.WriteKeyRequired(false),
+    keyRequired: UiConfig.KeyRequired = UiConfig.KeyRequired(false),
     agentsEnabled: UiConfig.AgentsEnabled = UiConfig.AgentsEnabled(false),
     tilesTone: UiConfig.TilesTone = UiConfig.TilesTone("light"),
     plugins: PluginsReport = PluginsReport(),
@@ -70,8 +70,10 @@ object UiConfig:
   object CountersPollSeconds extends Newtype[Int, Pure]
   type JobPollMs = JobPollMs.T
   object JobPollMs extends Newtype[Int, Pure]
-  type WriteKeyRequired = WriteKeyRequired.T
-  object WriteKeyRequired extends Newtype[Boolean, Pure]
+
+  /** Whether the page must send the API key: it was let in with the key, not as a trusted network's. */
+  type KeyRequired = KeyRequired.T
+  object KeyRequired extends Newtype[Boolean, Pure]
   type AgentsEnabled = AgentsEnabled.T
   object AgentsEnabled extends Newtype[Boolean, Pure]
   type TilesTone = TilesTone.T

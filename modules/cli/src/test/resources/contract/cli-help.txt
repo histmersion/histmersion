@@ -1,62 +1,62 @@
 ==== histmersion
 Usage:
-    histmersion [--server <string>] [--token <string>] version
-    histmersion [--server <string>] [--token <string>] health
-    histmersion [--server <string>] [--token <string>] about
-    histmersion [--server <string>] [--token <string>] seed
-    histmersion [--server <string>] [--token <string>] reindex
-    histmersion [--server <string>] [--token <string>] search
-    histmersion [--server <string>] [--token <string>] facets
-    histmersion [--server <string>] [--token <string>] get
-    histmersion [--server <string>] [--token <string>] passages
-    histmersion [--server <string>] [--token <string>] geo-when
-    histmersion [--server <string>] [--token <string>] histogram
-    histmersion [--server <string>] [--token <string>] neighbors
-    histmersion [--server <string>] [--token <string>] graph
-    histmersion [--server <string>] [--token <string>] contradictions
-    histmersion [--server <string>] [--token <string>] put
-    histmersion [--server <string>] [--token <string>] patch
-    histmersion [--server <string>] [--token <string>] rename
-    histmersion [--server <string>] [--token <string>] delete
-    histmersion [--server <string>] [--token <string>] export
-    histmersion [--server <string>] [--token <string>] backup
-    histmersion [--server <string>] [--token <string>] backups
-    histmersion [--server <string>] [--token <string>] restore
-    histmersion [--server <string>] [--token <string>] maintenance
-    histmersion [--server <string>] [--token <string>] bundle
-    histmersion [--server <string>] [--token <string>] merge
-    histmersion [--server <string>] [--token <string>] article
-    histmersion [--server <string>] [--token <string>] places
-    histmersion [--server <string>] [--token <string>] periods
-    histmersion [--server <string>] [--token <string>] init
-    histmersion [--server <string>] [--token <string>] events
-    histmersion [--server <string>] [--token <string>] attestations
-    histmersion [--server <string>] [--token <string>] candidates
-    histmersion [--server <string>] [--token <string>] goals
-    histmersion [--server <string>] [--token <string>] agent-state
-    histmersion [--server <string>] [--token <string>] agent
-    histmersion [--server <string>] [--token <string>] media
-    histmersion [--server <string>] [--token <string>] asset-links
-    histmersion [--server <string>] [--token <string>] lint
-    histmersion [--server <string>] [--token <string>] queue
-    histmersion [--server <string>] [--token <string>] query
-    histmersion [--server <string>] [--token <string>] schema
-    histmersion [--server <string>] [--token <string>] discover
-    histmersion [--server <string>] [--token <string>] refs
-    histmersion [--server <string>] [--token <string>] assess
-    histmersion [--server <string>] [--token <string>] followups
-    histmersion [--server <string>] [--token <string>] ingest
-    histmersion [--server <string>] [--token <string>] archive
-    histmersion [--server <string>] [--token <string>] calibre
-    histmersion [--server <string>] [--token <string>] reocr
-    histmersion [--server <string>] [--token <string>] assets
-    histmersion [--server <string>] [--token <string>] jobs
-    histmersion [--server <string>] [--token <string>] activity
-    histmersion [--server <string>] [--token <string>] bookmarks
-    histmersion [--server <string>] [--token <string>] notes
-    histmersion [--server <string>] [--token <string>] config
-    histmersion [--server <string>] [--token <string>] basemap
-    histmersion [--server <string>] [--token <string>] plugin
+    histmersion [--server <string>] version
+    histmersion [--server <string>] health
+    histmersion [--server <string>] about
+    histmersion [--server <string>] seed
+    histmersion [--server <string>] reindex
+    histmersion [--server <string>] search
+    histmersion [--server <string>] facets
+    histmersion [--server <string>] get
+    histmersion [--server <string>] passages
+    histmersion [--server <string>] geo-when
+    histmersion [--server <string>] histogram
+    histmersion [--server <string>] neighbors
+    histmersion [--server <string>] graph
+    histmersion [--server <string>] contradictions
+    histmersion [--server <string>] put
+    histmersion [--server <string>] patch
+    histmersion [--server <string>] rename
+    histmersion [--server <string>] delete
+    histmersion [--server <string>] export
+    histmersion [--server <string>] backup
+    histmersion [--server <string>] backups
+    histmersion [--server <string>] restore
+    histmersion [--server <string>] maintenance
+    histmersion [--server <string>] bundle
+    histmersion [--server <string>] merge
+    histmersion [--server <string>] article
+    histmersion [--server <string>] places
+    histmersion [--server <string>] periods
+    histmersion [--server <string>] init
+    histmersion [--server <string>] events
+    histmersion [--server <string>] attestations
+    histmersion [--server <string>] candidates
+    histmersion [--server <string>] goals
+    histmersion [--server <string>] agent-state
+    histmersion [--server <string>] agent
+    histmersion [--server <string>] media
+    histmersion [--server <string>] asset-links
+    histmersion [--server <string>] lint
+    histmersion [--server <string>] queue
+    histmersion [--server <string>] query
+    histmersion [--server <string>] schema
+    histmersion [--server <string>] discover
+    histmersion [--server <string>] refs
+    histmersion [--server <string>] assess
+    histmersion [--server <string>] followups
+    histmersion [--server <string>] ingest
+    histmersion [--server <string>] archive
+    histmersion [--server <string>] calibre
+    histmersion [--server <string>] reocr
+    histmersion [--server <string>] assets
+    histmersion [--server <string>] jobs
+    histmersion [--server <string>] activity
+    histmersion [--server <string>] bookmarks
+    histmersion [--server <string>] notes
+    histmersion [--server <string>] config
+    histmersion [--server <string>] basemap
+    histmersion [--server <string>] plugin
 
 Histmersion — CLI over the Histmersion server (MCP twin)
 
@@ -65,8 +65,6 @@ Options and flags:
         Display this help text.
     --server <string>
         Histmersion server URL (default: config cli.serverUrl / $HISTMERSION_SERVER_URL)
-    --token <string>
-        API key for authenticated servers (or $HISTMERSION_TOKEN)
 
 Subcommands:
     version

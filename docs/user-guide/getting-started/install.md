@@ -103,10 +103,9 @@ The server starts and stops everything else itself. On its first start it create
 then runs it (on `127.0.0.1:5433`) and the text-recognition program (on `127.0.0.1:8100`) as its own
 child processes. The server itself listens on `127.0.0.1:8000` — only your own computer can reach it.
 
-To reach it from other devices on your network, set `HISTMERSION_BIND=0.0.0.0` **and**
-`HISTMERSION_API_KEY` (a password every write must send) in the service's environment (macOS: the
-LaunchAgent's `EnvironmentVariables`; Linux: an `Environment=` line), then restart. Do this only on a
-network you trust.
+To reach it from your other devices — over Tailscale, or from your local network with a key — see
+[Who can reach your server](../how-to/access.md): the settings list the networks it accepts, and the
+server refuses to start when it would listen where nobody vouched for the network.
 
 ## First-run data
 

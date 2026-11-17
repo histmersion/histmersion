@@ -250,7 +250,6 @@ server:domain/activity/ActivityService.scala	automation.activity
 server:server/AcquisitionWiring.scala	server
 server:server/ArticleHtml.scala	server
 server:server/ArticlePage.scala	research.articles
-server:server/AuthHandler.scala	server
 server:server/BackupWiring.scala	server
 server:server/BasemapWiring.scala	server
 server:server/Bootstrap.scala	server

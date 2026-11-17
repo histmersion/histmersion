@@ -15588,7 +15588,7 @@
       ]
     },
     {
-      "type": "com.histmersion.server.AuthHandler"
+      "type": "com.histmersion.util.access.AccessGate"
     },
     {
       "type": "com.histmersion.server.Deps$",

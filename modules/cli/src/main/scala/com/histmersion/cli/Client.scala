@@ -488,8 +488,22 @@ object Client:
 
   type ServerUrl = ServerUrl.T
   object ServerUrl extends Newtype[String, Pure]
+
+  /** The API key the CLI sends as `Authorization: Bearer <token>`. Never a command-line argument, where `ps` shows it:
+    * `HISTMERSION_TOKEN`, else the first line of the file `cli.token-file` names.
+    */
   type Token = Token.T
-  object Token extends Newtype[String, Pure]
+  object Token extends Newtype[String, Pure]:
+    /** Pure: the variable's value when it is set and not blank, else what the file holds ([[firstLine]]), read only
+      * then. A file that cannot be read is the problem `read` reports.
+      */
+    def chosen[P](variable: Option[String], file: => Either[P, Option[Token]]): Either[P, Option[Token]] =
+      variable.map(_.trim).filter(_.nonEmpty) match
+        case Some(v) => Right(Some(Token(v)))
+        case None    => file
+
+    /** Pure: the token a file holds, its first non-blank line trimmed; none for a file of blank lines. */
+    def firstLine(text: String): Option[Token] = text.linesIterator.map(_.trim).find(_.nonEmpty).map(Token(_))
 
   def isWrite(m: sttp.model.Method): Boolean =
     m == sttp.model.Method.POST || m == sttp.model.Method.PUT || m == sttp.model.Method.PATCH ||
@@ -499,13 +513,18 @@ object Client:
     * refused (#819: a refused backup download used to read "refused this write").
     */
   def unexpected(status: HttpStatus, serverUrl: ServerUrl, write: Write): Problem = status.value match
-    case 401 | 403 =>
-      val what = if write.value then "this write" else "this request"
+    case 401 =>
       Problem.Unclassified(
-        Legacy.Text(s"$serverUrl refused $what: it needs its API key — pass --token <key> or set HISTMERSION_TOKEN")
+        Legacy.Text(
+          s"$serverUrl refused ${what(write)}: it needs its API key — set HISTMERSION_TOKEN, or name a file that " +
+            "holds it in cli.token-file"
+        )
       )
+    case 403 => Problem.Unclassified(Legacy.Text(s"$serverUrl refused ${what(write)} (HTTP 403)"))
     case 404 =>
       Problem.Unclassified(
         Legacy.Text(s"$serverUrl has no such endpoint (HTTP 404) — is the CLI newer than the server?")
       )
     case c => Problem.Unclassified(Legacy.Text(s"unexpected answer from $serverUrl: HTTP $c"))
+
+  private def what(write: Write): String = if write.value then "this write" else "this request"

@@ -68,6 +68,8 @@ object Column:
       case Refused.Quota(limit, used, cap, at)         => s"${limit.productPrefix} is spent: $used of $cap${until(at)}"
       case Refused.Space(work, needs, on, free, least) =>
         s"no room for ${(work.stored +: Vector(s"$needs", s"$on", s"$free", s"$least")).mkString(HoldSeparator)}"
+      case Refused.Unauthenticated(credential)      => s"unauthenticated: needs ${credential.productPrefix}"
+      case Refused.Misdirected(host)                => s"misdirected to host '$host'"
       case Refused.Disabled(feature, setting, v, e) =>
         s"$feature is switched off by $setting${v.fold("")(variable => s"; $variable=true switches it on")}" +
           e.fold("")(effect => s" (${effect.productPrefix})")
@@ -111,7 +113,8 @@ object Column:
             case Config.Drain.Unclosed(s) => s" $s s"
             case Config.Drain.ClosedInUse => ""
           }: $component"
-      case Config.ApiKeyLogin(method)                               => s"api key login $method"
+      case Config.ApiKeyLogin(method)            => s"api key login $method"
+      case Config.Exposed(bind, reach, exposure) => s"exposed on '$bind' to '$reach': ${exposure.productPrefix}"
       case Config.FloorsUnread(Config.FloorsFrom.Saved, why)        => s"floors unread, saved (${why.storedEach})"
       case Config.FloorsUnread(Config.FloorsFrom.Setting(key), why) => s"floors unread, $key (${why.storedEach})"
       case Config.ReadAt(file, at, why)                             => s"settings $file read at $at (${why.storedEach})"
@@ -963,6 +966,9 @@ object Column:
     private val McpServerIs = "^agent mcp server (\\S+)$".r
     private val ContentHashes = "(?s)^content of (.+) hashes to (\\S+), not (\\S+)$".r
     private val ApiKeyLoginBy = "^api key login (\\S+)$".r
+    private val UnauthenticatedBy = "^unauthenticated: needs (\\w+)$".r
+    private val MisdirectedTo = "(?s)^misdirected to host '(.*)'$".r
+    private val ExposedOn = "(?s)^exposed on '(.*)' to '(.*)': (\\w+)$".r
     private val FloorsUnreadSaved = "(?s)^floors unread, saved \\((.*)\\)$".r
     private val FloorsUnreadOf = "(?s)^floors unread, (\\S+) \\((.*)\\)$".r
     private val SettingsReadAt = "(?s)^settings (.+?) read at (.+?) \\((.*)\\)$".r
@@ -1831,7 +1837,11 @@ object Column:
         case McpServerIs(status)                  => Some(Upstream.McpServer(Raw(s"$status")))
         case ContentHashes(path, found, expected) =>
           Some(Io.Hashed(Io.Path(s"$path"), Raw(s"$expected"), Raw(s"$found")))
-        case ApiKeyLoginBy(method)    => Some(Config.ApiKeyLogin(Raw(s"$method")))
+        case ApiKeyLoginBy(method)   => Some(Config.ApiKeyLogin(Raw(s"$method")))
+        case UnauthenticatedBy(cred) => word(Refused.Credential.values.toSeq, cred).map(Refused.Unauthenticated(_))
+        case MisdirectedTo(host)     => Some(Refused.Misdirected(Raw(s"$host")))
+        case ExposedOn(bind, reach, exposure) =>
+          word(Config.Exposure.values.toSeq, exposure).map(Config.Exposed(Raw(s"$bind"), Raw(s"$reach"), _))
         case FloorsUnreadSaved(why)   => whysOf(why).map(Config.FloorsUnread(Config.FloorsFrom.Saved, _))
         case FloorsUnreadOf(key, why) =>
           whysOf(why).map(Config.FloorsUnread(Config.FloorsFrom.Setting(SettingKey(s"$key")), _))

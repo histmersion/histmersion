@@ -848,6 +848,22 @@ object Problem:
       */
     final case class Space(work: Work, needs: Count, on: Io.Path, free: Count, least: Count) extends Refused
 
+    /** The request came from a network that is not trusted and carried no valid `credential`. */
+    final case class Unauthenticated(credential: Credential) extends Refused
+
+    /** The request named `host` in its `Host` header, which is none of the names this server answers to: a page whose
+      * name was pointed at this server (DNS rebinding) must not reach it.
+      */
+    final case class Misdirected(host: Raw) extends Refused
+
+    /** What a request must carry to be let in from a network that is not trusted. */
+    enum Credential derives CanEqual:
+      /** The API key, as `Authorization: Bearer <key>`. */
+      case ApiKey
+
+      /** A live run token of an agent run. */
+      case RunToken
+
     /** What a refusal for want of disk space was for, each with its own way out. */
     enum Work derives CanEqual:
       /** The base map's layer `title`: a smaller region, fewer zooms or another directory. */
@@ -920,6 +936,12 @@ object Problem:
 
       /** The ChatGPT plan does not allow ordinary usage now (`ordinaryUsageAllowed: false`). */
       case OrdinaryUsageDenied
+
+      /** A change sent by a page of another site (its `Origin`, or its `Referer`, is none of this server's own). */
+      case CrossSite
+
+      /** The request came from a network the settings list neither as trusted nor as authenticated. */
+      case NetworkNotAccepted
 
     /** The allowances a request can spend. */
     enum Limit:
@@ -1564,6 +1586,19 @@ object Problem:
 
       /** A skill's description is over 1,024 characters, which opencode refuses. */
       case DescriptionLong
+
+    /** The server would listen on `bind`, which `reach` can connect to, and nothing would stop a stranger there:
+      * `exposure` says why.
+      */
+    final case class Exposed(bind: Raw, reach: Raw, exposure: Exposure) extends Config
+
+    /** Why an address the server listens on would be open to whoever reaches it. */
+    enum Exposure derives CanEqual:
+      /** No setting lists the network: neither as trusted nor as authenticated. */
+      case Unlisted
+
+      /** The network is listed as authenticated, but there is no API key to authenticate with. */
+      case NoKey
 
     /** Why a model of a provider that can run on a plan is billed by the token. */
     enum Metered:
@@ -2594,6 +2629,8 @@ object Problem:
       ),
       Conflict.Job(Raw("0193f1c4"), Conflict.State("queued"), Conflict.Control.NotStarted),
       Refused.Policy(Refused.Rule.RunTokenRequired),
+      Refused.Unauthenticated(Refused.Credential.ApiKey),
+      Refused.Misdirected(Raw("rebound.example")),
       Refused.Quota(Refused.Limit.DailySpend, Refused.Amount(5.25), Refused.Amount(4.5), Some(EpochMs(1762732800000L))),
       Refused.Disabled(Refused.Feature("events-gvp"), SettingKey("histmersion.events.gvp.enabled"), None, None),
       Refused.Space(
@@ -2673,6 +2710,7 @@ object Problem:
       ),
       Config.Drained(Raw("pool (generation 3, 2 pinned)"), Config.Drain.InUse(Count(10L))),
       Config.ApiKeyLogin(Raw("api_key_helper")),
+      Config.Exposed(Raw("0.0.0.0"), Raw("0.0.0.0/0"), Config.Exposure.Unlisted),
       Config.FloorsUnread(
         Config.FloorsFrom.Setting(SettingKey("agents.quota.claude-plan.floors")),
         NonEmptyVector.of(Invalid.Missing(Field("five_hour"), Vector.empty))

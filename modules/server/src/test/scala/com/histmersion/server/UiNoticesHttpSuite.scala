@@ -15,14 +15,13 @@ import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import com.histmersion.db.DbSuite
 import com.histmersion.db.TestDb
 import com.histmersion.config.DbConfig
-import com.histmersion.config.AuthConfig
 import com.histmersion.config.ServerConfig
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.instance.UiNotices
 
 /** The toolbar's notices over HTTP: `GET /api/ui/counters` counts what waits and says what is new,
-  * `POST /api/ui/seen/{board}` marks a window read — without the API key, which every other write still needs — and the
-  * mark only moves forward. Skipped without HISTMERSION_TEST_DB_URL.
+  * `POST /api/ui/seen/{board}` marks a window read, and the mark only moves forward. From a network the server does not
+  * trust both need the API key, as every other request does. Skipped without HISTMERSION_TEST_DB_URL.
   */
 class UiNoticesHttpSuite extends DbSuite:
   private val testDb = TestDb.url
@@ -32,8 +31,9 @@ class UiNoticesHttpSuite extends DbSuite:
   private def send(req: HttpRequest): (Int, String) =
     val r = http.send(req, HttpResponse.BodyHandlers.ofString())
     (r.statusCode, r.body)
-  private def get(url: String) = send(HttpRequest.newBuilder(URI.create(url)).build())
-  private def post(url: String, body: String, key: Option[String] = None) =
+  private def get(url: String) =
+    send(HttpRequest.newBuilder(URI.create(url)).header("Authorization", "Bearer s3cret").build())
+  private def post(url: String, body: String, key: Option[String] = Some("s3cret")) =
     val b = HttpRequest.newBuilder(URI.create(url)).header("content-type", "application/json")
     send(
       key.fold(b)(k => b.header("Authorization", s"Bearer $k")).POST(HttpRequest.BodyPublishers.ofString(body)).build()
@@ -63,13 +63,13 @@ class UiNoticesHttpSuite extends DbSuite:
       lock.close()
       lock = null
 
-  test("counts, news, marking read without the key, and the mark only moving forward"):
+  test("counts, news, marking read, and the mark only moving forward"):
     val base = AppConfig.load()
     val cfg = base
       .modify(_.db)
       .setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
       .modify(_.auth)
-      .setTo(base.auth.modify(_.apiKey).setTo(AuthConfig.ApiKey("s3cret")))
+      .setTo(KeyedLoopback(base.auth, "s3cret"))
     supervised {
       val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}/api"
@@ -83,13 +83,14 @@ class UiNoticesHttpSuite extends DbSuite:
         assert(before.boards.filter(_.count.isDefined).map(_.key.value) == List("tasks", "approvals", "acquire"), b0)
         val tasks0 = before.boards.find(_.key.value == "tasks").get
 
-        // read the backlog as it is: no key needed, and it is no longer new
+        // read the backlog as it is: it is no longer new (and the mark, like every request, needs the key here)
+        assertEquals(post(s"$url/ui/seen/tasks", "{}", None)._1, 401)
         val (m0, mb0) = post(s"$url/ui/seen/tasks", "{}")
         assertEquals(m0, 200, mb0)
         assert(!decode(mb0).boards.find(_.key.value == "tasks").get.fresh.value, mb0)
 
-        // something lands in the backlog (a write that still needs the key)
-        assertEquals(post(s"$url/queue/tasks", """{"text":"zz notice task"}""")._1, 401)
+        // something lands in the backlog
+        assertEquals(post(s"$url/queue/tasks", """{"text":"zz notice task"}""", None)._1, 401)
         val (as, ab) = post(s"$url/queue/tasks", """{"text":"zz notice task"}""", Some("s3cret"))
         assertEquals(as, 200, ab)
         added = RawJson.decode[Queue.QueueItem](ab).toOption.map(_.id)
@@ -108,10 +109,11 @@ class UiNoticesHttpSuite extends DbSuite:
         assert(!read.fresh.value, read.toString)
         assertEquals(read.seen.map(_.value), Some(latest.value))
 
-        // refused: an unknown board, a malformed instant; a longer path is not the exemption
+        // refused: an unknown board, a malformed instant, a longer path
         assertEquals(post(s"$url/ui/seen/jobs", "{}")._1, 400)
         assertEquals(post(s"$url/ui/seen/tasks", """{"at":"yesterday"}""")._1, 400)
-        assertEquals(post(s"$url/ui/seen/tasks/x", "{}")._1, 401)
+        assertEquals(post(s"$url/ui/seen/tasks/x", "{}", None)._1, 401)
+        assertEquals(post(s"$url/ui/seen/tasks/x", "{}")._1, 404)
       finally
         added.foreach { i =>
           val _ = send(

@@ -600,13 +600,26 @@ object UiState:
 
   /** Load the [[Persist.Local]] fields from the store. */
   private[web] def restoreLocal(): Unit =
-    localFields.foreach { f =>
-      store
-        .get(LocalPrefix + f.key)
-        .foreach(raw =>
-          Try(js.JSON.parse(raw).asInstanceOf[js.Array[String]].toList).foreach(l => f.load(l.map(Field.Token(_))))
-        )
-    }
+    localFields.foreach(restore)
+
+  /** Load the kept API key alone: the first request, `/api/config`, may need it before anything else is set up. */
+  private[web] def restoreKey(): Unit = restore(apiKey)
+
+  /** Keep `key` (or none) before the page has started: only the key is written, never the address or the other kept
+    * choices, which are not loaded yet.
+    */
+  private[web] def keepKey(key: Option[String]): Unit =
+    apiKey.set(key)
+    key match
+      case Some(_) => store.put(LocalPrefix + apiKey.key, js.JSON.stringify(js.Array(apiKey.encoded*)))
+      case None    => store.remove(LocalPrefix + apiKey.key)
+
+  private def restore(f: Field[?]): Unit =
+    store
+      .get(LocalPrefix + f.key)
+      .foreach(raw =>
+        Try(js.JSON.parse(raw).asInstanceOf[js.Array[String]].toList).foreach(l => f.load(l.map(Field.Token(_))))
+      )
     store.get(LegacyLayersKey).foreach { raw =>
       if store.get(LocalPrefix + layers.key).isEmpty then
         Try(js.JSON.parse(raw)).foreach { d =>

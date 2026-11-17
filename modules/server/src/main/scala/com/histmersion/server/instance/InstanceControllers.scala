@@ -217,12 +217,12 @@ final class InstanceControllers(
         val _ = seen.mark(UserId.Local, SeenBoard(b.wire.value), at)
         uiCounters
 
-  /** The `ui` config block, plus whether writes need a key — never the key itself — and the plugins (their settings
-    * with secrets as references, never values).
+  /** The `ui` config block, plus whether the page must send the key (`keyRequired`: it was not let in as a trusted
+    * network's) — never the key itself — and the plugins (their settings with secrets as references, never values).
     */
-  def uiConfig: UiConfig = UiConfigViews.page(
+  def uiConfig(keyRequired: UiConfig.KeyRequired): UiConfig = UiConfigViews.page(
     cfg.ui,
-    writeKeyRequired = UiConfig.WriteKeyRequired(cfg.auth.apiKey.value.nonEmpty),
+    keyRequired = keyRequired,
     agentsEnabled = UiConfig.AgentsEnabled(cfg.agents.enabled.value),
     plugins = deps.plugins.report,
     baseMapSource = baseMapSource,

@@ -74,8 +74,9 @@ differs between programs; see your client's documentation.
 
 ### When the server asks for a key
 
-If the server is set up with an API key (`auth.api-key`, needed when it listens beyond your own
-computer), every **write** must send `Authorization: Bearer <key>`; reads stay open. Clients that
+On your own computer the assistant needs no key. A server it reaches over a network that the server
+does not trust ([Who can reach your server](how-to/access.md)) answers only to its API key
+(`auth.api-key`): every request — reads too — must send `Authorization: Bearer <key>`. Clients that
 support headers take it in their server entry — in a `.mcp.json`, for example:
 
 ```json

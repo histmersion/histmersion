@@ -26,7 +26,7 @@ import com.histmersion.api.instance.UiConfig
 import com.histmersion.db.DbSuite
 import com.histmersion.db.TestDb
 import com.histmersion.config.DbConfig
-import com.histmersion.config.AuthConfig
+import com.histmersion.server.KeyedLoopback
 import com.histmersion.config.ServerConfig
 
 /** The terrain base map over HTTP, on a server whose `basemap.dir` holds a fixture extract: the status, a tile as
@@ -39,7 +39,10 @@ class BasemapHttpSuite extends DbSuite:
 
   private val http = HttpClient.newHttpClient()
   private def get(url: String): HttpResponse[Array[Byte]] =
-    http.send(HttpRequest.newBuilder(URI.create(url)).build(), HttpResponse.BodyHandlers.ofByteArray())
+    http.send(
+      HttpRequest.newBuilder(URI.create(url)).header("Authorization", "Bearer k3y").build(),
+      HttpResponse.BodyHandlers.ofByteArray()
+    )
   private def send(method: String, url: String, key: Option[String]): (Int, String) =
     val b = HttpRequest.newBuilder(URI.create(url)).method(method, HttpRequest.BodyPublishers.noBody())
     val r =
@@ -52,7 +55,7 @@ class BasemapHttpSuite extends DbSuite:
       .modify(_.db)
       .setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
       .modify(_.auth)
-      .setTo(base.auth.modify(_.apiKey).setTo(AuthConfig.ApiKey("k3y")))
+      .setTo(KeyedLoopback(base.auth, "k3y"))
       .modify(_.basemap)
       .setTo(
         base.basemap.copy(

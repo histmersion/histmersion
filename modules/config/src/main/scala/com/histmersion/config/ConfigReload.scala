@@ -36,6 +36,7 @@ object ConfigReload:
     case AgentPoolSize extends SetOnce("the size of the agent pool, started once")
     case LlmCalls extends SetOnce("the LLM-call semaphore, sized once")
     case OcrPool extends SetOnce("the size of the OCR worker pool, started once")
+    case Access extends SetOnce("who is let in is checked against the bind address once, when the listener is bound")
 
   /** The settings a running server cannot change in place, and why. The running value is kept until a restart (see
     * [[effective]]), and the reload report lists them.
@@ -49,7 +50,12 @@ object ConfigReload:
     Key("histmersion.agents.enabled") -> SetOnce.AgentPool,
     Key("histmersion.agents.max-concurrent-runs") -> SetOnce.AgentPoolSize,
     Key("histmersion.agents.max-llm-calls-in-flight") -> SetOnce.LlmCalls,
-    Key("histmersion.converter.parallelism") -> SetOnce.OcrPool
+    Key("histmersion.converter.parallelism") -> SetOnce.OcrPool,
+    Key("histmersion.auth.trusted-networks") -> SetOnce.Access,
+    Key("histmersion.auth.authenticated-networks") -> SetOnce.Access,
+    Key("histmersion.auth.trusted-as") -> SetOnce.Access,
+    Key("histmersion.auth.hosts") -> SetOnce.Access,
+    Key("histmersion.auth.origins") -> SetOnce.Access
   )
 
   def restartOnly(key: Key): Boolean = RestartOnly.exists((k, _) => HotPlan.keyMatches(key, k))

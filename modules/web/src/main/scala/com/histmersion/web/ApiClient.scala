@@ -17,7 +17,6 @@ import org.scalajs.dom
 
 import sttp.client4.*
 import sttp.client4.fetch.FetchBackend
-import sttp.model.Method
 import sttp.tapir.{DecodeResult, PublicEndpoint}
 import sttp.tapir.client.sttp4.SttpClientInterpreter
 
@@ -108,14 +107,13 @@ object ApiClient:
   private val backend = FetchBackend()
   private val interp = SttpClientInterpreter()
 
-  /** Pure: does a request of this method carry the API key? Only writes — the gate lets reads by. */
-  private[web] def isWrite(m: Method): Boolean = m != Method.GET && m != Method.HEAD && m != Method.OPTIONS
-
-  /** THE one place a write is given its `Authorization` header ([[Auth.currentHeader]]). */
+  /** THE one place a request is given its `Authorization` header ([[Auth.currentHeader]]): every request, reads too,
+    * since a server reached from a network it does not trust gates them all.
+    */
   private def authorize[T](req: Request[T]): Request[T] =
-    if isWrite(req.method) then Auth.currentHeader.fold(req)((k, v) => req.header(k, v)) else req
+    Auth.currentHeader.fold(req)((k, v) => req.header(k, v))
 
-  /** A refused write drops the key and asks for it again, wherever it came from. */
+  /** A refused key is dropped and asked for again, wherever the request came from. */
   private def refuse(f: ApiFailure): ApiFailure =
     if f.unauthorized then Auth.rejected()
     f
@@ -125,9 +123,9 @@ object ApiClient:
     req.send(backend).flatMap { resp =>
       val code = resp.code.code
       resp.body match
-        case _ if code == 401 || code == 403 => Future.failed(refuse(ApiFailure.of(ApiFailure.Status(code), None)))
         case DecodeResult.Value(Right(o))    => Future.successful(o)
         case DecodeResult.Value(Left(e))     => Future.failed(refuse(ApiFailure(ApiFailure.Status(code), e)))
+        case _ if code == 401 || code == 403 => Future.failed(refuse(ApiFailure.of(ApiFailure.Status(code), None)))
         case other                           =>
           Future.failed(
             ApiFailure(

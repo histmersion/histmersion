@@ -9,7 +9,6 @@ import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.library.Source
 
-import sttp.model.Method
 import com.histmersion.api.automation.{Agents, AgentScheduler, ListFilters, Managers, Queue}
 import com.histmersion.api.catalogue.{EventTier, SkippedPeriod}
 import com.histmersion.api.exchange.{InitPlan, MergeApplyJob}
@@ -106,15 +105,21 @@ class ToolsSuite extends munit.FunSuite:
     assertEquals(Auth.header(None), None)
   }
 
-  test("only writes carry the key") {
-    assert(!ApiClient.isWrite(Method.GET))
-    assert(!ApiClient.isWrite(Method.HEAD))
-    List(Method.POST, Method.PUT, Method.PATCH, Method.DELETE).foreach(m => assert(ApiClient.isWrite(m), m))
+  test("the map sends the key to this page's own server only") {
+    assert(Auth.ownServer("/api/tiles/1/2/3", "https://h.example"))
+    assert(Auth.ownServer("https://h.example/web/styles/a.json", "https://h.example"))
+    assert(!Auth.ownServer("https://tiles.other.example/1/2/3.pbf", "https://h.example"))
+    assert(!Auth.ownServer("https://h.example.evil/x", "https://h.example"))
   }
 
   test("a failed response is classified by its status, with the server's message when there is one") {
     assert(ApiFailure.of(ApiFailure.Status(401), None).unauthorized)
-    assert(ApiFailure.of(ApiFailure.Status(403), None).unauthorized)
+    // a 403 is a refusal the key does not lift (another site, a switched-off feature): the key is kept
+    assert(!ApiFailure.of(ApiFailure.Status(403), None).unauthorized)
+    assertEquals(
+      ApiFailure.of(ApiFailure.Status(401), None).getMessage,
+      "the server needs its API key for this request"
+    )
     assert(ApiFailure(ApiFailure.Status(412), Api.Error(Problem.Unclassified(Legacy.Text("moved on")))).conflict)
     assert(ApiFailure(ApiFailure.Status(409), Api.Error(Problem.Unclassified(Legacy.Text("dup")))).duplicate)
     assertEquals(

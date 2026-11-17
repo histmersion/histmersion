@@ -40,11 +40,16 @@ object App:
 
   def init(): Unit =
     dom.console.log("Histmersion: init")
+    // the kept key goes with the first request: from a network the server does not trust, it answers nothing without
+    UiState.restoreKey()
     // ONE request: the failure and the success read the same answer (it was asked for twice)
     val configF = ApiClient.config()
-    configF.failed.foreach { e =>
-      dom.console.error("Histmersion: config failed", e.getMessage)
-      Option(dom.document.getElementById("app")).foreach(_.textContent = s"Failed to load config: ${e.getMessage}")
+    configF.failed.foreach {
+      case f: ApiFailure if f.unauthorized =>
+        Option(dom.document.getElementById("app")).foreach(Auth.keyGate)
+      case e =>
+        dom.console.error("Histmersion: config failed", e.getMessage)
+        Option(dom.document.getElementById("app")).foreach(_.textContent = s"Failed to load config: ${e.getMessage}")
     }
     Theme.install()
     configF.foreach { ui =>
@@ -52,7 +57,7 @@ object App:
       UiState.init(ui)
       Viewport.init(ui)
       MobileChrome.install()
-      Auth.init(ui.writeKeyRequired)
+      Auth.start(ui.keyRequired)
       RunsView.enabled.set(RunsView.Enabled(ui.agentsEnabled.value))
       Notices.install(ui)
       MergeView.configure(ui)

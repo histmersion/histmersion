@@ -1,7 +1,9 @@
 package com.histmersion
 package server
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
+import com.histmersion.util.access.{AccessGate, AccessPolicy, Admission}
+import com.histmersion.domain.automation.agents.RunTokens
 
 import hearth.kindlings.optics.syntax.*
 
@@ -146,6 +148,11 @@ object Composition:
       restart: Option[() => Unit] = None,
       system: SystemContext = SystemContext.isolated
   )(using Ox): NettySyncServer =
+    // who is let in, checked against the bind address before anything is opened: a listener that would be open to a
+    // network nobody vouched for does not start
+    val access = AccessPolicy
+      .forListener(hc.app.auth, hc.app.server.modify(_.host).setTo(host))
+      .fold(e => throw IllegalStateException(e.sentences.mkString("; ")), identity)
     val selectedCore = core.getOrElse(CoreBudget(() => system.clock.instant()))
     val sg =
       ServerGraph
@@ -209,30 +216,34 @@ object Composition:
         AgentsTools.agentEndpoints(h.agents)
       ) // one per agent definition, behind run tokens
       .addEndpoints(HttpApi(deps, h, acq.controllers, collections).endpoints)
-    if cfg.auth.apiKey.value.nonEmpty then
-      scribe.info("API key authentication enabled — write methods require Authorization: Bearer <key>")
+    scribe.info(s"access: ${access.summary}")
+    val agentPaths =
+      Admission.AgentPaths(Admission.Path(RunTokens.Path), Admission.Path(RunTokens.QuotaPath))
     srv.modifyConfig { nc =>
       nc.initPipeline { inner => (pipeline, tapirHandler) =>
         NettyConfig.defaultInitPipeline(inner)(pipeline, tapirHandler)
         // right after the HTTP codec, BEFORE the streams handler turns a request with a body into a
-        // streamed one: the auth gate (see AuthHandler) first, so an unauthorised write gets its 401
-        // instead of a "100 Continue"; then the answer to `Expect: 100-continue`, which curl sends
-        // for any body over 1 KB and then waits on — unanswered, the body arrived late or never
+        // streamed one: the access gate first, so a refused request gets its answer instead of a
+        // "100 Continue"; then the agent endpoint's run-token gate; then the answer to
+        // `Expect: 100-continue`, which curl sends for any body over 1 KB and then waits on — unanswered,
+        // the body arrived late or never. Each `addAfter(codec, …)` goes in front of the ones before it.
         val codec = pipeline.context(classOf[io.netty.handler.codec.http.HttpServerCodec]).name()
         val _ = pipeline.addAfter(
           codec,
           "histmersion-continue",
           io.netty.handler.codec.http.HttpServerExpectContinueHandler()
         )
-        // always in place: the key is read at each request (a reload may set, change or clear it)
-        val _ = pipeline.addAfter(codec, "histmersion-auth", AuthHandler(() => deps.cfg.auth.apiKey, h.agents.tokens))
-        // first of all: the agent MCP endpoint answers only to a live run token, and only with its agent's tools
-        val _ =
-          pipeline.addAfter(
-            codec,
-            "histmersion-run-token",
-            RunTokenGate(h.agents.tokens)
+        val _ = pipeline.addAfter(codec, "histmersion-run-token", RunTokenGate(h.agents.tokens))
+        val _ = pipeline.addAfter(
+          codec,
+          "histmersion-access",
+          AccessGate(
+            access,
+            () => deps.cfg.auth.apiKey,
+            bearer => h.agents.tokens.bearer(s"Bearer $bearer").isDefined,
+            agentPaths
           )
+        )
       }
     }
 

@@ -308,9 +308,12 @@ filters** resets them. In the approvals window you can tick open approvals and d
 
 ## Reading and writing
 
-Reading needs nothing. Changing anything (editing a source, uploading, deciding an approval) works at
-once on your own computer; when the server is set up with an API key (`auth.api-key`), the page asks
-for it before the first change and keeps it in the browser.
+On your own computer the page needs nothing: reading and changing anything (editing a source,
+uploading, deciding an approval) work at once. Opened from a network the server does not trust
+([Who can reach your server](../how-to/access.md)), the page asks for the server's API key
+(`auth.api-key`) before it shows anything, keeps it in the browser and sends it with every request.
+Pages opened in a tab of their own (a source's or an article's) and file downloads are links the
+browser follows by itself, without the key: from such a network they answer 401.
 
 ## On a phone or a narrow window
 

@@ -9,6 +9,7 @@ import com.histmersion.config.{AppConfig, Environment, UserPaths}
 import com.histmersion.domain.library.acquisition.CoreBudget
 import ox.{never, supervised}
 import com.histmersion.util.console.Console
+import com.histmersion.util.access.AccessPolicy
 
 /** The server binary: the command line, the config and the plugins on the main thread, the bundled runtime when there
   * is one, then [[Composition]] and the listener.
@@ -68,6 +69,12 @@ import com.histmersion.util.console.Console
       )
       sys.exit(if generation.report.ok && zones._1 then 0 else 2)
     case _ => ()
+  // who is let in, against the bind address: a server its settings would leave open to a network nobody vouched for
+  // stops HERE, before the bundled runtime or the database is started, saying which settings to change
+  AccessPolicy.forListener(loaded.auth, loaded.server).left.foreach { problems =>
+    problems.sentences.foreach(s => scribe.error(s"Histmersion does not start: $s"))
+    sys.exit(3)
+  }
   val reread = () => AppConfig.loadWithUserFile(loadedConfig.env, loadedConfig.file.path)
   // the native bundle: run the bundled Postgres + converter as children and point the config at them;
   // a reloaded config is pointed at them the same way (the children themselves are restart-only)

@@ -13,7 +13,6 @@ import com.histmersion.db.*
 import com.histmersion.db.DbSuite
 import com.histmersion.db.TestDb
 import com.histmersion.config.DbConfig
-import com.histmersion.config.AuthConfig
 import com.histmersion.config.ServerConfig
 
 /** `POST /api/sources/{ck}/rename` over real HTTP, with a write key configured: the write gate, the answer, and the old
@@ -36,7 +35,7 @@ class RenameHttpSuite extends DbSuite:
   private def req(url: String, key: Option[String]) =
     val b = HttpRequest.newBuilder(URI.create(url))
     key.fold(b)(k => b.header("Authorization", s"Bearer $k"))
-  private def get(url: String) = send(req(url, None).build())
+  private def get(url: String) = send(req(url, Some(Key)).build())
   private def json(method: String, url: String, body: String, key: Option[String] = Some(Key)) =
     send(
       req(url, key)
@@ -52,7 +51,7 @@ class RenameHttpSuite extends DbSuite:
       .modify(_.db)
       .setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
       .modify(_.auth)
-      .setTo(base.auth.modify(_.apiKey).setTo(AuthConfig.ApiKey(Key)))
+      .setTo(KeyedLoopback(base.auth, Key))
 
   private def clean(): Unit =
     val ds = testPool(cfg.db)

@@ -1,8 +1,11 @@
 # REST API
 
 The server's HTTP API, under `<public-url>/api`. The web page, the CLI and the MCP tools all use it.
-Reads are open; when `auth.api-key` is set, every `POST`, `PUT`, `PATCH` and `DELETE` needs
-`Authorization: Bearer <key>` (401 otherwise).
+A request from a trusted network (this computer, by default) needs nothing; one from an authenticated
+network needs `Authorization: Bearer <auth.api-key>` for every method, reads included (401 otherwise), except
+`GET /api/health`, `GET /api/version` and the web page and its files. Every request must name the server by
+one of its own host names (421 otherwise), and a change sent by another site's page is refused (403). See
+[Who can reach your server](../how-to/access.md).
 
 From [`modules/api/src/main/scala/com/histmersion/api/Api.scala`](https://github.com/histmersion/histmersion/blob/master/modules/api/src/main/scala/com/histmersion/api/Api.scala) —
 the single definition the server interprets and the CLI derives its client from.
@@ -10,8 +13,9 @@ the single definition the server interprets and the CLI derives its client from.
 **Errors.** Every endpoint fails the same way: the body is `{"problems": [{group, case, data, text}, …], "code"?}` —
 one or more problems, each with its group and case, its fields (`data`) and its English sentence (`text`) — and the
 status is the first problem's group's: 400 invalid input (a request body that is not a document of its format
-included), 403 refused (a policy, a path outside the directory it is
-confined to, a feature switched off), 404 not found, 409 a conflict (taken, renamed, an old key of another, the wrong
+included), 401 the API key (or an agent's run token) missing or wrong, 403 refused (a policy, another site's change,
+a network not accepted, a path outside the directory it is confined to, a feature switched off), 404 not found,
+421 a host name the server does not answer to, 409 a conflict (taken, renamed, an old key of another, the wrong
 state, referred to), 412 changed since `ifUpdatedAt`, 422 content or a plugin's item refused, 429 an allowance spent
 (with `Retry-After` when its end is known), 500 a failure of the server or of a file, 502/504 an upstream failed or did
 not answer, 503 busy (a backup, a restore) or a setting missing. A `code` some answers still carry (`not_found`,
@@ -20,7 +24,7 @@ with its own status until it is retired; a refused settings change (`settings_re
 
 | method | path | query / body | returns |
 |---|---|---|---|
-| `GET` | `/api/version` · `/api/health` · `/api/config` | — | build info · db + schema version · the `ui` config block the page reads, plus `writeKeyRequired` (whether writes need the API key — never the key) and `baseMapSource` resolved (`local` or `online`, never `auto`: [Working offline](../how-to/offline.md)) |
+| `GET` | `/api/version` · `/api/health` · `/api/config` | — | build info · db + schema version · the `ui` config block the page reads, plus `keyRequired` (whether this page must send the API key: it was not let in as a trusted network's — never the key) and `baseMapSource` resolved (`local` or `online`, never `auto`: [Working offline](../how-to/offline.md)) |
 | `POST` | `/api/config/reload` | — | `ReloadReport{published, generation, applied[], restartOnly[], rebuilt[], plugins[], draining[], errors[], warnings[], file}` — the config file read again and applied in place (see [Reloading the config](configuration.md#reloading-the-config-no-restart)); a failed reload is a 200 whose `errors` say why nothing changed |
 | `GET` | `/api/settings?prefix=` | — | `ConfigEdit.Page{file, exists, version, sections[{id, doc, fields[{key, kind, doc, default, value, effective, source, envVar, restart, credential{rule, form, shown}, locked}]}], problems[], restartable, setupDue}` — every setting (or those under `prefix`) as the settings file and the environment have them now; a credential only as set or not and how it is referred to (see [Changing settings](configuration.md#changing-settings-from-settings-or-the-command-line)) |
 | `POST` | `/api/settings` | `{changes: [{key, value?}], version?, literalConsent?, reload?}` | `ConfigEdit.Written{file, changed[], unchanged[], backup, version, created, restart[{key, why}], warnings[], reload, restartable}` — the changes written into the settings file in place (a change without `value` takes the setting out), then reloaded; 400 refused (with why), 409 the file changed since `version`, 503 no settings file |

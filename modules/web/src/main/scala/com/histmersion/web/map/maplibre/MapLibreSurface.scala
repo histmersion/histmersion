@@ -10,6 +10,7 @@ import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
 import com.histmersion.web.map.MapSurface
 import com.histmersion.web.map.BaseMapSpec
+import com.histmersion.web.Auth
 
 /** A [[MapSurface]] over one MapLibre map. */
 final class MapLibreSurface(
@@ -37,7 +38,9 @@ final class MapLibreSurface(
       refreshExpiredTiles = false,
       // the page follows the container's size itself ([[resize]], from MapView's observer): MapLibre's own
       // observer resized it a second time, 50 ms later, sending every move event again
-      trackResize = false
+      trackResize = false,
+      // tiles and styles from this server carry the key, which a server reached from an untrusted network needs
+      transformRequest = ((url: String, _: String) => Auth.mapRequest(url)): js.Function2[String, String, js.Object]
     )
     pixelRatio.foreach(r => o.pixelRatio = r.value)
     // MapLibre's own gestures (the zoom buttons, a double click, the keys, a drag's glide) ease unless it is told
