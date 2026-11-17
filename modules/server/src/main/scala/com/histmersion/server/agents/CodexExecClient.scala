@@ -1,6 +1,5 @@
 package com.histmersion
 package server.agents
-import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
 
 import hearth.kindlings.optics.syntax.*
@@ -104,11 +103,8 @@ final class CodexExecClient(val model: ModelRef, cfg: CodexConfig, rt: CliRuntim
               .flatMap(_.blocked(PlanQuota.PoolId.ChatgptPlan, Some(AgentsControllers.ModelName(model.model.value))))
               .flatMap(_._2)
               .map(ms => java.time.Instant.ofEpochMilli(ms.value))
-            throw new ModelLimitReached(
-              model,
-              until,
-              Problem.Unclassified(Legacy.Text(s"codex exec: ${m.sentence}".take(300)))
-            )
+            // m is codex exec's own words (Codex.parse), whole: "codex exec: <what it said>"
+            throw new ModelLimitReached(model, until, m)
           case None =>
             CliOutcomes.result(
               o,

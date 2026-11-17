@@ -41,8 +41,11 @@ object Text:
       case Invalid.Reference(form, at)                     => s"${path(at)}${form.said}"
       case Invalid.Broken(rule, at)                        => s"${path(at)}${rule.said}"
       case NotFound.Entity(t, key) if t.short == "Citekey" => s"No source '$key'"
-      case NotFound.Entity(t, key)                         => s"no ${t.noun} '$key'"
-      case NotFound.Listed(t, key, listing)                => s"no ${t.noun} '$key' (${listing.command} lists them)"
+      // by its noun: the name the newtype module captured may end in a form segment (`ProviderKind.Wire.T`)
+      case NotFound.Entity(t, key) if t.noun == "provider kind" =>
+        s"no AI provider '$key' is registered (its plugin is switched off or was removed)"
+      case NotFound.Entity(t, key)                 => s"no ${t.noun} '$key'"
+      case NotFound.Listed(t, key, listing)        => s"no ${t.noun} '$key' (${listing.command} lists them)"
       case NotFound.Copy(work, answers)            => s"no legal open-access PDF found for $work${answered(answers)}"
       case NotFound.Dangling(t, key, from, within) => within.missed(t, key, from)
       case NotFound.Name(place, label, name, lang, has) =>
@@ -94,12 +97,16 @@ object Text:
       case Upstream.Timeout(name, url, after, at) => s"${path(at)}$name did not answer at $url within $after ms"
       case Upstream.CallFailed(model, why)        => s"the call to $model failed: ${why.sentence}"
       case Upstream.CallThrew(model, reported)    => s"the call to $model failed: $reported"
+      case Upstream.Replied(upstream, said)       => s"$upstream: $said"
+      case Upstream.McpServer(status)             => s"the agent MCP server is $status"
       case Upstream.BadReply(name, url, s, r, at) =>
         s"${path(at)}$name's answer at $url is not ${s.noun} — $r"
-      case Io.File(op, path, reported)    => s"could not ${words(op.productPrefix)} $path — $reported"
-      case Io.Wrong(path, expected)       => s"$path ${expected.missed}"
-      case Io.Corrupt(format, at, damage) => s"the ${format.named} data at $at ${damage.said(format)}"
-      case Io.Absent(held, path, setting) => held.missed(path, setting)
+      case Io.File(op, path, reported)      => s"could not ${words(op.productPrefix)} $path — $reported"
+      case Io.Wrong(path, expected)         => s"$path ${expected.missed}"
+      case Io.Corrupt(format, at, damage)   => s"the ${format.named} data at $at ${damage.said(format)}"
+      case Io.Absent(held, path, setting)   => held.missed(path, setting)
+      case Io.Hashed(path, expected, found) =>
+        s"$path: its content hashes to $found, not to $expected, the hash it is stored under"
       case Io.Extract(extract, pinning)   => pinning.said(extract)
       case Io.Oversize(path, mb, setting) =>
         s"$path is $mb MB, over $setting — convert it to one feature per line (.ndjson)"
@@ -113,10 +120,23 @@ object Text:
       case Config.Unavailable(Config.Capability.SettingsFile) =>
         "This server was started without a settings file, so Settings cannot change anything. " +
           "Set HISTMERSION_CONFIG to the file to use and start it again."
-      case Config.Unavailable(Config.Capability.HotGraph) => "hot graph: closed"
-      case Config.Unavailable(capability)                 => s"this server has no ${words(capability.productPrefix)}"
-      case Config.Reload(stage, scope) => s"reloading the settings failed at ${words(stage.productPrefix)} ($scope)"
-      case Config.Cycle(scopes)        =>
+      case Config.Unavailable(Config.Capability.HotGraph)    => "hot graph: closed"
+      case Config.Unavailable(Config.Capability.ClaudeLogin) =>
+        "not logged in — run `claude`, then /login (or `claude setup-token` for a long-lived token)"
+      case Config.Unavailable(Config.Capability.AppServerRead) => "no app-server read in this context"
+      case Config.Unavailable(Config.Capability.PlanProbe)     => "no probe in this context"
+      case Config.Unavailable(Config.Capability.LoginCheck)    => "not checked in this context"
+      case Config.ApiKeyLogin(method)                          =>
+        s"logged in with an API key ($method), not a Claude plan — log in with your Claude account, or set use-api-key"
+      case Config.FloorsUnread(Config.FloorsFrom.Saved, why) =>
+        s"saved floors do not parse: ${why.toVector.map(_.sentence).mkString("; ")}"
+      case Config.FloorsUnread(Config.FloorsFrom.Setting(key), why) =>
+        s"$key: ${why.toVector.map(_.sentence).mkString("; ")}"
+      case Config.ReadAt(file, at, why) =>
+        why.toVector.map(_.sentence.replace(s"$at", s"$file")).mkString("; ")
+      case Config.Unavailable(capability) => s"this server has no ${words(capability.productPrefix)}"
+      case Config.Reload(stage, scope)    => s"reloading the settings failed at ${words(stage.productPrefix)} ($scope)"
+      case Config.Cycle(scopes)           =>
         s"the parts a reload rebuilds depend on each other in a cycle: ${scopes.toVector.mkString(" → ")}"
       case Config.Definition(file, flaw) => s"$file${flaw.said}"
       case Config.Unbuilt(scope, why)    => s"$scope: ${why.toVector.map(_.sentence).mkString("; ")}"
@@ -208,8 +228,12 @@ object Text:
       case Problem.Run.OutputCapped(step, model, cap, sent, setting) =>
         s"$step: $model's answer exceeded the $cap output-token cap (the step sent $sent) — raise ${setting.said} " +
           "(a thinking model's reasoning counts toward it), restart the server, then resume the run"
-      case Problem.Run.NoText(source)            => s"$source has no text — ingest or OCR it first"
-      case Problem.Run.NoBody(article)           => s"article '$article' has no body to review"
+      case Problem.Run.NoText(source)          => s"$source has no text — ingest or OCR it first"
+      case Problem.Run.NoBody(article)         => s"article '$article' has no body to review"
+      case Problem.Run.GuardStopped(why)       => s"claude -p stopped by the quota guard: $why"
+      case Problem.Run.NoLogin(why)            => s"unavailable: no login — $why"
+      case Problem.Run.ProbeUnread(exit, said) =>
+        s"the probe printed no rate_limit_event (exit $exit${said.fold("")(m => s": $m")})"
       case Problem.Run.Blocked(block)            => s"held back: ${block.said}"
       case Problem.Run.Interrupted               => "interrupted by a restart"
       case Problem.Run.CutShort(activity)        => activity.cutShort
@@ -554,8 +578,18 @@ object Text:
         s"no focus region '$name' in basemap.terrain.focus-regions (${known.mkString(", ")}): give its --bbox"
       case Invalid.Rule.FocusDeeper(extract) =>
         s"a focus region holds the zooms deeper than the extract's ($extract): ask for more than that"
-      case Invalid.Rule.LabelsUnranged                 => "the physical names are not read with range requests"
-      case Invalid.Rule.SeaFloorUnranged               => "the sea floor is not read with range requests"
+      case Invalid.Rule.LabelsUnranged              => "the physical names are not read with range requests"
+      case Invalid.Rule.SeaFloorUnranged            => "the sea floor is not read with range requests"
+      case Invalid.Rule.ProviderOf(model, provider) =>
+        s"$model is not ${if s"$provider".headOption.exists("aeiou".contains(_)) then "an" else "a"} $provider model"
+      case Invalid.Rule.OpencodeModelShape(model) =>
+        s"$model: an opencode model is <provider>/<model>, e.g. opencode:openai/gpt-5"
+      case Invalid.Rule.HostProvider(provider) =>
+        s"$provider is Histmersion's own provider; it is run by the host, not through the SPI"
+      case Invalid.Rule.OptionOf(option, owner, pipeline) => s"$option is an option of $owner, not of $pipeline"
+      case Invalid.Rule.NewArticleFilter(target)          =>
+        s"'$target' is a new article: give a filter (query, topics or tags) for the sources to compile it from"
+      case Invalid.Rule.NewArticleTitle(target)        => s"'$target' is a new article: give its title"
       case Invalid.Rule.NameByHand(name, place, label) =>
         s"'$name' is a name the gazetteer seed or an imported source gives '$label' [$place], not one added by hand — " +
           "removing it would last only until the next import"
@@ -630,6 +664,7 @@ object Text:
       case Conflict.Activity.CalibreGui =>
         "the Calibre GUI is running — quit it first (calibredb needs exclusive access to the library)"
       case Conflict.Activity.TileRequests => "too many tile requests waiting"
+      case Conflict.Activity.CodexRun     => "a Codex run is using the home — not now"
       case other                          => s"a ${words(other.productPrefix)} is still running"
 
   extension (activity: Conflict.Activity)
@@ -676,6 +711,16 @@ object Text:
       case Refused.Rule.PlanOutsideLocal =>
         "this provider is refused while the server listens beyond loopback: it spends your own plan, and another " +
           "client could spend it"
+      case Refused.Rule.ClaudeCodeOutsideLocal =>
+        "claude-code is refused while the server listens beyond loopback: another client could spend " +
+          "your Claude plan. Bind to 127.0.0.1 (HISTMERSION_BIND), or — when every client of this server is " +
+          "you — set agents.providers.claude-code.allow-non-loopback (HISTMERSION_AGENTS_CLAUDE_ALLOW_NON_LOOPBACK)"
+      case Refused.Rule.CodexOutsideLocal =>
+        "codex is refused while the server listens beyond loopback: another client could spend your ChatGPT plan"
+      case Refused.Rule.OpencodeChatgptOutsideLocal =>
+        "opencode on a ChatGPT login is refused while the server listens beyond loopback"
+      case Refused.Rule.OrdinaryUsageDenied =>
+        "the ChatGPT plan does not allow ordinary usage now (ordinaryUsageAllowed: false)"
 
   extension (limit: Refused.Limit)
     private def named: String = limit match
@@ -811,6 +856,7 @@ object Text:
         case Io.Held.GazetteerManifest => s"no gazetteer manifest at $path$set"
         case Io.Held.LpfFiles          => s"no LPF files in $path$set (put World Historical Gazetteer downloads there)"
         case Io.Held.SeedFiles         => s"no JSON files under $path$set"
+        case Io.Held.CodexHome         => s"no Codex home at $path$set"
 
   extension (pinning: Io.Pinning)
     private def said(extract: Raw): String = pinning match
@@ -947,17 +993,21 @@ object Text:
 
   extension (ending: Io.Ending)
     private def said: String = ending match
-      case Io.Ending.Exited(code, stderr) => s"exited with $code — $stderr"
+      case Io.Ending.Exited(code, stderr) =>
+        s"exited with $code${if s"$stderr".isEmpty then "" else s" — $stderr"}"
       case Io.Ending.TimedOut(after)      => s"did not finish within $after ms"
       case Io.Ending.NotStarted(reported) => s"could not be started — $reported"
+      case Io.Ending.Unanswered(request)  => s"ended without answering $request"
 
   extension (fault: Config.Fault)
     private def said: String = fault match
-      case Config.Fault.Empty            => "is empty"
-      case Config.Fault.Unset(variable)  => s"reads $variable, which is not set"
-      case Config.Fault.Malformed(raw)   => s"is not valid: '$raw'"
-      case Config.Fault.Unknown(raw)     => s"has an unknown value '$raw'"
-      case Config.Fault.Unregistered(id) => s"names '$id', which no enabled plugin registered — skipped"
+      case Config.Fault.Empty                       => "is empty"
+      case Config.Fault.Unset(variable)             => s"reads $variable, which is not set"
+      case Config.Fault.Malformed(raw)              => s"is not valid: '$raw'"
+      case Config.Fault.Unknown(raw)                => s"has an unknown value '$raw'"
+      case Config.Fault.Unregistered(id)            => s"names '$id', which no enabled plugin registered — skipped"
+      case Config.Fault.Defaulted(raw, known, used) =>
+        s"= '$raw' is neither ${known.mkString(" nor ")}; treated as $used"
       case Config.Fault.NoPlugin(id)     => s"names '$id', which is no plugin in this binary"
       case Config.Fault.Conflicts(other) => s"contradicts $other"
       case Config.Fault.NoSecret         => "names a secret no vault holds"

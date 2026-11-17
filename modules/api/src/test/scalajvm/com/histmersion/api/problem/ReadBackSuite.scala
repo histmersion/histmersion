@@ -36,6 +36,38 @@ class ReadBackSuite extends munit.FunSuite:
       Io.Wrong(Io.Path("/srv/a.json"), Io.Kind.OnDisk)
     ).foreach(p => assertEquals(Column.read(p.stored), p))
 
+  test("the agents' runtimes', plan pools' and run options' new rules, refusals and parts are stored and read back"):
+    Vector[Problem](
+      Refused.Policy(Refused.Rule.ClaudeCodeOutsideLocal),
+      Refused.Policy(Refused.Rule.CodexOutsideLocal),
+      Refused.Policy(Refused.Rule.OpencodeChatgptOutsideLocal),
+      Refused.Policy(Refused.Rule.OrdinaryUsageDenied),
+      Config.Unavailable(Config.Capability.ClaudeLogin),
+      Config.Unavailable(Config.Capability.AppServerRead),
+      Config.Unavailable(Config.Capability.PlanProbe),
+      Config.Unavailable(Config.Capability.LoginCheck),
+      Config.FloorsUnread(
+        Config.FloorsFrom.Saved,
+        NonEmptyVector.of(Invalid.Missing(Field("five_hour"), Vector.empty))
+      ),
+      Config.Setting(
+        SettingKey("agents.approvals.edges"),
+        Config.Fault.Defaulted(Raw("auot"), Vector(Raw("manual"), Raw("auto")), Raw("manual"))
+      ),
+      Io.Absent(Io.Held.CodexHome, Io.Path("/h/codex"), None),
+      Conflict.Busy(Conflict.Activity.CodexRun),
+      Io.Process(Io.Tool("codex app-server"), Io.Ending.Unanswered(Raw("account/rateLimits/read"))),
+      Io.Process(Io.Tool("sqlite3 /h/s.sqlite VACUUM;"), Io.Ending.Exited(Io.ExitCode(1), External.Stderr(""))),
+      Upstream.Replied(Upstream.Name("claude -p"), External.Reported("You've hit your limit\n· resets 3pm")),
+      Run.ProbeUnread(Io.ExitCode(0), None),
+      Invalid.Broken.here(Invalid.Rule.ProviderOf(Raw("codex:gpt-5"), Raw("opencode"))),
+      Invalid.Broken.here(Invalid.Rule.OpencodeModelShape(Raw("opencode:gpt-5"))),
+      Invalid.Broken.here(Invalid.Rule.HostProvider(Raw("codex"))),
+      Invalid.Broken.here(Invalid.Rule.OptionOf(Raw("a title, kind or filter"), Raw("compile-article"), Raw("x"))),
+      Invalid.Broken.here(Invalid.Rule.NewArticleFilter(Raw("yamnaya"))),
+      Invalid.Broken.here(Invalid.Rule.NewArticleTitle(Raw("yamnaya")))
+    ).foreach(p => assertEquals(Column.read(p.stored), p))
+
   test("an agent definition's every flaw is stored and reads back as itself"):
     Vector[Config.Flaw](
       Config.Flaw.NoHeader,

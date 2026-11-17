@@ -152,7 +152,9 @@ object ModelsView:
         p(cls := "muted", "No allowance: every model may be used up to the runs' and the day's budgets.")
       else ul(cls := "allowance-list", m.allowances.map(a => allowanceRow(a, busy, write))),
       allowanceForm(None, busy, write),
-      Option.when(m.problems.nonEmpty)(div(cls := "run-warnings", h4("Problems"), ul(m.problems.map(x => li(x.value)))))
+      Option.when(m.problems.nonEmpty)(
+        div(cls := "run-warnings", h4("Problems"), ul(m.problems.map(x => li(x.sentence))))
+      )
     )
 
   /** The subscription pools: one bar per window with its floor marker, the reset, how old the reading is and where it

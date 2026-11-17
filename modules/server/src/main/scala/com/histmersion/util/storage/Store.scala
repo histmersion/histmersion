@@ -1,6 +1,6 @@
 package com.histmersion
 package util.storage
-import com.histmersion.util.problem.{External, Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.ByteCount
@@ -162,7 +162,11 @@ object Store:
                   try { val _ = in.transferTo(out) }
                   finally out.close()
                   val actual = ContentStore.hex(ContentStore.Digest(md.digest()))
-                  if actual != sha256 then Left(Problem.Unclassified(Legacy.Text(s"its content hashes to $actual")))
+                  if actual != sha256 then
+                    Left(
+                      Problem.Io
+                        .Hashed(Problem.Io.Path.of(store.where(key)), Problem.Raw.of(sha256), Problem.Raw.of(actual))
+                    )
                   else r.commit().left.map(e => e.message).map(_ => ())
                 finally r.close()
               }

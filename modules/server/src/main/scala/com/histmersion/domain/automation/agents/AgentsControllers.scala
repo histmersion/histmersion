@@ -516,24 +516,37 @@ final class AgentsControllers(
           )
       )
     }
-    val modes = List("status-change" -> cfg.approvals.statusChange, "edges" -> cfg.approvals.edges).collect {
+    // a mode that is no mode is treated as manual: said, with the modes there are
+    val modes = List(
+      "status-change" -> cfg.approvals.statusChange,
+      "edges" -> cfg.approvals.edges,
+      "article-publish" -> cfg.approvals.articlePublish
+    ).collect {
       case (k, v) if ApprovalMode.parse(ApprovalMode.Wire(v.value)).isEmpty =>
-        s"agents.approvals.$k = '$v' is neither manual nor auto; treated as manual"
+        Problem.Config.Setting(
+          Problem.SettingKey(s"agents.approvals.$k"),
+          Problem.Config.Fault.Defaulted(
+            Problem.Raw.of(v),
+            ApprovalMode.values.toVector.map(m => Problem.Raw.of(m.wire)),
+            Problem.Raw.of(ApprovalMode.Manual.wire)
+          )
+        )
     }
-    val modes2 = Option
-      .when(ApprovalMode.parse(ApprovalMode.Wire(cfg.approvals.articlePublish.value)).isEmpty)(
-        s"agents.approvals.article-publish = '${cfg.approvals.articlePublish}' is neither manual nor auto; treated as manual"
+    val problems = prices.left.toOption.toList.flatMap(_.toVector) ++ modes ++ picker.allowances._2 ++
+      Option.when(!cfg.enabled.value)(
+        Problem.Refused.Disabled(
+          Problem.Refused.Feature("embedded agents"),
+          Problem.SettingKey("agents.enabled"),
+          None,
+          None
+        )
       )
-      .toList
-    val problems = prices.left.toOption.toList.flatMap(_.sentences) ++ modes ++ modes2 ++
-      picker.allowances._2.map(_.sentence) ++
-      Option.when(!cfg.enabled.value)("embedded agents are off (agents.enabled = false)")
     ModelsInfo(
       ModelsInfo.Enabled(cfg.enabled.value),
       roles,
       Pipeline.values.toList.map(p => ModelsInfo.Pipelines(p.wire.value)),
       ModelsInfo.MaxConcurrentRuns(cfg.maxConcurrentRuns.value),
-      problems.map(ModelsInfo.Problems(_)),
+      problems,
       chains,
       picker.allowanceStatuses(now),
       ModelsInfo.Now(java.time.Instant.ofEpochMilli(now.value).toString)

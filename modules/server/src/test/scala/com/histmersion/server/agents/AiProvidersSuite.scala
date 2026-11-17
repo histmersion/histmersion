@@ -183,14 +183,15 @@ class AiProvidersSuite extends munit.FunSuite:
       !byEnv.registries.aiProviders.contains(Registries.AiProvidersKey("claude-code")) && byEnv.registries.aiProviders
         .contains(Registries.AiProvidersKey("codex"))
     )
-    assert(
+    assertEquals(
       BuiltinAi
         .lookup(
           ProviderKind.Plugin(com.histmersion.api.automation.ProviderKind.Plugin.Name("gemini")),
           providersOf(byEnv.registries.aiProviders)
         )
         .left
-        .exists(_.sentence.contains("no AI provider 'gemini'"))
+        .map(_.sentence),
+      Left("no AI provider 'gemini' is registered (its plugin is switched off or was removed)")
     )
 
   test("a third-party provider registers beside the built-ins; a host provider's name is refused"):

@@ -111,6 +111,9 @@ class RenderSuite extends munit.FunSuite:
       "the call to anthropic:claude-opus failed (hello-ai says (Failed): Claude API error: Overloaded)"
     ),
     "CallThrew" -> (502, "the call to anthropic:claude-opus threw — IOException: connection reset"),
+    "Replied" -> (502, "codex exec said — stream disconnected before completion"),
+    "McpServer" -> (502, "agent mcp server failed"),
+    "Hashed" -> (500, "content of /srv/originals/ab12.pdf hashes to cd34, not ab12"),
     "Timeout" -> (504, "core did not answer at https://api.core.ac.uk/v3/search/works within 30000 ms"),
     "BadReply" -> (
       502,
@@ -199,6 +202,16 @@ class RenderSuite extends munit.FunSuite:
     ),
     "NoText" -> (409, "no text in 'anthony2007'"),
     "NoBody" -> (409, "no body to review in 'yamnaya'"),
+    "GuardStopped" -> (409, "stopped by the quota guard: the quota-guard mod ended the turn"),
+    "NoLogin" -> (409, "no login: 'claude auth status' says not logged in"),
+    "ProbeUnread" -> (409, "probe read no rate limit, exit 1 — Invalid API key"),
+    "ApiKeyLogin" -> (503, "api key login api_key_helper"),
+    "FloorsUnread" -> (503, "floors unread, agents.quota.claude-plan.floors (five_hour is required)"),
+    "ReadAt" -> (
+      503,
+      "settings ~/.config/histmersion/histmersion.conf read at /tmp/histmersion.conf.1234 " +
+        "(/tmp/histmersion.conf.1234 is not File)"
+    ),
     "Blocked" -> (409, "held back: PoolFull review"),
     "Interrupted" -> (409, "interrupted"),
     "Cancelled" -> (409, "cancelled by Person"),
@@ -738,6 +751,84 @@ class RenderSuite extends munit.FunSuite:
         "the answer could not be decoded: odd",
       Content.Undecoded(Content.Decoding.NotSchema, Some(External.Reported("iteration limit")), None) ->
         "the answer is not the JSON the schema asks for (iteration limit)"
+    ).foreach((p, want) => assertEquals(p.sentence, want))
+
+  test("the agents' runtimes, plan pools, doctor and run options keep the words and hints they had before typing"):
+    Vector[(Problem, String)](
+      Refused.Policy(Refused.Rule.ClaudeCodeOutsideLocal) ->
+        ("claude-code is refused while the server listens beyond loopback: another client could spend your Claude " +
+          "plan. Bind to 127.0.0.1 (HISTMERSION_BIND), or — when every client of this server is you — set " +
+          "agents.providers.claude-code.allow-non-loopback (HISTMERSION_AGENTS_CLAUDE_ALLOW_NON_LOOPBACK)"),
+      Refused.Policy(Refused.Rule.CodexOutsideLocal) ->
+        "codex is refused while the server listens beyond loopback: another client could spend your ChatGPT plan",
+      Refused.Policy(Refused.Rule.OpencodeChatgptOutsideLocal) ->
+        "opencode on a ChatGPT login is refused while the server listens beyond loopback",
+      Refused.Policy(Refused.Rule.OrdinaryUsageDenied) ->
+        "the ChatGPT plan does not allow ordinary usage now (ordinaryUsageAllowed: false)",
+      Config.Unavailable(Config.Capability.ClaudeLogin) ->
+        "not logged in — run `claude`, then /login (or `claude setup-token` for a long-lived token)",
+      Config.Unavailable(Config.Capability.AppServerRead) -> "no app-server read in this context",
+      Config.Unavailable(Config.Capability.PlanProbe) -> "no probe in this context",
+      Config.Unavailable(Config.Capability.LoginCheck) -> "not checked in this context",
+      Config.ApiKeyLogin(Raw("api_key")) ->
+        "logged in with an API key (api_key), not a Claude plan — log in with your Claude account, or set use-api-key",
+      Config.FloorsUnread(Config.FloorsFrom.Saved, NonEmptyVector.of(Relayed(Sentence("a")), Relayed(Sentence("b")))) ->
+        "saved floors do not parse: a; b",
+      Config.FloorsUnread(
+        Config.FloorsFrom.Setting(SettingKey("agents.quota.claude-plan.floors")),
+        NonEmptyVector.of(Relayed(Sentence("a")))
+      ) -> "agents.quota.claude-plan.floors: a",
+      Config.ReadAt(
+        Io.Path("~/h.conf"),
+        Io.Path("/tmp/h.conf.1"),
+        NonEmptyVector.of(Relayed(Sentence("/tmp/h.conf.1: bad")))
+      ) -> "~/h.conf: bad",
+      Config.Setting(
+        SettingKey("agents.approvals.edges"),
+        Config.Fault.Defaulted(Raw("auot"), Vector(Raw("manual"), Raw("auto")), Raw("manual"))
+      ) -> "agents.approvals.edges = 'auot' is neither manual nor auto; treated as manual",
+      Config.Setting(SettingKey("agents.providers.codex.command"), Config.Fault.Empty) ->
+        "agents.providers.codex.command is empty",
+      Upstream.Replied(Upstream.Name("codex exec"), External.Reported("usage limit\nreached")) ->
+        "codex exec: usage limit\nreached",
+      Upstream.McpServer(Raw("failed")) -> "the agent MCP server is failed",
+      Run.GuardStopped(Raw("the quota-guard mod ended the turn")) ->
+        "claude -p stopped by the quota guard: the quota-guard mod ended the turn",
+      Run.NoLogin(Raw("not logged in")) -> "unavailable: no login — not logged in",
+      Run.ProbeUnread(
+        Io.ExitCode(1),
+        Some(External.Reported("x"))
+      ) -> "the probe printed no rate_limit_event (exit 1: x)",
+      Run.ProbeUnread(Io.ExitCode(0), None) -> "the probe printed no rate_limit_event (exit 0)",
+      Io.Absent(Io.Held.CodexHome, Io.Path("/h/codex"), None) -> "no Codex home at /h/codex",
+      Conflict.Busy(Conflict.Activity.CodexRun) -> "a Codex run is using the home — not now",
+      Io.Process(Io.Tool("codex app-server"), Io.Ending.Unanswered(Raw("account/rateLimits/read"))) ->
+        "codex app-server ended without answering account/rateLimits/read",
+      Io.Process(Io.Tool("sqlite3 /h/s.sqlite VACUUM;"), Io.Ending.Exited(Io.ExitCode(1), External.Stderr(""))) ->
+        "sqlite3 /h/s.sqlite VACUUM; exited with 1",
+      NotFound.Entity(TypeName("ProviderKind"), Raw("gemini")) ->
+        "no AI provider 'gemini' is registered (its plugin is switched off or was removed)",
+      Refused.Disabled(
+        Refused.Feature("the codex provider"),
+        SettingKey("histmersion.plugins.ai-codex.enabled"),
+        None,
+        None
+      ) -> "the codex provider is switched off (histmersion.plugins.ai-codex.enabled = false)",
+      Invalid.Broken.here(Invalid.Rule.ProviderOf(Raw("codex:gpt-5"), Raw("opencode"))) ->
+        "codex:gpt-5 is not an opencode model",
+      Invalid.Broken.here(Invalid.Rule.ProviderOf(Raw("opencode:a/b"), Raw("codex"))) ->
+        "opencode:a/b is not a codex model",
+      Invalid.Broken.here(Invalid.Rule.OpencodeModelShape(Raw("opencode:gpt-5"))) ->
+        "opencode:gpt-5: an opencode model is <provider>/<model>, e.g. opencode:openai/gpt-5",
+      Invalid.Broken.here(Invalid.Rule.HostProvider(Raw("codex"))) ->
+        "codex is Histmersion's own provider; it is run by the host, not through the SPI",
+      Invalid.Broken.here(Invalid.Rule.OptionOf(Raw("fix"), Raw("review-article"), Raw("enrich-source"))) ->
+        "fix is an option of review-article, not of enrich-source",
+      Invalid.Broken.here(Invalid.Rule.RoundsWithin(Count(9L), Count(1L), Count(6L))) ->
+        "rounds must be between 1 and 6 (agents.review.rounds-cap)",
+      Invalid.Broken.here(Invalid.Rule.NewArticleFilter(Raw("yamnaya"))) ->
+        "'yamnaya' is a new article: give a filter (query, topics or tags) for the sources to compile it from",
+      Invalid.Broken.here(Invalid.Rule.NewArticleTitle(Raw("yamnaya"))) -> "'yamnaya' is a new article: give its title"
     ).foreach((p, want) => assertEquals(p.sentence, want))
 
   test("the hot graph's and the settings' refusals keep the words and hints they had before their cases were typed"):

@@ -1,7 +1,6 @@
 package com.histmersion
 package util.settings
-import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.{sentence, sentences}
+import com.histmersion.util.problem.Text.sentences
 
 import com.histmersion.api.settings.ConfigEdit
 import com.histmersion.config.edit.*
@@ -72,7 +71,7 @@ object SettingsViews:
       ConfigEdit.Written.Version(o.version.value),
       ConfigEdit.Written.Created(o.created.value),
       o.restart.map((k, why) =>
-        ConfigEdit.RestartNote(ConfigEdit.RestartNote.Key(k.value), Problem.Unclassified(Legacy.Text(why.value)))
+        ConfigEdit.RestartNote(ConfigEdit.RestartNote.Key(k.value), ConfigEdit.RestartNote.Why(why.value))
       ),
       o.warnings.map(w => ConfigEdit.Written.Warnings(w.value)),
       reload,

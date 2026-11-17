@@ -148,7 +148,7 @@ final class ServerGraph private (
                         .modify(_.draining)
                         .setTo(o.draining.map(d => ReloadReport.Draining(d.value)))
                         .modify(_.warnings)
-                        .setTo(warnings ++ o.warnings.map(w => ReloadReport.Warnings(w.value)))
+                        .setTo(warnings ++ o.warnings.map(w => ReloadReport.Warnings(w.sentence)))
         ServerGraph.log(report)
         report
   }

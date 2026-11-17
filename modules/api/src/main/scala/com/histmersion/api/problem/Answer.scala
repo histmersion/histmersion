@@ -72,6 +72,8 @@ object Answer:
       case _: Upstream.BadReply           => StatusCode.BadGateway
       case _: Upstream.CallFailed         => StatusCode.BadGateway
       case _: Upstream.CallThrew          => StatusCode.BadGateway
+      case _: Upstream.Replied            => StatusCode.BadGateway
+      case _: Upstream.McpServer          => StatusCode.BadGateway
       case _: Upstream.Timeout            => StatusCode.GatewayTimeout
       case Io.Wrong(_, Io.Kind.Inside(_)) => StatusCode.Forbidden
       case _: Io                          => StatusCode.InternalServerError

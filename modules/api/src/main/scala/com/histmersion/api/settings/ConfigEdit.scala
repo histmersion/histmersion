@@ -1,8 +1,6 @@
 package com.histmersion
 package api.settings
 
-import com.histmersion.util.problem.Problem
-
 import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -152,10 +150,14 @@ object ConfigEdit:
     type Reload = Reload.T
     object Reload extends Newtype[Boolean, Pure]
 
-  final case class RestartNote(key: RestartNote.Key, why: Problem) derives JsonCodec, KindlingsSchema
+  /** A changed setting a running server takes on only after a restart, and why (the part of the server it sizes or
+    * binds is built once): an explanation, not a failure.
+    */
+  final case class RestartNote(key: RestartNote.Key, why: RestartNote.Why) derives JsonCodec, KindlingsSchema
 
   object RestartNote:
     export Field.Key
+    export Field.Restart as Why
 
   final case class Written(
       file: Written.File,

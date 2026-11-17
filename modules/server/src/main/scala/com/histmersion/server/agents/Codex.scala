@@ -5,7 +5,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.domain.automation.agents.SttpAiJson
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.json.RawJson.*
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.domain.automation.agents.*
@@ -30,6 +30,9 @@ import com.histmersion.config.UserPaths.pathEquality
 object Codex:
   type SchemaJson = SchemaJson.T
   object SchemaJson extends Newtype[String, Pure]
+
+  /** Who reports a failed turn in its own words. */
+  private val Said = Problem.Upstream.Name("codex exec")
 
   /** The typed answer's JSON Schema as derived (opencode reads it in the message). */
 
@@ -145,10 +148,13 @@ object Codex:
             .as[String]
             .toOption
             .orElse(Some("turn failed"))
-            .map((text => Problem.Unclassified(Legacy.Text(text))))
+            .map(text => Problem.Upstream.Replied(Said, External.Reported.of(text)))
         case "error" =>
           error = error.orElse(
-            c.downField("message").as[String].toOption.map((text => Problem.Unclassified(Legacy.Text(text))))
+            c.downField("message")
+              .as[String]
+              .toOption
+              .map(text => Problem.Upstream.Replied(Said, External.Reported.of(text)))
           )
         case _ => ()
     }
@@ -156,17 +162,14 @@ object Codex:
 
   def client(cfg: CodexConfig, rt: CliRuntime, ref: ModelRef): Either[Problem, LlmClient] =
     if ref.provider != ProviderKind.Codex then
-      Left(Problem.Unclassified(Legacy.Text(s"${ref.wire} is not a codex model")))
-    else if !rt.loopback then
       Left(
-        Problem.Unclassified(
-          Legacy.Text(
-            "codex is refused while the server listens beyond loopback: another client could spend your ChatGPT plan"
-          )
+        Problem.Invalid.Broken.here(
+          Problem.Invalid.Rule.ProviderOf(Problem.Raw.of(ref.wire), Problem.Raw.of(ProviderKind.Codex.wire))
         )
       )
+    else if !rt.loopback then Left(Problem.Refused.Policy(Problem.Refused.Rule.CodexOutsideLocal))
     else if cfg.command.value.trim.isEmpty then
-      Left(Problem.Unclassified(Legacy.Text("agents.providers.codex.command is empty")))
+      Left(Problem.Config.Setting(Problem.SettingKey("agents.providers.codex.command"), Problem.Config.Fault.Empty))
     else Right(CodexExecClient(ref, cfg, rt))
 
   /** Who uses the runs' Codex home, and its retention (#2582, [[CodexRetention]]).
@@ -252,19 +255,26 @@ object Codex:
     ): Report =
       val w = lock(home).writeLock()
       if !Files.isDirectory(home) then
-        Report(skipped = Some(Problem.Unclassified(Legacy.Text(s"no Codex home at $home"))))
-      else if !w.tryLock() then
-        Report(skipped = Some(Problem.Unclassified(Legacy.Text("a Codex run is using the home — not now"))))
+        Report(skipped = Some(Problem.Io.Absent(Problem.Io.Held.CodexHome, Problem.Io.Path(s"$home"), None)))
+      else if !w.tryLock() then Report(skipped = Some(Problem.Conflict.Busy(Problem.Conflict.Activity.CodexRun)))
       else
         try
           val problems = List.newBuilder[Problem]
           val files = CodexRetention.SessionDirs.flatMap(d => filesUnder(home, home.resolve(d.value)))
           val gone =
             CodexRetention.stale(files, nowMs, CodexRetention.KeepDays(cfg.keepSessionsDays.value)).filter { f =>
+              val transcript = home.resolve(f.rel.value)
               scala.util
-                .Try(Files.deleteIfExists(home.resolve(f.rel.value)))
+                .Try(Files.deleteIfExists(transcript))
                 .fold(
-                  e => { problems += Problem.Unclassified(Legacy.Text(s"${f.rel}: ${e.getMessage}")); false },
+                  e => {
+                    problems += Problem.Io.File(
+                      Problem.Io.Access.Delete,
+                      Problem.Io.Path(s"$transcript"),
+                      External.Reported.of(e)
+                    )
+                    false
+                  },
                   identity
                 )
             }
@@ -276,11 +286,17 @@ object Codex:
               CodexRetention.sqliteFiles(names).flatMap { n =>
                 val f = home.resolve(n.value)
                 val before = Files.size(f)
-                run(List(Argument(cfg.sqlite.value), Argument(f.toString), Argument("VACUUM;"))) match
+                val argv = List(Argument(cfg.sqlite.value), Argument(f.toString), Argument("VACUUM;"))
+                run(argv) match
                   case Right(c) if c.value == 0 =>
                     Some((Report.VacuumedFile(n.value), ByteCount(before), ByteCount(Files.size(f))))
-                  case Right(c) => problems += Problem.Unclassified(Legacy.Text(s"$n: ${cfg.sqlite} exit $c")); None
-                  case Left(e)  => problems += Problem.Unclassified(Legacy.Text(s"$n: ${e.sentence}")); None
+                  case Right(c) =>
+                    problems += Problem.Io.Process(
+                      commandOf(argv),
+                      Problem.Io.Ending.Exited(Problem.Io.ExitCode(c.value), External.Stderr(""))
+                    )
+                    None
+                  case Left(e) => problems += e; None
               }
           Report(
             None,
@@ -304,6 +320,12 @@ object Codex:
             .foreach(p => scala.util.Try(Files.delete(p))) // a non-empty one stays
         finally s.close()
 
+    /** The command line `argv`, as a problem names the process: the program and the file it works on. */
+    private def commandOf(argv: List[Argument]): Problem.Io.Tool = Problem.Io.Tool(argv.map(_.value).mkString(" "))
+
+    /** How long a command may run. */
+    private val CommandLimit = Problem.Millis(10L * 60L * 1000L)
+
     /** A command's exit code; Left when it cannot start or does not end within 10 minutes. */
     def runCommand(argv: List[Argument]): Either[Problem, ExitCode] =
       scala.util
@@ -315,12 +337,13 @@ object Codex:
               .start()
           if p.waitFor(10, TimeUnit.MINUTES) then Right(ExitCode(p.exitValue()))
           else {
-            p.destroyForcibly(); Left(Problem.Unclassified(Legacy.Text(s"${argv.head} did not finish in 10 minutes")))
+            p.destroyForcibly()
+            Left(Problem.Io.Process(commandOf(argv), Problem.Io.Ending.TimedOut(CommandLimit)))
           }
         }
         .toEither
         .left
-        .map(e => Problem.Unclassified(Legacy.Text(s"${argv.headOption.fold("")(_.value)}: ${e.getMessage}")))
+        .map(e => Problem.Io.Process(commandOf(argv), Problem.Io.Ending.NotStarted(External.Reported.of(e))))
         .flatten
 
     /** After a step: a pass on a virtual thread when one is due ([[CodexRetention.due]]). */

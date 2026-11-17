@@ -5,8 +5,8 @@ import com.histmersion.util.json.RawJson
 import com.histmersion.api.json.NewtypeCodecs.given
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.json.RawJson.*
-import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.{sentence, sentences}
+import com.histmersion.util.problem.{External, Problem}
+import com.histmersion.util.problem.Text.sentence
 import io.scalaland.chimney.dsl.*
 
 import hearth.kindlings.optics.syntax.*
@@ -83,7 +83,7 @@ final class PlanPools(
         (
           Floors.Empty,
           PoolStatus.FloorsSource("saved"),
-          Some(Problem.Unclassified(Legacy.Text(s"saved floors do not parse: ${m.sentences.mkString("; ")}")))
+          Some(Problem.Config.FloorsUnread(Problem.Config.FloorsFrom.Saved, m.toNonEmpty))
         )
       case None =>
         Floors.parse(poolCfg(p)._1) match
@@ -92,7 +92,12 @@ final class PlanPools(
             (
               Floors.Empty,
               PoolStatus.FloorsSource("config"),
-              Some(Problem.Unclassified(Legacy.Text(s"agents.quota.${p.wire}.floors: ${m.sentences.mkString("; ")}")))
+              Some(
+                Problem.Config.FloorsUnread(
+                  Problem.Config.FloorsFrom.Setting(Problem.SettingKey(s"agents.quota.${p.wire}.floors")),
+                  m.toNonEmpty
+                )
+              )
             )
 
   def rules(p: PoolId): Rules =
@@ -214,7 +219,7 @@ final class PlanPools(
   def unavailable(m: ModelRef, now: PlanQuota.Now = now0): Option[Problem] =
     poolOf(m).filter(p => PlanPools.loginGates(p, m)).flatMap { p =>
       login(p, now) match
-        case Login.Missing(why) => Some(Problem.Unclassified(Legacy.Text(s"unavailable: no login — $why")))
+        case Login.Missing(why) => Some(Problem.Run.NoLogin(Problem.Raw.of(why)))
         case _                  => None
     }
 
@@ -224,8 +229,11 @@ final class PlanPools(
     RefreshMode
       .parse(RefreshMode.Wire(cfg.quota.claudePlan.refresh.value))
       .toRight(
-        Problem.Unclassified(
-          Legacy.Text(s"agents.quota.claude-plan.refresh: '${cfg.quota.claudePlan.refresh}' is not auto, probe or off")
+        Problem.Invalid.Unknown(
+          Problem.TypeName.named[RefreshMode],
+          Problem.Raw.of(cfg.quota.claudePlan.refresh),
+          RefreshMode.values.toVector.map(m => Problem.Raw.of(m.wire)),
+          Vector(Problem.Field("agents.quota.claude-plan.refresh"))
         )
       )
 
@@ -498,6 +506,9 @@ final class PlanPools(
 object PlanPools:
   type Force = Force.T
   object Force extends Newtype[Boolean, Pure]
+
+  /** The process a ChatGPT plan's read runs. */
+  private val AppServer = Problem.Io.Tool("codex app-server")
   type ScheduleText = ScheduleText.T
   object ScheduleText extends Newtype[String, Pure]
 
@@ -535,9 +546,9 @@ object PlanPools:
     /** Nothing is started: no read, no fresh reading taken, logins not known (so nothing is made unavailable).
       */
     val Offline: Seams = Seams(
-      (_, _, _) => Left(Problem.Unclassified(Legacy.Text("no app-server read in this context"))),
-      (_, _, _, _) => Left(Problem.Unclassified(Legacy.Text("no probe in this context"))),
-      (_, _, _) => Left(Problem.Unclassified(Legacy.Text("not checked in this context"))),
+      (_, _, _) => Left(Problem.Config.Unavailable(Problem.Config.Capability.AppServerRead)),
+      (_, _, _, _) => Left(Problem.Config.Unavailable(Problem.Config.Capability.PlanProbe)),
+      (_, _, _) => Left(Problem.Config.Unavailable(Problem.Config.Capability.LoginCheck)),
       refreshes = Refreshes(false)
     )
 
@@ -664,11 +675,9 @@ object PlanPools:
             .map(r => (r.text.value :: r.errors.map(_.value)).filter(_.nonEmpty).mkString("; "))
             .filter(_.nonEmpty)
           Left(
-            Problem.Unclassified(
-              Legacy.Text(
-                s"the probe printed no rate_limit_event (exit ${run.exit}" +
-                  said.orElse(Option(run.stderr.value).filter(_.nonEmpty)).fold("")(m => s": ${m.take(300)}") + ")"
-              )
+            Problem.Run.ProbeUnread(
+              Problem.Io.ExitCode(run.exit.value),
+              said.orElse(Option(run.stderr.value).filter(_.nonEmpty)).map(External.Reported.of)
             )
           )
 
@@ -816,9 +825,7 @@ object PlanPools:
       .filter(!_)
       .map(_ =>
         (
-          Problem.Unclassified(
-            Legacy.Text("the ChatGPT plan does not allow ordinary usage now (ordinaryUsageAllowed: false)")
-          ),
+          Problem.Refused.Policy(Problem.Refused.Rule.OrdinaryUsageDenied),
           Option.empty[PlanQuotaRepo.Pool.RefusalUntil]
         )
       )
@@ -837,6 +844,7 @@ object PlanPools:
       home: java.nio.file.Path,
       timeoutSeconds: AgentsConfig.DoctorTimeoutSeconds
   ): Either[Problem, Json] =
+    val seconds = math.max(1, timeoutSeconds.value).toLong
     try
       val pb = ProcessBuilder(command.value, "app-server").redirectError(ProcessBuilder.Redirect.DISCARD)
       val env = pb.environment()
@@ -857,18 +865,18 @@ object PlanPools:
             .flatMap(l => RawJson.parse(l).toOption)
             .find(j => j.cursor.downField("id").as[Int].toOption.contains(2))
         }
-        reader.get(math.max(1, timeoutSeconds.value).toLong, TimeUnit.SECONDS) match
+        reader.get(seconds, TimeUnit.SECONDS) match
           case None =>
-            Left(Problem.Unclassified(Legacy.Text("codex app-server ended without answering account/rateLimits/read")))
+            Left(Problem.Io.Process(AppServer, Problem.Io.Ending.Unanswered(Problem.Raw("account/rateLimits/read"))))
           case Some(j) =>
             j.cursor
               .downField("result")
               .focus
               .toRight(
-                Problem.Unclassified(
-                  Legacy.Text(
-                    s"account/rateLimits/read: ${j.cursor.downField("error").downField("message").as[String].getOrElse(j.noSpaces.take(200))}"
-                  )
+                Problem.Upstream.Replied(
+                  Problem.Upstream.Name("account/rateLimits/read"),
+                  External.Reported
+                    .of(j.cursor.downField("error").downField("message").as[String].getOrElse(j.noSpaces))
                 )
               )
       finally
@@ -880,7 +888,12 @@ object PlanPools:
     catch
       case e: InterruptedException                  => throw e
       case e: java.util.concurrent.TimeoutException =>
-        Left(Problem.Unclassified(Legacy.Text(s"codex app-server did not answer within $timeoutSeconds s")))
+        Left(
+          Problem.Io.Process(
+            AppServer,
+            Problem.Io.Ending.TimedOut(Problem.Millis(seconds * 1000L))
+          )
+        )
       case e: Exception =>
         Left(ProblemLog.unexpected(e, Problem.Where("the plan pools' quota read")))
 

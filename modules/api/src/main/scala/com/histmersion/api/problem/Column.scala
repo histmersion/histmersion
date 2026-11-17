@@ -83,6 +83,8 @@ object Column:
       case Upstream.Timeout(name, url, after, at)       => s"${path(at)}$name did not answer at $url within $after ms"
       case Upstream.CallFailed(model, why)              => s"the call to $model failed (${why.stored})"
       case Upstream.CallThrew(model, reported)          => s"the call to $model threw — $reported"
+      case Upstream.Replied(upstream, said)             => s"$upstream said — $said"
+      case Upstream.McpServer(status)                   => s"agent mcp server $status"
       case Upstream.BadReply(name, url, s, r, at) => s"${path(at)}$name's answer at $url is not ${s.productPrefix} — $r"
       case Io.File(op, path, reported)            => s"could not ${op.productPrefix} $path — $reported"
       case Io.Wrong(path, Io.Kind.Inside(dir))    => s"$path is outside $dir"
@@ -93,6 +95,7 @@ object Column:
       case Io.Entry(archive, entry, fault) => s"${archive.productPrefix} entry $entry: ${fault.stored}"
       case Io.Absent(held, path, setting)  =>
         s"no ${held.productPrefix} at $path${setting.fold("")(s => s" (set $s)")}"
+      case Io.Hashed(path, expected, found) => s"content of $path hashes to $found, not $expected"
       case Io.Extract(extract, pinning)     => s"extract '$extract' cannot be read: ${pinning.stored}"
       case Io.Oversize(path, mb, setting)   => s"$path is $mb MB, over $setting"
       case Config.Setting(key, fault)       => s"$key is wrong: ${fault.stored}"
@@ -108,6 +111,10 @@ object Column:
             case Config.Drain.Unclosed(s) => s" $s s"
             case Config.Drain.ClosedInUse => ""
           }: $component"
+      case Config.ApiKeyLogin(method)                               => s"api key login $method"
+      case Config.FloorsUnread(Config.FloorsFrom.Saved, why)        => s"floors unread, saved (${why.storedEach})"
+      case Config.FloorsUnread(Config.FloorsFrom.Setting(key), why) => s"floors unread, $key (${why.storedEach})"
+      case Config.ReadAt(file, at, why)                             => s"settings $file read at $at (${why.storedEach})"
       case Config.Unpriced(model, metered)    => s"model $model is unpriced${metered.fold("")(m => s" (${m.stored})")}"
       case Plugin.Load(plugin, fault)         => s"plugin $plugin did not load: ${fault.stored}"
       case Plugin.Rejected(plugin, item, why) => s"$plugin did not take '$item': ${why.stored}"
@@ -155,8 +162,12 @@ object Column:
       case Problem.Run.AllowanceReached(model)  => s"allowance reached by $model mid-step"
       case Problem.Run.OutputCapped(step, model, cap, sent, setting) =>
         s"output over the cap at step $step: $model, cap $cap, sent $sent, ${setting.productPrefix}"
-      case Problem.Run.NoText(source)            => s"no text in '$source'"
-      case Problem.Run.NoBody(article)           => s"no body to review in '$article'"
+      case Problem.Run.NoText(source)          => s"no text in '$source'"
+      case Problem.Run.NoBody(article)         => s"no body to review in '$article'"
+      case Problem.Run.GuardStopped(why)       => s"stopped by the quota guard: $why"
+      case Problem.Run.NoLogin(why)            => s"no login: $why"
+      case Problem.Run.ProbeUnread(exit, said) =>
+        s"probe read no rate limit, exit $exit${said.fold("")(m => s" — $m")}"
       case Problem.Run.Blocked(block)            => s"held back: ${block.stored}"
       case Problem.Run.Interrupted               => "interrupted"
       case Problem.Run.CutShort(activity)        => s"cut short: ${activity.productPrefix}"
@@ -325,6 +336,12 @@ object Column:
         case Invalid.Rule.FocusRegion(name, known)       => Vector(s"$name", known.mkString(ListSeparator))
         case Invalid.Rule.FocusDeeper(extract)           => Vector(s"$extract")
         case Invalid.Rule.LabelsUnranged | Invalid.Rule.SeaFloorUnranged => Vector.empty
+        case Invalid.Rule.ProviderOf(model, provider)                    => Vector(s"$model", s"$provider")
+        case Invalid.Rule.OpencodeModelShape(model)                      => Vector(s"$model")
+        case Invalid.Rule.HostProvider(provider)                         => Vector(s"$provider")
+        case Invalid.Rule.OptionOf(option, owner, pipeline)              => Vector(s"$option", s"$owner", s"$pipeline")
+        case Invalid.Rule.NewArticleFilter(target)                       => Vector(s"$target")
+        case Invalid.Rule.NewArticleTitle(target)                        => Vector(s"$target")
         case Invalid.Rule.IdentifierGiven | Invalid.Rule.RunsCompared | Invalid.Rule.RunRepeated |
             Invalid.Rule.QueryGiven | Invalid.Rule.UpstreamRecord | Invalid.Rule.UploadGiven |
             Invalid.Rule.PathOrBase64 | Invalid.Rule.ServerSees | Invalid.Rule.OriginalForReocr |
@@ -447,13 +464,16 @@ object Column:
       case Io.Ending.Exited(code, stderr) => s"exited with $code — $stderr"
       case Io.Ending.TimedOut(after)      => s"did not finish within $after ms"
       case Io.Ending.NotStarted(reported) => s"could not be started — $reported"
+      case Io.Ending.Unanswered(request)  => s"ended without answering $request"
 
   extension (fault: Config.Fault)
     private def stored: String = fault match
-      case Config.Fault.Unset(variable)  => s"Unset $variable"
-      case Config.Fault.Malformed(raw)   => s"Malformed '$raw'"
-      case Config.Fault.Unknown(raw)     => s"Unknown '$raw'"
-      case Config.Fault.Unregistered(id) => s"Unregistered '$id'"
+      case Config.Fault.Unset(variable)             => s"Unset $variable"
+      case Config.Fault.Malformed(raw)              => s"Malformed '$raw'"
+      case Config.Fault.Unknown(raw)                => s"Unknown '$raw'"
+      case Config.Fault.Unregistered(id)            => s"Unregistered '$id'"
+      case Config.Fault.Defaulted(raw, known, used) =>
+        s"Defaulted '$raw' (${known.mkString(ListSeparator)}) as '$used'"
       case Config.Fault.NoPlugin(id)     => s"NoPlugin '$id'"
       case Config.Fault.Conflicts(other) => s"Conflicts $other"
       case Config.Fault.WrongKind(e, f)  => s"WrongKind ${e.productPrefix}/${f.productPrefix}"
@@ -815,6 +835,12 @@ object Column:
         case Vector("FocusDeeper", e)        => Count.read(e).map(FocusDeeper(_))
         case Vector("LabelsUnranged")        => Some(LabelsUnranged)
         case Vector("SeaFloorUnranged")      => Some(SeaFloorUnranged)
+        case Vector("ProviderOf", m, p)      => Some(ProviderOf(Raw(m), Raw(p)))
+        case Vector("OpencodeModelShape", m) => Some(OpencodeModelShape(Raw(m)))
+        case Vector("HostProvider", p)       => Some(HostProvider(Raw(p)))
+        case Vector("OptionOf", o, w, p)     => Some(OptionOf(Raw(o), Raw(w), Raw(p)))
+        case Vector("NewArticleFilter", t)   => Some(NewArticleFilter(Raw(t)))
+        case Vector("NewArticleTitle", t)    => Some(NewArticleTitle(Raw(t)))
         case Vector("RoundsWithin", s, l, c) =>
           for
             stated <- Count.read(s)
@@ -931,6 +957,18 @@ object Column:
     private val Exited = "(?s)^(.+?) exited with (-?\\d+) — (.*)$".r
     private val Unfinished = "(?s)^(.+?) did not finish within (\\d+) ms$".r
     private val NotStarted = "(?s)^(.+?) could not be started — (.*)$".r
+    private val UnansweredBy = "(?s)^(.+?) ended without answering (.+)$".r
+    private val DefaultedAs = "(?s)^'(.*)' \\((.*)\\) as '(.*)'$".r
+    private val SaidBy = "(?s)^(.+?) said — (.*)$".r
+    private val McpServerIs = "^agent mcp server (\\S+)$".r
+    private val ContentHashes = "(?s)^content of (.+) hashes to (\\S+), not (\\S+)$".r
+    private val ApiKeyLoginBy = "^api key login (\\S+)$".r
+    private val FloorsUnreadSaved = "(?s)^floors unread, saved \\((.*)\\)$".r
+    private val FloorsUnreadOf = "(?s)^floors unread, (\\S+) \\((.*)\\)$".r
+    private val SettingsReadAt = "(?s)^settings (.+?) read at (.+?) \\((.*)\\)$".r
+    private val GuardStoppedBy = "(?s)^stopped by the quota guard: (.*)$".r
+    private val NoLoginFor = "(?s)^no login: (.*)$".r
+    private val ProbeUnreadExit = "(?s)^probe read no rate limit, exit (-?\\d+)(?: — (.*))?$".r
     private val DatabaseRefused = "(?s)^the database refused to (\\w+) — (.*)$".r
     private val WrongSetting = "(?s)^(\\S+) is wrong: (\\w+)(?: (.*))?$".r
     private val NoCapability = "^this server has no (\\w+)$".r
@@ -1781,6 +1819,30 @@ object Column:
         case _ => None
       },
       {
+        case UnansweredBy(tool, request) => Some(Io.Process(Io.Tool(s"$tool"), Io.Ending.Unanswered(Raw(s"$request"))))
+        case _                           => None
+      },
+      {
+        case SaidBy(upstream, said) =>
+          Some(Upstream.Replied(Upstream.Name(s"$upstream"), External.Reported(s"$said")))
+        case _ => None
+      },
+      {
+        case McpServerIs(status)                  => Some(Upstream.McpServer(Raw(s"$status")))
+        case ContentHashes(path, found, expected) =>
+          Some(Io.Hashed(Io.Path(s"$path"), Raw(s"$expected"), Raw(s"$found")))
+        case ApiKeyLoginBy(method)    => Some(Config.ApiKeyLogin(Raw(s"$method")))
+        case FloorsUnreadSaved(why)   => whysOf(why).map(Config.FloorsUnread(Config.FloorsFrom.Saved, _))
+        case FloorsUnreadOf(key, why) =>
+          whysOf(why).map(Config.FloorsUnread(Config.FloorsFrom.Setting(SettingKey(s"$key")), _))
+        case SettingsReadAt(file, at, why) => whysOf(why).map(Config.ReadAt(Io.Path(s"$file"), Io.Path(s"$at"), _))
+        case GuardStoppedBy(why)           => Some(Problem.Run.GuardStopped(Raw(s"$why")))
+        case NoLoginFor(why)               => Some(Problem.Run.NoLogin(Raw(s"$why")))
+        case ProbeUnreadExit(exit, said)   =>
+          Io.ExitCode.read(exit).map(Problem.Run.ProbeUnread(_, Option(said).map(m => External.Reported(s"$m"))))
+        case _ => None
+      },
+      {
         case DatabaseRefused(op, reported) =>
           word(Io.DbOp.values.toSeq, op).map(Io.Database(_, External.Reported(s"$reported")))
         case _ => None
@@ -1792,10 +1854,12 @@ object Column:
             .filter(a => a.length >= 2 && a.startsWith("'") && a.endsWith("'"))
             .map(a => Raw(s"${a.drop(1).dropRight(1)}"))
           val read: Option[Config.Fault] = (fault, arg) match
-            case ("Unset", Some(v))              => Some(Config.Fault.Unset(SettingKey(s"$v")))
-            case ("Malformed", Some(_))          => quoted.map(Config.Fault.Malformed(_))
-            case ("Unknown", Some(_))            => quoted.map(Config.Fault.Unknown(_))
-            case ("Unregistered", Some(_))       => quoted.map(Config.Fault.Unregistered(_))
+            case ("Unset", Some(v))                                 => Some(Config.Fault.Unset(SettingKey(s"$v")))
+            case ("Malformed", Some(_))                             => quoted.map(Config.Fault.Malformed(_))
+            case ("Unknown", Some(_))                               => quoted.map(Config.Fault.Unknown(_))
+            case ("Unregistered", Some(_))                          => quoted.map(Config.Fault.Unregistered(_))
+            case ("Defaulted", Some(DefaultedAs(raw, known, used))) =>
+              Some(Config.Fault.Defaulted(Raw(s"$raw"), raws(known), Raw(s"$used")))
             case ("NoPlugin", Some(_))           => quoted.map(Config.Fault.NoPlugin(_))
             case ("Conflicts", Some(o))          => Some(Config.Fault.Conflicts(SettingKey(s"$o")))
             case ("WrongKind", Some(Pair(e, f))) =>

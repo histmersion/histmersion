@@ -1,8 +1,8 @@
 package com.histmersion
 package util.settings
 
-import com.histmersion.util.problem.{External, Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.nonempty.NonEmptyVector
+import com.histmersion.util.problem.{External, Problem}
 import com.histmersion.config.AppConfig
 import com.histmersion.config.edit.{ConfigFileState, FileVersion, SettingError, SettingsFile, WriteOutcome}
 import com.histmersion.util.storage.{Store, TempName}
@@ -57,10 +57,7 @@ final class StoredSettingsFile(store: Store, key: Store.Key, val shown: Settings
                   AppConfig
                     .loadWithUserFile(env, Some(temp))
                     .left
-                    .map(
-                      _.toNonEmpty
-                        .map(p => Problem.Unclassified(Legacy.Text(p.sentence.replace(temp.toString, shown.value))))
-                    )
+                    .map(_.toNonEmpty.map(p => readAt(temp.toString, p)))
               )
             )
             bak <- backup(existed)
@@ -82,8 +79,12 @@ final class StoredSettingsFile(store: Store, key: Store.Key, val shown: Settings
   /** A parse of the file at `where`, its messages naming the settings file. */
   private def parsed(parse: Either[Problem, Option[Config]], where: String): Either[SettingError, Config] =
     parse.left
-      .map(m => SettingError.Unreadable(Problem.Unclassified(Legacy.Text(m.sentence.replace(where, shown.value)))))
+      .map(m => SettingError.Unreadable(readAt(where, m)))
       .flatMap(_.toRight(SettingError.Unreadable(Problem.Io.Wrong(Problem.Io.Path.of(shown), Problem.Io.Kind.Present))))
+
+  /** `problem`, found reading the settings at `where`: kept whole, shown naming the settings file. */
+  private def readAt(where: String, problem: Problem): Problem =
+    Problem.Config.ReadAt(Problem.Io.Path.of(shown), Problem.Io.Path(where), NonEmptyVector.of(problem))
 
   private def io(e: Store.Error): SettingError = SettingError.Io(e.message)
 

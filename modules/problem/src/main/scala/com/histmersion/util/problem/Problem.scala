@@ -492,6 +492,24 @@ object Problem:
       /** The sea floor is not read with range requests: `bathymetry` fetches it. */
       case SeaFloorUnranged
 
+      /** The model reference `model` was handed to the client of `provider`, which runs only its own models. */
+      case ProviderOf(model: Raw, provider: Raw)
+
+      /** An opencode model `model` is not `<provider>/<model>`. */
+      case OpencodeModelShape(model: Raw)
+
+      /** `provider` is Histmersion's own: the host runs it, the plugin SPI's turn is never called for it. */
+      case HostProvider(provider: Raw)
+
+      /** `option` is a run option of the pipeline `owner`, not of `pipeline`, the one asked for. */
+      case OptionOf(option: Raw, owner: Raw, pipeline: Raw)
+
+      /** `target` is a new article: compiling it needs a filter (query, topics or tags). */
+      case NewArticleFilter(target: Raw)
+
+      /** `target` is a new article: compiling it needs its title. */
+      case NewArticleTitle(target: Raw)
+
     /** What uses the agent roles a model is set for. */
     enum RoleOwner derives CanEqual:
       /** An agent pipeline, by its name: `--model-for` sets a model for one of its roles. */
@@ -792,6 +810,9 @@ object Problem:
     enum Activity:
       case Backup, Restore, Vacuum, Reindex, MergeApply, BundleImport, Seed, Migration, CalibreGui, TileRequests
 
+      /** A Codex run, which uses the runs' Codex home. */
+      case CodexRun
+
   /** The operation is not allowed, though it is valid and the state allows it. */
   sealed trait Refused extends Problem
 
@@ -886,6 +907,19 @@ object Problem:
         * client could spend it.
         */
       case PlanOutsideLocal
+
+      /** claude-code is refused while the server listens beyond loopback: another client could spend the Claude plan.
+        */
+      case ClaudeCodeOutsideLocal
+
+      /** codex is refused while the server listens beyond loopback: another client could spend the ChatGPT plan. */
+      case CodexOutsideLocal
+
+      /** opencode on a ChatGPT login is refused while the server listens beyond loopback. */
+      case OpencodeChatgptOutsideLocal
+
+      /** The ChatGPT plan does not allow ordinary usage now (`ordinaryUsageAllowed: false`). */
+      case OrdinaryUsageDenied
 
     /** The allowances a request can spend. */
     enum Limit:
@@ -987,6 +1021,12 @@ object Problem:
     /** A call to the model `upstream` threw: `reported`, the exception's class and message. */
     final case class CallThrew(upstream: Name, reported: External.Reported) extends Upstream
 
+    /** `upstream` (a command-line runtime, or the request it answered) reported a failure in its own words: `said`. */
+    final case class Replied(upstream: Name, said: External.Reported) extends Upstream
+
+    /** The agent MCP server a command-line runtime started for a step is not connected: `status`, as it reported it. */
+    final case class McpServer(status: Raw) extends Upstream
+
     object BadReply:
       /** The problem of the request as a whole: no path into it. */
       def here(upstream: Name, url: Url, expected: Shape, reported: External.Reported): BadReply =
@@ -1051,6 +1091,9 @@ object Problem:
     /** No `held` is at `path`. `setting`: the setting that moves it, when the problem names one. */
     final case class Absent(held: Held, path: Path, setting: Option[SettingKey]) extends Io
 
+    /** The content stored at `path` hashes to `found`, not to `expected`, the hash it is stored under. */
+    final case class Hashed(path: Path, expected: Raw, found: Raw) extends Io
+
     /** What a path should hold. */
     enum Held derives CanEqual:
       /** The bundled gazetteer seed (a directory of Linked Places files). */
@@ -1064,6 +1107,9 @@ object Problem:
 
       /** The JSON files of the gazetteer seed. */
       case SeedFiles
+
+      /** The Codex home the agent runs use. */
+      case CodexHome
 
     /** The gazetteer's pinned extract `extract` cannot be read: `pinning`. */
     final case class Extract(extract: Raw, pinning: Pinning) extends Io
@@ -1369,6 +1415,9 @@ object Problem:
       /** It could not be started. */
       case NotStarted(reported: External.Reported)
 
+      /** It ended without answering `request`. */
+      case Unanswered(request: Raw)
+
     enum DbOp:
       case Connect, Query, Migrate, Backup, Restore
 
@@ -1396,6 +1445,25 @@ object Problem:
       * how its closing went.
       */
     final case class Drained(component: Raw, drain: Drain) extends Config
+
+    /** Claude Code is logged in with an API key (`method`), not with a Claude plan. */
+    final case class ApiKeyLogin(method: Raw) extends Config
+
+    /** A plan pool's floors do not parse (`from` says whose), so it floors nothing: `why`, each problem. */
+    final case class FloorsUnread(from: FloorsFrom, why: NonEmptyVector[Problem]) extends Config
+
+    /** Where a plan pool's floors come from. */
+    enum FloorsFrom derives CanEqual:
+      /** The floors saved for the pool. */
+      case Saved
+
+      /** The setting `key`. */
+      case Setting(key: SettingKey)
+
+    /** The settings `file`, read at `at` (the file itself, or the copy staged before it replaces the file), does not
+      * load: `why`, each problem. They name the path read; shown, they name the settings file.
+      */
+    final case class ReadAt(file: Io.Path, at: Io.Path, why: NonEmptyVector[Problem]) extends Config
 
     /** How a retired part's closing went. */
     enum Drain derives CanEqual:
@@ -1522,6 +1590,9 @@ object Problem:
       /** It names `id`, which no enabled plugin registered: that entry is skipped. */
       case Unregistered(id: Raw)
 
+      /** Its value `raw` is none of `known`: it is treated as `used`. */
+      case Defaulted(raw: Raw, known: Vector[Raw], used: Raw)
+
       /** It names `id`, which is no plugin in this binary. */
       case NoPlugin(id: Raw)
 
@@ -1589,6 +1660,18 @@ object Problem:
 
       /** The graph of the parts a reload rebuilds: closed once the server shuts down. */
       case HotGraph
+
+      /** A Claude Code login: without one, the Claude plan cannot be used. */
+      case ClaudeLogin
+
+      /** A read of the ChatGPT plan through `codex app-server`: none where nothing is started. */
+      case AppServerRead
+
+      /** A `claude -p` probe of the Claude plan: none where nothing is started. */
+      case PlanProbe
+
+      /** A check of a plan's login: none where nothing is started. */
+      case LoginCheck
 
     /** The stages of a settings reload. */
     enum Stage:
@@ -1821,6 +1904,15 @@ object Problem:
 
     /** Article `article` has no body to review. */
     final case class NoBody(article: Raw) extends Run
+
+    /** The quota guard stopped a `claude -p` step: `why`, as the guard said it. */
+    final case class GuardStopped(why: Raw) extends Run
+
+    /** A model whose runtime spends a plan cannot be offered: the plan's login is missing (`why`). */
+    final case class NoLogin(why: Raw) extends Run
+
+    /** The plan probe printed no rate-limit event: it exited with `exit`; `said`, what it printed, if anything. */
+    final case class ProbeUnread(exit: Io.ExitCode, said: Option[External.Reported]) extends Run
 
     /** The scheduler holds it back: `block`. */
     final case class Blocked(block: Block) extends Run
@@ -2535,6 +2627,8 @@ object Problem:
         Plugin.Said(Plugin.Id("hello-ai"), Plugin.Claim.Failed, External.PluginSaid("Claude API error: Overloaded"))
       ),
       Upstream.CallThrew(Upstream.Name("anthropic:claude-opus"), External.Reported("IOException: connection reset")),
+      Upstream.Replied(Upstream.Name("codex exec"), External.Reported("stream disconnected before completion")),
+      Upstream.McpServer(Raw("failed")),
       Upstream.BadReply
         .here(core, url, Upstream.Shape.Json, External.Reported("expected json value got '<html>' (line 1)")),
       Io.File(
@@ -2554,6 +2648,7 @@ object Problem:
         )
       ),
       Io.Oversize(Io.Path("whg-crete.json"), Count(612L), SettingKey("places.sources.max-lpf-mb")),
+      Io.Hashed(Io.Path("/srv/originals/ab12.pdf"), Raw("ab12"), Raw("cd34")),
       Io.Corrupt(Io.Format.Png, Where("terrarium tile 3/4/2"), Io.Damage.Length(Count(1024L), Count(1000L))),
       Io.Process(
         Io.Tool("calibredb"),
@@ -2577,6 +2672,16 @@ object Problem:
         Config.Unbuilt(Config.Scope("pool"), NonEmptyVector.of(Config.Cycle(NonEmptyVector.of(Config.Scope("db")))))
       ),
       Config.Drained(Raw("pool (generation 3, 2 pinned)"), Config.Drain.InUse(Count(10L))),
+      Config.ApiKeyLogin(Raw("api_key_helper")),
+      Config.FloorsUnread(
+        Config.FloorsFrom.Setting(SettingKey("agents.quota.claude-plan.floors")),
+        NonEmptyVector.of(Invalid.Missing(Field("five_hour"), Vector.empty))
+      ),
+      Config.ReadAt(
+        Io.Path("~/.config/histmersion/histmersion.conf"),
+        Io.Path("/tmp/histmersion.conf.1234"),
+        NonEmptyVector.of(Io.Wrong(Io.Path("/tmp/histmersion.conf.1234"), Io.Kind.File))
+      ),
       Config.Unpriced(Run.Model("claude-opus-5-5"), Some(Config.Metered.ApiKey(Upstream.Name("claude-code")))),
       Config.Definition(
         Raw("agents/skeptic.md"),
@@ -2701,6 +2806,9 @@ object Problem:
       ),
       Run.NoText(Raw("anthony2007")),
       Run.NoBody(Raw("yamnaya")),
+      Run.GuardStopped(Raw("the quota-guard mod ended the turn")),
+      Run.NoLogin(Raw("'claude auth status' says not logged in")),
+      Run.ProbeUnread(Io.ExitCode(1), Some(External.Reported("Invalid API key"))),
       Run.Blocked(Run.Block.PoolFull(Run.Pool("review"))),
       Run.Interrupted,
       Run.CutShort(Conflict.Activity.MergeApply),

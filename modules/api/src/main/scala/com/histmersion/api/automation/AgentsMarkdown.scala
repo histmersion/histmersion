@@ -30,7 +30,7 @@ object AgentsMarkdown:
   def models(m: ModelsInfo): String =
     val head = s"# Embedded agents — ${if (m.enabled) == ModelsInfo.Enabled(true) then "enabled" else "OFF"}\n\n" +
       s"Pipelines: ${m.pipelines.mkString(", ")} · at most ${m.maxConcurrentRuns} run(s) at once\n\n"
-    val problems = if m.problems.isEmpty then "" else "\n\n" + m.problems.map(p => s"- $p").mkString("\n")
+    val problems = if m.problems.isEmpty then "" else "\n\n" + m.problems.map(p => s"- ${p.sentence}").mkString("\n")
     if m.chains.isEmpty then
       val rows = m.roles.map { r =>
         s"| ${r.role} | ${r.model.getOrElse("—")} | ${

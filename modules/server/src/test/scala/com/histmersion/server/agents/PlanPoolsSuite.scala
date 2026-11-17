@@ -98,7 +98,8 @@ class PlanPoolsSuite extends munit.FunSuite:
     script.toFile.setExecutable(true)
     val t0 = System.nanoTime()
     val r = PlanPools.readCodex(CodexConfig.Command(script.toString), dir, AgentsConfig.DoctorTimeoutSeconds(2))
-    assert(r.left.exists(_.sentence.contains("did not answer")), r)
+    // the timeout names the process and how long it was given
+    assertEquals(r.left.map(_.sentence), Left("codex app-server did not finish within 2000 ms"))
     assert((System.nanoTime() - t0) / 1000000000L < 15)
 
   test("a mod's report: percentUsed and the ISO reset"):

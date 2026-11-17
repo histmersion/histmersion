@@ -1,7 +1,7 @@
 package com.histmersion
 package server.hot
 import com.histmersion.util.nonempty.NonEmptyVector
-import com.histmersion.util.problem.{Legacy, Problem, ProblemLog, Problems}
+import com.histmersion.util.problem.{Problem, ProblemLog, Problems}
 import com.histmersion.util.problem.Text.sentence
 
 import hearth.kindlings.optics.syntax.*
@@ -292,10 +292,12 @@ object Hot:
                     try
                       within(onNew)(plan.flatMap { name =>
                         try { byName(name).onPublish(built(name).value); None }
-                        catch case NonFatal(e) => Some(Outcome.Warnings(s"$name: after the swap: ${e.getMessage}"))
+                        catch
+                          // logged with its stack under a new problem id; the reload report names the id
+                          case NonFatal(e) =>
+                            Some(ProblemLog.unexpected(e, Problem.Where(s"the publish hook of $name, after the swap")))
                       })
                     finally onNew.release()
-                  notes.foreach(w => log.warn(Problem.Unclassified(Legacy.Text(w.value))))
                   Right(Outcome(gen, plan, retire(retired.reverse, drain), notes))
             }
       }
@@ -426,12 +428,8 @@ object Hot:
         generation: Generation,
         rebuilt: List[Def.Name],
         draining: List[Instance.Description],
-        warnings: List[Outcome.Warnings]
+        warnings: List[Problem]
     )
-
-    object Outcome:
-      type Warnings = Warnings.T
-      object Warnings extends Newtype[String, Pure]
 
     final private[hot] case class Def[C](
         name: Def.Name,

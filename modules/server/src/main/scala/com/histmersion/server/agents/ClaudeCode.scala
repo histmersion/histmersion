@@ -5,7 +5,7 @@ import com.histmersion.domain.automation.agents.SttpAiJson
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.json.RawJson
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.domain.automation.agents.*
@@ -231,7 +231,8 @@ object ClaudeCode:
     * answer (§3a P3).
     */
   def abortedByGuard(r: Result): Boolean =
-    r.terminalReason.exists(_.sentence == "aborted_streaming") && r.text.value.trim.isEmpty && r.structured.isEmpty
+    r.terminalReason.contains(Result.TerminalReason.AbortedStreaming) && r.text.value.trim.isEmpty &&
+      r.structured.isEmpty
 
   // ── the output ─────────────────────────────────────────────────────────────────────────────────
 
@@ -245,7 +246,7 @@ object ClaudeCode:
       costUsd: Option[Result.CostUsd],
       denials: List[Result.Denials],
       errors: List[Result.Errors],
-      terminalReason: Option[Problem] = None
+      terminalReason: Option[Result.TerminalReason] = None
   )
 
   object Result:
@@ -263,6 +264,20 @@ object ClaudeCode:
     object Denials extends Newtype[String, Pure]
     type Errors = Errors.T
     object Errors extends Newtype[String, Pure]
+
+    /** Why the turn ended, as `claude -p` reports it (`terminal_reason`): a word of its own, not a failure. The guard's
+      * abort is branched on; any other word is kept as it was said.
+      */
+    enum TerminalReason derives CanEqual:
+      /** The quota-guard mod aborted the turn (`aborted_streaming`). */
+      case AbortedStreaming
+
+      /** Any other word: `word`. */
+      case Other(word: String)
+
+    object TerminalReason:
+      /** The reason `claude -p` wrote. */
+      def of(word: String): TerminalReason = if word == "aborted_streaming" then AbortedStreaming else Other(word)
 
   /** What one `claude -p` run printed: the conversation (assistant text, tool calls and their results, in order), the
     * result line, the usage and the model that served it — the result's `modelUsage` entry with the most output tokens
@@ -342,7 +357,7 @@ object ClaudeCode:
             .find(s => s.cursor.downField("name").as[String].contains(McpServer))
             .flatMap(_.cursor.downField("status").as[String].toOption)
             .filterNot(s => s == "connected" || s == "pending")
-            .map(s => Problem.Unclassified(Legacy.Text(s"the agent MCP server is $s")))
+            .map(s => Problem.Upstream.McpServer(Problem.Raw(s)))
         case "assistant" if c.downField("parent_tool_use_id").focus.forall(_.isNull) =>
           turn += 1
           if firstCall.isEmpty then firstCall = c.downField("message").focus.flatMap(firstCallTokens)
@@ -407,7 +422,7 @@ object ClaudeCode:
                 .downField("terminal_reason")
                 .as[String]
                 .toOption
-                .map((text => Problem.Unclassified(Legacy.Text(text))))
+                .map(Result.TerminalReason.of)
             )
           )
         case _ => ()
@@ -528,19 +543,20 @@ object ClaudeCode:
   /** The `claude-code` client for `ref`, or why it cannot be used here. */
   def client(cfg: ClaudeCodeConfig, rt: CliRuntime, ref: ModelRef): Either[Problem, LlmClient] =
     if ref.provider != ProviderKind.ClaudeCode then
-      Left(Problem.Unclassified(Legacy.Text(s"${ref.wire} is not a claude-code model")))
-    else if !rt.loopback && !cfg.allowNonLoopback.value then
       Left(
-        Problem.Unclassified(
-          Legacy.Text(
-            "claude-code is refused while the server listens beyond loopback: another client could spend " +
-              "your Claude plan. Bind to 127.0.0.1 (HISTMERSION_BIND), or — when every client of this server is " +
-              "you — set agents.providers.claude-code.allow-non-loopback (HISTMERSION_AGENTS_CLAUDE_ALLOW_NON_LOOPBACK)"
-          )
+        Problem.Invalid.Broken.here(
+          Problem.Invalid.Rule.ProviderOf(Problem.Raw.of(ref.wire), Problem.Raw.of(ProviderKind.ClaudeCode.wire))
         )
       )
+    else if !rt.loopback && !cfg.allowNonLoopback.value then
+      Left(Problem.Refused.Policy(Problem.Refused.Rule.ClaudeCodeOutsideLocal))
     else if cfg.command.value.trim.isEmpty then
-      Left(Problem.Unclassified(Legacy.Text("agents.providers.claude-code.command is empty")))
+      Left(
+        Problem.Config.Setting(
+          Problem.SettingKey("agents.providers.claude-code.command"),
+          Problem.Config.Fault.Empty
+        )
+      )
     else Right(ClaudeCodeClient(ref, cfg, rt))
 
   /** Whether the server listens on loopback only — the `claude-code` (and every plan-login) provider's precondition:

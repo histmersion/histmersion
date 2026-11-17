@@ -4,7 +4,7 @@ import com.histmersion.util.json.RawJson
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.Cursor
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 
 import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.managers.Zero
@@ -19,6 +19,9 @@ import io.github.iltotore.iron.constraint.any.Pure
 object Opencode:
   type SchemaNote = SchemaNote.T
   object SchemaNote extends Newtype[String, Pure]
+
+  /** Who reports a failed run in its own words. */
+  private val Said = Problem.Upstream.Name("opencode run")
 
   def argv(cfg: OpencodeConfig, model: ModelRef.Model, agent: AgentDef.Name, dir: Path): List[ClaudeCode.Argument] =
     List(cfg.command.value, "run", "--agent", agent.value, "--format", "json", "-m", model.value, "--dir", dir.toString)
@@ -89,29 +92,24 @@ object Opencode:
             .orElse(err.downField("message").as[String].toOption)
             .orElse(err.focus.map(_.noSpaces))
             .orElse(Some("error"))
-            .map((text => Problem.Unclassified(Legacy.Text(text))))
+            .map(text => Problem.Upstream.Replied(Said, External.Reported.of(text)))
         case _ => ()
     }
     CliOutcome(entries.result(), calls.result(), finalText, usage, error, CliOutcome.Turns(turns))
 
   def client(cfg: OpencodeConfig, rt: CliRuntime, ref: ModelRef): Either[Problem, LlmClient] =
     if ref.provider != ProviderKind.Opencode then
-      Left(Problem.Unclassified(Legacy.Text(s"${ref.wire} is not an opencode model")))
-    else if !ref.model.value.contains('/') then
       Left(
-        Problem.Unclassified(
-          Legacy.Text(s"${ref.wire}: an opencode model is <provider>/<model>, e.g. opencode:openai/gpt-5")
+        Problem.Invalid.Broken.here(
+          Problem.Invalid.Rule.ProviderOf(Problem.Raw.of(ref.wire), Problem.Raw.of(ProviderKind.Opencode.wire))
         )
       )
+    else if !ref.model.value.contains('/') then
+      Left(Problem.Invalid.Broken.here(Problem.Invalid.Rule.OpencodeModelShape(Problem.Raw.of(ref.wire))))
     else if PlanQuota
         .poolOf(ref, PlanQuota.Logins(opencodeChatgpt = PlanQuota.Logins.OpencodeChatgpt(cfg.chatgptLogin.value)))
         .isDefined && !rt.loopback
-    then
-      Left(
-        Problem.Unclassified(
-          Legacy.Text("opencode on a ChatGPT login is refused while the server listens beyond loopback")
-        )
-      )
+    then Left(Problem.Refused.Policy(Problem.Refused.Rule.OpencodeChatgptOutsideLocal))
     else if cfg.command.value.trim.isEmpty then
-      Left(Problem.Unclassified(Legacy.Text("agents.providers.opencode.command is empty")))
+      Left(Problem.Config.Setting(Problem.SettingKey("agents.providers.opencode.command"), Problem.Config.Fault.Empty))
     else Right(OpencodeRunClient(ref, cfg, rt))

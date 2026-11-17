@@ -26635,7 +26635,7 @@
           "problems" : {
             "type" : "array",
             "items" : {
-              "type" : "string"
+              "$ref" : "#/components/schemas/Problem"
             }
           },
           "chains" : {
@@ -29847,7 +29847,7 @@
             "type" : "string"
           },
           "why" : {
-            "$ref" : "#/components/schemas/Problem"
+            "type" : "string"
           }
         }
       },

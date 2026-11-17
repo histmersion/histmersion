@@ -132,7 +132,7 @@ object SettingsCmd:
         ConfigEdit.Written.Version(out.version.value),
         ConfigEdit.Written.Created(out.created.value),
         out.restart.map((k, why) =>
-          ConfigEdit.RestartNote(ConfigEdit.RestartNote.Key(k.value), Problem.Unclassified(Legacy.Text(why.value)))
+          ConfigEdit.RestartNote(ConfigEdit.RestartNote.Key(k.value), ConfigEdit.RestartNote.Why(why.value))
         ),
         out.warnings.map(n => ConfigEdit.Written.Warnings(n.value))
       )

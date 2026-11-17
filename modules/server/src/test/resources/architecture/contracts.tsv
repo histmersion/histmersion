@@ -1051,7 +1051,7 @@ unwrap	server:domain/automation/agents/AgentStateControllers.scala	.value outsid
 unwrap	server:domain/automation/agents/AgentStateService.scala	.value outside a boundary	10
 unwrap	server:domain/automation/agents/AgentTreeWriter.scala	.value outside a boundary	8
 unwrap	server:domain/automation/agents/AgentTrees.scala	.value outside a boundary	15
-unwrap	server:domain/automation/agents/AgentsControllers.scala	.value outside a boundary	137
+unwrap	server:domain/automation/agents/AgentsControllers.scala	.value outside a boundary	136
 unwrap	server:domain/automation/agents/AgentsSettings.scala	.value outside a boundary	20
 unwrap	server:domain/automation/agents/AllowanceGuard.scala	.value outside a boundary	2
 unwrap	server:domain/automation/agents/ApprovalService.scala	.value outside a boundary	135
@@ -1273,7 +1273,7 @@ unwrap	server:server/MarkdownHtml.scala	.value outside a boundary	1
 unwrap	server:server/MarkdownLint.scala	.value outside a boundary	21
 unwrap	server:server/Pages.scala	.value outside a boundary	118
 unwrap	server:server/SeedNoteFiles.scala	.value outside a boundary	5
-unwrap	server:server/ServerGraph.scala	.value outside a boundary	21
+unwrap	server:server/ServerGraph.scala	.value outside a boundary	20
 unwrap	server:server/ServerToolFiles.scala	.value outside a boundary	2
 unwrap	server:server/Static.scala	.value outside a boundary	1
 unwrap	server:server/StorageLocations.scala	.value outside a boundary	23
@@ -1287,16 +1287,16 @@ unwrap	server:server/agents/ClaudeCodeClient.scala	.value outside a boundary	18
 unwrap	server:server/agents/CliOutcomes.scala	.value outside a boundary	6
 unwrap	server:server/agents/CliProcess.scala	.value outside a boundary	10
 unwrap	server:server/agents/CliRuntime.scala	.value outside a boundary	2
-unwrap	server:server/agents/Codex.scala	.value outside a boundary	22
+unwrap	server:server/agents/Codex.scala	.value outside a boundary	23
 unwrap	server:server/agents/CodexExecClient.scala	.value outside a boundary	12
 unwrap	server:server/agents/HostAiProvider.scala	.value outside a boundary	2
 unwrap	server:server/agents/Opencode.scala	.value outside a boundary	8
 unwrap	server:server/agents/OpencodeRunClient.scala	.value outside a boundary	10
 unwrap	server:server/agents/PipelineWorkflow.scala	.value outside a boundary	4
-unwrap	server:server/agents/PlanPools.scala	.value outside a boundary	93
+unwrap	server:server/agents/PlanPools.scala	.value outside a boundary	94
 unwrap	server:server/agents/ServerAutomationHost.scala	.value outside a boundary	33
 unwrap	server:server/agents/ServerEngineSite.scala	.value outside a boundary	1
-unwrap	server:server/hot/Hot.scala	.value outside a boundary	13
+unwrap	server:server/hot/Hot.scala	.value outside a boundary	12
 unwrap	server:server/instance/InstanceControllers.scala	.value outside a boundary	28
 unwrap	server:server/instance/MaintenanceControllers.scala	.value outside a boundary	14
 unwrap	server:server/instance/SeedControllers.scala	.value outside a boundary	5
@@ -1365,7 +1365,7 @@ unwrap	server:util/settings/ConfigViews.scala	.value outside a boundary	2
 unwrap	server:util/settings/SettingsControllers.scala	.value outside a boundary	8
 unwrap	server:util/settings/SettingsService.scala	.value outside a boundary	12
 unwrap	server:util/settings/SettingsViews.scala	.value outside a boundary	31
-unwrap	server:util/settings/StoredSettingsFile.scala	.value outside a boundary	6
+unwrap	server:util/settings/StoredSettingsFile.scala	.value outside a boundary	4
 unwrap	server:util/storage/DiskStore.scala	.value outside a boundary	20
 unwrap	server:util/storage/MeasureBudget.scala	.value outside a boundary	5
 unwrap	server:util/storage/MemoryStore.scala	.value outside a boundary	27

@@ -658,7 +658,7 @@ object Agents:
       roles: List[RoleModel],
       pipelines: List[ModelsInfo.Pipelines],
       maxConcurrentRuns: ModelsInfo.MaxConcurrentRuns,
-      problems: List[ModelsInfo.Problems],
+      problems: List[Problem],
       chains: List[ModelChains.RoleChain] = Nil,
       allowances: List[ModelChains.AllowanceStatus] = Nil,
       now: ModelsInfo.Now = ModelsInfo.Now("")
@@ -673,8 +673,6 @@ object Agents:
     object Pipelines extends Newtype[String, Pure]
     type MaxConcurrentRuns = MaxConcurrentRuns.T
     object MaxConcurrentRuns extends Newtype[Int, Pure]
-    type Problems = Problems.T
-    object Problems extends Newtype[String, Pure]
     type Now = Now.T
     object Now extends Newtype[String, Pure]
 

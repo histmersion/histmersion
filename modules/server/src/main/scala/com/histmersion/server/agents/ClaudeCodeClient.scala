@@ -1,7 +1,7 @@
 package com.histmersion
 package server.agents
 import com.histmersion.util.json.RawJson.*
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 
 import com.histmersion.domain.automation.agents.{
   AgentDef,
@@ -138,15 +138,15 @@ final class ClaudeCodeClient(val model: ModelRef, cfg: ClaudeCodeConfig, rt: Cli
               .flatMap(_.blocked(PlanQuota.PoolId.ClaudePlan, Some(AgentsControllers.ModelName(model.model.value))))
               .flatMap(_._2)
               .map(i => java.time.Instant.ofEpochMilli(i.value))
-            throw new ModelLimitReached(
-              model,
-              until,
-              Problem.Unclassified(Legacy.Text(s"claude -p stopped by the quota guard: $why"))
-            )
+            throw new ModelLimitReached(model, until, Problem.Run.GuardStopped(Problem.Raw(why)))
           case None =>
             ClaudeCode.result(o, call.user, call.schema) match
               case Right(r)  => r
               case Left(lim) =>
-                throw new ModelLimitReached(model, lim.until, Problem.Unclassified(Legacy.Text(lim.message.value)))
+                throw new ModelLimitReached(
+                  model,
+                  lim.until,
+                  Problem.Upstream.Replied(Problem.Upstream.Name("claude -p"), External.Reported.of(lim.message.value))
+                )
       finally grant.foreach(g => rt.tokens.revoke(g.token))
     }

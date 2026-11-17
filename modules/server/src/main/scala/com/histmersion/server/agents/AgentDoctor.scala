@@ -5,7 +5,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
-import com.histmersion.util.problem.{Legacy, Problem, Problems}
+import com.histmersion.util.problem.{External, Problem, Problems}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import io.scalaland.chimney.dsl.*
@@ -306,7 +306,13 @@ final class AgentDoctor(
         cfg.doctorTimeoutSeconds
       ).flatMap {
         case (code, out) if code.value == 0 => Right(out.value)
-        case (code, out) => Left(Problem.Unclassified(Legacy.Text(s"exit ${code.value}: ${out.value.take(300)}")))
+        case (code, out)                    =>
+          Left(
+            Problem.Io.Process(
+              Problem.Io.Tool(cc.command.value),
+              Problem.Io.Ending.Exited(Problem.Io.ExitCode(code.value), External.Stderr.tail(out.value))
+            )
+          )
       }
     val versionCheck = version.fold(
       why =>
@@ -458,25 +464,20 @@ object AgentDoctor:
   def login(json: Output, useApiKey: ClaudeCodeConfig.UseApiKey): Either[Problem, DoctorCheck.Detail] =
     RawJson.parse(json.value.trim).toOption.map(_.cursor) match
       case None =>
-        Left(Problem.Unclassified(Legacy.Text(s"'claude auth status' did not answer JSON: ${json.value.take(200)}")))
+        Left(
+          Problem.Io.Corrupt(
+            Problem.Io.Format.Json,
+            Problem.Where("the answer of 'claude auth status'"),
+            Problem.Io.Damage.Unreadable(External.Reported.of(json.value))
+          )
+        )
       case Some(c) =>
         val in = c.downField("loggedIn").as[Boolean].getOrElse(false)
         val method = c.downField("authMethod").as[String].getOrElse("unknown")
         val plan = c.downField("subscriptionType").as[String].toOption.filter(_.nonEmpty)
-        if !in then
-          Left(
-            Problem.Unclassified(
-              Legacy.Text("not logged in — run `claude`, then /login (or `claude setup-token` for a long-lived token)")
-            )
-          )
+        if !in then Left(Problem.Config.Unavailable(Problem.Config.Capability.ClaudeLogin))
         else if !useApiKey.value && (method == "api_key" || method == "api_key_helper") then
-          Left(
-            Problem.Unclassified(
-              Legacy.Text(
-                s"logged in with an API key ($method), not a Claude plan — log in with your Claude account, or set use-api-key"
-              )
-            )
-          )
+          Left(Problem.Config.ApiKeyLogin(Problem.Raw(method)))
         else Right(DoctorCheck.Detail(s"logged in ($method${plan.fold("")(p => s", plan $p")})"))
 
   private lazy val client: HttpClient =
@@ -501,7 +502,14 @@ object AgentDoctor:
         .build()
       val res = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
       if res.statusCode() / 100 != 2 then
-        Left(Problem.Unclassified(Legacy.Text(s"HTTP ${res.statusCode()}: ${res.body().take(200)}")))
+        Left(
+          Problem.Upstream.Http.here(
+            Option(req.uri().getHost).fold(Problem.Upstream.Name.of(url))(Problem.Upstream.Name(_)),
+            Problem.Upstream.Url.of(url),
+            Problem.Upstream.Status(res.statusCode()),
+            External.ReplyExcerpt.head(res.body())
+          )
+        )
       else modelIds(Output(res.body()))
     catch
       case e: InterruptedException => throw e
@@ -510,14 +518,27 @@ object AgentDoctor:
 
   /** `{"data":[{"id":…},…]}` → the ids. */
   def modelIds(body: Output): Either[Problem, List[ModelRef.Model]] =
-    RawJson.parse(body.value).left.map(e => Problem.Unclassified(Legacy.Text(s"not JSON: $e"))).flatMap { j =>
-      j.cursor
-        .downField("data")
-        .as[List[Json]]
-        .left
-        .map(_ => Problem.Unclassified(Legacy.Text("no data[] in the answer")))
-        .map(_.flatMap(_.cursor.downField("id").as[String].toOption).map(ModelRef.Model(_)))
-    }
+    val listing = Problem.Where("the model listing")
+    RawJson
+      .parse(body.value)
+      .left
+      .map(e =>
+        Problem.Io.Corrupt(Problem.Io.Format.Json, listing, Problem.Io.Damage.Unreadable(External.Reported.of(s"$e")))
+      )
+      .flatMap { j =>
+        j.cursor
+          .downField("data")
+          .as[List[Json]]
+          .left
+          .map(_ =>
+            Problem.Io.Corrupt(
+              Problem.Io.Format.Json,
+              Problem.Where("data[] of the model listing"),
+              Problem.Io.Damage.Structure(Problem.Io.Flaw.NotArray)
+            )
+          )
+          .map(_.flatMap(_.cursor.downField("id").as[String].toOption).map(ModelRef.Model(_)))
+      }
 
   /** Run a local command (no network of ours) with `env` changes (None = removed): its exit code and output, or why it
     * could not be run.
@@ -528,7 +549,9 @@ object AgentDoctor:
       timeoutSeconds: AgentsConfig.DoctorTimeoutSeconds
   ): Either[Problem, (ProcessResult.ExitCode, Output)] =
     try
-      val pb = ProcessBuilder(argv.map(_.value).asJava).redirectErrorStream(true)
+      val command = argv.map(_.value)
+      val seconds = math.max(1, timeoutSeconds.value).toLong
+      val pb = ProcessBuilder(command.asJava).redirectErrorStream(true)
       env.foreach {
         case (k, Some(v)) => val _ = pb.environment().put(k.value, v.value)
         case (k, None)    => val _ = pb.environment().remove(k.value)
@@ -538,9 +561,14 @@ object AgentDoctor:
       val out = java.util.concurrent.CompletableFuture.supplyAsync(() =>
         String(p.getInputStream.readAllBytes(), StandardCharsets.UTF_8)
       )
-      if !p.waitFor(math.max(1, timeoutSeconds.value).toLong, TimeUnit.SECONDS) then
+      if !p.waitFor(seconds, TimeUnit.SECONDS) then
         p.destroyForcibly()
-        Left(Problem.Unclassified(Legacy.Text(s"no answer within ${timeoutSeconds.value} s")))
+        Left(
+          Problem.Io.Process(
+            Problem.Io.Tool(command.headOption.getOrElse("")),
+            Problem.Io.Ending.TimedOut(Problem.Millis(seconds * 1000L))
+          )
+        )
       else Right((ProcessResult.ExitCode(p.exitValue()), Output(out.get(5, TimeUnit.SECONDS))))
     catch
       case e: InterruptedException => throw e

@@ -1,6 +1,6 @@
 package com.histmersion
 package server.agents
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.api.automation.Agents.ProviderKind
 import com.histmersion.plugin.*
@@ -15,11 +15,7 @@ final case class HostAiProvider(plugin: HostAiProvider.Plugin, kind: ProviderKin
   def title: AiProvider.Title =
     AiProvider.Title(BuiltinAi.titles.getOrElse(kind, Title(kind.wire.value)).value)
   def turn(request: AiTurn.Request, http: AiHttp): Either[Problem, AiTurn] =
-    Left(
-      Problem.Unclassified(
-        Legacy.Text(s"${kind.wire} is Histmersion's own provider; it is run by the host, not through the SPI")
-      )
-    )
+    Left(Problem.Invalid.Broken.here(Problem.Invalid.Rule.HostProvider(Problem.Raw.of(kind.wire))))
 
 object HostAiProvider:
 

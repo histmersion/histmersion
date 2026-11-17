@@ -1,6 +1,6 @@
 package com.histmersion
 package server.agents
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.api.automation.Agents.ProviderKind
 import com.histmersion.plugin.*
@@ -68,9 +68,12 @@ object BuiltinAi:
     registered
       .get(com.histmersion.util.plugins.Plugin.Id.assume(kind.wire.value))
       .toRight(
-        Problem.Unclassified(
-          Legacy.Text(if reserved(Reserved(kind.wire.value)) then
-            s"the ${kind.wire} provider is switched off (histmersion.plugins.${pluginOf(kind)}.enabled = false)"
-          else s"no AI provider '${kind.wire}' is registered (its plugin is switched off or was removed)")
-        )
+        if reserved(Reserved(kind.wire.value)) then
+          Problem.Refused.Disabled(
+            Problem.Refused.Feature(s"the ${kind.wire} provider"),
+            Problem.SettingKey(s"histmersion.plugins.${pluginOf(kind)}.enabled"),
+            None,
+            None
+          )
+        else Problem.NotFound.Entity(Problem.TypeName.of(ProviderKind.Wire), Problem.Raw.of(kind.wire))
       )

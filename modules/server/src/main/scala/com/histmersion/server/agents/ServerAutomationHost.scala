@@ -1,6 +1,6 @@
 package com.histmersion
 package server.agents
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.domain.research.Slug
@@ -49,35 +49,35 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
           Citekey
             .parse(raw.value)
             .left
-            .map(p => refused(p.sentence))
+            .map(Api.Error(_))
             .flatMap(ck => h.library.sources.get(ck, body = SourcesControllers.GetBody(false)))
             .map(w => AutomationHost.CanonicalKey(w.source.citekey.value))
         )
       case TargetKind.Article if p == Pipeline.CompileArticle =>
         Some(
-          Slug.parse(raw.value).map(sl => AutomationHost.CanonicalKey(sl.value)).left.map(p => refused(p.sentence))
+          Slug.parse(raw.value).map(sl => AutomationHost.CanonicalKey(sl.value)).left.map(Api.Error(_))
         )
       case TargetKind.Article =>
         Some(
           Slug
             .parse(raw.value)
             .left
-            .map(p => refused(p.sentence))
+            .map(Api.Error(_))
             .flatMap(sl => h.research.articles.get(sl))
             .map(v => AutomationHost.CanonicalKey(v.article.slug.value))
         )
       case TargetKind.Goal =>
         Some(
           com.histmersion.domain.automation.Goal.Slug
-            .either(raw.value.trim)
+            .parse(raw.value.trim)
             .left
-            .map(refused)
+            .map(Api.Error(_))
             .flatMap(gs => h.goals.get(gs))
             .map(g => AutomationHost.CanonicalKey(g.slug.value))
         )
       case TargetKind.Manager => None
 
-  private def refused(why: String): Api.Error = Api.Error(Problem.Unclassified(Legacy.Text(why)))
+  private def broken(rule: Problem.Invalid.Rule): Api.Error = Api.Error(Problem.Invalid.Broken.here(rule))
 
   def runOptions(
       p: Pipeline,
@@ -86,7 +86,9 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
       roundsCap: AutomationHost.RunOptionsRoundsCap
   ): Either[Api.Error, Unit] =
     val wrong = (what: String, owner: Pipeline) =>
-      Left(Api.Error(Problem.Unclassified(Legacy.Text(s"$what is an option of ${owner.wire}, not of ${p.wire}"))))
+      Left(
+        broken(Problem.Invalid.Rule.OptionOf(Problem.Raw(what), Problem.Raw.of(owner.wire), Problem.Raw.of(p.wire)))
+      )
     val compileOpts =
       req.title.isDefined || req.kind.isDefined || req.query.isDefined || req.topics.nonEmpty || req.tags.nonEmpty
     p match
@@ -98,8 +100,12 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
       case _ if p != Pipeline.CompileArticle && compileOpts => wrong("a title, kind or filter", Pipeline.CompileArticle)
       case _ if req.rounds.exists(n => n.value < 1 || n.value > roundsCap.value) =>
         Left(
-          Api.Error(
-            Problem.Unclassified(Legacy.Text(s"rounds must be between 1 and $roundsCap (agents.review.rounds-cap)"))
+          broken(
+            Problem.Invalid.Rule.RoundsWithin(
+              req.rounds.fold(Problem.Count(0L))(Problem.Count.of(_)),
+              Problem.Count(1L),
+              Problem.Count.of(roundsCap)
+            )
           )
         )
       case Pipeline.CompileArticle =>
@@ -109,29 +115,22 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
             req.tags.exists(_.value.trim.nonEmpty)
         for
           _ <- req.kind.fold[Either[Api.Error, Unit]](Right(()))(k =>
-            Articles.kindOf(Article.Kind.Wire(k.value)).left.map(p => refused(p.sentence)).map(_ => ())
+            Articles.kindOf(Article.Kind.Wire(k.value)).left.map(Api.Error(_)).map(_ => ())
           )
           _ <- Either.cond(
             exists || filter,
             (),
-            Api.Error(
-              Problem.Unclassified(
-                Legacy.Text(
-                  s"'$target' is a new article: give a filter (query, topics or tags) " +
-                    "for the sources to compile it from"
-                )
-              )
-            )
+            broken(Problem.Invalid.Rule.NewArticleFilter(Problem.Raw.of(target)))
           )
           _ <- Either.cond(
             exists || req.title.exists(_.value.trim.nonEmpty),
             (),
-            Api.Error(Problem.Unclassified(Legacy.Text(s"'$target' is a new article: give its title")))
+            broken(Problem.Invalid.Rule.NewArticleTitle(Problem.Raw.of(target)))
           )
         yield ()
       case _ =>
         req.acquireItem.fold(Right(()))(id =>
-          Queue.fulfillable(id, h.queues.get(QueueItemId(id.value))).map(_ => ()).left.map(p => refused(p.sentence))
+          Queue.fulfillable(id, h.queues.get(QueueItemId(id.value))).map(_ => ()).left.map(Api.Error(_))
         )
 
   def runRoles(p: Pipeline): List[Role] =
@@ -142,14 +141,14 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
       Slug
         .parse(raw.value)
         .left
-        .map(p => refused(p.sentence))
+        .map(Api.Error(_))
         .flatMap(sl => h.research.articles.get(sl))
         .map(v => AutomationHost.CanonicalKey(v.article.slug.value))
     else
       Citekey
         .parse(raw.value)
         .left
-        .map(p => refused(p.sentence))
+        .map(Api.Error(_))
         .flatMap(ck => h.library.sources.get(ck, body = SourcesControllers.GetBody(false)))
         .map(w => AutomationHost.CanonicalKey(w.source.citekey.value))
 
