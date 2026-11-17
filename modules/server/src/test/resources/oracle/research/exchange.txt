@@ -1452,7 +1452,7 @@
   "resolutionErrors" : [
   ],
   "resolved" : 0,
-  "schemaVersion" : "109",
+  "schemaVersion" : "110",
   "sources" : [
   ]
 }
@@ -1576,7 +1576,7 @@
   "resolutionErrors" : [
   ],
   "resolved" : 1,
-  "schemaVersion" : "109",
+  "schemaVersion" : "110",
   "sources" : [
   ]
 }
@@ -1584,9 +1584,9 @@
 200 {
   "bundle" : "BUNDLE-WHOLE",
   "elapsedMs" : "N",
-  "error" : null,
   "job" : "UUID",
   "planHash" : "DIGEST",
+  "problems" : null,
   "result" : {
     "applied" : true,
     "backup" : "histmersion-STAMP.dump",

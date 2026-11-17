@@ -42,9 +42,9 @@
     ],
     "vacuum" : null
   },
-  "error" : null,
   "id" : "UUID",
   "kind" : "places-hierarchy",
+  "problems" : null,
   "progress" : "2 edges from 2 polygons × 2 points",
   "sha256" : null,
   "status" : "done",

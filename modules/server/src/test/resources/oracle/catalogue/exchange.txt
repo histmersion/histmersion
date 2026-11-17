@@ -2044,7 +2044,7 @@
   "resolutionErrors" : [
   ],
   "resolved" : 0,
-  "schemaVersion" : "109",
+  "schemaVersion" : "110",
   "sources" : [
     {
       "issue" : null,
@@ -2654,7 +2654,7 @@
   "resolutionErrors" : [
   ],
   "resolved" : 6,
-  "schemaVersion" : "109",
+  "schemaVersion" : "110",
   "sources" : [
     {
       "issue" : null,
@@ -3264,7 +3264,7 @@
   "resolutionErrors" : [
   ],
   "resolved" : 7,
-  "schemaVersion" : "109",
+  "schemaVersion" : "110",
   "sources" : [
     {
       "issue" : null,
@@ -3306,9 +3306,9 @@
 200 {
   "bundle" : "SHA256",
   "elapsedMs" : N,
-  "error" : null,
   "job" : "UUID",
   "planHash" : "DIGEST",
+  "problems" : null,
   "result" : {
     "applied" : true,
     "backup" : "histmersion-STAMP.dump",

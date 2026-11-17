@@ -846,7 +846,7 @@
   ],
   "title" : "A Zq book"
 }
-job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqbook1911_book","progress":"2 page(s), 1 asset(s)","error":null,"sha256":"12a0fc07ae5a990ab0e9e5bcd6faa0062ba8ab4852e6c0054076be344b4f4cb0","createdAt":"TS","updatedAt":"TS","acquireItem":null,"detail":null}
+job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqbook1911_book","progress":"2 page(s), 1 asset(s)","problems":null,"sha256":"12a0fc07ae5a990ab0e9e5bcd6faa0062ba8ab4852e6c0054076be344b4f4cb0","createdAt":"TS","updatedAt":"TS","acquireItem":null,"detail":null}
   > GET /archive/metadata/zqbook
   > GET /archive/metadata/zqbook
   > GET /archive/download/zqbook/zqbook.pdf

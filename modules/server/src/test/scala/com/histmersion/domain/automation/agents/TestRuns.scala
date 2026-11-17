@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.automation.agents
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
+import com.histmersion.api.automation.Stopped
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.server.agents.*
@@ -121,7 +122,7 @@ object TestRuns:
       Job.Kind.assume(JobKind),
       RunRow.Status(RunState.Running.wire.value),
       RunRow.Status(RunState.Paused.wire.value),
-      Problem.Unclassified(Legacy.Text(PauseReason.Interrupted.wire.value)),
+      Stopped.Interrupted.problem, // as Engine.reconcile pauses them
       RunRow.Status(RunState.Queued.wire.value),
       Nil
     )

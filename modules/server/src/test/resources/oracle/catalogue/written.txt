@@ -103,9 +103,9 @@
     ],
     "vacuum" : null
   },
-  "error" : null,
   "id" : "UUID",
   "kind" : "places-hierarchy",
+  "problems" : null,
   "progress" : "10 edges from 3 polygons × 7 points",
   "sha256" : null,
   "status" : "done",
@@ -1172,9 +1172,9 @@
     ],
     "vacuum" : null
   },
-  "error" : null,
   "id" : "UUID",
   "kind" : "events-import",
+  "problems" : null,
   "progress" : "gvp: 3 record(s) read, 1 kept · created 1 event(s), 0 merged with another record of the same thing, 0 matched to stored events · kinds: eruption 1 · skipped: after -1000 2",
   "sha256" : null,
   "status" : "done",

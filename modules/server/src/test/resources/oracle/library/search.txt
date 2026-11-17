@@ -18125,7 +18125,7 @@ _ERROR: cannot execute DROP TABLE in a read-only transaction_
 - **agent_role_chains** (table) — role text, models ARRAY, updated_at timestamp with time zone
 - **agent_role_fallthrough** (table) — role text, fallthrough boolean, updated_at timestamp with time zone
 - **agent_state** (table) — key text, value jsonb, updated_at timestamp with time zone
-- **agent_steps** (table) — job_id text, seq integer, attempt integer, name text, kind text, status text, output jsonb, prompt_hash text, model text, tokens_in bigint, tokens_out bigint, tokens_cache_read bigint, tokens_cache_write bigint, cost_usd numeric, error text, started_at timestamp with time zone, finished_at timestamp with time zone, actual_model text, would_write jsonb, first_call_tokens bigint, turns integer
+- **agent_steps** (table) — job_id text, seq integer, attempt integer, name text, kind text, status text, output jsonb, prompt_hash text, model text, tokens_in bigint, tokens_out bigint, tokens_cache_read bigint, tokens_cache_write bigint, cost_usd numeric, error jsonb, started_at timestamp with time zone, finished_at timestamp with time zone, actual_model text, would_write jsonb, first_call_tokens bigint, turns integer
 - **alias_tombstones** (table) — alias text, source_uid uuid, origin uuid, deleted_at timestamp with time zone
 - **approvals** (table) — id bigint, job_id text, kind text, citekey text, status text, current_status text, edge_kind text, target text, proposal jsonb, state text, note text, result text, created_at timestamp with time zone, decided_at timestamp with time zone, subject text, seq integer
 - **article_aliases** (table) — alias text, slug text, created_at timestamp with time zone
@@ -18138,7 +18138,7 @@ _ERROR: cannot execute DROP TABLE in a read-only transaction_
 - **assets** (table) — citekey text, name text, mime text, bytes bytea, sha256 text, width integer, height integer, kind text, caption text, license text, geom USER-DEFINED, period int8range, uid uuid, origin uuid, updated_at timestamp with time zone, provider text, provider_key text, source_url text, original_url text, author text, credit text, license_url text, retrieved_at timestamp with time zone, thumb bytea, thumb_mime text, thumb_width integer, thumb_height integer
 - **attestations** (table) — id bigint, citekey text, target_type text, target_id text, quote text, prefix text, suffix text, char_start integer, char_end integer, chunk_ord integer, page text, canvas text, xywh text, cts_urn text, note text, created_at timestamp with time zone, uid uuid, origin uuid, updated_at timestamp with time zone
 - **bookmarks** (table) — id uuid, user_id text, target_kind text, target_id text, target_uid uuid, target_label text, lat double precision, lon double precision, zoom double precision, period_start bigint, period_end bigint, view text, label text, origin uuid, created_at timestamp with time zone, updated_at timestamp with time zone, deleted_at timestamp with time zone
-- **candidate_watches** (table) — goal text, kind text, subject text, index_name text, watermark date, last_run timestamp with time zone, last_error text, last_found integer
+- **candidate_watches** (table) — goal text, kind text, subject text, index_name text, watermark date, last_run timestamp with time zone, last_error jsonb, last_found integer
 - **corrections** (table) — id bigint, target_kind text, target_id text, field text, value jsonb, upstream text, upstream_value jsonb, upstream_now jsonb, status text, created_at timestamp with time zone, updated_at timestamp with time zone, checked_at timestamp with time zone
 - **edges** (table) — src text, dst text, kind text
 - **event_aliases** (table) — alias text, event_id text, created_at timestamp with time zone
@@ -18160,7 +18160,7 @@ _ERROR: cannot execute DROP TABLE in a read-only transaction_
 - **goal_schedules** (table) — goal_slug text, kind text, cron text, enabled boolean, budget_usd numeric, next_run_at timestamp with time zone, last_run_at timestamp with time zone, last_job text, last_note text, created_at timestamp with time zone, updated_at timestamp with time zone
 - **goals** (table) — slug text, title text, status text, notes text, tags ARRAY, regions ARRAY, period int8range, parent_slug text, created_at timestamp with time zone, updated_at timestamp with time zone, uid uuid, origin uuid, plan jsonb, budget_usd numeric, plan_approved_at timestamp with time zone
 - **instance** (table) — id uuid, label text, created_at timestamp with time zone, singleton boolean
-- **jobs** (table) — id text, kind text, citekey text, status text, progress text, error text, sha256 text, created_at timestamp with time zone, updated_at timestamp with time zone, acquire_item integer, detail jsonb, pipeline text, pipeline_version integer, target_kind text, target_id text, model text, budget_usd numeric, budget_tokens bigint, warnings ARRAY, params jsonb, goal_slug text, parent_job text, origin text, result jsonb, resume_at timestamp with time zone, dry_run boolean, manager_id text, manager_item bigint, heartbeat_at timestamp with time zone
+- **jobs** (table) — id text, kind text, citekey text, status text, progress text, error jsonb, sha256 text, created_at timestamp with time zone, updated_at timestamp with time zone, acquire_item integer, detail jsonb, pipeline text, pipeline_version integer, target_kind text, target_id text, model text, budget_usd numeric, budget_tokens bigint, warnings ARRAY, params jsonb, goal_slug text, parent_job text, origin text, result jsonb, resume_at timestamp with time zone, dry_run boolean, manager_id text, manager_item bigint, heartbeat_at timestamp with time zone
 - **land** (table) — id integer, geom USER-DEFINED
 - **manager_events** (table) — id bigint, manager_id text, item_id bigint, run_id text, at timestamp with time zone, kind text, text text
 - **manager_hint_uses** (table) — hint_id bigint, run_id text
@@ -18185,7 +18185,7 @@ _ERROR: cannot execute DROP TABLE in a read-only transaction_
 - **place_removals** (table) — id text, label text, reason text, removed_at timestamp with time zone
 - **place_types** (table) — place_id text, type_label text, period int8range, citekey text
 - **places** (table) — id text, label text, kind text, geom USER-DEFINED, period int8range, source text, properties jsonb, geom_clipped USER-DEFINED, uid uuid, origin uuid, dataset text, updated_at timestamp with time zone, import_source text, import_ref text, import_version text, start_unknown boolean, location_precision text, site_type text, site_type_checked_at timestamp with time zone, shape_area double precision, shape_box USER-DEFINED, shape_dim smallint, shape_valid boolean, label_norm text, web_geojson text
-- **plan_pools** (table) — pool text, held boolean, floors text, refusal text, refusal_until timestamp with time zone, plan_type text, updated_at timestamp with time zone
+- **plan_pools** (table) — pool text, held boolean, floors text, refusal jsonb, refusal_until timestamp with time zone, plan_type text, updated_at timestamp with time zone
 - **plan_quota_readings** (table) — pool text, limit_id text, kind text, model text, used_pct double precision, resets_at timestamp with time zone, rejected boolean, observed_at timestamp with time zone, source text
 - **plan_quota_refreshes** (table) — id bigint, pool text, at timestamp with time zone, mode text, trigger text, ok boolean, detail text
 - **queue_items** (table) — id integer, list text, text text, topic text, status text, created_at timestamp with time zone, done_at timestamp with time zone, reason text, uid uuid, origin uuid, updated_at timestamp with time zone, goal_slug text, created_job text, closed_job text
@@ -18640,7 +18640,7 @@ _ERROR: cannot execute DROP TABLE in a read-only transaction_
           "nullable" : false
         },
         {
-          "dataType" : "text",
+          "dataType" : "jsonb",
           "name" : "error",
           "nullable" : true
         },
@@ -19458,7 +19458,7 @@ _ERROR: cannot execute DROP TABLE in a read-only transaction_
           "nullable" : true
         },
         {
-          "dataType" : "text",
+          "dataType" : "jsonb",
           "name" : "last_error",
           "nullable" : true
         },
@@ -20525,7 +20525,7 @@ _ERROR: cannot execute DROP TABLE in a read-only transaction_
           "nullable" : true
         },
         {
-          "dataType" : "text",
+          "dataType" : "jsonb",
           "name" : "error",
           "nullable" : true
         },
@@ -21760,7 +21760,7 @@ _ERROR: cannot execute DROP TABLE in a read-only transaction_
           "nullable" : true
         },
         {
-          "dataType" : "text",
+          "dataType" : "jsonb",
           "name" : "refusal",
           "nullable" : true
         },

@@ -59,7 +59,7 @@
   ],
   "title" : "Tin roads of Zqland"
 }
-job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqauthor2019_roads","progress":"2 page(s), 1 asset(s)","error":null,"sha256":"2d5dd186d2a4a979083e9033c2f53d77bfca8a76b2589b60093ac88a898b6455","createdAt":"TS","updatedAt":"TS","acquireItem":null,"detail":null}
+job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqauthor2019_roads","progress":"2 page(s), 1 asset(s)","problems":null,"sha256":"2d5dd186d2a4a979083e9033c2f53d77bfca8a76b2589b60093ac88a898b6455","createdAt":"TS","updatedAt":"TS","acquireItem":null,"detail":null}
   > GET /openalex/works/https://doi.org/10.5555/zq.open?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
   > GET /unpaywall/10.5555/zq.open?email=oracle@example.org
   > GET /files/zq-open.pdf
@@ -235,7 +235,7 @@ job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqauthor2019_ro
   ],
   "title" : "Tin roads of Zqland"
 }
-job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqauthor2019_roads","progress":"2 page(s), 1 asset(s)","error":null,"sha256":"2d5dd186d2a4a979083e9033c2f53d77bfca8a76b2589b60093ac88a898b6455","createdAt":"TS","updatedAt":"TS","acquireItem":null,"detail":null}
+job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqauthor2019_roads","progress":"2 page(s), 1 asset(s)","problems":null,"sha256":"2d5dd186d2a4a979083e9033c2f53d77bfca8a76b2589b60093ac88a898b6455","createdAt":"TS","updatedAt":"TS","acquireItem":null,"detail":null}
   > GET /openalex/works/https://doi.org/10.5555/zq.open?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
   > GET /unpaywall/10.5555/zq.open?email=oracle@example.org
   > GET /files/zq-open.pdf
@@ -308,7 +308,7 @@ job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqauthor2019_ro
   ],
   "title" : "A licensed Zq survey"
 }
-job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqlicence2020_licensed","progress":"2 page(s), 1 asset(s)","error":null,"sha256":"936b66b496285c8c3ca829b44f5d74d158e319e2a93de2d7961841f89e23810a","createdAt":"TS","updatedAt":"TS","acquireItem":null,"detail":null}
+job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqlicence2020_licensed","progress":"2 page(s), 1 asset(s)","problems":null,"sha256":"936b66b496285c8c3ca829b44f5d74d158e319e2a93de2d7961841f89e23810a","createdAt":"TS","updatedAt":"TS","acquireItem":null,"detail":null}
   > GET /openalex/works/https://doi.org/10.5555/zq.licensed?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
   > GET /unpaywall/10.5555/zq.licensed?email=oracle@example.org
   > GET /core/search/works/?q=doi:%2210.5555/zq.licensed%22&limit=1
@@ -380,7 +380,7 @@ job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqlicence2020_l
   ],
   "title" : "A licensed Zq survey"
 }
-job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqlicence2020_licensed","progress":"2 page(s), 1 asset(s)","error":null,"sha256":"936b66b496285c8c3ca829b44f5d74d158e319e2a93de2d7961841f89e23810a","createdAt":"TS","updatedAt":"TS","acquireItem":null,"detail":null}
+job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqlicence2020_licensed","progress":"2 page(s), 1 asset(s)","problems":null,"sha256":"936b66b496285c8c3ca829b44f5d74d158e319e2a93de2d7961841f89e23810a","createdAt":"TS","updatedAt":"TS","acquireItem":null,"detail":null}
   > GET /openalex/works/https://doi.org/10.5555/zq.licensed?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
   > GET /unpaywall/10.5555/zq.licensed?email=oracle@example.org
   > GET /core/search/works/?q=doi:%2210.5555/zq.licensed%22&limit=1
@@ -452,7 +452,7 @@ job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqlicence2020_l
   ],
   "title" : "A preprint on Zq metallurgy"
 }
-job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqarx2021_preprint","progress":"2 page(s), 1 asset(s)","error":null,"sha256":"874ce444963ac0d570538d15829a36b51bc3aa55a56ec12f6201e2927497f90b","createdAt":"TS","updatedAt":"TS","acquireItem":null,"detail":null}
+job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqarx2021_preprint","progress":"2 page(s), 1 asset(s)","problems":null,"sha256":"874ce444963ac0d570538d15829a36b51bc3aa55a56ec12f6201e2927497f90b","createdAt":"TS","updatedAt":"TS","acquireItem":null,"detail":null}
   > GET /openalex/works/https://doi.org/10.48550/arxiv.2101.00001?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
   > GET /unpaywall/10.48550/arxiv.2101.00001?email=oracle@example.org
   > GET /core/search/works/?q=doi:%2210.48550/arxiv.2101.00001%22&limit=1
@@ -875,7 +875,7 @@ job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqarx2021_prepr
   "sha256" : "ba3491d4b4046fe30b2af74c6b29e8ba62e88d22f6a8304104ec4c0ab53ffd87",
   "status" : "queued"
 }
-job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqa_upload","progress":"2 page(s), 1 asset(s)","error":null,"sha256":"ba3491d4b4046fe30b2af74c6b29e8ba62e88d22f6a8304104ec4c0ab53ffd87","createdAt":"TS","updatedAt":"TS","acquireItem":null,"detail":null}
+job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqa_upload","progress":"2 page(s), 1 asset(s)","problems":null,"sha256":"ba3491d4b4046fe30b2af74c6b29e8ba62e88d22f6a8304104ec4c0ab53ffd87","createdAt":"TS","updatedAt":"TS","acquireItem":null,"detail":null}
 == upload the same bytes as zqa_dup
 409 {
   "code" : "conflict",
@@ -902,7 +902,7 @@ job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqa_upload","pr
   "sha256" : "ba3491d4b4046fe30b2af74c6b29e8ba62e88d22f6a8304104ec4c0ab53ffd87",
   "status" : "queued"
 }
-job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqa_dup","progress":"2 page(s), 1 asset(s)","error":null,"sha256":"ba3491d4b4046fe30b2af74c6b29e8ba62e88d22f6a8304104ec4c0ab53ffd87","createdAt":"TS","updatedAt":"TS","acquireItem":null,"detail":null}
+job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqa_dup","progress":"2 page(s), 1 asset(s)","problems":null,"sha256":"ba3491d4b4046fe30b2af74c6b29e8ba62e88d22f6a8304104ec4c0ab53ffd87","createdAt":"TS","updatedAt":"TS","acquireItem":null,"detail":null}
 == upload (empty)
 400 {
   "code" : null,
@@ -965,7 +965,7 @@ job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqa_dup","progr
   "sha256" : "30742c5686c1cf50f899de16d4c7335debe57a98a27938d52263bcc60fd1e24a",
   "status" : "queued"
 }
-job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqa_ledger","progress":"2 page(s), 1 asset(s) · ticked off acquisition item 2","error":null,"sha256":"30742c5686c1cf50f899de16d4c7335debe57a98a27938d52263bcc60fd1e24a","createdAt":"TS","updatedAt":"TS","acquireItem":2,"detail":null}
+job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqa_ledger","progress":"2 page(s), 1 asset(s) · ticked off acquisition item 2","problems":null,"sha256":"30742c5686c1cf50f899de16d4c7335debe57a98a27938d52263bcc60fd1e24a","createdAt":"TS","updatedAt":"TS","acquireItem":2,"detail":null}
 == upload with a done item
 409 {
   "code" : null,
@@ -1007,7 +1007,7 @@ job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqa_ledger","pr
   "sha256" : "ba3491d4b4046fe30b2af74c6b29e8ba62e88d22f6a8304104ec4c0ab53ffd87",
   "status" : "queued"
 }
-job: 200 {"id":"UUID","kind":"reocr","status":"done","citekey":"zqa_upload","progress":"2 page(s), 1 asset(s)","error":null,"sha256":"ba3491d4b4046fe30b2af74c6b29e8ba62e88d22f6a8304104ec4c0ab53ffd87","createdAt":"TS","updatedAt":"TS","acquireItem":null,"detail":null}
+job: 200 {"id":"UUID","kind":"reocr","status":"done","citekey":"zqa_upload","progress":"2 page(s), 1 asset(s)","problems":null,"sha256":"ba3491d4b4046fe30b2af74c6b29e8ba62e88d22f6a8304104ec4c0ab53ffd87","createdAt":"TS","updatedAt":"TS","acquireItem":null,"detail":null}
 == reocr zqa_nodoi (no original)
 400 {
   "code" : null,
@@ -1069,7 +1069,7 @@ job: 200 {"id":"UUID","kind":"reocr","status":"done","citekey":"zqa_upload","pro
 }
 == mcp ingest base64
 queued job `UUID` for **zqa_mcp** — poll `job_status` with that id
-job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqa_mcp","progress":"2 page(s), 1 asset(s)","error":null,"sha256":"f7a82208f1948ea92999933994b05a305dcf1c669304b54970259700af410852","createdAt":"TS","updatedAt":"TS","acquireItem":null,"detail":null}
+job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqa_mcp","progress":"2 page(s), 1 asset(s)","problems":null,"sha256":"f7a82208f1948ea92999933994b05a305dcf1c669304b54970259700af410852","createdAt":"TS","updatedAt":"TS","acquireItem":null,"detail":null}
 == mcp ingest (neither)
 _give either `path` (a file the SERVER can see) or `base64` (the document itself)_
 == mcp ingest path outside
@@ -1147,9 +1147,9 @@ _Re-run with `--apply` to write this verdict to the source's `status`._
     "citekey" : "zqa_mcp",
     "createdAt" : "TS",
     "detail" : null,
-    "error" : null,
     "id" : "UUID",
     "kind" : "ingest",
+    "problems" : null,
     "progress" : "2 page(s), 1 asset(s)",
     "sha256" : "f7a82208f1948ea92999933994b05a305dcf1c669304b54970259700af410852",
     "status" : "done",
@@ -1160,9 +1160,9 @@ _Re-run with `--apply` to write this verdict to the source's `status`._
     "citekey" : "zqa_upload",
     "createdAt" : "TS",
     "detail" : null,
-    "error" : null,
     "id" : "UUID",
     "kind" : "reocr",
+    "problems" : null,
     "progress" : "2 page(s), 1 asset(s)",
     "sha256" : "ba3491d4b4046fe30b2af74c6b29e8ba62e88d22f6a8304104ec4c0ab53ffd87",
     "status" : "done",
@@ -1173,9 +1173,9 @@ _Re-run with `--apply` to write this verdict to the source's `status`._
     "citekey" : "zqa_ledger",
     "createdAt" : "TS",
     "detail" : null,
-    "error" : null,
     "id" : "UUID",
     "kind" : "ingest",
+    "problems" : null,
     "progress" : "2 page(s), 1 asset(s) · ticked off acquisition item 2",
     "sha256" : "30742c5686c1cf50f899de16d4c7335debe57a98a27938d52263bcc60fd1e24a",
     "status" : "done",
@@ -1186,9 +1186,9 @@ _Re-run with `--apply` to write this verdict to the source's `status`._
     "citekey" : "zqa_dup",
     "createdAt" : "TS",
     "detail" : null,
-    "error" : null,
     "id" : "UUID",
     "kind" : "ingest",
+    "problems" : null,
     "progress" : "2 page(s), 1 asset(s)",
     "sha256" : "ba3491d4b4046fe30b2af74c6b29e8ba62e88d22f6a8304104ec4c0ab53ffd87",
     "status" : "done",
@@ -1199,9 +1199,9 @@ _Re-run with `--apply` to write this verdict to the source's `status`._
     "citekey" : "zqa_upload",
     "createdAt" : "TS",
     "detail" : null,
-    "error" : null,
     "id" : "UUID",
     "kind" : "ingest",
+    "problems" : null,
     "progress" : "2 page(s), 1 asset(s)",
     "sha256" : "ba3491d4b4046fe30b2af74c6b29e8ba62e88d22f6a8304104ec4c0ab53ffd87",
     "status" : "done",
@@ -1212,9 +1212,9 @@ _Re-run with `--apply` to write this verdict to the source's `status`._
     "citekey" : "zqarx2021_preprint",
     "createdAt" : "TS",
     "detail" : null,
-    "error" : null,
     "id" : "UUID",
     "kind" : "ingest",
+    "problems" : null,
     "progress" : "2 page(s), 1 asset(s)",
     "sha256" : "874ce444963ac0d570538d15829a36b51bc3aa55a56ec12f6201e2927497f90b",
     "status" : "done",
@@ -1225,9 +1225,9 @@ _Re-run with `--apply` to write this verdict to the source's `status`._
     "citekey" : "zqlicence2020_licensed",
     "createdAt" : "TS",
     "detail" : null,
-    "error" : null,
     "id" : "UUID",
     "kind" : "ingest",
+    "problems" : null,
     "progress" : "2 page(s), 1 asset(s)",
     "sha256" : "936b66b496285c8c3ca829b44f5d74d158e319e2a93de2d7961841f89e23810a",
     "status" : "done",
@@ -1238,9 +1238,9 @@ _Re-run with `--apply` to write this verdict to the source's `status`._
     "citekey" : "zqlicence2020_licensed",
     "createdAt" : "TS",
     "detail" : null,
-    "error" : null,
     "id" : "UUID",
     "kind" : "ingest",
+    "problems" : null,
     "progress" : "2 page(s), 1 asset(s)",
     "sha256" : "936b66b496285c8c3ca829b44f5d74d158e319e2a93de2d7961841f89e23810a",
     "status" : "done",
@@ -1251,9 +1251,9 @@ _Re-run with `--apply` to write this verdict to the source's `status`._
     "citekey" : "zqauthor2019_roads",
     "createdAt" : "TS",
     "detail" : null,
-    "error" : null,
     "id" : "UUID",
     "kind" : "ingest",
+    "problems" : null,
     "progress" : "2 page(s), 1 asset(s)",
     "sha256" : "2d5dd186d2a4a979083e9033c2f53d77bfca8a76b2589b60093ac88a898b6455",
     "status" : "done",
@@ -1264,9 +1264,9 @@ _Re-run with `--apply` to write this verdict to the source's `status`._
     "citekey" : "zqauthor2019_roads",
     "createdAt" : "TS",
     "detail" : null,
-    "error" : null,
     "id" : "UUID",
     "kind" : "ingest",
+    "problems" : null,
     "progress" : "2 page(s), 1 asset(s)",
     "sha256" : "2d5dd186d2a4a979083e9033c2f53d77bfca8a76b2589b60093ac88a898b6455",
     "status" : "done",
@@ -1658,9 +1658,9 @@ _Re-run with `--apply` to write this verdict to the source's `status`._
       ],
       "vacuum" : null
     },
-    "error" : null,
     "id" : "UUID",
     "kind" : "acquire_recheck",
+    "problems" : null,
     "progress" : null,
     "sha256" : null,
     "status" : "queued",
@@ -1673,7 +1673,7 @@ _Re-run with `--apply` to write this verdict to the source's `status`._
   ],
   "withDoi" : 1
 }
-job: 200 {"id":"UUID","kind":"acquire_recheck","status":"done","citekey":null,"progress":"1/1 items · 0 closed · 0 fetched · 1 no legal copy · 0 failed","error":null,"sha256":null,"createdAt":"TS","updatedAt":"TS","acquireItem":null,"detail":{"init":null,"skippedPeriods":[],"skippedPeriodCount":0,"planHash":null,"vacuum":null,"media":null,"events":null,"eventImport":null,"eventRederive":null,"about":null,"recheck":{"all":true,"upTo":0,"since":"TS","by":"person","resumes":null}}}
+job: 200 {"id":"UUID","kind":"acquire_recheck","status":"done","citekey":null,"progress":"1/1 items · 0 closed · 0 fetched · 1 no legal copy · 0 failed","problems":null,"sha256":null,"createdAt":"TS","updatedAt":"TS","acquireItem":null,"detail":{"init":null,"skippedPeriods":[],"skippedPeriodCount":0,"planHash":null,"vacuum":null,"media":null,"events":null,"eventImport":null,"eventRederive":null,"about":null,"recheck":{"all":true,"upTo":0,"since":"TS","by":"person","resumes":null}}}
   > GET /openalex/works/https://doi.org/10.5555/zq.ref1?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
   > GET /unpaywall/10.5555/zq.ref1?email=oracle@example.org
   > GET /core/search/works/?q=doi:%2210.5555/zq.ref1%22&limit=1

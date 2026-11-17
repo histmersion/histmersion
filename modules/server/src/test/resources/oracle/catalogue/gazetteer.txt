@@ -94,9 +94,9 @@
     ],
     "vacuum" : null
   },
-  "error" : null,
   "id" : "UUID",
   "kind" : "init",
+  "problems" : null,
   "progress" : null,
   "sha256" : null,
   "status" : "queued",
@@ -139,9 +139,9 @@
     ],
     "vacuum" : null
   },
-  "error" : null,
   "id" : "UUID",
   "kind" : "init",
+  "problems" : null,
   "progress" : "gazetteer: 5 place(s) from 2 file(s); 0 finding→place link(s); period presets: 280 periods, 149 presets, 2 skipped",
   "sha256" : null,
   "status" : "done",
@@ -209,9 +209,9 @@
     ],
     "vacuum" : null
   },
-  "error" : null,
   "id" : "UUID",
   "kind" : "init",
+  "problems" : null,
   "progress" : null,
   "sha256" : null,
   "status" : "queued",
@@ -243,9 +243,9 @@
     ],
     "vacuum" : null
   },
-  "error" : null,
   "id" : "UUID",
   "kind" : "init",
+  "problems" : null,
   "progress" : "dry run of geonames: geonames fixture-1: 2 records, 2 new place(s), 0 joined an existing place, 0 place(s) changed, names +5 −0 ~0, links +3 −0",
   "sha256" : null,
   "status" : "done",
@@ -277,9 +277,9 @@
     ],
     "vacuum" : null
   },
-  "error" : null,
   "id" : "UUID",
   "kind" : "init",
+  "problems" : null,
   "progress" : null,
   "sha256" : null,
   "status" : "queued",
@@ -311,9 +311,9 @@
     ],
     "vacuum" : null
   },
-  "error" : null,
   "id" : "UUID",
   "kind" : "init",
+  "problems" : null,
   "progress" : "fetch geonames: geonames fixture-1: 2 records, 2 new place(s), 0 joined an existing place, 0 place(s) changed, names +5 −0 ~0, links +3 −0",
   "sha256" : null,
   "status" : "done",
@@ -345,9 +345,9 @@
     ],
     "vacuum" : null
   },
-  "error" : null,
   "id" : "UUID",
   "kind" : "init",
+  "problems" : null,
   "progress" : null,
   "sha256" : null,
   "status" : "queued",
@@ -379,9 +379,18 @@
     ],
     "vacuum" : null
   },
-  "error" : "fetch tgn: tgn fixture-2: tgn-absent.ndjson.gz is not at TMP/gaz-extracts/tgn-absent.ndjson.gz, and its pin has no download url (the extracts are not hosted). Put the file there — sha256 0000000000000000000000000000000000000000000000000000000000000000, 1 B — copied from another install or rebuilt with db/gazetteer/build.py (db/gazetteer/README.md); the folder is places.sources.dir (HISTMERSION_GAZETTEER_DIR; by default the XDG cache directory, $XDG_CACHE_HOME/histmersion/gazetteer or ~/.cache/histmersion/gazetteer). Then run the load again.",
   "id" : "UUID",
   "kind" : "init",
+  "problems" : [
+    {
+      "case" : "Unclassified",
+      "data" : {
+        "text" : "fetch tgn: tgn fixture-2: tgn-absent.ndjson.gz is not at TMP/gaz-extracts/tgn-absent.ndjson.gz, and its pin has no download url (the extracts are not hosted). Put the file there — sha256 0000000000000000000000000000000000000000000000000000000000000000, 1 B — copied from another install or rebuilt with db/gazetteer/build.py (db/gazetteer/README.md); the folder is places.sources.dir (HISTMERSION_GAZETTEER_DIR; by default the XDG cache directory, $XDG_CACHE_HOME/histmersion/gazetteer or ~/.cache/histmersion/gazetteer). Then run the load again."
+      },
+      "group" : "Unclassified",
+      "text" : "fetch tgn: tgn fixture-2: tgn-absent.ndjson.gz is not at TMP/gaz-extracts/tgn-absent.ndjson.gz, and its pin has no download url (the extracts are not hosted). Put the file there — sha256 0000000000000000000000000000000000000000000000000000000000000000, 1 B — copied from another install or rebuilt with db/gazetteer/build.py (db/gazetteer/README.md); the folder is places.sources.dir (HISTMERSION_GAZETTEER_DIR; by default the XDG cache directory, $XDG_CACHE_HOME/histmersion/gazetteer or ~/.cache/histmersion/gazetteer). Then run the load again."
+    }
+  ],
   "progress" : "nothing to do",
   "sha256" : null,
   "status" : "failed",
@@ -413,9 +422,9 @@
     ],
     "vacuum" : null
   },
-  "error" : null,
   "id" : "UUID",
   "kind" : "init",
+  "problems" : null,
   "progress" : null,
   "sha256" : null,
   "status" : "queued",
@@ -447,9 +456,9 @@
     ],
     "vacuum" : null
   },
-  "error" : null,
   "id" : "UUID",
   "kind" : "init",
+  "problems" : null,
   "progress" : "fetch lpf: lpf:zzgaz_hittite 56149470d829: 2 records, 1 new place(s), 1 joined an existing place, 0 place(s) changed, names +5 −0 ~0, links +1 −0; lpf:zzgaz_kultepe 0cd21d53760e: 1 record, 1 new place(s), 0 joined an existing place, 0 place(s) changed, names +3 −0 ~0, links +1 −0",
   "sha256" : null,
   "status" : "done",

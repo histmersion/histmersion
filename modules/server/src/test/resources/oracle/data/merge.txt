@@ -228,7 +228,7 @@
   "resolutionErrors" : [
   ],
   "resolved" : 2,
-  "schemaVersion" : "109",
+  "schemaVersion" : "110",
   "sources" : [
     {
       "issue" : null,
@@ -260,9 +260,9 @@ resolve:
 {
   "bundle" : "BUNDLE-WHOLE",
   "elapsedMs" : "N",
-  "error" : null,
   "job" : "UUID",
   "planHash" : "DIGEST",
+  "problems" : null,
   "result" : {
     "applied" : true,
     "backup" : "histmersion-STAMP.dump",
@@ -1056,7 +1056,7 @@ resolve:
 { "citekey" : "zzalpha2001_storm", "claim" : "the storm god of Hatti is Tarhunna of Arinna", "confidence" : "high", "geom" : { "coordinates" : [ 34.6, 40 ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Point" }, "id" : "zzalpha2001_storm#1", "origin" : "instance:work", "period" : "[-1400,-1199)", "period_name" : "LBA", "region_name" : "Anatolia", "significance" : null, "tags" : [ "oracle" ], "uid" : "finding:zzalpha2001_storm#1", "updated_at" : "TS" }
 { "citekey" : "zzbeta2005_hittites", "claim" : "a kingdom in central Anatolia", "confidence" : "high", "geom" : { "coordinates" : [ 34.6, 40 ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Point" }, "id" : "zzbeta2005_hittites#1", "origin" : "instance:work", "period" : "[-1400,-1199)", "period_name" : "LBA", "region_name" : "Anatolia", "significance" : null, "tags" : [ "oracle" ], "uid" : "finding:zzbeta2005_hittites#1", "updated_at" : "TS" }
 { "citekey" : "zzdelta2020_new", "claim" : "new at work", "confidence" : "high", "geom" : { "coordinates" : [ 34.6, 40 ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Point" }, "id" : "zzdelta2020_new#1", "origin" : "instance:work", "period" : "[-1400,-1199)", "period_name" : "LBA", "region_name" : "Anatolia", "significance" : null, "tags" : [ "oracle" ], "uid" : "finding:zzdelta2020_new#1", "updated_at" : "TS" }
-## flyway_schema_history 1 rows
+## flyway_schema_history 2 rows
 ## gazetteer_sources 0 rows
 ## goal_aliases 0 rows
 ## goal_focus 0 rows

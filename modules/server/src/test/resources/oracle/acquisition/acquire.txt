@@ -320,9 +320,9 @@
       ],
       "vacuum" : null
     },
-    "error" : null,
     "id" : "UUID",
     "kind" : "acquire_recheck",
+    "problems" : null,
     "progress" : null,
     "sha256" : null,
     "status" : "queued",
@@ -335,7 +335,7 @@
   ],
   "withDoi" : 5
 }
-job: 200 {"id":"UUID","kind":"acquire_recheck","status":"done","citekey":null,"progress":"4/4 items · 1 closed · 1 fetched · 3 no legal copy · 0 failed","error":null,"sha256":null,"createdAt":"TS","updatedAt":"TS","acquireItem":null,"detail":{"init":null,"skippedPeriods":[],"skippedPeriodCount":0,"planHash":null,"vacuum":null,"media":null,"events":null,"eventImport":null,"eventRederive":null,"about":null,"recheck":{"all":true,"upTo":0,"since":"TS","by":"person","resumes":null}}}
+job: 200 {"id":"UUID","kind":"acquire_recheck","status":"done","citekey":null,"progress":"4/4 items · 1 closed · 1 fetched · 3 no legal copy · 0 failed","problems":null,"sha256":null,"createdAt":"TS","updatedAt":"TS","acquireItem":null,"detail":{"init":null,"skippedPeriods":[],"skippedPeriodCount":0,"planHash":null,"vacuum":null,"media":null,"events":null,"eventImport":null,"eventRederive":null,"about":null,"recheck":{"all":true,"upTo":0,"since":"TS","by":"person","resumes":null}}}
   > GET /openalex/works/https://doi.org/10.5555/zq.gold?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
   > GET /unpaywall/10.5555/zq.gold?email=oracle@example.org
   > GET /openalex/works/https://doi.org/10.5555/zq.gold?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org

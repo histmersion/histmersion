@@ -63,7 +63,7 @@
 { "arxiv_id" : null, "authors" : [ "Pi Zqslag" ], "doi" : "10.5555/zq.fresh3", "found_by" : [ "crossref query \"zq tin trade\"" ], "goal" : "zqa-goal", "is_oa" : false, "state" : "new", "title" : "Zq slag heaps", "venue" : "Zq Notes", "year" : 2025 }
 ## candidate_watches 6 rows
 { "goal" : "zqa-goal", "index_name" : "arxiv", "kind" : "query", "last_error" : null, "last_found" : 0, "subject" : "zq tin trade" }
-{ "goal" : "zqa-goal", "index_name" : "core", "kind" : "query", "last_error" : "not asked this sweep — CORE's daily budget for searches is spent (6 of 6 tokens today, UTC; acquire.core.search-daily-tokens)", "last_found" : 0, "subject" : "zq tin trade" }
+{ "goal" : "zqa-goal", "index_name" : "core", "kind" : "query", "last_error" : [ { "case" : "Unasked", "data" : { "why" : { "case" : "Unclassified", "data" : { "text" : "CORE's daily budget for searches is spent (6 of 6 tokens today, UTC; acquire.core.search-daily-tokens)" }, "group" : "Unclassified", "text" : "CORE's daily budget for searches is spent (6 of 6 tokens today, UTC; acquire.core.search-daily-tokens)" } }, "group" : "Upstream", "text" : "not asked this sweep — CORE's daily budget for searches is spent (6 of 6 tokens today, UTC; acquire.core.search-daily-tokens)" } ], "last_found" : 0, "subject" : "zq tin trade" }
 { "goal" : "zqa-goal", "index_name" : "crossref", "kind" : "query", "last_error" : null, "last_found" : 2, "subject" : "zq tin trade" }
 { "goal" : "zqa-goal", "index_name" : "europepmc", "kind" : "query", "last_error" : null, "last_found" : 0, "subject" : "zq tin trade" }
 { "goal" : "zqa-goal", "index_name" : "openalex", "kind" : "citing", "last_error" : null, "last_found" : 1, "subject" : "10.5555/zq.cited" }

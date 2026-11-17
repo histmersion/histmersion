@@ -2,6 +2,8 @@ package com.histmersion
 package domain.activity
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.nonempty.NonEmptyVector
+import com.histmersion.util.database.NewtypeColumns.given
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -126,13 +128,15 @@ class ActivityServiceSuite extends DbSuite:
 
   private def seed(ds: DataSource): Unit =
     def t(i: Instant) = i.toString
+    // the job's problems as the server stores them: a list of entries
+    val failed = NonEmptyVector.of[Problem](Problem.Unclassified(Legacy.Text("HTTP 500")))
     transact(ds):
       sql"""INSERT INTO jobs (id, kind, status, pipeline, target_kind, target_id, goal_slug, created_at, updated_at)
             VALUES ('r1', 'agent', 'running', 'review-article', 'article', 'sea-peoples', 'g1', ${t(
           ago(1)
         )}::timestamptz, ${t(ago(1))}::timestamptz)""".update.run()
       sql"""INSERT INTO jobs (id, kind, status, error, created_at, updated_at)
-            VALUES ('j1', 'media-import', 'failed', 'HTTP 500', ${t(ago(2))}::timestamptz, ${t(ago(1))}::timestamptz),
+            VALUES ('j1', 'media-import', 'failed', $failed, ${t(ago(2))}::timestamptz, ${t(ago(1))}::timestamptz),
                    ('j0', 'basemap-fetch', 'failed', NULL, ${t(ago(60 * 24 * 9))}::timestamptz, ${t(
           ago(60 * 24 * 9)
         )}::timestamptz)""".update.run()

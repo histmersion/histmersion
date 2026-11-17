@@ -3,6 +3,7 @@ package server.agents
 import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
+import com.histmersion.api.problem.StoredShapes
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -257,29 +258,23 @@ class PlanRefreshSuite extends munit.FunSuite:
     Files.writeString(home.resolve("auth.json"), "") // an empty stand-in: only its presence is looked at
     assert(PlanPools.codexLogin(Some(home), CodexConfig.Command("codex")).isInstanceOf[Login.Present])
 
+  // the pauses as a master version stored them, read back as the row's problem is
   test("the role a plan-quota pause names, so a paused run is asked about that role again"):
     assertEquals(
       ModelPicker.pausedRole(
-        Problem.Stored.Unrecognised(
-          Problem.Stored.Text(
-            "plan-quota: enrich: all models for role extractor are below their plan floor or allowance; …"
-          )
+        StoredShapes.read(
+          "plan-quota: enrich: all models for role extractor are below their plan floor or allowance; …"
         )
       ),
       Some(Role.Extractor)
     )
     assertEquals(
       ModelPicker.pausedRole(
-        Problem.Stored.Unrecognised(
-          Problem.Stored.Text("plan-quota: review: all models for role cold-reader are below their allowance")
-        )
+        StoredShapes.read("plan-quota: review: all models for role cold-reader are below their allowance")
       ),
       Some(Role.ColdReader)
     )
-    assertEquals(
-      ModelPicker.pausedRole(Problem.Stored.Unrecognised(Problem.Stored.Text("plan-quota: something else"))),
-      None
-    )
+    assertEquals(ModelPicker.pausedRole(StoredShapes.read("plan-quota: something else")), None)
 
   // 2026-10-08: the Claude plan's five_hour window at its floor (reset 00:20Z) and the ChatGPT plan
   // held read as "no window frees by itself", and the run kept no resume time

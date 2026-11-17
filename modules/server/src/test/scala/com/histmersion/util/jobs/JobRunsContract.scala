@@ -116,13 +116,15 @@ abstract class JobRunsContract(name: String) extends DbSuite:
     List(soon, later, held).foreach(id =>
       assert(r.move(Kind, id, RunRow.Status("queued"), RunRow.Status("running"), None, None, None))
     )
+    def pause(cause: Problem.Run.PauseCause, why: String): Problem =
+      Problem.Run.Halted(cause, Problem.Stored.Unrecognised(Problem.Stored.Text(why)))
     assert(
       r.move(
         Kind,
         soon,
         RunRow.Status("running"),
         RunRow.Status("paused"),
-        Some(Problem.Stored.Unrecognised(Problem.Stored.Text("allowance: x"))),
+        Some(pause(Problem.Run.PauseCause.Allowance, "x")),
         None,
         Some(now.minusSeconds(60))
       )
@@ -133,7 +135,7 @@ abstract class JobRunsContract(name: String) extends DbSuite:
         later,
         RunRow.Status("running"),
         RunRow.Status("paused"),
-        Some(Problem.Stored.Unrecognised(Problem.Stored.Text("allowance: y"))),
+        Some(pause(Problem.Run.PauseCause.Allowance, "y")),
         None,
         Some(now.plusSeconds(3600))
       )
@@ -144,7 +146,7 @@ abstract class JobRunsContract(name: String) extends DbSuite:
         held,
         RunRow.Status("running"),
         RunRow.Status("paused"),
-        Some(Problem.Stored.Unrecognised(Problem.Stored.Text("plan-quota: z"))),
+        Some(pause(Problem.Run.PauseCause.PlanQuota, "z")),
         None,
         None
       )
@@ -154,8 +156,8 @@ abstract class JobRunsContract(name: String) extends DbSuite:
     assertEquals(
       r.pausedWaiting(Kind, RunRow.Status("paused"), now).map(r => (r._1, r._4)).toSet,
       Set(
-        (held, Problem.Stored.Unrecognised(Problem.Stored.Text("plan-quota: z"))),
-        (later, Problem.Stored.Unrecognised(Problem.Stored.Text("allowance: y")))
+        (held, Some(pause(Problem.Run.PauseCause.PlanQuota, "z"))),
+        (later, Some(pause(Problem.Run.PauseCause.Allowance, "y")))
       )
     )
     assert(r.resumeAt(Kind, later, RunRow.Status("paused"), now.minusSeconds(1)))
