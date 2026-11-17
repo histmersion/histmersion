@@ -159,6 +159,27 @@ class RenderSuite extends munit.FunSuite:
       "allowance unreadable (claude-code:*: '5 usd/fortnight' is unreadable as ModelChains.Limit.Spec)"
     ),
     "PlanOnly" -> (409, "no fall from a plan to a paid key for writer"),
+    "Stalled" -> (409, "stalled at step 4: 31 min, 3 times"),
+    "Silent" -> (409, "silent at step 4: 31 min, stall 1 of 3"),
+    "NoPipeline" -> (409, "no pipeline 'enrich-everything' in this build"),
+    "PipelineChanged" -> (409, "pipeline changed"),
+    "Reordered" -> (409, "step 2 moved from 'extract' to 'enrich'"),
+    "CheckpointUnread" -> (409, "step 2 (extract) checkpoint unreadable — missing required field 'claims'"),
+    "Vanished" -> (409, "run vanished"),
+    "Overspent" -> (409, "run overspent: $1.2000 of $1.00"),
+    "OverTokens" -> (409, "run over tokens: 600001 of 600000, cache weight 0.1"),
+    "OverCap" -> (409, "spend cap Daily reached: 5.0"),
+    "MovedOn" -> (409, "run 0193f1c4 moved on"),
+    "NotNow" -> (409, "run 0193f1c4 is done: no Resume"),
+    "Withdrawn" -> (409, "rejected: the run was cancelled"),
+    "AtStep" -> (409, "at step enrich (no model set for enricher (Call))"),
+    "Unsettled" -> (409, "step enrich unsettled after 16 attempts"),
+    "ProviderDown" -> (
+      409,
+      "provider down at step enrich (anthropic did not answer at https://api.anthropic.com/v1/messages within 600000 ms)"
+    ),
+    "BudgetSpent" -> (409, "budget spent at step enrich"),
+    "NoValidAnswer" -> (409, "no valid answer at step extract after 3 (the answer breaks StandIn)"),
     "Blocked" -> (409, "held back: PoolFull review"),
     "Interrupted" -> (409, "interrupted"),
     "Cancelled" -> (409, "cancelled by Person"),
@@ -604,6 +625,42 @@ class RenderSuite extends munit.FunSuite:
           Run.Unread(Raw("codex:*"), NonEmptyVector.of(Relayed(Sentence("z"))))
         )
       ) -> "its allowance cannot be read (local:*: x; y; codex:*: z)"
+    ).foreach((p, want) => assertEquals(p.sentence, want))
+
+  test("a run's lifecycle keeps the words and hints it had before its cases were typed"):
+    val step = Run.Step("enrich")
+    Vector[(Problem, String)](
+      Run.Stalled(Count(4L), Count(31L), Count(3L)) ->
+        "stalled 3 times at step 4 (no sign of life for 31 min each time; agents.watchdog)",
+      Run.Silent(Count(4L), Count(31L), Count(1L), Count(3L)) -> "no sign of life for 31 min at step 4 (stall 1 of 3)",
+      Run.NoPipeline(Raw("x")) -> "no pipeline 'x' in this build",
+      Run.PipelineChanged -> "the pipeline's version changed since this run started; start a new run",
+      Run.Reordered(Count(2L), Run.Step("extract"), step) ->
+        "step 2 is 'extract' in the checkpoint but 'enrich' now — the pipeline changed; start a new run",
+      Run.CheckpointUnread(Count(2L), step, External.Reported("eof")) ->
+        "step 2 (enrich): the checkpoint no longer decodes (eof)",
+      Run.Vanished -> "the run disappeared",
+      Run.Paused(Run.PauseReason.Requested, None) -> "paused on request",
+      Run.Overspent(Raw("$1.2000"), Raw("$1.00")) -> "the run spent $1.2000 of its $1.00 USD",
+      Run.OverTokens(Count(600001L), Count(600000L), Raw("0.1")) ->
+        "the run used 600001 of its 600000 budget tokens (cache reads count 0.1: agents.budgets.cache-read-weight)",
+      Run.OverCap(Run.Cap.Daily, Raw("5.0")) -> "today's agent spend reached agents.budgets.daily-usd (5.0)",
+      Run.OverCap(Run.Cap.Monthly, Raw("50.0")) ->
+        "this month's agent spend reached agents.budgets.monthly-usd (50.0)",
+      Run.MovedOn(Raw("r1")) -> "run r1 moved on; look again",
+      Run.NotNow(Raw("r1"), Raw("done"), Run.Control.Pause) ->
+        "run r1 is done; only a queued or running run can be paused",
+      Run.NotNow(Raw("r1"), Raw("done"), Run.Control.Resume) -> "run r1 is done; only a paused run can be resumed",
+      Run.NotNow(Raw("r1"), Raw("done"), Run.Control.Cancel) -> "run r1 is done; it has already finished",
+      Run.Withdrawn -> "rejected: the run was cancelled",
+      Run.AtStep(step, NonEmptyVector.of(Relayed(Sentence("a")), Relayed(Sentence("b")))) -> "enrich: a; b",
+      Run.Unsettled(step, Count(16L)) ->
+        "enrich: 16 attempts without an answer; the chain keeps running out mid-step",
+      Run.ProviderDown(step, NonEmptyVector.of(Relayed(Sentence("HTTP 529")))) ->
+        "enrich: HTTP 529 — fix the provider, then resume",
+      Run.BudgetSpent(step) -> "enrich: the run's budget is exhausted",
+      Run.NoValidAnswer(step, Count(3L), Vector(Relayed(Sentence("a")), Relayed(Sentence("b")))) ->
+        "enrich: no valid answer after 3 attempt(s): a; b"
     ).foreach((p, want) => assertEquals(p.sentence, want))
 
   test("a watch left out of a sweep says so before why, in its sentence and its stored text"):

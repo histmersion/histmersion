@@ -1607,6 +1607,62 @@ object Problem:
     /** The model is not used: `role`'s chain does not fall from a plan pool to a paid key. */
     final case class PlanOnly(role: Role) extends Run
 
+    /** The run showed no sign of life at step `step` for `minutes` minutes, `times` times: the watchdog gave up. */
+    final case class Stalled(step: Count, minutes: Count, times: Count) extends Run
+
+    /** The run showed no sign of life at step `step` for `minutes` minutes: stall `stall` of the `of` the watchdog
+      * allows before it gives up.
+      */
+    final case class Silent(step: Count, minutes: Count, stall: Count, of: Count) extends Run
+
+    /** This build has no pipeline `pipeline`. */
+    final case class NoPipeline(pipeline: Raw) extends Run
+
+    /** The pipeline's version changed since the run started: a new run is started instead. */
+    case object PipelineChanged extends Run
+
+    /** Step `seq` was `recorded` in the run's checkpoint and is `now` now: the pipeline changed under the run. */
+    final case class Reordered(seq: Count, recorded: Step, now: Step) extends Run
+
+    /** Step `seq` (`step`)'s checkpoint no longer decodes: `reported`, the decoder's words. */
+    final case class CheckpointUnread(seq: Count, step: Step, reported: External.Reported) extends Run
+
+    /** The run is no longer recorded. */
+    case object Vanished extends Run
+
+    /** The run spent `spent` of its budget of `budget` (both in USD, as written). */
+    final case class Overspent(spent: Raw, budget: Raw) extends Run
+
+    /** The run used `used` of its `budget` budget tokens, cache reads counting `weight`. */
+    final case class OverTokens(used: Count, budget: Count, weight: Raw) extends Run
+
+    /** The agents' spend over `cap`'s period reached the setting's `amount` (USD). */
+    final case class OverCap(cap: Cap, amount: Raw) extends Run
+
+    /** Run `run` moved on while it was looked at: it is looked at again. */
+    final case class MovedOn(run: Raw) extends Run
+
+    /** Run `run` is `status`, in which `control` does not apply. */
+    final case class NotNow(run: Raw, status: Raw, control: Control) extends Run
+
+    /** An approval closed because its run was cancelled: it is rejected. */
+    case object Withdrawn extends Run
+
+    /** Step `step` stopped: `why`, each problem. */
+    final case class AtStep(step: Step, why: NonEmptyVector[Problem]) extends Run
+
+    /** Step `step` made `attempts` attempts without an answer: the chain keeps running out mid-step. */
+    final case class Unsettled(step: Step, attempts: Count) extends Run
+
+    /** Step `step`'s provider failed: `why`, each problem; the provider is fixed, then the run resumed. */
+    final case class ProviderDown(step: Step, why: NonEmptyVector[Problem]) extends Run
+
+    /** Step `step` stopped: the run's budget is exhausted. */
+    final case class BudgetSpent(step: Step) extends Run
+
+    /** Step `step` has no valid answer after `attempts` attempts: the last answer's problems. */
+    final case class NoValidAnswer(step: Step, attempts: Count, problems: Vector[Problem]) extends Run
+
     /** The scheduler holds it back: `block`. */
     final case class Blocked(block: Block) extends Run
 
@@ -1647,7 +1703,9 @@ object Problem:
 
     /** A step of a run, by its name. */
     type Step = Step.T
-    object Step extends Newtype[String, Pure]
+    object Step extends Newtype[String, Pure]:
+      /** The step a value of any newtype names (`Step.of(name)`): unwrapped here, like [[Raw.of]]. */
+      def of[T](value: T)(using RefinedType.Mirror[T]): Step = Step(s"$value")
 
     /** A pool of runs, by its name. */
     type Pool = Pool.T
@@ -1665,6 +1723,14 @@ object Problem:
 
     enum AbortCause:
       case Disappeared, CheckpointMismatch, VersionChanged
+
+    /** The agents' spend caps: a day's and a month's. */
+    enum Cap derives CanEqual:
+      case Daily, Monthly
+
+    /** What a person does to a run. */
+    enum Control derives CanEqual:
+      case Pause, Resume, Cancel
 
     /** What a chain whose models are all out of headroom is below. */
     enum Floor derives CanEqual:
@@ -2380,6 +2446,38 @@ object Problem:
         )
       ),
       Run.PlanOnly(Run.Role("writer")),
+      Run.Stalled(Count(4L), Count(31L), Count(3L)),
+      Run.Silent(Count(4L), Count(31L), Count(1L), Count(3L)),
+      Run.NoPipeline(Raw("enrich-everything")),
+      Run.PipelineChanged,
+      Run.Reordered(Count(2L), Run.Step("extract"), Run.Step("enrich")),
+      Run.CheckpointUnread(Count(2L), Run.Step("extract"), External.Reported("missing required field 'claims'")),
+      Run.Vanished,
+      Run.Overspent(Raw("$1.2000"), Raw("$1.00")),
+      Run.OverTokens(Count(600001L), Count(600000L), Raw("0.1")),
+      Run.OverCap(Run.Cap.Daily, Raw("5.0")),
+      Run.MovedOn(Raw("0193f1c4")),
+      Run.NotNow(Raw("0193f1c4"), Raw("done"), Run.Control.Resume),
+      Run.Withdrawn,
+      Run.AtStep(Run.Step("enrich"), NonEmptyVector.of(Run.Unassigned(Run.Role("enricher"), Run.Asked.Call))),
+      Run.Unsettled(Run.Step("enrich"), Count(16L)),
+      Run.ProviderDown(
+        Run.Step("enrich"),
+        NonEmptyVector.of(
+          Upstream.Timeout(
+            Upstream.Name("anthropic"),
+            Upstream.Url("https://api.anthropic.com/v1/messages"),
+            Millis(600000L),
+            Vector.empty
+          )
+        )
+      ),
+      Run.BudgetSpent(Run.Step("enrich")),
+      Run.NoValidAnswer(
+        Run.Step("extract"),
+        Count(3L),
+        Vector(Content.Answer(Content.Requirement.StandIn))
+      ),
       Run.Blocked(Run.Block.PoolFull(Run.Pool("review"))),
       Run.Interrupted,
       Run.CutShort(Conflict.Activity.MergeApply),

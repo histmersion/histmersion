@@ -1,6 +1,6 @@
 package com.histmersion
 package domain.automation.agents
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{Legacy, Problem, ProblemLog}
 import com.histmersion.util.problem.Text.sentence
 
 import hearth.kindlings.optics.syntax.*
@@ -170,19 +170,13 @@ final class Engine(
           id,
           JobRepo.WarningText(s"$mark (${n}x): no sign of life for $mins min; its processes were killed".take(500))
         )
+        val (step, minutes) = (Problem.Count(c.seq.toLong), Problem.Count(mins))
         c.stalled = Some(if n >= math.max(1, cfg.watchdog.maxStalls.value) then
-          Halt.Fail(
-            Problem.Unclassified(
-              Legacy
-                .Text(s"stalled $n times at step ${c.seq} (no sign of life for $mins min each time; agents.watchdog)")
-            )
-          )
+          Halt.Fail(Problem.Run.Stalled(step, minutes, Problem.Count(n.toLong)))
         else
           Halt.Pause(
             PauseReason.Stalled,
-            Problem.Unclassified(
-              Legacy.Text(s"no sign of life for $mins min at step ${c.seq} (stall $n of ${cfg.watchdog.maxStalls})")
-            ),
+            Problem.Run.Silent(step, minutes, Problem.Count(n.toLong), Problem.Count.of(cfg.watchdog.maxStalls)),
             Some(
               java.time.Instant
                 .ofEpochMilli(now.value)
@@ -404,17 +398,9 @@ final class Engine(
           val outcome: Either[Halt, String] =
             try
               pipe match
-                case None =>
-                  Left(Halt.Fail(Problem.Unclassified(Legacy.Text(s"no pipeline '${run.pipeline}' in this build"))))
-                case Some(_) if !sameVersion =>
-                  Left(
-                    Halt.Fail(
-                      Problem.Unclassified(
-                        Legacy.Text("the pipeline's version changed since this run started; start a new run")
-                      )
-                    )
-                  )
-                case Some(p) =>
+                case None                    => Left(Halt.Fail(Problem.Run.NoPipeline(Problem.Raw.of(run.pipeline))))
+                case Some(_) if !sameVersion => Left(Halt.Fail(Problem.Run.PipelineChanged))
+                case Some(p)                 =>
                   val hooks = CliProcess.Hooks(
                     pr => { val _ = ctl.procs.add(pr) },
                     pr => { val _ = ctl.procs.remove(pr) },
@@ -434,10 +420,9 @@ final class Engine(
                     .now(agents.clock)
                     .plusSeconds(math.max(0, cfg.watchdog.interruptedResumeMinutes.value).toLong * 60L)
                 )
-                Left(Halt.Pause(PauseReason.Interrupted, Problem.Unclassified(Legacy.Text("interrupted")), at))
+                Left(Halt.Pause(PauseReason.Interrupted, Problem.Run.Interrupted, at))
               case e: Exception =>
-                scribe.error(s"agent run $id failed unexpectedly: ${e.getMessage}", e)
-                Left(Halt.Fail(Problem.Unclassified(Legacy.Text(s"${e.getClass.getSimpleName}: ${e.getMessage}"))))
+                Left(Halt.Fail(ProblemLog.unexpected(e, Problem.Where(s"agent run $id"))))
             finally
               running.remove(id)
               Thread.interrupted()
@@ -451,15 +436,9 @@ final class Engine(
                 id,
                 RunState.Running,
                 RunState.Cancelled,
-                error = Some(Problem.Unclassified(Legacy.Text("cancelled")))
+                error = Some(Problem.Run.Cancelled(Problem.Run.Actor.Person))
               )
-            case Left(Halt.Fail(m)) =>
-              transition(
-                id,
-                RunState.Running,
-                RunState.Failed,
-                error = Some(Problem.Unclassified(Legacy.Text(m.sentence.take(2000))))
-              )
+            case Left(Halt.Fail(m))                => transition(id, RunState.Running, RunState.Failed, error = Some(m))
             case Left(Halt.Pause(reason, why, at)) =>
               transition(
                 id,
@@ -532,13 +511,13 @@ final class Engine(
     Option(running.get(id)) match
       case Some(c) if c.cancel => Left(Halt.Cancel)
       case Some(c) if c.pause  =>
-        Left(Halt.Pause(PauseReason.Requested, Problem.Unclassified(Legacy.Text("paused on request"))))
+        Left(Halt.Pause(PauseReason.Requested, Problem.Run.Paused(Problem.Run.PauseReason.Requested, None)))
       case _ => Right(())
 
   /** Before an LLM call: the run's own budget, and the global daily and monthly caps. */
   private[histmersion] def checkBudget(id: Run.Id): Either[Halt, Unit] =
     agents.runs.get(id) match
-      case None    => Left(Halt.Fail(Problem.Unclassified(Legacy.Text("the run disappeared"))))
+      case None    => Left(Halt.Fail(Problem.Run.Vanished))
       case Some(r) =>
         val (day, month) = agents.runs.spendDayMonth()
         val weight = Usage.CacheReadWeight(cfg.budgets.cacheReadWeight.value)
@@ -546,10 +525,9 @@ final class Engine(
           Left(
             Halt.Pause(
               PauseReason.Budget,
-              Problem.Unclassified(
-                Legacy.Text(
-                  s"the run spent ${AgentsMarkdown.usd(r.costUsd.value)} of its ${AgentsMarkdown.usd(r.budgetUsd.value)} USD"
-                )
+              Problem.Run.Overspent(
+                Problem.Raw(AgentsMarkdown.usd(r.costUsd.value)),
+                Problem.Raw(AgentsMarkdown.usd(r.budgetUsd.value))
               )
             )
           )
@@ -557,11 +535,10 @@ final class Engine(
           Left(
             Halt.Pause(
               PauseReason.Budget,
-              Problem.Unclassified(
-                Legacy.Text(
-                  s"the run used ${r.usage.budgeted(weight)} of its ${r.budgetTokens} budget tokens " +
-                    s"(cache reads count ${cfg.budgets.cacheReadWeight}: agents.budgets.cache-read-weight)"
-                )
+              Problem.Run.OverTokens(
+                Problem.Count.of(r.usage.budgeted(weight)),
+                Problem.Count.of(r.budgetTokens),
+                Problem.Raw.of(cfg.budgets.cacheReadWeight)
               )
             )
           )
@@ -569,18 +546,14 @@ final class Engine(
           Left(
             Halt.Pause(
               PauseReason.Budget,
-              Problem.Unclassified(
-                Legacy.Text(s"today's agent spend reached agents.budgets.daily-usd (${cfg.budgets.dailyUsd})")
-              )
+              Problem.Run.OverCap(Problem.Run.Cap.Daily, Problem.Raw.of(cfg.budgets.dailyUsd))
             )
           )
         else if month >= BigDecimal(cfg.budgets.monthlyUsd.value) then
           Left(
             Halt.Pause(
               PauseReason.Budget,
-              Problem.Unclassified(
-                Legacy.Text(s"this month's agent spend reached agents.budgets.monthly-usd (${cfg.budgets.monthlyUsd})")
-              )
+              Problem.Run.OverCap(Problem.Run.Cap.Monthly, Problem.Raw.of(cfg.budgets.monthlyUsd))
             )
           )
         else Right(())
@@ -623,14 +596,10 @@ final class Engine(
               )
             )
           )
-            .toRight(conflict(Problem.Unclassified(Legacy.Text(s"run $id moved on; look again"))))
+            .toRight(conflict(Problem.Run.MovedOn(Problem.Raw.of(id))))
             .flatMap(_ => get(id))
         case _ =>
-          Left(
-            conflict(
-              Problem.Unclassified(Legacy.Text(s"run $id is ${r.status}; only a queued or running run can be paused"))
-            )
-          )
+          Left(conflict(Problem.Run.NotNow(Problem.Raw.of(id), Problem.Raw.of(r.status), Problem.Run.Control.Pause)))
     }
 
   def resume(
@@ -640,7 +609,7 @@ final class Engine(
   ): Either[Api.Error, RunInfo] =
     withRun(id) { r =>
       if !RunState.parse(RunState.Wire(r.status.value)).contains(RunState.Paused) then
-        Left(conflict(Problem.Unclassified(Legacy.Text(s"run $id is ${r.status}; only a paused run can be resumed"))))
+        Left(conflict(Problem.Run.NotNow(Problem.Raw.of(id), Problem.Raw.of(r.status), Problem.Run.Control.Resume)))
       else
         agents.jobRuns.budget(
           jobKind,
@@ -649,7 +618,7 @@ final class Engine(
           budgetTokens.map(t => JobRepo.TokenBudget(t.value))
         )
         transition(id, RunState.Paused, RunState.Queued)
-          .toRight(conflict(Problem.Unclassified(Legacy.Text(s"run $id moved on; look again"))))
+          .toRight(conflict(Problem.Run.MovedOn(Problem.Raw.of(id))))
           .flatMap { _ => submit(id); get(id) }
     }
 
@@ -660,16 +629,14 @@ final class Engine(
           Option(running.get(id)).foreach { c => c.cancel = true; c.thread.interrupt() }
           Right(r)
         case Some(s @ (RunState.Queued | RunState.Paused | RunState.WaitingApproval)) =>
-          transition(id, s, RunState.Cancelled, error = Some(Problem.Unclassified(Legacy.Text("cancelled"))))
-            .toRight(conflict(Problem.Unclassified(Legacy.Text(s"run $id moved on; look again"))))
+          transition(id, s, RunState.Cancelled, error = Some(Problem.Run.Cancelled(Problem.Run.Actor.Person)))
+            .toRight(conflict(Problem.Run.MovedOn(Problem.Raw.of(id))))
             .flatMap { _ =>
-              val _ = agents.approvalStore.closeForRun(
-                Job.Id.assume(id.value),
-                Problem.Unclassified(Legacy.Text("rejected: the run was cancelled"))
-              )
+              val _ = agents.approvalStore.closeForRun(Job.Id.assume(id.value), Problem.Run.Withdrawn)
               get(id)
             }
-        case _ => Left(conflict(Problem.Unclassified(Legacy.Text(s"run $id is ${r.status}; it has already finished"))))
+        case _ =>
+          Left(conflict(Problem.Run.NotNow(Problem.Raw.of(id), Problem.Raw.of(r.status), Problem.Run.Control.Cancel)))
     }
 
   private def get(id: Run.Id): Either[Api.Error, RunInfo] =

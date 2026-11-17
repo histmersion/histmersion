@@ -122,8 +122,9 @@ object Text:
       case Plugin.Rejected(plugin, item, why) => s"$plugin did not take $item: ${why.said}"
       case Plugin.Vault(vault, failure)       => s"secret vault $vault failed: ${failure.said}"
       case Plugin.Said(plugin, claim, text)   => s"$plugin (${words(claim.productPrefix)}): $text"
-      case Problem.Run.Paused(reason, at)     => s"paused for ${words(reason.productPrefix)}${until(at)}"
-      case Problem.Run.NoModel(role, passed)  =>
+      case Problem.Run.Paused(Problem.Run.PauseReason.Requested, None) => "paused on request"
+      case Problem.Run.Paused(reason, at)    => s"paused for ${words(reason.productPrefix)}${until(at)}"
+      case Problem.Run.NoModel(role, passed) =>
         s"no model of the $role chain can run${if passed.isEmpty then "" else s": ${passedOver(passed)}"}"
       case Problem.Run.Exhausted(role, floor, frees, passed) =>
         s"all models for role $role are ${floor.said}; ${frees.said} (${passedOver(passed)})"
@@ -144,6 +145,42 @@ object Text:
         s"its allowance cannot be read (${each.mkString("; ")})"
       case Problem.Run.PlanOnly(role) =>
         s"not used — the chain does not fall from a plan to a paid key (histmersion agent quota fallthrough $role on)"
+      case Problem.Run.Stalled(step, minutes, times) =>
+        s"stalled $times times at step $step (no sign of life for $minutes min each time; agents.watchdog)"
+      case Problem.Run.Silent(step, minutes, stall, of) =>
+        s"no sign of life for $minutes min at step $step (stall $stall of $of)"
+      case Problem.Run.NoPipeline(pipeline) => s"no pipeline '$pipeline' in this build"
+      case Problem.Run.PipelineChanged      =>
+        "the pipeline's version changed since this run started; start a new run"
+      case Problem.Run.Reordered(seq, recorded, now) =>
+        s"step $seq is '$recorded' in the checkpoint but '$now' now — the pipeline changed; start a new run"
+      case Problem.Run.CheckpointUnread(seq, step, r)   => s"step $seq ($step): the checkpoint no longer decodes ($r)"
+      case Problem.Run.Vanished                         => "the run disappeared"
+      case Problem.Run.Overspent(spent, budget)         => s"the run spent $spent of its $budget USD"
+      case Problem.Run.OverTokens(used, budget, weight) =>
+        s"the run used $used of its $budget budget tokens (cache reads count $weight: agents.budgets.cache-read-weight)"
+      case Problem.Run.OverCap(Problem.Run.Cap.Daily, amount) =>
+        s"today's agent spend reached agents.budgets.daily-usd ($amount)"
+      case Problem.Run.OverCap(Problem.Run.Cap.Monthly, amount) =>
+        s"this month's agent spend reached agents.budgets.monthly-usd ($amount)"
+      case Problem.Run.MovedOn(run)                                   => s"run $run moved on; look again"
+      case Problem.Run.NotNow(run, status, Problem.Run.Control.Pause) =>
+        s"run $run is $status; only a queued or running run can be paused"
+      case Problem.Run.NotNow(run, status, Problem.Run.Control.Resume) =>
+        s"run $run is $status; only a paused run can be resumed"
+      case Problem.Run.NotNow(run, status, Problem.Run.Control.Cancel) =>
+        s"run $run is $status; it has already finished"
+      case Problem.Run.Withdrawn                 => "rejected: the run was cancelled"
+      case Problem.Run.AtStep(step, why)         => s"$step: ${why.toVector.map(_.sentence).mkString("; ")}"
+      case Problem.Run.Unsettled(step, attempts) =>
+        s"$step: $attempts attempts without an answer; the chain keeps running out mid-step"
+      case Problem.Run.ProviderDown(step, why) =>
+        s"$step: ${why.toVector.map(_.sentence).mkString("; ")} — fix the provider, then resume"
+      case Problem.Run.BudgetSpent(step)                 => s"$step: the run's budget is exhausted"
+      case Problem.Run.NoValidAnswer(step, attempts, ps) =>
+        s"$step: no valid answer after $attempts attempt(s)${
+            if ps.isEmpty then "" else ps.map(_.sentence).mkString(": ", "; ", "")
+          }"
       case Problem.Run.Blocked(block)           => s"held back: ${block.said}"
       case Problem.Run.Interrupted              => "interrupted by a restart"
       case Problem.Run.CutShort(activity)       => activity.cutShort

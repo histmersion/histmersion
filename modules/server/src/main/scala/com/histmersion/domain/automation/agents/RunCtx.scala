@@ -4,7 +4,8 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.nonempty.NonEmptyVector
+import com.histmersion.util.problem.{External, Legacy, Problem}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.domain.automation.approvals.Decided
@@ -111,14 +112,9 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
     engine.agents.runs.checkpoint(jobId, seq).map { (recorded, json) =>
       if recorded != name then
         Left(
-          Halt
-            .Fail(
-              Problem.Unclassified(
-                Legacy.Text(
-                  s"step $seq is '$recorded' in the checkpoint but '$name' now — the pipeline changed; start a new run"
-                )
-              )
-            )
+          Halt.Fail(
+            Problem.Run.Reordered(Problem.Count.of(seq), Problem.Run.Step.of(recorded), Problem.Run.Step.of(name))
+          )
         )
       else
         RawJson
@@ -126,8 +122,8 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
           .left
           .map(e =>
             Halt.Fail(
-              Problem
-                .Unclassified(Legacy.Text(s"step $seq ($name): the checkpoint no longer decodes ($e)"))
+              Problem.Run
+                .CheckpointUnread(Problem.Count.of(seq), Problem.Run.Step.of(name), External.Reported.of(s"$e"))
             )
           )
     }
@@ -400,9 +396,9 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
       onRefresh = n => warn(s"${role.wire}: $n")
     ) match
       case Left(PickFailure.Unavailable(m)) =>
-        Left(Halt.Fail(Problem.Unclassified(Legacy.Text(s"$name: ${m.sentences.mkString("; ")}"))))
+        Left(Halt.Fail(Problem.Run.AtStep(Problem.Run.Step.of(name), m.toNonEmpty)))
       case Left(PickFailure.Exhausted(m, at, why)) =>
-        Left(Halt.Pause(why, Problem.Unclassified(Legacy.Text(s"$name: ${m.sentence}")), at))
+        Left(Halt.Pause(why, Problem.Run.AtStep(Problem.Run.Step.of(name), NonEmptyVector.of(m)), at))
       case Right(p) =>
         p.skipped
           .filter(warnedSkips.add)
@@ -440,13 +436,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
         case Left(h)                                                       => Left(h)
         case Right(_) if attempt - before > maxAttempts + MaxModelSwitches =>
           Left(
-            Halt.Fail(
-              Problem.Unclassified(
-                Legacy.Text(
-                  s"$name: ${attempt - before - 1} attempts without an answer; the chain keeps running out mid-step"
-                )
-              )
-            )
+            Halt.Fail(Problem.Run.Unsettled(Problem.Run.Step.of(name), Problem.Count((attempt - before - 1).toLong)))
           )
         case Right(picked) =>
           val (client, billing) = (picked.client, picked.billing)
@@ -516,9 +506,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
               Left(
                 Halt.Pause(
                   PauseReason.Provider,
-                  Problem.Unclassified(
-                    Legacy.Text(s"$name: ${e.problems.sentences.mkString("; ")} — fix the provider, then resume")
-                  )
+                  Problem.Run.ProviderDown(Problem.Run.Step.of(name), e.problems.toNonEmpty)
                 )
               )
             case Right(res) =>
@@ -544,12 +532,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
                     msgs,
                     served
                   )
-                  Left(
-                    Halt.Pause(
-                      PauseReason.Budget,
-                      Problem.Unclassified(Legacy.Text(s"$name: the run's budget is exhausted"))
-                    )
-                  )
+                  Left(Halt.Pause(PauseReason.Budget, Problem.Run.BudgetSpent(Problem.Run.Step.of(name))))
                 case FinishReason.Custom(AllowanceGuard.Reason) =>
                   record(
                     seq,
@@ -637,11 +620,8 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
                       if last then
                         Left(
                           Halt.Fail(
-                            Problem.Unclassified(
-                              Legacy.Text(
-                                s"$name: no valid answer after $attempt attempt(s): ${ps.take(3).mkString("; ")}"
-                              )
-                            )
+                            Problem.Run
+                              .NoValidAnswer(Problem.Run.Step.of(name), Problem.Count(attempt.toLong), ps.toVector)
                           )
                         )
                       // an answer that did not decode goes back too, so the model fixes the named field

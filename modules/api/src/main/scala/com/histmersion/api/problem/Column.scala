@@ -117,7 +117,26 @@ object Column:
       case Problem.Run.AllowanceUnread(broken) =>
         val each = broken.toVector.map(b => s"${b.target}: ${b.why.toVector.map(_.stored).mkString(WhySeparator)}")
         s"allowance unreadable (${each.mkString(PassedSeparator)})"
-      case Problem.Run.PlanOnly(role)           => s"no fall from a plan to a paid key for $role"
+      case Problem.Run.PlanOnly(role)                    => s"no fall from a plan to a paid key for $role"
+      case Problem.Run.Stalled(step, minutes, times)     => s"stalled at step $step: $minutes min, $times times"
+      case Problem.Run.Silent(step, minutes, stall, of)  => s"silent at step $step: $minutes min, stall $stall of $of"
+      case Problem.Run.NoPipeline(pipeline)              => s"no pipeline '$pipeline' in this build"
+      case Problem.Run.PipelineChanged                   => "pipeline changed"
+      case Problem.Run.Reordered(seq, recorded, now)     => s"step $seq moved from '$recorded' to '$now'"
+      case Problem.Run.CheckpointUnread(seq, step, r)    => s"step $seq ($step) checkpoint unreadable — $r"
+      case Problem.Run.Vanished                          => "run vanished"
+      case Problem.Run.Overspent(spent, budget)          => s"run overspent: $spent of $budget"
+      case Problem.Run.OverTokens(used, budget, weight)  => s"run over tokens: $used of $budget, cache weight $weight"
+      case Problem.Run.OverCap(cap, amount)              => s"spend cap ${cap.productPrefix} reached: $amount"
+      case Problem.Run.MovedOn(run)                      => s"run $run moved on"
+      case Problem.Run.NotNow(run, status, control)      => s"run $run is $status: no ${control.productPrefix}"
+      case Problem.Run.Withdrawn                         => "rejected: the run was cancelled"
+      case Problem.Run.AtStep(step, why)                 => s"at step $step (${why.storedEach})"
+      case Problem.Run.Unsettled(step, attempts)         => s"step $step unsettled after $attempts attempts"
+      case Problem.Run.ProviderDown(step, why)           => s"provider down at step $step (${why.storedEach})"
+      case Problem.Run.BudgetSpent(step)                 => s"budget spent at step $step"
+      case Problem.Run.NoValidAnswer(step, attempts, ps) =>
+        s"no valid answer at step $step after $attempts (${ps.map(_.stored).mkString(WhySeparator)})"
       case Problem.Run.Blocked(block)           => s"held back: ${block.stored}"
       case Problem.Run.Interrupted              => "interrupted"
       case Problem.Run.CutShort(activity)       => s"cut short: ${activity.productPrefix}"
@@ -179,6 +198,10 @@ object Column:
 
   /** Between the models a chain passed over (and the limits or allowances of one): a mark no sentence holds. */
   private val PassedSeparator = " ‖ "
+
+  extension (why: NonEmptyVector[Problem])
+    /** Problems held by one case, one after another. */
+    private def storedEach: String = why.toVector.map(_.stored).mkString(WhySeparator)
 
   /** Between the problems of one model passed over: a mark no sentence holds, other than [[PassedSeparator]]. */
   private val WhySeparator = " ¦ "
@@ -839,6 +862,21 @@ object Column:
     private val BelowAllowanceOf = "(?s)^below its allowance: (.*)$".r
     private val AllowanceUnreadable = "(?s)^allowance unreadable \\((.*)\\)$".r
     private val PlanOnlyFor = "^no fall from a plan to a paid key for (\\S+)$".r
+    private val StalledAt = "^stalled at step (\\d+): (\\d+) min, (\\d+) times$".r
+    private val SilentAt = "^silent at step (\\d+): (\\d+) min, stall (\\d+) of (\\d+)$".r
+    private val NoPipelineIn = "(?s)^no pipeline '(.*)' in this build$".r
+    private val StepMovedFrom = "(?s)^step (\\d+) moved from '(.*)' to '(.*)'$".r
+    private val CheckpointUnreadable = "(?s)^step (\\d+) \\((.*?)\\) checkpoint unreadable — (.*)$".r
+    private val RunOverspent = "^run overspent: (\\S+) of (\\S+)$".r
+    private val RunOverTokens = "^run over tokens: (\\d+) of (\\d+), cache weight (\\S+)$".r
+    private val SpendCapReached = "^spend cap (\\w+) reached: (\\S+)$".r
+    private val RunMovedOn = "^run (\\S+) moved on$".r
+    private val RunNotNow = "^run (\\S+) is (\\S+): no (\\w+)$".r
+    private val AtStepOf = "(?s)^at step (.+?) \\((.*)\\)$".r
+    private val UnsettledAt = "(?s)^step (.+) unsettled after (\\d+) attempts$".r
+    private val ProviderDownAt = "(?s)^provider down at step (.+?) \\((.*)\\)$".r
+    private val BudgetSpentAt = "(?s)^budget spent at step (.+)$".r
+    private val NoValidAnswerAt = "(?s)^no valid answer at step (.+?) after (\\d+) \\((.*)\\)$".r
     private val HeldPoolOf = " \\| ([^|\\[\\]]+) \\[([^\\]]+)\\]".r
 
     /** The models a chain passed over, from what [[passedStored]] wrote in the parentheses. */
@@ -1104,6 +1142,62 @@ object Column:
       {
         case PlanOnlyFor(role) => Some(Problem.Run.PlanOnly(Problem.Run.Role(s"$role")))
         case _                 => None
+      },
+      {
+        case AtStepOf(step, why) => whysOf(why).map(Problem.Run.AtStep(Problem.Run.Step(s"$step"), _))
+        case _                   => None
+      },
+      {
+        case ProviderDownAt(step, why) => whysOf(why).map(Problem.Run.ProviderDown(Problem.Run.Step(s"$step"), _))
+        case _                         => None
+      },
+      {
+        case NoValidAnswerAt(step, attempts, ps) =>
+          for n <- Count.read(attempts)
+          yield Problem.Run.NoValidAnswer(
+            Problem.Run.Step(s"$step"),
+            n,
+            if ps.isEmpty then Vector.empty else whysOf(ps).fold(Vector.empty)(_.toVector)
+          )
+        case _ => None
+      },
+      {
+        case StalledAt(step, minutes, times) =>
+          for
+            st <- Count.read(step)
+            m <- Count.read(minutes)
+            t <- Count.read(times)
+          yield Problem.Run.Stalled(st, m, t)
+        case SilentAt(step, minutes, stall, of) =>
+          for
+            st <- Count.read(step)
+            m <- Count.read(minutes)
+            n <- Count.read(stall)
+            o <- Count.read(of)
+          yield Problem.Run.Silent(st, m, n, o)
+        case NoPipelineIn(pipeline)            => Some(Problem.Run.NoPipeline(Raw(s"$pipeline")))
+        case "pipeline changed"                => Some(Problem.Run.PipelineChanged)
+        case StepMovedFrom(seq, recorded, now) =>
+          Count.read(seq).map(Problem.Run.Reordered(_, Problem.Run.Step(s"$recorded"), Problem.Run.Step(s"$now")))
+        case CheckpointUnreadable(seq, step, r) =>
+          Count.read(seq).map(Problem.Run.CheckpointUnread(_, Problem.Run.Step(s"$step"), External.Reported(s"$r")))
+        case "run vanished"                 => Some(Problem.Run.Vanished)
+        case RunOverspent(spent, budget)    => Some(Problem.Run.Overspent(Raw(s"$spent"), Raw(s"$budget")))
+        case RunOverTokens(used, budget, w) =>
+          for
+            u <- Count.read(used)
+            b <- Count.read(budget)
+          yield Problem.Run.OverTokens(u, b, Raw(s"$w"))
+        case SpendCapReached(cap, amount) =>
+          word(Problem.Run.Cap.values.toSeq, cap).map(Problem.Run.OverCap(_, Raw(s"$amount")))
+        case RunMovedOn(run)                 => Some(Problem.Run.MovedOn(Raw(s"$run")))
+        case RunNotNow(run, status, control) =>
+          word(Problem.Run.Control.values.toSeq, control).map(Problem.Run.NotNow(Raw(s"$run"), Raw(s"$status"), _))
+        case "rejected: the run was cancelled" => Some(Problem.Run.Withdrawn)
+        case UnsettledAt(step, attempts)       =>
+          Count.read(attempts).map(Problem.Run.Unsettled(Problem.Run.Step(s"$step"), _))
+        case BudgetSpentAt(step) => Some(Problem.Run.BudgetSpent(Problem.Run.Step(s"$step")))
+        case _                   => None
       },
       {
         case BrokenAt(at, written) =>
