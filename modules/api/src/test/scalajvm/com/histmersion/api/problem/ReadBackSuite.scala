@@ -81,6 +81,31 @@ class ReadBackSuite extends munit.FunSuite:
       Run.OutputCapped(Run.Step("draft"), Run.Model("a:b"), Count(1L), Count(2L), Run.Ceiling.StepOwn)
     ).foreach(p => assertEquals(Column.read(p.stored), p))
 
+  test("what an exception or a decoder reported is stored whole, every line, uncut, and reads back as itself"):
+    val whole = External.Reported("java.io.IOException: line one\n" + ("w" * 1500) + "\n  at line three (Foo.scala:3)")
+    val url = Upstream.Url("https://api.core.ac.uk/v3/search/works")
+    Vector[Problem](
+      Upstream.CallThrew(Upstream.Name("anthropic:claude-opus"), whole),
+      Upstream.BadReply.here(Upstream.Name("core"), url, Upstream.Shape.Json, whole),
+      Upstream.Unreachable.here(Upstream.Name("core"), url, whole),
+      Io.File(Io.Access.Read, Io.Path("/tmp/bundle.hmx"), whole),
+      Io.Database(Io.DbOp.Migrate, whole),
+      Io.Corrupt(Io.Format.Png, Where("terrarium tile 3/4/2"), Io.Damage.Unreadable(whole)),
+      Content.Undecoded(Content.Decoding.Mismatch(Raw(".notes"), whole), Some(whole), None),
+      Content.Undecoded(Content.Decoding.NotJson(whole), None, Some(External.ModelSaid("{no"))),
+      Content.Undecoded(Content.Decoding.Unreadable(whole), None, None),
+      Run.CheckpointUnread(Count(2L), Run.Step("extract"), whole),
+      Internal.Unexpected(
+        Internal.Id("3f2a9c1e"),
+        Where("backup"),
+        Internal.ExceptionName("java.io.IOException"),
+        whole
+      )
+    ).foreach { p =>
+      assert(p.stored.contains(s"$whole"), p.stored)
+      assertEquals(Column.read(p.stored), p)
+    }
+
   test("a relayed problem is stored as its sentence, which reads back as the text it is"):
     val relayed = Relayed(Sentence("the server is reindexing"))
     assertEquals(relayed.stored, "the server is reindexing")

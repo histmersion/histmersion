@@ -54,24 +54,28 @@ class CasesSuite extends munit.FunSuite:
   test("a relayed problem is its sentence"):
     assertEquals((Relayed(Sentence("the server is reindexing")): Problem).sentence, "the server is reindexing")
 
-  test("an exception becomes an internal problem with its class and its message's first line, cut to 300"):
-    val long = "x" * 400
+  test("an exception becomes an internal problem with its class and its whole message, every line, uncut"):
+    val long = "x" * 4000
     Problem.from(IllegalStateException(s"first line\nsecond line"), Where("backup"), Internal.Id("0a1b2c3d")) match
       case Internal.Unexpected(id, where, exception, reported) =>
         assertEquals(id, Internal.Id("0a1b2c3d"))
         assertEquals(where, Where("backup"))
         assertEquals(exception, Internal.ExceptionName("java.lang.IllegalStateException"))
-        assertEquals(reported, External.Reported("java.lang.IllegalStateException: first line"))
+        assertEquals(reported, External.Reported("java.lang.IllegalStateException: first line\nsecond line"))
       case other => fail(s"not unexpected: $other")
     Problem.from(RuntimeException(long), Where("x"), Internal.Id("x")) match
-      case Internal.Unexpected(_, _, _, reported) => assertEquals(s"$reported".length, External.Reported.Limit)
+      case Internal.Unexpected(_, _, _, reported) => assertEquals(s"$reported", s"java.lang.RuntimeException: $long")
       case other                                  => fail(s"not unexpected: $other")
     Problem.from(RuntimeException(), Where("x"), Internal.Id("x")) match
       case Internal.Unexpected(_, _, _, reported) =>
         assertEquals(reported, External.Reported("java.lang.RuntimeException"))
       case other => fail(s"not unexpected: $other")
 
-  test("outside text is cut where it is captured"):
+  test("what another layer reported is kept whole, every line, uncut"):
+    val text = "line one\n" + ("y" * 2000) + "\nline three"
+    assertEquals(s"${External.Reported.of(text)}", text)
+
+  test("excerpts of a larger text are cut where they are captured"):
     assertEquals(s"${External.Stderr.tail("a" * 600 + "end\n")}".length, External.Stderr.Limit)
     assert(s"${External.Stderr.tail("a" * 600 + "end\n")}".endsWith("end"))
     assertEquals(s"${External.ReplyExcerpt.head("b" * 300)}".length, External.ReplyExcerpt.Limit)

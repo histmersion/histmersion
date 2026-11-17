@@ -3,14 +3,25 @@ package server.agents
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.json.RawJson
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
+import com.histmersion.api.problem.Column
+import com.histmersion.api.problem.Column.stored
+
+import java.io.IOException
 
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.domain.library.workflows.*
 
-import com.histmersion.domain.automation.agents.{AnswerNotJson, AnswerSchemas, Engine, Prompt, SttpAiJson}
+import com.histmersion.domain.automation.agents.{
+  AnswerNotJson,
+  AnswerSchemas,
+  Engine,
+  Prompt,
+  SttpAiJson,
+  VerbatimFailure
+}
 import com.histmersion.domain.automation.managers.Zero
 
 import sttp.ai.core.agent.*
@@ -118,6 +129,26 @@ class StepFailureSuite extends munit.FunSuite:
     assertEquals(Engine.undecoded(Left(gaveUp)), Some("""{"notes": 5}"""))
     val long = AgentParseError("x" * 5000, RuntimeException("odd"))
     assert(Engine.answerProblem(long, FinishReason.NaturalStop).sentence.length < Engine.AnswerExcerpt + 100)
+
+  test("#941 the decoder's message is kept whole: every line, uncut, in the problem and its stored sentence"):
+    val message = "line one of the decoder\n" + ("d" * 1200) + "\nline three"
+    val p = Engine.answerProblem(AgentParseError("{nope", AnswerNotJson(message)), FinishReason.NaturalStop)
+    p match
+      case Problem.Content.Undecoded(Problem.Content.Decoding.NotJson(reported), _, _) =>
+        assertEquals(s"$reported", message)
+      case other => fail(s"not a NotJson: $other")
+    assert(p.sentence.contains(message), p.sentence)
+    assertEquals(Column.read(p.stored), p)
+    val thrown = Engine.answerProblem(AgentParseError("x", RuntimeException(message)), FinishReason.NaturalStop)
+    assert(thrown.sentence.contains(message), thrown.sentence)
+
+  test("a provider's exception is carried whole in the call's problem: every line, uncut"):
+    val message = "Claude API error: Overloaded\n" + ("e" * 900) + "\nretry later"
+    val model = Problem.Upstream.Name("anthropic:claude-opus")
+    val p = VerbatimFailure.describe(model, IOException(message))
+    assertEquals(p, Problem.Upstream.CallThrew(model, External.Reported(s"IOException: $message")))
+    assertEquals(p.sentence, s"the call to anthropic:claude-opus failed: IOException: $message")
+    assertEquals(Column.read(p.stored), p)
 
   test("#941 the retry prompt carries the decoder's error and the undecoded answer to amend"):
     val raw = """{"notes": 5}"""

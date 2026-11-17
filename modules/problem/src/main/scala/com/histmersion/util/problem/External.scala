@@ -5,21 +5,22 @@ import io.github.iltotore.iron.constraint.any.Pure
 
 /** Text from outside Histmersion that a problem carries: an exception's message, a process's standard error, the start
   * of an upstream's reply, a plugin's or a model's words. Each is captured once, where the exception, the process or
-  * the reply was met, cut to a bounded length; it is shown at an edge and never branched on.
+  * the reply was met; it is shown at an edge and never branched on. What an exception or another layer reported is kept
+  * whole (every line, uncut): it is the detail a failure is debugged from. A process's standard error, an upstream's
+  * reply, a plugin's and a model's words are bounded excerpts of a larger text.
   */
 object External:
 
-  /** An exception's class and message, `<class>: <message>`, its first line, at most [[Reported.Limit]] characters. */
+  /** An exception's class and message, `<class>: <message>`, whole: every line, uncut. */
   type Reported = Reported.T
   object Reported extends Newtype[String, Pure]:
-    val Limit = 300
 
     def of(thrown: Throwable): Reported =
       val message = Option(thrown.getMessage).map(m => s": $m").getOrElse("")
-      Reported(s"${thrown.getClass.getName}$message".linesIterator.nextOption().getOrElse("").take(Limit))
+      Reported(s"${thrown.getClass.getName}$message")
 
-    /** What another layer reported as text, cut the same way. */
-    def of(text: String): Reported = Reported(s"${text.linesIterator.nextOption().getOrElse("").take(Limit)}")
+    /** What another layer reported as text, whole. */
+    def of(text: String): Reported = Reported(s"$text")
 
   /** The end of what a process wrote to its standard error, at most [[Stderr.Limit]] characters. */
   type Stderr = Stderr.T
