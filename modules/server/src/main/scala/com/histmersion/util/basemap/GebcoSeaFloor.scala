@@ -1,6 +1,6 @@
 package com.histmersion
 package util.basemap
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.{ByteCount, ByteOffset}
@@ -60,7 +60,7 @@ final class GebcoSeaFloor(
             grid <- GeoTiffGrid
               .parse(head, (o, l) => http.bytes(url, o, l).map(_._1))
               .left
-              .map(e => Problem.Unclassified(Legacy.Text(s"$url: ${e.sentence}")))
+              .map(_.inside(Problem.Where.of(url)))
           yield grid.window(bbox).fold(done)(w => done :+ GebcoPart(name, url, grid, w, grid.runs(w, maxRequestBytes)))
         }
       }
@@ -113,8 +113,12 @@ final class GebcoSeaFloor(
                 .cond(
                   rows.size.value == run.length.value,
                   (),
-                  Problem
-                    .Unclassified(Legacy.Text(s"${part.url}: ${rows.size.value} bytes for a range of ${run.length}"))
+                  Problem.Io.Corrupt(
+                    Problem.Io.Format.GeoTiff,
+                    Problem.Where.of(part.url),
+                    Problem.Io.Damage
+                      .Structure(Problem.Io.Flaw.RangeBytes(Problem.Count.of(rows.size), Problem.Count.of(run.length)))
+                  )
                 )
                 .flatMap(_ => rows.commit().left.map(e => e.message).map(_ => ()))
             }

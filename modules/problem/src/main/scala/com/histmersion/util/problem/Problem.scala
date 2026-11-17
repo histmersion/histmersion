@@ -1095,7 +1095,8 @@ object Problem:
       case Inside(directory: Path)
 
     enum Format:
-      case Bundle, Tar, Json, Png, PmTiles, Pdf, Image, Text, Hocon, Yaml, Xml, Kit, Zip, GeoJson
+      case Bundle, Tar, Json, Png, PmTiles, Pdf, Image, Text, Hocon, Yaml, Xml, Kit, Zip, GeoJson, WebP, Gzip, Mvt,
+        GeoTiff
 
     /** What is wrong with the data. */
     enum Damage:
@@ -1116,6 +1117,18 @@ object Problem:
       /** Its layout breaks its format: `flaw`. */
       case Structure(flaw: Flaw)
 
+      /** It is not data of its format at all: its magic number is not there. */
+      case Foreign
+
+      /** It holds `found` bytes where `expected` belong. */
+      case Bytes(expected: Count, found: Count)
+
+      /** Its compressed data does not inflate: `reported` is what the inflater said. */
+      case Inflate(reported: External.Reported)
+
+      /** It is a kind of its format this version does not read: `variant`. */
+      case Unsupported(variant: Variant)
+
     /** How data breaks the layout of its format. */
     enum Flaw derives CanEqual:
       /** A GeoJSON document that is no FeatureCollection. */
@@ -1123,6 +1136,149 @@ object Problem:
 
       /** Natural Earth's land download holds no polygon. */
       case NoLandPolygons
+
+      /** A JSON document that is no array, where a list belongs. */
+      case NotArray
+
+      /** A PNG with no image header (IHDR) before its data. */
+      case NoImageHeader
+
+      /** A header holds a negative `quantity` at byte `byte`. */
+      case NegativeAt(quantity: Quantity, byte: Count)
+
+      /** A directory says it holds `size` entries, more than any can. */
+      case DirectorySize(size: Count)
+
+      /** The directory's entry `entry` has a negative offset. */
+      case NegativeEntry(entry: Count)
+
+      /** An entry's offset `offset` lies outside its file. */
+      case OffsetOutside(offset: Count)
+
+      /** An entry's length `length` is negative. */
+      case NegativeLength(length: Count)
+
+      /** Its directories nest deeper than the format allows. */
+      case TooDeep
+
+      /** Its root directory lies outside the first 16 KiB, where a reader looks for it. */
+      case RootOutside
+
+      /** Its metadata is over 16 MiB. */
+      case MetadataOver
+
+      /** A prefix code longer than 15 bits. */
+      case PrefixTooLong
+
+      /** An incomplete or over-subscribed prefix code. */
+      case PrefixIncomplete
+
+      /** A prefix code that matches no symbol. */
+      case PrefixInvalid
+
+      /** A chunk that runs past the end of the file. */
+      case ChunkTruncated
+
+      /** A stream that ends before its image does. */
+      case StreamTruncated
+
+      /** A stream without the VP8L signature. */
+      case NotVp8l
+
+      /** A transform used twice. */
+      case TransformTwice
+
+      /** A colour cache of a size outside 1 to 11 bits. */
+      case CacheSize
+
+      /** A symbol outside its alphabet. */
+      case SymbolOutside
+
+      /** More code lengths than symbols. */
+      case CodeLengthsOver
+
+      /** Code lengths that run past the alphabet. */
+      case CodeLengthsPast
+
+      /** A backward reference outside the image. */
+      case ReferenceOutside
+
+      /** A colour-cache code where no cache is. */
+      case CacheWithout
+
+      /** A colour-cache index outside the cache. */
+      case CacheIndexOutside
+
+      /** A range request answered `got` bytes for a range of `asked`. */
+      case RangeBytes(got: Count, asked: Count)
+
+      /** A TIFF that is not little-endian (or no TIFF). */
+      case NotLittleEndian
+
+      /** An image file directory without the tag `tag`. */
+      case NoTag(tag: Count)
+
+      /** A TIFF without strip offsets. */
+      case NoStripOffsets
+
+      /** A TIFF without a pixel scale: no GeoTIFF. */
+      case NoPixelScale
+
+      /** A TIFF without a tie point: no GeoTIFF. */
+      case NoTiePoint
+
+      /** A TIFF whose strips hold no row `row`. */
+      case NoStripForRow(row: Count)
+
+    /** What a header holds a value of. */
+    enum Quantity derives CanEqual:
+      case Offset, Length
+
+    /** A kind of a format a reader does not read, and what it reads instead. */
+    enum Variant derives CanEqual:
+      /** A PNG of colour type `colour`, bit depth `depth` and interlace method `interlace`: only 8-bit RGB(A)
+        * non-interlaced ones are read.
+        */
+      case PngLayout(colour: Count, depth: Count, interlace: Count)
+
+      /** A PNG row filtered with `filter`: the filters are 0 to 4. */
+      case PngFilter(filter: Count)
+
+      /** A lossy (VP8) WebP: only lossless WebP is read. */
+      case LossyWebP
+
+      /** A WebP with no VP8L chunk: only lossless WebP is read. */
+      case NoLossless
+
+      /** A VP8L stream of a version other than 0. */
+      case Vp8lVersion
+
+      /** Spec version `found`; this version reads `reads` only. */
+      case SpecVersion(found: Count, reads: Count)
+
+      /** `found` compression; this version reads `reads` only. */
+      case Compression(found: Raw, reads: Raw)
+
+      /** A BigTIFF: only classic TIFF is read. */
+      case BigTiff
+
+      /** Samples of `bits` bits: only 16-bit ones are read. */
+      case SampleBits(bits: Count)
+
+      /** TIFF compression `code`: only uncompressed grids are read. */
+      case TiffCompression(code: Count)
+
+      /** `count` bands: only one is read. */
+      case Bands(count: Count)
+
+      /** Planar configuration `configuration`: only 1 (chunky) is read. */
+      case Planar(configuration: Count)
+
+      /** Sample format `format`: only signed integers are read. */
+      case SampleFormat(format: Count)
+
+      /** A tiled TIFF: only strips are read. */
+      case Tiled
 
     /** How a process ended that did not end well. */
     enum Ending:

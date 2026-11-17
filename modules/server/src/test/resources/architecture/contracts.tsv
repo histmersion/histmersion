@@ -1313,13 +1313,13 @@ unwrap	server:util/basemap/BasemapService.scala	.value outside a boundary	308
 unwrap	server:util/basemap/DiskLru.scala	.value outside a boundary	13
 unwrap	server:util/basemap/GebcoPart.scala	.value outside a boundary	1
 unwrap	server:util/basemap/GebcoPlan.scala	.value outside a boundary	1
-unwrap	server:util/basemap/GebcoSeaFloor.scala	.value outside a boundary	80
+unwrap	server:util/basemap/GebcoSeaFloor.scala	.value outside a boundary	79
 unwrap	server:util/basemap/GeoTiffGrid.scala	.value outside a boundary	36
 unwrap	server:util/basemap/GridWindow.scala	.value outside a boundary	2
 unwrap	server:util/basemap/JavaRangeHttp.scala	.value outside a boundary	15
 unwrap	server:util/basemap/Mvt.scala	.value outside a boundary	28
 unwrap	server:util/basemap/OnDemandTiles.scala	.value outside a boundary	71
-unwrap	server:util/basemap/PmTiles.scala	.value outside a boundary	81
+unwrap	server:util/basemap/PmTiles.scala	.value outside a boundary	77
 unwrap	server:util/basemap/PmTilesWriter.scala	.value outside a boundary	17
 unwrap	server:util/basemap/Png.scala	.value outside a boundary	6
 unwrap	server:util/basemap/RangeHttp.scala	.value outside a boundary	12

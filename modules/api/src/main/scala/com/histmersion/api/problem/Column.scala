@@ -236,8 +236,41 @@ object Column:
       case Io.Damage.Unreadable(reported)    => s"Unreadable — $reported"
       case Io.Damage.Newer(found, reads)     => s"Newer $found/$reads"
       case Io.Damage.Schema(found, reads)    => s"Schema $found/$reads"
-      case Io.Damage.Structure(flaw)         => s"Structure ${flaw.productPrefix}"
+      case Io.Damage.Structure(flaw)         => s"Structure ${flaw.stored}"
+      case Io.Damage.Bytes(expected, found)  => s"Bytes $expected/$found"
+      case Io.Damage.Inflate(reported)       => s"Inflate — $reported"
+      case Io.Damage.Unsupported(variant)    => s"Unsupported ${variant.stored}"
       case other                             => other.productPrefix
+
+  /** A name, then what it holds, each after a space. */
+  extension (flaw: Io.Flaw)
+    private def stored: String =
+      val held: Vector[String] = flaw match
+        case Io.Flaw.NegativeAt(quantity, byte) => Vector(quantity.productPrefix, s"$byte")
+        case Io.Flaw.DirectorySize(size)        => Vector(s"$size")
+        case Io.Flaw.NegativeEntry(entry)       => Vector(s"$entry")
+        case Io.Flaw.OffsetOutside(offset)      => Vector(s"$offset")
+        case Io.Flaw.NegativeLength(length)     => Vector(s"$length")
+        case Io.Flaw.RangeBytes(got, asked)     => Vector(s"$got", s"$asked")
+        case Io.Flaw.NoTag(tag)                 => Vector(s"$tag")
+        case Io.Flaw.NoStripForRow(row)         => Vector(s"$row")
+        case _                                  => Vector.empty
+      (flaw.productPrefix +: held).mkString(" ")
+
+  extension (variant: Io.Variant)
+    private def stored: String =
+      val held: Vector[String] = variant match
+        case Io.Variant.PngLayout(colour, depth, interlace) => Vector(s"$colour", s"$depth", s"$interlace")
+        case Io.Variant.PngFilter(filter)                   => Vector(s"$filter")
+        case Io.Variant.SpecVersion(found, reads)           => Vector(s"$found", s"$reads")
+        case Io.Variant.Compression(found, reads)           => Vector(s"$found", s"$reads")
+        case Io.Variant.SampleBits(bits)                    => Vector(s"$bits")
+        case Io.Variant.TiffCompression(code)               => Vector(s"$code")
+        case Io.Variant.Bands(count)                        => Vector(s"$count")
+        case Io.Variant.Planar(configuration)               => Vector(s"$configuration")
+        case Io.Variant.SampleFormat(format)                => Vector(s"$format")
+        case _                                              => Vector.empty
+      (variant.productPrefix +: held).mkString(" ")
 
   extension (pinning: Io.Pinning)
     private def stored: String =
@@ -415,7 +448,7 @@ object Column:
     private def word[E <: Product](values: Seq[E], name: String | Null): Option[E] =
       Option(name).flatMap(n => values.find(_.productPrefix == n))
 
-    private val Damages = Vector(Io.Damage.Checksum, Io.Damage.Truncated, Io.Damage.Undecodable)
+    private val Damages = Vector(Io.Damage.Checksum, Io.Damage.Truncated, Io.Damage.Undecodable, Io.Damage.Foreign)
     private val Kinds = Vector(
       Io.Kind.File,
       Io.Kind.Directory,
@@ -714,7 +747,8 @@ object Column:
     private val DamageCounts = "^(\\w+) (\\d+)/(\\d+)$".r
     private val DamageNewer = "^Newer (\\S*)/(\\S*)$".r
     private val DamageReported = "(?s)^(\\w+) — (.*)$".r
-    private val DamageStructure = "^Structure (\\w+)$".r
+    private val DamageStructure = "^Structure (\\w+)((?: \\S+)*)$".r
+    private val DamageUnsupported = "^Unsupported (\\w+)((?: \\S+)*)$".r
     private val Exited = "(?s)^(.+?) exited with (-?\\d+) — (.*)$".r
     private val Unfinished = "(?s)^(.+?) did not finish within (\\d+) ms$".r
     private val NotStarted = "(?s)^(.+?) could not be started — (.*)$".r
@@ -814,8 +848,95 @@ object Column:
         yield Io.Damage.Schema(ec, fc)
       case DamageNewer(e, f)               => Some(Io.Damage.Newer(Raw(s"$e"), Raw(s"$f")))
       case DamageReported("Unreadable", r) => Some(Io.Damage.Unreadable(External.Reported(s"$r")))
-      case DamageStructure(flaw)           => word(Io.Flaw.values.toSeq, flaw).map(Io.Damage.Structure(_))
-      case other                           => word(Damages, other)
+      case DamageCounts("Bytes", e, f)     =>
+        for
+          ec <- Count.read(e)
+          fc <- Count.read(f)
+        yield Io.Damage.Bytes(ec, fc)
+      case DamageReported("Inflate", r)     => Some(Io.Damage.Inflate(External.Reported(s"$r")))
+      case DamageStructure(flaw, held)      => flawOf(flaw, held.split(' ').toVector.filter(_.nonEmpty))
+      case DamageUnsupported(variant, held) => variantOf(variant, held.split(' ').toVector.filter(_.nonEmpty))
+      case other                            => word(Damages, other)
+
+    private val FieldlessFlaws = Vector(
+      Io.Flaw.NotFeatureCollection,
+      Io.Flaw.NoLandPolygons,
+      Io.Flaw.NotArray,
+      Io.Flaw.NoImageHeader,
+      Io.Flaw.TooDeep,
+      Io.Flaw.RootOutside,
+      Io.Flaw.MetadataOver,
+      Io.Flaw.PrefixTooLong,
+      Io.Flaw.PrefixIncomplete,
+      Io.Flaw.PrefixInvalid,
+      Io.Flaw.ChunkTruncated,
+      Io.Flaw.StreamTruncated,
+      Io.Flaw.NotVp8l,
+      Io.Flaw.TransformTwice,
+      Io.Flaw.CacheSize,
+      Io.Flaw.SymbolOutside,
+      Io.Flaw.CodeLengthsOver,
+      Io.Flaw.CodeLengthsPast,
+      Io.Flaw.ReferenceOutside,
+      Io.Flaw.CacheWithout,
+      Io.Flaw.CacheIndexOutside,
+      Io.Flaw.NotLittleEndian,
+      Io.Flaw.NoStripOffsets,
+      Io.Flaw.NoPixelScale,
+      Io.Flaw.NoTiePoint
+    )
+
+    /** A flaw as [[Io.Flaw.stored]] wrote it: its name, then what it holds. */
+    private def flawOf(name: String, held: Vector[String]): Option[Io.Damage] =
+      val flaw: Option[Io.Flaw] = (name, held) match
+        case ("NegativeAt", Vector(q, b)) =>
+          for
+            quantity <- word(Io.Quantity.values.toSeq, q)
+            byte <- Count.read(b)
+          yield Io.Flaw.NegativeAt(quantity, byte)
+        case ("DirectorySize", Vector(n))  => Count.read(n).map(Io.Flaw.DirectorySize(_))
+        case ("NegativeEntry", Vector(n))  => Count.read(n).map(Io.Flaw.NegativeEntry(_))
+        case ("OffsetOutside", Vector(n))  => Count.read(n).map(Io.Flaw.OffsetOutside(_))
+        case ("NegativeLength", Vector(n)) => Count.read(n).map(Io.Flaw.NegativeLength(_))
+        case ("RangeBytes", Vector(g, a))  =>
+          for
+            got <- Count.read(g)
+            asked <- Count.read(a)
+          yield Io.Flaw.RangeBytes(got, asked)
+        case ("NoTag", Vector(n))         => Count.read(n).map(Io.Flaw.NoTag(_))
+        case ("NoStripForRow", Vector(n)) => Count.read(n).map(Io.Flaw.NoStripForRow(_))
+        case (other, Vector())            => word(FieldlessFlaws, other)
+        case _                            => None
+      flaw.map(Io.Damage.Structure(_))
+
+    private val FieldlessVariants =
+      Vector(Io.Variant.LossyWebP, Io.Variant.NoLossless, Io.Variant.Vp8lVersion, Io.Variant.BigTiff, Io.Variant.Tiled)
+
+    /** A variant as [[Io.Variant.stored]] wrote it: its name, then what it holds. */
+    private def variantOf(name: String, held: Vector[String]): Option[Io.Damage] =
+      def one(n: String)(make: Count => Io.Variant): Option[Io.Variant] = Count.read(n).map(make)
+      val variant: Option[Io.Variant] = (name, held) match
+        case ("PngLayout", Vector(c, d, i)) =>
+          for
+            colour <- Count.read(c)
+            depth <- Count.read(d)
+            interlace <- Count.read(i)
+          yield Io.Variant.PngLayout(colour, depth, interlace)
+        case ("PngFilter", Vector(f))      => one(f)(Io.Variant.PngFilter(_))
+        case ("SpecVersion", Vector(f, r)) =>
+          for
+            found <- Count.read(f)
+            reads <- Count.read(r)
+          yield Io.Variant.SpecVersion(found, reads)
+        case ("Compression", Vector(f, r))  => Some(Io.Variant.Compression(Raw(f), Raw(r)))
+        case ("SampleBits", Vector(b))      => one(b)(Io.Variant.SampleBits(_))
+        case ("TiffCompression", Vector(c)) => one(c)(Io.Variant.TiffCompression(_))
+        case ("Bands", Vector(n))           => one(n)(Io.Variant.Bands(_))
+        case ("Planar", Vector(p))          => one(p)(Io.Variant.Planar(_))
+        case ("SampleFormat", Vector(f))    => one(f)(Io.Variant.SampleFormat(_))
+        case (other, Vector())              => word(FieldlessVariants, other)
+        case _                              => None
+      variant.map(Io.Damage.Unsupported(_))
 
     /** A pinning as [[Io.Pinning.stored]] wrote it: its name, then what it holds. */
     private def pinningOf(written: Vector[String]): Option[Io.Pinning] = written match

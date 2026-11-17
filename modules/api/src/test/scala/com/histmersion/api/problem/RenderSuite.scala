@@ -457,6 +457,44 @@ class RenderSuite extends munit.FunSuite:
     assertEquals(Io.Extract(Raw("x"), Io.Pinning.NotBuilt(Io.Path("m"))).status.code, 500)
     assertEquals(NotFound.Name(place, label, Raw("n"), Raw(""), Vector.empty).status.code, 404)
 
+  test("a decoder's refusal keeps the format it reads and the hint of what it reads instead"):
+    def at(format: Io.Format, damage: Io.Damage) = Io.Corrupt(format, Where("the header"), damage).sentence
+    Vector(
+      at(Io.Format.Png, Io.Damage.Unsupported(Io.Variant.PngLayout(Count(0L), Count(8L), Count(0L)))) ->
+        "the PNG data at the header is a PNG of colour type 0, depth 8, interlace 0: only 8-bit RGB(A) non-interlaced PNGs are read",
+      at(Io.Format.Png, Io.Damage.Foreign) -> "the PNG data at the header is not a PNG (no magic number)",
+      at(Io.Format.WebP, Io.Damage.Unsupported(Io.Variant.LossyWebP)) ->
+        "the WebP data at the header is a lossy (VP8) WebP: only lossless WebP is read",
+      at(Io.Format.WebP, Io.Damage.Unsupported(Io.Variant.NoLossless)) ->
+        "the WebP data at the header has no VP8L chunk: only lossless WebP is read",
+      at(
+        Io.Format.PmTiles,
+        Io.Damage.Foreign
+      ) -> "the PMTiles data at the header is not a PMTiles archive (no magic number)",
+      at(Io.Format.PmTiles, Io.Damage.Unsupported(Io.Variant.SpecVersion(Count(2L), Count(3L)))) ->
+        "the PMTiles data at the header is spec version 2, which is not supported (only 3)",
+      at(Io.Format.PmTiles, Io.Damage.Unsupported(Io.Variant.Compression(Raw("brotli"), Raw("gzip")))) ->
+        "the PMTiles data at the header uses brotli compression, which is not supported (only gzip)",
+      at(Io.Format.GeoTiff, Io.Damage.Unsupported(Io.Variant.BigTiff)) ->
+        "the GeoTIFF data at the header is not a classic TIFF (BigTIFF is not read)",
+      at(Io.Format.GeoTiff, Io.Damage.Unsupported(Io.Variant.SampleBits(Count(32L)))) ->
+        "the GeoTIFF data at the header has 32-bit samples (only 16-bit are read)",
+      at(Io.Format.GeoTiff, Io.Damage.Unsupported(Io.Variant.TiffCompression(Count(8L)))) ->
+        "the GeoTIFF data at the header has compression 8 (only uncompressed grids are read)",
+      at(Io.Format.GeoTiff, Io.Damage.Unsupported(Io.Variant.Bands(Count(3L)))) ->
+        "the GeoTIFF data at the header has 3 bands (only one is read)",
+      at(Io.Format.GeoTiff, Io.Damage.Unsupported(Io.Variant.SampleFormat(Count(1L)))) ->
+        "the GeoTIFF data at the header has sample format 1 (only signed integers are read)",
+      at(Io.Format.GeoTiff, Io.Damage.Unsupported(Io.Variant.Tiled)) ->
+        "the GeoTIFF data at the header is a tiled TIFF (only strips are read)",
+      at(Io.Format.GeoTiff, Io.Damage.Structure(Io.Flaw.NoPixelScale)) ->
+        "the GeoTIFF data at the header has no pixel scale (not a GeoTIFF)",
+      at(Io.Format.PmTiles, Io.Damage.Structure(Io.Flaw.NegativeAt(Io.Quantity.Offset, Count(24L)))) ->
+        "the PMTiles data at the header holds a negative offset at byte 24",
+      at(Io.Format.Png, Io.Damage.Bytes(Count(1024L), Count(1000L))) ->
+        "the PNG data at the header holds 1000 bytes, not 1024"
+    ).foreach((s, want) => assertEquals(s, want))
+
   test("a watch left out of a sweep says so before why, in its sentence and its stored text"):
     val unasked = Upstream.Unasked(Relayed(Sentence("CORE asked to wait")))
     assertEquals(unasked.stored, "not asked this sweep — CORE asked to wait")

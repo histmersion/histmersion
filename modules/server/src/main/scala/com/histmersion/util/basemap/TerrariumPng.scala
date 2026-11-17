@@ -1,6 +1,6 @@
 package com.histmersion
 package util.basemap
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
@@ -61,7 +61,7 @@ object TerrariumPng:
   def decode(file: Png.PngBytes): Either[Problem, (Array[Float], TileSize)] =
     val png: Array[Byte] = file.value
     if png.length < 33 || !java.util.Arrays.equals(png.take(8), Signature) then
-      Left(Problem.Unclassified(Legacy.Text("not a PNG")))
+      Left(Problem.Io.Corrupt(Problem.Io.Format.Png, Problem.Where("the signature"), Problem.Io.Damage.Foreign))
     else
       val b = ByteBuffer.wrap(png)
       val width = b.getInt(16); val height = b.getInt(20)
@@ -71,7 +71,16 @@ object TerrariumPng:
         case RgbaColourType => 4
         case _              => 0
       if depth != 8 || channels == 0 || interlace != 0 then
-        Left(Problem.Unclassified(Legacy.Text(s"a PNG of colour type $colour, depth $depth, interlace $interlace")))
+        Left(
+          Problem.Io.Corrupt(
+            Problem.Io.Format.Png,
+            Problem.Where("the image header"),
+            Problem.Io.Damage.Unsupported(
+              Problem.Io.Variant
+                .PngLayout(Problem.Count(colour.toLong), Problem.Count(depth.toLong), Problem.Count(interlace.toLong))
+            )
+          )
+        )
       else
         val idat = ByteArrayOutputStream()
         var at = 8 // the next chunk
@@ -101,7 +110,14 @@ object TerrariumPng:
           def left(i: Int) = if i >= bpp then out(dst + i - bpp) & 0xff else 0
           def up(i: Int) = if y > 0 then out(dst - stride + i) & 0xff else 0
           def upLeft(i: Int) = if y > 0 && i >= bpp then out(dst - stride + i - bpp) & 0xff else 0
-          if f < 0 || f > 4 then Left(Problem.Unclassified(Legacy.Text(s"PNG filter $f")))
+          if f < 0 || f > 4 then
+            Left(
+              Problem.Io.Corrupt(
+                Problem.Io.Format.Png,
+                Problem.Where("the image data"),
+                Problem.Io.Damage.Unsupported(Problem.Io.Variant.PngFilter(Problem.Count(f.toLong)))
+              )
+            )
           else
             for i <- 0 until stride do
               val x = raw(src + i) & 0xff
@@ -148,9 +164,19 @@ object TerrariumPng:
       Either.cond(
         n == expected,
         out,
-        Problem.Unclassified(Legacy.Text(s"the PNG's image data holds $n bytes, not $expected"))
+        Problem.Io.Corrupt(
+          Problem.Io.Format.Png,
+          Problem.Where("the image data"),
+          Problem.Io.Damage.Bytes(Problem.Count(expected.toLong), Problem.Count(n.toLong))
+        )
       )
     catch
       case e: java.util.zip.DataFormatException =>
-        Left(Problem.Unclassified(Legacy.Text(s"the PNG's image data does not inflate: ${e.getMessage}")))
+        Left(
+          Problem.Io.Corrupt(
+            Problem.Io.Format.Png,
+            Problem.Where("the image data"),
+            Problem.Io.Damage.Inflate(External.Reported.of(e))
+          )
+        )
     finally inf.end()

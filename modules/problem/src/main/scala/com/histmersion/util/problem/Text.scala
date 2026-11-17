@@ -36,7 +36,7 @@ object Text:
         s"${path(at)}${year.era} is outside the representable range [${least.era}, ${greatest.era}] — deep time is " +
           "signed YEARS, BCE negative"
       case Invalid.Unparsable(format, where, damage, at) =>
-        s"${path(at)}the ${format.named} data at $where ${damage.said}"
+        s"${path(at)}the ${format.named} data at $where ${damage.said(format)}"
       case Invalid.Inconsistent(fs, rule, at)              => s"${path(at)}${rule.of(fs)}"
       case Invalid.Reference(form, at)                     => s"${path(at)}${form.said}"
       case Invalid.Broken(rule, at)                        => s"${path(at)}${rule.said}"
@@ -88,7 +88,7 @@ object Text:
         s"${path(at)}$name's answer at $url is not ${s.noun} — $r"
       case Io.File(op, path, reported)    => s"could not ${words(op.productPrefix)} $path — $reported"
       case Io.Wrong(path, expected)       => s"$path ${expected.missed}"
-      case Io.Corrupt(format, at, damage) => s"the ${format.named} data at $at ${damage.said}"
+      case Io.Corrupt(format, at, damage) => s"the ${format.named} data at $at ${damage.said(format)}"
       case Io.Absent(held, path, setting) => held.missed(path, setting)
       case Io.Extract(extract, pinning)   => pinning.said(extract)
       case Io.Oversize(path, mb, setting) =>
@@ -604,7 +604,7 @@ object Text:
       case Io.Kind.Inside(directory) => s"is outside $directory, the directory it is confined to"
 
   extension (damage: Io.Damage)
-    private def said: String = damage match
+    private def said(format: Io.Format): String = damage match
       case Io.Damage.Checksum                => "fails its checksum"
       case Io.Damage.Truncated               => "is cut short"
       case Io.Damage.Undecodable             => "cannot be decoded"
@@ -613,7 +613,11 @@ object Text:
       case Io.Damage.Newer(found, reads)  => s"is in format $found, newer than the format $reads this Histmersion reads"
       case Io.Damage.Schema(found, reads) =>
         s"comes from database schema V$found, newer than this Histmersion's V$reads — upgrade Histmersion"
-      case Io.Damage.Structure(flaw) => flaw.said
+      case Io.Damage.Structure(flaw)        => flaw.said
+      case Io.Damage.Foreign                => s"is not ${format.article} (no magic number)"
+      case Io.Damage.Bytes(expected, found) => s"holds $found bytes, not $expected"
+      case Io.Damage.Inflate(reported)      => s"does not inflate — $reported"
+      case Io.Damage.Unsupported(variant)   => variant.said
 
   extension (format: Io.Format)
     /** The format's name as a reader knows it: `PNG`, `GeoJSON`; the others in plain words (`json`, `bundle`). */
@@ -621,12 +625,74 @@ object Text:
       case Io.Format.Png     => "PNG"
       case Io.Format.PmTiles => "PMTiles"
       case Io.Format.GeoJson => "GeoJSON"
+      case Io.Format.WebP    => "WebP"
+      case Io.Format.Gzip    => "gzip"
+      case Io.Format.Mvt     => "vector tile"
+      case Io.Format.GeoTiff => "GeoTIFF"
       case other             => words(other.productPrefix)
+
+    /** One document of the format, with its article: `a PNG`, `a PMTiles archive`. */
+    private def article: String = format match
+      case Io.Format.Png     => "a PNG"
+      case Io.Format.WebP    => "a WebP file"
+      case Io.Format.PmTiles => "a PMTiles archive"
+      case Io.Format.GeoTiff => "a TIFF"
+      case other             => s"${other.named} data"
+
+  extension (variant: Io.Variant)
+    private def said: String = variant match
+      case Io.Variant.PngLayout(colour, depth, interlace) =>
+        s"is a PNG of colour type $colour, depth $depth, interlace $interlace: only 8-bit RGB(A) non-interlaced PNGs " +
+          "are read"
+      case Io.Variant.PngFilter(filter)         => s"uses PNG filter $filter, which does not exist (filters are 0 to 4)"
+      case Io.Variant.LossyWebP                 => "is a lossy (VP8) WebP: only lossless WebP is read"
+      case Io.Variant.NoLossless                => "has no VP8L chunk: only lossless WebP is read"
+      case Io.Variant.Vp8lVersion               => "is of an unknown VP8L version"
+      case Io.Variant.SpecVersion(found, reads) => s"is spec version $found, which is not supported (only $reads)"
+      case Io.Variant.Compression(found, reads) => s"uses $found compression, which is not supported (only $reads)"
+      case Io.Variant.BigTiff                   => "is not a classic TIFF (BigTIFF is not read)"
+      case Io.Variant.SampleBits(bits)          => s"has $bits-bit samples (only 16-bit are read)"
+      case Io.Variant.TiffCompression(code)     => s"has compression $code (only uncompressed grids are read)"
+      case Io.Variant.Bands(count)              => s"has $count bands (only one is read)"
+      case Io.Variant.Planar(configuration)     => s"has planar configuration $configuration (only 1 is read)"
+      case Io.Variant.SampleFormat(format)      => s"has sample format $format (only signed integers are read)"
+      case Io.Variant.Tiled                     => "is a tiled TIFF (only strips are read)"
 
   extension (flaw: Io.Flaw)
     private def said: String = flaw match
-      case Io.Flaw.NotFeatureCollection => "is not a FeatureCollection"
-      case Io.Flaw.NoLandPolygons       => "holds no land polygons"
+      case Io.Flaw.NotFeatureCollection   => "is not a FeatureCollection"
+      case Io.Flaw.NoLandPolygons         => "holds no land polygons"
+      case Io.Flaw.NotArray               => "is not a JSON array"
+      case Io.Flaw.NoImageHeader          => "has no image header (IHDR)"
+      case Io.Flaw.NegativeAt(q, byte)    => s"holds a negative ${words(q.productPrefix)} at byte $byte"
+      case Io.Flaw.DirectorySize(size)    => s"has an implausible directory size $size"
+      case Io.Flaw.NegativeEntry(entry)   => s"has a negative offset in entry $entry"
+      case Io.Flaw.OffsetOutside(offset)  => s"has an offset $offset that lies outside its file"
+      case Io.Flaw.NegativeLength(length) => s"has a negative length $length"
+      case Io.Flaw.TooDeep                => "nests its directories too deep"
+      case Io.Flaw.RootOutside            => "lies outside the first 16 KiB"
+      case Io.Flaw.MetadataOver           => "is over 16 MiB"
+      case Io.Flaw.PrefixTooLong          => "has a prefix code longer than 15 bits"
+      case Io.Flaw.PrefixIncomplete       => "has an incomplete or over-subscribed prefix code"
+      case Io.Flaw.PrefixInvalid          => "has an invalid prefix code"
+      case Io.Flaw.ChunkTruncated         => "has a truncated chunk"
+      case Io.Flaw.StreamTruncated        => "is truncated"
+      case Io.Flaw.NotVp8l                => "is not a VP8L stream"
+      case Io.Flaw.TransformTwice         => "uses a transform twice"
+      case Io.Flaw.CacheSize              => "has a colour cache of an invalid size"
+      case Io.Flaw.SymbolOutside          => "has a symbol outside its alphabet"
+      case Io.Flaw.CodeLengthsOver        => "has more code lengths than symbols"
+      case Io.Flaw.CodeLengthsPast        => "has code lengths past the alphabet"
+      case Io.Flaw.ReferenceOutside       => "has a backward reference outside the image"
+      case Io.Flaw.CacheWithout           => "has a colour-cache code without a cache"
+      case Io.Flaw.CacheIndexOutside      => "has a colour-cache index outside the cache"
+      case Io.Flaw.RangeBytes(got, asked) => s"holds $got bytes for a range of $asked"
+      case Io.Flaw.NotLittleEndian        => "is not a little-endian TIFF"
+      case Io.Flaw.NoTag(tag)             => s"has no tag $tag"
+      case Io.Flaw.NoStripOffsets         => "has no strip offsets"
+      case Io.Flaw.NoPixelScale           => "has no pixel scale (not a GeoTIFF)"
+      case Io.Flaw.NoTiePoint             => "has no tie point (not a GeoTIFF)"
+      case Io.Flaw.NoStripForRow(row)     => s"has no strip for row $row"
 
   extension (held: Io.Held)
     private def missed(path: Io.Path, setting: Option[SettingKey]): String =

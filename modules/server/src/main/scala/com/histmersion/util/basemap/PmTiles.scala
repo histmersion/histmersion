@@ -2,8 +2,7 @@ package com.histmersion
 package util.basemap
 import com.histmersion.util.json.RawJson
 import hearth.kindlings.jsoniterjson.Json
-import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.{External, Problem}
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import java.nio.{ByteBuffer, ByteOrder}
@@ -170,11 +169,23 @@ object PmTiles:
   def parseHeader(b: HeaderBytes): Either[Problem, Header] =
     val a: Array[Byte] = b.value
     if a.length < HeaderLength then
-      Left(Problem.Unclassified(Legacy.Text(s"a PMTiles header is $HeaderLength bytes, got ${a.length}")))
+      Left(
+        Problem.Io.Corrupt(
+          Problem.Io.Format.PmTiles,
+          Problem.Where("the header"),
+          Problem.Io.Damage.Bytes(Problem.Count(HeaderLength.toLong), Problem.Count(a.length.toLong))
+        )
+      )
     else if !a.take(7).sameElements(Magic) then
-      Left(Problem.Unclassified(Legacy.Text("not a PMTiles archive (no magic number)")))
+      Left(Problem.Io.Corrupt(Problem.Io.Format.PmTiles, Problem.Where("the header"), Problem.Io.Damage.Foreign))
     else if a(7) != 3 then
-      Left(Problem.Unclassified(Legacy.Text(s"PMTiles spec version ${a(7)} is not supported (only 3)")))
+      Left(
+        Problem.Io.Corrupt(
+          Problem.Io.Format.PmTiles,
+          Problem.Where("the header"),
+          Problem.Io.Damage.Unsupported(Problem.Io.Variant.SpecVersion(Problem.Count(a(7).toLong), Problem.Count(3L)))
+        )
+      )
     else
       val bb = ByteBuffer.wrap(a).order(ByteOrder.LITTLE_ENDIAN)
       def l(at: Int) = bb.getLong(at)
@@ -184,12 +195,26 @@ object PmTiles:
         ByteOffset
           .either(l(at))
           .left
-          .map(_ => Problem.Unclassified(Legacy.Text(s"a PMTiles header holds a negative offset at byte $at")))
+          .map(_ =>
+            Problem.Io.Corrupt(
+              Problem.Io.Format.PmTiles,
+              Problem.Where("the header"),
+              Problem.Io.Damage
+                .Structure(Problem.Io.Flaw.NegativeAt(Problem.Io.Quantity.Offset, Problem.Count(at.toLong)))
+            )
+          )
       def count(at: Int): Either[Problem, ByteCount] =
         ByteCount
           .either(l(at))
           .left
-          .map(_ => Problem.Unclassified(Legacy.Text(s"a PMTiles header holds a negative length at byte $at")))
+          .map(_ =>
+            Problem.Io.Corrupt(
+              Problem.Io.Format.PmTiles,
+              Problem.Where("the header"),
+              Problem.Io.Damage
+                .Structure(Problem.Io.Flaw.NegativeAt(Problem.Io.Quantity.Length, Problem.Count(at.toLong)))
+            )
+          )
       for
         rootOffset <- offset(8)
         rootLength <- count(16)
@@ -359,7 +384,14 @@ object PmTiles:
     try
       val v = Varints(b.value)
       val n = v.next()
-      if n < 0 || n > 50_000_000 then Left(Problem.Unclassified(Legacy.Text(s"implausible PMTiles directory size $n")))
+      if n < 0 || n > 50_000_000 then
+        Left(
+          Problem.Io.Corrupt(
+            Problem.Io.Format.PmTiles,
+            Problem.Where("a directory"),
+            Problem.Io.Damage.Structure(Problem.Io.Flaw.DirectorySize(Problem.Count(n)))
+          )
+        )
       else
         val k = n.toInt
         val ids = new Array[Long](k)
@@ -375,7 +407,13 @@ object PmTiles:
           offs(i) = if raw == 0 && i > 0 then offs(i - 1) + lens(i - 1) else raw - 1
         val negative = offs.indexWhere(_ < 0)
         if negative >= 0 then
-          Left(Problem.Unclassified(Legacy.Text(s"PMTiles directory entry $negative has a negative offset")))
+          Left(
+            Problem.Io.Corrupt(
+              Problem.Io.Format.PmTiles,
+              Problem.Where("a directory"),
+              Problem.Io.Damage.Structure(Problem.Io.Flaw.NegativeEntry(Problem.Count(negative.toLong)))
+            )
+          )
         else
           Right(
             Vector.tabulate(k)(i =>
@@ -387,7 +425,15 @@ object PmTiles:
               )
             )
           )
-    catch case e: IllegalArgumentException => Left(Problem.Unclassified(Legacy.Text(e.getMessage)))
+    catch
+      case e: IllegalArgumentException =>
+        Left(
+          Problem.Io.Corrupt(
+            Problem.Io.Format.PmTiles,
+            Problem.Where("a directory"),
+            Problem.Io.Damage.Unreadable(External.Reported.of(e))
+          )
+        )
 
   /** The entry that holds `id` in one sorted directory: the last whose id is ≤ `id` — a leaf pointer (to look further
     * in) or a run that covers it. `None`: not in this directory.
@@ -415,11 +461,23 @@ object PmTiles:
       at <- ByteOffset
         .either(section.value + e.offset.value)
         .left
-        .map(_ => Problem.Unclassified(Legacy.Text(s"PMTiles entry offset ${e.offset.value} lies outside its file")))
+        .map(_ =>
+          Problem.Io.Corrupt(
+            Problem.Io.Format.PmTiles,
+            Problem.Where("a directory"),
+            Problem.Io.Damage.Structure(Problem.Io.Flaw.OffsetOutside(Problem.Count.of(e.offset)))
+          )
+        )
       n <- ByteCount
         .either(e.length.value.toLong)
         .left
-        .map(_ => Problem.Unclassified(Legacy.Text(s"PMTiles entry length ${e.length.value} is negative")))
+        .map(_ =>
+          Problem.Io.Corrupt(
+            Problem.Io.Format.PmTiles,
+            Problem.Where("a directory"),
+            Problem.Io.Damage.Structure(Problem.Io.Flaw.NegativeLength(Problem.Count.of(e.length)))
+          )
+        )
     yield (at, n)
 
   // ── compression ─────────────────────────────────────────────────────────────────────────────────
@@ -431,7 +489,15 @@ object PmTiles:
 
   def gunzip(b: CompressedBytes): Either[Problem, PlainBytes] =
     try Right(PlainBytes(Using.resource(GZIPInputStream(ByteArrayInputStream(b.value: Array[Byte])))(_.readAllBytes())))
-    catch case e: java.io.IOException => Left(Problem.Unclassified(Legacy.Text(s"corrupt gzip data: ${e.getMessage}")))
+    catch
+      case e: java.io.IOException =>
+        Left(
+          Problem.Io.Corrupt(
+            Problem.Io.Format.Gzip,
+            Problem.Where("compressed data"),
+            Problem.Io.Damage.Inflate(External.Reported.of(e))
+          )
+        )
 
   def isGzip(b: TileBytes): Boolean =
     val a: Array[Byte] = b.value
@@ -442,8 +508,12 @@ object PmTiles:
     case Compression.Gzip                       => gunzip(b)
     case other                                  =>
       Left(
-        Problem.Unclassified(
-          Legacy.Text(s"PMTiles ${other.toString.toLowerCase} compression is not supported (only gzip)")
+        Problem.Io.Corrupt(
+          Problem.Io.Format.PmTiles,
+          Problem.Where("the header"),
+          Problem.Io.Damage.Unsupported(
+            Problem.Io.Variant.Compression(Problem.Raw(other.productPrefix.toLowerCase), Problem.Raw("gzip"))
+          )
         )
       )
 
@@ -493,7 +563,13 @@ object PmTiles:
             case None                  => Right(None)
             case Some(e) if !e.isLeaf  => Right(Some(e))
             case Some(_) if depth >= 3 =>
-              Left(Problem.Unclassified(Legacy.Text(s"${where.value}: directories nested too deep")))
+              Left(
+                Problem.Io.Corrupt(
+                  Problem.Io.Format.PmTiles,
+                  Problem.Where.of(where),
+                  Problem.Io.Damage.Structure(Problem.Io.Flaw.TooDeep)
+                )
+              )
             case Some(e) => leaf(e).flatMap(walk(_, depth + 1))
         walk(root, 0)
 
@@ -518,6 +594,8 @@ object PmTiles:
 
     def open(blob: Blob, maxLeaves: MaxLeaves = MaxLeaves(256)): Either[Problem, File] =
       val where = blob.where
+      def unread(e: java.io.IOException): Problem =
+        Problem.Io.File(Problem.Io.Access.Read, Problem.Io.Path.from(where), External.Reported.of(e))
       val opened: Either[Problem, File] =
         try
           val reader = blob.reader()
@@ -529,7 +607,11 @@ object PmTiles:
                 _ <- Either.cond(
                   h.rootOffset.value + h.rootLength.value <= bytes.length,
                   (),
-                  Problem.Unclassified(Legacy.Text("root directory outside the first 16 KiB"))
+                  Problem.Io.Corrupt(
+                    Problem.Io.Format.PmTiles,
+                    Problem.Where("the root directory"),
+                    Problem.Io.Damage.Structure(Problem.Io.Flaw.RootOutside)
+                  )
                 )
                 root <- decompress(
                   CompressedBytes(
@@ -540,16 +622,22 @@ object PmTiles:
                   .flatMap(decodeDirectory)
                 meta <- metadata(reader, h)
               yield new File(where, reader, h, root, meta, maxLeaves)
-            catch case e: java.io.IOException => Left(Problem.Unclassified(Legacy.Text(s"${e.getMessage}")))
+            catch case e: java.io.IOException => Left(unread(e))
           if read.isLeft then reader.close()
           read
-        catch case e: java.io.IOException => Left(Problem.Unclassified(Legacy.Text(s"${e.getMessage}")))
-      opened.left.map(e => Problem.Unclassified(Legacy.Text(s"${where.value}: ${e.sentence}")))
+        catch case e: java.io.IOException => Left(unread(e))
+      opened.left.map(_.inside(Problem.Where.of(where)))
 
     private def metadata(reader: RandomReader, h: Header): Either[Problem, Json] =
       if h.metadataLength.value <= 0 then Right(Json.obj())
       else if h.metadataLength.value > 16L * 1024 * 1024 then
-        Left(Problem.Unclassified(Legacy.Text("metadata over 16 MiB")))
+        Left(
+          Problem.Io.Corrupt(
+            Problem.Io.Format.PmTiles,
+            Problem.Where("the metadata"),
+            Problem.Io.Damage.Structure(Problem.Io.Flaw.MetadataOver)
+          )
+        )
       else
         // a file that ends early leaves the rest zeros, as a buffer read up to the end does
         val length = h.metadataLength.value.toInt
@@ -562,5 +650,11 @@ object PmTiles:
             RawJson
               .parse(String(b.value: Array[Byte], "UTF-8"))
               .left
-              .map(e => Problem.Unclassified(Legacy.Text(s"metadata is not JSON: $e")))
+              .map(e =>
+                Problem.Io.Corrupt(
+                  Problem.Io.Format.Json,
+                  Problem.Where("the PMTiles metadata"),
+                  Problem.Io.Damage.Unreadable(External.Reported.of(s"$e"))
+                )
+              )
           )

@@ -1,7 +1,6 @@
 package com.histmersion
 package util.basemap
-import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.{External, Problem}
 
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -39,14 +38,24 @@ object Vp8l:
     vp8lChunk(raw).flatMap { (off, len) =>
       try Right(Decoder(raw, off, off + len).image())
       catch
-        case e: Vp8lError                      => Left(Problem.Unclassified(Legacy.Text(e.getMessage)))
+        case e: Vp8lError                      => Left(e.problem)
         case e: ArrayIndexOutOfBoundsException =>
-          Left(Problem.Unclassified(Legacy.Text(s"corrupt VP8L stream (${e.getMessage})")))
+          Left(
+            Problem.Io.Corrupt(
+              Problem.Io.Format.WebP,
+              Problem.Where("the VP8L stream"),
+              Problem.Io.Damage.Unreadable(External.Reported.of(e))
+            )
+          )
     }
 
-  final private class Vp8lError(msg: String) extends Exception(msg)
-
-  private def fail(msg: String): Nothing = throw Vp8lError(msg)
+  /** A stream that breaks the format, thrown out of the bit reader's loops and caught by [[decode]]. */
+  final private class Vp8lError(val problem: Problem) extends Exception(null, null, false, false):
+    /** The VP8L stream breaks its layout: `flaw`. */
+    def this(flaw: Problem.Io.Flaw) =
+      this(
+        Problem.Io.Corrupt(Problem.Io.Format.WebP, Problem.Where("the VP8L stream"), Problem.Io.Damage.Structure(flaw))
+      )
 
   /** Where the `VP8L` payload is: inside a RIFF container (its chunk, after any `VP8X`), or the whole input when it
     * starts with the VP8L signature. Pure.
@@ -56,22 +65,41 @@ object Vp8l:
     def tag(i: Int) = new String(b, i, 4, "US-ASCII")
     if b.length >= 5 && (b(0) & 0xff) == 0x2f then Right((0, b.length))
     else if b.length < 20 || tag(0) != "RIFF" || tag(8) != "WEBP" then
-      Left(Problem.Unclassified(Legacy.Text("not a WebP file")))
+      Left(Problem.Io.Corrupt(Problem.Io.Format.WebP, Problem.Where("the RIFF header"), Problem.Io.Damage.Foreign))
     else
       // the chunks after the header: the first VP8L one is the image
       var i = 12
-      var found: Either[Problem, (Int, Int)] = Left(
-        Problem.Unclassified(Legacy.Text("no VP8L chunk: only lossless WebP is read"))
-      )
+      var found: Either[Problem, (Int, Int)] =
+        Left(
+          Problem.Io.Corrupt(
+            Problem.Io.Format.WebP,
+            Problem.Where("the chunks"),
+            Problem.Io.Damage.Unsupported(Problem.Io.Variant.NoLossless)
+          )
+        )
       var done = false
       while !done && i + 8 <= b.length do
         val t = tag(i)
         val n = le32(i + 4)
         if n < 0 || i + 8 + n > b.length then {
-          found = Left(Problem.Unclassified(Legacy.Text("truncated WebP chunk"))); done = true
+          found = Left(
+            Problem.Io.Corrupt(
+              Problem.Io.Format.WebP,
+              Problem.Where("the chunks"),
+              Problem.Io.Damage.Structure(Problem.Io.Flaw.ChunkTruncated)
+            )
+          );
+          done = true
         } else if t == "VP8L" then { found = Right((i + 8, n)); done = true }
         else if t == "VP8 " then {
-          found = Left(Problem.Unclassified(Legacy.Text("a lossy (VP8) WebP: only lossless WebP is read"))); done = true
+          found = Left(
+            Problem.Io.Corrupt(
+              Problem.Io.Format.WebP,
+              Problem.Where("the chunks"),
+              Problem.Io.Damage.Unsupported(Problem.Io.Variant.LossyWebP)
+            )
+          );
+          done = true
         } else i += 8 + n + (n & 1)
       found
 
@@ -127,7 +155,7 @@ object Vp8l:
         else
           val k = -e - 1
           val s = subs(k)((p >>> Root) & ((1 << subBits(k)) - 1))
-          if s < 0 then fail("invalid prefix code")
+          if s < 0 then throw Vp8lError(Problem.Io.Flaw.PrefixInvalid)
           r.skip(s & 0xf)
           s >>> 4
 
@@ -152,7 +180,14 @@ object Vp8l:
     else if used.size == 1 then Right(Code(Array.empty, Array.empty, Array.empty, single = used.head))
     else
       val maxLen = used.map(lengths(_)).max
-      if maxLen > 15 then Left(Problem.Unclassified(Legacy.Text("a prefix code longer than 15 bits")))
+      if maxLen > 15 then
+        Left(
+          Problem.Io.Corrupt(
+            Problem.Io.Format.WebP,
+            Problem.Where("the VP8L stream"),
+            Problem.Io.Damage.Structure(Problem.Io.Flaw.PrefixTooLong)
+          )
+        )
       else
         // canonical codes: by length, then by symbol
         val count = new Array[Int](16)
@@ -167,7 +202,13 @@ object Vp8l:
         // the Kraft sum must be exactly 1 for a complete code
         val kraft = used.map(s => 1L << (15 - lengths(s))).sum
         if kraft != (1L << 15) then
-          Left(Problem.Unclassified(Legacy.Text("an incomplete or over-subscribed prefix code")))
+          Left(
+            Problem.Io.Corrupt(
+              Problem.Io.Format.WebP,
+              Problem.Where("the VP8L stream"),
+              Problem.Io.Damage.Structure(Problem.Io.Flaw.PrefixIncomplete)
+            )
+          )
         else
           val root = Array.fill(1 << Root)(Int.MinValue)
           val subLen = scala.collection.mutable.HashMap.empty[Int, Int] // root prefix → deepest code under it
@@ -230,18 +271,25 @@ object Vp8l:
     private val r = Bits(b, from, until)
 
     def image(): Image =
-      if r.read(8) != 0x2f then fail("not a VP8L stream")
+      if r.read(8) != 0x2f then throw Vp8lError(Problem.Io.Flaw.NotVp8l)
       val w = r.read(14) + 1
       val h = r.read(14) + 1
       val _ = r.read(1) // alpha is used: the pixels say so themselves
-      if r.read(3) != 0 then fail("an unknown VP8L version")
+      if r.read(3) != 0 then
+        throw Vp8lError(
+          Problem.Io.Corrupt(
+            Problem.Io.Format.WebP,
+            Problem.Where("the VP8L stream"),
+            Problem.Io.Damage.Unsupported(Problem.Io.Variant.Vp8lVersion)
+          )
+        )
       // the transforms, in the order they were applied (undone in reverse)
       var width = w
       val transforms = scala.collection.mutable.ListBuffer.empty[Transform]
       var seen = Set.empty[Int]
       while r.read(1) == 1 do
         val kind = r.read(2)
-        if seen(kind) then fail("a transform used twice")
+        if seen(kind) then throw Vp8lError(Problem.Io.Flaw.TransformTwice)
         seen += kind
         kind match
           case 0 | 1 =>
@@ -261,7 +309,7 @@ object Vp8l:
             width = sub(width, bits)
       var px = entropyImage(width, h, top = true)
       transforms.reverseIterator.foreach(t => px = undo(t, px, h))
-      if r.overrun then fail("truncated VP8L stream")
+      if r.overrun then throw Vp8lError(Problem.Io.Flaw.StreamTruncated)
       Image(Image.Width(w), Image.Height(h), Image.Pixels(px))
 
     private def sub(size: Int, bits: Int): Int = (size + (1 << bits) - 1) >> bits
@@ -271,7 +319,7 @@ object Vp8l:
     private def entropyImage(w: Int, h: Int, top: Boolean): Array[Int] =
       val cacheBits = if r.read(1) == 1 then
         val c = r.read(4)
-        if c < 1 || c > 11 then fail("a colour cache of an invalid size")
+        if c < 1 || c > 11 then throw Vp8lError(Problem.Io.Flaw.CacheSize)
         c
       else 0
       val (metaBits, meta) =
@@ -292,14 +340,14 @@ object Vp8l:
         // a simple code: one or two symbols
         val two = r.read(1) == 1
         val first = r.read(if r.read(1) == 1 then 8 else 1)
-        if first >= size then fail("a symbol outside its alphabet")
+        if first >= size then throw Vp8lError(Problem.Io.Flaw.SymbolOutside)
         lengths(first) = 1
         if two then
           val second = r.read(8)
-          if second >= size then fail("a symbol outside its alphabet")
+          if second >= size then throw Vp8lError(Problem.Io.Flaw.SymbolOutside)
           lengths(second) = 1
         else lengths(first) = 0
-        if two then build(lengths).fold(p => fail(p.sentence), identity)
+        if two then build(lengths).fold(p => throw Vp8lError(p), identity)
         else Code(Array.empty, Array.empty, Array.empty, single = first)
       else
         val clLengths = new Array[Int](19)
@@ -308,12 +356,12 @@ object Vp8l:
         while i < n do
           clLengths(CodeLengthOrder(i)) = r.read(3)
           i += 1
-        val cl = build(clLengths).fold(p => fail(p.sentence), identity)
+        val cl = build(clLengths).fold(p => throw Vp8lError(p), identity)
         var max =
           if r.read(1) == 1 then
             val nbits = 2 + 2 * r.read(3)
             val m = 2 + r.read(nbits)
-            if m > size then fail("more code lengths than symbols")
+            if m > size then throw Vp8lError(Problem.Io.Flaw.CodeLengthsOver)
             m
           else size
         var s = 0
@@ -330,13 +378,13 @@ object Vp8l:
               case 16 => (3 + r.read(2), prev)
               case 17 => (3 + r.read(3), 0)
               case _  => (11 + r.read(7), 0)
-            if s + repeat > size then fail("code lengths past the alphabet")
+            if s + repeat > size then throw Vp8lError(Problem.Io.Flaw.CodeLengthsPast)
             var k = 0
             while k < repeat do
               lengths(s) = value
               s += 1
               k += 1
-        build(lengths).fold(p => fail(p.sentence), identity)
+        build(lengths).fold(p => throw Vp8lError(p), identity)
 
     /** A length or distance from its prefix symbol and its extra bits. */
     private def prefixValue(symbol: Int): Int =
@@ -380,16 +428,16 @@ object Vp8l:
           val length = prefixValue(s - 256)
           val distCode = prefixValue(g.dist.read(r))
           val d = distance(distCode, w)
-          if d > pos || pos + length > total then fail("a backward reference outside the image")
+          if d > pos || pos + length > total then throw Vp8lError(Problem.Io.Flaw.ReferenceOutside)
           var k = 0
           while k < length do
             out(pos) = out(pos - d)
             pos += 1
             k += 1
         else
-          if cache == null then fail("a colour-cache code without a cache")
+          if cache == null then throw Vp8lError(Problem.Io.Flaw.CacheWithout)
           val idx = s - 280
-          if idx >= cache.length then fail("a colour-cache index outside the cache")
+          if idx >= cache.length then throw Vp8lError(Problem.Io.Flaw.CacheIndexOutside)
           out(pos) = cache(idx)
           pos += 1
         if cache != null then
@@ -397,7 +445,7 @@ object Vp8l:
             val c = out(cached)
             cache((0x1e35a7bd * c) >>> cacheShift) = c
             cached += 1
-        if r.overrun then fail("truncated VP8L stream")
+        if r.overrun then throw Vp8lError(Problem.Io.Flaw.StreamTruncated)
       out
 
     /** Undo one transform over pixels `h` rows high. */

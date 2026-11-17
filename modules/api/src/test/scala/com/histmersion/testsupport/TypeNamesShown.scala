@@ -24,7 +24,9 @@ object TypeNamesShown:
       "WebP",
       "FeatureCollection",
       "GeoTIFF",
-      "BigTIFF"
+      "BigTIFF",
+      "KiB",
+      "MiB"
     )
 
   private val Dotted = """\b[A-Za-z][A-Za-z0-9]*(\.[A-Z][A-Za-z0-9]*)+\b""".r

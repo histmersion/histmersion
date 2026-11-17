@@ -90,7 +90,10 @@ class TerrainResampleSuite extends munit.FunSuite:
         .decode(PmTiles.TileBytes("RIFF\u0000\u0000\u0000\u0000WEBPVP8 ".getBytes("ISO-8859-1") ++ new Array[Byte](12)))
         .isLeft
     )
-    assertEquals(Vp8l.decode(PmTiles.TileBytes("hello".getBytes)).left.map(_.sentence.take(10)), Left("not a WebP"))
+    assertEquals(
+      Vp8l.decode(PmTiles.TileBytes("hello".getBytes)).left.map(_.sentence),
+      Left("the WebP data at the RIFF header is not a WebP file (no magic number)")
+    )
     // a truncated stream: an error, never an exception
     val t = resource("terr-z6.webp")
     assert(Vp8l.decode(PmTiles.TileBytes(t.value.take(t.value.length / 2))).isLeft)

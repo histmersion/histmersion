@@ -1,6 +1,6 @@
 package com.histmersion
 package util.basemap
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import java.io.ByteArrayOutputStream
 import java.util.zip.{CRC32, Deflater, Inflater}
@@ -87,7 +87,8 @@ object Png:
 
   /** An 8-bit RGB or RGBA, non-interlaced PNG's pixels (`0xAARRGGBB`). */
   def decode(png: PngBytes): Either[Problem, Vp8l.Image] =
-    if !isPng(png) then Left(Problem.Unclassified(Legacy.Text("not a PNG")))
+    if !isPng(png) then
+      Left(Problem.Io.Corrupt(Problem.Io.Format.Png, Problem.Where("the signature"), Problem.Io.Damage.Foreign))
     else
       val b: Array[Byte] = png.value
       def be32(i: Int) = (b(i) & 0xff) << 24 | (b(i + 1) & 0xff) << 16 | (b(i + 2) & 0xff) << 8 | (b(i + 3) & 0xff)
@@ -112,8 +113,25 @@ object Png:
         case 2 => 3
         case 6 => 4
         case _ => 0
-      if w <= 0 || h <= 0 || depth != 8 || bpp == 0 || interlace != 0 then
-        Left(Problem.Unclassified(Legacy.Text("only 8-bit RGB(A) non-interlaced PNGs are read")))
+      if w <= 0 || h <= 0 then
+        Left(
+          Problem.Io.Corrupt(
+            Problem.Io.Format.Png,
+            Problem.Where("the image header"),
+            Problem.Io.Damage.Structure(Problem.Io.Flaw.NoImageHeader)
+          )
+        )
+      else if depth != 8 || bpp == 0 || interlace != 0 then
+        Left(
+          Problem.Io.Corrupt(
+            Problem.Io.Format.Png,
+            Problem.Where("the image header"),
+            Problem.Io.Damage.Unsupported(
+              Problem.Io.Variant
+                .PngLayout(Problem.Count(colour.toLong), Problem.Count(depth.toLong), Problem.Count(interlace.toLong))
+            )
+          )
+        )
       else
         val stride = w * bpp
         val raw = new Array[Byte](h * (stride + 1))
@@ -123,7 +141,8 @@ object Png:
         while got < raw.length && !inf.finished() && !inf.needsInput() && !inf.needsDictionary() do
           got += inf.inflate(raw, got, raw.length - got)
         inf.end()
-        if got < raw.length then Left(Problem.Unclassified(Legacy.Text("truncated PNG data")))
+        if got < raw.length then
+          Left(Problem.Io.Corrupt(Problem.Io.Format.Png, Problem.Where("the image data"), Problem.Io.Damage.Truncated))
         else
           val cur = new Array[Int](stride)
           val prev = new Array[Int](stride)

@@ -211,8 +211,65 @@ class ReadBackSuite extends munit.FunSuite:
           Conflict.Control.NotPaused
         ).map(Conflict.Job(Raw("j: 1"), Conflict.State("running"), _)) ++
         Io.Format.values.toVector.map(Io.Corrupt(_, Where("x"), Io.Damage.Checksum)) ++
-        Io.Flaw.values.toVector.map(f =>
-          Io.Corrupt(Io.Format.GeoJson, Where("land.geojson"), Io.Damage.Structure(f))
+        Vector(
+          Io.Flaw.NotFeatureCollection,
+          Io.Flaw.NoLandPolygons,
+          Io.Flaw.NotArray,
+          Io.Flaw.NoImageHeader,
+          Io.Flaw.NegativeAt(Io.Quantity.Offset, Count(24L)),
+          Io.Flaw.NegativeAt(Io.Quantity.Length, Count(32L)),
+          Io.Flaw.DirectorySize(Count(-3L)),
+          Io.Flaw.NegativeEntry(Count(7L)),
+          Io.Flaw.OffsetOutside(Count(-12L)),
+          Io.Flaw.NegativeLength(Count(-1L)),
+          Io.Flaw.TooDeep,
+          Io.Flaw.RootOutside,
+          Io.Flaw.MetadataOver,
+          Io.Flaw.PrefixTooLong,
+          Io.Flaw.PrefixIncomplete,
+          Io.Flaw.PrefixInvalid,
+          Io.Flaw.ChunkTruncated,
+          Io.Flaw.StreamTruncated,
+          Io.Flaw.NotVp8l,
+          Io.Flaw.TransformTwice,
+          Io.Flaw.CacheSize,
+          Io.Flaw.SymbolOutside,
+          Io.Flaw.CodeLengthsOver,
+          Io.Flaw.CodeLengthsPast,
+          Io.Flaw.ReferenceOutside,
+          Io.Flaw.CacheWithout,
+          Io.Flaw.CacheIndexOutside,
+          Io.Flaw.RangeBytes(Count(100L), Count(200L)),
+          Io.Flaw.NotLittleEndian,
+          Io.Flaw.NoTag(Count(256L)),
+          Io.Flaw.NoStripOffsets,
+          Io.Flaw.NoPixelScale,
+          Io.Flaw.NoTiePoint,
+          Io.Flaw.NoStripForRow(Count(4L))
+        ).map(f => Io.Corrupt(Io.Format.GeoJson, Where("land.geojson in /a b"), Io.Damage.Structure(f))) ++
+        Vector(
+          Io.Damage.Foreign,
+          Io.Damage.Bytes(Count(127L), Count(50L)),
+          Io.Damage.Inflate(External.Reported("java.util.zip.ZipException: invalid stored block lengths")),
+          Io.Damage.Unsupported(Io.Variant.PngLayout(Count(3L), Count(16L), Count(1L))),
+          Io.Damage.Unsupported(Io.Variant.PngFilter(Count(7L))),
+          Io.Damage.Unsupported(Io.Variant.LossyWebP),
+          Io.Damage.Unsupported(Io.Variant.NoLossless),
+          Io.Damage.Unsupported(Io.Variant.Vp8lVersion),
+          Io.Damage.Unsupported(Io.Variant.SpecVersion(Count(2L), Count(3L))),
+          Io.Damage.Unsupported(Io.Variant.Compression(Raw("brotli"), Raw("gzip"))),
+          Io.Damage.Unsupported(Io.Variant.BigTiff),
+          Io.Damage.Unsupported(Io.Variant.SampleBits(Count(32L))),
+          Io.Damage.Unsupported(Io.Variant.TiffCompression(Count(5L))),
+          Io.Damage.Unsupported(Io.Variant.Bands(Count(3L))),
+          Io.Damage.Unsupported(Io.Variant.Planar(Count(2L))),
+          Io.Damage.Unsupported(Io.Variant.SampleFormat(Count(3L))),
+          Io.Damage.Unsupported(Io.Variant.Tiled)
+        ).flatMap(d =>
+          Vector(
+            Io.Corrupt(Io.Format.PmTiles, Where("the header in /srv/basemap/planet.pmtiles"), d),
+            Invalid.Unparsable(Io.Format.WebP, Where("the upload"), d, Vector(Field("body")))
+          )
         ) ++
         Io.Held.values.toVector.flatMap(h =>
           Vector(

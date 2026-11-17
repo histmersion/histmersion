@@ -3,7 +3,7 @@ package util.basemap
 import hearth.kindlings.jsoniterjson.JsonObject
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.{ByteCount, ByteOffset}
 import com.histmersion.api.BBox
@@ -256,7 +256,13 @@ object BasemapLabels:
       .downField("features")
       .focus
       .flatMap(_.asArray)
-      .toRight(Problem.Unclassified(Legacy.Text(s"$file is not a GeoJSON FeatureCollection")))
+      .toRight(
+        Problem.Io.Corrupt(
+          Problem.Io.Format.GeoJson,
+          Problem.Where.of(file),
+          Problem.Io.Damage.Structure(Problem.Io.Flaw.NotFeatureCollection)
+        )
+      )
       .map(_.toList.flatMap(label))
 
   /** Does the label touch `b` (grown by `margin` degrees)? Pure. */

@@ -1,6 +1,6 @@
 package com.histmersion
 package util.basemap
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 
 import java.io.ByteArrayOutputStream
 import java.nio.charset.StandardCharsets
@@ -110,7 +110,13 @@ object Mvt:
     try Right(a)
     catch
       case e: IllegalArgumentException =>
-        Left(Problem.Unclassified(Legacy.Text(s"malformed vector tile: ${e.getMessage}")))
+        Left(
+          Problem.Io.Corrupt(
+            Problem.Io.Format.Mvt,
+            Problem.Where("the tile"),
+            Problem.Io.Damage.Unreadable(External.Reported.of(e))
+          )
+        )
 
   /** Which features of one layer stay: those whose string `kind` is in `keep` (every kind when it is empty) and not in
     * `drop`. A feature without a `kind` stays unless `keep` is given. `props`: only these property keys stay (every one

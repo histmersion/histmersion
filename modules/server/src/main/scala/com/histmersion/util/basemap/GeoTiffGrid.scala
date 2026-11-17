@@ -1,7 +1,6 @@
 package com.histmersion
 package util.basemap
-import com.histmersion.util.problem.Text.sentence
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 
 import com.histmersion.api.BBox
 import com.histmersion.{ByteCount, ByteOffset}
@@ -97,25 +96,39 @@ object GeoTiffGrid:
   private def le(b: Array[Byte]) = ByteBuffer.wrap(b).order(ByteOrder.LITTLE_ENDIAN)
 
   /** One image file directory: its entries, and their values read from the file as asked. */
-  final private class Directory(entries: Map[Int, Entry], bytesAt: (Long, Int) => Either[String, Array[Byte]]):
+  final private class Directory(entries: Map[Int, Entry], bytesAt: (Long, Int) => Either[Problem, Array[Byte]]):
     def has(tag: Int): Boolean = entries.contains(tag)
-    private def raw(tag: Int): Either[String, Option[(Entry, Array[Byte])]] = entries.get(tag) match
+    private def raw(tag: Int): Either[Problem, Option[(Entry, Array[Byte])]] = entries.get(tag) match
       case None    => Right(None)
       case Some(e) =>
         val size = TypeSize.getOrElse(e.kind, 1) * e.count
         (if size <= 4 then Right(e.inline) else bytesAt(e.at, size.toInt)).map(b => Some(e -> b))
-    def ints(tag: Int): Either[String, Option[Vector[Long]]] = raw(tag).map(_.map { (e, b) =>
+    def ints(tag: Int): Either[Problem, Option[Vector[Long]]] = raw(tag).map(_.map { (e, b) =>
       val buf = le(b)
       (0 until e.count.toInt).toVector.map(i =>
         if e.kind == 3 then (buf.getShort(i * 2) & 0xffff).toLong else buf.getInt(i * 4).toLong & 0xffffffffL
       )
     })
-    def doubles(tag: Int): Either[String, Option[Vector[Double]]] =
+    def doubles(tag: Int): Either[Problem, Option[Vector[Double]]] =
       raw(tag).map(_.map((e, b) => (0 until e.count.toInt).toVector.map(i => le(b).getDouble(i * 8))))
-    def text(tag: Int): Either[String, Option[String]] =
+    def text(tag: Int): Either[Problem, Option[String]] =
       raw(tag).map(_.map((_, b) => new String(b, "US-ASCII").takeWhile(_ != '\u0000').trim))
-    def one(tag: Int, default: Option[Long] = None): Either[String, Long] =
-      ints(tag).flatMap(_.flatMap(_.headOption).orElse(default).toRight(s"no tag $tag"))
+    def one(tag: Int, default: Option[Long] = None): Either[Problem, Long] =
+      ints(tag).flatMap(
+        _.flatMap(_.headOption).orElse(default).toRight(flawed(Problem.Io.Flaw.NoTag(Problem.Count(tag.toLong))))
+      )
+
+  /** Damage to the TIFF's directory: what reading the grid refuses. */
+  private def damaged(damage: Problem.Io.Damage): Problem =
+    Problem.Io.Corrupt(Problem.Io.Format.GeoTiff, Problem.Where("the image file directory"), damage)
+
+  private def flawed(flaw: Problem.Io.Flaw): Problem = damaged(Problem.Io.Damage.Structure(flaw))
+
+  private def unread(variant: Problem.Io.Variant): Problem = damaged(Problem.Io.Damage.Unsupported(variant))
+
+  /** A value the directory holds that is no value of its type: Iron's description of why. */
+  private def refused(description: String): Problem =
+    damaged(Problem.Io.Damage.Unreadable(External.Reported.of(description)))
 
   /** Read the grid from the start of its file (`head`), asking `read(offset, length)` for whatever lies beyond it (the
     * strip offsets of a large grid). A little-endian classic TIFF holding one band of uncompressed signed 16-bit
@@ -127,21 +140,24 @@ object GeoTiffGrid:
   ): Either[Problem, GeoTiffGrid] =
     parseBytes(
       head.value,
-      (offset, length) =>
-        read(ByteOffset.applyUnsafe(offset), ByteCount.applyUnsafe(length.toLong)).map(_.value).left.map(_.sentence)
-    ).left.map((text => Problem.Unclassified(Legacy.Text(text))))
+      (offset, length) => read(ByteOffset.applyUnsafe(offset), ByteCount.applyUnsafe(length.toLong)).map(_.value)
+    )
 
   private def parseBytes(
       head: Array[Byte],
-      read: (Long, Int) => Either[String, Array[Byte]]
-  ): Either[String, GeoTiffGrid] =
-    def bytesAt(offset: Long, length: Int): Either[String, Array[Byte]] =
+      read: (Long, Int) => Either[Problem, Array[Byte]]
+  ): Either[Problem, GeoTiffGrid] =
+    def bytesAt(offset: Long, length: Int): Either[Problem, Array[Byte]] =
       if offset + length <= head.length then
         Right(java.util.Arrays.copyOfRange(head, offset.toInt, offset.toInt + length))
       else read(offset, length)
     for
-      _ <- Either.cond(head.length >= 8 && head(0) == 'I' && head(1) == 'I', (), "not a little-endian TIFF")
-      _ <- Either.cond(le(head).getShort(2) == 42, (), "not a classic TIFF (BigTIFF is not read)")
+      _ <- Either.cond(
+        head.length >= 8 && head(0) == 'I' && head(1) == 'I',
+        (),
+        flawed(Problem.Io.Flaw.NotLittleEndian)
+      )
+      _ <- Either.cond(le(head).getShort(2) == 42, (), unread(Problem.Io.Variant.BigTiff))
       ifdAt = le(head).getInt(4).toLong & 0xffffffffL
       countB <- bytesAt(ifdAt, 2)
       n = le(countB).getShort(0) & 0xffff
@@ -162,30 +178,38 @@ object GeoTiffGrid:
       grid <- gridOf(Directory(entries, bytesAt))
     yield grid
 
-  private def gridOf(d: Directory): Either[String, GeoTiffGrid] =
+  private def gridOf(d: Directory): Either[Problem, GeoTiffGrid] =
     for
       width <- d.one(ImageWidth)
       height <- d.one(ImageLength)
-      _ <- d.one(BitsPerSample).flatMap(b => Either.cond(b == 16, (), s"$b-bit samples (only 16-bit are read)"))
+      _ <- d
+        .one(BitsPerSample)
+        .flatMap(b => Either.cond(b == 16, (), unread(Problem.Io.Variant.SampleBits(Problem.Count(b)))))
       _ <- d
         .one(Compression, Some(1))
-        .flatMap(c => Either.cond(c == 1, (), s"compression $c (only uncompressed grids are read)"))
-      _ <- d.one(SamplesPerPixel, Some(1)).flatMap(s => Either.cond(s == 1, (), s"$s bands (only one is read)"))
-      _ <- d.one(PlanarConfiguration, Some(1)).flatMap(p => Either.cond(p == 1, (), s"planar configuration $p"))
+        .flatMap(c => Either.cond(c == 1, (), unread(Problem.Io.Variant.TiffCompression(Problem.Count(c)))))
+      _ <- d
+        .one(SamplesPerPixel, Some(1))
+        .flatMap(s => Either.cond(s == 1, (), unread(Problem.Io.Variant.Bands(Problem.Count(s)))))
+      _ <- d
+        .one(PlanarConfiguration, Some(1))
+        .flatMap(p => Either.cond(p == 1, (), unread(Problem.Io.Variant.Planar(Problem.Count(p)))))
       _ <- d
         .one(SampleFormat, Some(1))
-        .flatMap(f => Either.cond(f == SignedInteger, (), s"sample format $f (only signed integers are read)"))
-      _ <- Either.cond(!d.has(TileWidth), (), "a tiled TIFF (only strips are read)")
+        .flatMap(f => Either.cond(f == SignedInteger, (), unread(Problem.Io.Variant.SampleFormat(Problem.Count(f)))))
+      _ <- Either.cond(!d.has(TileWidth), (), unread(Problem.Io.Variant.Tiled))
       perStrip <- d.one(RowsPerStrip, Some(height))
-      strips <- d.ints(StripOffsets).flatMap(_.toRight("no strip offsets"))
-      scale <- d.doubles(ModelPixelScale).flatMap(_.filter(_.size >= 2).toRight("no pixel scale (not a GeoTIFF)"))
-      tie <- d.doubles(ModelTiepoint).flatMap(_.filter(_.size >= 6).toRight("no tie point (not a GeoTIFF)"))
+      strips <- d.ints(StripOffsets).flatMap(_.toRight(flawed(Problem.Io.Flaw.NoStripOffsets)))
+      scale <- d
+        .doubles(ModelPixelScale)
+        .flatMap(_.filter(_.size >= 2).toRight(flawed(Problem.Io.Flaw.NoPixelScale)))
+      tie <- d.doubles(ModelTiepoint).flatMap(_.filter(_.size >= 6).toRight(flawed(Problem.Io.Flaw.NoTiePoint)))
       keys <- d.ints(GeoKeyDirectory).map(_.getOrElse(Vector.empty))
       noData <- d.text(GdalNoData).map(_.flatMap(_.toDoubleOption).map(v => NoData(v.toShort)))
-      stepX <- Degrees.PerPixel.either(scale(0))
-      stepY <- Degrees.PerPixel.either(scale(1))
-      w <- PixelCount.either(width.toInt)
-      h <- PixelCount.either(height.toInt)
+      stepX <- Degrees.PerPixel.either(scale(0)).left.map(refused)
+      stepY <- Degrees.PerPixel.either(scale(1)).left.map(refused)
+      w <- PixelCount.either(width.toInt).left.map(refused)
+      h <- PixelCount.either(height.toInt).left.map(refused)
       offsets <- rowOffsets(strips, perStrip, height, width * 2)
     yield
       val point = rasterType(keys).contains(PixelIsPoint)
@@ -199,15 +223,15 @@ object GeoTiffGrid:
       perStrip: Long,
       height: Long,
       rowBytes: Long
-  ): Either[String, Vector[ByteOffset]] =
+  ): Either[Problem, Vector[ByteOffset]] =
     val b = Vector.newBuilder[ByteOffset]
     (0L until height)
-      .foldLeft[Either[String, Unit]](Right(())) { (acc, r) =>
+      .foldLeft[Either[Problem, Unit]](Right(())) { (acc, r) =>
         acc.flatMap { _ =>
           strips
             .lift((r / perStrip).toInt)
-            .toRight(s"no strip for row $r")
-            .flatMap(o => ByteOffset.either(o + (r % perStrip) * rowBytes))
+            .toRight(flawed(Problem.Io.Flaw.NoStripForRow(Problem.Count(r))))
+            .flatMap(o => ByteOffset.either(o + (r % perStrip) * rowBytes).left.map(refused))
             .map { o => b += o; () }
         }
       }
