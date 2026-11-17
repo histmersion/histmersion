@@ -104,17 +104,30 @@ object Column:
       case Plugin.Dependency(p, m, want, has) => s"$p needs $m $want; it ships $has"
       case Plugin.Said(plugin, claim, text)   => s"$plugin says (${claim.productPrefix}): $text"
       case Problem.Run.Paused(reason, at)     => s"paused for ${reason.productPrefix}${until(at)}"
-      case Problem.Run.NoModel(role, tried)   => s"no model of the $role chain can run${passedOver(tried)}"
-      case Problem.Run.Blocked(block)         => s"held back: ${block.stored}"
-      case Problem.Run.Interrupted            => "interrupted"
-      case Problem.Run.CutShort(activity)     => s"cut short: ${activity.productPrefix}"
-      case Problem.Run.Unrecorded(activity)   => s"unrecorded: ${activity.productPrefix}"
-      case Problem.Run.Cancelled(by)          => s"cancelled by ${by.productPrefix}"
-      case Problem.Run.Draining(since)        => s"draining since ${since.iso}"
-      case Problem.Run.Aborted(step, cause)   => s"step $step cannot go on: ${cause.productPrefix}"
-      case Content.Finding(cause)             => s"finding: ${cause.productPrefix}"
-      case Content.Proposal(rule, at)         => s"$at: ${rule.stored}"
-      case Content.Answer(rule)               => s"the answer breaks ${rule.stored}"
+      case Problem.Run.NoModel(role, passed)  => s"no model of the $role chain can run${passedStored(passed)}"
+      case Problem.Run.Exhausted(role, floor, frees, passed) =>
+        s"all models of the $role chain are spent (${floor.productPrefix}, ${frees.stored})${passedStored(passed)}"
+      case Problem.Run.PassedOver(model, why) =>
+        s"$model passed over (${why.toVector.map(_.stored).mkString(WhySeparator)})"
+      case Problem.Run.Unassigned(role, asked)   => s"no model set for $role (${asked.productPrefix})"
+      case Problem.Run.Cooling(until)            => s"cooling until ${until.iso}"
+      case Problem.Run.BelowFloor(pool, reading) => s"below the floor of $pool ($reading)"
+      case Problem.Run.BelowAllowance(limits)    =>
+        s"below its allowance: ${limits.toVector.map(l => s"${l.limit}$HoldSeparator${l.used}$HoldSeparator${l.reserve}").mkString(PassedSeparator)}"
+      case Problem.Run.AllowanceUnread(broken) =>
+        val each = broken.toVector.map(b => s"${b.target}: ${b.why.toVector.map(_.stored).mkString(WhySeparator)}")
+        s"allowance unreadable (${each.mkString(PassedSeparator)})"
+      case Problem.Run.PlanOnly(role)           => s"no fall from a plan to a paid key for $role"
+      case Problem.Run.Blocked(block)           => s"held back: ${block.stored}"
+      case Problem.Run.Interrupted              => "interrupted"
+      case Problem.Run.CutShort(activity)       => s"cut short: ${activity.productPrefix}"
+      case Problem.Run.Unrecorded(activity)     => s"unrecorded: ${activity.productPrefix}"
+      case Problem.Run.Cancelled(by)            => s"cancelled by ${by.productPrefix}"
+      case Problem.Run.Draining(since)          => s"draining since ${since.iso}"
+      case Problem.Run.Aborted(step, cause)     => s"step $step cannot go on: ${cause.productPrefix}"
+      case Content.Finding(cause)               => s"finding: ${cause.productPrefix}"
+      case Content.Proposal(rule, at)           => s"$at: ${rule.stored}"
+      case Content.Answer(rule)                 => s"the answer breaks ${rule.stored}"
       case Internal.Unexpected(id, where, e, r) => s"$where failed unexpectedly ($e, problem $id) — $r"
       case Unclassified(text)                   => s"unclassified: $text"
       case Stored.Unrecognised(text)            => s"$text"
@@ -158,8 +171,26 @@ object Column:
 
   private def until(at: Option[EpochMs]): String = at.fold("")(t => s" until ${t.iso}")
 
-  private def passedOver(tried: Vector[Problem.Run.Model]): String =
-    if tried.isEmpty then "" else s" (passed over: ${tried.mkString(", ")})"
+  /** The models a chain passed over, each with its problems, one after another in parentheses: a nested sentence is
+    * never the tail of the text, which a reader of a path (`<field>: <sentence>`) would take it for.
+    */
+  private def passedStored(passed: Vector[Problem.Run.PassedOver]): String =
+    if passed.isEmpty then "" else passed.map(_.stored).mkString(" (", PassedSeparator, ")")
+
+  /** Between the models a chain passed over (and the limits or allowances of one): a mark no sentence holds. */
+  private val PassedSeparator = " ‖ "
+
+  /** Between the problems of one model passed over: a mark no sentence holds, other than [[PassedSeparator]]. */
+  private val WhySeparator = " ¦ "
+
+  extension (frees: Problem.Run.Frees)
+    private def stored: String = frees match
+      case Problem.Run.Frees.At(at, model, held) => s"At ${at.iso} $model${heldStored(held)}"
+      case Problem.Run.Frees.Released(held)      => s"Released${heldStored(held.toVector)}"
+      case Problem.Run.Frees.Never               => "Never"
+
+  private def heldStored(held: Vector[Problem.Run.HeldPool]): String =
+    held.map(h => s"$HoldSeparator${h.title} [${h.pool}]").mkString
 
   private val CycleArrow = " → "
 
@@ -798,7 +829,36 @@ object Column:
     private val VaultFailed = "(?s)^secret vault (\\S+) failed: (\\w+)(?: (.*))?$".r
     private val Says = "(?s)^(\\S+) says \\((\\w+)\\): (.*)$".r
     private val PausedFor = "^paused for (\\w+)(?: until (\\S+))?$".r
-    private val NoModelFor = "(?s)^no model of the (\\S+) chain can run(?: \\(passed over: (.*)\\))?$".r
+    private val NoModelFor = "(?s)^no model of the (\\S+) chain can run(?: \\((.*)\\))?$".r
+    private val ChainSpent =
+      "(?s)^all models of the (\\S+) chain are spent \\((\\w+), (At (\\S+) (\\S+)|Released|Never)((?: \\| [^|\\[\\]]+ \\[[^\\]]+\\])*)\\)(?: \\((.*)\\))?$".r
+    private val PassedOverWhy = "(?s)^(\\S+) passed over \\((.*)\\)$".r
+    private val NoModelSet = "^no model set for (\\S+) \\((\\w+)\\)$".r
+    private val CoolingUntil = "^cooling until (\\S+)$".r
+    private val BelowFloorOf = "(?s)^below the floor of (.+?) \\((.*)\\)$".r
+    private val BelowAllowanceOf = "(?s)^below its allowance: (.*)$".r
+    private val AllowanceUnreadable = "(?s)^allowance unreadable \\((.*)\\)$".r
+    private val PlanOnlyFor = "^no fall from a plan to a paid key for (\\S+)$".r
+    private val HeldPoolOf = " \\| ([^|\\[\\]]+) \\[([^\\]]+)\\]".r
+
+    /** The models a chain passed over, from what [[passedStored]] wrote in the parentheses. */
+    private def passedOf(written: String | Null): Option[Vector[Problem.Run.PassedOver]] =
+      Option(written).fold(Some(Vector.empty)) { w =>
+        val each = w.split(java.util.regex.Pattern.quote(PassedSeparator), -1).toVector.map(read)
+        Option.when(each.forall(_.isInstanceOf[Problem.Run.PassedOver]))(each.collect {
+          case p: Problem.Run.PassedOver => p
+        })
+      }
+
+    /** The problems of one model passed over, or of an allowance's target. */
+    private def whysOf(written: String): Option[NonEmptyVector[Problem]] =
+      NonEmptyVector.from(written.split(java.util.regex.Pattern.quote(WhySeparator), -1).toVector.map(read))
+
+    private def heldOf(written: String): Vector[Problem.Run.HeldPool] =
+      HeldPoolOf
+        .findAllMatchIn(written)
+        .map(m => Problem.Run.HeldPool(Raw(s"${m.group(1)}"), Raw(s"${m.group(2)}")))
+        .toVector
     private val HeldBack = "(?s)^held back: (\\w+)(?: (.*))?$".r
     private val CancelledBy = "^cancelled by (\\w+)$".r
     private val DrainingSince = "^draining since (\\S+)$".r
@@ -979,6 +1039,72 @@ object Column:
       case _ => None
 
     private val Readers: List[String => Option[Problem]] = List(
+      // the cases that hold other problems first: a nested sentence may end in free text (a type's name, a reading),
+      // so the text may also read as a path in front of that sentence; the case that wrote it is the one meant
+      {
+        case NoModelFor(role, passed) => passedOf(passed).map(Problem.Run.NoModel(Problem.Run.Role(s"$role"), _))
+        case _                        => None
+      },
+      {
+        case ChainSpent(role, floor, frees, at, model, held, passed) =>
+          val read: Option[Problem.Run.Frees] = frees match
+            case "Never"    => Option.when(held.isEmpty)(Problem.Run.Frees.Never)
+            case "Released" => NonEmptyVector.from(heldOf(held)).map(Problem.Run.Frees.Released(_))
+            case _          => momentOf(at).map(Problem.Run.Frees.At(_, Problem.Run.Model(s"$model"), heldOf(held)))
+          for
+            f <- word(Problem.Run.Floor.values.toSeq, floor)
+            fr <- read
+            ps <- passedOf(passed)
+          yield Problem.Run.Exhausted(Problem.Run.Role(s"$role"), f, fr, ps)
+        case _ => None
+      },
+      {
+        case PassedOverWhy(model, why) => whysOf(why).map(Problem.Run.PassedOver(Problem.Run.Model(s"$model"), _))
+        case _                         => None
+      },
+      {
+        case NoModelSet(role, asked) =>
+          word(Problem.Run.Asked.values.toSeq, asked).map(Problem.Run.Unassigned(Problem.Run.Role(s"$role"), _))
+        case _ => None
+      },
+      {
+        case CoolingUntil(until) => momentOf(until).map(Problem.Run.Cooling(_))
+        case _                   => None
+      },
+      {
+        case BelowFloorOf(pool, reading) => Some(Problem.Run.BelowFloor(Raw(s"$pool"), Raw(s"$reading")))
+        case _                           => None
+      },
+      {
+        case BelowAllowanceOf(written) =>
+          val limits = written.split(java.util.regex.Pattern.quote(PassedSeparator), -1).toVector.map {
+            _.split(java.util.regex.Pattern.quote(HoldSeparator), -1).toVector match
+              case Vector(l, u, r) => Some(Problem.Run.Spent(Raw(s"$l"), Raw(s"$u"), Raw(s"$r")))
+              case _               => None
+          }
+          Option
+            .when(limits.forall(_.isDefined))(limits.flatten)
+            .flatMap(NonEmptyVector.from)
+            .map(Problem.Run.BelowAllowance(_))
+        case _ => None
+      },
+      {
+        case AllowanceUnreadable(written) =>
+          val broken = written.split(java.util.regex.Pattern.quote(PassedSeparator), -1).toVector.map { b =>
+            b.indexOf(": ") match
+              case -1 => None
+              case i  => whysOf(b.drop(i + 2)).map(Problem.Run.Unread(Raw(s"${b.take(i)}"), _))
+          }
+          Option
+            .when(broken.forall(_.isDefined))(broken.flatten)
+            .flatMap(NonEmptyVector.from)
+            .map(Problem.Run.AllowanceUnread(_))
+        case _ => None
+      },
+      {
+        case PlanOnlyFor(role) => Some(Problem.Run.PlanOnly(Problem.Run.Role(s"$role")))
+        case _                 => None
+      },
       {
         case BrokenAt(at, written) =>
           ruleOf(written.split(Regex.quote(HoldSeparator), -1).toVector).map(Invalid.Broken(_, pathOf(at)))
@@ -1523,12 +1649,6 @@ object Column:
             r <- word(Problem.Run.PauseReason.values.toSeq, reason)
             until <- untilOf(at)
           yield Problem.Run.Paused(r, until)
-        case _ => None
-      },
-      {
-        case NoModelFor(role, tried) =>
-          val models = Option(tried).fold(Vector.empty)(_.split(", ", -1).toVector.map(m => Problem.Run.Model(s"$m")))
-          Some(Problem.Run.NoModel(Problem.Run.Role(s"$role"), models))
         case _ => None
       },
       {

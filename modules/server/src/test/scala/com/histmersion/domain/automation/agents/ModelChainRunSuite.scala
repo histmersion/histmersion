@@ -432,7 +432,7 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
       )
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(c.models.map(e => (e.model.value: String, e.ready)), List(("local:zzUnpriced", false), (B.wire, true)))
-    assert(c.models.head.problem.exists(_.sentence.contains("has no price")), c)
+    assert(c.models.head.problems.exists(_.sentence.contains("has no price")), c)
     val run = startAndRun(a)
     assertEquals(run.status, "done", run.error)
     assertEquals(llmModels(run.id).map(_._4.map(_.value: String)).distinct, List(Some(B.wire)))
@@ -440,7 +440,7 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
     assert(
       a.runnable(Role.Extractor, Some(AgentsControllers.ModelName("local:zzUnpriced")))
         .left
-        .exists(_.sentence.contains("has no price"))
+        .exists(_.sentences.mkString("; ").contains("has no price"))
     )
 
   // ── agent doctor ───────────────────────────────────────────────────────────────────────────────

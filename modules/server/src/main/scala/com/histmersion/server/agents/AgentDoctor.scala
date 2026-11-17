@@ -5,7 +5,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{Legacy, Problem, Problems}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import io.scalaland.chimney.dsl.*
@@ -43,7 +43,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 final class AgentDoctor(
     app: AppConfig,
     picker: ModelPicker,
-    resolve: ModelRef => Either[Problem, (LlmClient, Billing)],
+    resolve: ModelRef => Either[Problems, (LlmClient, Billing)],
     listModels: (
         HttpDownload.Url,
         List[(AgentDoctor.HeaderName, AgentDoctor.HeaderText)],
@@ -86,7 +86,7 @@ final class AgentDoctor(
       val priced = models.map { m =>
         resolve(m) match
           case Right((_, b)) => ok(s"model ${m.wire}", s"${b.describe}; its client can be built")
-          case Left(why)     => fail(s"model ${m.wire}", why.sentence)
+          case Left(why)     => fail(s"model ${m.wire}", why.sentences.mkString("; "))
       }
       val off = registry
         .filterNot(_.contains(AgentDoctor.RegistryKey(k.wire.value)))
@@ -119,12 +119,14 @@ final class AgentDoctor(
        else warn("agents", "off (agents.enabled = false): nothing runs, settings can still be made")) ::
         Agents.Prices
           .parse(Agents.Prices.Wire(cfg.prices.value))
-          .fold(m => List(fail("prices", s"agents.prices: $m")), _ => Nil) ++
-        allowanceProblems.map(fail("allowances", _)) ++
-        allowances.collect {
-          case e if e.allowance.isLeft =>
-            fail(s"allowance ${e.target}", e.allowance.left.toOption.map(_.sentence).getOrElse(""))
-        } ++
+          .fold(
+            m => m.at(Problem.Field("agents.prices")).toVector.toList.map(p => fail("prices", p.sentence)),
+            _ => Nil
+          ) ++
+        allowanceProblems.map(p => fail("allowances", p.sentence)) ++
+        allowances.flatMap(e =>
+          e.allowance.fold(why => List(fail(s"allowance ${e.target}", why.sentences.mkString("; "))), _ => Nil)
+        ) ++
         roleChecks
     DoctorReport(DoctorReport.Enabled(cfg.enabled.value), online, providers, global)
 
@@ -176,7 +178,7 @@ final class AgentDoctor(
         val priced = models.map { m =>
           resolve(m) match
             case Right((_, b)) => ok(s"model ${m.wire}", s"${b.describe}; its client can be built")
-            case Left(why)     => fail(s"model ${m.wire}", why.sentence)
+            case Left(why)     => fail(s"model ${m.wire}", why.sentences.mkString("; "))
         }
         ProviderDoctor(
           ProviderDoctor.Provider(name.value),

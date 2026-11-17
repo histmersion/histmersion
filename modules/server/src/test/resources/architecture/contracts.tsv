@@ -1060,7 +1060,7 @@ unwrap	server:domain/automation/agents/Engine.scala	.value outside a boundary	66
 unwrap	server:domain/automation/agents/EngineSite.scala	.value outside a boundary	2
 unwrap	server:domain/automation/agents/FirstCallProbe.scala	.value outside a boundary	1
 unwrap	server:domain/automation/agents/LlmClient.scala	.value outside a boundary	8
-unwrap	server:domain/automation/agents/ModelPicker.scala	.value outside a boundary	54
+unwrap	server:domain/automation/agents/ModelPicker.scala	.value outside a boundary	53
 unwrap	server:domain/automation/agents/PluginAiClient.scala	.value outside a boundary	21
 unwrap	server:domain/automation/agents/PluginTree.scala	.value outside a boundary	5
 unwrap	server:domain/automation/agents/Prompt.scala	.value outside a boundary	1

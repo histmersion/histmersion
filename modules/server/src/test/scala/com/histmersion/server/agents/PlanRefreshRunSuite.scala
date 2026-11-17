@@ -512,7 +512,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
       a.picker.cool(Plan, Some(java.time.Instant.ofEpochMilli(since + 6 * 86400000L)), PlanQuotaRepo.EpochMillis(since))
     val head = a.models.chains.find(_.role.value == "extractor").get.models.head
     assert(
-      !head.usable.value && head.cooling.value && head.problem.exists(_.sentence.contains(ModelPicker.CoolingWhy)),
+      !head.usable.value && head.cooling.value && head.problems.exists(_.sentence.contains(ModelPicker.CoolingWhy)),
       head
     )
     val listed = AgentsMarkdown.roleChain(a.models.chains.find(_.role.value == "extractor").get)
@@ -582,7 +582,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
       )
     val (a, _) = handlers(Map(Plan -> ScriptedClient(Plan)), reads, only)
     a.picker.pick(Role.Extractor, None) match
-      case Left(PickFailure.Unavailable(m)) => assert(m.sentence.contains("unavailable: no login"), m)
+      case Left(PickFailure.Unavailable(m)) => assert(m.sentences.mkString("; ").contains("unavailable: no login"), m)
       case other                            => fail(s"not unavailable: $other")
     assertEquals(reads.probes.get(), 0)
     val pool = a.quota.plans.find(_.pool.value == "claude-plan").get
@@ -592,7 +592,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
     )
     assert(AgentsMarkdown.pool(pool).contains("**unavailable: no login"), AgentsMarkdown.pool(pool))
     val entry = a.models.chains.find(_.role.value == "extractor").get.models.head
-    assert(!entry.usable.value && entry.problem.exists(_.sentence.contains("no login")), entry)
+    assert(!entry.usable.value && entry.problems.exists(_.sentence.contains("no login")), entry)
     val forced = a
       .refreshQuota(QuotaRefresh(Some(PlanQuota.PoolId.Wire("claude-plan"))))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)

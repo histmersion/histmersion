@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.scheduler
 import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import hearth.kindlings.optics.syntax.*
 
@@ -145,8 +145,9 @@ final class SchedulerService(
               at.fold("")(t => s"; frees ~$t")
           )
         )
-      case Some((r, PickFailure.Unavailable(msg))) => Left(Block.Chain(s"${r.wire}: ${msg.sentence.take(200)}"))
-      case _                                       =>
+      case Some((r, PickFailure.Unavailable(msg))) =>
+        Left(Block.Chain(s"${r.wire}: ${msg.sentences.mkString("; ").take(200)}"))
+      case _ =>
         val plans = picks.collect { case (_, Right(p)) => p.billing }
         val pools = plans.collect { case Billing.Plan(p) => p }.distinct
         Right(if pools.nonEmpty && plans.forall(_.isInstanceOf[Billing.Plan]) then pools else Nil)

@@ -641,7 +641,7 @@ object Agents:
       role: RoleModel.Role,
       model: Option[RoleModel.Model],
       ready: RoleModel.Ready,
-      problem: Option[Problem]
+      problems: List[Problem]
   ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema

@@ -4,6 +4,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.writeToString
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.Cursor
 import com.histmersion.util.json.RawJson
+import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.util.problem.{Legacy, Problem, Problems}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
@@ -442,17 +443,19 @@ final class AgentsControllers(
         )
       )
 
-  /** The price table, parsed once per call (config is immutable; parsing is microseconds). */
-  private def prices: Either[Problem, Map[ModelRef.Model, Price]] =
+  /** The price table, parsed once per call (config is immutable; parsing is microseconds): every entry that does not
+    * read is a problem of its own.
+    */
+  private def prices: Either[Problems, Map[ModelRef.Model, Price]] =
     Agents.Prices
       .parse(Agents.Prices.Wire(cfg.prices.value))
       .left
-      .map(_.at(Problem.Field("agents.prices")).toNonEmpty.head)
+      .map(_.at(Problem.Field("agents.prices")))
 
   /** A model that can run: on a plan pool or PRICED (an unpriced metered model is refused, never treated as free), and
     * with a client its provider can build (a hosted provider needs its key; `claude-code` a loopback server).
     */
-  def resolve(m: ModelRef): Either[Problem, (LlmClient, Billing)] =
+  def resolve(m: ModelRef): Either[Problems, (LlmClient, Billing)] =
     for
       ps <- prices
       b <- Agents.Prices.billing(ps, m, pools.poolOf(m))
@@ -476,18 +479,17 @@ final class AgentsControllers(
   /** A role's chain can run at all: at least one of its models is on a plan or priced, and buildable (allowances are
     * not looked at — a run whose models are all spent queues and pauses until a window frees).
     */
-  def runnable(role: Role, overrideRef: Option[ModelName]): Either[Problem, Unit] =
+  def runnable(role: Role, overrideRef: Option[ModelName]): Either[Problems, Unit] =
     picker.chainFor(role, overrideRef).flatMap { chain =>
       val tried = chain.map(m => m -> resolve(m))
       if tried.exists(_._2.isRight) then Right(())
       else
         Left(
-          Problem.Unclassified(
-            Legacy.Text(
-              s"no model of the ${role.wire} chain can run: " + tried
-                .collect { case (m, Left(w)) => s"${m.wire}: ${w.sentence}" }
-                .mkString("; ")
-            )
+          Problem.Run.NoModel(
+            Problem.Run.Role.of(role.wire),
+            tried.collect { case (m, Left(w)) =>
+              Problem.Run.PassedOver(Problem.Run.Model.of(m.wire), w.toNonEmpty)
+            }.toVector
           )
         )
     }
@@ -506,16 +508,12 @@ final class AgentsControllers(
         Role.Wire(c.role.value),
         shown.map(RoleModel.Model(_)),
         ready = RoleModel.Ready(c.active.isDefined),
-        if c.active.isDefined then None
+        if c.active.isDefined then Nil
+        else if c.problems.nonEmpty then c.problems
         else
-          c.problem
-            .map(_.sentence)
-            .orElse(
-              Option.when(c.models.nonEmpty)(
-                c.models.flatMap(e => e.problem.map(p => s"${e.model}: ${p.sentence}")).mkString("; ")
-              )
-            )
-            .map((text => Problem.Unclassified(Legacy.Text(text))))
+          c.models.flatMap(e =>
+            NonEmptyVector.from(e.problems.toVector).map(Problem.Run.PassedOver(Problem.Run.Model.of(e.model), _))
+          )
       )
     }
     val modes = List("status-change" -> cfg.approvals.statusChange, "edges" -> cfg.approvals.edges).collect {
@@ -527,7 +525,8 @@ final class AgentsControllers(
         s"agents.approvals.article-publish = '${cfg.approvals.articlePublish}' is neither manual nor auto; treated as manual"
       )
       .toList
-    val problems = prices.left.toOption.map(_.sentence).toList ++ modes ++ modes2 ++ picker.allowances._2 ++
+    val problems = prices.left.toOption.toList.flatMap(_.sentences) ++ modes ++ modes2 ++
+      picker.allowances._2.map(_.sentence) ++
       Option.when(!cfg.enabled.value)("embedded agents are off (agents.enabled = false)")
     ModelsInfo(
       ModelsInfo.Enabled(cfg.enabled.value),
@@ -1258,7 +1257,7 @@ final class AgentsControllers(
         .map(_ => notFound(Problem.NotFound.Entity(Problem.TypeName.of(Citekey), Problem.Raw(s"${req.citekey}"))))
       src <- host.probeSubject(ck)
       picked <- picker.pick(Role.Probe, req.model.map(m => ModelName(m.value))).left.map {
-        case PickFailure.Unavailable(m)     => Api.Error(m)
+        case PickFailure.Unavailable(ps)    => Api.Error(ps)
         case PickFailure.Exhausted(m, _, _) => Api.Error(m)
       }
       result <- probeWith(picked.client, picked.billing, src)

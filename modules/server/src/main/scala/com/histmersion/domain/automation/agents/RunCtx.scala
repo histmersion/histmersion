@@ -400,7 +400,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
       onRefresh = n => warn(s"${role.wire}: $n")
     ) match
       case Left(PickFailure.Unavailable(m)) =>
-        Left(Halt.Fail(Problem.Unclassified(Legacy.Text(s"$name: ${m.sentence}"))))
+        Left(Halt.Fail(Problem.Unclassified(Legacy.Text(s"$name: ${m.sentences.mkString("; ")}"))))
       case Left(PickFailure.Exhausted(m, at, why)) =>
         Left(Halt.Pause(why, Problem.Unclassified(Legacy.Text(s"$name: ${m.sentence}")), at))
       case Right(p) =>

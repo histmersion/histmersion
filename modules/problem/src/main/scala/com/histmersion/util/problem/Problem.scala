@@ -1578,8 +1578,34 @@ object Problem:
     /** The run waits for `reason`, until `until` when that is known. */
     final case class Paused(reason: PauseReason, until: Option[EpochMs]) extends Run
 
-    /** No model of `role`'s chain can run; `tried` are the ones passed over. */
-    final case class NoModel(role: Role, tried: Vector[Model]) extends Run
+    /** No model of `role`'s chain can run: each of its models, passed over and why. */
+    final case class NoModel(role: Role, passed: Vector[PassedOver]) extends Run
+
+    /** Every model of `role`'s chain is out of headroom, below `floor`: the run waits until `frees`. `passed`: each
+      * model passed over and why, those out of headroom first.
+      */
+    final case class Exhausted(role: Role, floor: Floor, frees: Frees, passed: Vector[PassedOver]) extends Run
+
+    /** `model` of a chain is passed over: `why` (each reason it cannot run now). */
+    final case class PassedOver(model: Model, why: NonEmptyVector[Problem]) extends Run
+
+    /** No model is set for `role`: `asked` says where the question came from, and with it what to do. */
+    final case class Unassigned(role: Role, asked: Asked) extends Run
+
+    /** The model's plan reported its usage limit: it is skipped until `until`. */
+    final case class Cooling(until: EpochMs) extends Run
+
+    /** The plan pool `pool` (its title) the model draws on is below its floor: `reading`, the pool's own words. */
+    final case class BelowFloor(pool: Raw, reading: Raw) extends Run
+
+    /** The model is below its allowance: each limit without headroom. */
+    final case class BelowAllowance(limits: NonEmptyVector[Spent]) extends Run
+
+    /** An allowance covering the model cannot be read, so it blocks what it covers: each target and why. */
+    final case class AllowanceUnread(broken: NonEmptyVector[Unread]) extends Run
+
+    /** The model is not used: `role`'s chain does not fall from a plan pool to a paid key. */
+    final case class PlanOnly(role: Role) extends Run
 
     /** The scheduler holds it back: `block`. */
     final case class Blocked(block: Block) extends Run
@@ -1609,11 +1635,15 @@ object Problem:
 
     /** An agent role, in its wire spelling. */
     type Role = Role.T
-    object Role extends Newtype[String, Pure]
+    object Role extends Newtype[String, Pure]:
+      /** The role a value of any newtype spells (`Role.of(role.wire)`): unwrapped here, like [[Raw.of]]. */
+      def of[T](value: T)(using RefinedType.Mirror[T]): Role = Role(s"$value")
 
     /** A model, by its id. */
     type Model = Model.T
-    object Model extends Newtype[String, Pure]
+    object Model extends Newtype[String, Pure]:
+      /** The model a value of any newtype names (`Model.of(ref.wire)`): unwrapped here, like [[Raw.of]]. */
+      def of[T](value: T)(using RefinedType.Mirror[T]): Model = Model(s"$value")
 
     /** A step of a run, by its name. */
     type Step = Step.T
@@ -1635,6 +1665,42 @@ object Problem:
 
     enum AbortCause:
       case Disappeared, CheckpointMismatch, VersionChanged
+
+    /** What a chain whose models are all out of headroom is below. */
+    enum Floor derives CanEqual:
+      /** A plan pool's floor, or an allowance. */
+      case PlanOrAllowance
+
+      /** An allowance. */
+      case Allowance
+
+    /** When a chain whose models are all out of headroom gets one back. */
+    enum Frees derives CanEqual:
+      /** `model`'s window resets first, at `at`: the run resumes by itself then. `held`: the pools a person holds. */
+      case At(at: EpochMs, model: Model, held: Vector[HeldPool])
+
+      /** No window frees by itself; the pools a person holds free once released. */
+      case Released(held: NonEmptyVector[HeldPool])
+
+      /** No window frees by itself: the allowance is raised or reset. */
+      case Never
+
+    /** A plan pool a person holds: its title, and its name to release it by. */
+    final case class HeldPool(title: Raw, pool: Raw)
+
+    /** A limit of an allowance without headroom: the limit as written, what is used and the reserve kept. */
+    final case class Spent(limit: Raw, used: Raw, reserve: Raw)
+
+    /** An allowance's `target` that cannot be read: `why`. */
+    final case class Unread(target: Raw, why: NonEmptyVector[Problem])
+
+    /** Where the question for a role's model came from. */
+    enum Asked derives CanEqual:
+      /** A call that needs a model now: the setting, its variable, the saved chain or a model of the run's own. */
+      case Call
+
+      /** The listing of the chains (`agent models`). */
+      case Listing
 
   /** Content written by a person or a model breaks a rule of the writing. */
   sealed trait Content extends Problem
@@ -2268,7 +2334,52 @@ object Problem:
         External.PluginSaid("the AWMC server is in maintenance")
       ),
       Run.Paused(Run.PauseReason.Allowance, Some(EpochMs(1762732800000L))),
-      Run.NoModel(Run.Role("reviewer"), Vector(Run.Model("claude-opus-5-5"), Run.Model("gpt-6"))),
+      Run.NoModel(
+        Run.Role("reviewer"),
+        Vector(
+          Run.PassedOver(
+            Run.Model("claude-code:opus"),
+            NonEmptyVector.of(Config.Unpriced(Run.Model("claude-code:opus"), None))
+          ),
+          Run.PassedOver(Run.Model("codex:gpt-6"), NonEmptyVector.of(Run.PlanOnly(Run.Role("reviewer"))))
+        )
+      ),
+      Run.Exhausted(
+        Run.Role("enricher"),
+        Run.Floor.PlanOrAllowance,
+        Run.Frees.At(
+          EpochMs(1762732800000L),
+          Run.Model("claude-code:sonnet"),
+          Vector(Run.HeldPool(Raw("Claude plan"), Raw("claude-plan")))
+        ),
+        Vector(
+          Run.PassedOver(
+            Run.Model("claude-code:sonnet"),
+            NonEmptyVector.of(Run.BelowFloor(Raw("Claude plan"), Raw("5-hour window 3% left, floor 10%")))
+          )
+        )
+      ),
+      Run.PassedOver(Run.Model("local:qwen"), NonEmptyVector.of(Run.Cooling(EpochMs(1762732800000L)))),
+      Run.Unassigned(Run.Role("skeptic"), Run.Asked.Call),
+      Run.Cooling(EpochMs(1762732800000L)),
+      Run.BelowFloor(Raw("ChatGPT plan"), Raw("weekly window 2% left, floor 5%")),
+      Run.BelowAllowance(
+        NonEmptyVector.of(
+          Run.Spent(Raw("5 usd/day"), Raw("4.9 USD"), Raw("0.5 USD")),
+          Run.Spent(Raw("2M tokens/week"), Raw("1.9M"), Raw("0"))
+        )
+      ),
+      Run.AllowanceUnread(
+        NonEmptyVector.of(
+          Run.Unread(
+            Raw("claude-code:*"),
+            NonEmptyVector.of(
+              Invalid.Unreadable.here(TypeName("ModelChains.Limit.Spec"), Raw("5 usd/fortnight"), Vector.empty)
+            )
+          )
+        )
+      ),
+      Run.PlanOnly(Run.Role("writer")),
       Run.Blocked(Run.Block.PoolFull(Run.Pool("review"))),
       Run.Interrupted,
       Run.CutShort(Conflict.Activity.MergeApply),

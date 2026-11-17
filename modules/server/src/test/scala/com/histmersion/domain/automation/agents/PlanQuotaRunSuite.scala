@@ -442,7 +442,7 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
     assert(
       a.runnable(Role.Extractor, Some(AgentsControllers.ModelName("anthropic:zzUnpriced")))
         .left
-        .exists(_.sentence.contains("has no price"))
+        .exists(_.sentences.mkString("; ").contains("has no price"))
     )
     val keyed = unpricedPlan
       .modify(_.agents)
@@ -460,7 +460,10 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
     val (k, _) = handlers(Map(Plan -> ScriptedClient(Plan)), keyed)
     val refused = k.runnable(Role.Extractor, None)
     assert(
-      refused.left.exists(e => e.sentence.contains("has no price") && e.sentence.contains("use an API key")),
+      refused.left
+        .map(_.sentences.mkString("; "))
+        .left
+        .exists(e => e.contains("has no price") && e.contains("use an API key")),
       refused
     )
     assert(k.startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget)).isLeft)

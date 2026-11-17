@@ -305,5 +305,10 @@ class PluginAiRunSuite extends DbSuite with RunTranscripts:
         .left
         .exists(_.problems.sentences.mkString("; ").contains("unknown provider kind 'hello-ai'"))
     )
-    assert(gone.picker.chain(Role.Extractor).left.exists(_.sentence.contains("unknown provider kind 'hello-ai'")))
+    assert(
+      gone.picker
+        .chain(Role.Extractor)
+        .left
+        .exists(_.sentences.mkString("; ").contains("unknown provider kind 'hello-ai'"))
+    )
     assert(!gone.doctor(offline = AgentsControllers.Offline(true)).providers.exists(_.provider.value == "hello-ai"))

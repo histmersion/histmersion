@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.automation.agents
+import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 
@@ -166,6 +167,34 @@ class HowJobsStopSuite extends munit.FunSuite:
       assertEquals(cause(Problem.Stored.Unrecognised(Problem.Stored.Text(s"${r.wire}:no space"))).pausedOn(r), false)
       assert(!"%_\\".exists(prefix.contains(_)), prefix)
     }
+
+  test("a chain out of headroom, typed, says its sentence as the pause stores it: the role is read back from it"):
+    val exhausted = Problem.Run.Exhausted(
+      Problem.Run.Role("extractor"),
+      Problem.Run.Floor.Allowance,
+      Problem.Run.Frees.Never,
+      Vector(
+        Problem.Run.PassedOver(
+          Problem.Run.Model("local:a"),
+          NonEmptyVector.of(Problem.Run.Cooling(Problem.EpochMs(1762732800000L)))
+        )
+      )
+    )
+    val stored = Stopped.write(
+      Stopped.Cause.Paused(PauseReason.Allowance, Stopped.Detail(s"enrich: ${exhausted.sentence}"))
+    )
+    assertEquals(
+      cause(stored),
+      Stopped.Cause.Exhausted(
+        PauseReason.Allowance,
+        Stopped.Lead("enrich: "),
+        AgentRole.Extractor,
+        Stopped.Rest(
+          "below their allowance; no window frees by itself — raise or reset the allowance (local:a: its plan " +
+            "reported its usage limit; skipped until 2025-11-10T00:00:00Z)"
+        )
+      )
+    )
 
   test("the role an exhausted pause names is read from its sentence, with the step that put its lead in front"):
     assertEquals(

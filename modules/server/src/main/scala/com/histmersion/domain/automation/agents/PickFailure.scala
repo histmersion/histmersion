@@ -1,6 +1,6 @@
 package com.histmersion
 package domain.automation.agents
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.{Problem, Problems}
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -15,9 +15,9 @@ import io.github.iltotore.iron.constraint.any.Pure
   * before chains existed.
   */
 enum PickFailure:
-  case Unavailable(message: Problem)
+  case Unavailable(problems: Problems)
   case Exhausted(
-      message: Problem,
+      message: Problem.Run.Exhausted,
       freesAt: Option[Instant],
       reason: PauseReason = PauseReason.Allowance
   )

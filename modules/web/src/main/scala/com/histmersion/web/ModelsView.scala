@@ -293,7 +293,8 @@ object ModelsView:
     tr(
       td(c.role.value),
       td(
-        if c.models.isEmpty then span(cls := "muted", c.problem.map(_.sentence).getOrElse("no model"))
+        if c.models.isEmpty then
+          span(cls := "muted", if c.problems.isEmpty then "no model" else c.problems.map(_.sentence).mkString("; "))
         else
           span(
             cls := "chain",
@@ -301,7 +302,7 @@ object ModelsView:
               (if i > 0 then List(span(cls := "chain-sep", " → ")) else Nil) :+
                 span(
                   cls := s"chain-entry ${entryState(e)}",
-                  title := Option((e.problem.toList ++ e.billing.toList).mkString(" · "))
+                  title := Option((e.problems.map(_.sentence) ++ e.billing.toList).mkString(" · "))
                     .filter(_.nonEmpty)
                     .getOrElse("usable"),
                   e.model.value,

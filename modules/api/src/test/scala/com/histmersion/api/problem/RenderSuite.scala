@@ -138,7 +138,27 @@ class RenderSuite extends munit.FunSuite:
     ),
     "Said" -> (503, "gazetteer-awmc says (Unavailable): the AWMC server is in maintenance"),
     "Paused" -> (409, "paused for Allowance until 2025-11-10T00:00:00Z"),
-    "NoModel" -> (409, "no model of the reviewer chain can run (passed over: claude-opus-5-5, gpt-6)"),
+    "NoModel" -> (
+      409,
+      "no model of the reviewer chain can run (claude-code:opus passed over (model claude-code:opus is unpriced) ‖ " +
+        "codex:gpt-6 passed over (no fall from a plan to a paid key for reviewer))"
+    ),
+    "Exhausted" -> (
+      409,
+      "all models of the enricher chain are spent (PlanOrAllowance, At 2025-11-10T00:00:00Z claude-code:sonnet | " +
+        "Claude plan [claude-plan]) (claude-code:sonnet passed over (below the floor of Claude plan (5-hour window 3% " +
+        "left, floor 10%)))"
+    ),
+    "PassedOver" -> (409, "local:qwen passed over (cooling until 2025-11-10T00:00:00Z)"),
+    "Unassigned" -> (409, "no model set for skeptic (Call)"),
+    "Cooling" -> (409, "cooling until 2025-11-10T00:00:00Z"),
+    "BelowFloor" -> (409, "below the floor of ChatGPT plan (weekly window 2% left, floor 5%)"),
+    "BelowAllowance" -> (409, "below its allowance: 5 usd/day | 4.9 USD | 0.5 USD ‖ 2M tokens/week | 1.9M | 0"),
+    "AllowanceUnread" -> (
+      409,
+      "allowance unreadable (claude-code:*: '5 usd/fortnight' is unreadable as ModelChains.Limit.Spec)"
+    ),
+    "PlanOnly" -> (409, "no fall from a plan to a paid key for writer"),
     "Blocked" -> (409, "held back: PoolFull review"),
     "Interrupted" -> (409, "interrupted"),
     "Cancelled" -> (409, "cancelled by Person"),
@@ -542,6 +562,49 @@ class RenderSuite extends munit.FunSuite:
         "the json data at https://x/builds.json lists no build"
     ).foreach((p, s) => assertEquals(p.sentence, s))
     assertEquals(Upstream.Offline(Upstream.Name("the provider"), Some(EpochMs(5L))).retryAfter, Some(EpochMs(5L)))
+
+  test("a chain's model picking keeps the words and hints it had before its cases were typed"):
+    val (role, opus, gpt) = (Run.Role("enricher"), Run.Model("claude-code:opus"), Run.Model("codex:gpt-6"))
+    val at = EpochMs(1762732800000L)
+    val held = Run.HeldPool(Raw("Claude plan"), Raw("claude-plan"))
+    val floor = Run.PassedOver(opus, NonEmptyVector.of(Run.BelowFloor(Raw("Claude plan"), Raw("5-hour 3% left"))))
+    val planOnly = Run.PassedOver(gpt, NonEmptyVector.of(Run.PlanOnly(role)))
+    Vector[(Problem, String)](
+      Run.Unassigned(Run.Role("fact-checker"), Run.Asked.Call) ->
+        ("no model for the fact-checker role — set agents.roles.fact-checker (HISTMERSION_AGENTS_ROLE_FACT_CHECKER) " +
+          "to provider:model[ > provider:model …], save one with `histmersion agent models set fact-checker " +
+          "<provider:model>…`, or pass one"),
+      Run.Unassigned(role, Run.Asked.Listing) ->
+        "no model — set agents.roles.enricher or `histmersion agent models set enricher …`",
+      Run.NoModel(role, Vector(floor, planOnly)) ->
+        ("no model of the enricher chain can run: claude-code:opus: the Claude plan is below its floor: 5-hour 3% " +
+          "left; codex:gpt-6: not used — the chain does not fall from a plan to a paid key (histmersion agent quota " +
+          "fallthrough enricher on)"),
+      Run.Exhausted(role, Run.Floor.PlanOrAllowance, Run.Frees.At(at, opus, Vector(held)), Vector(floor, planOnly)) ->
+        ("all models for role enricher are below their plan floor or allowance; next reset at 2025-11-10T00:00:00Z " +
+          "(claude-code:opus), when the run resumes by itself; the Claude plan is held (release it with `histmersion " +
+          "agent quota release claude-plan`) (claude-code:opus: the Claude plan is below its floor: 5-hour 3% left; " +
+          "codex:gpt-6: not used — the chain does not fall from a plan to a paid key (histmersion agent quota " +
+          "fallthrough enricher on))"),
+      Run.Exhausted(role, Run.Floor.Allowance, Run.Frees.Released(NonEmptyVector.of(held)), Vector.empty) ->
+        ("all models for role enricher are below their allowance; no window frees by itself: the Claude plan is held " +
+          "(release it with `histmersion agent quota release claude-plan`) ()"),
+      Run.Exhausted(role, Run.Floor.Allowance, Run.Frees.Never, Vector.empty) ->
+        "all models for role enricher are below their allowance; no window frees by itself — raise or reset the allowance ()",
+      Run.Cooling(at) -> "its plan reported its usage limit; skipped until 2025-11-10T00:00:00Z",
+      Run.BelowAllowance(
+        NonEmptyVector.of(
+          Run.Spent(Raw("5 usd/day"), Raw("4.9 USD"), Raw("0.5 USD")),
+          Run.Spent(Raw("2M tok/week"), Raw("2M"), Raw("0"))
+        )
+      ) -> "below its allowance: 5 usd/day (4.9 USD used, reserve 0.5 USD), 2M tok/week (2M used, reserve 0)",
+      Run.AllowanceUnread(
+        NonEmptyVector.of(
+          Run.Unread(Raw("local:*"), NonEmptyVector.of(Relayed(Sentence("x")), Relayed(Sentence("y")))),
+          Run.Unread(Raw("codex:*"), NonEmptyVector.of(Relayed(Sentence("z"))))
+        )
+      ) -> "its allowance cannot be read (local:*: x; y; codex:*: z)"
+    ).foreach((p, want) => assertEquals(p.sentence, want))
 
   test("a watch left out of a sweep says so before why, in its sentence and its stored text"):
     val unasked = Upstream.Unasked(Relayed(Sentence("CORE asked to wait")))

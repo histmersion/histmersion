@@ -471,7 +471,7 @@ object ModelChains:
       model: ChainEntry.Model,
       ready: ChainEntry.Ready,
       usable: ChainEntry.Usable,
-      problem: Option[Problem] = None,
+      problems: List[Problem] = Nil,
       freesAt: Option[ChainEntry.FreesAt] = None,
       billing: Option[ChainEntry.Billing] = None,
       cooling: ChainEntry.Cooling = ChainEntry.Cooling(false)
@@ -497,7 +497,7 @@ object ModelChains:
       source: SettingSource.Wire,
       models: List[ChainEntry],
       active: Option[RoleChain.Active] = None,
-      problem: Option[Problem] = None
+      problems: List[Problem] = Nil
   ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema

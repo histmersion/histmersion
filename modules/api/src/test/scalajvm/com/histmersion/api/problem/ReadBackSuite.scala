@@ -597,6 +597,43 @@ class ReadBackSuite extends munit.FunSuite:
           Invalid.OutOfRange.here(TypeName("a.B"), Raw("x"), Invalid.Bounds(None, Some(Raw("9")))),
           Conflict.WrongState(TypeName("a.B"), Raw("k"), Conflict.State("done"), Vector.empty),
           Run.NoModel(Run.Role("writer"), Vector.empty),
+          Run.Exhausted(Run.Role("writer"), Run.Floor.Allowance, Run.Frees.Never, Vector.empty),
+          Run.Exhausted(
+            Run.Role("writer"),
+            Run.Floor.PlanOrAllowance,
+            Run.Frees.Released(
+              NonEmptyVector.of(
+                Run.HeldPool(Raw("Claude plan"), Raw("claude-plan")),
+                Run.HeldPool(Raw("ChatGPT plan"), Raw("chatgpt-plan"))
+              )
+            ),
+            Vector(
+              Run.PassedOver(
+                Run.Model("claude-code:opus"),
+                NonEmptyVector.of(
+                  Run.BelowAllowance(NonEmptyVector.of(Run.Spent(Raw("5 usd/day"), Raw("5 USD"), Raw("0 USD")))),
+                  Run.Cooling(EpochMs(1762732800000L))
+                )
+              ),
+              Run.PassedOver(Run.Model("codex:gpt-6"), NonEmptyVector.of(Run.PlanOnly(Run.Role("writer"))))
+            )
+          ),
+          Run.Exhausted(
+            Run.Role("writer"),
+            Run.Floor.Allowance,
+            Run.Frees.At(EpochMs(1762732800000L), Run.Model("local:a"), Vector.empty),
+            Vector(Run.PassedOver(Run.Model("local:a"), NonEmptyVector.of(Stored.Unrecognised(Stored.Text("odd")))))
+          ),
+          Run.Unassigned(Run.Role("writer"), Run.Asked.Listing),
+          Run.AllowanceUnread(
+            NonEmptyVector.of(
+              Run.Unread(Raw("local:*"), NonEmptyVector.of(Stored.Unrecognised(Stored.Text("a")))),
+              Run.Unread(
+                Raw("codex:*"),
+                NonEmptyVector.of(Stored.Unrecognised(Stored.Text("b")), Stored.Unrecognised(Stored.Text("c")))
+              )
+            )
+          ),
           Refused.Quota(Refused.Limit.RateLimit, Refused.Amount(1.5), Refused.Amount(2.5), None)
         ) ++ {
           val (met, url, at) =

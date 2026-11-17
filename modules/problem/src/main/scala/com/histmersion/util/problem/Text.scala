@@ -119,11 +119,31 @@ object Text:
       case Plugin.Dependency(plugin, module, want, ships) =>
         s"$plugin needs $module $want, but this Histmersion ships $ships — build the plugin against $ships " +
           s"(the histmersion-plugin-platform POM), or install a Histmersion that ships $want"
-      case Plugin.Rejected(plugin, item, why)   => s"$plugin did not take $item: ${why.said}"
-      case Plugin.Vault(vault, failure)         => s"secret vault $vault failed: ${failure.said}"
-      case Plugin.Said(plugin, claim, text)     => s"$plugin (${words(claim.productPrefix)}): $text"
-      case Problem.Run.Paused(reason, at)       => s"paused for ${words(reason.productPrefix)}${until(at)}"
-      case Problem.Run.NoModel(role, tried)     => s"no model of the $role chain can run${triedModels(tried)}"
+      case Plugin.Rejected(plugin, item, why) => s"$plugin did not take $item: ${why.said}"
+      case Plugin.Vault(vault, failure)       => s"secret vault $vault failed: ${failure.said}"
+      case Plugin.Said(plugin, claim, text)   => s"$plugin (${words(claim.productPrefix)}): $text"
+      case Problem.Run.Paused(reason, at)     => s"paused for ${words(reason.productPrefix)}${until(at)}"
+      case Problem.Run.NoModel(role, passed)  =>
+        s"no model of the $role chain can run${if passed.isEmpty then "" else s": ${passedOver(passed)}"}"
+      case Problem.Run.Exhausted(role, floor, frees, passed) =>
+        s"all models for role $role are ${floor.said}; ${frees.said} (${passedOver(passed)})"
+      case Problem.Run.PassedOver(model, why) => s"$model: ${why.toVector.map(_.sentence).mkString("; ")}"
+      case Problem.Run.Unassigned(role, Problem.Run.Asked.Call) =>
+        s"no model for the $role role — set agents.roles.$role " +
+          s"(HISTMERSION_AGENTS_ROLE_${s"$role".toUpperCase(java.util.Locale.ROOT).replace('-', '_')}) to " +
+          s"provider:model[ > provider:model …], save one with `histmersion agent models set $role <provider:model>…`, " +
+          "or pass one"
+      case Problem.Run.Unassigned(role, Problem.Run.Asked.Listing) =>
+        s"no model — set agents.roles.$role or `histmersion agent models set $role …`"
+      case Problem.Run.Cooling(until)            => s"its plan reported its usage limit; skipped until ${until.iso}"
+      case Problem.Run.BelowFloor(pool, reading) => s"the $pool is below its floor: $reading"
+      case Problem.Run.BelowAllowance(limits)    =>
+        s"below its allowance: ${limits.toVector.map(l => s"${l.limit} (${l.used} used, reserve ${l.reserve})").mkString(", ")}"
+      case Problem.Run.AllowanceUnread(broken) =>
+        val each = broken.toVector.map(b => s"${b.target}: ${b.why.toVector.map(_.sentence).mkString("; ")}")
+        s"its allowance cannot be read (${each.mkString("; ")})"
+      case Problem.Run.PlanOnly(role) =>
+        s"not used — the chain does not fall from a plan to a paid key (histmersion agent quota fallthrough $role on)"
       case Problem.Run.Blocked(block)           => s"held back: ${block.said}"
       case Problem.Run.Interrupted              => "interrupted by a restart"
       case Problem.Run.CutShort(activity)       => activity.cutShort
@@ -952,8 +972,23 @@ object Text:
       case Plugin.Attempt.ChallengeFailed  => "challenge-response failed"
       case Plugin.Attempt.Refused          => "an error KeePassXC gave"
 
-  private def triedModels(tried: Vector[Problem.Run.Model]): String =
-    if tried.isEmpty then "" else s" (passed over: ${tried.mkString(", ")})"
+  private def passedOver(passed: Vector[Problem.Run.PassedOver]): String = passed.map(_.sentence).mkString("; ")
+
+  extension (floor: Problem.Run.Floor)
+    private def said: String = floor match
+      case Problem.Run.Floor.PlanOrAllowance => "below their plan floor or allowance"
+      case Problem.Run.Floor.Allowance       => "below their allowance"
+
+  extension (frees: Problem.Run.Frees)
+    private def said: String = frees match
+      case Problem.Run.Frees.At(at, model, held) =>
+        (s"next reset at ${at.iso} ($model), when the run resumes by itself" +: held.map(_.said)).mkString("; ")
+      case Problem.Run.Frees.Released(held) => s"no window frees by itself: ${held.toVector.map(_.said).mkString("; ")}"
+      case Problem.Run.Frees.Never          => "no window frees by itself — raise or reset the allowance"
+
+  extension (held: Problem.Run.HeldPool)
+    private def said: String =
+      s"the ${held.title} is held (release it with `histmersion agent quota release ${held.pool}`)"
 
   extension (block: Problem.Run.Block)
     private def said: String = block match

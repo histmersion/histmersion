@@ -18332,8 +18332,11 @@
           "usable" : {
             "type" : "boolean"
           },
-          "problem" : {
-            "$ref" : "#/components/schemas/Problem"
+          "problems" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Problem"
+            }
           },
           "freesAt" : {
             "type" : "string"
@@ -30238,8 +30241,11 @@
           "active" : {
             "type" : "string"
           },
-          "problem" : {
-            "$ref" : "#/components/schemas/Problem"
+          "problems" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Problem"
+            }
           }
         }
       },
@@ -30248,7 +30254,8 @@
         "type" : "object",
         "required" : [
           "role",
-          "ready"
+          "ready",
+          "problems"
         ],
         "properties" : {
           "role" : {
@@ -30260,8 +30267,11 @@
           "ready" : {
             "type" : "boolean"
           },
-          "problem" : {
-            "$ref" : "#/components/schemas/Problem"
+          "problems" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Problem"
+            }
           }
         }
       },

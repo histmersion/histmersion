@@ -1,5 +1,6 @@
 package com.histmersion
 package server.agents
+import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
 
@@ -325,11 +326,13 @@ class PlanRefreshSuite extends munit.FunSuite:
       ModelRef(ProviderKind.Codex, ModelRef.Model("gpt-6-luna"))
     )
     val reset = PlanQuotaRepo.EpochMillis(java.time.Instant.parse("2026-10-09T00:20:00Z").toEpochMilli)
-    val (at, text) = ModelPicker.whenFrees(List((opus, Some(reset), None), (gpt, None, Some(PoolId.ChatgptPlan))))
+    val (at, frees) = ModelPicker.whenFrees(List((opus, Some(reset), None), (gpt, None, Some(PoolId.ChatgptPlan))))
+    val chatgpt = Problem.Run.HeldPool(Problem.Raw("ChatGPT plan"), Problem.Raw("chatgpt-plan"))
     assertEquals(at, Some(reset))
-    assert(text.contains("next reset at 2026-10-09T00:20:00Z (claude-code:opus)"), text)
-    assert(text.contains("the ChatGPT plan is held") && text.contains("agent quota release chatgpt-plan"), text)
-    assert(!text.contains("no window frees by itself"), text)
+    assertEquals(
+      frees,
+      Problem.Run.Frees.At(Problem.EpochMs(1791505200000L), Problem.Run.Model("claude-code:opus"), Vector(chatgpt))
+    )
     // the earliest of several resets; a model that never frees (a reserve as large as its limit) does not hide them
     val later = PlanQuotaRepo.EpochMillis(reset.value + 3600000L)
     assertEquals(
@@ -339,8 +342,8 @@ class PlanRefreshSuite extends munit.FunSuite:
     // only held pools: nothing frees by itself, and it says which pool to release
     val (none, heldOnly) = ModelPicker.whenFrees(List((gpt, None, Some(PoolId.ChatgptPlan))))
     assertEquals(none, None)
-    assert(heldOnly.startsWith("no window frees by itself: the ChatGPT plan is held"), heldOnly)
-    assertEquals(ModelPicker.whenFrees(List((opus, None, None)))._1, None)
+    assertEquals(heldOnly, Problem.Run.Frees.Released(NonEmptyVector.of(chatgpt)))
+    assertEquals(ModelPicker.whenFrees(List((opus, None, None))), (None, Problem.Run.Frees.Never))
 
   test("the probe end to end against a FAKE claude: argv, stdin 'quota', capped output, the reading"):
     val fake = FakeCli("claude", List(Init, Answer, Event, Result))

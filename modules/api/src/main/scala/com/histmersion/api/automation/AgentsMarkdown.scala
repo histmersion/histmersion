@@ -1,5 +1,6 @@
 package com.histmersion
 package api.automation
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.{Paging, Plural, RowCount, YearFmt}
 import com.histmersion.api.library.Facet
@@ -33,7 +34,7 @@ object AgentsMarkdown:
     if m.chains.isEmpty then
       val rows = m.roles.map { r =>
         s"| ${r.role} | ${r.model.getOrElse("—")} | ${
-            if (r.ready) == RoleModel.Ready(true) then "ready" else r.problem.map(_.sentence).getOrElse("not ready")
+            if (r.ready) == RoleModel.Ready(true) then "ready" else said(r.problems).getOrElse("not ready")
           } |"
       }
       (head + "| role | model | state |\n|---|---|---|\n" + rows.mkString("\n") + problems)
@@ -41,7 +42,7 @@ object AgentsMarkdown:
       val rows = m.chains.map { c =>
         val chain = if c.models.isEmpty then "—" else c.models.map(chainEntry).mkString(" → ")
         val now =
-          c.active.getOrElse(if c.models.isEmpty then c.problem.map(_.sentence).getOrElse("no model")
+          c.active.getOrElse(if c.models.isEmpty then said(c.problems).getOrElse("no model")
           else "**none: would pause**")
         s"| ${c.role} | $chain | $now | ${c.source} |"
       }
@@ -67,13 +68,17 @@ object AgentsMarkdown:
       else if !((e.ready) == ModelChains.ChainEntry.Ready(true)) then "not ready"
       else if (e.cooling) == ModelChains.ChainEntry.Cooling(true) then "cooling down"
       else "below its allowance"
-      s"${i + 1}. `${e.model}` — $state${e.problem.fold("")(p => s": ${p.sentence}")}${e.freesAt.fold("")(t =>
+      s"${i + 1}. `${e.model}` — $state${said(e.problems).fold("")(p => s": $p")}${e.freesAt.fold("")(t =>
           s" (frees $t)"
         )}" +
         e.billing.fold("")(b => s" · $b")
     }
     (s"**${c.role}** (${c.source}) — next call uses ${c.active.fold("none: a run would pause")(m => s"`$m`")}\n\n" +
-      (if lines.isEmpty then c.problem.map(_.sentence).getOrElse("no model") else lines.mkString("\n")))
+      (if lines.isEmpty then said(c.problems).getOrElse("no model") else lines.mkString("\n")))
+
+  /** Every problem's sentence, one after another; None when there is none. */
+  private def said(problems: List[Problem]): Option[String] =
+    Option.when(problems.nonEmpty)(problems.map(_.sentence).mkString("; "))
 
   private def amount(v: Double, m: ModelChains.Measure): String = m match
     case ModelChains.Measure.Tokens =>
