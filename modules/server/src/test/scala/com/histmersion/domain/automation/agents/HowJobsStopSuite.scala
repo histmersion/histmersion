@@ -3,6 +3,7 @@ package domain.automation.agents
 import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
+import com.histmersion.api.problem.Column.stored
 
 import Halt.Stopped
 import com.histmersion.api.automation.AgentRole
@@ -183,14 +184,15 @@ class HowJobsStopSuite extends munit.FunSuite:
     val sentence =
       "all models for role extractor are below their allowance; no window frees by itself — raise or reset the allowance (local:a: its plan reported its usage limit; skipped until 2025-11-10T00:00:00Z)"
     assertEquals(exhausted.sentence, sentence)
+    // what the engine stores for the pause RunCtx halts with: the step's AtStep, as its sentence (Engine.execute)
+    val atStep = Problem.Run.AtStep(Problem.Run.Step("enrich"), NonEmptyVector.of(exhausted))
+    val stored = Stopped.write(Stopped.Cause.Paused(PauseReason.Allowance, Stopped.Detail(atStep.sentence.take(1000))))
     assertEquals(
-      cause(
-        Problem.Stored.Unrecognised(
-          Problem.Stored.Text(
-            "allowance: enrich: all models for role extractor are below their allowance; no window frees by itself — raise or reset the allowance (local:a: its plan reported its usage limit; skipped until 2025-11-10T00:00:00Z)"
-          )
-        )
-      ),
+      stored.stored,
+      "allowance: enrich: all models for role extractor are below their allowance; no window frees by itself — raise or reset the allowance (local:a: its plan reported its usage limit; skipped until 2025-11-10T00:00:00Z)"
+    )
+    assertEquals(
+      cause(stored),
       Stopped.Cause.Exhausted(
         PauseReason.Allowance,
         Stopped.Lead("enrich: "),
