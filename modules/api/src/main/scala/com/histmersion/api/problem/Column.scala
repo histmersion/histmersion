@@ -553,25 +553,27 @@ object Column:
             bytes <- Count.read(b)
             limit <- Count.read(l)
           yield InlineBytes(bytes, limit)
-        case Vector("Base64Decodable", r)    => Some(Base64Decodable(External.Reported.of(r)))
-        case Vector("PathOrBase64")          => Some(PathOrBase64)
-        case Vector("ServerSees")            => Some(ServerSees)
-        case Vector("OriginalForReocr")      => Some(OriginalForReocr)
-        case Vector("OriginalForDownload")   => Some(OriginalForDownload)
-        case Vector("Frontmatter")           => Some(Frontmatter)
-        case Vector("NoteCitekey")           => Some(NoteCitekey)
-        case Vector("FilterRecorded")        => Some(FilterRecorded)
-        case Vector("ReviewLibraryWide")     => Some(ReviewLibraryWide)
-        case Vector("EnrichLibraryWide")     => Some(EnrichLibraryWide)
-        case Vector("SeedGoal")              => Some(SeedGoal)
-        case Vector("WatchGoal")             => Some(WatchGoal)
-        case Vector("EnrichCron")            => Some(EnrichCron)
-        case Vector("HintSettings")          => Some(HintSettings)
-        case Vector("HintUntil")             => Some(HintUntil)
-        case Vector("HintTargets")           => Some(HintTargets)
-        case Vector("CronGiven")             => Some(CronGiven)
-        case Vector("ChainGiven")            => Some(ChainGiven)
-        case Vector("HintConfig", allowed)   => Some(HintConfig(raws(allowed)))
+        case Vector("Base64Decodable", r)             => Some(Base64Decodable(External.Reported.of(r)))
+        case Vector("PathOrBase64")                   => Some(PathOrBase64)
+        case Vector("ServerSees")                     => Some(ServerSees)
+        case Vector("OriginalForReocr")               => Some(OriginalForReocr)
+        case Vector("OriginalForDownload")            => Some(OriginalForDownload)
+        case Vector("Frontmatter")                    => Some(Frontmatter)
+        case Vector("NoteCitekey")                    => Some(NoteCitekey)
+        case Vector("FilterRecorded")                 => Some(FilterRecorded)
+        case Vector("ReviewLibraryWide")              => Some(ReviewLibraryWide)
+        case Vector("EnrichLibraryWide")              => Some(EnrichLibraryWide)
+        case Vector("SeedGoal")                       => Some(SeedGoal)
+        case Vector("WatchGoal")                      => Some(WatchGoal)
+        case Vector("EnrichCron")                     => Some(EnrichCron)
+        case Vector("HintSettings")                   => Some(HintSettings)
+        case Vector("HintUntil")                      => Some(HintUntil)
+        case Vector("HintTargets")                    => Some(HintTargets)
+        case Vector("CronGiven")                      => Some(CronGiven)
+        case Vector("ChainGiven")                     => Some(ChainGiven)
+        case Vector("HintConfig", allowed)            => Some(HintConfig(raws(allowed)))
+        case Vector("RoleUsed", o, name, role, roles) =>
+          word(Invalid.RoleOwner.values.toSeq, o).map(RoleUsed(_, Raw(name), Raw(role), raws(roles)))
         case Vector("RoundsWithin", s, l, c) =>
           for
             stated <- Count.read(s)
@@ -661,7 +663,7 @@ object Column:
     private val ReferredTo = "(?s)^(\\S+) '(.*)' is referred to by (\\d+) (\\S+)$".r
     private val RefusedBy = "^refused: (\\w+)$".r
     private val Spent = "^(\\w+) is spent: (\\S+) of (\\S+?)(?: until (\\S+))?$".r
-    private val SwitchedOff = "(?s)^(.+) is switched off by (\\S+)$".r
+    private val SwitchedOff = "(?s)^(.+) is switched off by (\\S+?)(?:; (\\S+)=true switches it on)?$".r
     private val Answered = s"(?s)^$Prefix(\\S+) answered HTTP (\\d+) at (\\S+) — (.*)$$".r
     private val ChallengedAt = s"(?s)^$Prefix(\\S+) challenged with HTTP (\\d+) at (\\S+)$$".r
     private val NotAsked = s"(?s)^$NotAskedThisSweep(.*)$$".r
@@ -1010,8 +1012,14 @@ object Column:
         case _ => None
       },
       {
-        case SwitchedOff(feature, setting) =>
-          Some(Refused.Disabled(Refused.Feature(s"$feature"), SettingKey(s"$setting"), None))
+        case SwitchedOff(feature, setting, variable) =>
+          Some(
+            Refused.Disabled(
+              Refused.Feature(s"$feature"),
+              SettingKey(s"$setting"),
+              Option(variable).map(v => SettingKey(s"$v"))
+            )
+          )
         case _ => None
       },
       {

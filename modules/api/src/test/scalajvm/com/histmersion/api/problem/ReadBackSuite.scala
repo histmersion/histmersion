@@ -68,23 +68,43 @@ class ReadBackSuite extends munit.FunSuite:
     assertEquals(Column.read(text), read)
     assertEquals(Column.read(text).stored, text)
 
-  test("a refusal no column stores, whose reader would rebuild its raw input from text, reads back as the text it is"):
-    // RoleUsed and a Disabled that names its environment variable are only ever answered, never stored; their stored
-    // text writes back byte for byte all the same
+  test("a refusal naming a role its pipeline or manager does not use, or the variable that switches it on, reads back"):
     Vector[Problem](
       Invalid.Broken(
         Invalid.Rule.RoleUsed(Invalid.RoleOwner.Pipeline, Raw("enrich-source"), Raw("skeptic"), Vector(Raw("writer"))),
         Vector(Field("--model-for"))
       ),
+      Invalid.Broken(
+        Invalid.Rule.RoleUsed(
+          Invalid.RoleOwner.Manager,
+          Raw("review"),
+          Raw("drafter"),
+          Vector(Raw("reviewer"), Raw("fixer"))
+        ),
+        Vector(Field("models"))
+      ),
+      Invalid.Broken.here(Invalid.Rule.RoleUsed(Invalid.RoleOwner.Pipeline, Raw("probe"), Raw("writer"), Vector.empty)),
       Refused.Disabled(
         Refused.Feature("the embedded agent runtime"),
         SettingKey("agents.enabled"),
         Some(SettingKey("HISTMERSION_AGENTS_ENABLED"))
+      ),
+      Refused.Disabled(
+        Refused.Feature("write-back"),
+        SettingKey("histmersion.plugins.calibre.write-back"),
+        Some(SettingKey("HISTMERSION_PLUGIN_CALIBRE_WRITE_BACK"))
       )
     ).foreach { p =>
-      assertEquals(Column.read(p.stored).group, Group.Stored)
-      assertEquals(Column.read(p.stored).stored, p.stored)
+      assertEquals(Column.read(p.stored), p, p.stored)
     }
+
+  test("a switched-off refusal stored before it named its variable still reads back, and writes back the same"):
+    val text = "events-gvp is switched off by histmersion.events.gvp.enabled"
+    assertEquals(
+      Column.read(text),
+      Refused.Disabled(Refused.Feature("events-gvp"), SettingKey("histmersion.events.gvp.enabled"), None)
+    )
+    assertEquals(Column.read(text).stored, text)
 
   test("a problem written bare by an earlier version reads through the column reader"):
     // the frozen sentence of a case reads as that case, which is written typed from then on
