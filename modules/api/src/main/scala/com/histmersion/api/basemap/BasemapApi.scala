@@ -165,6 +165,9 @@ object BasemapApi:
 
   val Busy = "basemap_busy"
 
+  /** The code of a refusal while a base-map job runs. */
+  val BusyCode: Api.Error.Code = Api.Error.Code("basemap_busy")
+
   def tileTemplate(layer: Basemap.Layer, version: Basemap.LayerInfo.Version): TileTemplate =
     TileTemplate(s"/api/basemap/${layer.wire}/{z}/{x}/{y}?v=$version")
 

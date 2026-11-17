@@ -59,10 +59,15 @@ object Answer:
       case _: Refused.Policy              => StatusCode.Forbidden
       case _: Refused.Quota               => StatusCode.TooManyRequests
       case _: Refused.Disabled            => StatusCode.Forbidden
+      case _: Refused.Space               => StatusCode.Forbidden
       case _: Upstream.Http               => StatusCode.BadGateway
       case _: Upstream.Unreachable        => StatusCode.BadGateway
       case _: Upstream.Challenged         => StatusCode.BadGateway
       case _: Upstream.Limited            => StatusCode.TooManyRequests
+      case _: Upstream.Offline            => StatusCode.ServiceUnavailable
+      case _: Upstream.Changed            => StatusCode.BadGateway
+      case _: Upstream.Rebuilt            => StatusCode.BadGateway
+      case _: Upstream.Mislisted          => StatusCode.BadGateway
       case Upstream.Unasked(why)          => why.status
       case _: Upstream.BadReply           => StatusCode.BadGateway
       case _: Upstream.Timeout            => StatusCode.GatewayTimeout
@@ -85,6 +90,7 @@ object Answer:
     def retryAfter: Option[EpochMs] = problem match
       case Refused.Quota(_, _, _, until) => until
       case Upstream.Limited(_, until)    => until
+      case Upstream.Offline(_, until)    => until
       case Upstream.Unasked(why)         => why.retryAfter
       case _                             => None
 

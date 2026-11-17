@@ -4,7 +4,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.json.RawJson
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem, Problems}
 import com.histmersion.util.problem.Text.sentence
 
 import hearth.kindlings.optics.syntax.*
@@ -479,18 +479,26 @@ final class BasemapService(
     for
       rules <- sub
         .fold[Either[Api.Error, Option[Map[Basemap.Layer.Wire, Basemap.Read]]]](Right(None))(s =>
-          Basemap.parseSubset(s).map(Some(_)).left.map(e => BasemapService.invalid(s"layers: ${e.sentence}"))
+          Basemap.parseSubset(s).map(Some(_)).left.map(e => BasemapService.invalid(e.within(Problem.Field("layers"))))
         )
       l <- Basemap.Layer
         .parse(layer)
         .toRight(
-          BasemapService.notFound(s"no base-map layer '$layer' (vector, terrain, labels or bathymetry)")
+          BasemapService.notFound(
+            Problem.Invalid.Unknown.here(
+              Problem.TypeName.named[Basemap.Layer],
+              Problem.Raw.of(layer),
+              Basemap.Layer.values.toVector.map(l => Problem.Raw.of(l.wire))
+            )
+          )
         )
       f <- reader(l).left
         .map(e => Api.Error(e))
         .flatMap(
           _.toRight(
-            BasemapService.notFound(s"the ${l.title} layer is not downloaded — run `${Basemap.FetchCommand}`")
+            BasemapService.notFound(
+              Problem.NotFound.Undownloaded(Problem.Raw.of(l.title), Problem.Raw(Basemap.FetchCommand))
+            )
           )
         )
       stored <- f.tile(pz, px, py).left.map(e => Api.Error(e))
@@ -567,31 +575,31 @@ final class BasemapService(
 
   def remove(q: Basemap.RemoveQuery): Either[Api.Error, Basemap.Removed] =
     val which = q.layer.value.trim
-    val layers: Either[String, List[Basemap.Layer]] =
+    val layers: Either[Problem, List[Basemap.Layer]] =
       if which.equalsIgnoreCase("none") then Right(Nil)
-      else Basemap.Layer.parseMany(Basemap.Layer.Wires(q.layer.value)).left.map(_.sentence)
+      else Basemap.Layer.parseMany(Basemap.Layer.Wires(q.layer.value))
     val all = which.equalsIgnoreCase("all") || which.isEmpty
-    val focus: Either[String, List[Basemap.Focus.Name]] = q.focus.map(_.value.trim).filter(_.nonEmpty) match
+    val focus: Either[Problem, List[Basemap.Focus.Name]] = q.focus.map(_.value.trim).filter(_.nonEmpty) match
       case Some("all") => Right(focusFiles.map(_._1))
       case Some(n)     =>
         Basemap
           .validFocusName(Basemap.Focus.Name(n))
-          .left
-          .map(_.sentence)
           .flatMap(n =>
             Either.cond(
               focusFiles.exists(_._1 == n) || files.isDirectory(focusWork(n)),
               List(n),
-              s"no focus region '${n.value}' (${focusFiles.map(_._1.value).mkString(", ")})"
+              Problem.Invalid.Unknown(
+                Problem.TypeName.of(Basemap.Focus.Name),
+                Problem.Raw.of(n),
+                focusFiles.map(f => Problem.Raw.of(f._1)).toVector,
+                Vector(Problem.Field("focus"))
+              )
             )
           )
       case None if all => Right(focusFiles.map(_._1))
       case None        => Right(Nil)
-    layers.flatMap(ls => focus.map((ls, _))).left.map(e => BasemapService.invalid(e)).flatMap { (ls, fs) =>
-      if jobs.running.isDefined then
-        Left(
-          jobs.busy(BasemapJobs.Target("a base-map fetch"), Some(Problem.Unclassified(Legacy.Text(BasemapApi.Busy))))
-        )
+    layers.and(focus).left.map(e => BasemapService.invalid(e)).flatMap { (ls, fs) =>
+      if jobs.running.isDefined then Left(jobs.busy(BasemapJobs.Target("a base-map fetch"), Some(BasemapApi.BusyCode)))
       else
         val store = files
         def gone(f: Store.Key, w: Store.Key): List[(String, Long)] =
@@ -639,12 +647,17 @@ final class BasemapService(
       focus: Option[(Basemap.Focus.Name, BBox)] = None
   )
 
-  private def ask(q: Basemap.FetchQuery): Either[Problem, Ask] =
-    def zoom(z: Int, what: String): Either[Problem, BasemapFetch.Plan.MaxZoom] =
+  private def ask(q: Basemap.FetchQuery): Either[Problems, Ask] =
+    def zoom(z: Int, what: Problem.Field): Either[Problem, BasemapFetch.Plan.MaxZoom] =
       Either.cond(
         z >= 0 && z <= Basemap.MaxZoomCap,
         BasemapFetch.Plan.MaxZoom(z),
-        Problem.Unclassified(Legacy.Text(s"$what $z is outside 0–${Basemap.MaxZoomCap}"))
+        Problem.Invalid.OutOfRange(
+          Problem.TypeName.of(BasemapFetch.Plan.MaxZoom),
+          Problem.Raw.of(z.toLong),
+          Problem.Invalid.Bounds(Some(Problem.Raw.of(0L)), Some(Problem.Raw.of(Basemap.MaxZoomCap.toLong))),
+          Vector(what)
+        )
       )
     val asked = q.bbox.map(_.value.trim).filter(_.nonEmpty)
     for
@@ -661,24 +674,17 @@ final class BasemapService(
         tzAsked.map(BasemapFetch.Plan.MaxZoom(_)),
         cfg.terrain
       )
-      vz <- zoom(q.maxZoom.map(_.value).getOrElse(cfg.vector.maxZoom.value), "--max-zoom")
+      vz <- zoom(q.maxZoom.map(_.value).getOrElse(cfg.vector.maxZoom.value), Problem.Field("--max-zoom"))
       tz <- zoom(
         tzAsked.getOrElse(if focus.isDefined then cfg.terrain.onDemand.maxZoom.value else cfg.terrain.maxZoom.value),
-        "--terrain-max-zoom"
+        Problem.Field("--terrain-max-zoom")
       )
       _ <- Either.cond(
         focus.isEmpty || tz.value > cfg.terrain.maxZoom.value,
         (),
-        Problem.Unclassified(
-          Legacy.Text(
-            s"a focus region holds the zooms deeper than the extract's (${cfg.terrain.maxZoom.value}): ask for more than that"
-          )
-        )
+        Problem.Invalid.Broken.here(Problem.Invalid.Rule.FocusDeeper(Problem.Count.of(cfg.terrain.maxZoom)))
       )
-      _ <- Basemap
-        .parseDrop(Basemap.DropRule.Spec(cfg.vector.drop.value))
-        .left
-        .map(_.toNonEmpty.head)
+      _ <- Basemap.parseDrop(Basemap.DropRule.Spec(cfg.vector.drop.value))
     yield Ask(
       if focus.isDefined then List(Basemap.Layer.Terrain) else ls,
       focus.fold(b)(_._2),
@@ -691,7 +697,7 @@ final class BasemapService(
 
   def fetch(q: Basemap.FetchQuery): Either[Api.Error, JobInfo] =
     jobs.guarded(BasemapJobs.Operation("basemap/fetch")):
-      ask(q).left.map(e => BasemapService.invalid(e.sentence)).flatMap { a =>
+      ask(q).left.map(e => BasemapService.invalid(e)).flatMap { a =>
         val dry = if a.dryRun then "dry run: " else ""
         val what = a.focus match
           case Some((name, b)) =>
@@ -711,7 +717,7 @@ final class BasemapService(
           BasemapService.JobKind,
           BasemapJobs.Description(what),
           BasemapJobs.Target("a base-map fetch"),
-          Some(Problem.Unclassified(Legacy.Text(BasemapApi.Busy)))
+          Some(BasemapApi.BusyCode)
         )(note =>
           run(a, n => note(BasemapJobs.Target(n.value)))
             .map(BasemapJobs.Description(_))
@@ -788,13 +794,9 @@ final class BasemapService(
     case Basemap.Layer.Terrain =>
       Right(BasemapFetch.Source(RangeHttp.Url(cfg.terrain.url.value), BasemapFetch.Source.Label(cfg.terrain.url.value)))
     case Basemap.Layer.Labels =>
-      Left(
-        Problem.Unclassified(Legacy.Text("the physical names are not read with range requests"))
-      ) // `labels` fetches them
+      Left(Problem.Invalid.Broken.here(Problem.Invalid.Rule.LabelsUnranged)) // `labels` fetches them
     case Basemap.Layer.Bathymetry =>
-      Left(
-        Problem.Unclassified(Legacy.Text("the sea floor is not read with range requests"))
-      ) // `bathymetry` fetches it
+      Left(Problem.Invalid.Broken.here(Problem.Invalid.Rule.SeaFloorUnranged)) // `bathymetry` fetches it
     case Basemap.Layer.Vector =>
       val pinned = cfg.vector.build.value.trim
       resumable(l, a, extra) match
@@ -806,7 +808,13 @@ final class BasemapService(
           val chosen: Either[Problem, (BasemapService.BuildName, Long)] =
             if pinned.equalsIgnoreCase("latest") || pinned.isEmpty then
               builds.flatMap(
-                _.lastOption.toRight(Problem.Unclassified(Legacy.Text(s"${cfg.vector.buildsUrl.value} lists no build")))
+                _.lastOption.toRight(
+                  Problem.Io.Corrupt(
+                    Problem.Io.Format.Json,
+                    Problem.Where.of(cfg.vector.buildsUrl),
+                    Problem.Io.Damage.Structure(Problem.Io.Flaw.NoBuild)
+                  )
+                )
               )
             else
               builds
@@ -913,13 +921,12 @@ final class BasemapService(
       Either.cond(
         left >= minFree.value,
         (),
-        Problem.Unclassified(
-          Legacy.Text(
-            s"refused: the ${l.title} layer needs ${human(pendingBytes + outBytes)} more on ${store.where().value} " +
-              s"(${human(free)} free), which would leave less than ${human(minFree.value)} (basemap.min-free-gb). " +
-              "Free some space, fetch a smaller region (--bbox) or fewer zooms (--max-zoom / --terrain-max-zoom), " +
-              "or move the files with basemap.dir."
-          )
+        Problem.Refused.Space(
+          Problem.Refused.Work.Layer(Problem.Raw.of(l.title)),
+          Problem.Count(pendingBytes + outBytes),
+          Problem.Io.Path.from(store.where()),
+          Problem.Count(free),
+          Problem.Count.of(minFree)
         )
       )
     val rulesOf = BasemapService.mvtRules(rules)
@@ -975,11 +982,12 @@ final class BasemapService(
       val free = freeSpace(store).value
       if free - need < minFree.value then
         Left(
-          Problem.Unclassified(
-            Legacy.Text(
-              s"refused: the sea floor needs about ${human(need)} on ${store.where().value} (${human(free)} free), " +
-                s"which would leave less than ${human(minFree.value)} (basemap.min-free-gb)"
-            )
+          Problem.Refused.Space(
+            Problem.Refused.Work.SeaFloor,
+            Problem.Count(need),
+            Problem.Io.Path.from(store.where()),
+            Problem.Count(free),
+            Problem.Count.of(minFree)
           )
         )
       else
@@ -1051,12 +1059,12 @@ final class BasemapService(
         val free = freeSpace(store).value
         if free - sea.needs(plan).value < minFree.value then
           Left(
-            Problem.Unclassified(
-              Legacy.Text(
-                s"refused: the GEBCO sea floor needs about ${human(sea.needs(plan).value)} on ${store.where().value} " +
-                  s"(${human(free)} free), which would leave less than ${human(minFree.value)} (basemap.min-free-gb). " +
-                  "Fetch a smaller region (--bbox), or the ETOPO1 sea floor (basemap.bathymetry.source = etopo1)."
-              )
+            Problem.Refused.Space(
+              Problem.Refused.Work.Gebco,
+              Problem.Count.of(sea.needs(plan)),
+              Problem.Io.Path.from(store.where()),
+              Problem.Count(free),
+              Problem.Count.of(minFree)
             )
           )
         else
@@ -1104,11 +1112,12 @@ final class BasemapService(
       val need = 64L * 1024 * 1024
       if free - need < minFree.value then
         Left(
-          Problem.Unclassified(
-            Legacy.Text(
-              s"refused: the physical names need about ${human(need)} on ${store.where().value} (${human(free)} free), " +
-                s"which would leave less than ${human(minFree.value)} (basemap.min-free-gb)"
-            )
+          Problem.Refused.Space(
+            Problem.Refused.Work.Labels,
+            Problem.Count(need),
+            Problem.Io.Path.from(store.where()),
+            Problem.Count(free),
+            Problem.Count.of(minFree)
           )
         )
       else
@@ -1122,7 +1131,13 @@ final class BasemapService(
                 RawJson
                   .parse(t.value)
                   .left
-                  .map(e => Problem.Unclassified(Legacy.Text(s"$url is not JSON: $e")))
+                  .map(e =>
+                    Problem.Io.Corrupt(
+                      Problem.Io.Format.Json,
+                      Problem.Where(url),
+                      Problem.Io.Damage.Unreadable(External.Reported.of(s"$e"))
+                    )
+                  )
               )
               .flatMap(BasemapLabels.parse(BasemapLabels.FileName(f.value), _))
               .map(got ++ _)
@@ -1159,11 +1174,9 @@ object BasemapService:
   type TileKeys = TileKeys.T
   object TileKeys extends Newtype[String, Pure]
 
-  private def invalid(message: String): Api.Error =
-    Api.Error(Problem.Unclassified(Legacy.Text(message)), Some(Api.Error.Code(Write.CodeInvalid)))
+  private def invalid(problems: Problems): Api.Error = Api.Error(problems, Some(Api.Error.Code(Write.CodeInvalid)))
 
-  private def notFound(message: String): Api.Error =
-    Api.Error(Problem.Unclassified(Legacy.Text(message)), Some(Api.Error.Code(Write.CodeNotFound)))
+  private def notFound(problem: Problem): Api.Error = Api.Error(problem, Some(Api.Error.Code(Write.CodeNotFound)))
 
   private def human(n: Long): String = Backup.humanBytes(com.histmersion.api.ByteCount(n))
 
@@ -1239,10 +1252,8 @@ object BasemapService:
             .orElse(named.find(_._1 == n).map(_._2))
             .map(b => Some((n, b)))
             .toRight(
-              Problem.Unclassified(
-                Legacy.Text(
-                  s"no focus region '${n.value}' in basemap.terrain.focus-regions (${named.map(_._1.value).mkString(", ")}): give its --bbox"
-                )
+              Problem.Invalid.Broken.here(
+                Problem.Invalid.Rule.FocusRegion(Problem.Raw.of(n), named.map(r => Problem.Raw.of(r._1)).toVector)
               )
             )
         }
@@ -1347,10 +1358,22 @@ object BasemapService:
     RawJson
       .parse(json.value)
       .left
-      .map(e => Problem.Unclassified(Legacy.Text(s"the list of builds is not JSON: $e")))
+      .map(e =>
+        Problem.Io.Corrupt(
+          Problem.Io.Format.Json,
+          Problem.Where("the list of builds"),
+          Problem.Io.Damage.Unreadable(External.Reported.of(s"$e"))
+        )
+      )
       .flatMap { j =>
         j.asArray
-          .toRight(Problem.Unclassified(Legacy.Text("the list of builds is not a JSON array")))
+          .toRight(
+            Problem.Io.Corrupt(
+              Problem.Io.Format.Json,
+              Problem.Where("the list of builds"),
+              Problem.Io.Damage.Structure(Problem.Io.Flaw.NotArray)
+            )
+          )
           .map(
             _.toList
               .flatMap { b =>

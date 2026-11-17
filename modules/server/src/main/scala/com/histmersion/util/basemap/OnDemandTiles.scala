@@ -4,7 +4,8 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.json.RawJson
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.ProblemLog
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.{ByteCount, ByteOffset}
@@ -97,8 +98,7 @@ final class OnDemandTiles(
 
   /** One request to the provider: within the concurrency and the rate. */
   private def request[A](f: => Either[Problem, A]): Either[Problem, A] =
-    if !gate.tryAcquire(60, TimeUnit.SECONDS) then
-      Left(Problem.Unclassified(Legacy.Text("too many tile requests waiting")))
+    if !gate.tryAcquire(60, TimeUnit.SECONDS) then Left(Problem.Conflict.Busy(Problem.Conflict.Activity.TileRequests))
     else
       try
         val wait = synchronized {
@@ -156,7 +156,11 @@ final class OnDemandTiles(
             _ <- Either.cond(
               h.rootOffset.value + h.rootLength.value <= b.length,
               (),
-              Problem.Unclassified(Legacy.Text("root directory outside the first 16 KiB"))
+              Problem.Io.Corrupt(
+                Problem.Io.Format.PmTiles,
+                Problem.Where("the root directory"),
+                Problem.Io.Damage.Structure(Problem.Io.Flaw.RootOutside)
+              )
             )
             root <- PmTiles
               .decompress(
@@ -224,8 +228,15 @@ final class OnDemandTiles(
       PmTiles.find(d, id) match
         case None                  => Right(None)
         case Some(e) if !e.isLeaf  => Right(Some(e))
-        case Some(_) if depth >= 3 => Left(Problem.Unclassified(Legacy.Text("PMTiles directories nested too deep")))
-        case Some(e)               => leaf(r, e).flatMap(walk(_, depth + 1))
+        case Some(_) if depth >= 3 =>
+          Left(
+            Problem.Io.Corrupt(
+              Problem.Io.Format.PmTiles,
+              Problem.Where("the leaf directories"),
+              Problem.Io.Damage.Structure(Problem.Io.Flaw.TooDeep)
+            )
+          )
+        case Some(e) => leaf(r, e).flatMap(walk(_, depth + 1))
     if z < r.header.minZoom || z > r.header.maxZoom then Right(None) else walk(r.root, 0)
 
   private def read(
@@ -287,7 +298,7 @@ final class OnDemandTiles(
       cache.get(key) match
         case Some(hit)                          => Right(hit.map(b => PmTiles.TileBytes(b.value)))
         case None if offlineUntil > now().value =>
-          Left(Problem.Unclassified(Legacy.Text("the provider was unreachable a moment ago; not asked again yet")))
+          Left(Problem.Upstream.Offline(Problem.Upstream.Name("the provider"), Some(Problem.EpochMs(offlineUntil))))
         case None =>
           val mine = CompletableFuture[Either[Problem, Option[PmTiles.TileBytes]]]()
           Option(inflight.putIfAbsent(key.value, mine)) match
@@ -296,7 +307,7 @@ final class OnDemandTiles(
                 .Try(other.get(120, TimeUnit.SECONDS))
                 .toEither
                 .left
-                .map(e => Problem.Unclassified(Legacy.Text(s"tile ${key.value}: ${e.getMessage}")))
+                .map(e => ProblemLog.unexpected(e, Problem.Where(s"waiting for tile ${key.value}")))
                 .flatten
             case None =>
               try
@@ -313,7 +324,7 @@ final class OnDemandTiles(
               catch
                 case e: Throwable =>
                   mine.complete(
-                    Left(Problem.Unclassified(Legacy.Text(s"tile ${key.value}: ${e.getClass.getSimpleName}")))
+                    Left(ProblemLog.unexpected(e, Problem.Where(s"reading tile ${key.value}")))
                   )
                   throw e
               finally { val _ = inflight.remove(key.value, mine) }
@@ -330,7 +341,7 @@ object OnDemandTiles:
   private val Head = Store.Key.applyUnsafe("head.bin")
 
   /** The provider's file changed under a read (another ETag or size). */
-  val Changed: Problem = Problem.Unclassified(Legacy.Text("the provider's file changed"))
+  val Changed: Problem = Problem.Upstream.Changed(Problem.Upstream.Name("the provider"))
 
   /** Where tiles are read from: a PMTiles planet archive (range requests), or a tile URL with `{z}/{x}/{y}` (one GET a
     * tile; a 404 is "none").

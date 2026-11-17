@@ -59,6 +59,7 @@ class RenderSuite extends munit.FunSuite:
     "Listed" -> (404, "no MergeRepo.MergeIdOrPrefix '0193f1' listed by Merges"),
     "Name" -> (404, "no name 'Cnossus' in 'la' for 'Knossos' [pleiades_579885] (has: 'en', '')"),
     "SetByHand" -> (404, "nothing set by hand on 'Knossos' [pleiades_579885]"),
+    "Undownloaded" -> (404, "no download of the vector layer; fetch with `histmersion basemap fetch`"),
     "Dangling" -> (
       404,
       "no Bundle.Kind.Source '0193f1c4-7b2a-7c3e-9d41-5e6f7a8b9c0d' in BundleOrHere, referred to by finding anthony2007#1"
@@ -86,6 +87,14 @@ class RenderSuite extends munit.FunSuite:
     "Policy" -> (403, "refused: RunTokenRequired"),
     "Quota" -> (429, "DailySpend is spent: 5.25 of 4.5 until 2025-11-10T00:00:00Z"),
     "Disabled" -> (403, "events-gvp is switched off by histmersion.events.gvp.enabled"),
+    "Space" -> (403, "no room for Gebco | 4200000000 | /srv/histmersion/basemap | 5000000000 | 2000000000"),
+    "Offline" -> (503, "the provider is offline until 2025-11-10T00:00:00Z"),
+    "Changed" -> (502, "the provider's file changed"),
+    "Rebuilt" -> (502, "https://build.protomaps.com/20261101.pmtiles changed during the download"),
+    "Mislisted" -> (
+      502,
+      "https://build.protomaps.com/20261101.pmtiles is 120000000000 bytes, listed 121000000000 for '20261101.pmtiles'"
+    ),
     "Http" -> (
       502,
       "core answered HTTP 429 at https://api.core.ac.uk/v3/search/works — {\"message\":\"rate limited\"}"
@@ -494,6 +503,45 @@ class RenderSuite extends munit.FunSuite:
       at(Io.Format.Png, Io.Damage.Bytes(Count(1024L), Count(1000L))) ->
         "the PNG data at the header holds 1000 bytes, not 1024"
     ).foreach((s, want) => assertEquals(s, want))
+
+  test("the base map's refusals keep their words and hints"):
+    val on = Io.Path("/srv/basemap")
+    val (needs, free, least) = (Count(4_200_000_000L), Count(5_000_000_000L), Count(2_000_000_000L))
+    Vector[(Problem, String)](
+      Refused.Space(Refused.Work.Layer(Raw("vector")), needs, on, free, least) ->
+        ("refused: the vector layer needs 4.2 GB more on /srv/basemap (5.0 GB free), which would leave less than " +
+          "2.0 GB (basemap.min-free-gb). Free some space, fetch a smaller region (--bbox) or fewer zooms (--max-zoom " +
+          "/ --terrain-max-zoom), or move the files with basemap.dir."),
+      Refused.Space(Refused.Work.SeaFloor, needs, on, free, least) ->
+        ("refused: the sea floor needs about 4.2 GB on /srv/basemap (5.0 GB free), which would leave less than 2.0 GB " +
+          "(basemap.min-free-gb)"),
+      Refused.Space(Refused.Work.Gebco, needs, on, free, least) ->
+        ("refused: the GEBCO sea floor needs about 4.2 GB on /srv/basemap (5.0 GB free), which would leave less than " +
+          "2.0 GB (basemap.min-free-gb). Fetch a smaller region (--bbox), or the ETOPO1 sea floor " +
+          "(basemap.bathymetry.source = etopo1)."),
+      Refused.Space(Refused.Work.Labels, needs, on, free, least) ->
+        ("refused: the physical names need about 4.2 GB on /srv/basemap (5.0 GB free), which would leave less than " +
+          "2.0 GB (basemap.min-free-gb)"),
+      NotFound.Undownloaded(Raw("terrain"), Raw("histmersion basemap fetch")) ->
+        "the terrain layer is not downloaded — run `histmersion basemap fetch`",
+      Invalid.Broken.here(Invalid.Rule.FocusRegion(Raw("crete"), Vector(Raw("alps"), Raw("aegean")))) ->
+        "no focus region 'crete' in basemap.terrain.focus-regions (alps, aegean): give its --bbox",
+      Invalid.Broken.here(Invalid.Rule.FocusDeeper(Count(12L))) ->
+        "a focus region holds the zooms deeper than the extract's (12): ask for more than that",
+      Invalid.Broken.here(Invalid.Rule.LabelsUnranged) -> "the physical names are not read with range requests",
+      Invalid.Broken.here(Invalid.Rule.SeaFloorUnranged) -> "the sea floor is not read with range requests",
+      Upstream.Offline(Upstream.Name("the provider"), None) ->
+        "the provider was unreachable a moment ago; not asked again yet",
+      Upstream.Changed(Upstream.Name("the provider")) -> "the provider's file changed",
+      Upstream.Rebuilt(Upstream.Url("https://x/b.pmtiles")) ->
+        "https://x/b.pmtiles changed during the download (size or ETag differ) — run the fetch again for the new build",
+      Upstream.Mislisted(Upstream.Url("https://x/b.pmtiles"), Count(10L), Count(12L), Raw("b.pmtiles")) ->
+        "https://x/b.pmtiles is 10 bytes, but the provider lists 12 for b.pmtiles",
+      Conflict.Busy(Conflict.Activity.TileRequests) -> "too many tile requests waiting",
+      Io.Corrupt(Io.Format.Json, Where("https://x/builds.json"), Io.Damage.Structure(Io.Flaw.NoBuild)) ->
+        "the json data at https://x/builds.json lists no build"
+    ).foreach((p, s) => assertEquals(p.sentence, s))
+    assertEquals(Upstream.Offline(Upstream.Name("the provider"), Some(EpochMs(5L))).retryAfter, Some(EpochMs(5L)))
 
   test("a watch left out of a sweep says so before why, in its sentence and its stored text"):
     val unasked = Upstream.Unasked(Relayed(Sentence("CORE asked to wait")))

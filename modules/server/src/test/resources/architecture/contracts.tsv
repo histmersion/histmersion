@@ -1309,7 +1309,7 @@ unwrap	server:server/views/ResolveView.scala	.value outside a boundary	2
 unwrap	server:server/views/WorkListView.scala	.value outside a boundary	14
 unwrap	server:util/basemap/BasemapFetch.scala	.value outside a boundary	113
 unwrap	server:util/basemap/BasemapLabels.scala	.value outside a boundary	64
-unwrap	server:util/basemap/BasemapService.scala	.value outside a boundary	308
+unwrap	server:util/basemap/BasemapService.scala	.value outside a boundary	293
 unwrap	server:util/basemap/DiskLru.scala	.value outside a boundary	13
 unwrap	server:util/basemap/GebcoPart.scala	.value outside a boundary	1
 unwrap	server:util/basemap/GebcoPlan.scala	.value outside a boundary	1

@@ -47,12 +47,13 @@ object Text:
       case NotFound.Dangling(t, key, from, within) => within.missed(t, key, from)
       case NotFound.Name(place, label, name, lang, has) =>
         s"'$label' [$place] has no name '$name'${if s"$lang".isEmpty then "" else s" in $lang"}${hasIn(has)}"
-      case NotFound.SetByHand(place, label)   => s"'$label' [$place] has no kind, period or point set by hand"
-      case Conflict.Held(subject, hold)       => hold.said(subject)
-      case Conflict.Job(job, status, control) => control.said(job, status)
-      case Conflict.AlreadyExists(t, key)     => s"${t.noun} '$key' already exists"
-      case Conflict.Renamed(t, asked, now)    => s"${t.noun} '$asked' was renamed to '$now' — write to '$now' instead"
-      case Conflict.Aliased(t, key, of)       =>
+      case NotFound.SetByHand(place, label)    => s"'$label' [$place] has no kind, period or point set by hand"
+      case NotFound.Undownloaded(layer, fetch) => s"the $layer layer is not downloaded — run `$fetch`"
+      case Conflict.Held(subject, hold)        => hold.said(subject)
+      case Conflict.Job(job, status, control)  => control.said(job, status)
+      case Conflict.AlreadyExists(t, key)      => s"${t.noun} '$key' already exists"
+      case Conflict.Renamed(t, asked, now)     => s"${t.noun} '$asked' was renamed to '$now' — write to '$now' instead"
+      case Conflict.Aliased(t, key, of)        =>
         s"'$key' is an old ${t.noun} of '$of' and still resolves to it — pick another"
       case Conflict.OldKey(t, asked, now, action) =>
         s"'$asked' is an old ${t.noun} of '$now' — ${words(action.productPrefix)} '$now' instead"
@@ -69,6 +70,7 @@ object Text:
           "is the same as instead, or move those first"
       case Refused.Policy(rule)                               => rule.said
       case Refused.Quota(limit, used, cap, at)                => s"${limit.named} is spent: $used of $cap${until(at)}"
+      case Refused.Space(work, needs, on, free, least)        => work.refused(needs, on, free, least)
       case Refused.Disabled(feature, setting, variable, None) =>
         s"$feature is switched off ($setting = false)${variable.fold("")(v => s" — set $v=true on the server to use it")}"
       case Refused.Disabled(feature, setting, variable, Some(Refused.Effect.WritesLibrary)) =>
@@ -80,7 +82,13 @@ object Text:
       case Upstream.Http(name, url, st, body, at) => s"${path(at)}$name answered HTTP $st at $url — $body"
       case Upstream.Challenged(name, url, st, at) =>
         s"${path(at)}$name answered HTTP $st at $url with a bot-protection challenge, not the page"
-      case Upstream.Limited(name, at)             => s"$name's usage limit is reached${until(at)}"
+      case Upstream.Limited(name, at) => s"$name's usage limit is reached${until(at)}"
+      case Upstream.Offline(name, _)  => s"$name was unreachable a moment ago; not asked again yet"
+      case Upstream.Changed(name)     => s"$name's file changed"
+      case Upstream.Rebuilt(url)      =>
+        s"$url changed during the download (size or ETag differ) — run the fetch again for the new build"
+      case Upstream.Mislisted(url, size, listed, build) =>
+        s"$url is $size bytes, but the provider lists $listed for $build"
       case Upstream.Unasked(why)                  => s"not asked this sweep — ${why.sentence}"
       case Upstream.Unreachable(name, url, r, at) => s"${path(at)}cannot reach $name at $url — $r"
       case Upstream.Timeout(name, url, after, at) => s"${path(at)}$name did not answer at $url within $after ms"
@@ -454,6 +462,12 @@ object Text:
         s"'$role' is not a role a $kind manager runs (${roles.mkString(", ")})"
       case Invalid.Rule.PointOnly(place, label) =>
         s"'$label' [$place] has a shape, not a point — a point set by hand moves only a place known by a point"
+      case Invalid.Rule.FocusRegion(name, known) =>
+        s"no focus region '$name' in basemap.terrain.focus-regions (${known.mkString(", ")}): give its --bbox"
+      case Invalid.Rule.FocusDeeper(extract) =>
+        s"a focus region holds the zooms deeper than the extract's ($extract): ask for more than that"
+      case Invalid.Rule.LabelsUnranged                 => "the physical names are not read with range requests"
+      case Invalid.Rule.SeaFloorUnranged               => "the sea floor is not read with range requests"
       case Invalid.Rule.NameByHand(name, place, label) =>
         s"'$name' is a name the gazetteer seed or an imported source gives '$label' [$place], not one added by hand — " +
           "removing it would last only until the next import"
@@ -527,7 +541,8 @@ object Text:
     private def running: String = activity match
       case Conflict.Activity.CalibreGui =>
         "the Calibre GUI is running — quit it first (calibredb needs exclusive access to the library)"
-      case other => s"a ${words(other.productPrefix)} is still running"
+      case Conflict.Activity.TileRequests => "too many tile requests waiting"
+      case other                          => s"a ${words(other.productPrefix)} is still running"
 
   extension (activity: Conflict.Activity)
     /** The command that lists what the activity did, when it has one. */
@@ -663,6 +678,7 @@ object Text:
       case Io.Flaw.NotFeatureCollection   => "is not a FeatureCollection"
       case Io.Flaw.NoLandPolygons         => "holds no land polygons"
       case Io.Flaw.NotArray               => "is not a JSON array"
+      case Io.Flaw.NoBuild                => "lists no build"
       case Io.Flaw.NoImageHeader          => "has no image header (IHDR)"
       case Io.Flaw.NegativeAt(q, byte)    => s"holds a negative ${words(q.productPrefix)} at byte $byte"
       case Io.Flaw.DirectorySize(size)    => s"has an implausible directory size $size"
@@ -729,6 +745,19 @@ object Text:
         val exp = math.min(units.size, (math.log(n.toDouble) / math.log(1000)).toInt)
         val tenths = math.round(n.toDouble / math.pow(1000, exp.toDouble) * 10)
         s"${tenths / 10}.${tenths % 10} ${units(exp - 1)}"
+
+  extension (work: Refused.Work)
+    private def refused(needs: Count, on: Io.Path, free: Count, least: Count): String =
+      val room = s"(${free.human} free), which would leave less than ${least.human} (basemap.min-free-gb)"
+      work match
+        case Refused.Work.Layer(title) =>
+          s"refused: the $title layer needs ${needs.human} more on $on $room. Free some space, fetch a smaller region " +
+            "(--bbox) or fewer zooms (--max-zoom / --terrain-max-zoom), or move the files with basemap.dir."
+        case Refused.Work.SeaFloor => s"refused: the sea floor needs about ${needs.human} on $on $room"
+        case Refused.Work.Gebco    =>
+          s"refused: the GEBCO sea floor needs about ${needs.human} on $on $room. Fetch a smaller region (--bbox), or " +
+            "the ETOPO1 sea floor (basemap.bathymetry.source = etopo1)."
+        case Refused.Work.Labels => s"refused: the physical names need about ${needs.human} on $on $room"
 
   extension (reference: Conflict.Reference)
     private def said: String = reference.by match

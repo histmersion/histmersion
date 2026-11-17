@@ -300,7 +300,23 @@ class ReadBackSuite extends munit.FunSuite:
             NonEmptyVector.from(Conflict.Referrer.values.toVector.map(Conflict.Reference(Count(2L), _))).get
           ),
           Invalid.Broken.here(Invalid.Rule.PointOnly(Raw("p_1"), Raw("Troy"))),
-          Invalid.Broken.here(Invalid.Rule.NameByHand(Raw("Ilion"), Raw("p_1"), Raw("Troy")))
+          Invalid.Broken.here(Invalid.Rule.NameByHand(Raw("Ilion"), Raw("p_1"), Raw("Troy"))),
+          Invalid.Broken.here(Invalid.Rule.FocusRegion(Raw("crete"), Vector(Raw("alps"), Raw("aegean")))),
+          Invalid.Broken.here(Invalid.Rule.FocusRegion(Raw("crete"), Vector.empty)),
+          Invalid.Broken.here(Invalid.Rule.FocusDeeper(Count(12L))),
+          Invalid.Broken.here(Invalid.Rule.LabelsUnranged),
+          Invalid.Broken.here(Invalid.Rule.SeaFloorUnranged),
+          Refused.Space(
+            Refused.Work.Layer(Raw("vector tiles")),
+            Count(1L),
+            Io.Path("/a b"),
+            Count(2L),
+            Count(3L)
+          ),
+          Refused.Space(Refused.Work.SeaFloor, Count(1L), Io.Path("/a"), Count(2L), Count(3L)),
+          Refused.Space(Refused.Work.Labels, Count(1L), Io.Path("/a"), Count(2L), Count(3L)),
+          Upstream.Offline(Upstream.Name("the provider"), None),
+          Io.Corrupt(Io.Format.Json, Where("https://x/builds.json"), Io.Damage.Structure(Io.Flaw.NoBuild))
         ) ++
         Config.Capability.values.toVector.map(Config.Unavailable(_)) ++
         Vector(

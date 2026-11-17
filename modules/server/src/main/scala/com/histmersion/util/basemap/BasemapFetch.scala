@@ -5,7 +5,7 @@ import hearth.kindlings.jsoniterjson.JsonObject
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.json.RawJson
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 import com.histmersion.util.problem.Text.sentence
 
 import hearth.kindlings.optics.syntax.*
@@ -233,8 +233,11 @@ object BasemapFetch:
         .filter(s => s.value != remote.size.value)
         .map(s =>
           Left(
-            Problem.Unclassified(
-              Legacy.Text(s"${source.url} is ${remote.size} bytes, but the provider lists $s for ${source.label}")
+            Problem.Upstream.Mislisted(
+              Problem.Upstream.Url.of(source.url),
+              Problem.Count.of(remote.size),
+              Problem.Count.of(s),
+              Problem.Raw.of(source.label)
             )
           )
         )
@@ -243,7 +246,11 @@ object BasemapFetch:
       _ <- Either.cond(
         h.rootOffset.value + h.rootLength.value <= head.value.length,
         (),
-        Problem.Unclassified(Legacy.Text("root directory outside the first 16 KiB"))
+        Problem.Io.Corrupt(
+          Problem.Io.Format.PmTiles,
+          Problem.Where("the root directory"),
+          Problem.Io.Damage.Structure(Problem.Io.Flaw.RootOutside)
+        )
       )
       root <- PmTiles
         .decompress(
@@ -262,7 +269,13 @@ object BasemapFetch:
               RawJson
                 .parse(String(b.value, "UTF-8"))
                 .left
-                .map(e => Problem.Unclassified(Legacy.Text(s"metadata is not JSON: $e")))
+                .map(e =>
+                  Problem.Io.Corrupt(
+                    Problem.Io.Format.Json,
+                    Problem.Where("the PMTiles metadata"),
+                    Problem.Io.Damage.Unreadable(External.Reported.of(s"$e"))
+                  )
+                )
             )
       region = clip(bbox, h)
       top = math.min(maxZoom.value, h.maxZoom.value)
@@ -310,7 +323,14 @@ object BasemapFetch:
       }
     }
     if leaves.isEmpty then Right(found.result())
-    else if depth >= 3 then Left(Problem.Unclassified(Legacy.Text("PMTiles directories nested too deep")))
+    else if depth >= 3 then
+      Left(
+        Problem.Io.Corrupt(
+          Problem.Io.Format.PmTiles,
+          Problem.Where("the leaf directories"),
+          Problem.Io.Damage.Structure(Problem.Io.Flaw.TooDeep)
+        )
+      )
     else
       val byOffset = leaves.keys.toVector.sortBy[Long](_.offset.value)
       val ranges = coalesce(
@@ -374,13 +394,7 @@ object BasemapFetch:
                 .flatMap { got =>
                   if got.size != p.remote.size || got.etag != p.remote.etag then
                     part.discard()
-                    Left(
-                      Problem.Unclassified(
-                        Legacy.Text(
-                          s"${p.source.url} changed during the download (size or ETag differ) — run the fetch again for the new build"
-                        )
-                      )
-                    )
+                    Left(Problem.Upstream.Rebuilt(Problem.Upstream.Url.of(p.source.url)))
                   else
                     part.commit().left.map(e => e.message).map { _ =>
                       done += r._2.value

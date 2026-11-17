@@ -49,6 +49,7 @@ object Column:
       case NotFound.Name(place, label, name, lang, has) =>
         s"no name '$name' in '$lang' for '$label' [$place]${if has.isEmpty then "" else s" (has: ${quoted(has)})"}"
       case NotFound.SetByHand(place, label)       => s"nothing set by hand on '$label' [$place]"
+      case NotFound.Undownloaded(layer, fetch)    => s"no download of the $layer layer; fetch with `$fetch`"
       case Conflict.Held(subject, hold)           => s"held ${hold.stored}: $subject"
       case Conflict.Job(job, status, control)     => s"job '$job' is $status: ${control.stored}"
       case Conflict.AlreadyExists(t, key)         => s"$t '$key' already exists"
@@ -63,17 +64,23 @@ object Column:
       case Conflict.Referenced(t, key, by, n)     => s"$t '$key' is referred to by $n $by"
       case Conflict.Referred(place, label, refs)  =>
         s"place '$label' [$place] is referred to by ${refs.toVector.map(r => s"${r.count} ${r.by.productPrefix}").mkString(ListSeparator)}"
-      case Refused.Policy(rule)                     => s"refused: ${rule.productPrefix}"
-      case Refused.Quota(limit, used, cap, at)      => s"${limit.productPrefix} is spent: $used of $cap${until(at)}"
+      case Refused.Policy(rule)                        => s"refused: ${rule.productPrefix}"
+      case Refused.Quota(limit, used, cap, at)         => s"${limit.productPrefix} is spent: $used of $cap${until(at)}"
+      case Refused.Space(work, needs, on, free, least) =>
+        s"no room for ${(work.stored +: Vector(s"$needs", s"$on", s"$free", s"$least")).mkString(HoldSeparator)}"
       case Refused.Disabled(feature, setting, v, e) =>
         s"$feature is switched off by $setting${v.fold("")(variable => s"; $variable=true switches it on")}" +
           e.fold("")(effect => s" (${effect.productPrefix})")
-      case Upstream.Http(name, url, st, body, at) => s"${path(at)}$name answered HTTP $st at $url — $body"
-      case Upstream.Challenged(name, url, st, at) => s"${path(at)}$name challenged with HTTP $st at $url"
-      case Upstream.Limited(name, at)             => s"$name is limited${until(at)}"
-      case Upstream.Unasked(why)                  => s"$NotAskedThisSweep${why.stored}"
-      case Upstream.Unreachable(name, url, r, at) => s"${path(at)}cannot reach $name at $url — $r"
-      case Upstream.Timeout(name, url, after, at) => s"${path(at)}$name did not answer at $url within $after ms"
+      case Upstream.Http(name, url, st, body, at)       => s"${path(at)}$name answered HTTP $st at $url — $body"
+      case Upstream.Challenged(name, url, st, at)       => s"${path(at)}$name challenged with HTTP $st at $url"
+      case Upstream.Limited(name, at)                   => s"$name is limited${until(at)}"
+      case Upstream.Offline(name, at)                   => s"$name is offline${until(at)}"
+      case Upstream.Changed(name)                       => s"$name's file changed"
+      case Upstream.Rebuilt(url)                        => s"$url changed during the download"
+      case Upstream.Mislisted(url, size, listed, build) => s"$url is $size bytes, listed $listed for '$build'"
+      case Upstream.Unasked(why)                        => s"$NotAskedThisSweep${why.stored}"
+      case Upstream.Unreachable(name, url, r, at)       => s"${path(at)}cannot reach $name at $url — $r"
+      case Upstream.Timeout(name, url, after, at)       => s"${path(at)}$name did not answer at $url within $after ms"
       case Upstream.BadReply(name, url, s, r, at) => s"${path(at)}$name's answer at $url is not ${s.productPrefix} — $r"
       case Io.File(op, path, reported)            => s"could not ${op.productPrefix} $path — $reported"
       case Io.Wrong(path, Io.Kind.Inside(dir))    => s"$path is outside $dir"
@@ -199,6 +206,9 @@ object Column:
           Vector(owner.productPrefix, s"$name", s"$role", used.mkString(ListSeparator))
         case Invalid.Rule.PointOnly(place, label)        => Vector(s"$place", s"$label")
         case Invalid.Rule.NameByHand(name, place, label) => Vector(s"$name", s"$place", s"$label")
+        case Invalid.Rule.FocusRegion(name, known)       => Vector(s"$name", known.mkString(ListSeparator))
+        case Invalid.Rule.FocusDeeper(extract)           => Vector(s"$extract")
+        case Invalid.Rule.LabelsUnranged | Invalid.Rule.SeaFloorUnranged => Vector.empty
         case Invalid.Rule.IdentifierGiven | Invalid.Rule.RunsCompared | Invalid.Rule.RunRepeated |
             Invalid.Rule.QueryGiven | Invalid.Rule.UpstreamRecord | Invalid.Rule.UploadGiven |
             Invalid.Rule.PathOrBase64 | Invalid.Rule.ServerSees | Invalid.Rule.OriginalForReocr |
@@ -271,6 +281,11 @@ object Column:
         case Io.Variant.SampleFormat(format)                => Vector(s"$format")
         case _                                              => Vector.empty
       (variant.productPrefix +: held).mkString(" ")
+
+  extension (work: Refused.Work)
+    private def stored: String = work match
+      case Refused.Work.Layer(title) => s"Layer $title"
+      case other                     => other.productPrefix
 
   extension (pinning: Io.Pinning)
     private def stored: String =
@@ -449,6 +464,12 @@ object Column:
       Option(name).flatMap(n => values.find(_.productPrefix == n))
 
     private val Damages = Vector(Io.Damage.Checksum, Io.Damage.Truncated, Io.Damage.Undecodable, Io.Damage.Foreign)
+    private val NotDownloaded = "(?s)^no download of the (.*) layer; fetch with `(.*)`$".r
+    private val OfflineTill = "^(.+) is offline(?: until (\\S+))?$".r
+    private val FileChanged = "(?s)^(.+)'s file changed$".r
+    private val ChangedDuring = "^(\\S+) changed during the download$".r
+    private val ListedSize = "(?s)^(\\S+) is (\\d+) bytes, listed (\\d+) for '(.*)'$".r
+    private val NoRoom = "(?s)^no room for (.*)$".r
     private val Kinds = Vector(
       Io.Kind.File,
       Io.Kind.Directory,
@@ -636,6 +657,10 @@ object Column:
           word(Invalid.RoleOwner.values.toSeq, o).map(RoleUsed(_, Raw(name), Raw(role), raws(roles)))
         case Vector("PointOnly", p, l)       => Some(PointOnly(Raw(p), Raw(l)))
         case Vector("NameByHand", n, p, l)   => Some(NameByHand(Raw(n), Raw(p), Raw(l)))
+        case Vector("FocusRegion", n, known) => Some(FocusRegion(Raw(n), raws(known)))
+        case Vector("FocusDeeper", e)        => Count.read(e).map(FocusDeeper(_))
+        case Vector("LabelsUnranged")        => Some(LabelsUnranged)
+        case Vector("SeaFloorUnranged")      => Some(SeaFloorUnranged)
         case Vector("RoundsWithin", s, l, c) =>
           for
             stated <- Count.read(s)
@@ -862,6 +887,7 @@ object Column:
       Io.Flaw.NotFeatureCollection,
       Io.Flaw.NoLandPolygons,
       Io.Flaw.NotArray,
+      Io.Flaw.NoBuild,
       Io.Flaw.NoImageHeader,
       Io.Flaw.TooDeep,
       Io.Flaw.RootOutside,
@@ -1280,6 +1306,50 @@ object Column:
       {
         case NothingByHand(label, place) => Some(NotFound.SetByHand(Raw(s"$place"), Raw(s"$label")))
         case _                           => None
+      },
+      {
+        case NotDownloaded(layer, fetch) => Some(NotFound.Undownloaded(Raw(s"$layer"), Raw(s"$fetch")))
+        case _                           => None
+      },
+      {
+        case OfflineTill(name, at) => untilOf(at).map(Upstream.Offline(Upstream.Name(s"$name"), _))
+        case _                     => None
+      },
+      {
+        case FileChanged(name) => Some(Upstream.Changed(Upstream.Name(s"$name")))
+        case _                 => None
+      },
+      {
+        case ChangedDuring(url) => Some(Upstream.Rebuilt(Upstream.Url(s"$url")))
+        case _                  => None
+      },
+      {
+        case ListedSize(url, size, listed, build) =>
+          for
+            s <- Count.read(size)
+            l <- Count.read(listed)
+          yield Upstream.Mislisted(Upstream.Url(s"$url"), s, l, Raw(s"$build"))
+        case _ => None
+      },
+      {
+        case NoRoom(written) =>
+          written.split(Regex.quote(HoldSeparator), -1).toVector match
+            case Vector(w, n, on, f, l) =>
+              val work: Option[Refused.Work] = w match
+                case "SeaFloor"                          => Some(Refused.Work.SeaFloor)
+                case "Gebco"                             => Some(Refused.Work.Gebco)
+                case "Labels"                            => Some(Refused.Work.Labels)
+                case layer if layer.startsWith("Layer ") =>
+                  Some(Refused.Work.Layer(Raw(s"${layer.stripPrefix("Layer ")}")))
+                case _ => None
+              for
+                wk <- work
+                needs <- Count.read(n)
+                free <- Count.read(f)
+                least <- Count.read(l)
+              yield Refused.Space(wk, needs, Io.Path(s"$on"), free, least)
+            case _ => None
+        case _ => None
       },
       {
         case PlaceReferred(label, place, written) =>

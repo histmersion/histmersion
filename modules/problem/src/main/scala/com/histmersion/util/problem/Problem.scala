@@ -480,6 +480,18 @@ object Problem:
         */
       case NameByHand(name: Raw, place: Raw, label: Raw)
 
+      /** `name` is no focus region `basemap.terrain.focus-regions` names (`known` are): its `--bbox` is given. */
+      case FocusRegion(name: Raw, known: Vector[Raw])
+
+      /** A focus region holds the zooms deeper than the extract's, `extract`: more than that is asked for. */
+      case FocusDeeper(extract: Count)
+
+      /** The physical names are not read with range requests: `labels` fetches them. */
+      case LabelsUnranged
+
+      /** The sea floor is not read with range requests: `bathymetry` fetches it. */
+      case SeaFloorUnranged
+
     /** What uses the agent roles a model is set for. */
     enum RoleOwner derives CanEqual:
       /** An agent pipeline, by its name: `--model-for` sets a model for one of its roles. */
@@ -591,6 +603,9 @@ object Problem:
       * it has that name in by a person's hand (an empty one: no language), which the caller may have meant.
       */
     final case class Name(place: Raw, label: Raw, name: Raw, lang: Raw, has: Vector[Raw]) extends NotFound
+
+    /** The base map's `layer` is not downloaded: `fetch` downloads it. */
+    final case class Undownloaded(layer: Raw, fetch: Raw) extends NotFound
 
     /** The place `place` (`label`) has no kind, period or point a person set by hand. */
     final case class SetByHand(place: Raw, label: Raw) extends NotFound
@@ -775,7 +790,7 @@ object Problem:
 
     /** The work that holds the store or a resource while it runs. */
     enum Activity:
-      case Backup, Restore, Vacuum, Reindex, MergeApply, BundleImport, Seed, Migration, CalibreGui
+      case Backup, Restore, Vacuum, Reindex, MergeApply, BundleImport, Seed, Migration, CalibreGui, TileRequests
 
   /** The operation is not allowed, though it is valid and the state allows it. */
   sealed trait Refused extends Problem
@@ -806,6 +821,25 @@ object Problem:
       /** The fetcher obtains copies without the rights holder's authorisation: it stays off unless a person allows it.
         */
       case Unauthorised
+
+    /** `work` needs `needs` bytes on `on`, where `free` are free: it would leave less than `least`
+      * (`basemap.min-free-gb`).
+      */
+    final case class Space(work: Work, needs: Count, on: Io.Path, free: Count, least: Count) extends Refused
+
+    /** What a refusal for want of disk space was for, each with its own way out. */
+    enum Work derives CanEqual:
+      /** The base map's layer `title`: a smaller region, fewer zooms or another directory. */
+      case Layer(title: Raw)
+
+      /** The ETOPO1 sea floor. */
+      case SeaFloor
+
+      /** The GEBCO sea floor: a smaller region, or the ETOPO1 sea floor. */
+      case Gebco
+
+      /** The physical names. */
+      case Labels
 
     /** The rules a request can break. */
     enum Rule:
@@ -897,6 +931,19 @@ object Problem:
       */
     final case class Unasked(why: Problem) extends Upstream
 
+    /** `upstream` could not be reached a moment ago: it is not asked again before `until`, when that is known. */
+    final case class Offline(upstream: Name, until: Option[EpochMs]) extends Upstream
+
+    /** `upstream`'s file changed under a read (another ETag or size). */
+    final case class Changed(upstream: Name) extends Upstream
+
+    /** The file at `url` changed during a download (its size or ETag differ): the fetch is run again for the new build.
+      */
+    final case class Rebuilt(url: Url) extends Upstream
+
+    /** The file at `url` is `size` bytes, but the provider lists `listed` for the build `build`. */
+    final case class Mislisted(url: Url, size: Count, listed: Count, build: Raw) extends Upstream
+
     /** `upstream` could not be reached at `url`. */
     final case class Unreachable(
         upstream: Name,
@@ -937,7 +984,9 @@ object Problem:
 
     /** An address of the service. */
     type Url = Url.T
-    object Url extends Newtype[String, Pure]
+    object Url extends Newtype[String, Pure]:
+      /** The address a value of any newtype holds (`Url.of(source.url)`): unwrapped here, like [[Raw.of]]. */
+      def of[T](value: T)(using RefinedType.Mirror[T]): Url = Url(s"$value")
 
     /** An HTTP status code. */
     type Status = Status.T
@@ -1139,6 +1188,9 @@ object Problem:
 
       /** A JSON document that is no array, where a list belongs. */
       case NotArray
+
+      /** A provider's list of builds that lists none. */
+      case NoBuild
 
       /** A PNG with no image header (IHDR) before its data. */
       case NoImageHeader
@@ -2081,6 +2133,7 @@ object Problem:
       NotFound.Listed(TypeName("MergeRepo.MergeIdOrPrefix"), Raw("0193f1"), NotFound.Listing.Merges),
       NotFound.Name(Raw("pleiades_579885"), Raw("Knossos"), Raw("Cnossus"), Raw("la"), Vector(Raw("en"), Raw(""))),
       NotFound.SetByHand(Raw("pleiades_579885"), Raw("Knossos")),
+      NotFound.Undownloaded(Raw("vector"), Raw("histmersion basemap fetch")),
       NotFound.Dangling(
         TypeName("Bundle.Kind.Source"),
         Raw("0193f1c4-7b2a-7c3e-9d41-5e6f7a8b9c0d"),
@@ -2125,6 +2178,13 @@ object Problem:
       Refused.Policy(Refused.Rule.RunTokenRequired),
       Refused.Quota(Refused.Limit.DailySpend, Refused.Amount(5.25), Refused.Amount(4.5), Some(EpochMs(1762732800000L))),
       Refused.Disabled(Refused.Feature("events-gvp"), SettingKey("histmersion.events.gvp.enabled"), None, None),
+      Refused.Space(
+        Refused.Work.Gebco,
+        Count(4_200_000_000L),
+        Io.Path("/srv/histmersion/basemap"),
+        Count(5_000_000_000L),
+        Count(2_000_000_000L)
+      ),
       Upstream.Http.here(core, url, Upstream.Status(429), External.ReplyExcerpt("{\"message\":\"rate limited\"}")),
       Upstream.Challenged.here(
         Upstream.Name("archive-org"),
@@ -2134,6 +2194,15 @@ object Problem:
       Upstream.Limited(Upstream.Name("claude"), Some(EpochMs(1762732800000L))),
       Upstream.Unasked(Relayed(Sentence("CORE asked to wait until 2025-11-10T00:00:00Z"))),
       Upstream.Unreachable.here(core, url, reported),
+      Upstream.Offline(Upstream.Name("the provider"), Some(EpochMs(1762732800000L))),
+      Upstream.Changed(Upstream.Name("the provider")),
+      Upstream.Rebuilt(Upstream.Url("https://build.protomaps.com/20261101.pmtiles")),
+      Upstream.Mislisted(
+        Upstream.Url("https://build.protomaps.com/20261101.pmtiles"),
+        Count(120_000_000_000L),
+        Count(121_000_000_000L),
+        Raw("20261101.pmtiles")
+      ),
       Upstream.Timeout.here(core, url, Millis(30000L)),
       Upstream.BadReply
         .here(core, url, Upstream.Shape.Json, External.Reported("expected json value got '<html>' (line 1)")),

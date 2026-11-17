@@ -37,7 +37,7 @@ class CasesSuite extends munit.FunSuite:
 
   test("there are eleven groups and three cases outside them"):
     assertEquals(Group.values.length, 14)
-    assertEquals(examples.size, 81)
+    assertEquals(examples.size, 87)
 
   test("a relayed problem is its sentence"):
     assertEquals((Relayed(Sentence("the server is reindexing")): Problem).sentence, "the server is reindexing")
@@ -159,9 +159,9 @@ class CasesSuite extends munit.FunSuite:
     )
 
   test(
-    "only a missing entity, a listed one, a place's name or hand-set values, a copy or a referred-to record is not found"
+    "only a missing entity, a listed one, a place's name, hand-set values, a download, a copy or a referred-to record is not found"
   ):
     assertEquals(
       examples.filter(_.isNotFound).map(_.productPrefix),
-      Vector("Entity", "Copy", "Listed", "Name", "SetByHand", "Dangling")
+      Vector("Entity", "Copy", "Listed", "Name", "SetByHand", "Undownloaded", "Dangling")
     )

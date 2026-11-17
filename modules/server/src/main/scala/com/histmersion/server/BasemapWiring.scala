@@ -102,14 +102,14 @@ object BasemapWiring:
     def guarded[A](op: BasemapJobs.Operation)(body: => Either[Api.Error, A]): Either[Api.Error, A] =
       deps.maintenance.guard(WriteGate.OperationName(op.value))(body)
 
-    def busy(what: BasemapJobs.Target, busyCode: Option[Problem]): Api.Error =
-      BackgroundJob.busy(BackgroundJob.Work(what.value), slot.current, busyCode.map(c => Api.Error.Code(c.sentence)))
+    def busy(what: BasemapJobs.Target, busyCode: Option[Api.Error.Code]): Api.Error =
+      BackgroundJob.busy(BackgroundJob.Work(what.value), slot.current, busyCode)
 
     def start(
         kind: Job.Kind,
         about: BasemapJobs.Description,
         what: BasemapJobs.Target,
-        busyCode: Option[Problem]
+        busyCode: Option[Api.Error.Code]
     )(
         body: (BasemapJobs.Target => Unit) => Either[Problem, BasemapJobs.Description]
     ): Either[Api.Error, JobInfo] =
@@ -119,7 +119,7 @@ object BasemapWiring:
         Some(JobDetail.Purpose(Some(JobKinds.Subject(about.value)))),
         slot,
         BackgroundJob.Work(what.value),
-        busyCode.map(c => Api.Error.Code(c.sentence)),
+        busyCode,
         deps.pins,
         Some(deps.jobStops)
       )((_, note) =>

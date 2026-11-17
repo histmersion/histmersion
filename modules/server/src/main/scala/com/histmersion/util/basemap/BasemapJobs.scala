@@ -19,7 +19,7 @@ trait BasemapJobs:
   def guarded[A](op: BasemapJobs.Operation)(body: => Either[Api.Error, A]): Either[Api.Error, A]
 
   /** The refusal of work asked for while a job runs: `what` is the kind of work, `busyCode` its error code. */
-  def busy(what: BasemapJobs.Target, busyCode: Option[Problem]): Api.Error
+  def busy(what: BasemapJobs.Target, busyCode: Option[Api.Error.Code]): Api.Error
 
   /** `body` started as a job of `kind` described by `about`, given a progress reporter and answering its summary or why
     * it failed; `Left` — [[busy]] — while another runs.
@@ -28,7 +28,7 @@ trait BasemapJobs:
       kind: Job.Kind,
       about: BasemapJobs.Description,
       what: BasemapJobs.Target,
-      busyCode: Option[Problem]
+      busyCode: Option[Api.Error.Code]
   )(
       body: (BasemapJobs.Target => Unit) => Either[Problem, BasemapJobs.Description]
   ): Either[Api.Error, JobInfo]
