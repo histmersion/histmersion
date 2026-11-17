@@ -57,11 +57,14 @@ class RenderSuite extends munit.FunSuite:
     "Entity" -> (404, "no Citekey 'anthony2007'"),
     "Copy" -> (404, "no open-access copy of 'doi:10.1017/S0003598X00000001'"),
     "Listed" -> (404, "no MergeRepo.MergeIdOrPrefix '0193f1' listed by Merges"),
+    "Name" -> (404, "no name 'Cnossus' in 'la' for 'Knossos' [pleiades_579885] (has: 'en', '')"),
+    "SetByHand" -> (404, "nothing set by hand on 'Knossos' [pleiades_579885]"),
     "Dangling" -> (
       404,
       "no Bundle.Kind.Source '0193f1c4-7b2a-7c3e-9d41-5e6f7a8b9c0d' in BundleOrHere, referred to by finding anthony2007#1"
     ),
     "Held" -> (409, "held SameWork anthony2006 | doi: source anthony2007"),
+    "Referred" -> (409, "place 'Arkona' [local_arkona] is referred to by 3 Events, 1 ChildPlaces"),
     "Job" -> (409, "job '0193f1c4' is queued: NotStarted"),
     "Entry" -> (500, "Bundle entry entities/sources.ndjson: Differs Lines 4/3"),
     "AlreadyExists" -> (409, "Place.Id 'pleiades_579885' already exists"),
@@ -101,6 +104,12 @@ class RenderSuite extends munit.FunSuite:
     ),
     "File" -> (500, "could not Read /tmp/bundle.hmx — java.nio.file.NoSuchFileException: /tmp/bundle.hmx"),
     "Wrong" -> (500, "/srv/seed is not Directory"),
+    "Absent" -> (500, "no GazetteerSeed at /srv/histmersion/gazetteer (set init.data-dir)"),
+    "Extract" -> (
+      500,
+      "extract 'geonames' cannot be read: Mismatch | 2026-09 | /home/x/.cache/histmersion/gazetteer/geonames.lpf.gz | ab12 | cd34"
+    ),
+    "Oversize" -> (500, "whg-crete.json is 612 MB, over places.sources.max-lpf-mb"),
     "Corrupt" -> (500, "the Png data at terrarium tile 3/4/2 is damaged: Length 1024/1000"),
     "Process" -> (500, "calibredb exited with 2 — calibredb: library is locked"),
     "Database" -> (
@@ -379,6 +388,74 @@ class RenderSuite extends munit.FunSuite:
       Config.Setting(SettingKey("histmersion.plugins.order"), Config.Fault.NoPlugin(Raw("x"))).sentence,
       "histmersion.plugins.order names 'x', which is no plugin in this binary"
     )
+
+  test("the places' and the gazetteer's refusals keep the words and hints they had before their cases were typed"):
+    val (place, label) = (Raw("pleiades_579885"), Raw("Knossos"))
+    Vector[(Problem, String)](
+      NotFound.Name(place, label, Raw("Cnossus"), Raw("la"), Vector(Raw("en"), Raw(""))) ->
+        "'Knossos' [pleiades_579885] has no name 'Cnossus' in la (it has it with en, no language — pass that language)",
+      NotFound.Name(place, label, Raw("Zztell"), Raw(""), Vector.empty) ->
+        "'Knossos' [pleiades_579885] has no name 'Zztell'",
+      NotFound.SetByHand(place, label) -> "'Knossos' [pleiades_579885] has no kind, period or point set by hand",
+      Invalid.Broken.here(Invalid.Rule.PointOnly(place, label)) ->
+        ("'Knossos' [pleiades_579885] has a shape, not a point — a point set by hand moves only a place known by a " +
+          "point"),
+      Invalid.Broken.here(Invalid.Rule.NameByHand(Raw("Cnossus"), place, label)) ->
+        ("'Cnossus' is a name the gazetteer seed or an imported source gives 'Knossos' [pleiades_579885], not one " +
+          "added by hand — removing it would last only until the next import"),
+      Conflict.Referred(
+        place,
+        label,
+        NonEmptyVector.of(
+          Conflict.Reference(Count(3L), Conflict.Referrer.Events),
+          Conflict.Reference(Count(1L), Conflict.Referrer.AssetLinks),
+          Conflict.Reference(Count(2L), Conflict.Referrer.OnlyPlaceOf)
+        )
+      ) -> ("'Knossos' [pleiades_579885] is referred to by 3 event(s), 1 asset link(s), 2 finding(s) it is the only " +
+        "place of — merge it into the place it is the same as instead, or move those first"),
+      Io.Absent(Io.Held.GazetteerSeed, Io.Path("/srv/seed"), Some(SettingKey("init.data-dir"))) ->
+        "no gazetteer seed at /srv/seed (set init.data-dir)",
+      Io.Absent(Io.Held.GazetteerManifest, Io.Path("/srv/m.json"), Some(SettingKey("places.sources.manifest"))) ->
+        "no gazetteer manifest at /srv/m.json (set places.sources.manifest)",
+      Io.Absent(Io.Held.LpfFiles, Io.Path("/srv/lpf"), None) ->
+        "no LPF files in /srv/lpf (put World Historical Gazetteer downloads there)",
+      Io.Absent(Io.Held.SeedFiles, Io.Path("/srv/seed"), None) -> "no JSON files under /srv/seed",
+      Io.Extract(Raw("tgn"), Io.Pinning.Unlisted(Io.Path("db/gazetteer/extracts.json"))) ->
+        "db/gazetteer/extracts.json pins no 'tgn' extract",
+      Io.Extract(Raw("tgn"), Io.Pinning.NotBuilt(Io.Path("db/gazetteer/extracts.json"))) ->
+        ("tgn is not pinned yet (db/gazetteer/extracts.json names no built file or sha256 for it) — build it with " +
+          "db/gazetteer/build.py and pin it (db/gazetteer/README.md, \"Rebuilding and re-pinning\")"),
+      Io.Extract(Raw("tgn"), Io.Pinning.Mismatch(Raw("2026-09"), Io.Path("/c/tgn.lpf.gz"), Raw("ab"), Raw("cd"))) ->
+        ("/c/tgn.lpf.gz has sha256 ab, but tgn 2026-09 is pinned at cd — refused (rebuild it with " +
+          "db/gazetteer/build.py and re-pin, or fetch the pinned file)"),
+      Io.Extract(
+        Raw("tgn"),
+        Io.Pinning.Unhosted(
+          Raw("2026-09"),
+          Raw("tgn.lpf.gz"),
+          Io.Path("/c/tgn.lpf.gz"),
+          Raw("ab"),
+          Count(1_450_000_000L),
+          SettingKey("places.sources.dir"),
+          SettingKey("HISTMERSION_GAZETTEER_DIR")
+        )
+      ) -> ("tgn 2026-09: tgn.lpf.gz is not at /c/tgn.lpf.gz, and its pin has no download url (the extracts are not " +
+        "hosted). Put the file there — sha256 ab, 1.5 GB — copied from another install or rebuilt with " +
+        "db/gazetteer/build.py (db/gazetteer/README.md); the folder is places.sources.dir (HISTMERSION_GAZETTEER_DIR; " +
+        "by default the XDG cache directory, $XDG_CACHE_HOME/histmersion/gazetteer or ~/.cache/histmersion/gazetteer). " +
+        "Then run the load again."),
+      Io.Oversize(Io.Path("whg.json"), Count(612L), SettingKey("places.sources.max-lpf-mb")) ->
+        "whg.json is 612 MB, over places.sources.max-lpf-mb — convert it to one feature per line (.ndjson)"
+    ).foreach((p, s) => assertEquals(p.sentence, s))
+    // a damaged seed file is named, as "<file>: <why>" named it
+    assertEquals(
+      Io.Corrupt(Io.Format.Json, Where("LPF"), Io.Damage.Unreadable(External.Reported("expected '}'")))
+        .inside(Where("regions/aegean.json"))
+        .sentence,
+      "the json data at LPF in regions/aegean.json cannot be read — expected '}'"
+    )
+    assertEquals(Io.Extract(Raw("x"), Io.Pinning.NotBuilt(Io.Path("m"))).status.code, 500)
+    assertEquals(NotFound.Name(place, label, Raw("n"), Raw(""), Vector.empty).status.code, 404)
 
   test("a watch left out of a sweep says so before why, in its sentence and its stored text"):
     val unasked = Upstream.Unasked(Relayed(Sentence("CORE asked to wait")))

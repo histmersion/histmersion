@@ -40,12 +40,15 @@ object Column:
       case Invalid.OutOfTime(year, least, greatest, at)  => s"${path(at)}year $year is beyond [$least, $greatest]"
       case Invalid.Unparsable(format, where, damage, at) =>
         s"${path(at)}the ${format.productPrefix} input at $where is damaged: ${damage.stored}"
-      case Invalid.Reference(form, at)            => s"${path(at)}no secret reference: ${form.stored}"
-      case Invalid.Broken(rule, at)               => s"${path(at)}breaks ${rule.stored}"
-      case NotFound.Entity(t, key)                => s"no $t '$key'"
-      case NotFound.Listed(t, key, listing)       => s"no $t '$key' listed by ${listing.productPrefix}"
-      case NotFound.Copy(work, answers)           => s"no open-access copy of '$work'${answeredStored(answers)}"
-      case NotFound.Dangling(t, key, from, in)    => s"no $t '$key' in ${in.productPrefix}, referred to by $from"
+      case Invalid.Reference(form, at)                  => s"${path(at)}no secret reference: ${form.stored}"
+      case Invalid.Broken(rule, at)                     => s"${path(at)}breaks ${rule.stored}"
+      case NotFound.Entity(t, key)                      => s"no $t '$key'"
+      case NotFound.Listed(t, key, listing)             => s"no $t '$key' listed by ${listing.productPrefix}"
+      case NotFound.Copy(work, answers)                 => s"no open-access copy of '$work'${answeredStored(answers)}"
+      case NotFound.Dangling(t, key, from, in)          => s"no $t '$key' in ${in.productPrefix}, referred to by $from"
+      case NotFound.Name(place, label, name, lang, has) =>
+        s"no name '$name' in '$lang' for '$label' [$place]${if has.isEmpty then "" else s" (has: ${quoted(has)})"}"
+      case NotFound.SetByHand(place, label)       => s"nothing set by hand on '$label' [$place]"
       case Conflict.Held(subject, hold)           => s"held ${hold.stored}: $subject"
       case Conflict.Job(job, status, control)     => s"job '$job' is $status: ${control.stored}"
       case Conflict.AlreadyExists(t, key)         => s"$t '$key' already exists"
@@ -58,8 +61,10 @@ object Column:
       case Conflict.WrongState(t, key, is, ws)    => s"$t '$key' is $is; it needs ${ws.mkString(" or ")}"
       case Conflict.Busy(activity)                => s"${activity.productPrefix} is still running"
       case Conflict.Referenced(t, key, by, n)     => s"$t '$key' is referred to by $n $by"
-      case Refused.Policy(rule)                   => s"refused: ${rule.productPrefix}"
-      case Refused.Quota(limit, used, cap, at)    => s"${limit.productPrefix} is spent: $used of $cap${until(at)}"
+      case Conflict.Referred(place, label, refs)  =>
+        s"place '$label' [$place] is referred to by ${refs.toVector.map(r => s"${r.count} ${r.by.productPrefix}").mkString(ListSeparator)}"
+      case Refused.Policy(rule)                     => s"refused: ${rule.productPrefix}"
+      case Refused.Quota(limit, used, cap, at)      => s"${limit.productPrefix} is spent: $used of $cap${until(at)}"
       case Refused.Disabled(feature, setting, v, e) =>
         s"$feature is switched off by $setting${v.fold("")(variable => s"; $variable=true switches it on")}" +
           e.fold("")(effect => s" (${effect.productPrefix})")
@@ -73,10 +78,14 @@ object Column:
       case Io.File(op, path, reported)            => s"could not ${op.productPrefix} $path — $reported"
       case Io.Wrong(path, Io.Kind.Inside(dir))    => s"$path is outside $dir"
       case Io.Wrong(path, expected)               => s"$path is not ${expected.productPrefix}"
-      case Io.Corrupt(format, at, damage)     => s"the ${format.productPrefix} data at $at is damaged: ${damage.stored}"
-      case Io.Process(tool, ending)           => s"$tool ${ending.stored}"
-      case Io.Database(op, reported)          => s"the database refused to ${op.productPrefix} — $reported"
-      case Io.Entry(archive, entry, fault)    => s"${archive.productPrefix} entry $entry: ${fault.stored}"
+      case Io.Corrupt(format, at, damage)  => s"the ${format.productPrefix} data at $at is damaged: ${damage.stored}"
+      case Io.Process(tool, ending)        => s"$tool ${ending.stored}"
+      case Io.Database(op, reported)       => s"the database refused to ${op.productPrefix} — $reported"
+      case Io.Entry(archive, entry, fault) => s"${archive.productPrefix} entry $entry: ${fault.stored}"
+      case Io.Absent(held, path, setting)  =>
+        s"no ${held.productPrefix} at $path${setting.fold("")(s => s" (set $s)")}"
+      case Io.Extract(extract, pinning)       => s"extract '$extract' cannot be read: ${pinning.stored}"
+      case Io.Oversize(path, mb, setting)     => s"$path is $mb MB, over $setting"
       case Config.Setting(key, fault)         => s"$key is wrong: ${fault.stored}"
       case Config.Unavailable(capability)     => s"this server has no ${capability.productPrefix}"
       case Config.Reload(stage, scope)        => s"reloading the settings failed at ${stage.productPrefix} in $scope"
@@ -129,6 +138,8 @@ object Column:
       answers
         .map(a => s"${a.fetcher}: ${a.kind.productPrefix} — ${a.why.stored}")
         .mkString(" — ", "; ", "")
+
+  private def quoted(values: Vector[Raw]): String = values.map(v => s"'$v'").mkString(ListSeparator)
 
   private def quotedList(values: Vector[Raw]): String =
     if values.isEmpty then "" else values.map(v => s"'$v'").mkString(" (one of: ", ", ", ")")
@@ -186,6 +197,8 @@ object Column:
         case Invalid.Rule.RoundsWithin(stated, least, cap)  => Vector(s"$stated", s"$least", s"$cap")
         case Invalid.Rule.RoleUsed(owner, name, role, used) =>
           Vector(owner.productPrefix, s"$name", s"$role", used.mkString(ListSeparator))
+        case Invalid.Rule.PointOnly(place, label)        => Vector(s"$place", s"$label")
+        case Invalid.Rule.NameByHand(name, place, label) => Vector(s"$name", s"$place", s"$label")
         case Invalid.Rule.IdentifierGiven | Invalid.Rule.RunsCompared | Invalid.Rule.RunRepeated |
             Invalid.Rule.QueryGiven | Invalid.Rule.UpstreamRecord | Invalid.Rule.UploadGiven |
             Invalid.Rule.PathOrBase64 | Invalid.Rule.ServerSees | Invalid.Rule.OriginalForReocr |
@@ -223,7 +236,18 @@ object Column:
       case Io.Damage.Unreadable(reported)    => s"Unreadable — $reported"
       case Io.Damage.Newer(found, reads)     => s"Newer $found/$reads"
       case Io.Damage.Schema(found, reads)    => s"Schema $found/$reads"
+      case Io.Damage.Structure(flaw)         => s"Structure ${flaw.productPrefix}"
       case other                             => other.productPrefix
+
+  extension (pinning: Io.Pinning)
+    private def stored: String =
+      val held: Vector[String] = pinning match
+        case Io.Pinning.Unlisted(manifest)                     => Vector(s"$manifest")
+        case Io.Pinning.NotBuilt(manifest)                     => Vector(s"$manifest")
+        case Io.Pinning.Mismatch(version, path, found, pinned) => Vector(s"$version", s"$path", s"$found", s"$pinned")
+        case Io.Pinning.Unhosted(version, file, path, sha256, bytes, setting, variable) =>
+          Vector(s"$version", s"$file", s"$path", s"$sha256", s"$bytes", s"$setting", s"$variable")
+      (pinning.productPrefix +: held).mkString(HoldSeparator)
 
   extension (fault: Io.Fault)
     private def stored: String = fault match
@@ -577,6 +601,8 @@ object Column:
         case Vector("HintConfig", allowed)            => Some(HintConfig(raws(allowed)))
         case Vector("RoleUsed", o, name, role, roles) =>
           word(Invalid.RoleOwner.values.toSeq, o).map(RoleUsed(_, Raw(name), Raw(role), raws(roles)))
+        case Vector("PointOnly", p, l)       => Some(PointOnly(Raw(p), Raw(l)))
+        case Vector("NameByHand", n, p, l)   => Some(NameByHand(Raw(n), Raw(p), Raw(l)))
         case Vector("RoundsWithin", s, l, c) =>
           for
             stated <- Count.read(s)
@@ -646,8 +672,7 @@ object Column:
     private val NoListed = "(?s)^no (\\S+) '(.*)' listed by (\\w+)$".r
     private val InvertedAt = s"(?s)^${Prefix}the period would start in (-?\\d+) after it ends in (-?\\d+)$$".r
     private val BeyondAt = s"(?s)^${Prefix}year (-?\\d+) is beyond \\[(-?\\d+), (-?\\d+)\\]$$".r
-    private val UnparsableAt =
-      s"(?s)^${Prefix}the (\\w+) input at (.+?) is damaged: (\\w+)(?: (\\d+)/(\\d+)| — (.*))?$$".r
+    private val UnparsableAt = s"(?s)^${Prefix}the (\\w+) input at (.+?) is damaged: (.*)$$".r
     private val ByOldKey = "(?s)^(\\w+) by an old key: (\\S+) '(.*)' is now '(.*)'$".r
     private val CollidesWith = "(?s)^(\\S+) '(.*)' already exists; '(.*)' collides$".r
     private val ClaimedBy = "(?s)^(\\S+) '(.*)' is claimed: (\\w+)(?: '(.*)')?$".r
@@ -678,7 +703,18 @@ object Column:
     private val CouldNot = "(?s)^could not (\\w+) (.+?) — (.*)$".r
     private val IsNot = "(?s)^(.+) is not (\\w+)$".r
     private val IsOutside = "(?s)^(.+) is outside (.+)$".r
-    private val Damaged = "(?s)^the (\\w+) data at (.+?) is damaged: (\\w+)(?: (\\d+)/(\\d+)| — (.*))?$".r
+    private val Damaged = "(?s)^the (\\w+) data at (.+?) is damaged: (.*)$".r
+    private val NamedName = "(?s)^no name '(.*)' in '(.*)' for '(.*)' \\[(.*)\\](?: \\(has: '(.*)'\\))?$".r
+    private val NothingByHand = "(?s)^nothing set by hand on '(.*)' \\[(.*)\\]$".r
+    private val PlaceReferred = "(?s)^place '(.*)' \\[(.*)\\] is referred to by (.+)$".r
+    private val CountedBy = "^(\\d+) (\\w+)$".r
+    private val AbsentAt = "(?s)^no (\\w+) at (.+?)(?: \\(set (\\S+)\\))?$".r
+    private val ExtractOf = "(?s)^extract '(.*)' cannot be read: (.*)$".r
+    private val OversizeAt = "(?s)^(.+) is (\\d+) MB, over (\\S+)$".r
+    private val DamageCounts = "^(\\w+) (\\d+)/(\\d+)$".r
+    private val DamageNewer = "^Newer (\\S*)/(\\S*)$".r
+    private val DamageReported = "(?s)^(\\w+) — (.*)$".r
+    private val DamageStructure = "^Structure (\\w+)$".r
     private val Exited = "(?s)^(.+?) exited with (-?\\d+) — (.*)$".r
     private val Unfinished = "(?s)^(.+?) did not finish within (\\d+) ms$".r
     private val NotStarted = "(?s)^(.+?) could not be started — (.*)$".r
@@ -764,23 +800,36 @@ object Column:
     private val UnclassifiedText = "(?s)^unclassified: (.*)$".r
     private val BrokenAt = s"(?s)^${Prefix}breaks (.*)$$".r
 
-    /** A damage as [[Io.Damage.stored]] wrote it: its name, then two counts or what the reader reported. */
-    private def damageOf(damage: String, expected: String, found: String, reported: String): Option[Io.Damage] =
-      (Option(expected), Option(found), Option(reported)) match
-        case (Some(e), Some(f), None) if damage == "Length" =>
-          for
-            ec <- Count.read(e)
-            fc <- Count.read(f)
-          yield Io.Damage.Length(ec, fc)
-        case (Some(e), Some(f), None) if damage == "Newer"  => Some(Io.Damage.Newer(Raw(s"$e"), Raw(s"$f")))
-        case (Some(e), Some(f), None) if damage == "Schema" =>
-          for
-            ec <- Count.read(e)
-            fc <- Count.read(f)
-          yield Io.Damage.Schema(ec, fc)
-        case (None, None, Some(r)) if damage == "Unreadable" => Some(Io.Damage.Unreadable(External.Reported(s"$r")))
-        case (None, None, None)                              => word(Damages, damage)
-        case _                                               => None
+    /** A damage as [[Io.Damage.stored]] wrote it: its name, then two counts, what the reader reported, or its flaw. */
+    private def damageOf(damage: String): Option[Io.Damage] = damage match
+      case DamageCounts("Length", e, f) =>
+        for
+          ec <- Count.read(e)
+          fc <- Count.read(f)
+        yield Io.Damage.Length(ec, fc)
+      case DamageCounts("Schema", e, f) =>
+        for
+          ec <- Count.read(e)
+          fc <- Count.read(f)
+        yield Io.Damage.Schema(ec, fc)
+      case DamageNewer(e, f)               => Some(Io.Damage.Newer(Raw(s"$e"), Raw(s"$f")))
+      case DamageReported("Unreadable", r) => Some(Io.Damage.Unreadable(External.Reported(s"$r")))
+      case DamageStructure(flaw)           => word(Io.Flaw.values.toSeq, flaw).map(Io.Damage.Structure(_))
+      case other                           => word(Damages, other)
+
+    /** A pinning as [[Io.Pinning.stored]] wrote it: its name, then what it holds. */
+    private def pinningOf(written: Vector[String]): Option[Io.Pinning] = written match
+      case Vector("Unlisted", m)               => Some(Io.Pinning.Unlisted(Io.Path(m)))
+      case Vector("NotBuilt", m)               => Some(Io.Pinning.NotBuilt(Io.Path(m)))
+      case Vector("Mismatch", v, path, f, pin) => Some(Io.Pinning.Mismatch(Raw(v), Io.Path(path), Raw(f), Raw(pin)))
+      case Vector("Unhosted", v, file, path, sha, b, setting, variable) =>
+        Count
+          .read(b)
+          .map(
+            Io.Pinning
+              .Unhosted(Raw(v), Raw(file), Io.Path(path), Raw(sha), _, SettingKey(setting), SettingKey(variable))
+          )
+      case _ => None
 
     private val Readers: List[String => Option[Problem]] = List(
       {
@@ -937,10 +986,10 @@ object Column:
         case _ => None
       },
       {
-        case UnparsableAt(at, format, where, damage, expected, found, reported) =>
+        case UnparsableAt(at, format, where, damage) =>
           for
             f <- word(Io.Format.values.toSeq, format)
-            d <- damageOf(damage, expected, found, reported)
+            d <- damageOf(damage)
           yield Invalid.Unparsable(f, Where(s"$where"), d, pathOf(at))
         case _ => None
       },
@@ -1095,11 +1144,52 @@ object Column:
         case _                    => None
       },
       {
-        case Damaged(format, at, damage, expected, found, reported) =>
+        case Damaged(format, at, damage) =>
           for
             f <- word(Io.Format.values.toSeq, format)
-            d <- damageOf(damage, expected, found, reported)
+            d <- damageOf(damage)
           yield Io.Corrupt(f, Where(s"$at"), d)
+        case _ => None
+      },
+      {
+        case NamedName(name, lang, label, place, has) =>
+          Some(NotFound.Name(Raw(s"$place"), Raw(s"$label"), Raw(s"$name"), Raw(s"$lang"), quotedListOf(has)))
+        case _ => None
+      },
+      {
+        case NothingByHand(label, place) => Some(NotFound.SetByHand(Raw(s"$place"), Raw(s"$label")))
+        case _                           => None
+      },
+      {
+        case PlaceReferred(label, place, written) =>
+          val refs = written.split(ListSeparator, -1).toVector.map {
+            case CountedBy(n, by) =>
+              for
+                count <- Count.read(n)
+                referrer <- word(Conflict.Referrer.values.toSeq, by)
+              yield Conflict.Reference(count, referrer)
+            case _ => None
+          }
+          Option
+            .when(refs.forall(_.isDefined))(refs.flatten)
+            .flatMap(NonEmptyVector.from)
+            .map(Conflict.Referred(Raw(s"$place"), Raw(s"$label"), _))
+        case _ => None
+      },
+      {
+        case AbsentAt(held, path, setting) =>
+          word(Io.Held.values.toSeq, held)
+            .map(Io.Absent(_, Io.Path(s"$path"), Option(setting).map(s => SettingKey(s"$s"))))
+        case _ => None
+      },
+      {
+        case ExtractOf(extract, written) =>
+          pinningOf(written.split(Regex.quote(HoldSeparator), -1).toVector).map(Io.Extract(Raw(s"$extract"), _))
+        case _ => None
+      },
+      {
+        case OversizeAt(path, mb, setting) =>
+          Count.read(mb).map(Io.Oversize(Io.Path(s"$path"), _, SettingKey(s"$setting")))
         case _ => None
       },
       {

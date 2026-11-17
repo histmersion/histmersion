@@ -3,7 +3,8 @@ package domain.catalogue.places
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
+import com.histmersion.util.nonempty.NonEmptyVector
 
 import com.histmersion.api.{Dataset, Write}
 import com.histmersion.api.catalogue.{ManualPlaceName, Period, Year}
@@ -209,8 +210,7 @@ object PlaceService:
         Problem.NotFound.Entity(Problem.TypeName.of(Place.Id), Problem.Raw(s"$id")),
         Some(Api.Error.Code(Write.CodeNotFound))
       )
-    private def invalid(message: String): Api.Error =
-      Api.Error(Problem.Unclassified(Legacy.Text(message)), Some(Api.Error.Code(Write.CodeInvalid)))
+    private def invalid(problem: Problem): Api.Error = Api.Error(problem, Some(Api.Error.Code(Write.CodeInvalid)))
 
     def count(): RowCount = RowCount(places.size)
 
@@ -468,10 +468,13 @@ object PlaceService:
       val (o, n) = (Place.Id(from.value.trim), Place.Id(to.value.trim))
       val aliasOf = state.get.placeAliases.get(CatalogueState.PlaceAliasesKey(n.value))
       if find(o).isEmpty then Left(notFound(o.value))
-      else if find(n).isDefined then Left(invalid(s"'$n' is already the id of another place"))
+      else if find(n).isDefined then
+        Left(invalid(Problem.Conflict.AlreadyExists(Problem.TypeName.of(Place.Id), Problem.Raw.of(n))))
       else if aliasOf.exists(_.value != o.value) then
         Left(
-          invalid(s"'$n' is an old id of '${aliasOf.get}' and still resolves to it — pick another")
+          invalid(
+            Problem.Conflict.Aliased(Problem.TypeName.of(Place.Id), Problem.Raw.of(n), Problem.Raw.of(aliasOf.get))
+          )
         )
       else
         val _ = state.updateAndGet(s =>
@@ -526,17 +529,14 @@ object PlaceService:
       find(apiId(id)).toRight(notFound(id.value)).flatMap { p =>
         val same = p.names.filter(n => n.name == name && n.lang == lang)
         if same.isEmpty then
-          val langs =
-            p.names
-              .filter(n => n.name == name && n.manual.value)
-              .map(n => if n.lang.value.isEmpty then "no language" else n.lang.value)
-          val hint = if langs.isEmpty then "" else s" (it has it with ${langs.mkString(", ")} — pass that language)"
           Left(
             Api.Error(
-              Problem.Unclassified(
-                Legacy.Text(
-                  s"'${p.place.label}' [$id] has no name '$name'${if lang.value.isEmpty then "" else s" in $lang"}$hint"
-                )
+              Problem.NotFound.Name(
+                Problem.Raw.of(id),
+                Problem.Raw.of(p.place.label),
+                Problem.Raw.of(name),
+                Problem.Raw.of(lang),
+                p.names.filter(n => n.name == name && n.manual.value).map(n => Problem.Raw.of(n.lang))
               ),
               Some(Api.Error.Code(Write.CodeNotFound))
             )
@@ -544,8 +544,9 @@ object PlaceService:
         else if !same.exists(_.manual.value) then
           Left(
             invalid(
-              s"'$name' is a name the gazetteer seed or an imported source gives '${p.place.label}' [$id], not one added by hand — " +
-                "removing it would last only until the next import"
+              Problem.Invalid.Broken.here(
+                Problem.Invalid.Rule.NameByHand(Problem.Raw.of(name), Problem.Raw.of(id), Problem.Raw.of(p.place.label))
+              )
             )
           )
         else
@@ -586,18 +587,21 @@ object PlaceService:
     def add(in: Place.Input): Either[Api.Error, Place.Summary] =
       val id = in.place.id
       val s = state.get
-      if find(id).isDefined then Left(invalid(s"'$id' is already the id of a place — choose another id"))
-      else if s.placeRemovals(CatalogueState.PlaceRemovals(id.value)) then
-        Left(invalid(s"'$id' is the id of a place that was removed — choose another id"))
+      def claimed(clash: Problem.Conflict.Clash) =
+        invalid(Problem.Conflict.Claimed(Problem.TypeName.of(Place.Id), Problem.Raw.of(id), clash))
+      if find(id).isDefined then Left(claimed(Problem.Conflict.Clash.Taken))
+      else if s.placeRemovals(CatalogueState.PlaceRemovals(id.value)) then Left(claimed(Problem.Conflict.Clash.Removed))
       else if s.placeAliases.contains(CatalogueState.PlaceAliasesKey(id.value)) then
         Left(
-          invalid(
-            s"'$id' is an old id of '${s.placeAliases(CatalogueState.PlaceAliasesKey(id.value))}' and still resolves to it — choose another id"
+          claimed(
+            Problem.Conflict.Clash.OldKeyOf(Problem.Raw.of(s.placeAliases(CatalogueState.PlaceAliasesKey(id.value))))
           )
         )
       else
         val _ = importPlaces(List(in), Dataset.Local)
-        find(id).map(_.summary).toRight(Api.Error(Problem.Unclassified(Legacy.Text(s"place '$id' was not stored"))))
+        find(id)
+          .map(_.summary)
+          .toRight(Api.Error(Problem.NotFound.Entity(Problem.TypeName.of(Place.Id), Problem.Raw.of(id))))
 
     def overrides(id: Option[DPlace.Id]): List[Place.Override] =
       state.get.placeOverrides
@@ -637,9 +641,7 @@ object PlaceService:
             had
               .toRight(
                 Api.Error(
-                  Problem.Unclassified(
-                    Legacy.Text(s"'${before.place.label}' [$id] has no kind, period or point set by hand")
-                  ),
+                  Problem.NotFound.SetByHand(Problem.Raw.of(id), Problem.Raw.of(before.place.label)),
                   Some(Api.Error.Code(Write.CodeNotFound))
                 )
               )
@@ -648,8 +650,9 @@ object PlaceService:
               if before.place.geometry.exists(g => !InMemory.isPoint(g.value)) =>
             Left(
               invalid(
-                s"'${before.place.label}' [$id] has a shape, not a point — a point set by hand moves only a place " +
-                  "known by a point"
+                Problem.Invalid.Broken.here(
+                  Problem.Invalid.Rule.PointOnly(Problem.Raw.of(id), Problem.Raw.of(before.place.label))
+                )
               )
             )
           case Place.OverrideEdit.Put(kind, period, reason, _) =>
@@ -731,9 +734,17 @@ object PlaceService:
         toleranceKm: GeocodeSettings.ToleranceKm
     ): Either[Api.Error, Place.Gone] =
       (find(apiId(from)), find(apiId(into))) match
-        case (None, _)          => Left(notFound(from.value))
-        case (_, None)          => Left(notFound(into.value))
-        case _ if from == into  => Left(invalid("a place cannot be merged into itself"))
+        case (None, _)         => Left(notFound(from.value))
+        case (_, None)         => Left(notFound(into.value))
+        case _ if from == into =>
+          Left(
+            invalid(
+              Problem.Invalid.Inconsistent.here(
+                NonEmptyVector.of(Problem.Field("from"), Problem.Field("into")),
+                Problem.Invalid.Exclusion.Distinct
+              )
+            )
+          )
         case (Some(f), Some(i)) =>
           val _ = state.updateAndGet(s =>
             s.modify(_.places)
@@ -773,37 +784,34 @@ object PlaceService:
     def remove(id: DPlace.Id, reason: Option[PlaceRationale]): Either[Api.Error, Place.Gone] =
       find(apiId(id)).toRight(notFound(id.value)).flatMap { p =>
         val s = state.get
-        val refs = List(
-          "event(s)" -> s.events.count(_.placeId.contains(id)),
-          "attestation(s)" -> s.attestations.count(a => a.targetType.value == "place" && a.targetId.value == id.value),
-          "child place(s)" -> places.count(_.parents.exists(r => parentIs(r, p.id))),
-          "name(s) added by hand" -> p.names.count(_.manual.value)
+        val refs = Vector(
+          Problem.Conflict.Referrer.Events -> s.events.count(_.placeId.contains(id)),
+          Problem.Conflict.Referrer.Attestations -> s.attestations
+            .count(a => a.targetType.value == "place" && a.targetId.value == id.value),
+          Problem.Conflict.Referrer.ChildPlaces -> places.count(_.parents.exists(r => parentIs(r, p.id))),
+          Problem.Conflict.Referrer.ManualNames -> p.names.count(_.manual.value)
         ).filter(_._2 > 0)
-        if refs.nonEmpty then
-          Left(
-            invalid(
-              s"'${p.place.label}' [$id] is referred to by ${refs.map((w, c) => s"$c $w").mkString(", ")} — " +
-                "merge it into the place it is the same as instead, or move those first"
+        NonEmptyVector.from(refs.map((by, c) => Problem.Conflict.Reference(Problem.Count(c.toLong), by))) match
+          case Some(referred) =>
+            Left(invalid(Problem.Conflict.Referred(Problem.Raw.of(id), Problem.Raw.of(p.place.label), referred)))
+          case None =>
+            val _ = state.updateAndGet(
+              _.modify(_.places)
+                .using(_.filterNot(_.id == p.id))
+                .modify(_.placeRemovals)
+                .using(_ + CatalogueState.PlaceRemovals(id.value))
             )
-          )
-        else
-          val _ = state.updateAndGet(
-            _.modify(_.places)
-              .using(_.filterNot(_.id == p.id))
-              .modify(_.placeRemovals)
-              .using(_ + CatalogueState.PlaceRemovals(id.value))
-          )
-          Right(
-            Place.Gone(
-              p.id,
-              p.place.label,
-              None,
-              None,
-              Place.Gone.FindingsBefore(0),
-              Place.Gone.FindingsAfter(0),
-              Place.Gone.Unlocated(0)
+            Right(
+              Place.Gone(
+                p.id,
+                p.place.label,
+                None,
+                None,
+                Place.Gone.FindingsBefore(0),
+                Place.Gone.FindingsAfter(0),
+                Place.Gone.Unlocated(0)
+              )
             )
-          )
       }
 
   object InMemory:

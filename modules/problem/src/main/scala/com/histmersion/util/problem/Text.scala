@@ -36,7 +36,7 @@ object Text:
         s"${path(at)}${year.era} is outside the representable range [${least.era}, ${greatest.era}] — deep time is " +
           "signed YEARS, BCE negative"
       case Invalid.Unparsable(format, where, damage, at) =>
-        s"${path(at)}the ${words(format.productPrefix)} data at $where ${damage.said}"
+        s"${path(at)}the ${format.named} data at $where ${damage.said}"
       case Invalid.Inconsistent(fs, rule, at)              => s"${path(at)}${rule.of(fs)}"
       case Invalid.Reference(form, at)                     => s"${path(at)}${form.said}"
       case Invalid.Broken(rule, at)                        => s"${path(at)}${rule.said}"
@@ -45,11 +45,14 @@ object Text:
       case NotFound.Listed(t, key, listing)                => s"no ${t.noun} '$key' (${listing.command} lists them)"
       case NotFound.Copy(work, answers)            => s"no legal open-access PDF found for $work${answered(answers)}"
       case NotFound.Dangling(t, key, from, within) => within.missed(t, key, from)
-      case Conflict.Held(subject, hold)            => hold.said(subject)
-      case Conflict.Job(job, status, control)      => control.said(job, status)
-      case Conflict.AlreadyExists(t, key)          => s"${t.noun} '$key' already exists"
-      case Conflict.Renamed(t, asked, now) => s"${t.noun} '$asked' was renamed to '$now' — write to '$now' instead"
-      case Conflict.Aliased(t, key, of)    =>
+      case NotFound.Name(place, label, name, lang, has) =>
+        s"'$label' [$place] has no name '$name'${if s"$lang".isEmpty then "" else s" in $lang"}${hasIn(has)}"
+      case NotFound.SetByHand(place, label)   => s"'$label' [$place] has no kind, period or point set by hand"
+      case Conflict.Held(subject, hold)       => hold.said(subject)
+      case Conflict.Job(job, status, control) => control.said(job, status)
+      case Conflict.AlreadyExists(t, key)     => s"${t.noun} '$key' already exists"
+      case Conflict.Renamed(t, asked, now)    => s"${t.noun} '$asked' was renamed to '$now' — write to '$now' instead"
+      case Conflict.Aliased(t, key, of)       =>
         s"'$key' is an old ${t.noun} of '$of' and still resolves to it — pick another"
       case Conflict.OldKey(t, asked, now, action) =>
         s"'$asked' is an old ${t.noun} of '$now' — ${words(action.productPrefix)} '$now' instead"
@@ -61,6 +64,9 @@ object Text:
       case Conflict.Busy(activity)             => activity.running
       case Conflict.Referenced(t, key, by, n)  =>
         s"${t.noun} '$key' is referred to by ${by.counted(n)} — remove those references first (there is no override)"
+      case Conflict.Referred(place, label, refs) =>
+        s"'$label' [$place] is referred to by ${refs.toVector.map(_.said).mkString(", ")} — merge it into the place it " +
+          "is the same as instead, or move those first"
       case Refused.Policy(rule)                               => rule.said
       case Refused.Quota(limit, used, cap, at)                => s"${limit.named} is spent: $used of $cap${until(at)}"
       case Refused.Disabled(feature, setting, variable, None) =>
@@ -80,9 +86,13 @@ object Text:
       case Upstream.Timeout(name, url, after, at) => s"${path(at)}$name did not answer at $url within $after ms"
       case Upstream.BadReply(name, url, s, r, at) =>
         s"${path(at)}$name's answer at $url is not ${s.noun} — $r"
-      case Io.File(op, path, reported)     => s"could not ${words(op.productPrefix)} $path — $reported"
-      case Io.Wrong(path, expected)        => s"$path ${expected.missed}"
-      case Io.Corrupt(format, at, damage)  => s"the ${words(format.productPrefix)} data at $at ${damage.said}"
+      case Io.File(op, path, reported)    => s"could not ${words(op.productPrefix)} $path — $reported"
+      case Io.Wrong(path, expected)       => s"$path ${expected.missed}"
+      case Io.Corrupt(format, at, damage) => s"the ${format.named} data at $at ${damage.said}"
+      case Io.Absent(held, path, setting) => held.missed(path, setting)
+      case Io.Extract(extract, pinning)   => pinning.said(extract)
+      case Io.Oversize(path, mb, setting) =>
+        s"$path is $mb MB, over $setting — convert it to one feature per line (.ndjson)"
       case Io.Process(tool, ending)        => s"$tool ${ending.said}"
       case Io.Database(op, reported)       => s"the database refused to ${words(op.productPrefix)} — $reported"
       case Io.Entry(archive, entry, fault) => fault.said(words(archive.productPrefix), entry)
@@ -442,6 +452,11 @@ object Text:
           })"
       case Invalid.Rule.RoleUsed(Invalid.RoleOwner.Manager, kind, role, roles) =>
         s"'$role' is not a role a $kind manager runs (${roles.mkString(", ")})"
+      case Invalid.Rule.PointOnly(place, label) =>
+        s"'$label' [$place] has a shape, not a point — a point set by hand moves only a place known by a point"
+      case Invalid.Rule.NameByHand(name, place, label) =>
+        s"'$name' is a name the gazetteer seed or an imported source gives '$label' [$place], not one added by hand — " +
+          "removing it would last only until the next import"
 
   extension (year: Invalid.Year)
     /** The year as a reader writes it: `900 BCE`, `530 CE`; there is no year 0, which is read as 1 BCE. */
@@ -598,6 +613,74 @@ object Text:
       case Io.Damage.Newer(found, reads)  => s"is in format $found, newer than the format $reads this Histmersion reads"
       case Io.Damage.Schema(found, reads) =>
         s"comes from database schema V$found, newer than this Histmersion's V$reads — upgrade Histmersion"
+      case Io.Damage.Structure(flaw) => flaw.said
+
+  extension (format: Io.Format)
+    /** The format's name as a reader knows it: `PNG`, `GeoJSON`; the others in plain words (`json`, `bundle`). */
+    private def named: String = format match
+      case Io.Format.Png     => "PNG"
+      case Io.Format.PmTiles => "PMTiles"
+      case Io.Format.GeoJson => "GeoJSON"
+      case other             => words(other.productPrefix)
+
+  extension (flaw: Io.Flaw)
+    private def said: String = flaw match
+      case Io.Flaw.NotFeatureCollection => "is not a FeatureCollection"
+      case Io.Flaw.NoLandPolygons       => "holds no land polygons"
+
+  extension (held: Io.Held)
+    private def missed(path: Io.Path, setting: Option[SettingKey]): String =
+      val set = setting.fold("")(s => s" (set $s)")
+      held match
+        case Io.Held.GazetteerSeed     => s"no gazetteer seed at $path$set"
+        case Io.Held.GazetteerManifest => s"no gazetteer manifest at $path$set"
+        case Io.Held.LpfFiles          => s"no LPF files in $path$set (put World Historical Gazetteer downloads there)"
+        case Io.Held.SeedFiles         => s"no JSON files under $path$set"
+
+  extension (pinning: Io.Pinning)
+    private def said(extract: Raw): String = pinning match
+      case Io.Pinning.Unlisted(manifest) => s"$manifest pins no '$extract' extract"
+      case Io.Pinning.NotBuilt(manifest) =>
+        s"$extract is not pinned yet ($manifest names no built file or sha256 for it) — build it with " +
+          "db/gazetteer/build.py and pin it (db/gazetteer/README.md, \"Rebuilding and re-pinning\")"
+      case Io.Pinning.Mismatch(version, path, found, pinned) =>
+        s"$path has sha256 $found, but $extract $version is pinned at $pinned — refused (rebuild it with " +
+          "db/gazetteer/build.py and re-pin, or fetch the pinned file)"
+      case Io.Pinning.Unhosted(version, file, path, sha256, bytes, setting, variable) =>
+        s"$extract $version: $file is not at $path, and its pin has no download url (the extracts are not hosted). " +
+          s"Put the file there — sha256 $sha256, ${bytes.human} — copied from another install or rebuilt with " +
+          s"db/gazetteer/build.py (db/gazetteer/README.md); the folder is $setting ($variable; by default the XDG " +
+          "cache directory, $XDG_CACHE_HOME/histmersion/gazetteer or ~/.cache/histmersion/gazetteer). Then run the " +
+          "load again."
+
+  extension (bytes: Count)
+    /** A size in bytes as people read it: `812 B`, `1.4 MB` (powers of 1000, one decimal). */
+    private def human: String =
+      val n = s"$bytes".toLong
+      val units = Vector("kB", "MB", "GB", "TB")
+      if n < 1000 then s"$n B"
+      else
+        val exp = math.min(units.size, (math.log(n.toDouble) / math.log(1000)).toInt)
+        val tenths = math.round(n.toDouble / math.pow(1000, exp.toDouble) * 10)
+        s"${tenths / 10}.${tenths % 10} ${units(exp - 1)}"
+
+  extension (reference: Conflict.Reference)
+    private def said: String = reference.by match
+      case Conflict.Referrer.Events       => s"${reference.count} event(s)"
+      case Conflict.Referrer.Attestations => s"${reference.count} attestation(s)"
+      case Conflict.Referrer.AssetLinks   => s"${reference.count} asset link(s)"
+      case Conflict.Referrer.ChildPlaces  => s"${reference.count} child place(s)"
+      case Conflict.Referrer.ManualNames  => s"${reference.count} name(s) added by hand"
+      case Conflict.Referrer.OnlyPlaceOf  => s"${reference.count} finding(s) it is the only place of"
+
+  /** The languages a place has a name in by hand, after a name it lacks in the one asked: ` (it has it with en, no
+    * language — pass that language)`.
+    */
+  private def hasIn(has: Vector[Raw]): String =
+    if has.isEmpty then ""
+    else
+      s" (it has it with ${has.map(l => if s"$l".isEmpty then "no language" else s"$l").mkString(", ")} — pass that " +
+        "language)"
 
   extension (fault: Io.Fault)
     private def said(archive: String, entry: Io.Path): String = fault match

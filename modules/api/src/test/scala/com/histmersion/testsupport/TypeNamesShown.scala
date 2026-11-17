@@ -21,7 +21,10 @@ object TypeNamesShown:
       "PostgreSQL",
       "CrossRef",
       "PeriodO",
-      "WebP"
+      "WebP",
+      "FeatureCollection",
+      "GeoTIFF",
+      "BigTIFF"
     )
 
   private val Dotted = """\b[A-Za-z][A-Za-z0-9]*(\.[A-Z][A-Za-z0-9]*)+\b""".r

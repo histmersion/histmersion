@@ -2,7 +2,7 @@ package com.histmersion
 package domain.catalogue.places
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import io.scalaland.chimney.dsl.*
 
@@ -1184,15 +1184,17 @@ private[places] object PlaceRepo:
           .headOption match
           case None =>
             val langs = sql"SELECT lang FROM place_names WHERE place_id = $id AND name = $name AND manual"
-              .query[String]
+              .query[Lang]
               .run()
-              .map(l => if l.isEmpty then "no language" else l)
-            val hint = if langs.isEmpty then "" else s" (it has it with ${langs.mkString(", ")} — pass that language)"
+              .toVector
             Left(
               Api.Error(
-                Problem.Unclassified(
-                  Legacy
-                    .Text(s"'$label' [$id] has no name '$name'${if lang.value.isEmpty then "" else s" in $lang"}$hint")
+                Problem.NotFound.Name(
+                  Problem.Raw.of(id),
+                  Problem.Raw.of(label),
+                  Problem.Raw.of(name),
+                  Problem.Raw.of(lang),
+                  langs.map(Problem.Raw.of(_))
                 ),
                 Some(Api.Error.Code(Write.CodeNotFound))
               )
@@ -1200,11 +1202,8 @@ private[places] object PlaceRepo:
           case Some(false) =>
             Left(
               Api.Error(
-                Problem.Unclassified(
-                  Legacy.Text(
-                    s"'$name' is a name the gazetteer seed or an imported source gives '$label' [$id], not one added by hand — " +
-                      "removing it would last only until the next import"
-                  )
+                Problem.Invalid.Broken.here(
+                  Problem.Invalid.Rule.NameByHand(Problem.Raw.of(name), Problem.Raw.of(id), Problem.Raw.of(label))
                 ),
                 Some(Api.Error.Code(Write.CodeInvalid))
               )

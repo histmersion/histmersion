@@ -1,6 +1,6 @@
 package com.histmersion
 package server
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.config.{AppConfig, UserPaths}
 
@@ -18,7 +18,13 @@ final case class GazetteerPaths(extracts: Path, lpf: Path, manifest: Path, legac
   /** The manifest's text, or why there is none. */
   def manifestText(): Either[Problem, GazetteerPaths.ManifestText] =
     if !Files.isRegularFile(manifest) then
-      Left(Problem.Unclassified(Legacy.Text(s"no gazetteer manifest at $manifest (set places.sources.manifest)")))
+      Left(
+        Problem.Io.Absent(
+          Problem.Io.Held.GazetteerManifest,
+          Problem.Io.Path(s"$manifest"),
+          Some(Problem.SettingKey("places.sources.manifest"))
+        )
+      )
     else Right(GazetteerPaths.ManifestText(Files.readString(manifest)))
 
 object GazetteerPaths:

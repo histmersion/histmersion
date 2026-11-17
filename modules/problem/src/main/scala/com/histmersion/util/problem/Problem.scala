@@ -77,7 +77,11 @@ object Problem:
 
   /** The wire name of a request or settings field (`lat`, `edges`, `agents.budgets.daily-usd`). */
   type Field = Field.T
-  object Field extends Newtype[String, Pure]
+  object Field extends Newtype[String, Pure]:
+    /** The field a value of any newtype names (`Field.of(file)`, an entry of a list read field by field): unwrapped
+      * here, like [[Raw.of]].
+      */
+    def of[T](value: T)(using RefinedType.Mirror[T]): Field = Field(s"$value")
 
   /** Where in the code or the work a failure happened: the operation's own name (`backup`, `merge apply`). */
   type Where = Where.T
@@ -86,6 +90,11 @@ object Problem:
       * [[Raw.of]].
       */
     def of[T](value: T)(using RefinedType.Mirror[T]): Where = Where(s"$value")
+
+    extension (at: Where)
+      /** The same place, found inside `outer` (a part of a file, inside that file): `feature #3 in seed/regions.json`.
+        */
+      def in(outer: Where): Where = Where(s"$at in $outer")
 
   /** A share between 0 and 1 (`0.42`: 42 of every hundred), shown to two decimals. */
   type Share = Share.T
@@ -463,6 +472,14 @@ object Problem:
         */
       case RoleUsed(owner: RoleOwner, name: Raw, role: Raw, roles: Vector[Raw])
 
+      /** A point set by hand moves only a place known by a point: `place` (`label`) has a shape. */
+      case PointOnly(place: Raw, label: Raw)
+
+      /** `name` is a name the gazetteer seed or an imported source gives `place` (`label`), not one a person added:
+        * removing it would last only until the next import.
+        */
+      case NameByHand(name: Raw, place: Raw, label: Raw)
+
     /** What uses the agent roles a model is set for. */
     enum RoleOwner derives CanEqual:
       /** An agent pipeline, by its name: `--model-for` sets a model for one of its roles. */
@@ -570,6 +587,14 @@ object Problem:
       /** `histmersion merge list`: the merges, by id. */
       case Merges
 
+    /** The place `place` (`label`) has no name `name` in `lang` (in any language, when empty); `has` are the languages
+      * it has that name in by a person's hand (an empty one: no language), which the caller may have meant.
+      */
+    final case class Name(place: Raw, label: Raw, name: Raw, lang: Raw, has: Vector[Raw]) extends NotFound
+
+    /** The place `place` (`label`) has no kind, period or point a person set by hand. */
+    final case class SetByHand(place: Raw, label: Raw) extends NotFound
+
     /** No `typeName` `key` is `within` the place it is looked for, and `from` refers to it. */
     final case class Dangling(typeName: TypeName, key: Raw, from: Where, within: Scope) extends NotFound
 
@@ -633,6 +658,21 @@ object Problem:
 
     /** `count` values of the type `by` refer to it (one problem per type of referrer). */
     final case class Referenced(typeName: TypeName, key: Raw, by: TypeName, count: Count) extends Conflict
+
+    /** The place `place` (`label`) is not removed: `refs` refer to it. Merging it into the place it is the same as
+      * moves them; so does moving them first.
+      */
+    final case class Referred(place: Raw, label: Raw, refs: NonEmptyVector[Reference]) extends Conflict
+
+    /** `count` records of the kind `by` refer to a place. */
+    final case class Reference(count: Count, by: Referrer)
+
+    /** What refers to a place, keeping it from being removed. */
+    enum Referrer derives CanEqual:
+      case Events, Attestations, AssetLinks, ChildPlaces, ManualNames
+
+      /** Findings it is the only place of. */
+      case OnlyPlaceOf
 
     /** A merge does not carry out `subject` (an issue, a record or a resolution, as the plan names it): `hold`. */
     final case class Held(subject: Where, hold: Hold) extends Conflict
@@ -943,6 +983,56 @@ object Problem:
     /** The entry `entry` of an `archive` file is not as its manifest or its records say: `fault`. */
     final case class Entry(archive: Format, entry: Path, fault: Fault) extends Io
 
+    /** No `held` is at `path`. `setting`: the setting that moves it, when the problem names one. */
+    final case class Absent(held: Held, path: Path, setting: Option[SettingKey]) extends Io
+
+    /** What a path should hold. */
+    enum Held derives CanEqual:
+      /** The bundled gazetteer seed (a directory of Linked Places files). */
+      case GazetteerSeed
+
+      /** The manifest of the gazetteer's pinned extracts. */
+      case GazetteerManifest
+
+      /** World Historical Gazetteer downloads (Linked Places files), in the drop folder. */
+      case LpfFiles
+
+      /** The JSON files of the gazetteer seed. */
+      case SeedFiles
+
+    /** The gazetteer's pinned extract `extract` cannot be read: `pinning`. */
+    final case class Extract(extract: Raw, pinning: Pinning) extends Io
+
+    /** Why a pinned extract cannot be read, and what to do about it. */
+    enum Pinning derives CanEqual:
+      /** The manifest `manifest` pins no extract of that name. */
+      case Unlisted(manifest: Path)
+
+      /** The manifest `manifest` names no built file or sha256 for it: it is built and pinned first. */
+      case NotBuilt(manifest: Path)
+
+      /** The file at `path` has sha256 `found`, not `pinned`, the one version `version` is pinned at: refused. */
+      case Mismatch(version: Raw, path: Path, found: Raw, pinned: Raw)
+
+      /** Version `version`'s `file` is not at `path`, and its pin has no download url (the extracts are not hosted): it
+        * is put there, `bytes` bytes with sha256 `sha256`. The folder is `setting` (the environment variable
+        * `variable`).
+        */
+      case Unhosted(
+          version: Raw,
+          file: Raw,
+          path: Path,
+          sha256: Raw,
+          bytes: Count,
+          setting: SettingKey,
+          variable: SettingKey
+      )
+
+    /** `path`, a document read whole, is `megabytes` MB, over the limit `setting` sets: one record per line, it
+      * streams.
+      */
+    final case class Oversize(path: Path, megabytes: Count, setting: SettingKey) extends Io
+
     /** What is wrong with an entry of an archive. */
     enum Fault:
       /** The archive holds no such entry. */
@@ -978,7 +1068,11 @@ object Problem:
 
     /** A path on a file system, as text: the browser has no file system type. */
     type Path = Path.T
-    object Path extends Newtype[String, Pure]
+    object Path extends Newtype[String, Pure]:
+      /** The path a value of any newtype holds (`Path.from(store.where(key))`): unwrapped here, like [[Raw.of]]. Not
+        * named `of`: it reads no file system, as `java.nio.file.Path.of` would be read to.
+        */
+      def from[T](value: T)(using RefinedType.Mirror[T]): Path = Path(s"$value")
 
     /** A program run as a process, by its command name (`calibredb`, `pg_dump`). */
     type Tool = Tool.T
@@ -1001,7 +1095,7 @@ object Problem:
       case Inside(directory: Path)
 
     enum Format:
-      case Bundle, Tar, Json, Png, PmTiles, Pdf, Image, Text, Hocon, Yaml, Xml, Kit, Zip
+      case Bundle, Tar, Json, Png, PmTiles, Pdf, Image, Text, Hocon, Yaml, Xml, Kit, Zip, GeoJson
 
     /** What is wrong with the data. */
     enum Damage:
@@ -1018,6 +1112,17 @@ object Problem:
 
       /** It comes from database schema `found`, newer than the schema `reads` this version has. */
       case Schema(found: Count, reads: Count)
+
+      /** Its layout breaks its format: `flaw`. */
+      case Structure(flaw: Flaw)
+
+    /** How data breaks the layout of its format. */
+    enum Flaw derives CanEqual:
+      /** A GeoJSON document that is no FeatureCollection. */
+      case NotFeatureCollection
+
+      /** Natural Earth's land download holds no polygon. */
+      case NoLandPolygons
 
     /** How a process ended that did not end well. */
     enum Ending:
@@ -1726,12 +1831,13 @@ object Problem:
       case Upstream.BadReply(n, u, e, r, at)  => Upstream.BadReply(n, u, e, r, field +: at)
       case other                              => other
 
-    /** The same problem, found inside `where` (a finding, a claim of an answer): a proposal's place and an input's path
-      * get it in front, so that the sentence starts `where: `.
+    /** The same problem, found inside `where` (a finding, a claim of an answer, a file): a proposal's place and an
+      * input's path get it in front, so that the sentence starts `where: `; damaged data is placed inside it.
       */
     def inside(where: Where): Problem = problem match
       case Content.Proposal(rule, at) => Content.Proposal(rule, Where(s"$where: $at"))
       case Content.Answer(rule)       => Content.Proposal(rule, where)
+      case Io.Corrupt(format, at, d)  => Io.Corrupt(format, at.in(where), d)
       case other                      => other.within(Field(s"$where"))
 
   // ---- one of each ------------------------------------------------------------------------------------------
@@ -1817,6 +1923,8 @@ object Problem:
       NotFound.Entity(citekey, Raw("anthony2007")),
       NotFound.Copy(Raw("doi:10.1017/S0003598X00000001"), Vector.empty),
       NotFound.Listed(TypeName("MergeRepo.MergeIdOrPrefix"), Raw("0193f1"), NotFound.Listing.Merges),
+      NotFound.Name(Raw("pleiades_579885"), Raw("Knossos"), Raw("Cnossus"), Raw("la"), Vector(Raw("en"), Raw(""))),
+      NotFound.SetByHand(Raw("pleiades_579885"), Raw("Knossos")),
       NotFound.Dangling(
         TypeName("Bundle.Kind.Source"),
         Raw("0193f1c4-7b2a-7c3e-9d41-5e6f7a8b9c0d"),
@@ -1849,6 +1957,14 @@ object Problem:
         Count(3L)
       ),
       Conflict.Held(Where("source anthony2007"), Conflict.Hold.SameWork(Raw("anthony2006"), Raw("doi"))),
+      Conflict.Referred(
+        Raw("local_arkona"),
+        Raw("Arkona"),
+        NonEmptyVector.of(
+          Conflict.Reference(Count(3L), Conflict.Referrer.Events),
+          Conflict.Reference(Count(1L), Conflict.Referrer.ChildPlaces)
+        )
+      ),
       Conflict.Job(Raw("0193f1c4"), Conflict.State("queued"), Conflict.Control.NotStarted),
       Refused.Policy(Refused.Rule.RunTokenRequired),
       Refused.Quota(Refused.Limit.DailySpend, Refused.Amount(5.25), Refused.Amount(4.5), Some(EpochMs(1762732800000L))),
@@ -1871,6 +1987,17 @@ object Problem:
         External.Reported("java.nio.file.NoSuchFileException: /tmp/bundle.hmx")
       ),
       Io.Wrong(Io.Path("/srv/seed"), Io.Kind.Directory),
+      Io.Absent(Io.Held.GazetteerSeed, Io.Path("/srv/histmersion/gazetteer"), Some(SettingKey("init.data-dir"))),
+      Io.Extract(
+        Raw("geonames"),
+        Io.Pinning.Mismatch(
+          Raw("2026-09"),
+          Io.Path("/home/x/.cache/histmersion/gazetteer/geonames.lpf.gz"),
+          Raw("ab12"),
+          Raw("cd34")
+        )
+      ),
+      Io.Oversize(Io.Path("whg-crete.json"), Count(612L), SettingKey("places.sources.max-lpf-mb")),
       Io.Corrupt(Io.Format.Png, Where("terrarium tile 3/4/2"), Io.Damage.Length(Count(1024L), Count(1000L))),
       Io.Process(
         Io.Tool("calibredb"),

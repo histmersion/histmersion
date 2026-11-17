@@ -3,7 +3,7 @@ package domain.catalogue.places
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Problem}
 
 /** Natural Earth land for clipping polities to the coastline (V025) — `histmersion places fetch land`.
   *
@@ -27,13 +27,25 @@ object NaturalEarthLand:
     RawJson
       .parse(rawJson)
       .left
-      .map(e => Problem.Unclassified(Legacy.Text(s"invalid JSON: $e")))
+      .map(e =>
+        Problem.Io.Corrupt(
+          Problem.Io.Format.Json,
+          Problem.Where("a Natural Earth layer"),
+          Problem.Io.Damage.Unreadable(External.Reported.of(s"$e"))
+        )
+      )
       .flatMap { doc =>
         doc.cursor
           .downField("features")
           .focus
           .flatMap(_.asArray)
-          .toRight(Problem.Unclassified(Legacy.Text("not a GeoJSON FeatureCollection")))
+          .toRight(
+            Problem.Io.Corrupt(
+              Problem.Io.Format.GeoJson,
+              Problem.Where("a Natural Earth layer"),
+              Problem.Io.Damage.Structure(Problem.Io.Flaw.NotFeatureCollection)
+            )
+          )
           .map(_.toList.flatMap { f =>
             f.cursor
               .downField("geometry")
@@ -61,7 +73,15 @@ object NaturalEarthLand:
         acc.flatMap(l => geometries(r).map(l ++ _))
       )
       _ <-
-        if geoms.isEmpty then Left(Problem.Unclassified(Legacy.Text("no land polygons in the download"))) else Right(())
+        if geoms.isEmpty then
+          Left(
+            Problem.Io.Corrupt(
+              Problem.Io.Format.GeoJson,
+              Problem.Where("the download"),
+              Problem.Io.Damage.Structure(Problem.Io.Flaw.NoLandPolygons)
+            )
+          )
+        else Right(())
     yield
       if dryRun.value then
         Place.ImportResult(

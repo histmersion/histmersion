@@ -1,7 +1,6 @@
 package com.histmersion
 package domain.catalogue.places
-import com.histmersion.util.problem.{Legacy, Problem}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.api.Dataset
 import com.histmersion.api.catalogue.Lpf
@@ -57,7 +56,13 @@ final class GazetteerImports(
     */
   def seed(seed: Store, note: JobInfo.Progress => Unit): Either[Problem, GazetteerImports.Summary] =
     if !seed.isDirectory(Store.Key.Root) then
-      Left(Problem.Unclassified(Legacy.Text(s"no gazetteer seed at ${seed.where()} (set init.data-dir)")))
+      Left(
+        Problem.Io.Absent(
+          Problem.Io.Held.GazetteerSeed,
+          Problem.Io.Path.from(seed.where()),
+          Some(Problem.SettingKey("init.data-dir"))
+        )
+      )
     else
       def entries(dir: Store.Key): List[PlaceSeed.Entry[Store.Key]] =
         seed
@@ -74,7 +79,7 @@ final class GazetteerImports(
       ): Either[Problem, com.histmersion.api.catalogue.Place.ImportResult] =
         seed
           .get(f)
-          .toRight(Problem.Unclassified(Legacy.Text(s"${f.value}: not found")))
+          .toRight(Problem.Io.Wrong(Problem.Io.Path.from(seed.where(f)), Problem.Io.Kind.Present))
           .flatMap(blob =>
             Lpf
               .parse(
@@ -82,7 +87,7 @@ final class GazetteerImports(
                 com.histmersion.api.catalogue.Place.KindValue(kind.fold(Place.Kind.Region)(_.value))
               )
               .left
-              .map(e => Problem.Unclassified(Legacy.Text(s"${f.value}: ${e.sentence}")))
+              .map(_.inside(Problem.Where.of(f)))
           )
           .map(
             _.grouped(batch).foldLeft(
@@ -113,7 +118,7 @@ final class GazetteerImports(
             importFile(f, kind).map(r => (n + r.places.value, if r.failed.isEmpty then retry else retry :+ (f -> kind)))
           }
         }
-      if files.isEmpty then Left(Problem.Unclassified(Legacy.Text(s"no JSON files under ${seed.where()}")))
+      if files.isEmpty then Left(Problem.Io.Absent(Problem.Io.Held.SeedFiles, Problem.Io.Path.from(seed.where()), None))
       else
         for
           first <- pass(files)

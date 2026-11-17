@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.catalogue.places
 import com.histmersion.util.nonempty.NonEmptyVector
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
@@ -98,9 +98,7 @@ private[places] object PlaceOverrideRepo:
               case None =>
                 Left(
                   Api.Error(
-                    Problem.Unclassified(
-                      Legacy.Text(s"'${before.label}' [${id.value}] has no kind, period or point set by hand")
-                    ),
+                    Problem.NotFound.SetByHand(Problem.Raw.of(id), Problem.Raw.of(before.label)),
                     Some(Api.Error.Code(Write.CodeNotFound))
                   )
                 )
@@ -112,11 +110,8 @@ private[places] object PlaceOverrideRepo:
           case Place.OverrideEdit.Put(_, _, _, Some(_)) if before.hasShape.value =>
             Left(
               Api.Error(
-                Problem.Unclassified(
-                  Legacy.Text(
-                    s"'${before.label}' [${id.value}] has a shape, not a point — a point set by hand moves only a place " +
-                      "known by a point"
-                  )
+                Problem.Invalid.Broken.here(
+                  Problem.Invalid.Rule.PointOnly(Problem.Raw.of(id), Problem.Raw.of(before.label))
                 ),
                 Some(Api.Error.Code(Write.CodeInvalid))
               )
@@ -269,49 +264,49 @@ private[places] object PlaceOverrideRepo:
       .flatMap { label =>
         def n(q: Frag) = q.query[Int].run().head
         val refs = List(
-          "event(s)" -> n(sql"SELECT count(*)::int FROM events WHERE place_id = $id"),
-          "attestation(s)" -> n(
+          Problem.Conflict.Referrer.Events -> n(sql"SELECT count(*)::int FROM events WHERE place_id = $id"),
+          Problem.Conflict.Referrer.Attestations -> n(
             sql"SELECT count(*)::int FROM attestations WHERE target_type = 'place' AND target_id = $id"
           ),
-          "asset link(s)" -> n(
+          Problem.Conflict.Referrer.AssetLinks -> n(
             sql"SELECT count(*)::int FROM asset_links WHERE target_type = 'place' AND target_id = $id"
           ),
-          "child place(s)" -> n(sql"SELECT count(*)::int FROM place_relations WHERE parent_id = $id"),
-          "name(s) added by hand" -> n(sql"SELECT count(*)::int FROM place_names WHERE place_id = $id AND manual"),
-          "finding(s) it is the only place of" -> n(
+          Problem.Conflict.Referrer.ChildPlaces -> n(
+            sql"SELECT count(*)::int FROM place_relations WHERE parent_id = $id"
+          ),
+          Problem.Conflict.Referrer.ManualNames -> n(
+            sql"SELECT count(*)::int FROM place_names WHERE place_id = $id AND manual"
+          ),
+          Problem.Conflict.Referrer.OnlyPlaceOf -> n(
             sql"""SELECT count(*)::int FROM finding_places fp WHERE fp.place_id = $id
               AND NOT EXISTS (SELECT 1 FROM finding_places o WHERE o.finding_id = fp.finding_id AND o.place_id <> $id)"""
           )
         ).filter(_._2 > 0)
-        if refs.nonEmpty then
-          Left(
-            Api.Error(
-              Problem.Unclassified(
-                Legacy.Text(
-                  s"'${label.value}' [${id.value}] is referred to by ${refs.map((w, c) => s"$c $w").mkString(", ")} — " +
-                    "merge it into the place it is the same as instead, or move those first"
-                )
-              ),
-              Some(Api.Error.Code(Write.CodeInvalid))
+        NonEmptyVector.from(refs.toVector.map((by, c) => Problem.Conflict.Reference(Problem.Count(c.toLong), by))) match
+          case Some(referred) =>
+            Left(
+              Api.Error(
+                Problem.Conflict.Referred(Problem.Raw.of(id), Problem.Raw.of(label), referred),
+                Some(Api.Error.Code(Write.CodeInvalid))
+              )
             )
-          )
-        else
-          val had = linked(id)
-          val _ = sql"""INSERT INTO place_removals (id, label, reason) VALUES ($id, $label, $reason::text)
-                      ON CONFLICT (id) DO UPDATE SET label = EXCLUDED.label, reason = EXCLUDED.reason,
-                        removed_at = now()""".update.run()
-          val _ = sql"DELETE FROM places WHERE id = $id".update.run()
-          Right(
-            Place.Gone(
-              Place.Id(id.value),
-              Place.Gone.Label(label.value),
-              None,
-              None,
-              Place.Gone.FindingsBefore(had.size),
-              Place.Gone.FindingsAfter(0),
-              Place.Gone.Unlocated(stillLocated(had).value)
+          case None =>
+            val had = linked(id)
+            val _ = sql"""INSERT INTO place_removals (id, label, reason) VALUES ($id, $label, $reason::text)
+                        ON CONFLICT (id) DO UPDATE SET label = EXCLUDED.label, reason = EXCLUDED.reason,
+                          removed_at = now()""".update.run()
+            val _ = sql"DELETE FROM places WHERE id = $id".update.run()
+            Right(
+              Place.Gone(
+                Place.Id(id.value),
+                Place.Gone.Label(label.value),
+                None,
+                None,
+                Place.Gone.FindingsBefore(had.size),
+                Place.Gone.FindingsAfter(0),
+                Place.Gone.Unlocated(stillLocated(had).value)
+              )
             )
-          )
       }
 
   /** The overrides, by place id; `id` narrows to one place. */

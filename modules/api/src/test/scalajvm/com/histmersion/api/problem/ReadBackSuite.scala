@@ -211,6 +211,40 @@ class ReadBackSuite extends munit.FunSuite:
           Conflict.Control.NotPaused
         ).map(Conflict.Job(Raw("j: 1"), Conflict.State("running"), _)) ++
         Io.Format.values.toVector.map(Io.Corrupt(_, Where("x"), Io.Damage.Checksum)) ++
+        Io.Flaw.values.toVector.map(f =>
+          Io.Corrupt(Io.Format.GeoJson, Where("land.geojson"), Io.Damage.Structure(f))
+        ) ++
+        Io.Held.values.toVector.flatMap(h =>
+          Vector(
+            Io.Absent(h, Io.Path("/srv/a b"), None),
+            Io.Absent(h, Io.Path("/srv/x"), Some(SettingKey("places.sources.lpf-dir")))
+          )
+        ) ++
+        Vector(
+          Io.Pinning.Unlisted(Io.Path("db/gazetteer/extracts.json")),
+          Io.Pinning.NotBuilt(Io.Path("db/gazetteer/extracts.json")),
+          Io.Pinning.Mismatch(Raw("2026-09"), Io.Path("/c/tgn.lpf.gz"), Raw("ab"), Raw("cd")),
+          Io.Pinning.Unhosted(
+            Raw("2026-09"),
+            Raw("wikidata.lpf.gz"),
+            Io.Path("/home/x/.cache/histmersion/gazetteer/wikidata.lpf.gz"),
+            Raw("9f8e"),
+            Count(1_450_000_000L),
+            SettingKey("places.sources.dir"),
+            SettingKey("HISTMERSION_GAZETTEER_DIR")
+          )
+        ).map(Io.Extract(Raw("wikidata"), _)) ++
+        Vector(
+          NotFound.Name(Raw("p_1"), Raw("Troy: Ilion"), Raw("Wilusa"), Raw(""), Vector.empty),
+          NotFound.Name(Raw("p_1"), Raw("Troy"), Raw("Ilios"), Raw("grc"), Vector(Raw("grc-latn"))),
+          Conflict.Referred(
+            Raw("p_1"),
+            Raw("Troy"),
+            NonEmptyVector.from(Conflict.Referrer.values.toVector.map(Conflict.Reference(Count(2L), _))).get
+          ),
+          Invalid.Broken.here(Invalid.Rule.PointOnly(Raw("p_1"), Raw("Troy"))),
+          Invalid.Broken.here(Invalid.Rule.NameByHand(Raw("Ilion"), Raw("p_1"), Raw("Troy")))
+        ) ++
         Config.Capability.values.toVector.map(Config.Unavailable(_)) ++
         Vector(
           Plugin.Fault.Missing,

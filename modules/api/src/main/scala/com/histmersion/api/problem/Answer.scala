@@ -53,6 +53,7 @@ object Answer:
       case _: Conflict.Claimed            => StatusCode.Conflict
       case _: Conflict.WrongState         => StatusCode.Conflict
       case _: Conflict.Referenced         => StatusCode.Conflict
+      case _: Conflict.Referred           => StatusCode.Conflict
       case _: Conflict.Held               => StatusCode.Conflict
       case _: Conflict.Job                => StatusCode.Conflict
       case _: Refused.Policy              => StatusCode.Forbidden

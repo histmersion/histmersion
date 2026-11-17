@@ -146,11 +146,19 @@
   "code" : "invalid",
   "problems" : [
     {
-      "case" : "Unclassified",
+      "case" : "Broken",
       "data" : {
-        "text" : "'Zzhügel' is a name the gazetteer seed or an imported source gives 'Zzhill' [zz_hill], not one added by hand — removing it would last only until the next import"
+        "at" : [
+        ],
+        "rule" : {
+          "NameByHand" : {
+            "label" : "Zzhill",
+            "name" : "Zzhügel",
+            "place" : "zz_hill"
+          }
+        }
       },
-      "group" : "Unclassified",
+      "group" : "Invalid",
       "text" : "'Zzhügel' is a name the gazetteer seed or an imported source gives 'Zzhill' [zz_hill], not one added by hand — removing it would last only until the next import"
     }
   ]
