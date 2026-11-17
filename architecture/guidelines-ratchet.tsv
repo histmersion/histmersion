@@ -20,7 +20,7 @@ G3misplaced	plugins/fetchers	test	1
 G3misplaced	plugins/gazetteers	main	4
 G3misplaced	plugins/media	main	23
 G3misplaced	server	main	354
-G3misplaced	server	test	70
+G3misplaced	server	test	71
 G3misplaced	upstreams	main	56
 G3misplaced	values	main	4
 G3misplaced	web	main	923
@@ -28,7 +28,7 @@ G44	api	main	4583
 G44	api	test	716
 G44	chimney-iron-tests	test	10
 G44	cli	main	364
-G44	cli	test	92
+G44	cli	test	91
 G44	config	main	175
 G44	config	test	51
 G44	core	main	2848
@@ -66,15 +66,15 @@ G44	plugins/media	main	103
 G44	plugins/media	test	57
 G44	problem	main	5
 G44	problem	test	1
-G44	server	main	10450
-G44	server	test	3973
+G44	server	main	10460
+G44	server	test	3991
 G44	upstreams	main	147
 G44	upstreams	test	44
 G44	values	main	181
 G44	values	test	24
-G44	web	main	4912
+G44	web	main	4911
 G44	web	test	889
-G44conversion	server	main	1188
+G44conversion	server	main	1187
 G44plaindef	api	main	34
 G44plaindef	cli	main	6
 G44plaindef	config	main	1
@@ -87,8 +87,8 @@ G44plaindef	server	main	28
 G44plaindef	server	test	1
 G44plaindef	values	main	4
 G44plaindef	web	main	27
-G45boundary	api	main	928
-G45boundary	cli	main	1014
+G45boundary	api	main	931
+G45boundary	cli	main	1018
 G45boundary	config	main	63
 G45boundary	console	main	4
 G45boundary	core	main	10
@@ -167,7 +167,7 @@ G47root	plugin-host	main	2
 G47root	server	main	2
 G47self	api	main	3755
 G47self	cli	main	228
-G47self	config	main	728
+G47self	config	main	734
 G47self	console	main	7
 G47self	core	main	1024
 G47self	db	main	801
@@ -189,7 +189,7 @@ G47self	plugins/events	main	39
 G47self	plugins/fetchers	main	20
 G47self	plugins/gazetteers	main	11
 G47self	plugins/media	main	88
-G47self	server	main	1578
+G47self	server	main	1581
 G47self	server	test	25
 G47self	upstreams	main	122
 G47self	values	main	156
@@ -248,7 +248,7 @@ G58raw	server	test	49
 G5problem	api	main	3
 G5problem	core	main	1
 G60fromString	api	main	1
-G60fromString	cli	main	133
+G60fromString	cli	main	134
 G60fromString	cli	test	15
 G60fromString	core	test	23
 G60fromString	db	main	10
@@ -260,7 +260,7 @@ G60fromString	web	main	57
 G60fromString	web	test	21
 G60unrecognised	api	main	1
 G60unrecognised	problem	main	1
-G9prefix	api	main	318
+G9prefix	api	main	317
 G9prefix	api	test	1
 G9prefix	chimney-iron-tests	test	1
 G9prefix	cli	main	7
@@ -320,7 +320,7 @@ G9prefixRole	plugins/fetchers	test	1
 G9prefixRole	plugins/gazetteers	test	3
 G9prefixRole	plugins/media	test	1
 G9prefixRole	server	main	15
-G9prefixRole	server	test	162
+G9prefixRole	server	test	165
 G9prefixRole	upstreams	test	6
 G9prefixRole	values	test	5
 G9prefixRole	web	main	4
