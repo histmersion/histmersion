@@ -771,7 +771,6 @@ unwrap	api:api/automation/Queue.scala	.value outside a boundary	25
 unwrap	api:api/automation/Run.scala	.value outside a boundary	1
 unwrap	api:api/automation/ScheduleKind.scala	.value outside a boundary	3
 unwrap	api:api/automation/Stalls.scala	.value outside a boundary	10
-unwrap	api:api/automation/Stopped.scala	.value outside a boundary	2
 unwrap	api:api/automation/TargetKind.scala	.value outside a boundary	1
 unwrap	api:api/backup/Backup.scala	.value outside a boundary	23
 unwrap	api:api/basemap/BaseMapSource.scala	.value outside a boundary	1
