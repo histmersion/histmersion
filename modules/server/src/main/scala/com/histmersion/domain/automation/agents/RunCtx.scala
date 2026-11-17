@@ -372,7 +372,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
               maxTokens.getOrElse(LlmCall.MaxTokens(cfg.step.maxTokens.value)),
               Engine.stepTurns(d, turns.map(t => AgentDef.MaxTurns(t.value))),
               validate,
-              Engine.capSetting(Engine.CapKeyOverridden(maxTokens.isDefined))
+              Engine.ceiling(Engine.CapKeyOverridden(maxTokens.isDefined))
             )
           }
       }
@@ -414,7 +414,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
       maxTokens: RunCtx.MaxTokens,
       turns: AgentDef.MaxTurns,
       validate: (A, RunCtx.LastAttempt, List[ToolUse]) => Either[List[Problem], Checked[O]],
-      capSetting: Problem.Run.CapSetting
+      ceiling: Problem.Run.Ceiling
   ): Either[Halt, O] =
     val role = agent.role
     val maxAttempts = 1 + math.max(0, cfg.step.maxRetries.value)
@@ -556,7 +556,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
                     Problem.Run.Model.of(client.model.wire),
                     Problem.Count.of(Engine.outputCapHit(res).getOrElse(Engine.OutputCapLimit(maxTokens.value))),
                     Problem.Count.of(maxTokens),
-                    capSetting
+                    ceiling
                   )
                   record(
                     seq,

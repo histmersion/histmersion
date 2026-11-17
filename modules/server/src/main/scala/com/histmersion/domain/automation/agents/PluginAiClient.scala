@@ -2,7 +2,8 @@ package com.histmersion
 package domain.automation.agents
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.json.RawJson.*
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
+import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.domain.automation.agents.VerbatimFailure
@@ -42,11 +43,9 @@ object PluginAiClient:
   def client(ref: ModelRef, provider: AiProvider, http: AiHttp, loopback: Loopback): Either[Problem, LlmClient] =
     if provider.spendsPersonalPlan.value && !loopback.value then
       Left(
-        Problem.Unclassified(
-          Legacy.Text(
-            s"${ref.provider.wire} is refused while the server listens beyond loopback: it spends your own plan, " +
-              "and another client could spend it"
-          )
+        Problem.Run.AtModel(
+          Problem.Run.Model.of(ref.wire),
+          NonEmptyVector.of(Problem.Refused.Policy(Problem.Refused.Rule.PlanOutsideLocal))
         )
       )
     else
@@ -54,8 +53,8 @@ object PluginAiClient:
         .check(provider, PluginAi.ModelName(ref.model.value))
         .left
         .map(why =>
-          Problem.Unclassified(Legacy.Text(if verbatim(provider) then why.sentence
-          else s"${ref.wire}: ${why.sentence}"))
+          if verbatim(provider) then why
+          else Problem.Run.AtModel(Problem.Run.Model.of(ref.wire), NonEmptyVector.of(why))
         )
         .map(_ => PluginAiClient(ref, provider, http))
 
@@ -173,7 +172,8 @@ object PluginAiClient:
           throw new ModelLimitReached(
             model,
             until.map(u => java.time.Instant.ofEpochMilli(u.value)),
-            Problem.Unclassified(Legacy.Text(s"${model.wire}: ${limited.sentence}".take(300)))
+            Problem.Run.AtModel(Problem.Run.Model.of(model.wire), NonEmptyVector.of(limited))
           )
         case Left(m) if caps.verbatimFailures.value => throw VerbatimFailure(m)
-        case Left(m) => throw java.io.IOException(s"${model.wire}: ${m.sentence}".take(600))
+        case Left(m)                                =>
+          throw VerbatimFailure(Problem.Run.AtModel(Problem.Run.Model.of(model.wire), NonEmptyVector.of(m)))

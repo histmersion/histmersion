@@ -1,6 +1,6 @@
 package com.histmersion
 package domain.automation.agents
-import com.histmersion.util.problem.{Legacy, Problem, Problems}
+import com.histmersion.util.problem.{External, Problem, Problems}
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.util.storage.{ByteSource, Resources, SafePath, Store, Stores}
@@ -56,4 +56,6 @@ object PluginTree:
       }
       scribe.info(s"wrote ${tree.size} file(s) under ${store.where()}")
       Right(())
-    catch case error: java.io.IOException => Left(Problem.Unclassified(Legacy.Text(error.getMessage)))
+    catch
+      case error: java.io.IOException =>
+        Left(Problem.Io.File(Problem.Io.Access.Write, Problem.Io.Path.of(store.where()), External.Reported.of(error)))

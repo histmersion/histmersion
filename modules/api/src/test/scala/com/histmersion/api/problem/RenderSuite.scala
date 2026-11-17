@@ -106,6 +106,11 @@ class RenderSuite extends munit.FunSuite:
       502,
       "cannot reach core at https://api.core.ac.uk/v3/search/works — java.io.IOException: connection reset"
     ),
+    "CallFailed" -> (
+      502,
+      "the call to anthropic:claude-opus failed (hello-ai says (Failed): Claude API error: Overloaded)"
+    ),
+    "CallThrew" -> (502, "the call to anthropic:claude-opus threw — IOException: connection reset"),
     "Timeout" -> (504, "core did not answer at https://api.core.ac.uk/v3/search/works within 30000 ms"),
     "BadReply" -> (
       502,
@@ -173,6 +178,7 @@ class RenderSuite extends munit.FunSuite:
     "NotNow" -> (409, "run 0193f1c4 is done: no Resume"),
     "Withdrawn" -> (409, "rejected: the run was cancelled"),
     "AtStep" -> (409, "at step enrich (no model set for enricher (Call))"),
+    "AtModel" -> (409, "at model hello-ai:echo (refused: PlanOutsideLocal)"),
     "Unsettled" -> (409, "step enrich unsettled after 16 attempts"),
     "ProviderDown" -> (
       409,
@@ -695,16 +701,25 @@ class RenderSuite extends munit.FunSuite:
         "claude-code:opus reached its usage limit — skipped until 2025-11-10T00:00:00Z",
       Run.AllowanceReached(Run.Model("anthropic:claude-opus")) ->
         "anthropic:claude-opus reached its allowance during the step; the chain's next model takes it",
-      Run.OutputCapped(step, haiku, Count(4096L), Count(4096L), Run.CapSetting.StepMaxTokens) ->
+      Run.OutputCapped(step, haiku, Count(4096L), Count(4096L), Run.Ceiling.StepMaxTokens) ->
         ("cold-reader-1: claude-code:haiku's answer exceeded the 4096 output-token cap (the step sent 4096) — raise " +
           "agents.step.max-tokens (HISTMERSION_AGENTS_MAX_TOKENS) (a thinking model's reasoning counts toward it), " +
           "restart the server, then resume the run"),
-      Run.OutputCapped(step, haiku, Count(4096L), Count(8192L), Run.CapSetting.StepOwn) ->
+      Run.OutputCapped(step, haiku, Count(4096L), Count(8192L), Run.Ceiling.StepOwn) ->
         ("cold-reader-1: claude-code:haiku's answer exceeded the 4096 output-token cap (the step sent 8192) — raise " +
           "the step's own cap (agents.review.fixer-max-tokens or agents.compile.draft-max-tokens) (a thinking " +
           "model's reasoning counts toward it), restart the server, then resume the run"),
       Run.NoText(Raw("anthony2007")) -> "anthony2007 has no text — ingest or OCR it first",
       Run.NoBody(Raw("yamnaya")) -> "article 'yamnaya' has no body to review",
+      Run.AtModel(Run.Model("hello-ai:echo"), NonEmptyVector.of(Refused.Policy(Refused.Rule.PlanOutsideLocal))) ->
+        ("hello-ai:echo: this provider is refused while the server listens beyond loopback: it spends your own " +
+          "plan, and another client could spend it"),
+      Refused.Policy(Refused.Rule.RunTokenRequired) -> "a live run token is required",
+      Refused.Policy(Refused.Rule.TokenOtherAgent) -> "this run token is not for that agent",
+      Upstream.CallFailed(Upstream.Name("anthropic:claude-opus"), Relayed(Sentence("Overloaded"))) ->
+        "the call to anthropic:claude-opus failed: Overloaded",
+      Upstream.CallThrew(Upstream.Name("anthropic:claude-opus"), External.Reported("IOException: reset")) ->
+        "the call to anthropic:claude-opus failed: IOException: reset",
       Content.Undecoded(
         Content.Decoding.Mismatch(Raw(".notes"), External.Reported("expected '\"'")),
         None,

@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.agents
 import hearth.kindlings.jsoniterjson.Json
-import com.histmersion.util.problem.{Legacy, Problem, Problems}
+import com.histmersion.util.problem.{Problem, Problems}
 
 import com.histmersion.server.agents.ClaudeCode
 
@@ -82,8 +82,9 @@ final class AgentTrees(app: AppConfig, defs: AgentDefinitions, paths: UserPaths 
       dir <- out
         .orElse(root)
         .toRight(
-          Problem.Unclassified(
-            Legacy.Text("no runtimes directory: set agents.runtimes.dir (HISTMERSION_AGENTS_RUNTIMES_DIR)")
+          Problem.Config.Setting(
+            Problem.SettingKey("agents.runtimes.dir"),
+            Problem.Config.Fault.Unset(Problem.SettingKey("HISTMERSION_AGENTS_RUNTIMES_DIR"))
           )
         )
       d <- load(known)
@@ -166,4 +167,4 @@ object AgentTrees:
   def write(store: Store, tree: Map[String, String], runtimes: List[String], sha: Sha256)(using
       java.time.Clock
   ): Either[Problem, GenerateResult] =
-    AgentTreeWriter.write(store, tree, runtimes, sha).left.map((text => Problem.Unclassified(Legacy.Text(text))))
+    AgentTreeWriter.write(store, tree, runtimes, sha)

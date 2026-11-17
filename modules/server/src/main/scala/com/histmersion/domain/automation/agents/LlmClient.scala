@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.automation.agents
 import com.github.plokhotnyuk.jsoniter_scala.core.{writeToString, JsonValueCodec}
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
+import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.server.agents.{BuiltinAi, ClaudeCode, CliRuntime, Codex, HostAiProvider, Opencode}
@@ -61,7 +62,7 @@ object LlmClient:
       BuiltinAi
         .lookup(ref.provider, providers())
         .left
-        .map(why => Problem.Unclassified(Legacy.Text(s"${ref.wire}: ${why.sentence}")))
+        .map(why => Problem.Run.AtModel(Problem.Run.Model.of(ref.wire), NonEmptyVector.of(why)))
         .flatMap {
           case _: HostAiProvider => host(rt)(cfg, ref)
           case p                 =>
@@ -81,7 +82,18 @@ object LlmClient:
           Opencode.client(cfg.providers.opencode, rt, ref)
         case k =>
           Left(
-            Problem.Unclassified(Legacy.Text(s"${ref.wire}: ${k.wire} is not one of the host's command-line providers"))
+            Problem.Run.AtModel(
+              Problem.Run.Model.of(ref.wire),
+              NonEmptyVector.of(
+                Problem.Invalid.Unknown.here(
+                  Problem.TypeName.of(ProviderKind.Wire),
+                  Problem.Raw.of(k.wire),
+                  Vector(ProviderKind.ClaudeCode, ProviderKind.Codex, ProviderKind.Opencode).map(p =>
+                    Problem.Raw.of(p.wire)
+                  )
+                )
+              )
+            )
           )
 
   /** sttp-ai's usage → ours. */

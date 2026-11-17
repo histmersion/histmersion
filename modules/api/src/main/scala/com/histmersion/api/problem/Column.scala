@@ -81,6 +81,8 @@ object Column:
       case Upstream.Unasked(why)                        => s"$NotAskedThisSweep${why.stored}"
       case Upstream.Unreachable(name, url, r, at)       => s"${path(at)}cannot reach $name at $url — $r"
       case Upstream.Timeout(name, url, after, at)       => s"${path(at)}$name did not answer at $url within $after ms"
+      case Upstream.CallFailed(model, why)              => s"the call to $model failed (${why.stored})"
+      case Upstream.CallThrew(model, reported)          => s"the call to $model threw — $reported"
       case Upstream.BadReply(name, url, s, r, at) => s"${path(at)}$name's answer at $url is not ${s.productPrefix} — $r"
       case Io.File(op, path, reported)            => s"could not ${op.productPrefix} $path — $reported"
       case Io.Wrong(path, Io.Kind.Inside(dir))    => s"$path is outside $dir"
@@ -133,6 +135,7 @@ object Column:
       case Problem.Run.NotNow(run, status, control)      => s"run $run is $status: no ${control.productPrefix}"
       case Problem.Run.Withdrawn                         => "rejected: the run was cancelled"
       case Problem.Run.AtStep(step, why)                 => s"at step $step (${why.storedEach})"
+      case Problem.Run.AtModel(model, why)               => s"at model $model (${why.storedEach})"
       case Problem.Run.Unsettled(step, attempts)         => s"step $step unsettled after $attempts attempts"
       case Problem.Run.ProviderDown(step, why)           => s"provider down at step $step (${why.storedEach})"
       case Problem.Run.BudgetSpent(step)                 => s"budget spent at step $step"
@@ -967,6 +970,9 @@ object Column:
     private val NoValidAnswerAt = "(?s)^no valid answer at step (.+?) after (\\d+) \\((.*)\\)$".r
     private val HeldPoolOf = " \\| ([^|\\[\\]]+) \\[([^\\]]+)\\]".r
     private val DefinitionBroken = "(?s)^definition (.+?) is broken: (.*)$".r
+    private val AtModelOf = "(?s)^at model (\\S+) \\((.*)\\)$".r
+    private val CallFailedFor = "(?s)^the call to (\\S+) failed \\((.*)\\)$".r
+    private val CallThrewFor = "(?s)^the call to (\\S+) threw — (.*)$".r
     private val StepFailed = "(?s)^step failed \\((.*)\\)$".r
     private val AnswerRejected = "(?s)^answer rejected \\((.*)\\)$".r
     private val LimitReachedUntil = "(?s)^limit reached, skipped until (\\S+) \\((.*)\\)$".r
@@ -1250,8 +1256,11 @@ object Column:
         case _                         => None
       },
       {
-        case StepFailed(why)    => whysOf(why).map(Problem.Run.Failed(_))
-        case AnswerRejected(ps) =>
+        case StepFailed(why)           => whysOf(why).map(Problem.Run.Failed(_))
+        case AtModelOf(model, why)     => whysOf(why).map(Problem.Run.AtModel(Problem.Run.Model(s"$model"), _))
+        case CallFailedFor(model, why) => Some(Upstream.CallFailed(Upstream.Name(s"$model"), read(why)))
+        case CallThrewFor(model, r)    => Some(Upstream.CallThrew(Upstream.Name(s"$model"), External.Reported(s"$r")))
+        case AnswerRejected(ps)        =>
           Some(Problem.Run.Declined(if ps.isEmpty then Vector.empty else whysOf(ps).fold(Vector.empty)(_.toVector)))
         case LimitReachedUntil(until, why) => momentOf(until).map(Problem.Run.LimitReached(read(why), _))
         case _                             => None
@@ -1307,7 +1316,7 @@ object Column:
           for
             c <- Count.read(cap)
             n <- Count.read(sent)
-            st <- word(Problem.Run.CapSetting.values.toSeq, setting)
+            st <- word(Problem.Run.Ceiling.values.toSeq, setting)
           yield Problem.Run.OutputCapped(Problem.Run.Step(s"$step"), Problem.Run.Model(s"$model"), c, n, st)
         case DefinitionBroken(file, written) =>
           flawOf(written.split(Regex.quote(HoldSeparator), -1).toVector).map(Config.Definition(Raw(s"$file"), _))

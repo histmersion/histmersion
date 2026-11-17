@@ -1,6 +1,6 @@
 package com.histmersion
 package domain.automation.agents
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 
 import io.netty.buffer.Unpooled
@@ -51,7 +51,7 @@ final class RunTokenGate(tokens: RunTokens) extends ChannelInboundHandlerAdapter
                 ctx,
                 req,
                 HttpResponseStatus.UNAUTHORIZED,
-                Problem.Unclassified(Legacy.Text("a live run token is required"))
+                Problem.Refused.Policy(Problem.Refused.Rule.RunTokenRequired)
               )
             case Some(g) if path != RunTokens.Path && path != s"${RunTokens.Path}/${g.agent}" =>
               scribe.warn(s"agent MCP: a token of ${g.agent} (run ${g.run.getOrElse("-")}) asked for $path — refused")
@@ -59,7 +59,7 @@ final class RunTokenGate(tokens: RunTokens) extends ChannelInboundHandlerAdapter
                 ctx,
                 req,
                 HttpResponseStatus.FORBIDDEN,
-                Problem.Unclassified(Legacy.Text("this run token is not for that agent"))
+                Problem.Refused.Policy(Problem.Refused.Rule.TokenOtherAgent)
               )
             case Some(g) =>
               if path == RunTokens.Path then

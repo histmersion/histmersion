@@ -879,6 +879,14 @@ object Problem:
       /** Bookmarks, notes and read marks belong to a person: an automated run has none. */
       case PersonOnly
 
+      /** The run token is another agent's than the one whose tools were asked for. */
+      case TokenOtherAgent
+
+      /** A provider that spends the person's own plan is refused while the server listens beyond loopback: another
+        * client could spend it.
+        */
+      case PlanOutsideLocal
+
     /** The allowances a request can spend. */
     enum Limit:
       case DailySpend, MonthlySpend, RunSpend, ProviderQuota, RateLimit, PlanAllowance
@@ -973,6 +981,12 @@ object Problem:
         at: Vector[Field]
     ) extends Upstream
 
+    /** A call to the model `upstream` failed: `why`, as its provider described it. */
+    final case class CallFailed(upstream: Name, why: Problem) extends Upstream
+
+    /** A call to the model `upstream` threw: `reported`, the exception's class and message. */
+    final case class CallThrew(upstream: Name, reported: External.Reported) extends Upstream
+
     object BadReply:
       /** The problem of the request as a whole: no path into it. */
       def here(upstream: Name, url: Url, expected: Shape, reported: External.Reported): BadReply =
@@ -980,7 +994,9 @@ object Problem:
 
     /** The service, by the name its settings and plugin use (`openalex`, `core`, the Histmersion server itself). */
     type Name = Name.T
-    object Name extends Newtype[String, Pure]
+    object Name extends Newtype[String, Pure]:
+      /** The service a value of any newtype names (`Name.of(model.wire)`): unwrapped here, like [[Raw.of]]. */
+      def of[T](value: T)(using RefinedType.Mirror[T]): Name = Name(s"$value")
 
     /** An address of the service. */
     type Url = Url.T
@@ -1732,6 +1748,9 @@ object Problem:
     /** Step `step` stopped: `why`, each problem. */
     final case class AtStep(step: Step, why: NonEmptyVector[Problem]) extends Run
 
+    /** Model `model` cannot be used now: `why`, each problem (its client does not build, its plan said no). */
+    final case class AtModel(model: Model, why: NonEmptyVector[Problem]) extends Run
+
     /** Step `step` made `attempts` attempts without an answer: the chain keeps running out mid-step. */
     final case class Unsettled(step: Step, attempts: Count) extends Run
 
@@ -1761,7 +1780,7 @@ object Problem:
     /** `model`'s answer to step `step` exceeded its output cap of `cap` tokens (the step sent `sent`): a configuration
       * error, not a retry — `setting` is raised, the server restarted, then the run resumed.
       */
-    final case class OutputCapped(step: Step, model: Model, cap: Count, sent: Count, setting: CapSetting) extends Run
+    final case class OutputCapped(step: Step, model: Model, cap: Count, sent: Count, setting: Ceiling) extends Run
 
     /** Source `source` has no text to read: it is ingested or OCR'd first. */
     final case class NoText(source: Raw) extends Run
@@ -1835,7 +1854,7 @@ object Problem:
       case Daily, Monthly
 
     /** The setting that caps a step's answer. */
-    enum CapSetting derives CanEqual:
+    enum Ceiling derives CanEqual:
       /** `agents.step.max-tokens`, every step's cap. */
       case StepMaxTokens
 
@@ -2477,6 +2496,11 @@ object Problem:
         Raw("20261101.pmtiles")
       ),
       Upstream.Timeout.here(core, url, Millis(30000L)),
+      Upstream.CallFailed(
+        Upstream.Name("anthropic:claude-opus"),
+        Plugin.Said(Plugin.Id("hello-ai"), Plugin.Claim.Failed, External.PluginSaid("Claude API error: Overloaded"))
+      ),
+      Upstream.CallThrew(Upstream.Name("anthropic:claude-opus"), External.Reported("IOException: connection reset")),
       Upstream.BadReply
         .here(core, url, Upstream.Shape.Json, External.Reported("expected json value got '<html>' (line 1)")),
       Io.File(
@@ -2598,6 +2622,10 @@ object Problem:
       Run.NotNow(Raw("0193f1c4"), Raw("done"), Run.Control.Resume),
       Run.Withdrawn,
       Run.AtStep(Run.Step("enrich"), NonEmptyVector.of(Run.Unassigned(Run.Role("enricher"), Run.Asked.Call))),
+      Run.AtModel(
+        Run.Model("hello-ai:echo"),
+        NonEmptyVector.of(Refused.Policy(Refused.Rule.PlanOutsideLocal))
+      ),
       Run.Unsettled(Run.Step("enrich"), Count(16L)),
       Run.ProviderDown(
         Run.Step("enrich"),
@@ -2630,7 +2658,7 @@ object Problem:
         Run.Model("claude-code:haiku"),
         Count(4096L),
         Count(4096L),
-        Run.CapSetting.StepMaxTokens
+        Run.Ceiling.StepMaxTokens
       ),
       Run.NoText(Raw("anthony2007")),
       Run.NoBody(Raw("yamnaya")),

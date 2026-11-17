@@ -286,6 +286,7 @@ object AgentDefinitions:
   * list only these tools and take only these roles.
   */
 final class AgentDefinitions(prompts: Prompts, val roster: AgentRoster):
+  import AgentDefinitions.agentFile
   val tools: List[ToolName] = roster.tools
 
   /** Every bundled file, relative to `agents/`. */
@@ -322,7 +323,7 @@ final class AgentDefinitions(prompts: Prompts, val roster: AgentRoster):
           ),
           d,
           Problem.Config.Definition(
-            AgentDefinitions.agentFile(name),
+            agentFile(name),
             Problem.Config.Flaw
               .RoleUnused(Problem.Raw.of(d.role.wire), roster.roles.toVector.map(r => Problem.Raw.of(r.wire)))
           )

@@ -177,7 +177,7 @@ final class AgentsControllers(
     approvalStore,
     cfg,
     site.approvalEffects,
-    p => managing.applyProposal(p).left.map((text => Problem.Unclassified(Legacy.Text(text))))
+    p => managing.applyProposal(p)
   )
 
   /** What the domains register into the engine: their workflows and agent tools. A registration the engine refuses (two
@@ -1425,10 +1425,4 @@ object AgentsControllers:
           case v: VerbatimFailure => v.description.sentence
           case _                  => s"${e.getClass.getSimpleName}: ${e.getMessage}"
         scribe.warn(s"agent call to ${model.wire} failed: $logged")
-        Left(
-          Api.Error(
-            Problem.Unclassified(
-              Legacy.Text(s"the call to ${model.wire} failed: ${VerbatimFailure.describe(e).sentence}".take(600))
-            )
-          )
-        )
+        Left(Api.Error(VerbatimFailure.describe(Problem.Upstream.Name.of(model.wire), e)))

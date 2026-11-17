@@ -941,20 +941,29 @@ final class ManagersControllers(
     * applied — items prioritised, held or skipped, or the settings changed — and recorded on the hint. Left = why it
     * could not be (the approval is then marked failed with it).
     */
-  def applyProposal(p: HintProposal): Either[String, String] =
+  def applyProposal(p: HintProposal): Either[Problems, String] =
     for
-      m <- manager(p.managerId.transformInto[ManagerLight.Id]).left.map(_.problems.sentences.mkString("; "))
+      m <- manager(p.managerId.transformInto[ManagerLight.Id]).left.map(_.problems)
       ht <- Transactor(ds)
         .read(ManagerRepo.hint(ManagerHint.Id(p.hint.value)))
         .filter(_.managerId == m.id)
-        .toRight(s"hint #${p.hint} of ${m.id} is gone")
-      _ <- Either.cond(ht.retiredAt.isEmpty, (), s"hint #${ht.id} was retired meanwhile")
+        .toRight(Problem.NotFound.Entity(Problem.TypeName.of(ManagerHint.Id), Problem.Raw.of(p.hint)))
+      _ <- Either.cond(
+        ht.retiredAt.isEmpty,
+        (),
+        Problem.Conflict.WrongState(
+          Problem.TypeName.of(ManagerHint.Id),
+          Problem.Raw.of(ht.id),
+          Problem.Conflict.State("retired"),
+          Vector(Problem.Conflict.State("active"))
+        )
+      )
       e <- checkEffect(
         m,
         p.effect,
         ht.itemId.flatMap(i => agents.managerStore.item(ManagerItem.Id(i.value))),
         proposal = true
-      ).left.map(_.problems.sentences.mkString("; "))
+      ).left.map(_.problems)
       w <- HintEffect.Action.verb(e.action) match
         case Some(HintEffect.Verb.Config) =>
           val c = m.config.merge(e.config.getOrElse(ManagerConfig()))

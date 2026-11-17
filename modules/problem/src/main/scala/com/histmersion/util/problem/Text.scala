@@ -92,6 +92,8 @@ object Text:
       case Upstream.Unasked(why)                  => s"not asked this sweep — ${why.sentence}"
       case Upstream.Unreachable(name, url, r, at) => s"${path(at)}cannot reach $name at $url — $r"
       case Upstream.Timeout(name, url, after, at) => s"${path(at)}$name did not answer at $url within $after ms"
+      case Upstream.CallFailed(model, why)        => s"the call to $model failed: ${why.sentence}"
+      case Upstream.CallThrew(model, reported)    => s"the call to $model failed: $reported"
       case Upstream.BadReply(name, url, s, r, at) =>
         s"${path(at)}$name's answer at $url is not ${s.noun} — $r"
       case Io.File(op, path, reported)    => s"could not ${words(op.productPrefix)} $path — $reported"
@@ -173,6 +175,7 @@ object Text:
         s"run $run is $status; it has already finished"
       case Problem.Run.Withdrawn                 => "rejected: the run was cancelled"
       case Problem.Run.AtStep(step, why)         => s"$step: ${why.toVector.map(_.sentence).mkString("; ")}"
+      case Problem.Run.AtModel(model, why)       => s"$model: ${why.toVector.map(_.sentence).mkString("; ")}"
       case Problem.Run.Unsettled(step, attempts) =>
         s"$step: $attempts attempts without an answer; the chain keeps running out mid-step"
       case Problem.Run.ProviderDown(step, why) =>
@@ -655,6 +658,10 @@ object Text:
       case Refused.Rule.RegistrationOver  =>
         "registration is over: a plugin adds to a registry only from inside its register"
       case Refused.Rule.PersonOnly => "bookmarks, notes and read marks are a person's own; an automated run has none"
+      case Refused.Rule.TokenOtherAgent  => "this run token is not for that agent"
+      case Refused.Rule.PlanOutsideLocal =>
+        "this provider is refused while the server listens beyond loopback: it spends your own plan, and another " +
+          "client could spend it"
 
   extension (limit: Refused.Limit)
     private def named: String = limit match
@@ -1069,10 +1076,10 @@ object Text:
       case Config.Flaw.ToolUnknown(tool)           => s" names {{tool:$tool}}, which is not an MCP tool"
       case Config.Flaw.DescriptionLong             => ": the description is over 1,024 characters (opencode refuses it)"
 
-  extension (setting: Problem.Run.CapSetting)
+  extension (setting: Problem.Run.Ceiling)
     private def said: String = setting match
-      case Problem.Run.CapSetting.StepMaxTokens => "agents.step.max-tokens (HISTMERSION_AGENTS_MAX_TOKENS)"
-      case Problem.Run.CapSetting.StepOwn       =>
+      case Problem.Run.Ceiling.StepMaxTokens => "agents.step.max-tokens (HISTMERSION_AGENTS_MAX_TOKENS)"
+      case Problem.Run.Ceiling.StepOwn       =>
         "the step's own cap (agents.review.fixer-max-tokens or agents.compile.draft-max-tokens)"
 
   extension (decoding: Content.Decoding)

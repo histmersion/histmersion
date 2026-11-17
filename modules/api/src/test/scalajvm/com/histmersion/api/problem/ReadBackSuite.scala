@@ -68,7 +68,7 @@ class ReadBackSuite extends munit.FunSuite:
         None
       ),
       Run.Declined(Vector.empty),
-      Run.OutputCapped(Run.Step("draft"), Run.Model("a:b"), Count(1L), Count(2L), Run.CapSetting.StepOwn)
+      Run.OutputCapped(Run.Step("draft"), Run.Model("a:b"), Count(1L), Count(2L), Run.Ceiling.StepOwn)
     ).foreach(p => assertEquals(Column.read(p.stored), p))
 
   test("a relayed problem is stored as its sentence, which reads back as the text it is"):

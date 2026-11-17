@@ -1,5 +1,6 @@
 package com.histmersion
 package server.agents
+import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.domain.automation.agents.SttpAiJson
 import com.histmersion.domain.automation.agents.SttpAiJson.given
 import com.histmersion.util.problem.{Legacy, Problem}
@@ -597,16 +598,27 @@ class AiProvidersSuite extends munit.FunSuite:
       PluginAiClient.Loopback(true)
     )
     assertEquals(refused.left.toOption.map(_.sentence), Some("no Gemini key — set GEMINI_KEY"))
-    // any other provider's error names the model and the exception, as before
-    val other = Scripted(List(_ => Left(Problem.Unclassified(Legacy.Text("HTTP 500")))))
+    // any other provider's error names the model, and keeps the provider's problem as it is
+    val http500 = Problem.Unclassified(Legacy.Text("HTTP 500"))
+    val other = Scripted(List(_ => Left(http500)))
+    val otherFailed = AgentsControllers
+      .attempt(ref)(PluginAiClient(ref, other, AiHttp.Offline).run(call()))
+      .left
+      .map(e => NonEmptyVector.toVector(e.problems))
     assertEquals(
-      AgentsControllers
-        .attempt(ref)(PluginAiClient(ref, other, AiHttp.Offline).run(call()))
-        .left
-        .map(_.problems.head)
-        .left
-        .map(_.sentence),
-      Left("the call to gemini:pro failed: IOException: gemini:pro: HTTP 500")
+      otherFailed,
+      Left(
+        Vector(
+          Problem.Upstream.CallFailed(
+            Problem.Upstream.Name("gemini:pro"),
+            Problem.Run.AtModel(Problem.Run.Model("gemini:pro"), NonEmptyVector.of(http500))
+          )
+        )
+      )
+    )
+    assertEquals(
+      otherFailed.left.map(_.map(_.sentence)),
+      Left(Vector("the call to gemini:pro failed: gemini:pro: HTTP 500"))
     )
 
   test("billing and quota: a plugin provider's model is metered, on no plan pool"):

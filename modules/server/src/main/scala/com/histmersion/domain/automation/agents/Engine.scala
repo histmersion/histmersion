@@ -693,8 +693,8 @@ object Engine:
   /** The setting that sets a step's output cap: `agents.step.max-tokens`, unless the pipeline passed the step its own
     * cap (the fixer's and the writer's).
     */
-  def capSetting(overridden: CapKeyOverridden): Problem.Run.CapSetting =
-    if overridden.value then Problem.Run.CapSetting.StepOwn else Problem.Run.CapSetting.StepMaxTokens
+  def ceiling(overridden: CapKeyOverridden): Problem.Run.Ceiling =
+    if overridden.value then Problem.Run.Ceiling.StepOwn else Problem.Run.Ceiling.StepMaxTokens
 
   private val OutputCap = "exceeded the (\\d+) output token maximum".r
 

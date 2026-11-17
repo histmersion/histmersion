@@ -5,6 +5,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 
+import com.histmersion.util.problem.{External, Problem}
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.automation.Agents.GenerateResult
 import com.histmersion.util.storage.{ByteSource, Store}
@@ -15,13 +16,16 @@ private[agents] object AgentTreeWriter:
   private val Manifest =
     Store.Key.of("manifest.json").fold(error => throw IllegalArgumentException(error.sentence), identity)
 
+  /** A store's own problem, carried out of the writing loop to be returned as it is. */
+  final private case class Failed(problem: Problem) extends Exception(null, null, false, false)
+
   def write(store: Store, tree: Map[String, String], runtimes: List[String], sha: Sha256)(using
       clock: Clock
-  ): Either[String, GenerateResult] =
+  ): Either[Problem, GenerateResult] =
     try
       def key(name: String): Store.Key =
         Store.Key.of(name).fold(error => throw IllegalArgumentException(error.sentence), identity)
-      store.makeDirectory().fold(error => throw java.io.IOException(error.message.sentence), identity)
+      store.makeDirectory().fold(error => throw Failed(error.message), identity)
       val previous = store.get(Manifest).toList.flatMap { blob =>
         RawJson
           .parse(blob.text().value)
@@ -37,7 +41,7 @@ private[agents] object AgentTreeWriter:
         if !same then
           store
             .put(target, ByteSource.Content(text.getBytes(UTF_8)))
-            .fold(error => throw java.io.IOException(error.message.sentence), _ => ())
+            .fold(error => throw Failed(error.message), _ => ())
           written += 1
       }
       val gone = previous.filter(p => runtimes.exists(r => p.startsWith(s"$r/")) && !tree.contains(p))
@@ -47,7 +51,7 @@ private[agents] object AgentTreeWriter:
       if runtimes.contains(AgentRuntime.ClaudeCode.wire.value) then
         store
           .makeDirectory(key("claude-code/login"))
-          .fold(error => throw java.io.IOException(error.message.sentence), identity)
+          .fold(error => throw Failed(error.message), identity)
       val keep = previous.filterNot(p => runtimes.exists(r => p.startsWith(s"$r/")))
       val files = (keep.flatMap(name => store.get(key(name)).map(blob => name -> Prompt.sha256(blob.text().value))) ++
         tree.toList.map((name, text) => name -> Prompt.sha256(text))).sortBy(_._1)
@@ -60,7 +64,7 @@ private[agents] object AgentTreeWriter:
       )
       store
         .write(Manifest, ByteSource.Content(AgentGenerator.pretty(manifest).getBytes(UTF_8)))
-        .fold(error => throw java.io.IOException(error.message.sentence), _ => ())
+        .fold(error => throw Failed(error.message), _ => ())
       Right(
         GenerateResult(
           GenerateResult.Dir(store.where().value),
@@ -72,5 +76,6 @@ private[agents] object AgentTreeWriter:
         )
       )
     catch
+      case Failed(problem)  => Left(problem)
       case error: Exception =>
-        Left(s"generating into ${store.where()} failed: ${error.getClass.getSimpleName}: ${error.getMessage}")
+        Left(Problem.Io.File(Problem.Io.Access.Write, Problem.Io.Path.of(store.where()), External.Reported.of(error)))

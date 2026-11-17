@@ -1043,7 +1043,7 @@ unwrap	server:domain/Referables.scala	.value outside a boundary	1
 unwrap	server:domain/activity/ActivityService.scala	.value outside a boundary	1
 unwrap	server:domain/automation/AutomationState.scala	.value outside a boundary	2
 unwrap	server:domain/automation/agents/AgentDef.scala	.value outside a boundary	1
-unwrap	server:domain/automation/agents/AgentDefinitions.scala	.value outside a boundary	28
+unwrap	server:domain/automation/agents/AgentDefinitions.scala	.value outside a boundary	26
 unwrap	server:domain/automation/agents/AgentGenerator.scala	.value outside a boundary	35
 unwrap	server:domain/automation/agents/AgentLease.scala	.value outside a boundary	1
 unwrap	server:domain/automation/agents/AgentRuntime.scala	.value outside a boundary	2
@@ -1066,7 +1066,7 @@ unwrap	server:domain/automation/agents/PluginTree.scala	.value outside a boundar
 unwrap	server:domain/automation/agents/Prompt.scala	.value outside a boundary	1
 unwrap	server:domain/automation/agents/Prompts.scala	.value outside a boundary	5
 unwrap	server:domain/automation/agents/RunBudget.scala	.value outside a boundary	3
-unwrap	server:domain/automation/agents/RunCtx.scala	.value outside a boundary	39
+unwrap	server:domain/automation/agents/RunCtx.scala	.value outside a boundary	35
 unwrap	server:domain/automation/agents/RunService.scala	.value outside a boundary	141
 unwrap	server:domain/automation/agents/RunTokens.scala	.value outside a boundary	9
 unwrap	server:domain/automation/agents/SkillDef.scala	.value outside a boundary	2
@@ -1082,9 +1082,9 @@ unwrap	server:domain/automation/goals/FocusService.scala	.value outside a bounda
 unwrap	server:domain/automation/goals/GoalFocusService.scala	.value outside a boundary	110
 unwrap	server:domain/automation/goals/GoalService.scala	.value outside a boundary	88
 unwrap	server:domain/automation/goals/GoalsControllers.scala	.value outside a boundary	16
-unwrap	server:domain/automation/goals/PlanGoalPipeline.scala	.value outside a boundary	66
+unwrap	server:domain/automation/goals/PlanGoalPipeline.scala	.value outside a boundary	65
 unwrap	server:domain/automation/managers/DrainService.scala	.value outside a boundary	15
-unwrap	server:domain/automation/managers/HintEffectPipeline.scala	.value outside a boundary	38
+unwrap	server:domain/automation/managers/HintEffectPipeline.scala	.value outside a boundary	35
 unwrap	server:domain/automation/managers/ManagerDefaultsViews.scala	.value outside a boundary	2
 unwrap	server:domain/automation/managers/ManagerKindDefinition.scala	.value outside a boundary	2
 unwrap	server:domain/automation/managers/ManagerService.scala	.value outside a boundary	231

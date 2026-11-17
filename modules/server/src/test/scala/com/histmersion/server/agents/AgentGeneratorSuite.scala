@@ -130,7 +130,7 @@ class AgentGeneratorSuite extends munit.FunSuite:
       refused("x", bad),
       Left(
         "agents/x.md: tools.histmersion names tools an agent cannot be offered: patch_source " +
-          s"(one of ${ToolboxOrder.names.map(_.value).mkString(", ")})"
+          s"(one of ${ToolboxOrder.names.mkString(", ")})"
       )
     )
     assertEquals(refused("y", bad), Left("agents/y.md: name 'x' is not the file's"))
@@ -138,7 +138,7 @@ class AgentGeneratorSuite extends munit.FunSuite:
     val noRole = AgentDefinitions.Markdown(bad.value.replace("model-role: reviewer", "model-role: boss"))
     assertEquals(
       refused("x", noRole),
-      Left(s"agents/x.md: model-role is not one of ${Role.values.map(_.wire.value).mkString(", ")}")
+      Left(s"agents/x.md: model-role is not one of ${Role.values.map(_.wire).mkString(", ")}")
     )
 
   test("placeholders render per runtime"):

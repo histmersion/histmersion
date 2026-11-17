@@ -2,7 +2,7 @@ package com.histmersion
 package domain.automation.approvals
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.Cursor
-import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import io.scalaland.chimney.dsl.*
@@ -34,7 +34,7 @@ final class Approvals(
     store: ApprovalService,
     cfg: => AgentsConfig,
     effects: => ApprovalEffects,
-    applyHint: Managers.HintProposal => Either[Problem, String] = _ =>
+    applyHint: Managers.HintProposal => Either[Problems, String] = _ =>
       Left(Problem.Config.Unavailable(Problem.Config.Capability.Agents))
 ):
 
@@ -178,7 +178,8 @@ final class Approvals(
             .toRight(unreadable(Problem.Raw.of(a.id)))
             .flatMap(applyHint) match
             case Right(w) => store.settle(id, ApprovalState.Approved, DomainApproval.Outcome(s"applied: $w".take(1000)))
-            case Left(m)  => store.settle(id, ApprovalState.Failed, DomainApproval.Outcome(m.sentence.take(1000)))
+            case Left(m)  =>
+              store.settle(id, ApprovalState.Failed, DomainApproval.Outcome(m.sentences.mkString("; ").take(1000)))
         case (Decision.Approve, k) if effects.subjectKinds(k.transformInto[Approval.Kind]) =>
           effects.applySubject(a) match
             case Right(w) => store.settle(id, ApprovalState.Approved, DomainApproval.Outcome(s"applied: $w"))
