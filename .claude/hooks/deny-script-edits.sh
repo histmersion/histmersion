@@ -39,8 +39,9 @@ elif has '(^|[^[:alnum:]_.-])(python3?|node|ruby|perl)([[:space:]]|$)' &&
      has "open\([^)]*,[[:space:]]*(mode[[:space:]]*=[[:space:]]*)?['\"][wax]|\.open\([[:space:]]*['\"][wax]|\.write_(text|bytes)\(|os\.(replace|rename)\(|shutil\.(copy|copyfile|copy2|move)\(|fileinput|writeFileSync|File\.write|IO\.write"; then
   reason="an inline or untracked script writes files"
 else
-  targets=$(printf '%s' "$flat" | grep -oE '(>>?|tee([[:space:]]+-a)?)[[:space:]]*"?[^[:space:]|;&<>"]+' |
-            sed -E 's/^(>>?|tee([[:space:]]+-a)?)[[:space:]]*"?//')
+  # `tee` only as a command word (after start, space or a pipe), never inside a name like BuiltinGazetteers.scala
+  targets=$(printf '%s' "$flat" | grep -oE '(>>?|(^|[[:space:]|])tee([[:space:]]+-a)?[[:space:]])[[:space:]]*"?[^[:space:]|;&<>"]+' |
+            sed -E 's/^[[:space:]|]*(>>?|tee([[:space:]]+-a)?)[[:space:]]*"?//')
   while IFS= read -r t; do
     [ -n "$t" ] || continue
     case "$t" in /tmp/*|/private/tmp/*|/var/folders/*|/dev/*|\&*) continue ;; esac

@@ -1,0 +1,22 @@
+{"want":"deny","cwd":"/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix","tool_input":{"command":"sed -i '' 's/a/b/' modules/x/Foo.scala"}}
+{"want":"deny","cwd":"/tmp","tool_input":{"command":"cd /x && sed -E -i.bak 's/a/b/' f.scala"}}
+{"want":"deny","cwd":"/tmp","tool_input":{"command":"perl -pi -e 's/a/b/' Foo.scala"}}
+{"want":"deny","cwd":"/tmp","tool_input":{"command":"python3 - <<'PY'\np='Foo.scala'\ns=open(p).read()\nopen(p,'w').write(s.replace('a','b'))\nPY"}}
+{"want":"deny","cwd":"/tmp","tool_input":{"command":"python3 -c \"import pathlib; pathlib.Path('A.scala').write_text('x')\""}}
+{"want":"deny","cwd":"/Users/dev/Workspaces/GitHub/histmersion-wt/notes","tool_input":{"command":"python3 g60s5/fix-sentence.py modules/server"}}
+{"want":"deny","cwd":"/tmp","tool_input":{"command":"cat >> /Users/dev/Workspaces/GitHub/histmersion-wt/notes/refactor-goals.md <<'EOF'\nx\nEOF"}}
+{"want":"deny","cwd":"/tmp","tool_input":{"command":"git show HEAD:a/Foo.scala > a/Foo.scala"}}
+{"want":"deny","cwd":"/tmp","tool_input":{"command":"echo x | tee -a architecture/guidelines-ratchet.tsv"}}
+{"want":"allow","cwd":"/tmp","tool_input":{"command":"sbt test 2>&1 | tee refactor-audit/concept-table/test.log; echo rc=$?"}}
+{"want":"allow","cwd":"/tmp","tool_input":{"command":"git show HEAD:a/Foo.scala > /tmp/before.scala"}}
+{"want":"allow","cwd":"/tmp","tool_input":{"command":"python3 -c \"import json,sys; print(json.load(sys.stdin)['a'])\" < x.json"}}
+{"want":"allow","cwd":"/tmp","tool_input":{"command":"sed -n '1,40p' Foo.scala | grep -n def"}}
+{"want":"allow","cwd":"/tmp","tool_input":{"command":"cmd > /dev/null 2>&1 && echo ok"}}
+{"want":"allow","cwd":"/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix","tool_input":{"command":"scala-cli run tools/refactor/AddConsole.scala -- modules"}}
+{"want":"allow","cwd":"/tmp","tool_input":{"command":"perl -ne 'print if /x/' Foo.scala"}}
+{"want":"allow","cwd":"/tmp","tool_input":{"command":"bash /Users/dev/Workspaces/GitHub/histmersion-wt/notes/pg3.sh up"}}
+{"want":"allow","cwd":"/tmp","tool_input":{"command":"bash /Users/dev/Workspaces/GitHub/histmersion-wt/notes/test-suite.sh server"}}
+{"want":"allow","cwd":"/tmp","tool_input":{"command":"bash /Users/dev/Workspaces/GitHub/histmersion-wt/notes/pilot-compile.sh"}}
+{"want":"allow","cwd":"/tmp","tool_input":{"command":"sed -n '1,80p' modules/server/src/main/scala/x/BuiltinGazetteers.scala; grep -n Left modules/server/src/main/scala/x/BuiltinGazetteers.scala"}}
+{"want":"deny","cwd":"/tmp","tool_input":{"command":"echo x |tee modules/a/Foo.scala"}}
+{"want":"deny","cwd":"/tmp","tool_input":{"command":"echo x | tee -a notes/x.md"}}
