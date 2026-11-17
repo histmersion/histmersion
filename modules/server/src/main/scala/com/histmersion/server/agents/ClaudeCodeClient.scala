@@ -146,7 +146,7 @@ final class ClaudeCodeClient(val model: ModelRef, cfg: ClaudeCodeConfig, rt: Cli
                 throw new ModelLimitReached(
                   model,
                   lim.until,
-                  Problem.Upstream.Replied(Problem.Upstream.Name("claude -p"), External.Reported.of(lim.message.value))
+                  Problem.Upstream.Replied(Problem.Upstream.Name("claude -p"), External.Reported(s"${lim.message}"))
                 )
       finally grant.foreach(g => rt.tokens.revoke(g.token))
     }

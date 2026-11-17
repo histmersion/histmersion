@@ -310,7 +310,8 @@ final class AgentDoctor(
           Left(
             Problem.Io.Process(
               Problem.Io.Tool(cc.command.value),
-              Problem.Io.Ending.Exited(Problem.Io.ExitCode(code.value), External.Stderr.tail(out.value))
+              // what it printed (stdout and stderr together), whole
+              Problem.Io.Ending.Exited(Problem.Io.ExitCode(code.value), External.Stderr(s"$out"))
             )
           )
       }
@@ -468,7 +469,7 @@ object AgentDoctor:
           Problem.Io.Corrupt(
             Problem.Io.Format.Json,
             Problem.Where("the answer of 'claude auth status'"),
-            Problem.Io.Damage.Unreadable(External.Reported.of(json.value))
+            Problem.Io.Damage.Unreadable(External.Reported(s"$json"))
           )
         )
       case Some(c) =>

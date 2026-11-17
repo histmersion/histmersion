@@ -1280,10 +1280,10 @@ unwrap	server:server/StorageLocations.scala	.value outside a boundary	23
 unwrap	server:server/Supervisor.scala	.value outside a boundary	31
 unwrap	server:server/TimeZoneCheck.scala	.value outside a boundary	5
 unwrap	server:server/UiConfigViews.scala	.value outside a boundary	5
-unwrap	server:server/agents/AgentDoctor.scala	.value outside a boundary	68
+unwrap	server:server/agents/AgentDoctor.scala	.value outside a boundary	66
 unwrap	server:server/agents/BuiltinAi.scala	.value outside a boundary	6
 unwrap	server:server/agents/ClaudeCode.scala	.value outside a boundary	49
-unwrap	server:server/agents/ClaudeCodeClient.scala	.value outside a boundary	18
+unwrap	server:server/agents/ClaudeCodeClient.scala	.value outside a boundary	17
 unwrap	server:server/agents/CliOutcomes.scala	.value outside a boundary	6
 unwrap	server:server/agents/CliProcess.scala	.value outside a boundary	10
 unwrap	server:server/agents/CliRuntime.scala	.value outside a boundary	2
