@@ -946,6 +946,11 @@ object Problem:
       /** The request came from a network the settings list as refused (`auth.refused-networks`). */
       case NetworkRefused
 
+      /** The request says a proxy forwarded it (`Forwarded`, `X-Forwarded-For`, `X-Forwarded-Host`, `X-Forwarded-Proto`
+        * or `X-Real-IP`), and the settings declare no proxy (`auth.proxy = "none"`).
+        */
+      case UndeclaredProxy
+
     /** The allowances a request can spend. */
     enum Limit:
       case DailySpend, MonthlySpend, RunSpend, ProviderQuota, RateLimit, PlanAllowance
@@ -1608,6 +1613,12 @@ object Problem:
       * not mark what it forwards would hand every client the owner's trust.
       */
     final case class ProxyUndeclared(publicUrl: Raw) extends Config
+
+    /** `server.host` lists the wildcard `wildcard` (`0.0.0.0` or `::`; the JDK binds either as the wildcard of both
+      * families) and `address` besides, on the one port: the wildcard already listens on every address, so the second
+      * listener fails to bind (Linux) or takes its address's connections from the first (macOS).
+      */
+    final case class WildcardOverlap(wildcard: Raw, address: Raw) extends Config
 
     /** Why a model of a provider that can run on a plan is billed by the token. */
     enum Metered:
@@ -2721,6 +2732,7 @@ object Problem:
       Config.ApiKeyLogin(Raw("api_key_helper")),
       Config.Exposed(Raw("0.0.0.0"), Raw("0.0.0.0/0"), Config.Exposure.Unlisted),
       Config.ProxyUndeclared(Raw("https://histmersion.example.edu")),
+      Config.WildcardOverlap(Raw("0.0.0.0"), Raw("127.0.0.1")),
       Config.FloorsUnread(
         Config.FloorsFrom.Setting(SettingKey("agents.quota.claude-plan.floors")),
         NonEmptyVector.of(Invalid.Missing(Field("five_hour"), Vector.empty))

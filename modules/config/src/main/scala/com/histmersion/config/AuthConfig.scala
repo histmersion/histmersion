@@ -8,11 +8,12 @@ import io.github.iltotore.iron.constraint.any.Pure
   * from a network in `authenticatedNetworks` needs `Authorization: Bearer <apiKey>`, reads and writes alike; one from a
   * network in `refusedNetworks` is turned away, and so is one from a network no list names. The longest prefix that
   * holds the peer decides. `proxy` declares a reverse proxy on this machine (`local`): the requests it forwards reach
-  * the server from loopback, and carry `Forwarded` or `X-Forwarded-For`, so they are held to the authenticated rules
-  * however loopback is listed. `hosts` are the names, besides the loopback ones, the bind addresses and the public
-  * URL's host, a request may give in its `Host` header; `origins` the pages, besides this server's own, that may send
-  * changes. The server does not start when one of its bind addresses can be reached from a network these settings leave
-  * open, or when its public URL is HTTPS while loopback is trusted and no proxy is declared.
+  * the server from loopback, and carry a proxy's header (`Forwarded`, `X-Forwarded-*`, `X-Real-IP`), so they are held
+  * to the authenticated rules however loopback is listed; with none declared (`none`) such a request is refused.
+  * `hosts` are the names, besides the loopback ones, the bind addresses and the public URL's host, a request may give
+  * in its `Host` header; `origins` the pages, besides this server's own, that may send changes. The server does not
+  * start when one of its bind addresses can be reached from a network these settings leave open, or when its public URL
+  * is HTTPS while loopback is trusted and no proxy is declared.
   */
 final case class AuthConfig(
     apiKey: AuthConfig.ApiKey,

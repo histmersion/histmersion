@@ -210,6 +210,7 @@ class RenderSuite extends munit.FunSuite:
     "ApiKeyLogin" -> (503, "api key login api_key_helper"),
     "Exposed" -> (503, "exposed on '0.0.0.0' to '0.0.0.0/0': Unlisted"),
     "ProxyUndeclared" -> (503, "undeclared proxy for 'https://histmersion.example.edu'"),
+    "WildcardOverlap" -> (503, "wildcard '0.0.0.0' overlaps '127.0.0.1'"),
     "FloorsUnread" -> (503, "floors unread, agents.quota.claude-plan.floors (five_hour is required)"),
     "ReadAt" -> (
       503,
@@ -937,17 +938,33 @@ class RenderSuite extends munit.FunSuite:
         ("server.public-url = 'https://histmersion.example.edu' is https, so a reverse proxy serves it, and " +
           "auth.trusted-networks trusts loopback, where a proxy on this machine connects from — declare the proxy " +
           "with auth.proxy = \"local\" (what it forwards then needs auth.api-key), or take loopback out of " +
-          "auth.trusted-networks")
+          "auth.trusted-networks"),
+      Refused.Policy(Refused.Rule.UndeclaredProxy) ->
+        ("this request says a proxy forwarded it (Forwarded, X-Forwarded-For, X-Forwarded-Host, X-Forwarded-Proto or " +
+          "X-Real-IP), but the server declares none (auth.proxy = \"none\") — send it directly, or, when a proxy on " +
+          "the server's computer serves it, set auth.proxy = \"local\" on the server and restart it"),
+      Config.WildcardOverlap(Raw("0.0.0.0"), Raw("::1")) ->
+        ("server.host lists '0.0.0.0' and '::1' on one port, but '0.0.0.0' already listens on every address of this " +
+          "computer — list '0.0.0.0' alone, or only specific addresses (HISTMERSION_BIND)")
     ).foreach((p, want) => assertEquals(p.sentence, want))
     Vector[Problem](
       Refused.Unauthenticated(Refused.Credential.RunToken),
       Refused.Policy(Refused.Rule.CrossSite),
       Refused.Policy(Refused.Rule.NetworkRefused),
+      Refused.Policy(Refused.Rule.UndeclaredProxy),
       Config.Exposed(Raw("::"), Raw("::/0"), Config.Exposure.NoKey),
-      Config.ProxyUndeclared(Raw("https://x.example:8443/hm"))
+      Config.ProxyUndeclared(Raw("https://x.example:8443/hm")),
+      Config.WildcardOverlap(Raw("::"), Raw("0.0.0.0")),
+      Config.WildcardOverlap(Raw("[::]"), Raw("my host's name")),
+      Config.WildcardOverlap(Raw("0.0.0.0"), Raw("fd7a:115c:a1e0::5"))
     ).foreach(p => assertEquals(Column.read(p.stored), p))
     assertEquals(
       (Refused.Policy(Refused.Rule.NetworkRefused): Problem).status.code,
       403,
       "a refused network is forbidden, not asked for a key"
+    )
+    assertEquals(
+      (Refused.Policy(Refused.Rule.UndeclaredProxy): Problem).status.code,
+      403,
+      "a forwarded request with no proxy declared is forbidden: well formed (not 400), and no key lets it in (not 401)"
     )

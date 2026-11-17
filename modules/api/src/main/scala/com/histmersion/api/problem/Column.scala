@@ -113,9 +113,10 @@ object Column:
             case Config.Drain.Unclosed(s) => s" $s s"
             case Config.Drain.ClosedInUse => ""
           }: $component"
-      case Config.ApiKeyLogin(method)            => s"api key login $method"
-      case Config.Exposed(bind, reach, exposure) => s"exposed on '$bind' to '$reach': ${exposure.productPrefix}"
-      case Config.ProxyUndeclared(publicUrl)     => s"undeclared proxy for '$publicUrl'"
+      case Config.ApiKeyLogin(method)                => s"api key login $method"
+      case Config.Exposed(bind, reach, exposure)     => s"exposed on '$bind' to '$reach': ${exposure.productPrefix}"
+      case Config.ProxyUndeclared(publicUrl)         => s"undeclared proxy for '$publicUrl'"
+      case Config.WildcardOverlap(wildcard, address) => s"wildcard '$wildcard' overlaps '$address'"
       case Config.FloorsUnread(Config.FloorsFrom.Saved, why)        => s"floors unread, saved (${why.storedEach})"
       case Config.FloorsUnread(Config.FloorsFrom.Setting(key), why) => s"floors unread, $key (${why.storedEach})"
       case Config.ReadAt(file, at, why)                             => s"settings $file read at $at (${why.storedEach})"
@@ -971,6 +972,7 @@ object Column:
     private val MisdirectedTo = "(?s)^misdirected to host '(.*)'$".r
     private val ExposedOn = "(?s)^exposed on '(.*)' to '(.*)': (\\w+)$".r
     private val ProxyUndeclaredFor = "(?s)^undeclared proxy for '(.*)'$".r
+    private val WildcardOverlaps = "(?s)^wildcard '(.*?)' overlaps '(.*)'$".r
     private val FloorsUnreadSaved = "(?s)^floors unread, saved \\((.*)\\)$".r
     private val FloorsUnreadOf = "(?s)^floors unread, (\\S+) \\((.*)\\)$".r
     private val SettingsReadAt = "(?s)^settings (.+?) read at (.+?) \\((.*)\\)$".r
@@ -1844,9 +1846,11 @@ object Column:
         case MisdirectedTo(host)     => Some(Refused.Misdirected(Raw(s"$host")))
         case ExposedOn(bind, reach, exposure) =>
           word(Config.Exposure.values.toSeq, exposure).map(Config.Exposed(Raw(s"$bind"), Raw(s"$reach"), _))
-        case ProxyUndeclaredFor(publicUrl) => Some(Config.ProxyUndeclared(Raw(s"$publicUrl")))
-        case FloorsUnreadSaved(why)        => whysOf(why).map(Config.FloorsUnread(Config.FloorsFrom.Saved, _))
-        case FloorsUnreadOf(key, why)      =>
+        case ProxyUndeclaredFor(publicUrl)       => Some(Config.ProxyUndeclared(Raw(s"$publicUrl")))
+        case WildcardOverlaps(wildcard, address) =>
+          Some(Config.WildcardOverlap(Raw(s"$wildcard"), Raw(s"$address")))
+        case FloorsUnreadSaved(why)   => whysOf(why).map(Config.FloorsUnread(Config.FloorsFrom.Saved, _))
+        case FloorsUnreadOf(key, why) =>
           whysOf(why).map(Config.FloorsUnread(Config.FloorsFrom.Setting(SettingKey(s"$key")), _))
         case SettingsReadAt(file, at, why) => whysOf(why).map(Config.ReadAt(Io.Path(s"$file"), Io.Path(s"$at"), _))
         case GuardStoppedBy(why)           => Some(Problem.Run.GuardStopped(Raw(s"$why")))

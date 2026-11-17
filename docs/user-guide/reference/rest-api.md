@@ -4,7 +4,9 @@ The server's HTTP API, under `<public-url>/api`. The web page, the CLI and the M
 A request from a trusted network (this computer, by default) needs nothing; one from an authenticated
 network needs `Authorization: Bearer <auth.api-key>` for every method, reads included (401 otherwise), except
 `GET /api/health`, `GET /api/version` and the web page and its files. A request from a refused network
-(`auth.refused-networks`), or from one no list names, is refused (403) whatever it carries. Every request must name
+(`auth.refused-networks`), or from one no list names, is refused (403) whatever it carries, and so is one that carries
+`Forwarded`, `X-Forwarded-For`, `X-Forwarded-Host`, `X-Forwarded-Proto` or `X-Real-IP` while `auth.proxy` is `none`
+(`UndeclaredProxy`). Every request must name
 the server by one of its own host names (421 otherwise), and a change sent by another site's page is refused (403).
 No `GET` or `HEAD` endpoint is meant to change anything (a check over the compiled routes holds them to it; the ones
 that still do are listed in `architecture/get-writes.tsv`). See [Who can reach your server](../how-to/access.md).

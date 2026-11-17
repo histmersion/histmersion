@@ -10,6 +10,9 @@ import com.histmersion.api.automation.Managers
 /** The autopilot's one row (V096, docs/research-process-managers.md "As built: the autopilot"): the switch, who turned
   * it and when, the managers it paused when it was turned off, and when it last ensured the goals' managers and ran its
   * housekeeping. Every statement runs on the connection it is given (`AutopilotRowService` opens it).
+  *
+  * The migration makes the row (`V109__schema.sql`, as V096 did before the squash), so a read only reads: a database
+  * without it (a row deleted by hand) reads as the row the migration makes, and the first write makes it again.
   */
 object AutopilotRepo:
   type Digest = Digest.T
@@ -51,22 +54,29 @@ object AutopilotRepo:
     type LastLintAt = LastLintAt.T
     object LastLintAt extends Newtype[String, Pure]
 
-  /** The row, made first if it is not there yet. */
+  /** The row; read only. Without one (deleted by hand: the migration makes it), the row the migration makes — off,
+    * changed now by nobody, nothing paused, nothing done yet — and nothing is written.
+    */
   def get()(using DbCon): Row =
-    val _ = sql"INSERT INTO agent_autopilot (id) VALUES (true) ON CONFLICT DO NOTHING".update.run()
     Sql
-      .raw(Sql.RawText(s"""SELECT enabled, ${at("changed_at")}, changed_by, paused, ${at("last_ensure_at")},
-                       ${at("last_backup_at")}, ${at("last_lint_at")} FROM agent_autopilot WHERE id"""))
+      .raw(Sql.RawText(s"""SELECT coalesce(a.enabled, false), ${at("coalesce(a.changed_at, now())")},
+                       coalesce(a.changed_by, ''), coalesce(a.paused, '{}'::text[]), ${at("a.last_ensure_at")},
+                       ${at("a.last_backup_at")}, ${at("a.last_lint_at")}
+                       FROM (VALUES (true)) AS one (id) LEFT JOIN agent_autopilot a ON a.id"""))
       .frag
       .query[Row]
       .run()
       .head
 
+  /** The row made again before a write, if it was deleted (the migration makes it; reads never do). */
+  private def made()(using DbCon): Unit =
+    val _ = sql"INSERT INTO agent_autopilot (id) VALUES (true) ON CONFLICT DO NOTHING".update.run()
+
   /** Switch it; `paused` = the managers it paused (turning it off) or none (turning it on). True = it changed (it was
     * the other way).
     */
   def set(enabled: Row.Enabled, by: Row.ChangedBy, paused: List[Row.Paused])(using DbCon): Boolean =
-    val _ = get()
+    made()
     sql"""UPDATE agent_autopilot SET enabled = $enabled, changed_at = now(), changed_by = $by, paused = $paused::text[],
                                      last_ensure_at = NULL
           WHERE id AND enabled <> $enabled""".update.run() > 0
@@ -74,27 +84,31 @@ object AutopilotRepo:
   /** It made sure of the goals' managers now. */
   def ensured(now: java.time.Instant)(using DbCon): Unit =
     val t = now.toString
+    made()
     val _ = sql"UPDATE agent_autopilot SET last_ensure_at = $t::timestamptz WHERE id".update.run()
 
   /** Ensure again at the next tick (a plan created sub-goals, a goal was added). */
   def ensureSoon()(using DbCon): Unit =
+    made()
     val _ = sql"UPDATE agent_autopilot SET last_ensure_at = NULL WHERE id".update.run()
 
   def backedUp(now: java.time.Instant)(using DbCon): Unit =
     val t = now.toString
+    made()
     val _ = sql"UPDATE agent_autopilot SET last_backup_at = $t::timestamptz WHERE id".update.run()
 
   def linted(now: java.time.Instant)(using DbCon): Unit =
     val t = now.toString
+    made()
     val _ = sql"UPDATE agent_autopilot SET last_lint_at = $t::timestamptz WHERE id".update.run()
 
   /** A paused manager the autopilot resumed (it no longer counts as one it paused). */
   def unpaused(managerId: Managers.ManagerInfo.Id)(using DbCon): Unit =
+    made()
     val _ = sql"UPDATE agent_autopilot SET paused = array_remove(paused, $managerId) WHERE id".update.run()
 
   /** The scheduler's strategy a person chose (V100): (name, by, at); None = agents.scheduler.strategy. */
   def strategy()(using DbCon): Option[(StrategyName, Row.ChangedBy, Row.ChangedAt)] =
-    val _ = get()
     Sql
       .raw(Sql.RawText(s"""SELECT scheduler_strategy, coalesce(scheduler_by, ''), coalesce(${at("scheduler_at")}, '')
                 FROM agent_autopilot WHERE id AND scheduler_strategy IS NOT NULL"""))
@@ -105,29 +119,29 @@ object AutopilotRepo:
 
   /** Set (Some) or clear (None: back to the config's) the scheduler's strategy. */
   def setStrategy(name: Option[StrategyName], by: Row.ChangedBy)(using DbCon): Unit =
-    val _ = get()
+    made()
     val _ =
       sql"""UPDATE agent_autopilot SET scheduler_strategy = $name, scheduler_by = $by, scheduler_at = now() WHERE id""".update
         .run()
 
   /** When the daily approval digest was last written (V101), if ever. */
   def lastDigest()(using DbCon): Option[Digest] =
-    val _ = get()
     Sql
       .raw(Sql.RawText(s"SELECT ${at("last_digest_at")} FROM agent_autopilot WHERE id"))
       .frag
       .query[Option[Digest]]
       .run()
-      .head
+      .headOption
+      .flatten
 
   /** The digest was written at `now`. */
   def digested(now: java.time.Instant)(using DbCon): Unit =
     val t = now.toString
+    made()
     val _ = sql"UPDATE agent_autopilot SET last_digest_at = $t::timestamptz WHERE id".update.run()
 
   /** Draining (V102): since when, by whom, and when it was first seen drained; None = not draining. */
   def drain()(using DbCon): Option[(DrainSince, Row.ChangedBy, Option[DrainedAt])] =
-    val _ = get()
     Sql
       .raw(Sql.RawText(s"""SELECT ${at("drain_since")}, coalesce(drain_by, ''), ${at("drained_at")}
                 FROM agent_autopilot WHERE id AND drain_since IS NOT NULL"""))
@@ -138,7 +152,7 @@ object AutopilotRepo:
 
   /** Start draining (true; a drain under way keeps its start) or stop (false). True = it changed. */
   def setDrain(on: Boolean, by: Row.ChangedBy)(using DbCon): Boolean =
-    val _ = get()
+    made()
     if on then sql"""UPDATE agent_autopilot SET drain_since = now(), drain_by = $by, drained_at = NULL
                      WHERE id AND drain_since IS NULL""".update.run() > 0
     else sql"""UPDATE agent_autopilot SET drain_since = NULL, drain_by = NULL, drained_at = NULL
@@ -147,5 +161,6 @@ object AutopilotRepo:
   /** The drain was first seen drained at `now` (kept until it is lifted or work runs again: `None`). */
   def drained(at: Option[java.time.Instant])(using DbCon): Unit =
     val t = at.map(_.toString)
+    made()
     val _ =
       sql"UPDATE agent_autopilot SET drained_at = $t::timestamptz WHERE id AND drain_since IS NOT NULL".update.run()

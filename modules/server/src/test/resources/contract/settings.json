@@ -11,7 +11,7 @@
           "key" : "histmersion.server.host",
           "section" : "server",
           "kind" : "list",
-          "doc" : "Every address the server listens on (at least one); each is reachable from beyond loopback only as auth.* allows. Loopback plus a tailnet address, e.g. [\"127.0.0.1\", \"100.101.102.103\"], is reachable from the tailnet but not from the LAN. HISTMERSION_BIND lists them comma-separated (\"127.0.0.1,100.101.102.103\").",
+          "doc" : "Every address the server listens on (at least one); each is reachable from beyond loopback only as auth.* allows. Loopback plus a tailnet address, e.g. [\"127.0.0.1\", \"100.101.102.103\"], is reachable from the tailnet but not from the LAN. HISTMERSION_BIND lists them comma-separated (\"127.0.0.1,100.101.102.103\"). A wildcard (\"0.0.0.0\" or \"::\", each reached from IPv4 and IPv6) must be the only address listed.",
           "default" : "[\"127.0.0.1\"]",
           "value" : null,
           "effective" : "[\"127.0.0.1\"]",
@@ -5143,7 +5143,7 @@
     },
     {
       "id" : "auth",
-      "doc" : "who is let in (the user guide's \"Who can reach your server\": its setups) Each listed network (CIDR) says what a request from it gets: trusted, authenticated or refused; the longest prefix holding the client's address decides, and a request from no listed network is refused too (403). The server does not start when an address of server.host can be reached from a network no list covers, or only from an authenticated one while api-key is empty; nor when public-url is https, loopback is trusted and no proxy is declared. Every request must name the server by one of its own host names (421 otherwise), and a change sent by another site's page is refused (403).",
+      "doc" : "who is let in (the user guide's \"Who can reach your server\": its setups) Each listed network (CIDR) says what a request from it gets: trusted, authenticated or refused; the longest prefix holding the client's address decides, and a request from no listed network is refused too (403). The server does not start when an address of server.host can be reached from a network no list covers, or only from an authenticated one while api-key is empty; nor when server.host lists a wildcard beside another address; nor when public-url is https, loopback is trusted and no proxy is declared. Every request must name the server by one of its own host names (421 otherwise), and a change sent by another site's page is refused (403).",
       "fields" : [
         {
           "key" : "histmersion.auth.api-key",
@@ -5209,7 +5209,7 @@
           "key" : "histmersion.auth.proxy",
           "section" : "auth",
           "kind" : "text",
-          "doc" : "A reverse proxy in front of the server: \"none\", or \"local\" (one on this machine, connecting over loopback). With \"local\", a loopback request that carries Forwarded or X-Forwarded-For is the proxy's, so it needs api-key like an authenticated network's (the proxy must set one of those headers on every request). Required when public-url is https and loopback is trusted.",
+          "doc" : "A reverse proxy in front of the server: \"none\", or \"local\" (one on this machine, connecting over loopback). A request that carries Forwarded, X-Forwarded-For, X-Forwarded-Host, X-Forwarded-Proto or X-Real-IP came through a proxy. With \"none\" it is refused (403) whatever it carries; with \"local\" it is the proxy's, so it needs api-key like an authenticated network's (the proxy must set one of those headers on every request). Required when public-url is https and loopback is trusted.",
           "default" : "\"none\"",
           "value" : null,
           "effective" : "\"none\"",

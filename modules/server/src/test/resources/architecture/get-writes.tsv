@@ -9,13 +9,6 @@ api.Api.exportBundle	GET	modules/server/src/main/scala/com/histmersion/server/Ht
 api.automation.AgentsApi.doctor	GET	modules/server/src/main/scala/com/histmersion/domain/automation/agents/AgentsRoutes.scala	Process	java.lang.ProcessBuilder.start
 api.automation.AgentsApi.models	GET	modules/server/src/main/scala/com/histmersion/domain/automation/agents/AgentsRoutes.scala	Database	com.augustnagro.magnum.Frag.update
 api.automation.AgentsApi.quota	GET	modules/server/src/main/scala/com/histmersion/domain/automation/agents/AgentsRoutes.scala	Database	com.augustnagro.magnum.Frag.update
-api.automation.ManagersApi.digest	GET	modules/server/src/main/scala/com/histmersion/domain/automation/managers/ManagersRoutes.scala	Database	com.augustnagro.magnum.Frag.update
-api.automation.ManagersApi.events	GET	modules/server/src/main/scala/com/histmersion/domain/automation/managers/ManagersRoutes.scala	Database	com.augustnagro.magnum.Frag.update
-api.automation.ManagersApi.focus	GET	modules/server/src/main/scala/com/histmersion/domain/automation/managers/ManagersRoutes.scala	Database	com.augustnagro.magnum.Frag.update
-api.automation.ManagersApi.get	GET	modules/server/src/main/scala/com/histmersion/domain/automation/managers/ManagersRoutes.scala	Database	com.augustnagro.magnum.Frag.update
-api.automation.ManagersApi.hints	GET	modules/server/src/main/scala/com/histmersion/domain/automation/managers/ManagersRoutes.scala	Database	com.augustnagro.magnum.Frag.update
-api.automation.ManagersApi.items	GET	modules/server/src/main/scala/com/histmersion/domain/automation/managers/ManagersRoutes.scala	Database	com.augustnagro.magnum.Frag.update
-api.automation.ManagersApi.list	GET	modules/server/src/main/scala/com/histmersion/domain/automation/managers/ManagersRoutes.scala	Database	com.augustnagro.magnum.Frag.update
 api.automation.ManagersApi.scheduler	GET	modules/server/src/main/scala/com/histmersion/domain/automation/managers/ManagersRoutes.scala	Database	com.augustnagro.magnum.Frag.update
 api.automation.ManagersApi.schedulerWhy	GET	modules/server/src/main/scala/com/histmersion/domain/automation/managers/ManagersRoutes.scala	Database	com.augustnagro.magnum.Frag.update
 api.automation.ManagersApi.stalls	GET	modules/server/src/main/scala/com/histmersion/domain/automation/managers/ManagersRoutes.scala	Database	com.augustnagro.magnum.Frag.update
@@ -34,4 +27,3 @@ api.library.AcquireApi.archiveInfo	GET	modules/server/src/main/scala/com/histmer
 api.library.AcquireApi.archiveSearch	GET	modules/server/src/main/scala/com/histmersion/domain/library/acquisition/AcquisitionRoutes.scala	Process	java.lang.ProcessBuilder.start
 api.library.CollectionsApi.audit	GET	modules/server/src/main/scala/com/histmersion/domain/library/collections/CollectionsRoutes.scala	Process	java.lang.ProcessBuilder.start
 api.library.CollectionsApi.search	GET	modules/server/src/main/scala/com/histmersion/domain/library/collections/CollectionsRoutes.scala	Process	java.lang.ProcessBuilder.start
-api.views.AutopilotApi.autopilot	GET	modules/server/src/main/scala/com/histmersion/server/HttpApi.scala	Database	com.augustnagro.magnum.Frag.update

@@ -111,11 +111,11 @@ object AccessPolicy:
 
   /** The reverse proxy in front of the server. */
   enum Proxy derives CanEqual:
-    /** None is declared (`none`). */
+    /** None is declared (`none`): a request that says a proxy forwarded it is refused. */
     case Undeclared
 
-    /** One on this machine (`local`): it connects over loopback and marks every request it forwards with `Forwarded` or
-      * `X-Forwarded-For`, so a loopback request so marked is held to the authenticated rules.
+    /** One on this machine (`local`): it connects over loopback and marks every request it forwards with one of
+      * [[Admission.Forwarded.Headers]], so a loopback request so marked is held to the authenticated rules.
       */
     case Local
 
@@ -142,7 +142,8 @@ object AccessPolicy:
 
   /** The addresses a listener on `bind` can be reached from. Loopback is reached from loopback only (`localhost` from
     * both families'); an address of one family from that whole family (the operating system routes to it from any
-    * interface); the dual-stack wildcard `::`, and a name that is no literal address, from everywhere.
+    * interface); either wildcard, and a name that is no literal address, from everywhere. `0.0.0.0` too: the JDK opens
+    * its server sockets dual-stack and binds the IPv4 wildcard as `::`, so IPv6 clients reach it as well.
     */
   def reachOf(bind: ServerConfig.Host): List[Cidr] =
     if isLocalhost(bind) then Cidr.loopback
@@ -150,10 +151,23 @@ object AccessPolicy:
       Cidr.literal(bindText(bind)) match
         case Some(a) if a.isLoopbackAddress =>
           Cidr.loopback.filter(_.family == Cidr.numbered(a)._1)
-        case Some(a) if a.isAnyLocalAddress && Cidr.numbered(a)._1 == Cidr.Family.V6 => Cidr.everything
-        case Some(a)                                                                 =>
+        case Some(a) if a.isAnyLocalAddress => Cidr.everything
+        case Some(a)                        =>
           Cidr.everything.filter(_.family == Cidr.numbered(a)._1)
         case None => Cidr.everything
+
+  /** Every address `binds` lists besides a wildcard (`0.0.0.0` or `::`, the first one listed), each paired with it: a
+    * wildcard already listens on every address of the port, so a second listener on it fails to bind (Linux refuses an
+    * address under a wildcard bound on its port) or takes that address's connections from the wildcard's (macOS lets
+    * it). `0.0.0.0` and `::1` overlap too: the JDK binds `0.0.0.0` as the dual-stack `::`.
+    */
+  def overlaps(binds: NonEmptyVector[ServerConfig.Host]): Vector[Problem] =
+    val all = binds.toVector.zipWithIndex
+    all.find((b, _) => isWildcard(b)).toVector.flatMap { (wildcard, at) =>
+      all.collect {
+        case (b, i) if i != at => Problem.Config.WildcardOverlap(Problem.Raw(s"$wildcard"), Problem.Raw(s"$b"))
+      }
+    }
 
   /** A page origin: scheme, host and port (the scheme's default port when the text names none). */
   final case class Origin(scheme: String, host: HostName, port: Port)
@@ -178,14 +192,14 @@ object AccessPolicy:
   private val LoopbackPeers: List[InetAddress] = List("127.0.0.1", "::1").flatMap(Cidr.literal)
 
   /** The policy of a listener bound to every address of `server.host`, or every reason it must not start: a setting
-    * that is wrong, an address that leaves a network open ([[exposure]]), or an HTTPS public URL in front of a trusted
-    * loopback with no proxy declared ([[proxyNeeded]]).
+    * that is wrong, a wildcard listed beside another address ([[overlaps]]), an address that leaves a network open
+    * ([[exposure]]), or an HTTPS public URL in front of a trusted loopback with no proxy declared ([[proxyNeeded]]).
     */
   def forListener(auth: AuthConfig, server: ServerConfig): Either[Problems, AccessPolicy] =
     from(auth, server).flatMap { p =>
       val open = p.exposure(server.host, s"${auth.apiKey}".nonEmpty).left.toOption.toVector.flatMap(_.toVector)
       val unproxied = p.proxyNeeded(server.publicUrl).left.toOption
-      Problems.from(open ++ unproxied).toLeft(p)
+      Problems.from(overlaps(server.host) ++ open ++ unproxied).toLeft(p)
     }
 
   /** The policy the `auth` settings and the listener's own (its bind addresses, its public URL) describe, or every

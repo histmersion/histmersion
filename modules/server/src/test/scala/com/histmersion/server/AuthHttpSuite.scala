@@ -231,9 +231,34 @@ class AuthHttpSuite extends munit.FunSuite:
         assertEquals(refused.authenticate, None, "a refused network is not asked for a key")
     }
 
-  test("a request a proxy forwarded earns no trust from the proxy's loopback address"):
+  /** Each header a proxy marks what it forwards with, as a proxy would set it. */
+  private val marks = List(
+    "Forwarded" -> "for=203.0.113.9;proto=https",
+    "X-Forwarded-For" -> "203.0.113.9",
+    "X-Forwarded-Host" -> "histmersion.example.edu",
+    "X-Forwarded-Proto" -> "https",
+    "X-Real-IP" -> "203.0.113.9"
+  )
+
+  test("with a local proxy declared, a request it forwarded earns no trust from its loopback address"):
+    withServer(a => trustedWithKey(a).modify(_.proxy).setTo(AuthConfig.Proxy("local"))) { (url, _) =>
+      marks.foreach { mark =>
+        assertEquals(send(s"$url/api/backups/$Dump", headers = List(mark)).status, 401, mark._1)
+        assertEquals(send(s"$url/api/backups/$Dump", key = Some(Key), headers = List(mark)).status, 200, mark._1)
+      }
+      assertEquals(send(s"$url/api/backups/$Dump").status, 200, "the owner's own request, unmarked")
+    }
+
+  test("with no proxy declared, a forwarded request is refused (403) whatever it carries, the probes included"):
     withServer(trustedWithKey) { (url, _) =>
-      val proxied = List("X-Forwarded-For" -> "203.0.113.9")
-      assertEquals(send(s"$url/api/backups/$Dump", headers = proxied).status, 401)
-      assertEquals(send(s"$url/api/backups/$Dump", key = Some(Key), headers = proxied).status, 200)
+      for
+        mark <- marks
+        path <- List("/api/health", "/", s"/api/backups/$Dump")
+        key <- List(None, Some(Key))
+      do
+        val refused = send(s"$url$path", key = key, headers = List(mark))
+        assertEquals(refused.status, 403, s"${mark._1} $path")
+        assert(refused.body.contains("UndeclaredProxy"), refused.body)
+        assertEquals(refused.authenticate, None, "no key lets it in, so none is asked for")
+      assertEquals(send(s"$url/api/backups/$Dump").status, 200, "the owner's own request, unmarked")
     }

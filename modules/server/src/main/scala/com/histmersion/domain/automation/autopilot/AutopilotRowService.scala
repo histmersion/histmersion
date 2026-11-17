@@ -77,7 +77,8 @@ object AutopilotRowService:
     def setDrain(on: Boolean, by: AutopilotRepo.Row.ChangedBy): Boolean = db.transact(AutopilotRepo.setDrain(on, by))
     def drained(at: Option[Instant]): Unit = db.transact(AutopilotRepo.drained(at))
 
-  /** The row in memory, made at its first use as the database makes it; `clock` stands in for the database's `now()`.
+  /** The row in memory, made at its first use: it stands in for the row the migration makes, there from the start in a
+    * database. `clock` stands in for the database's `now()`.
     */
   final class InMemory(state: AtomicReference[AutomationState], clock: Clock) extends AutopilotRowService:
     private def now: Instant = Instant.now(clock)

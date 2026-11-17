@@ -147,6 +147,9 @@ object Text:
         s"server.public-url = '$publicUrl' is https, so a reverse proxy serves it, and auth.trusted-networks trusts " +
           "loopback, where a proxy on this machine connects from — declare the proxy with auth.proxy = \"local\" (what " +
           "it forwards then needs auth.api-key), or take loopback out of auth.trusted-networks"
+      case Config.WildcardOverlap(wildcard, address) =>
+        s"server.host lists '$wildcard' and '$address' on one port, but '$wildcard' already listens on every address " +
+          s"of this computer — list '$wildcard' alone, or only specific addresses (HISTMERSION_BIND)"
       case Config.FloorsUnread(Config.FloorsFrom.Saved, why) =>
         s"saved floors do not parse: ${why.toVector.map(_.sentence).mkString("; ")}"
       case Config.FloorsUnread(Config.FloorsFrom.Setting(key), why) =>
@@ -748,6 +751,10 @@ object Text:
           "auth.trusted-networks nor in auth.authenticated-networks"
       case Refused.Rule.NetworkRefused =>
         "this server refuses every request from your network — its settings list it in auth.refused-networks"
+      case Refused.Rule.UndeclaredProxy =>
+        "this request says a proxy forwarded it (Forwarded, X-Forwarded-For, X-Forwarded-Host, X-Forwarded-Proto or " +
+          "X-Real-IP), but the server declares none (auth.proxy = \"none\") — send it directly, or, when a proxy on " +
+          "the server's computer serves it, set auth.proxy = \"local\" on the server and restart it"
 
   extension (limit: Refused.Limit)
     private def named: String = limit match

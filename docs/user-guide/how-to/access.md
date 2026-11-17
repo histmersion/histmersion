@@ -60,22 +60,27 @@ your own devices' addresses (`100.101.102.103/32`) instead of the whole range.
 ### Every interface, no key, everyone else refused
 
 The same trust, listening on every interface (`0.0.0.0`): the networks you trust get in and every
-other network is refused, so no key is needed.
+other network is refused, so no key is needed. `0.0.0.0` listens for IPv6 as well (Java binds it as
+`::`, the wildcard of both families), so the IPv6 networks are named too.
 
 ```hocon
 histmersion {
   server.host = ["0.0.0.0"]
   auth {
-    trusted-networks = ["127.0.0.0/8", "100.64.0.0/10"]
-    refused-networks = ["0.0.0.0/0"]
+    trusted-networks = ["127.0.0.0/8", "::1/128", "100.64.0.0/10"]
+    refused-networks = ["0.0.0.0/0", "::/0"]
   }
 }
 ```
 
+List a wildcard (`0.0.0.0` or `::`) alone: it already listens on every address, so the server does not
+start when `server.host` names another address beside it (below).
+
 ### An institution's or a public server
 
-Trust no network: every request authenticates. Put the server behind a reverse proxy that serves HTTPS,
-and tell the server the name it is reached by:
+Trust no network: every request authenticates. Put the server behind a reverse proxy on the same
+machine that serves HTTPS, declare it (what it forwards is refused otherwise, see below), and tell the
+server the name it is reached by:
 
 ```hocon
 histmersion {
@@ -87,6 +92,7 @@ histmersion {
     api-key = "…"
     trusted-networks = []
     authenticated-networks = ["0.0.0.0/0", "::/0"]
+    proxy = "local"
     hosts = ["histmersion.example.edu"]
   }
 }
@@ -113,11 +119,17 @@ histmersion {
 }
 ```
 
-The server never trusts a request that carries a `Forwarded` or `X-Forwarded-For` header, whatever its
-address: such a request came through a proxy, and its address is the proxy's. It is held to the rules of
-an authenticated network instead: it needs the key. A proxy that sends no such header would hand every
-client your trust, which is why the server will not start in front of one it has not been told about
-(below). Alternatively take loopback out of `auth.trusted-networks` and authenticate everyone.
+A request that carries any of `Forwarded`, `X-Forwarded-For`, `X-Forwarded-Host`,
+`X-Forwarded-Proto` or `X-Real-IP` came through a proxy, and its address is the proxy's, not the
+client's. With the proxy declared (`auth.proxy = "local"`), the server never trusts such a request,
+whatever its address: it is held to the rules of an authenticated network instead, so it needs the key.
+A proxy that sends none of these headers would hand every client your trust, which is why the server will
+not start in front of one it has not been told about (below). Alternatively take loopback out of
+`auth.trusted-networks` and authenticate everyone.
+
+With no proxy declared (`auth.proxy = "none"`, the default), a request that carries one of these headers
+is refused (**403**) whatever else it carries, even `/api/health`: no proxy is supposed to be there, so
+something unexpected forwarded it. Declare the proxy to let its requests in with the key.
 
 Signing in with personal accounts (and with an institution's single sign-on) is planned; until then
 everyone who authenticates uses the one API key.
@@ -137,8 +149,18 @@ set) or as refused
 ```
 
 Loopback (`127.0.0.1`, `::1`, `localhost`) is reached from loopback only. Any other address of one
-family (`0.0.0.0`, `192.168.1.5`, `100.101.102.103`) is reached from that whole family; `::` and a host
-name from both IPv4 and IPv6.
+family (`192.168.1.5`, `100.101.102.103`) is reached from that whole family; `0.0.0.0`, `::` and a
+host name from both IPv4 and IPv6 (Java binds `0.0.0.0` as `::`, which takes IPv4 and IPv6 alike).
+
+It does not start either when `server.host` lists a wildcard (`0.0.0.0` or `::`) beside another
+address, `127.0.0.1` or `::1` included. The wildcard already listens on every address of the port, so
+the second listener would fail to bind (Linux) or quietly take that address's connections (macOS):
+
+```text
+Histmersion does not start: server.host lists '0.0.0.0' and '127.0.0.1' on one port, but '0.0.0.0'
+already listens on every address of this computer — list '0.0.0.0' alone, or only specific addresses
+(HISTMERSION_BIND)
+```
 
 It also does not start when `server.public-url` is `https`, loopback is trusted, and no proxy is
 declared: HTTPS means a proxy serves the page, and it may well connect from loopback.
@@ -182,7 +204,7 @@ From an authenticated network, without the key, the server answers only:
 
 Everything else — the sources, the settings, the backups, the agents' state and transcripts — answers
 **401** until the request carries `Authorization: Bearer <key>`. A refused network gets **403** even for
-these.
+these, and so does a request a proxy forwarded when no proxy is declared.
 
 ## Sending the key
 

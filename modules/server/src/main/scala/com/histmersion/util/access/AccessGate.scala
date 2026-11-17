@@ -60,7 +60,7 @@ final class AccessGate(
       host = header(HttpHeaderNames.HOST),
       origin = header(HttpHeaderNames.ORIGIN),
       referer = header(HttpHeaderNames.REFERER),
-      forwarded = Admission.Forwarded.of(headers.contains("Forwarded") || headers.contains("X-Forwarded-For")),
+      forwarded = Admission.Forwarded.of(Admission.Forwarded.Headers.exists(h => headers.contains(h))),
       presented = presented(headers.get(HttpHeaderNames.AUTHORIZATION))
     )
 
