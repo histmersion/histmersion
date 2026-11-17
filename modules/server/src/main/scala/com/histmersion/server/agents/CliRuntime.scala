@@ -37,8 +37,10 @@ final class CliRuntime(
   /** Wired by [[AgentsControllers]] (it needs the DataSource); `var` only for that late attachment. */
   @volatile var pools: Option[PoolSink] = None
 
-  /** `127.x`, `::1`, `localhost`: nobody else can reach the server, so nobody else can spend a plan. */
-  def loopback: Boolean = ClaudeCode.Env.isLoopback(app.server.host)
+  /** Every address the server listens on is `127.x`, `::1` or `localhost`: nobody else can reach the server, so nobody
+    * else can spend a plan.
+    */
+  def loopback: Boolean = app.server.host.forall(ClaudeCode.Env.isLoopback)
 
   /** The agent MCP endpoint as a CLI reaches it (one URL; the run token decides the tools). */
   def agentMcpUrl: GenSettings.AgentMcpUrl = trees.settings(AgentTrees.SettingsVersion("")).agentMcpUrl

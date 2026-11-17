@@ -799,6 +799,8 @@ lazy val server = project
     Compile / mainClass := Some("com.histmersion.server.histmersionServer")
   )
   .settings(commonDeps)
+  // the GET-writes rule (ReadOnlyRoutesSuite) reads the compiled trees of the main modules: tests only
+  .settings(libraryDependencies += "org.scala-lang" %% "scala3-tasty-inspector" % scalaVersion.value % Test)
   // one suite at a time per group: a restore drops connections, and a booting server fails the running jobs
   .settings(dbTestGroups("server", groups = 5, heap = "2g"))
   .settings(

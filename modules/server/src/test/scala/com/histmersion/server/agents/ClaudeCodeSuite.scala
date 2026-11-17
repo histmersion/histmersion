@@ -307,6 +307,13 @@ class ClaudeCodeSuite extends munit.FunSuite:
     val dir = Files.createTempDirectory("hm-rt-")
     val lan = CliRuntime(FakeCli.app(dir, "HISTMERSION_BIND" -> "0.0.0.0"), EngineContributions.roster)
     assert(ClaudeCode.client(Cfg, lan, Sonnet).left.exists(_.sentence.contains("beyond loopback")))
+    // several addresses: loopback only when every one is; loopback plus a tailnet address is beyond it
+    val both = CliRuntime(FakeCli.app(dir, "HISTMERSION_BIND" -> "127.0.0.1, ::1"), EngineContributions.roster)
+    assert(both.loopback)
+    val tailnet =
+      CliRuntime(FakeCli.app(dir, "HISTMERSION_BIND" -> "127.0.0.1,100.101.102.103"), EngineContributions.roster)
+    assert(!tailnet.loopback)
+    assert(ClaudeCode.client(Cfg, tailnet, Sonnet).left.exists(_.sentence.contains("beyond loopback")))
     assert(
       ClaudeCode
         .client(Cfg.modify(_.allowNonLoopback).setTo(ClaudeCodeConfig.AllowNonLoopback(true)), lan, Sonnet)

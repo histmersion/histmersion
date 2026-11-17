@@ -126,11 +126,26 @@ class SupervisorSuite extends munit.FunSuite:
     assertEquals(c.backups.dir, "/d/backups")
     assertEquals(c.backups.pgBinDir, "/h/pg/bin")
     assertEquals(c.converter.spoolDir, "/d/uploads")
-    assertEquals(c.server.host, "127.0.0.1", "a desktop install is private unless HISTMERSION_BIND says otherwise")
+    // the addresses the server listens on are the settings': loopback by default, else the config file's or
+    // HISTMERSION_BIND's list — the bundle no longer replaces them
+    def bundled(env: Map[String, String], text: String): Vector[String] =
+      val read = AppConfig
+        .loadWithUserText(
+          org.ekrich.config.ConfigFactory.parseMap(scala.jdk.CollectionConverters.MapHasAsJava(env).asJava),
+          text
+        )
+        .fold(e => fail(s"$e"), _.config)
+      Supervisor.configure(read.modify(_.runtime).setTo(rc()), l).server.host.toVector.map(h => s"$h")
+    assertEquals(bundled(Map.empty, ""), Vector("127.0.0.1"), "a desktop install is private unless told otherwise")
     assertEquals(
-      Supervisor.configure(base.modify(_.runtime).setTo(rc()), l, Some(ServerConfig.Host("0.0.0.0"))).server.host,
-      "0.0.0.0"
+      bundled(Map.empty, """histmersion.server.host = ["127.0.0.1", "100.101.102.103"]"""),
+      Vector("127.0.0.1", "100.101.102.103")
     )
+    assertEquals(
+      bundled(Map("HISTMERSION_BIND" -> "127.0.0.1, 100.101.102.103"), ""),
+      Vector("127.0.0.1", "100.101.102.103")
+    )
+    assertEquals(bundled(Map("HISTMERSION_BIND" -> "0.0.0.0"), ""), Vector("0.0.0.0"))
     val custom = base
       .modify(_.runtime)
       .setTo(rc())

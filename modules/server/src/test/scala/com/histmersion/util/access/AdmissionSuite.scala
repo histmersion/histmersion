@@ -19,7 +19,9 @@ class AdmissionSuite extends munit.FunSuite:
   private val defaults = AppConfig.load(ConfigFactory.empty)
   private val agent = AgentPaths(Path("/mcp/agent"), Path("/api/agents/quota/claude"))
 
-  /** Loopback trusted, the tailnet trusted, everything else authenticated with a key. */
+  /** Loopback trusted, the tailnet trusted, the LAN authenticated with a key, `10.0.0.0/8` refused (and a guest range
+    * inside the LAN refused too), everything else unlisted.
+    */
   private val policy: AccessPolicy =
     val auth = defaults.auth
       .modify(_.apiKey)
@@ -28,6 +30,8 @@ class AdmissionSuite extends munit.FunSuite:
       .setTo(List("127.0.0.0/8", "::1/128", "100.64.0.0/10").map(AuthConfig.Network(_)))
       .modify(_.authenticatedNetworks)
       .setTo(List("192.168.0.0/16").map(AuthConfig.Network(_)))
+      .modify(_.refusedNetworks)
+      .setTo(List("10.0.0.0/8", "192.168.50.0/24").map(AuthConfig.Network(_)))
       .modify(_.hosts)
       .setTo(List(AuthConfig.HostName("mymac.tail1234.ts.net")))
       .modify(_.origins)
@@ -37,6 +41,8 @@ class AdmissionSuite extends munit.FunSuite:
   private val loopback = InetAddress.getByName("127.0.0.1")
   private val tailnet = InetAddress.getByName("100.101.102.103")
   private val lan = InetAddress.getByName("192.168.1.20")
+  private val refusedPeer = InetAddress.getByName("10.1.2.3")
+  private val guest = InetAddress.getByName("192.168.50.7")
   private val stranger = InetAddress.getByName("203.0.113.9")
 
   private def request(
@@ -152,12 +158,88 @@ class AdmissionSuite extends munit.FunSuite:
     }
     assertEquals(decided(request(lan, Method.Change, path = "/mcp/agentx")), unauthenticated)
 
-  test("a network no setting lists is refused (403), the public probes included"):
-    for path <- List("/api/health", "/api/backups/x", "/") do
+  test("a network no setting lists is refused (403), the public probes and the agent endpoint included"):
+    for path <- List("/api/health", "/api/backups/x", "/", "/mcp/agent") do
       assertEquals(
         decided(request(stranger, path = path, presented = Presented.ApiKey)),
         Left(Problem.Refused.Policy(Problem.Refused.Rule.NetworkNotAccepted))
       )
+
+  test("a refused network is refused (403) with its own rule, whatever it sends; inside an authenticated one too"):
+    for
+      peer <- List(refusedPeer, guest)
+      path <- List("/api/health", "/api/backups/x", "/", "/mcp/agent")
+      presented <- Presented.values.toList
+      host <- List(Some("localhost:8000"), Some("rebound.example"), None)
+    do
+      assertEquals(
+        decided(request(peer, path = path, presented = presented, host = host)),
+        Left(Problem.Refused.Policy(Problem.Refused.Rule.NetworkRefused)),
+        s"$peer $path ${presented.productPrefix} $host"
+      )
+    assertEquals(decided(request(lan, presented = Presented.ApiKey)), Right(KeyHolder), "the LAN around the guests")
+
+  /** Every combination of the network kind (trusted loopback and tailnet, authenticated, refused, unlisted), the
+    * method, the credential, a proxy's mark, the `Host` (answered, foreign, missing), the page a change comes from
+    * (none, the server's own, a listed one, another site's by `Origin` or by `Referer`, `null`) and the path (gated,
+    * public, the agent endpoint, the quota path), against the decision written out as a table of rules in order.
+    */
+  test("the decision, exhaustively: network kind x method x credential x proxy x Host x origin x path"):
+    enum Net derives CanEqual:
+      case Trusted, Authenticated, Refused, Unlisted
+    val peers = List(loopback -> Net.Trusted, tailnet -> Net.Trusted, lan -> Net.Authenticated) ++
+      List(refusedPeer -> Net.Refused, guest -> Net.Refused, stranger -> Net.Unlisted)
+    val hosts = List(Some("localhost:8000") -> true, Some("rebound.example:8000") -> false, None -> false)
+    // (Origin, Referer, whether a change from it is the server's own)
+    val pages = List(
+      (None, None, true),
+      (Some("http://localhost:8000"), None, true),
+      (Some("https://proxy.example"), None, true),
+      (None, Some("http://localhost:8000/explore"), true),
+      (Some("https://evil.example"), None, false),
+      (None, Some("https://evil.example/x"), false),
+      (Some("null"), None, false)
+    )
+    val paths = List("/api/backups/x", "/api/health", "/mcp/agent/skeptic", "/api/agents/quota/claude")
+    def expected(
+        net: Net,
+        method: Method,
+        presented: Presented,
+        forwarded: Boolean,
+        host: Option[String],
+        hostOk: Boolean,
+        ownPage: Boolean,
+        path: String
+    ): Either[Problem, Admission] =
+      if net == Net.Unlisted then Left(Problem.Refused.Policy(Problem.Refused.Rule.NetworkNotAccepted))
+      else if net == Net.Refused then Left(Problem.Refused.Policy(Problem.Refused.Rule.NetworkRefused))
+      else if !hostOk then Left(Problem.Refused.Misdirected(Problem.Raw(host.fold("")(_.takeWhile(_ != ':')))))
+      else if method == Method.Change && !ownPage then crossSite
+      else if path.startsWith("/mcp/agent") then Right(Agent)
+      else if net == Net.Trusted && !forwarded then Right(Trusted)
+      else if presented == Presented.ApiKey then Right(KeyHolder)
+      else if presented == Presented.RunToken && path == "/api/agents/quota/claude" then Right(RunToken)
+      else if method == Method.Read && path == "/api/health" then Right(Public)
+      else unauthenticated
+    var cases = 0
+    for
+      (peer, net) <- peers
+      method <- Method.values.toList
+      presented <- Presented.values.toList
+      forwarded <- List(false, true)
+      (host, hostOk) <- hosts
+      (origin, referer, ownPage) <- pages
+      path <- paths
+    do
+      val r = request(peer, method, path, host, origin, referer, forwarded, presented)
+      assertEquals(
+        decided(r),
+        expected(net, method, presented, forwarded, host, hostOk, ownPage, path),
+        s"${net.productPrefix} $peer ${method.productPrefix} ${presented.productPrefix} forwarded=$forwarded $host " +
+          s"$origin $referer $path"
+      )
+      cases += 1
+    assertEquals(cases, 6 * 3 * 4 * 2 * 3 * 7 * 4)
 
   test("a proxied request earns no trust from its peer address: it needs the key"):
     assertEquals(decided(request(loopback, forwarded = true)), unauthenticated)

@@ -67,8 +67,9 @@ mistyped value changes **nothing**, and says why.
   a setting the LaunchAgent and `.mcp.json` also name), `runtime.*` (the bundled Postgres and converter
   are started once), `agents.enabled`, `agents.max-concurrent-runs`, `agents.max-llm-calls-in-flight` and
   `converter.parallelism` (pool sizes), and who is let in — `auth.trusted-networks`,
-  `auth.authenticated-networks`, `auth.trusted-as`, `auth.hosts`, `auth.origins` (checked against the bind
-  address once, when the listener is bound; `auth.api-key` itself applies at once).
+  `auth.authenticated-networks`, `auth.refused-networks`, `auth.proxy`, `auth.trusted-as`, `auth.hosts`,
+  `auth.origins` (checked against the bind addresses once, when the listener is bound; `auth.api-key` itself
+  applies at once).
 - **The environment** is the one read at startup: a reload re-reads the file only.
 
 The report lists the settings applied, the restart-only ones not applied, the components rebuilt, the
@@ -168,7 +169,7 @@ The settings of backups and portable bundles are listed with them, in
 
 | key | env var | default | what |
 |---|---|---|---|
-| `server.host` | `HISTMERSION_BIND` | `127.0.0.1` | bind address. Any other is refused at start unless the `auth.*` networks cover every address it can be reached from ([Who can reach your server](../how-to/access.md)) |
+| `server.host` | `HISTMERSION_BIND` | `["127.0.0.1"]` | every address the server listens on, at least one (the variable lists them comma-separated: `127.0.0.1,100.101.102.103`). Each is checked on its own at start: it is refused unless the `auth.*` networks — trusted, authenticated with a key, or refused — cover every address it can be reached from. Loopback plus a tailnet address is reachable from the tailnet, not from the LAN ([Who can reach your server](../how-to/access.md)). The bundle keeps this setting (it used to replace it with `127.0.0.1` unless `HISTMERSION_BIND` was set) |
 | `server.port` | `HISTMERSION_PORT` | `8000` | listen port |
 | `server.public-url` | `HISTMERSION_PUBLIC_URL` | `http://localhost:8000` | how clients reach the server; used for absolute URLs and to generate `.mcp.json` |
 | `server.request-timeout-seconds` | `HISTMERSION_REQUEST_TIMEOUT` | `1800` | one HTTP request end to end; must cover a `pg_dump`/`pg_restore` (netty's own default, 20 s, is not enough for a backup of the live corpus) |
@@ -260,7 +261,9 @@ The settings of backups and portable bundles are listed with them, in
 | `init.fetch-sources` | `HISTMERSION_INIT_FETCH_SOURCES` | `cliopatria,awmc,land,periodo` | what `histmersion init --fetch` downloads, in order |
 | `auth.api-key` | `HISTMERSION_API_KEY` | *(empty)* | the key a request from an authenticated network sends as `Authorization: Bearer <key>` — reads and writes alike (401 otherwise). Compared in constant time. The web UI asks for it once and keeps it in the browser's storage ([Who can reach your server](../how-to/access.md)) |
 | `auth.trusted-networks` | — | `["127.0.0.0/8", "::1/128"]` | networks (CIDR) whose requests act as `auth.trusted-as` with no key. A tailnet: add `"100.64.0.0/10", "fd7a:115c:a1e0::/48"`. Restart-only |
-| `auth.authenticated-networks` | — | `[]` | networks whose requests need `auth.api-key`. A request from a network neither list holds is refused (403); the longest prefix decides. Restart-only |
+| `auth.authenticated-networks` | — | `[]` | networks whose requests need `auth.api-key`. A request from a network no list holds is refused (403); the longest prefix decides. Restart-only |
+| `auth.refused-networks` | — | `[]` | networks whose requests are refused (403, `NetworkRefused`), whatever they carry — the probes and the web page too. With `["0.0.0.0/0", "::/0"]` a server can listen on `0.0.0.0` with no key: the trusted networks get in, every other is turned away. A network named in two lists stops the start. Restart-only |
+| `auth.proxy` | — | `none` | a reverse proxy in front of the server: `none`, or `local` (one on this machine, connecting over loopback). With `local`, the proxy must mark every request it forwards with `Forwarded` or `X-Forwarded-For`; such a request is never trusted, so it needs `auth.api-key`. The server does not start when `server.public-url` is `https`, loopback is trusted and this is `none`. Restart-only |
 | `auth.trusted-as` | — | `owner` | who a trusted request acts as (`owner`, the one principal so far). Restart-only |
 | `auth.hosts` | — | `[]` | names a request may give in its `Host` header besides `localhost`, `127.0.0.1`, `[::1]`, `server.host` and the host of `server.public-url` (another one: 421). Restart-only |
 | `auth.origins` | — | `[]` | page origins (`https://name[:port]`) that may send changes besides this server's own pages (another page's change: 403). Restart-only |

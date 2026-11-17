@@ -9,7 +9,7 @@ import scala.util.Try
   * from CIDR text (`127.0.0.0/8`, `::1/128`) or a bare address (a network of one); host bits set in the text are
   * cleared (`127.0.0.1/8` is `127.0.0.0/8`). Only literal addresses are read: no text is ever looked up in DNS.
   */
-final case class Cidr private (family: Cidr.Family, first: BigInt, prefix: Int):
+final case class Cidr private (family: Cidr.Family, first: BigInt, prefix: Int) derives CanEqual:
   import Cidr.{numbered, render}
 
   /** The highest address of the network. */

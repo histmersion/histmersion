@@ -1261,7 +1261,7 @@ unwrap	server:domain/research/workflows/ReviewManagerKind.scala	.value outside a
 unwrap	server:domain/research/workflows/SeedManagerKind.scala	.value outside a boundary	64
 unwrap	server:server/ArticleHtml.scala	.value outside a boundary	9
 unwrap	server:server/Bootstrap.scala	.value outside a boundary	26
-unwrap	server:server/Composition.scala	.value outside a boundary	27
+unwrap	server:server/Composition.scala	.value outside a boundary	26
 unwrap	server:server/Deps.scala	.value outside a boundary	3
 unwrap	server:server/GazetteerPaths.scala	.value outside a boundary	5
 unwrap	server:server/HtmlRender.scala	.value outside a boundary	30
@@ -1276,7 +1276,7 @@ unwrap	server:server/ServerGraph.scala	.value outside a boundary	20
 unwrap	server:server/ServerToolFiles.scala	.value outside a boundary	2
 unwrap	server:server/Static.scala	.value outside a boundary	1
 unwrap	server:server/StorageLocations.scala	.value outside a boundary	23
-unwrap	server:server/Supervisor.scala	.value outside a boundary	31
+unwrap	server:server/Supervisor.scala	.value outside a boundary	28
 unwrap	server:server/TimeZoneCheck.scala	.value outside a boundary	5
 unwrap	server:server/UiConfigViews.scala	.value outside a boundary	5
 unwrap	server:server/agents/AgentDoctor.scala	.value outside a boundary	66

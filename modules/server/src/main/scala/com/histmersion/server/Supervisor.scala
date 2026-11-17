@@ -209,9 +209,11 @@ object Supervisor:
     )
 
   /** The configuration with every endpoint and directory pointed at the bundle. Settings the user changed explicitly (a
-    * backups dir other than the default, a pg-bin-dir) are kept.
+    * backups dir other than the default, a pg-bin-dir) are kept, and so are the addresses the server listens on
+    * (`server.host`): loopback only unless the config file or `HISTMERSION_BIND` (comma-separated) lists others, such
+    * as a tailnet address.
     */
-  private[server] def configure(cfg: AppConfig, l: Layout, explicitBind: Option[ServerConfig.Host] = None): AppConfig =
+  private[server] def configure(cfg: AppConfig, l: Layout): AppConfig =
     val dbName = Backup
       .parseJdbc(Backup.JdbcUrl(cfg.db.url.value))
       .toOption
@@ -219,11 +221,6 @@ object Supervisor:
       .filter(_.nonEmpty)
       .getOrElse("histmersion")
     cfg.copy(
-      // a desktop install is private by default, so the bind address is loopback unless the user
-      // says otherwise (set HISTMERSION_BIND=0.0.0.0 to share on the LAN — and set HISTMERSION_API_KEY then)
-      server = cfg.server
-        .modify(_.host)
-        .setTo(explicitBind.filter(_.value.nonEmpty).getOrElse(ServerConfig.Host("127.0.0.1"))),
       db = cfg.db.modify(_.url).setTo(DbConfig.Url(s"jdbc:postgresql://127.0.0.1:${cfg.runtime.pgPort.value}/$dbName")),
       converter = cfg.converter
         .modify(_.url)
@@ -378,11 +375,7 @@ object Supervisor:
           s"postgres did not start (exit $rc): ${out.takeRight(5).mkString("; ")} — see ${l.logs.resolve("postgres.log")}"
         )
       scribe.info(s"runtime: postgres up on 127.0.0.1:${cfg.runtime.pgPort}")
-    val configured = configure(
-      cfg,
-      l,
-      paths.environment.get(Environment.VariablesKey("HISTMERSION_BIND")).map(v => ServerConfig.Host(v.value))
-    )
+    val configured = configure(cfg, l)
     ensureDatabase(configured)
 
     if Files.isExecutable(l.python) then superviseConverter(l, cfg.runtime.converterPort)
@@ -403,10 +396,9 @@ object Supervisor:
   ): ConfigSource =
     val l = layout(started.runtime, currentExecutable, paths.environment.lookup, paths.osName)
       .fold(e => throw IllegalStateException(e.sentence), identity)
-    val bind = paths.environment.get(Environment.VariablesKey("HISTMERSION_BIND")).map(v => ServerConfig.Host(v.value))
     ConfigSource(
       read,
-      c => configure(c, l, bind),
+      c => configure(c, l),
       c =>
         scala.util
           .Try(ensureDatabase(c))

@@ -3,9 +3,11 @@
 The server's HTTP API, under `<public-url>/api`. The web page, the CLI and the MCP tools all use it.
 A request from a trusted network (this computer, by default) needs nothing; one from an authenticated
 network needs `Authorization: Bearer <auth.api-key>` for every method, reads included (401 otherwise), except
-`GET /api/health`, `GET /api/version` and the web page and its files. Every request must name the server by
-one of its own host names (421 otherwise), and a change sent by another site's page is refused (403). See
-[Who can reach your server](../how-to/access.md).
+`GET /api/health`, `GET /api/version` and the web page and its files. A request from a refused network
+(`auth.refused-networks`), or from one no list names, is refused (403) whatever it carries. Every request must name
+the server by one of its own host names (421 otherwise), and a change sent by another site's page is refused (403).
+No `GET` or `HEAD` endpoint is meant to change anything (a check over the compiled routes holds them to it; the ones
+that still do are listed in `architecture/get-writes.tsv`). See [Who can reach your server](../how-to/access.md).
 
 From [`modules/api/src/main/scala/com/histmersion/api/Api.scala`](https://github.com/histmersion/histmersion/blob/master/modules/api/src/main/scala/com/histmersion/api/Api.scala) —
 the single definition the server interprets and the CLI derives its client from.
@@ -14,7 +16,7 @@ the single definition the server interprets and the CLI derives its client from.
 one or more problems, each with its group and case, its fields (`data`) and its English sentence (`text`) — and the
 status is the first problem's group's: 400 invalid input (a request body that is not a document of its format
 included), 401 the API key (or an agent's run token) missing or wrong, 403 refused (a policy, another site's change,
-a network not accepted, a path outside the directory it is confined to, a feature switched off), 404 not found,
+a network not accepted or refused, a path outside the directory it is confined to, a feature switched off), 404 not found,
 421 a host name the server does not answer to, 409 a conflict (taken, renamed, an old key of another, the wrong
 state, referred to), 412 changed since `ifUpdatedAt`, 422 content or a plugin's item refused, 429 an allowance spent
 (with `Retry-After` when its end is known), 500 a failure of the server or of a file, 502/504 an upstream failed or did

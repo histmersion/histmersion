@@ -35,6 +35,8 @@ import com.histmersion.domain.automation.workflows.ToolName
 import com.histmersion.util.plugins.Plugin
 import scala.collection.immutable.ListMap
 import com.histmersion.config.ServerConfig
+import com.histmersion.server.instance.Listener
+import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.util.database.Transactor
 import com.histmersion.server.agents.EngineContributions
 import com.histmersion.domain.library.workflows.AgentUpstream
@@ -62,7 +64,11 @@ object Composition:
     * belong to the enclosing Ox scope and close with it.
     */
   def server(cfg: AppConfig, host: ServerConfig.Host, port: ServerConfig.Port)(using Ox): NettySyncServer =
-    build(HotConfig.fixed(cfg), None, host, port, None)
+    build(HotConfig.fixed(cfg), None, NonEmptyVector.of(host), port, None).server
+
+  /** A configured server on every address of `binds` (not yet started: [[Listener.start]] binds them all). */
+  def listener(cfg: AppConfig, binds: NonEmptyVector[ServerConfig.Host], port: ServerConfig.Port)(using Ox): Listener =
+    build(HotConfig.fixed(cfg), None, binds, port, None)
 
   /** Same, with an explicit OCR sidecar client — the seam an HTTP test uses to ingest a document through a fake
     * converter (plan §1.8). With `source`, the server can reload its config: the load it was started from, and how to
@@ -84,7 +90,7 @@ object Composition:
     build(
       hotConfig(cfg, configFile, source.map(_._1)),
       source.map(_._2),
-      host,
+      NonEmptyVector.of(host),
       port,
       Some(converter),
       autoInit,
@@ -92,7 +98,7 @@ object Composition:
       plugins,
       core,
       system = system
-    )
+    ).server
 
   private[server] def hotConfig(cfg: AppConfig, configFile: ConfigFileInfo, loaded: Option[LoadedConfig]): HotConfig =
     loaded match
@@ -138,7 +144,7 @@ object Composition:
   private[server] def build(
       hc: HotConfig,
       source: Option[ConfigSource],
-      host: ServerConfig.Host,
+      binds: NonEmptyVector[ServerConfig.Host],
       port: ServerConfig.Port,
       converter: Option[ConverterClient],
       autoInit: InitConfig.Auto = InitConfig.Auto(false),
@@ -147,11 +153,11 @@ object Composition:
       core: Option[CoreBudget] = None,
       restart: Option[() => Unit] = None,
       system: SystemContext = SystemContext.isolated
-  )(using Ox): NettySyncServer =
-    // who is let in, checked against the bind address before anything is opened: a listener that would be open to a
+  )(using Ox): Listener =
+    // who is let in, checked against every bind address before anything is opened: a listener that would be open to a
     // network nobody vouched for does not start
     val access = AccessPolicy
-      .forListener(hc.app.auth, hc.app.server.modify(_.host).setTo(host))
+      .forListener(hc.app.auth, hc.app.server.modify(_.host).setTo(binds))
       .fold(e => throw IllegalStateException(e.sentences.mkString("; ")), identity)
     val selectedCore = core.getOrElse(CoreBudget(() => system.clock.instant()))
     val sg =
@@ -200,7 +206,7 @@ object Composition:
     // every request pinned to the generation current when it arrived (hot.PinRequests)
     val options = NettySyncServerOptions.customiseInterceptors.prependInterceptor(Pin.Requests(sg.graph)).options
     val srv = NettySyncServer(options)
-      .host(host.value)
+      .host(s"${binds.head}")
       .port(port.value)
       .modifyConfig(
         timeouts(_, cfg.server.requestTimeoutSeconds.value.seconds)
@@ -219,7 +225,7 @@ object Composition:
     scribe.info(s"access: ${access.summary}")
     val agentPaths =
       Admission.AgentPaths(Admission.Path(RunTokens.Path), Admission.Path(RunTokens.QuotaPath))
-    srv.modifyConfig { nc =>
+    val gated = srv.modifyConfig { nc =>
       nc.initPipeline { inner => (pipeline, tapirHandler) =>
         NettyConfig.defaultInitPipeline(inner)(pipeline, tapirHandler)
         // right after the HTTP codec, BEFORE the streams handler turns a request with a body into a
@@ -246,6 +252,7 @@ object Composition:
         )
       }
     }
+    Listener(gated, binds)
 
   /** The `leases` node: on a database swap, the agent lease is claimed on the new database before the swap is published
     * (and released on the old one when its generation closes); once published, the new database's interrupted jobs are

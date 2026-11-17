@@ -1,18 +1,23 @@
 # Who can reach your server
 
-Histmersion decides who it lets in by **where a request comes from**. Its settings list the
-networks it accepts, and for each one what a request from it must carry:
+Histmersion decides who it lets in by **where a request comes from**. Its settings list networks, and
+for each one what a request from it gets:
 
 - a **trusted** network acts as you, the owner, with no sign-in. On your own computer this is the
   default: you open `http://localhost:8000` and nothing asks for a password;
 - an **authenticated** network must send the server's API key (`auth.api-key`) with every request,
   reads as well as changes;
-- a request from a network that neither list names is refused.
+- a **refused** network is turned away (403), whatever it sends;
+- a request from a network that no list names is refused too.
 
 When several listed networks hold an address, the narrowest one (the longest prefix) decides. So
-`127.0.0.0/8` can be trusted inside an authenticated `0.0.0.0/0`.
+`127.0.0.0/8` can be trusted inside an authenticated or refused `0.0.0.0/0`.
 
-## Pick one of three setups
+The server listens on every address in `server.host` (a list; `HISTMERSION_BIND` gives it
+comma-separated, e.g. `127.0.0.1,100.101.102.103`). The bundled app keeps that setting: loopback only,
+unless your config file or `HISTMERSION_BIND` lists more.
+
+## Pick one of these setups
 
 ### On this computer only (the default)
 
@@ -21,7 +26,7 @@ The browser, the `histmersion` command and your AI assistant all work without a 
 
 ```hocon
 histmersion {
-  server.host = "127.0.0.1"
+  server.host = ["127.0.0.1"]
   auth.trusted-networks = ["127.0.0.0/8", "::1/128"]
 }
 ```
@@ -29,24 +34,43 @@ histmersion {
 ### On this computer and your tailnet (Tailscale)
 
 [Tailscale](https://tailscale.com) gives each of your devices an address in `100.64.0.0/10` (and
-`fd7a:115c:a1e0::/48`). Trust that range, and your phone or laptop reach the server as you do.
-Listening on every interface also exposes the server to the local network you are on, so the rest
-must authenticate:
+`fd7a:115c:a1e0::/48`). Listen on loopback and on this computer's tailnet address only (find it with
+`tailscale ip -4`), and trust the tailnet: your phone or laptop reach the server as you do, with no key,
+and nothing on the local network you are on can connect.
 
 ```hocon
 histmersion {
-  server.host = "0.0.0.0"
+  server.host = ["127.0.0.1", "::1", "100.101.102.103"]     # this computer's tailnet address
   auth {
-    api-key = "…"                             # or HISTMERSION_API_KEY in the service's environment
     trusted-networks = ["127.0.0.0/8", "::1/128", "100.64.0.0/10", "fd7a:115c:a1e0::/48"]
-    authenticated-networks = ["0.0.0.0/0", "::/0"]
-    hosts = ["mymac.tail1234.ts.net", "100.101.102.103"]   # the names you type in the browser
+    refused-networks = ["0.0.0.0/0", "::/0"]
+    hosts = ["mymac.tail1234.ts.net"]                         # the name you type in the browser
   }
 }
 ```
 
+Why the refused networks: the operating system delivers a packet for an address to any interface
+it arrives on, so the server counts a non-loopback address as reachable from its whole address family.
+Naming the rest as refused accounts for it, so the server starts with no key; a stray connection that
+reaches the tailnet address from elsewhere gets 403.
+
 Trusting the tailnet trusts **every device on it**. If you share your tailnet with others, list only
 your own devices' addresses (`100.101.102.103/32`) instead of the whole range.
+
+### Every interface, no key, everyone else refused
+
+The same trust, listening on every interface (`0.0.0.0`): the networks you trust get in and every
+other network is refused, so no key is needed.
+
+```hocon
+histmersion {
+  server.host = ["0.0.0.0"]
+  auth {
+    trusted-networks = ["127.0.0.0/8", "100.64.0.0/10"]
+    refused-networks = ["0.0.0.0/0"]
+  }
+}
+```
 
 ### An institution's or a public server
 
@@ -56,7 +80,7 @@ and tell the server the name it is reached by:
 ```hocon
 histmersion {
   server {
-    host = "0.0.0.0"                         # or 127.0.0.1 when the proxy runs on the same machine
+    host = ["0.0.0.0"]
     public-url = "https://histmersion.example.edu"
   }
   auth {
@@ -68,28 +92,65 @@ histmersion {
 }
 ```
 
-A proxy on the same machine connects from `127.0.0.1`, so **remove loopback from the trusted
-networks** behind one. The server also refuses to trust any request that carries a `Forwarded` or
-`X-Forwarded-For` header, whatever its address: such a request came through a proxy, and its address
-is the proxy's.
+### Behind a reverse proxy on this computer
+
+A proxy on the same machine connects from `127.0.0.1`. If loopback stays trusted (so that your own
+`histmersion` command needs no key), **declare the proxy**, and make it mark every request it forwards
+with `X-Forwarded-For` (Caddy does by default; in nginx,
+`proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;`):
+
+```hocon
+histmersion {
+  server {
+    host = ["127.0.0.1"]
+    public-url = "https://histmersion.example.edu"
+  }
+  auth {
+    api-key = "…"
+    proxy = "local"
+    hosts = ["histmersion.example.edu"]
+  }
+}
+```
+
+The server never trusts a request that carries a `Forwarded` or `X-Forwarded-For` header, whatever its
+address: such a request came through a proxy, and its address is the proxy's. It is held to the rules of
+an authenticated network instead: it needs the key. A proxy that sends no such header would hand every
+client your trust, which is why the server will not start in front of one it has not been told about
+(below). Alternatively take loopback out of `auth.trusted-networks` and authenticate everyone.
 
 Signing in with personal accounts (and with an institution's single sign-on) is planned; until then
 everyone who authenticates uses the one API key.
 
 ## The server refuses an open setup
 
-The server does not start when the address it listens on can be reached from a network that is
-neither trusted nor authenticated with a key. For example, `server.host = "0.0.0.0"` with only
-loopback trusted stops with:
+The server does not start when an address it listens on can be reached from a network that is neither
+trusted, authenticated with a key, nor refused. Each address in `server.host` is checked on its own,
+and every open one is named. For example, `server.host = ["0.0.0.0"]` with only loopback trusted stops
+with:
 
 ```text
-Histmersion does not start: server.host = '0.0.0.0' can be reached from 0.0.0.0/0, which neither
-auth.trusted-networks nor auth.authenticated-networks lists — bind to 127.0.0.1 (HISTMERSION_BIND),
-or list that network as trusted or as authenticated (with auth.api-key set)
+Histmersion does not start: server.host lists '0.0.0.0', which can be reached from 0.0.0.0/0; none of
+auth.trusted-networks, auth.authenticated-networks and auth.refused-networks names that network — bind to
+127.0.0.1 only (HISTMERSION_BIND), or list the network as trusted, as authenticated (with auth.api-key
+set) or as refused
 ```
 
-An address of one family (`0.0.0.0`, `192.168.1.5`) is reached from that whole family; `::` and a
-host name from both IPv4 and IPv6.
+Loopback (`127.0.0.1`, `::1`, `localhost`) is reached from loopback only. Any other address of one
+family (`0.0.0.0`, `192.168.1.5`, `100.101.102.103`) is reached from that whole family; `::` and a host
+name from both IPv4 and IPv6.
+
+It also does not start when `server.public-url` is `https`, loopback is trusted, and no proxy is
+declared: HTTPS means a proxy serves the page, and it may well connect from loopback.
+
+```text
+Histmersion does not start: server.public-url = 'https://histmersion.example.edu' is https, so a reverse
+proxy serves it, and auth.trusted-networks trusts loopback, where a proxy on this machine connects from —
+declare the proxy with auth.proxy = "local" (what it forwards then needs auth.api-key), or take loopback
+out of auth.trusted-networks
+```
+
+A network named in two lists (the same CIDR as trusted and refused, say) stops the start as well.
 
 ## What protects a trusted computer
 
@@ -97,7 +158,7 @@ Because trust comes from the address, a web page you visit could try to use it: 
 to `localhost` from your own browser. Two checks stop that, on every setup:
 
 - **The host name.** A request must name the server by one of its own names: `localhost`,
-  `127.0.0.1`, `[::1]`, the address in `server.host`, the host of `server.public-url`, or one listed
+  `127.0.0.1`, `[::1]`, an address in `server.host`, the host of `server.public-url`, or one listed
   in `auth.hosts`. Any other name is answered **421**. A page whose own name was pointed at your
   computer (DNS rebinding) is turned away here.
 - **The page a change comes from.** A change (`POST`, `PUT`, `PATCH`, `DELETE`) sent by a browser page
@@ -105,6 +166,11 @@ to `localhost` from your own browser. Two checks stop that, on every setup:
   listed in `auth.origins`. Any other page's change is answered **403**. A program that is no browser
   page (the `histmersion` command, an MCP client) sends no `Origin` or `Referer` and passes: the
   server sets no cookie that another page could ride on.
+
+A read (`GET`, `HEAD`) from another site's page is not checked: the browser does not let that page see
+the answer, and a read changes nothing. A check over the compiled routes holds every `GET` and `HEAD`
+endpoint to that; the few that still change something (caches, markers, lazily created rows) are listed
+for the developers in `architecture/get-writes.tsv`.
 
 ## What answers without a key
 
@@ -115,7 +181,8 @@ From an authenticated network, without the key, the server answers only:
   ask you for the key.
 
 Everything else — the sources, the settings, the backups, the agents' state and transcripts — answers
-**401** until the request carries `Authorization: Bearer <key>`.
+**401** until the request carries `Authorization: Bearer <key>`. A refused network gets **403** even for
+these.
 
 ## Sending the key
 
@@ -127,5 +194,5 @@ Everything else — the sources, the settings, the backups, the agents' state an
 - **An MCP client** sends it as a header, for example in `.mcp.json`:
   `{"type": "http", "url": "https://histmersion.example.edu/mcp", "headers": {"Authorization": "Bearer …"}}`.
 
-The networks, `trusted-as`, `hosts` and `origins` are read when the server starts; the key itself is
-read again by `histmersion config reload`.
+The addresses, the networks, `proxy`, `trusted-as`, `hosts` and `origins` are read when the server
+starts; the key itself is read again by `histmersion config reload`.

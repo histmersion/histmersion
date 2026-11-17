@@ -47,6 +47,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.config.OpencodeConfig
 import com.histmersion.config.ClaudeCodeConfig
 import com.histmersion.config.AuthConfig
+import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.server.ConverterWiring
 
 /** Plan pools end to end against a `*_test` database (docs/research-plan-quotas.md §5): the pick with plan readings — a
@@ -85,7 +86,7 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
     b.modify(_.db)
       .setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
       .modify(_.server)
-      .setTo(b.server.modify(_.host).setTo(ServerConfig.Host("127.0.0.1")))
+      .setTo(b.server.modify(_.host).setTo(NonEmptyVector.of(ServerConfig.Host("127.0.0.1"))))
       .modify(_.agents)
       .setTo(
         b.agents

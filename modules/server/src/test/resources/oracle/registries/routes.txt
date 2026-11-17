@@ -10,7 +10,7 @@ route	POST /api /site-types /refine {body as application/json (UTF-8)} -> status
 route	GET /api /version -> status code - possible codes (Map()) {body as application/json (UTF-8)}/{body as application/json (UTF-8)}
 route	GET /api /health -> status code - possible codes (Map()) {body as application/json (UTF-8)}/{body as application/json (UTF-8)}
 route	GET /api /about -> status code - possible codes (Map()) {body as application/json (UTF-8)}/{body as application/json (UTF-8)}
-route	GET /api /config -> status code - possible codes (Map()) {body as application/json (UTF-8)}/{body as application/json (UTF-8)}
+route	GET /api /config {data from request} -> status code - possible codes (Map()) {body as application/json (UTF-8)}/{body as application/json (UTF-8)}
 route	GET /api /ui /counters -> status code - possible codes (Map()) {body as application/json (UTF-8)}/{body as application/json (UTF-8)}
 route	POST /api /ui /seen /[board] {body as application/json (UTF-8)} -> status code - possible codes (Map()) {body as application/json (UTF-8)}/{body as application/json (UTF-8)}
 route	GET /api /basemap -> status code - possible codes (Map()) {body as application/json (UTF-8)}/{body as application/json (UTF-8)}

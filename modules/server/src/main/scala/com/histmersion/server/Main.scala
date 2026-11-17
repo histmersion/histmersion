@@ -121,9 +121,17 @@ import com.histmersion.util.access.AccessPolicy
         case e: Throwable =>
           scribe.error(s"Histmersion failed to start: ${e.getClass.getName}: ${e.getMessage}", e)
           sys.exit(3)
-    val _ = srv.start()
-    scribe.info(
-      s"Histmersion listening on http://${cfg.server.host}:${cfg.server.port} (public ${cfg.server.publicUrl})"
-    )
+    // every address of server.host; one that cannot be bound (taken, not this machine's) stops the start
+    val bound =
+      try srv.start()
+      catch
+        case e: Throwable =>
+          scribe.error(s"Histmersion could not listen on ${srv.binds.toVector.mkString(", ")}: ${e.getMessage}", e)
+          sys.exit(3)
+    val urls = bound.toVector.zip(srv.binds.toVector).map { (b, h) =>
+      val address = if s"$h".contains(':') && !s"$h".startsWith("[") then s"[$h]" else s"$h"
+      s"http://$address:${b.port}"
+    }
+    scribe.info(s"Histmersion listening on ${urls.mkString(", ")} (public ${cfg.server.publicUrl})")
     never
   }

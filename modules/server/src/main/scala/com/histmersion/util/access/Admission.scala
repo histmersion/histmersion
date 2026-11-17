@@ -117,30 +117,39 @@ object Admission:
       WebPaths.isApp(p.split('/').toList.filter(_.nonEmpty).map(WebPaths.Segment(_)))
     }
 
-  /** Whether the request is let in, and how; or the problem that refuses it. In order: its `Host` must be one the
-    * server answers to (else 421); a change sent by a browser page must come from an accepted origin (else 403); the
-    * agent endpoint is then left to its run-token gate; otherwise the network of the peer decides — trusted, or
-    * authenticated with the key (or a run token on the quota path), or a public read (else 401), or no listed network
-    * at all (403).
+  /** Whether the request is let in, and how; or the problem that refuses it. In order: a peer of a refused network, or
+    * of no listed network, is refused (403) whatever it sends — the public probes and the agent endpoint included; its
+    * `Host` must be one the server answers to (else 421); a change sent by a browser page must come from an accepted
+    * origin (else 403); the agent endpoint is then left to its run-token gate; otherwise the peer's network decides —
+    * trusted (unless a proxy forwarded the request), or authenticated with the key (or a run token on the quota path),
+    * or a public read (else 401).
     */
   def decide(request: Request, policy: AccessPolicy, agent: AgentPaths): Either[Problem, Admission] =
+    policy.requirementOf(request.peer) match
+      case None => Left(Problem.Refused.Policy(Problem.Refused.Rule.NetworkNotAccepted))
+      case Some(AccessPolicy.Requirement.Refused) => Left(Problem.Refused.Policy(Problem.Refused.Rule.NetworkRefused))
+      case Some(AccessPolicy.Requirement.Trusted) => accepted(request, policy, agent, trusted = true)
+      case Some(AccessPolicy.Requirement.Authenticated) => accepted(request, policy, agent, trusted = false)
+
+  /** [[decide]] for a request from an accepted network, `trusted` or authenticated. */
+  private def accepted(
+      request: Request,
+      policy: AccessPolicy,
+      agent: AgentPaths,
+      trusted: Boolean
+  ): Either[Problem, Admission] =
     val host = request.host.map(h => AccessPolicy.HostName.ofHeader(s"$h"))
     if !host.exists(policy.answersTo) then Left(Problem.Refused.Misdirected(Problem.Raw(host.fold("")(h => s"$h"))))
     else if request.method == Method.Change && !sameSite(request, policy) then
       Left(Problem.Refused.Policy(Problem.Refused.Rule.CrossSite))
     else if s"${request.path}" == s"${agent.mcp}" || s"${request.path}".startsWith(s"${agent.mcp}/") then Right(Agent)
+    else if trusted && request.forwarded == Forwarded.Direct then Right(Trusted)
     else
-      policy.requirementOf(request.peer) match
-        case None =>
-          Left(Problem.Refused.Policy(Problem.Refused.Rule.NetworkNotAccepted))
-        case Some(AccessPolicy.Requirement.Trusted) if request.forwarded == Forwarded.Direct => Right(Trusted)
-        case Some(_)                                                                         =>
-          request.presented match
-            case Presented.ApiKey                                  => Right(KeyHolder)
-            case Presented.RunToken if request.path == agent.quota => Right(RunToken)
-            case _ if isPublic(request.method, request.path)       => Right(Public)
-            case _                                                 =>
-              Left(Problem.Refused.Unauthenticated(Problem.Refused.Credential.ApiKey))
+      request.presented match
+        case Presented.ApiKey                                  => Right(KeyHolder)
+        case Presented.RunToken if request.path == agent.quota => Right(RunToken)
+        case _ if isPublic(request.method, request.path)       => Right(Public)
+        case _ => Left(Problem.Refused.Unauthenticated(Problem.Refused.Credential.ApiKey))
 
   /** A change's page is the server's own when its `Origin` (or, without one, its `Referer`) is an accepted origin. A
     * request with neither is no browser page's (the CLI, an MCP client) and carries no cookie a page could ride on, so

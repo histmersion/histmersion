@@ -4,6 +4,8 @@ package config
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
 
+import com.histmersion.util.nonempty.NonEmptyVector
+
 /** Application config, modelled as case classes and read from HOCON (sconfig) via Kindlings derivation. Defaults + env
   * overrides live in `reference.conf`; nothing is hardcoded elsewhere.
   */
@@ -14,9 +16,12 @@ import io.github.iltotore.iron.constraint.any.Pure
   * counts an idle keep-alive connection as open, so every stop with a client still connected waited the whole time; the
   * test suites set it to 0.
   */
-/** `sourceUrl`: the repository the About window and `histmersion about` link as this program's source. */
+/** `sourceUrl`: the repository the About window and `histmersion about` link as this program's source. `host`: every
+  * address the server listens on, at least one (`["127.0.0.1", "100.101.102.103"]`: loopback and a tailnet address, not
+  * the LAN); `HISTMERSION_BIND` gives them comma-separated.
+  */
 final case class ServerConfig(
-    host: ServerConfig.Host,
+    host: NonEmptyVector[ServerConfig.Host],
     port: ServerConfig.Port,
     publicUrl: ServerConfig.PublicUrl,
     requestTimeoutSeconds: ServerConfig.RequestTimeoutSeconds,

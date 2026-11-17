@@ -46,6 +46,7 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.api.automation.Agents
 import com.histmersion.config.DbConfig
 import com.histmersion.config.ServerConfig
+import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.config.AgentsConfig
 import com.histmersion.config.AgentRolesConfig
 import com.histmersion.config.CodexConfig
@@ -55,7 +56,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.config.ClaudePlanConfig
 import com.histmersion.domain.PlanReadSchedule
 import com.histmersion.config.QuotaConfig
-import com.histmersion.config.AuthConfig
+import com.histmersion.server.KeyedLoopback
 import com.histmersion.config.ClaudeCodeConfig
 import com.histmersion.server.ConverterWiring
 
@@ -85,7 +86,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
     b.modify(_.db)
       .setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
       .modify(_.server)
-      .setTo(b.server.modify(_.host).setTo(ServerConfig.Host("127.0.0.1")))
+      .setTo(b.server.modify(_.host).setTo(NonEmptyVector.of(ServerConfig.Host("127.0.0.1"))))
       .modify(_.agents)
       .setTo(
         b.agents
@@ -676,7 +677,8 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
       (r.statusCode, r.body)
     val keyed = baseCfg
       .modify(_.auth)
-      .setTo(baseCfg.auth.modify(_.apiKey).setTo(AuthConfig.ApiKey("zz-key")))
+      // loopback authenticated, standing for a client on another network: from a trusted one no key is needed
+      .setTo(KeyedLoopback(baseCfg.auth, "zz-key"))
       .modify(_.agents)
       .setTo(
         baseCfg.agents
@@ -719,7 +721,13 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
         assertEquals(j.downField("status").downField("refreshesToday").as[Int], Right(1), body)
         assertEquals((fake.after("--max-turns"), fake.after("--model"), fake.stdin), ("1", "haiku", "quota"))
         assertEquals(fake.env("CLAUDE_CODE_MAX_OUTPUT_TOKENS"), "16")
-        val q = http.send(HttpRequest.newBuilder(URI.create(url)).build(), HttpResponse.BodyHandlers.ofString()).body
+        // a read needs the key too from a network that is not trusted
+        val q = http
+          .send(
+            HttpRequest.newBuilder(URI.create(url)).header("Authorization", "Bearer zz-key").build(),
+            HttpResponse.BodyHandlers.ofString()
+          )
+          .body
         assert(q.contains("\"refreshesToday\":1") && q.contains("\"source\":\"probe\""), q.take(800))
         assertEquals(post(s"$url/refresh", """{"pool":"nobody-plan"}""", Some("zz-key"))._1, 400)
         // every pool: the ChatGPT plan's app-server reads are off here, and it says so

@@ -41,6 +41,7 @@ import com.histmersion.api.exchange.Bundle
 import com.histmersion.domain.library.ingest.Upload
 import com.histmersion.util.storage.HandedFile
 import com.histmersion.util.jobs.Job
+import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.domain.automation.managers.ManagerRepo
 import com.histmersion.api.catalogue.Year
 
@@ -76,7 +77,7 @@ class AutoEnrichRunSuite extends DbSuite with RunTranscripts:
     b.modify(_.db)
       .setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
       .modify(_.server)
-      .setTo(b.server.modify(_.host).setTo(ServerConfig.Host("127.0.0.1")))
+      .setTo(b.server.modify(_.host).setTo(NonEmptyVector.of(ServerConfig.Host("127.0.0.1"))))
       .modify(_.converter)
       .setTo(
         b.converter

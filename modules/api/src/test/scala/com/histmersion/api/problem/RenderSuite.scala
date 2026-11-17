@@ -209,6 +209,7 @@ class RenderSuite extends munit.FunSuite:
     "ProbeUnread" -> (409, "probe read no rate limit, exit 1 — Invalid API key"),
     "ApiKeyLogin" -> (503, "api key login api_key_helper"),
     "Exposed" -> (503, "exposed on '0.0.0.0' to '0.0.0.0/0': Unlisted"),
+    "ProxyUndeclared" -> (503, "undeclared proxy for 'https://histmersion.example.edu'"),
     "FloorsUnread" -> (503, "floors unread, agents.quota.claude-plan.floors (five_hour is required)"),
     "ReadAt" -> (
       503,
@@ -922,16 +923,31 @@ class RenderSuite extends munit.FunSuite:
       Refused.Policy(Refused.Rule.NetworkNotAccepted) ->
         ("this server does not accept requests from your network — its settings list it neither in " +
           "auth.trusted-networks nor in auth.authenticated-networks"),
+      Refused.Policy(Refused.Rule.NetworkRefused) ->
+        "this server refuses every request from your network — its settings list it in auth.refused-networks",
       Config.Exposed(Raw("0.0.0.0"), Raw("0.0.0.0/0"), Config.Exposure.Unlisted) ->
-        ("server.host = '0.0.0.0' can be reached from 0.0.0.0/0, which neither auth.trusted-networks nor " +
-          "auth.authenticated-networks lists — bind to 127.0.0.1 (HISTMERSION_BIND), or list that network as " +
-          "trusted or as authenticated (with auth.api-key set)"),
+        ("server.host lists '0.0.0.0', which can be reached from 0.0.0.0/0; none of auth.trusted-networks, " +
+          "auth.authenticated-networks and auth.refused-networks names that network — bind to 127.0.0.1 only " +
+          "(HISTMERSION_BIND), or list the network as trusted, as authenticated (with auth.api-key set) or as refused"),
       Config.Exposed(Raw("0.0.0.0"), Raw("::/0"), Config.Exposure.NoKey) ->
-        ("server.host = '0.0.0.0' can be reached from ::/0, which auth.authenticated-networks lists, but " +
-          "auth.api-key is empty — set the key (HISTMERSION_API_KEY), or bind to 127.0.0.1 (HISTMERSION_BIND)")
+        ("server.host lists '0.0.0.0', which can be reached from ::/0; auth.authenticated-networks names that " +
+          "network, but auth.api-key is empty — set the key (HISTMERSION_API_KEY), list the network in " +
+          "auth.refused-networks, or bind to 127.0.0.1 only (HISTMERSION_BIND)"),
+      Config.ProxyUndeclared(Raw("https://histmersion.example.edu")) ->
+        ("server.public-url = 'https://histmersion.example.edu' is https, so a reverse proxy serves it, and " +
+          "auth.trusted-networks trusts loopback, where a proxy on this machine connects from — declare the proxy " +
+          "with auth.proxy = \"local\" (what it forwards then needs auth.api-key), or take loopback out of " +
+          "auth.trusted-networks")
     ).foreach((p, want) => assertEquals(p.sentence, want))
     Vector[Problem](
       Refused.Unauthenticated(Refused.Credential.RunToken),
       Refused.Policy(Refused.Rule.CrossSite),
-      Config.Exposed(Raw("::"), Raw("::/0"), Config.Exposure.NoKey)
+      Refused.Policy(Refused.Rule.NetworkRefused),
+      Config.Exposed(Raw("::"), Raw("::/0"), Config.Exposure.NoKey),
+      Config.ProxyUndeclared(Raw("https://x.example:8443/hm"))
     ).foreach(p => assertEquals(Column.read(p.stored), p))
+    assertEquals(
+      (Refused.Policy(Refused.Rule.NetworkRefused): Problem).status.code,
+      403,
+      "a refused network is forbidden, not asked for a key"
+    )

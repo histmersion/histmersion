@@ -43,6 +43,7 @@ import com.histmersion.db.TestDb
 import com.histmersion.api.automation.Agents
 import com.histmersion.config.DbConfig
 import com.histmersion.config.ServerConfig
+import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.config.AgentsConfig
 import com.histmersion.config.AgentRolesConfig
 import com.histmersion.config.AgentEnrichConfig
@@ -86,7 +87,7 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
     b.modify(_.db)
       .setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
       .modify(_.server)
-      .setTo(b.server.modify(_.host).setTo(ServerConfig.Host("127.0.0.1")))
+      .setTo(b.server.modify(_.host).setTo(NonEmptyVector.of(ServerConfig.Host("127.0.0.1"))))
       .modify(_.agents)
       .setTo(
         b.agents
@@ -547,7 +548,8 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
       )
       assert(requests.isEmpty)
       // the same server bound beyond loopback refuses claude-code (and says why)
-      val lan = cfg.modify(_.server).setTo(cfg.server.modify(_.host).setTo(ServerConfig.Host("0.0.0.0")))
+      val lan =
+        cfg.modify(_.server).setTo(cfg.server.modify(_.host).setTo(NonEmptyVector.of(ServerConfig.Host("0.0.0.0"))))
       val ld = AgentsControllers(ServerEngineSite(Deps(lan, ds), ServerWiring(Deps(lan, ds))))
         .doctor(offline = AgentsControllers.Offline(true))
       val bind = ld.providers.find(_.provider.value == "claude-code").get.checks.find(_.name.value == "bind").get

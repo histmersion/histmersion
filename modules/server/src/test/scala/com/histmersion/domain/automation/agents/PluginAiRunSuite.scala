@@ -44,6 +44,7 @@ import com.histmersion.plugin.Plugin
 import com.histmersion.config.DbConfig
 import com.histmersion.config.ServerConfig
 import com.histmersion.config.AgentsConfig
+import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.config.AgentRolesConfig
 import com.histmersion.config.AgentEnrichConfig
 import com.histmersion.api.catalogue.Year
@@ -154,7 +155,7 @@ class PluginAiRunSuite extends DbSuite with RunTranscripts:
     b.modify(_.db)
       .setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
       .modify(_.server)
-      .setTo(b.server.modify(_.host).setTo(ServerConfig.Host("127.0.0.1")))
+      .setTo(b.server.modify(_.host).setTo(NonEmptyVector.of(ServerConfig.Host("127.0.0.1"))))
       .modify(_.agents)
       .setTo(
         b.agents

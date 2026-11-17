@@ -11,6 +11,7 @@ import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.Files
 import com.histmersion.db.TestDb
+import com.histmersion.util.nonempty.NonEmptyVector
 
 /** Who the server lets in, over real HTTP on loopback. The peer of every request here is 127.0.0.1, so the two sides of
   * the trust decision are two settings: the default (loopback trusted as the owner) and [[KeyedLoopback]] (loopback
@@ -179,6 +180,56 @@ class AuthHttpSuite extends munit.FunSuite:
         assertEquals(put(List("Origin" -> s"http://localhost:$port")), 200)
         assertEquals(put(Nil), 200) // the CLI and MCP clients send no Origin
       }
+
+  /** A server over the test database listening on every address of `binds` (each on an ephemeral port of its own). */
+  private def withListener(auth: AuthConfig => AuthConfig, binds: NonEmptyVector[ServerConfig.Host])(
+      body: Vector[String] => Unit
+  ): Unit =
+    val base = AppConfig.load()
+    val cfg = base
+      .modify(_.db)
+      .setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
+      .modify(_.auth)
+      .setTo(auth(base.auth))
+    supervised {
+      val bound = Composition.listener(cfg, binds, ServerConfig.Port(0)).start()
+      try
+        body(bound.toVector.zip(binds.toVector).map { (b, h) =>
+          if s"$h".contains(':') then s"http://[$h]:${b.port}" else s"http://$h:${b.port}"
+        })
+      finally bound.toVector.foreach(_.stop())
+    }
+
+  test("every address of server.host is bound, each behind the same gate"):
+    withListener(identity, NonEmptyVector.of(ServerConfig.Host("127.0.0.1"), ServerConfig.Host("::1"))) { urls =>
+      assertEquals(urls.size, 2)
+      urls.foreach { url =>
+        assertEquals(send(s"$url/api/health").status, 200, url)
+        val config = send(s"$url/api/config")
+        assertEquals(config.status, 200, url)
+        assert(config.body.contains("\"keyRequired\":false"), s"loopback of either family is trusted: $url")
+        assertEquals(
+          send(s"$url/api/sources/$ck", "PUT", Some("{}"), headers = List("Origin" -> "https://evil.example")).status,
+          403,
+          url
+        )
+      }
+    }
+
+  test("a refused network is answered 403 with its own rule, the public probes included"):
+    // IPv4 loopback refused, so the peer of these requests stands for a refused network; the bind's whole reach is
+    // accounted for, so the server starts with no key
+    val refusedLoopback: AuthConfig => AuthConfig = _.modify(_.trustedNetworks)
+      .setTo(List(AuthConfig.Network("::1/128")))
+      .modify(_.refusedNetworks)
+      .setTo(List(AuthConfig.Network("127.0.0.0/8")))
+    withListener(refusedLoopback, NonEmptyVector.of(ServerConfig.Host("127.0.0.1"))) { urls =>
+      for path <- List("/api/health", "/", "/api/settings") do
+        val refused = send(s"${urls.head}$path")
+        assertEquals(refused.status, 403, path)
+        assert(refused.body.contains("NetworkRefused"), refused.body)
+        assertEquals(refused.authenticate, None, "a refused network is not asked for a key")
+    }
 
   test("a request a proxy forwarded earns no trust from the proxy's loopback address"):
     withServer(trustedWithKey) { (url, _) =>

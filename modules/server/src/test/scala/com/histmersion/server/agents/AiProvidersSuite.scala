@@ -42,6 +42,7 @@ import com.histmersion.api.automation.Agents
 import com.histmersion.domain.automation.agents.LlmCall
 import com.histmersion.plugin.AiUsage
 import com.histmersion.plugin.AiTurn
+import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.plugin.AiTool
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.library.Title
@@ -129,7 +130,7 @@ class AiProvidersSuite extends munit.FunSuite:
   private val app = AppConfig.load()
   private def rt(host: String = "127.0.0.1") =
     CliRuntime(
-      app.modify(_.server).setTo(app.server.modify(_.host).setTo(ServerConfig.Host(host))),
+      app.modify(_.server).setTo(app.server.modify(_.host).setTo(NonEmptyVector.of(ServerConfig.Host(host)))),
       EngineContributions.roster
     )
 

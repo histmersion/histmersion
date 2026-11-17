@@ -940,8 +940,11 @@ object Problem:
       /** A change sent by a page of another site (its `Origin`, or its `Referer`, is none of this server's own). */
       case CrossSite
 
-      /** The request came from a network the settings list neither as trusted nor as authenticated. */
+      /** The request came from a network the settings list neither as trusted, as authenticated nor as refused. */
       case NetworkNotAccepted
+
+      /** The request came from a network the settings list as refused (`auth.refused-networks`). */
+      case NetworkRefused
 
     /** The allowances a request can spend. */
     enum Limit:
@@ -1594,11 +1597,17 @@ object Problem:
 
     /** Why an address the server listens on would be open to whoever reaches it. */
     enum Exposure derives CanEqual:
-      /** No setting lists the network: neither as trusted nor as authenticated. */
+      /** No setting lists the network: neither as trusted, as authenticated nor as refused. */
       case Unlisted
 
       /** The network is listed as authenticated, but there is no API key to authenticate with. */
       case NoKey
+
+    /** The public URL `publicUrl` is HTTPS, which this server does not serve itself, so a reverse proxy forwards to it,
+      * and loopback, where a proxy on this machine connects from, is trusted with no proxy declared: a proxy that does
+      * not mark what it forwards would hand every client the owner's trust.
+      */
+    final case class ProxyUndeclared(publicUrl: Raw) extends Config
 
     /** Why a model of a provider that can run on a plan is billed by the token. */
     enum Metered:
@@ -2711,6 +2720,7 @@ object Problem:
       Config.Drained(Raw("pool (generation 3, 2 pinned)"), Config.Drain.InUse(Count(10L))),
       Config.ApiKeyLogin(Raw("api_key_helper")),
       Config.Exposed(Raw("0.0.0.0"), Raw("0.0.0.0/0"), Config.Exposure.Unlisted),
+      Config.ProxyUndeclared(Raw("https://histmersion.example.edu")),
       Config.FloorsUnread(
         Config.FloorsFrom.Setting(SettingKey("agents.quota.claude-plan.floors")),
         NonEmptyVector.of(Invalid.Missing(Field("five_hour"), Vector.empty))

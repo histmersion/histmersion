@@ -317,6 +317,18 @@ class ConfigSuite extends munit.FunSuite:
     assertEquals(layer.getString("max-items"), "9")
     assertEquals(EnvOverrides.layer(defaults, env()).isEmpty, true)
 
+  test("a variable that overrides a list gives its comma-separated elements; one that overrides text stays whole"):
+    val defaults = org.ekrich.config.ConfigFactory.parseString(
+      "hosts = [\"127.0.0.1\"]\nhosts = ${?P_HOSTS}\nname = \"a,b\"\nname = ${?P_NAME}"
+    )
+    val layer = EnvOverrides.layer(defaults, env("P_HOSTS" -> " 127.0.0.1, ,100.101.102.103 ", "P_NAME" -> "x, y"))
+    assertEquals(layer.getStringList("hosts").asScala.toList, List("127.0.0.1", "100.101.102.103"))
+    assertEquals(layer.getString("name"), "x, y")
+    assertEquals(
+      EnvOverrides.layer(defaults, env("P_HOSTS" -> "0.0.0.0")).getStringList("hosts").asScala.toList,
+      List("0.0.0.0")
+    )
+
   test("the cache directory: XDG_CACHE_HOME, else ~/.cache, on every platform (#1403)"):
     def e(kv: (String, String)*): UserPaths.Lookup =
       k => kv.toMap.get(k.value).map(Environment.VariablesValue(_))

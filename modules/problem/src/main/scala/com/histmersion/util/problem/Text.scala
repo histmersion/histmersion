@@ -136,12 +136,17 @@ object Text:
       case Config.ApiKeyLogin(method)                          =>
         s"logged in with an API key ($method), not a Claude plan — log in with your Claude account, or set use-api-key"
       case Config.Exposed(bind, reach, Config.Exposure.Unlisted) =>
-        s"server.host = '$bind' can be reached from $reach, which neither auth.trusted-networks nor " +
-          "auth.authenticated-networks lists — bind to 127.0.0.1 (HISTMERSION_BIND), or list that network as trusted " +
-          "or as authenticated (with auth.api-key set)"
+        s"server.host lists '$bind', which can be reached from $reach; none of auth.trusted-networks, " +
+          "auth.authenticated-networks and auth.refused-networks names that network — bind to 127.0.0.1 only " +
+          "(HISTMERSION_BIND), or list the network as trusted, as authenticated (with auth.api-key set) or as refused"
       case Config.Exposed(bind, reach, Config.Exposure.NoKey) =>
-        s"server.host = '$bind' can be reached from $reach, which auth.authenticated-networks lists, but auth.api-key " +
-          "is empty — set the key (HISTMERSION_API_KEY), or bind to 127.0.0.1 (HISTMERSION_BIND)"
+        s"server.host lists '$bind', which can be reached from $reach; auth.authenticated-networks names that " +
+          "network, but auth.api-key is empty — set the key (HISTMERSION_API_KEY), list the network in " +
+          "auth.refused-networks, or bind to 127.0.0.1 only (HISTMERSION_BIND)"
+      case Config.ProxyUndeclared(publicUrl) =>
+        s"server.public-url = '$publicUrl' is https, so a reverse proxy serves it, and auth.trusted-networks trusts " +
+          "loopback, where a proxy on this machine connects from — declare the proxy with auth.proxy = \"local\" (what " +
+          "it forwards then needs auth.api-key), or take loopback out of auth.trusted-networks"
       case Config.FloorsUnread(Config.FloorsFrom.Saved, why) =>
         s"saved floors do not parse: ${why.toVector.map(_.sentence).mkString("; ")}"
       case Config.FloorsUnread(Config.FloorsFrom.Setting(key), why) =>
@@ -741,6 +746,8 @@ object Text:
       case Refused.Rule.NetworkNotAccepted =>
         "this server does not accept requests from your network — its settings list it neither in " +
           "auth.trusted-networks nor in auth.authenticated-networks"
+      case Refused.Rule.NetworkRefused =>
+        "this server refuses every request from your network — its settings list it in auth.refused-networks"
 
   extension (limit: Refused.Limit)
     private def named: String = limit match

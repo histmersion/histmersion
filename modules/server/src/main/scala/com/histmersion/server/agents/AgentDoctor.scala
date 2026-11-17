@@ -267,20 +267,21 @@ final class AgentDoctor(
 
   private def claudeCode(models: List[ModelRef], allowances: List[picker.Effective]): List[DoctorCheck] =
     val cc = app.agents.providers.claudeCode
-    val loopback = ClaudeCode.Env.isLoopback(app.server.host)
+    val loopback = app.server.host.forall(ClaudeCode.Env.isLoopback)
+    val listens = app.server.host.toVector.mkString(", ")
     val used = models.nonEmpty
     val level = if used then fail else warn
     val bind =
-      if loopback then ok("bind", s"the server listens on loopback (${app.server.host}); only you can start a run")
+      if loopback then ok("bind", s"the server listens on loopback ($listens); only you can start a run")
       else if cc.allowNonLoopback.value then
         warn(
           "bind",
-          s"the server listens on ${app.server.host} and allow-non-loopback is on: every client of this server must be you"
+          s"the server listens on $listens and allow-non-loopback is on: every client of this server must be you"
         )
       else
         level(
           "bind",
-          s"refused: the server listens on ${app.server.host}, beyond loopback — another client could spend your " +
+          s"refused: the server listens on $listens, beyond loopback — another client could spend your " +
             "Claude plan. Bind to 127.0.0.1 or set allow-non-loopback when every client is you"
         )
     val childEnv: Map[ProcessLaunch.EnvironmentKey, Option[ProcessLaunch.EnvironmentValue]] =
