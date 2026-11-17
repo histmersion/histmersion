@@ -924,7 +924,7 @@ final class BasemapService(
         Problem.Refused.Space(
           Problem.Refused.Work.Layer(Problem.Raw.of(l.title)),
           Problem.Count(pendingBytes + outBytes),
-          Problem.Io.Path.from(store.where()),
+          Problem.Io.Path.of(store.where()),
           Problem.Count(free),
           Problem.Count.of(minFree)
         )
@@ -985,7 +985,7 @@ final class BasemapService(
           Problem.Refused.Space(
             Problem.Refused.Work.SeaFloor,
             Problem.Count(need),
-            Problem.Io.Path.from(store.where()),
+            Problem.Io.Path.of(store.where()),
             Problem.Count(free),
             Problem.Count.of(minFree)
           )
@@ -1062,7 +1062,7 @@ final class BasemapService(
             Problem.Refused.Space(
               Problem.Refused.Work.Gebco,
               Problem.Count.of(sea.needs(plan)),
-              Problem.Io.Path.from(store.where()),
+              Problem.Io.Path.of(store.where()),
               Problem.Count(free),
               Problem.Count.of(minFree)
             )
@@ -1115,7 +1115,7 @@ final class BasemapService(
           Problem.Refused.Space(
             Problem.Refused.Work.Labels,
             Problem.Count(need),
-            Problem.Io.Path.from(store.where()),
+            Problem.Io.Path.of(store.where()),
             Problem.Count(free),
             Problem.Count.of(minFree)
           )

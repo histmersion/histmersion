@@ -59,7 +59,7 @@ final class GazetteerImports(
       Left(
         Problem.Io.Absent(
           Problem.Io.Held.GazetteerSeed,
-          Problem.Io.Path.from(seed.where()),
+          Problem.Io.Path.of(seed.where()),
           Some(Problem.SettingKey("init.data-dir"))
         )
       )
@@ -79,7 +79,7 @@ final class GazetteerImports(
       ): Either[Problem, com.histmersion.api.catalogue.Place.ImportResult] =
         seed
           .get(f)
-          .toRight(Problem.Io.Wrong(Problem.Io.Path.from(seed.where(f)), Problem.Io.Kind.Present))
+          .toRight(Problem.Io.Wrong(Problem.Io.Path.of(seed.where(f)), Problem.Io.Kind.Present))
           .flatMap(blob =>
             Lpf
               .parse(
@@ -118,7 +118,7 @@ final class GazetteerImports(
             importFile(f, kind).map(r => (n + r.places.value, if r.failed.isEmpty then retry else retry :+ (f -> kind)))
           }
         }
-      if files.isEmpty then Left(Problem.Io.Absent(Problem.Io.Held.SeedFiles, Problem.Io.Path.from(seed.where()), None))
+      if files.isEmpty then Left(Problem.Io.Absent(Problem.Io.Held.SeedFiles, Problem.Io.Path.of(seed.where()), None))
       else
         for
           first <- pass(files)

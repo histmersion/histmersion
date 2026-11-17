@@ -1118,10 +1118,8 @@ object Problem:
     /** A path on a file system, as text: the browser has no file system type. */
     type Path = Path.T
     object Path extends Newtype[String, Pure]:
-      /** The path a value of any newtype holds (`Path.from(store.where(key))`): unwrapped here, like [[Raw.of]]. Not
-        * named `of`: it reads no file system, as `java.nio.file.Path.of` would be read to.
-        */
-      def from[T](value: T)(using RefinedType.Mirror[T]): Path = Path(s"$value")
+      /** The path a value of any newtype holds (`Path.of(store.where(key))`): unwrapped here, like [[Raw.of]]. */
+      def of[T](value: T)(using RefinedType.Mirror[T]): Path = Path(s"$value")
 
     /** A program run as a process, by its command name (`calibredb`, `pg_dump`). */
     type Tool = Tool.T

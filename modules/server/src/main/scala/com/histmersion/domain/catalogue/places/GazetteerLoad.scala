@@ -96,7 +96,7 @@ object GazetteerLoad:
       _.extracts
         .find(_.name.value == kind.wire.value)
         .toRight(
-          Problem.Io.Extract(Problem.Raw.of(kind.wire), Problem.Io.Pinning.Unlisted(Problem.Io.Path.from(p.manifestAt)))
+          Problem.Io.Extract(Problem.Raw.of(kind.wire), Problem.Io.Pinning.Unlisted(Problem.Io.Path.of(p.manifestAt)))
         )
     )
 
@@ -107,7 +107,7 @@ object GazetteerLoad:
     */
   def verify(store: Store, key: Store.Key, x: Gazetteer.Extract): Either[Problem, Blob] =
     store.get(key) match
-      case None    => Left(Problem.Io.Wrong(Problem.Io.Path.from(store.where(key)), Problem.Io.Kind.Present))
+      case None    => Left(Problem.Io.Wrong(Problem.Io.Path.of(store.where(key)), Problem.Io.Kind.Present))
       case Some(f) =>
         val got = f.sha256().value
         if got.equalsIgnoreCase(x.sha256.value) then Right(f)
@@ -117,7 +117,7 @@ object GazetteerLoad:
               Problem.Raw.of(x.name),
               Problem.Io.Pinning.Mismatch(
                 Problem.Raw.of(x.version),
-                Problem.Io.Path.from(store.where(key)),
+                Problem.Io.Path.of(store.where(key)),
                 Problem.Raw.of(f.sha256()),
                 Problem.Raw.of(x.sha256)
               )
@@ -135,7 +135,7 @@ object GazetteerLoad:
     */
   def missing(p: Stores, x: Gazetteer.Extract): Problem =
     if x.sha256.value.trim.isEmpty || x.file.value.trim.isEmpty then
-      Problem.Io.Extract(Problem.Raw.of(x.name), Problem.Io.Pinning.NotBuilt(Problem.Io.Path.from(p.manifestAt)))
+      Problem.Io.Extract(Problem.Raw.of(x.name), Problem.Io.Pinning.NotBuilt(Problem.Io.Path.of(p.manifestAt)))
     else
       val f = Store.Key.of(x.file.value).toOption.fold(p.extracts.where())(p.extracts.where(_))
       Problem.Io.Extract(
@@ -143,7 +143,7 @@ object GazetteerLoad:
         Problem.Io.Pinning.Unhosted(
           Problem.Raw.of(x.version),
           Problem.Raw.of(x.file),
-          Problem.Io.Path.from(f),
+          Problem.Io.Path.of(f),
           Problem.Raw.of(x.sha256),
           Problem.Count.of(x.bytes),
           Problem.SettingKey("places.sources.dir"),
@@ -431,7 +431,7 @@ object GazetteerLoad:
   ): Either[Problem, List[Gazetteer.LoadCounts]] =
     val files = lpfFiles(s.stores.lpf)
     if files.isEmpty then
-      Left(Problem.Io.Absent(Problem.Io.Held.LpfFiles, Problem.Io.Path.from(s.stores.lpf.where()), None))
+      Left(Problem.Io.Absent(Problem.Io.Held.LpfFiles, Problem.Io.Path.of(s.stores.lpf.where()), None))
     else
       files.foldLeft[Either[Problem, List[Gazetteer.LoadCounts]]](Right(Nil)) { (acc, f) =>
         acc.flatMap(done => loadLpfFile(db, s, f, apply, note).map(done :+ _))
@@ -489,7 +489,7 @@ object GazetteerLoad:
       else if f.size.value > s.maxLpfBytes.value then
         Left(
           Problem.Io.Oversize(
-            Problem.Io.Path.from(f.key.name),
+            Problem.Io.Path.of(f.key.name),
             Problem.Count(f.size.value / (1024 * 1024)),
             Problem.SettingKey("places.sources.max-lpf-mb")
           )

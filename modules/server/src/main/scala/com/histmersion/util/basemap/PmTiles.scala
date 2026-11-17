@@ -595,7 +595,7 @@ object PmTiles:
     def open(blob: Blob, maxLeaves: MaxLeaves = MaxLeaves(256)): Either[Problem, File] =
       val where = blob.where
       def unread(e: java.io.IOException): Problem =
-        Problem.Io.File(Problem.Io.Access.Read, Problem.Io.Path.from(where), External.Reported.of(e))
+        Problem.Io.File(Problem.Io.Access.Read, Problem.Io.Path.of(where), External.Reported.of(e))
       val opened: Either[Problem, File] =
         try
           val reader = blob.reader()

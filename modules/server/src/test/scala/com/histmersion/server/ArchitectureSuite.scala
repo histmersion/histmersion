@@ -106,6 +106,23 @@ class ArchitectureSuite extends munit.FunSuite:
       List("filesystem\tcore:scalajvm:x/Io.scala\tFiles.*\t1", "filesystem\tcore:scalajs:x/Io.scala\tFiles.*\t1")
     )
 
+  test("the file-system rule's Path.of is java.nio's: imported, renamed or written out, never another type's Path"):
+    def pathOf(text: String): List[String] =
+      val s = SourceFile("server:x/A.scala", "com.histmersion.x", Blank(text), text)
+      Rules.all(List(s -> "library.sources")).map(_.row).filter(_.contains("\tPath.of\t"))
+    def row(n: Int) = List(s"filesystem\tserver:x/A.scala\tPath.of\t$n")
+    assertEquals(pathOf("import java.nio.file.Path\nval p = Path.of(\"a\")\n"), row(1))
+    assertEquals(pathOf("import java.nio.file.{Files, Path}\nval p = Path.of(a)\nval q = Path\n  .of(b)\n"), row(2))
+    assertEquals(pathOf("import java.nio.file.*\nval p = Path.of(a)\n"), row(1))
+    assertEquals(pathOf("import java.nio.file.{Path as P}\nval p = P.of(a)\n"), row(1))
+    assertEquals(pathOf("val p = java.nio.file.Path.of(a)\n"), row(1))
+    assertEquals(pathOf("import java.nio\nval p = nio.file.Path.of(a)\n"), row(1))
+    // another type's Path: a member, or a Path of a file importing no java.nio one
+    assertEquals(pathOf("val p = Problem.Io.Path.of(store.where(key))\n"), Nil)
+    assertEquals(pathOf("import java.nio.file.Path\nval p = Problem.Io.Path.of(a)\n"), Nil)
+    assertEquals(pathOf("import Problem.Io.Path\nval p = Path.of(a)\n"), Nil)
+    assertEquals(pathOf("// java.nio.file.Path.of(a)\nval s = \"Path.of\"\n"), Nil)
+
   test("the code a check reads is the same however the formatter breaks a string over lines"):
     def words(text: String): List[String] = Blank(text).split("\\s+").toList.filter(_.nonEmpty)
     val oneLine = "val a = s\"$owner${if (x).value then \" (here)\" else \"\"} until ${y.value}\".size"
@@ -414,20 +431,53 @@ object ArchitectureSuite:
         }
       }
 
-    private val FileSystem: List[(String, scala.util.matching.Regex)] = List(
-      "java.nio.file" -> "java\\.nio\\.file".r,
-      "java.io.File" -> "java\\.io\\.File\\b".r,
-      "Files.*" -> "\\bFiles\\.\\w+".r,
-      "Path.of" -> "\\bPath\\.of\\b".r,
-      "Paths.get" -> "\\bPaths\\.get\\b".r,
-      "FileChannel" -> "\\bFileChannel\\b".r,
-      "RandomAccessFile" -> "\\bRandomAccessFile\\b".r,
-      "File streams" -> "\\bFile(?:Input|Output)Stream\\b|\\bFile(?:Reader|Writer)\\b".r,
-      "MappedByteBuffer" -> "\\bMappedByteBuffer\\b".r,
-      "StandardCopyOption" -> "\\bStandardCopyOption\\b".r,
-      ".toFile" -> "\\.toFile\\b".r,
-      "File(" -> "(?<![\\w.])File\\(".r
+    private def matches(re: scala.util.matching.Regex): String => List[Int] =
+      code => re.findAllMatchIn(code).map(_.start).toList
+
+    private val FileSystem: List[(String, String => List[Int])] = List(
+      "java.nio.file" -> matches("java\\.nio\\.file".r),
+      "java.io.File" -> matches("java\\.io\\.File\\b".r),
+      "Files.*" -> matches("\\bFiles\\.\\w+".r),
+      "Path.of" -> NioPath.of,
+      "Paths.get" -> matches("\\bPaths\\.get\\b".r),
+      "FileChannel" -> matches("\\bFileChannel\\b".r),
+      "RandomAccessFile" -> matches("\\bRandomAccessFile\\b".r),
+      "File streams" -> matches("\\bFile(?:Input|Output)Stream\\b|\\bFile(?:Reader|Writer)\\b".r),
+      "MappedByteBuffer" -> matches("\\bMappedByteBuffer\\b".r),
+      "StandardCopyOption" -> matches("\\bStandardCopyOption\\b".r),
+      ".toFile" -> matches("\\.toFile\\b".r),
+      "File(" -> matches("(?<![\\w.])File\\(".r)
     )
+
+    /** `java.nio.file.Path.of`, the file system's own `Path`: written out (`java.nio.file.Path.of`,
+      * `nio.file.Path.of`), or by a name a `java.nio.file` import brings into scope (`Path`, the `P` of `Path as P`, or
+      * `Path` by a wildcard). Another type's `Path` (`Problem.Io.Path.of`, or a `Path` of a file importing no java.nio
+      * one) is a member of that type, which builds no file system path.
+      */
+    object NioPath:
+      private val Qualified = "\\bnio\\s*\\.\\s*file\\s*\\.\\s*Path\\s*\\.\\s*of\\b".r
+      private val Single = "\\bimport\\s+(?:_root_\\.)?java\\.nio\\.file\\.Path\\b(?!\\s*\\.)".r
+      private val Wildcard = "\\bimport\\s+(?:_root_\\.)?java\\.nio\\.file\\.(?:\\*|_)(?!\\w)".r
+      private val Braces = "\\bimport\\s+(?:_root_\\.)?java\\.nio\\.file\\.\\{([^}]*)\\}".r
+      private val Selector = "^\\s*(\\w+|\\*|_)(?:\\s*(?:as|=>)\\s*(\\w+))?\\s*$".r
+
+      /** The names `java.nio.file.Path` goes by in a file, from its imports. */
+      def names(code: String): Set[String] =
+        val single = Single.findFirstIn(code).map(_ => "Path")
+        val wildcard = Wildcard.findFirstIn(code).map(_ => "Path")
+        val braced = Braces.findAllMatchIn(code).flatMap(_.group(1).split(',')).flatMap {
+          case Selector("Path", null)    => Some("Path")
+          case Selector("Path", rename)  => Option.when(rename != "_")(rename)
+          case Selector("*" | "_", null) => Some("Path")
+          case _                         => None
+        }
+        (single ++ wildcard ++ braced).toSet
+
+      /** The offsets of the file system's `Path.of` in a file. */
+      def of(code: String): List[Int] =
+        val byName =
+          names(code).toList.flatMap(n => s"(?<![\\w.])\\Q$n\\E\\s*\\.\\s*of\\b".r.findAllMatchIn(code).map(_.start))
+        (Qualified.findAllMatchIn(code).map(_.start).toList ++ byName).distinct.sorted
 
     /** The files that keep paths at their edge: they build or receive the locations. */
     private val Tools = Set(
@@ -443,11 +493,9 @@ object ArchitectureSuite:
         val fs =
           if fsAllowed then Nil
           else
-            FileSystem.flatMap { (kind, re) =>
-              val hits = re.findAllMatchIn(s.code).toList
-              hits.headOption.map(h =>
-                Violation("filesystem", s.key, kind, hits.size, s"${s.key}:${s.lineOf(h.start)}")
-              )
+            FileSystem.flatMap { (kind, find) =>
+              val hits = find(s.code)
+              hits.headOption.map(h => Violation("filesystem", s.key, kind, hits.size, s"${s.key}:${s.lineOf(h)}"))
             }
         val processes =
           if l == "util.process" then Nil
