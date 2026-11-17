@@ -22,6 +22,12 @@ import io.github.iltotore.iron.constraint.any.Pure
   * ([[PmTilesFile]]), the writer ([[PmTilesWriter]]) and the remote extract ([[BasemapFetch]]) share one tested codec.
   */
 object PmTiles:
+
+  /** The place in the data that a problem names: where in a PMTiles archive its header is. */
+  private val AtHeader: Problem.Where = Problem.Where("the header")
+
+  /** The place in the data that a problem names: where in a PMTiles archive a directory of tiles is. */
+  private val AtDirectory: Problem.Where = Problem.Where("a directory")
   type ByteLength = ByteLength.T
   object ByteLength extends Newtype[Int, Pure]
   type CompressedBytes = CompressedBytes.T
@@ -170,21 +176,16 @@ object PmTiles:
     val a: Array[Byte] = b.value
     if a.length < HeaderLength then
       Left(
-        Problem.Io.Corrupt(
-          Problem.Io.Format.PmTiles,
-          Problem.Where("the header"),
-          Problem.Io.Damage.Bytes(Problem.Count(HeaderLength.toLong), Problem.Count(a.length.toLong))
-        )
+        Problem.Io.Damage
+          .Bytes(Problem.Count(HeaderLength.toLong), Problem.Count(a.length.toLong))
+          .in(Problem.Io.Format.PmTiles, AtHeader)
       )
-    else if !a.take(7).sameElements(Magic) then
-      Left(Problem.Io.Corrupt(Problem.Io.Format.PmTiles, Problem.Where("the header"), Problem.Io.Damage.Foreign))
+    else if !a.take(7).sameElements(Magic) then Left(Problem.Io.Damage.Foreign.in(Problem.Io.Format.PmTiles, AtHeader))
     else if a(7) != 3 then
       Left(
-        Problem.Io.Corrupt(
-          Problem.Io.Format.PmTiles,
-          Problem.Where("the header"),
-          Problem.Io.Damage.Unsupported(Problem.Io.Variant.SpecVersion(Problem.Count(a(7).toLong), Problem.Count(3L)))
-        )
+        Problem.Io.Variant
+          .SpecVersion(Problem.Count(a(7).toLong), Problem.Count(3L))
+          .in(Problem.Io.Format.PmTiles, AtHeader)
       )
     else
       val bb = ByteBuffer.wrap(a).order(ByteOrder.LITTLE_ENDIAN)
@@ -196,24 +197,18 @@ object PmTiles:
           .either(l(at))
           .left
           .map(_ =>
-            Problem.Io.Corrupt(
-              Problem.Io.Format.PmTiles,
-              Problem.Where("the header"),
-              Problem.Io.Damage
-                .Structure(Problem.Io.Flaw.NegativeAt(Problem.Io.Quantity.Offset, Problem.Count(at.toLong)))
-            )
+            Problem.Io.Flaw
+              .NegativeAt(Problem.Io.Quantity.Offset, Problem.Count(at.toLong))
+              .in(Problem.Io.Format.PmTiles, AtHeader)
           )
       def count(at: Int): Either[Problem, ByteCount] =
         ByteCount
           .either(l(at))
           .left
           .map(_ =>
-            Problem.Io.Corrupt(
-              Problem.Io.Format.PmTiles,
-              Problem.Where("the header"),
-              Problem.Io.Damage
-                .Structure(Problem.Io.Flaw.NegativeAt(Problem.Io.Quantity.Length, Problem.Count(at.toLong)))
-            )
+            Problem.Io.Flaw
+              .NegativeAt(Problem.Io.Quantity.Length, Problem.Count(at.toLong))
+              .in(Problem.Io.Format.PmTiles, AtHeader)
           )
       for
         rootOffset <- offset(8)
@@ -386,11 +381,7 @@ object PmTiles:
       val n = v.next()
       if n < 0 || n > 50_000_000 then
         Left(
-          Problem.Io.Corrupt(
-            Problem.Io.Format.PmTiles,
-            Problem.Where("a directory"),
-            Problem.Io.Damage.Structure(Problem.Io.Flaw.DirectorySize(Problem.Count(n)))
-          )
+          Problem.Io.Flaw.DirectorySize(Problem.Count(n)).in(Problem.Io.Format.PmTiles, AtDirectory)
         )
       else
         val k = n.toInt
@@ -408,11 +399,7 @@ object PmTiles:
         val negative = offs.indexWhere(_ < 0)
         if negative >= 0 then
           Left(
-            Problem.Io.Corrupt(
-              Problem.Io.Format.PmTiles,
-              Problem.Where("a directory"),
-              Problem.Io.Damage.Structure(Problem.Io.Flaw.NegativeEntry(Problem.Count(negative.toLong)))
-            )
+            Problem.Io.Flaw.NegativeEntry(Problem.Count(negative.toLong)).in(Problem.Io.Format.PmTiles, AtDirectory)
           )
         else
           Right(
@@ -428,11 +415,7 @@ object PmTiles:
     catch
       case e: IllegalArgumentException =>
         Left(
-          Problem.Io.Corrupt(
-            Problem.Io.Format.PmTiles,
-            Problem.Where("a directory"),
-            Problem.Io.Damage.Unreadable(External.Reported.of(e))
-          )
+          Problem.Io.Damage.Unreadable(External.Reported.of(e)).in(Problem.Io.Format.PmTiles, AtDirectory)
         )
 
   /** The entry that holds `id` in one sorted directory: the last whose id is ≤ `id` — a leaf pointer (to look further
@@ -461,23 +444,11 @@ object PmTiles:
       at <- ByteOffset
         .either(section.value + e.offset.value)
         .left
-        .map(_ =>
-          Problem.Io.Corrupt(
-            Problem.Io.Format.PmTiles,
-            Problem.Where("a directory"),
-            Problem.Io.Damage.Structure(Problem.Io.Flaw.OffsetOutside(Problem.Count.of(e.offset)))
-          )
-        )
+        .map(_ => Problem.Io.Flaw.OffsetOutside(Problem.Count.of(e.offset)).in(Problem.Io.Format.PmTiles, AtDirectory))
       n <- ByteCount
         .either(e.length.value.toLong)
         .left
-        .map(_ =>
-          Problem.Io.Corrupt(
-            Problem.Io.Format.PmTiles,
-            Problem.Where("a directory"),
-            Problem.Io.Damage.Structure(Problem.Io.Flaw.NegativeLength(Problem.Count.of(e.length)))
-          )
-        )
+        .map(_ => Problem.Io.Flaw.NegativeLength(Problem.Count.of(e.length)).in(Problem.Io.Format.PmTiles, AtDirectory))
     yield (at, n)
 
   // ── compression ─────────────────────────────────────────────────────────────────────────────────
@@ -492,11 +463,9 @@ object PmTiles:
     catch
       case e: java.io.IOException =>
         Left(
-          Problem.Io.Corrupt(
-            Problem.Io.Format.Gzip,
-            Problem.Where("compressed data"),
-            Problem.Io.Damage.Inflate(External.Reported.of(e))
-          )
+          Problem.Io.Damage
+            .Inflate(External.Reported.of(e))
+            .in(Problem.Io.Format.Gzip, Problem.Where("compressed data"))
         )
 
   def isGzip(b: TileBytes): Boolean =
@@ -508,13 +477,9 @@ object PmTiles:
     case Compression.Gzip                       => gunzip(b)
     case other                                  =>
       Left(
-        Problem.Io.Corrupt(
-          Problem.Io.Format.PmTiles,
-          Problem.Where("the header"),
-          Problem.Io.Damage.Unsupported(
-            Problem.Io.Variant.Compression(Problem.Raw(other.productPrefix.toLowerCase), Problem.Raw("gzip"))
-          )
-        )
+        Problem.Io.Variant
+          .Compression(Problem.Raw(other.productPrefix.toLowerCase), Problem.Raw("gzip"))
+          .in(Problem.Io.Format.PmTiles, AtHeader)
       )
 
   def compress(b: PlainBytes, c: Compression): CompressedBytes = c match
@@ -564,11 +529,7 @@ object PmTiles:
             case Some(e) if !e.isLeaf  => Right(Some(e))
             case Some(_) if depth >= 3 =>
               Left(
-                Problem.Io.Corrupt(
-                  Problem.Io.Format.PmTiles,
-                  Problem.Where.of(where),
-                  Problem.Io.Damage.Structure(Problem.Io.Flaw.TooDeep)
-                )
+                Problem.Io.Flaw.TooDeep.in(Problem.Io.Format.PmTiles, Problem.Where.of(where))
               )
             case Some(e) => leaf(e).flatMap(walk(_, depth + 1))
         walk(root, 0)
@@ -607,11 +568,7 @@ object PmTiles:
                 _ <- Either.cond(
                   h.rootOffset.value + h.rootLength.value <= bytes.length,
                   (),
-                  Problem.Io.Corrupt(
-                    Problem.Io.Format.PmTiles,
-                    Problem.Where("the root directory"),
-                    Problem.Io.Damage.Structure(Problem.Io.Flaw.RootOutside)
-                  )
+                  Problem.Io.Flaw.RootOutside.in(Problem.Io.Format.PmTiles, Problem.Where("the root directory"))
                 )
                 root <- decompress(
                   CompressedBytes(
@@ -632,11 +589,7 @@ object PmTiles:
       if h.metadataLength.value <= 0 then Right(Json.obj())
       else if h.metadataLength.value > 16L * 1024 * 1024 then
         Left(
-          Problem.Io.Corrupt(
-            Problem.Io.Format.PmTiles,
-            Problem.Where("the metadata"),
-            Problem.Io.Damage.Structure(Problem.Io.Flaw.MetadataOver)
-          )
+          Problem.Io.Flaw.MetadataOver.in(Problem.Io.Format.PmTiles, Problem.Where("the metadata"))
         )
       else
         // a file that ends early leaves the rest zeros, as a buffer read up to the end does
@@ -651,10 +604,8 @@ object PmTiles:
               .parse(String(b.value: Array[Byte], "UTF-8"))
               .left
               .map(e =>
-                Problem.Io.Corrupt(
-                  Problem.Io.Format.Json,
-                  Problem.Where("the PMTiles metadata"),
-                  Problem.Io.Damage.Unreadable(External.Reported.of(s"$e"))
-                )
+                Problem.Io.Damage
+                  .Unreadable(External.Reported.of(s"$e"))
+                  .in(Problem.Io.Format.Json, Problem.Where("the PMTiles metadata"))
               )
           )

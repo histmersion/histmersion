@@ -111,11 +111,7 @@ object Mvt:
     catch
       case e: IllegalArgumentException =>
         Left(
-          Problem.Io.Corrupt(
-            Problem.Io.Format.Mvt,
-            Problem.Where("the tile"),
-            Problem.Io.Damage.Unreadable(External.Reported.of(e))
-          )
+          Problem.Io.Damage.Unreadable(External.Reported.of(e)).in(Problem.Io.Format.Mvt, Problem.Where("the tile"))
         )
 
   /** Which features of one layer stay: those whose string `kind` is in `keep` (every kind when it is empty) and not in

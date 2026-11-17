@@ -71,6 +71,9 @@ final case class GeoTiffGrid(
     )
 
 object GeoTiffGrid:
+
+  /** The place in the data that a problem names: where in a TIFF its tags are. */
+  private val AtDirectory: Problem.Where = Problem.Where("the image file directory")
   type PixelX = PixelX.T
   object PixelX extends Newtype[Double, Pure]
   type PixelY = PixelY.T
@@ -115,20 +118,14 @@ object GeoTiffGrid:
       raw(tag).map(_.map((_, b) => new String(b, "US-ASCII").takeWhile(_ != '\u0000').trim))
     def one(tag: Int, default: Option[Long] = None): Either[Problem, Long] =
       ints(tag).flatMap(
-        _.flatMap(_.headOption).orElse(default).toRight(flawed(Problem.Io.Flaw.NoTag(Problem.Count(tag.toLong))))
+        _.flatMap(_.headOption)
+          .orElse(default)
+          .toRight(Problem.Io.Flaw.NoTag(Problem.Count(tag.toLong)).in(Problem.Io.Format.GeoTiff, AtDirectory))
       )
-
-  /** Damage to the TIFF's directory: what reading the grid refuses. */
-  private def damaged(damage: Problem.Io.Damage): Problem =
-    Problem.Io.Corrupt(Problem.Io.Format.GeoTiff, Problem.Where("the image file directory"), damage)
-
-  private def flawed(flaw: Problem.Io.Flaw): Problem = damaged(Problem.Io.Damage.Structure(flaw))
-
-  private def unread(variant: Problem.Io.Variant): Problem = damaged(Problem.Io.Damage.Unsupported(variant))
 
   /** A value the directory holds that is no value of its type: Iron's description of why. */
   private def refused(description: String): Problem =
-    damaged(Problem.Io.Damage.Unreadable(External.Reported.of(description)))
+    Problem.Io.Damage.Unreadable(External.Reported.of(description)).in(Problem.Io.Format.GeoTiff, AtDirectory)
 
   /** Read the grid from the start of its file (`head`), asking `read(offset, length)` for whatever lies beyond it (the
     * strip offsets of a large grid). A little-endian classic TIFF holding one band of uncompressed signed 16-bit
@@ -155,9 +152,13 @@ object GeoTiffGrid:
       _ <- Either.cond(
         head.length >= 8 && head(0) == 'I' && head(1) == 'I',
         (),
-        flawed(Problem.Io.Flaw.NotLittleEndian)
+        Problem.Io.Flaw.NotLittleEndian.in(Problem.Io.Format.GeoTiff, AtDirectory)
       )
-      _ <- Either.cond(le(head).getShort(2) == 42, (), unread(Problem.Io.Variant.BigTiff))
+      _ <- Either.cond(
+        le(head).getShort(2) == 42,
+        (),
+        Problem.Io.Variant.BigTiff.in(Problem.Io.Format.GeoTiff, AtDirectory)
+      )
       ifdAt = le(head).getInt(4).toLong & 0xffffffffL
       countB <- bytesAt(ifdAt, 2)
       n = le(countB).getShort(0) & 0xffff
@@ -184,26 +185,53 @@ object GeoTiffGrid:
       height <- d.one(ImageLength)
       _ <- d
         .one(BitsPerSample)
-        .flatMap(b => Either.cond(b == 16, (), unread(Problem.Io.Variant.SampleBits(Problem.Count(b)))))
+        .flatMap(b =>
+          Either.cond(
+            b == 16,
+            (),
+            Problem.Io.Variant.SampleBits(Problem.Count(b)).in(Problem.Io.Format.GeoTiff, AtDirectory)
+          )
+        )
       _ <- d
         .one(Compression, Some(1))
-        .flatMap(c => Either.cond(c == 1, (), unread(Problem.Io.Variant.TiffCompression(Problem.Count(c)))))
+        .flatMap(c =>
+          Either.cond(
+            c == 1,
+            (),
+            Problem.Io.Variant.TiffCompression(Problem.Count(c)).in(Problem.Io.Format.GeoTiff, AtDirectory)
+          )
+        )
       _ <- d
         .one(SamplesPerPixel, Some(1))
-        .flatMap(s => Either.cond(s == 1, (), unread(Problem.Io.Variant.Bands(Problem.Count(s)))))
+        .flatMap(s =>
+          Either.cond(s == 1, (), Problem.Io.Variant.Bands(Problem.Count(s)).in(Problem.Io.Format.GeoTiff, AtDirectory))
+        )
       _ <- d
         .one(PlanarConfiguration, Some(1))
-        .flatMap(p => Either.cond(p == 1, (), unread(Problem.Io.Variant.Planar(Problem.Count(p)))))
+        .flatMap(p =>
+          Either
+            .cond(p == 1, (), Problem.Io.Variant.Planar(Problem.Count(p)).in(Problem.Io.Format.GeoTiff, AtDirectory))
+        )
       _ <- d
         .one(SampleFormat, Some(1))
-        .flatMap(f => Either.cond(f == SignedInteger, (), unread(Problem.Io.Variant.SampleFormat(Problem.Count(f)))))
-      _ <- Either.cond(!d.has(TileWidth), (), unread(Problem.Io.Variant.Tiled))
+        .flatMap(f =>
+          Either.cond(
+            f == SignedInteger,
+            (),
+            Problem.Io.Variant.SampleFormat(Problem.Count(f)).in(Problem.Io.Format.GeoTiff, AtDirectory)
+          )
+        )
+      _ <- Either.cond(!d.has(TileWidth), (), Problem.Io.Variant.Tiled.in(Problem.Io.Format.GeoTiff, AtDirectory))
       perStrip <- d.one(RowsPerStrip, Some(height))
-      strips <- d.ints(StripOffsets).flatMap(_.toRight(flawed(Problem.Io.Flaw.NoStripOffsets)))
+      strips <- d
+        .ints(StripOffsets)
+        .flatMap(_.toRight(Problem.Io.Flaw.NoStripOffsets.in(Problem.Io.Format.GeoTiff, AtDirectory)))
       scale <- d
         .doubles(ModelPixelScale)
-        .flatMap(_.filter(_.size >= 2).toRight(flawed(Problem.Io.Flaw.NoPixelScale)))
-      tie <- d.doubles(ModelTiepoint).flatMap(_.filter(_.size >= 6).toRight(flawed(Problem.Io.Flaw.NoTiePoint)))
+        .flatMap(_.filter(_.size >= 2).toRight(Problem.Io.Flaw.NoPixelScale.in(Problem.Io.Format.GeoTiff, AtDirectory)))
+      tie <- d
+        .doubles(ModelTiepoint)
+        .flatMap(_.filter(_.size >= 6).toRight(Problem.Io.Flaw.NoTiePoint.in(Problem.Io.Format.GeoTiff, AtDirectory)))
       keys <- d.ints(GeoKeyDirectory).map(_.getOrElse(Vector.empty))
       noData <- d.text(GdalNoData).map(_.flatMap(_.toDoubleOption).map(v => NoData(v.toShort)))
       stepX <- Degrees.PerPixel.either(scale(0)).left.map(refused)
@@ -230,7 +258,7 @@ object GeoTiffGrid:
         acc.flatMap { _ =>
           strips
             .lift((r / perStrip).toInt)
-            .toRight(flawed(Problem.Io.Flaw.NoStripForRow(Problem.Count(r))))
+            .toRight(Problem.Io.Flaw.NoStripForRow(Problem.Count(r)).in(Problem.Io.Format.GeoTiff, AtDirectory))
             .flatMap(o => ByteOffset.either(o + (r % perStrip) * rowBytes).left.map(refused))
             .map { o => b += o; () }
         }

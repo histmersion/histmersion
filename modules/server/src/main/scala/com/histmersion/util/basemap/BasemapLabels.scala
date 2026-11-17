@@ -257,11 +257,7 @@ object BasemapLabels:
       .focus
       .flatMap(_.asArray)
       .toRight(
-        Problem.Io.Corrupt(
-          Problem.Io.Format.GeoJson,
-          Problem.Where.of(file),
-          Problem.Io.Damage.Structure(Problem.Io.Flaw.NotFeatureCollection)
-        )
+        Problem.Io.Flaw.NotFeatureCollection.in(Problem.Io.Format.GeoJson, Problem.Where.of(file))
       )
       .map(_.toList.flatMap(label))
 

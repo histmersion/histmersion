@@ -15,6 +15,12 @@ import io.github.iltotore.iron.constraint.any.Pure
   * colour-indexing), the colour cache, meta prefix codes and LZ77 backward references.
   */
 object Vp8l:
+
+  /** The place in the data that a problem names: where in a WebP its lossless image is. */
+  private val AtStream: Problem.Where = Problem.Where("the VP8L stream")
+
+  /** The place in the data that a problem names: where in a WebP its RIFF chunks are. */
+  private val AtChunks: Problem.Where = Problem.Where("the chunks")
   type Bitstream = PmTiles.TileBytes
   val Bitstream: PmTiles.TileBytes.type = PmTiles.TileBytes
 
@@ -41,11 +47,7 @@ object Vp8l:
         case e: Vp8lError                      => Left(e.problem)
         case e: ArrayIndexOutOfBoundsException =>
           Left(
-            Problem.Io.Corrupt(
-              Problem.Io.Format.WebP,
-              Problem.Where("the VP8L stream"),
-              Problem.Io.Damage.Unreadable(External.Reported.of(e))
-            )
+            Problem.Io.Damage.Unreadable(External.Reported.of(e)).in(Problem.Io.Format.WebP, AtStream)
           )
     }
 
@@ -54,7 +56,7 @@ object Vp8l:
     /** The VP8L stream breaks its layout: `flaw`. */
     def this(flaw: Problem.Io.Flaw) =
       this(
-        Problem.Io.Corrupt(Problem.Io.Format.WebP, Problem.Where("the VP8L stream"), Problem.Io.Damage.Structure(flaw))
+        flaw.in(Problem.Io.Format.WebP, AtStream)
       )
 
   /** Where the `VP8L` payload is: inside a RIFF container (its chunk, after any `VP8X`), or the whole input when it
@@ -65,17 +67,13 @@ object Vp8l:
     def tag(i: Int) = new String(b, i, 4, "US-ASCII")
     if b.length >= 5 && (b(0) & 0xff) == 0x2f then Right((0, b.length))
     else if b.length < 20 || tag(0) != "RIFF" || tag(8) != "WEBP" then
-      Left(Problem.Io.Corrupt(Problem.Io.Format.WebP, Problem.Where("the RIFF header"), Problem.Io.Damage.Foreign))
+      Left(Problem.Io.Damage.Foreign.in(Problem.Io.Format.WebP, Problem.Where("the RIFF header")))
     else
       // the chunks after the header: the first VP8L one is the image
       var i = 12
       var found: Either[Problem, (Int, Int)] =
         Left(
-          Problem.Io.Corrupt(
-            Problem.Io.Format.WebP,
-            Problem.Where("the chunks"),
-            Problem.Io.Damage.Unsupported(Problem.Io.Variant.NoLossless)
-          )
+          Problem.Io.Variant.NoLossless.in(Problem.Io.Format.WebP, AtChunks)
         )
       var done = false
       while !done && i + 8 <= b.length do
@@ -83,21 +81,13 @@ object Vp8l:
         val n = le32(i + 4)
         if n < 0 || i + 8 + n > b.length then {
           found = Left(
-            Problem.Io.Corrupt(
-              Problem.Io.Format.WebP,
-              Problem.Where("the chunks"),
-              Problem.Io.Damage.Structure(Problem.Io.Flaw.ChunkTruncated)
-            )
+            Problem.Io.Flaw.ChunkTruncated.in(Problem.Io.Format.WebP, AtChunks)
           );
           done = true
         } else if t == "VP8L" then { found = Right((i + 8, n)); done = true }
         else if t == "VP8 " then {
           found = Left(
-            Problem.Io.Corrupt(
-              Problem.Io.Format.WebP,
-              Problem.Where("the chunks"),
-              Problem.Io.Damage.Unsupported(Problem.Io.Variant.LossyWebP)
-            )
+            Problem.Io.Variant.LossyWebP.in(Problem.Io.Format.WebP, AtChunks)
           );
           done = true
         } else i += 8 + n + (n & 1)
@@ -182,11 +172,7 @@ object Vp8l:
       val maxLen = used.map(lengths(_)).max
       if maxLen > 15 then
         Left(
-          Problem.Io.Corrupt(
-            Problem.Io.Format.WebP,
-            Problem.Where("the VP8L stream"),
-            Problem.Io.Damage.Structure(Problem.Io.Flaw.PrefixTooLong)
-          )
+          Problem.Io.Flaw.PrefixTooLong.in(Problem.Io.Format.WebP, AtStream)
         )
       else
         // canonical codes: by length, then by symbol
@@ -203,11 +189,7 @@ object Vp8l:
         val kraft = used.map(s => 1L << (15 - lengths(s))).sum
         if kraft != (1L << 15) then
           Left(
-            Problem.Io.Corrupt(
-              Problem.Io.Format.WebP,
-              Problem.Where("the VP8L stream"),
-              Problem.Io.Damage.Structure(Problem.Io.Flaw.PrefixIncomplete)
-            )
+            Problem.Io.Flaw.PrefixIncomplete.in(Problem.Io.Format.WebP, AtStream)
           )
         else
           val root = Array.fill(1 << Root)(Int.MinValue)
@@ -277,11 +259,7 @@ object Vp8l:
       val _ = r.read(1) // alpha is used: the pixels say so themselves
       if r.read(3) != 0 then
         throw Vp8lError(
-          Problem.Io.Corrupt(
-            Problem.Io.Format.WebP,
-            Problem.Where("the VP8L stream"),
-            Problem.Io.Damage.Unsupported(Problem.Io.Variant.Vp8lVersion)
-          )
+          Problem.Io.Variant.Vp8lVersion.in(Problem.Io.Format.WebP, AtStream)
         )
       // the transforms, in the order they were applied (undone in reverse)
       var width = w

@@ -1176,6 +1176,9 @@ object Problem:
       /** It is a kind of its format this version does not read: `variant`. */
       case Unsupported(variant: Variant)
 
+      /** This damage, to the data in `format` at `at`. */
+      def in(format: Format, at: Where): Corrupt = Corrupt(format, at, this)
+
     /** How data breaks the layout of its format. */
     enum Flaw derives CanEqual:
       /** A GeoJSON document that is no FeatureCollection. */
@@ -1280,6 +1283,9 @@ object Problem:
       /** A TIFF whose strips hold no row `row`. */
       case NoStripForRow(row: Count)
 
+      /** This flaw of the layout, in the data in `format` at `at`. */
+      def in(format: Format, at: Where): Corrupt = Damage.Structure(this).in(format, at)
+
     /** What a header holds a value of. */
     enum Quantity derives CanEqual:
       case Offset, Length
@@ -1329,6 +1335,9 @@ object Problem:
 
       /** A tiled TIFF: only strips are read. */
       case Tiled
+
+      /** Data in `format` at `at` of this kind, which this version does not read. */
+      def in(format: Format, at: Where): Corrupt = Damage.Unsupported(this).in(format, at)
 
     /** How a process ended that did not end well. */
     enum Ending:

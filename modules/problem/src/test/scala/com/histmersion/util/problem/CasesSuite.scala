@@ -39,6 +39,18 @@ class CasesSuite extends munit.FunSuite:
     assertEquals(Group.values.length, 14)
     assertEquals(examples.size, 87)
 
+  test("damage, a flaw or an unread variant placed in a format's data is the corrupt problem of those three"):
+    val at = Where("the header")
+    assertEquals(Io.Damage.Foreign.in(Io.Format.PmTiles, at), Io.Corrupt(Io.Format.PmTiles, at, Io.Damage.Foreign))
+    assertEquals(
+      Io.Flaw.TooDeep.in(Io.Format.PmTiles, at),
+      Io.Corrupt(Io.Format.PmTiles, at, Io.Damage.Structure(Io.Flaw.TooDeep))
+    )
+    assertEquals(
+      Io.Variant.Tiled.in(Io.Format.GeoTiff, at),
+      Io.Corrupt(Io.Format.GeoTiff, at, Io.Damage.Unsupported(Io.Variant.Tiled))
+    )
+
   test("a relayed problem is its sentence"):
     assertEquals((Relayed(Sentence("the server is reindexing")): Problem).sentence, "the server is reindexing")
 

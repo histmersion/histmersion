@@ -11,6 +11,9 @@ import io.github.iltotore.iron.constraint.any.Pure
   * over red (×256), green (×1) and blue (×1/256), one 8-bit RGB pixel a sample.
   */
 object TerrariumPng:
+
+  /** The place in the data that a problem names: where in a PNG its pixels are. */
+  private val AtImageData: Problem.Where = Problem.Where("the image data")
   type TileSize = TileSize.T
   object TileSize extends Newtype[Int, Pure]
 
@@ -61,7 +64,7 @@ object TerrariumPng:
   def decode(file: Png.PngBytes): Either[Problem, (Array[Float], TileSize)] =
     val png: Array[Byte] = file.value
     if png.length < 33 || !java.util.Arrays.equals(png.take(8), Signature) then
-      Left(Problem.Io.Corrupt(Problem.Io.Format.Png, Problem.Where("the signature"), Problem.Io.Damage.Foreign))
+      Left(Problem.Io.Damage.Foreign.in(Problem.Io.Format.Png, Problem.Where("the signature")))
     else
       val b = ByteBuffer.wrap(png)
       val width = b.getInt(16); val height = b.getInt(20)
@@ -72,14 +75,9 @@ object TerrariumPng:
         case _              => 0
       if depth != 8 || channels == 0 || interlace != 0 then
         Left(
-          Problem.Io.Corrupt(
-            Problem.Io.Format.Png,
-            Problem.Where("the image header"),
-            Problem.Io.Damage.Unsupported(
-              Problem.Io.Variant
-                .PngLayout(Problem.Count(colour.toLong), Problem.Count(depth.toLong), Problem.Count(interlace.toLong))
-            )
-          )
+          Problem.Io.Variant
+            .PngLayout(Problem.Count(colour.toLong), Problem.Count(depth.toLong), Problem.Count(interlace.toLong))
+            .in(Problem.Io.Format.Png, Problem.Where("the image header"))
         )
       else
         val idat = ByteArrayOutputStream()
@@ -112,11 +110,7 @@ object TerrariumPng:
           def upLeft(i: Int) = if y > 0 && i >= bpp then out(dst - stride + i - bpp) & 0xff else 0
           if f < 0 || f > 4 then
             Left(
-              Problem.Io.Corrupt(
-                Problem.Io.Format.Png,
-                Problem.Where("the image data"),
-                Problem.Io.Damage.Unsupported(Problem.Io.Variant.PngFilter(Problem.Count(f.toLong)))
-              )
+              Problem.Io.Variant.PngFilter(Problem.Count(f.toLong)).in(Problem.Io.Format.Png, AtImageData)
             )
           else
             for i <- 0 until stride do
@@ -164,19 +158,13 @@ object TerrariumPng:
       Either.cond(
         n == expected,
         out,
-        Problem.Io.Corrupt(
-          Problem.Io.Format.Png,
-          Problem.Where("the image data"),
-          Problem.Io.Damage.Bytes(Problem.Count(expected.toLong), Problem.Count(n.toLong))
-        )
+        Problem.Io.Damage
+          .Bytes(Problem.Count(expected.toLong), Problem.Count(n.toLong))
+          .in(Problem.Io.Format.Png, AtImageData)
       )
     catch
       case e: java.util.zip.DataFormatException =>
         Left(
-          Problem.Io.Corrupt(
-            Problem.Io.Format.Png,
-            Problem.Where("the image data"),
-            Problem.Io.Damage.Inflate(External.Reported.of(e))
-          )
+          Problem.Io.Damage.Inflate(External.Reported.of(e)).in(Problem.Io.Format.Png, AtImageData)
         )
     finally inf.end()

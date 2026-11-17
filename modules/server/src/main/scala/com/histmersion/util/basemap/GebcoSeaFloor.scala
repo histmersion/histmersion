@@ -113,12 +113,9 @@ final class GebcoSeaFloor(
                 .cond(
                   rows.size.value == run.length.value,
                   (),
-                  Problem.Io.Corrupt(
-                    Problem.Io.Format.GeoTiff,
-                    Problem.Where.of(part.url),
-                    Problem.Io.Damage
-                      .Structure(Problem.Io.Flaw.RangeBytes(Problem.Count.of(rows.size), Problem.Count.of(run.length)))
-                  )
+                  Problem.Io.Flaw
+                    .RangeBytes(Problem.Count.of(rows.size), Problem.Count.of(run.length))
+                    .in(Problem.Io.Format.GeoTiff, Problem.Where.of(part.url))
                 )
                 .flatMap(_ => rows.commit().left.map(e => e.message).map(_ => ()))
             }
