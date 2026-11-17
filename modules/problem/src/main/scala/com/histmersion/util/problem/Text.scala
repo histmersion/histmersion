@@ -61,10 +61,16 @@ object Text:
       case Conflict.Busy(activity)             => activity.running
       case Conflict.Referenced(t, key, by, n)  =>
         s"${t.noun} '$key' is referred to by ${by.counted(n)} — remove those references first (there is no override)"
-      case Refused.Policy(rule)                         => rule.said
-      case Refused.Quota(limit, used, cap, at)          => s"${limit.named} is spent: $used of $cap${until(at)}"
-      case Refused.Disabled(feature, setting, variable) =>
+      case Refused.Policy(rule)                               => rule.said
+      case Refused.Quota(limit, used, cap, at)                => s"${limit.named} is spent: $used of $cap${until(at)}"
+      case Refused.Disabled(feature, setting, variable, None) =>
         s"$feature is switched off ($setting = false)${variable.fold("")(v => s" — set $v=true on the server to use it")}"
+      case Refused.Disabled(feature, setting, variable, Some(Refused.Effect.WritesLibrary)) =>
+        s"$feature is switched off ($setting = false) — set it to true${variable.fold("")(v => s" ($v=true)")} to let " +
+          "the server write to the library"
+      case Refused.Disabled(feature, setting, variable, Some(Refused.Effect.Unauthorised)) =>
+        s"$feature obtains copies without the rights holder's authorisation and stays off ($setting = false)" +
+          variable.fold("")(v => s" — set $v=true on the server to allow it")
       case Upstream.Http(name, url, st, body, at) => s"${path(at)}$name answered HTTP $st at $url — $body"
       case Upstream.Challenged(name, url, st, at) =>
         s"${path(at)}$name answered HTTP $st at $url with a bot-protection challenge, not the page"
@@ -680,6 +686,8 @@ object Text:
       case Config.Fault.Unset(variable)  => s"reads $variable, which is not set"
       case Config.Fault.Malformed(raw)   => s"is not valid: '$raw'"
       case Config.Fault.Unknown(raw)     => s"has an unknown value '$raw'"
+      case Config.Fault.Unregistered(id) => s"names '$id', which no enabled plugin registered — skipped"
+      case Config.Fault.NoPlugin(id)     => s"names '$id', which is no plugin in this binary"
       case Config.Fault.Conflicts(other) => s"contradicts $other"
       case Config.Fault.NoSecret         => "names a secret no vault holds"
       case Config.Fault.Block            => "is a block of settings, not one setting: set one of the settings inside it"

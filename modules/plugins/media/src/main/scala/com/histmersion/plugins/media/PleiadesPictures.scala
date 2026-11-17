@@ -32,6 +32,7 @@ final class PleiadesPictures(media: MediaSettings, licences: LicenceReader) exte
       Problem.Refused.Disabled(
         Problem.Refused.Feature("Pleiades (linked Commons files)"),
         Problem.SettingKey("histmersion.media.pleiades.enabled"),
+        None,
         None
       )
     )

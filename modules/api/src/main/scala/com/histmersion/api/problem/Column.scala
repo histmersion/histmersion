@@ -60,8 +60,9 @@ object Column:
       case Conflict.Referenced(t, key, by, n)     => s"$t '$key' is referred to by $n $by"
       case Refused.Policy(rule)                   => s"refused: ${rule.productPrefix}"
       case Refused.Quota(limit, used, cap, at)    => s"${limit.productPrefix} is spent: $used of $cap${until(at)}"
-      case Refused.Disabled(feature, setting, v)  =>
-        s"$feature is switched off by $setting${v.fold("")(variable => s"; $variable=true switches it on")}"
+      case Refused.Disabled(feature, setting, v, e) =>
+        s"$feature is switched off by $setting${v.fold("")(variable => s"; $variable=true switches it on")}" +
+          e.fold("")(effect => s" (${effect.productPrefix})")
       case Upstream.Http(name, url, st, body, at) => s"${path(at)}$name answered HTTP $st at $url — $body"
       case Upstream.Challenged(name, url, st, at) => s"${path(at)}$name challenged with HTTP $st at $url"
       case Upstream.Limited(name, at)             => s"$name is limited${until(at)}"
@@ -264,6 +265,8 @@ object Column:
       case Config.Fault.Unset(variable)  => s"Unset $variable"
       case Config.Fault.Malformed(raw)   => s"Malformed '$raw'"
       case Config.Fault.Unknown(raw)     => s"Unknown '$raw'"
+      case Config.Fault.Unregistered(id) => s"Unregistered '$id'"
+      case Config.Fault.NoPlugin(id)     => s"NoPlugin '$id'"
       case Config.Fault.Conflicts(other) => s"Conflicts $other"
       case Config.Fault.WrongKind(e, f)  => s"WrongKind ${e.productPrefix}/${f.productPrefix}"
       case Config.Fault.Unreadable(r)    => s"Unreadable — $r"
@@ -663,7 +666,8 @@ object Column:
     private val ReferredTo = "(?s)^(\\S+) '(.*)' is referred to by (\\d+) (\\S+)$".r
     private val RefusedBy = "^refused: (\\w+)$".r
     private val Spent = "^(\\w+) is spent: (\\S+) of (\\S+?)(?: until (\\S+))?$".r
-    private val SwitchedOff = "(?s)^(.+) is switched off by (\\S+?)(?:; (\\S+)=true switches it on)?$".r
+    private val SwitchedOff =
+      "(?s)^(.+) is switched off by (\\S+?)(?:; (\\S+)=true switches it on)?(?: \\((\\w+)\\))?$".r
     private val Answered = s"(?s)^$Prefix(\\S+) answered HTTP (\\d+) at (\\S+) — (.*)$$".r
     private val ChallengedAt = s"(?s)^$Prefix(\\S+) challenged with HTTP (\\d+) at (\\S+)$$".r
     private val NotAsked = s"(?s)^$NotAskedThisSweep(.*)$$".r
@@ -1012,12 +1016,15 @@ object Column:
         case _ => None
       },
       {
-        case SwitchedOff(feature, setting, variable) =>
-          Some(
+        case SwitchedOff(feature, setting, variable, effect) =>
+          val read: Option[Option[Refused.Effect]] =
+            Option(effect).fold(Some(None))(e => word(Refused.Effect.values.toSeq, e).map(Some(_)))
+          read.map(
             Refused.Disabled(
               Refused.Feature(s"$feature"),
               SettingKey(s"$setting"),
-              Option(variable).map(v => SettingKey(s"$v"))
+              Option(variable).map(v => SettingKey(s"$v")),
+              _
             )
           )
         case _ => None
@@ -1127,6 +1134,8 @@ object Column:
             case ("Unset", Some(v))              => Some(Config.Fault.Unset(SettingKey(s"$v")))
             case ("Malformed", Some(_))          => quoted.map(Config.Fault.Malformed(_))
             case ("Unknown", Some(_))            => quoted.map(Config.Fault.Unknown(_))
+            case ("Unregistered", Some(_))       => quoted.map(Config.Fault.Unregistered(_))
+            case ("NoPlugin", Some(_))           => quoted.map(Config.Fault.NoPlugin(_))
             case ("Conflicts", Some(o))          => Some(Config.Fault.Conflicts(SettingKey(s"$o")))
             case ("WrongKind", Some(Pair(e, f))) =>
               for

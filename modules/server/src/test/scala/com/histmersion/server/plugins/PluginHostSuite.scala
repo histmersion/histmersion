@@ -222,7 +222,7 @@ class PluginHostSuite extends munit.FunSuite:
       List(Plugin.Info.Id("c"), Plugin.Info.Id("zz"), Plugin.Info.Id("c"))
     )
     assertEquals(o, List("c", "a", "b"))
-    assertEquals(w.map(_.sentence), List("histmersion.plugins.order has an unknown value 'zz'"))
+    assertEquals(w.map(_.sentence), List("histmersion.plugins.order names 'zz', which is no plugin in this binary"))
     assertEquals(
       PluginHost.configuredOrder(conf("histmersion.plugins.order = [b, a]"), ConfigFactory.empty),
       Right(List("b", "a"))
@@ -586,7 +586,7 @@ class PluginHostSuite extends munit.FunSuite:
     assertEquals(
       g.report.warnings,
       List(
-        "histmersion.plugins.order has an unknown value 'ghost'",
+        "histmersion.plugins.order names 'ghost', which is no plugin in this binary",
         "histmersion.plugins.helo is no setting: it is ignored"
       )
     )

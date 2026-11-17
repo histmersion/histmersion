@@ -203,7 +203,7 @@ object PluginHost:
         .filterNot(ids.contains)
         .map(id =>
           Problem.Config
-            .Setting(Problem.SettingKey(s"$Root.$OrderKey"), Problem.Config.Fault.Unknown(Problem.Raw(s"$id")))
+            .Setting(Problem.SettingKey(s"$Root.$OrderKey"), Problem.Config.Fault.NoPlugin(Problem.Raw(s"$id")))
         )
     (listed.filter(ids.contains) ++ ids.filterNot(listed.contains).sorted, unknown)
 

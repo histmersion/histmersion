@@ -645,7 +645,12 @@ object PluginHarness:
       case Some(st) if st.state == PluginState.Disabled.wire =>
         Left(
           Problem.Refused
-            .Disabled(Problem.Refused.Feature(s"$id"), Problem.SettingKey(s"${PluginHost.Root}.$id.enabled"), None)
+            .Disabled(
+              Problem.Refused.Feature(s"$id"),
+              Problem.SettingKey(s"${PluginHost.Root}.$id.enabled"),
+              None,
+              None
+            )
         )
       case Some(st) =>
         val why = st.errors ++ failedVaults.toList.flatMap(_.errors.map(_.within(Problem.Field("secrets"))))

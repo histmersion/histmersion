@@ -32,7 +32,8 @@ final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollec
     Problem.Refused.Disabled(
       Problem.Refused.Feature("write-back"),
       Problem.SettingKey("histmersion.plugins.calibre.write-back"),
-      Some(Problem.SettingKey("HISTMERSION_PLUGIN_CALIBRE_WRITE_BACK"))
+      Some(Problem.SettingKey("HISTMERSION_PLUGIN_CALIBRE_WRITE_BACK")),
+      Some(Problem.Refused.Effect.WritesLibrary)
     )
 
   override def reach: Either[Problems, Unit] =

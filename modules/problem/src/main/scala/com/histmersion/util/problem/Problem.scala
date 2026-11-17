@@ -749,9 +749,23 @@ object Problem:
     final case class Quota(limit: Limit, used: Amount, cap: Amount, until: Option[EpochMs]) extends Refused
 
     /** `feature` is switched off: `setting` is `false`. `variable`: the environment variable that switches it on, when
-      * the refusal names one.
+      * the refusal names one; `effect`: what switching it on does, when the refusal says it.
       */
-    final case class Disabled(feature: Feature, setting: SettingKey, variable: Option[SettingKey]) extends Refused
+    final case class Disabled(
+        feature: Feature,
+        setting: SettingKey,
+        variable: Option[SettingKey],
+        effect: Option[Effect]
+    ) extends Refused
+
+    /** What switching a feature on does, as a switched-off refusal says it. */
+    enum Effect derives CanEqual:
+      /** The server writes to the library the collection reads (Calibre's write-back). */
+      case WritesLibrary
+
+      /** The fetcher obtains copies without the rights holder's authorisation: it stays off unless a person allows it.
+        */
+      case Unauthorised
 
     /** The rules a request can break. */
     enum Rule:
@@ -1062,6 +1076,12 @@ object Problem:
 
       /** Its value is none the setting knows. */
       case Unknown(raw: Raw)
+
+      /** It names `id`, which no enabled plugin registered: that entry is skipped. */
+      case Unregistered(id: Raw)
+
+      /** It names `id`, which is no plugin in this binary. */
+      case NoPlugin(id: Raw)
 
       /** It contradicts `other`. */
       case Conflicts(other: SettingKey)
@@ -1832,7 +1852,7 @@ object Problem:
       Conflict.Job(Raw("0193f1c4"), Conflict.State("queued"), Conflict.Control.NotStarted),
       Refused.Policy(Refused.Rule.RunTokenRequired),
       Refused.Quota(Refused.Limit.DailySpend, Refused.Amount(5.25), Refused.Amount(4.5), Some(EpochMs(1762732800000L))),
-      Refused.Disabled(Refused.Feature("events-gvp"), SettingKey("histmersion.events.gvp.enabled"), None),
+      Refused.Disabled(Refused.Feature("events-gvp"), SettingKey("histmersion.events.gvp.enabled"), None, None),
       Upstream.Http.here(core, url, Upstream.Status(429), External.ReplyExcerpt("{\"message\":\"rate limited\"}")),
       Upstream.Challenged.here(
         Upstream.Name("archive-org"),

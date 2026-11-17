@@ -87,12 +87,20 @@ class ReadBackSuite extends munit.FunSuite:
       Refused.Disabled(
         Refused.Feature("the embedded agent runtime"),
         SettingKey("agents.enabled"),
-        Some(SettingKey("HISTMERSION_AGENTS_ENABLED"))
+        Some(SettingKey("HISTMERSION_AGENTS_ENABLED")),
+        None
       ),
       Refused.Disabled(
         Refused.Feature("write-back"),
         SettingKey("histmersion.plugins.calibre.write-back"),
-        Some(SettingKey("HISTMERSION_PLUGIN_CALIBRE_WRITE_BACK"))
+        Some(SettingKey("HISTMERSION_PLUGIN_CALIBRE_WRITE_BACK")),
+        Some(Refused.Effect.WritesLibrary)
+      ),
+      Refused.Disabled(
+        Refused.Feature("u"),
+        SettingKey("histmersion.acquire.allow-unauthorised"),
+        None,
+        Some(Refused.Effect.Unauthorised)
       )
     ).foreach { p =>
       assertEquals(Column.read(p.stored), p, p.stored)
@@ -102,7 +110,7 @@ class ReadBackSuite extends munit.FunSuite:
     val text = "events-gvp is switched off by histmersion.events.gvp.enabled"
     assertEquals(
       Column.read(text),
-      Refused.Disabled(Refused.Feature("events-gvp"), SettingKey("histmersion.events.gvp.enabled"), None)
+      Refused.Disabled(Refused.Feature("events-gvp"), SettingKey("histmersion.events.gvp.enabled"), None, None)
     )
     assertEquals(Column.read(text).stored, text)
 
@@ -126,6 +134,8 @@ class ReadBackSuite extends munit.FunSuite:
         Vector(
           Config.Fault.Malformed(Raw("x y")),
           Config.Fault.Unknown(Raw("z")),
+          Config.Fault.Unregistered(Raw("gone")),
+          Config.Fault.NoPlugin(Raw("media-x")),
           Config.Fault.Conflicts(SettingKey("c.d")),
           Config.Fault.Block,
           Config.Fault.WrongKind(Config.ValueKind.Number, Config.ValueKind.Text),

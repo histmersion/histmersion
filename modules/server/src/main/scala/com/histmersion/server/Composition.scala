@@ -369,7 +369,7 @@ object Composition:
       FetchChain.AllowUnauthorised(cfg.allowUnauthorised.value),
       plugins = plugins.registered.flatMap(i => Plugin.Id.option(i.value))
     )
-    notes.foreach(n => scribe.info(n.sentence))
+    notes.foreach(n => scribe.info(s"acquire: ${n.sentence}"))
     scribe.info(chain.plan match
       case Nil  => "acquire: no source fetcher is registered — every fetch is a miss"
       case plan => s"acquire: chain ${plan.map(_._1).mkString(" → ")}")

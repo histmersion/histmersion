@@ -204,7 +204,12 @@ object FetchChain:
     val off = ids
       .filter(id => registered(id).access == Access.Unauthorised && !allowUnauthorised.value)
       .map(id =>
-        Problem.Refused.Disabled(Problem.Refused.Feature(s"$id"), Problem.SettingKey(AllowUnauthorisedKey), None)
+        Problem.Refused.Disabled(
+          Problem.Refused.Feature(s"$id"),
+          Problem.SettingKey(AllowUnauthorisedKey),
+          None,
+          Some(Problem.Refused.Effect.Unauthorised)
+        )
       )
     val known: Set[String] = plugins.map(_.value)
     (
@@ -228,7 +233,7 @@ object FetchChain:
     val notes = listed
       .filterNot(registered.contains)
       .map(id =>
-        Problem.Config.Setting(Problem.SettingKey(ChainKey), Problem.Config.Fault.Unknown(Problem.Raw(s"$id")))
+        Problem.Config.Setting(Problem.SettingKey(ChainKey), Problem.Config.Fault.Unregistered(Problem.Raw(s"$id")))
       )
     (listed.filter(registered.contains) ++ registered.filterNot(listed.contains), notes)
 

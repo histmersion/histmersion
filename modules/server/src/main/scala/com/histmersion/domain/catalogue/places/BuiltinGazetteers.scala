@@ -78,6 +78,7 @@ object BuiltinGazetteers:
           Problem.Refused.Disabled(
             Problem.Refused.Feature(s"${e.title} ($name)"),
             Problem.SettingKey(s"histmersion.plugins.${e.plugin}.enabled"),
+            None,
             None
           )
         )

@@ -70,7 +70,7 @@ class FetchChainSuite extends munit.FunSuite:
     assertEquals(ids, List("a"))
     assertEquals(
       notes.map(_.sentence),
-      List("x", "y").map(id => s"histmersion.acquire.chain has an unknown value '$id'")
+      List("x", "y").map(id => s"histmersion.acquire.chain names '$id', which no enabled plugin registered — skipped")
     )
 
   test("the legal gate: open and subscription always run; unauthorised only when allowed, never on the legal path"):
@@ -310,6 +310,12 @@ class FetchChainSuite extends munit.FunSuite:
     assertEquals(chain.plan.map(_._1), List("a", "b", "u"))
     assertEquals(notes.size, 2, notes.map(_.sentence).mkString("\n"))
     assert(notes.exists(_.sentence.contains("'gone'")))
-    assert(notes.exists(_.sentence == "u is switched off (histmersion.acquire.allow-unauthorised = false)"), notes)
+    assert(
+      notes.exists(
+        _.sentence == "u obtains copies without the rights holder's authorisation and stays off " +
+          "(histmersion.acquire.allow-unauthorised = false)"
+      ),
+      notes
+    )
     val (_, allowed) = FetchChain.of(regs, Nil, allowUnauthorised = FetchChain.AllowUnauthorised(true))
     assertEquals(allowed, Nil)

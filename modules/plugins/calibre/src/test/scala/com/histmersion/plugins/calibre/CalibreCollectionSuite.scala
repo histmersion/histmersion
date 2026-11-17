@@ -188,8 +188,8 @@ class CalibreCollectionSuite extends munit.FunSuite:
           _.sentences
             .mkString("; ")
             .contains(
-              "write-back is switched off (histmersion.plugins.calibre.write-back = false) — set " +
-                "HISTMERSION_PLUGIN_CALIBRE_WRITE_BACK=true on the server to use it"
+              "write-back is switched off (histmersion.plugins.calibre.write-back = false) — set it to true " +
+                "(HISTMERSION_PLUGIN_CALIBRE_WRITE_BACK=true) to let the server write to the library"
             )
         ),
         r

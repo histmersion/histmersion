@@ -436,7 +436,8 @@ final class AgentsControllers(
             .Disabled(
               Problem.Refused.Feature("the embedded agent runtime"),
               Problem.SettingKey("agents.enabled"),
-              Some(Problem.SettingKey("HISTMERSION_AGENTS_ENABLED"))
+              Some(Problem.SettingKey("HISTMERSION_AGENTS_ENABLED")),
+              None
             )
         )
       )

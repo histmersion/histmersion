@@ -288,7 +288,8 @@ class RenderSuite extends munit.FunSuite:
     val agentsOff = Refused.Disabled(
       Refused.Feature("the embedded agent runtime"),
       SettingKey("agents.enabled"),
-      Some(SettingKey("HISTMERSION_AGENTS_ENABLED"))
+      Some(SettingKey("HISTMERSION_AGENTS_ENABLED")),
+      None
     )
     assertEquals(
       agentsOff.sentence,
@@ -301,6 +302,7 @@ class RenderSuite extends munit.FunSuite:
         .Disabled(
           Refused.Feature("NOAA NCEI Natural Hazards (noaa)"),
           SettingKey("histmersion.plugins.events-noaa.enabled"),
+          None,
           None
         )
         .sentence,
@@ -334,6 +336,48 @@ class RenderSuite extends munit.FunSuite:
         .sentence,
       "unknown hint action 'config' (one of: prioritise, hold, skip) — change the settings with the manager's config " +
         "instead"
+    )
+
+  test("what switching a feature on does is in its refusal, word for word as before the case was typed"):
+    // pre-G60 FetchChain: "acquire: u obtains copies without the rights holder's authorisation and stays off
+    // (acquire.allow-unauthorised = false)"
+    val unauthorised = Refused.Disabled(
+      Refused.Feature("u"),
+      SettingKey("histmersion.acquire.allow-unauthorised"),
+      None,
+      Some(Refused.Effect.Unauthorised)
+    )
+    assertEquals(
+      unauthorised.sentence,
+      "u obtains copies without the rights holder's authorisation and stays off " +
+        "(histmersion.acquire.allow-unauthorised = false)"
+    )
+    // pre-G60 CalibreCollection: "write-back is off — set histmersion.plugins.calibre.write-back = true
+    // (HISTMERSION_PLUGIN_CALIBRE_WRITE_BACK=true) to let the server write to the library"
+    val writeBack = Refused.Disabled(
+      Refused.Feature("write-back"),
+      SettingKey("histmersion.plugins.calibre.write-back"),
+      Some(SettingKey("HISTMERSION_PLUGIN_CALIBRE_WRITE_BACK")),
+      Some(Refused.Effect.WritesLibrary)
+    )
+    assertEquals(
+      writeBack.sentence,
+      "write-back is switched off (histmersion.plugins.calibre.write-back = false) — set it to true " +
+        "(HISTMERSION_PLUGIN_CALIBRE_WRITE_BACK=true) to let the server write to the library"
+    )
+    assertEquals(writeBack.status.code, 403)
+    Vector(unauthorised, writeBack).foreach(p => assertEquals(Column.read(p.stored), p, p.stored))
+
+  test("a listed plugin id that names nothing says why, as before the case was typed"):
+    // pre-G60: "acquire.chain names 'gone', which no enabled plugin registered — skipped" and
+    // "histmersion.plugins.order names 'x', which is no plugin in this binary"
+    assertEquals(
+      Config.Setting(SettingKey("histmersion.acquire.chain"), Config.Fault.Unregistered(Raw("gone"))).sentence,
+      "histmersion.acquire.chain names 'gone', which no enabled plugin registered — skipped"
+    )
+    assertEquals(
+      Config.Setting(SettingKey("histmersion.plugins.order"), Config.Fault.NoPlugin(Raw("x"))).sentence,
+      "histmersion.plugins.order names 'x', which is no plugin in this binary"
     )
 
   test("a watch left out of a sweep says so before why, in its sentence and its stored text"):
