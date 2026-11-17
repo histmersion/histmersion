@@ -10,5 +10,29 @@
   "enabledPlugins": {
     "cellar@virtuslab-cellar": true,
     "direct-style-scala@virtuslab-scala-skill": true
+  },
+  "permissions": {
+    "deny": [
+      "Bash(sed -i*)",
+      "Bash(*sed -i *)",
+      "Bash(*sed -E -i*)",
+      "Bash(perl -pi*)",
+      "Bash(*perl -pi *)",
+      "Bash(*perl -i *)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Monitor",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/deny-script-edits.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
   }
 }
