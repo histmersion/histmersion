@@ -46,3 +46,5 @@ object Uses:
   def years: Sql = Sql.of(Sql.Text("y BETWEEN ? AND ?"), Param.L(Param.L.V(-10)), Param.L(Param.L.V(10)))
 
   val expected: List[Param] = List(Param.L(Param.L.V(-10)), Param.S(Param.S.V("x")))
+
+  def matching(where: Sql, pattern: String): Sql = where ++ " AND label ~* '" ++ pattern ++ "'"

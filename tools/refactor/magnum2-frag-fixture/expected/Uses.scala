@@ -38,3 +38,5 @@ object Uses:
   def years: Frag = sql"y BETWEEN ${-10L} AND ${10L}"
 
   val expected: List[Any] = List(-10L, "x")
+
+  def matching(where: Frag, pattern: String): Frag = sql"$where AND label ~* '${SqlLiteral(pattern)}'"

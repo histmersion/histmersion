@@ -398,7 +398,10 @@ class Magnum2Frag(config: Magnum2Frag.Config) extends SemanticRule("Magnum2Frag"
     def chain(t: Term): List[Seg] = t match {
       case i: Term.ApplyInfix if isConcat(i) =>
         val r = i.argClause.values.head
-        chain(i.lhs) ++ (if (stringy(r)) strSegs(r) else chain(r))
+        // `++(raw: String)` appends text, whatever spells the String: it stays text (raw), never a bound value
+        val textOverload = sym(i.op) == SqlCls + "`++`(+1)."
+        if (textOverload && !stringy(r)) note(r, "a String appended as SQL text (++): kept as SqlLiteral")
+        chain(i.lhs) ++ (if (stringy(r) || textOverload) strSegs(r) else chain(r))
       case _ =>
         leaf(t).getOrElse {
           if (isPlaceholder(t)) bail("placeholder operand")
@@ -493,11 +496,12 @@ class Magnum2Frag(config: Magnum2Frag.Config) extends SemanticRule("Magnum2Frag"
         val sel = if (needed.size == 1) needed.head else needed.mkString("{", ", ", "}")
         Patch.addGlobalImport(s"com.augustnagro.magnum.$sel".parse[Importer].get)
       }
-      val dbGiven = doc.tree.collect { case i: Importer if i.ref.syntax == "com.histmersion.util.database" && i.importees.exists(_.is[Importee.Given]) => i }.nonEmpty
+      def givens(i: Importer): Boolean = i.importees.exists(e => e.is[Importee.Given] || e.is[Importee.GivenAll])
+      val dbGiven = doc.tree.collect { case i: Importer if i.ref.syntax == "com.histmersion.util.database" && givens(i) => i }.nonEmpty
       val inDbPkg = doc.tree.collect { case p: Pkg => p.ref.syntax }.exists(r => r == "util.database" || r == "com.histmersion.util.database")
       val arrays = if (usesTextArray && !dbGiven && !inDbPkg) Patch.addGlobalImport(importer"com.histmersion.util.database.given") else Patch.empty
       val columns = doc.tree.collect {
-        case i: Importer if i.ref.syntax.endsWith("NewtypeColumns") && i.importees.exists(_.is[Importee.Given]) => i
+        case i: Importer if i.ref.syntax.endsWith("NewtypeColumns") && givens(i) => i
       }.nonEmpty
       val newtypes =
         if (usesNewtype && !columns) Patch.addGlobalImport(importer"com.histmersion.util.database.NewtypeColumns.given")
@@ -548,6 +552,9 @@ class Magnum2Frag(config: Magnum2Frag.Config) extends SemanticRule("Magnum2Frag"
           val text = segs.map { case Text(x, _) => x; case Code(c) => "${" + c + "}"; case other => bail(s"$other") }.mkString
           fragType = fragType || v.decltpe.nonEmpty
           v.decltpe.map(tp => Patch.replaceTree(tp, "Frag")).asPatch + Patch.replaceTree(v.rhs, "sql" + q + text + q)
+        // `import Param.*` (the cases S, L, I, D, A) goes with them
+        case i: Import if i.importers.forall(imp => imp.ref.syntax.split('.').last == "Param" && sym(imp.ref).startsWith(ParamObj)) =>
+          Patch.removeTokens(i.tokens) + Patch.removeTokens(trailingNewline(i))
         case i: Importee.Name if (i.name.value == "Sql" || i.name.value == "Param") && i.parent.exists {
               case imp: Importer => imp.ref.syntax.endsWith("util.database")
               case _ => false
