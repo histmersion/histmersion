@@ -37,7 +37,7 @@ def sh(cmd, log=None, timeout=3000):
 
 def take_snapshot():
     shutil.rmtree(snap, ignore_errors=True)
-    for d in glob.glob('target/out/*/scala-3.10.0/*/*classes/META-INF/semanticdb'):
+    for d in glob.glob('target/out/*/scala-3.10.1/*/*classes/META-INF/semanticdb'):
         for m in checked:
             src = os.path.join(d, m)
             if os.path.isdir(src):
@@ -79,7 +79,7 @@ def run_rule(n):
             if os.path.exists(ledger): os.remove(ledger)
             write_conf()
             sh('scala-cli run --server=false -q -S 2.13.18 --java-opt -Xmx6g --java-opt -Xss8m --dep ch.epfl.scala:scalafix-cli_2.13.18:0.14.9 '
-               f'--main-class scalafix.cli.Cli -- --config {conf} --scala-version 3.10.0 --sourceroot . --auto-classpath '
+               f'--main-class scalafix.cli.Cli -- --config {conf} --scala-version 3.10.1 --sourceroot . --auto-classpath '
                f'--auto-classpath-roots target/out {files}', log=os.path.join(work, f'scalafix-{n}.log'), timeout=5400)
             cur = sorted({x for l in (open(ledger) if os.path.exists(ledger) else []) for x in l.rstrip('\n').split('\t')[8].split(',') if x})
             print(f'  pass {it + 1}: {len(cur)} rewritten pairs', flush=True)
@@ -90,7 +90,7 @@ def run_rule(n):
     if os.path.exists(ledger): os.remove(ledger)
     write_conf()
     rc = sh('scala-cli run --server=false -q -S 2.13.18 --java-opt -Xmx6g --java-opt -Xss8m --dep ch.epfl.scala:scalafix-cli_2.13.18:0.14.9 '
-            f'--main-class scalafix.cli.Cli -- --config {conf} --scala-version 3.10.0 --sourceroot . --auto-classpath '
+            f'--main-class scalafix.cli.Cli -- --config {conf} --scala-version 3.10.1 --sourceroot . --auto-classpath '
             f'--auto-classpath-roots target/out {files}', log=os.path.join(work, f'scalafix-{n}.log'), timeout=5400)
     if rc not in (0, 1):  # 1: files changed (nothing else is reported as an error)
         print(open(os.path.join(work, f'scalafix-{n}.log')).read()[-4000:])

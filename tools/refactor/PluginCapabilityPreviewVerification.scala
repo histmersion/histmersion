@@ -12,7 +12,7 @@ class PluginCapabilityPreviewVerification extends SyntacticRule("PluginCapabilit
       .replace("${CSR_CACHE}", Paths.get(System.getProperty("user.home"), "Library/Caches/Coursier/v1").toString))
     require(entries.forall(p => Files.isRegularFile(Paths.get(p))))
     val logs = Paths.get("target/plugin-capability-verification"); Files.createDirectories(logs)
-    val args = List("scala-cli", "compile", "target/plugin-capability-preview", "--test", "--server=false", "-S", "3.10.0",
+    val args = List("scala-cli", "compile", "target/plugin-capability-preview", "--test", "--server=false", "-S", "3.10.1",
       "--scalac-option", "-source:future", "--classpath", entries.mkString(java.io.File.pathSeparator))
     val code = new ProcessBuilder(args.asJava).redirectErrorStream(true).redirectOutput(logs.resolve("preview.log").toFile).start().waitFor()
     require(code == 0, s"Preview compilation failed ($code); see $logs/preview.log")

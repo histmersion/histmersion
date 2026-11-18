@@ -107,11 +107,11 @@ class GuidelineRatchetSuite extends munit.FunSuite:
   test("the inventory reads the SemanticDB of meta and test-meta, never a leftover one beside the classes"):
     val out = Files.createTempDirectory("ratchet-out")
     val dirs =
-      List("jvm/scala-3.10.0/m/meta", "jvm/scala-3.10.0/m/test-meta", "jvm/scala-3.10.0/m/classes/META-INF/semanticdb")
+      List("jvm/scala-3.10.1/m/meta", "jvm/scala-3.10.1/m/test-meta", "jvm/scala-3.10.1/m/classes/META-INF/semanticdb")
     dirs.foreach(d => Files.createDirectories(out.resolve(d)))
     assertEquals(
       Inventory.semanticdbTargetRoots(out).map(p => out.toAbsolutePath.normalize.relativize(p).toString),
-      List("jvm/scala-3.10.0/m/meta", "jvm/scala-3.10.0/m/test-meta")
+      List("jvm/scala-3.10.1/m/meta", "jvm/scala-3.10.1/m/test-meta")
     )
     assertEquals(Inventory.semanticdbTargetRoots(out.resolve("missing")), Nil)
 
@@ -220,7 +220,7 @@ object GuidelineRatchetSuite:
         "--config",
         Config,
         "--scala-version",
-        "3.10.0",
+        "3.10.1",
         "--sourceroot",
         ".",
         "--auto-classpath",

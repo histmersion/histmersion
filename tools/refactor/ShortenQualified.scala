@@ -21,7 +21,7 @@ object ShortenQualified {
   case class Config(
     exclusions: String = "",
     ledger: String = "",
-    semanticdbRoots: List[String] = List("target/out/jvm/scala-3.10.0", "target/out/sjs1/scala-3.10.0", ".semanticdb"),
+    semanticdbRoots: List[String] = List("target/out/jvm/scala-3.10.1", "target/out/sjs1/scala-3.10.1", ".semanticdb"),
     projectPackage: String = "com/histmersion/",
     chainPackages: Boolean = true,
     shorten: Boolean = true,

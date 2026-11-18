@@ -18,7 +18,7 @@ class CodecCompiledReferences(val policy: CodecCompiledReferences.Policy) extend
     val built = Files.readAllLines(Paths.get(policy.build,"sources.tsv")).asScala.drop(1).map(_.split("\t",-1)).toList
     require(Files.readString(Paths.get(policy.build,"status.txt")).startsWith("PASS\n"))
     built.foreach(r => require(hash(Files.readAllBytes(Paths.get(r(0)))) == r(1),"Source differs from successful build"))
-    val base = Paths.get("target/out/jvm/scala-3.10.0")
+    val base = Paths.get("target/out/jvm/scala-3.10.1")
     val stream = Files.walk(base)
     val paths = try stream.iterator.asScala.filter(p => Files.isRegularFile(p) && p.toString.endsWith(".class") &&
       (p.toString.contains("/classes/") || p.toString.contains("/test-classes/"))).toList.sortBy(_.toString) finally stream.close()

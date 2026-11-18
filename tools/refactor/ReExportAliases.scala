@@ -17,7 +17,7 @@ import scala.meta.internal.{semanticdb => s}
   * the same entity. A pair whose export the compiler or SymbolOracle rejects goes into `exclusions` and stays. */
 object ReExportAliases {
   case class Config(exclusions: String = "", ledger: String = "", scope: List[String] = List(""), packageExports: Boolean = true, rewritten: String = "",
-    semanticdbRoots: List[String] = List("target/out/jvm/scala-3.10.0", "target/out/sjs1/scala-3.10.0", ".semanticdb"))
+    semanticdbRoots: List[String] = List("target/out/jvm/scala-3.10.1", "target/out/sjs1/scala-3.10.1", ".semanticdb"))
   object Config {
     implicit val surface: generic.Surface[Config] = generic.deriveSurface[Config]
     implicit val decoder: ConfDecoder[Config] = generic.deriveDecoder(Config()).noTypos

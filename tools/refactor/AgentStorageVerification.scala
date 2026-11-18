@@ -17,7 +17,7 @@ class AgentStorageVerification extends SyntacticRule("AgentStorageVerification")
       .replace("${OUT}", Paths.get("target/out").toAbsolutePath.toString)
       .replace("${CSR_CACHE}", Paths.get(System.getProperty("user.home"), "Library/Caches/Coursier/v1").toString))
     require(entries.forall(p => Files.isRegularFile(Paths.get(p))))
-    run("contracts", List("scala-cli", "run", "tools/refactor/agent-storage", "--server=false", "-S", "3.10.0", "--scalac-option", "-source:future",
+    run("contracts", List("scala-cli", "run", "tools/refactor/agent-storage", "--server=false", "-S", "3.10.1", "--scalac-option", "-source:future",
       "--classpath", entries.mkString(java.io.File.pathSeparator), "--main-class", "com.histmersion.domain.automation.agents.AgentStorageCheck"))
     val out = Paths.get("refactor-audit/agent-storage"); Files.createDirectories(out)
     Files.write(out.resolve("template-verification.txt"), List("PASS", "Replacement templates compile and execute capability contracts against the evaluated server classpath.",

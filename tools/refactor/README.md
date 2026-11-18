@@ -106,7 +106,7 @@ finding histories or create a new finding ledger. `pipeline-example.conf` is a
 non-executing example referencing the completed clock batch. Run it with:
 
 ```
-scala-cli run --server=false -q -S 2.13.18 --dep ch.epfl.scala:scalafix-cli_2.13.18:0.14.9 --main-class scalafix.cli.Cli -- --config tools/refactor/pipeline-example.conf --scala-version 3.10.0 --files tools/refactor/ProjectAssessment.scala
+scala-cli run --server=false -q -S 2.13.18 --dep ch.epfl.scala:scalafix-cli_2.13.18:0.14.9 --main-class scalafix.cli.Cli -- --config tools/refactor/pipeline-example.conf --scala-version 3.10.1 --files tools/refactor/ProjectAssessment.scala
 ```
 
 `mode = plan` validates configuration structure only. It does not check preview
@@ -195,7 +195,7 @@ transitive propagation. Production preview generation and boundary compilation
 remain necessary before application; passing fixtures alone do not authorize a
 claim that the multi-concept production rewrite is complete.
 
-The assessment also runs `ModelInventory.scala` over every production/test source and verifies its compiled fixtures. Its reports live in `refactor-audit/models/`. Run it independently with the Scalafix CLI and `--config tools/refactor/models.conf --scala-version 3.10.0 --sourceroot . --auto-classpath --auto-classpath-roots target/out --files modules` after compiling with SemanticDB.
+The assessment also runs `ModelInventory.scala` over every production/test source and verifies its compiled fixtures. Its reports live in `refactor-audit/models/`. Run it independently with the Scalafix CLI and `--config tools/refactor/models.conf --scala-version 3.10.1 --sourceroot . --auto-classpath --auto-classpath-roots target/out --files modules` after compiling with SemanticDB.
 
 `positions.tsv` records fields, constructor/method/lambda parameters, return values, vals/vars, givens, aliases and type bounds, including inferred symbol signatures. `leaves.tsv` follows nested type arguments, transparent aliases, functions, tuples, unions, by-name/repeated types and singleton primitives. A cross-file symbol catalogue resolves project declarations before classification. Opaque and Iron types are distinguished from their primitive representation; custom types named String or Int are not primitives. Unit and bottom/top types are not model-value primitive candidates.
 
@@ -224,7 +224,7 @@ Missing metadata, external definitions and unsupported semantic forms remain in 
 `visibility-consumers.tsv` includes direct name references, declared/inferred signature references and transparent alias chains, separating production/tests and inside/outside expected features. `type-references.tsv` and `alias-references.tsv` preserve the underlying evidence for layer checks. Opaque representations remain hidden. Fixtures check broad privacy, inherited privacy, inferred/aliased row consumers, opaque non-leaks, database owners without suffixes and absent configured targets. Generated implicit arguments/typeclass instances and external alias metadata remain gaps; relationship counts are not violation counts.
 
 ```text
-scala-cli run --server=false -q -S 2.13.18 --dep ch.epfl.scala:scalafix-cli_2.13.18:0.14.9 --main-class scalafix.cli.Cli -- --config tools/refactor/assessment.conf --scala-version 3.10.0 --files tools/refactor/ProjectAssessment.scala
+scala-cli run --server=false -q -S 2.13.18 --dep ch.epfl.scala:scalafix-cli_2.13.18:0.14.9 --main-class scalafix.cli.Cli -- --config tools/refactor/assessment.conf --scala-version 3.10.1 --files tools/refactor/ProjectAssessment.scala
 ```
 
 This read-only Scalafix assessment compiles production and tests with ordinary SemanticDB and formatting disabled, runs the developed capability/structural detectors and current migration measurements over all modules, and verifies the structural fixtures and source expectations. The assessment itself never applies application patches. Child commands are sbt and Scalafix; no Python or shell rewrite scripts are used.
@@ -237,7 +237,7 @@ The 26 current metrics cover 14 capability checks, five structural checks, confi
 
 `SchemaDerives.scala` detects `given Schema[A] = summon[KindlingsSchema[A]].schema` by resolved symbols. It inventories all production/test modules and records each match's AST, eligibility, generated given symbol and explicit consumers. Scala 3 omits symbols on derives syntax; eligibility therefore checks the typed compiler-generated Kindlings instance on the companion. Non-local, generic, modified or otherwise unsupported definitions are reported for review. Customized schema expressions and strict JSON codecs are outside this rewrite.
 
-Run the Scalafix CLI with `--config tools/refactor/schema-derives.conf --scala-version 3.10.0 --sourceroot . --auto-classpath --auto-classpath-roots target/out --files modules` to inspect. Apply with `schema-derives-apply.conf` after inspecting the plan. Source-set/hash checks reject stale plans. Apply adds `com.histmersion.api.json.Schema` to the existing derives clause, removes the redundant given/empty companion, and updates explicit given references, including imported aliases. The rule generates the shared adapter through Scalafix. `SchemaPatchWhitespace.scala` removes whitespace tokens left by removed definitions; run it over the same files after the rewrite. Recompile before semantic verification.
+Run the Scalafix CLI with `--config tools/refactor/schema-derives.conf --scala-version 3.10.1 --sourceroot . --auto-classpath --auto-classpath-roots target/out --files modules` to inspect. Apply with `schema-derives-apply.conf` after inspecting the plan. Source-set/hash checks reject stale plans. Apply adds `com.histmersion.api.json.Schema` to the existing derives clause, removes the redundant given/empty companion, and updates explicit given references, including imported aliases. The rule generates the shared adapter through Scalafix. `SchemaPatchWhitespace.scala` removes whitespace tokens left by removed definitions; run it over the same files after the rewrite. Recompile before semantic verification.
 
 The adapter must be a concrete subtype of Tapir Schema: Scala resolves a plain type alias's derives through Tapir's companion, bypassing the intended Kindlings bridge. The concrete adapter delegates to Kindlings and preserves every schema constructor field. It requires no additional dependency. Its allocation occurs when the schema instance is constructed.
 
@@ -265,7 +265,7 @@ Compile the policy fixture against the real interface:
 
 ```text
 scala-cli compile tools/refactor/console-policy-fixtures.scala modules/console/src/main/scala/com/histmersion/util/console/Console.scala --server=false --semanticdb --semanticdb-targetroot /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/refactor-console-fixtures
-scala-cli run --server=false -q -S 2.13.18 --dep ch.epfl.scala:scalafix-cli_2.13.18:0.14.9 --main-class scalafix.cli.Cli -- --config tools/refactor/console-policy-fixtures.conf --scala-version 3.10.0 --sourceroot tools/refactor --semanticdb-targetroots target/refactor-console-fixtures --files tools/refactor/console-policy-fixtures.scala
+scala-cli run --server=false -q -S 2.13.18 --dep ch.epfl.scala:scalafix-cli_2.13.18:0.14.9 --main-class scalafix.cli.Cli -- --config tools/refactor/console-policy-fixtures.conf --scala-version 3.10.1 --sourceroot tools/refactor --semanticdb-targetroots target/refactor-console-fixtures --files tools/refactor/console-policy-fixtures.scala
 ```
 
 Six exact diagnostics must pass fixture verification; substituting `console-policy-reject.conf` must exit 64. User-output regressions cover isolated injected consoles, channels, Unicode, JSON, progress, prompts and exit statuses. Production and aggregate test compilation use `scalafmtOnCompile := false` and ordinary `-Xsemanticdb`.
@@ -291,7 +291,7 @@ The fixture under `repository-fixture/src/main/scala` covers renamed imports, ch
 The 43-goal register is encoded in `migration.conf`, based on the user's `docs/refactor-goals.md` in the main checkout (read only). Historical counts and checkmarks are not completion evidence. Run the readiness entry point:
 
 ```text
-scala-cli run --server=false -q -S 2.13.18 --dep ch.epfl.scala:scalafix-cli_2.13.18:0.14.9 --main-class scalafix.cli.Cli -- --config tools/refactor/migration.conf --scala-version 3.10.0 --sourceroot . --files modules --files tools/refactor/source-fixtures.scala --files tools/refactor/structure-fixtures.scala
+scala-cli run --server=false -q -S 2.13.18 --dep ch.epfl.scala:scalafix-cli_2.13.18:0.14.9 --main-class scalafix.cli.Cli -- --config tools/refactor/migration.conf --scala-version 3.10.1 --sourceroot . --files modules --files tools/refactor/source-fixtures.scala --files tools/refactor/structure-fixtures.scala
 ```
 
 This runs the current syntactic checks, both syntactic fixture files and 24 guarded real-source expectations in one invocation. It writes `refactor-audit/migration/coverage-matrix.md`, `readiness.txt`, findings, coverage and SHA-256 fingerprints of the parsed inputs and decoded policy. Input changes during the scan fail verification. Synthetic fixture findings are excluded from application counts.
@@ -342,7 +342,7 @@ scala-cli compile tools/refactor/fixtures.scala tools/refactor/clock-fixtures.sc
 Run the fixture assertions through Scalafix itself:
 
 ```text
-scala-cli run --server=false -q -S 2.13.18 --dep ch.epfl.scala:scalafix-cli_2.13.18:0.14.9 --main-class scalafix.cli.Cli -- --config tools/refactor/fixtures.conf --scala-version 3.10.0 --sourceroot tools/refactor --semanticdb-targetroots target/refactor-fixtures --files tools/refactor/fixtures.scala --files tools/refactor/clock-fixtures.scala --files tools/refactor/config-fixtures.scala --files tools/refactor/import-fixtures.scala --files tools/refactor/transaction-fixtures.scala --files tools/refactor/transaction-helpers.scala
+scala-cli run --server=false -q -S 2.13.18 --dep ch.epfl.scala:scalafix-cli_2.13.18:0.14.9 --main-class scalafix.cli.Cli -- --config tools/refactor/fixtures.conf --scala-version 3.10.1 --sourceroot tools/refactor --semanticdb-targetroots target/refactor-fixtures --files tools/refactor/fixtures.scala --files tools/refactor/clock-fixtures.scala --files tools/refactor/config-fixtures.scala --files tools/refactor/import-fixtures.scala --files tools/refactor/transaction-fixtures.scala --files tools/refactor/transaction-helpers.scala
 ```
 
 The rule runtime is Scala 2.13; analyzed code is Scala 3.10. Fixture mode compares
@@ -382,7 +382,7 @@ sbt --server -batch 'set every scalafmtOnCompile := false' 'set ThisBuild / scal
 Then run the detector. Both JVM and Scala.js outputs are searched:
 
 ```text
-scala-cli run --server=false -q -S 2.13.18 --dep ch.epfl.scala:scalafix-cli_2.13.18:0.14.9 --main-class scalafix.cli.Cli -- --config tools/refactor/capabilities.conf --scala-version 3.10.0 --sourceroot . --auto-classpath --auto-classpath-roots target/out --exclude '**/src/test/**' --files modules
+scala-cli run --server=false -q -S 2.13.18 --dep ch.epfl.scala:scalafix-cli_2.13.18:0.14.9 --main-class scalafix.cli.Cli -- --config tools/refactor/capabilities.conf --scala-version 3.10.1 --sourceroot . --auto-classpath --auto-classpath-roots target/out --exclude '**/src/test/**' --files modules
 ```
 
 Do not disable stale SemanticDB checks. Production compilation now passes after the
@@ -518,7 +518,7 @@ sbt --server -batch 'set every scalafmtOnCompile := false' 'set ThisBuild / scal
 
 ## Historical best-effort reproduction
 
-Scala's [best-effort mode](https://www.scala-lang.org/api/3.5.1/docs/docs/internals/best-effort-compilation.html) can emit SemanticDB despite type errors. This was verified on the installed Scala 3.10.0 using `best-effort-fixture.scala`: compilation exits 1 with two intended errors, yet the two known capability references remain detectable. The missing type appears in the unresolved-name report. Error placeholders can still carry symbols, so an empty unresolved report would not certify valid code.
+Scala's [best-effort mode](https://www.scala-lang.org/api/3.5.1/docs/docs/internals/best-effort-compilation.html) can emit SemanticDB despite type errors. This was verified on the installed Scala 3.10.1 using `best-effort-fixture.scala`: compilation exits 1 with two intended errors, yet the two known capability references remain detectable. The missing type appears in the unresolved-name report. Error placeholders can still carry symbols, so an empty unresolved report would not certify valid code.
 
 Generate provisional metadata separately from ordinary metadata, with formatting disabled:
 
@@ -529,7 +529,7 @@ sbt --server -batch 'set every scalafmtOnCompile := false' 'set server / Compile
 Observed exit 1: CLI reports eight inherited errors; server also reaches a compiler pickling assertion in `CompareRunsViews.scala`. SemanticDB extraction happened before that assertion. Do not call this a successful build. The following audit reads the isolated provisional output alongside the ordinary metadata already present in `target/out`:
 
 ```text
-scala-cli run --server=false -q -S 2.13.18 --dep ch.epfl.scala:scalafix-cli_2.13.18:0.14.9 --main-class scalafix.cli.Cli -- --config tools/refactor/capabilities-best-effort.conf --scala-version 3.10.0 --sourceroot . --auto-classpath --auto-classpath-roots target/out --semanticdb-targetroots target/refactor-best-effort --exclude '**/src/test/**' --files modules
+scala-cli run --server=false -q -S 2.13.18 --dep ch.epfl.scala:scalafix-cli_2.13.18:0.14.9 --main-class scalafix.cli.Cli -- --config tools/refactor/capabilities-best-effort.conf --scala-version 3.10.1 --sourceroot . --auto-classpath --auto-classpath-roots target/out --semanticdb-targetroots target/refactor-best-effort --exclude '**/src/test/**' --files modules
 ```
 
 All 2,355 main files were read, with no omitted files. All 21 guarded source expectations passed, including service-owned transactions, borrowed DbCon, injected Clock overloads, ctx.http/ctx.env, pure config parsing and pure Path construction. There are 432 provisional policy findings and 4,578 name lookups without symbols. The latter is a diagnostic inventory, not a count of compiler errors. `bestEffort=true` forces exit 1 even when coverage and assertions pass; `verification.txt`, `coverage.tsv`, `findings.tsv` and `unresolved.tsv` are under `refactor-audit/capabilities-best-effort/`.
@@ -538,7 +538,7 @@ Reproduce the broken-code fixture separately:
 
 ```text
 scala-cli compile tools/refactor/best-effort-fixture.scala --server=false --semanticdb --semanticdb-targetroot /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/refactor-best-effort-fixtures --scalac-option -Ybest-effort
-scala-cli run --server=false -q -S 2.13.18 --dep ch.epfl.scala:scalafix-cli_2.13.18:0.14.9 --main-class scalafix.cli.Cli -- --config tools/refactor/best-effort-fixtures.conf --scala-version 3.10.0 --sourceroot tools/refactor --semanticdb-targetroots target/refactor-best-effort-fixtures --files tools/refactor/best-effort-fixture.scala
+scala-cli run --server=false -q -S 2.13.18 --dep ch.epfl.scala:scalafix-cli_2.13.18:0.14.9 --main-class scalafix.cli.Cli -- --config tools/refactor/best-effort-fixtures.conf --scala-version 3.10.1 --sourceroot tools/refactor --semanticdb-targetroots target/refactor-best-effort-fixtures --files tools/refactor/best-effort-fixture.scala
 ```
 
 The compile must fail; the assertion run must pass. Switching to `best-effort-reject.conf` must fail verification because provisional compiler evidence cannot certify compliance. Keep best-effort metadata out of the ordinary audit's classpath roots.
@@ -548,7 +548,7 @@ The compile must fail; the assertion run must pass. Switching to `best-effort-re
 ## Broader candidate inventory
 
 ```text
-scala-cli run --server=false -q -S 2.13.18 --dep ch.epfl.scala:scalafix-cli_2.13.18:0.14.9 --main-class scalafix.cli.Cli -- --rules file:tools/refactor/ContractInventory.scala --scala-version 3.10.0 --sourceroot . --files modules
+scala-cli run --server=false -q -S 2.13.18 --dep ch.epfl.scala:scalafix-cli_2.13.18:0.14.9 --main-class scalafix.cli.Cli -- --rules file:tools/refactor/ContractInventory.scala --scala-version 3.10.1 --sourceroot . --files modules
 ```
 
 `ContractInventory` is exploratory syntax analysis. Its generated checklist names
@@ -581,7 +581,7 @@ The source-audit checklist is in `refactor-audit/audited-examples.md`. Two cheap
 Run the AST checks on every Scala file, including sources that do not compile:
 
 ```text
-scala-cli run --server=false -q -S 2.13.18 --dep ch.epfl.scala:scalafix-cli_2.13.18:0.14.9 --main-class scalafix.cli.Cli -- --config tools/refactor/source-contracts.conf --scala-version 3.10.0 --sourceroot . --files modules
+scala-cli run --server=false -q -S 2.13.18 --dep ch.epfl.scala:scalafix-cli_2.13.18:0.14.9 --main-class scalafix.cli.Cli -- --config tools/refactor/source-contracts.conf --scala-version 3.10.1 --sourceroot . --files modules
 ```
 
 This inventory returns exit 0 when coverage and assertions pass, even with violations. It writes `refactor-audit/source-contracts/{summary.txt,verification.txt,findings.tsv,files.txt,missing-files.txt}` plus input fingerprints. Findings include source and AST. It is not a zero-violation migration gate. The current checks cover configured primitive roles, feature repository visibility, exact forbidden packages, Handlers declarations in configured controller packages, and ordinary Array[String] launcher signatures on objects. The full readiness command above adds the goal coverage requirements and synthetic fixtures.
@@ -589,7 +589,7 @@ This inventory returns exit 0 when coverage and assertions pass, even with viola
 Run the synthetic fixtures:
 
 ```text
-scala-cli run --server=false -q -S 2.13.18 --dep ch.epfl.scala:scalafix-cli_2.13.18:0.14.9 --main-class scalafix.cli.Cli -- --config tools/refactor/source-fixtures.conf --scala-version 3.10.0 --sourceroot . --files tools/refactor/source-fixtures.scala
+scala-cli run --server=false -q -S 2.13.18 --dep ch.epfl.scala:scalafix-cli_2.13.18:0.14.9 --main-class scalafix.cli.Cli -- --config tools/refactor/source-fixtures.conf --scala-version 3.10.1 --sourceroot . --files tools/refactor/source-fixtures.scala
 ```
 
 Expected exit 0, six diagnostics asserted internally. Every unmarked line must stay clean. Cases include configured and unrelated owners, typed parameters, unrelated parameter names, private helpers, lambda parameters, nested implementations, feature-private repositories, overly broad private scope and protected repositories.

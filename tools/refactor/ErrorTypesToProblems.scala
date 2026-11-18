@@ -46,7 +46,7 @@ object ErrorTypesToProblems {
     problemsImport: String = "com.histmersion.util.problem.Problems",
     // what the code reads off a wrapper beyond its problems: the fields a conversion cannot drop
     carrierFields: List[String] = List("code", "isNotFound", "isInvalidCitekey", "field", "status", "exitCode", "notFound", "workingDirDenied"),
-    semanticdbRoots: List[String] = List("target/out/jvm/scala-3.10.0", "target/out/sjs1/scala-3.10.0"),
+    semanticdbRoots: List[String] = List("target/out/jvm/scala-3.10.1", "target/out/sjs1/scala-3.10.1"),
     // extra fields this run does not move to the callers (a regex found in them): `Code\\(` keeps the methods whose
     // wrapper builds an `Api.Error.Code`, a newtype each caller would build again (one G44 finding per caller)
     refuseExtra: String = "",

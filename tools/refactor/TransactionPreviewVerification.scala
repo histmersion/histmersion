@@ -17,10 +17,10 @@ class TransactionPreviewVerification extends SyntacticRule("TransactionPreviewVe
       .replace("${OUT}",Paths.get("target/out").toAbsolutePath.toString)
       .replace("${CSR_CACHE}",Paths.get(System.getProperty("user.home"),"Library/Caches/Coursier/v1").toString))
     require(entries.forall(p => Files.isRegularFile(Paths.get(p))),"Unresolved evaluated classpath entry")
-    run("preview",List("scala-cli","compile","target/transaction-repair-preview","--server=false","-S","3.10.0",
+    run("preview",List("scala-cli","compile","target/transaction-repair-preview","--server=false","-S","3.10.1",
       "--scalac-option","-source:future","--classpath",entries.mkString(java.io.File.pathSeparator)))
     run("lifecycle",List("scala-cli","run","tools/refactor/transaction-repair/Transactor.scala","tools/refactor/transaction-repair/Lifecycle.scala",
-      "--server=false","-S","3.10.0","--scalac-option","-source:future","--dep","com.augustnagro::magnum:1.3.1","--main-class","transactionfixture.Lifecycle"))
+      "--server=false","-S","3.10.1","--scalac-option","-source:future","--dep","com.augustnagro::magnum:1.3.1","--main-class","transactionfixture.Lifecycle"))
     val out = Paths.get("refactor-audit/transaction-repair/preview-verification.txt")
     Files.createDirectories(out.getParent)
     Files.write(out,List("PASS","All preview production and test sources compile against the evaluated server test classpath.",

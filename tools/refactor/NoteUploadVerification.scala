@@ -17,7 +17,7 @@ class NoteUploadVerification extends SyntacticRule("NoteUploadVerification") {
       .replace("${OUT}", Paths.get("target/out").toAbsolutePath.toString)
       .replace("${CSR_CACHE}", Paths.get(System.getProperty("user.home"), "Library/Caches/Coursier/v1").toString))
     require(entries.forall(p => Files.isRegularFile(Paths.get(p))))
-    val options = List("--server=false", "-S", "3.10.0", "--scalac-option", "-source:future", "--classpath", entries.mkString(java.io.File.pathSeparator))
+    val options = List("--server=false", "-S", "3.10.1", "--scalac-option", "-source:future", "--classpath", entries.mkString(java.io.File.pathSeparator))
     run("preview", List("scala-cli", "compile", "target/note-upload-preview", "--test") ++ options)
     val sources = List("files/src/main/scala/com/histmersion/domain/library/sources/SourceNote.scala",
       "files/src/main/scala/com/histmersion/util/storage/TextFiles.scala", "server/src/main/scala/com/histmersion/util/storage/DiskTextFiles.scala",

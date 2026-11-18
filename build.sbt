@@ -5,7 +5,7 @@
 
 import Dependencies.*
 
-val scala3 = "3.10.0"
+val scala3 = "3.10.1"
 ThisBuild / scalaVersion := scala3
 ThisBuild / organization := "com.histmersion"
 ThisBuild / version := "0.1.0-SNAPSHOT"

@@ -27,7 +27,7 @@ import scala.meta.internal.{semanticdb => s}
 object ProblemUnification {
   case class Config(
     report: String = "refactor-audit/concept-table/scratch/problem-unification.tsv",
-    semanticdbRoots: List[String] = List("target/out/jvm/scala-3.10.0", "target/out/sjs1/scala-3.10.0"),
+    semanticdbRoots: List[String] = List("target/out/jvm/scala-3.10.1", "target/out/sjs1/scala-3.10.1"),
     debug: Boolean = false,
     apiModules: List[String] = List("api", "core", "db", "server", "cli", "web", "files", "plugin-host", "plugin-testkit")
   )

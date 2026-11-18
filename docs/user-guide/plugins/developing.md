@@ -98,7 +98,7 @@ recordings go in `recordings/` (see [Testing](#testing)).
 The two Scala files are the ones you edit, and `project.scala` is the build:
 
 ```scala
-//> using scala 3.10.0
+//> using scala 3.10.1
 //> using repository m2Local
 //> using compileOnly.dep com.histmersion::histmersion-plugin-api:0.1.0-SNAPSHOT
 //> using compileOnly.dep com.histmersion::histmersion-plugin-platform:0.1.0-SNAPSHOT
@@ -236,7 +236,7 @@ on your own libraries as usual:
 
 ```scala
 // build.sbt
-scalaVersion := "3.10.0"
+scalaVersion := "3.10.1"
 organization := "org.example"
 version      := "0.1.0"
 resolvers += Resolver.mavenLocal                 // ~/.m2/repository: histmersion plugin repo --m2
@@ -537,7 +537,7 @@ compiled by Scala before 3.8 into the form JDK 25 prefers; nothing for you to do
 - **Publish it with its POM**, which lists the libraries it needs (scala-cli's `publish`, sbt's
   `publish`, Maven's `deploy`). Depend on `histmersion-plugin-api` and `histmersion-plugin-platform`
   compile-only (`compileOnly.dep`, `% Provided`), so neither is listed or packed.
-- Build with a Scala 3 version no newer than the server's (3.10.0 in this release), against the
+- Build with a Scala 3 version no newer than the server's (3.10.1 in this release), against the
   same `Spi.Version`, and with the platform's versions of the libraries the server ships.
 - Users install it from a Maven repository by coordinates, or from a file or `https` URL with the POM
   beside the jar (`x-1.0.jar` and `x-1.0.pom`): `histmersion plugin add <group::artifact:version|path|url>`.

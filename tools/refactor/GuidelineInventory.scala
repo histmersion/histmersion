@@ -21,7 +21,7 @@ object GuidelineInventory {
     emitLints: Boolean = false,
     requireCoverage: Boolean = true,
     projectPrefix: String = "com/histmersion/",
-    semanticdbRoots: List[String] = List("target/out/jvm/scala-3.10.0", "target/out/sjs1/scala-3.10.0"),
+    semanticdbRoots: List[String] = List("target/out/jvm/scala-3.10.1", "target/out/sjs1/scala-3.10.1"),
     testMarkers: List[String] = List("/src/test/"),
     textBranchTypes: String = "(?i).*(problem|error|reason|refus|fail|why|because|message|detail|note|outcome|warning|stopped|state)(s|text)?",
     textBranchExceptions: String = "",

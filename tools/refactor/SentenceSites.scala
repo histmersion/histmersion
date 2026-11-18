@@ -38,7 +38,7 @@ object SentenceSites {
     exclude: List[String] = List("modules/problem/src/main/scala/com/histmersion/util/problem/Problem.scala",
       "modules/problem/src/main/scala/com/histmersion/util/problem/Text.scala"),
     problemRoot: String = "com/histmersion/util/problem/Problem.",
-    problemSemanticdb: List[String] = List("target/out/jvm/scala-3.10.0/histmersion-problem/meta"),
+    problemSemanticdb: List[String] = List("target/out/jvm/scala-3.10.1/histmersion-problem/meta"),
     newtypeParent: String = "com/histmersion/Newtype#",
     emitLints: Boolean = false,
     expected: String = ""

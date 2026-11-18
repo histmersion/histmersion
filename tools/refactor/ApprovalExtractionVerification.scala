@@ -17,7 +17,7 @@ class ApprovalExtractionVerification extends SyntacticRule("ApprovalExtractionVe
       .replace("${OUT}", Paths.get("target/out").toAbsolutePath.toString)
       .replace("${CSR_CACHE}", Paths.get(System.getProperty("user.home"), "Library/Caches/Coursier/v1").toString))
     require(entries.forall(p => Files.isRegularFile(Paths.get(p))))
-    run("preview", List("scala-cli", "compile", "target/approval-extraction-preview-v3", "--server=false", "-S", "3.10.0", "--scalac-option", "-source:future", "--classpath", entries.mkString(java.io.File.pathSeparator)))
+    run("preview", List("scala-cli", "compile", "target/approval-extraction-preview-v3", "--server=false", "-S", "3.10.1", "--scalac-option", "-source:future", "--classpath", entries.mkString(java.io.File.pathSeparator)))
     Files.write(Paths.get("refactor-audit/approval-isolation/extraction/v3/verification.txt"),List("PASS: extracted definitions compile together on the evaluated server classpath.",
       "This is a preview only. Wiring, old-method removal, module-local compilation and before/after contract execution remain required.").asJava)
   }

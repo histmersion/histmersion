@@ -38,7 +38,7 @@ object UnclassifiedSites {
     unclassified: String = "com/histmersion/util/problem/Problem.Unclassified.",
     legacyText: String = "com/histmersion/util/problem/Problem.legacyText(",
     legacy: String = "com/histmersion/util/problem/Legacy.Text.",
-    semanticdbRoots: List[String] = List("target/out/jvm/scala-3.10.0", "target/out/sjs1/scala-3.10.0"),
+    semanticdbRoots: List[String] = List("target/out/jvm/scala-3.10.1", "target/out/sjs1/scala-3.10.1"),
     emitLints: Boolean = false,
     expected: String = ""
   )

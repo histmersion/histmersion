@@ -11,7 +11,7 @@ class AgentStoragePreviewVerification extends SyntacticRule("AgentStoragePreview
       .replace("${OUT}", Paths.get("target/out").toAbsolutePath.toString)
       .replace("${CSR_CACHE}", Paths.get(System.getProperty("user.home"), "Library/Caches/Coursier/v1").toString))
     require(entries.forall(p => Files.isRegularFile(Paths.get(p))))
-    val arguments = List("scala-cli", "compile", "target/agent-storage-preview", "--test", "--server=false", "-S", "3.10.0", "--scalac-option", "-source:future",
+    val arguments = List("scala-cli", "compile", "target/agent-storage-preview", "--test", "--server=false", "-S", "3.10.1", "--scalac-option", "-source:future",
       "--classpath", entries.mkString(java.io.File.pathSeparator))
     val code = new ProcessBuilder(arguments.asJava).redirectErrorStream(true).redirectOutput(logs.resolve("preview.log").toFile).start().waitFor()
     require(code == 0, s"Preview compilation failed ($code); see $logs/preview.log")
