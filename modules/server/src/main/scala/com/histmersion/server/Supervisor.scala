@@ -112,40 +112,19 @@ object Supervisor:
       ProcessLaunch.Command("start")
     )
 
-  private val MB = 1024L * 1024L
-
-  /** A Postgres size for `bytes`, in whole megabytes. */
-  private def mb(bytes: Long): String = s"${math.max(1L, bytes / MB)}MB"
-
-  /** A configured size: a Postgres size (letters and digits only, so nothing can ride along into the `-o` string),
-    * `auto` from `ramBytes`, or nothing (Postgres' default — also for `auto` when the machine's memory is unknown).
-    */
-  private def size(v: String, auto: Long => Long, ramBytes: Option[ByteCount]): Option[String] =
-    v.trim match
-      case ""                                         => None
-      case a if a.equalsIgnoreCase("auto")            => ramBytes.map(r => mb(auto(r.value)))
-      case s if s.matches("[0-9]+\\s*(kB|MB|GB|TB)?") => Some(s.replaceAll("\\s", ""))
-      case other                                      =>
-        scribe.warn(s"runtime.postgres: '$other' is not a Postgres size (e.g. 512MB, 2GB) — left to Postgres")
-        None
-
-  /** Pure: the `-c` settings the bundled Postgres starts with, given the machine's RAM.
-    *
-    *   - `shared_buffers` `auto` = RAM/16 within 128 MB…2 GB: initdb's 128 MB holds a fraction of the gazetteer's
-    *     indexes, so a place search or a text query re-read its pages through the kernel on every keystroke (2 GB on a
-    *     48 GB machine: warm interactive p50s 10–60 % lower, 2026-10-09);
-    *   - `effective_cache_size` `auto` = RAM/2 — what the planner may assume the OS caches;
-    *   - `work_mem` — a sort or hash per query node (16 MB: a 24 000-row candidate sort stays in memory).
+  /** Pure: the `-c` settings the bundled Postgres starts with, given the machine's RAM: each memory parameter's size
+    * ([[PgTuning.sizes]]: `auto` by [[PgParameter.auto]], left to Postgres while the RAM is unknown or the setting is
+    * empty), then `max_connections`. Every value is a typed size or count written by this code, so nothing can ride
+    * along into the `-o` string.
     */
   private[server] def pgSettings(t: PgTuning, ramBytes: Option[ByteCount]): List[(String, String)] =
-    List(
-      "shared_buffers" -> size(t.sharedBuffers.value, r => math.max(128 * MB, math.min(2048 * MB, r / 16)), ramBytes),
-      "effective_cache_size" -> size(t.effectiveCacheSize.value, r => math.max(512 * MB, r / 2), ramBytes),
-      "work_mem" -> size(t.workMem.value, _ => 16 * MB, ramBytes)
-    ).collect { case (k, Some(v)) => k -> v }
+    t.sizes(ramBytes).map((p, bytes) => p.name -> s"${bytes.written}") :+
+      ("max_connections" -> s"${t.maxConnections}")
 
-  /** The machine's physical memory, when the platform says: `hw.memsize` on macOS, `MemTotal` on Linux. */
-  private def physicalMemory(osName: UserPaths.OsName): Option[ByteCount] =
+  /** The machine's physical memory, when the platform says: `hw.memsize` on macOS, `MemTotal` on Linux. Read once, by
+    * the entry point ([[SystemContext.memory]]).
+    */
+  def physicalMemory(osName: UserPaths.OsName): Option[ByteCount] =
     scala.util
       .Try {
         if UserPaths.isMac(osName) then
@@ -332,9 +311,11 @@ object Supervisor:
 
   /** Start (or adopt) the bundled Postgres and the converter, register their shutdown, and return the configuration
     * that points at them. Throws with an actionable message when the bundle is incomplete — the server cannot run
-    * without its database.
+    * without its database — or when the database pool does not fit in the connections Postgres is started with
+    * ([[PgTuning.admits]]), before anything is started. `memory` is the machine's, which `auto` sizes from.
     */
-  def start(cfg: AppConfig, paths: UserPaths): AppConfig =
+  def start(cfg: AppConfig, paths: UserPaths, memory: Option[ByteCount]): AppConfig =
+    cfg.runtime.postgres.admits(cfg.db.pool).left.foreach(p => throw IllegalStateException(p.sentence))
     val exe = currentExecutable
     val l = layout(cfg.runtime, exe, paths.environment.lookup, paths.osName)
       .fold(e => throw IllegalStateException(e.sentence), identity)
@@ -367,8 +348,8 @@ object Supervisor:
       )._1 == 0
     then scribe.info("runtime: postgres already running on this cluster — adopting it")
     else
-      val settings = pgSettings(cfg.runtime.postgres, physicalMemory(paths.osName))
-      scribe.info(s"runtime: postgres memory ${settings.map((k, v) => s"$k=$v").mkString(", ")}")
+      val settings = pgSettings(cfg.runtime.postgres, memory)
+      scribe.info(s"runtime: postgres settings ${settings.map((k, v) => s"$k=$v").mkString(", ")}")
       val (rc, out) = run(pgStart(l, cfg.runtime.pgPort, settings), l)
       if rc != 0 then
         throw IllegalStateException(
@@ -387,7 +368,8 @@ object Supervisor:
   /** How a config reload is fitted to the running bundle (docs/research-plugins.md §3.5): every reloaded config is
     * pointed at the bundled Postgres and converter the way [[start]] pointed the first one (the children themselves,
     * `runtime.*`, are restart-only), and a database the reload names is created in the bundled cluster before a pool
-    * opens on it. `started` is the config [[start]] was given.
+    * opens on it — once its pool is known to fit in the connections the running Postgres was started with (`started`'s,
+    * [[PgTuning.admits]]). `started` is the config [[start]] was given.
     */
   def reloadSource(
       started: AppConfig,
@@ -400,11 +382,15 @@ object Supervisor:
       read,
       c => configure(c, l),
       c =>
-        scala.util
-          .Try(ensureDatabase(c))
-          .toEither
-          .left
-          .map(e => Problem.Unclassified(Legacy.Text(s"cannot create the database: ${e.getMessage}")))
+        started.runtime.postgres
+          .admits(c.db.pool)
+          .flatMap(_ =>
+            scala.util
+              .Try(ensureDatabase(c))
+              .toEither
+              .left
+              .map(e => Problem.Unclassified(Legacy.Text(s"cannot create the database: ${e.getMessage}")))
+          )
     )
 
   private def initCluster(l: Layout, user: DbConfig.User, password: DbConfig.Password): Unit =

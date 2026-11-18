@@ -3,6 +3,7 @@ package util.settings
 import com.histmersion.util.problem.Text.sentences
 
 import com.histmersion.api.settings.ConfigEdit
+import com.histmersion.config.{PgBytes, PgParameter}
 import com.histmersion.config.edit.*
 import com.histmersion.api.Api
 import com.histmersion.api.settings.ReloadReport
@@ -11,7 +12,7 @@ import com.histmersion.api.settings.ReloadReport
 object SettingsViews:
 
   def page(s: SettingsSnapshot, restartable: Boolean): ConfigEdit.Page =
-    val fields = s.readings.map(field)
+    val fields = s.readings.map(field(_, s.automatic))
     val sections = fields
       .map(_.section)
       .distinct
@@ -35,7 +36,10 @@ object SettingsViews:
   private def sectionDoc(id: String): String =
     SettingKey.either(s"${SettingKey.Root}.$id").toOption.fold("")(k => ConfigSchema.reference.blockDoc(k).value)
 
-  def field(r: SettingReading): ConfigEdit.Field =
+  /** One setting as the wire shows it; `automatic` (the bundled Postgres' sizes set to `auto`, and what each comes to
+    * on this machine) gives the setting it sizes its `resolved` value.
+    */
+  def field(r: SettingReading, automatic: List[(PgParameter, PgBytes)] = Nil): ConfigEdit.Field =
     val s = SettingShown.of(r)
     ConfigEdit.Field(
       ConfigEdit.Field.Key(s.key.value),
@@ -55,7 +59,10 @@ object SettingsViews:
           s.credentialShown.map(x => ConfigEdit.Credential.Shown(x.value))
         )
       ),
-      s.locked.map(p => ConfigEdit.Field.Locked(p.sentences.mkString("; ")))
+      s.locked.map(p => ConfigEdit.Field.Locked(p.sentences.mkString("; "))),
+      automatic.collectFirst {
+        case (p, bytes) if p.key == r.field.key => ConfigEdit.Field.Resolved(s"${bytes.written}")
+      }
     )
 
   def written(

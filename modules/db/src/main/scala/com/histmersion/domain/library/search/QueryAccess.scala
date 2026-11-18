@@ -14,7 +14,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 object QueryAccess:
 
   /** The READ-ONLY pool behind `POST /api/query` — the `histmersion_query` role of migration V011, which holds nothing
-    * but SELECT. Deliberately tiny: the hatch is an interactive escape valve, not a serving path.
+    * but SELECT. Deliberately tiny: the hatch is an interactive escape valve, not a serving path
+    * ([[DbPoolConfig.Max.query]], which the bundled Postgres' connections are checked against too).
     */
 
   def pool(db: DbConfig, q: QueryConfig): HikariDataSource =
@@ -22,7 +23,7 @@ object QueryAccess:
       Db.JdbcUrl(db.url.value),
       Db.Login(q.user.value),
       Db.Password(q.password.value),
-      Db.PoolMax(math.min(4, math.max(1, db.pool.max.value))),
+      Db.PoolMax(db.pool.max.query.value),
       Db.PoolName("histmersion-query")
     )
 

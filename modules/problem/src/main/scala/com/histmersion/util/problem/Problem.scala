@@ -146,7 +146,11 @@ object Problem:
 
   /** A setting's key: `histmersion.agents.budgets.daily-usd`. */
   type SettingKey = SettingKey.T
-  object SettingKey extends Newtype[String, Pure]
+  object SettingKey extends Newtype[String, Pure]:
+    /** The key a value of any newtype over text names (`SettingKey.of(parameter.key)`): unwrapped here, like
+      * [[Raw.of]].
+      */
+    def of[T](value: T)(using RefinedType.Mirror[T] { type BaseType = String }): SettingKey = SettingKey(s"$value")
 
   /** The first word of a case's name: one of the eleven groups (what kind of failure it is), or one of the three cases
     * outside them (`Unclassified`, `Stored`, `Relayed`).
@@ -1648,6 +1652,16 @@ object Problem:
 
       /** Its value is none the setting knows. */
       case Unknown(raw: Raw)
+
+      /** Its value `raw` is no size Postgres reads: a whole number of kB, MB, GB or TB, `auto`, or empty. */
+      case NotSize(raw: Raw)
+
+      /** It sizes the database pool at `pool` connections, more than the bundled Postgres' `connections` (the setting
+        * `limit`) leave room for: at most `most`. A reload holds the old pools beside the new ones until they are idle,
+        * each application pool beside its read-only query pool, and `reserved` connections stay free for a backup, the
+        * bundle's own administration and a person's session.
+        */
+      case PoolOverConnections(pool: Count, limit: SettingKey, connections: Count, most: Count, reserved: Count)
 
       /** It names `id`, which no enabled plugin registered: that entry is skipped. */
       case Unregistered(id: Raw)

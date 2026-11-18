@@ -5,7 +5,7 @@ import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.testsupport.ComparedByValue.given
 
-import com.histmersion.api.settings.{ConfigEdit, ReloadReport}
+import com.histmersion.api.settings.{ConfigEdit, ConfigEditMarkdown, ReloadReport}
 import com.histmersion.config.edit.ConfigFileState
 import org.ekrich.config.ConfigFactory
 
@@ -17,12 +17,17 @@ class SettingsControllersSuite extends munit.FunSuite:
   final private class Fixture(
       text: Option[ConfigFileState.Text],
       restartable: Boolean = false,
-      env: Map[String, String] = Map.empty
+      env: Map[String, String] = Map.empty,
+      memory: Option[ByteCount] = None
   ):
     val file = AtomicReference(text)
     val reloads = AtomicInteger(0)
     val settings =
-      SettingsService.InMemory(file, ConfigFactory.parseMap(scala.jdk.CollectionConverters.MapHasAsJava(env).asJava))
+      SettingsService.InMemory(
+        file,
+        ConfigFactory.parseMap(scala.jdk.CollectionConverters.MapHasAsJava(env).asJava),
+        memory = memory
+      )
     val restarts = RestartService.InMemory(restartable)
     val c = SettingsControllers(
       settings,
@@ -61,6 +66,38 @@ class SettingsControllersSuite extends munit.FunSuite:
       Right(List("backups"))
     )
     assert(f.c.page(Some(SettingsService.ConfigPath("not a key!"))).isLeft)
+
+  test("a bundled-Postgres size set to auto shows what it comes to on the server's machine; nothing else does"):
+    val f = Fixture(
+      Some(ConfigFileState.Text("histmersion.runtime.postgres.effective-cache-size = \"6GB\"\n")),
+      memory = Some(ByteCount(51539607552L)) // 48 GB
+    )
+    val p = f.c.page(None).fold(e => fail(e.problems.sentences.mkString("; ")), identity)
+    def resolved(k: ConfigEdit.Field.Key) = p.field(k).flatMap(_.resolved)
+    assertEquals(
+      resolved(ConfigEdit.Field.Key("runtime.postgres.shared-buffers")),
+      Some(ConfigEdit.Field.Resolved("2GB"))
+    )
+    assertEquals(
+      p.field(ConfigEdit.Field.Key("runtime.postgres.shared-buffers")).flatMap(_.effective),
+      Some(ConfigEdit.Field.Effective("\"auto\""))
+    )
+    assertEquals(
+      resolved(ConfigEdit.Field.Key("runtime.postgres.effective-cache-size")),
+      None,
+      "a size the file sets is shown as it is"
+    )
+    assertEquals(resolved(ConfigEdit.Field.Key("runtime.postgres.work-mem")), None)
+    assertEquals(resolved(ConfigEdit.Field.Key("runtime.postgres.max-connections")), None)
+    assertEquals(resolved(ConfigEdit.Field.Key("backups.keep")), None)
+    // the machine's memory unknown (as in a test server): nothing to show
+    val unknown = Fixture(None).c.page(None).fold(e => fail(e.problems.sentences.mkString("; ")), identity)
+    assertEquals(unknown.fields.flatMap(_.resolved), Nil)
+    // the CLI and the MCP tool say it beside the value
+    assertEquals(
+      p.field(ConfigEdit.Field.Key("runtime.postgres.shared-buffers")).map(ConfigEditMarkdown.shown),
+      Some("`\"auto\"` (comes to `2GB` on the server's machine)")
+    )
 
   test("a credential's value never crosses: not what the file writes, not what applies, not the default"):
     val f = Fixture(

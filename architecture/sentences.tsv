@@ -376,6 +376,8 @@ com/histmersion/config/ConfigLayers.unreadable().#0	modules/config/src/main/scal
 com/histmersion/config/HotPlan.order().#0	modules/config/src/main/scala/com/histmersion/config/HotPlan.scala	Conflict.AlreadyExists		place id 'pleiades_579885' already exists	same	
 com/histmersion/config/HotPlan.order().#1	modules/config/src/main/scala/com/histmersion/config/HotPlan.scala	Invalid.Unknown		unknown source status 'dubious' (one of: current, contested)	same	
 com/histmersion/config/HotPlan.order().#2	modules/config/src/main/scala/com/histmersion/config/HotPlan.scala	Config.Cycle		the parts a reload rebuilds depend on each other in a cycle: db → lease → db	same	
+com/histmersion/config/PgTuning#admits().#0	modules/config/src/main/scala/com/histmersion/config/PgTuning.scala	Config.Setting	Config.Fault.PoolOverConnections	histmersion.agents.providers.codex.command is empty	same	
+com/histmersion/config/PgTuning.Written#tuning().#0	modules/config/src/main/scala/com/histmersion/config/PgTuning.scala	Config.Setting	Config.Fault.NotSize	histmersion.agents.providers.codex.command is empty	same	
 com/histmersion/config/SeaFloorSource.parse().#0	modules/config/src/main/scala/com/histmersion/config/SeaFloorSource.scala	Invalid.Unknown		unknown source status 'dubious' (one of: current, contested)	same	
 com/histmersion/config/UserConfigFile#warnings().#0	modules/config/src/main/scala/com/histmersion/config/UserConfigFile.scala	Config.Setting		histmersion.agents.providers.codex.command is empty	same	
 com/histmersion/config/edit/ConfigTextEdit.verify().#0	modules/config/src/main/scala/com/histmersion/config/edit/ConfigTextEdit.scala	Config.Setting	Config.Fault.NotReadBack	histmersion.agents.providers.codex.command is empty	same	

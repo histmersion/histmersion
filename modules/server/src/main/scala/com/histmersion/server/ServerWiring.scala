@@ -287,7 +287,11 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
   lazy val settings: SettingsControllers =
     import com.histmersion.util.settings.{RestartService, SettingsControllers, SettingsService}
     SettingsControllers(
-      SettingsService(() => deps.loaded, () => StorageLocations.settingsFile(deps.loaded, deps.storage)),
+      SettingsService(
+        () => deps.loaded,
+        () => StorageLocations.settingsFile(deps.loaded, deps.storage),
+        deps.memory
+      ),
       RestartService(deps.restart),
       () => deps.reloader(),
       () =>

@@ -92,7 +92,9 @@ final class Deps(
     val environment: Environment = Environment.empty,
     val userPaths: UserPaths = UserPaths(Environment.empty, UserPaths.OsName("")),
     val timer: Timer = new SystemTimer,
-    val pause: Pause = new ThreadPause
+    val pause: Pause = new ThreadPause,
+    /** The machine's physical memory ([[SystemContext.memory]]), which the bundled Postgres' `auto` sizes come from. */
+    val memory: Option[ByteCount] = None
 ):
 
   /** Transactions on the application role ([[ds]]). */

@@ -11,7 +11,10 @@ object ConfigEditMarkdown:
     f.credential match
       case Some(c) if !((c.isSet) == (true)) => ("not set")
       case Some(c)                           => ("set" + c.shown.fold("")(s => s" (`$s`)"))
-      case None                              => (f.effective.fold("(nothing)")(v => s"`$v`"))
+      case None                              =>
+        f.effective.fold("(nothing)")(v => s"`$v`") + f.resolved.fold("")(r =>
+          s" (comes to `$r` on the server's machine)"
+        )
 
   def field(f: Field): String =
     val from = Source.parse(f.source).fold(f.source)(_.label)

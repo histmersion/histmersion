@@ -118,6 +118,7 @@ object SettingControl:
           )
         )
       ),
+      f.resolved.map(size => span(cls := "setting-resolved", s" Auto comes to $size on the server's machine.")),
       f.restart.map(why => span(cls := "setting-restart", s" Takes effect after a restart ($why).")),
       Option.when(f.source == ConfigEdit.Source.File.wire && f.locked.isEmpty)(
         button(
