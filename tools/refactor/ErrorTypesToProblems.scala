@@ -50,6 +50,9 @@ object ErrorTypesToProblems {
     // extra fields this run does not move to the callers (a regex found in them): `Code\\(` keeps the methods whose
     // wrapper builds an `Api.Error.Code`, a newtype each caller would build again (one G44 finding per caller)
     refuseExtra: String = "",
+    // files the rule adds no import to (ContractsSuite: a domain file names the api only in a boundary); a method with
+    // a caller there that does not see the wrapper already stays
+    noImportIn: List[String] = List("modules/server/src/main/scala/com/histmersion/domain/"),
     emitLints: Boolean = false
   )
   object Config {
@@ -79,8 +82,13 @@ object ErrorTypesToProblems {
   case class Plan(methods: Map[String, Method], calls: Map[String, List[Call]], valueRefs: Set[String], overridden: Set[String],
       names: Map[String, Set[String]]) {
     /** Why a method stays: its own reasons, then what its callers and the rest of the code need. */
-    def verdict(m: Method, only: List[String], refuseExtra: String = ""): List[String] = {
+    def verdict(m: Method, only: List[String], refuseExtra: String = "", noImportIn: List[String] = Nil): List[String] = {
       val callers = calls.getOrElse(m.sym, Nil)
+      // a caller in a layer that may not import the wrapper's owner (a domain file naming the api) must see it already
+      val walled = callers.filter { c =>
+        val there = names.getOrElse(c.path, Set.empty)
+        noImportIn.exists(c.path.startsWith) && m.needs.exists(n => !there(n) && !n.split("=", 2)(1).matches("(scala|java/lang)/.*"))
+      }
       // a caller that does not see a name gets its import; one that writes the name for something else cannot
       val blind = callers.filter { c =>
         val there = names.getOrElse(c.path, Set.empty)
@@ -95,10 +103,11 @@ object ErrorTypesToProblems {
         Option.when(overridden(m.sym))("overridden") ++
         Option.when(m.arity > 0 && valueRefs(m.sym))("used as a function value, or called without its name") ++
         Option.when(callers.exists(_.indented))("a call ends in an indented block") ++
-        blind.headOption.map(c => s"a caller in ${c.path} names ${m.needs.map(_.split("=", 2)(0)).mkString(" or ")} otherwise")
+        blind.headOption.map(c => s"a caller in ${c.path} names ${m.needs.map(_.split("=", 2)(0)).mkString(" or ")} otherwise") ++
+        walled.headOption.map(c => s"a caller in ${c.path} may not import ${m.needs.map(_.split("=", 2)(0)).mkString(" or ")}")
     }
-    def converted(only: List[String], refuseExtra: String = ""): Map[String, Method] =
-      methods.filter { case (_, m) => verdict(m, only, refuseExtra).isEmpty }
+    def converted(only: List[String], refuseExtra: String = "", noImportIn: List[String] = Nil): Map[String, Method] =
+      methods.filter { case (_, m) => verdict(m, only, refuseExtra, noImportIn).isEmpty }
   }
   object Plan {
     def read(path: String): Plan = {
@@ -162,13 +171,13 @@ class ErrorTypesToProblems(config: ErrorTypesToProblems.Config, index: Concurren
     write(config.carriers, "path\tline\tenclosing\twhat\ttext" :: carrierRows.asScala.toList.sorted)
     val plan = Plan.read(config.plan)
     write(config.report, "method\tpath\twrapper\textra\tverdict" :: plan.methods.values.toList.sortBy(m => (m.path, m.sym)).map { m =>
-      val v = plan.verdict(m, config.only, config.refuseExtra)
+      val v = plan.verdict(m, config.only, config.refuseExtra, config.noImportIn)
       List(m.sym, m.path, m.wrapper, m.extra, if (v.isEmpty) "converted" else v.mkString("; ")).map(clean).mkString("\t")
     })
   }
 
   private lazy val plan: Plan = plans.computeIfAbsent(config.plan, p => Plan.read(p))
-  private lazy val converted: Map[String, Method] = plan.converted(config.only, config.refuseExtra)
+  private lazy val converted: Map[String, Method] = plan.converted(config.only, config.refuseExtra, config.noImportIn)
 
   // ---- symbols and types ---------------------------------------------------------------------------------------------
   private val Wrappers = config.wrappers.toSet
