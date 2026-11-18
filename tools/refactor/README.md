@@ -564,6 +564,20 @@ custom codecs and module boundaries need more evidence. Comments carry their tok
 structure rather than repeated enclosing-file ASTs. This inventory does not replace
 the tested semantic detector or the architectural design review.
 
+## Magnum 2 fragments
+
+`Magnum2Frag.scala` (G58, `magnum2-frag.conf`) moved the db and server modules from the db module's own `Sql`/`Param`
+fragments to Magnum 2's nesting `Frag`: constant text handed to `Sql.raw` becomes `sql"..."`, `Sql.of(text, params*)`
+becomes `sql"..."` with each `?` replaced by its value (bound through its codec), `++` chains become one `sql"..."` that
+nests every non-constant operand, and String text spliced into SQL stays raw as `${SqlLiteral(...)}`. It runs once,
+over the SemanticDB of the Magnum 1.3.1 build; the sites it leaves alone go to `refactor-audit/magnum2/left-alone.tsv`
+with the reason. Its fixture compiles `magnum2-frag-fixture/input` against 1.3.1, runs the rule and diffs the result with
+`expected/`, which is compiled against 2.0.0:
+
+```text
+bash tools/refactor/magnum2-frag-fixture/check.sh
+```
+
 ## Remaining work
 
 - Extend the repository call graph to dispatch, supplied callbacks and initializer effects; define approved capability boundaries before adding propagation for other capabilities.
