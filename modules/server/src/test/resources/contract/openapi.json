@@ -21742,6 +21742,9 @@
           },
           "locked" : {
             "type" : "string"
+          },
+          "resolved" : {
+            "type" : "string"
           }
         }
       },
