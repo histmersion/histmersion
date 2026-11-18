@@ -1,7 +1,71 @@
 {
   "reflection": [
     {
+      "type": "com.histmersion.api.automation.AgentRole$",
+      "fields": [
+        {
+          "name": "derived$CanEqual$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.automation.Approval$Kind$",
+      "fields": [
+        {
+          "name": "derived$CanEqual$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.automation.Approval$Mode$",
+      "fields": [
+        {
+          "name": "derived$CanEqual$lzy2"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.automation.Approval$State$",
+      "fields": [
+        {
+          "name": "derived$CanEqual$lzy3"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.automation.Pipeline$",
+      "fields": [
+        {
+          "name": "derived$CanEqual$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.api.automation.ProviderKind$",
+      "fields": [
+        {
+          "name": "derived$CanEqual$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.automation.Run$State$",
+      "fields": [
+        {
+          "name": "derived$CanEqual$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.automation.Step$Status$",
+      "fields": [
+        {
+          "name": "derived$CanEqual$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.automation.TargetKind$",
       "fields": [
         {
           "name": "derived$CanEqual$lzy1"
@@ -831,7 +895,23 @@
       ]
     },
     {
+      "type": "com.histmersion.config.PgSize$",
+      "fields": [
+        {
+          "name": "derived$CanEqual$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.config.PgTuning$",
+      "fields": [
+        {
+          "name": "given_ConfigReader_PgTuning$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.PgTuning$Written$",
       "fields": [
         {
           "name": "derived$ConfigReader$lzy1"

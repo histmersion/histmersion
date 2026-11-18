@@ -12,12 +12,16 @@
 set -euo pipefail
 root="$(cd "$(dirname "$0")/../.." && pwd)"
 here="$root/spike/crema"
-graal="${GRAALVM_HOME:-$HOME/.sdkman/candidates/java/25.4.4.1+1-graalce}"
+graal="${GRAALVM_HOME:-$HOME/.sdkman/candidates/java/25.5.5.0+3-graalce}"
 export JAVA_HOME="$graal" PATH="$graal/bin:$PATH"
+# the build's Scala (build.sbt, .sdkmanrc): the plugin-side 3.x jars and the sbt output directory follow it
+sv="${SCALA_VERSION:-3.10.1}"
+# log prefix: crema-* is the 25.4 run (2026-11-18 morning), crema2-* the re-run on 25.5
+tag="${CREMA_TAG:-crema2}"
 out="$here/target"; logs="$root/refactor-audit/concept-table"; meta="$here/metadata"
 mkdir -p "$out" "$logs"
-drv="$(ls -d "$root"/target/out/jvm/scala-*/histmersion-crema-spike | head -1)"
-hello="$(ls "$root"/target/out/jvm/scala-*/histmersion-plugin-hello/histmersion-plugin-hello_3-*.jar | grep -v -- '-tests\.jar$' | head -1)"
+drv="$(ls -d "$root"/target/out/jvm/scala-"$sv"/histmersion-crema-spike | head -1)"
+hello="$(ls "$root"/target/out/jvm/scala-"$sv"/histmersion-plugin-hello/histmersion-plugin-hello_3-*.jar | grep -v -- '-tests\.jar$' | head -1)"
 cp="$(cat "$drv/crema-classpath.txt")"
 main=com.histmersion.spike.crema.CremaMain
 sloth="$(ls "${SLOTH_HOME:-$HOME/Workspaces/Github/sloth}"/cli/target/scala-*/sloth.jar | head -1)"
@@ -32,8 +36,8 @@ scalac() { # <version> <out.jar> <sources...>
 
 case "${1:-}" in
   jars)
-    scalac 3.10.0 "$out/bench.jar" "$here/bench/Bench.scala" "$here/bench/JdkUse.scala"
-    scalac 3.10.0 "$out/lazies-310.jar" "$here/lazy/Lazies.scala"
+    scalac "$sv" "$out/bench.jar" "$here/bench/Bench.scala" "$here/bench/JdkUse.scala" "$here/bench/JdkCatch.scala"
+    scalac "$sv" "$out/lazies-310.jar" "$here/lazy/Lazies.scala"
     scalac 3.3.6 "$out/lazies-33.jar" "$here/lazy/Lazies.scala"
     cp "$out/lazies-33.jar" "$out/lazies-33-sloth.jar"
     java -jar "$sloth" "$out/lazies-33-sloth.jar" \
@@ -84,18 +88,36 @@ case "${1:-}" in
       rcl-min) flags=("${rcl[@]}" "$min") ;;
       rcl-platform) flags=("${rcl[@]}" "$min,$platform") ;;
       rcl-all) flags=("${rcl[@]}" -H:Preserve=all) ;;
+      # 25.5 re-run: Preserve=all minus the macro-carrying kindlings and hearth packages (the ones whose method
+      # signatures name internal.compiletime or need the compiler), with the kindlings readers registered instead
+      rcl-all-ign)
+        ign=(
+          hearth.kindlings.sconfigderivation hearth.kindlings.sconfigderivation.internal.compiletime
+          hearth.kindlings.sconfigderivation.internal.compiletime.rules
+          hearth.kindlings.jsoniterderivation hearth.kindlings.jsoniterderivation.internal.compiletime
+          hearth.kindlings.jsoniterderivation.internal.compiletime.rules
+          hearth.kindlings.tapirschemaderivation hearth.kindlings.tapirschemaderivation.internal.compiletime
+          hearth.kindlings.tapirschemaderivation.internal.compiletime.rules
+          hearth.kindlings.optics hearth.kindlings.optics.internal.compiletime hearth.kindlings.derivation.compiletime
+          hearth.kindlings.macros.compiletime hearth.kindlings.jsonschemaconfigs
+          hearth hearth.data hearth.debug hearth.source hearth.std hearth.std.extensions hearth.typed hearth.typename
+          hearth.untyped hearth.treeprinter
+        )
+        flags=("${rcl[@]}" -H:Preserve=all "-H:IgnorePreserveForClasses=$(printf '%s\n' "${ign[@]}" | paste -sd, -)") ;;
+      # 25.5 re-run: rcl-platform WITHOUT the kindlings reflection registrations (is the workaround still needed?)
+      rcl-platform-nometa) flags=("${rcl[@]}" "$min,$platform") ;;
       rcl-jit) flags=("${rcl[@]}" "$min,$platform" -H:+GraalJITCompileAtRuntime) ;;
       rcl-compat) flags=("${rcl[@]}" "$min,$platform" -H:+CompatibilityMode) ;;
       *) echo "unknown variant $variant" >&2; exit 2 ;;
     esac
     printf '%s\n' "${flags[@]}" | tr ',' '\n' | sed 's#^path=.*/#path=…/#' | head -40
-    log="$logs/crema-build-$variant.log"
+    log="$logs/$tag-build-$variant.log"
     echo "native-image ($variant) → $out/crema-$variant; log $log"
     start=$(date +%s)
     rc=0
     # rcl-platform and up: the kindlings reader classes a derived plugin reader calls, which -H:Preserve cannot
     # keep (their package names macro-time classes), registered for reflection instead
-    confdirs="$meta"; case "$variant" in rcl-platform|rcl-jit|rcl-compat) confdirs="$meta,$here/platform-metadata" ;; esac
+    confdirs="$meta"; case "$variant" in rcl-platform|rcl-jit|rcl-compat|rcl-all-ign) confdirs="$meta,$here/platform-metadata" ;; esac
     /usr/bin/time -l native-image "${flags[@]}" -H:ConfigurationFileDirectories="$confdirs" \
       -cp "$image_cp" "$main" "$out/crema-$variant" > "$log" 2>&1 || rc=$?
     echo "exit $rc after $(( $(date +%s) - start )) s"
@@ -119,7 +141,9 @@ case "${1:-}" in
       done
       echo "== $variant: JDK classes the image does not use"
       "${bin[@]}" lazy "$out/bench.jar" com.histmersion.spike.cremabench.JdkUse 2>&1 || echo "exit $?"
-    } 2>&1 | tee "$logs/crema-measure-$variant.log"
+      echo "== $variant: the same call inside catch Throwable"
+      "${bin[@]}" lazy "$out/bench.jar" com.histmersion.spike.cremabench.JdkCatch 2>&1 || echo "exit $?"
+    } 2>&1 | tee "$logs/$tag-measure-$variant.log"
     ;;
   server-build)
     # the REAL server image from its relink kit (sbt server/relinkKit): closed (as shipped) or rcl-jit (runtime class
@@ -145,7 +169,7 @@ case "${1:-}" in
         "-H:Preserve=$(printf 'package=%s\n' "${pkgs[@]}" | paste -sd, -)"
         -H:ConfigurationFileDirectories="$here/platform-metadata")
     fi
-    log="$logs/crema-build-server-$variant.log"
+    log="$logs/$tag-build-server-$variant.log"
     echo "native-image server ($variant) → $out/server-$variant; log $log"
     start=$(date +%s); rc=0
     /usr/bin/time -l native-image "${args[@]}" "${flags[@]}" -cp "$kcp" "$(tr -d '\n' < "$kit/main-class")" \
@@ -168,7 +192,7 @@ case "${1:-}" in
     {
       echo "== server-$variant: size"; ls -l "$out/server-$variant"
       echo "== server-$variant: --self-check ×9"; python3 -I "$here/timeit.py" 9 "${run[@]}"
-    } 2>&1 | tee "$logs/crema-measure-server-$variant.log"
+    } 2>&1 | tee "$logs/$tag-measure-server-$variant.log"
     rm -rf "$tmp"
     ;;
   *) sed -n 2,12p "$0"; exit 2 ;;
