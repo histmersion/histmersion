@@ -319,7 +319,7 @@ G9prefixRole	plugins/fetchers	test	1
 G9prefixRole	plugins/gazetteers	test	3
 G9prefixRole	plugins/media	test	1
 G9prefixRole	server	main	15
-G9prefixRole	server	test	165
+G9prefixRole	server	test	166
 G9prefixRole	upstreams	test	6
 G9prefixRole	values	test	5
 G9prefixRole	web	main	4
