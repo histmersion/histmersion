@@ -183,3 +183,8 @@ class ReadBackSuite extends munit.FunSuite:
       List(Content.Proposal(Content.Requirement.SlugFree, Where("'old'")))
     )
     assertEquals(RawJson.decode[Plans.ArticlePlan](typed.asJson.noSpaces).map(_.dropped), Right(typed.dropped))
+    assertEquals(
+      typed.asJson.noSpaces,
+      """{"goal":"g","rationale":"r","articles":[],"dropped":[{"group":"Content","case":"Proposal",""" +
+        """"data":{"rule":{"SlugFree":{}},"at":"'old'"},"text":"'old': an article with this slug exists (or did)"}]}"""
+    )
