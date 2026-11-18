@@ -3,17 +3,19 @@
 # JDK version the release declares (JAVA_VERSION in its `release` file), which scripts/bundle/server.sh
 # builds with, writes into the kit (kit/graalvm-version) and the relink scripts look for. The sha256 is
 # the release's own (graalvm/graalvm-ce-builds publishes <asset>.sha256 beside each tarball, and GitHub's
-# asset digest agrees — both checked 2026-10-23). Moving the pin = new lines here, in the same commit as
-# the docs that name it and the re-checked reachability metadata (AGENTS.md, "The JDK pin").
+# asset digest agrees — both checked 2026-11-18, and the macOS aarch64 tarball downloaded and hashed).
+# Moving the pin = new lines here, in the same commit as the docs that name it and the re-checked
+# reachability metadata (AGENTS.md, "The JDK pin").
 #
-# GraalVM CE 25.4 ("25 Innovation 4", release tag graal-25.4.4.1.1, JDK 25.0.4.1.1): an INNOVATION
-# release, which gets no fixes once the next one is out — move to each new one as it lands
-# (docs/research-build-speed.md §5). It ships no macOS x64 build, so there is no macos-x64 line: an Intel
-# Mac cannot provision it (histmersion-toolchain install says so; JVM mode needs only a JDK 25).
+# GraalVM CE 25.5 ("25 Innovation 5", release tag graal-25.5.5.0.3, JDK 25.0.5.0.3; since 2026-11-18,
+# 25.4 / JDK 25.0.4.1.1 from 2026-10-23): an INNOVATION release, which gets no fixes once the next one is
+# out — move to each new one as it lands (docs/research-build-speed.md §5). It ships no macOS x64 build,
+# so there is no macos-x64 line: an Intel Mac cannot provision it (histmersion-toolchain install says so;
+# JVM mode needs only a JDK 25).
 #
 # Licence: GraalVM Community Edition is GPLv2 with the Classpath Exception (Substrate VM, the runtime
 # linked into every native image, included), so it may be downloaded, used and redistributed, and a
 # binary linked with it is not made GPL by that.
-25.0.4.1.1 macos-aarch64 4ec9932aa4aab1afca0ea31982d32d6f956615c61fe21a227b49756b25adda4f https://github.com/graalvm/graalvm-ce-builds/releases/download/graal-25.4.4.1.1/graalvm-community-jdk-25i4-25.0.4.1.1_macos-aarch64_bin.tar.gz
-25.0.4.1.1 linux-x64 05ccbbe783210b6886ff7b08fcd0b061c5dce4852b05db87284fc0e24abb08e2 https://github.com/graalvm/graalvm-ce-builds/releases/download/graal-25.4.4.1.1/graalvm-community-jdk-25i4-25.0.4.1.1_linux-x64_bin.tar.gz
-25.0.4.1.1 linux-aarch64 e5f5e2f59643cf96765c741dc00b206f86c69c8c1bf843fe26050c871e0e2dbc https://github.com/graalvm/graalvm-ce-builds/releases/download/graal-25.4.4.1.1/graalvm-community-jdk-25i4-25.0.4.1.1_linux-aarch64_bin.tar.gz
+25.0.5.0.3 macos-aarch64 54369d4a5931a5a2101c7c52444a4e7e6647a3a4e041335053cda6fd22295e0c https://github.com/graalvm/graalvm-ce-builds/releases/download/graal-25.5.5.0.3/graalvm-community-jdk-25i5-25.0.5.0.3_macos-aarch64_bin.tar.gz
+25.0.5.0.3 linux-x64 c6438dee6c3ade2220d40b7ccdcad24b512d30e233e61bb4fc70519522de34ef https://github.com/graalvm/graalvm-ce-builds/releases/download/graal-25.5.5.0.3/graalvm-community-jdk-25i5-25.0.5.0.3_linux-x64_bin.tar.gz
+25.0.5.0.3 linux-aarch64 41741c0650ae7564a78335f9e4fc353a902e6ff1d4140f2e4fabd1c55d5cce66 https://github.com/graalvm/graalvm-ce-builds/releases/download/graal-25.5.5.0.3/graalvm-community-jdk-25i5-25.0.5.0.3_linux-aarch64_bin.tar.gz

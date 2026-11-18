@@ -247,7 +247,7 @@ object PluginTemplate:
       |## Install it from this directory
       |
       |You need an installed Histmersion (its `histmersion` CLI and the server), scala-cli, and a JDK: use the one
-      |Histmersion is built with, GraalVM CE 25.4 (`sdk install java 25.4.4.1+1-graalce`, then point `JAVA_HOME`
+      |Histmersion is built with, GraalVM CE 25.5 (`sdk install java 25.5.5.0+3-graalce`, then point `JAVA_HOME`
       |at it). The Histmersion source repository is not needed.
       |
       |1. **Build and test**, offline:

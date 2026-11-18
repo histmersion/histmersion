@@ -16,8 +16,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       # the PINNED GraalVM CE (scripts/bundle/graalvm-pins.txt: version, URL, SHA-256), provisioned by the
-      # same script the installers use — setup-graalvm cannot name an innovation release (25.4's assets are
-      # `graalvm-community-jdk-25i4-…` under the tag graal-25.4.4.1.1)
+      # same script the installers use — setup-graalvm cannot name an innovation release (25.5's assets are
+      # `graalvm-community-jdk-25i5-…` under the tag graal-25.5.5.0.3)
       - name: GraalVM CE (the pin)
         run: |
           export HISTMERSION_DATA_DIR="$RUNNER_TEMP/histmersion-toolchain" HISTMERSION_HOME=

@@ -519,7 +519,7 @@ when it was linked. Two consequences:
    lacks, so add the ones it names. For anything else, use GraalVM's **tracing agent**: run your
    plugin's code once under `-agentlib:native-image-agent=…` (for example its tests, or a JVM-mode
    `--self-check` with the plugin enabled) and ship the JSON it writes. Use the GraalVM version
-   Histmersion pins (CE 25.4, JDK 25.0.4.1.1: `sdk install java 25.4.4.1+1-graalce`).
+   Histmersion pins (CE 25.5, JDK 25.0.5.0.3: `sdk install java 25.5.5.0+3-graalce`).
    The `hello` fixture's `Class.forName` lookup works in a relinked binary only because its jar carries
    such a file.
 

@@ -29,7 +29,7 @@ macOS on Apple Silicon or Linux; needs [sdkman](https://sdkman.io), [uv](https:/
 [pixi](https://pixi.sh) and [just](https://just.systems).
 
 ```bash
-sdk env install && sdk env   # the pinned GraalVM CE 25.4 and sbt (.sdkmanrc)
+sdk env install && sdk env   # the pinned GraalVM CE 25.5 and sbt (.sdkmanrc)
 just install             # build the native bundle, install it as a user service, start it
 histmersion health
 open http://localhost:8000

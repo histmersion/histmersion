@@ -1,6 +1,6 @@
 // Histmersion — native Scala MCP server + host CLI over a Postgres/PostGIS store.
 // Direct-style SoftwareMill stack: Tapir + tapir-netty-server-sync, Chimp (MCP), jsoniter-scala (+Kindlings),
-// Ox, Magnum (sync JDBC). Toolchain (.sdkmanrc, `sdk env install && sdk env`): GraalVM CE 25.4 + native-image,
+// Ox, Magnum (sync JDBC). Toolchain (.sdkmanrc, `sdk env install && sdk env`): GraalVM CE 25.5 + native-image,
 // pinned in scripts/bundle/graalvm-pins.txt; sbt 2.0.11, also in project/build.properties.
 
 import Dependencies.*

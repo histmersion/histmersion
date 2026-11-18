@@ -25,7 +25,7 @@ check() { if eval "$2"; then ok "$1"; else bad "$1"; fi; }  # <what> <shell test
 
 # ── a fake GraalVM ────────────────────────────────────────────────────────────────────────────────
 graal="$tmp/graalvm"; mkdir -p "$graal/bin"
-echo 'JAVA_VERSION="25.0.4.1.1"' > "$graal/release"
+echo 'JAVA_VERSION="25.0.5.0.3"' > "$graal/release"
 cat > "$graal/bin/java" <<'SH'
 #!/bin/bash
 # pluginTool <cmd> …, pluginResolver resolve …, histmersionServer --self-check, -jar sloth.jar, SlothVerify.java — told
@@ -143,10 +143,10 @@ new_install() {
   echo a.jar > "$INSTALL/kit/classpath"
   echo "--initialize-at-build-time=org.slf4j.ScribeLoggerAdapter" > "$INSTALL/kit/native-image.args"
   echo com.histmersion.server.histmersionServer > "$INSTALL/kit/main-class"
-  echo 25.0.4.1.1 > "$INSTALL/kit/graalvm-version"
+  echo 25.0.5.0.3 > "$INSTALL/kit/graalvm-version"
   echo sloth > "$INSTALL/kit/tools/sloth.jar"; echo verify > "$INSTALL/kit/tools/SlothVerify.java"
   echo resolver > "$INSTALL/kit/tools/resolver/histmersion-plugin-resolver.jar"
-  echo '{"format":1,"version":"0.1.0","graalvm":"25.0.4.1.1","spiVersion":1}' > "$INSTALL/kit/kit.json"
+  echo '{"format":1,"version":"0.1.0","graalvm":"25.0.5.0.3","spiVersion":1}' > "$INSTALL/kit/kit.json"
   (cd "$INSTALL/kit" && find . -type f ! -name kit.json ! -name SHA256SUMS | sed 's|^\./||' | sort \
     | while read -r f; do printf '%s  %s\n' "$(shasum -a 256 "$f" | awk '{print $1}')" "$f"; done > SHA256SUMS)
   export HISTMERSION_DATA_DIR="$tmp/data"

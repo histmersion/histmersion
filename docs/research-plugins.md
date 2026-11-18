@@ -651,7 +651,7 @@ Plugin config changes alone (`enabled = false`) need only a config reload — no
 | need | macOS | Linux |
 |---|---|---|
 | C toolchain | Xcode Command Line Tools (`xcode-select --install`); GraalVM states "Native Image requires the Xcode command line tools", macOS 13+ and Xcode 14+ | `build-essential zlib1g-dev` (Debian/Ubuntu); `gcc glibc-devel zlib-devel libstdc++-static` (dnf); glibc ≥ 2.17, zlib ≥ 1.2.3, GCC ≥ 10.3 (GraalVM *Getting started on Linux*) |
-| GraalVM | CE at the pin (25.0.1 when this was written; GraalVM CE 25.4, JDK 25.0.4.1.1, since 2026-10-23 — `scripts/bundle/graalvm-pins.txt`): a tarball from `graalvm/graalvm-ce-builds` with a pinned sha256, fetched by `curl` (no quarantine) into `~/Applications/Histmersion/graalvm` | same, `~/.local/share/histmersion/graalvm` |
+| GraalVM | CE at the pin (25.0.1 when this was written; GraalVM CE 25.4, JDK 25.0.4.1.1, since 2026-10-23; GraalVM CE 25.5, JDK 25.0.5.0.3, since 2026-11-18 — `scripts/bundle/graalvm-pins.txt`): a tarball from `graalvm/graalvm-ce-builds` with a pinned sha256, fetched by `curl` (no quarantine) into `~/Applications/Histmersion/graalvm` | same, `~/.local/share/histmersion/graalvm` |
 | Sloth | only for the **from-source** build; the relink kit ships patched jars | same |
 | sbt / Scala | only for the from-source build | same |
 
@@ -1535,7 +1535,8 @@ unanswered). `local` runs `histmersion-toolchain install` (the pinned GraalVM CE
 release's own `.sha256` files and GitHub's asset digests agree — unpacked into
 `<data>/toolchain/graalvm-ce-<version>`; 25.0.1 for macOS aarch64/x64 and Linux x64/aarch64, checked
 2026-10-18; since 2026-10-23 GraalVM CE 25.4, JDK 25.0.4.1.1, for macOS aarch64 and Linux x64/aarch64 —
-25.4 has no macOS x64 build — checked 2026-10-23), `histmersion-toolchain
+25.4 has no macOS x64 build — checked 2026-10-23; since 2026-11-18 GraalVM CE 25.5, JDK 25.0.5.0.3,
+the same three platforms, checked 2026-11-18), `histmersion-toolchain
 check`, then `histmersion-relink --no-restart` before the service starts; any failure falls back to JVM
 mode, and failing that keeps the prebuilt binary. **Deviation:** §8.1 put GraalVM under
 `~/Applications/Histmersion/graalvm`; an install replaces that directory wholesale, so it lives in the

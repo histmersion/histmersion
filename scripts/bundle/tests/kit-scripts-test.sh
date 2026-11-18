@@ -46,7 +46,7 @@ for s in server-jvm:histmersion-server-jvm toolchain:histmersion-toolchain signi
   install -m 0755 "$src/${s%%:*}.sh" "$install/bin/${s#*:}"
 done
 install -m 0644 "$src/kit-common.sh" "$install/libexec/kit-common.sh"
-echo 25.0.4.1.1 > "$install/kit/graalvm-version"
+echo 25.0.5.0.3 > "$install/kit/graalvm-version"
 printf 'b.jar\na.jar\n' > "$install/kit/classpath"
 echo com.histmersion.server.histmersionServer > "$install/kit/main-class"
 
@@ -88,40 +88,40 @@ rm -rf "$HISTMERSION_DATA_DIR/signing" "$HISTMERSION_DATA_DIR/plugins"
 
 # ── histmersion-toolchain ─────────────────────────────────────────────────────────────────────────
 echo "toolchain"
-fake="$tmp/fake-graal/graalvm-community-25.4.4.1.1+1.1"
+fake="$tmp/fake-graal/graalvm-community-25.5.5.0.3+1.1"
 mkdir -p "$fake/Contents/Home/bin"
-echo 'JAVA_VERSION="25.0.4.1.1"' > "$fake/Contents/Home/release"
+echo 'JAVA_VERSION="25.0.5.0.3"' > "$fake/Contents/Home/release"
 printf '#!/bin/sh\necho fake\n' > "$fake/Contents/Home/bin/native-image"; cp "$fake/Contents/Home/bin/native-image" "$fake/Contents/Home/bin/java"
 chmod +x "$fake/Contents/Home/bin/"*
-tar -czf "$tmp/graal.tar.gz" -C "$tmp/fake-graal" "graalvm-community-25.4.4.1.1+1.1"
+tar -czf "$tmp/graal.tar.gz" -C "$tmp/fake-graal" "graalvm-community-25.5.5.0.3+1.1"
 sum="$(shasum -a 256 "$tmp/graal.tar.gz" | awk '{print $1}')"
 export HISTMERSION_TOOLCHAIN_PLATFORM=test-arch
-printf '# a comment\n25.0.4.1.1 test-arch %s file://%s\n' "0000000000000000000000000000000000000000000000000000000000000000" "$tmp/graal.tar.gz" > "$tmp/pins-bad"
+printf '# a comment\n25.0.5.0.3 test-arch %s file://%s\n' "0000000000000000000000000000000000000000000000000000000000000000" "$tmp/graal.tar.gz" > "$tmp/pins-bad"
 rc=0; HISTMERSION_GRAALVM_PINS="$tmp/pins-bad" "$install/bin/histmersion-toolchain" install > "$tmp/t.out" 2>&1 || rc=$?
 check "a checksum mismatch: refused (exit 2), nothing unpacked, no download left" \
-  '[ "$rc" = 2 ] && grep -q "SHA-256 mismatch" "$tmp/t.out" && [ ! -e "$HISTMERSION_DATA_DIR/toolchain/graalvm-ce-25.0.4.1.1" ] && [ -z "$(ls -A "$HISTMERSION_DATA_DIR/toolchain" 2>/dev/null | grep -v "^\.lock$" || true)" ]'
-printf '25.0.4.1.1 test-arch %s file://%s\n' "$sum" "$tmp/graal.tar.gz" > "$tmp/pins"
+  '[ "$rc" = 2 ] && grep -q "SHA-256 mismatch" "$tmp/t.out" && [ ! -e "$HISTMERSION_DATA_DIR/toolchain/graalvm-ce-25.0.5.0.3" ] && [ -z "$(ls -A "$HISTMERSION_DATA_DIR/toolchain" 2>/dev/null | grep -v "^\.lock$" || true)" ]'
+printf '25.0.5.0.3 test-arch %s file://%s\n' "$sum" "$tmp/graal.tar.gz" > "$tmp/pins"
 rc=0; HISTMERSION_GRAALVM_PINS="$tmp/pins" "$install/bin/histmersion-toolchain" install > "$tmp/t.out" 2>&1 || rc=$?
-check "the pinned archive is unpacked into the data directory" '[ "$rc" = 0 ] && [ -x "$HISTMERSION_DATA_DIR/toolchain/graalvm-ce-25.0.4.1.1/Contents/Home/bin/native-image" ]'
+check "the pinned archive is unpacked into the data directory" '[ "$rc" = 0 ] && [ -x "$HISTMERSION_DATA_DIR/toolchain/graalvm-ce-25.0.5.0.3/Contents/Home/bin/native-image" ]'
 check "the licence is named on the way" 'grep -q "Classpath Exception" "$tmp/t.out"'
 check "path: the provisioned home (macOS layout: Contents/Home)" \
-  '[ "$("$install/bin/histmersion-toolchain" path)" = "$HISTMERSION_DATA_DIR/toolchain/graalvm-ce-25.0.4.1.1/Contents/Home" ]'
+  '[ "$("$install/bin/histmersion-toolchain" path)" = "$HISTMERSION_DATA_DIR/toolchain/graalvm-ce-25.0.5.0.3/Contents/Home" ]'
 rc=0; HISTMERSION_GRAALVM_PINS="$tmp/pins" "$install/bin/histmersion-toolchain" install > "$tmp/t.out" 2>&1 || rc=$?
 check "install again: already provisioned, nothing downloaded" '[ "$rc" = 0 ] && grep -q "already provisioned" "$tmp/t.out"'
-printf '25.0.4.1.1 other-arch %s file://%s\n' "$sum" "$tmp/graal.tar.gz" > "$tmp/pins-other"
+printf '25.0.5.0.3 other-arch %s file://%s\n' "$sum" "$tmp/graal.tar.gz" > "$tmp/pins-other"
 "$install/bin/histmersion-toolchain" remove > /dev/null
 rc=0; HISTMERSION_GRAALVM_PINS="$tmp/pins-other" "$install/bin/histmersion-toolchain" install > "$tmp/t.out" 2>&1 || rc=$?
 check "no pin for this platform: refused (exit 2)" '[ "$rc" = 2 ] && grep -q "no pinned GraalVM" "$tmp/t.out"'
 rc=0; HISTMERSION_RELINK_MEMORY_BYTES=$((8 * 1073741824)) "$install/bin/histmersion-toolchain" check > "$tmp/t.out" 2>&1 || rc=$?
 check "check: no GraalVM and 8 GB → cannot relink (exit 2), JVM mode named" \
-  '[ "$rc" = 2 ] && grep -q "GraalVM CE 25.0.4.1.1: MISSING" "$tmp/t.out" && grep -q "LESS than" "$tmp/t.out" && grep -q "JVM mode" "$tmp/t.out"'
+  '[ "$rc" = 2 ] && grep -q "GraalVM CE 25.0.5.0.3: MISSING" "$tmp/t.out" && grep -q "LESS than" "$tmp/t.out" && grep -q "JVM mode" "$tmp/t.out"'
 pinned="$(awk '!/^#/ && NF {print $1; exit}' "$src/graalvm-pins.txt")"
 check "the repo's pins: one version, the three CI platforms, each a 64-hex SHA-256 and an official release URL" \
   '[ -n "$pinned" ] && [ "$(awk "!/^#/ && NF" "$src/graalvm-pins.txt" | grep -cvE "^$pinned [a-z0-9-]+ [0-9a-f]{64} https://github.com/graalvm/graalvm-ce-builds/releases/download/[^ ]+_bin\.tar\.gz$")" = 0 ] \
    && [ "$(grep -cE "^$pinned (macos-aarch64|linux-x64|linux-aarch64) " "$src/graalvm-pins.txt")" = 3 ]'
 rc=0; HISTMERSION_HOME="$tmp/no-kit" HISTMERSION_RELINK_MEMORY_BYTES=$((8 * 1073741824)) bash "$src/toolchain.sh" check > "$tmp/t.out" 2>&1 || rc=$?
 check "without a kit, the toolchain's version is the pins' (the one pin)" 'grep -q "GraalVM CE $pinned" "$tmp/t.out"'
-# sdkman names a GraalVM CE build by its release (25.4.4.1+1-graalce), the pins' URLs by its tag (graal-25.4.4.1.1)
+# sdkman names a GraalVM CE build by its release (25.5.5.0+3-graalce), the pins' URLs by its tag (graal-25.5.5.0.3)
 sdk_java="$(sed -n 's/^java=\(.*\)-graalce$/\1/p' "$src/../../.sdkmanrc" | tr '+' '.')"
 check ".sdkmanrc names the pinned GraalVM CE release" \
   '[ -n "$sdk_java" ] && [ "$(grep -cvE "^#|^$|/releases/download/graal-$sdk_java/" "$src/graalvm-pins.txt")" = 0 ]'
@@ -243,7 +243,7 @@ SH
 new_dest() { # <dir> — a bundle with a prebuilt binary, a kit, fake toolchain and relink
   rm -rf "$1" "$tmp"/rc.* && mkdir -p "$1/bin" "$1/kit" "$1/libexec"
   printf '#!/bin/sh\n# prebuilt\n' > "$1/bin/histmersion-server"; chmod +x "$1/bin/histmersion-server"
-  echo 25.0.4.1.1 > "$1/kit/graalvm-version"; echo kit-jar > "$1/kit/a.jar"
+  echo 25.0.5.0.3 > "$1/kit/graalvm-version"; echo kit-jar > "$1/kit/a.jar"
   (cd "$1/kit" && shasum -a 256 a.jar graalvm-version > SHA256SUMS)
   install -m 0644 "$src/kit-common.sh" "$1/libexec/kit-common.sh"
   fake_tool "$1" histmersion-toolchain; fake_tool "$1" histmersion-relink
@@ -291,7 +291,7 @@ new_dest "$dest"; real_toolchain "$dest"
 rc_mem=0; PATH="$fakebin:$PATH" HISTMERSION_RELINK_MEMORY_BYTES=$((8 * 1073741824)) HISTMERSION_GRAALVM_PINS="$tmp/pins" \
   HISTMERSION_HOME="$dest" ib_build "$dest" local > "$tmp/ib.out" 2>&1 || rc_mem=$?
 check "8 GB of memory (under HISTMERSION_RELINK_MIN_MEMORY_GB): the prebuilt binary, nothing downloaded or linked" \
-  '[ "$rc_mem" = 0 ] && [ "$ib_result" = prebuilt ] && is_prebuilt "$dest" && grep -q "LESS than the 16 GB" "$tmp/ib.out" && [ ! -s "$tmp/steps" ] && [ ! -e "$HISTMERSION_DATA_DIR/toolchain/graalvm-ce-25.0.4.1.1" ]'
+  '[ "$rc_mem" = 0 ] && [ "$ib_result" = prebuilt ] && is_prebuilt "$dest" && grep -q "LESS than the 16 GB" "$tmp/ib.out" && [ ! -s "$tmp/steps" ] && [ ! -e "$HISTMERSION_DATA_DIR/toolchain/graalvm-ce-25.0.5.0.3" ]'
 new_dest "$dest"; real_toolchain "$dest"
 rc_sum=0; PATH="$fakebin:$PATH" HISTMERSION_RELINK_MEMORY_BYTES=$((48 * 1073741824)) HISTMERSION_GRAALVM_PINS="$tmp/pins-bad" \
   HISTMERSION_HOME="$dest" ib_build "$dest" local > "$tmp/ib.out" 2>&1 || rc_sum=$?
@@ -301,7 +301,7 @@ new_dest "$dest"; real_toolchain "$dest"
 rc_ok=0; PATH="$fakebin:$PATH" HISTMERSION_RELINK_MEMORY_BYTES=$((48 * 1073741824)) HISTMERSION_GRAALVM_PINS="$tmp/pins" \
   HISTMERSION_HOME="$dest" ib_build "$dest" local > "$tmp/ib.out" 2>&1 || rc_ok=$?
 check "enough memory, the pinned download good: GraalVM provisioned, then linked" \
-  '[ "$rc_ok" = 0 ] && [ "$ib_result" = local ] && [ -x "$HISTMERSION_DATA_DIR/toolchain/graalvm-ce-25.0.4.1.1/Contents/Home/bin/native-image" ] && [ "$(steps)" = "histmersion-relink --no-restart;" ]'
+  '[ "$rc_ok" = 0 ] && [ "$ib_result" = local ] && [ -x "$HISTMERSION_DATA_DIR/toolchain/graalvm-ce-25.0.5.0.3/Contents/Home/bin/native-image" ] && [ "$(steps)" = "histmersion-relink --no-restart;" ]'
 
 # nothing linked again when it would give the same binary (the build record)
 new_dest "$dest"; build "$dest" local; : > "$tmp/steps"

@@ -227,8 +227,8 @@ class PluginTemplateSuite extends munit.FunSuite:
       "**Updating.**",
       "histmersion plugin rm my-mirror --rebuild",
       "`enabled = false`",
-      "GraalVM CE 25.4",
-      "25.4.4.1+1-graalce",
+      "GraalVM CE 25.5",
+      "25.5.5.0+3-graalce",
       "histmersion plugin repo --m2"
     ).foreach(step => assert(readme.contains(step), s"the README lacks: $step"))
     assert(

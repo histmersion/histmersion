@@ -733,10 +733,10 @@ task, but check `git status` after a hard interrupt.
 
 ## The JDK pin
 
-`scripts/bundle/graalvm-pins.txt` pins **GraalVM CE 25.4** ("25 Innovation 4", JDK **25.0.4.1.1** — the
-version its `release` file declares, which is the string every check compares): one line per platform
-with the official release URL and its SHA-256. `.sdkmanrc` names the same build
-(`java=25.4.4.1+1-graalce`, which sdkman downloads from that URL), so in a checkout
+`scripts/bundle/graalvm-pins.txt` pins **GraalVM CE 25.5** ("25 Innovation 5", JDK **25.0.5.0.3** — the
+version its `release` file declares, which is the string every check compares; since 2026-11-18, CE 25.4
+before it): one line per platform with the official release URL and its SHA-256. `.sdkmanrc` names the
+same build (`java=25.5.5.0+3-graalce`, which sdkman downloads from that URL), so in a checkout
 `sdk env install && sdk env` is the whole setup. The build uses the **active** JDK (`JAVA_HOME`, else
 `java` on `PATH`) and refuses any other version: `nativeImage` and the tracing-agent run (`project/NativeImage.scala`),
 the justfile's sbt recipes (`scripts/dev/sbt.sh`) and `scripts/bundle/server.sh`, which also writes the
@@ -747,8 +747,8 @@ is a single coordinated change — the pins (version, URLs, SHA-256 checked agai
 AND GitHub's asset digest), the `java=` line of `.sdkmanrc`, the docs that name it, and the re-checked
 tracing-agent metadata, in one commit.
 
-25.4 is an **innovation** release: it gets no fixes once the next one is out, so the pin moves with each
-new one (docs/research-build-speed.md §5 has why it was adopted: 20 % smaller binaries at the same build
+25.5 is an **innovation** release: it gets no fixes once the next one is out, so the pin moves with each
+new one (docs/research-build-speed.md §5 has why the innovation line (25.4) was adopted: 20 % smaller binaries at the same build
 time). It ships no macOS x64 build. Its builder refuses a `java.*` class on the image class path, which
 is why build.sbt excludes `scala-java-time-tzdb_3` (a Scala.js time-zone database scribe's perfolation
 pulls onto the JVM, holding its own `java.time.zone.TzdbZoneRulesProvider`); the binaries use the JDK's

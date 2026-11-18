@@ -39,7 +39,7 @@ You need [sdkman](https://sdkman.io) (it installs the Java toolchain and sbt), [
 the repository:
 
 ```bash
-sdk env install        # the pinned Java toolchain (GraalVM CE 25.4, ~340 MB once) and sbt (.sdkmanrc)
+sdk env install        # the pinned Java toolchain (GraalVM CE 25.5, ~340 MB once) and sbt (.sdkmanrc)
 sdk env                # use them in this shell
 just install           # builds dist/histmersion (~3.3 GB, of which the OCR models are ~1.3 GB),
                        # installs it, starts it
@@ -58,9 +58,9 @@ To do that the installer:
 
 1. checks for a C toolchain (macOS: `xcode-select --install`; Linux: `build-essential zlib1g-dev`),
    enough memory (`HISTMERSION_RELINK_MIN_MEMORY_GB`: the Mac's total RAM, default 16 GB) and disk;
-2. downloads GraalVM CE 25.4 **once** from its official release (~340 MB on macOS, ~350 MB on
+2. downloads GraalVM CE 25.5 **once** from its official release (~340 MB on macOS, ~350 MB on
    Linux), checks it against a pinned SHA-256 checksum, and unpacks it into the data folder's
-   `toolchain/` (~640 MB) — the same copy a build from source uses. GraalVM CE 25.4 has no build
+   `toolchain/` (~640 MB) — the same copy a build from source uses. GraalVM CE 25.5 has no build
    for Intel Macs: there the installer falls back to the bundle's ready-made server;
 3. links the server — about 2 minutes and 9–10 GB of memory on a recent laptop.
 

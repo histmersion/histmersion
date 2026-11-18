@@ -274,7 +274,7 @@ class PluginToolSuite extends munit.FunSuite:
       kit,
       PluginKit.KitManifest.Version("0.1.0"),
       Some(PluginKit.KitManifest.Commit("abc")),
-      PluginKit.KitManifest.Graalvm("25.0.4.1.1")
+      PluginKit.KitManifest.Graalvm("25.0.5.0.3")
     )
     assertEquals(m.files.map(_.file), List("classpath", "lib/a.jar", "main-class"))
     assertEquals(
@@ -283,7 +283,7 @@ class PluginToolSuite extends munit.FunSuite:
     )
     assertEquals(
       (m.mainClass, m.graalvm, m.spiVersion),
-      ("com.histmersion.server.histmersionServer", "25.0.4.1.1", Spi.Version)
+      ("com.histmersion.server.histmersionServer", "25.0.5.0.3", Spi.Version)
     )
     val actual =
       m.files.map(f => f.file -> Sha256.applyUnsafe(RelinkPlugins.sha256(kit.resolve(f.file.value)).value)).toMap

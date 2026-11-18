@@ -156,7 +156,7 @@ another macOS version.
 A plugin you have as source, such as one `histmersion plugin new` wrote or a scala-cli project cloned from
 its repository, is built, published into a directory and installed from there. You need an installed
 Histmersion (its `histmersion` CLI and the server), [scala-cli](https://scala-cli.virtuslab.org), and a JDK:
-use the one Histmersion is built with, GraalVM CE 25.4 (`sdk install java 25.4.4.1+1-graalce`, then point
+use the one Histmersion is built with, GraalVM CE 25.5 (`sdk install java 25.5.5.0+3-graalce`, then point
 `JAVA_HOME` at it). The Histmersion source repository is not needed: the project reads the plugin API, the
 platform and the testkit from the local Maven repository (`//> using repository m2Local`,
 `~/.m2/repository`), into which the installer copies the install's; `histmersion plugin repo --m2` copies

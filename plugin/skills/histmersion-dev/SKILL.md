@@ -10,8 +10,8 @@ build/test/run workflow.
 
 ## Toolchain
 
-Pinned: **GraalVM CE 25.4** (JDK 25.0.4.1.1) in `scripts/bundle/graalvm-pins.txt` (URL + SHA-256 per
-platform); `.sdkmanrc` names the same build (`java=25.4.4.1+1-graalce`), sbt 2.0.11 and Scala 3.10.
+Pinned: **GraalVM CE 25.5** (JDK 25.0.5.0.3) in `scripts/bundle/graalvm-pins.txt` (URL + SHA-256 per
+platform); `.sdkmanrc` names the same build (`java=25.5.5.0+3-graalce`), sbt 2.0.11 and Scala 3.10.
 
 ```bash
 sdk env install && sdk env   # once per checkout, then `sdk env` per shell (or sdkman_auto_env=true)
@@ -134,7 +134,7 @@ current**.
   legacy split files (`reflect-config.json`, `resource-config.json`, …) were deleted with the JDK bump
   and must not come back beside it: the JDK-25 agent EMPTIES a legacy `resource-config.json` it finds
   in the merge dir, which silently drops every resource.
-- Regenerate metadata **only with the pinned JDK** (GraalVM CE 25.4, active after `sdk env`). Agents disagree across JDKs — the JDK-24 one
+- Regenerate metadata **only with the pinned JDK** (GraalVM CE 25.5, active after `sdk env`). Agents disagree across JDKs — the JDK-24 one
   rejects `jniAccessible`, the JDK-22 one writes the legacy format back.
 - `resources` are recorded file by file, as requested. Exercising one page is not enough: hit every
   asset under `web/`, and boot once against an EMPTY database so Flyway reads every migration.

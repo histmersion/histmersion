@@ -91,7 +91,7 @@ hk_sha256_check() { # <dir> <sums file name>
   else (cd "$1" && sha256sum -c --quiet "$2"); fi
 }
 
-# The JDK version a home declares (its `release` file): 25.0.4.1.1 for GraalVM CE 25.4
+# The JDK version a home declares (its `release` file): 25.0.5.0.3 for GraalVM CE 25.5
 hk_jdk_version() { # <java home>
   sed -n 's/^JAVA_VERSION="\([^"]*\)".*/\1/p' "$1/release" 2>/dev/null | head -1
 }
@@ -104,7 +104,7 @@ hk_pinned_version() { # <pins file>
 
 # The GraalVM homes worth trying, best first: the explicit one, the one `histmersion-toolchain install`
 # provisioned, GRAALVM_HOME / JAVA_HOME, then sdkman's GraalVM CE candidates (named by GraalVM's release,
-# 25.4.4.1+1-graalce for JDK 25.0.4.1.1, so the caller matches each one's `release` file).
+# 25.5.5.0+3-graalce for JDK 25.0.5.0.3, so the caller matches each one's `release` file).
 hk_graalvm_candidates() { # <version>
   local v="$1" d
   [ -n "${HISTMERSION_GRAALVM_HOME:-}" ] && printf '%s\n' "$HISTMERSION_GRAALVM_HOME"

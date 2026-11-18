@@ -99,7 +99,7 @@ class PluginCmdSuite extends munit.FunSuite:
       Files.createDirectories(home.resolve("kit"))
       Files.writeString(
         home.resolve("kit/kit.json"),
-        """{"format":1,"version":"0.1.0","commit":"abc","graalvm":"25.0.4.1.1","spiVersion":1,"mainClass":"M","files":[]}"""
+        """{"format":1,"version":"0.1.0","commit":"abc","graalvm":"25.0.5.0.3","spiVersion":1,"mainClass":"M","files":[]}"""
       )
       val out = collection.mutable.Buffer.empty[String]
       val cfg = CliPluginsConfig(
@@ -504,7 +504,7 @@ class PluginCmdSuite extends munit.FunSuite:
     val (st, lines) = e.ops.status(Some(PluginsReport(PluginsReport.SpiVersion(1))), serverAnswered = true)
     assertEquals(st.verdict, PluginKit.Verdict.RelinkNeeded)
     assertEquals(st.added, List(PluginJar.File("hello-0.1.0.jar")))
-    assert(lines.exists(_.contains("kit: 0.1.0 (abc) · GraalVM 25.0.4.1.1 · plugin SPI 1")), lines)
+    assert(lines.exists(_.contains("kit: 0.1.0 (abc) · GraalVM 25.0.5.0.3 · plugin SPI 1")), lines)
     assert(lines.contains("- GPG provenance: (fake)"), lines)
     val listed = e.ops.list(None).mkString("\n")
     assert(listed.contains("- hello-0.1.0.jar — hello 0.1.0 (open) · NOT in the binary yet"), listed)
