@@ -915,10 +915,10 @@ unwrap	core:domain/ManagerPolicy.scala	.value outside a boundary	66
 unwrap	core:domain/MergeFold.scala	.value outside a boundary	29
 unwrap	core:domain/MergePlanner.scala	.value outside a boundary	114
 unwrap	core:domain/PassageFinder.scala	.value outside a boundary	14
-unwrap	core:domain/PlanArticles.scala	.value outside a boundary	23
+unwrap	core:domain/PlanArticles.scala	.value outside a boundary	20
 unwrap	core:domain/PlanGoal.scala	.value outside a boundary	41
 unwrap	core:domain/PlanReadSchedule.scala	.value outside a boundary	2
-unwrap	core:domain/ReviewArticle.scala	.value outside a boundary	191
+unwrap	core:domain/ReviewArticle.scala	.value outside a boundary	187
 unwrap	core:domain/ReviewLedger.scala	.value outside a boundary	68
 unwrap	core:domain/SchedulerPolicy.scala	.value outside a boundary	54
 unwrap	core:domain/Scheduling.scala	.value outside a boundary	5
@@ -1252,7 +1252,7 @@ unwrap	server:domain/research/articles/PageBuilder.scala	.value outside a bounda
 unwrap	server:domain/research/articles/lint/SourceTextFormatting.scala	.value outside a boundary	5
 unwrap	server:domain/research/workflows/CompileArticlePipeline.scala	.value outside a boundary	69
 unwrap	server:domain/research/workflows/InferFilterPipeline.scala	.value outside a boundary	31
-unwrap	server:domain/research/workflows/ProposeArticlesPipeline.scala	.value outside a boundary	40
+unwrap	server:domain/research/workflows/ProposeArticlesPipeline.scala	.value outside a boundary	39
 unwrap	server:domain/research/workflows/ResearchWorkflow.scala	.value outside a boundary	4
 unwrap	server:domain/research/workflows/ReviewArticlePipeline.scala	.value outside a boundary	93
 unwrap	server:domain/research/workflows/ReviewLedgerService.scala	.value outside a boundary	6
