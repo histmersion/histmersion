@@ -309,7 +309,7 @@ cli_err="$data/cli.err"
 "$b/bin/histmersion" health 2>"$cli_err" | grep -q "db ok" || fail "histmersion health"
 "$b/bin/histmersion" about | grep -qF "config file: $data/histmersion.conf (read; ignored unknown key: histmersion.smoke-typo)" \
   || fail "histmersion about does not report the config file it read"
-grep -q "unknown setting 'histmersion.smoke-typo'" "$data/server.out" || fail "no warning for an unknown config key"
+grep -q "histmersion.smoke-typo is no setting: it is ignored" "$data/server.out" || fail "no warning for an unknown config key"
 # the Storage part: measured in the background, so the first answer may still say "measuring…"
 storage=""
 for _ in $(seq 1 15); do
