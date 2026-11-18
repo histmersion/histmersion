@@ -31,8 +31,8 @@ G44	cli	main	364
 G44	cli	test	91
 G44	config	main	175
 G44	config	test	51
-G44	core	main	2848
-G44	core	test	1011
+G44	core	main	2869
+G44	core	test	1004
 G44	db	main	497
 G44	db	test	1523
 G44	files	main	224
@@ -66,8 +66,8 @@ G44	plugins/media	main	103
 G44	plugins/media	test	57
 G44	problem	main	5
 G44	problem	test	1
-G44	server	main	10457
-G44	server	test	4003
+G44	server	main	10455
+G44	server	test	4001
 G44	upstreams	main	147
 G44	upstreams	test	44
 G44	values	main	181
@@ -157,7 +157,7 @@ G47package	plugin-fixtures/hello	main	7
 G47package	plugin-fixtures/hello-ai	main	4
 G47package	plugin-fixtures/hello-deps	main	3
 G47package	plugin-fixtures/hello-lib	main	1
-G47root	api	main	239
+G47root	api	main	238
 G47root	core	main	3
 G47root	plugin-fixtures/hello	main	19
 G47root	plugin-fixtures/hello-ai	main	33
@@ -165,7 +165,7 @@ G47root	plugin-fixtures/hello-deps	main	5
 G47root	plugin-fixtures/hello-lib	main	7
 G47root	plugin-host	main	2
 G47root	server	main	2
-G47self	api	main	3755
+G47self	api	main	3754
 G47self	cli	main	228
 G47self	config	main	736
 G47self	console	main	7
@@ -204,8 +204,8 @@ G49	cli	test	17
 G49	config	main	65
 G49	config	test	8
 G49	console	main	1
-G49	core	main	834
-G49	core	test	168
+G49	core	main	832
+G49	core	test	162
 G49	db	main	987
 G49	db	test	341
 G49	files	main	89
@@ -234,8 +234,8 @@ G49	plugins/gazetteers	main	21
 G49	plugins/gazetteers	test	30
 G49	plugins/media	main	103
 G49	plugins/media	test	15
-G49	server	main	4013
-G49	server	test	1112
+G49	server	main	4012
+G49	server	test	1110
 G49	upstreams	main	42
 G49	upstreams	test	17
 G49	values	main	35
@@ -253,7 +253,7 @@ G60fromString	core	test	23
 G60fromString	db	main	10
 G60fromString	db	test	5
 G60fromString	problem	main	2
-G60fromString	server	main	157
+G60fromString	server	main	154
 G60fromString	server	test	180
 G60fromString	web	main	57
 G60fromString	web	test	21
