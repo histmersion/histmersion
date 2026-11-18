@@ -16,31 +16,24 @@ private[histmersion] object Keyset:
 
   /** The order every paged list uses. `alias` = the table's alias in the query (with its dot). */
 
-  def orderBy(alias: String): Sql = Sql.raw(Sql.Text(s" ORDER BY ${alias}created_at DESC, ${alias}id DESC"))
+  def orderBy(alias: String): Frag = sql" ORDER BY ${SqlLiteral(alias)}created_at DESC, ${SqlLiteral(alias)}id DESC"
 
-  /** ` AND (created_at, id) < (that row's)` — the rows older than the cursor. */
-  def olderThan(alias: String, table: String, cursor: Param): Sql =
-    Sql.of(
-      Sql.OfText(s" AND (${alias}created_at, ${alias}id) < (SELECT created_at, id FROM $table WHERE id = ?)"),
-      cursor
-    )
+  /** ` AND (created_at, id) < (that row's)` — the rows older than the cursor (an id, bound through its codec). */
+  def olderThan[C](alias: String, table: String, cursor: C)(using DbCodec[C]): Frag =
+    sql" AND (${SqlLiteral(alias)}created_at, ${SqlLiteral(alias)}id) < (SELECT created_at, id FROM ${SqlLiteral(table)} WHERE id = $cursor)"
 
   /** ` AND (created_at, id) >= (that row's)` — the rows from the newest down to the cursor, itself included.
     */
-  def atOrNewer(alias: String, table: String, cursor: Param): Sql =
-    Sql.of(
-      Sql.OfText(s" AND (${alias}created_at, ${alias}id) >= (SELECT created_at, id FROM $table WHERE id = ?)"),
-      cursor
-    )
+  def atOrNewer[C](alias: String, table: String, cursor: C)(using DbCodec[C]): Frag =
+    sql" AND (${SqlLiteral(alias)}created_at, ${SqlLiteral(alias)}id) >= (SELECT created_at, id FROM ${SqlLiteral(table)} WHERE id = $cursor)"
 
   /** Is there a row with this id? A cursor naming no row would silently give an empty page. */
-  def existsOn(table: String, cursor: Param)(using DbCon): Boolean =
-    Sql.of(Sql.OfText(s"SELECT 1 FROM $table WHERE id = ?"), cursor).frag.query[Int].run().nonEmpty
+  def existsOn[C](table: String, cursor: C)(using DbCodec[C], DbCon): Boolean =
+    sql"SELECT 1 FROM ${SqlLiteral(table)} WHERE id = $cursor".query[Int].run().nonEmpty
 
   /** `SELECT <state>, count(*) … GROUP BY <state>`, largest first then by name. */
-  def countsOn(from: Sql, stateCol: String)(using DbCon): List[(State, RowCount)] =
-    (Sql.raw(Sql.Text(s"SELECT $stateCol, count(*)::int ")) ++ from ++ Sql
-      .raw(Sql.Text(s" GROUP BY $stateCol"))).frag
+  def countsOn(from: Frag, stateCol: String)(using DbCon): List[(State, RowCount)] =
+    sql"SELECT ${SqlLiteral(stateCol)}, count(*)::int $from GROUP BY ${SqlLiteral(stateCol)}"
       .query[(State, RowCount)]
       .run()
       .toList
@@ -50,27 +43,26 @@ private[histmersion] object Keyset:
     * that row; whether anything is older than the page then takes one indexed probe. `select` = the projection and its
     * `FROM` (the table under `alias`, plus any joins); `where` the filters, starting ` WHERE` (` WHERE true` for none).
     */
-  def pageOn[R](
-      select: Sql,
-      where: Sql,
+  def pageOn[R, C, K](
+      select: Frag,
+      where: Frag,
       alias: String,
       table: String,
       limit: PageSize,
-      before: Option[Param],
-      upTo: Option[Param],
-      id: R => Param
-  )(using DbCodec[R], DbCon): (Vector[R], Boolean) =
-    val bounds = before.fold(Sql.empty)(olderThan(alias, table, _)) ++ upTo.fold(Sql.empty)(atOrNewer(alias, table, _))
+      before: Option[C],
+      upTo: Option[C],
+      id: R => K
+  )(using DbCodec[R], DbCodec[C], DbCodec[K], DbCon): (Vector[R], Boolean) =
+    val bounds = sql"${before.fold(sql"")(olderThan(alias, table, _))}${upTo.fold(sql"")(atOrNewer(alias, table, _))}"
     val rows =
-      (select ++ where ++ bounds ++ orderBy(alias) ++ Sql.of(
-        Sql.OfText(" LIMIT ?"),
-        Param.I(Param.I.V(math.min(limit.value, Int.MaxValue - 1) + 1))
-      )).frag.query[R].run()
+      sql"$select$where$bounds${orderBy(alias)} LIMIT ${math.min(limit.value, Int.MaxValue - 1) + 1}".query[R].run()
     val (shown, more) = Paging.cut(rows, Paging.Limit(limit.value))
     if more || upTo.isEmpty then (shown, more)
     else
       val older = shown.lastOption.exists { last =>
-        (Sql.raw(Sql.Text(s"SELECT 1 FROM $table ${alias.stripSuffix(".")}")) ++ where ++
-          olderThan(alias, table, id(last)) ++ Sql.raw(Sql.Text(" LIMIT 1"))).frag.query[Int].run().nonEmpty
+        sql"SELECT 1 FROM ${SqlLiteral(table)} ${SqlLiteral(alias.stripSuffix("."))}$where${olderThan(alias, table, id(last))} LIMIT 1"
+          .query[Int]
+          .run()
+          .nonEmpty
       }
       (shown, older)

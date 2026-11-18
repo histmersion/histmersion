@@ -12,7 +12,6 @@ import com.histmersion.api.catalogue.Geocode.{Attempt, Candidate, KindHint, Move
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
 import javax.sql.DataSource
-import com.histmersion.util.database.Sql
 import com.histmersion.api.catalogue.{Geocode, Period}
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.catalogue.Longitude
@@ -214,9 +213,7 @@ private[places] object Geocoder:
     * Read-only.
     */
   def movesIn(s: GeocodeSettings)(using DbCon): List[Move] =
-    Sql
-      .raw(Sql.RawText(legacySql))
-      .frag
+    sql"${SqlLiteral(legacySql)}"
       .query[Placed]
       .run()
       .toList
@@ -296,7 +293,7 @@ private[places] object Geocoder:
     * is never listed. Read-only.
     */
   def placementsIn(s: GeocodeSettings)(using DbCon): List[Placement] =
-    Sql.raw(Sql.RawText(unplacedSql)).frag.query[Unplaced].run().toList.flatMap { u =>
+    sql"${SqlLiteral(unplacedSql)}".query[Unplaced].run().toList.flatMap { u =>
       resolveIn(
         Attempt.Name(u.region.value),
         KindHint.Unknown,

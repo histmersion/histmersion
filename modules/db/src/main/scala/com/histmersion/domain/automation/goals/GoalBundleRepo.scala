@@ -7,7 +7,7 @@ import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.data.exchange.BundleImport
 import com.histmersion.domain.automation.goals.GoalRepo
-import com.histmersion.util.database.{Jsonb, Sql}
+import com.histmersion.util.database.Jsonb
 import com.histmersion.util.data.exchange.{BundleFormat, BundleScope}
 import com.histmersion.util.data.exchange.BundleSql.*
 
@@ -27,35 +27,37 @@ private[goals] object GoalBundleRepo:
 
   def goals(scope: BundleScope)(using DbCon): Vector[Bundle.Goal] =
     val w = where(scope, "g.uid", "g.updated_at")
-    val rows = (Sql.raw(Sql.RawText(s"""SELECT g.uid, g.origin, g.slug, g.title, g.status, g.notes, g.tags, g.regions,
-                       ${rangeCols("g.period")}, p.uid, ${ts("g.created_at")}, ${ts("g.updated_at")},
-                       g.plan::text, ${ts("g.plan_approved_at")}, g.budget_usd
-                FROM goals g LEFT JOIN goals p ON p.slug = g.parent_slug WHERE """)) ++ w ++ " ORDER BY g.uid").frag
+    val rows = sql"""SELECT g.uid, g.origin, g.slug, g.title, g.status, g.notes, g.tags, g.regions,
+                       ${SqlLiteral(rangeCols("g.period"))}, p.uid, ${SqlLiteral(ts("g.created_at"))}, ${SqlLiteral(
+        ts("g.updated_at")
+      )},
+                       g.plan::text, ${SqlLiteral(ts("g.plan_approved_at"))}, g.budget_usd
+                FROM goals g LEFT JOIN goals p ON p.slug = g.parent_slug WHERE $w ORDER BY g.uid"""
       .query[BGoalRow]
       .run()
     // a linked source, article or queue item travels by uid (a queue item's id is a local serial)
-    val links = (Sql.raw(Sql.RawText(s"""SELECT g.uid, l.kind,
+    val links = sql"""SELECT g.uid, l.kind,
                         CASE l.kind WHEN 'queue-item' THEN coalesce(q.uid::text, l.ref) ELSE l.ref END,
                         CASE l.kind WHEN 'source' THEN s.uid WHEN 'article' THEN a.uid WHEN 'queue-item' THEN q.uid END,
-                        l.note, ${ts("l.created_at")}
+                        l.note, ${SqlLiteral(ts("l.created_at"))}
                  FROM goal_links l JOIN goals g ON g.slug = l.goal_slug
                  LEFT JOIN sources s ON l.kind = 'source' AND s.citekey = l.ref
                  LEFT JOIN articles a ON l.kind = 'article' AND a.slug = l.ref
-                 LEFT JOIN queue_items q ON l.kind = 'queue-item' AND q.id::text = l.ref WHERE """)) ++ w ++
-      """ ORDER BY g.uid, l.kind COLLATE "C", l.ref COLLATE "C"""").frag.query[BGoalLinkRow].run().groupBy(_.goalUid)
+                 LEFT JOIN queue_items q ON l.kind = 'queue-item' AND q.id::text = l.ref WHERE $w ORDER BY g.uid, l.kind COLLATE "C", l.ref COLLATE "C\""""
+      .query[BGoalLinkRow]
+      .run()
+      .groupBy(_.goalUid)
     // a goal's schedules are its watcher's sweeps since phase 3 (docs/research-process-managers.md); the rows
     // the managers have not moved into a watcher yet travel as they are. A bundle carries the cron, the
     // sweeps and the budget — the watcher's state (paused, items, events) stays here.
-    val schedules = (Sql.raw(Sql.RawText("""SELECT u.uid, u.kind, u.cron, u.enabled, u.budget_usd FROM (
+    val schedules = sql"""SELECT u.uid, u.kind, u.cron, u.enabled, u.budget_usd FROM (
                        SELECT g.uid, x.kind, x.cron, x.enabled, x.budget_usd
-                       FROM goal_schedules x JOIN goals g ON g.slug = x.goal_slug WHERE """)) ++ w ++
-      """ UNION ALL
+                       FROM goal_schedules x JOIN goals g ON g.slug = x.goal_slug WHERE $w UNION ALL
                        SELECT g.uid, k.kind, m.cron, true, (m.config->>'budgetUsd')::numeric
                        FROM agent_managers m JOIN goals g ON g.slug = m.goal_slug
                        CROSS JOIN LATERAL jsonb_array_elements_text(
                          coalesce(m.config->'sweeps', '["acquisition", "currency"]'::jsonb)) AS k(kind)
-                       WHERE m.kind = 'watch' AND m.cron IS NOT NULL AND """ ++ w ++
-      """) u ORDER BY u.uid, u.kind COLLATE "C"""").frag
+                       WHERE m.kind = 'watch' AND m.cron IS NOT NULL AND $w) u ORDER BY u.uid, u.kind COLLATE "C\""""
       .query[BGoalScheduleRow]
       .run()
       .distinctBy(r => (r.goalUid, r.kind))
@@ -112,9 +114,12 @@ private[goals] object GoalBundleRepo:
     }
 
   def goalAliases(scope: BundleScope)(using DbCon): Vector[Bundle.GoalAlias] =
-    (Sql.raw(Sql.RawText(s"""SELECT x.alias, g.uid, ${ts("x.created_at")}
-                FROM goal_aliases x JOIN goals g ON g.slug = x.goal_slug WHERE """)) ++
-      where(scope, "g.uid", "x.created_at") ++ """ ORDER BY x.alias COLLATE "C"""").frag
+    sql"""SELECT x.alias, g.uid, ${SqlLiteral(ts("x.created_at"))}
+                FROM goal_aliases x JOIN goals g ON g.slug = x.goal_slug WHERE ${where(
+        scope,
+        "g.uid",
+        "x.created_at"
+      )} ORDER BY x.alias COLLATE "C\""""
       .query[(Bundle.GoalAlias.Alias, UUID, Bundle.GoalAlias.CreatedAt)]
       .run()
       .map(Bundle.GoalAlias.apply)

@@ -16,7 +16,6 @@ import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import javax.sql.DataSource
-import com.histmersion.util.database.Sql
 import com.histmersion.db.*
 import com.histmersion.config.DbConfig
 import com.histmersion.config.BackupsConfig
@@ -1024,7 +1023,7 @@ class ResearchOracleSuite extends DbSuite:
       "SELECT id::text, 'instance' FROM instance"
     )
     def run(q: String): List[(String, String)] =
-      scala.util.Try(connect(ds)(Sql.raw(Sql.Text(q)).frag.query[(String, String)].run().toList)).getOrElse(Nil)
+      scala.util.Try(connect(ds)(sql"${SqlLiteral(q)}".query[(String, String)].run().toList)).getOrElse(Nil)
     queries.flatMap(run).distinctBy(_._1).toMap
 
   /** uid → the record it names, over every database the exchange test made. */
@@ -1037,7 +1036,7 @@ class ResearchOracleSuite extends DbSuite:
       "SELECT alias_uid::text, 'alias-of:' || uid::text FROM uid_aliases"
     )
     def run(ds: DataSource, q: String): List[(String, String)] =
-      scala.util.Try(connect(ds)(Sql.raw(Sql.Text(q)).frag.query[(String, String)].run().toList)).getOrElse(Nil)
+      scala.util.Try(connect(ds)(sql"${SqlLiteral(q)}".query[(String, String)].run().toList)).getOrElse(Nil)
     val records = dss.flatMap((_, ds) => queries.flatMap(run(ds, _)))
     val instances =
       dss.flatMap((n, ds) => run(ds, "SELECT id::text, 'x' FROM instance").map((id, _) => id -> s"instance:$n"))
@@ -1181,9 +1180,7 @@ class ResearchOracleSuite extends DbSuite:
           if cs.isEmpty then Nil
           else
             connect(ds)(
-              Sql
-                .raw(Sql.Text(s"""SELECT to_jsonb(x)::text FROM (SELECT $cs FROM "$t") x"""))
-                .frag
+              sql"""SELECT to_jsonb(x)::text FROM (SELECT ${SqlLiteral(cs)} FROM "${SqlLiteral(t)}") x"""
                 .query[String]
                 .run()
                 .toList

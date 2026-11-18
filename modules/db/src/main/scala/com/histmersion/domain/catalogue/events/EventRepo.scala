@@ -19,7 +19,6 @@ import com.histmersion.api.catalogue.{
   EventScale,
   EventSummary
 }
-import com.histmersion.util.database.{Param, Sql}
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
@@ -32,6 +31,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.personal.UnreadPage
 import com.histmersion.domain.catalogue.Event
 import com.histmersion.util.identity.AliasTable
+import com.histmersion.util.database.given
 
 /** The events (`events`) with their datings, edges and participants (`event_datings`, `event_edges`,
   * `event_participants`) and the old ids of renamed ones (`event_aliases`). Every method runs on the connection it is
@@ -68,19 +68,14 @@ private[events] object EventRepo:
   // ── reads ───────────────────────────────────────────────────────────────────────────────────
 
   /** The events `where` selects ([[EventSql.listWhere]]), one page of them. */
-  def list(where: Sql, limit: PageSize, offset: Offset)(using DbCon): EventList =
-    val total = (Sql.raw(Sql.Text(s"SELECT count(*)::int FROM $fromEvents WHERE ")) ++ where).frag.query[Int].run().head
-    val rows = (Sql.raw(Sql.Text(s"SELECT $summaryCols FROM $fromEvents WHERE ")) ++ where ++
-      Sql.raw(Sql.Text(" ORDER BY coalesce(e.not_before, e.begin_by), e.label, e.id")) ++
-      Sql.of(
-        Sql.Text(" LIMIT ? OFFSET ?"),
-        Param.I(Param.I.V(limit.value.max(1))),
-        Param.I(Param.I.V(offset.value.max(0)))
-      )).frag
-      .query[EventRow]
-      .run()
-      .toList
-      .map(_.toSummary)
+  def list(where: Frag, limit: PageSize, offset: Offset)(using DbCon): EventList =
+    val total = sql"SELECT count(*)::int FROM ${SqlLiteral(fromEvents)} WHERE $where".query[Int].run().head
+    val rows =
+      sql"SELECT ${SqlLiteral(summaryCols)} FROM ${SqlLiteral(fromEvents)} WHERE $where ORDER BY coalesce(e.not_before, e.begin_by), e.label, e.id LIMIT ${limit.value.max(1)} OFFSET ${offset.value.max(0)}"
+        .query[EventRow]
+        .run()
+        .toList
+        .map(_.toSummary)
     EventList.of(EventList.Total(total), rows, UnreadPage.Offset(offset.value.max(0)))
 
   /** The events `listed` selects that have a position, for the map's playback. The anchor is the event's own geometry,
@@ -89,24 +84,26 @@ private[events] object EventRepo:
     * land-clipped shape, as the map draws it); a local one, or an area known only by a point, none. Two statements: the
     * rows with their scale, then the outlines of the regional ones alone.
     */
-  def geo(listed: Sql, limit: PageSize, tolerance: GeoTolerance)(using DbCon): EventGeo.List =
+  def geo(listed: Frag, limit: PageSize, tolerance: GeoTolerance)(using DbCon): EventGeo.List =
     // drawn at a year only when dated, and well enough (core.EventPrecision.mapped): the imprecise are
     // counted; an undated one (its outer span unbounded) would otherwise stand in every period
     val where =
-      listed ++ Sql.of(Sql.OfText(" AND e.uncertainty <= ?"), Param.L(Param.L.V(EventPrecision.ApproximateUpTo.value)))
-    val rows = (geoSelect ++ where ++
-      Sql.raw(Sql.Text(" ORDER BY coalesce(e.not_before, e.begin_by), e.label, e.id")) ++
-      Sql.of(Sql.Text(" LIMIT ?"), Param.I(Param.I.V(limit.value.max(1))))).frag.query[EventGeoRow].run().toList
-    val unplaced = (Sql.raw(
-      Sql.Text(s"SELECT count(*)::int FROM $fromEvents WHERE e.geom IS NULL AND ep.geom IS NULL AND ")
-    ) ++ where).frag.query[Int].run().head
-    val imprecise = (Sql.raw(
-      Sql.Text(s"SELECT count(*)::int FROM $fromEvents WHERE coalesce(e.geom, ep.geom) IS NOT NULL AND ")
-    ) ++
-      listed ++ Sql.of(
-        Sql.Text(" AND e.uncertainty > ?"),
-        Param.L(Param.L.V(EventPrecision.ApproximateUpTo.value))
-      )).frag.query[Int].run().head
+      sql"$listed AND e.uncertainty <= ${EventPrecision.ApproximateUpTo}"
+    val rows =
+      sql"$geoSelect$where ORDER BY coalesce(e.not_before, e.begin_by), e.label, e.id LIMIT ${limit.value.max(1)}"
+        .query[EventGeoRow]
+        .run()
+        .toList
+    val unplaced =
+      sql"SELECT count(*)::int FROM ${SqlLiteral(fromEvents)} WHERE e.geom IS NULL AND ep.geom IS NULL AND $where"
+        .query[Int]
+        .run()
+        .head
+    val imprecise =
+      sql"SELECT count(*)::int FROM ${SqlLiteral(fromEvents)} WHERE coalesce(e.geom, ep.geom) IS NOT NULL AND $listed AND e.uncertainty > ${EventPrecision.ApproximateUpTo}"
+        .query[Int]
+        .run()
+        .head
     val items = rows.map(r => (r, r.toGeo))
     val wanted = items.collect { case (r, g) if r.hasArea && g.scale.value == EventScale.Regional => r.row.id }
     val outlines: Map[BEventRow.Id, BEventRow.Geom] =
@@ -131,19 +128,19 @@ private[events] object EventRepo:
   def geoOf(ids: List[BEventRow.Id])(using DbCon): Map[BEventRow.Id, EventGeo] =
     if ids.isEmpty then Map.empty
     else
-      (geoSelect ++ Sql.of(
-        Sql.OfText("e.id = ANY(?) AND e.uncertainty <= ?"),
-        Param.A(ids.map(i => Param.A.V(i.value))),
-        Param.L(Param.L.V(EventPrecision.ApproximateUpTo.value))
-      )).frag.query[EventGeoRow].run().map(r => r.row.id -> r.toGeo).toMap
+      sql"${geoSelect}e.id = ANY($ids) AND e.uncertainty <= ${EventPrecision.ApproximateUpTo}"
+        .query[EventGeoRow]
+        .run()
+        .map(r => r.row.id -> r.toGeo)
+        .toMap
 
   /** The SELECT of the map's event rows ([[EventGeoRow]]), up to its WHERE (which the caller ends). */
-  private val geoSelect: Sql = Sql.raw(Sql.Text(s"""SELECT $summaryCols,
+  private val geoSelect: Frag = sql"""SELECT ${SqlLiteral(summaryCols)},
               ST_Y(a.pt), ST_X(a.pt), s.src, ep.label, GeometryType(s.g) IN ('POLYGON', 'MULTIPOLYGON'),
               (SELECT max(c.vei) FROM event_catalogue c WHERE c.event_id = e.id),
               (SELECT max(c.magnitude) FROM event_catalogue c WHERE c.event_id = e.id)
-            FROM $fromEvents ${EventSql.anchorJoins}
-            WHERE s.g IS NOT NULL AND """))
+            FROM ${SqlLiteral(fromEvents)} ${SqlLiteral(EventSql.anchorJoins)}
+            WHERE s.g IS NOT NULL AND """
 
   /** One event with its parent, parts, datings, edges, participants, Wikidata item and corrections by hand. */
   def get(id: BEventRow.Id)(using DbCon): Option[EventEntry] =

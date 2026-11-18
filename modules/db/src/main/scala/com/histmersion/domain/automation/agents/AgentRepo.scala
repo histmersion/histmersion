@@ -17,7 +17,7 @@ import com.augustnagro.magnum.*
 import com.histmersion.api.automation.ApprovalDigest
 import com.histmersion.domain.automation.agents.RunQuery
 import com.histmersion.domain.automation.approvals.ApprovalQuery
-import com.histmersion.util.database.{Jsonb, Keyset, ListSql, Param, Sql}
+import com.histmersion.util.database.{Jsonb, Keyset, ListSql}
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
 
@@ -108,16 +108,11 @@ object AgentRepo:
 
   private given DbCodec[MessageInfo] = DbCodec.derived
 
-  private val ts = """'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
-
-  private def sqlOf(text: String, ps: Param*): Sql = Sql.of(Sql.OfText(text), ps*)
-  private def str(x: String): Param = Param.S(Param.S.V(x))
-  private def lng(x: Long): Param = Param.L(Param.L.V(x))
-  private def int(x: Int): Param = Param.I(Param.I.V(x))
+  private val ts = sql"""'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
 
   /** ONE projection of a run with its usage totals, then (in [[runSelect]]) the runs among the jobs. */
   private val runFrom =
-    Sql.raw(Sql.RawText(s"""SELECT j.id, j.pipeline, j.target_id, j.status, j.progress, j.error, j.model, j.budget_usd,
+    sql"""SELECT j.id, j.pipeline, j.target_id, j.status, j.progress, j.error, j.model, j.budget_usd,
               j.budget_tokens, j.warnings,
               to_char(j.created_at AT TIME ZONE 'UTC', $ts), to_char(j.updated_at AT TIME ZONE 'UTC', $ts),
               coalesce(u.tin, 0), coalesce(u.tout, 0), coalesce(u.tcr, 0), coalesce(u.tcw, 0), coalesce(u.cost, 0),
@@ -129,10 +124,10 @@ object AgentRepo:
          SELECT sum(tokens_in)::bigint AS tin, sum(tokens_out)::bigint AS tout,
                 sum(tokens_cache_read)::bigint AS tcr, sum(tokens_cache_write)::bigint AS tcw,
                 sum(cost_usd) AS cost
-         FROM agent_steps s WHERE s.job_id = j.id) u ON true"""))
+         FROM agent_steps s WHERE s.job_id = j.id) u ON true"""
   private val runsOnly = s" WHERE j.kind = '$JobKind'"
-  private val runsOnlySql = Sql.raw(Sql.RawText(runsOnly))
-  private val runSelect = runFrom ++ runsOnlySql
+  private val runsOnlySql = sql"${SqlLiteral(runsOnly)}"
+  private val runSelect = sql"$runFrom$runsOnlySql"
 
   private def toInfo(r: RunRow): RunInfo =
     RunInfo(
@@ -165,17 +160,17 @@ object AgentRepo:
     )
 
   def get(id: RunInfo.Id)(using DbCon): Option[RunInfo] =
-    (runSelect ++ sqlOf(" AND j.id = ?", str(id.value))).frag.query[RunRow].run().headOption.map(toInfo)
+    sql"$runSelect AND j.id = $id".query[RunRow].run().headOption.map(toInfo)
 
   def list(
       status: Option[Run.State.Wire],
       limit: PageSize,
       goal: Option[com.histmersion.domain.automation.Goal.Slug] = None
   )(using DbCon): Vector[RunInfo] =
-    (runSelect ++ runStatus(status) ++ runGoal(goal) ++ Keyset.orderBy("j.") ++ sqlOf(
-      " LIMIT ?",
-      int(limit.value)
-    )).frag.query[RunRow].run().map(toInfo)
+    sql"$runSelect${runStatus(status)}${runGoal(goal)}${Keyset.orderBy("j.")} LIMIT $limit"
+      .query[RunRow]
+      .run()
+      .map(toInfo)
 
   /** One page of the newest-first runs ([[com.histmersion.api.Paging]]), `status` and `goal` as in [[list]]; `before` /
     * `upTo` are run ids. Left: a cursor that names no job.
@@ -203,15 +198,10 @@ object AgentRepo:
   /** ` AND (j.model is one of them OR a step of the run used one of them)` — `expr` maps a model to what is matched
     * (itself, or its provider).
     */
-  private def usedModel(vs: List[String], expr: String => String): Sql =
-    if vs.isEmpty then Sql.empty
+  private def usedModel(vs: List[String], expr: String => String): Frag =
+    if vs.isEmpty then sql""
     else
-      sqlOf(
-        s" AND (${expr("j.model")} = ANY(?::text[]) OR EXISTS (SELECT 1 FROM agent_steps ms " +
-          s"WHERE ms.job_id = j.id AND ${expr("ms.model")} = ANY(?::text[])))",
-        Param.A(vs.map(Param.A.V(_))),
-        Param.A(vs.map(Param.A.V(_)))
-      )
+      sql" AND (${SqlLiteral(expr("j.model"))} = ANY($vs::text[]) OR EXISTS (SELECT 1 FROM agent_steps ms WHERE ms.job_id = j.id AND ${SqlLiteral(expr("ms.model"))} = ANY($vs::text[])))"
 
   private def provider(col: String): String = s"split_part($col, ':', 1)"
 
@@ -225,7 +215,7 @@ object AgentRepo:
       "provider" -> usedModel(q.providers.map(_.value), provider),
       "origin" -> ListSql.anyOf(originExpr, q.origins.map(_.value)),
       "time" -> ListSql.between("j.created_at", q.since, q.until),
-      "q" -> q.q.fold(Sql.empty)(t => sqlOf(" AND j.target_id ILIKE ?", str(ListSql.contains(t.value))))
+      "q" -> q.q.fold(sql"")(t => sql" AND j.target_id ILIKE ${ListSql.contains(t.value)}")
     )
   )
 
@@ -236,18 +226,18 @@ object AgentRepo:
       before: Option[PageCursor],
       upTo: Option[PageCursor]
   )(using DbCon): Either[Problem, (Vector[RunInfo], Boolean)] =
-    (before.toList ++ upTo.toList).find(c => !Keyset.existsOn("jobs", str(c.value))) match
+    (before.toList ++ upTo.toList).find(c => !Keyset.existsOn("jobs", c)) match
       case Some(c) => Left(Problem.NotFound.Entity(Problem.TypeName.of(Run.Id), Problem.Raw.of(c)))
       case None    =>
-        val (rows, more) = Keyset.pageOn[RunRow](
+        val (rows, more) = Keyset.pageOn[RunRow, PageCursor, RunInfo.Id](
           runFrom,
-          runsOnlySql ++ runConds(q).all,
+          sql"$runsOnlySql${runConds(q).all}",
           "j.",
           "jobs",
           limit,
-          before.map(c => str(c.value)),
-          upTo.map(c => str(c.value)),
-          r => str(r.id.value)
+          before,
+          upTo,
+          _.id
         )
         Right((rows.map(toInfo), more))
 
@@ -260,15 +250,9 @@ object AgentRepo:
   ): (List[(Run.State.Wire, RowCount)], List[(String, List[(String, RowCount)])]) =
     val c = runConds(q)
     val facetMax = PageSize.applyUnsafe(ListFilters.FacetMax)
-    def from(except: String) = Sql.raw(Sql.RawText(" FROM jobs j")) ++ runsOnlySql ++ c.except(except)
-    def used(except: String): Sql =
-      Sql.raw(
-        Sql.RawText(
-          " FROM (SELECT DISTINCT j.id, x.m FROM jobs j CROSS JOIN LATERAL (SELECT j.model AS m UNION " +
-            "SELECT s.model FROM agent_steps s WHERE s.job_id = j.id) x"
-        )
-      ) ++ runsOnlySql ++ c.except(except) ++
-        Sql.raw(Sql.RawText(" AND x.m IS NOT NULL) u WHERE true"))
+    def from(except: String) = sql" FROM jobs j$runsOnlySql${c.except(except)}"
+    def used(except: String): Frag =
+      sql" FROM (SELECT DISTINCT j.id, x.m FROM jobs j CROSS JOIN LATERAL (SELECT j.model AS m UNION SELECT s.model FROM agent_steps s WHERE s.job_id = j.id) x$runsOnlySql${c.except(except)} AND x.m IS NOT NULL) u WHERE true"
     (
       Keyset.countsOn(from("status"), "j.status").map((s, n) => (Run.State.Wire(s.value), n)),
       List(
@@ -285,22 +269,21 @@ object AgentRepo:
       goal: Option[com.histmersion.domain.automation.Goal.Slug] = None
   )(using DbCon): List[(Run.State.Wire, RowCount)] =
     Keyset
-      .countsOn(Sql.raw(Sql.RawText(" FROM jobs j")) ++ runsOnlySql ++ runGoal(goal), "j.status")
+      .countsOn(sql" FROM jobs j$runsOnlySql${runGoal(goal)}", "j.status")
       .map((s, n) => (Run.State.Wire(s.value), n))
 
-  private def runStatus(status: Option[Run.State.Wire]): Sql =
-    status.map(_.value.trim.toLowerCase).filter(_.nonEmpty).fold(Sql.empty)(s => sqlOf(" AND j.status = ?", str(s)))
+  private def runStatus(status: Option[Run.State.Wire]): Frag =
+    status.map(_.value.trim.toLowerCase).filter(_.nonEmpty).fold(sql"")(s => sql" AND j.status = $s")
 
-  private def runGoal(goal: Option[com.histmersion.domain.automation.Goal.Slug]): Sql =
-    goal.map(_.value.trim).filter(_.nonEmpty).fold(Sql.empty)(g => sqlOf(" AND j.goal_slug = ?", str(g)))
+  private def runGoal(goal: Option[com.histmersion.domain.automation.Goal.Slug]): Frag =
+    goal.map(_.value.trim).filter(_.nonEmpty).fold(sql"")(g => sql" AND j.goal_slug = $g")
 
   /** Every run of `p` on `target`, newest first (what auto-enrich asks before queueing another). */
   def forTarget(p: Pipeline, target: RunInfo.Target)(using DbCon): Vector[RunInfo] =
-    (runSelect ++ sqlOf(
-      " AND j.pipeline = ? AND j.target_id = ? ORDER BY j.created_at DESC, j.id",
-      str(p.wire.value),
-      str(target.value)
-    )).frag.query[RunRow].run().map(toInfo)
+    sql"$runSelect AND j.pipeline = ${p.wire} AND j.target_id = $target ORDER BY j.created_at DESC, j.id"
+      .query[RunRow]
+      .run()
+      .map(toInfo)
 
   /** The runs a manager dispatched, newest first (`active` = only those not settled yet: queued, running, paused or
     * waiting).
@@ -310,9 +293,8 @@ object AgentRepo:
       active: ActiveOnly = ActiveOnly(false),
       limit: PageSize = PageSize(200)
   )(using DbCon): Vector[RunInfo] =
-    val open = if active.value then sqlOf(" AND j.status IN ('queued', 'running', 'paused', 'waiting')") else Sql.empty
-    (runSelect ++ sqlOf(" AND j.manager_id = ?", str(managerId.value)) ++ open ++
-      sqlOf(" ORDER BY j.created_at DESC, j.id DESC LIMIT ?", int(limit.value))).frag
+    val open = if active.value then sql" AND j.status IN ('queued', 'running', 'paused', 'waiting')" else sql""
+    sql"$runSelect AND j.manager_id = $managerId$open ORDER BY j.created_at DESC, j.id DESC LIMIT $limit"
       .query[RunRow]
       .run()
       .map(toInfo)
@@ -321,10 +303,10 @@ object AgentRepo:
     * start a second writer on it.
     */
   def unsettledOn(target: RunInfo.Target)(using DbCon): Vector[RunInfo] =
-    (runSelect ++ sqlOf(
-      " AND j.target_id = ? AND j.status IN ('queued', 'running', 'paused', 'waiting')",
-      str(target.value)
-    )).frag.query[RunRow].run().map(toInfo)
+    sql"$runSelect AND j.target_id = $target AND j.status IN ('queued', 'running', 'paused', 'waiting')"
+      .query[RunRow]
+      .run()
+      .map(toInfo)
 
   // ── steps: checkpoints and attempts ────────────────────────────────────────────────────────────
 
@@ -442,8 +424,8 @@ object AgentRepo:
   def steps(jobId: Job.Id, outputChars: OutputChars)(using DbCon): List[StepInfo] =
     sql"""SELECT seq, name, kind, attempt, status, model, prompt_hash, tokens_in, tokens_out, tokens_cache_read,
                  tokens_cache_write, cost_usd, error, left(output::text, $outputChars),
-                 to_char(started_at AT TIME ZONE 'UTC', ${SqlLiteral(ts)}),
-                 to_char(finished_at AT TIME ZONE 'UTC', ${SqlLiteral(ts)}), actual_model, would_write::text,
+                 to_char(started_at AT TIME ZONE 'UTC', $ts),
+                 to_char(finished_at AT TIME ZONE 'UTC', $ts), actual_model, would_write::text,
                  first_call_tokens, turns
           FROM agent_steps WHERE job_id = $jobId ORDER BY seq, attempt""".query[StepRow].run().toList.map { r =>
       StepInfo(
@@ -527,14 +509,11 @@ object AgentRepo:
       seq: Option[StepInfo.Seq]
   ) derives DbCodec
 
-  private val approvalSelect = Sql.raw(
-    Sql.RawText(
-      s"""SELECT id, job_id, kind, citekey, status, current_status, edge_kind, target, proposal::text, state, note,
+  private val approvalSelect =
+    sql"""SELECT id, job_id, kind, citekey, status, current_status, edge_kind, target, proposal::text, state, note,
               result, to_char(created_at AT TIME ZONE 'UTC', $ts), to_char(decided_at AT TIME ZONE 'UTC', $ts),
               subject, seq
        FROM approvals"""
-    )
-  )
 
   /** The payload decides how a row reads: a source proposal, a goal's plan, or an article draft. */
   def info(r: ApprovalRow): ApprovalInfo =
@@ -598,7 +577,7 @@ object AgentRepo:
 
   def approval(id: ApprovalInfo.Id)(using DbCon): Option[ApprovalInfo] =
 
-    (approvalSelect ++ sqlOf(" WHERE id = ?", lng(id.value))).frag
+    sql"$approvalSelect WHERE id = $id"
       .query[ApprovalRow]
       .run()
       .headOption
@@ -606,11 +585,8 @@ object AgentRepo:
 
   /** Newest first; `state` narrows (none = every state). */
   def approvals(state: Option[ApprovalState], limit: PageSize)(using DbCon): List[ApprovalInfo] =
-    val where = state.fold(Sql.empty)(s => sqlOf(" WHERE state = ?", str(s.wire.value)))
-    (approvalSelect ++ where ++ sqlOf(
-      " ORDER BY created_at DESC, id DESC LIMIT ?",
-      int(limit.value)
-    )).frag.query[ApprovalRow].run().toList.map(info)
+    val where = state.fold(sql"")(s => sql" WHERE state = ${s.wire}")
+    sql"$approvalSelect$where ORDER BY created_at DESC, id DESC LIMIT $limit".query[ApprovalRow].run().toList.map(info)
 
   /** One page of the newest-first approvals ([[com.histmersion.api.Paging]]), `state` as in [[approvals]]; `before` /
     * `upTo` are approval ids. Left: a cursor that is not one.
@@ -624,29 +600,16 @@ object AgentRepo:
     approvalPage(ApprovalQuery(state), limit, before, upTo)
 
   private def approvalConds(q: ApprovalQuery): ListSql.Conds =
-    val subject = q.subject.fold(Sql.empty) { t =>
-      val p = str(ListSql.contains(t.value))
-      sqlOf(
-        " AND (subject ILIKE ? OR citekey ILIKE ? OR target ILIKE ? OR EXISTS (SELECT 1 FROM jobs sj " +
-          "WHERE sj.id = approvals.job_id AND (sj.goal_slug ILIKE ? OR sj.manager_id ILIKE ?)))",
-        p,
-        p,
-        p,
-        p,
-        p
-      )
+    val subject = q.subject.fold(sql"") { t =>
+      val p = ListSql.contains(t.value)
+      sql" AND (subject ILIKE $p OR citekey ILIKE $p OR target ILIKE $p OR EXISTS (SELECT 1 FROM jobs sj WHERE sj.id = approvals.job_id AND (sj.goal_slug ILIKE $p OR sj.manager_id ILIKE $p)))"
     }
-    val goal = q.goal.fold(Sql.empty)(g =>
-      sqlOf(
-        " AND (subject = ? OR EXISTS (SELECT 1 FROM jobs gj " +
-          "WHERE gj.id = approvals.job_id AND gj.goal_slug = ?))",
-        str(g.value),
-        str(g.value)
-      )
+    val goal = q.goal.fold(sql"")(g =>
+      sql" AND (subject = $g OR EXISTS (SELECT 1 FROM jobs gj WHERE gj.id = approvals.job_id AND gj.goal_slug = $g))"
     )
     ListSql.Conds(
       List(
-        "state" -> q.state.fold(Sql.empty)(s => sqlOf(" AND state = ?", str(s.wire.value))),
+        "state" -> q.state.fold(sql"")(s => sql" AND state = ${s.wire}"),
         "kind" -> ListSql.anyOf("kind", q.kinds.map(_.wire.value)),
         "subject" -> subject,
         "goal" -> goal,
@@ -661,18 +624,17 @@ object AgentRepo:
       before: Option[PageCursor],
       upTo: Option[PageCursor]
   )(using DbCon): Either[Problem, (List[ApprovalInfo], Boolean)] =
-    def cursor(c: PageCursor): Either[Problem, Param] =
+    def cursor(c: PageCursor): Either[Problem, Long] =
       c.value.trim.toLongOption
-        .map(lng(_))
         .filter(Keyset.existsOn("approvals", _))
         .toRight(Problem.NotFound.Entity(Problem.TypeName.of(Approval.Id), Problem.Raw.of(c)))
     for
       b <- before.fold(Right(None))(cursor(_).map(Some(_)))
       u <- upTo.fold(Right(None))(cursor(_).map(Some(_)))
     yield
-      val where = Sql.raw(Sql.RawText(" WHERE true")) ++ approvalConds(q).all
+      val where = sql" WHERE true${approvalConds(q).all}"
       val (rows, more) = Keyset
-        .pageOn[ApprovalRow](approvalSelect, where, "", "approvals", limit, b, u, r => lng(r.id.value))
+        .pageOn[ApprovalRow, Long, ApprovalInfo.Id](approvalSelect, where, "", "approvals", limit, b, u, _.id)
       (rows.toList.map(info), more)
 
   /** The counts that go with a filtered page: per state (under every filter but the state) and the `kind` and
@@ -683,7 +645,7 @@ object AgentRepo:
   ): (List[(Approval.State.Wire, RowCount)], List[(String, List[(String, RowCount)])]) =
     val c = approvalConds(q)
     val facetMax = PageSize.applyUnsafe(ListFilters.FacetMax)
-    def from(except: String) = Sql.raw(Sql.RawText(" FROM approvals WHERE true")) ++ c.except(except)
+    def from(except: String) = sql" FROM approvals WHERE true${c.except(except)}"
     (
       Keyset.countsOn(from("state"), "state").map((s, n) => (Approval.State.Wire(s.value), n)),
       List(
@@ -695,7 +657,7 @@ object AgentRepo:
   /** How many approvals are in each state. */
   def approvalCounts()(using DbCon): List[(Approval.State.Wire, RowCount)] =
     Keyset
-      .countsOn(Sql.raw(Sql.RawText(" FROM approvals")), "state")
+      .countsOn(sql" FROM approvals", "state")
       .map((s, n) => (Approval.State.Wire(s.value), n))
 
   /** The approval step `seq` of run `jobId` waits on, opened if it is not there yet (a resumed run finds the one it
@@ -739,28 +701,30 @@ object AgentRepo:
 
   /** The approvals run `jobId` opened (of `kind`, when given), oldest first. */
   def approvalsOf(jobId: Job.Id, kind: Option[ApprovalKind] = None)(using DbCon): List[ApprovalInfo] =
-    (approvalSelect ++ sqlOf(" WHERE job_id = ?", str(jobId.value)) ++
-      kind.fold(Sql.empty)(k => sqlOf(" AND kind = ?", str(k.wire.value))) ++
-      sqlOf(" ORDER BY id")).frag.query[ApprovalRow].run().toList.map(info)
+    sql"$approvalSelect WHERE job_id = $jobId${kind.fold(sql"")(k => sql" AND kind = ${k.wire}")} ORDER BY id"
+      .query[ApprovalRow]
+      .run()
+      .toList
+      .map(info)
 
   /** The approvals of `kind` the autopilot APPROVED since `since` (their note starts with `autopilot: approved`) — what
     * its daily caps count.
     */
   def autoApprovedSince(kind: ApprovalKind, since: java.time.Instant)(using DbCon): List[ApprovalInfo] =
     val t = since.toString
-    (approvalSelect ++ sqlOf(
-      " WHERE kind = ? AND note LIKE 'autopilot: approved%' AND decided_at >= ?::timestamptz ORDER BY id",
-      str(kind.wire.value),
-      str(t)
-    )).frag.query[ApprovalRow].run().toList.map(info)
+    sql"$approvalSelect WHERE kind = ${kind.wire} AND note LIKE 'autopilot: approved%' AND decided_at >= $t::timestamptz ORDER BY id"
+      .query[ApprovalRow]
+      .run()
+      .toList
+      .map(info)
 
   /** The OPEN approvals of the given kinds, oldest first (what the supervisor's checks look at). */
   def openOfKinds(kinds: List[ApprovalKind], limit: PageSize)(using DbCon): List[ApprovalInfo] =
-    (approvalSelect ++ sqlOf(
-      " WHERE state = 'open' AND kind = ANY(?::text[]) ORDER BY id LIMIT ?",
-      Param.A(kinds.map(k => Param.A.V(k.wire.value))),
-      int(limit.value)
-    )).frag.query[ApprovalRow].run().toList.map(info)
+    sql"$approvalSelect WHERE state = 'open' AND kind = ANY(${kinds.map(_.wire)}::text[]) ORDER BY id LIMIT $limit"
+      .query[ApprovalRow]
+      .run()
+      .toList
+      .map(info)
 
   /** Every OPEN approval, light (id, kind, subject, created), oldest first — what the digest groups. */
   def openLight()(using DbCon): List[ApprovalDigest.Open] =
@@ -795,7 +759,7 @@ object AgentRepo:
   /** The approval step `seq` of run `jobId` opened, if it did. */
   def forStep(jobId: Job.Id, seq: StepInfo.Seq)(using DbCon): Option[ApprovalInfo] =
 
-    (approvalSelect ++ sqlOf(" WHERE job_id = ? AND seq = ?", str(jobId.value), int(seq.value))).frag
+    sql"$approvalSelect WHERE job_id = $jobId AND seq = $seq"
       .query[ApprovalRow]
       .run()
       .headOption

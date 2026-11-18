@@ -47,7 +47,6 @@ import com.histmersion.util.data.exchange.{BundleFormat, BundleReader, BundleTar
 import com.histmersion.util.data.exchange.BundleExport
 import com.histmersion.domain.automation.goals.GoalRepo
 import com.histmersion.util.data.exchange.{BundleImport, BundleRepo}
-import com.histmersion.util.database.Sql
 import com.histmersion.api.catalogue.{EventDating, EventEdge, EventParticipant, EventPut, Period, Place}
 import com.histmersion.api.exchange.{Bundle, MergeResolution, MergeResolutions}
 import com.histmersion.api.library.{Edge, Finding, Source}
@@ -553,7 +552,7 @@ class BundleSuite extends DbSuite with Bounded:
     String(entries.find(_._1 == path).map(_._2).getOrElse(fail(s"no $path")), UTF_8)
 
   private def count(ds: DataSource, q: String): Int =
-    connect(ds)(Sql.raw(Sql.Text(q)).frag.query[Int].run().head)
+    connect(ds)(sql"${SqlLiteral(q)}".query[Int].run().head)
 
   private def instanceId(ds: DataSource): UUID = Transactor(ds).read(BundleRepo.instance).id
 
@@ -787,7 +786,7 @@ class BundleSuite extends DbSuite with Bounded:
     )
     val r1 = importInto(b, first, sb)
     assert(r1.applied.value, r1.problems.mkString("\n"))
-    def one(ds: DataSource, q: String): String = connect(ds)(Sql.raw(Sql.Text(q)).frag.query[String].run().head)
+    def one(ds: DataSource, q: String): String = connect(ds)(sql"${SqlLiteral(q)}".query[String].run().head)
     assertEquals(
       one(b, "SELECT names::text || plus_minus || dating_method FROM events WHERE id = 'zzb_e1'"),
       "{Thera,Santorini}10radiocarbon"

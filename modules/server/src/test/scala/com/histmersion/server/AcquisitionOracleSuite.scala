@@ -24,7 +24,6 @@ import java.nio.file.{Files, Path}
 import java.util.concurrent.ConcurrentLinkedQueue
 import javax.sql.DataSource
 import scala.jdk.CollectionConverters.*
-import com.histmersion.util.database.Sql
 import com.histmersion.db.*
 import com.histmersion.api.media.DataCredits
 import com.histmersion.api.ocr.{ConvertedDoc, ConvertedImage}
@@ -1045,9 +1044,7 @@ class AcquisitionOracleSuite extends DbSuite:
     Tables
       .map { (t, cols) =>
         val rs = connect(ds)(
-          Sql
-            .raw(Sql.Text(s"""SELECT to_jsonb(x)::text FROM (SELECT $cols FROM "$t") x"""))
-            .frag
+          sql"""SELECT to_jsonb(x)::text FROM (SELECT ${SqlLiteral(cols)} FROM "${SqlLiteral(t)}") x"""
             .query[String]
             .run()
             .toList

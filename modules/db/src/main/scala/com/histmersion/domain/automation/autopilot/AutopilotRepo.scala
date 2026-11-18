@@ -1,7 +1,6 @@
 package com.histmersion
 package domain.automation.autopilot
 import com.augustnagro.magnum.*
-import com.histmersion.util.database.Sql
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
@@ -58,12 +57,12 @@ object AutopilotRepo:
     * changed now by nobody, nothing paused, nothing done yet — and nothing is written.
     */
   def get()(using DbCon): Row =
-    Sql
-      .raw(Sql.RawText(s"""SELECT coalesce(a.enabled, false), ${at("coalesce(a.changed_at, now())")},
-                       coalesce(a.changed_by, ''), coalesce(a.paused, '{}'::text[]), ${at("a.last_ensure_at")},
-                       ${at("a.last_backup_at")}, ${at("a.last_lint_at")}
-                       FROM (VALUES (true)) AS one (id) LEFT JOIN agent_autopilot a ON a.id"""))
-      .frag
+    sql"""SELECT coalesce(a.enabled, false), ${SqlLiteral(at("coalesce(a.changed_at, now())"))},
+                       coalesce(a.changed_by, ''), coalesce(a.paused, '{}'::text[]), ${SqlLiteral(
+        at("a.last_ensure_at")
+      )},
+                       ${SqlLiteral(at("a.last_backup_at"))}, ${SqlLiteral(at("a.last_lint_at"))}
+                       FROM (VALUES (true)) AS one (id) LEFT JOIN agent_autopilot a ON a.id"""
       .query[Row]
       .run()
       .head
@@ -109,10 +108,8 @@ object AutopilotRepo:
 
   /** The scheduler's strategy a person chose (V100): (name, by, at); None = agents.scheduler.strategy. */
   def strategy()(using DbCon): Option[(StrategyName, Row.ChangedBy, Row.ChangedAt)] =
-    Sql
-      .raw(Sql.RawText(s"""SELECT scheduler_strategy, coalesce(scheduler_by, ''), coalesce(${at("scheduler_at")}, '')
-                FROM agent_autopilot WHERE id AND scheduler_strategy IS NOT NULL"""))
-      .frag
+    sql"""SELECT scheduler_strategy, coalesce(scheduler_by, ''), coalesce(${SqlLiteral(at("scheduler_at"))}, '')
+                FROM agent_autopilot WHERE id AND scheduler_strategy IS NOT NULL"""
       .query[(StrategyName, Row.ChangedBy, Row.ChangedAt)]
       .run()
       .headOption
@@ -126,9 +123,7 @@ object AutopilotRepo:
 
   /** When the daily approval digest was last written (V101), if ever. */
   def lastDigest()(using DbCon): Option[Digest] =
-    Sql
-      .raw(Sql.RawText(s"SELECT ${at("last_digest_at")} FROM agent_autopilot WHERE id"))
-      .frag
+    sql"SELECT ${SqlLiteral(at("last_digest_at"))} FROM agent_autopilot WHERE id"
       .query[Option[Digest]]
       .run()
       .headOption
@@ -142,10 +137,8 @@ object AutopilotRepo:
 
   /** Draining (V102): since when, by whom, and when it was first seen drained; None = not draining. */
   def drain()(using DbCon): Option[(DrainSince, Row.ChangedBy, Option[DrainedAt])] =
-    Sql
-      .raw(Sql.RawText(s"""SELECT ${at("drain_since")}, coalesce(drain_by, ''), ${at("drained_at")}
-                FROM agent_autopilot WHERE id AND drain_since IS NOT NULL"""))
-      .frag
+    sql"""SELECT ${SqlLiteral(at("drain_since"))}, coalesce(drain_by, ''), ${SqlLiteral(at("drained_at"))}
+                FROM agent_autopilot WHERE id AND drain_since IS NOT NULL"""
       .query[(DrainSince, Row.ChangedBy, Option[DrainedAt])]
       .run()
       .headOption

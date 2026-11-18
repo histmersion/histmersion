@@ -19,7 +19,7 @@ private[findings] object FindingRepo:
     */
 
   def findingsFor(filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): Vector[GeoHit] =
-    (FilterSql.findingsFeedQuery(filter, scope).frag.query[GeoFeedRow].run().map(_.toHit))
+    (FilterSql.findingsFeedQuery(filter, scope).query[GeoFeedRow].run().map(_.toHit))
 
   def findingsCount(filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): RowCount =
-    RowCount(FilterSql.findingsCountQuery(filter, scope).frag.query[Int].run().headOption.getOrElse(0))
+    RowCount(FilterSql.findingsCountQuery(filter, scope).query[Int].run().headOption.getOrElse(0))

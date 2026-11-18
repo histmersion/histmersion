@@ -5,7 +5,6 @@ import com.histmersion.domain.library.search.FilterSql
 
 import com.histmersion.domain.catalogue.places.PlaceScope
 
-import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
 
@@ -26,27 +25,23 @@ private[articles] object CoverageRepo:
   private given DbCodec[Coverage.Source] = DbCodec.derived
   private given DbCodec[Coverage.Edge] = DbCodec.derived
 
-  import Param.*
-
   /** How many sources `f` selects, and the first `cap` of them in citekey order. */
   def sourceSet(f: Filter, scope: PlaceScope, cap: ArticleRepo.Limit)(using DbCon): (RowCount, List[Coverage.Source]) =
-    val total = RowCount(FilterSql.countQuery(f, scope).frag.query[Int].run().headOption.getOrElse(0))
-    val rows = (Sql.raw(Sql.RawText("SELECT s.citekey, s.title, s.year, s.status, s.authors FROM sources s WHERE ")) ++
-      FilterSql.where(f, scope) ++ Sql
-        .of(Sql.OfText(" ORDER BY s.citekey LIMIT ?"), I(Param.I.V(math.max(0, cap.value))))).frag
-      .query[Coverage.Source]
-      .run()
-      .toList
+    val total = RowCount(FilterSql.countQuery(f, scope).query[Int].run().headOption.getOrElse(0))
+    val rows =
+      sql"SELECT s.citekey, s.title, s.year, s.status, s.authors FROM sources s WHERE ${FilterSql.where(f, scope)} ORDER BY s.citekey LIMIT ${math.max(0, cap.value)}"
+        .query[Coverage.Source]
+        .run()
+        .toList
     (total, rows)
 
   /** How many sources `f` selects, and which of `citekeys` are among them (exact, whatever their number). */
   def members(f: Filter, scope: PlaceScope, citekeys: List[Citekey])(using DbCon): (RowCount, Set[Citekey]) =
-    val total = RowCount(FilterSql.countQuery(f, scope).frag.query[Int].run().headOption.getOrElse(0))
+    val total = RowCount(FilterSql.countQuery(f, scope).query[Int].run().headOption.getOrElse(0))
     val in =
       if citekeys.isEmpty then Set.empty[Citekey]
       else
-        (Sql.raw(Sql.RawText("SELECT s.citekey FROM sources s WHERE ")) ++ FilterSql.where(f, scope) ++
-          Sql.of(Sql.OfText(" AND s.citekey = ANY(?)"), A(citekeys.distinct.map(c => Param.A.V(c.value))))).frag
+        sql"SELECT s.citekey FROM sources s WHERE ${FilterSql.where(f, scope)} AND s.citekey = ANY(${citekeys.distinct})"
           .query[Citekey]
           .run()
           .toSet

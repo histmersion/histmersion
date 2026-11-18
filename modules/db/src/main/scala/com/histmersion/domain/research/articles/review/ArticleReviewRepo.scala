@@ -64,7 +64,7 @@ private[review] object ArticleReviewRepo:
   val WaitingKinds: List[ApprovalRow.Kind] =
     List(ApprovalRow.Kind("article-filter"), ApprovalRow.Kind("article-publish"))
 
-  private val ts = """'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
+  private val ts = sql"""'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
 
   /** The review facts of each of `slugs`, and the time of its item's last change (UTC). A slug the manager and the
     * ledgers know nothing of maps to empty facts.
@@ -76,7 +76,7 @@ private[review] object ArticleReviewRepo:
     else
       val rows = sql"""
           SELECT a.slug, mi.status, mi.outcome, mi.attempts,
-                 to_char(mi.updated_at AT TIME ZONE 'UTC', ${SqlLiteral(ts)}),
+                 to_char(mi.updated_at AT TIME ZONE 'UTC', $ts),
                  rl.findings, rl.open_majors, rl.open_minors, rl.runs, st.round
           FROM unnest(${slugs.distinct}::text[]) AS a(slug)
           LEFT JOIN LATERAL (
@@ -131,7 +131,7 @@ private[review] object ArticleReviewRepo:
   def runStarts(runs: List[Run.Id])(using DbCon): Map[Run.Id, String] =
     if runs.isEmpty then Map.empty
     else
-      sql"""SELECT id, to_char(created_at AT TIME ZONE 'UTC', ${SqlLiteral(ts)}) FROM jobs
+      sql"""SELECT id, to_char(created_at AT TIME ZONE 'UTC', $ts) FROM jobs
               WHERE id = ANY(${runs.distinct}::text[])"""
         .query[(String, String)]
         .run()

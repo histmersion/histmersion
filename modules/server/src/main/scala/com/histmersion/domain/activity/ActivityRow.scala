@@ -6,7 +6,6 @@ import io.scalaland.chimney.dsl.*
 
 import com.histmersion.api.automation.Activity
 import com.histmersion.api.automation.Activity.{Entry, Show}
-import com.histmersion.util.database.{Param, Sql}
 
 import com.histmersion.util.database.NewtypeColumns.given
 

@@ -5,7 +5,6 @@ import com.histmersion.api.exchange.Bundle
 
 import com.histmersion.api.given
 import com.histmersion.util.data.exchange.BundleImport
-import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.data.exchange.BundleEntities.BlobUse
 import com.histmersion.util.data.{DataOwner, TableName}
@@ -27,6 +26,7 @@ import com.augustnagro.magnum.DbCon
 import hearth.kindlings.optics.syntax.*
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.sources.referrers.SourceReferrers
+import com.augustnagro.magnum.sql
 
 /** What a bundle carries of the library: the sources (each line stamped with its rev, its body and its stored original
   * blobs), their findings, the edges they make and the ones still parked, their assessments and their old citekeys.
@@ -46,12 +46,7 @@ object SourcesCarried:
   private def body(uid: java.util.UUID)(using DbCon): java.io.OutputStream => Unit =
     out =>
       out.write(
-        Sql
-          .of(
-            Sql.Text("SELECT convert_to(ocr_markdown, 'UTF8') FROM sources WHERE uid = ?::uuid"),
-            Param.S(Param.S.V(uid.toString))
-          )
-          .frag
+        sql"SELECT convert_to(ocr_markdown, 'UTF8') FROM sources WHERE uid = ${uid.toString}::uuid"
           .query[Array[Byte]]
           .run()
           .head

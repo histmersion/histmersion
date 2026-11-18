@@ -31,7 +31,6 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import javax.imageio.ImageIO
 import javax.sql.DataSource
-import com.histmersion.util.database.Sql
 import com.histmersion.db.*
 import com.histmersion.api.media.{MediaCoversRequest, MediaImportReport, MediaImportRequest}
 import com.histmersion.api.Api
@@ -432,7 +431,7 @@ class MediaOracleSuite extends DbSuite:
     else { Thread.sleep(100); awaitJob(url, id, left - 1) }
 
   private def exec(ds: DataSource, statement: String): Unit =
-    connect(ds)(Sql.raw(Sql.Text(statement)).frag.update.run(): Unit)
+    connect(ds)(sql"${SqlLiteral(statement)}".update.run(): Unit)
 
   // ── pictures ───────────────────────────────────────────────────────────────────────────────
 
@@ -821,7 +820,7 @@ class MediaOracleSuite extends DbSuite:
       "SELECT id::text, 'bookmark' FROM bookmarks"
     )
     def run(ds: DataSource, q: String): List[(String, String)] =
-      scala.util.Try(connect(ds)(Sql.raw(Sql.Text(q)).frag.query[(String, String)].run().toList)).getOrElse(Nil)
+      scala.util.Try(connect(ds)(sql"${SqlLiteral(q)}".query[(String, String)].run().toList)).getOrElse(Nil)
     val records = dss.flatMap((_, ds) => queries.flatMap(run(ds, _)))
     val instances =
       dss.flatMap((n, ds) => run(ds, "SELECT id::text, 'x' FROM instance").map((id, _) => id -> s"instance:$n"))
@@ -875,7 +874,7 @@ class MediaOracleSuite extends DbSuite:
                 length(x.thumb), 'thumbSha', encode(sha256(coalesce(x.thumb, ''::bytea)), 'hex'),
                 'geom', ST_AsText(x.geom)))::text FROM assets x"""
           else s"""SELECT to_jsonb(x)::text FROM "$t" x"""
-        val rs = connect(ds)(Sql.raw(Sql.Text(q)).frag.query[String].run().toList)
+        val rs = connect(ds)(sql"${SqlLiteral(q)}".query[String].run().toList)
         val normed = rs.map(r => exchanged(json(r, names), names).linesIterator.map(_.trim).mkString(" ")).sorted
         (s"## $t ${normed.size} rows" :: normed).mkString("\n")
       }

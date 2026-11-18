@@ -11,7 +11,7 @@ import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
-import com.histmersion.util.database.{Jsonb, Keyset, ListSql, Param, Sql}
+import com.histmersion.util.database.{Jsonb, Keyset, ListSql}
 import com.histmersion.api.automation.Agents
 import com.histmersion.api.exchange.{MergeApplyJob, MergeApplyResult}
 import com.histmersion.api.jobs.{JobDetail, JobInfo, JobState}
@@ -46,14 +46,12 @@ object JobRepo:
   type WarningText = WarningText.T
   object WarningText extends Newtype[String, Pure]
 
-  /** ONE projection, reused by both reads (AGENTS.md: no duplicated column lists). Magnum's `sql""` cannot splice a
-    * `Frag`, so composition goes through the module's own [[Sql]] fragment type.
-    */
-  private val select = Sql.raw(Sql.Text("""SELECT id, kind, status, citekey, progress, error, sha256,
+  /** ONE projection, reused by both reads (AGENTS.md: no duplicated column lists), nested into each as a `Frag`. */
+  private val select = sql"""SELECT id, kind, status, citekey, progress, error, sha256,
               to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
               to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
               acquire_item, detail::text
-       FROM jobs"""))
+       FROM jobs"""
 
   /** A stored detail this build cannot read (written by a newer one) is left out, not fatal. */
   private def toInfo(r: JobRow): JobInfo =
@@ -107,19 +105,15 @@ object JobRepo:
     val _ = (sql"UPDATE jobs SET detail = $js::jsonb WHERE id = $id".update.run())
 
   def get(id: Job.Id)(using DbCon): Option[JobInfo] =
-    (select ++ Sql
-      .of(Sql.OfText(" WHERE id = ?"), Param.S(Param.S.V(id.value)))).frag.query[JobRow].run().headOption.map(toInfo)
+    sql"$select WHERE id = $id".query[JobRow].run().headOption.map(toInfo)
 
   /** Newest first; `status` (when given) narrows to one state. */
   def list(status: Option[JobState.Wire], limit: PageSize)(using DbCon): Vector[JobInfo] =
     val where = status.map(_.value.trim.toLowerCase).filter(_.nonEmpty) match
-      case Some(s) => Sql.of(Sql.OfText(" WHERE status = ?"), Param.S(Param.S.V(s)))
-      case None    => Sql.empty
-    val q = select ++ where ++ Keyset.orderBy("") ++ Sql.of(
-      Sql.OfText(" LIMIT ?"),
-      Param.I(Param.I.V(math.max(1, limit.value)))
-    )
-    (q.frag.query[JobRow].run().map(toInfo))
+      case Some(s) => sql" WHERE status = $s"
+      case None    => sql""
+    val q = sql"$select$where${Keyset.orderBy("")} LIMIT ${math.max(1, limit.value)}"
+    (q.query[JobRow].run().map(toInfo))
 
   /** One page of the newest-first list ([[com.histmersion.api.Paging]]): `before` = only jobs older than that one,
     * `upTo` = only jobs down to and including it. Left: a cursor that names no job. Returns the page and whether older
@@ -148,21 +142,12 @@ object JobRepo:
 
   /** How many jobs are in each state — the whole table (one `GROUP BY` over the status index). */
   def stateCounts(using DbCon): List[(Keyset.State, RowCount)] =
-    Keyset.countsOn(Sql.raw(Sql.RawText(" FROM jobs")), "status")
+    Keyset.countsOn(sql" FROM jobs", "status")
 
   private def conds(q: JobQuery): ListSql.Conds =
-    val text = q.q.fold(Sql.empty) { t =>
-      val p = Param.S(Param.S.V(ListSql.contains(t.value)))
-      Sql.of(
-        Sql.OfText(
-          " AND (citekey ILIKE ? OR target_id ILIKE ? OR pipeline ILIKE ? OR detail::text ILIKE ? OR id LIKE ?)"
-        ),
-        p,
-        p,
-        p,
-        p,
-        Param.S(Param.S.V(ListSql.contains(t.value).drop(1)))
-      )
+    val text = q.q.fold(sql"") { t =>
+      val p = ListSql.contains(t.value)
+      sql" AND (citekey ILIKE $p OR target_id ILIKE $p OR pipeline ILIKE $p OR detail::text ILIKE $p OR id LIKE ${ListSql.contains(t.value).drop(1)})"
     }
     ListSql.Conds(
       List(
@@ -180,18 +165,18 @@ object JobRepo:
       before: Option[PageCursor],
       upTo: Option[PageCursor]
   )(using DbCon): Either[Problem, (Vector[JobInfo], Boolean)] =
-    (before.toList ++ upTo.toList).find(c => !Keyset.existsOn("jobs", Param.S(Param.S.V(c.value)))) match
+    (before.toList ++ upTo.toList).find(c => !Keyset.existsOn("jobs", c)) match
       case Some(c) => Left(Problem.NotFound.Entity(Problem.TypeName.of(Job.Id), Problem.Raw.of(c)))
       case None    =>
-        val (rows, more) = Keyset.pageOn[JobRow](
+        val (rows, more) = Keyset.pageOn[JobRow, PageCursor, JobRow.Id](
           select,
-          Sql.raw(Sql.RawText(" WHERE true")) ++ conds(q).all,
+          sql" WHERE true${conds(q).all}",
           "",
           "jobs",
           limit,
-          before.map(c => Param.S(Param.S.V(c.value))),
-          upTo.map(c => Param.S(Param.S.V(c.value))),
-          r => Param.S(Param.S.V(r.id.value))
+          before,
+          upTo,
+          _.id
         )
         Right((rows.map(toInfo), more))
 
@@ -202,7 +187,7 @@ object JobRepo:
       DbCon
   ): (List[(Keyset.State, RowCount)], List[(String, List[(String, RowCount)])]) =
     val c = conds(q)
-    def from(except: String) = Sql.raw(Sql.RawText(" FROM jobs WHERE true")) ++ c.except(except)
+    def from(except: String) = sql" FROM jobs WHERE true${c.except(except)}"
     (Keyset.countsOn(from("status"), "status"), List("kind" -> ListSql.facetOn(from("kind"), "kind", facetMax)))
 
   /** Free-text progress on a `running` job — what the CLI's progress line prints. */

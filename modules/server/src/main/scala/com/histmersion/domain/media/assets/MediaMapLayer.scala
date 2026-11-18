@@ -3,18 +3,18 @@ package domain.media.assets
 
 import com.histmersion.api.media.MediaGeoHit
 import com.histmersion.api.catalogue.{TileProps as P, TilesApi}
-import com.histmersion.util.database.Sql
 import com.histmersion.domain.catalogue.maptiles.{TileCell, TileFeatures as F, TilePoint, TileValue}
 import com.histmersion.domain.catalogue.maptiles.layers.MapLayer
 import com.histmersion.domain.catalogue.periods.BPeriodRow
 import com.histmersion.domain.DeepTime
 import com.histmersion.domain.catalogue.maptiles.MapTiles
+import com.augustnagro.magnum.Frag
 
 /** The pictures as a layer of the map: those placed in a tile's box, of the kind, provider and licence asked for, dated
   * in the span when one is asked for.
   */
 final class MediaMapLayer(assets: AssetService) extends MapLayer:
-  def candidates(q: TilesApi.TileQuery, window: Option[(BPeriodRow.PLo, BPeriodRow.PHi)], envelope: Sql): Sql =
+  def candidates(q: TilesApi.TileQuery, window: Option[(BPeriodRow.PLo, BPeriodRow.PHi)], envelope: Frag): Frag =
     MediaRepo.tileCandidates(
       q.kind.map(k => MediaItemRow.Kind(k.value)),
       q.provider.map(p => MediaItemRow.Provider(p.value)),

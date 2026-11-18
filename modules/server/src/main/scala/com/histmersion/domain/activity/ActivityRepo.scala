@@ -3,12 +3,12 @@ package domain.activity
 
 import com.histmersion.api.automation.Activity
 import com.histmersion.api.automation.Activity.{Entry, Show}
-import com.histmersion.util.database.{Param, Sql}
 
 import com.augustnagro.magnum.*
 
 import java.time.Instant
 import com.histmersion.domain.automation.approvals.ApprovalQuery
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** The activity list in SQL: the jobs (agent runs among them), the worklog and a person's decisions as one relation,
   * filtered and cut into pages by the rules of [[ActivityRules]]. Takes the connection it runs on.
@@ -65,41 +65,30 @@ private[activity] object ActivityRepo:
   private def quoted(states: Set[Entry.State]): String =
     states.toList.map(_.value).sorted.map(s => s"'$s'").mkString(", ")
 
-  private def where(q: ActivityQuery): Sql =
-    Sql.raw(Sql.Text(s" WHERE ${showSql(q.show)}")) ++
-      q.goal.fold(Sql.empty)(g => Sql.of(Sql.Text(" AND goal = ?"), Param.S(Param.S.V(g.value)))) ++
-      q.since.fold(Sql.empty)(s => Sql.of(Sql.Text(" AND t >= ?::timestamptz"), Param.S(Param.S.V(s.toString)))) ++
-      q.before.fold(Sql.empty)(c =>
-        Sql.of(
-          Sql.Text(""" AND (t < ?::timestamptz OR (t = ?::timestamptz AND (kind || ':' || rid) COLLATE "C" < ?))"""),
-          Param.S(Param.S.V(c.at.toString)),
-          Param.S(Param.S.V(c.at.toString)),
-          Param.S(Param.S.V(c.key.value))
-        )
-      )
+  private def where(q: ActivityQuery): Frag =
+    sql" WHERE ${SqlLiteral(showSql(q.show))}${q.goal.fold(sql"")(g =>
+        sql" AND goal = $g"
+      )}${q.since.fold(sql"")(s => sql" AND t >= ${s.toString}::timestamptz")}${q.before.fold(sql"")(c =>
+        sql""" AND (t < ${c.at.toString}::timestamptz OR (t = ${c.at.toString}::timestamptz AND (kind || ':' || rid) COLLATE "C" < ${c.key}))"""
+      )}"
 
   /** One page of `q`, with the next page's cursor. */
   def page(q: ActivityQuery)(using DbCon): (List[Entry], Option[ActivityCursor.Wire]) =
-    val sql = Sql.raw(Sql.Text(s"$Projection FROM $Merged")) ++ where(q) ++
-      Sql.of(
-        Sql.Text(""" ORDER BY t DESC, (kind || ':' || rid) COLLATE "C" DESC LIMIT ?"""),
-        Param.I(Param.I.V(q.limit.value + 1))
-      )
-    val rows = sql.frag.query[ActivityRow].run().toList.map(_.entry)
+    val sql = sql"""${SqlLiteral(Projection)} FROM ${SqlLiteral(Merged)}${where(
+        q
+      )} ORDER BY t DESC, (kind || ':' || rid) COLLATE "C" DESC LIMIT ${q.limit.value + 1}"""
+    val rows = sql.query[ActivityRow].run().toList.map(_.entry)
     val (kept, rest) = rows.splitAt(q.limit.value)
     (kept, Option.when(rest.nonEmpty)(kept.lastOption).flatten.map(ActivityRules.cursorOf(_).wire))
 
   /** The runs and jobs running now, and those started since `weekAgo` that failed. */
   def counts(weekAgo: Instant)(using DbCon): Activity.Counts =
-    val sql = Sql.of(
-      Sql.Text(s"""SELECT count(*) FILTER (WHERE status IN (${quoted(ActivityRules.RunningStates)})),
-                                count(*) FILTER (WHERE status IN (${quoted(
-          ActivityRules.ProblemStates
-        )}) AND created_at >= ?::timestamptz)
-                         FROM jobs"""),
-      Param.S(Param.S.V(weekAgo.toString))
-    )
-    sql.frag
+    val sql = sql"""SELECT count(*) FILTER (WHERE status IN (${SqlLiteral(quoted(ActivityRules.RunningStates))})),
+                                count(*) FILTER (WHERE status IN (${SqlLiteral(
+        quoted(ActivityRules.ProblemStates)
+      )}) AND created_at >= ${weekAgo.toString}::timestamptz)
+                         FROM jobs"""
+    sql
       .query[(Long, Long)]
       .run()
       .headOption

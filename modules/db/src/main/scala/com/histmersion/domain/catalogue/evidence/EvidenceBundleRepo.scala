@@ -5,7 +5,6 @@ import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.json.RawJson
 
 import com.histmersion.util.data.exchange.BundleImport
-import com.histmersion.util.database.Sql
 import com.histmersion.util.data.exchange.{BundleFormat, BundleScope}
 import com.histmersion.util.data.exchange.BundleSql.*
 
@@ -26,12 +25,15 @@ private[evidence] object EvidenceBundleRepo:
   // ── out ──────────────────────────────────────────────────────────────────────────────────────
 
   def attestations(scope: BundleScope)(using DbCon): Vector[Bundle.Attestation] =
-    (Sql.raw(Sql.Text(s"""SELECT t.uid, t.origin, s.uid, t.target_type, t.target_id,
-                       ${targetUid("t.target_type", "t.target_id")}, t.quote, t.prefix, t.suffix,
+    sql"""SELECT t.uid, t.origin, s.uid, t.target_type, t.target_id,
+                       ${SqlLiteral(targetUid("t.target_type", "t.target_id"))}, t.quote, t.prefix, t.suffix,
                        t.char_start, t.char_end, t.chunk_ord, t.page, t.canvas, t.xywh, t.cts_urn, t.note,
-                       ${ts("t.created_at")}, ${ts("t.updated_at")}
-                FROM attestations t JOIN sources s ON s.citekey = t.citekey WHERE """)) ++
-      where(scope, "t.uid", "t.updated_at") ++ " ORDER BY t.uid").frag
+                       ${SqlLiteral(ts("t.created_at"))}, ${SqlLiteral(ts("t.updated_at"))}
+                FROM attestations t JOIN sources s ON s.citekey = t.citekey WHERE ${where(
+        scope,
+        "t.uid",
+        "t.updated_at"
+      )} ORDER BY t.uid"""
       .query[BAttestationFullRow]
       .run()
       .map(r =>
@@ -65,12 +67,12 @@ private[evidence] object EvidenceBundleRepo:
   def eventCandidates(scope: BundleScope)(using DbCon): Vector[Bundle.EventCandidate] =
     val w = scope match
       case BundleScope.Since(_) =>
-        Sql.raw(Sql.Text("(c.status <> 'proposed' OR ")) ++ where(scope, "e.uid", "c.computed_at") ++ ")"
+        sql"(c.status <> 'proposed' OR ${where(scope, "e.uid", "c.computed_at")})"
       case _ => where(scope, "e.uid", "c.computed_at")
-    (Sql.raw(Sql.Text(s"""SELECT e.uid, s.uid, c.citekey, c.score, c.status, c.findings, c.passages::text, c.reasons,
-                       ${ts("c.computed_at")}
+    sql"""SELECT e.uid, s.uid, c.citekey, c.score, c.status, c.findings, c.passages::text, c.reasons,
+                       ${SqlLiteral(ts("c.computed_at"))}
                 FROM event_link_candidates c JOIN events e ON e.id = c.event_id
-                JOIN sources s ON s.citekey = c.citekey WHERE """)) ++ w ++ " ORDER BY e.uid, s.uid").frag
+                JOIN sources s ON s.citekey = c.citekey WHERE $w ORDER BY e.uid, s.uid"""
       .query[BCandidateRow]
       .run()
       .map { r =>
@@ -89,9 +91,12 @@ private[evidence] object EvidenceBundleRepo:
 
   /** When the candidates of the events in scope were last computed (`event_link_checks`). */
   def eventChecks(scope: BundleScope)(using DbCon): Vector[Bundle.EventCheck] =
-    (Sql.raw(Sql.Text(s"""SELECT e.uid, ${ts("k.checked_at")}
-                FROM event_link_checks k JOIN events e ON e.id = k.event_id WHERE """)) ++
-      where(scope, "e.uid", "k.checked_at") ++ " ORDER BY e.uid").frag
+    sql"""SELECT e.uid, ${SqlLiteral(ts("k.checked_at"))}
+                FROM event_link_checks k JOIN events e ON e.id = k.event_id WHERE ${where(
+        scope,
+        "e.uid",
+        "k.checked_at"
+      )} ORDER BY e.uid"""
       .query[(UUID, String)]
       .run()
       .map((uid, at) => Bundle.EventCheck(uid, Bundle.EventCheck.CheckedAt(at)))
@@ -113,9 +118,7 @@ private[evidence] object EvidenceBundleRepo:
     val eventIds = eventIdsOf()
     import com.histmersion.api.exchange.Bundle.EventSets.newer
     if w.es.eventCandidates.nonEmpty then
-      val here = Sql
-        .raw(Sql.Text(s"SELECT event_id, citekey, status, ${ts("computed_at")} FROM event_link_candidates"))
-        .frag
+      val here = sql"SELECT event_id, citekey, status, ${SqlLiteral(ts("computed_at"))} FROM event_link_candidates"
         .query[(String, String, String, String)]
         .run()
         .map((e, c, st, at) => (e, c) -> (st, at))
@@ -145,9 +148,7 @@ private[evidence] object EvidenceBundleRepo:
     val eventIds = eventIdsOf()
     import com.histmersion.api.exchange.Bundle.EventSets.newer
     if w.es.eventChecks.nonEmpty then
-      val here = Sql
-        .raw(Sql.Text(s"SELECT event_id, ${ts("checked_at")} FROM event_link_checks"))
-        .frag
+      val here = sql"SELECT event_id, ${SqlLiteral(ts("checked_at"))} FROM event_link_checks"
         .query[(String, String)]
         .run()
         .toMap

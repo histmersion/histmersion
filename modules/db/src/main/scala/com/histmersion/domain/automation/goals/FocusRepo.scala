@@ -2,7 +2,6 @@ package com.histmersion
 package domain.automation.goals
 
 import com.augustnagro.magnum.*
-import com.histmersion.util.database.Sql
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
@@ -58,12 +57,10 @@ object FocusRepo:
     object LeftAt extends Newtype[String, Pure]
 
   def goals()(using DbCon): List[GoalRow] =
-    Sql
-      .raw(Sql.Text(s"""SELECT g.slug, g.title, g.parent_slug, g.status, ${at("g.created_at")},
+    sql"""SELECT g.slug, g.title, g.parent_slug, g.status, ${SqlLiteral(at("g.created_at"))},
                        coalesce(f.active, false), coalesce(f.pinned, false), coalesce(f.priority, 0),
-                       ${at("f.since")}, f.why, ${at("f.left_at")}, f.left_why
-                FROM goals g LEFT JOIN goal_focus f ON f.slug = g.slug ORDER BY g.slug"""))
-      .frag
+                       ${SqlLiteral(at("f.since"))}, f.why, ${SqlLiteral(at("f.left_at"))}, f.left_why
+                FROM goals g LEFT JOIN goal_focus f ON f.slug = g.slug ORDER BY g.slug"""
       .query[GoalRow]
       .run()
       .toList

@@ -3,7 +3,6 @@ package domain.catalogue.periods
 
 import com.histmersion.api.Dataset
 import com.histmersion.api.catalogue.HistoricalPeriod
-import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.util.database.given_DbCodec_List
 import com.histmersion.util.database.{LikePattern, RangeSql}
 
@@ -30,21 +29,14 @@ private[periods] object PeriodRepo:
   private val columns = s"id, label, authority, ${RangeSql.cols("period")}, region, parent_id, preset"
 
   def get(id: PeriodRow.Id)(using DbCon): Option[HistoricalPeriod] =
-    Sql
-      .of(Sql.OfText(s"SELECT $columns FROM periods WHERE id = ?"), Param.S(Param.S.V(id.value)))
-      .frag
+    sql"SELECT ${SqlLiteral(columns)} FROM periods WHERE id = $id"
       .query[PeriodRow]
       .run()
       .headOption
       .map(_.toPeriod)
 
   def children(id: PeriodRow.Id)(using DbCon): Vector[HistoricalPeriod] =
-    Sql
-      .of(
-        Sql.OfText(s"SELECT $columns FROM periods WHERE parent_id = ? ORDER BY ${RangeSql.start("period")}, label, id"),
-        Param.S(Param.S.V(id.value))
-      )
-      .frag
+    sql"SELECT ${SqlLiteral(columns)} FROM periods WHERE parent_id = $id ORDER BY ${SqlLiteral(RangeSql.start("period"))}, label, id"
       .query[PeriodRow]
       .run()
       .map(_.toPeriod)

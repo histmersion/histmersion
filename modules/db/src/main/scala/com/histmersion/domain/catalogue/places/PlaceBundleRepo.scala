@@ -5,7 +5,7 @@ import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.domain.MergeSettings
 import com.histmersion.util.data.exchange.BundleImport
-import com.histmersion.util.database.{Jsonb, Param, Sql}
+import com.histmersion.util.database.Jsonb
 import com.histmersion.util.data.exchange.{BundleFormat, BundleScope}
 import com.histmersion.util.data.exchange.BundleSql.*
 
@@ -38,14 +38,14 @@ private[places] object PlaceBundleRepo:
     */
 
   def places(scope: BundleScope, alsoIds: List[BPlaceRow.Id] = Nil)(using DbCon): Vector[Bundle.Place] =
-    val own = Sql.raw(Sql.Text("p.dataset = 'local' AND ")) ++ where(scope, "p.uid", "p.updated_at")
+    val own = sql"p.dataset = 'local' AND ${where(scope, "p.uid", "p.updated_at")}"
     val sel = if alsoIds.isEmpty then own
-    else
-      Sql.raw(Sql.RawText("((")) ++ own ++
-        Sql.of(Sql.OfText(") OR p.id = ANY(?::text[]))"), Param.A(alsoIds.distinct.map(i => Param.A.V(i.value))))
-    val rows = (Sql.raw(Sql.RawText(s"""SELECT p.uid, p.origin, p.id, p.label, p.kind, encode(ST_AsEWKB(p.geom), 'hex'),
-                       ${rangeCols("p.period")}, p.source, p.properties::text, ${ts("p.updated_at")}
-                FROM places p WHERE """)) ++ sel ++ " ORDER BY p.uid").frag.query[BPlaceRow].run()
+    else sql"(($own) OR p.id = ANY(${alsoIds.distinct}::text[]))"
+    val rows = sql"""SELECT p.uid, p.origin, p.id, p.label, p.kind, encode(ST_AsEWKB(p.geom), 'hex'),
+                       ${SqlLiteral(rangeCols("p.period"))}, p.source, p.properties::text, ${SqlLiteral(
+        ts("p.updated_at")
+      )}
+                FROM places p WHERE $sel ORDER BY p.uid""".query[BPlaceRow].run()
     val ids = rows.map(_.id).toList
     if ids.isEmpty then Vector.empty
     else
@@ -126,9 +126,12 @@ private[places] object PlaceBundleRepo:
     * place travels as the reference fingerprint, not as a row.
     */
   def placeAliases(scope: BundleScope)(using DbCon): Vector[Bundle.PlaceAlias] =
-    (Sql.raw(Sql.RawText(s"""SELECT x.alias, p.uid, ${ts("x.created_at")}
-                FROM place_aliases x JOIN places p ON p.id = x.place_id WHERE p.dataset = 'local' AND """)) ++
-      where(scope, "p.uid", "x.created_at") ++ """ ORDER BY x.alias COLLATE "C"""").frag
+    sql"""SELECT x.alias, p.uid, ${SqlLiteral(ts("x.created_at"))}
+                FROM place_aliases x JOIN places p ON p.id = x.place_id WHERE p.dataset = 'local' AND ${where(
+        scope,
+        "p.uid",
+        "x.created_at"
+      )} ORDER BY x.alias COLLATE "C\""""
       .query[(String, UUID, String)]
       .run()
       .map((a, u, c) => Bundle.PlaceAlias(Bundle.PlaceAlias.Alias(a), u, Bundle.PlaceAlias.CreatedAt(c)))
@@ -137,9 +140,12 @@ private[places] object PlaceBundleRepo:
     * and the places asked about with no answer (so the other side does not ask again).
     */
   def siteTypes(scope: BundleScope)(using DbCon): Vector[Bundle.SiteType] =
-    (Sql.raw(Sql.RawText(s"""SELECT p.id, p.site_type, ${ts("p.site_type_checked_at")} FROM places p
-                WHERE (p.site_type IS NOT NULL OR p.site_type_checked_at IS NOT NULL) AND """)) ++
-      where(scope, "p.uid", "p.site_type_checked_at") ++ """ ORDER BY p.id COLLATE "C"""").frag
+    sql"""SELECT p.id, p.site_type, ${SqlLiteral(ts("p.site_type_checked_at"))} FROM places p
+                WHERE (p.site_type IS NOT NULL OR p.site_type_checked_at IS NOT NULL) AND ${where(
+        scope,
+        "p.uid",
+        "p.site_type_checked_at"
+      )} ORDER BY p.id COLLATE "C\""""
       .query[(String, Option[String], Option[String])]
       .run()
       .map((id, v, c) =>
@@ -149,26 +155,21 @@ private[places] object PlaceBundleRepo:
 
   // ── what a merge plan compares ───────────────────────────────────────────────────────────────
 
-  /** Who has each of `labels` here, by the query's (label, uid) rows. */
-  private def owners(q: String, ids: List[BPlaceRow.Id])(using DbCon): Map[BPlaceRow.Id, UUID] =
+  /** Who has each of `ids` here, by the (label, uid) rows of the query `q` makes of them. */
+  private def owners(ids: List[BPlaceRow.Id])(q: List[BPlaceRow.Id] => Frag)(using
+      DbCon
+  ): Map[BPlaceRow.Id, UUID] =
     if ids.isEmpty then Map.empty
-    else
-      Sql
-        .of(Sql.OfText(q), Param.A(ids.distinct.map(i => Param.A.V(i.value))))
-        .frag
-        .query[(BPlaceRow.Id, UUID)]
-        .run()
-        .toMap
+    else q(ids.distinct).query[(BPlaceRow.Id, UUID)].run().toMap
 
   /** The places here among `ids` → their uids. */
   def placesNamed(ids: List[BPlaceRow.Id])(using DbCon): Map[BPlaceRow.Id, UUID] =
-    owners("SELECT id, uid FROM places WHERE id = ANY(?::text[])", ids)
+    owners(ids)(ls => sql"SELECT id, uid FROM places WHERE id = ANY($ls::text[])")
 
   /** The old place ids here among `ids` → the uid of the place each names. */
   def oldIdsNamed(ids: List[BPlaceRow.Id])(using DbCon): Map[BPlaceRow.Id, UUID] =
-    owners(
-      "SELECT x.alias, p.uid FROM place_aliases x JOIN places p ON p.id = x.place_id WHERE x.alias = ANY(?::text[])",
-      ids
+    owners(ids)(ls =>
+      sql"SELECT x.alias, p.uid FROM place_aliases x JOIN places p ON p.id = x.place_id WHERE x.alias = ANY($ls::text[])"
     )
 
   /** Which of `ids` name a place here. */
@@ -187,31 +188,22 @@ private[places] object PlaceBundleRepo:
     * one.
     */
   def matchPlaces(ps: List[Bundle.Place], cfg: MergeSettings)(using DbCon): Map[UUID, BPlaceRow.Id] =
-    val norm = PlaceRepo.normLabelSql("p.label")
+    val norm = PlaceSql.normLabel(sql"p.label")
     ps.flatMap { b =>
       val within = cfg.placeWithinKm.value * 1000.0
-      Sql
-        .of(
-          Sql.OfText(s"""WITH b AS (SELECT ST_GeomFromEWKB(decode(nullif(?, ''), 'hex')) AS g)
+      sql"""WITH b AS (SELECT ST_GeomFromEWKB(decode(nullif(${b.geom.fold("")(_.value)}, ''), 'hex')) AS g)
             SELECT p.id FROM places p, b
-            WHERE $norm = ${PlaceRepo.normLabelSql("?")} AND p.kind = ?
+            WHERE $norm = ${PlaceSql.normLabel(sql"${b.label}")} AND p.kind = ${b.kind}
               AND CASE WHEN p.geom IS NULL OR b.g IS NULL THEN p.geom IS NULL AND b.g IS NULL
                        WHEN GeometryType(p.geom) = 'POINT' AND GeometryType(b.g) = 'POINT'
-                         THEN ST_DWithin(p.geom::geography, b.g::geography, ?)
+                         THEN ST_DWithin(p.geom::geography, b.g::geography, $within)
                        WHEN ST_Area(p.geom) > 0 AND ST_Area(b.g) > 0
-                         THEN ST_Area(ST_Intersection(p.geom, b.g)) / NULLIF(ST_Area(ST_Union(p.geom, b.g)), 0) >= ?
+                         THEN ST_Area(ST_Intersection(p.geom, b.g)) / NULLIF(ST_Area(ST_Union(p.geom, b.g)), 0) >= ${cfg.placeOverlapAtLeast}
                        ELSE false END
             ORDER BY CASE WHEN p.dataset = 'local' THEN 0 ELSE 1 END,
                      CASE WHEN p.geom IS NULL OR b.g IS NULL THEN 0 ELSE ST_Distance(ST_Centroid(p.geom), ST_Centroid(b.g)) END,
                      p.id
-            LIMIT 1"""),
-          Param.S(Param.S.V(b.geom.fold("")(_.value))),
-          Param.S(Param.S.V(b.label.value)),
-          Param.S(Param.S.V(b.kind.value)),
-          Param.D(Param.D.V(within)),
-          Param.D(Param.D.V(cfg.placeOverlapAtLeast.value))
-        )
-        .frag
+            LIMIT 1"""
         .query[BPlaceRow.Id]
         .run()
         .headOption
@@ -316,14 +308,11 @@ private[places] object PlaceBundleRepo:
     given DbCon = w.transaction
     if w.es.siteTypes.nonEmpty then
       val placeHere = this.placeHere(w)
-      val here = Sql
-        .raw(
-          Sql.RawText(s"SELECT id, ${ts("site_type_checked_at")} FROM places WHERE site_type_checked_at IS NOT NULL")
-        )
-        .frag
-        .query[(String, String)]
-        .run()
-        .toMap
+      val here =
+        sql"SELECT id, ${SqlLiteral(ts("site_type_checked_at"))} FROM places WHERE site_type_checked_at IS NOT NULL"
+          .query[(String, String)]
+          .run()
+          .toMap
       w.es.siteTypes.foreach { t =>
         val id = placeHere(BPlaceRow.Id(t.placeId.value))
         if newer(here.get(id.value).map(Bundle.UpdatedAt(_)), t.checkedAt.map(c => Bundle.UpdatedAt(c.value))) then

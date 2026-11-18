@@ -1,8 +1,6 @@
 package com.histmersion
 package domain.automation.agents
 
-import com.histmersion.util.database.{Param, Sql}
-
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
@@ -20,7 +18,7 @@ object LeaseRepo:
   type TtlSeconds = TtlSeconds.T
   object TtlSeconds extends Newtype[Int, Pure]
 
-  private val ts = """'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
+  private val ts = sql"""'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
 
   /** Claim (or renew) lease `name` for `owner` for `ttlSeconds`: it is taken when free, expired, or already ours.
     * `true` = we hold it now.
@@ -37,14 +35,7 @@ object LeaseRepo:
 
   /** Who holds it, until when, and whether that is in the past. */
   def holder(name: LeaseName)(using DbCon): Option[(LeaseOwner, LeaseExpiry, Boolean)] =
-    Sql
-      .of(
-        Sql.Text(
-          s"SELECT owner, to_char(until AT TIME ZONE 'UTC', $ts), until < now() FROM agent_leases WHERE name = ?"
-        ),
-        Param.S(Param.S.V(name.value))
-      )
-      .frag
+    sql"SELECT owner, to_char(until AT TIME ZONE 'UTC', $ts), until < now() FROM agent_leases WHERE name = $name"
       .query[(String, String, Boolean)]
       .run()
       .headOption

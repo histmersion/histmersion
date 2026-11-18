@@ -5,7 +5,6 @@ import com.histmersion.domain.*
 import com.histmersion.api.automation.Goal.Plans.*
 
 import com.augustnagro.magnum.*
-import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
@@ -18,7 +17,7 @@ object GoalLinkRepo:
   type ItemId = ItemId.T
   object ItemId extends Newtype[Int, Pure]
 
-  private val ts = """'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
+  private val ts = sql"""'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
 
   final private case class LinkRow(
       kind: Goal.LinkKind.Wire,
@@ -38,7 +37,7 @@ object GoalLinkRepo:
                              WHEN 'article' THEN (SELECT a.title FROM articles a WHERE a.slug = l.ref)
                              WHEN 'queue-item' THEN (SELECT q.text FROM queue_items q WHERE q.id::text = l.ref)
                              ELSE NULL END,
-                 to_char(l.created_at AT TIME ZONE 'UTC', ${SqlLiteral(ts)}),
+                 to_char(l.created_at AT TIME ZONE 'UTC', $ts),
                  CASE l.kind WHEN 'queue-item' THEN (SELECT q.list FROM queue_items q WHERE q.id::text = l.ref) END
           FROM goal_links l WHERE l.goal_slug = $goal
           ORDER BY CASE l.kind WHEN 'source' THEN 0 WHEN 'article' THEN 1 WHEN 'query' THEN 2 ELSE 3 END,
@@ -147,10 +146,10 @@ object GoalLinkRepo:
       lastNote: Option[GoalSchedule.LastNote]
   ) derives DbCodec
 
-  private val scheduleSelect = Sql.raw(Sql.RawText(s"""SELECT goal_slug, kind, cron, enabled, budget_usd,
+  private val scheduleSelect = sql"""SELECT goal_slug, kind, cron, enabled, budget_usd,
               to_char(next_run_at AT TIME ZONE 'UTC', $ts), to_char(last_run_at AT TIME ZONE 'UTC', $ts),
               last_job, last_note
-       FROM goal_schedules"""))
+       FROM goal_schedules"""
 
   private def toSchedule(r: ScheduleRow): Option[GoalSchedule] =
     ScheduleKind
@@ -171,8 +170,8 @@ object GoalLinkRepo:
 
   /** Every schedule (or one goal's), the next due first. */
   def schedules(goal: Option[com.histmersion.domain.automation.Goal.Slug] = None)(using DbCon): List[GoalSchedule] =
-    val where = goal.fold(Sql.empty)(g => Sql.of(Sql.OfText(" WHERE goal_slug = ?"), Param.S(Param.S.V(g.value))))
-    (scheduleSelect ++ where ++ " ORDER BY next_run_at NULLS LAST, goal_slug, kind").frag
+    val where = goal.fold(sql"")(g => sql" WHERE goal_slug = $g")
+    sql"$scheduleSelect$where ORDER BY next_run_at NULLS LAST, goal_slug, kind"
       .query[ScheduleRow]
       .run()
       .toList
@@ -182,11 +181,7 @@ object GoalLinkRepo:
   def schedule(goal: com.histmersion.domain.automation.Goal.Slug, kind: ScheduleKind)(using
       DbCon
   ): Option[GoalSchedule] =
-    (scheduleSelect ++ Sql.of(
-      Sql.OfText(" WHERE goal_slug = ? AND kind = ?"),
-      Param.S(Param.S.V(goal.value)),
-      Param.S(Param.S.V(kind.wire.value))
-    )).frag
+    sql"$scheduleSelect WHERE goal_slug = $goal AND kind = ${kind.wire}"
       .query[ScheduleRow]
       .run()
       .headOption
@@ -225,16 +220,9 @@ object GoalLinkRepo:
     * servers migrating at once cannot both get them.
     */
   def takeSchedulesIn(goal: com.histmersion.domain.automation.Goal.Slug)(using DbCon): List[GoalSchedule] =
-    Sql
-      .of(
-        Sql.OfText(
-          s"""DELETE FROM goal_schedules WHERE goal_slug = ? RETURNING goal_slug, kind, cron, enabled, budget_usd,
+    sql"""DELETE FROM goal_schedules WHERE goal_slug = $goal RETURNING goal_slug, kind, cron, enabled, budget_usd,
               to_char(next_run_at AT TIME ZONE 'UTC', $ts), to_char(last_run_at AT TIME ZONE 'UTC', $ts),
               last_job, last_note"""
-        ),
-        Param.S(Param.S.V(goal.value))
-      )
-      .frag
       .query[ScheduleRow]
       .run()
       .toList

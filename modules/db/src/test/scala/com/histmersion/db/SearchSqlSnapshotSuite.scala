@@ -13,7 +13,6 @@ import com.histmersion.domain.*
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
-import com.histmersion.util.database.Sql
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.{Filter, Sort}
 import com.histmersion.api.library.Facet
@@ -23,6 +22,7 @@ import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.research.ReviewGoal
 import com.histmersion.domain.library.Citekey
+import com.augustnagro.magnum.Frag
 
 /** The SQL the filter's builders generate, recorded for every combination the search exercises: each criterion alone
   * (text, tags, authors, places by name and by gazetteer id, topics, statuses, publication years, deep time, a box and
@@ -126,9 +126,20 @@ class SearchSqlSnapshotSuite extends munit.FunSuite:
 
   private val scopes: List[(String, PlaceScope)] = List("no scope" -> PlaceScope.empty, "scoped" -> scoped)
 
-  private def render(s: Sql): String = s"${s.text}\n  params: ${s.params.mkString(", ")}"
+  private def render(s: Frag): String = s"${s.sqlString}\n  params: ${s.params.map(param).mkString(", ")}"
 
-  private def statements(f: Filter, scope: PlaceScope): List[(String, Sql)] =
+  /** A bound value with the JDBC type it is bound as, in the recording's spelling (`S` text, `I` int, `L` bigint, `D`
+    * double, `A` a text array): a value that changed type would change the recording.
+    */
+  private def param(p: Any): String = p.asInstanceOf[Matchable] match
+    case s: String   => s"S($s)"
+    case i: Int      => s"I($i)"
+    case l: Long     => s"L($l)"
+    case d: Double   => s"D($d)"
+    case xs: List[?] => s"A($xs)"
+    case other       => s"?($other)"
+
+  private def statements(f: Filter, scope: PlaceScope): List[(String, Frag)] =
     val text = FilterSql.text(f)
     List(
       "where" -> FilterSql.where(f, scope),
@@ -158,7 +169,7 @@ class SearchSqlSnapshotSuite extends munit.FunSuite:
       )
     )
 
-  private def facets(f: Filter, scope: PlaceScope): List[(String, Sql)] =
+  private def facets(f: Filter, scope: PlaceScope): List[(String, Frag)] =
     Facet.Field.values.toList.flatMap { ff =>
       List(
         s"facetsQuery ${Facet.Field.label(ff)}" -> FilterSql.facetsQuery(ff, None, f, PageSize(50), scope),

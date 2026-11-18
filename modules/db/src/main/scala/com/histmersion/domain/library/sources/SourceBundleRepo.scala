@@ -10,7 +10,6 @@ import io.scalaland.chimney.dsl.*
 
 import com.histmersion.util.data.exchange.BundleImport
 import com.histmersion.util.database.Jsonb
-import com.histmersion.util.database.Sql
 import com.histmersion.util.data.exchange.BundleEntities.BlobUse
 import com.histmersion.util.data.exchange.BlobSink
 import com.histmersion.util.data.exchange.BundleFormat
@@ -49,24 +48,25 @@ private[sources] object SourceBundleRepo:
   // ── out ──────────────────────────────────────────────────────────────────────────────────────
 
   def sources(scope: BundleScope)(using DbCon): Vector[BSourceRow] =
-    (Sql.raw(
-      Sql.RawText(s"""SELECT s.uid, s.origin, s.citekey, s.title, s.authors, s.doi, s.year, s.venue, s.status,
-                       s.topics, s.regions, s.tags, ${rangeCols("s.period")}, s.summary, s.notes, s.source,
+    sql"""SELECT s.uid, s.origin, s.citekey, s.title, s.authors, s.doi, s.year, s.venue, s.status,
+                       s.topics, s.regions, s.tags, ${SqlLiteral(rangeCols("s.period"))}, s.summary, s.notes, s.source,
                        s.cited_by_count, s.influential_citations, to_char(s.added_date, 'YYYY-MM-DD'),
                        encode(sha256(convert_to(s.ocr_markdown, 'UTF8')), 'hex'),
                        octet_length(convert_to(s.ocr_markdown, 'UTF8'))::bigint,
-                       nullif(lower(btrim(s.sha256)), ''), ${ts("s.updated_at")},
+                       nullif(lower(btrim(s.sha256)), ''), ${SqlLiteral(ts("s.updated_at"))},
                        coalesce((SELECT array_agg(i.value ORDER BY i.value COLLATE "C") FROM source_identifiers i
                                  WHERE i.source_uid = s.uid AND i.scheme = 'isbn'), '{}'::text[])
-                FROM sources s WHERE """)
-    ) ++ where(scope, "s.uid", "s.updated_at") ++ " ORDER BY s.uid").frag.query[BSourceRow].run()
+                FROM sources s WHERE ${where(scope, "s.uid", "s.updated_at")} ORDER BY s.uid""".query[BSourceRow].run()
 
   def findings(scope: BundleScope)(using DbCon): Vector[Bundle.Finding] =
-    (Sql.raw(Sql.RawText(s"""SELECT f.uid, f.origin, s.uid, f.id, f.claim, f.region_name, ST_X(f.geom), ST_Y(f.geom),
-                       ${rangeCols("f.period")}, f.period_name, f.tags, f.confidence, f.significance,
-                       ${ts("f.updated_at")}
-                FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE """)) ++
-      where(scope, "f.uid", "f.updated_at") ++ " ORDER BY f.uid").frag.query[BFindingRow].run().map { r =>
+    sql"""SELECT f.uid, f.origin, s.uid, f.id, f.claim, f.region_name, ST_X(f.geom), ST_Y(f.geom),
+                       ${SqlLiteral(rangeCols("f.period"))}, f.period_name, f.tags, f.confidence, f.significance,
+                       ${SqlLiteral(ts("f.updated_at"))}
+                FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE ${where(
+        scope,
+        "f.uid",
+        "f.updated_at"
+      )} ORDER BY f.uid""".query[BFindingRow].run().map { r =>
       Bundle.Finding(
         r.uid,
         r.origin,
@@ -91,26 +91,35 @@ private[sources] object SourceBundleRepo:
 
   /** The out-edges of the sources in scope — a source carries its whole set. */
   def edges(scope: BundleScope)(using DbCon): Vector[Bundle.Edge] =
-    (Sql.raw(Sql.RawText("""SELECT a.uid, b.uid, e.kind FROM edges e
-                JOIN sources a ON a.citekey = e.src JOIN sources b ON b.citekey = e.dst WHERE """)) ++
-      where(scope, "a.uid", "a.updated_at") ++ """ ORDER BY a.uid, b.uid, e.kind COLLATE "C"""").frag
+    sql"""SELECT a.uid, b.uid, e.kind FROM edges e
+                JOIN sources a ON a.citekey = e.src JOIN sources b ON b.citekey = e.dst WHERE ${where(
+        scope,
+        "a.uid",
+        "a.updated_at"
+      )} ORDER BY a.uid, b.uid, e.kind COLLATE "C\""""
       .query[(UUID, UUID, Bundle.Edge.Kind)]
       .run()
       .map(Bundle.Edge.apply)
 
   def unresolvedEdges(scope: BundleScope)(using DbCon): Vector[Bundle.UnresolvedEdge] =
-    (Sql.raw(Sql.RawText("""SELECT a.uid, u.dst, u.kind FROM unresolved_edges u
-                JOIN sources a ON a.citekey = u.src WHERE """)) ++
-      where(scope, "a.uid", "a.updated_at") ++ """ ORDER BY a.uid, u.dst COLLATE "C", u.kind COLLATE "C"""").frag
+    sql"""SELECT a.uid, u.dst, u.kind FROM unresolved_edges u
+                JOIN sources a ON a.citekey = u.src WHERE ${where(
+        scope,
+        "a.uid",
+        "a.updated_at"
+      )} ORDER BY a.uid, u.dst COLLATE "C", u.kind COLLATE "C\""""
       .query[(UUID, Bundle.UnresolvedEdge.Dst, Bundle.UnresolvedEdge.Kind)]
       .run()
       .map(Bundle.UnresolvedEdge.apply)
 
   def assessments(scope: BundleScope)(using DbCon): Vector[Bundle.Assessment] =
-    (Sql.raw(Sql.RawText(s"""SELECT s.uid, ${ts("a.checked_at")}, a.retracted, a.notices::text, a.cited_by,
+    sql"""SELECT s.uid, ${SqlLiteral(ts("a.checked_at"))}, a.retracted, a.notices::text, a.cited_by,
                        a.influential, a.verdict
-                FROM assessments a JOIN sources s ON s.citekey = a.citekey WHERE """)) ++
-      where(scope, "s.uid", "a.checked_at") ++ " ORDER BY s.uid").frag.query[BAssessmentRow].run().map { r =>
+                FROM assessments a JOIN sources s ON s.citekey = a.citekey WHERE ${where(
+        scope,
+        "s.uid",
+        "a.checked_at"
+      )} ORDER BY s.uid""".query[BAssessmentRow].run().map { r =>
       Bundle.Assessment(
         r.sourceUid,
         Bundle.Assessment.CheckedAt(r.checkedAt.value),
@@ -123,9 +132,12 @@ private[sources] object SourceBundleRepo:
     }
 
   def aliases(scope: BundleScope)(using DbCon): Vector[Bundle.Alias] =
-    (Sql.raw(Sql.RawText(s"""SELECT a.alias, s.uid, ${ts("a.created_at")}
-                FROM source_aliases a JOIN sources s ON s.citekey = a.citekey WHERE """)) ++
-      where(scope, "s.uid", "a.created_at") ++ """ ORDER BY a.alias COLLATE "C"""").frag
+    sql"""SELECT a.alias, s.uid, ${SqlLiteral(ts("a.created_at"))}
+                FROM source_aliases a JOIN sources s ON s.citekey = a.citekey WHERE ${where(
+        scope,
+        "s.uid",
+        "a.created_at"
+      )} ORDER BY a.alias COLLATE "C\""""
       .query[(Bundle.Alias.Value, UUID, Bundle.Alias.CreatedAt)]
       .run()
       .map(Bundle.Alias.apply)

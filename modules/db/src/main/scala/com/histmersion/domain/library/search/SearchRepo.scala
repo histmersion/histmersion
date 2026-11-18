@@ -9,7 +9,6 @@ import com.histmersion.util.database.given
 import com.histmersion.domain.catalogue.places.PlaceScope
 
 import com.augustnagro.magnum.*
-import com.histmersion.util.database.Sql
 import com.histmersion.api.library.{Filter, Hit, SearchResult}
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.personal.UnreadPage
@@ -24,7 +23,7 @@ private[search] object SearchRepo:
   /** How many sources the filter selects — `SearchResult.total` without building a page. */
 
   def count(filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): RowCount =
-    RowCount(FilterSql.countQuery(filter, scope).frag.query[Int].run().headOption.getOrElse(0))
+    RowCount(FilterSql.countQuery(filter, scope).query[Int].run().headOption.getOrElse(0))
 
   /** How many findings the filter selects (uncapped — the map feed above stops at its limit). */
   /** How many findings matching `filter` landed in NO place at all — the "unlocated" bucket of the region tree (plan
@@ -32,14 +31,13 @@ private[search] object SearchRepo:
     * feed.
     */
   def unlocated(filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): RowCount =
-    val q = Sql.raw(Sql.Text("SELECT count(*)::int FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE ")) ++
-      FilterSql.sourceWhere(filter) ++ Sql.raw(Sql.Text(" AND ")) ++ FilterSql.findingWhere(filter, scope = scope) ++
-      Sql.raw(Sql.Text(" AND NOT EXISTS (SELECT 1 FROM finding_places fp WHERE fp.finding_id = f.id)"))
-    RowCount(q.frag.query[Int].run().headOption.getOrElse(0))
+    val q =
+      sql"SELECT count(*)::int FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE ${FilterSql.sourceWhere(filter)} AND ${FilterSql.findingWhere(filter, scope = scope)} AND NOT EXISTS (SELECT 1 FROM finding_places fp WHERE fp.finding_id = f.id)"
+    RowCount(q.query[Int].run().headOption.getOrElse(0))
 
   /** How many sources, findings, articles and events the filter selects ([[FilterSql.selectionCountsQuery]]). */
   def selectionCounts(filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): Place.Counts =
-    (FilterSql.selectionCountsQuery(filter, scope).frag.query[(Int, Int, Int, Int)].run().head match
+    (FilterSql.selectionCountsQuery(filter, scope).query[(Int, Int, Int, Int)].run().head match
       case (s, f, a, e) =>
         Place.Counts(
           Place.Counts.Sources(s),
@@ -62,8 +60,8 @@ private[search] object SearchRepo:
   def sources(filter: Filter, snippetWords: Search.SnippetWords, scope: PlaceScope = PlaceScope.empty)(using
       DbCon
   ): SearchResult =
-    val total = FilterSql.countQuery(filter, scope).frag.query[Int].run().headOption.getOrElse(0)
-    val rows = FilterSql.sourcesQuery(filter, snippetWords, scope).frag.query[FilterSql.SourceRow].run()
+    val total = FilterSql.countQuery(filter, scope).query[Int].run().headOption.getOrElse(0)
+    val rows = FilterSql.sourcesQuery(filter, snippetWords, scope).query[FilterSql.SourceRow].run()
     if rows.isEmpty then SearchResult.of(SearchResult.Total(total), Nil, UnreadPage.Offset(filter.offset.value.max(0)))
     else
       val citekeys = rows.map(_.citekey).toList
@@ -73,7 +71,6 @@ private[search] object SearchRepo:
           case Some(q) =>
             FilterSql
               .snippetsQuery(q, snippetWords, citekeys)
-              .frag
               .query[FilterSql.SnippetRow]
               .run()
               .map(s => s.citekey -> s)
@@ -82,7 +79,6 @@ private[search] object SearchRepo:
       // one round-trip for the page's findings; which ones count as evidence is decided purely
       val byCk = FilterSql
         .findingsQuery(citekeys)
-        .frag
         .query[FindingHitRow]
         .run()
         .groupBy(_.citekey)

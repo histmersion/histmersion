@@ -2,7 +2,6 @@ package com.histmersion
 package domain.media.assets
 
 import com.histmersion.util.data.exchange.BundleImport
-import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.util.data.exchange.BundleScope
 import com.histmersion.util.data.exchange.BundleSql.*
 
@@ -22,11 +21,14 @@ private[assets] object AssetBundleRepo:
   // ── out ──────────────────────────────────────────────────────────────────────────────────────
 
   def assets(scope: BundleScope)(using DbCon): Vector[AssetBundleRow] =
-    (Sql.raw(Sql.Text(s"""SELECT x.uid, x.origin, s.uid, x.name, x.mime, x.sha256, length(x.bytes)::bigint,
+    sql"""SELECT x.uid, x.origin, s.uid, x.name, x.mime, x.sha256, length(x.bytes)::bigint,
                        x.width, x.height, x.kind, x.caption, x.license, encode(ST_AsEWKB(x.geom), 'hex'),
-                       ${rangeCols("x.period")}, ${ts("x.updated_at")}
-                FROM assets x JOIN sources s ON s.citekey = x.citekey WHERE """)) ++
-      where(scope, "x.uid", "x.updated_at") ++ " ORDER BY x.uid").frag.query[AssetBundleRow].run()
+                       ${SqlLiteral(rangeCols("x.period"))}, ${SqlLiteral(ts("x.updated_at"))}
+                FROM assets x JOIN sources s ON s.citekey = x.citekey WHERE ${where(
+        scope,
+        "x.uid",
+        "x.updated_at"
+      )} ORDER BY x.uid""".query[AssetBundleRow].run()
 
   def line(r: AssetBundleRow): Bundle.Asset =
     Bundle.Asset(
@@ -54,9 +56,7 @@ private[assets] object AssetBundleRepo:
   def bytes(uid: UUID)(using DbCon): java.io.OutputStream => Unit =
     out =>
       out.write(
-        Sql
-          .of(Sql.OfText("SELECT bytes FROM assets WHERE uid = ?::uuid"), Param.S(Param.S.V(uid.toString)))
-          .frag
+        sql"SELECT bytes FROM assets WHERE uid = ${uid.toString}::uuid"
           .query[Array[Byte]]
           .run()
           .head

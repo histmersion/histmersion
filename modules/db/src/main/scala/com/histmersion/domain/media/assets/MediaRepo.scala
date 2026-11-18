@@ -4,7 +4,6 @@ package domain.media.assets
 import com.histmersion.util.database.RangeSql
 
 import com.histmersion.api.Api
-import com.histmersion.util.database.{Param, Sql}
 
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
@@ -259,7 +258,7 @@ private[assets] object MediaRepo:
           LIMIT ${limit.value.max(1)}""".query[MediaThumbRow].run().toList.map(thumbOf)
 
   private val itemCols =
-    """a.uid::text, a.name, a.mime, length(a.bytes), a.citekey, a.provider, a.provider_key, a.width, a.height,
+    sql"""a.uid::text, a.name, a.mime, length(a.bytes), a.citekey, a.provider, a.provider_key, a.width, a.height,
        a.kind, a.caption, a.license, a.license_url, a.author, a.credit, a.source_url, a.original_url,
        to_char(a.retrieved_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), a.thumb IS NOT NULL"""
 
@@ -319,7 +318,7 @@ private[assets] object MediaRepo:
     val (place, event) = (clean(q.place.map(_.value)), clean(q.event.map(_.value)))
     val text = clean(q.q.map(_.value)).map(t => s"%$t%")
     val offset = q.offset.map(_.value).getOrElse(0).max(0)
-    val rows = sql"""SELECT ${SqlLiteral(itemCols)}, count(*) OVER ()::int FROM assets a
+    val rows = sql"""SELECT $itemCols, count(*) OVER ()::int FROM assets a
           WHERE ($provider::text IS NULL OR ($provider::text = ${MediaProvider.Source} AND a.provider IS NULL)
                  OR a.provider = $provider::text)
             AND ($license::text IS NULL OR ($license::text = 'none' AND coalesce(btrim(a.license), '') = '')
@@ -342,7 +341,7 @@ private[assets] object MediaRepo:
     )
 
   def show(uid: MediaItemRow.Uid)(using DbCon): Option[MediaItem] =
-    sql"SELECT ${SqlLiteral(itemCols)} FROM assets a WHERE a.uid = $uid::uuid"
+    sql"SELECT $itemCols FROM assets a WHERE a.uid = $uid::uuid"
       .query[MediaItemRow]
       .run()
       .headOption
@@ -383,7 +382,7 @@ private[assets] object MediaRepo:
   def geo(q: Api.MediaGeoQuery, limit: Limit)(using DbCon): List[MediaGeoHit] =
     val k = q.kind.map(_.value.trim.toLowerCase).filter(_.nonEmpty)
     val (provider, license) = (clean(q.provider.map(_.value)), clean(q.license.map(_.value)))
-    sql"""SELECT ${SqlLiteral(geoCols)}
+    sql"""SELECT $geoCols
           FROM assets a
           WHERE a.geom IS NOT NULL
             AND ($k::text IS NULL OR a.kind = $k::text)
@@ -402,7 +401,7 @@ private[assets] object MediaRepo:
   def geoOf(uids: List[MediaItemRow.Uid])(using DbCon): Map[MediaItemRow.Uid, MediaGeoHit] =
     if uids.isEmpty then Map.empty
     else
-      sql"""SELECT ${SqlLiteral(geoCols)} FROM assets a
+      sql"""SELECT $geoCols FROM assets a
           WHERE a.geom IS NOT NULL AND a.uid = ANY($uids::uuid[])"""
         .query[MediaGeoRow]
         .run()
@@ -417,34 +416,27 @@ private[assets] object MediaRepo:
       provider: Option[MediaItemRow.Provider],
       license: Option[MediaItemRow.License],
       window: Option[(DeepTime.SignedYear, DeepTime.SignedYear)],
-      envelope: Sql
-  ): Sql =
+      envelope: Frag
+  ): Frag =
     val k = kind.map(_.value.trim.toLowerCase).filter(_.nonEmpty)
-    val ps = List.newBuilder[Sql]
-    k.foreach(v => ps += Sql.of(Sql.OfText("a.kind = ?"), Param.S(Param.S.V(v))))
+    val ps = List.newBuilder[Frag]
+    k.foreach(v => ps += sql"a.kind = $v")
     clean(provider.map(_.value)).foreach(p =>
-      ps += (if p == MediaProvider.Source then Sql.raw(Sql.Text("a.provider IS NULL"))
-             else Sql.of(Sql.Text("a.provider = ?"), Param.S(Param.S.V(p))))
+      ps += (if p == MediaProvider.Source then sql"a.provider IS NULL"
+             else sql"a.provider = $p")
     )
     clean(license.map(_.value)).foreach(l =>
-      ps += (if l == "none" then Sql.raw(Sql.Text("coalesce(btrim(a.license), '') = ''"))
-             else Sql.of(Sql.Text("a.license = ?"), Param.S(Param.S.V(l))))
+      ps += (if l == "none" then sql"coalesce(btrim(a.license), '') = ''"
+             else sql"a.license = $l")
     )
     window.foreach((lo, hi) =>
-      ps += Sql.raw(Sql.Text(RangeSql.overlaps("a.period", s"${lo.value}::bigint", s"${hi.value}::bigint")))
+      ps += sql"${SqlLiteral(RangeSql.overlaps("a.period", s"${lo.value}::bigint", s"${hi.value}::bigint"))}"
     )
-    val rest = ps.result().foldLeft(Sql.empty)((acc, p) => acc ++ Sql.raw(Sql.RawText(" AND ")) ++ p)
-    Sql.raw(
-      Sql.Text(
-        "SELECT a.uid::text AS key, ST_X(q.pt) AS lon, ST_Y(q.pt) AS lat, lower(a.period) AS ps, upper(a.period) - 1 AS pe," +
-          " false AS ub" +
-          " FROM assets a CROSS JOIN LATERAL (SELECT CASE WHEN GeometryType(a.geom) = 'POINT' THEN a.geom" +
-          " ELSE ST_PointOnSurface(a.geom) END AS pt) q WHERE a.geom IS NOT NULL AND a.geom && "
-      )
-    ) ++ envelope ++ rest
+    val rest = ps.result().foldLeft(sql"")((acc, p) => sql"$acc AND $p")
+    sql"SELECT a.uid::text AS key, ST_X(q.pt) AS lon, ST_Y(q.pt) AS lat, lower(a.period) AS ps, upper(a.period) - 1 AS pe, false AS ub FROM assets a CROSS JOIN LATERAL (SELECT CASE WHEN GeometryType(a.geom) = 'POINT' THEN a.geom ELSE ST_PointOnSurface(a.geom) END AS pt) q WHERE a.geom IS NOT NULL AND a.geom && $envelope$rest"
 
   private val geoCols =
-    """a.citekey, a.name, a.kind, ST_Y(ST_PointOnSurface(a.geom)), ST_X(ST_PointOnSurface(a.geom)),
+    sql"""a.citekey, a.name, a.kind, ST_Y(ST_PointOnSurface(a.geom)), ST_X(ST_PointOnSurface(a.geom)),
        lower(a.period), upper(a.period) - 1, a.caption, a.uid::text, a.provider, a.license, a.credit,
        a.thumb IS NOT NULL, a.source_url, a.license_url, a.author"""
 

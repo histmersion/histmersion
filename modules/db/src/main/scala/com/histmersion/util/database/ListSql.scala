@@ -3,6 +3,7 @@ package util.database
 import com.augustnagro.magnum.*
 
 import java.time.Instant
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** The SQL of the list filters (core `ListFilters`): one ` AND …` fragment per filter, named, so a page applies them
   * all and a facet's count applies all but its own. Pure, but for [[facet]].
@@ -10,42 +11,39 @@ import java.time.Instant
 private[histmersion] object ListSql:
 
   /** The named conditions of one filtered list, in order. */
-  final case class Conds(parts: List[(String, Sql)]):
+  final case class Conds(parts: List[(String, Frag)]):
     /** Every condition. */
-    def all: Sql = parts.foldLeft(Sql.empty)(_ ++ _._2)
+    def all: Frag = parts.map(_._2).joined(sql"")
 
     /** Every condition but the one named `name` — what that facet is counted under. */
-    def except(name: String): Sql = parts.filterNot(_._1 == name).foldLeft(Sql.empty)(_ ++ _._2)
+    def except(name: String): Frag = parts.filterNot(_._1 == name).map(_._2).joined(sql"")
 
   /** ` AND <expr> = ANY(?)` — nothing for no values. */
-  def anyOf(expr: String, vs: List[String]): Sql =
-    if vs.isEmpty then Sql.empty else Sql.of(Sql.OfText(s" AND $expr = ANY(?::text[])"), Param.A(vs.map(Param.A.V(_))))
+  def anyOf(expr: String, vs: List[String]): Frag =
+    if vs.isEmpty then sql"" else sql" AND ${SqlLiteral(expr)} = ANY($vs::text[])"
 
   /** ` AND <expr> = ?` — nothing for none. */
-  def equal(expr: String, v: Option[String]): Sql =
-    v.fold(Sql.empty)(x => Sql.of(Sql.OfText(s" AND $expr = ?"), Param.S(Param.S.V(x))))
+  def equal(expr: String, v: Option[String]): Frag =
+    v.fold(sql"")(x => sql" AND ${SqlLiteral(expr)} = $x")
 
   /** An `ILIKE` pattern matching `s` anywhere in a value — its own `%`, `_` and `\` taken literally. */
   def contains(s: String): String =
     "%" + s.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
 
   /** ` AND <col> >= since AND <col> < until` — either bound left out when unset. */
-  def between(col: String, since: Option[Instant], until: Option[Instant]): Sql =
-    since.fold(Sql.empty)(s => Sql.of(Sql.OfText(s" AND $col >= ?::timestamptz"), Param.S(Param.S.V(s.toString)))) ++
-      until.fold(Sql.empty)(u => Sql.of(Sql.OfText(s" AND $col < ?::timestamptz"), Param.S(Param.S.V(u.toString))))
+  def between(col: String, since: Option[Instant], until: Option[Instant]): Frag =
+    sql"${since.fold(sql"")(s => sql" AND ${SqlLiteral(col)} >= ${s.toString}::timestamptz")}${until.fold(sql"")(u =>
+        sql" AND ${SqlLiteral(col)} < ${u.toString}::timestamptz"
+      )}"
 
   /** `SELECT <expr>, <count> <from> … GROUP BY 1`, the largest first (then by value), at most `max` values (the lists'
     * filters give theirs); NULLs are not a value. `from` = `FROM … WHERE …` with the filters; `count` = what is counted
     * (`count(DISTINCT id)` where a row can appear twice).
     */
-  def facetOn(from: Sql, expr: String, max: PageSize, count: String = "count(*)")(using
+  def facetOn(from: Frag, expr: String, max: PageSize, count: String = "count(*)")(using
       DbCon
   ): List[(String, RowCount)] =
-    (Sql.raw(Sql.RawText(s"SELECT $expr, $count::int ")) ++ from ++
-      Sql.of(
-        Sql.OfText(s" AND $expr IS NOT NULL GROUP BY 1 ORDER BY 2 DESC, 1 LIMIT ?"),
-        Param.I(Param.I.V(max.value))
-      )).frag
+    sql"SELECT ${SqlLiteral(expr)}, ${SqlLiteral(count)}::int $from AND ${SqlLiteral(expr)} IS NOT NULL GROUP BY 1 ORDER BY 2 DESC, 1 LIMIT $max"
       .query[(String, Int)]
       .run()
       .toList

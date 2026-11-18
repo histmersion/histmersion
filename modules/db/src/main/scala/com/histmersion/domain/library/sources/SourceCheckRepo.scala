@@ -7,7 +7,6 @@ import com.histmersion.domain.catalogue.places.{FindingPlacement, GeocodeSetting
 
 import com.histmersion.config.*
 import com.histmersion.api.checks.Lint.*
-import com.histmersion.util.database.Sql
 import com.histmersion.util.data.checks.{CheckInput, CheckRun}
 
 import com.histmersion.util.database.given
@@ -29,8 +28,8 @@ import com.histmersion.api.library.AuthorName
   *     `CitationLint.danglingEdges` / `CitationLint.unresolvedShortCitekeys` / `Lint.duplicates`, which are pure and
   *     unit-tested without a database.
   *
-  * No rule takes a parameter, so nothing here can be an injection vector; the statements are constants, spliced through
-  * [[Sql.raw]].
+  * No rule takes a parameter, so nothing here can be an injection vector; the statements are constant `sql"..."`
+  * fragments.
   */
 private[sources] object SourceCheckRepo:
 
@@ -131,13 +130,13 @@ private[sources] object SourceCheckRepo:
     case r                                       => projections.get(r).toList
 
   private def pairs(sql: String)(using DbCon): List[(String, String)] =
-    Sql.raw(Sql.RawText(sql)).frag.query[(String, String)].run().toList
+    sql"${SqlLiteral(sql)}".query[(String, String)].run().toList
 
   private def triples(sql: String)(using DbCon): List[(String, String, String)] =
-    Sql.raw(Sql.RawText(sql)).frag.query[(String, String, String)].run().toList
+    sql"${SqlLiteral(sql)}".query[(String, String, String)].run().toList
 
   private def arrays(sql: String)(using DbCon): List[(String, List[String])] =
-    Sql.raw(Sql.RawText(sql)).frag.query[(String, List[String])].run().toList
+    sql"${SqlLiteral(sql)}".query[(String, List[String])].run().toList
 
   /** What the rules read besides the database: how many prefix candidates a dangling target is offered
     * (`lint.suggestions`), the formatting check and the geocoder's knobs (`finding-geocode`, `finding-unplaced`).
@@ -157,11 +156,9 @@ private[sources] object SourceCheckRepo:
     )
 
   // the graph inputs and the fetches several rules classify, read at most once per run
-  private val StoredCitekeys = CheckInput(Sql.raw(Sql.RawText(citekeysSql)).frag.query[String].run().toSet)
+  private val StoredCitekeys = CheckInput(sql"${SqlLiteral(citekeysSql)}".query[String].run().toSet)
   private val EdgeRows = CheckInput(
-    Sql
-      .raw(Sql.RawText(edgesSql))
-      .frag
+    sql"${SqlLiteral(edgesSql)}"
       .query[(String, String, String)]
       .run()
       .flatMap((src, dst, kind) =>
@@ -230,4 +227,4 @@ private[sources] object SourceCheckRepo:
 
   /** The sources with a body and no full-text chunks, each with its body's length (`stale-chunks`). */
   def stale()(using DbCon): Vector[(com.histmersion.domain.library.Citekey, RowCount)] =
-    Sql.raw(Sql.RawText(staleCitekeysSql)).frag.query[(com.histmersion.domain.library.Citekey, RowCount)].run()
+    sql"${SqlLiteral(staleCitekeysSql)}".query[(com.histmersion.domain.library.Citekey, RowCount)].run()

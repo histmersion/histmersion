@@ -6,10 +6,10 @@ import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.domain.media.assets.PictureTarget
 import com.histmersion.domain.catalogue.places.ExternalIds
 import com.histmersion.domain.catalogue.places.Wikidata
-import com.histmersion.util.database.Sql
 
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.given
+import com.histmersion.util.database.literal
 import com.augustnagro.magnum.*
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.media.assets.MediaItemRow
@@ -139,9 +139,7 @@ private[imports] object ImportRepo:
         // database's microseconds, so a check made in the same millisecond counted as newer
         val asOf = if refresh.value then since else None
         val everyOne = refresh.value && since.isEmpty
-        val events = Sql
-          .raw(Sql.Text(eventCandidates(provider, asOf, everyOne) + s" ORDER BY e.id LIMIT $n"))
-          .frag
+        val events = sql"${SqlLiteral(eventCandidates(provider, asOf, everyOne))} ORDER BY e.id LIMIT ${n.literal}"
           .query[(Target.Id, Target.Qid, Target.Label)]
           .run()
           .toList
@@ -150,14 +148,7 @@ private[imports] object ImportRepo:
         val places =
           if rest <= 0 then Nil
           else
-            Sql
-              .raw(
-                Sql.Text(
-                  placeCandidates(provider, asOf, everyOne) +
-                    s" ORDER BY (c.kind IN ('site', 'feature')) DESC, c.s DESC, c.n DESC, c.place_id LIMIT $rest"
-                )
-              )
-              .frag
+            sql"${SqlLiteral(placeCandidates(provider, asOf, everyOne))} ORDER BY (c.kind IN ('site', 'feature')) DESC, c.s DESC, c.n DESC, c.place_id LIMIT ${rest.literal}"
               .query[(Target.Id, Target.Qid, Target.Label, Option[String], Long, Long)]
               .run()
               .toList
@@ -169,9 +160,9 @@ private[imports] object ImportRepo:
     */
   def pending(provider: MediaItemRow.Provider, since: Option[Since])(using DbCon): RowCount =
     val e =
-      Sql.raw(Sql.Text(s"SELECT count(*)::int FROM (${eventCandidates(provider, since)}) x")).frag.query[Int].run().head
+      sql"SELECT count(*)::int FROM (${SqlLiteral(eventCandidates(provider, since))}) x".query[Int].run().head
     val p =
-      Sql.raw(Sql.Text(s"SELECT count(*)::int FROM (${placeCandidates(provider, since)}) x")).frag.query[Int].run().head
+      sql"SELECT count(*)::int FROM (${SqlLiteral(placeCandidates(provider, since))}) x".query[Int].run().head
     RowCount(e + p)
 
   // ── which places and events a collection or the depictions import asks (#1446) ──────────────
@@ -256,14 +247,7 @@ private[imports] object ImportRepo:
       case (None, None) =>
         if places.value then
           Right(
-            Sql
-              .raw(
-                Sql.Text(
-                  mapPlaces(check, asOf, everyOne, pleiadesOnly.value) +
-                    s" ORDER BY (p.kind IN ('site', 'feature')) DESC, u.s DESC, u.n DESC, u.place_id LIMIT $n"
-                )
-              )
-              .frag
+            sql"${SqlLiteral(mapPlaces(check, asOf, everyOne, pleiadesOnly.value))} ORDER BY (p.kind IN ('site', 'feature')) DESC, u.s DESC, u.n DESC, u.place_id LIMIT ${n.literal}"
               .query[(Target.Id, Target.Label, Option[String], Long, Long)]
               .run()
               .toList
@@ -271,9 +255,7 @@ private[imports] object ImportRepo:
           )
         else
           Right(
-            Sql
-              .raw(Sql.Text(eventCandidates(check, asOf, everyOne) + s" ORDER BY e.id LIMIT $n"))
-              .frag
+            sql"${SqlLiteral(eventCandidates(check, asOf, everyOne))} ORDER BY e.id LIMIT ${n.literal}"
               .query[(Target.Id, Target.Qid, Target.Label)]
               .run()
               .toList
@@ -286,7 +268,7 @@ private[imports] object ImportRepo:
   ): RowCount =
     val q = if places.value then mapPlaces(check, since, everyOne = false, pleiadesOnly.value)
     else eventCandidates(check, since, everyOne = false)
-    RowCount(Sql.raw(Sql.Text(s"SELECT count(*)::int FROM ($q) x")).frag.query[Int].run().head)
+    RowCount(sql"SELECT count(*)::int FROM (${SqlLiteral(q)}) x".query[Int].run().head)
 
   def placeFacts(
       ids: List[com.histmersion.domain.catalogue.Place.Id]

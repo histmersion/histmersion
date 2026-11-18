@@ -2,7 +2,6 @@ package com.histmersion
 package util.identity
 import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.domain.{Described, ItemKey, ItemKind, ItemRef, ItemUid, RecordState}
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.domain.Title
@@ -11,6 +10,8 @@ import com.augustnagro.magnum.*
 
 import java.time.Instant
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.database.given
+import com.histmersion.util.database.literal
 
 /** How an owner's table names its records, so that references to them are resolved and described in one place: the
   * table (aliased `t` in the expressions), the expression of a record's key and title, its uid column where the kind
@@ -34,12 +35,7 @@ final case class RecordTable(
   private def byKeys(keys: List[ItemKey])(using DbCon): List[(ItemKey, Option[ItemUid], Option[Title])] =
     if keys.isEmpty then Nil
     else
-      Sql
-        .of(
-          Sql.Text(s"SELECT $keyCol, $uidCol, $titleCol FROM $tableName t WHERE $keyCol = ANY(?::text[])"),
-          Param.A(keys.map(k => Param.A.V(k.value)))
-        )
-        .frag
+      sql"SELECT ${SqlLiteral(keyCol)}, ${SqlLiteral(uidCol)}, ${SqlLiteral(titleCol)} FROM ${SqlLiteral(tableName)} t WHERE ${SqlLiteral(keyCol)} = ANY($keys::text[])"
         .query[(ItemKey, Option[ItemUid], Option[Title])]
         .run()
         .toList
@@ -47,15 +43,12 @@ final case class RecordTable(
   /** Old keys → (the key now, uid, title). */
   private def byAliases(keys: List[ItemKey])(using DbCon): Map[ItemKey, (ItemKey, Option[ItemUid], Option[Title])] =
     aliases.filter(_ => keys.nonEmpty).fold(Map.empty) { a =>
-      Sql
-        .of(
-          Sql.Text(
-            s"""SELECT a.${a.alias}, $keyCol, $uidCol, $titleCol FROM ${a.table} a JOIN $tableName t ON $keyCol = a.${a.target}
-              WHERE a.${a.alias} = ANY(?::text[])"""
-          ),
-          Param.A(keys.map(k => Param.A.V(k.value)))
-        )
-        .frag
+      sql"""SELECT a.${SqlLiteral(a.alias.value)}, ${SqlLiteral(keyCol)}, ${SqlLiteral(uidCol)}, ${SqlLiteral(
+          titleCol
+        )} FROM ${SqlLiteral(a.table.value)} a JOIN ${SqlLiteral(tableName)} t ON ${SqlLiteral(
+          keyCol
+        )} = a.${SqlLiteral(a.target.value)}
+              WHERE a.${SqlLiteral(a.alias.value)} = ANY($keys::text[])"""
         .query[(ItemKey, ItemKey, Option[ItemUid], Option[Title])]
         .run()
         .map((old, now, u, t) => old -> (now, u, t))
@@ -64,12 +57,8 @@ final case class RecordTable(
 
   private def byUids(uids: Set[ItemUid])(using DbCon): Map[ItemUid, (ItemKey, Option[Title])] =
     uid.filter(_ => uids.nonEmpty).fold(Map.empty) { col =>
-      Sql
-        .of(
-          Sql.Text(s"SELECT ${col.value}, $keyCol, $titleCol FROM $tableName t WHERE ${col.value} = ANY(?::uuid[])"),
-          Param.A(uids.toList.map(u => Param.A.V(u.toString)))
-        )
-        .frag
+      sql"SELECT ${SqlLiteral(col.value)}, ${SqlLiteral(keyCol)}, ${SqlLiteral(titleCol)} FROM ${SqlLiteral(tableName)} t WHERE ${SqlLiteral(col.value)} = ANY(${uids.toList
+          .map(u => u.toString)}::uuid[])"
         .query[(ItemUid, ItemKey, Option[Title])]
         .run()
         .map((u, k, t) => u -> (k, t))
@@ -80,19 +69,14 @@ final case class RecordTable(
   private def redirects(uids: Set[ItemUid])(using DbCon): Map[ItemUid, ItemUid] =
     if uids.isEmpty then Map.empty
     else
-      Sql
-        .of(
-          Sql.Text(
-            s"""WITH RECURSIVE r(start, uid, hops) AS (
-                SELECT alias_uid, uid, 1 FROM uid_aliases WHERE alias_uid = ANY(?::uuid[])
+      sql"""WITH RECURSIVE r(start, uid, hops) AS (
+                SELECT alias_uid, uid, 1 FROM uid_aliases WHERE alias_uid = ANY(${uids.toList.map(u =>
+          u.toString
+        )}::uuid[])
                 UNION ALL
                 SELECT r.start, a.uid, r.hops + 1 FROM r JOIN uid_aliases a ON a.alias_uid = r.uid
-                 WHERE r.hops < ${RecordTable.MaxHops})
+                 WHERE r.hops < ${RecordTable.MaxHops.literal})
               SELECT DISTINCT ON (start) start, uid FROM r ORDER BY start, hops DESC"""
-          ),
-          Param.A(uids.toList.map(u => Param.A.V(u.toString)))
-        )
-        .frag
         .query[(ItemUid, ItemUid)]
         .run()
         .toMap
@@ -100,15 +84,8 @@ final case class RecordTable(
   private def tombstones(uids: Set[ItemUid])(using DbCon): Map[ItemUid, Instant] =
     if uids.isEmpty then Map.empty
     else
-      Sql
-        .of(
-          Sql.Text(
-            s"""SELECT uid, to_char(deleted_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') FROM tombstones
-              WHERE uid = ANY(?::uuid[])"""
-          ),
-          Param.A(uids.toList.map(u => Param.A.V(u.toString)))
-        )
-        .frag
+      sql"""SELECT uid, to_char(deleted_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') FROM tombstones
+              WHERE uid = ANY(${uids.toList.map(u => u.toString)}::uuid[])"""
         .query[(ItemUid, String)]
         .run()
         .map((u, at) => u -> Instant.parse(at))

@@ -20,7 +20,7 @@ import com.histmersion.api.exchange.{
 }
 import com.histmersion.api.aliases.UidRedirect
 import com.histmersion.api.given
-import com.histmersion.util.database.{Jsonb, Param, Sql}
+import com.histmersion.util.database.Jsonb
 import com.histmersion.util.database.given
 import com.histmersion.domain.MergePlanner
 import com.histmersion.domain.MergePlanner.Fold
@@ -73,12 +73,7 @@ object MergeRepo:
 
   /** The merges, newest first. */
   def list(limit: PageSize)(using DbCon): List[MergeInfo] =
-    Sql
-      .of(
-        Sql.OfText(s"SELECT $mergeCols FROM merges m ORDER BY m.applied_at DESC, m.id DESC LIMIT ?"),
-        Param.I(Param.I.V(math.max(1, limit.value)))
-      )
-      .frag
+    sql"SELECT ${SqlLiteral(mergeCols)} FROM merges m ORDER BY m.applied_at DESC, m.id DESC LIMIT ${math.max(1, limit.value)}"
       .query[MergeRow]
       .run()
       .toList
@@ -95,14 +90,7 @@ object MergeRepo:
         )
       )
     else
-      Sql
-        .of(
-          Sql.OfText(
-            s"SELECT $mergeCols FROM merges m WHERE m.id::text LIKE ? ORDER BY m.applied_at DESC, m.id DESC LIMIT 2"
-          ),
-          Param.S(Param.S.V(p + "%"))
-        )
-        .frag
+      sql"SELECT ${SqlLiteral(mergeCols)} FROM merges m WHERE m.id::text LIKE ${p + "%"} ORDER BY m.applied_at DESC, m.id DESC LIMIT 2"
         .query[MergeRow]
         .run()
         .toList match
@@ -188,24 +176,14 @@ object MergeRepo:
       val rows = (t, m) match
         case (Some(u), _) =>
           // the record's own row, and those of every bundle uid that redirects to it
-          Sql.of(
-            Sql.OfText(s"""$select WHERE l.foreign_uid = ?::uuid OR l.local_uid = ?::uuid
-                     OR l.foreign_uid IN (SELECT alias_uid FROM uid_aliases WHERE uid = ?::uuid)
-                     ORDER BY l.recorded_at DESC, l.foreign_uid LIMIT ?"""),
-            Param.S(Param.S.V(u.toString)),
-            Param.S(Param.S.V(u.toString)),
-            Param.S(Param.S.V(u.toString)),
-            Param.I(Param.I.V(n))
-          )
+          sql"""${SqlLiteral(select)} WHERE l.foreign_uid = ${u.toString}::uuid OR l.local_uid = ${u.toString}::uuid
+                     OR l.foreign_uid IN (SELECT alias_uid FROM uid_aliases WHERE uid = ${u.toString}::uuid)
+                     ORDER BY l.recorded_at DESC, l.foreign_uid LIMIT $n"""
         case (None, Some(mid)) =>
-          Sql.of(
-            Sql.OfText(s"$select WHERE l.merge_id = ?::uuid ORDER BY l.kind, l.foreign_uid LIMIT ?"),
-            Param.S(Param.S.V(mid.toString)),
-            Param.I(Param.I.V(n))
-          )
+          sql"${SqlLiteral(select)} WHERE l.merge_id = ${mid.toString}::uuid ORDER BY l.kind, l.foreign_uid LIMIT $n"
         case _ =>
-          Sql.of(Sql.OfText(s"$select ORDER BY l.recorded_at DESC, l.foreign_uid LIMIT ?"), Param.I(Param.I.V(n)))
-      val entries = rows.frag
+          sql"${SqlLiteral(select)} ORDER BY l.recorded_at DESC, l.foreign_uid LIMIT $n"
+      val entries = rows
         .query[LedgerRow]
         .run()
         .toList
@@ -239,12 +217,7 @@ object MergeRepo:
   // ── the review screen's draft (V051) ──────────────────────────────────────────────────────────
 
   def session(bundle: BundleName)(using DbCon): MergeSession =
-    Sql
-      .of(
-        Sql.OfText(s"SELECT resolutions::text, ${ts("updated_at")} FROM merge_sessions WHERE bundle = ?"),
-        Param.S(Param.S.V(bundle.value))
-      )
-      .frag
+    sql"SELECT resolutions::text, ${SqlLiteral(ts("updated_at"))} FROM merge_sessions WHERE bundle = $bundle"
       .query[(String, String)]
       .run()
       .headOption
@@ -336,13 +309,7 @@ object MergeRepo:
 
   /** A merge's own change of rows it folded into: their clocks move. */
   def touch(table: TableName, uids: List[UUID])(using DbCon): Unit =
-    Sql
-      .of(
-        Sql.OfText(s"UPDATE ${table.value} SET updated_at = now() WHERE uid = ANY(?::uuid[])"),
-        Param.A(uids.map(u => Param.A.V(u.toString)))
-      )
-      .frag
-      .update
+    sql"UPDATE ${SqlLiteral(table.value)} SET updated_at = now() WHERE uid = ANY(${uids.map(u => u.toString)}::uuid[])".update
       .run()
 
   /** One redirect per folded record: the bundle's uid names the survivor here. */

@@ -2,7 +2,6 @@ package com.histmersion
 package domain.research.articles
 
 import com.histmersion.api.checks.Lint.*
-import com.histmersion.util.database.Sql
 
 import com.histmersion.util.data.checks.{CheckInput, CheckRun}
 
@@ -23,7 +22,7 @@ import com.histmersion.api.library.Edge
   *
   * Every rule is either a **projection** (one SQL statement yielding `(slug, detail)`, in [[projections]]) or a **fetch
   * + pure classifier** (`ArticleLint.articleFiller`, `ArticleLint.articleCritiquePairing`, …, pure and unit-tested
-  * without a database). No rule takes a parameter; the statements are constants, spliced through [[Sql.raw]].
+  * without a database). No rule takes a parameter; the statements are constant `sql"..."` fragments.
   */
 private[articles] object ArticleCheckRepo:
 
@@ -69,16 +68,16 @@ private[articles] object ArticleCheckRepo:
     case r                      => projections.get(r).toList
 
   private def pairs(sql: String)(using DbCon): List[(String, String)] =
-    Sql.raw(Sql.Text(sql)).frag.query[(String, String)].run().toList
+    sql"${SqlLiteral(sql)}".query[(String, String)].run().toList
 
   private def triples(sql: String)(using DbCon): List[(String, String, String)] =
-    Sql.raw(Sql.Text(sql)).frag.query[(String, String, String)].run().toList
+    sql"${SqlLiteral(sql)}".query[(String, String, String)].run().toList
 
   private def articles(sql: String)(using DbCon): List[(Article.Slug, Article.Body)] =
     pairs(sql).map((slug, body) => (Article.Slug(slug), Article.Body(body)))
 
   // the stored citekeys and the articles several rules classify, read at most once per run
-  private val StoredCitekeys = CheckInput(Sql.raw(Sql.Text(citekeysSql)).frag.query[String].run().toSet)
+  private val StoredCitekeys = CheckInput(sql"${SqlLiteral(citekeysSql)}".query[String].run().toSet)
   private val ArticleRows = CheckInput(articles(articlesSql))
 
   /** Whether a citekey is stored — what the formatting rules check a bare citekey against, read once per run. */
@@ -129,9 +128,7 @@ private[articles] object ArticleCheckRepo:
   )
 
   private def pairingCorpusIn()(using DbCon): PairingCorpus =
-    val names = Sql
-      .raw(Sql.Text(sourceNamesSql))
-      .frag
+    val names = sql"${SqlLiteral(sourceNamesSql)}"
       .query[(String, List[String], Option[Int])]
       .run()
       .map { (ck, authors, year) =>

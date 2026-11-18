@@ -2,7 +2,6 @@ package com.histmersion
 package domain.media.figures
 
 import com.histmersion.api.media.{FigureLicenceFill, MediaCount}
-import com.histmersion.util.database.Sql
 
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
@@ -13,15 +12,13 @@ import com.histmersion.util.database.NewtypeColumns.given
   */
 private[figures] object FigureRepo:
   private val figureCandidates =
-    """FROM assets a JOIN sources s ON s.citekey = a.citekey
+    sql"""FROM assets a JOIN sources s ON s.citekey = a.citekey
        WHERE a.provider IS NULL AND (a.license IS NULL OR btrim(a.license) = '')
          AND s.license IS NOT NULL AND btrim(s.license) <> ''"""
 
   /** Count (and with `apply`, write) the figures with no licence whose source records one. */
   def fillLicences(apply: FigureLicenceFill.Applied)(using DbCon): FigureLicenceFill =
-    val by = Sql
-      .raw(Sql.RawText(s"SELECT a.citekey, count(*)::int $figureCandidates GROUP BY a.citekey ORDER BY 2 DESC, 1"))
-      .frag
+    val by = sql"SELECT a.citekey, count(*)::int $figureCandidates GROUP BY a.citekey ORDER BY 2 DESC, 1"
       .query[(MediaCount.Key, MediaCount.N)]
       .run()
       .toList

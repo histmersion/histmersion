@@ -1,12 +1,11 @@
 package com.histmersion
 package util.identity
 
-import com.histmersion.util.database.{Param, Sql}
-
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
 import com.histmersion.api.aliases.AliasKind
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** Where an owner keeps a kind's records and their old identifiers: the table and its identifier column, the alias
   * table and its column naming the record. ONE resolution of an old identifier for every kind, so the rule cannot
@@ -24,16 +23,7 @@ final case class AliasTable(
   def renamedTo(ds: DataSource, id: AliasTable.Id): Option[AliasTable.Id] = connect(ds)(renamedToIn(id))
 
   def renamedToIn(id: AliasTable.Id)(using DbCon): Option[AliasTable.Id] =
-    Sql
-      .of(
-        Sql.Text(
-          s"SELECT x.${targetColumn.value} FROM ${aliasTable.value} x WHERE x.alias = ? AND NOT EXISTS " +
-            s"(SELECT 1 FROM ${table.value} r WHERE r.${idColumn.value} = ?)"
-        ),
-        Param.S(Param.S.V(id.value)),
-        Param.S(Param.S.V(id.value))
-      )
-      .frag
+    sql"SELECT x.${SqlLiteral(targetColumn.value)} FROM ${SqlLiteral(aliasTable.value)} x WHERE x.alias = $id AND NOT EXISTS (SELECT 1 FROM ${SqlLiteral(table.value)} r WHERE r.${SqlLiteral(idColumn.value)} = $id)"
       .query[String]
       .run()
       .headOption

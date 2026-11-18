@@ -634,10 +634,16 @@ adjusted with media queries and swapped as a theme without touching Scala.
 
 ## Magnum / SQL conventions
 
-- `sql"…"` interpolation with **parameters**, never string concatenation of user input. A dynamic part (a column,
-  a direction, a table) is a `sql"…"` fragment chosen from a closed set (`case SortBy.Created => sql"created_at"`),
-  never a `String` passed to a raw operator (`Sql.raw`, `Sql.of(Text(…))`, `SqlLiteral`). An enum or newtype is bound
-  through its `DbCodec`, never interpolated as text: `s"$kind"` stores `toString`, not the wire spelling.
+- `sql"…"` interpolation with **parameters**, never string concatenation of user input. Magnum 2 nests a `Frag`
+  interpolated into `sql"…"` (its text spliced, its parameters bound in place), so fragments compose by nesting:
+  `sql"$select WHERE $where"`; a list of them is `parts.joined(sql" AND ")` (`util.database.FragJoin`). A dynamic
+  part (a column, a direction, a table) is a `sql"…"` fragment chosen from a closed set
+  (`case SortBy.Created => sql"created_at"`), never a `String` passed to a raw operator (`SqlLiteral`, the `Frag`
+  constructor). A number the planner must see is written as `n.literal` (`util.database.SqlNumber`: numbers and
+  their newtypes only). An enum or newtype is bound through its `DbCodec` — `$id`, never `${id.value}` (Iron's
+  `.value` is an `IronType`, which has no codec, and Magnum 2 refuses a value without one at compile time) — never
+  interpolated as text: `s"$kind"` stores `toString`, not the wire spelling. A hand-written `DbCodec` implements
+  `readSingleOption` (NULL as `None`).
 - Deep time is a Postgres **`int8range`** of signed years (BCE negative). Postgres normalises
   `[a,b]` to `[a,b+1)`, so the inclusive upper bound you read back is **`upper − 1`**. Get this wrong
   and every period is one year too long.
@@ -645,8 +651,8 @@ adjusted with media queries and swapped as a theme without touching Scala.
   binary types — that keeps native-image free of a fiddly dependency while Postgres still does all
   the spatial work.
 - `text[]` columns cross as **real arrays**: select the column itself and decode it with
-  `DbCodec[List[String]]` (`db/Codecs.scala`); bind a list as `$list::text[]` (or `Param.A` in an
-  `Sql` fragment). No joined-string intermediates, no separators to split on.
+  `DbCodec[List[String]]` (`db/Codecs.scala`); bind a list as `$list::text[]` (a list of newtypes too, through
+  `NewtypeColumns`). No joined-string intermediates, no separators to split on.
 - Repos are **stateless**: they take the `DataSource` as a parameter. SQL fragments built from a
   `Filter` are values, composed, not accumulated in mutable state.
 - No duplicated column lists — one `Fragment` per projection, reused.

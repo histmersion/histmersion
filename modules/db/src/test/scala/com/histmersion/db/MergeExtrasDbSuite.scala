@@ -36,7 +36,6 @@ import com.histmersion.util.data.exchange.{BundleExport, MergeRepo}
 import com.histmersion.domain.automation.goals.{GoalLinkRepo, GoalRepo}
 import com.histmersion.domain.automation.managers.ManagerRepo
 import com.histmersion.util.data.exchange.{BundleImport, ImportOptions, MergeState}
-import com.histmersion.util.database.Sql
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.api.catalogue.{EventPut, Period, Place}
 import com.histmersion.api.exchange.{MergeApplyResult, MergeJobState, MergePlan, MergeResolution, MergeResolutions}
@@ -175,9 +174,9 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
       )
       .fold(e => fail(e.sentences.mkString("; ")), identity)
 
-  private def count(ds: DataSource, q: String): Int = connect(ds)(Sql.raw(Sql.Text(q)).frag.query[Int].run().head)
+  private def count(ds: DataSource, q: String): Int = connect(ds)(sql"${SqlLiteral(q)}".query[Int].run().head)
   private def text(ds: DataSource, q: String): Option[String] =
-    connect(ds)(Sql.raw(Sql.Text(q)).frag.query[Option[String]].run().headOption.flatten)
+    connect(ds)(sql"${SqlLiteral(q)}".query[Option[String]].run().headOption.flatten)
 
   private def site(id: String, label: Place.Label, lon: Double, lat: Double): Place.Input =
     Place.Input(

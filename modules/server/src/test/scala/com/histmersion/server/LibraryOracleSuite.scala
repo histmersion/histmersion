@@ -19,7 +19,6 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import javax.imageio.ImageIO
 import javax.sql.DataSource
-import com.histmersion.util.database.Sql
 import com.histmersion.db.*
 import com.histmersion.api.exchange.{MergePlan, MergeResolutions}
 import com.histmersion.config.DbConfig
@@ -171,8 +170,8 @@ class LibraryOracleSuite extends DbSuite:
       .flatMap(_.cursor.downField("result").downField("content").downArray.downField("text").as[String].toOption)
       .getOrElse(s"${r.statusCode} $text")
 
-  private def exec(ds: DataSource, statement: Sql.Text): Unit =
-    connect(ds)(Sql.raw(statement).frag.update.run(): Unit)
+  private def exec(ds: DataSource, statement: Frag): Unit =
+    connect(ds)(statement.update.run(): Unit)
 
   // ── the crafted collection ─────────────────────────────────────────────────────────────────
 
@@ -511,9 +510,9 @@ class LibraryOracleSuite extends DbSuite:
     )
     exec(
       ds,
-      Sql.Text("""INSERT INTO goal_links (goal_slug, kind, ref, note) VALUES
+      sql"""INSERT INTO goal_links (goal_slug, kind, ref, note) VALUES
         |('zq-goal', 'source', 'zqalpha1990_tell', 'the walls'),
-        |('zq-goal', 'source', 'zqdelta2010_gone', 'the lost report')""".stripMargin)
+        |('zq-goal', 'source', 'zqdelta2010_gone', 'the lost report')""".stripMargin
     )
     val _ =
       step("a task mentioning delta", post(s"$url/api/queue/tasks", """{"text":"re-read [[zqdelta2010_gone]]"}"""))
@@ -933,9 +932,9 @@ class LibraryOracleSuite extends DbSuite:
       "SELECT uid::text, 'attestation:' || citekey || ':' || target_id FROM attestations",
       "SELECT uid::text, 'tombstone:' || kind FROM tombstones",
       "SELECT id::text, 'instance' FROM instance"
-    ).map(Sql.Text(_))
-    def run(q: Sql.Text): List[(String, String)] =
-      scala.util.Try(connect(ds)(Sql.raw(q).frag.query[(String, String)].run().toList)).getOrElse(Nil)
+    ).map(q => sql"${SqlLiteral(q)}")
+    def run(q: Frag): List[(String, String)] =
+      scala.util.Try(connect(ds)(q.query[(String, String)].run().toList)).getOrElse(Nil)
     queries.flatMap(run).distinctBy(_._1).toMap
 
   private def normalise(text: String, names: Map[String, String]): String =
@@ -992,9 +991,7 @@ class LibraryOracleSuite extends DbSuite:
     Tables
       .map { (t, cols) =>
         val rs = connect(ds)(
-          Sql
-            .raw(Sql.Text(s"""SELECT to_jsonb(x)::text FROM (SELECT $cols FROM "$t") x"""))
-            .frag
+          sql"""SELECT to_jsonb(x)::text FROM (SELECT ${SqlLiteral(cols)} FROM "${SqlLiteral(t)}") x"""
             .query[String]
             .run()
             .toList
@@ -1309,9 +1306,9 @@ class LibraryOracleSuite extends DbSuite:
     // what the tables hold besides the writes: a stored original's digest twice, a body's chunks gone
     exec(
       ds,
-      Sql.Text("UPDATE sources SET sha256 = 'aa' || repeat('0', 62) WHERE citekey IN ('zxg2007_doia', 'zxh2008_doib')")
+      sql"UPDATE sources SET sha256 = 'aa' || repeat('0', 62) WHERE citekey IN ('zxg2007_doia', 'zxh2008_doib')"
     )
-    exec(ds, Sql.Text("DELETE FROM source_chunks WHERE citekey = 'zxi2009_stale'"))
+    exec(ds, sql"DELETE FROM source_chunks WHERE citekey = 'zxi2009_stale'")
     log.result()
 
   /** Every entry of a bundle: its name and size; a line file's lines; a blob by its length; the manifest without the
@@ -1356,16 +1353,14 @@ class LibraryOracleSuite extends DbSuite:
       "SELECT uid::text, 'finding:' || id FROM findings",
       "SELECT uid::text, 'tombstone:' || kind FROM tombstones",
       "SELECT alias_uid::text, 'alias-of:' || uid::text FROM uid_aliases"
-    ).map(Sql.Text(_))
-    def run(ds: DataSource, q: Sql.Text): List[(String, String)] =
-      scala.util.Try(connect(ds)(Sql.raw(q).frag.query[(String, String)].run().toList)).getOrElse(Nil)
+    ).map(q => sql"${SqlLiteral(q)}")
+    def run(ds: DataSource, q: Frag): List[(String, String)] =
+      scala.util.Try(connect(ds)(q.query[(String, String)].run().toList)).getOrElse(Nil)
     val records = dss.flatMap((_, ds) => queries.flatMap(run(ds, _)))
     val instances =
-      dss.flatMap((n, ds) =>
-        run(ds, Sql.Text("SELECT id::text, 'x' FROM instance")).map((id, _) => id -> s"instance:$n")
-      )
+      dss.flatMap((n, ds) => run(ds, sql"SELECT id::text, 'x' FROM instance").map((id, _) => id -> s"instance:$n"))
     val merges = dss.flatMap((n, ds) =>
-      run(ds, Sql.Text("SELECT id::text, 'x' FROM merges ORDER BY created_at")).zipWithIndex.map { case ((id, _), i) =>
+      run(ds, sql"SELECT id::text, 'x' FROM merges ORDER BY created_at").zipWithIndex.map { case ((id, _), i) =>
         id -> s"merge:$n#${i + 1}"
       }
     )
@@ -1465,9 +1460,7 @@ class LibraryOracleSuite extends DbSuite:
     LibraryTables
       .map { (t, cols) =>
         val rs = connect(ds)(
-          Sql
-            .raw(Sql.Text(s"""SELECT to_jsonb(x)::text FROM (SELECT $cols FROM "$t") x"""))
-            .frag
+          sql"""SELECT to_jsonb(x)::text FROM (SELECT ${SqlLiteral(cols)} FROM "${SqlLiteral(t)}") x"""
             .query[String]
             .run()
             .toList

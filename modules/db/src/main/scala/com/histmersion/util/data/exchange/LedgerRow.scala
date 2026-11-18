@@ -14,7 +14,7 @@ import com.histmersion.api.exchange.{
 }
 import com.histmersion.api.aliases.UidRedirect
 import com.histmersion.api.given
-import com.histmersion.util.database.{Jsonb, Param, Sql}
+import com.histmersion.util.database.Jsonb
 import com.histmersion.util.database.given
 import com.histmersion.domain.MergePlanner
 import com.histmersion.domain.MergePlanner.Fold

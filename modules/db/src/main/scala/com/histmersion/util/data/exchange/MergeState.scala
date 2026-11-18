@@ -25,8 +25,8 @@ import com.histmersion.util.data.exchange.{
   MergeRuleSet
 }
 import com.histmersion.util.storage.{ByteSource, ContentStore}
-import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.util.database.given
+import com.histmersion.util.database.joined
 import com.histmersion.api.exchange.{Bundle, IssuePlace, MergeDecision, MergeIssue, MergePlan, MergeResolutions}
 import com.histmersion.Sha256
 import com.histmersion.api.library.{Citekey, Finding}
@@ -71,11 +71,12 @@ object MergeState:
     val localUids = foreignUids.map(idOf)
 
     // who has the bundle's labels here (the owners that register their own merge rules add theirs to the input)
-    def owners(q: String, labels: List[String]): Map[String, UUID] =
+    // `q` makes the query of the labels, bound as one text[]
+    def owners(labels: List[String])(q: List[String] => Frag): Map[String, UUID] =
       if labels.isEmpty then Map.empty
-      else Sql.of(Sql.Text(q), Param.A(labels.distinct.map(l => Param.A.V(l)))).frag.query[(String, UUID)].run().toMap
-    def slugOwners(q: String, labels: List[ReviewGoal.Slug]): Map[ReviewGoal.Slug, UUID] =
-      owners(q, labels.map(_.value)).map((s, u) => ReviewGoal.Slug(s) -> u)
+      else q(labels.distinct).query[(String, UUID)].run().toMap
+    def slugOwners(labels: List[ReviewGoal.Slug])(q: List[String] => Frag): Map[ReviewGoal.Slug, UUID] =
+      owners(labels.map(_.value))(q).map((s, u) => ReviewGoal.Slug(s) -> u)
     val localized = MergePlanner.localize(es, mapped, Map.empty)
     val labels = Labels(
       citekeys = sql"SELECT citekey, uid FROM sources".query[(String, UUID)].run().map((c, u) => Citekey(c) -> u).toMap,
@@ -84,23 +85,20 @@ object MergeState:
         .run()
         .map((c, u) => Citekey(c) -> u)
         .toMap,
-      findings = owners("SELECT id, uid FROM findings WHERE id = ANY(?::text[])", es.findings.map(_.id.value))
-        .map((f, u) => Finding.Id(f) -> u),
-      slugs = slugOwners(
-        "SELECT slug, uid FROM articles WHERE slug = ANY(?::text[])",
-        es.articles.map(_.slug) ++ es.articleAliases.map(_.alias)
+      findings =
+        owners(es.findings.map(_.id.value))(ls => sql"SELECT id, uid FROM findings WHERE id = ANY($ls::text[])")
+          .map((f, u) => Finding.Id(f) -> u),
+      slugs = slugOwners(es.articles.map(_.slug) ++ es.articleAliases.map(_.alias))(ls =>
+        sql"SELECT slug, uid FROM articles WHERE slug = ANY($ls::text[])"
       ),
-      goals = slugOwners(
-        "SELECT slug, uid FROM goals WHERE slug = ANY(?::text[])",
-        es.goals.map(_.slug) ++ es.goalAliases.map(_.alias)
+      goals = slugOwners(es.goals.map(_.slug) ++ es.goalAliases.map(_.alias))(ls =>
+        sql"SELECT slug, uid FROM goals WHERE slug = ANY($ls::text[])"
       ),
-      articleAliases = slugOwners(
-        "SELECT x.alias, a.uid FROM article_aliases x JOIN articles a ON a.slug = x.slug WHERE x.alias = ANY(?::text[])",
-        es.articles.map(_.slug) ++ es.articleAliases.map(_.alias)
+      articleAliases = slugOwners(es.articles.map(_.slug) ++ es.articleAliases.map(_.alias))(ls =>
+        sql"SELECT x.alias, a.uid FROM article_aliases x JOIN articles a ON a.slug = x.slug WHERE x.alias = ANY($ls::text[])"
       ),
-      goalAliases = slugOwners(
-        "SELECT x.alias, g.uid FROM goal_aliases x JOIN goals g ON g.slug = x.goal_slug WHERE x.alias = ANY(?::text[])",
-        es.goals.map(_.slug) ++ es.goalAliases.map(_.alias)
+      goalAliases = slugOwners(es.goals.map(_.slug) ++ es.goalAliases.map(_.alias))(ls =>
+        sql"SELECT x.alias, g.uid FROM goal_aliases x JOIN goals g ON g.slug = x.goal_slug WHERE x.alias = ANY($ls::text[])"
       )
     )
     // every row here: a merged pair needs the survivor's findings, assets, attestations and edges, a
@@ -166,12 +164,7 @@ object MergeState:
         .distinct
     if hexes.isEmpty then p
     else
-      val json = Sql
-        .of(
-          Sql.Text("""SELECT h, ST_AsGeoJSON(ST_GeomFromEWKB(decode(h, 'hex')), 6) FROM unnest(?::text[]) AS h"""),
-          Param.A(hexes.map(h => Param.A.V(h)))
-        )
-        .frag
+      val json = sql"""SELECT h, ST_AsGeoJSON(ST_GeomFromEWKB(decode(h, 'hex')), 6) FROM unnest($hexes::text[]) AS h"""
         .query[(String, Option[String])]
         .run()
         .flatMap((h, j) => j.map(h -> _))
@@ -203,12 +196,9 @@ object MergeState:
     if uids.isEmpty || tables.isEmpty then Set.empty
     else
       val us = ids(uids)
-      Sql
-        .of(
-          Sql.Text(tables.map(t => s"SELECT uid FROM ${t.value} WHERE uid = ANY(?::uuid[])").mkString(" UNION ALL ")),
-          tables.map(_ => Param.A(us.map(u => Param.A.V(u))))*
-        )
-        .frag
+      tables
+        .map(t => sql"SELECT uid FROM ${SqlLiteral(t.value)} WHERE uid = ANY($us::uuid[])")
+        .joined(sql" UNION ALL ")
         .query[UUID]
         .run()
         .toSet

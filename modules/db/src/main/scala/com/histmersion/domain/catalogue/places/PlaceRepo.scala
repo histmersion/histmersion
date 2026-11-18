@@ -9,7 +9,7 @@ import io.scalaland.chimney.dsl.*
 import com.histmersion.util.database.given
 
 import com.histmersion.util.database.LikePattern
-import com.histmersion.util.database.RangeSql
+import com.histmersion.util.database.{joined, literal, RangeSql}
 
 import com.histmersion.api.{Dataset, SpatialHierarchyResult, Write}
 import com.histmersion.config.*
@@ -18,8 +18,6 @@ import com.histmersion.domain.*
 import com.augustnagro.magnum.*
 import scala.util.chaining.*
 import com.histmersion.util.database.NewtypeColumns.given
-import com.histmersion.util.database.Param
-import com.histmersion.util.database.Sql
 import com.histmersion.api.catalogue.{Geocode, GeoTime, ManualPlaceName, Period, SiteTypes}
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.Api
@@ -111,9 +109,6 @@ private[places] object PlaceRepo:
   }
 
   /** Every alternate name of `p`, comma-joined — the `names` column of a [[PlaceSummary]]. */
-  private def raw(text: String): Sql = Sql.raw(Sql.Text(text))
-
-  private def of(text: String, ps: Param*): Sql = Sql.of(Sql.Text(text), ps*)
 
   private def signed(y: Year): DeepTime.SignedYear = DeepTime.SignedYear(y.value)
 
@@ -270,7 +265,7 @@ private[places] object PlaceRepo:
     val byPrefix =
       if long.isEmpty then Vector.empty
       else
-        (Sql.raw(Sql.RawText("WITH ")) ++ timeWindowCte(asOf, modernFrom) ++ sql""" SELECT p.id FROM places p
+        (sql"""WITH ${timeWindowCte(asOf, modernFrom)} SELECT p.id FROM places p
               LEFT JOIN LATERAL (
                 SELECT count(*)::int AS n FROM finding_places fp WHERE fp.place_id = p.id
               ) fc ON true
@@ -289,7 +284,7 @@ private[places] object PlaceRepo:
         // candidate exactly when it passes the filter. A query of one or two characters has no
         // trigram: "ur" is in ~100 000 names, so it is matched by the name KEY (V067) instead —
         // "Ur" finds Ur(i), not every Ural and Uruk.
-        (Sql.raw(Sql.RawText("WITH ")) ++ timeWindowCte(asOf, modernFrom) ++ sql""", cand AS MATERIALIZED (
+        (sql"""WITH ${timeWindowCte(asOf, modernFrom)}, cand AS MATERIALIZED (
                 SELECT p.id FROM places p WHERE $long::text IS NOT NULL AND p.label ILIKE $cont ESCAPE '\\'$pm
                 UNION
                 SELECT place_id FROM place_names WHERE $long::text IS NOT NULL AND name ILIKE $cont ESCAPE '\\'
@@ -392,39 +387,25 @@ private[places] object PlaceRepo:
       sql"SELECT properties->>'date_source' FROM places WHERE id = $id".query[Option[String]].run().headOption.flatten
     def array(key: ArrayKey) =
       s"CASE WHEN jsonb_typeof(p.properties->'${key.value}') = 'array' THEN p.properties->'${key.value}' ELSE '[]'::jsonb END"
-    val periods = Sql
-      .of(
-        Sql.Text(
-          s"SELECT coalesce(x->>'label', x->>'id') FROM places p, jsonb_array_elements(${array(ArrayKey("periods"))}) x" +
-            " WHERE p.id = ? AND jsonb_typeof(x) = 'object'"
-        ),
-        Param.S(Param.S.V(id.value))
-      )
-      .frag
-      .query[Option[String]]
-      .run()
-      .toList
-      .flatten
-    val designations = Sql
-      .of(
-        Sql.Text(
-          s"SELECT x->>'id', x->>'label', x->>'start', x->>'end' FROM places p, jsonb_array_elements(${array(ArrayKey("heritage"))}) x" +
-            " WHERE p.id = ? AND jsonb_typeof(x) = 'object' AND x->>'id' IS NOT NULL"
-        ),
-        Param.S(Param.S.V(id.value))
-      )
-      .frag
-      .query[
-        (
-            Place.Designation.Id,
-            Option[Place.Designation.Label],
-            Option[Place.Designation.Start],
-            Option[Place.Designation.End]
-        )
-      ]
-      .run()
-      .toList
-      .map(Place.Designation.apply)
+    val periods =
+      sql"SELECT coalesce(x->>'label', x->>'id') FROM places p, jsonb_array_elements(${SqlLiteral(array(ArrayKey("periods")))}) x WHERE p.id = $id AND jsonb_typeof(x) = 'object'"
+        .query[Option[String]]
+        .run()
+        .toList
+        .flatten
+    val designations =
+      sql"SELECT x->>'id', x->>'label', x->>'start', x->>'end' FROM places p, jsonb_array_elements(${SqlLiteral(array(ArrayKey("heritage")))}) x WHERE p.id = $id AND jsonb_typeof(x) = 'object' AND x->>'id' IS NOT NULL"
+        .query[
+          (
+              Place.Designation.Id,
+              Option[Place.Designation.Label],
+              Option[Place.Designation.Start],
+              Option[Place.Designation.End]
+          )
+        ]
+        .run()
+        .toList
+        .map(Place.Designation.apply)
     val registers = sql"""SELECT r.key, v FROM places p,
             jsonb_each(CASE WHEN jsonb_typeof(p.properties->'registers') = 'object' THEN p.properties->'registers' ELSE '{}'::jsonb END) r,
             jsonb_array_elements_text(CASE WHEN jsonb_typeof(r.value) = 'array' THEN r.value ELSE jsonb_build_array(r.value) END) v
@@ -505,8 +486,9 @@ private[places] object PlaceRepo:
   )(using
       DbCon
   ): Vector[Place.Summary] =
-    (Sql.raw(Sql.RawText("WITH ")) ++ timeWindowCte(asOf, modernFrom) ++
-      sql""" SELECT ${SqlLiteral(summaryCols)} FROM place_relations r JOIN places p ON p.id = r.child_id
+    (sql"""WITH ${timeWindowCte(asOf, modernFrom)} SELECT ${SqlLiteral(
+        summaryCols
+      )} FROM place_relations r JOIN places p ON p.id = r.child_id
           WHERE r.parent_id = $id AND NOT ${SqlLiteral(importedSql("p"))}
             AND ($asOf::bigint IS NULL OR r.period @> $asOf::bigint)
             AND ${SqlLiteral(inTimeSql("p", asOf))}
@@ -518,9 +500,7 @@ private[places] object PlaceRepo:
     * (`*Granouas`). Applies ONLY to root selection — a river still appears under the region that contains it.
     */
   private val rootEligibleSql =
-    "p.kind IN ('region', 'polity', 'continent')" +
-      " AND NOT coalesce((p.properties->>'withdrawn')::boolean, false)" +
-      " AND p.label NOT ILIKE 'withdrawn%' AND p.label NOT LIKE '*%' AND p.label NOT LIKE '%?%'"
+    sql"p.kind IN ('region', 'polity', 'continent') AND NOT coalesce((p.properties->>'withdrawn')::boolean, false) AND p.label NOT ILIKE 'withdrawn%' AND p.label NOT LIKE '*%' AND p.label NOT LIKE '%?%'"
 
   /** The hierarchy AS OF one year, as a depth-tagged pre-order walk (a recursive CTE over `place_relations` whose own
     * `period` covers `asOf`). `root` empty starts from every ELIGIBLE place that has no parent — the world level;
@@ -538,14 +518,14 @@ private[places] object PlaceRepo:
     // `maxDepth` is a caller's number; `depthCap` is the configured ceiling (`places.tree-depth`).
     // A caller asking for depth 10 000 walked ten thousand levels of a recursive CTE.
     val depth = math.max(0, math.min(maxDepth.value, depthCap.value))
-    (Sql.raw(Sql.RawText("WITH RECURSIVE ")) ++ timeWindowCte(asOf, modernFrom) ++ sql""", edges AS (
+    (sql"""WITH RECURSIVE ${timeWindowCte(asOf, modernFrom)}, edges AS (
             SELECT r.child_id, r.parent_id FROM place_relations r
             WHERE $asOf::bigint IS NULL OR r.period @> $asOf::bigint
           ), roots AS (
             SELECT p.id FROM places p
             WHERE ($root::text IS NOT NULL AND p.id = $root::text)
                OR ($root::text IS NULL
-                   AND ${SqlLiteral(rootEligibleSql)}
+                   AND $rootEligibleSql
                    AND NOT EXISTS (SELECT 1 FROM edges e WHERE e.child_id = p.id)
                    AND EXISTS (SELECT 1 FROM edges e WHERE e.parent_id = p.id))
           ), tree AS (
@@ -602,7 +582,7 @@ private[places] object PlaceRepo:
       asOf: Option[DeepTime.SignedYear],
       limit: GeoJsonQueryLimit,
       modernFrom: PlaceRepo.GeoJsonQueryModernFrom = DefaultModernFrom
-  ): Sql =
+  ): Frag =
     geoJsonTimeQuery(kind, asOf.fold(GeoTime.Always)(y => GeoTime.At(Year(y.value))), limit, modernFrom)
 
   /** [[geoJsonQuery]] for any [[GeoTime]]: across all time, at a year, or over a whole range. `pairsByIndex = false`
@@ -615,26 +595,27 @@ private[places] object PlaceRepo:
       limit: Limit,
       modernFrom: DeepTime.SignedYear = DefaultModernFrom,
       pairsByIndex: PairsByIndex = PairsByIndex(true)
-  ): Sql =
-    import Param.*
+  ): Frag =
     val k = kind.map(_.value.trim.toLowerCase).filter(_.nonEmpty)
     val window = time.window.map((a, b) => (signed(a), signed(b)))
     val within = time match
       case w: GeoTime.Within => Some(w)
       case _                 => None
     val where = List(
-      Some(Sql.raw(Sql.RawText("p.geom IS NOT NULL"))),
-      Some(Sql.of(Sql.OfText("p.label !~* ?"), S(Param.S.V(UninformativeLabel)))),
+      Some(sql"p.geom IS NOT NULL"),
+      Some(sql"p.label !~* $UninformativeLabel"),
       // across all time a present-day place is never drawn; at a year, the time rule decides
       // (physical features always, present-day places from `modern-from`, undated ones by findings)
-      Some(raw(if window.isEmpty then s"NOT $ModernSql"
-      else inWindowSql("p", window, k.map(com.histmersion.domain.catalogue.Place.Kind.Wire(_))))),
-      k.map(v => Sql.of(Sql.OfText("p.kind = ?"), S(Param.S.V(v)))),
+      Some(
+        if window.isEmpty then sql"NOT ${SqlLiteral(ModernSql)}"
+        else sql"${SqlLiteral(inWindowSql("p", window, k.map(com.histmersion.domain.catalogue.Place.Kind.Wire(_))))}"
+      ),
+      k.map(v => sql"p.kind = $v"),
       // an undated import is never on a time-sliced map, findings or not (its open range is unknown)
-      window.map(_ => raw(s"NOT $UndatedImportSql")),
+      window.map(_ => sql"NOT ${SqlLiteral(UndatedImportSql)}"),
       // nor is a polity known only by a point and no date (a late Roman province Pleiades does not
       // date, `lint --rule place-kind`): a state is not "always"
-      window.map(_ => raw(UndatedPolityPointSql))
+      window.map(_ => sql"${SqlLiteral(UndatedPolityPointSql)}")
     ).flatten
     // `live` carries no geometry — copying 138 large polygons into a CTE's tuplestore cost ~2 s;
     // the full shapes are read from `places` only for candidate pairs and for the rows returned.
@@ -649,13 +630,11 @@ private[places] object PlaceRepo:
     // What the ranking and the collapse read of a shape — its area, box and normalised label — is
     // stored with it (V090): computed here, each decompressed the polygon of every row alive, ~70 ms
     // apiece over a whole range.
-    val cols = raw(
-      "SELECT p.id, p.kind, " +
-        s"$sourceTierSql AS tier, p.label_norm AS norm, p.shape_area AS area, " +
-        s"p.shape_box AS bb, ${timeBasisSql("p")} AS basis${if within.isDefined then ", p.period AS per" else ""}" +
-        " FROM places p WHERE "
-    )
-    val rest = Sql(Sql.Text(where.map(_.text.value).mkString(" AND ")), where.flatMap(_.params))
+    val cols =
+      sql"SELECT p.id, p.kind, ${SqlLiteral(sourceTierSql)} AS tier, p.label_norm AS norm, p.shape_area AS area, p.shape_box AS bb, ${SqlLiteral(timeBasisSql("p"))} AS basis${
+          if within.isDefined then sql", p.period AS per" else sql""
+        } FROM places p WHERE "
+    val rest = where.joined(sql" AND ")
     // At a year both halves are read through a (kind, period) GiST (V076): `places_base_layer_time`
     // (the curated predicate) and `places_dated_import` ([[DatedImportSql]], implied there by "not
     // curated" and "not an undated import" — stated so the planner can use the index). The few
@@ -668,47 +647,27 @@ private[places] object PlaceRepo:
       else
         s" AND NOT $CuratedSql AND $DatedImportSql" +
           " AND EXISTS (SELECT 1 FROM finding_places fp WHERE fp.place_id = p.id OFFSET 0)"
-    val live = Sql.raw(Sql.RawText("WITH ")) ++ windowCte(window, modernFrom) ++ raw(", live AS (") ++
-      cols ++ rest ++ raw(s" AND $CuratedSql") ++ raw(" UNION ALL ") ++
-      cols ++ rest ++ raw(imported) ++ raw(")")
+    val live =
+      sql"WITH ${windowCte(window, modernFrom)}, live AS ($cols$rest AND ${SqlLiteral(CuratedSql)} UNION ALL $cols$rest${SqlLiteral(imported)})"
     // only a time view collapses duplicates: across all time, successive shapes are all real
     val shadowed =
-      if window.isEmpty then Sql.raw(Sql.RawText(", shadowed AS (SELECT NULL::text AS id WHERE false)"))
+      if window.isEmpty then sql", shadowed AS (SELECT NULL::text AS id WHERE false)"
       else
         within.fold(
-          raw(
-            // a shape is shadowed only by a LOWER tier: a lone tier (every site is tier 2) has no pairs,
-            // and pairing its 6 400 rows with each other first took 3 s a year (2026-10-09)
-            ", shadowed AS (SELECT DISTINCT lo.id" +
-              " FROM (SELECT * FROM live WHERE tier > (SELECT min(tier) FROM live)) lo" +
-              " JOIN (SELECT * FROM live WHERE tier < (SELECT max(tier) FROM live)) hi" +
-              " ON hi.tier < lo.tier AND hi.kind = lo.kind AND hi.bb && lo.bb" +
-              // each shape fetched by id for its candidate pair (`OFFSET 0` keeps the planner from
-              // flattening it back into a join): `live` is a few dozen rows but estimated at thousands,
-              // and as a plain join the planner merged it with ALL 1.2 M places by key — 200 of the
-              // 240 ms a polity layer took per year (2026-10-09)
-              " CROSS JOIN LATERAL (SELECT geom FROM places WHERE id = hi.id OFFSET 0) gh" +
-              " CROSS JOIN LATERAL (SELECT geom FROM places WHERE id = lo.id OFFSET 0) gl" +
-              " WHERE hi.norm = lo.norm OR (ST_Intersects(gh.geom, gl.geom)" +
-              " AND ST_Area(ST_Intersection(ST_MakeValid(gh.geom), ST_MakeValid(gl.geom)))" +
-              s" > $SameStateOverlap * least(hi.area, lo.area)))"
-          )
+          sql", shadowed AS (SELECT DISTINCT lo.id FROM (SELECT * FROM live WHERE tier > (SELECT min(tier) FROM live)) lo JOIN (SELECT * FROM live WHERE tier < (SELECT max(tier) FROM live)) hi ON hi.tier < lo.tier AND hi.kind = lo.kind AND hi.bb && lo.bb CROSS JOIN LATERAL (SELECT geom FROM places WHERE id = hi.id OFFSET 0) gh CROSS JOIN LATERAL (SELECT geom FROM places WHERE id = lo.id OFFSET 0) gl WHERE hi.norm = lo.norm OR (ST_Intersects(gh.geom, gl.geom) AND ST_Area(ST_Intersection(ST_MakeValid(gh.geom), ST_MakeValid(gl.geom))) > ${SameStateOverlap.literal} * least(hi.area, lo.area)))"
         )(_ =>
           // over a range a layer of areas probes its few sketches and OHM shapes for partners through
           // `places_area_time_geom` (V090); a kindless or site layer keeps the plain pairing
           k.filterNot(_ == Place.Kind.Site)
             .filter(_ => pairsByIndex.value)
-            .fold(raw(rangeShadowedSql))(_ =>
-              raw(", shadowed AS (SELECT DISTINCT pr.lid AS id FROM (") ++
-                rangePairsSql(rest, small = 3, partner = "c.tier < 3", smallIsLo = true) ++ raw(" UNION ALL ") ++
-                rangePairsSql(rest, small = 1, partner = "c.tier = 2", smallIsLo = false) ++
-                raw(") pr" + rangeShadowTestSql + ")")
+            .fold(sql"${SqlLiteral(rangeShadowedSql)}")(_ =>
+              sql", shadowed AS (SELECT DISTINCT pr.lid AS id FROM (${rangePairsSql(rest, small = 3, partner = "c.tier < 3", smallIsLo = true)} UNION ALL ${rangePairsSql(rest, small = 1, partner = "c.tier = 2", smallIsLo = false)}) pr${SqlLiteral(rangeShadowTestSql)})"
             )
         )
     // what is drawn: every unshadowed live shape; over a range, one VERSION of each state —
     // [[pickVersionSql]]'s `shown`
-    val (shown, drawn) = within.fold((Sql.raw(Sql.RawText("")), "live WHERE id NOT IN (SELECT id FROM shadowed)"))(w =>
-      (raw(pickVersionSql(w)), "shown")
+    val (shown, drawn) = within.fold((sql"", "live WHERE id NOT IN (SELECT id FROM shadowed)"))(w =>
+      (sql"${SqlLiteral(pickVersionSql(w))}", "shown")
     )
     // what was there then before what is merely shown then: among equal areas (every point) a dated
     // place outranks one dated by its findings, a physical feature and a present-day one — at 1600 the
@@ -718,20 +677,7 @@ private[places] object PlaceRepo:
     // RANK FIRST, then read the rows shown: the limit is taken over `live` alone, and only those rows
     // are joined back to `places` for their label, dates and shape — not all 14 700 sites alive in
     // 500 CE, one index lookup each, to keep 200 (2026-10-09)
-    live ++ shadowed ++ shown ++ raw(
-      s" SELECT l.id, p.label, l.kind, $startCol AS ps, ${RangeSql.end("p.period")} AS pe, $datingCol AS dating," +
-        " l.basis," +
-        " coalesce(p.shape_dim = 2, false) AS has_boundary," +
-        // a polity is drawn on land when the land is loaded (V025), an area as its stored web outline
-        // (V090: simplified to the map, written once); `geom` stays the published shape
-        " coalesce(p.web_geojson, ST_AsGeoJSON(coalesce(p.geom_clipped, p.geom), 5)) AS geojson," +
-        // what a site is (#1449): a stored refinement, else its gazetteer's own fields (core.SiteTypes)
-        " p.site_type, p.properties->>'feature_types', p.properties->>'fcode', p.properties->>'class'," +
-        " p.properties->>'p31'" +
-        s" FROM (SELECT * FROM $drawn ORDER BY ${rank("")}"
-    ) ++
-      of(" LIMIT ?", I(Param.I.V(limit.value.max(1)))) ++
-      raw(s") l JOIN places p ON p.id = l.id ORDER BY ${rank("l.")}")
+    sql"$live$shadowed$shown SELECT l.id, p.label, l.kind, ${SqlLiteral(startCol)} AS ps, ${SqlLiteral(RangeSql.end("p.period"))} AS pe, ${SqlLiteral(datingCol)} AS dating, l.basis, coalesce(p.shape_dim = 2, false) AS has_boundary, coalesce(p.web_geojson, ST_AsGeoJSON(coalesce(p.geom_clipped, p.geom), 5)) AS geojson, p.site_type, p.properties->>'feature_types', p.properties->>'fcode', p.properties->>'class', p.properties->>'p31' FROM (SELECT * FROM ${SqlLiteral(drawn)} ORDER BY ${SqlLiteral(rank(""))} LIMIT ${limit.value.max(1)}) l JOIN places p ON p.id = l.id ORDER BY ${SqlLiteral(rank("l."))}"
 
   /** The test of a candidate pair `pr` (`lid` under `hid`, `same_name`, `small` the smaller area, `lbb` and `hbb` their
     * boxes): the same normalised name, or the shapes' intersection covering more than [[SameStateOverlap]] of the
@@ -778,19 +724,9 @@ private[places] object PlaceRepo:
     * 650 000 times (80 ms). `smallIsLo`: the small tier's shape is the one shadowed (a sketch under a real dataset) or
     * the one shadowing (OHM over Cliopatria).
     */
-  private[places] def rangePairsSql(rest: Sql, small: Int, partner: String, smallIsLo: Boolean): Sql =
+  private[places] def rangePairsSql(rest: Frag, small: Int, partner: String, smallIsLo: Boolean): Frag =
     val (lo, hi) = if smallIsLo then ("s", "c") else ("c", "s")
-    raw(
-      s"SELECT $lo.id AS lid, $hi.id AS hid, s.norm = c.norm AS same_name, least(c.area, s.area) AS small," +
-        s" $lo.bb AS lbb, $hi.bb AS hbb FROM (SELECT * FROM live WHERE tier = $small) s CROSS JOIN LATERAL" +
-        s" (SELECT * FROM (SELECT p.id, $sourceTierSql AS tier, p.label_norm AS norm, p.shape_area AS area," +
-        " p.shape_box AS bb FROM places p WHERE p.kind <> 'site' AND p.kind = s.kind AND p.period && s.per" +
-        " AND p.geom && s.bb::geometry AND "
-    ) ++ rest ++
-      raw(
-        s" AND ($CuratedSql OR ($DatedImportSql AND EXISTS (SELECT 1 FROM finding_places fp WHERE fp.place_id = p.id)))" +
-          s") c WHERE $partner) c"
-      )
+    sql"SELECT ${SqlLiteral(lo)}.id AS lid, ${SqlLiteral(hi)}.id AS hid, s.norm = c.norm AS same_name, least(c.area, s.area) AS small, ${SqlLiteral(lo)}.bb AS lbb, ${SqlLiteral(hi)}.bb AS hbb FROM (SELECT * FROM live WHERE tier = ${small.literal}) s CROSS JOIN LATERAL (SELECT * FROM (SELECT p.id, ${SqlLiteral(sourceTierSql)} AS tier, p.label_norm AS norm, p.shape_area AS area, p.shape_box AS bb FROM places p WHERE p.kind <> 'site' AND p.kind = s.kind AND p.period && s.per AND p.geom && s.bb::geometry AND $rest AND (${SqlLiteral(CuratedSql)} OR (${SqlLiteral(DatedImportSql)} AND EXISTS (SELECT 1 FROM finding_places fp WHERE fp.place_id = p.id)))) c WHERE ${SqlLiteral(partner)}) c"
 
   /** The CTE `shown` over a whole range `w` ([[GeoTime.Within]]): ONE VERSION of each state alive at any time in it.
     * The unshadowed live shapes are grouped into "the same state over time" by kind and NORMALISED LABEL
@@ -838,7 +774,7 @@ private[places] object PlaceRepo:
       limit: Limit,
       modernFrom: DeepTime.SignedYear = DefaultModernFrom
   )(using DbCon): GeoJson =
-    val rows = geoJsonTimeQuery(kind, time, limit, modernFrom).frag
+    val rows = geoJsonTimeQuery(kind, time, limit, modernFrom)
       .query[
         (
             String,

@@ -26,7 +26,7 @@ import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.api.library.Confidence
-import com.histmersion.util.database.{Migrate, Param, Sql}
+import com.histmersion.util.database.Migrate
 import com.histmersion.api.catalogue.{
   CatalogRecord,
   EventLinkCandidate,
@@ -371,7 +371,7 @@ class EventCatalogRepoSuite extends DbSuite:
   test("lead facts count the findings around a catalogue event"):
     val (_, rows) = EvidenceFixtures.leadRows(
       ds,
-      Sql.of(Sql.Text("e.id = ?"), Param.S(Param.S.V("zztest_b"))),
+      sql"e.id = ${"zztest_b"}",
       CatalogMerge.Tolerance.Km(300),
       CatalogMerge.Tolerance.Years(500),
       PageSize(5),

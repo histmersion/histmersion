@@ -4,7 +4,6 @@ package domain.automation.worklists
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.data.exchange.BundleImport
-import com.histmersion.util.database.Sql
 import com.histmersion.util.data.exchange.BundleScope
 import com.histmersion.util.data.exchange.BundleSql.*
 
@@ -19,9 +18,11 @@ import com.histmersion.api.automation.Queue
 private[worklists] object QueueBundleRepo:
 
   def queue(scope: BundleScope)(using DbCon): Vector[Bundle.QueueItem] =
-    (Sql.raw(Sql.RawText(s"""SELECT q.uid, q.origin, q.list, q.text, q.topic, q.status, q.reason,
-                       ${ts("q.created_at")}, ${ts("q.done_at")}, ${ts("q.updated_at")}
-                FROM queue_items q WHERE """)) ++ where(scope, "q.uid", "q.updated_at") ++ " ORDER BY q.uid").frag
+    sql"""SELECT q.uid, q.origin, q.list, q.text, q.topic, q.status, q.reason,
+                       ${SqlLiteral(ts("q.created_at"))}, ${SqlLiteral(ts("q.done_at"))}, ${SqlLiteral(
+        ts("q.updated_at")
+      )}
+                FROM queue_items q WHERE ${where(scope, "q.uid", "q.updated_at")} ORDER BY q.uid"""
       .query[BQueueRow]
       .run()
       .map { r =>

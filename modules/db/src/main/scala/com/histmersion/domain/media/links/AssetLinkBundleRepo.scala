@@ -2,7 +2,6 @@ package com.histmersion
 package domain.media.links
 
 import com.histmersion.util.data.exchange.BundleImport
-import com.histmersion.util.database.Sql
 import com.histmersion.util.data.exchange.BundleScope
 import com.histmersion.util.data.exchange.BundleSql.*
 
@@ -18,10 +17,15 @@ import com.histmersion.api.exchange.Bundle
 private[links] object AssetLinkBundleRepo:
 
   def assetLinks(scope: BundleScope)(using DbCon): Vector[Bundle.AssetLink] =
-    (Sql.raw(Sql.RawText(s"""SELECT l.uid, l.origin, x.uid, l.relation, l.target_type, l.target_id,
-                       ${targetUid("l.target_type", "l.target_id")}, l.xywh, l.notes, ${ts("l.updated_at")}
-                FROM asset_links l JOIN assets x ON x.citekey = l.citekey AND x.name = l.asset_name WHERE """)) ++
-      where(scope, "l.uid", "l.updated_at") ++ " ORDER BY l.uid").frag
+    sql"""SELECT l.uid, l.origin, x.uid, l.relation, l.target_type, l.target_id,
+                       ${SqlLiteral(targetUid("l.target_type", "l.target_id"))}, l.xywh, l.notes, ${SqlLiteral(
+        ts("l.updated_at")
+      )}
+                FROM asset_links l JOIN assets x ON x.citekey = l.citekey AND x.name = l.asset_name WHERE ${where(
+        scope,
+        "l.uid",
+        "l.updated_at"
+      )} ORDER BY l.uid"""
       .query[(UUID, UUID, UUID, String, String, String, Option[UUID], Option[String], Option[String], String)]
       .run()
       .map((uid, origin, assetUid, relation, targetType, targetId, targetUid, xywh, notes, updatedAt) =>

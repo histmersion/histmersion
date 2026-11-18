@@ -12,7 +12,6 @@ import com.histmersion.domain.catalogue.places.SiteTypesSql
 import com.histmersion.config.*
 
 import com.augustnagro.magnum.*
-import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.api.catalogue.{Place, SiteTypes}
 import com.histmersion.api.catalogue.CatalogRecord.Wikidata
 import com.histmersion.api.catalogue.SiteTypes.{Geonames, Pleiades, SiteType}
@@ -52,16 +51,9 @@ class SiteTypesSqlSuite extends DbSuite:
           cls.map("class" -> Json.fromString(_)) ++ p31.map("p31" -> _)
       )
       .noSpaces
-    val q = Sql.of(
-      Sql.Text(
-        s"SELECT ${SiteTypesSql.expr("a")} FROM (SELECT ?::text AS kind, nullif(?, '')::text AS site_type," +
-          " ?::jsonb AS properties) a"
-      ),
-      Param.S(Param.S.V(kind)),
-      Param.S(Param.S.V(stored.getOrElse(""))),
-      Param.S(Param.S.V(props))
-    )
-    connect(ds)(q.frag.query[Option[String]].run().head)
+    val q =
+      sql"SELECT ${SqlLiteral(SiteTypesSql.expr("a"))} FROM (SELECT $kind::text AS kind, nullif(${stored.getOrElse("")}, '')::text AS site_type, $props::jsonb AS properties) a"
+    connect(ds)(q.query[Option[String]].run().head)
 
   private def same(
       kind: Place.Kind.Wire,

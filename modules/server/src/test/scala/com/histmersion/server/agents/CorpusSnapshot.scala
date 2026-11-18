@@ -2,7 +2,6 @@ package com.histmersion
 package server.agents
 
 import com.augustnagro.magnum.*
-import com.histmersion.util.database.Sql
 
 import javax.sql.DataSource
 
@@ -31,13 +30,7 @@ object CorpusSnapshot:
   def of(ds: DataSource): Map[String, String] =
     connect(ds):
       Tables.map { t =>
-        t -> Sql
-          .raw(
-            Sql.Text(
-              s"SELECT coalesce(md5(string_agg(x::text, '|' ORDER BY x::text)), '') || ':' || count(*) FROM $t x"
-            )
-          )
-          .frag
+        t -> sql"SELECT coalesce(md5(string_agg(x::text, '|' ORDER BY x::text)), '') || ':' || count(*) FROM ${SqlLiteral(t)} x"
           .query[String]
           .run()
           .head

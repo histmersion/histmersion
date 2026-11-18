@@ -9,7 +9,7 @@ import com.histmersion.api.TableSize
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
-import com.histmersion.util.database.{Migrate, Sql}
+import com.histmersion.util.database.Migrate
 
 import com.augustnagro.magnum.*
 import com.histmersion.db.*
@@ -36,7 +36,7 @@ class StatsRepoSuite extends DbSuite:
     Migrate.run(d); d
 
   private def count(table: String): Int =
-    connect(ds)(Sql.raw(Sql.Text(s"SELECT count(*)::int FROM $table")).frag.query[Int].run().head)
+    connect(ds)(sql"SELECT count(*)::int FROM ${SqlLiteral(table)}".query[Int].run().head)
 
   test("#718: corpus counts read every table they name"):
     val c = connect(ds)(

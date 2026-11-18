@@ -22,7 +22,6 @@ import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import javax.sql.DataSource
-import com.histmersion.util.database.Sql
 import com.histmersion.db.*
 import com.histmersion.api.catalogue.{EventImportRequest, Geocode, Period}
 import com.histmersion.api.catalogue.Gazetteer
@@ -790,14 +789,12 @@ class CatalogueOracleSuite extends DbSuite:
       "SELECT uid::text, 'attestation:' || citekey || ':' || target_id FROM attestations",
       "SELECT uid::text, 'tombstone:' || kind FROM tombstones",
       "SELECT alias_uid::text, 'alias-of:' || uid::text FROM uid_aliases"
-    ).map(Sql.Text(_))
-    def run(ds: DataSource, q: Sql.Text): List[(String, String)] =
-      scala.util.Try(connect(ds)(Sql.raw(q).frag.query[(String, String)].run().toList)).getOrElse(Nil)
+    ).map(q => sql"${SqlLiteral(q)}")
+    def run(ds: DataSource, q: Frag): List[(String, String)] =
+      scala.util.Try(connect(ds)(q.query[(String, String)].run().toList)).getOrElse(Nil)
     val records = dss.flatMap((_, ds) => queries.flatMap(run(ds, _)))
     val instances =
-      dss.flatMap((n, ds) =>
-        run(ds, Sql.Text("SELECT id::text, 'x' FROM instance")).map((id, _) => id -> s"instance:$n")
-      )
+      dss.flatMap((n, ds) => run(ds, sql"SELECT id::text, 'x' FROM instance").map((id, _) => id -> s"instance:$n"))
     (records ++ instances).distinctBy(_._1).toMap
 
   private def normalise(text: String, names: Map[String, String]): String =
@@ -906,7 +903,7 @@ class CatalogueOracleSuite extends DbSuite:
         if !present(t) then s"## $t (no such table)"
         else
           val rs =
-            connect(ds)(Sql.raw(Sql.Text(s"""SELECT to_jsonb(x)::text FROM "$t" x""")).frag.query[String].run().toList)
+            connect(ds)(sql"""SELECT to_jsonb(x)::text FROM "${SqlLiteral(t)}" x""".query[String].run().toList)
           val normed = rs.map(r => json(r, names).linesIterator.map(_.trim).mkString(" ")).sorted
           (s"## $t ${normed.size} rows" :: normed).mkString("\n")
       }
@@ -1159,8 +1156,8 @@ class CatalogueOracleSuite extends DbSuite:
     if j.contains("\"done\"") || j.contains("\"failed\"") || left == 0 then j
     else { Thread.sleep(100); applyJob(url, job, left - 1) }
 
-  private def exec(ds: DataSource, statement: Sql.Text): Unit =
-    connect(ds)(Sql.raw(statement).frag.update.run(): Unit)
+  private def exec(ds: DataSource, statement: Frag): Unit =
+    connect(ds)(statement.update.run(): Unit)
 
   /** A source by its DOI: one work under two citekeys, so a merge pairs the two by the strong key. */
   private def pairSource(title: String, doi: String, body: String): String =
@@ -1274,8 +1271,8 @@ class CatalogueOracleSuite extends DbSuite:
       "home: event links ash confirmed",
       post(s"$homeUrl/api/events/zz_ashfall/links", """{"confirm":["zzvolc2004_ash"]}""")
     )
-    exec(home, Sql.Text("UPDATE places SET site_type = 'Q15661340', site_type_checked_at = now() WHERE id = 'zz_hill'"))
-    exec(home, Sql.Text("UPDATE places SET site_type = 'Q839954', site_type_checked_at = now() WHERE id = 'zz_mound'"))
+    exec(home, sql"UPDATE places SET site_type = 'Q15661340', site_type_checked_at = now() WHERE id = 'zz_hill'")
+    exec(home, sql"UPDATE places SET site_type = 'Q839954', site_type_checked_at = now() WHERE id = 'zz_mound'")
     val _ = step(
       "home: place both",
       post(
@@ -1292,9 +1289,7 @@ class CatalogueOracleSuite extends DbSuite:
     )
     exec(
       home,
-      Sql.Text(
-        "INSERT INTO periods (id, label, period, region, dataset) VALUES ('zz_age', 'The Zz age', '[-1500,-1001)', 'Zzland', 'local'), ('zz_dusk_h', 'The Zz dusk', '[-1200,-1001)', 'Zzland', 'local')"
-      )
+      sql"INSERT INTO periods (id, label, period, region, dataset) VALUES ('zz_age', 'The Zz age', '[-1500,-1001)', 'Zzland', 'local'), ('zz_dusk_h', 'The Zz dusk', '[-1200,-1001)', 'Zzland', 'local')"
     )
     val _ = step(
       "home: event tremor",
@@ -1354,7 +1349,7 @@ class CatalogueOracleSuite extends DbSuite:
     }
     val _ =
       step("cat: event links ash recomputed", post(s"$catUrl/api/events/zz_ashfall/links", """{"recompute":true}"""))
-    exec(cat, Sql.Text("UPDATE places SET site_type = 'Q839954', site_type_checked_at = now() WHERE id = 'zz_hill'"))
+    exec(cat, sql"UPDATE places SET site_type = 'Q839954', site_type_checked_at = now() WHERE id = 'zz_hill'")
     val _ = step("cat: place renamed", post(s"$catUrl/api/places/zz_port/rename", """{"to":"zz_harbour"}"""))
     val _ = step(
       "cat: place merged",
@@ -1381,9 +1376,7 @@ class CatalogueOracleSuite extends DbSuite:
     )
     exec(
       cat,
-      Sql.Text(
-        "INSERT INTO periods (id, label, period, region, dataset) VALUES ('zz_age', 'The Zz era', '[-1600,-1001)', 'Zzland', 'local'), ('zz_dusk_c', 'The Zz dusk', '[-1200,-1001)', 'Zzland', 'local')"
-      )
+      sql"INSERT INTO periods (id, label, period, region, dataset) VALUES ('zz_age', 'The Zz era', '[-1600,-1001)', 'Zzland', 'local'), ('zz_dusk_c', 'The Zz dusk', '[-1200,-1001)', 'Zzland', 'local')"
     )
     val _ = step(
       "cat: event quake",
@@ -1481,7 +1474,7 @@ class CatalogueOracleSuite extends DbSuite:
     ExchangeTables
       .map { t =>
         val rs =
-          connect(ds)(Sql.raw(Sql.Text(s"""SELECT to_jsonb(x)::text FROM "$t" x""")).frag.query[String].run().toList)
+          connect(ds)(sql"""SELECT to_jsonb(x)::text FROM "${SqlLiteral(t)}" x""".query[String].run().toList)
         val normed = rs.map(r => exchanged(json(r, names), names).linesIterator.map(_.trim).mkString(" ")).sorted
         (s"## $t ${normed.size} rows" :: normed).mkString("\n")
       }

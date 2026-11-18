@@ -14,7 +14,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
-import com.histmersion.util.database.{Migrate, Sql}
+import com.histmersion.util.database.{literal, Migrate}
 import com.histmersion.api.catalogue.{Latitude, Longitude, Period, Place}
 import com.histmersion.api.library.{Finding, Source}
 import com.histmersion.util.database.given
@@ -243,13 +243,7 @@ class PlaceholderPointSuite extends DbSuite with Bounded:
   ):
     seed()
     def isPh(p: GeoPoint) = connect(ds)(
-      Sql
-        .raw(
-          Sql.Text(
-            s"SELECT ${PlaceFixtures.placeholderSql("f")} FROM (SELECT ST_SetSRID(ST_MakePoint(${p.lon}, ${p.lat}), 4326) AS geom) f"
-          )
-        )
-        .frag
+      sql"SELECT ${SqlLiteral(PlaceFixtures.placeholderSql("f"))} FROM (SELECT ST_SetSRID(ST_MakePoint(${p.lon.literal}, ${p.lat.literal}), 4326) AS geom) f"
         .query[Boolean]
         .run()
         .head

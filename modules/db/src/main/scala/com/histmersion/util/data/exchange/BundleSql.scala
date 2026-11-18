@@ -1,10 +1,12 @@
 package com.histmersion
 package util.data.exchange
 
-import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.domain.DeepTime
 import com.histmersion.util.database.RangeSql
 import com.histmersion.api.catalogue.Year
+import com.augustnagro.magnum.{sql, Frag, SqlLiteral}
+import com.histmersion.util.database.given
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** The SQL every carried kind's lines are read with: a clock as the wire carries it, a range as three columns, the rows
   * a scope selects, and the uid of whatever a label names.
@@ -45,11 +47,11 @@ object BundleSql:
     )
 
   /** `WHERE` for the scope, on a table's uid and change-clock columns. */
-  def where(scope: BundleScope, uid: String, clock: String): Sql = scope match
-    case BundleScope.All       => Sql.raw(Sql.RawText("TRUE"))
-    case BundleScope.Since(at) => Sql.of(Sql.OfText(s"$clock > ?::timestamptz"), Param.S(Param.S.V(at.value)))
+  def where(scope: BundleScope, uid: String, clock: String): Frag = scope match
+    case BundleScope.All       => sql"TRUE"
+    case BundleScope.Since(at) => sql"${SqlLiteral(clock)} > $at::timestamptz"
     case BundleScope.Uids(us)  =>
-      Sql.of(Sql.OfText(s"$uid = ANY(?::uuid[])"), Param.A(us.map(u => Param.A.V(u.toString))))
+      sql"${SqlLiteral(uid)} = ANY(${us.map(u => u.toString)}::uuid[])"
 
   /** The uid of whatever a label names, for a target that HAS a uid — the label of an attestation's or an asset link's
     * target is kept, and its uid travels beside it for the matcher.

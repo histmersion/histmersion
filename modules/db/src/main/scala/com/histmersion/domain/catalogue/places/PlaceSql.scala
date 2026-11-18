@@ -2,11 +2,12 @@ package com.histmersion
 package domain.catalogue.places
 
 import com.histmersion.api.catalogue.Gazetteer
-import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.util.database.RangeSql
 import com.histmersion.domain.catalogue.Place
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.DeepTime
+import com.augustnagro.magnum.{sql, Frag, SqlLiteral}
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** The places' SQL other queries embed, over a `places` row by its alias: what an import brought in, how a place is
   * dated, its time basis and the time rule of a view at a year or over a window, the base layers' predicates, the
@@ -70,8 +71,11 @@ object PlaceSql:
   /** A label reduced to what identifies the state: lower case, no parentheses, no filler words (of/the/and), no
     * punctuation — so "Old Kingdom of Egypt" and "Old Kingdom Egypt" meet.
     */
-  def normLabelSql(col: String): String =
-    s"regexp_replace(regexp_replace(lower($col), '\\m(of|the|and)\\M', '', 'g'), '[^a-z0-9]+', '', 'g')"
+  def normLabelSql(col: String): String = normLabel(sql"${SqlLiteral(col)}").sqlString
+
+  /** [[normLabelSql]] of any SQL expression: a column, or a label bound as a parameter. */
+  def normLabel(value: Frag): Frag =
+    sql"regexp_replace(regexp_replace(lower($value), '\\m(of|the|and)\\M', '', 'g'), '[^a-z0-9]+', '', 'g')"
 
   /** Share of the SMALLER outline covered by the other above which two same-kind shapes from different sources are
     * taken to be the same state (different names, e.g. "Palatial Minoan Crete" vs "Minoan civilization").
@@ -121,22 +125,15 @@ object PlaceSql:
     * time, nothing is filtered), `modern_on` whether it reaches `modern-from`. [[inTimeSql]] reads it; every
     * time-filtered place query starts with it.
     */
-  def timeWindowCte(asOf: Option[DeepTime.SignedYear], modernFrom: PlaceSql.TimeWindowCteModernFrom): Sql =
+  def timeWindowCte(asOf: Option[DeepTime.SignedYear], modernFrom: PlaceSql.TimeWindowCteModernFrom): Frag =
     windowCte(asOf.map(y => (y, y)), modernFrom)
 
   /** [[timeWindowCte]] for the inclusive window `lo..hi` (the map's area layer over a whole range, [[GeoTime.Within]]):
     * `modern_on` when its END reaches `modern-from`. A year is the window `y..y`.
     */
-  def windowCte(window: Option[(DeepTime.SignedYear, DeepTime.SignedYear)], modernFrom: DeepTime.SignedYear): Sql =
-    import Param.*
-    window.fold(Sql.raw(Sql.RawText("tw AS (SELECT NULL::int8range AS w, false AS modern_on)")))((lo, hi) =>
-      Sql.of(
-        Sql.OfText("tw AS (SELECT int8range(?::bigint, ?::bigint, '[]') AS w, ?::bigint >= ?::bigint AS modern_on)"),
-        L(L.V(lo.value)),
-        L(L.V(hi.value)),
-        L(L.V(hi.value)),
-        L(L.V(modernFrom.value))
-      )
+  def windowCte(window: Option[(DeepTime.SignedYear, DeepTime.SignedYear)], modernFrom: DeepTime.SignedYear): Frag =
+    window.fold(sql"tw AS (SELECT NULL::int8range AS w, false AS modern_on)")((lo, hi) =>
+      sql"tw AS (SELECT int8range($lo::bigint, $hi::bigint, '[]') AS w, $hi::bigint >= $modernFrom::bigint AS modern_on)"
     )
 
   /** [[PlaceTimeBasis.visible]] in SQL, over a `places` row aliased `alias`, at the year `asOf` against the window of

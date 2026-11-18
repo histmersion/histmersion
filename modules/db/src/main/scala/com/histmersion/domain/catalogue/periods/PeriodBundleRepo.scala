@@ -2,7 +2,6 @@ package com.histmersion
 package domain.catalogue.periods
 
 import com.histmersion.util.data.exchange.BundleImport
-import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.util.data.exchange.BundleScope
 import com.histmersion.util.data.exchange.BundleSql.*
 import com.histmersion.domain.catalogue.places.PlaceSql
@@ -22,18 +21,14 @@ private[periods] object PeriodBundleRepo:
   /** The named periods of this collection's own in scope, or with one of `alsoIds`. */
 
   def periods(scope: BundleScope, alsoIds: List[BPeriodRow.Id] = Nil)(using DbCon): Vector[Bundle.Period] =
-    val own = Sql.raw(Sql.Text("p.dataset = 'local' AND ")) ++ where(scope, "p.uid", "p.updated_at")
+    val own = sql"p.dataset = 'local' AND ${where(scope, "p.uid", "p.updated_at")}"
     val sel = if alsoIds.isEmpty then own
-    else
-      Sql.raw(Sql.RawText("((")) ++ own ++ Sql.of(
-        Sql.Text(") OR p.id = ANY(?::text[]))"),
-        Param.A(alsoIds.distinct.map(i => Param.A.V(i.value)))
-      )
-    (Sql.raw(
-      Sql.Text(s"""SELECT p.uid, p.origin, p.id, p.label, p.authority, ${rangeCols("p.period")}, p.region, p.parent_id,
-                       ${ts("p.updated_at")}
-                FROM periods p WHERE """)
-    ) ++ sel ++ " ORDER BY p.uid").frag.query[BPeriodRow].run().map { r =>
+    else sql"(($own) OR p.id = ANY(${alsoIds.distinct}::text[]))"
+    sql"""SELECT p.uid, p.origin, p.id, p.label, p.authority, ${SqlLiteral(
+        rangeCols("p.period")
+      )}, p.region, p.parent_id,
+                       ${SqlLiteral(ts("p.updated_at"))}
+                FROM periods p WHERE $sel ORDER BY p.uid""".query[BPeriodRow].run().map { r =>
       Bundle.Period(
         r.uid,
         r.origin,
@@ -59,20 +54,18 @@ private[periods] object PeriodBundleRepo:
   /** A bundle period with no id here that names a period here: the same label (reduced) and spans sharing a year.
     */
   def matchPeriods(ps: List[Bundle.Period])(using DbCon): Map[UUID, BPeriodRow.Id] =
-    val norm = PlaceSql.normLabelSql("p.label")
+    val norm = PlaceSql.normLabel(sql"p.label")
     ps.flatMap { b =>
       val (lo, hi) = (b.period.flatMap(_.start), b.period.flatMap(_.end))
-      Sql
-        .of(
-          Sql.Text(s"""SELECT p.id FROM periods p
-            WHERE $norm = ${PlaceSql.normLabelSql("?")}
-              AND p.period && ${RangeSql.range("nullif(?, '')::bigint", "nullif(?, '')::bigint")}
-            ORDER BY CASE WHEN p.dataset = 'local' THEN 0 ELSE 1 END, p.id LIMIT 1"""),
-          Param.S(Param.S.V(b.label.value)),
-          Param.S(Param.S.V(lo.fold("")(_.toString))),
-          Param.S(Param.S.V(hi.fold("")(_.toString)))
+      val window =
+        RangeSql.range(
+          sql"nullif(${lo.fold("")(_.toString)}, '')::bigint",
+          sql"nullif(${hi.fold("")(_.toString)}, '')::bigint"
         )
-        .frag
+      sql"""SELECT p.id FROM periods p
+            WHERE $norm = ${PlaceSql.normLabel(sql"${b.label}")}
+              AND p.period && $window
+            ORDER BY CASE WHEN p.dataset = 'local' THEN 0 ELSE 1 END, p.id LIMIT 1"""
         .query[BPeriodRow.Id]
         .run()
         .headOption

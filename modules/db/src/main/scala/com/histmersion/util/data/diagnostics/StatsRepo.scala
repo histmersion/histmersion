@@ -2,7 +2,6 @@ package com.histmersion
 package util.data.diagnostics
 
 import com.augustnagro.magnum.*
-import com.histmersion.util.database.Sql
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.data.TableName
@@ -19,14 +18,12 @@ object StatsRepo:
   /** The rows of `table`. */
 
   def rows(table: TableName)(using DbCon): Count =
-    Count(Sql.raw(Sql.RawText(s"SELECT count(*)::int FROM ${quoted(table.value)}")).frag.query[Int].run().head.toLong)
+    Count(sql"SELECT count(*)::int FROM ${SqlLiteral(quoted(table.value))}".query[Int].run().head.toLong)
 
   /** The rows of `table` whose `column` is set. */
   def rowsWith(table: TableName, column: ColumnName)(using DbCon): Count =
     Count(
-      Sql
-        .raw(Sql.RawText(s"SELECT count(*)::int FROM ${quoted(table.value)} WHERE ${quoted(column.value)} IS NOT NULL"))
-        .frag
+      sql"SELECT count(*)::int FROM ${SqlLiteral(quoted(table.value))} WHERE ${SqlLiteral(quoted(column.value))} IS NOT NULL"
         .query[Int]
         .run()
         .head

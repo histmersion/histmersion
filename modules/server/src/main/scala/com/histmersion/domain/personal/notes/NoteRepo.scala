@@ -2,7 +2,6 @@ package com.histmersion
 package domain.personal.notes
 
 import com.histmersion.api.ItemKind as MarkKind
-import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.domain.personal.{MarkTime, TargetColumns, TargetLabel}
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.{PageSize, UserId}
@@ -11,6 +10,7 @@ import com.augustnagro.magnum.*
 
 import scala.util.chaining.*
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.database.given
 
 /** The `notes` table. Takes the connection it runs on; a removed note stays as its tombstone. */
 private[notes] object NoteRepo:
@@ -28,29 +28,17 @@ private[notes] object NoteRepo:
   def list(user: UserId, kind: Option[MarkKind], item: Option[Note.Item], size: Option[PageSize])(using
       DbCon
   ): List[Note.Row] =
-    (Sql.of(Sql.Text(s"$Projection WHERE n.user_id = ? AND n.deleted_at IS NULL"), Param.S(Param.S.V(user.value))) ++
-      kind.fold(Sql.empty)(k => Sql.of(Sql.Text(" AND n.target_kind = ?"), Param.S(Param.S.V(k.wire.value)))) ++
-      item.fold(Sql.empty)(i =>
-        Sql.of(
-          Sql.Text(" AND (n.target_id = ? OR n.target_uid = ANY(?::uuid[]))"),
-          Param.S(Param.S.V(i.key.value)),
-          Param.A(i.uids.toList.map(u => Param.A.V(u.value.toString)))
-        )
-      ) ++
-      Sql.raw(Sql.Text(" ORDER BY n.updated_at DESC, n.id DESC")) ++
-      size.fold(Sql.empty)(s => Sql.of(Sql.Text(" LIMIT ?"), Param.I(Param.I.V(s.value))))).frag
+    sql"${SqlLiteral(Projection)} WHERE n.user_id = $user AND n.deleted_at IS NULL${kind.fold(
+        sql""
+      )(k => sql" AND n.target_kind = ${k.wire}")}${item.fold(sql"")(i =>
+        sql" AND (n.target_id = ${i.key} OR n.target_uid = ANY(${i.uids.toList.map(u => u.value.toString)}::uuid[]))"
+      )} ORDER BY n.updated_at DESC, n.id DESC${size.fold(sql"")(s => sql" LIMIT $s")}"
       .query[Note.Row]
       .run()
       .toList
 
   def live(user: UserId, id: com.histmersion.api.personal.Note.Id)(using DbCon): Option[Note.Row] =
-    Sql
-      .of(
-        Sql.Text(s"$Projection WHERE n.user_id = ? AND n.deleted_at IS NULL AND n.id = ?::uuid"),
-        Param.S(Param.S.V(user.value)),
-        Param.S(Param.S.V(id.value))
-      )
-      .frag
+    sql"${SqlLiteral(Projection)} WHERE n.user_id = $user AND n.deleted_at IS NULL AND n.id = $id::uuid"
       .query[Note.Row]
       .run()
       .headOption

@@ -19,7 +19,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
-import com.histmersion.util.database.{Migrate, Param}
+import com.histmersion.util.database.Migrate
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.{Filter, Finding, Source}
 import com.histmersion.util.database.given
@@ -98,7 +98,8 @@ class RepoDetailsSuite extends DbSuite:
       val text = Search
         .bestChunkJoin(Search.BestChunkJoinQ("x"), max)
         .params
-        .collect { case Param.S(v) => v.value }
+        .map(_.asInstanceOf[Matchable])
+        .collect { case v: String => v }
         .find(_.contains("MaxWords"))
         .get
       val Some(mn) = """MinWords=(\d+)""".r.findFirstMatchIn(text).map(_.group(1).toInt): @unchecked

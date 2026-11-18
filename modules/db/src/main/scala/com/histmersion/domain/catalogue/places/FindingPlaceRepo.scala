@@ -8,7 +8,6 @@ import com.histmersion.domain.*
 import com.histmersion.util.database.RangeSql
 
 import com.augustnagro.magnum.*
-import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.api.catalogue.Geocode
 import com.histmersion.api.catalogue.Place
 import io.github.iltotore.iron.constraint.any.Pure
@@ -153,8 +152,7 @@ private[places] object FindingPlaceRepo:
     */
   def unresolvedPlaceholdersIn()(using DbCon): List[(Citekey, Placeholder.Detail)] =
     val ph =
-      (Sql.raw(Sql.Text(placeholderFindingsSql)) ++ Sql
-        .raw(Sql.Text(" ORDER BY f.citekey, f.id"))).frag.query[Placeholder].run().toList
+      sql"${SqlLiteral(placeholderFindingsSql)} ORDER BY f.citekey, f.id".query[Placeholder].run().toList
     val resolved = resolve(ph).map(_._1).toSet
     ph.filterNot(p => resolved.contains(p.id)).map { p =>
       val at = String.format(java.util.Locale.ROOT, "%.4f N %.4f E", p.lat, p.lon)
@@ -186,10 +184,10 @@ private[places] object FindingPlaceRepo:
   private def placeholders(citekey: Option[Citekey])(using
       DbCon
   ): (List[Placeholder.Id], List[(Placeholder.Id, BPlaceRow.Id)]) =
-    val ph = (Sql.raw(Sql.Text(placeholderFindingsSql)) ++
-      citekey.fold(Sql.raw(Sql.Text("")))(ck =>
-        Sql.of(Sql.Text(" AND f.citekey = ?"), Param.S(Param.S.V(ck.value)))
-      )).frag.query[Placeholder].run().toList
+    val ph = sql"${SqlLiteral(placeholderFindingsSql)}${citekey.fold(sql"")(ck => sql" AND f.citekey = $ck")}"
+      .query[Placeholder]
+      .run()
+      .toList
     (ph.map(_.id), resolve(ph))
 
   /** The inserts that define "a finding belongs to a place", shared by the full rebuild and the per-citekey

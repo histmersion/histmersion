@@ -16,7 +16,7 @@ import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.domain.automation.goals.GoalRepo
-import com.histmersion.util.database.{Migrate, Param}
+import com.histmersion.util.database.Migrate
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.automation.Goal
 import com.histmersion.util.database.given
@@ -55,8 +55,8 @@ class RangeSqlSuite extends DbSuite:
     assertEquals(RangeSql.cols("f.period", "p0", "p1"), "lower(f.period) AS p0, upper(f.period) - 1 AS p1")
     assertEquals(RangeSql.range("d.lo", "d.hi"), "int8range(d.lo, d.hi + 1, '[)')")
     val o = RangeSql.overlaps("s.period", Period(Year(-10), Year(10)))
-    assertEquals(o.text, "s.period && int8range(?::bigint, ?::bigint, '[]')")
-    assertEquals(o.params, List(Param.L(Param.L.V(-10)), Param.L(Param.L.V(10))))
+    assertEquals(o.sqlString, "s.period && int8range(?::bigint, ?::bigint, '[]')")
+    assertEquals(o.params, List(-10L, 10L))
 
   test("merge: a bound given alone replaces that bound and keeps the other"):
     val stored = (Some(DeepTime.SignedYear(-1200L)), Some(DeepTime.SignedYear(-1000L)))

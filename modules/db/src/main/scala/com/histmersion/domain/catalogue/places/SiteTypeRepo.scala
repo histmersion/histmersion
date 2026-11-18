@@ -1,8 +1,6 @@
 package com.histmersion
 package domain.catalogue.places
 
-import com.histmersion.util.database.{Param, Sql}
-
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.given_DbCodec_List
@@ -21,22 +19,13 @@ private[places] object SiteTypeRepo:
     * (`refresh`) asked before `before` (epoch ms — the start of this run).
     */
 
-  private def toTypeWhere(refresh: Refresh, before: Option[DeepTime.SignedYear]): Sql =
+  private def toTypeWhere(refresh: Refresh, before: Option[DeepTime.SignedYear]): Frag =
     val asked = (refresh.value, before) match
       case (true, Some(ms)) =>
-        Sql.of(
-          Sql.OfText("(p.site_type_checked_at IS NULL OR p.site_type_checked_at < to_timestamp(? / 1000.0))"),
-          Param.L(Param.L.V(ms.value))
-        )
-      case (true, None) => Sql.raw(Sql.RawText("TRUE"))
-      case _            => Sql.raw(Sql.RawText("p.site_type_checked_at IS NULL"))
-    Sql.raw(Sql.Text("p.import_source = 'wikidata' AND p.id ~ '^wikidata_q[1-9][0-9]*$' AND ")) ++ asked ++
-      Sql.raw(
-        Sql.Text(
-          " AND (EXISTS (SELECT 1 FROM finding_places fp WHERE fp.place_id = p.id)" +
-            " OR EXISTS (SELECT 1 FROM media_links m WHERE m.target_type = 'place' AND m.target_id = p.id))"
-        )
-      )
+        sql"(p.site_type_checked_at IS NULL OR p.site_type_checked_at < to_timestamp($ms / 1000.0))"
+      case (true, None) => sql"TRUE"
+      case _            => sql"p.site_type_checked_at IS NULL"
+    sql"p.import_source = 'wikidata' AND p.id ~ '^wikidata_q[1-9][0-9]*$$' AND $asked AND (EXISTS (SELECT 1 FROM finding_places fp WHERE fp.place_id = p.id) OR EXISTS (SELECT 1 FROM media_links m WHERE m.target_type = 'place' AND m.target_id = p.id))"
 
   /** (place id, Wikidata item, the class the import kept) of the next `limit` sites to refine. */
   def sitesToType(
@@ -44,18 +33,14 @@ private[places] object SiteTypeRepo:
       refresh: Refresh,
       before: Option[DeepTime.SignedYear]
   )(using DbCon): List[(Place.Id, PlaceRepo.Label, Option[PlaceRepo.SiteType])] =
-    (Sql.raw(Sql.Text("SELECT p.id, upper(substr(p.id, 10)), p.properties->>'class' FROM places p WHERE ")) ++
-      toTypeWhere(refresh, before) ++ Sql.of(
-        Sql.OfText(" ORDER BY p.id LIMIT ?"),
-        Param.I(Param.I.V(limit.value.max(0)))
-      )).frag
+    sql"SELECT p.id, upper(substr(p.id, 10)), p.properties->>'class' FROM places p WHERE ${toTypeWhere(refresh, before)} ORDER BY p.id LIMIT ${limit.value.max(0)}"
       .query[(Place.Id, PlaceRepo.Label, Option[PlaceRepo.SiteType])]
       .run()
       .toList
 
   def countSitesToType(refresh: Refresh, before: Option[DeepTime.SignedYear])(using DbCon): RowCount =
     RowCount(
-      (Sql.raw(Sql.RawText("SELECT count(*)::int FROM places p WHERE ")) ++ toTypeWhere(refresh, before)).frag
+      sql"SELECT count(*)::int FROM places p WHERE ${toTypeWhere(refresh, before)}"
         .query[Int]
         .run()
         .head

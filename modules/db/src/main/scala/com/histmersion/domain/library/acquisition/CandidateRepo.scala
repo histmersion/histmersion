@@ -23,7 +23,7 @@ private[acquisition] object CandidateRepo:
   type Limit = Limit.T
   object Limit extends Newtype[Int, Pure]
 
-  private val ts = """'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
+  private val ts = sql"""'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
 
   final private case class WatchRow(
       goal: CandidateWatch.Goal,
@@ -39,7 +39,7 @@ private[acquisition] object CandidateRepo:
   /** A goal's watches as they were last read. */
   def watches(goal: Goal.Slug)(using DbCon): List[CandidateWatch] =
     sql"""SELECT goal, kind, subject, index_name, to_char(watermark, 'YYYY-MM-DD'),
-                   to_char(last_run AT TIME ZONE 'UTC', ${SqlLiteral(ts)}), last_error, last_found
+                   to_char(last_run AT TIME ZONE 'UTC', $ts), last_error, last_found
             FROM candidate_watches WHERE goal = $goal ORDER BY kind, subject, index_name"""
       .query[WatchRow]
       .run()
@@ -115,9 +115,7 @@ private[acquisition] object CandidateRepo:
       DbCon
   ): List[Source.Candidate] =
     sql"""SELECT id, goal, doi, title, year, authors, venue, abstract, is_oa, arxiv_id, found_by, state,
-                   to_char(first_seen AT TIME ZONE 'UTC', ${SqlLiteral(
-        ts
-      )}), to_char(last_seen AT TIME ZONE 'UTC', ${SqlLiteral(ts)})
+                   to_char(first_seen AT TIME ZONE 'UTC', $ts), to_char(last_seen AT TIME ZONE 'UTC', $ts)
             FROM source_candidates WHERE ($goal::text IS NULL OR goal = $goal) AND state = $state
             ORDER BY id LIMIT $limit OFFSET $offset"""
       .query[Row]

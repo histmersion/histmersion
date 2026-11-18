@@ -6,7 +6,6 @@ import com.histmersion.util.json.RawJson
 
 import com.histmersion.domain.catalogue.places.PlacesCarried
 import com.histmersion.util.data.exchange.BundleImport
-import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.util.data.exchange.{BundleFormat, BundleScope}
 import com.histmersion.util.data.exchange.BundleSql.*
 
@@ -35,27 +34,32 @@ private[events] object EventBundleRepo:
 
   def events(scope: BundleScope)(using DbCon): Vector[Bundle.Event] =
     val w = where(scope, "e.uid", "e.updated_at")
-    val rows = (Sql.raw(Sql.Text(s"""SELECT e.uid, e.origin, e.id, e.label, e.kind, e.not_before, e.begin_by,
+    val rows = sql"""SELECT e.uid, e.origin, e.id, e.label, e.kind, e.not_before, e.begin_by,
                                   e.end_from, e.not_after, e.historicity, encode(ST_AsEWKB(e.geom), 'hex'),
-                                  e.place_id, p.uid, e.description, e.citekey, s.uid, ${ts("e.updated_at")}, e.scale,
+                                  e.place_id, p.uid, e.description, e.citekey, s.uid, ${SqlLiteral(
+        ts("e.updated_at")
+      )}, e.scale,
                                   e.catalogue, e.names, e.wikidata, e.central, e.plus_minus, e.dating_method
                            FROM events e LEFT JOIN events p ON p.id = e.parent_id
-                           LEFT JOIN sources s ON s.citekey = e.citekey WHERE """)) ++ w ++ " ORDER BY e.uid").frag
+                           LEFT JOIN sources s ON s.citekey = e.citekey WHERE $w ORDER BY e.uid"""
       .query[BEventRow]
       .run()
-    val datings = (Sql.raw(Sql.Text("""SELECT e.uid, d.citekey, s.uid, d.not_before, d.begin_by, d.end_from,
+    val datings = sql"""SELECT e.uid, d.citekey, s.uid, d.not_before, d.begin_by, d.end_from,
                                      d.not_after, d.method, d.note
                               FROM event_datings d JOIN events e ON e.id = d.event_id
-                              LEFT JOIN sources s ON s.citekey = d.citekey WHERE """)) ++ w ++
-      """ ORDER BY e.uid, d.citekey COLLATE "C"""").frag.query[BDatingRow].run().groupBy(_.eventUid)
-    val edges = (Sql.raw(Sql.Text("""SELECT e.uid, b.uid, g.kind, g.citekey, s.uid, g.note
+                              LEFT JOIN sources s ON s.citekey = d.citekey WHERE $w ORDER BY e.uid, d.citekey COLLATE "C\""""
+      .query[BDatingRow]
+      .run()
+      .groupBy(_.eventUid)
+    val edges = sql"""SELECT e.uid, b.uid, g.kind, g.citekey, s.uid, g.note
                             FROM event_edges g JOIN events e ON e.id = g.src_id JOIN events b ON b.id = g.dst_id
-                            LEFT JOIN sources s ON s.citekey = g.citekey WHERE """)) ++ w ++
-      """ ORDER BY e.uid, b.uid, g.kind COLLATE "C"""").frag.query[BEventEdgeRow].run().groupBy(_.eventUid)
-    val people = (Sql.raw(Sql.Text("""SELECT e.uid, p.actor, p.role, p.citekey, s.uid
+                            LEFT JOIN sources s ON s.citekey = g.citekey WHERE $w ORDER BY e.uid, b.uid, g.kind COLLATE "C\""""
+      .query[BEventEdgeRow]
+      .run()
+      .groupBy(_.eventUid)
+    val people = sql"""SELECT e.uid, p.actor, p.role, p.citekey, s.uid
                              FROM event_participants p JOIN events e ON e.id = p.event_id
-                             LEFT JOIN sources s ON s.citekey = p.citekey WHERE """)) ++ w ++
-      """ ORDER BY e.uid, p.actor COLLATE "C", p.role COLLATE "C"""").frag
+                             LEFT JOIN sources s ON s.citekey = p.citekey WHERE $w ORDER BY e.uid, p.actor COLLATE "C", p.role COLLATE "C\""""
       .query[BParticipantRow]
       .run()
       .groupBy(_.eventUid)
@@ -128,21 +132,26 @@ private[events] object EventBundleRepo:
 
   /** Old event ids and goal slugs (V053) of the events and goals in scope. */
   def eventAliases(scope: BundleScope)(using DbCon): Vector[Bundle.EventAlias] =
-    (Sql.raw(Sql.Text(s"""SELECT x.alias, e.uid, ${ts("x.created_at")}
-                FROM event_aliases x JOIN events e ON e.id = x.event_id WHERE """)) ++
-      where(scope, "e.uid", "x.created_at") ++ """ ORDER BY x.alias COLLATE "C"""").frag
+    sql"""SELECT x.alias, e.uid, ${SqlLiteral(ts("x.created_at"))}
+                FROM event_aliases x JOIN events e ON e.id = x.event_id WHERE ${where(
+        scope,
+        "e.uid",
+        "x.created_at"
+      )} ORDER BY x.alias COLLATE "C\""""
       .query[(String, UUID, String)]
       .run()
       .map((alias, uid, at) => Bundle.EventAlias(Bundle.EventAlias.Alias(alias), uid, Bundle.EventAlias.CreatedAt(at)))
 
   /** What the catalogues say about the events in scope (`event_catalogue`): by event, then the record's key. */
   def eventCatalogue(scope: BundleScope)(using DbCon): Vector[Bundle.EventCatalogue] =
-    (Sql.raw(Sql.Text(s"""SELECT e.uid, c.provider, c.provider_id, c.url, c.label, c.kind, c.not_before, c.begin_by,
+    sql"""SELECT e.uid, c.provider, c.provider_id, c.url, c.label, c.kind, c.not_before, c.begin_by,
                        c.end_from, c.not_after, c.lat, c.lon, c.vei, c.magnitude, c.deaths, c.historicity,
-                       c.record::text, ${ts("c.retrieved_at")}
-                FROM event_catalogue c JOIN events e ON e.id = c.event_id WHERE """)) ++
-      where(scope, "e.uid", "c.retrieved_at") ++
-      """ ORDER BY e.uid, c.provider COLLATE "C", c.provider_id COLLATE "C"""").frag.query[BCatalogueRow].run().map { r =>
+                       c.record::text, ${SqlLiteral(ts("c.retrieved_at"))}
+                FROM event_catalogue c JOIN events e ON e.id = c.event_id WHERE ${where(
+        scope,
+        "e.uid",
+        "c.retrieved_at"
+      )} ORDER BY e.uid, c.provider COLLATE "C", c.provider_id COLLATE "C\"""".query[BCatalogueRow].run().map { r =>
       Bundle.EventCatalogue(
         r.eventUid,
         Bundle.EventCatalogue.Provider(r.provider.value),
@@ -170,37 +179,34 @@ private[events] object EventBundleRepo:
     */
   def corrections(scope: BundleScope)(using DbCon): Vector[Bundle.Correction] =
     val eventUid = "(SELECT x.uid FROM events x WHERE c.target_kind = 'event' AND x.id = c.target_id)"
-    (Sql.raw(Sql.Text(s"""SELECT c.target_kind, c.target_id, $eventUid, c.field, c.value::text, c.upstream,
-                       c.upstream_value::text, c.upstream_now::text, c.status, ${ts("c.created_at")},
-                       ${ts("c.updated_at")}, ${ts("c.checked_at")}
-                FROM corrections c WHERE """)) ++
-      where(scope, eventUid, "greatest(c.updated_at, coalesce(c.checked_at, c.updated_at))") ++
-      """ ORDER BY c.target_kind COLLATE "C", c.target_id COLLATE "C", c.field COLLATE "C"""").frag
+    sql"""SELECT c.target_kind, c.target_id, ${SqlLiteral(eventUid)}, c.field, c.value::text, c.upstream,
+                       c.upstream_value::text, c.upstream_now::text, c.status, ${SqlLiteral(ts("c.created_at"))},
+                       ${SqlLiteral(ts("c.updated_at"))}, ${SqlLiteral(ts("c.checked_at"))}
+                FROM corrections c WHERE ${where(
+        scope,
+        eventUid,
+        "greatest(c.updated_at, coalesce(c.checked_at, c.updated_at))"
+      )} ORDER BY c.target_kind COLLATE "C", c.target_id COLLATE "C", c.field COLLATE "C\""""
       .query[Bundle.Correction]
       .run()
 
   // ── what a merge plan compares ───────────────────────────────────────────────────────────────
 
-  /** Who has each of `labels` here, by the query's (label, uid) rows. */
-  private def owners(q: String, labels: List[BEventRow.Id])(using DbCon): Map[BEventRow.Id, UUID] =
+  /** Who has each of `labels` here, by the (label, uid) rows of the query `q` makes of them. */
+  private def owners(labels: List[BEventRow.Id])(q: List[BEventRow.Id] => Frag)(using
+      DbCon
+  ): Map[BEventRow.Id, UUID] =
     if labels.isEmpty then Map.empty
-    else
-      Sql
-        .of(Sql.Text(q), Param.A(labels.distinct.map(l => Param.A.V(l.value))))
-        .frag
-        .query[(BEventRow.Id, UUID)]
-        .run()
-        .toMap
+    else q(labels.distinct).query[(BEventRow.Id, UUID)].run().toMap
 
   /** The events here among `ids` → their uids. */
   def eventsNamed(ids: List[BEventRow.Id])(using DbCon): Map[BEventRow.Id, UUID] =
-    owners("SELECT id, uid FROM events WHERE id = ANY(?::text[])", ids)
+    owners(ids)(ls => sql"SELECT id, uid FROM events WHERE id = ANY($ls::text[])")
 
   /** The old event ids here among `ids` → the uid of the event each names. */
   def oldIdsNamed(ids: List[BEventRow.Id])(using DbCon): Map[BEventRow.Id, UUID] =
-    owners(
-      "SELECT x.alias, e.uid FROM event_aliases x JOIN events e ON e.id = x.event_id WHERE x.alias = ANY(?::text[])",
-      ids
+    owners(ids)(ls =>
+      sql"SELECT x.alias, e.uid FROM event_aliases x JOIN events e ON e.id = x.event_id WHERE x.alias = ANY($ls::text[])"
     )
 
   // ── in ───────────────────────────────────────────────────────────────────────────────────────
@@ -306,9 +312,7 @@ private[events] object EventBundleRepo:
     val eventIds = eventIdsOf()
     import com.histmersion.api.exchange.Bundle.EventSets.newer
     if w.es.eventCatalogue.nonEmpty then
-      val here = Sql
-        .raw(Sql.Text(s"SELECT provider, provider_id, ${ts("retrieved_at")} FROM event_catalogue"))
-        .frag
+      val here = sql"SELECT provider, provider_id, ${SqlLiteral(ts("retrieved_at"))} FROM event_catalogue"
         .query[(String, String, Bundle.UpdatedAt)]
         .run()
         .map((p, i, at) => (p, i) -> at)
@@ -342,9 +346,7 @@ private[events] object EventBundleRepo:
     import com.histmersion.api.exchange.Bundle.EventSets.newer
     if w.es.corrections.nonEmpty then
       val clock = s"greatest(${ts("updated_at")}, coalesce(${ts("checked_at")}, ''))"
-      val here = Sql
-        .raw(Sql.Text(s"SELECT target_kind, target_id, field, $clock FROM corrections"))
-        .frag
+      val here = sql"SELECT target_kind, target_id, field, ${SqlLiteral(clock)} FROM corrections"
         .query[(String, String, String, Bundle.UpdatedAt)]
         .run()
         .map((k, t, f, at) => (k, t, f) -> at)

@@ -4,7 +4,6 @@ import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.api.catalogue.Corrections
-import com.histmersion.util.database.{Param, Sql}
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.given_DbCodec_List
@@ -20,12 +19,11 @@ import com.histmersion.util.json.RawJson.equality
   */
 private[events] object CorrectionRepo:
   private val Cols =
-    "c.id, c.target_kind, c.target_id, c.field, c.value::text, c.upstream_value::text, c.status, c.upstream, " +
-      "c.upstream_now::text, c.created_at::text, c.checked_at::text"
+    sql"c.id, c.target_kind, c.target_id, c.field, c.value::text, c.upstream_value::text, c.status, c.upstream, c.upstream_now::text, c.created_at::text, c.checked_at::text"
 
   /** The corrections of one target, by field. */
   def of(kind: Correction.TargetKind, id: Correction.TargetId)(using DbCon): List[CorrectionRow] =
-    sql"""SELECT ${SqlLiteral(Cols)} FROM corrections c WHERE c.target_kind = $kind AND c.target_id = $id
+    sql"""SELECT $Cols FROM corrections c WHERE c.target_kind = $kind AND c.target_id = $id
           ORDER BY c.field""".query[CorrectionRow].run().toList
 
   /** A person set `field` to `value` while upstream (`upstream`, the catalogue) says `upstreamValue`: equal → no
@@ -87,40 +85,29 @@ private[events] object CorrectionRepo:
       DbCon
   ): Correction.List =
     val st = status.map(_.value.trim.toLowerCase).filter(_.nonEmpty)
-    val where = Sql.of(Sql.OfText("c.target_kind = ?"), Param.S(Param.S.V(kind.value))) ++
-      id.map(_.value.trim)
+    val where = sql"c.target_kind = $kind${id
+        .map(_.value.trim)
         .filter(_.nonEmpty)
-        .fold(Sql.empty)(i => Sql.of(Sql.OfText(" AND c.target_id = ?"), Param.S(Param.S.V(i)))) ++
-      st.fold(Sql.raw(Sql.RawText(" AND c.status <> 'agreed'")))(s =>
-        Sql.of(Sql.OfText(" AND c.status = ?"), Param.S(Param.S.V(s)))
-      )
+        .fold(sql"")(i => sql" AND c.target_id = $i")}${st.fold(sql" AND c.status <> 'agreed'")(s =>
+        sql" AND c.status = $s"
+      )}"
     val count =
-      (Sql.raw(Sql.RawText("SELECT count(*)::int FROM corrections c WHERE ")) ++ where).frag.query[Int].run().head
-    val rows = (Sql.raw(
-      Sql.RawText(
-        s"SELECT $Cols, e.label FROM corrections c " +
-          "LEFT JOIN events e ON c.target_kind = 'event' AND e.id = c.target_id WHERE "
-      )
-    ) ++ where ++
-      Sql.raw(Sql.RawText(" ORDER BY c.status = 'conflict' DESC, c.target_id, c.field")) ++
-      Sql.of(
-        Sql.OfText(" LIMIT ? OFFSET ?"),
-        Param.I(Param.I.V(limit.value.max(1))),
-        Param.I(Param.I.V(offset.value.max(0)))
-      )).frag
-      .query[(CorrectionRow, Option[Correction.Label])]
-      .run()
-      .toList
+      sql"SELECT count(*)::int FROM corrections c WHERE $where".query[Int].run().head
+    val rows =
+      sql"SELECT $Cols, e.label FROM corrections c LEFT JOIN events e ON c.target_kind = 'event' AND e.id = c.target_id WHERE $where ORDER BY c.status = 'conflict' DESC, c.target_id, c.field LIMIT ${limit.value.max(1)} OFFSET ${offset.value.max(0)}"
+        .query[(CorrectionRow, Option[Correction.Label])]
+        .run()
+        .toList
     Correction.List(Correction.List.Total(count), rows.map((r, label) => r.toDto(label)))
 
   /** `lint --rule event-correction-conflict`: the events whose catalogue changed a field a person kept by hand, each
     * with what the person kept, what the catalogue said and what it says now.
     */
   def conflictsIn()(using DbCon): List[(Correction.TargetId, Lint.LintItem.Detail)] =
-    Sql.raw(Sql.RawText(ConflictsSql)).frag.query[(Correction.TargetId, Lint.LintItem.Detail)].run().toList
+    sql"$ConflictsSql".query[(Correction.TargetId, Lint.LintItem.Detail)].run().toList
 
   private val ConflictsSql =
-    """SELECT c.target_id,
+    sql"""SELECT c.target_id,
                 c.field || ': kept “' || left(coalesce(c.value #>> '{}', c.value::text), 60) || '” by hand; the catalogue (' ||
                 coalesce(c.upstream, '?') || ') said “' || left(coalesce(c.upstream_value #>> '{}', c.upstream_value::text), 60) ||
                 '” and now says “' || left(coalesce(c.upstream_now #>> '{}', c.upstream_now::text, '?'), 60) || '”'

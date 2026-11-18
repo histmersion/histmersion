@@ -6,10 +6,12 @@ import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.api.BBox
 import com.histmersion.api.catalogue.{EventPrecision, EventTaxonomy, EventTier}
 import com.histmersion.api.library.Filter
-import com.histmersion.util.database.{Param, Sql}
-import com.histmersion.util.database.{EnvelopeSql, LikePattern, RangeSql}
+import com.histmersion.util.database.{joined, literal, EnvelopeSql, LikePattern, RangeSql}
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.catalogue.Place
+import com.augustnagro.magnum.{sql, Frag, SqlLiteral}
+import com.histmersion.util.database.given
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** The events' SQL other queries of the catalogue embed: an event's tier and anchor, the selection of the event list
   * (and of the map's events layer), the map's event tiles' candidates.
@@ -78,44 +80,36 @@ object EventSql:
       historicity: Option[EventSelection.Historicity],
       placeId: Option[Place.Id],
       more: Narrow = Narrow()
-  ): Sql =
+  ): Frag =
     def clean(o: Option[String]) = o.map(_.trim).filter(_.nonEmpty)
-    val ps = List.newBuilder[Sql]
+    val ps = List.newBuilder[Frag]
     val selected = related.eventWhere(filter, scope)
     val catalogueOnly = s"($TierSql) = '${EventTier.Catalogue}'"
-    if selected.text.value != "TRUE" then
+    if selected.sqlString != "TRUE" then
       if more.context.value then
         // the catalogue's events of the period stay, whatever the sources selected
         val inPeriod = related.eventWhere(Filter(period = filter.period, title = filter.title), PlaceScope.empty)
-        ps += (Sql.raw(Sql.RawText("(")) ++ selected ++ Sql.raw(
-          Sql.Text(s" OR ($catalogueOnly AND ")
-        ) ++ inPeriod ++ Sql.raw(Sql.Text("))")))
+        ps += (sql"($selected OR (${SqlLiteral(catalogueOnly)} AND $inPeriod))")
       else ps += selected
     clean(more.tier.map(_.value))
       .map(_.toLowerCase)
-      .foreach(t => ps += Sql.of(Sql.Text(s"($TierSql) = ?"), Param.S(Param.S.V(t))))
+      .foreach(t => ps += sql"(${SqlLiteral(TierSql)}) = $t")
     more.area.foreach(b => ps += EnvelopeSql.envelopes(s"coalesce(e.geom, ep.geom)", b))
     clean(text.map(_.value)).foreach { t =>
       val c = LikePattern.contains(t)
-      ps += Sql.of(
-        Sql.Text("(e.label ILIKE ? ESCAPE '\\' OR e.description ILIKE ? ESCAPE '\\')"),
-        Param.S(Param.S.V(c)),
-        Param.S(Param.S.V(c))
-      )
+      ps += sql"(e.label ILIKE $c ESCAPE '\\' OR e.description ILIKE $c ESCAPE '\\')"
     }
     EventTaxonomy.condition(clean(kind.map(_.value)).map(k => EventTaxonomy.KindCondition.Filter(k))).foreach { c =>
-      ps += Sql.of(
-        Sql.Text(if c.negate.value then "NOT (e.kind = ANY(?::text[]))" else "e.kind = ANY(?::text[])"),
-        Param.A(c.kinds.map(k => Param.A.V(k.value)))
-      )
+      ps += (if c.negate.value then sql"NOT (e.kind = ANY(${c.kinds}::text[]))"
+             else sql"e.kind = ANY(${c.kinds}::text[])")
     }
     clean(historicity.map(_.value))
       .map(_.toLowerCase)
-      .foreach(h => ps += Sql.of(Sql.Text("e.historicity = ?"), Param.S(Param.S.V(h))))
-    clean(placeId.map(_.value)).foreach(p => ps += Sql.of(Sql.Text("e.place_id = ?"), Param.S(Param.S.V(p))))
+      .foreach(h => ps += sql"e.historicity = $h")
+    clean(placeId.map(_.value)).foreach(p => ps += sql"e.place_id = $p")
     val parts = ps.result()
-    if parts.isEmpty then Sql.raw(Sql.RawText("TRUE"))
-    else Sql(Sql.Text(parts.map(_.text.value).mkString(" AND ")), parts.flatMap(_.params))
+    if parts.isEmpty then sql"TRUE"
+    else parts.joined(sql" AND ")
 
   /** An event's ANCHOR over `events e` with its place `ep`: its own geometry, else its place's (`s.g`, `s.src`), as a
     * point — the point itself, or the point-on-surface of an area (`a.pt`).
@@ -129,12 +123,13 @@ object EventSql:
   /** The map's events as the tiles select them: the anchor's id, place and dates, for the list's selection (`where`,
     * over `events e` with `ep`), in the tile's box `envelope`.
     */
-  def tileCandidates(where: Sql, envelope: Sql): Sql =
-    Sql.raw(Sql.Text(s"""SELECT e.id AS key, ST_X(a.pt) AS lon, ST_Y(a.pt) AS lat,
-                  ${RangeSql.start("e.outer_span")} AS ps, ${RangeSql.end("e.outer_span")} AS pe, false AS ub
-                FROM $fromEvents $anchorJoins
-                WHERE s.g IS NOT NULL AND e.uncertainty <= ${EventPrecision.ApproximateUpTo} AND s.g && """)) ++
-      envelope ++ Sql.raw(Sql.Text(" AND ")) ++ where
+  def tileCandidates(where: Frag, envelope: Frag): Frag =
+    sql"""SELECT e.id AS key, ST_X(a.pt) AS lon, ST_Y(a.pt) AS lat,
+                  ${SqlLiteral(RangeSql.start("e.outer_span"))} AS ps, ${SqlLiteral(
+        RangeSql.end("e.outer_span")
+      )} AS pe, false AS ub
+                FROM ${SqlLiteral(fromEvents)} ${SqlLiteral(anchorJoins)}
+                WHERE s.g IS NOT NULL AND e.uncertainty <= ${EventPrecision.ApproximateUpTo.literal} AND s.g && $envelope AND $where"""
 
   /** An event with no known date: its outer span open on both sides. */
   val UndatedSql = "(lower_inf(e.outer_span) AND upper_inf(e.outer_span))"
@@ -142,10 +137,12 @@ object EventSql:
   /** [[tileCandidates]] and, beside them, the events `undatedWhere` selects that have no known date (whatever the span:
     * `undatedWhere` is the selection without it), each marked (`ub`).
     */
-  def tileCandidatesWithUndated(where: Sql, undatedWhere: Sql, envelope: Sql): Sql =
-    Sql.raw(Sql.Text(s"""SELECT e.id AS key, ST_X(a.pt) AS lon, ST_Y(a.pt) AS lat,
-                  ${RangeSql.start("e.outer_span")} AS ps, ${RangeSql.end("e.outer_span")} AS pe, $UndatedSql AS ub
-                FROM $fromEvents $anchorJoins
-                WHERE s.g IS NOT NULL AND s.g && """)) ++ envelope ++
-      Sql.raw(Sql.Text(s" AND ((e.uncertainty <= ${EventPrecision.ApproximateUpTo} AND ")) ++ where ++
-      Sql.raw(Sql.Text(s") OR ($UndatedSql AND ")) ++ undatedWhere ++ Sql.raw(Sql.Text("))"))
+  def tileCandidatesWithUndated(where: Frag, undatedWhere: Frag, envelope: Frag): Frag =
+    sql"""SELECT e.id AS key, ST_X(a.pt) AS lon, ST_Y(a.pt) AS lat,
+                  ${SqlLiteral(RangeSql.start("e.outer_span"))} AS ps, ${SqlLiteral(
+        RangeSql.end("e.outer_span")
+      )} AS pe, ${SqlLiteral(UndatedSql)} AS ub
+                FROM ${SqlLiteral(fromEvents)} ${SqlLiteral(anchorJoins)}
+                WHERE s.g IS NOT NULL AND s.g && $envelope AND ((e.uncertainty <= ${EventPrecision.ApproximateUpTo.literal} AND $where) OR (${SqlLiteral(
+        UndatedSql
+      )} AND $undatedWhere))"""

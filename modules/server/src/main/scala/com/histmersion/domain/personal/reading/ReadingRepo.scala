@@ -1,7 +1,6 @@
 package com.histmersion
 package domain.personal.reading
 
-import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.domain.{ItemKey, ItemKind, ItemRef, ItemUid}
 import com.histmersion.domain.personal.{MarkTime, TargetLabel}
 import com.histmersion.util.database.NewtypeColumns.given
@@ -24,20 +23,13 @@ private[reading] object ReadingRepo:
       case ReadingShow.Read   => (" AND m.read_at IS NOT NULL", " ORDER BY m.read_at DESC, m.id DESC")
       case ReadingShow.Opened => (" AND m.opened_at IS NOT NULL", " ORDER BY m.opened_at DESC, m.id DESC")
       case ReadingShow.All    => ("", " ORDER BY m.updated_at DESC, m.id DESC")
-    (Sql.of(Sql.Text(s"$Projection WHERE m.user_id = ?"), Param.S(Param.S.V(user.value))) ++
-      kind.fold(Sql.empty)(k => Sql.of(Sql.Text(" AND m.target_kind = ?"), Param.S(Param.S.V(k.value)))) ++
-      Sql.raw(Sql.Text(where + order)) ++ Sql
-        .of(Sql.Text(" LIMIT ?"), Param.I(Param.I.V(size.value)))).frag.query[MarkRow].run().toList
+    sql"${SqlLiteral(Projection)} WHERE m.user_id = $user${kind.fold(sql"")(k => sql" AND m.target_kind = $k")}${SqlLiteral(where + order)} LIMIT $size"
+      .query[MarkRow]
+      .run()
+      .toList
 
   def get(user: UserId, ref: ItemRef)(using DbCon): Option[MarkRow] =
-    Sql
-      .of(
-        Sql.Text(s"$Projection WHERE m.user_id = ? AND m.target_kind = ? AND m.target_id = ?"),
-        Param.S(Param.S.V(user.value)),
-        Param.S(Param.S.V(ref.kind.value)),
-        Param.S(Param.S.V(ref.key.value))
-      )
-      .frag
+    sql"${SqlLiteral(Projection)} WHERE m.user_id = $user AND m.target_kind = ${ref.kind} AND m.target_id = ${ref.key}"
       .query[MarkRow]
       .run()
       .headOption

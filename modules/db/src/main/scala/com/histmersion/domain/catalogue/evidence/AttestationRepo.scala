@@ -20,9 +20,7 @@ private[evidence] object AttestationRepo:
   private given DbCodec[Attestation] = DbCodec.derived
 
   private val cols =
-    "a.id, a.citekey, a.target_type, a.target_id, " +
-      "a.quote, a.prefix, a.suffix, a.char_start, a.char_end, a.chunk_ord, " +
-      "a.page, a.canvas, a.xywh, a.cts_urn, a.note"
+    sql"a.id, a.citekey, a.target_type, a.target_id, a.quote, a.prefix, a.suffix, a.char_start, a.char_end, a.chunk_ord, a.page, a.canvas, a.xywh, a.cts_urn, a.note"
 
   def list(
       citekey: Option[Citekey],
@@ -41,7 +39,7 @@ private[evidence] object AttestationRepo:
             AND ($tt::text IS NULL OR a.target_type = $tt)
             AND ($ti::text IS NULL OR a.target_id = $ti)
           """.query[Int].run().head
-    val rows = sql"""SELECT ${SqlLiteral(cols)} FROM attestations a
+    val rows = sql"""SELECT $cols FROM attestations a
           WHERE ($ck::text IS NULL OR a.citekey = $ck)
             AND ($tt::text IS NULL OR a.target_type = $tt)
             AND ($ti::text IS NULL OR a.target_id = $ti)
@@ -55,7 +53,7 @@ private[evidence] object AttestationRepo:
     )
 
   def get(id: AttestationId)(using DbCon): Option[Attestation] =
-    sql"""SELECT ${SqlLiteral(cols)} FROM attestations a WHERE a.id = $id""".query[Attestation].run().headOption
+    sql"""SELECT $cols FROM attestations a WHERE a.id = $id""".query[Attestation].run().headOption
 
   def create(in: Attestation.Put)(using DbCon): Attestation =
     val id = sql"""INSERT INTO attestations (citekey, target_type, target_id,

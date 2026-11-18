@@ -20,7 +20,7 @@ import com.histmersion.domain.*
 import com.histmersion.domain.catalogue.Place.Id as PlaceId
 import com.histmersion.api.library.Tree.TreeRow
 import com.histmersion.api.library.Confidence
-import com.histmersion.util.database.{Migrate, Param}
+import com.histmersion.util.database.Migrate
 import com.histmersion.api.catalogue.{Period, Place}
 import com.histmersion.api.library.{Bucket, Filter, Finding, Source}
 import com.histmersion.util.database.given
@@ -319,18 +319,20 @@ class TreeRepoSuite extends DbSuite:
       Filter(places = List(Filter.Places("zzt_north"))),
       scope
     )
-    assert(sql.text.value.contains("finding_places"), sql.text)
-    assert(sql.params.exists(_ == Param.A(List(Param.A.V("zzt_north"), Param.A.V("zzt_land")))), sql.params.toString)
+    assert(sql.sqlString.contains("finding_places"), sql.sqlString)
+    val lists = sql.params.map(_.asInstanceOf[Matchable]).collect { case l: List[?] =>
+      l.map(_.asInstanceOf[Matchable]).collect { case s: String => s }
+    }
+    assert(lists.exists(_ == List("zzt_north", "zzt_land")), sql.params.toString)
 
   test("rowsQuery(sources) gates on a matching finding exactly as the histogram does"):
     val f = Filter(places = List(Filter.Places("anywhere")), period = Some(Period(Year(-1600), Year(-1200))))
     assert(
-      SearchFixtures.treeRowsQuery(SearchFixtures.AggregateUnit("sources"), f).text.value.contains("fp.matched > 0")
+      SearchFixtures.treeRowsQuery(SearchFixtures.AggregateUnit("sources"), f).sqlString.contains("fp.matched > 0")
     )
     assert(
       !SearchFixtures
         .treeRowsQuery(SearchFixtures.AggregateUnit("sources"), Filter(period = Some(Period(Year(-1600), Year(-1200)))))
-        .text
-        .value
+        .sqlString
         .contains("fp.matched > 0")
     )

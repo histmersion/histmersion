@@ -2,7 +2,6 @@ package com.histmersion
 package util.data.backup
 
 import com.augustnagro.magnum.*
-import com.histmersion.util.database.Sql
 import com.histmersion.util.data.TableName
 
 /** The one database question backup and restore ask: how many rows a table a restore must not drop unasked holds.
@@ -17,7 +16,7 @@ object BackupRepo:
     RowCount(
       scala.util
         .Try(
-          Sql.raw(Sql.RawText(s"SELECT count(*) FROM ${quoted(table)}")).frag.query[Int].run().headOption.getOrElse(0)
+          sql"SELECT count(*) FROM ${SqlLiteral(quoted(table))}".query[Int].run().headOption.getOrElse(0)
         )
         .getOrElse(0)
     )

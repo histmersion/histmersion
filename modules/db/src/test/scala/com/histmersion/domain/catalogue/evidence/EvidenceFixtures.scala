@@ -14,10 +14,10 @@ import com.histmersion.domain.DeepTime
 import com.histmersion.domain.catalogue.Event
 import com.histmersion.domain.catalogue.events.{BEventRow, CatalogMerge}
 import com.histmersion.domain.library.Citekey
-import com.histmersion.util.database.Sql
 
 import com.augustnagro.magnum.{connect, transact}
 import javax.sql.DataSource
+import com.augustnagro.magnum.Frag
 
 /** The events' links and leads as a db suite writes and reads them: each call on a connection of its own. */
 object EvidenceFixtures:
@@ -40,7 +40,7 @@ object EvidenceFixtures:
     connect(ds)(LeadRepo.nearFindings(id, km, years, limit))
   def leadRows(
       ds: DataSource,
-      where: Sql,
+      where: Frag,
       km: CatalogMerge.Tolerance.Km,
       years: CatalogMerge.Tolerance.Years,
       limit: PageSize,

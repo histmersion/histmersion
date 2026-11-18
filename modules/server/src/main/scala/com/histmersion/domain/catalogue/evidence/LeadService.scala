@@ -13,7 +13,6 @@ import com.histmersion.api.catalogue.{
 import com.histmersion.domain.DeepTime.SignedYear
 import com.histmersion.domain.catalogue.Event
 import com.histmersion.domain.catalogue.events.CatalogMerge as CM
-import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.domain.catalogue.CatalogueState
 import com.histmersion.domain.catalogue.events.{EventSelection, EventSourceFilter}
 import com.histmersion.util.database.Transactor
@@ -22,6 +21,8 @@ import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.catalogue.events.EventService
 import com.histmersion.api.catalogue.Year
+import com.augustnagro.magnum.sql
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** What an event's card and the leads are computed from: the sources attesting an event, the dated findings near it,
   * the facts of each event's lead (its size, the findings around it, the sources proposed and confirmed), and the
@@ -98,7 +99,7 @@ object LeadService:
     def leadOf(id: Event.Id, km: CM.Tolerance.Km, years: CM.Tolerance.Years): List[LeadRow] =
       db.read(
         LeadRepo
-          .leadRows(Sql.of(Sql.Text("e.id = ?"), Param.S(Param.S.V(id.value))), km, years, PageSize(1), Offset.Start)
+          .leadRows(sql"e.id = $id", km, years, PageSize(1), Offset.Start)
       )._2
     def articleCandidates(
         citekeys: List[Citekey],

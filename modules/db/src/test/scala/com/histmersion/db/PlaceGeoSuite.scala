@@ -9,19 +9,20 @@ import com.histmersion.domain.catalogue.places.PlaceFixtures
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.util.database.{Migrate, Param, Sql}
+import com.histmersion.util.database.Migrate
+import com.augustnagro.magnum.Frag
 import com.histmersion.api.catalogue.{GeoTime, Period, Place}
 import com.histmersion.util.database.given
 import com.histmersion.domain.DeepTime
 import com.histmersion.api.catalogue.Year
 import com.histmersion.domain.catalogue.places.BPlaceRow
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** The map layer draws each state ONCE (`PlaceFixtures.geoJson`): pure checks of the query, and — against a disposable
   * Postgres (`TestDb`) — the de-duplication on real shapes. Fixtures sit around 150–171°E, 36–41°S, where no other
   * fixture lives.
   */
 class PlaceGeoSuite extends DbSuite:
-  import Param.*
 
   test("an as-of query ranks sources and drops shadowed shapes; the limit comes last"):
     val q = PlaceFixtures.geoJsonQuery(
@@ -29,37 +30,37 @@ class PlaceGeoSuite extends DbSuite:
       Some(DeepTime.SignedYear(-1900L)),
       PlaceFixtures.Limit(50)
     )
-    assert(q.text.value.contains("hi.tier < lo.tier"), q.text)
+    assert(q.sqlString.contains("hi.tier < lo.tier"), q.sqlString)
     // a lone tier has no pairs: each side keeps only the tiers that can be in one
-    assert(q.text.value.contains("WHERE tier > (SELECT min(tier) FROM live)) lo"), q.text)
-    assert(q.text.value.contains("hi.norm = lo.norm"), q.text)
-    assert(q.text.value.contains("NOT IN (SELECT id FROM shadowed)"), q.text)
-    assert(q.text.value.contains("ORDER BY l.area DESC"), q.text)
+    assert(q.sqlString.contains("WHERE tier > (SELECT min(tier) FROM live)) lo"), q.sqlString)
+    assert(q.sqlString.contains("hi.norm = lo.norm"), q.sqlString)
+    assert(q.sqlString.contains("NOT IN (SELECT id FROM shadowed)"), q.sqlString)
+    assert(q.sqlString.contains("ORDER BY l.area DESC"), q.sqlString)
     // the window of the time rule first (year, year, year ≥ modern-from), then the live set in its two
     // halves (curated, imported with a finding), each with the layer's own filters
-    val half = List(S(S.V(PlaceFixtures.UninformativeLabel)), S(S.V("polity")))
+    val half = List(PlaceFixtures.UninformativeLabel, "polity")
     assertEquals(
       q.params,
-      List(L(L.V(-1900L)), L(L.V(-1900L)), L(L.V(-1900L)), L(L.V(PlaceFixtures.DefaultModernFrom.value))) ++
-        half ++ half ++ List(I(I.V(50)))
+      List(-1900L, -1900L, -1900L, PlaceFixtures.DefaultModernFrom) ++
+        half ++ half ++ List(50)
     )
     assert(
-      q.text.value.contains(
+      q.sqlString.contains(
         PlaceFixtures.inTimeSql(
           "p",
           Some(DeepTime.SignedYear(-1900L)),
           Some(com.histmersion.domain.catalogue.Place.Kind.Wire("polity"))
         )
       ),
-      q.text
+      q.sqlString
     )
 
   test("without as-of nothing is collapsed (successive shapes across time are all real)"):
     val q = PlaceFixtures.geoJsonQuery(None, None, PlaceFixtures.Limit(10))
-    assert(q.text.value.contains("shadowed AS (SELECT NULL::text AS id WHERE false)"), q.text)
+    assert(q.sqlString.contains("shadowed AS (SELECT NULL::text AS id WHERE false)"), q.sqlString)
     assertEquals(
       q.params,
-      List(S(S.V(PlaceFixtures.UninformativeLabel)), S(S.V(PlaceFixtures.UninformativeLabel)), I(I.V(10)))
+      List(PlaceFixtures.UninformativeLabel, PlaceFixtures.UninformativeLabel, 10)
     )
 
   test(
@@ -71,8 +72,7 @@ class PlaceGeoSuite extends DbSuite:
         Some(DeepTime.SignedYear(-1400L)),
         PlaceFixtures.Limit(10)
       )
-      .text
-      .value
+      .sqlString
     // BaseLayerSql in its two halves: the curated places (V075's partial index), the imported with a finding
     assert(timed.contains(s"AND ${PlaceFixtures.CuratedSql} UNION ALL "), timed)
     // at a year the imported half says it holds dated imports only, the predicate of `places_dated_import` (V076)
@@ -86,8 +86,7 @@ class PlaceGeoSuite extends DbSuite:
     assert(timed.contains(s"NOT ${PlaceFixtures.UndatedImportSql}"), timed)
     val untimed = PlaceFixtures
       .geoJsonQuery(Some(com.histmersion.domain.catalogue.Place.Kind.Wire("site")), None, PlaceFixtures.Limit(10))
-      .text
-      .value
+      .sqlString
     assert(
       untimed.contains(s"AND NOT ${PlaceFixtures.CuratedSql} AND p.id IN (SELECT fp.place_id FROM finding_places fp)")
     )
@@ -100,8 +99,7 @@ class PlaceGeoSuite extends DbSuite:
         Some(DeepTime.SignedYear(-200L)),
         PlaceFixtures.Limit(10)
       )
-      .text
-      .value
+      .sqlString
     assertEquals(
       timed.split(java.util.regex.Pattern.quote(PlaceFixtures.UndatedPolityPointSql), -1).length - 1,
       2,
@@ -110,8 +108,7 @@ class PlaceGeoSuite extends DbSuite:
     assert(
       !PlaceFixtures
         .geoJsonQuery(Some(com.histmersion.domain.catalogue.Place.Kind.Wire("polity")), None, PlaceFixtures.Limit(10))
-        .text
-        .value
+        .sqlString
         .contains(PlaceFixtures.UndatedPolityPointSql)
     )
 
@@ -122,50 +119,56 @@ class PlaceGeoSuite extends DbSuite:
       PlaceFixtures.Limit(50)
     )
     assert(
-      q.text.value.contains(
+      q.sqlString.contains(
         PlaceFixtures.inWindowSql(
           "p",
           Some((DeepTime.SignedYear(-2000L), DeepTime.SignedYear(-1000L))),
           Some(com.histmersion.domain.catalogue.Place.Kind.Wire("polity"))
         )
       ),
-      q.text
+      q.sqlString
     )
-    assert(q.text.value.contains("p.period && int8range(-2000::bigint, -1000::bigint, '[]')"), q.text)
+    assert(q.sqlString.contains("p.period && int8range(-2000::bigint, -1000::bigint, '[]')"), q.sqlString)
     // a layer of areas: the two small tiers (sketches, OHM) find their partners through the index of
     // V090 (`places_area_time_geom`: non-site, period && …, geom && …), each partner held to `live`'s
     // own predicate — never every shape against every shape
-    assert(!q.text.value.contains(PlaceFixtures.rangeShadowedSql), q.text)
+    assert(!q.sqlString.contains(PlaceFixtures.rangeShadowedSql), q.sqlString)
     assert(
-      q.text.value.contains("FROM (SELECT * FROM live WHERE tier = 3) s CROSS JOIN LATERAL") &&
-        q.text.value.contains("FROM (SELECT * FROM live WHERE tier = 1) s CROSS JOIN LATERAL"),
-      q.text
+      q.sqlString.contains("FROM (SELECT * FROM live WHERE tier = 3) s CROSS JOIN LATERAL") &&
+        q.sqlString.contains("FROM (SELECT * FROM live WHERE tier = 1) s CROSS JOIN LATERAL"),
+      q.sqlString
     )
     assert(
-      q.text.value.contains(
+      q.sqlString.contains(
         "WHERE p.kind <> 'site' AND p.kind = s.kind AND p.period && s.per AND p.geom && s.bb::geometry AND "
       ),
-      q.text
+      q.sqlString
     )
-    assert(q.text.value.contains(") c WHERE c.tier < 3) c") && q.text.value.contains(") c WHERE c.tier = 2) c"), q.text)
-    assert(q.text.value.contains(PlaceFixtures.rangeShadowTestSql), q.text)
+    assert(
+      q.sqlString.contains(") c WHERE c.tier < 3) c") && q.sqlString.contains(") c WHERE c.tier = 2) c"),
+      q.sqlString
+    )
+    assert(q.sqlString.contains(PlaceFixtures.rangeShadowTestSql), q.sqlString)
     // the stored shape columns (V090), not the polygon read again per row
-    assert(q.text.value.contains("p.label_norm AS norm, p.shape_area AS area, p.shape_box AS bb"), q.text)
-    assert(!q.text.value.contains("ST_Area(p.geom)") && !q.text.value.contains("p.geom::box2d"), q.text)
-    assert(q.text.value.contains("coalesce(p.web_geojson, ST_AsGeoJSON(coalesce(p.geom_clipped, p.geom), 5))"), q.text)
-    assert(q.text.value.contains("min(es) OVER (PARTITION BY kind, coalesce(nullif(norm, ''), id))"), q.text)
-    assert(q.text.value.contains("FROM (SELECT * FROM shown ORDER BY area DESC"), q.text)
-    val half = List(S(S.V(PlaceFixtures.UninformativeLabel)), S(S.V("polity")))
+    assert(q.sqlString.contains("p.label_norm AS norm, p.shape_area AS area, p.shape_box AS bb"), q.sqlString)
+    assert(!q.sqlString.contains("ST_Area(p.geom)") && !q.sqlString.contains("p.geom::box2d"), q.sqlString)
+    assert(
+      q.sqlString.contains("coalesce(p.web_geojson, ST_AsGeoJSON(coalesce(p.geom_clipped, p.geom), 5))"),
+      q.sqlString
+    )
+    assert(q.sqlString.contains("min(es) OVER (PARTITION BY kind, coalesce(nullif(norm, ''), id))"), q.sqlString)
+    assert(q.sqlString.contains("FROM (SELECT * FROM shown ORDER BY area DESC"), q.sqlString)
+    val half = List(PlaceFixtures.UninformativeLabel, "polity")
     // the live set's two halves, then the two pair halves (each holds a partner to the same filters)
     assertEquals(
       q.params,
       List(
-        L(L.V(-2000L)),
-        L(L.V(-1000L)),
-        L(L.V(-1000L)),
-        L(L.V(PlaceFixtures.DefaultModernFrom.value))
+        -2000L,
+        -1000L,
+        -1000L,
+        PlaceFixtures.DefaultModernFrom
       ) ++ half ++ half ++
-        half ++ half ++ List(I(I.V(50)))
+        half ++ half ++ List(50)
     )
     // the plain pairing — a site or kindless layer, and the reference below: the small tiers against `live`
     val plain =
@@ -176,22 +179,22 @@ class PlaceGeoSuite extends DbSuite:
         pairsByIndex = PlaceFixtures.PairsByIndex(false)
       )
     assert(
-      plain.text.value.contains(PlaceFixtures.rangeShadowedSql) && plain.text.value.contains("AND hi.per && lo.per"),
-      plain.text
+      plain.sqlString.contains(PlaceFixtures.rangeShadowedSql) && plain.sqlString.contains("AND hi.per && lo.per"),
+      plain.sqlString
     )
     assert(
-      plain.text.value.contains("FROM live WHERE tier = 3) lo JOIN (SELECT * FROM live WHERE tier < 3) hi") &&
-        plain.text.value.contains("FROM live WHERE tier = 2) lo JOIN (SELECT * FROM live WHERE tier = 1) hi"),
-      plain.text
+      plain.sqlString.contains("FROM live WHERE tier = 3) lo JOIN (SELECT * FROM live WHERE tier < 3) hi") &&
+        plain.sqlString.contains("FROM live WHERE tier = 2) lo JOIN (SELECT * FROM live WHERE tier = 1) hi"),
+      plain.sqlString
     )
     assertEquals(
       plain.params,
       List(
-        L(L.V(-2000L)),
-        L(L.V(-1000L)),
-        L(L.V(-1000L)),
-        L(L.V(PlaceFixtures.DefaultModernFrom.value))
-      ) ++ half ++ half ++ List(I(I.V(50)))
+        -2000L,
+        -1000L,
+        -1000L,
+        PlaceFixtures.DefaultModernFrom
+      ) ++ half ++ half ++ List(50)
     )
     List(Some(com.histmersion.domain.catalogue.Place.Kind.Wire("site")), None).foreach(k =>
       assert(
@@ -201,8 +204,7 @@ class PlaceGeoSuite extends DbSuite:
             GeoTime.Within(Year(-2000), Year(-1000), latest = GeoTime.Within.Latest(false)),
             PlaceFixtures.Limit(50)
           )
-          .text
-          .value
+          .sqlString
           .contains(PlaceFixtures.rangeShadowedSql),
         s"kind $k"
       )
@@ -213,8 +215,7 @@ class PlaceGeoSuite extends DbSuite:
         GeoTime.Within(Year(-2000), Year(-1000), latest = GeoTime.Within.Latest(true)),
         PlaceFixtures.Limit(50)
       )
-      .text
-      .value
+      .sqlString
     assert(late.contains("max(ee) OVER") && late.contains("WHERE v.ee = v.anchor"), late)
     // a year is what it always was: none of the range's machinery
     val year = PlaceFixtures.geoJsonTimeQuery(
@@ -223,16 +224,16 @@ class PlaceGeoSuite extends DbSuite:
       PlaceFixtures.Limit(50)
     )
     assertEquals(
-      year.text,
+      year.sqlString,
       PlaceFixtures
         .geoJsonQuery(
           Some(com.histmersion.domain.catalogue.Place.Kind.Wire("polity")),
           Some(DeepTime.SignedYear(-1500L)),
           PlaceFixtures.Limit(50)
         )
-        .text
+        .sqlString
     )
-    assert(!year.text.value.contains(" per") && !year.text.value.contains("shown"), year.text)
+    assert(!year.sqlString.contains(" per") && !year.sqlString.contains("shown"), year.sqlString)
 
   test("the pair test skips the polygon intersection only where the boxes rule it out"):
     val t = PlaceFixtures.rangeShadowTestSql
@@ -464,10 +465,10 @@ class PlaceGeoSuite extends DbSuite:
     )
 
   /** The whole answer of a geo statement, row by row. */
-  private def rows(q: Sql): Vector[String] =
+  private def rows(q: Frag): Vector[String] =
     import com.augustnagro.magnum.*
     connect(ds)(
-      q.frag
+      q
         .query[
           (
               String,
@@ -596,16 +597,14 @@ class PlaceGeoSuite extends DbSuite:
     val _ = PlaceFixtures.upsertPlaces(ds, List(round, tiny, dot, bowtie))
     type Cols = (String, Boolean, Boolean, Boolean, Boolean, Option[Int], Option[Int], Option[Double], Boolean, Boolean)
     def cols(): Vector[Cols] = connect(ds)(
-      Sql
-        .raw(Sql.Text(s"""SELECT id, label_norm = ${PlaceFixtures.normLabelSql("label")}, shape_area = ST_Area(geom),
+      sql"""SELECT id, label_norm = ${SqlLiteral(PlaceFixtures.normLabelSql("label"))}, shape_area = ST_Area(geom),
                  shape_box::text = (geom::box2d)::text, shape_dim = ST_Dimension(geom),
                  ST_NPoints(ST_GeomFromGeoJSON(web_geojson)), ST_NPoints(geom),
                  ST_HausdorffDistance(ST_GeomFromGeoJSON(web_geojson), geom),
                  shape_valid = ST_IsValid(geom),
                  -- the pair test's shortcut: a valid shape is what ST_MakeValid returns, byte for byte
                  NOT shape_valid OR ST_AsEWKB(ST_MakeValid(geom)) = ST_AsEWKB(geom)
-          FROM places WHERE left(id, 4) = 'zzs_' ORDER BY id"""))
-        .frag
+          FROM places WHERE left(id, 4) = 'zzs_' ORDER BY id"""
         .query[Cols]
         .run()
     )
@@ -712,8 +711,7 @@ class PlaceGeoSuite extends DbSuite:
     assert(
       PlaceFixtures
         .geoJsonQuery(Some(com.histmersion.domain.catalogue.Place.Kind.Wire("site")), None, PlaceFixtures.Limit(10))
-        .text
-        .value
+        .sqlString
         .contains(s"NOT ${PlaceFixtures.ModernSql}"),
       "across all time, as before"
     )

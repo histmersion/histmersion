@@ -39,7 +39,6 @@ import com.histmersion.domain.automation.goals.GoalRepo
 import com.histmersion.util.data.exchange.{BundleImport, BundleRepo, ImportOptions, MergeState}
 import com.histmersion.api.catalogue.{Latitude, Longitude}
 import com.histmersion.api.library.Citekey
-import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.catalogue.{EventPut, Period}
 import com.histmersion.api.exchange.{
@@ -158,7 +157,7 @@ class MergeSuite extends DbSuite with Bounded:
       )
       .fold(e => fail(e.sentences.mkString("; ")), identity)
 
-  private def count(ds: DataSource, q: String): Int = connect(ds)(Sql.raw(Sql.Text(q)).frag.query[Int].run().head)
+  private def count(ds: DataSource, q: String): Int = connect(ds)(sql"${SqlLiteral(q)}".query[Int].run().head)
 
   // ── the crafted pair ───────────────────────────────────────────────────────────────────────
 
@@ -908,10 +907,10 @@ class MergeSuite extends DbSuite with Bounded:
     loop(MergeResolutions(), 5)
 
   private def one[A](ds: DataSource, q: String)(using DbCodec[A]): A =
-    connect(ds)(Sql.raw(Sql.Text(q)).frag.query[A].run().head)
+    connect(ds)(sql"${SqlLiteral(q)}".query[A].run().head)
   private def uidOf(ds: DataSource, table: String, col: String, label: String): UUID =
     connect(ds)(
-      Sql.of(Sql.Text(s"SELECT uid FROM $table WHERE $col = ?"), Param.S(Param.S.V(label))).frag.query[UUID].run().head
+      sql"SELECT uid FROM ${SqlLiteral(table)} WHERE ${SqlLiteral(col)} = $label".query[UUID].run().head
     )
 
   test(

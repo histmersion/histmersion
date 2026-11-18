@@ -5,7 +5,6 @@ import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.{Api, Write}
 import com.histmersion.domain.media.MediaRole
 import com.histmersion.domain.media.imports.{MediaMatch, Target}
-import com.histmersion.util.database.Sql
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
@@ -158,5 +157,5 @@ object AssetFixtures:
       provider: Option[MediaItemRow.Provider],
       license: Option[MediaItemRow.License],
       window: Option[(DeepTime.SignedYear, DeepTime.SignedYear)],
-      envelope: Sql
-  ): Sql = MediaRepo.tileCandidates(kind, provider, license, window, envelope)
+      envelope: Frag
+  ): Frag = MediaRepo.tileCandidates(kind, provider, license, window, envelope)

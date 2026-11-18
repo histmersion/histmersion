@@ -37,7 +37,6 @@ import javax.sql.DataSource
 import scala.jdk.CollectionConverters.*
 import com.histmersion.domain.automation.goals.GoalRepo
 import com.histmersion.util.data.exchange.BundleRepo
-import com.histmersion.util.database.Sql
 import com.histmersion.db.*
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.catalogue.{EventPut, HistoricalPeriod, Period, Place}
@@ -525,16 +524,14 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
       "SELECT uid::text, 'attestation:' || citekey || ':' || target_id FROM attestations",
       "SELECT uid::text, 'tombstone:' || kind FROM tombstones",
       "SELECT alias_uid::text, 'alias-of:' || uid::text FROM uid_aliases"
-    ).map(Sql.Text(_))
-    def run(ds: DataSource, q: Sql.Text): List[(String, String)] =
-      scala.util.Try(connect(ds)(Sql.raw(q).frag.query[(String, String)].run().toList)).getOrElse(Nil)
+    ).map(q => sql"${SqlLiteral(q)}")
+    def run(ds: DataSource, q: Frag): List[(String, String)] =
+      scala.util.Try(connect(ds)(q.query[(String, String)].run().toList)).getOrElse(Nil)
     val records = dss.flatMap((_, ds) => queries.flatMap(run(ds, _)))
     val instances =
-      dss.flatMap((n, ds) =>
-        run(ds, Sql.Text("SELECT id::text, 'x' FROM instance")).map((id, _) => id -> s"instance:$n")
-      )
+      dss.flatMap((n, ds) => run(ds, sql"SELECT id::text, 'x' FROM instance").map((id, _) => id -> s"instance:$n"))
     val merges = dss.flatMap((n, ds) =>
-      run(ds, Sql.Text("SELECT id::text, 'x' FROM merges ORDER BY created_at")).zipWithIndex.map { case ((id, _), i) =>
+      run(ds, sql"SELECT id::text, 'x' FROM merges ORDER BY created_at").zipWithIndex.map { case ((id, _), i) =>
         id -> s"merge:$n#${i + 1}"
       }
     )
@@ -631,7 +628,7 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
     tables
       .map { t =>
         val rs =
-          connect(ds)(Sql.raw(Sql.Text(s"""SELECT to_jsonb(x)::text FROM "$t" x""")).frag.query[String].run().toList)
+          connect(ds)(sql"""SELECT to_jsonb(x)::text FROM "${SqlLiteral(t)}" x""".query[String].run().toList)
         val normed = rs.map(r => json(r, names).linesIterator.map(_.trim).mkString(" ")).sorted
         if t == "flyway_schema_history" then s"## $t ${normed.size} rows"
         else if normed.size > 200 then

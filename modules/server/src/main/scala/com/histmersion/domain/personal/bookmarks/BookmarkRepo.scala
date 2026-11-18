@@ -2,7 +2,6 @@ package com.histmersion
 package domain.personal.bookmarks
 
 import com.histmersion.api.ItemKind as MarkKind
-import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.domain.ItemRef
 import com.histmersion.domain.personal.{MarkTime, TargetColumns, TargetLabel}
 import com.histmersion.util.database.NewtypeColumns.given
@@ -27,22 +26,15 @@ private[bookmarks] object BookmarkRepo:
 
   /** Newest first; every one when no `size` is given. */
   def list(user: UserId, kind: Option[MarkKind], size: Option[PageSize])(using DbCon): List[Bookmark.Row] =
-    (Sql.of(Sql.Text(s"$Projection WHERE b.user_id = ? AND b.deleted_at IS NULL"), Param.S(Param.S.V(user.value))) ++
-      kind.fold(Sql.empty)(k => Sql.of(Sql.Text(" AND b.target_kind = ?"), Param.S(Param.S.V(k.wire.value)))) ++
-      Sql.raw(Sql.Text(" ORDER BY b.created_at DESC, b.id DESC")) ++
-      size.fold(Sql.empty)(s => Sql.of(Sql.Text(" LIMIT ?"), Param.I(Param.I.V(s.value))))).frag
+    sql"${SqlLiteral(Projection)} WHERE b.user_id = $user AND b.deleted_at IS NULL${kind.fold(sql"")(k =>
+        sql" AND b.target_kind = ${k.wire}"
+      )} ORDER BY b.created_at DESC, b.id DESC${size.fold(sql"")(s => sql" LIMIT $s")}"
       .query[Bookmark.Row]
       .run()
       .toList
 
   def live(user: UserId, id: com.histmersion.api.personal.Bookmark.Id)(using DbCon): Option[Bookmark.Row] =
-    Sql
-      .of(
-        Sql.Text(s"$Projection WHERE b.user_id = ? AND b.deleted_at IS NULL AND b.id = ?::uuid"),
-        Param.S(Param.S.V(user.value)),
-        Param.S(Param.S.V(id.value))
-      )
-      .frag
+    sql"${SqlLiteral(Projection)} WHERE b.user_id = $user AND b.deleted_at IS NULL AND b.id = $id::uuid"
       .query[Bookmark.Row]
       .run()
       .headOption

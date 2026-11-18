@@ -11,7 +11,6 @@ import com.histmersion.domain.*
 import com.histmersion.domain.catalogue.places.PlaceReview.{Candidate, Evidence, LinkedItem, Proposal}
 
 import com.augustnagro.magnum.*
-import com.histmersion.util.database.Sql
 import com.histmersion.api.catalogue.Geocode
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.domain.DeepTime
@@ -75,18 +74,11 @@ private[places] object PlaceReviewRepo:
   /** The evidence of every reviewed place, and for a withdrawn duplicate the seed places its name resolves to.
     */
   def evidenceIn()(using DbCon): List[(Evidence, List[Candidate])] =
-    val rows = Sql
-      .raw(
-        Sql.Text(
-          "SELECT p.id, p.label, p.kind, p.properties->>'feature_types', p.properties->>'time_periods'," +
-            s" CASE WHEN p.start_unknown THEN NULL ELSE ${RangeSql.start("p.period")} END, ${RangeSql.end("p.period")}" +
-            s" FROM places p WHERE $reviewedSql ORDER BY p.id"
-        )
-      )
-      .frag
-      .query[Row]
-      .run()
-      .toList
+    val rows =
+      sql"SELECT p.id, p.label, p.kind, p.properties->>'feature_types', p.properties->>'time_periods', CASE WHEN p.start_unknown THEN NULL ELSE ${SqlLiteral(RangeSql.start("p.period"))} END, ${SqlLiteral(RangeSql.end("p.period"))} FROM places p WHERE ${SqlLiteral(reviewedSql)} ORDER BY p.id"
+        .query[Row]
+        .run()
+        .toList
     val ids = rows.map(_.id)
     val items = sql"""SELECT place_id, scheme || ':' || external_id, item_class,
                              ${SqlLiteral(RangeSql.cols("item_period"))}

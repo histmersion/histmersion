@@ -3,7 +3,6 @@ package domain.research.articles
 
 import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.domain.research.Slug
-import com.histmersion.util.database.Sql
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
@@ -70,5 +69,5 @@ object ArticleFixtures:
       scope: PlaceScope,
       kind: Option[com.histmersion.domain.research.Article.Kind],
       text: Option[Search.Query]
-  ): Sql =
+  ): Frag =
     ArticleRepo.listWhere(filter, scope, kind, text)

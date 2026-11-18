@@ -14,7 +14,6 @@ import com.histmersion.api.catalogue.{
 }
 import com.histmersion.api.views.EventDetail
 import com.histmersion.api.library.Filter
-import com.histmersion.util.database.Sql
 import com.histmersion.domain.library.search.FilterEventSources
 
 import com.augustnagro.magnum.{connect, transact}
@@ -24,6 +23,7 @@ import com.histmersion.api.catalogue.Correction
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.api.catalogue.EventEntry
 import com.histmersion.domain.catalogue.Event
+import com.augustnagro.magnum.Frag
 
 /** The events' store as a db suite writes and reads it: each call on a connection, or in a transaction, of its own. */
 object EventFixtures:
@@ -40,7 +40,7 @@ object EventFixtures:
       historicity: Option[EventSelection.Historicity],
       placeId: Option[Place.Id],
       more: EventSql.Narrow = EventSql.Narrow()
-  ): Sql = EventSql.listWhere(related, filter, scope, text, kind, historicity, placeId, more)
+  ): Frag = EventSql.listWhere(related, filter, scope, text, kind, historicity, placeId, more)
 
   def list(
       ds: DataSource,

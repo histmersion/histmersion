@@ -2,9 +2,11 @@ package com.histmersion
 package domain.library.search
 
 import com.histmersion.util.database.given
-import com.histmersion.util.database.{Param, Sql}
+import com.histmersion.util.database.joined
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
+import com.augustnagro.magnum.{sql, Frag, SqlLiteral}
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** Postgres full-text search, as composable SQL fragments (plan §1.4).
   *
@@ -13,11 +15,9 @@ import com.histmersion.domain.library.Citekey
   *
   * {{{
   * val q = "\"sea peoples\" -egypt"
-  * val query = Sql.raw("SELECT s.citekey, fts.snippet, fts.heading FROM sources s ") ++
-  *   Search.bestChunkJoin(q, cfg.limits.snippetWords) ++
-  *   Sql.raw(" WHERE ") ++ Search.ftsPredicate(q) ++ Sql.raw(" AND ") ++ otherFilters ++
-  *   Sql.raw(" ORDER BY ") ++ Search.rankExpr(q) ++ Sql.raw(" DESC")
-  * query.frag.query[SearchHit].run()
+  * val query = sql"SELECT s.citekey, fts.snippet, fts.heading FROM sources s ${Search.bestChunkJoin(q, cfg.limits.snippetWords)}
+  *   WHERE ${Search.ftsPredicate(q)} AND $otherFilters ORDER BY ${Search.rankExpr(q)} DESC"
+  * query.query[SearchHit].run()
   * }}}
   *
   * Every fragment takes the alias the `sources` table is bound to (default `s`) and emits its own private aliases
@@ -53,31 +53,29 @@ object Search:
   type SnippetsQueryQ = Query
   val SnippetsQueryQ: Query.type = Query
 
-  def tsQuery(q: Query): Sql = Sql.of(Sql.OfText("websearch_to_tsquery('english', ?)"), Param.S(Param.S.V(q.value)))
+  def tsQuery(q: Query): Frag = sql"websearch_to_tsquery('english', $q)"
 
   /** True when the source matches: its weighted title(A)/summary(B) vector, or ANY of its body chunks. Use in a
     * `WHERE`.
     */
-  def ftsPredicate(q: FtsPredicateQ, alias: String = "s"): Sql =
-    Sql.raw(Sql.RawText(s"($alias.tsv @@ ")) ++ tsQuery(q) ++
-      s" OR EXISTS (SELECT 1 FROM source_chunks fts_p WHERE fts_p.citekey = $alias.citekey AND fts_p.tsv @@ " ++
-      tsQuery(q) ++ "))"
+  def ftsPredicate(q: FtsPredicateQ, alias: String = "s"): Frag =
+    sql"(${SqlLiteral(alias)}.tsv @@ ${tsQuery(q)} OR EXISTS (SELECT 1 FROM source_chunks fts_p WHERE fts_p.citekey = ${SqlLiteral(alias)}.citekey AND fts_p.tsv @@ ${tsQuery(q)}))"
 
   /** Relevance: title/summary rank plus the best body chunk's rank. `ts_rank_cd`'s default weights (A = 1.0 … D = 0.1)
     * do the work — chunk lexemes are unweighted, i.e. D — so a title match outranks a body match without any hand-tuned
     * multiplier. Use in an `ORDER BY … DESC`.
     */
-  def rankExpr(q: RankExprQ, alias: String = "s"): Sql =
-    Sql.raw(Sql.RawText(s"(ts_rank_cd($alias.tsv, ")) ++ tsQuery(q) ++
-      ") + coalesce((SELECT max(ts_rank_cd(fts_r.tsv, " ++ tsQuery(q) ++
-      s")) FROM source_chunks fts_r WHERE fts_r.citekey = $alias.citekey AND fts_r.tsv @@ " ++
-      tsQuery(q) ++ "), 0))"
+  def rankExpr(q: RankExprQ, alias: String = "s"): Frag =
+    sql"(ts_rank_cd(${SqlLiteral(alias)}.tsv, ${tsQuery(q)}) + coalesce((SELECT max(ts_rank_cd(fts_r.tsv, ${tsQuery(q)})) FROM source_chunks fts_r WHERE fts_r.citekey = ${SqlLiteral(alias)}.citekey AND fts_r.tsv @@ ${tsQuery(q)}), 0))"
 
   /** Headings whose chunks are reference lists, acknowledgements, etc. — they match many queries but carry no useful
     * content. Down-weighted in [[bestChunkJoin]] (preferred only when no body chunk matches). The pattern is compiled
     * into the SQL `~*` operator, not the JVM regex.
     */
   val BoilerplateHeading = "references|bibliography|notes|index|acknowledg"
+
+  /** [[BoilerplateHeading]] written into the statements' text (the `~*` pattern inside quotes), as it always was. */
+  private val Boilerplate = sql"${SqlLiteral(BoilerplateHeading)}"
 
   /** `LEFT JOIN LATERAL` exposing `fts.snippet` (a `ts_headline` of the best-matching chunk, hits wrapped in `**`) and
     * `fts.heading` (that chunk's heading breadcrumb). Both are NULL when only the title/summary matched. Goes straight
@@ -90,16 +88,11 @@ object Search:
     * **Deprecated in favour of the two-phase approach**: [[bestChunkCte]] + [[snippetsQuery]]. Kept for reference; new
     * callers should use the CTE path.
     */
-  def bestChunkJoin(q: BestChunkJoinQ, maxWords: SnippetWords, alias: String = "s"): Sql =
+  def bestChunkJoin(q: BestChunkJoinQ, maxWords: SnippetWords, alias: String = "s"): Frag =
     val maxW = math.max(2, maxWords.value)
     val minW = math.max(1, math.min(8, maxW - 1))
     val opts = s"MaxFragments=1, MaxWords=$maxW, MinWords=$minW, StartSel=**, StopSel=**, HighlightAll=false"
-    Sql.raw(Sql.RawText("LEFT JOIN LATERAL (SELECT fts_b.heading AS heading, ts_headline('english', fts_b.body, ")) ++
-      tsQuery(q) ++ Sql.of(Sql.OfText(", ?) AS snippet"), Param.S(Param.S.V(opts))) ++
-      s" FROM source_chunks fts_b WHERE fts_b.citekey = $alias.citekey AND fts_b.tsv @@ " ++
-      tsQuery(q) ++ " ORDER BY CASE WHEN fts_b.heading ~* '" ++ BoilerplateHeading ++
-      "' THEN ts_rank_cd(fts_b.tsv, " ++ tsQuery(q) ++ ") * 0.001 ELSE ts_rank_cd(fts_b.tsv, " ++
-      tsQuery(q) ++ ") END DESC, fts_b.ord LIMIT 1) fts ON true"
+    sql"LEFT JOIN LATERAL (SELECT fts_b.heading AS heading, ts_headline('english', fts_b.body, ${tsQuery(q)}, $opts) AS snippet FROM source_chunks fts_b WHERE fts_b.citekey = ${SqlLiteral(alias)}.citekey AND fts_b.tsv @@ ${tsQuery(q)} ORDER BY CASE WHEN fts_b.heading ~* '$Boilerplate' THEN ts_rank_cd(fts_b.tsv, ${tsQuery(q)}) * 0.001 ELSE ts_rank_cd(fts_b.tsv, ${tsQuery(q)}) END DESC, fts_b.ord LIMIT 1) fts ON true"
 
   // ── two-phase FTS: CTE for ranking, deferred snippets for the page only ─────────────────────
 
@@ -111,22 +104,18 @@ object Search:
     * Boilerplate headings (references, bibliography, etc.) are penalised at 0.001x, matching the behaviour of
     * [[bestChunkJoin]].
     */
-  def bestChunkCte(q: BestChunkCteQ): Sql =
+  def bestChunkCte(q: BestChunkCteQ): Frag =
     // `fts_m` ranks each matching chunk ONCE (MATERIALIZED stops Postgres inlining it back into the
     // sort key): `ts_rank_cd` de-TOASTs the chunk's tsvector, and evaluating it three times per
     // chunk (rank + both CASE arms) tripled the cost of a common word — 6.7k chunks for "bronze".
-    Sql.raw(Sql.RawText("WITH fts_m AS MATERIALIZED (SELECT citekey, ord, heading, ts_rank_cd(tsv, ")) ++ tsQuery(q) ++
-      ") AS r FROM source_chunks WHERE tsv @@ " ++ tsQuery(q) ++ "), " ++
-      "best_chunks AS (SELECT DISTINCT ON (citekey) citekey, r AS rank FROM fts_m" ++
-      " ORDER BY citekey, CASE WHEN heading ~* '" ++ BoilerplateHeading ++
-      "' THEN r * 0.001 ELSE r END DESC, ord) "
+    sql"WITH fts_m AS MATERIALIZED (SELECT citekey, ord, heading, ts_rank_cd(tsv, ${tsQuery(q)}) AS r FROM source_chunks WHERE tsv @@ ${tsQuery(q)}), best_chunks AS (SELECT DISTINCT ON (citekey) citekey, r AS rank FROM fts_m ORDER BY citekey, CASE WHEN heading ~* '$Boilerplate' THEN r * 0.001 ELSE r END DESC, ord) "
 
   /** Relevance ranking using the precomputed `best_chunks` CTE instead of a per-source correlated subquery. Use in
     * `ORDER BY … DESC` when [[bestChunkCte]] is the query's CTE. Falls back gracefully: `coalesce(bc.rank, 0)` when the
     * source matched only on title/summary.
     */
-  def rankExprCte(q: RankExprCteQ, alias: String = "s"): Sql =
-    Sql.raw(Sql.RawText(s"(ts_rank_cd($alias.tsv, ")) ++ tsQuery(q) ++ ") + coalesce(bc.rank, 0))"
+  def rankExprCte(q: RankExprCteQ, alias: String = "s"): Frag =
+    sql"(ts_rank_cd(${SqlLiteral(alias)}.tsv, ${tsQuery(q)}) + coalesce(bc.rank, 0))"
 
   /** Compute the snippet and heading for a specific set of citekeys. Uses a two-level query:
     *
@@ -144,23 +133,14 @@ object Search:
     * Returns `(citekey, heading, snippet)` rows. An empty `citekeys` list returns an empty fragment that matches
     * nothing (the caller should skip the query).
     */
-  def snippetsQuery(q: SnippetsQueryQ, maxWords: SnippetWords, citekeys: List[Citekey]): Sql =
-    if citekeys.isEmpty then return Sql.raw(Sql.RawText("SELECT NULL::text, NULL::text, NULL::text WHERE FALSE"))
+  def snippetsQuery(q: SnippetsQueryQ, maxWords: SnippetWords, citekeys: List[Citekey]): Frag =
+    if citekeys.isEmpty then return sql"SELECT NULL::text, NULL::text, NULL::text WHERE FALSE"
     val maxW = math.max(2, maxWords.value)
     val minW = math.max(1, math.min(8, maxW - 1))
     val opts = s"MaxFragments=1, MaxWords=$maxW, MinWords=$minW, StartSel=**, StopSel=**, HighlightAll=false"
-    val qmarks = List.fill(citekeys.size)("?").mkString(", ")
+    val keys = citekeys.map(c => sql"$c").joined(sql", ")
     // inner: find the best chunk (citekey, ord) per source — no ts_headline
-    val inner = Sql.raw(Sql.RawText("SELECT DISTINCT ON (citekey) citekey, ord")) ++
-      Sql(
-        Sql.Text(" FROM source_chunks WHERE citekey IN (" + qmarks + ") AND tsv @@ "),
-        citekeys.map(c => Param.S(Param.S.V(c.value)))
-      ) ++
-      tsQuery(q) ++ " ORDER BY citekey, CASE WHEN heading ~* '" ++ BoilerplateHeading ++
-      "' THEN ts_rank_cd(tsv, " ++ tsQuery(q) ++ ") * 0.001 ELSE ts_rank_cd(tsv, " ++
-      tsQuery(q) ++ ") END DESC, ord"
+    val inner =
+      sql"SELECT DISTINCT ON (citekey) citekey, ord FROM source_chunks WHERE citekey IN ($keys) AND tsv @@ ${tsQuery(q)} ORDER BY citekey, CASE WHEN heading ~* '$Boilerplate' THEN ts_rank_cd(tsv, ${tsQuery(q)}) * 0.001 ELSE ts_rank_cd(tsv, ${tsQuery(q)}) END DESC, ord"
     // outer: ts_headline only for those N rows
-    Sql.raw(Sql.RawText("SELECT sc.citekey, sc.heading, ts_headline('english', sc.body, ")) ++
-      tsQuery(q) ++ Sql.of(Sql.OfText(", ?) AS snippet"), Param.S(Param.S.V(opts))) ++
-      " FROM source_chunks sc INNER JOIN (" ++ inner ++
-      ") best ON best.citekey = sc.citekey AND best.ord = sc.ord"
+    sql"SELECT sc.citekey, sc.heading, ts_headline('english', sc.body, ${tsQuery(q)}, $opts) AS snippet FROM source_chunks sc INNER JOIN ($inner) best ON best.citekey = sc.citekey AND best.ord = sc.ord"

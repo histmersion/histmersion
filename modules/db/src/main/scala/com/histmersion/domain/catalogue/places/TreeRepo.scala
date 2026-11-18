@@ -11,7 +11,6 @@ import com.histmersion.domain.*
 import com.histmersion.api.catalogue.RegionNode
 
 import com.augustnagro.magnum.*
-import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.catalogue.Place
 import com.histmersion.domain.DeepTime
@@ -94,46 +93,25 @@ private[places] object TreeRepo:
     * edges. Deliberately UNFILTERED by `asOf` — `by=time,region` reads the hierarchy at a different year in every time
     * bucket, so the as-of predicate belongs in [[Tree]], applied to the (small) closure, not in this query.
     */
-  private def closure(ids: List[com.histmersion.domain.catalogue.Place.Id]): String =
-    s"""WITH RECURSIVE up(id) AS (
-          SELECT p.id FROM places p WHERE p.id = ANY(?::text[])
+  private def closure(ids: List[com.histmersion.domain.catalogue.Place.Id]): Frag =
+    sql"""WITH RECURSIVE up(id) AS (
+          SELECT p.id FROM places p WHERE p.id = ANY($ids::text[])
           UNION
           SELECT r.parent_id FROM place_relations r JOIN up ON r.child_id = up.id
-          WHERE r.kind = '${Place.Relation.PartOf}'
+          WHERE r.kind = '${SqlLiteral(Place.Relation.PartOf)}'
         )"""
-
-  private def closureParams(ids: List[com.histmersion.domain.catalogue.Place.Id]) = List(
-    Param.A(ids.map(i => Param.A.V(i.value)))
-  )
 
   /** The nodes of the closure — id, label, kind, own validity, and whether the shape is contested. */
   /** `withdrawn` is Pleiades's own marker for a superseded record. Some of the export carries it as a property, some
     * only as a `Withdrawn (duplicate): …` label — [[RegionNode.rootEligible]] checks the label too, so both spellings
     * are caught wherever they come from.
     */
-  def nodesQuery(ids: List[com.histmersion.domain.catalogue.Place.Id]): Sql =
-    Sql(
-      Sql.Text(
-        closure(ids) +
-          s" SELECT p.id, p.label, p.kind, ${RangeSql.cols("p.period")}," +
-          " coalesce((p.properties->>'contested')::boolean, false)," +
-          " coalesce((p.properties->>'withdrawn')::boolean, false)" +
-          " FROM places p JOIN up ON up.id = p.id"
-      ),
-      closureParams(ids)
-    )
+  def nodesQuery(ids: List[com.histmersion.domain.catalogue.Place.Id]): Frag =
+    sql"${closure(ids)} SELECT p.id, p.label, p.kind, ${SqlLiteral(RangeSql.cols("p.period"))}, coalesce((p.properties->>'contested')::boolean, false), coalesce((p.properties->>'withdrawn')::boolean, false) FROM places p JOIN up ON up.id = p.id"
 
   /** The `part_of` edges WITHIN the closure, each with its own validity. */
-  def relationsQuery(ids: List[com.histmersion.domain.catalogue.Place.Id]): Sql =
-    Sql(
-      Sql.Text(
-        closure(ids) +
-          s" SELECT r.child_id, r.parent_id, r.kind, ${RangeSql.cols("r.period")}" +
-          " FROM place_relations r" +
-          " WHERE r.child_id IN (SELECT id FROM up) AND r.parent_id IN (SELECT id FROM up)"
-      ),
-      closureParams(ids)
-    )
+  def relationsQuery(ids: List[com.histmersion.domain.catalogue.Place.Id]): Frag =
+    sql"${closure(ids)} SELECT r.child_id, r.parent_id, r.kind, ${SqlLiteral(RangeSql.cols("r.period"))} FROM place_relations r WHERE r.child_id IN (SELECT id FROM up) AND r.parent_id IN (SELECT id FROM up)"
 
   /** The gazetteer slice a tree's rows need: every place they were materialised into (`placeIds`) plus all its
     * ancestors, and the edges between them. Empty when nothing is located — no query is run then.
@@ -144,6 +122,6 @@ private[places] object TreeRepo:
     val ids = placeIds.distinct
     if ids.isEmpty then (Nil, Nil)
     else
-      val ns = nodesQuery(ids).frag.query[RegionNodeRow].run().map(_.toNode).toList
-      val rs = relationsQuery(ids).frag.query[RelationRow].run().map(_.toRelation).toList
+      val ns = nodesQuery(ids).query[RegionNodeRow].run().map(_.toNode).toList
+      val rs = relationsQuery(ids).query[RelationRow].run().map(_.toRelation).toList
       (ns, rs)

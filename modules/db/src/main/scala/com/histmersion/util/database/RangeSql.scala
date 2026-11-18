@@ -3,11 +3,12 @@ package util.database
 import com.histmersion.util.problem.Problem
 
 import com.histmersion.api.{Write, YearFmt}
-import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.domain.*
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.Api
 import com.histmersion.api.catalogue.Year
+import com.augustnagro.magnum.{sql, Frag, SqlLiteral}
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** The ONE spelling of a deep-time `int8range` column in SQL (#1798 item 9): how its inclusive bounds are read, how
   * optional bounds are written, and how a PATCH that names one bound merges with the stored other one.
@@ -39,7 +40,10 @@ object RangeSql:
   /** `int8range(lo, hi + 1, '[)')` — the range of two INCLUSIVE bounds given as SQL expressions (columns, `?::bigint`);
     * a NULL bound is an open side.
     */
-  def range(lo: String, hi: String): String = s"int8range($lo, $hi + 1, '[)')"
+  def range(lo: String, hi: String): String = range(sql"${SqlLiteral(lo)}", sql"${SqlLiteral(hi)}").sqlString
+
+  /** [[range]] of two SQL expressions as fragments (a column, a bound parameter). */
+  def range(lo: Frag, hi: Frag): Frag = sql"int8range($lo, $hi + 1, '[)')"
 
   /** `col && int8range(lo, hi, '[]')` — the column overlaps the inclusive window `[lo, hi]` given as SQL expressions.
     * The Scala twin is `FilterSql.overlaps`.
@@ -47,12 +51,8 @@ object RangeSql:
   def overlaps(col: String, lo: String, hi: String): String = s"$col && int8range($lo, $hi, '[]')"
 
   /** [[overlaps]] with the window bound as two parameters. */
-  def overlaps(col: String, p: Period): Sql =
-    Sql.of(
-      Sql.OfText(overlaps(col, "?::bigint", "?::bigint")),
-      Param.L(Param.L.V(p.start.value)),
-      Param.L(Param.L.V(p.end.value))
-    )
+  def overlaps(col: String, p: Period): Frag =
+    sql"${SqlLiteral(col)} && int8range(${p.start}::bigint, ${p.end}::bigint, '[]')"
 
   /** The `int8range` literal of optional inclusive bounds — `[-1200,-999)`, `[-1200,)`, `(,-999)`, and `(,)` (every
     * year) when neither is given. Bind it as `${lit}::int8range`.

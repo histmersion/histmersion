@@ -24,7 +24,7 @@ import com.histmersion.domain.*
 import com.histmersion.domain.catalogue.Place.Kind.Wire as KindWire
 import com.augustnagro.magnum.*
 import com.histmersion.api.library.Confidence
-import com.histmersion.util.database.{Migrate, Param, Sql}
+import com.histmersion.util.database.{joined, literal, Migrate}
 import com.histmersion.api.catalogue.{EventPut, Geocode, Period, Place}
 import com.histmersion.api.library.{Filter, Finding, Source}
 import com.histmersion.api.research.Article
@@ -294,33 +294,33 @@ class InteractiveQueriesSuite extends DbSuite with Bounded:
   private def scope(f: Filter) = PlaceFixtures.scopeFor(ds, f.places, f.period)
 
   /** The source predicate as it was: the place ids through a CORRELATED `EXISTS`. */
-  private def correlated(sql: Sql): Sql =
-    Sql(
-      Sql.Text(
-        sql.text.value
-          .replace(
-            "s.citekey IN (SELECT f.citekey FROM findings f JOIN finding_places fp ON fp.finding_id = f.id" +
-              " WHERE fp.place_id = ANY(?::text[]))",
-            "EXISTS (SELECT 1 FROM findings f JOIN finding_places fp ON fp.finding_id = f.id" +
-              " WHERE f.citekey = s.citekey AND fp.place_id = ANY(?::text[]))"
-          )
-          .replace(
-            "f.id IN (SELECT fp.finding_id FROM finding_places fp WHERE fp.place_id = ANY(?::text[]))",
-            "EXISTS (SELECT 1 FROM finding_places fp WHERE fp.finding_id = f.id AND fp.place_id = ANY(?::text[]))"
-          )
-      ),
-      sql.params
+  private def correlated(sql: Frag): Frag =
+    // the old text with the new one's parameters, bound by its own writer: the same values in the same places
+    Frag(
+      sql.sqlString
+        .replace(
+          "s.citekey IN (SELECT f.citekey FROM findings f JOIN finding_places fp ON fp.finding_id = f.id" +
+            " WHERE fp.place_id = ANY(?::text[]))",
+          "EXISTS (SELECT 1 FROM findings f JOIN finding_places fp ON fp.finding_id = f.id" +
+            " WHERE f.citekey = s.citekey AND fp.place_id = ANY(?::text[]))"
+        )
+        .replace(
+          "f.id IN (SELECT fp.finding_id FROM finding_places fp WHERE fp.place_id = ANY(?::text[]))",
+          "EXISTS (SELECT 1 FROM finding_places fp WHERE fp.finding_id = f.id AND fp.place_id = ANY(?::text[]))"
+        ),
+      sql.params,
+      sql.writer
     )
 
-  private def citekeys(sql: Sql): Set[String] = connect(ds)(sql.frag.query[String].run().toSet)
+  private def citekeys(sql: Frag): Set[String] = connect(ds)(sql.query[String].run().toSet)
 
   test("a place id selects the same sources and findings as the correlated EXISTS did"):
     filters.foreach { f =>
       val sc = scope(f)
       val now = citekeys(FilterSql.sourceKeys(f, sc))
       assertEquals(now, citekeys(correlated(FilterSql.sourceKeys(f, sc))), f.toString)
-      val feed = Sql.raw(Sql.Text("SELECT f.id FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE ")) ++
-        FilterSql.sourceWhere(f) ++ Sql.raw(Sql.Text(" AND ")) ++ FilterSql.findingWhere(f, scope = sc)
+      val feed =
+        sql"SELECT f.id FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE ${FilterSql.sourceWhere(f)} AND ${FilterSql.findingWhere(f, scope = sc)}"
       assertEquals(citekeys(feed), citekeys(correlated(feed)), f.toString)
       assertEquals(FindingFixtures.findingsFor(ds, f, sc).size, citekeys(feed).size, f.toString)
     }
@@ -414,10 +414,10 @@ class InteractiveQueriesSuite extends DbSuite with Bounded:
     val long = text.filter(_.length >= 3)
     val short = text.filter(_.length < 3).map(Geocode.key)
     connect(ds):
-      (Sql.raw(Sql.Text("WITH ")) ++ PlaceFixtures.timeWindowCte(
-        asOf,
-        PlaceFixtures.DefaultModernFrom
-      ) ++ sql""", cand AS MATERIALIZED (
+      (sql"""WITH ${PlaceFixtures.timeWindowCte(
+          asOf,
+          PlaceFixtures.DefaultModernFrom
+        )}, cand AS MATERIALIZED (
               SELECT id FROM places WHERE $long::text IS NOT NULL AND label ILIKE $cont ESCAPE '\\'
               UNION
               SELECT place_id FROM place_names WHERE $long::text IS NOT NULL AND name ILIKE $cont ESCAPE '\\'
@@ -541,56 +541,30 @@ class InteractiveQueriesSuite extends DbSuite with Bounded:
       kind: Option[KindWire],
       asOf: Option[DeepTime.SignedYear],
       limit: PlaceFixtures.Limit
-  ): Sql =
-    import Param.*
+  ): Frag =
     import PlaceFixtures.*
     val k = kind.map(v => KindWire(v.value.trim.toLowerCase)).filter(_.value.nonEmpty)
     val where = List(
-      Some(Sql.raw(Sql.Text("p.geom IS NOT NULL"))),
-      Some(Sql.of(Sql.Text("p.label !~* ?"), S(S.V(UninformativeLabel)))),
-      Some(Sql.raw(Sql.Text(if asOf.isEmpty then s"NOT $ModernSql" else inTimeSql("p", asOf, k)))),
-      Some(Sql.raw(Sql.Text(BaseLayerSql))),
-      k.map(v => Sql.of(Sql.Text("p.kind = ?"), S(S.V(v.value)))),
-      asOf.map(_ => Sql.raw(Sql.Text(s"NOT $UndatedImportSql"))),
+      Some(sql"p.geom IS NOT NULL"),
+      Some(sql"p.label !~* $UninformativeLabel"),
+      Some(if asOf.isEmpty then sql"NOT ${SqlLiteral(ModernSql)}" else sql"${SqlLiteral(inTimeSql("p", asOf, k))}"),
+      Some(sql"${SqlLiteral(BaseLayerSql)}"),
+      k.map(v => sql"p.kind = $v"),
+      asOf.map(_ => sql"NOT ${SqlLiteral(UndatedImportSql)}"),
       // region-cleanup's rule: an undated polity known only by a point is on no map at a year
-      asOf.map(_ => Sql.raw(Sql.Text(UndatedPolityPointSql)))
+      asOf.map(_ => sql"${SqlLiteral(UndatedPolityPointSql)}")
     ).flatten
-    val live = Sql.raw(Sql.Text("WITH ")) ++ timeWindowCte(asOf, DefaultModernFrom) ++ Sql.raw(
-      Sql.Text(
-        ", live AS (SELECT p.id, p.kind, " +
-          s"$sourceTierSql AS tier, ${normLabelSql("p.label")} AS norm, ST_Area(p.geom) AS area, " +
-          s"p.geom::box2d AS bb, ${timeBasisSql("p")} AS basis FROM places p WHERE "
-      )
-    ) ++
-      Sql(Sql.Text(where.map(_.text.value).mkString(" AND ")), where.flatMap(_.params)) ++ Sql.raw(Sql.Text(")"))
+    val live =
+      sql"WITH ${timeWindowCte(asOf, DefaultModernFrom)}, live AS (SELECT p.id, p.kind, ${SqlLiteral(sourceTierSql)} AS tier, ${SqlLiteral(normLabelSql("p.label"))} AS norm, ST_Area(p.geom) AS area, p.geom::box2d AS bb, ${SqlLiteral(timeBasisSql("p"))} AS basis FROM places p WHERE ${where.joined(sql" AND ")})"
     val shadowed =
-      if asOf.isEmpty then Sql.raw(Sql.Text(", shadowed AS (SELECT NULL::text AS id WHERE false)"))
+      if asOf.isEmpty then sql", shadowed AS (SELECT NULL::text AS id WHERE false)"
       else
-        Sql.raw(
-          Sql.Text(
-            ", shadowed AS (SELECT DISTINCT lo.id FROM live lo JOIN live hi" +
-              " ON hi.tier < lo.tier AND hi.kind = lo.kind AND hi.bb && lo.bb" +
-              " JOIN places gh ON gh.id = hi.id JOIN places gl ON gl.id = lo.id" +
-              " WHERE hi.norm = lo.norm OR (ST_Intersects(gh.geom, gl.geom)" +
-              " AND ST_Area(ST_Intersection(ST_MakeValid(gh.geom), ST_MakeValid(gl.geom)))" +
-              s" > $SameStateOverlap * least(hi.area, lo.area)))"
-          )
-        )
-    live ++ shadowed ++ Sql.raw(
-      Sql.Text(
-        s" SELECT l.id, p.label, l.kind, $startCol AS ps, upper(p.period) - 1 AS pe, $datingCol AS dating," +
-          " l.basis," +
-          " coalesce(ST_Dimension(p.geom) = 2, false) AS has_boundary," +
-          " ST_AsGeoJSON(coalesce(p.geom_clipped, p.geom), 5) AS geojson FROM live l JOIN places p ON p.id = l.id" +
-          " WHERE l.id NOT IN (SELECT id FROM shadowed)" +
-          " ORDER BY l.area DESC, CASE l.basis WHEN 'dated' THEN 0 WHEN 'findings' THEN 1" +
-          " WHEN 'timeless' THEN 2 ELSE 3 END, l.id"
-      )
-    ) ++ Sql.of(Sql.Text(" LIMIT ?"), I(I.V(limit.value.max(1))))
+        sql", shadowed AS (SELECT DISTINCT lo.id FROM live lo JOIN live hi ON hi.tier < lo.tier AND hi.kind = lo.kind AND hi.bb && lo.bb JOIN places gh ON gh.id = hi.id JOIN places gl ON gl.id = lo.id WHERE hi.norm = lo.norm OR (ST_Intersects(gh.geom, gl.geom) AND ST_Area(ST_Intersection(ST_MakeValid(gh.geom), ST_MakeValid(gl.geom))) > ${SameStateOverlap.literal} * least(hi.area, lo.area)))"
+    sql"$live$shadowed SELECT l.id, p.label, l.kind, ${SqlLiteral(startCol)} AS ps, upper(p.period) - 1 AS pe, ${SqlLiteral(datingCol)} AS dating, l.basis, coalesce(ST_Dimension(p.geom) = 2, false) AS has_boundary, ST_AsGeoJSON(coalesce(p.geom_clipped, p.geom), 5) AS geojson FROM live l JOIN places p ON p.id = l.id WHERE l.id NOT IN (SELECT id FROM shadowed) ORDER BY l.area DESC, CASE l.basis WHEN 'dated' THEN 0 WHEN 'findings' THEN 1 WHEN 'timeless' THEN 2 ELSE 3 END, l.id LIMIT ${limit.value.max(1)}"
 
-  private def rows(q: Sql): Vector[String] =
+  private def rows(q: Frag): Vector[String] =
     connect(ds)(
-      q.frag
+      q
         .query[(String, String, String, Option[Long], Option[Long], String, String, Boolean, String)]
         .run()
         .map(_.toString)

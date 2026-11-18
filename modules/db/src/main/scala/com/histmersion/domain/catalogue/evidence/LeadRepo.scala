@@ -10,7 +10,6 @@ import com.histmersion.api.catalogue.{
   EventSourceRef,
   EventTier
 }
-import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.domain.catalogue.Event
 import com.histmersion.domain.catalogue.events.EventSql
 import com.histmersion.util.database.RangeSql
@@ -94,53 +93,38 @@ private[evidence] object LeadRepo:
     * (within `km`, `years`), proposed and confirmed sources. Catalogue events first, the largest first.
     */
   def leadRows(
-      where: Sql,
+      where: Frag,
       km: CatalogMerge.Tolerance.Km,
       years: CatalogMerge.Tolerance.Years,
       limit: PageSize,
       offset: Offset
   )(using DbCon): (RowCount, List[LeadRow]) =
-    val total = (Sql.raw(
-      Sql.RawText("SELECT count(*)::int FROM events e LEFT JOIN places ep ON ep.id = e.place_id WHERE ")
-    ) ++ where).frag.query[Int].run().head
-    val rows = (Sql.raw(Sql.RawText(s"""SELECT e.id, e.label, e.kind, e.not_before, e.begin_by, e.end_from, e.not_after,
-                 ${EventSql.TierSql} AS tier,
+    val total = sql"SELECT count(*)::int FROM events e LEFT JOIN places ep ON ep.id = e.place_id WHERE $where"
+      .query[Int]
+      .run()
+      .head
+    val rows = (sql"""SELECT e.id, e.label, e.kind, e.not_before, e.begin_by, e.end_from, e.not_after,
+                 ${SqlLiteral(EventSql.TierSql)} AS tier,
                  (SELECT max(c.vei) FROM event_catalogue c WHERE c.event_id = e.id),
                  (SELECT max(c.magnitude) FROM event_catalogue c WHERE c.event_id = e.id),
                  (SELECT count(*)::int FROM findings f
                    WHERE a.pt IS NOT NULL AND e.outer_span IS NOT NULL AND f.geom IS NOT NULL
                      AND NOT lower_inf(f.period) AND NOT upper_inf(f.period)
-                     AND f.geom && ${EventSql.boxAround(EventSql.Point("a.pt"), km)}
-                     AND ST_DWithin(f.geom::geography, a.pt::geography, ?)
-                     AND f.period && int8range(${RangeSql.start("e.outer_span")} - ?, ${RangeSql.end(
-        "e.outer_span"
-      )} + ?, '[]')),
+                     AND f.geom && ${SqlLiteral(EventSql.boxAround(EventSql.Point("a.pt"), km))}
+                     AND ST_DWithin(f.geom::geography, a.pt::geography, ${km.value * 1000.0})
+                     AND f.period && int8range(${SqlLiteral(RangeSql.start("e.outer_span"))} - $years, ${SqlLiteral(
+        RangeSql.end("e.outer_span")
+      )} + $years, '[]')),
                  (SELECT count(*)::int FROM event_link_candidates k WHERE k.event_id = e.id AND k.status = 'proposed'),
                  (SELECT count(*)::int FROM event_link_candidates k WHERE k.event_id = e.id AND k.status = 'confirmed')
                FROM events e LEFT JOIN places ep ON ep.id = e.place_id
-               CROSS JOIN LATERAL (SELECT ${EventSql.AnchorSql} AS pt) a WHERE """)) ++ where ++
-      Sql.raw(
-        Sql.RawText(
-          s" ORDER BY (${EventSql.TierSql}) = '${EventTier.Catalogue}' DESC," +
-            " (SELECT coalesce(max(c.vei), 0) + coalesce(max(c.magnitude), 0) FROM event_catalogue c WHERE c.event_id = e.id) DESC," +
-            " coalesce(e.not_before, e.begin_by), e.id"
-        )
-      ) ++
-      Sql.of(
-        Sql.OfText(" LIMIT ? OFFSET ?"),
-        Param.I(Param.I.V(limit.value.max(1))),
-        Param.I(Param.I.V(offset.value.max(0)))
-      ))
-    // the three `?` of the findings count come first in the text
-    val withParams = Sql(
-      rows.text,
-      List(
-        Param.D(Param.D.V(km.value * 1000.0)),
-        Param.L(Param.L.V(years.value)),
-        Param.L(Param.L.V(years.value))
-      ) ++ rows.params
-    )
-    (RowCount(total), withParams.frag.query[LeadRow].run().toList)
+               CROSS JOIN LATERAL (SELECT ${SqlLiteral(
+        EventSql.AnchorSql
+      )} AS pt) a WHERE $where ORDER BY (${SqlLiteral(EventSql.TierSql)}) = '${SqlLiteral(
+        EventTier.Catalogue
+      )}' DESC, (SELECT coalesce(max(c.vei), 0) + coalesce(max(c.magnitude), 0) FROM event_catalogue c WHERE c.event_id = e.id) DESC, coalesce(e.not_before, e.begin_by), e.id LIMIT ${limit.value
+        .max(1)} OFFSET ${offset.value.max(0)}""")
+    (RowCount(total), rows.query[LeadRow].run().toList)
 
   /** Catalogue events an article's period and region hold: those overlapping `period` within `km` of one of `citekeys`'
     * dated findings of that period, and large enough (`minVei`, `minMagnitude`, or a war) — with how many of those

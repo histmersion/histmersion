@@ -2,7 +2,6 @@ package com.histmersion
 package domain.research.articles
 
 import com.histmersion.util.data.exchange.BundleImport
-import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.util.data.exchange.BundleEntities.BlobUse
 import com.histmersion.util.data.exchange.{BlobSink, BundleScope}
 import com.histmersion.util.data.exchange.BundleSql.*
@@ -26,9 +25,9 @@ private[articles] object ArticleBundleRepo:
   // ── out ──────────────────────────────────────────────────────────────────────────────────────
 
   def articles(scope: BundleScope)(using DbCon): Vector[Bundle.Article] =
-    (Sql.raw(Sql.RawText(s"""SELECT a.uid, a.origin, a.slug, a.title, a.kind, a.body, a.summary, a.tags, a.regions,
-                       ${rangeCols("a.period")}, ${ts("a.updated_at")}
-                FROM articles a WHERE """)) ++ where(scope, "a.uid", "a.updated_at") ++ " ORDER BY a.uid").frag
+    sql"""SELECT a.uid, a.origin, a.slug, a.title, a.kind, a.body, a.summary, a.tags, a.regions,
+                       ${SqlLiteral(rangeCols("a.period"))}, ${SqlLiteral(ts("a.updated_at"))}
+                FROM articles a WHERE ${where(scope, "a.uid", "a.updated_at")} ORDER BY a.uid"""
       .query[BArticleRow]
       .run()
       .map { r =>
@@ -52,17 +51,23 @@ private[articles] object ArticleBundleRepo:
       }
 
   def versions(scope: BundleScope)(using DbCon): Vector[BVersionRow] =
-    (Sql.raw(Sql.RawText(s"""SELECT v.uid, v.origin, a.uid, encode(sha256(convert_to(v.body, 'UTF8')), 'hex'),
+    sql"""SELECT v.uid, v.origin, a.uid, encode(sha256(convert_to(v.body, 'UTF8')), 'hex'),
                        octet_length(convert_to(v.body, 'UTF8'))::bigint, v.summary,
-                       ${ts("v.updated_at")}, ${ts("v.created_at")}
-                FROM article_versions v JOIN articles a ON a.slug = v.slug WHERE """)) ++
-      where(scope, "v.uid", "v.created_at") ++ " ORDER BY v.uid").frag.query[BVersionRow].run()
+                       ${SqlLiteral(ts("v.updated_at"))}, ${SqlLiteral(ts("v.created_at"))}
+                FROM article_versions v JOIN articles a ON a.slug = v.slug WHERE ${where(
+        scope,
+        "v.uid",
+        "v.created_at"
+      )} ORDER BY v.uid""".query[BVersionRow].run()
 
   /** Old article slugs (V042) of the articles in scope. */
   def articleAliases(scope: BundleScope)(using DbCon): Vector[Bundle.ArticleAlias] =
-    (Sql.raw(Sql.RawText(s"""SELECT x.alias, a.uid, ${ts("x.created_at")}
-                FROM article_aliases x JOIN articles a ON a.slug = x.slug WHERE """)) ++
-      where(scope, "a.uid", "x.created_at") ++ """ ORDER BY x.alias COLLATE "C"""").frag
+    sql"""SELECT x.alias, a.uid, ${SqlLiteral(ts("x.created_at"))}
+                FROM article_aliases x JOIN articles a ON a.slug = x.slug WHERE ${where(
+        scope,
+        "a.uid",
+        "x.created_at"
+      )} ORDER BY x.alias COLLATE "C\""""
       .query[(Bundle.ArticleAlias.Alias, UUID, Bundle.ArticleAlias.CreatedAt)]
       .run()
       .map(Bundle.ArticleAlias.apply)
@@ -82,12 +87,7 @@ private[articles] object ArticleBundleRepo:
   def versionBody(uid: UUID)(using DbCon): java.io.OutputStream => Unit =
     out =>
       out.write(
-        Sql
-          .of(
-            Sql.OfText("SELECT convert_to(body, 'UTF8') FROM article_versions WHERE uid = ?::uuid"),
-            Param.S(Param.S.V(uid.toString))
-          )
-          .frag
+        sql"SELECT convert_to(body, 'UTF8') FROM article_versions WHERE uid = ${uid.toString}::uuid"
           .query[Array[Byte]]
           .run()
           .head

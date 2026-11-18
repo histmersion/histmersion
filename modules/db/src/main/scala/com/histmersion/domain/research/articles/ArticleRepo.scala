@@ -14,10 +14,10 @@ import com.histmersion.domain.library.search.Search
 
 import com.histmersion.domain.catalogue.places.PlaceScope
 
-import com.histmersion.util.database.RangeSql
+import com.histmersion.util.database.{joined, RangeSql}
 
 import com.histmersion.api.Write
-import com.histmersion.util.database.{Jsonb, Param, Sql}
+import com.histmersion.util.database.Jsonb
 import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.*
@@ -67,10 +67,8 @@ private[articles] object ArticleRepo:
   private given DbCodec[Article.Ref] = DbCodec.derived
   private given DbCodec[EventArticleRef] = DbCodec.derived
 
-  import Param.*
-
   /** `\` escapes `%`/`_` in every ILIKE here, as in [[FilterSql]] (whose copy is private). */
-  private val Esc = " ESCAPE '\\'"
+  private val Esc = sql" ESCAPE '\\'"
 
   /** `updated_at` rendered UTC-normalised: stable to compare, safe to echo back as `ifUpdatedAt`. */
   private val Token = "to_char(a.updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.US\"Z\"')"
@@ -281,9 +279,7 @@ private[articles] object ArticleRepo:
       .getOrElse(slug)
 
   private def token(slug: String)(using DbCon): Option[String] =
-    Sql
-      .of(Sql.Text(s"SELECT $Token FROM articles a WHERE a.slug = ?"), S(Param.S.V(slug)))
-      .frag
+    sql"SELECT ${SqlLiteral(Token)} FROM articles a WHERE a.slug = $slug"
       .query[String]
       .run()
       .headOption
@@ -291,9 +287,7 @@ private[articles] object ArticleRepo:
   // ── reads ──────────────────────────────────────────────────────────────────────────────────
   /** The whole article as the DOMAIN model — the input side of a patch, and what `export` renders. */
   def load(slug: Slug)(using DbCon): Option[Article] =
-    Sql
-      .of(Sql.Text(s"SELECT $LoadCols FROM articles a WHERE a.slug = ?"), S(Param.S.V(slug.value)))
-      .frag
+    sql"SELECT ${SqlLiteral(LoadCols)} FROM articles a WHERE a.slug = $slug"
       .query[FullArticleRow]
       .run()
       .headOption
@@ -317,9 +311,7 @@ private[articles] object ArticleRepo:
       }
 
   def get(slug: Slug)(using DbCon): Option[Article.Row] =
-    Sql
-      .of(Sql.Text(s"SELECT $ViewCols FROM articles a WHERE a.slug = ?"), S(Param.S.V(canonical(slug).value)))
-      .frag
+    sql"SELECT ${SqlLiteral(ViewCols)} FROM articles a WHERE a.slug = ${canonical(slug)}"
       .query[Article.Row]
       .run()
       .headOption
@@ -327,9 +319,7 @@ private[articles] object ArticleRepo:
   /** The article plus both directions of its link graph — one connection, three queries. */
   def view(requested: Slug)(using DbCon): Option[Article.View] =
     val slug = canonical(requested) // an old slug (V042) shows the article it was renamed to
-    Sql
-      .of(Sql.Text(s"SELECT $ViewCols FROM articles a WHERE a.slug = ?"), S(Param.S.V(slug.value)))
-      .frag
+    sql"SELECT ${SqlLiteral(ViewCols)} FROM articles a WHERE a.slug = $slug"
       .query[Article.Row]
       .run()
       .headOption
@@ -423,20 +413,20 @@ private[articles] object ArticleRepo:
   )(using DbCon): Article.List =
     val where = listWhere(filter, scope, kind, text)
     val order = text.map(t => Search.Query(t.value.trim)).filter(_.value.nonEmpty) match
-      case Some(t) => Sql.raw(Sql.Text("ORDER BY ts_rank_cd(a.tsv, ")) ++ tsQuery(t) ++ ") DESC, a.title, a.slug"
-      case None    => Sql.raw(Sql.Text("ORDER BY a.kind, a.title, a.slug"))
+      case Some(t) => sql"ORDER BY ts_rank_cd(a.tsv, ${tsQuery(t)}) DESC, a.title, a.slug"
+      case None    => sql"ORDER BY a.kind, a.title, a.slug"
     val kinds = Article.List.byKind(
-      (Sql.raw(Sql.Text("SELECT a.kind, count(*)::int FROM articles a WHERE ")) ++ where ++ " GROUP BY a.kind").frag
+      sql"SELECT a.kind, count(*)::int FROM articles a WHERE $where GROUP BY a.kind"
         .query[(String, Int)]
         .run()
         .toList
         .map((kind, n) => Article.KindCount(Article.Kind.Wire(kind), Article.KindCount.Count(n)))
     )
     val total = Article.List.Total(kinds.map(_.count.value).sum)
-    val rows = (Sql.raw(Sql.Text(s"SELECT $SummaryCols FROM articles a WHERE ")) ++ where ++ " " ++
-      order ++ Sql.of(Sql.Text(" LIMIT ? OFFSET ?"), I(Param.I.V(limit.value)), I(Param.I.V(offset.value.max(0))))).frag
-      .query[ArticleSummaryRow]
-      .run()
+    val rows =
+      sql"SELECT ${SqlLiteral(SummaryCols)} FROM articles a WHERE $where $order LIMIT $limit OFFSET ${offset.value.max(0)}"
+        .query[ArticleSummaryRow]
+        .run()
     Article.List.of(total, rows.toList.map(_.summaryRow), UnreadPage.Offset(offset.value.max(0)), kinds)
 
   /** The WHERE of [[list]], as a value — pure, so it is unit-tested without a database. The filter's part is
@@ -447,24 +437,23 @@ private[articles] object ArticleRepo:
       scope: PlaceScope,
       kind: Option[com.histmersion.domain.research.Article.Kind],
       text: Option[Search.Query]
-  ): Sql =
-    val ps = List.newBuilder[Sql]
+  ): Frag =
+    val ps = List.newBuilder[Frag]
     val related = FilterSql.articleWhere(filter, scope)
-    if related.text.value != "TRUE" then ps += related
+    if related.sqlString != "TRUE" then ps += related
     kind
       .map(_.value.trim.toLowerCase)
       .filter(_.nonEmpty)
-      .foreach(k => ps += Sql.of(Sql.OfText("lower(a.kind) = ?"), S(Param.S.V(k))))
+      .foreach(k => ps += sql"lower(a.kind) = $k")
     text.map(_.value.trim).filter(_.nonEmpty).foreach { t =>
-      val fts = Sql.raw(Sql.RawText("(a.tsv @@ ")) ++ tsQuery(Search.Query(t)) ++
-        Sql.of(Sql.OfText(s" OR a.title ILIKE ?$Esc)"), S(Param.S.V(FilterSql.contains(t))))
+      val fts = sql"(a.tsv @@ ${tsQuery(Search.Query(t))} OR a.title ILIKE ${FilterSql.contains(t)}$Esc)"
       ps += fts
     }
     val parts = ps.result()
-    if parts.isEmpty then Sql.raw(Sql.RawText("TRUE"))
-    else Sql(Sql.Text(parts.map(_.text.value).mkString(" AND ")), parts.flatMap(_.params))
+    if parts.isEmpty then sql"TRUE"
+    else parts.joined(sql" AND ")
 
-  private def tsQuery(q: Search.Query): Sql = Search.tsQuery(q)
+  private def tsQuery(q: Search.Query): Frag = Search.tsQuery(q)
 
   def slugs(using DbCon): Vector[Slug] =
     sql"""SELECT slug FROM articles ORDER BY slug COLLATE "C"""".query[Slug].run()
@@ -481,24 +470,18 @@ private[articles] object ArticleRepo:
 
   /** The `updated_at` / `created_at` timestamps rendered UTC-normalised, as the article token does. */
   private val VerToken =
-    "to_char(v.updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.US\"Z\"')"
+    sql"to_char(v.updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.US\"Z\"')"
   private val VerCreated =
-    "to_char(v.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.US\"Z\"')"
+    sql"to_char(v.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.US\"Z\"')"
 
   /** List the version history of one article: id, slug, summary (first 200 chars), updatedAt, createdAt, and word count
     * (approximated as non-empty whitespace-split tokens). Newest first.
     */
   def listVersions(slug: Slug, limit: Limit = Limit(20))(using DbCon): List[Article.Version] =
-    Sql
-      .of(
-        Sql.Text(s"""SELECT v.id, v.slug, left(v.summary, 200),
+    sql"""SELECT v.id, v.slug, left(v.summary, 200),
             $VerToken, $VerCreated,
             array_length(regexp_split_to_array(trim(v.body), '\\s+'), 1)
-            FROM article_versions v WHERE v.slug = ? ORDER BY v.created_at DESC, v.id DESC LIMIT ?"""),
-        Param.S(Param.S.V(slug.value)),
-        Param.I(Param.I.V(limit.value))
-      )
-      .frag
+            FROM article_versions v WHERE v.slug = $slug ORDER BY v.created_at DESC, v.id DESC LIMIT $limit"""
       .query[Article.Version]
       .run()
       .toList
@@ -517,15 +500,9 @@ private[articles] object ArticleRepo:
       .map(VersionId(_))
 
   def getVersion(slug: Slug, versionId: VersionId)(using DbCon): Option[Article.VersionFull] =
-    Sql
-      .of(
-        Sql.Text(s"""SELECT v.id, v.slug, v.body, v.summary,
+    sql"""SELECT v.id, v.slug, v.body, v.summary,
             $VerToken, $VerCreated
-            FROM article_versions v WHERE v.slug = ? AND v.id = ?"""),
-        Param.S(Param.S.V(slug.value)),
-        Param.L(Param.L.V(versionId.value))
-      )
-      .frag
+            FROM article_versions v WHERE v.slug = $slug AND v.id = $versionId"""
       .query[Article.VersionFull]
       .run()
       .headOption

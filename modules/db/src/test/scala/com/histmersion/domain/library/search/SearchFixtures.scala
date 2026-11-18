@@ -14,7 +14,6 @@ import com.histmersion.api.catalogue.Period
 import com.histmersion.api.catalogue.Place
 import com.histmersion.util.time.Timer
 import com.histmersion.util.database.Transactor
-import com.histmersion.util.database.Sql
 
 /** The db suites' reads of the search on a database of their own. */
 object SearchFixtures:
@@ -68,11 +67,11 @@ object SearchFixtures:
       unit: AggregateRepo.Unit,
       filter: Filter,
       scope: PlaceScope = PlaceScope.empty
-  ): Sql =
+  ): Frag =
     AggregateRepo.periodsQuery(unit, filter, scope)
   def treeRowsQuery(
       unit: AggregateRepo.Unit,
       filter: Filter,
       scope: PlaceScope = PlaceScope.empty
-  ): Sql =
+  ): Frag =
     AggregateRepo.treeRowsQuery(unit, filter, scope)

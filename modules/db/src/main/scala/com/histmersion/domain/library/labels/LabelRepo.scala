@@ -23,4 +23,4 @@ private[labels] object LabelRepo:
       limit: PageSize,
       scope: PlaceScope = PlaceScope.empty
   )(using DbCon): Vector[Facet] =
-    FilterSql.facetsQuery(field, prefix, filter, limit, scope).frag.query[Facet].run()
+    FilterSql.facetsQuery(field, prefix, filter, limit, scope).query[Facet].run()

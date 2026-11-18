@@ -18,6 +18,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.config.Environment
 import com.histmersion.util.system.JvmHome
 import com.histmersion.util.storage.Store
+import com.augustnagro.magnum.sql
 
 /** Writes the generated per-runtime trees (docs/research-agent-runtimes.md §2.2) under the runtimes directory:
   * `<data dir>/agents/{claude-code,codex,opencode}/` and `manifest.json`.
@@ -159,7 +160,7 @@ object AgentTrees:
         .mkString("\u0001")
     )
 
-  private val Manifest = "manifest.json"
+  private val Manifest = sql"manifest.json"
 
   /** Write `tree` under `dir`: each file atomically, only when its text changed; a file the previous manifest listed
     * (for one of these runtimes) and this tree does not have is removed.

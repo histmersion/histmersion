@@ -18,7 +18,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
-import com.histmersion.util.database.{Migrate, Param, Sql}
+import com.histmersion.util.database.Migrate
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.db.*
 import com.histmersion.api.catalogue.{Period, SiteTile, Year}
@@ -82,20 +82,9 @@ class TileRepoSuite extends DbSuite:
       props: Place.Properties = Place.Properties("{}"),
       siteType: Option[TileRepo.SiteType] = None
   ): Unit = connect(ds):
-    val _ = Sql
-      .of(
-        Sql.Text(
-          s"INSERT INTO places (id, label, kind, period, geom)" +
-            s" VALUES (?, ?, 'site', $period, ST_SetSRID(ST_MakePoint(?, ?), 4326))"
-        ),
-        Param.S(Param.S.V(id.value)),
-        Param.S(Param.S.V(label.value)),
-        Param.D(Param.D.V(Lon.value + dx)),
-        Param.D(Param.D.V(Lat.value + dy))
-      )
-      .frag
-      .update
-      .run()
+    val _ =
+      sql"INSERT INTO places (id, label, kind, period, geom) VALUES ($id, $label, 'site', ${SqlLiteral(period)}, ST_SetSRID(ST_MakePoint(${Lon.value + dx}, ${Lat.value + dy}), 4326))".update
+        .run()
     // the optional columns set apart: `Param` has no null
     val _ =
       sql"UPDATE places SET import_source = $importSource, properties = $props::jsonb, site_type = $siteType WHERE id = $id".update
@@ -107,9 +96,7 @@ class TileRepoSuite extends DbSuite:
     val c = tileAt(TileCoord.Z(7), Latitude(-33.9), Longitude(18.4))
     val (ux, uy) = TileRepo.unitsSql(c)
     val (x, y) = connect(ds):
-      Sql
-        .raw(Sql.Text(s"SELECT $ux, $uy FROM (SELECT 18.4::float8 AS lon, -33.9::float8 AS lat) p"))
-        .frag
+      sql"SELECT ${SqlLiteral(ux)}, ${SqlLiteral(uy)} FROM (SELECT 18.4::float8 AS lon, -33.9::float8 AS lat) p"
         .query[(Double, Double)]
         .run()
         .head
@@ -302,19 +289,9 @@ class TileRepoSuite extends DbSuite:
   test("grouping: a tile of more items than it keeps alone counts them by cell, and the counts add up to every item"):
     // 900 sites on a 30 × 30 grid 0.01° apart: more than a tile keeps alone
     connect(ds):
-      val _ = Sql
-        .of(
-          Sql.Text(
-            "INSERT INTO places (id, label, kind, period, geom) SELECT 'zztile_g' || i || '_' || j, 'Zztile G', 'site'," +
-              " int8range(-1000 + i, -900 + j, '[]'), ST_SetSRID(ST_MakePoint(? + i * 0.01, ? + j * 0.01), 4326)" +
-              " FROM generate_series(0, 29) i, generate_series(0, 29) j"
-          ),
-          Param.D(Param.D.V(Lon.value)),
-          Param.D(Param.D.V(Lat.value))
-        )
-        .frag
-        .update
-        .run()
+      val _ =
+        sql"INSERT INTO places (id, label, kind, period, geom) SELECT 'zztile_g' || i || '_' || j, 'Zztile G', 'site', int8range(-1000 + i, -900 + j, '[]'), ST_SetSRID(ST_MakePoint($Lon + i * 0.01, $Lat + j * 0.01), 4326) FROM generate_series(0, 29) i, generate_series(0, 29) j".update
+          .run()
     val small =
       TileGrid.of(maxZoom = TileGrid.MaxZoom(11), maxPoints = TileGrid.MaxPoints(100), cellPx = TileGrid.CellPx(32))
     List(3, 6, 9).foreach { z =>

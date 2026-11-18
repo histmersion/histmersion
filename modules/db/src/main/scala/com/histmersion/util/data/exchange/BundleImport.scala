@@ -24,7 +24,6 @@ import com.histmersion.util.data.exchange.{
 }
 import com.histmersion.util.data.exchange.BundlePlan.Decision
 import com.histmersion.util.storage.{ByteSource, ContentStore}
-import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.data.exchange.Bundle
@@ -145,10 +144,7 @@ object BundleImport:
           val t = tombs(d.uid)
           if d.decision == Decision.Delete then
             val table = kinds.tableOf(t.kind).value
-            Sql
-              .of(Sql.Text(s"DELETE FROM $table WHERE uid = ?::uuid"), Param.S(Param.S.V(t.uid.toString)))
-              .frag
-              .update
+            sql"DELETE FROM ${SqlLiteral(table)} WHERE uid = ${t.uid.toString}::uuid".update
               .run()
           sql"""INSERT INTO tombstones (uid, kind, origin, deleted_at)
                 VALUES (${t.uid}, ${t.kind.wire}, ${t.origin}, ${t.deletedAt}::timestamptz)

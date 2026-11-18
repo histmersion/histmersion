@@ -2,25 +2,19 @@ package com.histmersion
 package util.database
 
 import com.histmersion.api.BBox
-import com.histmersion.util.database.{Param, Sql}
+import com.augustnagro.magnum.{sql, Frag, SqlLiteral}
 
 /** The PostGIS predicate for a viewport over a geometry column. A box with `minLon > maxLon` crosses the antimeridian
   * and becomes two envelopes OR'ed together (`minLon…180` and `-180…maxLon`).
   */
 object EnvelopeSql:
-  def envelopes(geom: String, b: BBox): Sql =
+  def envelopes(geom: String, b: BBox): Frag =
     def env(minLon: Double, minLat: Double, maxLon: Double, maxLat: Double) =
-      Sql.of(
-        Sql.OfText(s"$geom && ST_MakeEnvelope(?, ?, ?, ?, 4326)"),
-        Param.D(Param.D.V(minLon)),
-        Param.D(Param.D.V(minLat)),
-        Param.D(Param.D.V(maxLon)),
-        Param.D(Param.D.V(maxLat))
-      )
+      sql"${SqlLiteral(geom)} && ST_MakeEnvelope($minLon, $minLat, $maxLon, $maxLat, 4326)"
     if b.crossesAntimeridian then
       val both = List(
         env(b.minLon.value, b.minLat.value, 180.0, b.maxLat.value),
         env(-180.0, b.minLat.value, b.maxLon.value, b.maxLat.value)
       )
-      Sql(Sql.Text(both.map(_.text.value).mkString(" OR ")), both.flatMap(_.params)).wrap("(", ")")
+      sql"(${both.joined(sql" OR ")})"
     else env(b.minLon.value, b.minLat.value, b.maxLon.value, b.maxLat.value)
