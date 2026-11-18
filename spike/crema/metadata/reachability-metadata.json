@@ -1,0 +1,1369 @@
+{
+  "reflection": [
+    {
+      "type": "com.histmersion.api.automation.ProviderKind$",
+      "fields": [
+        {
+          "name": "derived$CanEqual$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.catalogue.CatalogProviderInfo$",
+      "fields": [
+        {
+          "name": "derived$JsonCodec$lzy1"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "derived$Schema$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.catalogue.Gazetteer$Kind$",
+      "fields": [
+        {
+          "name": "derived$CanEqual$lzy1"
+        },
+        {
+          "name": "given_JsonValueCodec_Kind$lzy1"
+        },
+        {
+          "name": "given_Schema_Kind$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.jobs.JobInfo$",
+      "fields": [
+        {
+          "name": "derived$CanEqual$lzy1"
+        },
+        {
+          "name": "derived$JsonCodec$lzy1"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "derived$Schema$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.plugins.PluginSetting$",
+      "fields": [
+        {
+          "name": "derived$JsonCodec$lzy1"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "derived$Schema$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.plugins.PluginStatus$",
+      "fields": [
+        {
+          "name": "derived$JsonCodec$lzy1"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "derived$Schema$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.plugins.PluginsReport$",
+      "fields": [
+        {
+          "name": "derived$JsonCodec$lzy1"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "derived$Schema$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.AcquireConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.AcquireDefaults$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.AgentApprovalsConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.AgentAutopilotConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.AgentBudgetsConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.AgentCompileConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.AgentEnrichConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.AgentEnrichGuardsConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.AgentInferFilterConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.AgentManagersConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.AgentPlanConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.AgentProviderConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.AgentProvidersConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.AgentReviewConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.AgentRolesConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.AgentRuntimesConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.AgentSchedulerConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.AgentSeedConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.AgentStepConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.AgentToolsConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.AgentTraceConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.AgentVerifyConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.AgentWatchdogConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.AgentsConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.AgentsConfig$package$",
+      "fields": [
+        {
+          "name": "given_ConfigReader_ScheduledRefresh$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.ApiKey$package$ApiKey$",
+      "fields": [
+        {
+          "name": "given_ConfigReader_ApiKey$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.AppConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.AuthConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.AutoApprovalsConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.BackupsConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.BasemapBathymetryConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.BasemapConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.BasemapGebcoConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.BasemapLabelsConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.BasemapOnDemandConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.BasemapTerrainConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.BasemapVectorConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.BundlesConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.CalibreCliConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.CandidatesConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.CitationCount$package$CitationCount$",
+      "fields": [
+        {
+          "name": "given_ConfigReader_CitationCount$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.ClaudeCodeConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.ClaudeCodeConfig$EnvKey$",
+      "fields": [
+        {
+          "name": "given_ConfigReader_Map$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.ClaudePlanConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.CliConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.CliPluginsConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.CodexConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.CommaList$package$CommaList$",
+      "fields": [
+        {
+          "name": "given_ConfigReader_CommaList$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.Config$package$",
+      "fields": [
+        {
+          "name": "given_ConfigReader_Boolean$lzy1"
+        },
+        {
+          "name": "given_ConfigReader_Double$lzy1"
+        },
+        {
+          "name": "given_ConfigReader_Int$lzy1"
+        },
+        {
+          "name": "given_ConfigReader_Long$lzy1"
+        },
+        {
+          "name": "given_ConfigReader_SeaFloorSource$lzy1"
+        },
+        {
+          "name": "given_ConfigReader_Year$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.ConfigReload$Config$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.ConverterConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.CoreServiceConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.CorpusConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.Days$package$Days$",
+      "fields": [
+        {
+          "name": "given_ConfigReader_Days$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.DbConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.DbPoolConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.EventsConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.EventsGvpConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.EventsLeadsConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.EventsLinksConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.EventsNoaaConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.EventsWikidataConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.Hours$package$Hours$",
+      "fields": [
+        {
+          "name": "given_ConfigReader_Hours$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.IndexName$package$IndexName$",
+      "fields": [
+        {
+          "name": "given_ConfigReader_IndexName$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.InitConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.ItemCount$package$ItemCount$",
+      "fields": [
+        {
+          "name": "given_ConfigReader_ItemCount$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.KeyedServiceConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.LandingConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.LibraryAgentsConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.LibraryManagersConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.Limits$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.LintConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.MaintenanceConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.MatchScore$package$MatchScore$",
+      "fields": [
+        {
+          "name": "given_ConfigReader_MatchScore$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.MediaCollectionConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.MediaCommonsConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.MediaConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.MediaCoversConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.MediaDepictsConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.MediaIllustrationsConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.MediaPluginCollectionsConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.MediaPluginCollectionsConfig$PerCollectionKey$",
+      "fields": [
+        {
+          "name": "given_ConfigReader_Map$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.MediaWikidataConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.MergeConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.MergeWeights$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.Minutes$package$Minutes$",
+      "fields": [
+        {
+          "name": "given_ConfigReader_Minutes$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.OpencodeConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.PassageLimits$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.Percent$package$Percent$",
+      "fields": [
+        {
+          "name": "given_ConfigReader_Percent$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.PeriodsConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.PgTuning$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.PlaceSourcesConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.PlacesConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.PlanPoolConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.QueryConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.QuotaConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.RecheckConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.ResearchAgentsConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.ResearchManagersConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.RetractionWatchConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.ReviewManagerConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.RuntimeConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.Seconds$package$Seconds$",
+      "fields": [
+        {
+          "name": "given_ConfigReader_Seconds$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.ServerConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.ServiceConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.ServiceUrl$package$ServiceUrl$",
+      "fields": [
+        {
+          "name": "given_ConfigReader_ServiceUrl$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.SetupConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.SimpleManagerConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.SiteTypesConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.StorageConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.TlsConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.TokenCount$package$TokenCount$",
+      "fields": [
+        {
+          "name": "given_ConfigReader_TokenCount$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.UiDebounceSettings$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.UiEventsSettings$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.UiMapStartSettings$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.UiMapTilesSettings$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.UiSettings$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.UiTimeSettings$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.WatchManagerConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.plugin.Access$",
+      "fields": [
+        {
+          "name": "derived$CanEqual$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.plugin.Plugin$Config$",
+      "fields": [
+        {
+          "name": "given_ConfigReader_Boolean$lzy1"
+        },
+        {
+          "name": "given_ConfigReader_Double$lzy1"
+        },
+        {
+          "name": "given_ConfigReader_Int$lzy1"
+        },
+        {
+          "name": "given_ConfigReader_Long$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.plugin.Secret$Ref$",
+      "fields": [
+        {
+          "name": "derived$CanEqual$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.plugin.testkit.internal.Wire",
+      "fields": [
+        {
+          "name": "recorded$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.plugin.testkit.internal.Wire$$anon$3",
+      "fields": [
+        {
+          "name": "network$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.pluginhost.FetchChain$Answer$Kind$",
+      "fields": [
+        {
+          "name": "derived$CanEqual$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.pluginhost.PluginHost$RegistrationContext",
+      "fields": [
+        {
+          "name": "http$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.pluginhost.SystemProcesses",
+      "fields": [
+        {
+          "name": "Session$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.util.problem.Problem$",
+      "fields": [
+        {
+          "name": "given_CanEqual_Problems_Problems$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.util.problem.Problem$Config$Exposure$",
+      "fields": [
+        {
+          "name": "derived$CanEqual$lzy19"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.util.problem.Problem$Conflict$Referrer$",
+      "fields": [
+        {
+          "name": "derived$CanEqual$lzy7"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.util.problem.Problem$Invalid$CronPart$",
+      "fields": [
+        {
+          "name": "derived$CanEqual$lzy2"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.util.problem.Problem$Io$Held$",
+      "fields": [
+        {
+          "name": "derived$CanEqual$lzy11"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.util.problem.Problem$Refused$Credential$",
+      "fields": [
+        {
+          "name": "derived$CanEqual$lzy9"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.util.problem.Problem$Refused$Work$",
+      "fields": [
+        {
+          "name": "derived$CanEqual$lzy10"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.util.problem.Problem$Run$Asked$",
+      "fields": [
+        {
+          "name": "derived$CanEqual$lzy26"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.util.problem.Problem$Run$Cap$",
+      "fields": [
+        {
+          "name": "derived$CanEqual$lzy21"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.util.problem.Problem$Run$Ceiling$",
+      "fields": [
+        {
+          "name": "derived$CanEqual$lzy22"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.util.problem.Problem$Run$Control$",
+      "fields": [
+        {
+          "name": "derived$CanEqual$lzy23"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.util.problem.Problem$Run$Floor$",
+      "fields": [
+        {
+          "name": "derived$CanEqual$lzy24"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.util.problem.Problem$Run$PauseCause$",
+      "fields": [
+        {
+          "name": "derived$CanEqual$lzy20"
+        }
+      ]
+    },
+    {
+      "type": "java.lang.ClassLoader",
+      "fields": [
+        {
+          "name": "classLoaderValueMap"
+        }
+      ]
+    },
+    {
+      "type": "java.lang.ClassValue"
+    },
+    {
+      "type": "java.lang.Object[]"
+    },
+    {
+      "type": "java.lang.String[]"
+    },
+    {
+      "type": "jdk.internal.misc.Unsafe"
+    },
+    {
+      "type": "org.ekrich.config.impl.AbstractConfigObject[]"
+    },
+    {
+      "type": "scala.collection.concurrent.CNodeBase"
+    },
+    {
+      "type": "scala.collection.concurrent.INodeBase"
+    },
+    {
+      "type": "scala.collection.concurrent.MainNode"
+    },
+    {
+      "type": "scala.collection.concurrent.TrieMap"
+    },
+    {
+      "type": "scala.collection.immutable.ArraySeq$",
+      "fields": [
+        {
+          "name": "emptyImpl$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "scala.collection.immutable.LazyList$",
+      "fields": [
+        {
+          "name": "_tailUpdater$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "scala.collection.immutable.LazyListBase"
+    },
+    {
+      "type": "scala.math.BigDecimal$",
+      "fields": [
+        {
+          "name": "cache$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "scala.util.Properties$",
+      "fields": [
+        {
+          "name": "consoleIsTerminal$lzy1"
+        },
+        {
+          "name": "isAvian$lzy1"
+        },
+        {
+          "name": "isLinux$lzy1"
+        },
+        {
+          "name": "isMac$lzy1"
+        },
+        {
+          "name": "isWin$lzy1"
+        },
+        {
+          "name": "scalaProps$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "scala.util.matching.Regex$MatchIterator",
+      "fields": [
+        {
+          "name": "scala$util$matching$Regex$MatchData$$nameToIndex$lzy2"
+        }
+      ]
+    },
+    {
+      "type": "sun.net.www.protocol.jar.Handler",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.text.resources.cldr.FormatData"
+    },
+    {
+      "type": "sun.text.resources.cldr.FormatData_en"
+    }
+  ],
+  "resources": [
+    {
+      "glob": "META-INF/histmersion/plugins/hello.conf"
+    },
+    {
+      "glob": "META-INF/services/com.histmersion.plugin.Plugin"
+    },
+    {
+      "glob": "library.properties"
+    },
+    {
+      "glob": "reference.conf"
+    },
+    {
+      "module": "java.base",
+      "glob": "sun/net/www/content-types.properties"
+    }
+  ]
+}

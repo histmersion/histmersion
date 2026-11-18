@@ -1,0 +1,8 @@
+{
+  "rules": [
+    { "includeClasses": "**" },
+    { "excludeClasses": "com.histmersion.fixtures.**" },
+    { "excludeClasses": "com.histmersion.spike.cremabench.**" },
+    { "excludeClasses": "com.histmersion.spike.cremalazy.**" }
+  ]
+}
