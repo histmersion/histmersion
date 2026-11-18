@@ -57,7 +57,14 @@ class PlanArticlesSuite extends munit.FunSuite:
     check(a, maxArticles = Limits.MaxArticles(6), last = LastRound(true)) match
       case Right((cs, dropped)) =>
         assertEquals(cs.map(c => (c.slug, c.kind)), List(("good", "concept")))
-        assert(dropped.exists(_.value.contains("proposed twice")))
+        // the sentences the dropped entries had as text before they were typed (G60 step 5)
+        val said = dropped.map(_.sentence)
+        assert(said.contains("'good' proposed twice"), said)
+        assert(
+          said.contains("not proposed: article 'nofilter': it has no filter: give a query, topics or tags"),
+          said
+        )
+        assert(said.contains("not proposed: article 'untitled': it has no title"), said)
       case other => fail(other.toString)
     assert(
       check(ArticlesAnswer(ArticlesAnswer.Rationale(""), Nil), Limits.MaxArticles(6), last = LastRound(false)).isLeft
@@ -111,9 +118,10 @@ class PlanArticlesSuite extends munit.FunSuite:
     assertEquals(plan.rationale, "r")
     val tinny = plan.articles.head
     assertEquals((tinny.hits, tinny.overlapWith), (4, None))
-    assert(plan.dropped.exists(_.value.contains("'taken'")))
-    assert(plan.dropped.exists(d => d.value.contains("'small'") && d.value.contains("at least 3")), plan.dropped)
-    assert(plan.dropped.exists(d => d.value.contains("'copper-again'") && d.value.contains("[[cop]]")), plan.dropped)
+    val said = plan.dropped.map(_.sentence)
+    assert(said.contains("'taken': an article with this slug exists (or did)"), said)
+    assert(said.exists(d => d.startsWith("'small': ") && d.endsWith(" returns 1 source; at least 3")), said)
+    assert(said.contains("'copper-again': 75% of its sources are [[cop]]'s already (less than 50%)"), said)
     // the overlap with an area article: 3 of "old"'s 4 sources are "existing2"'s
     val p2 = verify(
       Goal.Slug("goal"),
@@ -126,7 +134,10 @@ class PlanArticlesSuite extends munit.FunSuite:
       lim
     )
     assertEquals(p2.articles, Nil)
-    assert(p2.dropped.head.value.contains("75%"), p2.dropped)
+    assertEquals(
+      p2.dropped.map(_.sentence),
+      List("'old': 75% of its sources are [[existing2]]'s already (less than 50%)")
+    )
 
   test("overlap: the share of mine the other holds"):
     assertEquals(

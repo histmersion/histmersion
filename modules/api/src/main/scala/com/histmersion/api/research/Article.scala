@@ -1101,7 +1101,7 @@ object Article:
         goal: ArticlePlan.Goal,
         rationale: ArticlePlan.Rationale = ArticlePlan.Rationale(""),
         articles: scala.List[ProposedArticle] = Nil,
-        dropped: scala.List[ArticlePlan.Dropped] = Nil
+        dropped: scala.List[Problem] = Nil
     ) derives JsonCodec,
           KindlingsSchema,
           com.histmersion.api.json.Schema:
@@ -1112,8 +1112,6 @@ object Article:
       export ReviewGoal.Slug as Goal
       type Rationale = Rationale.T
       object Rationale extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type Dropped = Dropped.T
-      object Dropped extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def filterLine(f: Filter): String = f.line
 
@@ -1133,7 +1131,7 @@ object Article:
         s"- `${a.slug}` — ${a.title} (${a.kind}) · ${a.filter.line} → ${Plural.count(Plural.Count((a.hits).value.toLong), Plural.CountSingular("source"))}$ov" +
           Option(a.why).filter(w => s"$w".nonEmpty).fold("")(w => s": $w")
       }
-      val dropped = p.dropped.map(d => s"- dropped: $d")
+      val dropped = p.dropped.map(d => s"- dropped: ${d.sentence}")
       Markdown(
         (Option(p.rationale.value).filter(_.nonEmpty).toList ++ scala.List((as ++ dropped).mkString("\n")))
           .filter(_.nonEmpty)

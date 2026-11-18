@@ -432,9 +432,13 @@ class ManagerPhase2Suite extends DbSuite with RunTranscripts:
     assertEquals(appr.kind, "article-plan")
     val plan = appr.articles.get
     assertEquals(plan.articles.map(_.slug), List("zzagent_new"))
-    assert(
-      plan.dropped.exists(_.value.contains("zzagent_old")) && plan.dropped.exists(_.value.contains("zzagent_thin")),
-      plan.dropped
+    // word for word the text the plan held before its dropped entries were typed (G60 step 5)
+    assertEquals(
+      plan.dropped.map(_.sentence),
+      List(
+        "'zzagent_old': an article with this slug exists (or did)",
+        "'zzagent_thin': search {query: \"Uluburun copper Anatolia nowhere\"} returns 0 sources; at least 2"
+      )
     )
     a.managers.tick(t0)
     assertEquals(item(m.id, ProposeKind, goalTarget(Goal)).status, "held")

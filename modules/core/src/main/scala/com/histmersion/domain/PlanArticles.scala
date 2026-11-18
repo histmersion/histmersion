@@ -1,8 +1,7 @@
 package com.histmersion
 package domain
 import com.histmersion.util.problem.Problem
-import com.histmersion.util.problem.Problem.{Content, Count, Field, Where}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Problem.{Content, Count, Field, Raw, Share, Where}
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.domain.library.Citekey
@@ -118,17 +117,18 @@ object PlanArticles:
       a: ArticlesAnswer,
       maxArticles: Limits.MaxArticles,
       last: LastRound
-  ): Either[List[Problem], (List[Candidate], List[ArticlePlan.Dropped])] =
+  ): Either[List[Problem], (List[Candidate], List[Problem])] =
     val problems = List.newBuilder[Problem]
-    val dropped = List.newBuilder[ArticlePlan.Dropped]
+    val dropped = List.newBuilder[Problem]
     val kept = a.articles
       .foldLeft(Vector.empty[Candidate]) { (acc, x) =>
         Articles.slugOf(Article.Slug(Option(x.slug).fold("")(_.value))) match
           case Left(m) => problems += m.within(Field(s"article '${x.slug}'")); acc
           case Right(s) if Option(x.title).forall(_.value.trim.isEmpty) =>
             problems += Content.Proposal(Content.Requirement.ArticleTitle, Where(s"article '$s'")); acc
-          case Right(s) if acc.exists(_.slug == s) => dropped += ArticlePlan.Dropped(s"'$s' proposed twice"); acc
-          case Right(s)                            =>
+          case Right(s) if acc.exists(_.slug == s) =>
+            dropped += Content.Answer(Content.Requirement.ProposedOnce(Raw.of(s))); acc
+          case Right(s) =>
             val kind = x.kind.map(_.value.trim).filter(_.nonEmpty).getOrElse("concept")
             Articles.kindOf(Article.Kind.Wire(kind)) match
               case Left(m)  => problems += m.within(Field(s"article '$s'")); acc
@@ -165,7 +165,7 @@ object PlanArticles:
       Right(
         (
           kept.take(cap),
-          dropped.result() ++ ps.map(p => ArticlePlan.Dropped(s"not proposed: ${p.sentence}"))
+          dropped.result() ++ ps.map(Content.NotProposed(_))
         )
       )
 
@@ -177,7 +177,7 @@ object PlanArticles:
       goal: Goal.Slug,
       rationale: ArticlesAnswer.Rationale,
       cs: List[Candidate],
-      dropped: List[ArticlePlan.Dropped],
+      dropped: List[Problem],
       slugFree: Article.Slug => Boolean,
       hits: Article.Filter => (ProposedArticle.Hits, Set[Citekey]),
       existing: List[(Article.Slug, Set[Citekey])],
@@ -186,7 +186,7 @@ object PlanArticles:
     @tailrec def loop(
         rest: List[Candidate],
         acc: Vector[(ProposedArticle, Set[Citekey])],
-        drop: Vector[ArticlePlan.Dropped]
+        drop: Vector[Problem]
     ): ArticlePlan =
       rest match
         case Nil =>
@@ -197,8 +197,8 @@ object PlanArticles:
             dropped ++ drop
           )
         case c :: tail =>
-          if !slugFree(c.slug) then
-            loop(tail, acc, drop :+ ArticlePlan.Dropped(s"'${c.slug}': an article with this slug exists (or did)"))
+          def refused(rule: Content.Requirement) = Content.Proposal(rule, Where(s"'${c.slug}'"))
+          if !slugFree(c.slug) then loop(tail, acc, drop :+ refused(Content.Requirement.SlugFree))
           else
             val (n, set) = hits(c.filter)
             val against = existing ++ acc.map((p, s) => (p.slug, s))
@@ -207,8 +207,8 @@ object PlanArticles:
               loop(
                 tail,
                 acc,
-                drop :+ ArticlePlan.Dropped(
-                  s"'${c.slug}': ${c.filter.line} returns ${Plural.count(Plural.CountN(n.value.toLong), Plural.CountSingular("source"))}; at least ${limits.minSources}"
+                drop :+ refused(
+                  Content.Requirement.ArticleSources(Raw(c.filter.line), Count.of(n), Count.of(limits.minSources))
                 )
               )
             else
@@ -217,8 +217,8 @@ object PlanArticles:
                   loop(
                     tail,
                     acc,
-                    drop :+ ArticlePlan.Dropped(
-                      f"'${c.slug}': ${share.value * 100}%.0f%% of its sources are [[$o]]'s already (less than ${limits.maxOverlap.value * 100}%.0f%%)"
+                    drop :+ refused(
+                      Content.Requirement.ArticleOverlap(Share.of(share), Raw.of(o), Share.of(limits.maxOverlap))
                     )
                   )
                 case w =>

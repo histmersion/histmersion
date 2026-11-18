@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.research.workflows
 import com.histmersion.util.json.RawJson.*
-import com.histmersion.util.problem.{Legacy, Problem, Problems}
+import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -236,10 +236,7 @@ final class ProposeArticlesPipeline(
         )
         if plan.isEmpty && !last then
           Left(
-            plan.dropped.take(12).map(d => Problem.Unclassified(Legacy.Text(d.value))) :+
-              Problem.Unclassified(
-                Legacy.Text("no proposed article passed the checks: fix the ones above or propose others")
-              )
+            plan.dropped.take(12) :+ Problem.Content.Answer(Problem.Content.Requirement.ArticlePassed)
           )
         else Right(plan)
       }

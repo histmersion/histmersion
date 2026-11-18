@@ -157,3 +157,29 @@ class ReadBackSuite extends munit.FunSuite:
     val reported = External.Reported("java.io.IOException: reset\n" + ("y" * 1500) + "\nthird line")
     val p: Problem = Upstream.CallThrew(Upstream.Name("anthropic:claude-opus"), reported)
     assertEquals(RawJson.decode[Problem](p.entry.asJson.noSpaces), Right(p))
+
+  test("an article plan stored with its dropped proposals as text reads back with each text whole, shown as it was"):
+    import com.histmersion.api.research.Article.Plans
+    val texts = List(
+      "'zzagent_old': an article with this slug exists (or did)",
+      "'zzagent_thin': search {query: \"Uluburun copper Anatolia nowhere\"} returns 0 sources; at least 2",
+      "not proposed: article 'Bad Slug': 'Bad Slug' is not a slug"
+    )
+    val stored = s"""{"goal":"zzagent-goal","rationale":"r","articles":[],"dropped":${texts
+        .map(t => Json.fromString(t).noSpaces)
+        .mkString("[", ",", "]")}}"""
+    val plan = RawJson.decode[Plans.ArticlePlan](stored)
+    assertEquals(plan.map(_.dropped.map(_.sentence)), Right(texts))
+    assertEquals(plan.map(_.dropped), Right(texts.map(StoredShapes.read)))
+    assertEquals(
+      plan.map(p => s"${Plans.planBlock(p)}"),
+      Right("r\n\n" + texts.map(t => s"- dropped: $t").mkString("\n"))
+    )
+    // a plan written now keeps each dropped proposal's case, and reads back as it
+    val typed = Plans.ArticlePlan(
+      Plans.ArticlePlan.Goal("g"),
+      Plans.ArticlePlan.Rationale("r"),
+      Nil,
+      List(Content.Proposal(Content.Requirement.SlugFree, Where("'old'")))
+    )
+    assertEquals(RawJson.decode[Plans.ArticlePlan](typed.asJson.noSpaces).map(_.dropped), Right(typed.dropped))
