@@ -1,4 +1,7 @@
 method	path	wrapper	extra	verdict
+demo/Perform#apply().	modules/demo/src/main/scala/demo/Applies.scala	com/histmersion/cli/Cli.Error#		used as a function value, or called without its name
+demo/Runner.run().	modules/demo/src/main/scala/demo/Applies.scala	com/histmersion/cli/Cli.Error#		overrides demo/Runs#run().
+demo/UsesPerform.go().	modules/demo/src/main/scala/demo/Applies.scala	com/histmersion/cli/Cli.Error#		uses demo/Perform#apply().
 demo/Callers.api().	modules/demo/src/main/scala/demo/Demo.scala	com/histmersion/api/Api.Error#		uses positive (demo/Parse.positive().); uses missing (demo/Parse.missing().)
 demo/Callers.down().	modules/demo/src/main/scala/demo/Demo.scala	com/histmersion/api/Api.Error#		uses countdown (demo/Parse.countdown().)
 demo/Callers.lambda().	modules/demo/src/main/scala/demo/Demo.scala	com/histmersion/api/Api.Error#		uses checked (demo/Parse.checked().); uses checkedLambda (demo/Parse.checkedLambda().)
@@ -13,6 +16,6 @@ demo/Parse.number().	modules/demo/src/main/scala/demo/Demo.scala	com/histmersion
 demo/Parse.positive().	modules/demo/src/main/scala/demo/Demo.scala	com/histmersion/api/Api.Error#		converted
 demo/Parse.reads().	modules/demo/src/main/scala/demo/Demo.scala	com/histmersion/cli/Cli.Error#		parameter e is a wrapper; uses e (demo/Parse.reads().(e))
 demo/Parse.typed().	modules/demo/src/main/scala/demo/Demo.scala	com/histmersion/api/Api.Error#		writes the wrapper's type; uses e (local2)
-demo/Parse.valued().	modules/demo/src/main/scala/demo/Demo.scala	com/histmersion/cli/Cli.Error#		used as a function value
+demo/Parse.valued().	modules/demo/src/main/scala/demo/Demo.scala	com/histmersion/cli/Cli.Error#		used as a function value, or called without its name
 demo/Parse.viaMixed().	modules/demo/src/main/scala/demo/Demo.scala	com/histmersion/cli/Cli.Error#		uses mixed (demo/Parse.mixed().)
 demo/Refusals.refused().	modules/demo/src/main/scala/demo/Refusals.scala	com/histmersion/cli/Cli.Error#	exitCode = ExitCode.Refused	a caller in modules/demo/src/main/scala/demo/Shadow.scala names ExitCode or Cli otherwise

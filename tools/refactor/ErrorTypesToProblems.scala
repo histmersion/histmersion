@@ -89,7 +89,7 @@ object ErrorTypesToProblems {
       m.reasons ++
         Option.when(only.nonEmpty && !only.exists(m.path.startsWith))("outside this run's modules") ++
         Option.when(overridden(m.sym))("overridden") ++
-        Option.when(m.arity > 0 && valueRefs(m.sym))("used as a function value") ++
+        Option.when(m.arity > 0 && valueRefs(m.sym))("used as a function value, or called without its name") ++
         Option.when(callers.exists(_.indented))("a call ends in an indented block") ++
         blind.headOption.map(c => s"a caller in ${c.path} names ${m.needs.map(_.split("=", 2)(0)).mkString(" or ")} otherwise")
     }
@@ -266,6 +266,36 @@ class ErrorTypesToProblems(config: ErrorTypesToProblems.Config, index: Concurren
       !b.tokens.headOption.exists(_.text == "{") && !a.tokens.lastOption.exists(t => t.text == ")" || t.text == "}"))
     case _ => false
   }
+  /** The `apply` methods an application calls without naming them: `Perform(c)(cmd)` calls `Perform#apply`, `obj(x)`
+    * calls `obj.apply`. They have no name in the tree, so the scan of names cannot see them. */
+  private def implicitApplies(fun: Term, file: String)(implicit doc: SemanticDocument): List[String] = {
+    def appliesOf(owner: String): List[String] = (0 to 3).toList.map(i => owner + (if (i == 0) "apply()." else s"apply(+$i)."))
+    def classOf(t: s.Type): Option[String] = t match {
+      case r: s.TypeRef if r.symbol.endsWith("#") => Some(r.symbol)
+      case _ => None
+    }
+    def resultOwner(sym: Symbol): Option[String] = info(sym, file).map(_.signature).flatMap {
+      case v: s.ValueSignature => classOf(v.tpe)
+      case m: s.MethodSignature => classOf(m.returnType)
+      case _: s.ClassSignature if sym.value.endsWith(".") => Some(sym.value)
+      case _ => None
+    }
+    val owners = fun match {
+      case _: Term.Name | _: Term.Select =>
+        val sym = symbolOf(fun)
+        info(sym, file).map(_.signature) match {
+          case Some(m: s.MethodSignature) if m.parameterLists.nonEmpty => Nil // an ordinary call
+          case _ => resultOwner(sym).toList
+        }
+      case a: Term.Apply =>
+        val sym = symbolOf(a.fun)
+        if (sym.value.endsWith("#`<init>`().")) List(sym.value.stripSuffix("`<init>`()."))
+        else if (sym.value.endsWith("#")) List(sym.value) // a creator application names the class
+        else resultOwner(sym).toList
+      case _ => Nil
+    }
+    owners.flatMap(appliesOf).filter(a => index.containsKey(a) && wrapperTyped(Symbol(a), file))
+  }
   private def enclosing(t: Tree)(implicit doc: SemanticDocument): String =
     ancestors(t).collectFirst { case d: Defn.Def if !d.name.symbol.isLocal => d.name.symbol.value }.getOrElse("-")
   private def wrapperIn(t: Type)(implicit doc: SemanticDocument): Option[(String, Type)] = t match {
@@ -294,6 +324,7 @@ class ErrorTypesToProblems(config: ErrorTypesToProblems.Config, index: Concurren
     // what overrides what, and every reference of a method: calls and values
     doc.tree.traverse {
       case d: Defn.Def => info(d.name.symbol, file).toList.flatMap(_.overriddenSymbols).foreach(o => fact("over", o))
+      case a: Term.Apply if constructs(a).isEmpty => implicitApplies(a.fun, file).foreach(sym => fact("ref", sym))
       case n: Term.Name if !n.symbol.isNone && !n.symbol.isLocal && !n.parent.exists { case d: Defn.Def => d.name eq n; case _ => false } &&
           info(n.symbol, file).exists(i => i.signature.isInstanceOf[s.MethodSignature] && wrapperTyped(n.symbol, file)) =>
         val call = callOf(n)
@@ -331,9 +362,11 @@ class ErrorTypesToProblems(config: ErrorTypesToProblems.Config, index: Concurren
             // a construction's extra fields are not references of the wrapper
           case t @ (_: Type.Name | _: Type.Select) if Wrappers(symbolOf(t).value) => reasons += "writes the wrapper's type"
         }
+        info(self, file).toList.flatMap(_.overriddenSymbols).headOption.foreach(o => reasons += s"overrides $o")
         d.body.traverse {
           case n: Term.Name if n.symbol != self && !ancestors(n).exists(ownConstructions) && wrapperTyped(n.symbol, file) =>
             reasons += s"uses ${n.value} (${n.symbol.value})"
+          case a: Term.Apply if !ownConstructions(a) => implicitApplies(a.fun, file).headOption.foreach(sym => reasons += s"uses $sym")
         }
         needs += qualifierNeed(wrapper)
         val extra = if (extras.size > 1) { reasons += s"wrappers with different extra fields (${extras.mkString(" | ")})"; "-" } else extras.headOption.getOrElse("")
