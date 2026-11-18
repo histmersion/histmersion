@@ -11,7 +11,7 @@ build/test/run workflow.
 ## Toolchain
 
 Pinned: **GraalVM CE 25.5** (JDK 25.0.5.0.3) in `scripts/bundle/graalvm-pins.txt` (URL + SHA-256 per
-platform); `.sdkmanrc` names the same build (`java=25.5.5.0+3-graalce`), sbt 2.0.11 and Scala 3.10.
+platform); `.sdkmanrc` names the same build (`java=25.5.5.0+3-graalce`), sbt 2.1.0 and Scala 3.10.
 
 ```bash
 sdk env install && sdk env   # once per checkout, then `sdk env` per shell (or sdkman_auto_env=true)

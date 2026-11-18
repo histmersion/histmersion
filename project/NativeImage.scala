@@ -61,8 +61,9 @@ object NativeImage extends AutoPlugin {
       log.info(s"native image built → $out")
     },
     // the module's Runtime classpath in target/classpath.txt, so the app can be run under the tracing agent
-    // directly (no sbt classes polluting the collected metadata)
-    writeClasspath := {
+    // directly (no sbt classes polluting the collected metadata). UNCACHED for the reason nativeImage is: the file
+    // is not the task's result, so a cache hit would skip writing it (sbt 2.1 warns that `target` is no cache input)
+    writeClasspath := Def.uncached {
       val conv = fileConverter.value
       val cp = (Runtime / fullClasspath).value
         .map(a => conv.toPath(a.data).toFile)

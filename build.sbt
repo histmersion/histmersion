@@ -1,7 +1,7 @@
 // Histmersion — native Scala MCP server + host CLI over a Postgres/PostGIS store.
 // Direct-style SoftwareMill stack: Tapir + tapir-netty-server-sync, Chimp (MCP), jsoniter-scala (+Kindlings),
 // Ox, Magnum (sync JDBC). Toolchain (.sdkmanrc, `sdk env install && sdk env`): GraalVM CE 25.5 + native-image,
-// pinned in scripts/bundle/graalvm-pins.txt; sbt 2.0.11, also in project/build.properties.
+// pinned in scripts/bundle/graalvm-pins.txt; sbt 2.1.0, also in project/build.properties.
 
 import Dependencies.*
 
@@ -647,7 +647,7 @@ lazy val pluginResolver = project
     libraryDependencies ++= Seq(
       // the Java API of coursier, everything shaded into one jar; its slf4j-api 1.7 is left out, the
       // kit's 2.x serves it
-      ("io.get-coursier" % "interface" % V.coursierInterface).exclude("org.slf4j", "slf4j-api"),
+      ("io.get-coursier" % "interface" % V.coursierInterface).exclude("org.slf4j" % "slf4j-api"),
       "io.github.iltotore" %% "iron" % V.iron
     ),
     // the fixture repository (hello-lib, hello-deps) the resolution suite installs from, offline
@@ -1136,8 +1136,8 @@ lazy val server = project
       "io.scalaland" %% "chimney" % V.chimney,
       // exclude netty's JNI native transports → force the pure-Java NIO transport (native-image safe)
       ("com.softwaremill.sttp.tapir" %% "tapir-netty-server-sync" % V.tapir)
-        .exclude("io.netty", "netty-transport-native-kqueue")
-        .exclude("io.netty", "netty-transport-native-epoll"),
+        .exclude("io.netty" % "netty-transport-native-kqueue")
+        .exclude("io.netty" % "netty-transport-native-epoll"),
       "com.softwaremill.sttp.tapir" %% "tapir-files" % V.tapir,
       // sync HTTP CLIENT for the acquisition upstreams (OpenAlex/Crossref/Unpaywall/…): the same
       // java.net.http-backed sttp the CLI uses, so native-image needs no extra machinery.
@@ -1157,7 +1157,7 @@ lazy val server = project
       // the JSON of the agents' tool and answer schemas (apispec's JSON Schema model) and of the OpenAPI document,
       // without circe; byte-for-byte what apispec's circe module wrote
       ("com.kubuszok" %% "kindlings-tapir-openapi-jsoniter" % V.kindlings)
-        .exclude("com.softwaremill.sttp.tapir", "tapir-openapi-docs_3")
+        .exclude("com.softwaremill.sttp.tapir" %% "tapir-openapi-docs")
     )
   )
 

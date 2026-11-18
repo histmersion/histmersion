@@ -9,7 +9,7 @@ boundaries, code style and coding practices, the configuration and native-image 
 
 | tool | for |
 |---|---|
-| [sdkman](https://sdkman.io) | the pinned JDK, **GraalVM CE 25.5** (JDK 25.0.5.0.3), and sbt 2.0.11: `.sdkmanrc`; run `sdk env install && sdk env` in the checkout |
+| [sdkman](https://sdkman.io) | the pinned JDK, **GraalVM CE 25.5** (JDK 25.0.5.0.3), and sbt 2.1.0: `.sdkmanrc`; run `sdk env install && sdk env` in the checkout |
 | [just](https://just.systems) | the recipes below (`just` lists them) |
 | [uv](https://docs.astral.sh/uv/) | the OCR converter's Python environment |
 | [pixi](https://pixi.sh) | the bundled PostgreSQL 18 + PostGIS (`runtime/postgres`), also for test databases |
