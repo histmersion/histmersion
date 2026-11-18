@@ -51,7 +51,11 @@ object ConfigEdit:
       envVar: Option[Field.EnvVar] = None,
       restart: Option[Field.Restart] = None,
       credential: Option[Credential] = None,
-      locked: Option[Field.Locked] = None
+      locked: Option[Field.Locked] = None,
+      /** What the value in effect comes to where it says how to compute one: a bundled-Postgres size set to `auto`, as
+        * sized from the server machine's memory (`2GB`). None for every other setting.
+        */
+      resolved: Option[Field.Resolved] = None
   ) derives JsonCodec,
         KindlingsSchema:
     def relative: Field.LocalKey = Field.LocalKey((key).value.stripPrefix("histmersion."))
@@ -83,6 +87,8 @@ object ConfigEdit:
     object Restart extends Newtype[String, Pure]
     type Locked = Locked.T
     object Locked extends Newtype[String, Pure]
+    type Resolved = Resolved.T
+    object Resolved extends Newtype[String, Pure]
 
   final case class Section(id: Section.Id, doc: Section.Doc = Section.Doc(""), fields: List[Field] = Nil)
       derives JsonCodec,

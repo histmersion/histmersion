@@ -1055,10 +1055,17 @@ object Text:
 
   extension (fault: Config.Fault)
     private def said: String = fault match
-      case Config.Fault.Empty                       => "is empty"
-      case Config.Fault.Unset(variable)             => s"reads $variable, which is not set"
-      case Config.Fault.Malformed(raw)              => s"is not valid: '$raw'"
-      case Config.Fault.Unknown(raw)                => s"has an unknown value '$raw'"
+      case Config.Fault.Empty           => "is empty"
+      case Config.Fault.Unset(variable) => s"reads $variable, which is not set"
+      case Config.Fault.Malformed(raw)  => s"is not valid: '$raw'"
+      case Config.Fault.Unknown(raw)    => s"has an unknown value '$raw'"
+      case Config.Fault.NotSize(raw)    =>
+        s"is not a size: '$raw' (a whole number of kB, MB, GB or TB, such as 512MB or 2GB; auto; or \"\" for " +
+          "Postgres' own default)"
+      case Config.Fault.PoolOverConnections(pool, limit, connections, most, reserved) =>
+        s"is $pool, more than the $connections connections of $limit leave room for: at most $most (a settings " +
+          s"reload holds the old pools beside the new ones, each beside its read-only query pool, and $reserved stay " +
+          "free for backups and maintenance) — lower it, or raise the connections and restart"
       case Config.Fault.Unregistered(id)            => s"names '$id', which no enabled plugin registered — skipped"
       case Config.Fault.Defaulted(raw, known, used) =>
         s"= '$raw' is neither ${known.mkString(" nor ")}; treated as $used"

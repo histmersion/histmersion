@@ -55,11 +55,13 @@ import com.histmersion.util.access.AccessPolicy
   val loaded = loadedConfig.config
   // the environment the settings were read with, and the paths and the clock: the only reads of them
   val environment = Environment.of(loadedConfig.env)
+  val osName = UserPaths.OsName(System.getProperty("os.name", ""))
   val system =
     SystemContext(
       startupClock,
       environment,
-      UserPaths(environment, UserPaths.OsName(System.getProperty("os.name", "")))
+      UserPaths(environment, osName),
+      memory = Supervisor.physicalMemory(osName)
     )
   mode match
     case ServerMode.SelfCheck =>
@@ -83,7 +85,11 @@ import com.histmersion.util.access.AccessPolicy
   val (cfg, source) =
     if !bundled then (loaded, ConfigSource(reread))
     else
-      try (Supervisor.start(loaded, system.userPaths), Supervisor.reloadSource(loaded, reread, system.userPaths))
+      try
+        (
+          Supervisor.start(loaded, system.userPaths, system.memory),
+          Supervisor.reloadSource(loaded, reread, system.userPaths)
+        )
       catch
         case e: Throwable =>
           scribe.error(s"Histmersion could not start its bundled runtime: ${e.getMessage}")

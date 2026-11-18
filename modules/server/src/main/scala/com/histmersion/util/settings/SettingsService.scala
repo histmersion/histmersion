@@ -48,12 +48,18 @@ object SettingsService:
     * read it with.
     */
 
-  def apply(loaded: () => LoadedConfig, file: () => Option[SettingsFile]): SettingsService =
-    Implementation(loaded, file, ConfigSchema.reference)
+  def apply(
+      loaded: () => LoadedConfig,
+      file: () => Option[SettingsFile],
+      memory: Option[ByteCount] = None
+  ): SettingsService =
+    Implementation(loaded, file, ConfigSchema.reference, memory)
 
   private def noFile = SettingError.NoFile(Problem.Config.Unavailable(Problem.Config.Capability.SettingsFile))
 
-  /** The snapshot of a file read as `state`, its settings loaded into `loaded` (or why they would not load). */
+  /** The snapshot of a file read as `state`, its settings loaded into `loaded` (or why they would not load); `memory`
+    * is the machine's, which an `auto` size of the bundled Postgres comes from.
+    */
   private[settings] def snapshot(
       schema: ConfigSchema,
       state: ConfigFileState,
@@ -62,7 +68,8 @@ object SettingsService:
       prefix: Option[SettingKey],
       completed: SetupConfig.Completed,
       file: Option[SettingsSnapshot.File],
-      extra: List[SettingKey]
+      extra: List[SettingKey],
+      memory: Option[ByteCount] = None
   ): SettingsSnapshot =
     val merged =
       loaded.fold(_ => AppConfig.loadWithUserText(env, "").fold(_ => ConfigFactory.empty, _.merged), _.merged)
@@ -74,13 +81,15 @@ object SettingsService:
       state.version,
       SettingsReader.read(schema, state, merged, env, prefix, extra),
       problems,
-      setupDue = SettingsSnapshot.SetupDue(!completed.value && !ConfigSchema.setsAnything(state.parsed))
+      setupDue = SettingsSnapshot.SetupDue(!completed.value && !ConfigSchema.setsAnything(state.parsed)),
+      automatic = loaded.toOption.toList.flatMap(_.config.runtime.postgres.automatic(memory))
     )
 
   final private class Implementation(
       loaded: () => LoadedConfig,
       file: () => Option[SettingsFile],
-      val schema: ConfigSchema
+      val schema: ConfigSchema,
+      memory: Option[ByteCount]
   ) extends SettingsService:
     private def writer: Option[ConfigFileWriter] =
       val l = loaded()
@@ -101,7 +110,8 @@ object SettingsService:
               prefix,
               now.fold(_ => l.config.setup.completed, _.config.setup.completed),
               Some(SettingsSnapshot.File(w.file.shown.value)),
-              extra
+              extra,
+              memory
             )
           }
         )
@@ -125,7 +135,8 @@ object SettingsService:
   final class InMemory(
       text: AtomicReference[Option[ConfigFileState.Text]],
       env: Config = ConfigFactory.empty,
-      val schema: ConfigSchema = ConfigSchema.reference
+      val schema: ConfigSchema = ConfigSchema.reference,
+      memory: Option[ByteCount] = None
   ) extends SettingsService:
     val path: SettingsSnapshot.File = SettingsSnapshot.File(InMemory.FileName)
 
@@ -159,7 +170,8 @@ object SettingsService:
           prefix,
           loaded.fold(_ => SetupConfig.Completed(false), _.config.setup.completed),
           Some(path),
-          extra
+          extra,
+          memory
         )
       }
 

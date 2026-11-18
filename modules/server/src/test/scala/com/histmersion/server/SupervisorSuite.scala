@@ -82,41 +82,70 @@ class SupervisorSuite extends munit.FunSuite:
       o
     )
 
-  test("postgres starts with memory sized from the machine's RAM, or as configured"):
-    val GB = 1024L * 1024L * 1024L
-    val auto = PgTuning(PgTuning.SharedBuffers("auto"), PgTuning.EffectiveCacheSize("auto"), PgTuning.WorkMem("16MB"))
+  test("postgres starts with memory sized from the machine's RAM, or as configured, and its connections"):
+    val auto = PgTuning(
+      PgSize.Auto,
+      PgSize.Auto,
+      PgSize.Exactly(PgBytes(16777216L)), // 16 MB
+      PgSize.Exactly(PgBytes(67108864L)), // 64 MB
+      PgTuning.Connections(100)
+    )
+    // the sizes the start before typed sizes passed on a 48 GB machine (2048MB, 24576MB, 16MB), each in its largest
+    // whole unit, and initdb's own maintenance_work_mem and max_connections (64MB and 100: `postgres -C` on a fresh
+    // cluster)
     assertEquals(
-      Supervisor.pgSettings(auto, Some(ByteCount.applyUnsafe(48 * GB))),
-      List("shared_buffers" -> "2048MB", "effective_cache_size" -> "24576MB", "work_mem" -> "16MB")
+      Supervisor.pgSettings(auto, Some(ByteCount(51539607552L))),
+      List(
+        "shared_buffers" -> "2GB",
+        "effective_cache_size" -> "24GB",
+        "work_mem" -> "16MB",
+        "maintenance_work_mem" -> "64MB",
+        "max_connections" -> "100"
+      )
     )
     // RAM/16, never under initdb's 128 MB
-    assertEquals(Supervisor.pgSettings(auto, Some(ByteCount.applyUnsafe(8 * GB))).head, "shared_buffers" -> "512MB")
-    assertEquals(Supervisor.pgSettings(auto, Some(ByteCount.applyUnsafe(1 * GB))).head, "shared_buffers" -> "128MB")
+    assertEquals(Supervisor.pgSettings(auto, Some(ByteCount(8589934592L))).head, "shared_buffers" -> "512MB")
+    assertEquals(Supervisor.pgSettings(auto, Some(ByteCount(1073741824L))).head, "shared_buffers" -> "128MB")
     // the RAM unknown: `auto` is left to Postgres, an explicit size still applies
-    assertEquals(Supervisor.pgSettings(auto, None), List("work_mem" -> "16MB"))
     assertEquals(
-      Supervisor.pgSettings(
-        PgTuning(PgTuning.SharedBuffers("1GB"), PgTuning.EffectiveCacheSize(""), PgTuning.WorkMem("")),
-        None
-      ),
-      List("shared_buffers" -> "1GB")
+      Supervisor.pgSettings(auto, None),
+      List("work_mem" -> "16MB", "maintenance_work_mem" -> "64MB", "max_connections" -> "100")
     )
-    // anything that is not a size never reaches the -o string
     assertEquals(
       Supervisor.pgSettings(
         PgTuning(
-          PgTuning.SharedBuffers("1GB -c fsync=off"),
-          PgTuning.EffectiveCacheSize("lots"),
-          PgTuning.WorkMem("4 MB")
+          PgSize.Exactly(PgBytes(1073741824L)),
+          PgSize.Unset,
+          PgSize.Unset,
+          PgSize.Unset,
+          PgTuning.Connections(40)
         ),
-        Some(ByteCount.applyUnsafe(GB))
+        None
       ),
-      List("work_mem" -> "4MB")
+      List("shared_buffers" -> "1GB", "max_connections" -> "40")
     )
     val o =
       Supervisor.pgOptions(RuntimeConfig.PgPort(5433), List("shared_buffers" -> "2048MB", "work_mem" -> "16MB")).value
     assert(o.endsWith(" -c shared_buffers=2048MB -c work_mem=16MB"), o)
-    assertEquals(base.runtime.postgres, auto, "reference.conf: auto, auto, 16MB")
+    assertEquals(base.runtime.postgres, auto, "reference.conf: auto, auto, 16MB, 64MB, 100")
+
+  test("a pool the bundled Postgres' connections cannot hold stops the start before anything starts, and a reload"):
+    val crowded = base
+      .modify(_.runtime)
+      .setTo(rc("/nonexistent/home", "/nonexistent/data"))
+      .modify(_.db)
+      .setTo(base.db.modify(_.pool).setTo(DbPoolConfig(DbPoolConfig.Max(44))))
+    val paths = UserPaths(Environment.empty, UserPaths.OsName("Linux"))
+    val said =
+      "histmersion.db.pool.max is 44, more than the 100 connections of histmersion.runtime.postgres.max-connections " +
+        "leave room for: at most 43"
+    // the check is the start's first step: no directory is made, no Postgres run
+    val e = intercept[IllegalStateException](Supervisor.start(crowded, paths, None))
+    assert(e.getMessage.startsWith(said), e.getMessage)
+    assert(!java.nio.file.Files.exists(Path.of("/nonexistent")))
+    // a reload's pool, against the connections the running Postgres was started with
+    val source = Supervisor.reloadSource(base.modify(_.runtime).setTo(rc("/h", "/d")), () => fail("not read"), paths)
+    assert(source.prepare(crowded).left.exists(_.sentence.startsWith(said)), s"${source.prepare(crowded)}")
 
   test("the config is pointed at the bundle; explicit user settings are kept"):
     val l = Supervisor.Layout(Path.of("/h"), Path.of("/d"))

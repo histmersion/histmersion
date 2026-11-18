@@ -142,6 +142,9 @@ config:config/OpencodeConfig.scala	automation.agents
 config:config/PassageLimits.scala	library.sources
 config:config/Percent.scala	values
 config:config/PeriodsConfig.scala	catalogue.periods
+config:config/PgBytes.scala	util.database
+config:config/PgParameter.scala	util.database
+config:config/PgSize.scala	util.database
 config:config/PgTuning.scala	util.database
 config:config/PlaceSourcesConfig.scala	catalogue.places
 config:config/PlacesConfig.scala	catalogue.places

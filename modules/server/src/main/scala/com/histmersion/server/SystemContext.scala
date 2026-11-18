@@ -11,14 +11,16 @@ import com.histmersion.util.time.ThreadPause
 import com.histmersion.util.system.JvmHome
 
 /** What the process reads from its surroundings, read once by the entry point and passed down: the clock, the
-  * environment and the per-user paths that follow from it.
+  * environment and the per-user paths that follow from it, and the machine's physical memory (`None` where the platform
+  * does not say, and in a test), which the bundled Postgres' `auto` sizes come from.
   */
 final case class SystemContext(
     clock: Clock,
     environment: Environment,
     userPaths: UserPaths,
     timer: Timer = new SystemTimer,
-    pause: Pause = new ThreadPause
+    pause: Pause = new ThreadPause,
+    memory: Option[ByteCount] = None
 )
 
 object SystemContext:
