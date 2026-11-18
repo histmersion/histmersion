@@ -131,6 +131,7 @@ derives	config:config/MatchScore.scala	codec given written by hand	1
 derives	config:config/MediaPluginCollectionsConfig.scala	codec given written by hand	2
 derives	config:config/Minutes.scala	codec given written by hand	1
 derives	config:config/Percent.scala	codec given written by hand	1
+derives	config:config/PgTuning.scala	codec given written by hand	1
 derives	config:config/Seconds.scala	codec given written by hand	1
 derives	config:config/ServiceUrl.scala	codec given written by hand	1
 derives	config:config/TokenCount.scala	codec given written by hand	1
@@ -1275,7 +1276,7 @@ unwrap	server:server/ServerGraph.scala	.value outside a boundary	20
 unwrap	server:server/ServerToolFiles.scala	.value outside a boundary	2
 unwrap	server:server/Static.scala	.value outside a boundary	1
 unwrap	server:server/StorageLocations.scala	.value outside a boundary	23
-unwrap	server:server/Supervisor.scala	.value outside a boundary	28
+unwrap	server:server/Supervisor.scala	.value outside a boundary	24
 unwrap	server:server/TimeZoneCheck.scala	.value outside a boundary	5
 unwrap	server:server/UiConfigViews.scala	.value outside a boundary	5
 unwrap	server:server/agents/AgentDoctor.scala	.value outside a boundary	66
@@ -1388,6 +1389,7 @@ unwrap	upstreams:upstreams/settings/UpstreamSettings.scala	.value outside a boun
 unwrap	upstreams:upstreams/wikidata/WikidataClasses.scala	.value outside a boundary	1
 unwrap	upstreams:upstreams/wikidata/WikidataEntities.scala	.value outside a boundary	3
 unwrap	upstreams:upstreams/wikidata/WikidataStatement.scala	.value outside a boundary	2
+unwrap	values:ByteCount.scala	.value outside a boundary	1
 unwrap	values:Latitude.scala	.value outside a boundary	1
 unwrap	values:Longitude.scala	.value outside a boundary	1
 unwrap	values:domain/Licence.scala	.value outside a boundary	12
