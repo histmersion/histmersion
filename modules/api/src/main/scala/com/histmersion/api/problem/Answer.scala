@@ -154,7 +154,7 @@ object Answer:
           case Problem.Group.Config       => wrapped.as(using config)
           case Problem.Group.Plugin       => wrapped.as(using plugin)
           case Problem.Group.Run          => wrapped.as(using run)
-          case Problem.Group.Content      => wrapped.as(using content)
+          case Problem.Group.Content      => wrapped.as(using ContentCodec.content)
           case Problem.Group.Internal     => wrapped.as(using internal)
           case Problem.Group.Unclassified => entry.data.as(using unclassified)
           case Problem.Group.Stored       => wrapped.as(using stored)
@@ -182,7 +182,6 @@ object Answer:
   private lazy val config = JsonCodec.derivedWords[Config]
   private lazy val plugin = JsonCodec.derivedWords[Plugin]
   private lazy val run = JsonCodec.derivedWords[Problem.Run]
-  private lazy val content = JsonCodec.derivedWords[Content]
   private lazy val internal = JsonCodec.derivedWords[Internal]
   private lazy val unclassified = JsonCodec.derivedWords[Unclassified]
   private lazy val stored = JsonCodec.derivedWords[Stored]
@@ -200,7 +199,7 @@ object Answer:
         case p: Config       => p.asJson(using config).asObject.getOrElse(JsonObject.empty)
         case p: Plugin       => p.asJson(using plugin).asObject.getOrElse(JsonObject.empty)
         case p: Problem.Run  => p.asJson(using run).asObject.getOrElse(JsonObject.empty)
-        case p: Content      => p.asJson(using content).asObject.getOrElse(JsonObject.empty)
+        case p: Content      => p.asJson(using ContentCodec.content).asObject.getOrElse(JsonObject.empty)
         case p: Internal     => p.asJson(using internal).asObject.getOrElse(JsonObject.empty)
         case p: Unclassified => JsonObject("Unclassified" -> p.asJson(using unclassified))
         case p: Stored       => p.asJson(using stored).asObject.getOrElse(JsonObject.empty)

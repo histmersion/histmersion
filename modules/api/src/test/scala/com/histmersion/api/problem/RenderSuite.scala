@@ -162,6 +162,7 @@ class RenderSuite extends munit.FunSuite:
     "Finding" -> 422,
     "Proposal" -> 422,
     "Answer" -> 422,
+    "NotProposed" -> 422,
     "Undecoded" -> 422,
     "Unexpected" -> 500,
     "Unclassified" -> 400,

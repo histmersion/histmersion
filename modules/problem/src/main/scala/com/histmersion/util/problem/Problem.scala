@@ -2119,6 +2119,9 @@ object Problem:
       */
     final case class Answer(rule: Requirement) extends Content
 
+    /** An article a plan proposed and the checks dropped: `problem`, why. */
+    final case class NotProposed(problem: Problem) extends Content
+
     /** A model's answer is not the step's typed answer: `why`; `finish`, how the call ended when that says more;
       * `began`, the start of the answer.
       */
@@ -2396,6 +2399,222 @@ object Problem:
 
       /** A goal plan's rationale is empty: it says how the plan covers the goal. */
       case GoalPlanRationale
+
+      /** A review panel's answer (a reviewer's or the fixer's) breaks `rule`. */
+      case Panel(rule: PanelRule)
+
+      /** The article `slug` is proposed twice. */
+      case ProposedOnce(slug: Raw)
+
+      /** An article with the proposed slug exists, or did. */
+      case SlugFree
+
+      /** The proposed filter `line` returns `total` sources, fewer than `least`. */
+      case ArticleSources(line: Raw, total: Count, least: Count)
+
+      /** `share` of the proposed article's sources are `other`'s already, not less than `most`. */
+      case ArticleOverlap(share: Share, other: Raw, most: Share)
+
+      /** No proposed article passed the checks. */
+      case ArticlePassed
+
+    /** What the review panel's answers are held to (ReviewArticle): the reviewers' findings, verdicts, spot-checks,
+      * rulings and checks, and the fixer's rejections, set-asides and reasons. Its own vocabulary, apart from
+      * [[Requirement]], so that each stays a size the codec derivation handles.
+      */
+    enum PanelRule:
+
+      /** A reviewer that reads no sources (the cold reader) gives evidence records. */
+      case RecordsCited
+
+      /** An evidence record's quote (`quote`; its first 80 characters show) is not in the record of `citekey`. */
+      case QuoteInSourceRecord(citekey: Raw, quote: Raw)
+
+      /** A finding's severity (`stated`) is neither major nor minor. */
+      case SeverityKnown(stated: Raw)
+
+      /** A finding states no problem. */
+      case ProblemStated
+
+      /** A finding states no `where`: the section heading or the passage's first words. */
+      case WhereStated
+
+      /** An answer gives no verdict. */
+      case VerdictGiven
+
+      /** The stated verdict (`stated`) is not PASS, MINOR or MAJOR. */
+      case VerdictKnown(stated: Raw)
+
+      /** The stated verdict `verdict` is worse than any finding: a finding that makes it so is left out. */
+      case VerdictShown(verdict: Raw)
+
+      /** An entry names no citekey. */
+      case CitekeyGiven
+
+      /** A spot-check is of a source the article does not cite. */
+      case SpotCited
+
+      /** A spot-check's verdict (`stated`) is none of `known`. */
+      case SpotVerdict(stated: Raw, known: Vector[Raw])
+
+      /** A spot-check's claim is not in the article: it copies the article's words. */
+      case ClaimInArticle
+
+      /** A spot-check rests on no get_source or passages call of the step for its source. */
+      case RecordRead
+
+      /** Only `verified` of the `required` spot-checks are verified on different cited sources; the step made `calls`
+        * get_source/passages calls.
+        */
+      case SpotChecksVerified(verified: Count, required: Count, calls: Count)
+
+      /** An empty explain-back slot (`stated`) is none of `known`. */
+      case SlotKnown(stated: Raw, known: Vector[Raw])
+
+      /** The cold reader gives no explain-back. */
+      case ExplainBackGiven
+
+      /** A missing-critique MAJOR's quote is not in the article: it quotes the sentence that states the criticised
+        * claim.
+        */
+      case CriticisedClaimQuoted
+
+      /** The missing-critique MAJOR `finding` names no pair of the critique checklist (its `pair` is empty). */
+      case PairNamed(finding: Raw)
+
+      /** A ruling names no pair of the critique checklist. */
+      case ChecklistPair
+
+      /** A ruling names a pair that is already `state` (not open). */
+      case PairOpen(state: Raw)
+
+      /** A not-material ruling names a pair a missing-critique MAJOR names too: the finding stands. */
+      case FindingStands
+
+      /** A ruling gives no reason. */
+      case ReasonStated
+
+      /** A reason is `length` characters, more than `most`. */
+      case ReasonWithin(length: Count, most: Count)
+
+      /** Open pairs of the critique checklist (`unruled`) have no ruling. */
+      case PairsRuled(unruled: Vector[Raw])
+
+      /** A check gives no id: it is one of `asked`. */
+      case CheckId(asked: Vector[Raw])
+
+      /** A check's id is not one of the findings asked about (`asked`). */
+      case AskedFinding(asked: Vector[Raw])
+
+      /** A check's quote (`quote`; its first 80 characters show) is not in the current article. */
+      case QuoteInArticle(quote: Raw)
+
+      /** A check gives no quote of the current text that shows what it says (`shows`). */
+      case CheckQuoted(shows: Shows)
+
+      /** A check that a finding is not fixed gives no note. */
+      case CheckNoted
+
+      /** A finding asked about has no check. */
+      case CheckGiven
+
+      /** The fixer names `id`, which is no finding of the round. */
+      case KnownFinding(id: Raw)
+
+      /** A rejection names no finding of the round. */
+      case FindingListed
+
+      /** The fixer rejects `id`, which cannot be rejected (`why`). */
+      case Rejectable(id: Raw, why: Unrejectable)
+
+      /** The rejection of `id` gives no reason. */
+      case RejectionReason(id: Raw)
+
+      /** The rejection of `id` names `stated`, which is no citekey. */
+      case RejectionCitekey(id: Raw, stated: Raw)
+
+      /** A rejection's quote is not in the record of `citekey`. */
+      case RejectionQuote(citekey: Raw)
+
+      /** A won't-fix gives no id. */
+      case WontFixId
+
+      /** An entry names a finding there is none of. */
+      case SuchFinding
+
+      /** The fixer declines `id`, a MAJOR: only a minor finding can be declined. */
+      case OnlyMinorDeclined(id: Raw)
+
+      /** An entry gives no reason. */
+      case GiveReason
+
+      /** `id` is listed as applied, but its pair (`src`, `dst`) is not cited in one paragraph. */
+      case PairAnswered(id: Raw, src: Raw, dst: Raw)
+
+      /** The edits cite `cited`, whose recorded critiques (`pairs`) no paragraph discusses. */
+      case CritiquesDiscussed(cited: Vector[Raw], pairs: Vector[Discussed])
+
+      /** The edits reopen a closed finding (`line`, as the ledger shows it). */
+      case ClosedKept(line: Raw)
+
+      /** The major finding `id` is not decided; `decision` says how it may be. */
+      case MajorDecided(id: Raw, decision: Decision)
+
+      /** The fixer lists `applied` as applied, but no edit changed the article. */
+      case EditMade(applied: Vector[Raw])
+
+      /** A set-aside names `pair`, which is no pair of the article's critique checklist; `remedy` says what else to do.
+        */
+      case ChecklistEdge(pair: Raw, remedy: Remedy)
+
+      /** A set-aside names neither a finding nor a pair. */
+      case SetAsideNamed
+
+      /** A set-aside names a finding that is not a missing critique. */
+      case MissingCritiqueOnly
+
+      /** A set-aside's finding names no pair, and the set-aside gives none. */
+      case FindingPair
+
+      /** The fixer gives coverage reasons for an article that records no filter. */
+      case ReasonsUnfiltered
+
+      /** An empty reason for a source that has no stored reason to remove. */
+      case StoredReason
+
+      /** A reason for a source the filter does not return. */
+      case FilterReturns
+
+      /** A reason for a source the article cites. */
+      case LeftOut
+
+      /** The unplaced-sources findings `findings` are listed as applied, but `left` are still neither cited nor given a
+        * reason (the first twenty show).
+        */
+      case StillUnplaced(findings: Vector[Raw], left: Vector[Raw])
+
+    /** What a check's quote shows: the finding fixed, or still there. */
+    enum Shows:
+      case Fixed, StillThere
+
+    /** Why a finding cannot be rejected: a mechanical check is certain, a reader's confusion is a fact. */
+    enum Unrejectable:
+      case MechanicalCheck, ReadersConfusion
+
+    /** How an undecided MAJOR may be decided: applied or rejected; or, a coverage finding on an article that records no
+      * filter, declined (no edit records the filter).
+      */
+    enum Decision:
+      case ApplyOrReject, DeclineUnfiltered
+
+    /** What a set-aside that names no checklist pair may do instead: nothing more (a pair it names alone), or apply or
+      * reject its finding.
+      */
+    enum Remedy:
+      case Unstated, ApplyOrReject
+
+    /** A recorded critique (`pair`, `src>dst`) of a work the edits cite, with its edge kinds. */
+    final case class Discussed(pair: Raw, kinds: Vector[Raw])
 
   /** Something that should not happen happened: a bug, or a fault of the platform. */
   sealed trait Internal extends Problem
@@ -2904,6 +3123,7 @@ object Problem:
       Content.Finding(Content.Flaw.UncitedParagraph),
       Content.Proposal(Content.Requirement.TooManyClaims(Count(12L), Count(15L)), Where("claims")),
       Content.Answer(Content.Requirement.SummaryGiven),
+      Content.NotProposed(Content.Answer(Content.Requirement.ProposedOnce(Raw("tin-trade")))),
       Content.Undecoded(
         Content.Decoding.Mismatch(Raw(".notes"), External.Reported("Got value '5' with wrong type, expecting string")),
         Some(External.Reported("iteration limit")),

@@ -274,6 +274,7 @@ object Text:
       case Content.Finding(cause)           => cause.said
       case Content.Proposal(rule, at)       => s"$at: ${rule.said}"
       case Content.Answer(rule)             => rule.said
+      case Content.NotProposed(why)         => s"not proposed: ${why.sentence}"
       case Content.Undecoded(why, finish, began) =>
         s"${why.said}${finish.fold("")(f => s" ($f)")}${began.fold("")(b => s" — the answer began: $b")}"
       case Internal.Unexpected(id, where, e, r) => s"$where failed unexpectedly ($e, problem $id) — $r"
@@ -1360,5 +1361,122 @@ object Text:
       case Content.Requirement.TooManySubGoals(cap, gave) => s"at most $cap sub-goals (you gave $gave)"
       case Content.Requirement.TooManyQueries(cap, gave)  => s"at most $cap queries (you gave $gave)"
       case Content.Requirement.TooManyWorks(cap, gave)    => s"at most $cap works (you gave $gave)"
-      case Content.Requirement.PlanGiven         => "the plan proposes nothing: give sub-goals, queries or works"
-      case Content.Requirement.GoalPlanRationale => "the rationale is empty — say how the plan covers the goal"
+      case Content.Requirement.PlanGiven          => "the plan proposes nothing: give sub-goals, queries or works"
+      case Content.Requirement.GoalPlanRationale  => "the rationale is empty — say how the plan covers the goal"
+      case Content.Requirement.Panel(rule)        => rule.said
+      case Content.Requirement.ProposedOnce(slug) => s"'$slug' proposed twice"
+      case Content.Requirement.SlugFree           => "an article with this slug exists (or did)"
+      case Content.Requirement.ArticleSources(line, total, least) => s"$line returns ${total.sources}; at least $least"
+      case Content.Requirement.ArticleOverlap(share, other, most) =>
+        f"${s"$share".toDouble * 100}%.0f%% of its sources are [[$other]]'s already (less than ${s"$most".toDouble * 100}%.0f%%)"
+      case Content.Requirement.ArticlePassed =>
+        "no proposed article passed the checks: fix the ones above or propose others"
+
+  extension (rule: Content.PanelRule)
+    private def said: String = rule match
+      case Content.PanelRule.RecordsCited                        => "this reviewer cites no records"
+      case Content.PanelRule.QuoteInSourceRecord(citekey, quote) =>
+        s"the quote is not in the record of [[$citekey]]: \"${s"$quote".take(80)}\""
+      case Content.PanelRule.SeverityKnown(stated) => s"severity '$stated' is neither major nor minor"
+      case Content.PanelRule.ProblemStated         => "no problem stated"
+      case Content.PanelRule.WhereStated           =>
+        "no where stated — give the section heading or the passage's first words"
+      case Content.PanelRule.VerdictGiven          => "no verdict given — PASS, MINOR or MAJOR"
+      case Content.PanelRule.VerdictKnown(stated)  => s"verdict '$stated' is not PASS, MINOR or MAJOR"
+      case Content.PanelRule.VerdictShown(verdict) =>
+        s"the verdict is $verdict but no finding is ${s"$verdict".toLowerCase(java.util.Locale.ROOT)} — list the " +
+          "finding that makes it so"
+      case Content.PanelRule.CitekeyGiven               => "no citekey"
+      case Content.PanelRule.SpotCited                  => "the article does not cite it — check a source it cites"
+      case Content.PanelRule.SpotVerdict(stated, known) => s"verdict '$stated' is not one of ${known.mkString(", ")}"
+      case Content.PanelRule.ClaimInArticle => "the claim is not in the article — copy the article's words exactly"
+      case Content.PanelRule.RecordRead     =>
+        "no get_source or passages call for it in this step — read the record before reporting what it says"
+      case Content.PanelRule.SpotChecksVerified(verified, required, calls) =>
+        s"spot-checks: $verified of the $required required are verified (on different cited sources; this step made " +
+          s"$calls get_source/passages call(s)) — read the records now with get_source or passages, and report each " +
+          "check with the record's sentence copied from the result"
+      case Content.PanelRule.SlotKnown(stated, known) => s"empty slot '$stated' is not one of ${known.mkString(", ")}"
+      case Content.PanelRule.ExplainBackGiven         => "no explain-back"
+      case Content.PanelRule.CriticisedClaimQuoted    =>
+        "its quote is not in the article — quote the article's sentence that states the criticised claim (or the " +
+          "conclusion the critique would change), copied exactly"
+      case Content.PanelRule.PairNamed(finding) =>
+        s"$finding (missing-critique, major) names no pair of the critique checklist (its `pair` is empty): name the " +
+          "pair it is about in `pair` (src>dst) — a disagreement with no recorded edge is a proposal, not a MAJOR"
+      case Content.PanelRule.ChecklistPair       => "not a pair of the critique checklist"
+      case Content.PanelRule.PairOpen(state)     => s"the pair is already $state"
+      case Content.PanelRule.FindingStands       => "a missing-critique MAJOR names it too (the finding stands)"
+      case Content.PanelRule.ReasonStated        => "no reason"
+      case Content.PanelRule.ReasonWithin(n, at) => s"the reason is $n characters (at most $at)"
+      case Content.PanelRule.PairsRuled(unruled) =>
+        s"open pairs of the critique checklist without a ruling: ${unruled.mkString(", ")} — for each, a " +
+          "missing-critique MAJOR naming it in `pair` (it bears on a claim the article makes), or a `notMaterial` " +
+          "entry with the reason"
+      case Content.PanelRule.CheckId(asked) =>
+        s"a check with no id — give the id of the finding it checks (${asked.mkString(", ")})"
+      case Content.PanelRule.AskedFinding(asked) =>
+        s"not one of the findings you were asked to check (${asked.mkString(", ")})"
+      case Content.PanelRule.QuoteInArticle(quote) =>
+        s"the quote is not in the current article — copy it exactly: \"${s"$quote".take(80)}\""
+      case Content.PanelRule.CheckQuoted(shows) => s"no quote — quote the current text that shows it ${shows.said}"
+      case Content.PanelRule.CheckNoted         => "no note — say why it is not fixed (the fixer reads it)"
+      case Content.PanelRule.CheckGiven         => "no check — say whether it is fixed"
+      case Content.PanelRule.KnownFinding(id)   => s"there is no finding '$id'"
+      case Content.PanelRule.FindingListed      => "no such finding"
+      case Content.PanelRule.Rejectable(id, Content.Unrejectable.MechanicalCheck) =>
+        s"$id is a mechanical check; it cannot be rejected, only fixed"
+      case Content.PanelRule.Rejectable(id, Content.Unrejectable.ReadersConfusion) =>
+        s"$id is a reader's confusion; it cannot be rejected — define or restructure instead"
+      case Content.PanelRule.RejectionReason(id) => s"rejection of $id gives no reason — say why the finding is wrong"
+      case Content.PanelRule.RejectionCitekey(id, stated) =>
+        s"rejection of $id names '$stated', which is not a citekey"
+      case Content.PanelRule.RejectionQuote(citekey) =>
+        s"the quote is not in the record of $citekey — quote it exactly or apply the finding"
+      case Content.PanelRule.WontFixId   => "a won't-fix with no id — give the id of the minor finding you decline"
+      case Content.PanelRule.SuchFinding => "there is no such finding"
+      case Content.PanelRule.OnlyMinorDeclined(id) =>
+        s"$id is MAJOR: apply it or reject it — only a minor finding can be declined"
+      case Content.PanelRule.GiveReason                 => "give the reason"
+      case Content.PanelRule.PairAnswered(id, src, dst) =>
+        s"$id is listed as applied, but [[$src]] and [[$dst]] are not cited in one paragraph — cite both where the " +
+          "critique is discussed, or set it aside (`setAside`) with a reason"
+      case Content.PanelRule.CritiquesDiscussed(cited, pairs) =>
+        s"your edits cite ${cited.map(c => s"[[$c]]").mkString(", ")}, whose recorded critiques no paragraph " +
+          s"discusses: ${pairs.map(p => s"${p.pair} (${p.kinds.mkString("/")})").mkString(", ")} — for each, cite " +
+          "the critic in the paragraph that cites the criticised work, or set the pair aside (`setAside` with its " +
+          "`pair`, no `id`) with a reason"
+      case Content.PanelRule.ClosedKept(line) => s"your edits reopen a closed finding — $line: keep what fixed it"
+      case Content.PanelRule.MajorDecided(id, Content.Decision.ApplyOrReject) =>
+        s"major finding $id is neither applied nor rejected"
+      case Content.PanelRule.MajorDecided(id, Content.Decision.DeclineUnfiltered) =>
+        s"major finding $id is neither applied, rejected nor declined — a coverage finding on an article that " +
+          "records no filter needs the filter recorded, which no edit does: put it in wontFix with that reason (it " +
+          "stays open for a person)"
+      case Content.PanelRule.EditMade(applied) =>
+        s"you list ${applied.mkString(", ")} as applied, but no edit changed the article"
+      case Content.PanelRule.ChecklistEdge(pair, remedy) =>
+        s"$pair is not a pair of the article's critique checklist (no recorded edge)${remedy.said}"
+      case Content.PanelRule.SetAsideNamed =>
+        "a set-aside with neither an id nor a pair — give the finding's id, or the pair (src>dst)"
+      case Content.PanelRule.MissingCritiqueOnly => "only a missing-critique finding can be set aside"
+      case Content.PanelRule.FindingPair         => "the finding names no pair — give it in `pair` (src>dst)"
+      case Content.PanelRule.ReasonsUnfiltered   =>
+        "the article records no filter, so it has no generated Not used list: leave `reasons` empty"
+      case Content.PanelRule.StoredReason  => "empty, and no reason is stored for it"
+      case Content.PanelRule.FilterReturns => "the filter does not return it — give reasons only for its sources"
+      case Content.PanelRule.LeftOut       => "the article cites it — a reason is only for a source it leaves out"
+      case Content.PanelRule.StillUnplaced(findings, left) =>
+        s"${findings.mkString(", ")}: still neither cited nor given a reason: " +
+          left.take(20).map(ck => s"[[$ck]]").mkString(", ") + (if left.size > 20 then s" (+${left.size - 20} more)"
+                                                                else "")
+
+  extension (shows: Content.Shows)
+    private def said: String = shows match
+      case Content.Shows.Fixed      => "fixed"
+      case Content.Shows.StillThere => "still there"
+
+  extension (remedy: Content.Remedy)
+    private def said: String = remedy match
+      case Content.Remedy.Unstated      => ""
+      case Content.Remedy.ApplyOrReject => " — apply or reject the finding"
