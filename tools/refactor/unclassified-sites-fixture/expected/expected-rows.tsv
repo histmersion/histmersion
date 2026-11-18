@@ -1,0 +1,15 @@
+kind	scope	module	dir	path	line	enclosing	shape	wrapper	template	splices	extra
+Unclassified	main	demo	demo:feature/area	modules/demo/src/main/scala/com/histmersion/feature/area/Demo.scala	11	demo/Demo.literal().	literal	Left	no such file
+Unclassified	main	demo	demo:feature/area	modules/demo/src/main/scala/com/histmersion/feature/area/Demo.scala	13	demo/Demo.interpolated().	interpolation	Failure	no such file: {p}	p: Path
+Unclassified	main	demo	demo:feature/area	modules/demo/src/main/scala/com/histmersion/feature/area/Demo.scala	15	demo/Demo.relay().	relay	result	cannot start: {inner.sentence}	inner.sentence: String
+Unclassified	main	demo	demo:feature/area	modules/demo/src/main/scala/com/histmersion/feature/area/Demo.scala	17	demo/Demo.message().	getMessage	result	failed: {e.getMessage}	e.getMessage: ?
+Unclassified	main	demo	demo:feature/area	modules/demo/src/main/scala/com/histmersion/feature/area/Demo.scala	18	demo/Demo.thrown().	getMessage	result	{e.getMessage}	e: Throwable
+Unclassified	main	demo	demo:feature/area	modules/demo/src/main/scala/com/histmersion/feature/area/Demo.scala	19	demo/Demo.thrownText().	getMessage	result	{e.getMessage}	e: Throwable
+Unclassified	main	demo	demo:feature/area	modules/demo/src/main/scala/com/histmersion/feature/area/Demo.scala	21	demo/Demo.exception().	exception	result	failed: {e}	e: Throwable
+Either[String]	main	demo	demo:feature/area	modules/demo/src/main/scala/com/histmersion/feature/area/Demo.scala	23	demo/Demo.parse().	-	-	-		Either[String, Int]
+Unclassified	main	demo	demo:feature/area	modules/demo/src/main/scala/com/histmersion/feature/area/Demo.scala	24	demo/Demo.lifted().	lifted	.left.map(λ)	{e}	e: String	lifted-from=demo/Demo.parse().
+Unclassified	main	demo	demo:feature/area	modules/demo/src/main/scala/com/histmersion/feature/area/Demo.scala	26	demo/Demo.multi().	multi-line	result	first {p}\nsecond	p: String
+Unclassified	main	demo	demo:feature/area	modules/demo/src/main/scala/com/histmersion/feature/area/Demo.scala	32	demo/Demo.expression().	expression	Some	{m.trim}	m.trim: ?
+legacyText	main	demo	demo:feature/area	modules/demo/src/main/scala/com/histmersion/feature/area/Demo.scala	34	demo/Demo.read().	-	result	-
+Either[String]	main	demo	demo:feature/area	modules/demo/src/main/scala/com/histmersion/feature/area/Demo.scala	36	demo/Demo.check.	-	-	-		Either[String, Unit]
+Unclassified	test	demo	demo:	modules/demo/src/testlike/scala/demo/DemoSuite.scala	7	demo/DemoSuite.made.	literal	result	in a test
