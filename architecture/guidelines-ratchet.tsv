@@ -189,7 +189,7 @@ G47self	plugins/events	main	39
 G47self	plugins/fetchers	main	20
 G47self	plugins/gazetteers	main	11
 G47self	plugins/media	main	88
-G47self	server	main	1582
+G47self	server	main	1580
 G47self	server	test	25
 G47self	upstreams	main	122
 G47self	values	main	156
