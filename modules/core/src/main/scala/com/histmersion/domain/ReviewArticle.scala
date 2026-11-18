@@ -4,6 +4,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Problem.{Content, Raw}
+import com.histmersion.util.problem.Problem.Content.PanelRule
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.StoredIdCodecs.given
@@ -1337,10 +1338,14 @@ object ReviewArticle:
   // ── validating a reviewer's answer ──────────────────────────────────────────────────────────────
 
   /** How a stated evidence record is checked: a verified [[Evidence]], or why it was dropped. */
-  type EvidenceCheck = EvidenceAnswer => Either[String, Evidence]
+  type EvidenceCheck = EvidenceAnswer => Either[Problem, Evidence]
 
   /** No evidence is checked (the cold reader has none). */
-  val NoEvidence: EvidenceCheck = e => Left(s"[[${e.citekey.value}]]: this reviewer cites no records")
+  val NoEvidence: EvidenceCheck =
+    e =>
+      Left(
+        Content.Proposal(Content.Requirement.Panel(PanelRule.RecordsCited), Problem.Where(s"[[${e.citekey}]]"))
+      )
 
   /** The check every reviewer's evidence passes: a real citekey, and a quote that IS in its record (the OCR-tolerant
     * matcher the fixer's rejections use). `text` is the record as get_source shows it (summary, findings, notes, body).
@@ -1353,15 +1358,16 @@ object ReviewArticle:
     e =>
       val raw = Option(e.citekey).map(_.normalised).getOrElse("")
       val q = Option(e.quote).map(_.value.trim).getOrElse("")
-      if q.isEmpty then Left(s"[[$raw]]: no quote")
+      if q.isEmpty then Left(Content.Proposal(Content.Requirement.QuoteGiven, Problem.Where(s"[[$raw]]")))
       else
         com.histmersion.domain.library.Citekey.option(raw).filter(isCitekey) match
-          case None     => Left(s"'$raw' is not a citekey")
+          case None     => Left(Content.Answer(Content.Requirement.KnownCitekey(Raw(raw))))
           case Some(ck) =>
             text(ck).map(t => findQuote(q, t.value, minRatio)).filter(_.accepted) match
               case Some(m) =>
                 Right(Evidence(ck, e.offset.flatMap(o => Offset.option(o.value)), Evidence.Quote(q), m.ratio))
-              case None => Left(s"the quote is not in the record of [[$ck]]: \"${q.take(80)}\"")
+              case None =>
+                Left(Content.Answer(Content.Requirement.Panel(PanelRule.QuoteInSourceRecord(Raw.of(ck), Raw(q)))))
 
   /** Findings as stated → verified findings with code-assigned ids (`R1`…), plus what was dropped. A finding with no
     * problem, no `where`, or a severity outside the vocabulary is a problem to send back. Evidence that does not check
@@ -1372,15 +1378,15 @@ object ReviewArticle:
       r: Reviewer,
       as: List[FindingAnswer],
       ev: EvidenceCheck = NoEvidence
-  ): (List[Finding], List[String], List[String]) =
+  ): (List[Finding], List[Problem], List[String]) =
     val checked = as.zipWithIndex.map { (a, i) =>
-      val label = s"finding ${i + 1} (${Option(a.problem).map(_.value).getOrElse("").take(60)})"
+      val label = Problem.Where(s"finding ${i + 1} (${Option(a.problem).map(_.value).getOrElse("").take(60)})")
+      def refused(rule: PanelRule) = Left(Content.Proposal(Content.Requirement.Panel(rule), label))
       Severity.parse(Option(a.severity).getOrElse(Severity.Wire(""))) match
-        case None => Left(s"$label: severity '${a.severity}' is neither major nor minor")
-        case Some(_) if Option(a.problem).forall(_.value.trim.isEmpty) => Left(s"$label: no problem stated")
-        case Some(_) if Option(a.where).forall(_.value.trim.isEmpty)   =>
-          Left(s"$label: no where stated — give the section heading or the passage's first words")
-        case Some(s) => Right((s, a))
+        case None => refused(PanelRule.SeverityKnown(Raw.of(a.severity)))
+        case Some(_) if Option(a.problem).forall(_.value.trim.isEmpty) => refused(PanelRule.ProblemStated)
+        case Some(_) if Option(a.where).forall(_.value.trim.isEmpty)   => refused(PanelRule.WhereStated)
+        case Some(s)                                                   => Right((s, a))
     }
     val built = checked.collect { case Right(v) => v }.zipWithIndex.map { case ((s, a), i) =>
       val id = Finding.Id(s"${r.prefix}${i + 1}")
@@ -1397,36 +1403,36 @@ object ReviewArticle:
         evs.collect { case Right(e) => e },
         pair = Option(a.pair).flatten.flatMap(CritiqueRef.parse(_).toOption)
       )
-      (f, evs.collect { case Left(m) => s"${r.wire}: $id evidence dropped — $m" })
+      (f, evs.collect { case Left(m) => s"${r.wire}: $id evidence dropped — ${m.sentence}" })
     }
     (built.map(_._1), checked.collect { case Left(m) => m }, built.flatMap(_._2))
 
   /** The stated verdict must not be worse than the findings show (a MAJOR with no major finding is a finding left out);
     * a milder one is simply corrected. On the last attempt the findings decide.
     */
-  private def verdictOf(stated: Verdict.Wire, fs: List[Finding], last: VerdictOfLast): Either[String, Verdict] =
+  private def verdictOf(stated: Verdict.Wire, fs: List[Finding], last: VerdictOfLast): Either[Problem, Verdict] =
     val derived = Verdict.of(fs)
     Verdict.parse(Option(stated).getOrElse(Verdict.Wire(""))) match
       case None if !last.value && Option(stated).forall(_.value.trim.isEmpty) =>
-        Left("no verdict given — PASS, MINOR or MAJOR")
-      case None if !last.value                             => Left(s"verdict '$stated' is not PASS, MINOR or MAJOR")
+        Left(Content.Answer(Content.Requirement.Panel(PanelRule.VerdictGiven)))
+      case None if !last.value =>
+        Left(Content.Answer(Content.Requirement.Panel(PanelRule.VerdictKnown(Raw.of(stated)))))
       case Some(v) if v.rank > derived.rank && !last.value =>
-        Left(
-          s"the verdict is ${v.wire} but no finding is ${v.wire.value.toLowerCase} — list the finding that makes it so"
-        )
+        Left(Content.Answer(Content.Requirement.Panel(PanelRule.VerdictShown(Raw.of(v.wire)))))
       case _ => Right(derived)
 
   private def settle(
       r: Reviewer,
-      verdict: Either[String, Verdict],
+      verdict: Either[Problem, Verdict],
       fs: List[Finding],
-      problems: List[String],
+      problems: List[Problem],
       dropped: List[String],
       last: LastRound
-  )(build: Verdict => Report): Either[List[String], (Report, List[String])] =
+  )(build: Verdict => Report): Either[List[Problem], (Report, List[String])] =
     val all = problems ++ verdict.left.toOption.toList
     if all.nonEmpty && !last.value then Left(all)
-    else Right((build(verdict.getOrElse(Verdict.of(fs))), all.map(p => s"${r.wire}: dropped — $p") ++ dropped))
+    else
+      Right((build(verdict.getOrElse(Verdict.of(fs))), all.map(p => s"${r.wire}: dropped — ${p.sentence}") ++ dropped))
 
   /** `critique`: a missing-critique MAJOR of the rules reviewer is calibrated like the skeptic's ([[checkCritiques]];
     * it owes no rulings and is never sent back for one).
@@ -1438,7 +1444,7 @@ object ReviewArticle:
       prior: Option[Prior] = None,
       spots: Option[SpotRule] = None,
       critique: Option[CritiqueRule] = None
-  ): Either[List[String], (Report, List[String])] =
+  ): Either[List[Problem], (Report, List[String])] =
     val (stated, ps, ds) = checkFindings(Reviewer.Rules, a.findings, ev)
     val (fs, _, kws) = critique.fold((stated, Nil, Nil))(c =>
       checkCritiques(Reviewer.Rules, stated, c.copy(shown = Nil, full = CritiqueRule.Full(false)), Nil, last)
@@ -1506,32 +1512,33 @@ object ReviewArticle:
       rule: SpotRule,
       ev: EvidenceCheck,
       last: CheckSpotChecksLast
-  ): (List[SpotCheck], List[String], List[String]) =
+  ): (List[SpotCheck], List[Problem], List[String]) =
     val results = as.zipWithIndex.map { (a, i) =>
       val ck = Option(a.citekey).map(_.normalised).getOrElse("")
       val claim = Option(a.claim).map(_.value.trim).getOrElse("")
       val verdict =
         SpotVerdictsValue(Option(a.verdict).map(_.value.trim.toLowerCase(java.util.Locale.ROOT)).getOrElse(""))
-      val label = s"spot-check ${i + 1} ([[$ck]])"
-      val checked: Either[String, SpotCheck] =
-        if ck.isEmpty then Left(s"spot-check ${i + 1}: no citekey")
+      val label = Problem.Where(s"spot-check ${i + 1} ([[$ck]])")
+      def refused(rule: PanelRule) = Left(Content.Proposal(Content.Requirement.Panel(rule), label))
+      val checked: Either[Problem, SpotCheck] =
+        if ck.isEmpty then
+          Left(
+            Content.Proposal(Content.Requirement.Panel(PanelRule.CitekeyGiven), Problem.Where(s"spot-check ${i + 1}"))
+          )
         else if rule.cited.nonEmpty && !rule.cited.exists(_.value.equalsIgnoreCase(ck)) then
-          Left(s"$label: the article does not cite it — check a source it cites")
+          refused(PanelRule.SpotCited)
         else if !SpotVerdicts.contains(verdict) then
-          Left(s"$label: verdict '${a.verdict}' is not one of ${SpotVerdicts.mkString(", ")}")
+          refused(PanelRule.SpotVerdict(Raw.of(a.verdict), SpotVerdicts.toVector.map(Raw.of(_))))
         else if claim.isEmpty || !findQuote(claim, rule.body.value, rule.minRatio).accepted then
-          Left(s"$label: the claim is not in the article — copy the article's words exactly")
+          refused(PanelRule.ClaimInArticle)
         else
           rule.calls.find(readsText(_, ck)) match
-            case None =>
-              Left(
-                s"$label: no get_source or passages call for it in this step — read the record before reporting what it says"
-              )
+            case None       => refused(PanelRule.RecordRead)
             case Some(call) =>
               ev(
                 EvidenceAnswer(EvidenceAnswer.Citekey(ck), None, Option(a.recordQuote).getOrElse(Evidence.Quote("")))
               ) match
-                case Left(m)  => Left(s"$label: $m")
+                case Left(m)  => Left(m.inside(label))
                 case Right(e) =>
                   Right(
                     SpotCheck(
@@ -1548,14 +1555,21 @@ object ReviewArticle:
     val verified = results.collect { case Right(s) => s }
     val failed = results.collect { case Left(m) => m }
     val sources = verified.map(_.citekey.value.toLowerCase(java.util.Locale.ROOT)).distinct.size
-    if sources >= rule.required.value then (verified, Nil, failed.map(m => s"rules: dropped — $m"))
+    if sources >= rule.required.value then (verified, Nil, failed.map(m => s"rules: dropped — ${m.sentence}"))
     else
       val read = rule.calls.filter(u => SpotCheckTools(SpotCheck.Tool(u.tool.value.trim))).size
-      val short = s"spot-checks: $sources of the ${rule.required} required are verified (on different cited sources; " +
-        s"this step made $read get_source/passages call(s)) — read the records now with get_source or passages, and " +
-        "report each check with the record's sentence copied from the result"
-      val problems = short :: failed
-      if last.value then (verified, Nil, problems.map(p => s"rules: unverified — $p"))
+      val short = Content.Answer(
+        Content.Requirement.Panel(
+          PanelRule
+            .SpotChecksVerified(
+              Problem.Count(sources.toLong),
+              Problem.Count.of(rule.required),
+              Problem.Count(read.toLong)
+            )
+        )
+      )
+      val problems: List[Problem] = short :: failed
+      if last.value then (verified, Nil, problems.map(p => s"rules: unverified — ${p.sentence}"))
       else (verified, problems, Nil)
 
   /** The finding code adds from the cold reader's `termsUndefined` count: above [[TermCountThreshold]] terms, MINOR at
@@ -1605,10 +1619,13 @@ object ReviewArticle:
       a: ColdReaderAnswer,
       last: CheckColdReaderLast,
       prior: Option[Prior] = None
-  ): Either[List[String], (Report, List[String])] =
+  ): Either[List[Problem], (Report, List[String])] =
     val (stated, ps, _) = checkFindings(Reviewer.ColdReader, a.findings.map(_.asFinding))
     val (slots, odd) = emptySlotsOf(a.emptySlots)
-    val unknown = odd.map(s => s"empty slot '$s' is not one of ${ExplainSlots.map(_.value).mkString(", ")}")
+    val unknown: List[Problem] =
+      odd.map(s =>
+        Content.Answer(Content.Requirement.Panel(PanelRule.SlotKnown(Raw(s), ExplainSlots.toVector.map(Raw.of(_)))))
+      )
     val explain = Option(a.explainBack).map(e => ColdReaderAnswer.ExplainBack(e.value.trim)).filter(_.value.nonEmpty)
     val extra =
       slots
@@ -1638,7 +1655,10 @@ object ReviewArticle:
     }
     val fs = stated ++ added
     val (cs, cps, cws) = checksOf(Reviewer.ColdReader, prior, a.checks, last)
-    val problems = ps ++ unknown ++ explain.fold(List("no explain-back"))(_ => Nil) ++ cps
+    val problems =
+      ps ++ unknown ++ explain.fold(List(Content.Answer(Content.Requirement.Panel(PanelRule.ExplainBackGiven))))(_ =>
+        Nil
+      ) ++ cps
     val countOnly =
       a.termsUndefined.value > TermCountThreshold && Verdict
         .parse(Option(a.verdict).getOrElse(Verdict.Wire("")))
@@ -1664,7 +1684,7 @@ object ReviewArticle:
       minRatio: CritiqueRule.MinRatio,
       prior: Option[Prior] = None,
       critique: Option[CritiqueRule] = None
-  ): Either[List[String], (Report, List[String])] =
+  ): Either[List[Problem], (Report, List[String])] =
     val (stated, ps, ds) = checkFindings(Reviewer.Skeptic, a.findings, evidenceCheck(isCitekey, text, minRatio))
     val props = a.proposals.map(AgentProposals.check(_, isCitekey, text, minRatio))
     val verified = props.collect { case Right(p) => p }
@@ -1860,7 +1880,7 @@ object ReviewArticle:
       rule: CritiqueRule,
       proposals: List[Proposal],
       last: CheckCritiquesLast
-  ): (List[Finding], List[String], List[String]) =
+  ): (List[Finding], List[Problem], List[String]) =
     val results = fs.map { f =>
       if !isMissingCritique(f) || !f.major then Right((f, None))
       else
@@ -1877,8 +1897,7 @@ object ReviewArticle:
               claimSentence(rule.body, f.quote, rule.minRatio) match
                 case None if rule.full.value && !last.value =>
                   Left(
-                    s"$label: its quote is not in the article — quote the article's sentence that states the criticised " +
-                      "claim (or the conclusion the critique would change), copied exactly"
+                    Content.Proposal(Content.Requirement.Panel(PanelRule.CriticisedClaimQuoted), Problem.Where(label))
                   )
                 case None => minor(g, "its quote is not in the article, so no unqualified claim is shown")
                 case Some(sentence) if qualifiedClaim(sentence, f.quote, p.criticised.citekey) =>
@@ -1892,10 +1911,7 @@ object ReviewArticle:
                 s"${p.ref.wire} is set aside with a stored reason: \"${p.reason.map(w => s"$w").getOrElse("").take(160)}\""
             minor(f.modify(_.pair).setTo(Some(p.ref)), why)
           case None if f.pair.isEmpty && rule.full.value && !last.value =>
-            Left(
-              s"$label names no pair of the critique checklist (its `pair` is empty): name the pair it is about in " +
-                "`pair` (src>dst) — a disagreement with no recorded edge is a proposal, not a MAJOR"
-            )
+            Left(Content.Answer(Content.Requirement.Panel(PanelRule.PairNamed(Raw.of(f.id)))))
           case None =>
             val proposed = f.pair.exists(ref =>
               proposals.exists(pp =>
@@ -1954,20 +1970,22 @@ object ReviewArticle:
       fs: List[Finding],
       rule: CritiqueRule,
       last: CheckNotMaterialLast
-  ): (List[CritiqueReason], List[String], List[String]) =
+  ): (List[CritiqueReason], List[Problem], List[String]) =
     val named = fs.filter(f => f.major && isMissingCritique(f)).flatMap(_.pair)
     val results = as.map { a =>
       val reason = Option(a.reason).map(w => s"$w".trim.replaceAll("\\s+", " ")).getOrElse("")
-      CritiqueRef.parse(Option(a.pair).getOrElse(CritiqueRef.Wire(""))).left.map(_.sentence).flatMap { ref =>
+      CritiqueRef.parse(Option(a.pair).getOrElse(CritiqueRef.Wire(""))).flatMap { ref =>
+        def refused(r: CritiqueRef, rule: PanelRule) =
+          Left(Content.Proposal(Content.Requirement.Panel(rule), Problem.Where(s"not material ${r.wire}")))
         Critiques.find(rule.pairs, ref) match
-          case None               => Left(s"not material ${ref.wire}: not a pair of the critique checklist")
-          case Some(p) if !p.open => Left(s"not material ${p.ref.wire}: the pair is already ${p.state.wire}")
-          case Some(p) if named.exists(_.same(p.ref)) =>
-            Left(s"not material ${p.ref.wire}: a missing-critique MAJOR names it too (the finding stands)")
-          case Some(_) if reason.isEmpty                          => Left(s"not material ${ref.wire}: no reason")
+          case None                                   => refused(ref, PanelRule.ChecklistPair)
+          case Some(p) if !p.open                     => refused(p.ref, PanelRule.PairOpen(Raw.of(p.state.wire)))
+          case Some(p) if named.exists(_.same(p.ref)) => refused(p.ref, PanelRule.FindingStands)
+          case Some(_) if reason.isEmpty              => refused(ref, PanelRule.ReasonStated)
           case Some(p) if reason.length > CritiqueReason.MaxChars =>
-            Left(
-              s"not material ${p.ref.wire}: the reason is ${reason.length} characters (at most ${CritiqueReason.MaxChars})"
+            refused(
+              p.ref,
+              PanelRule.ReasonWithin(Problem.Count(reason.length.toLong), Problem.Count(CritiqueReason.MaxChars.toLong))
             )
           case Some(p) => Right(CritiqueReason(p.ref.src, p.ref.dst, Coverage.Rationale(reason)))
       }
@@ -1975,14 +1993,13 @@ object ReviewArticle:
     val ok = results.collect { case Right(c) => c }.distinctBy(c => (c.src, c.dst))
     val ruled = fs.filter(isMissingCritique).flatMap(_.pair) ++ ok.map(_.ref)
     val unruled = rule.shown.filter(p => p.open && !ruled.exists(_.same(p.ref))).map(_.ref.wire)
-    val missing = Option
+    val missing: List[Problem] = Option
       .when(unruled.nonEmpty)(
-        s"open pairs of the critique checklist without a ruling: ${unruled.mkString(", ")} — for each, a missing-critique " +
-          "MAJOR naming it in `pair` (it bears on a claim the article makes), or a `notMaterial` entry with the reason"
+        Content.Answer(Content.Requirement.Panel(PanelRule.PairsRuled(unruled.toVector.map(Raw.of(_)))))
       )
       .toList
-    val dropped = results.collect { case Left(m) => s"skeptic: dropped — $m" }
-    if last.value then (ok, Nil, dropped ++ missing.map(m => s"skeptic: $m (left open)"))
+    val dropped = results.collect { case Left(m) => s"skeptic: dropped — ${m.sentence}" }
+    if last.value then (ok, Nil, dropped ++ missing.map(m => s"skeptic: ${m.sentence} (left open)"))
     else (ok, missing, dropped)
 
   // ── checks of earlier findings, and the verification pass (the review ledger) ──────────────────
@@ -2004,7 +2021,7 @@ object ReviewArticle:
       prior: Option[Prior],
       as: List[CheckAnswer],
       last: ChecksOfLast
-  ): (List[Check], List[String], List[String]) =
+  ): (List[Check], List[Problem], List[String]) =
     prior.filter(_.asked.nonEmpty).fold((Nil, Nil, Nil))(p => checkChecks(r, p, as, last))
 
   /** Verify a reviewer's checks of its earlier findings: one per finding asked about (a missing one leaves it open),
@@ -2018,8 +2035,9 @@ object ReviewArticle:
       prior: Prior,
       as: List[CheckAnswer],
       last: LastRound
-  ): (List[Check], List[String], List[String]) =
+  ): (List[Check], List[Problem], List[String]) =
     val byId = prior.asked.map(f => f.id -> f).toMap
+    val asked = byId.keys.toVector.sortBy(_.value).map(Raw.of(_))
     def gone(f: Finding) =
       f.quote.value.trim.isEmpty || !findQuote(f.quote.value, prior.body.value, prior.minRatio).accepted
     val results = Option(as).getOrElse(Nil).map { c =>
@@ -2027,37 +2045,38 @@ object ReviewArticle:
       val id = Finding.Id(idText)
       val q = Option(c.quote).map(_.value.trim).getOrElse("")
       val note = Option(c.note).map(_.value.trim).getOrElse("")
-      val checked: Either[String, Check] = byId.get(id) match
-        case None if idText.isEmpty =>
+      def refused(rule: PanelRule) =
+        Left(Content.Proposal(Content.Requirement.Panel(rule), Problem.Where(s"check of $id")))
+      val checked: Either[Problem, Check] = byId.get(id) match
+        case None if idText.isEmpty => Left(Content.Answer(Content.Requirement.Panel(PanelRule.CheckId(asked))))
+        case None                   =>
           Left(
-            s"a check with no id — give the id of the finding it checks (${byId.keys.toList.map(_.value).sorted.mkString(", ")})"
-          )
-        case None =>
-          Left(
-            s"check of '$id': not one of the findings you were asked to check (${byId.keys.toList.map(_.value).sorted.mkString(", ")})"
+            Content.Proposal(Content.Requirement.Panel(PanelRule.AskedFinding(asked)), Problem.Where(s"check of '$id'"))
           )
         case Some(_) if q.nonEmpty =>
           if findQuote(q, prior.body.value, prior.minRatio).accepted then
             Right(Check(id, c.fixed, Check.Quote(q), Check.Note(note)))
-          else Left(s"check of $id: the quote is not in the current article — copy it exactly: \"${q.take(80)}\"")
+          else refused(PanelRule.QuoteInArticle(Raw(q)))
         case Some(f) if gone(f) => Right(Check(id, c.fixed, Check.Quote(""), Check.Note(note)))
         case Some(_)            =>
-          Left(s"check of $id: no quote — quote the current text that shows it ${
-              if c.fixed.value then "fixed" else "still there"
-            }")
+          refused(
+            PanelRule.CheckQuoted(if c.fixed.value then Content.Shows.Fixed else Content.Shows.StillThere)
+          )
       checked match
-        case Right(k) if !k.fixed.value && k.note.value.isEmpty =>
-          Left(s"check of $id: no note — say why it is not fixed (the fixer reads it)")
-        case other => other
+        case Right(k) if !k.fixed.value && k.note.value.isEmpty => refused(PanelRule.CheckNoted)
+        case other                                              => other
     }
     val checks = results
       .collect { case Right(c) => c }
       .foldLeft(Vector.empty[Check])((acc, c) => if acc.exists(_.id == c.id) then acc else acc :+ c)
       .toList
-    val missing =
-      prior.asked.map(_.id).filterNot(checks.map(_.id).toSet).map(id => s"$id: no check — say whether it is fixed")
+    val missing: List[Problem] =
+      prior.asked
+        .map(_.id)
+        .filterNot(checks.map(_.id).toSet)
+        .map(id => Content.Proposal(Content.Requirement.Panel(PanelRule.CheckGiven), Problem.Where.of(id)))
     val problems = results.collect { case Left(p) => p } ++ missing
-    if last.value then (checks, Nil, problems.map(p => s"${r.wire}: $p (left open)"))
+    if last.value then (checks, Nil, problems.map(p => s"${r.wire}: ${p.sentence} (left open)"))
     else (checks, problems, Nil)
 
   /** A reviewer's word that a missing-critique finding is fixed, held to what code can see (§6.9): while its pair still
@@ -2161,7 +2180,7 @@ object ReviewArticle:
       ev: EvidenceCheck,
       last: CheckRecheckLast,
       critiques: List[CritiquePair] = Nil
-  ): Either[List[String], (Recheck, List[String])] =
+  ): Either[List[Problem], (Recheck, List[String])] =
     val (cs, cps, cws) = checkChecks(r, prior, a.checks, last)
     val (raw, ps, ds0) = checkFindings(r, Option(a.findings).getOrElse(Nil), ev)
     // a re-check is shown no checklist: a missing-critique MAJOR on no open pair is recorded minor
@@ -2188,7 +2207,7 @@ object ReviewArticle:
       Right(
         (
           Recheck(r, cs, scoped.map(_._1), lessons),
-          cws ++ ps.map(p => s"${r.wire}: dropped — $p") ++ ds ++ scoped.flatMap(_._2)
+          cws ++ ps.map(p => s"${r.wire}: dropped — ${p.sentence}") ++ ds ++ scoped.flatMap(_._2)
         )
       )
 
@@ -2398,26 +2417,36 @@ object ReviewArticle:
       coverage: Option[Coverage] = None,
       critiques: List[CritiquePair] = Nil,
       guards: Option[FixGuards] = None
-  ): Either[List[String], (Fix, List[String])] =
+  ): Either[List[Problem], (Fix, List[String])] =
     val ids = m.findings.map(_.id).toSet
     val byId = m.findings.map(f => f.id -> f).toMap
     val applied0 = a.applied.map(x => Finding.Id(x.value.trim)).filter(_.value.nonEmpty).distinct
-    val unknown = (applied0 ++ a.rejected
-      .map(r => Finding.Id(r.id.value.trim))).filterNot(ids).distinct.map(i => s"there is no finding '$i'")
-    val rejections = a.rejected.map { r =>
+    val unknown: List[Problem] = (applied0 ++ a.rejected
+      .map(r => Finding.Id(r.id.value.trim)))
+      .filterNot(ids)
+      .distinct
+      .map(i => Content.Answer(Content.Requirement.Panel(PanelRule.KnownFinding(Raw.of(i)))))
+    val rejections: List[Either[(Finding.Id, Problem), Rejection]] = a.rejected.map { r =>
       val id = Finding.Id(r.id.value.trim)
       val ckText = r.citekey.normalised
+      def refused(rule: PanelRule) = Left(id -> Content.Answer(Content.Requirement.Panel(rule)))
       byId.get(id) match
-        case None                                         => Left(id -> s"rejection of '$id': no such finding")
+        case None =>
+          Left(
+            id -> Content.Proposal(
+              Content.Requirement.Panel(PanelRule.FindingListed),
+              Problem.Where(s"rejection of '$id'")
+            )
+          )
         case Some(f) if f.reviewer == Reviewer.Mechanical =>
-          Left(id -> s"$id is a mechanical check; it cannot be rejected, only fixed")
+          refused(PanelRule.Rejectable(Raw.of(id), Content.Unrejectable.MechanicalCheck))
         case Some(f) if f.reviewer == Reviewer.ColdReader =>
-          Left(id -> s"$id is a reader's confusion; it cannot be rejected — define or restructure instead")
+          refused(PanelRule.Rejectable(Raw.of(id), Content.Unrejectable.ReadersConfusion))
         case Some(_) if Option(r.reason).forall(w => s"$w".trim.isEmpty) =>
-          Left(id -> s"rejection of $id gives no reason — say why the finding is wrong")
+          refused(PanelRule.RejectionReason(Raw.of(id)))
         case Some(_) =>
           com.histmersion.domain.library.Citekey.option(ckText).filter(isCitekey) match
-            case None     => Left(id -> s"rejection of $id names '$ckText', which is not a citekey")
+            case None     => refused(PanelRule.RejectionCitekey(Raw.of(id), Raw(ckText)))
             case Some(ck) =>
               val q = Option(r.quote).map(_.value.trim).getOrElse("")
               val hit = text(ck).map(t => findQuote(q, t.value, minRatio))
@@ -2434,20 +2463,25 @@ object ReviewArticle:
                   )
                 case None =>
                   Left(
-                    id -> s"rejection of $id: the quote is not in the record of $ck — quote it exactly or apply the finding"
+                    id -> Content.Proposal(
+                      Content.Requirement.Panel(PanelRule.RejectionQuote(Raw.of(ck))),
+                      Problem.Where(s"rejection of $id")
+                    )
                   )
     }
     val rejectedOk = rejections.collect { case Right(r) => r }
     val rejectedBad = rejections.collect { case Left(v) => v }
-    val wont = Option(a.wontFix).getOrElse(Nil).map { w =>
+    val wont: List[Either[Problem, WontFix]] = Option(a.wontFix).getOrElse(Nil).map { w =>
       val idText = Option(w.id).map(_.value.trim).getOrElse("")
       val id = Finding.Id(idText)
       byId.get(id) match
-        case None if idText.isEmpty => Left("a won't-fix with no id — give the id of the minor finding you decline")
-        case None                   => Left(s"won't fix '$id': there is no such finding")
+        case None if idText.isEmpty => Left(Content.Answer(Content.Requirement.Panel(PanelRule.WontFixId)))
+        case None                   =>
+          Left(Content.Proposal(Content.Requirement.Panel(PanelRule.SuchFinding), Problem.Where(s"won't fix '$id'")))
         case Some(f) if f.major && !needsFilter(f, coverage) =>
-          Left(s"$id is MAJOR: apply it or reject it — only a minor finding can be declined")
-        case Some(_) if Option(w.reason).forall(r => s"$r".trim.isEmpty) => Left(s"won't fix $id: give the reason")
+          Left(Content.Answer(Content.Requirement.Panel(PanelRule.OnlyMinorDeclined(Raw.of(id)))))
+        case Some(_) if Option(w.reason).forall(r => s"$r".trim.isEmpty) =>
+          Left(Content.Proposal(Content.Requirement.Panel(PanelRule.GiveReason), Problem.Where(s"won't fix $id")))
         case Some(_) => Right(WontFix(id, Rationale(s"${w.reason}".trim)))
     }
     val edits = Option(a.edits).getOrElse(Nil)
@@ -2491,9 +2525,8 @@ object ReviewArticle:
       .filter(f => guards.isDefined && isMissingCritique(f))
       .flatMap(f => f.pair.filterNot(answered(_, rev)).map(r => f.id -> r))
     def unansweredText(r: CritiqueRef) = s"[[${r.src}]] and [[${r.dst}]] are not cited in one paragraph"
-    val pairProblems = pairUnanswered.map((id, r) =>
-      s"$id is listed as applied, but ${unansweredText(r)} — cite both where the critique is discussed, or set it aside " +
-        "(`setAside`) with a reason"
+    val pairProblems: List[Problem] = pairUnanswered.map((id, r) =>
+      Content.Answer(Content.Requirement.Panel(PanelRule.PairAnswered(Raw.of(id), Raw.of(r.src), Raw.of(r.dst))))
     )
     val applied = if last.value then applied0.filterNot(id => pairUnanswered.exists(_._1 == id)) else applied0
     // pairs the revision brought in: a work it now cites whose recorded critique it discusses nowhere
@@ -2502,13 +2535,17 @@ object ReviewArticle:
       .foldLeft(Vector.empty[CritiquePair])((acc, p) => if acc.exists(_.ref.same(p.ref)) then acc else acc :+ p)
       .toList
     val broughtProblem = Option.when(brought.nonEmpty)(
-      s"your edits cite ${brought.map(p => s"[[${p.criticised.citekey}]]").distinct.mkString(", ")}, whose recorded critiques " +
-        s"no paragraph discusses: ${brought.map(p => s"${p.ref.wire} (${p.kinds.mkString("/")})").mkString(", ")} — for each, " +
-        "cite the critic in the paragraph that cites the criticised work, or set the pair aside (`setAside` with its `pair`, " +
-        "no `id`) with a reason"
+      Content.Answer(
+        Content.Requirement.Panel(
+          PanelRule.CritiquesDiscussed(
+            brought.map(p => Raw.of(p.criticised.citekey)).distinct.toVector,
+            brought.toVector.map(p => Content.Discussed(Raw.of(p.ref.wire), p.kinds.toVector.map(Raw.of(_))))
+          )
+        )
+      )
     )
-    val regressionProblems =
-      rev.regressions.map(r => s"your edits reopen a closed finding — ${r.line}: keep what fixed it")
+    val regressionProblems: List[Problem] =
+      rev.regressions.map(r => Content.Answer(Content.Requirement.Panel(PanelRule.ClosedKept(Raw(r.line)))))
 
     // repaired: findings whose pair the pairing repair answered (not those the fixer claims)
     val repaired = m.findings
@@ -2520,10 +2557,9 @@ object ReviewArticle:
     val declinedOk = wont.collect { case Right(w) => w.id }.toSet
     val undecided =
       m.majors.filterNot(f => decided(f.id) || declinedOk(f.id) || pairUnanswered.exists(_._1 == f.id)).map { f =>
-        if needsFilter(f, coverage) then
-          s"major finding ${f.id} is neither applied, rejected nor declined — a coverage finding on an article that records " +
-            "no filter needs the filter recorded, which no edit does: put it in wontFix with that reason (it stays open for a person)"
-        else s"major finding ${f.id} is neither applied nor rejected"
+        val decision =
+          if needsFilter(f, coverage) then Content.Decision.DeclineUnfiltered else Content.Decision.ApplyOrReject
+        Content.Answer(Content.Requirement.Panel(PanelRule.MajorDecided(Raw.of(f.id), decision)))
       }
     val check = rev.check
     val stated = Option(a.reasons).getOrElse(Nil)
@@ -2531,14 +2567,11 @@ object ReviewArticle:
     val noEdit = Option.when(
       applied.exists(ids) && !check.edits.exists(_.applied) && reasons.isEmpty && asides.isEmpty &&
         rev.hits.isEmpty
-    )(s"you list ${applied.mkString(", ")} as applied, but no edit changed the article")
-    val problems =
-      check.problems.map(_.sentence) ++ reasonProblems ++ noEdit.toList ++ unknown ++ undecided ++ rejectedBad.map(
-        _._2
-      ) ++
-        wont.collect { case Left(p) =>
-          p
-        } ++ asideProblems ++ pairProblems ++ broughtProblem.toList ++ regressionProblems
+    )(Content.Answer(Content.Requirement.Panel(PanelRule.EditMade(applied.toVector.map(Raw.of(_))))))
+    val problems: List[Problem] =
+      check.problems ++ reasonProblems ++ noEdit.toList ++ unknown ++ undecided ++ rejectedBad.map(_._2) ++
+        wont.collect { case Left(p) => p } ++ asideProblems ++ pairProblems ++ broughtProblem.toList ++
+        regressionProblems
     if problems.isEmpty || (last.value && !check.fatal.value) then
       val wontOk = wont.collect { case Right(w) => w }.filterNot(w => applied.contains(w.id)).distinctBy(_.id)
       val setAside = asides.filterNot(s => applied.contains(s.id) || rejectedOk.exists(_.id == s.id))
@@ -2570,7 +2603,9 @@ object ReviewArticle:
         notFixed,
         pairsAside
       )
-      Right((fix, (problems.map(p => s"fixer: kept despite — $p") ++ droppedNote.map(n => s"fixer: $n").toList)))
+      Right(
+        (fix, (problems.map(p => s"fixer: kept despite — ${p.sentence}") ++ droppedNote.map(n => s"fixer: $n").toList))
+      )
     else Left(problems)
 
   /** The fixer's set-asides (§6.8): each names a missing-critique finding, the pair (its own, or the finding's), which
@@ -2582,45 +2617,54 @@ object ReviewArticle:
       as: List[SetAsideAnswer],
       byId: Map[SetAside.Id, Finding],
       critiques: List[CritiquePair]
-  ): (List[SetAside], List[CritiqueReason], List[String]) =
+  ): (List[SetAside], List[CritiqueReason], List[Problem]) =
     def reasonOf(a: SetAsideAnswer) = Option(a.reason).map(w => s"$w".trim.replaceAll("\\s+", " ")).getOrElse("")
-    def held(label: String, r: CritiqueRef, reason: String): Either[String, CritiquePair] =
+    def held(
+        label: Problem.Where,
+        r: CritiqueRef,
+        reason: String,
+        remedy: Content.Remedy
+    ): Either[Problem, CritiquePair] =
+      def refused(rule: PanelRule) = Left(Content.Proposal(Content.Requirement.Panel(rule), label))
       Critiques.find(critiques, r) match
-        case None => Left(s"$label: ${r.wire} is not a pair of the article's critique checklist (no recorded edge)")
-        case Some(_) if reason.isEmpty                          => Left(s"$label: give the reason")
+        case None                      => refused(PanelRule.ChecklistEdge(Raw.of(r.wire), remedy))
+        case Some(_) if reason.isEmpty => refused(PanelRule.GiveReason)
         case Some(_) if reason.length > CritiqueReason.MaxChars =>
-          Left(s"$label: the reason is ${reason.length} characters (at most ${CritiqueReason.MaxChars})")
+          refused(
+            PanelRule.ReasonWithin(Problem.Count(reason.length.toLong), Problem.Count(CritiqueReason.MaxChars.toLong))
+          )
         case Some(p) => Right(p)
-    val results: List[Either[String, Either[SetAside, CritiqueReason]]] = as.map { a =>
+    val results: List[Either[Problem, Either[SetAside, CritiqueReason]]] = as.map { a =>
       val idText = Option(a.id).map(_.value.trim).getOrElse("")
       val id = Finding.Id(idText)
       val reason = reasonOf(a)
       val named = Option(a.pair).flatten
         .map(_.value.trim)
         .filter(_.nonEmpty)
-        .map(t => CritiqueRef.parse(CritiqueRef.Wire(t)).left.map(_.sentence))
+        .map(t => CritiqueRef.parse(CritiqueRef.Wire(t)))
       if idText.isEmpty then
         named match
-          case None => Left("a set-aside with neither an id nor a pair — give the finding's id, or the pair (src>dst)")
-          case Some(Left(e))  => Left(s"set aside: $e")
+          case None           => Left(Content.Answer(Content.Requirement.Panel(PanelRule.SetAsideNamed)))
+          case Some(Left(e))  => Left(e.inside(Problem.Where("set aside")))
           case Some(Right(r)) =>
-            held(s"set aside ${r.wire}", r, reason).map(p =>
+            held(Problem.Where(s"set aside ${r.wire}"), r, reason, Content.Remedy.Unstated).map(p =>
               Right(CritiqueReason(p.ref.src, p.ref.dst, Coverage.Rationale(reason)))
             )
       else
+        def refused(at: Problem.Where, rule: PanelRule) = Left(Content.Proposal(Content.Requirement.Panel(rule), at))
         byId.get(id) match
-          case None                             => Left(s"set aside '$id': there is no such finding")
+          case None                             => refused(Problem.Where(s"set aside '$id'"), PanelRule.SuchFinding)
           case Some(f) if !isMissingCritique(f) =>
-            Left(s"set aside $id: only a missing-critique finding can be set aside")
+            refused(Problem.Where(s"set aside $id"), PanelRule.MissingCritiqueOnly)
           case Some(f) =>
-            val ref = named match
+            val ref: Either[Problem, CritiqueRef] = named match
               case Some(r) => r
-              case None    => f.pair.toRight(s"set aside $id: the finding names no pair — give it in `pair` (src>dst)")
+              case None    =>
+                f.pair.toRight(
+                  Content.Proposal(Content.Requirement.Panel(PanelRule.FindingPair), Problem.Where(s"set aside $id"))
+                )
             ref
-              .flatMap(r =>
-                held(s"set aside $id", r, reason).left
-                  .map(m => if m.contains("no recorded edge") then s"$m — apply or reject the finding" else m)
-              )
+              .flatMap(r => held(Problem.Where(s"set aside $id"), r, reason, Content.Remedy.ApplyOrReject))
               .map(p => Left(SetAside(id, p.ref, Coverage.Rationale(reason))))
     }
     val ok = results.collect { case Right(v) => v }
@@ -2650,16 +2694,13 @@ object ReviewArticle:
       isCitekey: com.histmersion.domain.library.Citekey => Boolean,
       m: Merged,
       applied: Set[Fix.Applied]
-  ): (List[Coverage.Reason], List[String]) =
+  ): (List[Coverage.Reason], List[Problem]) =
     coverage match
       case None =>
         (
           Nil,
           Option
-            .when(stated.nonEmpty)(
-              "the article records no filter, so it has no generated Not used list: " +
-                "leave `reasons` empty"
-            )
+            .when(stated.nonEmpty)(Content.Answer(Content.Requirement.Panel(PanelRule.ReasonsUnfiltered)))
             .toList
         )
       case Some(c) =>
@@ -2669,22 +2710,20 @@ object ReviewArticle:
           .toSet
         val inFilter = (c.notUsed.map(_.source.citekey) ++ c.cited.map(_.citekey)).toSet
         val stored = c.reasons.map(r => r.citekey -> r.reason).toMap
-        val checked = stated.map { r =>
+        val checked: List[Either[Problem, Coverage.Reason]] = stated.map { r =>
           val ck = com.histmersion.api.library.Citekey(
             Option(r.citekey).map(_.value.trim.stripPrefix("[[").stripSuffix("]]").trim.toLowerCase).getOrElse("")
           )
+          def refused(rule: PanelRule) =
+            Left(Content.Proposal(Content.Requirement.Panel(rule), Problem.Where(s"reason for [[$ck]]")))
           val removes = Option(r.reason).forall(w => s"$w".trim.isEmpty)
           if removes && stored.contains(ck) then Right(r.modify(_.citekey).setTo(ck))
-          else if removes then Left(s"reason for [[$ck]]: empty, and no reason is stored for it")
-          else if !inFilter(ck) then
-            Left(s"reason for [[$ck]]: the filter does not return it — give reasons only for its sources")
-          else if citedAfter(ck) then
-            Left(s"reason for [[$ck]]: the article cites it — a reason is only for a source it leaves out")
+          else if removes then refused(PanelRule.StoredReason)
+          else if !inFilter(ck) then refused(PanelRule.FilterReturns)
+          else if citedAfter(ck) then refused(PanelRule.LeftOut)
           else
             Coverage.Reason
               .merge(Map.empty, List(r.modify(_.citekey).setTo(ck)))
-              .left
-              .map(_.sentence)
               .map(_ => r.modify(_.citekey).setTo(ck))
         }
         val ok = checked.collect { case Right(r) => r }
@@ -2697,9 +2736,11 @@ object ReviewArticle:
           .map(_.id)
         val left = Article.Coverage.unplacedAfter(c, citedAfter, merged)
         val still = Option.when(unplacedIds.exists(applied) && left.nonEmpty)(
-          s"${unplacedIds.filter(applied).mkString(", ")}: still neither cited nor given a reason: " +
-            left.take(20).map(ck => s"[[$ck]]").mkString(", ") + (if left.size > 20 then s" (+${left.size - 20} more)"
-                                                                  else "")
+          Content.Answer(
+            Content.Requirement.Panel(
+              PanelRule.StillUnplaced(unplacedIds.filter(applied).toVector.map(Raw.of(_)), left.toVector.map(Raw.of(_)))
+            )
+          )
         )
         (ok, checked.collect { case Left(p) => p } ++ still.toList)
 

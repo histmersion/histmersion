@@ -322,7 +322,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     )
 
   test("rules reviewer: an empty verdict, or a finding with no where or no problem, fails"):
-    def problems(a: RulesAnswer) = checkRules(a, last = CheckRulesLast(false)).left.toOption.get
+    def problems(a: RulesAnswer) = checkRules(a, last = CheckRulesLast(false)).left.toOption.get.map(_.sentence)
     assertEquals(
       problems(RulesAnswer(RulesAnswer.Verdict(""), Nil, RulesAnswer.Filter("f"), Nil, Nil)),
       List("no verdict given — PASS, MINOR or MAJOR")
@@ -372,7 +372,8 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     )
 
   test("cold reader: an empty verdict, explain-back or finding where fails"):
-    def problems(a: ColdReaderAnswer) = checkColdReader(a, last = CheckColdReaderLast(false)).left.toOption.get
+    def problems(a: ColdReaderAnswer) =
+      checkColdReader(a, last = CheckColdReaderLast(false)).left.toOption.get.map(_.sentence)
     val reader = ReaderFindingAnswer(
       ReaderFindingAnswer.Severity("minor"),
       ReaderFindingAnswer.Kind("term"),
@@ -419,7 +420,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
       _.value == "a2019_tin",
       _ => Some(record),
       minRatio
-    ).left.toOption.get
+    ).left.toOption.get.map(_.sentence)
     assert(ps.contains("no verdict given — PASS, MINOR or MAJOR") && ps.exists(_.contains("no where stated")), ps)
     val (_, ws) = checkSkeptic(
       a.modify(_.verdict).setTo(SkepticAnswer.Verdict("MINOR")).modify(_.findings).setTo(List(finding())),
@@ -459,7 +460,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
         _ => Some(record),
         minRatio,
         last = LastRound(false)
-      ).left.toOption.get
+      ).left.toOption.get.map(_.sentence)
     val nullText = problems(
       FixerAnswer(
         List(EditAnswer(Op.Replace, EditAnswer.Anchor("by sea"), None)),
@@ -522,7 +523,8 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
   private var noWorkDoi: PlanGoal.WorkAnswer.Doi = scala.compiletime.uninitialized
 
   test("check: an empty or null id, and a not-fixed check with no note, fail; a fixed check's note stays optional"):
-    def problems(c: CheckAnswer) = checkChecks(Reviewer.Rules, ledgerPrior, List(c), last = LastRound(false))._2
+    def problems(c: CheckAnswer) =
+      checkChecks(Reviewer.Rules, ledgerPrior, List(c), last = LastRound(false))._2.map(_.sentence)
     assert(
       problems(
         CheckAnswer(
@@ -598,7 +600,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
             )
           )
         )
-      ).left.toOption.get
+      ).left.toOption.get.map(_.sentence)
     assert(noNote.contains("check of R1: no note — say why it is not fixed (the fixer reads it)"), noNote)
     val ok = CheckAnswer(
       CheckAnswer.Id("R1"),
@@ -606,7 +608,8 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
       CheckAnswer.Quote("Tin reached the Aegean"),
       CheckAnswer.Note("")
     )
-    val noWhere = recheck(RecheckAnswer(List(ok), List(finding(where = FindingAnswer.Where(""))))).left.toOption.get
+    val noWhere =
+      recheck(RecheckAnswer(List(ok), List(finding(where = FindingAnswer.Where(""))))).left.toOption.get.map(_.sentence)
     assert(noWhere.exists(_.contains("no where stated")), noWhere)
     assertEquals(
       recheck(
@@ -647,7 +650,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
         _ => Some(record),
         minRatio,
         last = LastRound(false)
-      ).left.toOption.get
+      ).left.toOption.get.map(_.sentence)
     assert(
       problems(WontFixAnswer(WontFixAnswer.Id(""), ReviewArticle.Rationale("wordy, but exact"))).contains(
         "a won't-fix with no id — give the id of the minor finding you decline"

@@ -454,7 +454,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
     assert(
       back.left.exists(
         _.exists(
-          _.startsWith(
+          _.sentence.startsWith(
             "S1 is listed as applied, but [[zz2024_iso]] and [[knapp2016_tin]] are not cited in one paragraph"
           )
         )
@@ -582,7 +582,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
     assert(
       back.left.exists(
         _.exists(
-          _.contains(
+          _.sentence.contains(
             "your edits cite [[zz2020_new]], whose recorded critiques no paragraph discusses: zz2021_crit>zz2020_new (challenges)"
           )
         )
@@ -679,7 +679,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
     )
     assert(
       back.left.exists(
-        _.exists(_.startsWith("your edits reopen a closed finding — R1 (closed): the text it fixed is back"))
+        _.exists(_.sentence.startsWith("your edits reopen a closed finding — R1 (closed): the text it fixed is back"))
       ),
       back
     )
@@ -755,7 +755,8 @@ class ReviewConvergenceSuite extends munit.FunSuite:
       ReviewArticle.FixerAnswer.Notes("")
     )
     assert(
-      fix(m, a, last = LastRound(false)).left.exists(_.contains("major finding R1 is neither applied nor rejected"))
+      fix(m, a, last = LastRound(false)).left
+        .exists(_.map(_.sentence).contains("major finding R1 is neither applied nor rejected"))
     )
     val (f, _) = fix(m, a, last = LastRound(true)).toOption.get
     assertEquals(

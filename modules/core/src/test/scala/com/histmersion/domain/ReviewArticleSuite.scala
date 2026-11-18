@@ -118,7 +118,9 @@ class ReviewArticleSuite extends munit.FunSuite:
       Nil,
       Nil
     )
-    assert(checkRules(a, last = ReviewArticle.CheckRulesLast(false)).left.exists(_.exists(_.contains("'severe'"))))
+    assert(
+      checkRules(a, last = ReviewArticle.CheckRulesLast(false)).left.exists(_.exists(_.sentence.contains("'severe'")))
+    )
     val (r, ws) = checkRules(a, last = ReviewArticle.CheckRulesLast(true)).toOption.get
     assertEquals(r.findings.map(f => (f.id, f.severity)), List(("R1", Severity.Major)))
     assertEquals(r.verdict, Verdict.Major)
@@ -134,7 +136,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     )
     assert(
       checkRules(tooBad, last = ReviewArticle.CheckRulesLast(false)).left
-        .exists(_.exists(_.contains("no finding is major")))
+        .exists(_.exists(_.sentence.contains("no finding is major")))
     )
     assertEquals(checkRules(tooBad, last = ReviewArticle.CheckRulesLast(true)).map(_._1.verdict), Right(Verdict.Minor))
     val tooMild = RulesAnswer(
@@ -623,7 +625,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       record.get,
       minRatio,
       last
-    )
+    ).left.map(_.map(_.sentence))
 
   test("fixer: edits applied to the reviewed body, every major decided and a quoted rejection pass"):
     val a = FixerAnswer(
@@ -954,7 +956,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       minRatio,
       last,
       c
-    )
+    ).left.map(_.map(_.sentence))
 
   test("fixer (#958): an unplaced source is answered with a reason — no edit needed; the reasons are checked"):
     val ok = FixerAnswer(
@@ -1265,7 +1267,8 @@ class ReviewArticleSuite extends munit.FunSuite:
         ReviewArticle.CheckAnswer.Note("")
       )
     )
-    val (cs, ps, ws) = checkChecks(Reviewer.Rules, prior, bad, last = ReviewArticle.LastRound(false))
+    val (cs, problems, ws) = checkChecks(Reviewer.Rules, prior, bad, last = ReviewArticle.LastRound(false))
+    val ps = problems.map(_.sentence)
     assertEquals((cs, ws), (Nil, Nil))
     assert(ps.exists(_.startsWith("check of R1: the quote is not in the current article")), ps)
     assert(ps.exists(_.startsWith("check of 'S2': not one of the findings you were asked to check (R1, R4)")), ps)
@@ -1591,7 +1594,7 @@ class ReviewArticleSuite extends munit.FunSuite:
         minRatio,
         ReviewArticle.LastRound(false),
         c
-      )
+      ).left.map(_.map(_.sentence))
     val base = FixerAnswer(
       List(gloss),
       List(Finding.Id("C1")),
@@ -1739,8 +1742,9 @@ class ReviewArticleSuite extends munit.FunSuite:
   test(
     "spot-checks: an answer from the brief alone (no tool call) is sent back, and kept with a warning on the last attempt"
   ):
-    val (ok, ps, ws) =
+    val (ok, problems, ws) =
       checkSpotChecks(List(spotTin, spotIso), rule(Nil), spotEv, last = ReviewArticle.CheckSpotChecksLast(false))
+    val ps = problems.map(_.sentence)
     assertEquals((ok, ws), (Nil, Nil))
     assert(ps.head.startsWith("spot-checks: 0 of the 2 required are verified"), ps)
     assert(ps.head.contains("0 get_source/passages call(s)"), ps)
@@ -1751,7 +1755,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     assert(ws2.nonEmpty && ws2.forall(_.startsWith("rules: unverified — ")), ws2)
     // no spot-check at all is the same
     assert(
-      checkSpotChecks(Nil, rule(Nil), spotEv, last = ReviewArticle.CheckSpotChecksLast(false))._2.head
+      checkSpotChecks(Nil, rule(Nil), spotEv, last = ReviewArticle.CheckSpotChecksLast(false))._2.head.sentence
         .startsWith("spot-checks: 0 of the 2")
     )
 
@@ -1759,7 +1763,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     val twice = List(spotTin, spotTin.modify(_.claim).setTo(SpotCheckAnswer.Claim("Two dates are argued")))
     val (_, ps, _) =
       checkSpotChecks(twice, rule(List(read("knapp2016_tin"))), spotEv, last = ReviewArticle.CheckSpotChecksLast(false))
-    assert(ps.head.startsWith("spot-checks: 1 of the 2 required"), ps)
+    assert(ps.head.sentence.startsWith("spot-checks: 1 of the 2 required"), ps)
     assertEquals(
       checkSpotChecks(
         twice,
@@ -1778,7 +1782,7 @@ class ReviewArticleSuite extends munit.FunSuite:
         rule(calls, required = ReviewArticle.SpotRule.Required(1)),
         spotEv,
         last = ReviewArticle.CheckSpotChecksLast(false)
-      )._2.drop(1).head
+      )._2.drop(1).head.sentence
     assert(
       problem(spotTin.modify(_.citekey).setTo(SpotCheckAnswer.Citekey("atlantis")))
         .contains("the article does not cite it")
@@ -1823,7 +1827,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       "no rule: nothing required (a verification pass, a test)"
     )
     val missing = checkRules(a, last = ReviewArticle.CheckRulesLast(false), spotEv, spots = Some(rule(Nil)))
-    assert(missing.left.exists(_.head.startsWith("spot-checks: 0 of the 2")), missing)
+    assert(missing.left.exists(_.head.sentence.startsWith("spot-checks: 0 of the 2")), missing)
     val done = checkRules(
       a,
       last = ReviewArticle.CheckRulesLast(false),

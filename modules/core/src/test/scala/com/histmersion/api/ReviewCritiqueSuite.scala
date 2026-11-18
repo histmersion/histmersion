@@ -3,6 +3,7 @@ package api
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -177,7 +178,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
       last = ReviewArticle.CheckCritiquesLast(false)
     )
     assert(
-      ps.size == 1 && ps.head.contains(
+      ps.size == 1 && ps.head.sentence.contains(
         "S1 (missing-critique, major) names no pair of the critique checklist (its `pair` is empty)"
       ),
       ps
@@ -234,7 +235,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
     assert(hw.exists(_.contains("S8 (missing-critique, major)")), hw)
     // the quote is not in the article: back on a full panel's skeptic, minor on the last attempt and in a re-check
     val (_, ps, _) = one(mc(Finding.Id("S9"), Some(CritiqueRef.Wire("smith1987_dying>frazer1922_golden"))))
-    assert(ps.exists(_.contains("S9 (missing-critique, major): its quote is not in the article")), ps)
+    assert(ps.exists(_.sentence.contains("S9 (missing-critique, major): its quote is not in the article")), ps)
     assertEquals(
       one(
         mc(Finding.Id("S9"), Some(CritiqueRef.Wire("smith1987_dying>frazer1922_golden"))),
@@ -437,7 +438,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
     // one pair left without a ruling: sent back, a warning on the last attempt
     val (_, ps2, _) = checkNotMaterial(Nil, fs, pass1, last = ReviewArticle.CheckNotMaterialLast(false))
     assert(
-      ps2.size == 1 && ps2.head.startsWith(
+      ps2.size == 1 && ps2.head.sentence.startsWith(
         "open pairs of the critique checklist without a ruling: brown1999_rites>frazer1922_golden — "
       ),
       ps2
@@ -661,7 +662,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
     )
     assertEquals((none, noPair), (Nil, Nil))
     assertEquals(
-      bad.map(_.takeWhile(_ != ':')),
+      bad.map(_.sentence.takeWhile(_ != ':')),
       List(
         "set aside R1",
         "set aside S2",
