@@ -33,6 +33,7 @@ import java.util.concurrent.{CompletableFuture, ConcurrentHashMap, TimeoutExcept
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
 import javax.sql.DataSource
 import scala.jdk.OptionConverters.*
+import scala.util.control.NonFatal
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.jobs.JobState
 import com.histmersion.api.automation.Agents.PauseReason
@@ -146,8 +147,9 @@ final class IngestQueue(
       val _ = probe.thenAccept(r => convHealth.set((clock.millis(), r)))
       try probe.get(math.max(1, c.healthTimeoutMs.value).toLong, TimeUnit.MILLISECONDS)
       catch
-        case _: TimeoutException => timedOut
-        case e: Throwable        => s"degraded: ${e.getClass.getSimpleName}"
+        case _: TimeoutException     => timedOut
+        case e: InterruptedException => s"degraded: ${e.getClass.getSimpleName}"
+        case NonFatal(e)             => s"degraded: ${e.getClass.getSimpleName}"
 
   // ── the job body ───────────────────────────────────────────────────────────────────────────
 

@@ -8,6 +8,7 @@ import com.histmersion.api.plugins.PluginsMarkdown
 import com.histmersion.config.{AppConfig, Environment, UserPaths}
 import com.histmersion.domain.library.acquisition.CoreBudget
 import ox.{never, supervised}
+import scala.annotation.nowarn
 import com.histmersion.util.console.Console
 import com.histmersion.util.access.AccessPolicy
 
@@ -91,7 +92,8 @@ import com.histmersion.util.access.AccessPolicy
           Supervisor.reloadSource(loaded, reread, system.userPaths)
         )
       catch
-        case e: Throwable =>
+        // the process edge: every Throwable ends it with exit 3, or the threads started so far could keep it alive
+        case e: (Throwable @nowarn("id=E235")) =>
           scribe.error(s"Histmersion could not start its bundled runtime: ${e.getMessage}")
           sys.exit(3)
   // a LaunchAgent (launchd names its job in XPC_SERVICE_NAME) or a systemd unit (INVOCATION_ID) starts the
@@ -124,14 +126,16 @@ import com.histmersion.util.access.AccessPolicy
           system = system
         )
       catch
-        case e: Throwable =>
+        // the process edge: every Throwable ends it with exit 3, or the threads started so far could keep it alive
+        case e: (Throwable @nowarn("id=E235")) =>
           scribe.error(s"Histmersion failed to start: ${e.getClass.getName}: ${e.getMessage}", e)
           sys.exit(3)
     // every address of server.host; one that cannot be bound (taken, not this machine's) stops the start
     val bound =
       try srv.start()
       catch
-        case e: Throwable =>
+        // the process edge: every Throwable ends it with exit 3, or the threads started so far could keep it alive
+        case e: (Throwable @nowarn("id=E235")) =>
           scribe.error(s"Histmersion could not listen on ${srv.binds.toVector.mkString(", ")}: ${e.getMessage}", e)
           sys.exit(3)
     val urls = bound.toVector.zip(srv.binds.toVector).map { (b, h) =>

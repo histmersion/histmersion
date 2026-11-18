@@ -14,6 +14,8 @@ import javax.sql.DataSource
 import com.histmersion.api.jobs.{JobDetail, JobInfo, JobState}
 import com.histmersion.api.Api
 import io.github.iltotore.iron.constraint.any.Pure
+import scala.annotation.nowarn
+import scala.util.control.NonFatal
 
 /** The ONE way the server runs work longer than a request as a background job (#1946): a `jobs` row (`histmersion jobs
   * <id>` follows it; a restart fails it as `interrupted` like every other unfinished job), on its own daemon thread, at
@@ -116,7 +118,8 @@ object BackgroundJob:
       val job =
         try Transactor(ds).transact(JobRepo.create(kind, None, None, detail = detail))
         catch
-          case e: Throwable =>
+          // frees the slot and rethrows: every Throwable, or a fatal one would leave the slot claimed for good
+          case e: (Throwable @nowarn("id=E235")) =>
             slot.free()
             throw e
       launch(ds, job, kind, slot, what, busyCode, pins, stops, JobState.Queued, body)
@@ -164,7 +167,11 @@ object BackgroundJob:
           try (body(job, report), None)
           catch
             case s: JobStopped => (Outcome.failed(Problem.Run.Cancelled(Problem.Run.Actor.Person)), Some(s.stop))
-            case e: Throwable  => (Outcome.failed(describe(e)), None)
+            // an interrupt is the job's interruption (`describe`), and a deep recursion fails this job alone: its
+            // stack is unwound here
+            case e: InterruptedException => (Outcome.failed(describe(e)), None)
+            case e: StackOverflowError   => (Outcome.failed(describe(e)), None)
+            case NonFatal(e)             => (Outcome.failed(describe(e)), None)
         val asked = stops.flatMap(_.requestedFor(id))
         stops.foreach(_.answered(id))
         val _ = ending(out, thrown, asked) match

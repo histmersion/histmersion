@@ -22,6 +22,7 @@ import sttp.shared.Identity
 import java.util.concurrent.{ConcurrentHashMap, LinkedBlockingQueue, Semaphore}
 import javax.sql.DataSource
 import scala.jdk.CollectionConverters.*
+import scala.util.control.NonFatal
 import com.histmersion.api.automation.{AgentsApi, AgentsMarkdown, PlanQuota}
 import com.histmersion.api.Api
 import com.histmersion.domain.automation.Run
@@ -371,7 +372,7 @@ final class Engine(
       }
     catch
       case _: InterruptedException => ()
-      case e: Throwable            => scribe.error(s"agent pool died: ${e.getMessage}", e)
+      case NonFatal(e)             => scribe.error(s"agent pool died: ${e.getMessage}", e)
 
   private def worker(): Unit =
     var alive = true // the loop's exit flag; interruption of the pool clears it

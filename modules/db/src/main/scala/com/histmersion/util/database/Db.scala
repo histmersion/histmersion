@@ -11,6 +11,7 @@ import com.zaxxer.hikari.HikariDataSource
 import org.postgresql.ds.PGSimpleDataSource
 import java.sql.SQLException
 import javax.sql.DataSource
+import scala.util.control.NonFatal
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Postgres connection pools from the HOCON config (see [[AppConfig]] / reference.conf).
@@ -169,7 +170,7 @@ object Db:
   def evict(ds: DataSource): Unit =
     hikari(ds).foreach { p =>
       try Option(p.getHikariPoolMXBean).foreach(_.softEvictConnections())
-      catch case e: Throwable => scribe.warn(s"could not evict ${p.getPoolName}: ${e.getMessage}")
+      catch case NonFatal(e) => scribe.warn(s"could not evict ${p.getPoolName}: ${e.getMessage}")
     }
 
   /** Can we actually connect as the read-only role? Checked once at startup, so a misconfigured password is a log line
@@ -181,5 +182,5 @@ object Db:
       try Right(())
       finally c.close()
     catch
-      case e: Throwable =>
+      case NonFatal(e) =>
         Left(Problem.Io.Database(Problem.Io.DbOp.Connect, External.Reported.of(e)))

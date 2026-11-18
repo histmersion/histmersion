@@ -5,6 +5,7 @@ import com.histmersion.api.personal.ItemKey
 import com.histmersion.web.{LibrarySection, Pages, Route}
 
 import scala.scalajs.js
+import scala.util.control.NonFatal
 
 /** What a Library list shows and has chosen, in the address: `/library?item=<citekey>`,
   * `/library/articles?item=<slug>`, a shelf of My library (`/library?shelf=bookmarks`) — so the choice survives a
@@ -43,4 +44,4 @@ object LibraryAddress:
 
   private def decode(v: String): String =
     try js.URIUtils.decodeURIComponent(v.replace('+', ' '))
-    catch case _: Throwable => v
+    catch case NonFatal(_) => v

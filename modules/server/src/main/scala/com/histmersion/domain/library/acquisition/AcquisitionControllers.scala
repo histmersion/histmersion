@@ -61,6 +61,7 @@ import com.histmersion.domain.automation.goals.GoalService
 import com.histmersion.domain.automation.Goal
 import com.histmersion.api.library.AcquireApi
 import com.histmersion.api.catalogue.Year
+import scala.util.control.NonFatal
 import com.histmersion.domain.library.search.Search
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.library.ArxivId
@@ -471,7 +472,7 @@ final class AcquisitionControllers(
             )
             scribe.info(s"acquire: Retraction Watch refreshed — $n row(s)")
       catch
-        case e: Throwable =>
+        case NonFatal(e) =>
           rwError.set(Some(ProblemLog.unexpected(e, Problem.Where("the Retraction Watch refresh"))))
       finally rwRunning.set(false))
       val _ = Thread.ofVirtual().name("retraction-watch-refresh").start(() => work.run())

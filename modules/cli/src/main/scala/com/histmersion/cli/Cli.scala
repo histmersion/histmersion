@@ -9,7 +9,7 @@ import com.histmersion.api.library.Tree
 import com.histmersion.api.library.SearchMarkdown
 import com.histmersion.api.library.SourcesMarkdown
 
-import scala.annotation.tailrec
+import scala.annotation.{nowarn, tailrec}
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.{Api, Markdown}
 import com.histmersion.config.*
@@ -209,7 +209,9 @@ object Cli:
     // is NOT probed up front: a command that needs it says what to do instead of the trace
     try runCommand(args)
     catch
-      case t: Throwable if WorkingDir.denied(t) =>
+      // every Throwable, narrowed by the guard: the failure often arrives inside an ExceptionInInitializerError, a
+      // LinkageError that NonFatal would let through
+      case t: (Throwable @nowarn("id=E235")) if WorkingDir.denied(t) =>
         err.println(WorkingDir.message)
         sys.exit(3)
 

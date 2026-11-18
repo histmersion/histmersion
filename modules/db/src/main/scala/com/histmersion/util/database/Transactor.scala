@@ -3,6 +3,7 @@ package util.database
 
 import com.augustnagro.magnum.{connect as connectTo, transact as transactOn, DbCon}
 import javax.sql.DataSource
+import scala.annotation.nowarn
 import io.github.iltotore.iron.constraint.any.Pure
 
 trait Transactor:
@@ -50,7 +51,8 @@ object Transactor:
           transactionOpen = false
         result
       catch
-        case error: Throwable =>
+        // records and rethrows: every Throwable, or a fatal one would be replaced by a cleanup failure below
+        case error: (Throwable @nowarn("id=E235")) =>
           primary = error
           throw error
       finally
@@ -60,7 +62,8 @@ object Transactor:
             action
             true
           catch
-            case error: Throwable =>
+            // collected, then rethrown or suppressed on the primary: every Throwable, so each cleanup step still runs
+            case error: (Throwable @nowarn("id=E235")) =>
               if cleanup == null then cleanup = error
               else if cleanup ne error then cleanup.addSuppressed(error)
               false

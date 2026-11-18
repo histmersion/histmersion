@@ -10,6 +10,7 @@ import org.flywaydb.core.api.ResourceProvider
 import org.flywaydb.core.api.resource.LoadableResource
 import java.io.{InputStreamReader, Reader}
 import java.nio.charset.Charset
+import scala.annotation.nowarn
 import scala.jdk.CollectionConverters.*
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -137,7 +138,8 @@ object Migrate:
               true
           finally st.close()
         catch
-          case e: Throwable =>
+          // rolls back and rethrows: every Throwable, so no failure leaves the history change half done
+          case e: (Throwable @nowarn("id=E235")) =>
             c.rollback()
             throw e
     finally c.close()

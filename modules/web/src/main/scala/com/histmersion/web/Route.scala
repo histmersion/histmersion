@@ -5,6 +5,7 @@ import com.histmersion.api.HtmlAtoms
 import com.histmersion.api.automation.Queue
 
 import scala.scalajs.js
+import scala.util.control.NonFatal
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A page of the web UI, by its address. Every page and every item has a real path, so each can be bookmarked, shared,
@@ -115,7 +116,7 @@ object Route:
 
   private def decode(s: String): String =
     try js.URIUtils.decodeURIComponent(s)
-    catch case _: Throwable => s
+    catch case NonFatal(_) => s
 
   /** The page an address stands for; `None` for one the web UI does not know. The root and the old addresses of the
     * lists (`/acquire`, `/tasks`, `/log`, `/merge`) are [[legacy]]'s.

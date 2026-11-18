@@ -11,6 +11,7 @@ import com.histmersion.util.jobs.JobRepo
 import javax.sql.DataSource
 import java.util.concurrent.LinkedBlockingQueue
 import io.github.iltotore.iron.constraint.any.Pure
+import scala.util.control.NonFatal
 
 /** The bounded OCR worker pool (plan §1.8).
   *
@@ -95,8 +96,9 @@ final class JobPool(
     try run(id)
     catch
       case e: InterruptedException => throw e
-      case e: Throwable            =>
-        // a worker must outlive one bad job: record the failure and take the next id
+      // a worker must outlive one bad job, a deep recursion included (its stack is unwound here): record the failure
+      // and take the next id
+      case e @ (NonFatal(_) | _: StackOverflowError) =>
         val _ = Transactor(ds).transact(
           JobRepo.transition(
             id,
@@ -125,7 +127,7 @@ final class JobPool(
       }
     catch
       case _: InterruptedException => () // stop() — expected
-      case e: Throwable            => scribe.error(s"job pool died: ${e.getMessage}", e)
+      case NonFatal(e)             => scribe.error(s"job pool died: ${e.getMessage}", e)
 
   private def worker(): Unit =
     var running = true // the loop's exit flag; interruption clears it
@@ -136,7 +138,7 @@ final class JobPool(
         try q.work.run()
         catch
           case e: InterruptedException => throw e
-          case e: Throwable            => scribe.error(s"job ${q.id}: recording its failure failed: ${e.getMessage}", e)
+          case NonFatal(e)             => scribe.error(s"job ${q.id}: recording its failure failed: ${e.getMessage}", e)
       catch case _: InterruptedException => running = false
 
 object JobPool:

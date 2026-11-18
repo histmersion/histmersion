@@ -12,6 +12,7 @@ import hearth.kindlings.optics.syntax.*
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.library.Source
 import io.github.iltotore.iron.constraint.any.Pure
+import scala.util.control.NonFatal
 
 /** Seed the library from a folder of `wiki/sources/` notes. Idempotent (a put by citekey).
   *
@@ -59,7 +60,7 @@ final class SeedImport(
                 if found.nonEmpty then
                   val _ = addFigures(ck, found)
                 Right(None)
-      catch case e: Throwable => Left(s"$name: ${e.getMessage}")
+      catch case NonFatal(e) => Left(s"$name: ${e.getMessage}")
     }
     // unify short tag targets → full citekeys (all sources now present)
     val resolved = sources.resolveEdges(Caller.Local)

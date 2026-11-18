@@ -11,6 +11,7 @@ import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
+import scala.util.control.NonFatal
 import com.histmersion.api.{Api, Paging}
 import com.histmersion.api.automation.{Activity, ActivityMarkdown, Agents, Approval, Goal, Queue}
 import com.histmersion.api.instance.UiConfig
@@ -79,7 +80,7 @@ object ActivityView:
       .collectFirst {
         case Array(k, v) if k == name.value && v.nonEmpty =>
           try js.URIUtils.decodeURIComponent(v.replace('+', ' '))
-          catch case _: Throwable => v
+          catch case NonFatal(_) => v
       }
       .map(_.trim)
       .filter(_.nonEmpty)

@@ -17,6 +17,7 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.util.concurrent.{CompletableFuture, ConcurrentHashMap, Semaphore, TimeUnit}
 import com.histmersion.api.basemap.Basemap
 import io.github.iltotore.iron.constraint.any.Pure
+import scala.annotation.nowarn
 
 /** A layer's tiles read when a page shows them, beyond what was downloaded (docs/research-terrain-basemap.md,
   * "On-demand relief"; #3760 for the map and the sea floor): the server reads just those tiles from the provider — by
@@ -322,7 +323,8 @@ final class OnDemandTiles(
                 mine.complete(r)
                 r
               catch
-                case e: Throwable =>
+                // answers the waiting readers and rethrows: every Throwable, or they would wait out their timeout
+                case e: (Throwable @nowarn("id=E235")) =>
                   mine.complete(
                     Left(ProblemLog.unexpected(e, Problem.Where(s"reading tile ${key.value}")))
                   )

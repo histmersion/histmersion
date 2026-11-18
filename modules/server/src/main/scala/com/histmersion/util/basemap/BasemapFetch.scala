@@ -21,6 +21,7 @@ import com.histmersion.util.storage.ByteSource
 
 import java.io.IOException
 import java.nio.charset.StandardCharsets.UTF_8
+import scala.annotation.nowarn
 import scala.collection.mutable
 import scala.util.Using
 import com.histmersion.api.backup.Backup
@@ -480,7 +481,8 @@ object BasemapFetch:
         case Right(n) =>
           Right((writer.finish(header, metadata), TileCount(n)))
     catch
-      case e: Throwable =>
+      // aborts the partial archive and rethrows: every Throwable, so no failure leaves a half-written file
+      case e: (Throwable @nowarn("id=E235")) =>
         writer.abort()
         throw e
     finally readers.values.foreach(_.close())
