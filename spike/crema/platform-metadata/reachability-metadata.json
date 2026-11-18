@@ -1,0 +1,9 @@
+{
+  "reflection": [
+    { "type": "hearth.kindlings.sconfigderivation.ConfigReader", "allDeclaredFields": true, "allDeclaredMethods": true, "allDeclaredConstructors": true },
+    { "type": "hearth.kindlings.sconfigderivation.ConfigReader$", "allDeclaredFields": true, "allDeclaredMethods": true, "allDeclaredConstructors": true },
+    { "type": "hearth.kindlings.sconfigderivation.ConfigDecodingError", "allDeclaredFields": true, "allDeclaredMethods": true, "allDeclaredConstructors": true },
+    { "type": "hearth.kindlings.sconfigderivation.SConfig", "allDeclaredFields": true, "allDeclaredMethods": true, "allDeclaredConstructors": true },
+    { "type": "hearth.kindlings.sconfigderivation.SConfig$", "allDeclaredFields": true, "allDeclaredMethods": true, "allDeclaredConstructors": true }
+  ]
+}

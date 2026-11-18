@@ -571,6 +571,36 @@ lazy val pluginHello = project
   )
   .settings(commonDeps)
 
+// SPIKE S7 ONLY (branch contracts3-crema-spike, never merged): a driver that runs the plugin SPI in a native image
+// with and without -H:+RuntimeClassLoading; spike/crema/run.sh links it. `cremaClasspath` writes the Sloth-patched
+// Runtime class path to target/crema-classpath.txt.
+val cremaClasspath = taskKey[File]("Write the Sloth-patched class path of the Crema spike driver")
+
+lazy val cremaSpike = project
+  .in(file("spike/crema/driver"))
+  .dependsOn(pluginTestkit)
+  .settings(
+    name := "histmersion-crema-spike",
+    publish / skip := true,
+    Compile / mainClass := Some("com.histmersion.spike.crema.CremaMain"),
+    cremaClasspath := Def.uncached {
+      val conv = fileConverter.value
+      val entries = (Runtime / fullClasspath).value.map(a => conv.toPath(a.data).toFile)
+      val cp = Sloth.patch(
+        streams.value.log,
+        (ThisBuild / slothJar).value,
+        entries,
+        target.value / "sloth",
+        (ThisBuild / baseDirectory).value / "target" / "sloth-store"
+      )
+      val out = target.value / "crema-classpath.txt"
+      IO.write(out, cp.mkString(java.io.File.pathSeparator))
+      IO.write(target.value / "crema-classpath-orig.txt", entries.mkString(java.io.File.pathSeparator))
+      out
+    }
+  )
+  .settings(commonDeps)
+
 lazy val pluginHelloAi = project
   .in(file("modules/plugin-fixtures/hello-ai"))
   .dependsOn(pluginApi)
