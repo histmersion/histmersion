@@ -17,7 +17,7 @@ class ModelInventoryVerification extends SyntacticRule("ModelInventoryVerificati
     run("compile",List("scala-cli","compile",source,"--server=false","-S","3.10.0","--scalac-option","-source:future",
       "--scalac-option","-Xsemanticdb","--scalac-option","-sourceroot","--scalac-option",Paths.get("").toAbsolutePath.toString,
       "--dep","io.github.iltotore::iron:3.4.1","--compilation-output","target/model-fixture-classes"))
-    val cli = List("scala-cli","run","--server=false","-q","-S","2.13.18","--dep","ch.epfl.scala:scalafix-cli_2.13.18:0.14.9","--main-class","scalafix.cli.Cli","--")
+    val cli = List("bash","tools/refactor/scalafix.sh") // the build's Scalafix; the fixture names its own --scala-version
     val args = List("--scala-version","3.10.0","--sourceroot",".","--classpath","target/model-fixture-classes","--files",source)
     run("positive",cli ++ List("--config","tools/refactor/model-fixture/inspect.conf") ++ args)
     def rows(name: String) = Files.readAllLines(Paths.get("target/model-fixture-report",name),UTF_8).asScala.drop(1).map(_.split("\t",-1).toList).toList

@@ -17,7 +17,7 @@ class SchemaVerification extends SyntacticRule("SchemaVerification") {
     val scala = List("--server=false", "-S", "3.10.0", "--scalac-option", "-source:future",
       "--scalac-option", "-Xsemanticdb", "--scalac-option", "-sourceroot", "--scalac-option", Paths.get("").toAbsolutePath.toString,
       "--dep", "com.kubuszok::kindlings-tapir-schema-derivation:0.3.3", "--dep", "com.kubuszok::kindlings-circe-derivation:0.3.3")
-    val cli = List("scala-cli", "run", "--server=false", "-q", "-S", "2.13.18", "--dep", "ch.epfl.scala:scalafix-cli_2.13.18:0.14.9", "--main-class", "scalafix.cli.Cli", "--")
+    val cli = List("bash", "tools/refactor/scalafix.sh") // the build's Scalafix; the fixture names its own --scala-version
     val fixture = "tools/refactor/schema-fixture/"
     val output = "target/schema-fixture-output/src/main/scala"
     def fix(config: String, source: String, cp: String, extra: List[String] = Nil, expected: Int = 0): Unit =

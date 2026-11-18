@@ -62,7 +62,8 @@ class ProjectAssessment(val policy: ProjectAssessment.Policy) extends SyntacticR
     val code = process.waitFor()
     require(code == 0, s"$label failed with exit $code; see ${current.resolve(label + ".log")}")
   }
-  private val cli = List("scala-cli", "run", "--server=false", "-q", "-S", "2.13.18", "--dep", "ch.epfl.scala:scalafix-cli_2.13.18:0.14.9", "--main-class", "scalafix.cli.Cli", "--")
+  // Scalafix at the build's versions, with the build's Scala as --scala-version (target/build-versions.properties)
+  private val cli = List("bash", "tools/refactor/scalafix.sh")
   private def migration(p: Pipeline): Unit = {
     require(Set("plan", "apply")(p.mode), "Pipeline mode must be plan or apply")
     require(!policy.captureBaseline, "Migration cannot recapture the aggregate baseline")
@@ -113,7 +114,7 @@ class ProjectAssessment(val policy: ProjectAssessment.Policy) extends SyntacticR
     Files.createDirectories(output)
     write(output.resolve("status.txt"), List("RUNNING"))
     def stage(label: String, i: Invocation): Unit = {
-      val args = cli ++ List("--config", i.config, "--scala-version", "3.10.1") ++
+      val args = cli ++ List("--config", i.config) ++
         (if (i.semantic) List("--sourceroot", ".", "--auto-classpath", "--auto-classpath-roots", "target/out") else Nil) ++
         i.files.flatMap(f => List("--files", f))
       println("Migration: " + label)
@@ -183,24 +184,24 @@ class ProjectAssessment(val policy: ProjectAssessment.Policy) extends SyntacticR
       val before = fingerprint(sourceFiles)
       val policyHash = fingerprint(policyInputs)
       val resourcesHash = fingerprint(resourceInputs)
-      run("example-preflight", cli ++ List("--rules", "file:tools/refactor/SourceExamplePreflight.scala", "--scala-version", "3.10.1", "--files", "tools/refactor/SourceExamplePreflight.scala"))
+      run("example-preflight", cli ++ List("--rules", "file:tools/refactor/SourceExamplePreflight.scala", "--files", "tools/refactor/SourceExamplePreflight.scala"))
       require(policyInputs.contains(Paths.get("tools/refactor/model-fixture/expected-primitives.tsv")),"Golden fixture expectations missing from policy fingerprint")
       if (policy.compile) run("compile", List("sbt", "--server", "-batch", "set every scalafmtOnCompile := false", "set ThisBuild / scalacOptions += \"-Xsemanticdb\"", "compile", "Test/compile"))
-      run("schema-fixtures", cli ++ List("--rules", "file:tools/refactor/SchemaVerification.scala", "--scala-version", "3.10.1", "--files", "tools/refactor/SchemaVerification.scala"))
-      run("model-fixtures", cli ++ List("--rules", "file:tools/refactor/ModelInventoryVerification.scala", "--scala-version", "3.10.1", "--files", "tools/refactor/ModelInventoryVerification.scala"))
-      run("operation-fixtures", cli ++ List("--rules", "file:tools/refactor/OperationInventoryVerification.scala", "--scala-version", "3.10.1", "--files", "tools/refactor/OperationInventoryVerification.scala"))
-      run("copy-fixtures", cli ++ List("--rules", "file:tools/refactor/CopyVerification.scala", "--scala-version", "3.10.1", "--files", "tools/refactor/CopyVerification.scala"))
-      run("copy-multiple-fixtures", cli ++ List("--config", "tools/refactor/copy-multiple-verification.conf", "--scala-version", "3.10.1", "--files", "tools/refactor/CopyVerification.scala"))
-      run("architecture-fixtures", cli ++ List("--rules", "file:tools/refactor/ArchitectureInventoryVerification.scala", "--scala-version", "3.10.1", "--files", "tools/refactor/ArchitectureInventoryVerification.scala"))
-      run("transaction-mode-fixtures", cli ++ List("--rules", "file:tools/refactor/TransactionModeVerification.scala", "--scala-version", "3.10.1", "--files", "tools/refactor/TransactionModeVerification.scala"))
-      run("build-inventory", cli ++ List("--config", "tools/refactor/build-inventory.conf", "--scala-version", "3.10.1", "--files", "tools/refactor/BuildInventory.scala"))
-      run("resource-inventory", cli ++ List("--config", "tools/refactor/resource-inventory.conf", "--scala-version", "3.10.1", "--files", "tools/refactor/ResourceInventory.scala"))
-      run("semantic", cli ++ List("--config", "tools/refactor/assessment-semantic.conf", "--scala-version", "3.10.1", "--sourceroot", ".", "--auto-classpath", "--auto-classpath-roots", "target/out", "--files", "modules"))
-      run("fixtures", cli ++ List("--config", "tools/refactor/assessment-fixtures.conf", "--scala-version", "3.10.1", "--sourceroot", ".", "--files", "modules", "--files", "tools/refactor/source-fixtures.scala", "--files", "tools/refactor/structure-fixtures.scala"))
+      run("schema-fixtures", cli ++ List("--rules", "file:tools/refactor/SchemaVerification.scala", "--files", "tools/refactor/SchemaVerification.scala"))
+      run("model-fixtures", cli ++ List("--rules", "file:tools/refactor/ModelInventoryVerification.scala", "--files", "tools/refactor/ModelInventoryVerification.scala"))
+      run("operation-fixtures", cli ++ List("--rules", "file:tools/refactor/OperationInventoryVerification.scala", "--files", "tools/refactor/OperationInventoryVerification.scala"))
+      run("copy-fixtures", cli ++ List("--rules", "file:tools/refactor/CopyVerification.scala", "--files", "tools/refactor/CopyVerification.scala"))
+      run("copy-multiple-fixtures", cli ++ List("--config", "tools/refactor/copy-multiple-verification.conf", "--files", "tools/refactor/CopyVerification.scala"))
+      run("architecture-fixtures", cli ++ List("--rules", "file:tools/refactor/ArchitectureInventoryVerification.scala", "--files", "tools/refactor/ArchitectureInventoryVerification.scala"))
+      run("transaction-mode-fixtures", cli ++ List("--rules", "file:tools/refactor/TransactionModeVerification.scala", "--files", "tools/refactor/TransactionModeVerification.scala"))
+      run("build-inventory", cli ++ List("--config", "tools/refactor/build-inventory.conf", "--files", "tools/refactor/BuildInventory.scala"))
+      run("resource-inventory", cli ++ List("--config", "tools/refactor/resource-inventory.conf", "--files", "tools/refactor/ResourceInventory.scala"))
+      run("semantic", cli ++ List("--config", "tools/refactor/assessment-semantic.conf", "--sourceroot", ".", "--auto-classpath", "--auto-classpath-roots", "target/out", "--files", "modules"))
+      run("fixtures", cli ++ List("--config", "tools/refactor/assessment-fixtures.conf", "--sourceroot", ".", "--files", "modules", "--files", "tools/refactor/source-fixtures.scala", "--files", "tools/refactor/structure-fixtures.scala"))
       require(before == fingerprint(sourceFiles), "Application sources changed during assessment")
       require(policyHash == fingerprint(policyInputs), "Rule/configuration/fixture changed during assessment")
       require(resourcesHash == fingerprint(resourceInputs), "Build/configuration/object-plan/ledger inputs changed during assessment")
-      run("inventory-coverage", cli ++ List("--config", "tools/refactor/inventory-coverage.conf", "--scala-version", "3.10.1", "--files", "tools/refactor/InventoryCoverage.scala"))
+      run("inventory-coverage", cli ++ List("--config", "tools/refactor/inventory-coverage.conf", "--files", "tools/refactor/InventoryCoverage.scala"))
       val modules = sourceFiles.map(p => module(p.toString)).distinct.sorted
       val scopes = scala.collection.mutable.LinkedHashMap.empty[String, String]
       val hits = scala.collection.mutable.ListBuffer.empty[(String, String)]
@@ -266,8 +267,8 @@ class ProjectAssessment(val policy: ProjectAssessment.Policy) extends SyntacticR
       } else Nil
       write(current.resolve("status.txt"), List("MEASUREMENT_COMPLETE", s"zero-gate=${remaining.isEmpty}", s"no-regression-gate=${regressions.isEmpty}", "Architectural readiness remains separate; see structure/coverage-matrix.md"))
       require(remaining.isEmpty && regressions.isEmpty, s"Batch gate failed: remaining=$remaining regressions=$regressions")
-      run("capability-history", cli ++ List("--config", "tools/refactor/capability-history.conf", "--scala-version", "3.10.1", "--files", "tools/refactor/CapabilityHistory.scala"))
-      run("isolation-history", cli ++ List("--config", "tools/refactor/isolation-history.conf", "--scala-version", "3.10.1", "--files", "tools/refactor/IsolationHistory.scala"))
+      run("capability-history", cli ++ List("--config", "tools/refactor/capability-history.conf", "--files", "tools/refactor/CapabilityHistory.scala"))
+      run("isolation-history", cli ++ List("--config", "tools/refactor/isolation-history.conf", "--files", "tools/refactor/IsolationHistory.scala"))
       println("Assessment complete: " + current.resolve("summary.md"))
     } catch {
       case e: Exception =>

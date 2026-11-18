@@ -74,6 +74,10 @@ class PluginTemplateSuite extends munit.FunSuite:
       PluginTemplate.ClassName("MyPlugin")
     )
 
+  test("the GraalVM CE release is the first two parts of sdkman's name for the build"):
+    assertEquals(PluginTemplate.graalvmRelease("25.4.4.1+1-graalce"), "25.4")
+    assertEquals(PluginTemplate.graalvmRelease("21.0.2-graalce"), "21.0")
+
   test("the project is its build, two Scala files, a README, a .gitignore and the resources a plugin jar carries"):
     assertEquals(
       PluginTemplate.files(request("mirror")).map(_.path.value),
@@ -227,8 +231,9 @@ class PluginTemplateSuite extends munit.FunSuite:
       "**Updating.**",
       "histmersion plugin rm my-mirror --rebuild",
       "`enabled = false`",
-      "GraalVM CE 25.5",
-      "25.5.5.0+3-graalce",
+      // the JDK .sdkmanrc pins, through the build (PluginBuildVersions)
+      s"GraalVM CE ${PluginTemplate.graalvmRelease(PluginBuildVersions.graalvm)} (",
+      s"`sdk install java ${PluginBuildVersions.graalvm}`",
       "histmersion plugin repo --m2"
     ).foreach(step => assert(readme.contains(step), s"the README lacks: $step"))
     assert(

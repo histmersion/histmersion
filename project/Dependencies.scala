@@ -6,6 +6,13 @@ import sbt.*
   */
 object Dependencies {
   object V {
+    // THE Scala version: every module's compiler and library. Code outside sbt reads it from what `BuildVersions`
+    // writes; .sdkmanrc's `scala=` must name the same one (BuildVersionsSuite).
+    val scala = "3.10.1"
+    // ch.epfl.scala scalafix-cli and the Scala 2.13 it is published for: tools only (GuidelineRatchetSuite and the
+    // rules under tools/refactor read them from `BuildVersions`)
+    val scalafix = "0.14.9"
+    val scalafixScala = "2.13.18"
     val tapir = "1.14.1" // built with Scala 3.9: needs the 3.10 compiler the build uses
     val sttp = "4.1.3" // sttp client4 (CLI → server HTTP client); what tapir 1.14.1 is built with
     // io.netty — tapir-netty-server-sync brings netty-all 4.2.19; overridden build-wide to the newest 4.2 patch for its
@@ -39,5 +46,38 @@ object Dependencies {
     val apispec = "0.12.0" // com.softwaremill.sttp.apispec — what tapir 1.14 and sttp-ai 0.12 bring
     val coursierInterface = "1.0.30" // io.get-coursier — coursier's Java API, one shaded jar: the plugin resolver
     val scalaJavaTime = "2.11.0" // io.github.cquiroz — java.time for Scala.js (Queue, Backup)
+  }
+
+  /** The versions code outside sbt needs, in one `key=value` file: sbt writes it to `target/build-versions.properties`
+    * whenever it loads the build (scripts and tools/refactor read it there) and into the server's test resources
+    * (GuidelineRatchetSuite, BuildVersionsSuite). The JDK pin is not here: its source is .sdkmanrc and
+    * scripts/bundle/graalvm-pins.txt, which scripts read directly.
+    */
+  object BuildVersions {
+    val FileName = "build-versions.properties"
+
+    val entries: List[(String, String)] =
+      List("scala" -> V.scala, "scalafix" -> V.scalafix, "scalafixScala" -> V.scalafixScala)
+
+    val text: String = entries.map { case (k, v) => s"$k=$v\n" }.mkString
+
+    /** Writes `text` to `out` unless it holds it already: several sbt processes may load the same checkout. */
+    def write(out: File): File = {
+      if (!out.isFile || IO.read(out) != text) {
+        IO.createDirectory(out.getParentFile)
+        val tmp = java.nio.file.Files.createTempFile(out.getParentFile.toPath, out.getName, ".tmp")
+        IO.write(tmp.toFile, text)
+        val _ = java.nio.file.Files.move(tmp, out.toPath, java.nio.file.StandardCopyOption.REPLACE_EXISTING,
+          java.nio.file.StandardCopyOption.ATOMIC_MOVE)
+      }
+      out
+    }
+
+    /** A `key=value` line of .sdkmanrc (`java`, `sbt`, `scala`), the toolchain's pin. */
+    def sdkmanrc(base: File, key: String): Option[String] = {
+      val f = base / ".sdkmanrc"
+      if (!f.isFile) None
+      else IO.readLines(f).map(_.trim).collectFirst { case l if l.startsWith(key + "=") => l.stripPrefix(key + "=") }
+    }
   }
 }

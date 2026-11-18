@@ -18,7 +18,7 @@ class OperationInventoryVerification extends SyntacticRule("OperationInventoryVe
       "--scalac-option","-Xsemanticdb","--scalac-option","-sourceroot","--scalac-option",Paths.get("").toAbsolutePath.toString,
       "--dep","io.github.iltotore::iron:3.4.1","--dep","com.kubuszok::kindlings-tapir-schema-derivation:0.3.3",
       "--dep","com.kubuszok::kindlings-circe-derivation:0.3.3","--compilation-output","target/operation-fixture-classes"))
-    val cli = List("scala-cli","run","--server=false","-q","-S","2.13.18","--dep","ch.epfl.scala:scalafix-cli_2.13.18:0.14.9","--main-class","scalafix.cli.Cli","--")
+    val cli = List("bash","tools/refactor/scalafix.sh") // the build's Scalafix; the fixture names its own --scala-version
     val args = List("--scala-version","3.10.0","--sourceroot",".","--classpath","target/operation-fixture-classes","--files",source)
     run("positive",cli ++ List("--config","tools/refactor/operation-fixture/inspect.conf") ++ args)
     val rows = Files.readAllLines(Paths.get("target/operation-fixture-report/occurrences.tsv"),UTF_8).asScala.drop(1).map(_.split("\t",-1).toList).toList

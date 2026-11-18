@@ -24,7 +24,7 @@ class IsolationHistoryVerification extends SyntacticRule("IsolationHistoryVerifi
       }
       val conf = dir.resolve("check.conf")
       Files.write(conf,List("rules = [\"file:tools/refactor/IsolationHistory.scala\"]", "IsolationHistory.ledger = \"" + dir.toString + "\"").asJava)
-      val args = List("scala-cli","run","--server=false","-q","-S","2.13.18","--dep","ch.epfl.scala:scalafix-cli_2.13.18:0.14.9","--main-class","scalafix.cli.Cli","--",
+      val args = List("bash","tools/refactor/scalafix.sh",
         "--config",conf.toString,"--scala-version","3.10.0","--files","tools/refactor/IsolationHistory.scala")
       val code = new ProcessBuilder(args.asJava).redirectErrorStream(true).redirectOutput(dir.resolve("run.log").toFile).start().waitFor()
       require((code == 0) == (scenario == "unchanged"), "Unexpected exit for " + scenario)

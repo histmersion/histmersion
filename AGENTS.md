@@ -181,6 +181,10 @@ is a written reason.
   the chunker, bbox maths — all pure, all unit-testable with no database.
 - **`Either[…, A]` for expected failures.** 404, a bad citekey, a malformed filter, an unreachable
   server: these are values, not exceptions. Exceptions are for genuinely unexpected states.
+- **Catch `NonFatal(e)`, never `Throwable`.** Catching Throwable (E235) is a compile error (`-Wconf` in `build.sbt`).
+  A catch that cleans up and rethrows, or a process edge that must end the process, keeps every Throwable with
+  `case e: (Throwable @nowarn("id=E235"))` and a line saying why. `NonFatal` lets `InterruptedException` through: a
+  catch that relies on an interrupt names it in its own `case`.
 - **User output uses our `util.console.Console`, passed with `using`.** `Cli.out.println(...)` and
   `Cli.err.println(...)` resolve that contextual interface; they are not global streams. Raw streams and
   terminal input belong only to its adapter. Entry points choose adapters, with no global Console instance
@@ -775,6 +779,7 @@ formatted against `Locale.ROOT` (see `Backup.humanBytes`) — the default locale
 | Settings are keyed by **source position** | `key := value` inside a shared `def` makes the last caller win **for every project** | set it per-project inline — see `Compile / mainClass` in `build.sbt` |
 | Classpath entries are **virtual file refs** | `.data` is not a `java.io.File` | `fileConverter.value.toPath(a.data).toFile` |
 | Module output layout changed | it is **not** `modules/<m>/target/` | `target/out/jvm/<scalaVersion>/<name>/` — locate the artefact, never hardcode the path |
+| A version named in two places drifts | a bump misses one | every version (Scala, libraries, scalafix-cli) lives in `project/Dependencies.scala`; code outside sbt reads `target/build-versions.properties` (written on load; `bash tools/refactor/scalafix.sh --print scala`) or the server's test resource of the same name. sbt's own version is in `project/build.properties`, the JDK pin in `.sdkmanrc` and `scripts/bundle/graalvm-pins.txt`; `BuildVersionsSuite` checks `.sdkmanrc` and the plugin guide against the build |
 
 ## Docs and skills
 

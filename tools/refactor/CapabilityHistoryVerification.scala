@@ -28,7 +28,7 @@ class CapabilityHistoryVerification extends SyntacticRule("CapabilityHistoryVeri
       } == 1
     }
     require(selected >= 0,"Need an independently identifiable fixture observation")
-    val cli = List("scala-cli","run","--server=false","-q","-S","2.13.18","--dep","ch.epfl.scala:scalafix-cli_2.13.18:0.14.9","--main-class","scalafix.cli.Cli","--")
+    val cli = List("bash","tools/refactor/scalafix.sh") // the build's Scalafix; the fixture names its own --scala-version
     def run(label: String, mode: String, expected: Int, extra: List[String] = Nil): Unit = {
       val conf = root.resolve(label + ".conf")
       write(conf,List("rules = [\"file:tools/refactor/CapabilityHistory.scala\"]",s"CapabilityHistory { mode = $mode, report = \"$report\", ledger = \"$ledger\" }") ++ extra)

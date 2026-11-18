@@ -131,6 +131,9 @@ object PluginTemplate:
     case TemplateRepository.Remote(_) =>
       "The plugin API, the platform and the testkit come from the Maven repository named below."
 
+  /** The GraalVM CE release of sdkman's name for a build: `25.5` for `25.5.5.0+3-graalce`. Pure. */
+  private[cli] def graalvmRelease(sdkman: String): String = sdkman.split('.').take(2).mkString(".")
+
   private def header(r: Request): String = s"package ${r.pkg.value}\n\n"
 
   private def fill(r: Request, text: String): String =
@@ -150,7 +153,9 @@ object PluginTemplate:
       "@apiSources@" -> PluginArtifacts.path(PluginArtifacts.PathName(PluginArtifacts.Api), "-sources.jar").value,
       "@coordinates@" -> s"${r.pkg.value}::${r.id.value}:$FirstVersion",
       "@publishDir@" -> PublishDir,
-      "@projectProperty@" -> ProjectProperty
+      "@projectProperty@" -> ProjectProperty,
+      "@graalvm@" -> PluginBuildVersions.graalvm,
+      "@graalvmRelease@" -> graalvmRelease(PluginBuildVersions.graalvm)
     ).foldLeft(text) { case (t, (k, v)) => t.replace(k, v) }
 
   /** The fields Scala 3 lazy vals keep their value in (`<name>$lzy<n>`): a native image reaches them through a
@@ -247,7 +252,7 @@ object PluginTemplate:
       |## Install it from this directory
       |
       |You need an installed Histmersion (its `histmersion` CLI and the server), scala-cli, and a JDK: use the one
-      |Histmersion is built with, GraalVM CE 25.5 (`sdk install java 25.5.5.0+3-graalce`, then point `JAVA_HOME`
+      |Histmersion is built with, GraalVM CE @graalvmRelease@ (`sdk install java @graalvm@`, then point `JAVA_HOME`
       |at it). The Histmersion source repository is not needed.
       |
       |1. **Build and test**, offline:

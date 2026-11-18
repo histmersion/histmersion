@@ -21,7 +21,8 @@ object GuidelineInventory {
     emitLints: Boolean = false,
     requireCoverage: Boolean = true,
     projectPrefix: String = "com/histmersion/",
-    semanticdbRoots: List[String] = List("target/out/jvm/scala-3.10.1", "target/out/sjs1/scala-3.10.1"),
+    // `{scalaVersion}` is Scalafix's --scala-version: the build's (target/build-versions.properties)
+    semanticdbRoots: List[String] = List("target/out/jvm/scala-{scalaVersion}", "target/out/sjs1/scala-{scalaVersion}"),
     testMarkers: List[String] = List("/src/test/"),
     textBranchTypes: String = "(?i).*(problem|error|reason|refus|fail|why|because|message|detail|note|outcome|warning|stopped|state)(s|text)?",
     textBranchExceptions: String = "",
@@ -158,7 +159,7 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
     c.conf.getOrElse("GuidelineInventory")(Policy()).map { p =>
       val b = readBoundaries(p.boundaries)
       Option(Paths.get(p.report).getParent).foreach(Files.createDirectories(_))
-      new GuidelineInventory(p, b, readTextExceptions(p.textBranchExceptions), buildIndex(p.semanticdbRoots))
+      new GuidelineInventory(p, b, readTextExceptions(p.textBranchExceptions), buildIndex(p.semanticdbRoots.map(_.replace("{scalaVersion}", c.scalaVersion))))
     }
 
   private def ancestors(t: Tree): List[Tree] = t.parent.toList.flatMap(p => p :: ancestors(p))

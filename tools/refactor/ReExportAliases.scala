@@ -17,7 +17,8 @@ import scala.meta.internal.{semanticdb => s}
   * the same entity. A pair whose export the compiler or SymbolOracle rejects goes into `exclusions` and stays. */
 object ReExportAliases {
   case class Config(exclusions: String = "", ledger: String = "", scope: List[String] = List(""), packageExports: Boolean = true, rewritten: String = "",
-    semanticdbRoots: List[String] = List("target/out/jvm/scala-3.10.1", "target/out/sjs1/scala-3.10.1", ".semanticdb"))
+    // `{scalaVersion}` is Scalafix's --scala-version: the build's (target/build-versions.properties)
+    semanticdbRoots: List[String] = List("target/out/jvm/scala-{scalaVersion}", "target/out/sjs1/scala-{scalaVersion}", ".semanticdb"))
   object Config {
     implicit val surface: generic.Surface[Config] = generic.deriveSurface[Config]
     implicit val decoder: ConfDecoder[Config] = generic.deriveDecoder(Config()).noTypos
@@ -102,7 +103,7 @@ class ReExportAliases(config: ReExportAliases.Config, excluded: Set[String]) ext
         Files.readAllLines(Paths.get(cfg.exclusions), UTF_8).asScala.map(_.split("\t").head.trim).filter(l => l.nonEmpty && !l.startsWith("#")).toSet
       else Set.empty[String]
       if (cfg.ledger.nonEmpty) Option(Paths.get(cfg.ledger).getParent).foreach(Files.createDirectories(_))
-      new ReExportAliases(cfg, ex)
+      new ReExportAliases(cfg.copy(semanticdbRoots = cfg.semanticdbRoots.map(_.replace("{scalaVersion}", c.scalaVersion))), ex)
     }
   private val lock = new Object
 

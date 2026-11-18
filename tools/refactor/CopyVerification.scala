@@ -27,7 +27,7 @@ class CopyVerification(val policy: CopyVerification.Policy) extends SyntacticRul
     val output = policy.output + "/src/main/scala"
     val flags = List("--server=false","-S","3.10.0","--scalac-option","-source:future","--dep","com.kubuszok::kindlings-optics:0.3.3",
       "--scalac-option","-Xsemanticdb","--scalac-option","-sourceroot","--scalac-option",Paths.get("").toAbsolutePath.toString)
-    val cli = List("scala-cli","run","--server=false","-q","-S","2.13.18","--dep","ch.epfl.scala:scalafix-cli_2.13.18:0.14.9","--main-class","scalafix.cli.Cli","--")
+    val cli = List("bash","tools/refactor/scalafix.sh") // the build's Scalafix; the fixture names its own --scala-version
     def fix(mode: String, path: String, cp: String, extra: List[String] = Nil, code: Int = 0): Unit =
       run(mode,cli ++ List("--config",base + mode + ".conf","--scala-version","3.10.0","--sourceroot",".","--classpath",cp,"--files",path) ++ extra,code)
     run("input",List("scala-cli","run",input,"--main-class","lensfixture.verify","--compilation-output","target/copy-fixture-classes") ++ flags)

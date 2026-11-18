@@ -1,12 +1,26 @@
 // Histmersion — native Scala MCP server + host CLI over a Postgres/PostGIS store.
 // Direct-style SoftwareMill stack: Tapir + tapir-netty-server-sync, Chimp (MCP), jsoniter-scala (+Kindlings),
 // Ox, Magnum (sync JDBC). Toolchain (.sdkmanrc, `sdk env install && sdk env`): GraalVM CE 25.5 + native-image,
-// pinned in scripts/bundle/graalvm-pins.txt; sbt 2.1.0, also in project/build.properties.
+// pinned in scripts/bundle/graalvm-pins.txt; sbt in project/build.properties (.sdkmanrc names the same one).
 
 import Dependencies.*
 
-val scala3 = "3.10.1"
+// The Scala version, like every other version, lives in project/Dependencies.scala (`V.scala`)
+val scala3 = V.scala
 ThisBuild / scalaVersion := scala3
+
+// The GraalVM CE build .sdkmanrc pins (`java=`, sdkman's name for it): the plugin template tells a plugin author to
+// install it. The pin's sources are .sdkmanrc and scripts/bundle/graalvm-pins.txt; sbt only reads them.
+val sdkmanJava = settingKey[String]("The JDK .sdkmanrc pins, by sdkman's name (java=…)")
+ThisBuild / sdkmanJava := BuildVersions
+  .sdkmanrc((ThisBuild / baseDirectory).value, "java")
+  .getOrElse(sys.error(".sdkmanrc names no java= build"))
+
+// What code outside sbt reads the versions from (tools/refactor, scripts): written on every load of the build
+Global / onLoad := (Global / onLoad).value.andThen { state =>
+  val _ = BuildVersions.write(state.baseDir / "target" / BuildVersions.FileName)
+  state
+}
 ThisBuild / organization := "com.histmersion"
 ThisBuild / version := "0.1.0-SNAPSHOT"
 
@@ -39,6 +53,9 @@ ThisBuild / scalacOptions ++= Seq(
   // a pattern match on a non-Matchable type (E165: tapir's `Any` value matchers #829, decoded YAML
   // and JDBC arrays #879) is an ERROR anywhere in the build, so the warning cannot creep back unnoticed
   "-Wconf:id=E165:e",
+  // catching Throwable (E235) is an ERROR: `case NonFatal(e)`, or, where a catch cleans up and rethrows (or is a
+  // process edge), `case e: (Throwable @nowarn("id=E235"))` with a line that says why
+  "-Wconf:id=E235:e",
   // `==` and `!=` compile only between types with a `CanEqual` (G53): a newtype's own (its `Newtype` base), an enum's or
   // record's `derives CanEqual`, the standard library's; comparing two unrelated types is a compile error
   "-language:strictEquality"
@@ -1020,6 +1037,12 @@ lazy val server = project
       streams.value.log.info(s"plugin repository → $repo")
       repo
     },
+    // the versions of project/Dependencies.scala (`BuildVersions`): GuidelineRatchetSuite runs Scalafix with them
+    Test / resourceGenerators += Def.task {
+      val out = (Test / resourceManaged).value / BuildVersions.FileName
+      if !out.exists() || IO.read(out) != BuildVersions.text then IO.write(out, BuildVersions.text)
+      Seq(out)
+    }.taskValue,
     // the test plugins' jars (modules/plugin-fixtures), for the suites that install, describe and check
     // a third-party plugin — never on the server's own class path — and the plugin platform as the
     // contract file has it and as the build resolves it (PluginPlatformSuite compares them)
@@ -1218,6 +1241,7 @@ lazy val cli = project
            |  val organization: String = "${organization.value}"
            |  val histmersion: String  = "${version.value}"
            |  val munit: String        = "${V.munit}"
+           |  val graalvm: String      = "${(ThisBuild / sdkmanJava).value}"
            |""".stripMargin
       if !out.exists() || IO.read(out) != src then IO.write(out, src)
       Seq(out)

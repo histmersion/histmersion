@@ -14,7 +14,7 @@ class OwnerRelocationVerification extends SyntacticRule("OwnerRelocationVerifica
     val input = fixture.resolve("input")
     files(input).foreach { p => val dest = work.resolve(input.relativize(p)); Files.createDirectories(dest.getParent); Files.copy(p,dest) }
     val scala = List("--server=false","-S","3.10.0","--dep","io.github.iltotore::iron:3.4.1","--scalac-option","-source:future","--scalac-option","-Xsemanticdb","--scalac-option","-sourceroot","--scalac-option",root.toString)
-    val cli = List("scala-cli","run","--server=false","-q","-S","2.13.18","--dep","ch.epfl.scala:scalafix-cli_2.13.18:0.14.9","--main-class","scalafix.cli.Cli","--")
+    val cli = List("bash","tools/refactor/scalafix.sh") // the build's Scalafix; the fixture names its own --scala-version
     def run(label: String, command: List[String], success: Boolean = true): Unit = {
       println("Relocation fixture: " + label)
       val code = new ProcessBuilder(command.asJava).redirectErrorStream(true).redirectOutput(out.resolve(label + ".log").toFile).start().waitFor()

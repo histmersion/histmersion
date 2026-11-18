@@ -32,7 +32,8 @@ object NewtypeOrdering {
     report: String = "",
     roots: List[String] = List("."),
     exclude: List[String] = Nil,
-    semanticdbRoots: List[String] = List("target/out/jvm/scala-3.10.1", "target/out/sjs1/scala-3.10.1", ".semanticdb"),
+    // `{scalaVersion}` is Scalafix's --scala-version: the build's (target/build-versions.properties)
+    semanticdbRoots: List[String] = List("target/out/jvm/scala-{scalaVersion}", "target/out/sjs1/scala-{scalaVersion}", ".semanticdb"),
     base: String = "com/histmersion/Newtype#"
   )
   object Config {
@@ -122,7 +123,8 @@ class NewtypeOrdering(config: NewtypeOrdering.Config) extends SemanticRule("Newt
   def this() = this(NewtypeOrdering.Config())
 
   override def withConfiguration(c: Configuration): Configured[Rule] =
-    c.conf.getOrElse("NewtypeOrdering")(Config()).map(new NewtypeOrdering(_))
+    c.conf.getOrElse("NewtypeOrdering")(Config()).map(cfg =>
+      new NewtypeOrdering(cfg.copy(semanticdbRoots = cfg.semanticdbRoots.map(_.replace("{scalaVersion}", c.scalaVersion)))))
   override def beforeStart(): Unit = customOrderings = scanCustom(config.roots, config.exclude)
 
   private def ancestors(t: Tree): List[Tree] = t.parent.toList.flatMap(p => p :: ancestors(p))

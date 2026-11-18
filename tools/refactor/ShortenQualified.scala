@@ -21,7 +21,8 @@ object ShortenQualified {
   case class Config(
     exclusions: String = "",
     ledger: String = "",
-    semanticdbRoots: List[String] = List("target/out/jvm/scala-3.10.1", "target/out/sjs1/scala-3.10.1", ".semanticdb"),
+    // `{scalaVersion}` is Scalafix's --scala-version: the build's (target/build-versions.properties)
+    semanticdbRoots: List[String] = List("target/out/jvm/scala-{scalaVersion}", "target/out/sjs1/scala-{scalaVersion}", ".semanticdb"),
     projectPackage: String = "com/histmersion/",
     chainPackages: Boolean = true,
     shorten: Boolean = true,
@@ -153,7 +154,7 @@ class ShortenQualified(config: ShortenQualified.Config, excluded: Set[String]) e
         Files.readAllLines(Paths.get(cfg.exclusions), UTF_8).asScala.map(_.split("\t").head.trim).filter(l => l.nonEmpty && !l.startsWith("#")).toSet
       else Set.empty[String]
       if (cfg.ledger.nonEmpty) Option(Paths.get(cfg.ledger).getParent).foreach(Files.createDirectories(_))
-      new ShortenQualified(cfg, ex)
+      new ShortenQualified(cfg.copy(semanticdbRoots = cfg.semanticdbRoots.map(_.replace("{scalaVersion}", c.scalaVersion))), ex)
     }
 
   private val ledgerLock = new Object

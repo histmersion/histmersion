@@ -27,7 +27,8 @@ import scala.meta.internal.{semanticdb => s}
 object ProblemUnification {
   case class Config(
     report: String = "refactor-audit/concept-table/scratch/problem-unification.tsv",
-    semanticdbRoots: List[String] = List("target/out/jvm/scala-3.10.1", "target/out/sjs1/scala-3.10.1"),
+    // `{scalaVersion}` is Scalafix's --scala-version: the build's (target/build-versions.properties)
+    semanticdbRoots: List[String] = List("target/out/jvm/scala-{scalaVersion}", "target/out/sjs1/scala-{scalaVersion}"),
     debug: Boolean = false,
     apiModules: List[String] = List("api", "core", "db", "server", "cli", "web", "files", "plugin-host", "plugin-testkit")
   )
@@ -71,7 +72,7 @@ class ProblemUnification(config: ProblemUnification.Config, index: ConcurrentHas
   def this() = this(ProblemUnification.Config(), new ConcurrentHashMap())
 
   override def withConfiguration(c: Configuration): Configured[Rule] =
-    c.conf.getOrElse("ProblemUnification")(Config()).map(cfg => new ProblemUnification(cfg, ProblemUnification.index(cfg.semanticdbRoots)))
+    c.conf.getOrElse("ProblemUnification")(Config()).map(cfg => new ProblemUnification(cfg, ProblemUnification.index(cfg.semanticdbRoots.map(_.replace("{scalaVersion}", c.scalaVersion)))))
 
   override def afterComplete(): Unit = {
     val p = Paths.get(config.report)

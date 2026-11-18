@@ -46,7 +46,8 @@ object ErrorTypesToProblems {
     problemsImport: String = "com.histmersion.util.problem.Problems",
     // what the code reads off a wrapper beyond its problems: the fields a conversion cannot drop
     carrierFields: List[String] = List("code", "isNotFound", "isInvalidCitekey", "field", "status", "exitCode", "notFound", "workingDirDenied"),
-    semanticdbRoots: List[String] = List("target/out/jvm/scala-3.10.1", "target/out/sjs1/scala-3.10.1"),
+    // `{scalaVersion}` is Scalafix's --scala-version: the build's (target/build-versions.properties)
+    semanticdbRoots: List[String] = List("target/out/jvm/scala-{scalaVersion}", "target/out/sjs1/scala-{scalaVersion}"),
     // extra fields this run does not move to the callers (a regex found in them): `Code\\(` keeps the methods whose
     // wrapper builds an `Api.Error.Code`, a newtype each caller would build again (one G44 finding per caller)
     refuseExtra: String = "",
@@ -156,7 +157,7 @@ class ErrorTypesToProblems(config: ErrorTypesToProblems.Config, index: Concurren
   def this() = this(ErrorTypesToProblems.Config(), new ConcurrentHashMap())
 
   override def withConfiguration(c: Configuration): Configured[Rule] =
-    c.conf.getOrElse("ErrorTypesToProblems")(Config()).map(cfg => new ErrorTypesToProblems(cfg, ErrorTypesToProblems.index(cfg.semanticdbRoots)))
+    c.conf.getOrElse("ErrorTypesToProblems")(Config()).map(cfg => new ErrorTypesToProblems(cfg, ErrorTypesToProblems.index(cfg.semanticdbRoots.map(_.replace("{scalaVersion}", c.scalaVersion)))))
 
   override def beforeStart(): Unit = { facts.clear(); carrierRows.clear() }
 

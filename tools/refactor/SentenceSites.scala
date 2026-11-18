@@ -38,7 +38,8 @@ object SentenceSites {
     exclude: List[String] = List("modules/problem/src/main/scala/com/histmersion/util/problem/Problem.scala",
       "modules/problem/src/main/scala/com/histmersion/util/problem/Text.scala"),
     problemRoot: String = "com/histmersion/util/problem/Problem.",
-    problemSemanticdb: List[String] = List("target/out/jvm/scala-3.10.1/histmersion-problem/meta"),
+    // `{scalaVersion}` is Scalafix's --scala-version: the build's (target/build-versions.properties)
+    problemSemanticdb: List[String] = List("target/out/jvm/scala-{scalaVersion}/histmersion-problem/meta"),
     newtypeParent: String = "com/histmersion/Newtype#",
     emitLints: Boolean = false,
     expected: String = ""
@@ -76,7 +77,7 @@ class SentenceSites(config: SentenceSites.Config, index: Map[String, s.SymbolInf
   def this() = this(SentenceSites.Config(), Map.empty)
 
   override def withConfiguration(c: Configuration): Configured[Rule] =
-    c.conf.getOrElse("SentenceSites")(Config()).map(cfg => new SentenceSites(cfg, SentenceSites.index(cfg.problemSemanticdb)))
+    c.conf.getOrElse("SentenceSites")(Config()).map(cfg => new SentenceSites(cfg, SentenceSites.index(cfg.problemSemanticdb.map(_.replace("{scalaVersion}", c.scalaVersion)))))
 
   override def beforeStart(): Unit = rows.clear()
 

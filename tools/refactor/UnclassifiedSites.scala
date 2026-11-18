@@ -38,7 +38,8 @@ object UnclassifiedSites {
     unclassified: String = "com/histmersion/util/problem/Problem.Unclassified.",
     legacyText: String = "com/histmersion/util/problem/Problem.legacyText(",
     legacy: String = "com/histmersion/util/problem/Legacy.Text.",
-    semanticdbRoots: List[String] = List("target/out/jvm/scala-3.10.1", "target/out/sjs1/scala-3.10.1"),
+    // `{scalaVersion}` is Scalafix's --scala-version: the build's (target/build-versions.properties)
+    semanticdbRoots: List[String] = List("target/out/jvm/scala-{scalaVersion}", "target/out/sjs1/scala-{scalaVersion}"),
     emitLints: Boolean = false,
     expected: String = ""
   )
@@ -96,7 +97,7 @@ class UnclassifiedSites(config: UnclassifiedSites.Config, index: ConcurrentHashM
   def this() = this(UnclassifiedSites.Config(), new ConcurrentHashMap())
 
   override def withConfiguration(c: Configuration): Configured[Rule] =
-    c.conf.getOrElse("UnclassifiedSites")(Config()).map(cfg => new UnclassifiedSites(cfg, UnclassifiedSites.index(cfg.semanticdbRoots)))
+    c.conf.getOrElse("UnclassifiedSites")(Config()).map(cfg => new UnclassifiedSites(cfg, UnclassifiedSites.index(cfg.semanticdbRoots.map(_.replace("{scalaVersion}", c.scalaVersion)))))
 
   override def beforeStart(): Unit = rows.clear()
 

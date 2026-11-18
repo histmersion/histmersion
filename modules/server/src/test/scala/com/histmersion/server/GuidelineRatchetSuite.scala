@@ -104,16 +104,25 @@ class GuidelineRatchetSuite extends munit.FunSuite:
       List(Finding("G44", "core", "modules/core/src/test/scala/A.scala", 3, "value:Citekey"))
     )
 
-  test("the inventory reads the SemanticDB of meta and test-meta, never a leftover one beside the classes"):
+  test(
+    "the inventory reads the SemanticDB of meta and test-meta of the build's Scala, never a leftover one beside the " +
+      "classes or of an older Scala"
+  ):
     val out = Files.createTempDirectory("ratchet-out")
-    val dirs =
-      List("jvm/scala-3.10.1/m/meta", "jvm/scala-3.10.1/m/test-meta", "jvm/scala-3.10.1/m/classes/META-INF/semanticdb")
+    val dirs = List(
+      "jvm/scala-3.2.1/m/meta",
+      "jvm/scala-3.2.1/m/test-meta",
+      "jvm/scala-3.2.1/m/classes/META-INF/semanticdb",
+      "sjs1/scala-3.2.1/w/meta",
+      "jvm/scala-3.1.0/m/meta",
+      "sjs1/scala-3.1.0/w/test-meta"
+    )
     dirs.foreach(d => Files.createDirectories(out.resolve(d)))
     assertEquals(
-      Inventory.semanticdbTargetRoots(out).map(p => out.toAbsolutePath.normalize.relativize(p).toString),
-      List("jvm/scala-3.10.1/m/meta", "jvm/scala-3.10.1/m/test-meta")
+      Inventory.semanticdbTargetRoots(out, "3.2.1").map(p => out.toAbsolutePath.normalize.relativize(p).toString),
+      List("jvm/scala-3.2.1/m/meta", "jvm/scala-3.2.1/m/test-meta", "sjs1/scala-3.2.1/w/meta")
     )
-    assertEquals(Inventory.semanticdbTargetRoots(out.resolve("missing")), Nil)
+    assertEquals(Inventory.semanticdbTargetRoots(out.resolve("missing"), "3.2.1"), Nil)
 
 object GuidelineRatchetSuite:
 
@@ -186,14 +195,21 @@ object GuidelineRatchetSuite:
     /** The findings of one run, shared by the suites that read its reports (this one, SentenceLedgerSuite). */
     lazy val findings: List[Finding] = run()
 
-    /** The directories sbt writes the SemanticDB to (`meta`, `test-meta` beside each module's classes). Scalafix is
-      * told them, because by default it reads the first `META-INF/semanticdb` on the classpath — a leftover one under
-      * `classes` from an older build layout too, which describes an older text of the file.
+    /** The directories sbt writes the SemanticDB to (`meta`, `test-meta` beside each module's classes) under the
+      * `scala-<version>` of the build's Scala. Scalafix is told them, because by default it reads the first
+      * `META-INF/semanticdb` on the classpath — a leftover one under `classes` from an older build layout too, which
+      * describes an older text of the file; and a `scala-<older>` directory left by an earlier Scala does as well.
       */
-    def semanticdbTargetRoots(out: Path): List[Path] =
+    def semanticdbTargetRoots(out: Path, scalaVersion: String): List[Path] =
       if !Files.isDirectory(out) then Nil
       else
-        val stream = Files.find(out, 4, (p, a) => a.isDirectory && Set("meta", "test-meta")(p.getFileName.toString))
+        val stream = Files.find(
+          out,
+          4,
+          (p, a) =>
+            a.isDirectory && Set("meta", "test-meta")(p.getFileName.toString) &&
+              p.getParent.getParent.getFileName.toString == s"scala-$scalaVersion"
+        )
         try stream.iterator.asScala.map(_.toAbsolutePath.normalize).toList.sortBy(_.toString)
         finally stream.close()
 
@@ -201,26 +217,27 @@ object GuidelineRatchetSuite:
       Files.createDirectories(Log.getParent)
       Files.deleteIfExists(Report)
       Files.deleteIfExists(SentenceSites)
-      val targetRoots =
-        semanticdbTargetRoots(Path.of("target/out")).flatMap(p => List("--semanticdb-targetroots", p.toString))
+      val versions = BuildVersions.build
+      val targetRoots = semanticdbTargetRoots(Path.of("target/out"), versions.scala)
+        .flatMap(p => List("--semanticdb-targetroots", p.toString))
       val command = List(
         "scala-cli",
         "run",
         "--server=false",
         "-q",
         "-S",
-        "2.13.18",
+        versions.scalafixScala,
         "--java-opt",
         "-Xmx6g",
         "--dep",
-        "ch.epfl.scala:scalafix-cli_2.13.18:0.14.9",
+        s"ch.epfl.scala:scalafix-cli_${versions.scalafixScala}:${versions.scalafix}",
         "--main-class",
         "scalafix.cli.Cli",
         "--",
         "--config",
         Config,
         "--scala-version",
-        "3.10.1",
+        versions.scala,
         "--sourceroot",
         ".",
         "--auto-classpath",

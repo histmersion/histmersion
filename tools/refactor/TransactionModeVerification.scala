@@ -14,7 +14,7 @@ class TransactionModeVerification extends SyntacticRule("TransactionModeVerifica
     run("compile",List("scala-cli","compile",fixture,"--server=false","-S","3.10.0","--scalac-option","-source:future",
       "--scalac-option","-Xsemanticdb","--scalac-option","-sourceroot","--scalac-option",Paths.get("").toAbsolutePath.toString,
       "--compilation-output","target/transaction-mode-fixture-classes"))
-    val cli = List("scala-cli","run","--server=false","-q","-S","2.13.18","--dep","ch.epfl.scala:scalafix-cli_2.13.18:0.14.9","--main-class","scalafix.cli.Cli","--")
+    val cli = List("bash","tools/refactor/scalafix.sh") // the build's Scalafix; the fixture names its own --scala-version
     val arguments = List("--scala-version","3.10.0","--classpath","target/transaction-mode-fixture-classes","--files",fixture)
     run("check",cli ++ List("--config","tools/refactor/transaction-mode-fixture/check.conf") ++ arguments)
     val report = Paths.get("refactor-audit/transaction-mode-fixture")
