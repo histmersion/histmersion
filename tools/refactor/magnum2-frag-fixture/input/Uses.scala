@@ -40,3 +40,9 @@ object Uses:
       where.frag.query[Int].run().size
 
   def shown(s: Sql): String = s.text.value + s.text.toString
+
+  def chosen(on: Boolean): Sql = raw("SELECT 1" + (if on then " WHERE x" else ""))
+
+  def years: Sql = Sql.of(Sql.Text("y BETWEEN ? AND ?"), Param.L(Param.L.V(-10)), Param.L(Param.L.V(10)))
+
+  val expected: List[Param] = List(Param.L(Param.L.V(-10)), Param.S(Param.S.V("x")))

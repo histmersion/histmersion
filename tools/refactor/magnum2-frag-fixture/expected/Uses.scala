@@ -32,3 +32,9 @@ object Uses:
       where.query[Int].run().size
 
   def shown(s: Frag): String = s.sqlString + s.sqlString.toString
+
+  def chosen(on: Boolean): Frag = sql"SELECT 1${if on then sql" WHERE x" else sql""}"
+
+  def years: Frag = sql"y BETWEEN ${-10L} AND ${10L}"
+
+  val expected: List[Any] = List(-10L, "x")

@@ -13,7 +13,8 @@ import java.nio.charset.StandardCharsets.UTF_8
   *  - `Sql.of(Sql.Text("... ? ..."), p1, ...)` (and a file's own `of(text, ps*)`) becomes `sql"... $p1 ..."`, each `?`
   *    replaced by its parameter, in order; `Param.S(Param.S.V(e))` (L/I/D alike, also through the file's own
   *    `str`/`lng`/`int` helpers) binds `e` through its codec, `Param.A(xs.map(Param.A.V(_)))` binds `xs` as `text[]`
-  *    (the `DbCodec[List[String]]` of `util.database`, imported where needed);
+  *    (the `DbCodec[List[String]]` of `util.database`, imported where needed); a bound newtype's Iron `.value` (an
+  *    `IronType`, which has no codec) goes, `xs.map(_.value)` too, so the newtype binds through `NewtypeColumns`;
   *  - `a ++ b ++ c` (and `x.wrap("(", ")")`) becomes one `sql"$a$b$c"`, the constant parts merged into the text and every
   *    other operand nested as a `Frag` (kept in place, so the rewrites inside it apply too); `Sql.empty` is `sql""`;
   *  - text spliced from a String into raw SQL (`s"... $table ..."`, a non-literal text) stays raw, now visibly so:
@@ -186,10 +187,24 @@ class Magnum2Frag(config: Magnum2Frag.Config) extends SemanticRule("Magnum2Frag"
         val triple = i.pos.text.startsWith("s\"\"\"")
         val parts = i.parts.map(p => Text(p.pos.text, triple))
         parts.head :: i.args.zip(parts.tail).flatMap { case (a, p) => List(argSeg(a), p) }
-      case Term.ApplyInfix.After_4_6_0(l, Term.Name("+"), _, Term.ArgClause(List(r), _)) if stringy(l) && stringy(r) =>
+      case Term.ApplyInfix.After_4_6_0(l, Term.Name("+"), _, Term.ArgClause(List(r), _)) if stringy(l) || stringy(r) =>
         strSegs(l) ++ strSegs(r)
       case n: Term.Name if consts(sym(n)) => List(Code(n.value))
+      case i: Term.If if constantBranches(i) => List(Code(choice(i)))
       case other => List(Raw(other.syntax))
+    }
+    /** `if c then "a" else "b"`: SQL text chosen from two constants is a choice of two fragments, not raw text. */
+    def constantBranches(i: Term.If): Boolean = (unblock(i.thenp), unblock(i.elsep)) match {
+      case (a: Lit.String, b: Lit.String) => !litSeg(a).text.contains('?') && !litSeg(b).text.contains('?')
+      case _                              => false
+    }
+    def choice(i: Term.If): String = {
+      def frag(l: Term): String = {
+        val t = litSeg(unblock(l).asInstanceOf[Lit.String])
+        val q = if (t.triple) "\"\"\"" else "\""
+        "sql" + q + t.text + q
+      }
+      s"if ${i.cond.syntax} then ${frag(i.thenp)} else ${frag(i.elsep)}"
     }
     def stringy(t: Term): Boolean = unblock(t) match {
       case _: Lit.String => true
@@ -200,6 +215,7 @@ class Magnum2Frag(config: Magnum2Frag.Config) extends SemanticRule("Magnum2Frag"
     def argSeg(a: Tree): Seg = a match {
       case t: Term => unblock(t) match {
         case n: Term.Name if consts(sym(n)) => Code(n.value)
+        case i: Term.If if constantBranches(i) => Code(choice(i))
         case other                          => Raw(other.syntax)
       }
       case other => Raw(other.syntax)
@@ -230,8 +246,16 @@ class Magnum2Frag(config: Magnum2Frag.Config) extends SemanticRule("Magnum2Frag"
             Some(v.argClause.values.head)
           case _ => None
         }
+        // an Int literal bound as a Long or a Double keeps that type (`setLong`/`setDouble`, as before)
+        def widened(v: Term): Term = (kind, v) match {
+          case ("L", _: Lit.Int) => s"${v.syntax}L".parse[Term].get
+          case ("D", _: Lit.Int) => s"${v.syntax}.0".parse[Term].get
+          case ("L", Term.ApplyUnary(Term.Name("-"), _: Lit.Int)) => s"${v.syntax}L".parse[Term].get
+          case ("D", Term.ApplyUnary(Term.Name("-"), _: Lit.Int)) => s"${v.syntax}.0".parse[Term].get
+          case _ => v
+        }
         kind match {
-          case "S" | "L" | "I" | "D" => vOf(inner)
+          case "S" | "L" | "I" | "D" => vOf(inner).map(widened)
           case "A" =>
             inner match {
               case m: Term.Apply => m.fun match {
@@ -266,15 +290,45 @@ class Magnum2Frag(config: Magnum2Frag.Config) extends SemanticRule("Magnum2Frag"
         case _ => None
       }
       p match {
-        case a: Term.Apply if helperParam(a).isDefined => helperParam(a).get
+        case a: Term.Apply if helperParam(a).isDefined =>
+          unvalue(a.argClause.values.head).getOrElse(helperParam(a).get)
         case _ =>
           paramValue(p) match {
             case Some(v) =>
               if (isArray(p)) usesTextArray = true
-              v.syntax
+              unvalue(v).getOrElse(v.syntax)
             case None => p.syntax // a value of type Param: becomes the codec-typed value by hand
           }
       }
+    }
+    /** Iron's `.value` of a newtype is an `IronType`, which has no codec: `x.value` binds as `x` (through
+      * `NewtypeColumns`, its base type's codec), `xs.map(_.value)` as `xs`.
+      */
+    var usesNewtype = false
+    def isIronValue(n: Term.Name): Boolean = n.value == "value" && sym(n).startsWith("io/github/iltotore/iron/")
+    def unvalue(v: Term): Option[String] = {
+      val out = v match {
+        case Term.Select(q, n) if isIronValue(n) => Some(q.syntax)
+        case m: Term.Apply => (m.fun, m.argClause.values) match {
+          case (Term.Select(xs, Term.Name("map")), List(f)) =>
+            val strips = f match {
+              case af: Term.AnonymousFunction => af.body match {
+                case Term.Select(_: Term.Placeholder, n) => isIronValue(n)
+                case _                                   => false
+              }
+              case fn: Term.Function if fn.paramClause.values.size == 1 => fn.body match {
+                case Term.Select(x: Term.Name, n) => x.value == fn.paramClause.values.head.name.value && isIronValue(n)
+                case _                            => false
+              }
+              case _ => false
+            }
+            if (strips) Some(xs.syntax) else None
+          case _ => None
+        }
+        case _ => None
+      }
+      if (out.isDefined) usesNewtype = true
+      out
     }
     def isArray(p: Term): Boolean = p.syntax.startsWith("Param.A(") || p.syntax.startsWith("A(")
     def fill(segs: List[Seg], ps: List[Term]): List[Seg] = {
@@ -442,7 +496,13 @@ class Magnum2Frag(config: Magnum2Frag.Config) extends SemanticRule("Magnum2Frag"
       val dbGiven = doc.tree.collect { case i: Importer if i.ref.syntax == "com.histmersion.util.database" && i.importees.exists(_.is[Importee.Given]) => i }.nonEmpty
       val inDbPkg = doc.tree.collect { case p: Pkg => p.ref.syntax }.exists(r => r == "util.database" || r == "com.histmersion.util.database")
       val arrays = if (usesTextArray && !dbGiven && !inDbPkg) Patch.addGlobalImport(importer"com.histmersion.util.database.given") else Patch.empty
-      magnum + arrays
+      val columns = doc.tree.collect {
+        case i: Importer if i.ref.syntax.endsWith("NewtypeColumns") && i.importees.exists(_.is[Importee.Given]) => i
+      }.nonEmpty
+      val newtypes =
+        if (usesNewtype && !columns) Patch.addGlobalImport(importer"com.histmersion.util.database.NewtypeColumns.given")
+        else Patch.empty
+      magnum + arrays + newtypes
     }
 
     lazy val patch: Patch = {
@@ -466,7 +526,9 @@ class Magnum2Frag(config: Magnum2Frag.Config) extends SemanticRule("Magnum2Frag"
           // a standalone parameter (a keyset cursor, a bailed fragment's): the value itself
           val v = paramValue(a).get
           if (isArray(a)) usesTextArray = true
-          if (v.pos == Position.None) Patch.replaceTree(a, v.syntax)
+          val bare = unvalue(v)
+          if (bare.isDefined) Patch.replaceTree(a, bare.get)
+          else if (v.pos == Position.None || v.pos.input != a.pos.input) Patch.replaceTree(a, v.syntax)
           else Patch.removeTokens(a.tokens.filter(tok => tok.start < v.pos.start || tok.end > v.pos.end)) + go(v)
         case ap: Term.Apply if ap.fun.syntax == "SqlLiteral" && ap.argClause.values.size == 1 && (ap.argClause.values.head match {
               case n: Term.Name => consts(sym(n)); case _ => false
@@ -474,6 +536,8 @@ class Magnum2Frag(config: Magnum2Frag.Config) extends SemanticRule("Magnum2Frag"
           Patch.replaceTree(ap, ap.argClause.values.head.syntax)
         case n: Type.Name if n.value == "Sql" && sym(n) == SqlCls =>
           fragType = true; Patch.replaceTree(n, "Frag")
+        // a fragment's parameters are the bound values themselves (`Frag.params: Seq[Any]`)
+        case n: Type.Name if n.value == "Param" && sym(n) == DbPkg + "Param#" => Patch.replaceTree(n, "Any")
         case d: Defn.Def if helpers.contains(d.name.symbol.value) =>
           Patch.removeTokens(d.tokens) + Patch.removeTokens(trailingNewline(d))
         case v: Defn.Val if v.pats.size == 1 && v.pats.head.is[Pat.Var] && consts(v.pats.head.asInstanceOf[Pat.Var].name.symbol.value) =>
