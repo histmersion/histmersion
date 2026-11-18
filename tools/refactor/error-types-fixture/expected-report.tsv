@@ -1,0 +1,17 @@
+method	path	wrapper	extra	verdict
+demo/Callers.api().	modules/demo/src/main/scala/demo/Demo.scala	com/histmersion/api/Api.Error#		uses positive (demo/Parse.positive().); uses missing (demo/Parse.missing().)
+demo/Callers.down().	modules/demo/src/main/scala/demo/Demo.scala	com/histmersion/api/Api.Error#		uses countdown (demo/Parse.countdown().)
+demo/Callers.lambda().	modules/demo/src/main/scala/demo/Demo.scala	com/histmersion/api/Api.Error#		uses checked (demo/Parse.checked().); uses checkedLambda (demo/Parse.checkedLambda().)
+demo/Callers.run().	modules/demo/src/main/scala/demo/Demo.scala	com/histmersion/cli/Cli.Error#		uses number (demo/Parse.number().)
+demo/Parse.checked().	modules/demo/src/main/scala/demo/Demo.scala	com/histmersion/api/Api.Error#		converted
+demo/Parse.checkedLambda().	modules/demo/src/main/scala/demo/Demo.scala	com/histmersion/api/Api.Error#		converted
+demo/Parse.countdown().	modules/demo/src/main/scala/demo/Demo.scala	com/histmersion/api/Api.Error#		converted
+demo/Parse.local().	modules/demo/src/main/scala/demo/Demo.scala	com/histmersion/cli/Cli.Error#	exitCode = code	extra fields from a local value (code)
+demo/Parse.missing().	modules/demo/src/main/scala/demo/Demo.scala	com/histmersion/api/Api.Error#	Some(Api.Error.Code("not_found"))	converted
+demo/Parse.mixed().	modules/demo/src/main/scala/demo/Demo.scala	com/histmersion/cli/Cli.Error#	-	wrappers with different extra fields (exitCode = ExitCode.Usage | )
+demo/Parse.number().	modules/demo/src/main/scala/demo/Demo.scala	com/histmersion/cli/Cli.Error#	exitCode = ExitCode.Usage	converted
+demo/Parse.positive().	modules/demo/src/main/scala/demo/Demo.scala	com/histmersion/api/Api.Error#		converted
+demo/Parse.reads().	modules/demo/src/main/scala/demo/Demo.scala	com/histmersion/cli/Cli.Error#		parameter e is a wrapper; uses e (demo/Parse.reads().(e))
+demo/Parse.typed().	modules/demo/src/main/scala/demo/Demo.scala	com/histmersion/api/Api.Error#		writes the wrapper's type; uses e (local2)
+demo/Parse.valued().	modules/demo/src/main/scala/demo/Demo.scala	com/histmersion/cli/Cli.Error#		used as a function value
+demo/Parse.viaMixed().	modules/demo/src/main/scala/demo/Demo.scala	com/histmersion/cli/Cli.Error#		uses mixed (demo/Parse.mixed().)
