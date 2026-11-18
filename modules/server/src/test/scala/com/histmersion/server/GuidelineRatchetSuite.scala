@@ -22,7 +22,7 @@ class GuidelineRatchetSuite extends munit.FunSuite:
   override val munitTimeout = scala.concurrent.duration.Duration(20, "min")
 
   test("no guideline count rises above architecture/guidelines-ratchet.tsv, and every lowered count is written down"):
-    val findings = Inventory.run()
+    val findings = Inventory.findings
     val actual = Ratchet.counts(findings)
     val listed = if Files.isRegularFile(RatchetFile) then
       Ratchet.parse(Files.readAllLines(RatchetFile, UTF_8).asScala.toList)
@@ -180,6 +180,12 @@ object GuidelineRatchetSuite:
     val Report: Path = Path.of("target/guidelines/findings.tsv")
     val Log: Path = Path.of("target/guidelines/inventory.log")
 
+    /** The places that build a problem (SentenceSites, run in the same pass), for SentenceLedgerSuite. */
+    val SentenceSites: Path = Path.of("target/guidelines/sentence-sites.tsv")
+
+    /** The findings of one run, shared by the suites that read its reports (this one, SentenceLedgerSuite). */
+    lazy val findings: List[Finding] = run()
+
     /** The directories sbt writes the SemanticDB to (`meta`, `test-meta` beside each module's classes). Scalafix is
       * told them, because by default it reads the first `META-INF/semanticdb` on the classpath — a leftover one under
       * `classes` from an older build layout too, which describes an older text of the file.
@@ -194,6 +200,7 @@ object GuidelineRatchetSuite:
     def run(): List[Finding] =
       Files.createDirectories(Log.getParent)
       Files.deleteIfExists(Report)
+      Files.deleteIfExists(SentenceSites)
       val targetRoots =
         semanticdbTargetRoots(Path.of("target/out")).flatMap(p => List("--semanticdb-targetroots", p.toString))
       val command = List(

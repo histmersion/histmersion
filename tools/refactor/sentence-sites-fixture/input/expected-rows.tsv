@@ -1,0 +1,18 @@
+key	module	path	line	enclosing	site	variants	template
+demo/Demo.literal().#0	demo	modules/demo/src/main/scala/demo/Demo.scala	8	demo/Demo.literal().	Unclassified		no such file
+demo/Demo.interpolated().#0	demo	modules/demo/src/main/scala/demo/Demo.scala	11	demo/Demo.interpolated().	Unclassified		no such file: {p} ({n + 1} {{tries}})
+demo/Demo.concatenated().#0	demo	modules/demo/src/main/scala/demo/Demo.scala	13	demo/Demo.concatenated().	Unclassified		missing {p}!
+demo/Demo.thrown().#0	demo	modules/demo/src/main/scala/demo/Demo.scala	15	demo/Demo.thrown().	Unclassified		{e.getMessage}
+demo/Demo.thrownText().#0	demo	modules/demo/src/main/scala/demo/Demo.scala	16	demo/Demo.thrownText().	Unclassified		{e.getMessage}
+demo/Demo.expression().#0	demo	modules/demo/src/main/scala/demo/Demo.scala	18	demo/Demo.expression().	Unclassified		{m.trim}
+demo/Demo.multiLine().#0	demo	modules/demo/src/main/scala/demo/Demo.scala	21	demo/Demo.multiLine().	Unclassified		first {p}\nsecond
+demo/Demo.helper().#0	demo	modules/demo/src/main/scala/demo/Demo.scala	28	demo/Demo.helper().	Invalid.Missing		-
+demo/Demo.nested().#0	demo	modules/demo/src/main/scala/demo/Demo.scala	30	demo/Demo.nested().	Config.Setting	Config.Fault.Empty	-
+demo/Demo.nestedRejected().#0	demo	modules/demo/src/main/scala/demo/Demo.scala	31	demo/Demo.nestedRejected().	Config.Setting	Config.Fault.Rejected	-
+demo/Demo.caseObject().#0	demo	modules/demo/src/main/scala/demo/Demo.scala	33	demo/Demo.caseObject().	Run.Interrupted		-
+demo/Demo.imported().#0	demo	modules/demo/src/main/scala/demo/Demo.scala	34	demo/Demo.imported().	Run.Interrupted		-
+demo/Demo.wrapped().#0	demo	modules/demo/src/main/scala/demo/Demo.scala	36	demo/Demo.wrapped().	Run.Failed	Run.Interrupted	-
+demo/Demo.twoInOne.#0	demo	modules/demo/src/main/scala/demo/Demo.scala	38	demo/Demo.twoInOne.	Run.Interrupted		-
+demo/Demo.twoInOne.#1	demo	modules/demo/src/main/scala/demo/Demo.scala	38	demo/Demo.twoInOne.	Run.Interrupted		-
+demo/Demo.local().#0	demo	modules/demo/src/main/scala/demo/Demo.scala	48	demo/Demo.local().	Unclassified		local
+demo/Demo.escaped().#0	demo	modules/demo/src/main/scala/demo/Demo.scala	51	demo/Demo.escaped().	Unclassified		say "{p}" for $5
