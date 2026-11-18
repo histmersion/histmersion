@@ -55,6 +55,7 @@ import com.histmersion.domain.automation.Approval
 import com.histmersion.api.library.Filter
 import com.histmersion.config.AgentManagersConfig
 import com.histmersion.api.automation.Managers
+import com.histmersion.api.Api
 
 /** The process managers' phase 2 against a `*_test` database (docs/research-process-managers.md §4, §6): infer-filter
   * before a review (the filter checked against the corpus, held for its approval, the review waiting for it), the
@@ -300,7 +301,14 @@ class ManagerPhase2Suite extends DbSuite with RunTranscripts:
       .getOrElse("")
     assert(failed.contains("returns 0 sources"), failed)
     // the run left an approval and did not wait for it; the item waits, and so does the review
-    val appr = a.approvalsList(None, None).toOption.get.find(_.subject.contains(ApprovalInfo.Subject("zzagent_f1"))).get
+    val appr = a
+      .approvalsList(None, None)
+      .left
+      .map(Api.Error(_))
+      .toOption
+      .get
+      .find(_.subject.contains(ApprovalInfo.Subject("zzagent_f1")))
+      .get
     assertEquals(appr.kind, "article-filter")
     assertEquals(appr.filter.map(p => (p.total, p.cited, p.citedIn)), Some((2, 2, 2)))
     a.managers.tick(t0)
@@ -420,7 +428,7 @@ class ManagerPhase2Suite extends DbSuite with RunTranscripts:
     assertEquals((run.pipeline, run.goal.map(_.value: String)), ("propose-articles", Some(Goal)))
     a.engine.execute(ApiIds.run(run.id))
     assertEquals(connect(ds)(AgentRepo.get(run.id)).get.status, "done", why(connect(ds)(AgentRepo.get(run.id)).get))
-    val appr = a.approvalsList(None, None).toOption.get.find(_.subject.contains(GoalSubject)).get
+    val appr = a.approvalsList(None, None).left.map(Api.Error(_)).toOption.get.find(_.subject.contains(GoalSubject)).get
     assertEquals(appr.kind, "article-plan")
     val plan = appr.articles.get
     assertEquals(plan.articles.map(_.slug), List("zzagent_new"))
@@ -484,7 +492,7 @@ class ManagerPhase2Suite extends DbSuite with RunTranscripts:
     a.managers.tick(t0)
     a.engine.execute(ApiIds.run(item(seedId(ref(Goal)), ProposeKind, goalTarget(Goal)).runId.get))
     a.managers.tick(t0)
-    val appr = a.approvalsList(None, None).toOption.get.find(_.subject.contains(GoalSubject)).get
+    val appr = a.approvalsList(None, None).left.map(Api.Error(_)).toOption.get.find(_.subject.contains(GoalSubject)).get
     assert(a.decide(ApiIds.approval(appr.id), Approval.Outcome("reject"), DecisionRequest()).isRight)
     a.managers.tick(t0)
     assertEquals(item(seedId(ref(Goal)), ProposeKind, goalTarget(Goal)).status, "stopped")

@@ -28,6 +28,7 @@ import com.histmersion.domain.library.Doi
 import com.histmersion.api.library.Confidence
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.api.automation.Agents
+import com.histmersion.api.Api
 
 /** `enrich-source <citekey>` (docs/research-embedded-agents.md §4.2): read one source and propose its summary,
   * classification, period, quoted findings and notes; CODE verifies every answer and writes ONE patch. The LLM steps
@@ -97,6 +98,8 @@ final class EnrichSourcePipeline(
   private def load(ck: Citekey): Either[Problems, Loaded] =
     site.sources
       .get(ck, body = SourcesControllers.GetBody(true))
+      .left
+      .map(Api.Error(_))
       .left
       .map(_.problems)
       .flatMap { sw =>
@@ -222,7 +225,8 @@ final class EnrichSourcePipeline(
     s"Write the notes for [[${l.citekey}]].\n\n${meta(l)}\n\nsummary: ${c.summary}\n\nverified findings:\n" +
       fs.map(f => s"- ${f.claim} (quote: \"${f.quote}\")").mkString("\n")
 
-  private def isCitekey(s: Citekey): Boolean = site.sources.get(s, body = SourcesControllers.GetBody(false)).isRight
+  private def isCitekey(s: Citekey): Boolean =
+    site.sources.get(s, body = SourcesControllers.GetBody(false)).left.map(Api.Error(_)).isRight
 
   /** The single write. On a 412 (someone wrote the source since `load`) the source is re-read and the patch rebuilt
     * from the CHECKPOINTED answers — no LLM call — and sent once more.
@@ -376,7 +380,7 @@ final class EnrichSourcePipeline(
     // a dry run patched nothing: the lint would only describe the source as it was before
     val lint = if ctx.dryRun then Nil
     else
-      site.sources.get(ck, body = SourcesControllers.GetBody(false)).toOption.toList.flatMap { s =>
+      site.sources.get(ck, body = SourcesControllers.GetBody(false)).left.map(Api.Error(_)).toOption.toList.flatMap { s =>
         closeLint(FindingCount(s.findings.size), Loaded.HasPeriod(s.source.periodStart.isDefined), s.source.status)
       }
     lint.foreach(l => ctx.warn(s"lint: $l"))

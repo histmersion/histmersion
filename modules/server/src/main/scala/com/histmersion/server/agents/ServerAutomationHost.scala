@@ -50,7 +50,7 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
             .parse(raw.value)
             .left
             .map(Api.Error(_))
-            .flatMap(ck => h.library.sources.get(ck, body = SourcesControllers.GetBody(false)))
+            .flatMap(ck => h.library.sources.get(ck, body = SourcesControllers.GetBody(false)).left.map(Api.Error(_)))
             .map(w => AutomationHost.CanonicalKey(w.source.citekey.value))
         )
       case TargetKind.Article if p == Pipeline.CompileArticle =>
@@ -149,12 +149,14 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
         .parse(raw.value)
         .left
         .map(Api.Error(_))
-        .flatMap(ck => h.library.sources.get(ck, body = SourcesControllers.GetBody(false)))
+        .flatMap(ck => h.library.sources.get(ck, body = SourcesControllers.GetBody(false)).left.map(Api.Error(_)))
         .map(w => AutomationHost.CanonicalKey(w.source.citekey.value))
 
   def probeSubject(citekey: Citekey): Either[Api.Error, ProbeAnswer] =
     h.library.sources
       .get(citekey, body = SourcesControllers.GetBody(false))
+      .left
+      .map(Api.Error(_))
       .map(s => ProbeAnswer(s.source.citekey, s.source.title, s.source.year))
 
   def sameTitle(answered: Title, record: Title): Boolean = AgentVerify.sameTitle(answered, record)
@@ -176,6 +178,8 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
   def vocabulary(field: AutomationHost.VocabularyField): List[AutomationHost.Term] =
     h.library.labels
       .facets(Facet.Field.Wire(field.value), None, Filter())
+      .left
+      .map(Api.Error(_))
       .toOption
       .toList
       .flatten

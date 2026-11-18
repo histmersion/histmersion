@@ -51,6 +51,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.automation.Agents
 import com.histmersion.pluginhost.Registries
 import com.histmersion.domain.library.sources.SourcesControllers
+import com.histmersion.api.Api
 
 /** A THIRD-PARTY AI provider end to end (docs/research-plugins.md §23): the hello-ai test plugin's own jar
   * (modules/plugin-fixtures/hello-ai — compiled against plugin-api alone, never on the server's class path) is
@@ -247,7 +248,7 @@ class PluginAiRunSuite extends DbSuite with RunTranscripts:
         m.toolName.contains("facets") && m.role.value == "tool"
       )
     )
-    val got = h.library.sources.get(Ck, body = SourcesControllers.GetBody(false)).toOption.get
+    val got = h.library.sources.get(Ck, body = SourcesControllers.GetBody(false)).left.map(Api.Error(_)).toOption.get
     assertEquals(got.source.summary, Some("Tin reached the Aegean by sea."))
     assert(got.findings.exists(_.claim.value.contains("Uluburun")), got.findings.toString)
     assert(got.source.notes.exists(_.value.contains("tin by sea")), got.source.notes.toString)
@@ -293,7 +294,9 @@ class PluginAiRunSuite extends DbSuite with RunTranscripts:
         ModelChains.ChainSet(
           List(ModelChains.ChainEntry.Model("hello-ai:echo"), ModelChains.ChainEntry.Model("local:x"))
         )
-      ).isRight
+      ).left
+        .map(Api.Error(_))
+        .isRight
     )
     // the same database, the plugin switched off: the saved chain no longer reads, a new one is refused
     val (gone, _) = handlers(generation(pluginConf.replace("enabled = true", "enabled = false")))
@@ -303,6 +306,8 @@ class PluginAiRunSuite extends DbSuite with RunTranscripts:
           Agents.Role.Wire("extractor"),
           ModelChains.ChainSet(List(ModelChains.ChainEntry.Model("hello-ai:echo")))
         )
+        .left
+        .map(Api.Error(_))
         .left
         .exists(_.problems.sentences.mkString("; ").contains("unknown provider kind 'hello-ai'"))
     )

@@ -31,6 +31,7 @@ import com.histmersion.api.library.{
   CollectionUpdateOne
 }
 import com.histmersion.api.Api
+import com.histmersion.util.problem.Problems
 
 /** The collections' endpoints and tools over [[CollectionsService]]: the citekey checked where one is named, every
   * write behind the maintenance lock.
@@ -40,7 +41,7 @@ final class CollectionsControllers(service: CollectionsService, maintenance: Wri
   private def citekey(raw: com.histmersion.api.library.Citekey): Either[Api.Error, Citekey] =
     Citekey.parse(raw.value).left.map(p => Write.invalid(p))
 
-  def collections(caller: Caller): Either[Api.Error, List[CollectionInfo]] = Right(service.collections())
+  def collections(caller: Caller): Either[Problems, List[CollectionInfo]] = Right(service.collections())
   def collection(caller: Caller, name: CollectionsService.CollectionName): Either[Api.Error, CollectionInfo] =
     service.collection(name)
 

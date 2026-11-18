@@ -27,6 +27,7 @@ import com.histmersion.config.DbConfig
 import com.histmersion.config.BackupsConfig
 import com.histmersion.api.catalogue.Year
 import com.histmersion.config.ServerConfig
+import com.histmersion.api.Api
 
 /** The acceptance line of plan §4 wave 2.5: `backup` then `restore --force` reproduces `search` results. Runs
   * `pg_dump`/`pg_restore` for real, over the real HTTP endpoints, against a SCRATCH database created next to
@@ -250,7 +251,7 @@ class BackupRestoreSuite extends DbSuite:
 
         // 6. lose a source
         sql("DELETE FROM sources WHERE citekey = 'zz_backup_a'")
-        assert(h.library.sources.get(Citekey("zz_backup_a")).isLeft)
+        assert(h.library.sources.get(Citekey("zz_backup_a")).left.map(Api.Error(_)).isLeft)
         assertEquals(
           (h.library.search
             .sources(Filter(tags = List(Filter.Tags("zz-backup-test")), limit = Filter.Limit(10)))
@@ -274,7 +275,7 @@ class BackupRestoreSuite extends DbSuite:
           h.library.search.sources(Filter(tags = List(Filter.Tags("zz-backup-test")), limit = Filter.Limit(10)))
         assertEquals((after.total.value: Int), 2)
         assertEquals(after.hits.map(_.source.citekey).sorted, List("zz_backup_a", "zz_backup_b"))
-        val got = h.library.sources.get(Citekey("zz_backup_a")).toOption.get
+        val got = h.library.sources.get(Citekey("zz_backup_a")).left.map(Api.Error(_)).toOption.get
         assertEquals(got.source.title, "The Kept One")
         assertEquals(got.findings.map(_.claim), List("zz_backup_a says something"))
         assertEquals(got.source.periodStart, Some(-1300L))

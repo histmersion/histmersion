@@ -10,23 +10,26 @@ import com.histmersion.api.Paging
 import com.histmersion.api.automation.{AgentRole, AgentsApi, ModelChains}
 import com.histmersion.domain.automation.goals.BGoalLinkRow
 import com.histmersion.domain.automation.Approval
+import com.histmersion.api.Api
 
 /** REST wiring of the embedded agents — every route delegates to [[AgentsControllers]]. */
 object AgentsRoutes:
 
   def apply(a: AgentsControllers): List[ServerEndpoint[Any, Identity]] = List(
-    AgentsApi.generate.serverLogic[Identity](req => a.generate(req)),
+    AgentsApi.generate.serverLogic[Identity](req => a.generate(req).left.map(Api.Error(_))),
     AgentsApi.quota.serverLogicSuccess[Identity](_ => a.quota),
-    AgentsApi.setFallthrough.serverLogic[Identity]((role, in) => a.setFallthrough(AgentRole.Wire(role.value), in)),
-    AgentsApi.refreshQuota.serverLogic[Identity](in => a.refreshQuota(in)),
+    AgentsApi.setFallthrough.serverLogic[Identity]((role, in) =>
+      a.setFallthrough(AgentRole.Wire(role.value), in).left.map(Api.Error(_))
+    ),
+    AgentsApi.refreshQuota.serverLogic[Identity](in => a.refreshQuota(in).left.map(Api.Error(_))),
     AgentsApi.claudeGuard.serverLogicSuccess[Identity](r => a.guard(r)),
-    AgentsApi.setPool.serverLogic[Identity]((pool, in) => a.setPool(pool, in)),
+    AgentsApi.setPool.serverLogic[Identity]((pool, in) => a.setPool(pool, in).left.map(Api.Error(_))),
     AgentsApi.models.serverLogicSuccess[Identity](_ => a.models),
-    AgentsApi.setChain.serverLogic[Identity]((role, in) => a.setChain(role, in)),
-    AgentsApi.resetChain.serverLogic[Identity](role => a.resetChain(role)),
-    AgentsApi.setAllowance.serverLogic[Identity](in => a.setAllowance(in)),
+    AgentsApi.setChain.serverLogic[Identity]((role, in) => a.setChain(role, in).left.map(Api.Error(_))),
+    AgentsApi.resetChain.serverLogic[Identity](role => a.resetChain(role).left.map(Api.Error(_))),
+    AgentsApi.setAllowance.serverLogic[Identity](in => a.setAllowance(in).left.map(Api.Error(_))),
     AgentsApi.removeAllowance.serverLogic[Identity](target =>
-      a.removeAllowance(ModelChains.AllowanceSet.Target(target.value))
+      a.removeAllowance(ModelChains.AllowanceSet.Target(target.value)).left.map(Api.Error(_))
     ),
     AgentsApi.doctor.serverLogicSuccess[Identity](offline =>
       a.doctor(AgentsControllers.Offline(offline.exists(_.value)))

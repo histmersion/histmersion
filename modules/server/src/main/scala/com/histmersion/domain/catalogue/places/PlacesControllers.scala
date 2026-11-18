@@ -19,6 +19,7 @@ import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.api.aliases.AliasKind
 import com.histmersion.domain.catalogue.Place
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.problem.Problems
 
 /** The gazetteer's operations as REST, MCP and the CLI reach them: search, a place and the hierarchy around it, the
   * map's shapes, imports, a person's names, kinds, periods and points, merges, removals and renames, the matching of
@@ -61,17 +62,15 @@ final class PlacesControllers(
     places.search(q, asOf, limit(n, page(cfg().places.searchLimit.value)), modernFrom)
 
   /** `GET /api/places/geo` — the map layers' shapes for the time [[GeoPick.resolve]] makes of the query. */
-  def shapes(q: Api.PlacesGeoQuery): Either[Api.Error, Api.PlacesGeo.Json] =
+  def shapes(q: Api.PlacesGeoQuery): Either[Problems, Api.PlacesGeo.Json] =
     q.pick.map(p => GeoPick.Wire(p.value.trim)).filter(_.value.nonEmpty) match
       case Some(p) if GeoPick.parse(p).isEmpty =>
         Left(
-          Api.Error(
-            Problem.Invalid.Unknown(
-              Problem.TypeName.of(GeoPick.Wire),
-              Problem.Raw.of(p),
-              GeoPick.values.toVector.map(v => Problem.Raw.of(v.wire)),
-              Vector(Problem.Field("pick"))
-            )
+          Problem.Invalid.Unknown(
+            Problem.TypeName.of(GeoPick.Wire),
+            Problem.Raw.of(p),
+            GeoPick.values.toVector.map(v => Problem.Raw.of(v.wire)),
+            Vector(Problem.Field("pick"))
           )
         )
       case p =>

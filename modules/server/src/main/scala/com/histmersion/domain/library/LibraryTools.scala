@@ -118,11 +118,14 @@ object LibraryTools:
         )
         .input[FacetsInput]
         .handle { in =>
-          labels.facets(
-            Facet.Field.Wire(in.field.value),
-            in.prefix.map(p => FilterSql.FacetPrefix(p.value)),
-            in.toFilter
-          ) match
+          labels
+            .facets(
+              Facet.Field.Wire(in.field.value),
+              in.prefix.map(p => FilterSql.FacetPrefix(p.value)),
+              in.toFilter
+            )
+            .left
+            .map(Api.Error(_)) match
             case Right(fs) => ToolResult.text(SearchMarkdown.facets(in.field, fs.toVector))
             case Left(e)   => McpOut.error(e)
         }
@@ -144,14 +147,17 @@ object LibraryTools:
         )
         .input[GetSourceInput]
         .handle { in =>
-          sources.markdown(
-            in.citekey,
-            SourcesControllers.MarkdownFullText(in.fullText.value),
-            in.section,
-            in.heading,
-            in.offset,
-            in.chars
-          ) match
+          sources
+            .markdown(
+              in.citekey,
+              SourcesControllers.MarkdownFullText(in.fullText.value),
+              in.section,
+              in.heading,
+              in.offset,
+              in.chars
+            )
+            .left
+            .map(Api.Error(_)) match
             case Right(md) => ToolResult.text(md.value)
             case Left(e)   => ToolResult.text(s"_No source '${in.citekey}' — find a citekey with search._")
         }

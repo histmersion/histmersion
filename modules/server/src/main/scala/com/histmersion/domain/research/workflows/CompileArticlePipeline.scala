@@ -180,7 +180,8 @@ final class CompileArticlePipeline(
         case Left(e) => Left(e.problems)
     }
 
-  private def isCitekey(ck: Citekey): Boolean = site.sources.get(ck, body = SourcesControllers.GetBody(false)).isRight
+  private def isCitekey(ck: Citekey): Boolean =
+    site.sources.get(ck, body = SourcesControllers.GetBody(false)).left.map(Api.Error(_)).isRight
 
   private def filter(ctx: RunCtx, s: Snap): Either[Problems, Found] =
     val af = s.filter.getOrElse(Article.Filter(query = s.query, topics = s.topics, tags = s.tags))
@@ -217,7 +218,7 @@ final class CompileArticlePipeline(
     * `agents.compile.record-chars`.
     */
   private def record(ck: Citekey): Option[String] =
-    site.sources.get(ck, body = SourcesControllers.GetBody(true)).toOption.map { s =>
+    site.sources.get(ck, body = SourcesControllers.GetBody(true)).left.map(Api.Error(_)).toOption.map { s =>
       val parts = List(
         s.source.summary.map(x => s"Summary:\n$x"),
         Option.when(s.findings.nonEmpty)("Findings:\n" + s.findings.map(f => s"- ${f.claim}").mkString("\n")),
@@ -311,7 +312,13 @@ final class CompileArticlePipeline(
         val corpus = Corpus(
           isCitekey,
           t => resolve(WikiLinks.Occurrence.Target(t.value)).isDefined,
-          ck => site.sources.get(ck, body = SourcesControllers.GetBody(false)).toOption.map(_.source.status)
+          ck =>
+            site.sources
+              .get(ck, body = SourcesControllers.GetBody(false))
+              .left
+              .map(Api.Error(_))
+              .toOption
+              .map(_.source.status)
         )
         val title =
           Option.when(s.mode == DraftMode.Extend)(s.title).orElse(ctx.run.params.title.map(t => Title(t.value)))

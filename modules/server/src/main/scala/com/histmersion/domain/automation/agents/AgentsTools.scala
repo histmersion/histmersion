@@ -363,6 +363,8 @@ object AgentsTools:
           val out = (in.role.map(_.trim).filter(_.nonEmpty), in.target.map(_.trim).filter(_.nonEmpty)) match
             case _ if in.refresh =>
               a.refreshQuota(PlanQuota.QuotaRefresh(in.pool.map(PlanQuota.QuotaRefresh.Pool(_))))
+                .left
+                .map(Api.Error(_))
                 .map(AgentsMarkdown.refreshed)
             case _ if in.pool.exists(_.trim.nonEmpty) =>
               if in.hold.isEmpty && in.floors.isEmpty then
@@ -379,20 +381,29 @@ object AgentsTools:
                 a.setPool(
                   PlanQuota.PoolIdText(in.pool.get.trim),
                   PlanQuota.PoolSet(in.hold.map(PlanQuota.PoolSet.Hold(_)), in.floors.map(PlanQuota.PoolSet.Floors(_)))
-                ).map(AgentsMarkdown.pool)
+                ).left
+                  .map(Api.Error(_))
+                  .map(AgentsMarkdown.pool)
             case (Some(r), None) if in.fallthrough.isDefined =>
               a.setFallthrough(
                 AgentRole.Wire(r),
                 PlanQuota.FallthroughSet(PlanQuota.FallthroughSet.Fallthrough(in.fallthrough.get))
-              ).map(AgentsMarkdown.quota)
-            case (Some(r), None) if in.reset => a.resetChain(AgentRole.Wire(r)).map(AgentsMarkdown.roleChain)
-            case (Some(r), None)             =>
+              ).left
+                .map(Api.Error(_))
+                .map(AgentsMarkdown.quota)
+            case (Some(r), None) if in.reset =>
+              a.resetChain(AgentRole.Wire(r)).left.map(Api.Error(_)).map(AgentsMarkdown.roleChain)
+            case (Some(r), None) =>
               a.setChain(
                 AgentRole.Wire(r),
                 ModelChains.ChainSet(in.models.map(ModelChains.ChainSet.Models(_)))
-              ).map(AgentsMarkdown.roleChain)
+              ).left
+                .map(Api.Error(_))
+                .map(AgentsMarkdown.roleChain)
             case (None, Some(t)) if in.reset =>
               a.removeAllowance(ModelChains.AllowanceSet.Target(t))
+                .left
+                .map(Api.Error(_))
                 .map(x =>
                   if x.removed.value then s"The saved allowance of $t is removed." else s"No saved allowance for $t."
                 )
@@ -405,7 +416,9 @@ object AgentsTools:
                       ls.map(_.spec),
                       ModelChains.Allowance.ReservePct(in.reservePct)
                     )
-                  ).map(AgentsMarkdown.allowance)
+                  ).left
+                    .map(Api.Error(_))
+                    .map(AgentsMarkdown.allowance)
                 case (first :: more, _) => Left(Api.Error(Problems.of(first, more*)))
             case _ =>
               Left(
@@ -540,13 +553,17 @@ object AgentsTools:
                 case Some(b) =>
                   m.setAutopilot(
                     Autopilot.AutopilotSet(Autopilot.AutopilotSet.On(b), Some(Autopilot.AutopilotSet.By("mcp")))
-                  ).map(autopilotPage)
+                  ).left
+                    .map(Api.Error(_))
+                    .map(autopilotPage)
             case "repair-acquire" =>
               repairAcquire(RepairAcquire(in.dryRun))
             case "drain" =>
               m.drain(
                 Autopilot.DrainSet(Autopilot.DrainSet.On(in.on.getOrElse(true)), Some(Autopilot.DrainSet.By("mcp")))
-              ).map(autopilotPage)
+              ).left
+                .map(Api.Error(_))
+                .map(autopilotPage)
             case "mode" =>
               in.mode
                 .map(_.trim)

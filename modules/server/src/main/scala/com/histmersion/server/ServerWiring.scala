@@ -308,6 +308,8 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
     id =>
       library.sources
         .get(id, body = SourcesControllers.GetBody(false))
+        .left
+        .map(Api.Error(_))
         .toOption
         .map(s =>
           ResolvedSource(

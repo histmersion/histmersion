@@ -455,7 +455,7 @@ final class AcquisitionControllers(
     * [[retractionsStatus]]. The two fields of mutable state below are the price of that: a flag so two callers cannot
     * run it twice, and the last error so a failed refresh is visible instead of silent.
     */
-  private def updateRetractionsNow(): Either[Api.Error, RetractionsUpdate] =
+  private def updateRetractionsNow(): Either[Problems, RetractionsUpdate] =
     if !rwRunning.compareAndSet(false, true) then Right(retractionsStatus)
     else
       rwError.set(None)
@@ -1013,7 +1013,7 @@ final class AcquisitionControllers(
     maintenance.guard(WriteGate.OperationName("archive/import"))(archiveImportNow(item, file, req))
 
   def updateRetractions(): Either[Api.Error, RetractionsUpdate] =
-    maintenance.guard(WriteGate.OperationName("retractions/update"))(updateRetractionsNow())
+    maintenance.guard(WriteGate.OperationName("retractions/update"))(updateRetractionsNow().left.map(Api.Error(_)))
 
   // ── shared: what does the user's identifier point at? ───────────────────────────────────────
 

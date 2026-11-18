@@ -56,6 +56,7 @@ import com.histmersion.domain.automation.worklists.WorkListControllers
 import com.histmersion.server.views.WorkListView
 import com.histmersion.domain.automation.managers.ManagersControllers
 import com.histmersion.api.automation.Activity
+import com.histmersion.api.Api
 
 /** The watchers' ingest backlog against a `*_test` database (docs/research-process-managers.md "As built: the ingest
   * backlog"): a sweep's legal open-access picks past the day's allowance wait in the backlog — never the acquisition
@@ -610,6 +611,8 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
     assertEquals(a.oaBacklog.repair(RepairRequest(dryRun = RepairRequest.DryRun(true))).backlog, 1)
     val on = a.managing
       .setAutopilot(AutopilotSet(on = AutopilotSet.On(true), Some(AutopilotSet.By("test"))))
+      .left
+      .map(Api.Error(_))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(on.backlog, 1)
     // a person can reprioritise or skip an entry like any item, by its DOI

@@ -67,6 +67,7 @@ import com.histmersion.api.library.Filter
 import com.histmersion.config.AgentApprovalsConfig
 import com.histmersion.config.AgentCompileConfig
 import com.histmersion.domain.automation.approvals.ApprovalQuery
+import com.histmersion.api.Api
 
 /** Answers from fixtures: DOI metadata, citing papers, searches; counts what was asked. */
 final class StubUpstream extends AgentUpstream:
@@ -367,7 +368,7 @@ class GoalAgentsRunSuite extends DbSuite with com.histmersion.db.Bounded with Ru
       up.calls.asScala.toList.filter(_.startsWith("meta")).sorted,
       List("meta 10.5555/zzagent.ghost", "meta 10.5555/zzagent.in", "meta 10.5555/zzagent.out")
     )
-    val open = a.approvalsList(None, None).toOption.get.filter(_.subject.contains(GoalSubject))
+    val open = a.approvalsList(None, None).left.map(Api.Error(_)).toOption.get.filter(_.subject.contains(GoalSubject))
     assertEquals(open.map(_.kind), List("goal-plan"))
     val plan = open.head.plan.get
     assertEquals(
@@ -436,7 +437,8 @@ class GoalAgentsRunSuite extends DbSuite with com.histmersion.db.Bounded with Ru
     c.scripts ++= List(Seq(text(planJson)), Seq(text(planJson)))
     val (a, h, up) = handlers(c); seed(h); stubPlan(up)
     val run = start(a, RunRequest(PlanGoal, GoalTarget))
-    val id = a.approvalsList(None, None).toOption.get.find(_.subject.contains(GoalSubject)).get.id
+    val id =
+      a.approvalsList(None, None).left.map(Api.Error(_)).toOption.get.find(_.subject.contains(GoalSubject)).get.id
     assert(a.decide(ApiIds.approval(id), Approval.Outcome("reject"), DecisionRequest()).isRight)
     val done = runAgain(a, run.id)
     assertEquals(done.status, "done", done.error)
@@ -527,7 +529,7 @@ class GoalAgentsRunSuite extends DbSuite with com.histmersion.db.Bounded with Ru
     val offered = c.steps.map(_.flatMap(_.toolsOffered).map(_.name).toSet)
     assertEquals(offered.toSet, Set(Set.empty[String], Set("check_edits")))
     assert(offered.dropRight(2).forall(_.isEmpty), offered)
-    val appr = a.approvalsList(None, None).toOption.get.find(_.subject.contains(SlugSubject)).get
+    val appr = a.approvalsList(None, None).left.map(Api.Error(_)).toOption.get.find(_.subject.contains(SlugSubject)).get
     assertEquals(appr.kind, "article-publish")
     val d = appr.article.get
     assertEquals((d.mode, d.title, d.kind), (DraftMode.Create, "Zz tin", "concept"))
@@ -650,7 +652,8 @@ class GoalAgentsRunSuite extends DbSuite with com.histmersion.db.Bounded with Ru
     // someone edits the article while the draft waits
     val theirs = current.replace("None recorded", "Nothing recorded")
     assert(h.research.articles.patch(Slug, Article.Patch(body = Some(Article.Body(theirs)))).isRight)
-    val id = a.approvalsList(None, None).toOption.get.find(_.subject.contains(SlugSubject)).get.id
+    val id =
+      a.approvalsList(None, None).left.map(Api.Error(_)).toOption.get.find(_.subject.contains(SlugSubject)).get.id
     assert(a.decide(ApiIds.approval(id), Approval.Outcome("approve"), DecisionRequest()).isRight)
     val done = runAgain(a, run.id)
     assertEquals(done.status, "done", done.error)
@@ -696,7 +699,8 @@ class GoalAgentsRunSuite extends DbSuite with com.histmersion.db.Bounded with Ru
       Seq(text(draftJson(added, Some("## Disagreements"))))
     )
     val run = start(a, RunRequest(CompileArticle, SlugTarget, topics = TinTopics))
-    val id = a.approvalsList(None, None).toOption.get.find(_.subject.contains(SlugSubject)).get.id
+    val id =
+      a.approvalsList(None, None).left.map(Api.Error(_)).toOption.get.find(_.subject.contains(SlugSubject)).get.id
     assert(a.decide(ApiIds.approval(id), Approval.Outcome("approve"), DecisionRequest()).isRight)
     assertEquals(runAgain(a, run.id).status, "done")
     val body = h.research.articles.get(Slug).toOption.get.article.body.value
@@ -732,7 +736,13 @@ class GoalAgentsRunSuite extends DbSuite with com.histmersion.db.Bounded with Ru
     assertEquals(run.status, "done", why(run))
     assert(h.research.articles.get(Slug).isRight)
     val appr =
-      a.approvalsList(Some(ApprovalQuery.State("all")), None).toOption.get.find(_.subject.contains(SlugSubject)).get
+      a.approvalsList(Some(ApprovalQuery.State("all")), None)
+        .left
+        .map(Api.Error(_))
+        .toOption
+        .get
+        .find(_.subject.contains(SlugSubject))
+        .get
     assertEquals(appr.state, "approved")
 
   test(

@@ -60,6 +60,7 @@ import com.histmersion.config.QuotaConfig
 import com.histmersion.server.KeyedLoopback
 import com.histmersion.config.ClaudeCodeConfig
 import com.histmersion.server.ConverterWiring
+import com.histmersion.api.Api
 
 /** #989 against a `*_test` database: a pool paused only because its reading is stale takes a fresh one before it pauses
   * (the Claude probe, the ChatGPT app-server read) — once per stale-minutes, one at a time; a run paused on such a pool
@@ -309,6 +310,8 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
     val run = startAndRun(a)
     assert(run.status.value == "paused" && run.error.exists(_.sentence.startsWith("plan-quota:")), run.error)
     a.setPool(PlanQuota.PoolIdText("claude-plan"), PoolSet(hold = Some(PlanQuota.PoolSet.Hold(true))))
+      .left
+      .map(Api.Error(_))
     connect(ds)(sql"UPDATE plan_quota_readings SET observed_at = now() - interval '1 hour'".update.run())
     assert(a.picker.pick(Role.Extractor, None).isLeft)
     assertEquals(reads.probes.get(), 0, "a fresh reading would lift neither")
@@ -559,6 +562,8 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
     Thread.sleep(5)
     val refreshed = a
       .refreshQuota(QuotaRefresh(Some(PlanQuota.PoolId.Wire("claude-plan"))))
+      .left
+      .map(Api.Error(_))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(refreshed.lifted.map(_.value: String), List(Plan.wire.value: String))
     assert(AgentsMarkdown.refreshed(refreshed).contains("Back in use"), AgentsMarkdown.refreshed(refreshed))
@@ -610,6 +615,8 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
     assert(!entry.usable.value && entry.problems.exists(_.sentence.contains("no login")), entry)
     val forced = a
       .refreshQuota(QuotaRefresh(Some(PlanQuota.PoolId.Wire("claude-plan"))))
+      .left
+      .map(Api.Error(_))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assert(!forced.pools.head.refreshed.value && forced.pools.head.detail.value.contains("no login"), forced)
     assertEquals(reads.probes.get(), 0)

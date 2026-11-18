@@ -49,6 +49,7 @@ import com.histmersion.api.library.Title
 import com.histmersion.plugin.AiMessage
 import com.histmersion.plugin.AiCapabilities
 import com.histmersion.domain.automation.agents.PluginAiClient
+import com.histmersion.api.Api
 
 final case class Ping(word: String) derives JsonCodec, KindlingsSchema, com.histmersion.api.json.Schema
 
@@ -588,6 +589,8 @@ class AiProvidersSuite extends munit.FunSuite:
       AgentsControllers
         .attempt(ref)(PluginAiClient(ref, failing, AiHttp.Offline).run(call()))
         .left
+        .map(Api.Error(_))
+        .left
         .map(_.problems.head)
         .left
         .map(_.sentence),
@@ -605,6 +608,8 @@ class AiProvidersSuite extends munit.FunSuite:
     val other = Scripted(List(_ => Left(http500)))
     val otherFailed = AgentsControllers
       .attempt(ref)(PluginAiClient(ref, other, AiHttp.Offline).run(call()))
+      .left
+      .map(Api.Error(_))
       .left
       .map(e => NonEmptyVector.toVector(e.problems))
     assertEquals(

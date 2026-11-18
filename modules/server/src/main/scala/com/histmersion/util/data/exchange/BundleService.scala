@@ -32,6 +32,7 @@ import com.histmersion.api.Api
 import com.histmersion.util.jobs.Job
 import com.histmersion.util.storage.Reservation
 import com.histmersion.api.ByteCount
+import com.histmersion.util.problem.Problems
 
 /** The portable bundle and the merge (docs/research-merge-import.md, milestones M0–M7): this instance's identity, the
   * export, verify and import of a `.hmx` bundle, the bundles kept to be planned, the plan, the apply, the review
@@ -107,7 +108,7 @@ object BundleService:
     def exportBundle(since: Option[BundleScope.Since.At]): Either[Api.Error, (HandedFile, Bundle.Manifest)] =
       val store = bundles
       for
-        _ <- usable(store)
+        _ <- usable(store).left.map(Api.Error(_))
         _ = pruneStale(store)
         key = Store.Key.applyUnsafe(s"export-${UUID.randomUUID()}${Bundle.Extension}")
         part <- store
@@ -129,15 +130,13 @@ object BundleService:
           )
       yield file -> m
 
-    private def usable(store: Store): Either[Api.Error, Unit] =
+    private def usable(store: Store): Either[Problems, Unit] =
       store
         .makeDirectory()
         .left
         .map(e =>
-          Api.Error(
-            Problem
-              .Unclassified(Legacy.Text(s"bundles directory ${store.where()} is not usable: ${e.message.sentence}"))
-          )
+          Problem
+            .Unclassified(Legacy.Text(s"bundles directory ${store.where()} is not usable: ${e.message.sentence}"))
         )
 
     private def write(part: Reservation, since: Option[BundleScope.Since.At]) =
@@ -172,21 +171,23 @@ object BundleService:
       upload.read(in => BundleReader.verify(in, Migrate.current(w.ds).map(v => Bundle.Manifest.SchemaVersion(v.value))))
 
     def importBundle(upload: ByteSource, dryRun: ImportOptions.DryRun): Either[Api.Error, Bundle.ImportResult] =
-      shaOf(upload).flatMap(importFrom(upload, _, MergeResolutions(), dryRun))
+      shaOf(upload).left
+        .map(Api.Error(_))
+        .flatMap(importFrom(upload, _, MergeResolutions(), dryRun).left.map(Api.Error(_)))
 
     /** The sha256 of an uploaded file, as the server computes it. */
-    private def shaOf(upload: ByteSource): Either[Api.Error, Sha256] =
+    private def shaOf(upload: ByteSource): Either[Problems, Sha256] =
       Sha256
         .either(upload.read(BundleReader.sha256Of).value)
         .left
-        .map(e => Api.Error(Problem.Unclassified(Legacy.Text(s"the upload's sha256 is unusable: $e"))))
+        .map(e => Problem.Unclassified(Legacy.Text(s"the upload's sha256 is unusable: $e")))
 
     private def importFrom(
         bundle: ByteSource,
         sha: Sha256,
         resolutions: MergeResolutions,
         dryRun: ImportOptions.DryRun
-    ): Either[Api.Error, Bundle.ImportResult] =
+    ): Either[Problems, Bundle.ImportResult] =
       BundleImporter
         .run(
           w.ds,
@@ -199,8 +200,6 @@ object BundleService:
           w.carried,
           w.rules
         )
-        .left
-        .map(e => Api.Error(e))
 
     /** Where an uploaded bundle is kept: `upload-<sha256>.hmx`, content-addressed. */
     private def keyOf(sha: Sha256): Store.Key = Store.Key.applyUnsafe(s"upload-$sha${Bundle.Extension}")
@@ -228,9 +227,9 @@ object BundleService:
     def keep(upload: ByteSource): Either[Api.Error, Bundle.Upload] =
       val store = bundles
       for
-        sha <- shaOf(upload)
+        sha <- shaOf(upload).left.map(Api.Error(_))
         key = keyOf(sha)
-        _ <- usable(store)
+        _ <- usable(store).left.map(Api.Error(_))
         _ = pruneStale(store)
         _ <- copyIn(store, key, upload).left.map(e =>
           Api.Error(Problem.Unclassified(Legacy.Text(s"could not keep the bundle in ${store.where()}: $e")))
@@ -287,7 +286,7 @@ object BundleService:
         resolutions: MergeResolutions,
         dryRun: ImportOptions.DryRun
     ): Either[Api.Error, Bundle.ImportResult] =
-      kept(bundle).flatMap(importFrom(_, bundle, resolutions, dryRun))
+      kept(bundle).flatMap(importFrom(_, bundle, resolutions, dryRun).left.map(Api.Error(_)))
 
     def applyKept(
         bundle: Sha256,

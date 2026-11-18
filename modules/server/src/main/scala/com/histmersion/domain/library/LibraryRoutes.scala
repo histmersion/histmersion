@@ -40,7 +40,10 @@ object LibraryRoutes:
       ),
       Api.sources.serverLogicSuccess[Identity](f => search.sources(f)),
       Api.facets.serverLogic[Identity]((field, prefix, f) =>
-        labels.facets(Facet.Field.Wire(field.value), prefix.map(p => FilterSql.FacetPrefix(p.value)), f)
+        labels
+          .facets(Facet.Field.Wire(field.value), prefix.map(p => FilterSql.FacetPrefix(p.value)), f)
+          .left
+          .map(Api.Error(_))
       ),
       sourceArticles,
       Api.lintSource.serverLogic[Identity](ck => citekey(ck).flatMap(sources.lint)),
@@ -57,13 +60,15 @@ object LibraryRoutes:
               q.offset.map(o => Offset.option(o.value).getOrElse(Offset.Start)),
               q.chars.map(c => SourcesControllers.Chars(c.value))
             )
+            .left
+            .map(Api.Error(_))
             .map(md => Source.View(md.value))
         )
       ),
       Api.passages.serverLogic[Identity](q => sources.passages(q)),
       resolveId,
       Api.getSource.serverLogic[Identity]((ck, body) =>
-        citekey(ck).flatMap(sources.get(_, SourcesControllers.GetBody(body.value)))
+        citekey(ck).flatMap(sources.get(_, SourcesControllers.GetBody(body.value)).left.map(Api.Error(_)))
       ),
       Api.findingsPage.serverLogicSuccess[Identity](q => findings.page(q)),
       Api.findings.serverLogicSuccess[Identity](q => findings.feed(q)),

@@ -10,6 +10,7 @@ import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.Api
 
 /** The read-only query's MCP tools: `query` (its description generated from the live schema) and `schema`. */
 object QueryTools:
@@ -33,7 +34,7 @@ object QueryTools:
         .description(queries.toolDescription.value)
         .input[QueryInput]
         .handle { in =>
-          queries.run(Query.QueryRequest(Query.QueryRequest.Sql(in.sql.value))) match
+          queries.run(Query.QueryRequest(Query.QueryRequest.Sql(in.sql.value))).left.map(Api.Error(_)) match
             case Right(r) => ToolResult.text(Query.markdown(r).value)
             // hand the live schema back with the error so the next attempt can be right
             case Left(e) =>

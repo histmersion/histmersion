@@ -6,6 +6,7 @@ import com.histmersion.domain.Caller
 import com.histmersion.domain.library.search.Search
 import sttp.shared.Identity
 import sttp.tapir.server.ServerEndpoint
+import com.histmersion.api.Api
 
 /** The collections' endpoints bound to their controllers. Every request is the local person's until there are accounts.
   */
@@ -13,7 +14,7 @@ object CollectionsRoutes:
   def apply(c: CollectionsControllers): List[ServerEndpoint[Any, Identity]] =
     val me = Caller.Local
     List(
-      CollectionsApi.collections.serverLogic[Identity](_ => c.collections(me)),
+      CollectionsApi.collections.serverLogic[Identity](_ => c.collections(me).left.map(Api.Error(_))),
       CollectionsApi.collection.serverLogic[Identity](name =>
         c.collection(me, CollectionsService.CollectionName(name.value))
       ),

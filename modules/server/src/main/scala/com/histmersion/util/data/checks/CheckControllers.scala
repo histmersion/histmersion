@@ -13,6 +13,7 @@ import com.histmersion.api.Api
 import com.histmersion.api.text.WikiLinks
 import com.histmersion.util.time.Timer
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.problem.Problems
 
 /** The registered checks as REST, MCP and the CLI reach them: the lint report (an unknown rule name is a 400: a typo
   * must never read as a clean corpus), the safe fixes (a write, under the maintenance guard) and the report after them.
@@ -33,11 +34,9 @@ final class CheckControllers(
   private def context: CheckContext = CheckContext(config(), ds, format, write, timer)
 
   /** `GET /api/lint` — read-only. */
-  def lint(rules: List[CheckRule.Name]): Either[Api.Error, LintReport] =
+  def lint(rules: List[CheckRule.Name]): Either[Problems, LintReport] =
     checks
       .select(rules)
-      .left
-      .map(m => Api.Error(m))
       .map(rs => checks.report(rs, context, CheckRule.MaxItems(config().lint.maxItems.value)))
 
   /** `POST /api/lint/fix` — the repairs that are safe to make without a person, each owner's, in their ranks: the ones
@@ -56,10 +55,10 @@ final class CheckControllers(
     * the caller sees is the state AFTER the repair.
     */
   def lintWithFix(rules: List[CheckRule.Name], fix: CheckControllers.ApplyFix): Either[Api.Error, LintReport] =
-    if !fix.value then lint(rules)
+    if !fix.value then lint(rules).left.map(Api.Error(_))
     else
       guardedLintFix(rules).flatMap(f =>
-        lint(rules).map(_.modify(_.fixed).setTo(f.applied.map(a => LintReport.Fixed(a.value))))
+        lint(rules).left.map(Api.Error(_)).map(_.modify(_.fixed).setTo(f.applied.map(a => LintReport.Fixed(a.value))))
       )
 
 object CheckControllers:

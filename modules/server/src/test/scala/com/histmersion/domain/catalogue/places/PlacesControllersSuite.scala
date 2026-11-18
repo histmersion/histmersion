@@ -155,9 +155,16 @@ class PlacesControllersSuite extends munit.FunSuite:
     assert(
       c.shapes(Api.PlacesGeoQuery(pick = Some(GeoPick.Wire("nonsense"))))
         .left
+        .map(Api.Error(_))
+        .left
         .exists(_.problems.sentences.mkString("; ").contains("pick: unknown geo pick '"))
     )
-    assert(c.shapes(Api.PlacesGeoQuery(kind = Some(com.histmersion.api.catalogue.Place.Kind.Wire("region")))).isRight)
+    assert(
+      c.shapes(Api.PlacesGeoQuery(kind = Some(com.histmersion.api.catalogue.Place.Kind.Wire("region"))))
+        .left
+        .map(Api.Error(_))
+        .isRight
+    )
     assertEquals(
       c.geocode(Geocode.Attempt.Name("Zzcl"), Geocode.KindHint.Unknown, None).map(_.placeId),
       Some("zzcl_hill")

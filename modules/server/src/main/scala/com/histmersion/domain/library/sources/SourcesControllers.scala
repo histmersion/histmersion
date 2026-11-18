@@ -29,6 +29,7 @@ import com.histmersion.api.library.Source
 import com.histmersion.api.personal.UnreadPage
 import com.histmersion.util.time.Timer
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.problem.Problems
 
 /** A source over REST and MCP: read whole or by section, its passages, its note, written whole or in part, renamed,
   * deleted, its formatting checked and repaired, a note imported. Every citekey asked for is resolved first (an old one
@@ -82,7 +83,7 @@ final class SourcesControllers(
   def get(
       citekey: Citekey,
       body: SourcesControllers.GetBody = SourcesControllers.GetBody(true)
-  ): Either[Api.Error, Source.WithFindings] =
+  ): Either[Problems, Source.WithFindings] =
     val ck = canonical(citekey)
     sources
       .get(ck)
@@ -93,7 +94,7 @@ final class SourcesControllers(
           illustration = figures.sourceThumb(ck)
         )
       )
-      .toRight(Api.Error(Problem.NotFound.Entity(Problem.TypeName.of(Citekey), Problem.Raw(s"$citekey"))))
+      .toRight(Problem.NotFound.Entity(Problem.TypeName.of(Citekey), Problem.Raw(s"$citekey")))
 
   def citekeys: List[Citekey] = sources.citekeys
 
@@ -122,7 +123,7 @@ final class SourcesControllers(
         .map(m => Write.invalid(m))
         .flatMap(s => strictGate(strict.value, issuesOf(s.summary, s.notes)).map(_ => s))
         .flatMap { s =>
-          val _ = sources.put(s, Caller.Local); get(ck).map(withFormatting)
+          val _ = sources.put(s, Caller.Local); get(ck).left.map(Api.Error(_)).map(withFormatting)
         }
 
   /** Merge only the parts present in the patch (read + merge + write in one transaction). */
@@ -135,7 +136,7 @@ final class SourcesControllers(
       // only what this patch writes is gated: a strict patch of the tags is not refused for old notes
       strictGate(strict.value, issuesOf(p.summary, p.notes))
         .flatMap(_ => sources.patch(citekey, p, Caller.Local))
-        .flatMap(_ => get(citekey))
+        .flatMap(_ => get(citekey).left.map(Api.Error(_)))
         .map(withFormatting)
 
   /** `POST /api/sources/{ck}/rename` — everything the rename touches is the service's and the referrers'. */
@@ -148,15 +149,17 @@ final class SourcesControllers(
         .map(m => Write.invalid(m))
         .flatMap { now =>
           sources.rename(from, now, Caller.Local).flatMap { counts =>
-            get(now, body = SourcesControllers.GetBody(false)).map(sw =>
-              Source.Renamed(
-                apiCk(from),
-                apiCk(now),
-                sw.source,
-                counts,
-                sources.calibreId(now).map(c => Source.CalibreId(c.value))
+            get(now, body = SourcesControllers.GetBody(false)).left
+              .map(Api.Error(_))
+              .map(sw =>
+                Source.Renamed(
+                  apiCk(from),
+                  apiCk(now),
+                  sw.source,
+                  counts,
+                  sources.calibreId(now).map(c => Source.CalibreId(c.value))
+                )
               )
-            )
           }
         }
 
@@ -281,9 +284,11 @@ final class SourcesControllers(
 
   /** `GET /api/sources/{citekey}/lint`. */
   def lint(citekey: Citekey): Either[Api.Error, FormatReport] =
-    get(citekey, body = SourcesControllers.GetBody(false)).map(sw =>
-      FormatReport(FormatReport.Subject(sw.source.citekey.value), formatIssues(sw.source.summary, sw.source.notes))
-    )
+    get(citekey, body = SourcesControllers.GetBody(false)).left
+      .map(Api.Error(_))
+      .map(sw =>
+        FormatReport(FormatReport.Subject(sw.source.citekey.value), formatIssues(sw.source.summary, sw.source.notes))
+      )
 
   /** `POST /api/sources/{citekey}/lint/fix` — the wording-safe repairs to summary and notes, written as one patch
     * guarded by the `updatedAt` just read, then the report of what is left.
@@ -333,17 +338,15 @@ final class SourcesControllers(
       heading: Option[SourceService.Heading] = None,
       offset: Option[Offset] = None,
       chars: Option[SourcesControllers.Chars] = None
-  ): Either[Api.Error, SourcesControllers.Markdown] =
+  ): Either[Problems, SourcesControllers.Markdown] =
     val sec = section.flatMap(Source.Section.parse).map(_.value)
     val badSection = section.filter(_.value.nonEmpty).exists(_ => sec.isEmpty)
     if badSection then
       Left(
-        Api.Error(
-          Problem.Invalid.Unknown.here(
-            Problem.TypeName.of(Source.Section.Wire),
-            Problem.Raw(section.fold("")(_.value)),
-            Source.Section.all.toVector.map(Problem.Raw.of(_))
-          )
+        Problem.Invalid.Unknown.here(
+          Problem.TypeName.of(Source.Section.Wire),
+          Problem.Raw(section.fold("")(_.value)),
+          Source.Section.all.toVector.map(Problem.Raw.of(_))
         )
       )
     else

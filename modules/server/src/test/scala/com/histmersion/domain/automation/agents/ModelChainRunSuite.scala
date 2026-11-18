@@ -52,6 +52,7 @@ import com.histmersion.api.automation.ModelChains
 import com.histmersion.config.ClaudeCodeConfig
 import com.histmersion.config.AgentProviderConfig
 import com.histmersion.server.ConverterWiring
+import com.histmersion.api.Api
 
 /** Model chains and allowances end to end against a `*_test` database, with sttp-ai's scripted model per chained model:
   * the chain's next model takes over when the first is below its allowance (before a step, during one, or when its plan
@@ -334,6 +335,8 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
     )
     val saved = a
       .setChain(Agents.Role.Wire("extractor"), ChainSet(List(chainModel(B), chainModel(A))))
+      .left
+      .map(Api.Error(_))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(
       (saved.source, saved.active.map(_.value: String), saved.models.map(_.model.value: String)),
@@ -347,6 +350,8 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
           ModelChains.AllowanceSet.ReservePct(20)
         )
       )
+      .left
+      .map(Api.Error(_))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals((st.source, st.reservePct, st.limits.map(_.limit)), ("saved", 20, List("2M tokens/5h")))
     // a new process sees the same
@@ -371,11 +376,15 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
     )
     // reset
     assertEquals(
-      again.resetChain(Agents.Role.Wire("extractor")).map(c => (c.source, c.models.map(_.model.value: String))),
+      again
+        .resetChain(Agents.Role.Wire("extractor"))
+        .left
+        .map(Api.Error(_))
+        .map(c => (c.source, c.models.map(_.model.value: String))),
       Right(("config", List(A.wire, B.wire)))
     )
-    assertEquals(again.removeAllowance(allowanceTarget(A)).map(_.removed), Right(true))
-    assertEquals(again.removeAllowance(allowanceTarget(A)).map(_.removed), Right(false))
+    assertEquals(again.removeAllowance(allowanceTarget(A)).left.map(Api.Error(_)).map(_.removed), Right(true))
+    assertEquals(again.removeAllowance(allowanceTarget(A)).left.map(Api.Error(_)).map(_.removed), Right(false))
     assertEquals(
       again.models.allowances.filter(_.target.value == A.wire.value).map(a => (a.source, a.limits.map(_.limit))),
       List(("config", List("5 usd/1d")))
@@ -385,17 +394,23 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
       again
         .setChain(Agents.Role.Wire("narrator"), ChainSet(List(chainModel(A))))
         .left
+        .map(Api.Error(_))
+        .left
         .exists(_.problems.sentences.mkString("; ").contains("role 'narrator'"))
     )
     assert(
       again
         .setChain(Agents.Role.Wire("extractor"), ChainSet(List(ModelChains.ChainEntry.Model("ollama:x"))))
         .left
+        .map(Api.Error(_))
+        .left
         .exists(_.problems.sentences.mkString("; ").contains("unknown provider kind 'ollama'"))
     )
     assert(
       again
         .setChain(Agents.Role.Wire("extractor"), ChainSet(Nil))
+        .left
+        .map(Api.Error(_))
         .left
         .exists(_.problems.sentences.mkString("; ").contains("at least one"))
     )
@@ -408,17 +423,23 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
           )
         )
         .left
+        .map(Api.Error(_))
+        .left
         .exists(_.problems.sentences.mkString("; ").contains("is not a limit window"))
     )
     assert(
       again
         .setAllowance(AllowanceSet(allowanceTarget(A), Nil, ModelChains.AllowanceSet.ReservePct(120)))
         .left
+        .map(Api.Error(_))
+        .left
         .exists(_.problems.sentences.mkString("; ").contains("not between 0 and 99"))
     )
     assert(
       again
         .setAllowance(AllowanceSet(ModelChains.AllowanceSet.Target("nobody:*"), Nil))
+        .left
+        .map(Api.Error(_))
         .left
         .exists(_.problems.sentences.mkString("; ").contains("unknown provider kind 'nobody'"))
     )
@@ -431,6 +452,8 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
         Agents.Role.Wire("extractor"),
         ChainSet(List(ModelChains.ChainEntry.Model("local:zzUnpriced"), chainModel(B)))
       )
+      .left
+      .map(Api.Error(_))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(c.models.map(e => (e.model.value: String, e.ready)), List(("local:zzUnpriced", false), (B.wire, true)))
     assert(c.models.head.problems.exists(_.sentence.contains("has no price")), c)

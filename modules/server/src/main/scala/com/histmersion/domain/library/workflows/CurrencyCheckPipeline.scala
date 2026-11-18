@@ -28,6 +28,7 @@ import com.histmersion.domain.library.Doi
 import com.histmersion.api.automation.Queue
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.Api
 
 /** `currency-check <goal>` (docs/research-embedded-agents.md §4.5, §14): is what the goal rests on still accepted? For
   * each of the goal's sources with a DOI: `assess --apply` (a retraction overwrites the status, as `assess` always
@@ -74,6 +75,8 @@ final class CurrencyCheckPipeline(
       .flatMap(ck =>
         site.sources
           .get(ck, body = SourcesControllers.GetBody(false))
+          .left
+          .map(Api.Error(_))
           .toOption
           .map(s => Target(ck, s.source.doi.filter(_.value.trim.nonEmpty).flatMap(d => Doi.option(d.value.trim))))
       )

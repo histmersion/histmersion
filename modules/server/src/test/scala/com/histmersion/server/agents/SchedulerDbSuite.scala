@@ -67,6 +67,7 @@ import com.histmersion.config.AgentApprovalsConfig
 import com.histmersion.domain.automation.Approval
 import com.histmersion.config.AutoApprovalsConfig
 import com.histmersion.domain.automation.worklists.QueueRows
+import com.histmersion.api.Api
 
 /** The central scheduler against a `*_test` database (docs/research-goal-advancement.md "As built"): 20 goals under the
   * autopilot — `goal-first` with 3 runs at once gives every place to the best goal (a pin, then a person's priority,
@@ -306,6 +307,8 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     a.managing
       .setAutopilot(AutopilotSet(on = AutopilotSet.On(true), Some(AutopilotSet.By("test"))))
+      .left
+      .map(Api.Error(_))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
 
   private def item(mid: ManagerInfo.Id, kind: ManagerItem.Kind, target: ManagerItem.Target): ManagerItem =
@@ -723,6 +726,8 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
     // turning the autopilot on lifts it
     val st = a.managing
       .setAutopilot(AutopilotSet(on = AutopilotSet.On(true), Some(AutopilotSet.By("test"))))
+      .left
+      .map(Api.Error(_))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     note("on lifts the drain", a.autopilotPage(st))
     assert(st.changes.exists(_.value.contains("drain lifted")) && st.drain.isEmpty, st.changes)

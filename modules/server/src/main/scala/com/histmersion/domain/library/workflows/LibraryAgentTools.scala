@@ -74,6 +74,8 @@ final class LibraryAgentTools(site: => LibrarySite, upstream: () => AgentUpstrea
             in.offset,
             bodyChars(in.chars)
           )
+          .left
+          .map(Api.Error(_))
           .fold(
             e => s"No source '${in.citekey}': ${e.problems.sentences.mkString("; ")}",
             md =>
@@ -131,6 +133,8 @@ final class LibraryAgentTools(site: => LibrarySite, upstream: () => AgentUpstrea
             in.prefix.map(p => FilterSql.FacetPrefix(p.value)),
             facetsIn.toFilter
           )
+          .left
+          .map(Api.Error(_))
           .fold(
             e => e.problems.sentences.mkString("; "),
             fs => cap(SearchMarkdown.facets(facetsIn.field, fs.toVector), max, "narrow it with `prefix`")
@@ -159,6 +163,8 @@ final class LibraryAgentTools(site: => LibrarySite, upstream: () => AgentUpstrea
       ) { in =>
         site.query
           .run(Query.QueryRequest(Query.QueryRequest.Sql(in.sql.value)))
+          .left
+          .map(Api.Error(_))
           .fold(e => e.problems.sentences.mkString("; "), r => LibraryAgentTools.queryResult(r, caps.queryMaxRows, max))
       }
     },

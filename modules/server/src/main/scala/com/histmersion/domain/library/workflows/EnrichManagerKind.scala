@@ -64,6 +64,8 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
           case Some(ck) =>
             site.sources
               .get(ck, body = SourcesControllers.GetBody(false))
+              .left
+              .map(Api.Error(_))
               .map(s => ManagerContext.ItemTarget(s.source.citekey.value))
       case other => Left(Api.Error(Problem.Unclassified(Legacy.Text(s"unknown item kind '$other'"))))
 
@@ -78,7 +80,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
     val asSource = Citekey
       .option(text)
       .toRight(Api.Error(Problem.NotFound.Entity(Problem.TypeName.of(Citekey), Problem.Raw(s"$text"))))
-      .flatMap(ck => site.sources.get(ck, body = SourcesControllers.GetBody(false)))
+      .flatMap(ck => site.sources.get(ck, body = SourcesControllers.GetBody(false)).left.map(Api.Error(_)))
     asSource
       .map(s =>
         (List(ManagerContext.ItemTarget(s.source.citekey.value)), List.empty[ManagerKindDefinition.ExpandSkipped])
@@ -121,7 +123,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
 
   /** Why a source counts as enriched already (findings, notes, a live enrich run), if it does. */
   private def enrichedWhy(c: ManagerContext, ck: Citekey): Option[AutoEnrich.Rationale] =
-    site.sources.get(ck, body = SourcesControllers.GetBody(false)).toOption match
+    site.sources.get(ck, body = SourcesControllers.GetBody(false)).left.map(Api.Error(_)).toOption match
       case None      => Some(AutoEnrich.Rationale.NoSource)
       case Some(src) =>
         val runs = priorRuns(c, Citekey.assume(src.source.citekey.value))
@@ -152,7 +154,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
     def cfg = a.config
     try
       autoEnrichLock.synchronized {
-        site.sources.get(citekey, body = SourcesControllers.GetBody(false)) match
+        site.sources.get(citekey, body = SourcesControllers.GetBody(false)).left.map(Api.Error(_)) match
           case Left(e)    => Some(AutoEnrich.notQueued(e.problems))
           case Right(src) =>
             val ck = Citekey.assume(src.source.citekey.value)
@@ -232,6 +234,8 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
           .flatMap(ck =>
             site.sources
               .get(ck, body = SourcesControllers.GetBody(false))
+              .left
+              .map(Api.Error(_))
               .left
               .map(_ => ())
           ) match

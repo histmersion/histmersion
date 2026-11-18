@@ -119,7 +119,7 @@ final class HttpApi(
         keys.map(k => BasemapService.TileKeys(k.value))
       )
     ),
-    TilesApi.tile.serverLogic[Identity](q => h.tiles.tile(q))
+    TilesApi.tile.serverLogic[Identity](q => h.tiles.tile(q).left.map(Api.Error(_)))
   ) ++ LibraryRoutes(
     h.library.search,
     h.library.labels,
@@ -157,7 +157,7 @@ final class HttpApi(
     Api.exportBundle.serverLogic[Identity](since =>
       h.bundles.exportBundle(since.map(s => BundleScope.Since.At(s.value))).map((f, d) => (f, Api.FileName(d.value)))
     ),
-    Api.verifyBundle.serverLogic[Identity](f => h.bundles.verify(f)),
+    Api.verifyBundle.serverLogic[Identity](f => h.bundles.verify(f).left.map(Api.Error(_))),
     Api.importBundle.serverLogic[Identity]((dryRun, f) =>
       h.bundles.importBundle(ImportOptions.DryRun(dryRun.value), f)
     ),
@@ -167,7 +167,7 @@ final class HttpApi(
     Api.mergeImport.serverLogic[Identity](req => h.bundles.importUploaded(req)),
     Api.mergeApply.serverLogic[Identity](req => h.bundles.applyUploaded(req)),
     Api.mergeApplyStatus.serverLogic[Identity](job => HttpApi.jobId(job.value).flatMap(h.bundles.applyStatus)),
-    Api.mergeSession.serverLogic[Identity](b => h.bundles.session(b)),
+    Api.mergeSession.serverLogic[Identity](b => h.bundles.session(b).left.map(Api.Error(_))),
     Api.putMergeSession.serverLogic[Identity]((b, r) => h.bundles.putSession(b, r)),
     Api.parseResolutions.serverLogic[Identity](text =>
       h.bundles.parseResolutions(MergeResolutionsFile.Text(text.value))
@@ -264,13 +264,16 @@ final class HttpApi(
     ConfigEditApi.restart.serverLogic[Identity](_ => h.settings.restart())
   ) ++ PersonalRoutes(h.personal) ++ List[ServerEndpoint[Any, Identity]](
     Api.activity.serverLogic[Identity]((show, since, goal, limit, before) =>
-      h.activity.page(
-        show.map(s => Activity.Show.Wire(s.value)),
-        since.map(s => ListFilters.TimeBound(s.value)),
-        goal.map(g => ActivityQuery.Goal(g.value)),
-        limit.map(l => ActivityQuery.Limit(l.value)),
-        before.map(b => ActivityCursor.Wire(b.value))
-      )
+      h.activity
+        .page(
+          show.map(s => Activity.Show.Wire(s.value)),
+          since.map(s => ListFilters.TimeBound(s.value)),
+          goal.map(g => ActivityQuery.Goal(g.value)),
+          limit.map(l => ActivityQuery.Limit(l.value)),
+          before.map(b => ActivityCursor.Wire(b.value))
+        )
+        .left
+        .map(Api.Error(_))
     ),
     Api.jobs.serverLogic[Identity]((f, limit, before, upTo) =>
       h.jobList.page(
@@ -399,13 +402,13 @@ final class HttpApi(
         h.agents.managing,
         List(
           AutopilotApi.autopilot.serverLogicSuccess[Identity](_ => h.autopilot.autopilot),
-          AutopilotApi.setAutopilot.serverLogic[Identity](in => h.autopilot.setAutopilot(in)),
+          AutopilotApi.setAutopilot.serverLogic[Identity](in => h.autopilot.setAutopilot(in).left.map(Api.Error(_))),
           AutopilotApi.setMode.serverLogic[Identity](in => h.autopilot.setMode(in))
         ),
         AcquisitionWorkRoutes(
           EngineContributions.work(h.agents)
         ),
-        List(AutopilotApi.drain.serverLogic[Identity](in => h.autopilot.drain(in)))
+        List(AutopilotApi.drain.serverLogic[Identity](in => h.autopilot.drain(in).left.map(Api.Error(_))))
       ) ++ acquireRoutes ++
       IiifRoutes(h.media.iiif) ++
       List(sourcePage, static, apiNotFound, index)

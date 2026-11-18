@@ -14,6 +14,7 @@ import com.histmersion.api.Api
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.library.ArchiveFile
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.problem.Problems
 
 /** Server-side implementation of the IIIF Image API Level 1 (plan §4.3).
   *
@@ -55,41 +56,37 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
     // parse the filename as `default.{format}`
     val safeName = AssetService.AssetName(AssetLinks.safeName(name.value).value)
     for
-      format <- parseFilename(filename)
+      format <- parseFilename(filename).left.map(Api.Error(_))
       region <- Iiif.Region.parse(regionStr).left.map(p => Api.Error(p))
       size <- Iiif.Size.parse(sizeStr).left.map(p => Api.Error(p))
-      _ <- validateRotation(rotationStr)
+      _ <- validateRotation(rotationStr).left.map(Api.Error(_))
       result <- render(citekey, safeName, region, size, format)
     yield result
 
   // ── internals ──────────────────────────────────────────────────────────────────────────────
 
   /** Parse `default.jpg` or `default.png`. */
-  private def parseFilename(filename: IiifControllers.Filename): Either[Api.Error, Iiif.Format] =
+  private def parseFilename(filename: IiifControllers.Filename): Either[Problems, Iiif.Format] =
     filename.value match
       case s"default.$ext" =>
-        Iiif.parseFormat(ArchiveFile.Format.Wire(ext)).left.map(p => Api.Error(p))
+        Iiif.parseFormat(ArchiveFile.Format.Wire(ext))
       case _ =>
         Left(
-          Api.Error(
-            Problem.Invalid.Unreadable.here(
-              Problem.TypeName.of(Filename),
-              Problem.Raw.of(filename),
-              Vector(Problem.Raw("default.jpg"), Problem.Raw("default.png"))
-            )
+          Problem.Invalid.Unreadable.here(
+            Problem.TypeName.of(Filename),
+            Problem.Raw.of(filename),
+            Vector(Problem.Raw("default.jpg"), Problem.Raw("default.png"))
           )
         )
 
   /** Level 1 supports rotation `0` only. */
-  private def validateRotation(s: Iiif.Rotation): Either[Api.Error, Unit] =
+  private def validateRotation(s: Iiif.Rotation): Either[Problems, Unit] =
     s.value.trim match
       case "0" => Right(())
       case _   =>
         Left(
-          Api.Error(
-            Problem.Invalid.Unknown
-              .here(Problem.TypeName.of(Iiif.Rotation), Problem.Raw.of(s), Vector(Problem.Raw("0")))
-          )
+          Problem.Invalid.Unknown
+            .here(Problem.TypeName.of(Iiif.Rotation), Problem.Raw.of(s), Vector(Problem.Raw("0")))
         )
 
   /** Load the asset, decode it, apply transforms, and encode to the output format. */
@@ -110,7 +107,10 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
           case None =>
             Left(Api.Error(undecodable(name)))
           case Some(img) =>
-            applyRegion(img, region).flatMap(applySize(_, size)).flatMap(encode(_, format))
+            applyRegion(img, region).left
+              .map(Api.Error(_))
+              .flatMap(applySize(_, size).left.map(Api.Error(_)))
+              .flatMap(encode(_, format).left.map(Api.Error(_)))
 
   private def noAsset(citekey: Citekey, name: AssetService.AssetName): Problem =
     Problem.NotFound.Entity(Problem.TypeName.of(AssetService.AssetName), Problem.Raw(s"$citekey/$name"))
@@ -123,7 +123,7 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
     Option(ImageIO.read(new ByteArrayInputStream(bytes.value)))
 
   /** Crop the image to the requested region. */
-  private def applyRegion(img: BufferedImage, region: Iiif.Region): Either[Api.Error, BufferedImage] =
+  private def applyRegion(img: BufferedImage, region: Iiif.Region): Either[Problems, BufferedImage] =
     region match
       case Iiif.Region.Full                   => Right(img)
       case Iiif.Region.Pixels(xr, yr, wr, hr) =>
@@ -137,23 +137,21 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
         val ch = math.max(1, math.min(h, imgH - cy))
         if cx >= imgW || cy >= imgH then
           Left(
-            Api.Error(
-              Problem.Invalid.Broken.here(
-                Problem.Invalid.Rule.RegionWithin(
-                  Problem.Count.of(xr),
-                  Problem.Count.of(yr),
-                  Problem.Count.of(wr),
-                  Problem.Count.of(hr),
-                  Problem.Count(imgW.toLong),
-                  Problem.Count(imgH.toLong)
-                )
+            Problem.Invalid.Broken.here(
+              Problem.Invalid.Rule.RegionWithin(
+                Problem.Count.of(xr),
+                Problem.Count.of(yr),
+                Problem.Count.of(wr),
+                Problem.Count.of(hr),
+                Problem.Count(imgW.toLong),
+                Problem.Count(imgH.toLong)
               )
             )
           )
         else Right(img.getSubimage(cx, cy, cw, ch))
 
   /** Scale the image to the requested size. */
-  private def applySize(img: BufferedImage, size: Iiif.Size): Either[Api.Error, BufferedImage] =
+  private def applySize(img: BufferedImage, size: Iiif.Size): Either[Problems, BufferedImage] =
     val srcW = img.getWidth
     val srcH = img.getHeight
     size match
@@ -208,7 +206,7 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
   private def encode(
       img: BufferedImage,
       format: Iiif.Format
-  ): Either[Api.Error, (AssetService.Bytes, AssetService.Mime)] =
+  ): Either[Problems, (AssetService.Bytes, AssetService.Mime)] =
     val out = new ByteArrayOutputStream()
     // JPEG cannot encode alpha; convert to RGB if needed
     val toEncode =
@@ -222,12 +220,10 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
     val written = ImageIO.write(toEncode, if format.value == "jpg" then "JPEG" else "PNG", out)
     if !written then
       Left(
-        Api.Error(
-          Problem.Io.File(
-            Problem.Io.Access.Write,
-            Problem.Io.Path(s"default.$format"),
-            External.Reported("no image writer took the image")
-          )
+        Problem.Io.File(
+          Problem.Io.Access.Write,
+          Problem.Io.Path(s"default.$format"),
+          External.Reported("no image writer took the image")
         )
       )
     else Right((AssetService.Bytes(out.toByteArray), AssetService.Mime(Iiif.contentType(format).value)))

@@ -49,6 +49,7 @@ import com.histmersion.config.ClaudeCodeConfig
 import com.histmersion.config.AuthConfig
 import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.server.ConverterWiring
+import com.histmersion.api.Api
 
 /** Plan pools end to end against a `*_test` database (docs/research-plan-quotas.md §5): the pick with plan readings — a
   * window below its floor, a hold, a provider refusal — pauses a run with `plan-quota` until the reset instead of
@@ -251,6 +252,8 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
     assertEquals(a.pools.poolOf(Gpt), Some(PoolId.ChatgptPlan))
     a.pools.record(PoolId.ClaudePlan, low())
     a.setPool(PlanQuota.PoolIdText("chatgpt-plan"), PoolSet(hold = Some(PlanQuota.PoolSet.Hold(true))))
+      .left
+      .map(Api.Error(_))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     val reset =
       Transactor(ds)
@@ -295,6 +298,8 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
     a.pools.record(PoolId.ClaudePlan, low())
     assert(
       a.setFallthrough(Agents.Role.Wire("extractor"), FallthroughSet(PlanQuota.FallthroughSet.Fallthrough(true)))
+        .left
+        .map(Api.Error(_))
         .exists(_.fallthrough == List(PlanQuota.QuotaInfo.Fallthrough("extractor")))
     )
     val run = startAndRun(a)
@@ -303,6 +308,8 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
     // a free model after the plan is used whatever fallthrough says
     assert(
       a.setFallthrough(Agents.Role.Wire("extractor"), FallthroughSet(PlanQuota.FallthroughSet.Fallthrough(false)))
+        .left
+        .map(Api.Error(_))
         .isRight
     )
     val (p2, free) = (ScriptedClient(Plan), ScriptedClient(Free)); enrichScripts(free)
@@ -324,6 +331,8 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
     def planUsable = a.models.chains.find(_.role.value == "extractor").get.models.head.usable.value
     assert(planUsable, "no reading: unknown, usable")
     a.setPool(PlanQuota.PoolIdText("claude-plan"), PoolSet(hold = Some(PlanQuota.PoolSet.Hold(true))))
+      .left
+      .map(Api.Error(_))
       .fold(e => fail(e.problems.sentences.mkString("; ")), st => assert(st.held.value && !st.usable.value, st))
     assert(!planUsable)
     assertEquals(
@@ -332,6 +341,8 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
       "held: no time it frees by itself"
     )
     a.setPool(PlanQuota.PoolIdText("claude-plan"), PoolSet(hold = Some(PlanQuota.PoolSet.Hold(false))))
+      .left
+      .map(Api.Error(_))
     assert(planUsable)
     // a reading old enough to be stale lets a run go on only with the margin
     a.pools.record(
@@ -352,20 +363,28 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
     // floors saved over config
     val st = a
       .setPool(PlanQuota.PoolIdText("claude-plan"), PoolSet(floors = Some(PlanQuota.PoolSet.Floors("five_hour=10"))))
+      .left
+      .map(Api.Error(_))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals((st.floors, st.floorsSource), ("five_hour=10", "saved"))
     assert(planUsable, "30% left ≥ 10 + 10")
     assert(
       a.setPool(PlanQuota.PoolIdText("claude-plan"), PoolSet(floors = Some(PlanQuota.PoolSet.Floors("five_hour=x"))))
+        .left
+        .map(Api.Error(_))
         .isLeft
     )
     assertEquals(
       a.setPool(PlanQuota.PoolIdText("claude-plan"), PoolSet(floors = Some(PlanQuota.PoolSet.Floors(""))))
+        .left
+        .map(Api.Error(_))
         .map(_.floorsSource),
       Right("config")
     )
     assert(
       a.setPool(PlanQuota.PoolIdText("nobody-plan"), PoolSet(hold = Some(PlanQuota.PoolSet.Hold(true))))
+        .left
+        .map(Api.Error(_))
         .left
         .exists(_.problems.sentences.mkString("; ").contains("unknown pool"))
     )

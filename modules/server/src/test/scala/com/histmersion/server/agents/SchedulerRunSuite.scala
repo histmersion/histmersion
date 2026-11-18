@@ -47,6 +47,7 @@ import com.histmersion.domain.automation.worklists.WorkListControllers
 import com.histmersion.server.views.WorkListView
 import com.histmersion.domain.automation.approvals.ApprovalQuery
 import com.histmersion.domain.automation.Approval
+import com.histmersion.api.Api
 
 /** The goal sweeps and the goal schedules, against a `*_test` database: a currency check (assess and followups over a
   * goal's sources; a disagreeing paper in the corpus becomes ONE edge proposal, one outside it ONE acquisition item,
@@ -182,7 +183,7 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
     assertEquals(run.status, "done", run.error)
     import scala.jdk.CollectionConverters.*
     assertEquals(up.calls.asScala.toList, List(s"assess $Ck", s"followups $Ck"))
-    val open = a.approvalsList(None, None).toOption.get.filter(_.citekey == ApiCk2)
+    val open = a.approvalsList(None, None).left.map(Api.Error(_)).toOption.get.filter(_.citekey == ApiCk2)
     assertEquals(
       open.map(x => (x.kind, x.edgeKind, x.target.map(_.value: String))),
       List(("edge", Some("refutes"), Some(Ck)))
@@ -210,12 +211,28 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
     // again (as a schedule would): the open proposal and the queued paper are not doubled
     val again = start(a, RunRequest(Agents.RunRequest.Pipeline("currency-check"), GoalTarget))
     assertEquals(again.status, "done", again.error)
-    assertEquals(a.approvalsList(Some(ApprovalQuery.State("all")), None).toOption.get.count(_.citekey == ApiCk2), 1)
+    assertEquals(
+      a.approvalsList(Some(ApprovalQuery.State("all")), None)
+        .left
+        .map(Api.Error(_))
+        .toOption
+        .get
+        .count(_.citekey == ApiCk2),
+      1
+    )
     assertEquals(queued.size, 1)
     // a rejected proposal is not asked again either
     assert(a.decide(ApiIds.approval(open.head.id), Approval.Outcome("reject"), DecisionRequest()).isRight)
     assertEquals(start(a, RunRequest(Agents.RunRequest.Pipeline("currency-check"), GoalTarget)).status, "done")
-    assertEquals(a.approvalsList(Some(ApprovalQuery.State("all")), None).toOption.get.count(_.citekey == ApiCk2), 1)
+    assertEquals(
+      a.approvalsList(Some(ApprovalQuery.State("all")), None)
+        .left
+        .map(Api.Error(_))
+        .toOption
+        .get
+        .count(_.citekey == ApiCk2),
+      1
+    )
 
   private def work(
       doi: com.histmersion.api.library.Doi,

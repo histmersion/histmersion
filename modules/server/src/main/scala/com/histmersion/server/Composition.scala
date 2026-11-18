@@ -309,7 +309,8 @@ object Composition:
     import com.histmersion.api.*
     import com.histmersion.domain.library.collections.*
     val library = new CollectionLibrary:
-      def source(citekey: Citekey) = h.library.sources.get(citekey, body = SourcesControllers.GetBody(false))
+      def source(citekey: Citekey) =
+        h.library.sources.get(citekey, body = SourcesControllers.GetBody(false)).left.map(Api.Error(_))
       def create(citekey: Citekey, put: Source.Put) = h.library.sources.put(citekey, put)
       def patch(citekey: Citekey, patch: Source.Patch) = h.library.sources.patch(citekey, patch)
       def pushMeta(citekey: Citekey) = h.calibreGaps.pushMeta(citekey)

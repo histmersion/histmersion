@@ -30,7 +30,9 @@ object OpsRoutes:
       case Some(v) => either(v).left.map(_ => refused(what, v)).map(Some(_))
 
   def apply(w: ServerWiring): List[ServerEndpoint[Any, Identity]] = List(
-    OpsApi.lint.serverLogic[Identity](rules => w.checks.lint(rules.map(r => CheckRule.Name(r.value)))),
+    OpsApi.lint.serverLogic[Identity](rules =>
+      w.checks.lint(rules.map(r => CheckRule.Name(r.value))).left.map(Api.Error(_))
+    ),
     OpsApi.lintFix.serverLogicSuccess[Identity](rules => w.checks.lintFix(rules.map(r => CheckRule.Name(r.value)))),
     OpsApi.queuePatch.serverLogic[Identity]((id, p) => w.workLists.patch(QueueItemId(id.value), p)),
     OpsApi.queueDelete.serverLogic[Identity](id => w.workLists.delete(QueueItemId(id.value))),

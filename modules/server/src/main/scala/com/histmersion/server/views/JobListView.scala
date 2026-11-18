@@ -12,6 +12,7 @@ import com.histmersion.util.jobs.{JobListing, JobQuery}
 
 import java.time.Instant
 import com.histmersion.api.Api
+import com.histmersion.util.problem.Problems
 
 /** `GET /api/jobs` (and `job_status` without an id) filtered ([[ListFilters.JobFilter]]): the background jobs and the
   * agent runs, which are jobs too, in one page, newest first, with the per-state and the kind counts under the same
@@ -25,7 +26,11 @@ final class JobListView(jobs: JobListing):
       before: Option[Paging.Cursor],
       upTo: Option[Paging.Cursor]
   ): Either[Api.Error, (List[JobInfo], Paging.Page)] =
-    JobListView.query(f, now).flatMap(jobs.page(_, limit, before, upTo, PageSize.assume(ListFilters.FacetMax)))
+    JobListView
+      .query(f, now)
+      .left
+      .map(Api.Error(_))
+      .flatMap(jobs.page(_, limit, before, upTo, PageSize.assume(ListFilters.FacetMax)))
 
 object JobListView:
   /** The states a job can be in: a background job's, and — the agent runs being jobs too — a run's. */
@@ -35,17 +40,13 @@ object JobListView:
   /** A client's job filter checked and turned into the query: a state outside [[JobStatuses]] is a 400 naming the
     * allowed ones, a time bound is read once, against `now`; any kind passes (plugins add their own). Pure.
     */
-  def query(f: JobFilter, now: Instant): Either[Api.Error, JobQuery] =
+  def query(f: JobFilter, now: Instant): Either[Problems, JobQuery] =
     val n = f.normalized
     for
       st <- ListFilters
         .known(ListFilters.FacetName("status"), n.status.map(s => ListFilters.Term(s.value)), JobStatuses)
-        .left
-        .map(p => Api.Error(p))
       tr <- ListFilters
         .range(n.since.map(s => ListFilters.TimeBound(s.value)), n.until.map(u => ListFilters.TimeBound(u.value)), now)
-        .left
-        .map(p => Api.Error(p))
     yield JobQuery(
       st.map(t => JobQuery.Status(t.value)),
       n.kind.map(k => JobQuery.Kinds(k.value)),

@@ -243,7 +243,7 @@ final class AgentsControllers(
     if !cfg.enabled.value then 0
     else
       if cfg.runtimes.generate.value then
-        generate(GenerateRequest()) match
+        generate(GenerateRequest()).left.map(Api.Error(_)) match
           case Right(r) =>
             scribe.info(
               s"agent runtimes generated in ${r.dir}: ${r.files} file(s), ${r.written} changed, ${r.removed} removed"
@@ -270,7 +270,7 @@ final class AgentsControllers(
   /** `POST /api/agents/generate` — works with agents off too: the interactive plugin the research workspace installs is
     * one of the trees.
     */
-  def generate(req: GenerateRequest): Either[Api.Error, GenerateResult] =
+  def generate(req: GenerateRequest): Either[Problems, GenerateResult] =
     for
       rts <- req.runtimes
         .map(r => AgentRuntime.parse(AgentRuntime.Wire(r.value)).filter(AgentRuntime.Generated.contains).toRight(r))
@@ -280,11 +280,9 @@ final class AgentsControllers(
           val known = AgentRuntime.Generated.toVector.map(r => Problem.Raw.of(r.wire))
           def unknown(r: GenerateRequest.Runtimes): Problem =
             Problem.Invalid.Unknown.here(Problem.TypeName.of(AgentRuntime.Wire), Problem.Raw.of(r), known)
-          Left(Api.Error(Problems.of(unknown(first), more.map(unknown)*)))
+          Left(Problems.of(unknown(first), more.map(unknown)*))
       r <- cli.trees
         .generate(knownTools, rts, AgentTrees.out(req.out.map(_.value), site.userPaths))
-        .left
-        .map(e => Api.Error(e))
     yield r
 
   // ── plan pools ─────────────────────────────────────────────────────────────────────────────────
@@ -320,21 +318,19 @@ final class AgentsControllers(
         )
     )
 
-  private def poolOf(raw: PlanQuota.PoolId.Wire): Either[Api.Error, PlanQuota.PoolId] =
+  private def poolOf(raw: PlanQuota.PoolId.Wire): Either[Problems, PlanQuota.PoolId] =
     PlanQuota.PoolId
       .parse(raw)
       .toRight(
-        Api.Error(
-          Problem.Invalid.Unknown.here(
-            Problem.TypeName.of(PlanQuota.PoolId.Wire),
-            Problem.Raw.of(raw),
-            PlanQuota.PoolId.values.toVector.map(v => Problem.Raw.of(v.wire))
-          )
+        Problem.Invalid.Unknown.here(
+          Problem.TypeName.of(PlanQuota.PoolId.Wire),
+          Problem.Raw.of(raw),
+          PlanQuota.PoolId.values.toVector.map(v => Problem.Raw.of(v.wire))
         )
       )
 
   /** `PUT /api/agents/quota/{pool}` — the hold switch and the floors. */
-  def setPool(pool: PlanQuota.PoolIdText, in: PlanQuota.PoolSet): Either[Api.Error, PlanQuota.PoolStatus] =
+  def setPool(pool: PlanQuota.PoolIdText, in: PlanQuota.PoolSet): Either[Problems, PlanQuota.PoolStatus] =
     for
       p <- poolOf(PlanQuota.PoolId.Wire(pool.value))
       f <- in.floors.map(_.value.trim) match
@@ -342,8 +338,6 @@ final class AgentsControllers(
         case Some(t)  =>
           PlanQuota.Floors
             .parse(PlanQuota.Floors.Wire(t))
-            .left
-            .map(e => Api.Error(e))
             .map(fs => Some(Some(fs.text)))
         case None => Right(None)
       _ = in.hold.foreach(h => pools.hold(p, PlanQuotaRepo.Pool.Held(h.value)))
@@ -351,11 +345,11 @@ final class AgentsControllers(
       st <- pools
         .statuses(covers)
         .find(_.pool == p.wire)
-        .toRight(Api.Error(Problem.NotFound.Entity(Problem.TypeName.of(PlanQuota.PoolId.Wire), Problem.Raw.of(p.wire))))
+        .toRight(Problem.NotFound.Entity(Problem.TypeName.of(PlanQuota.PoolId.Wire), Problem.Raw.of(p.wire)))
     yield st
 
   /** `PUT /api/agents/quota/fallthrough/{role}`. */
-  def setFallthrough(role: Role.Wire, in: PlanQuota.FallthroughSet): Either[Api.Error, PlanQuota.QuotaInfo] =
+  def setFallthrough(role: Role.Wire, in: PlanQuota.FallthroughSet): Either[Problems, PlanQuota.QuotaInfo] =
     roleOf(role).map { r =>
       Transactor(ds).transact(
         PlanQuotaRepo.setFallthrough(ModelSettingsRepo.ChainRole(r.wire.value), in.fallthrough.value)
@@ -367,7 +361,7 @@ final class AgentsControllers(
     * ChatGPT plan from the app-server (free), the Claude plan from its probe (one minimal `claude -p` turn) unless
     * `refresh = off`. The login is checked again first; a pool without one is not read.
     */
-  def refreshQuota(in: PlanQuota.QuotaRefresh): Either[Api.Error, PlanQuota.QuotaRefreshed] =
+  def refreshQuota(in: PlanQuota.QuotaRefresh): Either[Problems, PlanQuota.QuotaRefreshed] =
     in.pool
       .map(_.value.trim)
       .filter(_.nonEmpty)
@@ -429,19 +423,17 @@ final class AgentsControllers(
       scribe.info(s"agents: running on the new database ($paused interrupted run(s) paused there)")
 
   /** Off unless `agents.enabled`: every agent operation but the read-only model listing refuses. */
-  private def enabled: Either[Api.Error, Unit] =
+  private def enabled: Either[Problems, Unit] =
     if cfg.enabled.value then Right(())
     else
       Left(
-        Api.Error(
-          Problem.Refused
-            .Disabled(
-              Problem.Refused.Feature("the embedded agent runtime"),
-              Problem.SettingKey("agents.enabled"),
-              Some(Problem.SettingKey("HISTMERSION_AGENTS_ENABLED")),
-              None
-            )
-        )
+        Problem.Refused
+          .Disabled(
+            Problem.Refused.Feature("the embedded agent runtime"),
+            Problem.SettingKey("agents.enabled"),
+            Some(Problem.SettingKey("HISTMERSION_AGENTS_ENABLED")),
+            None
+          )
       )
 
   /** The price table, parsed once per call (config is immutable; parsing is microseconds): every entry that does not
@@ -555,47 +547,43 @@ final class AgentsControllers(
 
   // ── chains and allowances: saved over config ───────────────────────────────────────────────────
 
-  private def roleOf(raw: Role.Wire): Either[Api.Error, Role] =
+  private def roleOf(raw: Role.Wire): Either[Problems, Role] =
     Role
       .parse(raw)
       .toRight(
-        Api.Error(
-          Problem.Invalid.Unknown.here(
-            Problem.TypeName.of(Role.Wire),
-            Problem.Raw.of(raw),
-            Role.values.toVector.map(v => Problem.Raw.of(v.wire))
-          )
+        Problem.Invalid.Unknown.here(
+          Problem.TypeName.of(Role.Wire),
+          Problem.Raw.of(raw),
+          Role.values.toVector.map(v => Problem.Raw.of(v.wire))
         )
       )
 
-  private def chainOf(role: Role): Either[Api.Error, ModelChains.RoleChain] =
+  private def chainOf(role: Role): Either[Problems, ModelChains.RoleChain] =
     picker
       .roleChains(PlanQuotaRepo.EpochMillis(clock.millis()))
       .find(_.role.value == role.wire.value)
-      .toRight(Api.Error(Problem.NotFound.Entity(Problem.TypeName.of(Role.Wire), Problem.Raw.of(role.wire))))
+      .toRight(Problem.NotFound.Entity(Problem.TypeName.of(Role.Wire), Problem.Raw.of(role.wire)))
 
   /** `PUT /api/agents/models/{role}` — the role's chain, saved over `agents.roles.<role>`. Every model must be a
     * `provider:model`; one that is not priced or buildable yet is accepted and shown as not ready (a price or key may
     * come next). Works with agents off.
     */
-  def setChain(role: Role.Wire, in: ModelChains.ChainSet): Either[Api.Error, ModelChains.RoleChain] =
+  def setChain(role: Role.Wire, in: ModelChains.ChainSet): Either[Problems, ModelChains.RoleChain] =
     for
       r <- roleOf(role)
       ms <- ModelChains
         .parseModels(in.models.map(m => ModelRef.Model.Spec(m.value)), knownPluginNames)
-        .left
-        .map(e => Api.Error(e))
       _ <- Either.cond(
         ms.nonEmpty,
         (),
-        Api.Error(Problem.Invalid.Broken.here(Problem.Invalid.Rule.ChainGiven))
+        Problem.Invalid.Broken.here(Problem.Invalid.Rule.ChainGiven)
       )
       _ = Transactor(ds).transact(ModelSettingsRepo.setChain(ModelSettingsRepo.ChainRole(r.wire.value), ms.map(_.wire)))
       c <- chainOf(r)
     yield c
 
   /** `DELETE /api/agents/models/{role}` — back to `agents.roles.<role>`. */
-  def resetChain(role: Role.Wire): Either[Api.Error, ModelChains.RoleChain] =
+  def resetChain(role: Role.Wire): Either[Problems, ModelChains.RoleChain] =
     for
       r <- roleOf(role)
       _ = Transactor(ds).transact(ModelSettingsRepo.removeChain(ModelSettingsRepo.ChainRole(r.wire.value)))
@@ -603,16 +591,14 @@ final class AgentsControllers(
     yield c
 
   /** `PUT /api/agents/allowances` — one model's or provider's limits and reserve, saved over config. */
-  def setAllowance(in: ModelChains.AllowanceSet): Either[Api.Error, ModelChains.AllowanceStatus] =
+  def setAllowance(in: ModelChains.AllowanceSet): Either[Problems, ModelChains.AllowanceStatus] =
     for
       t <- ModelChains.Target
         .parse(ModelChains.Target.Spec(in.target.value), knownPluginNames)
-        .left
-        .map(e => Api.Error(e))
       ls <- in.limits.map(ModelChains.Limit.fromSpec).partitionMap(identity) match
         case (Nil, ok)          => Right(ok)
-        case (first :: more, _) => Left(Api.Error(Problems.of(first, more*)))
-      a <- ModelChains.Allowance.of(t, ls, in.reservePct).left.map(e => Api.Error(e))
+        case (first :: more, _) => Left(Problems.of(first, more*))
+      a <- ModelChains.Allowance.of(t, ls, in.reservePct)
       _ = Transactor(ds).transact(
         ModelSettingsRepo.setAllowance(
           ModelSettingsRepo.Saved.Target(t.wire.value),
@@ -624,16 +610,14 @@ final class AgentsControllers(
         .allowanceStatuses(PlanQuotaRepo.EpochMillis(clock.millis()))
         .find(_.target.value == t.wire.value)
         .toRight(
-          Api.Error(Problem.NotFound.Entity(Problem.TypeName.of(ModelChains.Target.Wire), Problem.Raw.of(t.wire)))
+          Problem.NotFound.Entity(Problem.TypeName.of(ModelChains.Target.Wire), Problem.Raw.of(t.wire))
         )
     yield st
 
   /** `DELETE /api/agents/allowances?target=…` — the saved allowance goes; config's (if any) applies again. */
-  def removeAllowance(target: ModelChains.AllowanceSet.Target): Either[Api.Error, Goal.Plans.Removed] =
+  def removeAllowance(target: ModelChains.AllowanceSet.Target): Either[Problems, Goal.Plans.Removed] =
     ModelChains.Target
       .parse(ModelChains.Target.Spec(target.value), knownPluginNames)
-      .left
-      .map(e => Api.Error(e))
       .map(t =>
         Goal.Plans.Removed(
           Goal.Plans.Removed.Value(
@@ -745,7 +729,7 @@ final class AgentsControllers(
     */
   def prepare(req: RunRequest, parent: Option[RunInfo]): Either[Api.Error, Prepared] =
     for
-      _ <- enabled
+      _ <- enabled.left.map(Api.Error(_))
       p <- Pipeline
         .parse(Pipeline.Wire(req.pipeline.value))
         .toRight(
@@ -785,7 +769,7 @@ final class AgentsControllers(
           req.budgetUsd.map(_.value).orElse(goal.flatMap(goalBudget).map(_.value)).getOrElse(cfg.budgets.runUsd.value)
         ),
         "budget-usd"
-      )
+      ).left.map(Api.Error(_))
       tok <- positive(
         PositiveAmount(
           req.budgetTokens
@@ -794,7 +778,7 @@ final class AgentsControllers(
             .toDouble
         ),
         "budget-tokens"
-      )
+      ).left.map(Api.Error(_))
     yield
       val clean = (xs: List[String]) => Option(xs.map(_.trim).filter(_.nonEmpty).distinct).filter(_.nonEmpty)
       val params = RunParams(
@@ -918,17 +902,15 @@ final class AgentsControllers(
     goals.planAndBudget(goal).flatMap(_._2).map(b => BudgetUsd(b.toDouble))
 
   /** Budgets are stored to the micro-dollar (numeric(12,6)): anything smaller would round to 0. */
-  private def positive(v: PositiveAmount, what: String): Either[Api.Error, PositiveAmount] =
+  private def positive(v: PositiveAmount, what: String): Either[Problems, PositiveAmount] =
     if v.value >= 0.000001 then Right(v)
     else
       Left(
-        Api.Error(
-          Problem.Invalid.OutOfRange(
-            Problem.TypeName.of(PositiveAmount),
-            Problem.Raw.of(v),
-            Problem.Invalid.Bounds(Some(Problem.Raw("0.000001")), None),
-            Vector(Problem.Field(what))
-          )
+        Problem.Invalid.OutOfRange(
+          Problem.TypeName.of(PositiveAmount),
+          Problem.Raw.of(v),
+          Problem.Invalid.Bounds(Some(Problem.Raw("0.000001")), None),
+          Vector(Problem.Field(what))
         )
       )
 
@@ -941,16 +923,14 @@ final class AgentsControllers(
       status: Option[RunQuery.Status],
       limit: Option[PageSize],
       goal: Option[DomainGoal.Slug] = None
-  ): Either[Api.Error, List[RunInfo]] =
+  ): Either[Problems, List[RunInfo]] =
     status.map(st => RunQuery.Status(st.value.trim)).filter(_.value.nonEmpty) match
       case Some(st) if RunState.parse(RunState.Wire(st.value)).isEmpty =>
         Left(
-          Api.Error(
-            Problem.Invalid.Unknown.here(
-              Problem.TypeName.of(RunQuery.Status),
-              Problem.Raw.of(st),
-              RunState.values.toVector.map(v => Problem.Raw.of(v.wire))
-            )
+          Problem.Invalid.Unknown.here(
+            Problem.TypeName.of(RunQuery.Status),
+            Problem.Raw.of(st),
+            RunState.values.toVector.map(v => Problem.Raw.of(v.wire))
           )
         )
       case st => Right(runs.list(st, RunQuery.Limit(site.config.limits.page(limit, searchPage).value), goal).toList)
@@ -1067,7 +1047,7 @@ final class AgentsControllers(
   ): Either[Api.Error, RunInfo] =
     action.value.trim.toLowerCase match
       case "pause"  => engine.pause(id)
-      case "resume" => enabled.flatMap(_ => engine.resume(id, budgetUsd, budgetTokens))
+      case "resume" => enabled.left.map(Api.Error(_)).flatMap(_ => engine.resume(id, budgetUsd, budgetTokens))
       case "cancel" => engine.cancel(id)
       case other    =>
         Left(
@@ -1088,7 +1068,7 @@ final class AgentsControllers(
   def approvalsList(
       state: Option[ApprovalQuery.State],
       limit: Option[PageSize]
-  ): Either[Api.Error, List[ApprovalInfo]] =
+  ): Either[Problems, List[ApprovalInfo]] =
     approvals.list(
       state,
       limit.map(l => ApprovalQuery.Limit(l.value)),
@@ -1216,16 +1196,14 @@ final class AgentsControllers(
       Removed.Value(goals.unlink(slug, k.transformInto[DomainGoal.LinkKind], GoalLink.Ref(ref.value.trim)))
     )
 
-  private def scheduleKind(kind: ScheduleKind.Wire): Either[Api.Error, ScheduleKind] =
+  private def scheduleKind(kind: ScheduleKind.Wire): Either[Problems, ScheduleKind] =
     ScheduleKind
       .parse(kind)
       .toRight(
-        Api.Error(
-          Problem.Invalid.Unknown.here(
-            Problem.TypeName.of(ScheduleKind.Wire),
-            Problem.Raw.of(kind),
-            ScheduleKind.values.toVector.map(v => Problem.Raw.of(v.wire))
-          )
+        Problem.Invalid.Unknown.here(
+          Problem.TypeName.of(ScheduleKind.Wire),
+          Problem.Raw.of(kind),
+          ScheduleKind.values.toVector.map(v => Problem.Raw.of(v.wire))
         )
       )
 
@@ -1242,9 +1220,9 @@ final class AgentsControllers(
   ): Either[Api.Error, GoalSchedule] =
     for
       _ <- host.goal(slug)
-      k <- scheduleKind(kind)
+      k <- scheduleKind(kind).left.map(Api.Error(_))
       _ <- in.budgetUsd.fold[Either[Api.Error, PositiveAmount]](Right(PositiveAmount(0)))(b =>
-        positive(PositiveAmount(b.value), "budget-usd")
+        positive(PositiveAmount(b.value), "budget-usd").left.map(Api.Error(_))
       )
       out <- managing.setSchedule(slug, k, in, now)
     yield out
@@ -1252,7 +1230,7 @@ final class AgentsControllers(
   def removeSchedule(slug: DomainGoal.Slug, kind: ScheduleKind.Wire): Either[Api.Error, Removed] =
     for
       _ <- host.goal(slug)
-      k <- scheduleKind(kind)
+      k <- scheduleKind(kind).left.map(Api.Error(_))
     yield managing.removeSchedule(slug, k)
 
   /** Every goal's schedules: its watcher's sweeps. */
@@ -1264,7 +1242,7 @@ final class AgentsControllers(
     */
   def probe(req: ProbeRequest): Either[Api.Error, ProbeResult] =
     for
-      _ <- enabled
+      _ <- enabled.left.map(Api.Error(_))
       ck <- Citekey
         .either(req.citekey.value)
         .left
@@ -1312,7 +1290,7 @@ final class AgentsControllers(
     val t0 = timer.start()
     @annotation.tailrec
     def go(attempt: Int, user: String, used: Usage, calls: List[String]): Either[Api.Error, ProbeResult] =
-      AgentsControllers.attempt(client.model)(client.run(call(user))) match
+      AgentsControllers.attempt(client.model)(client.run(call(user))).left.map(Api.Error(_)) match
         case Left(e)    => Left(e)
         case Right(res) =>
           val use = used + LlmClient.usage(res.usage)
@@ -1425,12 +1403,12 @@ object AgentsControllers:
         scribe.warn(s"agent call to ${model.wire}: ${e.getMessage}")
         Left(Left(e))
       case e: InterruptedException => throw e
-      case e: Exception            => attempt(model)(throw e).left.map(Right(_))
+      case e: Exception            => attempt(model)(throw e).left.map(Api.Error(_)).left.map(Right(_))
 
   /** A provider call that threw (unreachable host, an API error, a malformed response) → a value, logged with the model
     * but never with the request (which can carry an API key header).
     */
-  def attempt[A](model: ModelRef)(a: => A): Either[Api.Error, A] =
+  def attempt[A](model: ModelRef)(a: => A): Either[Problems, A] =
     try Right(a)
     catch
       case e: InterruptedException => throw e
@@ -1439,4 +1417,4 @@ object AgentsControllers:
           case v: VerbatimFailure => v.description.sentence
           case _                  => s"${e.getClass.getSimpleName}: ${e.getMessage}"
         scribe.warn(s"agent call to ${model.wire} failed: $logged")
-        Left(Api.Error(VerbatimFailure.describe(Problem.Upstream.Name.of(model.wire), e)))
+        Left(VerbatimFailure.describe(Problem.Upstream.Name.of(model.wire), e))

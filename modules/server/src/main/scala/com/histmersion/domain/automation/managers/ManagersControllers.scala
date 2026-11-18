@@ -1220,7 +1220,7 @@ final class ManagersControllers(
     agents.scheduler.set(in)
 
   /** `POST /api/agents/autopilot/drain {on}`. */
-  def drain(in: Autopilot.DrainSet): Either[Api.Error, Autopilot.EngineStatus] = Right(agents.drain.set(in))
+  def drain(in: Autopilot.DrainSet): Either[Problems, Autopilot.EngineStatus] = Right(agents.drain.set(in))
 
   /** `GET /api/agents/stalls[?days=]` — readable with agents off. */
   def stalls(days: Option[AgentAutopilotConfig.StallDays]): Stalls.StallReport = agents.scheduler.stalls(days)
@@ -1270,7 +1270,7 @@ final class ManagersControllers(
       }
 
   /** `POST /api/agents/autopilot {on}` — idempotent; the answer says what it did. */
-  def setAutopilot(in: Autopilot.AutopilotSet): Either[Api.Error, Autopilot.EngineStatus] =
+  def setAutopilot(in: Autopilot.AutopilotSet): Either[Problems, Autopilot.EngineStatus] =
     Right(agents.autopilot.set(in))
 
   // ── events ─────────────────────────────────────────────────────────────────────────────────────

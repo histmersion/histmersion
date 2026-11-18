@@ -9,6 +9,7 @@ import java.time.Instant
 import scala.annotation.tailrec
 import com.histmersion.api.Api
 import com.histmersion.util.time.TimeEquality.instantEquality
+import com.histmersion.util.problem.Problems
 
 /** What the activity list's filters mean, entry by entry, and how a page of it is cut: the rules the database's query
   * follows in SQL, and the in-memory list follows here. Pure.
@@ -85,7 +86,7 @@ object ActivityRules:
       limit: Option[ActivityQuery.Limit],
       before: Option[ActivityCursor.Wire],
       now: Instant
-  ): Either[Api.Error, ActivityQuery] =
+  ): Either[Problems, ActivityQuery] =
     for
       s <- show
         .map(_.value.trim)
@@ -94,19 +95,17 @@ object ActivityRules:
           Show
             .parse(Show.Wire(w))
             .toRight(
-              Api.Error(
-                Invalid.Unknown.here(TypeName.of(Show.Wire), Raw(w), Show.values.toVector.map(s => Raw.of(s.wire)))
-              )
+              Invalid.Unknown.here(TypeName.of(Show.Wire), Raw(w), Show.values.toVector.map(s => Raw.of(s.wire)))
             )
         )
       t <- since
         .map(v => ListFilters.TimeBound(v.value.trim))
         .filter(_.value.nonEmpty)
-        .fold(Right(None))(v => ListFilters.timeBound(v, end = false, now).map(Some(_)).left.map(Api.Error(_)))
+        .fold(Right(None))(v => ListFilters.timeBound(v, end = false, now).map(Some(_)))
       c <- before
         .map(w => ActivityCursor.Wire(w.value.trim))
         .filter(_.value.nonEmpty)
-        .fold(Right(None))(v => ActivityCursor.parse(v).map(Some(_)).left.map(Api.Error(_)))
+        .fold(Right(None))(v => ActivityCursor.parse(v).map(Some(_)))
     yield ActivityQuery(
       s,
       t,

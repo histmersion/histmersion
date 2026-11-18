@@ -228,6 +228,8 @@ final class McpTools(
             in.limit.map(ActivityQuery.Limit(_)),
             in.before.map(ActivityCursor.Wire(_))
           )
+          .left
+          .map(Api.Error(_))
           .fold(
             McpOut.error,
             p =>
@@ -603,7 +605,7 @@ final class McpTools(
       ) ++ MediaTools(
         h.media.assets,
         h.media.links,
-        ck => h.library.sources.get(ck).isRight
+        ck => h.library.sources.get(ck).left.map(Api.Error(_)).isRight
       ) ++ List(
         mergePlanTool,
         mergesTool,

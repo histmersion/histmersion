@@ -8,11 +8,12 @@ import com.histmersion.config.AppConfig
 import com.histmersion.api.library.Query
 import com.histmersion.api.Api
 import com.histmersion.util.database.Transactor
+import com.histmersion.util.problem.Problems
 
 /** `POST /api/query` and `GET /api/schema/tables` (MCP `query`, `schema`). */
 final class QueryControllers(queries: QueryService, cfg: () => AppConfig):
 
-  def run(req: QueryRequest): Either[Api.Error, QueryResult] =
+  def run(req: QueryRequest): Either[Problems, QueryResult] =
     val q = cfg().query
     queries
       .run(
@@ -21,8 +22,6 @@ final class QueryControllers(queries: QueryService, cfg: () => AppConfig):
         QueryRepo.MaxRows(q.maxRows.value),
         QueryRepo.MaxCellChars(q.maxCellChars.value)
       )
-      .left
-      .map(m => Api.Error(m))
 
   def schemaTables: SchemaTables = SchemaTables(queries.tables)
 

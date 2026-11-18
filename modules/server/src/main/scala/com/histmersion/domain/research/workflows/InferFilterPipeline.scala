@@ -29,6 +29,7 @@ import com.histmersion.domain.Title
 import com.histmersion.util.jobs.Job
 import com.histmersion.domain.automation.Approval
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.Api
 
 /** `infer-filter <article>` (docs/research-process-managers.md §4 (a), phase 2): an article that records no coverage
   * filter (#958) gets one proposed — the review manager runs it BEFORE the article's review, so the review's coverage
@@ -96,6 +97,8 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
       val vocab = (field: String) =>
         site.labels
           .facets(Facet.Field.Wire(field), None, Filter())
+          .left
+          .map(Api.Error(_))
           .toOption
           .toList
           .flatten

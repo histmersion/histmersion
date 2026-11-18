@@ -52,6 +52,7 @@ import com.histmersion.domain.library.sources.SourcesControllers
 import com.histmersion.config.AgentSchedulerConfig
 import com.histmersion.domain.automation.Approval
 import com.histmersion.domain.automation.agents.RunService
+import com.histmersion.api.Api
 
 /** The process managers' phase 3 against a `*_test` database (docs/research-process-managers.md §4 (c), §6): the
   * watcher (created paused with its cron and one item per sweep; an acquisition sweep whose OPT-IN auto-ingest takes
@@ -323,6 +324,8 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
     assertEquals(
       h.library.sources
         .get(Citekey("zzagent105555zzagenta"), body = SourcesControllers.GetBody(false))
+        .left
+        .map(Api.Error(_))
         .map(_.source.title),
       Right("Ingested 10.5555/zzagent.a")
     )
@@ -573,7 +576,7 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
     connect(ds)(ManagerRepo.itemFor(Enrich, EnrichKind, ManagerItem.Target(ck.value))).get
 
   private def openHintApprovals(a: AgentsControllers): List[ApprovalInfo] =
-    a.approvalsList(None, None).toOption.get.filter(_.kind.value == "hint-effect")
+    a.approvalsList(None, None).left.map(Api.Error(_)).toOption.get.filter(_.kind.value == "hint-effect")
 
   test(
     "a model's effect (MCP: propose) waits for a person: nothing changes until approved; approve applies it, reject leaves it"

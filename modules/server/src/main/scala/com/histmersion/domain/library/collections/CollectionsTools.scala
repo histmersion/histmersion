@@ -94,7 +94,7 @@ object CollectionsTools:
             .fold(CollectionsService.Calibre)(CollectionsService.CollectionName(_))
           val limit = in.limit.map(l => CollectionsService.Limit(l.value))
           in.action.value.trim.toLowerCase(java.util.Locale.ROOT) match
-            case "list"   => answer(c.collections(me))(CollectionsMarkdown.collections)
+            case "list"   => answer(c.collections(me).left.map(Api.Error(_)))(CollectionsMarkdown.collections)
             case "info"   => answer(c.collection(me, name))(CollectionsMarkdown.collection)
             case "search" =>
               answer(c.search(me, name, in.query, limit, CollectionsService.SearchUnlinked(in.unlinked.value)))(s =>

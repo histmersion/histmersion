@@ -44,6 +44,7 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.util.jobs.Job
 import com.histmersion.api.catalogue.Year
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.Api
 
 /** `propose-articles <goal>` (docs/research-process-managers.md §4 (b), phase 2): the seeding manager's planner step. A
   * model proposes the articles a research area should have; CODE keeps the ones that can be compiled and are new
@@ -153,6 +154,8 @@ final class ProposeArticlesPipeline(
       val vocab = (field: String) =>
         site.labels
           .facets(Facet.Field.Wire(field), None, Filter())
+          .left
+          .map(Api.Error(_))
           .toOption
           .toList
           .flatten

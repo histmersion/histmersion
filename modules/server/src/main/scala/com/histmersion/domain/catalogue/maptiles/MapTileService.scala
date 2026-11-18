@@ -19,6 +19,7 @@ import com.histmersion.util.database.Transactor
 import sttp.model.StatusCode
 import com.histmersion.api.Api
 import com.histmersion.domain.catalogue.periods.BPeriodRow
+import com.histmersion.util.problem.Problems
 
 /** `GET /api/tiles/{layer}/{z}/{x}/{y}` ([[TilesApi]]): a layer's tile cut from the database, kept ([[TileCache]])
   * under the versions of what it reads, and answered 304 when the browser holds it. The sites and the events are the
@@ -39,25 +40,21 @@ final class MapTileService(
 
   val cache: TileCache = TileCache(() => ByteCount.assume(settings().cacheMb.value.toLong.max(1) * 1024 * 1024))
 
-  def tile(q: TilesApi.TileQuery): Either[Api.Error, TilesApi.TileAnswer] =
+  def tile(q: TilesApi.TileQuery): Either[Problems, TilesApi.TileAnswer] =
     val s = settings()
     for
       layer <- TileLayer
         .parse(q.layer)
         .toRight(
-          Api.Error(
-            Problem.Invalid.Unknown(
-              Problem.TypeName.of(TileLayer.Wire),
-              Problem.Raw.of(q.layer),
-              TileLayer.values.toVector.map(v => Problem.Raw.of(v.wire)),
-              Vector(Problem.Field("layer"))
-            )
+          Problem.Invalid.Unknown(
+            Problem.TypeName.of(TileLayer.Wire),
+            Problem.Raw.of(q.layer),
+            TileLayer.values.toVector.map(v => Problem.Raw.of(v.wire)),
+            Vector(Problem.Field("layer"))
           )
         )
       coord <- TileCoord
         .of(TileCoord.Z(q.z.value), TileCoord.X(q.x.value), TileCoord.Y(q.y.value), TileCoord.Z(s.maxZoom.value))
-        .left
-        .map(Api.Error(_))
     yield
       val versions = currentVersions()
       val k = key(layer, coord, q, versions)

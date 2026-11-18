@@ -132,7 +132,10 @@ class SourcesControllersSuite extends munit.FunSuite:
     val c = controllers()
     val _ = c.put(Walls90, put)
     val _ = c.rename(Walls90, Rename.Request(Walls91))
-    assertEquals(c.get(Walls90, body = SourcesControllers.GetBody(false)).map(_.source.citekey), Right("zqa1991_walls"))
+    assertEquals(
+      c.get(Walls90, body = SourcesControllers.GetBody(false)).left.map(Api.Error(_)).map(_.source.citekey),
+      Right("zqa1991_walls")
+    )
     assertEquals(c.canonical(Walls90), "zqa1991_walls")
     assertEquals(
       c.patch(Walls90, Source.Patch(summary = Some(Source.Summary("s")))).map(_.source.summary),
@@ -140,6 +143,8 @@ class SourcesControllersSuite extends munit.FunSuite:
     )
     assert(
       c.markdown(Walls90, SourcesControllers.MarkdownFullText(false))
+        .left
+        .map(Api.Error(_))
         .toOption
         .get
         .value
@@ -147,6 +152,8 @@ class SourcesControllersSuite extends munit.FunSuite:
     )
     assert(
       c.markdown(Walls90, SourcesControllers.MarkdownFullText(false), Some(Source.Section.Wire("toc")))
+        .left
+        .map(Api.Error(_))
         .toOption
         .get
         .value
@@ -154,6 +161,8 @@ class SourcesControllersSuite extends munit.FunSuite:
     )
     assert(
       c.markdown(Walls90, SourcesControllers.MarkdownFullText(false), Some(Source.Section.Wire("nonsense")))
+        .left
+        .map(Api.Error(_))
         .left
         .exists(_.problems.sentences.mkString("; ").startsWith("unknown source section 'nonsense' (one of: summary"))
     )
@@ -174,15 +183,18 @@ class SourcesControllersSuite extends munit.FunSuite:
     val c = controllers()
     val _ = c.put(Walls90, put.modify(_.notes).setTo(Some(Source.Notes("two  spaces"))))
     assertEquals(c.fix(Walls90).map(_.fixed), Right(List("notes: double space")))
-    assertEquals(c.get(Walls90).map(_.source.notes), Right(Some("two spaces")))
+    assertEquals(c.get(Walls90).left.map(Api.Error(_)).map(_.source.notes), Right(Some("two spaces")))
     assertEquals(
       c.delete(Walls90, Source.DeleteRequest()).map(_.files),
       Right(List("/spool/zqa1990_walls.pdf"))
     )
-    assertEquals(c.get(Walls90).isRight, true)
+    assertEquals(c.get(Walls90).left.map(Api.Error(_)).isRight, true)
     val gone = c.delete(Walls90, Source.DeleteRequest(apply = Source.DeleteRequest.Apply(true))).toOption.get
     assertEquals((gone.applied, gone.filesFailed, removed.get), (true, Nil, List("/spool/zqa1990_walls.pdf")))
-    assertEquals(c.get(Walls90).left.map(_.problems.head).left.map(_.sentence), Left("No source 'zqa1990_walls'"))
+    assertEquals(
+      c.get(Walls90).left.map(Api.Error(_)).left.map(_.problems.head).left.map(_.sentence),
+      Left("No source 'zqa1990_walls'")
+    )
 
   test("a held lock refuses every write"):
     val gate = WriteGate()

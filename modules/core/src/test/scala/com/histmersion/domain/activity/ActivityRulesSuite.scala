@@ -14,6 +14,7 @@ import java.time.Instant
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.api.automation.ListFilters
+import com.histmersion.api.Api
 
 class ActivityRulesSuite extends munit.FunSuite:
 
@@ -138,14 +139,17 @@ class ActivityRulesSuite extends munit.FunSuite:
 
   test("the query: the chips' words, a time ago, a capped limit; anything else a 400 naming what is allowed"):
     assertEquals(
-      ActivityRules.query(
-        Some(Show.Wire("problems")),
-        Some(ListFilters.TimeBound("7d")),
-        Some(ActivityQuery.Goal(" g1 ")),
-        Some(ActivityQuery.Limit(1000)),
-        None,
-        now
-      ),
+      ActivityRules
+        .query(
+          Some(Show.Wire("problems")),
+          Some(ListFilters.TimeBound("7d")),
+          Some(ActivityQuery.Goal(" g1 ")),
+          Some(ActivityQuery.Limit(1000)),
+          None,
+          now
+        )
+        .left
+        .map(Api.Error(_)),
       Right(
         ActivityQuery(
           Show.Problems,
@@ -156,12 +160,22 @@ class ActivityRulesSuite extends munit.FunSuite:
         )
       )
     )
-    assertEquals(ActivityRules.query(None, None, None, None, None, now), Right(ActivityQuery()))
+    assertEquals(ActivityRules.query(None, None, None, None, None, now).left.map(Api.Error(_)), Right(ActivityQuery()))
     assert(
       ActivityRules
         .query(Some(Show.Wire("everything else")), None, None, None, None, now)
         .left
+        .map(Api.Error(_))
+        .left
         .exists(_.problems.sentences.mkString("; ").contains("running"))
     )
-    assert(ActivityRules.query(None, Some(ListFilters.TimeBound("last week")), None, None, None, now).isLeft)
-    assert(ActivityRules.query(None, None, None, None, Some(ActivityCursor.Wire("nope")), now).isLeft)
+    assert(
+      ActivityRules
+        .query(None, Some(ListFilters.TimeBound("last week")), None, None, None, now)
+        .left
+        .map(Api.Error(_))
+        .isLeft
+    )
+    assert(
+      ActivityRules.query(None, None, None, None, Some(ActivityCursor.Wire("nope")), now).left.map(Api.Error(_)).isLeft
+    )

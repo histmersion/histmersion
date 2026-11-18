@@ -42,7 +42,7 @@ final class Approvals(
       state: Option[ApprovalQuery.State],
       limit: Option[ApprovalQuery.Limit],
       page: ApprovalQuery.Limit
-  ): Either[Api.Error, List[ApprovalInfo]] =
+  ): Either[Problems, List[ApprovalInfo]] =
     filter(state).map(st => store.approvals(st, page))
 
   /** One page of the approvals ([[Paging]]) that match `f` ([[ListFilters.ApprovalFilter]]: no state = the open ones),
@@ -74,7 +74,7 @@ final class Approvals(
       )
 
   /** The `state` query: none = the open ones, `all` = every state (None), else one state. */
-  private def filter(state: Option[ApprovalQuery.State]): Either[Api.Error, Option[ApprovalState]] =
+  private def filter(state: Option[ApprovalQuery.State]): Either[Problems, Option[ApprovalState]] =
     state.map(_.value.trim).filter(_.nonEmpty) match
       case None        => Right(Some(ApprovalState.Open))
       case Some("all") => Right(None)
@@ -83,12 +83,10 @@ final class Approvals(
           .parse(ApprovalState.Wire(s))
           .map(Some(_))
           .toRight(
-            Api.Error(
-              Problem.Invalid.Unknown.here(
-                Problem.TypeName.of(ApprovalState.Wire),
-                Problem.Raw(s),
-                ApprovalState.values.toVector.map(st => Problem.Raw.of(st.wire)) :+ Problem.Raw("all")
-              )
+            Problem.Invalid.Unknown.here(
+              Problem.TypeName.of(ApprovalState.Wire),
+              Problem.Raw(s),
+              ApprovalState.values.toVector.map(st => Problem.Raw.of(st.wire)) :+ Problem.Raw("all")
             )
           )
 

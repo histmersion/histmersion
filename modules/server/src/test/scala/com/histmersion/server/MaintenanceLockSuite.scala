@@ -190,7 +190,7 @@ class MaintenanceLockSuite extends DbSuite:
       h.workLists.importText(Queue.Kind.Label("tasks"), Queue.QueueImport(text = Queue.QueueItem.Text("")))
     )
     // reads are NOT blocked: a restore stops writes, it does not take the service down
-    val reads = underLock(h.checks.lint(Nil))
+    val reads = underLock(h.checks.lint(Nil).left.map(Api.Error(_)))
     assert(reads.isRight, s"lint (a read) must still answer: $reads")
     assert(
       underLock(

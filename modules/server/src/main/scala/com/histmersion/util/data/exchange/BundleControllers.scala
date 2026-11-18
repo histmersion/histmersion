@@ -25,6 +25,7 @@ import java.time.OffsetDateTime
 import com.histmersion.api.Api
 import com.histmersion.util.jobs.Job
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.problem.Problems
 
 /** The bundle and merge endpoints, MCP tools and `histmersion bundle|merge` commands (docs/research-merge-import.md):
   * the raw inputs parsed, the maintenance guard of every write, the [[BundleService]] call. An upload is the file the
@@ -42,33 +43,41 @@ final class BundleControllers(bundles: BundleService, maintenance: WriteGate):
   def exportBundle(
       since: Option[BundleScope.Since.At]
   ): Either[Api.Error, (HandedFile, BundleControllers.Disposition)] =
-    BundleControllers.since(since).flatMap(bundles.exportBundle).map((f, m) => f -> BundleControllers.disposition(m))
+    BundleControllers
+      .since(since)
+      .left
+      .map(Api.Error(_))
+      .flatMap(bundles.exportBundle)
+      .map((f, m) => f -> BundleControllers.disposition(m))
 
   /** `POST /api/bundle/verify`. */
-  def verify(upload: HandedFile): Either[Api.Error, Bundle.VerifyResult] = readable(upload).map(bundles.verify)
+  def verify(upload: HandedFile): Either[Problems, Bundle.VerifyResult] = readable(upload).map(bundles.verify)
 
   /** `POST /api/bundle/import?dryRun=`. A write: refused while a restore holds the lock. Planned with no resolutions:
     * any open issue refuses it (decide them, then `POST /api/merge/import`).
     */
   def importBundle(dryRun: ImportOptions.DryRun, upload: HandedFile): Either[Api.Error, Bundle.ImportResult] =
     maintenance.guard(WriteGate.OperationName("bundle/import"))(
-      readable(upload).flatMap(bundles.importBundle(_, dryRun))
+      readable(upload).left.map(Api.Error(_)).flatMap(bundles.importBundle(_, dryRun))
     )
 
   /** `POST /api/bundle/upload` — keep the bundle under its sha256 so it can be planned and imported by name. The
     * manifest is read back, and what reading the file found wrong is reported.
     */
-  def upload(upload: HandedFile): Either[Api.Error, Bundle.Upload] = readable(upload).flatMap(bundles.keep)
+  def upload(upload: HandedFile): Either[Api.Error, Bundle.Upload] =
+    readable(upload).left.map(Api.Error(_)).flatMap(bundles.keep)
 
   /** `POST /api/merge/plan` (and MCP `merge_plan`) — pure: reads, never writes. */
   def plan(req: MergePlan.Request): Either[Api.Error, MergePlan] =
-    BundleControllers.sha256(req.bundle.value).flatMap(bundles.plan(_, req.resolutions))
+    BundleControllers.sha256(req.bundle.value).left.map(Api.Error(_)).flatMap(bundles.plan(_, req.resolutions))
 
   /** `POST /api/merge/import` — import an uploaded bundle with resolutions. A write. */
   def importUploaded(req: MergeImportRequest): Either[Api.Error, Bundle.ImportResult] =
     maintenance.guard(WriteGate.OperationName("merge/import")):
       BundleControllers
         .sha256(req.bundle.value)
+        .left
+        .map(Api.Error(_))
         .flatMap(bundles.importKept(_, req.resolutions, ImportOptions.DryRun(req.dryRun.value)))
 
   /** `POST /api/merge/apply` — carry out the reviewed plan of an uploaded bundle (M5). A write, and the one that takes
@@ -81,6 +90,8 @@ final class BundleControllers(bundles: BundleService, maintenance: WriteGate):
     maintenance.guard(WriteGate.OperationName("merge/apply")):
       BundleControllers
         .sha256(req.bundle.value)
+        .left
+        .map(Api.Error(_))
         .flatMap(bundles.applyKept(_, MergeRow.PlanHash(req.planHash.value), req.resolutions))
 
   /** `GET /api/merge/apply/{job}` — the job is a `jobs` row, so it answers across a restart (#888). */
@@ -100,13 +111,13 @@ final class BundleControllers(bundles: BundleService, maintenance: WriteGate):
       )
 
   /** `GET /api/merge/sessions/{bundle}`. */
-  def session(bundle: Api.Merge.Id): Either[Api.Error, MergeSession] =
+  def session(bundle: Api.Merge.Id): Either[Problems, MergeSession] =
     BundleControllers.sha256(bundle.value).map(bundles.session)
 
   /** `PUT /api/merge/sessions/{bundle}`. */
   def putSession(bundle: Api.Merge.Id, r: MergeResolutions): Either[Api.Error, MergeSession] =
     maintenance.guard(WriteGate.OperationName("merge/session")):
-      BundleControllers.sha256(bundle.value).map(bundles.putSession(_, r))
+      BundleControllers.sha256(bundle.value).left.map(Api.Error(_)).map(bundles.putSession(_, r))
 
   /** `POST /api/merge/resolutions` — the YAML of a resolution file, read; every bad line at once. */
   def parseResolutions(text: MergeResolutionsFile.Text): Either[Api.Error, MergeResolutions] =
@@ -136,10 +147,10 @@ final class BundleControllers(bundles: BundleService, maintenance: WriteGate):
       limit.map(_.value).flatMap(PageSize.option(_)).getOrElse(BundleControllers.LedgerLimit)
     )
 
-  private def readable(f: HandedFile): Either[Api.Error, ByteSource] =
+  private def readable(f: HandedFile): Either[Problems, ByteSource] =
     val source = HandedFile.source(f)
     if source.size.value <= 0 then
-      Left(Api.Error(Problem.Unclassified(Legacy.Text("the upload is empty — send a .hmx bundle as the body"))))
+      Left(Problem.Unclassified(Legacy.Text("the upload is empty — send a .hmx bundle as the body")))
     else Right(source)
 
 object BundleControllers:
@@ -152,20 +163,18 @@ object BundleControllers:
   val LedgerLimit: PageSize = PageSize(200)
 
   /** A bundle's name on the server: its sha256, 64 lower-case hex digits. Pure. */
-  def sha256(raw: String): Either[Api.Error, Sha256] =
+  def sha256(raw: String): Either[Problems, Sha256] =
     Sha256
       .either(raw.trim.toLowerCase(java.util.Locale.ROOT))
       .left
       .map(_ =>
-        Api.Error(
-          Problem.Unclassified(
-            Legacy.Text(s"'$raw' is not a bundle's sha256 (64 hex digits, as `POST /api/bundle/upload` answers)")
-          )
+        Problem.Unclassified(
+          Legacy.Text(s"'$raw' is not a bundle's sha256 (64 hex digits, as `POST /api/bundle/upload` answers)")
         )
       )
 
   /** `since` must be a moment: ISO-8601 with an offset (`2026-10-03T09:12:00Z`), as `asOf` is. */
-  def since(raw: Option[BundleScope.Since.At]): Either[Api.Error, Option[BundleScope.Since.At]] =
+  def since(raw: Option[BundleScope.Since.At]): Either[Problems, Option[BundleScope.Since.At]] =
     raw.map(_.value.trim).filter(_.nonEmpty) match
       case None    => Right(None)
       case Some(s) =>
@@ -174,12 +183,10 @@ object BundleControllers:
           .toOption
           .map(_ => Some(BundleScope.Since.At(s)))
           .toRight(
-            Api.Error(
-              Problem.Unclassified(
-                Legacy.Text(
-                  s"since '$s' is not a moment — give an ISO-8601 time with its offset, " +
-                    "e.g. 2026-10-03T09:12:00Z (a bundle's manifest asOf)"
-                )
+            Problem.Unclassified(
+              Legacy.Text(
+                s"since '$s' is not a moment — give an ISO-8601 time with its offset, " +
+                  "e.g. 2026-10-03T09:12:00Z (a bundle's manifest asOf)"
               )
             )
           )

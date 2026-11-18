@@ -16,6 +16,7 @@ import com.histmersion.domain.library.search.Search
 import com.histmersion.domain.Title
 import com.histmersion.domain.library.Edge
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.Api
 
 /** Assembles the typed page models from the library's and research's controllers — the one impure step between the
   * database and [[Pages]]. Each page resolves its links with ONE [[ArticlesControllers.pageLinks]] call.
@@ -29,7 +30,7 @@ final class PageBuilder(
 
   /** `(title, inner HTML)` of `/source/{citekey}`, `?q=` terms highlighted. */
   def source(ck: Citekey, full: PageBuilder.SourceFull, q: Option[Search.Query]): Option[(Title, HtmlRender.Html)] =
-    sources.get(ck).toOption.map { sw =>
+    sources.get(ck).left.map(Api.Error(_)).toOption.map { sw =>
       val s = sw.source
       val ref = Source.Ref(s.citekey, s.doi, s.authors, s.year, s.title, s.status)
       val rows = citations.neighbors(ck)
@@ -124,7 +125,7 @@ final class PageBuilder(
           v.sourcesCited,
           v.formatting,
           v.coverage,
-          articles.reviewOf(Slug.assume(v.article.slug.value)).toOption
+          articles.reviewOf(Slug.assume(v.article.slug.value)).left.map(Api.Error(_)).toOption
         ),
         s => links(WikiLinks.Occurrence.Target(s.value))
       )

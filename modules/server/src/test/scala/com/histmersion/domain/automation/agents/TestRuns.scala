@@ -22,6 +22,7 @@ import com.augustnagro.magnum.DbCon
 
 import javax.sql.DataSource
 import com.histmersion.server.ServerWiring
+import com.histmersion.api.Api
 
 /** How the agent suites set up runs by hand: through the jobs area, as the engine records them. */
 object TestRuns:
@@ -136,7 +137,13 @@ object TestRuns:
     new SourceProposals(
       SourceApprovalService(Transactor(ds), a.approvalStore, a.clock),
       a.config,
-      ck => h.library.sources.get(ck, body = SourcesControllers.GetBody(false)).toOption.map(_.source.status),
+      ck =>
+        h.library.sources
+          .get(ck, body = SourcesControllers.GetBody(false))
+          .left
+          .map(Api.Error(_))
+          .toOption
+          .map(_.source.status),
       p =>
         h.library.sources
           .patch(p.citekey, p.patch)

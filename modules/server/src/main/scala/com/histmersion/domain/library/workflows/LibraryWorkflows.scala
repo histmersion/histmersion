@@ -15,6 +15,7 @@ import com.histmersion.util.database.Transactor
 import javax.sql.DataSource
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.library.sources.SourcesControllers
+import com.histmersion.api.Api
 
 /** What the library contributes to the workflow engine: its three pipelines as workflows (enrich-source,
   * currency-check, acquisition-sweep), the enrich and watch manager kinds, its agent tools, and the acquisition work
@@ -39,7 +40,14 @@ final class LibraryWorkflows(
     ck =>
       Citekey
         .option(ck.value)
-        .flatMap(c => site.sources.get(c, body = SourcesControllers.GetBody(false)).toOption.map(_.source.status)),
+        .flatMap(c =>
+          site.sources
+            .get(c, body = SourcesControllers.GetBody(false))
+            .left
+            .map(Api.Error(_))
+            .toOption
+            .map(_.source.status)
+        ),
     p =>
       site.sources
         .patch(p.citekey, p.patch)

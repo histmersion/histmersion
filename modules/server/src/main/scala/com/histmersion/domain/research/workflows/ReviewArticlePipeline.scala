@@ -558,12 +558,13 @@ final class ReviewArticlePipeline(
     )
     t => resolve(WikiLinks.Occurrence.Target(t.value)).isDefined
 
-  private def isCitekey(ck: Citekey): Boolean = site.sources.get(ck, body = SourcesControllers.GetBody(false)).isRight
+  private def isCitekey(ck: Citekey): Boolean =
+    site.sources.get(ck, body = SourcesControllers.GetBody(false)).left.map(Api.Error(_)).isRight
 
   /** What a quote may be checked against: a source's summary, findings, notes and body — what `get_source` shows.
     */
   private def recordText(ck: Citekey): Option[AgentVerify.SourceBody] =
-    site.sources.get(ck, body = SourcesControllers.GetBody(true)).toOption.map { s =>
+    site.sources.get(ck, body = SourcesControllers.GetBody(true)).left.map(Api.Error(_)).toOption.map { s =>
       AgentVerify.SourceBody(
         (s.source.summary.toList.map(_.value) ++ s.findings.map(_.claim.value) ++ s.source.notes.toList.map(_.value) ++
           s.source.ocrMarkdown.toList.map(_.value)).mkString("\n\n")

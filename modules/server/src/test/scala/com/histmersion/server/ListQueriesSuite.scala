@@ -14,6 +14,7 @@ import com.histmersion.api.automation.Agents
 import com.histmersion.server.views.JobListView
 import com.histmersion.api.jobs.JobState
 import com.histmersion.api.jobs.JobKinds
+import com.histmersion.api.Api
 
 /** The list filters a client sent, checked and turned into the repos' queries (no database). */
 class ListQueriesSuite extends munit.FunSuite:
@@ -129,10 +130,12 @@ class ListQueriesSuite extends munit.FunSuite:
   test("jobs: states are checked, any kind passes (plugins add their own)"):
     val q = JobListView
       .query(JobFilter(status = List(JobState.Wire("done,failed")), kind = List(JobKinds.Wire("basemap-fetch"))), now)
+      .left
+      .map(Api.Error(_))
       .toOption
       .get
     assertEquals((q.status, q.kinds), (List("done", "failed"), List("basemap-fetch")))
     // an agent run is a job too: its states filter the jobs list
-    assert(JobListView.query(JobFilter(status = List(JobState.Wire("waiting"))), now).isRight)
-    assert(JobListView.query(JobFilter(status = List(JobState.Wire("stuck"))), now).isLeft)
-    assert(JobListView.query(JobFilter(until = Some(JobFilter.Until("tomorrow"))), now).isLeft)
+    assert(JobListView.query(JobFilter(status = List(JobState.Wire("waiting"))), now).left.map(Api.Error(_)).isRight)
+    assert(JobListView.query(JobFilter(status = List(JobState.Wire("stuck"))), now).left.map(Api.Error(_)).isLeft)
+    assert(JobListView.query(JobFilter(until = Some(JobFilter.Until("tomorrow"))), now).left.map(Api.Error(_)).isLeft)

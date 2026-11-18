@@ -67,6 +67,7 @@ import com.histmersion.config.AgentTraceConfig
 import com.histmersion.config.ClaudeCodeConfig
 import com.histmersion.config.AgentBudgetsConfig
 import com.histmersion.server.agents.CliProcess
+import com.histmersion.api.Api
 
 /** A scripted stand-in for a provider: each LLM step (each `run`) consumes the next script — the real sttp-ai loop runs
   * against it, the real tools execute in process. Records every request and counts the steps it served. `fail` makes
@@ -215,7 +216,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     val run = startAndRun(a)
     assertEquals(run.status, "done", run.error)
 
-    val s = h.library.sources.get(Ck).toOption.get
+    val s = h.library.sources.get(Ck).left.map(Api.Error(_)).toOption.get
     assertEquals(s.source.summary, Some("Tin reached the Aegean by sea."))
     assertEquals((s.source.periodStart, s.source.periodEnd), (Some(-1600L), Some(-1200L)))
     assertEquals(s.source.status, Source.Status.Current)
@@ -303,7 +304,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
         retry.contains("give a place name the gazetteer knows (a site, city or region)"),
       retry
     )
-    val fs = h.library.sources.get(Ck).toOption.get.findings
+    val fs = h.library.sources.get(Ck).left.map(Api.Error(_)).toOption.get.findings
     assertEquals(fs.map(f => (f.regionName, f.lon, f.lat)), List((Some("Zzagentville"), Some(31.4), Some(36.1))))
 
   test("each step is offered only its allowlist: classify may look things up, the others get no tool at all"):
@@ -345,7 +346,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     assertEquals(done.status, "done", done.error)
     assertEquals(second.steps.size, 1, "only the unfinished notes step reached the model")
     assertEquals(first.steps.size, 2)
-    assertEquals(h2.library.sources.get(Ck).toOption.get.findings.size, 1)
+    assertEquals(h2.library.sources.get(Ck).left.map(Api.Error(_)).toOption.get.findings.size, 1)
 
   test("prompt injection in the body: a write tool is not even offered, and a hostile status is only proposed"):
     val hostile = Source.OcrMarkdown(
@@ -365,7 +366,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     assertEquals(run.status, "done", run.error)
     val sent = c.steps.head.last.history.entries.collect { case ConversationEntry.ToolResult(_, n, r) => (n, r) }
     assertEquals(sent.toList, List(("patch_source", "Tool not found: patch_source")))
-    assertEquals(h.library.sources.get(Ck).toOption.get.source.status, Source.Status.Unassessed)
+    assertEquals(h.library.sources.get(Ck).left.map(Api.Error(_)).toOption.get.source.status, Source.Status.Unassessed)
     assert(run.warnings.exists(_.value.contains("status retracted not applied")), run.warnings)
     // the proposal waits in the approvals, not in the backlog (P2); nothing is applied until approved
     val open =
@@ -651,7 +652,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
       case other                                  => fail(s"expected an open approval, got $other")
     // the same proposal while it is open is not doubled
     assert(TestRuns.proposals(a, h, ds).propose(None, p).isInstanceOf[SourceProposals.Outcome.AlreadyOpen])
-    assertEquals(h.library.sources.get(Ck).toOption.get.source.status, Source.Status.Unassessed)
+    assertEquals(h.library.sources.get(Ck).left.map(Api.Error(_)).toOption.get.source.status, Source.Status.Unassessed)
     val decided = a
       .decide(
         id,
@@ -661,7 +662,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
       .toOption
       .get
     assertEquals((decided.state, decided.note), ("approved", Some("checked the rebuttal")))
-    assertEquals(h.library.sources.get(Ck).toOption.get.source.status, Source.Status.Contested)
+    assertEquals(h.library.sources.get(Ck).left.map(Api.Error(_)).toOption.get.source.status, Source.Status.Contested)
     assert(
       a.decide(id, Approval.Outcome("reject"), DecisionRequest())
         .left
@@ -678,9 +679,12 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
       case SourceProposals.Outcome.Recorded(i, _) => Approval.Id(i.value)
       case other                                  => fail(s"expected an open approval, got $other")
     assertEquals(a.decide(id2, Approval.Outcome("reject"), DecisionRequest()).map(_.state), Right("rejected"))
-    assertEquals(h.library.sources.get(Ck).toOption.get.source.status, Source.Status.Contested)
-    assertEquals(a.approvalsList(Some(ApprovalQuery.State("all")), None).map(_.count(_.citekey == ApiCk)), Right(2))
-    assert(a.approvalsList(Some(ApprovalQuery.State("pending")), None).isLeft)
+    assertEquals(h.library.sources.get(Ck).left.map(Api.Error(_)).toOption.get.source.status, Source.Status.Contested)
+    assertEquals(
+      a.approvalsList(Some(ApprovalQuery.State("all")), None).left.map(Api.Error(_)).map(_.count(_.citekey == ApiCk)),
+      Right(2)
+    )
+    assert(a.approvalsList(Some(ApprovalQuery.State("pending")), None).left.map(Api.Error(_)).isLeft)
     // paged (core Paging): newest first, id2 then id; the counts are every state's, the total the filter's
     val (one, page) = a.approvalsPage(Some(ApprovalQuery.State("all")), Some(PageSize(1))).toOption.get
     assertEquals(one.size, 1)
@@ -733,7 +737,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
         )
       )
     assert(o.isInstanceOf[SourceProposals.Outcome.Applied], o)
-    assertEquals(h.library.sources.get(Ck).toOption.get.source.status, Source.Status.Debunked)
+    assertEquals(h.library.sources.get(Ck).left.map(Api.Error(_)).toOption.get.source.status, Source.Status.Debunked)
     assertEquals(
       TestRuns
         .approvals(ds)

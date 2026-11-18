@@ -49,6 +49,7 @@ import com.histmersion.domain.automation.Run
 import com.histmersion.domain.research.workflows.ReviewManagerPolicy
 import com.histmersion.api.exchange.Bundle
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.problem.Problems
 
 /** The articles' operations, each the one implementation REST, MCP and the agents' tools call: the list and one article
   * in every view, the writes (put, patch, delete, rename, a note imported) with the strict formatting gate, the
@@ -268,13 +269,13 @@ final class ArticlesControllers(
     */
   def review(slug: Slug): Either[Api.Error, Article.ReviewView] =
     val canon = store.canonical(slug)
-    store.load(canon).toRight(notFound(slug)).flatMap(_ => reviewOf(canon))
+    store.load(canon).toRight(notFound(slug)).flatMap(_ => reviewOf(canon).left.map(Api.Error(_)))
 
   /** The review view of an article known to exist (its canonical slug); a ledger that no longer decodes is an error
     * rather than an empty history.
     */
-  def reviewOf(slug: Slug): Either[Api.Error, Article.ReviewView] =
-    ledgers(slug).left.map(Api.Error(_)).map { ledger =>
+  def reviewOf(slug: Slug): Either[Problems, Article.ReviewView] =
+    ledgers(slug).map { ledger =>
       val (facts, updatedAt) =
         reviewState.facts(List(slug)).getOrElse(slug, (ArticleReviewStatus.Facts(), None))
       val starts =
@@ -520,7 +521,11 @@ final class ArticlesControllers(
     * unknown, so "no articles yet" and "no such source" are different answers.
     */
   def sourceArticles(citekey: Citekey): Either[Api.Error, List[Backlink]] =
-    sources.get(citekey).map(s => store.backlinksForSource(Citekey.assume(s.source.citekey.value)))
+    sources
+      .get(citekey)
+      .left
+      .map(Api.Error(_))
+      .map(s => store.backlinksForSource(Citekey.assume(s.source.citekey.value)))
 
   /** "Mentioned in articles", the part a source's default and full views carry. */
   def mentionedIn(citekey: Citekey): String =

@@ -48,7 +48,7 @@ object PlacesRoutes:
           limit.flatMap(l => PageSize.option(l.value))
         )
       ),
-      Api.placesGeo.serverLogic[Identity](q => places.shapes(q)),
+      Api.placesGeo.serverLogic[Identity](q => places.shapes(q).left.map(Api.Error(_))),
       Api.placeNames.serverLogicSuccess[Identity](place =>
         place.map(_.value.trim).filter(_.nonEmpty) match
           case None      => places.manualNames(None)
