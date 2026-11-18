@@ -17164,7 +17164,7 @@
           "dropped" : {
             "type" : "array",
             "items" : {
-              "type" : "string"
+              "$ref" : "#/components/schemas/Problem"
             }
           }
         }
