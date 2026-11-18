@@ -108,12 +108,11 @@ final class PlanPools(
       Rules.MarginPct(cfg.quota.margin.value)
     )
 
-  /** The verdict for one call on `p` (and its model's own buckets). The ChatGPT pool is read from the app-server first
-    * when its last reading is older than `poll-seconds`. Takes no fresh reading of its own: [[decide]] does, for a
-    * pick.
+  /** The verdict for one call on `p` (and its model's own buckets), from what is stored: the readings, the hold and the
+    * provider's refusal as last recorded. It reads nothing else and writes nothing — what every view asks (`agent
+    * quota`, `agent models`, the scheduler's dry pass). A call that runs work asks [[current]].
     */
   def verdict(p: PoolId, model: Option[ChainEntry.Model], now: PlanQuota.Now = now0): (Verdict, List[WindowState]) =
-    if p == PoolId.ChatgptPlan then poll(now)
     val pool = Transactor(ds).read(PlanQuotaRepo.pool(p))
     PlanQuota.verdict(
       Transactor(ds).read(PlanQuotaRepo.readings(p)),
@@ -125,6 +124,15 @@ final class PlanPools(
       now,
       model
     )
+
+  /** The verdict for a call that runs work on `p` (a run's pick, a step's check, the scheduler's pass): the ChatGPT
+    * pool is read from the app-server first when its last reading is older than `poll-seconds` ([[poll]], which records
+    * the reading and the provider's refusal); then [[verdict]]. Takes no fresh reading of its own: [[decide]] does, for
+    * a pick.
+    */
+  def current(p: PoolId, model: Option[ChainEntry.Model], now: PlanQuota.Now = now0): (Verdict, List[WindowState]) =
+    if p == PoolId.ChatgptPlan then poll(now)
+    verdict(p, model, now)
 
   /** Why `p`'s verdict would wait for a fresh reading now (None = it decides by itself). */
   def need(p: PoolId, model: Option[ChainEntry.Model], now: PlanQuota.Now): Option[RefreshNeed] =
@@ -150,16 +158,16 @@ final class PlanPools(
       trigger: RefreshTrigger,
       now: PlanQuota.Now = now0
   ): (Verdict, List[WindowState], Option[Refreshed]) =
-    val (v, states) = verdict(p, model, now)
+    val (v, states) = current(p, model, now)
     if need(p, model, now).isEmpty then (v, states, None)
     else
       refreshPool(p, trigger, model, force = PlanPools.Force(false), now) match
         // not taken — perhaps because the caller waited while another took one: ask again either way
         case Left(_) =>
-          val (v2, s2) = verdict(p, model, now0)
+          val (v2, s2) = current(p, model, now0)
           (v2, s2, None)
         case Right(r) =>
-          val (v2, s2) = verdict(p, model, now0)
+          val (v2, s2) = current(p, model, now0)
           (v2, s2, Some(r))
 
   def record(p: PoolId, rs: List[Reading]): Unit = Transactor(ds).transact(PlanQuotaRepo.record(p, rs))
@@ -172,7 +180,7 @@ final class PlanPools(
       p: PoolId,
       model: Option[AgentsControllers.ModelName]
   ): Option[(PlanQuota.Rationale, Option[PlanQuotaRepo.EpochMillis])] =
-    verdict(p, model.map(m => ChainEntry.Model(m.value)))._1 match
+    current(p, model.map(m => ChainEntry.Model(m.value)))._1 match
       case Verdict.Blocked(why, until) =>
         Some((why, until.map(u => PlanQuotaRepo.EpochMillis(u.value))))
       case _ => None
@@ -433,7 +441,10 @@ final class PlanPools(
           until.map(u => GuardAnswer.ResetsAt(java.time.Instant.ofEpochMilli(u.value).toString))
         )
 
-  /** Every plan pool, as `agent quota` shows it. Takes no fresh reading (looking is free). */
+  /** Every plan pool, as `agent quota` shows it, from what is stored ([[verdict]]): it takes no reading — not even the
+    * ChatGPT pool's app-server read — and writes nothing (looking is free). A run, the scheduler's pass and its
+    * schedule, and `agent quota refresh` take the readings it shows.
+    */
   def statuses(covers: PoolId => List[PoolStatus.Covers], now: PlanQuota.Now = now0): List[PoolStatus] =
     val today = java.time.Instant
       .ofEpochMilli(now.value)

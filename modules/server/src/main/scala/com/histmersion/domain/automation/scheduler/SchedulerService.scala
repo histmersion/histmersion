@@ -124,19 +124,18 @@ final class SchedulerService(
       )
     else None
 
-  /** The plan pools the roles of `pipelines` draw on with `over` (a manager's model overrides) — picked without
-    * spending (no plan reading is taken): Left = a role's chain cannot run now (why); Right(Nil) = a metered model in
-    * the mix, or nothing known (no pool limit).
+  /** The plan pools the roles of `pipelines` draw on with `over` (a manager's model overrides), each role's model
+    * chosen by `choose` — never with a fresh plan reading taken (nothing is spent): Left = a role's chain cannot run
+    * now (why); Right(Nil) = a metered model in the mix, or nothing known (no pool limit).
     */
   def poolIds(
       over: List[Agents.ModelOverride],
       now: Instant,
-      pipelines: List[Pipeline]
+      pipelines: List[Pipeline],
+      choose: ModelPicker.Choose
   ): Either[Block.Chain, List[PlanQuota.PoolId]] =
     val roles = pipelines.flatMap(_.roles).distinct
-    val picks = roles.map { r =>
-      r -> agents.picker.pick(r, modelOf(over, r), PlanQuotaRepo.EpochMillis(now.toEpochMilli), refresh = None)
-    }
+    val picks = roles.map(r => r -> choose(r, modelOf(over, r), PlanQuotaRepo.EpochMillis(now.toEpochMilli)))
     picks.collectFirst { case (r, Left(f)) => (r, f) } match
       case Some((r, PickFailure.Exhausted(_, at, why))) =>
         Left(
@@ -159,9 +158,11 @@ final class SchedulerService(
     math.max(1, calls) * math.max(1, cfg.scheduler.poolOvercommit.value)
 
   /** What one pass reads: every due pending item of `ms` (the active managers that may start runs) at `now`, the goals,
-    * the blocks, the runs that occupy a place; `stop` = why nothing starts at all (draining).
+    * the blocks, the runs that occupy a place; `stop` = why nothing starts at all (draining). `choose` picks each
+    * role's model: as a run would ([[pass]], which may record the ChatGPT pool's reading) or from what is stored
+    * ([[dry]]).
     */
-  def inputs(ms: List[ManagerInfo], now: Instant, stop: Option[Block]): Inputs =
+  def inputs(ms: List[ManagerInfo], now: Instant, stop: Option[Block], choose: ModelPicker.Choose): Inputs =
     val gs = goals()
     val perManager = ms.map { m =>
       m -> agents.managerStore
@@ -206,7 +207,8 @@ final class SchedulerService(
         val itemKind = ManagerContext.ItemKind(i.kind.value)
         val pipeline = agents.managers.pipelineOf(itemKind)
         val pools =
-          if daily.isDefined then Right(Nil) else memo.getOrElseUpdate(pipeline, poolIds(over, now, List(pipeline)))
+          if daily.isDefined then Right(Nil)
+          else memo.getOrElseUpdate(pipeline, poolIds(over, now, List(pipeline), choose))
         val block = daily
           .map(d => Block(d))
           .orElse(pools.left.toOption.map(chain => Block(Block.Why.Starved(chain))))
@@ -261,7 +263,10 @@ final class SchedulerService(
     val runs = agents.managerStore.occupyingRuns()
     val pipePools = collection.mutable.Map.empty[Pipeline, List[PlanQuota.PoolId]] // per pass
     def poolsOfRun(w: Pipeline.Wire): List[PlanQuota.PoolId] =
-      Pipeline.parse(w).toList.flatMap(p => pipePools.getOrElseUpdate(p, poolIds(Nil, now, List(p)).getOrElse(Nil)))
+      Pipeline
+        .parse(w)
+        .toList
+        .flatMap(p => pipePools.getOrElseUpdate(p, poolIds(Nil, now, List(p), choose).getOrElse(Nil)))
     val caps = ms.flatMap(m => m.config.maxRuns.map(r => m.id -> Resources.ManagerCapValue(r.value))).toMap
     val res = Resources(
       maxRuns = Resources.MaxRuns(cfg.maxConcurrentRuns.value),
@@ -305,7 +310,9 @@ final class SchedulerService(
   def pass(ms: List[ManagerInfo], now: Instant, stop: Option[Block])(
       start: (ManagerInfo, ManagerItem) => Either[Block.Refusal, Unit]
   ): Decision =
-    val in = inputs(ms, now, stop)
+    // each role's model picked as a run picks it, so a stale ChatGPT reading is read again (and recorded) first; never
+    // a fresh reading taken for a pool (`refresh = None`: that is the run's, when it starts)
+    val in = inputs(ms, now, stop, (r, m, at) => agents.picker.pick(r, m, at, refresh = None))
     val s = settings
     val d =
       SchedulerPolicy.run(in.cands, in.res, s, now)(c => in.items.get(c.id).fold(Left(Block.Refusal.Gone))(start(_, _)))
@@ -358,9 +365,11 @@ final class SchedulerService(
           Kind.parse(m.kind).exists(k => k == Kind.Review || k == Kind.Enrich || k == Kind.Seed || k == Kind.Watch)
       )
 
-  /** A pass that starts nothing: what one would do now. */
+  /** A pass that starts nothing: what one would do now, from what is stored — no plan pool is read, nothing is written
+    * (the scheduler views, GET routes, show it).
+    */
   private def dry(now: Instant): Snapshot =
-    val in = inputs(live(), now, agents.drain.block)
+    val in = inputs(live(), now, agents.drain.block, agents.picker.look)
     val s = settings
     Snapshot(now, dry = true, in, s, SchedulerPolicy.run(in.cands, in.res, s, now)(_ => Right(())))
 

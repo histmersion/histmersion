@@ -12,30 +12,33 @@ import com.histmersion.util.problem.{Problem, Problems}
 
 /** Who the server lets in, read from the `auth` settings once, when the listener is bound: each listed network and what
   * a request from it gets, the names a request may give as its `Host`, the page origins that may send changes besides
-  * the server's own, and the reverse proxy declared in front of it.
+  * the server's own, and the networks a reverse proxy in front of it connects from.
   */
 final case class AccessPolicy private (
     networks: List[AccessPolicy.Network],
     hosts: Set[AccessPolicy.HostName],
     origins: Set[AccessPolicy.Origin],
     trustedAs: AccessPolicy.Principal,
-    proxy: AccessPolicy.Proxy
+    proxies: List[Cidr]
 ):
   import AccessPolicy.*
 
-  /** The policy in one line for the log: each network and what it gets, the proxy, and the names answered to. */
+  /** The policy in one line for the log: each network and what it gets, the proxy networks, and the names answered to.
+    */
   def summary: String =
     val listed =
       if networks.isEmpty then "no network accepted"
       else networks.map(n => s"${n.cidr} ${n.requires.toString.toLowerCase(Locale.ROOT)}").mkString(", ")
-    val proxied = proxy match
-      case Proxy.Undeclared => ""
-      case Proxy.Local      => "; a local proxy's forwarded requests authenticated"
+    val proxied =
+      if proxies.isEmpty then "" else s"; forwarded requests from ${proxies.mkString(", ")} authenticated"
     s"$listed$proxied; answers to ${hosts.toList.map(h => s"$h").sorted.mkString(", ")}"
 
   /** What a request from `peer` gets: the requirement of the longest listed prefix that holds it, if any does. */
   def requirementOf(peer: InetAddress): Option[Requirement] =
     networks.filter(_.cidr.holds(peer)).maxByOption(_.cidr.prefix).map(_.requires)
+
+  /** Whether a request `peer` sent, marked as forwarded, may come from a proxy: `peer` is in a proxy network. */
+  def proxiedFrom(peer: InetAddress): Boolean = proxies.exists(_.holds(peer))
 
   /** Whether a request may give `host` (a `Host` header, its port ignored) as the name it asked for. */
   def answersTo(host: HostName): Boolean = hosts.contains(host)
@@ -65,12 +68,14 @@ final case class AccessPolicy private (
 
   /** Whether a public URL of `publicUrl` needs a declared proxy that is missing: it is HTTPS, which this server does
     * not serve itself, so a reverse proxy forwards to it; when loopback (where a proxy on this machine connects from)
-    * is trusted, a proxy that does not mark what it forwards would hand every client the owner's trust.
+    * is trusted and no proxy network covers it, a proxy that does not mark what it forwards would hand every client the
+    * owner's trust. Loopback is covered when a proxy network holds `127.0.0.1` or `::1`, as it is trusted when a
+    * trusted network holds either.
     */
   def proxyNeeded(publicUrl: ServerConfig.PublicUrl): Either[Problem, Unit] =
     val https = Origin.parse(s"$publicUrl").exists(_.scheme == "https")
     val loopbackTrusted = LoopbackPeers.exists(a => requirementOf(a).contains(Requirement.Trusted))
-    if https && loopbackTrusted && proxy == Proxy.Undeclared then
+    if https && loopbackTrusted && !LoopbackPeers.exists(proxiedFrom) then
       Left(Problem.Config.ProxyUndeclared(Problem.Raw(s"$publicUrl")))
     else Right(())
 
@@ -108,16 +113,6 @@ object AccessPolicy:
   enum Principal derives CanEqual:
     /** The person the install belongs to. */
     case Owner
-
-  /** The reverse proxy in front of the server. */
-  enum Proxy derives CanEqual:
-    /** None is declared (`none`): a request that says a proxy forwarded it is refused. */
-    case Undeclared
-
-    /** One on this machine (`local`): it connects over loopback and marks every request it forwards with one of
-      * [[Admission.Forwarded.Headers]], so a loopback request so marked is held to the authenticated rules.
-      */
-    case Local
 
   /** A listed network and what a request from it gets. */
   final case class Network(cidr: Cidr, requires: Requirement)
@@ -169,6 +164,36 @@ object AccessPolicy:
       }
     }
 
+  /** Every address `binds` lists again after its first entry, however it is written ([[sameAddress]]): a second
+    * listener cannot bind what the first holds. Each repeat is paired with the first entry, both as written.
+    */
+  def repeats(binds: NonEmptyVector[ServerConfig.Host]): Vector[Problem] =
+    val all = binds.toVector
+    all.zipWithIndex.flatMap { (b, i) =>
+      all
+        .take(i)
+        .find(sameAddress(_, b))
+        .map(first => Problem.Config.BindRepeated(Problem.Raw.of(first), Problem.Raw.of(b)))
+    }
+
+  /** `binds` with each address once, at its first entry ([[repeats]] names the others). */
+  def once(binds: NonEmptyVector[ServerConfig.Host]): NonEmptyVector[ServerConfig.Host] =
+    NonEmptyVector.of(
+      binds.head,
+      binds.tail.zipWithIndex.collect {
+        case (b, i) if !binds.toVector.take(i + 1).exists(sameAddress(_, b)) => b
+      }*
+    )
+
+  /** Whether two bind entries name one address: two literals of one number (`::1`, `[::1]` and `0:0:0:0:0:0:0:1`; an
+    * IPv4-mapped `::ffff:127.0.0.1` and `127.0.0.1`), or one name in any case, with or without its trailing dot. No
+    * name is looked up: `localhost` and `127.0.0.1` are two entries.
+    */
+  def sameAddress(a: ServerConfig.Host, b: ServerConfig.Host): Boolean =
+    def address(bind: ServerConfig.Host): Either[String, (Cidr.Family, BigInt)] =
+      Cidr.literal(bindText(bind)).map(Cidr.numbered).toRight(bindText(bind).toLowerCase(Locale.ROOT).stripSuffix("."))
+    address(a) == address(b)
+
   /** A page origin: scheme, host and port (the scheme's default port when the text names none). */
   final case class Origin(scheme: String, host: HostName, port: Port)
 
@@ -192,14 +217,16 @@ object AccessPolicy:
   private val LoopbackPeers: List[InetAddress] = List("127.0.0.1", "::1").flatMap(Cidr.literal)
 
   /** The policy of a listener bound to every address of `server.host`, or every reason it must not start: a setting
-    * that is wrong, a wildcard listed beside another address ([[overlaps]]), an address that leaves a network open
-    * ([[exposure]]), or an HTTPS public URL in front of a trusted loopback with no proxy declared ([[proxyNeeded]]).
+    * that is wrong, an address listed twice ([[repeats]]), a wildcard listed beside another address ([[overlaps]]), an
+    * address that leaves a network open ([[exposure]]), or an HTTPS public URL in front of a trusted loopback no proxy
+    * network covers ([[proxyNeeded]]). A repeated address is checked once, at its first entry.
     */
   def forListener(auth: AuthConfig, server: ServerConfig): Either[Problems, AccessPolicy] =
     from(auth, server).flatMap { p =>
-      val open = p.exposure(server.host, s"${auth.apiKey}".nonEmpty).left.toOption.toVector.flatMap(_.toVector)
+      val binds = once(server.host)
+      val open = p.exposure(binds, s"${auth.apiKey}".nonEmpty).left.toOption.toVector.flatMap(_.toVector)
       val unproxied = p.proxyNeeded(server.publicUrl).left.toOption
-      Problems.from(overlaps(server.host) ++ open ++ unproxied).toLeft(p)
+      Problems.from(repeats(server.host) ++ overlaps(binds) ++ open ++ unproxied).toLeft(p)
     }
 
   /** The policy the `auth` settings and the listener's own (its bind addresses, its public URL) describe, or every
@@ -225,13 +252,13 @@ object AccessPolicy:
     val principal = s"${auth.trustedAs}".trim.toLowerCase(Locale.ROOT) match
       case "owner" => Right(Principal.Owner)
       case other   => Left(unknown(TrustedAsKey, other))
-    val proxy = s"${auth.proxy}".trim.toLowerCase(Locale.ROOT) match
-      case "none"  => Right(Proxy.Undeclared)
-      case "local" => Right(Proxy.Local)
-      case other   => Left(unknown(ProxyKey, other))
+    // a proxy network may overlap any list, the trusted one above all (a proxy on this machine): it says only where a
+    // forwarded request may come from, not what it gets
+    val proxies =
+      auth.proxyNetworks.map(n => s"$n").map(raw => Cidr.parse(raw).toRight(malformed(ProxyNetworksKey, raw)))
     val problems: Vector[Problem] =
       lists.toVector.flatMap(_._2.left.toOption.toVector.flatten) ++ clashes ++
-        origins.collect { case Left(p) => p } ++ principal.left.toOption ++ proxy.left.toOption
+        origins.collect { case Left(p) => p } ++ principal.left.toOption ++ proxies.collect { case Left(p) => p }
     Problems.from(problems) match
       case Some(all) => Left(all)
       case None      =>
@@ -245,7 +272,7 @@ object AccessPolicy:
             names,
             origins.collect { case Right(o) => o }.toSet ++ publicOrigin,
             principal.getOrElse(Principal.Owner),
-            proxy.getOrElse(Proxy.Undeclared)
+            proxies.collect { case Right(c) => c }
           )
         )
 
@@ -253,7 +280,7 @@ object AccessPolicy:
   private val AuthenticatedKey = "auth.authenticated-networks"
   private val RefusedKey = "auth.refused-networks"
   private val TrustedAsKey = "auth.trusted-as"
-  private val ProxyKey = "auth.proxy"
+  private val ProxyNetworksKey = "auth.proxy-networks"
   private val OriginsKey = "auth.origins"
 
   private def networks(key: String, raw: List[String], requires: Requirement): Either[Vector[Problem], List[Network]] =

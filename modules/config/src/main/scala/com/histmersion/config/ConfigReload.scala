@@ -54,7 +54,7 @@ object ConfigReload:
     Key("histmersion.auth.trusted-networks") -> SetOnce.Access,
     Key("histmersion.auth.authenticated-networks") -> SetOnce.Access,
     Key("histmersion.auth.refused-networks") -> SetOnce.Access,
-    Key("histmersion.auth.proxy") -> SetOnce.Access,
+    Key("histmersion.auth.proxy-networks") -> SetOnce.Access,
     Key("histmersion.auth.trusted-as") -> SetOnce.Access,
     Key("histmersion.auth.hosts") -> SetOnce.Access,
     Key("histmersion.auth.origins") -> SetOnce.Access

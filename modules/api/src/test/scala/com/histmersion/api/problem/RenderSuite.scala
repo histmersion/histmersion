@@ -144,6 +144,7 @@ class RenderSuite extends munit.FunSuite:
     "Exposed" -> 503,
     "ProxyUndeclared" -> 503,
     "WildcardOverlap" -> 503,
+    "BindRepeated" -> 503,
     "FloorsUnread" -> 503,
     "ReadAt" -> 503,
     "Blocked" -> 409,
@@ -810,16 +811,36 @@ class RenderSuite extends munit.FunSuite:
       Config.ProxyUndeclared(Raw("https://histmersion.example.edu")) ->
         ("server.public-url = 'https://histmersion.example.edu' is https, so a reverse proxy serves it, and " +
           "auth.trusted-networks trusts loopback, where a proxy on this machine connects from — declare the proxy " +
-          "with auth.proxy = \"local\" (what it forwards then needs auth.api-key), or take loopback out of " +
-          "auth.trusted-networks"),
+          "by listing loopback in auth.proxy-networks (what it forwards then needs auth.api-key), or take loopback " +
+          "out of auth.trusted-networks"),
       Refused.Policy(Refused.Rule.UndeclaredProxy) ->
-        ("this request says a proxy forwarded it (Forwarded, X-Forwarded-For, X-Forwarded-Host, X-Forwarded-Proto or " +
-          "X-Real-IP), but the server declares none (auth.proxy = \"none\") — send it directly, or, when a proxy on " +
-          "the server's computer serves it, set auth.proxy = \"local\" on the server and restart it"),
+        ("this request says a proxy forwarded it (Forwarded, X-Forwarded-For, X-Forwarded-Host, X-Forwarded-Proto, " +
+          "X-Real-IP or Via), but it comes from no network the server lists in auth.proxy-networks — send it " +
+          "directly, or, when a proxy serves it, add the proxy's network to auth.proxy-networks on the server and " +
+          "restart it"),
       Config.WildcardOverlap(Raw("0.0.0.0"), Raw("::1")) ->
         ("server.host lists '0.0.0.0' and '::1' on one port, but '0.0.0.0' already listens on every address of this " +
-          "computer — list '0.0.0.0' alone, or only specific addresses (HISTMERSION_BIND)")
+          "computer — list '0.0.0.0' alone, or only specific addresses (HISTMERSION_BIND)"),
+      Config.BindRepeated(Raw("::1"), Raw("[::1]")) ->
+        ("server.host lists the address '::1' twice (as '::1' and as '[::1]'), and a second listener cannot bind an " +
+          "address the first already holds — list each address once (HISTMERSION_BIND)"),
+      Config.BindRepeated(Raw("127.0.0.1"), Raw("127.0.0.1")) ->
+        ("server.host lists the address '127.0.0.1' twice (as '127.0.0.1' and as '127.0.0.1'), and a second " +
+          "listener cannot bind an address the first already holds — list each address once (HISTMERSION_BIND)")
     ).foreach((p, want) => assertEquals(p.sentence, want))
+    assertEquals(
+      (Config.BindRepeated(Raw("::1"), Raw("[::1]")): Problem).status.code,
+      503,
+      "an address listed twice stops the start, as every start-up problem does"
+    )
+    // stored and answered as its derived entry, no reader of its own: both spellings kept as written
+    val repeated = Config.BindRepeated(Raw("::1"), Raw("[::1]"))
+    val written = repeated.entry.asJson.noSpaces
+    assertEquals(
+      written,
+      s"""{"group":"Config","case":"BindRepeated","data":{"address":"::1","again":"[::1]"},"text":"${repeated.sentence}"}"""
+    )
+    assertEquals(RawJson.decode[Answer.Entry](written).flatMap(_.problem), Right(repeated))
     assertEquals(
       (Refused.Policy(Refused.Rule.NetworkRefused): Problem).status.code,
       403,

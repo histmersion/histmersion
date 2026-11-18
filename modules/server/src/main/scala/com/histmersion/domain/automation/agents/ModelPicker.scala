@@ -46,6 +46,7 @@ final class ModelPicker(
       */
     known: () => Set[ProviderKind.Plugin.Name] = () => Set.empty
 )(using wallClock: java.time.Clock):
+  import ModelPicker.{PoolRead, PoolUsable, Want}
 
   /** model wire → (skipped until, when its plan reported the limit) */
   private val cooldown = ConcurrentHashMap[ModelRef.Wire, (Long, Long)]()
@@ -67,16 +68,37 @@ final class ModelPicker(
     val _ = cooldown.put(model.wire, (at, now.value))
     Instant.ofEpochMilli(at)
 
-  /** Until when `model` is skipped, if it is: a cool-down whose time has passed, or that a later reading of its plan
-    * pool lifts ([[ModelPicker.lifts]]), is dropped here.
+  /** A pool read as stored: what every view asks ([[look]], [[roleChains]], [[cooldowns]]). It writes nothing. */
+  private def stored: PoolRead =
+    (p, m, now, _) => (pools.verdict(p, Some(m), now)._1, None)
+
+  /** A pool read as a call that runs work reads it: the ChatGPT pool from the app-server first when its last reading is
+    * older than `poll-seconds` ([[PlanPools.current]], which records the reading and the provider's refusal); and, when
+    * `refresh` names why and the model is wanted, a fresh reading taken first when the verdict hangs only on an old one
+    * ([[PlanPools.decide]]).
     */
-  private def cooling(model: ModelRef, now: PlanQuotaRepo.EpochMillis): Option[PlanQuotaRepo.EpochMillis] =
+  private def working(refresh: Option[PlanQuota.RefreshTrigger]): PoolRead =
+    (p, m, now, want) =>
+      (refresh, want) match
+        case (Some(t), Want.Wanted) =>
+          val (v, _, r) = pools.decide(p, Some(m), t, now)
+          (v, r)
+        case _ => (pools.current(p, Some(m), now)._1, None)
+
+  /** Until when `model` is skipped, if it is: a cool-down whose time has passed, or that a later reading of its plan
+    * pool (asked through `read`) lifts ([[ModelPicker.lifts]]), is dropped here.
+    */
+  private def cooling(
+      model: ModelRef,
+      now: PlanQuotaRepo.EpochMillis,
+      read: PoolRead
+  ): Option[PlanQuotaRepo.EpochMillis] =
     Option(cooldown.get(model.wire)).flatMap { (until, since) =>
       val lifted = until > now.value && pools.poolOf(model).exists { p =>
         ModelPicker.lifts(
           PlanQuotaRepo.EpochMillis(since),
           pools.lastObserved(p).map(o => PlanQuotaRepo.EpochMillis(o.value)),
-          ModelPicker.PoolUsable(pools.verdict(p, Some(poolModel(model)), poolInstant(now))._1.usable)
+          PoolUsable(read(p, poolModel(model), poolInstant(now), Want.Unwanted)._1.usable)
         )
       }
       if until > now.value && !lifted then Some(PlanQuotaRepo.EpochMillis(until))
@@ -89,7 +111,7 @@ final class ModelPicker(
     }
 
   /** The models skipped now because their plan reported its usage limit, with until when — after lifting those a later
-    * reading of their pool clears (`agent quota`, `agent quota refresh`).
+    * reading of their pool clears (`agent quota`, `agent quota refresh`). Reads the pools as stored.
     */
   def cooldowns(
       now: PlanQuotaRepo.EpochMillis = PlanQuotaRepo.EpochMillis(wallClock.millis())
@@ -99,7 +121,7 @@ final class ModelPicker(
       ModelRef
         .parse(w, known())
         .toOption
-        .flatMap(m => cooling(m, now))
+        .flatMap(m => cooling(m, now, stored))
         .map(u => w -> Instant.ofEpochMilli(u.value))
     )
 
@@ -229,31 +251,29 @@ final class ModelPicker(
     type Cooling = Cooling.T
     object Cooling extends Newtype[Boolean, Pure]
 
-  /** `refresh`: the caller WANTS the model (a pick), so a pool that would wait only on a stale reading, or was never
-    * read, takes a fresh one first ([[PlanPools.decide]]); None = just looking.
+  /** `read`: how the plan pool `m` draws on is read — as stored ([[stored]], a view), or as a call that runs work reads
+    * it ([[working]]: when the caller WANTS the model, a pool that would wait only on a stale reading, or was never
+    * read, takes a fresh one first).
     */
-  def state(
+  private def state(
       m: ModelRef,
       effective: List[Effective],
       now: PlanQuotaRepo.EpochMillis,
-      refresh: Option[PlanQuota.RefreshTrigger] = None
+      read: PoolRead
   ): ModelState =
     val cov = covering(m, effective, now)
     val broken = cov.collect { case (e, Left(why)) => Problem.Run.Unread(Problem.Raw.of(e.target), why.toNonEmpty) }
     val ss = cov.collect { case (_, Right(s)) => s }.flatten
     val (ok, frees) = verdict(ss)
-    val cool = cooling(m, now)
+    val cool = cooling(m, now, read)
     val (headroomTokens, hu) = headroom(ss)
     val ht = headroomTokens.map(h => Picked.HeadroomTokens(h.value))
     val noLogin = pools.unavailable(m, poolInstant(now))
     // a fresh reading only for a model that could otherwise be used: not one cooling down or capped
-    val wanted = refresh.filter(_ => noLogin.isEmpty && broken.isEmpty && cool.isEmpty && ok)
+    val want = if noLogin.isEmpty && broken.isEmpty && cool.isEmpty && ok then Want.Wanted else Want.Unwanted
     val plan = pools.poolOf(m).map { p =>
-      wanted match
-        case Some(t) =>
-          val (v, _, r) = pools.decide(p, Some(poolModel(m)), t, poolInstant(now))
-          (p, v, r.map(x => ModelState.Refreshed(s"${p.title}: fresh reading (${x.text})")))
-        case None => (p, pools.verdict(p, Some(poolModel(m)), poolInstant(now))._1, None)
+      val (v, r) = read(p, poolModel(m), poolInstant(now), want)
+      (p, v, r.map(x => ModelState.Refreshed(s"${p.title}: fresh reading (${x.text})")))
     }
     val refreshed = plan.flatMap(_._3)
     val blocked = plan.collect { case (p, PlanQuota.Verdict.Blocked(w, u), _) => (p, w, u) }
@@ -310,8 +330,9 @@ final class ModelPicker(
 
   // ── the choice ─────────────────────────────────────────────────────────────────────────────────
 
-  /** The model for the next call of `role`. `refresh` is why the pick may take a fresh reading of a plan pool
-    * ([[state]]); `onRefresh` hears what each one read (the run's trace).
+  /** The model for the next call of `role`, as a call that runs work picks it: the pools read as [[working]] reads
+    * them, which may record a reading. `refresh` is why the pick may take a fresh reading of a plan pool (None: none is
+    * taken — the scheduler's pass); `onRefresh` hears what each one read (the run's trace).
     */
   def pick(
       role: Role,
@@ -319,6 +340,26 @@ final class ModelPicker(
       now: PlanQuotaRepo.EpochMillis = PlanQuotaRepo.EpochMillis(wallClock.millis()),
       refresh: Option[PlanQuota.RefreshTrigger] = Some(PlanQuota.RefreshTrigger.Pick),
       onRefresh: ModelState.Refreshed => Unit = _ => ()
+  ): Either[PickFailure, Picked] =
+    choose(role, overrideRef, now, working(refresh), onRefresh)
+
+  /** The model [[pick]] would choose for `role` now, from what is stored: no pool is read, nothing is written (the
+    * scheduler's dry pass, which the views show).
+    */
+  def look(
+      role: Role,
+      overrideRef: Option[AgentsControllers.ModelName],
+      now: PlanQuotaRepo.EpochMillis
+  ): Either[PickFailure, Picked] =
+    choose(role, overrideRef, now, stored, _ => ())
+
+  /** The first usable model of `role`'s chain, each one's pool read through `read`. */
+  private def choose(
+      role: Role,
+      overrideRef: Option[AgentsControllers.ModelName],
+      now: PlanQuotaRepo.EpochMillis,
+      read: PoolRead,
+      onRefresh: ModelState.Refreshed => Unit
   ): Either[PickFailure, Picked] =
     chainFor(role, overrideRef).left.map(PickFailure.Unavailable(_)).flatMap { chain =>
       val (effective, _) = allowances
@@ -361,7 +402,7 @@ final class ModelPicker(
             resolve(m) match
               case Left(why)                => go(tail, notReady :+ passed(m, why), exhausted, planHit)
               case Right((client, billing)) =>
-                val st = state(m, effective, now, refresh)
+                val st = state(m, effective, now, read)
                 st.refreshed.foreach(onRefresh)
                 if st.unavailable.value then go(tail, notReady ++ st.why.map(passed(m, _)), exhausted, planHit)
                 else if st.usable.value then
@@ -421,7 +462,7 @@ final class ModelPicker(
                   why.toVector.toList
                 )
               case Right((_, billing)) =>
-                val st = state(m, effective, now)
+                val st = state(m, effective, now, stored)
                 ChainEntry(
                   ChainEntry.Model(m.wire.value),
                   ready = ModelChains.ChainEntry.Ready(true),
@@ -490,6 +531,27 @@ object ModelPicker:
   /** Whether the plan pool a model draws on is usable for it, as its newest verdict says. */
   type PoolUsable = PoolUsable.T
   object PoolUsable extends Newtype[Boolean, Pure]
+
+  /** Whether a pick wants a model, so a fresh reading of its plan pool may be taken for it. */
+  enum Want derives CanEqual:
+    /** It could otherwise be used: it has a login, its allowances read and leave headroom, it is not cooling down. */
+    case Wanted
+
+    /** It is passed over whatever its pool says, or its pool is only asked whether a cool-down lifts. */
+    case Unwanted
+
+  /** How a model's state reads the plan pool it draws on: the pool's verdict for the model at a time, given whether the
+    * model is wanted ([[Want]]), and what a fresh reading taken for it read. A function, not a trait, so the views'
+    * reading (as stored) and a run's (which may record one) stay apart in the call graph the GET-writes check walks.
+    */
+  type PoolRead =
+    (PlanQuota.PoolId, ChainEntry.Model, PlanQuota.Now, Want) => (PlanQuota.Verdict, Option[server.agents.Refreshed])
+
+  /** How a caller has a role's model chosen at a time, with a run's model override if any: as a run picks it
+    * ([[ModelPicker.pick]]) or from what is stored ([[ModelPicker.look]]).
+    */
+  type Choose =
+    (Role, Option[AgentsControllers.ModelName], PlanQuotaRepo.EpochMillis) => Either[PickFailure, Picked]
 
   /** Why a model is skipped after its plan reported its usage limit — the words `agent models` and `agent quota` show,
     * so a stuck cool-down can be told from an allowance.

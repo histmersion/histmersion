@@ -37,7 +37,7 @@ class AccessPolicySuite extends munit.FunSuite:
       trusted: List[String] = List("127.0.0.0/8", "::1/128"),
       authenticated: List[String] = Nil,
       refused: List[String] = Nil,
-      proxy: String = "none"
+      proxies: List[String] = Nil
   ): AuthConfig =
     defaults.auth
       .modify(_.apiKey)
@@ -48,8 +48,8 @@ class AccessPolicySuite extends munit.FunSuite:
       .setTo(authenticated.map(AuthConfig.Network(_)))
       .modify(_.refusedNetworks)
       .setTo(refused.map(AuthConfig.Network(_)))
-      .modify(_.proxy)
-      .setTo(AuthConfig.Proxy(proxy))
+      .modify(_.proxyNetworks)
+      .setTo(proxies.map(AuthConfig.Network(_)))
 
   private def binds(first: String, more: String*): NonEmptyVector[ServerConfig.Host] =
     NonEmptyVector.of(ServerConfig.Host(first), more.map(ServerConfig.Host(_))*)
@@ -72,7 +72,7 @@ class AccessPolicySuite extends munit.FunSuite:
     assertEquals(defaults.server.host.toVector.map(h => s"$h"), Vector("127.0.0.1"))
     val p = policy(defaults)
     assertEquals(p.trustedAs, AccessPolicy.Principal.Owner)
-    assertEquals(p.proxy, AccessPolicy.Proxy.Undeclared)
+    assertEquals(p.proxies, Nil, "no proxy network")
     assertEquals(p.requirementOf(at("127.0.0.1")), Some(AccessPolicy.Requirement.Trusted))
     assertEquals(p.requirementOf(at("::1")), Some(AccessPolicy.Requirement.Trusted))
     assertEquals(p.requirementOf(at("192.168.1.20")), None)
@@ -146,7 +146,7 @@ class AccessPolicySuite extends munit.FunSuite:
         |    api-key = "k3y"
         |    trusted-networks = []
         |    authenticated-networks = ["0.0.0.0/0", "::/0"]
-        |    proxy = "local"
+        |    proxy-networks = ["127.0.0.0/8", "::1/128"]
         |    hosts = ["histmersion.example.edu"]
         |  }
         |}""".stripMargin
@@ -155,10 +155,26 @@ class AccessPolicySuite extends munit.FunSuite:
     val proxied = settings(
       """histmersion {
         |  server { host = ["127.0.0.1"], public-url = "https://histmersion.example.edu" }
-        |  auth { api-key = "k3y", proxy = "local", hosts = ["histmersion.example.edu"] }
+        |  auth { api-key = "k3y", proxy-networks = ["127.0.0.0/8", "::1/128"], hosts = ["histmersion.example.edu"] }
         |}""".stripMargin
     )
-    List(local, tailscale, wildcard, institution, proxied).foreach(c =>
+    // a load balancer on another computer of the LAN: its address authenticated (with the key) and named as the proxy,
+    // every other address refused — loopback too: trusted, with an https public URL and no proxy network covering it,
+    // it would stop the start
+    val balanced = settings(
+      """histmersion {
+        |  server { host = ["192.168.1.5"], public-url = "https://histmersion.example.edu" }
+        |  auth {
+        |    api-key = "k3y"
+        |    trusted-networks = []
+        |    authenticated-networks = ["192.168.1.2/32"]
+        |    refused-networks = ["0.0.0.0/0"]
+        |    proxy-networks = ["192.168.1.2/32"]
+        |    hosts = ["histmersion.example.edu"]
+        |  }
+        |}""".stripMargin
+    )
+    List(local, tailscale, wildcard, institution, proxied, balanced).foreach(c =>
       assert(AccessPolicy.forListener(c.auth, c.server).isRight, s"${c.server.host} ${c.auth}")
     )
     val t = policy(tailscale)
@@ -180,7 +196,10 @@ class AccessPolicySuite extends munit.FunSuite:
       ),
       "the public URL's origin, whatever port the server itself listens on behind its proxy"
     )
-    assertEquals(policy(proxied).proxy, AccessPolicy.Proxy.Local)
+    assertEquals(policy(proxied).proxies.map(c => s"$c"), List("127.0.0.0/8", "::1/128"))
+    val b = policy(balanced)
+    assert(b.proxiedFrom(at("192.168.1.2")) && !b.proxiedFrom(at("192.168.1.3")) && !b.proxiedFrom(at("127.0.0.1")))
+    assertEquals(b.requirementOf(at("192.168.1.2")), Some(AccessPolicy.Requirement.Authenticated))
 
   test("every wrong setting is named, not just the first"):
     val wrong =
@@ -192,8 +211,8 @@ class AccessPolicySuite extends munit.FunSuite:
       .setTo(List(AuthConfig.Network("everything")))
       .modify(_.trustedAs)
       .setTo(AuthConfig.TrustedAs("root"))
-      .modify(_.proxy)
-      .setTo(AuthConfig.Proxy("nginx"))
+      .modify(_.proxyNetworks)
+      .setTo(List(AuthConfig.Network("127.0.0.0/8"), AuthConfig.Network("nginx")))
       .modify(_.origins)
       .setTo(List(AuthConfig.Origin("ftp://x")))
     def setting(key: String, fault: Problem.Config.Fault): Problem =
@@ -207,7 +226,7 @@ class AccessPolicySuite extends munit.FunSuite:
           setting("auth.refused-networks", Problem.Config.Fault.Malformed(Problem.Raw("everything"))),
           setting("auth.origins", Problem.Config.Fault.Malformed(Problem.Raw("ftp://x"))),
           setting("auth.trusted-as", Problem.Config.Fault.Unknown(Problem.Raw("root"))),
-          setting("auth.proxy", Problem.Config.Fault.Unknown(Problem.Raw("nginx")))
+          setting("auth.proxy-networks", Problem.Config.Fault.Malformed(Problem.Raw("nginx")))
         )
       )
     )
@@ -373,9 +392,12 @@ class AccessPolicySuite extends munit.FunSuite:
     * out: a wildcard listed with any other address overlaps it, and an address is open when some zone it is reached
     * from is unlisted, or authenticated with no key. Loopback reaches loopback only, the tailnet address all of IPv4, a
     * wildcard everything; an unlisted loopback or tailnet zone takes the kind of the rest (`0.0.0.0/0` holds it: the
-    * longest prefix decides). Every problem is reported together: the overlaps first, then each open address.
+    * longest prefix decides). Each set is also tried with one of its addresses listed again at the end, in another
+    * spelling where it has one (`::ffff:100.101.102.103`, `[::]`) or as written: that entry is a repeat, and the rest
+    * is checked on the addresses once. Every problem is reported together: the repeats first, then the overlaps, then
+    * each open address.
     */
-  test("the multi-bind start-up rule, exhaustively: zones x kinds x key x binds"):
+  test("the multi-bind start-up rule, exhaustively: zones x kinds x key x binds x a repeat"):
     enum Kind derives CanEqual:
       case Trusted, Authenticated, Refused, Unlisted
     val zones = List(List("127.0.0.0/8"), List("100.64.0.0/10"), List("0.0.0.0/0", "::/0"))
@@ -383,12 +405,20 @@ class AccessPolicySuite extends munit.FunSuite:
     val reached =
       Map("127.0.0.1" -> List(0), "100.101.102.103" -> List(0, 1, 2), "0.0.0.0" -> List(0, 1, 2), "::" -> List(0, 1, 2))
     val wildcards = Set("0.0.0.0", "::")
+    val again =
+      Map(
+        "127.0.0.1" -> "127.0.0.1",
+        "100.101.102.103" -> "::ffff:100.101.102.103",
+        "0.0.0.0" -> "0.0.0.0",
+        "::" -> "[::]"
+      )
     val bindSets = (1 to addresses.size).flatMap(addresses.combinations).toList
     var cases = 0
     for
       kinds <- for a <- Kind.values.toList; b <- Kind.values.toList; c <- Kind.values.toList yield List(a, b, c)
       key <- List(true, false)
       bs <- bindSets
+      repeated <- None :: bs.map(Some(_))
     do
       def listed(k: Kind): List[String] = zones.zip(kinds).collect { case (z, kind) if kind == k => z }.flatten
       val a = auth(
@@ -400,22 +430,59 @@ class AccessPolicySuite extends munit.FunSuite:
       def effective(zone: Int): Kind = if kinds(zone) == Kind.Unlisted then kinds(2) else kinds(zone)
       def open(zone: Int): Boolean =
         effective(zone) == Kind.Unlisted || (effective(zone) == Kind.Authenticated && !key)
+      val entries = bs ++ repeated.map(again)
+      val wantRepeats = repeated.toList.map(b => b -> again(b))
       val wantOverlaps = bs.find(wildcards.contains).toList.flatMap(w => bs.filterNot(_ == w).map(w -> _))
       val wantOpen = bs.filter(b => reached(b).exists(open))
-      val got = listener(a, bs.head, bs.tail*)
+      val got = listener(a, entries.head, entries.tail*)
+      val gotRepeats = refusedWith(got).collect { case Problem.Config.BindRepeated(b, r) => s"$b" -> s"$r" }
       val gotOverlaps = refusedWith(got).collect { case Problem.Config.WildcardOverlap(w, b) => s"$w" -> s"$b" }
       val gotOpen = refusedWith(got).collect { case Problem.Config.Exposed(b, _, _) => s"$b" }
-      assertEquals(gotOverlaps, wantOverlaps.toVector, s"$kinds key=$key binds=$bs")
-      assertEquals(gotOpen, wantOpen.toVector, s"$kinds key=$key binds=$bs")
-      assertEquals(refusedWith(got).size, wantOverlaps.size + wantOpen.size, s"$kinds key=$key binds=$bs")
+      val at = s"$kinds key=$key binds=$entries"
+      assertEquals(gotRepeats, wantRepeats.toVector, at)
+      assertEquals(gotOverlaps, wantOverlaps.toVector, at)
+      assertEquals(gotOpen, wantOpen.toVector, at)
+      assertEquals(refusedWith(got).size, wantRepeats.size + wantOverlaps.size + wantOpen.size, at)
       assertEquals(
-        refusedWith(got).takeWhile(_.isInstanceOf[Problem.Config.WildcardOverlap]).size,
-        wantOverlaps.size,
-        "the overlaps come first"
+        refusedWith(got).map(_.productPrefix).distinct.toList,
+        List("BindRepeated", "WildcardOverlap", "Exposed").filter(refusedWith(got).map(_.productPrefix).contains),
+        s"the repeats come first, then the overlaps: $at"
       )
-      assertEquals(got.isRight, wantOverlaps.isEmpty && wantOpen.isEmpty, s"$kinds key=$key binds=$bs")
+      assertEquals(got.isRight, wantRepeats.isEmpty && wantOverlaps.isEmpty && wantOpen.isEmpty, at)
       cases += 1
-    assertEquals(cases, 64 * 2 * 15)
+    // each set once as it is, and once more with each of its addresses repeated: 15 + 4·1 + 6·2 + 4·3 + 1·4 = 47
+    assertEquals(cases, 64 * 2 * 47)
+
+  test("an address listed twice, however it is written, stops the start, naming server.host and HISTMERSION_BIND"):
+    val all = auth(key = "k", trusted = List("127.0.0.0/8", "::1/128"), authenticated = List("0.0.0.0/0", "::/0"))
+    // every problem of a start, a repeat as the pair of entries it names, as written
+    def repeats(first: String, more: String*): Vector[(String, String)] =
+      refusedWith(listener(all, first, more*)).map {
+        case Problem.Config.BindRepeated(a, b) => s"$a" -> s"$b"
+        case other                             => fail(s"not a repeat: $other")
+      }
+    assertEquals(repeats("127.0.0.1", "127.0.0.1"), Vector("127.0.0.1" -> "127.0.0.1"))
+    assertEquals(repeats("::1", "[::1]"), Vector("::1" -> "[::1]"))
+    assertEquals(repeats("::1", "0:0:0:0:0:0:0:1"), Vector("::1" -> "0:0:0:0:0:0:0:1"))
+    assertEquals(
+      repeats("127.0.0.1", "::ffff:127.0.0.1"),
+      Vector("127.0.0.1" -> "::ffff:127.0.0.1"),
+      "an IPv4-mapped address is its IPv4 address"
+    )
+    assertEquals(
+      repeats("MyMac.example.", "mymac.example"),
+      Vector("MyMac.example." -> "mymac.example"),
+      "a name in another case, or with its trailing dot"
+    )
+    // the third entry repeats the first, and is paired with the first, not the second
+    assertEquals(repeats("::1", "127.0.0.1", " ::1 ", "[::1]"), Vector("::1" -> " ::1 ", "::1" -> "[::1]"))
+    // distinct addresses, and a name beside the address it may resolve to (nothing is looked up), start
+    List(List("127.0.0.1", "127.0.0.2"), List("127.0.0.1", "::1"), List("localhost", "127.0.0.1"))
+      .foreach(bs => assert(listener(all, bs.head, bs.tail*).isRight, bs))
+    // a repeated wildcard is one repeat, not an overlap with itself; the rest is checked once
+    assertEquals(repeats("0.0.0.0", "0.0.0.0"), Vector("0.0.0.0" -> "0.0.0.0"))
+    val said = refusedWith(listener(all, "::1", "[::1]")).map(_.sentence).mkString
+    List("server.host", "HISTMERSION_BIND", "'::1'", "'[::1]'").foreach(k => assert(said.contains(k), said))
 
   test("a wildcard with any other address is refused at start-up, naming server.host and HISTMERSION_BIND"):
     def overlap(w: String, b: String): Problem = Problem.Config.WildcardOverlap(Problem.Raw(w), Problem.Raw(b))
@@ -441,34 +508,61 @@ class AccessPolicySuite extends munit.FunSuite:
   private def public(url: String): ServerConfig =
     bound("127.0.0.1").modify(_.publicUrl).setTo(ServerConfig.PublicUrl(url))
 
-  test("an https public URL with loopback trusted and no proxy declared: refused, naming the settings"):
+  test("an https public URL with loopback trusted and no proxy network covering it: refused, naming the settings"):
     val refused = AccessPolicy.forListener(auth(), public("https://histmersion.example.edu"))
     assertEquals(refused, Left(Problem.Config.ProxyUndeclared(Problem.Raw("https://histmersion.example.edu"))))
     val said = refused.left.toOption.get.sentences.mkString
-    List("server.public-url", "auth.proxy", "auth.trusted-networks", "auth.api-key")
+    List("server.public-url", "auth.proxy-networks", "auth.trusted-networks", "auth.api-key")
       .foreach(k => assert(said.contains(k), said))
 
-  test("the proxy rule: https x loopback trusted x proxy declared, only all three refuse"):
+  /** The proxy networks: empty, covering loopback (either family, or both), or elsewhere only (a load balancer on the
+    * LAN). Only an https URL in front of a trusted loopback that no proxy network covers refuses.
+    */
+  test("the proxy rule: https x loopback trusted x proxy networks (empty, covering loopback, elsewhere)"):
+    var cases = 0
     for
       url <- List("https://h.example", "http://h.example", "HTTPS://H.example:8443/x", "http://localhost:8000")
       trusted <- List(List("127.0.0.0/8", "::1/128"), List("::1/128"), List("127.0.0.1/32"), Nil)
-      proxy <- List("none", "local")
+      (proxies, covers) <- List(
+        Nil -> false,
+        List("127.0.0.0/8", "::1/128") -> true,
+        List("127.0.0.1") -> true,
+        List("::1/128") -> true,
+        List("192.168.1.2/32") -> false,
+        List("10.0.0.0/8", "fd00::/8") -> false
+      )
     do
       val https = url.toLowerCase.startsWith("https")
-      val want = https && trusted.nonEmpty && proxy == "none"
+      val want = https && trusted.nonEmpty && !covers
       // everything else authenticated with the key, so the bind's reach is accounted for whatever is trusted
       val authenticated = List("0.0.0.0/0", "::/0")
       val got =
         AccessPolicy.forListener(
-          auth(key = "k", trusted = trusted, authenticated = authenticated, proxy = proxy),
+          auth(key = "k", trusted = trusted, authenticated = authenticated, proxies = proxies),
           public(url)
         )
-      assertEquals(got.isLeft, want, s"$url $trusted $proxy $got")
+      assertEquals(got.isLeft, want, s"$url $trusted $proxies $got")
       if want then assertEquals(got, Left(Problem.Config.ProxyUndeclared(Problem.Raw(url))))
+      cases += 1
+    assertEquals(cases, 4 * 4 * 6)
 
-  test("a declared proxy changes no network's requirement; the start-up problems are all reported together"):
-    val p = policy(settings("""histmersion.auth.proxy = "local""""))
+  test("a proxy network may overlap any other list: the trusted, the authenticated, the refused"):
+    for proxies <- List(
+        List("127.0.0.0/8", "::1/128"),
+        List("127.0.0.1"),
+        List("0.0.0.0/0", "::/0"),
+        List("10.0.0.0/8")
+      )
+    do
+      assert(
+        AccessPolicy.from(auth(refused = List("10.0.0.0/8"), proxies = proxies), defaults.server).isRight,
+        s"$proxies"
+      )
+
+  test("a proxy network changes no network's requirement; the start-up problems are all reported together"):
+    val p = policy(settings("""histmersion.auth.proxy-networks = ["127.0.0.0/8"]"""))
     assertEquals(p.requirementOf(at("127.0.0.1")), Some(AccessPolicy.Requirement.Trusted))
+    assert(p.proxiedFrom(at("127.0.0.1")) && !p.proxiedFrom(at("::1")))
     val both =
       AccessPolicy.forListener(auth(), bound("0.0.0.0").modify(_.publicUrl).setTo(ServerConfig.PublicUrl("https://x")))
     assertEquals(
@@ -478,13 +572,14 @@ class AccessPolicySuite extends munit.FunSuite:
         Problem.Config.ProxyUndeclared(Problem.Raw("https://x"))
       )
     )
-    val three = AccessPolicy.forListener(
+    val four = AccessPolicy.forListener(
       auth(),
-      bound("0.0.0.0", "127.0.0.1").modify(_.publicUrl).setTo(ServerConfig.PublicUrl("https://x"))
+      bound("0.0.0.0", "127.0.0.1", "[0.0.0.0]").modify(_.publicUrl).setTo(ServerConfig.PublicUrl("https://x"))
     )
     assertEquals(
-      refusedWith(three),
+      refusedWith(four),
       Vector(
+        Problem.Config.BindRepeated(Problem.Raw("0.0.0.0"), Problem.Raw("[0.0.0.0]")),
         Problem.Config.WildcardOverlap(Problem.Raw("0.0.0.0"), Problem.Raw("127.0.0.1")),
         exposed("0.0.0.0", "0.0.0.0/0", Problem.Config.Exposure.Unlisted),
         Problem.Config.ProxyUndeclared(Problem.Raw("https://x"))
@@ -504,3 +599,7 @@ class AccessPolicySuite extends munit.FunSuite:
       supervised(Composition.listener(open, binds("127.0.0.1", "100.101.102.103"), ServerConfig.Port(0)))
     }
     assert(two.getMessage.contains("server.host lists '100.101.102.103'"), two.getMessage)
+    val twice = intercept[IllegalStateException] {
+      supervised(Composition.listener(defaults, binds("::1", "[::1]"), ServerConfig.Port(0)))
+    }
+    assert(twice.getMessage.contains("server.host lists the address '::1' twice"), twice.getMessage)

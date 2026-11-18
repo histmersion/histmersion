@@ -73,17 +73,18 @@ object Admission:
   object HeaderText extends Newtype[String, Pure]
 
   /** How the request reached the server. One a proxy says it forwarded (any of [[Forwarded.Headers]]) has the proxy's
-    * peer address, never the client's, so it earns no trust; with no proxy declared it is refused.
+    * peer address, never the client's, so it earns no trust; from a peer in no proxy network it is refused.
     */
   enum Forwarded derives CanEqual:
     case Direct, ByProxy
 
   object Forwarded:
-    /** The headers a reverse proxy adds to what it forwards: the standard one (RFC 7239) and the de-facto ones nginx,
-      * Caddy, Apache and Traefik set. Any one of them marks the request as forwarded.
+    /** The headers a reverse proxy adds to what it forwards: the standard one (RFC 7239), the de-facto ones nginx,
+      * Caddy, Apache and Traefik set, and `Via` (RFC 9110 §7.6.3), which a proxy adds to say it passed the request on.
+      * Any one of them marks the request as forwarded.
       */
     val Headers: List[String] =
-      List("Forwarded", "X-Forwarded-For", "X-Forwarded-Host", "X-Forwarded-Proto", "X-Real-IP")
+      List("Forwarded", "X-Forwarded-For", "X-Forwarded-Host", "X-Forwarded-Proto", "X-Real-IP", "Via")
 
     /** By a proxy when the request carries any of [[Headers]]. */
     def of(forwardedHeader: Boolean): Forwarded = if forwardedHeader then ByProxy else Direct
@@ -125,7 +126,7 @@ object Admission:
 
   /** Whether the request is let in, and how; or the problem that refuses it. In order: a peer of a refused network, or
     * of no listed network, is refused (403) whatever it sends — the public probes and the agent endpoint included; a
-    * request a proxy forwarded, when the settings declare none, is refused (403) the same way; its `Host` must be one
+    * request a proxy forwarded, from a peer in no proxy network, is refused (403) the same way; its `Host` must be one
     * the server answers to (else 421); a change sent by a browser page must come from an accepted origin (else 403);
     * the agent endpoint is then left to its run-token gate; otherwise the peer's network decides — trusted (unless a
     * proxy forwarded the request), or authenticated with the key (or a run token on the quota path), or a public read
@@ -135,7 +136,7 @@ object Admission:
     policy.requirementOf(request.peer) match
       case None => Left(Problem.Refused.Policy(Problem.Refused.Rule.NetworkNotAccepted))
       case Some(AccessPolicy.Requirement.Refused) => Left(Problem.Refused.Policy(Problem.Refused.Rule.NetworkRefused))
-      case Some(_) if request.forwarded == Forwarded.ByProxy && policy.proxy == AccessPolicy.Proxy.Undeclared =>
+      case Some(_) if request.forwarded == Forwarded.ByProxy && !policy.proxiedFrom(request.peer) =>
         Left(Problem.Refused.Policy(Problem.Refused.Rule.UndeclaredProxy))
       case Some(AccessPolicy.Requirement.Trusted)       => accepted(request, policy, agent, trusted = true)
       case Some(AccessPolicy.Requirement.Authenticated) => accepted(request, policy, agent, trusted = false)

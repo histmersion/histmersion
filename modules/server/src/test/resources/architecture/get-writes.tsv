@@ -7,11 +7,6 @@ api.Api.exportBundle	GET	modules/server/src/main/scala/com/histmersion/server/Ht
 api.Api.exportBundle	GET	modules/server/src/main/scala/com/histmersion/server/HttpApi.scala	File	java.nio.file.Files.newOutputStream
 api.Api.exportBundle	GET	modules/server/src/main/scala/com/histmersion/server/HttpApi.scala	File	java.nio.file.Files.setPosixFilePermissions
 api.automation.AgentsApi.doctor	GET	modules/server/src/main/scala/com/histmersion/domain/automation/agents/AgentsRoutes.scala	Process	java.lang.ProcessBuilder.start
-api.automation.AgentsApi.models	GET	modules/server/src/main/scala/com/histmersion/domain/automation/agents/AgentsRoutes.scala	Database	com.augustnagro.magnum.Frag.update
-api.automation.AgentsApi.quota	GET	modules/server/src/main/scala/com/histmersion/domain/automation/agents/AgentsRoutes.scala	Database	com.augustnagro.magnum.Frag.update
-api.automation.ManagersApi.scheduler	GET	modules/server/src/main/scala/com/histmersion/domain/automation/managers/ManagersRoutes.scala	Database	com.augustnagro.magnum.Frag.update
-api.automation.ManagersApi.schedulerWhy	GET	modules/server/src/main/scala/com/histmersion/domain/automation/managers/ManagersRoutes.scala	Database	com.augustnagro.magnum.Frag.update
-api.automation.ManagersApi.stalls	GET	modules/server/src/main/scala/com/histmersion/domain/automation/managers/ManagersRoutes.scala	Database	com.augustnagro.magnum.Frag.update
 api.basemap.BasemapApi.status	GET	modules/server/src/main/scala/com/histmersion/server/HttpApi.scala	File	java.nio.file.Files.deleteIfExists
 api.basemap.BasemapApi.tile	GET	modules/server/src/main/scala/com/histmersion/server/HttpApi.scala	File	java.nio.file.Files.createDirectories
 api.basemap.BasemapApi.tile	GET	modules/server/src/main/scala/com/histmersion/server/HttpApi.scala	File	java.nio.file.Files.createTempFile

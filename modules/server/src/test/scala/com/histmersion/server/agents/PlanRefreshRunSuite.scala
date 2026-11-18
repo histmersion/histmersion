@@ -44,6 +44,7 @@ import com.histmersion.util.system.JvmHome
 import com.histmersion.db.TestDb
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.automation.Agents
+import com.histmersion.api.automation.Managers.ManagerItem
 import com.histmersion.config.DbConfig
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.nonempty.NonEmptyVector
@@ -113,6 +114,18 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
   private lazy val ds = testPool(baseCfg.db)
   protected def transcriptDs: javax.sql.DataSource = ds
 
+  /** The same database through sessions that are read-only from their start (each connection's first statement sets the
+    * session's transactions READ ONLY), autocommit statements included: every INSERT or UPDATE through it fails. Its
+    * own pool, closed with the suite.
+    */
+  private lazy val readOnlyDs =
+    val pool = Db.pool(baseCfg.db)
+    pool.setConnectionInitSql("SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY")
+    pool
+
+  override def afterSuite(): Unit =
+    if testDb.isDefined then readOnlyDs.close()
+
   private val now = () => System.currentTimeMillis()
   private val Min = 60000L
 
@@ -171,9 +184,10 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
   private def handlers(
       clients: Map[ModelRef, LlmClient],
       reads: Reads,
-      cfg: AppConfig = baseCfg
+      cfg: AppConfig = baseCfg,
+      over: javax.sql.DataSource = ds
   ): (AgentsControllers, ServerWiring) =
-    val deps = Deps(cfg, ds)
+    val deps = Deps(cfg, over)
     val h = ServerWiring(deps)
     (
       AgentsControllers(
@@ -660,6 +674,88 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
       PlanPools.loginGates(PoolId.ChatgptPlan, ModelRef(ProviderKind.Opencode, Agents.ModelRef.Model("openai/gpt-5"))),
       false
     )
+
+  /** S1d: the GET routes `agent quota`, `agent models` and the scheduler's (status, why, stalls) used to read the
+    * ChatGPT plan from the app-server and record the reading and the provider's refusal. Now they show what is stored
+    * and write nothing — run here through sessions that refuse every write — while the scheduler's pass and a run's
+    * pick still take that read, and record it.
+    */
+  test("the views of the plan pools write nothing: agent quota, agent models and the scheduler, read-only"):
+    val home = Files.createDirectories(java.nio.file.Path.of("target/test-home/codex-views"))
+    Files.writeString(home.resolve("auth.json"), "") // a stand-in: only its presence is looked at
+    val reads = Reads()
+    reads.codex = Right(
+      RawJson
+        .parse(s"""{"ordinaryUsageAllowed":false,"rateLimits":{"limitId":"codex","primary":{"usedPercent":5,
+        |"windowDurationMins":300,"resetsAt":${(now() + 3600000L) / 1000}},"planType":"plus",
+        |"rateLimitReachedType":null}}""".stripMargin)
+        .toOption
+        .get
+    )
+    val Codex = ModelRef(ProviderKind.Codex, Agents.ModelRef.Model("gpt-5"))
+    // a read is due at every look (no reading yet, poll-seconds 1), and the extractor's chain draws on the ChatGPT plan
+    val cfg = baseCfg
+      .modify(_.agents)
+      .setTo(
+        baseCfg.agents
+          .modify(_.quota)
+          .setTo(baseCfg.agents.quota.modify(_.pollSeconds).setTo(QuotaConfig.PollSeconds(1)))
+          .modify(_.roles)
+          .setTo(baseCfg.agents.roles.modify(_.extractor).setTo(AgentRolesConfig.Extractor("codex:gpt-5")))
+          .modify(_.providers)
+          .setTo(
+            baseCfg.agents.providers
+              .modify(_.codex)
+              .setTo(
+                baseCfg.agents.providers.codex
+                  .modify(_.appServer)
+                  .setTo(CodexConfig.AppServer(true))
+                  .modify(_.home)
+                  .setTo(CodexConfig.Home("target/test-home/codex-views"))
+              )
+          )
+      )
+    val clients = Map[ModelRef, LlmClient](Codex -> ScriptedClient(Codex))
+    // the sessions refuse a write: the check has teeth
+    val refused = intercept[Exception](
+      Transactor(readOnlyDs).transact(PlanQuotaRepo.setHold(PoolId.ChatgptPlan, PlanQuotaRepo.Pool.Held(true)))
+    )
+    assert(
+      Iterator
+        .iterate[Throwable](refused)(_.getCause)
+        .takeWhile(_ != null)
+        .exists(e => s"${e.getMessage}".contains("read-only")),
+      refused
+    )
+
+    val (views, _) = handlers(clients, reads, cfg)
+    val (viewsRo, _) = handlers(clients, reads, cfg, readOnlyDs)
+    def looked(a: AgentsControllers): Unit =
+      assertEquals(a.quota.plans.size, PoolId.values.length, "every pool shown")
+      assert(a.models.chains.exists(_.models.nonEmpty), "the extractor's chain, its codex model judged")
+      val _ = a.scheduler.status()
+      val _ = a.scheduler.stalls()
+      val _ = a.scheduler.why(ManagerItem.Ref("zz-no-such-item"))
+    looked(viewsRo)
+    assertEquals(reads.codexReads.get(), 0, "no view reads the app-server")
+    assertEquals(connect(ds)(PlanQuotaRepo.pool(PoolId.ChatgptPlan)).refusal, None, "and none recorded a refusal")
+    assertEquals(connect(ds)(PlanQuotaRepo.readings(PoolId.ChatgptPlan)), Nil)
+
+    // the scheduler's pass picks as a run does: the stale (here: absent) ChatGPT reading is read, and recorded with the
+    // provider's refusal — the write the views no longer make
+    val passed = views.picker.pick(Role.Extractor, None, refresh = None)
+    assertEquals(reads.codexReads.get(), 1)
+    assert(passed.isLeft, s"the plan refuses ordinary usage: $passed")
+    assert(
+      connect(ds)(PlanQuotaRepo.pool(PoolId.ChatgptPlan)).refusal.exists(_.sentence.contains("ordinaryUsageAllowed")),
+      "the pass recorded the refusal"
+    )
+    assertEquals(connect(ds)(PlanQuotaRepo.readings(PoolId.ChatgptPlan)).size, 1, "the 300-minute window")
+    // and the read-only views show it, still writing nothing
+    looked(viewsRo)
+    val shown = viewsRo.quota.plans.flatMap(_.reason)
+    assert(shown.exists(w => s"$w".contains("ordinaryUsageAllowed")), shown)
+    assertEquals(reads.codexReads.get(), 1)
 
   test("#989: `agent quota refresh` over HTTP — the API key, a FAKE claude probed, the count in `agent quota`"):
     val fake = FakeCli("claude", List(event(12, 42), Result))

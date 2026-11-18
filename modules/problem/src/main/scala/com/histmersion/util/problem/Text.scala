@@ -145,11 +145,15 @@ object Text:
           "auth.refused-networks, or bind to 127.0.0.1 only (HISTMERSION_BIND)"
       case Config.ProxyUndeclared(publicUrl) =>
         s"server.public-url = '$publicUrl' is https, so a reverse proxy serves it, and auth.trusted-networks trusts " +
-          "loopback, where a proxy on this machine connects from — declare the proxy with auth.proxy = \"local\" (what " +
-          "it forwards then needs auth.api-key), or take loopback out of auth.trusted-networks"
+          "loopback, where a proxy on this machine connects from — declare the proxy by listing loopback in " +
+          "auth.proxy-networks (what it forwards then needs auth.api-key), or take loopback out of " +
+          "auth.trusted-networks"
       case Config.WildcardOverlap(wildcard, address) =>
         s"server.host lists '$wildcard' and '$address' on one port, but '$wildcard' already listens on every address " +
           s"of this computer — list '$wildcard' alone, or only specific addresses (HISTMERSION_BIND)"
+      case Config.BindRepeated(address, again) =>
+        s"server.host lists the address '$address' twice (as '$address' and as '$again'), and a second listener " +
+          "cannot bind an address the first already holds — list each address once (HISTMERSION_BIND)"
       case Config.FloorsUnread(Config.FloorsFrom.Saved, why) =>
         s"saved floors do not parse: ${why.toVector.map(_.sentence).mkString("; ")}"
       case Config.FloorsUnread(Config.FloorsFrom.Setting(key), why) =>
@@ -767,9 +771,10 @@ object Text:
       case Refused.Rule.NetworkRefused =>
         "this server refuses every request from your network — its settings list it in auth.refused-networks"
       case Refused.Rule.UndeclaredProxy =>
-        "this request says a proxy forwarded it (Forwarded, X-Forwarded-For, X-Forwarded-Host, X-Forwarded-Proto or " +
-          "X-Real-IP), but the server declares none (auth.proxy = \"none\") — send it directly, or, when a proxy on " +
-          "the server's computer serves it, set auth.proxy = \"local\" on the server and restart it"
+        "this request says a proxy forwarded it (Forwarded, X-Forwarded-For, X-Forwarded-Host, X-Forwarded-Proto, " +
+          "X-Real-IP or Via), but it comes from no network the server lists in auth.proxy-networks — send it " +
+          "directly, or, when a proxy serves it, add the proxy's network to auth.proxy-networks on the server and " +
+          "restart it"
 
   extension (limit: Refused.Limit)
     private def named: String = limit match

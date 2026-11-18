@@ -946,8 +946,9 @@ object Problem:
       /** The request came from a network the settings list as refused (`auth.refused-networks`). */
       case NetworkRefused
 
-      /** The request says a proxy forwarded it (`Forwarded`, `X-Forwarded-For`, `X-Forwarded-Host`, `X-Forwarded-Proto`
-        * or `X-Real-IP`), and the settings declare no proxy (`auth.proxy = "none"`).
+      /** The request says a proxy forwarded it (`Forwarded`, `X-Forwarded-For`, `X-Forwarded-Host`,
+        * `X-Forwarded-Proto`, `X-Real-IP` or `Via`), and it comes from no network the settings declare a proxy in
+        * (`auth.proxy-networks`; empty, the default, declares none).
         */
       case UndeclaredProxy
 
@@ -1609,8 +1610,9 @@ object Problem:
       case NoKey
 
     /** The public URL `publicUrl` is HTTPS, which this server does not serve itself, so a reverse proxy forwards to it,
-      * and loopback, where a proxy on this machine connects from, is trusted with no proxy declared: a proxy that does
-      * not mark what it forwards would hand every client the owner's trust.
+      * and loopback, where a proxy on this machine connects from, is trusted while no proxy network
+      * (`auth.proxy-networks`) covers it: a proxy that does not mark what it forwards would hand every client the
+      * owner's trust.
       */
     final case class ProxyUndeclared(publicUrl: Raw) extends Config
 
@@ -1619,6 +1621,11 @@ object Problem:
       * listener fails to bind (Linux) or takes its address's connections from the first (macOS).
       */
     final case class WildcardOverlap(wildcard: Raw, address: Raw) extends Config
+
+    /** `server.host` lists one address twice: as `address`, and again as `again` (the same text, or another spelling of
+      * it — `::1` and `[::1]`, a name in another case). Each is kept as written.
+      */
+    final case class BindRepeated(address: Raw, again: Raw) extends Config
 
     /** Why a model of a provider that can run on a plan is billed by the token. */
     enum Metered:
@@ -2747,6 +2754,7 @@ object Problem:
       Config.Exposed(Raw("0.0.0.0"), Raw("0.0.0.0/0"), Config.Exposure.Unlisted),
       Config.ProxyUndeclared(Raw("https://histmersion.example.edu")),
       Config.WildcardOverlap(Raw("0.0.0.0"), Raw("127.0.0.1")),
+      Config.BindRepeated(Raw("::1"), Raw("[::1]")),
       Config.FloorsUnread(
         Config.FloorsFrom.Setting(SettingKey("agents.quota.claude-plan.floors")),
         NonEmptyVector.of(Invalid.Missing(Field("five_hour"), Vector.empty))

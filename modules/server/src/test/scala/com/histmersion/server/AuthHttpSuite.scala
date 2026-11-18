@@ -237,11 +237,17 @@ class AuthHttpSuite extends munit.FunSuite:
     "X-Forwarded-For" -> "203.0.113.9",
     "X-Forwarded-Host" -> "histmersion.example.edu",
     "X-Forwarded-Proto" -> "https",
-    "X-Real-IP" -> "203.0.113.9"
+    "X-Real-IP" -> "203.0.113.9",
+    "Via" -> "1.1 proxy.example"
   )
 
-  test("with a local proxy declared, a request it forwarded earns no trust from its loopback address"):
-    withServer(a => trustedWithKey(a).modify(_.proxy).setTo(AuthConfig.Proxy("local"))) { (url, _) =>
+  private def proxyNetworks(networks: AuthConfig.Network*)(auth: AuthConfig): AuthConfig =
+    trustedWithKey(auth).modify(_.proxyNetworks).setTo(networks.toList)
+
+  test(
+    "from a proxy network (loopback: a proxy on this machine), a forwarded request earns no trust: it needs the key"
+  ):
+    withServer(proxyNetworks(AuthConfig.Network("127.0.0.0/8"), AuthConfig.Network("::1/128"))) { (url, _) =>
       marks.foreach { mark =>
         assertEquals(send(s"$url/api/backups/$Dump", headers = List(mark)).status, 401, mark._1)
         assertEquals(send(s"$url/api/backups/$Dump", key = Some(Key), headers = List(mark)).status, 200, mark._1)
@@ -249,16 +255,19 @@ class AuthHttpSuite extends munit.FunSuite:
       assertEquals(send(s"$url/api/backups/$Dump").status, 200, "the owner's own request, unmarked")
     }
 
-  test("with no proxy declared, a forwarded request is refused (403) whatever it carries, the probes included"):
-    withServer(trustedWithKey) { (url, _) =>
-      for
-        mark <- marks
-        path <- List("/api/health", "/", s"/api/backups/$Dump")
-        key <- List(None, Some(Key))
-      do
-        val refused = send(s"$url$path", key = key, headers = List(mark))
-        assertEquals(refused.status, 403, s"${mark._1} $path")
-        assert(refused.body.contains("UndeclaredProxy"), refused.body)
-        assertEquals(refused.authenticate, None, "no key lets it in, so none is asked for")
-      assertEquals(send(s"$url/api/backups/$Dump").status, 200, "the owner's own request, unmarked")
-    }
+  test("with no proxy network, or none holding the peer, a forwarded request is refused (403), the probes included"):
+    // empty, and a load balancer's networks elsewhere: either way loopback is no proxy's
+    val elsewhere = proxyNetworks(AuthConfig.Network("192.168.1.2/32"), AuthConfig.Network("fd00::/8"))
+    for auth <- List(proxyNetworks(), elsewhere) do
+      withServer(auth) { (url, _) =>
+        for
+          mark <- marks
+          path <- List("/api/health", "/", s"/api/backups/$Dump")
+          key <- List(None, Some(Key))
+        do
+          val refused = send(s"$url$path", key = key, headers = List(mark))
+          assertEquals(refused.status, 403, s"${mark._1} $path")
+          assert(refused.body.contains("UndeclaredProxy"), refused.body)
+          assertEquals(refused.authenticate, None, "no key lets it in, so none is asked for")
+        assertEquals(send(s"$url/api/backups/$Dump").status, 200, "the owner's own request, unmarked")
+      }

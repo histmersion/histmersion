@@ -298,8 +298,9 @@ final class AgentsControllers(
         )
         .toList
 
-  /** `GET /api/agents/quota` — readable with agents off. Nothing is spent: the ChatGPT pool is read from the app-server
-    * (throttled), the Claude pool from what runs and mods reported.
+  /** `GET /api/agents/quota` — readable with agents off. Nothing is spent and nothing written: every pool as last
+    * recorded — the ChatGPT pool as the app-server's last read (a run, the scheduler's pass or schedule, or `agent
+    * quota refresh` takes one), the Claude pool from what runs, probes and mods reported.
     */
   def quota: PlanQuota.QuotaInfo =
     val now = PlanQuotaRepo.EpochMillis(clock.millis())

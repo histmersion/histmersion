@@ -20,17 +20,20 @@ class AdmissionSuite extends munit.FunSuite:
   private val agent = AgentPaths(Path("/mcp/agent"), Path("/api/agents/quota/claude"))
 
   /** Loopback trusted, the tailnet trusted, the LAN authenticated with a key, `10.0.0.0/8` refused (and a guest range
-    * inside the LAN refused too), everything else unlisted; no proxy declared.
+    * inside the LAN refused too), everything else unlisted; no proxy network.
     */
-  private val policy: AccessPolicy = policyWith("none")
+  private val policy: AccessPolicy = policyWith(Nil)
 
-  /** [[policy]] with a proxy on this machine declared. */
-  private val proxied: AccessPolicy = policyWith("local")
+  /** [[policy]] with a proxy on this machine declared: loopback is a proxy network. */
+  private val proxied: AccessPolicy = policyWith(List("127.0.0.0/8", "::1/128"))
 
-  private def policyWith(proxy: String): AccessPolicy =
+  /** [[policy]] with a proxy network that holds none of this suite's peers (a documentation range). */
+  private val proxiedElsewhere: AccessPolicy = policyWith(List("198.51.100.0/24"))
+
+  private def policyWith(proxyNetworks: List[String]): AccessPolicy =
     val auth = defaults.auth
-      .modify(_.proxy)
-      .setTo(AuthConfig.Proxy(proxy))
+      .modify(_.proxyNetworks)
+      .setTo(proxyNetworks.map(AuthConfig.Network(_)))
       .modify(_.apiKey)
       .setTo(AuthConfig.ApiKey("k3y"))
       .modify(_.trustedNetworks)
@@ -188,16 +191,24 @@ class AdmissionSuite extends munit.FunSuite:
     assertEquals(decided(request(lan, presented = Presented.ApiKey)), Right(KeyHolder), "the LAN around the guests")
 
   /** Every combination of the network kind (trusted loopback and tailnet, authenticated, refused, unlisted), the
-    * method, the credential, a proxy's mark, the proxy setting (none, local), the `Host` (answered, foreign, missing),
-    * the page a change comes from (none, the server's own, a listed one, another site's by `Origin` or by `Referer`,
-    * `null`) and the path (gated, public, the agent endpoint, the quota path), against the decision written out as a
-    * table of rules in order.
+    * method, the credential, a proxy's mark, the proxy networks (empty, one that covers the peer, one that does not),
+    * the `Host` (answered, foreign, missing), the page a change comes from (none, the server's own, a listed one,
+    * another site's by `Origin` or by `Referer`, `null`) and the path (gated, public, the agent endpoint, the quota
+    * path), against the decision written out as a table of rules in order.
     */
   test("the decision, exhaustively: network kind x method x credential x mark x proxy x Host x origin x path"):
     enum Net derives CanEqual:
       case Trusted, Authenticated, Refused, Unlisted
+    enum Proxies derives CanEqual:
+      case Empty, CoverPeer, Elsewhere
     val peers = List(loopback -> Net.Trusted, tailnet -> Net.Trusted, lan -> Net.Authenticated) ++
       List(refusedPeer -> Net.Refused, guest -> Net.Refused, stranger -> Net.Unlisted)
+    // the peer itself as the proxy network (a network of one), for each peer
+    val covering = peers.map((peer, _) => peer -> policyWith(List(peer.getHostAddress))).toMap
+    def policyOf(peer: InetAddress, proxies: Proxies): AccessPolicy = proxies match
+      case Proxies.Empty     => policy
+      case Proxies.CoverPeer => covering(peer)
+      case Proxies.Elsewhere => proxiedElsewhere
     val hosts = List(Some("localhost:8000") -> true, Some("rebound.example:8000") -> false, None -> false)
     // (Origin, Referer, whether a change from it is the server's own)
     val pages = List(
@@ -215,7 +226,7 @@ class AdmissionSuite extends munit.FunSuite:
         method: Method,
         presented: Presented,
         forwarded: Boolean,
-        proxyDeclared: Boolean,
+        proxies: Proxies,
         host: Option[String],
         hostOk: Boolean,
         ownPage: Boolean,
@@ -223,7 +234,7 @@ class AdmissionSuite extends munit.FunSuite:
     ): Either[Problem, Admission] =
       if net == Net.Unlisted then Left(Problem.Refused.Policy(Problem.Refused.Rule.NetworkNotAccepted))
       else if net == Net.Refused then Left(Problem.Refused.Policy(Problem.Refused.Rule.NetworkRefused))
-      else if forwarded && !proxyDeclared then undeclaredProxy
+      else if forwarded && proxies != Proxies.CoverPeer then undeclaredProxy
       else if !hostOk then Left(Problem.Refused.Misdirected(Problem.Raw(host.fold("")(_.takeWhile(_ != ':')))))
       else if method == Method.Change && !ownPage then crossSite
       else if path.startsWith("/mcp/agent") then Right(Agent)
@@ -238,38 +249,61 @@ class AdmissionSuite extends munit.FunSuite:
       method <- Method.values.toList
       presented <- Presented.values.toList
       forwarded <- List(false, true)
-      (p, proxyDeclared) <- List(policy -> false, proxied -> true)
+      proxies <- Proxies.values.toList
       (host, hostOk) <- hosts
       (origin, referer, ownPage) <- pages
       path <- paths
     do
       val r = request(peer, method, path, host, origin, referer, forwarded, presented)
       assertEquals(
-        decided(r, p),
-        expected(net, method, presented, forwarded, proxyDeclared, host, hostOk, ownPage, path),
+        decided(r, policyOf(peer, proxies)),
+        expected(net, method, presented, forwarded, proxies, host, hostOk, ownPage, path),
         s"${net.productPrefix} $peer ${method.productPrefix} ${presented.productPrefix} forwarded=$forwarded " +
-          s"proxy=$proxyDeclared $host $origin $referer $path"
+          s"proxies=${proxies.productPrefix} $host $origin $referer $path"
       )
       cases += 1
-    assertEquals(cases, 6 * 3 * 4 * 2 * 2 * 3 * 7 * 4)
+    assertEquals(cases, 6 * 3 * 4 * 2 * 3 * 3 * 7 * 4)
 
-  test("with a proxy declared, a proxied request earns no trust from its peer address: it needs the key"):
+  test("from a proxy network, a proxied request earns no trust from its peer address: it needs the key"):
     assertEquals(decided(request(loopback, forwarded = true), proxied), unauthenticated)
     assertEquals(decided(request(loopback, forwarded = true, presented = Presented.ApiKey), proxied), Right(KeyHolder))
     assertEquals(decided(request(loopback, forwarded = true, path = "/api/health"), proxied), Right(Public))
     assertEquals(decided(request(loopback), proxied), Right(Trusted), "the owner's own unmarked request")
+    // a load balancer elsewhere: its network authenticated (or trusted) and named as a proxy network
+    val balancer = policyWith(List("192.168.1.20/32"))
+    assertEquals(decided(request(lan, forwarded = true), balancer), unauthenticated)
+    assertEquals(decided(request(lan, forwarded = true, presented = Presented.ApiKey), balancer), Right(KeyHolder))
+    assertEquals(
+      decided(request(InetAddress.getByName("192.168.1.21"), forwarded = true, presented = Presented.ApiKey), balancer),
+      undeclaredProxy,
+      "its neighbour on the LAN is no proxy"
+    )
 
-  test("with no proxy declared, a proxied request is refused (403) from any accepted network, whatever it carries"):
+  test("a proxy network lets nothing in by itself: its peer still needs a trusted or authenticated network"):
+    val everywhere = policyWith(List("0.0.0.0/0", "::/0"))
+    assertEquals(
+      decided(request(stranger, forwarded = true, presented = Presented.ApiKey), everywhere),
+      Left(Problem.Refused.Policy(Problem.Refused.Rule.NetworkNotAccepted))
+    )
+    assertEquals(
+      decided(request(refusedPeer, forwarded = true, presented = Presented.ApiKey), everywhere),
+      Left(Problem.Refused.Policy(Problem.Refused.Rule.NetworkRefused))
+    )
+
+  test("from a peer in no proxy network, a proxied request is refused (403) from any accepted network"):
     for
+      p <- List(policy, proxiedElsewhere)
       peer <- List(loopback, tailnet, lan)
       presented <- Presented.values.toList
       path <- List("/api/health", "/", "/api/backups/x", "/mcp/agent")
       host <- List(Some("localhost:8000"), Some("rebound.example"), None)
     do
       assertEquals(
-        decided(request(peer, path = path, host = host, presented = presented, forwarded = true)),
+        decided(request(peer, path = path, host = host, presented = presented, forwarded = true), p),
         undeclaredProxy
       )
+    // the local proxy's networks are loopback only: a tailnet peer that says it was forwarded is refused
+    assertEquals(decided(request(tailnet, forwarded = true, presented = Presented.ApiKey), proxied), undeclaredProxy)
     // a refused or unlisted network keeps its own rule
     assertEquals(
       decided(request(refusedPeer, forwarded = true)),
@@ -280,10 +314,10 @@ class AdmissionSuite extends munit.FunSuite:
       Left(Problem.Refused.Policy(Problem.Refused.Rule.NetworkNotAccepted))
     )
 
-  test("the headers that mark a request as forwarded: the standard one and the four de-facto ones"):
+  test("the headers that mark a request as forwarded: the standard one, the four de-facto ones and Via"):
     assertEquals(
       Forwarded.Headers,
-      List("Forwarded", "X-Forwarded-For", "X-Forwarded-Host", "X-Forwarded-Proto", "X-Real-IP")
+      List("Forwarded", "X-Forwarded-For", "X-Forwarded-Host", "X-Forwarded-Proto", "X-Real-IP", "Via")
     )
 
   // ── the public allow-list, pinned ──────────────────────────────────────────────────────────────
