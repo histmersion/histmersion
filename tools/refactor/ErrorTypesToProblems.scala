@@ -78,13 +78,20 @@ object ErrorTypesToProblems {
     /** Why a method stays: its own reasons, then what its callers and the rest of the code need. */
     def verdict(m: Method, only: List[String]): List[String] = {
       val callers = calls.getOrElse(m.sym, Nil)
-      val blind = callers.filterNot(c => c.path == m.path || m.needs.forall(n => names.getOrElse(c.path, Set.empty)(n) || n.split("=", 2)(1).matches("(scala|java/lang)/.*")))
+      // a caller that does not see a name gets its import; one that writes the name for something else cannot
+      val blind = callers.filter { c =>
+        val there = names.getOrElse(c.path, Set.empty)
+        m.needs.exists { n =>
+          val ident = n.split("=", 2)(0)
+          !there(n) && there.exists(_.startsWith(ident + "="))
+        }
+      }
       m.reasons ++
         Option.when(only.nonEmpty && !only.exists(m.path.startsWith))("outside this run's modules") ++
         Option.when(overridden(m.sym))("overridden") ++
         Option.when(m.arity > 0 && valueRefs(m.sym))("used as a function value") ++
         Option.when(callers.exists(_.indented))("a call ends in an indented block") ++
-        blind.headOption.map(c => s"a caller in ${c.path} does not see ${m.needs.mkString(", ")}")
+        blind.headOption.map(c => s"a caller in ${c.path} names ${m.needs.map(_.split("=", 2)(0)).mkString(" or ")} otherwise")
     }
     def converted(only: List[String]): Map[String, Method] = methods.filter { case (_, m) => verdict(m, only).isEmpty }
   }
@@ -351,6 +358,7 @@ class ErrorTypesToProblems(config: ErrorTypesToProblems.Config, index: Concurren
     def tokensBetween(from: Int, to: Int) = doc.tree.tokens.filter(tk => tk.start >= from && tk.end <= to && tk.end > tk.start).toList
     def removeRange(from: Int, to: Int): Patch = Patch.fromIterable(tokensBetween(from, to).map(Patch.removeToken))
     var needsImport = false
+    val wanted = scala.collection.mutable.Set.empty[String]
     // the converted methods of this file
     doc.tree.traverse {
       case d: Defn.Def if converted.contains(d.name.symbol.value) =>
@@ -379,13 +387,21 @@ class ErrorTypesToProblems(config: ErrorTypesToProblems.Config, index: Concurren
           val w = written(m.wrapper)
           val extra = if (m.extra.isEmpty) "" else s", ${m.extra}"
           patches ::= Patch.addRight(call, s".left.map($w(_$extra))")
+          wanted ++= m.needs
         }
+    }
+    // the names the adapters are written with, imported where the file does not see them yet
+    val seen = doc.tree.collect { case n: Term.Name if !n.symbol.isNone => s"${n.value}=${n.symbol.value}" }.toSet
+    val imports = wanted.toList.sorted.filterNot(n => seen(n) || n.split("=", 2)(1).matches("(scala|java/lang)/.*")).map { n =>
+      val path = n.split("=", 2)(1).replaceAll("[A-Za-z0-9_]+\\$package\\.", "").stripSuffix(".").replace('/', '.').split('.').toList
+      Patch.addGlobalImport(Importer(path.dropRight(1).map(Term.Name(_)).reduceLeft[Term.Ref]((q, nm) => Term.Select(q, nm.asInstanceOf[Term.Name])),
+        List(Importee.Name(Name(path.last)))))
     }
     val hasProblems = doc.tree.collect { case n: Type.Name if n.value == "Problems" && symbolOf(n).value == config.problemsType => n }.nonEmpty ||
       doc.tree.collect { case i: Importer if i.importees.exists { case Importee.Name(nm) => nm.value == "Problems"; case _ => false } => i }.nonEmpty
     val importPatch = if (needsImport && !hasProblems) Patch.addGlobalImport(Importer(
       config.problemsImport.split('.').dropRight(1).toList.map(Term.Name(_)).reduceLeft[Term.Ref]((q, n) => Term.Select(q, n.asInstanceOf[Term.Name])),
       List(Importee.Name(Name(config.problemsImport.split('.').last))))) else Patch.empty
-    Patch.fromIterable(patches) + importPatch
+    Patch.fromIterable(patches) + importPatch + Patch.fromIterable(imports)
   }
 }

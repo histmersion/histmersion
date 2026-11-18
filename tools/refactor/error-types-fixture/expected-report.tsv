@@ -15,3 +15,4 @@ demo/Parse.reads().	modules/demo/src/main/scala/demo/Demo.scala	com/histmersion/
 demo/Parse.typed().	modules/demo/src/main/scala/demo/Demo.scala	com/histmersion/api/Api.Error#		writes the wrapper's type; uses e (local2)
 demo/Parse.valued().	modules/demo/src/main/scala/demo/Demo.scala	com/histmersion/cli/Cli.Error#		used as a function value
 demo/Parse.viaMixed().	modules/demo/src/main/scala/demo/Demo.scala	com/histmersion/cli/Cli.Error#		uses mixed (demo/Parse.mixed().)
+demo/Refusals.refused().	modules/demo/src/main/scala/demo/Refusals.scala	com/histmersion/cli/Cli.Error#	exitCode = ExitCode.Refused	a caller in modules/demo/src/main/scala/demo/Shadow.scala names ExitCode or Cli otherwise
