@@ -282,8 +282,10 @@ object ArticleCli:
               e.period,
               e.ifUpdatedAt
             )
-            .flatMap(ArticlePatches.withCoverage(_, ff, rs))
-            .flatMap(ArticlePatches.withCritiques(_, crs))
+            .left
+            .map(Cli.Error(_, exitCode = ExitCode.Usage))
+            .flatMap(ArticlePatches.withCoverage(_, ff, rs).left.map(Cli.Error(_, exitCode = ExitCode.Usage)))
+            .flatMap(ArticlePatches.withCritiques(_, crs).left.map(Cli.Error(_, exitCode = ExitCode.Usage)))
             .flatMap(p =>
               c.patchArticle(slug, p, strict).map { v =>
                 Cli.out.println(ArticleMarkdown.article(v))

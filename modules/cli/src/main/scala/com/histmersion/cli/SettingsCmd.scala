@@ -52,25 +52,22 @@ object SettingsCmd:
 
     private def env = ConfigFactory.systemEnvironment()
 
-    private def file: Either[Cli.Error, LocalSettingsFile] =
+    private def file: Either[Problems, LocalSettingsFile] =
       UserPaths
         .configFile(k => AppConfig.lookup(env)(k.value).map(Environment.VariablesValue(_)))
         .toRight(
-          Cli.Error(
-            Problem.Unclassified(Legacy.Text(s"no settings file location: HOME is unset (set ${UserPaths.ConfigEnv})")),
-            ExitCode.Usage
-          )
+          Problem.Unclassified(Legacy.Text(s"no settings file location: HOME is unset (set ${UserPaths.ConfigEnv})"))
         )
         .map(LocalSettingsFile(_))
 
-    private def writer: Either[Cli.Error, ConfigFileWriter] =
+    private def writer: Either[Problems, ConfigFileWriter] =
       file.map(ConfigFileWriter(_, env, ConfigSchema.reference))
 
     private def failed(e: SettingError) = Cli.Error(e.message, ExitCode.Refused)
 
     def page(prefix: Option[Settings.Prefix]): Either[Cli.Error, ConfigEdit.Page] =
       for
-        f <- file
+        f <- file.left.map(Cli.Error(_, ExitCode.Usage))
         p <- prefix
           .fold(Right(None))(k => SettingKey.parse(SettingKey.ParseRaw(k.value)).map(Some(_)))
           .left
@@ -115,7 +112,7 @@ object SettingsCmd:
 
     def write(w: ConfigEdit.Write): Either[Cli.Error, ConfigEdit.Written] =
       for
-        fw <- writer
+        fw <- writer.left.map(Cli.Error(_, ExitCode.Usage))
         edits <- SettingEdit
           .parseAll(
             w.changes.map(c => SettingKey.ParseRaw(c.key.value) -> c.value.map(v => SettingValue.Typed(v.value))),

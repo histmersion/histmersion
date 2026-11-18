@@ -6,6 +6,7 @@ import com.histmersion.config.*
 import java.nio.file.Files
 import com.histmersion.api.exchange.EditionsPolicy
 import com.histmersion.api.exchange.{MergeResolution, MergeResolutions}
+import com.histmersion.cli.Cli
 
 /** `histmersion merge plan` and the resolution flags of `bundle import`: they parse, and the file plus the flags make
   * one resolution set, flags winning, every bad line reported. No server.
@@ -57,6 +58,8 @@ class MergeCmdSuite extends munit.FunSuite:
           None
         )
       )
+      .left
+      .map(Cli.Error(_, exitCode = ExitCode.Usage))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(
       r.resolve.map(x => x.issue -> x.decision).toMap,
@@ -67,13 +70,16 @@ class MergeCmdSuite extends munit.FunSuite:
     )
     assertEquals(r.policy.editions, Some(EditionsPolicy.Separate))
     val bad =
-      MergeCmd.resolutions(
-        MergeCmd.ResolutionFlags(
-          Some(MergeCmd.ResolutionFlags.File("/no/such/file.yaml")),
-          List(MergeResolutions.Text.Flag("nonsense")),
-          Some(MergeCmd.ResolutionFlags.Editions("sometimes"))
+      MergeCmd
+        .resolutions(
+          MergeCmd.ResolutionFlags(
+            Some(MergeCmd.ResolutionFlags.File("/no/such/file.yaml")),
+            List(MergeResolutions.Text.Flag("nonsense")),
+            Some(MergeCmd.ResolutionFlags.Editions("sometimes"))
+          )
         )
-      )
+        .left
+        .map(Cli.Error(_, exitCode = ExitCode.Usage))
     val msg = bad.left.map(_.problems.sentences.mkString("; ")).swap.getOrElse(fail("accepted"))
     assert(
       msg.contains("no such file") && msg.contains("resolve: 'nonsense'") && msg.contains("--editions sometimes"),
@@ -93,6 +99,8 @@ class MergeCmdSuite extends munit.FunSuite:
           )
         )
       )
+      .left
+      .map(Cli.Error(_, exitCode = ExitCode.Usage))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(
       r.resolve.map(x => x.issue -> x.text).toMap,
@@ -101,11 +109,14 @@ class MergeCmdSuite extends munit.FunSuite:
         MergeResolution.Issue("S-2") -> None
       )
     )
-    val bad = MergeCmd.withTexts(
-      MergeResolutions(
-        List(MergeResolution(MergeResolution.Issue("A-1"), MergeResolution.Decision("file:/no/such/merged.md")))
+    val bad = MergeCmd
+      .withTexts(
+        MergeResolutions(
+          List(MergeResolution(MergeResolution.Issue("A-1"), MergeResolution.Decision("file:/no/such/merged.md")))
+        )
       )
-    )
+      .left
+      .map(Cli.Error(_, exitCode = ExitCode.Usage))
     assert(
       bad.left.exists(_.problems.sentences.mkString("; ").contains("A-1: file:/no/such/merged.md — no such file")),
       bad.toString

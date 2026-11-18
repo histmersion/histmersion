@@ -7,6 +7,7 @@ import com.histmersion.config.*
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path, StandardCopyOption}
 import scala.jdk.CollectionConverters.*
+import com.histmersion.util.problem.Problems
 
 /** `plugin repo`, `plugin api-jar` and `plugin new`: what a plugin author needs from the install on this machine. They
   * read files only, and need no server.
@@ -37,16 +38,13 @@ object PluginAuthoring:
   /** The local Maven repository, `$HOME/.m2/repository`: where Maven, Gradle, sbt (`Resolver.mavenLocal`) and scala-cli
     * (`m2Local`) look for artifacts installed on this machine.
     */
-  def mavenLocal(env: LocalInstall.EnvVariable => Option[LocalInstall.EnvSetting]): Either[Cli.Error, Path] =
+  def mavenLocal(env: LocalInstall.EnvVariable => Option[LocalInstall.EnvSetting]): Either[Problems, Path] =
     env(LocalInstall.EnvVariable("HOME"))
       .map(_.value.trim)
       .filter(_.nonEmpty)
       .map(h => Path.of(h, ".m2", "repository"))
       .toRight(
-        Cli.Error(
-          Problem.Unclassified(Legacy.Text("HOME is unset: there is no local Maven repository (~/.m2/repository)")),
-          exitCode = ExitCode.Usage
-        )
+        Problem.Unclassified(Legacy.Text("HOME is unset: there is no local Maven repository (~/.m2/repository)"))
       )
 
   /** Copy the install's Maven repository into the local one, so that a build naming `m2Local` finds the plugin API, the
@@ -104,7 +102,7 @@ object PluginAuthoring:
     localRepository(install).map(i => (i.apiJar, i.apiSources))
 
   /** Write a new project into `dir`, which must not exist or be empty; the paths written. */
-  def write(dir: Path, files: List[TemplateFile]): Either[Cli.Error, List[Path]] =
+  def write(dir: Path, files: List[TemplateFile]): Either[Problems, List[Path]] =
     val occupied = Files.exists(dir) && (!Files.isDirectory(dir) || {
       val s = Files.list(dir)
       try s.findAny().isPresent
@@ -112,10 +110,7 @@ object PluginAuthoring:
     })
     if occupied then
       Left(
-        Cli.Error(
-          Problem.Unclassified(Legacy.Text(s"$dir exists and is not empty — choose another --dir")),
-          exitCode = ExitCode.Usage
-        )
+        Problem.Unclassified(Legacy.Text(s"$dir exists and is not empty — choose another --dir"))
       )
     else
       Right(files.map { f =>

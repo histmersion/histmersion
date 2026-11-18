@@ -152,12 +152,17 @@ object PluginCmd:
                   install,
                   PluginAuthoring
                     .mavenLocal(k => Option(java.lang.System.getenv(k.value)).map(LocalInstall.EnvSetting(_)))
+                    .left
+                    .map(Cli.Error(_, exitCode = ExitCode.Usage))
                 )
-                written <- PluginAuthoring.write(
-                  target,
-                  PluginTemplate
-                    .files(PluginTemplate.Request(id, kind, pkg, repo, PluginTemplate.Request.AgentNotes(agentNotes)))
-                )
+                written <- PluginAuthoring
+                  .write(
+                    target,
+                    PluginTemplate
+                      .files(PluginTemplate.Request(id, kind, pkg, repo, PluginTemplate.Request.AgentNotes(agentNotes)))
+                  )
+                  .left
+                  .map(Cli.Error(_, exitCode = ExitCode.Usage))
               yield
                 if copied.nonEmpty then
                   Cli.out.println(
@@ -169,9 +174,10 @@ object PluginCmd:
           val _ = c
           if m2 then
             for
-              dir <- PluginAuthoring.mavenLocal(k =>
-                Option(java.lang.System.getenv(k.value)).map(LocalInstall.EnvSetting(_))
-              )
+              dir <- PluginAuthoring
+                .mavenLocal(k => Option(java.lang.System.getenv(k.value)).map(LocalInstall.EnvSetting(_)))
+                .left
+                .map(Cli.Error(_, exitCode = ExitCode.Usage))
               copied <- PluginAuthoring.publishToMavenLocal(install, dir)
             yield
               Cli.out.println(if asUrl then dir.toUri.toString else dir.toString)

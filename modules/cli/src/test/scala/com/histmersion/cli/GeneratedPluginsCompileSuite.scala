@@ -3,6 +3,7 @@ package cli
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
+import com.histmersion.cli.{Cli, ExitCode}
 
 /** The plugin projects `histmersion plugin new` writes, compiled against the plugin API of THIS build: a template that
   * names a type, a constructor or a method the SPI no longer has fails here, offline, in the normal test run. The main
@@ -28,7 +29,11 @@ class GeneratedPluginsCompileSuite extends munit.FunSuite:
   /** The sources of the project, written under a fresh directory: `main` and `test`. */
   private def written(kind: PluginKind): (Path, List[Path], List[Path]) =
     val dir = Files.createTempDirectory("generated-plugin")
-    val paths = PluginAuthoring.write(dir, PluginTemplate.files(request(kind))).fold(e => fail(e.toString), identity)
+    val paths = PluginAuthoring
+      .write(dir, PluginTemplate.files(request(kind)))
+      .left
+      .map(Cli.Error(_, exitCode = ExitCode.Usage))
+      .fold(e => fail(e.toString), identity)
     val (tests, mains) = paths
       .filter(_.toString.endsWith(".scala"))
       .partition { p =>

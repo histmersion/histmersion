@@ -36,6 +36,7 @@ import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.catalogue.EventsJobKinds
+import com.histmersion.util.problem.Problems
 
 object EventsCmd:
 
@@ -59,7 +60,7 @@ object EventsCmd:
       desc: Option[String],
       ck: Option[String],
       wd: Option[String]
-  ): Either[Cli.Error, EventPatch] =
+  ): Either[Problems, EventPatch] =
     for
       geom <- EventGeometry
         .of(
@@ -67,16 +68,11 @@ object EventsCmd:
           lat.map(Latitude(_)),
           lon.map(Longitude(_))
         )
-        .left
-        .map(m => Cli.Error(m, exitCode = ExitCode.Usage))
       _ <- scale
         .filter(v => EventScale.parse(EventSummary.Scale(v)).isEmpty)
         .fold(Right(()))(v =>
           Left(
-            Cli.Error(
-              Problem.Unclassified(Legacy.Text(s"--scale: '$v' is not local, regional or auto")),
-              exitCode = ExitCode.Usage
-            )
+            Problem.Unclassified(Legacy.Text(s"--scale: '$v' is not local, regional or auto"))
           )
         )
       p = EventPatch(
@@ -94,10 +90,7 @@ object EventsCmd:
       _ <- Either.cond(
         p != EventPatch(),
         (),
-        Cli.Error(
-          Problem.Unclassified(Legacy.Text("nothing to change: give at least one field")),
-          exitCode = ExitCode.Usage
-        )
+        Problem.Unclassified(Legacy.Text("nothing to change: give at least one field"))
       )
     yield p
 

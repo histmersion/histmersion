@@ -38,6 +38,7 @@ import com.histmersion.cli.CommandLine.{given, *}
 import com.histmersion.util.problem.Problem
 import org.rogach.scallop.*
 import scala.util.chaining.*
+import com.histmersion.cli.ExitCode
 
 /** The command line of [[EventsCmd]]. */
 object EventsArgs:
@@ -131,6 +132,8 @@ object EventsArgs:
           ck_.toOption,
           wd_.toOption
         )
+        .left
+        .map(Cli.Error(_, exitCode = ExitCode.Usage))
         .left
         .map(_.problems)
         .map(EventsCmd.Command.Patch(id_(), _))

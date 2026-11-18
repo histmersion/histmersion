@@ -298,12 +298,15 @@ class PluginTemplateSuite extends munit.FunSuite:
     val root = Files.createTempDirectory("plugin-new")
     try
       val files = PluginTemplate.files(request("mirror"))
-      val written = PluginAuthoring.write(root.resolve("mirror"), files)
+      val written =
+        PluginAuthoring.write(root.resolve("mirror"), files).left.map(Cli.Error(_, exitCode = ExitCode.Usage))
       assertEquals(written.map(_.size), Right(files.size))
       assert(Files.isRegularFile(root.resolve("mirror/resources/META-INF/services/com.histmersion.plugin.Plugin")))
       assert(
         PluginAuthoring
           .write(root.resolve("mirror"), files)
+          .left
+          .map(Cli.Error(_, exitCode = ExitCode.Usage))
           .left
           .exists(_.problems.sentences.mkString("; ").contains("not empty"))
       )
@@ -397,12 +400,21 @@ class PluginTemplateSuite extends munit.FunSuite:
 
   test("the local Maven repository is under HOME"):
     assertEquals(
-      PluginAuthoring.mavenLocal(
-        Map(LocalInstall.EnvVariable("HOME") -> LocalInstall.EnvSetting("/home/someone")).get
-      ),
+      PluginAuthoring
+        .mavenLocal(
+          Map(LocalInstall.EnvVariable("HOME") -> LocalInstall.EnvSetting("/home/someone")).get
+        )
+        .left
+        .map(Cli.Error(_, exitCode = ExitCode.Usage)),
       Right(Path.of("/home/someone/.m2/repository"))
     )
-    assert(PluginAuthoring.mavenLocal(Map.empty[LocalInstall.EnvVariable, LocalInstall.EnvSetting].get).isLeft)
+    assert(
+      PluginAuthoring
+        .mavenLocal(Map.empty[LocalInstall.EnvVariable, LocalInstall.EnvSetting].get)
+        .left
+        .map(Cli.Error(_, exitCode = ExitCode.Usage))
+        .isLeft
+    )
 
   test("next steps: test, publish with the POM, add by coordinates from the publish repository"):
     val id = PluginId.parse("my-mirror").toOption.get

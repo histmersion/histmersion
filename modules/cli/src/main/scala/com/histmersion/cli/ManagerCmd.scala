@@ -26,17 +26,16 @@ import com.histmersion.api.library.AcquisitionWorkApi
 import com.histmersion.api.automation.Activity
 import com.histmersion.api.automation.Stalls
 import com.histmersion.api.automation.Managers
+import com.histmersion.util.problem.Problems
 
 /** `histmersion agent managers` and `histmersion agent manager <id> …` — the persistent process managers
   * (docs/research-process-managers.md). The server runs them; this reads and steers them over HTTP.
   */
 object ManagerCmd:
 
-  private def config(kvs: List[String]): Either[Cli.Error, ManagerConfig] =
+  private def config(kvs: List[String]): Either[Problems, ManagerConfig] =
     ManagerConfig
       .parse(kvs.map(ManagerConfig.Spec(_)))
-      .left
-      .map(m => Cli.Error(m, exitCode = ExitCode.Usage))
 
   /** The settings `--config` and `config` take. */
   val SettingKeys: String =
@@ -196,7 +195,8 @@ object ManagerCmd:
             )
           ).map(r => Output.emit(json, r)(ApprovalDigestMarkdown.bulk))
         case Command.Create(kind, goal, kvs, cron, active, json) =>
-          config(kvs)
+          config(kvs).left
+            .map(Cli.Error(_, exitCode = ExitCode.Usage))
             .flatMap(cfg =>
               c.call(ManagersApi.create)(
                 ManagerCreate(
@@ -345,6 +345,7 @@ object ManagerCmd:
               c.call(ManagersApi.update)((id, ManagerUpdate(cron = Some(ManagerUpdate.Cron(t)))))
                 .map(m => Cli.out.println(ManagersMarkdown.line(m)))
             case ManagerVerb.Config(kvs) =>
-              config(kvs)
+              config(kvs).left
+                .map(Cli.Error(_, exitCode = ExitCode.Usage))
                 .flatMap(cfg => c.call(ManagersApi.update)((id, ManagerUpdate(Some(cfg)))))
                 .map(m => Cli.out.println(ManagersMarkdown.line(m)))

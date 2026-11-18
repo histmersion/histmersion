@@ -15,6 +15,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.Api
 import com.histmersion.api.library.Filter
 import com.histmersion.api.library.Citekey
+import com.histmersion.cli.Cli
 
 /** `histmersion article patch` flag → [[ArticlePatch]]. Pure: the semantics of "only what you pass changes" is asserted
   * without a server.
@@ -35,20 +36,23 @@ class ArticlePatchesSuite extends munit.FunSuite:
       period: Option[ArticlePatches.FilterFlags.Period] = None,
       ifUpdatedAt: Option[Article.UpdatedAt] = None
   ) =
-    ArticlePatches.build(
-      json,
-      title,
-      summary,
-      kind,
-      bodyFile,
-      appendFile,
-      tagsAdd,
-      tagsRemove,
-      tagsReplace,
-      regions,
-      period,
-      ifUpdatedAt
-    )
+    ArticlePatches
+      .build(
+        json,
+        title,
+        summary,
+        kind,
+        bodyFile,
+        appendFile,
+        tagsAdd,
+        tagsRemove,
+        tagsReplace,
+        regions,
+        period,
+        ifUpdatedAt
+      )
+      .left
+      .map(Cli.Error(_, exitCode = ExitCode.Usage))
 
   test("no flags at all is an empty patch — nothing is touched"):
     assertEquals(build(), Right(Article.Patch()))
@@ -139,6 +143,8 @@ class ArticlePatchesSuite extends munit.FunSuite:
           ArticlePatches.ReasonText("nilsson1927_minoan=")
         )
       )
+      .left
+      .map(Cli.Error(_, exitCode = ExitCode.Usage))
       .toOption
       .get
     assertEquals(
@@ -162,12 +168,20 @@ class ArticlePatchesSuite extends munit.FunSuite:
     )
     // no flag: the --json filter stands
     assertEquals(
-      ArticlePatches.withCoverage(base, ArticlePatches.FilterFlags(), Nil).toOption.get.filter,
+      ArticlePatches
+        .withCoverage(base, ArticlePatches.FilterFlags(), Nil)
+        .left
+        .map(Cli.Error(_, exitCode = ExitCode.Usage))
+        .toOption
+        .get
+        .filter,
       Some(Article.Filter(query = Some(Filter.Q("from json"))))
     )
     assertEquals(
       ArticlePatches
         .withCoverage(Article.Patch(), ArticlePatches.FilterFlags(clear = ArticlePatches.FilterFlags.Clear(true)), Nil)
+        .left
+        .map(Cli.Error(_, exitCode = ExitCode.Usage))
         .toOption
         .get
         .filter,
@@ -181,11 +195,15 @@ class ArticlePatchesSuite extends munit.FunSuite:
             .FilterFlags(query = Some(Api.ArticleQuery.Text("x")), clear = ArticlePatches.FilterFlags.Clear(true)),
           Nil
         )
+        .left
+        .map(Cli.Error(_, exitCode = ExitCode.Usage))
         .isLeft
     )
     assert(
       ArticlePatches
         .withCoverage(Article.Patch(), ArticlePatches.FilterFlags(), List(ArticlePatches.ReasonText("no-equals-sign")))
+        .left
+        .map(Cli.Error(_, exitCode = ExitCode.Usage))
         .isLeft
     )
     assert(
@@ -195,6 +213,8 @@ class ArticlePatchesSuite extends munit.FunSuite:
           ArticlePatches.FilterFlags(period = Some(ArticlePatches.FilterFlags.Period("-1500"))),
           Nil
         )
+        .left
+        .map(Cli.Error(_, exitCode = ExitCode.Usage))
         .isLeft
     )
 
@@ -210,6 +230,8 @@ class ArticlePatchesSuite extends munit.FunSuite:
           CritiqueReason.Spec("[[jones2001_myth]] -> lee1990_ritual=")
         )
       )
+      .left
+      .map(Cli.Error(_, exitCode = ExitCode.Usage))
       .toOption
       .get
     assertEquals(
@@ -224,9 +246,15 @@ class ArticlePatchesSuite extends munit.FunSuite:
         CritiqueReason(Citekey("jones2001_myth"), Citekey("lee1990_ritual"), Coverage.Rationale(""))
       )
     )
-    assertEquals(ArticlePatches.withCritiques(base, Nil).toOption.get, base)
+    assertEquals(
+      ArticlePatches.withCritiques(base, Nil).left.map(Cli.Error(_, exitCode = ExitCode.Usage)).toOption.get,
+      base
+    )
     val bad =
-      ArticlePatches.withCritiques(Article.Patch(), List(CritiqueReason.Spec("smith1987_dying=no pair")))
+      ArticlePatches
+        .withCritiques(Article.Patch(), List(CritiqueReason.Spec("smith1987_dying=no pair")))
+        .left
+        .map(Cli.Error(_, exitCode = ExitCode.Usage))
     assert(
       bad.left.exists(e =>
         e.problems.sentences.mkString("; ").startsWith("--critique-reason:") && e.exitCode == ExitCode.Usage

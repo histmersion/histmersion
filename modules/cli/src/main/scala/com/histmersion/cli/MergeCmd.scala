@@ -28,6 +28,7 @@ import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.exchange.MergePlan
 import com.histmersion.util.console.Console
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.problem.Problems
 
 /** `histmersion merge plan` — what importing another collection's bundle would do, and every issue, in one run
   * (docs/research-merge-import.md §6, milestone M3). The bundle is uploaded to the server (it is planned there, against
@@ -52,7 +53,7 @@ object MergeCmd:
     object Editions extends Newtype[String, Pure]
 
   /** The file, then the flags over it. Every bad line is reported at once. Reads the file; else pure. */
-  def resolutions(f: ResolutionFlags): Either[Cli.Error, MergeResolutions] =
+  def resolutions(f: ResolutionFlags): Either[Problems, MergeResolutions] =
     val fromFile: Either[List[Problem], MergeResolutions] = f.file match
       case None    => Right(MergeResolutions())
       case Some(p) =>
@@ -75,7 +76,7 @@ object MergeCmd:
       fromFile.left.toOption.getOrElse(Nil) ++ flags.flatMap(_.left.toOption) ++ editions.left.toOption.toList
     if errors.nonEmpty then
       Left(
-        Cli.Error(Problem.Unclassified(Legacy.Text(errors.map(_.sentence).mkString("\n"))), exitCode = ExitCode.Usage)
+        Problem.Unclassified(Legacy.Text(errors.map(_.sentence).mkString("\n")))
       )
     else
       Right(
@@ -87,7 +88,7 @@ object MergeCmd:
   /** The merged text of every `file:<path>` decision, read here and sent along: the server cannot read this machine's
     * files. A path that cannot be read is an error.
     */
-  def withTexts(r: MergeResolutions): Either[Cli.Error, MergeResolutions] =
+  def withTexts(r: MergeResolutions): Either[Problems, MergeResolutions] =
     val read = r.resolve.map { x =>
       MergeDecision
         .parse(MergeDecision.Wire(x.decision.value))
@@ -109,8 +110,7 @@ object MergeCmd:
               .map(t => x.modify(_.text).setTo(Some(MergeResolution.Text(t))))
     }
     val errors = read.flatMap(_.left.toOption)
-    if errors.nonEmpty then
-      Left(Cli.Error(Problem.Unclassified(Legacy.Text(errors.mkString("\n"))), exitCode = ExitCode.Usage))
+    if errors.nonEmpty then Left(Problem.Unclassified(Legacy.Text(errors.mkString("\n"))))
     else Right(r.modify(_.resolve).setTo(read.flatMap(_.toOption)))
 
   /** Upload the bundle; refuse what is not one. */
@@ -202,7 +202,7 @@ object MergeCmd:
               (),
               Cli.Error(Problem.Unclassified(Legacy.Text(s"no such file: $file")), exitCode = ExitCode.Usage)
             )
-            res <- resolutions(flags)
+            res <- resolutions(flags).left.map(Cli.Error(_, exitCode = ExitCode.Usage))
             u <- upload(c, p.toFile)
             plan <- c.mergePlan(MergePlan.Request(MergePlan.Request.Bundle(u.sha256.value), res))
             _ <- template.fold[Either[Cli.Error, Unit]](Right(())) { t =>
@@ -237,8 +237,8 @@ object MergeCmd:
               (),
               Cli.Error(Problem.Unclassified(Legacy.Text(s"no such file: $file")), exitCode = ExitCode.Usage)
             )
-            res0 <- resolutions(flags)
-            res <- withTexts(res0)
+            res0 <- resolutions(flags).left.map(Cli.Error(_, exitCode = ExitCode.Usage))
+            res <- withTexts(res0).left.map(Cli.Error(_, exitCode = ExitCode.Usage))
             u <- upload(c, p.toFile)
             plan <- c.mergePlan(MergePlan.Request(MergePlan.Request.Bundle(u.sha256.value), res))
             _ <- Either.cond(

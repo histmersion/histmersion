@@ -10,6 +10,7 @@ import com.histmersion.util.data.exchange.{BundleFormat, BundleTar}
 import com.histmersion.api.exchange.{Bundle, BundleMarkdown, MergeImportRequest}
 import com.histmersion.util.console.Console
 import com.histmersion.api.library.InstanceLabel
+import com.histmersion.util.problem.Problems
 
 /** `histmersion bundle export|verify|import|instance` — the portable bundle (docs/research-merge-import.md, milestones
   * M0–M2). The server builds and reads bundles; the CLI moves the file: an export is streamed to disk, a verify/import
@@ -17,10 +18,10 @@ import com.histmersion.api.library.InstanceLabel
   */
 object BundleCmd:
 
-  private def existing(file: String): Either[Cli.Error, java.io.File] =
+  private def existing(file: String): Either[Problems, java.io.File] =
     val p = Path.of(file)
     if Files.isRegularFile(p) then Right(p.toFile)
-    else Left(Cli.Error(Problem.Unclassified(Legacy.Text(s"no such file: $file")), exitCode = ExitCode.Usage))
+    else Left(Problem.Unclassified(Legacy.Text(s"no such file: $file")))
 
   /** The manifest of a bundle on disk — its first entry. */
   private[cli] def manifestOf(p: Path): Either[Problem, Bundle.Manifest] =
@@ -69,7 +70,7 @@ object BundleCmd:
                 m => Right(Cli.out.println(s"${BundleMarkdown.manifest(m)}\n\n→ $dest (${Files.size(dest)} bytes)"))
               )
         case Command.Verify(file, json) =>
-          existing(file).flatMap(c.verifyBundle).flatMap { r =>
+          existing(file).left.map(Cli.Error(_, exitCode = ExitCode.Usage)).flatMap(c.verifyBundle).flatMap { r =>
             Output.emit(json, r)(BundleMarkdown.verify)
             if r.ok.value then Right(())
             else
@@ -79,11 +80,14 @@ object BundleCmd:
           }
         case Command.Import(file, dryRun, res, json) =>
           val run: Either[Cli.Error, Bundle.ImportResult] =
-            if res.isEmpty then existing(file).flatMap(c.importBundle(Cli.DryRun(dryRun), _))
+            if res.isEmpty then
+              existing(file).left
+                .map(Cli.Error(_, exitCode = ExitCode.Usage))
+                .flatMap(c.importBundle(Cli.DryRun(dryRun), _))
             else
               for
-                f <- existing(file)
-                r <- MergeCmd.resolutions(res)
+                f <- existing(file).left.map(Cli.Error(_, exitCode = ExitCode.Usage))
+                r <- MergeCmd.resolutions(res).left.map(Cli.Error(_, exitCode = ExitCode.Usage))
                 u <- MergeCmd.upload(c, f)
                 x <- c.mergeImport(
                   MergeImportRequest(MergeImportRequest.Bundle(u.sha256.value), r, MergeImportRequest.DryRun(dryRun))

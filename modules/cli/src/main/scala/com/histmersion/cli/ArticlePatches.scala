@@ -22,6 +22,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Api
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.catalogue.Year
+import com.histmersion.util.problem.Problems
 
 /** Build an [[ArticlePatch]] from CLI flags — pure, so the flag semantics are unit-tested without a server. Mirrors
   * [[Patches]] on the source side: `--json` is the baseline, each flag overrides the part it names, and an absent part
@@ -50,7 +51,7 @@ object ArticlePatches:
       regions: Option[CsvText],
       period: Option[FilterFlags.Period],
       ifUpdatedAt: Option[Article.UpdatedAt]
-  ): Either[Cli.Error, Article.Patch] =
+  ): Either[Problems, Article.Patch] =
     for
       base <- parse(json)
       body <- read(bodyFile)(Article.Body(_))
@@ -116,16 +117,13 @@ object ArticlePatches:
     * spell (the server validates it); `--clear-filter` sends the empty filter that clears it; each `--reason ck=text`
     * sets one reason, `ck=` removes it. Both override `--json`.
     */
-  def withCoverage(p: Article.Patch, f: FilterFlags, reasons: List[ReasonText]): Either[Cli.Error, Article.Patch] =
+  def withCoverage(p: Article.Patch, f: FilterFlags, reasons: List[ReasonText]): Either[Problems, Article.Patch] =
     for
       period <- periodOf(f.period)
       _ <- Either.cond(
         !(f.clear.value && f.anyGiven),
         (),
-        Cli.Error(
-          Problem.Unclassified(Legacy.Text("--clear-filter with --filter-* flags: give one or the other")),
-          exitCode = ExitCode.Usage
-        )
+        Problem.Unclassified(Legacy.Text("--clear-filter with --filter-* flags: give one or the other"))
       )
       rs <- reasons.traverse { r =>
         r.value.indexOf('=') match
@@ -138,10 +136,7 @@ object ArticlePatches:
             )
           case _ =>
             Left(
-              Cli.Error(
-                Problem.Unclassified(Legacy.Text(s"--reason: '$r' is not <citekey>=<reason>")),
-                exitCode = ExitCode.Usage
-              )
+              Problem.Unclassified(Legacy.Text(s"--reason: '$r' is not <citekey>=<reason>"))
             )
       }
     yield
@@ -167,34 +162,32 @@ object ArticlePatches:
   /** Each `--critique-reason src>dst=text` sets the reason of one critique-checklist pair, `src>dst=` removes it; added
     * to those of `--json`.
     */
-  def withCritiques(p: Article.Patch, reasons: List[CritiqueReason.Spec]): Either[Cli.Error, Article.Patch] =
+  def withCritiques(p: Article.Patch, reasons: List[CritiqueReason.Spec]): Either[Problems, Article.Patch] =
     reasons
       .traverse(r =>
         CritiqueReason
           .parse(r)
           .left
-          .map(m =>
-            Cli.Error(Problem.Unclassified(Legacy.Text(s"--critique-reason: ${m.sentence}")), exitCode = ExitCode.Usage)
-          )
+          .map(m => Problem.Unclassified(Legacy.Text(s"--critique-reason: ${m.sentence}")))
       )
       .map(rs => if rs.isEmpty then p else p.modify(_.critiqueReasons).setTo(p.critiqueReasons ++ rs))
 
-  private def parse(json: Option[PatchJson]): Either[Cli.Error, Article.Patch] = json match
+  private def parse(json: Option[PatchJson]): Either[Problems, Article.Patch] = json match
     case None    => Right(Article.Patch())
     case Some(s) =>
       RawJson
         .decode[Article.Patch](s.value)
         .left
-        .map(e => Cli.Error(Problem.Unclassified(Legacy.Text(s"--json: $e")), exitCode = ExitCode.Usage))
+        .map(e => Problem.Unclassified(Legacy.Text(s"--json: $e")))
 
-  private def read[A](file: Option[TextFile])(wrap: String => A): Either[Cli.Error, Option[A]] = file match
+  private def read[A](file: Option[TextFile])(wrap: String => A): Either[Problems, Option[A]] = file match
     case None    => Right(None)
     case Some(f) =>
       val p = java.nio.file.Path.of(f.value)
       if java.nio.file.Files.isRegularFile(p) then Right(Some(wrap(java.nio.file.Files.readString(p))))
-      else Left(Cli.Error(Problem.Unclassified(Legacy.Text(s"no such file: $f")), exitCode = ExitCode.Usage))
+      else Left(Problem.Unclassified(Legacy.Text(s"no such file: $f")))
 
-  private def periodOf(s: Option[FilterFlags.Period]): Either[Cli.Error, Option[Period.Input]] = s match
+  private def periodOf(s: Option[FilterFlags.Period]): Either[Problems, Option[Period.Input]] = s match
     case None    => Right(None)
     case Some(v) =>
       v.value.split(",").map(_.trim).toList match
@@ -204,14 +197,11 @@ object ArticlePatches:
               Right(Some(Period.Input(Year(x), Year(y))))
             case _ =>
               Left(
-                Cli.Error(
-                  Problem.Unclassified(Legacy.Text(s"--period: '$v' is not start,end")),
-                  exitCode = ExitCode.Usage
-                )
+                Problem.Unclassified(Legacy.Text(s"--period: '$v' is not start,end"))
               )
         case _ =>
           Left(
-            Cli.Error(Problem.Unclassified(Legacy.Text(s"--period: '$v' is not start,end")), exitCode = ExitCode.Usage)
+            Problem.Unclassified(Legacy.Text(s"--period: '$v' is not start,end"))
           )
 
   private def csv(s: Option[CsvText]): List[String] = s.map(csv1).getOrElse(Nil)

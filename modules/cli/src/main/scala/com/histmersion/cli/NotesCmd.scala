@@ -9,24 +9,22 @@ import java.nio.file.{Files, Path}
 import com.histmersion.api.ItemKind
 import com.histmersion.api.library.Title
 import com.histmersion.util.console.Console
+import com.histmersion.util.problem.Problems
 
 /** `histmersion notes list|show|add|edit|rm` — your notes (Markdown), each left on an item or a place on the map.
   */
 object NotesCmd:
 
-  private def text(inline: Option[String], file: Option[String]): Either[Cli.Error, Note.Text] =
+  private def text(inline: Option[String], file: Option[String]): Either[Problems, Note.Text] =
     (inline, file) match
       case (Some(t), None) => Right(Note.Text(t))
       case (None, Some(f)) =>
         val p = Path.of(f)
         if Files.isRegularFile(p) then Right(Note.Text(Files.readString(p)))
-        else Left(Cli.Error(Problem.Unclassified(Legacy.Text(s"no such file: $f")), exitCode = ExitCode.Usage))
+        else Left(Problem.Unclassified(Legacy.Text(s"no such file: $f")))
       case _ =>
         Left(
-          Cli.Error(
-            Problem.Unclassified(Legacy.Text("give the note's text with --text or --file (one of them)")),
-            exitCode = ExitCode.Usage
-          )
+          Problem.Unclassified(Legacy.Text("give the note's text with --text or --file (one of them)"))
         )
 
   /** What `histmersion …` of this group was asked to do, every argument parsed. */
@@ -64,11 +62,12 @@ object NotesCmd:
         case Command.Add(raw, inline, file, title, json) =>
           for
             t <- TargetFlags.target(raw)
-            x <- text(inline, file)
+            x <- text(inline, file).left.map(Cli.Error(_, exitCode = ExitCode.Usage))
             n <- c.call(PersonalApi.addNote)(Note.New(t, x, title.map(Title(_))))
           yield Output.emit(json, n)(n => s"Noted on ${n.title} (id `${n.id.value}`).")
         case Command.Edit(id, inline, file, json) =>
-          text(inline, file)
+          text(inline, file).left
+            .map(Cli.Error(_, exitCode = ExitCode.Usage))
             .flatMap(x => c.call(PersonalApi.editNote)((Note.Id(id), Note.Edit(x))))
             .map(n => Output.emit(json, n)(n => s"Changed the note on ${n.title}."))
         case Command.Rm(id, json) =>

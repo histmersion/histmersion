@@ -19,6 +19,7 @@ import com.histmersion.api.library.{Citekey, Title}
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.Write
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.problem.Problems
 
 /** Assemble a [[SourcePatch]] from `histmersion patch` flags.
   *
@@ -54,16 +55,24 @@ object Patches:
     for
       base <- json.fold[Either[Cli.Error, Source.Patch]](
         Right(Source.Patch())
-      )(parse[Source.Patch]("--json", _))
-      adds <- traverse(addFindings)(parse[Finding.Input]("--add-finding", _))
-      eAdd <- traverse(addEdges)(parseEdge("--add-edge", _))
-      eRem <- traverse(removeEdges)(parseEdge("--remove-edge", _))
-      p <- period.fold[Either[Cli.Error, Option[Period.Input]]](Right(base.period))(parsePeriod(_).map(Some(_)))
+      )(parse[Source.Patch]("--json", _).left.map(Cli.Error(_, exitCode = ExitCode.Usage)))
+      adds <- traverse(addFindings)(
+        parse[Finding.Input]("--add-finding", _).left.map(Cli.Error(_, exitCode = ExitCode.Usage))
+      )
+      eAdd <- traverse(addEdges)(parseEdge("--add-edge", _).left.map(Cli.Error(_, exitCode = ExitCode.Usage)))
+      eRem <- traverse(removeEdges)(parseEdge("--remove-edge", _).left.map(Cli.Error(_, exitCode = ExitCode.Usage)))
+      p <- period.fold[Either[Cli.Error, Option[Period.Input]]](Right(base.period))(
+        parsePeriod(_).left.map(Cli.Error(_, exitCode = ExitCode.Usage)).map(Some(_))
+      )
       notes <- notesFile.fold[Either[Cli.Error, Option[Source.Notes]]](Right(base.notes))(f =>
-        readFile("--notes-file", f.value).map(t => Some(Source.Notes(t)))
+        readFile("--notes-file", f.value).left
+          .map(Cli.Error(_, exitCode = ExitCode.Usage))
+          .map(t => Some(Source.Notes(t)))
       )
       body <- bodyFile.fold[Either[Cli.Error, Option[Source.OcrMarkdown]]](Right(base.body))(f =>
-        readFile("--body-file", f.value).map(t => Some(Source.OcrMarkdown(t)))
+        readFile("--body-file", f.value).left
+          .map(Cli.Error(_, exitCode = ExitCode.Usage))
+          .map(t => Some(Source.OcrMarkdown(t)))
       )
       meta = mergeMetadata(base.metadata, title, status)
       tags = mergeTags(base.tags, tagsAdd, tagsRemove, tagsReplace)
@@ -138,60 +147,46 @@ object Patches:
 
   private def csvItems(s: String): List[Write.ListItem] = csv(s).map(Write.ListItem(_))
 
-  private def parse[A: JsonValueCodec](flag: String, s: String): Either[Cli.Error, A] =
+  private def parse[A: JsonValueCodec](flag: String, s: String): Either[Problems, A] =
     RawJson
       .decode[A](s)
       .left
-      .map(e =>
-        Cli.Error(
-          Problem.Unclassified(Legacy.Text(s"$flag: not valid JSON for this option ($e)")),
-          exitCode = ExitCode.Usage
-        )
-      )
+      .map(e => Problem.Unclassified(Legacy.Text(s"$flag: not valid JSON for this option ($e)")))
 
   /** `--add-edge refutes:heggarty2023_language` — an edge FROM the patched source, so only the kind and the target are
     * given.
     */
-  private[cli] def parseEdge(flag: String, s: String): Either[Cli.Error, Edge.Input] =
+  private[cli] def parseEdge(flag: String, s: String): Either[Problems, Edge.Input] =
     s.split(":", 2).map(_.trim) match
       case Array(k, dst) if dst.nonEmpty =>
         Edge.Kind
           .fromWire(Edge.Kind.Wire(k))
           .map(Edge.Input(Citekey(dst), _))
           .toRight(
-            Cli.Error(
-              Problem.Unclassified(
-                Legacy.Text(s"$flag: unknown edge kind '$k' (one of: ${Edge.Kind.allWire.mkString(", ")})")
-              ),
-              exitCode = ExitCode.Usage
+            Problem.Unclassified(
+              Legacy.Text(s"$flag: unknown edge kind '$k' (one of: ${Edge.Kind.allWire.mkString(", ")})")
             )
           )
       case _ =>
         Left(
-          Cli.Error(
-            Problem.Unclassified(
-              Legacy.Text(s"$flag: expected '<kind>:<citekey>', e.g. 'challenges:lord1968_oralpoet', got '$s'")
-            ),
-            exitCode = ExitCode.Usage
+          Problem.Unclassified(
+            Legacy.Text(s"$flag: expected '<kind>:<citekey>', e.g. 'challenges:lord1968_oralpoet', got '$s'")
           )
         )
 
-  private def parsePeriod(s: String): Either[Cli.Error, Period.Input] =
+  private def parsePeriod(s: String): Either[Problems, Period.Input] =
     csv(s).map(_.toLongOption) match
       case List(Some(a), Some(b)) => Right(Period.Input(Year(a), Year(b)))
       case _                      =>
         Left(
-          Cli.Error(
-            Problem.Unclassified(Legacy.Text(s"--period: expected 'start,end' as signed years, got '$s'")),
-            exitCode = ExitCode.Usage
-          )
+          Problem.Unclassified(Legacy.Text(s"--period: expected 'start,end' as signed years, got '$s'"))
         )
 
   /** A file a flag names, read whole — a large body (a book's OCR) cannot travel through `--json`. */
-  private def readFile(flag: String, file: String): Either[Cli.Error, String] =
+  private def readFile(flag: String, file: String): Either[Problems, String] =
     val p = Path.of(file)
     if Files.isRegularFile(p) then Right(Files.readString(p))
-    else Left(Cli.Error(Problem.Unclassified(Legacy.Text(s"$flag: no such file: $file")), exitCode = ExitCode.Usage))
+    else Left(Problem.Unclassified(Legacy.Text(s"$flag: no such file: $file")))
 
   private def traverse[A, B](as: List[A])(f: A => Either[Cli.Error, B]): Either[Cli.Error, List[B]] =
     as.foldLeft[Either[Cli.Error, List[B]]](Right(Nil))((acc, a) => acc.flatMap(bs => f(a).map(bs :+ _)))
