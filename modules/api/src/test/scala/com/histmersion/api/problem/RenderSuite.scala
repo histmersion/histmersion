@@ -8,7 +8,7 @@ import hearth.kindlings.jsoniterjson.Json
 
 import util.problem.{External, Problem, Problems}
 import util.problem.Problem.*
-import Answer.{answer, decoded, entry, problem, relayedEntry, retryAfter, status}
+import Answer.{answer, decoded, entry, problem, retryAfter, status}
 import util.problem.Text.{sentence, sentences}
 import json.NewtypeCodecs.{list, problemCodec}
 
@@ -194,11 +194,6 @@ class RenderSuite extends munit.FunSuite:
     val relayed = Relayed(Sentence("the server is reindexing"))
     val written = """{"group":"Relayed","case":"Relayed","data":{},"text":"the server is reindexing"}"""
     assertEquals(relayed.entry.asJson.noSpaces, written)
-    assertEquals(
-      (Invalid.Missing.here(Field("rationale")): Problem).relayedEntry.asJson.noSpaces,
-      """{"group":"Relayed","case":"Relayed","data":{},"text":"rationale is required"}"""
-    )
-    assertEquals(relayed.relayedEntry.asJson.noSpaces, written)
     assertEquals((relayed: Problem).asJson.noSpaces, written)
     assertEquals(RawJson.decode[Problem](written), Right(relayed))
 

@@ -6,8 +6,9 @@ import sttp.tapir.{Schema, SchemaType}
 import sttp.tapir.EndpointIO.Body
 import sttp.tapir.internal.*
 
-/** No request body holds a problem, so the browser, which reads a problem's sentence alone ([[ProblemJson]] on
-  * Scala.js), never sends the server one it would have to read back as its case.
+/** No request body holds a problem: a problem is what the server answers, never what a caller sends. Were one sent, the
+  * browser writes it as the server does (the typed entry, TypedEntrySuite on both platforms), and a bare string in it
+  * would read on the server as a master text ([[StoredShapes]]), not as the outside text the page meant.
   */
 class RequestBodiesSuite extends munit.FunSuite:
 

@@ -100,24 +100,15 @@ object Answer:
       case Upstream.Unasked(why)         => why.retryAfter
       case _                             => None
 
-    /** The problem as the body lists it: its group, its case, its fields and its sentence. */
+    /** The problem as the body lists it: its group, its case, its fields and its sentence. A [[Relayed]] problem, known
+      * by its sentence alone, is the `Relayed` group and case with no fields, which reads back as the same problem. The
+      * server, the CLI and the browser write every problem so (`NewtypeCodecs.problemCodec`).
+      */
     def entry: Entry = problem match
-      case relayed: Relayed => relayed.relayedEntry
+      case relayed: Relayed => entryOf(relayed.group, relayed.productPrefix, Json.obj(), relayed.sentence)
       case typed            =>
         val (name, data) = typed.encoded
-        entryOf(typed.group, name, data, typed.relayed.sentence)
-
-    /** The problem as only its sentence: a relayed one as it is, any other by its [[util.problem.Text.sentence]]. */
-    def relayed: Relayed = problem match
-      case relayed: Relayed => relayed
-      case typed            => Relayed(Sentence(s"${typed.sentence}"))
-
-    /** The problem as the browser writes it, by its sentence alone: the `Relayed` group and case with no fields, which
-      * reads back as the same [[Relayed]]. Unlike [[entry]] it needs none of the groups' codecs.
-      */
-    def relayedEntry: Entry =
-      val relayed = problem.relayed
-      entryOf(relayed.group, relayed.productPrefix, Json.obj(), relayed.sentence)
+        entryOf(typed.group, name, data, Sentence(s"${typed.sentence}"))
 
   /** An entry of the body: the group and the case by their names. */
   private def entryOf(group: Problem.Group, name: String, data: Json, sentence: Sentence): Entry =
@@ -170,10 +161,17 @@ object Answer:
           case Problem.Group.Relayed      => Right(Relayed(entry.text))
         }
 
+  extension (json: Json)
+    /** The problem a wire record or a stored column carries: an entry as its case ([[problem]]), on the JVM and in the
+      * browser alike; a bare string as this platform reads one ([[ProblemJson.bare]]).
+      */
+    def asProblem: Either[String, Problem] =
+      json.asString.fold(json.as[Entry].flatMap(_.problem))(text => Right(ProblemJson.bare(text)))
+
   // ---- the derived codecs of the cases' fields ----------------------------------------------------------------
 
-  // code words as strings (`"Read"`), a case's defaults honoured; lazy, so a page that only writes relayed problems
-  // ([[relayedEntry]]) links none of them
+  // code words as strings (`"Read"`), a case's defaults honoured; one derivation for the JVM and the browser alike.
+  // Lazy: a case holding a problem writes it through `NewtypeCodecs.problemCodec`, which comes back here
 
   private lazy val invalid = JsonCodec.derivedWords[Invalid]
   private lazy val notFound = JsonCodec.derivedWords[NotFound]

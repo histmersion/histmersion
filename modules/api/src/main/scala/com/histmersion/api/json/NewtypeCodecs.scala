@@ -9,8 +9,9 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import hearth.kindlings.jsoniterjson.Json
 import util.json.{JsonCodec, RawJson}
 import util.problem.Problem
-import api.problem.{Answer, ProblemJson}
-import api.problem.ProblemJson.json
+import util.json.RawJson.asJson
+import api.problem.Answer
+import api.problem.Answer.{asProblem, entry}
 
 /** The JSON codec, key codec and tapir schema of every newtype (`type X = X.T; object X extends Newtype[Base, C]`),
   * from its base type's: the same JSON and the same schema, with the constraint checked on decoding. Importing its
@@ -41,15 +42,17 @@ object NewtypeCodecs:
     base.as[T]
 
   /** A problem in a wire record: its group, its case, its fields and its English sentence (`{"group", "case", "data",
-    * "text"}`, an [[Answer.Entry]]), so a reader keeps its type and a person still reads the sentence. The JVM reads
-    * and writes the case; the browser, which only shows the sentence, reads the `text` alone ([[ProblemJson]]).
+    * "text"}`, an [[Answer.Entry]]), so a reader keeps its type and a person still reads the sentence. One codec for
+    * the JVM (server, CLI, MCP) and the browser: each writes and reads the case, a problem nested in another's fields
+    * too.
     *
-    * Every problem is written as its entry, in stored columns and records too. A bare string is how a master version
-    * kept a problem's text, in stored and checkpointed JSON: it reads through [[api.problem.StoredShapes]] (the shapes
-    * a master version wrote; any other text as [[Problem.Stored.Unrecognised]], kept whole).
+    * Every problem is written as its entry, in stored columns and records too. A bare string is read by the platform
+    * ([[api.problem.ProblemJson.bare]]): on the JVM it is how a master version kept a problem's text, in stored and
+    * checkpointed JSON, read through [[api.problem.StoredShapes]] (the shapes a master version wrote; any other text as
+    * [[Problem.Stored.Unrecognised]], kept whole); in the browser it is outside text, [[Problem.Relayed]].
     */
   given problemCodec: JsonValueCodec[Problem] =
-    JsonCodec.mapped[Problem, Json](_.json, ProblemJson.read)
+    JsonCodec.mapped[Problem, Json](_.entry.asJson, _.asProblem)
 
   /** A problem's schema: the typed entry (named `Problem`, apart from the other records called `Entry`). */
   given problemSchema: Schema[Problem] =

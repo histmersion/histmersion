@@ -2439,9 +2439,8 @@ object Problem:
     type Text = Text.T
     object Text extends Newtype[String, Pure]
 
-  /** A problem known only by its sentence, as another program wrote it: how the browser reads the server's typed
-    * entries, since it shows a problem and never tells cases apart, so it links none of the cases' codecs. It is no
-    * case of any group and no code branches on it.
+  /** A problem known only by its sentence, as another program wrote it: how the browser reads outside text, a bare
+    * string where a typed entry would be. It is no case of any group and no code branches on it.
     */
   final case class Relayed(sentence: Sentence) extends Problem
 
