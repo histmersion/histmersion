@@ -44,6 +44,7 @@ import com.histmersion.plugin.Longitude
 import com.histmersion.plugin.CataloguePage
 import com.histmersion.domain.catalogue.events.BEventRow
 import com.histmersion.domain.DeepTime
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** A THIRD-PARTY plugin's event catalogue (docs/research-plugins.md §6) read by `events import` through the registries,
   * against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise): its parts in order, a paged part followed, a
@@ -139,12 +140,12 @@ class PluginCatalogueSuite extends DbSuite:
     base.modify(_.media).setTo(base.media.modify(_.requestIntervalMs).setTo(MediaConfig.RequestIntervalMs(0)))
 
   private def clean(): Unit = connect(ds):
-    val _ = sql"DELETE FROM event_catalogue WHERE provider = ${Catalogue.value}".update.run()
+    val _ = sql"DELETE FROM event_catalogue WHERE provider = $Catalogue".update.run()
     val _ = sql"DELETE FROM events WHERE id LIKE 'zq_quakes%'".update.run()
-    val _ = sql"DELETE FROM event_import_parts WHERE provider = ${Catalogue.value}".update.run()
-    val _ = sql"DELETE FROM event_catalogue WHERE provider = ${Floods.value}".update.run()
+    val _ = sql"DELETE FROM event_import_parts WHERE provider = $Catalogue".update.run()
+    val _ = sql"DELETE FROM event_catalogue WHERE provider = $Floods".update.run()
     val _ = sql"DELETE FROM events WHERE id LIKE 'zq_floods%'".update.run()
-    val _ = sql"DELETE FROM event_import_parts WHERE provider = ${Floods.value}".update.run()
+    val _ = sql"DELETE FROM event_import_parts WHERE provider = $Floods".update.run()
 
   override def beforeAll(): Unit = if testDb.isDefined then clean()
   override def afterSuite(): Unit = if testDb.isDefined then clean()

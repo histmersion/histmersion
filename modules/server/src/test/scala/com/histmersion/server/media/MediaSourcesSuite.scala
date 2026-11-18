@@ -59,6 +59,7 @@ import com.histmersion.api.library.RepairAcquire
 import com.histmersion.config.ServerConfig
 import com.histmersion.domain.media.imports.Target
 import com.histmersion.api.media.ImportJobKinds
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** The second slice of #1446 through the server, against the test database (HISTMERSION_TEST_DB_URL; skipped otherwise)
   * and fakes only — no network, no sidecar: a paper's illustration chosen from its figures with a thumbnail from the
@@ -154,10 +155,10 @@ class MediaSourcesSuite extends DbSuite:
       clean()
       connect(ds):
         sql"""INSERT INTO sources (citekey, title, ocr_markdown) VALUES
-              (${Paper.value}, 'Zqms paper', 'Title ![](assets/fig-0001-01.png) ![](assets/fig-0002-01.png) ![](assets/fig-0001-01.png) ![](assets/fig-0001-01.png)'),
-              (${Book.value}, 'Zqms book', NULL)""".update.run()
+              ($Paper, 'Zqms paper', 'Title ![](assets/fig-0001-01.png) ![](assets/fig-0002-01.png) ![](assets/fig-0001-01.png) ![](assets/fig-0001-01.png)'),
+              ($Book, 'Zqms book', NULL)""".update.run()
         sql"""INSERT INTO source_identifiers (source_uid, scheme, value)
-              SELECT uid, 'isbn', '978-0-00-000000-2' FROM sources WHERE citekey = ${Book.value}""".update.run()
+              SELECT uid, 'isbn', '978-0-00-000000-2' FROM sources WHERE citekey = $Book""".update.run()
         ()
       val _ = AssetFixtures.add(
         ds,

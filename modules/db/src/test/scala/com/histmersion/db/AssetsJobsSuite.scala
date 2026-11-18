@@ -146,9 +146,10 @@ class AssetsJobsSuite extends DbSuite:
       )
     )
     import com.augustnagro.magnum.*
+    import com.histmersion.util.database.NewtypeColumns.given
     def uid(name: String) =
       connect(ds)(
-        sql"SELECT uid::text FROM assets WHERE citekey = ${ck.value} AND name = $name".query[String].run().headOption
+        sql"SELECT uid::text FROM assets WHERE citekey = $ck AND name = $name".query[String].run().headOption
       )
     def links = AssetLinkFixtures
       .list(ds, Some(ck), None, None, None)

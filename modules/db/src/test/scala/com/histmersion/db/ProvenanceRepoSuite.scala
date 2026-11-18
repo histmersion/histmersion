@@ -11,6 +11,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.Migrate
 import com.histmersion.api.library.{MetadataPatch, Provenance, Source}
 import com.histmersion.util.database.given

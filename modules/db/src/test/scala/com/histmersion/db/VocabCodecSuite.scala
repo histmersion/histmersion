@@ -12,6 +12,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.api.library.Confidence
 import com.histmersion.util.database.{Jsonb, Migrate}
 import com.histmersion.api.library.{Finding, Source}

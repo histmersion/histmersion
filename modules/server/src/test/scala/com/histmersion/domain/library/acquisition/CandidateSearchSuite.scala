@@ -39,6 +39,7 @@ import com.histmersion.domain.automation.worklists.QueueService
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.library.Candidates
 import com.histmersion.domain.library.workflows.AgentUpstream
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** The deterministic new-source search (#3761) over fake indexes: what a sweep stores, the watermarks it keeps,
   * deduplication across indexes and against the corpus and the acquisition list, a failed index, a dry run, marking —
@@ -78,7 +79,7 @@ class CandidateSearchSuite extends DbSuite:
   private def fresh(): Unit =
     import com.augustnagro.magnum.*
     transact(ds):
-      sql"DELETE FROM goals WHERE slug = ${Goal.value}".update.run()
+      sql"DELETE FROM goals WHERE slug = $Goal".update.run()
       sql"DELETE FROM sources WHERE citekey LIKE 'zzcand%'".update.run()
       sql"DELETE FROM queue_items WHERE text LIKE '%zzcand%'".update.run()
     assert(

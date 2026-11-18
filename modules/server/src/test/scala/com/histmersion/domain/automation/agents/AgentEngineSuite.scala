@@ -68,6 +68,7 @@ import com.histmersion.config.ClaudeCodeConfig
 import com.histmersion.config.AgentBudgetsConfig
 import com.histmersion.server.agents.CliProcess
 import com.histmersion.api.Api
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** A scripted stand-in for a provider: each LLM step (each `run`) consumes the next script — the real sttp-ai loop runs
   * against it, the real tools execute in process. Records every request and counts the steps it served. `fail` makes

@@ -36,6 +36,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Citekey
 import com.histmersion.domain.DeepTime
 import com.histmersion.api.library.Filter
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** What an imported place's silence about time means (V074, 2026-10-09), against a real PostGIS
   * (HISTMERSION_TEST_DB_URL; skipped otherwise):
@@ -192,7 +193,7 @@ class ImportedPlaceTimeSuite extends DbSuite with com.histmersion.db.Bounded:
     val c = load(Wikidata, V1, List(Patones))
     assertEquals(c.created, 1L)
     val stored = connect(ds)(
-      sql"SELECT lower(period), upper(period) - 1, start_unknown FROM places WHERE id = ${PatonesId.value}"
+      sql"SELECT lower(period), upper(period) - 1, start_unknown FROM places WHERE id = $PatonesId"
         .query[(Option[Long], Option[Long], Boolean)]
         .run()
         .head
@@ -397,7 +398,7 @@ class ImportedPlaceTimeSuite extends DbSuite with com.histmersion.db.Bounded:
     assertEquals(c.descriptionsChanged, 2L, "the new text, and the version on the other")
     val rows =
       connect(ds)(
-        sql"SELECT count(*)::int FROM place_descriptions WHERE place_id = ${PatonesId.value}".query[Int].run().head
+        sql"SELECT count(*)::int FROM place_descriptions WHERE place_id = $PatonesId".query[Int].run().head
       )
     assertEquals(rows, 2, "no duplicates")
     assertEquals(PlaceFixtures.get(ds, PatonesId).get.place.periodEnd, Some(1750L))

@@ -65,6 +65,7 @@ private[articles] object ArticleRepo:
   private given DbCodec[Article.Row] = DbCodec.derived
   private given DbCodec[CitedSource] = DbCodec.derived
   private given DbCodec[Article.Ref] = DbCodec.derived
+  private given DbCodec[EventArticleRef] = DbCodec.derived
 
   import Param.*
 

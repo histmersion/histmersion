@@ -37,7 +37,7 @@ class JobRunsDbSuite extends JobRunsContract("db"):
       id: Run.Id
   ): (RunRow.Status, Option[Problem], Option[JobRunState.Progress], Option[RunRow.Origin]) =
     val (status, error, progress, origin) = connect(sources(runs))(
-      sql"SELECT status, error, progress, origin FROM jobs WHERE id = ${id.value}"
+      sql"SELECT status, error, progress, origin FROM jobs WHERE id = $id"
         .query[(String, Option[NonEmptyVector[Problem]], Option[String], Option[String])]
         .run()
         .head

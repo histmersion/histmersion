@@ -62,6 +62,7 @@ import com.histmersion.plugin.Access
 import com.histmersion.plugin.WorkKey
 import com.histmersion.plugin.Fetch
 import com.histmersion.config.ConverterConfig
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** The acquisition handlers against a real Postgres (`HISTMERSION_TEST_DB_URL`), with every upstream replaced by a
   * fake. What is exercised here is the part fixtures cannot reach: resolving references to stored citekeys, writing

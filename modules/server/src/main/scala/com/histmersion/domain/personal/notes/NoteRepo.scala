@@ -67,7 +67,7 @@ private[notes] object NoteRepo:
     val stamp = at.iso
     sql"""INSERT INTO notes (user_id, target_kind, target_id, target_uid, target_label, lat, lon, period_start,
                              period_end, body, created_at, updated_at)
-          VALUES (${user.value}, ${c.kind}, ${c.key}, ${c.uid}, $targetLabel, ${c.lat}, ${c.lon}, ${c.from},
+          VALUES ($user, ${c.kind}, ${c.key}, ${c.uid}, $targetLabel, ${c.lat}, ${c.lon}, ${c.from},
                   ${c.to}, $text, $stamp::timestamptz, $stamp::timestamptz)
           RETURNING id::text""".query[com.histmersion.api.personal.Note.Id].run().head
 
@@ -79,13 +79,13 @@ private[notes] object NoteRepo:
   )(using DbCon): RowsChanged =
     val stamp = at.iso
     sql"""UPDATE notes SET body = $text, updated_at = $stamp::timestamptz
-          WHERE user_id = ${user.value} AND id = ${id.value}::uuid AND deleted_at IS NULL""".update
+          WHERE user_id = $user AND id = $id::uuid AND deleted_at IS NULL""".update
       .run()
       .pipe(RowsChanged(_))
 
   def tombstone(user: UserId, id: com.histmersion.api.personal.Note.Id, at: MarkTime)(using DbCon): RowsChanged =
     val stamp = at.iso
     sql"""UPDATE notes SET deleted_at = $stamp::timestamptz, updated_at = $stamp::timestamptz
-          WHERE user_id = ${user.value} AND id = ${id.value}::uuid AND deleted_at IS NULL""".update
+          WHERE user_id = $user AND id = $id::uuid AND deleted_at IS NULL""".update
       .run()
       .pipe(RowsChanged(_))

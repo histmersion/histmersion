@@ -50,6 +50,7 @@ import com.histmersion.config.AuthConfig
 import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.server.ConverterWiring
 import com.histmersion.api.Api
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** Plan pools end to end against a `*_test` database (docs/research-plan-quotas.md §5): the pick with plan readings — a
   * window below its floor, a hold, a provider refusal — pauses a run with `plan-quota` until the reset instead of

@@ -1,7 +1,7 @@
 package com.histmersion
 package server.instance
 
-import com.histmersion.api.automation.Agents
+import com.histmersion.api.automation.{AgentJobKinds, Agents}
 import com.histmersion.api.instance.UiNotices
 import com.histmersion.api.instance.UiNotices.{Board, Counters}
 
@@ -56,7 +56,7 @@ object UiRepo:
     val (running, queued) =
       sql"""SELECT (count(*) FILTER (WHERE status = ${Run.State.Running.wire}))::int,
                    (count(*) FILTER (WHERE status = ${Run.State.Queued.wire}))::int
-            FROM jobs WHERE kind = ${Agents.JobKind}""".query[(Int, Int)].run().head
+            FROM jobs WHERE kind = ${AgentJobKinds.Agent.kind}""".query[(Int, Int)].run().head
     val (on, draining) =
       sql"SELECT enabled, drain_since IS NOT NULL FROM agent_autopilot WHERE id"
         .query[(Boolean, Boolean)]

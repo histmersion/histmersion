@@ -16,6 +16,7 @@ import com.histmersion.domain.*
 import com.histmersion.api.catalogue.Geocode.{Approximation, Attempt, KindHint}
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.api.library.Confidence
 import com.histmersion.util.database.Migrate
 import com.histmersion.api.catalogue.{Geocode, Period}
@@ -256,7 +257,7 @@ class GeocoderSuite extends DbSuite with Bounded:
     )
 
   private def point(id: Finding.Id): (Double, Double, Option[String]) = connect(ds):
-    sql"SELECT ST_X(geom), ST_Y(geom), region_name FROM findings WHERE id = ${id.value}"
+    sql"SELECT ST_X(geom), ST_Y(geom), region_name FROM findings WHERE id = $id"
       .query[(Double, Double, Option[String])]
       .run()
       .head

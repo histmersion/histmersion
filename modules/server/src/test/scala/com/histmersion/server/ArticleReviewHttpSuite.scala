@@ -107,8 +107,8 @@ class ArticleReviewHttpSuite extends DbSuite:
     ReviewLedgerFixtures.put(ds, ledger)
     transact(ds):
       sql"""INSERT INTO jobs (id, kind, status, created_at) VALUES
-            ($RunA, ${Agents.JobKind}, 'done', '2026-10-01T10:00:00Z'::timestamptz),
-            ($RunB, ${Agents.JobKind}, 'running', '2026-10-02T10:00:00Z'::timestamptz)""".update.run()
+            ($RunA, ${Agents.JobKind: String}, 'done', '2026-10-01T10:00:00Z'::timestamptz),
+            ($RunB, ${Agents.JobKind: String}, 'running', '2026-10-02T10:00:00Z'::timestamptz)""".update.run()
       sql"""INSERT INTO agent_steps (job_id, seq, attempt, name, kind, status) VALUES
             ($RunB, 1, 1, 'ledger', 'code', 'done'), ($RunB, 2, 1, 'snapshot-1', 'code', 'done'),
             ($RunB, 3, 1, 'snapshot-2', 'code', 'done')""".update.run()

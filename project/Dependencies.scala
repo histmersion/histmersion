@@ -29,7 +29,7 @@ object Dependencies {
       "6.0.1" // org.rogach — the CLI parser (no dependency but the Scala library)
     val ox = "1.0.2" // direct-style concurrency (via tapir-netty-server-sync); 1.0+ dropped
     // StructuredTaskScope for its own ThreadHerd → JDK 25 (JEP 505) safe
-    val magnum = "1.3.1" // sync JDBC
+    val magnum = "2.0.0" // sync JDBC; 2.0 nests an interpolated Frag into sql"" and needs a DbCodec for every value
     val postgres = "42.7.14"
     val hikari = "7.1.0" // com.zaxxer — JDBC connection pool (native-image-safe, no reflection)
     val flyway = "13.12.2" // schema versioning (SQL migrations under db/migration); 11.20+ knows PostgreSQL 18

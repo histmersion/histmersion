@@ -28,14 +28,9 @@ object NewtypeColumns:
     def queryRepr: String = base.queryRepr
     def readSingle(rs: ResultSet, pos: Int): T =
       val raw = base.readSingle(rs, pos)
-      if Option(raw).isEmpty then raw.asInstanceOf[T]
-      else
-        m.ops
-          .either(raw)
-          .fold(
-            e => throw SQLException(s"column ${rs.getMetaData.getColumnLabel(pos)}: '$raw' is not valid: $e"),
-            _.asInstanceOf[T]
-          )
+      if Option(raw).isEmpty then raw.asInstanceOf[T] else checked(m, rs, pos, raw)
+    def readSingleOption(rs: ResultSet, pos: Int): Option[T] =
+      base.readSingleOption(rs, pos).map(raw => checked(m, rs, pos, raw))
     def writeSingle(entity: T, ps: PreparedStatement, pos: Int): Unit =
       base.writeSingle(entity.asInstanceOf[m.BaseType], ps, pos)
 
@@ -43,17 +38,20 @@ object NewtypeColumns:
     new DbCodec[List[T]]:
       val cols: IArray[Int] = base.cols
       def queryRepr: String = base.queryRepr
-      def readSingle(rs: ResultSet, pos: Int): List[T] =
-        base.readSingle(rs, pos).map { raw =>
-          m.ops
-            .either(raw)
-            .fold(
-              e => throw SQLException(s"column ${rs.getMetaData.getColumnLabel(pos)}: '$raw' is not valid: $e"),
-              _.asInstanceOf[T]
-            )
-        }
+      def readSingle(rs: ResultSet, pos: Int): List[T] = base.readSingle(rs, pos).map(raw => checked(m, rs, pos, raw))
+      def readSingleOption(rs: ResultSet, pos: Int): Option[List[T]] =
+        base.readSingleOption(rs, pos).map(_.map(raw => checked(m, rs, pos, raw)))
       def writeSingle(entity: List[T], ps: PreparedStatement, pos: Int): Unit =
         base.writeSingle(entity.map(_.asInstanceOf[m.BaseType]), ps, pos)
+
+  /** The stored value as the newtype, or the read fails naming the column and the value. */
+  private def checked[T](m: RefinedType.Mirror[T], rs: ResultSet, pos: Int, raw: m.BaseType): T =
+    m.ops
+      .either(raw)
+      .fold(
+        e => throw SQLException(s"column ${rs.getMetaData.getColumnLabel(pos)}: '$raw' is not valid: $e"),
+        _.asInstanceOf[T]
+      )
 
   /** A problems' column (a job's, a step's, a watch's, a plan pool's): every problem's entry, in order, in a JSON
     * array.
@@ -73,8 +71,9 @@ object NewtypeColumns:
   private def jsonbColumn[A](using codec: JsonValueCodec[A]): DbCodec[A] = new DbCodec[A]:
     val cols: IArray[Int] = IArray(Types.OTHER)
     def queryRepr: String = "?"
-    def readSingle(rs: ResultSet, pos: Int): A =
-      Option(rs.getString(pos)).fold(null.asInstanceOf[A])(text =>
+    def readSingle(rs: ResultSet, pos: Int): A = readSingleOption(rs, pos).getOrElse(null.asInstanceOf[A])
+    def readSingleOption(rs: ResultSet, pos: Int): Option[A] =
+      Option(rs.getString(pos)).map(text =>
         RawJson
           .decode[A](text)
           .fold(

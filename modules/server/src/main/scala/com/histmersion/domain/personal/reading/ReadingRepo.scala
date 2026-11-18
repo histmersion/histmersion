@@ -45,7 +45,7 @@ private[reading] object ReadingRepo:
   /** The records of `kind` the person marked read. */
   def read(user: UserId, kind: ItemKind)(using DbCon): List[ItemRef] =
     sql"""SELECT target_kind, target_id, target_uid FROM read_marks
-          WHERE user_id = ${user.value} AND target_kind = $kind AND read_at IS NOT NULL"""
+          WHERE user_id = $user AND target_kind = $kind AND read_at IS NOT NULL"""
       .query[(ItemKind, ItemKey, Option[ItemUid])]
       .run()
       .map(ItemRef.apply)
@@ -58,7 +58,7 @@ private[reading] object ReadingRepo:
     val stamp = at.iso
     val readAt = Option.when(read.value)(stamp)
     sql"""INSERT INTO read_marks (user_id, target_kind, target_id, target_uid, target_label, read_at, created_at, updated_at)
-          VALUES (${user.value}, ${ref.kind}, ${ref.key}, ${ref.uid}, $targetLabel, $readAt::timestamptz,
+          VALUES ($user, ${ref.kind}, ${ref.key}, ${ref.uid}, $targetLabel, $readAt::timestamptz,
                   $stamp::timestamptz, $stamp::timestamptz)
           ON CONFLICT (user_id, target_kind, target_id) DO UPDATE SET
             read_at = CASE WHEN EXCLUDED.read_at IS NULL THEN NULL ELSE coalesce(read_marks.read_at, EXCLUDED.read_at) END,
@@ -69,7 +69,7 @@ private[reading] object ReadingRepo:
   def setOpened(user: UserId, ref: ItemRef, targetLabel: Option[TargetLabel], at: MarkTime)(using DbCon): Unit =
     val stamp = at.iso
     sql"""INSERT INTO read_marks (user_id, target_kind, target_id, target_uid, target_label, opened_at, created_at, updated_at)
-          VALUES (${user.value}, ${ref.kind}, ${ref.key}, ${ref.uid}, $targetLabel, $stamp::timestamptz,
+          VALUES ($user, ${ref.kind}, ${ref.key}, ${ref.uid}, $targetLabel, $stamp::timestamptz,
                   $stamp::timestamptz, $stamp::timestamptz)
           ON CONFLICT (user_id, target_kind, target_id) DO UPDATE SET
             opened_at = EXCLUDED.opened_at,

@@ -48,6 +48,9 @@ class InteractiveQueriesSuite extends DbSuite with Bounded:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
+  // the reference search reads its hits as the repository does (Magnum 2 derives a row codec only where asked)
+  private given DbCodec[Place.Hit] = DbCodec.derived
+
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
     val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))

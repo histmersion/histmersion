@@ -54,6 +54,7 @@ import com.histmersion.plugin.Period
 import com.histmersion.plugin.Year
 import com.histmersion.api.catalogue.Event
 import com.histmersion.config.ServerConfig
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** A THIRD-PARTY plugin's media collection (docs/research-plugins.md §6, §11) run by `media import` through the
   * registries, against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise): the plugin states each record's
@@ -177,7 +178,7 @@ class PluginMediaImportSuite extends DbSuite:
 
   private def clean(): Unit = connect(ds):
     val _ = sql"DELETE FROM media_links WHERE target_id LIKE 'zqpl%'".update.run()
-    val _ = sql"DELETE FROM assets WHERE provider = ${Collection.value}".update.run()
+    val _ = sql"DELETE FROM assets WHERE provider = $Collection".update.run()
     val _ = sql"DELETE FROM media_checks WHERE target_id LIKE 'zqpl%'".update.run()
     val _ = sql"DELETE FROM finding_places WHERE place_id LIKE 'zqpl%'".update.run()
     val _ = sql"DELETE FROM findings WHERE citekey LIKE 'zqpl%'".update.run()
@@ -205,7 +206,7 @@ class PluginMediaImportSuite extends DbSuite:
         sql"INSERT INTO sources (citekey, title) VALUES ('zqpl2020_x', 'Zqpl')".update.run()
         sql"""INSERT INTO findings (id, citekey, claim, period) VALUES
               ('zqpl2020_x#1', 'zqpl2020_x', 'a', int8range(-1600, -1100, '[]'))""".update.run()
-        sql"INSERT INTO finding_places (finding_id, place_id) VALUES ('zqpl2020_x#1', ${PlaceId.value})".update.run()
+        sql"INSERT INTO finding_places (finding_id, place_id) VALUES ('zqpl2020_x#1', $PlaceId)".update.run()
         ()
   override def afterSuite(): Unit = if testDb.isDefined then clean()
 
@@ -255,7 +256,7 @@ class PluginMediaImportSuite extends DbSuite:
     )
     val stored = connect(ds)(
       sql"""SELECT a.provider_key, a.license, a.credit, m.basis, m.role FROM assets a
-          JOIN media_links m ON m.asset_uid = a.uid WHERE a.provider = ${Collection.value} ORDER BY a.provider_key"""
+          JOIN media_links m ON m.asset_uid = a.uid WHERE a.provider = $Collection ORDER BY a.provider_key"""
         .query[(String, Option[String], Option[String], Option[String], String)]
         .run()
         .toList
@@ -268,7 +269,7 @@ class PluginMediaImportSuite extends DbSuite:
     assertEquals(stored.head._4, Some("place_of_origin = Zqplenai; 1400–1300 BCE within 1600–1100 BCE"))
     assert(http.requests.exists(_._1 == "https://zq.example/img/nc.jpg"), "the host downloaded the rendition")
     val checked = connect(ds)(
-      sql"SELECT found FROM media_checks WHERE provider = ${Collection.value} AND target_id = ${PlaceId.value}"
+      sql"SELECT found FROM media_checks WHERE provider = $Collection AND target_id = $PlaceId"
         .query[Int]
         .run()
         .toList

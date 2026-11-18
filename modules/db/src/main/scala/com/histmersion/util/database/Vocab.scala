@@ -2,6 +2,8 @@ package com.histmersion
 package util.database
 import com.augustnagro.magnum.*
 
+import java.sql.{PreparedStatement, ResultSet, Types}
+
 /** Magnum DbCodec instances for the domain vocabularies. Each reads/writes the lowercase wire string that Postgres
   * stores. Placed here (db module) because core has no Magnum dependency.
   *
@@ -11,8 +13,15 @@ import com.augustnagro.magnum.*
   * ([[Write]]: an unknown word is refused).
   */
 object Vocab:
-  /** A vocabulary column: `parse` the stored wire string, `unknown` for anything it does not know. */
+  /** A vocabulary column: `parse` the stored wire string, `unknown` for anything it does not know. A NULL column reads
+    * as `unknown`, and as `None` where the column is read as an `Option` (an outer join's missing row).
+    */
 
   def codec[E](parse: WireEnumValues.Wire => Option[E], wire: E => WireEnumValues.Wire, unknown: E): DbCodec[E] =
-    DbCodec[Option[String]]
-      .biMap(s => s.flatMap(v => parse(WireEnumValues.Wire(v.trim))).getOrElse(unknown), e => Some(wire(e).value))
+    new DbCodec[E]:
+      val cols: IArray[Int] = IArray(Types.VARCHAR)
+      def queryRepr: String = "?"
+      def readSingle(rs: ResultSet, pos: Int): E = readSingleOption(rs, pos).getOrElse(unknown)
+      def readSingleOption(rs: ResultSet, pos: Int): Option[E] =
+        Option(rs.getString(pos)).map(v => parse(WireEnumValues.Wire(v.trim)).getOrElse(unknown))
+      def writeSingle(e: E, ps: PreparedStatement, pos: Int): Unit = ps.setString(pos, wire(e).value)

@@ -22,9 +22,16 @@ object Jsonb:
   type JsonText = JsonText.T
   object JsonText extends Newtype[String, Pure]
 
-  def codec[A: JsonValueCodec](fallback: A, dropNulls: DropNulls = DropNulls(false)): DbCodec[A] =
-    DbCodec[Option[String]]
-      .biMap(_.flatMap(t => read[A](JsonText(t))).getOrElse(fallback), a => Some(write(a, dropNulls).value))
+  /** A NULL column reads as `fallback`, and as `None` where the column is read as an `Option` (an outer join's miss).
+    */
+  def codec[A: JsonValueCodec](fallback: A, dropNulls: DropNulls = DropNulls(false)): DbCodec[A] = new DbCodec[A]:
+    val cols: IArray[Int] = IArray(java.sql.Types.VARCHAR)
+    def queryRepr: String = "?"
+    def readSingle(rs: java.sql.ResultSet, pos: Int): A = readSingleOption(rs, pos).getOrElse(fallback)
+    def readSingleOption(rs: java.sql.ResultSet, pos: Int): Option[A] =
+      Option(rs.getString(pos)).map(t => Jsonb.read[A](JsonText(t)).getOrElse(fallback))
+    def writeSingle(a: A, ps: java.sql.PreparedStatement, pos: Int): Unit =
+      ps.setString(pos, Jsonb.write(a, dropNulls).value)
 
   def optional[A: JsonValueCodec](dropNulls: DropNulls = DropNulls(false)): DbCodec[Option[A]] =
     DbCodec[Option[String]].biMap(_.flatMap(t => read[A](JsonText(t))), _.map(a => write(a, dropNulls).value))

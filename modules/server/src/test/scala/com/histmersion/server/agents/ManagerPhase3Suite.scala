@@ -2,6 +2,7 @@ package com.histmersion
 package server.agents
 
 import com.histmersion.util.problem.Problem
+import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.testsupport.ComparedByValue.given
 

@@ -35,6 +35,7 @@ import com.histmersion.domain.*
 import com.histmersion.api.automation.Queue.{Kind, QueueAdd, QueuePatch}
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.data.exchange.TestExchange
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}

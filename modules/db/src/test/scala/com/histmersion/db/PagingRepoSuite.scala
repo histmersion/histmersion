@@ -16,6 +16,7 @@ import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.{ApprovalState, RunState}
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.util.database.Migrate
 import com.histmersion.api.automation.Agents

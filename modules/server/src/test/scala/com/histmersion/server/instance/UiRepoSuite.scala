@@ -16,6 +16,7 @@ import com.histmersion.util.database.Migrate
 import com.augustnagro.magnum.*
 import com.histmersion.db.DbSuite
 import com.histmersion.db.TestDb
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** The toolbar's notices against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise: an approval's proposal
   * and its decision both count as a change, a goal's edit does, the open ones are counted, V083 left a baseline mark
@@ -36,8 +37,8 @@ class UiRepoSuite extends DbSuite:
 
   private def tidy(): Unit =
     connect(ds):
-      sql"DELETE FROM approvals WHERE citekey = ${ck.value}".update.run()
-      sql"DELETE FROM goals WHERE slug = ${goal.value}".update.run()
+      sql"DELETE FROM approvals WHERE citekey = $ck".update.run()
+      sql"DELETE FROM goals WHERE slug = $goal".update.run()
 
   override def beforeEach(context: BeforeEach): Unit = if testDb.isDefined then tidy()
   override def afterEach(context: AfterEach): Unit = if testDb.isDefined then tidy()
@@ -56,7 +57,7 @@ class UiRepoSuite extends DbSuite:
 
   private def markSeen(b: Board, at: UiNotices.Counter.Seen): Unit =
     connect(ds)(
-      sql"""INSERT INTO ui_seen (board, seen_at) VALUES (${b.wire.value}, ${at.value}::timestamptz)
+      sql"""INSERT INTO ui_seen (board, seen_at) VALUES (${b.wire}, $at::timestamptz)
             ON CONFLICT (board) DO UPDATE SET seen_at = greatest(ui_seen.seen_at, EXCLUDED.seen_at)""".update
         .run(): Unit
     )
@@ -108,7 +109,7 @@ class UiRepoSuite extends DbSuite:
     markSeen(Board.Approvals, t0)
     val before = board(Board.Approvals).count.get.value
     val id = connect(ds)(
-      sql"""INSERT INTO approvals (kind, citekey, status, proposal) VALUES ('status-change', ${ck.value}, 'contested', '{}'::jsonb)
+      sql"""INSERT INTO approvals (kind, citekey, status, proposal) VALUES ('status-change', $ck, 'contested', '{}'::jsonb)
             RETURNING id""".query[Long].run().head
     )
     val proposed = board(Board.Approvals)
@@ -129,7 +130,7 @@ class UiRepoSuite extends DbSuite:
   test("a goal changed after the mark is news"):
     val t0 = now()
     markSeen(Board.Goals, t0)
-    connect(ds)(sql"INSERT INTO goals (slug, title) VALUES (${goal.value}, 'zz notice')".update.run())
+    connect(ds)(sql"INSERT INTO goals (slug, title) VALUES ($goal, 'zz notice')".update.run())
     val g = board(Board.Goals)
     assert(g.fresh.value && g.latest.exists(_.value > t0.value), g.toString)
     assertEquals(g.count, None, "goals are not counted")

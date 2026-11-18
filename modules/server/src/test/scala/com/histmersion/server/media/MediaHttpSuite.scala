@@ -44,6 +44,7 @@ import com.histmersion.api.catalogue.Event
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.catalogue.EventSummary
 import com.histmersion.config.ServerConfig
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** Media from outside providers (#1446) through the server: an import against a FAKE provider into the test database
   * (HISTMERSION_TEST_DB_URL; skipped otherwise), then what the web UI and the CLI read — the place card's thumbnail,
@@ -125,7 +126,7 @@ class MediaHttpSuite extends DbSuite:
         )
       )
       connect(ds)(sql"""INSERT INTO place_links (place_id, scheme, external_id, relation, import_source, import_ref)
-            VALUES (${PlaceId.value}, 'wikidata', 'Q132564', 'exact_match', 'test', 'zqmh')""".update.run())
+            VALUES ($PlaceId, 'wikidata', 'Q132564', 'exact_match', 'test', 'zqmh')""".update.run())
       EventFixtures.put(
         ds,
         EventId,
@@ -168,7 +169,7 @@ class MediaHttpSuite extends DbSuite:
       List(Some("CC-BY-SA-2.5"))
     )
     assert(fake.requests.forall(_._2 == Map("User-Agent" -> cfg.media.userAgent.value)))
-    val checked = connect(ds)(sql"SELECT found FROM media_checks WHERE target_id = ${PlaceId.value}".query[Int].run())
+    val checked = connect(ds)(sql"SELECT found FROM media_checks WHERE target_id = $PlaceId".query[Int].run())
     assertEquals(checked, Vector(1))
 
   test("refusals: an unknown provider, a place with no Wikidata link, an event with no item"):

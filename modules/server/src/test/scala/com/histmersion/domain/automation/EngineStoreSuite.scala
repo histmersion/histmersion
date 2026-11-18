@@ -24,6 +24,7 @@ import com.histmersion.domain.library.workflows.SourceApprovalService
 import com.histmersion.domain.automation.agents.AgentStateService
 import com.histmersion.db.TestDb
 import com.histmersion.config.DbConfig
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** A contract of the engine's services, run once on the in-memory stores and once on the database (a scratch database
   * per test, gated on HISTMERSION_TEST_DB_URL): [[fresh]] gives each test empty stores, or none on a run with no such
@@ -125,12 +126,12 @@ object EngineStoreSuite:
           val agentState = AgentStateService(db)
           def article(slug: Slug, title: Title): Unit =
             connect(ds)(
-              sql"INSERT INTO articles (slug, title, kind, body) VALUES (${slug.value}, ${title.value}, 'concept', '')".update
+              sql"INSERT INTO articles (slug, title, kind, body) VALUES ($slug, $title, 'concept', '')".update
                 .run()
             ): Unit
           def source(citekey: Citekey, title: Title): Unit =
             connect(ds)(
-              sql"INSERT INTO sources (citekey, title) VALUES (${citekey.value}, ${title.value})".update.run()
+              sql"INSERT INTO sources (citekey, title) VALUES ($citekey, $title)".update.run()
             ): Unit
           def within[A](work: DbCon ?=> A): A = transact(ds)(work)
       }

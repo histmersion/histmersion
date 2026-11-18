@@ -49,7 +49,7 @@ private[bookmarks] object BookmarkRepo:
 
   /** The live bookmark of an item, by the key it was bookmarked under. */
   def ofItem(user: UserId, ref: ItemRef)(using DbCon): Option[com.histmersion.api.personal.Bookmark.Id] =
-    sql"""SELECT id::text FROM bookmarks WHERE user_id = ${user.value} AND target_kind = ${ref.kind.value: String}
+    sql"""SELECT id::text FROM bookmarks WHERE user_id = $user AND target_kind = ${ref.kind.value: String}
             AND target_id = ${ref.key} AND deleted_at IS NULL"""
       .query[com.histmersion.api.personal.Bookmark.Id]
       .run()
@@ -65,7 +65,7 @@ private[bookmarks] object BookmarkRepo:
     val stamp = at.iso
     sql"""INSERT INTO bookmarks (user_id, target_kind, target_id, target_uid, target_label, lat, lon, zoom,
                                  period_start, period_end, view, label, created_at, updated_at)
-          VALUES (${user.value}, ${c.kind}, ${c.key}, ${c.uid}, $targetLabel, ${c.lat}, ${c.lon}, ${c.zoom},
+          VALUES ($user, ${c.kind}, ${c.key}, ${c.uid}, $targetLabel, ${c.lat}, ${c.lon}, ${c.zoom},
                   ${c.from}, ${c.to}, ${c.view}, $label, $stamp::timestamptz, $stamp::timestamptz)
           RETURNING id::text""".query[com.histmersion.api.personal.Bookmark.Id].run().head
 
@@ -77,13 +77,13 @@ private[bookmarks] object BookmarkRepo:
   )(using DbCon): RowsChanged =
     val stamp = at.iso
     sql"""UPDATE bookmarks SET label = $label, updated_at = $stamp::timestamptz
-          WHERE user_id = ${user.value} AND id = ${id.value}::uuid AND deleted_at IS NULL""".update
+          WHERE user_id = $user AND id = $id::uuid AND deleted_at IS NULL""".update
       .run()
       .pipe(RowsChanged(_))
 
   def tombstone(user: UserId, id: com.histmersion.api.personal.Bookmark.Id, at: MarkTime)(using DbCon): RowsChanged =
     val stamp = at.iso
     sql"""UPDATE bookmarks SET deleted_at = $stamp::timestamptz, updated_at = $stamp::timestamptz
-          WHERE user_id = ${user.value} AND id = ${id.value}::uuid AND deleted_at IS NULL""".update
+          WHERE user_id = $user AND id = $id::uuid AND deleted_at IS NULL""".update
       .run()
       .pipe(RowsChanged(_))

@@ -16,6 +16,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.Migrate
 import com.histmersion.api.catalogue.{Latitude, Longitude, Period, Place, Year}
 import com.histmersion.domain.catalogue.Place as DPlace
@@ -144,7 +145,7 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
 
   private def row(id: DPlace.Id): (String, String, Boolean) =
     connect(ds)(
-      sql"SELECT kind, period::text, start_unknown FROM places WHERE id = ${id.value}"
+      sql"SELECT kind, period::text, start_unknown FROM places WHERE id = $id"
         .query[(String, String, Boolean)]
         .run()
         .head
@@ -205,7 +206,7 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
     )
     // a gazetteer-style write (start unknown) and a lint-style UPDATE alike
     connect(ds):
-      val _ = sql"UPDATE places SET kind = 'feature', start_unknown = true WHERE id = ${Regio.value}".update.run()
+      val _ = sql"UPDATE places SET kind = 'feature', start_unknown = true WHERE id = $Regio".update.run()
     assertEquals(row(Regio), ("region", "[-7,)", false))
     assertEquals(PlaceFixtures.overrides(ds, Some(Regio)).map(_.sourceKind), List("feature"))
     // a later set changes only what it names
@@ -243,7 +244,7 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
     )
     // after the reset, the next seed writes the source's kind freely
     connect(ds):
-      val _ = sql"UPDATE places SET kind = 'feature' WHERE id = ${Regio.value}".update.run()
+      val _ = sql"UPDATE places SET kind = 'feature' WHERE id = $Regio".update.run()
     assertEquals(row(Regio)._1, "feature")
 
   test("the place-kind lint no longer lists a place a person decided"):
@@ -369,7 +370,7 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
   // ── a point set by hand (V081) ────────────────────────────────────────────────────────────────
 
   private def geom(id: DPlace.Id): String =
-    connect(ds)(sql"SELECT ST_AsText(geom) FROM places WHERE id = ${id.value}".query[String].run().head)
+    connect(ds)(sql"SELECT ST_AsText(geom) FROM places WHERE id = $id".query[String].run().head)
 
   private def tribe(geometry: Option[Place.Geometry]) =
     Place.Input(
@@ -412,7 +413,7 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
     )
     // a lint-style UPDATE alike; a later kind changes only the kind
     connect(ds):
-      val _ = sql"UPDATE places SET geom = ST_SetSRID(ST_MakePoint(1, 1), 4326) WHERE id = ${Tribe.value}".update.run()
+      val _ = sql"UPDATE places SET geom = ST_SetSRID(ST_MakePoint(1, 1), 4326) WHERE id = $Tribe".update.run()
     assertEquals(geom(Tribe), "POINT(150.9 -30.9)")
     val k =
       PlaceFixtures
@@ -472,7 +473,7 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
     )
     connect(ds):
       val _ = sql"""INSERT INTO place_links (place_id, scheme, external_id, relation, item_geom)
-                    VALUES (${id.value}, 'wikidata', 'Qzzpo', 'exact_match', ST_SetSRID(ST_MakePoint(151.1, -31.3), 4326))""".update
+                    VALUES ($id, 'wikidata', 'Qzzpo', 'exact_match', ST_SetSRID(ST_MakePoint(151.1, -31.3), 4326))""".update
         .run()
     def listed = PlaceFixtures.relocations(ds).map(_.id).filter(_.value == id.value)
     assertEquals(listed.map(_.value: String), List(id), "a grid square's centre with a linked point elsewhere")

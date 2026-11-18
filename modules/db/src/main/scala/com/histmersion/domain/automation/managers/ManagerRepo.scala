@@ -7,6 +7,7 @@ import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.util.json.RawJson.*
 
 import com.histmersion.api.automation.Agents.{JobKind, PauseReason, RunState}
+import com.histmersion.api.automation.AgentJobKinds
 import com.histmersion.api.automation.Manager
 import com.histmersion.api.automation.Managers.*
 
@@ -51,6 +52,9 @@ object ManagerRepo:
     Text as EventInText,
     Text as EventText
   }
+
+  /** An agent run's `jobs.kind`, bound through its newtype's codec. */
+  private val AgentRun = AgentJobKinds.Agent.kind
 
   private val ts = """'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
   private def at(col: String) = s"to_char($col AT TIME ZONE 'UTC', $ts)"
@@ -234,7 +238,7 @@ object ManagerRepo:
 
   /** Its runs not settled yet (queued, running, paused, waiting). */
   def inFlight(id: ManagerRow.Id)(using DbCon): RowCount =
-    sql"""SELECT count(*)::int FROM jobs WHERE kind = $JobKind AND manager_id = $id
+    sql"""SELECT count(*)::int FROM jobs WHERE kind = $AgentRun AND manager_id = $id
                       AND status IN ('queued', 'running', 'paused', 'waiting')""".query[RowCount].run().head
 
   /** Its runs that run, or will run again without a person (what a manager's own `maxRuns` counts): queued, running,
@@ -276,7 +280,7 @@ object ManagerRepo:
     */
   def recentKinds(n: PageSize)(using DbCon): List[ItemRow.Kind] =
     sql"""SELECT i.kind FROM jobs j JOIN manager_items i ON i.id = j.manager_item
-          WHERE j.kind = $JobKind ORDER BY j.created_at DESC, j.id DESC LIMIT ${math.max(0, n.value)}"""
+          WHERE j.kind = $AgentRun ORDER BY j.created_at DESC, j.id DESC LIMIT ${math.max(0, n.value)}"""
       .query[ManagerItem.Kind]
       .run()
       .toList
@@ -696,7 +700,7 @@ object ManagerRepo:
     sql"""SELECT a.slug FROM articles a
           WHERE a.kind <> 'index' AND a.tags @> $tags::text[]
             AND NOT EXISTS (SELECT 1 FROM review_ledgers l WHERE l.slug = a.slug)
-            AND NOT EXISTS (SELECT 1 FROM jobs j WHERE j.kind = $JobKind AND j.pipeline = 'review-article'
+            AND NOT EXISTS (SELECT 1 FROM jobs j WHERE j.kind = $AgentRun AND j.pipeline = 'review-article'
                             AND j.target_id = a.slug)
             AND ($goal::text IS NULL OR EXISTS (SELECT 1 FROM goal_links g WHERE g.goal_slug = $goal
                                                  AND g.kind = 'article' AND g.ref = a.slug))
@@ -961,7 +965,7 @@ object ManagerRepo:
               JOIN agent_steps s ON s.job_id = j.id AND s.name = 'rank' AND s.status = 'done'
               CROSS JOIN LATERAL jsonb_array_elements(CASE WHEN jsonb_typeof(s.output) = 'array' THEN s.output
                                                             ELSE '[]'::jsonb END) p
-              WHERE j.kind = $JobKind AND j.pipeline = 'acquisition-sweep' AND j.manager_id LIKE 'watch:%')
+              WHERE j.kind = $AgentRun AND j.pipeline = 'acquisition-sweep' AND j.manager_id LIKE 'watch:%')
             SELECT DISTINCT ON (q.id, p.goal) q.id, q.text, q.topic, p.goal, p.manager_id, p.job, p.doi, p.oa, p.title,
                    p.year, p.authors, p.venue, p.why
             FROM queue_items q

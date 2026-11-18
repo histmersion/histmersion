@@ -28,6 +28,7 @@ import com.histmersion.config.DbConfig
 import com.histmersion.config.InitConfig
 import com.histmersion.api.catalogue.Year
 import com.histmersion.util.jobs.Job
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** Named periods and the first-run job against a real Postgres (#719, #720); skipped without HISTMERSION_TEST_DB_URL.
   * The network is a function the test supplies, and the data directory is a temporary one holding the REAL committed
@@ -78,7 +79,9 @@ class BootstrapSuite extends DbSuite:
   private lazy val periods = PeriodService(Transactor(ds))
 
   private def clean(): Unit =
-    (fixtureIds ++ seedIds.reverse).foreach(id => transact(ds)(sql"DELETE FROM periods WHERE id = $id".update.run()))
+    // the fixture's ids (text), then the seed's (newtypes): each bound through its own codec
+    fixtureIds.foreach(id => transact(ds)(sql"DELETE FROM periods WHERE id = $id".update.run()))
+    seedIds.reverse.foreach(id => transact(ds)(sql"DELETE FROM periods WHERE id = $id".update.run()))
     transact(ds)(sql"DELETE FROM seed_versions WHERE name = ${Bootstrap.PeriodSeed}".update.run())
 
   override def beforeAll(): Unit = if testDb.nonEmpty then clean()

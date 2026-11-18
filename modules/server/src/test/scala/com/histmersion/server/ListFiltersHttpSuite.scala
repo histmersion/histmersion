@@ -93,7 +93,7 @@ class ListFiltersHttpSuite extends DbSuite:
       ).zipWithIndex.foreach { case ((p, st, model), i) =>
         val id = s"$tag-run$i"
         sql"""INSERT INTO jobs (id, kind, status, pipeline, target_id, origin)
-                VALUES ($id, ${Agents.JobKind}, $st, $p, ${s"$tag-target$i"}, 'person')""".update.run()
+                VALUES ($id, ${Agents.JobKind: String}, $st, $p, ${s"$tag-target$i"}, 'person')""".update.run()
         sql"""INSERT INTO agent_steps (job_id, seq, attempt, name, kind, status, model)
                 VALUES ($id, 1, 1, 'x', 'llm', 'done', $model)""".update.run()
       }

@@ -112,7 +112,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
       sql"DELETE FROM agent_managers".update.run()
       sql"DELETE FROM sources WHERE citekey LIKE 'zzrecheck%'".update.run()
       sql"DELETE FROM queue_items WHERE text ILIKE '%zzrecheck%' OR text LIKE 'acquire re-check:%'".update.run()
-      sql"DELETE FROM jobs WHERE kind = ${RecheckJob.JobKind}".update.run()
+      sql"DELETE FROM jobs WHERE kind = ${RecheckJob.JobKind: String}".update.run()
       sql"UPDATE agent_autopilot SET enabled = false, paused = '{}', changed_by = '', last_ensure_at = NULL".update
         .run()
     val _ = transact(ds)(AutopilotRepo.setDrain(on = false, AutopilotRepo.Row.ChangedBy("test")))
