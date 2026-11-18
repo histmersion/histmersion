@@ -59,6 +59,13 @@ class SbtTest(unittest.TestCase):
         self.assertEqual(T.parse_sbt_export(text),
                          ["${OUT}/a.jar", "${CSR_CACHE}/https/repo1.maven.org/maven2/x/y/1/y-1.jar"])
 
+    def test_show_lines_become_entries_once(self):
+        text = "[info] welcome\n[info] * Attributed(${OUT}/a.jar>sha256-00ff/12)\n" \
+               "[info] * Attributed(${CSR_CACHE}/https/repo1.maven.org/maven2/x/y/1/y-1.jar)\n" \
+               "[info] * Attributed(${CSR_CACHE}/https/repo1.maven.org/maven2/x/y/1/y-1.jar)\n[success] done\n"
+        self.assertEqual(T.parse_sbt_export(text),
+                         ["${OUT}/a.jar>sha256-00ff/12", "${CSR_CACHE}/https/repo1.maven.org/maven2/x/y/1/y-1.jar"])
+
     def test_maven_coordinates_from_a_cache_path(self):
         self.assertEqual(T.maven_coords("${CSR_CACHE}/https/repo1.maven.org/maven2/com/softwaremill/sttp/tapir/"
                                         "tapir-core_3/1.13.31/tapir-core_3-1.13.31.jar"),

@@ -17,31 +17,36 @@ Every jar on the class path of the server, the CLI, plugin-api and the first-par
 |---|---|---|---|
 | app.tulz:tuplez-full-light_sjs1_3 | 0.4.0 | MIT | compatible |
 | com.augustnagro:magnum_3 | 1.3.1 | Apache-2.0 | compatible |
-| com.fasterxml.jackson.core:jackson-annotations | 2.22 | The Apache Software License, Version 2.0 | compatible |
+| com.github.plokhotnyuk.jsoniter-scala:jsoniter-scala-core_3 | 2.43.0 | MIT License | compatible |
+| com.github.plokhotnyuk.jsoniter-scala:jsoniter-scala-core_sjs1_3 | 2.43.0 | MIT License | compatible |
 | com.kubuszok:hearth-better-printers_3 | 0.4.5 | Apache-2.0 | compatible |
 | com.kubuszok:hearth-better-printers_sjs1_3 | 0.4.5 | Apache-2.0 | compatible |
 | com.kubuszok:hearth-micro-fp_3 | 0.4.5 | Apache-2.0 | compatible |
 | com.kubuszok:hearth-micro-fp_sjs1_3 | 0.4.5 | Apache-2.0 | compatible |
 | com.kubuszok:hearth_3 | 0.4.5 | Apache-2.0 | compatible |
 | com.kubuszok:hearth_sjs1_3 | 0.4.5 | Apache-2.0 | compatible |
-| com.kubuszok:kindlings-circe-derivation_3 | 0.4.0 | Apache-2.0 | compatible |
-| com.kubuszok:kindlings-circe-derivation_sjs1_3 | 0.4.0 | Apache-2.0 | compatible |
 | com.kubuszok:kindlings-derivation-commons_3 | 0.4.0 | Apache-2.0 | compatible |
 | com.kubuszok:kindlings-derivation-commons_sjs1_3 | 0.4.0 | Apache-2.0 | compatible |
+| com.kubuszok:kindlings-iron-integration_sjs1_3 | 0.4.0 | Apache-2.0 | compatible |
 | com.kubuszok:kindlings-json-schema-config-macro-providers_3 | 0.4.0 | Apache-2.0 | compatible |
 | com.kubuszok:kindlings-json-schema-config-macro-providers_sjs1_3 | 0.4.0 | Apache-2.0 | compatible |
+| com.kubuszok:kindlings-jsoniter-derivation_3 | 0.4.0 | Apache-2.0 | compatible |
+| com.kubuszok:kindlings-jsoniter-derivation_sjs1_3 | 0.4.0 | Apache-2.0 | compatible |
+| com.kubuszok:kindlings-jsoniter-json_3 | 0.4.0 | Apache-2.0 | compatible |
+| com.kubuszok:kindlings-jsoniter-json_sjs1_3 | 0.4.0 | Apache-2.0 | compatible |
 | com.kubuszok:kindlings-macro-commons_3 | 0.4.0 | Apache-2.0 | compatible |
 | com.kubuszok:kindlings-macro-commons_sjs1_3 | 0.4.0 | Apache-2.0 | compatible |
 | com.kubuszok:kindlings-optics_3 | 0.4.0 | Apache-2.0 | compatible |
 | com.kubuszok:kindlings-optics_sjs1_3 | 0.4.0 | Apache-2.0 | compatible |
 | com.kubuszok:kindlings-sconfig-derivation_3 | 0.4.0 | Apache-2.0 | compatible |
+| com.kubuszok:kindlings-tapir-openapi-jsoniter_3 | 0.4.0 | Apache-2.0 | compatible |
 | com.kubuszok:kindlings-tapir-schema-derivation_3 | 0.4.0 | Apache-2.0 | compatible |
 | com.kubuszok:kindlings-tapir-schema-derivation_sjs1_3 | 0.4.0 | Apache-2.0 | compatible |
 | com.lihaoyi:sourcecode_3 | 0.4.4 | MIT | compatible |
 | com.outr:moduload_3 | 1.1.7 | MIT | compatible |
-| com.outr:perfolation_3 | 1.3.0 | MIT | compatible |
-| com.outr:scribe-slf4j2_3 | 3.19.0 | MIT | compatible |
-| com.outr:scribe_3 | 3.19.0 | MIT | compatible |
+| com.outr:perfolation_3 | 1.3.1 | MIT | compatible |
+| com.outr:scribe-slf4j2_3 | 3.19.1 | MIT | compatible |
+| com.outr:scribe_3 | 3.19.1 | MIT | compatible |
 | com.raquo:airstream_sjs1_3 | 17.2.1 | MIT | compatible |
 | com.raquo:ew_sjs1_3 | 0.2.0 | MIT | compatible |
 | com.raquo:laminar_sjs1_3 | 17.2.1 | MIT | compatible |
@@ -52,14 +57,13 @@ Every jar on the class path of the server, the CLI, plugin-api and the first-par
 | com.softwaremill.magnolia1_3:magnolia_sjs1_3 | 1.3.24 | Apache 2.0 | compatible |
 | com.softwaremill.ox:core_3 | 1.0.2 | Apache 2.0 | compatible |
 | com.softwaremill.ox:flow-reactive-streams_3 | 1.0.2 | Apache 2.0 | compatible |
-| com.softwaremill.sttp.ai:claude_3 | 0.12.0 | Apache-2.0 | compatible |
 | com.softwaremill.sttp.ai:core_3 | 0.12.0 | Apache-2.0 | compatible |
-| com.softwaremill.sttp.ai:openai_3 | 0.12.0 | Apache-2.0 | compatible |
 | com.softwaremill.sttp.apispec:apispec-model_3 | 0.12.0 | Apache-2.0 | compatible |
 | com.softwaremill.sttp.apispec:asyncapi-model_3 | 0.12.0 | Apache-2.0 | compatible |
 | com.softwaremill.sttp.apispec:jsonschema-circe_3 | 0.12.0 | Apache-2.0 | compatible |
-| com.softwaremill.sttp.client4:core_3 | 4.1.0 | Apache-2.0 | compatible |
-| com.softwaremill.sttp.client4:core_sjs1_3 | 4.1.0 | Apache-2.0 | compatible |
+| com.softwaremill.sttp.apispec:openapi-model_3 | 0.11.10 | Apache 2.0 | compatible |
+| com.softwaremill.sttp.client4:core_3 | 4.1.3 | Apache-2.0 | compatible |
+| com.softwaremill.sttp.client4:core_sjs1_3 | 4.1.3 | Apache-2.0 | compatible |
 | com.softwaremill.sttp.model:core_3 | 1.9.0 | Apache-2.0 | compatible |
 | com.softwaremill.sttp.model:core_sjs1_3 | 1.9.0 | Apache-2.0 | compatible |
 | com.softwaremill.sttp.shared:core_3 | 1.6.0 | Apache-2.0 | compatible |
@@ -67,18 +71,19 @@ Every jar on the class path of the server, the CLI, plugin-api and the first-par
 | com.softwaremill.sttp.shared:ws_3 | 1.6.0 | Apache-2.0 | compatible |
 | com.softwaremill.sttp.shared:ws_sjs1_3 | 1.6.0 | Apache-2.0 | compatible |
 | com.softwaremill.sttp.tapir:tapir-apispec-docs_3 | 1.14.0 | Apache-2.0 | compatible |
-| com.softwaremill.sttp.tapir:tapir-client_3 | 1.14.0 | Apache-2.0 | compatible |
-| com.softwaremill.sttp.tapir:tapir-client_sjs1_3 | 1.14.0 | Apache-2.0 | compatible |
-| com.softwaremill.sttp.tapir:tapir-core_3 | 1.14.0 | Apache-2.0 | compatible |
-| com.softwaremill.sttp.tapir:tapir-core_sjs1_3 | 1.14.0 | Apache-2.0 | compatible |
-| com.softwaremill.sttp.tapir:tapir-files_3 | 1.14.0 | Apache-2.0 | compatible |
-| com.softwaremill.sttp.tapir:tapir-json-circe_3 | 1.14.0 | Apache-2.0 | compatible |
-| com.softwaremill.sttp.tapir:tapir-json-circe_sjs1_3 | 1.14.0 | Apache-2.0 | compatible |
-| com.softwaremill.sttp.tapir:tapir-netty-server-sync_3 | 1.14.0 | Apache-2.0 | compatible |
-| com.softwaremill.sttp.tapir:tapir-netty-server_3 | 1.14.0 | Apache-2.0 | compatible |
-| com.softwaremill.sttp.tapir:tapir-server_3 | 1.14.0 | Apache-2.0 | compatible |
-| com.softwaremill.sttp.tapir:tapir-sttp-client4_3 | 1.14.0 | Apache-2.0 | compatible |
-| com.softwaremill.sttp.tapir:tapir-sttp-client4_sjs1_3 | 1.14.0 | Apache-2.0 | compatible |
+| com.softwaremill.sttp.tapir:tapir-client_3 | 1.14.1 | Apache-2.0 | compatible |
+| com.softwaremill.sttp.tapir:tapir-client_sjs1_3 | 1.14.1 | Apache-2.0 | compatible |
+| com.softwaremill.sttp.tapir:tapir-core_3 | 1.14.1 | Apache-2.0 | compatible |
+| com.softwaremill.sttp.tapir:tapir-core_sjs1_3 | 1.14.1 | Apache-2.0 | compatible |
+| com.softwaremill.sttp.tapir:tapir-files_3 | 1.14.1 | Apache-2.0 | compatible |
+| com.softwaremill.sttp.tapir:tapir-json-circe_3 | 1.13.31 | Apache 2.0 | compatible |
+| com.softwaremill.sttp.tapir:tapir-jsoniter-scala_3 | 1.14.1 | Apache-2.0 | compatible |
+| com.softwaremill.sttp.tapir:tapir-jsoniter-scala_sjs1_3 | 1.14.1 | Apache-2.0 | compatible |
+| com.softwaremill.sttp.tapir:tapir-netty-server-sync_3 | 1.14.1 | Apache-2.0 | compatible |
+| com.softwaremill.sttp.tapir:tapir-netty-server_3 | 1.14.1 | Apache-2.0 | compatible |
+| com.softwaremill.sttp.tapir:tapir-server_3 | 1.14.1 | Apache-2.0 | compatible |
+| com.softwaremill.sttp.tapir:tapir-sttp-client4_3 | 1.14.1 | Apache-2.0 | compatible |
+| com.softwaremill.sttp.tapir:tapir-sttp-client4_sjs1_3 | 1.14.1 | Apache-2.0 | compatible |
 | com.vladsch.flexmark:flexmark | 0.64.8 | BSD 2-Clause License | compatible |
 | com.vladsch.flexmark:flexmark-ext-tables | 0.64.8 | BSD 2-Clause License | compatible |
 | com.vladsch.flexmark:flexmark-util | 0.64.8 | BSD 2-Clause License | compatible |
@@ -97,91 +102,82 @@ Every jar on the class path of the server, the CLI, plugin-api and the first-par
 | commons-codec:commons-codec | 1.11 | Apache License, Version 2.0 | compatible |
 | commons-logging:commons-logging | 1.2 | The Apache Software License, Version 2.0 | compatible |
 | io.circe:circe-core_3 | 0.14.17 | Apache-2.0 | compatible |
-| io.circe:circe-core_sjs1_3 | 0.14.17 | Apache-2.0 | compatible |
 | io.circe:circe-generic_3 | 0.14.17 | Apache-2.0 | compatible |
-| io.circe:circe-generic_sjs1_3 | 0.14.17 | Apache-2.0 | compatible |
 | io.circe:circe-jawn_3 | 0.14.17 | Apache-2.0 | compatible |
 | io.circe:circe-numbers_3 | 0.14.17 | Apache-2.0 | compatible |
-| io.circe:circe-numbers_sjs1_3 | 0.14.17 | Apache-2.0 | compatible |
 | io.circe:circe-parser_3 | 0.14.17 | Apache-2.0 | compatible |
-| io.circe:circe-parser_sjs1_3 | 0.14.17 | Apache-2.0 | compatible |
-| io.circe:circe-scalajs_sjs1_3 | 0.14.17 | Apache-2.0 | compatible |
 | io.get-coursier:interface | 1.0.30 | Apache License 2.0 | compatible |
 | io.github.cquiroz:cldr-api_sjs1_3 | 4.5.0 | BSD 3-Clause License | compatible |
-| io.github.cquiroz:scala-java-locales_sjs1_3 | 1.5.4 | BSD 3-Clause License | compatible |
-| io.github.cquiroz:scala-java-time_3 | 2.6.0 | BSD 3-Clause License | compatible |
-| io.github.cquiroz:scala-java-time_sjs1_3 | 2.8.0 | BSD 3-Clause License | compatible |
+| io.github.cquiroz:scala-java-locales_sjs1_3 | 1.6.0 | BSD 3-Clause License | compatible |
+| io.github.cquiroz:scala-java-time_sjs1_3 | 2.11.0 | BSD 3-Clause License | compatible |
 | io.github.iltotore:iron_3 | 3.4.1 | Apache License 2.0 | compatible |
 | io.github.iltotore:iron_sjs1_3 | 3.4.1 | Apache License 2.0 | compatible |
-| io.netty:netty-all | 4.2.18.Final | Apache License, Version 2.0 | compatible |
-| io.netty:netty-buffer | 4.2.18.Final | Apache License, Version 2.0 | compatible |
-| io.netty:netty-codec | 4.2.18.Final | Apache License, Version 2.0 | compatible |
-| io.netty:netty-codec-base | 4.2.18.Final | Apache License, Version 2.0 | compatible |
-| io.netty:netty-codec-classes-quic | 4.2.18.Final | Apache License, Version 2.0 | compatible |
-| io.netty:netty-codec-compression | 4.2.18.Final | Apache License, Version 2.0 | compatible |
-| io.netty:netty-codec-dns | 4.2.18.Final | Apache License, Version 2.0 | compatible |
-| io.netty:netty-codec-haproxy | 4.2.18.Final | Apache License, Version 2.0 | compatible |
-| io.netty:netty-codec-http | 4.2.18.Final | Apache License, Version 2.0 | compatible |
-| io.netty:netty-codec-http2 | 4.2.18.Final | Apache License, Version 2.0 | compatible |
-| io.netty:netty-codec-http3 | 4.2.18.Final | Apache License, Version 2.0 | compatible |
-| io.netty:netty-codec-marshalling | 4.2.18.Final | Apache License, Version 2.0 | compatible |
-| io.netty:netty-codec-memcache | 4.2.18.Final | Apache License, Version 2.0 | compatible |
-| io.netty:netty-codec-mqtt | 4.2.18.Final | Apache License, Version 2.0 | compatible |
-| io.netty:netty-codec-native-quic | 4.2.18.Final | Apache License, Version 2.0 | compatible |
-| io.netty:netty-codec-protobuf | 4.2.18.Final | Apache License, Version 2.0 | compatible |
-| io.netty:netty-codec-redis | 4.2.18.Final | Apache License, Version 2.0 | compatible |
-| io.netty:netty-codec-smtp | 4.2.18.Final | Apache License, Version 2.0 | compatible |
-| io.netty:netty-codec-socks | 4.2.18.Final | Apache License, Version 2.0 | compatible |
-| io.netty:netty-codec-stomp | 4.2.18.Final | Apache License, Version 2.0 | compatible |
-| io.netty:netty-codec-xml | 4.2.18.Final | Apache License, Version 2.0 | compatible |
-| io.netty:netty-common | 4.2.18.Final | Apache License, Version 2.0 | compatible |
-| io.netty:netty-handler | 4.2.18.Final | Apache License, Version 2.0 | compatible |
-| io.netty:netty-handler-proxy | 4.2.18.Final | Apache License, Version 2.0 | compatible |
-| io.netty:netty-handler-ssl-ocsp | 4.2.18.Final | Apache License, Version 2.0 | compatible |
-| io.netty:netty-resolver | 4.2.18.Final | Apache License, Version 2.0 | compatible |
-| io.netty:netty-resolver-dns | 4.2.18.Final | Apache License, Version 2.0 | compatible |
-| io.netty:netty-resolver-dns-classes-macos | 4.2.18.Final | Apache License, Version 2.0 | compatible |
-| io.netty:netty-resolver-dns-native-macos | 4.2.18.Final | Apache License, Version 2.0 | compatible |
-| io.netty:netty-transport | 4.2.18.Final | Apache License, Version 2.0 | compatible |
-| io.netty:netty-transport-classes-epoll | 4.2.18.Final | Apache License, Version 2.0 | compatible |
-| io.netty:netty-transport-classes-io_uring | 4.2.18.Final | Apache License, Version 2.0 | compatible |
-| io.netty:netty-transport-classes-kqueue | 4.2.18.Final | Apache License, Version 2.0 | compatible |
-| io.netty:netty-transport-native-io_uring | 4.2.18.Final | Apache License, Version 2.0 | compatible |
-| io.netty:netty-transport-native-unix-common | 4.2.18.Final | Apache License, Version 2.0 | compatible |
-| io.netty:netty-transport-rxtx | 4.2.18.Final | Apache License, Version 2.0 | compatible |
-| io.netty:netty-transport-sctp | 4.2.18.Final | Apache License, Version 2.0 | compatible |
-| io.netty:netty-transport-udt | 4.2.18.Final | Apache License, Version 2.0 | compatible |
-| io.scalaland:chimney_3 | 2.1.0 | Apache-2.0 | compatible |
+| io.netty:netty-all | 4.2.21.Final | Apache License, Version 2.0 | compatible |
+| io.netty:netty-buffer | 4.2.21.Final | Apache License, Version 2.0 | compatible |
+| io.netty:netty-codec | 4.2.21.Final | Apache License, Version 2.0 | compatible |
+| io.netty:netty-codec-base | 4.2.21.Final | Apache License, Version 2.0 | compatible |
+| io.netty:netty-codec-classes-quic | 4.2.21.Final | Apache License, Version 2.0 | compatible |
+| io.netty:netty-codec-compression | 4.2.21.Final | Apache License, Version 2.0 | compatible |
+| io.netty:netty-codec-dns | 4.2.21.Final | Apache License, Version 2.0 | compatible |
+| io.netty:netty-codec-haproxy | 4.2.21.Final | Apache License, Version 2.0 | compatible |
+| io.netty:netty-codec-http | 4.2.21.Final | Apache License, Version 2.0 | compatible |
+| io.netty:netty-codec-http2 | 4.2.21.Final | Apache License, Version 2.0 | compatible |
+| io.netty:netty-codec-http3 | 4.2.21.Final | Apache License, Version 2.0 | compatible |
+| io.netty:netty-codec-marshalling | 4.2.21.Final | Apache License, Version 2.0 | compatible |
+| io.netty:netty-codec-memcache | 4.2.21.Final | Apache License, Version 2.0 | compatible |
+| io.netty:netty-codec-mqtt | 4.2.21.Final | Apache License, Version 2.0 | compatible |
+| io.netty:netty-codec-native-quic | 4.2.21.Final | Apache License, Version 2.0 | compatible |
+| io.netty:netty-codec-protobuf | 4.2.21.Final | Apache License, Version 2.0 | compatible |
+| io.netty:netty-codec-redis | 4.2.21.Final | Apache License, Version 2.0 | compatible |
+| io.netty:netty-codec-smtp | 4.2.21.Final | Apache License, Version 2.0 | compatible |
+| io.netty:netty-codec-socks | 4.2.21.Final | Apache License, Version 2.0 | compatible |
+| io.netty:netty-codec-stomp | 4.2.21.Final | Apache License, Version 2.0 | compatible |
+| io.netty:netty-codec-xml | 4.2.21.Final | Apache License, Version 2.0 | compatible |
+| io.netty:netty-common | 4.2.21.Final | Apache License, Version 2.0 | compatible |
+| io.netty:netty-handler | 4.2.21.Final | Apache License, Version 2.0 | compatible |
+| io.netty:netty-handler-proxy | 4.2.21.Final | Apache License, Version 2.0 | compatible |
+| io.netty:netty-handler-ssl-ocsp | 4.2.21.Final | Apache License, Version 2.0 | compatible |
+| io.netty:netty-resolver | 4.2.21.Final | Apache License, Version 2.0 | compatible |
+| io.netty:netty-resolver-dns | 4.2.21.Final | Apache License, Version 2.0 | compatible |
+| io.netty:netty-resolver-dns-classes-macos | 4.2.21.Final | Apache License, Version 2.0 | compatible |
+| io.netty:netty-resolver-dns-native-macos | 4.2.21.Final | Apache License, Version 2.0 | compatible |
+| io.netty:netty-transport | 4.2.21.Final | Apache License, Version 2.0 | compatible |
+| io.netty:netty-transport-classes-epoll | 4.2.21.Final | Apache License, Version 2.0 | compatible |
+| io.netty:netty-transport-classes-io_uring | 4.2.21.Final | Apache License, Version 2.0 | compatible |
+| io.netty:netty-transport-classes-kqueue | 4.2.21.Final | Apache License, Version 2.0 | compatible |
+| io.netty:netty-transport-native-io_uring | 4.2.21.Final | Apache License, Version 2.0 | compatible |
+| io.netty:netty-transport-native-unix-common | 4.2.21.Final | Apache License, Version 2.0 | compatible |
+| io.netty:netty-transport-rxtx | 4.2.21.Final | Apache License, Version 2.0 | compatible |
+| io.netty:netty-transport-sctp | 4.2.21.Final | Apache License, Version 2.0 | compatible |
+| io.netty:netty-transport-udt | 4.2.21.Final | Apache License, Version 2.0 | compatible |
+| io.scalaland:chimney_3 | 2.1.1 | Apache-2.0 | compatible |
 | org.apache.httpcomponents:httpclient | 4.5.14 | Apache License, Version 2.0 | compatible |
 | org.apache.httpcomponents:httpcore | 4.4.16 | Apache License, Version 2.0 | compatible |
 | org.apache.httpcomponents:httpmime | 4.5.14 | Apache License, Version 2.0 | compatible |
 | org.checkerframework:checker-qual | 3.55.1 | The MIT License | compatible |
 | org.ekrich:sconfig_3 | 2.1.0 | Apache-2.0 | compatible |
-| org.flywaydb:flyway-core | 13.11.1 | Apache License, Version 2.0 | compatible |
-| org.flywaydb:flyway-database-cockroachdb | 13.11.1 | Apache License, Version 2.0 | compatible |
-| org.flywaydb:flyway-database-postgresql | 13.11.1 | Apache License, Version 2.0 | compatible |
+| org.flywaydb:flyway-core | 13.12.2 | Apache License, Version 2.0 | compatible |
+| org.flywaydb:flyway-database-cockroachdb | 13.12.2 | Apache License, Version 2.0 | compatible |
+| org.flywaydb:flyway-database-postgresql | 13.12.2 | Apache License, Version 2.0 | compatible |
 | org.jetbrains:annotations | 24.0.1 | The Apache Software License, Version 2.0 | compatible |
 | org.playframework.netty:netty-reactive-streams | 3.0.10 | Apache License, Version 2.0 | compatible |
 | org.playframework.netty:netty-reactive-streams-http | 3.0.10 | Apache License, Version 2.0 | compatible |
-| org.portable-scala:portable-scala-reflect_2.13 | 1.1.3 | BSD New | compatible |
 | org.portable-scala:portable-scala-reflect_sjs1_2.13 | 1.1.3 | BSD New | compatible |
 | org.postgresql:postgresql | 42.7.14 | BSD-2-Clause | compatible |
 | org.reactivestreams:reactive-streams | 1.0.4 | MIT-0 | compatible |
 | org.rogach:scallop_3 | 6.0.1 | MIT License | compatible |
 | org.scala-js:scalajs-dom_sjs1_3 | 2.8.1 | MIT | compatible |
 | org.scala-js:scalajs-java-securerandom_sjs1_2.13 | 1.0.0 | Apache-2.0 | compatible |
-| org.scala-js:scalajs-javalib | 1.22.0 | Apache-2.0 | compatible |
-| org.scala-js:scalajs-library_2.13 | 1.22.0 | Apache-2.0 | compatible |
-| org.scala-js:scalajs-scalalib_2.13 | 3.10.0 | Apache-2.0 | compatible |
+| org.scala-js:scalajs-javalib | 1.23.0 | Apache-2.0 | compatible |
+| org.scala-js:scalajs-library_2.13 | 1.23.0 | Apache-2.0 | compatible |
+| org.scala-js:scalajs-scalalib_2.13 | 3.10.1 | Apache-2.0 | compatible |
 | org.scala-lang.modules:scala-collection-compat_3 | 2.11.0 | Apache-2.0 | compatible |
-| org.scala-lang:scala-library | 3.10.0 | Apache-2.0 | compatible |
-| org.scala-lang:scala3-library_3 | 3.10.0 | Apache-2.0 | compatible |
-| org.scala-lang:scala3-library_sjs1_3 | 3.10.0 | Apache-2.0 | compatible |
+| org.scala-lang:scala-library | 3.10.1 | Apache-2.0 | compatible |
+| org.scala-lang:scala3-library_3 | 3.10.1 | Apache-2.0 | compatible |
+| org.scala-lang:scala3-library_sjs1_3 | 3.10.1 | Apache-2.0 | compatible |
 | org.slf4j:slf4j-api | 2.0.20 | MIT | compatible |
 | org.typelevel:cats-core_3 | 2.13.0 | MIT | compatible |
-| org.typelevel:cats-core_sjs1_3 | 2.13.0 | MIT | compatible |
 | org.typelevel:cats-kernel_3 | 2.13.0 | MIT | compatible |
-| org.typelevel:cats-kernel_sjs1_3 | 2.13.0 | MIT | compatible |
 | org.typelevel:jawn-parser_3 | 1.8.0 | MIT | compatible |
 | org.yaml:snakeyaml | 2.7 | Apache License, Version 2.0 | compatible |
 

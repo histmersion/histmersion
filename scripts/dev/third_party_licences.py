@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """The licences of the third-party libraries Histmersion is built from and ships — `just licences`.
 
-    python3 scripts/dev/third_party_licences.py --classpaths <sbt export output> [--out THIRD-PARTY.md]
+    python3 scripts/dev/third_party_licences.py --classpaths <sbt show output> [--out THIRD-PARTY.md]
 
 It reads
-  - the JVM and Scala.js class paths, as `sbt "export <module>/Runtime/fullClasspath" …` prints them
-    (one `List(…)` line per module), and each jar's POM in the Coursier cache — following the parent
+  - the JVM and Scala.js class paths, as `sbt "show <module>/Runtime/fullClasspath" …` prints them
+    (one `[info] * Attributed(…)` line per entry; `export`'s `List(…)` lines are read too), and each jar's POM in the Coursier cache — following the parent
     POMs, fetched from Maven Central when the cache lacks one;
   - the converter's uv.lock: the packages the bundle installs (the main and `ocr` dependencies, not the
     `dev` group), each package's licence from PyPI;
@@ -114,12 +114,21 @@ def classify(licences: list, any_of: bool = False) -> str:
     return "check"
 
 
+SBT_SHOW_ENTRY = re.compile(r"^\[info\] \* Attributed\((.+)\)$")
+
+
 def parse_sbt_export(text: str) -> list:
-    """`sbt export …/fullClasspath` output → the class path entries of every module, without duplicates."""
+    """`sbt show …/fullClasspath` (one `[info] * Attributed(…)` line per entry) or `sbt export …/fullClasspath`
+    (one `List(…)` line per module) output → the class path entries of every module, without duplicates. `just
+    licences` uses `show`: sbt 2.1's `export` prints nothing when the task's result comes from the cache."""
     out = []
     for line in text.splitlines():
         line = line.strip()
-        if line.startswith("List(") and line.endswith(")"):
+        shown = SBT_SHOW_ENTRY.match(line)
+        if shown:
+            if shown.group(1) not in out:
+                out.append(shown.group(1))
+        elif line.startswith("List(") and line.endswith(")"):
             for entry in line[len("List("):-1].split(", "):
                 if entry and entry not in out:
                     out.append(entry)

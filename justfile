@@ -152,11 +152,12 @@ licences:
     #!/usr/bin/env bash
     set -euo pipefail
     mkdir -p target
-    {{sbt}} "export server/Runtime/fullClasspath" "export cli/Runtime/fullClasspath" \
-      "export pluginApi/Runtime/fullClasspath" "export pluginVaults/Runtime/fullClasspath" \
-      "export pluginTestkit/Runtime/fullClasspath" \
-      "export pluginResolver/Runtime/fullClasspath" \
-      "export web/Compile/fullClasspath" > target/licences-classpaths.log
+    # `show`, not `export`: sbt 2.1's export prints nothing when the class path comes from its cache
+    {{sbt}} "show server/Runtime/fullClasspath" "show cli/Runtime/fullClasspath" \
+      "show pluginApi/Runtime/fullClasspath" "show pluginVaults/Runtime/fullClasspath" \
+      "show pluginTestkit/Runtime/fullClasspath" \
+      "show pluginResolver/Runtime/fullClasspath" \
+      "show web/Compile/fullClasspath" > target/licences-classpaths.log
     python3 scripts/dev/third_party_licences.py --classpaths target/licences-classpaths.log
 
 # Every suite, DB-backed ones on a throwaway Postgres that is removed afterwards

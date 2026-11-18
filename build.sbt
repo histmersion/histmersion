@@ -154,6 +154,8 @@ lazy val commonDeps = Seq(
   // the plugins; Scala.js's `_sjs1_3` is a different module and stays. The binaries' zones are the JDK's
   // own tzdb, checked by `histmersion-server --self-check` (TimeZoneCheck, TimeZoneCheckSuite).
   excludeDependencies += ExclusionRule("io.github.cquiroz", "scala-java-time-tzdb_3"),
+  // netty at its newest 4.2 patch (project/Dependencies.scala, V.netty): netty-all pins every netty module it lists
+  dependencyOverrides += "io.netty" % "netty-all" % V.netty,
   testFrameworks += new TestFramework("munit.Framework"),
   // every compile formats the module's sources first (.scalafmt.conf); `just fmt-check` is the gate
   scalafmtOnCompile := true,
