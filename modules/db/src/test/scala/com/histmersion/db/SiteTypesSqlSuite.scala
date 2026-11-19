@@ -52,7 +52,7 @@ class SiteTypesSqlSuite extends DbSuite:
       )
       .noSpaces
     val q =
-      sql"SELECT ${SqlLiteral(SiteTypesSql.expr("a"))} FROM (SELECT $kind::text AS kind, nullif(${stored.getOrElse("")}, '')::text AS site_type, $props::jsonb AS properties) a"
+      sql"SELECT ${SiteTypesSql.expr(sql"a")} FROM (SELECT $kind::text AS kind, nullif(${stored.getOrElse("")}, '')::text AS site_type, $props::jsonb AS properties) a"
     connect(ds)(q.query[Option[String]].run().head)
 
   private def same(

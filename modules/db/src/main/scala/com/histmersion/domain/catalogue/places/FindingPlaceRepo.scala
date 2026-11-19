@@ -89,9 +89,8 @@ private[places] object FindingPlaceRepo:
     * steppe ancestry. A finding belongs to one only by an EXPLICIT match ([[insertAssignments]]). Imported places have
     * their own, stricter rule.
     */
-  private[histmersion] def explicitOnlySql(alias: String): String =
-    s"coalesce(ST_Dimension($alias.geom) = 0 AND (coalesce($alias.kind, '') NOT IN ('site', 'feature')" +
-      s" OR coalesce($alias.location_precision = 'grid-cell', false)), false)"
+  private[histmersion] def explicitOnlySql(alias: Frag): Frag =
+    sql"coalesce(ST_Dimension($alias.geom) = 0 AND (coalesce($alias.kind, '') NOT IN ('site', 'feature') OR coalesce($alias.location_precision = 'grid-cell', false)), false)"
 
   /** The placeholder minimum the assignment's geocoder pass ranks with ([[Geocode.isPlaceholder]]). It MUST equal
     * `places.geocode-placeholder-min` in `reference.conf`; `PlaceRepoSuite` asserts it.
@@ -115,16 +114,10 @@ private[places] object FindingPlaceRepo:
     * the Temple of Athena Alea, and by containment the Peloponnese. A placeholder finding belongs to what its NAME says
     * ([[insertAssignments]]). Within 1e-6° (0.1 m) of the point.
     */
-  private[histmersion] def placeholderSql(f: String): String =
+  private[histmersion] def placeholderSql(f: Frag): Frag =
     // the two EXISTS read the partial indexes `places_rep_point` and `places_explicit_point` (V080),
     // whose predicates these are word for word
-    s"(CASE WHEN $f.geom IS NULL OR GeometryType($f.geom) <> 'POINT' THEN false" +
-      s" WHEN histmersion_grid_centre(ST_X($f.geom), ST_Y($f.geom)) THEN true" +
-      s" ELSE EXISTS (SELECT 1 FROM places q WHERE ST_PointOnSurface(q.geom) && ST_Expand($f.geom, 1e-6)" +
-      s" AND ST_Dimension(q.geom) > 0 AND q.kind <> 'site' AND NOT ${importedSql("q")}" +
-      s" AND ST_DWithin(ST_PointOnSurface(q.geom), $f.geom, 1e-6))" +
-      s" OR EXISTS (SELECT 1 FROM places q WHERE q.geom && ST_Expand($f.geom, 1e-6)" +
-      s" AND NOT ${importedSql("q")} AND ${explicitOnlySql("q")} AND ST_DWithin(q.geom, $f.geom, 1e-6)) END)"
+    sql"(CASE WHEN $f.geom IS NULL OR GeometryType($f.geom) <> 'POINT' THEN false WHEN histmersion_grid_centre(ST_X($f.geom), ST_Y($f.geom)) THEN true ELSE EXISTS (SELECT 1 FROM places q WHERE ST_PointOnSurface(q.geom) && ST_Expand($f.geom, 1e-6) AND ST_Dimension(q.geom) > 0 AND q.kind <> 'site' AND NOT ${importedSql(sql"q")} AND ST_DWithin(ST_PointOnSurface(q.geom), $f.geom, 1e-6)) OR EXISTS (SELECT 1 FROM places q WHERE q.geom && ST_Expand($f.geom, 1e-6) AND NOT ${importedSql(sql"q")} AND ${explicitOnlySql(sql"q")} AND ST_DWithin(q.geom, $f.geom, 1e-6)) END)"
 
   final private case class Placeholder(
       id: Placeholder.Id,
@@ -143,16 +136,15 @@ private[places] object FindingPlaceRepo:
     object Detail extends Newtype[String, Pure]
 
   /** Every placeholder finding: id, place name, period, citekey and point (`lint --rule finding-placeholder`). */
-  val placeholderFindingsSql: String =
-    s"SELECT f.id, nullif(btrim(f.region_name), ''), ${RangeSql.cols("f.period")}, f.citekey," +
-      s" ST_X(f.geom), ST_Y(f.geom) FROM findings f WHERE f.geom IS NOT NULL AND ${placeholderSql("f")}"
+  val placeholderFindingsSql: Frag =
+    sql"SELECT f.id, nullif(btrim(f.region_name), ''), ${RangeSql.cols(sql"f.period")}, f.citekey, ST_X(f.geom), ST_Y(f.geom) FROM findings f WHERE f.geom IS NOT NULL AND ${placeholderSql(sql"f")}"
 
   /** The placeholder findings whose place name the geocoder does not resolve, or that have none — what
     * `lint --rule finding-placeholder` lists, as (citekey, line), by citekey and finding id.
     */
   def unresolvedPlaceholdersIn()(using DbCon): List[(Citekey, Placeholder.Detail)] =
     val ph =
-      sql"${SqlLiteral(placeholderFindingsSql)} ORDER BY f.citekey, f.id".query[Placeholder].run().toList
+      sql"$placeholderFindingsSql ORDER BY f.citekey, f.id".query[Placeholder].run().toList
     val resolved = resolve(ph).map(_._1).toSet
     ph.filterNot(p => resolved.contains(p.id)).map { p =>
       val at = String.format(java.util.Locale.ROOT, "%.4f N %.4f E", p.lat, p.lon)
@@ -184,7 +176,7 @@ private[places] object FindingPlaceRepo:
   private def placeholders(citekey: Option[Citekey])(using
       DbCon
   ): (List[Placeholder.Id], List[(Placeholder.Id, BPlaceRow.Id)]) =
-    val ph = sql"${SqlLiteral(placeholderFindingsSql)}${citekey.fold(sql"")(ck => sql" AND f.citekey = $ck")}"
+    val ph = sql"$placeholderFindingsSql${citekey.fold(sql"")(ck => sql" AND f.citekey = $ck")}"
       .query[Placeholder]
       .run()
       .toList
@@ -228,7 +220,7 @@ private[places] object FindingPlaceRepo:
       sql"""INSERT INTO finding_places (finding_id, place_id)
             SELECT f.id, p.id FROM findings f JOIN places p ON ST_CoveredBy(f.geom, p.geom)
             WHERE f.geom IS NOT NULL AND p.geom IS NOT NULL AND ST_Dimension(p.geom) > 0
-              AND NOT ${SqlLiteral(importedSql("p"))}
+              AND NOT ${importedSql(sql"p")}
               AND ($citekey::text IS NULL OR f.citekey = $citekey::text)
               AND ($anyPlace OR p.id = ANY($pids::text[]))
               AND (f.period IS NULL OR f.period && p.period)
@@ -240,8 +232,8 @@ private[places] object FindingPlaceRepo:
               ON p.geom && ST_Expand(f.geom,
                    $degrees / greatest(cos(radians(ST_Y(f.geom))), 0.01))
             WHERE f.geom IS NOT NULL AND p.geom IS NOT NULL AND ST_Dimension(p.geom) = 0
-              AND NOT ${SqlLiteral(importedSql("p"))}
-              AND NOT ${SqlLiteral(explicitOnlySql("p"))}
+              AND NOT ${importedSql(sql"p")}
+              AND NOT ${explicitOnlySql(sql"p")}
               AND ($citekey::text IS NULL OR f.citekey = $citekey::text)
               AND ($anyPlace OR p.id = ANY($pids::text[]))
               AND NOT (f.id = ANY($phIds::text[]))
@@ -263,8 +255,8 @@ private[places] object FindingPlaceRepo:
               AND CASE WHEN GeometryType(p.geom) = 'POINT'
                        THEN abs(ST_X(p.geom) - ST_X(f.geom)) < 1e-7 AND abs(ST_Y(p.geom) - ST_Y(f.geom)) < 1e-7
                        ELSE false END
-              AND (${SqlLiteral(importedSql("p"))}
-                   OR (${SqlLiteral(explicitOnlySql("p"))} AND NOT coalesce(p.location_precision = 'grid-cell', false)))
+              AND (${importedSql(sql"p")}
+                   OR (${explicitOnlySql(sql"p")} AND NOT coalesce(p.location_precision = 'grid-cell', false)))
               AND ($citekey::text IS NULL OR f.citekey = $citekey::text)
               AND ($anyPlace OR p.id = ANY($pids::text[]))
               AND (f.period IS NULL OR f.period && p.period)
@@ -276,8 +268,8 @@ private[places] object FindingPlaceRepo:
             JOIN place_names n ON lower(n.name) = lower(f.region_name)
             JOIN places p ON p.id = n.place_id
             WHERE f.geom IS NULL AND f.region_name IS NOT NULL AND f.region_name <> ''
-              AND NOT ${SqlLiteral(importedSql("p"))}
-              AND NOT ${SqlLiteral(explicitOnlySql("p"))}
+              AND NOT ${importedSql(sql"p")}
+              AND NOT ${explicitOnlySql(sql"p")}
               AND ($citekey::text IS NULL OR f.citekey = $citekey::text)
               AND ($anyPlace OR p.id = ANY($pids::text[]))
               AND (f.period IS NULL OR f.period && p.period)
@@ -313,7 +305,7 @@ private[places] object FindingPlaceRepo:
                    WHERE rp.geom IS NOT NULL),
                  cover AS MATERIALIZED (
                    SELECT rs.rid, a.id AS aid FROM rs JOIN places a ON a.geom && rs.geom
-                   WHERE ST_Dimension(a.geom) = 2 AND a.id <> rs.rid AND NOT ${SqlLiteral(importedSql("a"))}
+                   WHERE ST_Dimension(a.geom) = 2 AND a.id <> rs.rid AND NOT ${importedSql(sql"a")}
                      AND ($anyPlace OR a.id = ANY($pids::text[]))
                      AND CASE WHEN NOT EXISTS (SELECT 1 FROM r JOIN findings f ON f.id = r.fid
                                                WHERE r.rid = rs.rid AND (f.period IS NULL OR f.period && a.period))
@@ -324,7 +316,7 @@ private[places] object FindingPlaceRepo:
                               ELSE ST_Covers(a.geom, ST_PointOnSurface(rs.geom)) END
                    UNION ALL
                    SELECT rs.rid, rp.id FROM rs JOIN places rp ON rp.id = rs.rid
-                   WHERE NOT ${SqlLiteral(importedSql("rp"))} AND ($anyPlace OR rp.id = ANY($pids::text[])))
+                   WHERE NOT ${importedSql(sql"rp")} AND ($anyPlace OR rp.id = ANY($pids::text[])))
             INSERT INTO finding_places (finding_id, place_id)
             SELECT DISTINCT r.fid, c.aid FROM r JOIN cover c ON c.rid = r.rid
             JOIN findings f ON f.id = r.fid JOIN places a ON a.id = c.aid
@@ -366,13 +358,11 @@ private[places] object FindingPlaceRepo:
       val hits = sql"""SELECT DISTINCT k FROM unnest($allKeys::text[]) AS k
                        WHERE EXISTS (SELECT 1 FROM places p WHERE histmersion_place_key(p.label) = k
                                        AND ($anyPlace OR p.id = ANY($pids::text[]))
-                                       AND NOT ${SqlLiteral(importedSql("p"))} AND ${SqlLiteral(explicitOnlySql("p"))})
+                                       AND NOT ${importedSql(sql"p")} AND ${explicitOnlySql(sql"p")})
                           OR EXISTS (SELECT 1 FROM place_names n JOIN places p ON p.id = n.place_id
                                      WHERE histmersion_place_key(n.name) = k
                                        AND ($anyPlace OR p.id = ANY($pids::text[]))
-                                       AND NOT ${SqlLiteral(importedSql("p"))} AND ${SqlLiteral(
-          explicitOnlySql("p")
-        )})"""
+                                       AND NOT ${importedSql(sql"p")} AND ${explicitOnlySql(sql"p")})"""
         .query[Geocode.Key]
         .run()
         .toSet
@@ -391,7 +381,7 @@ private[places] object FindingPlaceRepo:
         RowCount(sql"""INSERT INTO finding_places (finding_id, place_id)
               SELECT r.fid, r.pid FROM unnest($fids::text[], $pids::text[]) AS r(fid, pid)
               JOIN findings f ON f.id = r.fid JOIN places p ON p.id = r.pid
-              WHERE NOT ${SqlLiteral(importedSql("p"))} AND ${SqlLiteral(explicitOnlySql("p"))}
+              WHERE NOT ${importedSql(sql"p")} AND ${explicitOnlySql(sql"p")}
                 AND ($anyPlace OR p.id = ANY($pids::text[]))
                 AND (f.period IS NULL OR f.period && p.period)
             ON CONFLICT DO NOTHING""".update.run())

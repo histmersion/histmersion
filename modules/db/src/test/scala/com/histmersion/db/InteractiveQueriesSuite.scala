@@ -425,11 +425,9 @@ class InteractiveQueriesSuite extends DbSuite with Bounded:
               SELECT id FROM places WHERE $short::text IS NOT NULL AND histmersion_place_key(label) = $short::text
               UNION
               SELECT place_id FROM place_names WHERE $short::text IS NOT NULL AND histmersion_place_key(name) = $short::text)
-            SELECT p.id, p.label, p.kind, ${SqlLiteral(PlaceFixtures.startCol)}, upper(p.period) - 1, p.source,
+            SELECT p.id, p.label, p.kind, ${PlaceFixtures.startCol}, upper(p.period) - 1, p.source,
                    coalesce(nm.names, ''), nm.matched, coalesce(fc.n, 0),
-                   coalesce((p.properties->>'contested')::boolean, false), ${SqlLiteral(
-          PlaceFixtures.datingCol
-        )}, p.import_source
+                   coalesce((p.properties->>'contested')::boolean, false), ${PlaceFixtures.datingCol}, p.import_source
             FROM places p
             LEFT JOIN LATERAL (
               SELECT string_agg(DISTINCT n.name, ', ' ORDER BY n.name) AS names,
@@ -448,10 +446,10 @@ class InteractiveQueriesSuite extends DbSuite with Bounded:
             WHERE ($text::text IS NULL OR p.id IN (SELECT id FROM cand))
               AND ($text::text IS NULL OR nm.matched IS NOT NULL OR p.label ILIKE $cont ESCAPE '\\'
                    OR $short::text IS NOT NULL)
-              AND ${SqlLiteral(PlaceFixtures.inTimeSql("p", asOf))}
+              AND ${PlaceFixtures.inTimeSql(sql"p", asOf)}
             ORDER BY (lower(p.label) = lower($exact)) DESC,
                      (p.label ILIKE $pre ESCAPE '\\') DESC,
-                     ${SqlLiteral(PlaceFixtures.tierSql)},
+                     ${PlaceFixtures.tierSql},
                      fc.n DESC, length(p.label), p.id
             LIMIT ${limit.value.max(1)}""").query[Place.Hit].run()
 
@@ -547,20 +545,20 @@ class InteractiveQueriesSuite extends DbSuite with Bounded:
     val where = List(
       Some(sql"p.geom IS NOT NULL"),
       Some(sql"p.label !~* $UninformativeLabel"),
-      Some(if asOf.isEmpty then sql"NOT ${SqlLiteral(ModernSql)}" else sql"${SqlLiteral(inTimeSql("p", asOf, k))}"),
-      Some(sql"${SqlLiteral(BaseLayerSql)}"),
+      Some(if asOf.isEmpty then sql"NOT $ModernSql" else sql"${inTimeSql(sql"p", asOf, k)}"),
+      Some(sql"$BaseLayerSql"),
       k.map(v => sql"p.kind = $v"),
-      asOf.map(_ => sql"NOT ${SqlLiteral(UndatedImportSql)}"),
+      asOf.map(_ => sql"NOT $UndatedImportSql"),
       // region-cleanup's rule: an undated polity known only by a point is on no map at a year
-      asOf.map(_ => sql"${SqlLiteral(UndatedPolityPointSql)}")
+      asOf.map(_ => sql"$UndatedPolityPointSql")
     ).flatten
     val live =
-      sql"WITH ${timeWindowCte(asOf, DefaultModernFrom)}, live AS (SELECT p.id, p.kind, ${SqlLiteral(sourceTierSql)} AS tier, ${SqlLiteral(normLabelSql("p.label"))} AS norm, ST_Area(p.geom) AS area, p.geom::box2d AS bb, ${SqlLiteral(timeBasisSql("p"))} AS basis FROM places p WHERE ${where.joined(sql" AND ")})"
+      sql"WITH ${timeWindowCte(asOf, DefaultModernFrom)}, live AS (SELECT p.id, p.kind, $sourceTierSql AS tier, ${normLabel(sql"p.label")} AS norm, ST_Area(p.geom) AS area, p.geom::box2d AS bb, ${timeBasisSql(sql"p")} AS basis FROM places p WHERE ${where.joined(sql" AND ")})"
     val shadowed =
       if asOf.isEmpty then sql", shadowed AS (SELECT NULL::text AS id WHERE false)"
       else
         sql", shadowed AS (SELECT DISTINCT lo.id FROM live lo JOIN live hi ON hi.tier < lo.tier AND hi.kind = lo.kind AND hi.bb && lo.bb JOIN places gh ON gh.id = hi.id JOIN places gl ON gl.id = lo.id WHERE hi.norm = lo.norm OR (ST_Intersects(gh.geom, gl.geom) AND ST_Area(ST_Intersection(ST_MakeValid(gh.geom), ST_MakeValid(gl.geom))) > ${SameStateOverlap.literal} * least(hi.area, lo.area)))"
-    sql"$live$shadowed SELECT l.id, p.label, l.kind, ${SqlLiteral(startCol)} AS ps, upper(p.period) - 1 AS pe, ${SqlLiteral(datingCol)} AS dating, l.basis, coalesce(ST_Dimension(p.geom) = 2, false) AS has_boundary, ST_AsGeoJSON(coalesce(p.geom_clipped, p.geom), 5) AS geojson FROM live l JOIN places p ON p.id = l.id WHERE l.id NOT IN (SELECT id FROM shadowed) ORDER BY l.area DESC, CASE l.basis WHEN 'dated' THEN 0 WHEN 'findings' THEN 1 WHEN 'timeless' THEN 2 ELSE 3 END, l.id LIMIT ${limit.value.max(1)}"
+    sql"$live$shadowed SELECT l.id, p.label, l.kind, $startCol AS ps, upper(p.period) - 1 AS pe, $datingCol AS dating, l.basis, coalesce(ST_Dimension(p.geom) = 2, false) AS has_boundary, ST_AsGeoJSON(coalesce(p.geom_clipped, p.geom), 5) AS geojson FROM live l JOIN places p ON p.id = l.id WHERE l.id NOT IN (SELECT id FROM shadowed) ORDER BY l.area DESC, CASE l.basis WHEN 'dated' THEN 0 WHEN 'findings' THEN 1 WHEN 'timeless' THEN 2 ELSE 3 END, l.id LIMIT ${limit.value.max(1)}"
 
   private def rows(q: Frag): Vector[String] =
     connect(ds)(

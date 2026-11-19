@@ -26,16 +26,17 @@ private[maptiles] object UndatedSiteRepo:
   val UndatedGroup: Group = Group("undated")
 
   /** A site with no known date that a map draws (a point, an informative name), over a `places` row `p` — word for word
-    * the predicate of `places_site_undated`, then the label rule.
+    * the predicate of `places_site_undated` (`'site'` is `Place.Kind.Site`, written in for the planner; TileRepoSuite
+    * holds it), then the label rule.
     */
-  private val UndatedSiteSql =
-    s"p.kind = '${Place.Kind.Site}' AND p.geom IS NOT NULL AND lower_inf(p.period) AND upper_inf(p.period)"
+  private[maptiles] val UndatedSiteSql: Frag =
+    sql"p.kind = 'site' AND p.geom IS NOT NULL AND lower_inf(p.period) AND upper_inf(p.period)"
 
   private def typed(siteType: Option[TileRepo.SiteType]): Frag =
     siteType
       .map(_.value.trim.toLowerCase)
       .filter(_.nonEmpty)
-      .fold(sql"")(t => sql" AND ${SqlLiteral(SiteTypesSql.expr("p"))} = $t")
+      .fold(sql"")(t => sql" AND ${SiteTypesSql.expr(sql"p")} = $t")
 
   /** The undated sites in the box `envelope` (of type `siteType` when one is asked for), but those of `except`, as a
     * tile's candidates ([[TileRepo.cellsSql]]: no dates, each marked `ub`). Pure.
@@ -45,7 +46,7 @@ private[maptiles] object UndatedSiteRepo:
       envelope: Frag,
       except: List[TileRepo.SiteId] = Nil
   ): Frag =
-    sql"SELECT p.id AS key, ST_X(q.pt) AS lon, ST_Y(q.pt) AS lat, NULL::bigint AS ps, NULL::bigint AS pe, true AS ub FROM places p CROSS JOIN LATERAL (SELECT CASE WHEN GeometryType(p.geom) = 'POINT' THEN p.geom ELSE ST_PointOnSurface(p.geom) END AS pt) q WHERE ${SqlLiteral(UndatedSiteSql)} AND p.geom && $envelope AND p.label !~* ${PlaceSql.UninformativeLabel}${typed(siteType)}${
+    sql"SELECT p.id AS key, ST_X(q.pt) AS lon, ST_Y(q.pt) AS lat, NULL::bigint AS ps, NULL::bigint AS pe, true AS ub FROM places p CROSS JOIN LATERAL (SELECT CASE WHEN GeometryType(p.geom) = 'POINT' THEN p.geom ELSE ST_PointOnSurface(p.geom) END AS pt) q WHERE $UndatedSiteSql AND p.geom && $envelope AND p.label !~* ${PlaceSql.UninformativeLabel}${typed(siteType)}${
         if except.isEmpty then sql""
         else sql" AND NOT (p.id = ANY($except::text[]))"
       }"
@@ -100,17 +101,17 @@ private[maptiles] object UndatedSiteRepo:
   /** The sites' places on Web Mercator's unit square, each axis held inside it (as [[TileRepo.unitsSql]]), over the
     * columns `lon` and `lat`.
     */
-  private val unitSquare: (String, String) =
-    val l = s"radians(greatest(${-TileCoord.MaxLat.value}, least(${TileCoord.MaxLat}, lat)))"
-    def held(v: String) = s"least(greatest($v, 0), 0.99999999999)"
-    (held("(lon + 180) / 360.0"), held(s"(1 - ln(tan($l) + 1 / cos($l)) / pi()) / 2"))
+  private val unitSquare: (Frag, Frag) =
+    val l = sql"radians(greatest(${(-TileCoord.MaxLat.value).literal}, least(${TileCoord.MaxLat.literal}, lat)))"
+    def held(v: Frag) = sql"least(greatest($v, 0), 0.99999999999)"
+    (held(sql"(lon + 180) / 360.0"), held(sql"(1 - ln(tan($l) + 1 / cos($l)) / pi()) / 2"))
 
   /** The statement that counts every undated site again, by type, into the squares of zooms 0 to `maxZoom` (`perSide` a
     * tile side). Pure.
     */
   def rebuildSql(perSide: UndatedBuild.PerSide, maxZoom: UndatedBuild.MaxZoom): Frag =
     val (mx, my) = unitSquare
-    sql"INSERT INTO site_undated_cells (z, gx, gy, site_type, n, sx, sy, w, s, e, nn, one) SELECT z.z, floor(m.mx * ((1::bigint << z.z) * ${perSide.literal}))::bigint, floor(m.my * ((1::bigint << z.z) * ${perSide.literal}))::bigint, m.st, count(*)::int, sum(m.mx), sum(m.my), min(m.lon), min(m.lat), max(m.lon), max(m.lat), min(m.id) FROM (SELECT id, lon, lat, st, ${SqlLiteral(mx)} AS mx, ${SqlLiteral(my)} AS my FROM (SELECT p.id, ST_X(q.pt) AS lon, ST_Y(q.pt) AS lat, coalesce(${SqlLiteral(SiteTypesSql.expr("p"))}, '') AS st FROM places p CROSS JOIN LATERAL (SELECT CASE WHEN GeometryType(p.geom) = 'POINT' THEN p.geom ELSE ST_PointOnSurface(p.geom) END AS pt) q WHERE ${SqlLiteral(UndatedSiteSql)} AND p.label !~* ${PlaceSql.UninformativeLabel}) s) m CROSS JOIN generate_series(0, $maxZoom) z(z) GROUP BY 1, 2, 3, 4"
+    sql"INSERT INTO site_undated_cells (z, gx, gy, site_type, n, sx, sy, w, s, e, nn, one) SELECT z.z, floor(m.mx * ((1::bigint << z.z) * ${perSide.literal}))::bigint, floor(m.my * ((1::bigint << z.z) * ${perSide.literal}))::bigint, m.st, count(*)::int, sum(m.mx), sum(m.my), min(m.lon), min(m.lat), max(m.lon), max(m.lat), min(m.id) FROM (SELECT id, lon, lat, st, $mx AS mx, $my AS my FROM (SELECT p.id, ST_X(q.pt) AS lon, ST_Y(q.pt) AS lat, coalesce(${SiteTypesSql.expr(sql"p")}, '') AS st FROM places p CROSS JOIN LATERAL (SELECT CASE WHEN GeometryType(p.geom) = 'POINT' THEN p.geom ELSE ST_PointOnSurface(p.geom) END AS pt) q WHERE $UndatedSiteSql AND p.label !~* ${PlaceSql.UninformativeLabel}) s) m CROSS JOIN generate_series(0, $maxZoom) z(z) GROUP BY 1, 2, 3, 4"
 
   /** Count every undated site again ([[rebuildSql]]) and record what from (`version` of the `undated` group, read
     * before), replacing the kept counts — in the caller's transaction, so readers see the old counts until it commits.

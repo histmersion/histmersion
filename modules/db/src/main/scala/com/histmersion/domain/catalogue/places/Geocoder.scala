@@ -54,7 +54,7 @@ private[places] object Geocoder:
                         THEN (SELECT count(*)::int FROM places q WHERE q.geom && p.geom AND ST_Equals(q.geom, p.geom))
                         ELSE 1 END,
                    ST_X(ST_PointOnSurface(p.geom)), ST_Y(ST_PointOnSurface(p.geom)),
-                   ${SqlLiteral(tierSql)},
+                   $tierSql,
                    coalesce(p.location_precision = 'grid-cell', false)
             FROM hit h JOIN places p ON p.id = h.id
             WHERE p.geom IS NOT NULL
@@ -63,10 +63,8 @@ private[places] object Geocoder:
             GROUP BY p.id, h.nlo, h.nhi""".query[Candidate].run().toList
 
   /** SQL twin of [[Geocode.tierOf]] over a `places` row aliased `p`. */
-  private[histmersion] val tierSql: String =
-    "CASE WHEN p.import_source IS NULL THEN 0 WHEN p.import_source LIKE 'lpf:%' THEN 1" +
-      " WHEN p.import_source = 'wikidata' THEN 2 WHEN p.import_source = 'tgn' THEN 3" +
-      " WHEN p.import_source = 'geonames' THEN 4 ELSE 5 END"
+  private[histmersion] val tierSql: Frag =
+    sql"CASE WHEN p.import_source IS NULL THEN 0 WHEN p.import_source LIKE 'lpf:%' THEN 1 WHEN p.import_source = 'wikidata' THEN 2 WHEN p.import_source = 'tgn' THEN 3 WHEN p.import_source = 'geonames' THEN 4 ELSE 5 END"
 
   /** Where `name` is, for a finding of period `at` about a place of kind `hint`. `None` = no gazetteer place by that
     * name (nothing is ever guessed).
@@ -175,8 +173,8 @@ private[places] object Geocoder:
     * `legacy` is the old rule, verbatim: exact `lower()` match on a label or any name, then site < feature < polity <
     * region, then the smaller area, then the id; the point on its surface.
     */
-  val legacySql: String =
-    s"""WITH asked AS (
+  val legacySql: Frag =
+    sql"""WITH asked AS (
          SELECT DISTINCT ON (f.id) f.id, btrim(p->>'place') AS place
          FROM findings f
          JOIN jobs j ON j.kind = 'agent' AND j.pipeline = 'enrich-source' AND j.target_id = f.citekey
@@ -186,7 +184,7 @@ private[places] object Geocoder:
          ORDER BY f.id, j.created_at DESC
        ), named AS (
          SELECT f.id, f.citekey, coalesce(a.place, btrim(f.region_name)) AS name, f.region_name,
-                ST_X(f.geom) AS lon, ST_Y(f.geom) AS lat, ${RangeSql.cols("f.period", "p0", "p1")}
+                ST_X(f.geom) AS lon, ST_Y(f.geom) AS lat, ${RangeSql.cols(sql"f.period", sql"p0", sql"p1")}
          FROM findings f LEFT JOIN asked a ON a.id = f.id
          WHERE f.geom IS NOT NULL AND coalesce(a.place, btrim(f.region_name), '') <> ''
        ), names AS (
@@ -211,7 +209,7 @@ private[places] object Geocoder:
     * Read-only.
     */
   def movesIn(s: GeocodeSettings)(using DbCon): List[Move] =
-    sql"${SqlLiteral(legacySql)}"
+    sql"$legacySql"
       .query[Placed]
       .run()
       .toList
@@ -280,8 +278,8 @@ private[places] object Geocoder:
     object To extends Newtype[Long, Pure]
 
   /** The findings with a place name and no point — what `finding-unplaced` reads. */
-  val unplacedSql: String =
-    s"""SELECT f.id, f.citekey, btrim(f.region_name), ${RangeSql.cols("f.period")}
+  val unplacedSql: Frag =
+    sql"""SELECT f.id, f.citekey, btrim(f.region_name), ${RangeSql.cols(sql"f.period")}
        FROM findings f
        WHERE f.geom IS NULL AND btrim(coalesce(f.region_name, '')) <> ''
        ORDER BY f.citekey, f.id"""
@@ -291,7 +289,7 @@ private[places] object Geocoder:
     * is never listed. Read-only.
     */
   def placementsIn(s: GeocodeSettings)(using DbCon): List[Placement] =
-    sql"${SqlLiteral(unplacedSql)}".query[Unplaced].run().toList.flatMap { u =>
+    sql"$unplacedSql".query[Unplaced].run().toList.flatMap { u =>
       resolveIn(
         Attempt.Name(u.region.value),
         KindHint.Unknown,

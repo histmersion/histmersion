@@ -63,19 +63,17 @@ private[places] object PlaceReviewRepo:
     * type, and every place Pleiades withdrew, whatever its kind — unless a person set its kind or period (`places set`,
     * V080).
     */
-  private val reviewedSql: String =
-    // a place whose kind or period a person set (V080) is decided: never listed again
-    "p.import_source IS NULL AND NOT EXISTS (SELECT 1 FROM place_overrides o WHERE o.place_id = p.id)" +
-      " AND ((ST_Dimension(p.geom) = 0 AND p.kind NOT IN ('site', 'feature'))" +
-      " OR (ST_Dimension(p.geom) = 0 AND p.kind = 'site' AND string_to_array(p.properties->>'feature_types', ',')" +
-      s" && ARRAY[${(PlaceReview.PolityTypes ++ PlaceReview.PeopleTypes).toList.sorted.map(t => s"'$t'").mkString(", ")}])" +
-      " OR p.label ~* '^withdrawn')"
+  private val reviewedSql: Frag =
+    // a place whose kind or period a person set (V080) is decided: never listed again; the administrative and people
+    // types bound as one text[] (the rule's own constants)
+    val types = (PlaceReview.PolityTypes ++ PlaceReview.PeopleTypes).toList
+    sql"p.import_source IS NULL AND NOT EXISTS (SELECT 1 FROM place_overrides o WHERE o.place_id = p.id) AND ((ST_Dimension(p.geom) = 0 AND p.kind NOT IN ('site', 'feature')) OR (ST_Dimension(p.geom) = 0 AND p.kind = 'site' AND string_to_array(p.properties->>'feature_types', ',') && $types::text[]) OR p.label ~* '^withdrawn')"
 
   /** The evidence of every reviewed place, and for a withdrawn duplicate the seed places its name resolves to.
     */
   def evidenceIn()(using DbCon): List[(Evidence, List[Candidate])] =
     val rows =
-      sql"SELECT p.id, p.label, p.kind, p.properties->>'feature_types', p.properties->>'time_periods', CASE WHEN p.start_unknown THEN NULL ELSE ${RangeSql.start(sql"p.period")} END, ${RangeSql.end(sql"p.period")} FROM places p WHERE ${SqlLiteral(reviewedSql)} ORDER BY p.id"
+      sql"SELECT p.id, p.label, p.kind, p.properties->>'feature_types', p.properties->>'time_periods', CASE WHEN p.start_unknown THEN NULL ELSE ${RangeSql.start(sql"p.period")} END, ${RangeSql.end(sql"p.period")} FROM places p WHERE $reviewedSql ORDER BY p.id"
         .query[Row]
         .run()
         .toList

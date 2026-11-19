@@ -251,12 +251,12 @@ private[places] object PointAreaRepo:
     val keys: List[String] = findings.flatMap(_._2).distinct.map(_.value)
     if keys.isEmpty then Map.empty
     else
-      val seedOnly = s"NOT ${PlaceRepo.importedSql("p")} AND ${FindingPlaceRepo.explicitOnlySql("p")}"
+      val seedOnly = sql"NOT ${PlaceRepo.importedSql(sql"p")} AND ${FindingPlaceRepo.explicitOnlySql(sql"p")}"
       val hits =
         sql"""SELECT DISTINCT k FROM unnest($keys::text[]) AS k
-              WHERE EXISTS (SELECT 1 FROM places p WHERE histmersion_place_key(p.label) = k AND ${SqlLiteral(seedOnly)})
+              WHERE EXISTS (SELECT 1 FROM places p WHERE histmersion_place_key(p.label) = k AND $seedOnly)
                  OR EXISTS (SELECT 1 FROM place_names n JOIN places p ON p.id = n.place_id
-                            WHERE histmersion_place_key(n.name) = k AND ${SqlLiteral(seedOnly)})"""
+                            WHERE histmersion_place_key(n.name) = k AND $seedOnly)"""
           .query[String]
           .run()
           .toSet

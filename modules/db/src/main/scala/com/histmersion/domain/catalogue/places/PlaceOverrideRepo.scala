@@ -56,7 +56,7 @@ private[places] object PlaceOverrideRepo:
     * when its geometry is a line or an area).
     */
   private def rowOf(id: BPlaceRow.Id)(using DbCon): Option[Row] =
-    sql"""SELECT p.label, p.kind, ${SqlLiteral(PlaceRepo.startCol)},
+    sql"""SELECT p.label, p.kind, ${PlaceRepo.startCol},
                  ${RangeSql.end(sql"p.period")},
                  CASE WHEN GeometryType(p.geom) = 'POINT' THEN ST_Y(p.geom) END,
                  CASE WHEN GeometryType(p.geom) = 'POINT' THEN ST_X(p.geom) END,

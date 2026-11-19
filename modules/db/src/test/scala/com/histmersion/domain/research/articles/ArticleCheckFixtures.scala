@@ -3,7 +3,7 @@ package domain.research.articles
 
 import com.histmersion.api.checks.Lint.{FormatChecker, LintRuleReport, Rule}
 import com.histmersion.util.data.checks.CheckRun
-import com.augustnagro.magnum.DbCon
+import com.augustnagro.magnum.{DbCon, Frag}
 
 /** The articles' lint rules as the db suites run them: a rule's report on the suite's connection and the SQL each rule
   * reads.
@@ -18,4 +18,4 @@ object ArticleCheckFixtures:
   ): LintRuleReport =
     ArticleCheckRepo.report(r, format, maxItems)
 
-  def sqlOf(rule: String): List[String] = ArticleCheckRepo.sqlOf(rule)
+  def sqlOf(rule: String): List[Frag] = ArticleCheckRepo.sqlOf(rule)

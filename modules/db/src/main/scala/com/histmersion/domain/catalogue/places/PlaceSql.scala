@@ -1,19 +1,22 @@
 package com.histmersion
 package domain.catalogue.places
 
-import com.histmersion.api.catalogue.Gazetteer
-import com.histmersion.util.database.RangeSql
+import com.histmersion.util.database.{literal, RangeSql}
 import com.histmersion.domain.catalogue.Place
-import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.DeepTime
-import com.augustnagro.magnum.{sql, Frag, SqlLiteral}
+import com.augustnagro.magnum.{sql, Frag}
 import com.histmersion.util.database.NewtypeColumns.given
 
-/** The places' SQL other queries embed, over a `places` row by its alias: what an import brought in, how a place is
-  * dated, its time basis and the time rule of a view at a year or over a window, the base layers' predicates, the
-  * labels that name nothing.
+/** The places' SQL other queries embed, over a `places` row by its alias (a fragment: `sql"p"`): what an import brought
+  * in, how a place is dated, its time basis and the time rule of a view at a year or over a window, the base layers'
+  * predicates, the labels that name nothing.
   */
 object PlaceSql:
+
+  type DefaultModernFrom = DefaultModernFromValue
+  export com.histmersion.domain.DeepTime.SignedYear as DefaultModernFromValue
+  export com.histmersion.domain.DeepTime.SignedYear as TimeWindowCteModernFrom
+  export Place.Kind.Wire as InTimeSqlKind
 
   /** A place GeoNames or Wikidata brought in (#1064), over a `places` row aliased `alias`. Such a place is for finding
     * a name and placing a finding, and for an explicit pick: it is no part of the hierarchy (a filter's scope, the
@@ -21,59 +24,42 @@ object PlaceSql:
     * very point — and is drawn on the base map only with a finding (2026-10-09: 1.2 M points had made every region's
     * subtree and hover counts enormous).
     */
-  type ImportedList = ImportedListValue
-  type ImportedListValue = ImportedListValue.T
-  object ImportedListValue extends Newtype[String, Pure]
-  type ModernSqlAlias = String
-  type DefaultModernFrom = DefaultModernFromValue
-  export com.histmersion.domain.DeepTime.SignedYear as DefaultModernFromValue
-  type UndatedSqlAlias = String
-  type TimelessSqlAlias = String
-  type TimeBasisSqlAlias = String
-  export com.histmersion.domain.DeepTime.SignedYear as TimeWindowCteModernFrom
-  type InTimeSqlAlias = String
-  export Place.Kind.Wire as InTimeSqlKind
-  type InWindowSqlAlias = String
+  def importedSql(alias: Frag): Frag =
+    sql"coalesce($alias.import_source, '') IN $ImportedList"
 
-  def importedSql(alias: String): String =
-    s"coalesce($alias.import_source, '') IN $ImportedList"
-
-  /** `('wikidata', 'geonames', 'tgn')` — [[Gazetteer.ImportedSources]] as an SQL list. The partial indexes of
-    * V075/V076/V080 (rebuilt by V093 when TGN joined) spell it word for word.
+  /** `('wikidata', 'geonames', 'tgn')` — `Gazetteer.ImportedSources` as an SQL list, written into the text: the partial
+    * indexes of V075/V076/V080 (rebuilt by V093 when TGN joined) spell it word for word, and the planner matches them
+    * only on the literal. `TileRepoSuite` holds it equal to `Gazetteer.ImportedSources`.
     */
-  val ImportedList: ImportedList =
-    ImportedListValue(Gazetteer.ImportedSources.map(s => s"'$s'").mkString("(", ", ", ")"))
+  val ImportedList: Frag = sql"('wikidata', 'geonames', 'tgn')"
 
   /** A place whose source states NO date (GeoNames, Wikidata — [[PlaceDating.Unknown]]): the open range there means
     * "unknown", not "always". Findable and placeable by name; never on a time-sliced map. Over a `places` row aliased
     * `p`.
     */
-  val UndatedImportSql =
-    s"(coalesce(p.import_source, '') IN $ImportedList AND lower_inf(p.period) AND upper_inf(p.period))"
+  val UndatedImportSql: Frag =
+    sql"(coalesce(p.import_source, '') IN $ImportedList AND lower_inf(p.period) AND upper_inf(p.period))"
 
   /** [[PlaceDating]] of a `places` row aliased `p` (V074). */
-  val datingCol =
-    s"CASE WHEN p.start_unknown THEN 'end-only' WHEN $UndatedImportSql THEN 'unknown' ELSE 'stated' END"
+  val datingCol: Frag =
+    sql"CASE WHEN p.start_unknown THEN 'end-only' WHEN $UndatedImportSql THEN 'unknown' ELSE 'stated' END"
 
   /** The STATED start: `NULL` when it is unknown (the stored lower bound is then only the window the time filters use,
     * V074).
     */
-  val startCol = s"CASE WHEN p.start_unknown THEN NULL ELSE ${RangeSql.start("p.period")} END"
+  val startCol: Frag = sql"CASE WHEN p.start_unknown THEN NULL ELSE ${RangeSql.start(sql"p.period")} END"
 
   /** Which source wins when two describe the same state at the same time: 1 = OpenHistoricalMap, 2 = every other real
     * dataset (Cliopatria/Seshat, Pleiades, Natural Earth), 3 = the agent-drawn sketches of `db/places/polities` — shown
     * only where nothing better covers them.
     */
-  val sourceTierSql: String =
-    "CASE WHEN p.properties->>'method' = 'ohm-import' THEN 1" +
-      " WHEN p.properties->>'method' = 'agent-drawn' THEN 3 ELSE 2 END"
+  val sourceTierSql: Frag =
+    sql"CASE WHEN p.properties->>'method' = 'ohm-import' THEN 1 WHEN p.properties->>'method' = 'agent-drawn' THEN 3 ELSE 2 END"
 
   /** A label reduced to what identifies the state: lower case, no parentheses, no filler words (of/the/and), no
-    * punctuation — so "Old Kingdom of Egypt" and "Old Kingdom Egypt" meet.
+    * punctuation — so "Old Kingdom of Egypt" and "Old Kingdom Egypt" meet. `value` is any SQL expression: a column, or
+    * a label bound as a parameter.
     */
-  def normLabelSql(col: String): String = normLabel(sql"${SqlLiteral(col)}").sqlString
-
-  /** [[normLabelSql]] of any SQL expression: a column, or a label bound as a parameter. */
   def normLabel(value: Frag): Frag =
     sql"regexp_replace(regexp_replace(lower($value), '\\m(of|the|and)\\M', '', 'g'), '[^a-z0-9]+', '', 'g')"
 
@@ -94,10 +80,10 @@ object PlaceSql:
     * `places.modern-from` ("Kraków" would sit among the sites of 1400 BCE) and a physical feature at any time
     * ([[inTimeSql]]); the map across all time draws neither.
     */
-  val ModernSql = modernSql("p")
+  val ModernSql: Frag = modernSql(sql"p")
 
   /** [[ModernSql]] over a `places` row aliased `alias`. */
-  def modernSql(alias: ModernSqlAlias): String = s"coalesce(($alias.properties->>'modern')::boolean, false)"
+  def modernSql(alias: Frag): Frag = sql"coalesce(($alias.properties->>'modern')::boolean, false)"
 
   // ── the time rule (2026-10-09): what a view AT A TIME shows ─────────────────────────────────────
 
@@ -109,17 +95,15 @@ object PlaceSql:
   /** A stored period open on both sides: the source states no date. An unknown start (V074) is not — it stores a
     * window.
     */
-  private def undatedSql(alias: UndatedSqlAlias): String = s"(lower_inf($alias.period) AND upper_inf($alias.period))"
+  private def undatedSql(alias: Frag): Frag = sql"(lower_inf($alias.period) AND upper_inf($alias.period))"
 
   /** A physical feature of the seed: there at any time ([[PlaceTimeBasis.Timeless]]). */
-  private def timelessSql(alias: TimelessSqlAlias): String =
-    s"(NOT ${importedSql(alias)} AND ($alias.kind = 'feature' OR ($alias.kind = 'region' AND ${modernSql(alias)})))"
+  private def timelessSql(alias: Frag): Frag =
+    sql"(NOT ${importedSql(alias)} AND ($alias.kind = 'feature' OR ($alias.kind = 'region' AND ${modernSql(alias)})))"
 
   /** [[PlaceTimeBasis.of]] in SQL, over a `places` row aliased `alias`: the basis's wire name. */
-  def timeBasisSql(alias: TimeBasisSqlAlias): String =
-    s"CASE WHEN ${timelessSql(alias)} THEN 'timeless' WHEN ${modernSql(alias)} THEN 'modern'" +
-      s" WHEN ${undatedSql(alias)} AND $alias.geom IS NULL THEN 'grouping'" +
-      s" WHEN ${undatedSql(alias)} THEN 'findings' ELSE 'dated' END"
+  def timeBasisSql(alias: Frag): Frag =
+    sql"CASE WHEN ${timelessSql(alias)} THEN 'timeless' WHEN ${modernSql(alias)} THEN 'modern' WHEN ${undatedSql(alias)} AND $alias.geom IS NULL THEN 'grouping' WHEN ${undatedSql(alias)} THEN 'findings' ELSE 'dated' END"
 
   /** The window of a time view as a one-row CTE `tw(w, modern_on)` for the year `asOf`: `w` the window (`NULL` = no
     * time, nothing is filtered), `modern_on` whether it reaches `modern-from`. [[inTimeSql]] reads it; every
@@ -142,8 +126,8 @@ object PlaceSql:
     * on through it); any other undated place only when a finding or an event DATED within the window is attached to it
     * — in [[timeBasisSql]]'s order.
     *
-    * Led by an overlap with the year as a LITERAL (a `Long`, so nothing to escape): every place the rule shows overlaps
-    * the window (an undated one is open on both sides) except a physical feature dated outside it, so
+    * Led by an overlap with the year as a LITERAL (`n.literal`, a number: nothing to escape): every place the rule
+    * shows overlaps the window (an undated one is open on both sides) except a physical feature dated outside it, so
     * `period && [y, y]` — OR'ed with "physical" only where `kind` can be one — is implied by the rule. Read from the
     * CTE (`(SELECT tw.w FROM tw)`, an init-plan whose value the planner cannot see) the overlap was estimated at 13 000
     * rows and `places_period_gist` was AND'ed into every candidate scan — 1.19 M rows, 40 ms of a place search's 47,
@@ -152,10 +136,10 @@ object PlaceSql:
     * (kind, period) GiSTs of a map layer (V076).
     */
   def inTimeSql(
-      alias: InTimeSqlAlias,
+      alias: Frag,
       asOf: Option[DeepTime.SignedYear],
       kind: Option[PlaceSql.InTimeSqlKind] = None
-  ): String =
+  ): Frag =
     inWindowSql(alias, asOf.map(y => (y, y)), kind)
 
   /** [[inTimeSql]] over the inclusive window `lo..hi` ([[windowCte]]): shown at ANY year of it. With `modernFrom` the
@@ -165,29 +149,26 @@ object PlaceSql:
     * finding of the window for each of them (2.5 s of a sites tile over -3000..2000, 2026-10-27).
     */
   def inWindowSql(
-      alias: InWindowSqlAlias,
+      alias: Frag,
       window: Option[(DeepTime.SignedYear, DeepTime.SignedYear)],
       kind: Option[Place.Kind.Wire] = None,
       modernFrom: Option[DeepTime.SignedYear] = None
-  ): String =
-    window.fold("true") { (lo, hi) =>
-      val w = modernFrom.fold("(SELECT tw.w FROM tw)")(_ => s"int8range($lo::bigint, $hi::bigint, '[]')")
-      val modernOn = modernFrom.fold("(SELECT tw.modern_on FROM tw)")(m => if hi >= m then "true" else "false")
+  ): Frag =
+    window.fold(sql"true") { (lo, hi) =>
+      val (from, to) = (sql"${lo.literal}::bigint", sql"${hi.literal}::bigint")
+      val w = modernFrom.fold(sql"(SELECT tw.w FROM tw)")(_ => sql"int8range($from, $to, '[]')")
+      val modernOn = modernFrom.fold(sql"(SELECT tw.modern_on FROM tw)")(m => if hi >= m then sql"true" else sql"false")
       val modern = modernSql(alias)
       val undated = undatedSql(alias)
       val timeless = timelessSql(alias)
-      val overlap = RangeSql.overlaps(s"$alias.period", s"$lo::bigint", s"$hi::bigint")
+      val overlap = RangeSql.overlaps(sql"$alias.period", from, to)
       val physicalKind = kind.forall(k => k.value == Place.Kind.Feature || k.value == Place.Kind.Region)
-      val lead = if physicalKind then s"($overlap OR $timeless)" else overlap
-      s"($lead AND ($timeless" +
-        s" OR ($modern AND $modernOn)" +
-        s" OR (NOT $undated AND NOT $modern)" +
-        s" OR (NOT $modern AND $undated AND $alias.geom IS NULL)" +
-        s" OR (NOT $modern AND $undated AND $alias.geom IS NOT NULL AND (" +
-        s"EXISTS (SELECT 1 FROM finding_places fp JOIN findings f ON f.id = fp.finding_id" +
-        s" WHERE fp.place_id = $alias.id AND f.period && $w AND NOT (lower_inf(f.period) AND upper_inf(f.period)))" +
-        s" OR EXISTS (SELECT 1 FROM events e WHERE e.place_id = $alias.id AND e.outer_span && $w" +
-        s" AND NOT (lower_inf(e.outer_span) AND upper_inf(e.outer_span)))))))"
+      val lead = if physicalKind then sql"($overlap OR $timeless)" else overlap
+      val byFindings =
+        sql"EXISTS (SELECT 1 FROM finding_places fp JOIN findings f ON f.id = fp.finding_id WHERE fp.place_id = $alias.id AND f.period && $w AND NOT (lower_inf(f.period) AND upper_inf(f.period)))"
+      val byEvents =
+        sql"EXISTS (SELECT 1 FROM events e WHERE e.place_id = $alias.id AND e.outer_span && $w AND NOT (lower_inf(e.outer_span) AND upper_inf(e.outer_span)))"
+      sql"($lead AND ($timeless OR ($modern AND $modernOn) OR (NOT $undated AND NOT $modern) OR (NOT $modern AND $undated AND $alias.geom IS NULL) OR (NOT $modern AND $undated AND $alias.geom IS NOT NULL AND ($byFindings OR $byEvents))))"
     }
 
   /** The BASE layers (polity, region, site, feature) draw the curated gazetteer: the bundled seed, a person's own
@@ -196,14 +177,13 @@ object PlaceSql:
     * ranking: 1.2 M imported points would otherwise fill the map with dots that are neither sites nor boundaries. Over
     * a `places` row aliased `p`.
     */
-  val BaseLayerSql =
-    s"(p.import_source IS NULL OR p.import_source NOT IN $ImportedList" +
-      " OR EXISTS (SELECT 1 FROM finding_places fp WHERE fp.place_id = p.id))"
+  val BaseLayerSql: Frag =
+    sql"(p.import_source IS NULL OR p.import_source NOT IN $ImportedList OR EXISTS (SELECT 1 FROM finding_places fp WHERE fp.place_id = p.id))"
 
   /** The curated half of [[BaseLayerSql]] — word for word the predicate of the partial index `places_base_layer`
     * (V075), which is what lets the planner use it.
     */
-  val CuratedSql = s"(p.import_source IS NULL OR p.import_source NOT IN $ImportedList)"
+  val CuratedSql: Frag = sql"(p.import_source IS NULL OR p.import_source NOT IN $ImportedList)"
 
   /** NOT a present-day GeoNames/Wikidata place — word for word the predicate of the partial indexes
     * `places_before_modern` and `places_before_modern_label_trgm` (V076). A view at a year before `places.modern-from`
@@ -211,18 +191,18 @@ object PlaceSql:
     * being present-day), so there this is implied by the time rule and only tells the planner which indexes hold the
     * candidates.
     */
-  val ShownBeforeModernSql = s"NOT (${importedSql("p")} AND ${modernSql("p")})"
+  val ShownBeforeModernSql: Frag = sql"NOT (${importedSql(sql"p")} AND ${modernSql(sql"p")})"
 
   /** A DATED GeoNames/Wikidata place — word for word the predicate of the partial index `places_dated_import` (V076).
     * At a year the imported half of a base layer is exactly these (an undated import is never drawn then), and saying
     * so lets the planner read the few hundred alive that year instead of every imported place a finding is attached to.
     */
-  val DatedImportSql =
-    s"(p.import_source IN $ImportedList AND NOT (lower_inf(p.period) AND upper_inf(p.period)))"
+  val DatedImportSql: Frag =
+    sql"(p.import_source IN $ImportedList AND NOT (lower_inf(p.period) AND upper_inf(p.period)))"
 
   /** Not an undated polity known only by a point, over a `places` row aliased `p`: a map at a year never draws one,
     * findings or not (region-cleanup, 2026-10-09) — a state is not "always". The dimension is the stored `shape_dim`
     * (V090): `ST_Dimension(p.geom)` decompressed every polity alive.
     */
-  val UndatedPolityPointSql =
-    "NOT (p.kind = 'polity' AND p.shape_dim = 0 AND lower_inf(p.period) AND upper_inf(p.period))"
+  val UndatedPolityPointSql: Frag =
+    sql"NOT (p.kind = 'polity' AND p.shape_dim = 0 AND lower_inf(p.period) AND upper_inf(p.period))"

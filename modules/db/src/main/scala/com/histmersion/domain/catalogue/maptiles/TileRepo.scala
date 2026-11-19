@@ -75,12 +75,13 @@ private[maptiles] object TileRepo:
   /** Web Mercator in SQL over the columns `lon` and `lat`: [[TileCoord.mercator]], each axis held inside the unit
     * square, then in units of tile `c` — `(x, y)`. `TileRepoSuite` holds it to the Scala.
     */
-  def unitsSql(c: TileCoord): (String, String) =
-    val l = s"radians(greatest(${-TileCoord.MaxLat.value}, least(${TileCoord.MaxLat}, lat)))"
-    def held(v: String) = s"least(greatest($v, 0), 0.99999999999)"
+  def unitsSql(c: TileCoord): (Frag, Frag) =
+    val l = sql"radians(greatest(${(-TileCoord.MaxLat.value).literal}, least(${TileCoord.MaxLat.literal}, lat)))"
+    def held(v: Frag) = sql"least(greatest($v, 0), 0.99999999999)"
+    val (side, extent) = (c.side.literal, TileCoord.Extent.literal)
     (
-      s"(${held("(lon + 180) / 360.0")} * ${c.side} - ${c.x}) * ${TileCoord.Extent}",
-      s"(${held(s"(1 - ln(tan($l) + 1 / cos($l)) / pi()) / 2")} * ${c.side} - ${c.y}) * ${TileCoord.Extent}"
+      sql"(${held(sql"(lon + 180) / 360.0")} * $side - ${c.x.literal}) * $extent",
+      sql"(${held(sql"(1 - ln(tan($l) + 1 / cos($l)) / pi()) / 2")} * $side - ${c.y.literal}) * $extent"
     )
 
   /** The items of `candidates` placed in tile `c` (columns `key`, `lon`, `lat`, `ps`, `pe`, `ub`: an item's key, point,
@@ -90,7 +91,7 @@ private[maptiles] object TileRepo:
   private def placedSql(candidates: Frag, c: TileCoord): Frag =
     val (ux, uy) = unitsSql(c)
     val e = TileCoord.Extent
-    sql"WITH c AS MATERIALIZED ($candidates), k AS MATERIALIZED (SELECT key, lon, lat, ub, CASE WHEN ps IS NOT NULL AND pe IS NOT NULL THEN (ps + pe) / 2.0 END AS mid, ${SqlLiteral(ux)} AS px, ${SqlLiteral(uy)} AS py FROM c), t AS MATERIALIZED (SELECT * FROM k WHERE px >= 0 AND px < ${e.literal} AND py >= 0 AND py < ${e.literal})"
+    sql"WITH c AS MATERIALIZED ($candidates), k AS MATERIALIZED (SELECT key, lon, lat, ub, CASE WHEN ps IS NOT NULL AND pe IS NOT NULL THEN (ps + pe) / 2.0 END AS mid, $ux AS px, $uy AS py FROM c), t AS MATERIALIZED (SELECT * FROM k WHERE px >= 0 AND px < ${e.literal} AND py >= 0 AND py < ${e.literal})"
 
   /** The cells of tile `c` over `candidates` ([[placedSql]]): every item alone when there are at most `maxPoints`, else
     * counted by cells of `cellUnits` (a cell of one item answers as the item). Rows as [[TileCell]]'s fields, `undated`
@@ -146,17 +147,18 @@ private[maptiles] object TileRepo:
     val tw = Some(window)
     // `ub`: a site of no known date the span shows by its findings or events — counted among the undated
     // sites too when they are asked for ([[UndatedSiteRepo]])
-    val ub = if markUndated then "(lower_inf(p.period) AND upper_inf(p.period))" else "false"
-    sql"SELECT p.id AS key, ST_X(q.pt) AS lon, ST_Y(q.pt) AS lat, ${RangeSql.start(sql"p.period")} AS ps, ${RangeSql.end(sql"p.period")} AS pe, ${SqlLiteral(ub)} AS ub FROM places p CROSS JOIN LATERAL (SELECT CASE WHEN GeometryType(p.geom) = 'POINT' THEN p.geom ELSE ST_PointOnSurface(p.geom) END AS pt) q WHERE p.kind = '${SqlLiteral(Place.Kind.Site)}' AND p.geom IS NOT NULL AND NOT (coalesce(p.import_source, '') IN ${SqlLiteral(PlaceSql.ImportedList.value)} AND lower_inf(p.period) AND upper_inf(p.period)) AND p.geom && $envelope AND p.label !~* ${PlaceSql.UninformativeLabel} AND ${SqlLiteral(PlaceSql.inWindowSql("p", tw, Some(Place.Kind.Wire(Place.Kind.Site)), Some(modernFrom)))}${siteType
+    val ub = if markUndated then sql"(lower_inf(p.period) AND upper_inf(p.period))" else sql"false"
+    // `p.kind = 'site'` is `Place.Kind.Site` word for word, written in: `places_site_map`'s predicate (TileRepoSuite)
+    sql"SELECT p.id AS key, ST_X(q.pt) AS lon, ST_Y(q.pt) AS lat, ${RangeSql.start(sql"p.period")} AS ps, ${RangeSql.end(sql"p.period")} AS pe, $ub AS ub FROM places p CROSS JOIN LATERAL (SELECT CASE WHEN GeometryType(p.geom) = 'POINT' THEN p.geom ELSE ST_PointOnSurface(p.geom) END AS pt) q WHERE p.kind = 'site' AND p.geom IS NOT NULL AND NOT (coalesce(p.import_source, '') IN ${PlaceSql.ImportedList} AND lower_inf(p.period) AND upper_inf(p.period)) AND p.geom && $envelope AND p.label !~* ${PlaceSql.UninformativeLabel} AND ${PlaceSql.inWindowSql(sql"p", tw, Some(Place.Kind.Wire(Place.Kind.Site)), Some(modernFrom))}${siteType
         .map(_.value.trim.toLowerCase)
         .filter(_.nonEmpty)
-        .fold(sql"")(t => sql" AND ${SqlLiteral(SiteTypesSql.expr("p"))} = $t")}"
+        .fold(sql"")(t => sql" AND ${SiteTypesSql.expr(sql"p")} = $t")}"
 
   /** The sites of `ids` as a sites tile draws one, by id. */
   def sitesOf(ids: List[SiteId])(using DbCon): Map[SiteId, SiteTile] =
     if ids.isEmpty then Map.empty
     else
-      sql"SELECT p.id, p.label, p.kind, ${SqlLiteral(SiteTypesSql.expr("p"))}, ${SqlLiteral(PlaceSql.timeBasisSql("p"))}, ${RangeSql.start(sql"p.period")}, ${RangeSql.end(sql"p.period")} FROM places p WHERE p.id = ANY($ids)"
+      sql"SELECT p.id, p.label, p.kind, ${SiteTypesSql.expr(sql"p")}, ${PlaceSql.timeBasisSql(sql"p")}, ${RangeSql.start(sql"p.period")}, ${RangeSql.end(sql"p.period")} FROM places p WHERE p.id = ANY($ids)"
         .query[(String, String, String, Option[String], String, Option[Long], Option[Long])]
         .run()
         .map((id, label, kind, t, basis, ps, pe) =>

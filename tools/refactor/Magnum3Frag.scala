@@ -14,8 +14,8 @@ import metaconfig.{ConfDecoder, Configured, generic}
   *   - `names`: `SqlLiteral(x)`, where `x` (or `a.b.x`) is a configured name whose definition is a `Frag` now, becomes
   *     `x`.
   *
-  * `files` restricts an entry to the files whose path ends with one of them (the short names `t`, `at`, `cols` mean
-  * different things in different files). The `SqlLiteral` importee goes where none is left; `sql` is imported where a
+  * `files` restricts an entry to the files whose path ends with one of them, or lies under one ending in `/` (the
+  * short names `t`, `at`, `cols` mean different things in different files). The `SqlLiteral` importee goes where none is left; `sql` is imported where a
   * fragment was written and the file had no `sql` in scope. What it cannot rewrite (a non-literal argument at an SQL
   * position, a triple-quoted literal with a backslash, which `sql"""..."""` would read as an escape, a bare call
   * spliced into an `s"..."` or joined with `+`, where a `Frag` would put its `toString` into the text) is kept and
@@ -48,7 +48,9 @@ class Magnum3Frag(config: Magnum3Frag.Config) extends SyntacticRule("Magnum3Frag
   override def withConfiguration(c: Configuration): Configured[Rule] =
     c.conf.getOrElse("Magnum3Frag")(this.config).map(new Magnum3Frag(_))
 
-  private def inFile(path: String, files: List[String]): Boolean = files.isEmpty || files.exists(f => path.endsWith(f))
+  /** `files` names a file by the end of its path, or a directory by a part ending in `/`. */
+  private def inFile(path: String, files: List[String]): Boolean =
+    files.isEmpty || files.exists(f => path.endsWith(f) || (f.endsWith("/") && path.contains("/" + f)))
 
   private def lastName(t: Term): Option[String] = t match {
     case Term.Name(n)      => Some(n)

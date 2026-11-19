@@ -243,7 +243,7 @@ class PlaceholderPointSuite extends DbSuite with Bounded:
   ):
     seed()
     def isPh(p: GeoPoint) = connect(ds)(
-      sql"SELECT ${SqlLiteral(PlaceFixtures.placeholderSql("f"))} FROM (SELECT ST_SetSRID(ST_MakePoint(${p.lon.literal}, ${p.lat.literal}), 4326) AS geom) f"
+      sql"SELECT ${PlaceFixtures.placeholderSql(sql"f")} FROM (SELECT ST_SetSRID(ST_MakePoint(${p.lon.literal}, ${p.lat.literal}), 4326) AS geom) f"
         .query[Boolean]
         .run()
         .head

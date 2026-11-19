@@ -5,7 +5,7 @@ import com.histmersion.api.checks.Lint.{FormatChecker, LintReport, Rule}
 import com.histmersion.domain.research.articles.ArticleCheckFixtures
 import com.histmersion.domain.catalogue.places.GeocodeSettings
 import com.histmersion.util.data.checks.CheckRun
-import com.augustnagro.magnum.connect
+import com.augustnagro.magnum.{connect, Frag}
 
 import com.histmersion.api.maintenance.ReindexResult
 import com.histmersion.util.database.Transactor
@@ -40,4 +40,4 @@ object SourceCheckFixtures:
         else ArticleCheckFixtures.report(r, format, ArticleCheckFixtures.ReportMaxItems(maxItems.value))
       })
 
-  def sqlOf(rule: Rule.Name): List[String] = SourceCheckRepo.sqlOf(rule.value) ++ ArticleCheckFixtures.sqlOf(rule.value)
+  def sqlOf(rule: Rule.Name): List[Frag] = SourceCheckRepo.sqlOf(rule.value) ++ ArticleCheckFixtures.sqlOf(rule.value)

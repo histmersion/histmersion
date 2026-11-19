@@ -98,7 +98,7 @@ private[places] object TreeRepo:
           SELECT p.id FROM places p WHERE p.id = ANY($ids::text[])
           UNION
           SELECT r.parent_id FROM place_relations r JOIN up ON r.child_id = up.id
-          WHERE r.kind = '${SqlLiteral(Place.Relation.PartOf)}'
+          WHERE r.kind = ${Place.Relation.PartOf}
         )"""
 
   /** The nodes of the closure — id, label, kind, own validity, and whether the shape is contested. */

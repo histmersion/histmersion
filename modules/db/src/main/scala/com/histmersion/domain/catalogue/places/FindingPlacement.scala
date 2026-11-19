@@ -2,7 +2,7 @@ package com.histmersion
 package domain.catalogue.places
 
 import com.histmersion.api.catalogue.Geocode
-import com.augustnagro.magnum.DbCon
+import com.augustnagro.magnum.{DbCon, Frag}
 import com.histmersion.domain.library.Citekey
 
 /** What the places decide for the library: which places a source's findings belong to (`finding_places`), placed again
@@ -30,7 +30,7 @@ object FindingPlacement:
   /** Every finding on a placeholder point (one standing for a named place), as `lint --rule finding-placeholder` reads
     * them: id, place name, period, citekey and point.
     */
-  def placeholderFindingsSql: String = FindingPlaceRepo.placeholderFindingsSql
+  def placeholderFindingsSql: Frag = FindingPlaceRepo.placeholderFindingsSql
 
   /** The findings on a placeholder point whose place name the geocoder does not resolve, or that have none: (citekey,
     * line), by citekey and finding id.
@@ -41,10 +41,10 @@ object FindingPlacement:
   /** The findings whose stored point is the one the old geocoder chose for their place name, as
     * `lint --rule finding-geocode` reads them.
     */
-  def legacyPointsSql: String = Geocoder.legacySql
+  def legacyPointsSql: Frag = Geocoder.legacySql
 
   /** The findings with a place name and no point, as `lint --rule finding-unplaced` reads them. */
-  def unplacedSql: String = Geocoder.unplacedSql
+  def unplacedSql: Frag = Geocoder.unplacedSql
 
   /** The moves `finding-geocode`'s repair would make: every old-geocoder point the current ranking puts more than
     * `repairKm` away. Read-only.

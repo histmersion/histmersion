@@ -92,11 +92,22 @@ class TileRepoSuite extends DbSuite:
 
   private def keysIn(cells: List[TileCell]): Set[String] = cells.filter(_.isItem).map(_.key.value).toSet
 
+  test("the sites' partial-index predicates name Place.Kind.Site and the imported sources word for word"):
+    val kind = s"p.kind = '${DPlace.Kind.Site}'"
+    val sites =
+      TileRepo.siteCandidates((SignedYear(-100L), SignedYear(100L)), None, SignedYear(1500L), sql"TRUE").sqlString
+    assert(sites.contains(kind), sites)
+    assert(UndatedSiteRepo.UndatedSiteSql.sqlString.startsWith(kind), UndatedSiteRepo.UndatedSiteSql.sqlString)
+    assertEquals(
+      PlaceFixtures.ImportedList.sqlString,
+      com.histmersion.api.catalogue.Gazetteer.ImportedSources.map(s => s"'$s'").mkString("(", ", ", ")")
+    )
+
   test("the SQL Mercator places a point where the Scala one does"):
     val c = tileAt(TileCoord.Z(7), Latitude(-33.9), Longitude(18.4))
     val (ux, uy) = TileRepo.unitsSql(c)
     val (x, y) = connect(ds):
-      sql"SELECT ${SqlLiteral(ux)}, ${SqlLiteral(uy)} FROM (SELECT 18.4::float8 AS lon, -33.9::float8 AS lat) p"
+      sql"SELECT $ux, $uy FROM (SELECT 18.4::float8 AS lon, -33.9::float8 AS lat) p"
         .query[(Double, Double)]
         .run()
         .head

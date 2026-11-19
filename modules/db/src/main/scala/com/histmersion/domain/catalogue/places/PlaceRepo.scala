@@ -89,7 +89,7 @@ private[places] object PlaceRepo:
     inTimeSql,
     inWindowSql,
     modernSql,
-    normLabelSql,
+    normLabel,
     sourceTierSql,
     startCol,
     timeBasisSql,
@@ -116,18 +116,17 @@ private[places] object PlaceRepo:
     RangeSql.bounds(b._1.map(signed), b._2.map(signed))
 
   private val namesCol =
-    "coalesce((SELECT string_agg(DISTINCT n.name, ', ' ORDER BY n.name) FROM place_names n" +
-      " WHERE n.place_id = p.id), '')"
+    sql"coalesce((SELECT string_agg(DISTINCT n.name, ', ' ORDER BY n.name) FROM place_names n WHERE n.place_id = p.id), '')"
 
   /** `properties.contested` (plan §1.6a / stream 2.2): a hand-traced shape whose extent is disputed. It lives in the
     * jsonb blob — the importer keeps every property it does not model — and is projected out here so every surface can
     * mark it without parsing JSON.
     */
-  private val contestedCol = "coalesce((p.properties->>'contested')::boolean, false)"
+  private val contestedCol = sql"coalesce((p.properties->>'contested')::boolean, false)"
 
   /** The [[PlaceSummary]] projection, over a `places` row aliased `p`. One definition, reused. */
   private val summaryCols =
-    s"p.id, p.label, p.kind, $startCol, ${RangeSql.end("p.period")}, p.source, $namesCol, $contestedCol, $datingCol, p.import_source"
+    sql"p.id, p.label, p.kind, $startCol, ${RangeSql.end(sql"p.period")}, p.source, $namesCol, $contestedCol, $datingCol, p.import_source"
 
   // ── import ───────────────────────────────────────────────────────────────────────────────────
 
@@ -252,7 +251,7 @@ private[places] object PlaceRepo:
     // then), it lets every pass read the 132 000 others through their own indexes (V076): at 2500 BCE
     // "Tro" checked 8 500 candidates by primary key, nearly all of them imported, and found its label
     // matches in all 1.28 M labels — 57 ms; through the partial indexes, 34 (2026-10-09).
-    val pm = SqlLiteral(if asOf.exists(_ < modernFrom) then s" AND $ShownBeforeModernSql" else "")
+    val pm = if asOf.exists(_ < modernFrom) then sql" AND $ShownBeforeModernSql" else sql""
     // RANK FIRST, DECORATE AFTER (2026-10-09). The ordering needs only the row itself and its
     // finding count; the alternate-name laterals (every name of the place, and the one that
     // matched) are for the `n` rows shown. Computing them for every candidate first — 23 800 for
@@ -270,9 +269,9 @@ private[places] object PlaceRepo:
                 SELECT count(*)::int AS n FROM finding_places fp WHERE fp.place_id = p.id
               ) fc ON true
               WHERE p.label ILIKE $pre ESCAPE '\\'$pm
-                AND ${SqlLiteral(inTimeSql("p", asOf))}
+                AND ${inTimeSql(sql"p", asOf)}
               ORDER BY (lower(p.label) = lower($exact)) DESC,
-                       ${SqlLiteral(Geocoder.tierSql)},
+                       ${Geocoder.tierSql},
                        fc.n DESC, length(p.label), p.id
               LIMIT $n""").query[String].run()
     val ranked: Vector[String] =
@@ -298,19 +297,19 @@ private[places] object PlaceRepo:
                 SELECT count(*)::int AS n FROM finding_places fp WHERE fp.place_id = p.id
               ) fc ON true
               WHERE ($text::text IS NULL OR p.id = ANY(ARRAY(SELECT id FROM cand)))$pm
-                AND ${SqlLiteral(inTimeSql("p", asOf))}
+                AND ${inTimeSql(sql"p", asOf)}
               ORDER BY (lower(p.label) = lower($exact)) DESC,
                        (p.label ILIKE $pre ESCAPE '\\') DESC,
-                       ${SqlLiteral(Geocoder.tierSql)},
+                       ${Geocoder.tierSql},
                        fc.n DESC, length(p.label), p.id
               LIMIT $n""").query[String].run()
     if ranked.isEmpty then Vector.empty
     else
       val ids = ranked.toList
-      val rows = sql"""SELECT p.id, p.label, p.kind, ${SqlLiteral(startCol)}, ${RangeSql.end(sql"p.period")}, p.source,
+      val rows = sql"""SELECT p.id, p.label, p.kind, $startCol, ${RangeSql.end(sql"p.period")}, p.source,
                    coalesce(nm.names, ''), nm.matched,
                    (SELECT count(*)::int FROM finding_places fp WHERE fp.place_id = p.id),
-                   ${SqlLiteral(contestedCol)}, ${SqlLiteral(datingCol)}, p.import_source
+                   $contestedCol, $datingCol, p.import_source
             FROM places p
             LEFT JOIN LATERAL (
               SELECT string_agg(DISTINCT n.name, ', ' ORDER BY n.name) AS names,
@@ -344,11 +343,11 @@ private[places] object PlaceRepo:
               WHERE r.parent_id = p.id AND c.geom IS NOT NULL
                 AND ($asOf::bigint IS NULL OR r.period @> $asOf::bigint))) AS shape
             FROM places p WHERE p.id = $id)
-          SELECT ${SqlLiteral(summaryCols)},
+          SELECT $summaryCols,
                  ST_AsGeoJSON(g.shape),
                  (SELECT count(*)::int FROM finding_places fp WHERE fp.place_id = p.id),
                  coalesce(ST_Dimension(g.shape) = 2, false),
-                 ${SqlLiteral(timeBasisSql("p"))}, p.location_precision
+                 ${timeBasisSql(sql"p")}, p.location_precision
           FROM places p, g WHERE p.id = $id""".query[PlaceDetailRow].run().headOption.map { r =>
       val fps = footprintsIn(id, asOf).toList
       val lks = sql"""SELECT place_id, scheme, external_id, relation FROM place_links
@@ -383,16 +382,17 @@ private[places] object PlaceRepo:
   private def recordOf(id: com.histmersion.domain.catalogue.Place.Id)(using DbCon): Place.Record =
     val dateSource =
       sql"SELECT properties->>'date_source' FROM places WHERE id = $id".query[Option[String]].run().headOption.flatten
+    // the key bound through its codec (`properties -> ?`)
     def array(key: ArrayKey) =
-      s"CASE WHEN jsonb_typeof(p.properties->'${key.value}') = 'array' THEN p.properties->'${key.value}' ELSE '[]'::jsonb END"
+      sql"CASE WHEN jsonb_typeof(p.properties->$key) = 'array' THEN p.properties->$key ELSE '[]'::jsonb END"
     val periods =
-      sql"SELECT coalesce(x->>'label', x->>'id') FROM places p, jsonb_array_elements(${SqlLiteral(array(ArrayKey("periods")))}) x WHERE p.id = $id AND jsonb_typeof(x) = 'object'"
+      sql"SELECT coalesce(x->>'label', x->>'id') FROM places p, jsonb_array_elements(${array(ArrayKey("periods"))}) x WHERE p.id = $id AND jsonb_typeof(x) = 'object'"
         .query[Option[String]]
         .run()
         .toList
         .flatten
     val designations =
-      sql"SELECT x->>'id', x->>'label', x->>'start', x->>'end' FROM places p, jsonb_array_elements(${SqlLiteral(array(ArrayKey("heritage")))}) x WHERE p.id = $id AND jsonb_typeof(x) = 'object' AND x->>'id' IS NOT NULL"
+      sql"SELECT x->>'id', x->>'label', x->>'start', x->>'end' FROM places p, jsonb_array_elements(${array(ArrayKey("heritage"))}) x WHERE p.id = $id AND jsonb_typeof(x) = 'object' AND x->>'id' IS NOT NULL"
         .query[
           (
               Place.Designation.Id,
@@ -460,7 +460,7 @@ private[places] object PlaceRepo:
   private def parents(id: com.histmersion.domain.catalogue.Place.Id, asOf: Option[DeepTime.SignedYear])(using
       DbCon
   ): Vector[Place.Summary] =
-    sql"""SELECT ${SqlLiteral(summaryCols)} FROM place_relations r JOIN places p ON p.id = r.parent_id
+    sql"""SELECT $summaryCols FROM place_relations r JOIN places p ON p.id = r.parent_id
           WHERE r.child_id = $id
             AND ($asOf::bigint IS NULL OR r.period @> $asOf::bigint)
             AND ($asOf::bigint IS NULL OR p.period @> $asOf::bigint)
@@ -484,12 +484,13 @@ private[places] object PlaceRepo:
   )(using
       DbCon
   ): Vector[Place.Summary] =
-    (sql"""WITH ${timeWindowCte(asOf, modernFrom)} SELECT ${SqlLiteral(
-        summaryCols
-      )} FROM place_relations r JOIN places p ON p.id = r.child_id
-          WHERE r.parent_id = $id AND NOT ${SqlLiteral(importedSql("p"))}
+    (sql"""WITH ${timeWindowCte(
+        asOf,
+        modernFrom
+      )} SELECT $summaryCols FROM place_relations r JOIN places p ON p.id = r.child_id
+          WHERE r.parent_id = $id AND NOT ${importedSql(sql"p")}
             AND ($asOf::bigint IS NULL OR r.period @> $asOf::bigint)
-            AND ${SqlLiteral(inTimeSql("p", asOf))}
+            AND ${inTimeSql(sql"p", asOf)}
           ORDER BY p.label, p.id LIMIT ${limit.value.max(1)}""").query[Place.Summary].run()
 
   /** SQL twin of [[com.histmersion.api.catalogue.RegionNode.rootEligible]]: a place that may head the hierarchy.
@@ -530,26 +531,26 @@ private[places] object PlaceRepo:
             SELECT p.id, 0 AS depth, ARRAY[lower(p.label), p.id] AS path,
                    ARRAY[p.id] AS visited
             FROM roots r JOIN places p ON p.id = r.id
-            WHERE ${SqlLiteral(inTimeSql("p", asOf))}
+            WHERE ${inTimeSql(sql"p", asOf)}
             UNION ALL
             SELECT c.id, t.depth + 1, t.path || lower(c.label) || c.id, t.visited || c.id
             FROM tree t JOIN edges e ON e.parent_id = t.id JOIN places c ON c.id = e.child_id
-            WHERE t.depth + 1 <= $depth AND NOT ${SqlLiteral(importedSql("c"))}
+            WHERE t.depth + 1 <= $depth AND NOT ${importedSql(sql"c")}
               -- a `part_of` cycle (A part of B part of A) is data, not an impossibility, and the
               -- depth bound alone only made it terminate — it still walked the loop N times and
               -- reported the same place at every level. Refuse to revisit a place on one path.
               AND NOT (c.id = ANY(t.visited))
-              AND ${SqlLiteral(inTimeSql("c", asOf))}
+              AND ${inTimeSql(sql"c", asOf)}
           )
           SELECT t.id, p.label, p.kind, t.depth,
                  (SELECT count(*)::int FROM finding_places fp WHERE fp.place_id = t.id),
-                 ${SqlLiteral(contestedCol)}
+                 $contestedCol
           FROM tree t JOIN places p ON p.id = t.id
           ORDER BY t.path, t.depth LIMIT ${limit.value.max(1)}""").query[Place.TreeRow].run()
 
   /** The gazetteer places one finding was materialised into. */
   def placesOf(findingId: EventMatcher.NearFinding.Id)(using DbCon): Vector[Place.Summary] =
-    sql"""SELECT ${SqlLiteral(summaryCols)} FROM finding_places fp JOIN places p ON p.id = fp.place_id
+    sql"""SELECT $summaryCols FROM finding_places fp JOIN places p ON p.id = fp.place_id
           WHERE fp.finding_id = $findingId ORDER BY p.label, p.id"""
       .query[Place.Summary]
       .run()
@@ -605,15 +606,15 @@ private[places] object PlaceRepo:
       // across all time a present-day place is never drawn; at a year, the time rule decides
       // (physical features always, present-day places from `modern-from`, undated ones by findings)
       Some(
-        if window.isEmpty then sql"NOT ${SqlLiteral(ModernSql)}"
-        else sql"${SqlLiteral(inWindowSql("p", window, k.map(com.histmersion.domain.catalogue.Place.Kind.Wire(_))))}"
+        if window.isEmpty then sql"NOT $ModernSql"
+        else sql"${inWindowSql(sql"p", window, k.map(com.histmersion.domain.catalogue.Place.Kind.Wire(_)))}"
       ),
       k.map(v => sql"p.kind = $v"),
       // an undated import is never on a time-sliced map, findings or not (its open range is unknown)
-      window.map(_ => sql"NOT ${SqlLiteral(UndatedImportSql)}"),
+      window.map(_ => sql"NOT $UndatedImportSql"),
       // nor is a polity known only by a point and no date (a late Roman province Pleiades does not
       // date, `lint --rule place-kind`): a state is not "always"
-      window.map(_ => sql"${SqlLiteral(UndatedPolityPointSql)}")
+      window.map(_ => sql"$UndatedPolityPointSql")
     ).flatten
     // `live` carries no geometry — copying 138 large polygons into a CTE's tuplestore cost ~2 s;
     // the full shapes are read from `places` only for candidate pairs and for the rows returned.
@@ -629,7 +630,7 @@ private[places] object PlaceRepo:
     // stored with it (V090): computed here, each decompressed the polygon of every row alive, ~70 ms
     // apiece over a whole range.
     val cols =
-      sql"SELECT p.id, p.kind, ${SqlLiteral(sourceTierSql)} AS tier, p.label_norm AS norm, p.shape_area AS area, p.shape_box AS bb, ${SqlLiteral(timeBasisSql("p"))} AS basis${
+      sql"SELECT p.id, p.kind, $sourceTierSql AS tier, p.label_norm AS norm, p.shape_area AS area, p.shape_box AS bb, ${timeBasisSql(sql"p")} AS basis${
           if within.isDefined then sql", p.period AS per" else sql""
         } FROM places p WHERE "
     val rest = where.joined(sql" AND ")
@@ -641,12 +642,11 @@ private[places] object PlaceRepo:
     // partial index, read every imported place with a finding instead — 9 500 lookups, 35 ms a year.
     // Across all time the semi-join is the right shape and stays.
     val imported =
-      if window.isEmpty then s" AND NOT $CuratedSql AND p.id IN (SELECT fp.place_id FROM finding_places fp)"
+      if window.isEmpty then sql" AND NOT $CuratedSql AND p.id IN (SELECT fp.place_id FROM finding_places fp)"
       else
-        s" AND NOT $CuratedSql AND $DatedImportSql" +
-          " AND EXISTS (SELECT 1 FROM finding_places fp WHERE fp.place_id = p.id OFFSET 0)"
+        sql" AND NOT $CuratedSql AND $DatedImportSql AND EXISTS (SELECT 1 FROM finding_places fp WHERE fp.place_id = p.id OFFSET 0)"
     val live =
-      sql"WITH ${windowCte(window, modernFrom)}, live AS ($cols$rest AND ${SqlLiteral(CuratedSql)} UNION ALL $cols$rest${SqlLiteral(imported)})"
+      sql"WITH ${windowCte(window, modernFrom)}, live AS ($cols$rest AND $CuratedSql UNION ALL $cols$rest$imported)"
     // only a time view collapses duplicates: across all time, successive shapes are all real
     val shadowed =
       if window.isEmpty then sql", shadowed AS (SELECT NULL::text AS id WHERE false)"
@@ -658,26 +658,23 @@ private[places] object PlaceRepo:
           // `places_area_time_geom` (V090); a kindless or site layer keeps the plain pairing
           k.filterNot(_ == Place.Kind.Site)
             .filter(_ => pairsByIndex.value)
-            .fold(sql"${SqlLiteral(rangeShadowedSql)}")(_ =>
-              sql", shadowed AS (SELECT DISTINCT pr.lid AS id FROM (${rangePairsSql(rest, small = 3, partner = "c.tier < 3", smallIsLo = true)} UNION ALL ${rangePairsSql(rest, small = 1, partner = "c.tier = 2", smallIsLo = false)}) pr${SqlLiteral(rangeShadowTestSql)})"
+            .fold(rangeShadowedSql)(_ =>
+              sql", shadowed AS (SELECT DISTINCT pr.lid AS id FROM (${rangePairsSql(rest, small = 3, partner = sql"c.tier < 3", smallIsLo = true)} UNION ALL ${rangePairsSql(rest, small = 1, partner = sql"c.tier = 2", smallIsLo = false)}) pr$rangeShadowTestSql)"
             )
         )
     // what is drawn: every unshadowed live shape; over a range, one VERSION of each state —
     // [[pickVersionSql]]'s `shown`
-    val (shown, drawn) = within.fold((sql"", "live WHERE id NOT IN (SELECT id FROM shadowed)"))(w =>
-      (sql"${SqlLiteral(pickVersionSql(w))}", "shown")
-    )
+    val (shown, drawn) =
+      within.fold((sql"", sql"live WHERE id NOT IN (SELECT id FROM shadowed)"))(w => (pickVersionSql(w), sql"shown"))
     // what was there then before what is merely shown then: among equal areas (every point) a dated
     // place outranks one dated by its findings, a physical feature and a present-day one — at 1600 the
     // 4 000 Natural Earth cities would otherwise take the whole site limit by id
-    def rank(l: String) =
-      SqlLiteral(
-        s"${l}area DESC, CASE ${l}basis WHEN 'dated' THEN 0 WHEN 'findings' THEN 1 WHEN 'timeless' THEN 2 ELSE 3 END, ${l}id"
-      )
+    def rank(l: Frag) =
+      sql"${l}area DESC, CASE ${l}basis WHEN 'dated' THEN 0 WHEN 'findings' THEN 1 WHEN 'timeless' THEN 2 ELSE 3 END, ${l}id"
     // RANK FIRST, then read the rows shown: the limit is taken over `live` alone, and only those rows
     // are joined back to `places` for their label, dates and shape — not all 14 700 sites alive in
     // 500 CE, one index lookup each, to keep 200 (2026-10-09)
-    sql"$live$shadowed$shown SELECT l.id, p.label, l.kind, ${SqlLiteral(startCol)} AS ps, ${RangeSql.end(sql"p.period")} AS pe, ${SqlLiteral(datingCol)} AS dating, l.basis, coalesce(p.shape_dim = 2, false) AS has_boundary, coalesce(p.web_geojson, ST_AsGeoJSON(coalesce(p.geom_clipped, p.geom), 5)) AS geojson, p.site_type, p.properties->>'feature_types', p.properties->>'fcode', p.properties->>'class', p.properties->>'p31' FROM (SELECT * FROM ${SqlLiteral(drawn)} ORDER BY ${rank("")} LIMIT ${limit.value.max(1)}) l JOIN places p ON p.id = l.id ORDER BY ${rank("l.")}"
+    sql"$live$shadowed$shown SELECT l.id, p.label, l.kind, $startCol AS ps, ${RangeSql.end(sql"p.period")} AS pe, $datingCol AS dating, l.basis, coalesce(p.shape_dim = 2, false) AS has_boundary, coalesce(p.web_geojson, ST_AsGeoJSON(coalesce(p.geom_clipped, p.geom), 5)) AS geojson, p.site_type, p.properties->>'feature_types', p.properties->>'fcode', p.properties->>'class', p.properties->>'p31' FROM (SELECT * FROM $drawn ORDER BY ${rank(sql"")} LIMIT ${limit.value.max(1)}) l JOIN places p ON p.id = l.id ORDER BY ${rank(sql"l.")}"
 
   /** The test of a candidate pair `pr` (`lid` under `hid`, `same_name`, `small` the smaller area, `lbb` and `hbb` their
     * boxes): the same normalised name, or the shapes' intersection covering more than [[SameStateOverlap]] of the
@@ -686,16 +683,12 @@ private[places] object PlaceRepo:
     * pair, and repaired only when it is invalid (`shape_valid`, V090): ST_MakeValid returns a valid shape as it is, and
     * checking that again was half the cost of the test (13 of 25 ms over -3000..2000).
     */
-  private[places] val rangeShadowTestSql: String =
-    def overlap(lo: String, hi: String) =
-      s"greatest(0, least($hi(pr.lbb), $hi(pr.hbb)) - greatest($lo(pr.lbb), $lo(pr.hbb)))"
-    def valid(g: String) = s"CASE WHEN $g.valid THEN $g.geom ELSE ST_MakeValid($g.geom) END"
-    " CROSS JOIN LATERAL (SELECT geom, shape_valid AS valid FROM places WHERE id = pr.hid OFFSET 0) gh" +
-      " CROSS JOIN LATERAL (SELECT geom, shape_valid AS valid FROM places WHERE id = pr.lid OFFSET 0) gl" +
-      s" WHERE pr.same_name OR (${overlap("ST_XMin", "ST_XMax")} * ${overlap("ST_YMin", "ST_YMax")}" +
-      s" > $SameStateOverlap * pr.small AND ST_Intersects(gh.geom, gl.geom)" +
-      s" AND ST_Area(ST_Intersection(${valid("gh")}, ${valid("gl")}))" +
-      s" > $SameStateOverlap * pr.small)"
+  private[places] val rangeShadowTestSql: Frag =
+    def overlap(lo: Frag, hi: Frag) =
+      sql"greatest(0, least($hi(pr.lbb), $hi(pr.hbb)) - greatest($lo(pr.lbb), $lo(pr.hbb)))"
+    def valid(g: Frag) = sql"CASE WHEN $g.valid THEN $g.geom ELSE ST_MakeValid($g.geom) END"
+    val share = SameStateOverlap.literal
+    sql" CROSS JOIN LATERAL (SELECT geom, shape_valid AS valid FROM places WHERE id = pr.hid OFFSET 0) gh CROSS JOIN LATERAL (SELECT geom, shape_valid AS valid FROM places WHERE id = pr.lid OFFSET 0) gl WHERE pr.same_name OR (${overlap(sql"ST_XMin", sql"ST_XMax")} * ${overlap(sql"ST_YMin", sql"ST_YMax")} > $share * pr.small AND ST_Intersects(gh.geom, gl.geom) AND ST_Area(ST_Intersection(${valid(sql"gh")}, ${valid(sql"gl")})) > $share * pr.small)"
 
   /** The CTE `shadowed` over a whole range ([[GeoTime.Within]]): the rule of a year — a shape is shadowed by a LOWER
     * tier's shape of the same normalised name or covering [[SameStateOverlap]] of the smaller — among shapes that
@@ -705,14 +698,10 @@ private[places] object PlaceRepo:
     * time met each other: 170 M comparisons, past the statement timeout; split, 970 pairs in 0.3 s for the whole of
     * -3000..2000 (2026-10-16). Each shape is fetched by id for its pair, as at a year.
     */
-  private[places] val rangeShadowedSql: String =
-    def pairs(lo: String, hi: String) =
-      "SELECT lo.id AS lid, hi.id AS hid, lo.norm = hi.norm AS same_name, least(hi.area, lo.area) AS small," +
-        " lo.bb AS lbb, hi.bb AS hbb" +
-        s" FROM (SELECT * FROM live WHERE $lo) lo JOIN (SELECT * FROM live WHERE $hi) hi" +
-        " ON hi.tier < lo.tier AND hi.kind = lo.kind AND hi.bb && lo.bb AND hi.per && lo.per"
-    ", shadowed AS (SELECT DISTINCT pr.lid AS id FROM (" + pairs("tier = 3", "tier < 3") + " UNION ALL " +
-      pairs("tier = 2", "tier = 1") + ") pr" + rangeShadowTestSql + ")"
+  private[places] val rangeShadowedSql: Frag =
+    def pairs(lo: Frag, hi: Frag) =
+      sql"SELECT lo.id AS lid, hi.id AS hid, lo.norm = hi.norm AS same_name, least(hi.area, lo.area) AS small, lo.bb AS lbb, hi.bb AS hbb FROM (SELECT * FROM live WHERE $lo) lo JOIN (SELECT * FROM live WHERE $hi) hi ON hi.tier < lo.tier AND hi.kind = lo.kind AND hi.bb && lo.bb AND hi.per && lo.per"
+    sql", shadowed AS (SELECT DISTINCT pr.lid AS id FROM (${pairs(sql"tier = 3", sql"tier < 3")} UNION ALL ${pairs(sql"tier = 2", sql"tier = 1")}) pr$rangeShadowTestSql)"
 
   /** One half of the range's candidate pairs for a layer of AREAS ([[rangeShadowedSql]] reads the same pairs by
     * comparing all of `live` with itself): each `live` shape of the small tier `small` (3, the sketches, ~50; or 1,
@@ -724,9 +713,9 @@ private[places] object PlaceRepo:
     * 650 000 times (80 ms). `smallIsLo`: the small tier's shape is the one shadowed (a sketch under a real dataset) or
     * the one shadowing (OHM over Cliopatria).
     */
-  private[places] def rangePairsSql(rest: Frag, small: Int, partner: String, smallIsLo: Boolean): Frag =
-    val (lo, hi) = if smallIsLo then ("s", "c") else ("c", "s")
-    sql"SELECT ${SqlLiteral(lo)}.id AS lid, ${SqlLiteral(hi)}.id AS hid, s.norm = c.norm AS same_name, least(c.area, s.area) AS small, ${SqlLiteral(lo)}.bb AS lbb, ${SqlLiteral(hi)}.bb AS hbb FROM (SELECT * FROM live WHERE tier = ${small.literal}) s CROSS JOIN LATERAL (SELECT * FROM (SELECT p.id, ${SqlLiteral(sourceTierSql)} AS tier, p.label_norm AS norm, p.shape_area AS area, p.shape_box AS bb FROM places p WHERE p.kind <> 'site' AND p.kind = s.kind AND p.period && s.per AND p.geom && s.bb::geometry AND $rest AND (${SqlLiteral(CuratedSql)} OR (${SqlLiteral(DatedImportSql)} AND EXISTS (SELECT 1 FROM finding_places fp WHERE fp.place_id = p.id)))) c WHERE ${SqlLiteral(partner)}) c"
+  private[places] def rangePairsSql(rest: Frag, small: Int, partner: Frag, smallIsLo: Boolean): Frag =
+    val (lo, hi) = if smallIsLo then (sql"s", sql"c") else (sql"c", sql"s")
+    sql"SELECT $lo.id AS lid, $hi.id AS hid, s.norm = c.norm AS same_name, least(c.area, s.area) AS small, $lo.bb AS lbb, $hi.bb AS hbb FROM (SELECT * FROM live WHERE tier = ${small.literal}) s CROSS JOIN LATERAL (SELECT * FROM (SELECT p.id, $sourceTierSql AS tier, p.label_norm AS norm, p.shape_area AS area, p.shape_box AS bb FROM places p WHERE p.kind <> 'site' AND p.kind = s.kind AND p.period && s.per AND p.geom && s.bb::geometry AND $rest AND ($CuratedSql OR ($DatedImportSql AND EXISTS (SELECT 1 FROM finding_places fp WHERE fp.place_id = p.id)))) c WHERE $partner) c"
 
   /** The CTE `shown` over a whole range `w` ([[GeoTime.Within]]): ONE VERSION of each state alive at any time in it.
     * The unshadowed live shapes are grouped into "the same state over time" by kind and NORMALISED LABEL
@@ -739,16 +728,10 @@ private[places] object PlaceRepo:
     * together then both stay, as at a year. Cross-tier duplicates are gone already (`shadowed`, among shapes that
     * coexist), and different states may overlap: all are drawn.
     */
-  private[places] def pickVersionSql(w: GeoTime.Within): String =
-    val (lo, hi) = (w.from, w.to)
-    val (edge, anchor) = if w.latest.value then ("ee", "max") else ("es", "min")
-    ", kept AS (SELECT live.*," +
-      s" greatest($lo::bigint, coalesce(${RangeSql.start("per")}, $lo::bigint)) AS es," +
-      s" least($hi::bigint, coalesce(${RangeSql.end("per")}, $hi::bigint)) AS ee" +
-      " FROM live WHERE id NOT IN (SELECT id FROM shadowed))" +
-      ", shown AS (SELECT id, kind, tier, norm, area, bb, basis FROM (SELECT kept.*," +
-      s" $anchor($edge) OVER (PARTITION BY kind, coalesce(nullif(norm, ''), id)) AS anchor FROM kept) v" +
-      s" WHERE v.$edge = v.anchor)"
+  private[places] def pickVersionSql(w: GeoTime.Within): Frag =
+    val (lo, hi) = (sql"${w.from.literal}::bigint", sql"${w.to.literal}::bigint")
+    val (edge, anchor) = if w.latest.value then (sql"ee", sql"max") else (sql"es", sql"min")
+    sql", kept AS (SELECT live.*, greatest($lo, coalesce(${RangeSql.start(sql"per")}, $lo)) AS es, least($hi, coalesce(${RangeSql.end(sql"per")}, $hi)) AS ee FROM live WHERE id NOT IN (SELECT id FROM shadowed)), shown AS (SELECT id, kind, tier, norm, area, bb, basis FROM (SELECT kept.*, $anchor($edge) OVER (PARTITION BY kind, coalesce(nullif(norm, ''), id)) AS anchor FROM kept) v WHERE v.$edge = v.anchor)"
 
   /** `GET /api/places/geo` — a FeatureCollection for the map. When `asOf` is given, each state is drawn ONCE: of shapes
     * from different source tiers that share a normalised name or overlap by [[SameStateOverlap]], only the best tier
@@ -874,7 +857,7 @@ private[places] object PlaceRepo:
           FROM places site, places region
           WHERE ST_GeometryType(region.geom) IN ('ST_Polygon', 'ST_MultiPolygon')
             AND ST_GeometryType(site.geom) = 'ST_Point'
-            AND NOT ${SqlLiteral(importedSql("site"))} AND NOT ${SqlLiteral(importedSql("region"))}
+            AND NOT ${importedSql(sql"site")} AND NOT ${importedSql(sql"region")}
             AND ST_Contains(region.geom, site.geom)
             AND site.id != region.id
           ON CONFLICT (child_id, parent_id, kind) DO NOTHING""".update.run()
@@ -926,7 +909,7 @@ private[places] object PlaceRepo:
                         UNION
                         SELECT r.child_id FROM place_relations r JOIN d ON r.parent_id = d.id
                         JOIN places c ON c.id = r.child_id
-                        WHERE NOT ${SqlLiteral(importedSql("c"))}
+                        WHERE NOT ${importedSql(sql"c")}
                           AND ($lo::bigint IS NULL
                                OR r.period && int8range($lo::bigint, $hi::bigint, '[]'))
                       )
@@ -1194,7 +1177,7 @@ private[places] object PlaceRepo:
       )
     else
       val _ = upsertIn(List(in), Dataset.Local)
-      sql"SELECT ${SqlLiteral(summaryCols)} FROM places p WHERE p.id = $id"
+      sql"SELECT $summaryCols FROM places p WHERE p.id = $id"
         .query[Place.Summary]
         .run()
         .headOption
