@@ -47,8 +47,7 @@ object EnrichSource:
   object Topic extends Newtype[String, Pure]
   type Region = Region.T
   object Region extends Newtype[String, Pure]
-  type PlaceQuery = FindingProposal.Place
-  val PlaceQuery: FindingProposal.Place.type = FindingProposal.Place
+  export FindingProposal.Place as PlaceQuery
   type Tag = Tag.T
   object Tag extends Newtype[String, Pure]
   type Text = Text.T
@@ -508,8 +507,7 @@ object EnrichSource:
   )
 
   object FindingGuards:
-    type PlaceQuery = EnrichSource.PlaceQuery
-    val PlaceQuery: EnrichSource.PlaceQuery.type = EnrichSource.PlaceQuery
+    export com.histmersion.domain.EnrichSource.FindingProposal.Place as PlaceQuery
 
     type MinPlacedShare = MinPlacedShare.T
     object MinPlacedShare extends Newtype[Double, Pure]

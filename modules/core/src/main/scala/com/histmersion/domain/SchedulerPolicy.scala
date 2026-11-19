@@ -340,18 +340,12 @@ object SchedulerPolicy:
       typePriority.getOrElse(t, Settings.TypePriorityValue(0))
 
   object Settings:
-    type AgingHours = SchedulerDefaults.AgingHours
-    val AgingHours: SchedulerDefaults.AgingHours.type = SchedulerDefaults.AgingHours
-    type MaxWaitHours = SchedulerDefaults.MaxWaitHours
-    val MaxWaitHours: SchedulerDefaults.MaxWaitHours.type = SchedulerDefaults.MaxWaitHours
-    type MinShare = SchedulerDefaults.MinShare
-    val MinShare: SchedulerDefaults.MinShare.type = SchedulerDefaults.MinShare
+    export SchedulerDefaults.{AgingHours, MaxWaitHours, MinShare}
     type WeightsValue = WeightsValue.T
     object WeightsValue extends Newtype[Int, Pure]
     type TypePriorityValue = TypePriorityValue.T
     object TypePriorityValue extends Newtype[Int, Pure]
-    type GatheringSlots = SchedulerDefaults.GatheringSlots
-    val GatheringSlots: SchedulerDefaults.GatheringSlots.type = SchedulerDefaults.GatheringSlots
+    export SchedulerDefaults.GatheringSlots
 
   // ── scoring ────────────────────────────────────────────────────────────────────────────────────
 
@@ -501,10 +495,7 @@ object SchedulerPolicy:
   )
 
   object Wait:
-    type Code = Block.Code
-    val Code: Block.Code.type = Block.Code
-    type Why = Block.Why
-    val Why: Block.Why.type = Block.Why
+    export Block.{Code, Why}
     type Behind = Behind.T
     object Behind extends Newtype[String, Pure]
     type Position = Position.T

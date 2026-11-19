@@ -59,10 +59,7 @@ object BSourceRow:
   object Tags extends Newtype[String, Pure]
   type PNull = PNull.T
   object PNull extends Newtype[Boolean, Pure]
-  type PLo = DeepTime.SignedYear
-  val PLo: DeepTime.SignedYear.type = DeepTime.SignedYear
-  type PHi = DeepTime.SignedYear
-  val PHi: DeepTime.SignedYear.type = DeepTime.SignedYear
+  export DeepTime.{SignedYear as PHi, SignedYear as PLo}
   type Summary = Summary.T
   object Summary extends Newtype[String, Pure]
   type Notes = Notes.T

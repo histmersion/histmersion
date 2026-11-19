@@ -34,10 +34,7 @@ private[places] object PlaceReviewRepo:
   ) derives DbCodec
 
   object Row:
-    type Start = DeepTime.SignedYear
-    val Start: DeepTime.SignedYear.type = DeepTime.SignedYear
-    type End = DeepTime.SignedYear
-    val End: DeepTime.SignedYear.type = DeepTime.SignedYear
+    export DeepTime.{SignedYear as End, SignedYear as Start}
 
   final private case class ItemRow(
       placeId: Evidence.Id,
@@ -48,10 +45,7 @@ private[places] object PlaceReviewRepo:
   ) derives DbCodec
 
   object ItemRow:
-    type From = DeepTime.SignedYear
-    val From: DeepTime.SignedYear.type = DeepTime.SignedYear
-    type To = DeepTime.SignedYear
-    val To: DeepTime.SignedYear.type = DeepTime.SignedYear
+    export DeepTime.{SignedYear as From, SignedYear as To}
 
   private given DbCodec[Candidate] = DbCodec.derived
 

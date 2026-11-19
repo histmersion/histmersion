@@ -68,5 +68,4 @@ object FindingPlacement:
     def placeSource(citekey: Citekey)(using DbCon): RowCount = FindingPlaceRepo.materialiseFor(citekey, toleranceKm)
 
   object Implementation:
-    type ToleranceKm = GeocodeSettings.ToleranceKm
-    val ToleranceKm: GeocodeSettings.ToleranceKm.type = GeocodeSettings.ToleranceKm
+    export GeocodeSettings.ToleranceKm

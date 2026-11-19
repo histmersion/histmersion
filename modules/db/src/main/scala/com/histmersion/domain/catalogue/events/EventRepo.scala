@@ -45,9 +45,7 @@ private[events] object EventRepo:
 
   /** How many events the catalogue holds. */
 
-  type GeoTolerance = com.histmersion.domain.catalogue.events.GeoTolerance
-  val GeoTolerance: com.histmersion.domain.catalogue.events.GeoTolerance.type =
-    com.histmersion.domain.catalogue.events.GeoTolerance
+  export com.histmersion.domain.catalogue.events.GeoTolerance
 
   def count()(using DbCon): EventCount = EventCount(sql"SELECT count(*)::int FROM events".query[Int].run().head.toLong)
 

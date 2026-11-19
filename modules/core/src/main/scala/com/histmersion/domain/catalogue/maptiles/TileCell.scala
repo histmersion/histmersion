@@ -27,10 +27,7 @@ object TileCell:
 
   type Key = Key.T
   object Key extends Newtype[String, Pure]
-  type X = TilePoint.X
-  val X: TilePoint.X.type = TilePoint.X
-  type Y = TilePoint.Y
-  val Y: TilePoint.Y.type = TilePoint.Y
+  export TilePoint.{X, Y}
   type N = N.T
   object N extends Newtype[Int, Pure]
   type MidLo = MidLo.T

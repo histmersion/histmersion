@@ -41,8 +41,7 @@ object ArticleSummaryRow:
   val Slug: com.histmersion.domain.research.Slug.type = com.histmersion.domain.research.Slug
   type Title = com.histmersion.domain.Title
   val Title: com.histmersion.domain.Title.type = com.histmersion.domain.Title
-  type Kind = com.histmersion.domain.research.Article.Kind
-  val Kind: com.histmersion.domain.research.Article.Kind.type = com.histmersion.domain.research.Article.Kind
+  export com.histmersion.domain.research.Article.Kind
   type Summary = Summary.T
   object Summary extends Newtype[String, Pure]
   type Tags = Tags.T

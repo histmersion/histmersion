@@ -102,16 +102,12 @@ object ReviewLedger:
   ) derives JsonCodec
 
   object Closure:
-    type By = ReviewArticle.Reviewer.Wire
-    val By: ReviewArticle.Reviewer.Wire.type = ReviewArticle.Reviewer.Wire
-    type Round = ReviewArticle.Merged.Round
-    val Round: ReviewArticle.Merged.Round.type = ReviewArticle.Merged.Round
-    type Run = com.histmersion.domain.automation.Run.Id
-    val Run: com.histmersion.domain.automation.Run.Id.type = com.histmersion.domain.automation.Run.Id
+    export ReviewArticle.Reviewer.Wire as By
+    export ReviewArticle.Merged.Round
+    export com.histmersion.domain.automation.Run.Id as Run
     type Note = Note.T
     object Note extends Newtype[String, Pure]
-    type Quote = ReviewArticle.Evidence.Quote
-    val Quote: ReviewArticle.Evidence.Quote.type = ReviewArticle.Evidence.Quote
+    export ReviewArticle.Evidence.Quote
 
   /** One finding in the ledger. `claimed`: the fixer lists it as applied, and its reviewer has not checked it yet.
     * `notFixed`: the last check's word that it is not (or the rejection it was raised again after); `notFixedCount`:
@@ -142,10 +138,8 @@ object ReviewLedger:
 
   object Entry:
 
-    type Run = com.histmersion.domain.automation.Run.Id
-    val Run: com.histmersion.domain.automation.Run.Id.type = com.histmersion.domain.automation.Run.Id
-    type Round = Closure.Round
-    val Round: Closure.Round.type = Closure.Round
+    export com.histmersion.domain.automation.Run.Id as Run
+    export com.histmersion.domain.ReviewArticle.Merged.Round
     type Claimed = Claimed.T
     object Claimed extends Newtype[Boolean, Pure]
     type NotFixed = NotFixed.T
@@ -154,19 +148,15 @@ object ReviewLedger:
     object Reopened extends Newtype[Int, Pure]
     type NotFixedCount = NotFixedCount.T
     object NotFixedCount extends Newtype[Int, Pure]
-    type Deferred = com.histmersion.domain.automation.Run.Id
-    val Deferred: com.histmersion.domain.automation.Run.Id.type = com.histmersion.domain.automation.Run.Id
+    export com.histmersion.domain.automation.Run.Id as Deferred
 
   final case class Lesson(text: Lesson.Text, source: LessonSource, run: Lesson.Run, round: Lesson.Round)
       derives JsonCodec
 
   object Lesson:
-    type Text = ReviewArticle.Recheck.Lessons
-    val Text: ReviewArticle.Recheck.Lessons.type = ReviewArticle.Recheck.Lessons
-    type Run = com.histmersion.domain.automation.Run.Id
-    val Run: com.histmersion.domain.automation.Run.Id.type = com.histmersion.domain.automation.Run.Id
-    type Round = Closure.Round
-    val Round: Closure.Round.type = Closure.Round
+    export ReviewArticle.Recheck.Lessons as Text
+    export com.histmersion.domain.automation.Run.Id as Run
+    export com.histmersion.domain.ReviewArticle.Merged.Round
 
   /** `task`: the article's one backlog item (#934), while it has one. */
   final case class Ledger(
@@ -704,8 +694,7 @@ object ReviewLedger:
     type Rationale = Rationale.T
     object Rationale extends Newtype[String, Pure]
 
-    type Id = Finding.Id
-    val Id: Finding.Id.type = Finding.Id
+    export Finding.Id
 
   /** THE REGRESSION GUARD: what a revision (`before` → `after`) does to the findings the ledger has closed as fixed —
     * checked by code, before any reviewer reads it:

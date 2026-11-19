@@ -207,8 +207,7 @@ object ReviewArticle:
       extension (c: Citekey) def normalised: String = c.value.trim.stripPrefix("[[").stripSuffix("]]").trim
     type Offset = Offset.T
     object Offset extends Newtype[Int, Pure]
-    type Quote = Evidence.Quote
-    val Quote: Evidence.Quote.type = Evidence.Quote
+    export Evidence.Quote
 
     given Schema[EvidenceAnswer] = KindlingsSchema
       .derived[EvidenceAnswer]
@@ -238,20 +237,11 @@ object ReviewArticle:
       pair: Option[FindingAnswer.Pair] = None
   ) derives JsonCodec
   object FindingAnswer:
-    type Severity = ReviewArticle.Severity.Wire
-    val Severity: ReviewArticle.Severity.Wire.type = ReviewArticle.Severity.Wire
-    type Kind = Finding.Kind
-    val Kind: Finding.Kind.type = Finding.Kind
-    type Where = Finding.Where
-    val Where: Finding.Where.type = Finding.Where
-    type Quote = Finding.Quote
-    val Quote: Finding.Quote.type = Finding.Quote
-    type Problem = Finding.Problem
-    val Problem: Finding.Problem.type = Finding.Problem
-    type Fix = Finding.Fix
-    val Fix: Finding.Fix.type = Finding.Fix
-    type Pair = NotMaterialAnswer.Pair
-    val Pair: NotMaterialAnswer.Pair.type = NotMaterialAnswer.Pair
+    export ReviewArticle.Severity.Wire as Severity
+    export Finding.{Kind, Where}
+    export com.histmersion.domain.ReviewArticle.Evidence.Quote
+    export Finding.{Fix, Problem}
+    export com.histmersion.api.research.CritiqueRef.Wire as Pair
 
     given Schema[FindingAnswer] = KindlingsSchema
       .derived[FindingAnswer]
@@ -287,18 +277,10 @@ object ReviewArticle:
   ) derives JsonCodec:
     def asFinding: FindingAnswer = FindingAnswer(severity, kind, where, quote, problem, fix)
   object ReaderFindingAnswer:
-    type Severity = ReviewArticle.Severity.Wire
-    val Severity: ReviewArticle.Severity.Wire.type = ReviewArticle.Severity.Wire
-    type Kind = Finding.Kind
-    val Kind: Finding.Kind.type = Finding.Kind
-    type Where = Finding.Where
-    val Where: Finding.Where.type = Finding.Where
-    type Quote = Finding.Quote
-    val Quote: Finding.Quote.type = Finding.Quote
-    type Problem = Finding.Problem
-    val Problem: Finding.Problem.type = Finding.Problem
-    type Fix = Finding.Fix
-    val Fix: Finding.Fix.type = Finding.Fix
+    export ReviewArticle.Severity.Wire as Severity
+    export Finding.{Kind, Where}
+    export com.histmersion.domain.ReviewArticle.Evidence.Quote
+    export Finding.{Fix, Problem}
 
     given Schema[ReaderFindingAnswer] = KindlingsSchema
       .derived[ReaderFindingAnswer]
@@ -320,8 +302,7 @@ object ReviewArticle:
       checks: List[CheckAnswer] = Nil
   ) derives JsonCodec
   object RulesAnswer:
-    type Verdict = ReviewArticle.Verdict.Wire
-    val Verdict: ReviewArticle.Verdict.Wire.type = ReviewArticle.Verdict.Wire
+    export ReviewArticle.Verdict.Wire as Verdict
     type Filter = Filter.T
     object Filter extends Newtype[String, Pure]
     type UncitedRelevant = UncitedRelevant.T
@@ -361,12 +342,9 @@ object ReviewArticle:
     type Citekey = Citekey.T
     object Citekey extends Newtype[String, Pure]:
       extension (c: Citekey) def normalised: String = c.value.trim.stripPrefix("[[").stripSuffix("]]").trim
-    type Claim = SpotCheck.Claim
-    val Claim: SpotCheck.Claim.type = SpotCheck.Claim
-    type Verdict = SpotVerdictsValue
-    val Verdict: SpotVerdictsValue.type = SpotVerdictsValue
-    type RecordQuote = SpotCheck.RecordQuote
-    val RecordQuote: SpotCheck.RecordQuote.type = SpotCheck.RecordQuote
+    export SpotCheck.Claim
+    export com.histmersion.domain.ReviewArticle.SpotVerdictsValue as Verdict
+    export com.histmersion.domain.ReviewArticle.Evidence.Quote as RecordQuote
 
     given Schema[SpotCheckAnswer] = KindlingsSchema
       .derived[SpotCheckAnswer]
@@ -387,12 +365,10 @@ object ReviewArticle:
       checks: List[CheckAnswer] = Nil
   ) derives JsonCodec
   object ColdReaderAnswer:
-    type Verdict = ReviewArticle.Verdict.Wire
-    val Verdict: ReviewArticle.Verdict.Wire.type = ReviewArticle.Verdict.Wire
+    export ReviewArticle.Verdict.Wire as Verdict
     type ExplainBack = ExplainBack.T
     object ExplainBack extends Newtype[String, Pure]
-    type EmptySlots = ExplainSlotsValue
-    val EmptySlots: ExplainSlotsValue.type = ExplainSlotsValue
+    export com.histmersion.domain.ReviewArticle.ExplainSlotsValue as EmptySlots
     type TermsUndefined = TermsUndefined.T
     object TermsUndefined extends Newtype[Int, Pure]
     type OpaqueSentences = OpaqueSentences.T
@@ -428,8 +404,7 @@ object ReviewArticle:
       notMaterial: List[NotMaterialAnswer] = Nil
   ) derives JsonCodec
   object SkepticAnswer:
-    type Verdict = ReviewArticle.Verdict.Wire
-    val Verdict: ReviewArticle.Verdict.Wire.type = ReviewArticle.Verdict.Wire
+    export ReviewArticle.Verdict.Wire as Verdict
     type ClaimsChecked = ClaimsChecked.T
     object ClaimsChecked extends Newtype[Int, Pure]
 
@@ -456,8 +431,7 @@ object ReviewArticle:
     */
   final case class NotMaterialAnswer(pair: NotMaterialAnswer.Pair, reason: Rationale) derives JsonCodec
   object NotMaterialAnswer:
-    type Pair = CritiqueRef.Wire
-    val Pair: CritiqueRef.Wire.type = CritiqueRef.Wire
+    export CritiqueRef.Wire as Pair
 
     given Schema[NotMaterialAnswer] = KindlingsSchema
       .derived[NotMaterialAnswer]
@@ -479,14 +453,10 @@ object ReviewArticle:
       note: CheckAnswer.Note
   ) derives JsonCodec
   object CheckAnswer:
-    type Id = Check.Id
-    val Id: Check.Id.type = Check.Id
-    type Fixed = Check.Fixed
-    val Fixed: Check.Fixed.type = Check.Fixed
-    type Quote = Check.Quote
-    val Quote: Check.Quote.type = Check.Quote
-    type Note = Check.Note
-    val Note: Check.Note.type = Check.Note
+    export com.histmersion.domain.ReviewArticle.Finding.Id
+    export Check.Fixed
+    export com.histmersion.domain.ReviewArticle.Evidence.Quote
+    export Check.Note
 
     given Schema[CheckAnswer] = KindlingsSchema
       .derived[CheckAnswer]
@@ -510,8 +480,7 @@ object ReviewArticle:
       lessons: List[RecheckAnswer.Lessons] = Nil
   ) derives JsonCodec
   object RecheckAnswer:
-    type Lessons = Recheck.Lessons
-    val Lessons: Recheck.Lessons.type = Recheck.Lessons
+    export Recheck.Lessons
 
     given Schema[RecheckAnswer] = KindlingsSchema
       .derived[RecheckAnswer]
@@ -538,10 +507,8 @@ object ReviewArticle:
     type Citekey = Citekey.T
     object Citekey extends Newtype[String, Pure]:
       extension (c: Citekey) def normalised: String = c.value.trim
-    type Id = Rejection.Id
-    val Id: Rejection.Id.type = Rejection.Id
-    type Quote = Rejection.Quote
-    val Quote: Rejection.Quote.type = Rejection.Quote
+    export com.histmersion.domain.ReviewArticle.Finding.Id
+    export com.histmersion.domain.ReviewArticle.Evidence.Quote
 
     given Schema[RejectionAnswer] = KindlingsSchema
       .derived[RejectionAnswer]
@@ -563,12 +530,8 @@ object ReviewArticle:
       setAside: List[SetAsideAnswer] = Nil
   ) derives JsonCodec
   object FixerAnswer:
-    type Applied = Fix.Applied
-    val Applied: Fix.Applied.type = Fix.Applied
-    type UnresolvedMoved = Fix.UnresolvedMoved
-    val UnresolvedMoved: Fix.UnresolvedMoved.type = Fix.UnresolvedMoved
-    type Notes = Fix.Notes
-    val Notes: Fix.Notes.type = Fix.Notes
+    export com.histmersion.domain.ReviewArticle.Finding.Id as Applied
+    export Fix.{Notes, UnresolvedMoved}
 
     given Schema[FixerAnswer] = KindlingsSchema
       .derived[FixerAnswer]
@@ -608,10 +571,8 @@ object ReviewArticle:
       reason: Rationale
   ) derives JsonCodec
   object SetAsideAnswer:
-    type Id = SetAside.Id
-    val Id: SetAside.Id.type = SetAside.Id
-    type Pair = NotMaterialAnswer.Pair
-    val Pair: NotMaterialAnswer.Pair.type = NotMaterialAnswer.Pair
+    export com.histmersion.domain.ReviewArticle.Finding.Id
+    export com.histmersion.api.research.CritiqueRef.Wire as Pair
 
     given Schema[SetAsideAnswer] = KindlingsSchema
       .derived[SetAsideAnswer]
@@ -630,8 +591,7 @@ object ReviewArticle:
 
   final case class WontFixAnswer(id: WontFixAnswer.Id, reason: Rationale) derives JsonCodec
   object WontFixAnswer:
-    type Id = WontFix.Id
-    val Id: WontFix.Id.type = WontFix.Id
+    export com.histmersion.domain.ReviewArticle.Finding.Id
 
     given Schema[WontFixAnswer] = KindlingsSchema
       .derived[WontFixAnswer]
@@ -674,8 +634,7 @@ object ReviewArticle:
     object Kind extends Newtype[String, Pure]
     type Where = Where.T
     object Where extends Newtype[String, Pure]
-    type Quote = Evidence.Quote
-    val Quote: Evidence.Quote.type = Evidence.Quote
+    export Evidence.Quote
     type Problem = Problem.T
 
     /** What is wrong, as the sentence the ledgers store it. The sentences code writes for the mechanical findings the
@@ -839,8 +798,7 @@ object ReviewArticle:
     val Offset: com.histmersion.Offset.type = com.histmersion.Offset
     type Quote = Quote.T
     object Quote extends Newtype[String, Pure]
-    type Ratio = AgentVerify.Ratio
-    val Ratio: AgentVerify.Ratio.type = AgentVerify.Ratio
+    export AgentVerify.Ratio
 
   /** A verified [[SpotCheckAnswer]]: the claim found in the article, the quote found in the record (`ratio`, as for
     * [[Evidence]]), and `tool` — the call of the step that read the source.
@@ -857,14 +815,10 @@ object ReviewArticle:
   object SpotCheck:
     type Claim = Claim.T
     object Claim extends Newtype[String, Pure]
-    type Verdict = SpotVerdictsValue
-    val Verdict: SpotVerdictsValue.type = SpotVerdictsValue
-    type RecordQuote = Evidence.Quote
-    val RecordQuote: Evidence.Quote.type = Evidence.Quote
-    type Ratio = AgentVerify.Ratio
-    val Ratio: AgentVerify.Ratio.type = AgentVerify.Ratio
-    type Tool = ToolUse.Tool
-    val Tool: ToolUse.Tool.type = ToolUse.Tool
+    export com.histmersion.domain.ReviewArticle.SpotVerdictsValue as Verdict
+    export Evidence.Quote as RecordQuote
+    export AgentVerify.Ratio
+    export ToolUse.Tool
 
   /** One reviewer's verified answer. */
   final case class Report(
@@ -883,21 +837,17 @@ object ReviewArticle:
   ) derives JsonCodec
 
   object Report:
-    type ExplainBack = ColdReaderAnswer.ExplainBack
-    val ExplainBack: ColdReaderAnswer.ExplainBack.type = ColdReaderAnswer.ExplainBack
-    type EmptySlots = ColdReaderAnswer.EmptySlots
-    val EmptySlots: ColdReaderAnswer.EmptySlots.type = ColdReaderAnswer.EmptySlots
+    export ColdReaderAnswer.ExplainBack
+    export com.histmersion.domain.ReviewArticle.ExplainSlotsValue as EmptySlots
 
   /** A verified [[CheckAnswer]]. */
   final case class Check(id: Check.Id, fixed: Check.Fixed, quote: Check.Quote, note: Check.Note) derives JsonCodec
 
   object Check:
-    type Id = Finding.Id
-    val Id: Finding.Id.type = Finding.Id
+    export Finding.Id
     type Fixed = Fixed.T
     object Fixed extends Newtype[Boolean, Pure]
-    type Quote = Evidence.Quote
-    val Quote: Evidence.Quote.type = Evidence.Quote
+    export Evidence.Quote
     type Note = Note.T
     object Note extends Newtype[String, Pure]
 
@@ -937,10 +887,8 @@ object ReviewArticle:
     val Slug: com.histmersion.domain.research.Slug.type = com.histmersion.domain.research.Slug
     type Title = com.histmersion.domain.Title
     val Title: com.histmersion.domain.Title.type = com.histmersion.domain.Title
-    type Kind = Article.Kind.Wire
-    val Kind: Article.Kind.Wire.type = Article.Kind.Wire
-    type Body = Fix.Body
-    val Body: Fix.Body.type = Fix.Body
+    export Article.Kind.Wire as Kind
+    export com.histmersion.api.research.Article.Body
     type UpdatedAt = UpdatedAt.T
     object UpdatedAt extends Newtype[String, Pure]
     type Truncated = Truncated.T
@@ -980,12 +928,9 @@ object ReviewArticle:
 
     type Round = Round.T
     object Round extends Newtype[Int, Pure]
-    type ExplainBack = ColdReaderAnswer.ExplainBack
-    val ExplainBack: ColdReaderAnswer.ExplainBack.type = ColdReaderAnswer.ExplainBack
-    type EmptySlots = ColdReaderAnswer.EmptySlots
-    val EmptySlots: ColdReaderAnswer.EmptySlots.type = ColdReaderAnswer.EmptySlots
-    type Deferred = Finding.Id
-    val Deferred: Finding.Id.type = Finding.Id
+    export ColdReaderAnswer.ExplainBack
+    export com.histmersion.domain.ReviewArticle.ExplainSlotsValue as EmptySlots
+    export Finding.Id as Deferred
 
   final case class Rejection(
       id: Rejection.Id,
@@ -996,12 +941,9 @@ object ReviewArticle:
   ) derives JsonCodec
 
   object Rejection:
-    type Id = Finding.Id
-    val Id: Finding.Id.type = Finding.Id
-    type Quote = Evidence.Quote
-    val Quote: Evidence.Quote.type = Evidence.Quote
-    type Ratio = AgentVerify.Ratio
-    val Ratio: AgentVerify.Ratio.type = AgentVerify.Ratio
+    export Finding.Id
+    export Evidence.Quote
+    export AgentVerify.Ratio
 
   /** The fixer's verified revision: the body its edits produced, and every edit with what became of it (applied, or
     * skipped and why) — what a person reads to see exactly what changed. `unverified` = rejections whose quote code
@@ -1036,37 +978,27 @@ object ReviewArticle:
   ) derives JsonCodec
 
   object Fix:
-    type Body = Article.Body
-    val Body: Article.Body.type = Article.Body
-    type Applied = Finding.Id
-    val Applied: Finding.Id.type = Finding.Id
-    type Unverified = Finding.Id
-    val Unverified: Finding.Id.type = Finding.Id
+    export Article.Body
+    export Finding.{Id as Applied, Id as Unverified}
     type UnresolvedMoved = UnresolvedMoved.T
     object UnresolvedMoved extends Newtype[String, Pure]
     type Notes = Notes.T
     object Notes extends Newtype[String, Pure]
-    type WordsBefore = Article.Edits.ArticleCheck.WordsBefore
-    val WordsBefore: Article.Edits.ArticleCheck.WordsBefore.type = Article.Edits.ArticleCheck.WordsBefore
-    type WordsAfter = Article.Edits.ArticleCheck.WordsAfter
-    val WordsAfter: Article.Edits.ArticleCheck.WordsAfter.type = Article.Edits.ArticleCheck.WordsAfter
-    type Repaired = Finding.Id
-    val Repaired: Finding.Id.type = Finding.Id
+    export Article.Edits.ArticleCheck.{WordsAfter, WordsBefore}
+    export Finding.Id as Repaired
     type Repairs = Repairs.T
     object Repairs extends Newtype[String, Pure]
 
   final case class WontFix(id: WontFix.Id, reason: Rationale) derives JsonCodec
 
   object WontFix:
-    type Id = Finding.Id
-    val Id: Finding.Id.type = Finding.Id
+    export Finding.Id
 
   /** A verified [[SetAsideAnswer]]: the finding, the checklist pair, the reason stored. */
   final case class SetAside(id: SetAside.Id, pair: CritiqueRef, reason: Coverage.Rationale) derives JsonCodec
 
   object SetAside:
-    type Id = Finding.Id
-    val Id: Finding.Id.type = Finding.Id
+    export Finding.Id
 
   /** What a round's patch did: the article version that holds the PREVIOUS text (undo from it), or why nothing was
     * written.
@@ -1481,10 +1413,8 @@ object ReviewArticle:
     object Required extends Newtype[Int, Pure]
     type Cited = com.histmersion.domain.library.Citekey
     val Cited: com.histmersion.domain.library.Citekey.type = com.histmersion.domain.library.Citekey
-    type Body = Fix.Body
-    val Body: Fix.Body.type = Fix.Body
-    type MinRatio = CritiqueRule.MinRatio
-    val MinRatio: CritiqueRule.MinRatio.type = CritiqueRule.MinRatio
+    export com.histmersion.api.research.Article.Body
+    export com.histmersion.domain.AgentVerify.MinRatio
 
   /** How many spot-checks a full pass needs: `min` of them, or one per source the article cites in the corpus when it
     * cites fewer.
@@ -1723,10 +1653,8 @@ object ReviewArticle:
   object CritiqueRule:
     type Full = Full.T
     object Full extends Newtype[Boolean, Pure]
-    type Body = Fix.Body
-    val Body: Fix.Body.type = Fix.Body
-    type MinRatio = AgentVerify.MinRatio
-    val MinRatio: AgentVerify.MinRatio.type = AgentVerify.MinRatio
+    export com.histmersion.api.research.Article.Body
+    export AgentVerify.MinRatio
 
   private def recordedMinor(f: Finding, why: String): Finding =
     f.modify(_.severity)
@@ -2010,10 +1938,8 @@ object ReviewArticle:
   final case class Prior(asked: List[Finding], body: Prior.Body, minRatio: Prior.MinRatio)
 
   object Prior:
-    type Body = Fix.Body
-    val Body: Fix.Body.type = Fix.Body
-    type MinRatio = CritiqueRule.MinRatio
-    val MinRatio: CritiqueRule.MinRatio.type = CritiqueRule.MinRatio
+    export com.histmersion.api.research.Article.Body
+    export com.histmersion.domain.AgentVerify.MinRatio
 
   /** A full panel's checks: only when the ledger listed findings of this reviewer; otherwise ignored. */
   private def checksOf(
@@ -2386,8 +2312,7 @@ object ReviewArticle:
   )
 
   object Revision:
-    type Body = Fix.Body
-    val Body: Fix.Body.type = Fix.Body
+    export com.histmersion.api.research.Article.Body
 
   /** Verify a revision: its edits applied to the body the round reviewed and the result checked ([[checkBody]]); every
     * MAJOR finding either applied or rejected; no mechanical or cold-reader finding rejected (a reader's confusion is a

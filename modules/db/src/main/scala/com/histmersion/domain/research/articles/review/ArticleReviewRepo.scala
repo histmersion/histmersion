@@ -45,20 +45,17 @@ private[review] object ArticleReviewRepo:
   object ApprovalRow:
     type Subject = com.histmersion.domain.research.Slug
     val Subject: com.histmersion.domain.research.Slug.type = com.histmersion.domain.research.Slug
-    type Id = ManagerPolicy.ApprovalId
-    val Id: ManagerPolicy.ApprovalId.type = ManagerPolicy.ApprovalId
+    export ManagerPolicy.ApprovalId as Id
     type Kind = Kind.T
     object Kind extends Newtype[String, Pure]
 
   final private case class GoalRow(slug: GoalRow.Slug, title: GoalRow.Title, status: GoalRow.Status) derives DbCodec
 
   object GoalRow:
-    type Slug = Goal.Slug
-    val Slug: Goal.Slug.type = Goal.Slug
+    export Goal.Slug
     type Title = com.histmersion.domain.Title
     val Title: com.histmersion.domain.Title.type = com.histmersion.domain.Title
-    type Status = Goal.Status.Wire
-    val Status: Goal.Status.Wire.type = Goal.Status.Wire
+    export Goal.Status.Wire as Status
 
   /** The approval kinds that leave an article waiting for a person. */
   val WaitingKinds: List[ApprovalRow.Kind] =

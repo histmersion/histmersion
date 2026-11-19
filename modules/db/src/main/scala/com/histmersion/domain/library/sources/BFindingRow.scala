@@ -40,10 +40,7 @@ object BFindingRow:
   object Region extends Newtype[String, Pure]
   type PNull = PNull.T
   object PNull extends Newtype[Boolean, Pure]
-  type PLo = DeepTime.SignedYear
-  val PLo: DeepTime.SignedYear.type = DeepTime.SignedYear
-  type PHi = DeepTime.SignedYear
-  val PHi: DeepTime.SignedYear.type = DeepTime.SignedYear
+  export DeepTime.{SignedYear as PHi, SignedYear as PLo}
   type PeriodName = PeriodName.T
   object PeriodName extends Newtype[String, Pure]
   type Tags = Tags.T

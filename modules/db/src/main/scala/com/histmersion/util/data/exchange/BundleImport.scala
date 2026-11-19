@@ -39,8 +39,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * merge plan's. Rows are written in dependency order, with the bundle's own uids, origins and timestamps.
   */
 object BundleImport:
-  type Options = ImportOptions
-  val Options: ImportOptions.type = ImportOptions
+  export com.histmersion.util.data.exchange.ImportOptions as Options
 
   /** The ledger's foreign rev for a tombstone, which has no content to hash. */
   val DeletedRev: BundlePlan.Rev = BundlePlan.Rev(BundlePlan.DeletedRev)

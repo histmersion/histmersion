@@ -46,14 +46,7 @@ object ArticleReviewStatus:
   )
 
   object LedgerFacts:
-    type OpenMajors = ReviewBadge.OpenMajors
-    val OpenMajors: ReviewBadge.OpenMajors.type = ReviewBadge.OpenMajors
-    type OpenMinors = ReviewBadge.OpenMinors
-    val OpenMinors: ReviewBadge.OpenMinors.type = ReviewBadge.OpenMinors
-    type Findings = ReviewBadge.Findings
-    val Findings: ReviewBadge.Findings.type = ReviewBadge.Findings
-    type Runs = ReviewBadge.Runs
-    val Runs: ReviewBadge.Runs.type = ReviewBadge.Runs
+    export ReviewBadge.{Findings, OpenMajors, OpenMinors, Runs}
 
     def of(l: Ledger): LedgerFacts =
       LedgerFacts(
@@ -74,8 +67,7 @@ object ArticleReviewStatus:
   )
 
   object Facts:
-    type Round = ReviewBadge.Round
-    val Round: ReviewBadge.Round.type = ReviewBadge.Round
+    export com.histmersion.api.research.ReviewRound.Round
 
   /** The state, from the item first (a run going on, queued, stopped), then the ledger's open MAJOR findings. A
     * cancelled item counts as no item: what the ledger says stands.

@@ -83,8 +83,7 @@ object CompareRuns:
     object Pipeline extends Newtype[String, Pure]
     type Target = Target.T
     object Target extends Newtype[String, Pure]
-    type Status = com.histmersion.domain.automation.Run.State.Wire
-    val Status: com.histmersion.domain.automation.Run.State.Wire.type = com.histmersion.domain.automation.Run.State.Wire
+    export com.histmersion.domain.automation.Run.State.Wire as Status
     type DryRun = DryRun.T
     object DryRun extends Newtype[Boolean, Pure]
     type Model = Model.T
@@ -111,9 +110,7 @@ object CompareRuns:
   object Step:
     type Name = Name.T
     object Name extends Newtype[String, Pure]
-    type Status = com.histmersion.domain.automation.Step.Status.Wire
-    val Status: com.histmersion.domain.automation.Step.Status.Wire.type =
-      com.histmersion.domain.automation.Step.Status.Wire
+    export com.histmersion.domain.automation.Step.Status.Wire as Status
     type Model = Model.T
     object Model extends Newtype[String, Pure]
     type ActualModel = ActualModel.T
@@ -150,18 +147,11 @@ object CompareRuns:
   )
 
   object RunSide:
-    type Id = RunHead.Id
-    val Id: RunHead.Id.type = RunHead.Id
-    type Status = RunHead.Status
-    val Status: RunHead.Status.type = RunHead.Status
-    type DryRun = RunHead.DryRun
-    val DryRun: RunHead.DryRun.type = RunHead.DryRun
-    type Model = RunHead.Model
-    val Model: RunHead.Model.type = RunHead.Model
-    type CostUsd = Step.CostUsd
-    val CostUsd: Step.CostUsd.type = Step.CostUsd
-    type Seconds = CompareRuns.Seconds
-    val Seconds: CompareRuns.Seconds.type = CompareRuns.Seconds
+    export RunHead.Id
+    export com.histmersion.domain.automation.Run.State.Wire as Status
+    export RunHead.{DryRun, Model}
+    export Step.CostUsd
+    export CompareRuns.Seconds
     type Attempts = Attempts.T
     object Attempts extends Newtype[Int, Pure]
     type Failures = Failures.T
@@ -182,31 +172,19 @@ object CompareRuns:
   )
 
   object StepSide:
-    type Models = Step.Model
-    val Models: Step.Model.type = Step.Model
-    type Actual = Step.ActualModel
-    val Actual: Step.ActualModel.type = Step.ActualModel
+    export Step.{ActualModel as Actual, Model as Models}
     type Billing = Billing.T
     object Billing extends Newtype[String, Pure]
-    type CostUsd = Step.CostUsd
-    val CostUsd: Step.CostUsd.type = Step.CostUsd
-    type Seconds = CompareRuns.Seconds
-    val Seconds: CompareRuns.Seconds.type = CompareRuns.Seconds
-    type Attempts = RunSide.Attempts
-    val Attempts: RunSide.Attempts.type = RunSide.Attempts
-    type Failures = RunSide.Failures
-    val Failures: RunSide.Failures.type = RunSide.Failures
-    type FirstCallTokens = Step.FirstCallTokens
-    val FirstCallTokens: Step.FirstCallTokens.type = Step.FirstCallTokens
-    type Turns = Step.Turns
-    val Turns: Step.Turns.type = Step.Turns
+    export Step.CostUsd
+    export CompareRuns.Seconds
+    export RunSide.{Attempts, Failures}
+    export Step.{FirstCallTokens, Turns}
 
   /** One step name, and that step in each run (None = the run has no such step). */
   final case class StepRow(name: StepRow.Name, runs: List[Option[StepSide]])
 
   object StepRow:
-    type Name = Step.Name
-    val Name: Step.Name.type = Step.Name
+    export Step.Name
 
   /** enrich-source's outputs; the period is the classify step's, in signed years. */
   final case class EnrichSide(
@@ -321,10 +299,7 @@ object CompareRuns:
   )
 
   object Comparison:
-    type Pipeline = RunHead.Pipeline
-    val Pipeline: RunHead.Pipeline.type = RunHead.Pipeline
-    type Target = RunHead.Target
-    val Target: RunHead.Target.type = RunHead.Target
+    export RunHead.{Pipeline, Target}
     type Notes = Notes.T
     object Notes extends Newtype[String, Pure]
 

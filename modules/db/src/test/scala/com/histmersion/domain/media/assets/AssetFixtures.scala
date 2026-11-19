@@ -27,16 +27,7 @@ import com.histmersion.domain.DeepTime
   * transaction of its own, as the service runs it.
   */
 object AssetFixtures:
-  type Limit = MediaRepo.Limit
-  val Limit: MediaRepo.Limit.type = MediaRepo.Limit
-  type LinkProperty = MediaRepo.LinkProperty
-  val LinkProperty: MediaRepo.LinkProperty.type = MediaRepo.LinkProperty
-  type LinkItem = MediaRepo.LinkItem
-  val LinkItem: MediaRepo.LinkItem.type = MediaRepo.LinkItem
-  type LinkRank = MediaRepo.LinkRank
-  val LinkRank: MediaRepo.LinkRank.type = MediaRepo.LinkRank
-  type SetSourcePictureProperty = MediaRepo.SetSourcePictureProperty
-  val SetSourcePictureProperty: MediaRepo.SetSourcePictureProperty.type = MediaRepo.SetSourcePictureProperty
+  export MediaRepo.{Limit, LinkItem, LinkProperty, LinkRank, SetSourcePictureProperty}
 
   def add(ds: DataSource, citekey: Citekey, figures: List[NewFigure]): RowCount =
     transact(ds)(AssetRepo.add(citekey, figures))

@@ -29,8 +29,7 @@ object FullArticleRow:
   val Slug: com.histmersion.domain.research.Slug.type = com.histmersion.domain.research.Slug
   type Title = com.histmersion.domain.Title
   val Title: com.histmersion.domain.Title.type = com.histmersion.domain.Title
-  type Kind = Article.Kind
-  val Kind: Article.Kind.type = Article.Kind
+  export Article.Kind
   type Body = Body.T
   object Body extends Newtype[String, Pure]
   type Summary = Summary.T

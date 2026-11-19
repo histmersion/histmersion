@@ -123,11 +123,8 @@ object AgentProposals:
     object Kind extends Newtype[String, Pure]
     type Citekey = Citekey.T
     object Citekey extends Newtype[String, Pure]
-    type Status = com.histmersion.domain.library.Source.Status.Wire
-    val Status: com.histmersion.domain.library.Source.Status.Wire.type =
-      com.histmersion.domain.library.Source.Status.Wire
-    type EdgeKind = Edge.Kind.Wire
-    val EdgeKind: Edge.Kind.Wire.type = Edge.Kind.Wire
+    export com.histmersion.domain.library.Source.Status.Wire as Status
+    export Edge.Kind.Wire as EdgeKind
     type Target = Target.T
     object Target extends Newtype[String, Pure]
     type Evidence = Evidence.T

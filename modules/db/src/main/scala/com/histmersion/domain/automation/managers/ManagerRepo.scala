@@ -82,25 +82,13 @@ object ManagerRepo:
   ) derives DbCodec
 
   object ManagerRow:
-    type Id = ManagerInfo.Id
-    val Id: ManagerInfo.Id.type = ManagerInfo.Id
-    type Kind = ManagerInfo.Kind
-    val Kind: ManagerInfo.Kind.type = ManagerInfo.Kind
-    type Goal = com.histmersion.api.automation.Goal.Slug
-    val Goal: com.histmersion.api.automation.Goal.Slug.type = com.histmersion.api.automation.Goal.Slug
-    type State = ManagerInfo.State
-    val State: ManagerInfo.State.type = ManagerInfo.State
-    type PauseRuns = ManagerInfo.PauseRuns
-    val PauseRuns: ManagerInfo.PauseRuns.type = ManagerInfo.PauseRuns
+    export ManagerInfo.Id
+    export com.histmersion.api.automation.Manager.Kind.Wire as Kind
+    export com.histmersion.api.automation.Goal.Slug as Goal
+    export com.histmersion.api.automation.Manager.State.Wire as State
+    export ManagerInfo.PauseRuns
     type StatusNote = Manager.Status
-    type Cron = ManagerInfo.Cron
-    val Cron: ManagerInfo.Cron.type = ManagerInfo.Cron
-    type NextTickAt = ManagerInfo.NextTickAt
-    val NextTickAt: ManagerInfo.NextTickAt.type = ManagerInfo.NextTickAt
-    type CreatedAt = ManagerInfo.CreatedAt
-    val CreatedAt: ManagerInfo.CreatedAt.type = ManagerInfo.CreatedAt
-    type UpdatedAt = ManagerInfo.UpdatedAt
-    val UpdatedAt: ManagerInfo.UpdatedAt.type = ManagerInfo.UpdatedAt
+    export ManagerInfo.{CreatedAt, Cron, NextTickAt, UpdatedAt}
 
   private val managerSelect =
     sql"""SELECT id, kind, goal_slug, state, pause_runs, config::text, status_note, cron, ${Timestamps.isoSeconds(
@@ -343,34 +331,15 @@ object ManagerRepo:
   ) derives DbCodec
 
   object ItemRow:
-    type Id = ManagerItem.Id
-    val Id: ManagerItem.Id.type = ManagerItem.Id
-    type ManagerId = ManagerInfo.Id
-    val ManagerId: ManagerInfo.Id.type = ManagerInfo.Id
-    type Kind = ManagerItem.Kind
-    val Kind: ManagerItem.Kind.type = ManagerItem.Kind
-    type Target = ManagerItem.Target
-    val Target: ManagerItem.Target.type = ManagerItem.Target
-    type Status = ManagerItem.Status
-    val Status: ManagerItem.Status.type = ManagerItem.Status
-    type Priority = ManagerItem.Priority
-    val Priority: ManagerItem.Priority.type = ManagerItem.Priority
-    type Attempts = ManagerItem.Attempts
-    val Attempts: ManagerItem.Attempts.type = ManagerItem.Attempts
-    type Failures = ManagerItem.Failures
-    val Failures: ManagerItem.Failures.type = ManagerItem.Failures
-    type EvaluatedRun = Agents.RunInfo.Id
-    val EvaluatedRun: Agents.RunInfo.Id.type = Agents.RunInfo.Id
-    type NotBefore = ManagerItem.NotBefore
-    val NotBefore: ManagerItem.NotBefore.type = ManagerItem.NotBefore
-    type Outcome = ManagerItem.Outcome
-    val Outcome: ManagerItem.Outcome.type = ManagerItem.Outcome
-    type Origin = ManagerItem.Origin
-    val Origin: ManagerItem.Origin.type = ManagerItem.Origin
-    type CreatedAt = ManagerItem.CreatedAt
-    val CreatedAt: ManagerItem.CreatedAt.type = ManagerItem.CreatedAt
-    type UpdatedAt = ManagerItem.UpdatedAt
-    val UpdatedAt: ManagerItem.UpdatedAt.type = ManagerItem.UpdatedAt
+    export ManagerItem.Id
+    export ManagerInfo.Id as ManagerId
+    export ManagerItem.{Kind, Target}
+    export com.histmersion.api.automation.ItemStatus.Wire as Status
+    export ManagerItem.{Attempts, Failures, Priority}
+    export Agents.RunInfo.Id as EvaluatedRun
+    export ManagerItem.{NotBefore, Outcome}
+    export com.histmersion.api.automation.Managers.ItemOrigin.Wire as Origin
+    export ManagerItem.{CreatedAt, UpdatedAt}
 
   private val itemSelect =
     sql"""SELECT id, manager_id, kind, target, status, priority, attempts, failures, run_id, evaluated_run,
@@ -1021,26 +990,9 @@ object ManagerRepo:
   ) derives DbCodec
 
   object HintRow:
-    type Id = ManagerHint.Id
-    val Id: ManagerHint.Id.type = ManagerHint.Id
-    type ManagerId = ManagerInfo.Id
-    val ManagerId: ManagerInfo.Id.type = ManagerInfo.Id
-    type ItemId = ManagerHint.ItemId
-    val ItemId: ManagerHint.ItemId.type = ManagerHint.ItemId
-    type Text = ManagerHint.Text
-    val Text: ManagerHint.Text.type = ManagerHint.Text
-    type Author = ManagerHint.Author
-    val Author: ManagerHint.Author.type = ManagerHint.Author
-    type Standing = ManagerHint.Standing
-    val Standing: ManagerHint.Standing.type = ManagerHint.Standing
-    type CreatedAt = ManagerHint.CreatedAt
-    val CreatedAt: ManagerHint.CreatedAt.type = ManagerHint.CreatedAt
-    type RetiredAt = ManagerHint.RetiredAt
-    val RetiredAt: ManagerHint.RetiredAt.type = ManagerHint.RetiredAt
-    type Uses = ManagerHint.Uses
-    val Uses: ManagerHint.Uses.type = ManagerHint.Uses
-    type Proposal = ManagerHint.Proposal
-    val Proposal: ManagerHint.Proposal.type = ManagerHint.Proposal
+    export ManagerHint.Id
+    export ManagerInfo.Id as ManagerId
+    export ManagerHint.{Author, CreatedAt, ItemId, Proposal, RetiredAt, Standing, Text, Uses}
 
   /** A hint, with the newest OPEN `hint-effect` approval about it (a model's proposed action waiting for a person) and
     * that action.

@@ -31,15 +31,5 @@ final private[periods] case class PeriodRow(
     )
 
 object PeriodRow:
-  type Id = HistoricalPeriod.Id
-  val Id: HistoricalPeriod.Id.type = HistoricalPeriod.Id
-  type Label = HistoricalPeriod.Label
-  val Label: HistoricalPeriod.Label.type = HistoricalPeriod.Label
-  type Authority = HistoricalPeriod.Authority
-  val Authority: HistoricalPeriod.Authority.type = HistoricalPeriod.Authority
-  type Region = HistoricalPeriod.Region
-  val Region: HistoricalPeriod.Region.type = HistoricalPeriod.Region
-  type ParentId = HistoricalPeriod.ParentId
-  val ParentId: HistoricalPeriod.ParentId.type = HistoricalPeriod.ParentId
-  type Preset = PresetRegion.Wire
-  val Preset: PresetRegion.Wire.type = PresetRegion.Wire
+  export HistoricalPeriod.{Authority, Id, Label, ParentId, Region}
+  export PresetRegion.Wire as Preset

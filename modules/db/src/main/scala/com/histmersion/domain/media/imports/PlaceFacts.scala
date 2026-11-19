@@ -25,5 +25,4 @@ object PlaceFacts:
   object Label extends Newtype[String, Pure]
   type Keys = Keys.T
   object Keys extends Newtype[String, Pure]
-  type Qid = Target.Qid
-  val Qid: Target.Qid.type = Target.Qid
+  export Target.Qid

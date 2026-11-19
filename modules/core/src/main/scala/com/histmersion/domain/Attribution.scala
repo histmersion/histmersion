@@ -24,8 +24,7 @@ object Attribution:
   type PublicDomainCredit = Credit
   val PublicDomainCredit: Credit.type = Credit
 
-  type LicenceUrl = Licence.Url
-  val LicenceUrl: Licence.Url.type = Licence.Url
+  export Licence.Url as LicenceUrl
   type Author = AuthorName
   val Author: AuthorName.type = AuthorName
   type Credit = Credit.T

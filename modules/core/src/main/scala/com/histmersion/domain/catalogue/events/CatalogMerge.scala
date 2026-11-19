@@ -89,8 +89,7 @@ object CatalogMerge:
     object Years extends Newtype[Double, Pure]
     type Km = Km.T
     object Km extends Newtype[Double, Pure]
-    type Id = Event.Id
-    val Id: Event.Id.type = Event.Id
+    export Event.Id
 
     given Ordering[Fit] =
       Ordering.by((f: Fit) => (-f.score.value, f.years.value: Double, f.km.value: Double, f.id.value: String))

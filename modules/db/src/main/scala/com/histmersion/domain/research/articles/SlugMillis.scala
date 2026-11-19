@@ -11,5 +11,4 @@ final private[articles] case class SlugMillis(slug: SlugMillis.Slug, millis: Slu
 object SlugMillis:
   type Slug = com.histmersion.domain.research.Slug
   val Slug: com.histmersion.domain.research.Slug.type = com.histmersion.domain.research.Slug
-  type Millis = CitekeyMillis.Millis
-  val Millis: CitekeyMillis.Millis.type = CitekeyMillis.Millis
+  export CitekeyMillis.Millis

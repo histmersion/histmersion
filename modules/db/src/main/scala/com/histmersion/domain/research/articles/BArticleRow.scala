@@ -31,8 +31,7 @@ object BArticleRow:
   val Slug: com.histmersion.domain.research.Slug.type = com.histmersion.domain.research.Slug
   type Title = com.histmersion.domain.Title
   val Title: com.histmersion.domain.Title.type = com.histmersion.domain.Title
-  type Kind = Article.Kind
-  val Kind: Article.Kind.type = Article.Kind
+  export Article.Kind
   type Body = Body.T
   object Body extends Newtype[String, Pure]
   type Summary = Summary.T
@@ -43,9 +42,6 @@ object BArticleRow:
   object Regions extends Newtype[String, Pure]
   type PNull = PNull.T
   object PNull extends Newtype[Boolean, Pure]
-  type PLo = DeepTime.SignedYear
-  val PLo: DeepTime.SignedYear.type = DeepTime.SignedYear
-  type PHi = DeepTime.SignedYear
-  val PHi: DeepTime.SignedYear.type = DeepTime.SignedYear
+  export DeepTime.{SignedYear as PHi, SignedYear as PLo}
   type UpdatedAt = UpdatedAt.T
   object UpdatedAt extends Newtype[String, Pure]

@@ -63,17 +63,13 @@ object BundlePlan:
   final case class Ledger(foreignRev: Ledger.ForeignRev, localRevAfter: Option[Ledger.LocalRevAfter])
 
   object Ledger:
-    type ForeignRev = Rev
-    val ForeignRev: Rev.type = Rev
-    type LocalRevAfter = Rev
-    val LocalRevAfter: Rev.type = Rev
+    export com.histmersion.util.data.exchange.BundlePlan.{Rev as ForeignRev, Rev as LocalRevAfter}
 
   /** A uid as this instance knows it: the live row's rev, whether it is tombstoned, the ledger. */
   final case class Local(rev: Option[Local.Rev], tombstoned: Local.Tombstoned, ledger: Option[Ledger])
 
   object Local:
-    type Rev = BundlePlan.Rev
-    val Rev: BundlePlan.Rev.type = BundlePlan.Rev
+    export BundlePlan.Rev
     type Tombstoned = Tombstoned.T
     object Tombstoned extends Newtype[Boolean, Pure]
 

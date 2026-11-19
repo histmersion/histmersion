@@ -45,9 +45,7 @@ object PlaceScope:
   val ByValueKey: Value.type = Value
   type LabelsKey = Value
   val LabelsKey: Value.type = Value
-  type ByValueValue = Place.Id
-  val ByValueValue: Place.Id.type = Place.Id
-  type LabelsValue = PlaceRepo.Label
-  val LabelsValue: PlaceRepo.Label.type = PlaceRepo.Label
+  export Place.Id as ByValueValue
+  export PlaceRepo.Label as LabelsValue
 
   val empty: PlaceScope = PlaceScope(Map.empty)
