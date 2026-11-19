@@ -11,12 +11,12 @@ db:domain/catalogue/places/Geocoder.scala	n.citekey, n.id	n is a CTE of findings
 db:domain/catalogue/places/PlaceRepo.scala	n.name	string_agg of DISTINCT names: equal names are one value
 db:domain/catalogue/places/PlaceRepo.scala	n.name	string_agg of DISTINCT names: equal names are one value
 db:domain/catalogue/places/PlaceRepo.scala	(lower(m.name) = lower($exact)) DESC, length(m.name), m.name	LIMIT 1 of a name: rows tied on it read the same name
-db:domain/catalogue/places/PlaceRepo.scala	${rank("")}	rank(...) ends with the place's id
-db:domain/catalogue/places/PlaceRepo.scala	${rank("l.")}	rank(...) ends with the place's id
+db:domain/catalogue/places/PlaceRepo.scala	${rank(sql"")}	rank(...) ends with the place's id
+db:domain/catalogue/places/PlaceRepo.scala	${rank(sql"l.")}	rank(...) ends with the place's id
 db:domain/catalogue/places/PointAreaRepo.scala	a.id	a is a CTE of places: id is its key
 db:domain/library/acquisition/CandidateRepo.scala	CASE state WHEN 'new' THEN 0 WHEN 'seen' THEN 1 WHEN 'queued' THEN 2 ELSE 3 END, state	GROUP BY state: one row per state
 db:domain/library/search/FilterSql.scala	s.cited_by_count DESC NULLS LAST, s.citekey	s is sources: citekey is its key
-db:domain/library/search/FilterSql.scala	${RangeSql.start("s.period")} ASC NULLS LAST, s.citekey	s is sources: citekey is its key
+db:domain/library/search/FilterSql.scala	${RangeSql.start(sql"s.period")} ASC NULLS LAST, s.citekey	s is sources: citekey is its key
 db:domain/library/search/FilterSql.scala	s.year DESC NULLS LAST, s.citekey	s is sources: citekey is its key
 db:domain/library/search/FilterSql.scala	s.year ASC NULLS LAST, s.citekey	s is sources: citekey is its key
 db:domain/library/search/FilterSql.scala	lower(s.title) ASC, s.citekey	s is sources: citekey is its key
