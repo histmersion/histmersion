@@ -65,7 +65,6 @@ private[articles] object ArticleRepo:
   private given DbCodec[Article.Row] = DbCodec.derived
   private given DbCodec[CitedSource] = DbCodec.derived
   private given DbCodec[Article.Ref] = DbCodec.derived
-  private given DbCodec[EventArticleRef] = DbCodec.derived
 
   /** `\` escapes `%`/`_` in every ILIKE here, as in [[FilterSql]] (whose copy is private). */
   private val Esc = sql" ESCAPE '\\'"
@@ -347,10 +346,15 @@ private[articles] object ArticleRepo:
       DbCon
   ): List[EventArticleRef] =
     if citekeys.isEmpty then Nil
-    else sql"""SELECT DISTINCT ON (a.slug) a.slug, a.title, l.target
+    else
+      sql"""SELECT DISTINCT ON (a.slug) a.slug, a.title, l.target
             FROM article_links l JOIN articles a ON a.slug = l.src_slug
             WHERE l.target_kind = 'source' AND l.target = ANY($citekeys::text[])
-            ORDER BY a.slug, l.target LIMIT $limit""".query[EventArticleRef].run().toList
+            ORDER BY a.slug, l.target LIMIT $limit"""
+        .query[(Article.Slug, Article.Title, Citekey)]
+        .run()
+        .toList
+        .map(EventArticleRef.apply)
 
   /** The other direction, for a SOURCE: which compiled articles cite it (`article_links` rows with
     * `target_kind = 'source'`). An index lookup, like [[backlinks]], because the classification was done at write time

@@ -16,7 +16,9 @@ private[histmersion] object Keyset:
 
   /** The order every paged list uses. `alias` = the table's alias in the query (with its dot). */
 
-  def orderBy(alias: String): Frag = sql" ORDER BY ${SqlLiteral(alias)}created_at DESC, ${SqlLiteral(alias)}id DESC"
+  def orderBy(at: String): Frag =
+    val alias = SqlLiteral(at)
+    sql" ORDER BY ${alias}created_at DESC, ${alias}id DESC"
 
   /** ` AND (created_at, id) < (that row's)` — the rows older than the cursor (an id, bound through its codec). */
   def olderThan[C](alias: String, table: String, cursor: C)(using DbCodec[C]): Frag =

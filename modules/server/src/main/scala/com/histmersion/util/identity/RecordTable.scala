@@ -43,12 +43,9 @@ final case class RecordTable(
   /** Old keys → (the key now, uid, title). */
   private def byAliases(keys: List[ItemKey])(using DbCon): Map[ItemKey, (ItemKey, Option[ItemUid], Option[Title])] =
     aliases.filter(_ => keys.nonEmpty).fold(Map.empty) { a =>
-      sql"""SELECT a.${SqlLiteral(a.alias.value)}, ${SqlLiteral(keyCol)}, ${SqlLiteral(uidCol)}, ${SqlLiteral(
-          titleCol
-        )} FROM ${SqlLiteral(a.table.value)} a JOIN ${SqlLiteral(tableName)} t ON ${SqlLiteral(
-          keyCol
-        )} = a.${SqlLiteral(a.target.value)}
-              WHERE a.${SqlLiteral(a.alias.value)} = ANY($keys::text[])"""
+      sql"""SELECT a.${a.alias}, ${SqlLiteral(keyCol)}, ${SqlLiteral(uidCol)}, ${SqlLiteral(titleCol)} FROM ${a.table} a
+              JOIN ${SqlLiteral(tableName)} t ON ${SqlLiteral(keyCol)} = a.${a.target}
+              WHERE a.${a.alias} = ANY($keys::text[])"""
         .query[(ItemKey, ItemKey, Option[ItemUid], Option[Title])]
         .run()
         .map((old, now, u, t) => old -> (now, u, t))

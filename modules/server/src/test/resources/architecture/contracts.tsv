@@ -1111,7 +1111,7 @@ unwrap	server:domain/catalogue/evidence/AttestationService.scala	.value outside 
 unwrap	server:domain/catalogue/evidence/AttestationsControllers.scala	.value outside a boundary	9
 unwrap	server:domain/catalogue/evidence/EventLinkService.scala	.value outside a boundary	23
 unwrap	server:domain/catalogue/evidence/EventLinksControllers.scala	.value outside a boundary	97
-unwrap	server:domain/catalogue/evidence/LeadService.scala	.value outside a boundary	36
+unwrap	server:domain/catalogue/evidence/LeadService.scala	.value outside a boundary	35
 unwrap	server:domain/catalogue/maptiles/MapTileService.scala	.value outside a boundary	38
 unwrap	server:domain/catalogue/maptiles/MapTiles.scala	.value outside a boundary	15
 unwrap	server:domain/catalogue/maptiles/TileCache.scala	.value outside a boundary	4
@@ -1183,7 +1183,7 @@ unwrap	server:domain/library/search/SearchFilters.scala	.value outside a boundar
 unwrap	server:domain/library/sources/SourceMedia.scala	.value outside a boundary	4
 unwrap	server:domain/library/sources/SourceMirrorNote.scala	.value outside a boundary	2
 unwrap	server:domain/library/sources/SourcePassages.scala	.value outside a boundary	10
-unwrap	server:domain/library/sources/SourceReadable.scala	.value outside a boundary	10
+unwrap	server:domain/library/sources/SourceReadable.scala	.value outside a boundary	7
 unwrap	server:domain/library/sources/SourceService.scala	.value outside a boundary	157
 unwrap	server:domain/library/sources/SourcesControllers.scala	.value outside a boundary	59
 unwrap	server:domain/library/sources/SourcesData.scala	.value outside a boundary	9
@@ -1245,7 +1245,7 @@ unwrap	server:domain/personal/reading/ReadingShow.scala	.value outside a boundar
 unwrap	server:domain/personal/seen/SeenService.scala	.value outside a boundary	2
 unwrap	server:domain/research/articles/ArticleCitedSources.scala	.value outside a boundary	1
 unwrap	server:domain/research/articles/ArticleMirrorNote.scala	.value outside a boundary	2
-unwrap	server:domain/research/articles/ArticleReadable.scala	.value outside a boundary	4
+unwrap	server:domain/research/articles/ArticleReadable.scala	.value outside a boundary	1
 unwrap	server:domain/research/articles/ArticleService.scala	.value outside a boundary	73
 unwrap	server:domain/research/articles/ArticlesControllers.scala	.value outside a boundary	94
 unwrap	server:domain/research/articles/ArticlesData.scala	.value outside a boundary	7
@@ -1341,7 +1341,7 @@ unwrap	server:util/data/maintenance/PgRelocation.scala	.value outside a boundary
 unwrap	server:util/data/maintenance/VacuumJobs.scala	.value outside a boundary	7
 unwrap	server:util/data/maintenance/WriteGate.scala	.value outside a boundary	2
 unwrap	server:util/data/mirror/Mirror.scala	.value outside a boundary	1
-unwrap	server:util/identity/RecordTable.scala	.value outside a boundary	10
+unwrap	server:util/identity/RecordTable.scala	.value outside a boundary	8
 unwrap	server:util/identity/TableReferable.scala	.value outside a boundary	1
 unwrap	server:util/jobs/BackgroundJob.scala	.value outside a boundary	8
 unwrap	server:util/jobs/JobControlService.scala	.value outside a boundary	4

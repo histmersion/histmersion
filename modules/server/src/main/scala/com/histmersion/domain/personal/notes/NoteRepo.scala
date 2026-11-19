@@ -28,11 +28,13 @@ private[notes] object NoteRepo:
   def list(user: UserId, kind: Option[MarkKind], item: Option[Note.Item], size: Option[PageSize])(using
       DbCon
   ): List[Note.Row] =
-    sql"${SqlLiteral(Projection)} WHERE n.user_id = $user AND n.deleted_at IS NULL${kind.fold(
-        sql""
-      )(k => sql" AND n.target_kind = ${k.wire}")}${item.fold(sql"")(i =>
-        sql" AND (n.target_id = ${i.key} OR n.target_uid = ANY(${i.uids.toList.map(u => u.value.toString)}::uuid[]))"
-      )} ORDER BY n.updated_at DESC, n.id DESC${size.fold(sql"")(s => sql" LIMIT $s")}"
+    val ofKind = kind.fold(sql"")(k => sql" AND n.target_kind = ${k.wire}")
+    val ofItem = item.fold(sql"")(i =>
+      sql" AND (n.target_id = ${i.key} OR n.target_uid = ANY(${i.uids.toList.map(u => u.value.toString)}::uuid[]))"
+    )
+    val ordered =
+      sql"${SqlLiteral(Projection)} WHERE n.user_id = $user AND n.deleted_at IS NULL$ofKind$ofItem ORDER BY n.updated_at DESC, n.id DESC"
+    sql"$ordered${size.fold(sql"")(s => sql" LIMIT $s")}"
       .query[Note.Row]
       .run()
       .toList

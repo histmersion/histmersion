@@ -673,11 +673,13 @@ private[places] object PlaceRepo:
     // place outranks one dated by its findings, a physical feature and a present-day one — at 1600 the
     // 4 000 Natural Earth cities would otherwise take the whole site limit by id
     def rank(l: String) =
-      s"${l}area DESC, CASE ${l}basis WHEN 'dated' THEN 0 WHEN 'findings' THEN 1 WHEN 'timeless' THEN 2 ELSE 3 END, ${l}id"
+      SqlLiteral(
+        s"${l}area DESC, CASE ${l}basis WHEN 'dated' THEN 0 WHEN 'findings' THEN 1 WHEN 'timeless' THEN 2 ELSE 3 END, ${l}id"
+      )
     // RANK FIRST, then read the rows shown: the limit is taken over `live` alone, and only those rows
     // are joined back to `places` for their label, dates and shape — not all 14 700 sites alive in
     // 500 CE, one index lookup each, to keep 200 (2026-10-09)
-    sql"$live$shadowed$shown SELECT l.id, p.label, l.kind, ${SqlLiteral(startCol)} AS ps, ${SqlLiteral(RangeSql.end("p.period"))} AS pe, ${SqlLiteral(datingCol)} AS dating, l.basis, coalesce(p.shape_dim = 2, false) AS has_boundary, coalesce(p.web_geojson, ST_AsGeoJSON(coalesce(p.geom_clipped, p.geom), 5)) AS geojson, p.site_type, p.properties->>'feature_types', p.properties->>'fcode', p.properties->>'class', p.properties->>'p31' FROM (SELECT * FROM ${SqlLiteral(drawn)} ORDER BY ${SqlLiteral(rank(""))} LIMIT ${limit.value.max(1)}) l JOIN places p ON p.id = l.id ORDER BY ${SqlLiteral(rank("l."))}"
+    sql"$live$shadowed$shown SELECT l.id, p.label, l.kind, ${SqlLiteral(startCol)} AS ps, ${SqlLiteral(RangeSql.end("p.period"))} AS pe, ${SqlLiteral(datingCol)} AS dating, l.basis, coalesce(p.shape_dim = 2, false) AS has_boundary, coalesce(p.web_geojson, ST_AsGeoJSON(coalesce(p.geom_clipped, p.geom), 5)) AS geojson, p.site_type, p.properties->>'feature_types', p.properties->>'fcode', p.properties->>'class', p.properties->>'p31' FROM (SELECT * FROM ${SqlLiteral(drawn)} ORDER BY ${rank("")} LIMIT ${limit.value.max(1)}) l JOIN places p ON p.id = l.id ORDER BY ${rank("l.")}"
 
   /** The test of a candidate pair `pr` (`lid` under `hid`, `same_name`, `small` the smaller area, `lbb` and `hbb` their
     * boxes): the same normalised name, or the shapes' intersection covering more than [[SameStateOverlap]] of the

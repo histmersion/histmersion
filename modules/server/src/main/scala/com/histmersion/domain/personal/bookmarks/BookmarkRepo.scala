@@ -26,9 +26,10 @@ private[bookmarks] object BookmarkRepo:
 
   /** Newest first; every one when no `size` is given. */
   def list(user: UserId, kind: Option[MarkKind], size: Option[PageSize])(using DbCon): List[Bookmark.Row] =
-    sql"${SqlLiteral(Projection)} WHERE b.user_id = $user AND b.deleted_at IS NULL${kind.fold(sql"")(k =>
-        sql" AND b.target_kind = ${k.wire}"
-      )} ORDER BY b.created_at DESC, b.id DESC${size.fold(sql"")(s => sql" LIMIT $s")}"
+    val ofKind = kind.fold(sql"")(k => sql" AND b.target_kind = ${k.wire}")
+    val ordered =
+      sql"${SqlLiteral(Projection)} WHERE b.user_id = $user AND b.deleted_at IS NULL$ofKind ORDER BY b.created_at DESC, b.id DESC"
+    sql"$ordered${size.fold(sql"")(s => sql" LIMIT $s")}"
       .query[Bookmark.Row]
       .run()
       .toList

@@ -4,6 +4,7 @@ package domain.automation.goals
 import com.histmersion.domain.ItemKind
 import com.histmersion.util.database.Transactor
 import com.histmersion.util.identity.{AliasColumns, RecordTable, TableReferable}
+import com.augustnagro.magnum.sql
 
 /** Research goals as others point at them: by slug (and the slugs a rename left), a uid that survives renames. */
 final class GoalReferable(db: Transactor) extends TableReferable(db, List(GoalReferable.Table))
@@ -19,6 +20,6 @@ object GoalReferable:
       RecordTable.Title("t.title"),
       Some(RecordTable.Uid("t.uid")),
       Some(
-        AliasColumns(AliasColumns.Table("goal_aliases"), AliasColumns.Alias("alias"), AliasColumns.Target("goal_slug"))
+        AliasColumns(sql"goal_aliases", sql"alias", sql"goal_slug")
       )
     )

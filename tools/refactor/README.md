@@ -578,6 +578,10 @@ with the reason. Its fixture compiles `magnum2-frag-fixture/input` against 1.3.1
 bash tools/refactor/magnum2-frag-fixture/check.sh
 ```
 
+`MagnumTypedBinds.scala` (`magnum-typed-binds.conf`, syntactic) did the companion step for the server tests on 2.0.0:
+`${x.value}` inside `sql"..."` binds `x` (Iron's `.value` is an `IronType`, which has no codec), and the suites the
+compiler named get `NewtypeColumns.given`.
+
 ## Remaining work
 
 - Extend the repository call graph to dispatch, supplied callbacks and initializer effects; define approved capability boundaries before adding propagation for other capabilities.

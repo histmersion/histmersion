@@ -1,15 +1,9 @@
 package com.histmersion
 package util.identity
 
-import io.github.iltotore.iron.constraint.any.Pure
+import com.augustnagro.magnum.Frag
 
-/** An owner's alias table: the old key a rename left (`alias`) and the key it stands for now (`target`). */
-final case class AliasColumns(table: AliasColumns.Table, alias: AliasColumns.Alias, target: AliasColumns.Target)
-
-object AliasColumns:
-  type Table = Table.T
-  object Table extends Newtype[String, Pure]
-  type Alias = Alias.T
-  object Alias extends Newtype[String, Pure]
-  type Target = Target.T
-  object Target extends Newtype[String, Pure]
+/** An owner's alias table: the old key a rename left (`alias`) and the key it stands for now (`target`), each the
+  * owner's constant SQL name (`sql"article_aliases"`), nested into the statements that read it.
+  */
+final case class AliasColumns(table: Frag, alias: Frag, target: Frag)

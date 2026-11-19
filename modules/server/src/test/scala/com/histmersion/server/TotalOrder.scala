@@ -98,6 +98,10 @@ object TotalOrder:
       else if c == '"' && raw.substring(math.max(0, i - 8), i) == "COLLATE " && raw.startsWith("\"C\"", i) then
         out ++= "\"C\""
         i += 3
+      // the same collation as the last thing in a `sql"""…"""`, its closing quote escaped (`sql` reads escapes)
+      else if c == '"' && raw.substring(math.max(0, i - 8), i) == "COLLATE " && raw.startsWith("\"C\\\"", i) then
+        out ++= "\"C\""
+        i += 4
       else if depth == 0 && c == '"' then done = true
       else if depth == 0 && Stop.findPrefixOf(raw.substring(i, math.min(raw.length, i + 200))).isDefined &&
         c.isWhitespace
