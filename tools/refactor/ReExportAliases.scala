@@ -17,6 +17,15 @@ import scala.meta.internal.{semanticdb => s}
   * the same entity. A pair whose export the compiler or SymbolOracle rejects goes into `exclusions` and stays. */
 object ReExportAliases {
   case class Config(exclusions: String = "", ledger: String = "", scope: List[String] = List(""), packageExports: Boolean = true, rewritten: String = "",
+    // every alias pair (`type X = …` then `val X: ….type = …`) that stays, as `path TAB key TAB reason TAB alias`
+    // (qualified-round.py adds them to the exclusions once the round is done)
+    skipped: String = "",
+    // pairs in the companion of a class, trait or enum are rewritten too (an export there can break a creator application
+    // only through a typing cycle, which the compiler reports and qualified-round.py backs off)
+    companionExports: Boolean = false,
+    // `type X = Y; val X: Y.type = Y` where Y is in scope by an import or an enclosing object (not a member of the alias's
+    // own object) becomes an export from the path of Y's owner
+    scopeNames: Boolean = false,
     // `{scalaVersion}` is Scalafix's --scala-version: the build's (target/build-versions.properties)
     semanticdbRoots: List[String] = List("target/out/jvm/scala-{scalaVersion}", "target/out/sjs1/scala-{scalaVersion}", ".semanticdb"))
   object Config {
@@ -50,7 +59,7 @@ object ReExportAliases {
     * pairs this rule rewrites (their target owner differs from their own). Such a value must stay a val: the backend crashes
     * on a singleton type of an export forwarder ("Error while emitting"). */
   /** With `known` (the value halves a previous pass really rewrote), only those are exempt from pinning. */
-  def pinned(roots: List[String], scope: List[String], packageExports: Boolean, known: Option[Set[String]]): Set[String] = pinnedCache.computeIfAbsent(roots ++ ("|" :: packageExports.toString :: known.fold("-")(_.size.toString) :: scope), _ => {
+  def pinned(roots: List[String], scope: List[String], packageExports: Boolean, known: Option[Set[String]], companionExports: Boolean = false): Set[String] = pinnedCache.computeIfAbsent(roots ++ ("|" :: packageExports.toString :: companionExports.toString :: known.fold("-")(_.size.toString) :: scope), _ => {
     val r = roots
     val idx = index(r)
     def singleton(i: s.SymbolInformation): Option[String] = (i.signature match {
@@ -65,7 +74,7 @@ object ReExportAliases {
         val isPair = inScope && i.symbol.endsWith(".") && idx.containsKey(i.symbol.stripSuffix(".") + "#")
         // exempt only a pair this run rewrites: not a self-alias, not a cross-module package export
         val caseCompanion = Option(idx.get(owner.stripSuffix(".") + "#")).exists(c => c.kind == s.SymbolInformation.Kind.CLASS || c.kind == s.SymbolInformation.Kind.TRAIT)
-        val rewritten = isPair && !caseCompanion && key(Symbol(target).owner.value) != key(owner) && finalObjectIn(idx, i.symbol).exists { obj =>
+        val rewritten = isPair && (companionExports || !caseCompanion) && key(Symbol(target).owner.value) != key(owner) && finalObjectIn(idx, i.symbol).exists { obj =>
           !(packageLevel(obj) && !(packageExports && Option(uris.get(obj)).exists(u => Option(uris.get(i.symbol)).exists(v => u.startsWith(moduleOf(v))))))
         }
         !(known match { case Some(k) => isPair && k(i.symbol); case None => rewritten })
@@ -166,7 +175,7 @@ class ReExportAliases(config: ReExportAliases.Config, excluded: Set[String]) ext
           if t.mods.isEmpty && v.mods.isEmpty && t.tparamClause.values.isEmpty && n.value == t.name.value &&
             strip(tb.syntax) == strip(vr.syntax) && strip(ref.syntax) == strip(vr.syntax) &&
             tn.symbol.value.nonEmpty && key(tn.symbol.value) == key(vn.symbol.value) &&
-            !hasComment(t.pos.start, v.pos.end) && !excluded(path + "@" + t.pos.start) && !ownOwner(t, tq) && !inCaseCompanion(t) =>
+            !hasComment(t.pos.start, v.pos.end) && !excluded(path + "@" + t.pos.start) && !ownOwner(t, tq) && (config.companionExports || !inCaseCompanion(t)) =>
         finalObject(vn.symbol.value) match {
           // an export from a package (top-level newtypes) of another module crashes the backend ("Error while emitting"),
           // one from the module's own package can break creator applications of classes there: such pairs stay unless
@@ -176,8 +185,53 @@ class ReExportAliases(config: ReExportAliases.Config, excluded: Set[String]) ext
           case Some(obj) => pathOf(obj).filterNot(o => ownOwnerSym(t, Symbol(obj).owner.value)).map(o => Pair(t, v, o, Symbol(obj).displayName, t.name.value))
           case None => None
         }
+      // a name in scope by an import or an enclosing object: exported from the path of its owner
+      case (tb: Type.Name, vr: Term.Name, Some(Type.Singleton(ref: Term.Name)), List(Pat.Var(n)))
+          if config.scopeNames && t.mods.isEmpty && v.mods.isEmpty && t.tparamClause.values.isEmpty && n.value == t.name.value &&
+            tb.value == vr.value && ref.value == vr.value && tb.symbol.value.nonEmpty && key(tb.symbol.value) == key(vr.symbol.value) &&
+            !hasComment(t.pos.start, v.pos.end) && !excluded(path + "@" + t.pos.start) && !ownOwnerSym(t, Symbol(vr.symbol.value).owner.value) &&
+            (config.companionExports || !inCaseCompanion(t)) =>
+        finalObject(vr.symbol.value) match {
+          case Some(obj) if packageLevel(obj) && !(packageExports && Option(uris.get(obj)).exists(_.startsWith(moduleOf(path)))) => None
+          case Some(obj) => pathOf(obj).filterNot(o => ownOwnerSym(t, Symbol(obj).owner.value)).map(o => Pair(t, v, o, Symbol(obj).displayName, t.name.value))
+          case None => None
+        }
       case _ => None
     }
+    /** Why a pair of the inventory's shape stays: pairOf's conditions in its order. */
+    def keptBecause(t: Defn.Type, v: Defn.Val, pinnedVal: Boolean): String = (t.body, v.rhs, v.decltpe) match {
+      case (tb @ Type.Select(tq, tn), vr @ Term.Select(_, vn), Some(Type.Singleton(ref))) =>
+        if (t.mods.nonEmpty || v.mods.nonEmpty) "a modifier on the alias (an export carries none)"
+        else if (t.tparamClause.values.nonEmpty) "the alias has type parameters"
+        else if (!(strip(tb.syntax) == strip(vr.syntax) && strip(ref.syntax) == strip(vr.syntax))) "the type and the value spell different paths"
+        else if (tn.symbol.value.isEmpty || key(tn.symbol.value) != key(vn.symbol.value)) "the type and the value denote different entities"
+        else if (hasComment(t.pos.start, v.pos.end)) "a comment inside the pair"
+        else if (ownOwner(t, tq)) "aliases a member of the object it stands in: Scala 3 cannot export that (\"already a member\")"
+        else if (!config.companionExports && inCaseCompanion(t)) "in the companion of a class, trait or enum: an export there hides the synthetic apply"
+        else if (pinnedVal) "a val elsewhere has this value's singleton type: that type of an export forwarder crashes the backend"
+        else finalObject(vn.symbol.value) match {
+          case Some(obj) if packageLevel(obj) => "a top-level definition of another module's package: exporting it crashes the backend"
+          case Some(obj) if key(obj) != key(vn.symbol.value) && pathOf(obj).isEmpty => "an alias of a top-level or backquoted definition"
+          case Some(_) => "the object it finally denotes is a member of the object the export would stand in"
+          case None => "the value is no plain path to an object"
+        }
+      case (tb: Type.Name, vr: Term.Name, _) =>
+        if (!config.scopeNames) "aliases a name in scope (scopeNames is off)"
+        else if (vr.symbol.isNone || tb.symbol.isNone) "a name without a SemanticDB symbol"
+        else if (ownOwnerSym(t, Symbol(vr.symbol.value).owner.value)) "aliases a member of its own object: Scala 3 cannot export that"
+        else if (t.mods.nonEmpty || v.mods.nonEmpty) "a modifier on the alias (an export carries none)"
+        else if (hasComment(t.pos.start, v.pos.end)) "a comment inside the pair"
+        else if (!config.companionExports && inCaseCompanion(t)) "in the companion of a class, trait or enum: an export there hides the synthetic apply"
+        else if (pinnedVal) "a val elsewhere has this value's singleton type: that type of an export forwarder crashes the backend"
+        else finalObject(vr.symbol.value) match {
+          case Some(obj) if packageLevel(obj) => "a top-level definition of another module's package: exporting it crashes the backend"
+          case Some(obj) if pathOf(obj).isEmpty => "an alias of a top-level, local or backquoted definition"
+          case Some(_) => "the object it finally denotes is a member of the object the export would stand in"
+          case None => "the name is no plain path to an object (a local or a parameter)"
+        }
+      case _ => "not a plain path on both sides"
+    }
+    val skippedRows = List.newBuilder[String]
     val statLists: List[List[Stat]] = doc.tree.collect {
       case t: Template => t.body.stats
       case p: Pkg => p.body.stats
@@ -186,12 +240,20 @@ class ReExportAliases(config: ReExportAliases.Config, excluded: Set[String]) ext
     // the backend crashes on a singleton type of a forwarder ("Error while emitting")
     val pinnedHere: Set[String] = ReExportAliases.pinned(config.semanticdbRoots, config.scope, config.packageExports,
       if (config.rewritten.nonEmpty && Files.isRegularFile(Paths.get(config.rewritten)))
-        Some(Files.readAllLines(Paths.get(config.rewritten), UTF_8).asScala.map(_.trim).filter(_.nonEmpty).toSet) else None)
+        Some(Files.readAllLines(Paths.get(config.rewritten), UTF_8).asScala.map(_.trim).filter(_.nonEmpty).toSet) else None,
+      config.companionExports)
     val rows = List.newBuilder[(Int, Int, String, String)]
     val patches = statLists.flatMap { stats =>
       // consecutive pairs, grouped while the owner stays the same and only blank space separates them
       val pairs = stats.zip(stats.drop(1)).flatMap {
-        case (t: Defn.Type, v: Defn.Val) if !pinnedHere(key(v.pats.collectFirst { case Pat.Var(n) => n.symbol.value }.getOrElse(""))) => pairOf(t, v)
+        // the inventory's shape (GuidelineInventory G46): `type X = …` followed by `val X: ….type = …`
+        case (t: Defn.Type, v: Defn.Val) if v.pats.size == 1 && (v.pats.head match { case Pat.Var(n) => n.value == t.name.value; case _ => false }) &&
+            v.decltpe.exists(_.is[Type.Singleton]) =>
+          val pin = pinnedHere(key(v.pats.collectFirst { case Pat.Var(n) => n.symbol.value }.getOrElse("")))
+          val p = if (pin) None else pairOf(t, v)
+          if (p.isEmpty && config.skipped.nonEmpty && !excluded(path + "@" + t.pos.start))
+            skippedRows += List(path, path + "@" + t.pos.start, keptBecause(t, v, pin), t.syntax.replace("\t", " ").take(120)).mkString("\t")
+          p
         case _ => None
       }
       val groups = pairs.foldLeft(List.empty[List[Pair]]) {
@@ -219,6 +281,10 @@ class ReExportAliases(config: ReExportAliases.Config, excluded: Set[String]) ext
       if (out.nonEmpty) lock.synchronized {
         Files.write(Paths.get(config.ledger), out.map(_ + "\n").mkString.getBytes(UTF_8), StandardOpenOption.CREATE, StandardOpenOption.APPEND)
       }
+    }
+    val kept = skippedRows.result()
+    if (config.skipped.nonEmpty && kept.nonEmpty) lock.synchronized {
+      Files.write(Paths.get(config.skipped), kept.map(_ + "\n").mkString.getBytes(UTF_8), StandardOpenOption.CREATE, StandardOpenOption.APPEND)
     }
     patches.asPatch
   }

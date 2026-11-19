@@ -33,10 +33,15 @@ object SymbolOracle {
   def md5(bytes: Array[Byte]): String = java.security.MessageDigest.getInstance("MD5").digest(bytes).map(b => f"${b & 255}%02X").mkString
   /** `scala.Predef.String` is `java.lang.String`; an export forwarder `X().` is the member `X.` it replaces (same owner,
     * name and type: SemanticDB marks every forwarder as a method). */
-  def norm(sym: String): String =
-    if (sym == "scala/Predef.String#") "java/lang/String#"
-    else if (sym.endsWith("().") && !sym.startsWith("local")) sym.stripSuffix("().") + "."
-    else sym
+  def norm(sym: String): String = {
+    val s0 =
+      if (sym == "scala/Predef.String#") "java/lang/String#"
+      else if (sym.endsWith("().") && !sym.startsWith("local")) sym.stripSuffix("().") + "."
+      else sym
+    // `m.v = x` on a var is recorded as the setter `v_=` when the var's class is compiled in the same run and as the var `v`
+    // when it is read from TASTy (an incremental compile): the same var either way
+    if (s0.endsWith("_=`.") && !s0.startsWith("local")) s0.replaceAll("`([^`]+)_=`\\.$", "$1.") else s0
+  }
 
   /** Ranges (start, end) of imports and package-clause references. */
   def ignoredRanges(text: String): List[(Int, Int)] =

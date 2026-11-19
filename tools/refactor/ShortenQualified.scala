@@ -31,7 +31,10 @@ object ShortenQualified {
     // a path rooted at `_root_` or at the project package that neither a shorter name nor an import can spell (a same-named
     // type of another layer is in scope: `api.library.Source` in a `domain.library` file) keeps the shortest suffix that
     // starts at a project subpackage the (chained) package clause puts in scope, e.g. `api.library.Source`
-    packagePrefixes: Boolean = false
+    packagePrefixes: Boolean = false,
+    // where a path rooted at `_root_` or at the project package keeps that spelling, a row `path TAB key TAB reason TAB
+    // spelling` (qualified-round.py adds them to the exclusions once the round is done)
+    skipped: String = ""
   )
   object Config {
     implicit val surface: generic.Surface[Config] = generic.deriveSurface[Config]
@@ -477,6 +480,9 @@ class ShortenQualified(config: ShortenQualified.Config, excluded: Set[String]) e
 
     case class Edit(start: Int, end: Int, text: String, kind: String, key: String, note: String)
     val edits = scala.collection.mutable.ListBuffer.empty[Edit]
+    val skippedRows = scala.collection.mutable.ListBuffer.empty[String]
+    def skip(key: String, reason: String, node: Tree): Unit =
+      if (config.skipped.nonEmpty) skippedRows += List(path, key, reason, node.syntax.replace("\n", " ").replace("\t", " ").take(160)).mkString("\t")
     var patch = Patch.empty
 
     val chains: List[(Tree, List[Name])] = doc.tree.collect {
@@ -528,6 +534,32 @@ class ShortenQualified(config: ShortenQualified.Config, excluded: Set[String]) e
             }.map(i => (i, None))
           }
           .orElse(if (rooted && resolve(segs.head.value, false, syms.head, node) == Same) Some((0, None)) else None)
+        if (rooted || projectRooted) {
+          def why: String = {
+            val last = n - 1
+            val nm = segs(last).value
+            val named = resolve(nm, wantType(last), syms(last), node) match {
+              case Other => s"`$nm` names another symbol here"
+              case NotFound => s"`$nm` is not in scope here"
+              case Same if last == 0 => s"`$nm` resolves only below `_root_`"
+              case Same => s"`$nm` resolves, but `${segs(last - 1).value}` is not its static owner"
+            }
+            val i0 = syms.indexWhere(s => !isPackage(s) && !namespaceObject(s))
+            val imp =
+              if (isExport) "no import is added for an export"
+              else if (!config.addImports) "imports are off"
+              else if (i0 <= 0) "nothing on the path to import"
+              else if (!importable(segs(i0).value, syms(i0))) s"no import of `${segs(i0).value}`: the file has another `${segs(i0).value}`"
+              else s"an import of `${segs(i0).value}` would not resolve to it"
+            val pre = if (config.packagePrefixes) "; no project subpackage on the path is in scope" else ""
+            s"$named; $imp$pre"
+          }
+          chosen match {
+            case None => skip(chainKey, why, node)
+            case Some((0, _)) if projectRooted => skip(chainKey, "only `_root_.` dropped: " + why, node)
+            case _ =>
+          }
+        }
         chosen.foreach { case (i, imp) =>
           val start = names.head.pos.start
           val end = segs(i).pos.start
@@ -538,9 +570,13 @@ class ShortenQualified(config: ShortenQualified.Config, excluded: Set[String]) e
             val toks = doc.tokens.filter(t => t.start >= start && t.end <= end && t.start < end)
             patch += Patch.removeTokens(toks).atomic
             edits += Edit(start, end, "", "drop", chainKey, removed + "|" + segs.drop(i).map(_.value).mkString(".") + imp.fold("")(" +import " + _))
-          } else imp.foreach(plannedImports.remove)
+          } else {
+            imp.foreach(plannedImports.remove)
+            if (rooted || projectRooted) skip(chainKey, "the qualifier holds parentheses or a comment", node)
+          }
         }
-      }
+      } else if (!excluded(chainKey) && n >= 1 && (rooted || segs.head.value == config.projectPackage.takeWhile(_ != '/')) && !syms.forall(_.nonEmpty))
+        skip(chainKey, "a segment has no SemanticDB symbol", node)
     }
 
     // ---- package chaining and imports -------------------------------------------------------------------------------
@@ -586,6 +622,9 @@ class ShortenQualified(config: ShortenQualified.Config, excluded: Set[String]) e
       ledgerLock.synchronized {
         Files.write(Paths.get(config.ledger), rows.map(_ + "\n").mkString.getBytes(UTF_8), StandardOpenOption.CREATE, StandardOpenOption.APPEND)
       }
+    }
+    if (config.skipped.nonEmpty && skippedRows.nonEmpty) ledgerLock.synchronized {
+      Files.write(Paths.get(config.skipped), skippedRows.map(_ + "\n").mkString.getBytes(UTF_8), StandardOpenOption.CREATE, StandardOpenOption.APPEND)
     }
     patch
   }

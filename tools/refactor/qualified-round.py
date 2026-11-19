@@ -23,6 +23,8 @@ ap.add_argument('--check-modules', nargs='*', default=[], help='modules only com
 ap.add_argument('--check-projects', nargs='*', default=[])
 ap.add_argument('--no-pkg', action='store_true')
 ap.add_argument('--no-package-prefixes', action='store_true', help='g47: never keep a project subpackage as the head')
+ap.add_argument('--companion-exports', action='store_true', help='g46: rewrite pairs in companions of classes too')
+ap.add_argument('--scope-names', action='store_true', help='g46: rewrite pairs that alias a name in scope')
 a = ap.parse_args()
 
 RULE = {'g46': 'ReExportAliases', 'g47': 'ShortenQualified'}[a.rule]
@@ -31,6 +33,8 @@ work = os.path.abspath(a.work)
 os.makedirs(work, exist_ok=True)
 snap = os.path.join(work, 'snapshot')
 ledger = os.path.join(work, 'ledger.tsv')
+# what the rule keeps as it is, with the rule's reason: added to the exclusions when the round is done
+skipped = os.path.join(work, 'skipped.tsv')
 conf = os.path.join(work, 'rule.conf')
 mods = [m.rstrip('/') for m in a.modules]
 checked = mods + [m.rstrip('/') for m in a.check_modules]
@@ -77,12 +81,26 @@ def exclude(keys, reason):
         for k in new: f.write(f'{k}\t{reason}\n')
     return new
 
+def record_skipped():
+    """The rule's own reasons for what it keeps (skipped.tsv: path, key, reason, spelling) become exclusions, so every finding
+    is either rewritten or listed with a reason."""
+    if not os.path.exists(skipped): return 0
+    have = exclusions()
+    rows = [l.rstrip('\n').split('\t') for l in open(skipped) if l.strip()]
+    new = {}
+    for r in rows:
+        if len(r) >= 3 and r[1] not in have: new.setdefault(r[1], f'kept: {r[2]}' + (f' ({r[3]})' if len(r) > 3 else ''))
+    with open(EXCL, 'a') as f:
+        for k, why in new.items(): f.write(f'{k}\t{why}\n')
+    return len(new)
+
 def write_conf():
     scope = ', '.join(f'"{m}/"' for m in mods)
     rew = os.path.join(work, 'rewritten.txt')
-    cfg = {'g46': f'ReExportAliases {{ exclusions = "{EXCL}", ledger = "{ledger}", scope = [{scope}], packageExports = {"false" if a.no_pkg else "true"}, rewritten = "{rew if os.path.exists(rew) else ""}" }}',
+    cfg = {'g46': f'ReExportAliases {{ exclusions = "{EXCL}", ledger = "{ledger}", scope = [{scope}], packageExports = {"false" if a.no_pkg else "true"}, rewritten = "{rew if os.path.exists(rew) else ""}", skipped = "{skipped}", '
+                  f'companionExports = {"true" if a.companion_exports else "false"}, scopeNames = {"true" if a.scope_names else "false"} }}',
            'g47': f'ShortenQualified {{ exclusions = "{EXCL}", ledger = "{ledger}", chainPackages = {"false" if a.no_pkg else "true"}, '
-                  f'packagePrefixes = {"false" if a.no_package_prefixes else "true"} }}'}[a.rule]
+                  f'packagePrefixes = {"false" if a.no_package_prefixes else "true"}, skipped = "{skipped}" }}'}[a.rule]
     open(conf, 'w').write(f'rules = ["file:tools/refactor/{RULE}.scala"]\n{cfg}\n')
 
 def run_rule(n):
@@ -109,6 +127,7 @@ def run_rule(n):
             open(rew, 'w').write('\n'.join(cur) + '\n')
         sh('git checkout -- ' + ' '.join(mods))
     if os.path.exists(ledger): os.remove(ledger)
+    if os.path.exists(skipped): os.remove(skipped)
     write_conf()
     rc = sh(f'{SCALAFIX} --config {conf} --sourceroot . --auto-classpath '
             f'--auto-classpath-roots target/out {files}', log=os.path.join(work, f'scalafix-{n}.log'), timeout=5400)
@@ -191,7 +210,8 @@ def main():
         if n == 1: take_snapshot()
         fr = by_file(rows)
         print(f'round {n}: {len(rows)} ledger rows in {len(fr)} files', flush=True)
-        if not rows: return 0
+        if not rows:
+            print(f'done: no edits; {record_skipped()} kept as written', flush=True); return 0
         tasks = ' '.join(f'{p}/compile {p}/Test/compile' for p in a.projects + a.check_projects)
         clog = os.path.join(work, f'compile-{n}.log')
         sh(f'{a.compile} {clog} {tasks} > {clog}.summary 2>&1', timeout=3000)
@@ -287,7 +307,8 @@ def main():
         changed = [b for b in bad if b[1] == 'changed']
         if stale: print(f'  stale: {stale[:5]}', flush=True)
         if not changed and not stale:
-            print(f'done: {len(rows)} edits', flush=True); return 0
+            kept = record_skipped()
+            print(f'done: {len(rows)} edits; {kept} kept as written (exclusions, with the rule\'s reason)', flush=True); return 0
         keys = []
         for b in changed:
             p, off, offb = b[0], int(b[2]), int(b[6])
