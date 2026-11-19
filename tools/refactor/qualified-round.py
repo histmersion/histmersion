@@ -3,10 +3,13 @@
 SemanticDB comparison (tools/refactor/SymbolOracle.scala) rejects, until the module compiles and every occurrence denotes the
 same symbol as before. Rejected edits are appended to tools/refactor/<rule>-exclusions.tsv with the reason.
 
-usage: qualified-round.py <g46|g47> <work-dir> <compile-script> --modules modules/api ... --projects api apiJS ...
+usage: qualified-round.py <g46|g47> <work-dir> <compile-command> --modules modules/api ... --projects api apiJS ...
+
+<compile-command> is called as `<compile-command> <log> <sbt task>...`: it writes the whole sbt output to <log> and prints
+`rc=<exit code>` (tools/refactor/qualified-compile.sh). `--projects root` compiles every project of the build.
 
 Starts from the committed sources of the modules (git checkout), so it can be rerun. Needs a SemanticDB build of the current
-sources (the compile script runs sbt with -Xsemanticdb)."""
+sources (the build has semanticdbEnabled; sbt writes it to `meta`/`test-meta` beside each project's classes)."""
 import os, re, shutil, subprocess, sys, glob, argparse
 
 ap = argparse.ArgumentParser()
@@ -19,6 +22,7 @@ ap.add_argument('--rounds', type=int, default=8)
 ap.add_argument('--check-modules', nargs='*', default=[], help='modules only compared, never rewritten (dependants)')
 ap.add_argument('--check-projects', nargs='*', default=[])
 ap.add_argument('--no-pkg', action='store_true')
+ap.add_argument('--no-package-prefixes', action='store_true', help='g47: never keep a project subpackage as the head')
 a = ap.parse_args()
 
 RULE = {'g46': 'ReExportAliases', 'g47': 'ShortenQualified'}[a.rule]
@@ -36,13 +40,25 @@ SCALA = subprocess.run(['bash', 'tools/refactor/scalafix.sh', '--print', 'scala'
 # Scalafix at the build's versions, run with the build's Scala as --scala-version
 SCALAFIX = "SCALAFIX_JAVA_OPTS='-Xmx6g -Xss8m' bash tools/refactor/scalafix.sh"
 
+def semanticdb_dirs():
+    """The SemanticDB directories of the build's Scala: `meta`/`test-meta` beside each project's classes (an older layout
+    kept them under `classes`)."""
+    return sorted(glob.glob(f'target/out/*/scala-{SCALA}/*/meta/META-INF/semanticdb') +
+                  glob.glob(f'target/out/*/scala-{SCALA}/*/test-meta/META-INF/semanticdb') +
+                  glob.glob(f'target/out/*/scala-{SCALA}/*/*classes/META-INF/semanticdb'))
+
+def targetroots():
+    """Scalafix is told the SemanticDB roots of the build's Scala, or it reads the first one on the class path, which may
+    describe an older text (a `scala-<older>` directory)."""
+    return ' '.join(f'--semanticdb-targetroots {os.path.dirname(os.path.dirname(d))}' for d in semanticdb_dirs())
+
 def sh(cmd, log=None, timeout=3000):
     with open(log, 'w') if log else open(os.devnull, 'w') as out:
         return subprocess.run(cmd, shell=True, stdout=out, stderr=subprocess.STDOUT, timeout=timeout).returncode
 
 def take_snapshot():
     shutil.rmtree(snap, ignore_errors=True)
-    for d in glob.glob(f'target/out/*/scala-{SCALA}/*/*classes/META-INF/semanticdb'):
+    for d in semanticdb_dirs():
         for m in checked:
             src = os.path.join(d, m)
             if os.path.isdir(src):
@@ -65,15 +81,16 @@ def write_conf():
     scope = ', '.join(f'"{m}/"' for m in mods)
     rew = os.path.join(work, 'rewritten.txt')
     cfg = {'g46': f'ReExportAliases {{ exclusions = "{EXCL}", ledger = "{ledger}", scope = [{scope}], packageExports = {"false" if a.no_pkg else "true"}, rewritten = "{rew if os.path.exists(rew) else ""}" }}',
-           'g47': f'ShortenQualified {{ exclusions = "{EXCL}", ledger = "{ledger}", chainPackages = {"false" if a.no_pkg else "true"} }}'}[a.rule]
+           'g47': f'ShortenQualified {{ exclusions = "{EXCL}", ledger = "{ledger}", chainPackages = {"false" if a.no_pkg else "true"}, '
+                  f'packagePrefixes = {"false" if a.no_package_prefixes else "true"} }}'}[a.rule]
     open(conf, 'w').write(f'rules = ["file:tools/refactor/{RULE}.scala"]\n{cfg}\n')
 
 def run_rule(n):
     sh('git checkout -- ' + ' '.join(mods))
     if True:  # the rule, its index and the snapshot need SemanticDB of the committed sources (mostly sbt cache hits)
         tasks = ' '.join(f'{p}/compile {p}/Test/compile' for p in a.projects + a.check_projects)
-        sh(f'{a.compile} {a.rule}-pristine-{n} {tasks}', log=os.path.join(work, f'pristine-{n}.summary'), timeout=3000)
-    files = ' '.join(f'--files {m}' for m in mods)
+        sh(f'{a.compile} {os.path.join(work, f"compile-pristine-{n}.log")} {tasks}', log=os.path.join(work, f'pristine-{n}.summary'), timeout=3000)
+    files = ' '.join(f'--files {m}' for m in mods) + ' ' + targetroots()
     rew = os.path.join(work, 'rewritten.txt')
     if a.rule == 'g46':
         # pinning needs the pairs that really get rewritten: iterate the rule until that set is stable
@@ -145,10 +162,13 @@ PROJECT = {'values': 'values', 'api': 'api', 'upstreams': 'upstreams', 'config':
            'plugin-vaults': 'pluginVaults', 'plugins/fetchers': 'pluginsFetchers', 'plugins/events': 'pluginsEvents',
            'plugins/media': 'pluginsMedia', 'plugins/gazetteers': 'pluginsGazetteers', 'plugins/ai-http': 'pluginsAiHttp',
            'plugins/calibre': 'pluginsCalibre', 'plugin-resolver': 'pluginResolver', 'console': 'console',
-           'chimney-iron': 'chimneyIron', 'chimney-iron-tests': 'chimneyIronTests', 'cli': 'cli', 'web': 'web', 'server': 'server'}
+           'chimney-iron': 'chimneyIron', 'chimney-iron-tests': 'chimneyIronTests', 'cli': 'cli', 'web': 'web', 'server': 'server',
+           'newtype': 'newtype', 'nonempty': 'nonEmpty', 'nonempty-derivation': 'nonEmptyDerivation', 'problem': 'problem',
+           'json': 'json', 'plugin-fixtures/hello': 'pluginHello', 'plugin-fixtures/hello-ai': 'pluginHelloAi',
+           'plugin-fixtures/hello-lib': 'pluginHelloLib', 'plugin-fixtures/hello-deps': 'pluginHelloDeps'}
 
 def project_of(path):
-    m = re.match(r'modules/((?:plugins/)?[^/]+)/', path)
+    m = re.match(r'modules/((?:plugins/|plugin-fixtures/)?[^/]+)/', path)
     return PROJECT.get(m.group(1)) if m else None
 
 ERR = re.compile(r'^\[error\] -- (?:\[E\d+\] )?.*?(/\S+?\.scala):(\d+):(\d+)')
@@ -174,9 +194,7 @@ def main():
         if not rows: return 0
         tasks = ' '.join(f'{p}/compile {p}/Test/compile' for p in a.projects + a.check_projects)
         clog = os.path.join(work, f'compile-{n}.log')
-        sh(f'{a.compile} {a.rule}-{n} {tasks} > {clog}.summary 2>&1', timeout=3000)
-        src_log = glob.glob(f'/private/tmp/claude-501/*/*/scratchpad/g47/compile-{a.rule}-{n}.log')
-        clog = src_log[0] if src_log else clog
+        sh(f'{a.compile} {clog} {tasks} > {clog}.summary 2>&1', timeout=3000)
         errs = compile_errors(clog)
         unedited = [e for e in errs if not fr.get(e[0])]
         if errs and len(unedited) == len(errs):
@@ -184,9 +202,8 @@ def main():
             # ("object X does not take parameters"); a clean build of those projects decides
             projs = sorted({project_of(e[0]) for e in unedited if project_of(e[0])})
             print(f'  {len(errs)} errors in unedited files only: clean build of {projs}', flush=True)
-            sh(f'{a.compile} {a.rule}-{n}-clean ' + ' '.join(f'{p}/clean {p}/compile {p}/Test/compile' for p in projs) + f' > {os.path.join(work, f"compile-{n}.log")}.summary 2>&1', timeout=3000)
-            src_log = glob.glob(f'/private/tmp/claude-501/*/*/scratchpad/g47/compile-{a.rule}-{n}-clean.log')
-            clog = src_log[0] if src_log else clog
+            clog = os.path.join(work, f'compile-{n}-clean.log')
+            sh(f'{a.compile} {clog} ' + ' '.join(f'{p}/clean {p}/compile {p}/Test/compile' for p in projs) + f' > {os.path.join(work, f"compile-{n}.log")}.summary 2>&1', timeout=3000)
             errs = compile_errors(clog)
         rcline = open(f'{os.path.join(work, f"compile-{n}.log")}.summary').read()
         if not errs and 'rc=0' not in rcline:

@@ -11,7 +11,8 @@ import scala.meta.internal.{semanticdb => s}
   *  1. a single `package com.histmersion.x.y` clause becomes `package com.histmersion` / `package x.y`;
   *  2. `_root_.` goes where the rest of the path still resolves to the same symbol;
   *  3. a path rooted at `_root_` or at a project package (`com.histmersion.a.B.C`) gets the shortest spelling that resolves to the
-  *     SAME symbol in its scope, adding an import of the top-level symbol when that is the shortest;
+  *     SAME symbol in its scope, adding an import of the top-level symbol when that is the shortest; with `packagePrefixes`,
+  *     a path no name or import can spell keeps the shortest suffix headed by a project subpackage in scope;
   *  4. inside `T` or its companion, `T.Member` (or `a.b.T.Member`) loses the qualifier where `Member` resolves to the same symbol.
   * Resolution is a conservative model of Scala 3 scoping (locals, parameters, template members with inherited ones from the
   * project-wide SemanticDB index, imports, package members, the root imports); the compiler and a SemanticDB comparison of
@@ -26,7 +27,11 @@ object ShortenQualified {
     projectPackage: String = "com/histmersion/",
     chainPackages: Boolean = true,
     shorten: Boolean = true,
-    addImports: Boolean = true
+    addImports: Boolean = true,
+    // a path rooted at `_root_` or at the project package that neither a shorter name nor an import can spell (a same-named
+    // type of another layer is in scope: `api.library.Source` in a `domain.library` file) keeps the shortest suffix that
+    // starts at a project subpackage the (chained) package clause puts in scope, e.g. `api.library.Source`
+    packagePrefixes: Boolean = false
   )
   object Config {
     implicit val surface: generic.Surface[Config] = generic.deriveSurface[Config]
@@ -513,6 +518,14 @@ class ShortenQualified(config: ShortenQualified.Config, excluded: Set[String]) e
                 } else None
               }
             }
+          }
+          .orElse {
+            // a project subpackage as the head: `com.histmersion.api.library.Source` -> `api.library.Source`
+            if (!config.packagePrefixes || !(rooted || projectRooted)) None
+            else (n - 1 to 1 by -1).find { i =>
+              isPackage(syms(i)) && syms(i).startsWith(config.projectPackage) && syms(i) != config.projectPackage &&
+                key(importOwner(syms(i))) == key(syms(i - 1)) && resolve(segs(i).value, false, syms(i), node) == Same
+            }.map(i => (i, None))
           }
           .orElse(if (rooted && resolve(segs.head.value, false, syms.head, node) == Same) Some((0, None)) else None)
         chosen.foreach { case (i, imp) =>
