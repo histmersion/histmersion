@@ -29,10 +29,8 @@ final case class WorkRef(
 object WorkRef:
   type OpenalexId = OpenalexId.T
   object OpenalexId extends Newtype[String, Pure]
-  type ArxivId = com.histmersion.upstreams.ArxivId
-  val ArxivId: com.histmersion.upstreams.ArxivId.type = com.histmersion.upstreams.ArxivId
-  type Title = WorkKey.Title
-  val Title: WorkKey.Title.type = WorkKey.Title
+  export com.histmersion.upstreams.ArxivId
+  export WorkKey.Title
   type Venue = Venue.T
   object Venue extends Newtype[String, Pure]
   type CitedByCount = CitedByCount.T

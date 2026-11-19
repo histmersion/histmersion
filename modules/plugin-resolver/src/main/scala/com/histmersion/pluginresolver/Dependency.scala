@@ -16,5 +16,4 @@ final case class Dependency(coordinates: ModuleCoordinates, file: Path, neededBy
     Resolver.FileName(s"${coordinates.key.group.value}-${file.getFileName.toString}")
 
 object Dependency:
-  type NeededBy = Resolver.FileName
-  val NeededBy: Resolver.FileName.type = Resolver.FileName
+  export Resolver.FileName as NeededBy

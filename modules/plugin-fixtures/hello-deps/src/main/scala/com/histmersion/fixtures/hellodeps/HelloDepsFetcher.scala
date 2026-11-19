@@ -16,6 +16,4 @@ final class HelloDepsFetcher(greeting: HelloDepsFetcher.Greeting) extends Source
     )
 
 object HelloDepsFetcher:
-  type Greeting = _root_.com.histmersion.fixtures.hellolib.Shout.Shouted
-  val Greeting: _root_.com.histmersion.fixtures.hellolib.Shout.Shouted.type =
-    _root_.com.histmersion.fixtures.hellolib.Shout.Shouted
+  export com.histmersion.fixtures.hellolib.Shout.Shouted as Greeting

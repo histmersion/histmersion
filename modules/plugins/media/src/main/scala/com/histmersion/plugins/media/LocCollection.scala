@@ -61,8 +61,7 @@ object LocCollection:
   type Date = Date.T
   object Date extends Newtype[String, Pure]
 
-  type ThumbPx = MediaSettings.ThumbPx
-  val ThumbPx: MediaSettings.ThumbPx.type = MediaSettings.ThumbPx
+  export MediaSettings.ThumbPx
 
   def searchUrl(
       base: CollectionSettings.ApiUrl,

@@ -211,8 +211,7 @@ final class Calibre(cfg: Calibre.Library, shell: Shell)(using files: LocalFiles)
 
 /** The pure half: parsing what the two readers print, the metadata guard, the update plan and the commands. */
 object Calibre:
-  type Argument = Processes.RunArgv
-  val Argument: Processes.RunArgv.type = Processes.RunArgv
+  export Processes.RunArgv as Argument
   type Author = Author.T
   object Author extends Newtype[String, Pure]
   type SqlLiteral = SqlLiteral.T
@@ -761,8 +760,7 @@ object Calibre:
     object Id extends Newtype[Int, Pure]
     type Title = Title.T
     object Title extends Newtype[String, Pure]
-    type Authors = Author
-    val Authors: Author.type = Author
+    export com.histmersion.plugins.calibre.Calibre.Author as Authors
     type Pubdate = Pubdate.T
     object Pubdate extends Newtype[String, Pure]
     type Publisher = Publisher.T
@@ -840,14 +838,12 @@ object Calibre:
   object Push:
     type Title = Title.T
     object Title extends Newtype[String, Pure]
-    type Authors = Author
-    val Authors: Author.type = Author
+    export com.histmersion.plugins.calibre.Calibre.Author as Authors
     type Doi = Doi.T
     object Doi extends Newtype[String, Pure]
     type Isbn = Isbn.T
     object Isbn extends Newtype[String, Pure]
-    type Year = Book.Year
-    val Year: Book.Year.type = Book.Year
+    export Book.Year
     type Publisher = Publisher.T
     object Publisher extends Newtype[String, Pure]
     type Summary = Summary.T
@@ -913,8 +909,7 @@ object Calibre:
     object Sqlite extends Newtype[String, Pure]
     type WriteBack = WriteBack.T
     object WriteBack extends Newtype[Boolean, Pure]
-    type GuiProcess = Shell.ProcessMatch
-    val GuiProcess: Shell.ProcessMatch.type = Shell.ProcessMatch
+    export Shell.ProcessMatch as GuiProcess
 
     val InstallDirs: List[InstallDir] = List(
       InstallDir("/Applications/calibre.app/Contents/MacOS"),

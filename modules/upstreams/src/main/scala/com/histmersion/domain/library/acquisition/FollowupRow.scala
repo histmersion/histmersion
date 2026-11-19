@@ -18,8 +18,7 @@ final case class FollowupRow(
 )
 
 object FollowupRow:
-  type Title = WorkKey.Title
-  val Title: WorkKey.Title.type = WorkKey.Title
+  export WorkKey.Title
   type Arxiv = ArxivId
   val Arxiv: ArxivId.type = ArxivId
   type CitedBy = CitedBy.T

@@ -19,8 +19,7 @@ object Secret:
   type Resolved = Resolved.T
   object Resolved extends Newtype[String, Pure]
 
-  type ParseText = Ref.ParseText
-  val ParseText: Ref.ParseText.type = Ref.ParseText
+  export Ref.ParseText
 
   def apply(ref: Ref): Secret = new Secret(ref)
 

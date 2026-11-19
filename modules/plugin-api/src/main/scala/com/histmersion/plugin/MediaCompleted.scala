@@ -12,5 +12,4 @@ final case class MediaCompleted(
 )
 
 object MediaCompleted:
-  type ItemsKey = MediaItem.Key
-  val ItemsKey: MediaItem.Key.type = MediaItem.Key
+  export MediaItem.Key as ItemsKey

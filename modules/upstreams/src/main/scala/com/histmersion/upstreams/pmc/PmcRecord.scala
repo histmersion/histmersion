@@ -13,8 +13,7 @@ final case class PmcRecord(
 )
 
 object PmcRecord:
-  type Pmcid = WorkKey.Pmcid
-  val Pmcid: WorkKey.Pmcid.type = WorkKey.Pmcid
+  export WorkKey.Pmcid
   type OpenAccess = OpenAccess.T
   object OpenAccess extends Newtype[Boolean, Pure]
   type Manuscript = Manuscript.T

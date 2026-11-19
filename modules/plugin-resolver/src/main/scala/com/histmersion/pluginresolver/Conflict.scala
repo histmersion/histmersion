@@ -20,5 +20,4 @@ final case class Conflict(plugin: Conflict.Plugin, key: ModuleKey, wanted: Modul
 
 object Conflict:
 
-  type Plugin = Resolver.FileName
-  val Plugin: Resolver.FileName.type = Resolver.FileName
+  export Resolver.FileName as Plugin

@@ -14,8 +14,7 @@ final case class RefRow(
 )
 
 object RefRow:
-  type Title = WorkKey.Title
-  val Title: WorkKey.Title.type = WorkKey.Title
+  export WorkKey.Title
   type Authors = Authors.T
   object Authors extends Newtype[String, Pure]
   type Raw = Raw.T

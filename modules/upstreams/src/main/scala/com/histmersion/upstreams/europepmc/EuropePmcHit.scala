@@ -10,8 +10,7 @@ final case class EuropePmcHit(
 )
 
 object EuropePmcHit:
-  type Pmcid = WorkKey.Pmcid
-  val Pmcid: WorkKey.Pmcid.type = WorkKey.Pmcid
+  export WorkKey.Pmcid
   type IsOpenAccess = IsOpenAccess.T
   object IsOpenAccess extends Newtype[Boolean, Pure]
   type PdfUrls = PdfUrls.T

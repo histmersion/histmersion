@@ -48,8 +48,7 @@ object ArtInstituteCollection:
   type Width = Width.T
   object Width extends Newtype[Int, Pure]
 
-  type ThumbPx = MediaSettings.ThumbPx
-  val ThumbPx: MediaSettings.ThumbPx.type = MediaSettings.ThumbPx
+  export MediaSettings.ThumbPx
 
   val Fields: String = List(
     "id",

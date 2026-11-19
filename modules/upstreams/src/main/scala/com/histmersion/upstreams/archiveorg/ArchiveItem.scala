@@ -18,8 +18,7 @@ final case class ArchiveItem(
 object ArchiveItem:
   type Identifier = ArchiveId
   val Identifier: ArchiveId.type = ArchiveId
-  type Title = WorkKey.Title
-  val Title: WorkKey.Title.type = WorkKey.Title
+  export WorkKey.Title
   type Creator = Creator.T
   object Creator extends Newtype[String, Pure]
   type Year = com.histmersion.plugin.Year
