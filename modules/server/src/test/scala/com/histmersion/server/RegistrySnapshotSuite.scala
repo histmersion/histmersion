@@ -53,7 +53,7 @@ class RegistrySnapshotSuite extends munit.FunSuite:
         s"  carried\t${k.entry.value}\trecord=${k.record.fold("-")(_.toString)}\ttable=${k.table
             .fold("-")(_.value)}\tsteps=$steps"
       } ++ c.mergeRules.map { r =>
-        s"  merge\t${r.kind}\tlabel=${r.ledgerLabel.getOrElse("-")}\treferable=${r.referable}\tplanning=${r.planning.isDefined}"
+        s"  merge\t${r.kind}\tlabel=${r.ledgerLabel.fold("-")(_.sqlString)}\treferable=${r.referable}\tplanning=${r.planning.isDefined}"
       } ++ c.mirror.map(m => s"  mirror\t${m.records}\t${m.placement}") ++ c.caches.map(k =>
         s"  cache\t${k.name.value}\t${k.label}\t${k.holding}\tstale=${k.staleAfter.mkString(",")}"
       ) ++ c.maintenance.map(t => s"  task\t${t.name.value}") ++ c.checks.map(r =>
