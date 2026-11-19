@@ -11,7 +11,7 @@ import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.automation.Agents.*
 import com.histmersion.domain.automation.approvals.ProposalEvidence
-import com.histmersion.api.automation.ListFilters
+import com.histmersion.api.automation.{AgentJobKinds, ListFilters}
 
 import com.augustnagro.magnum.*
 import com.histmersion.api.automation.ApprovalDigest
@@ -125,8 +125,7 @@ object AgentRepo:
                 sum(tokens_cache_read)::bigint AS tcr, sum(tokens_cache_write)::bigint AS tcw,
                 sum(cost_usd) AS cost
          FROM agent_steps s WHERE s.job_id = j.id) u ON true"""
-  private val runsOnly = s" WHERE j.kind = '$JobKind'"
-  private val runsOnlySql = sql"${SqlLiteral(runsOnly)}"
+  private val runsOnlySql = sql" WHERE j.kind = ${AgentJobKinds.Agent.kind}"
   private val runSelect = sql"$runFrom$runsOnlySql"
 
   private def toInfo(r: RunRow): RunInfo =
@@ -167,7 +166,7 @@ object AgentRepo:
       limit: PageSize,
       goal: Option[com.histmersion.domain.automation.Goal.Slug] = None
   )(using DbCon): Vector[RunInfo] =
-    sql"$runSelect${runStatus(status)}${runGoal(goal)}${Keyset.orderBy("j.")} LIMIT $limit"
+    sql"$runSelect${runStatus(status)}${runGoal(goal)}${Keyset.orderBy(sql"j.")} LIMIT $limit"
       .query[RunRow]
       .run()
       .map(toInfo)
@@ -193,28 +192,28 @@ object AgentRepo:
     )
 
   /** A run that predates `jobs.origin` was started by a person. */
-  private val originExpr = s"coalesce(j.origin, '${Origin.Person.wire}')"
+  private val originExpr = sql"coalesce(j.origin, ${Origin.Person.wire})"
 
   /** ` AND (j.model is one of them OR a step of the run used one of them)` — `expr` maps a model to what is matched
     * (itself, or its provider).
     */
-  private def usedModel(vs: List[String], expr: String => String): Frag =
+  private def usedModel(vs: List[String], expr: Frag => Frag): Frag =
     if vs.isEmpty then sql""
     else
-      sql" AND (${SqlLiteral(expr("j.model"))} = ANY($vs::text[]) OR EXISTS (SELECT 1 FROM agent_steps ms WHERE ms.job_id = j.id AND ${SqlLiteral(expr("ms.model"))} = ANY($vs::text[])))"
+      sql" AND (${expr(sql"j.model")} = ANY($vs::text[]) OR EXISTS (SELECT 1 FROM agent_steps ms WHERE ms.job_id = j.id AND ${expr(sql"ms.model")} = ANY($vs::text[])))"
 
-  private def provider(col: String): String = s"split_part($col, ':', 1)"
+  private def provider(col: Frag): Frag = sql"split_part($col, ':', 1)"
 
   private def runConds(q: RunQuery): ListSql.Conds = ListSql.Conds(
     List(
-      "status" -> ListSql.anyOf("j.status", q.status.map(_.value)),
-      "pipeline" -> ListSql.anyOf("j.pipeline", q.pipelines.map(_.value)),
-      "manager" -> ListSql.anyOf("j.manager_id", q.managers.map(_.value)),
-      "goal" -> ListSql.equal("j.goal_slug", q.goal.map(_.value)),
+      "status" -> ListSql.anyOf(sql"j.status", q.status.map(_.value)),
+      "pipeline" -> ListSql.anyOf(sql"j.pipeline", q.pipelines.map(_.value)),
+      "manager" -> ListSql.anyOf(sql"j.manager_id", q.managers.map(_.value)),
+      "goal" -> ListSql.equal(sql"j.goal_slug", q.goal.map(_.value)),
       "model" -> usedModel(q.models.map(_.value), identity),
       "provider" -> usedModel(q.providers.map(_.value), provider),
       "origin" -> ListSql.anyOf(originExpr, q.origins.map(_.value)),
-      "time" -> ListSql.between("j.created_at", q.since, q.until),
+      "time" -> ListSql.between(sql"j.created_at", q.since, q.until),
       "q" -> q.q.fold(sql"")(t => sql" AND j.target_id ILIKE ${ListSql.contains(t.value)}")
     )
   )
@@ -226,14 +225,13 @@ object AgentRepo:
       before: Option[PageCursor],
       upTo: Option[PageCursor]
   )(using DbCon): Either[Problem, (Vector[RunInfo], Boolean)] =
-    (before.toList ++ upTo.toList).find(c => !Keyset.existsOn("jobs", c)) match
+    (before.toList ++ upTo.toList).find(c => !Keyset.existsOn(sql"jobs", c)) match
       case Some(c) => Left(Problem.NotFound.Entity(Problem.TypeName.of(Run.Id), Problem.Raw.of(c)))
       case None    =>
         val (rows, more) = Keyset.pageOn[RunRow, PageCursor, RunInfo.Id](
           runFrom,
           sql"$runsOnlySql${runConds(q).all}",
-          "j.",
-          "jobs",
+          Keyset.Table(sql"jobs", sql"j", sql"j."),
           limit,
           before,
           upTo,
@@ -254,13 +252,13 @@ object AgentRepo:
     def used(except: String): Frag =
       sql" FROM (SELECT DISTINCT j.id, x.m FROM jobs j CROSS JOIN LATERAL (SELECT j.model AS m UNION SELECT s.model FROM agent_steps s WHERE s.job_id = j.id) x$runsOnlySql${c.except(except)} AND x.m IS NOT NULL) u WHERE true"
     (
-      Keyset.countsOn(from("status"), "j.status").map((s, n) => (Run.State.Wire(s.value), n)),
+      Keyset.countsOn(from("status"), sql"j.status").map((s, n) => (Run.State.Wire(s.value), n)),
       List(
-        "pipeline" -> ListSql.facetOn(from("pipeline"), "j.pipeline", facetMax),
+        "pipeline" -> ListSql.facetOn(from("pipeline"), sql"j.pipeline", facetMax),
         "origin" -> ListSql.facetOn(from("origin"), originExpr, facetMax),
-        "manager" -> ListSql.facetOn(from("manager"), "j.manager_id", facetMax),
-        "model" -> ListSql.facetOn(used("model"), "u.m", facetMax),
-        "provider" -> ListSql.facetOn(used("provider"), provider("u.m"), facetMax, "count(DISTINCT u.id)")
+        "manager" -> ListSql.facetOn(from("manager"), sql"j.manager_id", facetMax),
+        "model" -> ListSql.facetOn(used("model"), sql"u.m", facetMax),
+        "provider" -> ListSql.facetOn(used("provider"), provider(sql"u.m"), facetMax, sql"count(DISTINCT u.id)")
       )
     )
 
@@ -269,7 +267,7 @@ object AgentRepo:
       goal: Option[com.histmersion.domain.automation.Goal.Slug] = None
   )(using DbCon): List[(Run.State.Wire, RowCount)] =
     Keyset
-      .countsOn(sql" FROM jobs j$runsOnlySql${runGoal(goal)}", "j.status")
+      .countsOn(sql" FROM jobs j$runsOnlySql${runGoal(goal)}", sql"j.status")
       .map((s, n) => (Run.State.Wire(s.value), n))
 
   private def runStatus(status: Option[Run.State.Wire]): Frag =
@@ -610,7 +608,7 @@ object AgentRepo:
     ListSql.Conds(
       List(
         "state" -> q.state.fold(sql"")(s => sql" AND state = ${s.wire}"),
-        "kind" -> ListSql.anyOf("kind", q.kinds.map(_.wire.value)),
+        "kind" -> ListSql.anyOf(sql"kind", q.kinds.map(_.wire.value)),
         "subject" -> subject,
         "goal" -> goal,
         "decidedBy" -> ListSql.anyOf(ApprovalQuery.decidedByExpr, q.decidedBy.map(_.wire.value))
@@ -626,7 +624,7 @@ object AgentRepo:
   )(using DbCon): Either[Problem, (List[ApprovalInfo], Boolean)] =
     def cursor(c: PageCursor): Either[Problem, Long] =
       c.value.trim.toLongOption
-        .filter(Keyset.existsOn("approvals", _))
+        .filter(Keyset.existsOn(sql"approvals", _))
         .toRight(Problem.NotFound.Entity(Problem.TypeName.of(Approval.Id), Problem.Raw.of(c)))
     for
       b <- before.fold(Right(None))(cursor(_).map(Some(_)))
@@ -634,7 +632,15 @@ object AgentRepo:
     yield
       val where = sql" WHERE true${approvalConds(q).all}"
       val (rows, more) = Keyset
-        .pageOn[ApprovalRow, Long, ApprovalInfo.Id](approvalSelect, where, "", "approvals", limit, b, u, _.id)
+        .pageOn[ApprovalRow, Long, ApprovalInfo.Id](
+          approvalSelect,
+          where,
+          Keyset.Table(sql"approvals"),
+          limit,
+          b,
+          u,
+          _.id
+        )
       (rows.toList.map(info), more)
 
   /** The counts that go with a filtered page: per state (under every filter but the state) and the `kind` and
@@ -647,9 +653,9 @@ object AgentRepo:
     val facetMax = PageSize.applyUnsafe(ListFilters.FacetMax)
     def from(except: String) = sql" FROM approvals WHERE true${c.except(except)}"
     (
-      Keyset.countsOn(from("state"), "state").map((s, n) => (Approval.State.Wire(s.value), n)),
+      Keyset.countsOn(from("state"), sql"state").map((s, n) => (Approval.State.Wire(s.value), n)),
       List(
-        "kind" -> ListSql.facetOn(from("kind"), "kind", facetMax),
+        "kind" -> ListSql.facetOn(from("kind"), sql"kind", facetMax),
         "decidedBy" -> ListSql.facetOn(from("decidedBy"), ApprovalQuery.decidedByExpr, facetMax)
       )
     )
@@ -657,7 +663,7 @@ object AgentRepo:
   /** How many approvals are in each state. */
   def approvalCounts()(using DbCon): List[(Approval.State.Wire, RowCount)] =
     Keyset
-      .countsOn(sql" FROM approvals", "state")
+      .countsOn(sql" FROM approvals", sql"state")
       .map((s, n) => (Approval.State.Wire(s.value), n))
 
   /** The approval step `seq` of run `jobId` waits on, opened if it is not there yet (a resumed run finds the one it

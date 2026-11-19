@@ -94,7 +94,7 @@ object EventSql:
     clean(more.tier.map(_.value))
       .map(_.toLowerCase)
       .foreach(t => ps += sql"(${SqlLiteral(TierSql)}) = $t")
-    more.area.foreach(b => ps += EnvelopeSql.envelopes(s"coalesce(e.geom, ep.geom)", b))
+    more.area.foreach(b => ps += EnvelopeSql.envelopes(sql"coalesce(e.geom, ep.geom)", b))
     clean(text.map(_.value)).foreach { t =>
       val c = LikePattern.contains(t)
       ps += sql"(e.label ILIKE $c ESCAPE '\\' OR e.description ILIKE $c ESCAPE '\\')"
@@ -125,9 +125,7 @@ object EventSql:
     */
   def tileCandidates(where: Frag, envelope: Frag): Frag =
     sql"""SELECT e.id AS key, ST_X(a.pt) AS lon, ST_Y(a.pt) AS lat,
-                  ${SqlLiteral(RangeSql.start("e.outer_span"))} AS ps, ${SqlLiteral(
-        RangeSql.end("e.outer_span")
-      )} AS pe, false AS ub
+                  ${RangeSql.start(sql"e.outer_span")} AS ps, ${RangeSql.end(sql"e.outer_span")} AS pe, false AS ub
                 FROM ${SqlLiteral(fromEvents)} ${SqlLiteral(anchorJoins)}
                 WHERE s.g IS NOT NULL AND e.uncertainty <= ${EventPrecision.ApproximateUpTo.literal} AND s.g && $envelope AND $where"""
 
@@ -139,9 +137,9 @@ object EventSql:
     */
   def tileCandidatesWithUndated(where: Frag, undatedWhere: Frag, envelope: Frag): Frag =
     sql"""SELECT e.id AS key, ST_X(a.pt) AS lon, ST_Y(a.pt) AS lat,
-                  ${SqlLiteral(RangeSql.start("e.outer_span"))} AS ps, ${SqlLiteral(
-        RangeSql.end("e.outer_span")
-      )} AS pe, ${SqlLiteral(UndatedSql)} AS ub
+                  ${RangeSql.start(sql"e.outer_span")} AS ps, ${RangeSql.end(sql"e.outer_span")} AS pe, ${SqlLiteral(
+        UndatedSql
+      )} AS ub
                 FROM ${SqlLiteral(fromEvents)} ${SqlLiteral(anchorJoins)}
                 WHERE s.g IS NOT NULL AND s.g && $envelope AND ((e.uncertainty <= ${EventPrecision.ApproximateUpTo.literal} AND $where) OR (${SqlLiteral(
         UndatedSql

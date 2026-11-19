@@ -8,6 +8,7 @@ import com.histmersion.util.data.exchange.BundleScope
 import com.histmersion.util.data.exchange.BundleSql.*
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.Timestamps
 
 /** What a bundle carries of the tombstones: the records deleted here, read as the bundle's lines by uid (the import
   * writes them first, `BundleImport.Writer.tombstones`, as only it knows which rows its plan deletes).
@@ -15,7 +16,7 @@ import com.augustnagro.magnum.*
 object TombstoneBundleRepo:
 
   def tombstones(scope: BundleScope)(using DbCon): Vector[Bundle.Tombstone] =
-    sql"SELECT uid, kind, origin, ${SqlLiteral(ts("deleted_at"))} FROM tombstones WHERE ${where(scope, "uid", "deleted_at")} ORDER BY uid"
+    sql"SELECT uid, kind, origin, ${Timestamps.iso(sql"deleted_at")} FROM tombstones WHERE ${where(scope, sql"uid", sql"deleted_at")} ORDER BY uid"
       .query[BTombstoneRow]
       .run()
       .flatMap { r =>

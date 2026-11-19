@@ -14,6 +14,7 @@ import java.util.UUID
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.domain.research.Slug
 import com.histmersion.util.data.exchange.PlanQuestions
+import com.histmersion.util.database.Timestamps
 
 /** The articles as a bundle carries them (docs/research-merge-import.md §4): each article, its versions (their bodies
   * as blobs) and its old slugs, read out in a deterministic order (by uid; the old slugs by alias, in the "C"
@@ -26,8 +27,8 @@ private[articles] object ArticleBundleRepo:
 
   def articles(scope: BundleScope)(using DbCon): Vector[Bundle.Article] =
     sql"""SELECT a.uid, a.origin, a.slug, a.title, a.kind, a.body, a.summary, a.tags, a.regions,
-                       ${SqlLiteral(rangeCols("a.period"))}, ${SqlLiteral(ts("a.updated_at"))}
-                FROM articles a WHERE ${where(scope, "a.uid", "a.updated_at")} ORDER BY a.uid"""
+                       ${rangeCols(sql"a.period")}, ${Timestamps.iso(sql"a.updated_at")}
+                FROM articles a WHERE ${where(scope, sql"a.uid", sql"a.updated_at")} ORDER BY a.uid"""
       .query[BArticleRow]
       .run()
       .map { r =>
@@ -53,20 +54,20 @@ private[articles] object ArticleBundleRepo:
   def versions(scope: BundleScope)(using DbCon): Vector[BVersionRow] =
     sql"""SELECT v.uid, v.origin, a.uid, encode(sha256(convert_to(v.body, 'UTF8')), 'hex'),
                        octet_length(convert_to(v.body, 'UTF8'))::bigint, v.summary,
-                       ${SqlLiteral(ts("v.updated_at"))}, ${SqlLiteral(ts("v.created_at"))}
+                       ${Timestamps.iso(sql"v.updated_at")}, ${Timestamps.iso(sql"v.created_at")}
                 FROM article_versions v JOIN articles a ON a.slug = v.slug WHERE ${where(
         scope,
-        "v.uid",
-        "v.created_at"
+        sql"v.uid",
+        sql"v.created_at"
       )} ORDER BY v.uid""".query[BVersionRow].run()
 
   /** Old article slugs (V042) of the articles in scope. */
   def articleAliases(scope: BundleScope)(using DbCon): Vector[Bundle.ArticleAlias] =
-    sql"""SELECT x.alias, a.uid, ${SqlLiteral(ts("x.created_at"))}
+    sql"""SELECT x.alias, a.uid, ${Timestamps.iso(sql"x.created_at")}
                 FROM article_aliases x JOIN articles a ON a.slug = x.slug WHERE ${where(
         scope,
-        "a.uid",
-        "x.created_at"
+        sql"a.uid",
+        sql"x.created_at"
       )} ORDER BY x.alias COLLATE "C\""""
       .query[(Bundle.ArticleAlias.Alias, UUID, Bundle.ArticleAlias.CreatedAt)]
       .run()

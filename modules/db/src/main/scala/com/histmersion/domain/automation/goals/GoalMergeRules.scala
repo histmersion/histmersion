@@ -2,6 +2,7 @@ package com.histmersion
 package domain.automation.goals
 
 import com.histmersion.api.exchange.Bundle
+import com.augustnagro.magnum.{sql, Frag}
 
 import com.histmersion.util.data.DataOwner
 import com.histmersion.util.data.exchange.MergeRules
@@ -11,5 +12,5 @@ object GoalMergeRules extends MergeRules:
 
   val owner: DataOwner = DataOwner("automation")
   val kind: Bundle.Kind = Bundle.Kind.Goal
-  override val ledgerLabel: Option[String] = Some("SELECT slug FROM goals WHERE uid = l.local_uid")
+  override val ledgerLabel: Option[Frag] = Some(sql"SELECT slug FROM goals WHERE uid = l.local_uid")
   override val referable: Boolean = true

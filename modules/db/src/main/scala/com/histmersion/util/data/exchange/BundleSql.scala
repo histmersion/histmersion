@@ -4,22 +4,17 @@ package util.data.exchange
 import com.histmersion.domain.DeepTime
 import com.histmersion.util.database.RangeSql
 import com.histmersion.api.catalogue.Year
-import com.augustnagro.magnum.{sql, Frag, SqlLiteral}
+import com.augustnagro.magnum.{sql, Frag}
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
 
-/** The SQL every carried kind's lines are read with: a clock as the wire carries it, a range as three columns, the rows
-  * a scope selects, and the uid of whatever a label names.
+/** The SQL every carried kind's lines are read with: a range as three columns, the rows a scope selects, and the uid of
+  * whatever a label names (a clock as the wire carries it is [[Timestamps.iso]]).
   */
 object BundleSql:
 
-  /** `timestamptz` as the wire carries it everywhere: UTC, microseconds, `Z`. */
-
-  def ts(col: String): String =
-    s"""to_char($col AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')"""
-
   /** A range as the three columns [[range]] reads back. */
-  def rangeCols(col: String): String = s"$col IS NULL, ${RangeSql.cols(col)}"
+  def rangeCols(col: Frag): Frag = sql"$col IS NULL, ${RangeSql.cols(col)}"
 
   def range(
       isNull: Bundle.RangeIsNull,
@@ -47,17 +42,17 @@ object BundleSql:
     )
 
   /** `WHERE` for the scope, on a table's uid and change-clock columns. */
-  def where(scope: BundleScope, uid: String, clock: String): Frag = scope match
+  def where(scope: BundleScope, uid: Frag, clock: Frag): Frag = scope match
     case BundleScope.All       => sql"TRUE"
-    case BundleScope.Since(at) => sql"${SqlLiteral(clock)} > $at::timestamptz"
+    case BundleScope.Since(at) => sql"$clock > $at::timestamptz"
     case BundleScope.Uids(us)  =>
-      sql"${SqlLiteral(uid)} = ANY(${us.map(u => u.toString)}::uuid[])"
+      sql"$uid = ANY(${us.map(u => u.toString)}::uuid[])"
 
   /** The uid of whatever a label names, for a target that HAS a uid — the label of an attestation's or an asset link's
     * target is kept, and its uid travels beside it for the matcher.
     */
-  def targetUid(tt: String, tid: String): String =
-    s"""CASE $tt WHEN 'finding' THEN (SELECT uid FROM findings WHERE id = $tid)
+  def targetUid(tt: Frag, tid: Frag): Frag =
+    sql"""CASE $tt WHEN 'finding' THEN (SELECT uid FROM findings WHERE id = $tid)
                  WHEN 'source'  THEN (SELECT uid FROM sources WHERE citekey = $tid)
                  WHEN 'article' THEN (SELECT uid FROM articles WHERE slug = $tid)
                  WHEN 'event'   THEN (SELECT uid FROM events WHERE id = $tid) END"""

@@ -137,7 +137,7 @@ private[assets] object AssetRepo:
     sql"""SELECT name, mime, length(bytes), sha256, width, height,
                  kind, caption, license,
                  ST_Y(geom::geometry), ST_X(geom::geometry),
-                 ${SqlLiteral(RangeSql.cols("period"))}
+                 ${RangeSql.cols(sql"period")}
           FROM assets WHERE citekey = $citekey AND name = $name"""
       .query[AssetDetailRow]
       .run()
@@ -181,7 +181,7 @@ private[assets] object AssetRepo:
             .run()
         case _ => ()
       val stored =
-        sql"SELECT ${SqlLiteral(RangeSql.cols("period"))} FROM assets WHERE citekey = $citekey AND name = $name"
+        sql"SELECT ${RangeSql.cols(sql"period")} FROM assets WHERE citekey = $citekey AND name = $name"
           .query[(Option[Long], Option[Long])]
           .run()
           .head

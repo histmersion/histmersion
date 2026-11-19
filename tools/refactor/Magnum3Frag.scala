@@ -92,6 +92,7 @@ class Magnum3Frag(config: Magnum3Frag.Config) extends SyntacticRule("Magnum3Frag
               case Right(f) => f
               case Left(why) => left += s"${line(arg)}\t${c.fun}\t$why"; arg.syntax
             }
+          case s: Term.Interpolate if s.prefix.value == "sql" => s.syntax
           case other if c.sqlArgs.contains(i) =>
             left += s"${line(arg)}\t${c.fun}\tnot a literal at an SQL position: ${other.syntax}"; other.syntax
           case other => other.syntax

@@ -49,12 +49,12 @@ private[search] object AggregateRepo:
     */
   def periodsQuery(unit: Unit, filter: Filter, scope: PlaceScope = PlaceScope.empty): Frag =
     if unit.value == "findings" then
-      sql"SELECT ${SqlLiteral(RangeSql.cols("f.period"))} FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE ${FilterSql.sourceWhere(filter)} AND ${FilterSql.findingWhere(filter, scope = scope)}"
+      sql"SELECT ${RangeSql.cols(sql"f.period")} FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE ${FilterSql.sourceWhere(filter)} AND ${FilterSql.findingWhere(filter, scope = scope)}"
     else
       val gate =
         if FilterSql.hasFindingPlaceCriteria(filter) then sql" AND fp.matched > 0" else sql""
-      val ownPeriod = filter.period.fold(sql"TRUE")(RangeSql.overlaps("s.period", _))
-      sql"SELECT COALESCE(${SqlLiteral(RangeSql.start("s.period"))}, fp.min_start), COALESCE(${SqlLiteral(RangeSql.end("s.period"))}, fp.max_end) FROM sources s LEFT JOIN LATERAL (SELECT min(${SqlLiteral(RangeSql.start("f.period"))}) AS min_start, max(${SqlLiteral(RangeSql.end("f.period"))}) AS max_end, count(*) AS matched, count(*) FILTER (WHERE ${FilterSql.findingPeriodWhere(filter)}) AS in_window FROM findings f WHERE f.citekey = s.citekey AND ${FilterSql.findingPlaceWhere(filter, scope = scope)}) fp ON true WHERE ${FilterSql.sourceWhere(filter)}$gate AND ($ownPeriod OR fp.in_window > 0)"
+      val ownPeriod = filter.period.fold(sql"TRUE")(RangeSql.overlaps(sql"s.period", _))
+      sql"SELECT COALESCE(${RangeSql.start(sql"s.period")}, fp.min_start), COALESCE(${RangeSql.end(sql"s.period")}, fp.max_end) FROM sources s LEFT JOIN LATERAL (SELECT min(${RangeSql.start(sql"f.period")}) AS min_start, max(${RangeSql.end(sql"f.period")}) AS max_end, count(*) AS matched, count(*) FILTER (WHERE ${FilterSql.findingPeriodWhere(filter)}) AS in_window FROM findings f WHERE f.citekey = s.citekey AND ${FilterSql.findingPlaceWhere(filter, scope = scope)}) fp ON true WHERE ${FilterSql.sourceWhere(filter)}$gate AND ($ownPeriod OR fp.in_window > 0)"
 
   /** Run [[periodsQuery]]. `unit` is `sources` (default) or `findings`. */
   def periods(unit: Unit, filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): Vector[Period.Row] =
@@ -107,12 +107,12 @@ private[search] object AggregateRepo:
     */
   def treeRowsQuery(unit: Unit, filter: Filter, scope: PlaceScope = PlaceScope.empty): Frag =
     if unit.value == "findings" then
-      sql"SELECT f.id, f.citekey, s.title, ${SqlLiteral(RangeSql.cols("f.period"))}, ${SqlLiteral(placesOf("f"))} FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE ${FilterSql.sourceWhere(filter)} AND ${FilterSql.findingWhere(filter, scope = scope)} ${FilterSql.orderBySql(filter)}"
+      sql"SELECT f.id, f.citekey, s.title, ${RangeSql.cols(sql"f.period")}, ${SqlLiteral(placesOf("f"))} FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE ${FilterSql.sourceWhere(filter)} AND ${FilterSql.findingWhere(filter, scope = scope)} ${FilterSql.orderBySql(filter)}"
     else
       val gate =
         if FilterSql.hasFindingPlaceCriteria(filter) then sql" AND fp.matched > 0" else sql""
-      val ownPeriod = filter.period.fold(sql"TRUE")(RangeSql.overlaps("s.period", _))
-      sql"SELECT s.citekey, s.citekey, s.title, COALESCE(${SqlLiteral(RangeSql.start("s.period"))}, fp.min_start), COALESCE(${SqlLiteral(RangeSql.end("s.period"))}, fp.max_end), coalesce(fp.place_ids, '{}'::text[]) FROM sources s LEFT JOIN LATERAL (SELECT min(${SqlLiteral(RangeSql.start("f.period"))}) AS min_start, max(${SqlLiteral(RangeSql.end("f.period"))}) AS max_end, count(DISTINCT f.id) AS matched, count(DISTINCT f.id) FILTER (WHERE ${FilterSql.findingPeriodWhere(filter)}) AS in_window, array_agg(DISTINCT l.place_id) FILTER (WHERE l.place_id IS NOT NULL) AS place_ids FROM findings f LEFT JOIN finding_places l ON l.finding_id = f.id WHERE f.citekey = s.citekey AND ${FilterSql.findingPlaceWhere(filter, scope = scope)}) fp ON true WHERE ${FilterSql.sourceWhere(filter)}$gate AND ($ownPeriod OR fp.in_window > 0) ${FilterSql.orderBySql(filter)}"
+      val ownPeriod = filter.period.fold(sql"TRUE")(RangeSql.overlaps(sql"s.period", _))
+      sql"SELECT s.citekey, s.citekey, s.title, COALESCE(${RangeSql.start(sql"s.period")}, fp.min_start), COALESCE(${RangeSql.end(sql"s.period")}, fp.max_end), coalesce(fp.place_ids, '{}'::text[]) FROM sources s LEFT JOIN LATERAL (SELECT min(${RangeSql.start(sql"f.period")}) AS min_start, max(${RangeSql.end(sql"f.period")}) AS max_end, count(DISTINCT f.id) AS matched, count(DISTINCT f.id) FILTER (WHERE ${FilterSql.findingPeriodWhere(filter)}) AS in_window, array_agg(DISTINCT l.place_id) FILTER (WHERE l.place_id IS NOT NULL) AS place_ids FROM findings f LEFT JOIN finding_places l ON l.finding_id = f.id WHERE f.citekey = s.citekey AND ${FilterSql.findingPlaceWhere(filter, scope = scope)}) fp ON true WHERE ${FilterSql.sourceWhere(filter)}$gate AND ($ownPeriod OR fp.in_window > 0) ${FilterSql.orderBySql(filter)}"
 
   /** Run [[treeRowsQuery]]: the rows the tree buckets and nests ([[com.histmersion.api.library.Tree]], pure), hung off
     * the gazetteer the catalogue gives (`TreeRepo.gazetteer`). `unit` is `sources` (default) or `findings`.

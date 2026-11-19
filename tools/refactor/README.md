@@ -582,6 +582,18 @@ bash tools/refactor/magnum2-frag-fixture/check.sh
 `${x.value}` inside `sql"..."` binds `x` (Iron's `.value` is an `IronType`, which has no codec), and the suites the
 compiler named get `NewtypeColumns.given`.
 
+`Magnum3Frag.scala` (G58 slice 2, `magnum3-frag.conf`, syntactic) follows a helper that now builds a `Frag` from `Frag`
+columns instead of SQL text as a String (`RangeSql.cols`, the shared `Timestamps.iso`, `PlaceSql.importedSql`, ...) at
+its call sites: a String literal at an SQL position becomes a `sql"..."` of the same text, a call may be renamed (a
+file's own `ts` to `Timestamps.iso`), `${SqlLiteral(helper(...))}` and `${SqlLiteral(name)}` of a name that is a `Frag`
+now lose the wrapper, and the `SqlLiteral` import goes where none is left. A call spliced into an `s"..."` or joined
+with `+` is kept and reported (a `Frag` there would put its `toString` into the text). The helpers' definitions are
+edited by hand first; the fixture:
+
+```text
+bash tools/refactor/magnum3-frag-fixture/check.sh
+```
+
 ## Remaining work
 
 - Extend the repository call graph to dispatch, supplied callbacks and initializer effects; define approved capability boundaries before adding propagation for other capabilities.

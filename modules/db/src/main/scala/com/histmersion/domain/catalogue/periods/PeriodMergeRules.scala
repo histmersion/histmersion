@@ -10,7 +10,7 @@ import com.histmersion.domain.catalogue.CataloguePlan
 import com.histmersion.util.data.exchange.PlanRules
 import com.histmersion.util.data.exchange.{BundleScope, MergeRules}
 
-import com.augustnagro.magnum.DbCon
+import com.augustnagro.magnum.{sql, DbCon, Frag}
 import hearth.kindlings.optics.syntax.*
 
 /** How a merge treats named periods: the ledger names one by its id; a plan knows which of the bundle's periods with no
@@ -21,7 +21,7 @@ object PeriodMergeRules extends MergeRules:
   override val planning: Option[PlanRules] = Some(CataloguePlan)
   val owner: DataOwner = DataOwner("catalogue")
   val kind: Bundle.Kind = Bundle.Kind.Period
-  override val ledgerLabel: Option[String] = Some("SELECT id FROM periods WHERE uid = l.local_uid")
+  override val ledgerLabel: Option[Frag] = Some(sql"SELECT id FROM periods WHERE uid = l.local_uid")
 
   override def gather(
       bundle: BundleEntities,

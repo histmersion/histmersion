@@ -19,18 +19,18 @@ class ListSqlSuite extends munit.FunSuite:
   private def sent(f: Frag): (String, List[Any]) = (f.sqlString, f.params.toList)
 
   test("a list condition binds ONE array; none is nothing"):
-    assertEquals(sent(ListSql.anyOf("kind", Nil)), ("", Nil))
+    assertEquals(sent(ListSql.anyOf(sql"kind", Nil)), ("", Nil))
     assertEquals(
-      sent(ListSql.anyOf("kind", List("edge", "goal-plan"))),
+      sent(ListSql.anyOf(sql"kind", List("edge", "goal-plan"))),
       (" AND kind = ANY(?::text[])", List(List("edge", "goal-plan")))
     )
-    assertEquals(sent(ListSql.equal("j.goal_slug", Some("g"))), (" AND j.goal_slug = ?", List("g")))
+    assertEquals(sent(ListSql.equal(sql"j.goal_slug", Some("g"))), (" AND j.goal_slug = ?", List("g")))
 
   test("a time range is bound as instants; either side may be open"):
     val s = Instant.parse("2026-10-01T00:00:00Z")
-    assertEquals(ListSql.between("created_at", Some(s), None).sqlString, " AND created_at >= ?::timestamptz")
-    assertEquals(sent(ListSql.between("created_at", None, Some(s)))._2, List("2026-10-01T00:00:00Z"))
-    assertEquals(sent(ListSql.between("created_at", None, None)), ("", Nil))
+    assertEquals(ListSql.between(sql"created_at", Some(s), None).sqlString, " AND created_at >= ?::timestamptz")
+    assertEquals(sent(ListSql.between(sql"created_at", None, Some(s)))._2, List("2026-10-01T00:00:00Z"))
+    assertEquals(sent(ListSql.between(sql"created_at", None, None)), ("", Nil))
 
   test("a facet is counted under every condition but its own"):
     val c = ListSql.Conds(

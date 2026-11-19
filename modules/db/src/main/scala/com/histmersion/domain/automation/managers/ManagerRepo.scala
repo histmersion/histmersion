@@ -28,6 +28,7 @@ import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.CodexRetention
+import com.histmersion.util.database.Timestamps
 
 /** The store of the process managers (V087, docs/research-process-managers.md §2): managers, their work items, hints
   * (and which runs they reached), events, and the agent lease. All state lives in these rows, so a restart picks up
@@ -55,9 +56,6 @@ object ManagerRepo:
 
   /** An agent run's `jobs.kind`, bound through its newtype's codec. */
   private val AgentRun = AgentJobKinds.Agent.kind
-
-  private val ts = """'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
-  private def at(col: String) = s"to_char($col AT TIME ZONE 'UTC', $ts)"
 
   // the jsonb columns, through their DTOs' codecs ([[Jsonb]]); absent fields are left out when written
   private given configCodec: DbCodec[ManagerConfig] = Jsonb.codec(ManagerConfig(), dropNulls = Jsonb.DropNulls(true))
@@ -105,10 +103,12 @@ object ManagerRepo:
     val UpdatedAt: ManagerInfo.UpdatedAt.type = ManagerInfo.UpdatedAt
 
   private val managerSelect =
-    sql"""SELECT id, kind, goal_slug, state, pause_runs, config::text, status_note, cron, ${SqlLiteral(
-        at("next_tick_at")
+    sql"""SELECT id, kind, goal_slug, state, pause_runs, config::text, status_note, cron, ${Timestamps.isoSeconds(
+        sql"next_tick_at"
       )},
-              ${SqlLiteral(at("created_at"))}, ${SqlLiteral(at("updated_at"))} FROM agent_managers"""
+              ${Timestamps.isoSeconds(sql"created_at")}, ${Timestamps.isoSeconds(
+        sql"updated_at"
+      )} FROM agent_managers"""
 
   private def toInfo(r: ManagerRow)(using DbCon): ManagerInfo =
     val (usd, tokens) = spendToday(r.id)
@@ -246,7 +246,7 @@ object ManagerRepo:
     */
   def running(id: ManagerRow.Id)(using DbCon): RowCount =
 
-    sql"SELECT count(*)::int FROM jobs WHERE kind = $AgentRun AND manager_id = $id AND ${occupyingOn("jobs")}"
+    sql"SELECT count(*)::int FROM jobs WHERE kind = $AgentRun AND manager_id = $id AND ${occupyingOn(sql"jobs")}"
       .query[RowCount]
       .run()
       .head
@@ -256,7 +256,7 @@ object ManagerRepo:
     */
   def occupyingRuns()(using DbCon): List[(Pipeline.Wire, Option[ManagerRow.Goal])] =
 
-    sql"SELECT j.pipeline, m.goal_slug FROM jobs j LEFT JOIN agent_managers m ON m.id = j.manager_id WHERE j.kind = $AgentRun AND ${occupyingOn("j")}"
+    sql"SELECT j.pipeline, m.goal_slug FROM jobs j LEFT JOIN agent_managers m ON m.id = j.manager_id WHERE j.kind = $AgentRun AND ${occupyingOn(sql"j")}"
       .query[(Pipeline.Wire, Option[ManagerRow.Goal])]
       .run()
       .toList
@@ -264,8 +264,8 @@ object ManagerRepo:
   /** The runs that occupy a place ([[running]]'s rule), as a predicate on table (alias) `t` of `jobs`. A pause for an
     * allowance or a plan pool is told by its problem's case and cause (`error @>` the pause's entry), not by its words.
     */
-  private def occupyingOn(t: String): Frag =
-    sql"(${SqlLiteral(t)}.status IN ('queued', 'running') OR (${SqlLiteral(t)}.status = 'paused' AND (${SqlLiteral(t)}.resume_at IS NOT NULL OR ${SqlLiteral(t)}.error @> ${Stopped.pausedMatch(PauseReason.Allowance).noSpaces}::jsonb OR ${SqlLiteral(t)}.error @> ${Stopped.pausedMatch(PauseReason.PlanQuota).noSpaces}::jsonb)))"
+  private def occupyingOn(t: Frag): Frag =
+    sql"($t.status IN ('queued', 'running') OR ($t.status = 'paused' AND ($t.resume_at IS NOT NULL OR $t.error @> ${Stopped.pausedMatch(PauseReason.Allowance).noSpaces}::jsonb OR $t.error @> ${Stopped.pausedMatch(PauseReason.PlanQuota).noSpaces}::jsonb)))"
 
   /** The item kinds of the last `n` runs the managers started, newest first (what the scheduler's shares count).
     */
@@ -280,8 +280,7 @@ object ManagerRepo:
     * ingested or swept for it, or a source was linked to it — as an ISO instant (UTC).
     */
   def lastProgress()(using DbCon): Map[ManagerRow.Goal, ProgressText] =
-    val ts = """'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
-    sql"""SELECT goal, to_char(max(at) AT TIME ZONE 'UTC', ${SqlLiteral(ts)}) FROM (
+    sql"""SELECT goal, to_char(max(at) AT TIME ZONE 'UTC', ${Timestamps.IsoSecondsFormat}) FROM (
                  SELECT m.goal_slug AS goal, max(e.at) AS at FROM manager_events e JOIN agent_managers m ON m.id = e.manager_id
                  WHERE m.goal_slug IS NOT NULL AND e.kind IN (${Feed.Started}, ${Feed.Settled}, ${Feed.Evaluated}, ${Feed.Ingested}, ${Feed.Swept}) GROUP BY m.goal_slug
                  UNION ALL
@@ -375,9 +374,8 @@ object ManagerRepo:
 
   private val itemSelect =
     sql"""SELECT id, manager_id, kind, target, status, priority, attempts, failures, run_id, evaluated_run,
-              ${SqlLiteral(at("not_before"))}, hold::text, state::text, outcome, origin, ${SqlLiteral(
-        at("created_at")
-      )}, ${SqlLiteral(at("updated_at"))}
+              ${Timestamps.isoSeconds(sql"not_before")}, hold::text, state::text, outcome, origin, ${Timestamps
+        .isoSeconds(sql"created_at")}, ${Timestamps.isoSeconds(sql"updated_at")}
        FROM manager_items"""
 
   private def toItem(r: ItemRow): ManagerItem =
@@ -711,7 +709,9 @@ object ManagerRepo:
     val lim = math.max(1, limit.value)
     val g = goal.map(_.value.trim).getOrElse("")
     val done =
-      sql"""SELECT i.target, ${SqlLiteral(at("i.updated_at"))}, (i.state->>'filterHits')::int, i.id FROM manager_items i
+      sql"""SELECT i.target, ${Timestamps.isoSeconds(
+          sql"i.updated_at"
+        )}, (i.state->>'filterHits')::int, i.id FROM manager_items i
           JOIN articles a ON a.slug = i.target
           WHERE i.manager_id = $managerId AND i.kind = $kind AND i.status = 'done' AND a.tags @> $tags::text[]
             AND ($g = '' OR EXISTS (SELECT 1 FROM goal_links g WHERE g.goal_slug = $g
@@ -722,7 +722,9 @@ object ManagerRepo:
         .toList
         .map((s, t, n, id) => (s, t, n, Some(id)))
     val ledgers =
-      sql"""SELECT l.slug, ${SqlLiteral(at("l.updated_at"))} FROM review_ledgers l JOIN articles a ON a.slug = l.slug
+      sql"""SELECT l.slug, ${Timestamps.isoSeconds(
+          sql"l.updated_at"
+        )} FROM review_ledgers l JOIN articles a ON a.slug = l.slug
           WHERE a.kind <> 'index' AND a.tags @> $tags::text[]
             AND NOT EXISTS (SELECT 1 FROM jsonb_array_elements(coalesce(l.ledger->'entries', '[]'::jsonb)) e
                             WHERE coalesce(e->>'status', 'open') = 'open' AND e->'finding'->>'severity' = 'major')
@@ -749,7 +751,7 @@ object ManagerRepo:
       DbCon
   ): List[(Slug, Option[ProgressText])] =
     val g = goal.map(_.value.trim).getOrElse("")
-    sql"""SELECT a.slug, ${SqlLiteral(at("x.updated_at"))} FROM articles a
+    sql"""SELECT a.slug, ${Timestamps.isoSeconds(sql"x.updated_at")} FROM articles a
           LEFT JOIN manager_items x ON x.manager_id = $managerId AND x.kind = $ArticleExtend AND x.target = a.slug
           WHERE a.coverage_filter IS NOT NULL AND a.kind <> 'index' AND a.tags @> $tags::text[]
             AND ($g = '' OR EXISTS (SELECT 1 FROM goal_links gl WHERE gl.goal_slug = $g
@@ -782,7 +784,7 @@ object ManagerRepo:
                          AND i.status IN ('pending', 'held', 'active')),
                       (SELECT count(*)::int FROM manager_items i WHERE i.manager_id = m.id AND i.kind <> $OaIngest
                          AND i.status IN ('done', 'stopped', 'failed') AND i.updated_at >= $t::timestamptz),
-                      (SELECT ${SqlLiteral(at("max(e.at)"))} FROM manager_events e WHERE e.manager_id = m.id)
+                      (SELECT ${Timestamps.isoSeconds(sql"max(e.at)")} FROM manager_events e WHERE e.manager_id = m.id)
                FROM agent_managers m"""
       .query[(ManagerRow.Id, RowCount, RowCount, Option[ProgressText])]
       .run()
@@ -937,7 +939,7 @@ object ManagerRepo:
   private given DbCodec[ManagerEvent] = DbCodec.derived
 
   private val eventSelect =
-    sql"SELECT id, manager_id, item_id, run_id, ${SqlLiteral(at("at"))}, kind, text FROM manager_events"
+    sql"SELECT id, manager_id, item_id, run_id, ${Timestamps.isoSeconds(sql"at")}, kind, text FROM manager_events"
 
   def eventIn(
       managerId: ManagerRow.Id,
@@ -1044,10 +1046,12 @@ object ManagerRepo:
     * that action.
     */
   private val hintSelect =
-    sql"""SELECT h.id, h.manager_id, h.item_id, h.text, h.effect::text, h.author, h.standing, ${SqlLiteral(
-        at("h.created_at")
+    sql"""SELECT h.id, h.manager_id, h.item_id, h.text, h.effect::text, h.author, h.standing, ${Timestamps.isoSeconds(
+        sql"h.created_at"
       )},
-              ${SqlLiteral(at("h.retired_at"))}, (SELECT count(*)::int FROM manager_hint_uses u WHERE u.hint_id = h.id),
+              ${Timestamps.isoSeconds(
+        sql"h.retired_at"
+      )}, (SELECT count(*)::int FROM manager_hint_uses u WHERE u.hint_id = h.id),
               p.id, (p.proposal->'effect')::text
        FROM manager_hints h
        LEFT JOIN LATERAL (SELECT a.id, a.proposal FROM approvals a

@@ -57,7 +57,7 @@ private[places] object PlaceOverrideRepo:
     */
   private def rowOf(id: BPlaceRow.Id)(using DbCon): Option[Row] =
     sql"""SELECT p.label, p.kind, ${SqlLiteral(PlaceRepo.startCol)},
-                 ${SqlLiteral(RangeSql.end("p.period"))},
+                 ${RangeSql.end(sql"p.period")},
                  CASE WHEN GeometryType(p.geom) = 'POINT' THEN ST_Y(p.geom) END,
                  CASE WHEN GeometryType(p.geom) = 'POINT' THEN ST_X(p.geom) END,
                  coalesce(GeometryType(p.geom) <> 'POINT', false)
@@ -312,12 +312,10 @@ private[places] object PlaceOverrideRepo:
   /** The overrides, by place id; `id` narrows to one place. */
   def list(id: Option[BPlaceRow.Id])(using DbCon): List[Place.Override] =
     sql"""SELECT o.place_id, p.label, o.kind,
-                 ${SqlLiteral(RangeSql.cols("o.period"))},
+                 ${RangeSql.cols(sql"o.period")},
                  o.period IS NOT NULL, o.reason, o.source_kind,
-                 CASE WHEN o.source_start_unknown THEN NULL ELSE ${SqlLiteral(
-        RangeSql.start("o.source_period")
-      )} END,
-                 ${SqlLiteral(RangeSql.end("o.source_period"))},
+                 CASE WHEN o.source_start_unknown THEN NULL ELSE ${RangeSql.start(sql"o.source_period")} END,
+                 ${RangeSql.end(sql"o.source_period")},
                  to_char(o.updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
                  ST_Y(o.point), ST_X(o.point),
                  CASE WHEN GeometryType(o.source_geom) = 'POINT' THEN ST_Y(o.source_geom) END,

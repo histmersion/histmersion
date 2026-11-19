@@ -8,7 +8,7 @@ import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.data.DataOwner
 import com.histmersion.util.data.exchange.{MergeRules, PlanRules}
 
-import com.augustnagro.magnum.DbCon
+import com.augustnagro.magnum.{sql, DbCon, Frag}
 import hearth.kindlings.optics.syntax.*
 
 /** How a merge treats figures: the ledger names one by its name; other lines point at one by uid; a plan knows which
@@ -18,7 +18,7 @@ object AssetMergeRules extends MergeRules:
 
   val owner: DataOwner = DataOwner("media")
   val kind: Bundle.Kind = Bundle.Kind.Asset
-  override val ledgerLabel: Option[String] = Some("SELECT name FROM assets WHERE uid = l.local_uid")
+  override val ledgerLabel: Option[Frag] = Some(sql"SELECT name FROM assets WHERE uid = l.local_uid")
   override val referable: Boolean = true
   override val planning: Option[PlanRules] = Some(AssetPlan)
 

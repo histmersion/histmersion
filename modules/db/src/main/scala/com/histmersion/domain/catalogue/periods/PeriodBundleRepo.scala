@@ -12,6 +12,7 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.augustnagro.magnum.*
 import java.util.UUID
 import com.histmersion.api.exchange.Bundle
+import com.histmersion.util.database.Timestamps
 
 /** The named periods as a bundle carries them (docs/research-merge-import.md §4, §7.3): this collection's own, read out
   * in a deterministic order, and written in by an import.
@@ -21,13 +22,11 @@ private[periods] object PeriodBundleRepo:
   /** The named periods of this collection's own in scope, or with one of `alsoIds`. */
 
   def periods(scope: BundleScope, alsoIds: List[BPeriodRow.Id] = Nil)(using DbCon): Vector[Bundle.Period] =
-    val own = sql"p.dataset = 'local' AND ${where(scope, "p.uid", "p.updated_at")}"
+    val own = sql"p.dataset = 'local' AND ${where(scope, sql"p.uid", sql"p.updated_at")}"
     val sel = if alsoIds.isEmpty then own
     else sql"(($own) OR p.id = ANY(${alsoIds.distinct}::text[]))"
-    sql"""SELECT p.uid, p.origin, p.id, p.label, p.authority, ${SqlLiteral(
-        rangeCols("p.period")
-      )}, p.region, p.parent_id,
-                       ${SqlLiteral(ts("p.updated_at"))}
+    sql"""SELECT p.uid, p.origin, p.id, p.label, p.authority, ${rangeCols(sql"p.period")}, p.region, p.parent_id,
+                       ${Timestamps.iso(sql"p.updated_at")}
                 FROM periods p WHERE $sel ORDER BY p.uid""".query[BPeriodRow].run().map { r =>
       Bundle.Period(
         r.uid,

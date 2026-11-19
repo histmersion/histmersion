@@ -307,9 +307,7 @@ private[places] object PlaceRepo:
     if ranked.isEmpty then Vector.empty
     else
       val ids = ranked.toList
-      val rows = sql"""SELECT p.id, p.label, p.kind, ${SqlLiteral(startCol)}, ${SqlLiteral(
-          RangeSql.end("p.period")
-        )}, p.source,
+      val rows = sql"""SELECT p.id, p.label, p.kind, ${SqlLiteral(startCol)}, ${RangeSql.end(sql"p.period")}, p.source,
                    coalesce(nm.names, ''), nm.matched,
                    (SELECT count(*)::int FROM finding_places fp WHERE fp.place_id = p.id),
                    ${SqlLiteral(contestedCol)}, ${SqlLiteral(datingCol)}, p.import_source
@@ -679,7 +677,7 @@ private[places] object PlaceRepo:
     // RANK FIRST, then read the rows shown: the limit is taken over `live` alone, and only those rows
     // are joined back to `places` for their label, dates and shape — not all 14 700 sites alive in
     // 500 CE, one index lookup each, to keep 200 (2026-10-09)
-    sql"$live$shadowed$shown SELECT l.id, p.label, l.kind, ${SqlLiteral(startCol)} AS ps, ${SqlLiteral(RangeSql.end("p.period"))} AS pe, ${SqlLiteral(datingCol)} AS dating, l.basis, coalesce(p.shape_dim = 2, false) AS has_boundary, coalesce(p.web_geojson, ST_AsGeoJSON(coalesce(p.geom_clipped, p.geom), 5)) AS geojson, p.site_type, p.properties->>'feature_types', p.properties->>'fcode', p.properties->>'class', p.properties->>'p31' FROM (SELECT * FROM ${SqlLiteral(drawn)} ORDER BY ${rank("")} LIMIT ${limit.value.max(1)}) l JOIN places p ON p.id = l.id ORDER BY ${rank("l.")}"
+    sql"$live$shadowed$shown SELECT l.id, p.label, l.kind, ${SqlLiteral(startCol)} AS ps, ${RangeSql.end(sql"p.period")} AS pe, ${SqlLiteral(datingCol)} AS dating, l.basis, coalesce(p.shape_dim = 2, false) AS has_boundary, coalesce(p.web_geojson, ST_AsGeoJSON(coalesce(p.geom_clipped, p.geom), 5)) AS geojson, p.site_type, p.properties->>'feature_types', p.properties->>'fcode', p.properties->>'class', p.properties->>'p31' FROM (SELECT * FROM ${SqlLiteral(drawn)} ORDER BY ${rank("")} LIMIT ${limit.value.max(1)}) l JOIN places p ON p.id = l.id ORDER BY ${rank("l.")}"
 
   /** The test of a candidate pair `pr` (`lid` under `hid`, `same_name`, `small` the smaller area, `lbb` and `hbb` their
     * boxes): the same normalised name, or the shapes' intersection covering more than [[SameStateOverlap]] of the
@@ -954,12 +952,12 @@ private[places] object PlaceRepo:
   private def footprintsIn(placeId: com.histmersion.domain.catalogue.Place.Id, asOf: Option[DeepTime.SignedYear])(using
       DbCon
   ): Vector[Place.Footprint] =
-    sql"""SELECT f.id, f.place_id, f.role, ${SqlLiteral(RangeSql.cols("f.period"))},
+    sql"""SELECT f.id, f.place_id, f.role, ${RangeSql.cols(sql"f.period")},
                  f.certainty, f.accuracy_m, f.citekey
           FROM place_footprints f
           WHERE f.place_id = $placeId
             AND ($asOf::bigint IS NULL OR f.period @> $asOf::bigint)
-          ORDER BY f.role, ${SqlLiteral(RangeSql.start("f.period"))}, f.id""".query[FootprintRow].run().map(_.toDto)
+          ORDER BY f.role, ${RangeSql.start(sql"f.period")}, f.id""".query[FootprintRow].run().map(_.toDto)
 
   def links(placeId: com.histmersion.domain.catalogue.Place.Id)(using DbCon): Vector[Place.Link] =
     sql"""SELECT place_id, scheme, external_id, relation FROM place_links
@@ -978,7 +976,7 @@ private[places] object PlaceRepo:
   private def typesIn(placeId: com.histmersion.domain.catalogue.Place.Id, asOf: Option[DeepTime.SignedYear])(using
       DbCon
   ): List[Place.Type] =
-    sql"""SELECT place_id, type_label, ${SqlLiteral(RangeSql.cols("period"))}, citekey
+    sql"""SELECT place_id, type_label, ${RangeSql.cols(sql"period")}, citekey
           FROM place_types
           WHERE place_id = $placeId
             AND ($asOf::bigint IS NULL OR period @> $asOf::bigint)

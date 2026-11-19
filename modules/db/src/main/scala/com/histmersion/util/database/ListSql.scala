@@ -19,31 +19,31 @@ private[histmersion] object ListSql:
     def except(name: String): Frag = parts.filterNot(_._1 == name).map(_._2).joined(sql"")
 
   /** ` AND <expr> = ANY(?)` — nothing for no values. */
-  def anyOf(expr: String, vs: List[String]): Frag =
-    if vs.isEmpty then sql"" else sql" AND ${SqlLiteral(expr)} = ANY($vs::text[])"
+  def anyOf(expr: Frag, vs: List[String]): Frag =
+    if vs.isEmpty then sql"" else sql" AND $expr = ANY($vs::text[])"
 
   /** ` AND <expr> = ?` — nothing for none. */
-  def equal(expr: String, v: Option[String]): Frag =
-    v.fold(sql"")(x => sql" AND ${SqlLiteral(expr)} = $x")
+  def equal(expr: Frag, v: Option[String]): Frag =
+    v.fold(sql"")(x => sql" AND $expr = $x")
 
   /** An `ILIKE` pattern matching `s` anywhere in a value — its own `%`, `_` and `\` taken literally. */
   def contains(s: String): String =
     "%" + s.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
 
   /** ` AND <col> >= since AND <col> < until` — either bound left out when unset. */
-  def between(col: String, since: Option[Instant], until: Option[Instant]): Frag =
-    sql"${since.fold(sql"")(s => sql" AND ${SqlLiteral(col)} >= ${s.toString}::timestamptz")}${until.fold(sql"")(u =>
-        sql" AND ${SqlLiteral(col)} < ${u.toString}::timestamptz"
+  def between(col: Frag, since: Option[Instant], until: Option[Instant]): Frag =
+    sql"${since.fold(sql"")(s => sql" AND $col >= ${s.toString}::timestamptz")}${until.fold(sql"")(u =>
+        sql" AND $col < ${u.toString}::timestamptz"
       )}"
 
   /** `SELECT <expr>, <count> <from> … GROUP BY 1`, the largest first (then by value), at most `max` values (the lists'
     * filters give theirs); NULLs are not a value. `from` = `FROM … WHERE …` with the filters; `count` = what is counted
     * (`count(DISTINCT id)` where a row can appear twice).
     */
-  def facetOn(from: Frag, expr: String, max: PageSize, count: String = "count(*)")(using
+  def facetOn(from: Frag, expr: Frag, max: PageSize, count: Frag = sql"count(*)")(using
       DbCon
   ): List[(String, RowCount)] =
-    sql"SELECT ${SqlLiteral(expr)}, ${SqlLiteral(count)}::int $from AND ${SqlLiteral(expr)} IS NOT NULL GROUP BY 1 ORDER BY 2 DESC, 1 LIMIT $max"
+    sql"SELECT $expr, $count::int $from AND $expr IS NOT NULL GROUP BY 1 ORDER BY 2 DESC, 1 LIMIT $max"
       .query[(String, Int)]
       .run()
       .toList

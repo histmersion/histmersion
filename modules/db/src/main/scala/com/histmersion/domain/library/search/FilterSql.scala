@@ -12,7 +12,6 @@ import com.histmersion.util.database.{joined, RangeSql}
 import com.histmersion.api.{BBox, Markdown}
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.media.MediaRole
 import com.augustnagro.magnum.DbCodec
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.{Filter, SearchHit, Sort}
@@ -31,7 +30,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Doi
 import com.histmersion.domain.Highlight
 import com.histmersion.api.library.Hit
-import com.augustnagro.magnum.{sql, Frag, SqlLiteral}
+import com.augustnagro.magnum.{sql, Frag}
 
 /** `Filter` → SQL, as a **pure function** (plan §1.0/§2.2): every builder here returns a value that can be asserted on
   * in a unit test without a database. `SourceRepo` is the only thing that turns one into a Magnum [[Frag]] and runs it.
@@ -52,7 +51,7 @@ object FilterSql:
     * so a bare `'\'` reached Postgres as `ESCAPE ''` (no escape character at all), every `\_` in the pattern then
     * needed a literal backslash, and a search for `ZZR_` matched nothing (#769).
     */
-  private val Esc = " ESCAPE '\\'"
+  private val Esc = sql" ESCAPE '\\'"
   def escapeLike(s: String): String = LikePattern.escape(s)
   def contains(s: String): String = LikePattern.contains(s)
   def startsWith(s: String): String = LikePattern.startsWith(s)
@@ -80,14 +79,14 @@ object FilterSql:
     sql"s.citekey IN (SELECT f.citekey FROM findings f JOIN finding_places fp ON fp.finding_id = f.id WHERE fp.place_id = ANY($ids::text[]))"
 
   /** `finding_places` membership for ONE finding row (alias `fa`), uncorrelated like [[placeIdsSource]]. */
-  private def placeIdsFinding(ids: List[Place.Id], fa: String): Frag =
-    sql"${SqlLiteral(fa)}.id IN (SELECT fp.finding_id FROM finding_places fp WHERE fp.place_id = ANY($ids::text[]))"
+  private def placeIdsFinding(ids: List[Place.Id], fa: Frag): Frag =
+    sql"$fa.id IN (SELECT fp.finding_id FROM finding_places fp WHERE fp.place_id = ANY($ids::text[]))"
 
   /** The wave-1 name match for a source: its own regions, any of its findings' `region_name`, OR any place_name
     * matching by ILIKE prefix (so "Anatolian" reaches "Anatolian plateau" etc.).
     */
   private def placeNameSource(p: String): Frag =
-    sql"(EXISTS (SELECT 1 FROM unnest(s.regions) x WHERE x ILIKE ${contains(p)}${SqlLiteral(Esc)}) OR EXISTS (SELECT 1 FROM findings f WHERE f.citekey = s.citekey AND f.region_name ILIKE ${contains(p)}${SqlLiteral(Esc)}) OR EXISTS (SELECT 1 FROM findings f JOIN finding_places fp ON fp.finding_id = f.id JOIN place_names pn ON pn.place_id = fp.place_id WHERE f.citekey = s.citekey AND pn.name ILIKE ${contains(p)}${SqlLiteral(Esc)}))"
+    sql"(EXISTS (SELECT 1 FROM unnest(s.regions) x WHERE x ILIKE ${contains(p)}$Esc) OR EXISTS (SELECT 1 FROM findings f WHERE f.citekey = s.citekey AND f.region_name ILIKE ${contains(p)}$Esc) OR EXISTS (SELECT 1 FROM findings f JOIN finding_places fp ON fp.finding_id = f.id JOIN place_names pn ON pn.place_id = fp.place_id WHERE f.citekey = s.citekey AND pn.name ILIKE ${contains(p)}$Esc))"
 
   /** A value the gazetteer resolved is matched through `finding_places` ALONE. It used to be OR'ed with the name match
     * on the value itself — the ID ("pleiades_570577") as an ILIKE over every finding's place names — which can match
@@ -100,8 +99,8 @@ object FilterSql:
       case None      => placeNameSource(p.value)
 
   /** `finding_places` membership for ONE finding row (alias `fa`). */
-  private def placeFinding(p: Filter.Places, scope: PlaceScope, fa: String): Frag =
-    val byName = sql"${SqlLiteral(fa)}.region_name ILIKE ${contains(p.value)}${SqlLiteral(Esc)}"
+  private def placeFinding(p: Filter.Places, scope: PlaceScope, fa: Frag): Frag =
+    val byName = sql"$fa.region_name ILIKE ${contains(p.value)}$Esc"
     scope.idsFor(PlaceScope.IdsForValue(p.value)) match
       case Some(ids) =>
         placeIdsFinding(ids, fa)
@@ -127,9 +126,7 @@ object FilterSql:
     // authors: any-of, case-insensitive substring
     if f.authors.nonEmpty then
       ps += anyOf(
-        f.authors.map(a =>
-          sql"EXISTS (SELECT 1 FROM unnest(s.authors) x WHERE x ILIKE ${contains(a.value)}${SqlLiteral(Esc)})"
-        )
+        f.authors.map(a => sql"EXISTS (SELECT 1 FROM unnest(s.authors) x WHERE x ILIKE ${contains(a.value)}$Esc)")
       )
 
     // places: any-of — a gazetteer id through `finding_places`, otherwise the name ILIKE over
@@ -147,16 +144,15 @@ object FilterSql:
     f.years.foreach(y => ps += sql"(s.year IS NOT NULL AND s.year BETWEEN ${y.start} AND ${y.end})")
 
     f.period.foreach(p =>
-      ps += sql"(${RangeSql.overlaps("s.period", p)} OR EXISTS (SELECT 1 FROM findings f WHERE f.citekey = s.citekey AND ${RangeSql
-          .overlaps("f.period", p)}))"
+      ps += sql"(${RangeSql.overlaps(sql"s.period", p)} OR EXISTS (SELECT 1 FROM findings f WHERE f.citekey = s.citekey AND ${RangeSql.overlaps(sql"f.period", p)}))"
     )
 
     f.bbox.foreach(b =>
-      ps += (sql"EXISTS (SELECT 1 FROM findings f WHERE f.citekey = s.citekey AND f.geom IS NOT NULL AND ${envelopes("f.geom", b)})")
+      ps += (sql"EXISTS (SELECT 1 FROM findings f WHERE f.citekey = s.citekey AND f.geom IS NOT NULL AND ${envelopes(sql"f.geom", b)})")
     )
 
     // the global title quick-filter: a case-insensitive substring of the source's own title
-    titleLike(f).foreach(t => ps += sql"s.title ILIKE ${contains(t.value)}${SqlLiteral(Esc)}")
+    titleLike(f).foreach(t => ps += sql"s.title ILIKE ${contains(t.value)}$Esc")
 
     // a research goal's sources: those it links
     f.goal
@@ -198,7 +194,7 @@ object FilterSql:
     val ps = List.newBuilder[Frag]
     if !set.isEmpty then
       ps += (sql"EXISTS (SELECT 1 FROM article_links al WHERE al.src_slug = a.slug AND al.target_kind = 'source' AND al.target = ANY(${sourceKeySet(set, scope)}))")
-    titleLike(f).foreach(t => ps += sql"a.title ILIKE ${contains(t.value)}${SqlLiteral(Esc)}")
+    titleLike(f).foreach(t => ps += sql"a.title ILIKE ${contains(t.value)}$Esc")
     val parts = ps.result()
     if parts.isEmpty then sql"TRUE" else parts.joined(And)
 
@@ -214,15 +210,15 @@ object FilterSql:
       // its own source, or a source that attests it (#1449)
       val keys = sourceKeySet(set, scope)
       ps += (sql"(e.citekey = ANY($keys) OR EXISTS (SELECT 1 FROM attestations ea WHERE ea.target_type = 'event' AND ea.target_id = e.id AND ea.citekey = ANY($keys)))")
-    f.period.foreach(p => ps += RangeSql.overlaps("e.outer_span", p))
-    titleLike(f).foreach(t => ps += sql"e.label ILIKE ${contains(t.value)}${SqlLiteral(Esc)}")
+    f.period.foreach(p => ps += RangeSql.overlaps(sql"e.outer_span", p))
+    titleLike(f).foreach(t => ps += sql"e.label ILIKE ${contains(t.value)}$Esc")
     val parts = ps.result()
     if parts.isEmpty then sql"TRUE" else parts.joined(And)
 
   /** The PostGIS predicate for a viewport. A box with `minLon > maxLon` crosses the **antimeridian** and becomes two
     * envelopes OR'ed together (`minLon…180` and `-180…maxLon`).
     */
-  def envelopes(geom: String, b: BBox): Frag = EnvelopeSql.envelopes(geom, b)
+  def envelopes(geom: Frag, b: BBox): Frag = EnvelopeSql.envelopes(geom, b)
 
   // ── the FINDING-level predicate (map feed §1.1, histogram §1.7) ─────────────────────────────
   // `/api/sources` asks "does this SOURCE match?" — an EXISTS quantified over its findings (above).
@@ -248,26 +244,26 @@ object FilterSql:
   /** The non-temporal criteria for ONE finding: tags (over `findings.tags ∪ sources.tags`, AND semantics), places
     * (any-of, ILIKE on `region_name`) and the viewport (antimeridian-split). `TRUE` when the filter sets none of them.
     */
-  def findingPlaceWhere(f: Filter, fa: String = "f", sa: String = "s", scope: PlaceScope = PlaceScope.empty): Frag =
+  def findingPlaceWhere(f: Filter, fa: Frag = sql"f", sa: Frag = sql"s", scope: PlaceScope = PlaceScope.empty): Frag =
     val ps = List.newBuilder[Frag]
 
     f.tags.foreach { t =>
-      ps += sql"(EXISTS (SELECT 1 FROM unnest(${SqlLiteral(fa)}.tags) x WHERE lower(x) = lower($t)) OR EXISTS (SELECT 1 FROM unnest(${SqlLiteral(sa)}.tags) x WHERE lower(x) = lower($t)))"
+      ps += sql"(EXISTS (SELECT 1 FROM unnest($fa.tags) x WHERE lower(x) = lower($t)) OR EXISTS (SELECT 1 FROM unnest($sa.tags) x WHERE lower(x) = lower($t)))"
     }
 
     if f.places.nonEmpty then ps += anyOf(f.places.map(placeFinding(_, scope, fa)))
 
-    f.bbox.foreach(b => ps += (sql"(${SqlLiteral(fa)}.geom IS NOT NULL AND ${envelopes(s"$fa.geom", b)})"))
+    f.bbox.foreach(b => ps += (sql"($fa.geom IS NOT NULL AND ${envelopes(sql"$fa.geom", b)})"))
 
     val parts = ps.result()
     if parts.isEmpty then sql"TRUE" else parts.joined(And)
 
   /** Deep-time overlap for ONE finding; `TRUE` when the filter carries no period. */
-  def findingPeriodWhere(f: Filter, fa: String = "f"): Frag =
-    f.period.fold(sql"TRUE")(p => RangeSql.overlaps(s"$fa.period", p))
+  def findingPeriodWhere(f: Filter, fa: Frag = sql"f"): Frag =
+    f.period.fold(sql"TRUE")(p => RangeSql.overlaps(sql"$fa.period", p))
 
   /** Everything ONE finding must satisfy: the period AND the rest. `TRUE` for an empty filter. */
-  def findingWhere(f: Filter, fa: String = "f", sa: String = "s", scope: PlaceScope = PlaceScope.empty): Frag =
+  def findingWhere(f: Filter, fa: Frag = sql"f", sa: Frag = sql"s", scope: PlaceScope = PlaceScope.empty): Frag =
     val parts = List(findingPeriodWhere(f, fa), findingPlaceWhere(f, fa, sa, scope)).filter(_.sqlString != "TRUE")
     if parts.isEmpty then sql"TRUE" else parts.joined(And)
 
@@ -275,12 +271,12 @@ object FilterSql:
     * rank by, so it falls back to citations; with one it is `ts_rank_cd` — see [[orderBySql]], which is what the
     * queries actually use.
     */
-  def orderBy(sort: Sort): String = sort match
-    case Sort.Relevance | Sort.Cited => "ORDER BY s.cited_by_count DESC NULLS LAST, s.citekey"
-    case Sort.PeriodStart            => s"ORDER BY ${RangeSql.start("s.period")} ASC NULLS LAST, s.citekey"
-    case Sort.Year                   => "ORDER BY s.year DESC NULLS LAST, s.citekey"
-    case Sort.Oldest                 => "ORDER BY s.year ASC NULLS LAST, s.citekey"
-    case Sort.Title                  => "ORDER BY lower(s.title) ASC, s.citekey"
+  def orderBy(sort: Sort): Frag = sort match
+    case Sort.Relevance | Sort.Cited => sql"ORDER BY s.cited_by_count DESC NULLS LAST, s.citekey"
+    case Sort.PeriodStart            => sql"ORDER BY ${RangeSql.start(sql"s.period")} ASC NULLS LAST, s.citekey"
+    case Sort.Year                   => sql"ORDER BY s.year DESC NULLS LAST, s.citekey"
+    case Sort.Oldest                 => sql"ORDER BY s.year ASC NULLS LAST, s.citekey"
+    case Sort.Title                  => sql"ORDER BY lower(s.title) ASC, s.citekey"
 
   /** The ORDER BY as a fragment: `Sort.Relevance` + a text query ranks by FTS relevance (`ts_rank_cd` over
     * title/summary plus the best body chunk), citations breaking ties; everything else is the parameterless ordering
@@ -294,7 +290,7 @@ object FilterSql:
     case (Sort.Relevance, Some(q)) =>
       val rank = if useCte then Search.rankExprCte(q) else Search.rankExpr(q)
       sql"ORDER BY $rank DESC, s.cited_by_count DESC NULLS LAST, s.citekey"
-    case _ => sql"${SqlLiteral(orderBy(f.sort))}"
+    case _ => orderBy(f.sort)
 
   /** The filter's text query, trimmed; `None` when there is nothing to search for. */
   def text(f: Filter): Option[Search.Query] =
@@ -304,8 +300,7 @@ object FilterSql:
 
   /** Columns of [[SourceRow]] — `SearchHit` plus what `why` needs (tags, authors, body-hit). */
   private val rowCols =
-    s"s.citekey, s.title, s.year, s.status, s.topics, s.regions, ${RangeSql.cols("s.period")}," +
-      " s.summary, s.tags, s.authors, s.doi"
+    sql"s.citekey, s.title, s.year, s.status, s.topics, s.regions, ${RangeSql.cols(sql"s.period")}, s.summary, s.tags, s.authors, s.doi"
 
   /** The page of matching sources (plan §1.4). For a text query, uses a two-phase approach:
     *
@@ -330,7 +325,7 @@ object FilterSql:
         )
       case None =>
         (sql"", sql"FALSE AS body_hit, NULL::text, NULL::text", sql"")
-    sql"${cte}SELECT ${SqlLiteral(rowCols)}, $cols FROM sources s$join WHERE ${where(f, scope)} ${orderBySql(f, useCte = text(f).isDefined)} LIMIT ${f.limit.value.max(0)} OFFSET ${f.offset.value.max(0)}"
+    sql"${cte}SELECT $rowCols, $cols FROM sources s$join WHERE ${where(f, scope)} ${orderBySql(f, useCte = text(f).isDefined)} LIMIT ${f.limit.value.max(0)} OFFSET ${f.offset.value.max(0)}"
 
   /** `total` = count(DISTINCT source) for the filter, ignoring limit/offset. */
   def countQuery(f: Filter, scope: PlaceScope = PlaceScope.empty): Frag =
@@ -360,27 +355,22 @@ object FilterSql:
     // the gazetteer places each finding was materialised into (plan §1.6a) — labels for the reader, ids so
     // `findingWhy` can say WHICH place chip the finding satisfied. Arrays, not joined strings: a place label routinely
     // contains a comma.
-    sql"SELECT f.citekey, f.id, f.claim, f.region_name, ST_X(f.geom), ST_Y(f.geom), ${SqlLiteral(
-        RangeSql.cols("f.period")
-      )}, f.period_name, f.tags, ARRAY(SELECT p.label FROM finding_places fp JOIN places p ON p.id = fp.place_id WHERE fp.finding_id = f.id ORDER BY p.label, p.id), ARRAY(SELECT fp.place_id FROM finding_places fp WHERE fp.finding_id = f.id ORDER BY fp.place_id) FROM findings f WHERE f.citekey IN (${citekeys
+    sql"SELECT f.citekey, f.id, f.claim, f.region_name, ST_X(f.geom), ST_Y(f.geom), ${RangeSql.cols(sql"f.period")}, f.period_name, f.tags, ARRAY(SELECT p.label FROM finding_places fp JOIN places p ON p.id = fp.place_id WHERE fp.finding_id = f.id ORDER BY p.label, p.id), ARRAY(SELECT fp.place_id FROM finding_places fp WHERE fp.finding_id = f.id ORDER BY fp.place_id) FROM findings f WHERE f.citekey IN (${citekeys
         .map(c => sql"$c")
         .joined(sql", ")}) ORDER BY f.citekey, f.id"
 
   /** Columns of [[com.histmersion.api.library.GeoHit]] — one map-feed row (a finding plus its source's title). */
   private val geoCols =
-    "f.citekey, s.title, f.claim, f.region_name, ST_X(f.geom), ST_Y(f.geom)," +
-      s" ${RangeSql.cols("f.period")}, f.confidence, f.significance, s.doi," +
-      // what the source is (core.SourceKinds), for the marker's icon: its venue, provenance, words, cover
-      " s.venue, s.source, s.tags, s.topics," +
-      " EXISTS (SELECT 1 FROM media_links m WHERE m.target_type = 'source' AND m.target_id = s.citekey" +
-      s" AND m.role = '${MediaRole.Cover}')"
+    // after the dates: what the source is (core.SourceKinds), for the marker's icon: its venue, provenance, words, and
+    // whether it has a cover (`m.role` is `MediaRole.Cover` word for word; FilterSqlSuite holds that)
+    sql"f.citekey, s.title, f.claim, f.region_name, ST_X(f.geom), ST_Y(f.geom), ${RangeSql.cols(sql"f.period")}, f.confidence, f.significance, s.doi, s.venue, s.source, s.tags, s.topics, EXISTS (SELECT 1 FROM media_links m WHERE m.target_type = 'source' AND m.target_id = s.citekey AND m.role = 'cover')"
 
   /** `GET /api/findings` — the MAP FEED: every finding that ITSELF satisfies the finding-level criteria
     * ([[findingWhere]]), belonging to a source that satisfies the source-level ones ([[sourceWhere]]). Ordered
     * oldest-first, with a deterministic tiebreak so paging is stable.
     */
   def findingsFeedQuery(f: Filter, scope: PlaceScope = PlaceScope.empty): Frag =
-    sql"SELECT ${SqlLiteral(geoCols)} FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE ${sourceWhere(f)} AND ${findingWhere(f, scope = scope)} ORDER BY ${SqlLiteral(RangeSql.start("f.period"))} NULLS LAST, f.citekey, f.id LIMIT ${f.limit.value.max(0)} OFFSET ${f.offset.value.max(0)}"
+    sql"SELECT $geoCols FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE ${sourceWhere(f)} AND ${findingWhere(f, scope = scope)} ORDER BY ${RangeSql.start(sql"f.period")} NULLS LAST, f.citekey, f.id LIMIT ${f.limit.value.max(0)} OFFSET ${f.offset.value.max(0)}"
 
   /** How many findings [[findingsFeedQuery]] would return without its `LIMIT` — the same WHERE, so a count and the map
     * feed can never disagree about which findings a filter selects.
@@ -397,21 +387,16 @@ object FilterSql:
     sql"SELECT (${countQuery(f, scope)}), (${findingsCountQuery(f, scope)}), (SELECT count(*)::int FROM articles a WHERE ${articleWhere(f, scope)}), (SELECT count(*)::int FROM events e WHERE ${eventWhere(f, scope)})"
 
   /** The set of values a facet dimension draws from, as a LATERAL sub-select correlated on `s`. */
-  def facetValues(field: Facet.Field): String = field match
+  def facetValues(field: Facet.Field): Frag = field match
     case Facet.Field.Tags =>
-      "SELECT x FROM unnest(s.tags) x" +
-        " UNION SELECT y FROM findings f, unnest(f.tags) y WHERE f.citekey = s.citekey"
-    case Facet.Field.Authors => "SELECT x FROM unnest(s.authors) x"
+      sql"SELECT x FROM unnest(s.tags) x UNION SELECT y FROM findings f, unnest(f.tags) y WHERE f.citekey = s.citekey"
+    case Facet.Field.Authors => sql"SELECT x FROM unnest(s.authors) x"
     case Facet.Field.Places  =>
       // author labels (wave 1) UNION the gazetteer labels the findings were materialised into (§1.6a)
-      "SELECT x FROM unnest(s.regions) x" +
-        " UNION SELECT f.region_name FROM findings f" +
-        " WHERE f.citekey = s.citekey AND f.region_name IS NOT NULL" +
-        " UNION SELECT p.label FROM findings f JOIN finding_places fp ON fp.finding_id = f.id" +
-        " JOIN places p ON p.id = fp.place_id WHERE f.citekey = s.citekey"
-    case Facet.Field.Topics     => "SELECT x FROM unnest(s.topics) x"
-    case Facet.Field.Status     => "SELECT s.status"
-    case Facet.Field.Provenance => "SELECT coalesce(s.source, 'unknown')"
+      sql"SELECT x FROM unnest(s.regions) x UNION SELECT f.region_name FROM findings f WHERE f.citekey = s.citekey AND f.region_name IS NOT NULL UNION SELECT p.label FROM findings f JOIN finding_places fp ON fp.finding_id = f.id JOIN places p ON p.id = fp.place_id WHERE f.citekey = s.citekey"
+    case Facet.Field.Topics     => sql"SELECT x FROM unnest(s.topics) x"
+    case Facet.Field.Status     => sql"SELECT s.status"
+    case Facet.Field.Provenance => sql"SELECT coalesce(s.source, 'unknown')"
 
   /** `(value, count(DISTINCT source))` for one dimension inside the current filter, most-used first. `prefix` is a
     * case-insensitive prefix match (for chip autocomplete).
@@ -431,23 +416,20 @@ object FilterSql:
     val pre = prefix.map(_.value.trim).filter(_.nonEmpty) match
       // matched as DISPLAYED: the UI shows `_` as a space (Fmt.display), so "bronze age" and
       // "bronze_age" both find `bronze_age_collapse`
-      case Some(p) => sql" AND replace(v, '_', ' ') ILIKE ${startsWith(p.replace('_', ' '))}${SqlLiteral(Esc)}"
+      case Some(p) => sql" AND replace(v, '_', ' ') ILIKE ${startsWith(p.replace('_', ' '))}$Esc"
       case None    => sql""
     // `places` additionally reports the gazetteer id behind a label (`lower(v)` IS the group key, so
     // the scalar sub-select is legal) — that is what lets a chip filter by id instead of by name.
     // (`min(lower(v))` rather than `lower(v)`: every row of the group has the same value, and an
     // aggregate is what makes the correlated sub-select legal under GROUP BY.) The two columns share
     // ONE definition and ONE ordering, so they always describe the same place.
-    def gazetteer(col: String) =
-      s"(SELECT $col FROM place_names pn JOIN places p ON p.id = pn.place_id" +
-        " WHERE lower(pn.name) = min(lower(v))" +
-        " ORDER BY (lower(p.label) = min(lower(v))) DESC, p.id LIMIT 1)"
+    def gazetteer(col: Frag) =
+      sql"(SELECT $col FROM place_names pn JOIN places p ON p.id = pn.place_id WHERE lower(pn.name) = min(lower(v)) ORDER BY (lower(p.label) = min(lower(v))) DESC, p.id LIMIT 1)"
     val idCol =
       if field == Facet.Field.Places then
-        s", ${gazetteer("pn.place_id")} AS place_id" +
-          s", coalesce(${gazetteer("(p.properties->>'contested')::boolean")}, false) AS contested"
-      else ", NULL::text AS place_id, FALSE AS contested"
-    sql"SELECT mode() WITHIN GROUP (ORDER BY v) AS value, count(DISTINCT s.citekey)::int AS count${SqlLiteral(idCol)} FROM sources s CROSS JOIN LATERAL (${SqlLiteral(facetValues(field))}) AS t(v) WHERE ${where(f, scope)} AND v IS NOT NULL AND v <> ''$pre GROUP BY lower(v) ORDER BY count(DISTINCT s.citekey) DESC, lower(v) ASC LIMIT ${limit.value.max(1)}"
+        sql", ${gazetteer(sql"pn.place_id")} AS place_id, coalesce(${gazetteer(sql"(p.properties->>'contested')::boolean")}, false) AS contested"
+      else sql", NULL::text AS place_id, FALSE AS contested"
+    sql"SELECT mode() WITHIN GROUP (ORDER BY v) AS value, count(DISTINCT s.citekey)::int AS count$idCol FROM sources s CROSS JOIN LATERAL (${facetValues(field)}) AS t(v) WHERE ${where(f, scope)} AND v IS NOT NULL AND v <> ''$pre GROUP BY lower(v) ORDER BY count(DISTINCT s.citekey) DESC, lower(v) ASC LIMIT ${limit.value.max(1)}"
 
   // ── pure match explanation ───────────────────────────────────────────────────────────────────
 

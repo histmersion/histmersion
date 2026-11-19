@@ -36,7 +36,7 @@ private[periods] object PeriodRepo:
       .map(_.toPeriod)
 
   def children(id: PeriodRow.Id)(using DbCon): Vector[HistoricalPeriod] =
-    sql"SELECT ${SqlLiteral(columns)} FROM periods WHERE parent_id = $id ORDER BY ${SqlLiteral(RangeSql.start("period"))}, label, id"
+    sql"SELECT ${SqlLiteral(columns)} FROM periods WHERE parent_id = $id ORDER BY ${RangeSql.start(sql"period")}, label, id"
       .query[PeriodRow]
       .run()
       .map(_.toPeriod)
@@ -61,7 +61,7 @@ private[periods] object PeriodRepo:
             AND ($reg::text IS NULL OR lower(region) = lower($reg))
             AND (($from::bigint IS NULL AND $to::bigint IS NULL)
                  OR period && int8range($from::bigint, $to::bigint, '[]'))
-          ORDER BY ${SqlLiteral(RangeSql.start("period"))}, label, id""".query[PeriodRow].run().map(_.toPeriod)
+          ORDER BY ${RangeSql.start(sql"period")}, label, id""".query[PeriodRow].run().map(_.toPeriod)
 
   def count(using DbCon): RowCount =
     RowCount(sql"SELECT count(*)::int FROM periods".query[Int].run().head)

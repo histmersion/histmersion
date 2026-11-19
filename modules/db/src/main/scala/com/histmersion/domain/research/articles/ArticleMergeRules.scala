@@ -2,6 +2,7 @@ package com.histmersion
 package domain.research.articles
 
 import com.histmersion.api.exchange.Bundle
+import com.augustnagro.magnum.{sql, Frag}
 
 import com.histmersion.domain.research.ResearchPlan
 import com.histmersion.util.data.DataOwner
@@ -14,6 +15,6 @@ object ArticleMergeRules extends MergeRules:
 
   val owner: DataOwner = DataOwner("research")
   val kind: Bundle.Kind = Bundle.Kind.Article
-  override val ledgerLabel: Option[String] = Some("SELECT slug FROM articles WHERE uid = l.local_uid")
+  override val ledgerLabel: Option[Frag] = Some(sql"SELECT slug FROM articles WHERE uid = l.local_uid")
   override val referable: Boolean = true
   override val planning: Option[PlanRules] = Some(ResearchPlan)

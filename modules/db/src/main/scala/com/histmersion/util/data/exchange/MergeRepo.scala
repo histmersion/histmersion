@@ -20,7 +20,7 @@ import com.histmersion.api.exchange.{
 }
 import com.histmersion.api.aliases.UidRedirect
 import com.histmersion.api.given
-import com.histmersion.util.database.Jsonb
+import com.histmersion.util.database.{Jsonb, Timestamps}
 import com.histmersion.util.database.given
 import com.histmersion.domain.MergePlanner
 import com.histmersion.domain.MergePlanner.Fold
@@ -32,6 +32,7 @@ import java.util.UUID
 import com.histmersion.api.Api
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.data.TableName
+import com.histmersion.util.database.Timestamps
 
 /** What a collection remembers of its merges (docs/research-merge-import.md §6.1, milestone M7):
   * `merge list | show | ledger` read `merges`, `merge_ledger`, `uid_aliases` and `merge_decisions`; the web review
@@ -51,10 +52,10 @@ object MergeRepo:
   type UidText = UidText.T
   object UidText extends Newtype[String, Pure]
 
-  private val ts = BundleSql.ts
-
   private val mergeCols =
-    s"""m.id, m.bundle_id, m.bundle_sha256, m.from_instance, m.from_label, ${ts("m.applied_at")}, m.plan_hash, m.backup,
+    sql"""m.id, m.bundle_id, m.bundle_sha256, m.from_instance, m.from_label, ${Timestamps.iso(
+        sql"m.applied_at"
+      )}, m.plan_hash, m.backup,
         (SELECT count(*)::int FROM merge_ledger l WHERE l.merge_id = m.id),
         (SELECT count(*)::int FROM uid_aliases u WHERE u.merge_id = m.id)"""
 
@@ -73,7 +74,7 @@ object MergeRepo:
 
   /** The merges, newest first. */
   def list(limit: PageSize)(using DbCon): List[MergeInfo] =
-    sql"SELECT ${SqlLiteral(mergeCols)} FROM merges m ORDER BY m.applied_at DESC, m.id DESC LIMIT ${math.max(1, limit.value)}"
+    sql"SELECT $mergeCols FROM merges m ORDER BY m.applied_at DESC, m.id DESC LIMIT ${math.max(1, limit.value)}"
       .query[MergeRow]
       .run()
       .toList
@@ -90,7 +91,7 @@ object MergeRepo:
         )
       )
     else
-      sql"SELECT ${SqlLiteral(mergeCols)} FROM merges m WHERE m.id::text LIKE ${p + "%"} ORDER BY m.applied_at DESC, m.id DESC LIMIT 2"
+      sql"SELECT $mergeCols FROM merges m WHERE m.id::text LIKE ${p + "%"} ORDER BY m.applied_at DESC, m.id DESC LIMIT 2"
         .query[MergeRow]
         .run()
         .toList match
@@ -149,8 +150,8 @@ object MergeRepo:
       DbCon
   ): Either[Api.Error, MergeLedger] =
     val label = rules.ledgerLabelSql
-    val select = s"""SELECT l.foreign_uid, l.kind, l.merge_id, l.foreign_rev, l.local_uid, $label, l.local_rev_after,
-                            l.decision, ${ts("l.recorded_at")} FROM merge_ledger l"""
+    val select = sql"""SELECT l.foreign_uid, l.kind, l.merge_id, l.foreign_rev, l.local_uid, $label, l.local_rev_after,
+                            l.decision, ${Timestamps.iso(sql"l.recorded_at")} FROM merge_ledger l"""
     def asUid(s: String): Option[UUID] = scala.util.Try(UUID.fromString(s.trim)).toOption
     val target: Either[Api.Error, Option[UUID]] = uid.map(_.value.trim).filter(_.nonEmpty) match
       case None    => Right(None)
@@ -176,13 +177,13 @@ object MergeRepo:
       val rows = (t, m) match
         case (Some(u), _) =>
           // the record's own row, and those of every bundle uid that redirects to it
-          sql"""${SqlLiteral(select)} WHERE l.foreign_uid = ${u.toString}::uuid OR l.local_uid = ${u.toString}::uuid
+          sql"""$select WHERE l.foreign_uid = ${u.toString}::uuid OR l.local_uid = ${u.toString}::uuid
                      OR l.foreign_uid IN (SELECT alias_uid FROM uid_aliases WHERE uid = ${u.toString}::uuid)
                      ORDER BY l.recorded_at DESC, l.foreign_uid LIMIT $n"""
         case (None, Some(mid)) =>
-          sql"${SqlLiteral(select)} WHERE l.merge_id = ${mid.toString}::uuid ORDER BY l.kind, l.foreign_uid LIMIT $n"
+          sql"$select WHERE l.merge_id = ${mid.toString}::uuid ORDER BY l.kind, l.foreign_uid LIMIT $n"
         case _ =>
-          sql"${SqlLiteral(select)} ORDER BY l.recorded_at DESC, l.foreign_uid LIMIT $n"
+          sql"$select ORDER BY l.recorded_at DESC, l.foreign_uid LIMIT $n"
       val entries = rows
         .query[LedgerRow]
         .run()
@@ -217,7 +218,7 @@ object MergeRepo:
   // ── the review screen's draft (V051) ──────────────────────────────────────────────────────────
 
   def session(bundle: BundleName)(using DbCon): MergeSession =
-    sql"SELECT resolutions::text, ${SqlLiteral(ts("updated_at"))} FROM merge_sessions WHERE bundle = $bundle"
+    sql"SELECT resolutions::text, ${Timestamps.iso(sql"updated_at")} FROM merge_sessions WHERE bundle = $bundle"
       .query[(String, String)]
       .run()
       .headOption

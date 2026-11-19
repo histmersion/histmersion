@@ -241,12 +241,12 @@ private[sources] object SourceRepo:
 
   def load(citekey: Citekey)(using DbCon): Option[Source] =
     sql"""SELECT citekey, title, authors, doi, year, venue, status, topics, regions, tags,
-                 ${SqlLiteral(RangeSql.cols("period"))}, summary, cited_by_count, influential_citations,
+                 ${RangeSql.cols(sql"period")}, summary, cited_by_count, influential_citations,
                  source, calibre_id, ocr_markdown, notes,
                  to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')
           FROM sources WHERE citekey = $citekey""".query[FullSourceRow].run().headOption.map { r =>
       val fs = sql"""SELECT id, claim, region_name, ST_X(geom), ST_Y(geom),
-                            ${SqlLiteral(RangeSql.cols("period"))}, period_name,
+                            ${RangeSql.cols(sql"period")}, period_name,
                             tags, confidence, significance
                      FROM findings WHERE citekey = $citekey ORDER BY id""".query[FindingIdRow].run()
       // the DOMAIN edge list is both tables: where an edge is stored is a storage concern, and a
@@ -626,14 +626,14 @@ private[sources] object SourceRepo:
 
   def get(citekey: Citekey)(using DbCon): Option[(Source.Detail, Vector[Finding.Row])] =
     val src = sql"""SELECT citekey, title, authors, year, venue, status, topics, regions, tags,
-                             ${SqlLiteral(RangeSql.cols("period"))},
+                             ${RangeSql.cols(sql"period")},
                              summary, doi, ocr_markdown, notes,
                              to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"'),
                              source, uid, origin
                       FROM sources WHERE citekey = $citekey""".query[Source.Detail].run().headOption
     src.map { r =>
       val fs = sql"""SELECT claim, region_name, ST_X(geom), ST_Y(geom),
-                              ${SqlLiteral(RangeSql.cols("period"))}, period_name,
+                              ${RangeSql.cols(sql"period")}, period_name,
                               tags, confidence, significance, uid
                        FROM findings WHERE citekey = $citekey ORDER BY id""".query[Finding.Row].run()
       (r, fs)

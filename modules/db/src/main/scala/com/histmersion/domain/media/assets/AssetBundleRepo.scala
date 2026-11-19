@@ -11,6 +11,7 @@ import com.augustnagro.magnum.*
 import java.util.UUID
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.Sha256
+import com.histmersion.util.database.Timestamps
 
 /** The figures as a bundle carries them (docs/research-merge-import.md §4): this collection's assets with their
   * source's uid, read out in uid order, the bytes of each one a blob — and written in by an import, the metadata of the
@@ -23,11 +24,11 @@ private[assets] object AssetBundleRepo:
   def assets(scope: BundleScope)(using DbCon): Vector[AssetBundleRow] =
     sql"""SELECT x.uid, x.origin, s.uid, x.name, x.mime, x.sha256, length(x.bytes)::bigint,
                        x.width, x.height, x.kind, x.caption, x.license, encode(ST_AsEWKB(x.geom), 'hex'),
-                       ${SqlLiteral(rangeCols("x.period"))}, ${SqlLiteral(ts("x.updated_at"))}
+                       ${rangeCols(sql"x.period")}, ${Timestamps.iso(sql"x.updated_at")}
                 FROM assets x JOIN sources s ON s.citekey = x.citekey WHERE ${where(
         scope,
-        "x.uid",
-        "x.updated_at"
+        sql"x.uid",
+        sql"x.updated_at"
       )} ORDER BY x.uid""".query[AssetBundleRow].run()
 
   def line(r: AssetBundleRow): Bundle.Asset =

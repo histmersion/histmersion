@@ -202,8 +202,8 @@ class SearchSqlSnapshotSuite extends munit.FunSuite:
       "rankExprCte" -> Search.rankExprCte(Search.RankExprCteQ("sea peoples")),
       "findingsQuery" -> FilterSql.findingsQuery(List(Citekey("zqa1990_a"), Citekey("zqb2001_b")))
     ).foreach((n, s) => out ++= s"## $n\n${render(s)}\n")
-    out ++= s"## orderBy\n${Sort.values.toList.map(s => s"${Sort.label(s)}: ${FilterSql.orderBy(s)}").mkString("\n")}\n"
-    out ++= s"## facetValues\n${Facet.Field.values.toList.map(f => s"${Facet.Field.label(f)}: ${FilterSql.facetValues(f)}").mkString("\n")}\n"
+    out ++= s"## orderBy\n${Sort.values.toList.map(s => s"${Sort.label(s)}: ${FilterSql.orderBy(s).sqlString}").mkString("\n")}\n"
+    out ++= s"## facetValues\n${Facet.Field.values.toList.map(f => s"${Facet.Field.label(f)}: ${FilterSql.facetValues(f).sqlString}").mkString("\n")}\n"
     out.result()
 
   test("the search's SQL, as recorded"):

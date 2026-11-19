@@ -17,6 +17,7 @@ import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.library.Citekey
 import com.histmersion.util.data.exchange.PlanQuestions
 import com.histmersion.domain.catalogue.Place
+import com.histmersion.util.database.Timestamps
 
 /** The places as a bundle carries them (docs/research-merge-import.md §4, §7.3): this collection's own places with
   * their names, parents, links and types, their old ids and the site types refined from outside — read out in a
@@ -38,23 +39,21 @@ private[places] object PlaceBundleRepo:
     */
 
   def places(scope: BundleScope, alsoIds: List[BPlaceRow.Id] = Nil)(using DbCon): Vector[Bundle.Place] =
-    val own = sql"p.dataset = 'local' AND ${where(scope, "p.uid", "p.updated_at")}"
+    val own = sql"p.dataset = 'local' AND ${where(scope, sql"p.uid", sql"p.updated_at")}"
     val sel = if alsoIds.isEmpty then own
     else sql"(($own) OR p.id = ANY(${alsoIds.distinct}::text[]))"
     val rows = sql"""SELECT p.uid, p.origin, p.id, p.label, p.kind, encode(ST_AsEWKB(p.geom), 'hex'),
-                       ${SqlLiteral(rangeCols("p.period"))}, p.source, p.properties::text, ${SqlLiteral(
-        ts("p.updated_at")
-      )}
+                       ${rangeCols(sql"p.period")}, p.source, p.properties::text, ${Timestamps.iso(sql"p.updated_at")}
                 FROM places p WHERE $sel ORDER BY p.uid""".query[BPlaceRow].run()
     val ids = rows.map(_.id).toList
     if ids.isEmpty then Vector.empty
     else
-      val names = sql"""SELECT place_id, name, lang, ${SqlLiteral(rangeCols("period"))} FROM place_names
+      val names = sql"""SELECT place_id, name, lang, ${rangeCols(sql"period")} FROM place_names
                         WHERE place_id = ANY($ids::text[]) AND import_source = '' ORDER BY place_id, name COLLATE "C", lang COLLATE "C", import_ref COLLATE "C""""
         .query[BPlaceNameRow]
         .run()
         .groupBy(n => BPlaceRow.Id(n.placeId.value))
-      val rels = sql"""SELECT child_id, parent_id, kind, ${SqlLiteral(rangeCols("period"))} FROM place_relations
+      val rels = sql"""SELECT child_id, parent_id, kind, ${rangeCols(sql"period")} FROM place_relations
                        WHERE child_id = ANY($ids::text[]) ORDER BY child_id, parent_id COLLATE "C", kind COLLATE "C""""
         .query[BPlaceRelRow]
         .run()
@@ -65,7 +64,7 @@ private[places] object PlaceBundleRepo:
           .query[(String, String, String, String)]
           .run()
           .groupBy(_._1)
-      val types = sql"""SELECT place_id, type_label, ${SqlLiteral(rangeCols("period"))}, citekey
+      val types = sql"""SELECT place_id, type_label, ${rangeCols(sql"period")}, citekey
                         FROM place_types WHERE place_id = ANY($ids::text[]) ORDER BY place_id, type_label COLLATE "C""""
         .query[BPlaceTypeRow]
         .run()
@@ -126,11 +125,11 @@ private[places] object PlaceBundleRepo:
     * place travels as the reference fingerprint, not as a row.
     */
   def placeAliases(scope: BundleScope)(using DbCon): Vector[Bundle.PlaceAlias] =
-    sql"""SELECT x.alias, p.uid, ${SqlLiteral(ts("x.created_at"))}
+    sql"""SELECT x.alias, p.uid, ${Timestamps.iso(sql"x.created_at")}
                 FROM place_aliases x JOIN places p ON p.id = x.place_id WHERE p.dataset = 'local' AND ${where(
         scope,
-        "p.uid",
-        "x.created_at"
+        sql"p.uid",
+        sql"x.created_at"
       )} ORDER BY x.alias COLLATE "C\""""
       .query[(String, UUID, String)]
       .run()
@@ -140,11 +139,11 @@ private[places] object PlaceBundleRepo:
     * and the places asked about with no answer (so the other side does not ask again).
     */
   def siteTypes(scope: BundleScope)(using DbCon): Vector[Bundle.SiteType] =
-    sql"""SELECT p.id, p.site_type, ${SqlLiteral(ts("p.site_type_checked_at"))} FROM places p
+    sql"""SELECT p.id, p.site_type, ${Timestamps.iso(sql"p.site_type_checked_at")} FROM places p
                 WHERE (p.site_type IS NOT NULL OR p.site_type_checked_at IS NOT NULL) AND ${where(
         scope,
-        "p.uid",
-        "p.site_type_checked_at"
+        sql"p.uid",
+        sql"p.site_type_checked_at"
       )} ORDER BY p.id COLLATE "C\""""
       .query[(String, Option[String], Option[String])]
       .run()
@@ -309,7 +308,7 @@ private[places] object PlaceBundleRepo:
     if w.es.siteTypes.nonEmpty then
       val placeHere = this.placeHere(w)
       val here =
-        sql"SELECT id, ${SqlLiteral(ts("site_type_checked_at"))} FROM places WHERE site_type_checked_at IS NOT NULL"
+        sql"SELECT id, ${Timestamps.iso(sql"site_type_checked_at")} FROM places WHERE site_type_checked_at IS NOT NULL"
           .query[(String, String)]
           .run()
           .toMap

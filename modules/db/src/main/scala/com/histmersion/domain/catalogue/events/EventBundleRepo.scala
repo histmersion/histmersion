@@ -21,6 +21,7 @@ import com.histmersion.util.data.exchange.PlanQuestions
 import com.histmersion.domain.catalogue.places.BPlaceRow
 import com.histmersion.api.catalogue.EventScale
 import com.histmersion.api.catalogue.EventSummary
+import com.histmersion.util.database.Timestamps
 
 /** The events as a bundle carries them (docs/research-merge-import.md §4, §7.3): the events with their datings, edges
   * and participants, their old ids, what the catalogues say about them and the corrections by hand — read out in a
@@ -33,11 +34,11 @@ private[events] object EventBundleRepo:
   // ── out ──────────────────────────────────────────────────────────────────────────────────────
 
   def events(scope: BundleScope)(using DbCon): Vector[Bundle.Event] =
-    val w = where(scope, "e.uid", "e.updated_at")
+    val w = where(scope, sql"e.uid", sql"e.updated_at")
     val rows = sql"""SELECT e.uid, e.origin, e.id, e.label, e.kind, e.not_before, e.begin_by,
                                   e.end_from, e.not_after, e.historicity, encode(ST_AsEWKB(e.geom), 'hex'),
-                                  e.place_id, p.uid, e.description, e.citekey, s.uid, ${SqlLiteral(
-        ts("e.updated_at")
+                                  e.place_id, p.uid, e.description, e.citekey, s.uid, ${Timestamps.iso(
+        sql"e.updated_at"
       )}, e.scale,
                                   e.catalogue, e.names, e.wikidata, e.central, e.plus_minus, e.dating_method
                            FROM events e LEFT JOIN events p ON p.id = e.parent_id
@@ -132,11 +133,11 @@ private[events] object EventBundleRepo:
 
   /** Old event ids and goal slugs (V053) of the events and goals in scope. */
   def eventAliases(scope: BundleScope)(using DbCon): Vector[Bundle.EventAlias] =
-    sql"""SELECT x.alias, e.uid, ${SqlLiteral(ts("x.created_at"))}
+    sql"""SELECT x.alias, e.uid, ${Timestamps.iso(sql"x.created_at")}
                 FROM event_aliases x JOIN events e ON e.id = x.event_id WHERE ${where(
         scope,
-        "e.uid",
-        "x.created_at"
+        sql"e.uid",
+        sql"x.created_at"
       )} ORDER BY x.alias COLLATE "C\""""
       .query[(String, UUID, String)]
       .run()
@@ -146,11 +147,11 @@ private[events] object EventBundleRepo:
   def eventCatalogue(scope: BundleScope)(using DbCon): Vector[Bundle.EventCatalogue] =
     sql"""SELECT e.uid, c.provider, c.provider_id, c.url, c.label, c.kind, c.not_before, c.begin_by,
                        c.end_from, c.not_after, c.lat, c.lon, c.vei, c.magnitude, c.deaths, c.historicity,
-                       c.record::text, ${SqlLiteral(ts("c.retrieved_at"))}
+                       c.record::text, ${Timestamps.iso(sql"c.retrieved_at")}
                 FROM event_catalogue c JOIN events e ON e.id = c.event_id WHERE ${where(
         scope,
-        "e.uid",
-        "c.retrieved_at"
+        sql"e.uid",
+        sql"c.retrieved_at"
       )} ORDER BY e.uid, c.provider COLLATE "C", c.provider_id COLLATE "C\"""".query[BCatalogueRow].run().map { r =>
       Bundle.EventCatalogue(
         r.eventUid,
@@ -178,14 +179,14 @@ private[events] object EventBundleRepo:
     * change and the last refresh.
     */
   def corrections(scope: BundleScope)(using DbCon): Vector[Bundle.Correction] =
-    val eventUid = "(SELECT x.uid FROM events x WHERE c.target_kind = 'event' AND x.id = c.target_id)"
-    sql"""SELECT c.target_kind, c.target_id, ${SqlLiteral(eventUid)}, c.field, c.value::text, c.upstream,
-                       c.upstream_value::text, c.upstream_now::text, c.status, ${SqlLiteral(ts("c.created_at"))},
-                       ${SqlLiteral(ts("c.updated_at"))}, ${SqlLiteral(ts("c.checked_at"))}
+    val eventUid = sql"(SELECT x.uid FROM events x WHERE c.target_kind = 'event' AND x.id = c.target_id)"
+    sql"""SELECT c.target_kind, c.target_id, $eventUid, c.field, c.value::text, c.upstream,
+                       c.upstream_value::text, c.upstream_now::text, c.status, ${Timestamps.iso(sql"c.created_at")},
+                       ${Timestamps.iso(sql"c.updated_at")}, ${Timestamps.iso(sql"c.checked_at")}
                 FROM corrections c WHERE ${where(
         scope,
         eventUid,
-        "greatest(c.updated_at, coalesce(c.checked_at, c.updated_at))"
+        sql"greatest(c.updated_at, coalesce(c.checked_at, c.updated_at))"
       )} ORDER BY c.target_kind COLLATE "C", c.target_id COLLATE "C", c.field COLLATE "C\""""
       .query[Bundle.Correction]
       .run()
@@ -312,7 +313,7 @@ private[events] object EventBundleRepo:
     val eventIds = eventIdsOf()
     import com.histmersion.api.exchange.Bundle.EventSets.newer
     if w.es.eventCatalogue.nonEmpty then
-      val here = sql"SELECT provider, provider_id, ${SqlLiteral(ts("retrieved_at"))} FROM event_catalogue"
+      val here = sql"SELECT provider, provider_id, ${Timestamps.iso(sql"retrieved_at")} FROM event_catalogue"
         .query[(String, String, Bundle.UpdatedAt)]
         .run()
         .map((p, i, at) => (p, i) -> at)
@@ -345,8 +346,9 @@ private[events] object EventBundleRepo:
     val placeHere = PlacesCarried.placeHere(w)
     import com.histmersion.api.exchange.Bundle.EventSets.newer
     if w.es.corrections.nonEmpty then
-      val clock = s"greatest(${ts("updated_at")}, coalesce(${ts("checked_at")}, ''))"
-      val here = sql"SELECT target_kind, target_id, field, ${SqlLiteral(clock)} FROM corrections"
+      val clock =
+        sql"greatest(${Timestamps.iso(sql"updated_at")}, coalesce(${Timestamps.iso(sql"checked_at")}, ''))"
+      val here = sql"SELECT target_kind, target_id, field, $clock FROM corrections"
         .query[(String, String, String, Bundle.UpdatedAt)]
         .run()
         .map((k, t, f, at) => (k, t, f) -> at)

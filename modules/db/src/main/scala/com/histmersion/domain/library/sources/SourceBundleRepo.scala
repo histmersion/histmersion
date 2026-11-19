@@ -38,6 +38,7 @@ import com.histmersion.api.library.Source
 import com.histmersion.domain.library.sources.referrers.SourceReferrers
 import com.histmersion.util.ocr.Chunker
 import com.histmersion.api.exchange.Bundle.uidEquality
+import com.histmersion.util.database.Timestamps
 
 /** The sources as a bundle carries them (docs/research-merge-import.md §4): each source with its findings, its edges in
   * and out, its parked edges, its old citekeys and its assessment, read out in a deterministic order (by uid; owned
@@ -49,23 +50,25 @@ private[sources] object SourceBundleRepo:
 
   def sources(scope: BundleScope)(using DbCon): Vector[BSourceRow] =
     sql"""SELECT s.uid, s.origin, s.citekey, s.title, s.authors, s.doi, s.year, s.venue, s.status,
-                       s.topics, s.regions, s.tags, ${SqlLiteral(rangeCols("s.period"))}, s.summary, s.notes, s.source,
+                       s.topics, s.regions, s.tags, ${rangeCols(sql"s.period")}, s.summary, s.notes, s.source,
                        s.cited_by_count, s.influential_citations, to_char(s.added_date, 'YYYY-MM-DD'),
                        encode(sha256(convert_to(s.ocr_markdown, 'UTF8')), 'hex'),
                        octet_length(convert_to(s.ocr_markdown, 'UTF8'))::bigint,
-                       nullif(lower(btrim(s.sha256)), ''), ${SqlLiteral(ts("s.updated_at"))},
+                       nullif(lower(btrim(s.sha256)), ''), ${Timestamps.iso(sql"s.updated_at")},
                        coalesce((SELECT array_agg(i.value ORDER BY i.value COLLATE "C") FROM source_identifiers i
                                  WHERE i.source_uid = s.uid AND i.scheme = 'isbn'), '{}'::text[])
-                FROM sources s WHERE ${where(scope, "s.uid", "s.updated_at")} ORDER BY s.uid""".query[BSourceRow].run()
+                FROM sources s WHERE ${where(scope, sql"s.uid", sql"s.updated_at")} ORDER BY s.uid"""
+      .query[BSourceRow]
+      .run()
 
   def findings(scope: BundleScope)(using DbCon): Vector[Bundle.Finding] =
     sql"""SELECT f.uid, f.origin, s.uid, f.id, f.claim, f.region_name, ST_X(f.geom), ST_Y(f.geom),
-                       ${SqlLiteral(rangeCols("f.period"))}, f.period_name, f.tags, f.confidence, f.significance,
-                       ${SqlLiteral(ts("f.updated_at"))}
+                       ${rangeCols(sql"f.period")}, f.period_name, f.tags, f.confidence, f.significance,
+                       ${Timestamps.iso(sql"f.updated_at")}
                 FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE ${where(
         scope,
-        "f.uid",
-        "f.updated_at"
+        sql"f.uid",
+        sql"f.updated_at"
       )} ORDER BY f.uid""".query[BFindingRow].run().map { r =>
       Bundle.Finding(
         r.uid,
@@ -94,8 +97,8 @@ private[sources] object SourceBundleRepo:
     sql"""SELECT a.uid, b.uid, e.kind FROM edges e
                 JOIN sources a ON a.citekey = e.src JOIN sources b ON b.citekey = e.dst WHERE ${where(
         scope,
-        "a.uid",
-        "a.updated_at"
+        sql"a.uid",
+        sql"a.updated_at"
       )} ORDER BY a.uid, b.uid, e.kind COLLATE "C\""""
       .query[(UUID, UUID, Bundle.Edge.Kind)]
       .run()
@@ -105,20 +108,20 @@ private[sources] object SourceBundleRepo:
     sql"""SELECT a.uid, u.dst, u.kind FROM unresolved_edges u
                 JOIN sources a ON a.citekey = u.src WHERE ${where(
         scope,
-        "a.uid",
-        "a.updated_at"
+        sql"a.uid",
+        sql"a.updated_at"
       )} ORDER BY a.uid, u.dst COLLATE "C", u.kind COLLATE "C\""""
       .query[(UUID, Bundle.UnresolvedEdge.Dst, Bundle.UnresolvedEdge.Kind)]
       .run()
       .map(Bundle.UnresolvedEdge.apply)
 
   def assessments(scope: BundleScope)(using DbCon): Vector[Bundle.Assessment] =
-    sql"""SELECT s.uid, ${SqlLiteral(ts("a.checked_at"))}, a.retracted, a.notices::text, a.cited_by,
+    sql"""SELECT s.uid, ${Timestamps.iso(sql"a.checked_at")}, a.retracted, a.notices::text, a.cited_by,
                        a.influential, a.verdict
                 FROM assessments a JOIN sources s ON s.citekey = a.citekey WHERE ${where(
         scope,
-        "s.uid",
-        "a.checked_at"
+        sql"s.uid",
+        sql"a.checked_at"
       )} ORDER BY s.uid""".query[BAssessmentRow].run().map { r =>
       Bundle.Assessment(
         r.sourceUid,
@@ -132,11 +135,11 @@ private[sources] object SourceBundleRepo:
     }
 
   def aliases(scope: BundleScope)(using DbCon): Vector[Bundle.Alias] =
-    sql"""SELECT a.alias, s.uid, ${SqlLiteral(ts("a.created_at"))}
+    sql"""SELECT a.alias, s.uid, ${Timestamps.iso(sql"a.created_at")}
                 FROM source_aliases a JOIN sources s ON s.citekey = a.citekey WHERE ${where(
         scope,
-        "s.uid",
-        "a.created_at"
+        sql"s.uid",
+        sql"a.created_at"
       )} ORDER BY a.alias COLLATE "C\""""
       .query[(Bundle.Alias.Value, UUID, Bundle.Alias.CreatedAt)]
       .run()

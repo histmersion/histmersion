@@ -9,18 +9,16 @@ import com.augustnagro.magnum.*
 import java.time.Instant
 import com.histmersion.domain.automation.approvals.ApprovalQuery
 import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.util.database.{joined, Timestamps}
 
 /** The activity list in SQL: the jobs (agent runs among them), the worklog and a person's decisions as one relation,
   * filtered and cut into pages by the rules of [[ActivityRules]]. Takes the connection it runs on.
   */
 private[activity] object ActivityRepo:
 
-  private val Iso = """'YYYY-MM-DD"T"HH24:MI:SS.US"Z"'"""
-  private def iso(col: String) = s"to_char($col AT TIME ZONE 'UTC', $Iso)"
-
   /** Every entry, with its time as a timestamp (`t`) to filter and order by, and its key in byte order. */
-  private val Merged: String =
-    s"""(SELECT CASE WHEN j.kind = 'agent' THEN 'run' ELSE 'job' END AS kind, j.id AS rid, j.created_at AS t,
+  private val Merged: Frag =
+    sql"""(SELECT CASE WHEN j.kind = 'agent' THEN 'run' ELSE 'job' END AS kind, j.id AS rid, j.created_at AS t,
                 j.status AS state, coalesce(j.pipeline, j.kind) AS what, coalesce(j.progress, '') AS text, j.error,
                 CASE WHEN j.status IN ('running', 'queued', 'waiting', 'paused') THEN NULL ELSE j.updated_at END AS ended,
                 coalesce(j.goal_slug, CASE WHEN j.target_kind = 'goal' THEN j.target_id END) AS goal, j.id AS job,
@@ -47,26 +45,26 @@ private[activity] object ActivityRepo:
            FROM (SELECT * FROM approvals WHERE decided_at IS NOT NULL AND ${ApprovalQuery.decidedByExpr} = 'person') a
            LEFT JOIN jobs rj ON rj.id = a.job_id) m"""
 
-  private val Projection: String =
-    s"""SELECT kind || ':' || rid AS key, kind, ${iso("t")}, state, what, text, error, ${iso(
-        "ended"
+  private val Projection: Frag =
+    sql"""SELECT kind || ':' || rid AS key, kind, ${Timestamps.iso(sql"t")}, state, what, text, error, ${Timestamps.iso(
+        sql"ended"
       )}, goal, job, writer,
               citekey, article, queue_item, queue_list, approval, target, target_kind"""
 
-  private def showSql(show: Show): String = show match
-    case Show.Everything => "true"
-    case Show.Running    => s"kind IN ('run', 'job') AND state IN (${quoted(ActivityRules.RunningStates)})"
-    case Show.Agents     => "(kind = 'run' OR (kind = 'log' AND writer = 'agent'))"
-    case Show.Jobs       => "(kind = 'job' OR (kind = 'log' AND writer = 'job'))"
-    case Show.Yours      => "kind = 'decision'"
-    case Show.Problems   => s"kind IN ('run', 'job') AND state IN (${quoted(ActivityRules.ProblemStates)})"
+  private def showSql(show: Show): Frag = show match
+    case Show.Everything => sql"true"
+    case Show.Running    => sql"kind IN ('run', 'job') AND state IN (${listed(ActivityRules.RunningStates)})"
+    case Show.Agents     => sql"(kind = 'run' OR (kind = 'log' AND writer = 'agent'))"
+    case Show.Jobs       => sql"(kind = 'job' OR (kind = 'log' AND writer = 'job'))"
+    case Show.Yours      => sql"kind = 'decision'"
+    case Show.Problems   => sql"kind IN ('run', 'job') AND state IN (${listed(ActivityRules.ProblemStates)})"
 
-  // the rules' own constants, never a client's text
-  private def quoted(states: Set[Entry.State]): String =
-    states.toList.map(_.value).sorted.map(s => s"'$s'").mkString(", ")
+  /** The rules' own states, each bound through its codec, in their sorted order: `?, ?, …`. */
+  private def listed(states: Set[Entry.State]): Frag =
+    states.toList.sortBy(_.value).map(s => sql"$s").joined(sql", ")
 
   private def where(q: ActivityQuery): Frag =
-    sql" WHERE ${SqlLiteral(showSql(q.show))}${q.goal.fold(sql"")(g =>
+    sql" WHERE ${showSql(q.show)}${q.goal.fold(sql"")(g =>
         sql" AND goal = $g"
       )}${q.since.fold(sql"")(s => sql" AND t >= ${s.toString}::timestamptz")}${q.before.fold(sql"")(c =>
         sql""" AND (t < ${c.at.toString}::timestamptz OR (t = ${c.at.toString}::timestamptz AND (kind || ':' || rid) COLLATE "C" < ${c.key}))"""
@@ -74,7 +72,7 @@ private[activity] object ActivityRepo:
 
   /** One page of `q`, with the next page's cursor. */
   def page(q: ActivityQuery)(using DbCon): (List[Entry], Option[ActivityCursor.Wire]) =
-    val sql = sql"""${SqlLiteral(Projection)} FROM ${SqlLiteral(Merged)}${where(
+    val sql = sql"""$Projection FROM $Merged${where(
         q
       )} ORDER BY t DESC, (kind || ':' || rid) COLLATE "C" DESC LIMIT ${q.limit.value + 1}"""
     val rows = sql.query[ActivityRow].run().toList.map(_.entry)
@@ -83,9 +81,9 @@ private[activity] object ActivityRepo:
 
   /** The runs and jobs running now, and those started since `weekAgo` that failed. */
   def counts(weekAgo: Instant)(using DbCon): Activity.Counts =
-    val sql = sql"""SELECT count(*) FILTER (WHERE status IN (${SqlLiteral(quoted(ActivityRules.RunningStates))})),
-                                count(*) FILTER (WHERE status IN (${SqlLiteral(
-        quoted(ActivityRules.ProblemStates)
+    val sql = sql"""SELECT count(*) FILTER (WHERE status IN (${listed(ActivityRules.RunningStates)})),
+                                count(*) FILTER (WHERE status IN (${listed(
+        ActivityRules.ProblemStates
       )}) AND created_at >= ${weekAgo.toString}::timestamptz)
                          FROM jobs"""
     sql

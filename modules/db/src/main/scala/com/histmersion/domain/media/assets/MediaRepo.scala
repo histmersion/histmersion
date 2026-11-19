@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.media.assets
 
-import com.histmersion.util.database.RangeSql
+import com.histmersion.util.database.{literal, RangeSql}
 
 import com.histmersion.api.Api
 
@@ -430,7 +430,7 @@ private[assets] object MediaRepo:
              else sql"a.license = $l")
     )
     window.foreach((lo, hi) =>
-      ps += sql"${SqlLiteral(RangeSql.overlaps("a.period", s"${lo.value}::bigint", s"${hi.value}::bigint"))}"
+      ps += RangeSql.overlaps(sql"a.period", sql"${lo.literal}::bigint", sql"${hi.literal}::bigint")
     )
     val rest = ps.result().foldLeft(sql"")((acc, p) => sql"$acc AND $p")
     sql"SELECT a.uid::text AS key, ST_X(q.pt) AS lon, ST_Y(q.pt) AS lat, lower(a.period) AS ps, upper(a.period) - 1 AS pe, false AS ub FROM assets a CROSS JOIN LATERAL (SELECT CASE WHEN GeometryType(a.geom) = 'POINT' THEN a.geom ELSE ST_PointOnSurface(a.geom) END AS pt) q WHERE a.geom IS NOT NULL AND a.geom && $envelope$rest"

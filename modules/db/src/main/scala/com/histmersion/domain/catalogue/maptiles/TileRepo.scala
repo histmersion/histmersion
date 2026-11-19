@@ -147,7 +147,7 @@ private[maptiles] object TileRepo:
     // `ub`: a site of no known date the span shows by its findings or events — counted among the undated
     // sites too when they are asked for ([[UndatedSiteRepo]])
     val ub = if markUndated then "(lower_inf(p.period) AND upper_inf(p.period))" else "false"
-    sql"SELECT p.id AS key, ST_X(q.pt) AS lon, ST_Y(q.pt) AS lat, ${SqlLiteral(RangeSql.start("p.period"))} AS ps, ${SqlLiteral(RangeSql.end("p.period"))} AS pe, ${SqlLiteral(ub)} AS ub FROM places p CROSS JOIN LATERAL (SELECT CASE WHEN GeometryType(p.geom) = 'POINT' THEN p.geom ELSE ST_PointOnSurface(p.geom) END AS pt) q WHERE p.kind = '${SqlLiteral(Place.Kind.Site)}' AND p.geom IS NOT NULL AND NOT (coalesce(p.import_source, '') IN ${SqlLiteral(PlaceSql.ImportedList.value)} AND lower_inf(p.period) AND upper_inf(p.period)) AND p.geom && $envelope AND p.label !~* ${PlaceSql.UninformativeLabel} AND ${SqlLiteral(PlaceSql.inWindowSql("p", tw, Some(Place.Kind.Wire(Place.Kind.Site)), Some(modernFrom)))}${siteType
+    sql"SELECT p.id AS key, ST_X(q.pt) AS lon, ST_Y(q.pt) AS lat, ${RangeSql.start(sql"p.period")} AS ps, ${RangeSql.end(sql"p.period")} AS pe, ${SqlLiteral(ub)} AS ub FROM places p CROSS JOIN LATERAL (SELECT CASE WHEN GeometryType(p.geom) = 'POINT' THEN p.geom ELSE ST_PointOnSurface(p.geom) END AS pt) q WHERE p.kind = '${SqlLiteral(Place.Kind.Site)}' AND p.geom IS NOT NULL AND NOT (coalesce(p.import_source, '') IN ${SqlLiteral(PlaceSql.ImportedList.value)} AND lower_inf(p.period) AND upper_inf(p.period)) AND p.geom && $envelope AND p.label !~* ${PlaceSql.UninformativeLabel} AND ${SqlLiteral(PlaceSql.inWindowSql("p", tw, Some(Place.Kind.Wire(Place.Kind.Site)), Some(modernFrom)))}${siteType
         .map(_.value.trim.toLowerCase)
         .filter(_.nonEmpty)
         .fold(sql"")(t => sql" AND ${SqlLiteral(SiteTypesSql.expr("p"))} = $t")}"
@@ -156,7 +156,7 @@ private[maptiles] object TileRepo:
   def sitesOf(ids: List[SiteId])(using DbCon): Map[SiteId, SiteTile] =
     if ids.isEmpty then Map.empty
     else
-      sql"SELECT p.id, p.label, p.kind, ${SqlLiteral(SiteTypesSql.expr("p"))}, ${SqlLiteral(PlaceSql.timeBasisSql("p"))}, ${SqlLiteral(RangeSql.start("p.period"))}, ${SqlLiteral(RangeSql.end("p.period"))} FROM places p WHERE p.id = ANY($ids)"
+      sql"SELECT p.id, p.label, p.kind, ${SqlLiteral(SiteTypesSql.expr("p"))}, ${SqlLiteral(PlaceSql.timeBasisSql("p"))}, ${RangeSql.start(sql"p.period")}, ${RangeSql.end(sql"p.period")} FROM places p WHERE p.id = ANY($ids)"
         .query[(String, String, String, Option[String], String, Option[Long], Option[Long])]
         .run()
         .map((id, label, kind, t, basis, ps, pe) =>

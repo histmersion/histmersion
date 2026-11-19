@@ -7,6 +7,7 @@ import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.GoalFocus
+import com.histmersion.util.database.Timestamps
 
 /** The autopilot's focus (V098, docs/research-process-managers.md "As built: the focus"): one `goal_focus` row per goal
   * it touched or a person pinned (active now, since and why; when and why it last left; a person's pin and priority), a
@@ -14,9 +15,6 @@ import com.histmersion.domain.GoalFocus
   * themselves are in [[ManagerRepo]] (they are items).
   */
 object FocusRepo:
-
-  private val ts = """'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
-  private def at(col: String) = s"to_char($col AT TIME ZONE 'UTC', $ts)"
 
   /** A goal with what the focus recorded about it. */
   final case class GoalRow(
@@ -57,9 +55,11 @@ object FocusRepo:
     object LeftAt extends Newtype[String, Pure]
 
   def goals()(using DbCon): List[GoalRow] =
-    sql"""SELECT g.slug, g.title, g.parent_slug, g.status, ${SqlLiteral(at("g.created_at"))},
+    sql"""SELECT g.slug, g.title, g.parent_slug, g.status, ${Timestamps.isoSeconds(sql"g.created_at")},
                        coalesce(f.active, false), coalesce(f.pinned, false), coalesce(f.priority, 0),
-                       ${SqlLiteral(at("f.since"))}, f.why, ${SqlLiteral(at("f.left_at"))}, f.left_why
+                       ${Timestamps.isoSeconds(sql"f.since")}, f.why, ${Timestamps.isoSeconds(
+        sql"f.left_at"
+      )}, f.left_why
                 FROM goals g LEFT JOIN goal_focus f ON f.slug = g.slug ORDER BY g.slug"""
       .query[GoalRow]
       .run()

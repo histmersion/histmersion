@@ -15,6 +15,7 @@ import java.util.UUID
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.library.Citekey
 import com.histmersion.domain.catalogue.events.BEventRow
+import com.histmersion.util.database.Timestamps
 
 /** The evidence as a bundle carries it (docs/research-merge-import.md §4, §7.3): the attestations, the sources that
   * possibly discuss an event and when they were last computed — read out in a deterministic order, and written in by an
@@ -26,13 +27,13 @@ private[evidence] object EvidenceBundleRepo:
 
   def attestations(scope: BundleScope)(using DbCon): Vector[Bundle.Attestation] =
     sql"""SELECT t.uid, t.origin, s.uid, t.target_type, t.target_id,
-                       ${SqlLiteral(targetUid("t.target_type", "t.target_id"))}, t.quote, t.prefix, t.suffix,
+                       ${targetUid(sql"t.target_type", sql"t.target_id")}, t.quote, t.prefix, t.suffix,
                        t.char_start, t.char_end, t.chunk_ord, t.page, t.canvas, t.xywh, t.cts_urn, t.note,
-                       ${SqlLiteral(ts("t.created_at"))}, ${SqlLiteral(ts("t.updated_at"))}
+                       ${Timestamps.iso(sql"t.created_at")}, ${Timestamps.iso(sql"t.updated_at")}
                 FROM attestations t JOIN sources s ON s.citekey = t.citekey WHERE ${where(
         scope,
-        "t.uid",
-        "t.updated_at"
+        sql"t.uid",
+        sql"t.updated_at"
       )} ORDER BY t.uid"""
       .query[BAttestationFullRow]
       .run()
@@ -67,10 +68,10 @@ private[evidence] object EvidenceBundleRepo:
   def eventCandidates(scope: BundleScope)(using DbCon): Vector[Bundle.EventCandidate] =
     val w = scope match
       case BundleScope.Since(_) =>
-        sql"(c.status <> 'proposed' OR ${where(scope, "e.uid", "c.computed_at")})"
-      case _ => where(scope, "e.uid", "c.computed_at")
+        sql"(c.status <> 'proposed' OR ${where(scope, sql"e.uid", sql"c.computed_at")})"
+      case _ => where(scope, sql"e.uid", sql"c.computed_at")
     sql"""SELECT e.uid, s.uid, c.citekey, c.score, c.status, c.findings, c.passages::text, c.reasons,
-                       ${SqlLiteral(ts("c.computed_at"))}
+                       ${Timestamps.iso(sql"c.computed_at")}
                 FROM event_link_candidates c JOIN events e ON e.id = c.event_id
                 JOIN sources s ON s.citekey = c.citekey WHERE $w ORDER BY e.uid, s.uid"""
       .query[BCandidateRow]
@@ -91,11 +92,11 @@ private[evidence] object EvidenceBundleRepo:
 
   /** When the candidates of the events in scope were last computed (`event_link_checks`). */
   def eventChecks(scope: BundleScope)(using DbCon): Vector[Bundle.EventCheck] =
-    sql"""SELECT e.uid, ${SqlLiteral(ts("k.checked_at"))}
+    sql"""SELECT e.uid, ${Timestamps.iso(sql"k.checked_at")}
                 FROM event_link_checks k JOIN events e ON e.id = k.event_id WHERE ${where(
         scope,
-        "e.uid",
-        "k.checked_at"
+        sql"e.uid",
+        sql"k.checked_at"
       )} ORDER BY e.uid"""
       .query[(UUID, String)]
       .run()
@@ -118,7 +119,7 @@ private[evidence] object EvidenceBundleRepo:
     val eventIds = eventIdsOf()
     import com.histmersion.api.exchange.Bundle.EventSets.newer
     if w.es.eventCandidates.nonEmpty then
-      val here = sql"SELECT event_id, citekey, status, ${SqlLiteral(ts("computed_at"))} FROM event_link_candidates"
+      val here = sql"SELECT event_id, citekey, status, ${Timestamps.iso(sql"computed_at")} FROM event_link_candidates"
         .query[(String, String, String, String)]
         .run()
         .map((e, c, st, at) => (e, c) -> (st, at))
@@ -148,7 +149,7 @@ private[evidence] object EvidenceBundleRepo:
     val eventIds = eventIdsOf()
     import com.histmersion.api.exchange.Bundle.EventSets.newer
     if w.es.eventChecks.nonEmpty then
-      val here = sql"SELECT event_id, ${SqlLiteral(ts("checked_at"))} FROM event_link_checks"
+      val here = sql"SELECT event_id, ${Timestamps.iso(sql"checked_at")} FROM event_link_checks"
         .query[(String, String)]
         .run()
         .toMap

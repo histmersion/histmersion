@@ -107,11 +107,11 @@ private[places] object TreeRepo:
     * are caught wherever they come from.
     */
   def nodesQuery(ids: List[com.histmersion.domain.catalogue.Place.Id]): Frag =
-    sql"${closure(ids)} SELECT p.id, p.label, p.kind, ${SqlLiteral(RangeSql.cols("p.period"))}, coalesce((p.properties->>'contested')::boolean, false), coalesce((p.properties->>'withdrawn')::boolean, false) FROM places p JOIN up ON up.id = p.id"
+    sql"${closure(ids)} SELECT p.id, p.label, p.kind, ${RangeSql.cols(sql"p.period")}, coalesce((p.properties->>'contested')::boolean, false), coalesce((p.properties->>'withdrawn')::boolean, false) FROM places p JOIN up ON up.id = p.id"
 
   /** The `part_of` edges WITHIN the closure, each with its own validity. */
   def relationsQuery(ids: List[com.histmersion.domain.catalogue.Place.Id]): Frag =
-    sql"${closure(ids)} SELECT r.child_id, r.parent_id, r.kind, ${SqlLiteral(RangeSql.cols("r.period"))} FROM place_relations r WHERE r.child_id IN (SELECT id FROM up) AND r.parent_id IN (SELECT id FROM up)"
+    sql"${closure(ids)} SELECT r.child_id, r.parent_id, r.kind, ${RangeSql.cols(sql"r.period")} FROM place_relations r WHERE r.child_id IN (SELECT id FROM up) AND r.parent_id IN (SELECT id FROM up)"
 
   /** The gazetteer slice a tree's rows need: every place they were materialised into (`placeIds`) plus all its
     * ancestors, and the edges between them. Empty when nothing is located — no query is run then.

@@ -11,6 +11,7 @@ import com.augustnagro.magnum.*
 import io.scalaland.chimney.dsl.*
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.automation.Queue
+import com.histmersion.util.database.Timestamps
 
 /** What a bundle carries of the work lists: their items, read as the bundle's lines by uid, and the import's step that
   * writes them.
@@ -19,10 +20,10 @@ private[worklists] object QueueBundleRepo:
 
   def queue(scope: BundleScope)(using DbCon): Vector[Bundle.QueueItem] =
     sql"""SELECT q.uid, q.origin, q.list, q.text, q.topic, q.status, q.reason,
-                       ${SqlLiteral(ts("q.created_at"))}, ${SqlLiteral(ts("q.done_at"))}, ${SqlLiteral(
-        ts("q.updated_at")
+                       ${Timestamps.iso(sql"q.created_at")}, ${Timestamps.iso(sql"q.done_at")}, ${Timestamps.iso(
+        sql"q.updated_at"
       )}
-                FROM queue_items q WHERE ${where(scope, "q.uid", "q.updated_at")} ORDER BY q.uid"""
+                FROM queue_items q WHERE ${where(scope, sql"q.uid", sql"q.updated_at")} ORDER BY q.uid"""
       .query[BQueueRow]
       .run()
       .map { r =>

@@ -206,12 +206,12 @@ class FilterSqlSuite extends munit.FunSuite:
     assertEquals(FilterSql.startsWith("a_"), "a\\_%")
 
   test("sort orders are deterministic (citekey tiebreak) and cover every case"):
-    Sort.values.foreach(s => assert(FilterSql.orderBy(s).endsWith(", s.citekey"), s.toString))
-    assertEquals(FilterSql.orderBy(Sort.Cited), "ORDER BY s.cited_by_count DESC NULLS LAST, s.citekey")
-    assertEquals(FilterSql.orderBy(Sort.PeriodStart), "ORDER BY lower(s.period) ASC NULLS LAST, s.citekey")
-    assertEquals(FilterSql.orderBy(Sort.Year), "ORDER BY s.year DESC NULLS LAST, s.citekey")
-    assertEquals(FilterSql.orderBy(Sort.Oldest), "ORDER BY s.year ASC NULLS LAST, s.citekey")
-    assertEquals(FilterSql.orderBy(Sort.Title), "ORDER BY lower(s.title) ASC, s.citekey")
+    Sort.values.foreach(s => assert(FilterSql.orderBy(s).sqlString.endsWith(", s.citekey"), s.toString))
+    assertEquals(FilterSql.orderBy(Sort.Cited).sqlString, "ORDER BY s.cited_by_count DESC NULLS LAST, s.citekey")
+    assertEquals(FilterSql.orderBy(Sort.PeriodStart).sqlString, "ORDER BY lower(s.period) ASC NULLS LAST, s.citekey")
+    assertEquals(FilterSql.orderBy(Sort.Year).sqlString, "ORDER BY s.year DESC NULLS LAST, s.citekey")
+    assertEquals(FilterSql.orderBy(Sort.Oldest).sqlString, "ORDER BY s.year ASC NULLS LAST, s.citekey")
+    assertEquals(FilterSql.orderBy(Sort.Title).sqlString, "ORDER BY lower(s.title) ASC, s.citekey")
 
   test("sourcesQuery with a text query uses a CTE for ranking, defers snippets"):
     val s = FilterSql.sourcesQuery(
@@ -295,11 +295,11 @@ class FilterSqlSuite extends munit.FunSuite:
     assert(ctePath.sqlString.contains("coalesce(bc.rank, 0)"), ctePath.sqlString)
     assert(!ctePath.sqlString.contains("source_chunks"), ctePath.sqlString)
     assertEquals(ctePath.params, List("collapse")) // one tsquery for ts_rank_cd on source
-    assertEquals(sent(FilterSql.orderBySql(Filter())), (FilterSql.orderBy(Sort.Relevance), Nil))
+    assertEquals(sent(FilterSql.orderBySql(Filter())), (FilterSql.orderBy(Sort.Relevance).sqlString, Nil))
     // an explicit sort always wins over relevance ranking
     assertEquals(
       sent(FilterSql.orderBySql(Filter(q = Some(Filter.Q("x")), sort = Sort.Title))),
-      (FilterSql.orderBy(Sort.Title), Nil)
+      (FilterSql.orderBy(Sort.Title).sqlString, Nil)
     )
 
   test("FilterSql.text trims the query and treats blank as absent"):
@@ -475,10 +475,14 @@ class FilterSqlSuite extends munit.FunSuite:
     assert(!n.sqlString.contains("LIMIT") && !n.sqlString.contains("ORDER BY"), n.sqlString)
     assertEquals(n.params, feed.params.dropRight(2))
 
+  test("the map feed's cover column names MediaRole.Cover word for word"):
+    val feed = FilterSql.findingsFeedQuery(Filter()).sqlString
+    assert(feed.contains(s"m.role = '${com.histmersion.api.media.MediaRole.Cover}')"), feed)
+
   test("facet dimensions: places and tags union the source and its findings"):
-    assert(FilterSql.facetValues(Facet.Field.Tags).contains("unnest(f.tags)"))
-    assert(FilterSql.facetValues(Facet.Field.Places).contains("f.region_name"))
-    assertEquals(FilterSql.facetValues(Facet.Field.Status), "SELECT s.status")
+    assert(FilterSql.facetValues(Facet.Field.Tags).sqlString.contains("unnest(f.tags)"))
+    assert(FilterSql.facetValues(Facet.Field.Places).sqlString.contains("f.region_name"))
+    assertEquals(FilterSql.facetValues(Facet.Field.Status).sqlString, "SELECT s.status")
 
   // ── pure match explanation ──────────────────────────────────────────────────────────────────
   // the columns arrive as `text[]` lists, so a value containing a comma still matches exactly

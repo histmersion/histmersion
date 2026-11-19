@@ -45,12 +45,10 @@ private[places] object Geocoder:
               SELECT id, true AS by_label, NULL::bigint AS nlo, NULL::bigint AS nhi
               FROM places WHERE histmersion_place_key(label) = $key
               UNION ALL
-              SELECT place_id, false, ${SqlLiteral(RangeSql.cols("period"))}
+              SELECT place_id, false, ${RangeSql.cols(sql"period")}
               FROM place_names WHERE histmersion_place_key(name) = $key)
             SELECT p.id, p.label, p.kind, bool_or(h.by_label),
-                   greatest(${SqlLiteral(RangeSql.start("p.period"))}, h.nlo), least(${SqlLiteral(
-          RangeSql.end("p.period")
-        )}, h.nhi),
+                   greatest(${RangeSql.start(sql"p.period")}, h.nlo), least(${RangeSql.end(sql"p.period")}, h.nhi),
                    ST_Dimension(p.geom), ST_Area(p.geom),
                    CASE WHEN ST_Dimension(p.geom) = 0
                         THEN (SELECT count(*)::int FROM places q WHERE q.geom && p.geom AND ST_Equals(q.geom, p.geom))

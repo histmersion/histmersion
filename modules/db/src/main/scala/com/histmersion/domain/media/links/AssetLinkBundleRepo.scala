@@ -9,6 +9,7 @@ import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
 import java.util.UUID
 import com.histmersion.api.exchange.Bundle
+import com.histmersion.util.database.Timestamps
 
 /** The figures' links as a bundle carries them: each with its figure's uid and its target's uid when the target is a
   * record — read out in uid order, and written in by an import once every figure is here, the target named by its label
@@ -18,13 +19,13 @@ private[links] object AssetLinkBundleRepo:
 
   def assetLinks(scope: BundleScope)(using DbCon): Vector[Bundle.AssetLink] =
     sql"""SELECT l.uid, l.origin, x.uid, l.relation, l.target_type, l.target_id,
-                       ${SqlLiteral(targetUid("l.target_type", "l.target_id"))}, l.xywh, l.notes, ${SqlLiteral(
-        ts("l.updated_at")
+                       ${targetUid(sql"l.target_type", sql"l.target_id")}, l.xywh, l.notes, ${Timestamps.iso(
+        sql"l.updated_at"
       )}
                 FROM asset_links l JOIN assets x ON x.citekey = l.citekey AND x.name = l.asset_name WHERE ${where(
         scope,
-        "l.uid",
-        "l.updated_at"
+        sql"l.uid",
+        sql"l.updated_at"
       )} ORDER BY l.uid"""
       .query[(UUID, UUID, UUID, String, String, String, Option[UUID], Option[String], Option[String], String)]
       .run()

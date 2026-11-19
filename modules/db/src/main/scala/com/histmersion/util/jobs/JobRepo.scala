@@ -112,7 +112,7 @@ object JobRepo:
     val where = status.map(_.value.trim.toLowerCase).filter(_.nonEmpty) match
       case Some(s) => sql" WHERE status = $s"
       case None    => sql""
-    val q = sql"$select$where${Keyset.orderBy("")} LIMIT ${math.max(1, limit.value)}"
+    val q = sql"$select$where${Keyset.orderBy(sql"")} LIMIT ${math.max(1, limit.value)}"
     (q.query[JobRow].run().map(toInfo))
 
   /** One page of the newest-first list ([[com.histmersion.api.Paging]]): `before` = only jobs older than that one,
@@ -142,7 +142,7 @@ object JobRepo:
 
   /** How many jobs are in each state — the whole table (one `GROUP BY` over the status index). */
   def stateCounts(using DbCon): List[(Keyset.State, RowCount)] =
-    Keyset.countsOn(sql" FROM jobs", "status")
+    Keyset.countsOn(sql" FROM jobs", sql"status")
 
   private def conds(q: JobQuery): ListSql.Conds =
     val text = q.q.fold(sql"") { t =>
@@ -151,9 +151,9 @@ object JobRepo:
     }
     ListSql.Conds(
       List(
-        "status" -> ListSql.anyOf("status", q.status.map(_.value)),
-        "kind" -> ListSql.anyOf("kind", q.kinds.map(_.value)),
-        "time" -> ListSql.between("created_at", q.since, q.until),
+        "status" -> ListSql.anyOf(sql"status", q.status.map(_.value)),
+        "kind" -> ListSql.anyOf(sql"kind", q.kinds.map(_.value)),
+        "time" -> ListSql.between(sql"created_at", q.since, q.until),
         "q" -> text
       )
     )
@@ -165,14 +165,13 @@ object JobRepo:
       before: Option[PageCursor],
       upTo: Option[PageCursor]
   )(using DbCon): Either[Problem, (Vector[JobInfo], Boolean)] =
-    (before.toList ++ upTo.toList).find(c => !Keyset.existsOn("jobs", c)) match
+    (before.toList ++ upTo.toList).find(c => !Keyset.existsOn(sql"jobs", c)) match
       case Some(c) => Left(Problem.NotFound.Entity(Problem.TypeName.of(Job.Id), Problem.Raw.of(c)))
       case None    =>
         val (rows, more) = Keyset.pageOn[JobRow, PageCursor, JobRow.Id](
           select,
           sql" WHERE true${conds(q).all}",
-          "",
-          "jobs",
+          Keyset.Table(sql"jobs"),
           limit,
           before,
           upTo,
@@ -188,7 +187,7 @@ object JobRepo:
   ): (List[(Keyset.State, RowCount)], List[(String, List[(String, RowCount)])]) =
     val c = conds(q)
     def from(except: String) = sql" FROM jobs WHERE true${c.except(except)}"
-    (Keyset.countsOn(from("status"), "status"), List("kind" -> ListSql.facetOn(from("kind"), "kind", facetMax)))
+    (Keyset.countsOn(from("status"), sql"status"), List("kind" -> ListSql.facetOn(from("kind"), sql"kind", facetMax)))
 
   /** Free-text progress on a `running` job — what the CLI's progress line prints. */
   def progress(id: Job.Id, text: JobRow.Progress)(using DbCon): Unit =

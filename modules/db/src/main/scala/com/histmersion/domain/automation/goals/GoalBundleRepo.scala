@@ -17,6 +17,7 @@ import com.histmersion.api.Api
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.util.data.exchange.PlanQuestions
 import com.histmersion.domain.automation.Goal
+import com.histmersion.util.database.Timestamps
 
 /** What a bundle carries of the goals (docs/research-merge-import.md §4), read as the bundle's lines in a deterministic
   * order (by uid; their links and schedules by their goal's uid, then their own key, in the "C" collation), and the
@@ -26,12 +27,12 @@ import com.histmersion.domain.automation.Goal
 private[goals] object GoalBundleRepo:
 
   def goals(scope: BundleScope)(using DbCon): Vector[Bundle.Goal] =
-    val w = where(scope, "g.uid", "g.updated_at")
+    val w = where(scope, sql"g.uid", sql"g.updated_at")
     val rows = sql"""SELECT g.uid, g.origin, g.slug, g.title, g.status, g.notes, g.tags, g.regions,
-                       ${SqlLiteral(rangeCols("g.period"))}, p.uid, ${SqlLiteral(ts("g.created_at"))}, ${SqlLiteral(
-        ts("g.updated_at")
+                       ${rangeCols(sql"g.period")}, p.uid, ${Timestamps.iso(sql"g.created_at")}, ${Timestamps.iso(
+        sql"g.updated_at"
       )},
-                       g.plan::text, ${SqlLiteral(ts("g.plan_approved_at"))}, g.budget_usd
+                       g.plan::text, ${Timestamps.iso(sql"g.plan_approved_at")}, g.budget_usd
                 FROM goals g LEFT JOIN goals p ON p.slug = g.parent_slug WHERE $w ORDER BY g.uid"""
       .query[BGoalRow]
       .run()
@@ -39,7 +40,7 @@ private[goals] object GoalBundleRepo:
     val links = sql"""SELECT g.uid, l.kind,
                         CASE l.kind WHEN 'queue-item' THEN coalesce(q.uid::text, l.ref) ELSE l.ref END,
                         CASE l.kind WHEN 'source' THEN s.uid WHEN 'article' THEN a.uid WHEN 'queue-item' THEN q.uid END,
-                        l.note, ${SqlLiteral(ts("l.created_at"))}
+                        l.note, ${Timestamps.iso(sql"l.created_at")}
                  FROM goal_links l JOIN goals g ON g.slug = l.goal_slug
                  LEFT JOIN sources s ON l.kind = 'source' AND s.citekey = l.ref
                  LEFT JOIN articles a ON l.kind = 'article' AND a.slug = l.ref
@@ -114,11 +115,11 @@ private[goals] object GoalBundleRepo:
     }
 
   def goalAliases(scope: BundleScope)(using DbCon): Vector[Bundle.GoalAlias] =
-    sql"""SELECT x.alias, g.uid, ${SqlLiteral(ts("x.created_at"))}
+    sql"""SELECT x.alias, g.uid, ${Timestamps.iso(sql"x.created_at")}
                 FROM goal_aliases x JOIN goals g ON g.slug = x.goal_slug WHERE ${where(
         scope,
-        "g.uid",
-        "x.created_at"
+        sql"g.uid",
+        sql"x.created_at"
       )} ORDER BY x.alias COLLATE "C\""""
       .query[(Bundle.GoalAlias.Alias, UUID, Bundle.GoalAlias.CreatedAt)]
       .run()

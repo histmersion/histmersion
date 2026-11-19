@@ -122,7 +122,7 @@ object GoalRepo:
           sql"UPDATE goals SET budget_usd = $usd, updated_at = now() WHERE slug = $slug".update.run()
         }
         // a bound given alone replaces that bound; the other stays as stored ([[RangeSql.merge]])
-        val storedRaw = sql"SELECT ${SqlLiteral(RangeSql.cols("period"))} FROM goals WHERE slug = $slug"
+        val storedRaw = sql"SELECT ${RangeSql.cols(sql"period")} FROM goals WHERE slug = $slug"
           .query[(Option[Long], Option[Long])]
           .run()
           .head

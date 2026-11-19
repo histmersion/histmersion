@@ -75,13 +75,13 @@ private[places] object PlaceReviewRepo:
     */
   def evidenceIn()(using DbCon): List[(Evidence, List[Candidate])] =
     val rows =
-      sql"SELECT p.id, p.label, p.kind, p.properties->>'feature_types', p.properties->>'time_periods', CASE WHEN p.start_unknown THEN NULL ELSE ${SqlLiteral(RangeSql.start("p.period"))} END, ${SqlLiteral(RangeSql.end("p.period"))} FROM places p WHERE ${SqlLiteral(reviewedSql)} ORDER BY p.id"
+      sql"SELECT p.id, p.label, p.kind, p.properties->>'feature_types', p.properties->>'time_periods', CASE WHEN p.start_unknown THEN NULL ELSE ${RangeSql.start(sql"p.period")} END, ${RangeSql.end(sql"p.period")} FROM places p WHERE ${SqlLiteral(reviewedSql)} ORDER BY p.id"
         .query[Row]
         .run()
         .toList
     val ids = rows.map(_.id)
     val items = sql"""SELECT place_id, scheme || ':' || external_id, item_class,
-                             ${SqlLiteral(RangeSql.cols("item_period"))}
+                             ${RangeSql.cols(sql"item_period")}
                       FROM place_links WHERE place_id = ANY($ids::text[]) AND item_class IS NOT NULL
                       ORDER BY place_id, scheme, external_id""".query[ItemRow].run().toList.groupBy(_.placeId)
     val descs = sql"""SELECT place_id, text FROM place_descriptions

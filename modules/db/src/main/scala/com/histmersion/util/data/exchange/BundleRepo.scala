@@ -14,6 +14,7 @@ import com.histmersion.util.database.given
 import com.histmersion.api.aliases.InstanceInfo
 import com.histmersion.util.data.exchange.Bundle
 import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.util.database.Timestamps
 
 given DbCodec[InstanceInfo] = DbCodec.derived
 
@@ -25,7 +26,7 @@ object BundleRepo:
   // ── this instance ──────────────────────────────────────────────────────────────────────────
 
   def instance(using DbCon): InstanceInfo =
-    sql"SELECT id, label, ${SqlLiteral(ts("created_at"))} FROM instance".query[InstanceInfo].run().head
+    sql"SELECT id, label, ${Timestamps.iso(sql"created_at")} FROM instance".query[InstanceInfo].run().head
 
   /** Name this instance; a blank label clears it. */
   def setLabel(label: Option[InstanceInfo.Label])(using DbCon): InstanceInfo =

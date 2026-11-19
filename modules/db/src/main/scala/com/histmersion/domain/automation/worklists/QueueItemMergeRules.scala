@@ -2,6 +2,7 @@ package com.histmersion
 package domain.automation.worklists
 
 import com.histmersion.api.exchange.Bundle
+import com.augustnagro.magnum.{sql, Frag}
 
 import com.histmersion.util.data.DataOwner
 import com.histmersion.util.data.exchange.MergeRules
@@ -11,4 +12,4 @@ object QueueItemMergeRules extends MergeRules:
 
   val owner: DataOwner = DataOwner("automation")
   val kind: Bundle.Kind = Bundle.Kind.QueueItem
-  override val ledgerLabel: Option[String] = Some("SELECT left(text, 60) FROM queue_items WHERE uid = l.local_uid")
+  override val ledgerLabel: Option[Frag] = Some(sql"SELECT left(text, 60) FROM queue_items WHERE uid = l.local_uid")

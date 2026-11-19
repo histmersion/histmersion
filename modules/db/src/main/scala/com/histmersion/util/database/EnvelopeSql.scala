@@ -2,15 +2,15 @@ package com.histmersion
 package util.database
 
 import com.histmersion.api.BBox
-import com.augustnagro.magnum.{sql, Frag, SqlLiteral}
+import com.augustnagro.magnum.{sql, Frag}
 
 /** The PostGIS predicate for a viewport over a geometry column. A box with `minLon > maxLon` crosses the antimeridian
   * and becomes two envelopes OR'ed together (`minLon…180` and `-180…maxLon`).
   */
 object EnvelopeSql:
-  def envelopes(geom: String, b: BBox): Frag =
+  def envelopes(geom: Frag, b: BBox): Frag =
     def env(minLon: Double, minLat: Double, maxLon: Double, maxLat: Double) =
-      sql"${SqlLiteral(geom)} && ST_MakeEnvelope($minLon, $minLat, $maxLon, $maxLat, 4326)"
+      sql"$geom && ST_MakeEnvelope($minLon, $minLat, $maxLon, $maxLat, 4326)"
     if b.crossesAntimeridian then
       val both = List(
         env(b.minLon.value, b.minLat.value, 180.0, b.maxLat.value),

@@ -5,6 +5,7 @@ import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Managers
+import com.histmersion.util.database.Timestamps
 
 /** The autopilot's one row (V096, docs/research-process-managers.md "As built: the autopilot"): the switch, who turned
   * it and when, the managers it paused when it was turned off, and when it last ensured the goals' managers and ran its
@@ -22,9 +23,6 @@ object AutopilotRepo:
   object DrainSince extends Newtype[String, Pure]
   type DrainedAt = DrainedAt.T
   object DrainedAt extends Newtype[String, Pure]
-
-  private val ts = """'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
-  private def at(col: String) = s"to_char($col AT TIME ZONE 'UTC', $ts)"
 
   /** The row as read. Times are ISO instants (UTC). */
   final case class Row(
@@ -57,11 +55,11 @@ object AutopilotRepo:
     * changed now by nobody, nothing paused, nothing done yet — and nothing is written.
     */
   def get()(using DbCon): Row =
-    sql"""SELECT coalesce(a.enabled, false), ${SqlLiteral(at("coalesce(a.changed_at, now())"))},
-                       coalesce(a.changed_by, ''), coalesce(a.paused, '{}'::text[]), ${SqlLiteral(
-        at("a.last_ensure_at")
+    sql"""SELECT coalesce(a.enabled, false), ${Timestamps.isoSeconds(sql"coalesce(a.changed_at, now())")},
+                       coalesce(a.changed_by, ''), coalesce(a.paused, '{}'::text[]), ${Timestamps.isoSeconds(
+        sql"a.last_ensure_at"
       )},
-                       ${SqlLiteral(at("a.last_backup_at"))}, ${SqlLiteral(at("a.last_lint_at"))}
+                       ${Timestamps.isoSeconds(sql"a.last_backup_at")}, ${Timestamps.isoSeconds(sql"a.last_lint_at")}
                        FROM (VALUES (true)) AS one (id) LEFT JOIN agent_autopilot a ON a.id"""
       .query[Row]
       .run()
@@ -108,7 +106,9 @@ object AutopilotRepo:
 
   /** The scheduler's strategy a person chose (V100): (name, by, at); None = agents.scheduler.strategy. */
   def strategy()(using DbCon): Option[(StrategyName, Row.ChangedBy, Row.ChangedAt)] =
-    sql"""SELECT scheduler_strategy, coalesce(scheduler_by, ''), coalesce(${SqlLiteral(at("scheduler_at"))}, '')
+    sql"""SELECT scheduler_strategy, coalesce(scheduler_by, ''), coalesce(${Timestamps.isoSeconds(
+        sql"scheduler_at"
+      )}, '')
                 FROM agent_autopilot WHERE id AND scheduler_strategy IS NOT NULL"""
       .query[(StrategyName, Row.ChangedBy, Row.ChangedAt)]
       .run()
@@ -123,7 +123,7 @@ object AutopilotRepo:
 
   /** When the daily approval digest was last written (V101), if ever. */
   def lastDigest()(using DbCon): Option[Digest] =
-    sql"SELECT ${SqlLiteral(at("last_digest_at"))} FROM agent_autopilot WHERE id"
+    sql"SELECT ${Timestamps.isoSeconds(sql"last_digest_at")} FROM agent_autopilot WHERE id"
       .query[Option[Digest]]
       .run()
       .headOption
@@ -137,7 +137,9 @@ object AutopilotRepo:
 
   /** Draining (V102): since when, by whom, and when it was first seen drained; None = not draining. */
   def drain()(using DbCon): Option[(DrainSince, Row.ChangedBy, Option[DrainedAt])] =
-    sql"""SELECT ${SqlLiteral(at("drain_since"))}, coalesce(drain_by, ''), ${SqlLiteral(at("drained_at"))}
+    sql"""SELECT ${Timestamps.isoSeconds(sql"drain_since")}, coalesce(drain_by, ''), ${Timestamps.isoSeconds(
+        sql"drained_at"
+      )}
                 FROM agent_autopilot WHERE id AND drain_since IS NOT NULL"""
       .query[(DrainSince, Row.ChangedBy, Option[DrainedAt])]
       .run()

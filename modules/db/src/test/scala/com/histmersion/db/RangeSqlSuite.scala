@@ -51,10 +51,17 @@ class RangeSqlSuite extends DbSuite:
     assertEquals(RangeSql.literalOf(None), None)
 
   test("the SQL spellings: inclusive reads, a range of inclusive bounds, an inclusive overlap"):
-    assertEquals(RangeSql.cols("f.period"), "lower(f.period), upper(f.period) - 1")
-    assertEquals(RangeSql.cols("f.period", "p0", "p1"), "lower(f.period) AS p0, upper(f.period) - 1 AS p1")
-    assertEquals(RangeSql.range("d.lo", "d.hi"), "int8range(d.lo, d.hi + 1, '[)')")
-    val o = RangeSql.overlaps("s.period", Period(Year(-10), Year(10)))
+    assertEquals(RangeSql.cols(sql"f.period").sqlString, "lower(f.period), upper(f.period) - 1")
+    assertEquals(
+      RangeSql.cols(sql"f.period", sql"p0", sql"p1").sqlString,
+      "lower(f.period) AS p0, upper(f.period) - 1 AS p1"
+    )
+    assertEquals(RangeSql.range(sql"d.lo", sql"d.hi").sqlString, "int8range(d.lo, d.hi + 1, '[)')")
+    assertEquals(
+      RangeSql.overlaps(sql"f.period", sql"-5::bigint", sql"5::bigint").sqlString,
+      "f.period && int8range(-5::bigint, 5::bigint, '[]')"
+    )
+    val o = RangeSql.overlaps(sql"s.period", Period(Year(-10), Year(10)))
     assertEquals(o.sqlString, "s.period && int8range(?::bigint, ?::bigint, '[]')")
     assertEquals(o.params, List(-10L, 10L))
 

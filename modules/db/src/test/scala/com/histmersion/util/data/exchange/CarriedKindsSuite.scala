@@ -77,10 +77,12 @@ class CarriedKindsSuite extends munit.FunSuite:
 
   test("merge rules: the ledger names the records of every kind it has a label for; lines point at five kinds"):
     val rules = TestExchange.rules
-    List("source", "finding", "article", "asset", "event", "goal", "place", "period", "queue-item").foreach { k =>
-      assert(rules.ledgerLabelSql.contains(s"WHEN '$k' THEN ("), k)
-    }
-    assert(rules.ledgerLabelSql.startsWith("CASE l.kind WHEN") && rules.ledgerLabelSql.endsWith(" END"))
+    val label = rules.ledgerLabelSql
+    val kindsNamed = List("source", "finding", "article", "asset", "event", "goal", "place", "period", "queue-item")
+    // each kind bound through its codec, one `WHEN ? THEN (…)` per kind, in the parameters' order
+    kindsNamed.foreach(k => assert(label.params.map(_.toString).contains(k), k))
+    assertEquals(label.sqlString.split("WHEN \\? THEN \\(", -1).length - 1, label.params.size)
+    assert(label.sqlString.startsWith("CASE l.kind WHEN") && label.sqlString.endsWith(" END"))
     assertEquals(
       rules.referableTables(kinds).map(_.value).sorted,
       List("articles", "assets", "events", "goals", "sources")

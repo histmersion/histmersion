@@ -7,7 +7,7 @@ import com.histmersion.domain.*
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.Api
 import com.histmersion.api.catalogue.Year
-import com.augustnagro.magnum.{sql, Frag, SqlLiteral}
+import com.augustnagro.magnum.{sql, Frag}
 import com.histmersion.util.database.NewtypeColumns.given
 
 /** The ONE spelling of a deep-time `int8range` column in SQL (#1798 item 9): how its inclusive bounds are read, how
@@ -19,40 +19,43 @@ import com.histmersion.util.database.NewtypeColumns.given
   */
 object RangeSql:
 
+  export DeepTime.{SignedYear as LiteralEnd, SignedYear as LiteralStart}
+
   /** `lower(col)` — the inclusive start of an `int8range` column; NULL when that side is open (Postgres reads an
     * infinite bound as NULL), or the column is NULL or empty.
     */
-  type StartCol = String
-  type ColsCol = String
-  export DeepTime.{SignedYear as LiteralEnd, SignedYear as LiteralStart}
-
-  def start(col: StartCol): String = s"lower($col)"
+  def start(col: Frag): Frag = sql"lower($col)"
 
   /** `upper(col) - 1` — the inclusive end (the stored bound is exclusive); NULL when that side is open. */
-  def end(col: String): String = s"upper($col) - 1"
+  def end(col: Frag): Frag = sql"upper($col) - 1"
 
   /** `lower(col), upper(col) - 1` — the inclusive bounds of an `int8range` column, in that order. */
-  def cols(col: ColsCol): String = s"${start(col)}, ${end(col)}"
+  def cols(col: Frag): Frag = sql"${start(col)}, ${end(col)}"
 
   /** The same, each named: `lower(col) AS a, upper(col) - 1 AS b`. */
-  def cols(col: ColsCol, startAs: String, endAs: String): String = s"${start(col)} AS $startAs, ${end(col)} AS $endAs"
+  def cols(col: Frag, startAs: Frag, endAs: Frag): Frag = sql"${start(col)} AS $startAs, ${end(col)} AS $endAs"
 
-  /** `int8range(lo, hi + 1, '[)')` — the range of two INCLUSIVE bounds given as SQL expressions (columns, `?::bigint`);
-    * a NULL bound is an open side.
+  /** `int8range(lo, hi + 1, '[)')` — the range of two INCLUSIVE bounds given as SQL expressions (columns, a bound
+    * parameter); a NULL bound is an open side.
     */
-  def range(lo: String, hi: String): String = range(sql"${SqlLiteral(lo)}", sql"${SqlLiteral(hi)}").sqlString
-
-  /** [[range]] of two SQL expressions as fragments (a column, a bound parameter). */
   def range(lo: Frag, hi: Frag): Frag = sql"int8range($lo, $hi + 1, '[)')"
 
   /** `col && int8range(lo, hi, '[]')` — the column overlaps the inclusive window `[lo, hi]` given as SQL expressions.
     * The Scala twin is `FilterSql.overlaps`.
     */
-  def overlaps(col: String, lo: String, hi: String): String = s"$col && int8range($lo, $hi, '[]')"
+  def overlaps(col: Frag, lo: Frag, hi: Frag): Frag = sql"$col && int8range($lo, $hi, '[]')"
 
   /** [[overlaps]] with the window bound as two parameters. */
-  def overlaps(col: String, p: Period): Frag =
-    sql"${SqlLiteral(col)} && int8range(${p.start}::bigint, ${p.end}::bigint, '[]')"
+  def overlaps(col: Frag, p: Period): Frag =
+    sql"$col && int8range(${p.start}::bigint, ${p.end}::bigint, '[]')"
+
+  // TEMPORARY (G58 slice 2): the text forms, until their last callers build fragments.
+  def start(col: String): String = s"lower($col)"
+  def end(col: String): String = s"upper($col) - 1"
+  def cols(col: String): String = s"${start(col)}, ${end(col)}"
+  def cols(col: String, startAs: String, endAs: String): String = s"${start(col)} AS $startAs, ${end(col)} AS $endAs"
+  def range(lo: String, hi: String): String = s"int8range($lo, $hi + 1, '[)')"
+  def overlaps(col: String, lo: String, hi: String): String = s"$col && int8range($lo, $hi, '[]')"
 
   /** The `int8range` literal of optional inclusive bounds — `[-1200,-999)`, `[-1200,)`, `(,-999)`, and `(,)` (every
     * year) when neither is given. Bind it as `${lit}::int8range`.

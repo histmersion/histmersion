@@ -58,20 +58,16 @@ private[evidence] object LeadRepo:
             SELECT f.id, f.citekey, f.claim,
                    ST_Distance(f.geom::geography, ev.pt::geography) / 1000.0,
                    CASE WHEN f.period && ev.span THEN 0
-                        ELSE greatest(${SqlLiteral(RangeSql.start("f.period"))} - (${SqlLiteral(
-        RangeSql.end("ev.span")
-      )}),
-                                      ${SqlLiteral(RangeSql.start("ev.span"))} - (${SqlLiteral(
-        RangeSql.end("f.period")
-      )})) END,
-                   ${SqlLiteral(RangeSql.cols("f.period"))}
+                        ELSE greatest(${RangeSql.start(sql"f.period")} - (${RangeSql.end(sql"ev.span")}),
+                                      ${RangeSql.start(sql"ev.span")} - (${RangeSql.end(sql"f.period")})) END,
+                   ${RangeSql.cols(sql"f.period")}
             FROM ev JOIN findings f
               ON f.geom IS NOT NULL AND ev.pt IS NOT NULL AND ev.span IS NOT NULL
              AND NOT lower_inf(f.period) AND NOT upper_inf(f.period)
              AND f.geom && ${SqlLiteral(EventSql.boxAround(EventSql.Point("ev.pt"), km))}
              AND ST_DWithin(f.geom::geography, ev.pt::geography, ${km.value * 1000.0})
-             AND f.period && int8range(${SqlLiteral(RangeSql.start("ev.span"))} - $years, ${SqlLiteral(
-        RangeSql.end("ev.span")
+             AND f.period && int8range(${RangeSql.start(sql"ev.span")} - $years, ${RangeSql.end(
+        sql"ev.span"
       )} + $years, '[]')
             ORDER BY 5, 4, f.id LIMIT $limit"""
       .query[NearFindingRow]
@@ -112,8 +108,8 @@ private[evidence] object LeadRepo:
                      AND NOT lower_inf(f.period) AND NOT upper_inf(f.period)
                      AND f.geom && ${SqlLiteral(EventSql.boxAround(EventSql.Point("a.pt"), km))}
                      AND ST_DWithin(f.geom::geography, a.pt::geography, ${km.value * 1000.0})
-                     AND f.period && int8range(${SqlLiteral(RangeSql.start("e.outer_span"))} - $years, ${SqlLiteral(
-        RangeSql.end("e.outer_span")
+                     AND f.period && int8range(${RangeSql.start(sql"e.outer_span")} - $years, ${RangeSql.end(
+        sql"e.outer_span"
       )} + $years, '[]')),
                  (SELECT count(*)::int FROM event_link_candidates k WHERE k.event_id = e.id AND k.status = 'proposed'),
                  (SELECT count(*)::int FROM event_link_candidates k WHERE k.event_id = e.id AND k.status = 'confirmed')

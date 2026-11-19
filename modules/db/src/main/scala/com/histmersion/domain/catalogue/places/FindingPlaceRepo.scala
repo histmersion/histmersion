@@ -346,7 +346,7 @@ private[places] object FindingPlaceRepo:
   private def byResolution(citekey: Option[Citekey], anyPlace: Boolean, pids: List[BPlaceRow.Id])(using
       DbCon
   ): RowCount =
-    val named = sql"""SELECT f.id, btrim(f.region_name), ${SqlLiteral(RangeSql.cols("f.period"))}
+    val named = sql"""SELECT f.id, btrim(f.region_name), ${RangeSql.cols(sql"f.period")}
                       FROM findings f
                       WHERE btrim(coalesce(f.region_name, '')) <> ''
                         AND ($citekey::text IS NULL OR f.citekey = $citekey::text)"""
