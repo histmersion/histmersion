@@ -13,8 +13,12 @@ import scala.jdk.CollectionConverters.*
   * The inventory is a Scalafix rule over the SemanticDB the normal compile writes (`semanticdbEnabled`), run through
   * scala-cli over every module, main and test. A count above the file fails, naming the new findings (path:line) of the
   * files changed since the file was last committed; a count below it fails too, until the file is regenerated with
-  * `HISTMERSION_UPDATE_ARCHITECTURE=1 sbt 'server/testOnly *GuidelineRatchetSuite'`, which writes the file when it is
-  * missing and otherwise refuses to write a count that rises.
+  * `HISTMERSION_UPDATE_ARCHITECTURE=1 sbt 'server/testOnly *GuidelineRatchetSuite'`, which writes falls only: it
+  * refuses a count that rises and a missing file (restored from git, never regenerated).
+  *
+  * The file's limits are the file at the merge base with the pilot ([[RatchetBase]]): a count, or a row of
+  * `architecture/boundaries.tsv` (the inventory's boundary files), above the base fails unless the owner's accept
+  * script accepted it, so a branch cannot raise a limit in the change that raises the count.
   */
 class GuidelineRatchetSuite extends munit.FunSuite:
   import GuidelineRatchetSuite.*
@@ -22,11 +26,14 @@ class GuidelineRatchetSuite extends munit.FunSuite:
   override val munitTimeout = scala.concurrent.duration.Duration(20, "min")
 
   test("no guideline count rises above architecture/guidelines-ratchet.tsv, and every lowered count is written down"):
+    assert(
+      Files.isRegularFile(RatchetFile),
+      s"$RatchetFile is missing: restore it from git (git checkout -- $RatchetFile); it is never regenerated, since a " +
+        "regenerated file would accept any count"
+    )
     val findings = Inventory.findings
     val actual = Ratchet.counts(findings)
-    val listed = if Files.isRegularFile(RatchetFile) then
-      Ratchet.parse(Files.readAllLines(RatchetFile, UTF_8).asScala.toList)
-    else Map.empty
+    val listed = Ratchet.parse(Files.readAllLines(RatchetFile, UTF_8).asScala.toList)
     val rises = Ratchet.rises(listed, actual)
     val drops = Ratchet.drops(listed, actual)
     def risen: String =
@@ -40,11 +47,12 @@ class GuidelineRatchetSuite extends munit.FunSuite:
         }
         .mkString("\n")
     if sys.env.get("HISTMERSION_UPDATE_ARCHITECTURE").contains("1") then
-      assert(
-        rises.isEmpty || !Files.isRegularFile(RatchetFile),
-        s"not regenerated: these counts rose (fix the new findings first)\n$risen"
-      )
-      val _ = Files.write(RatchetFile, Ratchet.render(actual).asJava, UTF_8)
+      assert(rises.isEmpty, s"not regenerated: these counts rose (fix the new findings first)\n$risen")
+      val rendered = Ratchet.render(actual)
+      RatchetBase.Spec.GuidelineRatchet.check(rendered, RatchetBase.Git(Path.of(".")), sys.env) match
+        case Left(why) => fail(s"not regenerated: $why")
+        case Right(_)  => ()
+      val _ = Files.write(RatchetFile, rendered.asJava, UTF_8)
     else
       assert(
         rises.isEmpty && drops.isEmpty,
@@ -57,6 +65,16 @@ class GuidelineRatchetSuite extends munit.FunSuite:
               .mkString("\n")
           )).mkString("\n")
       )
+
+  test(
+    "architecture/guidelines-ratchet.tsv and architecture/boundaries.tsv are no higher than at the merge base with " +
+      "the pilot, but for the owner's accepted rises"
+  ):
+    List(RatchetBase.Spec.GuidelineRatchet, RatchetBase.Spec.Boundaries).foreach { spec =>
+      spec.checkFile() match
+        case Left(why)   => fail(why)
+        case Right(used) => RatchetBase.announce(used).foreach(println)
+    }
 
   test("findings are counted per rule, module and scope"):
     val findings = List(

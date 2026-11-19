@@ -22,7 +22,9 @@ import scala.jdk.CollectionConverters.*
   * there yet; then its package (`com.histmersion.domain.<domain>.<feature>`, `com.histmersion.util.<area>`). The
   * violations that exist today are listed in `architecture/exceptions.tsv`; the list is exact both ways, so a new
   * violation fails and so does a row nothing violates any more. Each slice of the refactor removes rows and adds none;
-  * `HISTMERSION_UPDATE_ARCHITECTURE=1` rewrites the list from the sources.
+  * `HISTMERSION_UPDATE_ARCHITECTURE=1` rewrites the list from the sources, falls only: never a missing file, and never
+  * a row new or higher than the file at the merge base with the pilot ([[RatchetBase]]) that the owner's accept script
+  * did not accept.
   */
 class ArchitectureSuite extends munit.FunSuite:
   import ArchitectureSuite.*
@@ -58,16 +60,23 @@ class ArchitectureSuite extends munit.FunSuite:
   test("no violation but the listed exceptions, and every listed exception still exists"):
     val file = Resources.resolve("exceptions.tsv")
     val actual = violations.map(_.row).distinct.sorted
-    val listed =
-      if Files.isRegularFile(file) then Files.readAllLines(file, UTF_8).asScala.filterNot(_.startsWith("#")).toList
-      else Nil
+    assert(
+      Files.isRegularFile(file),
+      s"$file is missing: restore it from git (git checkout -- $file); it is never regenerated, since a regenerated " +
+        "file would accept any violation"
+    )
+    val listed = Files.readAllLines(file, UTF_8).asScala.filterNot(_.startsWith("#")).toList
     if sys.env.get("HISTMERSION_UPDATE_ARCHITECTURE").contains("1") then
       val risen = Ratchet.risenRules(listed, actual)
       assert(
-        risen.isEmpty || !Files.isRegularFile(file),
+        risen.isEmpty,
         s"not rewritten: these rules' totals rose (fix the new violations first): ${risen.mkString(", ")}"
       )
-      val _ = Files.write(file, Ratchet.exceptionsFile(actual).asJava, UTF_8)
+      val rewritten = Ratchet.exceptionsFile(actual)
+      RatchetBase.Spec.Exceptions.check(rewritten, RatchetBase.Git(Path.of(".")), sys.env) match
+        case Left(why) => fail(s"not rewritten: $why")
+        case Right(_)  => ()
+      val _ = Files.write(file, rewritten.asJava, UTF_8)
     else
       val added = actual.filterNot(listed.toSet)
       val gone = listed.filterNot(actual.toSet)
@@ -77,6 +86,11 @@ class ArchitectureSuite extends munit.FunSuite:
         (added.map(r => s"new violation at ${where(r)}: $r") ++
           gone.map(r => s"no longer violated — remove it from architecture/exceptions.tsv: $r")).mkString("\n")
       )
+
+  test("exceptions.tsv is no higher than at the merge base with the pilot, but for the owner's accepted rises"):
+    RatchetBase.Spec.Exceptions.checkFile() match
+      case Left(why)   => fail(why)
+      case Right(used) => RatchetBase.announce(used).foreach(println)
 
   test("a rewrite of a violation list may move rows but never raise a rule's total"):
     val listed = List("direction\ta:x.scala\tutil -> library: Source\t1", "filesystem\ta:y.scala\tFiles.*\t3")

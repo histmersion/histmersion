@@ -78,7 +78,9 @@ import com.histmersion.server.ArchitectureSuite.{Blank, SourceFile, Violation}
   *
   * The violations that exist today are listed in `architecture/contracts.tsv`, exact both ways (a new violation fails,
   * a row nothing violates any more fails, a count must match); each step of the refactor shrinks the list.
-  * `HISTMERSION_UPDATE_ARCHITECTURE=1` rewrites it from the sources.
+  * `HISTMERSION_UPDATE_ARCHITECTURE=1` rewrites it from the sources, falls only: never a missing file, and never a row
+  * new or higher than the file at the merge base with the pilot ([[RatchetBase]]) that the owner's accept script did
+  * not accept. The same base holds `total-order.tsv`: a reviewed row added or changed in the branch fails.
   */
 class ContractsSuite extends munit.FunSuite:
   import ContractsSuite.*
@@ -89,16 +91,22 @@ class ContractsSuite extends munit.FunSuite:
     val file = ArchitectureSuite.Resources.resolve("contracts.tsv")
     val violations = Rules.all(sources)
     val actual = violations.map(_.row).distinct.sorted
-    val listed =
-      if Files.isRegularFile(file) then Files.readAllLines(file, UTF_8).asScala.filterNot(_.startsWith("#")).toList
-      else Nil
+    assert(
+      Files.isRegularFile(file),
+      s"$file is missing: restore it from git (git checkout -- $file); it is never regenerated, since a regenerated " +
+        "file would accept any violation"
+    )
+    val listed = Files.readAllLines(file, UTF_8).asScala.filterNot(_.startsWith("#")).toList
     if sys.env.get("HISTMERSION_UPDATE_ARCHITECTURE").contains("1") then
       val risen = ArchitectureSuite.Ratchet.risenRules(listed, actual)
       assert(
-        risen.isEmpty || !Files.isRegularFile(file),
+        risen.isEmpty,
         s"not rewritten: these rules' totals rose (fix the new violations first): ${risen.mkString(", ")}"
       )
       val header = "# rule\tfile\tdetail\tcount — the known violations of AGENTS.md's rules 1–14; shrink, never grow"
+      RatchetBase.Spec.Contracts.check(header :: actual, RatchetBase.Git(Path.of(".")), sys.env) match
+        case Left(why) => fail(s"not rewritten: $why")
+        case Right(_)  => ()
       val _ = Files.write(file, (header :: actual).asJava, UTF_8)
     else
       val added = actual.filterNot(listed.toSet)
@@ -109,6 +117,16 @@ class ContractsSuite extends munit.FunSuite:
         (added.map(r => s"new violation at ${where(r)}: $r") ++
           gone.map(r => s"no longer violated — remove it from architecture/contracts.tsv: $r")).mkString("\n")
       )
+
+  test(
+    "contracts.tsv and total-order.tsv are no higher than at the merge base with the pilot, but for the owner's " +
+      "accepted rises"
+  ):
+    List(RatchetBase.Spec.Contracts, RatchetBase.Spec.TotalOrder).foreach { spec =>
+      spec.checkFile() match
+        case Left(why)   => fail(why)
+        case Right(used) => RatchetBase.announce(used).foreach(println)
+    }
 
   test("the scanner reads a signature across lines and skips private members"):
     val code =
