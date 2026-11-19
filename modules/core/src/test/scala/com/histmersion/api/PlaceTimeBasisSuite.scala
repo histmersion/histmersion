@@ -25,7 +25,7 @@ class PlaceTimeBasisSuite extends munit.FunSuite:
       imported: Boolean = false,
       undated: Boolean = false,
       geometry: Boolean = true
-  ) = com.histmersion.api.catalogue.Place.TimeBasis.of(kind, modern, imported, undated, geometry)
+  ) = api.catalogue.Place.TimeBasis.of(kind, modern, imported, undated, geometry)
 
   test("a dated place, also one whose unknown start is a stored window, is judged by its period"):
     assertEquals(of(OfKind(Place.Kind.Site)), Dated)
@@ -59,7 +59,7 @@ class PlaceTimeBasisSuite extends munit.FunSuite:
     assertEquals(of(OfKind(Place.Kind.People), imported = true, undated = true), Findings)
 
   test("visible: only what the basis allows"):
-    def vis(b: com.histmersion.api.catalogue.Place.TimeBasis, hi: VisibleEnd, overlaps: Boolean, evidence: Boolean) =
+    def vis(b: api.catalogue.Place.TimeBasis, hi: VisibleEnd, overlaps: Boolean, evidence: Boolean) =
       visible(b, hi, modernFrom = ModernFrom(1500), overlaps, evidence)
     assert(vis(Dated, VisibleEnd(-2500), overlaps = true, evidence = false))
     assert(!vis(Dated, VisibleEnd(-2500), overlaps = false, evidence = true), "a finding does not date a dated place")
@@ -79,21 +79,21 @@ class PlaceTimeBasisSuite extends munit.FunSuite:
     assertEquals(parse(Wire("sometimes")), None)
 
   test("a card at a time says a place is there by its findings; with no time, or dated, it says nothing"):
-    val p = com.histmersion.api.catalogue.Place.Summary(
-      com.histmersion.api.catalogue.Place.Id("x"),
-      com.histmersion.api.catalogue.Place.Summary.Label("Anatolia"),
-      com.histmersion.api.catalogue.Place.Summary.Kind(Place.Kind.Region),
+    val p = api.catalogue.Place.Summary(
+      api.catalogue.Place.Id("x"),
+      api.catalogue.Place.Summary.Label("Anatolia"),
+      api.catalogue.Place.Summary.Kind(Place.Kind.Region),
       None,
       None,
       None,
-      com.histmersion.api.catalogue.Place.Summary.Names("")
+      api.catalogue.Place.Summary.Names("")
     )
     val d = PlaceDetail(
       p,
       None,
       Nil,
       Nil,
-      com.histmersion.api.catalogue.Place.Counts.Findings(0),
+      api.catalogue.Place.Counts.Findings(0),
       Some(Year(-2500L)),
       timeBasis = Findings
     )

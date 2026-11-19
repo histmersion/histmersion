@@ -26,7 +26,7 @@ class PlaceGeoSuite extends DbSuite:
 
   test("an as-of query ranks sources and drops shadowed shapes; the limit comes last"):
     val q = PlaceFixtures.geoJsonQuery(
-      Some(com.histmersion.domain.catalogue.Place.Kind.Wire("Polity")),
+      Some(domain.catalogue.Place.Kind.Wire("Polity")),
       Some(DeepTime.SignedYear(-1900L)),
       PlaceFixtures.Limit(50)
     )
@@ -50,7 +50,7 @@ class PlaceGeoSuite extends DbSuite:
           .inTimeSql(
             sql"p",
             Some(DeepTime.SignedYear(-1900L)),
-            Some(com.histmersion.domain.catalogue.Place.Kind.Wire("polity"))
+            Some(domain.catalogue.Place.Kind.Wire("polity"))
           )
           .sqlString
       ),
@@ -70,7 +70,7 @@ class PlaceGeoSuite extends DbSuite:
   ):
     val timed = PlaceFixtures
       .geoJsonQuery(
-        Some(com.histmersion.domain.catalogue.Place.Kind.Wire("site")),
+        Some(domain.catalogue.Place.Kind.Wire("site")),
         Some(DeepTime.SignedYear(-1400L)),
         PlaceFixtures.Limit(10)
       )
@@ -89,7 +89,7 @@ class PlaceGeoSuite extends DbSuite:
     )
     assert(timed.contains(s"NOT $undatedImport"), timed)
     val untimed = PlaceFixtures
-      .geoJsonQuery(Some(com.histmersion.domain.catalogue.Place.Kind.Wire("site")), None, PlaceFixtures.Limit(10))
+      .geoJsonQuery(Some(domain.catalogue.Place.Kind.Wire("site")), None, PlaceFixtures.Limit(10))
       .sqlString
     assert(
       untimed.contains(s"AND NOT $curated AND p.id IN (SELECT fp.place_id FROM finding_places fp)")
@@ -99,7 +99,7 @@ class PlaceGeoSuite extends DbSuite:
   test("an undated polity known only by a point is left out at a year, in both halves; across all time it is drawn"):
     val timed = PlaceFixtures
       .geoJsonQuery(
-        Some(com.histmersion.domain.catalogue.Place.Kind.Wire("polity")),
+        Some(domain.catalogue.Place.Kind.Wire("polity")),
         Some(DeepTime.SignedYear(-200L)),
         PlaceFixtures.Limit(10)
       )
@@ -111,14 +111,14 @@ class PlaceGeoSuite extends DbSuite:
     )
     assert(
       !PlaceFixtures
-        .geoJsonQuery(Some(com.histmersion.domain.catalogue.Place.Kind.Wire("polity")), None, PlaceFixtures.Limit(10))
+        .geoJsonQuery(Some(domain.catalogue.Place.Kind.Wire("polity")), None, PlaceFixtures.Limit(10))
         .sqlString
         .contains(PlaceFixtures.UndatedPolityPointSql.sqlString)
     )
 
   test("over a whole range: the window is the range, shadowing only among shapes that coexist, one version per state"):
     val q = PlaceFixtures.geoJsonTimeQuery(
-      Some(com.histmersion.domain.catalogue.Place.Kind.Wire("polity")),
+      Some(domain.catalogue.Place.Kind.Wire("polity")),
       GeoTime.Within(Year(-2000), Year(-1000), latest = GeoTime.Within.Latest(false)),
       PlaceFixtures.Limit(50)
     )
@@ -128,7 +128,7 @@ class PlaceGeoSuite extends DbSuite:
           .inWindowSql(
             sql"p",
             Some((DeepTime.SignedYear(-2000L), DeepTime.SignedYear(-1000L))),
-            Some(com.histmersion.domain.catalogue.Place.Kind.Wire("polity"))
+            Some(domain.catalogue.Place.Kind.Wire("polity"))
           )
           .sqlString
       ),
@@ -179,7 +179,7 @@ class PlaceGeoSuite extends DbSuite:
     // the plain pairing — a site or kindless layer, and the reference below: the small tiers against `live`
     val plain =
       PlaceFixtures.geoJsonTimeQuery(
-        Some(com.histmersion.domain.catalogue.Place.Kind.Wire("polity")),
+        Some(domain.catalogue.Place.Kind.Wire("polity")),
         GeoTime.Within(Year(-2000), Year(-1000), latest = GeoTime.Within.Latest(false)),
         PlaceFixtures.Limit(50),
         pairsByIndex = PlaceFixtures.PairsByIndex(false)
@@ -203,7 +203,7 @@ class PlaceGeoSuite extends DbSuite:
         PlaceFixtures.DefaultModernFrom
       ) ++ half ++ half ++ List(50)
     )
-    List(Some(com.histmersion.domain.catalogue.Place.Kind.Wire("site")), None).foreach(k =>
+    List(Some(domain.catalogue.Place.Kind.Wire("site")), None).foreach(k =>
       assert(
         PlaceFixtures
           .geoJsonTimeQuery(
@@ -218,7 +218,7 @@ class PlaceGeoSuite extends DbSuite:
     )
     val late = PlaceFixtures
       .geoJsonTimeQuery(
-        Some(com.histmersion.domain.catalogue.Place.Kind.Wire("polity")),
+        Some(domain.catalogue.Place.Kind.Wire("polity")),
         GeoTime.Within(Year(-2000), Year(-1000), latest = GeoTime.Within.Latest(true)),
         PlaceFixtures.Limit(50)
       )
@@ -226,7 +226,7 @@ class PlaceGeoSuite extends DbSuite:
     assert(late.contains("max(ee) OVER") && late.contains("WHERE v.ee = v.anchor"), late)
     // a year is what it always was: none of the range's machinery
     val year = PlaceFixtures.geoJsonTimeQuery(
-      Some(com.histmersion.domain.catalogue.Place.Kind.Wire("polity")),
+      Some(domain.catalogue.Place.Kind.Wire("polity")),
       GeoTime.At(Year(-1500)),
       PlaceFixtures.Limit(50)
     )
@@ -234,7 +234,7 @@ class PlaceGeoSuite extends DbSuite:
       year.sqlString,
       PlaceFixtures
         .geoJsonQuery(
-          Some(com.histmersion.domain.catalogue.Place.Kind.Wire("polity")),
+          Some(domain.catalogue.Place.Kind.Wire("polity")),
           Some(DeepTime.SignedYear(-1500L)),
           PlaceFixtures.Limit(50)
         )
@@ -277,7 +277,7 @@ class PlaceGeoSuite extends DbSuite:
       Place(
         id,
         label,
-        Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Polity),
+        Place.KindValue(domain.catalogue.Place.Kind.Polity),
         Some(g),
         Some(Period(from, to)),
         Some(Place.Source("fixture")),
@@ -348,7 +348,7 @@ class PlaceGeoSuite extends DbSuite:
   private def shownAt(year: Long): Set[String] =
     val json = PlaceFixtures.geoJson(
       ds,
-      Some(com.histmersion.domain.catalogue.Place.Kind.Wire("polity")),
+      Some(domain.catalogue.Place.Kind.Wire("polity")),
       Some(DeepTime.SignedYear(year)),
       PlaceFixtures.Limit(500)
     )
@@ -433,7 +433,7 @@ class PlaceGeoSuite extends DbSuite:
   private def shownOver(lo: Long, hi: Long, latest: Boolean): Set[String] =
     val json = PlaceFixtures.geoJsonAt(
       ds,
-      Some(com.histmersion.domain.catalogue.Place.Kind.Wire("polity")),
+      Some(domain.catalogue.Place.Kind.Wire("polity")),
       GeoTime.Within(Year(lo), Year(hi), GeoTime.Within.Latest(latest)),
       PlaceFixtures.Limit(500)
     )
@@ -460,7 +460,7 @@ class PlaceGeoSuite extends DbSuite:
           PlaceFixtures
             .geoJson(
               ds,
-              Some(com.histmersion.domain.catalogue.Place.Kind.Wire("polity")),
+              Some(domain.catalogue.Place.Kind.Wire("polity")),
               Some(DeepTime.SignedYear(-1300L)),
               PlaceFixtures.Limit(500)
             )
@@ -517,7 +517,7 @@ class PlaceGeoSuite extends DbSuite:
       val t = GeoTime.Within(Year(lo), Year(hi), GeoTime.Within.Latest(latest))
       val indexed = rows(
         PlaceFixtures.geoJsonTimeQuery(
-          Some(com.histmersion.domain.catalogue.Place.Kind.Wire("polity")),
+          Some(domain.catalogue.Place.Kind.Wire("polity")),
           t,
           PlaceFixtures.Limit(limit)
         )
@@ -526,7 +526,7 @@ class PlaceGeoSuite extends DbSuite:
         indexed,
         rows(
           PlaceFixtures.geoJsonTimeQuery(
-            Some(com.histmersion.domain.catalogue.Place.Kind.Wire("polity")),
+            Some(domain.catalogue.Place.Kind.Wire("polity")),
             t,
             PlaceFixtures.Limit(limit),
             pairsByIndex = PlaceFixtures.PairsByIndex(false)
@@ -537,7 +537,7 @@ class PlaceGeoSuite extends DbSuite:
     // and the collapse did happen: OHM over Cliopatria, Cliopatria over the sketch of the same state
     val over = rows(
       PlaceFixtures.geoJsonTimeQuery(
-        Some(com.histmersion.domain.catalogue.Place.Kind.Wire("polity")),
+        Some(domain.catalogue.Place.Kind.Wire("polity")),
         GeoTime.Within(Year(-2700), Year(-1600), GeoTime.Within.Latest(false)),
         PlaceFixtures.Limit(500)
       )
@@ -564,7 +564,7 @@ class PlaceGeoSuite extends DbSuite:
       Place(
         Place.Id("zzs_round"),
         Place.Label("The Kingdom of Zzs-Round (East)"),
-        Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Polity),
+        Place.KindValue(domain.catalogue.Place.Kind.Polity),
         Some(Place.Geometry(circle(157.5, -38.5, 1.5, 720))),
         Some(Period(Year(3000), Year(3100))),
         Some(Place.Source("fixture"))
@@ -583,7 +583,7 @@ class PlaceGeoSuite extends DbSuite:
       Place(
         Place.Id("zzs_dot"),
         Place.Label("Zzs Dot"),
-        Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+        Place.KindValue(domain.catalogue.Place.Kind.Site),
         Some(Place.Geometry("""{"type":"Point","coordinates":[156.2,-38.2]}""")),
         Some(Period(Year(3000), Year(3100))),
         Some(Place.Source("fixture"))
@@ -641,7 +641,7 @@ class PlaceGeoSuite extends DbSuite:
     val drawn = PlaceFixtures
       .geoJsonAt(
         ds,
-        Some(com.histmersion.domain.catalogue.Place.Kind.Wire("polity")),
+        Some(domain.catalogue.Place.Kind.Wire("polity")),
         GeoTime.Within(Year(3000), Year(3100), latest = GeoTime.Within.Latest(false)),
         PlaceFixtures.Limit(500)
       )
@@ -687,7 +687,7 @@ class PlaceGeoSuite extends DbSuite:
         Place(
           id,
           label,
-          Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+          Place.KindValue(domain.catalogue.Place.Kind.Site),
           Some(Place.Geometry("""{"type":"Point","coordinates":[165.5,-38.5]}""")),
           None,
           Some(Place.Source("fixture")),
@@ -705,7 +705,7 @@ class PlaceGeoSuite extends DbSuite:
     val _ = PlaceFixtures.upsertPlaces(ds, sites)
     val json = PlaceFixtures.geoJson(
       ds,
-      Some(com.histmersion.domain.catalogue.Place.Kind.Wire("site")),
+      Some(domain.catalogue.Place.Kind.Wire("site")),
       None,
       PlaceFixtures.Limit(100000)
     )
@@ -717,7 +717,7 @@ class PlaceGeoSuite extends DbSuite:
   test("a present-day (modern) place is drawn only once the map reaches the modern era"):
     assert(
       PlaceFixtures
-        .geoJsonQuery(Some(com.histmersion.domain.catalogue.Place.Kind.Wire("site")), None, PlaceFixtures.Limit(10))
+        .geoJsonQuery(Some(domain.catalogue.Place.Kind.Wire("site")), None, PlaceFixtures.Limit(10))
         .sqlString
         .contains(s"NOT ${PlaceFixtures.ModernSql.sqlString}"),
       "across all time, as before"
@@ -728,7 +728,7 @@ class PlaceGeoSuite extends DbSuite:
         Place(
           id,
           Place.Label("Zzqmodern"),
-          Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+          Place.KindValue(domain.catalogue.Place.Kind.Site),
           Some(Place.Geometry("""{"type":"Point","coordinates":[166.5,-38.5]}""")),
           None,
           Some(Place.Source("fixture")),
@@ -746,7 +746,7 @@ class PlaceGeoSuite extends DbSuite:
     )
     val json = PlaceFixtures.geoJson(
       ds,
-      Some(com.histmersion.domain.catalogue.Place.Kind.Wire("site")),
+      Some(domain.catalogue.Place.Kind.Wire("site")),
       Some(DeepTime.SignedYear(-1400L)),
       PlaceFixtures.Limit(100000)
     )
@@ -759,7 +759,7 @@ class PlaceGeoSuite extends DbSuite:
         PlaceFixtures
           .geoJson(
             ds,
-            Some(com.histmersion.domain.catalogue.Place.Kind.Wire("site")),
+            Some(domain.catalogue.Place.Kind.Wire("site")),
             Some(DeepTime.SignedYear(1600L)),
             PlaceFixtures.Limit(100000)
           )
@@ -773,7 +773,7 @@ class PlaceGeoSuite extends DbSuite:
         PlaceFixtures
           .geoJson(
             ds,
-            Some(com.histmersion.domain.catalogue.Place.Kind.Wire("site")),
+            Some(domain.catalogue.Place.Kind.Wire("site")),
             None,
             PlaceFixtures.Limit(100000)
           )
@@ -787,7 +787,7 @@ class PlaceGeoSuite extends DbSuite:
   test("a place's extent footprint follows the place on insert and re-import"):
     assume(testDb.nonEmpty, "HISTMERSION_TEST_DB_URL is not set")
     def fp = PlaceFixtures
-      .footprints(ds, com.histmersion.domain.catalogue.Place.Id("zzq_fp_polity"), None)
+      .footprints(ds, domain.catalogue.Place.Id("zzq_fp_polity"), None)
       .filter(_.role.value == "extent")
     val first = polity(
       Place.Id("zzq_fp_polity"),
@@ -847,7 +847,7 @@ class PlaceGeoSuite extends DbSuite:
       val drawn = PlaceFixtures
         .geoJson(
           ds,
-          Some(com.histmersion.domain.catalogue.Place.Kind.Wire("polity")),
+          Some(domain.catalogue.Place.Kind.Wire("polity")),
           Some(DeepTime.SignedYear(-1300L)),
           PlaceFixtures.Limit(500)
         )
@@ -862,7 +862,7 @@ class PlaceGeoSuite extends DbSuite:
       val redrawn = PlaceFixtures
         .geoJson(
           ds,
-          Some(com.histmersion.domain.catalogue.Place.Kind.Wire("polity")),
+          Some(domain.catalogue.Place.Kind.Wire("polity")),
           Some(DeepTime.SignedYear(-1300L)),
           PlaceFixtures.Limit(500)
         )

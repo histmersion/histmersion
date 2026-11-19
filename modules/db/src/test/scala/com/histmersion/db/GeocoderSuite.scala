@@ -266,8 +266,8 @@ class GeocoderSuite extends DbSuite with Bounded:
     val siteLabel = "[Zzhulwan]/Zzchala/Zzalbania"
     val src = Source(
       citekey = Citekey(Ck),
-      title = com.histmersion.api.library.Title("Fixture"),
-      authors = (List("A")).map(com.histmersion.api.library.AuthorName.apply),
+      title = api.library.Title("Fixture"),
+      authors = (List("A")).map(api.library.AuthorName.apply),
       doi = None,
       year = (Some(2025)).map(Year.apply),
       venue = None,

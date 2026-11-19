@@ -43,7 +43,7 @@ private[citations] object CitationRepo:
     * (`unresolved_edges`) is an `article` when a compiled article has that slug, else `unresolved`. Incoming edges are
     * always from stored sources. `kinds` narrows by edge kind; empty means all.
     */
-  def neighbors(citekey: Citekey, kinds: List[com.histmersion.domain.library.Edge.Kind.Wire] = Nil)(using
+  def neighbors(citekey: Citekey, kinds: List[domain.library.Edge.Kind.Wire] = Nil)(using
       DbCon
   ): Vector[NeighborRow] =
     val all = kinds.isEmpty

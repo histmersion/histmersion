@@ -35,9 +35,9 @@ private[periods] object PeriodBundleRepo:
         Bundle.Period.Label(r.label.value),
         r.authority.map(a => Bundle.Period.Authority(a.value)),
         range(
-          com.histmersion.util.data.exchange.Bundle.RangeIsNull(r.pNull.value),
-          r.pLo.map(l => com.histmersion.util.data.exchange.Bundle.RangeLower(l.value)),
-          r.pHi.map(h => com.histmersion.util.data.exchange.Bundle.RangeUpper(h.value))
+          util.data.exchange.Bundle.RangeIsNull(r.pNull.value),
+          r.pLo.map(l => util.data.exchange.Bundle.RangeLower(l.value)),
+          r.pHi.map(h => util.data.exchange.Bundle.RangeUpper(h.value))
         ),
         r.region.map(g => Bundle.Period.Region(g.value)),
         r.parentId.map(p => Bundle.Period.ParentId(p.value)),

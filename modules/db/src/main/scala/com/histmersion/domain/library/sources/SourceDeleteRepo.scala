@@ -66,8 +66,8 @@ private[sources] object SourceDeleteRepo:
   ) derives DbCodec
 
   object Row:
-    type Title = com.histmersion.domain.Title
-    val Title: com.histmersion.domain.Title.type = com.histmersion.domain.Title
+    type Title = domain.Title
+    val Title: domain.Title.type = domain.Title
     type CalibreId = CalibreId.T
     object CalibreId extends Newtype[String, Pure]
 

@@ -232,8 +232,8 @@ private[places] object PlaceOverrideRepo:
       case (Some(fl), Some(il)) =>
         val had = (linked(from) ++ linked(into)).distinct
         val _ = PlaceReviewRepo.mergeIn(
-          com.histmersion.domain.catalogue.Place.Id.assume(from.value),
-          com.histmersion.domain.catalogue.Place.Id.assume(into.value)
+          domain.catalogue.Place.Id.assume(from.value),
+          domain.catalogue.Place.Id.assume(into.value)
         )
         val _ = FindingPlaceRepo.materialisePlaces(List(into), toleranceKm)
         Right(

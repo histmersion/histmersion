@@ -67,7 +67,7 @@ object ArticleReviewStatus:
   )
 
   object Facts:
-    export com.histmersion.api.research.ReviewRound.Round
+    export ReviewRound.Round
 
   /** The state, from the item first (a run going on, queued, stopped), then the ledger's open MAJOR findings. A
     * cancelled item counts as no item: what the ledger says stands.

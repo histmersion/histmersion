@@ -150,8 +150,8 @@ class InteractiveQueriesSuite extends DbSuite with Bounded:
   ) =
     Source(
       citekey = ck,
-      title = com.histmersion.api.library.Title(s"Zzi source $ck"),
-      authors = (List("Zzi")).map(com.histmersion.api.library.AuthorName.apply),
+      title = api.library.Title(s"Zzi source $ck"),
+      authors = (List("Zzi")).map(api.library.AuthorName.apply),
       doi = None,
       year = (Some(2011)).map(Year.apply),
       venue = None,

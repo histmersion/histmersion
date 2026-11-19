@@ -68,8 +68,8 @@ class LintRepoSuite extends DbSuite:
       edges: List[Edge] = Nil
   ) = Source(
     citekey = Citekey(citekey),
-    title = com.histmersion.api.library.Title(s"Fixture $citekey"),
-    authors = (List("A")).map(com.histmersion.api.library.AuthorName.apply),
+    title = api.library.Title(s"Fixture $citekey"),
+    authors = (List("A")).map(api.library.AuthorName.apply),
     doi = (doi).map(Doi.apply),
     year = (Some(2020)).map(Year.apply),
     venue = None,

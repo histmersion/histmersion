@@ -43,7 +43,7 @@ private[imports] object ImportRepo:
   private val QidRe = "^Q[1-9][0-9]*$"
 
   /** One place's Wikidata item: an exact link first, else any; a `wikidata_q…` id names its own. */
-  private def placeQid(id: com.histmersion.domain.catalogue.Place.Id)(using DbCon): Option[Target.Qid] =
+  private def placeQid(id: domain.catalogue.Place.Id)(using DbCon): Option[Target.Qid] =
     sql"""SELECT external_id FROM place_links
           WHERE place_id = $id AND scheme = 'wikidata' AND external_id ~ $QidRe
           ORDER BY (relation = 'exact_match') DESC, external_id LIMIT 1"""
@@ -107,15 +107,15 @@ private[imports] object ImportRepo:
     */
   def targets(
       provider: MediaItemRow.Provider,
-      place: Option[com.histmersion.domain.catalogue.Place.Id],
-      event: Option[com.histmersion.domain.catalogue.Event.Id],
+      place: Option[domain.catalogue.Place.Id],
+      event: Option[domain.catalogue.Event.Id],
       limit: Limit,
       refresh: Refresh,
       since: Option[Since]
   )(using DbCon): Either[Problem, List[Target]] =
     (
-      place.flatMap(p => com.histmersion.domain.catalogue.Place.Id.option(p.value.trim)),
-      event.flatMap(e => com.histmersion.domain.catalogue.Event.Id.option(e.value.trim))
+      place.flatMap(p => domain.catalogue.Place.Id.option(p.value.trim)),
+      event.flatMap(e => domain.catalogue.Event.Id.option(e.value.trim))
     ) match
       case (Some(pid), _) =>
         sql"SELECT label FROM places WHERE id = $pid".query[Target.Label].run().headOption match
@@ -204,8 +204,8 @@ private[imports] object ImportRepo:
   def collectionTargets(
       check: MediaItemRow.Provider,
       places: Places,
-      place: Option[com.histmersion.domain.catalogue.Place.Id],
-      event: Option[com.histmersion.domain.catalogue.Event.Id],
+      place: Option[domain.catalogue.Place.Id],
+      event: Option[domain.catalogue.Event.Id],
       limit: Limit,
       refresh: Refresh,
       since: Option[Since],
@@ -215,8 +215,8 @@ private[imports] object ImportRepo:
     val asOf = if refresh.value then since else None
     val everyOne = refresh.value && since.isEmpty
     (
-      place.flatMap(p => com.histmersion.domain.catalogue.Place.Id.option(p.value.trim)),
-      event.flatMap(e => com.histmersion.domain.catalogue.Event.Id.option(e.value.trim))
+      place.flatMap(p => domain.catalogue.Place.Id.option(p.value.trim)),
+      event.flatMap(e => domain.catalogue.Event.Id.option(e.value.trim))
     ) match
       case (Some(pid), _) =>
         if !places.value then
@@ -278,8 +278,8 @@ private[imports] object ImportRepo:
     RowCount(sql"SELECT count(*)::int FROM ($q) x".query[Int].run().head)
 
   def placeFacts(
-      ids: List[com.histmersion.domain.catalogue.Place.Id]
-  )(using DbCon): Map[com.histmersion.domain.catalogue.Place.Id, PlaceFacts] =
+      ids: List[domain.catalogue.Place.Id]
+  )(using DbCon): Map[domain.catalogue.Place.Id, PlaceFacts] =
     if ids.isEmpty then Map.empty
     else
       sql"""SELECT p.id, p.label,
@@ -314,7 +314,7 @@ private[imports] object ImportRepo:
         .run()
         .toList
         .map { (id, label, keys, lo, hi, q, lat, lon) =>
-          com.histmersion.domain.catalogue.Place.Id
+          domain.catalogue.Place.Id
             .applyUnsafe(id) -> PlaceFacts(PlaceFacts.Id(id), label, keys.toSet, lo.zip(hi), q, lat, lon)
         }
         .toMap
@@ -322,14 +322,14 @@ private[imports] object ImportRepo:
   /** The Pleiades ids of places: a `pleiades_<n>` place is that record alone; another place has its exact Pleiades
     * links, in order. Places without one are left out.
     */
-  def pleiadesIds(ids: List[com.histmersion.domain.catalogue.Place.Id])(using
+  def pleiadesIds(ids: List[domain.catalogue.Place.Id])(using
       DbCon
-  ): Map[com.histmersion.domain.catalogue.Place.Id, List[ExternalIds.ExternalId]] =
+  ): Map[domain.catalogue.Place.Id, List[ExternalIds.ExternalId]] =
     if ids.isEmpty then Map.empty else pleiadesIdsIn(ids)
 
-  private def pleiadesIdsIn(ids: List[com.histmersion.domain.catalogue.Place.Id])(using
+  private def pleiadesIdsIn(ids: List[domain.catalogue.Place.Id])(using
       DbCon
-  ): Map[com.histmersion.domain.catalogue.Place.Id, List[ExternalIds.ExternalId]] =
+  ): Map[domain.catalogue.Place.Id, List[ExternalIds.ExternalId]] =
     val own =
       ids.flatMap(id => ExternalIds.ofPlaceId(id).filter(_._1 == ExternalIds.Pleiades).map(p => id -> List(p._2))).toMap
     val rest = ids.filterNot(own.contains)
@@ -339,7 +339,7 @@ private[imports] object ImportRepo:
         sql"""SELECT place_id, external_id FROM place_links WHERE place_id = ANY($rest::text[])
                   AND scheme = 'pleiades' AND relation = 'exact_match' AND external_id ~ '^[0-9]+$$'
                   ORDER BY place_id, external_id"""
-          .query[(com.histmersion.domain.catalogue.Place.Id, ExternalIds.ExternalId)]
+          .query[(domain.catalogue.Place.Id, ExternalIds.ExternalId)]
           .run()
           .toList
           .groupMap(_._1)(_._2)
@@ -350,14 +350,14 @@ private[imports] object ImportRepo:
     * an id.
     */
   def placeExternalIds(
-      ids: List[com.histmersion.domain.catalogue.Place.Id]
-  )(using DbCon): Map[com.histmersion.domain.catalogue.Place.Id, Set[(ExternalIds.Scheme, ExternalIds.ExternalId)]] =
+      ids: List[domain.catalogue.Place.Id]
+  )(using DbCon): Map[domain.catalogue.Place.Id, Set[(ExternalIds.Scheme, ExternalIds.ExternalId)]] =
     if ids.isEmpty then Map.empty
     else
       val linked =
         sql"""SELECT place_id, scheme, external_id FROM place_links WHERE place_id = ANY($ids::text[])
               AND relation = 'exact_match' AND scheme IN ('pleiades', 'geonames', 'wikidata')"""
-          .query[(com.histmersion.domain.catalogue.Place.Id, ExternalIds.Scheme, ExternalIds.ExternalId)]
+          .query[(domain.catalogue.Place.Id, ExternalIds.Scheme, ExternalIds.ExternalId)]
           .run()
           .toList
       val fromLinks = linked.groupMap(_._1)(r => (r._2, r._3)).view.mapValues(_.toSet).toMap
@@ -388,13 +388,13 @@ private[imports] object ImportRepo:
             JOIN unnest($schemes::text[], $exts::text[]) AS w(s, e) ON l.scheme = w.s AND l.external_id = w.e
             WHERE l.relation = 'exact_match'
               AND EXISTS (SELECT 1 FROM finding_places fp WHERE fp.place_id = l.place_id)"""
-        .query[(ExternalIds.Scheme, ExternalIds.ExternalId, com.histmersion.domain.catalogue.Place.Id)]
+        .query[(ExternalIds.Scheme, ExternalIds.ExternalId, domain.catalogue.Place.Id)]
         .run()
         .toList
         .map((s, e, p) => ((s, e), p))
       val self = sql"""SELECT p.id FROM places p WHERE p.id = ANY($owned::text[])
             AND EXISTS (SELECT 1 FROM finding_places fp WHERE fp.place_id = p.id)"""
-        .query[com.histmersion.domain.catalogue.Place.Id]
+        .query[domain.catalogue.Place.Id]
         .run()
         .toList
         .flatMap(id => ownIds.get(id.value).map(_ -> id))
@@ -414,7 +414,7 @@ private[imports] object ImportRepo:
                 UNION SELECT histmersion_place_key(n.name), n.place_id FROM place_names n
                 WHERE histmersion_place_key(n.name) = ANY($ks::text[])) x
               WHERE EXISTS (SELECT 1 FROM finding_places fp WHERE fp.place_id = x.id)"""
-          .query[(NameKey, com.histmersion.domain.catalogue.Place.Id)]
+          .query[(NameKey, domain.catalogue.Place.Id)]
           .run()
           .toList
       val facts = placeFacts(hits.map(_._2).distinct)
@@ -423,7 +423,7 @@ private[imports] object ImportRepo:
   // ── what was asked ───────────────────────────────────────────────────────────────────────────
 
   /** Record a place's Commons category (Wikidata P373) as a link of the place. Returns whether new. */
-  def commonsCategory(placeId: com.histmersion.domain.catalogue.Place.Id, category: Category, qid: Target.Qid)(using
+  def commonsCategory(placeId: domain.catalogue.Place.Id, category: Category, qid: Target.Qid)(using
       DbCon
   ): Boolean =
     sql"""INSERT INTO place_links (place_id, scheme, external_id, relation, import_source, import_ref)

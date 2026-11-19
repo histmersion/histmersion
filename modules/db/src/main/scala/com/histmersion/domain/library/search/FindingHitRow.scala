@@ -40,8 +40,8 @@ final private[search] case class FindingHitRow(
       Nil,
       places.map(p => Finding.Match.Places(p.value))
     )
-  def assignedPlaceIds: List[com.histmersion.domain.catalogue.Place.Id] =
-    placeIds.map(id => com.histmersion.domain.catalogue.Place.Id.applyUnsafe(id.value))
+  def assignedPlaceIds: List[domain.catalogue.Place.Id] =
+    placeIds.map(id => domain.catalogue.Place.Id.applyUnsafe(id.value))
 
 object FindingHitRow:
 

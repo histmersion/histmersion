@@ -684,17 +684,17 @@ private[sources] object SourceRepo:
   // ── the identifiers acquisition resolves a work's references and its own copy by ────────────
 
   /** `lower(doi) -> citekey` for the whole corpus, in one query. */
-  def doiIndex()(using DbCon): Map[com.histmersion.domain.library.Doi, Citekey] =
+  def doiIndex()(using DbCon): Map[domain.library.Doi, Citekey] =
     sql"SELECT lower(doi), citekey FROM sources WHERE doi IS NOT NULL AND doi <> ''"
       .query[DoiKey]
       .run()
       .map(r => r.doi -> r.citekey)
       .toMap
 
-  final private case class DoiKey(doi: com.histmersion.domain.library.Doi, citekey: Citekey) derives DbCodec
+  final private case class DoiKey(doi: domain.library.Doi, citekey: Citekey) derives DbCodec
 
   /** The citekey of the source holding `doi` (the first by citekey), if one does. */
-  def citekeyOfDoi(doi: com.histmersion.domain.library.Doi)(using DbCon): Option[Citekey] =
+  def citekeyOfDoi(doi: domain.library.Doi)(using DbCon): Option[Citekey] =
     val d = doi.value.trim.toLowerCase
     sql"SELECT citekey FROM sources WHERE lower(doi) = $d ORDER BY citekey LIMIT 1".query[Citekey].run().headOption
 
@@ -746,8 +746,8 @@ private[sources] object SourceRepo:
   object GapRow:
     type Doi = Doi.T
     object Doi extends Newtype[String, Pure]
-    type Title = com.histmersion.domain.Title
-    val Title: com.histmersion.domain.Title.type = com.histmersion.domain.Title
+    type Title = domain.Title
+    val Title: domain.Title.type = domain.Title
     type Authors = Authors.T
     object Authors extends Newtype[String, Pure]
     type Venue = Venue.T

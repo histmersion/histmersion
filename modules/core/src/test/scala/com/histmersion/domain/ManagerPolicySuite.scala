@@ -204,7 +204,7 @@ class ManagerPolicySuite extends munit.FunSuite:
         ManagerPolicy.Candidate.Target("x"),
         Nil,
         Nil,
-        List(com.histmersion.domain.automation.Goal.Slug("g"))
+        List(automation.Goal.Slug("g"))
       )
     )
     val hs = List(
@@ -418,19 +418,19 @@ class ManagerPolicySuite extends munit.FunSuite:
 
   test("item kinds and the enqueue words"):
     assertEquals(
-      itemKindOf(com.histmersion.api.automation.Manager.Kind.Review, com.histmersion.api.ItemKind.Word("")),
+      itemKindOf(api.automation.Manager.Kind.Review, api.ItemKind.Word("")),
       Some(ArticleReview)
     )
     assertEquals(
-      itemKindOf(com.histmersion.api.automation.Manager.Kind.Review, com.histmersion.api.ItemKind.Word("extend")),
+      itemKindOf(api.automation.Manager.Kind.Review, api.ItemKind.Word("extend")),
       Some(ArticleExtend)
     )
     assertEquals(
-      itemKindOf(com.histmersion.api.automation.Manager.Kind.Seed, com.histmersion.api.ItemKind.Word("propose")),
+      itemKindOf(api.automation.Manager.Kind.Seed, api.ItemKind.Word("propose")),
       Some(ProposeArticles)
     )
     assertEquals(
-      itemKindOf(com.histmersion.api.automation.Manager.Kind.Enrich, com.histmersion.api.ItemKind.Word("review")),
+      itemKindOf(api.automation.Manager.Kind.Enrich, api.ItemKind.Word("review")),
       None
     )
     assertEquals(EnqueueKind.parse(Managers.EnqueueKind.Wire("source-enrich")), Some(EnqueueKind.Enrich))
@@ -456,27 +456,27 @@ class ManagerPolicySuite extends munit.FunSuite:
 
   test("watcher: its item kinds and words, its sweeps (none named = both), its settings and defaults"):
     assertEquals(
-      itemKinds(com.histmersion.api.automation.Manager.Kind.Watch),
+      itemKinds(api.automation.Manager.Kind.Watch),
       List(AcquisitionSweep, CurrencyCheck, OaIngest)
     )
     assertEquals(
-      itemKindOf(com.histmersion.api.automation.Manager.Kind.Watch, com.histmersion.api.ItemKind.Word("")),
+      itemKindOf(api.automation.Manager.Kind.Watch, api.ItemKind.Word("")),
       Some(AcquisitionSweep)
     )
     assertEquals(
-      itemKindOf(com.histmersion.api.automation.Manager.Kind.Watch, com.histmersion.api.ItemKind.Word("backlog")),
+      itemKindOf(api.automation.Manager.Kind.Watch, api.ItemKind.Word("backlog")),
       Some(OaIngest)
     )
     assertEquals(
-      itemKindOf(com.histmersion.api.automation.Manager.Kind.Review, com.histmersion.api.ItemKind.Word("ingest")),
+      itemKindOf(api.automation.Manager.Kind.Review, api.ItemKind.Word("ingest")),
       None
     )
     assertEquals(
-      itemKindOf(com.histmersion.api.automation.Manager.Kind.Watch, com.histmersion.api.ItemKind.Word("currency")),
+      itemKindOf(api.automation.Manager.Kind.Watch, api.ItemKind.Word("currency")),
       Some(CurrencyCheck)
     )
     assertEquals(
-      itemKindOf(com.histmersion.api.automation.Manager.Kind.Watch, com.histmersion.api.ItemKind.Word("review")),
+      itemKindOf(api.automation.Manager.Kind.Watch, api.ItemKind.Word("review")),
       None
     )
     assertEquals(watchId(Goal.Ref(" tin ")), "watch:tin")

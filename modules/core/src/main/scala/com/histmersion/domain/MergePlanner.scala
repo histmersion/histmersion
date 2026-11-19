@@ -359,11 +359,11 @@ object MergePlanner:
   // ── issue ids ───────────────────────────────────────────────────────────────────────────────
 
   /** The letter of an issue id: the entity it is about (O for an OCR body, L for an alias). */
-  def letter(kind: MergeIssue.Kind, entity: Bundle.Kind): com.histmersion.util.data.exchange.Bundle.Kind.IssueLetter =
+  def letter(kind: MergeIssue.Kind, entity: Bundle.Kind): util.data.exchange.Bundle.Kind.IssueLetter =
     kind match
-      case MergeIssue.Kind.BodyDiffers   => com.histmersion.util.data.exchange.Bundle.Kind.IssueLetter("O")
-      case MergeIssue.Kind.AliasConflict => com.histmersion.util.data.exchange.Bundle.Kind.IssueLetter("L")
-      case _ => com.histmersion.util.data.exchange.Bundle.Kind.IssueLetter(entity.issueLetter)
+      case MergeIssue.Kind.BodyDiffers   => util.data.exchange.Bundle.Kind.IssueLetter("O")
+      case MergeIssue.Kind.AliasConflict => util.data.exchange.Bundle.Kind.IssueLetter("L")
+      case _                             => util.data.exchange.Bundle.Kind.IssueLetter(entity.issueLetter)
 
   /** `<letter>-<8 hex>`: sha256 of the kind, the sorted bundle uids, the sorted local uids, the two revs and anything
     * else that tells the issue apart (an alias). The same records unchanged → the same id; either side changed → a new
@@ -1305,23 +1305,22 @@ object MergePlanner:
         case SourceFate.Gate(_, g) =>
           decisionIn(gateId(g)).filter(_.kind == km.Map).flatMap(_.argument).map(a => Citekey(a.value))
         case _ => None
-      mapTo.flatMap(ck => com.histmersion.domain.library.Citekey.option(ck.value).map(ck -> _)).foreach {
-        (ck, domainCk) =>
-          fold(r.uid, l.uid, Bundle.Kind.Source)
-          foldedSources(r.uid) = l.uid
-          finalCitekey(r.uid) = ck
-          tally = tally.modify(_.sourcesMerged).using(n => MergeTally.SourcesMerged(n.value + 1))
-          // the source field by field and its findings, as the sources' rules fold them
-          val keepRightBody = run.foldSources(r, l, domainCk, folds)
+      mapTo.flatMap(ck => library.Citekey.option(ck.value).map(ck -> _)).foreach { (ck, domainCk) =>
+        fold(r.uid, l.uid, Bundle.Kind.Source)
+        foldedSources(r.uid) = l.uid
+        finalCitekey(r.uid) = ck
+        tally = tally.modify(_.sourcesMerged).using(n => MergeTally.SourcesMerged(n.value + 1))
+        // the source field by field and its findings, as the sources' rules fold them
+        val keepRightBody = run.foldSources(r, l, domainCk, folds)
 
-          // what the kinds own of the pair before the rest: the figures
-          run.foldPairFirst(r, l, keepRightBody, folds)
+        // what the kinds own of the pair before the rest: the figures
+        run.foldPairFirst(r, l, keepRightBody, folds)
 
-          // what the kinds own of the pair: as the body question is decided
-          val alt = run.bodyIssue(r.uid) match
-            case Some(id) => Some(decisionIn(id).map(_.kind).getOrElse(km.KeepLeft))
-            case None     => None
-          run.foldPair(r, l, alt, folds)
+        // what the kinds own of the pair: as the body question is decided
+        val alt = run.bodyIssue(r.uid) match
+          case Some(id) => Some(decisionIn(id).map(_.kind).getOrElse(km.KeepLeft))
+          case None     => None
+        run.foldPair(r, l, alt, folds)
       }
     }
     // the citekey every other source of the bundle will have here
@@ -1335,7 +1334,7 @@ object MergePlanner:
             else sourcesByUid.get(l).fold(s.citekey)(_.citekey)
           case _ => finalCitekey(s.uid) = renameRight.getOrElse(s.uid, s.citekey)
     }
-    renameRight.foreach((u, ck) => com.histmersion.domain.library.Citekey.option(ck.value).foreach(run.renamed(u, _)))
+    renameRight.foreach((u, ck) => library.Citekey.option(ck.value).foreach(run.renamed(u, _)))
     tally = tally.copy(sourcesRenamed = MergeTally.SourcesRenamed(renameRight.size + renames.result().size))
     // a finding id or an asset name a different record has here: the bundle's is renumbered / renamed
     val relabelled = scala.collection.mutable.ListBuffer.empty[String]
@@ -1357,8 +1356,8 @@ object MergePlanner:
           body,
           ckMap.flatMap((k, v) =>
             for
-              from <- com.histmersion.domain.library.Citekey.option(k.value)
-              to <- com.histmersion.domain.library.Citekey.option(v.value)
+              from <- library.Citekey.option(k.value)
+              to <- library.Citekey.option(v.value)
             yield from -> to
           )
         )

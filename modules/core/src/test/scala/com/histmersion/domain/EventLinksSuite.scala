@@ -157,7 +157,7 @@ class EventLinksSuite extends munit.FunSuite:
         )
       )
     val cs = EventMatcher.candidates(Event.Id("thera"), near, named, w)
-    assertEquals(cs.map(_.citekey), List("named2020", "near2020").map(com.histmersion.api.library.Citekey.apply))
+    assertEquals(cs.map(_.citekey), List("named2020", "near2020").map(api.library.Citekey.apply))
     assertEquals(cs.head.status, Event.LinkStatus.Proposed)
     assert(cs.head.reasons.exists(_.value.contains("names it 2 times")), cs.head.reasons.toString)
     assert(cs(1).score.value <= w.finding.value, "findings alone never pass a name")
@@ -189,7 +189,7 @@ class EventLinksSuite extends munit.FunSuite:
 
   test("a catalogue event raises a lead in counts and dates; an attested one none"):
     val f = LeadFacts(
-      com.histmersion.api.catalogue.Event.Id("gvp_13879"),
+      api.catalogue.Event.Id("gvp_13879"),
       LeadFacts.Label("Eruption of Santorini"),
       LeadFacts.Kind("eruption"),
       TimeSpan(Some(Year(-1624)), None, None, Some(Year(-1596))),
@@ -233,7 +233,7 @@ class EventLinksSuite extends munit.FunSuite:
     val md = ArticleEventLead.markdown(
       List(
         ArticleEventLead(
-          com.histmersion.api.catalogue.Event.Id("gvp_1"),
+          api.catalogue.Event.Id("gvp_1"),
           ArticleEventLead.Label("Eruption of X"),
           ArticleEventLead.Kind("eruption"),
           ArticleEventLead.Years("1600 BCE"),
@@ -248,12 +248,12 @@ class EventLinksSuite extends munit.FunSuite:
 
   test("markdown of links and leads says unconfirmed and lists the commands"):
     val l = EventLinkList(
-      com.histmersion.api.catalogue.Event.Id("e"),
+      api.catalogue.Event.Id("e"),
       EventLinkList.Label("E"),
       List(
         EventLinkCandidate(
-          com.histmersion.api.catalogue.Event.Id("e"),
-          com.histmersion.api.library.Citekey("a2020"),
+          api.catalogue.Event.Id("e"),
+          api.library.Citekey("a2020"),
           EventLinkCandidate.Score(1.1),
           reasons = List(EventLinkCandidate.Reasons("names it 1 time"))
         )
@@ -265,14 +265,14 @@ class EventLinksSuite extends munit.FunSuite:
         EventLead.List.Total(1),
         List(
           EventLead(
-            com.histmersion.api.catalogue.Event.Id("e"),
+            api.catalogue.Event.Id("e"),
             EventLead.Label("E"),
             EventLead.Kind("eruption"),
             EventLead.Tier("catalogue"),
             EventLead.Years("1 CE"),
             EventLead.Text("No source…"),
             EventLeads.actions(
-              com.histmersion.api.catalogue.Event.Id("e"),
+              api.catalogue.Event.Id("e"),
               EventLead.Label("E"),
               EventLead.Years("1 CE"),
               LeadFacts.Proposed(0)

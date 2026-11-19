@@ -164,7 +164,7 @@ object AgentRepo:
   def list(
       status: Option[Run.State.Wire],
       limit: PageSize,
-      goal: Option[com.histmersion.domain.automation.Goal.Slug] = None
+      goal: Option[domain.automation.Goal.Slug] = None
   )(using DbCon): Vector[RunInfo] =
     sql"$runSelect${runStatus(status)}${runGoal(goal)}${Keyset.orderBy(sql"j.")} LIMIT $limit"
       .query[RunRow]
@@ -177,7 +177,7 @@ object AgentRepo:
   def page(
       status: Option[Run.State.Wire],
       limit: PageSize,
-      goal: Option[com.histmersion.domain.automation.Goal.Slug] = None,
+      goal: Option[domain.automation.Goal.Slug] = None,
       before: Option[PageCursor] = None,
       upTo: Option[PageCursor] = None
   )(using DbCon): Either[Problem, (Vector[RunInfo], Boolean)] =
@@ -264,7 +264,7 @@ object AgentRepo:
 
   /** How many runs are in each state — of one goal, when given. */
   def stateCounts(
-      goal: Option[com.histmersion.domain.automation.Goal.Slug] = None
+      goal: Option[domain.automation.Goal.Slug] = None
   )(using DbCon): List[(Run.State.Wire, RowCount)] =
     Keyset
       .countsOn(sql" FROM jobs j$runsOnlySql${runGoal(goal)}", sql"j.status")
@@ -273,7 +273,7 @@ object AgentRepo:
   private def runStatus(status: Option[Run.State.Wire]): Frag =
     status.map(_.value.trim.toLowerCase).filter(_.nonEmpty).fold(sql"")(s => sql" AND j.status = $s")
 
-  private def runGoal(goal: Option[com.histmersion.domain.automation.Goal.Slug]): Frag =
+  private def runGoal(goal: Option[domain.automation.Goal.Slug]): Frag =
     goal.map(_.value.trim).filter(_.nonEmpty).fold(sql"")(g => sql" AND j.goal_slug = $g")
 
   /** Every run of `p` on `target`, newest first (what auto-enrich asks before queueing another). */

@@ -54,14 +54,14 @@ object PlaceFixtures:
 
   def get(
       ds: DataSource,
-      id: com.histmersion.domain.catalogue.Place.Id,
+      id: domain.catalogue.Place.Id,
       asOf: Option[SignedYear] = None,
       modernFrom: SignedYear = PlaceSql.DefaultModernFrom
   ): Option[Place.Entry] = connect(ds)(PlaceRepo.get(id, asOf, modernFrom))
 
   def children(
       ds: DataSource,
-      id: com.histmersion.domain.catalogue.Place.Id,
+      id: domain.catalogue.Place.Id,
       asOf: Option[SignedYear],
       limit: PlaceRepo.Limit,
       modernFrom: SignedYear = PlaceSql.DefaultModernFrom
@@ -70,7 +70,7 @@ object PlaceFixtures:
   def hierarchy(
       ds: DataSource,
       asOf: Option[SignedYear],
-      root: Option[com.histmersion.domain.catalogue.Place.Id],
+      root: Option[domain.catalogue.Place.Id],
       maxDepth: PlaceRepo.Depth,
       limit: PlaceRepo.Limit,
       depthCap: PlaceRepo.Depth = PlaceRepo.Depth(Int.MaxValue),
@@ -82,7 +82,7 @@ object PlaceFixtures:
 
   def geoJson(
       ds: DataSource,
-      kind: Option[com.histmersion.domain.catalogue.Place.Kind.Wire],
+      kind: Option[domain.catalogue.Place.Kind.Wire],
       asOf: Option[SignedYear],
       limit: PlaceRepo.Limit,
       modernFrom: SignedYear = PlaceSql.DefaultModernFrom
@@ -90,7 +90,7 @@ object PlaceFixtures:
 
   def geoJsonAt(
       ds: DataSource,
-      kind: Option[com.histmersion.domain.catalogue.Place.Kind.Wire],
+      kind: Option[domain.catalogue.Place.Kind.Wire],
       time: GeoTime,
       limit: PlaceRepo.Limit,
       modernFrom: SignedYear = PlaceSql.DefaultModernFrom
@@ -101,18 +101,18 @@ object PlaceFixtures:
 
   def footprints(
       ds: DataSource,
-      placeId: com.histmersion.domain.catalogue.Place.Id,
+      placeId: domain.catalogue.Place.Id,
       asOf: Option[SignedYear]
   ): Vector[Place.Footprint] =
     connect(ds)(PlaceRepo.footprints(placeId, asOf))
 
-  def links(ds: DataSource, placeId: com.histmersion.domain.catalogue.Place.Id): Vector[Place.Link] =
+  def links(ds: DataSource, placeId: domain.catalogue.Place.Id): Vector[Place.Link] =
     connect(ds)(PlaceRepo.links(placeId))
 
   def rename(
       ds: DataSource,
-      oldId: com.histmersion.domain.catalogue.Place.Id,
-      newId: com.histmersion.domain.catalogue.Place.Id
+      oldId: domain.catalogue.Place.Id,
+      newId: domain.catalogue.Place.Id
   ): Either[Api.Error, Unit] =
     transact(ds)(PlaceRepo.rename(oldId, newId))
 
@@ -120,7 +120,7 @@ object PlaceFixtures:
 
   def addName(
       ds: DataSource,
-      id: com.histmersion.domain.catalogue.Place.Id,
+      id: domain.catalogue.Place.Id,
       name: PlaceRepo.Name,
       lang: PlaceRepo.Lang
   ): Either[Api.Error, Place.NameChanged] =
@@ -128,13 +128,13 @@ object PlaceFixtures:
 
   def removeName(
       ds: DataSource,
-      id: com.histmersion.domain.catalogue.Place.Id,
+      id: domain.catalogue.Place.Id,
       name: PlaceRepo.Name,
       lang: PlaceRepo.Lang
   ): Either[Api.Error, Place.NameChanged] =
     transact(ds)(PlaceRepo.removeName(id, name, lang))
 
-  def manualNames(ds: DataSource, id: Option[com.histmersion.domain.catalogue.Place.Id]): List[ManualPlaceName] =
+  def manualNames(ds: DataSource, id: Option[domain.catalogue.Place.Id]): List[ManualPlaceName] =
     connect(ds)(PlaceRepo.manualNames(id))
 
   def addPlace(ds: DataSource, in: Place.Input): Either[Api.Error, Place.Summary] = transact(ds)(PlaceRepo.addPlace(in))
@@ -146,7 +146,7 @@ object PlaceFixtures:
 
   def materialisePlaces(
       ds: DataSource,
-      placeIds: List[com.histmersion.domain.catalogue.Place.Id],
+      placeIds: List[domain.catalogue.Place.Id],
       toleranceKm: PlacesConfig.PointToleranceKm
   ): RowCount =
     transact(ds)(
@@ -155,7 +155,7 @@ object PlaceFixtures:
 
   /** The same, on the suite's own transaction. */
   def materialisePlacesIn(
-      placeIds: List[com.histmersion.domain.catalogue.Place.Id],
+      placeIds: List[domain.catalogue.Place.Id],
       toleranceKm: PlacesConfig.PointToleranceKm
   )(using DbCon): RowCount =
     FindingPlaceRepo.materialisePlaces(placeIds.map(i => BPlaceRow.Id(i.value)), findingTolerance(toleranceKm))
@@ -169,14 +169,14 @@ object PlaceFixtures:
       TreeRepo.gazetteer(
         rows.iterator
           .flatMap(_.placeIds)
-          .map(i => com.histmersion.domain.catalogue.Place.Id.applyUnsafe(i.value))
+          .map(i => domain.catalogue.Place.Id.applyUnsafe(i.value))
           .toList
       )
     )
 
   def setOverride(
       ds: DataSource,
-      id: com.histmersion.domain.catalogue.Place.Id,
+      id: domain.catalogue.Place.Id,
       edit: Place.OverrideEdit,
       toleranceKm: PlacesConfig.PointToleranceKm
   ): Either[Api.Error, Place.OverrideChanged] =
@@ -184,8 +184,8 @@ object PlaceFixtures:
 
   def merge(
       ds: DataSource,
-      from: com.histmersion.domain.catalogue.Place.Id,
-      into: com.histmersion.domain.catalogue.Place.Id,
+      from: domain.catalogue.Place.Id,
+      into: domain.catalogue.Place.Id,
       toleranceKm: PlacesConfig.PointToleranceKm
   ): Either[Api.Error, Place.Gone] =
     transact(ds)(
@@ -194,12 +194,12 @@ object PlaceFixtures:
 
   def remove(
       ds: DataSource,
-      id: com.histmersion.domain.catalogue.Place.Id,
+      id: domain.catalogue.Place.Id,
       reason: Option[Place.Rationale]
   ): Either[Api.Error, Place.Gone] =
     transact(ds)(PlaceOverrideRepo.remove(BPlaceRow.Id(id.value), reason))
 
-  def overrides(ds: DataSource, id: Option[com.histmersion.domain.catalogue.Place.Id]): List[Place.Override] =
+  def overrides(ds: DataSource, id: Option[domain.catalogue.Place.Id]): List[Place.Override] =
     connect(ds)(PlaceOverrideRepo.list(id.map(i => BPlaceRow.Id(i.value))))
 
   def replaceLand(ds: DataSource, geometries: List[BPlaceRow.Geom]): RowCount =

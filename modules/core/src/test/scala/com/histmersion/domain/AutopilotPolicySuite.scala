@@ -541,20 +541,20 @@ class AutopilotPolicySuite extends munit.FunSuite:
     crons.foreach(c =>
       assert(
         ManagerPolicy
-          .checkCron(com.histmersion.domain.Cron.Text(c.value), now, ManagerPolicy.MinIntervalMinutes(60))
+          .checkCron(domain.Cron.Text(c.value), now, ManagerPolicy.MinIntervalMinutes(60))
           .isRight,
         c
       )
     )
     assert(
-      com.histmersion.domain.Cron
+      domain.Cron
         .parse(
-          com.histmersion.domain.Cron
+          domain.Cron
             .Text(stagger(AutopilotPolicy.Cron("@daily"), AutopilotPolicy.ManagerRow.Id("k")).value)
         )
-        .isRight && com.histmersion.domain.Cron
+        .isRight && domain.Cron
         .parse(
-          com.histmersion.domain.Cron
+          domain.Cron
             .Text(stagger(AutopilotPolicy.Cron("@monthly"), AutopilotPolicy.ManagerRow.Id("k")).value)
         )
         .isRight
@@ -653,9 +653,9 @@ class AutopilotPolicySuite extends munit.FunSuite:
         List((Item.Kind.PlanGoalItem, ManagerPolicy.Candidate.Target("g")))
       )
     )
-    assertEquals(itemKindOf(Kind.Seed, com.histmersion.api.ItemKind.Word("plan-goal")), Some(PlanGoalItem))
+    assertEquals(itemKindOf(Kind.Seed, api.ItemKind.Word("plan-goal")), Some(PlanGoalItem))
     assertEquals(
-      itemKindOf(Kind.Seed, com.histmersion.api.ItemKind.Word("plan")),
+      itemKindOf(Kind.Seed, api.ItemKind.Word("plan")),
       Some(ProposeArticles),
       "`plan` keeps naming the article plan"
     )

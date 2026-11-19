@@ -96,8 +96,8 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
       ds,
       Source(
         citekey = Citekey("zzpo_src"),
-        title = com.histmersion.api.library.Title("Override fixture"),
-        authors = (List("T")).map(com.histmersion.api.library.AuthorName.apply),
+        title = api.library.Title("Override fixture"),
+        authors = (List("T")).map(api.library.AuthorName.apply),
         doi = None,
         year = (Some(2026)).map(Year.apply),
         venue = None,
@@ -220,7 +220,7 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
       put(kind = Some(Place.OverrideEdit.Put.Kind(DPlace.Kind.Region)), from = Some(Year(-7)), to = Some(Year(410)))
     assertEquals(PlaceFixtures.rename(ds, Regio, DPlace.Id("zzpo_regio_xii")), Right(()))
     assertEquals(
-      PlaceFixtures.overrides(ds, Some(com.histmersion.domain.catalogue.Place.Id("zzpo_regio_xii"))).map(_.kind),
+      PlaceFixtures.overrides(ds, Some(domain.catalogue.Place.Id("zzpo_regio_xii"))).map(_.kind),
       List(Some("region"))
     )
     assertEquals(PlaceFixtures.rename(ds, DPlace.Id("zzpo_regio_xii"), Regio), Right(()))
@@ -237,7 +237,7 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
     )
     assertEquals(
       PlaceFixtures
-        .setOverride(ds, com.histmersion.domain.catalogue.Place.Id("zzpo_nope"), Place.OverrideEdit.Reset, tol)
+        .setOverride(ds, domain.catalogue.Place.Id("zzpo_nope"), Place.OverrideEdit.Reset, tol)
         .left
         .map(_.code),
       Left(Some(Write.CodeNotFound))
@@ -283,7 +283,7 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
       val _ = sql"""INSERT INTO place_links (place_id, scheme, external_id, relation)
                     VALUES ('zzpo_dup', 'pleiades', 'zzpo1', 'exact_match')""".update.run()
     val _ =
-      transact(ds)(PlaceFixtures.materialisePlacesIn(List(com.histmersion.domain.catalogue.Place.Id("zzpo_dup")), tol))
+      transact(ds)(PlaceFixtures.materialisePlacesIn(List(domain.catalogue.Place.Id("zzpo_dup")), tol))
     assertEquals(placesOf(1), Set(Regio, City, DPlace.Id("zzpo_dup")))
     val r = PlaceFixtures.merge(ds, DPlace.Id("zzpo_dup"), City, tol).toOption.get
     assertEquals((r.into.map(_.value: String), r.findingsBefore, r.findingsAfter, r.unlocated), (Some(City), 2, 2, 0))
@@ -297,10 +297,10 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
       Dataset.Seed
     )
     assertEquals(res.places, 1)
-    assertEquals(PlaceFixtures.get(ds, com.histmersion.domain.catalogue.Place.Id("zzpo_dup")), None)
+    assertEquals(PlaceFixtures.get(ds, domain.catalogue.Place.Id("zzpo_dup")), None)
     assertEquals(PlaceFixtures.merge(ds, City, City, tol).left.map(_.code), Left(Some(Write.CodeInvalid)))
     assertEquals(
-      PlaceFixtures.merge(ds, com.histmersion.domain.catalogue.Place.Id("zzpo_nope"), City, tol).left.map(_.code),
+      PlaceFixtures.merge(ds, domain.catalogue.Place.Id("zzpo_nope"), City, tol).left.map(_.code),
       Left(Some(Write.CodeNotFound))
     )
 
@@ -328,7 +328,7 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
     val _ = PlaceFixtures.addName(ds, DPlace.Id("zzpo_road"), PlaceFixtures.Name("Zzpo Via"), PlaceFixtures.Lang(""))
     assert(
       PlaceFixtures
-        .remove(ds, com.histmersion.domain.catalogue.Place.Id("zzpo_road"), None)
+        .remove(ds, domain.catalogue.Place.Id("zzpo_road"), None)
         .left
         .exists(_.problems.sentences.mkString("; ").contains("1 name(s) added by hand"))
     )
@@ -336,7 +336,7 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
     val r = PlaceFixtures
       .remove(
         ds,
-        com.histmersion.domain.catalogue.Place.Id("zzpo_road"),
+        domain.catalogue.Place.Id("zzpo_road"),
         Some(Place.Rationale("withdrawn by Pleiades, no replacement"))
       )
       .toOption
@@ -348,7 +348,7 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
       Dataset.Seed
     )
     assertEquals(
-      PlaceFixtures.get(ds, com.histmersion.domain.catalogue.Place.Id("zzpo_road")),
+      PlaceFixtures.get(ds, domain.catalogue.Place.Id("zzpo_road")),
       None,
       "the seed leaves a removed place out"
     )
@@ -363,7 +363,7 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
       Dataset.Seed
     )
     assert(
-      PlaceFixtures.get(ds, com.histmersion.domain.catalogue.Place.Id("zzpo_road")).isDefined,
+      PlaceFixtures.get(ds, domain.catalogue.Place.Id("zzpo_road")).isDefined,
       "deleting the removal lets the seed bring it back"
     )
 

@@ -116,8 +116,8 @@ class TreeRepoSuite extends DbSuite:
 
   private val src = Source(
     citekey = Citekey("zzt_src"),
-    title = com.histmersion.api.library.Title("Tree fixture"),
-    authors = (List("T")).map(com.histmersion.api.library.AuthorName.apply),
+    title = api.library.Title("Tree fixture"),
+    authors = (List("T")).map(api.library.AuthorName.apply),
     doi = None,
     year = (Some(2021)).map(Year.apply),
     venue = None,
@@ -246,7 +246,7 @@ class TreeRepoSuite extends DbSuite:
     assertEquals(ns.find(_.id.value == "zzt_world").flatMap(_.period), None)
     assertEquals(
       ns.find(_.id.value == "zzt_land").map(_.kind),
-      Some(com.histmersion.domain.catalogue.Place.Kind.Region)
+      Some(domain.catalogue.Place.Kind.Region)
     )
     assert(rels.exists(r => r.childId.value == "zzt_north" && r.parentId.value == "zzt_land"))
     assertEquals(rels.find(_.childId.value == "zzt_south").flatMap(_.period), Some(Period(Year(-1500), Year(-1300))))
@@ -255,7 +255,7 @@ class TreeRepoSuite extends DbSuite:
   test("gazetteer() runs no query at all when nothing is located"):
     assertEquals(
       PlaceFixtures
-        .gazetteer(ds, Vector(TreeRow(TreeRow.Key("x"), Citekey("x"), com.histmersion.api.library.Title("X")))),
+        .gazetteer(ds, Vector(TreeRow(TreeRow.Key("x"), Citekey("x"), api.library.Title("X")))),
       (Nil, Nil)
     )
 

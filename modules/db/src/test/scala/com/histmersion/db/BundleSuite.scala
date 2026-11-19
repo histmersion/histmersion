@@ -184,9 +184,9 @@ class BundleSuite extends DbSuite with Bounded:
       edges: List[Edge] = Nil,
       calibre: Option[Source.CalibreId] = None
   ) = Source(
-    citekey = com.histmersion.api.library.Citekey(ck.value),
-    title = com.histmersion.api.library.Title(s"Title of $ck — Ünïcödé"),
-    authors = (List("Güterbock, Hans G.", "Jane Harrison")).map(com.histmersion.api.library.AuthorName.apply),
+    citekey = api.library.Citekey(ck.value),
+    title = api.library.Title(s"Title of $ck — Ünïcödé"),
+    authors = (List("Güterbock, Hans G.", "Jane Harrison")).map(api.library.AuthorName.apply),
     doi = (Some(s"10.1234/$ck")).map(Doi.apply),
     year = (Some(2001)).map(Year.apply),
     venue = (Some("JNES")).map(Source.Venue.apply),
@@ -204,7 +204,7 @@ class BundleSuite extends DbSuite with Bounded:
     findings = (0 until findings).toList.map(i =>
       Finding(
         Finding.Id(s"$ck#$i"),
-        com.histmersion.api.library.Citekey(ck.value),
+        api.library.Citekey(ck.value),
         Finding.Claim(s"claim $i of $ck"),
         Some(Finding.Region("Anatolia")),
         Option.when(i % 2 == 0)(GeoPoint(Longitude(34.615 + i * 0.000000000000123), Latitude(40.019))),
@@ -236,13 +236,13 @@ class BundleSuite extends DbSuite with Bounded:
         4,
         List(
           Edge(
-            com.histmersion.api.library.Citekey(A1.value),
-            com.histmersion.api.library.Citekey(B0.value),
+            api.library.Citekey(A1.value),
+            api.library.Citekey(B0.value),
             Edge.Kind.References
           ),
           Edge(
-            com.histmersion.api.library.Citekey(A1.value),
-            com.histmersion.api.library.Citekey("zzbmissing2020_x"),
+            api.library.Citekey(A1.value),
+            api.library.Citekey("zzbmissing2020_x"),
             Edge.Kind.Challenges
           )
         ),
@@ -257,8 +257,8 @@ class BundleSuite extends DbSuite with Bounded:
         0,
         List(
           Edge(
-            com.histmersion.api.library.Citekey(G1.value),
-            com.histmersion.api.library.Citekey(A1.value),
+            api.library.Citekey(G1.value),
+            api.library.Citekey(A1.value),
             Edge.Kind.SupersededBy
           )
         )
@@ -311,7 +311,7 @@ class BundleSuite extends DbSuite with Bounded:
       AssetLinkFixtures.create(
         ds,
         AssetLink.Put(
-          com.histmersion.api.library.Citekey(A1.value),
+          api.library.Citekey(A1.value),
           Bundle.Asset.FileName("fig1.png"),
           AssetRelation.Wire("depicts"),
           MediaTarget.TargetType("finding"),
@@ -322,7 +322,7 @@ class BundleSuite extends DbSuite with Bounded:
     val _ = AttestationRows.create(
       ds,
       Attestation.Put(
-        com.histmersion.api.library.Citekey(A1.value),
+        api.library.Citekey(A1.value),
         Attestation.TargetType("finding"),
         Attestation.TargetId(s"$A1#1"),
         quote = Some(Attestation.Quote("The body")),
@@ -387,13 +387,13 @@ class BundleSuite extends DbSuite with Bounded:
         EventSummary.Kind("battle"),
         TimeSpan(Some(Year(-1200)), Some(Year(-1195)), Some(Year(-1190)), None),
         placeId = Some(Place.Id("zzb_place")),
-        citekey = Some(com.histmersion.api.library.Citekey(A1.value)),
+        citekey = Some(api.library.Citekey(A1.value)),
         description = Some(EventSummary.Description("d")),
         scale = Some(EventSummary.Scale("regional")),
         datings = List(
           EventDating(
             Event.Id("zzb_e1"),
-            com.histmersion.api.library.Citekey(A1.value),
+            api.library.Citekey(A1.value),
             TimeSpan(Some(Year(-1210)), None, None, Some(Year(-1180))),
             Some(EventDating.Method("textual"))
           )
@@ -403,7 +403,7 @@ class BundleSuite extends DbSuite with Bounded:
             Event.Id("zzb_e1"),
             EventParticipant.Actor("Hattusili"),
             EventParticipant.Role("ruler"),
-            Some(com.histmersion.api.library.Citekey(A1.value))
+            Some(api.library.Citekey(A1.value))
           )
         )
       )
@@ -420,7 +420,7 @@ class BundleSuite extends DbSuite with Bounded:
             Event.Id("zzb_e2"),
             Event.Id("zzb_e1"),
             EventEdge.Kind("after"),
-            com.histmersion.api.library.Citekey(A1.value),
+            api.library.Citekey(A1.value),
             Some(EventEdge.Note("n"))
           )
         )
@@ -429,7 +429,7 @@ class BundleSuite extends DbSuite with Bounded:
     eventSets(ds)
     transact(ds)(
       GoalRepo.put(
-        com.histmersion.domain.automation.Goal.Slug("zzb_goal"),
+        domain.automation.Goal.Slug("zzb_goal"),
         Goal.Put(
           Goal.Title("Hittites"),
           Goal.StatusValue("seeding"),
@@ -443,7 +443,7 @@ class BundleSuite extends DbSuite with Bounded:
     )
     transact(ds)(
       GoalRepo.put(
-        com.histmersion.domain.automation.Goal.Slug("zzb_goal_sub"),
+        domain.automation.Goal.Slug("zzb_goal_sub"),
         Goal.Put(Goal.Title("Sub"), parentSlug = Some(Goal.Slug("zzb_goal")))
       )
     )
@@ -622,8 +622,8 @@ class BundleSuite extends DbSuite with Bounded:
       ds,
       List(
         Edge(
-          com.histmersion.api.library.Citekey(G1.value),
-          com.histmersion.api.library.Citekey(B1.value),
+          api.library.Citekey(G1.value),
+          api.library.Citekey(B1.value),
           Edge.Kind.Challenges
         )
       )
@@ -921,7 +921,7 @@ class BundleSuite extends DbSuite with Bounded:
     assert(r3c.applied.value, r3c.problems.mkString("\n"))
     assertEquals(r3c.issues, Nil)
     // a deletion over there of a row unchanged here since the last import deletes it here
-    val _ = Transactor(a).transact(GoalRepo.deleteIn(com.histmersion.domain.automation.Goal.Slug("zzb_goal_sub")))
+    val _ = Transactor(a).transact(GoalRepo.deleteIn(domain.automation.Goal.Slug("zzb_goal_sub")))
     val r4 = importInto(b, exportOf(a, sa), sb)
     assertEquals(
       r4.counts.find(_.kind == Bundle.Kind.Goal).map(_.deleted),
@@ -1093,8 +1093,8 @@ class BundleSuite extends DbSuite with Bounded:
           .filter(_ => rnd.nextBoolean())
           .map(dst =>
             Edge(
-              com.histmersion.api.library.Citekey(ck.value),
-              com.histmersion.api.library.Citekey(dst.value),
+              api.library.Citekey(ck.value),
+              api.library.Citekey(dst.value),
               Edge.Kind.References
             )
           )

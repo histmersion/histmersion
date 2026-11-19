@@ -489,7 +489,7 @@ class FilterSqlSuite extends munit.FunSuite:
   // the columns arrive as `text[]` lists, so a value containing a comma still matches exactly
   private val row = FilterSql.SourceRow(
     citekey = Citekey("cline2014_collapse"),
-    title = com.histmersion.api.library.Title("1177 BC: The Year Civilization Collapsed"),
+    title = api.library.Title("1177 BC: The Year Civilization Collapsed"),
     year = Some(Year(2014)),
     status = Source.Status.Current,
     topics = List(Source.Topics("collapse"), Source.Topics("trade")),
@@ -498,7 +498,7 @@ class FilterSqlSuite extends munit.FunSuite:
     periodEnd = Some(Year(-1100)),
     summary = Some(Source.Summary("Systems collapse.")),
     tags = List(Filter.Tags("sea-peoples"), Filter.Tags("bronze-age")),
-    authors = List(com.histmersion.api.library.AuthorName("Eric H. Cline")),
+    authors = List(api.library.AuthorName("Eric H. Cline")),
     bodyHit = false
   )
 
@@ -569,8 +569,8 @@ class FilterSqlSuite extends munit.FunSuite:
       .modify(_.authors)
       .setTo(
         List(
-          com.histmersion.api.library.AuthorName("Stocker, Sharon R."),
-          com.histmersion.api.library.AuthorName("Davis, J.")
+          api.library.AuthorName("Stocker, Sharon R."),
+          api.library.AuthorName("Davis, J.")
         )
       )
     assertEquals(
@@ -607,7 +607,7 @@ class FilterSqlSuite extends munit.FunSuite:
     assertEquals(FilterSql.findingWhy(Filter(tags = List(Filter.Tags("trade"))), m), Nil)
 
   private def fm(
-      region: Option[com.histmersion.api.catalogue.Place.Region],
+      region: Option[api.catalogue.Place.Region],
       lon: Option[Longitude],
       lat: Option[Latitude],
       start: Option[Year],
@@ -629,7 +629,7 @@ class FilterSqlSuite extends munit.FunSuite:
 
   test("findingWhy names the criteria a finding satisfies"):
     val m = fm(
-      Some(com.histmersion.api.catalogue.Place.Region("Ugarit, Syria")),
+      Some(api.catalogue.Place.Region("Ugarit, Syria")),
       Some(Longitude(35.8)),
       Some(Latitude(35.6)),
       Some(Year(-1190)),
@@ -649,7 +649,7 @@ class FilterSqlSuite extends munit.FunSuite:
 
   test("findingWhy is empty when nothing matches → the finding is not evidence"):
     val m = fm(
-      Some(com.histmersion.api.catalogue.Place.Region("Cyprus")),
+      Some(api.catalogue.Place.Region("Cyprus")),
       Some(Longitude(33.0)),
       Some(Latitude(35.0)),
       Some(Year(-800)),

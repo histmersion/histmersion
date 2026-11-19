@@ -33,8 +33,8 @@ class RepoSuite extends DbSuite:
 
   private val src = Source(
     citekey = Citekey("zz_test_source"),
-    title = com.histmersion.api.library.Title("Test"),
-    authors = (List("A", "B")).map(com.histmersion.api.library.AuthorName.apply),
+    title = api.library.Title("Test"),
+    authors = (List("A", "B")).map(api.library.AuthorName.apply),
     doi = None,
     year = (Some(2020)).map(Year.apply),
     venue = None,
@@ -66,7 +66,7 @@ class RepoSuite extends DbSuite:
 
   test("upsert → get round-trip, int8range bounds inclusive"):
     SourceFixtures.upsert(ds, src, AppConfig.load().limits.chunkChars)
-    val (d, fs) = SourceFixtures.get(ds, com.histmersion.domain.library.Citekey("zz_test_source")).get
+    val (d, fs) = SourceFixtures.get(ds, domain.library.Citekey("zz_test_source")).get
     assertEquals((d.periodStart, d.periodEnd), (Some(-2000L), Some(-1500L)))
     assertEquals(d.authors, List("A", "B"))
     assertEquals(fs.head.lon, Some(32.0))
@@ -108,7 +108,7 @@ class RepoSuite extends DbSuite:
     SourceFixtures.upsert(ds, src, AppConfig.load().limits.chunkChars)
     assert(
       CitationFixtures
-        .neighbors(ds, com.histmersion.domain.library.Citekey("zz_test_source"))
+        .neighbors(ds, domain.library.Citekey("zz_test_source"))
         .exists(n =>
           n.direction.value == "out" && n.citekey.value == "zz_other" && n.target == NeighborTarget.Unresolved
         )

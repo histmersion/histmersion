@@ -37,10 +37,10 @@ object AgentProposals:
     */
   final case class Proposal(
       kind: Approval.Kind,
-      citekey: com.histmersion.domain.library.Citekey,
+      citekey: library.Citekey,
       status: Option[Source.Status] = None,
       edgeKind: Option[Edge.Kind] = None,
-      target: Option[com.histmersion.domain.library.Citekey] = None,
+      target: Option[library.Citekey] = None,
       evidence: Proposal.Evidence = Proposal.Evidence(""),
       quote: Option[Proposal.Quote] = None
   ) derives JsonCodec,
@@ -123,7 +123,7 @@ object AgentProposals:
     object Kind extends Newtype[String, Pure]
     type Citekey = Citekey.T
     object Citekey extends Newtype[String, Pure]
-    export com.histmersion.domain.library.Source.Status.Wire as Status
+    export library.Source.Status.Wire as Status
     export Edge.Kind.Wire as EdgeKind
     type Target = Target.T
     object Target extends Newtype[String, Pure]
@@ -157,8 +157,8 @@ object AgentProposals:
     */
   def check(
       a: ProposalAnswer,
-      isCitekey: com.histmersion.domain.library.Citekey => Boolean,
-      text: com.histmersion.domain.library.Citekey => Option[AgentVerify.SourceBody],
+      isCitekey: library.Citekey => Boolean,
+      text: library.Citekey => Option[AgentVerify.SourceBody],
       minRatio: AgentVerify.MinRatio
   ): Either[Problem, Proposal] =
     val raw = a.citekey.value.trim
@@ -167,13 +167,13 @@ object AgentProposals:
     val at = Where(s"proposal for $shown")
     val field = Field(s"proposal for $shown")
     def broken(rule: Content.Requirement): Problem = Content.Proposal(rule, at)
-    def quoted(keys: List[com.histmersion.domain.library.Citekey]): Either[Problem, Proposal.Quote] =
+    def quoted(keys: List[library.Citekey]): Either[Problem, Proposal.Quote] =
       val q = Proposal.Quote(a.quote.value.trim)
       if q.value.isEmpty then Left(broken(Content.Requirement.QuoteGiven))
       else if keys.flatMap(text(_)).exists(t => AgentVerify.findQuote(q, t, minRatio).accepted) then Right(q)
       else Left(broken(Content.Requirement.QuoteInRecords(keys.toVector.map(Raw.of(_)))))
     for
-      ck <- com.histmersion.domain.library.Citekey
+      ck <- library.Citekey
         .parse(raw)
         .toOption
         .filter(isCitekey)
@@ -210,7 +210,7 @@ object AgentProposals:
               )
             t <- a.target
               .map(_.value.trim)
-              .flatMap(com.histmersion.domain.library.Citekey.parse(_).toOption)
+              .flatMap(library.Citekey.parse(_).toOption)
               .filter(isCitekey)
               .toRight(broken(Content.Requirement.EdgeTarget))
             _ <- Either.cond(t != ck, (), broken(Content.Requirement.NoSelfEdge))

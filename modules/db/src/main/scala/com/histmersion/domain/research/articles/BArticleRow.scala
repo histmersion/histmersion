@@ -27,10 +27,10 @@ final private[articles] case class BArticleRow(
 ) derives DbCodec
 
 object BArticleRow:
-  type Slug = com.histmersion.domain.research.Slug
-  val Slug: com.histmersion.domain.research.Slug.type = com.histmersion.domain.research.Slug
-  type Title = com.histmersion.domain.Title
-  val Title: com.histmersion.domain.Title.type = com.histmersion.domain.Title
+  type Slug = domain.research.Slug
+  val Slug: domain.research.Slug.type = domain.research.Slug
+  type Title = domain.Title
+  val Title: domain.Title.type = domain.Title
   export Article.Kind
   type Body = Body.T
   object Body extends Newtype[String, Pure]

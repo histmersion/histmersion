@@ -54,8 +54,8 @@ class RelatedListsRepoSuite extends DbSuite:
       ds,
       Source(
         citekey = Citekey(ck),
-        title = com.histmersion.api.library.Title(s"Source title $ck"),
-        authors = (List(author)).map(com.histmersion.api.library.AuthorName.apply),
+        title = api.library.Title(s"Source title $ck"),
+        authors = (List(author)).map(api.library.AuthorName.apply),
         doi = None,
         year = (Some(2010)).map(Year.apply),
         venue = None,

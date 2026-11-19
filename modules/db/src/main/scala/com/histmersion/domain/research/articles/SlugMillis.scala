@@ -9,6 +9,6 @@ import com.histmersion.domain.library.sources.CitekeyMillis
 final private[articles] case class SlugMillis(slug: SlugMillis.Slug, millis: SlugMillis.Millis) derives DbCodec
 
 object SlugMillis:
-  type Slug = com.histmersion.domain.research.Slug
-  val Slug: com.histmersion.domain.research.Slug.type = com.histmersion.domain.research.Slug
+  type Slug = domain.research.Slug
+  val Slug: domain.research.Slug.type = domain.research.Slug
   export CitekeyMillis.Millis

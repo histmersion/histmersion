@@ -76,7 +76,7 @@ object JobRepo:
     */
   def create(
       kind: Job.Kind,
-      citekey: Option[com.histmersion.domain.library.Citekey],
+      citekey: Option[domain.library.Citekey],
       sha256: Option[com.histmersion.Sha256],
       acquireItem: Option[JobRow.AcquireItem] = None,
       detail: Option[JobDetail] = None

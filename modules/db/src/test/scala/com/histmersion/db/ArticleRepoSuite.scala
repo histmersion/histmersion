@@ -51,8 +51,8 @@ class ArticleRepoSuite extends DbSuite:
       ds,
       Source(
         citekey = Citekey(ck),
-        title = com.histmersion.api.library.Title(s"Title of $ck"),
-        authors = (List("A")).map(com.histmersion.api.library.AuthorName.apply),
+        title = api.library.Title(s"Title of $ck"),
+        authors = (List("A")).map(api.library.AuthorName.apply),
         doi = None,
         year = (Some(2014)).map(Year.apply),
         venue = None,
@@ -125,12 +125,12 @@ class ArticleRepoSuite extends DbSuite:
     val _ = SourceFixtures.put(
       ds,
       SourceFixtures
-        .load(ds, com.histmersion.domain.library.Citekey("zz_comma2020_authors"))
+        .load(ds, domain.library.Citekey("zz_comma2020_authors"))
         .get
         .copy(authors =
           List(
-            com.histmersion.api.library.AuthorName("Stocker, Sharon R."),
-            com.histmersion.api.library.AuthorName("Davis, Jack L.")
+            api.library.AuthorName("Stocker, Sharon R."),
+            api.library.AuthorName("Davis, Jack L.")
           )
         ),
       Limits.ChunkChars(4000)
@@ -141,7 +141,7 @@ class ArticleRepoSuite extends DbSuite:
       List(List("Stocker, Sharon R.", "Davis, Jack L."))
     )
     assertEquals(
-      SourceFixtures.get(ds, com.histmersion.domain.library.Citekey("zz_comma2020_authors")).map(_._1.authors),
+      SourceFixtures.get(ds, domain.library.Citekey("zz_comma2020_authors")).map(_._1.authors),
       Some(List("Stocker, Sharon R.", "Davis, Jack L."))
     )
 
@@ -249,7 +249,7 @@ class ArticleRepoSuite extends DbSuite:
         .setTo(Some(Article.SummaryText("nothing here")))
     )
 
-    def slugs(q: Option[Search.Query] = None, kind: Option[com.histmersion.domain.research.Article.Kind] = None) =
+    def slugs(q: Option[Search.Query] = None, kind: Option[domain.research.Article.Kind] = None) =
       ArticleFixtures
         .list(ds, Filter(), PlaceScope.empty, kind, q, ArticleFixtures.Limit(50), Offset(0))
         .articles
@@ -259,7 +259,7 @@ class ArticleRepoSuite extends DbSuite:
     assertEquals(slugs(q = Some(Search.Query("Medinet"))), List(slug.value: String)) // body (weight C)
     assertEquals(slugs(q = Some(Search.Query("\"Sea Peoples\""))), List(slug.value: String)) // title phrase (weight A)
     assertEquals(slugs(q = Some(Search.Query("loose"))), List(slug.value: String)) // summary (weight B)
-    assert(slugs(kind = Some(com.histmersion.domain.research.Article.Kind("concept"))).contains(slug.value))
+    assert(slugs(kind = Some(domain.research.Article.Kind("concept"))).contains(slug.value))
     assertEquals(slugs(q = Some(Search.Query("zzznothingmatchesthis"))), Nil)
 
   test("list: an unfinished word still finds the title (the web UI tab types into this)"):
@@ -285,7 +285,7 @@ class ArticleRepoSuite extends DbSuite:
         ds,
         Filter(title = Some(Filter.Title("ZZ TOTAL marker"))),
         PlaceScope.empty,
-        Some(com.histmersion.domain.research.Article.Kind("concept")),
+        Some(domain.research.Article.Kind("concept")),
         None,
         ArticleFixtures.Limit(1),
         Offset(0)
@@ -466,7 +466,7 @@ class ArticleRepoSuite extends DbSuite:
       SourceFixtures
         .rename(
           ds,
-          com.histmersion.domain.library.Citekey("zz_covren2001_old"),
+          domain.library.Citekey("zz_covren2001_old"),
           Citekeys.RenameToNewRaw("zz_covren2001_new")
         )
         .isRight

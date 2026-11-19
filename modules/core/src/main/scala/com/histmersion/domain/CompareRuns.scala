@@ -83,7 +83,7 @@ object CompareRuns:
     object Pipeline extends Newtype[String, Pure]
     type Target = Target.T
     object Target extends Newtype[String, Pure]
-    export com.histmersion.domain.automation.Run.State.Wire as Status
+    export automation.Run.State.Wire as Status
     type DryRun = DryRun.T
     object DryRun extends Newtype[Boolean, Pure]
     type Model = Model.T
@@ -110,7 +110,7 @@ object CompareRuns:
   object Step:
     type Name = Name.T
     object Name extends Newtype[String, Pure]
-    export com.histmersion.domain.automation.Step.Status.Wire as Status
+    export automation.Step.Status.Wire as Status
     type Model = Model.T
     object Model extends Newtype[String, Pure]
     type ActualModel = ActualModel.T
@@ -148,7 +148,7 @@ object CompareRuns:
 
   object RunSide:
     export RunHead.Id
-    export com.histmersion.domain.automation.Run.State.Wire as Status
+    export automation.Run.State.Wire as Status
     export RunHead.{DryRun, Model}
     export Step.CostUsd
     export CompareRuns.Seconds
@@ -343,7 +343,7 @@ object CompareRuns:
         StepRow(n, runs.map(d => Option(d.steps.filter(_.name == n)).filter(_.nonEmpty).map(stepSide(_, billing))))
       )
       val notes = runs.collect {
-        case d if d.run.status != com.histmersion.domain.automation.Run.State.Done.wire =>
+        case d if d.run.status != automation.Run.State.Done.wire =>
           Comparison.Notes(s"run ${d.run.id.short} is ${d.run.status}, not done: its outputs are what it had so far")
       }
       val enrich = outputs.enrich(runs)
@@ -385,7 +385,7 @@ object CompareRuns:
   private def secondsOf(steps: List[Step]): Seconds = Seconds(steps.foldLeft(0L)((acc, s) => acc + seconds(s).value))
 
   private def failedIn(steps: List[Step]): Int =
-    steps.count(_.status == com.histmersion.domain.automation.Step.Status.Failed.wire)
+    steps.count(_.status == automation.Step.Status.Failed.wire)
 
   private def sum(us: List[Tokens]): Tokens = us.foldLeft(Tokens.Zero)(_ + _)
 
@@ -424,7 +424,7 @@ object CompareRuns:
   /** The checkpoint of step `name`: its last finished attempt's output, decoded. */
   def output[O: JsonValueCodec](d: Run, name: CompareRuns.OutputName): Option[O] =
     d.steps
-      .filter(s => s.name == name && s.status == com.histmersion.domain.automation.Step.Status.Done.wire)
+      .filter(s => s.name == name && s.status == automation.Step.Status.Done.wire)
       .lastOption
       .flatMap(_.output)
       .flatMap(o => RawJson.decode[O](o.value).toOption)

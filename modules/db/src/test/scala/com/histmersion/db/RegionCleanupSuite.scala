@@ -69,7 +69,7 @@ class RegionCleanupSuite extends RegionCleanupFixtures:
       Place(
         Place.Id("pleiades_999100010"),
         Place.Label("Zzrc Thessalia"),
-        Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region),
+        Place.KindValue(domain.catalogue.Place.Kind.Region),
         pt(Longitude(141.9), Latitude(-47.1)),
         properties = types("region")
       )
@@ -98,11 +98,11 @@ class RegionCleanupSuite extends RegionCleanupFixtures:
       )
     assertEquals(alone.map(r => (r.placeId, r.approximate)), Some((Achaia, List(Geocode.Approximation.GridSquare))))
     assertEquals(
-      PlaceFixtures.get(ds, com.histmersion.domain.catalogue.Place.Id.applyUnsafe(Thess)).map(_.locationPrecision),
+      PlaceFixtures.get(ds, domain.catalogue.Place.Id.applyUnsafe(Thess)).map(_.locationPrecision),
       Some(Place.Precision.GridCell)
     )
     assertEquals(
-      PlaceFixtures.get(ds, com.histmersion.domain.catalogue.Place.Id.applyUnsafe(Regio1)).map(_.locationPrecision),
+      PlaceFixtures.get(ds, domain.catalogue.Place.Id.applyUnsafe(Regio1)).map(_.locationPrecision),
       Some(Place.Precision.Stated)
     )
 

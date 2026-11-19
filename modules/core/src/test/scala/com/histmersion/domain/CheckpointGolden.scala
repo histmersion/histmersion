@@ -65,8 +65,8 @@ object CheckpointGolden:
 
   private val metadataPatches = List(
     MetadataPatch(
-      (Some("A title")).map(com.histmersion.api.library.Title.apply),
-      (Some(List("Smith, J.", "Doe, A."))).map(_.map(com.histmersion.api.library.AuthorName.apply)),
+      (Some("A title")).map(api.library.Title.apply),
+      (Some(List("Smith, J.", "Doe, A."))).map(_.map(api.library.AuthorName.apply)),
       (Some(1987)).map(Year.apply),
       (Some("Antiquity")).map(Source.Venue.apply),
       (Some("10.1/x")).map(Doi.apply),
@@ -123,7 +123,7 @@ object CheckpointGolden:
     "proposal.ndjson",
     Proposal(
       Approval.Kind.StatusChange,
-      com.histmersion.domain.library.Citekey("smith1987_tin"),
+      library.Citekey("smith1987_tin"),
       status = Some(Source.Status.Superseded),
       evidence = Proposal.Evidence("Doe shows the route is later."),
       quote = Some(Proposal.Quote("the route is later"))
@@ -131,14 +131,14 @@ object CheckpointGolden:
       AgentProposals.EdgeKinds.map(k =>
         Proposal(
           Approval.Kind.Edge,
-          com.histmersion.domain.library.Citekey("doe2001_tin"),
+          library.Citekey("doe2001_tin"),
           edgeKind = Some(k),
-          target = Some(com.histmersion.domain.library.Citekey("smith1987_tin")),
+          target = Some(library.Citekey("smith1987_tin")),
           evidence = Proposal.Evidence("It argues against."),
           quote = Some(Proposal.Quote("we disagree"))
         )
       ) ++
-      Approval.Kind.values.toList.map(k => Proposal(k, com.histmersion.domain.library.Citekey("smith1987_tin")))
+      Approval.Kind.values.toList.map(k => Proposal(k, library.Citekey("smith1987_tin")))
   )
 
   /** What [[AgentProposals.Proposal.patch]] writes for each proposal. */
@@ -176,7 +176,7 @@ object CheckpointGolden:
             Some(StatedYear(AgentVerify.ToSignedYearValue(2000), AgentVerify.YearUnit.Wire("BCE"))),
             Some(FindingProposal.PeriodName("EBA")),
             List(EnrichSource.Tag("tin")),
-            com.histmersion.domain.library.Confidence.Wire("high")
+            library.Confidence.Wire("high")
           ),
           FindingProposal(
             FindingProposal.Claim("A bare claim."),
@@ -187,7 +187,7 @@ object CheckpointGolden:
             None,
             None,
             Nil,
-            com.histmersion.domain.library.Confidence.Wire("low")
+            library.Confidence.Wire("low")
           )
         )
       ),
@@ -254,12 +254,12 @@ object CheckpointGolden:
   private val evidence =
     List(
       Evidence(
-        com.histmersion.domain.library.Citekey("smith1987_tin"),
+        library.Citekey("smith1987_tin"),
         Some(Offset(120)),
         Evidence.Quote("the route is later"),
         Evidence.Ratio(0.97)
       ),
-      Evidence(com.histmersion.domain.library.Citekey("doe2001_tin"), None, Evidence.Quote("q"), Evidence.Ratio(1.0))
+      Evidence(library.Citekey("doe2001_tin"), None, Evidence.Quote("q"), Evidence.Ratio(1.0))
     )
 
   val reviewFindings: Golden[ReviewArticle.Finding] = Golden(
@@ -302,7 +302,7 @@ object CheckpointGolden:
       List(Check(Check.Id("R1"), fixed = Check.Fixed(true), Check.Quote("a quote"), Check.Note("fixed in ## Origins"))),
       List(
         SpotCheck(
-          com.histmersion.domain.library.Citekey("smith1987_tin"),
+          library.Citekey("smith1987_tin"),
           SpotCheck.Claim("tin came"),
           SpotCheck.Verdict("attributable"),
           SpotCheck.RecordQuote("the route is later"),
@@ -348,9 +348,9 @@ object CheckpointGolden:
         (Some("10.1/x")).map(Doi.apply),
         Some(WorkRef.OpenalexId("W123")),
         Some(Source.Candidate.ArxivId("2101.00001")),
-        (Some("Tin and trade")).map(com.histmersion.api.library.Title.apply),
+        (Some("Tin and trade")).map(api.library.Title.apply),
         (Some(1987)).map(Year.apply),
-        (List("J. Smith")).map(com.histmersion.api.library.AuthorName.apply),
+        (List("J. Smith")).map(api.library.AuthorName.apply),
         (Some("Antiquity")).map(Source.Venue.apply),
         Some(Source.CitedByCount(12)),
         isOa = WorkRef.IsOa(true),
@@ -386,7 +386,7 @@ object CheckpointGolden:
 /** The patches `enrich-source` builds from its checkpoints: one that fills everything, one that fills nothing. */
 private object EnrichSourceSamples:
   private val loaded = EnrichSource.Loaded(
-    com.histmersion.domain.library.Citekey("smith1987_tin"),
+    library.Citekey("smith1987_tin"),
     EnrichSource.Loaded.Title("Tin"),
     List(AuthorName("Smith, J.")),
     Some(com.histmersion.Year(1987)),

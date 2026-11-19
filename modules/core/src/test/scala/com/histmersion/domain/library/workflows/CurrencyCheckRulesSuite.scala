@@ -33,7 +33,7 @@ class CurrencyCheckRulesSuite extends munit.FunSuite:
       proposedKind = FollowupRow.ProposedKind("refutes"),
       citekey = Some(Citekey("new2024_x"))
     )
-    currencyAction(com.histmersion.domain.library.Citekey("old2000_y"), row) match
+    currencyAction(domain.library.Citekey("old2000_y"), row) match
       case CurrencyAction.Propose(p) =>
         assertEquals(
           (p.kind, p.citekey, p.edgeKind, p.target),
@@ -42,32 +42,32 @@ class CurrencyCheckRulesSuite extends munit.FunSuite:
         assert(p.evidence.value.contains("we refute X"), p.evidence)
       case other => fail(s"expected a proposal, got $other")
     currencyAction(
-      com.histmersion.domain.library.Citekey("old2000_y"),
+      domain.library.Citekey("old2000_y"),
       row.modify(_.proposedKind).setTo(FollowupRow.ProposedKind("supersedes"))
     ) match
       case CurrencyAction.Propose(p) =>
         assertEquals((p.citekey, p.edgeKind, p.target), ("old2000_y", Some(Edge.Kind.SupersededBy), Some("new2024_x")))
       case other => fail(s"expected a proposal, got $other")
     assertEquals(
-      currencyAction(com.histmersion.domain.library.Citekey("old2000_y"), row.modify(_.citekey).setTo(None)),
+      currencyAction(domain.library.Citekey("old2000_y"), row.modify(_.citekey).setTo(None)),
       CurrencyAction.Fetch(row.modify(_.citekey).setTo(None))
     )
     assertEquals(
       currencyAction(
-        com.histmersion.domain.library.Citekey("old2000_y"),
+        domain.library.Citekey("old2000_y"),
         row.modify(_.proposedKind).setTo(FollowupRow.ProposedKind("confirms"))
       ),
       CurrencyAction.Ignore
     )
     assertEquals(
       currencyAction(
-        com.histmersion.domain.library.Citekey("old2000_y"),
+        domain.library.Citekey("old2000_y"),
         row.modify(_.proposedKind).setTo(FollowupRow.ProposedKind("cites"))
       ),
       CurrencyAction.Ignore
     )
     assertEquals(
-      currencyAction(com.histmersion.domain.library.Citekey("new2024_x"), row),
+      currencyAction(domain.library.Citekey("new2024_x"), row),
       CurrencyAction.Ignore,
       "a paper citing itself proposes nothing"
     )

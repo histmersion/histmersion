@@ -123,7 +123,7 @@ private[evidence] object LeadRepo:
     * findings are near each.
     */
   def articleCandidates(
-      citekeys: List[com.histmersion.domain.library.Citekey],
+      citekeys: List[domain.library.Citekey],
       period: Option[(DeepTime.SignedYear, DeepTime.SignedYear)],
       km: CatalogMerge.Tolerance.Km,
       minVei: CatalogRecord.Vei,

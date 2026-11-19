@@ -83,9 +83,9 @@ object ManagerRepo:
 
   object ManagerRow:
     export ManagerInfo.Id
-    export com.histmersion.api.automation.Manager.Kind.Wire as Kind
+    export Manager.Kind.Wire as Kind
     export com.histmersion.api.automation.Goal.Slug as Goal
-    export com.histmersion.api.automation.Manager.State.Wire as State
+    export Manager.State.Wire as State
     export ManagerInfo.PauseRuns
     type StatusNote = Manager.Status
     export ManagerInfo.{CreatedAt, Cron, NextTickAt, UpdatedAt}

@@ -62,7 +62,7 @@ object CompileArticle:
       quote: AgentProposals.Proposal.Quote,
       date: Option[ClaimAnswer.Date] = None,
       place: Option[ClaimAnswer.Place] = None,
-      confidence: com.histmersion.domain.library.Confidence.Wire
+      confidence: library.Confidence.Wire
   ) derives JsonCodec
   object ClaimAnswer:
     type Claim = Claim.T
@@ -132,7 +132,7 @@ object CompileArticle:
       val at = Where(s"claim ${i + 1} (${Option(c.claim).map(_.value).getOrElse("").take(50)})")
       if Option(c.claim).forall(_.value.trim.isEmpty) then Left(Content.Proposal(Content.Requirement.NoClaim, at))
       else
-        AgentVerify.confidence(Option(c.confidence).getOrElse(com.histmersion.domain.library.Confidence.Wire(""))) match
+        AgentVerify.confidence(Option(c.confidence).getOrElse(library.Confidence.Wire(""))) match
           case Left(m)     => Left(m.inside(at))
           case Right(conf) =>
             val q = Option(c.quote).map(_.value.trim).getOrElse("")

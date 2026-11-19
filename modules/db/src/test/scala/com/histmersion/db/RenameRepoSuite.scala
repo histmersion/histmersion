@@ -46,7 +46,7 @@ class RenameRepoSuite extends DbSuite:
   private val New = Citekey("zzrn2011_book")
   private val Other = Citekey("zzrnb2020_other")
   private val Waiter = Citekey("zzrnc2021_waiter")
-  private val Slug = com.histmersion.domain.research.Slug("zzrn_article")
+  private val Slug = domain.research.Slug("zzrn_article")
   private val Place = "zzrn_place"
   private val Event = "zzrn_event"
 
@@ -57,9 +57,9 @@ class RenameRepoSuite extends DbSuite:
       summary: Option[Source.Summary] = None,
       findings: Int = 0
   ) = Source(
-    citekey = com.histmersion.api.library.Citekey(ck.value),
-    title = com.histmersion.api.library.Title(s"Title $ck"),
-    authors = (List("A")).map(com.histmersion.api.library.AuthorName.apply),
+    citekey = api.library.Citekey(ck.value),
+    title = api.library.Title(s"Title $ck"),
+    authors = (List("A")).map(api.library.AuthorName.apply),
     doi = None,
     year = (Some(2011)).map(Year.apply),
     venue = None,
@@ -77,7 +77,7 @@ class RenameRepoSuite extends DbSuite:
     findings = (0 until findings).toList.map(i =>
       Finding(
         Finding.Id(s"$ck#$i"),
-        com.histmersion.api.library.Citekey(ck.value),
+        api.library.Citekey(ck.value),
         Finding.Claim(s"claim $i"),
         Some(Finding.Region("Anatolia")),
         Some(GeoPoint(Longitude(32.0), Latitude(39.0))),
@@ -145,8 +145,8 @@ class RenameRepoSuite extends DbSuite:
         findings = 2,
         edges = List(
           Edge(
-            com.histmersion.api.library.Citekey(Old.value),
-            com.histmersion.api.library.Citekey(Other.value),
+            api.library.Citekey(Old.value),
+            api.library.Citekey(Other.value),
             Edge.Kind.Challenges
           )
         ),
@@ -158,8 +158,8 @@ class RenameRepoSuite extends DbSuite:
         Other,
         edges = List(
           Edge(
-            com.histmersion.api.library.Citekey(Other.value),
-            com.histmersion.api.library.Citekey(Old.value),
+            api.library.Citekey(Other.value),
+            api.library.Citekey(Old.value),
             Edge.Kind.References
           )
         ),
@@ -172,13 +172,13 @@ class RenameRepoSuite extends DbSuite:
         Waiter,
         edges = List(
           Edge(
-            com.histmersion.api.library.Citekey(Waiter.value),
-            com.histmersion.api.library.Citekey(New.value),
+            api.library.Citekey(Waiter.value),
+            api.library.Citekey(New.value),
             Edge.Kind.References
           ),
           Edge(
-            com.histmersion.api.library.Citekey(Waiter.value),
-            com.histmersion.api.library.Citekey("zzrn2011"),
+            api.library.Citekey(Waiter.value),
+            api.library.Citekey("zzrn2011"),
             Edge.Kind.Updates
           )
         )
@@ -346,7 +346,7 @@ class RenameRepoSuite extends DbSuite:
     // the alias
     assertEquals(
       SourceFixtures.aliases(ds).filter(_.alias.value.startsWith(Prefix)),
-      List(Source.Alias(Source.Alias.Value(Old.value), com.histmersion.api.library.Citekey(New.value)))
+      List(Source.Alias(Source.Alias.Value(Old.value), api.library.Citekey(New.value)))
     )
     assertEquals(SourceFixtures.canonical(ds, Old), Some(New))
     assertEquals(SourceFixtures.canonical(ds, New), Some(New))
@@ -383,8 +383,8 @@ class RenameRepoSuite extends DbSuite:
         Other,
         edges = List(
           Edge(
-            com.histmersion.api.library.Citekey(Other.value),
-            com.histmersion.api.library.Citekey(Old.value),
+            api.library.Citekey(Other.value),
+            api.library.Citekey(Old.value),
             Edge.Kind.Challenges
           )
         )
@@ -413,8 +413,8 @@ class RenameRepoSuite extends DbSuite:
     assertEquals(
       SourceFixtures.aliases(ds).filter(_.alias.value.startsWith(Prefix)).toSet,
       Set(
-        Source.Alias(Source.Alias.Value(New.value), com.histmersion.api.library.Citekey(Old.value)),
-        Source.Alias(Source.Alias.Value(third.value), com.histmersion.api.library.Citekey(Old.value))
+        Source.Alias(Source.Alias.Value(New.value), api.library.Citekey(Old.value)),
+        Source.Alias(Source.Alias.Value(third.value), api.library.Citekey(Old.value))
       )
     )
 

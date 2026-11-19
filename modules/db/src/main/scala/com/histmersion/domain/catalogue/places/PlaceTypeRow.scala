@@ -10,7 +10,7 @@ import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
 
 final private[places] case class PlaceTypeRow(
-    placeId: com.histmersion.domain.catalogue.Place.Id,
+    placeId: domain.catalogue.Place.Id,
     typeLabel: PlaceTypeRow.TypeLabel,
     periodStart: Option[Year],
     periodEnd: Option[Year],

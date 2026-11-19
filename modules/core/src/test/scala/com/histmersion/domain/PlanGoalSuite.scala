@@ -57,10 +57,10 @@ class PlanGoalSuite extends munit.FunSuite:
       p.subGoals,
       List(
         PlannedGoal(
-          com.histmersion.api.automation.Goal.Slug("tin-trade"),
-          com.histmersion.api.automation.Goal.Title("Tin trade"),
-          Some(com.histmersion.api.automation.Goal.Notes("where tin came from")),
-          List(com.histmersion.api.automation.Goal.Tags("tin"))
+          api.automation.Goal.Slug("tin-trade"),
+          api.automation.Goal.Title("Tin trade"),
+          Some(api.automation.Goal.Notes("where tin came from")),
+          List(api.automation.Goal.Tags("tin"))
         )
       )
     )
@@ -169,11 +169,11 @@ class PlanGoalSuite extends munit.FunSuite:
       plan.works,
       List(
         PlannedWork(
-          com.histmersion.api.library.Doi("10.1000/a"),
-          Some(com.histmersion.api.library.Title("A")),
-          Some(com.histmersion.api.catalogue.Year(2020)),
+          api.library.Doi("10.1000/a"),
+          Some(api.library.Title("A")),
+          Some(api.catalogue.Year(2020)),
           Nil,
-          Some(com.histmersion.api.library.Citekey("a2020_x")),
+          Some(api.library.Citekey("a2020_x")),
           inCorpus = PlannedWork.InCorpus(true),
           why = Rationale("a")
         )
@@ -185,10 +185,10 @@ class PlanGoalSuite extends munit.FunSuite:
   test("the acquisition item carries the DOI as a resolver URL (so the queue can be deduplicated)"):
     val w =
       PlannedWork(
-        com.histmersion.api.library.Doi("10.1000/xyz"),
-        Some(com.histmersion.api.library.Title("Tin isotopes")),
-        Some(com.histmersion.api.catalogue.Year(2024)),
-        List(com.histmersion.api.library.AuthorName("Berger"), com.histmersion.api.library.AuthorName("Lockhoff")),
+        api.library.Doi("10.1000/xyz"),
+        Some(api.library.Title("Tin isotopes")),
+        Some(api.catalogue.Year(2024)),
+        List(api.library.AuthorName("Berger"), api.library.AuthorName("Lockhoff")),
         why = Rationale("dates the tin")
       )
     val t = acquireText(w, Goal.Slug("bronze-age"))

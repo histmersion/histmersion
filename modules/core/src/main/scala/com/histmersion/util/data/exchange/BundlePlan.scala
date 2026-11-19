@@ -63,7 +63,7 @@ object BundlePlan:
   final case class Ledger(foreignRev: Ledger.ForeignRev, localRevAfter: Option[Ledger.LocalRevAfter])
 
   object Ledger:
-    export com.histmersion.util.data.exchange.BundlePlan.{Rev as ForeignRev, Rev as LocalRevAfter}
+    export BundlePlan.{Rev as ForeignRev, Rev as LocalRevAfter}
 
   /** A uid as this instance knows it: the live row's rev, whether it is tombstoned, the ledger. */
   final case class Local(rev: Option[Local.Rev], tombstoned: Local.Tombstoned, ledger: Option[Ledger])

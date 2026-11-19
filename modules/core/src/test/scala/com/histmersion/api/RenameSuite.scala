@@ -52,33 +52,33 @@ class RenameSuite extends munit.FunSuite:
     refused(Citekeys.RenameToNewRaw("nodigits"), "LINK-shaped")
 
   test("shortForms: every prefix that ends right before an underscore"):
-    assertEquals(Rename.shortForms(com.histmersion.api.library.Citekey("beckman2025_ahhiyawa")), List("beckman2025"))
-    assertEquals(Rename.shortForms(com.histmersion.api.library.Citekey("a2020_b_c")), List("a2020", "a2020_b"))
-    assertEquals(Rename.shortForms(com.histmersion.api.library.Citekey("knapp2016")), Nil)
-    assertEquals(Rename.shortForms(com.histmersion.api.library.Citekey("_x")), Nil)
+    assertEquals(Rename.shortForms(library.Citekey("beckman2025_ahhiyawa")), List("beckman2025"))
+    assertEquals(Rename.shortForms(library.Citekey("a2020_b_c")), List("a2020", "a2020_b"))
+    assertEquals(Rename.shortForms(library.Citekey("knapp2016")), Nil)
+    assertEquals(Rename.shortForms(library.Citekey("_x")), Nil)
 
   test("findingId: only `<old>#…` moves"):
     assertEquals(
       Rename.findingId(
         Finding.Id("old2020_a#3"),
-        com.histmersion.api.library.Citekey("old2020_a"),
-        com.histmersion.api.library.Citekey("new1999_a")
+        library.Citekey("old2020_a"),
+        library.Citekey("new1999_a")
       ),
       Some("new1999_a#3")
     )
     assertEquals(
       Rename.findingId(
         Finding.Id("old2020_ab#3"),
-        com.histmersion.api.library.Citekey("old2020_a"),
-        com.histmersion.api.library.Citekey("new1999_a")
+        library.Citekey("old2020_a"),
+        library.Citekey("new1999_a")
       ),
       None
     )
     assertEquals(
       Rename.findingId(
         Finding.Id("custom-id"),
-        com.histmersion.api.library.Citekey("old2020_a"),
-        com.histmersion.api.library.Citekey("new1999_a")
+        library.Citekey("old2020_a"),
+        library.Citekey("new1999_a")
       ),
       None
     )
@@ -87,24 +87,24 @@ class RenameSuite extends munit.FunSuite:
     assertEquals(
       Rename.replaceToken(
         "b2021_y|old2020_a|references",
-        com.histmersion.api.library.Citekey("old2020_a"),
-        com.histmersion.api.library.Citekey("new1999_a")
+        library.Citekey("old2020_a"),
+        library.Citekey("new1999_a")
       ),
       "b2021_y|new1999_a|references"
     )
     assertEquals(
       Rename.replaceToken(
         "old2020_a#2",
-        com.histmersion.api.library.Citekey("old2020_a"),
-        com.histmersion.api.library.Citekey("new1999_a")
+        library.Citekey("old2020_a"),
+        library.Citekey("new1999_a")
       ),
       "new1999_a#2"
     )
     assertEquals(
       Rename.replaceToken(
         "zold2020_a|old2020_ab|old2020_a.x",
-        com.histmersion.api.library.Citekey("old2020_a"),
-        com.histmersion.api.library.Citekey("new1999_a")
+        library.Citekey("old2020_a"),
+        library.Citekey("new1999_a")
       ),
       "zold2020_a|old2020_ab|old2020_a.x"
     )
@@ -112,8 +112,8 @@ class RenameSuite extends munit.FunSuite:
     assertEquals(
       Rename.replaceToken(
         "x2020_v1x2",
-        com.histmersion.api.library.Citekey("x2020_v1.2"),
-        com.histmersion.api.library.Citekey("y")
+        library.Citekey("x2020_v1.2"),
+        library.Citekey("y")
       ),
       "x2020_v1x2"
     )
@@ -139,7 +139,7 @@ class RenameSuite extends munit.FunSuite:
 
   test("the rename report names the alias, the counts, and what Calibre and the mirror need"):
     val src = Source.Detail(
-      com.histmersion.api.library.Citekey("page1959_history"),
+      library.Citekey("page1959_history"),
       Title("History"),
       (List("Page")).map(AuthorName.apply),
       (Some(1959)).map(Year.apply),
@@ -165,8 +165,8 @@ class RenameSuite extends munit.FunSuite:
     val pushed =
       SourcesMarkdown.sourceRenamed(
         Source.Renamed(
-          com.histmersion.api.library.Citekey("page2024_history"),
-          com.histmersion.api.library.Citekey("page1959_history"),
+          library.Citekey("page2024_history"),
+          library.Citekey("page1959_history"),
           src,
           counts,
           Some(Source.CalibreId("12"))
@@ -185,8 +185,8 @@ class RenameSuite extends munit.FunSuite:
     val notPushed =
       SourcesMarkdown.sourceRenamed(
         Source.Renamed(
-          com.histmersion.api.library.Citekey("page2024_history"),
-          com.histmersion.api.library.Citekey("page1959_history"),
+          library.Citekey("page2024_history"),
+          library.Citekey("page1959_history"),
           src,
           counts,
           None

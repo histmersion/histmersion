@@ -397,13 +397,13 @@ object AutopilotPolicy:
 
   /** How deep a goal is: the number of parents above it (a cycle or a missing parent stops the walk). */
   def depth(
-      slug: com.histmersion.domain.research.Slug,
-      parentOf: com.histmersion.domain.research.Slug => Option[com.histmersion.domain.research.Slug]
+      slug: research.Slug,
+      parentOf: research.Slug => Option[research.Slug]
   ): GoalPlanFacts.Depth =
     @annotation.tailrec
     def go(
-        s: com.histmersion.domain.research.Slug,
-        seen: Set[com.histmersion.domain.research.Slug],
+        s: research.Slug,
+        seen: Set[research.Slug],
         n: Int
     ): GoalPlanFacts.Depth = parentOf(s) match
       case Some(p) if !seen(p) && n < 64 => go(p, seen + p, n + 1)
@@ -552,11 +552,11 @@ object AutopilotPolicy:
 
   object Step:
     object CreateSeed:
-      export com.histmersion.domain.automation.Goal.Slug as Goal
+      export automation.Goal.Slug as Goal
       export AutopilotPolicy.Cron
       export GoalRow.NeedsPlan as PlanFirst
     object CreateWatch:
-      export com.histmersion.domain.automation.Goal.Slug as Goal
+      export automation.Goal.Slug as Goal
       export AutopilotPolicy.Cron
       export Settings.WatchIngestPerDay as PerDay
     object Resume:
@@ -569,7 +569,7 @@ object AutopilotPolicy:
       export Settings.WatchIngestPerDay as PerDay
     object AddPlanItem:
       export ManagerRow.Id
-      export com.histmersion.domain.automation.Goal.Slug as Goal
+      export automation.Goal.Slug as Goal
     object ExtendMinNew:
       export ManagerRow.Id
       export Settings.ExtendMinNew as N

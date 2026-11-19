@@ -112,8 +112,8 @@ class PlaceRepoSuite extends DbSuite:
 
   private val src = Source(
     citekey = Citekey("zzp_src"),
-    title = com.histmersion.api.library.Title("Gazetteer fixture"),
-    authors = (List("T")).map(com.histmersion.api.library.AuthorName.apply),
+    title = api.library.Title("Gazetteer fixture"),
+    authors = (List("T")).map(api.library.AuthorName.apply),
     doi = None,
     year = (Some(2020)).map(Year.apply),
     venue = None,
@@ -441,7 +441,7 @@ class PlaceRepoSuite extends DbSuite:
       SourceFixtures
         .patch(
           ds,
-          com.histmersion.domain.library.Citekey("zzp_src"),
+          domain.library.Citekey("zzp_src"),
           Source.Patch(notes = Some(Source.Notes("an agent wrote a note"))),
           cfg.limits.chunkChars,
           cfg.places.pointToleranceKm
@@ -475,7 +475,7 @@ class PlaceRepoSuite extends DbSuite:
     val fewer = src.modify(_.findings).setTo(src.findings.filter(_.id.value != "zzp_src#1"))
     val _ = SourceFixtures.put(ds, fewer, cfg.limits.chunkChars, cfg.places.pointToleranceKm)
     assertEquals(
-      SourceFixtures.load(ds, com.histmersion.domain.library.Citekey("zzp_src")).get.findings.map(_.id),
+      SourceFixtures.load(ds, domain.library.Citekey("zzp_src")).get.findings.map(_.id),
       List("zzp_src#0", "zzp_src#2", "zzp_src#3")
     )
     assert(PlaceFixtures.placesOf(ds, Finding.Id("zzp_src#0")).nonEmpty)

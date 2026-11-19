@@ -273,7 +273,7 @@ class TileRepoSuite extends DbSuite:
       "int8range(1200, 1400, '[]')",
       props = Place.Properties("""{"heritage": {"id": "Q3"}, "registers": []}""")
     )
-    val r = PlaceFixtures.get(ds, com.histmersion.domain.catalogue.Place.Id("zztile_r1")).get.record
+    val r = PlaceFixtures.get(ds, domain.catalogue.Place.Id("zztile_r1")).get.record
     assertEquals(r.dateSource, Some("wikidata-p571"))
     assertEquals(r.periods, List("Byzantine"))
     assertEquals(
@@ -295,7 +295,7 @@ class TileRepoSuite extends DbSuite:
         Place.Register(Place.Register.Property("P2186"), Place.Register.Id("GR-2"))
       )
     )
-    assert(PlaceFixtures.get(ds, com.histmersion.domain.catalogue.Place.Id("zztile_r2")).get.record.isEmpty)
+    assert(PlaceFixtures.get(ds, domain.catalogue.Place.Id("zztile_r2")).get.record.isEmpty)
 
   test("grouping: a tile of more items than it keeps alone counts them by cell, and the counts add up to every item"):
     // 900 sites on a 30 × 30 grid 0.01° apart: more than a tile keeps alone
@@ -408,7 +408,7 @@ class TileRepoSuite extends DbSuite:
 
   test("versions: a write moves its group's version, once per transaction, and folding keeps it"):
     val before = connect(ds)(TileRepo.versions)
-    site(com.histmersion.domain.catalogue.Place.Id("zztile_v1"), Place.Label("Zztile V"), "int8range(1, 2, '[]')")
+    site(domain.catalogue.Place.Id("zztile_v1"), Place.Label("Zztile V"), "int8range(1, 2, '[]')")
     val after = connect(ds)(TileRepo.versions)
     assertEquals(
       after.getOrElse(TileRepo.GroupName("places"), UndatedBuild.Version(0L)).value,

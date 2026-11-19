@@ -58,7 +58,7 @@ private[evidence] object EventLinkRepo:
     sql"""INSERT INTO event_link_checks (event_id) VALUES ($id)
           ON CONFLICT (event_id) DO UPDATE SET checked_at = now()""".update.run()
 
-  def setStatus(id: BEventRow.Id, citekey: com.histmersion.domain.library.Citekey, status: BCandidateRow.Status)(using
+  def setStatus(id: BEventRow.Id, citekey: domain.library.Citekey, status: BCandidateRow.Status)(using
       DbCon
   ): Boolean =
     sql"UPDATE event_link_candidates SET status = $status WHERE event_id = $id AND citekey = $citekey".update

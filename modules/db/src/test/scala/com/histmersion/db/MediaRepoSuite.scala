@@ -93,7 +93,7 @@ class MediaRepoSuite extends DbSuite with Bounded:
             Place(
               Place.Id("zqmd_site"),
               Place.Label("Zqmd site"),
-              Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+              Place.KindValue(domain.catalogue.Place.Kind.Site),
               pt(130.0),
               Some(Period(Year(-1600), Year(-1100)))
             ),
@@ -103,7 +103,7 @@ class MediaRepoSuite extends DbSuite with Bounded:
             Place(
               Place.Id("zqmd_busy"),
               Place.Label("Zqmd busy"),
-              Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+              Place.KindValue(domain.catalogue.Place.Kind.Site),
               pt(131.0)
             ),
             List(Place.Name(Place.Name.Value("Zqmd busy")))
@@ -112,7 +112,7 @@ class MediaRepoSuite extends DbSuite with Bounded:
             Place(
               Place.Id("zqmd_nolink"),
               Place.Label("Zqmd no link"),
-              Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+              Place.KindValue(domain.catalogue.Place.Kind.Site),
               pt(132.0)
             ),
             List(Place.Name(Place.Name.Value("Zqmd no link")))
@@ -240,7 +240,7 @@ class MediaRepoSuite extends DbSuite with Bounded:
     val link = AssetLinkFixtures.create(
       ds,
       AssetLink.Put(
-        com.histmersion.api.library.Citekey("zqmd2020_figs"),
+        api.library.Citekey("zqmd2020_figs"),
         Bundle.Asset.FileName("fig1.png"),
         AssetRelation.Wire("depicts"),
         MediaTarget.TargetType("place"),
@@ -520,7 +520,7 @@ class MediaRepoSuite extends DbSuite with Bounded:
       ImportFixtures.targets(
         ds,
         Prov,
-        Some(com.histmersion.domain.catalogue.Place.Id("zqmd_site")),
+        Some(domain.catalogue.Place.Id("zqmd_site")),
         None,
         ImportFixtures.Limit(10),
         refresh = ImportFixtures.Refresh(false)
@@ -536,7 +536,7 @@ class MediaRepoSuite extends DbSuite with Bounded:
         .targets(
           ds,
           Prov,
-          Some(com.histmersion.domain.catalogue.Place.Id("zqmd_nolink")),
+          Some(domain.catalogue.Place.Id("zqmd_nolink")),
           None,
           ImportFixtures.Limit(10),
           refresh = ImportFixtures.Refresh(false)
@@ -549,7 +549,7 @@ class MediaRepoSuite extends DbSuite with Bounded:
         .targets(
           ds,
           Prov,
-          Some(com.histmersion.domain.catalogue.Place.Id("zqmd_nope")),
+          Some(domain.catalogue.Place.Id("zqmd_nope")),
           None,
           ImportFixtures.Limit(10),
           refresh = ImportFixtures.Refresh(false)
@@ -610,7 +610,7 @@ class MediaRepoSuite extends DbSuite with Bounded:
     assert(
       ImportFixtures.commonsCategory(
         ds,
-        com.histmersion.domain.catalogue.Place.Id("zqmd_site"),
+        domain.catalogue.Place.Id("zqmd_site"),
         ImportFixtures.Category("Zqmd category"),
         Target.Qid("Q90000001")
       )
@@ -618,7 +618,7 @@ class MediaRepoSuite extends DbSuite with Bounded:
     assert(
       !ImportFixtures.commonsCategory(
         ds,
-        com.histmersion.domain.catalogue.Place.Id("zqmd_site"),
+        domain.catalogue.Place.Id("zqmd_site"),
         ImportFixtures.Category("Zqmd category"),
         Target.Qid("Q90000001")
       )
@@ -627,7 +627,7 @@ class MediaRepoSuite extends DbSuite with Bounded:
       PlaceFixtures
         .get(
           ds,
-          com.histmersion.domain.catalogue.Place.Id("zqmd_site"),
+          domain.catalogue.Place.Id("zqmd_site"),
           None,
           DeepTime.SignedYear(cfg.places.modernFrom.value)
         )
@@ -791,7 +791,7 @@ class MediaRepoSuite extends DbSuite with Bounded:
           Place(
             Place.Id("zqmd_eq_a"),
             Place.Label("Zqmd Gobekli Tepe"),
-            Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+            Place.KindValue(domain.catalogue.Place.Kind.Site),
             pt(133.0)
           ),
           List(Place.Name(Place.Name.Value("Zqmd Gobekli Tepe")))
@@ -801,7 +801,7 @@ class MediaRepoSuite extends DbSuite with Bounded:
           Place(
             Place.Id("zqmd_eq_b"),
             Place.Label("Zqmd Göbekli tepe"),
-            Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+            Place.KindValue(domain.catalogue.Place.Kind.Site),
             pt(133.01)
           ),
           List(Place.Name(Place.Name.Value("Zqmd Göbekli tepe")))
@@ -811,7 +811,7 @@ class MediaRepoSuite extends DbSuite with Bounded:
           Place(
             Place.Id("zqmd_eq_far"),
             Place.Label("Zqmd Gobekli Tepe"),
-            Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+            Place.KindValue(domain.catalogue.Place.Kind.Site),
             pt(141.0)
           ),
           List(Place.Name(Place.Name.Value("Zqmd Gobekli Tepe")))
@@ -821,7 +821,7 @@ class MediaRepoSuite extends DbSuite with Bounded:
           Place(
             Place.Id("zqmd_eq_wd"),
             Place.Label("Zqmd Other"),
-            Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+            Place.KindValue(domain.catalogue.Place.Kind.Site),
             pt(135.0)
           ),
           List(Place.Name(Place.Name.Value("Zqmd Other")))
@@ -870,31 +870,31 @@ class MediaRepoSuite extends DbSuite with Bounded:
       None,
       AssetFixtures.LinkRank(0)
     )
-    def uids(id: com.histmersion.domain.catalogue.Place.Id) =
+    def uids(id: domain.catalogue.Place.Id) =
       AssetFixtures.placeThumbs(ds, id, EventMatcher.NearFinding.Km(cfg.media.sameSiteKm.value)).map(_.uid)
     assertEquals(
-      uids(com.histmersion.domain.catalogue.Place.Id("zqmd_eq_a")).map(_.value),
+      uids(domain.catalogue.Place.Id("zqmd_eq_a")).map(_.value),
       List(photo.value),
       "its own; the plan is the old id's, not an equivalent of a"
     )
     assertEquals(
-      uids(com.histmersion.domain.catalogue.Place.Id("zqmd_eq_b")).map(_.value),
+      uids(domain.catalogue.Place.Id("zqmd_eq_b")).map(_.value),
       List(photo.value, plan.value),
       "the same site's other point, and its own old id"
     )
     assertEquals(
-      uids(com.histmersion.domain.catalogue.Place.Id("zqmd_eq_wd")).map(_.value),
+      uids(domain.catalogue.Place.Id("zqmd_eq_wd")).map(_.value),
       List(photo.value),
       "the same Wikidata item"
     )
     assertEquals(
-      uids(com.histmersion.domain.catalogue.Place.Id("zqmd_eq_far")),
+      uids(domain.catalogue.Place.Id("zqmd_eq_far")),
       Nil,
       "the same name far away is another place"
     )
     assertEquals(
       AssetFixtures
-        .placeThumbs(ds, com.histmersion.domain.catalogue.Place.Id("zqmd_eq_b"), EventMatcher.NearFinding.Km(0))
+        .placeThumbs(ds, domain.catalogue.Place.Id("zqmd_eq_b"), EventMatcher.NearFinding.Km(0))
         .map(_.uid.value),
       List(plan.value),
       "no same-site radius: the alias only"
@@ -925,7 +925,7 @@ class MediaRepoSuite extends DbSuite with Bounded:
       AssetFixtures
         .placeThumbs(
           ds,
-          com.histmersion.domain.catalogue.Place.Id("zqmd_eq_wd"),
+          domain.catalogue.Place.Id("zqmd_eq_wd"),
           EventMatcher.NearFinding.Km(cfg.media.sameSiteKm.value)
         )
         .map(_.uid.value)

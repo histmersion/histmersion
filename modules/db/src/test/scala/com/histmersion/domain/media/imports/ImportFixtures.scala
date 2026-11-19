@@ -17,8 +17,8 @@ object ImportFixtures:
   def targets(
       ds: DataSource,
       provider: MediaItemRow.Provider,
-      place: Option[com.histmersion.domain.catalogue.Place.Id],
-      event: Option[com.histmersion.domain.catalogue.Event.Id],
+      place: Option[domain.catalogue.Place.Id],
+      event: Option[domain.catalogue.Event.Id],
       limit: ImportRepo.Limit,
       refresh: ImportRepo.Refresh,
       since: Option[ImportRepo.Since] = None
@@ -30,8 +30,8 @@ object ImportFixtures:
       ds: DataSource,
       check: MediaItemRow.Provider,
       places: ImportRepo.Places,
-      place: Option[com.histmersion.domain.catalogue.Place.Id],
-      event: Option[com.histmersion.domain.catalogue.Event.Id],
+      place: Option[domain.catalogue.Place.Id],
+      event: Option[domain.catalogue.Event.Id],
       limit: ImportRepo.Limit,
       refresh: ImportRepo.Refresh,
       since: Option[ImportRepo.Since] = None,
@@ -47,19 +47,19 @@ object ImportFixtures:
   ): RowCount = connect(ds)(ImportRepo.collectionPending(check, places, since, pleiadesOnly))
   def placeFacts(
       ds: DataSource,
-      ids: List[com.histmersion.domain.catalogue.Place.Id]
-  ): Map[com.histmersion.domain.catalogue.Place.Id, PlaceFacts] = connect(ds)(ImportRepo.placeFacts(ids))
+      ids: List[domain.catalogue.Place.Id]
+  ): Map[domain.catalogue.Place.Id, PlaceFacts] = connect(ds)(ImportRepo.placeFacts(ids))
   def mapPlacesNamed(ds: DataSource, keys: List[ImportRepo.NameKey]): Map[ImportRepo.NameKey, List[PlaceFacts]] =
     connect(ds)(ImportRepo.mapPlacesNamed(keys))
   def placeExternalIds(
       ds: DataSource,
-      ids: List[com.histmersion.domain.catalogue.Place.Id]
-  ): Map[com.histmersion.domain.catalogue.Place.Id, Set[(ExternalIds.Scheme, ExternalIds.ExternalId)]] =
+      ids: List[domain.catalogue.Place.Id]
+  ): Map[domain.catalogue.Place.Id, Set[(ExternalIds.Scheme, ExternalIds.ExternalId)]] =
     connect(ds)(ImportRepo.placeExternalIds(ids))
   def pleiadesIds(
       ds: DataSource,
-      ids: List[com.histmersion.domain.catalogue.Place.Id]
-  ): Map[com.histmersion.domain.catalogue.Place.Id, List[ExternalIds.ExternalId]] =
+      ids: List[domain.catalogue.Place.Id]
+  ): Map[domain.catalogue.Place.Id, List[ExternalIds.ExternalId]] =
     connect(ds)(ImportRepo.pleiadesIds(ids))
   def mapPlacesWithIds(
       ds: DataSource,
@@ -68,7 +68,7 @@ object ImportFixtures:
     connect(ds)(ImportRepo.mapPlacesWithIds(ids))
   def commonsCategory(
       ds: DataSource,
-      placeId: com.histmersion.domain.catalogue.Place.Id,
+      placeId: domain.catalogue.Place.Id,
       category: ImportRepo.Category,
       qid: Target.Qid
   ): Boolean =

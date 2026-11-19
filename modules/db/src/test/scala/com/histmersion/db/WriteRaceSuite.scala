@@ -57,9 +57,9 @@ class WriteRaceSuite extends DbSuite:
     SourceFixtures.put(
       ds,
       Source(
-        citekey = com.histmersion.api.library.Citekey("zzrace_src"),
-        title = com.histmersion.api.library.Title("Race"),
-        authors = (Nil).map(com.histmersion.api.library.AuthorName.apply),
+        citekey = api.library.Citekey("zzrace_src"),
+        title = api.library.Title("Race"),
+        authors = (Nil).map(api.library.AuthorName.apply),
         doi = None,
         year = None,
         venue = None,

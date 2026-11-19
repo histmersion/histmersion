@@ -177,8 +177,8 @@ class MergeSuite extends DbSuite with Bounded:
   ): Source =
     Source(
       Citekey(ck),
-      com.histmersion.api.library.Title(title),
-      (authors).map(com.histmersion.api.library.AuthorName.apply),
+      api.library.Title(title),
+      (authors).map(api.library.AuthorName.apply),
       (doi).map(Doi.apply),
       (Some(year)).map(Year.apply),
       (venue).map(Source.Venue.apply),
@@ -253,7 +253,7 @@ class MergeSuite extends DbSuite with Bounded:
       src("zzshared2001_alpha", "Alpha", List("Doe, John"), 2001, summary = Some(Source.Summary("as imported")))
     )
     transact(work)(
-      GoalRepo.put(com.histmersion.domain.automation.Goal.Slug("zz_shared_goal"), Goal.Put(Goal.Title("Shared goal")))
+      GoalRepo.put(domain.automation.Goal.Slug("zz_shared_goal"), Goal.Put(Goal.Title("Shared goal")))
     )
     // two articles both sides will edit: in different places (a clean three-way merge), in one place
     val _ = ArticleFixtures.put(
@@ -280,21 +280,21 @@ class MergeSuite extends DbSuite with Bounded:
     val _ =
       SourceFixtures.patch(
         work,
-        com.histmersion.domain.library.Citekey("zzshared2001_alpha"),
+        domain.library.Citekey("zzshared2001_alpha"),
         Source.Patch(summary = Some(Source.Summary("edited at work"))),
         chunkChars
       )
     val _ =
       SourceFixtures.patch(
         home,
-        com.histmersion.domain.library.Citekey("zzshared2001_alpha"),
+        domain.library.Citekey("zzshared2001_alpha"),
         Source.Patch(summary = Some(Source.Summary("edited at home"))),
         chunkChars
       )
-    val _ = Transactor(work).transact(GoalRepo.deleteIn(com.histmersion.domain.automation.Goal.Slug("zz_shared_goal")))
+    val _ = Transactor(work).transact(GoalRepo.deleteIn(domain.automation.Goal.Slug("zz_shared_goal")))
     val _ = Transactor(home).transact(
       GoalRepo.patchIn(
-        com.histmersion.domain.automation.Goal.Slug("zz_shared_goal"),
+        domain.automation.Goal.Slug("zz_shared_goal"),
         Goal.Patch(notes = Some(Goal.Notes("edited at home")))
       )
     )
@@ -361,7 +361,7 @@ class MergeSuite extends DbSuite with Bounded:
     // one figure as home's (the same bytes), one new, one whose name home uses for another figure
     val _ = AssetFixtures.add(
       work,
-      com.histmersion.domain.library.Citekey("guterbock1997_perspectives"),
+      domain.library.Citekey("guterbock1997_perspectives"),
       List(
         asset(NewFigure.Name("fig1.png"), 1),
         asset(NewFigure.Name("fig2.png"), 2),
@@ -379,7 +379,7 @@ class MergeSuite extends DbSuite with Bounded:
         body = Some(Source.OcrMarkdown("Kuhrt body, work's OCR"))
       )
     )
-    SourceFixtures.setSha256(work, com.histmersion.domain.library.Citekey("kuhrt1995_near"), kuhrtSha)
+    SourceFixtures.setSha256(work, domain.library.Citekey("kuhrt1995_near"), kuhrtSha)
     // one passage home's body has too (it moves), one only work's has (it cannot)
     attest(work, Citekey("kuhrt1995_near"), Attestation.Quote("Kuhrt body"), Attestation.TargetId("zz_found"))
     attest(work, Citekey("kuhrt1995_near"), Attestation.Quote("work's OCR"), Attestation.TargetId("zz_lost"))
@@ -421,7 +421,7 @@ class MergeSuite extends DbSuite with Bounded:
     )
     val _ = SourceFixtures.rename(
       work,
-      com.histmersion.domain.library.Citekey("harrison1903_old"),
+      domain.library.Citekey("harrison1903_old"),
       Citekeys.RenameToNewRaw("harrison1903_prolegomena")
     )
     put(
@@ -479,7 +479,7 @@ class MergeSuite extends DbSuite with Bounded:
     )
     transact(work)(
       GoalRepo.put(
-        com.histmersion.domain.automation.Goal.Slug("zz_goal_both"),
+        domain.automation.Goal.Slug("zz_goal_both"),
         Goal.Put(Goal.Title("Goal created at work"), status = Goal.StatusValue("seeding"))
       )
     )
@@ -504,7 +504,7 @@ class MergeSuite extends DbSuite with Bounded:
     )
     val _ = AssetFixtures.add(
       home,
-      com.histmersion.domain.library.Citekey("guterbock1997_hittite"),
+      domain.library.Citekey("guterbock1997_hittite"),
       List(asset(NewFigure.Name("fig1.png"), 1), asset(NewFigure.Name("fig3.png"), 3))
     )
     put(
@@ -518,7 +518,7 @@ class MergeSuite extends DbSuite with Bounded:
         body = Some(Source.OcrMarkdown("Preface. Kuhrt body, home's OCR"))
       )
     )
-    SourceFixtures.setSha256(home, com.histmersion.domain.library.Citekey("kuhrt1995_ancient"), kuhrtSha)
+    SourceFixtures.setSha256(home, domain.library.Citekey("kuhrt1995_ancient"), kuhrtSha)
     // home's own attestation: should the merge take work's body, it could not move
     attest(home, Citekey("kuhrt1995_ancient"), Attestation.Quote("home's OCR"), Attestation.TargetId("zz_home"))
     put(
@@ -548,7 +548,7 @@ class MergeSuite extends DbSuite with Bounded:
     )
     val _ = SourceFixtures.rename(
       home,
-      com.histmersion.domain.library.Citekey("latacz2023_troy"),
+      domain.library.Citekey("latacz2023_troy"),
       Citekeys.RenameToNewRaw("latacz2004_troy")
     )
     put(
@@ -561,7 +561,7 @@ class MergeSuite extends DbSuite with Bounded:
     )
     val _ = SourceFixtures.rename(
       home,
-      com.histmersion.domain.library.Citekey("harrison1903_old"),
+      domain.library.Citekey("harrison1903_old"),
       Citekeys.RenameToNewRaw("harrison1912_themis")
     )
     put(
@@ -617,7 +617,7 @@ class MergeSuite extends DbSuite with Bounded:
     )
     transact(home)(
       GoalRepo.put(
-        com.histmersion.domain.automation.Goal.Slug("zz_goal_both"),
+        domain.automation.Goal.Slug("zz_goal_both"),
         Goal.Put(Goal.Title("Goal created at home"), notes = Some(Goal.Notes("home's plan")))
       )
     )
@@ -773,7 +773,7 @@ class MergeSuite extends DbSuite with Bounded:
     val _ =
       SourceFixtures.patch(
         a,
-        com.histmersion.domain.library.Citekey("zzx2001_there"),
+        domain.library.Citekey("zzx2001_there"),
         Source.Patch(summary = Some(Source.Summary("v2 from there"))),
         chunkChars
       )
@@ -786,7 +786,7 @@ class MergeSuite extends DbSuite with Bounded:
     assertEquals(r.counts.find(_.kind == Bundle.Kind.Source).map(_.updated), Some(1), r.toString)
     assertEquals(count(b, "SELECT count(*)::int FROM sources"), 1)
     assertEquals(
-      SourceFixtures.load(b, com.histmersion.domain.library.Citekey("zzx2001_here")).flatMap(_.summary),
+      SourceFixtures.load(b, domain.library.Citekey("zzx2001_here")).flatMap(_.summary),
       Some("v2 from there")
     )
     assertEquals(count(b, s"SELECT count(*)::int FROM sources WHERE uid = '$uidHere' AND citekey = 'zzx2001_here'"), 1)
@@ -941,11 +941,11 @@ class MergeSuite extends DbSuite with Bounded:
     assertEquals(count(home, "SELECT count(*)::int FROM sources"), 11 + 2) // + zznew2020_only, smith2019_ritualkingship
     assertEquals(count(home, s"SELECT count(*)::int FROM uid_aliases WHERE alias_uid = '$uidW' AND uid = '$uidH'"), 1)
     assertEquals(
-      SourceFixtures.load(home, com.histmersion.domain.library.Citekey("guterbock1997_hittite")).flatMap(_.notes),
+      SourceFixtures.load(home, domain.library.Citekey("guterbock1997_hittite")).flatMap(_.notes),
       Some("home's notes\n\nwork's notes")
     )
     assertEquals(
-      SourceFixtures.load(home, com.histmersion.domain.library.Citekey("guterbock1997_hittite")).map(_.doi),
+      SourceFixtures.load(home, domain.library.Citekey("guterbock1997_hittite")).map(_.doi),
       Some(Some("10.5555/oip26"))
     )
     assertEquals(
@@ -956,28 +956,28 @@ class MergeSuite extends DbSuite with Bounded:
       1
     )
     assertEquals(
-      SourceFixtures.load(home, com.histmersion.domain.library.Citekey("bryce2005_kingdom_hittites")).map(_.status),
+      SourceFixtures.load(home, domain.library.Citekey("bryce2005_kingdom_hittites")).map(_.status),
       Some(Source.Status.Contested)
     )
     assertEquals(
-      SourceFixtures.load(home, com.histmersion.domain.library.Citekey("page1959_history")).flatMap(_.year),
+      SourceFixtures.load(home, domain.library.Citekey("page1959_history")).flatMap(_.year),
       Some(1959L)
     )
     assertEquals(
-      SourceFixtures.load(home, com.histmersion.domain.library.Citekey("smith2019_ritualkingship")).map(_.title),
+      SourceFixtures.load(home, domain.library.Citekey("smith2019_ritualkingship")).map(_.title),
       Some("Ritual and Kingship in Early Mesopotamia")
     )
     assertEquals(
-      SourceFixtures.load(home, com.histmersion.domain.library.Citekey("smith2019_ritual")).map(_.title),
+      SourceFixtures.load(home, domain.library.Citekey("smith2019_ritual")).map(_.title),
       Some("Ritual Economies of the Aegean")
     )
     assertEquals(
-      SourceFixtures.load(home, com.histmersion.domain.library.Citekey("zzshared2001_alpha")).flatMap(_.summary),
+      SourceFixtures.load(home, domain.library.Citekey("zzshared2001_alpha")).flatMap(_.summary),
       Some("edited at work")
     )
     // the kept body stays (keep-left by default); the ISBN and MinHash pairs folded too
     assertEquals(
-      SourceFixtures.load(home, com.histmersion.domain.library.Citekey("kuhrt1995_ancient")).flatMap(_.ocrMarkdown),
+      SourceFixtures.load(home, domain.library.Citekey("kuhrt1995_ancient")).flatMap(_.ocrMarkdown),
       Some("Preface. Kuhrt body, home's OCR")
     )
     assertEquals(
@@ -990,7 +990,7 @@ class MergeSuite extends DbSuite with Bounded:
 
     // findings: the same claim is one (tags unioned), the near duplicate kept beside it, the new one
     // numbered after home's last
-    val gf = SourceFixtures.load(home, com.histmersion.domain.library.Citekey("guterbock1997_hittite")).get.findings
+    val gf = SourceFixtures.load(home, domain.library.Citekey("guterbock1997_hittite")).get.findings
     assertEquals(
       gf.map(_.id.value).sorted,
       List("guterbock1997_hittite#1", "guterbock1997_hittite#2", "guterbock1997_hittite#3", "guterbock1997_hittite#4")
@@ -1003,7 +1003,7 @@ class MergeSuite extends DbSuite with Bounded:
     // figures: the same bytes are one, a taken name gets work's label
     assertEquals(
       AssetFixtures
-        .list(home, com.histmersion.domain.library.Citekey("guterbock1997_hittite"))
+        .list(home, domain.library.Citekey("guterbock1997_hittite"))
         .map(_.name.value)
         .toList
         .sorted,
@@ -1226,7 +1226,7 @@ class MergeSuite extends DbSuite with Bounded:
       )
     )
     transact(a)(
-      GoalRepo.put(com.histmersion.domain.automation.Goal.Slug("zz_old_goal"), Goal.Put(Goal.Title("A goal")))
+      GoalRepo.put(domain.automation.Goal.Slug("zz_old_goal"), Goal.Put(Goal.Title("A goal")))
     )
     val first = importInto(b, exportOf(a, sa), sb)
     assert(first.applied.value, first.problems.mkString("\n"))
@@ -1239,8 +1239,8 @@ class MergeSuite extends DbSuite with Bounded:
         .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
       GoalRepo
         .renameIn(
-          com.histmersion.domain.automation.Goal.Slug("zz_old_goal"),
-          com.histmersion.domain.automation.Goal.Slug("zz_new_goal")
+          domain.automation.Goal.Slug("zz_old_goal"),
+          domain.automation.Goal.Slug("zz_new_goal")
         )
         .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     }

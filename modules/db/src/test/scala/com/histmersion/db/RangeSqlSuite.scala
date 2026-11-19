@@ -121,7 +121,7 @@ class RangeSqlSuite extends DbSuite:
     assertEquals(
       transact(ds)(
         GoalRepo.put(
-          com.histmersion.domain.automation.Goal.Slug("zz_period_goal"),
+          domain.automation.Goal.Slug("zz_period_goal"),
           Goal.Put(Goal.Title("Period goal"), periodStart = Some(Year(-1200)), periodEnd = Some(Year(-1000)))
         )
       ),
@@ -130,40 +130,38 @@ class RangeSqlSuite extends DbSuite:
     assertEquals(
       Transactor(ds).transact(
         GoalRepo.patchIn(
-          com.histmersion.domain.automation.Goal.Slug("zz_period_goal"),
+          domain.automation.Goal.Slug("zz_period_goal"),
           Goal.Patch(periodStart = Some(Year(-1300)))
         )
       ),
       Right(())
     )
-    val g = connect(ds)(GoalRepo.get(com.histmersion.domain.automation.Goal.Slug("zz_period_goal"))).get
+    val g = connect(ds)(GoalRepo.get(domain.automation.Goal.Slug("zz_period_goal"))).get
     assertEquals((g.periodStart, g.periodEnd), (Some(-1300L), Some(-1000L)))
     assertEquals(
       Transactor(ds).transact(
         GoalRepo.patchIn(
-          com.histmersion.domain.automation.Goal.Slug("zz_period_goal"),
+          domain.automation.Goal.Slug("zz_period_goal"),
           Goal.Patch(periodEnd = Some(Year(-1100)))
         )
       ),
       Right(())
     )
-    val g2 = connect(ds)(GoalRepo.get(com.histmersion.domain.automation.Goal.Slug("zz_period_goal"))).get
+    val g2 = connect(ds)(GoalRepo.get(domain.automation.Goal.Slug("zz_period_goal"))).get
     assertEquals((g2.periodStart, g2.periodEnd), (Some(-1300L), Some(-1100L)))
     // inverted: refused, stored period unchanged
     assert(
       Transactor(ds)
         .transact(
           GoalRepo.patchIn(
-            com.histmersion.domain.automation.Goal.Slug("zz_period_goal"),
+            domain.automation.Goal.Slug("zz_period_goal"),
             Goal.Patch(periodStart = Some(Year(-1000)))
           )
         )
         .isLeft
     )
     assertEquals(
-      connect(ds)(GoalRepo.get(com.histmersion.domain.automation.Goal.Slug("zz_period_goal"))).map(x =>
-        (x.periodStart, x.periodEnd)
-      ),
+      connect(ds)(GoalRepo.get(domain.automation.Goal.Slug("zz_period_goal"))).map(x => (x.periodStart, x.periodEnd)),
       Some((Some(-1300L), Some(-1100L)))
     )
     connect(ds)(sql"DELETE FROM goals WHERE slug = 'zz_period_goal'".update.run())
@@ -173,22 +171,20 @@ class RangeSqlSuite extends DbSuite:
     assertEquals(
       transact(ds)(
         GoalRepo.put(
-          com.histmersion.domain.automation.Goal.Slug("zz_period_open"),
+          domain.automation.Goal.Slug("zz_period_open"),
           Goal.Put(Goal.Title("Open"), periodStart = Some(Year(-3300)))
         )
       ),
       Right(())
     )
     assertEquals(
-      connect(ds)(GoalRepo.get(com.histmersion.domain.automation.Goal.Slug("zz_period_open"))).map(x =>
-        (x.periodStart, x.periodEnd)
-      ),
+      connect(ds)(GoalRepo.get(domain.automation.Goal.Slug("zz_period_open"))).map(x => (x.periodStart, x.periodEnd)),
       Some((Some(-3300L), None))
     )
     assert(
       transact(ds)(
         GoalRepo.put(
-          com.histmersion.domain.automation.Goal.Slug("zz_period_open"),
+          domain.automation.Goal.Slug("zz_period_open"),
           Goal.Put(Goal.Title("Open"), periodStart = Some(Year(5)), periodEnd = Some(Year(-5)))
         )
       ).isLeft

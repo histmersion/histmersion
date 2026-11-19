@@ -41,7 +41,7 @@ object GoalRepo:
         UnreadPage.Offset(offset.value.max(0))
       )
 
-  def get(slug: com.histmersion.domain.automation.Goal.Slug)(using DbCon): Option[Goal] =
+  def get(slug: domain.automation.Goal.Slug)(using DbCon): Option[Goal] =
     sql"""SELECT $cols FROM goals g WHERE g.slug = $slug"""
       .query[GoalRow]
       .run()
@@ -53,20 +53,20 @@ object GoalRepo:
     sql"""SELECT $cols FROM goals g ORDER BY g.slug""".query[GoalRow].run().toList.map(_.toDto)
 
   /** A goal's direct sub-goals, by slug. */
-  def children(slug: com.histmersion.domain.automation.Goal.Slug)(using DbCon): List[Goal] =
+  def children(slug: domain.automation.Goal.Slug)(using DbCon): List[Goal] =
     sql"""SELECT $cols FROM goals g WHERE g.parent_slug = $slug ORDER BY g.slug"""
       .query[GoalRow]
       .run()
       .toList
       .map(_.toDto)
 
-  def exists(slug: com.histmersion.domain.automation.Goal.Slug)(using DbCon): Boolean =
+  def exists(slug: domain.automation.Goal.Slug)(using DbCon): Boolean =
     (sql"SELECT 1 FROM goals WHERE slug = $slug".query[Int].run().nonEmpty)
 
   /** Create or replace a goal. Either bound of its period may be given alone (an open period); one that starts after it
     * ends is refused.
     */
-  def put(slug: com.histmersion.domain.automation.Goal.Slug, in: Goal.Put)(using DbCon): Either[Api.Error, Unit] =
+  def put(slug: domain.automation.Goal.Slug, in: Goal.Put)(using DbCon): Either[Api.Error, Unit] =
     RangeSql
       .merge(
         (None, None),
@@ -77,7 +77,7 @@ object GoalRepo:
       .getOrElse(Right((None, None)))
       .map((s, e) => putIn(slug, in, RangeSql.literal(s, e)))
 
-  private def putIn(slug: com.histmersion.domain.automation.Goal.Slug, in: Goal.Put, period: Option[String])(using
+  private def putIn(slug: domain.automation.Goal.Slug, in: Goal.Put, period: Option[String])(using
       DbCon
   ): Unit =
     sql"""INSERT INTO goals (slug, title, status, notes, tags, regions, period, parent_slug, updated_at)
@@ -90,7 +90,7 @@ object GoalRepo:
             parent_slug = EXCLUDED.parent_slug, updated_at = now()""".update.run()
 
   /** A goal's fields changed as given, in the caller's transaction. */
-  def patchIn(slug: com.histmersion.domain.automation.Goal.Slug, p: Goal.Patch)(using DbCon): Either[Api.Error, Unit] =
+  def patchIn(slug: domain.automation.Goal.Slug, p: Goal.Patch)(using DbCon): Either[Api.Error, Unit] =
     locally:
       val exists = sql"SELECT 1 FROM goals WHERE slug = $slug".query[Int].run().nonEmpty
       if !exists then
@@ -144,16 +144,16 @@ object GoalRepo:
     * cascades). What a bundle import does when a goal was renamed on the other side.
     */
   private[histmersion] def renameIn(
-      oldSlug: com.histmersion.domain.automation.Goal.Slug,
-      newSlug: com.histmersion.domain.automation.Goal.Slug
+      oldSlug: domain.automation.Goal.Slug,
+      newSlug: domain.automation.Goal.Slug
   )(using DbCon): Either[Api.Error, Unit] =
-    def exists(s: com.histmersion.domain.automation.Goal.Slug) =
+    def exists(s: domain.automation.Goal.Slug) =
       sql"SELECT 1 FROM goals WHERE slug = $s".query[Int].run().nonEmpty
     val aliasOf = sql"SELECT goal_slug FROM goal_aliases WHERE alias = $newSlug"
       .query[String]
       .run()
       .headOption
-      .map(com.histmersion.domain.automation.Goal.Slug.assume(_))
+      .map(domain.automation.Goal.Slug.assume(_))
     if !exists(oldSlug) then
       Left(
         Api.Error(
@@ -188,12 +188,12 @@ object GoalRepo:
 
   /** The slug an OLD slug was renamed to — `None` when it is a live slug, or nothing. */
   def renamedTo(
-      slug: com.histmersion.domain.automation.Goal.Slug
-  )(using DbCon): Option[com.histmersion.domain.automation.Goal.Slug] =
+      slug: domain.automation.Goal.Slug
+  )(using DbCon): Option[domain.automation.Goal.Slug] =
     GoalAliasTable.table
       .renamedToIn(AliasTable.Id(slug.value))
-      .map(id => com.histmersion.domain.automation.Goal.Slug.assume(id.value))
+      .map(id => domain.automation.Goal.Slug.assume(id.value))
 
   /** A goal removed in the caller's transaction; false when there was none. */
-  def deleteIn(slug: com.histmersion.domain.automation.Goal.Slug)(using DbCon): Boolean =
+  def deleteIn(slug: domain.automation.Goal.Slug)(using DbCon): Boolean =
     sql"DELETE FROM goals WHERE slug = $slug".update.run() > 0

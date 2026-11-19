@@ -77,8 +77,8 @@ class QueryRepoSuite extends DbSuite:
       ds,
       Source(
         citekey = Citekey(ck),
-        title = com.histmersion.api.library.Title("Probe"),
-        authors = (List("A")).map(com.histmersion.api.library.AuthorName.apply),
+        title = api.library.Title("Probe"),
+        authors = (List("A")).map(api.library.AuthorName.apply),
         doi = None,
         year = (Some(2020)).map(Year.apply),
         venue = None,

@@ -61,10 +61,10 @@ trait RegionCleanupFixtures extends DbSuite with Bounded:
   protected val Into = "pleiades_999100008"
   protected val Peir = "pleiades_999100009"
 
-  protected val AiantisId = com.histmersion.domain.catalogue.Place.Id("pleiades_999100003")
-  protected val ThessId = com.histmersion.domain.catalogue.Place.Id("pleiades_999100004")
-  protected val DupId = com.histmersion.domain.catalogue.Place.Id("pleiades_999100007")
-  protected val PeirId = com.histmersion.domain.catalogue.Place.Id("pleiades_999100009")
+  protected val AiantisId = domain.catalogue.Place.Id("pleiades_999100003")
+  protected val ThessId = domain.catalogue.Place.Id("pleiades_999100004")
+  protected val DupId = domain.catalogue.Place.Id("pleiades_999100007")
+  protected val PeirId = domain.catalogue.Place.Id("pleiades_999100009")
 
   protected val places = List(
     Place(
@@ -186,8 +186,8 @@ trait RegionCleanupFixtures extends DbSuite with Bounded:
       ds,
       Source(
         citekey = Citekey("zzrc_src"),
-        title = com.histmersion.api.library.Title("Region cleanup fixture"),
-        authors = (List("T")).map(com.histmersion.api.library.AuthorName.apply),
+        title = api.library.Title("Region cleanup fixture"),
+        authors = (List("T")).map(api.library.AuthorName.apply),
         doi = None,
         year = (Some(2026)).map(Year.apply),
         venue = None,

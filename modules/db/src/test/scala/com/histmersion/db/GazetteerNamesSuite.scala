@@ -103,7 +103,7 @@ class GazetteerNamesSuite extends DbSuite with Bounded:
       .getOrElse(fail("no db/places above the working directory"))
 
   /** The wanted features of the real seed files, as the first-run import parses them. */
-  private lazy val seed: List[com.histmersion.api.catalogue.Place.Input] =
+  private lazy val seed: List[api.catalogue.Place.Input] =
     def entries(dir: Path): List[PlaceSeed.Entry[Path]] =
       val st = Files.list(dir)
       try
@@ -120,7 +120,7 @@ class GazetteerNamesSuite extends DbSuite with Bounded:
       if !Wanted.exists(id => text.contains(s"\"$id\"")) then Nil
       else
         Lpf
-          .parse(text, com.histmersion.api.catalogue.Place.KindValue(kind.fold(Place.Kind.Region)(_.value)))
+          .parse(text, api.catalogue.Place.KindValue(kind.fold(Place.Kind.Region)(_.value)))
           .fold(e => fail(s"$f: ${e.sentence}"), identity)
           .filter(in => Wanted.contains(in.place.id.value))
     }
@@ -253,16 +253,16 @@ class GazetteerNamesSuite extends DbSuite with Bounded:
     )
 
   test("a place added by hand is local, refused when the id is taken, and untouched by a re-seed"):
-    val in = com.histmersion.api.catalogue.Place.Edits
+    val in = api.catalogue.Place.Edits
       .toInput(
-        com.histmersion.api.catalogue.Place.Add(
-          com.histmersion.api.catalogue.Place.Add.Label("Zzgn Gornji"),
-          com.histmersion.api.catalogue.Place.Add.Kind(Place.Kind.Site),
+        api.catalogue.Place.Add(
+          api.catalogue.Place.Add.Label("Zzgn Gornji"),
+          api.catalogue.Place.Add.Kind(Place.Kind.Site),
           Longitude(15.98),
           Latitude(45.81),
-          com.histmersion.api.catalogue.Place.Add.Source("fixture: a hand-checked map"),
-          names = List(com.histmersion.api.catalogue.Place.Add.Names("Zzgn Gornij")),
-          lang = Some(com.histmersion.api.catalogue.Place.Add.Lang("hr"))
+          api.catalogue.Place.Add.Source("fixture: a hand-checked map"),
+          names = List(api.catalogue.Place.Add.Names("Zzgn Gornij")),
+          lang = Some(api.catalogue.Place.Add.Lang("hr"))
         )
       )
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
@@ -271,7 +271,7 @@ class GazetteerNamesSuite extends DbSuite with Bounded:
     val dataset = connect(ds)(sql"SELECT dataset FROM places WHERE id = 'local_zzgn_gornji'".query[String].run().head)
     assertEquals(dataset, "local")
     assertEquals(PlaceFixtures.addPlace(ds, in).left.map(_.code), Left(Some(Write.CodeInvalid)), "the id is taken")
-    val seedId = in.modify(_.place).setTo(in.place.modify(_.id).setTo(com.histmersion.api.catalogue.Place.Id(Krakow)))
+    val seedId = in.modify(_.place).setTo(in.place.modify(_.id).setTo(api.catalogue.Place.Id(Krakow)))
     assertEquals(
       PlaceFixtures.addPlace(ds, seedId).left.map(_.code),
       Left(Some(Write.CodeInvalid)),
@@ -304,8 +304,8 @@ class GazetteerNamesSuite extends DbSuite with Bounded:
   test("finding-unplaced: a finding with a name and no point gets the geocoder's point; a placed one never moves"):
     val src = Source(
       citekey = Citekey(Ck),
-      title = com.histmersion.api.library.Title("Fixture"),
-      authors = (List("A")).map(com.histmersion.api.library.AuthorName.apply),
+      title = api.library.Title("Fixture"),
+      authors = (List("A")).map(api.library.AuthorName.apply),
       doi = None,
       year = (Some(2025)).map(Year.apply),
       venue = None,

@@ -68,11 +68,11 @@ class AgentsSuite extends munit.FunSuite:
     assertEquals(
       ModelRef.parse(
         Agents.ModelRef.Wire("gemini:pro"),
-        Set(com.histmersion.api.automation.ProviderKind.Plugin.Name("gemini"))
+        Set(api.automation.ProviderKind.Plugin.Name("gemini"))
       ),
       Right(
         ModelRef(
-          ProviderKind.Plugin(com.histmersion.api.automation.ProviderKind.Plugin.Name("gemini")),
+          ProviderKind.Plugin(api.automation.ProviderKind.Plugin.Name("gemini")),
           Agents.ModelRef.Model("pro")
         )
       )
@@ -81,7 +81,7 @@ class AgentsSuite extends munit.FunSuite:
       ModelRef
         .parse(
           Agents.ModelRef.Wire(" Gemini:pro:v2 "),
-          Set(com.histmersion.api.automation.ProviderKind.Plugin.Name("gemini"))
+          Set(api.automation.ProviderKind.Plugin.Name("gemini"))
         )
         .map(_.wire),
       Right("gemini:pro:v2")
@@ -89,12 +89,12 @@ class AgentsSuite extends munit.FunSuite:
     // a host name stays the host's, whatever a plugin claims
     assertEquals(
       ModelRef
-        .parse(Agents.ModelRef.Wire("local:x"), Set(com.histmersion.api.automation.ProviderKind.Plugin.Name("local"))),
+        .parse(Agents.ModelRef.Wire("local:x"), Set(api.automation.ProviderKind.Plugin.Name("local"))),
       Right(ModelRef(ProviderKind.Local, Agents.ModelRef.Model("x")))
     )
     assert(
       ModelRef
-        .parse(Agents.ModelRef.Wire("ollama:x"), Set(com.histmersion.api.automation.ProviderKind.Plugin.Name("gemini")))
+        .parse(Agents.ModelRef.Wire("ollama:x"), Set(api.automation.ProviderKind.Plugin.Name("gemini")))
         .left
         .exists(_.sentence.contains("one of: anthropic, openai, local, claude-code, codex, opencode, gemini"))
     )
@@ -102,11 +102,11 @@ class AgentsSuite extends munit.FunSuite:
       ProviderKind.values.map(_.wire),
       List("anthropic", "openai", "local", "claude-code", "codex", "opencode")
     )
-    assert(!ProviderKind.Plugin(com.histmersion.api.automation.ProviderKind.Plugin.Name("gemini")).isCli)
+    assert(!ProviderKind.Plugin(api.automation.ProviderKind.Plugin.Name("gemini")).isCli)
 
   test("a plugin provider's model is metered: no plan pool, paid, needs a price"):
     val m = ModelRef(
-      ProviderKind.Plugin(com.histmersion.api.automation.ProviderKind.Plugin.Name("gemini")),
+      ProviderKind.Plugin(api.automation.ProviderKind.Plugin.Name("gemini")),
       Agents.ModelRef.Model("pro")
     )
     assertEquals(PlanQuota.poolOf(m, PlanQuota.Logins()), None)
@@ -205,20 +205,20 @@ class AgentsSuite extends munit.FunSuite:
   test("Role and Pipeline parse their wire names"):
     assertEquals(Role.parse(AgentRole.Wire("cold-reader")), Some(Role.ColdReader))
     assertEquals(
-      Pipeline.parse(com.histmersion.api.automation.Pipeline.Wire("enrich-source")),
+      Pipeline.parse(api.automation.Pipeline.Wire("enrich-source")),
       Some(Pipeline.EnrichSource)
     )
     assertEquals(
-      Pipeline.parse(com.histmersion.api.automation.Pipeline.Wire("review-article")),
+      Pipeline.parse(api.automation.Pipeline.Wire("review-article")),
       Some(Pipeline.ReviewArticle)
     )
-    assertEquals(Pipeline.parse(com.histmersion.api.automation.Pipeline.Wire("enrich_source")), None)
+    assertEquals(Pipeline.parse(api.automation.Pipeline.Wire("enrich_source")), None)
 
   test("each pipeline names its target kind and every role it needs"):
     assertEquals(Pipeline.EnrichSource.targetKind, TargetKind.Source)
     assertEquals(Pipeline.ReviewArticle.targetKind, TargetKind.Article)
     assertEquals(Pipeline.ReviewArticle.roles, List(Role.Reviewer, Role.ColdReader, Role.Skeptic, Role.Fixer))
-    assertEquals(TargetKind.parse(com.histmersion.api.automation.TargetKind.Wire("article")), Some(TargetKind.Article))
+    assertEquals(TargetKind.parse(api.automation.TargetKind.Wire("article")), Some(TargetKind.Article))
 
   test("approval vocabularies parse their wire names"):
     assertEquals(ApprovalKind.parse(Approval.Kind.Wire("status-change")), Some(ApprovalKind.StatusChange))
@@ -252,7 +252,7 @@ class AgentsSuite extends munit.FunSuite:
 
   test("P3 pipelines, targets, roles and blocking approval kinds"):
     assertEquals(
-      Pipeline.parse(com.histmersion.api.automation.Pipeline.Wire("plan-goal")).map(_.targetKind),
+      Pipeline.parse(api.automation.Pipeline.Wire("plan-goal")).map(_.targetKind),
       Some(TargetKind.Goal)
     )
     assertEquals(Pipeline.CompileArticle.roles, List(Role.Extractor, Role.Writer))
@@ -261,7 +261,7 @@ class AgentsSuite extends munit.FunSuite:
     assert(ApprovalKind.GoalPlan.blocking.value && ApprovalKind.ArticlePublish.blocking.value)
     assert(!ApprovalKind.StatusChange.blocking.value && !ApprovalKind.Edge.blocking.value)
     assertEquals(
-      Goal.Plans.ScheduleKind.parse(com.histmersion.api.automation.ScheduleKind.Wire("acquisition")).map(_.pipeline),
+      Goal.Plans.ScheduleKind.parse(api.automation.ScheduleKind.Wire("acquisition")).map(_.pipeline),
       Some(Pipeline.AcquisitionSweep)
     )
     assertEquals(Origin.parse(Agents.Origin.Wire("scheduler")), Some(Origin.Scheduler))
@@ -281,7 +281,7 @@ class AgentsSuite extends munit.FunSuite:
       List(
         PlannedWork(
           Doi("10.1000/x"),
-          Some(com.histmersion.api.library.Title("X")),
+          Some(api.library.Title("X")),
           Some(Year(2020)),
           citekey = Some(Citekey("x2020_y")),
           inCorpus = PlannedWork.InCorpus(true),

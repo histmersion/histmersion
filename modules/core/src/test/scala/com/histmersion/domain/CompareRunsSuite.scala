@@ -295,7 +295,7 @@ class CompareRunsSuite extends munit.FunSuite:
   test("enrich-source: findings, places, dates, period, text lengths, and the claims only one run made"):
     def enrich(
         id: RunHead.Id,
-        claims: List[com.histmersion.api.library.Finding.Input],
+        claims: List[api.library.Finding.Input],
         choices: List[GeocodeChoice],
         notes: String
     ) = run(
@@ -348,9 +348,9 @@ class CompareRunsSuite extends munit.FunSuite:
     val a = enrich(
       RunHead.Id("a"),
       List(
-        com.histmersion.api.library.Finding
-          .Input(com.histmersion.api.library.Finding.Claim("Tin came by sea."), periodStart = Some(Year(-1300))),
-        com.histmersion.api.library.Finding.Input(com.histmersion.api.library.Finding.Claim("Copper came from Cyprus."))
+        api.library.Finding
+          .Input(api.library.Finding.Claim("Tin came by sea."), periodStart = Some(Year(-1300))),
+        api.library.Finding.Input(api.library.Finding.Claim("Copper came from Cyprus."))
       ),
       List(
         GeocodeChoice(
@@ -373,8 +373,8 @@ class CompareRunsSuite extends munit.FunSuite:
     val b = enrich(
       RunHead.Id("b"),
       List(
-        com.histmersion.api.library.Finding.Input(com.histmersion.api.library.Finding.Claim("tin  came by SEA.")),
-        com.histmersion.api.library.Finding.Input(com.histmersion.api.library.Finding.Claim("Tin was rare."))
+        api.library.Finding.Input(api.library.Finding.Claim("tin  came by SEA.")),
+        api.library.Finding.Input(api.library.Finding.Claim("Tin was rare."))
       ),
       Nil,
       "N."

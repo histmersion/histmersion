@@ -71,8 +71,8 @@ class EventCatalogRepoSuite extends DbSuite:
 
   private val src = Source(
     citekey = Citekey("zqec_src2020"),
-    title = com.histmersion.api.library.Title("Zqec volcanology"),
-    authors = (List("A")).map(com.histmersion.api.library.AuthorName.apply),
+    title = api.library.Title("Zqec volcanology"),
+    authors = (List("A")).map(api.library.AuthorName.apply),
     doi = None,
     year = (Some(2020)).map(Year.apply),
     venue = None,
@@ -313,7 +313,7 @@ class EventCatalogRepoSuite extends DbSuite:
       List("zqec_src2020")
     )
     val c = EventLinkCandidate(
-      com.histmersion.api.catalogue.Event.Id("zztest_b"),
+      api.catalogue.Event.Id("zztest_b"),
       Citekey("zqec_src2020"),
       EventLinkCandidate.Score(1.1),
       findings = Nil,
@@ -337,7 +337,7 @@ class EventCatalogRepoSuite extends DbSuite:
       EvidenceFixtures.setStatus(
         ds,
         BEventRow.Id("zztest_b"),
-        com.histmersion.domain.library.Citekey("zqec_src2020"),
+        domain.library.Citekey("zqec_src2020"),
         BCandidateRow.Status(Event.LinkStatus.Rejected)
       )
     )
@@ -382,7 +382,7 @@ class EventCatalogRepoSuite extends DbSuite:
   test("an article's catalogue events: in its period, near its sources' findings, large enough"):
     val got = EvidenceFixtures.articleCandidates(
       ds,
-      List(com.histmersion.domain.library.Citekey("zqec_src2020")),
+      List(domain.library.Citekey("zqec_src2020")),
       Some((DeepTime.SignedYear(-1700L), DeepTime.SignedYear(-1100L))),
       CatalogMerge.Tolerance.Km(300),
       CatalogRecord.Vei(4),
@@ -393,7 +393,7 @@ class EventCatalogRepoSuite extends DbSuite:
     assertEquals(
       EvidenceFixtures.articleCandidates(
         ds,
-        List(com.histmersion.domain.library.Citekey("zqec_src2020")),
+        List(domain.library.Citekey("zqec_src2020")),
         Some((DeepTime.SignedYear(-1700L), DeepTime.SignedYear(-1100L))),
         CatalogMerge.Tolerance.Km(300),
         CatalogRecord.Vei(5),

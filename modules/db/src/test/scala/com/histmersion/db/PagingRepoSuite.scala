@@ -46,7 +46,7 @@ class PagingRepoSuite extends DbSuite:
   private def jobCursor(id: String) = Some(JobRepo.PageCursor(id))
   private def runCursor(id: String) = Some(AgentRepo.PageCursor(id))
   private def runWire(w: Run.State.Wire) =
-    com.histmersion.domain.automation.Run.State.Wire(w.value)
+    domain.automation.Run.State.Wire(w.value)
 
   /** `n` jobs of `status`/`kind`: two share each second (ties broken by id), newest = the highest index. */
   private def jobs(

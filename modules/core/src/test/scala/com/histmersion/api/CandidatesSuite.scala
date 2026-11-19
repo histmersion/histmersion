@@ -74,7 +74,7 @@ class CandidatesSuite extends munit.FunSuite:
         title = (Some("P")).map(Title.apply)
       )
     )
-    val (kept, skipped) = CandidateDedupe.dedupe(found, Set(com.histmersion.domain.library.Doi("10.1234/known")))
+    val (kept, skipped) = CandidateDedupe.dedupe(found, Set(domain.library.Doi("10.1234/known")))
     assertEquals(
       kept.map(k => (k._1, k._3)),
       List(

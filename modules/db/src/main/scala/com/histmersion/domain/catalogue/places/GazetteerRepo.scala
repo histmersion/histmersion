@@ -165,15 +165,15 @@ private[places] object GazetteerRepo:
       val refs = records.map(_.ref)
       val _ = sql"INSERT INTO gaz_seen SELECT unnest($refs::text[]) ON CONFLICT DO NOTHING".update.run()
 
-    def pruneCandidates: List[com.histmersion.domain.catalogue.Place.Id] =
+    def pruneCandidates: List[domain.catalogue.Place.Id] =
       if pointAreaKinds.isEmpty || !Gazetteer.PointAreaSources.contains(source) then Nil
       else
         PointAreaRepo.ofSourceIn(
           PointAreas.Group.Source(source.value),
-          pointAreaKinds.toList.sorted.map(k => com.histmersion.domain.catalogue.Place.Kind.Wire(k.value))
+          pointAreaKinds.toList.sorted.map(k => domain.catalogue.Place.Kind.Wire(k.value))
         )
 
-    def deletePruneChunk(ids: List[com.histmersion.domain.catalogue.Place.Id]): RowCount =
+    def deletePruneChunk(ids: List[domain.catalogue.Place.Id]): RowCount =
       PointAreaRepo.deletePlacesIn(ids)
 
     def sweep(): Gazetteer.LoadCounts =

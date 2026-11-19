@@ -98,7 +98,7 @@ object EnrichSource:
       regions: List[Region] = Nil,
       tags: List[Tag] = Nil,
       period: Option[StatedPeriod],
-      status: com.histmersion.domain.library.Source.Status.Wire,
+      status: library.Source.Status.Wire,
       statusEvidence: Classification.StatusEvidence
   ) derives JsonCodec
   object Classification:
@@ -129,7 +129,7 @@ object EnrichSource:
       end: Option[StatedYear],
       periodName: Option[FindingProposal.PeriodName],
       tags: List[Tag] = Nil,
-      confidence: com.histmersion.domain.library.Confidence.Wire
+      confidence: library.Confidence.Wire
   ) derives JsonCodec
   object FindingProposal:
     type Claim = Claim.T
@@ -273,7 +273,7 @@ object EnrichSource:
   final case class GeocodeChoice(
       claim: GeocodeChoice.Claim,
       asked: GeocodeChoice.Asked,
-      placeId: Option[com.histmersion.domain.catalogue.Place.Id],
+      placeId: Option[catalogue.Place.Id],
       label: Option[GeocodeChoice.Label],
       approximate: Option[GeocodeChoice.Approximate]
   ) derives JsonCodec
@@ -507,7 +507,7 @@ object EnrichSource:
   )
 
   object FindingGuards:
-    export com.histmersion.domain.EnrichSource.FindingProposal.Place as PlaceQuery
+    export FindingProposal.Place as PlaceQuery
 
     type MinPlacedShare = MinPlacedShare.T
     object MinPlacedShare extends Newtype[Double, Pure]

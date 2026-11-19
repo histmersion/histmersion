@@ -16,7 +16,7 @@ class CarriedKindsSuite extends munit.FunSuite:
   private val kinds = TestExchange.kinds
 
   test("today's kinds carry every entry of the bundle format once, in the format's order"):
-    assertEquals(kinds.inBundleOrder.map(_.entry.value), com.histmersion.api.exchange.Bundle.Files.all)
+    assertEquals(kinds.inBundleOrder.map(_.entry.value), api.exchange.Bundle.Files.all)
 
   test("the order of the entries does not depend on the order the kinds were registered in"):
     assertEquals(
@@ -25,7 +25,7 @@ class CarriedKindsSuite extends munit.FunSuite:
     )
 
   test("a registry missing an entry, carrying one twice or one the format does not have is refused, each named"):
-    val sources = TestExchange.carried.find(_.entry.value == com.histmersion.api.exchange.Bundle.Kind.Source.file).get
+    val sources = TestExchange.carried.find(_.entry.value == api.exchange.Bundle.Kind.Source.file).get
     val odd = new CarriedKind:
       def owner: DataOwner = DataOwner("x")
       def entry: BundleEntry = BundleEntry("entities/odd.ndjson")
@@ -37,25 +37,25 @@ class CarriedKindsSuite extends munit.FunSuite:
       ): BundleEntities => BundleEntities =
         identity
     val withoutTombstones =
-      TestExchange.carried.filterNot(_.entry.value == com.histmersion.api.exchange.Bundle.Files.Tombstones)
+      TestExchange.carried.filterNot(_.entry.value == api.exchange.Bundle.Files.Tombstones)
     assertEquals(
       CarriedKinds.of(sources :: odd :: withoutTombstones).left.toOption.map(_.map(_.sentence)),
       Some(
         List(
-          s"the bundle holds no ${com.histmersion.api.exchange.Bundle.Files.Tombstones}",
-          s"${com.histmersion.api.exchange.Bundle.Kind.Source.file} appears twice in the bundle",
+          s"the bundle holds no ${api.exchange.Bundle.Files.Tombstones}",
+          s"${api.exchange.Bundle.Kind.Source.file} appears twice in the bundle",
           "entities/odd.ndjson is not a file a bundle holds"
         )
       )
     )
 
   test("every kind of record has its table"):
-    assertEquals(kinds.tableOf(com.histmersion.api.exchange.Bundle.Kind.Source), TableName("sources"))
-    assertEquals(kinds.tableOf(com.histmersion.api.exchange.Bundle.Kind.ArticleVersion), TableName("article_versions"))
-    assertEquals(kinds.tableOf(com.histmersion.api.exchange.Bundle.Kind.QueueItem), TableName("queue_items"))
+    assertEquals(kinds.tableOf(api.exchange.Bundle.Kind.Source), TableName("sources"))
+    assertEquals(kinds.tableOf(api.exchange.Bundle.Kind.ArticleVersion), TableName("article_versions"))
+    assertEquals(kinds.tableOf(api.exchange.Bundle.Kind.QueueItem), TableName("queue_items"))
     assertEquals(
-      com.histmersion.api.exchange.Bundle.Kind.values.toList.map(kinds.tableOf).distinct.size,
-      com.histmersion.api.exchange.Bundle.Kind.values.length
+      api.exchange.Bundle.Kind.values.toList.map(kinds.tableOf).distinct.size,
+      api.exchange.Bundle.Kind.values.length
     )
 
   test("the import's steps: tombstones first, the rows before the blobs, links after them, derived state last"):
@@ -87,4 +87,4 @@ class CarriedKindsSuite extends munit.FunSuite:
       rules.referableTables(kinds).map(_.value).sorted,
       List("articles", "assets", "events", "goals", "sources")
     )
-    assertEquals(rules.all.map(_.kind).sortBy(_.ordinal), com.histmersion.api.exchange.Bundle.Kind.values.toList)
+    assertEquals(rules.all.map(_.kind).sortBy(_.ordinal), api.exchange.Bundle.Kind.values.toList)

@@ -33,7 +33,7 @@ class AgentProposalsSuite extends munit.FunSuite:
       ProposalAnswer(
         ProposalAnswer.Kind("status"),
         ProposalAnswer.Citekey("knapp2016_tin"),
-        Some(com.histmersion.domain.library.Source.Status.Wire("Contested")),
+        Some(library.Source.Status.Wire("Contested")),
         None,
         None,
         ProposalAnswer.Evidence("a later paper disagrees"),
@@ -60,7 +60,7 @@ class AgentProposalsSuite extends munit.FunSuite:
     ).toOption.get
     assertEquals(
       p.patch.edges.map(_.add),
-      Some(List(Edge.Input(com.histmersion.api.library.Citekey("jones2021_tin"), Edge.Kind.SupersededBy)))
+      Some(List(Edge.Input(api.library.Citekey("jones2021_tin"), Edge.Kind.SupersededBy)))
     )
     assert(p.describe.value.contains("superseded_by"))
     assert(
@@ -96,7 +96,7 @@ class AgentProposalsSuite extends munit.FunSuite:
         ProposalAnswer(
           ProposalAnswer.Kind("status"),
           ProposalAnswer.Citekey("ghost"),
-          Some(com.histmersion.domain.library.Source.Status.Wire("contested")),
+          Some(library.Source.Status.Wire("contested")),
           None,
           None,
           ProposalAnswer.Evidence("e"),
@@ -110,7 +110,7 @@ class AgentProposalsSuite extends munit.FunSuite:
         ProposalAnswer(
           ProposalAnswer.Kind("status"),
           ProposalAnswer.Citekey("knapp2016_tin"),
-          Some(com.histmersion.domain.library.Source.Status.Wire("contested")),
+          Some(library.Source.Status.Wire("contested")),
           None,
           None,
           ProposalAnswer.Evidence(" "),
@@ -124,7 +124,7 @@ class AgentProposalsSuite extends munit.FunSuite:
         ProposalAnswer(
           ProposalAnswer.Kind("status"),
           ProposalAnswer.Citekey("knapp2016_tin"),
-          Some(com.histmersion.domain.library.Source.Status.Wire("debunked")),
+          Some(library.Source.Status.Wire("debunked")),
           None,
           None,
           ProposalAnswer.Evidence("e"),
@@ -137,7 +137,7 @@ class AgentProposalsSuite extends munit.FunSuite:
         ProposalAnswer(
           ProposalAnswer.Kind("status"),
           ProposalAnswer.Citekey("knapp2016_tin"),
-          Some(com.histmersion.domain.library.Source.Status.Wire("unassessed")),
+          Some(library.Source.Status.Wire("unassessed")),
           None,
           None,
           ProposalAnswer.Evidence("e"),

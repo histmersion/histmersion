@@ -39,8 +39,8 @@ class EdgeRepoSuite extends DbSuite:
 
   private def source(ck: String, edges: List[Edge] = Nil, topics: List[Source.Topics] = Nil) = Source(
     citekey = Citekey(ck),
-    title = com.histmersion.api.library.Title(s"Title $ck"),
-    authors = (List("A")).map(com.histmersion.api.library.AuthorName.apply),
+    title = api.library.Title(s"Title $ck"),
+    authors = (List("A")).map(api.library.AuthorName.apply),
     doi = (Some(s"10.1/$ck")).map(Doi.apply),
     year = (Some(2020)).map(Year.apply),
     venue = None,
@@ -69,23 +69,23 @@ class EdgeRepoSuite extends DbSuite:
     put(source(a, edges = List(Edge(Citekey(a), Citekey(b), Edge.Kind.Challenges))))
     // the domain read still carries it — a patch or an export must not lose it
     assertEquals(
-      SourceFixtures.load(ds, com.histmersion.domain.library.Citekey.assume(a)).get.edges,
+      SourceFixtures.load(ds, domain.library.Citekey.assume(a)).get.edges,
       List(Edge(Citekey(a), Citekey(b), Edge.Kind.Challenges))
     )
     assertEquals(
-      CitationFixtures.neighbors(ds, com.histmersion.domain.library.Citekey.assume(a)).map(n => (n.citekey, n.target)),
+      CitationFixtures.neighbors(ds, domain.library.Citekey.assume(a)).map(n => (n.citekey, n.target)),
       Vector(b -> NeighborTarget.Unresolved)
     )
     put(source(b))
     assertEquals(
       CitationFixtures
-        .neighbors(ds, com.histmersion.domain.library.Citekey.assume(a))
+        .neighbors(ds, domain.library.Citekey.assume(a))
         .map(n => (n.direction, n.citekey, n.target, n.title)),
       Vector(("out", b, NeighborTarget.Source, Some(s"Title $b")))
     )
     assertEquals(
       CitationFixtures
-        .neighbors(ds, com.histmersion.domain.library.Citekey.assume(b))
+        .neighbors(ds, domain.library.Citekey.assume(b))
         .map(n => (n.direction, n.citekey)),
       Vector("in" -> a)
     )
@@ -111,7 +111,7 @@ class EdgeRepoSuite extends DbSuite:
     put(source(a, edges = List(Edge(Citekey(a), Citekey(slug), Edge.Kind.Updates))))
     assertEquals(
       CitationFixtures
-        .neighbors(ds, com.histmersion.domain.library.Citekey.assume(a))
+        .neighbors(ds, domain.library.Citekey.assume(a))
         .map(n => (n.citekey, n.target, n.title)),
       Vector((slug, NeighborTarget.Article, Some("A topic")))
     )
@@ -119,8 +119,8 @@ class EdgeRepoSuite extends DbSuite:
     assertEquals(
       CitationFixtures.neighbors(
         ds,
-        com.histmersion.domain.library.Citekey.assume(a),
-        List(com.histmersion.domain.library.Edge.Kind.Wire("refutes"))
+        domain.library.Citekey.assume(a),
+        List(domain.library.Edge.Kind.Wire("refutes"))
       ),
       Vector.empty
     )
@@ -140,7 +140,7 @@ class EdgeRepoSuite extends DbSuite:
     )
     assert(SourceFixtures.resolveEdges(ds).value >= 1)
     assertEquals(
-      CitationFixtures.neighbors(ds, com.histmersion.domain.library.Citekey.assume(a)).map(n => (n.citekey, n.target)),
+      CitationFixtures.neighbors(ds, domain.library.Citekey.assume(a)).map(n => (n.citekey, n.target)),
       Vector(s"${Prefix}c2019_full" -> NeighborTarget.Source, s"${Prefix}d2018" -> NeighborTarget.Unresolved)
     )
 
@@ -163,15 +163,15 @@ class EdgeRepoSuite extends DbSuite:
           List(Edge(Citekey(c), Citekey(a), Edge.Kind.Challenges), Edge(Citekey(c), Citekey(d), Edge.Kind.References))
       )
     )
-    val g1 = CitationFixtures.graph(ds, com.histmersion.domain.library.Citekey.assume(a), Source.Graph.Depth(1))
+    val g1 = CitationFixtures.graph(ds, domain.library.Citekey.assume(a), Source.Graph.Depth(1))
     assertEquals(g1.nodes.map(_.id).toSet, Set(a, b, c))
     assertEquals(g1.links.map(l => (l.source, l.target)).toSet, Set(a -> b, c -> a))
     val ids = g1.nodes.map(_.id).toSet
     assert(g1.links.forall(l => ids(l.source) && ids(l.target)), g1)
-    val g2 = CitationFixtures.graph(ds, com.histmersion.domain.library.Citekey.assume(a), Source.Graph.Depth(2))
+    val g2 = CitationFixtures.graph(ds, domain.library.Citekey.assume(a), Source.Graph.Depth(2))
     assertEquals(g2.nodes.map(_.id).toSet, Set(a, b, c, d))
     assertEquals(g2.nodes.find(_.id.value == d).map(_.depth), Some(2))
     assertEquals(
-      CitationFixtures.graph(ds, com.histmersion.domain.library.Citekey.assume(a), Source.Graph.Depth(0)).links,
+      CitationFixtures.graph(ds, domain.library.Citekey.assume(a), Source.Graph.Depth(0)).links,
       Nil
     )

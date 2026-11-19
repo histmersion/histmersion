@@ -29,9 +29,9 @@ private[places] object PlaceBundleRepo:
 
   private def rangeOf(isNull: Boolean, lo: Option[Long], hi: Option[Long]): Option[Bundle.Range] =
     range(
-      com.histmersion.util.data.exchange.Bundle.RangeIsNull(isNull),
-      lo.map(com.histmersion.util.data.exchange.Bundle.RangeLower(_)),
-      hi.map(com.histmersion.util.data.exchange.Bundle.RangeUpper(_))
+      util.data.exchange.Bundle.RangeIsNull(isNull),
+      lo.map(util.data.exchange.Bundle.RangeLower(_)),
+      hi.map(util.data.exchange.Bundle.RangeUpper(_))
     )
 
   /** The places of this collection's own (`dataset = 'local'`, V052) in scope — or, with `alsoIds`, any place with one

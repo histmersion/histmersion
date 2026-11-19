@@ -14,8 +14,8 @@ import com.histmersion.util.database.NewtypeColumns.given
 object PlaceSql:
 
   type DefaultModernFrom = DefaultModernFromValue
-  export com.histmersion.domain.DeepTime.SignedYear as DefaultModernFromValue
-  export com.histmersion.domain.DeepTime.SignedYear as TimeWindowCteModernFrom
+  export DeepTime.SignedYear as DefaultModernFromValue
+  export DeepTime.SignedYear as TimeWindowCteModernFrom
   export Place.Kind.Wire as InTimeSqlKind
 
   /** A place GeoNames or Wikidata brought in (#1064), over a `places` row aliased `alias`. Such a place is for finding

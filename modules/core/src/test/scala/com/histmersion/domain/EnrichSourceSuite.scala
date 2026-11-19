@@ -83,7 +83,7 @@ class EnrichSourceSuite extends munit.FunSuite:
           StatedYear(AgentVerify.ToSignedYearValue(1200), AgentVerify.YearUnit.Wire("BCE"))
         )
       ),
-      com.histmersion.domain.library.Source.Status.Wire("current"),
+      library.Source.Status.Wire("current"),
       EnrichSource.Classification.StatusEvidence("widely cited")
     )
     val (v, ws) = checkClassification(
@@ -103,7 +103,7 @@ class EnrichSourceSuite extends munit.FunSuite:
       Nil,
       Nil,
       None,
-      com.histmersion.domain.library.Source.Status.Wire("debunk"),
+      library.Source.Status.Wire("debunk"),
       EnrichSource.Classification.StatusEvidence("")
     )
     assert(
@@ -124,7 +124,7 @@ class EnrichSourceSuite extends munit.FunSuite:
           StatedYear(AgentVerify.ToSignedYearValue(3200), AgentVerify.YearUnit.Wire("BP"))
         )
       ),
-      com.histmersion.domain.library.Source.Status.Wire("unassessed"),
+      library.Source.Status.Wire("unassessed"),
       EnrichSource.Classification.StatusEvidence("")
     )
     assert(
@@ -355,9 +355,9 @@ class EnrichSourceSuite extends munit.FunSuite:
 
   test("metadata: the record against the upstream one — title, year, first author, the citekey's year"):
     val w = WorkRef(
-      title = (Some("Bronze Age Tin: a Review")).map(com.histmersion.api.library.Title.apply),
+      title = (Some("Bronze Age Tin: a Review")).map(api.library.Title.apply),
       year = (Some(2017)).map(Year.apply),
-      authors = (List("A. Bernard Knapp")).map(com.histmersion.api.library.AuthorName.apply)
+      authors = (List("A. Bernard Knapp")).map(api.library.AuthorName.apply)
     )
     val diffs = compareMetadata(
       Citekey("knapp2016_tin"),

@@ -28,7 +28,7 @@ object Ident:
   private val ArxivOld = """^(?:arxiv:)?([a-z-]+(?:\.[A-Z]{2})?/\d{7})(?:v\d+)?$""".r
 
   /** DOIs are case-insensitive, so they are stored lower-case ([[DoiValue.normalize]]). */
-  def doi(raw: Written): Option[com.histmersion.domain.library.Doi] = DoiValue.normalize(raw.value)
+  def doi(raw: Written): Option[domain.library.Doi] = DoiValue.normalize(raw.value)
 
   def arxiv(raw: Written): Option[ArxivId] =
     Option(raw.value).map(_.trim).filter(_.nonEmpty).flatMap { s =>

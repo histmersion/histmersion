@@ -38,14 +38,14 @@ class FtsSuite extends DbSuite:
 
   private def source(
       ck: Citekey,
-      title: com.histmersion.api.library.Title,
+      title: api.library.Title,
       summary: Source.Summary,
       body: Source.OcrMarkdown
   ) =
     Source(
       citekey = ck,
       title = title,
-      authors = (List("Tester")).map(com.histmersion.api.library.AuthorName.apply),
+      authors = (List("Tester")).map(api.library.AuthorName.apply),
       doi = None,
       year = (Some(1999)).map(Year.apply),
       venue = None,
@@ -81,7 +81,7 @@ class FtsSuite extends DbSuite:
       ds,
       source(
         Citekey("zz_fts_big"),
-        com.histmersion.api.library.Title("Aegean stratigraphy"),
+        api.library.Title("Aegean stratigraphy"),
         Source.Summary("A summary with no query terms."),
         Source.OcrMarkdown(big)
       ),
@@ -91,7 +91,7 @@ class FtsSuite extends DbSuite:
       ds,
       source(
         Citekey("zz_fts_egypt"),
-        com.histmersion.api.library.Title("Delta excavations"),
+        api.library.Title("Delta excavations"),
         Source.Summary("Another summary."),
         Source.OcrMarkdown("## Medinet Habu\n\nThe sea peoples are named in Egypt, in the reliefs of Ramesses III.")
       ),
@@ -101,7 +101,7 @@ class FtsSuite extends DbSuite:
       ds,
       source(
         Citekey("zz_fts_title"),
-        com.histmersion.api.library.Title("The Sea Peoples reconsidered"),
+        api.library.Title("The Sea Peoples reconsidered"),
         Source.Summary("Historiography."),
         Source.OcrMarkdown("## Body\n\nThis body never mentions the raiders by name; it discusses pottery.")
       ),
@@ -160,7 +160,7 @@ class FtsSuite extends DbSuite:
     val r = SourceFixtures.reindexChunks(
       ds,
       chunkChars,
-      after = Some(com.histmersion.domain.library.Citekey("zz_fts_a")),
+      after = Some(domain.library.Citekey("zz_fts_a")),
       maxSources = Some(SourceRepairs.MaxSources(3))
     )
     assert(r.sources.value == 3 && r.chunks.value > r.sources.value, r)

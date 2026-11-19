@@ -44,12 +44,12 @@ private[articles] object CritiqueRepo:
   /** One checked change: set `reason` on the edge's direction, or remove the pair's reason. */
   private enum Change:
     case Set(
-        src: com.histmersion.domain.library.Citekey,
-        dst: com.histmersion.domain.library.Citekey,
+        src: domain.library.Citekey,
+        dst: domain.library.Citekey,
         reason: Coverage.Rationale,
         by: By
     )
-    case Remove(a: com.histmersion.domain.library.Citekey, b: com.histmersion.domain.library.Citekey)
+    case Remove(a: domain.library.Citekey, b: domain.library.Citekey)
 
   /** Check the reasons of a patch, inside the caller's transaction, writing nothing. Each pair's citekeys resolve as
     * links do (an old citekey names its source); a reason is kept under the direction of the disagreement edge between
@@ -63,8 +63,8 @@ private[articles] object CritiqueRepo:
       case Some(m) => Left(Api.Error(m, Some(Api.Error.Code(Write.CodeInvalid))))
       case None    =>
         val rs = tidy.collect { case Right(r) => r }
-        def stored(c: Citekey): Option[com.histmersion.domain.library.Citekey] =
-          com.histmersion.domain.library.Citekey.option(c.value)
+        def stored(c: Citekey): Option[domain.library.Citekey] =
+          domain.library.Citekey.option(c.value)
         val known = CitekeyResolver.stored.canonical(rs.flatMap(r => List(r.src, r.dst)).flatMap(stored).distinct)
         val kinds = Critiques.Kinds
         rs.foldLeft[Either[Api.Error, Vector[Change]]](Right(Vector.empty)) { (acc, r) =>
@@ -98,7 +98,7 @@ private[articles] object CritiqueRepo:
               case (Some(a), Some(b))                           =>
                 val dirs = sql"""SELECT src, dst FROM edges WHERE kind = ANY($kinds::text[])
                                  AND ((src = $a AND dst = $b) OR (src = $b AND dst = $a))"""
-                  .query[(com.histmersion.domain.library.Citekey, com.histmersion.domain.library.Citekey)]
+                  .query[(domain.library.Citekey, domain.library.Citekey)]
                   .run()
                   .toList
                   .distinct

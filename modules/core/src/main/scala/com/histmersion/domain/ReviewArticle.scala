@@ -93,7 +93,7 @@ object ReviewArticle:
   type CheckRulesLast = LastRound
   val CheckRulesLast: LastRound.type = LastRound
   type SpotCheckTools = SpotCheckToolsValue
-  export com.histmersion.domain.automation.agents.ToolUse.Tool as SpotCheckToolsValue
+  export ToolUse.Tool as SpotCheckToolsValue
   type SpotVerdicts = SpotVerdictsValue
   type SpotVerdictsValue = SpotVerdictsValue.T
   object SpotVerdictsValue extends Newtype[String, Pure]
@@ -239,9 +239,9 @@ object ReviewArticle:
   object FindingAnswer:
     export ReviewArticle.Severity.Wire as Severity
     export Finding.{Kind, Where}
-    export com.histmersion.domain.ReviewArticle.Evidence.Quote
+    export Evidence.Quote
     export Finding.{Fix, Problem}
-    export com.histmersion.api.research.CritiqueRef.Wire as Pair
+    export CritiqueRef.Wire as Pair
 
     given Schema[FindingAnswer] = KindlingsSchema
       .derived[FindingAnswer]
@@ -279,7 +279,7 @@ object ReviewArticle:
   object ReaderFindingAnswer:
     export ReviewArticle.Severity.Wire as Severity
     export Finding.{Kind, Where}
-    export com.histmersion.domain.ReviewArticle.Evidence.Quote
+    export Evidence.Quote
     export Finding.{Fix, Problem}
 
     given Schema[ReaderFindingAnswer] = KindlingsSchema
@@ -343,8 +343,8 @@ object ReviewArticle:
     object Citekey extends Newtype[String, Pure]:
       extension (c: Citekey) def normalised: String = c.value.trim.stripPrefix("[[").stripSuffix("]]").trim
     export SpotCheck.Claim
-    export com.histmersion.domain.ReviewArticle.SpotVerdictsValue as Verdict
-    export com.histmersion.domain.ReviewArticle.Evidence.Quote as RecordQuote
+    export ReviewArticle.SpotVerdictsValue as Verdict
+    export Evidence.Quote as RecordQuote
 
     given Schema[SpotCheckAnswer] = KindlingsSchema
       .derived[SpotCheckAnswer]
@@ -368,7 +368,7 @@ object ReviewArticle:
     export ReviewArticle.Verdict.Wire as Verdict
     type ExplainBack = ExplainBack.T
     object ExplainBack extends Newtype[String, Pure]
-    export com.histmersion.domain.ReviewArticle.ExplainSlotsValue as EmptySlots
+    export ReviewArticle.ExplainSlotsValue as EmptySlots
     type TermsUndefined = TermsUndefined.T
     object TermsUndefined extends Newtype[Int, Pure]
     type OpaqueSentences = OpaqueSentences.T
@@ -453,9 +453,9 @@ object ReviewArticle:
       note: CheckAnswer.Note
   ) derives JsonCodec
   object CheckAnswer:
-    export com.histmersion.domain.ReviewArticle.Finding.Id
+    export Finding.Id
     export Check.Fixed
-    export com.histmersion.domain.ReviewArticle.Evidence.Quote
+    export Evidence.Quote
     export Check.Note
 
     given Schema[CheckAnswer] = KindlingsSchema
@@ -507,8 +507,8 @@ object ReviewArticle:
     type Citekey = Citekey.T
     object Citekey extends Newtype[String, Pure]:
       extension (c: Citekey) def normalised: String = c.value.trim
-    export com.histmersion.domain.ReviewArticle.Finding.Id
-    export com.histmersion.domain.ReviewArticle.Evidence.Quote
+    export Finding.Id
+    export Evidence.Quote
 
     given Schema[RejectionAnswer] = KindlingsSchema
       .derived[RejectionAnswer]
@@ -530,7 +530,7 @@ object ReviewArticle:
       setAside: List[SetAsideAnswer] = Nil
   ) derives JsonCodec
   object FixerAnswer:
-    export com.histmersion.domain.ReviewArticle.Finding.Id as Applied
+    export Finding.Id as Applied
     export Fix.{Notes, UnresolvedMoved}
 
     given Schema[FixerAnswer] = KindlingsSchema
@@ -571,8 +571,8 @@ object ReviewArticle:
       reason: Rationale
   ) derives JsonCodec
   object SetAsideAnswer:
-    export com.histmersion.domain.ReviewArticle.Finding.Id
-    export com.histmersion.api.research.CritiqueRef.Wire as Pair
+    export Finding.Id
+    export CritiqueRef.Wire as Pair
 
     given Schema[SetAsideAnswer] = KindlingsSchema
       .derived[SetAsideAnswer]
@@ -591,7 +591,7 @@ object ReviewArticle:
 
   final case class WontFixAnswer(id: WontFixAnswer.Id, reason: Rationale) derives JsonCodec
   object WontFixAnswer:
-    export com.histmersion.domain.ReviewArticle.Finding.Id
+    export Finding.Id
 
     given Schema[WontFixAnswer] = KindlingsSchema
       .derived[WontFixAnswer]
@@ -785,7 +785,7 @@ object ReviewArticle:
 
   /** A verified [[EvidenceAnswer]]: `ratio` is how well the quote matched its record (1.0 = verbatim). */
   final case class Evidence(
-      citekey: com.histmersion.domain.library.Citekey,
+      citekey: library.Citekey,
       offset: Option[Evidence.Offset],
       quote: Evidence.Quote,
       ratio: Evidence.Ratio
@@ -804,7 +804,7 @@ object ReviewArticle:
     * [[Evidence]]), and `tool` — the call of the step that read the source.
     */
   final case class SpotCheck(
-      citekey: com.histmersion.domain.library.Citekey,
+      citekey: library.Citekey,
       claim: SpotCheck.Claim,
       verdict: SpotCheck.Verdict,
       recordQuote: SpotCheck.RecordQuote,
@@ -815,7 +815,7 @@ object ReviewArticle:
   object SpotCheck:
     type Claim = Claim.T
     object Claim extends Newtype[String, Pure]
-    export com.histmersion.domain.ReviewArticle.SpotVerdictsValue as Verdict
+    export ReviewArticle.SpotVerdictsValue as Verdict
     export Evidence.Quote as RecordQuote
     export AgentVerify.Ratio
     export ToolUse.Tool
@@ -838,7 +838,7 @@ object ReviewArticle:
 
   object Report:
     export ColdReaderAnswer.ExplainBack
-    export com.histmersion.domain.ReviewArticle.ExplainSlotsValue as EmptySlots
+    export ReviewArticle.ExplainSlotsValue as EmptySlots
 
   /** A verified [[CheckAnswer]]. */
   final case class Check(id: Check.Id, fixed: Check.Fixed, quote: Check.Quote, note: Check.Note) derives JsonCodec
@@ -883,12 +883,12 @@ object ReviewArticle:
 
   object Snapshot:
 
-    type Slug = com.histmersion.domain.research.Slug
-    val Slug: com.histmersion.domain.research.Slug.type = com.histmersion.domain.research.Slug
-    type Title = com.histmersion.domain.Title
-    val Title: com.histmersion.domain.Title.type = com.histmersion.domain.Title
+    type Slug = research.Slug
+    val Slug: research.Slug.type = research.Slug
+    type Title = domain.Title
+    val Title: domain.Title.type = domain.Title
     export Article.Kind.Wire as Kind
-    export com.histmersion.api.research.Article.Body
+    export Article.Body
     type UpdatedAt = UpdatedAt.T
     object UpdatedAt extends Newtype[String, Pure]
     type Truncated = Truncated.T
@@ -929,13 +929,13 @@ object ReviewArticle:
     type Round = Round.T
     object Round extends Newtype[Int, Pure]
     export ColdReaderAnswer.ExplainBack
-    export com.histmersion.domain.ReviewArticle.ExplainSlotsValue as EmptySlots
+    export ReviewArticle.ExplainSlotsValue as EmptySlots
     export Finding.Id as Deferred
 
   final case class Rejection(
       id: Rejection.Id,
       reason: Rationale,
-      citekey: com.histmersion.domain.library.Citekey,
+      citekey: library.Citekey,
       quote: Rejection.Quote,
       ratio: Rejection.Ratio
   ) derives JsonCodec
@@ -1030,8 +1030,8 @@ object ReviewArticle:
   ) derives JsonCodec
 
   object Outcome:
-    type Slug = com.histmersion.domain.research.Slug
-    val Slug: com.histmersion.domain.research.Slug.type = com.histmersion.domain.research.Slug
+    type Slug = research.Slug
+    val Slug: research.Slug.type = research.Slug
     type Rounds = Rounds.T
     object Rounds extends Newtype[Int, Pure]
     type Applied = Applied.T
@@ -1082,10 +1082,10 @@ object ReviewArticle:
     * used section or `_Method_` note is one too: code generates both, so a written one duplicates them and goes stale.
     */
   def mechanical(
-      slug: com.histmersion.domain.research.Slug,
+      slug: research.Slug,
       kind: Snapshot.Kind,
       body: ReviewArticle.MechanicalBody,
-      isTarget: com.histmersion.domain.research.Slug => Boolean,
+      isTarget: research.Slug => Boolean,
       generated: ReviewArticle.MechanicalGenerated = ReviewArticle.MechanicalGenerated(false)
   ): List[Finding] =
     val hs = headings(body)
@@ -1205,7 +1205,7 @@ object ReviewArticle:
         )
       )
     val dangling = wikilinks(body.value)
-      .filterNot(t => com.histmersion.domain.research.Slug.option(t).exists(isTarget))
+      .filterNot(t => research.Slug.option(t).exists(isTarget))
       .map(t =>
         f(
           Severity.Major,
@@ -1283,8 +1283,8 @@ object ReviewArticle:
     * matcher the fixer's rejections use). `text` is the record as get_source shows it (summary, findings, notes, body).
     */
   def evidenceCheck(
-      isCitekey: com.histmersion.domain.library.Citekey => Boolean,
-      text: com.histmersion.domain.library.Citekey => Option[AgentVerify.SourceBody],
+      isCitekey: library.Citekey => Boolean,
+      text: library.Citekey => Option[AgentVerify.SourceBody],
       minRatio: CritiqueRule.MinRatio
   ): EvidenceCheck =
     e =>
@@ -1292,7 +1292,7 @@ object ReviewArticle:
       val q = Option(e.quote).map(_.value.trim).getOrElse("")
       if q.isEmpty then Left(Content.Proposal(Content.Requirement.QuoteGiven, Problem.Where(s"[[$raw]]")))
       else
-        com.histmersion.domain.library.Citekey.option(raw).filter(isCitekey) match
+        library.Citekey.option(raw).filter(isCitekey) match
           case None     => Left(Content.Answer(Content.Requirement.KnownCitekey(Raw(raw))))
           case Some(ck) =>
             text(ck).map(t => findQuote(q, t.value, minRatio)).filter(_.accepted) match
@@ -1411,10 +1411,10 @@ object ReviewArticle:
   object SpotRule:
     type Required = Required.T
     object Required extends Newtype[Int, Pure]
-    type Cited = com.histmersion.domain.library.Citekey
-    val Cited: com.histmersion.domain.library.Citekey.type = com.histmersion.domain.library.Citekey
-    export com.histmersion.api.research.Article.Body
-    export com.histmersion.domain.AgentVerify.MinRatio
+    type Cited = library.Citekey
+    val Cited: library.Citekey.type = library.Citekey
+    export Article.Body
+    export AgentVerify.MinRatio
 
   /** How many spot-checks a full pass needs: `min` of them, or one per source the article cites in the corpus when it
     * cites fewer.
@@ -1424,7 +1424,7 @@ object ReviewArticle:
   )
 
   /** Does tool call `u` read the record of `ck`? A get_source or passages call whose input names it. */
-  def reads(u: AgentVerify.ToolUse, ck: com.histmersion.domain.library.Citekey): Boolean = readsText(u, ck.value)
+  def reads(u: AgentVerify.ToolUse, ck: library.Citekey): Boolean = readsText(u, ck.value)
 
   private def readsText(u: AgentVerify.ToolUse, ck: String): Boolean =
     SpotCheckTools(SpotCheck.Tool(u.tool.value.trim)) && ck.nonEmpty &&
@@ -1609,8 +1609,8 @@ object ReviewArticle:
   def checkSkeptic(
       a: SkepticAnswer,
       last: CheckSkepticLast,
-      isCitekey: com.histmersion.domain.library.Citekey => Boolean,
-      text: com.histmersion.domain.library.Citekey => Option[AgentVerify.SourceBody],
+      isCitekey: library.Citekey => Boolean,
+      text: library.Citekey => Option[AgentVerify.SourceBody],
       minRatio: CritiqueRule.MinRatio,
       prior: Option[Prior] = None,
       critique: Option[CritiqueRule] = None
@@ -1653,7 +1653,7 @@ object ReviewArticle:
   object CritiqueRule:
     type Full = Full.T
     object Full extends Newtype[Boolean, Pure]
-    export com.histmersion.api.research.Article.Body
+    export Article.Body
     export AgentVerify.MinRatio
 
   private def recordedMinor(f: Finding, why: String): Finding =
@@ -1938,8 +1938,8 @@ object ReviewArticle:
   final case class Prior(asked: List[Finding], body: Prior.Body, minRatio: Prior.MinRatio)
 
   object Prior:
-    export com.histmersion.api.research.Article.Body
-    export com.histmersion.domain.AgentVerify.MinRatio
+    export Article.Body
+    export AgentVerify.MinRatio
 
   /** A full panel's checks: only when the ledger listed findings of this reviewer; otherwise ignored. */
   private def checksOf(
@@ -2225,8 +2225,8 @@ object ReviewArticle:
     * compare).
     */
   final case class BodyCorpus(
-      isCitekey: com.histmersion.domain.library.Citekey => Boolean,
-      isTarget: com.histmersion.domain.research.Slug => Boolean,
+      isCitekey: library.Citekey => Boolean,
+      isTarget: research.Slug => Boolean,
       formatErrors: Fix.Body => List[Problem],
       generated: BodyCorpus.Generated = BodyCorpus.Generated(false)
   )
@@ -2244,7 +2244,7 @@ object ReviewArticle:
     * draft's). FATAL (never written, even on a last attempt): an empty body, or a link problem `before` did not have.
     */
   def checkBody(
-      slug: com.histmersion.domain.research.Slug,
+      slug: research.Slug,
       before: Fix.Body,
       kind: Snapshot.Kind,
       draft: Article.Edits.Draft,
@@ -2312,7 +2312,7 @@ object ReviewArticle:
   )
 
   object Revision:
-    export com.histmersion.api.research.Article.Body
+    export Article.Body
 
   /** Verify a revision: its edits applied to the body the round reviewed and the result checked ([[checkBody]]); every
     * MAJOR finding either applied or rejected; no mechanical or cold-reader finding rejected (a reader's confusion is a
@@ -2331,12 +2331,12 @@ object ReviewArticle:
   def checkFix(
       a: FixerAnswer,
       m: Merged,
-      slug: com.histmersion.domain.research.Slug,
+      slug: research.Slug,
       before: Fix.Body,
       kind: Snapshot.Kind,
       corpus: BodyCorpus,
-      isCitekey: com.histmersion.domain.library.Citekey => Boolean,
-      text: com.histmersion.domain.library.Citekey => Option[AgentVerify.SourceBody],
+      isCitekey: library.Citekey => Boolean,
+      text: library.Citekey => Option[AgentVerify.SourceBody],
       minRatio: CritiqueRule.MinRatio,
       last: LastRound,
       coverage: Option[Coverage] = None,
@@ -2370,7 +2370,7 @@ object ReviewArticle:
         case Some(_) if Option(r.reason).forall(w => s"$w".trim.isEmpty) =>
           refused(PanelRule.RejectionReason(Raw.of(id)))
         case Some(_) =>
-          com.histmersion.domain.library.Citekey.option(ckText).filter(isCitekey) match
+          library.Citekey.option(ckText).filter(isCitekey) match
             case None     => refused(PanelRule.RejectionCitekey(Raw.of(id), Raw(ckText)))
             case Some(ck) =>
               val q = Option(r.quote).map(_.value.trim).getOrElse("")
@@ -2616,7 +2616,7 @@ object ReviewArticle:
       stated: List[Coverage.Reason],
       coverage: Option[Coverage],
       body: Fix.Body,
-      isCitekey: com.histmersion.domain.library.Citekey => Boolean,
+      isCitekey: library.Citekey => Boolean,
       m: Merged,
       applied: Set[Fix.Applied]
   ): (List[Coverage.Reason], List[Problem]) =
@@ -2630,7 +2630,7 @@ object ReviewArticle:
         )
       case Some(c) =>
         val citedAfter = wikilinks(Article.Coverage.withoutNotUsed(body).value)
-          .filter(t => com.histmersion.domain.library.Citekey.option(t).exists(isCitekey))
+          .filter(t => library.Citekey.option(t).exists(isCitekey))
           .map(com.histmersion.api.library.Citekey(_))
           .toSet
         val inFilter = (c.notUsed.map(_.source.citekey) ++ c.cited.map(_.citekey)).toSet

@@ -60,7 +60,7 @@ class EventScaleRepoSuite extends DbSuite with Bounded:
       Place(
         Place.Id("zqes_site"),
         Place.Label("Zqes site"),
-        Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+        Place.KindValue(domain.catalogue.Place.Kind.Site),
         pt(Longitude(124.0)).map(Place.Geometry(_))
       ),
       List(Place.Name(Place.Name.Value("Zqes site")))
@@ -69,7 +69,7 @@ class EventScaleRepoSuite extends DbSuite with Bounded:
       Place(
         Place.Id("zqes_area"),
         Place.Label("Zqes area"),
-        Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region),
+        Place.KindValue(domain.catalogue.Place.Kind.Region),
         Square.map(Place.Geometry(_))
       ),
       List(Place.Name(Place.Name.Value("Zqes area")))
@@ -78,7 +78,7 @@ class EventScaleRepoSuite extends DbSuite with Bounded:
       Place(
         Place.Id("zqes_ptregion"),
         Place.Label("Zqes point region"),
-        Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region),
+        Place.KindValue(domain.catalogue.Place.Kind.Region),
         pt(Longitude(125.0)).map(Place.Geometry(_))
       ),
       List(Place.Name(Place.Name.Value("Zqes point region")))

@@ -320,7 +320,7 @@ class AcquireSuite extends munit.FunSuite:
     assertEquals(
       Acquire.browserDownloadText(
         w,
-        com.histmersion.api.library.Doi("10.3390/rel10040258"),
+        library.Doi("10.3390/rel10040258"),
         Citekey("greener2019_archaeology")
       ),
       Some(
@@ -339,7 +339,7 @@ class AcquireSuite extends munit.FunSuite:
       .setTo(List("A", "B").map(AuthorName.apply))
     assert(
       Acquire
-        .browserDownloadText(doiOnly, com.histmersion.api.library.Doi("10.3390/REL10040258"), Citekey("k"))
+        .browserDownloadText(doiOnly, library.Doi("10.3390/REL10040258"), Citekey("k"))
         .exists(t =>
           t.value.startsWith("A et al. (2019).") && t.value.contains("— open access, but") && !t.value
             .contains(" at https://doi.org")
@@ -348,7 +348,7 @@ class AcquireSuite extends munit.FunSuite:
     assertEquals(
       Acquire.browserDownloadText(
         w.modify(_.isOa).setTo(WorkRef.IsOa(false)),
-        com.histmersion.api.library.Doi("10.3390/rel10040258"),
+        library.Doi("10.3390/rel10040258"),
         Citekey("k")
       ),
       None
@@ -371,7 +371,7 @@ class AcquireSuite extends munit.FunSuite:
     val text = Acquire
       .browserDownloadText(
         w,
-        com.histmersion.api.library.Doi("10.1515/zz"),
+        library.Doi("10.1515/zz"),
         Citekey("k"),
         List(refusal, refusal, refusal.copy(why = Problem.Relayed(Problem.Sentence(" "))))
       )

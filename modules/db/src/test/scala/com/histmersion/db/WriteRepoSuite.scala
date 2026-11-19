@@ -40,9 +40,9 @@ class WriteRepoSuite extends DbSuite:
   private val chunkChars = Limits.ChunkChars(4000)
 
   private def seedSource(citekey: Citekey = ck) = Source(
-    citekey = com.histmersion.api.library.Citekey(citekey.value),
-    title = com.histmersion.api.library.Title("Writes"),
-    authors = (List("A", "B")).map(com.histmersion.api.library.AuthorName.apply),
+    citekey = api.library.Citekey(citekey.value),
+    title = api.library.Title("Writes"),
+    authors = (List("A", "B")).map(api.library.AuthorName.apply),
     doi = (Some("10.0/x")).map(Doi.apply),
     year = (Some(2020)).map(Year.apply),
     venue = (Some("Nature")).map(Source.Venue.apply),
@@ -60,7 +60,7 @@ class WriteRepoSuite extends DbSuite:
     findings = List(
       Finding(
         Finding.Id(s"$citekey#0"),
-        com.histmersion.api.library.Citekey(citekey.value),
+        api.library.Citekey(citekey.value),
         Finding.Claim("claim one"),
         Some(Finding.Region("Anatolia")),
         Some(GeoPoint(Longitude(32.0), Latitude(39.0))),
@@ -72,8 +72,8 @@ class WriteRepoSuite extends DbSuite:
     ),
     edges = List(
       Edge(
-        com.histmersion.api.library.Citekey(citekey.value),
-        com.histmersion.api.library.Citekey("zz_other"),
+        api.library.Citekey(citekey.value),
+        api.library.Citekey("zz_other"),
         Edge.Kind.References
       )
     ),
@@ -118,8 +118,8 @@ class WriteRepoSuite extends DbSuite:
       s.edges,
       List(
         Edge(
-          com.histmersion.api.library.Citekey(ck.value),
-          com.histmersion.api.library.Citekey("zz_other"),
+          api.library.Citekey(ck.value),
+          api.library.Citekey("zz_other"),
           Edge.Kind.References
         )
       )
@@ -242,7 +242,7 @@ class WriteRepoSuite extends DbSuite:
     val _ = fresh()
     val stored = SourceFixtures.load(ds, ck).get
     val exported = SourceNote.note(stored)
-    val back = SourceNote.parseNote(exported, com.histmersion.api.library.Citekey("fallback")).get
+    val back = SourceNote.parseNote(exported, api.library.Citekey("fallback")).get
     assertEquals(back.citekey, stored.citekey)
     assertEquals(back.title, stored.title)
     assertEquals(back.authors, stored.authors)

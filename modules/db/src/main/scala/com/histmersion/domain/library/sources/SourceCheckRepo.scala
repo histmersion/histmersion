@@ -181,7 +181,7 @@ private[sources] object SourceCheckRepo:
   )
 
   /** Whether a citekey is stored — what the formatting rules check a bare citekey against, read once per run. */
-  def storedCitekey(using run: CheckRun)(using DbCon): com.histmersion.domain.library.Citekey => Boolean = ck =>
+  def storedCitekey(using run: CheckRun)(using DbCon): domain.library.Citekey => Boolean = ck =>
     run(StoredCitekeys).contains(ck.value)
 
   /** One rule's report, on the run's connection. */
@@ -228,5 +228,5 @@ private[sources] object SourceCheckRepo:
   // ── the safe fixes ───────────────────────────────────────────────────────────────────────────
 
   /** The sources with a body and no full-text chunks, each with its body's length (`stale-chunks`). */
-  def stale()(using DbCon): Vector[(com.histmersion.domain.library.Citekey, RowCount)] =
-    staleCitekeysSql.query[(com.histmersion.domain.library.Citekey, RowCount)].run()
+  def stale()(using DbCon): Vector[(domain.library.Citekey, RowCount)] =
+    staleCitekeysSql.query[(domain.library.Citekey, RowCount)].run()

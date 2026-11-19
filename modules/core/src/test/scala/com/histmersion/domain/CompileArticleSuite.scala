@@ -37,14 +37,14 @@ class CompileArticleSuite extends munit.FunSuite:
       AgentProposals.Proposal.Quote("The Uluburun ship carried ten tons of copper and one ton of tin."),
       None,
       Some(ClaimAnswer.Place("Uluburun")),
-      com.histmersion.domain.library.Confidence.Wire("high")
+      library.Confidence.Wire("high")
     )
     val made = ClaimAnswer(
       ClaimAnswer.Claim("Tin came from Cornwall."),
       AgentProposals.Proposal.Quote("Cornish tin was shipped east every summer by traders."),
       None,
       None,
-      com.histmersion.domain.library.Confidence.Wire("medium")
+      library.Confidence.Wire("medium")
     )
     val conf =
       ClaimAnswer(
@@ -52,7 +52,7 @@ class CompileArticleSuite extends munit.FunSuite:
         AgentProposals.Proposal.Quote("Its cargo dates to about 1320 BCE."),
         Some(ClaimAnswer.Date("1320 BCE")),
         None,
-        com.histmersion.domain.library.Confidence.Wire("certain")
+        library.Confidence.Wire("certain")
       )
     val sent =
       checkExtract(
@@ -202,7 +202,7 @@ class CompileArticleSuite extends munit.FunSuite:
       d.reasons,
       List(
         Coverage.Reason(
-          com.histmersion.api.library.Citekey("c2001_old"),
+          api.library.Citekey("c2001_old"),
           Coverage.Rationale("about Egypt")
         )
       )
@@ -262,7 +262,7 @@ class CompileArticleSuite extends munit.FunSuite:
       List("[[b2024_iso]] has claims in the table but is neither cited nor given a reason")
     )
     val why = Coverage.Reason(
-      com.histmersion.api.library.Citekey("b2024_iso"),
+      api.library.Citekey("b2024_iso"),
       Coverage.Rationale("Its isotopes speak to a later period.")
     )
     val (d, _) = checkDraft(
@@ -281,11 +281,11 @@ class CompileArticleSuite extends munit.FunSuite:
       d.reasons,
       List(
         Coverage.Reason(
-          com.histmersion.api.library.Citekey("b2024_iso"),
+          api.library.Citekey("b2024_iso"),
           Coverage.Rationale("Its isotopes speak to a later period.")
         ),
         Coverage.Reason(
-          com.histmersion.api.library.Citekey("c2001_old"),
+          api.library.Citekey("c2001_old"),
           Coverage.Rationale("about Egypt")
         )
       ).sortBy(_.citekey.value)
@@ -293,11 +293,11 @@ class CompileArticleSuite extends munit.FunSuite:
     // the writer's reason wins over the extraction's; a reason for a cited source or one outside the table is a problem
     val bad = List(
       Coverage
-        .Reason(com.histmersion.api.library.Citekey("[[a2019_tin]]"), Coverage.Rationale("not needed")),
+        .Reason(api.library.Citekey("[[a2019_tin]]"), Coverage.Rationale("not needed")),
       Coverage
-        .Reason(com.histmersion.api.library.Citekey("zz1999_nope"), Coverage.Rationale("never read")),
+        .Reason(api.library.Citekey("zz1999_nope"), Coverage.Rationale("never read")),
       Coverage.Reason(
-        com.histmersion.api.library.Citekey("c2001_old"),
+        api.library.Citekey("c2001_old"),
         Coverage.Rationale("covers Egypt only")
       )
     )
@@ -336,7 +336,7 @@ class CompileArticleSuite extends munit.FunSuite:
       d2.reasons,
       List(
         Coverage.Reason(
-          com.histmersion.api.library.Citekey("c2001_old"),
+          api.library.Citekey("c2001_old"),
           Coverage.Rationale("covers Egypt only")
         )
       )
@@ -526,7 +526,7 @@ class CompileArticleSuite extends munit.FunSuite:
       Article.Title("Tin"),
       Article.Kind.Wire("concept"),
       Goal.Plans.ArticleDraft.Text("x"),
-      cited = List(com.histmersion.api.library.Citekey("a"), com.histmersion.api.library.Citekey("b"))
+      cited = List(api.library.Citekey("a"), api.library.Citekey("b"))
     )
     assert(
       logLine(

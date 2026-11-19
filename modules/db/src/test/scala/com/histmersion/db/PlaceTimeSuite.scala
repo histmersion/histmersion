@@ -123,8 +123,8 @@ class PlaceTimeSuite extends DbSuite with Bounded:
         ds,
         Source(
           citekey = Citekey("zqtv_src"),
-          title = com.histmersion.api.library.Title("Time rule fixture"),
-          authors = (List("T")).map(com.histmersion.api.library.AuthorName.apply),
+          title = api.library.Title("Time rule fixture"),
+          authors = (List("T")).map(api.library.AuthorName.apply),
           doi = None,
           year = (Some(2026)).map(Year.apply),
           venue = None,

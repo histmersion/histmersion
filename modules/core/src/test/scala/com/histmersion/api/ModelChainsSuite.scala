@@ -171,7 +171,7 @@ class ModelChainsSuite extends munit.FunSuite:
     assertEquals(
       parseChain(
         ModelChains.Chain.Spec("gemini:pro > local:x"),
-        Set(com.histmersion.api.automation.ProviderKind.Plugin.Name("gemini"))
+        Set(api.automation.ProviderKind.Plugin.Name("gemini"))
       ).map(_.map(_.wire)),
       Right(List("gemini:pro", "local:x"))
     )
@@ -181,12 +181,12 @@ class ModelChainsSuite extends munit.FunSuite:
     )
     val a = parseAllowances(
       ModelChains.Allowance.Spec("gemini:* = 1 usd/day"),
-      Set(com.histmersion.api.automation.ProviderKind.Plugin.Name("gemini"))
+      Set(api.automation.ProviderKind.Plugin.Name("gemini"))
     ).toOption.get.head
     assert(
       a.target.covers(
         ModelRef(
-          ProviderKind.Plugin(com.histmersion.api.automation.ProviderKind.Plugin.Name("gemini")),
+          ProviderKind.Plugin(api.automation.ProviderKind.Plugin.Name("gemini")),
           ModelRef.Model("pro")
         )
       )
@@ -196,7 +196,7 @@ class ModelChainsSuite extends munit.FunSuite:
       Target
         .parse(
           ModelChains.Target.Spec("gemini:pro"),
-          Set(com.histmersion.api.automation.ProviderKind.Plugin.Name("gemini"))
+          Set(api.automation.ProviderKind.Plugin.Name("gemini"))
         )
         .map(_.wire),
       Right("gemini:pro")

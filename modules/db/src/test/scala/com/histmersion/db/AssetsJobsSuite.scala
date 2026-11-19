@@ -52,9 +52,9 @@ class AssetsJobsSuite extends DbSuite:
   private val reocrKind = Job.Kind.applyUnsafe(Ingest.KindReocr)
 
   private def source(body: Option[Source.OcrMarkdown] = None) = Source(
-    citekey = com.histmersion.api.library.Citekey(ck.value),
-    title = com.histmersion.api.library.Title("Assets"),
-    authors = (Nil).map(com.histmersion.api.library.AuthorName.apply),
+    citekey = api.library.Citekey(ck.value),
+    title = api.library.Title("Assets"),
+    authors = (Nil).map(api.library.AuthorName.apply),
     doi = None,
     year = None,
     venue = None,
@@ -161,7 +161,7 @@ class AssetsJobsSuite extends DbSuite:
       .create(
         ds,
         AssetLink.Put(
-          com.histmersion.api.library.Citekey(ck.value),
+          api.library.Citekey(ck.value),
           Bundle.Asset.FileName("fig-1.png"),
           AssetRelation.Wire("depicts"),
           MediaTarget.TargetType("place"),
@@ -173,7 +173,7 @@ class AssetsJobsSuite extends DbSuite:
       .create(
         ds,
         AssetLink.Put(
-          com.histmersion.api.library.Citekey(ck.value),
+          api.library.Citekey(ck.value),
           Bundle.Asset.FileName("fig-2.png"),
           AssetRelation.Wire("depicts"),
           MediaTarget.TargetType("place"),
@@ -185,7 +185,7 @@ class AssetsJobsSuite extends DbSuite:
       .create(
         ds,
         AssetLink.Put(
-          com.histmersion.api.library.Citekey(ck.value),
+          api.library.Citekey(ck.value),
           Bundle.Asset.FileName("fig-3.png"),
           AssetRelation.Wire("depicts"),
           MediaTarget.TargetType("place"),

@@ -379,10 +379,10 @@ class IngestBacklogSuite extends munit.FunSuite:
       ItemState(oa =
         Some(
           OaWork(
-            com.histmersion.api.library.Doi("10.1/x"),
-            com.histmersion.api.library.Title("X"),
+            api.library.Doi("10.1/x"),
+            api.library.Title("X"),
             Some(Year(2020)),
-            List(com.histmersion.api.library.AuthorName("A")),
+            List(api.library.AuthorName("A")),
             None,
             List(Goal.Slug("g1"), Goal.Slug("g2")),
             Managers.Rationale("fits"),
@@ -428,7 +428,7 @@ class IngestBacklogSuite extends munit.FunSuite:
       rows = List(
         RepairAcquire.RepairRow(
           RepairAcquire.RepairRow.Item(7),
-          com.histmersion.api.library.Doi("10.1/x"),
+          api.library.Doi("10.1/x"),
           List(RepairAcquire.RepairRow.Goals("g")),
           RepairAcquire.RepairRow.Watcher("watch:g"),
           RepairAcquire.RepairRow.Action(RepairAcquire.Move),
@@ -436,7 +436,7 @@ class IngestBacklogSuite extends munit.FunSuite:
         ),
         RepairAcquire.RepairRow(
           RepairAcquire.RepairRow.Item(8),
-          com.histmersion.api.library.Doi("10.1/y"),
+          api.library.Doi("10.1/y"),
           List(RepairAcquire.RepairRow.Goals("g")),
           RepairAcquire.RepairRow.Watcher("watch:g"),
           RepairAcquire.RepairRow.Action(RepairAcquire.Keep),

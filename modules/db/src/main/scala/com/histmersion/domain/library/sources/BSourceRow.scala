@@ -45,8 +45,8 @@ final private[sources] case class BSourceRow(
 object BSourceRow:
   type Doi = Doi.T
   object Doi extends Newtype[String, Pure]
-  type Title = com.histmersion.domain.Title
-  val Title: com.histmersion.domain.Title.type = com.histmersion.domain.Title
+  type Title = domain.Title
+  val Title: domain.Title.type = domain.Title
   type Authors = Authors.T
   object Authors extends Newtype[String, Pure]
   type Venue = Venue.T

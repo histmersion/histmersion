@@ -114,8 +114,8 @@ class AgentVerifySuite extends munit.FunSuite:
     )
 
   test("status vocabulary: a typo is rejected, not turned into unassessed"):
-    assertEquals(status(com.histmersion.domain.library.Source.Status.Wire("Current")), Right(Source.Status.Current))
-    assert(status(com.histmersion.domain.library.Source.Status.Wire("debunk")).isLeft)
+    assertEquals(status(library.Source.Status.Wire("Current")), Right(Source.Status.Current))
+    assert(status(library.Source.Status.Wire("debunk")).isLeft)
 
   test("links: dangling targets and escaped brackets are problems"):
     val text = LinkProblemsText(

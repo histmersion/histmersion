@@ -183,7 +183,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
       Place(
         Place.Id(id),
         label,
-        Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+        Place.KindValue(domain.catalogue.Place.Kind.Site),
         Some(Place.Geometry(s"""{"type":"Point","coordinates":[$lon,$lat]}""")),
         Some(Period(Year(-1650), Year(-1180)))
       ),
@@ -287,8 +287,8 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
       work,
       Source(
         Citekey("zzgoal2020_src"),
-        com.histmersion.api.library.Title("Linked"),
-        (List("A")).map(com.histmersion.api.library.AuthorName.apply),
+        api.library.Title("Linked"),
+        (List("A")).map(api.library.AuthorName.apply),
         None,
         (Some(2020)).map(Year.apply),
         None,
@@ -305,20 +305,20 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
       ),
       cfg.limits.chunkChars
     )
-    transact(work)(GoalRepo.put(com.histmersion.domain.automation.Goal.Slug("zz_goal"), Goal.Put(Goal.Title("A goal"))))
+    transact(work)(GoalRepo.put(domain.automation.Goal.Slug("zz_goal"), Goal.Put(Goal.Title("A goal"))))
     transact(work)(
       GoalLinkRepo.setPlan(
-        com.histmersion.domain.automation.Goal.Slug("zz_goal"),
+        domain.automation.Goal.Slug("zz_goal"),
         BGoalRow.Plan("""{"goal":"zz_goal","rationale":"work's plan"}""")
       )
     )
     transact(work)(
-      GoalLinkRepo.setBudget(com.histmersion.domain.automation.Goal.Slug("zz_goal"), Some(BigDecimal("2.5")))
+      GoalLinkRepo.setBudget(domain.automation.Goal.Slug("zz_goal"), Some(BigDecimal("2.5")))
     )
     assert(
       transact(work)(
         GoalLinkRepo.link(
-          com.histmersion.domain.automation.Goal.Slug("zz_goal"),
+          domain.automation.Goal.Slug("zz_goal"),
           LinkKind.Source,
           Goal.Plans.GoalLink.Ref("zzgoal2020_src"),
           Some(Goal.Plans.GoalLink.Note("why"))
@@ -328,7 +328,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
     assert(
       transact(work)(
         GoalLinkRepo.link(
-          com.histmersion.domain.automation.Goal.Slug("zz_goal"),
+          domain.automation.Goal.Slug("zz_goal"),
           LinkKind.Query,
           Goal.Plans.GoalLink.Ref("hittite storm god"),
           None
@@ -337,7 +337,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
     )
     transact(work)(
       GoalLinkRepo.setSchedule(
-        com.histmersion.domain.automation.Goal.Slug("zz_goal"),
+        domain.automation.Goal.Slug("zz_goal"),
         ScheduleKind.Currency,
         Goal.Plans.GoalSchedule.Cron("@weekly"),
         Goal.Plans.GoalSchedule.Enabled(true),
@@ -353,20 +353,20 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
     val r = importInto(home, bundle, sh)
     assert(r.applied.value, r.problems.mkString("\n"))
     assertEquals(
-      connect(home)(GoalLinkRepo.planAndBudget(com.histmersion.domain.automation.Goal.Slug("zz_goal")))
+      connect(home)(GoalLinkRepo.planAndBudget(domain.automation.Goal.Slug("zz_goal")))
         .flatMap(_._1)
         .exists(_.value.contains("work's plan")),
       true
     )
     assertEquals(
       Transactor(home).read(
-        GoalLinkRepo.refsIn(com.histmersion.domain.automation.Goal.Slug("zz_goal"), LinkKind.Source)
+        GoalLinkRepo.refsIn(domain.automation.Goal.Slug("zz_goal"), LinkKind.Source)
       ),
       List("zzgoal2020_src")
     )
     val s =
       Transactor(home)
-        .read(GoalLinkRepo.schedule(com.histmersion.domain.automation.Goal.Slug("zz_goal"), ScheduleKind.Currency))
+        .read(GoalLinkRepo.schedule(domain.automation.Goal.Slug("zz_goal"), ScheduleKind.Currency))
         .getOrElse(fail("no schedule"))
     // brought in, it never fires here before a person saves it
     assertEquals((s.cron, s.nextRunAt), ("@weekly", None))
@@ -375,7 +375,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
     // changed on both sides afterwards: one goal; home's schedule stays, the links of both
     transact(home)(
       GoalLinkRepo.setSchedule(
-        com.histmersion.domain.automation.Goal.Slug("zz_goal"),
+        domain.automation.Goal.Slug("zz_goal"),
         ScheduleKind.Currency,
         Goal.Plans.GoalSchedule.Cron("@daily"),
         Goal.Plans.GoalSchedule.Enabled(true),
@@ -386,7 +386,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
     assert(
       transact(home)(
         GoalLinkRepo.link(
-          com.histmersion.domain.automation.Goal.Slug("zz_goal"),
+          domain.automation.Goal.Slug("zz_goal"),
           LinkKind.Query,
           Goal.Plans.GoalLink.Ref("ahhiyawa"),
           None
@@ -396,7 +396,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
     assert(
       transact(work)(
         GoalLinkRepo.link(
-          com.histmersion.domain.automation.Goal.Slug("zz_goal"),
+          domain.automation.Goal.Slug("zz_goal"),
           LinkKind.Query,
           Goal.Plans.GoalLink.Ref("mycenae"),
           None
@@ -410,13 +410,13 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
     assert(a.applied.value, (a.problems ++ a.issues.map(_.title)).mkString("\n"))
     assertEquals(
       Transactor(home)
-        .read(GoalLinkRepo.refsIn(com.histmersion.domain.automation.Goal.Slug("zz_goal"), LinkKind.Query))
+        .read(GoalLinkRepo.refsIn(domain.automation.Goal.Slug("zz_goal"), LinkKind.Query))
         .toSet,
       Set("hittite storm god", "ahhiyawa", "mycenae")
     )
     assertEquals(
       Transactor(home)
-        .read(GoalLinkRepo.schedule(com.histmersion.domain.automation.Goal.Slug("zz_goal"), ScheduleKind.Currency))
+        .read(GoalLinkRepo.schedule(domain.automation.Goal.Slug("zz_goal"), ScheduleKind.Currency))
         .map(_.cron),
       Some("@daily")
     )
@@ -425,7 +425,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
   test("goals (phase 3): a watcher's sweeps travel as the goal's schedules (cron, budget); its state stays home"):
     val (work, sw) = (fresh("ww"), spool("ww"))
     transact(work)(
-      GoalRepo.put(com.histmersion.domain.automation.Goal.Slug("zz_goal"), Goal.Put(Goal.Title("A watched goal")))
+      GoalRepo.put(domain.automation.Goal.Slug("zz_goal"), Goal.Put(Goal.Title("A watched goal")))
     )
     assert(
       transact(work)(
@@ -524,7 +524,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
       BEventRow.Id("zz_ev_other"),
       EventPut(EventSummary.Label("Other"), EventSummary.Kind("battle"))
     )
-    transact(ds)(GoalRepo.put(com.histmersion.domain.automation.Goal.Slug("zz_goal_a"), Goal.Put(Goal.Title("G"))))
+    transact(ds)(GoalRepo.put(domain.automation.Goal.Slug("zz_goal_a"), Goal.Put(Goal.Title("G"))))
     assert(EventFixtures.rename(ds, BEventRow.Id("zz_ev_a"), BEventRow.Id("zz_ev_b")).isRight)
     assertEquals(EventFixtures.renamedTo(ds, BEventRow.Id("zz_ev_a")), Some("zz_ev_b"))
     // an old id of one event is not free for another
@@ -541,22 +541,22 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
       Transactor(ds)
         .transact(
           GoalRepo.renameIn(
-            com.histmersion.domain.automation.Goal.Slug("zz_goal_a"),
-            com.histmersion.domain.automation.Goal.Slug("zz_goal_b")
+            domain.automation.Goal.Slug("zz_goal_a"),
+            domain.automation.Goal.Slug("zz_goal_b")
           )
         )
         .isRight
     )
     assertEquals(
-      Transactor(ds).read(GoalRepo.renamedTo(com.histmersion.domain.automation.Goal.Slug("zz_goal_a"))),
+      Transactor(ds).read(GoalRepo.renamedTo(domain.automation.Goal.Slug("zz_goal_a"))),
       Some("zz_goal_b")
     )
     assert(
       Transactor(ds)
         .transact(
           GoalRepo.renameIn(
-            com.histmersion.domain.automation.Goal.Slug("zz_goal_b"),
-            com.histmersion.domain.automation.Goal.Slug("zz_goal_b")
+            domain.automation.Goal.Slug("zz_goal_b"),
+            domain.automation.Goal.Slug("zz_goal_b")
           )
         )
         .isLeft
@@ -586,8 +586,8 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
       PlaceFixtures
         .rename(
           work,
-          com.histmersion.domain.catalogue.Place.Id("zz_old_site"),
-          com.histmersion.domain.catalogue.Place.Id("zz_new_site")
+          domain.catalogue.Place.Id("zz_old_site"),
+          domain.catalogue.Place.Id("zz_new_site")
         )
         .isRight
     )
@@ -618,8 +618,8 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
       PlaceFixtures
         .rename(
           work,
-          com.histmersion.domain.catalogue.Place.Id("zz_old_site"),
-          com.histmersion.domain.catalogue.Place.Id("zz_taken")
+          domain.catalogue.Place.Id("zz_old_site"),
+          domain.catalogue.Place.Id("zz_taken")
         )
         .isRight
     )
@@ -655,14 +655,14 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
       EventPut(EventSummary.Label("E"), EventSummary.Kind("battle"))
     )
     transact(work)(
-      GoalRepo.put(com.histmersion.domain.automation.Goal.Slug("zz_goal_before"), Goal.Put(Goal.Title("G")))
+      GoalRepo.put(domain.automation.Goal.Slug("zz_goal_before"), Goal.Put(Goal.Title("G")))
     )
     assert(
       PlaceFixtures
         .rename(
           work,
-          com.histmersion.domain.catalogue.Place.Id("zz_pl_before"),
-          com.histmersion.domain.catalogue.Place.Id("zz_pl_after")
+          domain.catalogue.Place.Id("zz_pl_before"),
+          domain.catalogue.Place.Id("zz_pl_after")
         )
         .isRight
     )
@@ -671,8 +671,8 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
       Transactor(work)
         .transact(
           GoalRepo.renameIn(
-            com.histmersion.domain.automation.Goal.Slug("zz_goal_before"),
-            com.histmersion.domain.automation.Goal.Slug("zz_goal_after")
+            domain.automation.Goal.Slug("zz_goal_before"),
+            domain.automation.Goal.Slug("zz_goal_after")
           )
         )
         .isRight
@@ -686,7 +686,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
     assert(r.applied.value, r.problems.mkString("\n"))
     assertEquals(EventFixtures.renamedTo(home, BEventRow.Id("zz_ev_before")), Some("zz_ev_after"))
     assertEquals(
-      Transactor(home).read(GoalRepo.renamedTo(com.histmersion.domain.automation.Goal.Slug("zz_goal_before"))),
+      Transactor(home).read(GoalRepo.renamedTo(domain.automation.Goal.Slug("zz_goal_before"))),
       Some("zz_goal_after")
     )
     assertEquals(PlaceFixtures.renamedTo(home, AliasTable.Id("zz_pl_before")), Some("zz_pl_after"))
@@ -718,22 +718,22 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
       PlaceFixtures
         .rename(
           ds,
-          com.histmersion.domain.catalogue.Place.Id("zz_pl_a"),
-          com.histmersion.domain.catalogue.Place.Id("zz_pl_b")
+          domain.catalogue.Place.Id("zz_pl_a"),
+          domain.catalogue.Place.Id("zz_pl_b")
         )
         .isRight
     )
     assertEquals(PlaceFixtures.renamedTo(ds, AliasTable.Id("zz_pl_a")), Some("zz_pl_b"))
     assertEquals(
-      PlaceFixtures.get(ds, com.histmersion.domain.catalogue.Place.Id("zz_pl_b")).map(_.place.label),
+      PlaceFixtures.get(ds, domain.catalogue.Place.Id("zz_pl_b")).map(_.place.label),
       Some("A")
     )
     assert(
       PlaceFixtures
         .rename(
           ds,
-          com.histmersion.domain.catalogue.Place.Id("zz_pl_other"),
-          com.histmersion.domain.catalogue.Place.Id("zz_pl_a")
+          domain.catalogue.Place.Id("zz_pl_other"),
+          domain.catalogue.Place.Id("zz_pl_a")
         )
         .left
         .exists(_.problems.sentences.mkString("; ").contains("is an old place id of 'zz_pl_b'"))
@@ -742,8 +742,8 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
       PlaceFixtures
         .rename(
           ds,
-          com.histmersion.domain.catalogue.Place.Id("zz_pl_b"),
-          com.histmersion.domain.catalogue.Place.Id("zz_pl_other")
+          domain.catalogue.Place.Id("zz_pl_b"),
+          domain.catalogue.Place.Id("zz_pl_other")
         )
         .left
         .exists(_.problems.sentences.mkString("; ").contains("already exists"))
@@ -752,8 +752,8 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
       PlaceFixtures
         .rename(
           ds,
-          com.histmersion.domain.catalogue.Place.Id("zz_pl_b"),
-          com.histmersion.domain.catalogue.Place.Id("zz_pl_a")
+          domain.catalogue.Place.Id("zz_pl_b"),
+          domain.catalogue.Place.Id("zz_pl_a")
         )
         .isRight
     )
@@ -803,7 +803,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
     val ocr = Transactor(ds).transact(
       JobRepo.create(
         Job.Kind.applyUnsafe(Ingest.KindIngest),
-        Some(com.histmersion.domain.library.Citekey("zz2020_x")),
+        Some(domain.library.Citekey("zz2020_x")),
         None
       )
     )

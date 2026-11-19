@@ -100,8 +100,8 @@ class PlaceReviewSuite extends RegionCleanupFixtures:
       ds,
       Source(
         citekey = Citekey("zzrc_src2"),
-        title = com.histmersion.api.library.Title("Region cleanup fixture 2"),
-        authors = (List("T")).map(com.histmersion.api.library.AuthorName.apply),
+        title = api.library.Title("Region cleanup fixture 2"),
+        authors = (List("T")).map(api.library.AuthorName.apply),
         doi = None,
         year = (Some(2026)).map(Year.apply),
         venue = None,
@@ -152,7 +152,7 @@ class PlaceReviewSuite extends RegionCleanupFixtures:
     )
     assertEquals(
       PlaceFixtures.get(ds, ThessId).map(_.locationPrecision),
-      Some(com.histmersion.api.catalogue.Place.Precision.Stated)
+      Some(api.catalogue.Place.Precision.Stated)
     )
     assertEquals(PlaceFixtures.relocations(ds).filter(_.id.value.startsWith("pleiades_99910")), Nil)
     assertEquals(

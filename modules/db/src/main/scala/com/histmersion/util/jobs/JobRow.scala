@@ -34,8 +34,8 @@ object JobRow:
   object Kind extends Newtype[String, Pure]
   type Status = Status.T
   object Status extends Newtype[String, Pure]
-  type Citekey = com.histmersion.domain.library.Citekey
-  val Citekey: com.histmersion.domain.library.Citekey.type = com.histmersion.domain.library.Citekey
+  type Citekey = domain.library.Citekey
+  val Citekey: domain.library.Citekey.type = domain.library.Citekey
   type Progress = Progress.T
   object Progress extends Newtype[String, Pure]
   type Sha256 = Sha256.T

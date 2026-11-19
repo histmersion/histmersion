@@ -80,9 +80,9 @@ private[sources] object SourceBundleRepo:
         r.lon.map(x => Longitude(x.value)),
         r.lat.map(x => Latitude(x.value)),
         range(
-          com.histmersion.util.data.exchange.Bundle.RangeIsNull(r.pNull.value),
-          r.pLo.map(x => com.histmersion.util.data.exchange.Bundle.RangeLower(x.value)),
-          r.pHi.map(x => com.histmersion.util.data.exchange.Bundle.RangeUpper(x.value))
+          util.data.exchange.Bundle.RangeIsNull(r.pNull.value),
+          r.pLo.map(x => util.data.exchange.Bundle.RangeLower(x.value)),
+          r.pHi.map(x => util.data.exchange.Bundle.RangeUpper(x.value))
         ),
         r.periodName.map(x => Bundle.Finding.PeriodName(x.value)),
         r.tags.map(t => Bundle.Finding.Tags(t.value)),
@@ -161,9 +161,9 @@ private[sources] object SourceBundleRepo:
       r.regions.map(t => Bundle.Source.Regions(t.value)),
       r.tags.map(t => Bundle.Source.Tags(t.value)),
       range(
-        com.histmersion.util.data.exchange.Bundle.RangeIsNull(r.pNull.value),
-        r.pLo.map(x => com.histmersion.util.data.exchange.Bundle.RangeLower(x.value)),
-        r.pHi.map(x => com.histmersion.util.data.exchange.Bundle.RangeUpper(x.value))
+        util.data.exchange.Bundle.RangeIsNull(r.pNull.value),
+        r.pLo.map(x => util.data.exchange.Bundle.RangeLower(x.value)),
+        r.pHi.map(x => util.data.exchange.Bundle.RangeUpper(x.value))
       ),
       r.summary.map(x => Bundle.Source.Summary(x.value)),
       r.notes.map(x => Bundle.Source.Notes(x.value)),
@@ -193,8 +193,8 @@ private[sources] object SourceBundleRepo:
       w.asLocal {
         SourceRepo
           .renameIn(
-            com.histmersion.domain.library.Citekey.assume(from.value),
-            com.histmersion.domain.library.Citekey.assume(to.value),
+            domain.library.Citekey.assume(from.value),
+            domain.library.Citekey.assume(to.value),
             referrers
           )
           .left
@@ -210,8 +210,8 @@ private[sources] object SourceBundleRepo:
         w.asLocal {
           SourceRepo
             .renameIn(
-              com.histmersion.domain.library.Citekey.assume(old.value),
-              com.histmersion.domain.library.Citekey.assume(s.citekey.value),
+              domain.library.Citekey.assume(old.value),
+              domain.library.Citekey.assume(s.citekey.value),
               referrers
             )
             .left
@@ -281,14 +281,13 @@ private[sources] object SourceBundleRepo:
 
   def aliasesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
-    w.es.aliases.filterNot(a => w.skipsAlias(com.histmersion.domain.library.Citekey.assume(a.alias.value))).foreach {
-      a =>
-        // never an alias equal to the source's own citekey (a key renamed back here, #827)
-        val n = sql"""INSERT INTO source_aliases (alias, citekey, created_at)
+    w.es.aliases.filterNot(a => w.skipsAlias(domain.library.Citekey.assume(a.alias.value))).foreach { a =>
+      // never an alias equal to the source's own citekey (a key renamed back here, #827)
+      val n = sql"""INSERT INTO source_aliases (alias, citekey, created_at)
             SELECT ${a.alias}, citekey, ${a.createdAt}::timestamptz FROM sources
             WHERE uid = ${a.sourceUid} AND citekey <> ${a.alias}
             ON CONFLICT (alias) DO NOTHING""".update.run()
-        if n > 0 then sql"DELETE FROM alias_tombstones WHERE alias = ${a.alias}".update.run(): Unit
+      if n > 0 then sql"DELETE FROM alias_tombstones WHERE alias = ${a.alias}".update.run(): Unit
     }
 
   def findingsIn(w: BundleImport.Writer): Unit =
@@ -344,7 +343,7 @@ private[sources] object SourceBundleRepo:
     bodiesChanged(w).foreach { u =>
       val (ck, md) =
         sql"SELECT citekey, ocr_markdown FROM sources WHERE uid = $u"
-          .query[(com.histmersion.domain.library.Citekey, Option[Chunker.ChunkMarkdown])]
+          .query[(domain.library.Citekey, Option[Chunker.ChunkMarkdown])]
           .run()
           .head
       val _ = SourceRepo.replaceChunks(ck, md, Chunker.ChunkMaxChars(w.opts.chunkChars.value))

@@ -547,7 +547,7 @@ object SourcePlan:
     def score(as: List[AuthorName]) =
       (
         as.size,
-        as.flatMap(a => MergeText.person(com.histmersion.domain.AuthorName(a.value)))
+        as.flatMap(a => MergeText.person(domain.AuthorName(a.value)))
           .map(p => p.forenames.map(_.value.length).sum)
           .sum,
         as.map(_.value.count(c => c.isLetter && c > 127)).sum

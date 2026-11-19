@@ -10,7 +10,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 
 final private[places] case class FootprintRow(
     id: FootprintRow.Id,
-    placeId: com.histmersion.domain.catalogue.Place.Id,
+    placeId: domain.catalogue.Place.Id,
     role: FootprintRow.Role,
     periodStart: Option[Year],
     periodEnd: Option[Year],

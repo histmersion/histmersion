@@ -171,7 +171,7 @@ class BundleFormatSuite extends munit.FunSuite:
       None,
       None,
       Nil,
-      Bundle.Blobs(Bundle.Blobs.Count(0), com.histmersion.api.ByteCount(0)),
+      Bundle.Blobs(Bundle.Blobs.Count(0), api.ByteCount(0)),
       Bundle.Reference(
         Bundle.Reference.Places(0),
         Bundle.Reference.PlacesDigest(""),
@@ -223,7 +223,7 @@ class BundleFormatSuite extends munit.FunSuite:
     val f = Bundle.FileInfo(
       Bundle.FileInfo.Path("entities/goals.ndjson"),
       Bundle.FileInfo.Lines(1),
-      com.histmersion.api.ByteCount(10),
+      api.ByteCount(10),
       Sha256("a")
     )
     val m = Bundle.Manifest(
@@ -239,11 +239,11 @@ class BundleFormatSuite extends munit.FunSuite:
         Bundle.FileInfo(
           Bundle.FileInfo.Path("entities/queue.ndjson"),
           Bundle.FileInfo.Lines(0),
-          com.histmersion.api.ByteCount(0),
+          api.ByteCount(0),
           Sha256("e")
         )
       ),
-      Bundle.Blobs(Bundle.Blobs.Count(0), com.histmersion.api.ByteCount(0)),
+      Bundle.Blobs(Bundle.Blobs.Count(0), api.ByteCount(0)),
       Bundle.Reference(
         Bundle.Reference.Places(0),
         Bundle.Reference.PlacesDigest(""),

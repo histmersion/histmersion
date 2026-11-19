@@ -93,7 +93,7 @@ private[places] object TreeRepo:
     * edges. Deliberately UNFILTERED by `asOf` — `by=time,region` reads the hierarchy at a different year in every time
     * bucket, so the as-of predicate belongs in [[Tree]], applied to the (small) closure, not in this query.
     */
-  private def closure(ids: List[com.histmersion.domain.catalogue.Place.Id]): Frag =
+  private def closure(ids: List[domain.catalogue.Place.Id]): Frag =
     sql"""WITH RECURSIVE up(id) AS (
           SELECT p.id FROM places p WHERE p.id = ANY($ids::text[])
           UNION
@@ -106,17 +106,17 @@ private[places] object TreeRepo:
     * only as a `Withdrawn (duplicate): …` label — [[RegionNode.rootEligible]] checks the label too, so both spellings
     * are caught wherever they come from.
     */
-  def nodesQuery(ids: List[com.histmersion.domain.catalogue.Place.Id]): Frag =
+  def nodesQuery(ids: List[domain.catalogue.Place.Id]): Frag =
     sql"${closure(ids)} SELECT p.id, p.label, p.kind, ${RangeSql.cols(sql"p.period")}, coalesce((p.properties->>'contested')::boolean, false), coalesce((p.properties->>'withdrawn')::boolean, false) FROM places p JOIN up ON up.id = p.id"
 
   /** The `part_of` edges WITHIN the closure, each with its own validity. */
-  def relationsQuery(ids: List[com.histmersion.domain.catalogue.Place.Id]): Frag =
+  def relationsQuery(ids: List[domain.catalogue.Place.Id]): Frag =
     sql"${closure(ids)} SELECT r.child_id, r.parent_id, r.kind, ${RangeSql.cols(sql"r.period")} FROM place_relations r WHERE r.child_id IN (SELECT id FROM up) AND r.parent_id IN (SELECT id FROM up)"
 
   /** The gazetteer slice a tree's rows need: every place they were materialised into (`placeIds`) plus all its
     * ancestors, and the edges between them. Empty when nothing is located — no query is run then.
     */
-  def gazetteer(placeIds: List[com.histmersion.domain.catalogue.Place.Id])(using
+  def gazetteer(placeIds: List[domain.catalogue.Place.Id])(using
       DbCon
   ): (List[RegionNode], List[Place.Relation]) =
     val ids = placeIds.distinct

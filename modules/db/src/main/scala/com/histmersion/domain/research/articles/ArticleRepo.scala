@@ -175,7 +175,7 @@ private[articles] object ArticleRepo:
         .canonical(
           written
             .filter(t => Article.Links.isCitekeyShaped(t.value))
-            .flatMap(t => com.histmersion.domain.library.Citekey.either(t.value).toOption)
+            .flatMap(t => domain.library.Citekey.either(t.value).toOption)
         )
         .map((from, to) => from.value -> to.value)
       val targets = written.map(t => known.get(t.value).fold(t)(Article.Link.Target(_))).distinct
@@ -342,7 +342,7 @@ private[articles] object ArticleRepo:
   /** The articles citing any of `citekeys` (one row per article, its first cited key), at most `limit` — an event's
     * card lists those citing the sources that attest it.
     */
-  def citing(citekeys: List[com.histmersion.domain.library.Citekey], limit: PageSize)(using
+  def citing(citekeys: List[domain.library.Citekey], limit: PageSize)(using
       DbCon
   ): List[EventArticleRef] =
     if citekeys.isEmpty then Nil
@@ -363,7 +363,7 @@ private[articles] object ArticleRepo:
     * Reuses [[Backlink]] deliberately: "something that points at me, with a kind, an id and a title" is the same shape
     * whichever end you stand at, and a second near-identical DTO would only give the two sides a way to drift.
     */
-  def backlinksForSource(citekey: com.histmersion.domain.library.Citekey)(using DbCon): List[Backlink] =
+  def backlinksForSource(citekey: domain.library.Citekey)(using DbCon): List[Backlink] =
     sql"""SELECT 'article' AS kind, a.slug AS id, a.title
             FROM article_links l JOIN articles a ON a.slug = l.src_slug
             WHERE l.target_kind = 'source' AND l.target = $citekey
@@ -410,7 +410,7 @@ private[articles] object ArticleRepo:
   def list(
       filter: Filter,
       scope: PlaceScope,
-      kind: Option[com.histmersion.domain.research.Article.Kind],
+      kind: Option[domain.research.Article.Kind],
       text: Option[Search.Query],
       limit: Limit,
       offset: Offset
@@ -439,7 +439,7 @@ private[articles] object ArticleRepo:
   def listWhere(
       filter: Filter,
       scope: PlaceScope,
-      kind: Option[com.histmersion.domain.research.Article.Kind],
+      kind: Option[domain.research.Article.Kind],
       text: Option[Search.Query]
   ): Frag =
     val ps = List.newBuilder[Frag]

@@ -161,8 +161,8 @@ private[articles] object ArticleCheckRepo:
   )
 
   object PairingRepair:
-    type Slug = com.histmersion.domain.research.Slug
-    val Slug: com.histmersion.domain.research.Slug.type = com.histmersion.domain.research.Slug
+    type Slug = domain.research.Slug
+    val Slug: domain.research.Slug.type = domain.research.Slug
     type UpdatedAt = UpdatedAt.T
     object UpdatedAt extends Newtype[String, Pure]
 

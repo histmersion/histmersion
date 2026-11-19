@@ -29,8 +29,8 @@ object EnrichComparison extends OutputComparison:
   def quoteCheck(steps: List[Step]): (EnrichSide.QuotesChecked, EnrichSide.QuotesPassed) =
     @tailrec def loop(rest: List[Step], checked: Int, passed: Int): (Int, Int) =
       rest match
-        case Nil                                                                              => (checked, passed)
-        case s :: tail if s.status == com.histmersion.domain.automation.Step.Status.Done.wire =>
+        case Nil                                                              => (checked, passed)
+        case s :: tail if s.status == domain.automation.Step.Status.Done.wire =>
           s.output.flatMap(o => RawJson.decode[VerifiedFindings](o.value).toOption) match
             case Some(v) =>
               val n = v.proposed.fold(v.findings.size)(_.value)

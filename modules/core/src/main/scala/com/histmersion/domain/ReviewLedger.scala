@@ -19,6 +19,7 @@ import com.histmersion.api.WireEnumValues
 import com.histmersion.domain.research.workflows.ReviewComparison
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
+import com.histmersion.domain.automation.Run
 
 /** The review ledger of one article (docs/research-review-convergence.md §6): every finding the `review-article` panel
   * ever raised on it, under an id that never changes, with what became of it — open, fixed (verified by the reviewer
@@ -41,20 +42,20 @@ object ReviewLedger:
   type TaskTextLimit = TaskTextLimit.T
   object TaskTextLimit extends Newtype[Int, Pure]
 
-  export com.histmersion.domain.automation.Run.Id as ApplyChecksRun
+  export automation.Run.Id as ApplyChecksRun
   export ReviewArticle.Merged.Round as ApplyChecksRound
-  export com.histmersion.domain.automation.Run.Id as RecheckMechanicalRun
+  export automation.Run.Id as RecheckMechanicalRun
   export ReviewArticle.Merged.Round as RecheckMechanicalRound
-  export com.histmersion.domain.automation.Run.Id as RecheckTermCountRun
+  export automation.Run.Id as RecheckTermCountRun
   export ReviewArticle.Merged.Round as RecheckTermCountRound
-  export com.histmersion.domain.automation.Run.Id as ApplyFixRun
+  export automation.Run.Id as ApplyFixRun
   export ReviewArticle.Merged.Round as ApplyFixRound
-  export com.histmersion.domain.automation.Run.Id as LearnRun
+  export automation.Run.Id as LearnRun
   export ReviewArticle.Merged.Round as LearnRound
-  export com.histmersion.domain.automation.Run.Id as ApplyRecheckRun
+  export automation.Run.Id as ApplyRecheckRun
   export ReviewArticle.Merged.Round as ApplyRecheckRound
-  type ArticleTaskSlug = com.histmersion.domain.research.Slug
-  val ArticleTaskSlug: com.histmersion.domain.research.Slug.type = com.histmersion.domain.research.Slug
+  type ArticleTaskSlug = research.Slug
+  val ArticleTaskSlug: research.Slug.type = research.Slug
 
   enum Status(val wire: WireEnumValues.Wire) derives CanEqual:
     case Open extends Status(WireEnumValues.Wire("open"))
@@ -104,7 +105,7 @@ object ReviewLedger:
   object Closure:
     export ReviewArticle.Reviewer.Wire as By
     export ReviewArticle.Merged.Round
-    export com.histmersion.domain.automation.Run.Id as Run
+    export automation.Run.Id as Run
     type Note = Note.T
     object Note extends Newtype[String, Pure]
     export ReviewArticle.Evidence.Quote
@@ -134,12 +135,12 @@ object ReviewLedger:
     def reviewer: Reviewer = finding.reviewer
 
     /** Deferred by `run`'s final pass: not part of that run's verdict. */
-    def deferredIn(run: com.histmersion.domain.automation.Run.Id): Boolean = open && deferred.contains(run)
+    def deferredIn(run: Run.Id): Boolean = open && deferred.contains(run)
 
   object Entry:
 
-    export com.histmersion.domain.automation.Run.Id as Run
-    export com.histmersion.domain.ReviewArticle.Merged.Round
+    export automation.Run.Id as Run
+    export ReviewArticle.Merged.Round
     type Claimed = Claimed.T
     object Claimed extends Newtype[Boolean, Pure]
     type NotFixed = NotFixed.T
@@ -148,15 +149,15 @@ object ReviewLedger:
     object Reopened extends Newtype[Int, Pure]
     type NotFixedCount = NotFixedCount.T
     object NotFixedCount extends Newtype[Int, Pure]
-    export com.histmersion.domain.automation.Run.Id as Deferred
+    export automation.Run.Id as Deferred
 
   final case class Lesson(text: Lesson.Text, source: LessonSource, run: Lesson.Run, round: Lesson.Round)
       derives JsonCodec
 
   object Lesson:
     export ReviewArticle.Recheck.Lessons as Text
-    export com.histmersion.domain.automation.Run.Id as Run
-    export com.histmersion.domain.ReviewArticle.Merged.Round
+    export automation.Run.Id as Run
+    export ReviewArticle.Merged.Round
 
   /** `task`: the article's one backlog item (#934), while it has one. */
   final case class Ledger(
@@ -175,8 +176,8 @@ object ReviewLedger:
 
   object Ledger:
 
-    type Slug = com.histmersion.domain.research.Slug
-    val Slug: com.histmersion.domain.research.Slug.type = com.histmersion.domain.research.Slug
+    type Slug = research.Slug
+    val Slug: research.Slug.type = research.Slug
     type Task = Task.T
     object Task extends Newtype[Int, Pure]
 
@@ -238,7 +239,7 @@ object ReviewLedger:
   def absorb(
       l: Ledger,
       fs: List[Finding],
-      run: com.histmersion.domain.automation.Run.Id,
+      run: Run.Id,
       round: Closure.Round
   ): (Ledger, List[Finding]) =
     @tailrec def absorbAll(
@@ -507,7 +508,7 @@ object ReviewLedger:
       explainBack: Option[ReviewArticle.ColdReaderAnswer.ExplainBack] = None,
       emptySlots: List[ReviewArticle.ColdReaderAnswer.EmptySlots] = Nil,
       proposals: List[AgentProposals.Proposal] = Nil,
-      run: Option[com.histmersion.domain.automation.Run.Id] = None
+      run: Option[Run.Id] = None
   ): Merged =
     val fs = l.open
       .map(_.finding)
@@ -668,7 +669,7 @@ object ReviewLedger:
   def deferFinal(
       before: Ledger,
       after: Ledger,
-      run: com.histmersion.domain.automation.Run.Id,
+      run: Run.Id,
       regression: Finding => Boolean
   ): (Ledger, List[Finding.Id]) =
     val fresh = after.open
@@ -761,7 +762,7 @@ object ReviewLedger:
   /** The article's one backlog item while a MAJOR is open: how many, and each one's line. */
   def taskText(
       l: Ledger,
-      runId: com.histmersion.domain.automation.Run.Id,
+      runId: Run.Id,
       maxChars: TaskTextLimit = TaskTextLimit(1500)
   ): Option[TaskText] =
     val majors = l.openMajors
@@ -791,5 +792,5 @@ object ReviewLedger:
     "^review-article \\S+: \\d+ open MAJORs?\\b".r.findPrefixOf(t).isDefined
 
   /** The text of the per-finding items earlier runs left for the article (before #934). */
-  def legacyTask(slug: com.histmersion.domain.research.Slug, text: TaskText): Boolean =
+  def legacyTask(slug: research.Slug, text: TaskText): Boolean =
     text.value.startsWith(s"review-article [[$slug]]: MAJOR ")

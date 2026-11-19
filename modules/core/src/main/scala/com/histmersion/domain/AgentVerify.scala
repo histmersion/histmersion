@@ -153,7 +153,7 @@ object AgentVerify:
   /** A model-proposed status, against the enum. Statuses the DB does not know are rejected, never coerced
     * (`SourceStatus.fromString` would quietly turn a typo into `unassessed`).
     */
-  def status(s: com.histmersion.domain.library.Source.Status.Wire): Either[Problem, Source.Status] =
+  def status(s: library.Source.Status.Wire): Either[Problem, Source.Status] =
     Source.Status.values
       .find(_.wire.value == s.value.trim.toLowerCase(java.util.Locale.ROOT))
       .toRight(
@@ -164,7 +164,7 @@ object AgentVerify:
         )
       )
 
-  def confidence(s: com.histmersion.domain.library.Confidence.Wire): Either[Problem, Confidence] =
+  def confidence(s: library.Confidence.Wire): Either[Problem, Confidence] =
     Confidence
       .fromString(Confidence.Wire(s.value.trim))
       .toRight(

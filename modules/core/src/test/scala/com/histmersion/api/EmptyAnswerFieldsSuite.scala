@@ -42,7 +42,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
 
   private val minRatio = AgentVerify.MinRatio(0.9)
   test("probe: an empty title or citekey, and a null year for a record that has one, are problems"):
-    val empty = ProbeAnswer(Citekey("huxley1956_catalogue"), com.histmersion.api.library.Title(""), None)
+    val empty = ProbeAnswer(Citekey("huxley1956_catalogue"), api.library.Title(""), None)
     assertEquals(
       empty.problems(Some(ProbeAnswer.RecordYear(1956))),
       List(
@@ -51,17 +51,17 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
       )
     )
     assertEquals(
-      ProbeAnswer(Citekey(" "), com.histmersion.api.library.Title("A Catalogue"), Some(Year(1956)))
+      ProbeAnswer(Citekey(" "), api.library.Title("A Catalogue"), Some(Year(1956)))
         .problems(Some(ProbeAnswer.RecordYear(1956))),
       List(Problem.Invalid.Missing.here(Problem.Field("citekey")))
     )
     // a record with no year is rightly answered with null
     assertEquals(
-      ProbeAnswer(Citekey("x1900_y"), com.histmersion.api.library.Title("A title"), None).problems(None),
+      ProbeAnswer(Citekey("x1900_y"), api.library.Title("A title"), None).problems(None),
       Nil
     )
     assertEquals(
-      ProbeAnswer(Citekey("huxley1956_catalogue"), com.histmersion.api.library.Title("A Catalogue"), Some(Year(1956)))
+      ProbeAnswer(Citekey("huxley1956_catalogue"), api.library.Title("A Catalogue"), Some(Year(1956)))
         .problems(Some(ProbeAnswer.RecordYear(1956))),
       Nil
     )
@@ -77,8 +77,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
 
   private def classification(
       summary: Classification.Summary = Classification.Summary("Tin by sea."),
-      status: com.histmersion.domain.library.Source.Status.Wire =
-        com.histmersion.domain.library.Source.Status.Wire("current"),
+      status: domain.library.Source.Status.Wire = domain.library.Source.Status.Wire("current"),
       evidence: Classification.StatusEvidence = Classification.StatusEvidence("the text says so")
   ) =
     Classification(summary, Nil, Nil, Nil, None, status, evidence)
@@ -92,7 +91,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     assertEquals(noSummary.left.toOption.map(_.map(_.sentence)), Some(List("the summary is empty")))
     assert(
       checkClassification(
-        classification(status = com.histmersion.domain.library.Source.Status.Wire("")),
+        classification(status = domain.library.Source.Status.Wire("")),
         CheckClassificationMaxAbsYear(50000),
         last = Last(true)
       ).left
@@ -111,7 +110,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     assert(
       checkClassification(
         classification(
-          status = com.histmersion.domain.library.Source.Status.Wire("unassessed"),
+          status = domain.library.Source.Status.Wire("unassessed"),
           evidence = Classification.StatusEvidence("")
         ),
         CheckClassificationMaxAbsYear(50000),
@@ -135,8 +134,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
       claim: FindingProposal.Claim,
       quote: AgentProposals.Proposal.Quote =
         AgentProposals.Proposal.Quote("The Uluburun ship carried ten tons of copper and one ton of tin."),
-      confidence: com.histmersion.domain.library.Confidence.Wire =
-        com.histmersion.domain.library.Confidence.Wire("high")
+      confidence: domain.library.Confidence.Wire = domain.library.Confidence.Wire("high")
   ) = FindingProposal(claim, quote, None, None, None, None, None, Nil, confidence)
 
   test("findings: an empty claim, quote or confidence fails, naming the finding"):
@@ -158,7 +156,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     )
     assert(
       problems(
-        proposal(FindingProposal.Claim("Tin by sea."), confidence = com.histmersion.domain.library.Confidence.Wire(""))
+        proposal(FindingProposal.Claim("Tin by sea."), confidence = domain.library.Confidence.Wire(""))
       ).head.sentence.contains("unknown confidence")
     )
 
@@ -179,7 +177,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     def problems(c: ClaimAnswer) =
       checkExtract(
         ExtractAnswer(ExtractAnswer.Relevant(true), Coverage.Rationale("tin"), List(c)),
-        com.histmersion.domain.library.Citekey("ck"),
+        domain.library.Citekey("ck"),
         record,
         minRatio,
         MaxClaims(10),
@@ -188,7 +186,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     val quote = AgentProposals.Proposal.Quote("The Uluburun ship carried ten tons of copper and one ton of tin.")
     assertEquals(
       problems(
-        ClaimAnswer(ClaimAnswer.Claim(""), quote, None, None, com.histmersion.domain.library.Confidence.Wire("high"))
+        ClaimAnswer(ClaimAnswer.Claim(""), quote, None, None, domain.library.Confidence.Wire("high"))
       ).map(_.sentence),
       List("claim 1 (): no claim")
     )
@@ -199,19 +197,19 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
           AgentProposals.Proposal.Quote(""),
           None,
           None,
-          com.histmersion.domain.library.Confidence.Wire("high")
+          domain.library.Confidence.Wire("high")
         )
       ).head.sentence.endsWith("no quote")
     )
     assert(
       problems(
-        ClaimAnswer(ClaimAnswer.Claim("Tin."), quote, None, None, com.histmersion.domain.library.Confidence.Wire(""))
+        ClaimAnswer(ClaimAnswer.Claim("Tin."), quote, None, None, domain.library.Confidence.Wire(""))
       ).head.sentence.contains("unknown confidence")
     )
     assertEquals(
       checkExtract(
         ExtractAnswer(ExtractAnswer.Relevant(false), Coverage.Rationale(""), Nil),
-        com.histmersion.domain.library.Citekey("ck"),
+        domain.library.Citekey("ck"),
         record,
         minRatio,
         MaxClaims(10),
@@ -222,7 +220,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
 
   private val facts = List(
     SourceFact(
-      com.histmersion.domain.library.Citekey("a2019_tin"),
+      domain.library.Citekey("a2019_tin"),
       Title("Tin"),
       Some(com.histmersion.Year(2019)),
       Source.Status.Current
@@ -234,10 +232,10 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     facts,
     List(
       Extracted(
-        com.histmersion.domain.library.Citekey("a2019_tin"),
+        domain.library.Citekey("a2019_tin"),
         List(
           Claim(
-            com.histmersion.domain.library.Citekey("a2019_tin"),
+            domain.library.Citekey("a2019_tin"),
             ClaimAnswer.Claim("c"),
             AgentProposals.Proposal.Quote("q"),
             None,
@@ -252,7 +250,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     Nil
   )
   private val corpus = Corpus(
-    Set(com.histmersion.domain.library.Citekey("a2019_tin")),
+    Set(domain.library.Citekey("a2019_tin")),
     _.value == "a2019_tin",
     _ => Some(Source.Status.Current)
   )
@@ -405,7 +403,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
         AgentProposals.ProposalAnswer(
           AgentProposals.ProposalAnswer.Kind("status"),
           AgentProposals.ProposalAnswer.Citekey("a2019_tin"),
-          Some(com.histmersion.domain.library.Source.Status.Wire("contested")),
+          Some(domain.library.Source.Status.Wire("contested")),
           None,
           None,
           AgentProposals.ProposalAnswer.Evidence(""),
@@ -674,7 +672,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     val caps = Caps(Caps.SubGoals(3), Caps.Queries(3), Caps.Works(3), Caps.QueryChars(80))
     def problems(a: PlanAnswer) = check(
       a,
-      com.histmersion.domain.automation.Goal.Slug("g"),
+      domain.automation.Goal.Slug("g"),
       _ => false,
       Set.empty,
       caps,
@@ -718,7 +716,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     val offered = List(
       Candidate(
         Doi("10.1000/a"),
-        com.histmersion.api.library.Title("A"),
+        api.library.Title("A"),
         Some(Year(2020)),
         Nil,
         None,

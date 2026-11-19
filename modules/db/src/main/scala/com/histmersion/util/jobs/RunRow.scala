@@ -34,13 +34,13 @@ object RunRow:
   object Status extends Newtype[String, Pure]
   type Pipeline = Pipeline.T
   object Pipeline extends Newtype[String, Pure]
-  export com.histmersion.domain.automation.Pipeline.Version as PipelineVersion
+  export domain.automation.Pipeline.Version as PipelineVersion
   type TargetKind = TargetKind.T
   object TargetKind extends Newtype[String, Pure]
   type Target = Target.T
   object Target extends Newtype[String, Pure]
-  type Citekey = com.histmersion.domain.library.Citekey
-  val Citekey: com.histmersion.domain.library.Citekey.type = com.histmersion.domain.library.Citekey
+  type Citekey = domain.library.Citekey
+  val Citekey: domain.library.Citekey.type = domain.library.Citekey
   type Model = Model.T
   object Model extends Newtype[String, Pure]
   export JobRepo.TokenBudget as BudgetTokens

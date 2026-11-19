@@ -36,10 +36,10 @@ class AcquisitionSweepRulesSuite extends munit.FunSuite:
         isRetracted = WorkRef.IsRetracted(true)
       )
     )
-    val (cs, skipped) = candidates(found, queued = Set(com.histmersion.domain.library.Doi("10.1000/c")), max = Limit(1))
+    val (cs, skipped) = candidates(found, queued = Set(domain.library.Doi("10.1000/c")), max = Limit(1))
     assertEquals(
       cs.map(c => (c.doi, c.query)),
-      List((com.histmersion.domain.library.Doi("10.1000/a"), Candidate.Query("q1")))
+      List((domain.library.Doi("10.1000/a"), Candidate.Query("q1")))
     )
     assertEquals(
       skipped.map((k, v) => k.said -> v),
@@ -48,7 +48,7 @@ class AcquisitionSweepRulesSuite extends munit.FunSuite:
 
   test("a ranking may only pick listed candidates"):
     val c = Candidate(
-      com.histmersion.domain.library.Doi("10.1000/a"),
+      domain.library.Doi("10.1000/a"),
       Title("A"),
       Some(Year(2020)),
       Nil,

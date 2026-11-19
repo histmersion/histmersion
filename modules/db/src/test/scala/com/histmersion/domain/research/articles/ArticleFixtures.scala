@@ -43,7 +43,7 @@ object ArticleFixtures:
       ds: DataSource,
       filter: Filter,
       scope: PlaceScope,
-      kind: Option[com.histmersion.domain.research.Article.Kind],
+      kind: Option[domain.research.Article.Kind],
       text: Option[Search.Query],
       limit: ArticleRepo.Limit,
       offset: Offset
@@ -67,7 +67,7 @@ object ArticleFixtures:
   def where(
       filter: Filter,
       scope: PlaceScope,
-      kind: Option[com.histmersion.domain.research.Article.Kind],
+      kind: Option[domain.research.Article.Kind],
       text: Option[Search.Query]
   ): Frag =
     ArticleRepo.listWhere(filter, scope, kind, text)

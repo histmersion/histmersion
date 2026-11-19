@@ -82,7 +82,7 @@ class PlaceholderPointSuite extends DbSuite with Bounded:
           Place(
             Place.Id(Hellas),
             Place.Label("Zzph Hellas"),
-            Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region),
+            Place.KindValue(domain.catalogue.Place.Kind.Region),
             box(150, -44, 154, -40)
           )
         ),
@@ -90,7 +90,7 @@ class PlaceholderPointSuite extends DbSuite with Bounded:
           Place(
             Place.Id(Balkans),
             Place.Label("Zzph Balkans"),
-            Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region),
+            Place.KindValue(domain.catalogue.Place.Kind.Region),
             box(149, -46, 156, -39)
           )
         ),
@@ -98,7 +98,7 @@ class PlaceholderPointSuite extends DbSuite with Bounded:
           Place(
             Place.Id(Pelop),
             Place.Label("Zzph Peloponnesos"),
-            Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Polity),
+            Place.KindValue(domain.catalogue.Place.Kind.Polity),
             box(151.0, -43.5, 152.8, -42.2)
           )
         ),
@@ -106,7 +106,7 @@ class PlaceholderPointSuite extends DbSuite with Bounded:
           Place(
             Place.Id(Mykenai),
             Place.Label("Zzph Mykenai Realm"),
-            Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Polity),
+            Place.KindValue(domain.catalogue.Place.Kind.Polity),
             box(150, -44, 152, -41),
             Some(Period(Year(-1600), Year(-1100)))
           )
@@ -115,7 +115,7 @@ class PlaceholderPointSuite extends DbSuite with Bounded:
           Place(
             Place.Id(Tegea),
             Place.Label("Zzph Tegea"),
-            Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+            Place.KindValue(domain.catalogue.Place.Kind.Site),
             pt(152.52, -42.53)
           )
         ),
@@ -123,7 +123,7 @@ class PlaceholderPointSuite extends DbSuite with Bounded:
           Place(
             Place.Id(Mantinea),
             Place.Label("Zzph Mantinea"),
-            Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+            Place.KindValue(domain.catalogue.Place.Kind.Site),
             pt(152.45, -42.45)
           )
         )
@@ -137,7 +137,7 @@ class PlaceholderPointSuite extends DbSuite with Bounded:
           Place(
             Place.Id(NearRep),
             Place.Label("Zzph Nearrep"),
-            Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+            Place.KindValue(domain.catalogue.Place.Kind.Site),
             pt(r.lon.value + 0.02, r.lat.value + 0.01)
           )
         )
@@ -159,8 +159,8 @@ class PlaceholderPointSuite extends DbSuite with Bounded:
       ds,
       Source(
         citekey = Citekey("zzph_src"),
-        title = com.histmersion.api.library.Title("Placeholder fixture"),
-        authors = (List("T")).map(com.histmersion.api.library.AuthorName.apply),
+        title = api.library.Title("Placeholder fixture"),
+        authors = (List("T")).map(api.library.AuthorName.apply),
         doi = None,
         year = (Some(2026)).map(Year.apply),
         venue = None,
@@ -226,13 +226,13 @@ class PlaceholderPointSuite extends DbSuite with Bounded:
     transact(ds):
       val _ = PlaceFixtures.materialisePlacesIn(
         List(
-          com.histmersion.domain.catalogue.Place.Id("zzph_hellas"),
-          com.histmersion.domain.catalogue.Place.Id("zzph_balkans"),
-          com.histmersion.domain.catalogue.Place.Id("zzph_pelop"),
-          com.histmersion.domain.catalogue.Place.Id("zzph_mykenai"),
-          com.histmersion.domain.catalogue.Place.Id("zzph_tegea"),
-          com.histmersion.domain.catalogue.Place.Id("zzph_mantinea"),
-          com.histmersion.domain.catalogue.Place.Id("zzph_nearrep")
+          domain.catalogue.Place.Id("zzph_hellas"),
+          domain.catalogue.Place.Id("zzph_balkans"),
+          domain.catalogue.Place.Id("zzph_pelop"),
+          domain.catalogue.Place.Id("zzph_mykenai"),
+          domain.catalogue.Place.Id("zzph_tegea"),
+          domain.catalogue.Place.Id("zzph_mantinea"),
+          domain.catalogue.Place.Id("zzph_nearrep")
         ),
         tol
       )
@@ -259,7 +259,7 @@ class PlaceholderPointSuite extends DbSuite with Bounded:
           Place(
             Place.Id("zzph_tribe"),
             Place.Label("Zzph Tribe"),
-            Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.People),
+            Place.KindValue(domain.catalogue.Place.Kind.People),
             pt(153.31, -41.17)
           ),
           List(Place.Name(Place.Name.Value("Zzph Tribe")))

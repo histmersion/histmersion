@@ -75,7 +75,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
       ReviewArticle.Finding.Fix("cite it"),
       pair = pair.flatMap(CritiqueRef.parse(_).toOption)
     )
-  private def edgeProposal(src: com.histmersion.domain.library.Citekey, dst: com.histmersion.domain.library.Citekey) =
+  private def edgeProposal(src: domain.library.Citekey, dst: domain.library.Citekey) =
     Proposal(
       ApprovalKind.Edge,
       src,
@@ -144,8 +144,8 @@ class ReviewCritiqueSuite extends munit.FunSuite:
     val f = mc(Finding.Id("S1"), Some(CritiqueRef.Wire("new2020_critic>frazer1922_golden")))
     val proposed = List(
       edgeProposal(
-        com.histmersion.domain.library.Citekey("frazer1922_golden"),
-        com.histmersion.domain.library.Citekey("new2020_critic")
+        domain.library.Citekey("frazer1922_golden"),
+        domain.library.Citekey("new2020_critic")
       )
     ) // either direction
     List(pass1, confirm, recheck).foreach { rule =>

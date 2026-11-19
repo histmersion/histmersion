@@ -37,11 +37,11 @@ final private[articles] case class ArticleSummaryRow(
     )
 
 object ArticleSummaryRow:
-  type Slug = com.histmersion.domain.research.Slug
-  val Slug: com.histmersion.domain.research.Slug.type = com.histmersion.domain.research.Slug
-  type Title = com.histmersion.domain.Title
-  val Title: com.histmersion.domain.Title.type = com.histmersion.domain.Title
-  export com.histmersion.domain.research.Article.Kind
+  type Slug = domain.research.Slug
+  val Slug: domain.research.Slug.type = domain.research.Slug
+  type Title = domain.Title
+  val Title: domain.Title.type = domain.Title
+  export domain.research.Article.Kind
   type Summary = Summary.T
   object Summary extends Newtype[String, Pure]
   type Tags = Tags.T

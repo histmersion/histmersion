@@ -32,8 +32,8 @@ class AggregateRepoSuite extends DbSuite:
   /** A source dated −1300…−1200 with one Anatolian finding at −1250 (the §1.7 acceptance shape). */
   private val dated = Source(
     citekey = Citekey("zz_agg_dated"),
-    title = com.histmersion.api.library.Title("Dated"),
-    authors = (List("A")).map(com.histmersion.api.library.AuthorName.apply),
+    title = api.library.Title("Dated"),
+    authors = (List("A")).map(api.library.AuthorName.apply),
     doi = None,
     year = (Some(2020)).map(Year.apply),
     venue = None,
@@ -65,8 +65,8 @@ class AggregateRepoSuite extends DbSuite:
   /** No source-level period, but a dated finding → the finding envelope stands in for it. */
   private val undatedSourceDatedFinding = Source(
     citekey = Citekey("zz_agg_findingonly"),
-    title = com.histmersion.api.library.Title("Finding only"),
-    authors = (Nil).map(com.histmersion.api.library.AuthorName.apply),
+    title = api.library.Title("Finding only"),
+    authors = (Nil).map(api.library.AuthorName.apply),
     doi = None,
     year = None,
     venue = None,
@@ -98,8 +98,8 @@ class AggregateRepoSuite extends DbSuite:
   /** Nothing dated at all → must never appear in the histogram (plan §1.7). */
   private val undated = Source(
     citekey = Citekey("zz_agg_undated"),
-    title = com.histmersion.api.library.Title("Undated"),
-    authors = (Nil).map(com.histmersion.api.library.AuthorName.apply),
+    title = api.library.Title("Undated"),
+    authors = (Nil).map(api.library.AuthorName.apply),
     doi = None,
     year = None,
     venue = None,
@@ -119,8 +119,8 @@ class AggregateRepoSuite extends DbSuite:
   /** Tagged, in its own century, so a `tag=` filter can be shown to narrow the histogram. */
   private val tagged = Source(
     citekey = Citekey("zz_agg_tagged"),
-    title = com.histmersion.api.library.Title("Tagged"),
-    authors = (Nil).map(com.histmersion.api.library.AuthorName.apply),
+    title = api.library.Title("Tagged"),
+    authors = (Nil).map(api.library.AuthorName.apply),
     doi = None,
     year = None,
     venue = None,

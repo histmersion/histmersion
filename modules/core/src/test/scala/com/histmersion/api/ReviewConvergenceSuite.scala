@@ -303,7 +303,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
   )
   private def together(b: ReviewArticle.Fix.Body, r: CritiqueRef) =
     Critiques.together(b, r, t => Some(Citekey(t.value)))
-  private def cites(b: ReviewArticle.Fix.Body, ck: com.histmersion.domain.library.Citekey) =
+  private def cites(b: ReviewArticle.Fix.Body, ck: domain.library.Citekey) =
     AgentVerify.wikilinks(AgentVerify.Text(b.value)).exists(_.value == ck.value)
 
   test("guard: a closed pair split apart, a fixed text written back, a citation the fix rests on dropped"):
@@ -358,7 +358,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
   )
 
   private val keys = Set("knapp2016_tin", "zz2024_iso", "zz2015_kull", "zz2011_west", "zz2020_new", "zz2021_crit")
-  private val isKey = (ck: com.histmersion.domain.library.Citekey) => keys(ck.value)
+  private val isKey = (ck: domain.library.Citekey) => keys(ck.value)
   private val isTarget = (s: Slug) => keys(s.value)
   private val corpus = BodyCorpus(isKey, isTarget, _ => Nil)
   private val edges = List(

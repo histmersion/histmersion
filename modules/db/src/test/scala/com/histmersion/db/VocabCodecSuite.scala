@@ -39,9 +39,9 @@ class VocabCodecSuite extends DbSuite:
     SourceFixtures.put(
       ds,
       Source(
-        citekey = com.histmersion.api.library.Citekey(ck.value),
-        title = com.histmersion.api.library.Title("Vocab"),
-        authors = (Nil).map(com.histmersion.api.library.AuthorName.apply),
+        citekey = api.library.Citekey(ck.value),
+        title = api.library.Title("Vocab"),
+        authors = (Nil).map(api.library.AuthorName.apply),
         doi = None,
         year = (Some(2020)).map(Year.apply),
         venue = None,
@@ -59,7 +59,7 @@ class VocabCodecSuite extends DbSuite:
         findings = List(
           Finding(
             Finding.Id(s"$ck#0"),
-            com.histmersion.api.library.Citekey(ck.value),
+            api.library.Citekey(ck.value),
             Finding.Claim("stated low"),
             None,
             None,
@@ -70,7 +70,7 @@ class VocabCodecSuite extends DbSuite:
           ),
           Finding(
             Finding.Id(s"$ck#1"),
-            com.histmersion.api.library.Citekey(ck.value),
+            api.library.Citekey(ck.value),
             Finding.Claim("garbled"),
             None,
             None,
@@ -81,7 +81,7 @@ class VocabCodecSuite extends DbSuite:
           ),
           Finding(
             Finding.Id(s"$ck#2"),
-            com.histmersion.api.library.Citekey(ck.value),
+            api.library.Citekey(ck.value),
             Finding.Claim("not stated"),
             None,
             None,

@@ -32,9 +32,9 @@ class ProvenanceRepoSuite extends DbSuite:
   private val Prefix = "zzprov"
 
   private def source(ck: Citekey, provenance: Option[Source.Provenance]) = Source(
-    citekey = com.histmersion.api.library.Citekey(ck.value),
-    title = com.histmersion.api.library.Title(s"Title $ck"),
-    authors = (List("A")).map(com.histmersion.api.library.AuthorName.apply),
+    citekey = api.library.Citekey(ck.value),
+    title = api.library.Title(s"Title $ck"),
+    authors = (List("A")).map(api.library.AuthorName.apply),
     doi = None,
     year = (Some(2020)).map(Year.apply),
     venue = None,

@@ -33,9 +33,9 @@ class BrowserDownloadSuite extends munit.FunSuite:
   private val ck = Citekey.parse("greener2019_archaeology").toOption.get
   private val mdpi = WorkRef(
     doi = (Some("10.3390/REL10040258")).map(Doi.apply),
-    title = (Some("Archaeology and the Bible")).map(com.histmersion.api.library.Title.apply),
+    title = (Some("Archaeology and the Bible")).map(api.library.Title.apply),
     year = (Some(2019)).map(Year.apply),
-    authors = (List("Greener", "Smith")).map(com.histmersion.api.library.AuthorName.apply),
+    authors = (List("Greener", "Smith")).map(api.library.AuthorName.apply),
     isOa = WorkRef.IsOa(true),
     oaStatus = Some(WorkRef.OaStatus("gold")),
     oaUrl = Some(WorkRef.OaUrl("https://www.mdpi.com/2077-1444/10/4/258/pdf")),
@@ -58,7 +58,7 @@ class BrowserDownloadSuite extends munit.FunSuite:
     )
     assertEquals(
       Scheduling.dois(b.text.value),
-      Set(com.histmersion.domain.library.Doi("10.3390/rel10040258")),
+      Set(library.Doi("10.3390/rel10040258")),
       "the DOI the acquisition list finds it by"
     )
 
@@ -114,7 +114,7 @@ class BrowserDownloadSuite extends munit.FunSuite:
   test("a refusing host found among later locations; the index's oa_url alone is enough"):
     val sup = WorkRef(
       doi = (Some("10.16993/bbk")).map(Doi.apply),
-      title = (Some("Book")).map(com.histmersion.api.library.Title.apply),
+      title = (Some("Book")).map(api.library.Title.apply),
       oaStatus = Some(WorkRef.OaStatus("gold")),
       oaLocations = List(
         WorkRef.OaLocations("https://doi.org/10.16993/bbk"),
@@ -127,7 +127,7 @@ class BrowserDownloadSuite extends munit.FunSuite:
     )
     val dg = WorkRef(
       doi = (Some("10.1515/zzz-2020-0001")).map(Doi.apply),
-      title = (Some("Article")).map(com.histmersion.api.library.Title.apply),
+      title = (Some("Article")).map(api.library.Title.apply),
       oaStatus = Some(WorkRef.OaStatus("gold")),
       oaUrl = Some(WorkRef.OaUrl("https://www.degruyter.com/document/doi/10.1515/zzz-2020-0001/pdf"))
     )

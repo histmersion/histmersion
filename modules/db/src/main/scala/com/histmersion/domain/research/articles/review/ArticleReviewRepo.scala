@@ -34,8 +34,8 @@ private[review] object ArticleReviewRepo:
   ) derives DbCodec
 
   object FactsRow:
-    type Slug = com.histmersion.domain.research.Slug
-    val Slug: com.histmersion.domain.research.Slug.type = com.histmersion.domain.research.Slug
+    type Slug = domain.research.Slug
+    val Slug: domain.research.Slug.type = domain.research.Slug
     type UpdatedAt = UpdatedAt.T
     object UpdatedAt extends Newtype[String, Pure]
 
@@ -43,8 +43,8 @@ private[review] object ArticleReviewRepo:
       derives DbCodec
 
   object ApprovalRow:
-    type Subject = com.histmersion.domain.research.Slug
-    val Subject: com.histmersion.domain.research.Slug.type = com.histmersion.domain.research.Slug
+    type Subject = domain.research.Slug
+    val Subject: domain.research.Slug.type = domain.research.Slug
     export ManagerPolicy.ApprovalId as Id
     type Kind = Kind.T
     object Kind extends Newtype[String, Pure]
@@ -53,8 +53,8 @@ private[review] object ArticleReviewRepo:
 
   object GoalRow:
     export Goal.Slug
-    type Title = com.histmersion.domain.Title
-    val Title: com.histmersion.domain.Title.type = com.histmersion.domain.Title
+    type Title = domain.Title
+    val Title: domain.Title.type = domain.Title
     export Goal.Status.Wire as Status
 
   /** The approval kinds that leave an article waiting for a person. */
@@ -67,8 +67,8 @@ private[review] object ArticleReviewRepo:
     * ledgers know nothing of maps to empty facts.
     */
   def facts(
-      slugs: List[com.histmersion.domain.research.Slug]
-  )(using DbCon): Map[com.histmersion.domain.research.Slug, (Facts, Option[FactsRow.UpdatedAt])] =
+      slugs: List[domain.research.Slug]
+  )(using DbCon): Map[domain.research.Slug, (Facts, Option[FactsRow.UpdatedAt])] =
     if slugs.isEmpty then Map.empty
     else
       val rows = sql"""
@@ -114,8 +114,8 @@ private[review] object ArticleReviewRepo:
       }.toMap
 
   private def approvals(
-      slugs: List[com.histmersion.domain.research.Slug]
-  )(using DbCon): Map[com.histmersion.domain.research.Slug, List[ReviewApproval]] =
+      slugs: List[domain.research.Slug]
+  )(using DbCon): Map[domain.research.Slug, List[ReviewApproval]] =
     sql"""SELECT subject, id, kind FROM approvals
           WHERE state = 'open' AND kind = ANY($WaitingKinds::text[]) AND subject = ANY(${slugs.distinct}::text[])
           ORDER BY id"""
@@ -136,7 +136,7 @@ private[review] object ArticleReviewRepo:
         .toMap
 
   /** The research goals that link the article (`goal_links` of kind `article`), by slug. */
-  def goals(slug: com.histmersion.domain.research.Slug)(using DbCon): List[ReviewGoal] =
+  def goals(slug: domain.research.Slug)(using DbCon): List[ReviewGoal] =
     sql"""SELECT g.slug, g.title, g.status FROM goal_links l JOIN goals g ON g.slug = l.goal_slug
             WHERE l.kind = 'article' AND l.ref = $slug ORDER BY g.slug"""
       .query[GoalRow]
