@@ -167,9 +167,9 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
       h.goals
         .put(
           goal,
-          com.histmersion.api.automation.Goal.Put(
-            com.histmersion.api.automation.Goal.Title(s"Zz $goal"),
-            notes = Some(com.histmersion.api.automation.Goal.Notes("where the tin came from"))
+          api.automation.Goal.Put(
+            api.automation.Goal.Title(s"Zz $goal"),
+            notes = Some(api.automation.Goal.Notes("where the tin came from"))
           )
         )
         .isRight
@@ -180,9 +180,9 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
   private def work(n: String, oa: WorkRef.IsOa = WorkRef.IsOa(true)) =
     WorkRef(
       doi = (Some(doi(n))).map(Doi.apply),
-      title = (Some(s"Work $n")).map(com.histmersion.api.library.Title.apply),
+      title = (Some(s"Work $n")).map(api.library.Title.apply),
       year = (Some(2023)).map(Year.apply),
-      authors = (List("Zz")).map(com.histmersion.api.library.AuthorName.apply),
+      authors = (List("Zz")).map(api.library.AuthorName.apply),
       isOa = oa
     )
   private def picks(ns: Seq[String]) =
@@ -198,7 +198,7 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
           .put(
             ck,
             Source.Put(
-              title = com.histmersion.api.library.Title(s"Ingested $d"),
+              title = api.library.Title(s"Ingested $d"),
               year = (Some(2023)).map(Year.apply),
               doi = (Some(d)).map(Doi.apply)
             )
@@ -207,9 +207,9 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
       )
       Right(
         Ingest.Report(
-          com.histmersion.api.library.Citekey(ck.value),
+          api.library.Citekey(ck.value),
           Some(Doi(d)),
-          Some(com.histmersion.api.library.Title(s"Ingested $d")),
+          Some(api.library.Title(s"Ingested $d")),
           created = Ingest.Report.Created(true),
           Some(
             PdfInfo(
@@ -236,7 +236,7 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
       .create(
         ManagerCreate(
           ManagerCreate.Kind("watch"),
-          Some(com.histmersion.api.automation.Goal.Slug(goal.value)),
+          Some(api.automation.Goal.Slug(goal.value)),
           ManagerConfig(
             sweeps = Some(List(Sweep.Wire("acquisition"))),
             autoIngest = Some(auto),
@@ -474,12 +474,8 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
     up.onIngest = legalIngest(h)
     val w1 = watcher(a, Goal, perDay = ManagerConfig.AutoIngestPerDay(5))
     val w2 = watcher(a, Goal2, perDay = ManagerConfig.AutoIngestPerDay(5))
-    (1 to 3).foreach(i =>
-      a.oaBacklog.add(w1.id, Goal, OaWork(Doi(doi(s"a$i")), com.histmersion.api.library.Title(s"A$i")))
-    )
-    (1 to 3).foreach(i =>
-      a.oaBacklog.add(w2.id, Goal2, OaWork(Doi(doi(s"b$i")), com.histmersion.api.library.Title(s"B$i")))
-    )
+    (1 to 3).foreach(i => a.oaBacklog.add(w1.id, Goal, OaWork(Doi(doi(s"a$i")), api.library.Title(s"A$i"))))
+    (1 to 3).foreach(i => a.oaBacklog.add(w2.id, Goal2, OaWork(Doi(doi(s"b$i")), api.library.Title(s"B$i"))))
     connect(ds)(sql"UPDATE agent_autopilot SET enabled = true, last_ensure_at = now()".update.run())
     val now = Instant.now()
     a.managers.tick(now)
@@ -539,7 +535,7 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
         .put(
           Citekey("zzagent2023_c"),
           Source.Put(
-            title = com.histmersion.api.library.Title("C"),
+            title = api.library.Title("C"),
             year = (Some(2023)).map(Year.apply),
             doi = (Some(doi("c"))).map(Doi.apply)
           )
@@ -607,7 +603,7 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
   test("the backlog in the repair's and the switch's answers; an entry steered by its DOI like any item"):
     val (a, h, _) = handlers(ScriptedClient(Model)); seed(a, h)
     val m = watcher(a, Goal, perDay = ManagerConfig.AutoIngestPerDay(5))
-    a.oaBacklog.add(m.id, Goal, OaWork(Doi(doi("q")), com.histmersion.api.library.Title("Q")))
+    a.oaBacklog.add(m.id, Goal, OaWork(Doi(doi("q")), api.library.Title("Q")))
     assertEquals(a.oaBacklog.repair(RepairRequest(dryRun = RepairRequest.DryRun(true))).backlog, 1)
     val on = a.managing
       .setAutopilot(AutopilotSet(on = AutopilotSet.On(true), Some(AutopilotSet.By("test"))))

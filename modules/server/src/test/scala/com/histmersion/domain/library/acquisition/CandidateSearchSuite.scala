@@ -53,7 +53,7 @@ class CandidateSearchSuite extends DbSuite:
     val b = AppConfig.load(); b.modify(_.db).setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
   }
   private lazy val ds = { val d = testPool(cfg.db); Migrate.run(d); d }
-  private val Goal = com.histmersion.domain.automation.Goal.Slug("zzcand-goal")
+  private val Goal = domain.automation.Goal.Slug("zzcand-goal")
 
   /** An index answering `hits` for every query, recording the `since` it was asked. */
   final private class FakeIndex(val name: ScholarlyIndex.Name, hits: => Either[Problem, List[WorkRef]])
@@ -63,10 +63,10 @@ class CandidateSearchSuite extends DbSuite:
 
   final private class FakeAlerts extends CitationAlerts:
     val asked = ConcurrentLinkedQueue[String]()
-    def citing(doi: com.histmersion.domain.library.Doi, since: LocalDate, limit: CitationAlerts.CitingLimit) = {
+    def citing(doi: domain.library.Doi, since: LocalDate, limit: CitationAlerts.CitingLimit) = {
       asked.add(s"citing $doi"); Right(List(work(Doi("10.5555/zzcand.citing"))))
     }
-    def authors(doi: com.histmersion.domain.library.Doi) = Right(
+    def authors(doi: domain.library.Doi) = Right(
       List(AuthorName("A1"), AuthorName("A2"), AuthorName("A3"))
     )
     def byAuthor(authorId: CitationAlerts.ByAuthorAuthorId, since: LocalDate, limit: CitationAlerts.ByAuthorLimit) = {
@@ -86,9 +86,9 @@ class CandidateSearchSuite extends DbSuite:
       transact(ds)(
         GoalRepo.put(
           Goal,
-          com.histmersion.api.automation.Goal.Put(
-            com.histmersion.api.automation.Goal.Title("Bronze Age collapse"),
-            status = com.histmersion.api.automation.Goal.StatusValue("seeding")
+          api.automation.Goal.Put(
+            api.automation.Goal.Title("Bronze Age collapse"),
+            status = api.automation.Goal.StatusValue("seeding")
           )
         )
       ).isRight
@@ -98,7 +98,7 @@ class CandidateSearchSuite extends DbSuite:
         GoalLinkRepo.link(
           Goal,
           LinkKind.Query,
-          com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("bronze age collapse"),
+          api.automation.Goal.Plans.GoalLink.Ref("bronze age collapse"),
           None
         )
       )
@@ -240,7 +240,7 @@ class CandidateSearchSuite extends DbSuite:
     assertEquals(store.mark(ids.take(1), Source.Candidate.State("dismissed")), 1)
     assertEquals(
       store
-        .markDois(Goal, List(com.histmersion.domain.library.Doi("10.5555/zzcand.b")), Source.Candidate.State("queued")),
+        .markDois(Goal, List(domain.library.Doi("10.5555/zzcand.b")), Source.Candidate.State("queued")),
       1
     )
     assertEquals(
@@ -283,7 +283,7 @@ class CandidateSearchSuite extends DbSuite:
         GoalLinkRepo.link(
           Goal,
           LinkKind.Source,
-          com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("zzcand_src"),
+          api.automation.Goal.Plans.GoalLink.Ref("zzcand_src"),
           None
         )
       )
@@ -307,7 +307,7 @@ class CandidateSearchSuite extends DbSuite:
     assert(
       search(Nil, alerts, LocalDate.of(2026, 10, 24))
         .sweep(
-          com.histmersion.domain.automation.Goal.Slug("zzcand-nowhere"),
+          domain.automation.Goal.Slug("zzcand-nowhere"),
           dryRun = CandidateSearch.SweepDryRun(false)
         )
         .isLeft
@@ -320,7 +320,7 @@ class CandidateSearchSuite extends DbSuite:
         GoalLinkRepo.link(
           Goal,
           LinkKind.Query,
-          com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("late bronze age"),
+          api.automation.Goal.Plans.GoalLink.Ref("late bronze age"),
           None
         )
       )
@@ -330,7 +330,7 @@ class CandidateSearchSuite extends DbSuite:
         GoalLinkRepo.link(
           Goal,
           LinkKind.Query,
-          com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("sea peoples"),
+          api.automation.Goal.Plans.GoalLink.Ref("sea peoples"),
           None
         )
       )

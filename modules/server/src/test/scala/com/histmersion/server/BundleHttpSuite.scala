@@ -48,7 +48,7 @@ import com.histmersion.api.exchange.Bundle.uidEquality
   * `POST /api/bundle/import` — the wiring, the write gate, the download name, and an instance importing its own bundle
   * changing nothing. The behaviour in depth is `db.BundleSuite`'s. Skipped without HISTMERSION_TEST_DB_URL.
   */
-class BundleHttpSuite extends DbSuite with com.histmersion.db.Bounded:
+class BundleHttpSuite extends DbSuite with db.Bounded:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 

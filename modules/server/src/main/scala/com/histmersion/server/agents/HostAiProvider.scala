@@ -19,4 +19,4 @@ final case class HostAiProvider(plugin: HostAiProvider.Plugin, kind: ProviderKin
 
 object HostAiProvider:
 
-  export com.histmersion.util.plugins.Plugin.Id as Plugin
+  export util.plugins.Plugin.Id as Plugin

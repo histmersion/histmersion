@@ -180,9 +180,9 @@ class MediaPortalsJobSuite extends DbSuite:
     d
 
   private val Ids = List(
-    com.histmersion.domain.catalogue.Place.Id("zqmp_site"),
-    com.histmersion.domain.catalogue.Place.Id("zqmp_region"),
-    com.histmersion.domain.catalogue.Place.Id("pleiades_99900002")
+    domain.catalogue.Place.Id("zqmp_site"),
+    domain.catalogue.Place.Id("zqmp_region"),
+    domain.catalogue.Place.Id("pleiades_99900002")
   )
   private val IdTexts: List[String] = Ids.map(_.value)
 
@@ -209,7 +209,7 @@ class MediaPortalsJobSuite extends DbSuite:
             Place(
               Place.Id("zqmp_site"),
               Place.Label("Zqmpetra"),
-              Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+              Place.KindValue(domain.catalogue.Place.Kind.Site),
               pt(Longitude(140.0))
             ),
             List(Place.Name(Place.Name.Value("Zqmpetra")))
@@ -218,7 +218,7 @@ class MediaPortalsJobSuite extends DbSuite:
             Place(
               Place.Id("zqmp_region"),
               Place.Label("Zqmpjordan"),
-              Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region),
+              Place.KindValue(domain.catalogue.Place.Kind.Region),
               pt(Longitude(141.0))
             ),
             List(Place.Name(Place.Name.Value("Zqmpjordan")))
@@ -227,7 +227,7 @@ class MediaPortalsJobSuite extends DbSuite:
             Place(
               Place.Id("pleiades_99900002"),
               Place.Label("Zqmp Zygouries"),
-              Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+              Place.KindValue(domain.catalogue.Place.Kind.Site),
               pt(Longitude(142.0))
             ),
             List(Place.Name(Place.Name.Value("Zqmp Zygouries")))
@@ -294,7 +294,7 @@ class MediaPortalsJobSuite extends DbSuite:
       ds,
       MediaItemRow.Provider(MediaProvider.Pleiades),
       places = ImportFixtures.Places(true),
-      Some(com.histmersion.domain.catalogue.Place.Id("zqmp_region")),
+      Some(domain.catalogue.Place.Id("zqmp_region")),
       None,
       ImportFixtures.Limit(1),
       ImportFixtures.Refresh(false),

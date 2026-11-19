@@ -37,7 +37,7 @@ final class SourceProposals(
   def proposedBefore(p: Proposal): Boolean = approvals.proposedBefore(
     p.kind,
     p.citekey,
-    p.status.transformInto[Option[com.histmersion.domain.library.Source.Status]],
+    p.status.transformInto[Option[domain.library.Source.Status]],
     p.edgeKind.transformInto[Option[Edge.Kind]],
     p.target
   )
@@ -63,8 +63,8 @@ final class SourceProposals(
       runId.map(r => Job.Id(r.value)),
       p.kind,
       p.citekey,
-      p.status.transformInto[Option[com.histmersion.domain.library.Source.Status]],
-      now.transformInto[Option[com.histmersion.domain.library.Source.Status]],
+      p.status.transformInto[Option[domain.library.Source.Status]],
+      now.transformInto[Option[domain.library.Source.Status]],
       p.edgeKind.transformInto[Option[Edge.Kind]],
       p.target,
       Jsonb.write(p),
@@ -132,13 +132,13 @@ object SourceProposals:
 
   object Outcome:
     object Applied:
-      export com.histmersion.domain.library.workflows.SourceProposals.OutcomeWhat as What
+      export SourceProposals.OutcomeWhat as What
 
     object Recorded:
-      export com.histmersion.domain.library.workflows.SourceProposals.{ApprovalRecordId as Id, OutcomeWhat as What}
+      export SourceProposals.{ApprovalRecordId as Id, OutcomeWhat as What}
 
     object AlreadyOpen:
-      export com.histmersion.domain.library.workflows.SourceProposals.OutcomeWhat as What
+      export SourceProposals.OutcomeWhat as What
 
     object NotProposed:
-      export com.histmersion.domain.library.workflows.SourceProposals.OutcomeWhat as What
+      export SourceProposals.OutcomeWhat as What

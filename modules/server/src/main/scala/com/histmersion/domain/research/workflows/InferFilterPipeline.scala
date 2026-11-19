@@ -108,7 +108,7 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
       Loaded(
         canonical,
         Title(a.title.value),
-        com.histmersion.domain.research.Article.Kind(a.kind.value),
+        domain.research.Article.Kind(a.kind.value),
         a.summary.map(s => Loaded.Summary(s.value)),
         a.tags.map(t => Loaded.Tags(t.value)),
         stored.flatMap(_.filter).isDefined,
@@ -257,7 +257,7 @@ object InferFilterPipeline:
   final case class Loaded(
       slug: Slug,
       title: Title,
-      kind: com.histmersion.domain.research.Article.Kind,
+      kind: research.Article.Kind,
       summary: Option[Loaded.Summary],
       tags: List[Loaded.Tags],
       hasFilter: Boolean,

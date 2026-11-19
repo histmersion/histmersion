@@ -24,7 +24,7 @@ object AddOptions:
   object Unsigned extends Newtype[Boolean, Pure]
   type Verify = Verify.T
   object Verify extends Newtype[Boolean, Pure]
-  type Sha256 = com.histmersion.api.Sha256
-  val Sha256: com.histmersion.api.Sha256.type = com.histmersion.api.Sha256
+  type Sha256 = api.Sha256
+  val Sha256: api.Sha256.type = api.Sha256
   type Repos = Repos.T
   object Repos extends Newtype[String, Pure]

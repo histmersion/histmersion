@@ -57,7 +57,7 @@ abstract class AttestationServiceContract extends CatalogueStoreSuite:
     val all = a.list(None, None, None, PageSize(10), Offset(0))
     assertEquals(((all.total.value: Int), all.attestations.map(_.id)), (3, List(first.id, second.id, third.id)))
     assertEquals(
-      a.list(Some(com.histmersion.domain.library.Citekey("zzat2020_one")), None, None, PageSize(10), Offset(0))
+      a.list(Some(domain.library.Citekey("zzat2020_one")), None, None, PageSize(10), Offset(0))
         .attestations
         .map(_.id),
       List(first.id, second.id)
@@ -75,7 +75,7 @@ abstract class AttestationServiceContract extends CatalogueStoreSuite:
     )
     assertEquals(
       (a.list(
-        Some(com.histmersion.domain.library.Citekey.assume(" ")),
+        Some(domain.library.Citekey.assume(" ")),
         Some(Attestation.TargetType("")),
         None,
         PageSize(10),

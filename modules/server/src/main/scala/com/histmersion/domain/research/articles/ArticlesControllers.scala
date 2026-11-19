@@ -70,7 +70,7 @@ final class ArticlesControllers(
     filters: SearchFilters,
     ledgers: Slug => Either[Problem, Option[ReviewLedger.Ledger]],
     articleLeads: (ArticleEventLead.Body, List[Citekey], Option[Period]) => List[ArticleEventLead],
-    note: Slug => Either[Api.Error, com.histmersion.domain.research.Article.Note],
+    note: Slug => Either[Api.Error, domain.research.Article.Note],
     current: (AliasKind, AliasTable.Id) => AliasTable.Id,
     cfg: () => AppConfig,
     maintenance: WriteGate
@@ -116,7 +116,7 @@ final class ArticlesControllers(
     * the write goes through.
     */
   private def strictGate(
-      strict: com.histmersion.domain.research.Article.StrictMode,
+      strict: domain.research.Article.StrictMode,
       issues: => List[FormatIssue]
   ): Either[Api.Error, Unit] =
     if !strict.value then Right(())
@@ -179,7 +179,7 @@ final class ArticlesControllers(
     * generated and must not be written into the body.
     */
   def bodyCorpus(
-      texts: List[com.histmersion.domain.research.Article.Body],
+      texts: List[domain.research.Article.Body],
       generated: ReviewArticle.BodyCorpus.Generated = ReviewArticle.BodyCorpus.Generated(false)
   ): ReviewArticle.BodyCorpus =
     val links = pageLinks(
@@ -228,7 +228,7 @@ final class ArticlesControllers(
               ReviewArticle.Snapshot.Kind(kind),
               draft,
               bodyCorpus(
-                texts.map(com.histmersion.domain.research.Article.Body(_)),
+                texts.map(domain.research.Article.Body(_)),
                 ReviewArticle.BodyCorpus.Generated(generated)
               )
             )
@@ -245,7 +245,7 @@ final class ArticlesControllers(
     val list = search.list(
       f,
       scopeOf(f),
-      q.kind.map(k => com.histmersion.domain.research.Article.Kind(k.value)),
+      q.kind.map(k => domain.research.Article.Kind(k.value)),
       q.text.map(t => Search.Query(t.value)),
       ArticleRepo.Limit(f.limit.value),
       Offset.option(f.offset.value).getOrElse(Offset(0))
@@ -545,8 +545,7 @@ final class ArticlesControllers(
   def put(
       slug: Slug,
       in: Article.Put,
-      strict: com.histmersion.domain.research.Article.StrictMode =
-        com.histmersion.domain.research.Article.StrictMode(false)
+      strict: domain.research.Article.StrictMode = domain.research.Article.StrictMode(false)
   ): Either[Api.Error, Article.View] =
     maintenance.guard(WriteGate.OperationName("put_article")):
       // an OLD slug follows the alias: the put replaces the renamed article
@@ -568,8 +567,7 @@ final class ArticlesControllers(
   def patch(
       slug: Slug,
       p: Article.Patch,
-      strict: com.histmersion.domain.research.Article.StrictMode =
-        com.histmersion.domain.research.Article.StrictMode(false)
+      strict: domain.research.Article.StrictMode = domain.research.Article.StrictMode(false)
   ): Either[Api.Error, Article.View] =
     maintenance.guard(WriteGate.OperationName("patch_article")):
       Right(currentSlug(slug))
@@ -586,7 +584,7 @@ final class ArticlesControllers(
                       _ => Right(()),
                       next =>
                         strictGate(
-                          com.histmersion.domain.research.Article.StrictMode(true),
+                          domain.research.Article.StrictMode(true),
                           formatting(next.body, next.summary)
                         )
                     )
@@ -628,14 +626,14 @@ final class ArticlesControllers(
   /** The article as it would live on disk — `wiki/<kind>/<slug>.md`, with its generated coverage sections after the
     * body (between markers an import drops) and its filter and reasons in the frontmatter.
     */
-  def exportNote(slug: Slug): Either[Api.Error, com.histmersion.domain.research.Article.Note] = note(slug)
+  def exportNote(slug: Slug): Either[Api.Error, domain.research.Article.Note] = note(slug)
 
   /** The note of the article an old slug or its own names, as the mirror writes it. */
-  def articleNote(slug: Slug): Either[Api.Error, com.histmersion.domain.research.Article.Note] =
+  def articleNote(slug: Slug): Either[Api.Error, domain.research.Article.Note] =
     store
       .load(currentSlug(slug))
       .map(a =>
-        com.histmersion.domain.research.Article
+        domain.research.Article
           .Note(ArticleNote.render(a, coverageOf(a).map(c => Article.Coverage.exported(c).value)))
       )
       .toRight(notFound(slug))
@@ -705,7 +703,7 @@ final class ArticlesControllers(
                 .map(m => error(m, Write.CodeInvalid))
                 .flatMap(k =>
                   strictGate(
-                    com.histmersion.domain.research.Article.StrictMode(req.strict.value),
+                    domain.research.Article.StrictMode(req.strict.value),
                     formatting(parsed.body, parsed.summary)
                   ).map(_ => k)
                 )

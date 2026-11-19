@@ -85,8 +85,8 @@ class AgentToolCapSuite extends DbSuite:
   override def beforeEach(context: BeforeEach): Unit =
     clean()
     val put = Source.Put(
-      com.histmersion.api.library.Title("How to Kill a Dragon"),
-      authors = (List("Calvert Watkins")).map(com.histmersion.api.library.AuthorName.apply),
+      api.library.Title("How to Kill a Dragon"),
+      authors = (List("Calvert Watkins")).map(api.library.AuthorName.apply),
       year = (Some(1995)).map(Year.apply),
       status = Some(Source.Status.Foundational),
       topics = List(Source.Topics("dragon_slaying_myth"), Source.Topics("pie_religion")),

@@ -199,7 +199,7 @@ final class AgentDoctor(
       models: List[ModelRef],
       online: Boolean
   ): (List[DoctorCheck], List[ProviderDoctor.UpstreamModels]) =
-    val p = com.histmersion.domain.automation.ProviderKind.values
+    val p = domain.automation.ProviderKind.values
       .find(_.wire.value == k.wire.value)
       .flatMap(cfg.provider)
       .getOrElse(throw IllegalStateException(s"${k.wire} has no HTTP config"))

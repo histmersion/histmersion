@@ -169,7 +169,7 @@ final class SearchControllers(
     val rows = search.treeRows(AggregateRepo.Unit(unit), window, scope)
     // the gazetteer slice these rows hang off — one upward closure, not the whole 16 k-place table
     def gaz =
-      places.gazetteer(rows.flatMap(_.placeIds.map(p => com.histmersion.domain.catalogue.Place.Id.assume(p.value))))
+      places.gazetteer(rows.flatMap(_.placeIds.map(p => domain.catalogue.Place.Id.assume(p.value))))
     // `by=region` reads the hierarchy at ONE year: the caller's, else the middle of the window
     val asOf = askedAsOf.orElse(Some(Tree.midpoint(from, to)))
     // LAZY DEEPER LEVELS: `place=<one gazetteer id>` roots the region tree AT that place, so

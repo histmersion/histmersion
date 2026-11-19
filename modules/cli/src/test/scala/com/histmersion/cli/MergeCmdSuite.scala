@@ -13,7 +13,7 @@ import com.histmersion.cli.Cli
   */
 class MergeCmdSuite extends munit.FunSuite:
 
-  private given console: com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard
+  private given console: util.console.Console = util.console.Console.standard
 
   private def parses(args: String*) = Parsing.parses(args*)
 

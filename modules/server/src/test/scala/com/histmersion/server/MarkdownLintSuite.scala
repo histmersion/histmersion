@@ -437,8 +437,7 @@ class MarkdownLintSuite extends munit.FunSuite:
   test(
     "#958: the generated coverage sections have no formatting problem, and the page renders them as a list and one note"
   ):
-    val src = (ck: Citekey, st: Source.Status) =>
-      Coverage.Source(ck, com.histmersion.api.library.Title(ck.value), Some(Year(2000)), st)
+    val src = (ck: Citekey, st: Source.Status) => Coverage.Source(ck, api.library.Title(ck.value), Some(Year(2000)), st)
     val c = Article.Coverage.compute(
       Article.Coverage.ComputeSlug("tin"),
       Article.Filter(query = Some(Filter.Q("tin_trade *x*")), topics = List(Filter.Topics("bronze_age"))),

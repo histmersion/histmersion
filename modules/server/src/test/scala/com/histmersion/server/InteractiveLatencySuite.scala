@@ -64,7 +64,7 @@ class InteractiveLatencySuite extends munit.FunSuite:
         Place(
           Place.Id("zzl_world"),
           Place.Label("Zzl World"),
-          Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region)
+          Place.KindValue(domain.catalogue.Place.Kind.Region)
         ),
         List(Place.Name(Place.Name.Value("Zzl World")))
       ),
@@ -72,7 +72,7 @@ class InteractiveLatencySuite extends munit.FunSuite:
         Place(
           Place.Id("zzl_land"),
           Place.Label("Zzl Land"),
-          Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region),
+          Place.KindValue(domain.catalogue.Place.Kind.Region),
           Some(
             Place.Geometry(
               """{"type":"Polygon","coordinates":[[[60.0,-50.0],[70.0,-50.0],[70.0,-40.0],[60.0,-40.0],[60.0,-50.0]]]}"""

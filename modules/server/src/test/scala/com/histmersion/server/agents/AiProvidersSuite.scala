@@ -50,8 +50,9 @@ import com.histmersion.plugin.AiMessage
 import com.histmersion.plugin.AiCapabilities
 import com.histmersion.domain.automation.agents.PluginAiClient
 import com.histmersion.api.Api
+import com.histmersion.api.json.Schema
 
-final case class Ping(word: String) derives JsonCodec, KindlingsSchema, com.histmersion.api.json.Schema
+final case class Ping(word: String) derives JsonCodec, KindlingsSchema, Schema
 
 /** AI providers as plugins (docs/research-plugins.md §22–§23), no database and no network: the six built-ins registered
   * and switched off like any plugin; a third-party provider registered beside them and refused under a host name; the
@@ -71,8 +72,8 @@ class AiProvidersSuite extends munit.FunSuite:
   /** The registry's providers as the engine reads them: keyed by plugin id. */
   private def providersOf(
       registered: ListMap[Registries.AiProvidersKey, AiProvider]
-  ): ListMap[com.histmersion.util.plugins.Plugin.Id, AiProvider] =
-    registered.map((k, p) => com.histmersion.util.plugins.Plugin.Id.assume(k.value) -> p)
+  ): ListMap[util.plugins.Plugin.Id, AiProvider] =
+    registered.map((k, p) => util.plugins.Plugin.Id.assume(k.value) -> p)
 
   /** A generation of `plugins` as the server builds one: the first-party plugins supplied the host's settings
     * (`reference.conf` under `env`) and allowed their reserved names.
@@ -97,7 +98,7 @@ class AiProvidersSuite extends munit.FunSuite:
       .discover(getClass.getClassLoader)
       ._1
       .filter(p =>
-        com.histmersion.util.plugins.Plugin.Id.option(p.info.id.value).exists(BuiltinAi.pluginIds)
+        util.plugins.Plugin.Id.option(p.info.id.value).exists(BuiltinAi.pluginIds)
       ) ++ ServerPlugins.providers
 
   /** What a scripted provider was asked, turn by turn. */
@@ -159,7 +160,7 @@ class AiProvidersSuite extends munit.FunSuite:
     )
     assertEquals(
       g.report.plugins
-        .filter(p => com.histmersion.util.plugins.Plugin.Id.option(p.id.value).exists(BuiltinAi.pluginIds))
+        .filter(p => util.plugins.Plugin.Id.option(p.id.value).exists(BuiltinAi.pluginIds))
         .map(p => (p.id, p.version, p.provides)),
       List(
         ("ai-anthropic", "0.1.0", List("ai-provider:anthropic")),
@@ -188,7 +189,7 @@ class AiProvidersSuite extends munit.FunSuite:
     assertEquals(
       BuiltinAi
         .lookup(
-          ProviderKind.Plugin(com.histmersion.api.automation.ProviderKind.Plugin.Name("gemini")),
+          ProviderKind.Plugin(api.automation.ProviderKind.Plugin.Name("gemini")),
           providersOf(byEnv.registries.aiProviders)
         )
         .left
@@ -277,7 +278,7 @@ class AiProvidersSuite extends munit.FunSuite:
       val r = ModelRef(k, Agents.ModelRef.Model("m/x"))
       assertEquals(f(app.agents, r).left.toOption, LlmClient.host(rt())(app.agents, r).left.toOption, k.wire)
     }
-    val off = LlmClient.factory(rt(), () => reg - com.histmersion.util.plugins.Plugin.Id("local"), AiHttp.Offline)
+    val off = LlmClient.factory(rt(), () => reg - util.plugins.Plugin.Id("local"), AiHttp.Offline)
     assertEquals(
       off(app.agents, ModelRef(ProviderKind.Local, Agents.ModelRef.Model("qwen"))).left.toOption.map(_.sentence),
       Some("local:qwen: the local provider is switched off (histmersion.plugins.ai-local.enabled = false)")
@@ -285,7 +286,7 @@ class AiProvidersSuite extends munit.FunSuite:
 
   test("the factory: a plugin provider becomes its client; its own check and the loopback rule apply"):
     val ref = ModelRef(
-      ProviderKind.Plugin(com.histmersion.api.automation.ProviderKind.Plugin.Name("gemini")),
+      ProviderKind.Plugin(api.automation.ProviderKind.Plugin.Name("gemini")),
       Agents.ModelRef.Model("pro")
     )
     def f(p: AiProvider, host: String = "127.0.0.1") =
@@ -320,7 +321,7 @@ class AiProvidersSuite extends munit.FunSuite:
 
   private val ping = AgentTool.fromFunction[Ping]("ping", "answers pong")(p => s"pong ${p.word}")
   private val ref = ModelRef(
-    ProviderKind.Plugin(com.histmersion.api.automation.ProviderKind.Plugin.Name("gemini")),
+    ProviderKind.Plugin(api.automation.ProviderKind.Plugin.Name("gemini")),
     Agents.ModelRef.Model("pro")
   )
   private def call(
@@ -364,7 +365,7 @@ class AiProvidersSuite extends munit.FunSuite:
     val r = PluginAiClient(ref, p, AiHttp.Offline).run(call())
     assertEquals(
       r.finalAnswer,
-      Right(ProbeAnswer(Citekey("x2020"), Title("X"), Some(com.histmersion.api.catalogue.Year(2020))))
+      Right(ProbeAnswer(Citekey("x2020"), Title("X"), Some(api.catalogue.Year(2020))))
     )
     assertEquals(r.toolCalls.map(c => (c.toolName, c.output)).toList, List(("ping", "pong hi")))
     assertEquals(r.usage, TokenUsage(Tokens(2000), Tokens(100), Tokens(800), Tokens.Zero, Tokens.Zero))
@@ -630,7 +631,7 @@ class AiProvidersSuite extends munit.FunSuite:
 
   test("billing and quota: a plugin provider's model is metered, on no plan pool"):
     val m = ModelRef(
-      ProviderKind.Plugin(com.histmersion.api.automation.ProviderKind.Plugin.Name("gemini")),
+      ProviderKind.Plugin(api.automation.ProviderKind.Plugin.Name("gemini")),
       Agents.ModelRef.Model("pro")
     )
     assertEquals(PlanQuota.poolOf(m, app.agents.logins), None)

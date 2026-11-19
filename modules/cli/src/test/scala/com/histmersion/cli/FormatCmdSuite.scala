@@ -10,7 +10,7 @@ import com.histmersion.api.checks.{FormatField, FormatIssue, FormatMarkdown, For
   */
 class FormatCmdSuite extends munit.FunSuite:
 
-  private given console: com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard
+  private given console: util.console.Console = util.console.Console.standard
 
   test("article lint <slug> [--fix] [--json]; patch and put take --strict"):
     assert(Parsing.parses("article", "lint", "sea_peoples"))

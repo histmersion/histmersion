@@ -470,7 +470,7 @@ final class CompileArticlePipeline(
           goals.link(
             g,
             io.scalaland.chimney.Transformer
-              .derive[Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind]
+              .derive[Goal.LinkKind, domain.automation.Goal.LinkKind]
               .transform(LinkKind.Article),
             Goal.Plans.GoalLink.Ref(d.slug.value),
             Some(Goal.Plans.GoalLink.Note("compiled by an agent run"))

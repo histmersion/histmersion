@@ -152,8 +152,8 @@ final class ReviewArticlePipeline(
 
   private def minRatio: AgentVerify.MinRatio = AgentVerify.MinRatio(lib.verify.quoteMinRatio.value)
 
-  private def domainBody(b: ReviewArticle.Fix.Body): com.histmersion.domain.research.Article.Body =
-    com.histmersion.domain.research.Article.Body(b.value)
+  private def domainBody(b: ReviewArticle.Fix.Body): domain.research.Article.Body =
+    domain.research.Article.Body(b.value)
 
   private def apiBody(b: ReviewArticle.Fix.Body): Article.Body = Article.Body(b.value)
 
@@ -861,7 +861,7 @@ final class ReviewArticlePipeline(
           domainBody(s.body) :: Option(a.edits)
             .getOrElse(Nil)
             .flatMap(_.text)
-            .map(t => com.histmersion.domain.research.Article.Body(t.value)),
+            .map(t => domain.research.Article.Body(t.value)),
           generated = ReviewArticle.BodyCorpus.Generated(s.coverage.isDefined)
         )
       checked(

@@ -27,7 +27,7 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
   private val t = Instant.parse("2026-11-03T06:00:00Z")
   private def goal(s: EngineStores, slug: Goal.Slug) = assert(
     s.goals
-      .put(slug, com.histmersion.api.automation.Goal.Put(com.histmersion.api.automation.Goal.Title(slug.value)))
+      .put(slug, api.automation.Goal.Put(api.automation.Goal.Title(slug.value)))
       .isRight
   )
 
@@ -160,7 +160,7 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
       m(s).openOf(
         ManagerInfo.Id("review"),
         List(ManagerItem.Kind("article-review")),
-        List(com.histmersion.api.automation.ItemStatus.Wire("active"))
+        List(api.automation.ItemStatus.Wire("active"))
       ),
       1
     )
@@ -287,7 +287,7 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
       m(s).openOf(
         ManagerInfo.Id("watch:zz"),
         List(ManagerItem.Kind(OaIngest)),
-        List(com.histmersion.api.automation.ItemStatus.Wire("held"))
+        List(api.automation.ItemStatus.Wire("held"))
       ),
       3
     )
@@ -295,7 +295,7 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
       m(s).openOf(
         ManagerInfo.Id("watch:zz"),
         List(ManagerItem.Kind(OaIngest)),
-        List(com.histmersion.api.automation.ItemStatus.Wire("held")),
+        List(api.automation.ItemStatus.Wire("held")),
         focusHeld = false
       ),
       1
@@ -351,19 +351,19 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
     )
     assertEquals(m(s).pace(Instant.parse("2099-01-01T00:00:00Z")).get(ManagerInfo.Id("watch:zz-g")).map(_._2), Some(0))
     assertEquals(m(s).sweepOutcomes(), Map("zz-g" -> "swept 3"))
-    assert(m(s).lastProgress().contains(com.histmersion.api.automation.Goal.Slug("zz-g")))
+    assert(m(s).lastProgress().contains(api.automation.Goal.Slug("zz-g")))
     assertEquals(m(s).lastProgress().keySet, Set("zz-g"))
     assert(
       s.goals.link(
         Goal.Slug("zz-g"),
         Goal.LinkKind.Source,
-        com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("zz2020_s"),
+        api.automation.Goal.Plans.GoalLink.Ref("zz2020_s"),
         None
       )
     )
     assert(
       m(s)
-        .lastProgress()(com.histmersion.api.automation.Goal.Slug("zz-g"))
+        .lastProgress()(api.automation.Goal.Slug("zz-g"))
         .value
         .matches("\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\dZ")
     )

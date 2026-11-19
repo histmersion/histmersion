@@ -33,7 +33,7 @@ class SourcesControllersSuite extends munit.FunSuite:
 
   private val formatting = new SourceFormatting:
     def issues(
-        summary: Option[com.histmersion.domain.library.Source.Summary],
+        summary: Option[domain.library.Source.Summary],
         notes: Option[SourceNote.Text]
     ): List[FormatIssue] =
       (summary.map(_.value).toList ++ notes.map(_.value).toList)
@@ -50,13 +50,13 @@ class SourcesControllersSuite extends munit.FunSuite:
           )
         )
     def fix(
-        text: com.histmersion.domain.library.Source.Text,
+        text: domain.library.Source.Text,
         field: FormatField
-    ): (com.histmersion.domain.library.Source.Text, List[com.histmersion.domain.library.Source.Text]) =
+    ): (domain.library.Source.Text, List[domain.library.Source.Text]) =
       if text.value.contains("  ") then
         (
-          com.histmersion.domain.library.Source.Text(text.value.replace("  ", " ")),
-          List(com.histmersion.domain.library.Source.Text("double space"))
+          domain.library.Source.Text(text.value.replace("  ", " ")),
+          List(domain.library.Source.Text("double space"))
         )
       else (text, Nil)
     def refusal(issues: List[FormatIssue]): Option[Problem] =
@@ -107,14 +107,14 @@ class SourcesControllersSuite extends munit.FunSuite:
     )
 
   private val Walls90 = Citekey("zqa1990_walls")
-  private val Walls91 = com.histmersion.api.library.Citekey("zqa1991_walls")
+  private val Walls91 = api.library.Citekey("zqa1991_walls")
   private val Cove = Citekey("zqb2001_cove")
   private val Div = Some(Source.Notes("<div>"))
 
   test("a put under a citekey that is not one is refused; a strict put with a formatting error too"):
     val c = controllers()
     assertEquals(
-      c.parseCitekey(com.histmersion.api.library.Citekey("Not A Key")).flatMap(c.put(_, put)).left.map(_.code),
+      c.parseCitekey(api.library.Citekey("Not A Key")).flatMap(c.put(_, put)).left.map(_.code),
       Left(Some(Write.CodeInvalid))
     )
     assertEquals(
@@ -167,12 +167,12 @@ class SourcesControllersSuite extends munit.FunSuite:
         .exists(_.problems.sentences.mkString("; ").startsWith("unknown source section 'nonsense' (one of: summary"))
     )
     assertEquals(
-      c.passages(Api.PassagesQuery(com.histmersion.api.library.Citekey("zqa1990_walls"), Api.PassagesQuery.Q("gate")))
+      c.passages(Api.PassagesQuery(api.library.Citekey("zqa1990_walls"), Api.PassagesQuery.Q("gate")))
         .map(_.matches),
       Right(1)
     )
     assertEquals(
-      c.passages(Api.PassagesQuery(com.histmersion.api.library.Citekey("zqnone2000_x"), Api.PassagesQuery.Q("gate")))
+      c.passages(Api.PassagesQuery(api.library.Citekey("zqnone2000_x"), Api.PassagesQuery.Q("gate")))
         .left
         .map(_.code),
       Left(Some(Write.CodeNotFound))

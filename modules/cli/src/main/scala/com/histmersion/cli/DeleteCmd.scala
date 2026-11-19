@@ -23,8 +23,8 @@ object DeleteCmd:
     def run(c: Client)(using Console): Either[Cli.Error, Unit] = Perform(c)(this)
 
   object Args:
-    type Citekey = com.histmersion.api.library.Citekey
-    val Citekey: com.histmersion.api.library.Citekey.type = com.histmersion.api.library.Citekey
+    type Citekey = api.library.Citekey
+    val Citekey: api.library.Citekey.type = api.library.Citekey
     export Api.Apply
     export Cli.JsonOutput as Json
 

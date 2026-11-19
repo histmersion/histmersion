@@ -20,7 +20,7 @@ import com.histmersion.domain.media.imports.Target
 abstract class AssetLinkServiceContract extends MediaStoreSuite:
 
   private val Ck = Citekey("zqal2001_x")
-  private val ApiCk = com.histmersion.api.library.Citekey("zqal2001_x")
+  private val ApiCk = api.library.Citekey("zqal2001_x")
   private def fig(name: NewFigure.Name, tag: String) =
     NewFigure(
       name,

@@ -73,7 +73,7 @@ class ManagerPhase2Suite extends DbSuite with RunTranscripts:
   private val PutTag = Article.Put.Tags("zzmgr2")
   private val IncludeTag = ManagerConfig.IncludeTags("zzmgr2")
   private val Goal = DomainGoal.Slug("zzagent-goal2")
-  private val GoalSlug = com.histmersion.api.automation.Goal.Slug("zzagent-goal2")
+  private val GoalSlug = api.automation.Goal.Slug("zzagent-goal2")
   private val GoalSubject = ApprovalInfo.Subject("zzagent-goal2")
   private val Ck = Citekey("zzagent2019_tin")
   private val Ck2 = Citekey("zzagent2024_iso")
@@ -172,7 +172,7 @@ class ManagerPhase2Suite extends DbSuite with RunTranscripts:
         .put(
           Ck,
           Source.Put(
-            title = com.histmersion.api.library.Title("Bronze Age tin"),
+            title = api.library.Title("Bronze Age tin"),
             year = (Some(2019)).map(Year.apply),
             topics = List(Source.Topics("zzagent_tin")),
             status = Some(Source.Status.Current),
@@ -191,7 +191,7 @@ class ManagerPhase2Suite extends DbSuite with RunTranscripts:
         .put(
           Ck2,
           Source.Put(
-            title = com.histmersion.api.library.Title("Tin isotopes"),
+            title = api.library.Title("Tin isotopes"),
             year = (Some(2024)).map(Year.apply),
             topics = List(Source.Topics("zzagent_tin")),
             body = Some(
@@ -214,9 +214,9 @@ class ManagerPhase2Suite extends DbSuite with RunTranscripts:
       h.goals
         .put(
           Goal,
-          com.histmersion.api.automation.Goal.Put(
-            com.histmersion.api.automation.Goal.Title("Zz tin in the Bronze Age"),
-            notes = Some(com.histmersion.api.automation.Goal.Notes("where the tin came from"))
+          api.automation.Goal.Put(
+            api.automation.Goal.Title("Zz tin in the Bronze Age"),
+            notes = Some(api.automation.Goal.Notes("where the tin came from"))
           )
         )
         .isRight
@@ -233,7 +233,7 @@ class ManagerPhase2Suite extends DbSuite with RunTranscripts:
        |
        |Where the tin was mined is open [[$Ck]].""".stripMargin
 
-  private def ref(g: DomainGoal.Slug) = com.histmersion.api.automation.Goal.Ref(g.value)
+  private def ref(g: DomainGoal.Slug) = api.automation.Goal.Ref(g.value)
   private def goalTarget(g: DomainGoal.Slug) = ManagerItem.Target(g.value)
   private def ckTarget(c: Citekey) = ManagerItem.Target(c.value)
 
@@ -476,7 +476,7 @@ class ManagerPhase2Suite extends DbSuite with RunTranscripts:
     assertEquals(connect(ds)(ManagerRepo.get(Review)).map(_.state), Some("paused"))
     assert(
       connect(ds)(GoalLinkRepo.links(Goal)).exists(l =>
-        l.kind == LinkKind.Article && l.ref == com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("zzagent_new")
+        l.kind == LinkKind.Article && l.ref == api.automation.Goal.Plans.GoalLink.Ref("zzagent_new")
       )
     )
 

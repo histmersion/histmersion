@@ -23,18 +23,18 @@ final class OpenAlexDiscovery(client: OpenAlexCrossref) extends DiscoveryClient:
     client
       .search(
         OpenAlexCrossref.SearchQuery(query.value),
-        since.map(y => com.histmersion.plugin.Year(y.value)),
+        since.map(y => plugin.Year(y.value)),
         sort.map(s => OpenAlexCrossref.SearchSort(s.value)),
         PageSize(limit.value)
       )
       .map(_.map(_.wire))
   def meta(doi: Doi): Either[Problem, WorkRef] =
-    client.meta(com.histmersion.plugin.Doi(doi.value)).left.map(problem).map(_.wire)
+    client.meta(plugin.Doi(doi.value)).left.map(problem).map(_.wire)
   def references(doi: Doi): Either[Problem, (DiscoveryClient.Backend, List[RefRow])] =
     client
-      .references(com.histmersion.plugin.Doi(doi.value))
+      .references(plugin.Doi(doi.value))
       .left
       .map(problem)
       .map((backend, rows) => (DiscoveryClient.Backend(backend.value), rows.map(_.wire)))
   def updates(doi: Doi) =
-    client.updates(com.histmersion.plugin.Doi(doi.value)).left.map(problem).map(DiscoveryClient.notices)
+    client.updates(plugin.Doi(doi.value)).left.map(problem).map(DiscoveryClient.notices)

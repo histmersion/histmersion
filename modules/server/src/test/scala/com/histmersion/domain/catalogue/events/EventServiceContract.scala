@@ -56,7 +56,7 @@ abstract class EventServiceContract extends CatalogueStoreSuite:
         Some(Citekey("zzev2020_src")),
         List(
           EventDating(
-            com.histmersion.api.catalogue.Event.Id("ignored"),
+            api.catalogue.Event.Id("ignored"),
             Citekey("zzev2020_src"),
             span(Year(-1251), Year(-1239)),
             Some(EventDating.Method("c14")),
@@ -65,8 +65,8 @@ abstract class EventServiceContract extends CatalogueStoreSuite:
         ),
         List(
           EventEdge(
-            com.histmersion.api.catalogue.Event.Id("zz_a"),
-            com.histmersion.api.catalogue.Event.Id("zz_b"),
+            api.catalogue.Event.Id("zz_a"),
+            api.catalogue.Event.Id("zz_b"),
             EventEdge.Kind("before"),
             Citekey("zzev2020_src"),
             None
@@ -74,7 +74,7 @@ abstract class EventServiceContract extends CatalogueStoreSuite:
         ),
         List(
           EventParticipant(
-            com.histmersion.api.catalogue.Event.Id("ignored"),
+            api.catalogue.Event.Id("ignored"),
             EventParticipant.Actor("Achaeans"),
             EventParticipant.Role("attacker"),
             None
@@ -269,7 +269,7 @@ abstract class EventServiceContract extends CatalogueStoreSuite:
         EventSummary.Label("Zz child"),
         EventSummary.Kind("battle"),
         span(Year(-1200), Year(-1195)),
-        parentId = Some(com.histmersion.api.catalogue.Event.Id("zz_old"))
+        parentId = Some(api.catalogue.Event.Id("zz_old"))
       )
     )
     assertEquals(e.rename(Event.Id("zz_old"), Event.Id("zz_new")), Right(()))

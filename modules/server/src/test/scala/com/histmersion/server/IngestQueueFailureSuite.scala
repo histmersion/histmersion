@@ -91,7 +91,7 @@ class IngestQueueFailureSuite extends DbSuite:
       val accepted = handler.controllers
         .ingest(
           Ingest.Params(
-            com.histmersion.api.library.Citekey("zz_ingest_queue_failure"),
+            api.library.Citekey("zz_ingest_queue_failure"),
             Some(Bundle.Asset.FileName("fixture.pdf")),
             force = Ingest.Params.Force(true),
             acquireItem = Some(Ingest.Params.AcquireItem(item.id.value))

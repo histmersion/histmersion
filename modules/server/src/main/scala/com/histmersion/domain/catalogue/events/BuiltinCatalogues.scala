@@ -17,16 +17,16 @@ import scala.collection.immutable.ListMap
 object BuiltinCatalogues:
 
   /** A first-party catalogue: its plugin and the name it registers. */
-  final case class Entry(plugin: com.histmersion.util.plugins.Plugin.Id, name: CatalogProviderInfo.Id):
+  final case class Entry(plugin: util.plugins.Plugin.Id, name: CatalogProviderInfo.Id):
     def title: String = CatalogProvider.info(name).fold(name.value)(_.title.value)
 
   val entries: List[Entry] = List(
-    Entry(com.histmersion.util.plugins.Plugin.Id("events-gvp"), CatalogProvider.Gvp),
-    Entry(com.histmersion.util.plugins.Plugin.Id("events-noaa"), CatalogProvider.Noaa),
-    Entry(com.histmersion.util.plugins.Plugin.Id("events-wikidata"), CatalogProvider.Wikidata)
+    Entry(util.plugins.Plugin.Id("events-gvp"), CatalogProvider.Gvp),
+    Entry(util.plugins.Plugin.Id("events-noaa"), CatalogProvider.Noaa),
+    Entry(util.plugins.Plugin.Id("events-wikidata"), CatalogProvider.Wikidata)
   )
 
-  val pluginIds: Set[com.histmersion.util.plugins.Plugin.Id] = entries.map(_.plugin).toSet
+  val pluginIds: Set[util.plugins.Plugin.Id] = entries.map(_.plugin).toSet
 
   /** The other names `events import` takes for a built-in catalogue. */
   val aliases: Map[CatalogProviderInfo.Id, CatalogProviderInfo.Id] = Map(

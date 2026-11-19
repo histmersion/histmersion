@@ -51,7 +51,7 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
       regionStr: Iiif.Region.Wire,
       sizeStr: Iiif.Size.Wire,
       rotationStr: Iiif.Rotation,
-      filename: IiifControllers.Filename
+      filename: Filename
   ): Either[Api.Error, (AssetService.Bytes, AssetService.Mime)] =
     // parse the filename as `default.{format}`
     val safeName = AssetService.AssetName(AssetLinks.safeName(name.value).value)
@@ -66,7 +66,7 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
   // ── internals ──────────────────────────────────────────────────────────────────────────────
 
   /** Parse `default.jpg` or `default.png`. */
-  private def parseFilename(filename: IiifControllers.Filename): Either[Problems, Iiif.Format] =
+  private def parseFilename(filename: Filename): Either[Problems, Iiif.Format] =
     filename.value match
       case s"default.$ext" =>
         Iiif.parseFormat(ArchiveFile.Format.Wire(ext))

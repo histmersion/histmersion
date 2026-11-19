@@ -29,8 +29,8 @@ import com.histmersion.api.plugins.PluginSet
   */
 class PluginCmdSuite extends munit.FunSuite:
 
-  private def consoleFor(stdout: String => Unit, stderr: String => Unit): com.histmersion.util.console.Console =
-    new com.histmersion.util.console.Console {
+  private def consoleFor(stdout: String => Unit, stderr: String => Unit): util.console.Console =
+    new util.console.Console {
       def write(value: Any): Unit = stdout(String.valueOf(value))
       def writeLine(value: Any): Unit = stdout(String.valueOf(value))
       def writeLine(): Unit = stdout("")
@@ -38,12 +38,12 @@ class PluginCmdSuite extends munit.FunSuite:
       def errorLine(value: => String): Unit = stderr(value)
       def errorLine(): Unit = stderr("")
       def errorFlush(): Unit = ()
-      def readLine(): com.histmersion.util.console.Console.Line = throw new UnsupportedOperationException(
+      def readLine(): util.console.Console.Line = throw new UnsupportedOperationException(
         "input not used"
       )
     }
 
-  private given console: com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard
+  private given console: util.console.Console = util.console.Console.standard
 
   final case class Env(home: Path, data: Path, ops: PluginOps, out: collection.mutable.Buffer[String]):
     def plugins: Path = data.resolve("plugins")

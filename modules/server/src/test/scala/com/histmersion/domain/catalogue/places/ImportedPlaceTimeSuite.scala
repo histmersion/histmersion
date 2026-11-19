@@ -51,7 +51,7 @@ import com.histmersion.util.database.NewtypeColumns.given
   * Fixtures sit at 150°W 60°S, where no other suite has any; ids carry `99950` or `zzpt`. The real
   * `wikidata`/`geonames` source keys are written WITHOUT the sweep, so no other suite's rows go.
   */
-class ImportedPlaceTimeSuite extends DbSuite with com.histmersion.db.Bounded:
+class ImportedPlaceTimeSuite extends DbSuite with db.Bounded:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
@@ -128,12 +128,12 @@ class ImportedPlaceTimeSuite extends DbSuite with com.histmersion.db.Bounded:
     GazRecord.Kind(Place.Kind.Polity),
     Span(None, Some(Year(1769)))
   )
-  private val PatonesId = com.histmersion.domain.catalogue.Place.Id("wikidata_q999500001")
+  private val PatonesId = domain.catalogue.Place.Id("wikidata_q999500001")
   private val PatonesHit = Place.Id("wikidata_q999500001")
   private val Src = Citekey("zzpt_src")
-  private val PolityKind = com.histmersion.domain.catalogue.Place.Kind.Wire("polity")
-  private val RegionKind = com.histmersion.domain.catalogue.Place.Kind.Wire("region")
-  private val SiteKind = com.histmersion.domain.catalogue.Place.Kind.Wire("site")
+  private val PolityKind = domain.catalogue.Place.Kind.Wire("polity")
+  private val RegionKind = domain.catalogue.Place.Kind.Wire("region")
+  private val SiteKind = domain.catalogue.Place.Kind.Wire("site")
   private val PatonesQuery = PlaceRepo.SearchText("Zzpt Kingdom of Patones")
   private val BogazQuery = PlaceRepo.SearchText("Zzpt Bogazkale")
   private val LpfQuery = PlaceRepo.SearchText("Zzpt Lpf State")
@@ -144,8 +144,8 @@ class ImportedPlaceTimeSuite extends DbSuite with com.histmersion.db.Bounded:
       ds,
       Source(
         citekey = ck,
-        title = com.histmersion.api.library.Title("Imported place fixture"),
-        authors = (List("T")).map(com.histmersion.api.library.AuthorName.apply),
+        title = api.library.Title("Imported place fixture"),
+        authors = (List("T")).map(api.library.AuthorName.apply),
         doi = None,
         year = (Some(2026)).map(Year.apply),
         venue = None,
@@ -178,7 +178,7 @@ class ImportedPlaceTimeSuite extends DbSuite with com.histmersion.db.Bounded:
     )
 
   private def onMap(
-      kind: com.histmersion.domain.catalogue.Place.Kind.Wire,
+      kind: domain.catalogue.Place.Kind.Wire,
       asOf: Option[DeepTime.SignedYear]
   ): Set[String] =
     "\"id\":\"((?:wikidata_q|geonames_)99950[0-9]+|zzpt[a-z_]*|lpf_zzpt[a-z0-9_]*)\"".r
@@ -223,7 +223,7 @@ class ImportedPlaceTimeSuite extends DbSuite with com.histmersion.db.Bounded:
       PlaceFixtures
         .geoJson(
           ds,
-          Some(com.histmersion.domain.catalogue.Place.Kind.Wire("polity")),
+          Some(domain.catalogue.Place.Kind.Wire("polity")),
           Some(DeepTime.SignedYear(1620L)),
           PlaceRepo.Limit(100000)
         )
@@ -276,7 +276,7 @@ class ImportedPlaceTimeSuite extends DbSuite with com.histmersion.db.Bounded:
     assertEquals(inside.head.id.value: String, PatonesId)
     assertEquals(at(Period(Year(1600), Year(1650))).map(_.value: String), Some(PatonesId))
     assertEquals(
-      PlaceFixtures.get(ds, com.histmersion.domain.catalogue.Place.Id("geonames_999500002")).map(_.place.dating),
+      PlaceFixtures.get(ds, domain.catalogue.Place.Id("geonames_999500002")).map(_.place.dating),
       Some(Place.Dating.Unknown)
     )
 
@@ -290,7 +290,7 @@ class ImportedPlaceTimeSuite extends DbSuite with com.histmersion.db.Bounded:
       Span.always
     )
     load(Geonames, V1, List(g))
-    val id = com.histmersion.domain.catalogue.Place.Id("geonames_999500003")
+    val id = domain.catalogue.Place.Id("geonames_999500003")
     val hit = Place.Id("geonames_999500003")
     assertEquals(
       PlaceFixtures.get(ds, id).map(p => (p.place.dating, p.place.when)),
@@ -344,11 +344,11 @@ class ImportedPlaceTimeSuite extends DbSuite with com.histmersion.db.Bounded:
       found(LpfQuery, Some(DeepTime.SignedYear(-4000L))).contains(Place.Id("lpf_zzpt_1")),
       "an LPF 'until 1769' is as the dataset says"
     )
-    val d = PlaceFixtures.get(ds, com.histmersion.domain.catalogue.Place.Id("lpf_zzpt_1")).get.place
+    val d = PlaceFixtures.get(ds, domain.catalogue.Place.Id("lpf_zzpt_1")).get.place
     assertEquals((d.periodStart, d.periodEnd, d.dating), (None, Some(1769L), Place.Dating.Stated))
-    assert(PlaceFixtures.get(ds, com.histmersion.domain.catalogue.Place.Id("zzpt_region")).get.hasBoundary.value)
+    assert(PlaceFixtures.get(ds, domain.catalogue.Place.Id("zzpt_region")).get.hasBoundary.value)
     assertEquals(
-      PlaceFixtures.get(ds, com.histmersion.domain.catalogue.Place.Id("zzpt_region")).get.place.dating,
+      PlaceFixtures.get(ds, domain.catalogue.Place.Id("zzpt_region")).get.place.dating,
       Place.Dating.Stated
     )
 
@@ -460,7 +460,7 @@ class ImportedPlaceTimeSuite extends DbSuite with com.histmersion.db.Bounded:
     assertEquals(scope.idsFor(PlaceScope.Value("zzpt_land")).map(_.toSet), Some(Set("zzpt_land", "zzpt_town")))
     assertEquals(
       PlaceFixtures
-        .children(ds, com.histmersion.domain.catalogue.Place.Id("zzpt_land"), None, PlaceRepo.Limit(100))
+        .children(ds, domain.catalogue.Place.Id("zzpt_land"), None, PlaceRepo.Limit(100))
         .map(_.id)
         .toSet,
       Set("zzpt_town")
@@ -470,7 +470,7 @@ class ImportedPlaceTimeSuite extends DbSuite with com.histmersion.db.Bounded:
         .hierarchy(
           ds,
           None,
-          Some(com.histmersion.domain.catalogue.Place.Id("zzpt_land")),
+          Some(domain.catalogue.Place.Id("zzpt_land")),
           PlaceRepo.Depth(3),
           PlaceRepo.Limit(100)
         )

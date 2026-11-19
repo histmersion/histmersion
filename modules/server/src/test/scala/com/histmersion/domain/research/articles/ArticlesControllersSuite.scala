@@ -68,7 +68,7 @@ class ArticlesControllersSuite extends munit.FunSuite:
     def list(
         f: Filter,
         s: PlaceScope,
-        k: Option[com.histmersion.domain.research.Article.Kind],
+        k: Option[domain.research.Article.Kind],
         t: Option[Search.Query],
         l: ArticleRepo.Limit,
         o: Offset
@@ -149,7 +149,7 @@ class ArticlesControllersSuite extends munit.FunSuite:
     assertEquals(c.put(Slug.assume("Not A Slug"), put).left.map(_.code), Left(Some(Write.CodeInvalid)))
     val messy = put.modify(_.body).setTo(Article.Body("<div> never closed\n"))
     assertEquals(
-      c.put(Slug("zr_walls"), messy, strict = com.histmersion.domain.research.Article.StrictMode(true))
+      c.put(Slug("zr_walls"), messy, strict = domain.research.Article.StrictMode(true))
         .left
         .map(_.code),
       Left(Some(Write.CodeInvalid))

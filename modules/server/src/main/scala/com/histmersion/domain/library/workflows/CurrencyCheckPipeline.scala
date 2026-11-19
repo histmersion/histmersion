@@ -108,7 +108,7 @@ final class CurrencyCheckPipeline(
               site.citations
                 .neighbors(
                   p.citekey,
-                  p.edgeKind.map(k => com.histmersion.domain.library.Edge.Kind.Wire(Edge.Kind.wireOf(k).value)).toList
+                  p.edgeKind.map(k => domain.library.Edge.Kind.Wire(Edge.Kind.wireOf(k).value)).toList
                 )
                 .exists(n => n.direction.value == "out" && p.target.exists(_.value == n.citekey.value))
             !known && (approvals.propose(ctx, p) match

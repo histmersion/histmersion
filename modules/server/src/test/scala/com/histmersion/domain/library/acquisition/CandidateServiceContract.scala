@@ -111,7 +111,7 @@ abstract class CandidateServiceContract extends AcquisitionStoreSuite:
     assertEquals(
       s.candidates.markDois(
         Goal.Slug("zq-goal"),
-        List(com.histmersion.domain.library.Doi("10.5555/zq.b")),
+        List(domain.library.Doi("10.5555/zq.b")),
         Source.Candidate.State("dismissed")
       ),
       1

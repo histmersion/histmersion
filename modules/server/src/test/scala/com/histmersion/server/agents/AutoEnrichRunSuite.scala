@@ -57,7 +57,7 @@ class AutoEnrichRunSuite extends DbSuite with RunTranscripts:
   override val munitTimeout = scala.concurrent.duration.Duration(120, "s")
 
   private val Ck = Citekey("zzautoenrich2020_tin")
-  private val IngestCk = com.histmersion.api.library.Citekey("zzautoenrich2020_tin")
+  private val IngestCk = api.library.Citekey("zzautoenrich2020_tin")
   private val RunTarget = RunInfo.Target("zzautoenrich2020_tin")
   private val ItemTarget = Managers.ManagerItem.Target("zzautoenrich2020_tin")
 
@@ -223,7 +223,7 @@ class AutoEnrichRunSuite extends DbSuite with RunTranscripts:
           .put(
             Ck,
             Source.Put(
-              title = com.histmersion.api.library.Title("Bronze Age tin"),
+              title = api.library.Title("Bronze Age tin"),
               year = (Some(2020)).map(Year.apply),
               findings = List(Finding.Input(Finding.Claim("The Uluburun ship carried copper.")))
             )

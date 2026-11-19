@@ -354,7 +354,7 @@ final class McpTools(
       .handle { in =>
         in.slug.map(_.trim).filter(_.nonEmpty) match
           case Some(slug) =>
-            com.histmersion.domain.automation.Goal.Slug
+            domain.automation.Goal.Slug
               .either(slug)
               .left
               .map(_ => refusedValue("goal", slug, Write.CodeNotFound))
@@ -390,7 +390,7 @@ final class McpTools(
             in.periodEnd.map(com.histmersion.api.catalogue.Year(_)),
             in.parentSlug.map(Goal.Slug(_))
           )
-        com.histmersion.domain.automation.Goal.Slug
+        domain.automation.Goal.Slug
           .either(in.slug)
           .left
           .map(_ => invalidValue("goal slug", in.slug))
@@ -422,7 +422,7 @@ final class McpTools(
           in.parentSlug.map(Goal.Slug(_)),
           in.budgetUsd.map(Goal.Patch.BudgetUsd(_))
         )
-        com.histmersion.domain.automation.Goal.Slug
+        domain.automation.Goal.Slug
           .either(in.slug)
           .left
           .map(_ => invalidValue("goal slug", in.slug))
@@ -564,7 +564,7 @@ final class McpTools(
           case "event" =>
             renamed(Event.Id.either(in.from.trim), "event id")(h.events.renamed(_, req))
           case "goal" =>
-            renamed(com.histmersion.domain.automation.Goal.Slug.either(in.from.trim), "goal slug")(
+            renamed(domain.automation.Goal.Slug.either(in.from.trim), "goal slug")(
               h.goals.rename(_, req)
             )
           case "place" =>
@@ -644,7 +644,7 @@ final class McpTools(
   def toolNames: Set[String] = server.tools.map(_.name).toSet
 
 object McpTools:
-  export com.histmersion.util.mcp.ToolInputs.given
+  export util.mcp.ToolInputs.given
 
   // JSON codec + tapir Schema both derived from each input by Kindlings → matching by construction.
   final case class PingInput() derives JsonCodec, KindlingsSchema, com.histmersion.api.json.Schema

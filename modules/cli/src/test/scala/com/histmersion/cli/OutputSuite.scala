@@ -16,7 +16,7 @@ import com.histmersion.api.library.CollectionEntry
 
 class OutputSuite extends munit.FunSuite:
 
-  private given console: com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard
+  private given console: util.console.Console = util.console.Console.standard
 
   test("render prints the DTO's own codec with --json, its Markdown without"):
     val item = Queue.QueueItem(
@@ -115,10 +115,10 @@ class OutputSuite extends munit.FunSuite:
     }
     Console.withOut(stdout) {
       Console.withErr(stderr) {
-        summon[com.histmersion.util.console.Console].write(value())
-        summon[com.histmersion.util.console.Console].writeLine()
-        summon[com.histmersion.util.console.Console].writeLine(null)
-        List("a", "b").foreach(summon[com.histmersion.util.console.Console].writeLine)
+        summon[util.console.Console].write(value())
+        summon[util.console.Console].writeLine()
+        summon[util.console.Console].writeLine(null)
+        List("a", "b").foreach(summon[util.console.Console].writeLine)
         Output.emit(json = Cli.JsonOutput(false), "answer")(identity)
         Output.emit(json = Cli.JsonOutput(true), "answer")(_ => fail("JSON must not render Markdown"))
       }
@@ -140,14 +140,14 @@ class OutputSuite extends munit.FunSuite:
     }
     var evaluated = 0
     Console.withErr(stream) {
-      summon[com.histmersion.util.console.Console].errorWrite { evaluated += 1; "雪" }
-      summon[com.histmersion.util.console.Console].errorLine("line")
-      summon[com.histmersion.util.console.Console].errorLine()
-      summon[com.histmersion.util.console.Console].errorFlush()
+      summon[util.console.Console].errorWrite { evaluated += 1; "雪" }
+      summon[util.console.Console].errorLine("line")
+      summon[util.console.Console].errorLine()
+      summon[util.console.Console].errorFlush()
       JobFollow.Progress.line("working")
       JobFollow.Progress.clear()
       intercept[IllegalArgumentException] {
-        summon[com.histmersion.util.console.Console].errorLine(throw new IllegalArgumentException("failed"))
+        summon[util.console.Console].errorLine(throw new IllegalArgumentException("failed"))
       }
     }
     val nl = System.lineSeparator()
@@ -162,17 +162,17 @@ class OutputSuite extends munit.FunSuite:
     val a = new java.io.ByteArrayOutputStream
     val b = new java.io.ByteArrayOutputStream
     val errors = new java.io.ByteArrayOutputStream
-    val first = com.histmersion.util.console.Console.streams(
+    val first = util.console.Console.streams(
       new java.io.PrintStream(a, true, "UTF-8"),
       new java.io.PrintStream(errors, true, "UTF-8"),
-      () => com.histmersion.util.console.Console.Line("yes")
+      () => util.console.Console.Line("yes")
     )
-    val second = com.histmersion.util.console.Console.streams(
+    val second = util.console.Console.streams(
       new java.io.PrintStream(b, true, "UTF-8"),
       new java.io.PrintStream(errors, true, "UTF-8"),
-      () => com.histmersion.util.console.Console.Line("no")
+      () => util.console.Console.Line("no")
     )
-    def answer(text: String)(using com.histmersion.util.console.Console): Unit = {
+    def answer(text: String)(using util.console.Console): Unit = {
       Cli.out.println(text)
       Cli.out.flush()
     }
@@ -181,8 +181,8 @@ class OutputSuite extends munit.FunSuite:
     answer("again")(using first)
     Cli.err(using first).println("problem")
     JobFollow.Progress.line("working")(using first)
-    assertEquals(first.readLine(), com.histmersion.util.console.Console.Line("yes"))
-    assertEquals(second.readLine(), com.histmersion.util.console.Console.Line("no"))
+    assertEquals(first.readLine(), util.console.Console.Line("yes"))
+    assertEquals(second.readLine(), util.console.Console.Line("no"))
     val nl = System.lineSeparator()
     assertEquals(a.toString("UTF-8"), s"first${nl}again$nl")
     assertEquals(b.toString("UTF-8"), s"second$nl")
@@ -195,14 +195,14 @@ class OutputSuite extends munit.FunSuite:
   test("injected terminal prompts use supplied streams and input") {
     val out = new java.io.ByteArrayOutputStream
     val err = new java.io.ByteArrayOutputStream
-    val console = com.histmersion.util.console.Console.streams(
+    val console = util.console.Console.streams(
       new java.io.PrintStream(out),
       new java.io.PrintStream(err),
-      () => com.histmersion.util.console.Console.Line("yes")
+      () => util.console.Console.Line("yes")
     )
     assertEquals(
-      console.readTerminalLine(com.histmersion.util.console.Console.Prompt("Proceed? ")),
-      Some(com.histmersion.util.console.Console.Line("yes"))
+      console.readTerminalLine(util.console.Console.Prompt("Proceed? ")),
+      Some(util.console.Console.Line("yes"))
     )
     assertEquals(out.toString("UTF-8"), "")
     assertEquals(err.toString("UTF-8"), "Proceed? ")

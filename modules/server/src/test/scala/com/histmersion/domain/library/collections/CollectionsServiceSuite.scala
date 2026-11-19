@@ -94,7 +94,7 @@ class CollectionsServiceSuite extends munit.FunSuite:
       CalibreGap.Title(s"Title of $ck"),
       List(CalibreGap.Authors("A B")),
       None,
-      Some(com.histmersion.api.catalogue.Year(2001)),
+      Some(api.catalogue.Year(2001)),
       None,
       None,
       List(CalibreGap.Topics("t")),
@@ -105,12 +105,12 @@ class CollectionsServiceSuite extends munit.FunSuite:
 
   final private class Library extends RefusingCollectionLibrary:
     val pushedIds = scala.collection.mutable.ListBuffer.empty[(Citekey, Source.CalibreId)]
-    override def pushMeta(citekey: com.histmersion.domain.library.Citekey) =
+    override def pushMeta(citekey: domain.library.Citekey) =
       Right(gap(Citekey(citekey.value), Some(CalibreGap.StoredOriginal(true)), id = Some(Source.CalibreId("2"))))
     override def pushed(req: CalibrePushRequest) =
       pushedIds += req.citekey -> req.calibreId;
       Right(CalibrePushResult(req.citekey, req.calibreId, ok = CalibrePushResult.Ok(true)))
-    override def original(citekey: com.histmersion.domain.library.Citekey) =
+    override def original(citekey: domain.library.Citekey) =
       if citekey.value == "zz_none" then
         Left(Api.Error(Problem.Unclassified(Legacy.Text(s"no original stored for '$citekey'"))))
       else
@@ -133,17 +133,17 @@ class CollectionsServiceSuite extends munit.FunSuite:
 
   private val linked = List(
     LinkedSource(
-      com.histmersion.domain.library.Citekey("zz_two"),
+      domain.library.Citekey("zz_two"),
       LinkedSource.Id("2"),
       LinkedSource.Title("Two"),
-      List(com.histmersion.domain.AuthorName("An Author")),
+      List(domain.AuthorName("An Author")),
       Some(com.histmersion.Year(2000))
     ),
     LinkedSource(
-      com.histmersion.domain.library.Citekey("zz_lost"),
+      domain.library.Citekey("zz_lost"),
       LinkedSource.Id("99"),
       LinkedSource.Title("Lost"),
-      List(com.histmersion.domain.AuthorName("Nobody")),
+      List(domain.AuthorName("Nobody")),
       None
     )
   )

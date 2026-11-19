@@ -30,17 +30,17 @@ class PagesSuite extends munit.FunSuite:
   private val cline = Source.Ref(
     Citekey("cline2014_year"),
     (Some("10.1515/9781400849987")).map(Doi.apply),
-    (List("Eric H. Cline")).map(com.histmersion.api.library.AuthorName.apply),
+    (List("Eric H. Cline")).map(api.library.AuthorName.apply),
     (Some(2014)).map(Year.apply),
-    com.histmersion.api.library.Title("1177 BC: The Year Civilization Collapsed"),
+    api.library.Title("1177 BC: The Year Civilization Collapsed"),
     Source.Status.Current
   )
   private val drews = Source.Ref(
     Citekey("drews1993_end"),
     None,
-    (List("Robert Drews")).map(com.histmersion.api.library.AuthorName.apply),
+    (List("Robert Drews")).map(api.library.AuthorName.apply),
     (Some(1993)).map(Year.apply),
-    com.histmersion.api.library.Title("The End of the Bronze Age"),
+    api.library.Title("The End of the Bronze Age"),
     Source.Status.Contested
   )
   private val topic = Article.Ref(
@@ -264,7 +264,7 @@ class PagesSuite extends munit.FunSuite:
     List(SourcePage.Topics("bronze_age_collapse")),
     List(SourcePage.Regions("Levant")),
     List(SourcePage.Tags("sea_peoples")),
-    Some(com.histmersion.domain.library.Source.Summary("A synthesis.")),
+    Some(domain.library.Source.Summary("A synthesis.")),
     None,
     Nil,
     Nil,

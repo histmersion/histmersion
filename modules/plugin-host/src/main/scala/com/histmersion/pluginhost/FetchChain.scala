@@ -85,7 +85,7 @@ final class FetchChain(
       log.warn(
         HostLog.Line(
           s"acquire: ${s.id.value} obtains copies WITHOUT the rights holder's authorisation; asked for " +
-            s"${FetchChain.describe(work).value} only because acquire.allow-unauthorised = true"
+            s"${describe(work).value} only because acquire.allow-unauthorised = true"
         )
       )
     val ctx = new Fetch.Context:
@@ -117,7 +117,7 @@ final class FetchChain(
           )
         )
       case Fetch.Refused(why) =>
-        log.info(HostLog.Line(s"acquire: ${s.id.value} refused ${FetchChain.describe(work).value}: ${why.sentence}"))
+        log.info(HostLog.Line(s"acquire: ${s.id.value} refused ${describe(work).value}: ${why.sentence}"))
         answer
       case Fetch.Miss(why) =>
         log.info(HostLog.Line(s"acquire: ${s.id.value}: no copy — ${why.sentence}"))
@@ -194,11 +194,11 @@ object FetchChain:
     * registered in that generation, which each fetch is told of ([[Fetch.Context.registered]]).
     */
   def of(
-      registered: ListMap[com.histmersion.util.plugins.Plugin.Id, SourceFetcher],
-      chain: List[com.histmersion.util.plugins.Plugin.Id],
+      registered: ListMap[util.plugins.Plugin.Id, SourceFetcher],
+      chain: List[util.plugins.Plugin.Id],
       allowUnauthorised: AllowUnauthorised,
       log: HostLog = HostLog.scribe,
-      plugins: Set[com.histmersion.util.plugins.Plugin.Id] = Set.empty
+      plugins: Set[util.plugins.Plugin.Id] = Set.empty
   ): (FetchChain, List[Problem]) =
     val (ids, unknown) = order(registered.keys.toList, chain)
     val off = ids
@@ -226,9 +226,9 @@ object FetchChain:
     * in registration order; with a note naming the listed ids nothing registered (a disabled plugin's, or a typo).
     */
   def order(
-      registered: List[com.histmersion.util.plugins.Plugin.Id],
-      chain: List[com.histmersion.util.plugins.Plugin.Id]
-  ): (List[com.histmersion.util.plugins.Plugin.Id], List[Problem]) =
+      registered: List[util.plugins.Plugin.Id],
+      chain: List[util.plugins.Plugin.Id]
+  ): (List[util.plugins.Plugin.Id], List[Problem]) =
     val listed = chain.distinct
     val notes = listed
       .filterNot(registered.contains)

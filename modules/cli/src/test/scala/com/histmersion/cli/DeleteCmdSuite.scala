@@ -10,7 +10,7 @@ import com.histmersion.config.CalibreCliConfig
 /** `histmersion delete <citekey> [--apply] [--json]` (#969): a dry run unless `--apply`, no `--force`. */
 class DeleteCmdSuite extends munit.FunSuite:
 
-  private given console: com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard
+  private given console: util.console.Console = util.console.Console.standard
 
   private def parse(args: String*) = Parsing.parse("delete" +: args*)
 

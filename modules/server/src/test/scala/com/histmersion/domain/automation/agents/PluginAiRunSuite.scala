@@ -125,7 +125,7 @@ class PluginAiRunSuite extends DbSuite with RunTranscripts:
     val builtin = PluginHost
       .discover(getClass.getClassLoader)
       ._1
-      .filter(p => BuiltinAi.pluginIds(com.histmersion.util.plugins.Plugin.Id.assume(p.info.id.value)))
+      .filter(p => BuiltinAi.pluginIds(util.plugins.Plugin.Id.assume(p.info.id.value)))
     val all = builtin ++ ServerPlugins.providers ++ ours
     val u = ConfigFactory.parseString(user)
     val host =
@@ -203,7 +203,7 @@ class PluginAiRunSuite extends DbSuite with RunTranscripts:
         .put(
           Ck,
           Source.Put(
-            title = com.histmersion.api.library.Title("Bronze Age tin"),
+            title = api.library.Title("Bronze Age tin"),
             year = (Some(2019)).map(Year.apply),
             body = Some(Body)
           )
@@ -224,7 +224,7 @@ class PluginAiRunSuite extends DbSuite with RunTranscripts:
     assert(!g.report.toString.contains(Secret), "the token's value is never in the report")
     assertEquals(
       BuiltinAi.known(
-        g.registries.aiProviders.map((k, p) => com.histmersion.util.plugins.Plugin.Id.assume(k.value) -> p)
+        g.registries.aiProviders.map((k, p) => util.plugins.Plugin.Id.assume(k.value) -> p)
       ),
       Set("hello-ai")
     )

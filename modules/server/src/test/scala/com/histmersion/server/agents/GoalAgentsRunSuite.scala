@@ -86,7 +86,7 @@ final class StubUpstream extends AgentUpstream:
       Assessment(
         Assessment.Target(citekey.value),
         None,
-        Some(com.histmersion.api.library.Citekey(citekey.value)),
+        Some(api.library.Citekey(citekey.value)),
         None,
         None,
         None,
@@ -170,20 +170,20 @@ object ApiIds:
   * quotes, evidence, draft, the blocking approval, a new article written only after approval, the chained review run,
   * an extension dropped on 412, and the `auto` mode). Skipped without HISTMERSION_TEST_DB_URL.
   */
-class GoalAgentsRunSuite extends DbSuite with com.histmersion.db.Bounded with RunTranscripts:
+class GoalAgentsRunSuite extends DbSuite with db.Bounded with RunTranscripts:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(120, "s")
 
   private val Goal = DomainGoal.Slug("zzagent-goal")
-  private val GoalSlug = com.histmersion.api.automation.Goal.Slug("zzagent-goal")
+  private val GoalSlug = api.automation.Goal.Slug("zzagent-goal")
   private val GoalTarget = RunRequest.Target("zzagent-goal")
   private val GoalSubject = ApprovalInfo.Subject("zzagent-goal")
   private val Ck = Citekey("zzagent2019_tin")
-  private val ApiCk = com.histmersion.api.library.Citekey("zzagent2019_tin")
+  private val ApiCk = api.library.Citekey("zzagent2019_tin")
   private val Ck2 = Citekey("zzagent2024_iso")
   private val CkTarget = RunRequest.Target("zzagent2019_tin")
-  private val Slug = com.histmersion.domain.research.Slug("zzagent_tin")
+  private val Slug = domain.research.Slug("zzagent_tin")
   private val SlugTarget = RunRequest.Target("zzagent_tin")
   private val SlugSubject = ApprovalInfo.Subject("zzagent_tin")
   private val SlugRef = GoalLink.Ref("zzagent_tin")
@@ -263,8 +263,8 @@ class GoalAgentsRunSuite extends DbSuite with com.histmersion.db.Bounded with Ru
         .put(
           Ck,
           Source.Put(
-            title = com.histmersion.api.library.Title("Bronze Age tin"),
-            year = (Some(2019)).map(com.histmersion.api.catalogue.Year.apply),
+            title = api.library.Title("Bronze Age tin"),
+            year = (Some(2019)).map(api.catalogue.Year.apply),
             topics = List(Source.Topics("zzagent_tin")),
             status = Some(Source.Status.Current),
             summary = Some(Source.Summary("The Uluburun ship carried ten tons of copper and one ton of tin.")),
@@ -282,8 +282,8 @@ class GoalAgentsRunSuite extends DbSuite with com.histmersion.db.Bounded with Ru
         .put(
           Ck2,
           Source.Put(
-            title = com.histmersion.api.library.Title("Tin isotopes"),
-            year = (Some(2024)).map(com.histmersion.api.catalogue.Year.apply),
+            title = api.library.Title("Tin isotopes"),
+            year = (Some(2024)).map(api.catalogue.Year.apply),
             topics = List(Source.Topics("zzagent_tin")),
             body = Some(
               Source.OcrMarkdown("We show that the tin of the Uluburun cargo came from Central Asia, not Anatolia.")
@@ -305,9 +305,9 @@ class GoalAgentsRunSuite extends DbSuite with com.histmersion.db.Bounded with Ru
       h.goals
         .put(
           Goal,
-          com.histmersion.api.automation.Goal.Put(
-            com.histmersion.api.automation.Goal.Title("Zz tin in the Bronze Age"),
-            notes = Some(com.histmersion.api.automation.Goal.Notes("where the tin came from"))
+          api.automation.Goal.Put(
+            api.automation.Goal.Title("Zz tin in the Bronze Age"),
+            notes = Some(api.automation.Goal.Notes("where the tin came from"))
           )
         )
         .isRight
@@ -340,17 +340,17 @@ class GoalAgentsRunSuite extends DbSuite with com.histmersion.db.Bounded with Ru
   private def stubPlan(up: StubUpstream): Unit =
     up.metas = Map(
       "10.5555/zzagent.in" -> WorkRef(
-        doi = (Some("10.5555/zzagent.in")).map(com.histmersion.api.library.Doi.apply),
-        title = (Some("Bronze Age tin")).map(com.histmersion.api.library.Title.apply),
-        year = (Some(2019)).map(com.histmersion.api.catalogue.Year.apply),
+        doi = (Some("10.5555/zzagent.in")).map(api.library.Doi.apply),
+        title = (Some("Bronze Age tin")).map(api.library.Title.apply),
+        year = (Some(2019)).map(api.catalogue.Year.apply),
         citekey = Some(ApiCk),
         inDb = WorkRef.InDb(true)
       ),
       "10.5555/zzagent.out" -> WorkRef(
-        doi = (Some("10.5555/zzagent.out")).map(com.histmersion.api.library.Doi.apply),
-        title = (Some("Zzagent tin isotopes")).map(com.histmersion.api.library.Title.apply),
-        year = (Some(2023)).map(com.histmersion.api.catalogue.Year.apply),
-        authors = (List("Berger", "Lockhoff")).map(com.histmersion.api.library.AuthorName.apply)
+        doi = (Some("10.5555/zzagent.out")).map(api.library.Doi.apply),
+        title = (Some("Zzagent tin isotopes")).map(api.library.Title.apply),
+        year = (Some(2023)).map(api.catalogue.Year.apply),
+        authors = (List("Berger", "Lockhoff")).map(api.library.AuthorName.apply)
       )
     )
 
@@ -377,7 +377,7 @@ class GoalAgentsRunSuite extends DbSuite with com.histmersion.db.Bounded with Ru
     )
     assert(plan.dropped.exists(_.value.contains("10.5555/zzagent.ghost")), plan.dropped)
     assert(
-      !Transactor(ds).read(GoalRepo.exists(com.histmersion.domain.automation.Goal.Slug("zzagent-tin-mines"))),
+      !Transactor(ds).read(GoalRepo.exists(domain.automation.Goal.Slug("zzagent-tin-mines"))),
       "nothing is created before approval"
     )
     assertEquals(connect(ds)(GoalLinkRepo.links(Goal)), Nil)
@@ -387,7 +387,7 @@ class GoalAgentsRunSuite extends DbSuite with com.histmersion.db.Bounded with Ru
       .decide(
         ApiIds.approval(open.head.id),
         Approval.Outcome("approve"),
-        DecisionRequest(Some(com.histmersion.api.automation.Approval.Note("good plan")))
+        DecisionRequest(Some(api.automation.Approval.Note("good plan")))
       )
       .toOption
       .get
@@ -397,7 +397,7 @@ class GoalAgentsRunSuite extends DbSuite with com.histmersion.db.Bounded with Ru
     assertEquals(done.status, "done", done.error)
     assertEquals(c.steps.size, 1, "the planner is not asked again on resume")
     assertEquals(
-      connect(ds)(GoalRepo.get(com.histmersion.domain.automation.Goal.Slug("zzagent-tin-mines")))
+      connect(ds)(GoalRepo.get(domain.automation.Goal.Slug("zzagent-tin-mines")))
         .flatMap(_.parentSlug)
         .map(_.value: String),
       Some(Goal)
@@ -443,7 +443,7 @@ class GoalAgentsRunSuite extends DbSuite with com.histmersion.db.Bounded with Ru
     val done = runAgain(a, run.id)
     assertEquals(done.status, "done", done.error)
     assert(done.progress.exists(_.value.contains("rejected")), done.progress)
-    assert(!Transactor(ds).read(GoalRepo.exists(com.histmersion.domain.automation.Goal.Slug("zzagent-tin-mines"))))
+    assert(!Transactor(ds).read(GoalRepo.exists(domain.automation.Goal.Slug("zzagent-tin-mines"))))
     assertEquals(connect(ds)(GoalLinkRepo.links(Goal)), Nil)
     assert(
       h.workListView
@@ -789,7 +789,7 @@ class GoalAgentsRunSuite extends DbSuite with com.histmersion.db.Bounded with Ru
     assert(a.startRun(RunRequest(PlanGoal, RunRequest.Target("zzagent-nope"))).isLeft)
     assert(
       a.startRun(
-        RunRequest(EnrichSource, CkTarget, goal = Some(com.histmersion.api.automation.Goal.Slug("zzagent-nope")))
+        RunRequest(EnrichSource, CkTarget, goal = Some(api.automation.Goal.Slug("zzagent-nope")))
       ).isLeft
     )
     val noWriter = baseCfg

@@ -185,4 +185,4 @@ class AgentSchemaSuite extends munit.FunSuite:
     )
 
 object AgentSchemaSuite:
-  final case class Titled(title: String) derives JsonCodec, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class Titled(title: String) derives JsonCodec, KindlingsSchema, api.json.Schema

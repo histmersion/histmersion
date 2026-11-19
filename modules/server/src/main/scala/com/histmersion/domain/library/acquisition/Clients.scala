@@ -12,5 +12,5 @@ import com.histmersion.domain.*
 /** A downloaded file plus where it came from — the plugin SPI's type, so a fetcher plugin's copy is the one ingest
   * stores.
   */
-type FetchedFile = com.histmersion.plugin.FetchedFile
-val FetchedFile = com.histmersion.plugin.FetchedFile
+type FetchedFile = plugin.FetchedFile
+val FetchedFile = plugin.FetchedFile

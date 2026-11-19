@@ -47,7 +47,7 @@ class AssetLinksControllersSuite extends munit.FunSuite:
     val c = controllers()
     val made = c.create(
       AssetLink.Put(
-        com.histmersion.api.library.Citekey("zqold"),
+        api.library.Citekey("zqold"),
         Bundle.Asset.FileName("a.png"),
         AssetRelation.Wire("depicts"),
         MediaTarget.TargetType("place"),
@@ -78,7 +78,7 @@ class AssetLinksControllersSuite extends munit.FunSuite:
         (
           c.create(
             AssetLink.Put(
-              com.histmersion.api.library.Citekey("zqold"),
+              api.library.Citekey("zqold"),
               Bundle.Asset.FileName("a.png"),
               AssetRelation.Wire("depicts"),
               MediaTarget.TargetType("place"),

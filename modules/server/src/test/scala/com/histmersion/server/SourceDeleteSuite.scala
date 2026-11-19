@@ -106,9 +106,9 @@ class SourceDeleteSuite extends DbSuite:
       findings: Int = 0,
       calibre: Option[Source.CalibreId] = None
   ) = Source(
-    citekey = com.histmersion.api.library.Citekey(ck.value),
-    title = com.histmersion.api.library.Title(s"Title $ck"),
-    authors = (List("A")).map(com.histmersion.api.library.AuthorName.apply),
+    citekey = api.library.Citekey(ck.value),
+    title = api.library.Title(s"Title $ck"),
+    authors = (List("A")).map(api.library.AuthorName.apply),
     doi = None,
     year = (Some(2020)).map(Year.apply),
     venue = None,
@@ -126,7 +126,7 @@ class SourceDeleteSuite extends DbSuite:
     findings = (0 until findings).toList.map(i =>
       Finding(
         Finding.Id(s"$ck#$i"),
-        com.histmersion.api.library.Citekey(ck.value),
+        api.library.Citekey(ck.value),
         Finding.Claim(s"claim $i"),
         Some(Finding.Region("Anatolia")),
         Some(GeoPoint(Longitude(32.0), Latitude(39.0))),
@@ -171,13 +171,13 @@ class SourceDeleteSuite extends DbSuite:
         calibre = Some(Source.CalibreId("1693")),
         edges = List(
           Edge(
-            com.histmersion.api.library.Citekey(Old),
-            com.histmersion.api.library.Citekey(Other),
+            api.library.Citekey(Old),
+            api.library.Citekey(Other),
             Edge.Kind.Challenges
           ),
           Edge(
-            com.histmersion.api.library.Citekey(Old),
-            com.histmersion.api.library.Citekey("zzdelmissing2001_x"),
+            api.library.Citekey(Old),
+            api.library.Citekey("zzdelmissing2001_x"),
             Edge.Kind.References
           )
         )
@@ -192,8 +192,8 @@ class SourceDeleteSuite extends DbSuite:
         OtherCk,
         edges = List(
           Edge(
-            com.histmersion.api.library.Citekey(Other),
-            com.histmersion.api.library.Citekey(Del),
+            api.library.Citekey(Other),
+            api.library.Citekey(Del),
             Edge.Kind.References
           )
         )
@@ -234,8 +234,8 @@ class SourceDeleteSuite extends DbSuite:
         Nil,
         None,
         reasons = Map(
-          com.histmersion.api.library.Citekey(Del) -> Coverage.Rationale("off topic"),
-          com.histmersion.api.library.Citekey(Other) -> Coverage.Rationale("kept")
+          api.library.Citekey(Del) -> Coverage.Rationale("off topic"),
+          api.library.Citekey(Other) -> Coverage.Rationale("kept")
         )
       )
     )
@@ -286,7 +286,7 @@ class SourceDeleteSuite extends DbSuite:
     assertEquals(
       d.edgesIn,
       List(
-        Edge(com.histmersion.api.library.Citekey(Other), com.histmersion.api.library.Citekey(Del), Edge.Kind.References)
+        Edge(api.library.Citekey(Other), api.library.Citekey(Del), Edge.Kind.References)
       )
     )
     assertEquals(d.coverage, List(Slug))
@@ -348,7 +348,7 @@ class SourceDeleteSuite extends DbSuite:
       assert(SourceFixtures.load(ds, DelCk).isDefined, "a refused delete deleted")
       ArticleFixtures.delete(
         ds,
-        com.histmersion.domain.research.Slug.either(slug.value).fold(m => fail(m), identity)
+        domain.research.Slug.either(slug.value).fold(m => fail(m), identity)
       ): Unit
     }
 
@@ -420,7 +420,7 @@ class SourceDeleteSuite extends DbSuite:
     // the article stays; only the reason keyed by the deleted source went
     assertEquals(
       ArticleFixtures
-        .load(ds, com.histmersion.domain.research.Slug("zzdel_article"))
+        .load(ds, domain.research.Slug("zzdel_article"))
         .map(_.reasons.view.mapValues(w => s"$w").toMap),
       Some(Map(Other -> "kept"))
     )

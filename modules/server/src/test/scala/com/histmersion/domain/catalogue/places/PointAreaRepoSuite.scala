@@ -32,7 +32,7 @@ import com.histmersion.util.time.SystemTimer
   * every dependent row gone, the affected findings matched again, a shape, a site and a seed place untouched. Fixtures
   * around 150°E 60°S, where no other suite has any; ids `wikidata_q9992…`, `geonames_9992…`, `zzpa…`.
   */
-class PointAreaRepoSuite extends DbSuite with com.histmersion.db.Bounded:
+class PointAreaRepoSuite extends DbSuite with db.Bounded:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
@@ -95,49 +95,49 @@ class PointAreaRepoSuite extends DbSuite with com.histmersion.db.Bounded:
           sql"""INSERT INTO places (id, label, kind, geom, period, dataset, import_source, import_ref, import_version)
                       VALUES ($id, $label, $kind, ST_GeomFromText($wkt, 4326), $period::int8range, 'seed', $src,
                               $src || ':' || $id, 'v1')""".update.run()
-      imported(Region, "Zzpa Region", com.histmersion.domain.catalogue.Place.Kind.Region, "POINT(150 -60)", "wikidata")
+      imported(Region, "Zzpa Region", domain.catalogue.Place.Kind.Region, "POINT(150 -60)", "wikidata")
       imported(
         Polity,
         "Zzpa Kingdom",
-        com.histmersion.domain.catalogue.Place.Kind.Polity,
+        domain.catalogue.Place.Kind.Polity,
         "POINT(150.5 -60)",
         "wikidata",
         "[-900,-699)"
       )
-      imported(Pinned, "Zzpa Pinned", com.histmersion.domain.catalogue.Place.Kind.Region, "POINT(151 -60)", "wikidata")
+      imported(Pinned, "Zzpa Pinned", domain.catalogue.Place.Kind.Region, "POINT(151 -60)", "wikidata")
       imported(
         Shaped,
         "Zzpa Shaped",
-        com.histmersion.domain.catalogue.Place.Kind.Region,
+        domain.catalogue.Place.Kind.Region,
         "POLYGON((150 -61,151 -61,151 -60.5,150 -61))",
         "wikidata"
       )
       imported(
         GnArea,
         "Zzpa Gn Area",
-        com.histmersion.domain.catalogue.Place.Kind.Region,
+        domain.catalogue.Place.Kind.Region,
         "POINT(151.5 -60)",
         "geonames"
       )
-      imported(GnSite, "Zzpa Gn Site", com.histmersion.domain.catalogue.Place.Kind.Site, "POINT(152 -60)", "geonames")
+      imported(GnSite, "Zzpa Gn Site", domain.catalogue.Place.Kind.Site, "POINT(152 -60)", "geonames")
       imported(
         Thrace,
         "Zzpa Thrace",
-        com.histmersion.domain.catalogue.Place.Kind.Region,
+        domain.catalogue.Place.Kind.Region,
         "POINT(151.2 -60.2)",
         "wikidata"
       )
       imported(
         Eastern,
         "Eastern Zzpa Thracia",
-        com.histmersion.domain.catalogue.Place.Kind.Region,
+        domain.catalogue.Place.Kind.Region,
         "POINT(151.4 -60.2)",
         "geonames"
       )
       imported(
         Curated,
         "Zzpa Curated",
-        com.histmersion.domain.catalogue.Place.Kind.Region,
+        domain.catalogue.Place.Kind.Region,
         "POINT(152.5 -60)",
         "wikidata"
       )
@@ -169,8 +169,8 @@ class PointAreaRepoSuite extends DbSuite with com.histmersion.db.Bounded:
       ds,
       Source(
         citekey = Citekey("zzpa_src"),
-        title = com.histmersion.api.library.Title("Point area fixture"),
-        authors = (List("T")).map(com.histmersion.api.library.AuthorName.apply),
+        title = api.library.Title("Point area fixture"),
+        authors = (List("T")).map(api.library.AuthorName.apply),
         doi = None,
         year = (Some(2026)).map(Year.apply),
         venue = None,
@@ -207,7 +207,7 @@ class PointAreaRepoSuite extends DbSuite with com.histmersion.db.Bounded:
   private def exists(id: String): Boolean =
     connect(ds)(sql"SELECT 1 FROM places WHERE id = $id".query[Int].run().nonEmpty)
   private val kinds =
-    Gazetteer.DefaultPointAreaKinds.map(k => com.histmersion.domain.catalogue.Place.Kind.Wire(k.value))
+    Gazetteer.DefaultPointAreaKinds.map(k => domain.catalogue.Place.Kind.Wire(k.value))
   private val rule = Lint.rule(Lint.Rule.Name(Lint.PlaceImportedPointArea)).get
   private lazy val geometry = PlaceGeometry(Transactor(ds))(using new SystemTimer)
   private def settings(batch: PointAreaRepo.Settings.Batch, budgetMs: PointAreaRepo.Settings.BudgetMs) =
@@ -340,14 +340,14 @@ class PointAreaRepoSuite extends DbSuite with com.histmersion.db.Bounded:
     seed()
     val ids = connect(ds)(PointAreaRepo.ofSourceIn(PointAreas.Group.Source("wikidata"), kinds)).toSet
     assert(
-      ids.contains(com.histmersion.domain.catalogue.Place.Id.applyUnsafe(Region)) && ids.contains(
-        com.histmersion.domain.catalogue.Place.Id.applyUnsafe(Polity)
+      ids.contains(domain.catalogue.Place.Id.applyUnsafe(Region)) && ids.contains(
+        domain.catalogue.Place.Id.applyUnsafe(Polity)
       ),
       ids.toString
     )
     assert(
-      !ids.contains(com.histmersion.domain.catalogue.Place.Id.applyUnsafe(Curated)) && !ids.contains(
-        com.histmersion.domain.catalogue.Place.Id.applyUnsafe(Pinned)
+      !ids.contains(domain.catalogue.Place.Id.applyUnsafe(Curated)) && !ids.contains(
+        domain.catalogue.Place.Id.applyUnsafe(Pinned)
       ),
       ids.toString
     )

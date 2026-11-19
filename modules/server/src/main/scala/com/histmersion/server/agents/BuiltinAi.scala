@@ -35,11 +35,11 @@ object BuiltinAi:
     ProviderKind.values.toList.filter(runtimes.contains).map(k => HostAiProvider(pluginOf(k), k))
 
   /** The plugin a built-in provider comes with. */
-  def pluginOf(kind: ProviderKind): com.histmersion.util.plugins.Plugin.Id =
-    com.histmersion.util.plugins.Plugin.Id.assume(s"ai-${kind.wire.value}")
+  def pluginOf(kind: ProviderKind): util.plugins.Plugin.Id =
+    util.plugins.Plugin.Id.assume(s"ai-${kind.wire.value}")
 
   /** The six built-in providers' plugins. */
-  val pluginIds: Set[com.histmersion.util.plugins.Plugin.Id] = ProviderKind.values.map(pluginOf).toSet
+  val pluginIds: Set[util.plugins.Plugin.Id] = ProviderKind.values.map(pluginOf).toSet
 
   def plugins: List[Plugin] = entries.map(e =>
     HostProvided(
@@ -55,18 +55,18 @@ object BuiltinAi:
     * (`ModelRef.parse`'s `known`).
     */
   def known(
-      registered: ListMap[com.histmersion.util.plugins.Plugin.Id, AiProvider]
-  ): Set[com.histmersion.util.plugins.Plugin.Id] = registered.keySet.toSet.filterNot(id => reserved(Reserved(id.value)))
+      registered: ListMap[util.plugins.Plugin.Id, AiProvider]
+  ): Set[util.plugins.Plugin.Id] = registered.keySet.toSet.filterNot(id => reserved(Reserved(id.value)))
 
   /** Pure: the provider a reference names among the registered ones, or why it cannot be used: a built-in provider
     * whose plugin is switched off, or a plugin provider no longer registered.
     */
   def lookup(
       kind: ProviderKind,
-      registered: ListMap[com.histmersion.util.plugins.Plugin.Id, AiProvider]
+      registered: ListMap[util.plugins.Plugin.Id, AiProvider]
   ): Either[Problem, AiProvider] =
     registered
-      .get(com.histmersion.util.plugins.Plugin.Id.assume(kind.wire.value))
+      .get(util.plugins.Plugin.Id.assume(kind.wire.value))
       .toRight(
         if reserved(Reserved(kind.wire.value)) then
           Problem.Refused.Disabled(

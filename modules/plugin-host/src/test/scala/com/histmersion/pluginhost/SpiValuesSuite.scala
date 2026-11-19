@@ -40,10 +40,10 @@ class SpiValuesSuite extends munit.FunSuite:
     assertEquals(SpiValues.period(com.histmersion.Period.point(com.histmersion.Year(7))), Some(Period.point(Year(7))))
     assertEquals((SpiValues.latitude(Latitude(91.0)), SpiValues.longitude(Longitude(-181.0))), (None, None))
     assertEquals(
-      com.histmersion.domain.library.Doi.normalize(" 10.1234/abc ").flatMap(SpiValues.doi),
+      domain.library.Doi.normalize(" 10.1234/abc ").flatMap(SpiValues.doi),
       Some(Doi("10.1234/abc"))
     )
-    assertEquals(com.histmersion.domain.library.Doi.normalize("abc").flatMap(SpiValues.doi), None)
+    assertEquals(domain.library.Doi.normalize("abc").flatMap(SpiValues.doi), None)
     assertEquals(
       (SpiValues.wikidata(Wikidata.Id("Q5788")), Wikidata.Id.option("Troy").flatMap(SpiValues.wikidata)),
       (Some(WikidataId("Q5788")), None)
@@ -193,10 +193,10 @@ class SpiValuesSuite extends munit.FunSuite:
         DeepTime.SignedYear(2026L),
         Some(
           BBox(
-            com.histmersion.api.catalogue.Longitude(-10),
-            com.histmersion.api.catalogue.Latitude(30),
-            com.histmersion.api.catalogue.Longitude(40),
-            com.histmersion.api.catalogue.Latitude(50)
+            api.catalogue.Longitude(-10),
+            api.catalogue.Latitude(30),
+            api.catalogue.Longitude(40),
+            api.catalogue.Latitude(50)
           )
         )
       ),
@@ -209,10 +209,10 @@ class SpiValuesSuite extends munit.FunSuite:
           DeepTime.SignedYear(2026L),
           Some(
             BBox(
-              com.histmersion.api.catalogue.Longitude(-10),
-              com.histmersion.api.catalogue.Latitude(30),
-              com.histmersion.api.catalogue.Longitude(400),
-              com.histmersion.api.catalogue.Latitude(50)
+              api.catalogue.Longitude(-10),
+              api.catalogue.Latitude(30),
+              api.catalogue.Longitude(400),
+              api.catalogue.Latitude(50)
             )
           )
         )

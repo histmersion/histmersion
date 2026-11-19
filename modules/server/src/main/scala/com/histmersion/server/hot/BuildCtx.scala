@@ -32,4 +32,4 @@ final class BuildCtx[C, A] private[hot] (
     dep(h.name).asInstanceOf[B]
 
 object BuildCtx:
-  export com.histmersion.config.HotNode.Name as Changed
+  export HotNode.Name as Changed

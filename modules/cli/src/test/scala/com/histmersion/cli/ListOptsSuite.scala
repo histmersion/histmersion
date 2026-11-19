@@ -16,7 +16,7 @@ import com.histmersion.api.Paging
   */
 class ListOptsSuite extends munit.FunSuite:
 
-  private given console: com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard
+  private given console: util.console.Console = util.console.Console.standard
 
   private def approvals(args: String*): Either[String, ApprovalFilter] =
     Parsing.parse("agent" +: "approvals" +: args*) match

@@ -68,7 +68,7 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
   override val munitTimeout = scala.concurrent.duration.Duration(180, "s")
 
   private val Goal = DomainGoal.Slug("zzagent-watch")
-  private val GoalSlug = com.histmersion.api.automation.Goal.Slug("zzagent-watch")
+  private val GoalSlug = api.automation.Goal.Slug("zzagent-watch")
   private val GoalTarget = ManagerItem.Target("zzagent-watch")
   private val Query = "zzagent tin trade"
   private val QueryRef = LinkAdd.Ref(Query)
@@ -154,23 +154,23 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
       h.goals
         .put(
           Goal,
-          com.histmersion.api.automation.Goal.Put(
-            com.histmersion.api.automation.Goal.Title("Zz tin watched"),
-            notes = Some(com.histmersion.api.automation.Goal.Notes("where the tin came from"))
+          api.automation.Goal.Put(
+            api.automation.Goal.Title("Zz tin watched"),
+            notes = Some(api.automation.Goal.Notes("where the tin came from"))
           )
         )
         .isRight
     )
     assert(a.addGoalLink(Goal, LinkAdd(LinkKind.Query, QueryRef)).isRight)
 
-  private def ref(g: DomainGoal.Slug) = com.histmersion.api.automation.Goal.Ref(g.value)
+  private def ref(g: DomainGoal.Slug) = api.automation.Goal.Ref(g.value)
 
   private def work(doi: String, title: String, oa: WorkRef.IsOa) =
     WorkRef(
       doi = (Some(doi)).map(Doi.apply),
-      title = (Some(title)).map(com.histmersion.api.library.Title.apply),
+      title = (Some(title)).map(api.library.Title.apply),
       year = (Some(2023)).map(Year.apply),
-      authors = (List("Zz")).map(com.histmersion.api.library.AuthorName.apply),
+      authors = (List("Zz")).map(api.library.AuthorName.apply),
       isOa = oa
     )
 
@@ -184,7 +184,7 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
           .put(
             ck,
             Source.Put(
-              title = com.histmersion.api.library.Title(s"Ingested $doi"),
+              title = api.library.Title(s"Ingested $doi"),
               year = (Some(2023)).map(Year.apply),
               doi = (Some(doi)).map(Doi.apply)
             )
@@ -193,9 +193,9 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
       )
       Right(
         Ingest.Report(
-          com.histmersion.api.library.Citekey(ck.value),
+          api.library.Citekey(ck.value),
           Some(Doi(doi)),
-          Some(com.histmersion.api.library.Title(s"Ingested $doi")),
+          Some(api.library.Title(s"Ingested $doi")),
           created = Ingest.Report.Created(true),
           Some(
             PdfInfo(
@@ -551,12 +551,12 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
   private def enrichItems(a: AgentsControllers, h: ServerWiring): Unit =
     assert(
       h.library.sources
-        .put(CkA, Source.Put(title = com.histmersion.api.library.Title("Hint A"), year = (Some(2020)).map(Year.apply)))
+        .put(CkA, Source.Put(title = api.library.Title("Hint A"), year = (Some(2020)).map(Year.apply)))
         .isRight
     )
     assert(
       h.library.sources
-        .put(CkB, Source.Put(title = com.histmersion.api.library.Title("Hint B"), year = (Some(2021)).map(Year.apply)))
+        .put(CkB, Source.Put(title = api.library.Title("Hint B"), year = (Some(2021)).map(Year.apply)))
         .isRight
     )
     a.managers.ensureDefaults()

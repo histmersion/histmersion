@@ -132,7 +132,7 @@ object PmTiles:
     object TileContents extends Newtype[Long, Pure]
     type Clustered = Clustered.T
     object Clustered extends Newtype[Boolean, Pure]
-    export com.histmersion.util.basemap.PmTiles.{Zoom as MaxZoom, Zoom as MinZoom}
+    export PmTiles.{Zoom as MaxZoom, Zoom as MinZoom}
     type MinLon = MinLon.T
     object MinLon extends Newtype[Double, Pure]
     type MinLat = MinLat.T
@@ -141,7 +141,7 @@ object PmTiles:
     object MaxLon extends Newtype[Double, Pure]
     type MaxLat = MaxLat.T
     object MaxLat extends Newtype[Double, Pure]
-    export com.histmersion.util.basemap.PmTiles.Zoom as CenterZoom
+    export PmTiles.Zoom as CenterZoom
     type CenterLon = CenterLon.T
     object CenterLon extends Newtype[Double, Pure]
     type CenterLat = CenterLat.T

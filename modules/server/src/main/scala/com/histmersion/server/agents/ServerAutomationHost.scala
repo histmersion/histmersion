@@ -34,10 +34,10 @@ import com.histmersion.domain.Title
   */
 final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream) extends AutomationHost:
   def articleExists(slug: Slug): Boolean = h.research.articleStore.exists(slug)
-  def goal(slug: com.histmersion.domain.automation.Goal.Slug): Either[Api.Error, Goal] = h.goals.get(slug)
-  def putGoal(slug: com.histmersion.domain.automation.Goal.Slug, in: Goal.Put): Either[Api.Error, Goal] =
+  def goal(slug: domain.automation.Goal.Slug): Either[Api.Error, Goal] = h.goals.get(slug)
+  def putGoal(slug: domain.automation.Goal.Slug, in: Goal.Put): Either[Api.Error, Goal] =
     h.goals.put(slug, in)
-  def patchGoal(slug: com.histmersion.domain.automation.Goal.Slug, patch: Goal.Patch): Either[Api.Error, Goal] =
+  def patchGoal(slug: domain.automation.Goal.Slug, patch: Goal.Patch): Either[Api.Error, Goal] =
     h.goals.patch(slug, patch)
   def runTarget(
       p: Pipeline,
@@ -68,7 +68,7 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
         )
       case TargetKind.Goal =>
         Some(
-          com.histmersion.domain.automation.Goal.Slug
+          domain.automation.Goal.Slug
             .parse(raw.value.trim)
             .left
             .map(Api.Error(_))

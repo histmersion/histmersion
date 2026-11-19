@@ -20,7 +20,7 @@ class FetchChainSuite extends munit.FunSuite:
 
   private val Pdf = FetchedFile.Bytes(("%PDF-1.4\n" + "x" * 2048).getBytes("ISO-8859-1"))
   private val Html = FetchedFile.Bytes(("<!DOCTYPE html><html>" + "x" * 2048 + "</html>").getBytes("UTF-8"))
-  private val FetchedDoi = com.histmersion.domain.library.Doi("10.1234/x")
+  private val FetchedDoi = domain.library.Doi("10.1234/x")
   private val doi = WorkKey(doi = Some(Doi("10.1234/x")))
 
   /** A fake fetcher answering `answer`, counting its calls. */
@@ -47,25 +47,25 @@ class FetchChainSuite extends munit.FunSuite:
     assertEquals(
       FetchChain.order(
         List(
-          com.histmersion.util.plugins.Plugin.Id("a"),
-          com.histmersion.util.plugins.Plugin.Id("b"),
-          com.histmersion.util.plugins.Plugin.Id("c"),
-          com.histmersion.util.plugins.Plugin.Id("d")
+          util.plugins.Plugin.Id("a"),
+          util.plugins.Plugin.Id("b"),
+          util.plugins.Plugin.Id("c"),
+          util.plugins.Plugin.Id("d")
         ),
-        List(com.histmersion.util.plugins.Plugin.Id("c"), com.histmersion.util.plugins.Plugin.Id("a"))
+        List(util.plugins.Plugin.Id("c"), util.plugins.Plugin.Id("a"))
       ),
       (List("c", "a", "b", "d"), Nil)
     )
     assertEquals(
       FetchChain
-        .order(List(com.histmersion.util.plugins.Plugin.Id("a"), com.histmersion.util.plugins.Plugin.Id("b")), Nil),
+        .order(List(util.plugins.Plugin.Id("a"), util.plugins.Plugin.Id("b")), Nil),
       (List("a", "b"), Nil)
     )
 
   test("order: a listed id nothing registered is skipped, with a note naming each such id"):
     val (ids, notes) = FetchChain.order(
-      List(com.histmersion.util.plugins.Plugin.Id("a")),
-      CommaList("x, a , , y, x").entries.flatMap(e => com.histmersion.util.plugins.Plugin.Id.option(e.value))
+      List(util.plugins.Plugin.Id("a")),
+      CommaList("x, a , , y, x").entries.flatMap(e => util.plugins.Plugin.Id.option(e.value))
     )
     assertEquals(ids, List("a"))
     assertEquals(
@@ -146,7 +146,7 @@ class FetchChainSuite extends munit.FunSuite:
       Left(Vector(true))
     )
     assertEquals(
-      FetchChain(Nil).fetch(Some(com.histmersion.domain.library.Doi("10.1234/x")), None).left.map(_.toVector),
+      FetchChain(Nil).fetch(Some(domain.library.Doi("10.1234/x")), None).left.map(_.toVector),
       Left(Vector(Problem.NotFound.Copy(Problem.Raw("doi:10.1234/x"), Vector.empty)))
     )
 
@@ -256,7 +256,7 @@ class FetchChainSuite extends munit.FunSuite:
     val seen = scala.collection.mutable.ListBuffer.empty[WorkKey] // a test double's record of calls
     val spy = Fake(Access.Open, (w, _) => { seen += w; Fetch.Miss(Problem.Unclassified(Legacy.Text("none"))) })
     val chain = FetchChain(List(FetchChain.Step.Id("spy") -> spy))
-    val _ = chain.fetch(Some(com.histmersion.domain.library.Doi("10.1/x")), Some(ArxivId("2101.00001")))
+    val _ = chain.fetch(Some(domain.library.Doi("10.1/x")), Some(ArxivId("2101.00001")))
     val _ = chain.fetchWork(
       WorkKey(archive = Some(WorkKey.Archive("racesofeurope")), format = Some(WorkKey.Format("pdf"))),
       legalOnly = FetchChain.LegalOnly(true)
@@ -293,17 +293,17 @@ class FetchChainSuite extends munit.FunSuite:
   test(
     "of: the registry in chain order, a note for what is listed and missing and for an unauthorised fetcher left off"
   ):
-    val regs = ListMap[com.histmersion.util.plugins.Plugin.Id, SourceFetcher](
-      com.histmersion.util.plugins.Plugin.Id("b") -> miss(),
-      com.histmersion.util.plugins.Plugin.Id("u") -> miss(Access.Unauthorised),
-      com.histmersion.util.plugins.Plugin.Id("a") -> found(FetchedFile.Source("a"))
+    val regs = ListMap[util.plugins.Plugin.Id, SourceFetcher](
+      util.plugins.Plugin.Id("b") -> miss(),
+      util.plugins.Plugin.Id("u") -> miss(Access.Unauthorised),
+      util.plugins.Plugin.Id("a") -> found(FetchedFile.Source("a"))
     )
     val (chain, notes) = FetchChain.of(
       regs,
       List(
-        com.histmersion.util.plugins.Plugin.Id("a"),
-        com.histmersion.util.plugins.Plugin.Id("gone"),
-        com.histmersion.util.plugins.Plugin.Id("b")
+        util.plugins.Plugin.Id("a"),
+        util.plugins.Plugin.Id("gone"),
+        util.plugins.Plugin.Id("b")
       ),
       allowUnauthorised = FetchChain.AllowUnauthorised(false)
     )

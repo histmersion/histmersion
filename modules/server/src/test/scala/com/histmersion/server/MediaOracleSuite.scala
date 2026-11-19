@@ -1089,7 +1089,7 @@ class MediaOracleSuite extends DbSuite:
       ("europeana", Some("pleiades_570491"), None)
     ).map((p, place, event) =>
       (
-        com.histmersion.api.media.MediaItem.Provider(p),
+        api.media.MediaItem.Provider(p),
         place.map(Place.Id(_)),
         event.map(Event.Id(_))
       )
@@ -1106,7 +1106,7 @@ class MediaOracleSuite extends DbSuite:
     run(
       "zq-own dry run",
       MediaImportRequest(
-        com.histmersion.api.media.MediaItem.Provider("zq-own"),
+        api.media.MediaItem.Provider("zq-own"),
         dryRun = MediaImportRequest.DryRun(true),
         limit = Some(MediaImportRequest.Limit(20))
       )
@@ -1114,7 +1114,7 @@ class MediaOracleSuite extends DbSuite:
     run(
       "zq-own a place",
       MediaImportRequest(
-        com.histmersion.api.media.MediaItem.Provider("zq-own"),
+        api.media.MediaItem.Provider("zq-own"),
         dryRun = MediaImportRequest.DryRun(false),
         place = Some(Place.Id("pleiades_697725"))
       )
@@ -1122,7 +1122,7 @@ class MediaOracleSuite extends DbSuite:
     run(
       "zq-own an event",
       MediaImportRequest(
-        com.histmersion.api.media.MediaItem.Provider("zq-own"),
+        api.media.MediaItem.Provider("zq-own"),
         dryRun = MediaImportRequest.DryRun(false),
         event = Some(Event.Id("fall_of_x"))
       )
@@ -1130,7 +1130,7 @@ class MediaOracleSuite extends DbSuite:
     run(
       "zq-own again, refresh",
       MediaImportRequest(
-        com.histmersion.api.media.MediaItem.Provider("zq-own"),
+        api.media.MediaItem.Provider("zq-own"),
         dryRun = MediaImportRequest.DryRun(false),
         place = Some(Place.Id("pleiades_697725")),
         refresh = MediaImportRequest.Refresh(true)
@@ -1139,7 +1139,7 @@ class MediaOracleSuite extends DbSuite:
     run(
       "zq-search dry run",
       MediaImportRequest(
-        com.histmersion.api.media.MediaItem.Provider("zq-search"),
+        api.media.MediaItem.Provider("zq-search"),
         dryRun = MediaImportRequest.DryRun(true),
         limit = Some(MediaImportRequest.Limit(3))
       )
@@ -1147,16 +1147,16 @@ class MediaOracleSuite extends DbSuite:
     run(
       "zq-search a place",
       MediaImportRequest(
-        com.histmersion.api.media.MediaItem.Provider("zq-search"),
+        api.media.MediaItem.Provider("zq-search"),
         dryRun = MediaImportRequest.DryRun(false),
         place = Some(Place.Id("pleiades_570491"))
       )
     )
-    run("an unknown collection", MediaImportRequest(com.histmersion.api.media.MediaItem.Provider("zq-nothing")))
+    run("an unknown collection", MediaImportRequest(api.media.MediaItem.Provider("zq-nothing")))
     run(
       "many, not as a job",
       MediaImportRequest(
-        com.histmersion.api.media.MediaItem.Provider("zq-own"),
+        api.media.MediaItem.Provider("zq-own"),
         dryRun = MediaImportRequest.DryRun(false)
       )
     )

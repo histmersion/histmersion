@@ -33,7 +33,7 @@ object Halt:
   type WaitId = WaitId.T
   object WaitId extends Newtype[Long, Pure]
   object Wait:
-    export com.histmersion.domain.automation.agents.Halt.WaitId as Id
+    export Halt.WaitId as Id
     type What = What.T
     object What extends Newtype[String, Pure]
   export com.histmersion.api.automation.Stopped

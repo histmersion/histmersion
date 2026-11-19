@@ -19,7 +19,7 @@ import com.histmersion.api.catalogue.Year
 abstract class EventLinkServiceContract extends CatalogueStoreSuite:
   private def cand(ck: Citekey, score: EventLinkCandidate.Score) =
     EventLinkCandidate(
-      com.histmersion.api.catalogue.Event.Id("zz_ev"),
+      api.catalogue.Event.Id("zz_ev"),
       ck,
       score,
       findings = List(Finding.Id("f1")),
@@ -70,21 +70,21 @@ abstract class EventLinkServiceContract extends CatalogueStoreSuite:
     assert(
       l.setStatus(
         Event.Id("zz_ev"),
-        com.histmersion.domain.library.Citekey("zzl2020_a"),
+        domain.library.Citekey("zzl2020_a"),
         Event.LinkStatus.Wire(Event.LinkStatus.Confirmed)
       )
     )
     assert(
       l.setStatus(
         Event.Id("zz_ev"),
-        com.histmersion.domain.library.Citekey("zzl2020_c"),
+        domain.library.Citekey("zzl2020_c"),
         Event.LinkStatus.Wire(Event.LinkStatus.Rejected)
       )
     )
     assert(
       !l.setStatus(
         Event.Id("zz_ev"),
-        com.histmersion.domain.library.Citekey("zzl2020_none"),
+        domain.library.Citekey("zzl2020_none"),
         Event.LinkStatus.Wire(Event.LinkStatus.Confirmed)
       )
     )

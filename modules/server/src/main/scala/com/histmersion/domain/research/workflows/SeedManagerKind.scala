@@ -127,7 +127,7 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
       case ArticleCompile if Slug.option(item.target.value).exists(site.articles.get(_).isRight) =>
         m.goal.foreach(g =>
           c.linkGoal(
-            com.histmersion.domain.automation.Goal.Slug.assume(g.value),
+            domain.automation.Goal.Slug.assume(g.value),
             Goal.Plans.LinkKind.Article,
             BGoalLinkRow.Ref(item.target.value),
             Some(BGoalLinkRow.Note(s"compiled by ${m.id}"))
@@ -169,7 +169,7 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
     itemKind.value match
       case ProposeArticles | PlanGoalItem =>
         val g = Option(raw.value.trim).filter(_.nonEmpty).orElse(m.goal.map(_.value)).getOrElse("")
-        com.histmersion.domain.automation.Goal.Slug
+        domain.automation.Goal.Slug
           .option(g)
           .toRight(Api.Error(Problem.NotFound.Entity(Problem.TypeName.of(Goal.Slug), Problem.Raw(s"$g"))))
           .flatMap(site.goal(_))
@@ -282,7 +282,7 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
       now: Instant,
       out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
   ): Option[ManagerLight.Id] =
-    val goalOf = com.histmersion.domain.automation.Goal.Slug.option(item.target.value).flatMap(site.goal(_).toOption)
+    val goalOf = domain.automation.Goal.Slug.option(item.target.value).flatMap(site.goal(_).toOption)
     def budget = m.config.budgetUsd.map(b => RunRequest.BudgetUsd(b.value))
     item.kind.value match
       case ProposeArticles =>
@@ -345,8 +345,7 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
             // sub-goals only above the depth limit (a goal there gets queries and works, no children)
             val depth = AutopilotPolicy.depth(
               Slug.assume(g.slug.value),
-              s =>
-                c.parentOf(com.histmersion.domain.automation.Goal.Slug.assume(s.value)).map(p => Slug.assume(p.value))
+              s => c.parentOf(domain.automation.Goal.Slug.assume(s.value)).map(p => Slug.assume(p.value))
             )
             val leaf = depth.value >= c.cfg.approvals.auto.maxGoalDepth.value
             c.start(

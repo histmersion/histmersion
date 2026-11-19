@@ -34,7 +34,7 @@ import com.histmersion.api.media.MediaImportRequest
   */
 class CalibreSuite extends munit.FunSuite:
 
-  private given console: com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard
+  private given console: util.console.Console = util.console.Console.standard
 
   private def fixture(name: String) = scala.io.Source.fromResource(s"acquire/$name").mkString
 

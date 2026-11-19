@@ -110,7 +110,7 @@ final class GoalFocusService(
       case Some(k) if List(ApprovalKind.ArticlePlan, ApprovalKind.GoalPlan, ApprovalKind.ArticlePublish).contains(k) =>
         !autoApprove
           .flatMap(_.value.toBooleanOption)
-          .getOrElse(cfg.approvals.checked(k.transformInto[com.histmersion.domain.automation.Approval.Kind]))
+          .getOrElse(cfg.approvals.checked(k.transformInto[domain.automation.Approval.Kind]))
       case _ => true
 
   final private case class Read(
@@ -128,7 +128,7 @@ final class GoalFocusService(
       r.goals.map(g => Goal.Slug.assume(g.value)) -> Work(
         Work.ItemId(r.id.value),
         ManagerItem.Kind(r.kind.value),
-        com.histmersion.domain.automation.ItemStatus.Wire(r.status.value),
+        domain.automation.ItemStatus.Wire(r.status.value),
         Work.Target(r.target.value),
         Work.Person(r.person.value),
         Work.FocusHeld(r.focusHeld.value),
@@ -171,7 +171,7 @@ final class GoalFocusService(
       max,
       GoalFocus.Settings.MinSources(agents.sourcesToPlan.value),
       plansByPerson = GoalFocus.Settings.PlansByPerson(
-        !cfg.approvals.checked(com.histmersion.domain.automation.Approval.Kind.GoalPlan)
+        !cfg.approvals.checked(domain.automation.Approval.Kind.GoalPlan)
       ),
       GoalFocus.Settings.OpenPersonPlans(r.openPlans.value)
     )
@@ -234,7 +234,7 @@ final class GoalFocusService(
       GoalFocus.Item(
         Work.ItemId(w.id.value),
         ManagerItem.Kind(w.kind.value),
-        com.histmersion.domain.automation.ItemStatus.Wire(w.status.value),
+        domain.automation.ItemStatus.Wire(w.status.value),
         w.goals.map(g => Goal.Slug.assume(g.value)),
         Work.Person(w.person.value),
         Work.FocusHeld(w.focusHeld.value)

@@ -36,7 +36,7 @@ final class PlaceCardView(
     )
 
 object PlaceCardView:
-  export com.histmersion.domain.catalogue.Place.Id as PlaceId
+  export domain.catalogue.Place.Id as PlaceId
 
   type WithCounts = WithCounts.T
   object WithCounts extends Newtype[Boolean, Pure]

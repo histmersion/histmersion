@@ -48,7 +48,7 @@ final class CandidateSearch(
   /** The goal's watches as of now: what is read, from where (the watermark is the stored one). */
   private def plan(goal: Goal): List[CandidateWatch] =
     val c = cfg
-    val links = goals.links(com.histmersion.domain.automation.Goal.Slug.assume(goal.slug.value))
+    val links = goals.links(domain.automation.Goal.Slug.assume(goal.slug.value))
     def refs(kind: LinkKind) = links.filter(_.kind == kind).map(_.ref.value)
     val watchGoal = CandidateWatch.Goal(goal.slug.value)
     val queries = Some(refs(LinkKind.Query)).filter(_.nonEmpty).getOrElse(List(goal.title.value))
@@ -77,7 +77,7 @@ final class CandidateSearch(
 
   /** Sweep `goal` now; a dry run reads, but stores neither candidates nor watermarks. */
   def sweep(
-      goal: com.histmersion.domain.automation.Goal.Slug,
+      goal: domain.automation.Goal.Slug,
       dryRun: CandidateSearch.SweepDryRun
   ): Either[Api.Error, CandidateSweep] =
     goals

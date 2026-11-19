@@ -91,7 +91,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
           .toRight(Api.Error(Problem.Unclassified(Legacy.Text(s"No article '$text'"))))
           .flatMap(slug => site.articleSources(slug))
           .orElse(
-            com.histmersion.domain.automation.Goal.Slug
+            domain.automation.Goal.Slug
               .option(text)
               .toRight(Api.Error(Problem.NotFound.Entity(Problem.TypeName.of(Goal.Slug), Problem.Raw(s"$text"))))
               .flatMap(slug =>
@@ -99,7 +99,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
                   .goal(slug)
                   .map(g =>
                     c.goalLinks(
-                      com.histmersion.domain.automation.Goal.Slug.assume(g.slug.value),
+                      domain.automation.Goal.Slug.assume(g.slug.value),
                       Goal.Plans.LinkKind.Source
                     ).map(x => Citekey.assume(x.value))
                   )

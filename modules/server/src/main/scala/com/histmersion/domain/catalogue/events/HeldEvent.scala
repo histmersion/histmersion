@@ -82,14 +82,14 @@ final case class HeldEvent(
     )
 
 object HeldEvent:
-  export com.histmersion.domain.catalogue.Event.Id
+  export domain.catalogue.Event.Id
   export EventRow.{Kind, Label}
-  export com.histmersion.domain.catalogue.Historicity.Wire as Historicity
+  export domain.catalogue.Historicity.Wire as Historicity
   export EventDetailRow.Geometry
   export EventRow.ParentId
   export BEventRow.Description
   export EventRow.Scale
-  export com.histmersion.domain.catalogue.places.Wikidata.Id as Wikidata
+  export domain.catalogue.places.Wikidata.Id as Wikidata
   export BEventRow.{Catalogue, Central, Names}
   export EventRow.PlusMinus
   export BEventRow.DatingMethod

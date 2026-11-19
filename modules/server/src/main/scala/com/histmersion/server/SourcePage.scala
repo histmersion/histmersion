@@ -45,6 +45,6 @@ object SourcePage:
   object Regions extends Newtype[String, Pure]
   type Tags = Tags.T
   object Tags extends Newtype[String, Pure]
-  export com.histmersion.domain.library.Source.Summary
+  export library.Source.Summary
   export SourceNote.Text as Notes
   export ArticleTools.ListArticlesInput.Query

@@ -22,13 +22,13 @@ final case class CitedEntry(
 object CitedEntry:
   type Number = Number.T
   object Number extends Newtype[Int, Pure]
-  type Citekey = com.histmersion.domain.library.Citekey
-  val Citekey: com.histmersion.domain.library.Citekey.type = com.histmersion.domain.library.Citekey
-  type Doi = com.histmersion.domain.library.Doi
-  val Doi: com.histmersion.domain.library.Doi.type = com.histmersion.domain.library.Doi
+  type Citekey = library.Citekey
+  val Citekey: library.Citekey.type = library.Citekey
+  type Doi = library.Doi
+  val Doi: library.Doi.type = library.Doi
   type Authors = Authors.T
   object Authors extends Newtype[String, Pure]
   type Year = com.histmersion.Year
   val Year: com.histmersion.Year.type = com.histmersion.Year
-  type Title = com.histmersion.domain.Title
-  val Title: com.histmersion.domain.Title.type = com.histmersion.domain.Title
+  type Title = domain.Title
+  val Title: domain.Title.type = domain.Title

@@ -37,7 +37,7 @@ class MediaSourceBoundarySuite extends munit.FunSuite:
 
   test("a valid absent source is not found"):
     assertEquals(
-      controllers().putFigures(com.histmersion.domain.library.Citekey("missing2026_source"), Nil).left.map(_.code),
+      controllers().putFigures(domain.library.Citekey("missing2026_source"), Nil).left.map(_.code),
       Left(Some(Write.CodeNotFound))
     )
 

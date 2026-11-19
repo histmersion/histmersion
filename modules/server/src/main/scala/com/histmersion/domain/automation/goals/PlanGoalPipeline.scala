@@ -65,7 +65,7 @@ final class PlanGoalPipeline(
   /** A sub-goal slug is taken by a goal OR by an old slug of one: a put to an old slug follows the alias (#1799) and
     * would replace the renamed goal.
     */
-  private def taken(s: com.histmersion.domain.automation.Goal.Slug): Boolean =
+  private def taken(s: domain.automation.Goal.Slug): Boolean =
     Transactor(ds).read(GoalRepo.exists(s)) || Transactor(ds).read(GoalRepo.renamedTo(s)).isDefined
 
   def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
@@ -318,7 +318,7 @@ object PlanGoalPipeline:
 
   /** The goal as the planner sees it (checkpointed). `tags0` = the corpus's tags (`tags` are the goal's). */
   final case class Loaded(
-      slug: com.histmersion.domain.automation.Goal.Slug,
+      slug: domain.automation.Goal.Slug,
       title: Title,
       notes: Option[Loaded.Notes],
       tags: List[Loaded.Tags],

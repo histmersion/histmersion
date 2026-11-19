@@ -417,7 +417,7 @@ final class AcquisitionControllers(
         yield ck -> d
         val applied = decision.flatMap {
           case (ck, Right(status)) =>
-            setStatus(ck, status.transformInto[com.histmersion.domain.library.Source.Status]).toOption
+            setStatus(ck, status.transformInto[domain.library.Source.Status]).toOption
               .map(_ => status.wire)
           case (_, Left(_)) => None
         }
@@ -658,8 +658,8 @@ final class AcquisitionControllers(
     // ── the copy: the acquisition chain (the plugins' source fetchers, legal ones first; the legal
     //    ones alone for a watcher's auto-ingest and `--legal-only`) ──
     val key = WorkLookup.key(
-      doi.map(d => com.histmersion.plugin.Doi(d.value)),
-      arxiv.map(a => com.histmersion.upstreams.ArxivId(a.value)),
+      doi.map(d => plugin.Doi(d.value)),
+      arxiv.map(a => upstreams.ArxivId(a.value)),
       work.map(_.upstream)
     )
     val chain = Option.when(skip.isEmpty)(oa.fetchWorkExplained(key, FetchChain.LegalOnly(path.legalChain.value)))
@@ -804,7 +804,7 @@ final class AcquisitionControllers(
             val shouldApply = outcome.created.value || a.verdict == Acquire.Verdicts.Retracted
             val applied = for
               status <- Acquire.statusFor(a.verdict) if shouldApply
-              _ <- setStatus(citekey, status.transformInto[com.histmersion.domain.library.Source.Status]).toOption
+              _ <- setStatus(citekey, status.transformInto[domain.library.Source.Status]).toOption
             yield status.wire
             steps += step("assess", true, s"${a.verdict}${applied.fold("")(s => s" → status=$s")}")
             a.modify(_.applied).setTo(applied.map(w => Assessment.Applied(w.value)))
@@ -899,7 +899,7 @@ final class AcquisitionControllers(
           format = req.format.map(f => WorkKey.Format(f.value)),
           title = item.title.map(t => WorkKey.Title(t.value)),
           authors = item.creator.map(c => WorkKey.Authors(c.value)),
-          year = item.year.map(y => com.histmersion.plugin.Year(y.value.toInt))
+          year = item.year.map(y => plugin.Year(y.value.toInt))
         ),
         FetchChain.LegalOnly(true)
       ).left
@@ -954,7 +954,7 @@ final class AcquisitionControllers(
   /** The fetched copy in the acquisition spool; a failure to write it is a step of the report. */
   private def spoolCopy(
       citekey: Citekey,
-      f: com.histmersion.plugin.FetchedFile,
+      f: FetchedFile,
       steps: scala.collection.mutable.Builder[Ingest.Step, List[Ingest.Step]]
   ): Option[FetchedCopy] =
     val sp = spool()
@@ -965,7 +965,7 @@ final class AcquisitionControllers(
   /** Patch just the `status` of a source (what `assess --apply` does), without disturbing anything else. */
   private def setStatus(
       citekey: Citekey,
-      status: com.histmersion.domain.library.Source.Status
+      status: domain.library.Source.Status
   ): Either[Api.Error, Source.UpdatedAt] =
     sources.patch(
       citekey,

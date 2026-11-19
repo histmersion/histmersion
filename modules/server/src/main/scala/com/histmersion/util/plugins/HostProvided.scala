@@ -23,11 +23,11 @@ object HostProvided:
   /** The ids of the plugins the host supplies itself: the command-line AI runtimes. The relink tool keeps them from a
     * user's plugin without loading the runtimes.
     */
-  val Ids: List[com.histmersion.util.plugins.Plugin.Id] =
+  val Ids: List[util.plugins.Plugin.Id] =
     List(
-      com.histmersion.util.plugins.Plugin.Id("ai-claude-code"),
-      com.histmersion.util.plugins.Plugin.Id("ai-codex"),
-      com.histmersion.util.plugins.Plugin.Id("ai-opencode")
+      util.plugins.Plugin.Id("ai-claude-code"),
+      util.plugins.Plugin.Id("ai-codex"),
+      util.plugins.Plugin.Id("ai-opencode")
     )
 
   /** The version every host-supplied plugin reports. */
@@ -35,7 +35,7 @@ object HostProvided:
 
   /** A host-supplied plugin with no settings of its own beyond the host's `enabled`. */
   def apply(
-      id: com.histmersion.util.plugins.Plugin.Id,
+      id: util.plugins.Plugin.Id,
       contribute: Plugin.Context => Either[Problem, Unit]
   ): HostProvided[NoSettings] =
     new HostProvided[NoSettings](Plugin.Info.Id(id.value), (_, ctx) => contribute(ctx))

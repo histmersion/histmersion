@@ -15,6 +15,7 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import java.util.concurrent.ConcurrentLinkedQueue
 import scala.jdk.CollectionConverters.*
+import com.histmersion.plugin.Doi
 
 /** The harness against the test plugins in `kit/`: loading as the server loads, each runner, and each HTTP mode against
   * a local server.
@@ -243,7 +244,7 @@ class PluginHarnessSuite extends munit.FunSuite:
       val env =
         Map("HISTMERSION_ACQUIRE_OPENALEX_URL" -> base, "HISTMERSION_ACQUIRE_CONTACT_EMAIL" -> "someone@example.org")
       val live = loaded(KitFetcher, s"base-url = \"$base\"", HttpMode.Record(dir), env = env)
-      val work = WorkKey.fromDoi(com.histmersion.plugin.Doi.assume("https://doi.org/10.1/OK"), live)
+      val work = WorkKey.fromDoi(Doi.assume("https://doi.org/10.1/OK"), live)
       assertEquals(
         work,
         Right(
@@ -257,7 +258,7 @@ class PluginHarnessSuite extends munit.FunSuite:
       )
       assert(!live.requests.exists(_.value.contains("someone")), "no contact e-mail from a test")
       val replay = loaded(KitFetcher, s"base-url = \"$base\"", HttpMode.Replay(dir), env = env)
-      assertEquals(WorkKey.fromDoi(com.histmersion.plugin.Doi("10.1/ok"), replay), work)
+      assertEquals(WorkKey.fromDoi(Doi("10.1/ok"), replay), work)
     }
   }
 

@@ -79,7 +79,7 @@ import com.histmersion.util.data.exchange.BundleFormat
   * collection's name, a timestamp as `TS`, and a size the disk decides as `N`. `HISTMERSION_UPDATE_ORACLE=1` rewrites
   * the files. Skipped without HISTMERSION_TEST_DB_URL or the PostgreSQL client tools.
   */
-class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
+class DataOracleSuite extends DbSuite with db.Bounded:
   private val testDb = TestDb.url
   private val pgBinDir: Option[String] =
     def has(dir: String) = List("pg_dump", "pg_restore").forall(b => Files.isExecutable(Path.of(dir).resolve(b)))
@@ -198,7 +198,7 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
     Source(
       ck,
       title,
-      (List("Doe, Jane")).map(com.histmersion.api.library.AuthorName.apply),
+      (List("Doe, Jane")).map(api.library.AuthorName.apply),
       None,
       Some(year),
       None,
@@ -240,7 +240,7 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
       Place(
         id,
         label,
-        Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+        Place.KindValue(domain.catalogue.Place.Kind.Site),
         Some(Place.Geometry(s"""{"type":"Point","coordinates":[$lon,$lat]}""")),
         Some(Period(Year(-1650), Year(-1180)))
       ),
@@ -286,7 +286,7 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
     SourceFixtures.upsert(ds, src(Citekey("zzgamma1903_old"), Title("An Old Book"), Year(1903)), chunk)
     val _ = SourceFixtures.rename(
       ds,
-      com.histmersion.domain.library.Citekey("zzgamma1903_old"),
+      domain.library.Citekey("zzgamma1903_old"),
       Citekeys.RenameToNewRaw("zzgamma1903_prolegomena")
     )
     val _ = ArticleFixtures.put(
@@ -317,11 +317,11 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
       )
     )
     val _ = transact(ds)(
-      GoalRepo.put(com.histmersion.domain.automation.Goal.Slug("zz_goal"), Goal.Put(Goal.Title("Know the storm gods")))
+      GoalRepo.put(domain.automation.Goal.Slug("zz_goal"), Goal.Put(Goal.Title("Know the storm gods")))
     )
     val _ = transact(ds)(
       GoalRepo.put(
-        com.histmersion.domain.automation.Goal.Slug("zz_goal_gone"),
+        domain.automation.Goal.Slug("zz_goal_gone"),
         Goal.Put(Goal.Title("A goal deleted later"))
       )
     )
@@ -371,7 +371,7 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
     )
     val _ = AssetFixtures.add(
       ds,
-      com.histmersion.domain.library.Citekey("zzalpha2001_storm"),
+      domain.library.Citekey("zzalpha2001_storm"),
       List(
         NewFigure(NewFigure.Name("fig1.png"), NewFigure.Mime("image/png"), png(1), None, None),
         NewFigure(NewFigure.Name("fig2.png"), NewFigure.Mime("image/png"), png(2), None, None)
@@ -430,14 +430,14 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
     // the same summary edited at home: a conflict
     val _ = SourceFixtures.patch(
       home,
-      com.histmersion.domain.library.Citekey("zzalpha2001_storm"),
+      domain.library.Citekey("zzalpha2001_storm"),
       Source.Patch(summary = Some(Source.Summary("edited at home"))),
       chunk
     )
     // a renamed citekey at work
     val _ = SourceFixtures.rename(
       work,
-      com.histmersion.domain.library.Citekey("zzbeta2005_kingdom"),
+      domain.library.Citekey("zzbeta2005_kingdom"),
       Citekeys.RenameToNewRaw("zzbeta2005_hittites")
     )
     // one paragraph both edited
@@ -482,7 +482,7 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
       )
     // a deleted event and a deleted goal at work
     val _ = EventFixtures.delete(work, BEventRow.Id("zz_event_gone"))
-    val _ = Transactor(work).transact(GoalRepo.deleteIn(com.histmersion.domain.automation.Goal.Slug("zz_goal_gone")))
+    val _ = Transactor(work).transact(GoalRepo.deleteIn(domain.automation.Goal.Slug("zz_goal_gone")))
     // something new at work
     SourceFixtures.upsert(
       work,

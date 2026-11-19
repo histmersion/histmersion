@@ -257,13 +257,13 @@ object ArticleTools:
         query.map(q => Api.ArticleQuery.Text(q.value))
       )
   object ListArticlesInput:
-    export com.histmersion.domain.research.Article.Kind
+    export domain.research.Article.Kind
     type Query = Query.T
     object Query extends Newtype[String, Pure]
     type Tag = Tag.T
     object Tag extends Newtype[String, Pure]
-    type Title = com.histmersion.domain.Title
-    val Title: com.histmersion.domain.Title.type = com.histmersion.domain.Title
+    type Title = domain.Title
+    val Title: domain.Title.type = domain.Title
     type Limit = PageSize
     val Limit: PageSize.type = PageSize
     type Offset = com.histmersion.Offset
@@ -371,7 +371,7 @@ object ArticleTools:
   ) derives JsonCodec
   object CheckEditsInput:
     export Article.Slug
-    export com.histmersion.domain.research.Article.{Body, Kind}
+    export domain.research.Article.{Body, Kind}
 
     given Schema[CheckEditsInput] = KindlingsSchema
       .derived[CheckEditsInput]
@@ -392,7 +392,7 @@ object ArticleTools:
   ) derives StrictJson
   object PutArticleInput:
     export Article.Slug
-    export com.histmersion.domain.research.Article.StrictMode as Strict
+    export domain.research.Article.StrictMode as Strict
 
     given Schema[PutArticleInput] = KindlingsSchema
       .derived[PutArticleInput]
@@ -406,7 +406,7 @@ object ArticleTools:
   )
   object PatchArticleInput:
     export Article.Slug
-    export com.histmersion.domain.research.Article.StrictMode as Strict
+    export domain.research.Article.StrictMode as Strict
 
     given Schema[PatchArticleInput] = KindlingsSchema
       .derived[PatchArticleInput]

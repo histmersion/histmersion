@@ -29,7 +29,7 @@ import com.histmersion.config.ServerConfig
   * rendered page — and `POST /api/places/{id}/rename` (#890), whose old id keeps resolving. Skipped without
   * HISTMERSION_TEST_DB_URL.
   */
-class FormatHttpSuite extends DbSuite with com.histmersion.db.Bounded:
+class FormatHttpSuite extends DbSuite with db.Bounded:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
@@ -206,7 +206,7 @@ class FormatHttpSuite extends DbSuite with com.histmersion.db.Bounded:
             Place(
               Place.Id("zz_fmt_place_a"),
               Place.Label("Fmt A"),
-              Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+              Place.KindValue(domain.catalogue.Place.Kind.Site),
               Some(Place.Geometry("""{"type":"Point","coordinates":[30.0,39.0]}"""))
             ),
             List(Place.Name(Place.Name.Value("Fmt A")))
@@ -215,7 +215,7 @@ class FormatHttpSuite extends DbSuite with com.histmersion.db.Bounded:
             Place(
               Place.Id("zz_fmt_place_other"),
               Place.Label("Fmt Other"),
-              Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+              Place.KindValue(domain.catalogue.Place.Kind.Site),
               Some(Place.Geometry("""{"type":"Point","coordinates":[31.0,39.0]}"""))
             ),
             List(Place.Name(Place.Name.Value("Fmt Other")))

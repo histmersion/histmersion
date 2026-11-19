@@ -34,7 +34,7 @@ abstract class AssessmentServiceContract extends AcquisitionStoreSuite:
     )
     assertEquals(s.assessments.retractionCount, 2)
     assertEquals(
-      s.assessments.retractionsFor(com.histmersion.domain.library.Doi("10.5555/ZQ.A")),
+      s.assessments.retractionsFor(domain.library.Doi("10.5555/ZQ.A")),
       List(
         RetractionNotice(
           Some(RetractionNotice.Nature("Retraction")),
@@ -49,7 +49,7 @@ abstract class AssessmentServiceContract extends AcquisitionStoreSuite:
       ),
       1
     )
-    assertEquals(s.assessments.retractionsFor(com.histmersion.domain.library.Doi("10.5555/zq.a")), Nil)
+    assertEquals(s.assessments.retractionsFor(domain.library.Doi("10.5555/zq.a")), Nil)
     assertEquals(s.assessments.retractionCount, 1)
   }
 
@@ -75,10 +75,10 @@ abstract class AssessmentServiceContract extends AcquisitionStoreSuite:
       ),
       Caller.Local
     )
-    assertEquals(s.assessments.lastFor(com.histmersion.domain.library.Citekey("zqa_one")), None)
+    assertEquals(s.assessments.lastFor(domain.library.Citekey("zqa_one")), None)
     val first = s.assessments.record(
       AssessmentRecord(
-        com.histmersion.domain.library.Citekey("zqa_one"),
+        domain.library.Citekey("zqa_one"),
         AssessmentRecord.Verdict("current"),
         AssessmentRecord.Retracted(false),
         AssessmentRecord.NoticesJson("{}"),
@@ -87,10 +87,10 @@ abstract class AssessmentServiceContract extends AcquisitionStoreSuite:
       )
     )
     assert(first.value.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z"), first)
-    assertEquals(s.assessments.lastFor(com.histmersion.domain.library.Citekey("zqa_one")).map(_._1), Some("current"))
+    assertEquals(s.assessments.lastFor(domain.library.Citekey("zqa_one")).map(_._1), Some("current"))
     val _ = s.assessments.record(
       AssessmentRecord(
-        com.histmersion.domain.library.Citekey("zqa_one"),
+        domain.library.Citekey("zqa_one"),
         AssessmentRecord.Verdict("retracted"),
         AssessmentRecord.Retracted(true),
         AssessmentRecord.NoticesJson("""{"n":1}"""),
@@ -98,7 +98,7 @@ abstract class AssessmentServiceContract extends AcquisitionStoreSuite:
         Some(AssessmentRecord.Influential(1))
       )
     )
-    assertEquals(s.assessments.lastFor(com.histmersion.domain.library.Citekey("zqa_one")).map(_._1), Some("retracted"))
+    assertEquals(s.assessments.lastFor(domain.library.Citekey("zqa_one")).map(_._1), Some("retracted"))
   }
 
 class AssessmentServiceInMemorySuite extends AssessmentServiceContract with AcquisitionStoreSuite.InMemory

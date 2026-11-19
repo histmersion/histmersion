@@ -29,7 +29,7 @@ import com.histmersion.config.ServerConfig
   * answer names the current one; a reference (an attestation's target) is stored against the current id; a
   * `place=<old id>` filter selects what `place=<new id>` does. Skipped without HISTMERSION_TEST_DB_URL.
   */
-class AliasRuleHttpSuite extends DbSuite with com.histmersion.db.Bounded:
+class AliasRuleHttpSuite extends DbSuite with db.Bounded:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 

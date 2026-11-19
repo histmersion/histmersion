@@ -84,7 +84,7 @@ abstract class LeadServiceContract extends CatalogueStoreSuite:
       Event.Id("gvp_8"),
       List(
         EventLinkCandidate(
-          com.histmersion.api.catalogue.Event.Id("gvp_8"),
+          api.catalogue.Event.Id("gvp_8"),
           Citekey("zzld2020_own"),
           EventLinkCandidate.Score(0.5)
         )
@@ -134,7 +134,7 @@ abstract class LeadServiceContract extends CatalogueStoreSuite:
     assert(
       s.eventLinks.setStatus(
         Event.Id("gvp_8"),
-        com.histmersion.domain.library.Citekey("zzld2020_own"),
+        domain.library.Citekey("zzld2020_own"),
         Event.LinkStatus.Wire(Event.LinkStatus.Confirmed)
       )
     )

@@ -170,7 +170,7 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
         .put(
           Ck,
           Source.Put(
-            title = com.histmersion.api.library.Title("Bronze Age tin"),
+            title = api.library.Title("Bronze Age tin"),
             year = (Some(2019)).map(Year.apply),
             body = Some(Body)
           )

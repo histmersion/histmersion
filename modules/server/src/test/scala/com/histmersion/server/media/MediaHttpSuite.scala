@@ -108,7 +108,7 @@ class MediaHttpSuite extends DbSuite:
             Place(
               Place.Id("zqmh_mycenae"),
               Place.Label("Zqmh Mycenae"),
-              Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+              Place.KindValue(domain.catalogue.Place.Kind.Site),
               Some(Place.Geometry("""{"type":"Point","coordinates":[22.75,37.73]}""")),
               Some(Period(Year(-1600), Year(-1100)))
             ),
@@ -118,7 +118,7 @@ class MediaHttpSuite extends DbSuite:
             Place(
               Place.Id("zqmh_nolink"),
               Place.Label("Zqmh no link"),
-              Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+              Place.KindValue(domain.catalogue.Place.Kind.Site),
               Some(Place.Geometry("""{"type":"Point","coordinates":[22.0,37.0]}"""))
             ),
             List(Place.Name(Place.Name.Value("Zqmh no link")))

@@ -115,7 +115,7 @@ object Plugins:
     )
 
   /** The keys each plugin's defaults resource declares (`enabled` aside): where a former plugin's key goes. */
-  def defaultKeys(plugins: List[Plugin]): com.histmersion.util.plugins.Plugin.Id => Set[SettingsService.ConfigPath] =
+  def defaultKeys(plugins: List[Plugin]): util.plugins.Plugin.Id => Set[SettingsService.ConfigPath] =
     val keys = plugins
       .map(p =>
         p.info.id ->
@@ -173,10 +173,10 @@ object Plugins:
   /** The plugin a changed key belongs to (`histmersion.plugins.<id>.…`); `None` for any other key — `order`, the whole
     * block, a host setting — which concerns every plugin.
     */
-  def pluginId(key: ConfigReload.Key): Option[com.histmersion.util.plugins.Plugin.Id] =
+  def pluginId(key: ConfigReload.Key): Option[util.plugins.Plugin.Id] =
     scala.util.Try(ConfigUtil.splitPath(key.value).asScala.toList).toOption match
       case Some("histmersion" :: "plugins" :: id :: _) if id != PluginHost.OrderKey =>
-        com.histmersion.util.plugins.Plugin.Id.option(id)
+        util.plugins.Plugin.Id.option(id)
       case _ => None
 
   /** CORE's key as the generation's `oa-core` plugin resolved it (its `api-key` secret reference, else `hostKey`,

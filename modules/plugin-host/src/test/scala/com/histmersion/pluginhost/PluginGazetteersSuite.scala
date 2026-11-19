@@ -59,7 +59,7 @@ class PluginGazetteersSuite extends munit.FunSuite:
             Place.Label(" Hittite Empire "),
             Place.KindValue("polity"),
             Some(Place.Geometry("""{"type":"Point","coordinates":[33.0,40.0]}""")),
-            Some(ApiPeriod(com.histmersion.api.catalogue.Year(-1650), com.histmersion.api.catalogue.Year(-1401))),
+            Some(ApiPeriod(api.catalogue.Year(-1650), api.catalogue.Year(-1401))),
             Some(Place.Source("Atlas, CC BY 4.0")),
             Some(Place.Properties("""{"wikidata":"Q170494"}""")),
             None
@@ -68,7 +68,7 @@ class PluginGazetteersSuite extends munit.FunSuite:
             Place.Name(
               Place.Name.Value("Hatti"),
               Place.Name.Lang("hit"),
-              Some(ApiPeriod(com.histmersion.api.catalogue.Year(-1650), com.histmersion.api.catalogue.Year(-1200))),
+              Some(ApiPeriod(api.catalogue.Year(-1650), api.catalogue.Year(-1200))),
               Some(OpenSide.End)
             )
           ),
@@ -77,7 +77,7 @@ class PluginGazetteersSuite extends munit.FunSuite:
               Place.Relation.ChildId("zz_slice_-1650_-1401"),
               Place.Relation.ParentId("zz_hittites"),
               Place.Relation.Kind("part_of"),
-              Some(ApiPeriod(com.histmersion.api.catalogue.Year(-1650), com.histmersion.api.catalogue.Year(-1401))),
+              Some(ApiPeriod(api.catalogue.Year(-1650), api.catalogue.Year(-1401))),
               None
             )
           )

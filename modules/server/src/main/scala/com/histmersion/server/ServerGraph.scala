@@ -256,7 +256,7 @@ object ServerGraph:
         }
         plug <- graph.node[Generation](
           Hot.Graph.Def.Name(Plugins),
-          keys = com.histmersion.util.plugins.Plugins.Keys.map(k => Hot.Graph.Def.Keys(k.value))
+          keys = util.plugins.Plugins.Keys.map(k => Hot.Graph.Def.Keys(k.value))
         ) { ctx =>
           Right(ctx.previous match
             case None => plugins.getOrElse(ServerPlugins.load(ctx.config.loaded, core = core))

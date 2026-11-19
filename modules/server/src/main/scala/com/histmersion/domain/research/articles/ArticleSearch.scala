@@ -14,7 +14,7 @@ trait ArticleSearch:
   def list(
       filter: Filter,
       scope: PlaceScope,
-      kind: Option[com.histmersion.domain.research.Article.Kind],
+      kind: Option[domain.research.Article.Kind],
       text: Option[Search.Query],
       limit: ArticleRepo.Limit,
       offset: Offset
@@ -27,7 +27,7 @@ object ArticleSearch:
     def list(
         filter: Filter,
         scope: PlaceScope,
-        kind: Option[com.histmersion.domain.research.Article.Kind],
+        kind: Option[domain.research.Article.Kind],
         text: Option[Search.Query],
         limit: ArticleRepo.Limit,
         offset: Offset

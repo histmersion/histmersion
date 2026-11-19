@@ -340,7 +340,7 @@ final class ManagerSupervisor(
       item.failures.transformInto[Next.Retry.Failures],
       item.state,
       run,
-      st.transformInto[com.histmersion.domain.automation.Run.State],
+      st.transformInto[domain.automation.Run.State],
       error,
       kind.facts(this, item, run),
       now
@@ -1130,7 +1130,7 @@ final class ManagerSupervisor(
   ): Unit =
     val _ = agents.goals.link(
       goal,
-      kind.transformInto[com.histmersion.domain.automation.Goal.LinkKind],
+      kind.transformInto[domain.automation.Goal.LinkKind],
       ref.transformInto[Goal.Plans.GoalLink.Ref],
       note.map(_.transformInto[Goal.Plans.GoalLink.Note])
     )

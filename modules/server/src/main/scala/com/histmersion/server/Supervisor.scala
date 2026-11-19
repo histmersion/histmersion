@@ -24,6 +24,7 @@ import com.histmersion.api.backup.Backup
 import com.histmersion.util.storage.Store
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.config.Environment
+import com.histmersion.util.plugins.PluginKit
 
 /** The native bundle (nothing installed system-wide): the server runs the bundled PostgreSQL and OCR converter as its
   * own child processes. Enabled by `runtime.enabled` (`HISTMERSION_RUNTIME=true`).
@@ -267,8 +268,8 @@ object Supervisor:
       */
     private def rewritePluginFiles(): Unit =
       List(
-        l.home.resolve("bin").resolve("histmersion-server.plugin-set.json") -> util.plugins.PluginKit.parseSet,
-        l.data.resolve("plugins").resolve("index.json") -> util.plugins.PluginKit.parseIndex
+        l.home.resolve("bin").resolve("histmersion-server.plugin-set.json") -> PluginKit.parseSet,
+        l.data.resolve("plugins").resolve("index.json") -> PluginKit.parseIndex
       ).foreach { (file, read) =>
         file.rewrittenOnce(read) match
           case Right(PluginFile.Rewritten) => scribe.info(s"runtime: rewrote $file into the list form of its problems")
@@ -286,7 +287,7 @@ object Supervisor:
       else
         for
           text <- file.attempt(Problem.Io.Access.Read)(Files.readString(file, UTF_8))
-          listed <- util.plugins.PluginKit.listedProblems(text, s"${file.getFileName}")
+          listed <- PluginKit.listedProblems(text, s"${file.getFileName}")
           outcome <- listed.fold[Either[Problem, PluginFile]](Right(PluginFile.Kept)) { rewritten =>
             read(rewritten).flatMap(_ => file.replacedBy(rewritten)).map(_ => PluginFile.Rewritten)
           }

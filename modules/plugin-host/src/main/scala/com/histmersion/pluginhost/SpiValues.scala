@@ -113,7 +113,7 @@ object SpiValues:
       .map(Problem.Invalid.malformed)
 
   /** A licence statement, as the text the host reads (and judges itself). */
-  def licenceOf(l: Licence): com.histmersion.domain.Licence.Id = com.histmersion.domain.Licence.Id(l.value)
+  def licenceOf(l: Licence): domain.Licence.Id = domain.Licence.Id(l.value)
 
   /** `None` stays `None`; a value that fails its check is left out (`None`), with the reason as a warning. */
   def kept[A, B](a: Option[A])(f: A => Either[Problem, B]): (Option[B], Option[Problem]) =

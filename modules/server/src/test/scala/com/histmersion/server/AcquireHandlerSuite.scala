@@ -91,9 +91,9 @@ class AcquireHandlerSuite extends DbSuite:
   private val target = WorkRef(
     doi = (Some("10.1038/zztest001")).map(Doi.apply),
     openalexId = Some(WorkRef.OpenalexId("W1")),
-    title = (Some("Massive migration test")).map(com.histmersion.api.library.Title.apply),
+    title = (Some("Massive migration test")).map(api.library.Title.apply),
     year = (Some(2015)).map(Year.apply),
-    authors = (List("Wolfgang Haak")).map(com.histmersion.api.library.AuthorName.apply),
+    authors = (List("Wolfgang Haak")).map(api.library.AuthorName.apply),
     venue = (Some("Nature")).map(Source.Venue.apply),
     citedByCount = Some(Source.CitedByCount(900)),
     citekey = (Some("zzacq_ingested")).map(Citekey.apply)
@@ -111,9 +111,9 @@ class AcquireHandlerSuite extends DbSuite:
         sort: Option[DiscoveryClient.SearchSort],
         limit: DiscoveryClient.SearchLimit
     ) = Right(hits)
-    def meta(doi: com.histmersion.domain.library.Doi) = Right(work.modify(_.doi).setTo(Some(Doi(doi.value))))
-    def references(doi: com.histmersion.domain.library.Doi) = Right((DiscoveryClient.Backend("crossref"), refs))
-    def updates(doi: com.histmersion.domain.library.Doi) = Right(notices)
+    def meta(doi: domain.library.Doi) = Right(work.modify(_.doi).setTo(Some(Doi(doi.value))))
+    def references(doi: domain.library.Doi) = Right((DiscoveryClient.Backend("crossref"), refs))
+    def updates(doi: domain.library.Doi) = Right(notices)
 
   private class FakeCitations(rows: List[FollowupRow]) extends CitationsClient:
     def citing(work: WorkRef, since: Option[com.histmersion.Year], limit: CitationsClient.CitingLimit) = Right(
@@ -121,21 +121,21 @@ class AcquireHandlerSuite extends DbSuite:
     )
 
   private object NoPdf extends OaFetcher:
-    def fetch(doi: Option[com.histmersion.domain.library.Doi], arxiv: Option[ArxivId]) = Left(
+    def fetch(doi: Option[domain.library.Doi], arxiv: Option[ArxivId]) = Left(
       Problem.Unclassified(Legacy.Text("no legal open-access PDF found"))
     )
 
   private class SomePdf(
       source: FetchedFile.Source = FetchedFile.Source("unpaywall"),
-      licence: Option[com.histmersion.plugin.Licence] = None
+      licence: Option[plugin.Licence] = None
   ) extends OaFetcher:
-    def fetch(doi: Option[com.histmersion.domain.library.Doi], arxiv: Option[ArxivId]) =
+    def fetch(doi: Option[domain.library.Doi], arxiv: Option[ArxivId]) =
       Right(
         FetchedFile(
           source,
-          Some(com.histmersion.plugin.FetchedFile.Url("https://example.org/x.pdf")),
+          Some(plugin.FetchedFile.Url("https://example.org/x.pdf")),
           FetchedFile.Bytes(("%PDF-1.4\n" + "x" * 2000).getBytes("UTF-8")),
-          com.histmersion.plugin.FetchedFile.Extension("pdf"),
+          plugin.FetchedFile.Extension("pdf"),
           licence
         )
       )
@@ -152,7 +152,7 @@ class AcquireHandlerSuite extends DbSuite:
         CollectionId(archived.identifier.value),
         archived.title.map(t => CollectionItem.Title(t.value)),
         archived.creator.map(c => CollectionItem.Authors(c.value)),
-        archived.year.map(y => com.histmersion.plugin.Year(y.value.toInt)),
+        archived.year.map(y => plugin.Year(y.value.toInt)),
         publisher = archived.publisher.map(p => CollectionItem.Publisher(p.value)),
         files = archived.files.map(f =>
           CollectionFile(
@@ -211,13 +211,13 @@ class AcquireHandlerSuite extends DbSuite:
   final private class RecordingJobs extends IngestJobs:
     private val skeleton = AcquisitionTesting.skeleton(Deps(cfg, ds))
     val files = java.util.concurrent.ConcurrentLinkedQueue[Option[FetchedCopy]]()
-    def enqueue(copy: Option[FetchedCopy], citekey: com.histmersion.domain.library.Citekey, meta: IngestMeta) =
+    def enqueue(copy: Option[FetchedCopy], citekey: domain.library.Citekey, meta: IngestMeta) =
       files.add(copy); skeleton.enqueue(copy, citekey, meta)
 
   /** A PDF fetcher that counts its calls. */
   final private class CountingPdf extends OaFetcher:
     val calls = java.util.concurrent.atomic.AtomicInteger(0)
-    def fetch(doi: Option[com.histmersion.domain.library.Doi], arxiv: Option[ArxivId]) =
+    def fetch(doi: Option[domain.library.Doi], arxiv: Option[ArxivId]) =
       calls.incrementAndGet(); SomePdf().fetch(doi, arxiv)
 
   // ── fixtures in the database ────────────────────────────────────────────────────────────────
@@ -231,8 +231,8 @@ class AcquireHandlerSuite extends DbSuite:
   ) =
     Source(
       Citekey(ck),
-      com.histmersion.api.library.Title(title),
-      (authors).map(com.histmersion.api.library.AuthorName.apply),
+      api.library.Title(title),
+      (authors).map(api.library.AuthorName.apply),
       (doi).map(Doi.apply),
       (year).map(Year.apply),
       None,
@@ -276,17 +276,17 @@ class AcquireHandlerSuite extends DbSuite:
 
     val rows = List(
       RefRow(
-        title = (Some("Something")).map(com.histmersion.api.library.Title.apply),
+        title = (Some("Something")).map(api.library.Title.apply),
         doi = (Some("10.1038/zzref001")).map(Doi.apply)
       ),
       RefRow(
-        title = (Some("Who We Are and How We Got Here")).map(com.histmersion.api.library.Title.apply),
-        authors = (List("Someone Zzacqreich")).map(com.histmersion.api.library.AuthorName.apply),
+        title = (Some("Who We Are and How We Got Here")).map(api.library.Title.apply),
+        authors = (List("Someone Zzacqreich")).map(api.library.AuthorName.apply),
         year = (Some(2018)).map(Year.apply)
       ),
       RefRow(
-        title = (Some("Unknown work")).map(com.histmersion.api.library.Title.apply),
-        authors = (List("Nobody Here")).map(com.histmersion.api.library.AuthorName.apply),
+        title = (Some("Unknown work")).map(api.library.Title.apply),
+        authors = (List("Nobody Here")).map(api.library.AuthorName.apply),
         year = (Some(1904)).map(Year.apply)
       )
     )
@@ -300,7 +300,7 @@ class AcquireHandlerSuite extends DbSuite:
     assertEquals(r.edgesAdded, 2)
     assertEquals(r.references.flatMap(_.citekey).toSet, Set("zzacq_bydoi", "zzacqreich2018_who"))
     val out = CitationFixtures
-      .neighbors(ds, com.histmersion.domain.library.Citekey("zzacq_target"))
+      .neighbors(ds, domain.library.Citekey("zzacq_target"))
       .filter(_.direction == NeighborRow.Direction("out"))
     assertEquals(out.map(_.citekey).toSet, Set("zzacq_bydoi", "zzacqreich2018_who"))
     assert(out.forall(_.kind == Edge.Kind.References))
@@ -316,7 +316,7 @@ class AcquireHandlerSuite extends DbSuite:
     assertEquals(r.edgesAdded, 0)
     assertEquals(
       CitationFixtures
-        .neighbors(ds, com.histmersion.domain.library.Citekey("zzacq_target"))
+        .neighbors(ds, domain.library.Citekey("zzacq_target"))
         .count(_.direction == NeighborRow.Direction("out")),
       0
     )
@@ -348,12 +348,12 @@ class AcquireHandlerSuite extends DbSuite:
     assertEquals(a.retractionWatch.head.date, Some("2021-12-15"))
     assertEquals(a.applied, Some("retracted"))
     assertEquals(
-      SourceFixtures.load(ds, com.histmersion.domain.library.Citekey("zzacq_retr")).map(_.status),
+      SourceFixtures.load(ds, domain.library.Citekey("zzacq_retr")).map(_.status),
       Some(Source.Status.Retracted)
     )
     // and the verdict is STORED, so a later lint does not need the network
     assertEquals(
-      AcquisitionTesting.assessments(ds).lastFor(com.histmersion.domain.library.Citekey("zzacq_retr")).map(_._1),
+      AcquisitionTesting.assessments(ds).lastFor(domain.library.Citekey("zzacq_retr")).map(_._1),
       Some("retracted")
     )
 
@@ -372,7 +372,7 @@ class AcquireHandlerSuite extends DbSuite:
     assertEquals(a.retractionWatch, Nil)
     assertEquals(a.applied, None) // no --apply
     assertEquals(
-      SourceFixtures.load(ds, com.histmersion.domain.library.Citekey("zzacq_ok")).map(_.status),
+      SourceFixtures.load(ds, domain.library.Citekey("zzacq_ok")).map(_.status),
       Some(Source.Status.Current)
     )
 
@@ -394,7 +394,7 @@ class AcquireHandlerSuite extends DbSuite:
     assertEquals((a.applied, a.kept), (None, Some(Source.Status.Contested)))
     assert(AcquireMarkdown.assessment(a).contains("Kept **contested** (set by hand)"))
     assertEquals(
-      SourceFixtures.load(ds, com.histmersion.domain.library.Citekey("zzacq_kept")).map(_.status),
+      SourceFixtures.load(ds, domain.library.Citekey("zzacq_kept")).map(_.status),
       Some(Source.Status.Contested)
     )
 
@@ -409,7 +409,7 @@ class AcquireHandlerSuite extends DbSuite:
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals((f.applied, f.kept), (Some("current"), None))
     assertEquals(
-      SourceFixtures.load(ds, com.histmersion.domain.library.Citekey("zzacq_kept")).map(_.status),
+      SourceFixtures.load(ds, domain.library.Citekey("zzacq_kept")).map(_.status),
       Some(Source.Status.Current)
     )
 
@@ -438,7 +438,7 @@ class AcquireHandlerSuite extends DbSuite:
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(r.applied, Some("retracted"))
     assertEquals(
-      SourceFixtures.load(ds, com.histmersion.domain.library.Citekey("zzacq_retr2")).map(_.status),
+      SourceFixtures.load(ds, domain.library.Citekey("zzacq_retr2")).map(_.status),
       Some(Source.Status.Retracted)
     )
 
@@ -450,14 +450,14 @@ class AcquireHandlerSuite extends DbSuite:
     SourceFixtures.upsert(ds, source("zzacq_critic", Some("10.1038/zzcritic")), cfg.limits.chunkChars)
     val rows = List(
       FollowupRow(
-        title = Some(com.histmersion.api.library.Title("A critique")),
+        title = Some(api.library.Title("A critique")),
         year = Some(Year(2021)),
         doi = Some(Doi("10.1038/zzcritic")),
         contexts = List(FollowupRow.Contexts("These data contradict the steppe model")),
         isInfluential = FollowupRow.IsInfluential(true)
       ),
       FollowupRow(
-        title = Some(com.histmersion.api.library.Title("Unknown citer")),
+        title = Some(api.library.Title("Unknown citer")),
         year = Some(Year(2022)),
         doi = Some(Doi("10.9999/nope")),
         contexts = List(FollowupRow.Contexts("consistent with earlier work"))
@@ -473,7 +473,7 @@ class AcquireHandlerSuite extends DbSuite:
     assertEquals(r.followups.map(_.citekey), List(Some("zzacq_critic"), None))
     assertEquals(r.edgesAdded, 1)
     val incoming = CitationFixtures
-      .neighbors(ds, com.histmersion.domain.library.Citekey("zzacq_target"))
+      .neighbors(ds, domain.library.Citekey("zzacq_target"))
       .filter(_.direction == NeighborRow.Direction("in"))
     assertEquals(incoming.map(n => (n.citekey, Edge.Kind.wireOf(n.kind))), Vector(("zzacq_critic", "refutes")))
 
@@ -485,12 +485,12 @@ class AcquireHandlerSuite extends DbSuite:
     val hits = List(
       WorkRef(
         doi = (Some("10.1038/zzknown")).map(Doi.apply),
-        title = (Some("Known")).map(com.histmersion.api.library.Title.apply),
+        title = (Some("Known")).map(api.library.Title.apply),
         citekey = (Some("x2000_known")).map(Citekey.apply)
       ),
       WorkRef(
         doi = (Some("10.1038/zzbrandnew")).map(Doi.apply),
-        title = (Some("New")).map(com.histmersion.api.library.Title.apply),
+        title = (Some("New")).map(api.library.Title.apply),
         citekey = (Some("y2001_new")).map(Citekey.apply)
       )
     )
@@ -532,7 +532,7 @@ class AcquireHandlerSuite extends DbSuite:
     assert(r.steps.forall(_.ok.value), r.steps.toString)
 
     val stored = SourceFixtures
-      .load(ds, com.histmersion.domain.library.Citekey("zzacq_ingested"))
+      .load(ds, domain.library.Citekey("zzacq_ingested"))
       .getOrElse(fail("source was not created"))
     assertEquals(stored.title, "Massive migration test")
     assertEquals(stored.doi, Some("10.1038/zztest001"))
@@ -549,7 +549,7 @@ class AcquireHandlerSuite extends DbSuite:
       sql"SELECT license FROM sources WHERE citekey = 'zzacq_ingested'".query[Option[String]].run().headOption.flatten
     )
     wipe("zzacq_ingested")
-    val r = handlers(oa = SomePdf(FetchedFile.Source("oabooks"), Some(com.histmersion.plugin.Licence(" CC-BY-4.0 "))))
+    val r = handlers(oa = SomePdf(FetchedFile.Source("oabooks"), Some(plugin.Licence(" CC-BY-4.0 "))))
       .ingest(Ingest.Request(Ingest.Request.Id("10.1038/zztest001")))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assert(
@@ -560,7 +560,7 @@ class AcquireHandlerSuite extends DbSuite:
     assertEquals(license, Some("CC-BY-4.0"))
     // a re-fetch with another licence keeps the one recorded; a copy without one changes nothing
     val again =
-      handlers(oa = SomePdf(FetchedFile.Source("oabooks"), Some(com.histmersion.plugin.Licence("CC-BY-NC-4.0"))))
+      handlers(oa = SomePdf(FetchedFile.Source("oabooks"), Some(plugin.Licence("CC-BY-NC-4.0"))))
         .ingest(Ingest.Request(Ingest.Request.Id("10.1038/zztest001"), refetch = Ingest.Request.Refetch(true)))
         .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assert(!again.steps.exists(_.step == Ingest.Step.Value("licence")), again.steps.toString)
@@ -568,7 +568,7 @@ class AcquireHandlerSuite extends DbSuite:
     assert(
       !AcquisitionTesting
         .sources(Deps(cfg, ds))
-        .recordLicence(com.histmersion.domain.library.Citekey("zzacq_ingested"), Licence.Id("  "), Caller.Local),
+        .recordLicence(domain.library.Citekey("zzacq_ingested"), Licence.Id("  "), Caller.Local),
       "a blank licence is never written"
     )
     wipe("zzacq_ingested")
@@ -576,7 +576,7 @@ class AcquireHandlerSuite extends DbSuite:
   test("an open-access work no script may fetch goes to the acquisition list once, as a browser download (#1581)"):
     import com.augustnagro.magnum.*
     def items = QueueRows
-      .acquireNaming(ds, com.histmersion.domain.library.Doi("10.1038/zztest001"))
+      .acquireNaming(ds, domain.library.Doi("10.1038/zztest001"))
       .filter(_.status == Queue.QueueItem.Status("open"))
     def dropItems(): Unit =
       transact(ds)(items.foreach(i => sql"DELETE FROM queue_items WHERE id = ${i.id}".update.run()))
@@ -621,7 +621,7 @@ class AcquireHandlerSuite extends DbSuite:
     import com.augustnagro.magnum.*
     import com.histmersion.plugin.{Access, Fetch, SourceFetcher, WorkKey}
     def items = QueueRows
-      .acquireNaming(ds, com.histmersion.domain.library.Doi("10.1038/zztest001"))
+      .acquireNaming(ds, domain.library.Doi("10.1038/zztest001"))
       .filter(_.status == Queue.QueueItem.Status("open"))
     def dropItems(): Unit =
       transact(ds)(items.foreach(i => sql"DELETE FROM queue_items WHERE id = ${i.id}".update.run()))
@@ -668,7 +668,7 @@ class AcquireHandlerSuite extends DbSuite:
     "#1581: a gold open-access work on a publisher that refuses scripts goes to the acquisition list, from a watcher's legal path too"
   ):
     import com.augustnagro.magnum.*
-    def items = QueueRows.acquireNaming(ds, com.histmersion.domain.library.Doi("10.1038/zztest001"))
+    def items = QueueRows.acquireNaming(ds, domain.library.Doi("10.1038/zztest001"))
     def dropItems(): Unit =
       transact(ds)(items.foreach(i => sql"DELETE FROM queue_items WHERE id = ${i.id}".update.run()))
     wipe("zzacq_ingested"); dropItems()
@@ -700,7 +700,7 @@ class AcquireHandlerSuite extends DbSuite:
       text
     )
     assert(
-      SourceFixtures.load(ds, com.histmersion.domain.library.Citekey("zzacq_ingested")).isEmpty,
+      SourceFixtures.load(ds, domain.library.Citekey("zzacq_ingested")).isEmpty,
       "the legal path creates no metadata-only source"
     )
     // a person's ingest of the same work: the item is reported, not doubled
@@ -792,7 +792,7 @@ class AcquireHandlerSuite extends DbSuite:
     assert(r.steps.exists(_.step == Ingest.Step.Value("legal-only")), r.steps.toString)
     assert(r.dropIn.isDefined, "with no legal copy it is a person's ingest as usual: the drop-in is explained")
     assert(
-      SourceFixtures.load(ds, com.histmersion.domain.library.Citekey("zzacq_ingested")).isDefined,
+      SourceFixtures.load(ds, domain.library.Citekey("zzacq_ingested")).isDefined,
       "the metadata-only source is created"
     )
     // without the flag the person's path asks it (the switch is on), and the watcher's never does
@@ -817,7 +817,7 @@ class AcquireHandlerSuite extends DbSuite:
     assert(r.dropIn.exists(_.value.contains("--citekey zzacq_ingested")), r.dropIn.toString)
     assert(r.steps.exists(s => s.step == Ingest.Step.Value("fetch") && !s.ok.value))
     assert(
-      SourceFixtures.load(ds, com.histmersion.domain.library.Citekey("zzacq_ingested")).isDefined,
+      SourceFixtures.load(ds, domain.library.Citekey("zzacq_ingested")).isDefined,
       "metadata-only source must still exist"
     )
     wipe("zzacq_ingested")
@@ -838,7 +838,7 @@ class AcquireHandlerSuite extends DbSuite:
       )
     )
     SourceFixtures
-      .patch(ds, com.histmersion.domain.library.Citekey("zzacq_ingested"), enriched, cfg.limits.chunkChars)
+      .patch(ds, domain.library.Citekey("zzacq_ingested"), enriched, cfg.limits.chunkChars)
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
 
     val again =
@@ -846,7 +846,7 @@ class AcquireHandlerSuite extends DbSuite:
         .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assert(!again.created.value, "an existing citekey must be updated, not recreated")
     val after =
-      SourceFixtures.load(ds, com.histmersion.domain.library.Citekey("zzacq_ingested")).getOrElse(fail("gone"))
+      SourceFixtures.load(ds, domain.library.Citekey("zzacq_ingested")).getOrElse(fail("gone"))
     assertEquals(after.notes, Some("The compiled article."))
     assertEquals(after.topics, List("indo-european"))
     assertEquals(after.tags, List("steppe"))
@@ -863,7 +863,7 @@ class AcquireHandlerSuite extends DbSuite:
     SourceFixtures
       .patch(
         ds,
-        com.histmersion.domain.library.Citekey("zzacq_ingested"),
+        domain.library.Citekey("zzacq_ingested"),
         Source.Patch(notes = Some(Source.Notes("Compiled."))),
         cfg.limits.chunkChars
       )
@@ -883,7 +883,7 @@ class AcquireHandlerSuite extends DbSuite:
     )
     assertEquals(r.dropIn, None)
     assertEquals(
-      SourceFixtures.load(ds, com.histmersion.domain.library.Citekey("zzacq_ingested")).flatMap(_.notes),
+      SourceFixtures.load(ds, domain.library.Citekey("zzacq_ingested")).flatMap(_.notes),
       Some("Compiled.")
     )
     wipe("zzacq_ingested")
@@ -896,7 +896,7 @@ class AcquireHandlerSuite extends DbSuite:
     SourceFixtures
       .patch(
         ds,
-        com.histmersion.domain.library.Citekey("zzacq_ingested"),
+        domain.library.Citekey("zzacq_ingested"),
         Source.Patch(body = Some(Source.OcrMarkdown("# The converted text"))),
         cfg.limits.chunkChars
       )
@@ -917,7 +917,7 @@ class AcquireHandlerSuite extends DbSuite:
     assertEquals(r.dropIn, None, "no 'get the file by hand' advice for a source that has it")
     assert(AcquireMarkdown.ingest(r).contains("not fetched — the source already has its original"))
     assertEquals(
-      SourceFixtures.load(ds, com.histmersion.domain.library.Citekey("zzacq_ingested")).flatMap(_.ocrMarkdown),
+      SourceFixtures.load(ds, domain.library.Citekey("zzacq_ingested")).flatMap(_.ocrMarkdown),
       Some("# The converted text")
     )
     // asked for: fetched and handed to the job, which replaces the body
@@ -967,7 +967,7 @@ class AcquireHandlerSuite extends DbSuite:
       .archiveImport(Caller.Local, ArchiveImportRequest(ArchiveImportRequest.Id("blackathena")))
     assert(r.isLeft)
     assert(r.left.exists(_.problems.sentences.mkString("; ").contains("lending-only")), r.toString)
-    assert(SourceFixtures.load(ds, com.histmersion.domain.library.Citekey("zzacqbernal1987_black")).isEmpty)
+    assert(SourceFixtures.load(ds, domain.library.Citekey("zzacqbernal1987_black")).isEmpty)
 
   test("a public archive.org item is imported with provenance archive_org"):
     wipe("zzacqcoon1939_races")
@@ -997,10 +997,10 @@ class AcquireHandlerSuite extends DbSuite:
         work.archive.fold(Fetch.Miss(Problem.Unclassified(Legacy.Text("no identifier"))))(_ =>
           Fetch.Found(
             FetchedFile(
-              com.histmersion.plugin.FetchedFile.Source("archive_org"),
+              plugin.FetchedFile.Source("archive_org"),
               None,
               FetchedFile.Bytes(("%PDF-1.4\n" + "y" * 20000).getBytes("UTF-8")),
-              com.histmersion.plugin.FetchedFile.Extension("pdf")
+              plugin.FetchedFile.Extension("pdf")
             )
           )
         )
@@ -1010,7 +1010,7 @@ class AcquireHandlerSuite extends DbSuite:
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(r.citekey, "zzacqcoon1939_races")
     assertEquals(
-      SourceFixtures.load(ds, com.histmersion.domain.library.Citekey("zzacqcoon1939_races")).flatMap(_.provenance),
+      SourceFixtures.load(ds, domain.library.Citekey("zzacqcoon1939_races")).flatMap(_.provenance),
       Some("archive_org")
     )
     wipe("zzacqcoon1939_races")
@@ -1043,7 +1043,7 @@ class AcquireHandlerSuite extends DbSuite:
     assert(!gaps().gaps(None).gaps.exists(_.citekey == Citekey("zzacq_gap")))
     // … and the push metadata now names the entry, which is what `calibre update` rewrites
     assertEquals(
-      gaps().pushMeta(com.histmersion.domain.library.Citekey("zzacq_gap")).map(_.calibreId),
+      gaps().pushMeta(domain.library.Citekey("zzacq_gap")).map(_.calibreId),
       Right(Some("9999"))
     )
     wipe("zzacq_gap", "zzacq_incalibre")
@@ -1098,14 +1098,14 @@ class AcquireHandlerSuite extends DbSuite:
           sort: Option[DiscoveryClient.SearchSort],
           limit: DiscoveryClient.SearchLimit
       ) = Right(Nil)
-      def meta(doi: com.histmersion.domain.library.Doi) = Left(Problem.Unclassified(Legacy.Text(s"$doi: HTTP 404")))
-      def references(doi: com.histmersion.domain.library.Doi) = Right((DiscoveryClient.Backend("crossref"), Nil))
-      def updates(doi: com.histmersion.domain.library.Doi) = Right(Nil)
+      def meta(doi: domain.library.Doi) = Left(Problem.Unclassified(Legacy.Text(s"$doi: HTTP 404")))
+      def references(doi: domain.library.Doi) = Right((DiscoveryClient.Backend("crossref"), Nil))
+      def updates(doi: domain.library.Doi) = Right(Nil)
     val h = handlers(blind)
     val r = h.ingest(Ingest.Request(Ingest.Request.Id("10.1017/zzdoesnotexist")))
     assert(r.left.exists(_.problems.sentences.mkString("; ").contains("no upstream record")), r.toString)
     assert(
-      SourceFixtures.load(ds, com.histmersion.domain.library.Citekey("anonnd")).isEmpty,
+      SourceFixtures.load(ds, domain.library.Citekey("anonnd")).isEmpty,
       "no junk source may be created"
     )
 
@@ -1115,5 +1115,5 @@ class AcquireHandlerSuite extends DbSuite:
       .ingest(Ingest.Request(Ingest.Request.Id("10.1017/zzdoesnotexist"), citekey = Some(Citekey("zzacq_manual"))))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(forced.citekey, "zzacq_manual")
-    assert(SourceFixtures.load(ds, com.histmersion.domain.library.Citekey("zzacq_manual")).isDefined)
+    assert(SourceFixtures.load(ds, domain.library.Citekey("zzacq_manual")).isDefined)
     wipe("zzacq_manual")

@@ -20,7 +20,7 @@ class MergeApplyJobsSuite extends munit.FunSuite:
   private val result =
     MergeApplyResult(
       UUID.randomUUID(),
-      com.histmersion.api.exchange.Bundle.Instance(UUID.randomUUID(), None),
+      api.exchange.Bundle.Instance(UUID.randomUUID(), None),
       applied = MergeApplyResult.Applied(true),
       MergeApplyResult.PlanHash("abc")
     )

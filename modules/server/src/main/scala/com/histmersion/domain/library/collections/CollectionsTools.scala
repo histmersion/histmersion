@@ -49,7 +49,7 @@ object CollectionsTools:
     object Action extends Newtype[String, Pure]
     type Name = Name.T
     object Name extends Newtype[String, Pure]
-    export com.histmersion.domain.library.search.Search.Query
+    export domain.library.search.Search.Query
     type Id = Id.T
     object Id extends Newtype[String, Pure]
     type Format = Format.T

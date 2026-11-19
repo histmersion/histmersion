@@ -200,7 +200,7 @@ object MediaWire:
         place(
           Place.Id("pleiades_570491"),
           Place.Label("Mycenae"),
-          Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+          Place.KindValue(domain.catalogue.Place.Kind.Site),
           Longitude(22.756),
           Latitude(37.73),
           span(-1600L, -1100L)
@@ -208,7 +208,7 @@ object MediaWire:
         place(
           Place.Id("geonames_390903"),
           Place.Label("Greece"),
-          Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region),
+          Place.KindValue(domain.catalogue.Place.Kind.Region),
           Longitude(22.0),
           Latitude(39.0),
           span(-3000L, -100L)
@@ -216,7 +216,7 @@ object MediaWire:
         place(
           Place.Id("geonames_146669"),
           Place.Label("Cyprus"),
-          Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region),
+          Place.KindValue(domain.catalogue.Place.Kind.Region),
           Longitude(33.0),
           Latitude(35.0),
           span(-1200L, -300L)
@@ -224,7 +224,7 @@ object MediaWire:
         place(
           Place.Id("pleiades_697725"),
           Place.Label("Petra"),
-          Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+          Place.KindValue(domain.catalogue.Place.Kind.Site),
           Longitude(35.44),
           Latitude(30.33),
           span(-300L, 100L)
@@ -232,7 +232,7 @@ object MediaWire:
         place(
           Place.Id("geonames_248816"),
           Place.Label("Jordan"),
-          Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region),
+          Place.KindValue(domain.catalogue.Place.Kind.Region),
           Longitude(36.0),
           Latitude(31.0),
           span(-3000L, 2000L)
@@ -240,7 +240,7 @@ object MediaWire:
         place(
           Place.Id("geonames_357994"),
           Place.Label("Egypt"),
-          Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region),
+          Place.KindValue(domain.catalogue.Place.Kind.Region),
           Longitude(30.0),
           Latitude(26.0),
           span(-3100L, -30L)
@@ -248,7 +248,7 @@ object MediaWire:
         place(
           Place.Id("geonames_163843"),
           Place.Label("Syria"),
-          Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region),
+          Place.KindValue(domain.catalogue.Place.Kind.Region),
           Longitude(38.0),
           Latitude(35.0),
           span(-3000L, 1500L)
@@ -256,7 +256,7 @@ object MediaWire:
         place(
           Place.Id("pleiades_757208100"),
           Place.Label("Zygouries"),
-          Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+          Place.KindValue(domain.catalogue.Place.Kind.Site),
           Longitude(22.85),
           Latitude(37.8),
           span(-3000L, -1100L)
@@ -264,7 +264,7 @@ object MediaWire:
         place(
           Place.Id("x_site"),
           Place.Label("X"),
-          Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+          Place.KindValue(domain.catalogue.Place.Kind.Site),
           Longitude(10.0),
           Latitude(10.0),
           None

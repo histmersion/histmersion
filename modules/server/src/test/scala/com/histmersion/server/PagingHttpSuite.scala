@@ -21,7 +21,7 @@ import com.histmersion.config.ServerConfig
 /** Offset paging over real HTTP and MCP (#1798 item 8): a cut list's JSON carries `offset` and `next`, its Markdown
   * says `next: offset=N`, and `geo_when` pages (`GET /api/findings/page`). Skipped without HISTMERSION_TEST_DB_URL.
   */
-class PagingHttpSuite extends munit.FunSuite with com.histmersion.db.Bounded:
+class PagingHttpSuite extends munit.FunSuite with db.Bounded:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 

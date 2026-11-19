@@ -42,7 +42,7 @@ import com.histmersion.api.library.Citekey
   * geocoder reading a dated name. Every fixture id is `pleiades_99900…`, `zzgaz…` or an authority id in the 99900000…
   * range, and the sources are `lpf:zzgaz…` or the `wikidata`/`geonames` keys with refs nothing else uses.
   */
-class GazetteerRepoSuite extends DbSuite with com.histmersion.db.Bounded:
+class GazetteerRepoSuite extends DbSuite with db.Bounded:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
@@ -604,8 +604,8 @@ class GazetteerRepoSuite extends DbSuite with com.histmersion.db.Bounded:
         ds,
         Source(
           citekey = Citekey("zzgaz_src"),
-          title = com.histmersion.api.library.Title("Gazetteer fixture"),
-          authors = (List("T")).map(com.histmersion.api.library.AuthorName.apply),
+          title = api.library.Title("Gazetteer fixture"),
+          authors = (List("T")).map(api.library.AuthorName.apply),
           doi = None,
           year = (Some(2026)).map(Year.apply),
           venue = None,

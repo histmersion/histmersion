@@ -119,7 +119,7 @@ object MarkdownLint:
 
   /** A source's summary and notes — the two texts an agent writes about one source. */
   def ofSource(
-      summary: Option[com.histmersion.domain.library.Source.Summary],
+      summary: Option[domain.library.Source.Summary],
       notes: Option[SourceNote.Text],
       links: WikiLinks.Occurrence.Target => Option[LinkTarget]
   ): List[FormatIssue] =

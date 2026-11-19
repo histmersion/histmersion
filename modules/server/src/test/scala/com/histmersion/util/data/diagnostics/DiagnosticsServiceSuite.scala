@@ -35,13 +35,13 @@ class DiagnosticsServiceSuite extends munit.FunSuite:
     assertEquals(
       service.largestTables(DiagnosticsService.TableLimit(5)),
       List(
-        TableSize(TableSize.Name("sources"), com.histmersion.api.ByteCount(300)),
-        TableSize(TableSize.Name("places"), com.histmersion.api.ByteCount(100))
+        TableSize(TableSize.Name("sources"), api.ByteCount(300)),
+        TableSize(TableSize.Name("places"), api.ByteCount(100))
       )
     )
     assertEquals(
       service.largestTables(DiagnosticsService.TableLimit(1)),
-      List(TableSize(TableSize.Name("sources"), com.histmersion.api.ByteCount(300)))
+      List(TableSize(TableSize.Name("sources"), api.ByteCount(300)))
     )
     assertEquals(service.largestTables(DiagnosticsService.TableLimit(0)), Nil)
 

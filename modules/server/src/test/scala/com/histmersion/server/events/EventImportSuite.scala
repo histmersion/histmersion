@@ -199,8 +199,8 @@ class EventImportSuite extends DbSuite:
     val chunk = AppConfig.load().limits.chunkChars
     def src(ck: Citekey, body: Source.OcrMarkdown, lon: Longitude) = Source(
       ck,
-      com.histmersion.api.library.Title(s"Zqei $ck"),
-      (List("A")).map(com.histmersion.api.library.AuthorName.apply),
+      api.library.Title(s"Zqei $ck"),
+      (List("A")).map(api.library.AuthorName.apply),
       None,
       (Some(2020)).map(Year.apply),
       None,
@@ -259,7 +259,7 @@ class EventImportSuite extends DbSuite:
       .get
     assertEquals(r.attested.map(a => (a.citekey, a.quote)), List(("zqei_named2020", Some("Siege of Alesia"))))
     val a = r.attested.head
-    val body = SourceFixtures.bodyText(ds, com.histmersion.domain.library.Citekey("zqei_named2020"))
+    val body = SourceFixtures.bodyText(ds, domain.library.Citekey("zqei_named2020"))
     assertEquals(
       body.value.substring(a.charStart.get.value, a.charEnd.get.value),
       "Siege of Alesia",
@@ -280,8 +280,8 @@ class EventImportSuite extends DbSuite:
       ds,
       Source(
         Citekey("zqei_sites2020"),
-        com.histmersion.api.library.Title("Zqei sites"),
-        (List("A")).map(com.histmersion.api.library.AuthorName.apply),
+        api.library.Title("Zqei sites"),
+        (List("A")).map(api.library.AuthorName.apply),
         None,
         (Some(2020)).map(Year.apply),
         None,
@@ -423,6 +423,6 @@ class EventImportSuite extends DbSuite:
       GeoTolerance(0.01)
     )
     assert(
-      !geo.events.exists(_.id == com.histmersion.api.catalogue.Event.Id("gvp_12724")) && geo.imprecise.value >= 1,
+      !geo.events.exists(_.id == api.catalogue.Event.Id("gvp_12724")) && geo.imprecise.value >= 1,
       geo.toString
     )

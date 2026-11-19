@@ -83,7 +83,7 @@ class PersonalTypesSuite extends munit.FunSuite:
       assertEquals(MarkTarget.ofColumns(c.kind, c.key, c.uid, c.lat, c.lon, c.zoom, c.from, c.to, c.view), Some(t))
     }
     assertEquals(
-      MarkTarget.fromWire(Target.item(MarkKind.Goal, com.histmersion.api.personal.ItemKey("g"))).map(_.kind),
+      MarkTarget.fromWire(Target.item(MarkKind.Goal, api.personal.ItemKey("g"))).map(_.kind),
       Some(MarkKind.Goal)
     )
 
@@ -98,8 +98,8 @@ class PersonalTypesSuite extends munit.FunSuite:
   test("wire coordinates are checked before becoming domain coordinates"):
     def point(lat: Double, lon: Double) = Target(
       kind = MarkKind.Point,
-      lat = Some(com.histmersion.api.catalogue.Latitude(lat)),
-      lon = Some(com.histmersion.api.catalogue.Longitude(lon))
+      lat = Some(api.catalogue.Latitude(lat)),
+      lon = Some(api.catalogue.Longitude(lon))
     )
     assert(MarkTarget.fromWire(point(90.0, 180.0)).nonEmpty)
     assert(MarkTarget.fromWire(point(-90.0, -180.0)).nonEmpty)

@@ -43,13 +43,13 @@ abstract class ApprovalServiceContract extends EngineStoreSuite:
       p.kind,
       p.citekey,
       io.scalaland.chimney.Transformer
-        .derive[Option[Source.Status], Option[com.histmersion.domain.library.Source.Status]]
+        .derive[Option[Source.Status], Option[domain.library.Source.Status]]
         .transform(p.status),
       io.scalaland.chimney.Transformer
-        .derive[Option[Source.Status], Option[com.histmersion.domain.library.Source.Status]]
+        .derive[Option[Source.Status], Option[domain.library.Source.Status]]
         .transform(current),
       io.scalaland.chimney.Transformer
-        .derive[Option[Edge.Kind], Option[com.histmersion.domain.library.Edge.Kind]]
+        .derive[Option[Edge.Kind], Option[domain.library.Edge.Kind]]
         .transform(p.edgeKind),
       p.target,
       Jsonb.write(p),
@@ -61,10 +61,10 @@ abstract class ApprovalServiceContract extends EngineStoreSuite:
       p.kind,
       p.citekey,
       io.scalaland.chimney.Transformer
-        .derive[Option[Source.Status], Option[com.histmersion.domain.library.Source.Status]]
+        .derive[Option[Source.Status], Option[domain.library.Source.Status]]
         .transform(p.status),
       io.scalaland.chimney.Transformer
-        .derive[Option[Edge.Kind], Option[com.histmersion.domain.library.Edge.Kind]]
+        .derive[Option[Edge.Kind], Option[domain.library.Edge.Kind]]
         .transform(p.edgeKind),
       p.target
     )
@@ -231,7 +231,7 @@ abstract class ApprovalServiceContract extends EngineStoreSuite:
         Citekey("zz2020_x"),
         None,
         None,
-        Some(com.histmersion.domain.library.Edge.Kind.Refutes),
+        Some(domain.library.Edge.Kind.Refutes),
         Some(Citekey("zz2019_y")),
         Jsonb.JsonText("{}"),
         ApprovalState.Open,

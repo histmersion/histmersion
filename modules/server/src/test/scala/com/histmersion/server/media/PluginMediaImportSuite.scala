@@ -195,7 +195,7 @@ class PluginMediaImportSuite extends DbSuite:
             Place(
               PlaceId,
               Place.Label("Zqplenae"),
-              Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+              Place.KindValue(domain.catalogue.Place.Kind.Site),
               Some(Place.Geometry("""{"type":"Point","coordinates":[142.0,-43]}"""))
             ),
             List(Place.Name(Place.Name.Value("Zqplenae")), Place.Name(Place.Name.Value("Zqplenai")))

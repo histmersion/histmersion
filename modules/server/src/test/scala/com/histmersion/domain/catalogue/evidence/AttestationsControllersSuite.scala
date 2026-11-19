@@ -50,7 +50,7 @@ class AttestationsControllersSuite extends munit.FunSuite:
       .create(
         Caller.Local,
         Attestation.Put(
-          com.histmersion.api.library.Citekey("zzold1990_x"),
+          api.library.Citekey("zzold1990_x"),
           Attestation.TargetType(" Place "),
           Attestation.TargetId("zz_old_hill")
         )
@@ -62,7 +62,7 @@ class AttestationsControllersSuite extends munit.FunSuite:
       .create(
         Caller.Local,
         Attestation.Put(
-          com.histmersion.api.library.Citekey("zznew1990_x"),
+          api.library.Citekey("zznew1990_x"),
           Attestation.TargetType("finding"),
           Attestation.TargetId("zz_old_hill")
         )
@@ -72,7 +72,7 @@ class AttestationsControllersSuite extends munit.FunSuite:
     assertEquals(f.targetId, "zz_old_hill")
     assertEquals(
       c.list(
-        Some(com.histmersion.api.library.Citekey("zzold1990_x")),
+        Some(api.library.Citekey("zzold1990_x")),
         Some(Attestation.TargetType("place")),
         Some(Attestation.TargetId("zz_old_hill")),
         None,
@@ -89,7 +89,7 @@ class AttestationsControllersSuite extends munit.FunSuite:
     val bad = c.create(
       Caller.Local,
       Attestation.Put(
-        com.histmersion.api.library.Citekey("zznew1990_x"),
+        api.library.Citekey("zznew1990_x"),
         Attestation.TargetType("planet"),
         Attestation.TargetId("x")
       )
@@ -104,7 +104,7 @@ class AttestationsControllersSuite extends munit.FunSuite:
     val none = c.create(
       Caller.Local,
       Attestation.Put(
-        com.histmersion.api.library.Citekey("zzgone1900_y"),
+        api.library.Citekey("zzgone1900_y"),
         Attestation.TargetType("place"),
         Attestation.TargetId("zz_hill")
       )
@@ -122,7 +122,7 @@ class AttestationsControllersSuite extends munit.FunSuite:
             .create(
               Caller.Local,
               Attestation.Put(
-                com.histmersion.api.library.Citekey("zznew1990_x"),
+                api.library.Citekey("zznew1990_x"),
                 Attestation.TargetType("place"),
                 Attestation.TargetId("zz_hill")
               )

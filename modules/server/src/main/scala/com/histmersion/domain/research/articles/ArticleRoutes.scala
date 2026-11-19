@@ -54,10 +54,10 @@ object ArticleRoutes:
         read(slug).flatMap(articles.get(_, ArticlesControllers.GetBrief(brief.value)))
       ),
       Api.putArticle.serverLogic[Identity]((slug, in, strict) =>
-        write(slug).flatMap(articles.put(_, in, com.histmersion.domain.research.Article.StrictMode(strict.value)))
+        write(slug).flatMap(articles.put(_, in, domain.research.Article.StrictMode(strict.value)))
       ),
       Api.patchArticle.serverLogic[Identity]((slug, p, strict) =>
-        write(slug).flatMap(articles.patch(_, p, com.histmersion.domain.research.Article.StrictMode(strict.value)))
+        write(slug).flatMap(articles.patch(_, p, domain.research.Article.StrictMode(strict.value)))
       ),
       Api.deleteArticle.serverLogic[Identity](slug => read(slug).flatMap(articles.delete))
     )

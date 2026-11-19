@@ -447,7 +447,7 @@ final class ManagersControllers(
 
   def items(
       id: ManagerLight.Id,
-      status: Option[com.histmersion.domain.automation.ItemStatus.Wire],
+      status: Option[domain.automation.ItemStatus.Wire],
       offset: Option[Offset],
       limit: Option[PageSize]
   ): Either[Api.Error, ItemPage] =

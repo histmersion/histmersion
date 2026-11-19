@@ -9,7 +9,7 @@ import com.histmersion.config.PlacesConfig
 /** `histmersion places seed`'s file walk is a pure function of a directory, so it is tested as one. */
 class PlacesCmdSuite extends munit.FunSuite:
 
-  private given console: com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard
+  private given console: util.console.Console = util.console.Console.standard
 
   private def tree(): Path =
     val root = Files.createTempDirectory("histmersion-places")

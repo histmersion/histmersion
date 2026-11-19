@@ -27,9 +27,9 @@ abstract class FocusServiceContract extends EngineStoreSuite:
         s.goals
           .put(
             g,
-            com.histmersion.api.automation.Goal.Put(
-              com.histmersion.api.automation.Goal.Title(g.value),
-              parentSlug = Option.when(g == Goal.Slug("zz-b"))(com.histmersion.api.automation.Goal.Slug("zz-a"))
+            api.automation.Goal.Put(
+              api.automation.Goal.Title(g.value),
+              parentSlug = Option.when(g == Goal.Slug("zz-b"))(api.automation.Goal.Slug("zz-a"))
             )
           )
           .isRight
@@ -63,7 +63,7 @@ abstract class FocusServiceContract extends EngineStoreSuite:
     List(Goal.Slug("zz-a"), Goal.Slug("zz-b")).foreach(g =>
       assert(
         s.goals
-          .put(g, com.histmersion.api.automation.Goal.Put(com.histmersion.api.automation.Goal.Title(g.value)))
+          .put(g, api.automation.Goal.Put(api.automation.Goal.Title(g.value)))
           .isRight
       )
     )
@@ -71,7 +71,7 @@ abstract class FocusServiceContract extends EngineStoreSuite:
       s.goals.link(
         Goal.Slug("zz-b"),
         Goal.LinkKind.Source,
-        com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("zz2020_s"),
+        api.automation.Goal.Plans.GoalLink.Ref("zz2020_s"),
         None
       )
     )
@@ -79,7 +79,7 @@ abstract class FocusServiceContract extends EngineStoreSuite:
       s.goals.link(
         Goal.Slug("zz-a"),
         Goal.LinkKind.Source,
-        com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("zz2020_s"),
+        api.automation.Goal.Plans.GoalLink.Ref("zz2020_s"),
         None
       )
     )
@@ -87,7 +87,7 @@ abstract class FocusServiceContract extends EngineStoreSuite:
       s.goals.link(
         Goal.Slug("zz-a"),
         Goal.LinkKind.Article,
-        com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("zz-art"),
+        api.automation.Goal.Plans.GoalLink.Ref("zz-art"),
         None
       )
     )
@@ -95,15 +95,15 @@ abstract class FocusServiceContract extends EngineStoreSuite:
       f(s).goalsOf(
         Goal.LinkKind.Wire("source"),
         List(
-          com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("zz2020_s"),
-          com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("zz2020_none")
+          api.automation.Goal.Plans.GoalLink.Ref("zz2020_s"),
+          api.automation.Goal.Plans.GoalLink.Ref("zz2020_none")
         )
       ),
       Map("zz2020_s" -> List("zz-a", "zz-b"))
     )
     assertEquals(
       f(s)
-        .goalsOf(Goal.LinkKind.Wire("article"), List(com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("zz-art"))),
+        .goalsOf(Goal.LinkKind.Wire("article"), List(api.automation.Goal.Plans.GoalLink.Ref("zz-art"))),
       Map("zz-art" -> List("zz-a"))
     )
     assertEquals(f(s).goalsOf(Goal.LinkKind.Wire("source"), Nil), Map.empty)

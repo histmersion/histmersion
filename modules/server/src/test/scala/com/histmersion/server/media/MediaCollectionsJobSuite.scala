@@ -157,7 +157,7 @@ class MediaCollectionsJobSuite extends DbSuite:
             Place(
               Place.Id("zqmc_site"),
               Place.Label("Zqmcenae"),
-              Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+              Place.KindValue(domain.catalogue.Place.Kind.Site),
               pt(Longitude(140.0))
             ),
             List(Place.Name(Place.Name.Value("Zqmcenae")), Place.Name(Place.Name.Value("Zqmcenai")))
@@ -166,7 +166,7 @@ class MediaCollectionsJobSuite extends DbSuite:
             Place(
               Place.Id("zqmc_thebai_a"),
               Place.Label("Zqmc Thebai"),
-              Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+              Place.KindValue(domain.catalogue.Place.Kind.Site),
               pt(Longitude(141.0))
             ),
             List(Place.Name(Place.Name.Value("Zqmc Thebai")))
@@ -175,7 +175,7 @@ class MediaCollectionsJobSuite extends DbSuite:
             Place(
               Place.Id("zqmc_thebai_b"),
               Place.Label("Zqmc Thebai"),
-              Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+              Place.KindValue(domain.catalogue.Place.Kind.Site),
               pt(Longitude(150.0))
             ),
             List(Place.Name(Place.Name.Value("Zqmc Thebai")))
@@ -199,8 +199,8 @@ class MediaCollectionsJobSuite extends DbSuite:
       providerServer.stop(0)
 
   test("the places as a match reads them: every name's key, the findings' span, and what a name names on the map"):
-    val f = ImportFixtures.placeFacts(ds, List(com.histmersion.domain.catalogue.Place.Id("zqmc_site")))(
-      com.histmersion.domain.catalogue.Place.Id("zqmc_site")
+    val f = ImportFixtures.placeFacts(ds, List(domain.catalogue.Place.Id("zqmc_site")))(
+      domain.catalogue.Place.Id("zqmc_site")
     )
     assertEquals(f.keys, Set("zqmcenae", "zqmcenai"))
     assertEquals(f.period, Some((-1600L, -1100L)))

@@ -48,7 +48,7 @@ final class CollectionsControllers(service: CollectionsService, maintenance: Wri
   def search(
       caller: Caller,
       name: CollectionsService.CollectionName,
-      q: Option[com.histmersion.domain.library.search.Search.Query],
+      q: Option[domain.library.search.Search.Query],
       limit: Option[CollectionsService.Limit],
       unlinked: CollectionsService.SearchUnlinked
   ): Either[Api.Error, CollectionSearch] = service.search(name, q, limit, unlinked)
@@ -124,12 +124,12 @@ final class CollectionsControllers(service: CollectionsService, maintenance: Wri
 
   def archiveSearch(
       caller: Caller,
-      q: com.histmersion.domain.library.search.Search.Query,
+      q: domain.library.search.Search.Query,
       rows: Option[CollectionsService.Limit]
   ): Either[Api.Error, ArchiveSearchResult] =
     service.archiveSearch(q, rows)
 
-  def archiveInfo(caller: Caller, id: com.histmersion.domain.library.ArchiveId): Either[Api.Error, ArchiveItem] =
+  def archiveInfo(caller: Caller, id: domain.library.ArchiveId): Either[Api.Error, ArchiveItem] =
     service.archiveInfo(id)
 
   def archiveImport(caller: Caller, req: ArchiveImportRequest): Either[Api.Error, Ingest.Report] =

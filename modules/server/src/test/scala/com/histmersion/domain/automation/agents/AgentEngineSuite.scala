@@ -106,7 +106,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
   override val munitTimeout = scala.concurrent.duration.Duration(120, "s")
 
   private val Ck = Citekey("zzagent2019_tin")
-  private val ApiCk = com.histmersion.api.library.Citekey(Ck.value)
+  private val ApiCk = api.library.Citekey(Ck.value)
   private val ApiTarget = RunRequest.Target(Ck.value)
   private val RunTarget = AgentsControllers.Target(Ck.value)
   private val Model = ModelRef(ProviderKind.Local, Agents.ModelRef.Model("scripted"))
@@ -196,7 +196,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
       .put(
         Ck,
         Source.Put(
-          title = com.histmersion.api.library.Title("Bronze Age tin"),
+          title = api.library.Title("Bronze Age tin"),
           year = (Some(2019)).map(Year.apply),
           body = Some(body)
         )
@@ -506,7 +506,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
       Right(
         RefsResult(
           RefsResult.Target(citekey.value),
-          Some(com.histmersion.api.library.Doi("10.1/zz")),
+          Some(api.library.Doi("10.1/zz")),
           RefsResult.Backend("crossref"),
           RefsResult.Count(12),
           RefsResult.Resolved(3),
@@ -519,8 +519,8 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
       Right(
         Assessment(
           Assessment.Target(citekey.value),
-          Some(com.histmersion.api.library.Doi("10.1/zz")),
-          Some(com.histmersion.api.library.Citekey(citekey.value)),
+          Some(api.library.Doi("10.1/zz")),
+          Some(api.library.Citekey(citekey.value)),
           Some(Year(2019)),
           Some(Acquire.CitedByCount(10)),
           None,
@@ -552,15 +552,15 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
         .patch(
           Ck,
           Source
-            .Patch(metadata = Some(MetadataPatch(doi = (Some("10.1/zz")).map(com.histmersion.api.library.Doi.apply))))
+            .Patch(metadata = Some(MetadataPatch(doi = (Some("10.1/zz")).map(api.library.Doi.apply))))
         )
         .isRight
     )
     val up =
       FakeUpstream(
         WorkRef(
-          doi = (Some("10.1/zz")).map(com.histmersion.api.library.Doi.apply),
-          title = (Some("Bronze Age tin")).map(com.histmersion.api.library.Title.apply),
+          doi = (Some("10.1/zz")).map(api.library.Doi.apply),
+          title = (Some("Bronze Age tin")).map(api.library.Title.apply),
           year = (Some(2020)).map(Year.apply)
         ),
         retracted = Assessment.IsRetracted(false)
@@ -601,13 +601,13 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
         .patch(
           Ck,
           Source
-            .Patch(metadata = Some(MetadataPatch(doi = (Some("10.1/zz")).map(com.histmersion.api.library.Doi.apply))))
+            .Patch(metadata = Some(MetadataPatch(doi = (Some("10.1/zz")).map(api.library.Doi.apply))))
         )
         .isRight
     )
     a.attach(
       FakeUpstream(
-        WorkRef(doi = (Some("10.1/zz")).map(com.histmersion.api.library.Doi.apply)),
+        WorkRef(doi = (Some("10.1/zz")).map(api.library.Doi.apply)),
         retracted = Assessment.IsRetracted(true)
       )
     )
@@ -658,7 +658,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
       .decide(
         id,
         Approval.Outcome("approve"),
-        DecisionRequest(Some(com.histmersion.api.automation.Approval.Note("checked the rebuttal")))
+        DecisionRequest(Some(api.automation.Approval.Note("checked the rebuttal")))
       )
       .toOption
       .get
@@ -806,7 +806,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
             val decided = a.decide(
               Approval.Id(id.value),
               Approval.Outcome("approve"),
-              DecisionRequest(Some(com.histmersion.api.automation.Approval.Note("zzagent race")))
+              DecisionRequest(Some(api.automation.Approval.Note("zzagent race")))
             )
             assert(decided.isRight, decided)
             assertEquals(connect(ds)(AgentRepo.get(ctx.run.id)).map(_.status), Some("running"))
@@ -890,7 +890,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
             .Patch(metadata =
               Some(
                 MetadataPatch(
-                  doi = (Some("10.1/zz")).map(com.histmersion.api.library.Doi.apply),
+                  doi = (Some("10.1/zz")).map(api.library.Doi.apply),
                   status = Some(Source.Status.Current)
                 )
               )
@@ -901,8 +901,8 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     val up =
       FakeUpstream(
         WorkRef(
-          doi = (Some("10.1/zz")).map(com.histmersion.api.library.Doi.apply),
-          title = (Some("Bronze Age tin")).map(com.histmersion.api.library.Title.apply),
+          doi = (Some("10.1/zz")).map(api.library.Doi.apply),
+          title = (Some("Bronze Age tin")).map(api.library.Title.apply),
           year = (Some(2019)).map(Year.apply)
         ),
         retracted = Assessment.IsRetracted(false)
@@ -1434,7 +1434,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(enrich.budgetTokens, 400000L)
     assertEquals(
-      evalCfg.agents.budgets.runTokensFor(com.histmersion.domain.automation.Pipeline.Wire("review-article")),
+      evalCfg.agents.budgets.runTokensFor(domain.automation.Pipeline.Wire("review-article")),
       1200000L
     )
 

@@ -95,7 +95,7 @@ class MaintenanceLockSuite extends DbSuite:
 
   test("every source write is refused while a restore holds the lock"):
     refused("put_source")(
-      h.library.sources.put(Citekey("zzlock_src"), Source.Put(title = com.histmersion.api.library.Title("T")))
+      h.library.sources.put(Citekey("zzlock_src"), Source.Put(title = api.library.Title("T")))
     )
     refused("patch_source")(
       h.library.sources.patch(Citekey("zzlock_src"), Source.Patch(summary = Some(Source.Summary("x"))))
@@ -139,25 +139,25 @@ class MaintenanceLockSuite extends DbSuite:
       h.places.addName(
         Caller.Local,
         Place.Id("zzlock_place"),
-        com.histmersion.api.catalogue.Place.NameAdd(com.histmersion.api.catalogue.Place.NameAdd.Name("X"))
+        api.catalogue.Place.NameAdd(api.catalogue.Place.NameAdd.Name("X"))
       )
     )
     refused("places/names/remove")(
       h.places.removeName(
         Caller.Local,
         Place.Id("zzlock_place"),
-        com.histmersion.api.catalogue.Place.NameRemove(com.histmersion.api.catalogue.Place.NameRemove.Name("X"))
+        api.catalogue.Place.NameRemove(api.catalogue.Place.NameRemove.Name("X"))
       )
     )
     refused("places/add")(
       h.places.add(
         Caller.Local,
-        com.histmersion.api.catalogue.Place.Add(
-          com.histmersion.api.catalogue.Place.Add.Label("Zzlock"),
-          com.histmersion.api.catalogue.Place.Add.Kind(Place.Kind.Site),
+        api.catalogue.Place.Add(
+          api.catalogue.Place.Add.Label("Zzlock"),
+          api.catalogue.Place.Add.Kind(Place.Kind.Site),
           Longitude(0),
           Latitude(0),
-          com.histmersion.api.catalogue.Place.Add.Source("fixture")
+          api.catalogue.Place.Add.Source("fixture")
         )
       )
     )
@@ -169,7 +169,7 @@ class MaintenanceLockSuite extends DbSuite:
       refused("ingest")(
         h.ingest.controllers
           .ingest(
-            Ingest.Params(com.histmersion.api.library.Citekey("zzlock_src"), Some(Bundle.Asset.FileName("a.pdf"))),
+            Ingest.Params(api.library.Citekey("zzlock_src"), Some(Bundle.Asset.FileName("a.pdf"))),
             Upload.handed(HandedFile.snapshot(f))
           )
       )
@@ -211,6 +211,6 @@ class MaintenanceLockSuite extends DbSuite:
 
   test("once the lock is released, the same writes go through"):
     assert(
-      h.library.sources.put(Citekey("zzlock_src"), Source.Put(title = com.histmersion.api.library.Title("T"))).isRight
+      h.library.sources.put(Citekey("zzlock_src"), Source.Put(title = api.library.Title("T"))).isRight
     )
     assert(h.places.rebuild(Caller.Local).isRight)

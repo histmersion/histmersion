@@ -495,7 +495,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
   /** What `place=<id>` alone selects in each list — the same scope (the place and its descendants) and the same queries
     * as `/api/sources`, `/api/findings`, `/api/articles` and `/api/events`.
     */
-  private def placeCounts(id: com.histmersion.domain.catalogue.Place.Id): Place.Counts =
+  private def placeCounts(id: domain.catalogue.Place.Id): Place.Counts =
     val f = Filter(places = List(Filter.Places(id.value)))
     library.search.selectionCounts(f)
 
@@ -643,5 +643,5 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
             ResearchData.ArticleNotes,
             MirrorPlacement.RecordId(slug.value)
           )
-          .map(n => com.histmersion.domain.research.Article.Note(n.value))
+          .map(n => domain.research.Article.Note(n.value))
     )

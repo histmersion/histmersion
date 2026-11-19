@@ -50,7 +50,7 @@ object EventCardTools:
     export com.histmersion.api.catalogue.Event.Id
     export Api.EventQuery.Kind
     export com.histmersion.api.catalogue.Historicity.Wire as Historicity
-    export com.histmersion.api.catalogue.Place.Id as PlaceId
+    export Place.Id as PlaceId
     type From = Year
     val From: Year.type = Year
     type To = Year

@@ -73,7 +73,7 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
   private val ArticleTag = Article.Put.Tags("zzmgr")
   private val SkipTag = HintEffect.Tag("zzmgr")
   private val Ck = Citekey("zzagent2019_tin")
-  private val ApiCk = com.histmersion.api.library.Citekey("zzagent2019_tin")
+  private val ApiCk = api.library.Citekey("zzagent2019_tin")
   private val Review = ManagerInfo.Id(ReviewId)
   private val ReviewLight = ApiIds.manager(Review)
   private val ReviewKind = ManagerItem.Kind(ArticleReview)
@@ -176,7 +176,7 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
         .put(
           Ck,
           Source.Put(
-            title = com.histmersion.api.library.Title("Bronze Age tin"),
+            title = api.library.Title("Bronze Age tin"),
             year = (Some(2019)).map(Year.apply),
             body = Some(
               Source.OcrMarkdown(
@@ -353,7 +353,7 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
           .put(
             ck,
             Source.Put(
-              title = com.histmersion.api.library.Title(s"Against $ck"),
+              title = api.library.Title(s"Against $ck"),
               year = (Some(2020)).map(Year.apply),
               body = Some(Source.OcrMarkdown("The tin was not from Anatolia."))
             )
@@ -588,7 +588,7 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
       h.library.sources
         .put(
           Citekey("zzagent2030_new"),
-          Source.Put(title = com.histmersion.api.library.Title("New"), year = (Some(2030)).map(Year.apply))
+          Source.Put(title = api.library.Title("New"), year = (Some(2030)).map(Year.apply))
         )
         .isRight
     )

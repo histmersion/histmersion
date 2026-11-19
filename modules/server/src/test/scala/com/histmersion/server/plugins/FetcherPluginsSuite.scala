@@ -66,14 +66,14 @@ class FetcherPluginsSuite extends munit.FunSuite:
 
   private def fetchers(g: Generation) =
     scala.collection.immutable.ListMap.from(
-      g.registries.sourceFetchers.iterator.map((k, v) => com.histmersion.util.plugins.Plugin.Id.assume(k.value) -> v)
+      g.registries.sourceFetchers.iterator.map((k, v) => util.plugins.Plugin.Id.assume(k.value) -> v)
     )
 
   private def chain(g: Generation): List[String] =
     FetchChain
       .of(
         fetchers(g),
-        cfg.chainIds.flatMap(c => com.histmersion.util.plugins.Plugin.Id.option(c.value)),
+        cfg.chainIds.flatMap(c => util.plugins.Plugin.Id.option(c.value)),
         FetchChain.AllowUnauthorised(cfg.allowUnauthorised.value)
       )
       ._1
@@ -112,9 +112,7 @@ class FetcherPluginsSuite extends munit.FunSuite:
       val g = generation(s"histmersion.plugins.$id.enabled = false")
       assertEquals(state(g, id), Some("disabled"))
       assertEquals(chain(g), Today.filterNot(_ == fetcher))
-      val e = generation(env =
-        Map(LegacyPlugins.enabledEnv(com.histmersion.util.plugins.Plugin.Id.assume(id)).value -> "false")
-      )
+      val e = generation(env = Map(LegacyPlugins.enabledEnv(util.plugins.Plugin.Id.assume(id)).value -> "false"))
       assertEquals(chain(e), Today.filterNot(_ == fetcher), id)
     }
 
@@ -312,7 +310,7 @@ class FetcherPluginsSuite extends munit.FunSuite:
     val g = generation()
     val (c, notes) = FetchChain.of(
       fetchers(g),
-      List(com.histmersion.util.plugins.Plugin.Id("arxiv"), com.histmersion.util.plugins.Plugin.Id("pmc")),
+      List(util.plugins.Plugin.Id("arxiv"), util.plugins.Plugin.Id("pmc")),
       allowUnauthorised = FetchChain.AllowUnauthorised(false)
     )
     assertEquals(c.plan.map(_._1.value).take(2), List("arxiv", "pmc"))
@@ -321,7 +319,7 @@ class FetcherPluginsSuite extends munit.FunSuite:
 
   // ── the landing step reads an index only while its plugin is on (§20.2) ─────────────────────
 
-  private val LandingDoi = com.histmersion.domain.library.Doi("10.9999/landing.1")
+  private val LandingDoi = domain.library.Doi("10.9999/landing.1")
   private val UpPage = "https://repo-u.example.org/item/1" // Unpaywall's repository location
   private val OaPage = "https://repo-o.example.org/item/1" // OpenAlex's
   private val DcPage = "https://repo-d.example.org/item/1" // where DataCite says the DOI resolves
@@ -428,7 +426,7 @@ class FetcherPluginsSuite extends munit.FunSuite:
         List(FetchChain.Step.Id("landing") -> g.registries.sourceFetchers(Registries.SourceFetchersKey("landing"))),
         registered = id => g.registered.exists(_.value == id.value)
       )
-        .fetch(Some(com.histmersion.domain.library.Doi("10.5281/zenodo.3695551")), None)
+        .fetch(Some(domain.library.Doi("10.5281/zenodo.3695551")), None)
     assertEquals(
       got.left.map(_.toVector),
       Left(Vector(Problem.NotFound.Copy(Problem.Raw("doi:10.5281/zenodo.3695551"), Vector.empty)))

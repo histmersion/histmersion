@@ -84,13 +84,13 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
   private val Goal = DomainGoal.Slug("zzagent-apgoal")
   private val ChildGoal = DomainGoal.Slug("zzagent-apchild")
   private val GrandGoal = DomainGoal.Slug("zzagent-apgrand")
-  private val GoalSlug = com.histmersion.api.automation.Goal.Slug("zzagent-apgoal")
+  private val GoalSlug = api.automation.Goal.Slug("zzagent-apgoal")
   private val GoalSubject = ApprovalInfo.Subject("zzagent-apgoal")
   private val GoalQuerySubject = ApprovalQuery.Subject("zzagent-apgoal")
   private val GoalPlanGoal = Article.Plans.ArticlePlan.Goal("zzagent-apgoal")
   private val Ck = Citekey("zzagent2019_tin")
   private val Ck2 = Citekey("zzagent2024_iso")
-  private val ApiCk2 = com.histmersion.api.library.Citekey("zzagent2024_iso")
+  private val ApiCk2 = api.library.Citekey("zzagent2024_iso")
   private val Review = ManagerInfo.Id(ReviewId)
   private val PlanGoalKind = ManagerItem.Kind(PlanGoalItem)
   private val ProposeKind = ManagerItem.Kind(ProposeArticles)
@@ -234,7 +234,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
         .put(
           Ck,
           Source.Put(
-            title = com.histmersion.api.library.Title("Bronze Age tin"),
+            title = api.library.Title("Bronze Age tin"),
             year = (Some(2019)).map(Year.apply),
             topics = List(Source.Topics("zzagent_tin")),
             status = Some(Source.Status.Current),
@@ -253,7 +253,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
         .put(
           Ck2,
           Source.Put(
-            title = com.histmersion.api.library.Title("Tin isotopes"),
+            title = api.library.Title("Tin isotopes"),
             year = (Some(2024)).map(Year.apply),
             topics = List(Source.Topics("zzagent_tin")),
             body = Some(
@@ -276,9 +276,9 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
       h.goals
         .put(
           Goal,
-          com.histmersion.api.automation.Goal.Put(
-            com.histmersion.api.automation.Goal.Title("Zz tin in the Bronze Age"),
-            notes = Some(com.histmersion.api.automation.Goal.Notes("where the tin came from"))
+          api.automation.Goal.Put(
+            api.automation.Goal.Title("Zz tin in the Bronze Age"),
+            notes = Some(api.automation.Goal.Notes("where the tin came from"))
           )
         )
         .isRight
@@ -310,7 +310,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
   private def draftJson(body: String) =
     s"""{"title":"Zz new","summary":"Where Aegean tin came from.","body":${str(body)},"section":null,"reasons":[]}"""
 
-  private def ref(g: DomainGoal.Slug) = com.histmersion.api.automation.Goal.Ref(g.value)
+  private def ref(g: DomainGoal.Slug) = api.automation.Goal.Ref(g.value)
   private def itemTarget(g: DomainGoal.Slug) = ManagerItem.Target(g.value)
 
   private def item(mid: ManagerInfo.Id, kind: ManagerItem.Kind, target: ManagerItem.Target): ManagerItem =
@@ -338,7 +338,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
       .filter(_.managerId.exists(_.value.startsWith("watch:")))
       .foreach(r => a.engine.execute(ApiIds.run(r.id)))
 
-  private def status(g: DomainGoal.Slug): com.histmersion.api.automation.Goal.StatusValue =
+  private def status(g: DomainGoal.Slug): api.automation.Goal.StatusValue =
     connect(ds)(GoalRepo.get(g)).get.status
 
   /** A clock from the wall clock (the switch records real times) that moves six minutes a tick — past the autopilot's
@@ -373,7 +373,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
         on.changes.contains(s"$ReviewId resumed") && on.changes.contains(s"$EnrichId resumed"),
       on.changes
     )
-    assertEquals(status(Goal), com.histmersion.domain.automation.Goal.Status.Seeding, "managed: seeding")
+    assertEquals(status(Goal), domain.automation.Goal.Status.Seeding, "managed: seeding")
     val seedM = connect(ds)(ManagerRepo.get(seedId(ref(Goal)))).get
     assertEquals(
       (seedM.state, seedM.cron.map(_.value: String)),
@@ -468,7 +468,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
     clock.tick(a)
     assertEquals(
       status(Goal),
-      com.histmersion.domain.automation.Goal.Status.Compiled,
+      domain.automation.Goal.Status.Compiled,
       "an article, nothing left to compile"
     )
 
@@ -483,7 +483,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
     clock.tick(a)
     assertEquals(item(Review, ReviewKind, NewTarget).status, "done")
     clock.tick(a)
-    assertEquals(status(Goal), com.histmersion.domain.automation.Goal.Status.Reviewed)
+    assertEquals(status(Goal), domain.automation.Goal.Status.Reviewed)
     assert(
       connect(ds)(ManagerRepo.events(seedId(ref(Goal)), None, PageSize(200)))
         .exists(e => e.kind.value == Feed.Autopilot && e.text.value.contains("compiled → reviewed"))
@@ -496,7 +496,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
     val g = st.goals.find(_.slug.value == Goal.value).get
     assertEquals(
       (g.status, g.articles, g.openApprovals),
-      (com.histmersion.domain.automation.Goal.Status.Reviewed, 1, 0)
+      (domain.automation.Goal.Status.Reviewed, 1, 0)
     )
     assert(g.doneLast7.value >= 3, g)
     assert(a.autopilotPage(st).contains(s"**$Goal** _(reviewed)_"))
@@ -584,8 +584,8 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
       h.goals
         .put(
           ChildGoal,
-          com.histmersion.api.automation.Goal
-            .Put(com.histmersion.api.automation.Goal.Title("Zz child"), parentSlug = Some(GoalSlug))
+          api.automation.Goal
+            .Put(api.automation.Goal.Title("Zz child"), parentSlug = Some(GoalSlug))
         )
         .isRight
     )
@@ -593,9 +593,9 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
       h.goals
         .put(
           GrandGoal,
-          com.histmersion.api.automation.Goal.Put(
-            com.histmersion.api.automation.Goal.Title("Zz grandchild"),
-            parentSlug = Some(com.histmersion.api.automation.Goal.Slug("zzagent-apchild"))
+          api.automation.Goal.Put(
+            api.automation.Goal.Title("Zz grandchild"),
+            parentSlug = Some(api.automation.Goal.Slug("zzagent-apchild"))
           )
         )
         .isRight
@@ -609,7 +609,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
     List(Goal, ChildGoal, GrandGoal).foreach { g =>
       assertEquals(connect(ds)(ManagerRepo.get(seedId(ref(g)))).map(_.state), Some("active"), g)
       assertEquals(connect(ds)(ManagerRepo.get(watchId(ref(g)))).map(_.state), Some("active"), g)
-      assertEquals(status(g), com.histmersion.domain.automation.Goal.Status.Seeding, g)
+      assertEquals(status(g), domain.automation.Goal.Status.Seeding, g)
     }
     Clock().tick(a)
     assertEquals(
@@ -663,13 +663,13 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
       h.goals
         .put(
           DomainGoal.Slug("zzagent-aplate"),
-          com.histmersion.api.automation.Goal.Put(com.histmersion.api.automation.Goal.Title("Zz later"))
+          api.automation.Goal.Put(api.automation.Goal.Title("Zz later"))
         )
         .isRight
     )
     Clock(Instant.now(suiteClock).plusSeconds(3600)).tick(a)
     assertEquals(
-      connect(ds)(ManagerRepo.get(seedId(com.histmersion.api.automation.Goal.Ref("zzagent-aplate")))).map(_.state),
+      connect(ds)(ManagerRepo.get(seedId(api.automation.Goal.Ref("zzagent-aplate")))).map(_.state),
       Some("active")
     )
     // the New research area form's watcher, asked for while it is on, is created active (paused only when asked)
@@ -677,7 +677,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
       h.goals
         .put(
           DomainGoal.Slug("zzagent-apform"),
-          com.histmersion.api.automation.Goal.Put(com.histmersion.api.automation.Goal.Title("Zz form"))
+          api.automation.Goal.Put(api.automation.Goal.Title("Zz form"))
         )
         .isRight
     )
@@ -686,7 +686,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
         .create(
           ManagerCreate(
             Managers.ManagerCreate.Kind("watch"),
-            Some(com.histmersion.api.automation.Goal.Slug("zzagent-apform"))
+            Some(api.automation.Goal.Slug("zzagent-apform"))
           )
         )
         .map(_.state),
@@ -697,7 +697,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
         .create(
           ManagerCreate(
             Managers.ManagerCreate.Kind("seed"),
-            Some(com.histmersion.api.automation.Goal.Slug("zzagent-apform")),
+            Some(api.automation.Goal.Slug("zzagent-apform")),
             paused = Some(Managers.ManagerCreate.Paused(true))
           )
         )
@@ -711,10 +711,10 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
       h.goals
         .patch(
           Goal,
-          com.histmersion.api.automation.Goal
+          api.automation.Goal
             .Patch(status =
               Some(
-                com.histmersion.api.automation.Goal.StatusValue(com.histmersion.domain.automation.Goal.Status.Reviewed)
+                api.automation.Goal.StatusValue(domain.automation.Goal.Status.Reviewed)
               )
             )
         )

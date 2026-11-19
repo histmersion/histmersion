@@ -43,7 +43,7 @@ trait ManagerKindDefinition:
     */
   def settings(c: ManagerConfig, m: ManagerDefaults): ReviewSettings = ReviewSettings.forKind(
     io.scalaland.chimney.Transformer
-      .derive[Manager.Kind, com.histmersion.domain.automation.Manager.Kind]
+      .derive[Manager.Kind, domain.automation.Manager.Kind]
       .transform(kind),
     c,
     m

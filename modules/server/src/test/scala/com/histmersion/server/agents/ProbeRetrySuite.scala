@@ -57,7 +57,7 @@ class ProbeRetrySuite extends DbSuite with RunTranscripts:
   override val munitTimeout = scala.concurrent.duration.Duration(60, "s")
 
   private val Ck = Citekey("zzprobe1956_catalogue")
-  private val ApiCk = com.histmersion.api.library.Citekey("zzprobe1956_catalogue")
+  private val ApiCk = api.library.Citekey("zzprobe1956_catalogue")
   private val Model = ModelRef(ProviderKind.Local, Agents.ModelRef.Model("zzProbe"))
   private val ProbeModel = ProbeRequest.Model(Model.wire.value)
   private val Usage1 = Some(TokenUsage(Tokens(100), Tokens(10), Tokens.Zero, Tokens.Zero))
@@ -105,7 +105,7 @@ class ProbeRetrySuite extends DbSuite with RunTranscripts:
         .put(
           Ck,
           Source.Put(
-            title = com.histmersion.api.library.Title("A Catalogue of Fishes"),
+            title = api.library.Title("A Catalogue of Fishes"),
             year = (Some(1956)).map(Year.apply)
           )
         )
@@ -184,7 +184,7 @@ class ProbeRetrySuite extends DbSuite with RunTranscripts:
         .put(
           Ck,
           Source.Put(
-            title = com.histmersion.api.library.Title("A Catalogue of Fishes"),
+            title = api.library.Title("A Catalogue of Fishes"),
             year = (Some(1956)).map(Year.apply)
           )
         )

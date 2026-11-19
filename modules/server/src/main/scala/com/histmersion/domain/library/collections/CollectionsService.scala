@@ -82,7 +82,7 @@ trait CollectionsService:
   def collection(name: CollectionsService.CollectionName): Either[Api.Error, CollectionInfo]
   def search(
       name: CollectionsService.CollectionName,
-      q: Option[com.histmersion.domain.library.search.Search.Query],
+      q: Option[domain.library.search.Search.Query],
       limit: Option[CollectionsService.Limit],
       unlinked: CollectionsService.SearchUnlinked
   ): Either[Api.Error, CollectionSearch]
@@ -104,7 +104,7 @@ trait CollectionsService:
   def updateOne(
       caller: Caller,
       name: CollectionsService.CollectionName,
-      citekey: com.histmersion.domain.library.Citekey
+      citekey: domain.library.Citekey
   ): Either[Api.Error, CollectionUpdatedOne]
   def updateAll(
       caller: Caller,
@@ -127,10 +127,10 @@ trait CollectionsService:
       req: CollectionSync.Request
   ): Either[Api.Error, CollectionSync]
   def archiveSearch(
-      q: com.histmersion.domain.library.search.Search.Query,
+      q: domain.library.search.Search.Query,
       rows: Option[CollectionsService.Limit]
   ): Either[Api.Error, ArchiveSearchResult]
-  def archiveInfo(id: com.histmersion.domain.library.ArchiveId): Either[Api.Error, ArchiveItem]
+  def archiveInfo(id: domain.library.ArchiveId): Either[Api.Error, ArchiveItem]
   def archiveImport(caller: Caller, req: ArchiveImportRequest): Either[Api.Error, Ingest.Report]
 
 object CollectionsService:
@@ -185,11 +185,11 @@ object CollectionsService:
       Api.Error(Problem.Unclassified(Legacy.Text(message)), Some(Api.Error.Code(CollectionsApi.Usage)))
     private def failed(problems: Problems): Api.Error = fail(problems.sentences.mkString("; "))
 
-    private def apiKey(ck: com.histmersion.domain.library.Citekey): Citekey = Citekey(ck.value)
+    private def apiKey(ck: domain.library.Citekey): Citekey = Citekey(ck.value)
 
     /** The citekey a request names, or the 400 that refuses it. */
-    private def checked(raw: Citekey): Either[Api.Error, com.histmersion.domain.library.Citekey] =
-      com.histmersion.domain.library.Citekey
+    private def checked(raw: Citekey): Either[Api.Error, domain.library.Citekey] =
+      domain.library.Citekey
         .parse(raw.value)
         .left
         .map(p => Write.invalid(p))
@@ -255,7 +255,7 @@ object CollectionsService:
 
     def search(
         name: CollectionName,
-        q: Option[com.histmersion.domain.library.search.Search.Query],
+        q: Option[domain.library.search.Search.Query],
         limit: Option[Limit],
         unlinked: SearchUnlinked
     ): Either[Api.Error, CollectionSearch] =
@@ -344,7 +344,7 @@ object CollectionsService:
       * compiled; either way the record ends up linked to this entry.
       */
     private def upsert(
-        ck: com.histmersion.domain.library.Citekey,
+        ck: domain.library.Citekey,
         item: CollectionItem,
         target: ImportTarget
     ): Either[Api.Error, Source.WithFindings] =
@@ -384,7 +384,7 @@ object CollectionsService:
               year = apiYear(item.year),
               venue = item.publisher.map(p => Source.Venue(p.value)),
               status = Some(
-                com.histmersion.domain.library.Source.Status.Unassessed
+                domain.library.Source.Status.Unassessed
                   .transformInto[Source.Status]
               ),
               tags = item.tags.map(t => Source.Tags(t.value)),
@@ -399,7 +399,7 @@ object CollectionsService:
       */
     private def coverOf(
         c: HostCollection,
-        ck: com.histmersion.domain.library.Citekey,
+        ck: domain.library.Citekey,
         item: CollectionItem
     ): CollectionCover =
       c.cover(item) match
@@ -452,7 +452,7 @@ object CollectionsService:
         c: HostCollection,
         item: CollectionItem,
         file: CollectionFile,
-        ck: com.histmersion.domain.library.Citekey,
+        ck: domain.library.Citekey,
         acquireItem: Option[CollectionImportRequest.AcquireItem]
     ): Either[Api.Error, Ingest.Accepted] =
       val fileName = file.name.value.reverse.takeWhile(_ != '/').reverse
@@ -486,7 +486,7 @@ object CollectionsService:
         )
       yield CollectionLinked(sw.source.citekey, CollectionLinked.Id(req.id.value), Title(item.title.fold("")(_.value)))
 
-    private def metadata(ck: com.histmersion.domain.library.Citekey, s: CalibreGap): CollectionMetadata =
+    private def metadata(ck: domain.library.Citekey, s: CalibreGap): CollectionMetadata =
       CollectionMetadata(
         CollectionMetadata.Key(ck.value),
         CollectionMetadata.Title(s.title.value),
@@ -501,7 +501,7 @@ object CollectionsService:
 
     /** The stored original of `ck` as a file to hand a collection; `hint` is added to the refusal when there is none.
       */
-    private def original(ck: com.histmersion.domain.library.Citekey, hint: String): Either[Api.Error, FetchedFile] =
+    private def original(ck: domain.library.Citekey, hint: String): Either[Api.Error, FetchedFile] =
       for
         o <- library
           .original(ck)
@@ -525,7 +525,7 @@ object CollectionsService:
       */
     private def pushOne(
         c: HostCollection,
-        ck: com.histmersion.domain.library.Citekey
+        ck: domain.library.Citekey
     ): Either[Api.Error, (CollectionId, Title)] =
       for
         s <- library.pushMeta(ck)
@@ -564,7 +564,7 @@ object CollectionsService:
     def updateOne(
         caller: Caller,
         name: CollectionName,
-        citekey: com.histmersion.domain.library.Citekey
+        citekey: domain.library.Citekey
     ): Either[Api.Error, CollectionUpdatedOne] =
       for
         c <- linking(name)
@@ -725,7 +725,7 @@ object CollectionsService:
       )
 
     def archiveSearch(
-        q: com.histmersion.domain.library.search.Search.Query,
+        q: domain.library.search.Search.Query,
         rows: Option[Limit]
     ): Either[Api.Error, ArchiveSearchResult] =
       val query = q.value.trim
@@ -750,11 +750,11 @@ object CollectionsService:
 
     private def archiveFound(
         c: HostCollection,
-        id: com.histmersion.domain.library.ArchiveId
+        id: domain.library.ArchiveId
     ): Either[Api.Error, CollectionItem] =
       c.item(CollectionId(id.value)).left.map(failed).flatMap(_.toRight(fail(s"no archive.org item '$id'")))
 
-    def archiveInfo(id: com.histmersion.domain.library.ArchiveId): Either[Api.Error, ArchiveItem] =
+    def archiveInfo(id: domain.library.ArchiveId): Either[Api.Error, ArchiveItem] =
       lookup(ArchiveOrg).flatMap(archiveFound(_, id)).map(archiveItem)
 
     /** Import a PUBLIC archive.org item. A lending-only scan is refused, not worked around: it must be borrowed on
@@ -763,7 +763,7 @@ object CollectionsService:
     def archiveImport(caller: Caller, req: ArchiveImportRequest): Either[Api.Error, Ingest.Report] =
       for
         c <- lookup(ArchiveOrg)
-        item <- archiveFound(c, com.histmersion.domain.library.ArchiveId(req.id.value))
+        item <- archiveFound(c, domain.library.ArchiveId(req.id.value))
         _ <- Either.cond(
           !item.restricted.value,
           (),

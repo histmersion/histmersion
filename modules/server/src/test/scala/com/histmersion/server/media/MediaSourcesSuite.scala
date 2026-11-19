@@ -107,9 +107,9 @@ class MediaSourcesSuite extends DbSuite:
     (r.statusCode, r.body)
 
   private val Paper = Citekey("zqms2024_paper")
-  private val ApiPaper = com.histmersion.api.library.Citekey("zqms2024_paper")
+  private val ApiPaper = api.library.Citekey("zqms2024_paper")
   private val Book = Citekey("zqms2010_book")
-  private val ApiBook = com.histmersion.api.library.Citekey("zqms2010_book")
+  private val ApiBook = api.library.Citekey("zqms2010_book")
   private val Png = Array[Byte](-119, 80, 78, 71, 13, 10, 26, 10)
   private val Jpeg = Array[Byte](-1, -40, -1, -32, 0, 16)
 
@@ -187,7 +187,7 @@ class MediaSourcesSuite extends DbSuite:
             Place(
               Place.Id("zqms_site"),
               Place.Label("Zqms Mykenai"),
-              Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+              Place.KindValue(domain.catalogue.Place.Kind.Site),
               Some(Place.Geometry("""{"type":"Point","coordinates":[-60,-50]}"""))
             ),
             List(Place.Name(Place.Name.Value("Zqms Mykenai")))
@@ -196,7 +196,7 @@ class MediaSourcesSuite extends DbSuite:
             Place(
               Place.Id("zqms_dup"),
               Place.Label("Zqms Mykenai"),
-              Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+              Place.KindValue(domain.catalogue.Place.Kind.Site),
               Some(Place.Geometry("""{"type":"Point","coordinates":[-60.005,-50]}"""))
             ),
             List(Place.Name(Place.Name.Value("Zqms Mykenai")))

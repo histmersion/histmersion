@@ -26,8 +26,8 @@ final class LibraryWorkflow(
 ) extends WorkflowDefinition:
   private val pipeline: Pipeline = impl.pipeline
   val id: WorkflowId = WorkflowId.applyUnsafe(pipeline.wire.value)
-  def version: com.histmersion.domain.automation.Pipeline.Version =
-    com.histmersion.domain.automation.Pipeline.Version(pipeline.version.value)
+  def version: domain.automation.Pipeline.Version =
+    domain.automation.Pipeline.Version(pipeline.version.value)
   def target: TargetKind = io.scalaland.chimney.Transformer
     .derive[com.histmersion.api.automation.TargetKind, TargetKind]
     .transform(pipeline.targetKind)

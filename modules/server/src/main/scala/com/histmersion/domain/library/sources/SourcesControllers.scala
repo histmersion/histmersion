@@ -71,7 +71,7 @@ final class SourcesControllers(
 
   private def issuesOf(summary: Option[Source.Summary], notes: Option[Source.Notes]): List[FormatIssue] =
     formatting.issues(
-      summary.map(s => com.histmersion.domain.library.Source.Summary(s.value)),
+      summary.map(s => domain.library.Source.Summary(s.value)),
       notes.map(n => SourceNote.Text(n.value))
     )
 
@@ -299,11 +299,11 @@ final class SourcesControllers(
       sources.load(ck).toRight(notFound(citekey)).flatMap { s =>
         val (summary, fs) =
           s.summary
-            .map(t => formatting.fix(com.histmersion.domain.library.Source.Text(t.value), FormatField.Summary))
+            .map(t => formatting.fix(domain.library.Source.Text(t.value), FormatField.Summary))
             .fold((None, Nil))((t, f) => (Some(t), f))
         val (notes, fn) =
           s.notes
-            .map(t => formatting.fix(com.histmersion.domain.library.Source.Text(t.value), FormatField.Notes))
+            .map(t => formatting.fix(domain.library.Source.Text(t.value), FormatField.Notes))
             .fold((None, Nil))((t, f) => (Some(t), f))
         val done = fs.map(f => "summary: " + f.value) ++ fn.map(f => "notes: " + f.value)
         val write =

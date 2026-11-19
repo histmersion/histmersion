@@ -189,7 +189,7 @@ object Pages:
         citations(p.cites, p.citedBy).value +
         ArticleHtml
           .toggle(
-            com.histmersion.domain.library.Citekey.assume(r.citekey.value),
+            domain.library.Citekey.assume(r.citekey.value),
             p.fullText != FullText.Hidden,
             p.query.map(q => HtmlRender.Query(q.value))
           )
@@ -368,7 +368,7 @@ object Pages:
             c.authors.map(a => CitedEntry.Authors(a.value)),
             c.year.map(y => CitedEntry.Year(y.value.toInt)),
             c.title.map(t => CitedEntry.Title(t.value)),
-            c.status.transformInto[Option[com.histmersion.domain.library.Source.Status]]
+            c.status.transformInto[Option[domain.library.Source.Status]]
           )
         )
         .orElse(links(WikiLinks.Occurrence.Target(ck.value)).collect { case r: Source.Ref =>
@@ -379,7 +379,7 @@ object Pages:
             r.authors.map(a => CitedEntry.Authors(a.value)),
             r.year.map(y => CitedEntry.Year(y.value.toInt)),
             Some(CitedEntry.Title(r.title.value)),
-            Some(r.status.transformInto[com.histmersion.domain.library.Source.Status])
+            Some(r.status.transformInto[domain.library.Source.Status])
           )
         })
     }
@@ -394,7 +394,7 @@ object Pages:
           c.authors.map(a => CitedEntry.Authors(a.value)),
           c.year.map(y => CitedEntry.Year(y.value.toInt)),
           c.title.map(t => CitedEntry.Title(t.value)),
-          c.status.transformInto[Option[com.histmersion.domain.library.Source.Status]]
+          c.status.transformInto[Option[domain.library.Source.Status]]
         )
       )
     numbered ++ rest

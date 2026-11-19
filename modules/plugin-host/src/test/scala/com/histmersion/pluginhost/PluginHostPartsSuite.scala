@@ -40,7 +40,7 @@ class PluginHostPartsSuite extends munit.FunSuite:
     )
 
   test("a media record is kept only with a readable, allowed licence and an image"):
-    val allow = LicencePolicy.of(com.histmersion.domain.Licence.AllowList("cc0,cc-by"))
+    val allow = LicencePolicy.of(domain.Licence.AllowList("cc0,cc-by"))
     assertEquals(PluginMedia.refusal(PluginMedia.record(item("CC-BY-4.0")), allow, PluginMedia.Provider("mine")), None)
     PluginMedia.refusal(PluginMedia.record(item("CC BY-NC 4.0")), allow, PluginMedia.Provider("mine")) match
       case Some(PluginMedia.Refusal.LicenceNotAllowed(_, provider)) =>

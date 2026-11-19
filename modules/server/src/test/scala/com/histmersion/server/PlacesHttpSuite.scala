@@ -65,7 +65,7 @@ class PlacesHttpSuite extends DbSuite:
         Place(
           Place.Id("zzh_world"),
           Place.Label("Zzh World"),
-          Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region)
+          Place.KindValue(domain.catalogue.Place.Kind.Region)
         ),
         List(Place.Name(Place.Name.Value("Zzh World")))
       ),
@@ -73,7 +73,7 @@ class PlacesHttpSuite extends DbSuite:
         Place(
           Place.Id("zzh_land"),
           Place.Label("Zzh Land"),
-          Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region),
+          Place.KindValue(domain.catalogue.Place.Kind.Region),
           Some(
             Place.Geometry(
               """{"type":"Polygon","coordinates":[[[100.0,10.0],[110.0,10.0],[110.0,20.0],[100.0,20.0],[100.0,10.0]]]}"""
@@ -88,7 +88,7 @@ class PlacesHttpSuite extends DbSuite:
         Place(
           Place.Id("zzh_polity"),
           Place.Label("Zzh Polity"),
-          Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Polity),
+          Place.KindValue(domain.catalogue.Place.Kind.Polity),
           Some(Place.Geometry("""{"type":"Point","coordinates":[105.0,15.0]}""")),
           Some(Period(Year(-1400), Year(-1200)))
         ),
@@ -183,7 +183,7 @@ class PlacesHttpSuite extends DbSuite:
         Place(
           Place.Id("zzc_world"),
           Place.Label("Zzc World"),
-          Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region)
+          Place.KindValue(domain.catalogue.Place.Kind.Region)
         ),
         List(Place.Name(Place.Name.Value("Zzc World")))
       ),
@@ -191,7 +191,7 @@ class PlacesHttpSuite extends DbSuite:
         Place(
           Place.Id("zzc_land"),
           Place.Label("Zzc Land"),
-          Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region),
+          Place.KindValue(domain.catalogue.Place.Kind.Region),
           Some(
             Place.Geometry(
               """{"type":"Polygon","coordinates":[[[120.0,10.0],[130.0,10.0],[130.0,20.0],[120.0,20.0],[120.0,10.0]]]}"""
@@ -331,7 +331,7 @@ class PlacesHttpSuite extends DbSuite:
             Place(
               Place.Id("zzn_lake"),
               Place.Label("Zzn Sea"),
-              Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Feature),
+              Place.KindValue(domain.catalogue.Place.Kind.Feature),
               Some(Place.Geometry("""{"type":"Point","coordinates":[140.5,-20.5]}"""))
             ),
             List(Place.Name(Place.Name.Value("Zzn Sea")))
@@ -423,7 +423,7 @@ class PlacesHttpSuite extends DbSuite:
             Place(
               Place.Id("zzo_regio"),
               Place.Label("Zzo Regio XII"),
-              Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+              Place.KindValue(domain.catalogue.Place.Kind.Site),
               Some(Place.Geometry("""{"type":"Point","coordinates":[141.5,-21.3]}"""))
             ),
             List(Place.Name(Place.Name.Value("Zzo Regio XII")))
@@ -491,7 +491,7 @@ class PlacesHttpSuite extends DbSuite:
             Place(
               Place.Id("zzo_dup"),
               Place.Label("Withdrawn: Zzo Regio XII"),
-              Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+              Place.KindValue(domain.catalogue.Place.Kind.Site),
               Some(Place.Geometry("""{"type":"Point","coordinates":[141.5,-21.3]}"""))
             ),
             List(Place.Name(Place.Name.Value("Withdrawn: Zzo Regio XII")))
@@ -500,7 +500,7 @@ class PlacesHttpSuite extends DbSuite:
             Place(
               Place.Id("zzo_road"),
               Place.Label("Withdrawn: Untitled"),
-              Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+              Place.KindValue(domain.catalogue.Place.Kind.Site),
               Some(Place.Geometry("""{"type":"Point","coordinates":[141.7,-21.7]}"""))
             ),
             List(Place.Name(Place.Name.Value("Withdrawn: Untitled")))

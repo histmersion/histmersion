@@ -338,7 +338,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
       infos.last,
       MediaProvider
         .Info(
-          com.histmersion.api.media.MediaItem.Provider("zq-portal"),
+          api.media.MediaItem.Provider("zq-portal"),
           MediaProvider.Info.Title("Zq portal objects"),
           MediaProvider.Info.Over("places"),
           MediaProvider.Info.Description(""),
@@ -489,36 +489,36 @@ class ProviderPluginsSuite extends munit.FunSuite:
     assertEquals(
       rights(Licence("CC BY-NC 4.0")).map(_.licence),
       Right(
-        com.histmersion.domain
-          .Licence(com.histmersion.domain.Licence.Id("CC-BY-NC-4.0"), com.histmersion.domain.Licence.Family.CcByNc)
+        domain
+          .Licence(domain.Licence.Id("CC-BY-NC-4.0"), domain.Licence.Family.CcByNc)
       )
     )
-    assertEquals(rights(Licence("CC-BY-4.0")).map(_.licence.family), Right(com.histmersion.domain.Licence.Family.CcBy))
+    assertEquals(rights(Licence("CC-BY-4.0")).map(_.licence.family), Right(domain.Licence.Family.CcBy))
     assertEquals(
       rights(Licence("https://creativecommons.org/licenses/by-sa/4.0/")).map(_.licence.family),
-      Right(com.histmersion.domain.Licence.Family.CcBySa)
+      Right(domain.Licence.Family.CcBySa)
     )
     assertEquals(
       rights(Licence("https://creativecommons.org/publicdomain/zero/1.0/")).map(_.licence.family),
-      Right(com.histmersion.domain.Licence.Family.Cc0)
+      Right(domain.Licence.Family.Cc0)
     )
     assertEquals(
       rights(Licence("Public domain")).map(_.licence.family),
-      Right(com.histmersion.domain.Licence.Family.PublicDomain)
+      Right(domain.Licence.Family.PublicDomain)
     )
     assertEquals(
       rights(Licence("All rights reserved")).map(_.licence.family),
-      Right(com.histmersion.domain.Licence.Family.AllRightsReserved)
+      Right(domain.Licence.Family.AllRightsReserved)
     )
     assertEquals(
       rights(Licence("free to use!")).map(_.licence.family),
-      Right(com.histmersion.domain.Licence.Family.Unknown)
+      Right(domain.Licence.Family.Unknown)
     )
     // an unclear statement: the licence URL decides when it is a known one
     assertEquals(
       rights(Licence("see link"), Some(MediaRights.LicenceUrl("https://creativecommons.org/licenses/by/4.0/")))
         .map(_.licence.family),
-      Right(com.histmersion.domain.Licence.Family.CcBy)
+      Right(domain.Licence.Family.CcBy)
     )
     assertEquals(
       rights(Licence("CC BY 4.0"), credit = MediaRights.Credit("  ")).left.map(_.sentence),
@@ -526,17 +526,17 @@ class ProviderPluginsSuite extends munit.FunSuite:
     )
     // whatever the family, the allowlist decides; unknown and all-rights-reserved never pass
     assert(
-      !com.histmersion.domain.Licence
+      !domain.Licence
         .allowed(
           rights(Licence("free to use!")).toOption.get.licence,
-          com.histmersion.domain.Licence.Family.allowable.toSet
+          domain.Licence.Family.allowable.toSet
         )
     )
     assert(
-      !com.histmersion.domain.Licence
+      !domain.Licence
         .allowed(
           rights(Licence("CC BY-NC 4.0")).toOption.get.licence,
-          com.histmersion.domain.Licence.allowList(com.histmersion.domain.Licence.AllowList("cc0,cc-by"))
+          domain.Licence.allowList(domain.Licence.AllowList("cc0,cc-by"))
         )
     )
 
@@ -561,7 +561,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
         DeepTime.span(DeepTime.SignedYear(-1400L), DeepTime.SignedYear(-1300L))
       )
     )
-    assertEquals(r.rights.map(_.licence.family), Right(com.histmersion.domain.Licence.Family.Cc0))
+    assertEquals(r.rights.map(_.licence.family), Right(domain.Licence.Family.Cc0))
     assertEquals(r.ids, List("pleiades" -> "1"))
     assertEquals(
       PluginMedia
@@ -601,10 +601,10 @@ class ProviderPluginsSuite extends munit.FunSuite:
     assertEquals(
       r.timeSpan,
       TimeSpan(
-        Some(com.histmersion.api.catalogue.Year(-1200L)),
+        Some(api.catalogue.Year(-1200L)),
         None,
         None,
-        Some(com.histmersion.api.catalogue.Year(-1200L))
+        Some(api.catalogue.Year(-1200L))
       )
     )
     assertEquals(
@@ -684,10 +684,10 @@ class ProviderPluginsSuite extends munit.FunSuite:
     assertEquals(
       d.timeSpan,
       TimeSpan(
-        Some(com.histmersion.api.catalogue.Year(-1050L)),
+        Some(api.catalogue.Year(-1050L)),
         None,
         None,
-        Some(com.histmersion.api.catalogue.Year(-950L))
+        Some(api.catalogue.Year(-950L))
       )
     )
     assertEquals((d.central, d.plusMinus), (Some(-1000L), Some(50L)))
@@ -696,10 +696,10 @@ class ProviderPluginsSuite extends munit.FunSuite:
       .modify(_.timeSpan)
       .setTo(
         TimeSpan(
-          Some(com.histmersion.api.catalogue.Year(-1200L)),
+          Some(api.catalogue.Year(-1200L)),
           None,
           None,
-          Some(com.histmersion.api.catalogue.Year(-1100L))
+          Some(api.catalogue.Year(-1100L))
         )
       )
     assertEquals(PluginEvents.derive(spanned, now).timeSpan, spanned.timeSpan)
@@ -712,10 +712,10 @@ class ProviderPluginsSuite extends munit.FunSuite:
     assertEquals(
       PluginEvents.derive(future, now).timeSpan,
       TimeSpan(
-        Some(com.histmersion.api.catalogue.Year(2010L)),
+        Some(api.catalogue.Year(2010L)),
         None,
         None,
-        Some(com.histmersion.api.catalogue.Year(2026L))
+        Some(api.catalogue.Year(2026L))
       )
     )
     assertEquals(PluginEvents.derive(future, now).central, Some(2020L))
@@ -723,10 +723,10 @@ class ProviderPluginsSuite extends munit.FunSuite:
       .modify(_.timeSpan)
       .setTo(
         TimeSpan(
-          Some(com.histmersion.api.catalogue.Year(-3500L)),
-          Some(com.histmersion.api.catalogue.Year(-3100L)),
-          Some(com.histmersion.api.catalogue.Year(-2950L)),
-          Some(com.histmersion.api.catalogue.Year(-2900L))
+          Some(api.catalogue.Year(-3500L)),
+          Some(api.catalogue.Year(-3100L)),
+          Some(api.catalogue.Year(-2950L)),
+          Some(api.catalogue.Year(-2900L))
         )
       )
     assertEquals(
@@ -737,10 +737,10 @@ class ProviderPluginsSuite extends munit.FunSuite:
         )
         .timeSpan,
       TimeSpan(
-        Some(com.histmersion.api.catalogue.Year(-3000L)),
-        Some(com.histmersion.api.catalogue.Year(-3000L)),
-        Some(com.histmersion.api.catalogue.Year(-2950L)),
-        Some(com.histmersion.api.catalogue.Year(-2900L))
+        Some(api.catalogue.Year(-3000L)),
+        Some(api.catalogue.Year(-3000L)),
+        Some(api.catalogue.Year(-2950L)),
+        Some(api.catalogue.Year(-2900L))
       )
     )
     // undated and no stated year: nothing invented

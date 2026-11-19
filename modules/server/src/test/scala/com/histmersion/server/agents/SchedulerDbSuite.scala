@@ -222,7 +222,7 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
           .put(
             c,
             Source.Put(
-              title = com.histmersion.api.library.Title(s"Zz $c"),
+              title = api.library.Title(s"Zz $c"),
               year = (Some(2020)).map(Year.apply),
               topics = List(Source.Topics("zzfocus_t")),
               body = Some(Source.OcrMarkdown("Tin."))
@@ -252,7 +252,7 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
           .put(
             ck(d),
             Source.Put(
-              title = com.histmersion.api.library.Title(s"Ingested $d"),
+              title = api.library.Title(s"Ingested $d"),
               year = (Some(2023)).map(Year.apply),
               doi = (Some(d)).map(Doi.apply)
             )
@@ -261,9 +261,9 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
       )
       Right(
         Ingest.Report(
-          com.histmersion.api.library.Citekey(ck(d).value),
+          api.library.Citekey(ck(d).value),
           Some(Doi(d)),
-          Some(com.histmersion.api.library.Title(s"Ingested $d")),
+          Some(api.library.Title(s"Ingested $d")),
           created = Ingest.Report.Created(true),
           Some(
             PdfInfo(
@@ -337,9 +337,7 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
     a.focus
       .set(FocusSet(FocusSet.Action("priority"), Some(apiSlug(g(15))), Some(FocusSet.Value(5))))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
-    goals.foreach(s =>
-      a.oaBacklog.add(watchId(ref(s)), s, OaWork(doi(s), com.histmersion.api.library.Title(s"Work of $s")))
-    )
+    goals.foreach(s => a.oaBacklog.add(watchId(ref(s)), s, OaWork(doi(s), api.library.Title(s"Work of $s"))))
     val clock = Clock()
     clock.tick(a)
 
@@ -572,7 +570,7 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
       a.decide(
         ApiIds.approval(p.id),
         Approval.Outcome("approve"),
-        DecisionRequest(Some(com.histmersion.api.automation.Approval.Note("by hand")))
+        DecisionRequest(Some(api.automation.Approval.Note("by hand")))
       ).map(_.state),
       Right("approved")
     )
@@ -610,7 +608,7 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
         .decideAll(
           ApprovalDigest.BulkDecide(
             ApprovalDigest.BulkDecide.Decision("approve"),
-            kind = Some(com.histmersion.api.automation.Approval.Kind.Wire("nope"))
+            kind = Some(api.automation.Approval.Kind.Wire("nope"))
           )
         )
         .isLeft
@@ -619,7 +617,7 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
       .decideAll(
         ApprovalDigest.BulkDecide(
           ApprovalDigest.BulkDecide.Decision("reject"),
-          kind = Some(com.histmersion.api.automation.Approval.Kind.Wire("goal-plan")),
+          kind = Some(api.automation.Approval.Kind.Wire("goal-plan")),
           dryRun = ApprovalDigest.BulkDecide.DryRun(true)
         )
       )
@@ -633,7 +631,7 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
       .decideAll(
         ApprovalDigest.BulkDecide(
           ApprovalDigest.BulkDecide.Decision("reject"),
-          kind = Some(com.histmersion.api.automation.Approval.Kind.Wire("goal-plan")),
+          kind = Some(api.automation.Approval.Kind.Wire("goal-plan")),
           subject = Some(ApprovalDigest.BulkDecide.Subject(g(2).value)),
           by = Some(ApprovalDigest.BulkDecide.By("test"))
         )
@@ -760,7 +758,7 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
         id,
         Source.Candidate.Goal(goal.value),
         Doi(s"10.5555/zzseed.$id"),
-        com.histmersion.api.library.Title(s"Zz seed $id"),
+        api.library.Title(s"Zz seed $id"),
         isOa = oa
       )
     up.sweepFinds = Map(

@@ -158,7 +158,7 @@ class BackupRestoreSuite extends DbSuite:
   private def fixture(ck: Citekey, title: Title) =
     Source.Put(
       title = title,
-      authors = (List("Tester")).map(com.histmersion.api.library.AuthorName.apply),
+      authors = (List("Tester")).map(api.library.AuthorName.apply),
       year = (Some(2026)).map(Year.apply),
       status = Some(Source.Status.Current),
       topics = List(Source.Topics("backup")),

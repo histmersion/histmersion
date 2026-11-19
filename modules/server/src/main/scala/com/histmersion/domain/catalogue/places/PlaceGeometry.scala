@@ -75,7 +75,7 @@ object PlaceGeometry:
           PointAreaRepo.Removal.Sources(0)
         )
       else
-        val kinds = s.kinds.map(k => com.histmersion.domain.catalogue.Place.Kind.Wire(k.value))
+        val kinds = s.kinds.map(k => domain.catalogue.Place.Kind.Wire(k.value))
         val deadline = timer.after(
           scala.concurrent.duration
             .FiniteDuration(math.max(0L, s.budgetMs.value), scala.concurrent.duration.MILLISECONDS)
@@ -87,7 +87,7 @@ object PlaceGeometry:
         // one pass over the chunks while time is left; at least one chunk per call, so a call progresses
         @tailrec
         def go(
-            rest: List[List[com.histmersion.domain.catalogue.Place.Id]],
+            rest: List[List[domain.catalogue.Place.Id]],
             removed: Int,
             findings: Int,
             cks: Set[Citekey]

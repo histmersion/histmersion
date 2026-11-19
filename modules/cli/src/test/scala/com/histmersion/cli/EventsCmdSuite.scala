@@ -12,7 +12,7 @@ import com.histmersion.api.catalogue.Place
   */
 class EventsCmdSuite extends munit.FunSuite:
 
-  private given console: com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard
+  private given console: util.console.Console = util.console.Console.standard
 
   /** The id and the patch `events patch` builds, or the problem it refuses the flags with. */
   private def parse(args: String*): Either[String, (String, EventPatch)] =

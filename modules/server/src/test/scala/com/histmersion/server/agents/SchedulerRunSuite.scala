@@ -56,17 +56,17 @@ import com.histmersion.api.Api
   * paused watcher; the `goal_schedules` rows migrated into it once, logged; a scheduled run that pauses still leaves a
   * backlog item). The watcher's own runs and crons: [[ManagerPhase3Suite]]. Skipped without HISTMERSION_TEST_DB_URL.
   */
-class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with RunTranscripts:
+class SchedulerRunSuite extends DbSuite with db.Bounded with RunTranscripts:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(120, "s")
 
   private val Goal = DomainGoal.Slug("zzagent-sched")
   private val GoalTarget = RunRequest.Target("zzagent-sched")
-  private val GoalRef = com.histmersion.api.automation.Goal.Ref("zzagent-sched")
+  private val GoalRef = api.automation.Goal.Ref("zzagent-sched")
   private val Ck = Citekey("zzagent2000_old")
   private val Ck2 = Citekey("zzagent2024_new")
-  private val ApiCk2 = com.histmersion.api.library.Citekey("zzagent2024_new")
+  private val ApiCk2 = api.library.Citekey("zzagent2024_new")
   private val CkRef = GoalLink.Ref("zzagent2000_old")
   private val Model = ModelRef(ProviderKind.Local, Agents.ModelRef.Model("scripted"))
   private val Usage1 = Some(TokenUsage(Tokens(1000), Tokens(100), Tokens.Zero, Tokens.Zero))
@@ -117,9 +117,9 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
         .put(
           Ck,
           Source.Put(
-            title = com.histmersion.api.library.Title("Old tin"),
-            year = (Some(2000)).map(com.histmersion.api.catalogue.Year.apply),
-            doi = (Some("10.5555/zzagent.old")).map(com.histmersion.api.library.Doi.apply)
+            title = api.library.Title("Old tin"),
+            year = (Some(2000)).map(api.catalogue.Year.apply),
+            doi = (Some("10.5555/zzagent.old")).map(api.library.Doi.apply)
           )
         )
         .isRight
@@ -129,9 +129,9 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
         .put(
           Ck2,
           Source.Put(
-            title = com.histmersion.api.library.Title("New tin"),
-            year = (Some(2024)).map(com.histmersion.api.catalogue.Year.apply),
-            doi = (Some("10.5555/zzagent.new")).map(com.histmersion.api.library.Doi.apply)
+            title = api.library.Title("New tin"),
+            year = (Some(2024)).map(api.catalogue.Year.apply),
+            doi = (Some("10.5555/zzagent.new")).map(api.library.Doi.apply)
           )
         )
         .isRight
@@ -140,7 +140,7 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
       h.goals
         .put(
           Goal,
-          com.histmersion.api.automation.Goal.Put(com.histmersion.api.automation.Goal.Title("Zz scheduled tin"))
+          api.automation.Goal.Put(api.automation.Goal.Title("Zz scheduled tin"))
         )
         .isRight
     )
@@ -153,23 +153,23 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
 
   private val citing = List(
     FollowupRow(
-      title = Some(com.histmersion.api.library.Title("New tin")),
-      year = Some(com.histmersion.api.catalogue.Year(2024)),
-      doi = Some(com.histmersion.api.library.Doi("10.5555/zzagent.new")),
+      title = Some(api.library.Title("New tin")),
+      year = Some(api.catalogue.Year(2024)),
+      doi = Some(api.library.Doi("10.5555/zzagent.new")),
       contexts = List(FollowupRow.Contexts("we refute the old dating")),
       proposedKind = FollowupRow.ProposedKind("refutes"),
       citekey = Some(ApiCk2)
     ),
     FollowupRow(
-      title = Some(com.histmersion.api.library.Title("Zzagent outside critique")),
-      year = Some(com.histmersion.api.catalogue.Year(2022)),
-      doi = Some(com.histmersion.api.library.Doi("10.5555/zzagent.out")),
+      title = Some(api.library.Title("Zzagent outside critique")),
+      year = Some(api.catalogue.Year(2022)),
+      doi = Some(api.library.Doi("10.5555/zzagent.out")),
       proposedKind = FollowupRow.ProposedKind("challenges")
     ),
     FollowupRow(
-      title = Some(com.histmersion.api.library.Title("Zzagent agreeing")),
-      year = Some(com.histmersion.api.catalogue.Year(2021)),
-      doi = Some(com.histmersion.api.library.Doi("10.5555/zzagent.ok")),
+      title = Some(api.library.Title("Zzagent agreeing")),
+      year = Some(api.catalogue.Year(2021)),
+      doi = Some(api.library.Doi("10.5555/zzagent.ok")),
       proposedKind = FollowupRow.ProposedKind("confirms")
     )
   )
@@ -235,15 +235,15 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
     )
 
   private def work(
-      doi: com.histmersion.api.library.Doi,
-      title: com.histmersion.api.library.Title,
+      doi: api.library.Doi,
+      title: api.library.Title,
       inDb: WorkRef.InDb = WorkRef.InDb(false)
   ) =
     WorkRef(
       doi = Some(doi),
       title = Some(title),
-      year = (Some(2023)).map(com.histmersion.api.catalogue.Year.apply),
-      authors = (List("Zz")).map(com.histmersion.api.library.AuthorName.apply),
+      year = (Some(2023)).map(api.catalogue.Year.apply),
+      authors = (List("Zz")).map(api.library.AuthorName.apply),
       inDb = inDb
     )
 
@@ -259,7 +259,7 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
     assert(
       a.addGoalLink(
         Goal,
-        LinkAdd(LinkKind.Query, com.histmersion.api.automation.Goal.Plans.LinkAdd.Ref("zzagent tin trade"))
+        LinkAdd(LinkKind.Query, api.automation.Goal.Plans.LinkAdd.Ref("zzagent tin trade"))
       ).isRight
     )
     assert(
@@ -371,19 +371,19 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
       Source.Candidate(
         Source.Candidate.Id(1),
         Source.Candidate.Goal(Goal.value),
-        com.histmersion.api.library.Doi("10.5555/zzagent.a"),
-        com.histmersion.api.library.Title("A"),
-        (Some(2026)).map(com.histmersion.api.catalogue.Year.apply),
-        (List("Zz")).map(com.histmersion.api.library.AuthorName.apply),
+        api.library.Doi("10.5555/zzagent.a"),
+        api.library.Title("A"),
+        (Some(2026)).map(api.catalogue.Year.apply),
+        (List("Zz")).map(api.library.AuthorName.apply),
         foundBy = List(Source.Candidate.FoundBy("openalex query \"zzagent tin trade\""))
       ),
       Source.Candidate(
         Source.Candidate.Id(2),
         Source.Candidate.Goal(Goal.value),
-        com.histmersion.api.library.Doi("10.5555/zzagent.b"),
-        com.histmersion.api.library.Title("B"),
-        (Some(2026)).map(com.histmersion.api.catalogue.Year.apply),
-        (List("Zz")).map(com.histmersion.api.library.AuthorName.apply),
+        api.library.Doi("10.5555/zzagent.b"),
+        api.library.Title("B"),
+        (Some(2026)).map(api.catalogue.Year.apply),
+        (List("Zz")).map(api.library.AuthorName.apply),
         foundBy = List(Source.Candidate.FoundBy("crossref query \"zzagent tin trade\""))
       )
     )
@@ -427,8 +427,8 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
     assert(
       a.setSchedule(
         Goal,
-        com.histmersion.api.automation.Goal.Plans.ScheduleKind.Wire("currency"),
-        ScheduleSet(com.histmersion.api.automation.Goal.Plans.ScheduleSet.Cron("not cron")),
+        api.automation.Goal.Plans.ScheduleKind.Wire("currency"),
+        ScheduleSet(api.automation.Goal.Plans.ScheduleSet.Cron("not cron")),
         Now
       ).left
         .exists(_.problems.sentences.mkString("; ").contains("five fields"))
@@ -436,8 +436,8 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
     assert(
       a.setSchedule(
         Goal,
-        com.histmersion.api.automation.Goal.Plans.ScheduleKind.Wire("currency"),
-        ScheduleSet(com.histmersion.api.automation.Goal.Plans.ScheduleSet.Cron("*/5 * * * *")),
+        api.automation.Goal.Plans.ScheduleKind.Wire("currency"),
+        ScheduleSet(api.automation.Goal.Plans.ScheduleSet.Cron("*/5 * * * *")),
         Now
       ).left
         .exists(_.problems.sentences.mkString("; ").contains("min-interval"))
@@ -445,18 +445,18 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
     assert(
       a.setSchedule(
         Goal,
-        com.histmersion.api.automation.Goal.Plans.ScheduleKind.Wire("weekly"),
-        ScheduleSet(com.histmersion.api.automation.Goal.Plans.ScheduleSet.Cron("@daily")),
+        api.automation.Goal.Plans.ScheduleKind.Wire("weekly"),
+        ScheduleSet(api.automation.Goal.Plans.ScheduleSet.Cron("@daily")),
         Now
       ).isLeft
     )
     val s = a
       .setSchedule(
         Goal,
-        com.histmersion.api.automation.Goal.Plans.ScheduleKind.Wire("currency"),
+        api.automation.Goal.Plans.ScheduleKind.Wire("currency"),
         ScheduleSet(
-          com.histmersion.api.automation.Goal.Plans.ScheduleSet.Cron("@daily"),
-          budgetUsd = Some(com.histmersion.api.automation.Goal.Plans.ScheduleSet.BudgetUsd(0.5))
+          api.automation.Goal.Plans.ScheduleSet.Cron("@daily"),
+          budgetUsd = Some(api.automation.Goal.Plans.ScheduleSet.BudgetUsd(0.5))
         ),
         Now
       )
@@ -476,8 +476,8 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
     val acq = a
       .setSchedule(
         Goal,
-        com.histmersion.api.automation.Goal.Plans.ScheduleKind.Wire("acquisition"),
-        ScheduleSet(com.histmersion.api.automation.Goal.Plans.ScheduleSet.Cron("@weekly")),
+        api.automation.Goal.Plans.ScheduleKind.Wire("acquisition"),
+        ScheduleSet(api.automation.Goal.Plans.ScheduleSet.Cron("@weekly")),
         Now
       )
       .toOption
@@ -490,10 +490,10 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
     val off = a
       .setSchedule(
         Goal,
-        com.histmersion.api.automation.Goal.Plans.ScheduleKind.Wire("currency"),
+        api.automation.Goal.Plans.ScheduleKind.Wire("currency"),
         ScheduleSet(
-          com.histmersion.api.automation.Goal.Plans.ScheduleSet.Cron("@weekly"),
-          enabled = com.histmersion.api.automation.Goal.Plans.ScheduleSet.Enabled(false)
+          api.automation.Goal.Plans.ScheduleSet.Cron("@weekly"),
+          enabled = api.automation.Goal.Plans.ScheduleSet.Enabled(false)
         ),
         Now
       )
@@ -502,11 +502,11 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
     assertEquals(off.enabled, false)
     assertEquals(a.goalView(Goal).toOption.get.schedules.map(_.kind), List(ScheduleKind.Acquisition))
     assertEquals(
-      a.removeSchedule(Goal, com.histmersion.api.automation.Goal.Plans.ScheduleKind.Wire("acquisition")).map(_.removed),
+      a.removeSchedule(Goal, api.automation.Goal.Plans.ScheduleKind.Wire("acquisition")).map(_.removed),
       Right(true)
     )
     assertEquals(
-      a.removeSchedule(Goal, com.histmersion.api.automation.Goal.Plans.ScheduleKind.Wire("acquisition")).map(_.removed),
+      a.removeSchedule(Goal, api.automation.Goal.Plans.ScheduleKind.Wire("acquisition")).map(_.removed),
       Right(false)
     )
     assertEquals(a.goalView(Goal).toOption.get.schedules, Nil)
@@ -522,8 +522,8 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
       GoalLinkRepo.setSchedule(
         Goal,
         ScheduleKind.Currency,
-        com.histmersion.api.automation.Goal.Plans.GoalSchedule.Cron("@daily"),
-        com.histmersion.api.automation.Goal.Plans.GoalSchedule.Enabled(true),
+        api.automation.Goal.Plans.GoalSchedule.Cron("@daily"),
+        api.automation.Goal.Plans.GoalSchedule.Enabled(true),
         Some(BigDecimal("0.1")),
         Some(Instant.parse("2026-10-05T00:00:00Z"))
       )
@@ -532,8 +532,8 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
       GoalLinkRepo.setSchedule(
         Goal,
         ScheduleKind.Acquisition,
-        com.histmersion.api.automation.Goal.Plans.GoalSchedule.Cron("@monthly"),
-        com.histmersion.api.automation.Goal.Plans.GoalSchedule.Enabled(true),
+        api.automation.Goal.Plans.GoalSchedule.Cron("@monthly"),
+        api.automation.Goal.Plans.GoalSchedule.Enabled(true),
         Some(BigDecimal("0.25")),
         Some(Instant.parse("2026-11-01T00:00:00Z"))
       )
@@ -569,8 +569,8 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
       GoalLinkRepo.setSchedule(
         Goal,
         ScheduleKind.Currency,
-        com.histmersion.api.automation.Goal.Plans.GoalSchedule.Cron("@monthly"),
-        com.histmersion.api.automation.Goal.Plans.GoalSchedule.Enabled(false),
+        api.automation.Goal.Plans.GoalSchedule.Cron("@monthly"),
+        api.automation.Goal.Plans.GoalSchedule.Enabled(false),
         None,
         None
       )
@@ -588,8 +588,8 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
       GoalLinkRepo.setSchedule(
         Goal,
         ScheduleKind.Acquisition,
-        com.histmersion.api.automation.Goal.Plans.GoalSchedule.Cron("@weekly"),
-        com.histmersion.api.automation.Goal.Plans.GoalSchedule.Enabled(true),
+        api.automation.Goal.Plans.GoalSchedule.Cron("@weekly"),
+        api.automation.Goal.Plans.GoalSchedule.Enabled(true),
         None,
         None
       )
@@ -601,8 +601,7 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
     val c = ScriptedClient(Model); c.fail = true
     val (a, h, up) = handlers(c); seed(h)
     assert(
-      a.addGoalLink(Goal, LinkAdd(LinkKind.Query, com.histmersion.api.automation.Goal.Plans.LinkAdd.Ref("zzagent q")))
-        .isRight
+      a.addGoalLink(Goal, LinkAdd(LinkKind.Query, api.automation.Goal.Plans.LinkAdd.Ref("zzagent q"))).isRight
     )
     up.found = Map("zzagent q" -> List(work(ApiDoi("10.5555/zzagent.z"), ApiTitle("Z"))))
     val id =
@@ -653,7 +652,7 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
     assert(
       a.addGoalLink(
         Goal,
-        LinkAdd(LinkKind.Query, com.histmersion.api.automation.Goal.Plans.LinkAdd.Ref("zzagent tin trade"))
+        LinkAdd(LinkKind.Query, api.automation.Goal.Plans.LinkAdd.Ref("zzagent tin trade"))
       ).isRight
     )
     up.found = Map(

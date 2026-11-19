@@ -23,13 +23,13 @@ trait AutomationHost:
   def articleExists(slug: Slug): Boolean
 
   /** A goal by its slug, a renamed goal's old slug answering as the goal it was renamed to. */
-  def goal(slug: com.histmersion.domain.automation.Goal.Slug): Either[Api.Error, Goal]
+  def goal(slug: domain.automation.Goal.Slug): Either[Api.Error, Goal]
 
   /** A goal written as a person would (`PUT`), an old slug writing to the goal it was renamed to. */
-  def putGoal(slug: com.histmersion.domain.automation.Goal.Slug, in: Goal.Put): Either[Api.Error, Goal]
+  def putGoal(slug: domain.automation.Goal.Slug, in: Goal.Put): Either[Api.Error, Goal]
 
   /** A goal changed as a person would (`PATCH`). */
-  def patchGoal(slug: com.histmersion.domain.automation.Goal.Slug, patch: Goal.Patch): Either[Api.Error, Goal]
+  def patchGoal(slug: domain.automation.Goal.Slug, patch: Goal.Patch): Either[Api.Error, Goal]
 
   // ── a run's request, checked by the workflow it names ─────────────────────────────────────────
 

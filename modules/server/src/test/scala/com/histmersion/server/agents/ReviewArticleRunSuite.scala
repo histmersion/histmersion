@@ -121,13 +121,13 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
   // a DB suite driving parallel steps: never let a hang run for hours (#865)
   override val munitTimeout = scala.concurrent.duration.Duration(120, "s")
 
-  private val Slug = com.histmersion.domain.research.Slug("zzagent_review")
+  private val Slug = domain.research.Slug("zzagent_review")
   private val SlugTarget = RunRequest.Target("zzagent_review")
   private val LedgerSlug = ReviewLedger.Ledger.Slug("zzagent_review")
   private val Ck = Citekey("zzagent2019_tin")
-  private val ApiCk = com.histmersion.api.library.Citekey("zzagent2019_tin")
+  private val ApiCk = api.library.Citekey("zzagent2019_tin")
   private val Ck2 = Citekey("zzagent2024_tin")
-  private val ApiCk2 = com.histmersion.api.library.Citekey("zzagent2024_tin")
+  private val ApiCk2 = api.library.Citekey("zzagent2024_tin")
   private val Model = ModelRef(ProviderKind.Local, Agents.ModelRef.Model("scripted"))
   private val Usage1 = Some(TokenUsage(Tokens(1000), Tokens(100), Tokens.Zero, Tokens.Zero))
 
@@ -300,8 +300,8 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
         .put(
           Ck,
           Source.Put(
-            title = com.histmersion.api.library.Title("Bronze Age tin"),
-            authors = (List("Ann Tinley")).map(com.histmersion.api.library.AuthorName.apply),
+            title = api.library.Title("Bronze Age tin"),
+            authors = (List("Ann Tinley")).map(api.library.AuthorName.apply),
             year = (Some(2019)).map(Year.apply),
             body = Some(
               Source.OcrMarkdown(
@@ -317,7 +317,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
         .put(
           Ck2,
           Source.Put(
-            title = com.histmersion.api.library.Title("Tin isotopes"),
+            title = api.library.Title("Tin isotopes"),
             year = (Some(2024)).map(Year.apply),
             body = Some(
               Source.OcrMarkdown("We show that the tin of the Uluburun cargo came from Central Asia, not Anatolia.")
@@ -395,7 +395,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       List(("edge", Some("refutes"), Some(Ck2)))
     )
     assertEquals(
-      h.library.citations.neighbors(Ck, List(com.histmersion.domain.library.Edge.Kind.Wire("refutes"))),
+      h.library.citations.neighbors(Ck, List(domain.library.Edge.Kind.Wire("refutes"))),
       Nil,
       "nothing is applied before approval"
     )
@@ -751,7 +751,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     val (_, h) = handlers(c); seed(h)
     val draft = h.research.articles
       .check(
-        com.histmersion.domain.research.Slug("zzagent_new"),
+        domain.research.Slug("zzagent_new"),
         Article.Edits.ArticleCheckRequest(body = Some(Article.Body(s"New [[zzagent_ghost]].\n\nUncited.")))
       )
       .toOption
@@ -766,7 +766,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     assert(
       h.research.articles
         .check(
-          com.histmersion.domain.research.Slug("zzagent_new"),
+          domain.research.Slug("zzagent_new"),
           Article.Edits.ArticleCheckRequest(edits =
             List(Article.Edits.EditAnswer(Article.Edits.Op.Delete, Article.Edits.EditAnswer.Anchor("x")))
           )
@@ -1501,7 +1501,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     )
     ReviewLedgerFixtures.put(ds, l)
     assertEquals(ReviewLedgerFixtures.get(ds, Slug), Right(Some(l)))
-    val moved = com.histmersion.domain.research.Slug("zzagent_review_moved")
+    val moved = domain.research.Slug("zzagent_review_moved")
     assert(h.research.articles.rename(Slug, LabelRename(LabelRename.To(moved.value))).isRight)
     assertEquals(
       ReviewLedgerFixtures.get(ds, moved).map(_.map(_.entries)),
@@ -1882,7 +1882,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
         .put(
           Ck3,
           Source.Put(
-            title = com.histmersion.api.library.Title("Tin routes"),
+            title = api.library.Title("Tin routes"),
             year = (Some(2021)).map(Year.apply),
             body = Some(Source.OcrMarkdown("The tin went overland before it reached the coast."))
           )

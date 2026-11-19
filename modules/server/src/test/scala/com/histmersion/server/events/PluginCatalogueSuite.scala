@@ -320,28 +320,28 @@ class PluginCatalogueSuite extends DbSuite:
     assertEquals(
       at(CatalogRecord.ProviderId("future"))._1,
       TimeSpan(
-        Some(com.histmersion.api.catalogue.Year(2000L)),
+        Some(api.catalogue.Year(2000L)),
         None,
         None,
-        Some(com.histmersion.api.catalogue.Year(2026L))
+        Some(api.catalogue.Year(2026L))
       )
     )
     assertEquals(
       at(CatalogRecord.ProviderId("early"))._1,
       TimeSpan(
-        Some(com.histmersion.api.catalogue.Year(-3000L)),
-        Some(com.histmersion.api.catalogue.Year(-3000L)),
+        Some(api.catalogue.Year(-3000L)),
+        Some(api.catalogue.Year(-3000L)),
         None,
-        Some(com.histmersion.api.catalogue.Year(-2900L))
+        Some(api.catalogue.Year(-2900L))
       )
     )
     assertEquals(
       at(CatalogRecord.ProviderId("stated"))._1,
       TimeSpan(
-        Some(com.histmersion.api.catalogue.Year(-1050L)),
+        Some(api.catalogue.Year(-1050L)),
         None,
         None,
-        Some(com.histmersion.api.catalogue.Year(-950L))
+        Some(api.catalogue.Year(-950L))
       )
     )
     assertEquals(
@@ -352,10 +352,10 @@ class PluginCatalogueSuite extends DbSuite:
     assertEquals(
       at(CatalogRecord.ProviderId("plain"))._1,
       TimeSpan(
-        Some(com.histmersion.api.catalogue.Year(-1200L)),
+        Some(api.catalogue.Year(-1200L)),
         None,
         None,
-        Some(com.histmersion.api.catalogue.Year(-1200L))
+        Some(api.catalogue.Year(-1200L))
       )
     )
     at.foreach((k, v) => assertEquals(v._2, v._1, s"$k: the event's dating is its record's"))

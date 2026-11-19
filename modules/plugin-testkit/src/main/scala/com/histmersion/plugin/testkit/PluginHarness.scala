@@ -171,11 +171,11 @@ final class PluginHarness private (
   ): FetchReport =
     val (outcome, logged, asked) = run {
       val (chain, notes) = FetchChain.of(
-        registries.sourceFetchers.map((k, v) => com.histmersion.util.plugins.Plugin.Id.assume(k.value) -> v),
+        registries.sourceFetchers.map((k, v) => util.plugins.Plugin.Id.assume(k.value) -> v),
         Nil,
         allowUnauthorised,
         hostLog,
-        Set(com.histmersion.util.plugins.Plugin.Id.assume(id.value))
+        Set(util.plugins.Plugin.Id.assume(id.value))
       )
       notes.foreach(n => hostLog.info(HostLog.Line(n.sentence)))
       chain.fetchWorkExplained(work, legalOnly)
@@ -314,7 +314,7 @@ final class PluginHarness private (
                           leftOut ++= warnings.map(w => CatalogueReport.LeftOut(s"$part: $w"))
                           val d = PluginEvents.derive(r, limits)
                           val ts = d.timeSpan
-                          def year(y: Option[com.histmersion.api.catalogue.Year]) =
+                          def year(y: Option[api.catalogue.Year]) =
                             y.flatMap(v => SpiValues.year(DeepTime.SignedYear(v.value)))
                           accepted += AcceptedEvent(
                             e,

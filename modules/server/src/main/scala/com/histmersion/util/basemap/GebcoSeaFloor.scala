@@ -204,11 +204,11 @@ object GebcoSeaFloor:
   object Row extends Newtype[Int, Pure]
   type SampledElevation = SampledElevation.T
   object SampledElevation extends Newtype[Float, Pure]
-  export com.histmersion.util.basemap.PmTiles.Entry.TileId as TileKey
-  export com.histmersion.util.basemap.PmTiles.{TileColumn as TileX, TileRow as TileY}
+  export PmTiles.Entry.TileId as TileKey
+  export PmTiles.{TileColumn as TileX, TileRow as TileY}
   type WholeDegrees = WholeDegrees.T
   object WholeDegrees extends Newtype[Int, Pure]
-  export com.histmersion.util.basemap.PmTiles.Zoom
+  export PmTiles.Zoom
 
   /** A GeoTIFF's URL in the grid's tiling: `{north}`, `{south}`, `{west}`, `{east}` as GEBCO writes them (`90.0`). */
   def urlOf(

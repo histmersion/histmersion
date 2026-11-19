@@ -136,10 +136,10 @@ class AgentsSettingsSuite extends munit.FunSuite:
     )
     assertEquals(cfg.agents.quota.fallthrough, "", "no chain falls from a plan to a paid key unless asked")
     assert(!cfg.agents.providers.codex.useApiKey.value && !cfg.agents.providers.opencode.chatgptLogin.value)
-    assertEquals(cfg.agents.provider(com.histmersion.domain.automation.ProviderKind.Codex), None)
+    assertEquals(cfg.agents.provider(domain.automation.ProviderKind.Codex), None)
     assertEquals(cfg.agents.allowances, "")
     assertEquals(
-      cfg.agents.provider(com.histmersion.domain.automation.ProviderKind.ClaudeCode),
+      cfg.agents.provider(domain.automation.ProviderKind.ClaudeCode),
       None,
       "claude-code is no HTTP provider"
     )

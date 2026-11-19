@@ -34,13 +34,13 @@ class PlacesControllersSuite extends munit.FunSuite:
   private val shapes: PlaceMap = (kind, time, limit, _) => PlaceDetailRow.Geometry(s"$kind $time $limit")
   private val geometry: PlaceGeometry = new PlaceGeometry:
     def rebuildFindingPlaces(toleranceKm: GeocodeSettings.ToleranceKm) =
-      com.histmersion.api.catalogue.Place.RebuildResult(
-        com.histmersion.api.catalogue.Place.RebuildResult.Links(0),
-        com.histmersion.api.catalogue.Place.RebuildResult.ByGeometry(0),
-        com.histmersion.api.catalogue.Place.RebuildResult.ByName(0),
-        com.histmersion.api.catalogue.Place.RebuildResult.Located(0),
-        com.histmersion.api.catalogue.Place.RebuildResult.Unlocated(0),
-        com.histmersion.api.catalogue.Place.RebuildResult.Places(0)
+      api.catalogue.Place.RebuildResult(
+        api.catalogue.Place.RebuildResult.Links(0),
+        api.catalogue.Place.RebuildResult.ByGeometry(0),
+        api.catalogue.Place.RebuildResult.ByName(0),
+        api.catalogue.Place.RebuildResult.Located(0),
+        api.catalogue.Place.RebuildResult.Unlocated(0),
+        api.catalogue.Place.RebuildResult.Places(0)
       )
     def buildHierarchy() = SpatialHierarchyResult(
       SpatialHierarchyResult.EdgesCreated(0),
@@ -61,8 +61,8 @@ class PlacesControllersSuite extends munit.FunSuite:
     Option.when(name == Geocode.Attempt.Name("Zzcl"))(
       Geocode.Resolution(
         Geocode.Resolution.Asked(name.value),
-        com.histmersion.api.catalogue.Place.Id("zzcl_hill"),
-        com.histmersion.api.catalogue.Place.Label("Zzclhill"),
+        api.catalogue.Place.Id("zzcl_hill"),
+        api.catalogue.Place.Label("Zzclhill"),
         Longitude(34.6),
         Latitude(40.0)
       )
@@ -126,7 +126,7 @@ class PlacesControllersSuite extends munit.FunSuite:
       c.addName(
         Caller.Local,
         Place.Id("zzcl_hill"),
-        com.histmersion.api.catalogue.Place.NameAdd(com.histmersion.api.catalogue.Place.NameAdd.Name("  "))
+        api.catalogue.Place.NameAdd(api.catalogue.Place.NameAdd.Name("  "))
       ).isLeft,
       "a blank name"
     )
@@ -134,9 +134,9 @@ class PlacesControllersSuite extends munit.FunSuite:
       c.addName(
         Caller.Local,
         Place.Id("zzcl_hill"),
-        com.histmersion.api.catalogue.Place.NameAdd(
-          com.histmersion.api.catalogue.Place.NameAdd.Name("Zzcl Höyük"),
-          Some(com.histmersion.api.catalogue.Place.Name.Lang("tr"))
+        api.catalogue.Place.NameAdd(
+          api.catalogue.Place.NameAdd.Name("Zzcl Höyük"),
+          Some(api.catalogue.Place.Name.Lang("tr"))
         )
       ).map(_.added),
       Right(true)
@@ -145,8 +145,8 @@ class PlacesControllersSuite extends munit.FunSuite:
     val set = c.setOverride(
       Caller.Local,
       Place.Id("zzcl_hill"),
-      com.histmersion.api.catalogue.Place.OverrideSet(
-        kind = Some(com.histmersion.api.catalogue.Place.OverrideSet.Kind("region")),
+      api.catalogue.Place.OverrideSet(
+        kind = Some(api.catalogue.Place.OverrideSet.Kind("region")),
         reason = Some(ApiPlace.Rationale("dug"))
       )
     )
@@ -160,7 +160,7 @@ class PlacesControllersSuite extends munit.FunSuite:
         .exists(_.problems.sentences.mkString("; ").contains("pick: unknown geo pick '"))
     )
     assert(
-      c.shapes(Api.PlacesGeoQuery(kind = Some(com.histmersion.api.catalogue.Place.Kind.Wire("region"))))
+      c.shapes(Api.PlacesGeoQuery(kind = Some(api.catalogue.Place.Kind.Wire("region"))))
         .left
         .map(Api.Error(_))
         .isRight
@@ -181,33 +181,33 @@ class PlacesControllersSuite extends munit.FunSuite:
           c.addName(
             Caller.Local,
             Place.Id("zzcl_hill"),
-            com.histmersion.api.catalogue.Place.NameAdd(com.histmersion.api.catalogue.Place.NameAdd.Name("x"))
+            api.catalogue.Place.NameAdd(api.catalogue.Place.NameAdd.Name("x"))
           ).isLeft,
           c.removeName(
             Caller.Local,
             Place.Id("zzcl_hill"),
-            com.histmersion.api.catalogue.Place.NameRemove(com.histmersion.api.catalogue.Place.NameRemove.Name("x"))
+            api.catalogue.Place.NameRemove(api.catalogue.Place.NameRemove.Name("x"))
           ).isLeft,
           c.setOverride(
             Caller.Local,
             Place.Id("zzcl_hill"),
-            com.histmersion.api.catalogue.Place
-              .OverrideSet(reset = com.histmersion.api.catalogue.Place.OverrideSet.Reset(true))
+            api.catalogue.Place
+              .OverrideSet(reset = api.catalogue.Place.OverrideSet.Reset(true))
           ).isLeft,
           c.merge(
             Caller.Local,
             Place.Id("zzcl_hill"),
-            com.histmersion.api.catalogue.Place.MergeIn(com.histmersion.api.catalogue.Place.Id("zzcl_land"))
+            api.catalogue.Place.MergeIn(api.catalogue.Place.Id("zzcl_land"))
           ).isLeft,
-          c.remove(Caller.Local, Place.Id("zzcl_hill"), com.histmersion.api.catalogue.Place.RemoveIn()).isLeft,
+          c.remove(Caller.Local, Place.Id("zzcl_hill"), api.catalogue.Place.RemoveIn()).isLeft,
           c.add(
             Caller.Local,
-            com.histmersion.api.catalogue.Place.Add(
-              com.histmersion.api.catalogue.Place.Add.Label("Zzcl"),
-              com.histmersion.api.catalogue.Place.Add.Kind(Place.Kind.Site),
+            api.catalogue.Place.Add(
+              api.catalogue.Place.Add.Label("Zzcl"),
+              api.catalogue.Place.Add.Kind(Place.Kind.Site),
               Longitude(0),
               Latitude(0),
-              com.histmersion.api.catalogue.Place.Add.Source("fixture")
+              api.catalogue.Place.Add.Source("fixture")
             )
           ).isLeft,
           c.rename(Caller.Local, Place.Id("zzcl_hill"), _ => Right(Place.Id("x"))).isLeft,

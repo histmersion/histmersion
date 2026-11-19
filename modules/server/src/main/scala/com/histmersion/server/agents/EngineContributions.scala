@@ -57,7 +57,7 @@ object EngineContributions:
     AgentRoster(
       ToolboxOrder.names,
       io.scalaland.chimney.Transformer
-        .derive[List[AgentRole], List[com.histmersion.domain.automation.AgentRole]]
+        .derive[List[AgentRole], List[domain.automation.AgentRole]]
         .transform((Pipeline.values.toList.flatMap(_.roles) :+ AgentRole.Probe).distinct)
     )
 

@@ -66,6 +66,6 @@ object AcquisitionStoreSuite:
             val _ = GoalService(db)
               .put(
                 Goal.Slug.applyUnsafe(slug),
-                com.histmersion.api.automation.Goal.Put(com.histmersion.api.automation.Goal.Title(s"Goal $slug"))
+                api.automation.Goal.Put(api.automation.Goal.Title(s"Goal $slug"))
               )
       }

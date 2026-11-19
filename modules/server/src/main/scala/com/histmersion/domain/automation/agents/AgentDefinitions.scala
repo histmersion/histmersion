@@ -318,7 +318,7 @@ final class AgentDefinitions(prompts: Prompts, val roster: AgentRoster):
         Either.cond(
           roster.roles.contains(
             io.scalaland.chimney.Transformer
-              .derive[AgentRole, com.histmersion.domain.automation.AgentRole]
+              .derive[AgentRole, domain.automation.AgentRole]
               .transform(d.role)
           ),
           d,

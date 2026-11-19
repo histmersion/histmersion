@@ -199,9 +199,9 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
   private def found(d: Doi, ck: Citekey) =
     Right(
       Ingest.Report(
-        com.histmersion.api.library.Citekey(ck.value),
-        Some(com.histmersion.api.library.Doi(d.value)),
-        Some(com.histmersion.api.library.Title("found")),
+        api.library.Citekey(ck.value),
+        Some(api.library.Doi(d.value)),
+        Some(api.library.Title("found")),
         created = Ingest.Report.Created(true),
         Some(PdfInfo(PdfInfo.Source("unpaywall"), None, ByteCount(2048), None)),
         Ingest.Report.EdgesAdded(0),
@@ -233,8 +233,8 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
         .put(
           Citekey("zzrecheck_full"),
           Source.Put(
-            title = com.histmersion.api.library.Title("Full"),
-            doi = (Some(doi("full"))).map(com.histmersion.api.library.Doi.apply),
+            title = api.library.Title("Full"),
+            doi = (Some(doi("full"))).map(api.library.Doi.apply),
             body = Some(Source.OcrMarkdown("The text."))
           )
         )
@@ -245,8 +245,8 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
         .put(
           Citekey("zzrecheck_meta"),
           Source.Put(
-            title = com.histmersion.api.library.Title("Meta"),
-            doi = (Some(doi("meta"))).map(com.histmersion.api.library.Doi.apply),
+            title = api.library.Title("Meta"),
+            doi = (Some(doi("meta"))).map(api.library.Doi.apply),
             notes = Some(Source.Notes("Compiled."))
           )
         )
@@ -432,12 +432,12 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     ) = Right(Nil)
     def meta(d: Doi) = Right(
       WorkRef(
-        doi = (Some(d.value)).map(com.histmersion.api.library.Doi.apply),
-        title = (Some(s"Work $d")).map(com.histmersion.api.library.Title.apply),
-        year = (Some(2020)).map(com.histmersion.api.catalogue.Year.apply),
-        authors = (List("Zz Zzrecheck")).map(com.histmersion.api.library.AuthorName.apply),
+        doi = (Some(d.value)).map(api.library.Doi.apply),
+        title = (Some(s"Work $d")).map(api.library.Title.apply),
+        year = (Some(2020)).map(api.catalogue.Year.apply),
+        authors = (List("Zz Zzrecheck")).map(api.library.AuthorName.apply),
         citekey = (Some("zzrecheck2020_" + d.value.replaceAll("[^a-z0-9]", "").takeRight(6)))
-          .map(com.histmersion.api.library.Citekey.apply)
+          .map(api.library.Citekey.apply)
       )
     )
     def references(d: Doi) = Right((DiscoveryClient.Backend("crossref"), Nil))
@@ -506,8 +506,8 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
         .put(
           Citekey("zzrecheck_kept"),
           Source.Put(
-            title = com.histmersion.api.library.Title("Kept"),
-            doi = (Some(doi("oa"))).map(com.histmersion.api.library.Doi.apply),
+            title = api.library.Title("Kept"),
+            doi = (Some(doi("oa"))).map(api.library.Doi.apply),
             notes = Some(Source.Notes("Compiled."))
           )
         )
@@ -635,8 +635,8 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
         .put(
           Citekey("zzrecheck_full"),
           Source.Put(
-            title = com.histmersion.api.library.Title("Full"),
-            doi = (Some(doi("full"))).map(com.histmersion.api.library.Doi.apply),
+            title = api.library.Title("Full"),
+            doi = (Some(doi("full"))).map(api.library.Doi.apply),
             body = Some(Source.OcrMarkdown("The text."))
           )
         )

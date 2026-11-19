@@ -44,7 +44,7 @@ abstract class CitationServiceContract extends LibraryStoreSuite:
       edges
     )
 
-  private def dom(c: Citekey) = com.histmersion.domain.library.Citekey.applyUnsafe(c.value)
+  private def dom(c: Citekey) = domain.library.Citekey.applyUnsafe(c.value)
   private val A = Citekey("zqa1990_a")
   private val B = Citekey("zqb2001_b")
   private val C = Citekey("zqc1975_c")
@@ -90,10 +90,10 @@ abstract class CitationServiceContract extends LibraryStoreSuite:
       )
     )
     assertEquals(
-      s.citations.neighbors(dom(A), List(com.histmersion.domain.library.Edge.Kind.Wire("refutes"))).map(_.citekey),
+      s.citations.neighbors(dom(A), List(domain.library.Edge.Kind.Wire("refutes"))).map(_.citekey),
       List(B)
     )
-    assertEquals(s.citations.neighbors(com.histmersion.domain.library.Citekey("zqnone2000_x"), Nil), Nil)
+    assertEquals(s.citations.neighbors(domain.library.Citekey("zqnone2000_x"), Nil), Nil)
   }
 
   stest("graph: breadth-first to a depth, every link between two nodes") { s =>
@@ -112,7 +112,7 @@ abstract class CitationServiceContract extends LibraryStoreSuite:
     val two = s.citations.graph(dom(A), CitationService.Depth(9))
     assertEquals((two.depth, two.nodes.map(_.id)), (4, List(A, B, C, D)))
     assertEquals(
-      s.citations.graph(com.histmersion.domain.library.Citekey("zqnone2000_x"), CitationService.Depth(2)).nodes,
+      s.citations.graph(domain.library.Citekey("zqnone2000_x"), CitationService.Depth(2)).nodes,
       Nil
     )
   }
@@ -144,7 +144,7 @@ abstract class CitationServiceContract extends LibraryStoreSuite:
         List((A, Some(B)), (B, Some(A)), (C, Some(A)), (E, None))
       )
       assertEquals(
-        s.citations.contradictions(Some(com.histmersion.domain.library.Citekey("zqnone2000_x")), None).total,
+        s.citations.contradictions(Some(domain.library.Citekey("zqnone2000_x")), None).total,
         0
       )
   }

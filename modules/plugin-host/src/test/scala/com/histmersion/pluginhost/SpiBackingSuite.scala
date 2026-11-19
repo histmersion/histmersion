@@ -157,10 +157,10 @@ class SpiBackingSuite extends munit.FunSuite:
         Fetch.Miss(Problem.NotFound.Copy(Problem.Raw("nothing"), Vector.empty))
     val (chain, _) =
       FetchChain.of(
-        scala.collection.immutable.ListMap(com.histmersion.util.plugins.Plugin.Id("peer") -> peerAware),
+        scala.collection.immutable.ListMap(util.plugins.Plugin.Id("peer") -> peerAware),
         Nil,
         FetchChain.AllowUnauthorised(false),
-        plugins = Set(com.histmersion.util.plugins.Plugin.Id("oa-unpaywall"))
+        plugins = Set(util.plugins.Plugin.Id("oa-unpaywall"))
       )
     chain.fetchWorkExplained(WorkKey(archive = Some(WorkKey.Archive("x"))), legalOnly = FetchChain.LegalOnly(true))
     assertEquals(asked.toList, List("oa-unpaywall" -> true, "oa-openalex" -> false))

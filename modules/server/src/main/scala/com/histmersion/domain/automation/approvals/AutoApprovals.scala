@@ -77,7 +77,7 @@ final class AutoApprovals(
     val goals = agents.focusStore.goals().map(g => g.slug -> g).toMap
     val linked = agents.focusStore
       .goalsOf(
-        com.histmersion.domain.automation.Goal.LinkKind.Article.wire,
+        domain.automation.Goal.LinkKind.Article.wire,
         open.flatMap(_.approval.subject).distinct.map(s => Goal.Plans.GoalLink.Ref(s.value))
       )
     def goalOf(a: ApprovalInfo) =
@@ -218,12 +218,12 @@ final class AutoApprovals(
           case (None, _)       => Verdict.Leave(AutopilotPolicy.Rationale("the approval carries no readable plan"))
           case (Some(p), _)    =>
             val raw = a.subject.fold(p.goal.value)(_.value)
-            (com.histmersion.domain.automation.Goal.Slug.option(raw), Slug.option(raw)) match
+            (domain.automation.Goal.Slug.option(raw), Slug.option(raw)) match
               case (Some(goal), Some(slug)) =>
                 val depth = AutopilotPolicy.depth(
                   slug,
                   s =>
-                    com.histmersion.domain.automation.Goal.Slug
+                    domain.automation.Goal.Slug
                       .option(s.value)
                       .flatMap(agents.goals.get)
                       .flatMap(_.parentSlug)
