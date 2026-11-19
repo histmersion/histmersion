@@ -4,7 +4,7 @@ G3misplaced	cli	main	94
 G3misplaced	config	main	10
 G3misplaced	core	main	351
 G3misplaced	core	test	5
-G3misplaced	db	main	602
+G3misplaced	db	main	594
 G3misplaced	db	test	12
 G3misplaced	files	main	33
 G3misplaced	plugin-api	main	2
@@ -33,7 +33,7 @@ G44	config	main	175
 G44	config	test	51
 G44	core	main	2869
 G44	core	test	1004
-G44	db	main	449
+G44	db	main	448
 G44	db	test	1335
 G44	files	main	224
 G44	files	test	52
@@ -92,7 +92,7 @@ G45boundary	cli	main	1018
 G45boundary	config	main	63
 G45boundary	console	main	4
 G45boundary	core	main	10
-G45boundary	db	main	1805
+G45boundary	db	main	1794
 G45boundary	files	main	59
 G45boundary	plugin-host	main	305
 G45boundary	plugin-resolver	main	33
@@ -206,7 +206,7 @@ G49	config	test	8
 G49	console	main	1
 G49	core	main	832
 G49	core	test	162
-G49	db	main	934
+G49	db	main	932
 G49	db	test	336
 G49	files	main	89
 G49	files	test	7
@@ -241,9 +241,9 @@ G49	upstreams	test	17
 G49	values	main	35
 G49	web	main	1340
 G49	web	test	199
-G58raw	db	main	369
-G58raw	db	test	29
-G58raw	server	main	29
+G58raw	db	main	13
+G58raw	db	test	10
+G58raw	server	main	15
 G58raw	server	test	21
 G5problem	api	main	3
 G5problem	core	main	1

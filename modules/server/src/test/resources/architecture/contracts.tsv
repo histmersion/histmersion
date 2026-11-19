@@ -375,7 +375,6 @@ layer	db:domain/catalogue/places/PlaceOverrideRepo.scala	a domain file names the
 layer	db:domain/catalogue/places/PlaceRepo.scala	a domain file names the api outside a boundary	1
 layer	db:domain/catalogue/places/PlaceReviewRepo.scala	a domain file names the api outside a boundary	1
 layer	db:domain/catalogue/places/PlaceSourceReferrer.scala	a domain file names the api outside a boundary	1
-layer	db:domain/catalogue/places/PlaceSql.scala	a domain file names the api outside a boundary	1
 layer	db:domain/catalogue/places/PlaceTypeRow.scala	a domain file names the api outside a boundary	1
 layer	db:domain/catalogue/places/PlaceVocabularyCodecs.scala	a domain file names the api outside a boundary	1
 layer	db:domain/catalogue/places/PlacesCarried.scala	a domain file names the api outside a boundary	1

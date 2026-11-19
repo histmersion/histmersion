@@ -8,6 +8,7 @@ import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.library.search.FilterSql
 import com.histmersion.domain.library.search.Search
+import com.histmersion.api.media.MediaRole
 
 import com.histmersion.domain.catalogue.places.PlaceScope
 
@@ -477,7 +478,7 @@ class FilterSqlSuite extends munit.FunSuite:
 
   test("the map feed's cover column names MediaRole.Cover word for word"):
     val feed = FilterSql.findingsFeedQuery(Filter()).sqlString
-    assert(feed.contains(s"m.role = '${com.histmersion.api.media.MediaRole.Cover}')"), feed)
+    assert(feed.contains(s"m.role = '${MediaRole.Cover}')"), feed)
 
   test("facet dimensions: places and tags union the source and its findings"):
     assert(FilterSql.facetValues(Facet.Field.Tags).sqlString.contains("unnest(f.tags)"))

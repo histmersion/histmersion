@@ -21,7 +21,7 @@ import com.augustnagro.magnum.*
 import com.histmersion.util.database.Migrate
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.db.*
-import com.histmersion.api.catalogue.{Period, SiteTile, Year}
+import com.histmersion.api.catalogue.{Gazetteer, Period, SiteTile, Year}
 import com.histmersion.api.library.Filter
 import com.histmersion.api.catalogue.Place
 import com.histmersion.domain.DeepTime.SignedYear
@@ -100,7 +100,7 @@ class TileRepoSuite extends DbSuite:
     assert(UndatedSiteRepo.UndatedSiteSql.sqlString.startsWith(kind), UndatedSiteRepo.UndatedSiteSql.sqlString)
     assertEquals(
       PlaceFixtures.ImportedList.sqlString,
-      com.histmersion.api.catalogue.Gazetteer.ImportedSources.map(s => s"'$s'").mkString("(", ", ", ")")
+      Gazetteer.ImportedSources.map(s => s"'$s'").mkString("(", ", ", ")")
     )
 
   test("the SQL Mercator places a point where the Scala one does"):

@@ -209,10 +209,8 @@ private[events] object EventRepo:
   // ── writes ──────────────────────────────────────────────────────────────────────────────────
 
   /** SQL, in an `ON CONFLICT` update of `events`: the four-point span is the one stored. */
-  private val sameSpan = SqlLiteral(
-    "(events.not_before, events.begin_by, events.end_from, events.not_after) " +
-      "IS NOT DISTINCT FROM (EXCLUDED.not_before, EXCLUDED.begin_by, EXCLUDED.end_from, EXCLUDED.not_after)"
-  )
+  private val sameSpan =
+    sql"(events.not_before, events.begin_by, events.end_from, events.not_after) IS NOT DISTINCT FROM (EXCLUDED.not_before, EXCLUDED.begin_by, EXCLUDED.end_from, EXCLUDED.not_after)"
 
   /** A person changed `fields` of an event an IMPORT created: each that now differs from what the catalogue's record
     * says is recorded as a correction, so the next import keeps it; one set back to the catalogue's value drops its

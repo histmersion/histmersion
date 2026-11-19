@@ -49,14 +49,6 @@ object RangeSql:
   def overlaps(col: Frag, p: Period): Frag =
     sql"$col && int8range(${p.start}::bigint, ${p.end}::bigint, '[]')"
 
-  // TEMPORARY (G58 slice 2): the text forms, until their last callers build fragments.
-  def start(col: String): String = s"lower($col)"
-  def end(col: String): String = s"upper($col) - 1"
-  def cols(col: String): String = s"${start(col)}, ${end(col)}"
-  def cols(col: String, startAs: String, endAs: String): String = s"${start(col)} AS $startAs, ${end(col)} AS $endAs"
-  def range(lo: String, hi: String): String = s"int8range($lo, $hi + 1, '[)')"
-  def overlaps(col: String, lo: String, hi: String): String = s"$col && int8range($lo, $hi, '[]')"
-
   /** The `int8range` literal of optional inclusive bounds — `[-1200,-999)`, `[-1200,)`, `(,-999)`, and `(,)` (every
     * year) when neither is given. Bind it as `${lit}::int8range`.
     */
