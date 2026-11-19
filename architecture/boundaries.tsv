@@ -279,7 +279,6 @@ modules/db/src/main/scala/com/histmersion/util/database/Keyset.scala	sql	builds 
 modules/db/src/main/scala/com/histmersion/util/database/LikePattern.scala	sql	escapes text into a LIKE pattern
 modules/db/src/main/scala/com/histmersion/util/database/Migrate.scala	sql	runs the Flyway migrations
 modules/db/src/main/scala/com/histmersion/util/database/NewtypeColumns.scala	sql	reads and writes a newtype column from its base type's codec
-modules/db/src/main/scala/com/histmersion/util/database/Sql.scala	sql	composes SQL fragments with bound parameters
 modules/db/src/main/scala/com/histmersion/util/database/Vocab.scala	sql	reads and writes vocabularies as their wire strings in columns
 modules/db/src/main/scala/com/histmersion/util/jobs/JobRepo.scala	sql	reads and writes the jobs table
 modules/db/src/main/scala/com/histmersion/util/jobs/JobSourceReferrer.scala	sql	counts and removes the job rows that point at a deleted source
