@@ -18,7 +18,7 @@ final case class SearchResult(
     next: Option[Offset] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema:
+      api.json.Schema:
   def page: OffsetPage = OffsetPage(total, offset, RowCount(hits.size))
 object SearchResult:
   type Total = Total.T

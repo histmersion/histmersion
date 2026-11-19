@@ -11,7 +11,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 final case class UpdateNotice(kind: Option[UpdateNotice.Kind], label: Option[UpdateNotice.Label], doi: Option[Doi])
     derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object UpdateNotice:
   type Kind = Kind.T

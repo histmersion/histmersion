@@ -1,4 +1,5 @@
-package com.histmersion.api.research
+package com.histmersion
+package api.research
 import com.histmersion.util.nonempty.NonEmptyVector
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.histmersion.util.problem.Problem
@@ -29,6 +30,11 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import scala.annotation.tailrec
 import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.api.library.Citekey
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.text.WikiLinks
+import com.histmersion.api.RowCount
+import com.histmersion.api.personal.UnreadPage
 final case class Article(
     slug: Article.Slug,
     title: Article.Title,
@@ -40,64 +46,64 @@ final case class Article(
     period: Option[Period] = None,
     updatedAt: Option[Article.UpdatedAt] = None,
     filter: Option[Article.Filter] = None,
-    reasons: Map[com.histmersion.api.library.Citekey, Coverage.Rationale] = Map.empty
+    reasons: Map[Citekey, Coverage.Rationale] = Map.empty
 )
 
 object Article:
   type Export = Export.T
-  object Export extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Export extends Newtype[String, Pure]
   type FullText = FullText.T
-  object FullText extends Newtype[Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FullText extends Newtype[Boolean, Pure]
   type Heading = Heading.T
-  object Heading extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Heading extends Newtype[String, Pure]
   type Lede = Lede.T
-  object Lede extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Lede extends Newtype[String, Pure]
   type Part = Part.T
-  object Part extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Part extends Newtype[String, Pure]
   type Period = Period.T
-  object Period extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Period extends Newtype[String, Pure]
   type Prose = Prose.T
-  object Prose extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Prose extends Newtype[String, Pure]
   type Section = Section.T
-  object Section extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Section extends Newtype[String, Pure]
   type VersionId = VersionId.T
-  object VersionId extends Newtype[Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object VersionId extends Newtype[Long, Pure]
 
   type Slug = Slug.T
-  object Slug extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Slug extends Newtype[String, Pure]
   type Title = Title.T
-  object Title extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Title extends Newtype[String, Pure]
   export Kind.Wire as KindValue
   type Body = Body.T
-  object Body extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Body extends Newtype[String, Pure]
   type SummaryText = SummaryText.T
-  object SummaryText extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SummaryText extends Newtype[String, Pure]
   type Tags = Tags.T
-  object Tags extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Tags extends Newtype[String, Pure]
   type Regions = Regions.T
-  object Regions extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Regions extends Newtype[String, Pure]
   type UpdatedAt = UpdatedAt.T
-  object UpdatedAt extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object UpdatedAt extends Newtype[String, Pure]
 
   object Coverage:
     type DisagreementKind = DisagreementKind.T
-    object DisagreementKind extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object DisagreementKind extends Newtype[String, Pure]
     type Export = Export.T
-    object Export extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Export extends Newtype[String, Pure]
     type Markdown = Markdown.T
-    object Markdown extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Markdown extends Newtype[String, Pure]
     type Method = Method.T
-    object Method extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Method extends Newtype[String, Pure]
     type NotUsed = NotUsed.T
-    object NotUsed extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object NotUsed extends Newtype[String, Pure]
     type Sections = Sections.T
-    object Sections extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Sections extends Newtype[String, Pure]
 
     type DisagreementKinds = DisagreementKindsValue
     type DisagreementKindsValue = DisagreementKind
     val DisagreementKindsValue: DisagreementKind.type = DisagreementKind
     export Article.Slug as ComputeSlug
-    export com.histmersion.api.research.Coverage.Total as ComputeTotal
+    export api.research.Coverage.Total as ComputeTotal
 
     val DisagreementKinds: scala.List[DisagreementKinds] = scala.List(
       DisagreementKind("challenges"),
@@ -121,11 +127,11 @@ object Article:
         slug: Coverage.ComputeSlug,
         filter: Filter,
         total: Coverage.ComputeTotal,
-        hits: scala.List[com.histmersion.api.research.Coverage.Source],
-        citedInFilter: Set[com.histmersion.api.library.Citekey],
-        cited: scala.List[com.histmersion.api.library.Citekey],
-        reasons: Map[com.histmersion.api.library.Citekey, Rationale],
-        edges: scala.List[com.histmersion.api.research.Coverage.Edge],
+        hits: scala.List[api.research.Coverage.Source],
+        citedInFilter: Set[Citekey],
+        cited: scala.List[Citekey],
+        reasons: Map[Citekey, Rationale],
+        edges: scala.List[api.research.Coverage.Edge],
         searches: scala.List[CoverageSearch]
     ): Coverage =
       val citedSet = cited.toSet
@@ -133,10 +139,10 @@ object Article:
       val readSet = read.map(_.citekey).toSet
       val notUsed = read
         .filterNot(s => citedSet(s.citekey))
-        .map(s => com.histmersion.api.research.Coverage.Entry(s, reasons.get(s.citekey)))
+        .map(s => api.research.Coverage.Entry(s, reasons.get(s.citekey)))
       val capped = read.size < total.value
       val outside =
-        cited.distinct.filterNot(ck => citedInFilter(com.histmersion.api.library.Citekey((ck).value)) || readSet(ck))
+        cited.distinct.filterNot(ck => citedInFilter(Citekey((ck).value)) || readSet(ck))
       val statuses =
         Source.Status.values.toList.flatMap(st =>
           Option(read.count(_.status == st)).filter(_ > 0).map(n => StatusCount(st, StatusCount.Count(n)))
@@ -147,37 +153,37 @@ object Article:
         .sortBy(e => (e.from.value, e.kind.value, e.to.value))
       val drift = scala
         .List(
-          com.histmersion.api.research.Coverage
+          api.research.Coverage
             .Drift(DriftKind.Unplaced, notUsed.filter(_.reason.isEmpty).map(_.source.citekey)),
-          com.histmersion.api.research.Coverage
+          api.research.Coverage
             .Drift(DriftKind.ReasonForCited, reasons.keys.toList.filter(citedSet).sorted),
-          com.histmersion.api.research.Coverage.Drift(
+          api.research.Coverage.Drift(
             DriftKind.ReasonOutside,
             if capped then Nil else reasons.keys.toList.filterNot(ck => readSet(ck) || citedSet(ck)).sorted
           )
         )
         .filter(_.citekeys.nonEmpty)
-      com.histmersion.api.research.Coverage(
+      api.research.Coverage(
         slug,
         filter,
         filter.shownLine,
         total,
-        com.histmersion.api.research.Coverage.Checked(read.size),
+        api.research.Coverage.Checked(read.size),
         read.filter(s => citedSet(s.citekey)),
         notUsed,
         outside,
         statuses,
         keptEdges,
         searches,
-        com.histmersion.api.research.Coverage.Reason.list(reasons),
+        api.research.Coverage.Reason.list(reasons),
         drift
       )
 
     def unplacedAfter(
         c: Coverage,
-        cited: Set[com.histmersion.api.library.Citekey],
-        reasons: Map[com.histmersion.api.library.Citekey, Rationale]
-    ): scala.List[com.histmersion.api.library.Citekey] =
+        cited: Set[Citekey],
+        reasons: Map[Citekey, Rationale]
+    ): scala.List[Citekey] =
       c.notUsed.map(_.source.citekey).filterNot(ck => cited(ck) || reasons.contains(ck))
 
     /** HTML comments, so Obsidian and the page do not show them. */
@@ -197,17 +203,15 @@ object Article:
       val n = c.notUsed.size
       val scope = if (c.capped) == (true) then s"; the first ${c.checked} (by citekey) were checked" else ""
       val lead =
-        if c.total == com.histmersion.api.research.Coverage.Total(0) then "_The filter returns no source._"
+        if c.total == api.research.Coverage.Total(0) then "_The filter returns no source._"
         else if n == 0 then
           if (c.capped) == (true) then
             s"_The filter returns ${c.total} $src; all ${c.checked} checked are cited above._"
           else
             s"_${
-                if c.total == com.histmersion.api.research.Coverage.Total(1) then "The one source"
+                if c.total == api.research.Coverage.Total(1) then "The one source"
                 else s"All ${c.total} sources"
-              } the filter returns ${
-                if c.total == com.histmersion.api.research.Coverage.Total(1) then "is" else "are"
-              } cited above._"
+              } the filter returns ${if c.total == api.research.Coverage.Total(1) then "is" else "are"} cited above._"
         else
           val citedText = if citedN == 0 then "None of them is"
           else
@@ -322,26 +326,23 @@ object Article:
           (if c.eventLeads.isEmpty then "" else "\n\n" + ArticleEventLead.markdown(c.eventLeads))
       )
 
-  final case class Deleted(slug: Slug, deleted: Deleted.Value)
-      derives JsonCodec,
-        KindlingsSchema,
-        com.histmersion.api.json.Schema
+  final case class Deleted(slug: Slug, deleted: Deleted.Value) derives JsonCodec, KindlingsSchema, api.json.Schema
 
   object Deleted:
     type Value = Value.T
-    object Value extends Newtype[Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Value extends Newtype[Boolean, Pure]
 
   object Edits:
     type Anchor = Anchor.T
-    object Anchor extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Anchor extends Newtype[String, Pure]
     type HeadLimit = HeadLimit.T
-    object HeadLimit extends Newtype[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object HeadLimit extends Newtype[Int, Pure]
     type Markdown = Markdown.T
-    object Markdown extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Markdown extends Newtype[String, Pure]
     type NewText = NewText.T
-    object NewText extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object NewText extends Newtype[String, Pure]
     type Offset = Offset.T
-    object Offset extends Newtype[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Offset extends Newtype[Int, Pure]
 
     export Article.{Body as ApplyOneText, Body as LocateText, Body as OccurrencesText}
 
@@ -356,7 +357,7 @@ object Article:
 
     object Op:
       type Wire = Wire.T
-      object Wire extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Wire extends Newtype[String, Pure]
 
       def parse(s: Wire): Option[Op] = values.find(_.wire.value.equalsIgnoreCase(s.value.trim))
       given WireEnumValues[Op]:
@@ -434,14 +435,14 @@ object Article:
         problem: Option[Problem] = None
     ) derives JsonCodec,
           KindlingsSchema,
-          com.histmersion.api.json.Schema:
+          api.json.Schema:
       def applied: Boolean = (problem.isEmpty)
       def label: String = (s"edit $index (${op.wire} \"$anchor\")")
 
     object EditResult:
 
       type Index = Index.T
-      object Index extends Newtype[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Index extends Newtype[Int, Pure]
       export Edits.{Anchor, NewText as Text}
 
     final case class Applied(body: Body, results: scala.List[EditResult]):
@@ -452,9 +453,9 @@ object Article:
 
     object Applied:
       type Count = Count.T
-      object Count extends Newtype[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Count extends Newtype[Int, Pure]
       type Issue = Issue.T
-      object Issue extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Issue extends Newtype[String, Pure]
 
     def head(anchor: Anchor, max: HeadLimit = HeadLimit(48)): String =
       val one = (anchor).value.trim.replaceAll("\\s+", " ")
@@ -602,17 +603,17 @@ object Article:
         body: Body
     ) derives JsonCodec,
           KindlingsSchema,
-          com.histmersion.api.json.Schema:
+          api.json.Schema:
       def clean: Boolean = (problems.isEmpty)
 
     object ArticleCheck:
 
       type Fatal = Fatal.T
-      object Fatal extends Newtype[Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Fatal extends Newtype[Boolean, Pure]
       type WordsBefore = WordsBefore.T
-      object WordsBefore extends Newtype[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object WordsBefore extends Newtype[Int, Pure]
       type WordsAfter = WordsAfter.T
-      object WordsAfter extends Newtype[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object WordsAfter extends Newtype[Int, Pure]
 
     def markdown(c: ArticleCheck): Markdown =
       val edits =
@@ -646,8 +647,8 @@ object Article:
       (query.forall((_).value.trim.isEmpty) && topics.isEmpty && tags.isEmpty && status.isEmpty && places.isEmpty &&
         authors.isEmpty && from.isEmpty && to.isEmpty)
 
-    def toFilter: com.histmersion.api.library.Filter =
-      com.histmersion.api.library.Filter.of(
+    def toFilter: api.library.Filter =
+      api.library.Filter.of(
         q = query,
         tags = tags,
         authors = authors,
@@ -674,10 +675,10 @@ object Article:
 
   object Filter:
 
-    export com.histmersion.api.library.Filter.{Authors, Places, Q as Query, Status, Tags, Topics}
+    export api.library.Filter.{Authors, Places, Q as Query, Status, Tags, Topics}
     export com.histmersion.api.catalogue.{Year as From, Year as To}
     type ExtraQueries = ExtraQueries.T
-    object ExtraQueries extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ExtraQueries extends Newtype[String, Pure]
 
     given Schema[Filter] = KindlingsSchema
       .derived[Filter]
@@ -716,7 +717,7 @@ object Article:
           .map((_).value.trim)
           .filter(_.nonEmpty)
           .distinct)
-          .map(refactorValue19 => _root_.com.histmersion.api.research.Article.Filter.ExtraQueries(refactorValue19))
+          .map(refactorValue19 => ExtraQueries(refactorValue19))
       )
       if unknown.nonEmpty then
         Left(
@@ -754,23 +755,23 @@ object Article:
       strict: Import.Strict = Import.Strict(false)
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Import:
     export Article.Body as Text
     type Mtime = Mtime.T
-    object Mtime extends Newtype[Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Mtime extends Newtype[Long, Pure]
     type Force = Force.T
-    object Force extends Newtype[Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Force extends Newtype[Boolean, Pure]
     type Strict = Strict.T
-    object Strict extends Newtype[Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Strict extends Newtype[Boolean, Pure]
 
   enum Kind:
     case Concept, Myth, Culture, Region, Timeline, Report, Index
 
   object Kind:
     type Wire = Wire.T
-    object Wire extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends Newtype[String, Pure]
     type FromStringS = Wire
     val FromStringS: Wire.type = Wire
 
@@ -789,29 +790,29 @@ object Article:
   final case class KindCount(kind: Kind.Wire, count: KindCount.Count)
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object KindCount:
     type Count = Count.T
-    object Count extends Newtype[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Count extends Newtype[Int, Pure]
 
   final case class Link(targetKind: Link.TargetKind, target: Link.Target)
 
   object Link:
     type TargetKind = TargetKind.T
-    object TargetKind extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    export com.histmersion.api.text.WikiLinks.Occurrence.Target
+    object TargetKind extends Newtype[String, Pure]
+    export api.text.WikiLinks.Occurrence.Target
 
   object Links:
     type Markdown = Markdown.T
-    object Markdown extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Markdown extends Newtype[String, Pure]
 
     export Article.Body as ResolveMarkdownMd
 
     val TargetArticle = "article"
     val TargetSource = "source"
 
-    export com.histmersion.api.text.WikiLinks.{isCitekeyShaped, normalize, occurrences, targets, Occurrence}
+    export api.text.WikiLinks.{isCitekeyShaped, normalize, occurrences, targets, Occurrence}
 
     def classify(targets: scala.List[Link.Target], isSource: Link.Target => Boolean): scala.List[Link] =
       targets.map { t =>
@@ -820,11 +821,11 @@ object Article:
       }
 
     def links(body: Body, isSource: Link.Target => Boolean): scala.List[Link] =
-      classify(targets(com.histmersion.api.text.WikiLinks.Body((body).value)), isSource)
+      classify(targets(WikiLinks.Body((body).value)), isSource)
 
     def hrefFor(
         target: Link.Target,
-        citekeyOf: Link.Target => Option[com.histmersion.api.library.Citekey],
+        citekeyOf: Link.Target => Option[Citekey],
         isArticle: Link.Target => Boolean
     ): Option[String] =
       (citekeyOf(Link.Target((target).value))
@@ -837,7 +838,7 @@ object Article:
         href: String => Option[String],
         displayLabel: String => Option[String] = _ => None
     ): String =
-      val out = rewriteLinks(com.histmersion.api.text.WikiLinks.Body((md).value)) { (t, explicit, written) =>
+      val out = rewriteLinks(WikiLinks.Body((md).value)) { (t, explicit, written) =>
         val label = explicit.getOrElse(written).value
         val text =
           if label.isEmpty then displayLabel(t.value).getOrElse(Label.display(Label.Text(t.value)).value) else label
@@ -847,7 +848,7 @@ object Article:
       }
       out.value
 
-    export com.histmersion.api.text.WikiLinks.{retarget, rewriteLinks}
+    export WikiLinks.{retarget, rewriteLinks}
 
     def resolveMarkdown(md: Links.ResolveMarkdownMd, isSource: Link.Target => Boolean): Markdown =
       Markdown(
@@ -860,7 +861,7 @@ object Article:
   /** The articles' lint rules: a thin or stand-in summary, filler phrases, uncited paragraphs, unpaired critiques. */
   object Lint:
     type FillerPhrasesText = FillerPhrasesText.T
-    object FillerPhrasesText extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object FillerPhrasesText extends Newtype[String, Pure]
 
     type FillerPhrases = FillerPhrasesValue
     type FillerPhrasesValue = FillerPhrasesText
@@ -912,8 +913,8 @@ object Article:
                 .orElse(Option.when(s.length < MinSummaryChars)(s"only ${s.length} chars: \"$s\""))
           why.map(w =>
             LintItem(
-              com.histmersion.api.library.Citekey((slug).value),
-              com.histmersion.api.checks.Lint.LintItem.Detail(w)
+              Citekey((slug).value),
+              api.checks.Lint.LintItem.Detail(w)
             )
           )
         }
@@ -927,8 +928,8 @@ object Article:
           else
             Some(
               LintItem(
-                com.histmersion.api.library.Citekey((slug).value),
-                com.histmersion.api.checks.Lint.LintItem.Detail.filler(matches)
+                Citekey((slug).value),
+                api.checks.Lint.LintItem.Detail.filler(matches)
               )
             )
         }
@@ -940,14 +941,14 @@ object Article:
     def articleUncitedParagraphs(articles: scala.List[(Slug, Body)]): scala.List[LintItem] =
       articles
         .flatMap { (slug, body) =>
-          val paras = extractParagraphs(com.histmersion.api.checks.Lint.ProseBody((body).value))
+          val paras = extractParagraphs(api.checks.Lint.ProseBody((body).value))
           val uncited = paras.filter(p => WikilinkCitekey.findFirstIn((p).value).isEmpty)
           if uncited.isEmpty then None
           else
             Some(
               LintItem(
-                com.histmersion.api.library.Citekey((slug).value),
-                com.histmersion.api.checks.Lint.LintItem
+                Citekey((slug).value),
+                api.checks.Lint.LintItem
                   .Detail(s"${uncited.size} paragraph(s) with no [[citekey]]: \"${(uncited.head).value.take(60)}…\"")
               )
             )
@@ -956,9 +957,9 @@ object Article:
 
     def articleCritiquePairing(
         articles: scala.List[(Slug, Body)],
-        resolve: CritiquePairing.Mention.Key => Option[com.histmersion.api.library.Citekey],
-        edges: scala.List[com.histmersion.api.research.Coverage.Edge],
-        work: com.histmersion.api.library.Citekey => Option[CritiquePairing.Work]
+        resolve: CritiquePairing.Mention.Key => Option[Citekey],
+        edges: scala.List[api.research.Coverage.Edge],
+        work: Citekey => Option[CritiquePairing.Work]
     ): scala.List[LintItem] =
       articles
         .flatMap((slug, body) =>
@@ -966,41 +967,41 @@ object Article:
             .hits(body, resolve, edges, work)
             .map(h =>
               LintItem(
-                com.histmersion.api.library.Citekey((slug).value),
-                com.histmersion.api.checks.Lint.LintItem.Detail(h.line)
+                Citekey((slug).value),
+                api.checks.Lint.LintItem.Detail(h.line)
               )
             )
         )
         .sortBy(_.citekey.value)
 
   final case class List(
-      total: com.histmersion.api.RowCount,
+      total: RowCount,
       articles: scala.List[Summary],
-      offset: com.histmersion.api.Offset = com.histmersion.api.Offset(0),
-      next: Option[com.histmersion.api.Offset] = None,
+      offset: api.Offset = api.Offset(0),
+      next: Option[api.Offset] = None,
       kinds: scala.List[KindCount] = Nil
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema:
-    def page: OffsetPage = OffsetPage(total, offset, com.histmersion.api.RowCount(articles.size))
+        api.json.Schema:
+    def page: OffsetPage = OffsetPage(total, offset, RowCount(articles.size))
   object List:
     type Total = Total.T
-    object Total extends Newtype[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Total extends Newtype[Int, Pure]
 
     def of(
         total: Total,
         rows: scala.List[Summary],
-        offset: com.histmersion.api.personal.UnreadPage.Offset,
+        offset: UnreadPage.Offset,
         kinds: scala.List[KindCount] = Nil
     ): List =
       List(
-        com.histmersion.api.RowCount((total).value),
+        RowCount((total).value),
         rows,
-        com.histmersion.api.Offset((offset).value),
+        api.Offset((offset).value),
         OffsetPage(
-          com.histmersion.api.RowCount((total).value),
-          com.histmersion.api.Offset((offset).value),
-          com.histmersion.api.RowCount(rows.size)
+          RowCount((total).value),
+          api.Offset((offset).value),
+          RowCount(rows.size)
         ).next,
         kinds
       )
@@ -1016,15 +1017,15 @@ object Article:
       section: Option[Patch.Section] = None,
       tags: Option[ListPatch] = None,
       regions: Option[scala.List[Patch.Regions]] = None,
-      period: Option[com.histmersion.api.catalogue.Period.Input] = None,
+      period: Option[api.catalogue.Period.Input] = None,
       kind: Option[Kind.Wire] = None,
       ifUpdatedAt: Option[Patch.IfUpdatedAt] = None,
       filter: Option[Filter] = None,
-      reasons: scala.List[com.histmersion.api.research.Coverage.Reason] = Nil,
+      reasons: scala.List[api.research.Coverage.Reason] = Nil,
       critiqueReasons: scala.List[CritiqueReason] = Nil
   ) derives StrictJson,
         KindlingsSchema,
-        com.histmersion.api.json.Schema,
+        api.json.Schema,
         CanEqual:
     def onlyCritiques: Boolean =
       (critiqueReasons.nonEmpty && this
@@ -1035,14 +1036,14 @@ object Article:
   object Patch:
 
     type Append = Append.T
-    object Append extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Append extends Newtype[String, Pure]
     type Section = Section.T
-    object Section extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Section extends Newtype[String, Pure]
     export Article.{Regions, UpdatedAt as IfUpdatedAt}
 
   object Plans:
     type Markdown = Markdown.T
-    object Markdown extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Markdown extends Newtype[String, Pure]
 
     final case class FilterProposal(
         slug: Slug,
@@ -1055,26 +1056,26 @@ object Article:
         sample: scala.List[FilterProposal.Sample] = Nil
     ) derives JsonCodec,
           KindlingsSchema,
-          com.histmersion.api.json.Schema:
+          api.json.Schema:
       def recall: FilterProposal.Recall = if cited == FilterProposal.Cited(0) then FilterProposal.Recall(1.0)
       else FilterProposal.Recall((citedIn).value.toDouble / (cited).value)
 
     object FilterProposal:
       type Recall = Recall.T
-      object Recall extends Newtype[Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Recall extends Newtype[Double, Pure]
 
       type Rationale = Rationale.T
-      object Rationale extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Rationale extends Newtype[String, Pure]
       type Total = Total.T
-      object Total extends Newtype[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Total extends Newtype[Int, Pure]
       type Cited = Cited.T
-      object Cited extends Newtype[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Cited extends Newtype[Int, Pure]
       type CitedIn = CitedIn.T
-      object CitedIn extends Newtype[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object CitedIn extends Newtype[Int, Pure]
       type Missed = Missed.T
-      object Missed extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Missed extends Newtype[String, Pure]
       type Sample = Sample.T
-      object Sample extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Sample extends Newtype[String, Pure]
 
     final case class ProposedArticle(
         slug: Slug,
@@ -1087,15 +1088,15 @@ object Article:
         overlapWith: Option[ProposedArticle.OverlapWith] = None
     ) derives JsonCodec,
           KindlingsSchema,
-          com.histmersion.api.json.Schema
+          api.json.Schema
 
     object ProposedArticle:
       type Hits = Hits.T
-      object Hits extends Newtype[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Hits extends Newtype[Int, Pure]
       type Overlap = Overlap.T
-      object Overlap extends Newtype[Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Overlap extends Newtype[Double, Pure]
       type OverlapWith = OverlapWith.T
-      object OverlapWith extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object OverlapWith extends Newtype[String, Pure]
 
     final case class ArticlePlan(
         goal: ArticlePlan.Goal,
@@ -1104,14 +1105,14 @@ object Article:
         dropped: scala.List[Problem] = Nil
     ) derives JsonCodec,
           KindlingsSchema,
-          com.histmersion.api.json.Schema:
+          api.json.Schema:
       def isEmpty: Boolean = (articles.isEmpty)
 
     object ArticlePlan:
 
       export ReviewGoal.Slug as Goal
       type Rationale = Rationale.T
-      object Rationale extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Rationale extends Newtype[String, Pure]
 
     def filterLine(f: Filter): String = f.line
 
@@ -1148,10 +1149,10 @@ object Article:
       periodStart: Option[Put.PeriodStart] = None,
       periodEnd: Option[Put.PeriodEnd] = None,
       filter: Option[Filter] = None,
-      reasons: scala.List[com.histmersion.api.research.Coverage.Reason] = Nil
+      reasons: scala.List[api.research.Coverage.Reason] = Nil
   ) derives StrictJson,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
   object Put:
 
     export Article.{Regions, Tags}
@@ -1167,7 +1168,7 @@ object Article:
       a.period.map(_.start),
       a.period.map(_.end),
       a.filter,
-      com.histmersion.api.research.Coverage.Reason.list(a.reasons)
+      api.research.Coverage.Reason.list(a.reasons)
     )
 
   final case class Ref(slug: Slug, title: Title, summary: Option[SummaryText] = None)
@@ -1182,13 +1183,13 @@ object Article:
       approvals: scala.List[ReviewApproval] = Nil
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
   object ReviewView:
     type Markdown = Markdown.T
-    object Markdown extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Markdown extends Newtype[String, Pure]
 
     type Outcome = Outcome.T
-    object Outcome extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Outcome extends Newtype[String, Pure]
     export Article.UpdatedAt
 
     def reviewerName(reviewer: ReviewFinding.Reviewer): String = named(reviewer.value)
@@ -1259,7 +1260,7 @@ object Article:
       uid: Option[java.util.UUID] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Row:
     export Article.{Regions, Tags}
@@ -1279,7 +1280,7 @@ object Article:
       review: Option[ReviewBadge] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Summary:
     export Article.{Regions, Tags}
@@ -1295,17 +1296,17 @@ object Article:
       wordCount: Version.WordCount
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Version:
     type Id = Id.T
-    object Id extends Newtype[Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Id extends Newtype[Long, Pure]
     type UpdatedAt = UpdatedAt.T
-    object UpdatedAt extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object UpdatedAt extends Newtype[String, Pure]
     type CreatedAt = CreatedAt.T
-    object CreatedAt extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object CreatedAt extends Newtype[String, Pure]
     type WordCount = WordCount.T
-    object WordCount extends Newtype[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object WordCount extends Newtype[Int, Pure]
 
   final case class VersionFull(
       id: VersionFull.Id,
@@ -1316,7 +1317,7 @@ object Article:
       createdAt: VersionFull.CreatedAt
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object VersionFull:
     export Version.{CreatedAt, Id, UpdatedAt}
@@ -1329,4 +1330,4 @@ object Article:
       coverage: Option[Coverage] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema

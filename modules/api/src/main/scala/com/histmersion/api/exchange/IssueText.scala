@@ -14,7 +14,7 @@ final case class IssueText(
     hunks: List[IssueHunk] = Nil
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object IssueText:
   type Base = Base.T

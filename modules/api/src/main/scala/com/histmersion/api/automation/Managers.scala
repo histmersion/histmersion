@@ -20,6 +20,7 @@ import com.histmersion.api.library.Title
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.library.Source
+import com.histmersion.api.ItemKind
 
 object Managers:
   /** Why a manager proposes, holds or changes an item: the narration of a decision, not a failure. */
@@ -105,7 +106,7 @@ object Managers:
     case Kind.Watch =>
       List(ManagerItem.Kind(AcquisitionSweep), ManagerItem.Kind(CurrencyCheck), ManagerItem.Kind(OaIngest))
 
-  def itemKindOf(k: Kind, word: com.histmersion.api.ItemKind.Word): Option[ManagerItem.Kind] =
+  def itemKindOf(k: Kind, word: ItemKind.Word): Option[ManagerItem.Kind] =
     val w = (word).value.trim.toLowerCase
     val kinds = itemKinds(k)
     if w.isEmpty then (kinds.headOption).map(refactorValue => ManagerItem.Kind((refactorValue).value))
@@ -173,7 +174,7 @@ object Managers:
       why: Rationale = Rationale("")
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   final case class ManagerConfig(
       maxRuns: Option[ManagerConfig.MaxRuns] = None,
@@ -202,7 +203,7 @@ object Managers:
       extendMinNew: Option[ManagerConfig.ExtendMinNew] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema:
+        api.json.Schema:
     def merge(other: ManagerConfig): ManagerConfig = ManagerConfig(
       other.maxRuns.orElse(maxRuns),
       other.maxOpen.orElse(maxOpen),
@@ -435,7 +436,7 @@ object Managers:
       cancelled: ItemCounts.Cancelled = ItemCounts.Cancelled(0)
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema:
+        api.json.Schema:
     def open: ItemCounts.Open = ItemCounts.Open((pending).value + (held).value + (active).value)
   object ItemCounts:
     type Count = Count.T
@@ -458,9 +459,9 @@ object Managers:
     type Cancelled = Cancelled.T
     object Cancelled extends Newtype[Int, Pure]
 
-    def of(rows: List[(com.histmersion.api.automation.ItemStatus.Wire, Count)]): ItemCounts =
+    def of(rows: List[(api.automation.ItemStatus.Wire, Count)]): ItemCounts =
       @tailrec def loop(
-          rest: List[(com.histmersion.api.automation.ItemStatus.Wire, Count)],
+          rest: List[(api.automation.ItemStatus.Wire, Count)],
           pending: Pending,
           held: Held,
           active: Active,
@@ -500,7 +501,7 @@ object Managers:
       text: ManagerEvent.Text = ManagerEvent.Text("")
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object ManagerEvent:
     type Id = Id.T
@@ -536,7 +537,7 @@ object Managers:
       backlogDays: Option[ManagerInfo.BacklogDays] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object ManagerInfo:
     type Id = Id.T
@@ -573,7 +574,7 @@ object Managers:
       focus: Option[Hold.Focus] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Hold:
     type Until = Until.T
@@ -598,7 +599,7 @@ object Managers:
       pairsAfter: Option[RunMark.PairsAfter] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object RunMark:
     type Before = Before.T
@@ -626,7 +627,7 @@ object Managers:
       oa: Option[OaWork] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object ItemState:
     type Before = Before.T
@@ -650,7 +651,7 @@ object Managers:
       acquireText: Option[OaWork.AcquireText] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object OaWork:
     type FoundBy = FoundBy.T
@@ -679,7 +680,7 @@ object Managers:
       run: Option[Agents.RunInfo] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object ManagerItem:
     type Ref = Ref.T
@@ -690,7 +691,7 @@ object Managers:
     object Kind extends Newtype[String, Pure]
     type Target = Target.T
     object Target extends Newtype[String, Pure]
-    export com.histmersion.api.automation.ItemStatus.Wire as Status
+    export api.automation.ItemStatus.Wire as Status
     type Priority = Priority.T
     object Priority extends Newtype[Int, Pure]
     type Attempts = Attempts.T
@@ -719,7 +720,7 @@ object Managers:
       config: Option[ManagerConfig] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
   object HintEffect:
 
     /** The action word as a person or a model wrote it: one [[Verb]]'s word once checked, any text before. */
@@ -783,7 +784,7 @@ object Managers:
       why: Rationale = Rationale("")
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object HintProposal:
     type Hint = Hint.T
@@ -808,7 +809,7 @@ object Managers:
       proposed: Option[HintEffect] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object ManagerHint:
     type Id = Id.T
@@ -837,7 +838,7 @@ object Managers:
       events: List[ManagerEvent] = Nil
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   final case class ItemPage(
       items: List[ManagerItem],
@@ -846,7 +847,7 @@ object Managers:
       limit: ItemPage.Limit
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object ItemPage:
     type Total = Total.T
@@ -859,7 +860,7 @@ object Managers:
   final case class EventPage(events: List[ManagerEvent], before: Option[EventPage.Before] = None)
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object EventPage:
     type Limit = Limit.T
@@ -875,7 +876,7 @@ object Managers:
       cron: Option[ManagerCreate.Cron] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object ManagerCreate:
     export Manager.Kind.Wire as Kind
@@ -887,7 +888,7 @@ object Managers:
   final case class ManagerUpdate(config: Option[ManagerConfig] = None, cron: Option[ManagerUpdate.Cron] = None)
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object ManagerUpdate:
     type Cron = Cron.T
@@ -899,7 +900,7 @@ object Managers:
       priority: Option[EnqueueRequest.Priority] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object EnqueueRequest:
     export EnqueueKind.Wire as Kind
@@ -914,7 +915,7 @@ object Managers:
       skipped: List[EnqueueResult.Skipped] = Nil
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object EnqueueResult:
     type Skipped = Skipped.T
@@ -928,7 +929,7 @@ object Managers:
       reason: Option[Rationale] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
   object ItemPatch:
 
     type Action = Action.T
@@ -952,7 +953,7 @@ object Managers:
       suggest: Option[HintAdd.Suggest] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object HintAdd:
     type Text = Text.T

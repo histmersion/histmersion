@@ -21,10 +21,10 @@ final case class CandidateWatch(
     lastFound: CandidateWatch.LastFound = CandidateWatch.LastFound(0)
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object CandidateWatch:
-  export com.histmersion.api.research.ReviewGoal.Slug as Goal
+  export api.research.ReviewGoal.Slug as Goal
   export Candidates.WatchKind.Wire as Kind
   type Subject = Subject.T
   object Subject extends Newtype[String, Pure]

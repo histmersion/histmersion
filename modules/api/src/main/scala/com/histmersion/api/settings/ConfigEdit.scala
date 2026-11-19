@@ -110,7 +110,7 @@ object ConfigEdit:
       setupDue: Page.SetupDue = Page.SetupDue(false)
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema:
+        api.json.Schema:
     def fields: List[Field] = sections.flatMap(_.fields)
     def field(key: Field.Key): Option[Field] =
       fields.find(_.key == key.qualified)
@@ -146,7 +146,7 @@ object ConfigEdit:
       reload: Write.Reload = Write.Reload(true)
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Write:
     type Version = Version.T
@@ -178,7 +178,7 @@ object ConfigEdit:
       restartable: Written.Restartable = Written.Restartable(false)
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Written:
     type File = File.T
@@ -205,7 +205,7 @@ object ConfigEdit:
   final case class Restart(accepted: Restart.Accepted, notice: Notice)
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Restart:
     type Accepted = Accepted.T

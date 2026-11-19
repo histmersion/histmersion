@@ -15,7 +15,7 @@ final case class BackupsUsage(
     keep: BackupsUsage.Keep
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object BackupsUsage:
   type Count = Count.T

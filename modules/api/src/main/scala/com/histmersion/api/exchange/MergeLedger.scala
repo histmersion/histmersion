@@ -15,7 +15,7 @@ final case class MergeLedger(
     redirects: List[UidRedirect] = Nil
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object MergeLedger:
   type Query = Query.T

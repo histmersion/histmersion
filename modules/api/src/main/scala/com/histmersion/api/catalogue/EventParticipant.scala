@@ -15,7 +15,7 @@ final case class EventParticipant(
     citekey: Option[Citekey] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object EventParticipant:
   type Actor = Actor.T

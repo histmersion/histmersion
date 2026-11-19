@@ -42,7 +42,7 @@ object Critiques:
     object From extends Newtype[Int, Pure]
     type To = To.T
     object To extends Newtype[Int, Pure]
-    export com.histmersion.api.text.WikiLinks.Body as Text
+    export api.text.WikiLinks.Body as Text
 
   def units(body: Article.Body): List[Block] =
     val lines = (body).value.replace("\r\n", "\n").split("\n", -1).toVector

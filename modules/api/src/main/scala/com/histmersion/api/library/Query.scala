@@ -33,10 +33,7 @@ object Query:
   type StatementsSql = String
   export QueryResult.{Columns as MarkdownTableColumns, Rows as MarkdownTableRows}
 
-  final case class QueryRequest(sql: QueryRequest.Sql)
-      derives JsonCodec,
-        KindlingsSchema,
-        com.histmersion.api.json.Schema
+  final case class QueryRequest(sql: QueryRequest.Sql) derives JsonCodec, KindlingsSchema, api.json.Schema
 
   object QueryRequest:
     export Query.Statement as Sql
@@ -49,7 +46,7 @@ object Query:
       elapsedMs: QueryResult.ElapsedMs
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object QueryResult:
     type Columns = Columns.T
@@ -69,7 +66,7 @@ object Query:
       nullable: SchemaColumn.Nullable
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object SchemaColumn:
     type Name = Name.T
@@ -82,7 +79,7 @@ object Query:
   final case class SchemaTable(name: SchemaTable.Name, kind: SchemaTable.Kind, columns: List[SchemaColumn])
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object SchemaTable:
     type Name = Name.T
@@ -90,10 +87,7 @@ object Query:
     type Kind = Kind.T
     object Kind extends Newtype[String, Pure]
 
-  final case class SchemaTables(tables: List[SchemaTable])
-      derives JsonCodec,
-        KindlingsSchema,
-        com.histmersion.api.json.Schema
+  final case class SchemaTables(tables: List[SchemaTable]) derives JsonCodec, KindlingsSchema, api.json.Schema
 
   private val Forbidden = Set(
     "SET",

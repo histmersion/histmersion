@@ -29,7 +29,7 @@ final case class MergeTally(
     periodsMerged: MergeTally.PeriodsMerged = MergeTally.PeriodsMerged(0)
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object MergeTally:
   type SourcesMerged = SourcesMerged.T

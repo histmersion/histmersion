@@ -15,7 +15,7 @@ final case class ResolvedId(
     article: Option[ResolvedArticle] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object ResolvedId:
   type Id = Id.T

@@ -25,6 +25,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.Api
 import com.histmersion.api.exchange.PlanMatchKind
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class Source(
     citekey: Citekey,
@@ -53,70 +54,67 @@ final case class Source(
 object Source:
   object Neighbor:
     type Line = Line.T
-    object Line extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Line extends Newtype[String, Pure]
   type AuthorSurname = AuthorSurname.T
-  object AuthorSurname extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AuthorSurname extends Newtype[String, Pure]
   type Body = Body.T
-  object Body extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Body extends Newtype[String, Pure]
   type EdgePart = EdgePart.T
-  object EdgePart extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object EdgePart extends Newtype[String, Pure]
   type EdgeRole = EdgeRole.T
-  object EdgeRole extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object EdgeRole extends Newtype[String, Pure]
   type Export = Export.T
-  object Export extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Export extends Newtype[String, Pure]
   type Venue = Venue.T
-  object Venue extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Venue extends Newtype[String, Pure]
   type View = View.T
-  object View extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object View extends Newtype[String, Pure]
 
   type Topics = Topics.T
-  object Topics extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Topics extends Newtype[String, Pure]
   type Regions = Regions.T
-  object Regions extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Regions extends Newtype[String, Pure]
   type Tags = Tags.T
-  object Tags extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Tags extends Newtype[String, Pure]
   type Summary = Summary.T
-  object Summary extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Summary extends Newtype[String, Pure]
   type CitedByCount = CitedByCount.T
-  object CitedByCount extends Newtype[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CitedByCount extends Newtype[Int, Pure]
   type InfluentialCitations = InfluentialCitations.T
-  object InfluentialCitations extends Newtype[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object InfluentialCitations extends Newtype[Int, Pure]
   type Provenance = Provenance.T
-  object Provenance extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Provenance extends Newtype[String, Pure]
   type CalibreId = CalibreId.T
-  object CalibreId extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CalibreId extends Newtype[String, Pure]
   type OcrMarkdown = OcrMarkdown.T
-  object OcrMarkdown extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object OcrMarkdown extends Newtype[String, Pure]
   type Notes = Notes.T
-  object Notes extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Notes extends Newtype[String, Pure]
   type UpdatedAt = UpdatedAt.T
-  object UpdatedAt extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object UpdatedAt extends Newtype[String, Pure]
 
   enum Status derives CanEqual:
     case Foundational, Current, Contested, Superseded, Debunked, Retracted, Unassessed
 
     /** The wire / storage spelling (`current`), as the JSON codec writes it. */
-    def wire: com.histmersion.api.library.Source.Status.Wire =
-      _root_.com.histmersion.api.library.Source.Status.Wire(Ascii.lower(toString))
+    def wire: Status.Wire =
+      Status.Wire(Ascii.lower(toString))
 
   object Status:
     type Wire = Wire.T
-    object Wire extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends Newtype[String, Pure]
 
     def fromString(s: Wire): Status =
       values.find(_.toString.equalsIgnoreCase((s).value)).getOrElse(Unassessed)
 
     given WireEnumValues[Status]:
-      def all: Array[Status] = Status.values
-      def wire(e: Status): _root_.com.histmersion.api.WireEnumValues.Wire =
-        _root_.com.histmersion.api.WireEnumValues.Wire((Wire(e.toString.toLowerCase)).value)
+      def all: Array[Status] = values
+      def wire(e: Status): WireEnumValues.Wire =
+        WireEnumValues.Wire((Wire(e.toString.toLowerCase)).value)
       def fromWire(s: WireEnumValues.Wire): Option[Status] =
         values.find(_.toString.equalsIgnoreCase((s).value))
 
-  final case class Alias(alias: Alias.Value, citekey: Citekey)
-      derives JsonCodec,
-        KindlingsSchema,
-        com.histmersion.api.json.Schema
+  final case class Alias(alias: Alias.Value, citekey: Citekey) derives JsonCodec, KindlingsSchema, api.json.Schema
 
   object Alias:
     export com.histmersion.api.library.Citekey as Value
@@ -127,76 +125,75 @@ object Source:
       doi: Doi,
       title: Title,
       year: Option[Year] = None,
-      authors: List[AuthorName] = (Nil).map(com.histmersion.api.library.AuthorName.apply),
-      venue: Option[com.histmersion.api.library.Source.Venue] = None,
+      authors: List[AuthorName] = (Nil).map(AuthorName.apply),
+      venue: Option[Venue] = None,
       abstractText: Option[Candidate.AbstractText] = None,
-      isOa: Candidate.IsOa = _root_.com.histmersion.api.library.Source.Candidate.IsOa(false),
+      isOa: Candidate.IsOa = Candidate.IsOa(false),
       arxivId: Option[Candidate.ArxivId] = None,
       foundBy: List[Candidate.FoundBy] = Nil,
       state: Candidate.State = Candidate.State(Candidates.State.New.wire.value),
-      firstSeen: Candidate.FirstSeen = _root_.com.histmersion.api.library.Source.Candidate.FirstSeen(""),
-      lastSeen: Candidate.LastSeen = _root_.com.histmersion.api.library.Source.Candidate.LastSeen("")
+      firstSeen: Candidate.FirstSeen = Candidate.FirstSeen(""),
+      lastSeen: Candidate.LastSeen = Candidate.LastSeen("")
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Candidate:
     type Id = Id.T
-    object Id extends Newtype[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    export com.histmersion.api.research.ReviewGoal.Slug as Goal
+    object Id extends Newtype[Long, Pure]
+    export api.research.ReviewGoal.Slug as Goal
     type AbstractText = AbstractText.T
-    object AbstractText extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object AbstractText extends Newtype[String, Pure]
     type IsOa = IsOa.T
-    object IsOa extends Newtype[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object IsOa extends Newtype[Boolean, Pure]
     type ArxivId = ArxivId.T
-    object ArxivId extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ArxivId extends Newtype[String, Pure]
     type FoundBy = FoundBy.T
-    object FoundBy extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object FoundBy extends Newtype[String, Pure]
     type State = State.T
-    object State extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object State extends Newtype[String, Pure]
     type FirstSeen = FirstSeen.T
-    object FirstSeen extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object FirstSeen extends Newtype[String, Pure]
     type LastSeen = LastSeen.T
-    object LastSeen extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object LastSeen extends Newtype[String, Pure]
 
   object Delete:
     type CalibreLine = CalibreLine.T
-    object CalibreLine extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object CalibreLine extends Newtype[String, Pure]
     type LogText = LogText.T
-    object LogText extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object LogText extends Newtype[String, Pure]
     type Markdown = Markdown.T
-    object Markdown extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Markdown extends Newtype[String, Pure]
 
-    export com.histmersion.api.library.Source.CalibreId as CalibreLineCalibreId
+    export Source.CalibreId as CalibreLineCalibreId
 
     def calibreLine(
-        calibreId: Option[com.histmersion.api.library.Source.Delete.CalibreLineCalibreId],
+        calibreId: Option[Delete.CalibreLineCalibreId],
         check: Option[CalibreEntryCheck]
-    ): com.histmersion.api.library.Source.Delete.CalibreLine =
+    ): CalibreLine =
       calibreId match
-        case None     => _root_.com.histmersion.api.library.Source.Delete.CalibreLine("Calibre: no linked entry.")
+        case None     => CalibreLine("Calibre: no linked entry.")
         case Some(id) =>
           check match
             case Some(CalibreEntryCheck.Present) =>
-              _root_.com.histmersion.api.library.Source.Delete.CalibreLine(
+              CalibreLine(
                 s"Calibre: entry $id is linked and is NOT touched — remove it in Calibre if it should go too."
               )
             case Some(CalibreEntryCheck.Missing) =>
-              _root_.com.histmersion.api.library.Source.Delete
-                .CalibreLine(s"Calibre: entry $id no longer exists in the library — nothing to remove there.")
+              CalibreLine(s"Calibre: entry $id no longer exists in the library — nothing to remove there.")
             case Some(CalibreEntryCheck.Unchecked(why)) =>
-              _root_.com.histmersion.api.library.Source.Delete.CalibreLine(
+              CalibreLine(
                 s"Calibre: the record links entry $id (the library could not be checked: ${why.sentence}); it is NOT touched — " +
                   "remove it in Calibre if it is there and should go too."
               )
             case None =>
-              _root_.com.histmersion.api.library.Source.Delete.CalibreLine(
+              CalibreLine(
                 s"Calibre: the record links entry $id (not checked against the library); it is NOT touched — " +
                   "remove it in Calibre if it is there and should go too."
               )
 
     def refusal(
-        ck: com.histmersion.api.library.Citekey,
+        ck: Citekey,
         blockers: List[DeleteBlocker]
     ): Problems =
       val kind = Problem.TypeName.named[DeleteBlocker.Kind]
@@ -296,7 +293,7 @@ object Source:
           )
         else if (d.refused) == (true) then Nil
         else List("", s"_Dry run. Re-run with `--apply` to delete._")
-      _root_.com.histmersion.api.library.Source.Delete.Markdown(
+      Markdown(
         (List(head, "", s"**${d.title}**") ++ blockers ++ counts ++ aliases ++ edgesIn ++ coverage ++ files ++ failed ++
           mentions ++ calibreLines ++ tail).mkString("\n")
       )
@@ -304,7 +301,7 @@ object Source:
   final case class DeleteRequest(apply: DeleteRequest.Apply = Api.Apply(false))
       derives StrictJson,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
   object DeleteRequest:
 
     export Api.Apply
@@ -325,28 +322,28 @@ object Source:
       logEntry: Option[Deletion.LogEntry] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema:
+        api.json.Schema:
     def refused: Boolean = (blockers.nonEmpty)
-    def count(p: DeletePart): com.histmersion.api.RowCount =
-      counts.find(_.part == p).fold(com.histmersion.api.RowCount(0))(c => com.histmersion.api.RowCount(c.rows.value))
+    def count(p: DeletePart): api.RowCount =
+      counts.find(_.part == p).fold(api.RowCount(0))(c => api.RowCount(c.rows.value))
 
   object Deletion:
 
     export com.histmersion.api.library.Title
     type Applied = Applied.T
-    object Applied extends Newtype[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Applied extends Newtype[Boolean, Pure]
     type Aliases = Aliases.T
-    object Aliases extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Aliases extends Newtype[String, Pure]
     type Coverage = Coverage.T
-    object Coverage extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Coverage extends Newtype[String, Pure]
     type Files = Files.T
-    object Files extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Files extends Newtype[String, Pure]
     type FilesFailed = FilesFailed.T
-    object FilesFailed extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object FilesFailed extends Newtype[String, Pure]
     type Mentions = Mentions.T
-    object Mentions extends Newtype[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Mentions extends Newtype[Int, Pure]
     type LogEntry = LogEntry.T
-    object LogEntry extends Newtype[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object LogEntry extends Newtype[Int, Pure]
 
   final case class Detail(
       citekey: Citekey,
@@ -370,10 +367,10 @@ object Source:
       origin: Option[java.util.UUID] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Detail:
-    export com.histmersion.api.library.Source.{OcrMarkdown, UpdatedAt}
+    export Source.{OcrMarkdown, UpdatedAt}
 
   final case class Graph(
       root: Graph.Root,
@@ -382,19 +379,19 @@ object Source:
       links: List[GraphLink]
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Graph:
     type DepthCount = DepthCount.T
-    object DepthCount extends Newtype[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object DepthCount extends Newtype[Int, Pure]
     export com.histmersion.api.library.Citekey as Root
-    type Depth = com.histmersion.api.library.Source.Graph.DepthCount
-    val Depth: _root_.com.histmersion.api.library.Source.Graph.DepthCount.type =
-      _root_.com.histmersion.api.library.Source.Graph.DepthCount
+    type Depth = DepthCount
+    val Depth: DepthCount.type =
+      DepthCount
 
   object Kinds:
     type Wire = Wire.T
-    object Wire extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends Newtype[String, Pure]
 
     val Book = "book"
     val Chapter = "chapter"
@@ -402,11 +399,11 @@ object Source:
     val Thesis = "thesis"
     val Dataset = "dataset"
     val Unknown = "unknown"
-    val all: List[com.histmersion.api.library.Source.Kinds.Wire] = List(
-      _root_.com.histmersion.api.library.Source.Kinds.Wire(Book),
-      _root_.com.histmersion.api.library.Source.Kinds.Wire(Chapter),
-      _root_.com.histmersion.api.library.Source.Kinds.Wire(Paper),
-      _root_.com.histmersion.api.library.Source.Kinds.Wire(Thesis),
+    val all: List[Wire] = List(
+      Wire(Book),
+      Wire(Chapter),
+      Wire(Paper),
+      Wire(Thesis),
       _root_.com.histmersion.api.library.Source.Kinds.Wire(Dataset),
       _root_.com.histmersion.api.library.Source.Kinds.Wire(Unknown)
     )
@@ -423,32 +420,32 @@ object Source:
         doi: Option[Doi],
         venue: Option[Venue],
         provenance: Option[Provenance],
-        tags: List[com.histmersion.api.library.Source.Tags],
-        topics: List[com.histmersion.api.library.Source.Topics],
+        tags: List[Tags],
+        topics: List[Topics],
         hasCover: Boolean
-    ): com.histmersion.api.library.Source.Kinds.Wire =
+    ): Wire =
       val words = (tags.map(_.value) ++ topics.map(_.value)).map(_.toLowerCase(java.util.Locale.ROOT))
       val where = venue.map(_.value).getOrElse("").toLowerCase(java.util.Locale.ROOT)
       val id = doi.map((_).value.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty)
       def says(w: String*) = words.exists(t => w.exists(t.contains)) || w.exists(where.contains)
-      if says("thesis", "dissertation") then _root_.com.histmersion.api.library.Source.Kinds.Wire(Thesis)
+      if says("thesis", "dissertation") then Wire(Thesis)
       else if words.exists(_.contains("dataset")) || id.exists(d => DataDoiPrefixes.exists(d.startsWith)) then
-        _root_.com.histmersion.api.library.Source.Kinds.Wire(Dataset)
+        Wire(Dataset)
       else
         id.flatMap {
           val refactorFunction2 = isbnDoi;
-          (refactorValue14) => refactorFunction2(_root_.com.histmersion.api.library.Doi(refactorValue14))
+          (refactorValue14) => refactorFunction2(Doi(refactorValue14))
         } match
           case Some(chapter) =>
-            if chapter then _root_.com.histmersion.api.library.Source.Kinds.Wire(Chapter)
-            else _root_.com.histmersion.api.library.Source.Kinds.Wire(Book)
-          case None if id.isDefined => _root_.com.histmersion.api.library.Source.Kinds.Wire(Paper)
+            if chapter then Wire(Chapter)
+            else Wire(Book)
+          case None if id.isDefined => Wire(Paper)
           case None                 =>
             if ((hasCover) == (true)) || provenance
                 .map((_).value.trim.toLowerCase(java.util.Locale.ROOT))
                 .exists(BookProvenance.contains)
-            then _root_.com.histmersion.api.library.Source.Kinds.Wire(Book)
-            else _root_.com.histmersion.api.library.Source.Kinds.Wire(Unknown)
+            then Wire(Book)
+            else Wire(Unknown)
 
     def isbnDoi(doi: Doi): Option[Boolean] =
       val suffix = (doi).value.dropWhile(_ != '/').drop(1).toLowerCase(java.util.Locale.ROOT).stripPrefix("cbo")
@@ -473,16 +470,16 @@ object Source:
       issue: Option[Match.Issue] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
   object Match:
-    export com.histmersion.api.exchange.PlanMatchKind.MatchLine as Line
+    export PlanMatchKind.MatchLine as Line
 
     /** A source's match in a merge plan: the plan's Markdown lists every one but the new sources. */
 
     type Score = Score.T
-    object Score extends Newtype[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Score extends Newtype[Double, Pure]
     type Issue = Issue.T
-    object Issue extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Issue extends Newtype[String, Pure]
 
     val Matches: PlanMatchKind[Match] =
       new com.histmersion.api.exchange.PlanMatchKind(
@@ -512,7 +509,7 @@ object Source:
       ifUpdatedAt: Option[UpdatedAt] = None
   ) derives StrictJson,
         KindlingsSchema,
-        com.histmersion.api.json.Schema,
+        api.json.Schema,
         CanEqual
 
   final case class Put(
@@ -538,7 +535,7 @@ object Source:
       edges: List[Edge.Input] = Nil
   ) derives StrictJson,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
   object Put:
 
     def of(s: Source): Put = Put(
@@ -573,61 +570,60 @@ object Source:
       authors: List[AuthorName],
       year: Option[Year],
       title: Title,
-      status: com.histmersion.api.library.Source.Status
+      status: Status
   ):
-    def idLabel: com.histmersion.api.library.Source.Ref.Label =
-      _root_.com.histmersion.api.library.Source.Ref.Label(doi.map(_.value).getOrElse(citekey.value.toString))
+    def idLabel: Ref.Label =
+      Ref.Label(doi.map(_.value).getOrElse(citekey.value.toString))
 
-    def shortCite: com.histmersion.api.library.Source.Ref.ShortCite =
+    def shortCite: Ref.ShortCite =
       val auth = Ref.shortAuthors(authors)
       val yr = year.map(_.toString).getOrElse("n.d.")
-      if (auth).value.isEmpty then _root_.com.histmersion.api.library.Source.Ref.ShortCite(yr)
-      else _root_.com.histmersion.api.library.Source.Ref.ShortCite(s"$auth $yr")
+      if (auth).value.isEmpty then Ref.ShortCite(yr)
+      else Ref.ShortCite(s"$auth $yr")
 
   object Ref:
     type Label = Label.T
-    object Label extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Label extends Newtype[String, Pure]
     type ShortAuthors = ShortAuthors.T
-    object ShortAuthors extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ShortAuthors extends Newtype[String, Pure]
     type ShortCite = ShortCite.T
-    object ShortCite extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ShortCite extends Newtype[String, Pure]
 
-    def surname(full: com.histmersion.api.library.AuthorName): com.histmersion.api.library.Source.AuthorSurname =
+    def surname(full: AuthorName): AuthorSurname =
       val t = (full).value.trim
-      if t.contains(",") then _root_.com.histmersion.api.library.Source.AuthorSurname(t.takeWhile(_ != ',').trim)
-      else _root_.com.histmersion.api.library.Source.AuthorSurname(t.split("\\s+").lastOption.getOrElse(t))
+      if t.contains(",") then AuthorSurname(t.takeWhile(_ != ',').trim)
+      else AuthorSurname(t.split("\\s+").lastOption.getOrElse(t))
 
     def shortAuthors(
-        authors: List[com.histmersion.api.library.AuthorName]
-    ): com.histmersion.api.library.Source.Ref.ShortAuthors =
+        authors: List[AuthorName]
+    ): ShortAuthors =
       val names = authors.map((_).value.trim).filter(_.nonEmpty)
       names match
-        case Nil      => _root_.com.histmersion.api.library.Source.Ref.ShortAuthors("")
+        case Nil      => ShortAuthors("")
         case a :: Nil =>
-          _root_.com.histmersion.api.library.Source.Ref
-            .ShortAuthors((surname(_root_.com.histmersion.api.library.AuthorName(a))).value)
+          ShortAuthors((surname(AuthorName(a))).value)
         case a :: b :: Nil =>
-          _root_.com.histmersion.api.library.Source.Ref.ShortAuthors(
-            (surname(_root_.com.histmersion.api.library.AuthorName(a))).value + " & " + surname(
-              _root_.com.histmersion.api.library.AuthorName(b)
+          ShortAuthors(
+            (surname(AuthorName(a))).value + " & " + surname(
+              AuthorName(b)
             )
           )
         case a :: _ => ShortAuthors((surname(AuthorName(a))).value + " et al.")
 
   final case class Renamed(
       oldCitekey: Citekey,
-      newCitekey: com.histmersion.api.library.Citekey,
+      newCitekey: Citekey,
       source: Detail,
       counts: Rename.Counts,
       /** Calibre never stores the citekey, but the host-side originals directory is keyed by it. */
-      calibreId: Option[com.histmersion.api.library.Source.CalibreId] = None
+      calibreId: Option[CalibreId] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Section:
     type Wire = Wire.T
-    object Wire extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends Newtype[String, Pure]
 
     val Summary = "summary"
     val Findings = "findings"
@@ -635,13 +631,13 @@ object Source:
     val Toc = "toc"
     val Body = "body"
     val All = "all"
-    val all: List[com.histmersion.api.library.Source.Section.Wire] = List(
-      _root_.com.histmersion.api.library.Source.Section.Wire(Summary),
-      _root_.com.histmersion.api.library.Source.Section.Wire(Findings),
-      _root_.com.histmersion.api.library.Source.Section.Wire(Notes),
-      _root_.com.histmersion.api.library.Source.Section.Wire(Toc),
-      _root_.com.histmersion.api.library.Source.Section.Wire(Body),
-      _root_.com.histmersion.api.library.Source.Section.Wire(All)
+    val all: List[Wire] = List(
+      Wire(Summary),
+      Wire(Findings),
+      Wire(Notes),
+      Wire(Toc),
+      Wire(Body),
+      Wire(All)
     )
 
     def parse(s: Wire): Option[Wire] =
@@ -655,7 +651,7 @@ object Source:
       illustration: Option[MediaThumb] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   /** A source's put and patch checked and applied to the stored record: the findings numbered, the edges and the
     * metadata checked, an old citekey in a patch followed to the current one.
@@ -665,9 +661,9 @@ object Source:
     def findingId(citekey: Citekey, n: Finding.Ordinal): Finding.Id = Finding.Id(s"$citekey#$n")
 
     def applyPut(
-        citekey: com.histmersion.api.library.Citekey,
+        citekey: Citekey,
         p: Put,
-        aliases: Set[com.histmersion.api.library.Citekey] = Set.empty
+        aliases: Set[Citekey] = Set.empty
     ): Either[Problem, Source] =
       for
         period <- periodOf(p.periodStart, p.periodEnd, "source")
@@ -763,7 +759,7 @@ object Source:
           topics = patch.topics.getOrElse(existing.topics),
           regions = patch.regions.getOrElse(existing.regions),
           tags = patch.tags.fold(existing.tags)(lp =>
-            applyList(existing.tags.map(t => com.histmersion.api.Write.ListItem(t.value)), lp).map(i => Tags(i.value))
+            applyList(existing.tags.map(t => ListItem(t.value)), lp).map(i => Tags(i.value))
           ),
           period = period,
           findings = fs,
@@ -781,7 +777,7 @@ object Source:
         p.copy(edges = p.edges.map(ep => EdgesPatch(ep.add.map(fix), ep.remove.map(fix))))
 
     def applyEdges(
-        citekey: com.histmersion.api.library.Citekey,
+        citekey: Citekey,
         current: List[Edge],
         p: EdgesPatch
     ): Either[Problem, List[Edge]] =
@@ -812,7 +808,7 @@ object Source:
         role: EdgeRole,
         in: Edge.Input
     ): Either[Problem, Edge] =
-      in.src.map(s => com.histmersion.api.library.Citekey(s.value.trim)).filter(_.value.nonEmpty) match
+      in.src.map(s => Citekey(s.value.trim)).filter(_.value.nonEmpty) match
         case Some(other) if other != citekey && !aliases.contains(other) =>
           Left(
             Problem.Invalid.StoredOn(
@@ -897,7 +893,7 @@ object Source:
         case None    => Right(None)
         case Some(c) =>
           Confidence
-            .fromString(_root_.com.histmersion.api.library.Confidence.Wire(c))
+            .fromString(Confidence.Wire(c))
             .map(Some(_))
             .toRight(
               Problem.Invalid.Unknown(
@@ -949,7 +945,7 @@ object Source:
         status: Status,
         edges: List[Edge]
     ): Either[Problem, Unit] =
-      if status == Status.Superseded && !edges.exists(_.kind == com.histmersion.api.library.Edge.Kind.SupersededBy)
+      if status == Status.Superseded && !edges.exists(_.kind == Edge.Kind.SupersededBy)
       then
         Left(
           Problem.Invalid.Missing(Problem.Field("superseded_by"), Vector(Problem.Field("edges"), Problem.Field("add")))

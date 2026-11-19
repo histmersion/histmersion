@@ -17,7 +17,7 @@ object Autopilot:
   final case class AutopilotSet(on: AutopilotSet.On, by: Option[AutopilotSet.By] = None)
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object AutopilotSet:
     type On = On.T
@@ -32,7 +32,7 @@ object Autopilot:
       note: Option[ManagerBrief.Note] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object ManagerBrief:
     type Id = Id.T
@@ -58,14 +58,14 @@ object Autopilot:
       etaDays: Option[GoalProgress.EtaDays] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object GoalProgress:
-    export com.histmersion.api.research.ReviewGoal.Slug
+    export api.research.ReviewGoal.Slug
     export Goal.Title
     type Status = Status.T
     object Status extends Newtype[String, Pure]
-    export com.histmersion.api.research.ReviewGoal.Slug as Parent
+    export api.research.ReviewGoal.Slug as Parent
     type Sources = Sources.T
     object Sources extends Newtype[Int, Pure]
     type Articles = Articles.T
@@ -87,7 +87,7 @@ object Autopilot:
       cap: ApprovalRule.Cap = ApprovalRule.Cap("")
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object ApprovalRule:
     export Approval.Kind.Wire as Kind
@@ -110,10 +110,10 @@ object Autopilot:
       etaDays: Option[FocusGoal.EtaDays] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object FocusGoal:
-    export com.histmersion.api.research.ReviewGoal.Slug
+    export api.research.ReviewGoal.Slug
     export Goal.Title
     type Status = Status.T
     object Status extends Newtype[String, Pure]
@@ -141,10 +141,10 @@ object Autopilot:
       pinned: FocusWaiting.Pinned = FocusWaiting.Pinned(false)
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object FocusWaiting:
-    export com.histmersion.api.research.ReviewGoal.Slug
+    export api.research.ReviewGoal.Slug
     type Code = Code.T
     object Code extends Newtype[String, Pure]
     type Pinned = Pinned.T
@@ -163,7 +163,7 @@ object Autopilot:
       changes: List[FocusInfo.Changes] = Nil
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object FocusInfo:
     type On = On.T
@@ -188,7 +188,7 @@ object Autopilot:
       by: Option[FocusSet.By] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
   object FocusSet:
 
     type Action = Action.T
@@ -208,7 +208,7 @@ object Autopilot:
       inFlight: DrainInfo.InFlight = DrainInfo.InFlight(0)
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object DrainInfo:
     type Since = Since.T
@@ -225,7 +225,7 @@ object Autopilot:
   final case class DrainSet(on: DrainSet.On, by: Option[DrainSet.By] = None)
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object DrainSet:
     type On = On.T

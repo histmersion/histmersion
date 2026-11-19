@@ -89,7 +89,7 @@ object Activity:
       targetKind: Option[Entry.TargetKind] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema:
+        api.json.Schema:
     def entryKind: Option[EntryKind] = EntryKind.parse(kind)
 
   object Entry:
@@ -107,9 +107,9 @@ object Activity:
     object Text extends Newtype[String, Pure]
     type EndedAt = EndedAt.T
     object EndedAt extends Newtype[String, Pure]
-    export com.histmersion.api.SpatialHierarchyResult.Job.Id as Job
+    export api.SpatialHierarchyResult.Job.Id as Job
     export Writer.Wire as By
-    export com.histmersion.api.research.ReviewGoal.Slug as Article
+    export api.research.ReviewGoal.Slug as Article
     export Goal.Plans.GoalLink.QueueNumber as QueueItem
     type QueueList = QueueList.T
     object QueueList extends Newtype[String, Pure]
@@ -125,7 +125,7 @@ object Activity:
       problemsWeek: Counts.ProblemsWeek = Counts.ProblemsWeek(0)
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Counts:
     type Wire = Wire.T
@@ -138,10 +138,10 @@ object Activity:
   final case class Page(entries: List[Entry], next: Option[Page.Next] = None, counts: Counts = Counts())
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Page:
-    export com.histmersion.api.Paging.Cursor as Next
+    export api.Paging.Cursor as Next
 
   val MaxLimit = 200
   val DefaultLimit = 30

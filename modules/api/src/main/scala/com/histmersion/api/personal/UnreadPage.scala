@@ -14,7 +14,7 @@ final case class UnreadPage(
     offset: UnreadPage.Offset = UnreadPage.Offset(0)
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object UnreadPage:
   type Total = Total.T

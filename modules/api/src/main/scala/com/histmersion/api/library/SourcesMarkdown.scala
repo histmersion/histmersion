@@ -1,4 +1,5 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 import com.histmersion.api.Plural
 import com.histmersion.api.Markdown.*
 import com.histmersion.api.media.AssetLinks
@@ -76,32 +77,30 @@ object SourcesMarkdown:
           .getOrElse("\n\n_(no full text stored)_")
     (header + topics + regions + tags + doi + prov + uid + summary + notes + findingsMd + body)
 
-  def neighbors(citekey: com.histmersion.api.library.Citekey, rows: Vector[NeighborRow]): String =
+  def neighbors(citekey: Citekey, rows: Vector[NeighborRow]): String =
     if rows.isEmpty then
       (s"_No references recorded for **$citekey**._ An empty result is not evidence of agreement — " +
         "disagreement edges are sparse (the corpus has only a handful); use `contradictions` for a focused view.")
     else
       def block(title: String, rs: Vector[NeighborRow])(
-          item: NeighborRow => com.histmersion.api.library.Source.Neighbor.Line
+          item: NeighborRow => Source.Neighbor.Line
       ): String =
         if rs.isEmpty then ("")
-        else
-          (s"\n\n**$title**\n${rs.map(r => s"- _${com.histmersion.api.library.Edge.Kind.wireOf(r.kind)}_ → ${item(r)}").mkString("\n")}"
-        )
-      def sources(dir: com.histmersion.api.library.ContradictionRow.Direction.Wire) =
+        else (s"\n\n**$title**\n${rs.map(r => s"- _${Edge.Kind.wireOf(r.kind)}_ → ${item(r)}").mkString("\n")}")
+      def sources(dir: ContradictionRow.Direction.Wire) =
         rows.filter(r => r.target == NeighborTarget.Source && r.direction == dir)
-      val sourceItem: NeighborRow => com.histmersion.api.library.Source.Neighbor.Line = r =>
+      val sourceItem: NeighborRow => Source.Neighbor.Line = r =>
         val st = r.status.map(s => s" _(${s.wire})_").getOrElse("")
-        _root_.com.histmersion.api.library.Source.Neighbor
+        Source.Neighbor
           .Line(s"[[${r.citekey}]]${r.title.map(t => s" — $t").getOrElse("")}$st")
       s"### Sources · $citekey" +
         block(
           ("Outgoing (this → other)"),
-          sources(_root_.com.histmersion.api.library.ContradictionRow.Direction.Wire("out"))
+          sources(ContradictionRow.Direction.Wire("out"))
         )(sourceItem) +
         block(
           "Incoming (other → this)",
-          sources(_root_.com.histmersion.api.library.ContradictionRow.Direction.Wire("in"))
+          sources(ContradictionRow.Direction.Wire("in"))
         )(sourceItem) +
         block("Articles", rows.filter(_.target == NeighborTarget.Article))(r =>
           Source.Neighbor.Line(
@@ -116,7 +115,7 @@ object SourcesMarkdown:
     if g.nodes.isEmpty then (s"_No graph data for **${g.root}**._")
     else
       val header =
-        s"### Source graph · ${g.root} (depth ${g.depth}, ${Plural.count(_root_.com.histmersion.api.Plural.CountN((g.nodes.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("node"))}, ${Plural.count(_root_.com.histmersion.api.Plural.CountN((g.links.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("link"))})"
+        s"### Source graph · ${g.root} (depth ${g.depth}, ${Plural.count(Plural.CountN((g.nodes.size).toLong), Plural.CountSingular("node"))}, ${Plural.count(Plural.CountN((g.links.size).toLong), Plural.CountSingular("link"))})"
       val nodeLines = g.nodes
         .sortBy(n => ((n.depth.value: Int), (n.id.value: String)))
         .map { n =>
@@ -128,12 +127,12 @@ object SourcesMarkdown:
         .mkString("\n")
       val linkLines = g.links
         .map { l =>
-          s"- `${l.source}` →_${com.histmersion.api.library.Edge.Kind.wireOf(l.kind)}_ `${l.target}`"
+          s"- `${l.source}` →_${Edge.Kind.wireOf(l.kind)}_ `${l.target}`"
         }
         .mkString("\n")
       (s"$header\n\n**Nodes**\n$nodeLines\n\n**Links**\n$linkLines")
 
-  def contradictions(result: ContradictionsResult, citekey: Option[com.histmersion.api.library.Citekey]): String =
+  def contradictions(result: ContradictionsResult, citekey: Option[Citekey]): String =
     if result.rows.isEmpty then
       citekey match
         case Some(ck) =>
@@ -146,13 +145,13 @@ object SourcesMarkdown:
         val edge = (r.direction, r.kind, r.otherCitekey) match
           case (Some(dir), Some(k), Some(other)) =>
             val arrow =
-              if dir == _root_.com.histmersion.api.library.ContradictionRow.Direction.Wire("out") then "→" else "←"
+              if dir == ContradictionRow.Direction.Wire("out") then "→" else "←"
             val otherInfo = List(
               r.otherTitle.map(_.value).getOrElse(""),
               r.otherYear.map(_.toString).getOrElse(""),
               r.otherStatus.fold("")(_.wire.value)
             ).filter(_.nonEmpty).mkString(" · ")
-            s"${com.histmersion.api.library.Edge.Kind.wireOf(k)} $arrow **$other** ($otherInfo)"
+            s"${Edge.Kind.wireOf(k)} $arrow **$other** ($otherInfo)"
           case _ => s"status: ${r.status.wire}"
         s"- **${r.citekey}** (${year(r.year.map(_.value.toInt))} · ${r.status.wire}) — $edge"
       }

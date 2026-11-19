@@ -34,16 +34,16 @@ object JobsView:
 
   /** The polling schedule — the one every polled window shares ([[com.histmersion.web.Poll]]). */
   object Poll:
-    val FirstMs: Int = com.histmersion.web.Poll.FirstMs
-    val MaxMs: Int = com.histmersion.web.Poll.MaxMs
+    val FirstMs: Int = web.Poll.FirstMs
+    val MaxMs: Int = web.Poll.MaxMs
 
     /** The delay before the next poll, or `None` to stop: no job left to wait for. */
     def next(
-        previous: Option[com.histmersion.web.Poll.Revision],
+        previous: Option[web.Poll.Revision],
         jobs: List[JobInfo],
-        changed: com.histmersion.web.Poll.DataChanged
-    ): Option[com.histmersion.web.Poll.Revision] =
-      com.histmersion.web.Poll.next(previous, com.histmersion.web.Poll.LiveMode(jobs.exists(!_.isTerminal)), changed)
+        changed: web.Poll.DataChanged
+    ): Option[web.Poll.Revision] =
+      web.Poll.next(previous, web.Poll.LiveMode(jobs.exists(!_.isTerminal)), changed)
 
   /** Is any job still queued or running — anywhere in the table (the server's counts), not just among the rows a filter
     * shows; the rows' own states when the server sent no counts.
@@ -177,7 +177,7 @@ object JobsView:
   /** A job this page started (an upload): show it, and poll quickly again. */
   def track(jobId: SpatialHierarchyResult.Job.Id): Unit =
     started.set(Some(jobId))
-    list.refresh(changed = com.histmersion.web.Poll.DataChanged(true))
+    list.refresh(changed = web.Poll.DataChanged(true))
 
   // ── view ────────────────────────────────────────────────────────────────────────────────────────
 

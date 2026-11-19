@@ -17,7 +17,7 @@ object AgentScheduler:
   final case class StrategyLine(name: StrategyLine.Name, describe: StrategyLine.Describe = StrategyLine.Describe(""))
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object StrategyLine:
     type Name = Name.T
@@ -35,7 +35,7 @@ object AgentScheduler:
       why: Rationale = Rationale("")
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Started:
     type Item = Item.T
@@ -63,7 +63,7 @@ object AgentScheduler:
       position: Waiting.Position = Waiting.Position(0)
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Waiting:
     type Item = Item.T
@@ -89,7 +89,7 @@ object AgentScheduler:
   final case class PoolUse(pool: PoolUse.Pool, used: PoolUse.Used = PoolUse.Used(0), cap: PoolUse.Cap = PoolUse.Cap(0))
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object PoolUse:
     type Pool = Pool.T
@@ -108,7 +108,7 @@ object AgentScheduler:
       waiting: TypeLine.Waiting = TypeLine.Waiting(0)
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object TypeLine:
     export JobKinds.Wire as JobType
@@ -142,7 +142,7 @@ object AgentScheduler:
       changes: List[SchedulerStatus.Changes] = Nil
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object SchedulerStatus:
     type StrategyFrom = StrategyFrom.T
@@ -169,7 +169,7 @@ object AgentScheduler:
   final case class SchedulerSet(strategy: SchedulerSet.Strategy, by: Option[SchedulerSet.By] = None)
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object SchedulerSet:
     type Strategy = Strategy.T
@@ -191,7 +191,7 @@ object AgentScheduler:
       approval: Option[WhyInfo.Approval] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object WhyInfo:
     type Item = Item.T

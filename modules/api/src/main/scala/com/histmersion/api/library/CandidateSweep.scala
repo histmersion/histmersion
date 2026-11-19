@@ -5,6 +5,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.json.Schema
 
 final case class CandidateSweep(
     goal: CandidateSweep.Goal,
@@ -18,10 +19,10 @@ final case class CandidateSweep(
     notes: List[CandidateSweep.Notes] = Nil
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      Schema
 object CandidateSweep:
 
-  export com.histmersion.api.research.ReviewGoal.Slug as Goal
+  export api.research.ReviewGoal.Slug as Goal
   type Found = Found.T
   object Found extends Newtype[Int, Pure]
   type Added = Added.T
@@ -42,9 +43,9 @@ object CandidateSweep:
   final case class Request(goal: Request.Goal, dryRun: Request.DryRun = Request.DryRun(false))
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        Schema
 
   object Request:
-    export com.histmersion.api.research.ReviewGoal.Slug as Goal
+    export api.research.ReviewGoal.Slug as Goal
     type DryRun = DryRun.T
     object DryRun extends Newtype[Boolean, Pure]

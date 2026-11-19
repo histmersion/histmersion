@@ -24,7 +24,7 @@ final case class AssetLink(
     notes: Option[AssetLink.Notes] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object AssetLink:
 
@@ -41,7 +41,7 @@ object AssetLink:
       deleted: Deleted.Value
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Deleted:
     type Value = Value.T
@@ -54,7 +54,7 @@ object AssetLink:
       next: Option[Offset] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema:
+        api.json.Schema:
     def page: OffsetPage = OffsetPage(total, offset, RowCount(links.size))
 
   object List:
@@ -77,4 +77,4 @@ object AssetLink:
       notes: Option[Notes] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema

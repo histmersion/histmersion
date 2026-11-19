@@ -46,7 +46,7 @@ enum SettingsSection(
       )
 
 object SettingsSection:
-  export com.histmersion.api.research.Article.Slug
+  export api.research.Article.Slug
   export UiLabels.Text as Label
   type Rare = Rare.T
   object Rare extends Newtype[Boolean, Pure]

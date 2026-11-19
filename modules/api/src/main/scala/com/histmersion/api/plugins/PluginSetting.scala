@@ -10,7 +10,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 final case class PluginSetting(key: PluginSetting.Key, value: PluginSetting.Value)
     derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object PluginSetting:
   type Key = Key.T

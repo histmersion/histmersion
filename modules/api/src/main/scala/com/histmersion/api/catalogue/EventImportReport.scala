@@ -29,7 +29,7 @@ final case class EventImportReport(
     corrections: Correction.Counts = Correction.Counts()
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 object EventImportReport:
   type Markdown = Markdown.T
   object Markdown extends Newtype[String, Pure]

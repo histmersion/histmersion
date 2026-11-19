@@ -34,7 +34,7 @@ final case class Coverage(
     critiques: List[CritiquePair] = Nil
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema:
+      api.json.Schema:
   def capped: Boolean = ((checked).value < (total).value)
   def unplaced: List[Citekey] = drift.filter(_.kind == DriftKind.Unplaced).flatMap(_.citekeys)
 object Coverage:
@@ -46,23 +46,14 @@ object Coverage:
   type Checked = Checked.T
   object Checked extends Newtype[Int, Pure]
 
-  final case class Drift(kind: DriftKind, citekeys: List[Citekey])
-      derives JsonCodec,
-        KindlingsSchema,
-        com.histmersion.api.json.Schema
+  final case class Drift(kind: DriftKind, citekeys: List[Citekey]) derives JsonCodec, KindlingsSchema, api.json.Schema
 
-  final case class Edge(from: Citekey, kind: Edge.Kind, to: Citekey)
-      derives JsonCodec,
-        KindlingsSchema,
-        com.histmersion.api.json.Schema
+  final case class Edge(from: Citekey, kind: Edge.Kind, to: Citekey) derives JsonCodec, KindlingsSchema, api.json.Schema
 
   object Edge:
-    export com.histmersion.api.library.Edge.Kind.Wire as Kind
+    export api.library.Edge.Kind.Wire as Kind
 
-  final case class Entry(source: Source, reason: Option[Rationale])
-      derives JsonCodec,
-        KindlingsSchema,
-        com.histmersion.api.json.Schema
+  final case class Entry(source: Source, reason: Option[Rationale]) derives JsonCodec, KindlingsSchema, api.json.Schema
 
   /** Why an article leaves one source of its filter out, in the words of whoever left it out: a decision, not a
     * failure.
@@ -121,8 +112,8 @@ object Coverage:
       citekey: Citekey,
       title: Title,
       year: Option[Year],
-      status: com.histmersion.api.library.Source.Status,
+      status: api.library.Source.Status,
       authors: List[AuthorName] = Nil
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema

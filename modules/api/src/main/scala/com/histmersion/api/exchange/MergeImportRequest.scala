@@ -13,9 +13,9 @@ final case class MergeImportRequest(
     dryRun: MergeImportRequest.DryRun = MergeImportRequest.DryRun(false)
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object MergeImportRequest:
-  export com.histmersion.api.exchange.Bundle.Name as Bundle
+  export api.exchange.Bundle.Name as Bundle
   type DryRun = DryRun.T
   object DryRun extends Newtype[Boolean, Pure]

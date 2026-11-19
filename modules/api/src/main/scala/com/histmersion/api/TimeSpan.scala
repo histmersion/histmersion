@@ -14,7 +14,7 @@ final case class TimeSpan(
     notAfter: Option[Year] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema,
+      json.Schema,
       CanEqual:
 
   /** The outer span: the earliest and latest years stated, one known end standing for both; `None` when undated. */

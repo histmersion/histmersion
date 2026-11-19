@@ -49,7 +49,7 @@ object Agents:
 
     def parse(
         s: Wire,
-        known: Set[com.histmersion.api.automation.ProviderKind.Plugin.Name] = Set.empty
+        known: Set[api.automation.ProviderKind.Plugin.Name] = Set.empty
     ): Either[Problem, ModelRef] =
       val t = (s).value.trim
       t.indexOf(':') match
@@ -81,7 +81,7 @@ object Agents:
       cacheWrite: Usage.CacheWrite = Usage.CacheWrite((0).toLong)
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema:
+        api.json.Schema:
     def +(o: Usage): Usage =
       Usage(
         Usage.Input((input).value + (o.input).value),
@@ -271,13 +271,13 @@ object Agents:
   final case class ProbeRequest(citekey: Citekey, model: Option[ProbeRequest.Model] = None)
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object ProbeRequest:
     type Model = Model.T
     object Model extends Newtype[String, Pure]
 
-  final case class ProbeAnswer(citekey: Citekey, title: com.histmersion.api.library.Title, year: Option[Year])
+  final case class ProbeAnswer(citekey: Citekey, title: api.library.Title, year: Option[Year])
       derives JsonCodec,
         KindlingsSchema:
     /** A strict-schema provider sends `""` and `null` where it has nothing; they must not pass. */
@@ -295,7 +295,7 @@ object Agents:
 
   object ProbeAnswer:
     /** The year asked of a model stays the 32-bit integer its schema has always said. */
-    given Schema[ProbeAnswer] = com.histmersion.api.json.Schema.derived[ProbeAnswer].modify(_.year)(_.format("int32"))
+    given Schema[ProbeAnswer] = api.json.Schema.derived[ProbeAnswer].modify(_.year)(_.format("int32"))
     type RecordYear = RecordYear.T
     object RecordYear extends Newtype[Int, Pure]
 
@@ -314,7 +314,7 @@ object Agents:
       attempts: ProbeResult.Attempts = ProbeResult.Attempts(1)
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object ProbeResult:
     type Model = Model.T
@@ -358,7 +358,7 @@ object Agents:
       modelFor: List[ModelOverride] = Nil
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object RunRequest:
     type Pipeline = Pipeline.T
@@ -391,7 +391,7 @@ object Agents:
   final case class ModelOverride(role: ModelOverride.Role, model: ModelOverride.Model)
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema:
+        api.json.Schema:
     def text: ModelOverride.Wire = ModelOverride.Wire(s"$role=$model")
   object ModelOverride:
     type Wire = Wire.T
@@ -434,7 +434,7 @@ object Agents:
       oaBacklog: Option[RunParams.OaBacklog] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema:
+        api.json.Schema:
     def fixes: Boolean = (fix.contains(RunRequest.Fix(true)))
     def noteList: List[RunParams.Notes] = (notes
       .getOrElse(Nil)
@@ -491,7 +491,7 @@ object Agents:
       pausedFor: Option[PauseReason] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema,
+        api.json.Schema,
         CanEqual:
     def isWaiting: Boolean = (status == Run.State.WaitingApproval.wire)
 
@@ -536,7 +536,7 @@ object Agents:
   final case class WouldWrite(what: WouldWrite.What, payload: WouldWrite.Payload)
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object WouldWrite:
     type What = What.T
@@ -564,7 +564,7 @@ object Agents:
       turns: Option[StepInfo.Turns] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema:
+        api.json.Schema:
     def modelText: String = (model, actualModel) match
       case (Some(m), Some(a)) if StepInfo.ActualModel((m).value.drop((m).value.indexOf(':') + 1)) != a => (s"$m → $a")
       case (Some(m), _)                                                                                => ((m).value)
@@ -613,7 +613,7 @@ object Agents:
       latencyMs: Option[MessageInfo.LatencyMs] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object MessageInfo:
     type N = N.T
@@ -634,7 +634,7 @@ object Agents:
   final case class RunDetail(run: RunInfo, steps: List[StepInfo], messages: List[MessageInfo])
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema,
+        api.json.Schema,
         CanEqual
 
   final case class RoleModel(
@@ -644,7 +644,7 @@ object Agents:
       problems: List[Problem]
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object RoleModel:
     export AgentRole.Wire as Role
@@ -664,7 +664,7 @@ object Agents:
       now: ModelsInfo.Now = ModelsInfo.Now("")
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object ModelsInfo:
     type Enabled = Enabled.T
@@ -696,7 +696,7 @@ object Agents:
   final case class DoctorCheck(name: DoctorCheck.Name, level: CheckLevel, detail: DoctorCheck.Detail)
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object DoctorCheck:
     type Name = Name.T
@@ -712,7 +712,7 @@ object Agents:
       upstreamModels: List[ProviderDoctor.UpstreamModels] = Nil
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema:
+        api.json.Schema:
     def level: CheckLevel =
       if checks.exists(_.level == CheckLevel.Fail) then CheckLevel.Fail
       else if checks.exists(_.level == CheckLevel.Warn) then CheckLevel.Warn
@@ -735,7 +735,7 @@ object Agents:
       checks: List[DoctorCheck]
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object DoctorReport:
     type Enabled = Enabled.T
@@ -748,7 +748,7 @@ object Agents:
       out: Option[GenerateRequest.Out] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object GenerateRequest:
     type Runtimes = Runtimes.T
@@ -765,7 +765,7 @@ object Agents:
       definitions: GenerateResult.Definitions
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object GenerateResult:
     type Dir = Dir.T
@@ -815,7 +815,7 @@ object Agents:
       hintEffect: Option[Managers.HintProposal] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema,
+        api.json.Schema,
         CanEqual:
     def approvalKind: Option[Approval.Kind] = Approval.Kind.parse(kind)
 
@@ -851,7 +851,7 @@ object Agents:
     object Status extends Newtype[String, Pure]
     type Current = Current.T
     object Current extends Newtype[String, Pure]
-    export com.histmersion.api.library.Edge.Kind.Wire as EdgeKind
+    export api.library.Edge.Kind.Wire as EdgeKind
     type Target = Target.T
     object Target extends Newtype[String, Pure]
     type Evidence = Evidence.T
@@ -872,7 +872,7 @@ object Agents:
   final case class DecisionRequest(note: Option[DecisionRequest.Note] = None)
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object DecisionRequest:
     export Approval.Note

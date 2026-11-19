@@ -13,7 +13,7 @@ final case class ListPatch(
     replace: Option[List[ListPatch.Replace]] = None
 ) derives StrictJson,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      json.Schema
 object ListPatch:
 
   export Write.{ListItem as Add, ListItem as Remove, ListItem as Replace}

@@ -17,7 +17,7 @@ final case class JobCounts(
     cancelled: JobCounts.Cancelled = JobCounts.Cancelled(0)
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema:
+      api.json.Schema:
   def of(s: JobState): JobCounts.Count = s match
     case JobState.Queued    => JobCounts.Count((queued).value)
     case JobState.Running   => JobCounts.Count((running).value)

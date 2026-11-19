@@ -12,7 +12,7 @@ final case class AgentStatePut(
     value: AgentStatePut.Value
 ) derives StrictJson,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object AgentStatePut:
 

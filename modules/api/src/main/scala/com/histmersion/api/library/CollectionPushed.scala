@@ -15,7 +15,7 @@ final case class CollectionPushed(
     replaced: Option[CollectionPushed.Replaced] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object CollectionPushed:
   type Id = Id.T

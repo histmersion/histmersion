@@ -51,7 +51,7 @@ object BaseMapSpec:
     type Reduced = Reduced.T
     object Reduced extends Newtype[Boolean, Pure]
   object Raster:
-    export com.histmersion.api.basemap.BasemapApi.TileTemplate as Template
+    export api.basemap.BasemapApi.TileTemplate as Template
     type MaxZoom = MaxZoom.T
     object MaxZoom extends Newtype[Int, Pure]
     type Attribution = Attribution.T

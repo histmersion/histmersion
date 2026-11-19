@@ -21,7 +21,7 @@ final case class MergeInfo(
     redirects: MergeInfo.Redirects = MergeInfo.Redirects(0)
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object MergeInfo:
   type BundleSha256 = BundleSha256.T

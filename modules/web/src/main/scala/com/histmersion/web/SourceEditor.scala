@@ -79,7 +79,7 @@ object SourceEditor:
     s"$what cannot be removed here, only changed — the patch leaves an omitted value alone"
 
   /** A signed year from what was typed (`1300 BCE`, `-1300`, `530 CE`, `530`), `None` for blank. */
-  def year(raw: Years.Text): Either[Problem, Option[com.histmersion.api.catalogue.Year]] =
+  def year(raw: Years.Text): Either[Problem, Option[api.catalogue.Year]] =
     if raw.value.trim.isEmpty then Right(None)
     else Years.parse(raw).map(Some(_))
 
@@ -140,11 +140,11 @@ object SourceEditor:
     if problems.nonEmpty then Left(problems)
     else
       val meta = MetadataPatch(
-        title = (title).map(com.histmersion.api.library.Title.apply),
+        title = (title).map(api.library.Title.apply),
         authors = (authors).map(_.map(AuthorName.apply)),
-        year = (yr).map(n => com.histmersion.api.catalogue.Year(n.toLong)),
+        year = (yr).map(n => api.catalogue.Year(n.toLong)),
         venue = (venue).map(Source.Venue.apply),
-        doi = (doi).map(com.histmersion.api.library.Doi.apply),
+        doi = (doi).map(api.library.Doi.apply),
         status = status
       )
       val patch = Source.Patch(

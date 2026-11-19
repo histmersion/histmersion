@@ -22,7 +22,7 @@ final case class Correction(
     checkedAt: Option[Correction.CheckedAt] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 object Correction:
 
   type Id = Id.T
@@ -55,7 +55,7 @@ object Correction:
       conflicts: Counts.Conflicts = Counts.Conflicts(0)
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema:
+        api.json.Schema:
     def +(o: Counts): Counts =
       Counts(
         Counts.Kept((kept).value + (o.kept).value),
@@ -81,7 +81,7 @@ object Correction:
   final case class List(total: List.Total, corrections: scala.List[Correction])
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object List:
     type Total = Total.T

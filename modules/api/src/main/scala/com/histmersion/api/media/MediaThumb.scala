@@ -20,7 +20,7 @@ final case class MediaThumb(
     height: Option[ImageSize.Height] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema:
+      api.json.Schema:
 
   /** The picture's line on an event's or a place's page: its role, credit, licence, source and address. */
   def markdownLine: MediaThumb.MarkdownLine =

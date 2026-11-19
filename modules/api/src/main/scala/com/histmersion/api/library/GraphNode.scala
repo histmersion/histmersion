@@ -11,11 +11,11 @@ final case class GraphNode(
     id: Citekey,
     title: Option[Title] = None,
     year: Option[Year] = None,
-    status: Option[com.histmersion.api.library.Source.Status] = None,
-    depth: GraphNode.Depth = _root_.com.histmersion.api.library.Source.Graph.DepthCount(0)
+    status: Option[Source.Status] = None,
+    depth: GraphNode.Depth = Source.Graph.DepthCount(0)
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object GraphNode:
   export Source.Graph.DepthCount as Depth

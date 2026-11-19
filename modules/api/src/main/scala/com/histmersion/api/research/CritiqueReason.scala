@@ -23,7 +23,7 @@ final case class CritiqueReason(
 
 object CritiqueReason:
 
-  export com.histmersion.api.automation.Activity.Actor as By
+  export api.automation.Activity.Actor as By
 
   given Schema[CritiqueReason] = KindlingsSchema
     .derived[CritiqueReason]

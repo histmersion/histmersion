@@ -33,13 +33,13 @@ final case class UiConfig(
     tilesTone: UiConfig.TilesTone = UiConfig.TilesTone("light"),
     plugins: PluginsReport = PluginsReport(),
     docsUrl: UiConfig.DocsUrl = UiConfig.DocsUrl(""),
-    baseMapSource: UiConfig.BaseMapSource = com.histmersion.api.basemap.BaseMapSource.Wire("auto"),
+    baseMapSource: UiConfig.BaseMapSource = api.basemap.BaseMapSource.Wire("auto"),
     mapLanguage: UiConfig.MapLanguage = UiConfig.MapLanguage("en"),
     mapStart: MapStartConfig = MapStartConfig(),
     setupDue: UiConfig.SetupDue = UiConfig.SetupDue(false)
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object UiConfig:
   type Tiles = Tiles.T
@@ -80,7 +80,7 @@ object UiConfig:
   object TilesTone extends Newtype[String, Pure]
   type DocsUrl = DocsUrl.T
   object DocsUrl extends Newtype[String, Pure]
-  export com.histmersion.api.basemap.BaseMapSource.Wire as BaseMapSource
+  export api.basemap.BaseMapSource.Wire as BaseMapSource
   type MapLanguage = MapLanguage.T
   object MapLanguage extends Newtype[String, Pure]
   type SetupDue = SetupDue.T

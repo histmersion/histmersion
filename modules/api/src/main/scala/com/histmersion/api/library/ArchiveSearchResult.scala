@@ -13,7 +13,7 @@ final case class ArchiveSearchResult(
     items: List[ArchiveItem]
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object ArchiveSearchResult:
   type Query = Query.T

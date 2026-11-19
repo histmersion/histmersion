@@ -250,7 +250,7 @@ object AgentsApi:
       )
 
   lazy val setSchedule: PublicEndpoint[
-    (ReviewGoal.Slug, com.histmersion.api.automation.ScheduleKind.Wire, ScheduleSet),
+    (ReviewGoal.Slug, api.automation.ScheduleKind.Wire, ScheduleSet),
     Api.Error,
     GoalSchedule,
     Any
@@ -259,29 +259,28 @@ object AgentsApi:
       .in("schedules" / path[String]("kind"))
       .in(jsonBody[ScheduleSet])
       .out(jsonBody[GoalSchedule]))
-      .mapIn[(ReviewGoal.Slug, com.histmersion.api.automation.ScheduleKind.Wire, ScheduleSet)](
+      .mapIn[(ReviewGoal.Slug, api.automation.ScheduleKind.Wire, ScheduleSet)](
         (refactorDecoded31: (String, String, ScheduleSet)) =>
           (
             ReviewGoal.Slug((refactorDecoded31)._1),
-            com.histmersion.api.automation.ScheduleKind.Wire((refactorDecoded31)._2),
+            api.automation.ScheduleKind.Wire((refactorDecoded31)._2),
             (refactorDecoded31)._3
           )
-      )((refactorEncoded31: (ReviewGoal.Slug, com.histmersion.api.automation.ScheduleKind.Wire, ScheduleSet)) =>
+      )((refactorEncoded31: (ReviewGoal.Slug, api.automation.ScheduleKind.Wire, ScheduleSet)) =>
         (((refactorEncoded31)._1).value, ((refactorEncoded31)._2).value, (refactorEncoded31)._3)
       )
 
   lazy val removeSchedule
-      : PublicEndpoint[(ReviewGoal.Slug, com.histmersion.api.automation.ScheduleKind.Wire), Api.Error, Removed, Any] =
+      : PublicEndpoint[(ReviewGoal.Slug, api.automation.ScheduleKind.Wire), Api.Error, Removed, Any] =
     (goalBase.delete
       .in("schedules" / path[String]("kind"))
       .out(jsonBody[Removed]))
-      .mapIn[(ReviewGoal.Slug, com.histmersion.api.automation.ScheduleKind.Wire)](
-        (refactorDecoded32: (String, String)) =>
-          (
-            ReviewGoal.Slug((refactorDecoded32)._1),
-            com.histmersion.api.automation.ScheduleKind.Wire((refactorDecoded32)._2)
-          )
-      )((refactorEncoded32: (ReviewGoal.Slug, com.histmersion.api.automation.ScheduleKind.Wire)) =>
+      .mapIn[(ReviewGoal.Slug, api.automation.ScheduleKind.Wire)]((refactorDecoded32: (String, String)) =>
+        (
+          ReviewGoal.Slug((refactorDecoded32)._1),
+          api.automation.ScheduleKind.Wire((refactorDecoded32)._2)
+        )
+      )((refactorEncoded32: (ReviewGoal.Slug, api.automation.ScheduleKind.Wire)) =>
         (((refactorEncoded32)._1).value, ((refactorEncoded32)._2).value)
       )
 

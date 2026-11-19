@@ -37,7 +37,7 @@ object UiNotices:
       fresh: Counter.Fresh = Counter.Fresh(false)
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Counter:
     type Count = Count.T
@@ -56,7 +56,7 @@ object UiNotices:
       draining: AgentsGlance.Draining = AgentsGlance.Draining(false)
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema:
+        api.json.Schema:
 
     /** The agents at a glance, as the top bar says it. */
     def wording: String =
@@ -82,12 +82,9 @@ object UiNotices:
   final case class Counters(boards: List[Counter], agents: Option[AgentsGlance] = None)
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
-  final case class SeenMark(at: Option[SeenMark.At] = None)
-      derives JsonCodec,
-        KindlingsSchema,
-        com.histmersion.api.json.Schema
+  final case class SeenMark(at: Option[SeenMark.At] = None) derives JsonCodec, KindlingsSchema, api.json.Schema
 
   object SeenMark:
     export Counter.Seen as At

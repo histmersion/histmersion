@@ -11,10 +11,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
 
-final case class CritiqueRef(src: Citekey, dst: Citekey)
-    derives JsonCodec,
-      KindlingsSchema,
-      com.histmersion.api.json.Schema:
+final case class CritiqueRef(src: Citekey, dst: Citekey) derives JsonCodec, KindlingsSchema, api.json.Schema:
   def wire: CritiqueRef.Wire = CritiqueRef.Wire(s"$src>$dst")
 
   def same(o: CritiqueRef): Boolean = ((src == o.src && dst == o.dst) || (src == o.dst && dst == o.src))

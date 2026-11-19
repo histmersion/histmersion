@@ -21,7 +21,7 @@ final case class ContradictionRow(
     otherStatus: Option[Source.Status] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object ContradictionRow:
   object Direction:

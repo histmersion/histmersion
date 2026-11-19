@@ -22,7 +22,7 @@ final case class Note(
     updatedAt: Note.At = Note.At("")
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object Note:
 
@@ -30,10 +30,7 @@ object Note:
   type At = At.T
   object At extends Newtype[String, Pure]
 
-  final case class Edit(text: Text, ifUpdatedAt: Option[At] = None)
-      derives JsonCodec,
-        KindlingsSchema,
-        com.histmersion.api.json.Schema
+  final case class Edit(text: Text, ifUpdatedAt: Option[At] = None) derives JsonCodec, KindlingsSchema, api.json.Schema
 
   type Id = Id.T
 
@@ -44,7 +41,7 @@ object Note:
   final case class New(target: Target, text: Text, title: Option[Title] = None)
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   type Text = Text.T
 

@@ -17,7 +17,7 @@ final case class MediaList(
     next: Option[Offset] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema:
+      api.json.Schema:
   def page: OffsetPage = OffsetPage(total, offset, RowCount(items.size))
 object MediaList:
 

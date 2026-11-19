@@ -19,7 +19,7 @@ final case class EventImportRequest(
     refresh: EventImportRequest.Refresh = EventImportRequest.Refresh(false)
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object EventImportRequest:
   export EventImportReport.Provider

@@ -18,7 +18,7 @@ final case class BuildStamp(
     sourceUrl: Option[BuildStamp.SourceUrl] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object BuildStamp:
   type Version = Version.T

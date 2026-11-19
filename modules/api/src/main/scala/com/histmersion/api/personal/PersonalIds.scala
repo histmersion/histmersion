@@ -5,7 +5,7 @@ import com.histmersion.api.Paging
 
 object PersonalIds:
 
-  export com.histmersion.api.Paging.{Limit as LimitAsked, Limit as LimitResult}
+  export Paging.{Limit as LimitAsked, Limit as LimitResult}
 
   val MaxLimit = 1000
   val DefaultLimit = 200

@@ -18,7 +18,7 @@ final case class PassageResult(
     bodyChars: PassageResult.BodyChars
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object PassageResult:
   type Query = Query.T

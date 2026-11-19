@@ -18,7 +18,7 @@ final case class CollectionSync(
     pushes: List[CollectionSync.Push]
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object CollectionSync:
 
@@ -32,7 +32,7 @@ object CollectionSync:
       problems: Option[NonEmptyVector[Problem]]
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Push:
     type Id = Id.T
@@ -44,7 +44,7 @@ object CollectionSync:
       limit: Option[Request.Limit] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Request:
     type Apply = Apply.T

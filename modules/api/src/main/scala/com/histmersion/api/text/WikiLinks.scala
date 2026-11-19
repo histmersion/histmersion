@@ -129,5 +129,5 @@ object WikiLinks:
       (Body(out), RetargetCount(count))
 
   /** Whether a text links `ck` (any case). */
-  def links(text: Body, ck: com.histmersion.api.library.Citekey): Boolean =
+  def links(text: Body, ck: api.library.Citekey): Boolean =
     targets(text).exists(_.value.equalsIgnoreCase(ck.value))

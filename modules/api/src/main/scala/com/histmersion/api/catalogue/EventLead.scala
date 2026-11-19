@@ -19,7 +19,7 @@ final case class EventLead(
     candidates: EventLead.Candidates = EventLead.Candidates(0)
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 object EventLead:
 
   type Label = Label.T
@@ -44,7 +44,7 @@ object EventLead:
       query: Option[Action.Query] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Action:
     type Kind = Kind.T
@@ -59,7 +59,7 @@ object EventLead:
   final case class List(total: List.Total, leads: scala.List[EventLead])
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object List:
     type Total = Total.T

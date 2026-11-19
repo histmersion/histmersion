@@ -9,7 +9,7 @@ import com.histmersion.api.library.RepairAcquire
 
 object MediaMarkdown:
 
-  export com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun as MediaSamplesDryRun
+  export RepairAcquire.RepairRequest.DryRun as MediaSamplesDryRun
 
   private def providerTitle(p: MediaItem.Provider): MediaProvider.Info.Title =
     MediaProvider.title(MediaProvider.Id(p.value))

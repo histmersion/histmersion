@@ -13,7 +13,7 @@ final case class CollectionAudit(
     checked: CollectionAudit.Checked
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object CollectionAudit:
 
@@ -34,7 +34,7 @@ object CollectionAudit:
       fix: Option[Row.Fix]
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Row:
     type Id = Id.T

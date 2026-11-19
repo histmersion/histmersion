@@ -14,10 +14,10 @@ final case class WorkRef(
     arxivId: Option[WorkRef.ArxivId] = None,
     title: Option[Title] = None,
     year: Option[Year] = None,
-    authors: List[AuthorName] = (Nil).map(com.histmersion.api.library.AuthorName.apply),
-    venue: Option[com.histmersion.api.library.Source.Venue] = None,
+    authors: List[AuthorName] = (Nil).map(AuthorName.apply),
+    venue: Option[Source.Venue] = None,
     citedByCount: Option[WorkRef.CitedByCount] = None,
-    isOa: WorkRef.IsOa = _root_.com.histmersion.api.library.Source.Candidate.IsOa(false),
+    isOa: WorkRef.IsOa = Source.Candidate.IsOa(false),
     oaStatus: Option[WorkRef.OaStatus] = None,
     oaUrl: Option[WorkRef.OaUrl] = None,
     isRetracted: WorkRef.IsRetracted = WorkRef.IsRetracted(false),
@@ -30,7 +30,7 @@ final case class WorkRef(
     oaLicence: Option[WorkRef.OaLicence] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object WorkRef:
   type OpenalexId = OpenalexId.T

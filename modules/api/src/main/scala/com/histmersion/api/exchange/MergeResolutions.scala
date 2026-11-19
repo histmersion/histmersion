@@ -17,7 +17,7 @@ final case class MergeResolutions(
     bundle: Option[UUID] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema:
+      api.json.Schema:
   def overriddenBy(later: MergeResolutions): MergeResolutions =
     val ids = later.resolve.map(_.issue).toSet
     MergeResolutions(

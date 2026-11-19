@@ -15,7 +15,7 @@ final case class EventPassage(
     context: EventPassage.Context = EventPassage.Context("")
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object EventPassage:
   type Start = Start.T

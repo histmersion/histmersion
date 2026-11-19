@@ -11,4 +11,4 @@ final case class IssueDetail(
     place: Option[IssuePlace] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema

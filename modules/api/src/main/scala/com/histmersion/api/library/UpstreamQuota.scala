@@ -24,7 +24,7 @@ final case class UpstreamQuota(
     observedAt: Option[ObservedAt] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object UpstreamQuota:
   type Upstream = Upstream.T

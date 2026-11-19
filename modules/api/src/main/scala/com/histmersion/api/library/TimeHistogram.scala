@@ -22,7 +22,7 @@ final case class TimeHistogram(
     tree: List[Bucket] = Nil
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object TimeHistogram:
   type From = From.T

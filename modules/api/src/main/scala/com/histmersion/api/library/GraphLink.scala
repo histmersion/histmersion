@@ -12,4 +12,4 @@ final case class GraphLink(
     kind: Edge.Kind
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema

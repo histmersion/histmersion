@@ -29,7 +29,7 @@ final case class MediaImportReport(
     samples: List[MediaSample] = Nil
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object MediaImportReport:
 

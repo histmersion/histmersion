@@ -15,7 +15,7 @@ final case class InitPlan(
     check: InitPlan.Check = InitPlan.Check(false)
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema:
+      api.json.Schema:
   def isEmpty: Boolean = (!(gazetteer).value && !(periodPresets).value && fetch.isEmpty)
 
 object InitPlan:

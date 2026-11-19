@@ -10,7 +10,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 final case class MatchSpan(start: MatchSpan.Start, end: MatchSpan.End)
     derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object MatchSpan:
   type Start = Start.T

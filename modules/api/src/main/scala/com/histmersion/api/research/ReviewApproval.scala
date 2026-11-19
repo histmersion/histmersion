@@ -10,7 +10,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 final case class ReviewApproval(id: ReviewApproval.Id, kind: ReviewApproval.Kind)
     derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object ReviewApproval:
   type Id = Id.T

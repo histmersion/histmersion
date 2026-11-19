@@ -40,7 +40,7 @@ final case class AutopilotStatus(
     acquireRecheck: Option[Acquire.Checks.RecheckStatus] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema:
+      api.json.Schema:
 
   /** The automation's part of the page. */
   def engine: Autopilot.EngineStatus = Autopilot.EngineStatus(

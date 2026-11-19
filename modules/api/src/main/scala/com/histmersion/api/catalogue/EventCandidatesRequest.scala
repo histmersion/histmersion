@@ -13,7 +13,7 @@ final case class EventCandidatesRequest(
     limit: Option[EventCandidatesRequest.Limit] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object EventCandidatesRequest:
   type All = All.T

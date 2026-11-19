@@ -16,7 +16,7 @@ final case class FollowupsResult(
     followups: List[FollowupRow]
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object FollowupsResult:
   type Target = Target.T

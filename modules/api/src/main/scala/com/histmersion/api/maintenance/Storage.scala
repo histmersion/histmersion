@@ -171,7 +171,7 @@ object Storage:
       host: Entry.Host = Entry.Host("server")
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Entry:
     type Key = Key.T
@@ -209,12 +209,12 @@ object Storage:
       problems: List[Report.Problems] = Nil
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   final case class Volume(id: Volume.Id, totalBytes: ByteCount, freeBytes: ByteCount)
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Volume:
     type Id = Id.T

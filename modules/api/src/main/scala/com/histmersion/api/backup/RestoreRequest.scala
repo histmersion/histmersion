@@ -11,7 +11,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 final case class RestoreRequest(file: RestoreRequest.File, force: RestoreRequest.Force = RestoreRequest.Force(false))
     derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object RestoreRequest:
   export Backup.Result.File

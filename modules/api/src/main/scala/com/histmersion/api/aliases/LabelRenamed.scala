@@ -16,9 +16,9 @@ final case class LabelRenamed(
     rewritten: List[LabelRenamed.Rewritten] = Nil
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object LabelRenamed:
-  export com.histmersion.api.library.Label.{Text as From, Text as To}
+  export api.library.Label.{Text as From, Text as To}
   type Rewritten = Rewritten.T
   object Rewritten extends Newtype[String, Pure]

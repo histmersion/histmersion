@@ -17,7 +17,7 @@ final case class RetractionNotice(
     date: Option[RetractionNotice.Date]
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object RetractionNotice:
   /** Why the work was retracted, in Retraction Watch's words: outside text, not a failure. */

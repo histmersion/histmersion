@@ -64,7 +64,7 @@ object AgentMode:
   final case class ModeSet(mode: ModeSet.Mode, by: Option[ModeSet.By] = None)
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object ModeSet:
     export AgentMode.Wire as Mode

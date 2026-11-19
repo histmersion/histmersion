@@ -24,7 +24,7 @@ final case class SearchHit(
     authors: List[AuthorName] = (Nil).map(AuthorName.apply)
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object SearchHit:
   export Source.{Regions, Summary, Topics}

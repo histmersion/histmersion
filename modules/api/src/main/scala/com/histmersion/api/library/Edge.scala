@@ -56,4 +56,4 @@ object Edge:
   final case class Input(dst: Citekey, kind: Kind, src: Option[Citekey] = None)
       derives StrictJson,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema

@@ -26,7 +26,7 @@ final case class Assessment(
     kept: Option[Source.Status] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object Assessment:
   type Target = Target.T

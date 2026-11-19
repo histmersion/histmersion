@@ -16,7 +16,7 @@ final case class EventEdge(
     note: Option[EventEdge.Note] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object EventEdge:
   type Kind = Kind.T

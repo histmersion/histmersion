@@ -11,4 +11,4 @@ final case class CollectionUpdateOne(
     citekey: Citekey
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema

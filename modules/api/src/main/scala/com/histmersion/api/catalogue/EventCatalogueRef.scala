@@ -20,7 +20,7 @@ final case class EventCatalogueRef(
     retrievedAt: Option[EventCatalogueRef.RetrievedAt] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object EventCatalogueRef:
   export CatalogRecord.Provider

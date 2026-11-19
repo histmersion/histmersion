@@ -16,7 +16,7 @@ final case class MediaTarget(
     basis: Option[MediaTarget.Basis] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object MediaTarget:
   type TargetType = TargetType.T

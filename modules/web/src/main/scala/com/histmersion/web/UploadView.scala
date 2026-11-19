@@ -67,7 +67,7 @@ object UploadView:
   /** A citekey suggested from a file name: `Anthony 2007 - The Horse.pdf` → `anthony_2007_the_horse`, or `None` (the
     * reader types one); the server judges it when the upload is sent.
     */
-  def suggestCitekey(fileName: Api.FileName): Option[com.histmersion.api.library.Citekey] =
+  def suggestCitekey(fileName: Api.FileName): Option[api.library.Citekey] =
     val name = fileName.value
     val stem = name.reverse.dropWhile(_ != '.').drop(1).reverse match
       case "" => name
@@ -80,7 +80,7 @@ object UploadView:
       .dropWhile(!_.isLetter)
       .take(60)
       .stripSuffix("_")
-    Option(slug).filter(_.length >= 2).map(com.histmersion.api.library.Citekey(_))
+    Option(slug).filter(_.length >= 2).map(api.library.Citekey(_))
 
   /** The parameters to send, or what is wrong, field by field. */
   def validate(d: Draft): Either[List[(Field, String)], Ingest.Params] =
@@ -104,14 +104,14 @@ object UploadView:
     else
       Right(
         Ingest.Params(
-          citekey = com.histmersion.api.library.Citekey(d.citekey.value.trim),
+          citekey = api.library.Citekey(d.citekey.value.trim),
           filename = d.fileName.map(f => Ingest.Params.Filename(f.value)),
           quality = Ingest.Params.Quality(d.quality.value),
           force = Ingest.Params.Force(d.force.value),
-          title = Some(d.title.value.trim).filter(_.nonEmpty).map(com.histmersion.api.library.Title(_)),
+          title = Some(d.title.value.trim).filter(_.nonEmpty).map(api.library.Title(_)),
           authors = d.authors.map(a => AuthorName(a.value)),
-          year = year.toOption.flatten.map(y => com.histmersion.api.catalogue.Year(y.toLong)),
-          doi = doi.toOption.flatten.map(com.histmersion.api.library.Doi(_)),
+          year = year.toOption.flatten.map(y => api.catalogue.Year(y.toLong)),
+          doi = doi.toOption.flatten.map(api.library.Doi(_)),
           acquireItem = d.forItem.map(i => Ingest.Params.AcquireItem(i.id.value))
         )
       )

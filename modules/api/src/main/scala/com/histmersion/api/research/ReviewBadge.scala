@@ -18,7 +18,7 @@ final case class ReviewBadge(
     round: Option[ReviewBadge.Round] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object ReviewBadge:
   type Label = Label.T

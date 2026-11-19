@@ -33,7 +33,7 @@ object AssetLinks:
   type ToAbsoluteMd = Body
   val ToAbsoluteMd: Body.type = Body
   export com.histmersion.api.library.{Citekey as ToAbsoluteCitekey, Citekey as UrlCitekey}
-  export com.histmersion.api.exchange.Bundle.Asset.FileName as UrlName
+  export Bundle.Asset.FileName as UrlName
 
   private val ImageLink = """!\[([^\]]*)\]\(\s*<?([^)>\s]+)>?(\s+"[^"]*")?\s*\)""".r
 

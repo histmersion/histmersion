@@ -315,7 +315,7 @@ object Basemap:
       fetchedAt: Option[Focus.FetchedAt] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Focus:
     type Spec = Spec.T
@@ -387,7 +387,7 @@ object Basemap:
       focus: List[Focus] = Nil
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema:
+        api.json.Schema:
     def deepest: Option[Focus.MaxZoom] =
       (maxZoom.toList ++ focus
         .map(_.maxZoom) ++ onDemand.filter(d => (d.enabled).value).map(_.maxZoom).toList).maxOption
@@ -430,7 +430,7 @@ object Basemap:
       offlineUntil: Option[OnDemand.OfflineUntil] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object OnDemand:
     type Enabled = Enabled.T
@@ -444,10 +444,7 @@ object Basemap:
     type OfflineUntil = OfflineUntil.T
     object OfflineUntil extends Newtype[String, Pure]
 
-  final case class Region(name: Region.Name, bbox: Region.Bbox)
-      derives JsonCodec,
-        KindlingsSchema,
-        com.histmersion.api.json.Schema
+  final case class Region(name: Region.Name, bbox: Region.Bbox) derives JsonCodec, KindlingsSchema, api.json.Schema
 
   object Region:
     export Focus.Name
@@ -468,7 +465,7 @@ object Basemap:
   final case class Removed(removed: List[Removed.Value], bytes: ByteCount)
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Removed:
     type Value = Value.T
@@ -488,7 +485,7 @@ object Basemap:
       regions: List[Region] = Nil
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema,
+        api.json.Schema,
         CanEqual:
     def missing(id: StyleState.Id): List[StyleState.Missing] = styles.find(_.id == id).fold(Nil)(_.missing)
 
@@ -512,7 +509,7 @@ object Basemap:
   final case class StyleState(id: StyleState.Id, name: StyleState.Name, missing: List[StyleState.Missing] = Nil)
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object StyleState:
     type Id = Id.T

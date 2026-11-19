@@ -386,7 +386,7 @@ object PlanQuota:
       why: Option[Rationale] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object WindowStatus:
     export Reading.Limit
@@ -431,7 +431,7 @@ object PlanQuota:
       lastRefresh: Option[RefreshInfo] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object PoolStatus:
     export PoolId.{Title, Wire as Pool}
@@ -472,7 +472,7 @@ object PlanQuota:
       detail: RefreshInfo.Detail
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object RefreshInfo:
     type LastAttempt = LastAttempt.T
@@ -489,7 +489,7 @@ object PlanQuota:
   final case class QuotaRefresh(pool: Option[QuotaRefresh.Pool] = None)
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object QuotaRefresh:
     export PoolId.Wire as Pool
@@ -501,7 +501,7 @@ object PlanQuota:
       status: PoolStatus
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object PoolRefreshed:
     export PoolId.Wire as Pool
@@ -513,7 +513,7 @@ object PlanQuota:
   final case class QuotaRefreshed(pools: List[PoolRefreshed], lifted: List[QuotaRefreshed.Lifted] = Nil)
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object QuotaRefreshed:
     type Lifted = Lifted.T
@@ -527,7 +527,7 @@ object PlanQuota:
       cooldowns: List[Cooldown] = Nil
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object QuotaInfo:
     type Fallthrough = Fallthrough.T
@@ -538,7 +538,7 @@ object PlanQuota:
   final case class Cooldown(model: Cooldown.Model, until: Cooldown.Until, reason: Rationale)
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Cooldown:
     export ModelChains.ChainEntry.Model
@@ -548,7 +548,7 @@ object PlanQuota:
   final case class PoolSet(hold: Option[PoolSet.Hold] = None, floors: Option[PoolSet.Floors] = None)
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object PoolSet:
     type Hold = Hold.T
@@ -559,7 +559,7 @@ object PlanQuota:
   final case class FallthroughSet(fallthrough: FallthroughSet.Fallthrough)
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object FallthroughSet:
     type Fallthrough = Fallthrough.T
@@ -572,7 +572,7 @@ object PlanQuota:
       resetsAt: Option[ModWindow.ResetsAt] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object ModWindow:
     export WindowStatus.Kind
@@ -583,7 +583,7 @@ object PlanQuota:
   final case class ModReport(source: ModReport.Source, rateLimits: List[ModWindow])
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object ModReport:
     type Source = Source.T
@@ -595,7 +595,7 @@ object PlanQuota:
       resetsAt: Option[GuardAnswer.ResetsAt] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object GuardAnswer:
     type Allow = Allow.T

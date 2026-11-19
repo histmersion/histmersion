@@ -25,7 +25,7 @@ final case class ReviewFinding(
     deferred: ReviewFinding.Deferred = ReviewFinding.Deferred(false)
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object ReviewFinding:
   type Id = Id.T
@@ -50,7 +50,7 @@ object ReviewFinding:
   object Outcome extends Newtype[String, Pure]
   type Note = Note.T
   object Note extends Newtype[String, Pure]
-  export com.histmersion.api.automation.Activity.Actor as ClosedBy
+  export api.automation.Activity.Actor as ClosedBy
   export ReviewRound.{Round as ClosedRound, RunNumber as ClosedRunNumber}
   type Reopened = Reopened.T
   object Reopened extends Newtype[Int, Pure]

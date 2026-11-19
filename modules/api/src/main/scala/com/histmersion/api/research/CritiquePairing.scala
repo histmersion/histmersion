@@ -88,7 +88,7 @@ object CritiquePairing:
     case Strong, Weak, Conflict
 
   object Mention:
-    export com.histmersion.api.text.WikiLinks.Occurrence.Target as Key
+    export WikiLinks.Occurrence.Target as Key
 
   private def mention(text: String, name: Work.Names, year: Option[Year]): Option[Mention] =
     val re = ("(?<!\\p{L})" + java.util.regex.Pattern.quote((name).value) + "(?!\\p{L})").r

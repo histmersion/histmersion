@@ -15,7 +15,7 @@ final case class MediaSourceLine(
     detail: MediaSourceLine.Detail
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object MediaSourceLine:
   type Role = Role.T

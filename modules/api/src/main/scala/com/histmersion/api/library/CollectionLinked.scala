@@ -14,7 +14,7 @@ final case class CollectionLinked(
     title: Title
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object CollectionLinked:
   type Id = Id.T

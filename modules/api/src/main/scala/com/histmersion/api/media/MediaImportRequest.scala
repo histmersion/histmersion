@@ -19,7 +19,7 @@ final case class MediaImportRequest(
     refresh: MediaImportRequest.Refresh = MediaImportRequest.Refresh(false)
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object MediaImportRequest:
   export RepairAcquire.RepairRequest.DryRun

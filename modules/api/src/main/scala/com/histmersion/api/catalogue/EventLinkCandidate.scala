@@ -21,7 +21,7 @@ final case class EventLinkCandidate(
     reasons: List[EventLinkCandidate.Reasons] = Nil
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 object EventLinkCandidate:
 
   /** Where a candidate link between an event and a source stands. */

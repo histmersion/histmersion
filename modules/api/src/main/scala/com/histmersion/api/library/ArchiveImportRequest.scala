@@ -13,7 +13,7 @@ final case class ArchiveImportRequest(
     format: Option[ArchiveImportRequest.Format] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object ArchiveImportRequest:
   export com.histmersion.api.library.ArchiveId as Id

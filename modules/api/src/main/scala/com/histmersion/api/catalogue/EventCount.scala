@@ -7,10 +7,7 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 
-final case class EventCount(key: EventCount.Key, n: EventCount.N)
-    derives JsonCodec,
-      KindlingsSchema,
-      com.histmersion.api.json.Schema
+final case class EventCount(key: EventCount.Key, n: EventCount.N) derives JsonCodec, KindlingsSchema, api.json.Schema
 object EventCount:
 
   type Key = Key.T

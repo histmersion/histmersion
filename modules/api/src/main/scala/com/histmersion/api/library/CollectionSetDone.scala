@@ -13,7 +13,7 @@ final case class CollectionSetDone(
     fields: List[CollectionSetDone.Fields]
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object CollectionSetDone:
   type Id = Id.T

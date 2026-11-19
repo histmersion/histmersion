@@ -24,7 +24,7 @@ final case class EventPut(
     scale: Option[EventSummary.Scale] = None
 ) derives StrictJson,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 object EventPut:
 
   export EventPatch.Geometry

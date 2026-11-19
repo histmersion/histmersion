@@ -40,7 +40,7 @@ enum Route derives CanEqual:
     case Settings(s)   => sub("/settings", s.slug.value)
     case Setup         => "/setup"
     case Source(ck)    => SourceLink.href(ck)
-    case Article(slug) => ArticleLink.href(com.histmersion.api.research.Article.Slug(slug.value))
+    case Article(slug) => ArticleLink.href(api.research.Article.Slug(slug.value))
     case Place(id)     => s"/place/${HtmlAtoms.segment(id.value)}"
     case Event(id)     => s"/event/${HtmlAtoms.segment(id.value)}"
     case Run(id)       => s"/run/${HtmlAtoms.segment(id.value)}"
@@ -77,14 +77,14 @@ object Route:
 
   /** The front page of each place. */
   object Goal:
-    export com.histmersion.api.automation.Goal.Slug
+    export api.automation.Goal.Slug
 
   object Source:
     type Citekey = Preview.Target.Source.Citekey
     val Citekey: Preview.Target.Source.Citekey.type = Preview.Target.Source.Citekey
 
   object Article:
-    export com.histmersion.api.research.Article.Slug
+    export api.research.Article.Slug
 
   object Place:
     export Pages.PlaceId as Id
@@ -129,7 +129,7 @@ object Route:
           case Nil     => Some(Library(LibrarySection.Sources))
           case List(s) => LibrarySection.values.find(x => x.slug.value == s && s.nonEmpty).map(Library(_))
           case _       => None
-      case List("research", "goals", slug)  => Some(Goal(com.histmersion.api.automation.Goal.Slug(slug)))
+      case List("research", "goals", slug)  => Some(Goal(api.automation.Goal.Slug(slug)))
       case "research" :: "activity" :: rest =>
         rest match
           case Nil     => Some(Activity(ActivityTab.Everything))
@@ -182,7 +182,7 @@ object Route:
     case WindowKey.Source(ck)    => Some(Source(Preview.Target.Source.Citekey(ck.value)))
     case WindowKey.Article(slug) => Some(Article(Preview.Item.Slug(slug.value)))
     case WindowKey.Run(id)       => Some(Run(RunId(id.value)))
-    case WindowKey.Goal(slug)    => Some(Goal(com.histmersion.api.automation.Goal.Slug(slug.value)))
+    case WindowKey.Goal(slug)    => Some(Goal(api.automation.Goal.Slug(slug.value)))
     case WindowKey.Manager(id)   => Some(Manager(ManagerId(id.value)))
     case _                       => None
 
@@ -213,7 +213,7 @@ object Route:
       .getOrElse(s"${Explore.path}#open=${js.URIUtils.encodeURIComponent(key.wire.value)}")
 
   /** The page of a list item: the list, scrolled to the item and marked (`?item=`). */
-  def queueItem(kind: Queue.Kind, id: com.histmersion.api.automation.Goal.Plans.GoalLink.QueueNumber): String =
+  def queueItem(kind: Queue.Kind, id: api.automation.Goal.Plans.GoalLink.QueueNumber): String =
     val list = kind match
       case Queue.Kind.Acquire => Research(ResearchSection.Acquire)
       case Queue.Kind.Tasks   => Research(ResearchSection.Backlog)

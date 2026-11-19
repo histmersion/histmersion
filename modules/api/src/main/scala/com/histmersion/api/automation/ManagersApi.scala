@@ -52,7 +52,7 @@ object ManagersApi:
   lazy val items: PublicEndpoint[
     (
         ManagerInfo.Id,
-        Option[com.histmersion.api.automation.ItemStatus.Wire],
+        Option[api.automation.ItemStatus.Wire],
         Option[ItemPage.Limit],
         Option[UnreadPage.Offset]
     ),
@@ -69,7 +69,7 @@ object ManagersApi:
       .mapIn[
         (
             ManagerInfo.Id,
-            Option[com.histmersion.api.automation.ItemStatus.Wire],
+            Option[api.automation.ItemStatus.Wire],
             Option[ItemPage.Limit],
             Option[UnreadPage.Offset]
         )
@@ -77,14 +77,14 @@ object ManagersApi:
         (
           ManagerInfo.Id((refactorDecoded18)._1),
           ((refactorDecoded18)._2)
-            .map(refactorElement19 => com.histmersion.api.automation.ItemStatus.Wire(refactorElement19)),
+            .map(refactorElement19 => api.automation.ItemStatus.Wire(refactorElement19)),
           ((refactorDecoded18)._3).map(refactorElement20 => ItemPage.Limit(refactorElement20)),
           ((refactorDecoded18)._4).map(refactorElement21 => UnreadPage.Offset(refactorElement21))
         )
       )(
         (refactorEncoded18: (
             ManagerInfo.Id,
-            Option[com.histmersion.api.automation.ItemStatus.Wire],
+            Option[api.automation.ItemStatus.Wire],
             Option[ItemPage.Limit],
             Option[UnreadPage.Offset]
         )) =>

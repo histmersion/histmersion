@@ -11,7 +11,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 final case class AssetsStored(citekey: Citekey, stored: AssetsStored.Stored)
     derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object AssetsStored:
   type Stored = Stored.T

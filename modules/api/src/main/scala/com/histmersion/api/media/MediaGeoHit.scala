@@ -31,4 +31,4 @@ final case class MediaGeoHit(
     author: Option[MediaItem.Author] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema

@@ -15,7 +15,7 @@ final case class CollectionPushRequest(
     replace: CollectionPushRequest.Replace = CollectionPushRequest.Replace(false)
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object CollectionPushRequest:
   type Replace = Replace.T

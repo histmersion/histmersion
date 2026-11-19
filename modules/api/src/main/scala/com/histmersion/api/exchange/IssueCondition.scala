@@ -10,7 +10,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 final case class IssueCondition(issue: IssueCondition.Issue, when: MergeDecision.Kind)
     derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object IssueCondition:
   export MergeIssue.Id as Issue

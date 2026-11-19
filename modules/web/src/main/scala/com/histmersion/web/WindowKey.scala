@@ -136,28 +136,28 @@ object WindowKey:
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
   object Source:
-    type Citekey = com.histmersion.api.library.Citekey
-    val Citekey: com.histmersion.api.library.Citekey.type = com.histmersion.api.library.Citekey
+    type Citekey = api.library.Citekey
+    val Citekey: api.library.Citekey.type = api.library.Citekey
 
   object Article:
-    export com.histmersion.api.research.Article.Slug
+    export api.research.Article.Slug
 
   object Graph:
-    type Citekey = com.histmersion.api.library.Citekey
-    val Citekey: com.histmersion.api.library.Citekey.type = com.histmersion.api.library.Citekey
+    type Citekey = api.library.Citekey
+    val Citekey: api.library.Citekey.type = api.library.Citekey
 
   object EditSource:
-    type Citekey = com.histmersion.api.library.Citekey
-    val Citekey: com.histmersion.api.library.Citekey.type = com.histmersion.api.library.Citekey
+    type Citekey = api.library.Citekey
+    val Citekey: api.library.Citekey.type = api.library.Citekey
 
   object Run:
-    export com.histmersion.api.automation.Agents.RunInfo.Id
+    export api.automation.Agents.RunInfo.Id
 
   object Goal:
-    export com.histmersion.api.automation.Goal.Slug
+    export api.automation.Goal.Slug
 
   object Manager:
-    export com.histmersion.api.automation.Managers.ManagerInfo.Id
+    export api.automation.Managers.ManagerInfo.Id
 
   /** The window of each bookkeeping list, and back. */
   def ofQueue(kind: Queue.Kind): WindowKey = kind match

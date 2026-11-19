@@ -16,7 +16,7 @@ final case class WikirefsResult(
     known: List[WikirefsResult.Known] = Nil
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object WikirefsResult:
   type Article = Article.T

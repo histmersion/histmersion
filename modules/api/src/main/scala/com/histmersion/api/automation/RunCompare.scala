@@ -24,7 +24,7 @@ object RunCompare:
       failures: RunSide.Failures
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object RunSide:
     type Status = Status.T
@@ -55,7 +55,7 @@ object RunCompare:
       turns: Option[StepSide.Turns] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object StepSide:
     type Models = Models.T
@@ -73,7 +73,7 @@ object RunCompare:
   final case class StepRow(name: StepRow.Name, runs: List[Option[StepSide]])
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object StepRow:
     type Name = Name.T
@@ -93,7 +93,7 @@ object RunCompare:
       uniqueClaims: List[EnrichSide.UniqueClaims]
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object EnrichSide:
     type Findings = Findings.T
@@ -122,7 +122,7 @@ object RunCompare:
       minors: ReviewerSide.Minors
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object ReviewerSide:
     type Reviewer = Reviewer.T
@@ -137,7 +137,7 @@ object RunCompare:
   final case class KindCount(kind: KindCount.Kind, count: KindCount.Count)
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object KindCount:
     type Kind = Kind.T
@@ -153,7 +153,7 @@ object RunCompare:
       majors: List[ReviewSide.Majors]
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object ReviewSide:
     type Verdict = Verdict.T
@@ -172,7 +172,7 @@ object RunCompare:
       pairs: List[MajorOverlap.Pairs]
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object MajorOverlap:
     type A = A.T
@@ -199,7 +199,7 @@ object RunCompare:
       notes: List[Comparison.Notes] = Nil
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Comparison:
     type Pipeline = Pipeline.T

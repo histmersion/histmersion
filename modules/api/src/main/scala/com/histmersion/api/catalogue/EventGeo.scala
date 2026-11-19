@@ -29,7 +29,7 @@ final case class EventGeo(
     dating: Option[EventGeo.Dating] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 object EventGeo:
 
   type Label = Label.T
@@ -77,7 +77,7 @@ object EventGeo:
       imprecise: List.Imprecise = List.Imprecise(0)
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object List:
     type Unplaced = Unplaced.T

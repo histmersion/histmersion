@@ -17,7 +17,7 @@ final case class CollectionGaps(
     gaps: List[CollectionGapRow]
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object CollectionGaps:
   type Count = Count.T

@@ -238,7 +238,7 @@ object Place:
       events: Counts.Events
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Counts:
     type Sources = Sources.T
@@ -284,7 +284,7 @@ object Place:
       source: Description.Source = _root_.com.histmersion.api.catalogue.Place.Source("")
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Description:
     type Text = Text.T
@@ -480,7 +480,7 @@ object Place:
       citekey: Option[Citekey] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
   object Footprint:
 
     type Roles = RolesValue
@@ -513,7 +513,7 @@ object Place:
       unlocated: Gone.Unlocated
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Gone:
     export Place.Label
@@ -543,7 +543,7 @@ object Place:
       importSource: Option[Hit.ImportSource] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema:
+        api.json.Schema:
     def toSummary: Summary =
       Summary(id, label, kind, periodStart, periodEnd, source, names, contested, dating, importSource)
 
@@ -567,7 +567,7 @@ object Place:
       job: Option[ImportResult.Job] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object ImportResult:
     type Places = Places.T
@@ -590,7 +590,7 @@ object Place:
       relation: Link.Relation = Link.Relation("close_match")
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
   object Link:
     type SchemeTitle = SchemeTitle.T
     object SchemeTitle extends Newtype[String, Pure]
@@ -680,7 +680,7 @@ object Place:
   final case class NameAdd(name: NameAdd.Name, lang: Option[NameAdd.Lang] = None)
       derives StrictJson,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
   object NameAdd:
 
     type Name = Name.T
@@ -697,7 +697,7 @@ object Place:
       wasImported: NameChanged.WasImported = NameChanged.WasImported(false)
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object NameChanged:
     export Place.Label
@@ -714,7 +714,7 @@ object Place:
   final case class NameRemove(name: NameRemove.Name, lang: Option[NameRemove.Lang] = None)
       derives StrictJson,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
   object NameRemove:
 
     type Name = Name.T
@@ -739,7 +739,7 @@ object Place:
       sourceLon: Option[Longitude] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Override:
     export Place.Label
@@ -769,7 +769,7 @@ object Place:
       lonAfter: Option[Longitude] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object OverrideChanged:
     export Place.Label
@@ -972,7 +972,7 @@ object Place:
       places: RebuildResult.Places
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object RebuildResult:
     type Links = Links.T
@@ -1082,10 +1082,7 @@ object Place:
       )
     val partOfKinds: Set[Kind] = Set(Kind(PartOf), Kind(PartOfAdmin), Kind(PartOfRegional), Kind(PartOfPhysical))
 
-  final case class RemoveIn(reason: Option[Rationale] = None)
-      derives StrictJson,
-        KindlingsSchema,
-        com.histmersion.api.json.Schema
+  final case class RemoveIn(reason: Option[Rationale] = None) derives StrictJson, KindlingsSchema, api.json.Schema
 
   object Shape:
     type IsAreaKind = Summary.Kind
@@ -1119,7 +1116,7 @@ object Place:
       importSource: Option[Summary.ImportSource] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema:
+        api.json.Schema:
     def when: Dating.Description = Dating.describe(dating, periodStart, periodEnd)
 
   object Summary:
@@ -1200,7 +1197,7 @@ object Place:
       contested: TreeRow.Contested = TreeRow.Contested(false)
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object TreeRow:
     export Place.Label
@@ -1220,7 +1217,7 @@ object Place:
       citekey: Option[Citekey] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Type:
     type TypeLabel = TypeLabel.T

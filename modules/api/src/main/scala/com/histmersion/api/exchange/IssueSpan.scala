@@ -7,7 +7,4 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.catalogue.Year
 
-final case class IssueSpan(start: Option[Year], end: Option[Year])
-    derives JsonCodec,
-      KindlingsSchema,
-      com.histmersion.api.json.Schema
+final case class IssueSpan(start: Option[Year], end: Option[Year]) derives JsonCodec, KindlingsSchema, api.json.Schema

@@ -15,7 +15,7 @@ final case class PassageHit(
     matches: List[MatchSpan]
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object PassageHit:
   type Offset = Offset.T

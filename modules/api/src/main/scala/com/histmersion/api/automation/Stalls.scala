@@ -25,10 +25,10 @@ object Stalls:
       action: Stall.Action = Stall.Action("")
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Stall:
-    export com.histmersion.api.research.ReviewGoal.Slug
+    export api.research.ReviewGoal.Slug
     export Facts.{IdleDays, LastProgress, Status, Title}
     type Code = Code.T
     object Code extends Newtype[String, Pure]
@@ -40,7 +40,7 @@ object Stalls:
   final case class ReasonCount(code: ReasonCount.Code, count: ReasonCount.Count)
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object ReasonCount:
     export Stall.Code
@@ -55,7 +55,7 @@ object Stalls:
       byReason: List[ReasonCount] = Nil
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object StallReport:
     type Days = Days.T
@@ -137,7 +137,7 @@ object Stalls:
   )
 
   object Facts:
-    export com.histmersion.api.research.ReviewGoal.Slug
+    export api.research.ReviewGoal.Slug
     type Title = Title.T
     object Title extends Newtype[String, Pure]
     type Status = Status.T

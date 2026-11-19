@@ -6,6 +6,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.catalogue.Year
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.json.Schema
 
 /** One item of a collection as a listing shows it (a Calibre book): its id, title, authors, year, publisher, tags,
   * identifiers by scheme and its files.
@@ -21,7 +22,7 @@ final case class CollectionEntry(
     formats: List[CollectionEntry.Formats]
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      Schema
 
 object CollectionEntry:
   type Id = Id.T

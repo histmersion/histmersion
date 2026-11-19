@@ -20,7 +20,7 @@ final case class RetractionsUpdate(
     error: Option[Problem] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object RetractionsUpdate:
   type Rows = Rows.T

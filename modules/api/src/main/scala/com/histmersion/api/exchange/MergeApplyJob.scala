@@ -27,16 +27,16 @@ final case class MergeApplyJob(
     problems: Option[NonEmptyVector[Problem]] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 object MergeApplyJob:
 
-  export com.histmersion.api.exchange.Bundle.Name as OfBundle
+  export api.exchange.Bundle.Name as OfBundle
   export MergePlan.PlanHash as OfPlanHash
   type OfElapsedMs = ElapsedMs
   val OfElapsedMs: ElapsedMs.type = ElapsedMs
 
-  export com.histmersion.api.SpatialHierarchyResult.Job.Id as Job
-  export com.histmersion.api.exchange.Bundle.Name as Bundle
+  export SpatialHierarchyResult.Job.Id as Job
+  export api.exchange.Bundle.Name as Bundle
   export MergePlan.PlanHash
   type ElapsedMs = ElapsedMs.T
   object ElapsedMs extends Newtype[Long, Pure]

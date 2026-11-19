@@ -28,7 +28,7 @@ final case class CollectionImported(
     jobErrorCode: Option[CollectionImported.JobErrorCode] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object CollectionImported:
   type Id = Id.T

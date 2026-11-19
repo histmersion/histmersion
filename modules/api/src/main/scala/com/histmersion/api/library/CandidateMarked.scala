@@ -10,7 +10,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 final case class CandidateMarked(state: Source.Candidate.State, updated: CandidateMarked.Updated)
     derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object CandidateMarked:
   type Updated = Updated.T

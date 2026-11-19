@@ -9,4 +9,4 @@ import com.histmersion.api.json.NewtypeCodecs.given
 final case class CandidateMark(ids: List[Source.Candidate.Id], state: Source.Candidate.State)
     derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema

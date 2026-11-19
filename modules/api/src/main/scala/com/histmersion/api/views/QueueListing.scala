@@ -18,7 +18,7 @@ final case class QueueListing(
     goals: List[Queue.ItemGoals] = Nil
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema:
+      api.json.Schema:
 
   /** The list in Markdown, each ACQUIRE item with its last check's reason; `None` for a list no kind names. */
   def markdown: Option[Queue.Markdown] =

@@ -13,7 +13,7 @@ final case class MediaCount(
     allowed: MediaCount.Allowed = MediaCount.Allowed(true)
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 object MediaCount:
 
   type Key = Key.T

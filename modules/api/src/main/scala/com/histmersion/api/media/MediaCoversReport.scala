@@ -18,7 +18,7 @@ final case class MediaCoversReport(
     failed: List[MediaCoversReport.Failed] = Nil
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object MediaCoversReport:
 

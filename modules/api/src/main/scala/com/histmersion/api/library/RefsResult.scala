@@ -17,7 +17,7 @@ final case class RefsResult(
     references: List[RefRow]
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object RefsResult:
   type Target = Target.T

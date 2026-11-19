@@ -14,7 +14,7 @@ final case class FigureLicenceFill(
     bySource: List[MediaCount] = Nil
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object FigureLicenceFill:
   type Candidates = Candidates.T

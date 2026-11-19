@@ -20,7 +20,7 @@ final case class ReloadReport(
     file: Option[ReloadReport.File] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema:
+      api.json.Schema:
   def ok: Boolean = (errors.isEmpty)
 
 object ReloadReport:

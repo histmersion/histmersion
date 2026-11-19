@@ -213,7 +213,7 @@ object ModelChains:
       if t.endsWith(":*") then
         val p = t.dropRight(2)
         ProviderKind
-          .parse(com.histmersion.api.automation.ProviderKind.Wire(p), known)
+          .parse(api.automation.ProviderKind.Wire(p), known)
           .map(Provider(_))
           .toRight(
             Invalid.Unknown
@@ -376,7 +376,7 @@ object ModelChains:
   final case class LimitSpec(amount: LimitSpec.Amount, measure: Measure, window: LimitSpec.Window)
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object LimitSpec:
     type Amount = Amount.T
@@ -384,10 +384,7 @@ object ModelChains:
     type Window = Window.T
     object Window extends Newtype[String, Pure]
 
-  final case class ChainSet(models: List[ChainSet.Models])
-      derives JsonCodec,
-        KindlingsSchema,
-        com.histmersion.api.json.Schema
+  final case class ChainSet(models: List[ChainSet.Models]) derives JsonCodec, KindlingsSchema, api.json.Schema
 
   object ChainSet:
     export ChainEntry.Model as Models
@@ -398,7 +395,7 @@ object ModelChains:
       reservePct: AllowanceSet.ReservePct = Allowance.ReservePct(0)
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object AllowanceSet:
     type Target = Target.T
@@ -425,7 +422,7 @@ object ModelChains:
       freesAt: Option[LimitStatus.FreesAt] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object LimitStatus:
     type Limit = Limit.T
@@ -455,7 +452,7 @@ object ModelChains:
       note: Option[AllowanceStatus.Note] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object AllowanceStatus:
     type Target = Target.T
@@ -477,7 +474,7 @@ object ModelChains:
       cooling: ChainEntry.Cooling = ChainEntry.Cooling(false)
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object ChainEntry:
     type Model = Model.T
@@ -500,7 +497,7 @@ object ModelChains:
       problems: List[Problem] = Nil
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object RoleChain:
     type Role = Role.T

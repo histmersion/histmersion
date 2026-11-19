@@ -15,7 +15,7 @@ final case class ConfigFileInfo(
     unknownKeys: List[ConfigFileInfo.UnknownKeys] = Nil
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 object ConfigFileInfo:
 
   type Path = Path.T

@@ -10,7 +10,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 final case class DeleteCount(part: DeletePart, rows: DeleteCount.Rows)
     derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object DeleteCount:
   type Rows = Rows.T

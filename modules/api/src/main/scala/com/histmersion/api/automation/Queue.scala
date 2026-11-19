@@ -55,7 +55,7 @@ object Queue:
       closedBy: Option[QueueItem.ClosedBy] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object QueueItem:
     type Id = Id.T
@@ -79,12 +79,9 @@ object Queue:
   final case class ItemGoals(item: QueueItem.Id, goals: List[GoalRef])
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
-  final case class GoalRef(slug: Goal.Slug, title: Goal.Title)
-      derives JsonCodec,
-        KindlingsSchema,
-        com.histmersion.api.json.Schema
+  final case class GoalRef(slug: Goal.Slug, title: Goal.Title) derives JsonCodec, KindlingsSchema, api.json.Schema
 
   final case class QueueAdd(
       text: QueueItem.Text,
@@ -96,7 +93,7 @@ object Queue:
       job: Option[SpatialHierarchyResult.Job.Id] = None
   ) derives StrictJson,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
   object QueueAdd:
 
     export QueueItem.CreatedAt
@@ -110,7 +107,7 @@ object Queue:
       closedBy: Option[QueuePatch.ClosedBy] = None
   ) derives StrictJson,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
   object QueuePatch:
 
     export QueueItem.ClosedBy
@@ -118,7 +115,7 @@ object Queue:
   final case class QueueImport(text: QueueItem.Text, replace: QueueImport.Replace = QueueImport.Replace(true))
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object QueueImport:
     type Replace = Replace.T
@@ -131,7 +128,7 @@ object Queue:
       replaced: QueueImported.Replaced
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object QueueImported:
     export Kind.Label as List

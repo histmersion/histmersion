@@ -16,7 +16,7 @@ final case class EventSourceRef(
     quote: Option[EventSourceRef.Quote] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object EventSourceRef:
   type Title = Title.T

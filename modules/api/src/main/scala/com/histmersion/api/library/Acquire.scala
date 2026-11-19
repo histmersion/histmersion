@@ -356,7 +356,7 @@ object Acquire:
         checks: AcquireCheck.Checks = AcquireCheck.Checks(1)
     ) derives JsonCodec,
           KindlingsSchema,
-          com.histmersion.api.json.Schema
+          api.json.Schema
 
     object AcquireCheck:
       type CheckedAt = CheckedAt.T
@@ -378,7 +378,7 @@ object Acquire:
         all: RecheckRequest.All = RecheckRequest.All(false)
     ) derives JsonCodec,
           KindlingsSchema,
-          com.histmersion.api.json.Schema
+          api.json.Schema
 
     object RecheckRequest:
       type DryRun = DryRun.T
@@ -400,7 +400,7 @@ object Acquire:
         citekey: Option[Citekey] = None
     ) derives JsonCodec,
           KindlingsSchema,
-          com.histmersion.api.json.Schema
+          api.json.Schema
 
     object RecheckRow:
       type Item = Item.T
@@ -425,7 +425,7 @@ object Acquire:
         job: Option[JobInfo] = None
     ) derives JsonCodec,
           KindlingsSchema,
-          com.histmersion.api.json.Schema
+          api.json.Schema
 
     object RecheckResult:
       type DryRun = DryRun.T
@@ -457,7 +457,7 @@ object Acquire:
         resumes: Option[RecheckJob.Resumes] = None
     ) derives JsonCodec,
           KindlingsSchema,
-          com.histmersion.api.json.Schema
+          api.json.Schema
     object RecheckJob:
 
       /** A re-check job's plan, in its detail. */
@@ -498,7 +498,7 @@ object Acquire:
         job: Option[RecheckStatus.Job] = None
     ) derives JsonCodec,
           KindlingsSchema,
-          com.histmersion.api.json.Schema
+          api.json.Schema
 
     object RecheckStatus:
       type Enabled = Enabled.T
@@ -523,7 +523,7 @@ object Acquire:
       object NextPass extends Newtype[String, Pure]
       type Note = Note.T
       object Note extends Newtype[String, Pure]
-      export com.histmersion.api.SpatialHierarchyResult.Job.Id as Job
+      export api.SpatialHierarchyResult.Job.Id as Job
 
     val Closed = "closed"
     val Fetched = "fetched"

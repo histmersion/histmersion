@@ -14,7 +14,7 @@ final case class CollectionFieldChange(
     to: CollectionFieldChange.To
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object CollectionFieldChange:
   type Field = Field.T

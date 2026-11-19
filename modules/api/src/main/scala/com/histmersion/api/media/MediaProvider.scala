@@ -80,7 +80,7 @@ object MediaProvider:
       licences: Info.Licences
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Info:
     type Title = Title.T

@@ -18,7 +18,7 @@ final case class ArticleEventLead(
     provider: ArticleEventLead.Provider
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 object ArticleEventLead:
   type Body = Body.T
   object Body extends Newtype[String, Pure]

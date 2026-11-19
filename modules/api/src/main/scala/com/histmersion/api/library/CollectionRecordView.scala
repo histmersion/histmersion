@@ -14,4 +14,4 @@ final case class CollectionRecordView(
     year: Option[Year]
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema

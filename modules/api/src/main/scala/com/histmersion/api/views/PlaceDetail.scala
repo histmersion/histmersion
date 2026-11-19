@@ -30,4 +30,4 @@ final case class PlaceDetail(
     media: List[MediaThumb] = Nil,
     siteType: Option[Place.Entry.SiteType] = None,
     record: Place.Record = Place.Record()
-) extends Place.Card derives JsonCodec, KindlingsSchema, com.histmersion.api.json.Schema
+) extends Place.Card derives JsonCodec, KindlingsSchema, api.json.Schema

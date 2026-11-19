@@ -10,7 +10,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 final case class IssueField(field: IssueField.Field, left: Option[IssueField.Value], right: Option[IssueField.Value])
     derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object IssueField:
   type Field = Field.T

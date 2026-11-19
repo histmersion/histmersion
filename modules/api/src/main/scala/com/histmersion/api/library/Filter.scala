@@ -30,7 +30,7 @@ final case class Filter(
     goal: Option[Filter.Goal] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema:
+      api.json.Schema:
 
   def isEmpty: Boolean =
     (q.forall((_).value.trim.isEmpty) && tags.isEmpty && authors.isEmpty && places.isEmpty && topics.isEmpty &&
@@ -69,7 +69,7 @@ object Filter:
   object Offset extends Newtype[Int, Pure]
   type Title = Title.T
   object Title extends Newtype[String, Pure]
-  export com.histmersion.api.research.ReviewGoal.Slug as Goal
+  export ReviewGoal.Slug as Goal
 
   val Earliest: Year = Year(-1000000000L)
   val Latest: Year = Year(1000000000L)
@@ -189,11 +189,11 @@ object Filter:
       )
     val status = Param(
       Param.Rest("status"),
-      _root_.com.histmersion.api.library.Filter.Docs.Param.Mcp("status"),
-      _root_.com.histmersion.api.library.Filter.Docs.Param
-        .Doc(s"ANY matches — ${com.histmersion.api.library.Source.Status.values.map(_.wire).mkString("|")}"),
-      _root_.com.histmersion.api.library.Filter.Docs.Param
-        .Brief(s"Any of ${com.histmersion.api.library.Source.Status.values.map(_.wire).mkString("|")}")
+      Param.Mcp("status"),
+      Param
+        .Doc(s"ANY matches — ${Source.Status.values.map(_.wire).mkString("|")}"),
+      Param
+        .Brief(s"Any of ${Source.Status.values.map(_.wire).mkString("|")}")
     )
     val yearFrom = Param(
       Param.Rest("yearFrom"),

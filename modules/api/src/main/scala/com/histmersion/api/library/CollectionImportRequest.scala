@@ -20,7 +20,7 @@ final case class CollectionImportRequest(
     acquireItem: Option[CollectionImportRequest.AcquireItem] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object CollectionImportRequest:
   type Id = Id.T

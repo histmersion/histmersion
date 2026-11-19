@@ -18,7 +18,7 @@ final case class NoteImport(
     assets: List[AssetInput] = Nil
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object NoteImport:
   export Source.{Notes as Body, Notes as Text}

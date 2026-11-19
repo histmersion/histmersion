@@ -57,7 +57,7 @@ enum ResearchSection(
       )
 
 object ResearchSection:
-  export com.histmersion.api.research.Article.Slug
+  export api.research.Article.Slug
   export UiLabels.Text as Label
   type Agents = Agents.T
   object Agents extends Newtype[Boolean, Pure]

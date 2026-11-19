@@ -13,7 +13,7 @@ final case class MergeResolution(
     text: Option[MergeResolution.Text] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object MergeResolution:
   type Issue = Issue.T

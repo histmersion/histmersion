@@ -11,4 +11,4 @@ import com.histmersion.api.library.Citekey
 final case class EventArticleRef(slug: Article.Slug, title: Article.Title, citekey: Citekey)
     derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema

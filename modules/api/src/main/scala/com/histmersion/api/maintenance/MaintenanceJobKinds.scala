@@ -13,5 +13,5 @@ object MaintenanceJobKinds:
     JobKindMeaning(
       "Database clean-up (VACUUM): frees the space old row versions hold after a re-seed or a gazetteer load."
     ),
-    subject = VacuumPlan.Detail.of(_).map(p => JobKinds.Subject(com.histmersion.api.maintenance.Vacuum.describe(p)))
+    subject = VacuumPlan.Detail.of(_).map(p => JobKinds.Subject(api.maintenance.Vacuum.describe(p)))
   )

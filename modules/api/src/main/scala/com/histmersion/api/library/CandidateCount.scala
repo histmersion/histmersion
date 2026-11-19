@@ -10,7 +10,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 final case class CandidateCount(state: Source.Candidate.State, count: CandidateCount.Count)
     derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object CandidateCount:
   type Count = Count.T

@@ -28,4 +28,4 @@ final case class AssetDetail(
     periodEnd: Option[Year] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema

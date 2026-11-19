@@ -10,7 +10,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 final case class TimeBucket(start: TimeBucket.Start, end: TimeBucket.End, count: TimeBucket.Count)
     derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object TimeBucket:
   type Start = Start.T

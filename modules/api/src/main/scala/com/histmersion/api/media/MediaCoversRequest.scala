@@ -19,7 +19,7 @@ final case class MediaCoversRequest(
     isbn: Option[MediaCoversRequest.Isbn] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object MediaCoversRequest:
   type Limit = Limit.T

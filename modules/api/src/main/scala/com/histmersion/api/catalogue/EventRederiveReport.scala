@@ -22,7 +22,7 @@ final case class EventRederiveReport(
     corrections: Correction.Counts = Correction.Counts()
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 object EventRederiveReport:
   type Report = Report.T
   object Report extends Newtype[String, Pure]

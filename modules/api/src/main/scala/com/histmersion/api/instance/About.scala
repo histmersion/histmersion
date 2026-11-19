@@ -36,7 +36,7 @@ final case class About(
     acquireRecheck: Option[Acquire.Checks.RecheckStatus] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object About:
   type Name = Name.T

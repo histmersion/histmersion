@@ -53,7 +53,7 @@ object Ingest:
       sha256: Option[Sha256] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Accepted:
     type Status = Status.T
@@ -73,7 +73,7 @@ object Ingest:
   )
 
   object Params:
-    export com.histmersion.api.exchange.Bundle.Asset.FileName as Filename
+    export api.exchange.Bundle.Asset.FileName as Filename
     type Quality = Quality.T
     object Quality extends Newtype[Boolean, Pure]
     type Force = Force.T
@@ -93,7 +93,7 @@ object Ingest:
       dropIn: Option[Report.DropIn] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Report:
     type Created = Created.T
@@ -110,7 +110,7 @@ object Ingest:
       legalOnly: Request.LegalOnly = Request.LegalOnly(false)
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Request:
     type Id = Id.T
@@ -124,7 +124,7 @@ object Ingest:
   final case class Step(step: Step.Value, ok: Step.Ok, detail: Step.Detail)
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Step:
     export Ingest.StepName as Value

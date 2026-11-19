@@ -15,7 +15,7 @@ final case class PdfInfo(
     spoolPath: Option[PdfInfo.SpoolPath]
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object PdfInfo:
   type Source = Source.T

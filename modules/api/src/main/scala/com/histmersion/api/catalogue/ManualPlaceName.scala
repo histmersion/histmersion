@@ -14,7 +14,7 @@ final case class ManualPlaceName(
     lang: ManualPlaceName.Lang
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object ManualPlaceName:
   type Label = Label.T

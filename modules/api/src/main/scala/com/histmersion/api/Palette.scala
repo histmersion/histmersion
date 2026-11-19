@@ -26,17 +26,17 @@ object Palette:
     Edge.Kind.Wire("foundational_for"),
     Edge.Kind.Wire("compilation_of"),
     Edge.Kind.Wire("review_of"),
-    com.histmersion.api.library.Edge.Kind.Wire("verifies")
+    Edge.Kind.Wire("verifies")
   )
-  val statuses: List[com.histmersion.api.library.Source.Status.Wire] =
+  val statuses: List[Source.Status.Wire] =
     List(
-      com.histmersion.api.library.Source.Status.Wire("foundational"),
-      com.histmersion.api.library.Source.Status.Wire("current"),
-      com.histmersion.api.library.Source.Status.Wire("contested"),
-      com.histmersion.api.library.Source.Status.Wire("superseded"),
-      com.histmersion.api.library.Source.Status.Wire("debunked"),
-      com.histmersion.api.library.Source.Status.Wire("retracted"),
-      com.histmersion.api.library.Source.Status.Wire("unassessed")
+      Source.Status.Wire("foundational"),
+      Source.Status.Wire("current"),
+      Source.Status.Wire("contested"),
+      Source.Status.Wire("superseded"),
+      Source.Status.Wire("debunked"),
+      Source.Status.Wire("retracted"),
+      Source.Status.Wire("unassessed")
     )
   val mediaKinds: List[MediaItem.Kind] = List(
     MediaItem.Kind("figure"),

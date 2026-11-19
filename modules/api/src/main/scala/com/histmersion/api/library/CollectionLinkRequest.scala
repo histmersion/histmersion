@@ -13,7 +13,7 @@ final case class CollectionLinkRequest(
     id: CollectionLinkRequest.Id
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object CollectionLinkRequest:
   type Id = Id.T

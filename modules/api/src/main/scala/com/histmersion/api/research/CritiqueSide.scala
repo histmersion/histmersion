@@ -18,7 +18,7 @@ final case class CritiqueSide(
     mentions: CritiqueSide.Mentions = CritiqueSide.Mentions(0)
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object CritiqueSide:
   type Cited = Cited.T

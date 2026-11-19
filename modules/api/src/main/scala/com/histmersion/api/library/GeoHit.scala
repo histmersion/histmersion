@@ -26,7 +26,7 @@ final case class GeoHit(
     sourceKind: Option[GeoHit.SourceKind] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object GeoHit:
   export com.histmersion.api.library.Title

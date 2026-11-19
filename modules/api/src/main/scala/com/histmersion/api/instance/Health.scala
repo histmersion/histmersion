@@ -15,7 +15,7 @@ final case class Health(
     warnings: List[Health.Warnings] = Nil
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object Health:
   type Status = Status.T

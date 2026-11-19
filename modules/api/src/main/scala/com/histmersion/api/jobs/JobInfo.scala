@@ -31,7 +31,7 @@ final case class JobInfo(
     detail: Option[JobDetail] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema,
+      api.json.Schema,
       CanEqual:
   def state: JobState = JobState.parse(status).getOrElse(JobState.Failed)
   def isTerminal: Boolean = state.isTerminal

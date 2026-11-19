@@ -14,7 +14,7 @@ final case class Facet(
     contested: Facet.Contested = Facet.Contested(false)
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 object Facet:
   type FieldText = FieldText.T
   object FieldText extends Newtype[String, Pure]

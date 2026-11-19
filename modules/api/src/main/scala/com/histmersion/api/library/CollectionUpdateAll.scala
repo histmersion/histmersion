@@ -13,7 +13,7 @@ final case class CollectionUpdateAll(
     applied: CollectionUpdateAll.Applied
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object CollectionUpdateAll:
 
@@ -25,7 +25,7 @@ object CollectionUpdateAll:
       apply: Request.Apply = Request.Apply(false)
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Request:
     type Apply = Apply.T

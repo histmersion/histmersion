@@ -11,7 +11,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 final case class RefsRequest(id: RefsRequest.Id, apply: RefsRequest.Apply = Api.Apply(false))
     derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object RefsRequest:
   type Id = Id.T

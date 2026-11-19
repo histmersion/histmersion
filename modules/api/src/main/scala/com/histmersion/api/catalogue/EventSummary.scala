@@ -28,7 +28,7 @@ final case class EventSummary(
     datingMethod: Option[EventSummary.DatingMethod] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema:
+      api.json.Schema:
   def datingNote: Option[String] = EventPrecision.note(central, plusMinus, datingMethod)
 
 object EventSummary:

@@ -35,7 +35,7 @@ object Bucket:
   object Key extends Newtype[String, Pure]
   type Kind = Kind.T
   object Kind extends Newtype[String, Pure]
-  export com.histmersion.api.catalogue.Place.Id as PlaceId
+  export api.catalogue.Place.Id as PlaceId
   type Count = Count.T
   object Count extends Newtype[Int, Pure]
   type Overlap = Overlap.T
@@ -47,7 +47,4 @@ object Bucket:
 
   def schema: Schema[Bucket] = summon[KindlingsSchema[Bucket]].schema
 
-  final case class Sample(citekey: Citekey, title: Title)
-      derives JsonCodec,
-        KindlingsSchema,
-        com.histmersion.api.json.Schema
+  final case class Sample(citekey: Citekey, title: Title) derives JsonCodec, KindlingsSchema, api.json.Schema

@@ -14,7 +14,7 @@ final case class CollectionSearch(
     total: CollectionSearch.Total
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object CollectionSearch:
   type Total = Total.T

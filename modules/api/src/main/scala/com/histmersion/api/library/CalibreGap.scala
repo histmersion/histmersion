@@ -24,7 +24,7 @@ final case class CalibreGap(
     storedOriginal: Option[CalibreGap.StoredOriginal] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object CalibreGap:
   export com.histmersion.api.library.Title

@@ -33,7 +33,7 @@ final case class Goal(
     updatedAt: Option[Goal.UpdatedAt] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object Goal:
   /** Why a plan names a work: the planner's words, not a failure. */
@@ -106,7 +106,7 @@ object Goal:
       deleted: Deleted.Value
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Deleted:
     type Value = Value.T
@@ -119,7 +119,7 @@ object Goal:
       next: Option[Offset] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema:
+        api.json.Schema:
     def page: OffsetPage = OffsetPage(total, offset, RowCount(goals.size))
 
   object List:
@@ -144,7 +144,7 @@ object Goal:
       budgetUsd: Option[Patch.BudgetUsd] = None
   ) derives StrictJson,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Patch:
 
@@ -160,11 +160,11 @@ object Goal:
         tags: scala.List[Tags] = Nil
     ) derives JsonCodec,
           KindlingsSchema,
-          com.histmersion.api.json.Schema
+          api.json.Schema
 
     final case class PlannedWork(
         doi: Doi,
-        title: Option[com.histmersion.api.library.Title] = None,
+        title: Option[api.library.Title] = None,
         year: Option[Year] = None,
         authors: scala.List[AuthorName] = Nil,
         citekey: Option[Citekey] = None,
@@ -173,7 +173,7 @@ object Goal:
         why: Rationale = Rationale("")
     ) derives JsonCodec,
           KindlingsSchema,
-          com.histmersion.api.json.Schema
+          api.json.Schema
 
     object PlannedWork:
       type InCorpus = InCorpus.T
@@ -190,7 +190,7 @@ object Goal:
         dropped: scala.List[Plan.Dropped] = Nil
     ) derives JsonCodec,
           KindlingsSchema,
-          com.histmersion.api.json.Schema:
+          api.json.Schema:
       def isEmpty: Boolean = (subGoals.isEmpty && queries.isEmpty && works.isEmpty)
 
     object Plan:
@@ -207,12 +207,12 @@ object Goal:
     export com.histmersion.api.automation.ScheduleKind
 
     final case class ArticleDraft(
-        slug: com.histmersion.api.research.Article.Slug,
+        slug: api.research.Article.Slug,
         mode: DraftMode,
-        title: com.histmersion.api.research.Article.Title,
-        kind: com.histmersion.api.research.Article.Kind.Wire,
+        title: api.research.Article.Title,
+        kind: api.research.Article.Kind.Wire,
         text: ArticleDraft.Text,
-        summary: Option[com.histmersion.api.research.Article.SummaryText] = None,
+        summary: Option[api.research.Article.SummaryText] = None,
         section: Option[ArticleDraft.Section] = None,
         cited: scala.List[Citekey] = Nil,
         notUsed: scala.List[Citekey] = Nil,
@@ -221,7 +221,7 @@ object Goal:
         reasons: scala.List[Coverage.Reason] = Nil
     ) derives JsonCodec,
           KindlingsSchema,
-          com.histmersion.api.json.Schema
+          api.json.Schema
 
     object ArticleDraft:
       type Text = Text.T
@@ -242,7 +242,7 @@ object Goal:
         queue: Option[GoalLink.Queue] = None
     ) derives JsonCodec,
           KindlingsSchema,
-          com.histmersion.api.json.Schema
+          api.json.Schema
 
     object GoalLink:
       type QueueNumber = QueueNumber.T
@@ -261,7 +261,7 @@ object Goal:
     final case class LinkAdd(kind: LinkKind, ref: LinkAdd.Ref, note: Option[LinkAdd.Note] = None)
         derives StrictJson,
           KindlingsSchema,
-          com.histmersion.api.json.Schema
+          api.json.Schema
     object LinkAdd:
 
       type Ref = Ref.T
@@ -282,7 +282,7 @@ object Goal:
         lastNote: Option[GoalSchedule.LastNote] = None
     ) derives JsonCodec,
           KindlingsSchema,
-          com.histmersion.api.json.Schema
+          api.json.Schema
 
     object GoalSchedule:
       type Cron = Cron.T
@@ -306,7 +306,7 @@ object Goal:
         budgetUsd: Option[ScheduleSet.BudgetUsd] = None
     ) derives StrictJson,
           KindlingsSchema,
-          com.histmersion.api.json.Schema
+          api.json.Schema
     object ScheduleSet:
 
       type Cron = Cron.T
@@ -316,7 +316,7 @@ object Goal:
       type BudgetUsd = BudgetUsd.T
       object BudgetUsd extends Newtype[Double, Pure]
 
-    final case class Removed(removed: Removed.Value) derives JsonCodec, KindlingsSchema, com.histmersion.api.json.Schema
+    final case class Removed(removed: Removed.Value) derives JsonCodec, KindlingsSchema, api.json.Schema
 
     object Removed:
       type Value = Value.T
@@ -331,7 +331,7 @@ object Goal:
         budgetUsd: Option[GoalView.BudgetUsd] = None
     ) derives JsonCodec,
           KindlingsSchema,
-          com.histmersion.api.json.Schema
+          api.json.Schema
 
     object GoalView:
       type BudgetUsd = BudgetUsd.T
@@ -348,7 +348,7 @@ object Goal:
       parentSlug: Option[Slug] = None
   ) derives StrictJson,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Stages:
     export Goal.{Stage as MeaningStatus, StageMeaning as MeaningResult}

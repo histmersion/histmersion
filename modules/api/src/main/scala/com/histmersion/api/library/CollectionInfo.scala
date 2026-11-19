@@ -22,7 +22,7 @@ final case class CollectionInfo(
     problems: List[Problem]
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object CollectionInfo:
   type Name = Name.T

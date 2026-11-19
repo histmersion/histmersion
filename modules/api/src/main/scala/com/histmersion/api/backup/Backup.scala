@@ -207,7 +207,7 @@ object Backup:
   final case class Info(file: Info.File, bytes: ByteCount, createdAt: Info.CreatedAt)
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Info:
     export Result.File
@@ -222,7 +222,7 @@ object Backup:
       pruned: List[Result.Pruned] = Nil
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Result:
     type File = File.T
@@ -252,7 +252,7 @@ object Backup:
       pruned: List[Status.Pruned] = Nil
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema:
+        api.json.Schema:
     def stateOf: Option[State] = State.parse(state)
     def result: Option[Result] =
       for b <- bytes; h <- sha256 if stateOf.contains(State.Done) yield Result(file, b, h, durationMs, pruned)

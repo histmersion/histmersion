@@ -22,7 +22,7 @@ final case class ArchiveItem(
     files: List[ArchiveFile] = Nil
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object ArchiveItem:
   export com.histmersion.api.library.ArchiveId as Identifier

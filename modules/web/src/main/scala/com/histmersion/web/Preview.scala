@@ -119,13 +119,13 @@ object Preview:
 
   object Target:
     object Source:
-      type Citekey = com.histmersion.api.library.Citekey
-      val Citekey: com.histmersion.api.library.Citekey.type = com.histmersion.api.library.Citekey
+      type Citekey = api.library.Citekey
+      val Citekey: api.library.Citekey.type = api.library.Citekey
     object Article:
-      export com.histmersion.api.research.Article.Slug
+      export api.research.Article.Slug
     object Place:
       export Pages.PlaceId as Id
-      export com.histmersion.api.Years.Astronomical as AsOf
+      export Years.Astronomical as AsOf
     object Event:
       export Pages.EventId as Id
 
@@ -549,7 +549,7 @@ object Preview:
       )
     case Target.Event(id) =>
       cached(eventCache, CacheKey(id.value))(
-        ApiClient.getEvent(com.histmersion.api.catalogue.Event.Id(id.value)).map(card)
+        ApiClient.getEvent(api.catalogue.Event.Id(id.value)).map(card)
       )
 
   // ── the one handler ──────────────────────────────────────────────────────────────────────────
@@ -821,7 +821,7 @@ object Preview:
   final case class Fit(x: Fit.X, y: Fit.Y, maxH: Fit.MaxH)
 
   object Fit:
-    export com.histmersion.web.Preview.{ScreenPixels as MaxH, ScreenPixels as X, ScreenPixels as Y}
+    export Preview.{ScreenPixels as MaxH, ScreenPixels as X, ScreenPixels as Y}
 
   /** The margin a card keeps from every viewport edge, and the least room worth placing it in beside its anchor; with
     * less on both sides it uses the whole height and covers the anchor instead.

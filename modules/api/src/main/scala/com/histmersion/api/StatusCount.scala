@@ -11,7 +11,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 final case class StatusCount(status: Source.Status, count: StatusCount.Count)
     derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      json.Schema
 
 object StatusCount:
   type Count = Count.T

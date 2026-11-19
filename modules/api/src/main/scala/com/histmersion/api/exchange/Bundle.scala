@@ -157,11 +157,11 @@ object Bundle:
   ) derives JsonCodec
 
   object Article:
-    export com.histmersion.api.research.ReviewGoal.Slug
+    export api.research.ReviewGoal.Slug
     type Title = Title.T
     object Title extends Newtype[String, Pure]
-    export com.histmersion.api.research.Article.Kind.Wire as Kind
-    export com.histmersion.api.research.Article.{Body, SummaryText as Summary}
+    export api.research.Article.Kind.Wire as Kind
+    export api.research.Article.{Body, SummaryText as Summary}
     type Tags = Tags.T
     object Tags extends Newtype[String, Pure]
     type Regions = Regions.T
@@ -175,7 +175,7 @@ object Bundle:
       derives JsonCodec
 
   object ArticleAlias:
-    export com.histmersion.api.research.ReviewGoal.Slug as Alias
+    export api.research.ReviewGoal.Slug as Alias
     type CreatedAt = CreatedAt.T
     object CreatedAt extends Newtype[String, Pure]
 
@@ -193,7 +193,7 @@ object Bundle:
   object ArticleVersion:
     type BodySha256 = BodySha256.T
     object BodySha256 extends Newtype[String, Pure]
-    export com.histmersion.api.research.Article.SummaryText as Summary
+    export api.research.Article.SummaryText as Summary
     type VersionOf = VersionOf.T
     object VersionOf extends Newtype[String, Pure]
     type UpdatedAt = UpdatedAt.T
@@ -216,7 +216,7 @@ object Bundle:
     object CheckedAt extends Newtype[String, Pure]
     type Retracted = Retracted.T
     object Retracted extends Newtype[Boolean, Pure]
-    export com.histmersion.api.library.Acquire.CitedByCount as CitedBy
+    export api.library.Acquire.CitedByCount as CitedBy
     type Influential = Influential.T
     object Influential extends Newtype[Int, Pure]
     type Verdict = Verdict.T
@@ -256,8 +256,8 @@ object Bundle:
     object Name extends Newtype[String, Pure]
     type Mime = MimeText
     val Mime: MimeText.type = MimeText
-    export com.histmersion.api.media.ImageSize.{Height, Width}
-    export com.histmersion.api.media.AssetKind.Wire as Kind
+    export api.media.ImageSize.{Height, Width}
+    export api.media.AssetKind.Wire as Kind
     type Caption = Caption.T
     object Caption extends Newtype[String, Pure]
     type License = License.T
@@ -287,7 +287,7 @@ object Bundle:
     def target: AssetLink.Target = AssetLink.Target.of(targetUid, targetId)
 
   object AssetLink:
-    export com.histmersion.api.media.AssetRelation.Wire as Relation
+    export api.media.AssetRelation.Wire as Relation
 
     enum Target derives CanEqual:
       case ByUid(uid: UUID)
@@ -366,10 +366,7 @@ object Bundle:
     type Rev = Rev.T
     object Rev extends Newtype[String, Pure]
 
-  final case class Blobs(count: Blobs.Count, bytes: ByteCount)
-      derives JsonCodec,
-        KindlingsSchema,
-        com.histmersion.api.json.Schema
+  final case class Blobs(count: Blobs.Count, bytes: ByteCount) derives JsonCodec, KindlingsSchema, api.json.Schema
 
   object Blobs:
     type Count = Count.T
@@ -405,7 +402,7 @@ object Bundle:
     object UpstreamValue extends Newtype[String, Pure]
     type UpstreamNow = UpstreamNow.T
     object UpstreamNow extends Newtype[String, Pure]
-    export com.histmersion.api.catalogue.EventCorrection.Status
+    export api.catalogue.EventCorrection.Status
     type CreatedAt = CreatedAt.T
     object CreatedAt extends Newtype[String, Pure]
     type UpdatedAt = UpdatedAt.T
@@ -416,7 +413,7 @@ object Bundle:
   final case class Edge(srcUid: UUID, dstUid: UUID, kind: Edge.Kind) derives JsonCodec, CanEqual
 
   object Edge:
-    export com.histmersion.api.library.Edge.Kind.Wire as Kind
+    export api.library.Edge.Kind.Wire as Kind
 
   final case class Event(
       uid: UUID,
@@ -454,7 +451,7 @@ object Bundle:
   ) derives JsonCodec
 
   object Event:
-    export com.histmersion.api.catalogue.Event.Id
+    export api.catalogue.Event.Id
     type Label = Label.T
     object Label extends Newtype[String, Pure]
     type Kind = Kind.T
@@ -467,10 +464,10 @@ object Bundle:
     object EndFrom extends Newtype[Long, Pure]
     type NotAfter = NotAfter.T
     object NotAfter extends Newtype[Long, Pure]
-    export com.histmersion.api.catalogue.Historicity.Wire as Historicity
+    export api.catalogue.Historicity.Wire as Historicity
     type Geom = Geom.T
     object Geom extends Newtype[String, Pure]
-    export com.histmersion.api.catalogue.Place.Id as PlaceId
+    export api.catalogue.Place.Id as PlaceId
     type Description = Description.T
     object Description extends Newtype[String, Pure]
     type UpdatedAt = UpdatedAt.T
@@ -496,7 +493,7 @@ object Bundle:
       derives JsonCodec
 
   object EventAlias:
-    export com.histmersion.api.catalogue.Event.Id as Alias
+    export api.catalogue.Event.Id as Alias
     type CreatedAt = CreatedAt.T
     object CreatedAt extends Newtype[String, Pure]
 
@@ -570,7 +567,7 @@ object Bundle:
     object Magnitude extends Newtype[Double, Pure]
     type Deaths = Deaths.T
     object Deaths extends Newtype[Long, Pure]
-    export com.histmersion.api.catalogue.Historicity.Wire as Historicity
+    export api.catalogue.Historicity.Wire as Historicity
     type RetrievedAt = RetrievedAt.T
     object RetrievedAt extends Newtype[String, Pure]
 
@@ -647,7 +644,7 @@ object Bundle:
   final case class FileInfo(path: FileInfo.Path, lines: FileInfo.Lines, bytes: ByteCount, sha256: Sha256)
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object FileInfo:
     type Path = Path.T
@@ -714,7 +711,7 @@ object Bundle:
   ) derives JsonCodec
 
   object Finding:
-    export com.histmersion.api.library.Finding.Id
+    export api.library.Finding.Id
     type Claim = Claim.T
     object Claim extends Newtype[String, Pure]
     type Region = Region.T
@@ -753,10 +750,10 @@ object Bundle:
   ) derives JsonCodec
 
   object Goal:
-    export com.histmersion.api.research.ReviewGoal.Slug
+    export api.research.ReviewGoal.Slug
     type Title = Title.T
     object Title extends Newtype[String, Pure]
-    export com.histmersion.api.automation.Goal.StatusValue as Status
+    export api.automation.Goal.StatusValue as Status
     type Notes = Notes.T
     object Notes extends Newtype[String, Pure]
     type Tags = Tags.T
@@ -777,7 +774,7 @@ object Bundle:
   final case class GoalAlias(alias: GoalAlias.Alias, goalUid: UUID, createdAt: GoalAlias.CreatedAt) derives JsonCodec
 
   object GoalAlias:
-    export com.histmersion.api.research.ReviewGoal.Slug as Alias
+    export api.research.ReviewGoal.Slug as Alias
     type CreatedAt = CreatedAt.T
     object CreatedAt extends Newtype[String, Pure]
 
@@ -794,7 +791,7 @@ object Bundle:
     def target: GoalLink.Target = GoalLink.Target.of(refUid, ref)
 
   object GoalLink:
-    export com.histmersion.api.automation.Goal.LinkKind.Wire as Kind
+    export api.automation.Goal.LinkKind.Wire as Kind
 
     enum Target derives CanEqual:
       case ByUid(uid: UUID)
@@ -819,7 +816,7 @@ object Bundle:
         CanEqual
 
   object GoalSchedule:
-    export com.histmersion.api.automation.ScheduleKind.Wire as Kind
+    export api.automation.ScheduleKind.Wire as Kind
     type Cron = Cron.T
     object Cron extends Newtype[String, Pure]
     type Enabled = Enabled.T
@@ -842,7 +839,7 @@ object Bundle:
       planHash: Option[ImportResult.PlanHash] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema:
+        api.json.Schema:
     def changed: ChangedCount = ChangedCount(counts.map(c => (c.changed.value: Int)).sum)
 
   object ImportResult:
@@ -862,7 +859,7 @@ object Bundle:
   final case class Instance(id: UUID, label: Option[Instance.Label] = None)
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Instance:
     type Label = Label.T
@@ -880,7 +877,7 @@ object Bundle:
       held: KindCounts.Held = KindCounts.Held(0)
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema:
+        api.json.Schema:
     def changed: ChangedCount = ChangedCount((inserted).value + (updated).value + (deleted).value)
 
   object KindCounts:
@@ -915,7 +912,7 @@ object Bundle:
       reference: Reference
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Manifest:
     type Format = Format.T
@@ -977,10 +974,10 @@ object Bundle:
   ) derives JsonCodec
 
   object Place:
-    export com.histmersion.api.catalogue.Place.Id
+    export api.catalogue.Place.Id
     type Label = Label.T
     object Label extends Newtype[String, Pure]
-    export com.histmersion.api.catalogue.Place.Kind.Wire as Kind
+    export api.catalogue.Place.Kind.Wire as Kind
     type Geom = Geom.T
     object Geom extends Newtype[String, Pure]
     type Source = Source.T
@@ -994,7 +991,7 @@ object Bundle:
       derives JsonCodec
 
   object PlaceAlias:
-    export com.histmersion.api.catalogue.Place.Id as Alias
+    export api.catalogue.Place.Id as Alias
     type CreatedAt = CreatedAt.T
     object CreatedAt extends Newtype[String, Pure]
 
@@ -1002,7 +999,7 @@ object Bundle:
       derives JsonCodec
 
   object PlaceLink:
-    export com.histmersion.api.catalogue.LinkScheme.Wire as Scheme
+    export api.catalogue.LinkScheme.Wire as Scheme
     type ExternalId = ExternalId.T
     object ExternalId extends Newtype[String, Pure]
     type Relation = Relation.T
@@ -1021,7 +1018,7 @@ object Bundle:
       derives JsonCodec
 
   object PlaceRelation:
-    export com.histmersion.api.catalogue.Place.Id as ParentId
+    export api.catalogue.Place.Id as ParentId
     type Kind = Kind.T
     object Kind extends Newtype[String, Pure]
 
@@ -1047,7 +1044,7 @@ object Bundle:
   ) derives JsonCodec
 
   object QueueItem:
-    export com.histmersion.api.automation.Queue.Wire as List
+    export Queue.Wire as List
     type Text = Text.T
     object Text extends Newtype[String, Pure]
     type Topic = Topic.T
@@ -1075,7 +1072,7 @@ object Bundle:
       periodsDigest: Reference.PeriodsDigest
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema,
+        api.json.Schema,
         CanEqual
 
   object Reference:
@@ -1095,7 +1092,7 @@ object Bundle:
   ) derives JsonCodec
 
   object SiteType:
-    export com.histmersion.api.catalogue.Place.Id as PlaceId
+    export api.catalogue.Place.Id as PlaceId
     type Value = Value.T
     object Value extends Newtype[String, Pure]
     type CheckedAt = CheckedAt.T
@@ -1105,12 +1102,12 @@ object Bundle:
       uid: UUID,
       origin: UUID,
       citekey: Citekey,
-      title: com.histmersion.api.library.Title,
+      title: api.library.Title,
       authors: List[AuthorName],
       doi: Option[Doi],
       year: Option[Year],
-      venue: Option[com.histmersion.api.library.Source.Venue],
-      status: com.histmersion.api.library.Source.Status,
+      venue: Option[api.library.Source.Venue],
+      status: api.library.Source.Status,
       topics: List[Source.Topics],
       regions: List[Source.Regions],
       tags: List[Source.Tags],
@@ -1143,7 +1140,7 @@ object Bundle:
     object Notes extends Newtype[String, Pure]
     type Provenance = Provenance.T
     object Provenance extends Newtype[String, Pure]
-    export com.histmersion.api.library.Acquire.CitedByCount
+    export api.library.Acquire.CitedByCount
     type InfluentialCitations = InfluentialCitations.T
     object InfluentialCitations extends Newtype[Int, Pure]
     type AddedDate = AddedDate.T
@@ -1179,12 +1176,12 @@ object Bundle:
   object UnresolvedEdge:
     type Dst = Dst.T
     object Dst extends Newtype[String, Pure]
-    export com.histmersion.api.library.Edge.Kind.Wire as Kind
+    export api.library.Edge.Kind.Wire as Kind
 
   final case class Upload(sha256: Sha256, bytes: ByteCount, manifest: Option[Manifest], problems: List[Problem])
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   final case class VerifyResult(
       ok: VerifyResult.Ok,
@@ -1193,7 +1190,7 @@ object Bundle:
       problems: List[Problem]
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object VerifyResult:
     type Ok = Ok.T

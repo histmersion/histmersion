@@ -15,7 +15,7 @@ final case class SkippedPeriod(
     detail: SkippedPeriod.Detail
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 object SkippedPeriod:
   type Id = Id.T
   object Id extends Newtype[String, Pure]

@@ -16,10 +16,10 @@ final case class AgentStateEntry(
     updatedAt: Option[AgentStateEntry.UpdatedAt] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object AgentStateEntry:
-  export com.histmersion.api.Api.AgentState.Key
+  export api.Api.AgentState.Key
   type Value = Value.T
   object Value extends Newtype[String, Pure]
   type UpdatedAt = UpdatedAt.T

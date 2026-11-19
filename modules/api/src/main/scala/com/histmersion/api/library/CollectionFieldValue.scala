@@ -13,7 +13,7 @@ final case class CollectionFieldValue(
     value: CollectionFieldValue.Value
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object CollectionFieldValue:
   type Name = Name.T

@@ -18,7 +18,7 @@ final case class ReadMark(
     openedAt: Option[ReadMark.OpenedAt] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object ReadMark:
 
@@ -30,7 +30,7 @@ object ReadMark:
   type OpenedAt = OpenedAt.T
   object OpenedAt extends Newtype[String, Pure]
 
-  final case class Set(kind: ItemKind, id: ItemKey, read: Read, title: Option[com.histmersion.api.library.Title] = None)
+  final case class Set(kind: ItemKind, id: ItemKey, read: Read, title: Option[api.library.Title] = None)
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema

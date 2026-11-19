@@ -13,7 +13,7 @@ final case class FormatCheck(
     fix: FormatCheck.Fix = FormatCheck.Fix(false)
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object FormatCheck:
   type Text = Text.T

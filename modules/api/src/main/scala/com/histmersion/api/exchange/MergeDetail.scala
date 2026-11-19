@@ -13,4 +13,4 @@ final case class MergeDetail(
     remembered: List[MergeResolution] = Nil
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema

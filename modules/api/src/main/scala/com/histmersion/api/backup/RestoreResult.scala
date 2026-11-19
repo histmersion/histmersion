@@ -19,7 +19,7 @@ final case class RestoreResult(
     warnings: List[RestoreResult.Warnings] = Nil
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object RestoreResult:
   export Backup.Result.File

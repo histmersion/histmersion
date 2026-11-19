@@ -21,7 +21,7 @@ final case class FollowupRow(
     citekey: Option[Citekey] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object FollowupRow:
   type Arxiv = Arxiv.T

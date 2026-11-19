@@ -21,7 +21,7 @@ final case class LedgerRow(
     recordedAt: LedgerRow.RecordedAt
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object LedgerRow:
   type Kind = Kind.T

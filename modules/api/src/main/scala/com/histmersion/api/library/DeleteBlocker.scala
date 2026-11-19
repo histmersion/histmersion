@@ -18,7 +18,7 @@ final case class DeleteBlocker(
     title: Option[DeleteBlocker.Title] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 object DeleteBlocker:
 
   type Id = Id.T

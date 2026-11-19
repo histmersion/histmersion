@@ -34,7 +34,7 @@ final case class MediaItem(
     targets: List[MediaTarget] = Nil
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object MediaItem:
   type Uid = Uid.T

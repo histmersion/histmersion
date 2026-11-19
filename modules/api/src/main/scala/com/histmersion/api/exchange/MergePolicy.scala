@@ -9,4 +9,4 @@ import com.histmersion.api.given
 final case class MergePolicy(editions: Option[EditionsPolicy] = None)
     derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema

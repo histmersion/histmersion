@@ -17,7 +17,7 @@ final case class EventDating(
     note: Option[EventDating.Note] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object EventDating:
   type Method = Method.T

@@ -14,7 +14,7 @@ final case class SeedResult(
     skipped: List[SeedResult.Skipped] = Nil
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object SeedResult:
   type Imported = Imported.T

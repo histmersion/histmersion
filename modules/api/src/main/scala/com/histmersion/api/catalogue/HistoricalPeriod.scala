@@ -20,7 +20,7 @@ final case class HistoricalPeriod(
     preset: Option[PresetRegion] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object HistoricalPeriod:
   type Id = Id.T

@@ -12,8 +12,8 @@ final case class MergeApplyRequest(
     resolutions: MergeResolutions = MergeResolutions()
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object MergeApplyRequest:
-  export com.histmersion.api.exchange.Bundle.Name as Bundle
+  export api.exchange.Bundle.Name as Bundle
   export MergePlan.PlanHash

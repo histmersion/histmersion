@@ -14,7 +14,7 @@ final case class DebounceConfig(
     previewMs: DebounceConfig.PreviewMs
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object DebounceConfig:
   type SuggestMs = SuggestMs.T

@@ -28,7 +28,7 @@ final case class MergePlan(
     changes: MergePlan.Changes = MergePlan.Changes(0)
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema:
+      api.json.Schema:
   def open: List[MergeIssue] = issues.filter((refactorCallback => ((refactorCallback.open) == (true))))
   def blocking: List[MergeIssue] = issues.filter(_.severity == MergeIssue.Severity.Blocking)
   def defaults: List[MergeIssue] = issues.filter(_.severity == MergeIssue.Severity.Default)
@@ -52,7 +52,7 @@ object MergePlan:
   final case class Request(bundle: Request.Bundle, resolutions: MergeResolutions = MergeResolutions())
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Request:
-    export com.histmersion.api.exchange.Bundle.Name as Bundle
+    export api.exchange.Bundle.Name as Bundle

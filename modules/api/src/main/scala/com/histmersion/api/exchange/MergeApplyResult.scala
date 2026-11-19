@@ -27,7 +27,7 @@ final case class MergeApplyResult(
     notes: List[MergeApplyResult.Notes] = Nil
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema:
+      api.json.Schema:
   def changed: Bundle.ChangedCount = Bundle.ChangedCount(counts.map(c => c.changed.value: Int).sum)
 
 object MergeApplyResult:

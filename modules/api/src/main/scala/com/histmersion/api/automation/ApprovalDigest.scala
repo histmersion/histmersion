@@ -19,7 +19,7 @@ object ApprovalDigest:
   final case class SubjectCount(subject: SubjectCount.Subject, count: SubjectCount.Count)
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object SubjectCount:
     type Subject = Subject.T
@@ -36,7 +36,7 @@ object ApprovalDigest:
       ids: List[Open.Id] = Nil
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object KindGroup:
     export Approval.Kind.Wire as Kind
@@ -55,7 +55,7 @@ object ApprovalDigest:
       goalPlansWait: Option[Digest.GoalPlansWait] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Digest:
     type At = At.T
@@ -80,7 +80,7 @@ object ApprovalDigest:
       by: Option[BulkDecide.By] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object BulkDecide:
     type Decision = Decision.T
@@ -99,7 +99,7 @@ object ApprovalDigest:
   final case class BulkFailed(id: BulkFailed.Id, problems: NonEmptyVector[Problem])
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object BulkFailed:
     type Id = Id.T
@@ -114,7 +114,7 @@ object ApprovalDigest:
       left: BulkResult.Left = BulkResult.Left(0)
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object BulkResult:
     type Decision = Decision.T

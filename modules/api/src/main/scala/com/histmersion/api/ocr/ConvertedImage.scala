@@ -17,9 +17,9 @@ final case class ConvertedImage(
     sha256: Option[Sha256] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object ConvertedImage:
-  export com.histmersion.api.exchange.Bundle.Asset.{FileName as Name, MimeText as Mime}
-  export com.histmersion.api.media.AssetInput.Base64
-  export com.histmersion.api.media.ImageSize.{Height, Width}
+  export api.exchange.Bundle.Asset.{FileName as Name, MimeText as Mime}
+  export api.media.AssetInput.Base64
+  export api.media.ImageSize.{Height, Width}

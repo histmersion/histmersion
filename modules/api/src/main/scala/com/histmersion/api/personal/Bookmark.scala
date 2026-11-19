@@ -22,7 +22,7 @@ final case class Bookmark(
     updatedAt: Bookmark.UpdatedAt = Bookmark.UpdatedAt("")
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema:
+      api.json.Schema:
   def name: Bookmark.Name =
     Bookmark.Name(label.map(_.value: String).filter(_.trim.nonEmpty).getOrElse(title.value: String))
 
@@ -35,7 +35,7 @@ object Bookmark:
   type UpdatedAt = UpdatedAt.T
   object UpdatedAt extends Newtype[String, Pure]
 
-  final case class Edit(label: Option[Label] = None) derives JsonCodec, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class Edit(label: Option[Label] = None) derives JsonCodec, KindlingsSchema, api.json.Schema
 
   type Id = Id.T
 
@@ -67,4 +67,4 @@ object Bookmark:
   final case class New(target: Target, label: Option[Label] = None, title: Option[Title] = None)
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema

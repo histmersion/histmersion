@@ -9,4 +9,4 @@ import com.histmersion.api.json.NewtypeCodecs.given
 final case class CalibrePushRequest(citekey: Citekey, calibreId: Source.CalibreId)
     derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema

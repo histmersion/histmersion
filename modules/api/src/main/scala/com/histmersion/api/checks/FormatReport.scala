@@ -14,7 +14,7 @@ final case class FormatReport(
     text: Option[FormatReport.Text] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema:
+      api.json.Schema:
   def errors: FormatReport.ErrorCount = FormatReport.ErrorCount(issues.count(_.severity == FormatSeverity.Error))
   def warnings: FormatReport.WarningCount =
     FormatReport.WarningCount(issues.count(_.severity == FormatSeverity.Warning))

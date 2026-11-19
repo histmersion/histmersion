@@ -10,7 +10,7 @@ import com.histmersion.api.jobs.JobDetail
 final case class VacuumPlan(analyze: VacuumPlan.Analyze, tables: List[VacuumPlan.Tables])
     derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 object VacuumPlan:
 
   /** A vacuum job's plan, in its detail. */

@@ -121,6 +121,9 @@ import com.histmersion.api.catalogue.Event
 import com.histmersion.api.library.Title
 import com.histmersion.api.media.AssetLinks
 import com.histmersion.api.media.Iiif
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.library.AuthorName
+import com.histmersion.api.library.Doi
 
 /** Every endpoint here and in the other `*Api` objects is a `lazy val`: initialising an object runs all of its strict
   * vals, so Scala.js would link every endpoint and every codec it names into the web bundle as soon as the page used
@@ -274,10 +277,10 @@ object Api:
             place.map(Filter.Places(_)),
             topic.map(Filter.Topics(_)),
             status.map(Filter.Status(_)),
-            yearFrom.map(com.histmersion.api.catalogue.Year(_)),
-            yearTo.map(com.histmersion.api.catalogue.Year(_)),
-            from.map(com.histmersion.api.catalogue.Year(_)),
-            to.map(com.histmersion.api.catalogue.Year(_)),
+            yearFrom.map(catalogue.Year(_)),
+            yearTo.map(catalogue.Year(_)),
+            from.map(catalogue.Year(_)),
+            to.map(catalogue.Year(_)),
             minLon.map(Longitude(_)),
             minLat.map(Latitude(_)),
             maxLon.map(Longitude(_)),
@@ -352,7 +355,7 @@ object Api:
       )
 
   lazy val getSource: PublicEndpoint[
-    (com.histmersion.api.library.Citekey, SourceViewQuery.FullText),
+    (Citekey, SourceViewQuery.FullText),
     Error,
     Source.WithFindings,
     Any
@@ -361,25 +364,25 @@ object Api:
       .in("sources" / path[String]("citekey"))
       .in(query[Boolean]("body").default(true))
       .out(jsonBody[Source.WithFindings]))
-      .mapIn[(com.histmersion.api.library.Citekey, SourceViewQuery.FullText)]((refactorDecoded109: (String, Boolean)) =>
+      .mapIn[(Citekey, SourceViewQuery.FullText)]((refactorDecoded109: (String, Boolean)) =>
         (
-          com.histmersion.api.library.Citekey((refactorDecoded109)._1),
+          Citekey((refactorDecoded109)._1),
           SourceViewQuery.FullText((refactorDecoded109)._2)
         )
-      )((refactorEncoded109: (com.histmersion.api.library.Citekey, SourceViewQuery.FullText)) =>
+      )((refactorEncoded109: (Citekey, SourceViewQuery.FullText)) =>
         (((refactorEncoded109)._1).value, ((refactorEncoded109)._2).value)
       )
 
-  lazy val sourceArticles: PublicEndpoint[com.histmersion.api.library.Citekey, Error, List[Backlink], Any] =
+  lazy val sourceArticles: PublicEndpoint[Citekey, Error, List[Backlink], Any] =
     (base.get
       .in("sources" / path[String]("citekey") / "articles")
       .out(jsonBody[List[Backlink]]))
-      .mapIn[com.histmersion.api.library.Citekey]((refactorDecoded4: String) =>
-        com.histmersion.api.library.Citekey(refactorDecoded4)
-      )((refactorEncoded4: com.histmersion.api.library.Citekey) => (refactorEncoded4).value)
+      .mapIn[Citekey]((refactorDecoded4: String) => Citekey(refactorDecoded4))((refactorEncoded4: Citekey) =>
+        (refactorEncoded4).value
+      )
 
   final case class SourceViewQuery(
-      citekey: com.histmersion.api.library.Citekey,
+      citekey: Citekey,
       fullText: SourceViewQuery.FullText = SourceViewQuery.FullText(false),
       section: Option[SourceViewQuery.Section] = None,
       heading: Option[SourceViewQuery.Heading] = None,
@@ -410,7 +413,7 @@ object Api:
       .in(query[Option[Int]]("chars"))
       .mapIn { case (citekey, fullText, section, heading, offset, chars) =>
         SourceViewQuery(
-          com.histmersion.api.library.Citekey(citekey),
+          Citekey(citekey),
           SourceViewQuery.FullText(fullText),
           section.map(SourceViewQuery.Section(_)),
           heading.map(SourceViewQuery.Heading(_)),
@@ -429,12 +432,12 @@ object Api:
       )
       .errorOut(problemOut)
       .out(stringBody))
-      .mapOut[_root_.com.histmersion.api.library.Source.View]((refactorDecoded: _root_.java.lang.String) =>
-        _root_.com.histmersion.api.library.Source.View(refactorDecoded)
-      )((refactorEncoded: Source.View) => (refactorEncoded).value)
+      .mapOut[Source.View]((refactorDecoded: String) => Source.View(refactorDecoded))((refactorEncoded: Source.View) =>
+        (refactorEncoded).value
+      )
 
   final case class PassagesQuery(
-      citekey: com.histmersion.api.library.Citekey,
+      citekey: Citekey,
       q: PassagesQuery.Q,
       regex: PassagesQuery.Regex = PassagesQuery.Regex(false),
       limit: Option[PassagesQuery.Limit] = None,
@@ -464,7 +467,7 @@ object Api:
       .in(query[Option[Int]]("context").description("characters of context around a match"))
       .mapIn { case (citekey, q, regex, limit, context) =>
         PassagesQuery(
-          com.histmersion.api.library.Citekey(citekey),
+          Citekey(citekey),
           PassagesQuery.Q(q),
           PassagesQuery.Regex(regex),
           limit.map(PassagesQuery.Limit(_)),
@@ -569,23 +572,22 @@ object Api:
       )
       .out(jsonBody[TimeHistogram])
 
-  lazy val neighbors
-      : PublicEndpoint[(com.histmersion.api.library.Citekey, List[Edge.Kind.Wire]), Error, List[NeighborRow], Any] =
+  lazy val neighbors: PublicEndpoint[(Citekey, List[Edge.Kind.Wire]), Error, List[NeighborRow], Any] =
     (base.get
       .in("neighbors" / path[String]("citekey"))
       .in(query[List[String]]("kind"))
       .out(jsonBody[List[NeighborRow]]))
-      .mapIn[(com.histmersion.api.library.Citekey, List[Edge.Kind.Wire])]((refactorDecoded5: (String, List[String])) =>
+      .mapIn[(Citekey, List[Edge.Kind.Wire])]((refactorDecoded5: (String, List[String])) =>
         (
-          com.histmersion.api.library.Citekey((refactorDecoded5)._1),
+          Citekey((refactorDecoded5)._1),
           ((refactorDecoded5)._2).map(refactorElement5 => Edge.Kind.Wire(refactorElement5))
         )
-      )((refactorEncoded5: (com.histmersion.api.library.Citekey, List[Edge.Kind.Wire])) =>
+      )((refactorEncoded5: (Citekey, List[Edge.Kind.Wire])) =>
         (((refactorEncoded5)._1).value, ((refactorEncoded5)._2).map(refactorElement6 => (refactorElement6).value))
       )
 
   lazy val graph: PublicEndpoint[
-    (com.histmersion.api.library.Citekey, Option[Source.Graph.DepthCount]),
+    (Citekey, Option[Source.Graph.DepthCount]),
     Error,
     Source.Graph,
     Any
@@ -594,14 +596,13 @@ object Api:
       .in("graph" / path[String]("citekey"))
       .in(query[Option[Int]]("depth"))
       .out(jsonBody[Source.Graph]))
-      .mapIn[(com.histmersion.api.library.Citekey, Option[Source.Graph.DepthCount])](
-        (refactorDecoded112: (String, Option[Int])) =>
-          (
-            _root_.com.histmersion.api.library.Citekey((refactorDecoded112)._1),
-            ((refactorDecoded112)._2)
-              .map(refactorElement99 => _root_.com.histmersion.api.library.Source.Graph.DepthCount(refactorElement99))
-          )
-      )((refactorEncoded112: (com.histmersion.api.library.Citekey, Option[Source.Graph.DepthCount])) =>
+      .mapIn[(Citekey, Option[Source.Graph.DepthCount])]((refactorDecoded112: (String, Option[Int])) =>
+        (
+          Citekey((refactorDecoded112)._1),
+          ((refactorDecoded112)._2)
+            .map(refactorElement99 => Source.Graph.DepthCount(refactorElement99))
+        )
+      )((refactorEncoded112: (Citekey, Option[Source.Graph.DepthCount])) =>
         (
           ((refactorEncoded112)._1).value,
           ((refactorEncoded112)._2).map(refactorElement100 => (refactorElement100).value)
@@ -609,7 +610,7 @@ object Api:
       )
 
   lazy val contradictions: PublicEndpoint[
-    (Option[com.histmersion.api.library.Citekey], Option[AggregateQuery.AsOf]),
+    (Option[Citekey], Option[AggregateQuery.AsOf]),
     Error,
     ContradictionsResult,
     Any
@@ -619,13 +620,12 @@ object Api:
       .in(query[Option[String]]("citekey"))
       .in(query[Option[Long]]("since"))
       .out(jsonBody[ContradictionsResult]))
-      .mapIn[(Option[com.histmersion.api.library.Citekey], Option[AggregateQuery.AsOf])](
-        (refactorDecoded7: (Option[String], Option[Long])) =>
-          (
-            ((refactorDecoded7)._1).map(refactorElement9 => com.histmersion.api.library.Citekey(refactorElement9)),
-            ((refactorDecoded7)._2).map(refactorElement10 => AggregateQuery.AsOf(refactorElement10))
-          )
-      )((refactorEncoded7: (Option[com.histmersion.api.library.Citekey], Option[AggregateQuery.AsOf])) =>
+      .mapIn[(Option[Citekey], Option[AggregateQuery.AsOf])]((refactorDecoded7: (Option[String], Option[Long])) =>
+        (
+          ((refactorDecoded7)._1).map(refactorElement9 => Citekey(refactorElement9)),
+          ((refactorDecoded7)._2).map(refactorElement10 => AggregateQuery.AsOf(refactorElement10))
+        )
+      )((refactorEncoded7: (Option[Citekey], Option[AggregateQuery.AsOf])) =>
         (
           ((refactorEncoded7)._1).map(refactorElement11 => (refactorElement11).value),
           ((refactorEncoded7)._2).map(refactorElement12 => (refactorElement12).value)
@@ -681,84 +681,75 @@ object Api:
     .default(false)
     .description("refuse the write when its Markdown has a formatting error (default: report only)")
 
-  lazy val putSource
-      : PublicEndpoint[(com.histmersion.api.library.Citekey, Source.Put, Overwrite), Error, Source.WithFindings, Any] =
+  lazy val putSource: PublicEndpoint[(Citekey, Source.Put, Overwrite), Error, Source.WithFindings, Any] =
     (endpoint.put
       .in("api" / "sources" / path[String]("citekey"))
       .in(jsonBody[Source.Put])
       .in(strictQuery)
       .errorOut(problemOut)
       .out(jsonBody[Source.WithFindings]))
-      .mapIn[(com.histmersion.api.library.Citekey, Source.Put, Overwrite)](
-        (refactorDecoded10: (String, Source.Put, Boolean)) =>
-          (
-            com.histmersion.api.library.Citekey((refactorDecoded10)._1),
-            (refactorDecoded10)._2,
-            Overwrite((refactorDecoded10)._3)
-          )
-      )((refactorEncoded10: (com.histmersion.api.library.Citekey, Source.Put, Overwrite)) =>
+      .mapIn[(Citekey, Source.Put, Overwrite)]((refactorDecoded10: (String, Source.Put, Boolean)) =>
+        (
+          Citekey((refactorDecoded10)._1),
+          (refactorDecoded10)._2,
+          Overwrite((refactorDecoded10)._3)
+        )
+      )((refactorEncoded10: (Citekey, Source.Put, Overwrite)) =>
         (((refactorEncoded10)._1).value, (refactorEncoded10)._2, ((refactorEncoded10)._3).value)
       )
 
-  lazy val patchSource
-      : PublicEndpoint[(com.histmersion.api.library.Citekey, Source.Patch, Apply), Error, Source.WithFindings, Any] =
+  lazy val patchSource: PublicEndpoint[(Citekey, Source.Patch, Apply), Error, Source.WithFindings, Any] =
     (endpoint.patch
       .in("api" / "sources" / path[String]("citekey"))
       .in(jsonBody[Source.Patch])
       .in(strictQuery)
       .errorOut(problemOut)
       .out(jsonBody[Source.WithFindings]))
-      .mapIn[(com.histmersion.api.library.Citekey, Source.Patch, Apply)](
-        (refactorDecoded117: (String, Source.Patch, Boolean)) =>
-          (
-            com.histmersion.api.library.Citekey((refactorDecoded117)._1),
-            (refactorDecoded117)._2,
-            Apply((refactorDecoded117)._3)
-          )
-      )((refactorEncoded117: (com.histmersion.api.library.Citekey, Source.Patch, Apply)) =>
+      .mapIn[(Citekey, Source.Patch, Apply)]((refactorDecoded117: (String, Source.Patch, Boolean)) =>
+        (
+          Citekey((refactorDecoded117)._1),
+          (refactorDecoded117)._2,
+          Apply((refactorDecoded117)._3)
+        )
+      )((refactorEncoded117: (Citekey, Source.Patch, Apply)) =>
         (((refactorEncoded117)._1).value, (refactorEncoded117)._2, ((refactorEncoded117)._3).value)
       )
 
-  lazy val lintSource: PublicEndpoint[com.histmersion.api.library.Citekey, Error, FormatReport, Any] =
+  lazy val lintSource: PublicEndpoint[Citekey, Error, FormatReport, Any] =
     (endpoint.get
       .in("api" / "sources" / path[String]("citekey") / "lint")
       .errorOut(problemOut)
       .out(jsonBody[FormatReport]))
-      .mapIn[com.histmersion.api.library.Citekey]((refactorDecoded118: String) =>
-        com.histmersion.api.library.Citekey(refactorDecoded118)
-      )((refactorEncoded118: com.histmersion.api.library.Citekey) => (refactorEncoded118).value)
+      .mapIn[Citekey]((refactorDecoded118: String) => Citekey(refactorDecoded118))((refactorEncoded118: Citekey) =>
+        (refactorEncoded118).value
+      )
 
-  lazy val fixSourceFormat: PublicEndpoint[com.histmersion.api.library.Citekey, Error, FormatReport, Any] =
+  lazy val fixSourceFormat: PublicEndpoint[Citekey, Error, FormatReport, Any] =
     (endpoint.post
       .in("api" / "sources" / path[String]("citekey") / "lint" / "fix")
       .errorOut(problemOut)
       .out(jsonBody[FormatReport]))
-      .mapIn[com.histmersion.api.library.Citekey]((refactorDecoded13: String) =>
-        com.histmersion.api.library.Citekey(refactorDecoded13)
-      )((refactorEncoded13: com.histmersion.api.library.Citekey) => (refactorEncoded13).value)
+      .mapIn[Citekey]((refactorDecoded13: String) => Citekey(refactorDecoded13))((refactorEncoded13: Citekey) =>
+        (refactorEncoded13).value
+      )
 
-  lazy val renameSource
-      : PublicEndpoint[(com.histmersion.api.library.Citekey, Rename.Request), Error, Source.Renamed, Any] =
+  lazy val renameSource: PublicEndpoint[(Citekey, Rename.Request), Error, Source.Renamed, Any] =
     (base.post
       .in("sources" / path[String]("citekey") / "rename")
       .in(jsonBody[Rename.Request])
       .out(jsonBody[Source.Renamed]))
-      .mapIn[(com.histmersion.api.library.Citekey, Rename.Request)]((refactorDecoded120: (String, Rename.Request)) =>
-        (com.histmersion.api.library.Citekey((refactorDecoded120)._1), (refactorDecoded120)._2)
-      )((refactorEncoded120: (com.histmersion.api.library.Citekey, Rename.Request)) =>
-        (((refactorEncoded120)._1).value, (refactorEncoded120)._2)
-      )
+      .mapIn[(Citekey, Rename.Request)]((refactorDecoded120: (String, Rename.Request)) =>
+        (Citekey((refactorDecoded120)._1), (refactorDecoded120)._2)
+      )((refactorEncoded120: (Citekey, Rename.Request)) => (((refactorEncoded120)._1).value, (refactorEncoded120)._2))
 
-  lazy val deleteSource
-      : PublicEndpoint[(com.histmersion.api.library.Citekey, Source.DeleteRequest), Error, Source.Deletion, Any] =
+  lazy val deleteSource: PublicEndpoint[(Citekey, Source.DeleteRequest), Error, Source.Deletion, Any] =
     (base.post
       .in("sources" / path[String]("citekey") / "delete")
       .in(jsonBody[Source.DeleteRequest])
       .out(jsonBody[Source.Deletion]))
-      .mapIn[(com.histmersion.api.library.Citekey, Source.DeleteRequest)](
-        (refactorDecoded121: (String, Source.DeleteRequest)) =>
-          (com.histmersion.api.library.Citekey((refactorDecoded121)._1), (refactorDecoded121)._2)
-      )((refactorEncoded121: (com.histmersion.api.library.Citekey, Source.DeleteRequest)) =>
+      .mapIn[(Citekey, Source.DeleteRequest)]((refactorDecoded121: (String, Source.DeleteRequest)) =>
+        (Citekey((refactorDecoded121)._1), (refactorDecoded121)._2)
+      )((refactorEncoded121: (Citekey, Source.DeleteRequest)) =>
         (((refactorEncoded121)._1).value, (refactorEncoded121)._2)
       )
 
@@ -768,27 +759,25 @@ object Api:
   lazy val importNote: PublicEndpoint[NoteImport, Error, SeedResult, Any] =
     base.post.in("sources" / "import").in(jsonBody[NoteImport]).out(jsonBody[SeedResult])
 
-  lazy val exportSource: PublicEndpoint[com.histmersion.api.library.Citekey, Error, Source.Export, Any] =
+  lazy val exportSource: PublicEndpoint[Citekey, Error, Source.Export, Any] =
     (endpoint.get
       .in("api" / "sources" / path[String]("citekey") / "export")
       .errorOut(problemOut)
       .out(stringBody))
-      .mapIn[com.histmersion.api.library.Citekey]((refactorDecoded16: String) =>
-        com.histmersion.api.library.Citekey(refactorDecoded16)
-      )((refactorEncoded16: com.histmersion.api.library.Citekey) => (refactorEncoded16).value)
-      .mapOut[_root_.com.histmersion.api.library.Source.Export]((refactorDecoded17: _root_.java.lang.String) =>
-        _root_.com.histmersion.api.library.Source.Export(refactorDecoded17)
-      )((refactorEncoded17: Source.Export) => (refactorEncoded17).value)
+      .mapIn[Citekey]((refactorDecoded16: String) => Citekey(refactorDecoded16))((refactorEncoded16: Citekey) =>
+        (refactorEncoded16).value
+      )
+      .mapOut[Source.Export]((refactorDecoded17: String) => Source.Export(refactorDecoded17))(
+        (refactorEncoded17: Source.Export) => (refactorEncoded17).value
+      )
 
-  lazy val citekeys: PublicEndpoint[Unit, Error, List[com.histmersion.api.library.Citekey], Any] =
+  lazy val citekeys: PublicEndpoint[Unit, Error, List[Citekey], Any] =
     (base.get
       .in("citekeys")
       .out(jsonBody[List[String]]))
-      .mapOut[List[com.histmersion.api.library.Citekey]]((refactorDecoded2: List[String]) =>
-        (refactorDecoded2).map(refactorElement => com.histmersion.api.library.Citekey(refactorElement))
-      )((refactorEncoded2: List[com.histmersion.api.library.Citekey]) =>
-        (refactorEncoded2).map(refactorElement2 => (refactorElement2).value)
-      )
+      .mapOut[List[Citekey]]((refactorDecoded2: List[String]) =>
+        (refactorDecoded2).map(refactorElement => Citekey(refactorElement))
+      )((refactorEncoded2: List[Citekey]) => (refactorEncoded2).map(refactorElement2 => (refactorElement2).value))
 
   lazy val resolveEdges: PublicEndpoint[Unit, Error, EdgesResolved, Any] =
     base.post.in("edges" / "resolve").out(jsonBody[EdgesResolved])
@@ -1789,7 +1778,7 @@ object Api:
     object Text extends Newtype[String, Pure]
     type Kind = Kind.T
     object Kind extends Newtype[String, Pure]
-    export com.histmersion.api.catalogue.Historicity.Wire as Historicity
+    export catalogue.Historicity.Wire as Historicity
     export Place.Id as PlaceId
     type Tier = Tier.T
     object Tier extends Newtype[String, Pure]
@@ -1874,7 +1863,7 @@ object Api:
       )
 
   final case class AttestationQuery(
-      citekey: Option[com.histmersion.api.library.Citekey] = None,
+      citekey: Option[Citekey] = None,
       targetType: Option[AttestationQuery.TargetType] = None,
       targetId: Option[AttestationQuery.TargetId] = None,
       limit: Option[AttestationQuery.Limit] = None,
@@ -1901,7 +1890,7 @@ object Api:
       .in(query[Option[Int]]("offset"))
       .mapIn { case (citekey, targetType, targetId, limit, offset) =>
         AttestationQuery(
-          citekey.map(com.histmersion.api.library.Citekey(_)),
+          citekey.map(Citekey(_)),
           targetType.map(AttestationQuery.TargetType(_)),
           targetId.map(AttestationQuery.TargetId(_)),
           limit.map(AttestationQuery.Limit(_)),
@@ -2087,14 +2076,14 @@ object Api:
       )
       .map { case (citekey, filename, quality, force, title, authors, year, doi, provenance, acquireItem) =>
         Ingest.Params(
-          com.histmersion.api.library.Citekey(citekey),
+          Citekey(citekey),
           filename.map(Ingest.Params.Filename(_)),
           Ingest.Params.Quality(quality),
           Ingest.Params.Force(force),
           title.map(Title(_)),
-          authors.map(com.histmersion.api.library.AuthorName(_)),
-          year.map(com.histmersion.api.catalogue.Year(_)),
-          doi.map(com.histmersion.api.library.Doi(_)),
+          authors.map(AuthorName(_)),
+          year.map(catalogue.Year(_)),
+          doi.map(Doi(_)),
           provenance.map(Ingest.Params.Provenance(_)),
           acquireItem.map(Ingest.Params.AcquireItem(_))
         )
@@ -2122,28 +2111,28 @@ object Api:
       .out(statusCode(StatusCode.Accepted))
       .out(jsonBody[Ingest.Accepted])
 
-  lazy val reocr: PublicEndpoint[(com.histmersion.api.library.Citekey, Overwrite), Error, Ingest.Accepted, Any] =
+  lazy val reocr: PublicEndpoint[(Citekey, Overwrite), Error, Ingest.Accepted, Any] =
     (endpoint.post
       .in("api" / "sources" / path[String]("citekey") / "reocr")
       .in(query[Boolean]("quality").default(false))
       .errorOut(problemOut)
       .out(statusCode(StatusCode.Accepted))
       .out(jsonBody[Ingest.Accepted]))
-      .mapIn[(com.histmersion.api.library.Citekey, Overwrite)]((refactorDecoded189: (String, Boolean)) =>
-        (com.histmersion.api.library.Citekey((refactorDecoded189)._1), Overwrite((refactorDecoded189)._2))
-      )((refactorEncoded189: (com.histmersion.api.library.Citekey, Overwrite)) =>
+      .mapIn[(Citekey, Overwrite)]((refactorDecoded189: (String, Boolean)) =>
+        (Citekey((refactorDecoded189)._1), Overwrite((refactorDecoded189)._2))
+      )((refactorEncoded189: (Citekey, Overwrite)) =>
         (((refactorEncoded189)._1).value, ((refactorEncoded189)._2).value)
       )
 
-  lazy val original: PublicEndpoint[com.histmersion.api.library.Citekey, Error, (TapirFile, FileName), Any] =
+  lazy val original: PublicEndpoint[Citekey, Error, (TapirFile, FileName), Any] =
     (endpoint.get
       .in("api" / "sources" / path[String]("citekey") / "original")
       .errorOut(problemOut)
       .out(fileBody)
       .out(header[String](sttp.model.HeaderNames.ContentDisposition)))
-      .mapIn[com.histmersion.api.library.Citekey]((refactorDecoded: String) =>
-        com.histmersion.api.library.Citekey(refactorDecoded)
-      )((refactorEncoded: com.histmersion.api.library.Citekey) => (refactorEncoded).value)
+      .mapIn[Citekey]((refactorDecoded: String) => Citekey(refactorDecoded))((refactorEncoded: Citekey) =>
+        (refactorEncoded).value
+      )
       .mapOut[(TapirFile, FileName)]((refactorDecoded: (TapirFile, String)) =>
         (refactorDecoded._1, FileName(refactorDecoded._2))
       )((refactorEncoded: (TapirFile, FileName)) => (refactorEncoded._1, (refactorEncoded._2).value))
@@ -2228,7 +2217,7 @@ object Api:
       )
 
   lazy val jobs: PublicEndpoint[
-    (ListFilters.JobFilter, Option[Jobs.Limit], Option[Jobs.Status], Option[com.histmersion.api.Jobs.Filter]),
+    (ListFilters.JobFilter, Option[Jobs.Limit], Option[Jobs.Status], Option[api.Jobs.Filter]),
     Error,
     (List[JobInfo], Paging.Page),
     Any
@@ -2241,20 +2230,20 @@ object Api:
       .in(query[Option[String]]("upTo"))
       .out(jsonBody[List[JobInfo]])
       .out(Paging.headers))
-      .mapIn[(ListFilters.JobFilter, Option[Jobs.Limit], Option[Jobs.Status], Option[com.histmersion.api.Jobs.Filter])](
+      .mapIn[(ListFilters.JobFilter, Option[Jobs.Limit], Option[Jobs.Status], Option[api.Jobs.Filter])](
         (refactorDecoded194: (ListFilters.JobFilter, Option[Int], Option[String], Option[String])) =>
           (
             (refactorDecoded194)._1,
             ((refactorDecoded194)._2).map(refactorElement171 => Jobs.Limit(refactorElement171)),
             ((refactorDecoded194)._3).map(refactorElement172 => Jobs.Status(refactorElement172)),
-            ((refactorDecoded194)._4).map(refactorElement173 => com.histmersion.api.Jobs.Filter(refactorElement173))
+            ((refactorDecoded194)._4).map(refactorElement173 => api.Jobs.Filter(refactorElement173))
           )
       )(
         (refactorEncoded194: (
             ListFilters.JobFilter,
             Option[Jobs.Limit],
             Option[Jobs.Status],
-            Option[com.histmersion.api.Jobs.Filter]
+            Option[api.Jobs.Filter]
         )) =>
           (
             (refactorEncoded194)._1,
@@ -2394,8 +2383,8 @@ object Api:
     export MediaProvider.Id as Provider
     type License = License.T
     object License extends Newtype[String, Pure]
-    export com.histmersion.api.catalogue.Place.Id as Place
-    export com.histmersion.api.catalogue.Event.Id as Event
+    export catalogue.Place.Id as Place
+    export catalogue.Event.Id as Event
     type Q = Q.T
     object Q extends Newtype[String, Pure]
     type Limit = Limit.T
@@ -2480,7 +2469,7 @@ object Api:
       .in(query[Option[String]]("mime"))
       .mapIn { case (citekey, provider, key, mime) =>
         SourceCoverParams(
-          com.histmersion.api.library.Citekey(citekey),
+          Citekey(citekey),
           MediaItem.Provider(provider),
           SourceCoverParams.Key(key),
           mime.map(Bundle.Asset.MimeText(_))

@@ -13,9 +13,9 @@ final case class MergeSession(
     updatedAt: Option[MergeSession.UpdatedAt] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object MergeSession:
-  export com.histmersion.api.exchange.Bundle.Name as Bundle
+  export api.exchange.Bundle.Name as Bundle
   type UpdatedAt = UpdatedAt.T
   object UpdatedAt extends Newtype[String, Pure]

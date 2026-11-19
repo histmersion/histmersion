@@ -91,19 +91,19 @@ class ManagersViewSuite extends munit.FunSuite:
 
   test("item actions by status"):
     assertEquals(
-      ManagersView.itemActions(com.histmersion.api.automation.ItemStatus.Wire("pending")),
+      ManagersView.itemActions(api.automation.ItemStatus.Wire("pending")),
       List("hold", "priority", "skip")
     )
     assertEquals(
-      ManagersView.itemActions(com.histmersion.api.automation.ItemStatus.Wire("held")),
+      ManagersView.itemActions(api.automation.ItemStatus.Wire("held")),
       List("release", "priority", "skip")
     )
     assertEquals(
-      ManagersView.itemActions(com.histmersion.api.automation.ItemStatus.Wire("active")),
+      ManagersView.itemActions(api.automation.ItemStatus.Wire("active")),
       List("priority", "skip")
     )
-    assertEquals(ManagersView.itemActions(com.histmersion.api.automation.ItemStatus.Wire("stopped")), List("reopen"))
-    assertEquals(ManagersView.itemActions(com.histmersion.api.automation.ItemStatus.Wire("nonsense")), Nil)
+    assertEquals(ManagersView.itemActions(api.automation.ItemStatus.Wire("stopped")), List("reopen"))
+    assertEquals(ManagersView.itemActions(api.automation.ItemStatus.Wire("nonsense")), Nil)
 
   test("an item the focus holds is not released by hand; a person's hold is"):
     val focus = ManagerItem(

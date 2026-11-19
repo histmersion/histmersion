@@ -18,7 +18,7 @@ final case class MediaSample(
     url: MediaSample.Url
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object MediaSample:
   type TargetLabel = TargetLabel.T

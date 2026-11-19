@@ -13,7 +13,7 @@ final case class MapTilesUiConfig(
     playbackBucketSeconds: MapTilesUiConfig.PlaybackBucketSeconds = MapTilesUiConfig.PlaybackBucketSeconds(1.0)
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object MapTilesUiConfig:
   type MaxZoom = MaxZoom.T

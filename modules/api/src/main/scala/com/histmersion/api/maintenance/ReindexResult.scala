@@ -15,7 +15,7 @@ final case class ReindexResult(
     remaining: ReindexResult.Remaining
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object ReindexResult:
   type Sources = Sources.T

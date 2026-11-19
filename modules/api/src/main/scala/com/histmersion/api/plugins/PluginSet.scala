@@ -21,7 +21,7 @@ final case class PluginSet(
     dependencies: Option[List[PluginFile]] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 object PluginSet:
   type Description = Description.T
   object Description extends Newtype[String, Pure]

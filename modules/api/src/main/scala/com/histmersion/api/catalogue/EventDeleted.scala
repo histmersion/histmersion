@@ -10,7 +10,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 final case class EventDeleted(id: Event.Id, deleted: EventDeleted.Deleted)
     derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object EventDeleted:
   type Deleted = Deleted.T

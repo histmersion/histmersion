@@ -28,7 +28,7 @@ final case class CollectionGapRow(
     counted: CollectionGapRow.Counted
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object CollectionGapRow:
   type Summary = Summary.T

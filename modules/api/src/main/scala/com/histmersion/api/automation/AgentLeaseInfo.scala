@@ -15,7 +15,7 @@ final case class AgentLeaseInfo(
     thisServer: AgentLeaseInfo.ThisServer
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema:
+      api.json.Schema:
   def describe: String =
     (s"$owner${if (thisServer).value then " (this server)" else ""} until $until${
         if (expired).value then " — expired" else ""

@@ -12,4 +12,4 @@ import com.histmersion.api.library.Title
 final case class ReadOpened(kind: ItemKind, id: ItemKey, title: Option[Title] = None)
     derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema

@@ -11,9 +11,9 @@ import io.github.iltotore.iron.constraint.any.Pure
 final case class CoverageSearch(query: CoverageSearch.Query, total: CoverageSearch.Total, cited: List[Citekey])
     derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object CoverageSearch:
-  export com.histmersion.api.Api.Search.Text as Query
+  export api.Api.Search.Text as Query
   type Total = Total.T
   object Total extends Newtype[Int, Pure]

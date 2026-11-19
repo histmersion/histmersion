@@ -147,7 +147,7 @@ object ManagersView:
     else itemActions(i.status)
 
   /** What a person can do to an item in this status. */
-  def itemActions(status: com.histmersion.api.automation.ItemStatus.Wire): List[ItemAction] =
+  def itemActions(status: api.automation.ItemStatus.Wire): List[ItemAction] =
     ItemStatus.parse(status) match
       case Some(ItemStatus.Pending) => List(ItemAction("hold"), ItemAction("priority"), ItemAction("skip"))
       case Some(ItemStatus.Held)    => List(ItemAction("release"), ItemAction("priority"), ItemAction("skip"))

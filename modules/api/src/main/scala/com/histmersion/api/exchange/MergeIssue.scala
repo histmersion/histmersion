@@ -33,7 +33,7 @@ final case class MergeIssue(
     detail: Option[IssueDetail] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema:
+      api.json.Schema:
   def open: Boolean = (severity == MergeIssue.Severity.Blocking && condition.isEmpty && decision.isEmpty)
 object MergeIssue:
 

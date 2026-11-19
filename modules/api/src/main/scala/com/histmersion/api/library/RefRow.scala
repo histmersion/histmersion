@@ -16,7 +16,7 @@ final case class RefRow(
     citekey: Option[Citekey] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object RefRow:
   export Refs.ReferenceText as Raw

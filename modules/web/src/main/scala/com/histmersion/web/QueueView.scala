@@ -63,11 +63,11 @@ object QueueView:
 
   object Seg:
     object Text:
-      export com.histmersion.api.UiLabels.Text as S
+      export UiLabels.Text as S
     object Bold:
-      export com.histmersion.api.UiLabels.Text as S
+      export UiLabels.Text as S
     object Italic:
-      export com.histmersion.api.UiLabels.Text as S
+      export UiLabels.Text as S
     object Doi:
       export QueueItemRef.Ref.Doi as Value
     object Url:
@@ -250,7 +250,7 @@ object QueueView:
     * server's OCR job applies too, addressed to the item.
     */
   def fulfil(item: Queue.QueueItem, citekey: Preview.Target.Source.Citekey): (Queue.QueueItem.Id, Queue.QueuePatch) =
-    item.id -> Queue.fulfil(item, com.histmersion.api.library.Citekey(citekey.value))
+    item.id -> Queue.fulfil(item, api.library.Citekey(citekey.value))
 
   /** The add form, as typed. */
   final case class AddDraft(

@@ -43,7 +43,7 @@ object Lint:
   final case class LintItem(citekey: Citekey, detail: LintItem.Detail)
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object LintItem:
     type Detail = Detail.T
@@ -67,7 +67,7 @@ object Lint:
       items: List[LintItem]
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object LintRuleReport:
     export Lint.Rule.{Description, Name as Rule}
@@ -77,7 +77,7 @@ object Lint:
   final case class LintReport(rules: List[LintRuleReport], fixed: List[LintReport.Fixed] = Nil)
       derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema:
+        api.json.Schema:
     def total: IssueCount = IssueCount(rules.map(r => (r.count).value).sum)
 
   object LintReport:
@@ -100,7 +100,7 @@ object Lint:
       pointAreasRemaining: LintFixResult.PointAreasRemaining = LintFixResult.PointAreasRemaining(0)
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object LintFixResult:
     type Applied = Applied.T

@@ -408,7 +408,7 @@ object Gazetteer:
       built: Option[Extract.Built] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Extract:
     type Name = Name.T
@@ -472,7 +472,7 @@ object Gazetteer:
       pointAreasSkipped: LoadCounts.PointAreasSkipped = LoadCounts.PointAreasSkipped((0).toLong)
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema:
+        api.json.Schema:
     def +(o: LoadCounts): LoadCounts =
       copy(
         records = LoadCounts.Records(records.value + o.records.value),
@@ -546,7 +546,7 @@ object Gazetteer:
     type PointAreasSkipped = PointAreasSkipped.T
     object PointAreasSkipped extends Newtype[Long, Pure]
 
-  final case class Manifest(extracts: List[Extract]) derives JsonCodec, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class Manifest(extracts: List[Extract]) derives JsonCodec, KindlingsSchema, api.json.Schema
 
   final case class SourceInfo(
       key: SourceInfo.Key,
@@ -566,7 +566,7 @@ object Gazetteer:
       periodEnd: Option[Year] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object SourceInfo:
     type Key = Key.T

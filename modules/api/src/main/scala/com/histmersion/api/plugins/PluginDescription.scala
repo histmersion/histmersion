@@ -24,7 +24,7 @@ final case class PluginDescription(
     error: Option[NonEmptyVector[Problem]] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object PluginDescription:
   type Id = Id.T

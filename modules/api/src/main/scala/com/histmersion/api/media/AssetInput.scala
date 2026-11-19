@@ -18,7 +18,7 @@ final case class AssetInput(
     sha256: Option[Sha256] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object AssetInput:
   type Base64 = Base64.T

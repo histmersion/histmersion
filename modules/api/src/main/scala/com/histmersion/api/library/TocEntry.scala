@@ -10,7 +10,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 final case class TocEntry(heading: TocEntry.Heading, ord: TocEntry.Ord, chars: TocEntry.Chars)
     derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 object TocEntry:
   type Markdown = Markdown.T
   object Markdown extends Newtype[String, Pure]

@@ -25,8 +25,8 @@ import com.histmersion.api.catalogue.Year
   * window, and nothing is added again per render.
   */
 object GraphPanel:
-  type Citekey = com.histmersion.api.library.Citekey
-  val Citekey: com.histmersion.api.library.Citekey.type = com.histmersion.api.library.Citekey
+  type Citekey = api.library.Citekey
+  val Citekey: api.library.Citekey.type = api.library.Citekey
 
   def open(citekey: Citekey): Unit =
     WindowManager.open(WindowKey.Graph(WindowKey.Graph.Citekey(citekey.value)))
@@ -119,7 +119,7 @@ object GraphPanel:
     )
 
   final private case class SimNode(
-      id: com.histmersion.api.library.Citekey,
+      id: api.library.Citekey,
       title: String,
       year: Option[Year],
       status: Option[Source.Status],

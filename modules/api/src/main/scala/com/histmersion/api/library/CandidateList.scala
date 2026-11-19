@@ -16,10 +16,10 @@ final case class CandidateList(
     next: Option[CandidateList.Next] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object CandidateList:
-  export com.histmersion.api.research.ReviewGoal.Slug as Goal
+  export api.research.ReviewGoal.Slug as Goal
   type State = State.T
   object State extends Newtype[String, Pure]
   type Offset = Offset.T

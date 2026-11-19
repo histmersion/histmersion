@@ -8,4 +8,4 @@ import com.histmersion.api.given
 final case class MediaFacets(providers: List[MediaCount], licences: List[MediaCount])
     derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema

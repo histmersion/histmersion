@@ -95,7 +95,7 @@ object Finding:
       places: List[Match.Places] = Nil
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Match:
     type Places = Places.T
@@ -115,4 +115,4 @@ object Finding:
       uid: Option[java.util.UUID] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema

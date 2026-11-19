@@ -23,7 +23,7 @@ final case class PluginStatus(
     errors: List[Problem] = Nil
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object PluginStatus:
   extension (status: PluginStatus)

@@ -14,7 +14,7 @@ final case class EventsUiConfig(
     outlineToleranceDeg: EventsUiConfig.OutlineToleranceDeg
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object EventsUiConfig:
   type LocalFadeSeconds = LocalFadeSeconds.T

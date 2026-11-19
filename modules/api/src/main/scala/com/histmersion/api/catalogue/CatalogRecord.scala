@@ -35,7 +35,7 @@ final case class CatalogRecord(
     raw: Option[CatalogRecord.Raw] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema:
+      api.json.Schema:
   def key: (CatalogRecord.Provider, EventCatalogueRef.ProviderId) =
     (CatalogRecord.Provider((provider).value), EventCatalogueRef.ProviderId((providerId).value))
 object CatalogRecord:

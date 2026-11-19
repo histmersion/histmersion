@@ -30,10 +30,7 @@ object Rename:
     val token = s"(?<![a-z0-9_.-])${java.util.regex.Pattern.quote((oldCk).value)}(?![a-z0-9_.-])".r
     token.replaceAllIn(text, java.util.regex.Matcher.quoteReplacement((newCk).value))
 
-  final case class Count(table: Count.Table, rows: Count.Rows)
-      derives JsonCodec,
-        KindlingsSchema,
-        com.histmersion.api.json.Schema
+  final case class Count(table: Count.Table, rows: Count.Rows) derives JsonCodec, KindlingsSchema, api.json.Schema
 
   object Count:
     type Table = Table.T
@@ -50,7 +47,7 @@ object Rename:
       edgesPromoted: Counts.EdgesPromoted
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Counts:
     type Findings = Findings.T
@@ -64,4 +61,4 @@ object Rename:
     type EdgesPromoted = EdgesPromoted.T
     object EdgesPromoted extends Newtype[Int, Pure]
 
-  final case class Request(newCitekey: Citekey) derives JsonCodec, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class Request(newCitekey: Citekey) derives JsonCodec, KindlingsSchema, api.json.Schema

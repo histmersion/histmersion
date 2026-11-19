@@ -10,4 +10,4 @@ import com.histmersion.api.catalogue.Year
 final case class TimeConfig(min: Year, max: Year, defaultFrom: Year, defaultTo: Year)
     derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema

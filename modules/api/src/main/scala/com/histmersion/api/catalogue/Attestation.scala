@@ -31,7 +31,7 @@ final case class Attestation(
     note: Option[Attestation.Note] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object Attestation:
 
@@ -69,7 +69,7 @@ object Attestation:
       deleted: Deleted.Value
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object Deleted:
     type Value = Value.T
@@ -82,7 +82,7 @@ object Attestation:
       next: Option[Offset] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema:
+        api.json.Schema:
     def page: OffsetPage = OffsetPage(total, offset, RowCount(attestations.size))
 
   object List:
@@ -109,7 +109,7 @@ object Attestation:
       note: Option[Note] = None
   ) derives StrictJson,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   final case class Put(
       citekey: Citekey,
@@ -128,4 +128,4 @@ object Attestation:
       note: Option[Note] = None
   ) derives StrictJson,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema

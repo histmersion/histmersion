@@ -13,7 +13,7 @@ final case class AssessRequest(
     forceStatus: AssessRequest.ForceStatus = AssessRequest.ForceStatus(false)
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object AssessRequest:
   type Id = Id.T

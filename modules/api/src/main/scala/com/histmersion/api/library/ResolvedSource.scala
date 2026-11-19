@@ -16,7 +16,7 @@ final case class ResolvedSource(
     status: Source.Status
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema:
+      api.json.Schema:
   def ref: Source.Ref = Source.Ref(citekey, doi, authors, year, title, status)
 
 object ResolvedSource:

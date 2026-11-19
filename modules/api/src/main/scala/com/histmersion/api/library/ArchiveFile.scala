@@ -13,7 +13,7 @@ final case class ArchiveFile(
     megabytes: ArchiveFile.Megabytes
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object ArchiveFile:
   type Name = Name.T

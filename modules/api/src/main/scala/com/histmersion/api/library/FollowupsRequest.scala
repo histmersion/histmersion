@@ -14,7 +14,7 @@ final case class FollowupsRequest(
     apply: FollowupsRequest.Apply = FollowupsRequest.Apply(false)
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object FollowupsRequest:
   type Id = Id.T

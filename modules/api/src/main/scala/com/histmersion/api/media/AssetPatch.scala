@@ -20,4 +20,4 @@ final case class AssetPatch(
     periodEnd: Option[Year] = None
 ) derives StrictJson,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema

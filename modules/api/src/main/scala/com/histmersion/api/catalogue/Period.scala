@@ -29,7 +29,7 @@ object Period:
       children: List[HistoricalPeriod] = Nil
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   final case class ImportResult(
       periods: ImportResult.Periods,
@@ -40,7 +40,7 @@ object Period:
       removed: ImportResult.Removed = ImportResult.Removed(0)
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object ImportResult:
     type Periods = Periods.T
@@ -54,7 +54,7 @@ object Period:
     type Removed = Removed.T
     object Removed extends Newtype[Int, Pure]
 
-  final case class Input(start: Year, end: Year) derives StrictJson, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class Input(start: Year, end: Year) derives StrictJson, KindlingsSchema, api.json.Schema
 
   final case class Row(periodStart: Option[Year], periodEnd: Option[Year])
 

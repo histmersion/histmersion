@@ -26,7 +26,7 @@ final case class Target(
     view: Option[ViewState] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema:
+      api.json.Schema:
   def itemKey: Option[ItemKey] = Option.when(kind.isItem)(id).flatten
 
   def identity: Option[Target.Identity] = itemKey.map(k => Target.Identity(s"${kind.wire}:$k"))

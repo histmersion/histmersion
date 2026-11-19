@@ -14,7 +14,7 @@ final case class EventLinksResult(
     rejected: List[EventLinksResult.Rejected] = Nil
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object EventLinksResult:
   type Refused = Refused.T

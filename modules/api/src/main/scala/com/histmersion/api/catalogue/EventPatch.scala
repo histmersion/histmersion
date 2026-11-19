@@ -26,7 +26,7 @@ final case class EventPatch(
     wikidata: Option[EventPatch.Wikidata] = None
 ) derives StrictJson,
       KindlingsSchema,
-      com.histmersion.api.json.Schema,
+      api.json.Schema,
       CanEqual
 object EventPatch:
 

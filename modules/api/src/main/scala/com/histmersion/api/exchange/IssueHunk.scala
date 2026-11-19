@@ -14,7 +14,7 @@ final case class IssueHunk(
     right: List[IssueHunk.Right] = Nil
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object IssueHunk:
   type Conflict = Conflict.T

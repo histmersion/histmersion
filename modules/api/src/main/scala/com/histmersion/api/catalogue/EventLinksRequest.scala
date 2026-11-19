@@ -14,7 +14,7 @@ final case class EventLinksRequest(
     reject: List[EventLinksRequest.Reject] = Nil
 ) derives StrictJson,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 object EventLinksRequest:
 
   type Recompute = Recompute.T

@@ -19,12 +19,12 @@ object RepairAcquire:
       by: Option[RepairRequest.By] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object RepairRequest:
     type DryRun = DryRun.T
     object DryRun extends Newtype[Boolean, Pure]
-    export com.histmersion.api.automation.Activity.Actor as By
+    export api.automation.Activity.Actor as By
 
   final case class RepairRow(
       item: RepairRow.Item,
@@ -36,7 +36,7 @@ object RepairAcquire:
       backlogItem: Option[RepairRow.BacklogItem] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object RepairRow:
     export Acquire.ItemNumber as Item
@@ -62,7 +62,7 @@ object RepairAcquire:
       backlogDays: Option[Managers.ManagerInfo.BacklogDays] = None
   ) derives JsonCodec,
         KindlingsSchema,
-        com.histmersion.api.json.Schema
+        api.json.Schema
 
   object RepairResult:
     export RepairRequest.DryRun

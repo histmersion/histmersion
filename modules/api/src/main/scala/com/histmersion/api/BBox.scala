@@ -13,7 +13,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 final case class BBox(minLon: Longitude, minLat: Latitude, maxLon: Longitude, maxLat: Latitude)
     derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema:
+      json.Schema:
   def crossesAntimeridian: Boolean = (minLon).value > (maxLon).value
 
   def contains(lon: Longitude, lat: Latitude): Boolean =

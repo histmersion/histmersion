@@ -15,7 +15,7 @@ final case class ReviewRound(
     findings: List[ReviewFinding]
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object ReviewRound:
   type Run = Run.T

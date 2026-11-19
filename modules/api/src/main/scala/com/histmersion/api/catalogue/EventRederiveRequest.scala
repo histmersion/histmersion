@@ -12,7 +12,7 @@ final case class EventRederiveRequest(
     dryRun: EventRederiveRequest.DryRun = EventRederiveRequest.DryRun(false)
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object EventRederiveRequest:
   export EventImportReport.Provider

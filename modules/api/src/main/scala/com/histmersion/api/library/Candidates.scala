@@ -7,16 +7,17 @@ import hearth.kindlings.jsoniterjson.Json
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.given
+import io.github.iltotore.iron.constraint.any.Pure
 
 object Candidates:
   type AuthorId = AuthorId.T
-  object AuthorId extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AuthorId extends Newtype[String, Pure]
   type Index = Index.T
-  object Index extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Index extends Newtype[String, Pure]
   type Lookback = Lookback.T
-  object Lookback extends Newtype[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Lookback extends Newtype[Int, Pure]
   type Watermark = Watermark.T
-  object Watermark extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Watermark extends Newtype[String, Pure]
 
   type Indexes = IndexesValue
   type IndexesValue = Index
@@ -28,7 +29,7 @@ object Candidates:
     case Author extends WatchKind(WatchKind.Wire("author"))
   object WatchKind:
     type Wire = Wire.T
-    object Wire extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends Newtype[String, Pure]
 
     def parse(s: Wire): Option[WatchKind] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
 
@@ -39,7 +40,7 @@ object Candidates:
     case Dismissed extends State(State.Wire("dismissed"))
   object State:
     type Wire = Wire.T
-    object Wire extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends Newtype[String, Pure]
 
     def parse(s: Wire): Option[State] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
 
@@ -55,9 +56,9 @@ object Candidates:
 
   object Found:
     type Key = Key.T
-    object Key extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Key extends Newtype[String, Pure]
     type By = By.T
-    object By extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object By extends Newtype[String, Pure]
 
   def richer(a: WorkRef, b: WorkRef): WorkRef =
     a.modify(_.title)
@@ -83,27 +84,26 @@ object Candidates:
       WorkRef(
         doi = (c.downField("doi").filled).map((com).histmersion.api.library.Doi.apply),
         title = (c.downField("title").filled.map((_).stripSuffix("."))).map(Title.apply),
-        year = (c.downField("pubYear").filled.flatMap((_).toIntOption)).map(com.histmersion.api.catalogue.Year.apply),
+        year = (c.downField("pubYear").filled.flatMap((_).toIntOption)).map(api.catalogue.Year.apply),
         authors = (c
           .downField("authorString")
           .filled
           .toList
           .flatMap((_).stripSuffix(".").split(",").map(_.trim).filter(_.nonEmpty)))
-          .map(com.histmersion.api.library.AuthorName.apply),
+          .map(AuthorName.apply),
         venue = (c
           .downField("journalTitle")
           .filled
           .orElse(c.downField("journalInfo").downField("journal").get[String]("title").toOption))
-          .map(com.histmersion.api.library.Source.Venue.apply),
-        isOa =
-          _root_.com.histmersion.api.library.Source.Candidate.IsOa(c.downField("isOpenAccess").filled.contains("Y")),
+          .map(Source.Venue.apply),
+        isOa = Source.Candidate.IsOa(c.downField("isOpenAccess").filled.contains("Y")),
         abstractText = c
           .downField("abstractText")
           .filled
           .map(
             (
                 refactorCallback =>
-                  _root_.com.histmersion.api.library.Source.Candidate
+                  Source.Candidate
                     .AbstractText((refactorCallback).replaceAll("<[^>]+>", ""))
             )
           )
@@ -117,7 +117,7 @@ object Candidates:
       WorkRef(
         doi = (c.downField("doi").filled).map((com).histmersion.api.library.Doi.apply),
         title = (c.downField("title").filled).map((com).histmersion.api.library.Title.apply),
-        year = (c.get[Int]("yearPublished").toOption).map(com.histmersion.api.catalogue.Year.apply),
+        year = (c.get[Int]("yearPublished").toOption).map(api.catalogue.Year.apply),
         authors = (c
           .downField("authors")
           .values
@@ -144,16 +144,16 @@ object Candidates:
     "(?s)<entry>(.*?)</entry>".r.findAllMatchIn((atom)).map(_.group(1)).toList.map { e =>
       val id = tag((e), ("id")).map((_).replaceFirst("^https?://arxiv.org/abs/", "").replaceAll("v\\d+$", ""))
       WorkRef(
-        arxivId = (id).map(refactorValue8 => _root_.com.histmersion.api.library.WorkRef.ArxivId(refactorValue8)),
+        arxivId = (id).map(refactorValue8 => WorkRef.ArxivId(refactorValue8)),
         title = (tag((e), ("title")).map(unescape)).map(Title.apply),
-        year = (tag((e), ("published")).flatMap((_).take(4).toIntOption)).map(com.histmersion.api.catalogue.Year.apply),
+        year = (tag((e), ("published")).flatMap((_).take(4).toIntOption)).map(api.catalogue.Year.apply),
         authors = ("(?s)<author>\\s*<name>(.*?)</name>".r
           .findAllMatchIn(e)
           .map(m => unescape((m.group(1).trim)))
           .toList)
-          .map(com.histmersion.api.library.AuthorName.apply),
+          .map(AuthorName.apply),
         doi = (tag((e), ("arxiv:doi"))).map((com).histmersion.api.library.Doi.apply),
-        venue = (Some("arXiv")).map(com.histmersion.api.library.Source.Venue.apply),
+        venue = (Some("arXiv")).map(Source.Venue.apply),
         isOa = WorkRef.IsOa(true),
         abstractText = tag(e, "summary").map(unescape).map(WorkRef.AbstractText(_))
       )

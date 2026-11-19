@@ -21,4 +21,4 @@ final case class CitedSource(
     doi: Option[Doi] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema

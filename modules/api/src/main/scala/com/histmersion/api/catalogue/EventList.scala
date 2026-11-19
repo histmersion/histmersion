@@ -18,7 +18,7 @@ final case class EventList(
     next: Option[Offset] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema:
+      api.json.Schema:
   def page: OffsetPage = OffsetPage(total, offset, RowCount(events.size))
 object EventList:
   type Limit = Limit.T

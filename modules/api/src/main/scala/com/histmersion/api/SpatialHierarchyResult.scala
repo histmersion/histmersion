@@ -14,7 +14,7 @@ final case class SpatialHierarchyResult(
     job: Option[SpatialHierarchyResult.Job.Id] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      json.Schema
 
 object SpatialHierarchyResult:
   object Job:

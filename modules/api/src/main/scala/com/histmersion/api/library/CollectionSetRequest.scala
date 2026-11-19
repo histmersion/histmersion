@@ -13,7 +13,7 @@ final case class CollectionSetRequest(
     fields: List[CollectionFieldValue]
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object CollectionSetRequest:
   type Id = Id.T

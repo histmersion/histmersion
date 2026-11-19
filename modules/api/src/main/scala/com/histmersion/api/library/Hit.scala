@@ -12,7 +12,7 @@ import Hit.Rationale
 final case class Hit(source: SearchHit, matched: List[Finding.Match], why: List[Rationale])
     derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object Hit:
   /** Why a source or one of its findings is in a search's result (`title matches 'collapse'`, `tag: sea-peoples`,

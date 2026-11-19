@@ -18,7 +18,7 @@ final case class FormatIssue(
     fix: Option[FormatIssue.Fix] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      com.histmersion.api.json.Schema
+      api.json.Schema
 
 object FormatIssue:
   type Line = Line.T
