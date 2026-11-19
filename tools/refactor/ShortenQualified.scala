@@ -32,6 +32,10 @@ object ShortenQualified {
     // type of another layer is in scope: `api.library.Source` in a `domain.library` file) keeps the shortest suffix that
     // starts at a project subpackage the (chained) package clause puts in scope, e.g. `api.library.Source`
     packagePrefixes: Boolean = false,
+    // `<path prefix>=<package>`: in files under the prefix, no package head inside that package (`api.library.Source`):
+    // the layer contract reads `com.histmersion.api` in a domain file's text, so there the path keeps its spelling or
+    // gets an import, which still names the package
+    packageHeadExcept: List[String] = Nil,
     // where a path rooted at `_root_` or at the project package keeps that spelling, a row `path TAB key TAB reason TAB
     // spelling` (qualified-round.py adds them to the exclusions once the round is done)
     skipped: String = ""
@@ -478,6 +482,13 @@ class ShortenQualified(config: ShortenQualified.Config, excluded: Set[String]) e
       case _ => false
     })
 
+    val headExceptions: List[String] = config.packageHeadExcept.flatMap { e =>
+      e.split("=", 2) match {
+        case Array(prefix, pkg) if path.startsWith(prefix) => List(pkg.replace('.', '/') + "/")
+        case _ => Nil
+      }
+    }
+    def headExcepted(pkgSym: String): Boolean = headExceptions.exists(pkgSym.startsWith)
     def inDerives(t: Tree): Boolean = t.parent.exists { case tp: Template => tp.derives.exists(_ eq t); case _ => false }
     /** Scala 3 records no occurrence for a path in a derives clause: its symbols are read from the project index by path,
       * when every qualifier is a package and the package has exactly one type of the last name. */
@@ -544,7 +555,7 @@ class ShortenQualified(config: ShortenQualified.Config, excluded: Set[String]) e
             // a project subpackage as the head: `com.histmersion.api.library.Source` -> `api.library.Source`
             if (!config.packagePrefixes || !spelledFromRoot) None
             else (n - 1 to 1 by -1).find { i =>
-              isPackage(syms(i)) && syms(i).startsWith(config.projectPackage) && syms(i) != config.projectPackage &&
+              isPackage(syms(i)) && syms(i).startsWith(config.projectPackage) && syms(i) != config.projectPackage && !headExcepted(syms(i)) &&
                 key(importOwner(syms(i))) == key(syms(i - 1)) && resolve(segs(i).value, false, syms(i), node) == Same
             }.map(i => (i, None))
           }
@@ -566,7 +577,11 @@ class ShortenQualified(config: ShortenQualified.Config, excluded: Set[String]) e
               else if (i0 <= 0) "nothing on the path to import"
               else if (!importable(segs(i0).value, syms(i0))) s"no import of `${segs(i0).value}`: the file has another `${segs(i0).value}`"
               else s"an import of `${segs(i0).value}` would not resolve to it"
-            val pre = if (config.packagePrefixes) "; no project subpackage on the path is in scope" else ""
+            val pre =
+              if (!config.packagePrefixes) ""
+              else if (syms.exists(s => isPackage(s) && headExcepted(s)))
+                s"; no package head inside ${headExceptions.find(p => syms.exists(_.startsWith(p))).map(dotted).getOrElse("")} here (the layer contract reads its name in this file)"
+              else "; no project subpackage on the path is in scope"
             s"$named; $imp$pre"
           }
           chosen match {

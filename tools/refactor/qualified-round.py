@@ -23,6 +23,10 @@ ap.add_argument('--check-modules', nargs='*', default=[], help='modules only com
 ap.add_argument('--check-projects', nargs='*', default=[])
 ap.add_argument('--no-pkg', action='store_true')
 ap.add_argument('--no-package-prefixes', action='store_true', help='g47: never keep a project subpackage as the head')
+# ContractsSuite's layer contract reads `com.histmersion.api` in the text of these modules' main domain files
+ap.add_argument('--package-head-except', nargs='*',
+                default=[f'modules/{m}/src/main/=com.histmersion.api' for m in ('core', 'db', 'server', 'files', 'config', 'plugin-host')],
+                help='g47: <path prefix>=<package>: no package head inside the package in those files')
 ap.add_argument('--companion-exports', action='store_true', help='g46: rewrite pairs in companions of classes too')
 ap.add_argument('--scope-names', action='store_true', help='g46: rewrite pairs that alias a name in scope')
 a = ap.parse_args()
@@ -100,7 +104,8 @@ def write_conf():
     cfg = {'g46': f'ReExportAliases {{ exclusions = "{EXCL}", ledger = "{ledger}", scope = [{scope}], packageExports = {"false" if a.no_pkg else "true"}, rewritten = "{rew if os.path.exists(rew) else ""}", skipped = "{skipped}", '
                   f'companionExports = {"true" if a.companion_exports else "false"}, scopeNames = {"true" if a.scope_names else "false"} }}',
            'g47': f'ShortenQualified {{ exclusions = "{EXCL}", ledger = "{ledger}", chainPackages = {"false" if a.no_pkg else "true"}, '
-                  f'packagePrefixes = {"false" if a.no_package_prefixes else "true"}, skipped = "{skipped}" }}'}[a.rule]
+                  f'packagePrefixes = {"false" if a.no_package_prefixes else "true"}, skipped = "{skipped}", '
+                  f'packageHeadExcept = [{", ".join(chr(34) + e + chr(34) for e in a.package_head_except)}] }}'}[a.rule]
     open(conf, 'w').write(f'rules = ["file:tools/refactor/{RULE}.scala"]\n{cfg}\n')
 
 def run_rule(n):
