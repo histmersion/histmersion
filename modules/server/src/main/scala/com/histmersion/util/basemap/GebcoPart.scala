@@ -22,5 +22,4 @@ object GebcoPart:
 
   type Name = Name.T
   object Name extends Newtype[String, Pure]
-  type Url = RangeHttp.Url
-  val Url: RangeHttp.Url.type = RangeHttp.Url
+  export RangeHttp.Url

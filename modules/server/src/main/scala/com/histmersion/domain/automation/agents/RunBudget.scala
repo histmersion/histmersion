@@ -43,5 +43,4 @@ final private[automation] class RunBudget(
 object RunBudget:
   type SpentTokens = SpentTokens.T
   object SpentTokens extends Newtype[Long, Pure]
-  type CapTokens = AgentsControllers.BudgetTokens
-  val CapTokens: AgentsControllers.BudgetTokens.type = AgentsControllers.BudgetTokens
+  export AgentsControllers.BudgetTokens as CapTokens

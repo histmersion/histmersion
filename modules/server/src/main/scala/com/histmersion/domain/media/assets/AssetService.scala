@@ -148,17 +148,10 @@ object AssetService:
   type AddedFigureCount = RowCount
   type FigureCount = RowCount
   type ReplacedFigureCount = RowCount
-  type AssetName = AssetInfoRow.Name
-  val AssetName: AssetInfoRow.Name.type = AssetInfoRow.Name
-  type AssetUid = MediaItemRow.Uid
-  val AssetUid: MediaItemRow.Uid.type = MediaItemRow.Uid
-  type Provider = MediaItemRow.Provider
-  val Provider: MediaItemRow.Provider.type = MediaItemRow.Provider
-  type ProviderKey = MediaItemRow.ProviderKey
-  val ProviderKey: MediaItemRow.ProviderKey.type = MediaItemRow.ProviderKey
+  export AssetInfoRow.Name as AssetName
+  export MediaItemRow.{Provider, ProviderKey, Uid as AssetUid}
   export Target.TargetType
-  type TargetId = Target.Id
-  val TargetId: Target.Id.type = Target.Id
+  export Target.Id as TargetId
   type Bytes = Bytes.T
   object Bytes extends Newtype[Array[Byte], Pure]
   type Mime = Mime.T
@@ -168,10 +161,8 @@ object AssetService:
   object Limit extends Newtype[Int, Pure]
   type LinkProperty = LinkProperty.T
   object LinkProperty extends Newtype[String, Pure]
-  type LinkRole = MediaRole.Wire
-  val LinkRole: MediaRole.Wire.type = MediaRole.Wire
-  type LinkBasis = MediaMatch.Basis
-  val LinkBasis: MediaMatch.Basis.type = MediaMatch.Basis
+  export MediaRole.Wire as LinkRole
+  export MediaMatch.Basis as LinkBasis
   type LinkItem = LinkItem.T
   object LinkItem extends Newtype[String, Pure]
   type LinkRank = LinkRank.T

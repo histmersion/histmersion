@@ -82,36 +82,17 @@ final case class HeldEvent(
     )
 
 object HeldEvent:
-  type Id = com.histmersion.domain.catalogue.Event.Id
-  val Id: com.histmersion.domain.catalogue.Event.Id.type = com.histmersion.domain.catalogue.Event.Id
-  type Label = EventRow.Label
-  val Label: EventRow.Label.type = EventRow.Label
-  type Kind = EventRow.Kind
-  val Kind: EventRow.Kind.type = EventRow.Kind
-  type Historicity = com.histmersion.domain.catalogue.Historicity.Wire
-  val Historicity: com.histmersion.domain.catalogue.Historicity.Wire.type =
-    com.histmersion.domain.catalogue.Historicity.Wire
-  type Geometry = EventDetailRow.Geometry
-  val Geometry: EventDetailRow.Geometry.type = EventDetailRow.Geometry
-  type ParentId = EventRow.ParentId
-  val ParentId: EventRow.ParentId.type = EventRow.ParentId
-  type Description = BEventRow.Description
-  val Description: BEventRow.Description.type = BEventRow.Description
-  type Scale = EventRow.Scale
-  val Scale: EventRow.Scale.type = EventRow.Scale
-  type Wikidata = com.histmersion.domain.catalogue.places.Wikidata.Id
-  val Wikidata: com.histmersion.domain.catalogue.places.Wikidata.Id.type =
-    com.histmersion.domain.catalogue.places.Wikidata.Id
-  type Names = BEventRow.Names
-  val Names: BEventRow.Names.type = BEventRow.Names
-  type Catalogue = BEventRow.Catalogue
-  val Catalogue: BEventRow.Catalogue.type = BEventRow.Catalogue
-  type Central = BEventRow.Central
-  val Central: BEventRow.Central.type = BEventRow.Central
-  type PlusMinus = EventRow.PlusMinus
-  val PlusMinus: EventRow.PlusMinus.type = EventRow.PlusMinus
-  type DatingMethod = BEventRow.DatingMethod
-  val DatingMethod: BEventRow.DatingMethod.type = BEventRow.DatingMethod
+  export com.histmersion.domain.catalogue.Event.Id
+  export EventRow.{Kind, Label}
+  export com.histmersion.domain.catalogue.Historicity.Wire as Historicity
+  export EventDetailRow.Geometry
+  export EventRow.ParentId
+  export BEventRow.Description
+  export EventRow.Scale
+  export com.histmersion.domain.catalogue.places.Wikidata.Id as Wikidata
+  export BEventRow.{Catalogue, Central, Names}
+  export EventRow.PlusMinus
+  export BEventRow.DatingMethod
 
   /** The `type` of a GeoJSON geometry, upper case. */
   def typeOf(geojson: EventDetailRow.Geometry): Option[EventRow.GeometryType] =

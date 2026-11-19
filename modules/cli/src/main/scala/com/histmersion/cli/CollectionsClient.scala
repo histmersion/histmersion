@@ -58,5 +58,4 @@ final class CollectionsClient(c: Client, name: Collection.Name):
   def onServer: Boolean = info.exists(_.reachable.value)
 
 object CollectionsClient:
-  type Name = Collection.Name
-  val Name: Collection.Name.type = Collection.Name
+  export Collection.Name

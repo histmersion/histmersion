@@ -21,13 +21,10 @@ enum Citation:
 
 object Citation:
   object ToSource:
-    type Kind = Edge.Kind.Wire
-    val Kind: Edge.Kind.Wire.type = Edge.Kind.Wire
+    export Edge.Kind.Wire as Kind
   object ToArticle:
-    type Kind = Edge.Kind.Wire
-    val Kind: Edge.Kind.Wire.type = Edge.Kind.Wire
+    export Edge.Kind.Wire as Kind
   object Unresolved:
     type Id = Id.T
     object Id extends Newtype[String, Pure]
-    type Kind = Edge.Kind.Wire
-    val Kind: Edge.Kind.Wire.type = Edge.Kind.Wire
+    export Edge.Kind.Wire as Kind

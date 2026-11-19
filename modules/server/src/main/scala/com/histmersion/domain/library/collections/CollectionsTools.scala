@@ -49,9 +49,7 @@ object CollectionsTools:
     object Action extends Newtype[String, Pure]
     type Name = Name.T
     object Name extends Newtype[String, Pure]
-    type Query = com.histmersion.domain.library.search.Search.Query
-    val Query: com.histmersion.domain.library.search.Search.Query.type =
-      com.histmersion.domain.library.search.Search.Query
+    export com.histmersion.domain.library.search.Search.Query
     type Id = Id.T
     object Id extends Newtype[String, Pure]
     type Format = Format.T

@@ -45,9 +45,6 @@ object SourcePage:
   object Regions extends Newtype[String, Pure]
   type Tags = Tags.T
   object Tags extends Newtype[String, Pure]
-  type Summary = com.histmersion.domain.library.Source.Summary
-  val Summary: com.histmersion.domain.library.Source.Summary.type = com.histmersion.domain.library.Source.Summary
-  type Notes = SourceNote.Text
-  val Notes: SourceNote.Text.type = SourceNote.Text
-  type Query = ArticleTools.ListArticlesInput.Query
-  val Query: ArticleTools.ListArticlesInput.Query.type = ArticleTools.ListArticlesInput.Query
+  export com.histmersion.domain.library.Source.Summary
+  export SourceNote.Text as Notes
+  export ArticleTools.ListArticlesInput.Query

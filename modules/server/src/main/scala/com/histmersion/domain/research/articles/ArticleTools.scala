@@ -257,8 +257,7 @@ object ArticleTools:
         query.map(q => Api.ArticleQuery.Text(q.value))
       )
   object ListArticlesInput:
-    type Kind = com.histmersion.domain.research.Article.Kind
-    val Kind: com.histmersion.domain.research.Article.Kind.type = com.histmersion.domain.research.Article.Kind
+    export com.histmersion.domain.research.Article.Kind
     type Query = Query.T
     object Query extends Newtype[String, Pure]
     type Tag = Tag.T
@@ -281,8 +280,7 @@ object ArticleTools:
   final case class GetArticleInput(slug: GetArticleInput.Slug, parts: Option[GetArticleInput.Parts] = None)
       derives JsonCodec
   object GetArticleInput:
-    type Slug = Article.Slug
-    val Slug: Article.Slug.type = Article.Slug
+    export Article.Slug
     type Parts = Parts.T
     object Parts extends Newtype[String, Pure]
 
@@ -324,8 +322,7 @@ object ArticleTools:
 
   final case class ArticleReviewInput(slug: ArticleReviewInput.Slug) derives JsonCodec
   object ArticleReviewInput:
-    type Slug = Article.Slug
-    val Slug: Article.Slug.type = Article.Slug
+    export Article.Slug
 
     given Schema[ArticleReviewInput] = KindlingsSchema
       .derived[ArticleReviewInput]
@@ -334,8 +331,7 @@ object ArticleTools:
 
   final case class ArticleCoverageInput(slug: ArticleCoverageInput.Slug) derives JsonCodec
   object ArticleCoverageInput:
-    type Slug = Article.Slug
-    val Slug: Article.Slug.type = Article.Slug
+    export Article.Slug
 
     given Schema[ArticleCoverageInput] = KindlingsSchema
       .derived[ArticleCoverageInput]
@@ -374,12 +370,8 @@ object ArticleTools:
       kind: Option[CheckEditsInput.Kind] = None
   ) derives JsonCodec
   object CheckEditsInput:
-    type Slug = Article.Slug
-    val Slug: Article.Slug.type = Article.Slug
-    type Body = com.histmersion.domain.research.Article.Body
-    val Body: com.histmersion.domain.research.Article.Body.type = com.histmersion.domain.research.Article.Body
-    type Kind = com.histmersion.domain.research.Article.Kind
-    val Kind: com.histmersion.domain.research.Article.Kind.type = com.histmersion.domain.research.Article.Kind
+    export Article.Slug
+    export com.histmersion.domain.research.Article.{Body, Kind}
 
     given Schema[CheckEditsInput] = KindlingsSchema
       .derived[CheckEditsInput]
@@ -399,11 +391,8 @@ object ArticleTools:
       strict: PutArticleInput.Strict = PutArticleInput.Strict(false)
   ) derives StrictJson
   object PutArticleInput:
-    type Slug = Article.Slug
-    val Slug: Article.Slug.type = Article.Slug
-    type Strict = com.histmersion.domain.research.Article.StrictMode
-    val Strict: com.histmersion.domain.research.Article.StrictMode.type =
-      com.histmersion.domain.research.Article.StrictMode
+    export Article.Slug
+    export com.histmersion.domain.research.Article.StrictMode as Strict
 
     given Schema[PutArticleInput] = KindlingsSchema
       .derived[PutArticleInput]
@@ -416,11 +405,8 @@ object ArticleTools:
       strict: PatchArticleInput.Strict = PatchArticleInput.Strict(false)
   )
   object PatchArticleInput:
-    type Slug = Article.Slug
-    val Slug: Article.Slug.type = Article.Slug
-    type Strict = com.histmersion.domain.research.Article.StrictMode
-    val Strict: com.histmersion.domain.research.Article.StrictMode.type =
-      com.histmersion.domain.research.Article.StrictMode
+    export Article.Slug
+    export com.histmersion.domain.research.Article.StrictMode as Strict
 
     given Schema[PatchArticleInput] = KindlingsSchema
       .derived[PatchArticleInput]
@@ -435,13 +421,11 @@ object ArticleTools:
         com.histmersion.api.json.Schema
 
   object ExportArticleInput:
-    type Slug = Article.Slug
-    val Slug: Article.Slug.type = Article.Slug
+    export Article.Slug
 
   final case class ArticleVersionsInput(slug: ArticleVersionsInput.Slug) derives JsonCodec
   object ArticleVersionsInput:
-    type Slug = Article.Slug
-    val Slug: Article.Slug.type = Article.Slug
+    export Article.Slug
 
     given Schema[ArticleVersionsInput] = KindlingsSchema
       .derived[ArticleVersionsInput]
@@ -451,8 +435,7 @@ object ArticleTools:
   final case class ArticleVersionInput(slug: ArticleVersionInput.Slug, versionId: ArticleVersionInput.VersionId)
       derives JsonCodec
   object ArticleVersionInput:
-    type Slug = Article.Slug
-    val Slug: Article.Slug.type = Article.Slug
+    export Article.Slug
     type VersionId = VersionId.T
     object VersionId extends Newtype[Long, Pure]
 

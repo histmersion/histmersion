@@ -17,14 +17,10 @@ object BuiltinMedia:
   object Alias extends Newtype[String, Pure]
   type CheckName = CheckName.T
   object CheckName extends Newtype[String, Pure]
-  type EntryKey = Entry.Name
-  val EntryKey: Entry.Name.type = Entry.Name
-  type Licences = MediaCollectionConfig.Licences
-  val Licences: MediaCollectionConfig.Licences.type = MediaCollectionConfig.Licences
-  type Provider = ImportService.Provider
-  val Provider: ImportService.Provider.type = ImportService.Provider
-  type ReservedName = Entry.Name
-  val ReservedName: Entry.Name.type = Entry.Name
+  export com.histmersion.pluginhost.Registries.MediaCollectionsKey as EntryKey
+  export MediaCollectionConfig.Licences
+  export com.histmersion.domain.media.assets.MediaItemRow.Provider
+  export com.histmersion.pluginhost.Registries.MediaCollectionsKey as ReservedName
 
   /** One first-party collection: its plugin, the name `media import` is asked for, what a refusal calls it, the name
     * its checks and reports are recorded under, the provider its pictures are stored under, and the allowlist it is
@@ -59,8 +55,7 @@ object BuiltinMedia:
     object Title extends Newtype[String, Pure]
     type Check = Check.T
     object Check extends Newtype[String, Pure]
-    type Provider = ImportService.Provider
-    val Provider: ImportService.Provider.type = ImportService.Provider
+    export com.histmersion.domain.media.assets.MediaItemRow.Provider
 
   /** In the order `media import`'s list names them. */
   val entries: List[Entry] = List(

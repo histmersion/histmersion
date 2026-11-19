@@ -19,5 +19,4 @@ final case class HostAiProvider(plugin: HostAiProvider.Plugin, kind: ProviderKin
 
 object HostAiProvider:
 
-  type Plugin = com.histmersion.util.plugins.Plugin.Id
-  val Plugin: com.histmersion.util.plugins.Plugin.Id.type = com.histmersion.util.plugins.Plugin.Id
+  export com.histmersion.util.plugins.Plugin.Id as Plugin

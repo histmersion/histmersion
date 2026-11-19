@@ -132,10 +132,7 @@ object PmTiles:
     object TileContents extends Newtype[Long, Pure]
     type Clustered = Clustered.T
     object Clustered extends Newtype[Boolean, Pure]
-    type MinZoom = Zoom
-    val MinZoom: Zoom.type = Zoom
-    type MaxZoom = Zoom
-    val MaxZoom: Zoom.type = Zoom
+    export com.histmersion.util.basemap.PmTiles.{Zoom as MaxZoom, Zoom as MinZoom}
     type MinLon = MinLon.T
     object MinLon extends Newtype[Double, Pure]
     type MinLat = MinLat.T
@@ -144,8 +141,7 @@ object PmTiles:
     object MaxLon extends Newtype[Double, Pure]
     type MaxLat = MaxLat.T
     object MaxLat extends Newtype[Double, Pure]
-    type CenterZoom = Zoom
-    val CenterZoom: Zoom.type = Zoom
+    export com.histmersion.util.basemap.PmTiles.Zoom as CenterZoom
     type CenterLon = CenterLon.T
     object CenterLon extends Newtype[Double, Pure]
     type CenterLat = CenterLat.T
@@ -548,8 +544,7 @@ object PmTiles:
     def close(): Unit = reader.close()
 
   object File:
-    type Where = Blob.Location
-    val Where: Blob.Location.type = Blob.Location
+    export Blob.Location as Where
     type MaxLeaves = MaxLeaves.T
     object MaxLeaves extends Newtype[Int, Pure]
 

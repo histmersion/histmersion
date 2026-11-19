@@ -75,16 +75,13 @@ trait ImportService:
   ): Unit
 
 object ImportService:
-  type ExternalId = ExternalIds.ExternalId
-  val ExternalId: ExternalIds.ExternalId.type = ExternalIds.ExternalId
+  export ExternalIds.ExternalId
   type FoundCount = RowCount
   val FoundCount: RowCount.type = RowCount
   type PendingCount = RowCount
   val PendingCount: RowCount.type = RowCount
-  type Provider = MediaItemRow.Provider
-  val Provider: MediaItemRow.Provider.type = MediaItemRow.Provider
-  type TargetId = Target.Id
-  val TargetId: Target.Id.type = Target.Id
+  export MediaItemRow.Provider
+  export Target.Id as TargetId
   export Target.TargetType
   type CheckName = CheckName.T
   object CheckName extends Newtype[String, Pure]

@@ -49,8 +49,7 @@ object BasemapFetch:
   object Attribution extends Newtype[String, Pure]
   type ChunkCount = ChunkCount.T
   object ChunkCount extends Newtype[Int, Pure]
-  type Dropped = Basemap.LayerInfo.Dropped
-  val Dropped: Basemap.LayerInfo.Dropped.type = Basemap.LayerInfo.Dropped
+  export Basemap.LayerInfo.Dropped
   type FetchedAt = FetchedAt.T
   object FetchedAt extends Newtype[String, Pure]
   type FilterSpec = FilterSpec.T
@@ -70,8 +69,7 @@ object BasemapFetch:
   final case class Source(url: Source.Url, label: Source.Label, expectedSize: Option[Source.ExpectedSize] = None)
 
   object Source:
-    type Url = RangeHttp.Url
-    val Url: RangeHttp.Url.type = RangeHttp.Url
+    export RangeHttp.Url
     type Label = Label.T
     object Label extends Newtype[String, Pure]
     type ExpectedSize = ExpectedSize.T
@@ -81,12 +79,10 @@ object BasemapFetch:
   final case class Wanted(id: Wanted.Id, offset: Wanted.Offset, length: Wanted.Length)
 
   object Wanted:
-    type Id = PmTiles.Entry.TileId
-    val Id: PmTiles.Entry.TileId.type = PmTiles.Entry.TileId
+    export PmTiles.Entry.TileId as Id
     type Offset = ByteOffset
     val Offset: ByteOffset.type = ByteOffset
-    type Length = PmTiles.Entry.Length
-    val Length: PmTiles.Entry.Length.type = PmTiles.Entry.Length
+    export PmTiles.Entry.Length
 
   final case class Plan(
       source: Source,

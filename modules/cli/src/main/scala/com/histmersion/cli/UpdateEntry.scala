@@ -11,7 +11,6 @@ final case class UpdateEntry(
 )
 
 object UpdateEntry:
-  type CalibreId = Calibre.Book.Id
-  val CalibreId: Calibre.Book.Id.type = Calibre.Book.Id
+  export Calibre.Book.Id as CalibreId
   type Citekeys = Citekeys.T
   object Citekeys extends Newtype[String, Pure]

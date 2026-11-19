@@ -195,16 +195,13 @@ object Store:
 
   object Error:
     object NotFound:
-      type Where = Blob.Location
-      val Where: Blob.Location.type = Blob.Location
+      export Blob.Location as Where
 
     object NotAFile:
-      type Where = Blob.Location
-      val Where: Blob.Location.type = Blob.Location
+      export Blob.Location as Where
 
     object NotOnDisk:
-      type Where = Blob.Location
-      val Where: Blob.Location.type = Blob.Location
+      export Blob.Location as Where
 
   /** A name inside a store: `/`-separated segments, relative, never `.` or `..`, no empty segment, no backslash or NUL.
     * The empty key is the store itself.

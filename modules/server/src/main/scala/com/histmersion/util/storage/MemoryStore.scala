@@ -188,8 +188,7 @@ object MemoryStore:
 
   object MemoryBlob:
 
-    type Where = Blob.Location
-    val Where: Blob.Location.type = Blob.Location
+    export Blob.Location as Where
 
   final class MemoryReservation(
       val key: Store.Key,
@@ -224,5 +223,4 @@ object MemoryStore:
 
   object MemoryReservation:
 
-    type Where = Blob.Location
-    val Where: Blob.Location.type = Blob.Location
+    export Blob.Location as Where

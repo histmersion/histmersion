@@ -89,8 +89,7 @@ final class DiskLru(store: Store, maxBytes: () => DiskLru.MaxBytes, ext: DiskLru
   }
 
 object DiskLru:
-  type Bytes = ByteSource.Content
-  val Bytes: ByteSource.Content.type = ByteSource.Content
+  export ByteSource.Content as Bytes
   type MaxBytes = MaxBytes.T
   object MaxBytes extends Newtype[Long, Pure]
   type EntryCount = EntryCount.T

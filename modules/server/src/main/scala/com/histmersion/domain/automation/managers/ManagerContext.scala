@@ -198,30 +198,19 @@ trait ManagerContext:
   ): Unit
 
 object ManagerContext:
-  type FailureCount = ManagerPolicy.Next.Retry.Failures
-  val FailureCount: ManagerPolicy.Next.Retry.Failures.type = ManagerPolicy.Next.Retry.Failures
-  type ItemId = Item.Id
-  val ItemId: Item.Id.type = Item.Id
-  type ItemKind = Item.Kind
-  val ItemKind: Item.Kind.type = Item.Kind
-  type ItemTarget = ManagerPolicy.Candidate.Target
-  val ItemTarget: ManagerPolicy.Candidate.Target.type = ManagerPolicy.Candidate.Target
+  export ManagerPolicy.Next.Retry.Failures as FailureCount
+  export Item.{Id as ItemId, Kind as ItemKind}
+  export ManagerPolicy.Candidate.Target as ItemTarget
   type Limit = Limit.T
   object Limit extends Newtype[Int, Pure]
-  type Priority = ManagerPolicy.Candidate.Priority
-  val Priority: ManagerPolicy.Candidate.Priority.type = ManagerPolicy.Candidate.Priority
+  export ManagerPolicy.Candidate.Priority
   type EventFeed = EventFeed.T
   object EventFeed extends Newtype[String, Pure]
   type EventText = EventText.T
   object EventText extends Newtype[String, Pure]
   type UpsertReopen = UpsertReopen.T
   object UpsertReopen extends Newtype[Boolean, Pure]
-  type EvaluatedOutcome = Item.Outcome
-  val EvaluatedOutcome: Item.Outcome.type = Item.Outcome
-  type SettleNowWhy = Item.Outcome
-  val SettleNowWhy: Item.Outcome.type = Item.Outcome
-  type RetryNote = Item.Note
-  val RetryNote: Item.Note.type = Item.Note
+  export Item.{Note as RetryNote, Outcome as EvaluatedOutcome, Outcome as SettleNowWhy}
   type StartWhat = StartWhat.T
   object StartWhat extends Newtype[String, Pure]
   type TickLine = TickLine.T

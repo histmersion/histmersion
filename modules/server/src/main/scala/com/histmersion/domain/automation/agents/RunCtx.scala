@@ -682,7 +682,6 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
     )
 
 object RunCtx:
-  type MaxTokens = LlmCall.MaxTokens
-  val MaxTokens: LlmCall.MaxTokens.type = LlmCall.MaxTokens
+  export LlmCall.MaxTokens
   type LastAttempt = LastAttempt.T
   object LastAttempt extends Newtype[Boolean, Pure]

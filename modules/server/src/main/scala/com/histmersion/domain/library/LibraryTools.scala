@@ -616,8 +616,7 @@ object LibraryTools:
 
   final case class NeighborsInput(citekey: Citekey, kinds: List[NeighborsInput.Kinds] = Nil) derives JsonCodec
   object NeighborsInput:
-    type Kinds = Edge.Kind.Wire
-    val Kinds: Edge.Kind.Wire.type = Edge.Kind.Wire
+    export Edge.Kind.Wire as Kinds
 
     given Schema[NeighborsInput] = KindlingsSchema
       .derived[NeighborsInput]

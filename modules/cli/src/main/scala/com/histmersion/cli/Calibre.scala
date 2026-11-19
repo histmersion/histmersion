@@ -1005,18 +1005,13 @@ object Calibre:
     val Authors: AuthorName.type = AuthorName
     type Pubdate = Pubdate.T
     object Pubdate extends Newtype[String, Pure]
-    type Publisher = CollectionEntry.Publisher
-    val Publisher: CollectionEntry.Publisher.type = CollectionEntry.Publisher
-    type Tags = CollectionEntry.Tags
-    val Tags: CollectionEntry.Tags.type = CollectionEntry.Tags
+    export CollectionEntry.{Publisher, Tags}
     type Comments = Comments.T
     object Comments extends Newtype[String, Pure]
-    type IdentifiersKey = CollectionEntry.IdentifiersKey
-    val IdentifiersKey: CollectionEntry.IdentifiersKey.type = CollectionEntry.IdentifiersKey
+    export CollectionEntry.IdentifiersKey
     type IdentifiersValue = IdentifiersValue.T
     object IdentifiersValue extends Newtype[String, Pure]
-    type Formats = CollectionEntry.Formats
-    val Formats: CollectionEntry.Formats.type = CollectionEntry.Formats
+    export CollectionEntry.Formats
     type Cover = Cover.T
     object Cover extends Newtype[String, Pure]
 
@@ -1024,10 +1019,7 @@ object Calibre:
   final case class Change(field: Field, from: Change.From, to: Change.To)
 
   object Change:
-    type From = CollectionFieldChange.From
-    val From: CollectionFieldChange.From.type = CollectionFieldChange.From
-    type To = CollectionFieldChange.To
-    val To: CollectionFieldChange.To.type = CollectionFieldChange.To
+    export CollectionFieldChange.{From, To}
 
   /** A field `calibre update` writes, by its `calibredb set_metadata --field` name. */
   enum Field(val name: Field.Name):
@@ -1040,8 +1032,7 @@ object Calibre:
     case Comments extends Field(Field.Name("comments"))
 
   object Field:
-    type Name = CollectionFieldValue.Name
-    val Name: CollectionFieldValue.Name.type = CollectionFieldValue.Name
+    export CollectionFieldValue.Name
 
   /** What the `calibre … --json` commands print: case classes with derived codecs, printed through [[Output.emit]] like
     * every other `--json`, never `Json.obj` assembled by hand. The field names are the ones those commands always
@@ -1061,24 +1052,16 @@ object Calibre:
         formats: List[Book.Formats]
     ) derives JsonCodec
     object Book:
-      type Id = Calibre.Book.Id
-      val Id: Calibre.Book.Id.type = Calibre.Book.Id
+      export Calibre.Book.Id
       type Title = com.histmersion.api.library.Title
       val Title: com.histmersion.api.library.Title.type = com.histmersion.api.library.Title
       type Authors = AuthorName
       val Authors: AuthorName.type = AuthorName
       type Year = Calibre.Book.Year
       val Year: Calibre.Book.Year.type = Calibre.Book.Year
-      type Publisher = CollectionEntry.Publisher
-      val Publisher: CollectionEntry.Publisher.type = CollectionEntry.Publisher
-      type Tags = CollectionEntry.Tags
-      val Tags: CollectionEntry.Tags.type = CollectionEntry.Tags
-      type IdentifiersKey = CollectionEntry.IdentifiersKey
-      val IdentifiersKey: CollectionEntry.IdentifiersKey.type = CollectionEntry.IdentifiersKey
-      type IdentifiersValue = Calibre.Book.IdentifiersValue
-      val IdentifiersValue: Calibre.Book.IdentifiersValue.type = Calibre.Book.IdentifiersValue
-      type Formats = CollectionEntry.Formats
-      val Formats: CollectionEntry.Formats.type = CollectionEntry.Formats
+      export CollectionEntry.{IdentifiersKey, Publisher, Tags}
+      export Calibre.Book.IdentifiersValue
+      export CollectionEntry.Formats
 
       def of(b: Calibre.Book): Book =
         Book(b.id, b.title, b.authors, b.year, b.publisher, b.tags, b.identifiers, b.formats)
@@ -1098,8 +1081,7 @@ object Calibre:
     final case class Linked(citekey: com.histmersion.api.library.Citekey, calibreId: Linked.CalibreId) derives JsonCodec
 
     object Linked:
-      type CalibreId = Calibre.Book.Id
-      val CalibreId: Calibre.Book.Id.type = Calibre.Book.Id
+      export Calibre.Book.Id as CalibreId
 
     /** `calibre push --replace --json`: `replaced` is the format swapped in. */
     final case class Replaced(
@@ -1109,8 +1091,7 @@ object Calibre:
     ) derives JsonCodec
 
     object Replaced:
-      type CalibreId = Calibre.Book.Id
-      val CalibreId: Calibre.Book.Id.type = Calibre.Book.Id
+      export Calibre.Book.Id as CalibreId
       type Value = Value.T
       object Value extends Newtype[String, Pure]
 
@@ -1122,20 +1103,13 @@ object Calibre:
     ) derives JsonCodec
 
     object Updated:
-      type CalibreId = Calibre.Book.Id
-      val CalibreId: Calibre.Book.Id.type = Calibre.Book.Id
-      type Changed = CollectionUpdatedOne.Changed
-      val Changed: CollectionUpdatedOne.Changed.type = CollectionUpdatedOne.Changed
+      export Calibre.Book.Id as CalibreId
+      export CollectionUpdatedOne.Changed
 
     final case class Change(field: Change.Field, from: Change.From, to: Change.To) derives JsonCodec
 
     object Change:
-      type Field = CollectionFieldChange.Field
-      val Field: CollectionFieldChange.Field.type = CollectionFieldChange.Field
-      type From = CollectionFieldChange.From
-      val From: CollectionFieldChange.From.type = CollectionFieldChange.From
-      type To = CollectionFieldChange.To
-      val To: CollectionFieldChange.To.type = CollectionFieldChange.To
+      export CollectionFieldChange.{Field, From, To}
 
     /** `calibre update --all --json`: one entry's outcome. */
     final case class UpdateRow(
@@ -1146,12 +1120,8 @@ object Calibre:
         reasons: List[Problem]
     ) derives JsonCodec
     object UpdateRow:
-      type CalibreId = Calibre.Book.Id
-      val CalibreId: Calibre.Book.Id.type = Calibre.Book.Id
-      type Citekeys = CollectionUpdateRow.Citekeys
-      val Citekeys: CollectionUpdateRow.Citekeys.type = CollectionUpdateRow.Citekeys
-      type State = CollectionUpdateRow.State
-      val State: CollectionUpdateRow.State.type = CollectionUpdateRow.State
+      export Calibre.Book.Id as CalibreId
+      export CollectionUpdateRow.{Citekeys, State}
 
       def of(e: UpdateEntry): UpdateRow =
         val (state, changes) = e.outcome match
@@ -1192,14 +1162,8 @@ object Calibre:
         fix: Option[AuditRow.Fix]
     ) derives JsonCodec
     object AuditRow:
-      type CalibreId = Calibre.Book.Id
-      val CalibreId: Calibre.Book.Id.type = Calibre.Book.Id
-      type Citekeys = CollectionAudit.Row.Citekeys
-      val Citekeys: CollectionAudit.Row.Citekeys.type = CollectionAudit.Row.Citekeys
-      type Issues = CollectionAudit.Row.Codes
-      val Issues: CollectionAudit.Row.Codes.type = CollectionAudit.Row.Codes
-      type Fix = CollectionAudit.Row.Fix
-      val Fix: CollectionAudit.Row.Fix.type = CollectionAudit.Row.Fix
+      export Calibre.Book.Id as CalibreId
+      export CollectionAudit.Row.{Citekeys, Codes as Issues, Fix}
 
       def of(f: AuditFinding): AuditRow =
         AuditRow(
@@ -1243,24 +1207,10 @@ object Calibre:
       val Doi: com.histmersion.api.library.Doi.type = com.histmersion.api.library.Doi
       type Year = Calibre.Book.Year
       val Year: Calibre.Book.Year.type = Calibre.Book.Year
-      type Venue = Source.Venue
-      val Venue: Source.Venue.type = Source.Venue
-      type Summary = CollectionGapRow.Summary
-      val Summary: CollectionGapRow.Summary.type = CollectionGapRow.Summary
-      type Topics = CollectionGapRow.Topics
-      val Topics: CollectionGapRow.Topics.type = CollectionGapRow.Topics
-      type Provenance = CollectionGapRow.Provenance
-      val Provenance: CollectionGapRow.Provenance.type = CollectionGapRow.Provenance
-      type CalibreId = Source.CalibreId
-      val CalibreId: Source.CalibreId.type = Source.CalibreId
-      type Isbn = CollectionGapRow.Isbn
-      val Isbn: CollectionGapRow.Isbn.type = CollectionGapRow.Isbn
-      type StoredOriginal = CollectionGapRow.StoredOriginal
-      val StoredOriginal: CollectionGapRow.StoredOriginal.type = CollectionGapRow.StoredOriginal
-      type Original = CollectionGapRow.Original
-      val Original: CollectionGapRow.Original.type = CollectionGapRow.Original
-      type Counted = CollectionGapRow.Counted
-      val Counted: CollectionGapRow.Counted.type = CollectionGapRow.Counted
+      export Source.Venue
+      export CollectionGapRow.{Provenance, Summary, Topics}
+      export Source.CalibreId
+      export CollectionGapRow.{Counted, Isbn, Original, StoredOriginal}
 
       def of(e: GapEntry): GapRow =
         val g = e.gap
@@ -1301,12 +1251,7 @@ object Calibre:
     final case class Gaps(count: Gaps.Count, uncounted: Gaps.Uncounted, total: Gaps.Total, gaps: List[GapRow])
         derives JsonCodec
     object Gaps:
-      type Count = CollectionGaps.Count
-      val Count: CollectionGaps.Count.type = CollectionGaps.Count
-      type Uncounted = CollectionGaps.Uncounted
-      val Uncounted: CollectionGaps.Uncounted.type = CollectionGaps.Uncounted
-      type Total = CollectionGaps.Total
-      val Total: CollectionGaps.Total.type = CollectionGaps.Total
+      export CollectionGaps.{Count, Total, Uncounted}
 
       def of(entries: List[GapEntry]): Gaps =
         val n = entries.count(_.counted.value)
@@ -1334,13 +1279,9 @@ object Calibre:
     val Authors: AuthorName.type = AuthorName
     type Doi = com.histmersion.api.library.Doi
     val Doi: com.histmersion.api.library.Doi.type = com.histmersion.api.library.Doi
-    type Isbn = CalibreGap.Isbn
-    val Isbn: CalibreGap.Isbn.type = CalibreGap.Isbn
+    export CalibreGap.Isbn
     type Year = Book.Year
     val Year: Book.Year.type = Book.Year
-    type Publisher = CollectionEntry.Publisher
-    val Publisher: CollectionEntry.Publisher.type = CollectionEntry.Publisher
-    type Summary = Source.Summary
-    val Summary: Source.Summary.type = Source.Summary
-    type Tags = CollectionEntry.Tags
-    val Tags: CollectionEntry.Tags.type = CollectionEntry.Tags
+    export CollectionEntry.Publisher
+    export Source.Summary
+    export CollectionEntry.Tags

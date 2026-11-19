@@ -36,8 +36,7 @@ final class PlaceCardView(
     )
 
 object PlaceCardView:
-  type PlaceId = com.histmersion.domain.catalogue.Place.Id
-  val PlaceId: com.histmersion.domain.catalogue.Place.Id.type = com.histmersion.domain.catalogue.Place.Id
+  export com.histmersion.domain.catalogue.Place.Id as PlaceId
 
   type WithCounts = WithCounts.T
   object WithCounts extends Newtype[Boolean, Pure]

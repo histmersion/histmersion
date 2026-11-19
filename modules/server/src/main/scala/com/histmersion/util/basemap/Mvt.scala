@@ -36,8 +36,7 @@ object Mvt:
   object PropText extends Newtype[String, Pure]
   type SignedNumber = SignedNumber.T
   object SignedNumber extends Newtype[Long, Pure]
-  type TileBytes = PmTiles.PlainBytes
-  val TileBytes: PmTiles.PlainBytes.type = PmTiles.PlainBytes
+  export PmTiles.PlainBytes as TileBytes
   type Varint = Varint.T
   object Varint extends Newtype[Long, Pure]
 

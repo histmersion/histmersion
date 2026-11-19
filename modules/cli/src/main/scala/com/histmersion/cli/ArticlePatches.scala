@@ -104,8 +104,7 @@ object ArticlePatches:
 
   object FilterFlags:
 
-    type Query = Api.ArticleQuery.Text
-    val Query: Api.ArticleQuery.Text.type = Api.ArticleQuery.Text
+    export Api.ArticleQuery.Text as Query
     type Period = Period.T
     object Period extends Newtype[String, Pure]
     type ExtraQueries = ExtraQueries.T

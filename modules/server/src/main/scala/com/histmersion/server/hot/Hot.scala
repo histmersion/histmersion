@@ -442,10 +442,7 @@ object Hot:
       def spec: HotNode = HotNode(name, deps, keys)
 
     object Def:
-      type Name = HotNode.Name
-      val Name: HotNode.Name.type = HotNode.Name
-      type Keys = HotNode.Keys
-      val Keys: HotNode.Keys.type = HotNode.Keys
+      export HotNode.{Keys, Name}
 
     /** One built value, the users pinning it and the scope holding it open. */
     final private[hot] class Instance(

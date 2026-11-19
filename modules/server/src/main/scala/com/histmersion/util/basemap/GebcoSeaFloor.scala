@@ -195,8 +195,7 @@ object GebcoSeaFloor:
   object Elevation extends Newtype[Short, Pure]
   type GridSize = GridSize.T
   object GridSize extends Newtype[Int, Pure]
-  type Note = BasemapFetch.Note
-  val Note: BasemapFetch.Note.type = BasemapFetch.Note
+  export BasemapFetch.Note
   type PixelX = PixelX.T
   object PixelX extends Newtype[Int, Pure]
   type PixelY = PixelY.T
@@ -205,16 +204,11 @@ object GebcoSeaFloor:
   object Row extends Newtype[Int, Pure]
   type SampledElevation = SampledElevation.T
   object SampledElevation extends Newtype[Float, Pure]
-  type TileKey = GebcoPlan.TileKey
-  val TileKey: GebcoPlan.TileKey.type = GebcoPlan.TileKey
-  type TileX = GebcoPlan.TileX
-  val TileX: GebcoPlan.TileX.type = GebcoPlan.TileX
-  type TileY = GebcoPlan.TileY
-  val TileY: GebcoPlan.TileY.type = GebcoPlan.TileY
+  export com.histmersion.util.basemap.PmTiles.Entry.TileId as TileKey
+  export com.histmersion.util.basemap.PmTiles.{TileColumn as TileX, TileRow as TileY}
   type WholeDegrees = WholeDegrees.T
   object WholeDegrees extends Newtype[Int, Pure]
-  type Zoom = GebcoPlan.Zoom
-  val Zoom: GebcoPlan.Zoom.type = GebcoPlan.Zoom
+  export com.histmersion.util.basemap.PmTiles.Zoom
 
   /** A GeoTIFF's URL in the grid's tiling: `{north}`, `{south}`, `{west}`, `{east}` as GEBCO writes them (`90.0`). */
   def urlOf(

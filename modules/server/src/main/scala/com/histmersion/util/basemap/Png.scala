@@ -13,14 +13,9 @@ object Png:
   private val AtImageHeader: Problem.Where = Problem.Where("the image header")
   type CompressionLevel = CompressionLevel.T
   object CompressionLevel extends Newtype[Int, Pure]
-  type Height = Vp8l.Image.Height
-  val Height: Vp8l.Image.Height.type = Vp8l.Image.Height
-  type Pixels = Vp8l.Image.Pixels
-  val Pixels: Vp8l.Image.Pixels.type = Vp8l.Image.Pixels
-  type PngBytes = PmTiles.TileBytes
-  val PngBytes: PmTiles.TileBytes.type = PmTiles.TileBytes
-  type Width = Vp8l.Image.Width
-  val Width: Vp8l.Image.Width.type = Vp8l.Image.Width
+  export Vp8l.Image.{Height, Pixels}
+  export PmTiles.TileBytes as PngBytes
+  export Vp8l.Image.Width
 
   private val Signature = Array[Byte](0x89.toByte, 'P', 'N', 'G', 0x0d, 0x0a, 0x1a, 0x0a)
 

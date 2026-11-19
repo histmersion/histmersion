@@ -21,8 +21,7 @@ object Vp8l:
 
   /** The place in the data that a problem names: where in a WebP its RIFF chunks are. */
   private val AtChunks: Problem.Where = Problem.Where("the chunks")
-  type Bitstream = PmTiles.TileBytes
-  val Bitstream: PmTiles.TileBytes.type = PmTiles.TileBytes
+  export PmTiles.TileBytes as Bitstream
 
   /** A decoded image: `pixels` row-major, each `0xAARRGGBB`. */
   final case class Image(width: Image.Width, height: Image.Height, pixels: Image.Pixels)

@@ -65,8 +65,7 @@ final class RunTokens(using wallClock: java.time.Clock):
   private def prune(now: PlanQuotaRepo.EpochMillis): Unit = grants.values().removeIf(_.expiresAt.value <= now.value)
 
 object RunTokens:
-  type Token = RunGrant.Token
-  val Token: RunGrant.Token.type = RunGrant.Token
+  export RunGrant.Token
   type TtlMillis = TtlMillis.T
   object TtlMillis extends Newtype[Long, Pure]
 

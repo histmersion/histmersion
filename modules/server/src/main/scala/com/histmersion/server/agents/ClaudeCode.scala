@@ -27,8 +27,7 @@ import com.histmersion.server.agents.CliOutcomes.finishEquality
 object ClaudeCode:
   type Argument = Argument.T
   object Argument extends Newtype[String, Pure]
-  type ModelId = ModelRef.Model
-  val ModelId: ModelRef.Model.type = ModelRef.Model
+  export ModelRef.Model as ModelId
 
   type McpConfigToken = McpConfigToken.T
   object McpConfigToken extends Newtype[String, Pure]

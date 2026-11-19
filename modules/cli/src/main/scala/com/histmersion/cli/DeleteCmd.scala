@@ -25,10 +25,8 @@ object DeleteCmd:
   object Args:
     type Citekey = com.histmersion.api.library.Citekey
     val Citekey: com.histmersion.api.library.Citekey.type = com.histmersion.api.library.Citekey
-    type Apply = Api.Apply
-    val Apply: Api.Apply.type = Api.Apply
-    type Json = Cli.JsonOutput
-    val Json: Cli.JsonOutput.type = Cli.JsonOutput
+    export Api.Apply
+    export Cli.JsonOutput as Json
 
   val Help: String =
     "Delete a source with its findings, edges, figures and stored original — a dry run unless --apply; refused while an article cites it; Calibre is never touched"

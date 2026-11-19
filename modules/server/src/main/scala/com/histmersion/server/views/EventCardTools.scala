@@ -46,26 +46,16 @@ object EventCardTools:
       offset: Option[EventsInput.Offset] = None
   ) derives JsonCodec
   object EventsInput:
-    type Query = Api.EventQuery.Text
-    val Query: Api.EventQuery.Text.type = Api.EventQuery.Text
-    type Id = com.histmersion.api.catalogue.Event.Id
-    val Id: com.histmersion.api.catalogue.Event.Id.type = com.histmersion.api.catalogue.Event.Id
-    type Kind = Api.EventQuery.Kind
-    val Kind: Api.EventQuery.Kind.type = Api.EventQuery.Kind
-    type Historicity = Api.EventQuery.Historicity
-    val Historicity: Api.EventQuery.Historicity.type = Api.EventQuery.Historicity
-    type PlaceId = Api.EventQuery.PlaceId
-    val PlaceId: Api.EventQuery.PlaceId.type = Api.EventQuery.PlaceId
+    export Api.EventQuery.Text as Query
+    export com.histmersion.api.catalogue.Event.Id
+    export Api.EventQuery.Kind
+    export com.histmersion.api.catalogue.Historicity.Wire as Historicity
+    export com.histmersion.api.catalogue.Place.Id as PlaceId
     type From = Year
     val From: Year.type = Year
     type To = Year
     val To: Year.type = Year
-    type Title = Filter.Title
-    val Title: Filter.Title.type = Filter.Title
-    type Limit = Filter.Limit
-    val Limit: Filter.Limit.type = Filter.Limit
-    type Offset = Filter.Offset
-    val Offset: Filter.Offset.type = Filter.Offset
+    export Filter.{Limit, Offset, Title}
 
     given Schema[EventsInput] = KindlingsSchema
       .derived[EventsInput]
@@ -99,32 +89,19 @@ object EventCardTools:
       wikidata: Option[PatchEventInput.Wikidata] = None
   ) derives StrictJson
   object PatchEventInput:
-    type Id = com.histmersion.api.catalogue.Event.Id
-    val Id: com.histmersion.api.catalogue.Event.Id.type = com.histmersion.api.catalogue.Event.Id
-    type Label = EventSummary.Label
-    val Label: EventSummary.Label.type = EventSummary.Label
-    type Kind = EventSummary.Kind
-    val Kind: EventSummary.Kind.type = EventSummary.Kind
-    type Historicity = EventSummary.Historicity
-    val Historicity: EventSummary.Historicity.type = EventSummary.Historicity
-    type Scale = EventSummary.Scale
-    val Scale: EventSummary.Scale.type = EventSummary.Scale
-    type PlaceId = Place.Id
-    val PlaceId: Place.Id.type = Place.Id
-    type Geometry = EventGeometry.Geojson
-    val Geometry: EventGeometry.Geojson.type = EventGeometry.Geojson
+    export com.histmersion.api.catalogue.Event.Id
+    export EventSummary.{Historicity, Kind, Label, Scale}
+    export Place.Id as PlaceId
+    export EventGeometry.Geojson as Geometry
     type Lat = Latitude
     val Lat: Latitude.type = Latitude
     type Lon = Longitude
     val Lon: Longitude.type = Longitude
-    type ParentId = com.histmersion.api.catalogue.Event.Id
-    val ParentId: com.histmersion.api.catalogue.Event.Id.type = com.histmersion.api.catalogue.Event.Id
-    type Description = EventSummary.Description
-    val Description: EventSummary.Description.type = EventSummary.Description
+    export com.histmersion.api.catalogue.Event.Id as ParentId
+    export EventSummary.Description
     type Citekey = com.histmersion.api.library.Citekey
     val Citekey: com.histmersion.api.library.Citekey.type = com.histmersion.api.library.Citekey
-    type Wikidata = EventPatch.Wikidata
-    val Wikidata: EventPatch.Wikidata.type = EventPatch.Wikidata
+    export EventPatch.Wikidata
 
     given Schema[PatchEventInput] = KindlingsSchema
       .derived[PatchEventInput]

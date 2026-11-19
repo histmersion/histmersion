@@ -132,19 +132,13 @@ object SourceProposals:
 
   object Outcome:
     object Applied:
-      type What = OutcomeWhat
-      val What: OutcomeWhat.type = OutcomeWhat
+      export com.histmersion.domain.library.workflows.SourceProposals.OutcomeWhat as What
 
     object Recorded:
-      type Id = ApprovalRecordId
-      val Id: ApprovalRecordId.type = ApprovalRecordId
-      type What = OutcomeWhat
-      val What: OutcomeWhat.type = OutcomeWhat
+      export com.histmersion.domain.library.workflows.SourceProposals.{ApprovalRecordId as Id, OutcomeWhat as What}
 
     object AlreadyOpen:
-      type What = OutcomeWhat
-      val What: OutcomeWhat.type = OutcomeWhat
+      export com.histmersion.domain.library.workflows.SourceProposals.OutcomeWhat as What
 
     object NotProposed:
-      type What = OutcomeWhat
-      val What: OutcomeWhat.type = OutcomeWhat
+      export com.histmersion.domain.library.workflows.SourceProposals.OutcomeWhat as What

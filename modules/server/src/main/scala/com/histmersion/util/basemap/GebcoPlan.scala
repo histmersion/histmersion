@@ -16,11 +16,5 @@ final case class GebcoPlan(
   def readBytes: ByteCount = ByteCount.applyUnsafe(parts.map(_.bytes.value).sum)
 
 object GebcoPlan:
-  type TileKey = PmTiles.Entry.TileId
-  val TileKey: PmTiles.Entry.TileId.type = PmTiles.Entry.TileId
-  type TileX = PmTiles.TileColumn
-  val TileX: PmTiles.TileColumn.type = PmTiles.TileColumn
-  type TileY = PmTiles.TileRow
-  val TileY: PmTiles.TileRow.type = PmTiles.TileRow
-  type Zoom = PmTiles.Zoom
-  val Zoom: PmTiles.Zoom.type = PmTiles.Zoom
+  export PmTiles.Entry.TileId as TileKey
+  export PmTiles.{TileColumn as TileX, TileRow as TileY, Zoom}

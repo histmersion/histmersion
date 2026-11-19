@@ -37,8 +37,7 @@ object ConverterState:
 
   /** From the raw probe answer (`"ok"` or why not) and the job the converter is working on, if any. */
   object Busy:
-    type JobId = Job.Id
-    val JobId: Job.Id.type = Job.Id
+    export Job.Id as JobId
 
   def of(probe: Probe, busyJob: Option[Job.Id]): ConverterState =
     if probe.value == "ok" then Ok else busyJob.fold(Down(Problem.Unclassified(Legacy.Text(probe.value))))(Busy(_))

@@ -107,10 +107,7 @@ final class AgentLease(
     catch case _: Exception => None
 
 object AgentLease:
-  type TtlSeconds = LeaseRepo.TtlSeconds
-  val TtlSeconds: LeaseRepo.TtlSeconds.type = LeaseRepo.TtlSeconds
-  type Owner = LeaseRepo.LeaseOwner
-  val Owner: LeaseRepo.LeaseOwner.type = LeaseRepo.LeaseOwner
+  export LeaseRepo.{LeaseOwner as Owner, TtlSeconds}
 
   val Name: LeaseRepo.LeaseName = LeaseRepo.LeaseName("agents")
 

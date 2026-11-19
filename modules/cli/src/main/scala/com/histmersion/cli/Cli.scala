@@ -265,8 +265,7 @@ object Cli:
   )
 
   object Error:
-    type ExitCode = com.histmersion.cli.ExitCode
-    val ExitCode: com.histmersion.cli.ExitCode.type = com.histmersion.cli.ExitCode
+    export com.histmersion.cli.ExitCode
 
   /** What `histmersion …` of this group was asked to do, every argument parsed. */
   enum TopCommand extends Command:

@@ -43,12 +43,8 @@ object DirSize:
   object Result:
     type Bytes = ByteCount
     val Bytes: ByteCount.type = ByteCount
-    type Files = Storage.FileCount
-    val Files: Storage.FileCount.type = Storage.FileCount
-    type Exists = Storage.Entry.Exists
-    val Exists: Storage.Entry.Exists.type = Storage.Entry.Exists
-    type Partial = Storage.Entry.Partial
-    val Partial: Storage.Entry.Partial.type = Storage.Entry.Partial
+    export Storage.FileCount as Files
+    export Storage.Entry.{Exists, Partial}
     type Unreadable = Unreadable.T
     object Unreadable extends Newtype[Int, Pure]
 

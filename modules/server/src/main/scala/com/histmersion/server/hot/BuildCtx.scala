@@ -32,5 +32,4 @@ final class BuildCtx[C, A] private[hot] (
     dep(h.name).asInstanceOf[B]
 
 object BuildCtx:
-  type Changed = Hot.Graph.Def.Name
-  val Changed: Hot.Graph.Def.Name.type = Hot.Graph.Def.Name
+  export com.histmersion.config.HotNode.Name as Changed

@@ -101,8 +101,7 @@ final class AgentTrees(app: AppConfig, defs: AgentDefinitions, paths: UserPaths 
 object AgentTrees:
 
   /** No environment: the trees only where the settings put them (a test's). */
-  type SettingsVersion = GenSettings.Version
-  val SettingsVersion: GenSettings.Version.type = GenSettings.Version
+  export GenSettings.Version as SettingsVersion
 
   val NoEnvironment: UserPaths = UserPaths(Environment.empty, UserPaths.OsName(""))
 

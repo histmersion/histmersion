@@ -12,7 +12,5 @@ import scala.jdk.CollectionConverters.*
 final case class InteractiveSpec(model: InteractiveSpec.Model, tools: List[InteractiveSpec.Tools])
 
 object InteractiveSpec:
-  type Model = AgentsControllers.ModelName
-  val Model: AgentsControllers.ModelName.type = AgentsControllers.ModelName
-  type Tools = ToolUse.Tool
-  val Tools: ToolUse.Tool.type = ToolUse.Tool
+  export AgentsControllers.ModelName as Model
+  export ToolUse.Tool as Tools

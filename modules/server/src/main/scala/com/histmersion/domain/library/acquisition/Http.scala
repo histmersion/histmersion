@@ -44,10 +44,8 @@ trait Http:
 
 object Http:
 
-  type Url = RepositoryLanding.Candidate.Url
-  val Url: RepositoryLanding.Candidate.Url.type = RepositoryLanding.Candidate.Url
-  type Text = HttpAnswer.Text
-  val Text: HttpAnswer.Text.type = HttpAnswer.Text
+  export RepositoryLanding.Candidate.Url
+  export HttpAnswer.Text
 
   /** A caller's own `User-Agent` (the PMC hosts get the project's public identity) replaces the acquisition one; either
     * goes through [[HttpPolicy.userAgent]], so neither can carry an e-mail.

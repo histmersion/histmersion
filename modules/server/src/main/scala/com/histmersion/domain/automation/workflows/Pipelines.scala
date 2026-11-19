@@ -22,10 +22,7 @@ import com.histmersion.api.Api
   */
 private[histmersion] object Pipelines:
 
-  type EntryText = Queue.QueueItem.Text
-  val EntryText: Queue.QueueItem.Text.type = Queue.QueueItem.Text
-  type EntryTopic = Queue.QueueItem.Topic
-  val EntryTopic: Queue.QueueItem.Topic.type = Queue.QueueItem.Topic
+  export Queue.QueueItem.{Text as EntryText, Topic as EntryTopic}
   type LogLine = LogLine.T
   object LogLine extends Newtype[String, Pure]
 

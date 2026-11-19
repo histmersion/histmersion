@@ -15,8 +15,7 @@ final case class AgentFacetsInput(field: AgentFacetsInput.Field, prefix: Option[
 object AgentFacetsInput:
   type Field = Field.T
   object Field extends Newtype[String, Pure]
-  type Prefix = FilterSql.FacetPrefix
-  val Prefix: FilterSql.FacetPrefix.type = FilterSql.FacetPrefix
+  export FilterSql.FacetPrefix as Prefix
 
   given Schema[AgentFacetsInput] = KindlingsSchema
     .derived[AgentFacetsInput]
