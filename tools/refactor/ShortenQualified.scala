@@ -478,6 +478,18 @@ class ShortenQualified(config: ShortenQualified.Config, excluded: Set[String]) e
       case _ => false
     })
 
+    def inDerives(t: Tree): Boolean = t.parent.exists { case tp: Template => tp.derives.exists(_ eq t); case _ => false }
+    /** Scala 3 records no occurrence for a path in a derives clause: its symbols are read from the project index by path,
+      * when every qualifier is a package and the package has exactly one type of the last name. */
+    def symbolsByPath(segs: List[Name]): Option[List[String]] = {
+      val names = segs.map(_.value)
+      val pkgs = names.init.scanLeft("")((acc, nm) => acc + nm + "/").tail
+      if (pkgs.isEmpty || !pkgs.forall(idx.packages)) None
+      else idx.packageMembers.getOrElse(pkgs.last, Map.empty).getOrElse(names.last, Set.empty).filter(isTypeSym).toList match {
+        case List(only) => Some(pkgs :+ only)
+        case _ => None
+      }
+    }
     case class Edit(start: Int, end: Int, text: String, kind: String, key: String, note: String)
     val edits = scala.collection.mutable.ListBuffer.empty[Edit]
     val skippedRows = scala.collection.mutable.ListBuffer.empty[String]
@@ -492,7 +504,10 @@ class ShortenQualified(config: ShortenQualified.Config, excluded: Set[String]) e
     if (config.shorten) chains.foreach { case (node, names) =>
       val rooted = names.head.value == "_root_"
       val segs = if (rooted) names.tail else names
-      val syms = segs.map(symOf)
+      // spelled from the root: `_root_.…` or `com.histmersion.…` (the G47root and G47fqn findings), not a relative path
+      val spelledFromRoot = rooted || segs.head.value == config.projectPackage.takeWhile(_ != '/')
+      val recorded = segs.map(symOf)
+      val syms = if (recorded.forall(_.nonEmpty) || !spelledFromRoot || !inDerives(node)) recorded else symbolsByPath(segs).getOrElse(recorded)
       val chainKey = path + "@" + node.pos.start
       val isExport = ancestors(node).exists(_.is[Export])
       val lastIsType = segs.last.is[Type.Name]
@@ -527,14 +542,14 @@ class ShortenQualified(config: ShortenQualified.Config, excluded: Set[String]) e
           }
           .orElse {
             // a project subpackage as the head: `com.histmersion.api.library.Source` -> `api.library.Source`
-            if (!config.packagePrefixes || !(rooted || projectRooted)) None
+            if (!config.packagePrefixes || !spelledFromRoot) None
             else (n - 1 to 1 by -1).find { i =>
               isPackage(syms(i)) && syms(i).startsWith(config.projectPackage) && syms(i) != config.projectPackage &&
                 key(importOwner(syms(i))) == key(syms(i - 1)) && resolve(segs(i).value, false, syms(i), node) == Same
             }.map(i => (i, None))
           }
           .orElse(if (rooted && resolve(segs.head.value, false, syms.head, node) == Same) Some((0, None)) else None)
-        if (rooted || projectRooted) {
+        if (spelledFromRoot) {
           def why: String = {
             val last = n - 1
             val nm = segs(last).value
@@ -572,10 +587,10 @@ class ShortenQualified(config: ShortenQualified.Config, excluded: Set[String]) e
             edits += Edit(start, end, "", "drop", chainKey, removed + "|" + segs.drop(i).map(_.value).mkString(".") + imp.fold("")(" +import " + _))
           } else {
             imp.foreach(plannedImports.remove)
-            if (rooted || projectRooted) skip(chainKey, "the qualifier holds parentheses or a comment", node)
+            if (spelledFromRoot) skip(chainKey, "the qualifier holds parentheses or a comment", node)
           }
         }
-      } else if (!excluded(chainKey) && n >= 1 && (rooted || segs.head.value == config.projectPackage.takeWhile(_ != '/')) && !syms.forall(_.nonEmpty))
+      } else if (!excluded(chainKey) && n >= 1 && spelledFromRoot && !syms.forall(_.nonEmpty))
         skip(chainKey, "a segment has no SemanticDB symbol", node)
     }
 

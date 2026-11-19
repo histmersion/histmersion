@@ -8,3 +8,9 @@ object Model:
   // P5 REWRITE to api.json.Schema: another Schema is imported, and json is no member of api.model
   given modelSchema: com.histmersion.api.json.Schema[Model] = new com.histmersion.api.json.Schema[Model] {}
   def otherSchema: Schema[Int] = new Schema[Int] {}
+
+// P7 REWRITE to api.json.Schema: a derives clause has no SemanticDB occurrences; the path is read from the index
+final case class Derived(id: Int) derives com.histmersion.api.json.Schema
+
+// P8 UNCHANGED: a relative path is no finding
+final case class Relative(id: Int) derives Schema

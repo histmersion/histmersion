@@ -201,7 +201,16 @@ def compile_errors(log):
         if m: out.append((m.group(1).replace(here, ''), int(m.group(2)), int(m.group(3))))
     return list(dict.fromkeys(out))
 
+def drop_kept():
+    """`kept:` rows are the rule's own verdicts of the last run, recomputed at the end of this one: dropped first, so a
+    better rule gets to try those places again (the compiler's and the comparison's rejections stay)."""
+    if not os.path.exists(EXCL): return
+    lines = open(EXCL).read().split('\n')
+    keep = [l for l in lines if not (l.split('\t')[1:2] and l.split('\t')[1].startswith('kept: '))]
+    if len(keep) != len(lines): open(EXCL, 'w').write('\n'.join(keep))
+
 def main():
+    drop_kept()
     for n in range(1, a.rounds + 1):
         rows = run_rule(n)
         slog = open(os.path.join(work, f'scalafix-{n}.log'), errors='ignore').read()
