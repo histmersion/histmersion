@@ -4,6 +4,7 @@ package domain.personal.reading
 import com.histmersion.domain.{ItemKey, ItemKind, ItemRef, ItemUid}
 import com.histmersion.domain.personal.{MarkTime, TargetLabel}
 import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.util.database.Timestamps
 import com.histmersion.{PageSize, UserId}
 
 import com.augustnagro.magnum.*
@@ -11,25 +12,25 @@ import com.augustnagro.magnum.*
 /** The `read_marks` table. Takes the connection it runs on. */
 private[reading] object ReadingRepo:
 
-  private def iso(col: String): String = s"""to_char($col AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')"""
-
   private val Projection =
-    s"""SELECT m.target_kind, m.target_id, m.target_uid, m.target_label, ${iso("m.read_at")}, ${iso("m.opened_at")},
-               ${iso("m.created_at")}, ${iso("m.updated_at")}
+    sql"""SELECT m.target_kind, m.target_id, m.target_uid, m.target_label, ${Timestamps.iso(
+        sql"m.read_at"
+      )}, ${Timestamps.iso(sql"m.opened_at")},
+               ${Timestamps.iso(sql"m.created_at")}, ${Timestamps.iso(sql"m.updated_at")}
           FROM read_marks m"""
 
   def list(user: UserId, kind: Option[ItemKind], show: ReadingShow, size: PageSize)(using DbCon): List[MarkRow] =
     val (where, order) = show match
-      case ReadingShow.Read   => (" AND m.read_at IS NOT NULL", " ORDER BY m.read_at DESC, m.id DESC")
-      case ReadingShow.Opened => (" AND m.opened_at IS NOT NULL", " ORDER BY m.opened_at DESC, m.id DESC")
-      case ReadingShow.All    => ("", " ORDER BY m.updated_at DESC, m.id DESC")
-    sql"${SqlLiteral(Projection)} WHERE m.user_id = $user${kind.fold(sql"")(k => sql" AND m.target_kind = $k")}${SqlLiteral(where + order)} LIMIT $size"
+      case ReadingShow.Read   => (sql" AND m.read_at IS NOT NULL", sql" ORDER BY m.read_at DESC, m.id DESC")
+      case ReadingShow.Opened => (sql" AND m.opened_at IS NOT NULL", sql" ORDER BY m.opened_at DESC, m.id DESC")
+      case ReadingShow.All    => (sql"", sql" ORDER BY m.updated_at DESC, m.id DESC")
+    sql"$Projection WHERE m.user_id = $user${kind.fold(sql"")(k => sql" AND m.target_kind = $k")}$where$order LIMIT $size"
       .query[MarkRow]
       .run()
       .toList
 
   def get(user: UserId, ref: ItemRef)(using DbCon): Option[MarkRow] =
-    sql"${SqlLiteral(Projection)} WHERE m.user_id = $user AND m.target_kind = ${ref.kind} AND m.target_id = ${ref.key}"
+    sql"$Projection WHERE m.user_id = $user AND m.target_kind = ${ref.kind} AND m.target_id = ${ref.key}"
       .query[MarkRow]
       .run()
       .headOption

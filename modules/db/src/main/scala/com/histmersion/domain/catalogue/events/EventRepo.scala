@@ -58,10 +58,7 @@ private[events] object EventRepo:
     * geometry's type — over [[EventSql.fromEvents]].
     */
   private val summaryCols =
-    "e.id, e.label, e.kind, e.not_before, e.begin_by, e.end_from, e.not_after, " +
-      "e.historicity, e.place_id, e.parent_id, e.description, e.citekey, " +
-      "e.scale, ep.kind, GeometryType(e.geom), " + EventSql.TierSql +
-      ", e.central, e.plus_minus, e.dating_method, e.uncertainty"
+    sql"e.id, e.label, e.kind, e.not_before, e.begin_by, e.end_from, e.not_after, e.historicity, e.place_id, e.parent_id, e.description, e.citekey, e.scale, ep.kind, GeometryType(e.geom), ${EventSql.TierSql}, e.central, e.plus_minus, e.dating_method, e.uncertainty"
 
   private val fromEvents = EventSql.fromEvents
 
@@ -69,9 +66,9 @@ private[events] object EventRepo:
 
   /** The events `where` selects ([[EventSql.listWhere]]), one page of them. */
   def list(where: Frag, limit: PageSize, offset: Offset)(using DbCon): EventList =
-    val total = sql"SELECT count(*)::int FROM ${SqlLiteral(fromEvents)} WHERE $where".query[Int].run().head
+    val total = sql"SELECT count(*)::int FROM $fromEvents WHERE $where".query[Int].run().head
     val rows =
-      sql"SELECT ${SqlLiteral(summaryCols)} FROM ${SqlLiteral(fromEvents)} WHERE $where ORDER BY coalesce(e.not_before, e.begin_by), e.label, e.id LIMIT ${limit.value.max(1)} OFFSET ${offset.value.max(0)}"
+      sql"SELECT $summaryCols FROM $fromEvents WHERE $where ORDER BY coalesce(e.not_before, e.begin_by), e.label, e.id LIMIT ${limit.value.max(1)} OFFSET ${offset.value.max(0)}"
         .query[EventRow]
         .run()
         .toList
@@ -95,12 +92,12 @@ private[events] object EventRepo:
         .run()
         .toList
     val unplaced =
-      sql"SELECT count(*)::int FROM ${SqlLiteral(fromEvents)} WHERE e.geom IS NULL AND ep.geom IS NULL AND $where"
+      sql"SELECT count(*)::int FROM $fromEvents WHERE e.geom IS NULL AND ep.geom IS NULL AND $where"
         .query[Int]
         .run()
         .head
     val imprecise =
-      sql"SELECT count(*)::int FROM ${SqlLiteral(fromEvents)} WHERE coalesce(e.geom, ep.geom) IS NOT NULL AND $listed AND e.uncertainty > ${EventPrecision.ApproximateUpTo}"
+      sql"SELECT count(*)::int FROM $fromEvents WHERE coalesce(e.geom, ep.geom) IS NOT NULL AND $listed AND e.uncertainty > ${EventPrecision.ApproximateUpTo}"
         .query[Int]
         .run()
         .head
@@ -111,7 +108,7 @@ private[events] object EventRepo:
       else
         sql"""SELECT e.id, ST_AsGeoJSON(ST_SimplifyPreserveTopology(
                        coalesce(e.geom, ep.geom_clipped, ep.geom), $tolerance), 4)
-              FROM ${SqlLiteral(fromEvents)} WHERE e.id = ANY($wanted::text[])"""
+              FROM $fromEvents WHERE e.id = ANY($wanted::text[])"""
           .query[(BEventRow.Id, Option[BEventRow.Geom])]
           .run()
           .collect { case (id, Some(g)) => id -> g }
@@ -135,25 +132,25 @@ private[events] object EventRepo:
         .toMap
 
   /** The SELECT of the map's event rows ([[EventGeoRow]]), up to its WHERE (which the caller ends). */
-  private val geoSelect: Frag = sql"""SELECT ${SqlLiteral(summaryCols)},
+  private val geoSelect: Frag = sql"""SELECT $summaryCols,
               ST_Y(a.pt), ST_X(a.pt), s.src, ep.label, GeometryType(s.g) IN ('POLYGON', 'MULTIPOLYGON'),
               (SELECT max(c.vei) FROM event_catalogue c WHERE c.event_id = e.id),
               (SELECT max(c.magnitude) FROM event_catalogue c WHERE c.event_id = e.id)
-            FROM ${SqlLiteral(fromEvents)} ${SqlLiteral(EventSql.anchorJoins)}
+            FROM $fromEvents ${EventSql.anchorJoins}
             WHERE s.g IS NOT NULL AND """
 
   /** One event with its parent, parts, datings, edges, participants, Wikidata item and corrections by hand. */
   def get(id: BEventRow.Id)(using DbCon): Option[EventEntry] =
-    sql"""SELECT ${SqlLiteral(summaryCols)}, ST_AsGeoJSON(e.geom)
-          FROM ${SqlLiteral(fromEvents)} WHERE e.id = $id""".query[EventDetailRow].run().headOption.map { r =>
+    sql"""SELECT $summaryCols, ST_AsGeoJSON(e.geom)
+          FROM $fromEvents WHERE e.id = $id""".query[EventDetailRow].run().headOption.map { r =>
       val parent = r.toSummary.parentId.flatMap { pid =>
-        sql"""SELECT ${SqlLiteral(summaryCols)} FROM ${SqlLiteral(fromEvents)} WHERE e.id = $pid"""
+        sql"""SELECT $summaryCols FROM $fromEvents WHERE e.id = $pid"""
           .query[EventRow]
           .run()
           .headOption
           .map(_.toSummary)
       }
-      val children = sql"""SELECT ${SqlLiteral(summaryCols)} FROM ${SqlLiteral(fromEvents)}
+      val children = sql"""SELECT $summaryCols FROM $fromEvents
             WHERE e.parent_id = $id ORDER BY coalesce(e.not_before, e.begin_by), e.label, e.id"""
         .query[EventRow]
         .run()
@@ -201,7 +198,7 @@ private[events] object EventRepo:
 
   /** The tier, other names and catalogue of one event. */
   def tierAndNames(id: BEventRow.Id)(using DbCon): Option[(Tier, List[BEventRow.Names], Option[BEventRow.Label])] =
-    sql"""SELECT ${SqlLiteral(EventSql.TierSql)}, e.names, e.catalogue FROM events e WHERE e.id = $id"""
+    sql"""SELECT ${EventSql.TierSql}, e.names, e.catalogue FROM events e WHERE e.id = $id"""
       .query[(Tier, List[BEventRow.Names], Option[BEventRow.Label])]
       .run()
       .headOption

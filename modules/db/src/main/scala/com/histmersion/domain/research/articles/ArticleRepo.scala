@@ -14,7 +14,7 @@ import com.histmersion.domain.library.search.Search
 
 import com.histmersion.domain.catalogue.places.PlaceScope
 
-import com.histmersion.util.database.{joined, RangeSql}
+import com.histmersion.util.database.{joined, RangeSql, Timestamps}
 
 import com.histmersion.api.Write
 import com.histmersion.util.database.Jsonb
@@ -70,21 +70,21 @@ private[articles] object ArticleRepo:
   private val Esc = sql" ESCAPE '\\'"
 
   /** `updated_at` rendered UTC-normalised: stable to compare, safe to echo back as `ifUpdatedAt`. */
-  private val Token = "to_char(a.updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.US\"Z\"')"
+  private val Token = Timestamps.iso(sql"a.updated_at")
 
   /** One projection per shape, reused — no duplicated column lists. The row and the domain shape read the same columns;
     * `text[]` arrives as a list in both.
     */
   private val SummaryCols =
-    s"a.slug, a.title, a.kind, a.summary, a.tags, a.regions, ${RangeSql.cols("a.period")}, $Token"
+    sql"a.slug, a.title, a.kind, a.summary, a.tags, a.regions, ${RangeSql.cols(sql"a.period")}, $Token"
   private val RowCols =
-    s"a.slug, a.title, a.kind, a.body, a.summary, a.tags, a.regions, ${RangeSql.cols("a.period")}, $Token"
+    sql"a.slug, a.title, a.kind, a.body, a.summary, a.tags, a.regions, ${RangeSql.cols(sql"a.period")}, $Token"
 
   /** [[ArticleRow]], the wire shape: the row plus its uid (V030). */
-  private val ViewCols = s"$RowCols, a.uid"
+  private val ViewCols = sql"$RowCols, a.uid"
 
   /** [[FullArticleRow]], the domain read: the row plus its recorded filter and reasons (V066), as JSON text. */
-  private val LoadCols = s"$RowCols, a.coverage_filter::text, a.coverage_reasons::text"
+  private val LoadCols = sql"$RowCols, a.coverage_filter::text, a.coverage_reasons::text"
 
   /** The filter and the reasons as the jsonb columns store them. */
   private def filterJson(a: Article): Option[String] =
@@ -278,7 +278,7 @@ private[articles] object ArticleRepo:
       .getOrElse(slug)
 
   private def token(slug: String)(using DbCon): Option[String] =
-    sql"SELECT ${SqlLiteral(Token)} FROM articles a WHERE a.slug = $slug"
+    sql"SELECT $Token FROM articles a WHERE a.slug = $slug"
       .query[String]
       .run()
       .headOption
@@ -286,7 +286,7 @@ private[articles] object ArticleRepo:
   // ── reads ──────────────────────────────────────────────────────────────────────────────────
   /** The whole article as the DOMAIN model — the input side of a patch, and what `export` renders. */
   def load(slug: Slug)(using DbCon): Option[Article] =
-    sql"SELECT ${SqlLiteral(LoadCols)} FROM articles a WHERE a.slug = $slug"
+    sql"SELECT $LoadCols FROM articles a WHERE a.slug = $slug"
       .query[FullArticleRow]
       .run()
       .headOption
@@ -310,7 +310,7 @@ private[articles] object ArticleRepo:
       }
 
   def get(slug: Slug)(using DbCon): Option[Article.Row] =
-    sql"SELECT ${SqlLiteral(ViewCols)} FROM articles a WHERE a.slug = ${canonical(slug)}"
+    sql"SELECT $ViewCols FROM articles a WHERE a.slug = ${canonical(slug)}"
       .query[Article.Row]
       .run()
       .headOption
@@ -318,7 +318,7 @@ private[articles] object ArticleRepo:
   /** The article plus both directions of its link graph — one connection, three queries. */
   def view(requested: Slug)(using DbCon): Option[Article.View] =
     val slug = canonical(requested) // an old slug (V042) shows the article it was renamed to
-    sql"SELECT ${SqlLiteral(ViewCols)} FROM articles a WHERE a.slug = $slug"
+    sql"SELECT $ViewCols FROM articles a WHERE a.slug = $slug"
       .query[Article.Row]
       .run()
       .headOption
@@ -428,7 +428,7 @@ private[articles] object ArticleRepo:
     )
     val total = Article.List.Total(kinds.map(_.count.value).sum)
     val rows =
-      sql"SELECT ${SqlLiteral(SummaryCols)} FROM articles a WHERE $where $order LIMIT $limit OFFSET ${offset.value.max(0)}"
+      sql"SELECT $SummaryCols FROM articles a WHERE $where $order LIMIT $limit OFFSET ${offset.value.max(0)}"
         .query[ArticleSummaryRow]
         .run()
     Article.List.of(total, rows.toList.map(_.summaryRow), UnreadPage.Offset(offset.value.max(0)), kinds)

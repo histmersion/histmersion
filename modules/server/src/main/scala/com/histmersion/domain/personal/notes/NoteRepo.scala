@@ -11,17 +11,16 @@ import com.augustnagro.magnum.*
 import scala.util.chaining.*
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.given
+import com.histmersion.util.database.Timestamps
 
 /** The `notes` table. Takes the connection it runs on; a removed note stays as its tombstone. */
 private[notes] object NoteRepo:
   type RowsChanged = RowsChanged.T
   object RowsChanged extends Newtype[Int, Pure]
 
-  private def iso(col: String): String = s"""to_char($col AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')"""
-
   private val Projection =
-    s"""SELECT n.id::text, n.target_kind, n.target_id, n.target_uid, n.lat, n.lon, n.period_start, n.period_end, n.body,
-               n.target_label, ${iso("n.created_at")}, ${iso("n.updated_at")}
+    sql"""SELECT n.id::text, n.target_kind, n.target_id, n.target_uid, n.lat, n.lon, n.period_start, n.period_end, n.body,
+               n.target_label, ${Timestamps.iso(sql"n.created_at")}, ${Timestamps.iso(sql"n.updated_at")}
           FROM notes n"""
 
   /** Last changed first; every one when no `size` is given. */
@@ -33,14 +32,14 @@ private[notes] object NoteRepo:
       sql" AND (n.target_id = ${i.key} OR n.target_uid = ANY(${i.uids.toList.map(u => u.value.toString)}::uuid[]))"
     )
     val ordered =
-      sql"${SqlLiteral(Projection)} WHERE n.user_id = $user AND n.deleted_at IS NULL$ofKind$ofItem ORDER BY n.updated_at DESC, n.id DESC"
+      sql"$Projection WHERE n.user_id = $user AND n.deleted_at IS NULL$ofKind$ofItem ORDER BY n.updated_at DESC, n.id DESC"
     sql"$ordered${size.fold(sql"")(s => sql" LIMIT $s")}"
       .query[Note.Row]
       .run()
       .toList
 
   def live(user: UserId, id: com.histmersion.api.personal.Note.Id)(using DbCon): Option[Note.Row] =
-    sql"${SqlLiteral(Projection)} WHERE n.user_id = $user AND n.deleted_at IS NULL AND n.id = $id::uuid"
+    sql"$Projection WHERE n.user_id = $user AND n.deleted_at IS NULL AND n.id = $id::uuid"
       .query[Note.Row]
       .run()
       .headOption

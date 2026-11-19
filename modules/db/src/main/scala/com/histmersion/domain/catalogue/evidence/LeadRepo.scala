@@ -53,7 +53,7 @@ private[evidence] object LeadRepo:
       using DbCon
   ): List[EventFindingRef] =
     sql"""WITH ev AS (
-              SELECT ${SqlLiteral(EventSql.AnchorSql)} AS pt, e.outer_span AS span
+              SELECT ${EventSql.AnchorSql} AS pt, e.outer_span AS span
               FROM events e LEFT JOIN places ep ON ep.id = e.place_id WHERE e.id = $id)
             SELECT f.id, f.citekey, f.claim,
                    ST_Distance(f.geom::geography, ev.pt::geography) / 1000.0,
@@ -64,7 +64,7 @@ private[evidence] object LeadRepo:
             FROM ev JOIN findings f
               ON f.geom IS NOT NULL AND ev.pt IS NOT NULL AND ev.span IS NOT NULL
              AND NOT lower_inf(f.period) AND NOT upper_inf(f.period)
-             AND f.geom && ${SqlLiteral(EventSql.boxAround(EventSql.Point("ev.pt"), km))}
+             AND f.geom && ${EventSql.boxAround(sql"ev.pt", km)}
              AND ST_DWithin(f.geom::geography, ev.pt::geography, ${km.value * 1000.0})
              AND f.period && int8range(${RangeSql.start(sql"ev.span")} - $years, ${RangeSql.end(
         sql"ev.span"
@@ -100,13 +100,13 @@ private[evidence] object LeadRepo:
       .run()
       .head
     val rows = (sql"""SELECT e.id, e.label, e.kind, e.not_before, e.begin_by, e.end_from, e.not_after,
-                 ${SqlLiteral(EventSql.TierSql)} AS tier,
+                 ${EventSql.TierSql} AS tier,
                  (SELECT max(c.vei) FROM event_catalogue c WHERE c.event_id = e.id),
                  (SELECT max(c.magnitude) FROM event_catalogue c WHERE c.event_id = e.id),
                  (SELECT count(*)::int FROM findings f
                    WHERE a.pt IS NOT NULL AND e.outer_span IS NOT NULL AND f.geom IS NOT NULL
                      AND NOT lower_inf(f.period) AND NOT upper_inf(f.period)
-                     AND f.geom && ${SqlLiteral(EventSql.boxAround(EventSql.Point("a.pt"), km))}
+                     AND f.geom && ${EventSql.boxAround(sql"a.pt", km)}
                      AND ST_DWithin(f.geom::geography, a.pt::geography, ${km.value * 1000.0})
                      AND f.period && int8range(${RangeSql.start(sql"e.outer_span")} - $years, ${RangeSql.end(
         sql"e.outer_span"
@@ -114,11 +114,7 @@ private[evidence] object LeadRepo:
                  (SELECT count(*)::int FROM event_link_candidates k WHERE k.event_id = e.id AND k.status = 'proposed'),
                  (SELECT count(*)::int FROM event_link_candidates k WHERE k.event_id = e.id AND k.status = 'confirmed')
                FROM events e LEFT JOIN places ep ON ep.id = e.place_id
-               CROSS JOIN LATERAL (SELECT ${SqlLiteral(
-        EventSql.AnchorSql
-      )} AS pt) a WHERE $where ORDER BY (${SqlLiteral(EventSql.TierSql)}) = '${SqlLiteral(
-        EventTier.Catalogue
-      )}' DESC, (SELECT coalesce(max(c.vei), 0) + coalesce(max(c.magnitude), 0) FROM event_catalogue c WHERE c.event_id = e.id) DESC, coalesce(e.not_before, e.begin_by), e.id LIMIT ${limit.value
+               CROSS JOIN LATERAL (SELECT ${EventSql.AnchorSql} AS pt) a WHERE $where ORDER BY ${EventSql.CatalogueOnly} DESC, (SELECT coalesce(max(c.vei), 0) + coalesce(max(c.magnitude), 0) FROM event_catalogue c WHERE c.event_id = e.id) DESC, coalesce(e.not_before, e.begin_by), e.id LIMIT ${limit.value
         .max(1)} OFFSET ${offset.value.max(0)}""")
     (RowCount(total), rows.query[LeadRow].run().toList)
 

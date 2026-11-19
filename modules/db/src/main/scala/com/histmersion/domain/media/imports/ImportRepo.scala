@@ -62,8 +62,8 @@ private[imports] object ImportRepo:
       provider: MediaItemRow.Provider,
       since: Option[Since],
       everyOne: Boolean = false
-  ): String =
-    s"""WITH used AS (
+  ): Frag =
+    sql"""WITH used AS (
           SELECT fp.place_id, count(*) AS n, count(DISTINCT f.citekey) AS s
           FROM finding_places fp JOIN findings f ON f.id = fp.finding_id GROUP BY fp.place_id),
         cand AS (
@@ -72,26 +72,33 @@ private[imports] object ImportRepo:
           JOIN places p ON p.id = u.place_id
           CROSS JOIN LATERAL (
             SELECT pl.external_id AS qid FROM place_links pl
-            WHERE pl.place_id = u.place_id AND pl.scheme = 'wikidata' AND pl.external_id ~ '$QidRe'
+            WHERE pl.place_id = u.place_id AND pl.scheme = 'wikidata' AND pl.external_id ~ $QidRe
             ORDER BY (pl.relation = 'exact_match') DESC, pl.external_id LIMIT 1) l
           ORDER BY l.qid, u.s DESC, u.n DESC, u.place_id)
         SELECT c.place_id, c.qid, c.label, c.kind, c.s, c.n FROM cand c
-        WHERE $everyOne OR NOT EXISTS (SELECT 1 FROM media_checks k WHERE k.provider = ${lit(provider.value)}
+        WHERE ${all(everyOne)} OR NOT EXISTS (SELECT 1 FROM media_checks k WHERE k.provider = $provider
                 AND ((k.target_type = 'place' AND k.target_id = c.place_id) OR k.qid = c.qid)
-                ${since.fold("")(ms => s"AND k.checked_at >= to_timestamp(${ms.value}::double precision / 1000)")})"""
+                ${checkedSince(sql"k", since)})"""
 
-  private def lit(s: String): String = "'" + s.replace("'", "''") + "'"
+  /** `true` (a refresh with no start: every one is asked again) or `false`, written in: the planner drops the
+    * `NOT EXISTS` it guards when it is `true`.
+    */
+  private def all(everyOne: Boolean): Frag = if everyOne then sql"true" else sql"false"
+
+  /** ` AND <alias>.checked_at >= <since>` (epoch milliseconds, written in) — nothing for none. */
+  private def checkedSince(alias: Frag, since: Option[Since]): Frag =
+    since.fold(sql"")(ms => sql"AND $alias.checked_at >= to_timestamp(${ms.literal}::double precision / 1000)")
 
   private def eventCandidates(
       provider: MediaItemRow.Provider,
       since: Option[Since],
       everyOne: Boolean = false
-  ): String =
-    s"""SELECT e.id, e.wikidata, e.label FROM events e
+  ): Frag =
+    sql"""SELECT e.id, e.wikidata, e.label FROM events e
         WHERE e.wikidata IS NOT NULL
-          AND ($everyOne OR NOT EXISTS (SELECT 1 FROM media_checks c WHERE c.provider = ${lit(provider.value)}
+          AND (${all(everyOne)} OR NOT EXISTS (SELECT 1 FROM media_checks c WHERE c.provider = $provider
                 AND ((c.target_type = 'event' AND c.target_id = e.id) OR (c.target_type = 'event' AND c.qid = e.wikidata))
-                ${since.fold("")(ms => s"AND c.checked_at >= to_timestamp(${ms.value}::double precision / 1000)")}))"""
+                ${checkedSince(sql"c", since)}))"""
 
   /** The places and events an import asks about. `place`/`event` name one (an error when it has no Wikidata item);
     * otherwise the events with an item, then the places of [[placeCandidates]] — each only when this provider has not
@@ -139,7 +146,7 @@ private[imports] object ImportRepo:
         // database's microseconds, so a check made in the same millisecond counted as newer
         val asOf = if refresh.value then since else None
         val everyOne = refresh.value && since.isEmpty
-        val events = sql"${SqlLiteral(eventCandidates(provider, asOf, everyOne))} ORDER BY e.id LIMIT ${n.literal}"
+        val events = sql"${eventCandidates(provider, asOf, everyOne)} ORDER BY e.id LIMIT ${n.literal}"
           .query[(Target.Id, Target.Qid, Target.Label)]
           .run()
           .toList
@@ -148,7 +155,7 @@ private[imports] object ImportRepo:
         val places =
           if rest <= 0 then Nil
           else
-            sql"${SqlLiteral(placeCandidates(provider, asOf, everyOne))} ORDER BY (c.kind IN ('site', 'feature')) DESC, c.s DESC, c.n DESC, c.place_id LIMIT ${rest.literal}"
+            sql"${placeCandidates(provider, asOf, everyOne)} ORDER BY (c.kind IN ('site', 'feature')) DESC, c.s DESC, c.n DESC, c.place_id LIMIT ${rest.literal}"
               .query[(Target.Id, Target.Qid, Target.Label, Option[String], Long, Long)]
               .run()
               .toList
@@ -160,9 +167,9 @@ private[imports] object ImportRepo:
     */
   def pending(provider: MediaItemRow.Provider, since: Option[Since])(using DbCon): RowCount =
     val e =
-      sql"SELECT count(*)::int FROM (${SqlLiteral(eventCandidates(provider, since))}) x".query[Int].run().head
+      sql"SELECT count(*)::int FROM (${eventCandidates(provider, since)}) x".query[Int].run().head
     val p =
-      sql"SELECT count(*)::int FROM (${SqlLiteral(placeCandidates(provider, since))}) x".query[Int].run().head
+      sql"SELECT count(*)::int FROM (${placeCandidates(provider, since)}) x".query[Int].run().head
     RowCount(e + p)
 
   // ── which places and events a collection or the depictions import asks (#1446) ──────────────
@@ -175,20 +182,20 @@ private[imports] object ImportRepo:
       since: Option[Since],
       everyOne: Boolean,
       pleiadesOnly: Boolean
-  ): String =
-    s"""WITH used AS (
+  ): Frag =
+    sql"""WITH used AS (
           SELECT fp.place_id, count(*) AS n, count(DISTINCT f.citekey) AS s
           FROM finding_places fp JOIN findings f ON f.id = fp.finding_id GROUP BY fp.place_id)
         SELECT u.place_id, p.label, p.kind, u.s, u.n FROM used u JOIN places p ON p.id = u.place_id
-        WHERE ($everyOne OR NOT EXISTS (SELECT 1 FROM media_checks k WHERE k.provider = ${lit(check.value)}
+        WHERE (${all(everyOne)} OR NOT EXISTS (SELECT 1 FROM media_checks k WHERE k.provider = $check
                 AND k.target_type = 'place' AND k.target_id = u.place_id
-                ${since.fold("")(ms => s"AND k.checked_at >= to_timestamp(${ms.value}::double precision / 1000)")}))
-          ${if pleiadesOnly then s"AND ($HasPleiades)" else ""}"""
+                ${checkedSince(sql"k", since)}))
+          ${if pleiadesOnly then sql"AND ($HasPleiades)" else sql""}"""
 
   /** A place `u.place_id` that carries a Pleiades id: its own (`pleiades_…`) or an exact link. */
   private val HasPleiades =
-    """u.place_id ~ '^pleiades_[0-9]+$' OR EXISTS (SELECT 1 FROM place_links l WHERE l.place_id = u.place_id
-         AND l.scheme = 'pleiades' AND l.relation = 'exact_match' AND l.external_id ~ '^[0-9]+$')"""
+    sql"""u.place_id ~ '^pleiades_[0-9]+$$' OR EXISTS (SELECT 1 FROM place_links l WHERE l.place_id = u.place_id
+         AND l.scheme = 'pleiades' AND l.relation = 'exact_match' AND l.external_id ~ '^[0-9]+$$')"""
 
   /** What a collection (`places = true`) or the depictions import (`places = false`: events) asks about: one place or
     * event by id, else the ones not asked yet — sites and features first, then by sources citing — as [[targets]] does
@@ -247,7 +254,7 @@ private[imports] object ImportRepo:
       case (None, None) =>
         if places.value then
           Right(
-            sql"${SqlLiteral(mapPlaces(check, asOf, everyOne, pleiadesOnly.value))} ORDER BY (p.kind IN ('site', 'feature')) DESC, u.s DESC, u.n DESC, u.place_id LIMIT ${n.literal}"
+            sql"${mapPlaces(check, asOf, everyOne, pleiadesOnly.value)} ORDER BY (p.kind IN ('site', 'feature')) DESC, u.s DESC, u.n DESC, u.place_id LIMIT ${n.literal}"
               .query[(Target.Id, Target.Label, Option[String], Long, Long)]
               .run()
               .toList
@@ -255,7 +262,7 @@ private[imports] object ImportRepo:
           )
         else
           Right(
-            sql"${SqlLiteral(eventCandidates(check, asOf, everyOne))} ORDER BY e.id LIMIT ${n.literal}"
+            sql"${eventCandidates(check, asOf, everyOne)} ORDER BY e.id LIMIT ${n.literal}"
               .query[(Target.Id, Target.Qid, Target.Label)]
               .run()
               .toList
@@ -268,7 +275,7 @@ private[imports] object ImportRepo:
   ): RowCount =
     val q = if places.value then mapPlaces(check, since, everyOne = false, pleiadesOnly.value)
     else eventCandidates(check, since, everyOne = false)
-    RowCount(sql"SELECT count(*)::int FROM (${SqlLiteral(q)}) x".query[Int].run().head)
+    RowCount(sql"SELECT count(*)::int FROM ($q) x".query[Int].run().head)
 
   def placeFacts(
       ids: List[com.histmersion.domain.catalogue.Place.Id]

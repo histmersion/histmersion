@@ -31,10 +31,10 @@ private[worklists] object QueueRepo:
     * normalises to UTC so the value is stable whatever the session TZ is.
     */
 
-  private val Cols = SqlLiteral("""id, list, text, topic, status, reason,
+  private val Cols = sql"""id, list, text, topic, status, reason,
        to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"'),
        to_char(done_at    AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"'),
-       goal_slug, created_job, closed_job""")
+       goal_slug, created_job, closed_job"""
 
   private given DbCodec[QueueItem] = DbCodec.derived
 

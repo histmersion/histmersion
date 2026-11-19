@@ -23,6 +23,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.research.ReviewGoal
 import com.histmersion.domain.library.Citekey
 import com.augustnagro.magnum.Frag
+import com.augustnagro.magnum.sql
 
 /** The SQL the filter's builders generate, recorded for every combination the search exercises: each criterion alone
   * (text, tags, authors, places by name and by gazetteer id, topics, statuses, publication years, deep time, a box and
@@ -197,7 +198,7 @@ class SearchSqlSnapshotSuite extends munit.FunSuite:
     List(
       "tsQuery" -> Search.tsQuery(Search.Query("sea peoples")),
       "ftsPredicate" -> Search.ftsPredicate(Search.FtsPredicateQ("sea peoples")),
-      "ftsPredicate f" -> Search.ftsPredicate(Search.FtsPredicateQ("x"), "f"),
+      "ftsPredicate f" -> Search.ftsPredicate(Search.FtsPredicateQ("x"), sql"f"),
       "rankExpr" -> Search.rankExpr(Search.RankExprQ("sea peoples")),
       "rankExprCte" -> Search.rankExprCte(Search.RankExprCteQ("sea peoples")),
       "findingsQuery" -> FilterSql.findingsQuery(List(Citekey("zqa1990_a"), Citekey("zqb2001_b")))

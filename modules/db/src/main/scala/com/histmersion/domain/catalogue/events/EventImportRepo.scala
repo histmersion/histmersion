@@ -40,7 +40,7 @@ private[events] object EventImportRepo:
                            WHERE c.event_id = e.id), '{}'::text[]),
                  e.catalogue, e.label
           FROM events e LEFT JOIN places ep ON ep.id = e.place_id
-          CROSS JOIN LATERAL (SELECT ${SqlLiteral(EventSql.AnchorSql)} AS pt) a
+          CROSS JOIN LATERAL (SELECT ${EventSql.AnchorSql} AS pt) a
           ORDER BY e.id"""
       .query[StoredEventRow]
       .run()

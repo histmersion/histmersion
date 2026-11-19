@@ -20,9 +20,8 @@ private[acquisition] object AcquireCheckRepo:
 
   // Times cross as epoch milliseconds (no timestamp codec in the native image).
 
-  private val Select = SqlLiteral(
-    "SELECT item_id, (extract(epoch FROM checked_at) * 1000)::bigint, generation, outcome, reason, checks FROM acquire_checks"
-  )
+  private val Select =
+    sql"SELECT item_id, (extract(epoch FROM checked_at) * 1000)::bigint, generation, outcome, reason, checks FROM acquire_checks"
 
   private def row(
       t: (

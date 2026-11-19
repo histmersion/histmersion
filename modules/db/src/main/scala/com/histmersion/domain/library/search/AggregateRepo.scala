@@ -90,8 +90,8 @@ private[search] object AggregateRepo:
   // ── the rows of the §1.6 aggregation tree ──────────────────────────────────────────────────────
 
   /** The gazetteer places one FINDING was materialised into, as an array (correlated on `fa`). */
-  private def placesOf(fa: String): String =
-    s"ARRAY(SELECT fp.place_id FROM finding_places fp WHERE fp.finding_id = $fa.id ORDER BY fp.place_id)"
+  private def placesOf(fa: Frag): Frag =
+    sql"ARRAY(SELECT fp.place_id FROM finding_places fp WHERE fp.finding_id = $fa.id ORDER BY fp.place_id)"
 
   /** The SQL behind [[treeRows]] — a **pure** value, so the predicate can be asserted on without a database (plan
     * §1.0/§2.2).
@@ -107,7 +107,7 @@ private[search] object AggregateRepo:
     */
   def treeRowsQuery(unit: Unit, filter: Filter, scope: PlaceScope = PlaceScope.empty): Frag =
     if unit.value == "findings" then
-      sql"SELECT f.id, f.citekey, s.title, ${RangeSql.cols(sql"f.period")}, ${SqlLiteral(placesOf("f"))} FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE ${FilterSql.sourceWhere(filter)} AND ${FilterSql.findingWhere(filter, scope = scope)} ${FilterSql.orderBySql(filter)}"
+      sql"SELECT f.id, f.citekey, s.title, ${RangeSql.cols(sql"f.period")}, ${placesOf(sql"f")} FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE ${FilterSql.sourceWhere(filter)} AND ${FilterSql.findingWhere(filter, scope = scope)} ${FilterSql.orderBySql(filter)}"
     else
       val gate =
         if FilterSql.hasFindingPlaceCriteria(filter) then sql" AND fp.matched > 0" else sql""

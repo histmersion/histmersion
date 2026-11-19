@@ -7,6 +7,7 @@ import com.histmersion.api.instance.UiNotices.{Board, Counters}
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.util.database.Timestamps
 import com.histmersion.domain.automation.Run
 
 /** The web UI's toolbar notices (migration V083, core [[UiNotices]]): each watched list's count and newest change, read
@@ -17,11 +18,7 @@ import com.histmersion.domain.automation.Run
   */
 object UiRepo:
   /** UTC, microseconds, one fixed format — so two instants compare as strings ([[UiNotices.fresh]]). */
-
-  private def iso(col: String): SqlLiteral =
-    SqlLiteral(s"""to_char($col AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')""")
-
-  private val Latest = iso("b.latest")
+  private val Latest = Timestamps.iso(sql"b.latest")
 
   /** Every board's counter, in [[Board]]'s order, with the reader's `seen` marks (board → ISO instant). A board with no
     * rows yet counts 0 and has no `latest`; one never opened has no `seen`.

@@ -4,12 +4,12 @@ package domain.catalogue.events
 import com.histmersion.domain.catalogue.places.PlaceScope
 
 import com.histmersion.api.BBox
-import com.histmersion.api.catalogue.{EventPrecision, EventTaxonomy, EventTier}
+import com.histmersion.api.catalogue.{EventPrecision, EventTaxonomy}
 import com.histmersion.api.library.Filter
 import com.histmersion.util.database.{joined, literal, EnvelopeSql, LikePattern, RangeSql}
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.catalogue.Place
-import com.augustnagro.magnum.{sql, Frag, SqlLiteral}
+import com.augustnagro.magnum.{sql, Frag}
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
 
@@ -17,40 +17,31 @@ import com.histmersion.util.database.NewtypeColumns.given
   * (and of the map's events layer), the map's event tiles' candidates.
   */
 object EventSql:
-  type Point = Point.T
-  object Point extends Newtype[String, Pure]
 
-  /** The SQL of an event's TIER over `events e`: attested when it names a source or an attestation names it. */
+  /** The SQL of an event's TIER over `events e`: attested when it names a source or an attestation names it. The two
+    * answers are `EventTier.Attested` and `EventTier.Catalogue` word for word (`EventSqlSuite` holds it).
+    */
+  val TierSql: Frag =
+    sql"CASE WHEN e.citekey IS NOT NULL OR EXISTS (SELECT 1 FROM attestations ta WHERE ta.target_type = 'event' AND ta.target_id = e.id) THEN 'attested' ELSE 'catalogue' END"
 
-  type TierSql = TierSqlValue
-  type TierSqlValue = String
-  object TierSqlValue:
-    inline def apply(v: String): String = v
-  type AnchorSql = AnchorSqlValue
-  type AnchorSqlValue = String
-  object AnchorSqlValue:
-    inline def apply(v: String): String = v
-
-  val TierSql: TierSql =
-    "CASE WHEN e.citekey IS NOT NULL OR EXISTS (SELECT 1 FROM attestations ta WHERE ta.target_type = 'event' " +
-      s"AND ta.target_id = e.id) THEN '${EventTier.Attested}' ELSE '${EventTier.Catalogue}' END"
+  /** The event is of the catalogue tier only ([[TierSql]]). */
+  val CatalogueOnly: Frag = sql"($TierSql) = 'catalogue'"
 
   /** An event's anchor point over `events e` with its place `ep` joined: its own geometry, else its place's (a point,
     * or the point-on-surface of an area).
     */
-  val AnchorSql: AnchorSql =
-    "(SELECT CASE WHEN GeometryType(g) = 'POINT' THEN g ELSE ST_PointOnSurface(g) END " +
-      "FROM (SELECT coalesce(e.geom, ep.geom) AS g) x)"
+  val AnchorSql: Frag =
+    sql"(SELECT CASE WHEN GeometryType(g) = 'POINT' THEN g ELSE ST_PointOnSurface(g) END FROM (SELECT coalesce(e.geom, ep.geom) AS g) x)"
 
-  /** SQL: the box `km` around the point `pt` in degrees — what lets the findings' geometry index answer before the
-    * exact geography distance is computed (a `::geography` cast cannot use it).
+  /** SQL: the box `km` around the point `pt` (an SQL expression) in degrees — what lets the findings' geometry index
+    * answer before the exact geography distance is computed (a `::geography` cast cannot use it).
     */
-  def boxAround(pt: Point, km: CatalogMerge.Tolerance.Km): String =
-    val dy = km.value / 111.32
-    s"ST_Expand($pt, $dy / greatest(cos(radians(ST_Y($pt))), 0.05), $dy)"
+  def boxAround(pt: Frag, km: CatalogMerge.Tolerance.Km): Frag =
+    val dy = (km.value / 111.32).literal
+    sql"ST_Expand($pt, $dy / greatest(cos(radians(ST_Y($pt))), 0.05), $dy)"
 
   /** `events e` with its place (`ep`) joined. */
-  val fromEvents = "events e LEFT JOIN places ep ON ep.id = e.place_id"
+  val fromEvents: Frag = sql"events e LEFT JOIN places ep ON ep.id = e.place_id"
 
   /** What only the catalogue work narrows events by: the tier, the catalogue context of the map's layer, and the area
     * the anchor lies in.
@@ -84,16 +75,15 @@ object EventSql:
     def clean(o: Option[String]) = o.map(_.trim).filter(_.nonEmpty)
     val ps = List.newBuilder[Frag]
     val selected = related.eventWhere(filter, scope)
-    val catalogueOnly = s"($TierSql) = '${EventTier.Catalogue}'"
     if selected.sqlString != "TRUE" then
       if more.context.value then
         // the catalogue's events of the period stay, whatever the sources selected
         val inPeriod = related.eventWhere(Filter(period = filter.period, title = filter.title), PlaceScope.empty)
-        ps += (sql"($selected OR (${SqlLiteral(catalogueOnly)} AND $inPeriod))")
+        ps += (sql"($selected OR ($CatalogueOnly AND $inPeriod))")
       else ps += selected
     clean(more.tier.map(_.value))
       .map(_.toLowerCase)
-      .foreach(t => ps += sql"(${SqlLiteral(TierSql)}) = $t")
+      .foreach(t => ps += sql"($TierSql) = $t")
     more.area.foreach(b => ps += EnvelopeSql.envelopes(sql"coalesce(e.geom, ep.geom)", b))
     clean(text.map(_.value)).foreach { t =>
       val c = LikePattern.contains(t)
@@ -114,8 +104,8 @@ object EventSql:
   /** An event's ANCHOR over `events e` with its place `ep`: its own geometry, else its place's (`s.g`, `s.src`), as a
     * point — the point itself, or the point-on-surface of an area (`a.pt`).
     */
-  val anchorJoins: String =
-    """CROSS JOIN LATERAL (SELECT coalesce(e.geom, ep.geom) AS g,
+  val anchorJoins: Frag =
+    sql"""CROSS JOIN LATERAL (SELECT coalesce(e.geom, ep.geom) AS g,
                                  CASE WHEN e.geom IS NOT NULL THEN 'event' ELSE 'place' END AS src) s
        CROSS JOIN LATERAL (SELECT CASE WHEN GeometryType(s.g) = 'POINT' THEN s.g
                                        ELSE ST_PointOnSurface(s.g) END AS pt) a"""
@@ -126,21 +116,19 @@ object EventSql:
   def tileCandidates(where: Frag, envelope: Frag): Frag =
     sql"""SELECT e.id AS key, ST_X(a.pt) AS lon, ST_Y(a.pt) AS lat,
                   ${RangeSql.start(sql"e.outer_span")} AS ps, ${RangeSql.end(sql"e.outer_span")} AS pe, false AS ub
-                FROM ${SqlLiteral(fromEvents)} ${SqlLiteral(anchorJoins)}
+                FROM $fromEvents $anchorJoins
                 WHERE s.g IS NOT NULL AND e.uncertainty <= ${EventPrecision.ApproximateUpTo.literal} AND s.g && $envelope AND $where"""
 
   /** An event with no known date: its outer span open on both sides. */
-  val UndatedSql = "(lower_inf(e.outer_span) AND upper_inf(e.outer_span))"
+  val UndatedSql: Frag = sql"(lower_inf(e.outer_span) AND upper_inf(e.outer_span))"
 
   /** [[tileCandidates]] and, beside them, the events `undatedWhere` selects that have no known date (whatever the span:
     * `undatedWhere` is the selection without it), each marked (`ub`).
     */
   def tileCandidatesWithUndated(where: Frag, undatedWhere: Frag, envelope: Frag): Frag =
     sql"""SELECT e.id AS key, ST_X(a.pt) AS lon, ST_Y(a.pt) AS lat,
-                  ${RangeSql.start(sql"e.outer_span")} AS ps, ${RangeSql.end(sql"e.outer_span")} AS pe, ${SqlLiteral(
-        UndatedSql
-      )} AS ub
-                FROM ${SqlLiteral(fromEvents)} ${SqlLiteral(anchorJoins)}
-                WHERE s.g IS NOT NULL AND s.g && $envelope AND ((e.uncertainty <= ${EventPrecision.ApproximateUpTo.literal} AND $where) OR (${SqlLiteral(
-        UndatedSql
-      )} AND $undatedWhere))"""
+                  ${RangeSql.start(sql"e.outer_span")} AS ps, ${RangeSql.end(
+        sql"e.outer_span"
+      )} AS pe, $UndatedSql AS ub
+                FROM $fromEvents $anchorJoins
+                WHERE s.g IS NOT NULL AND s.g && $envelope AND ((e.uncertainty <= ${EventPrecision.ApproximateUpTo.literal} AND $where) OR ($UndatedSql AND $undatedWhere))"""

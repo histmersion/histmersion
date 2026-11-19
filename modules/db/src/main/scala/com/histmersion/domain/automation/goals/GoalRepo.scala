@@ -22,8 +22,7 @@ import com.histmersion.util.identity.AliasTable
 object GoalRepo:
 
   private val cols =
-    "g.slug, g.title, g.status, g.notes, g.tags, g.regions, " +
-      s"${RangeSql.cols("g.period")}, g.parent_slug, g.updated_at::text"
+    sql"g.slug, g.title, g.status, g.notes, g.tags, g.regions, ${RangeSql.cols(sql"g.period")}, g.parent_slug, g.updated_at::text"
 
   /** One page of the goals (of one status), by slug, on the caller's connection. */
   def listIn(status: Option[GoalRow.Status], limit: PageSize, offset: Offset)(using DbCon): Goal.List =
@@ -31,7 +30,7 @@ object GoalRepo:
     locally:
       val total = sql"""SELECT count(*)::int FROM goals g
             WHERE ($st::text IS NULL OR g.status = $st)""".query[Int].run().head
-      val rows = sql"""SELECT ${SqlLiteral(cols)} FROM goals g
+      val rows = sql"""SELECT $cols FROM goals g
             WHERE ($st::text IS NULL OR g.status = $st)
             ORDER BY g.slug
             LIMIT ${limit.value.max(1)} OFFSET ${offset.value.max(0)}
@@ -43,7 +42,7 @@ object GoalRepo:
       )
 
   def get(slug: com.histmersion.domain.automation.Goal.Slug)(using DbCon): Option[Goal] =
-    sql"""SELECT ${SqlLiteral(cols)} FROM goals g WHERE g.slug = $slug"""
+    sql"""SELECT $cols FROM goals g WHERE g.slug = $slug"""
       .query[GoalRow]
       .run()
       .headOption
@@ -51,11 +50,11 @@ object GoalRepo:
 
   /** Every goal, by slug — unpaged, for the `meta/GOALS.md` export. */
   def all()(using DbCon): List[Goal] =
-    sql"""SELECT ${SqlLiteral(cols)} FROM goals g ORDER BY g.slug""".query[GoalRow].run().toList.map(_.toDto)
+    sql"""SELECT $cols FROM goals g ORDER BY g.slug""".query[GoalRow].run().toList.map(_.toDto)
 
   /** A goal's direct sub-goals, by slug. */
   def children(slug: com.histmersion.domain.automation.Goal.Slug)(using DbCon): List[Goal] =
-    sql"""SELECT ${SqlLiteral(cols)} FROM goals g WHERE g.parent_slug = $slug ORDER BY g.slug"""
+    sql"""SELECT $cols FROM goals g WHERE g.parent_slug = $slug ORDER BY g.slug"""
       .query[GoalRow]
       .run()
       .toList

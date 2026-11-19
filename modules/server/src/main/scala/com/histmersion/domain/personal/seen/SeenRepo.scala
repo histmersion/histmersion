@@ -3,6 +3,7 @@ package domain.personal.seen
 
 import com.histmersion.domain.personal.MarkTime
 import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.util.database.Timestamps
 
 import com.augustnagro.magnum.*
 
@@ -11,10 +12,8 @@ import java.time.Instant
 /** The `ui_seen` table: one mark per board. Takes the connection it runs on. */
 private[seen] object SeenRepo:
 
-  private val Iso = SqlLiteral("""'YYYY-MM-DD"T"HH24:MI:SS.US"Z"'""")
-
   def all(using DbCon): Map[SeenBoard, MarkTime] =
-    sql"SELECT board, to_char(seen_at AT TIME ZONE 'UTC', $Iso) FROM ui_seen"
+    sql"SELECT board, ${Timestamps.iso(sql"seen_at")} FROM ui_seen"
       .query[(SeenBoard, MarkTime.Iso)]
       .run()
       .map((b, at) => b -> MarkTime.parse(at))
@@ -26,5 +25,5 @@ private[seen] object SeenRepo:
     MarkTime.parse(
       sql"""INSERT INTO ui_seen (board, seen_at) VALUES ($board, coalesce($asked::timestamptz, now()))
             ON CONFLICT (board) DO UPDATE SET seen_at = greatest(ui_seen.seen_at, EXCLUDED.seen_at)
-            RETURNING to_char(seen_at AT TIME ZONE 'UTC', $Iso)""".query[MarkTime.Iso].run().head
+            RETURNING ${Timestamps.iso(sql"seen_at")}""".query[MarkTime.Iso].run().head
     )

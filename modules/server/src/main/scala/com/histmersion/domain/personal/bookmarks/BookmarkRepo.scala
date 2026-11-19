@@ -5,6 +5,7 @@ import com.histmersion.api.ItemKind as MarkKind
 import com.histmersion.domain.ItemRef
 import com.histmersion.domain.personal.{MarkTime, TargetColumns, TargetLabel}
 import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.util.database.Timestamps
 import com.histmersion.{PageSize, UserId}
 
 import com.augustnagro.magnum.*
@@ -17,25 +18,25 @@ private[bookmarks] object BookmarkRepo:
   type RowsChanged = RowsChanged.T
   object RowsChanged extends Newtype[Int, Pure]
 
-  private def iso(col: String): String = s"""to_char($col AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')"""
-
   private val Projection =
-    s"""SELECT b.id::text, b.target_kind, b.target_id, b.target_uid, b.lat, b.lon, b.zoom, b.period_start, b.period_end,
-               b.view, b.label, b.target_label, ${iso("b.created_at")}, ${iso("b.updated_at")}
+    sql"""SELECT b.id::text, b.target_kind, b.target_id, b.target_uid, b.lat, b.lon, b.zoom, b.period_start, b.period_end,
+               b.view, b.label, b.target_label, ${Timestamps.iso(sql"b.created_at")}, ${Timestamps.iso(
+        sql"b.updated_at"
+      )}
           FROM bookmarks b"""
 
   /** Newest first; every one when no `size` is given. */
   def list(user: UserId, kind: Option[MarkKind], size: Option[PageSize])(using DbCon): List[Bookmark.Row] =
     val ofKind = kind.fold(sql"")(k => sql" AND b.target_kind = ${k.wire}")
     val ordered =
-      sql"${SqlLiteral(Projection)} WHERE b.user_id = $user AND b.deleted_at IS NULL$ofKind ORDER BY b.created_at DESC, b.id DESC"
+      sql"$Projection WHERE b.user_id = $user AND b.deleted_at IS NULL$ofKind ORDER BY b.created_at DESC, b.id DESC"
     sql"$ordered${size.fold(sql"")(s => sql" LIMIT $s")}"
       .query[Bookmark.Row]
       .run()
       .toList
 
   def live(user: UserId, id: com.histmersion.api.personal.Bookmark.Id)(using DbCon): Option[Bookmark.Row] =
-    sql"${SqlLiteral(Projection)} WHERE b.user_id = $user AND b.deleted_at IS NULL AND b.id = $id::uuid"
+    sql"$Projection WHERE b.user_id = $user AND b.deleted_at IS NULL AND b.id = $id::uuid"
       .query[Bookmark.Row]
       .run()
       .headOption

@@ -26,17 +26,17 @@ private[periods] object PeriodRepo:
   type SetSeedVersionName = SetSeedVersionName.T
   object SetSeedVersionName extends Newtype[String, Pure]
 
-  private val columns = s"id, label, authority, ${RangeSql.cols("period")}, region, parent_id, preset"
+  private val columns = sql"id, label, authority, ${RangeSql.cols(sql"period")}, region, parent_id, preset"
 
   def get(id: PeriodRow.Id)(using DbCon): Option[HistoricalPeriod] =
-    sql"SELECT ${SqlLiteral(columns)} FROM periods WHERE id = $id"
+    sql"SELECT $columns FROM periods WHERE id = $id"
       .query[PeriodRow]
       .run()
       .headOption
       .map(_.toPeriod)
 
   def children(id: PeriodRow.Id)(using DbCon): Vector[HistoricalPeriod] =
-    sql"SELECT ${SqlLiteral(columns)} FROM periods WHERE parent_id = $id ORDER BY ${RangeSql.start(sql"period")}, label, id"
+    sql"SELECT $columns FROM periods WHERE parent_id = $id ORDER BY ${RangeSql.start(sql"period")}, label, id"
       .query[PeriodRow]
       .run()
       .map(_.toPeriod)
@@ -55,7 +55,7 @@ private[periods] object PeriodRepo:
     val text = q.map(_.value.trim).filter(_.nonEmpty)
     val cont = text.map(LikePattern.contains).getOrElse("%")
     val reg = region.map(_.value.trim).filter(_.nonEmpty)
-    sql"""SELECT ${SqlLiteral(columns)}
+    sql"""SELECT $columns
           FROM periods
           WHERE ($text::text IS NULL OR label ILIKE $cont ESCAPE '\\')
             AND ($reg::text IS NULL OR lower(region) = lower($reg))
