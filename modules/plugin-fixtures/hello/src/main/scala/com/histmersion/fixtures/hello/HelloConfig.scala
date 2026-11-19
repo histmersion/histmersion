@@ -1,9 +1,11 @@
-package com.histmersion.fixtures.hello
+package com.histmersion
+package fixtures.hello
 
 import com.histmersion.Newtype
 import com.histmersion.plugin.*
 import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A TEST FIXTURE, not a product: the smallest third-party plugin, compiled against plugin-api alone and packaged as
   * its own jar, which the relink tests and `scripts/bundle/smoke.sh` drop into a plugins directory
@@ -21,8 +23,8 @@ final case class HelloConfig(
 
 object HelloConfig:
   type Greeting = Greeting.T
-  object Greeting extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Greeting extends Newtype[String, Pure]
   type Greeter = Greeter.T
-  object Greeter extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Greeter extends Newtype[String, Pure]
   type Mirrors = Mirrors.T
-  object Mirrors extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Mirrors extends Newtype[String, Pure]

@@ -1,9 +1,11 @@
-package com.histmersion.fixtures.hellodeps
+package com.histmersion
+package fixtures.hellodeps
 
 import com.histmersion.Newtype
 import com.histmersion.plugin.*
 import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A TEST FIXTURE, not a product: a plugin with a dependency of its own (`hello-lib`), published with a POM that lists
   * it, as a plugin author publishes one. It registers only when that library's class loads, so a registered
@@ -13,4 +15,4 @@ final case class HelloDepsConfig(greeting: HelloDepsConfig.Greeting) derives Con
 
 object HelloDepsConfig:
   type Greeting = Greeting.T
-  object Greeting extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Greeting extends Newtype[String, Pure]

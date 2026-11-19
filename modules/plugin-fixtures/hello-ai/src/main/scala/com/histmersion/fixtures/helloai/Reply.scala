@@ -1,9 +1,11 @@
-package com.histmersion.fixtures.helloai
+package com.histmersion
+package fixtures.helloai
 
 import com.histmersion.Newtype
 import com.histmersion.plugin.*
 import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A TEST FIXTURE, not a product: the smallest third-party AI provider, compiled against plugin-api alone and packaged
   * as its own jar (docs/research-plugins.md §22–§23). It calls no model and opens no socket: its answers are SCRIPTED
@@ -22,10 +24,10 @@ final case class Reply(
 
 object Reply:
   type When = When.T
-  object When extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object When extends Newtype[String, Pure]
   type Text = Text.T
-  object Text extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Text extends Newtype[String, Pure]
   type Tool = Tool.T
-  object Tool extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Tool extends Newtype[String, Pure]
   type Input = Input.T
-  object Input extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Input extends Newtype[String, Pure]

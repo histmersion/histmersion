@@ -1,4 +1,5 @@
-package com.histmersion.fixtures.hellodeps
+package com.histmersion
+package fixtures.hellodeps
 import com.histmersion.util.problem.{External, Problem}
 
 import com.histmersion.plugin.*
@@ -16,4 +17,4 @@ final class HelloDepsFetcher(greeting: HelloDepsFetcher.Greeting) extends Source
     )
 
 object HelloDepsFetcher:
-  export com.histmersion.fixtures.hellolib.Shout.Shouted as Greeting
+  export fixtures.hellolib.Shout.Shouted as Greeting

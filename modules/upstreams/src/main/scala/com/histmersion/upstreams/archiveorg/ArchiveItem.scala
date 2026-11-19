@@ -21,8 +21,8 @@ object ArchiveItem:
   export WorkKey.Title
   type Creator = Creator.T
   object Creator extends Newtype[String, Pure]
-  type Year = com.histmersion.plugin.Year
-  val Year: com.histmersion.plugin.Year.type = com.histmersion.plugin.Year
+  type Year = plugin.Year
+  val Year: plugin.Year.type = plugin.Year
   type Publisher = Publisher.T
   object Publisher extends Newtype[String, Pure]
   type Description = Description.T

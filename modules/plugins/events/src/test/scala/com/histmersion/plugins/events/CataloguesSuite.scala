@@ -123,10 +123,10 @@ class CataloguesSuite extends munit.FunSuite:
       assertEquals(
         r.timeSpan,
         TimeSpan(
-          Some(com.histmersion.api.catalogue.Year(lo)),
+          Some(api.catalogue.Year(lo)),
           None,
           None,
-          Some(com.histmersion.api.catalogue.Year(hi))
+          Some(api.catalogue.Year(hi))
         ),
         s"$num: no certain core is invented"
       )
@@ -179,10 +179,10 @@ class CataloguesSuite extends munit.FunSuite:
     assertEquals(
       r.timeSpan,
       TimeSpan(
-        Some(com.histmersion.api.catalogue.Year(-2251)),
+        Some(api.catalogue.Year(-2251)),
         None,
         None,
-        Some(com.histmersion.api.catalogue.Year(2026))
+        Some(api.catalogue.Year(2026))
       )
     )
     assertEquals(r.description, Some("Confirmed Eruption at Hekla"))

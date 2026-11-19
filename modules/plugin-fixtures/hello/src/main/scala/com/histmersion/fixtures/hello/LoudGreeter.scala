@@ -1,4 +1,5 @@
-package com.histmersion.fixtures.hello
+package com.histmersion
+package fixtures.hello
 
 import com.histmersion.plugin.*
 import com.histmersion.plugin.Plugin.Config.given

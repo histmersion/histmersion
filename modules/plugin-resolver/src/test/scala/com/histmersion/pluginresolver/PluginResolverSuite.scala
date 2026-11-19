@@ -14,8 +14,8 @@ import scala.jdk.CollectionConverters.*
   */
 class PluginResolverSuite extends munit.FunSuite:
 
-  private def consoleFor(stdout: String => Unit, stderr: String => Unit): com.histmersion.util.console.Console =
-    new com.histmersion.util.console.Console {
+  private def consoleFor(stdout: String => Unit, stderr: String => Unit): util.console.Console =
+    new util.console.Console {
       def write(value: Any): Unit = stdout(String.valueOf(value))
       def writeLine(value: Any): Unit = stdout(String.valueOf(value))
       def writeLine(): Unit = stdout("")
@@ -23,7 +23,7 @@ class PluginResolverSuite extends munit.FunSuite:
       def errorLine(value: => String): Unit = stderr(value)
       def errorLine(): Unit = stderr("")
       def errorFlush(): Unit = ()
-      def readLine(): com.histmersion.util.console.Console.Line = throw new UnsupportedOperationException(
+      def readLine(): util.console.Console.Line = throw new UnsupportedOperationException(
         "input not used"
       )
     }

@@ -1,4 +1,5 @@
-package com.histmersion.fixtures.hello
+package com.histmersion
+package fixtures.hello
 import com.histmersion.util.problem.{Problem, Problems}
 
 import com.histmersion.plugin.*
@@ -10,9 +11,9 @@ import com.histmersion.plugin.Plugin.Config.given
 final class HelloPlugin extends Plugin:
   type Config = HelloConfig
   val info = Plugin.Info(
-    _root_.com.histmersion.plugin.Plugin.Info.Id("hello"),
-    _root_.com.histmersion.plugin.Plugin.Info.Version("0.1.0"),
-    _root_.com.histmersion.plugin.Plugin.Info.SpiVersion(Spi.Version)
+    Plugin.Info.Id("hello"),
+    Plugin.Info.Version("0.1.0"),
+    Plugin.Info.SpiVersion(Spi.Version)
   )
 
   def register(config: HelloConfig, ctx: Plugin.Context): Either[Problems, Unit] =
@@ -35,7 +36,7 @@ final class HelloPlugin extends Plugin:
         )
         ctx.sourceFetchers
           .add(
-            _root_.com.histmersion.plugin.Registry.AddId("hello"),
+            Registry.AddId("hello"),
             HelloFetcher(HelloFetcher.Mirrors(config.mirrors.size))
           )
       }

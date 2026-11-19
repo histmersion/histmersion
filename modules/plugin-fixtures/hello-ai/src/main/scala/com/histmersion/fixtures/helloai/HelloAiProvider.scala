@@ -1,14 +1,16 @@
-package com.histmersion.fixtures.helloai
+package com.histmersion
+package fixtures.helloai
 import com.histmersion.util.problem.{External, Problem}
 
 import com.histmersion.Newtype
 import com.histmersion.plugin.*
 import com.histmersion.plugin.Plugin.Config.given
+import io.github.iltotore.iron.constraint.any.Pure
 
 final class HelloAiProvider(replies: List[Reply], hasToken: HelloAiProvider.HasToken) extends AiProvider:
-  val title = _root_.com.histmersion.plugin.AiProvider.Title("Hello AI (scripted test provider)")
+  val title = AiProvider.Title("Hello AI (scripted test provider)")
   override val description =
-    _root_.com.histmersion.plugin.AiProvider.Description("answers from its config; calls no model")
+    AiProvider.Description("answers from its config; calls no model")
   override val capabilities =
     AiCapabilities(tools = AiCapabilities.Tools(true), structuredOutput = AiCapabilities.StructuredOutput(false))
 
@@ -29,27 +31,27 @@ final class HelloAiProvider(replies: List[Reply], hasToken: HelloAiProvider.HasT
   override def doctor(online: AiProvider.DoctorOnline, http: AiHttp): List[AiCheck] =
     List(
       AiCheck(
-        _root_.com.histmersion.plugin.AiCheck.Name("script"),
-        if replies.isEmpty then _root_.com.histmersion.plugin.AiCheck.Level("warn")
-        else _root_.com.histmersion.plugin.AiCheck.Level("ok"),
-        _root_.com.histmersion.plugin.AiCheck.Detail(s"${replies.size} scripted repl(ies)")
+        AiCheck.Name("script"),
+        if replies.isEmpty then AiCheck.Level("warn")
+        else AiCheck.Level("ok"),
+        AiCheck.Detail(s"${replies.size} scripted repl(ies)")
       ),
       AiCheck(
-        _root_.com.histmersion.plugin.AiCheck.Name("token"),
-        _root_.com.histmersion.plugin.AiCheck.Level("ok"),
-        if (hasToken).value then _root_.com.histmersion.plugin.AiCheck.Detail("given (never shown)")
-        else _root_.com.histmersion.plugin.AiCheck.Detail("none asked")
+        AiCheck.Name("token"),
+        AiCheck.Level("ok"),
+        if (hasToken).value then AiCheck.Detail("given (never shown)")
+        else AiCheck.Detail("none asked")
       )
     )
 
   def turn(request: AiTurn.Request, http: AiHttp): Either[Problem, AiTurn] =
     val usage = Some(
       AiUsage(
-        input = _root_.com.histmersion.plugin.AiUsage.Input((100).toLong),
-        output = _root_.com.histmersion.plugin.AiUsage.Output((20).toLong)
+        input = AiUsage.Input((100).toLong),
+        output = AiUsage.Output((20).toLong)
       )
     )
-    if request.model == _root_.com.histmersion.plugin.AiTurn.Request.Model("limited") then
+    if request.model == AiTurn.Request.Model("limited") then
       Left(
         Problem.Upstream.Limited(Problem.Upstream.Name("hello-ai"), None)
       )
@@ -70,17 +72,17 @@ final class HelloAiProvider(replies: List[Reply], hasToken: HelloAiProvider.HasT
             case Some(t) =>
               Right(
                 AiTurn(
-                  _root_.com.histmersion.plugin.AiTurn.Text(""),
+                  AiTurn.Text(""),
                   List(
                     AiTool.Call(
-                      _root_.com.histmersion.plugin.AiTool.Call.Id("hello-1"),
+                      AiTool.Call.Id("hello-1"),
                       AiTool.Call.Tool(t.value),
                       AiTool.Call.Input(r.input.fold("{}")(_.value))
                     )
                   ),
                   AiStop.ToolUse,
                   usage,
-                  Some(_root_.com.histmersion.plugin.AiTurn.ServedBy(s"${request.model}-scripted"))
+                  Some(AiTurn.ServedBy(s"${request.model}-scripted"))
                 )
               )
             case None =>
@@ -90,10 +92,10 @@ final class HelloAiProvider(replies: List[Reply], hasToken: HelloAiProvider.HasT
                   Nil,
                   AiStop.EndTurn,
                   usage,
-                  Some(_root_.com.histmersion.plugin.AiTurn.ServedBy(s"${request.model}-scripted"))
+                  Some(AiTurn.ServedBy(s"${request.model}-scripted"))
                 )
               )
 
 object HelloAiProvider:
   type HasToken = HasToken.T
-  object HasToken extends Newtype[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object HasToken extends Newtype[Boolean, Pure]

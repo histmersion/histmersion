@@ -122,7 +122,7 @@ object MetCollection:
             c.long("objectBeginDate").map(d => year(Year(d)).value),
             c.long("objectEndDate").map(d => year(Year(d)).value)
           )
-          .filterNot(_ == Period.point(com.histmersion.plugin.Year(-1)))
+          .filterNot(_ == Period.point(plugin.Year(-1)))
         MediaItem(
           MediaItem.Key(id.toString),
           MediaItem.Title(title),

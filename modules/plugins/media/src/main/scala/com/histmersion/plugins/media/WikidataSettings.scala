@@ -26,7 +26,7 @@ object WikidataSettings:
   object Spec extends Newtype[String, Pure]
 
   /** A Wikidata property id (`P18`). */
-  export com.histmersion.upstreams.wikidata.WikidataStatement.Property
+  export upstreams.wikidata.WikidataStatement.Property
 
   type ApiUrl = ApiUrl.T
   object ApiUrl extends Newtype[String, Pure]

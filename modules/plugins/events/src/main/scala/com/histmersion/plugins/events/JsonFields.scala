@@ -34,8 +34,8 @@ object JsonFields:
     def dbl(k: Key): Option[Decimal] = c.downField(k.value).double.map(Decimal(_))
 
   /** A year as the SPI states it; `None` beyond what a `Year` holds. */
-  def year(y: Year): Option[com.histmersion.plugin.Year] =
-    Option.when(y.value.isValidInt)(com.histmersion.plugin.Year(y.value.toInt))
+  def year(y: Year): Option[plugin.Year] =
+    Option.when(y.value.isValidInt)(plugin.Year(y.value.toInt))
 
   def latitude(l: Option[Decimal]): Option[Latitude] =
     l.filter(d => d.value >= -90.0 && d.value <= 90.0).map(d => Latitude(d.value))

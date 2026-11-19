@@ -115,7 +115,7 @@ object Secret:
     */
   trait Vault:
     def name: Vault.Name
-    def resolve(ref: Vault.ResolveRef): Either[Problems, Secret.Resolved]
+    def resolve(ref: Vault.ResolveRef): Either[Problems, Resolved]
 
     /** Several references at once: the host asks for every reference of this vault that the plugins of one config
       * generation (a server start, a `config reload`) hold, in ONE call, before it registers them. The answer has an
@@ -126,7 +126,7 @@ object Secret:
       */
     def resolveAll(
         refs: List[Vault.ResolveRef]
-    ): Map[Vault.ResolveRef, Either[Problems, Secret.Resolved]] =
+    ): Map[Vault.ResolveRef, Either[Problems, Resolved]] =
       refs.distinct.map(r => r -> resolve(r)).toMap
 
   object Vault:

@@ -45,14 +45,14 @@ final class Calibre(cfg: Calibre.Library, shell: Shell)(using files: LocalFiles)
   def search(
       query: CollectionQuery.Text,
       limit: Calibre.SearchLimit = Calibre.SearchLimit(20)
-  ): Either[Problems, List[Calibre.Book]] =
+  ): Either[Problems, List[Book]] =
     viaCalibredb(Some(query), limit.value).orElse(viaSqlite(Some(query), None, limit.value))
 
   /** The whole library (read-only), for the audit: one listing instead of a call per entry. */
-  def all(limit: Calibre.AllLimit = Calibre.AllLimit(1000000)): Either[Problems, List[Calibre.Book]] =
+  def all(limit: Calibre.AllLimit = Calibre.AllLimit(1000000)): Either[Problems, List[Book]] =
     viaCalibredb(None, limit.value).orElse(viaSqlite(None, None, limit.value))
 
-  def byId(id: Calibre.Book.Id): Either[Problems, Option[Calibre.Book]] =
+  def byId(id: Book.Id): Either[Problems, Option[Book]] =
     viaCalibredb(Some(CollectionQuery.Text(s"id:$id")), 1)
       .map(_.find(_.id == id))
       .orElse(viaSqlite(None, Some(id), 1).map(_.headOption))
@@ -60,7 +60,7 @@ final class Calibre(cfg: Calibre.Library, shell: Shell)(using files: LocalFiles)
   private def viaCalibredb(
       query: Option[CollectionQuery.Text],
       limit: Int
-  ): Either[Problems, List[Calibre.Book]] =
+  ): Either[Problems, List[Book]] =
     val cmd = Calibre.argv(cfg.calibredb.value, "list") ++ libArgs ++
       Calibre.argv(
         "--for-machine",
@@ -73,9 +73,9 @@ final class Calibre(cfg: Calibre.Library, shell: Shell)(using files: LocalFiles)
 
   private def viaSqlite(
       query: Option[CollectionQuery.Text],
-      id: Option[Calibre.Book.Id],
+      id: Option[Book.Id],
       limit: Int
-  ): Either[Problems, List[Calibre.Book]] =
+  ): Either[Problems, List[Book]] =
     val where = id match
       case Some(n) => s"b.id = ${n.value}"
       case None    =>
@@ -97,7 +97,7 @@ final class Calibre(cfg: Calibre.Library, shell: Shell)(using files: LocalFiles)
     * the whole reason this pipeline pushes metadata at all is that Calibre's own metadata sources key on ISBN and
     * cannot identify a journal article.
     */
-  def add(file: Path, meta: Calibre.Push): Either[Problems, Calibre.Book.Id] =
+  def add(file: Path, meta: Calibre.Push): Either[Problems, Book.Id] =
     for
       _ <- Calibre.guard(meta.title, meta.authors)
       _ <- Either.cond(!guiRunning, (), GuiRunning)
@@ -121,7 +121,7 @@ final class Calibre(cfg: Calibre.Library, shell: Shell)(using files: LocalFiles)
     * [[Calibre.updatePlan]]; nothing is run when the entry already agrees. Returns what changed.
     */
   def update(
-      id: Calibre.Book.Id,
+      id: Book.Id,
       meta: Calibre.Push
   ): Either[Problems, List[Calibre.Change]] =
     for
@@ -144,7 +144,7 @@ final class Calibre(cfg: Calibre.Library, shell: Shell)(using files: LocalFiles)
       e.outcome match
         case UpdateOutcome.Change(cs) if apply.value =>
           e.copy(outcome =
-            write(Calibre.Book.Id(e.calibreId.value), cs)
+            write(Book.Id(e.calibreId.value), cs)
               .fold(
                 why => UpdateOutcome.Failed(cs, why),
                 _ => UpdateOutcome.Applied(cs)
@@ -154,7 +154,7 @@ final class Calibre(cfg: Calibre.Library, shell: Shell)(using files: LocalFiles)
     }
 
   /** One `set_metadata` with the planned fields; nothing at all when there are none. */
-  private def write(id: Calibre.Book.Id, changes: List[Calibre.Change]): Either[Problems, Unit] =
+  private def write(id: Book.Id, changes: List[Calibre.Change]): Either[Problems, Unit] =
     if changes.isEmpty then Right(())
     else shell.run(Calibre.setMetadataCmd(cfg.calibredb, libArgs, id, changes)).map(_ => ())
 
@@ -163,7 +163,7 @@ final class Calibre(cfg: Calibre.Library, shell: Shell)(using files: LocalFiles)
   /** Set named fields on an existing entry — the explicit, reviewed counterpart of [[update]] (`enrich-calibre` applies
     * approved fixes with it). Same guards as every other write.
     */
-  def set(id: Calibre.Book.Id, fields: List[(Calibre.Field.Name, Calibre.Field.Value)]): Either[Problems, Unit] =
+  def set(id: Book.Id, fields: List[(Calibre.Field.Name, Calibre.Field.Value)]): Either[Problems, Unit] =
     for
       cmd <- Calibre.setCmd(cfg.calibredb, libArgs, id, fields)
       _ <- Either.cond(!guiRunning, (), GuiRunning)
@@ -174,7 +174,7 @@ final class Calibre(cfg: Calibre.Library, shell: Shell)(using files: LocalFiles)
   /** Replace the file of an EXISTING entry: `calibredb add_format`, which replaces the entry's format of the same type.
     * Unlike [[add]] it never creates an entry, so the link stays valid.
     */
-  def replaceFormat(id: Calibre.Book.Id, file: Path): Either[Problems, CollectionFile.Format] =
+  def replaceFormat(id: Book.Id, file: Path): Either[Problems, CollectionFile.Format] =
     for
       fmt <- Calibre.formatOf(file)
       _ <- Either.cond(!guiRunning, (), GuiRunning)
@@ -191,7 +191,7 @@ final class Calibre(cfg: Calibre.Library, shell: Shell)(using files: LocalFiles)
       (if meta.tags.isEmpty then Nil else Calibre.argv("--tags", meta.tags.mkString(",")))
 
   /** The fields `calibredb add` cannot set. Best-effort: a failure here leaves a usable entry. */
-  private def setMetadata(id: Calibre.Book.Id, meta: Calibre.Push): Either[Problems, Unit] =
+  private def setMetadata(id: Book.Id, meta: Calibre.Push): Either[Problems, Unit] =
     val fields = List(
       meta.publisher.map("publisher:" + _),
       meta.year.map(y => s"pubdate:$y-01-01"),
@@ -760,7 +760,7 @@ object Calibre:
     object Id extends Newtype[Int, Pure]
     type Title = Title.T
     object Title extends Newtype[String, Pure]
-    export com.histmersion.plugins.calibre.Calibre.Author as Authors
+    export Calibre.Author as Authors
     type Pubdate = Pubdate.T
     object Pubdate extends Newtype[String, Pure]
     type Publisher = Publisher.T
@@ -838,7 +838,7 @@ object Calibre:
   object Push:
     type Title = Title.T
     object Title extends Newtype[String, Pure]
-    export com.histmersion.plugins.calibre.Calibre.Author as Authors
+    export Calibre.Author as Authors
     type Doi = Doi.T
     object Doi extends Newtype[String, Pure]
     type Isbn = Isbn.T

@@ -1,4 +1,5 @@
-package com.histmersion.fixtures.hellodeps
+package com.histmersion
+package fixtures.hellodeps
 import com.histmersion.util.problem.{Problem, Problems}
 
 import com.histmersion.fixtures.hellolib.Shout

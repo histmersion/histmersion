@@ -33,8 +33,8 @@ final class OaRecords(
   lazy val handle: Option[Plugin.Http.Url] = OaRecords.handleUrl(cfg, http, log, doi)
 
 object OaRecords:
-  type Doi = com.histmersion.plugin.Doi
-  val Doi: com.histmersion.plugin.Doi.type = com.histmersion.plugin.Doi
+  type Doi = plugin.Doi
+  val Doi: plugin.Doi.type = plugin.Doi
 
   def handleUrl(cfg: UpstreamSettings, http: Plugin.Http, log: Plugin.Log, doi: Doi): Option[Plugin.Http.Url] =
     http.json(
