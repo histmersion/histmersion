@@ -25,7 +25,4 @@ import com.histmersion.api.Geo
 final case class LatLon(lat: LatLon.Lat, lon: LatLon.Lon) derives CanEqual
 
 object LatLon:
-  type Lat = Geo.Latitude
-  val Lat: Geo.Latitude.type = Geo.Latitude
-  type Lon = Geo.Longitude
-  val Lon: Geo.Longitude.type = Geo.Longitude
+  export Geo.{Latitude as Lat, Longitude as Lon}

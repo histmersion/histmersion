@@ -439,8 +439,7 @@ final class PointSet[D](
     arriving.foreach(ClusterMotion.arrive)
 
 object PointSet:
-  type Key = Clustering.GroupKey
-  val Key: Clustering.GroupKey.type = Clustering.GroupKey
+  export Clustering.GroupKey as Key
   type PointCount = PointCount.T
   object PointCount extends Newtype[Int, Pure]
   type FadeIn = FadeIn.T

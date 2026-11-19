@@ -47,8 +47,7 @@ final class Field[A](
   private[web] def remove(value: Field.Token): Unit = load(encoded.filterNot(_ == value))
 
 object Field:
-  type Token = FieldCodec.Token
-  val Token: FieldCodec.Token.type = FieldCodec.Token
+  export FieldCodec.Token
   type Key = Key.T
   object Key extends Newtype[String, Pure]
   type HashKey = HashKey.T

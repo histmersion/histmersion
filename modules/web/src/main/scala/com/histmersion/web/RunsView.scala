@@ -203,8 +203,7 @@ object RunsView:
   object Action:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
-    type Label = Text
-    val Label: Text.type = Text
+    export com.histmersion.api.UiLabels.Text as Label
 
   def actions(status: RunInfo.Status): List[Action] = RunState.parse(stateWire(status)) match
     case Some(RunState.Queued) | Some(RunState.Running) => List(Action.Pause, Action.Cancel)

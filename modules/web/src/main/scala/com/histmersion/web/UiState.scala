@@ -370,8 +370,7 @@ object UiState:
   object Preview:
     type Key = Key.T
     object Key extends Newtype[String, Pure]
-    type Value = FilterTerm
-    val Value: FilterTerm.type = FilterTerm
+    export com.histmersion.web.UiState.FilterTerm as Value
   val preview: Var[Option[Preview]] = Var(None)
 
   def setPreview(p: Option[Preview]): Unit =
@@ -522,8 +521,7 @@ object UiState:
   object ActiveChip:
     type Label = Label.T
     object Label extends Newtype[String, Pure]
-    type Value = FilterTerm
-    val Value: FilterTerm.type = FilterTerm
+    export com.histmersion.web.UiState.FilterTerm as Value
     type Shown = Shown.T
     object Shown extends Newtype[String, Pure]
 

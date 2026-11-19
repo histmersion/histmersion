@@ -205,8 +205,7 @@ object ListFilters:
   object JobFilter:
 
     export JobState.Wire as Status
-    type Kind = JobKinds.Wire
-    val Kind: JobKinds.Wire.type = JobKinds.Wire
+    export JobKinds.Wire as Kind
     type Since = Since.T
     object Since extends Newtype[String, Pure]
     type Until = Until.T

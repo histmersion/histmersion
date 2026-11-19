@@ -21,8 +21,7 @@ object ThemeChoice:
   /** A stored or attribute value; anything unknown (nothing stored, an old value) is the system's. */
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
-  type Label = UiLabels.Text
-  val Label: UiLabels.Text.type = UiLabels.Text
+  export UiLabels.Text as Label
 
   def fromWire(s: String): ThemeChoice =
     values.find(_.wire == Wire(Option(s).fold("")(_.trim.toLowerCase))).getOrElse(System)

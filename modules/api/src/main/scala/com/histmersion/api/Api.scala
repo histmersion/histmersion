@@ -1789,11 +1789,8 @@ object Api:
     object Text extends Newtype[String, Pure]
     type Kind = Kind.T
     object Kind extends Newtype[String, Pure]
-    type Historicity = com.histmersion.api.catalogue.Historicity.Wire
-    val Historicity: com.histmersion.api.catalogue.Historicity.Wire.type =
-      com.histmersion.api.catalogue.Historicity.Wire
-    type PlaceId = Place.Id
-    val PlaceId: Place.Id.type = Place.Id
+    export com.histmersion.api.catalogue.Historicity.Wire as Historicity
+    export Place.Id as PlaceId
     type Tier = Tier.T
     object Tier extends Newtype[String, Pure]
     type Context = Context.T

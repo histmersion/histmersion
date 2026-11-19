@@ -42,8 +42,7 @@ object UploadView:
   )
 
   object Draft:
-    type FileName = Api.FileName
-    val FileName: Api.FileName.type = Api.FileName
+    export Api.FileName
     type Citekey = Citekey.T
     object Citekey extends Newtype[String, Pure]
     type Title = Title.T

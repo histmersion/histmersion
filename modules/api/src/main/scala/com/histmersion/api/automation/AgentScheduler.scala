@@ -44,8 +44,7 @@ object AgentScheduler:
     object Manager extends Newtype[String, Pure]
     type Kind = Kind.T
     object Kind extends Newtype[String, Pure]
-    type JobType = JobKinds.Wire
-    val JobType: JobKinds.Wire.type = JobKinds.Wire
+    export JobKinds.Wire as JobType
     type Target = Target.T
     object Target extends Newtype[String, Pure]
 
@@ -73,8 +72,7 @@ object AgentScheduler:
     object Manager extends Newtype[String, Pure]
     type Kind = Kind.T
     object Kind extends Newtype[String, Pure]
-    type JobType = JobKinds.Wire
-    val JobType: JobKinds.Wire.type = JobKinds.Wire
+    export JobKinds.Wire as JobType
     type Target = Target.T
     object Target extends Newtype[String, Pure]
     type Priority = Priority.T
@@ -113,8 +111,7 @@ object AgentScheduler:
         com.histmersion.api.json.Schema
 
   object TypeLine:
-    type JobType = JobKinds.Wire
-    val JobType: JobKinds.Wire.type = JobKinds.Wire
+    export JobKinds.Wire as JobType
     type Label = Label.T
     object Label extends Newtype[String, Pure]
     type Weight = Weight.T

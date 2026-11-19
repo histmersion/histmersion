@@ -14,8 +14,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * approval kinds, pipelines, manager kinds, statuses and states — else the identifier humanised.
   */
 object UiLabels:
-  type Key = Wording.Id
-  val Key: Wording.Id.type = Wording.Id
+  export Wording.Id as Key
   type Text = Text.T
   object Text extends Newtype[String, Pure]
 

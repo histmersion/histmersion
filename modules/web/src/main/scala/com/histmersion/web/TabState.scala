@@ -49,8 +49,7 @@ object TabState:
   object Loading extends Newtype[Boolean, Pure]
   type Loaded = Loaded.T
   object Loaded extends Newtype[Boolean, Pure]
-  type Extras = TabPage.Extras
-  val Extras: TabPage.Extras.type = TabPage.Extras
+  export TabPage.Extras
 
   def loading[Row](s: TabState[Row]): TabState[Row] = s.copy(loading = Loading(true), error = None)
 

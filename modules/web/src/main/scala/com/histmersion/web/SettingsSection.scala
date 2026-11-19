@@ -46,9 +46,7 @@ enum SettingsSection(
       )
 
 object SettingsSection:
-  type Slug = Preview.Item.Slug
-  val Slug: Preview.Item.Slug.type = Preview.Item.Slug
-  type Label = UiLabels.Text
-  val Label: UiLabels.Text.type = UiLabels.Text
+  export com.histmersion.api.research.Article.Slug
+  export UiLabels.Text as Label
   type Rare = Rare.T
   object Rare extends Newtype[Boolean, Pure]

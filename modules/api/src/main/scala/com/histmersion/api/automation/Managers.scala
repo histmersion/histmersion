@@ -541,10 +541,8 @@ object Managers:
   object ManagerInfo:
     type Id = Id.T
     object Id extends Newtype[String, Pure]
-    type Kind = Manager.Kind.Wire
-    val Kind: Manager.Kind.Wire.type = Manager.Kind.Wire
-    type State = Manager.State.Wire
-    val State: Manager.State.Wire.type = Manager.State.Wire
+    export Manager.Kind.Wire as Kind
+    export Manager.State.Wire as State
     type PauseRuns = PauseRuns.T
     object PauseRuns extends Newtype[Boolean, Pure]
     type Cron = Cron.T
@@ -692,8 +690,7 @@ object Managers:
     object Kind extends Newtype[String, Pure]
     type Target = Target.T
     object Target extends Newtype[String, Pure]
-    type Status = com.histmersion.api.automation.ItemStatus.Wire
-    val Status: com.histmersion.api.automation.ItemStatus.Wire.type = com.histmersion.api.automation.ItemStatus.Wire
+    export com.histmersion.api.automation.ItemStatus.Wire as Status
     type Priority = Priority.T
     object Priority extends Newtype[Int, Pure]
     type Attempts = Attempts.T
@@ -704,8 +701,7 @@ object Managers:
     object NotBefore extends Newtype[String, Pure]
     type Outcome = Outcome.T
     object Outcome extends Newtype[String, Pure]
-    type Origin = ItemOrigin.Wire
-    val Origin: ItemOrigin.Wire.type = ItemOrigin.Wire
+    export ItemOrigin.Wire as Origin
     type CreatedAt = CreatedAt.T
     object CreatedAt extends Newtype[String, Pure]
     type UpdatedAt = UpdatedAt.T

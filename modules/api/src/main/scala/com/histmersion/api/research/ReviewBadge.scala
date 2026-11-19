@@ -33,5 +33,4 @@ object ReviewBadge:
   object Findings extends Newtype[Int, Pure]
   type Runs = Runs.T
   object Runs extends Newtype[Int, Pure]
-  type Round = ReviewRound.Round
-  val Round: ReviewRound.Round.type = ReviewRound.Round
+  export ReviewRound.Round

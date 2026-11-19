@@ -215,8 +215,7 @@ object Preview:
     object Text extends Newtype[String, Pure]
     type Citekey = Target.Source.Citekey
     val Citekey: Target.Source.Citekey.type = Target.Source.Citekey
-    type Slug = Article.Slug
-    val Slug: Article.Slug.type = Article.Slug
+    export Article.Slug
     type Href = Href.T
     object Href extends Newtype[String, Pure]
     type Command = Command.T
@@ -822,12 +821,7 @@ object Preview:
   final case class Fit(x: Fit.X, y: Fit.Y, maxH: Fit.MaxH)
 
   object Fit:
-    type X = ScreenPixels
-    val X: ScreenPixels.type = ScreenPixels
-    type Y = ScreenPixels
-    val Y: ScreenPixels.type = ScreenPixels
-    type MaxH = ScreenPixels
-    val MaxH: ScreenPixels.type = ScreenPixels
+    export com.histmersion.web.Preview.{ScreenPixels as MaxH, ScreenPixels as X, ScreenPixels as Y}
 
   /** The margin a card keeps from every viewport edge, and the least room worth placing it in beside its anchor; with
     * less on both sides it uses the whole height and covers the anchor instead.

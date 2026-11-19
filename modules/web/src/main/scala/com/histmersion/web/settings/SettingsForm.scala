@@ -32,8 +32,7 @@ object SettingsForm:
   )
 
   object Item:
-    type Key = ConfigEdit.Field.Key
-    val Key: ConfigEdit.Field.Key.type = ConfigEdit.Field.Key
+    export ConfigEdit.Field.Key
     type Name = Name.T
     object Name extends Newtype[String, Pure]
     type Help = Help.T
