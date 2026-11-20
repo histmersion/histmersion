@@ -37,9 +37,9 @@ object IngestCmd:
         .map(j => Cli.out.println(IngestMarkdown.job(j)))
     )
 
-  /** How long a job is followed: [[JobFollow.Limits.TimeoutVariable]] when it is set. */
+  /** How long a job is followed: the setting [[JobFollow.Limits.TimeoutVariable]]. */
   private[cli] def followLimits: Either[Cli.Error, JobFollow.Limits] =
-    JobFollow.Limits.of(Option(System.getenv(JobFollow.Limits.TimeoutVariable))).left.map(Cli.Error(_))
+    JobFollow.Limits.of(Settings.app.cli.followTimeoutSeconds).left.map(Cli.Error(_))
 
   /** Upload one document and (unless `noWait`) follow its OCR job to completion. */
   def upload(using

@@ -13,7 +13,7 @@ command prints, on stdout, the body a failed API request answers — `{"problems
   at another server.
 - Years are signed integers: 3300 BCE is `-3300`.
 - A command that waits for a job or a backup (an ingest, `backup`, `vacuum`…) waits at most six hours,
-  or `HISTMERSION_FOLLOW_TIMEOUT` seconds; a status check that fails for a moment (the server
+  or `cli.follow-timeout-seconds` (`HISTMERSION_FOLLOW_TIMEOUT`) seconds; a status check that fails for a moment (the server
   restarting) is asked again after 1, 2, 4, 8 s, up to five times in a row. Work still running at the
   end of the wait, or checks that keep failing, exit 8 (outcome unknown) with the last state seen: the
   job goes on on the server, and `histmersion jobs` shows how it ends.
