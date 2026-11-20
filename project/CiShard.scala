@@ -8,13 +8,16 @@ import java.nio.file.{Files, Path, StandardOpenOption}
 /** CI's test shards (.github/workflows/ci.yml, scripts/ci/): every project, inert unless the environment asks.
   *
   *   - `ciSuites` writes `target/ci/suites/<project>.tsv`, one `<project> TAB <suite>` row per defined test suite: what
-  *     the shards must cover between them (`sbt ciSuites` at the root writes every aggregated project's file).
+  *     the shards must cover between them (`sbt ciSuites` at the root writes every aggregated project's file); and
+  *     `target/ci/sources/<project>.tsv`, the project's test source directories, which scripts/ci/classify.py scans to
+  *     class each suite as unit or IT.
   *   - `HISTMERSION_CI_SHARD_FILE=<file>` (rows `<project> TAB <suite>`, as scripts/ci/plan.py writes them) narrows
   *     every project's suites to the file's: `sbt 'testOnly *'` at the root then runs exactly one shard.
   *   - `HISTMERSION_CI_REPORT_DIR=<dir>` records each finished suite as `<project> TAB <suite> TAB <result> TAB passed
-  *     TAB failed TAB errors TAB skipped TAB ignored` in `<dir>/<project>.tsv` (a suite that aborted is `error`), and
-  *     every skipped test with its reason in `<dir>/<project>.skips.tsv`; scripts/ci/check.py holds the union of the
-  *     shards' reports to the suites listed: each run exactly once.
+  *     TAB failed TAB errors TAB skipped TAB ignored TAB millis` in `<dir>/<project>.tsv` (a suite that aborted is
+  *     `error`; millis is the sum of its tests' durations), and every skipped test with its reason in
+  *     `<dir>/<project>.skips.tsv`; scripts/ci/check.py holds the union of the shards' reports to the suites listed:
+  *     each run exactly once.
   */
 object CiShard extends AutoPlugin {
   override def trigger = allRequirements
@@ -43,6 +46,13 @@ object CiShard extends AutoPlugin {
       val names = (Test / definedTestNames).value.distinct.sorted
       val out = (ThisBuild / baseDirectory).value / "target" / "ci" / "suites" / s"$id.tsv"
       IO.writeLines(out, names.map(n => s"$id\t$n"))
+      // where the suites' sources are, for scripts/ci/classify.py (unit or IT): relative to the build's root
+      val root = (ThisBuild / baseDirectory).value.toPath
+      val dirs = (Test / unmanagedSourceDirectories).value.filter(_.isDirectory).map(d => root.relativize(d.toPath))
+      IO.writeLines(
+        (ThisBuild / baseDirectory).value / "target" / "ci" / "sources" / s"$id.tsv",
+        dirs.map(d => s"$id\t$d")
+      )
       streams.value.log.info(s"ciSuites: ${names.size} suite(s) of $id → $out")
     },
     Test / testOptions := Def.uncached {
@@ -76,6 +86,7 @@ final class CiSuiteReport(project: String, dir: Path) extends TestsListener {
 
   final private class Counts {
     var passed, failed, errors, skipped, ignored = 0
+    var millis = 0L
   }
   private val counts = scala.collection.mutable.Map.empty[String, Counts]
 
@@ -98,6 +109,7 @@ final class CiSuiteReport(project: String, dir: Path) extends TestsListener {
   def testEvent(event: TestEvent): Unit = synchronized {
     event.detail.foreach { (e: TEvent) =>
       val c = counts.getOrElseUpdate(e.fullyQualifiedName, new Counts)
+      c.millis += math.max(0L, e.duration) // -1: the framework did not measure it
       e.status match {
         case Status.Success                                    => c.passed += 1
         case Status.Failure                                    => c.failed += 1
@@ -119,7 +131,7 @@ final class CiSuiteReport(project: String, dir: Path) extends TestsListener {
     val c = counts.getOrElse(name, new Counts)
     append(
       s"$project.tsv",
-      s"$project\t$name\t$result\t${c.passed}\t${c.failed}\t${c.errors}\t${c.skipped}\t${c.ignored}"
+      s"$project\t$name\t$result\t${c.passed}\t${c.failed}\t${c.errors}\t${c.skipped}\t${c.ignored}\t${c.millis}"
     )
   }
 
