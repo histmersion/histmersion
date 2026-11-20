@@ -1,16 +1,18 @@
 name: ci
 # Every push to master and the refactor branches (contracts3-**), every PR, and on demand: the whole forced test
-# suite, split into shards that run side by side, each DB-backed one on a throwaway PostgreSQL of its own (the one
-# Histmersion ships: runtime/postgres, PG 18 + PostGIS 3.6).
+# suite, split into shards that run side by side.
 #
+#   format     scalafmt alone, beside everything else: a formatting failure never skips or cancels a test job
+#   converter  the OCR converter's pytest
 #   build      compiles every module once (sbt 2's disk cache, target/sbt-cache, carried from earlier runs of the
-#              week), lists every test suite (`sbt ciSuites`, project/CiShard.scala) and deals them into shards
-#              (scripts/ci/plan.py); the test jobs replay its compile from the cache it hands on
-#   test       one job per shard: `testOnly *` narrowed to the shard's suites (HISTMERSION_CI_SHARD_FILE), every
-#              finished suite recorded (HISTMERSION_CI_REPORT_DIR); a DB shard sets HISTMERSION_TEST_DB_REQUIRED,
-#              so a DB suite without its database fails instead of skipping (B8)
-#   shards     each listed suite ran in exactly one shard (scripts/ci/check.py); the skipped tests listed
-#   format     scalafmt; converter: the OCR converter's pytest
+#              week), lists every test suite (`sbt ciSuites`, project/CiShard.scala), classes each as unit or IT
+#              from the test sources (scripts/ci/classify.py) and deals them into shards (scripts/ci/plan.py). It
+#              hands the test jobs its compilation output (the sbt cache they replay) and the shard plan
+#   unit / it  one job per shard: `testOnly *` narrowed to the shard's suites (HISTMERSION_CI_SHARD_FILE), every
+#              finished suite recorded (HISTMERSION_CI_REPORT_DIR). Every shard sets HISTMERSION_TEST_DB_REQUIRED:
+#              a unit shard has no database, so a unit suite that reaches TestDb fails loudly; an IT shard starts
+#              its own throwaway PostgreSQL (runtime/postgres, PG 18 + PostGIS 3.6), so an IT suite never skips (B8)
+#   shards     each suite classed, and run in exactly one shard of its class (scripts/ci/check.py); skips listed
 #   macos      on macOS arm64 (the platform the owner runs): the native server and CLI built from the branch,
 #              the CLI reference checked against the native CLI's help, the scripts' tests, and the browser tests
 #              (Playwright, modules/web/test) against that server — a skipped browser test fails (G125)
@@ -38,11 +40,34 @@ env:
   # at once (4 vCPU / 16 GB runner; sbt itself, and scala-cli for the guideline ratchet, beside them)
   HISTMERSION_TEST_FORKS: "3"
   HISTMERSION_TEST_GROUPS_SERVER: "3"
-  SBT: sbt --server -batch -Dsbt.global.localcache=${{ github.workspace }}/target/sbt-cache
+  # -Xss16m: the compiler's deep recursion (forced-run.sh's flag; the default stack overflows in Namer)
+  SBT: sbt --server -batch -J-Xss16m -Dsbt.global.localcache=${{ github.workspace }}/target/sbt-cache
   # what forced-run.sh sets: compiling never rewrites the sources (the format job checks them)
   NOFMT: set every scalafmtOnCompile := false
 
 jobs:
+  format:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: ./.github/actions/setup
+      - name: formatting (scalafmt; `just fmt` fixes it)
+        run: $SBT scalafmtCheckAll scalafmtSbtCheck
+
+  converter:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
+        with: { enable-cache: true, cache-dependency-glob: converter/uv.lock }
+      - name: converter tests
+        working-directory: converter
+        run: uv run --frozen pytest -q
+
   build:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
@@ -65,29 +90,34 @@ jobs:
           key: sbt-cache-${{ runner.os }}-${{ runner.arch }}-${{ steps.week.outputs.week }}-${{ github.sha }}
           restore-keys: sbt-cache-${{ runner.os }}-${{ runner.arch }}-${{ steps.week.outputs.week }}-
       - name: compile every module, list every suite
-        run: $SBT "$NOFMT" Test/compile ciSuites
-      - name: deal the suites into shards
+        run: $SBT -J-Xmx6g "$NOFMT" Test/compile ciSuites
+      - name: class the suites (unit or IT) and deal them into shards
         id: plan
         run: |
-          python3 -m unittest scripts/ci/tests/test_plan.py scripts/ci/tests/test_check.py
-          python3 scripts/ci/plan.py target/ci/suites target/ci/shards --server-shards 3 > "$RUNNER_TEMP/matrix.json"
+          python3 -m unittest scripts/ci/tests/test_plan.py scripts/ci/tests/test_check.py scripts/ci/tests/test_classify.py
+          # an unclassified suite is named here and dealt nowhere; the shards job fails the run on it
+          python3 scripts/ci/classify.py target/ci/suites target/ci/sources --out target/ci/classes.tsv || true
+          python3 scripts/ci/plan.py target/ci/classes.tsv target/ci/shards > "$RUNNER_TEMP/matrix.json"
           echo "matrix=$(cat "$RUNNER_TEMP/matrix.json")" >> "$GITHUB_OUTPUT"
           du -sh target/sbt-cache
-      - name: hand the compile cache and the plan to the test jobs
+      - name: the compilation output, for the test jobs
         run: |
-          tar -C target -cf - sbt-cache ci | zstd -T0 -3 -q -o "$RUNNER_TEMP/build-state.tar.zst"
-          ls -l "$RUNNER_TEMP/build-state.tar.zst"
+          tar -C target -cf - sbt-cache | zstd -T0 -3 -q -o "$RUNNER_TEMP/compiled.tar.zst"
+          ls -l "$RUNNER_TEMP/compiled.tar.zst"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: build-state
-          path: ${{ runner.temp }}/build-state.tar.zst
+          name: compiled
+          path: ${{ runner.temp }}/compiled.tar.zst
           retention-days: 1
           compression-level: 0
           if-no-files-found: error
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      - name: the plan (which suites each shard runs; the classes the shards job checks against)
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: suites
-          path: target/ci/suites
+          name: plan
+          path: |
+            target/ci/classes.tsv
+            target/ci/shards
           retention-days: 7
           if-no-files-found: error
       - name: compile cache (save)
@@ -108,7 +138,7 @@ jobs:
 
   test:
     needs: build
-    name: test (${{ matrix.shard }})
+    name: ${{ matrix.shard }}
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     strategy:
@@ -118,6 +148,9 @@ jobs:
     env:
       HISTMERSION_CI_SHARD_FILE: ${{ github.workspace }}/target/ci/shards/${{ matrix.shard }}.tsv
       HISTMERSION_CI_REPORT_DIR: ${{ github.workspace }}/target/ci/report/${{ matrix.shard }}
+      # unit shards: no database at all, so a unit suite that reaches TestDb fails instead of skipping; IT shards:
+      # their database is set below, and a DB suite that loses it fails too (B8, TestDb.RequiredEnv)
+      HISTMERSION_TEST_DB_REQUIRED: "1"
     steps:
       # full history: the ratchet suites take their limits from the merge base with origin/contracts3-pilot
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -131,14 +164,16 @@ jobs:
         run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL &
       - uses: ./.github/actions/setup
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-        with: { name: build-state, path: "${{ runner.temp }}" }
-      - name: the build job's compile cache and plan
+        with: { name: compiled, path: "${{ runner.temp }}" }
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with: { name: plan, path: target/ci }
+      - name: the build job's compilation output
         run: |
           mkdir -p target
-          zstd -d -q -c "$RUNNER_TEMP/build-state.tar.zst" | tar -C target -xf -
-          rm "$RUNNER_TEMP/build-state.tar.zst"
+          zstd -d -q -c "$RUNNER_TEMP/compiled.tar.zst" | tar -C target -xf -
+          rm "$RUNNER_TEMP/compiled.tar.zst"
       - name: scala-cli (the guideline ratchet runs Scalafix through it)
-        if: startsWith(matrix.shard, 'server')
+        if: contains(matrix.shard, 'server')
         uses: VirtusLab/scala-cli-setup@9d61091a7d9d19f69faa59b31cdbc6ef2537eccc # v1.19.0
       - uses: taiki-e/install-action@75a7c0f87bd666af3cdb75c5b9e9d03ab6044e6f # v2.90.6
         if: matrix.db
@@ -156,13 +191,12 @@ jobs:
             echo "HISTMERSION_TEST_DB_URL=jdbc:postgresql://127.0.0.1:55432/histmersion_test"
             # the backup/restore suites run the SAME pg_dump/pg_restore the bundle ships
             echo "HISTMERSION_PG_BIN_DIR=$GITHUB_WORKSPACE/runtime/postgres/.pixi/envs/default/bin"
-            # a DB suite that finds no database fails instead of skipping (B8, TestDb.RequiredEnv)
-            echo "HISTMERSION_TEST_DB_REQUIRED=1"
           } >> "$GITHUB_ENV"
       - name: forced tests of the shard
         run: |
           projects="$(cut -f1 "$HISTMERSION_CI_SHARD_FILE" | sort -u)"
           echo "shard ${{ matrix.shard }}: $(wc -l < "$HISTMERSION_CI_SHARD_FILE") suite(s) of" $projects
+          echo "database: ${HISTMERSION_TEST_DB_URL:-none}"
           # one project: its own testOnly (no other project links its tests for nothing); several: the root's,
           # which runs each aggregated project's and reports every failure, not only the first
           if [ "$(echo "$projects" | wc -l)" -eq 1 ]; then cmd="$projects/testOnly *"; else cmd="testOnly *"; fi
@@ -196,35 +230,13 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { persist-credentials: false }
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-        with: { name: suites, path: target/ci/suites }
+        with: { name: plan, path: target/ci }
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with: { pattern: report-*, path: target/ci/report }
-      - name: every suite ran in exactly one shard
+      - name: every suite classed, and run in exactly one shard of its class
         run: |
           mkdir -p target/ci/report
-          python3 scripts/ci/check.py target/ci/suites target/ci/report --summary "$GITHUB_STEP_SUMMARY"
-
-  format:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with: { persist-credentials: false }
-      - uses: ./.github/actions/setup
-      - name: formatting (scalafmt; `just fmt` fixes it)
-        run: $SBT scalafmtCheckAll scalafmtSbtCheck
-
-  converter:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with: { persist-credentials: false }
-      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
-        with: { enable-cache: true, cache-dependency-glob: converter/uv.lock }
-      - name: converter tests
-        working-directory: converter
-        run: uv run --frozen pytest -q
+          python3 scripts/ci/check.py target/ci/classes.tsv target/ci/report --summary "$GITHUB_STEP_SUMMARY"
 
   macos:
     name: macos (native server, CLI docs, browser tests)
@@ -259,6 +271,8 @@ jobs:
           restore-keys: sbt-cache-${{ runner.os }}-${{ runner.arch }}-${{ steps.week.outputs.week }}-
 
       - name: the native server and CLI, from this branch (scripts/bundle/server.sh, as `just native`)
+        env:
+          SBT_OPTS: -Xss16m
         run: bash scripts/bundle/server.sh target/native
       - name: compile cache (save)
         if: always()

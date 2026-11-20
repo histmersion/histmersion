@@ -482,7 +482,7 @@
       "citekey" : "zzhill1990_battle",
       "claim" : "the Zzwell is of the Zzmarch period",
       "id" : "zzhill1990_battle#2",
-      "km" : 42.05567572254,
+      "km" : 42.055676,
       "periodEnd" : -1300,
       "periodStart" : -1500,
       "yearGap" : 0
@@ -491,7 +491,7 @@
       "citekey" : "zzhill1990_battle",
       "claim" : "Zzport sent ships to Zzhill",
       "id" : "zzhill1990_battle#1",
-      "km" : 117.74707255148,
+      "km" : 117.747073,
       "periodEnd" : -1290,
       "periodStart" : -1310,
       "yearGap" : 0
@@ -585,7 +585,7 @@
       "citekey" : "zzhill1990_battle",
       "claim" : "Zzport sent ships to Zzhill",
       "id" : "zzhill1990_battle#1",
-      "km" : 117.74707255148,
+      "km" : 117.747073,
       "periodEnd" : -1290,
       "periodStart" : -1310,
       "yearGap" : 0
@@ -594,7 +594,7 @@
       "citekey" : "zzhill1990_battle",
       "claim" : "the Zzwell is of the Zzmarch period",
       "id" : "zzhill1990_battle#2",
-      "km" : 42.05567572254,
+      "km" : 42.055676,
       "periodEnd" : -1300,
       "periodStart" : -1500,
       "yearGap" : 10
@@ -711,7 +711,7 @@
       "citekey" : "zzhill1990_battle",
       "claim" : "the Zzwell is of the Zzmarch period",
       "id" : "zzhill1990_battle#2",
-      "km" : 30.889258052469998,
+      "km" : 30.889258,
       "periodEnd" : -1300,
       "periodStart" : -1500,
       "yearGap" : 0
@@ -720,7 +720,7 @@
       "citekey" : "zzhill1990_battle",
       "claim" : "the battle of Zzhill was fought around 1300 BC",
       "id" : "zzhill1990_battle#0",
-      "km" : 55.680057108250004,
+      "km" : 55.680057,
       "periodEnd" : -1290,
       "periodStart" : -1310,
       "yearGap" : 0
@@ -729,7 +729,7 @@
       "citekey" : "zzhill1990_battle",
       "claim" : "Zzport sent ships to Zzhill",
       "id" : "zzhill1990_battle#1",
-      "km" : 80.48292384319001,
+      "km" : 80.482924,
       "periodEnd" : -1290,
       "periodStart" : -1310,
       "yearGap" : 0
@@ -824,7 +824,7 @@
       "citekey" : "zzvolc2004_ash",
       "claim" : "ash from Mount Zzvolc fell east of Zzport",
       "id" : "zzvolc2004_ash#0",
-      "km" : 47.796833123030005,
+      "km" : 47.796833,
       "periodEnd" : -1600,
       "periodStart" : -1620,
       "yearGap" : 0
@@ -833,7 +833,7 @@
       "citekey" : "zzhill1990_battle",
       "claim" : "the Zzwell is of the Zzmarch period",
       "id" : "zzhill1990_battle#2",
-      "km" : 74.99379336168,
+      "km" : 74.993793,
       "periodEnd" : -1300,
       "periodStart" : -1500,
       "yearGap" : 100
@@ -1036,7 +1036,7 @@
       "citekey" : "zzhill1990_battle",
       "claim" : "the Zzwell is of the Zzmarch period",
       "id" : "zzhill1990_battle#2",
-      "km" : 30.889258052469998,
+      "km" : 30.889258,
       "periodEnd" : -1300,
       "periodStart" : -1500,
       "yearGap" : 0
@@ -1045,7 +1045,7 @@
       "citekey" : "zzhill1990_battle",
       "claim" : "the battle of Zzhill was fought around 1300 BC",
       "id" : "zzhill1990_battle#0",
-      "km" : 55.680057108250004,
+      "km" : 55.680057,
       "periodEnd" : -1290,
       "periodStart" : -1310,
       "yearGap" : 0
@@ -1054,7 +1054,7 @@
       "citekey" : "zzhill1990_battle",
       "claim" : "Zzport sent ships to Zzhill",
       "id" : "zzhill1990_battle#1",
-      "km" : 80.48292384319001,
+      "km" : 80.482924,
       "periodEnd" : -1290,
       "periodStart" : -1310,
       "yearGap" : 0

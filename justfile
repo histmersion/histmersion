@@ -136,7 +136,7 @@ test-scripts:
     python3 -m unittest scripts/dev/tests/test_affected.py
     python3 -m unittest scripts/dev/tests/test_test_weights.py
     python3 -m unittest scripts/dev/tests/test_third_party_licences.py
-    python3 -m unittest scripts/ci/tests/test_plan.py scripts/ci/tests/test_check.py
+    python3 -m unittest scripts/ci/tests/test_plan.py scripts/ci/tests/test_check.py scripts/ci/tests/test_classify.py
     scripts/dev/tests/seed-cache-test.sh
     scripts/dev/tests/pinned-jdk-test.sh
     scripts/bundle/tests/launchagent-env-test.sh

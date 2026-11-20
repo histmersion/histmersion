@@ -52,7 +52,7 @@
         "partial" : false,
         "path" : "TMP/work-backups",
         "shrink" : "lower backups.keep (now 2) — the next backup deletes the older archives",
-        "volume" : "/System/Volumes/Data (/dev/disk3s5)",
+        "volume" : "VOLUME",
         "within" : null
       },
       {
@@ -67,7 +67,7 @@
         "partial" : false,
         "path" : "TMP/work-spool",
         "shrink" : null,
-        "volume" : "/System/Volumes/Data (/dev/disk3s5)",
+        "volume" : "VOLUME",
         "within" : null
       },
       {
@@ -82,7 +82,7 @@
         "partial" : false,
         "path" : "TMP/work-acquire",
         "shrink" : "scratch: safe to empty while no acquisition is running",
-        "volume" : "/System/Volumes/Data (/dev/disk3s5)",
+        "volume" : "VOLUME",
         "within" : null
       },
       {
@@ -97,7 +97,7 @@
         "partial" : false,
         "path" : "TMP/work-bundles",
         "shrink" : "scratch: safe to empty while no bundle export or import is running",
-        "volume" : "/System/Volumes/Data (/dev/disk3s5)",
+        "volume" : "VOLUME",
         "within" : null
       },
       {
@@ -112,7 +112,7 @@
         "partial" : false,
         "path" : "TMP/cache/histmersion/gazetteer",
         "shrink" : "delete the cached extracts — histmersion places load fetches them again",
-        "volume" : "/System/Volumes/Data (/dev/disk3s5)",
+        "volume" : "VOLUME",
         "within" : null
       },
       {
@@ -127,7 +127,7 @@
         "partial" : false,
         "path" : "TMP/work-data/gazetteer",
         "shrink" : null,
-        "volume" : "/System/Volumes/Data (/dev/disk3s5)",
+        "volume" : "VOLUME",
         "within" : null
       },
       {
@@ -142,7 +142,7 @@
         "partial" : false,
         "path" : "TMP/work-data/gazetteer/lpf",
         "shrink" : null,
-        "volume" : "/System/Volumes/Data (/dev/disk3s5)",
+        "volume" : "VOLUME",
         "within" : "gazetteer-data"
       },
       {
@@ -157,7 +157,7 @@
         "partial" : false,
         "path" : "TMP/work-basemap",
         "shrink" : "histmersion basemap rm (one layer: histmersion basemap rm --layer <name>)",
-        "volume" : "/System/Volumes/Data (/dev/disk3s5)",
+        "volume" : "VOLUME",
         "within" : null
       },
       {
@@ -172,7 +172,7 @@
         "partial" : false,
         "path" : "TMP/work-data/toolchain",
         "shrink" : "histmersion-toolchain remove (needed again only to relink plugins)",
-        "volume" : "/System/Volumes/Data (/dev/disk3s5)",
+        "volume" : "VOLUME",
         "within" : null
       },
       {
@@ -187,7 +187,7 @@
         "partial" : false,
         "path" : "TMP/work-data/plugins",
         "shrink" : null,
-        "volume" : "/System/Volumes/Data (/dev/disk3s5)",
+        "volume" : "VOLUME",
         "within" : null
       },
       {
@@ -202,7 +202,7 @@
         "partial" : false,
         "path" : "TMP/work-data/agents",
         "shrink" : null,
-        "volume" : "/System/Volumes/Data (/dev/disk3s5)",
+        "volume" : "VOLUME",
         "within" : null
       },
       {
@@ -217,7 +217,7 @@
         "partial" : false,
         "path" : "TMP/work-data/agents/codex/home",
         "shrink" : "lower agents.providers.codex.keep-sessions-days — older run transcripts are deleted and its SQLite files vacuumed while no Codex run uses it (every retention-every-hours); never delete auth.json, its login",
-        "volume" : "/System/Volumes/Data (/dev/disk3s5)",
+        "volume" : "VOLUME",
         "within" : "agents"
       },
       {
@@ -232,7 +232,7 @@
         "partial" : false,
         "path" : "TMP/work-data/logs",
         "shrink" : "delete old log files (the server reopens them)",
-        "volume" : "/System/Volumes/Data (/dev/disk3s5)",
+        "volume" : "VOLUME",
         "within" : null
       }
     ],
@@ -269,7 +269,7 @@
     "volumes" : [
       {
         "freeBytes" : "N",
-        "id" : "/System/Volumes/Data (/dev/disk3s5)",
+        "id" : "VOLUME",
         "totalBytes" : "N"
       }
     ]

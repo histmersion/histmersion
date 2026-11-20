@@ -63,12 +63,16 @@ object Dependencies {
 
     /** Writes `text` to `out` unless it holds it already: several sbt processes may load the same checkout. */
     def write(out: File): File = {
-      if (!out.isFile || IO.read(out) != text) {
+      if !out.isFile || IO.read(out) != text then {
         IO.createDirectory(out.getParentFile)
         val tmp = java.nio.file.Files.createTempFile(out.getParentFile.toPath, out.getName, ".tmp")
         IO.write(tmp.toFile, text)
-        val _ = java.nio.file.Files.move(tmp, out.toPath, java.nio.file.StandardCopyOption.REPLACE_EXISTING,
-          java.nio.file.StandardCopyOption.ATOMIC_MOVE)
+        val _ = java.nio.file.Files.move(
+          tmp,
+          out.toPath,
+          java.nio.file.StandardCopyOption.REPLACE_EXISTING,
+          java.nio.file.StandardCopyOption.ATOMIC_MOVE
+        )
       }
       out
     }
@@ -76,7 +80,7 @@ object Dependencies {
     /** A `key=value` line of .sdkmanrc (`java`, `sbt`, `scala`), the toolchain's pin. */
     def sdkmanrc(base: File, key: String): Option[String] = {
       val f = base / ".sdkmanrc"
-      if (!f.isFile) None
+      if !f.isFile then None
       else IO.readLines(f).map(_.trim).collectFirst { case l if l.startsWith(key + "=") => l.stripPrefix(key + "=") }
     }
   }
