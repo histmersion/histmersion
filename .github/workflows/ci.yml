@@ -43,7 +43,10 @@ env:
   HISTMERSION_TEST_FORKS: "3"
   HISTMERSION_TEST_GROUPS_SERVER: "3"
   # -Xss16m: the compiler's deep recursion (forced-run.sh's flag; the default stack overflows in Namer)
-  SBT: sbt --server -batch -J-Xss16m -Dsbt.global.localcache=${{ github.workspace }}/target/sbt-cache
+  # -Dsbt.cache_test_result=false: a forced run — sbt 2 replays a passed suite's result from its disk cache otherwise
+  SBT: >-
+    sbt --server -batch -J-Xss16m -Dsbt.cache_test_result=false
+    -Dsbt.global.localcache=${{ github.workspace }}/target/sbt-cache
   # what forced-run.sh sets: compiling never rewrites the sources (the format job checks them)
   NOFMT: set every scalafmtOnCompile := false
 
@@ -216,7 +219,14 @@ jobs:
           # which runs each aggregated project's and reports every failure, not only the first
           if [ "$(echo "$projects" | wc -l)" -eq 1 ]; then cmd="$projects/testOnly *"; else cmd="testOnly *"; fi
           # every module compiled first: the guideline ratchet reads the SemanticDB of all of them
-          $SBT "$NOFMT" Test/compile "$cmd"
+          set +e
+          $SBT "$NOFMT" Test/compile "$cmd" 2>&1 | tee "$RUNNER_TEMP/sbt.log"
+          rc=${PIPESTATUS[0]}
+          # forced: no suite's result replayed from the cache (lane rule: `cached 0`)
+          if sed 's/\x1b\[[0-9;]*m//g' "$RUNNER_TEMP/sbt.log" | grep -E 'cached [1-9]'; then
+            echo "::error::a test result was replayed from sbt's cache: not a forced run"; rc=1
+          fi
+          exit $rc
       - name: no suite skipped for want of a database (B8)
         if: always()
         run: |
