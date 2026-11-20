@@ -45,23 +45,22 @@ object JobFollow:
   final case class Limits(timeout: TimeoutMs, failedPolls: FailedPolls)
 
   object Limits:
-    /** The variable that sets [[Limits.timeout]], in seconds. */
-    val TimeoutVariable = "HISTMERSION_FOLLOW_TIMEOUT"
+    /** The setting that gives [[Limits.timeout]], in seconds, and the variable that sets it. */
+    val TimeoutVariable = "cli.follow-timeout-seconds (HISTMERSION_FOLLOW_TIMEOUT)"
 
-    /** Six hours (an OCR of a long book takes one), five failed polls in a row. */
-    val Default: Limits = Limits(TimeoutMs(6L * 3600 * 1000), FailedPolls(5))
+    /** The failed polls in a row that are borne. */
+    val FailedPollsBorne: FailedPolls = FailedPolls(5)
 
-    /** The limits with the timeout `variable` gives in whole seconds (above 0), the default without it. Pure. */
-    def of(variable: Option[String]): Either[Problem, Limits] =
-      variable.map(_.trim).filter(_.nonEmpty) match
-        case None    => Right(Default)
-        case Some(v) =>
-          v.toLongOption
-            .filter(_ > 0)
-            .map(s => Default.copy(timeout = TimeoutMs(s * 1000)))
-            .toRight(
-              Problem.Unclassified(Legacy.Text(s"$TimeoutVariable must be a whole number of seconds above 0, not '$v'"))
-            )
+    /** Six hours (an OCR of a long book takes one), five failed polls in a row: the setting's default. */
+    val Default: Limits = Limits(TimeoutMs(6L * 3600 * 1000), FailedPollsBorne)
+
+    /** The limits with the timeout the setting gives, in whole seconds above 0. Pure. */
+    def of(seconds: CliConfig.FollowTimeoutSeconds): Either[Problem, Limits] =
+      Option
+        .when(seconds.value > 0)(Limits(TimeoutMs(seconds.value * 1000), FailedPollsBorne))
+        .toRight(
+          Problem.Unclassified(Legacy.Text(s"$TimeoutVariable must be a whole number of seconds above 0, not $seconds"))
+        )
 
   /** The wait after `failures` failed polls in a row: the poll interval doubled for each, at most [[MaxBackoff]]. Pure.
     */

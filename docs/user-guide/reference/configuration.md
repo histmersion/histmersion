@@ -271,6 +271,7 @@ The settings of backups and portable bundles are listed with them, in
 | `auth.origins` | — | `[]` | page origins (`https://name[:port]`) that may send changes besides this server's own pages (another page's change: 403). Restart-only |
 | `cli.server-url` | `HISTMERSION_SERVER_URL` | `http://localhost:8000` | where `histmersion` looks for the server |
 | `cli.token-file` | `HISTMERSION_TOKEN_FILE` | *(empty)* | a file whose first line is the API key `histmersion` sends when `HISTMERSION_TOKEN` is not set (`${HOME}/…` in the file works; keep the file readable by you alone). There is no `--token` option |
+| `cli.follow-timeout-seconds` | `HISTMERSION_FOLLOW_TIMEOUT` | `21600` | how long a command waits for the job or backup it started (an ingest, `backup`, `vacuum`); past it, it exits 8 (outcome unknown) and the work goes on on the server |
 | `acquire.contact-email` | `HISTMERSION_ACQUIRE_CONTACT_EMAIL` | *(empty)* — set per install | the **polite-pool** identity Crossref/OpenAlex/Unpaywall ask for, sent only as their `mailto`/`email` parameter — never in a header (`HttpPolicy`). Sent nowhere else. |
 | `acquire.openalex.url` · `crossref.url` · `unpaywall.url` · `arxiv.url` · `archive-org.url` · `wikipedia.url` | `HISTMERSION_ACQUIRE_*_URL` | the public APIs | upstream endpoints; point them at a mirror or a stub to work offline |
 | `acquire.core.api-key` | `HISTMERSION_ACQUIRE_CORE_API_KEY` | *(empty)* | CORE's key as plain text, for both CORE uses; `plugins.oa-core.api-key` (a secret reference) wins over it. Without either, CORE is not asked |

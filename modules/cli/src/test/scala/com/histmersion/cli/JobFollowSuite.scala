@@ -136,11 +136,11 @@ class JobFollowSuite extends munit.FunSuite:
     assertEquals(r.left.map(_.exitCode), Left(ExitCode.NotFound))
     assertEquals(polls, 1)
 
-  test("the timeout comes from HISTMERSION_FOLLOW_TIMEOUT in seconds; a bad value is a usage error"):
-    assertEquals(JobFollow.Limits.of(None), Right(JobFollow.Limits.Default))
-    assertEquals(JobFollow.Limits.of(Some(" 90 ")).map(_.timeout), Right(JobFollow.TimeoutMs(90000)))
-    assertEquals(JobFollow.Limits.of(Some("0")).left.map(Cli.Error(_).exitCode), Left(ExitCode.Usage))
-    assertEquals(JobFollow.Limits.of(Some("soon")).left.map(Cli.Error(_).exitCode), Left(ExitCode.Usage))
+  test("the timeout is cli.follow-timeout-seconds, six hours by default; 0 or less is a usage error"):
+    val seconds = CliConfig.FollowTimeoutSeconds
+    assertEquals(JobFollow.Limits.of(seconds(21600)), Right(JobFollow.Limits.Default))
+    assertEquals(JobFollow.Limits.of(seconds(90)).map(_.timeout), Right(JobFollow.TimeoutMs(90000)))
+    assertEquals(JobFollow.Limits.of(seconds(0)).left.map(Cli.Error(_).exitCode), Left(ExitCode.Usage))
 
   private def backup(
       state: Backup.State.Wire,

@@ -2957,7 +2957,7 @@ object Problem:
       Upstream.Timeout.here(core, url, Millis(30000L)),
       Upstream.Unanswered(
         Upstream.Name("Histmersion"),
-        Upstream.Url("http://localhost:8000/api/queue/tasks"),
+        Upstream.Url("https://histmersion.example/api/queue/tasks"),
         External.Reported("java.io.IOException: connection reset")
       ),
       Upstream.CallFailed(
