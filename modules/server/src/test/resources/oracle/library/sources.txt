@@ -813,7 +813,9 @@ Zqauthor 1950; Zqtell excavations.
 ## Mentioned in articles (1)
 - [Zq walls](/article/zq_article)
 == tool get_source {"citekey":"zqnone2000_x"}
-_No source 'zqnone2000_x' — find a citekey with search._
+_No source 'zqnone2000_x'_
+
+Find a citekey with search.
 == tool passages {"citekey":"zqalpha1990_tell","query":"Zqcove"}
 ## Passages: "Zqcove" in `zqalpha1990_tell`
 
@@ -830,7 +832,9 @@ Zqauthor 1950; Zqtell excavations.
 == tool passages {"citekey":"zqalpha1990_tell","query":"(","regex":true}
 _not a valid regex: Unclosed group at position 1 in `(` (leave regex off to match the text literally)_
 == tool passages {"citekey":"zqnone2000_x","query":"x"}
-_No source 'zqnone2000_x' — find a citekey with search._
+_No source 'zqnone2000_x'_
+
+Find a citekey with search.
 == tool export_source {"citekey":"zqalpha1990_tell"}
 ---
 citekey: zqalpha1990_tell
