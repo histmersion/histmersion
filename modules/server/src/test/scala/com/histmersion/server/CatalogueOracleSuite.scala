@@ -811,6 +811,17 @@ class CatalogueOracleSuite extends DbSuite:
   /** A line's revision, a bundle file's digest. */
   private def digest(key: String): Boolean = key.toLowerCase.matches(".*(rev|hash)(_?(after|before))?")
 
+  /** A distance PostGIS measured on the spheroid (`ST_Distance` over geography, in km): its last digits are the
+    * platform's floating point (47.796833123030005 on a Mac, 47.79683312304 on a Linux runner), so it is recorded to
+    * the millimetre — any change in what is measured still shows.
+    */
+  private def kilometres(v: Json): Json =
+    v.asNumber
+      .flatMap(_.toBigDecimal)
+      .filter(_.scale > KmScale)
+      .fold(v)(d => Json.fromBigDecimal(d.setScale(KmScale, BigDecimal.RoundingMode.HALF_UP)))
+  private val KmScale = 6
+
   private def json(text: String, names: Map[String, String]): String =
     def walk(j: Json): Json =
       j.arrayOrObject(
@@ -818,7 +829,9 @@ class CatalogueOracleSuite extends DbSuite:
         a => Json.fromValues(a.map(walk)),
         o =>
           Json.fromFields(o.toList.map { (k, v) =>
-            if digest(k) && v.isString then k -> Json.fromString("DIGEST") else k -> walk(v)
+            if digest(k) && v.isString then k -> Json.fromString("DIGEST")
+            else if k == "km" && v.isNumber then k -> kilometres(v)
+            else k -> walk(v)
           })
       )
     RawJson.parse(text) match

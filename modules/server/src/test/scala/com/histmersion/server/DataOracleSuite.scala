@@ -537,8 +537,13 @@ class DataOracleSuite extends DbSuite with db.Bounded:
     )
     (records ++ instances ++ merges).distinctBy(_._1).toMap
 
+  /** The volume the suite's directories live on, as the storage report names it (`DiskStore.volume`: the FileStore's
+    * name, "/System/Volumes/Data (/dev/disk3s5)" on a Mac, "/ (/dev/root)" on a CI runner): the machine decides it.
+    */
+  private lazy val tmpVolume = s"\"${Files.getFileStore(tmp)}\""
+
   private def normalise(text: String, names: Map[String, String]): String =
-    val roots = List(tmp.toString -> "TMP", sys.props("user.home") -> "HOME")
+    val roots = List(tmpVolume -> "\"VOLUME\"", tmp.toString -> "TMP", sys.props("user.home") -> "HOME")
     val t1 = roots.foldLeft(text)((t, r) => t.replace(r._1, r._2))
     val t2 = UuidRe.replaceAllIn(
       t1,
