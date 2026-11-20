@@ -19,7 +19,8 @@ class ClientTransportSuite extends munit.FunSuite:
     */
   private def hangUpAfterReading(): (ServerSocket, Client.ServerUrl) =
     val socket = new ServerSocket(0, 4, InetAddress.getLoopbackAddress)
-    @annotation.tailrec def serve(): Unit =
+    @annotation.tailrec
+    def serve(): Unit =
       val served = scala.util.Try {
         val s = socket.accept()
         val in = s.getInputStream
@@ -38,7 +39,8 @@ class ClientTransportSuite extends munit.FunSuite:
 
   private def readHead(in: InputStream): String =
     val out = new java.io.ByteArrayOutputStream
-    @annotation.tailrec def loop(last: List[Int]): Unit =
+    @annotation.tailrec
+    def loop(last: List[Int]): Unit =
       val b = in.read()
       if b >= 0 then
         out.write(b)

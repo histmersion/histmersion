@@ -590,28 +590,30 @@ object Cli:
             }
           }
         case TopCommand.Backup(into) =>
-          c.backup.flatMap(s => JobFollow.backup(() => c.backupStatus, s)).flatMap { r =>
-            out.println(Markdown.backup(r))
-            into match
-              case None    => Right(())
-              case Some(d) =>
-                // the name comes back over the wire, so it is validated here too before it becomes a
-                // path on THIS machine — the same gate the server applies to it
-                Backup
-                  .safeName(Backup.Name(r.file.value))
-                  .left
-                  .map(m =>
-                    Error.answered(
-                      Problem.Unclassified(Legacy.Text(s"server returned an odd file name: ${m.sentence}"))
+          IngestCmd.followLimits
+            .flatMap(limits => c.backup.flatMap(s => JobFollow.backup(() => c.backupStatus, s, c.unanswered, limits)))
+            .flatMap { r =>
+              out.println(Markdown.backup(r))
+              into match
+                case None    => Right(())
+                case Some(d) =>
+                  // the name comes back over the wire, so it is validated here too before it becomes a
+                  // path on THIS machine — the same gate the server applies to it
+                  Backup
+                    .safeName(Backup.Name(r.file.value))
+                    .left
+                    .map(m =>
+                      Error.answered(
+                        Problem.Unclassified(Legacy.Text(s"server returned an odd file name: ${m.sentence}"))
+                      )
                     )
-                  )
-                  .flatMap { name =>
-                    val dir = Path.of(d)
-                    val _ = Files.createDirectories(dir)
-                    c.downloadBackup(Backup.Name(name.value), dir.resolve(name.value).toFile)
-                      .map(f => out.println(s"downloaded → ${f.getAbsolutePath}"))
-                  }
-          }
+                    .flatMap { name =>
+                      val dir = Path.of(d)
+                      val _ = Files.createDirectories(dir)
+                      c.downloadBackup(Backup.Name(name.value), dir.resolve(name.value).toFile)
+                        .map(f => out.println(s"downloaded → ${f.getAbsolutePath}"))
+                    }
+            }
         case TopCommand.Backups(json) =>
           c.backups.map(rows => Output.emit(json, rows)(rs => Markdown.backups(rs.toVector)))
         case TopCommand.Restore(file, force, yes) =>

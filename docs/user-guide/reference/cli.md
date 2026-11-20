@@ -9,6 +9,11 @@ MCP tools. Every command prints the **same Markdown** the matching MCP tool retu
 - `--server <url>` (or `HISTMERSION_SERVER_URL`, or `cli.server-url` in the settings file) points it
   at another server.
 - Years are signed integers: 3300 BCE is `-3300`.
+- A command that waits for a job or a backup (an ingest, `backup`, `vacuum`…) waits at most six hours,
+  or `HISTMERSION_FOLLOW_TIMEOUT` seconds; a status check that fails for a moment (the server
+  restarting) is asked again after 1, 2, 4, 8 s, up to five times in a row. Work still running at the
+  end of the wait, or checks that keep failing, exit 8 (outcome unknown) with the last state seen: the
+  job goes on on the server, and `histmersion jobs` shows how it ends.
 - Exit codes: see below. Each failure's code follows from the kind of problem it is, so a script can
   tell what to do next.
 
