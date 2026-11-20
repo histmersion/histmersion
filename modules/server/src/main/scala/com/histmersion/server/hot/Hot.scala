@@ -328,6 +328,10 @@ object Hot:
         while !settled && System.nanoTime() < deadline do Thread.sleep(DrainPollMs)
         val busy =
           old.filterNot(i => i.isClosed || i.freeBut(if own(i) then Instance.PinCount(1) else Instance.PinCount(0)))
+        // free is not yet closed: when nothing is in use and the caller pins none of them, the drain closes them all at
+        // once, so wait for it (within the same bound) — a reload that reports nothing draining has closed the old
+        if busy.isEmpty && !old.exists(own) then
+          val _ = done.await(math.max(0L, deadline - System.nanoTime()), TimeUnit.NANOSECONDS)
         busy.foreach(i =>
           log.warn(
             Problem.Config
