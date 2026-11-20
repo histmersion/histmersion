@@ -586,7 +586,7 @@ exit 0
 --- calls
 
 ## histmersion calibre sync --apply
-exit 2
+exit 1
 --- stdout
 ### 2 source(s) not in Calibre
 
@@ -666,7 +666,7 @@ error: Calibre id 4: title is required; Calibre id 4: author is required
 calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "1" "--search" "id:4"
 
 ## histmersion calibre import 8
-exit 1
+exit 2
 --- stdout
 --- stderr
 error: the generated citekey 'zzcal2001_collision' is already a record that is not linked to Calibre — importing Calibre id 8 would merge two works into one record. Pass --citekey <another key> for a separate record, or --citekey zzcal2001_collision to import into that record on purpose
@@ -757,7 +757,7 @@ Cover: none (no cover file in Calibre, no ISBN)
 calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "1" "--search" "id:3"
 
 ## histmersion calibre import 5 --acquire-item 424242
-exit 1
+exit 4
 --- stdout
 --- stderr
 error: no queue item id '424242'
@@ -807,7 +807,7 @@ error: no Calibre book with id 99
 calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "1" "--search" "id:99"
 
 ## histmersion calibre link zznosuch 6
-exit 2
+exit 4
 --- stdout
 --- stderr
 error: No source 'zznosuch'
@@ -876,7 +876,7 @@ calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,tit
 calibredb "add_format" "--with-library" "<library>" "1" "<tmp>/zzcal_linked.pdf"
 
 ## histmersion calibre push zzcal_missing --replace
-exit 2
+exit 1
 --- stdout
 --- stderr
 error: 'zzcal_missing': no original stored — the server keeps uploads in its spool directory (converter.spool-dir); pass the file yourself (--file)
@@ -1186,7 +1186,7 @@ error: title is required
 --- calls
 
 ## histmersion calibre set 1 --field nocolon
-exit 2
+exit 1
 --- stdout
 --- stderr
 error: 'nocolon' is not <name>:<value>
