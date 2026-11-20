@@ -26,12 +26,20 @@ import com.histmersion.api.Paging
 object IngestCmd:
 
   /** Poll one job until it reaches a terminal state ([[JobFollow.job]]: one rewritten progress line), then print it.
-    * The exit code is the point: a failed conversion must not look like success in a script — it exits
-    * [[ExitCode.Refused]].
+    * The exit code is the point: a failed conversion must not look like success in a script — it exits with its
+    * problem's code; a job still running when the wait ([[JobFollow.Limits]]) ran out exits "outcome unknown".
     */
 
   def pollJob(c: Client, id: Job.Id, waited: Int)(using console: Console): Either[Cli.Error, Unit] =
-    JobFollow.job(c.job, id, waited * 1000L).map(j => Cli.out.println(IngestMarkdown.job(j)))
+    followLimits.flatMap(limits =>
+      JobFollow
+        .job(c.job, id, c.unanswered, limits, waited = waited * 1000L)
+        .map(j => Cli.out.println(IngestMarkdown.job(j)))
+    )
+
+  /** How long a job is followed: [[JobFollow.Limits.TimeoutVariable]] when it is set. */
+  private[cli] def followLimits: Either[Cli.Error, JobFollow.Limits] =
+    JobFollow.Limits.of(Option(System.getenv(JobFollow.Limits.TimeoutVariable))).left.map(Cli.Error(_))
 
   /** Upload one document and (unless `noWait`) follow its OCR job to completion. */
   def upload(using

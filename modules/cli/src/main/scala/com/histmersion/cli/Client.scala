@@ -123,6 +123,12 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
     // (`server.request-timeout-seconds`), and sttp's 1-minute default is shorter than a backup.
     send(authed(interp.toRequest(ep, Some(base)).apply(in).readTimeout(scala.concurrent.duration.Duration.Inf)))
 
+  /** A poll of running work: a read that answers at once, so a server that stops answering without closing the
+    * connection is a failed poll after [[Client.PollTimeout]], not a CLI that hangs for ever (G113).
+    */
+  private def poll[I, O](ep: PublicEndpoint[I, Api.Error, O, Any])(in: I): Either[Cli.Error, O] =
+    send(authed(interp.toRequest(ep, Some(base)).apply(in).readTimeout(Client.PollTimeout)))
+
   /** The bearer token on a request. EVERY request goes through here — the typed calls and the two file downloads alike
     * (#767: `downloadBackup` was built by hand and sent none).
     */
@@ -200,7 +206,7 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
   def writeSettings(w: ConfigEdit.Write): Either[Cli.Error, ConfigEdit.Written] = call(ConfigEditApi.write)(w)
   def restartServer: Either[Cli.Error, ConfigEdit.Restart] = call(ConfigEditApi.restart)(())
   def backup: Either[Cli.Error, Backup.Status] = call(Api.backup)(())
-  def backupStatus: Either[Cli.Error, Backup.Status] = call(Api.backupStatus)(())
+  def backupStatus: Either[Cli.Error, Backup.Status] = poll(Api.backupStatus)(())
   def vacuum(in: Vacuum.Request): Either[Cli.Error, JobInfo] = call(Api.maintenanceVacuum)(in)
   def backups: Either[Cli.Error, List[Backup.Info]] = call(Api.backups)(())
   def restore(req: RestoreRequest): Either[Cli.Error, RestoreResult] = call(Api.restore)(req)
@@ -438,7 +444,7 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
   def ingest(p: Ingest.Params, file: java.io.File): Either[Cli.Error, Ingest.Accepted] =
     call(Api.ingest)((p, file))
   def reocr(ck: Citekey, quality: Api.Overwrite): Either[Cli.Error, Ingest.Accepted] = call(Api.reocr)((ck, quality))
-  def job(id: SpatialHierarchyResult.Job.Id): Either[Cli.Error, JobInfo] = call(Api.job)(id)
+  def job(id: SpatialHierarchyResult.Job.Id): Either[Cli.Error, JobInfo] = poll(Api.job)(id)
   def basemapStatus(): Either[Cli.Error, Basemap.Status] = call(BasemapApi.status)(())
   def basemapFetch(q: Basemap.FetchQuery): Either[Cli.Error, JobInfo] = call(BasemapApi.fetch)(q)
   def basemapRemove(q: Basemap.RemoveQuery): Either[Cli.Error, Basemap.Removed] = call(BasemapApi.remove)(q)
@@ -516,6 +522,9 @@ object Client:
 
   /** How long the CLI waits to connect to the server before it says it cannot reach it. */
   val ConnectTimeout: java.time.Duration = java.time.Duration.ofSeconds(10)
+
+  /** How long one poll of running work waits for its answer. */
+  val PollTimeout: scala.concurrent.duration.FiniteDuration = scala.concurrent.duration.Duration(30, "s")
 
   /** What a send that threw means. Pure. A connection never made sent nothing ([[Problem.Upstream.Unreachable]]: safe
     * to send again); a write whose connection ended after it was sent (a reset, a read that timed out) may have been
