@@ -13,9 +13,11 @@ name: ci
 #              a unit shard has no database, so a unit suite that reaches TestDb fails loudly; an IT shard starts
 #              its own throwaway PostgreSQL (runtime/postgres, PG 18 + PostGIS 3.6), so an IT suite never skips (B8)
 #   shards     each suite classed, and run in exactly one shard of its class (scripts/ci/check.py); skips listed
-#   macos      on macOS arm64 (the platform the owner runs): the native server and CLI built from the branch,
-#              the CLI reference checked against the native CLI's help, the scripts' tests, and the browser tests
-#              (Playwright, modules/web/test) against that server — a skipped browser test fails (G125)
+#   native     the native server and CLI built from the branch (16 GB Linux runner), its self-check, and the CLI
+#              reference checked against the native CLI's help
+#   macos      on macOS arm64 (the platform the owner runs): the scripts' tests and the browser tests (Playwright,
+#              modules/web/test) against the server on the JVM — a skipped browser test fails (G125). The free
+#              macOS runner (7 GB) cannot link the native server: native-image needs more than 9 GB for it
 #
 # The ratchet suites compare against the merge base with contracts3-pilot: the test jobs check out the full
 # history, so origin/contracts3-pilot is there (RatchetBase's fallback; HISTMERSION_RATCHET_BASE overrides it).
@@ -251,11 +253,44 @@ jobs:
           mkdir -p target/ci/report
           python3 scripts/ci/check.py target/ci/classes.tsv target/ci/report --summary "$GITHUB_STEP_SUMMARY"
 
+  native:
+    # The native server and CLI from this branch (scripts/bundle/server.sh, as `just native`), on a 16 GB runner, over
+    # the build job's compile; the CLI reference checked against the native CLI's help; the server's self-check.
+    name: native (server and CLI, CLI docs)
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - name: free disk space (the runner's preinstalled SDKs we never use)
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL &
+      - uses: ./.github/actions/setup
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with: { name: compiled, path: "${{ runner.temp }}" }
+      - name: the build job's compilation output
+        run: |
+          mkdir -p target
+          zstd -d -q -c "$RUNNER_TEMP/compiled.tar.zst" | tar -C target -xf -
+          rm "$RUNNER_TEMP/compiled.tar.zst"
+      - name: the native server and CLI
+        env:
+          SBT_OPTS: -Xss16m
+        run: bash scripts/bundle/server.sh target/native
+      - name: the native server's self-check (time zones, the linked resources)
+        run: target/native/bin/histmersion-server --self-check
+      - name: CLI reference in the docs is current (the native CLI's help)
+        run: ./tools/gen-cli-docs.sh --check
+
   macos:
-    name: macos (native server, CLI docs, browser tests)
+    # The browser tests on macOS arm64, the platform the owner runs (Chromium draws the map on the GPU there), against
+    # the server on the JVM from the build job's compile. The NATIVE server is built by the `native` job on Linux: the
+    # free macOS arm64 runner has 7 GB and 3 cores, and native-image needs more than 9 GB for the server — it thrashed
+    # there for two hours without finishing its analysis (run 44769953576).
+    name: macos (browser tests, scripts' tests)
     needs: build
     runs-on: macos-15
-    timeout-minutes: 120
+    timeout-minutes: 60
     env:
       HISTMERSION_SERVER_URL: http://127.0.0.1:18080
     steps:
@@ -283,12 +318,11 @@ jobs:
           mkdir -p target
           zstd -d -q -c "$RUNNER_TEMP/compiled.tar.zst" | tar -C target -xf -
           rm "$RUNNER_TEMP/compiled.tar.zst"
-      - name: compile the server and the CLI (replayed), one module at a time where not
-        run: $SBT "set Global / concurrentRestrictions += Tags.limit(Tags.Compile, 1)" server/compile cli/compile
-      - name: the native server and CLI, from this branch (scripts/bundle/server.sh, as `just native`)
-        env:
-          SBT_OPTS: -Xss16m
-        run: bash scripts/bundle/server.sh target/native
+      - name: the server's class path (compiled from the replay, one module at a time where not)
+        run: |
+          $SBT "set Global / concurrentRestrictions += Tags.limit(Tags.Compile, 1)" server/writeClasspath
+          cp="$(find target/out -path '*histmersion-server/classpath.txt' | head -1)"
+          test -s "$cp" && echo "SERVER_CLASSPATH_FILE=$cp" >> "$GITHUB_ENV"
       - name: dependency cache (save)
         if: always() && env.HISTMERSION_CI_SAVE_DEPS != ''
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -299,14 +333,12 @@ jobs:
             ~/.sbt
             ~/.ivy2/cache
           key: ${{ env.HISTMERSION_CI_SAVE_DEPS }}
-      - name: CLI reference in the docs is current (the native CLI's help)
-        run: ./tools/gen-cli-docs.sh --check
       - name: the scripts' own tests (the LaunchAgent environment merge, the CI shard tools, …)
         run: just test-scripts
 
       - name: throwaway PostgreSQL 18 + PostGIS
         run: just test-db
-      - name: the native test server (no runtime children, scratch settings, the Aegean base-map extract)
+      - name: the test server on the JVM (no runtime children, scratch settings, the Aegean base-map extract)
         run: |
           conf="$RUNNER_TEMP/histmersion-test.conf"; : > "$conf"
           echo "HISTMERSION_TEST_CONFIG_FILE=$conf" >> "$GITHUB_ENV"
@@ -317,7 +349,8 @@ jobs:
           HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap \
           HISTMERSION_BASEMAP_TERRAIN_ON_DEMAND=false HISTMERSION_BASEMAP_VECTOR_ON_DEMAND=false \
           HISTMERSION_BASEMAP_BATHYMETRY_ON_DEMAND=false \
-            nohup target/native/bin/histmersion-server > "$RUNNER_TEMP/server.log" 2>&1 &
+            nohup java --sun-misc-unsafe-memory-access=allow -Xss4m -cp "$(cat "$SERVER_CLASSPATH_FILE")" \
+              com.histmersion.server.histmersionServer > "$RUNNER_TEMP/server.log" 2>&1 &
           curl -fsS --retry 90 --retry-delay 2 --retry-connrefused --retry-all-errors "$HISTMERSION_SERVER_URL/api/health"
       - name: browser dependencies (Playwright's Chromium)
         working-directory: modules/web
