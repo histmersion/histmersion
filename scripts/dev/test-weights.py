@@ -10,7 +10,10 @@ balance, never correctness. Suites under 2 s are left out (they are the default,
 import re
 import sys
 
-LINE = re.compile(r"Test run com\.histmersion\.(?:db|server)\.(?:[\w$]+\.)*([\w$]+) finished: .* total ([\d.]+)s")
+# the db and server modules' suites: their packages since the move by feature (db, server, util, domain)
+LINE = re.compile(
+    r"Test run com\.histmersion\.(?:db|server|util|domain)\.(?:[\w$]+\.)*([\w$]+) finished: .* total ([\d.]+)s"
+)
 ANSI = re.compile(r"\x1b\[[0-9;]*m")
 
 
