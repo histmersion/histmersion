@@ -1,71 +1,331 @@
 name: ci
-# Every push and PR: the whole test suite against the PostgreSQL Histmersion actually ships
-# (runtime/postgres — PG 18 + PostGIS 3.6), the converter's tests, and the docs' CLI
-# table. Building and smoke-testing the per-platform bundles is bundle.yml.
+# Every push to master and the refactor branches (contracts3-**), every PR, and on demand: the whole forced test
+# suite, split into shards that run side by side, each DB-backed one on a throwaway PostgreSQL of its own (the one
+# Histmersion ships: runtime/postgres, PG 18 + PostGIS 3.6).
+#
+#   build      compiles every module once (sbt 2's disk cache, target/sbt-cache, carried from earlier runs of the
+#              week), lists every test suite (`sbt ciSuites`, project/CiShard.scala) and deals them into shards
+#              (scripts/ci/plan.py); the test jobs replay its compile from the cache it hands on
+#   test       one job per shard: `testOnly *` narrowed to the shard's suites (HISTMERSION_CI_SHARD_FILE), every
+#              finished suite recorded (HISTMERSION_CI_REPORT_DIR); a DB shard sets HISTMERSION_TEST_DB_REQUIRED,
+#              so a DB suite without its database fails instead of skipping (B8)
+#   shards     each listed suite ran in exactly one shard (scripts/ci/check.py); the skipped tests listed
+#   format     scalafmt; converter: the OCR converter's pytest
+#   macos      on macOS arm64 (the platform the owner runs): the native server and CLI built from the branch,
+#              the CLI reference checked against the native CLI's help, the scripts' tests, and the browser tests
+#              (Playwright, modules/web/test) against that server — a skipped browser test fails (G125)
+#
+# The ratchet suites compare against the merge base with contracts3-pilot: the test jobs check out the full
+# history, so origin/contracts3-pilot is there (RatchetBase's fallback; HISTMERSION_RATCHET_BASE overrides it).
+# Building and smoke-testing the per-platform bundles is bundle.yml.
 on:
-  push: { branches: [master] }
+  push:
+    branches: [master, 'contracts3-**']
   pull_request: {}
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+env:
+  LANG: C.UTF-8
+  LC_ALL: C.UTF-8
+  # the server shards: build.sbt deals a shard's server suites into this many forked groups, at most this many JVMs
+  # at once (4 vCPU / 16 GB runner; sbt itself, and scala-cli for the guideline ratchet, beside them)
+  HISTMERSION_TEST_FORKS: "3"
+  HISTMERSION_TEST_GROUPS_SERVER: "3"
+  SBT: sbt --server -batch -Dsbt.global.localcache=${{ github.workspace }}/target/sbt-cache
+  # what forced-run.sh sets: compiling never rewrites the sources (the format job checks them)
+  NOFMT: set every scalafmtOnCompile := false
+
 jobs:
-  test:
+  build:
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 60
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
     steps:
-      - uses: actions/checkout@v4
-      # the PINNED GraalVM CE (scripts/bundle/graalvm-pins.txt: version, URL, SHA-256), provisioned by the
-      # same script the installers use — setup-graalvm cannot name an innovation release (25.5's assets are
-      # `graalvm-community-jdk-25i5-…` under the tag graal-25.5.5.0.3)
-      - name: GraalVM CE (the pin)
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - name: free disk space (the runner's preinstalled SDKs we never use)
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL &
+      - uses: ./.github/actions/setup
+        with: { save-deps: "true" }
+      - name: the week (the compile cache starts afresh each ISO week, so it never grows without bound)
+        id: week
+        run: echo "week=$(date -u +%G-%V)" >> "$GITHUB_OUTPUT"
+      - name: compile cache (restore)
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: target/sbt-cache
+          key: sbt-cache-${{ runner.os }}-${{ runner.arch }}-${{ steps.week.outputs.week }}-${{ github.sha }}
+          restore-keys: sbt-cache-${{ runner.os }}-${{ runner.arch }}-${{ steps.week.outputs.week }}-
+      - name: compile every module, list every suite
+        run: $SBT "$NOFMT" Test/compile ciSuites
+      - name: deal the suites into shards
+        id: plan
         run: |
-          export HISTMERSION_DATA_DIR="$RUNNER_TEMP/histmersion-toolchain" HISTMERSION_HOME=
-          bash scripts/bundle/toolchain.sh install
-          home="$(bash scripts/bundle/toolchain.sh path)"
-          echo "JAVA_HOME=$home" >> "$GITHUB_ENV"
-          echo "$home/bin" >> "$GITHUB_PATH"
-      - uses: actions/cache@v4
+          python3 -m unittest scripts/ci/tests/test_plan.py scripts/ci/tests/test_check.py
+          python3 scripts/ci/plan.py target/ci/suites target/ci/shards --server-shards 3 > "$RUNNER_TEMP/matrix.json"
+          echo "matrix=$(cat "$RUNNER_TEMP/matrix.json")" >> "$GITHUB_OUTPUT"
+          du -sh target/sbt-cache
+      - name: hand the compile cache and the plan to the test jobs
+        run: |
+          tar -C target -cf - sbt-cache ci | zstd -T0 -3 -q -o "$RUNNER_TEMP/build-state.tar.zst"
+          ls -l "$RUNNER_TEMP/build-state.tar.zst"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: build-state
+          path: ${{ runner.temp }}/build-state.tar.zst
+          retention-days: 1
+          compression-level: 0
+          if-no-files-found: error
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: suites
+          path: target/ci/suites
+          retention-days: 7
+          if-no-files-found: error
+      - name: compile cache (save)
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: target/sbt-cache
+          key: sbt-cache-${{ runner.os }}-${{ runner.arch }}-${{ steps.week.outputs.week }}-${{ github.sha }}
+      - name: dependency cache (save)
+        if: env.HISTMERSION_CI_SAVE_DEPS != ''
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             ~/.cache/coursier
             ~/Library/Caches/Coursier
             ~/.sbt
             ~/.ivy2/cache
-          key: sbt-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('build.sbt', 'project/**') }}
-          restore-keys: sbt-${{ runner.os }}-${{ runner.arch }}-
-      - uses: sbt/setup-sbt@v1
-      - uses: astral-sh/setup-uv@v6
-        with: { enable-cache: true, cache-dependency-glob: converter/uv.lock }
-      - uses: taiki-e/install-action@v2
-        with: { tool: just }
-      - name: pixi
-        run: |
-          curl -fsSL https://pixi.sh/install.sh | bash
-          echo "$HOME/.pixi/bin" >> "$GITHUB_PATH"
-      - uses: actions/cache@v4
-        with:
-          path: ~/.cache/rattler
-          key: rattler-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('runtime/postgres/pixi.lock') }}
+          key: ${{ env.HISTMERSION_CI_SAVE_DEPS }}
 
-      - name: formatting (scalafmt; `just fmt` fixes it)
-        run: sbt --server -batch scalafmtCheckAll scalafmtSbtCheck
+  test:
+    needs: build
+    name: test (${{ matrix.shard }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.build.outputs.matrix) }}
+    env:
+      HISTMERSION_CI_SHARD_FILE: ${{ github.workspace }}/target/ci/shards/${{ matrix.shard }}.tsv
+      HISTMERSION_CI_REPORT_DIR: ${{ github.workspace }}/target/ci/report/${{ matrix.shard }}
+    steps:
+      # full history: the ratchet suites take their limits from the merge base with origin/contracts3-pilot
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { fetch-depth: 0, persist-credentials: false }
+      - name: the ratchets' base branch is there
+        run: |
+          git rev-parse --verify -q origin/contracts3-pilot >/dev/null \
+            || git fetch -q --no-tags origin contracts3-pilot:refs/remotes/origin/contracts3-pilot
+          echo "ratchet base: $(git merge-base HEAD origin/contracts3-pilot)"
+      - name: free disk space (the runner's preinstalled SDKs we never use)
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL &
+      - uses: ./.github/actions/setup
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with: { name: build-state, path: "${{ runner.temp }}" }
+      - name: the build job's compile cache and plan
+        run: |
+          mkdir -p target
+          zstd -d -q -c "$RUNNER_TEMP/build-state.tar.zst" | tar -C target -xf -
+          rm "$RUNNER_TEMP/build-state.tar.zst"
+      - name: scala-cli (the guideline ratchet runs Scalafix through it)
+        if: startsWith(matrix.shard, 'server')
+        uses: VirtusLab/scala-cli-setup@9d61091a7d9d19f69faa59b31cdbc6ef2537eccc # v1.19.0
+      - uses: taiki-e/install-action@75a7c0f87bd666af3cdb75c5b9e9d03ab6044e6f # v2.90.6
+        if: matrix.db
+        with: { tool: just }
+      - uses: prefix-dev/setup-pixi@9936258fee697aff89b3fed6ca1f80a382ef694e # v0.11.3
+        if: matrix.db
+        with:
+          manifest-path: runtime/postgres/pixi.toml
+          cache: true
       - name: throwaway PostgreSQL 18 + PostGIS (the bundled runtime)
-        run: just test-db
-      - name: unit + integration tests
-        env:
-          HISTMERSION_TEST_DB_URL: "jdbc:postgresql://127.0.0.1:55432/histmersion_test"
-          # the backup/restore suite runs the SAME pg_dump/pg_restore the bundle ships
-          HISTMERSION_PG_BIN_DIR: ${{ github.workspace }}/runtime/postgres/.pixi/envs/default/bin
-          # the DB suites' forked groups (build.sbt `dbTestGroups`): 4 vCPU / 16 GB runner — 3 JVMs at once
-          HISTMERSION_TEST_FORKS: "3"
-        run: sbt --server -batch 'testOnly *'
+        if: matrix.db
+        run: |
+          just test-db
+          {
+            echo "HISTMERSION_TEST_DB_URL=jdbc:postgresql://127.0.0.1:55432/histmersion_test"
+            # the backup/restore suites run the SAME pg_dump/pg_restore the bundle ships
+            echo "HISTMERSION_PG_BIN_DIR=$GITHUB_WORKSPACE/runtime/postgres/.pixi/envs/default/bin"
+            # a DB suite that finds no database fails instead of skipping (B8, TestDb.RequiredEnv)
+            echo "HISTMERSION_TEST_DB_REQUIRED=1"
+          } >> "$GITHUB_ENV"
+      - name: forced tests of the shard
+        run: |
+          projects="$(cut -f1 "$HISTMERSION_CI_SHARD_FILE" | sort -u)"
+          echo "shard ${{ matrix.shard }}: $(wc -l < "$HISTMERSION_CI_SHARD_FILE") suite(s) of" $projects
+          # one project: its own testOnly (no other project links its tests for nothing); several: the root's,
+          # which runs each aggregated project's and reports every failure, not only the first
+          if [ "$(echo "$projects" | wc -l)" -eq 1 ]; then cmd="$projects/testOnly *"; else cmd="testOnly *"; fi
+          # every module compiled first: the guideline ratchet reads the SemanticDB of all of them
+          $SBT "$NOFMT" Test/compile "$cmd"
+      - name: no suite skipped for want of a database (B8)
+        if: always()
+        run: |
+          shopt -s nullglob
+          bad=0
+          for f in "$HISTMERSION_CI_REPORT_DIR"/*.skips.tsv; do
+            if grep -n 'HISTMERSION_TEST_DB_URL' "$f"; then bad=1; fi
+          done
+          exit $bad
+      - if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: report-${{ matrix.shard }}
+          path: target/ci/report/${{ matrix.shard }}
+          retention-days: 7
+          if-no-files-found: warn
+      - if: always() && matrix.db
+        run: just test-db-down
+
+  shards:
+    needs: [build, test]
+    if: always() && needs.build.result == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with: { name: suites, path: target/ci/suites }
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with: { pattern: report-*, path: target/ci/report }
+      - name: every suite ran in exactly one shard
+        run: |
+          mkdir -p target/ci/report
+          python3 scripts/ci/check.py target/ci/suites target/ci/report --summary "$GITHUB_STEP_SUMMARY"
+
+  format:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: ./.github/actions/setup
+      - name: formatting (scalafmt; `just fmt` fixes it)
+        run: $SBT scalafmtCheckAll scalafmtSbtCheck
+
+  converter:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
+        with: { enable-cache: true, cache-dependency-glob: converter/uv.lock }
       - name: converter tests
         working-directory: converter
         run: uv run --frozen pytest -q
-      - name: CLI reference in the docs is current
+
+  macos:
+    name: macos (native server, CLI docs, browser tests)
+    runs-on: macos-15
+    timeout-minutes: 120
+    env:
+      HISTMERSION_SERVER_URL: http://127.0.0.1:18080
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: ./.github/actions/setup
+        with: { save-deps: "true" }
+      - uses: taiki-e/install-action@75a7c0f87bd666af3cdb75c5b9e9d03ab6044e6f # v2.90.6
+        with: { tool: just }
+      - uses: prefix-dev/setup-pixi@9936258fee697aff89b3fed6ca1f80a382ef694e # v0.11.3
+        with:
+          manifest-path: runtime/postgres/pixi.toml
+          cache: true
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: modules/web/package-lock.json
+      - name: the week (the compile cache starts afresh each ISO week)
+        id: week
+        run: echo "week=$(date -u +%G-%V)" >> "$GITHUB_OUTPUT"
+      - name: compile cache (restore)
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: target/sbt-cache
+          key: sbt-cache-${{ runner.os }}-${{ runner.arch }}-${{ steps.week.outputs.week }}-${{ github.sha }}
+          restore-keys: sbt-cache-${{ runner.os }}-${{ runner.arch }}-${{ steps.week.outputs.week }}-
+
+      - name: the native server and CLI, from this branch (scripts/bundle/server.sh, as `just native`)
+        run: bash scripts/bundle/server.sh target/native
+      - name: compile cache (save)
+        if: always()
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: target/sbt-cache
+          key: sbt-cache-${{ runner.os }}-${{ runner.arch }}-${{ steps.week.outputs.week }}-${{ github.sha }}
+      - name: dependency cache (save)
+        if: always() && env.HISTMERSION_CI_SAVE_DEPS != ''
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cache/coursier
+            ~/Library/Caches/Coursier
+            ~/.sbt
+            ~/.ivy2/cache
+          key: ${{ env.HISTMERSION_CI_SAVE_DEPS }}
+      - name: CLI reference in the docs is current (the native CLI's help)
+        run: ./tools/gen-cli-docs.sh --check
+      - name: the scripts' own tests (the LaunchAgent environment merge, the CI shard tools, …)
+        run: just test-scripts
+
+      - name: throwaway PostgreSQL 18 + PostGIS
+        run: just test-db
+      - name: the native test server (no runtime children, scratch settings, the Aegean base-map extract)
         run: |
-          sbt --server -batch cli/nativeImage
-          ./tools/gen-cli-docs.sh --check
+          conf="$RUNNER_TEMP/histmersion-test.conf"; : > "$conf"
+          echo "HISTMERSION_TEST_CONFIG_FILE=$conf" >> "$GITHUB_ENV"
+          HISTMERSION_RUNTIME=false HISTMERSION_CONFIG="$conf" \
+          HISTMERSION_DATA_DIR="$RUNNER_TEMP/histmersion-data" \
+          HISTMERSION_DB_URL=jdbc:postgresql://127.0.0.1:55432/histmersion_test \
+          HISTMERSION_PORT=18080 HISTMERSION_PUBLIC_URL="$HISTMERSION_SERVER_URL" \
+          HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap \
+          HISTMERSION_BASEMAP_TERRAIN_ON_DEMAND=false HISTMERSION_BASEMAP_VECTOR_ON_DEMAND=false \
+          HISTMERSION_BASEMAP_BATHYMETRY_ON_DEMAND=false \
+            nohup target/native/bin/histmersion-server > "$RUNNER_TEMP/server.log" 2>&1 &
+          curl -fsS --retry 90 --retry-delay 2 --retry-connrefused --retry-all-errors "$HISTMERSION_SERVER_URL/api/health"
+      - name: browser dependencies (Playwright's Chromium)
+        working-directory: modules/web
+        run: |
+          npm ci
+          npx playwright install chromium
+      - name: browser tests (the files of `npm run test:browser`; a skipped test fails, G125)
+        working-directory: modules/web
+        run: |
+          files="$(node -p "require('./package.json').scripts['test:browser'].replace(/^node --test /, '')")"
+          report="$RUNNER_TEMP/browser-junit.xml"
+          rc=0
+          node --test --test-reporter=spec --test-reporter-destination=stdout \
+            --test-reporter=junit --test-reporter-destination="$report" $files || rc=$?
+          skipped="$(grep -c '<skipped' "$report" || true)"
+          echo "browser tests: exit $rc, $skipped skipped"
+          if [ "$skipped" != 0 ]; then
+            echo "::error::$skipped browser test(s) skipped (G125: a skip fails the run)"
+            rc=1
+          fi
+          exit $rc
+      - name: logs
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: macos-logs
+          path: |
+            ${{ runner.temp }}/server.log
+            ${{ runner.temp }}/browser-junit.xml
+            target/test-pg.log
+          retention-days: 7
+          if-no-files-found: ignore
       - if: always()
         run: just test-db-down
