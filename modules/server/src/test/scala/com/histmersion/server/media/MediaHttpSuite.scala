@@ -45,6 +45,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.catalogue.EventSummary
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.util.database.TestPermits.given
 
 /** Media from outside providers (#1446) through the server: an import against a FAKE provider into the test database
   * (HISTMERSION_TEST_DB_URL; skipped otherwise), then what the web UI and the CLI read — the place card's thumbnail,

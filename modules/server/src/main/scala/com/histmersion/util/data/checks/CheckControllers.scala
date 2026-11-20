@@ -6,6 +6,7 @@ import io.scalaland.chimney.dsl.*
 import com.histmersion.api.checks.Lint.{FormatChecker, LintFixResult, LintReport}
 import com.histmersion.config.AppConfig
 import com.histmersion.util.data.maintenance.WriteGate
+import com.histmersion.util.database.WritePermit
 import hearth.kindlings.optics.syntax.*
 
 import javax.sql.DataSource
@@ -43,13 +44,16 @@ final class CheckControllers(
     * that run on every call, and those of the rules `rules` names. Each is bounded per call; `remaining > 0` (or
     * `pointAreasRemaining > 0`) means "call me again".
     */
-  def lintFix(rules: List[CheckRule.Name] = Nil): LintFixResult = checks.fix(rules, context)
+  def lintFix(rules: List[CheckRule.Name] = Nil)(using WritePermit): LintFixResult = checks.fix(rules, context)
 
   /** `lint --fix` rewrites edges and re-chunks sources — a WRITE, and it was the one repair path that ran straight
     * through a restore.
     */
   def guardedLintFix(rules: List[CheckRule.Name] = Nil): Either[Api.Error, LintFixResult] =
     maintenance.guard(WriteGate.OperationName("lint/fix"))(Right(lintFix(rules)))
+
+  /** `POST /api/lint/fix`: [[lintFix]] under the maintenance gate, a refusal thrown (the route has no error output). */
+  def heldLintFix(rules: List[CheckRule.Name] = Nil): LintFixResult = maintenance.writing(lintFix(rules))
 
   /** Lint, optionally after applying the safe fixes — what `histmersion lint --fix` and the MCP tool do, so the report
     * the caller sees is the state AFTER the repair.

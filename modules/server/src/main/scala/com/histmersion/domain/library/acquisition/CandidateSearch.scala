@@ -24,6 +24,7 @@ import com.histmersion.domain.research.Slug
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.library.search.Search
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.database.WritePermit
 
 /** The deterministic new-source search of one goal (#3761, docs/research-goal-advancement.md): its WATCHES — every
   * saved query (its linked `query` links, else its title) on every index of `acquire.candidates.indexes`, and for up to
@@ -79,7 +80,7 @@ final class CandidateSearch(
   def sweep(
       goal: domain.automation.Goal.Slug,
       dryRun: CandidateSearch.SweepDryRun
-  ): Either[Api.Error, CandidateSweep] =
+  )(using WritePermit): Either[Api.Error, CandidateSweep] =
     goals
       .get(goal)
       .toRight(

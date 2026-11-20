@@ -18,6 +18,7 @@ import com.histmersion.api.catalogue.EventSummary
 import com.histmersion.api.catalogue.EventCatalogueRef
 import com.histmersion.api.catalogue.EventEntry
 import com.histmersion.domain.catalogue.places.Wikidata
+import com.histmersion.util.database.WritePermit
 
 /** What an import of an event catalogue reads and writes: the stored events as its merge sees them, the placed records
   * written (events created and refreshed, corrections by hand applied), the records kept for a re-derivation, and the
@@ -28,7 +29,7 @@ trait EventImportService:
   def stored(): List[StoredEvent]
 
   /** Write placed records in one transaction. */
-  def save(placed: List[(CatalogRecord, CatalogMerge.Placement)]): EventSaved
+  def save(placed: List[(CatalogRecord, CatalogMerge.Placement)])(using WritePermit): EventSaved
 
   /** The stored records of `provider` (every catalogue's when `None`) with the event each is of and its kind, in key
     * order; and how many no longer decode.
@@ -41,16 +42,18 @@ trait EventImportService:
   ): Map[(CatalogRecord.Provider, EventCatalogueRef.ProviderId), EventSummary.Kind]
 
   def partsDone(provider: CatalogRecord.Provider): Set[EventImportRepo.PartName]
-  def markPart(provider: CatalogRecord.Provider, part: EventImportRepo.PartName, records: RowCount): Unit
-  def clearParts(provider: CatalogRecord.Provider): Unit
+  def markPart(provider: CatalogRecord.Provider, part: EventImportRepo.PartName, records: RowCount)(using
+      WritePermit
+  ): Unit
+  def clearParts(provider: CatalogRecord.Provider)(using WritePermit): Unit
 
 object EventImportService:
   def apply(db: Transactor): EventImportService = Implementation(db)
 
   final private class Implementation(db: Transactor) extends EventImportService:
     def stored(): List[StoredEvent] = db.read(EventImportRepo.stored)
-    def save(placed: List[(CatalogRecord, CatalogMerge.Placement)]): EventSaved =
-      db.transact(EventImportRepo.save(placed))
+    def save(placed: List[(CatalogRecord, CatalogMerge.Placement)])(using WritePermit): EventSaved =
+      db.write(EventImportRepo.save(placed))
     def records(
         provider: Option[CatalogRecord.Provider]
     ): (List[(Event.Id, EventSummary.Kind, CatalogRecord)], RowCount) =
@@ -61,9 +64,12 @@ object EventImportService:
       db.read(EventImportRepo.storedKinds(provider))
     def partsDone(provider: CatalogRecord.Provider): Set[EventImportRepo.PartName] =
       db.read(EventImportRepo.partsDone(provider))
-    def markPart(provider: CatalogRecord.Provider, part: EventImportRepo.PartName, records: RowCount): Unit =
-      db.transact(EventImportRepo.markPart(provider, part, records))
-    def clearParts(provider: CatalogRecord.Provider): Unit = db.transact(EventImportRepo.clearParts(provider))
+    def markPart(provider: CatalogRecord.Provider, part: EventImportRepo.PartName, records: RowCount)(using
+        WritePermit
+    ): Unit =
+      db.write(EventImportRepo.markPart(provider, part, records))
+    def clearParts(provider: CatalogRecord.Provider)(using WritePermit): Unit =
+      db.write(EventImportRepo.clearParts(provider))
 
   /** The same rules over the shared in-memory state (no place is stored: an event's anchor is its own point). */
   final class InMemory(state: AtomicReference[CatalogueState]) extends EventImportService:
@@ -256,7 +262,7 @@ object EventImportService:
         case Nil       => acc
       (kept(recs, written), created, refreshed)
 
-    def save(placed: List[(CatalogRecord, CatalogMerge.Placement)]): EventSaved =
+    def save(placed: List[(CatalogRecord, CatalogMerge.Placement)])(using WritePermit): EventSaved =
       val groups = placed.groupBy(_._2.eventId).toList.sortBy(_._1.value)
       @tailrec def loop(
           rest: List[(Event.Id, List[(CatalogRecord, CatalogMerge.Placement)])],
@@ -317,7 +323,9 @@ object EventImportService:
         .keySet
         .map(k => EventImportRepo.PartName(k.value))
 
-    def markPart(provider: CatalogRecord.Provider, part: EventImportRepo.PartName, records: RowCount): Unit =
+    def markPart(provider: CatalogRecord.Provider, part: EventImportRepo.PartName, records: RowCount)(using
+        WritePermit
+    ): Unit =
       val key = CatalogueState.ImportPartsKey(provider.value)
       val _ = state.updateAndGet(
         _.modify(_.importParts).using(ps =>
@@ -326,5 +334,5 @@ object EventImportService:
         )
       )
 
-    def clearParts(provider: CatalogRecord.Provider): Unit =
+    def clearParts(provider: CatalogRecord.Provider)(using WritePermit): Unit =
       val _ = state.updateAndGet(_.modify(_.importParts).using(_ - CatalogueState.ImportPartsKey(provider.value)))

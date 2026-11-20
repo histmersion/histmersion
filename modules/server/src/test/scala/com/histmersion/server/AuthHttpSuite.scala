@@ -12,6 +12,7 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.Files
 import com.histmersion.db.TestDb
 import com.histmersion.util.nonempty.NonEmptyVector
+import com.histmersion.util.database.TestPermits.given
 
 /** Who the server lets in, over real HTTP on loopback. The peer of every request here is 127.0.0.1, so the two sides of
   * the trust decision are two settings: the default (loopback trusted as the owner) and [[KeyedLoopback]] (loopback

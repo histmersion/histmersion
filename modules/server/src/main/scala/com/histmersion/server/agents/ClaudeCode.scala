@@ -20,6 +20,7 @@ import com.histmersion.api.automation.PlanQuota
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.config.ServerConfig
 import com.histmersion.server.agents.CliOutcomes.finishEquality
+import com.histmersion.util.database.WritePermit
 
 /** The pure half of the `claude-code` provider: the argument vector, the environment, the MCP config, and the
   * `stream-json` output read back into sttp-ai's result types.
@@ -208,7 +209,7 @@ object ClaudeCode:
   /** A `rate_limit_event` line as it arrives: recorded in the Claude plan pool; when the pool is now below its floor
     * (or held) the answer says why, and the process is stopped.
     */
-  def watch(line: CliProcess.Run.Lines, pools: PoolSink): Option[CliProcess.Run.Stopped] =
+  def watch(line: CliProcess.Run.Lines, pools: PoolSink)(using WritePermit): Option[CliProcess.Run.Stopped] =
     if !line.value.contains("rate_limit_event") then None
     else
       RawJson

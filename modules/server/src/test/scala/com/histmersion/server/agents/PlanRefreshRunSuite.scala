@@ -61,6 +61,7 @@ import com.histmersion.server.KeyedLoopback
 import com.histmersion.config.ClaudeCodeConfig
 import com.histmersion.server.ConverterWiring
 import com.histmersion.api.Api
+import com.histmersion.util.database.TestPermits.given
 
 /** #989 against a `*_test` database: a pool paused only because its reading is stale takes a fresh one before it pauses
   * (the Claude probe, the ChatGPT app-server read) — once per stale-minutes, one at a time; a run paused on such a pool
@@ -232,7 +233,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
   /** 30% left of the 5-hour window (floor 25%), read an hour ago: stale, so it needs 35% — paused ONLY on its age.
     */
   private def staleReading(): Unit =
-    Transactor(ds).transact(
+    Transactor(ds).write(
       PlanQuotaRepo.record(
         PoolId.ClaudePlan,
         List(
@@ -431,7 +432,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
     assertEquals(onSchedule(when = at.plusSeconds(181 * 60)).map(_.ok), Right(true))
     assertEquals(reads.probes.get(), 2)
     // a reading a run recorded since counts like the schedule's own
-    Transactor(ds).transact(
+    Transactor(ds).write(
       PlanQuotaRepo.record(
         PoolId.ClaudePlan,
         List(
@@ -644,7 +645,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
           .setTo(baseCfg.agents.providers.codex.modify(_.appServer).setTo(CodexConfig.AppServer(true)))
       )
     val pools = PlanPools(ds, cfg, () => Some(home), reads.seams)
-    Transactor(ds).transact(
+    Transactor(ds).write(
       PlanQuotaRepo.record(
         PoolId.ChatgptPlan,
         List(
@@ -725,7 +726,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
     val clients = Map[ModelRef, LlmClient](Codex -> ScriptedClient(Codex))
     // the sessions refuse a write: the check has teeth
     val refused = intercept[Exception](
-      Transactor(readOnlyDs).transact(PlanQuotaRepo.setHold(PoolId.ChatgptPlan, PlanQuotaRepo.Pool.Held(true)))
+      Transactor(readOnlyDs).write(PlanQuotaRepo.setHold(PoolId.ChatgptPlan, PlanQuotaRepo.Pool.Held(true)))
     )
     assert(
       Iterator

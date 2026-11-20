@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicReference
 import javax.sql.DataSource
 import com.histmersion.api.Api
 import com.histmersion.api.media.ImportJobKinds
+import com.histmersion.util.database.WritePermit
 
 /** Media's runs — an import, the sources' pictures, as one request or as a job — one at a time: the polite pace is per
   * run, and two runs would ask twice as fast. A job is a `jobs` row a person may pause, resume or cancel between its
@@ -41,7 +42,7 @@ final class MediaJobs(ds: DataSource, maintenance: WriteGate, pins: WorkCarrier,
       )
 
   /** `work` behind the maintenance guard (`what` names the write). */
-  def guarded[A](what: WriteGate.OperationName)(work: => Either[Api.Error, A]): Either[Api.Error, A] =
+  def guarded[A](what: WriteGate.OperationName)(work: WritePermit ?=> Either[Api.Error, A]): Either[Api.Error, A] =
     maintenance.guard(what)(work)
 
   /** Whether a maintenance run holds the lock: a job stops between its batches. */
@@ -52,7 +53,7 @@ final class MediaJobs(ds: DataSource, maintenance: WriteGate, pins: WorkCarrier,
     * `body` returns the summary the finished job shows, or why it failed.
     */
   def start(kind: Job.Kind, describe: JobKinds.Subject)(
-      body: (JobInfo.Progress => Unit) => Either[Problems, BackgroundJob.Outcome.Summary]
+      body: (JobInfo.Progress => Unit) => WritePermit ?=> Either[Problems, BackgroundJob.Outcome.Summary]
   ): Either[Api.Error, JobInfo] =
     maintenance.guard(WriteGate.OperationName(kind.value)) {
       BackgroundJob.start(

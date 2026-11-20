@@ -50,6 +50,7 @@ import com.histmersion.domain.research.workflows.ReviewManagerPolicy
 import com.histmersion.api.exchange.Bundle
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.problem.Problems
+import com.histmersion.util.database.WritePermit
 
 /** The articles' operations, each the one implementation REST, MCP and the agents' tools call: the list and one article
   * in every view, the writes (put, patch, delete, rename, a note imported) with the strict formatting gate, the
@@ -162,7 +163,9 @@ final class ArticlesControllers(
   /** A whole body written by the mechanical pairing repair, guarded by the token it was computed against: whether it
     * was written.
     */
-  def writeRepairedBody(slug: Slug, body: Article.Body, token: Option[BArticleRow.UpdatedAt]): Boolean =
+  def writeRepairedBody(slug: Slug, body: Article.Body, token: Option[BArticleRow.UpdatedAt])(using
+      WritePermit
+  ): Boolean =
     store
       .patch(
         slug,
@@ -666,7 +669,7 @@ final class ArticlesControllers(
   def importNote(req: Article.Import): Either[Api.Error, SeedResult] =
     maintenance.guard(WriteGate.OperationName("import_article"))(importNow(req))
 
-  private def importNow(req: Article.Import): Either[Api.Error, SeedResult] =
+  private def importNow(req: Article.Import)(using WritePermit): Either[Api.Error, SeedResult] =
     val fallbackSlug = Article.Slug(req.slug.map(_.value.trim).filter(_.nonEmpty).getOrElse(""))
     val fallbackKind = Article.Kind.Wire(req.kind.map(_.value.trim).filter(_.nonEmpty).getOrElse(Articles.Kinds.head))
     ArticleNote.parse(req.text.value, fallbackSlug, fallbackKind) match

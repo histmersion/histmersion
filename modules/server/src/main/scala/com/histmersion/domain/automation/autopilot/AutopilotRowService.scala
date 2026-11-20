@@ -9,6 +9,7 @@ import hearth.kindlings.optics.syntax.*
 import java.time.{Clock, Instant}
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.api.automation.Managers
+import com.histmersion.util.database.WritePermit
 
 /** The autopilot's one row, as the engine's other features reach it: the switch and the managers it paused, when it
   * last ensured the goals' managers and kept house, a person's scheduler strategy, the approval digest's day and the
@@ -22,60 +23,64 @@ trait AutopilotRowService:
       enabled: AutopilotRepo.Row.Enabled,
       by: AutopilotRepo.Row.ChangedBy,
       paused: List[AutopilotRepo.Row.Paused]
-  ): Boolean
-  def ensured(now: Instant): Unit
+  )(using WritePermit): Boolean
+  def ensured(now: Instant)(using WritePermit): Unit
 
   /** Ensure again at the next tick. */
-  def ensureSoon(): Unit
-  def backedUp(now: Instant): Unit
-  def linted(now: Instant): Unit
+  def ensureSoon()(using WritePermit): Unit
+  def backedUp(now: Instant)(using WritePermit): Unit
+  def linted(now: Instant)(using WritePermit): Unit
 
   /** A paused manager it resumed. */
-  def unpaused(managerId: Managers.ManagerInfo.Id): Unit
+  def unpaused(managerId: Managers.ManagerInfo.Id)(using WritePermit): Unit
 
   /** A person's scheduler strategy: (name, by, at). */
   def strategy(): Option[(AutopilotRepo.StrategyName, AutopilotRepo.Row.ChangedBy, AutopilotRepo.Row.ChangedAt)]
 
   /** Set (Some) or clear (None) the person's strategy. */
-  def setStrategy(name: Option[AutopilotRepo.StrategyName], by: AutopilotRepo.Row.ChangedBy): Unit
+  def setStrategy(name: Option[AutopilotRepo.StrategyName], by: AutopilotRepo.Row.ChangedBy)(using WritePermit): Unit
   def lastDigest(): Option[AutopilotRepo.Digest]
-  def digested(now: Instant): Unit
+  def digested(now: Instant)(using WritePermit): Unit
 
   /** Draining: since when, by whom, when it was first seen drained. */
   def drain(): Option[(AutopilotRepo.DrainSince, AutopilotRepo.Row.ChangedBy, Option[AutopilotRepo.DrainedAt])]
 
   /** Start (a drain under way keeps its start) or stop draining. True = it changed. */
-  def setDrain(on: Boolean, by: AutopilotRepo.Row.ChangedBy): Boolean
+  def setDrain(on: Boolean, by: AutopilotRepo.Row.ChangedBy)(using WritePermit): Boolean
 
   /** First seen drained at (kept until lifted or work runs again: None). */
-  def drained(at: Option[Instant]): Unit
+  def drained(at: Option[Instant])(using WritePermit): Unit
 
 object AutopilotRowService:
   def apply(db: Transactor): AutopilotRowService = Implementation(db)
 
   final private class Implementation(db: Transactor) extends AutopilotRowService:
-    def row(): AutopilotRepo.Row = db.transact(AutopilotRepo.get())
+    def row(): AutopilotRepo.Row = db.read(AutopilotRepo.get())
     def set(
         enabled: AutopilotRepo.Row.Enabled,
         by: AutopilotRepo.Row.ChangedBy,
         paused: List[AutopilotRepo.Row.Paused]
-    ): Boolean =
-      db.transact(AutopilotRepo.set(enabled, by, paused))
-    def ensured(now: Instant): Unit = db.transact(AutopilotRepo.ensured(now))
-    def ensureSoon(): Unit = db.transact(AutopilotRepo.ensureSoon())
-    def backedUp(now: Instant): Unit = db.transact(AutopilotRepo.backedUp(now))
-    def linted(now: Instant): Unit = db.transact(AutopilotRepo.linted(now))
-    def unpaused(managerId: Managers.ManagerInfo.Id): Unit = db.transact(AutopilotRepo.unpaused(managerId))
+    )(using WritePermit): Boolean =
+      db.write(AutopilotRepo.set(enabled, by, paused))
+    def ensured(now: Instant)(using WritePermit): Unit = db.write(AutopilotRepo.ensured(now))
+    def ensureSoon()(using WritePermit): Unit = db.write(AutopilotRepo.ensureSoon())
+    def backedUp(now: Instant)(using WritePermit): Unit = db.write(AutopilotRepo.backedUp(now))
+    def linted(now: Instant)(using WritePermit): Unit = db.write(AutopilotRepo.linted(now))
+    def unpaused(managerId: Managers.ManagerInfo.Id)(using WritePermit): Unit =
+      db.write(AutopilotRepo.unpaused(managerId))
     def strategy(): Option[(AutopilotRepo.StrategyName, AutopilotRepo.Row.ChangedBy, AutopilotRepo.Row.ChangedAt)] =
-      db.transact(AutopilotRepo.strategy())
-    def setStrategy(name: Option[AutopilotRepo.StrategyName], by: AutopilotRepo.Row.ChangedBy): Unit =
-      db.transact(AutopilotRepo.setStrategy(name, by))
-    def lastDigest(): Option[AutopilotRepo.Digest] = db.transact(AutopilotRepo.lastDigest())
-    def digested(now: Instant): Unit = db.transact(AutopilotRepo.digested(now))
+      db.read(AutopilotRepo.strategy())
+    def setStrategy(name: Option[AutopilotRepo.StrategyName], by: AutopilotRepo.Row.ChangedBy)(using
+        WritePermit
+    ): Unit =
+      db.write(AutopilotRepo.setStrategy(name, by))
+    def lastDigest(): Option[AutopilotRepo.Digest] = db.read(AutopilotRepo.lastDigest())
+    def digested(now: Instant)(using WritePermit): Unit = db.write(AutopilotRepo.digested(now))
     def drain(): Option[(AutopilotRepo.DrainSince, AutopilotRepo.Row.ChangedBy, Option[AutopilotRepo.DrainedAt])] =
-      db.transact(AutopilotRepo.drain())
-    def setDrain(on: Boolean, by: AutopilotRepo.Row.ChangedBy): Boolean = db.transact(AutopilotRepo.setDrain(on, by))
-    def drained(at: Option[Instant]): Unit = db.transact(AutopilotRepo.drained(at))
+      db.read(AutopilotRepo.drain())
+    def setDrain(on: Boolean, by: AutopilotRepo.Row.ChangedBy)(using WritePermit): Boolean =
+      db.write(AutopilotRepo.setDrain(on, by))
+    def drained(at: Option[Instant])(using WritePermit): Unit = db.write(AutopilotRepo.drained(at))
 
   /** The row in memory, made at its first use: it stands in for the row the migration makes, there from the start in a
     * database. `clock` stands in for the database's `now()`.
@@ -110,7 +115,7 @@ object AutopilotRowService:
         enabled: AutopilotRepo.Row.Enabled,
         by: AutopilotRepo.Row.ChangedBy,
         paused: List[AutopilotRepo.Row.Paused]
-    ): Boolean =
+    )(using WritePermit): Boolean =
       change(_.enabled.value != enabled.value)(
         _.modify(_.enabled)
           .setTo(AutopilotRowState.Enabled(enabled.value))
@@ -123,11 +128,11 @@ object AutopilotRowService:
           .modify(_.lastEnsureAt)
           .setTo(None)
       )
-    def ensured(now: Instant): Unit = always(_.modify(_.lastEnsureAt).setTo(Some(now)))
-    def ensureSoon(): Unit = always(_.modify(_.lastEnsureAt).setTo(None))
-    def backedUp(now: Instant): Unit = always(_.modify(_.lastBackupAt).setTo(Some(now)))
-    def linted(now: Instant): Unit = always(_.modify(_.lastLintAt).setTo(Some(now)))
-    def unpaused(managerId: Managers.ManagerInfo.Id): Unit = always(
+    def ensured(now: Instant)(using WritePermit): Unit = always(_.modify(_.lastEnsureAt).setTo(Some(now)))
+    def ensureSoon()(using WritePermit): Unit = always(_.modify(_.lastEnsureAt).setTo(None))
+    def backedUp(now: Instant)(using WritePermit): Unit = always(_.modify(_.lastBackupAt).setTo(Some(now)))
+    def linted(now: Instant)(using WritePermit): Unit = always(_.modify(_.lastLintAt).setTo(Some(now)))
+    def unpaused(managerId: Managers.ManagerInfo.Id)(using WritePermit): Unit = always(
       _.modify(_.paused).using(_.filterNot(_.value == managerId.value))
     )
     def strategy(): Option[(AutopilotRepo.StrategyName, AutopilotRepo.Row.ChangedBy, AutopilotRepo.Row.ChangedAt)] =
@@ -139,7 +144,9 @@ object AutopilotRowService:
           AutopilotRepo.Row.ChangedAt(r.strategyAt.fold("")(text))
         )
       )
-    def setStrategy(name: Option[AutopilotRepo.StrategyName], by: AutopilotRepo.Row.ChangedBy): Unit =
+    def setStrategy(name: Option[AutopilotRepo.StrategyName], by: AutopilotRepo.Row.ChangedBy)(using
+        WritePermit
+    ): Unit =
       always(
         _.modify(_.strategy)
           .setTo(name.map(n => AutopilotRowState.Strategy(n.value)))
@@ -150,7 +157,7 @@ object AutopilotRowService:
       )
     def lastDigest(): Option[AutopilotRepo.Digest] =
       current().lastDigestAt.map(at => AutopilotRepo.Digest(text(at)))
-    def digested(now: Instant): Unit = always(_.modify(_.lastDigestAt).setTo(Some(now)))
+    def digested(now: Instant)(using WritePermit): Unit = always(_.modify(_.lastDigestAt).setTo(Some(now)))
     def drain(): Option[(AutopilotRepo.DrainSince, AutopilotRepo.Row.ChangedBy, Option[AutopilotRepo.DrainedAt])] =
       val r = current()
       r.drainSince.map(s =>
@@ -160,7 +167,7 @@ object AutopilotRowService:
           r.drainedAt.map(at => AutopilotRepo.DrainedAt(text(at)))
         )
       )
-    def setDrain(on: Boolean, by: AutopilotRepo.Row.ChangedBy): Boolean =
+    def setDrain(on: Boolean, by: AutopilotRepo.Row.ChangedBy)(using WritePermit): Boolean =
       if on then
         change(_.drainSince.isEmpty)(
           _.modify(_.drainSince)
@@ -174,4 +181,5 @@ object AutopilotRowService:
         change(_.drainSince.isDefined)(
           _.modify(_.drainSince).setTo(None).modify(_.drainBy).setTo(None).modify(_.drainedAt).setTo(None)
         )
-    def drained(at: Option[Instant]): Unit = change(_.drainSince.isDefined)(_.modify(_.drainedAt).setTo(at)): Unit
+    def drained(at: Option[Instant])(using WritePermit): Unit =
+      change(_.drainSince.isDefined)(_.modify(_.drainedAt).setTo(at)): Unit

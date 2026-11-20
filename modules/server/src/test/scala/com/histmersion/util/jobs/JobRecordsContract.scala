@@ -14,6 +14,7 @@ import com.histmersion.db.DbSuite
 import com.histmersion.domain.library.Citekey
 import com.histmersion.db.TestDb
 import com.histmersion.config.DbConfig
+import com.histmersion.util.database.TestPermits.given
 
 /** The one-piece jobs' rows, the same on the database and in memory: created `queued`, moved by compare-and-set (a
   * second claim is refused), progress only while running, the error and progress of the last move kept.

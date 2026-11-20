@@ -44,6 +44,7 @@ import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.personal.UnreadPage
 import com.histmersion.api.catalogue.LeadFacts
 import com.histmersion.util.json.RawJson.equality
+import com.histmersion.util.database.WritePermit
 
 /** The events: dated happenings with their datings by source, their relations to each other and their participants,
   * listed by a selection, drawn on the map, written by hand, renamed and deleted.
@@ -75,18 +76,18 @@ trait EventService:
   /** Create or replace one event; on one an import created, the fields that differ from its catalogue's are recorded as
     * corrections.
     */
-  def put(id: Event.Id, in: EventPut): Unit
+  def put(id: Event.Id, in: EventPut)(using WritePermit): Unit
 
   /** Change the fields `p` sets; on one an import created, each changed field is recorded as a correction. */
-  def patch(id: Event.Id, p: EventPatch): Either[Api.Error, Unit]
+  def patch(id: Event.Id, p: EventPatch)(using WritePermit): Either[Api.Error, Unit]
 
   /** A new id; the old one stays an alias, what names the event follows. */
-  def rename(from: Event.Id, to: Event.Id): Either[Api.Error, Unit]
+  def rename(from: Event.Id, to: Event.Id)(using WritePermit): Either[Api.Error, Unit]
 
   /** The id an old id was renamed to; `None` for a live id, or nothing. */
   def renamedTo(id: Event.Id): Option[Event.Id]
 
-  def delete(id: Event.Id): Boolean
+  def delete(id: Event.Id)(using WritePermit): Boolean
 
 object EventService:
   def apply(db: Transactor, related: EventSourceFilter): EventService = Implementation(db, related)
@@ -117,14 +118,14 @@ object EventService:
     def catalogueRefs(id: Event.Id): List[EventCatalogueRef] = db.read(EventImportRepo.catalogueRefs(id))
     def geometryError(geojson: EventDetailRow.Geometry): Option[Problem] =
       db.read(EventRepo.geometryError(BEventRow.Geom(geojson.value)))
-    def put(id: Event.Id, in: EventPut): Unit = db.transact(EventRepo.put(BEventRow.Id(id.value), in))
-    def patch(id: Event.Id, p: EventPatch): Either[Api.Error, Unit] =
-      db.transact(EventRepo.patch(BEventRow.Id(id.value), p))
-    def rename(from: Event.Id, to: Event.Id): Either[Api.Error, Unit] =
-      db.transact(EventRepo.rename(BEventRow.Id(from.value), BEventRow.Id(to.value)))
+    def put(id: Event.Id, in: EventPut)(using WritePermit): Unit = db.write(EventRepo.put(BEventRow.Id(id.value), in))
+    def patch(id: Event.Id, p: EventPatch)(using WritePermit): Either[Api.Error, Unit] =
+      db.write(EventRepo.patch(BEventRow.Id(id.value), p))
+    def rename(from: Event.Id, to: Event.Id)(using WritePermit): Either[Api.Error, Unit] =
+      db.write(EventRepo.rename(BEventRow.Id(from.value), BEventRow.Id(to.value)))
     def renamedTo(id: Event.Id): Option[Event.Id] =
       db.read(EventRepo.renamedTo(BEventRow.Id(id.value))).map(i => Event.Id.assume(i.value))
-    def delete(id: Event.Id): Boolean = db.transact(EventRepo.delete(BEventRow.Id(id.value)))
+    def delete(id: Event.Id)(using WritePermit): Boolean = db.write(EventRepo.delete(BEventRow.Id(id.value)))
 
   /** The same rules over the shared in-memory state, which holds the catalogue's rows alone: no place is stored, so an
     * event is anchored by its own geometry (a point; an area has no outline) and has no place's kind or label;
@@ -371,7 +372,7 @@ object EventService:
           .modify(_.lastCorrectionId)
           .setTo(CatalogueState.LastCorrectionId(n))
 
-    def put(id: Event.Id, in: EventPut): Unit =
+    def put(id: Event.Id, in: EventPut)(using WritePermit): Unit =
       val _ = state.updateAndGet { s =>
         val before = s.events.find(_.id == id)
         val sameSpan = before.exists(_.timeSpan == in.timeSpan)
@@ -405,7 +406,7 @@ object EventService:
         withCorrections(s.modify(_.events).setTo(written), id, EventFields.ofPut(in))
       }
 
-    def patch(id: Event.Id, p: EventPatch): Either[Api.Error, Unit] =
+    def patch(id: Event.Id, p: EventPatch)(using WritePermit): Either[Api.Error, Unit] =
       if !state.get.events.exists(_.id == id) then Left(missing(id))
       else
         val _ = state.updateAndGet { s =>
@@ -462,7 +463,7 @@ object EventService:
         }
         Right(())
 
-    def rename(from: Event.Id, to: Event.Id): Either[Api.Error, Unit] =
+    def rename(from: Event.Id, to: Event.Id)(using WritePermit): Either[Api.Error, Unit] =
       val (oldId, newId) = (from, to)
       val s = state.get
       def exists(i: Event.Id) = s.events.exists(_.id == i)
@@ -532,7 +533,7 @@ object EventService:
       if s.events.exists(_.id == id) then None
       else s.eventAliases.get(CatalogueState.EventAliasesKey(id.value)).map(v => Event.Id.assume(v.value))
 
-    def delete(id: Event.Id): Boolean =
+    def delete(id: Event.Id)(using WritePermit): Boolean =
       val had = state.get.events.exists(_.id == id)
       val _ = state.updateAndGet(
         _.modify(_.events)

@@ -16,6 +16,7 @@ import com.histmersion.api.Api
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.catalogue.PlacesJobKinds
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.database.WritePermit
 
 /** The gazetteer's background work as REST, MCP and the CLI reach it: a source a plugin registers fetched, the land
   * fetched, the hierarchy built from spatial containment — one at a time (each rewrites places the others read), each a
@@ -31,7 +32,10 @@ final class GazetteerControllers(
   private val slot = BackgroundJob.Slot()
 
   /** A places job: `about` says what it does (the jobs list shows it), `run` answers its summary or why it failed. */
-  private def job(kind: Job.Kind, about: String)(run: => Either[Problem, String]): Either[Api.Error, JobInfo] =
+  private def job(kind: Job.Kind, about: String)(
+      // runs on the job's thread, under the job's unit permit (never the caller's, whose block has ended by then)
+      run: WritePermit ?=> Either[Problem, String]
+  )(using WritePermit): Either[Api.Error, JobInfo] =
     BackgroundJob.start(
       ds,
       maintenance.workers,
@@ -88,7 +92,7 @@ final class GazetteerControllers(
   /** `places fetch land`: Natural Earth land for clipping polities to the coast (V025); like the gazetteers, a real run
     * is a background job — two downloads and a re-clip of every polity.
     */
-  private def land(dryRun: GazetteerControllers.DryRun): Either[Api.Error, Place.ImportResult] =
+  private def land(dryRun: GazetteerControllers.DryRun)(using WritePermit): Either[Api.Error, Place.ImportResult] =
     if dryRun.value then imports.land(dryRun = GazetteerControllers.DryRun(true)).left.map(refused)
     else
       job(Job.Kind.assume(PlacesJobKinds.PlacesFetch.kind.value), "fetch land")(

@@ -16,6 +16,7 @@ import com.histmersion.domain.automation.{Goal, Manager as DomainManager, Run}
 import io.scalaland.chimney.dsl.*
 import com.histmersion.domain.library.Doi
 import com.histmersion.api.automation.Pipeline
+import com.histmersion.util.database.WritePermit
 
 /** The process managers as the engine's other features reach them: a manager and its settings, its items (added, held
   * and released for the focus), its events, and the few reads over every manager at once that the autopilot, the focus,
@@ -47,8 +48,8 @@ trait ManagerService:
       config: ManagerConfig,
       cron: Option[ManagerInfo.Cron] = None,
       nextTick: Option[Instant] = None
-  ): Boolean
-  def setState(id: ManagerInfo.Id, state: State, pauseRuns: ManagerInfo.PauseRuns): Boolean
+  )(using WritePermit): Boolean
+  def setState(id: ManagerInfo.Id, state: State, pauseRuns: ManagerInfo.PauseRuns)(using WritePermit): Boolean
 
   /** Its settings and cron; `next` = when the cron fires next. */
   def setConfig(
@@ -56,7 +57,7 @@ trait ManagerService:
       config: ManagerConfig,
       cron: Option[ManagerInfo.Cron],
       next: Option[Instant]
-  ): Boolean
+  )(using WritePermit): Boolean
 
   /** Add an item, or bring an existing one back (`reopen`: a settled one pending again; the priority raised): its id,
     * and whether it is new.
@@ -69,7 +70,7 @@ trait ManagerService:
       priority: ManagerItem.Priority,
       reopen: Boolean,
       initial: ItemState = ItemState()
-  ): (ManagerItem.Id, Boolean)
+  )(using WritePermit): (ManagerItem.Id, Boolean)
   def item(id: ManagerItem.Id): Option[ManagerItem]
   def itemFor(managerId: ManagerInfo.Id, kind: ManagerItem.Kind, target: ManagerItem.Target): Option[ManagerItem]
 
@@ -94,7 +95,7 @@ trait ManagerService:
       runId: Option[Run.Id],
       kind: ManagerEvent.Kind,
       text: ManagerEvent.Text
-  ): Unit
+  )(using WritePermit): Unit
 
   /** A manager's newest event of `kind`. */
   def lastEventOf(managerId: ManagerInfo.Id, kind: ManagerEvent.Kind): Option[ManagerEvent]
@@ -123,13 +124,13 @@ trait ManagerService:
       failures: ManagerItem.Failures,
       notBefore: Instant,
       outcome: ManagerItem.Outcome
-  ): Boolean
+  )(using WritePermit): Boolean
 
   /** Per manager: its events of `kind` since `since`. */
   def countEventsBy(kind: ManagerEvent.Kind, since: Instant): Map[ManagerInfo.Id, RowCount]
 
   /** An item's state replaced while it is in one of `from`; false = it was not. */
-  def setItemState(itemId: ManagerItem.Id, state: ItemState, from: List[ItemStatus]): Boolean
+  def setItemState(itemId: ManagerItem.Id, state: ItemState, from: List[ItemStatus])(using WritePermit): Boolean
 
   /** The open acquisition items a watcher's sweep created, found by the run that picked their DOI. */
   def sweepAcquireItems(): List[SweepAcquireItem]
@@ -140,25 +141,27 @@ trait ManagerService:
   def pace(since: Instant): Map[ManagerInfo.Id, (RowCount, RowCount, Option[ManagerRepo.ProgressText])]
 
   /** A person's (or a hint's) hold of a pending or held item; false = it was neither. */
-  def hold(itemId: ManagerItem.Id, h: Hold): Boolean
+  def hold(itemId: ManagerItem.Id, h: Hold)(using WritePermit): Boolean
 
   /** A held item pending again; false = it was not held. */
-  def release(itemId: ManagerItem.Id): Boolean
+  def release(itemId: ManagerItem.Id)(using WritePermit): Boolean
 
   /** Settle an item that is in one of `from`; false = it was not. */
-  def settle(itemId: ManagerItem.Id, status: ItemStatus, outcome: ManagerItem.Outcome, from: List[ItemStatus]): Boolean
+  def settle(itemId: ManagerItem.Id, status: ItemStatus, outcome: ManagerItem.Outcome, from: List[ItemStatus])(using
+      WritePermit
+  ): Boolean
 
   /** A pending item active with run `run`, one more attempt, `state` its state; false = it was not pending. */
-  def dispatch(itemId: ManagerItem.Id, run: Run.Id, state: ItemState): Boolean
+  def dispatch(itemId: ManagerItem.Id, run: Run.Id, state: ItemState)(using WritePermit): Boolean
 
   /** Hold a pending item for the focus; false = it was not pending. */
-  def focusHold(itemId: ManagerItem.Id, h: Hold): Boolean
+  def focusHold(itemId: ManagerItem.Id, h: Hold)(using WritePermit): Boolean
 
   /** Release the focus's holds among `ids`; how many. */
-  def focusRelease(ids: List[ManagerItem.Id]): RowCount
+  def focusRelease(ids: List[ManagerItem.Id])(using WritePermit): RowCount
 
   /** Release every focus hold; how many. */
-  def focusReleaseAll(): RowCount
+  def focusReleaseAll()(using WritePermit): RowCount
   def focusHeldCount(): RowCount
 
   /** Items that wait for a person and hold no place. */
@@ -203,7 +206,7 @@ object ManagerService:
         config: ManagerConfig,
         cron: Option[ManagerInfo.Cron],
         nextTick: Option[Instant]
-    ): Boolean = db.transact(
+    )(using WritePermit): Boolean = db.write(
       ManagerRepo.create(
         id,
         kind,
@@ -214,15 +217,15 @@ object ManagerService:
         nextTick
       )
     )
-    def setState(id: ManagerInfo.Id, state: State, pauseRuns: ManagerInfo.PauseRuns): Boolean =
-      db.transact(ManagerRepo.setState(id, state, pauseRuns))
+    def setState(id: ManagerInfo.Id, state: State, pauseRuns: ManagerInfo.PauseRuns)(using WritePermit): Boolean =
+      db.write(ManagerRepo.setState(id, state, pauseRuns))
     def setConfig(
         id: ManagerInfo.Id,
         config: ManagerConfig,
         cron: Option[ManagerInfo.Cron],
         next: Option[Instant]
-    ): Boolean =
-      db.transact(ManagerRepo.setConfig(id, config, cron, next))
+    )(using WritePermit): Boolean =
+      db.write(ManagerRepo.setConfig(id, config, cron, next))
     def upsert(
         managerId: ManagerInfo.Id,
         kind: ManagerItem.Kind,
@@ -231,8 +234,8 @@ object ManagerService:
         priority: ManagerItem.Priority,
         reopen: Boolean,
         initial: ItemState
-    ): (ManagerItem.Id, Boolean) =
-      db.transact(ManagerRepo.upsert(managerId, kind, target, origin, priority, reopen, initial))
+    )(using WritePermit): (ManagerItem.Id, Boolean) =
+      db.write(ManagerRepo.upsert(managerId, kind, target, origin, priority, reopen, initial))
     def item(id: ManagerItem.Id): Option[ManagerItem] = db.read(ManagerRepo.item(id))
     def itemFor(managerId: ManagerInfo.Id, kind: ManagerItem.Kind, target: ManagerItem.Target): Option[ManagerItem] =
       db.read(ManagerRepo.itemFor(managerId, kind, target))
@@ -252,8 +255,8 @@ object ManagerService:
         runId: Option[Run.Id],
         kind: ManagerEvent.Kind,
         text: ManagerEvent.Text
-    ): Unit =
-      db.transact(ManagerRepo.event(managerId, itemId, runId.map(r => RunInfo.Id(r.value)), kind, text))
+    )(using WritePermit): Unit =
+      db.write(ManagerRepo.event(managerId, itemId, runId.map(r => RunInfo.Id(r.value)), kind, text))
     def lastEventOf(managerId: ManagerInfo.Id, kind: ManagerEvent.Kind): Option[ManagerEvent] =
       db.read(ManagerRepo.lastEventOf(managerId, kind))
     def countEventsAll(kind: ManagerEvent.Kind, since: Instant): RowCount =
@@ -267,29 +270,30 @@ object ManagerService:
         failures: ManagerItem.Failures,
         notBefore: Instant,
         outcome: ManagerItem.Outcome
-    ): Boolean =
-      db.transact(ManagerRepo.backlogRetryIn(itemId, failures, notBefore, outcome))
+    )(using WritePermit): Boolean =
+      db.write(ManagerRepo.backlogRetryIn(itemId, failures, notBefore, outcome))
     def countEventsBy(kind: ManagerEvent.Kind, since: Instant): Map[ManagerInfo.Id, RowCount] =
       db.read(ManagerRepo.countEventsByIn(kind, since))
-    def setItemState(itemId: ManagerItem.Id, state: ItemState, from: List[ItemStatus]): Boolean =
-      db.transact(ManagerRepo.setItemStateIn(itemId, state, from))
+    def setItemState(itemId: ManagerItem.Id, state: ItemState, from: List[ItemStatus])(using WritePermit): Boolean =
+      db.write(ManagerRepo.setItemStateIn(itemId, state, from))
     def sweepAcquireItems(): List[SweepAcquireItem] = db.read(ManagerRepo.sweepAcquireItemsIn())
     def pace(since: Instant): Map[ManagerInfo.Id, (RowCount, RowCount, Option[ManagerRepo.ProgressText])] =
       db.read(ManagerRepo.pace(since))
-    def hold(itemId: ManagerItem.Id, h: Hold): Boolean = db.transact(ManagerRepo.hold(itemId, h))
-    def release(itemId: ManagerItem.Id): Boolean = db.transact(ManagerRepo.release(itemId))
+    def hold(itemId: ManagerItem.Id, h: Hold)(using WritePermit): Boolean = db.write(ManagerRepo.hold(itemId, h))
+    def release(itemId: ManagerItem.Id)(using WritePermit): Boolean = db.write(ManagerRepo.release(itemId))
     def settle(
         itemId: ManagerItem.Id,
         status: ItemStatus,
         outcome: ManagerItem.Outcome,
         from: List[ItemStatus]
-    ): Boolean =
-      db.transact(ManagerRepo.settle(itemId, status, outcome, from))
-    def dispatch(itemId: ManagerItem.Id, run: Run.Id, state: ItemState): Boolean =
-      db.transact(ManagerRepo.dispatchIn(itemId, run, state))
-    def focusHold(itemId: ManagerItem.Id, h: Hold): Boolean = db.transact(ManagerRepo.focusHold(itemId, h))
-    def focusRelease(ids: List[ManagerItem.Id]): RowCount = db.transact(ManagerRepo.focusRelease(ids))
-    def focusReleaseAll(): RowCount = db.transact(ManagerRepo.focusReleaseAll())
+    )(using WritePermit): Boolean =
+      db.write(ManagerRepo.settle(itemId, status, outcome, from))
+    def dispatch(itemId: ManagerItem.Id, run: Run.Id, state: ItemState)(using WritePermit): Boolean =
+      db.write(ManagerRepo.dispatchIn(itemId, run, state))
+    def focusHold(itemId: ManagerItem.Id, h: Hold)(using WritePermit): Boolean =
+      db.write(ManagerRepo.focusHold(itemId, h))
+    def focusRelease(ids: List[ManagerItem.Id])(using WritePermit): RowCount = db.write(ManagerRepo.focusRelease(ids))
+    def focusReleaseAll()(using WritePermit): RowCount = db.write(ManagerRepo.focusReleaseAll())
     def focusHeldCount(): RowCount = db.read(ManagerRepo.focusHeldCount())
     def forPerson(): RowCount = db.read(ManagerRepo.forPerson())
     def lastProgress(): Map[com.histmersion.api.automation.Goal.Slug, ManagerRepo.ProgressText] =
@@ -448,7 +452,7 @@ object ManagerService:
         config: ManagerConfig,
         cron: Option[ManagerInfo.Cron],
         nextTick: Option[Instant]
-    ): Boolean =
+    )(using WritePermit): Boolean =
       val at = now
       !this.state
         .getAndUpdate(s =>
@@ -478,7 +482,7 @@ object ManagerService:
         .getAndUpdate(_.modify(_.managers).using(_.map(m => if m.id.value == id.value then f(m) else m)))
         .managers
         .exists(_.id.value == id.value)
-    def setState(id: ManagerInfo.Id, state: State, pauseRuns: ManagerInfo.PauseRuns): Boolean =
+    def setState(id: ManagerInfo.Id, state: State, pauseRuns: ManagerInfo.PauseRuns)(using WritePermit): Boolean =
       val at = now
       changeManager(id)(
         _.modify(_.state)
@@ -493,7 +497,7 @@ object ManagerService:
         config: ManagerConfig,
         cron: Option[ManagerInfo.Cron],
         next: Option[Instant]
-    ): Boolean =
+    )(using WritePermit): Boolean =
       val at = now
       changeManager(id)(
         _.modify(_.config)
@@ -513,7 +517,7 @@ object ManagerService:
         priority: ManagerItem.Priority,
         reopen: Boolean,
         initial: ItemState
-    ): (ManagerItem.Id, Boolean) =
+    )(using WritePermit): (ManagerItem.Id, Boolean) =
       val at = now
       var result: (ManagerItem.Id, Boolean) = (ManagerItem.Id(0L), false)
       val _ = state.updateAndGet { s =>
@@ -599,7 +603,7 @@ object ManagerService:
         runId: Option[Run.Id],
         kind: ManagerEvent.Kind,
         text: ManagerEvent.Text
-    ): Unit =
+    )(using WritePermit): Unit =
       val at = now
       val _ = state.updateAndGet { s =>
         val id = s.lastEventId.value + 1
@@ -656,7 +660,7 @@ object ManagerService:
         failures: ManagerItem.Failures,
         notBefore: Instant,
         outcome: ManagerItem.Outcome
-    ): Boolean =
+    )(using WritePermit): Boolean =
       val at = now
       changeItems(i => i.id.value == itemId.value && i.status.value == "pending")(
         _.modify(_.failures)
@@ -673,7 +677,7 @@ object ManagerService:
     def countEventsBy(kind: ManagerEvent.Kind, since: Instant): Map[ManagerInfo.Id, RowCount] =
       counted(events.filter(e => e.kind.value == kind.value && !e.at.isBefore(since)).map(_.managerId.value))
         .map((m, n) => ManagerInfo.Id(m) -> RowCount(n))
-    def setItemState(itemId: ManagerItem.Id, state: ItemState, from: List[ItemStatus]): Boolean =
+    def setItemState(itemId: ManagerItem.Id, state: ItemState, from: List[ItemStatus])(using WritePermit): Boolean =
       val at = now
       changeItems(i => i.id.value == itemId.value && from.exists(_.wire.value == i.status.value))(
         _.modify(_.state).setTo(state).modify(_.updatedAt).setTo(at)
@@ -702,7 +706,7 @@ object ManagerService:
         .setTo(None)
         .modify(_.updatedAt)
         .setTo(at)
-    def hold(itemId: ManagerItem.Id, h: Hold): Boolean =
+    def hold(itemId: ManagerItem.Id, h: Hold)(using WritePermit): Boolean =
       val at = now
       changeItems(i => i.id.value == itemId.value && (i.status.value == "pending" || i.status.value == "held"))(
         _.modify(_.status)
@@ -712,14 +716,14 @@ object ManagerService:
           .modify(_.updatedAt)
           .setTo(at)
       ) > 0
-    def release(itemId: ManagerItem.Id): Boolean =
+    def release(itemId: ManagerItem.Id)(using WritePermit): Boolean =
       changeItems(i => i.id.value == itemId.value && i.status.value == "held")(released(now)) > 0
     def settle(
         itemId: ManagerItem.Id,
         status: ItemStatus,
         outcome: ManagerItem.Outcome,
         from: List[ItemStatus]
-    ): Boolean =
+    )(using WritePermit): Boolean =
       val at = now
       changeItems(i => i.id.value == itemId.value && from.exists(_.wire.value == i.status.value))(
         _.modify(_.status)
@@ -731,7 +735,7 @@ object ManagerService:
           .modify(_.updatedAt)
           .setTo(at)
       ) > 0
-    def dispatch(itemId: ManagerItem.Id, run: Run.Id, state: ItemState): Boolean =
+    def dispatch(itemId: ManagerItem.Id, run: Run.Id, state: ItemState)(using WritePermit): Boolean =
       val at = now
       changeItems(i => i.id.value == itemId.value && i.status.value == ItemStatus.Pending.wire.value)(
         _.modify(_.status)
@@ -745,7 +749,7 @@ object ManagerService:
           .modify(_.updatedAt)
           .setTo(at)
       ) > 0
-    def focusHold(itemId: ManagerItem.Id, h: Hold): Boolean =
+    def focusHold(itemId: ManagerItem.Id, h: Hold)(using WritePermit): Boolean =
       val at = now
       changeItems(i => i.id.value == itemId.value && i.status.value == "pending")(
         _.modify(_.status)
@@ -755,12 +759,12 @@ object ManagerService:
           .modify(_.updatedAt)
           .setTo(at)
       ) > 0
-    def focusRelease(ids: List[ManagerItem.Id]): RowCount =
+    def focusRelease(ids: List[ManagerItem.Id])(using WritePermit): RowCount =
       RowCount(
         if ids.isEmpty then 0
         else changeItems(i => ids.exists(_.value == i.id.value) && focusHeld(i))(released(now))
       )
-    def focusReleaseAll(): RowCount = RowCount(changeItems(focusHeld)(released(now)))
+    def focusReleaseAll()(using WritePermit): RowCount = RowCount(changeItems(focusHeld)(released(now)))
     def focusHeldCount(): RowCount = RowCount(items.count(focusHeld))
     def forPerson(): RowCount =
       RowCount(

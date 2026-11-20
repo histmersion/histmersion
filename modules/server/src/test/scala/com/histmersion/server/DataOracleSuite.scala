@@ -65,6 +65,7 @@ import com.histmersion.domain.catalogue.events.BEventRow
 import com.histmersion.api.catalogue.EventSummary
 import com.histmersion.domain.catalogue.evidence.AttestationService
 import com.histmersion.util.data.exchange.BundleFormat
+import com.histmersion.util.database.TestPermits.given
 
 /** What data management answers over HTTP, on a crafted pair of collections ("work" and "home"), recorded on the code
   * before data management moved into its own area: the whole bundle of work and the part changed since a moment (every
@@ -254,7 +255,7 @@ class DataOracleSuite extends DbSuite with db.Bounded:
     * articles; a goal; a place, a period and an event at the place; figures and a link; an attestation; work items.
     */
   private def craftWork(ds: DataSource): Unit =
-    Transactor(ds).transact(BundleRepo.setLabel(Some(InstanceInfo.Label("work"))))
+    Transactor(ds).write(BundleRepo.setLabel(Some(InstanceInfo.Label("work"))))
     SourceFixtures.upsert(
       ds,
       src(
@@ -482,7 +483,7 @@ class DataOracleSuite extends DbSuite with db.Bounded:
       )
     // a deleted event and a deleted goal at work
     val _ = EventFixtures.delete(work, BEventRow.Id("zz_event_gone"))
-    val _ = Transactor(work).transact(GoalRepo.deleteIn(domain.automation.Goal.Slug("zz_goal_gone")))
+    val _ = Transactor(work).write(GoalRepo.deleteIn(domain.automation.Goal.Slug("zz_goal_gone")))
     // something new at work
     SourceFixtures.upsert(
       work,

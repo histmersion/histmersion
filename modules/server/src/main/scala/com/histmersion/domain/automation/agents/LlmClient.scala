@@ -18,13 +18,14 @@ import sttp.shared.Identity
 import com.histmersion.util.plugins.Plugin
 import com.histmersion.plugin.AiProvider
 import com.histmersion.plugin.AiHttp
+import com.histmersion.util.database.WritePermit
 
 /** A configured model, ready to run [[LlmCall]]s. The engine never sees a provider type: the loop (sttp-ai's) and its
   * builders are hidden behind [[run]], so a pinned-but-pre-1.0 library touches few files.
   */
 trait LlmClient:
   def model: ModelRef
-  def run[Out](call: LlmCall[Out]): AgentResult[Either[AgentFailure, Out]]
+  def run[Out](call: LlmCall[Out])(using WritePermit): AgentResult[Either[AgentFailure, Out]]
 
 object LlmClient:
 

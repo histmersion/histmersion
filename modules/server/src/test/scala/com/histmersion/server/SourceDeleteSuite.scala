@@ -46,6 +46,7 @@ import com.histmersion.api.catalogue.Latitude
 import com.histmersion.domain.library.sources.Citekeys
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.util.database.TestPermits.given
 
 /** Deleting a source (#969), against a real Postgres: the dry run lists everything and changes nothing; an article
   * citing the source (by its citekey, an old citekey or a short form), an event sourced to it, or a job still writing

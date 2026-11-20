@@ -24,7 +24,7 @@ import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.*
 import com.histmersion.api.automation.ModelChains.*
 import com.histmersion.domain.automation.agents.{AgentRepo, ModelSettingsRepo}
-import com.histmersion.util.database.{Db, Migrate}
+import com.histmersion.util.database.{Db, Migrate, WritePermit}
 import com.histmersion.server.{Composition, Deps, ServerWiring}
 import sttp.ai.core.agent.*
 
@@ -54,6 +54,7 @@ import com.histmersion.config.AgentProviderConfig
 import com.histmersion.server.ConverterWiring
 import com.histmersion.api.Api
 import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.util.database.TestPermits.given
 
 /** Model chains and allowances end to end against a `*_test` database, with sttp-ai's scripted model per chained model:
   * the chain's next model takes over when the first is below its allowance (before a step, during one, or when its plan
@@ -303,7 +304,7 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
     val until = Instant.now().plusSeconds(3600)
     val limited = new LlmClient:
       val model = A
-      def run[Out](call: LlmCall[Out]) =
+      def run[Out](call: LlmCall[Out])(using WritePermit) =
         throw ModelLimitReached(
           A,
           Some(until),
@@ -323,7 +324,7 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
   test("a provider failure still pauses the run (provider) — only a plan's limit moves down the chain"):
     val down = new LlmClient:
       val model = A
-      def run[Out](call: LlmCall[Out]) = throw java.net.ConnectException("refused")
+      def run[Out](call: LlmCall[Out])(using WritePermit) = throw java.net.ConnectException("refused")
     val (a, h) = handlers(Map(A -> down, B -> ScriptedClient(B))); seed(h)
     val run = startAndRun(a)
     assertEquals(run.status, "paused")

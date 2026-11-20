@@ -39,6 +39,7 @@ import com.histmersion.api.automation.Managers
 import com.histmersion.domain.automation.worklists.WorkListControllers
 import com.histmersion.domain.automation.Approval
 import com.histmersion.api.automation.Autopilot
+import com.histmersion.util.database.WritePermit
 
 /** The autopilot (docs/research-process-managers.md "As built: the autopilot"): ONE switch, kept in the database, that
   * lets the process managers carry every research goal from planned to reviewed with no person in the loop — within the
@@ -102,14 +103,14 @@ final class AutopilotService(
     )
 
   /** Make sure of the goals' managers at the next tick (a plan created sub-goals). */
-  def soon(): Unit = agents.autopilotRow.ensureSoon()
+  def soon()(using WritePermit): Unit = agents.autopilotRow.ensureSoon()
 
   // ── the switch ─────────────────────────────────────────────────────────────────────────────────
 
   /** Turn it on (ensure and advance at once) or off (pause the seeding managers and watchers it runs). Idempotent; the
     * answer is the status with what it did.
     */
-  def set(in: AutopilotSet, now: Instant = Instant.now(agents.clock)): EngineStatus =
+  def set(in: AutopilotSet, now: Instant = Instant.now(agents.clock))(using WritePermit): EngineStatus =
     val by = in.by.map(_.value.trim).filter(_.nonEmpty).getOrElse("person")
     val changedBy = AutopilotRepo.Row.ChangedBy(by)
     val row = agents.autopilotRow.row()
@@ -147,7 +148,7 @@ final class AutopilotService(
   /** One pass, from the managers' tick: nothing while off; on, ensure and advance when due, and the housekeeping when
     * due.
     */
-  def tick(now: Instant): List[String] =
+  def tick(now: Instant)(using WritePermit): List[String] =
     val row = agents.autopilotRow.row()
     if !row.enabled.value then Nil
     else
@@ -185,7 +186,7 @@ final class AutopilotService(
   )
 
   /** Every goal's managers ([[AutopilotPolicy.ensure]]), applied; one line per change. */
-  def ensureNow(now: Instant): List[String] =
+  def ensureNow(now: Instant)(using WritePermit): List[String] =
     val goals = agents.goals.all()
     val planned = agents.goals.planned()
     val links = agents.goals.linkCounts()
@@ -218,12 +219,12 @@ final class AutopilotService(
   /** The slug of a goal read from the database, as the domain types it. */
   private def slugOf(g: Goal): DomainGoal.Slug = DomainGoal.Slug.assume(g.slug.value)
 
-  private def event(id: ManagerInfo.Id, text: String): Unit =
+  private def event(id: ManagerInfo.Id, text: String)(using WritePermit): Unit =
     agents.managerStore.event(id, None, None, ManagerEvent.Kind(Feed.Autopilot), ManagerEvent.Text(text))
 
   private def itemOf(goal: DomainGoal.Slug): ManagerItem.Target = ManagerItem.Target(goal.value)
 
-  private def applyStep(s: Step, now: Instant): Option[String] =
+  private def applyStep(s: Step, now: Instant)(using WritePermit): Option[String] =
     s match
       case Step.CreateSeed(goal, cron, planFirst) =>
         val id = seedId(Goal.Ref(goal.value))
@@ -378,7 +379,7 @@ final class AutopilotService(
   /** Every goal's status moved on from the facts ([[AutopilotPolicy.advance]]), the deepest goals first so a parent
     * sees its sub-goals' new status in the same pass; one line per goal moved.
     */
-  def advance(now: Instant): List[String] =
+  def advance(now: Instant)(using WritePermit): List[String] =
     val goals = agents.goals.all()
     val parentOf: Map[String, Option[String]] =
       goals.map(g => (g.slug.value: String) -> g.parentSlug.map(p => p.value: String)).toMap
@@ -451,7 +452,7 @@ final class AutopilotService(
     * ([[AutopilotPolicy.nextArticle]]): its seeding manager's propose-articles item re-opened (the scheduler starts it;
     * the plan goes through the article-plan approvals). One line per goal.
     */
-  def nextArticles(now: Instant): List[String] =
+  def nextArticles(now: Instant)(using WritePermit): List[String] =
     if acfg.nextArticleHours.value <= 0 then Nil
     else
       val seeds = agents.managerStore
@@ -500,7 +501,7 @@ final class AutopilotService(
     * minutes), one at a time. Recorded as started, so a failure is not retried every tick (the next try is a period
     * later); the outcome is a worklog line.
     */
-  private def housekeeping(row: AutopilotRepo.Row, now: Instant): List[String] =
+  private def housekeeping(row: AutopilotRepo.Row, now: Instant)(using WritePermit): List[String] =
     val backupDue = AutopilotPolicy.due(
       row.lastBackupAt.flatMap(t => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(t.value))),
       AutopilotPolicy.EveryHours(acfg.backupHours.value),

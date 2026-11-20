@@ -68,6 +68,7 @@ import com.histmersion.config.AgentApprovalsConfig
 import com.histmersion.config.AgentCompileConfig
 import com.histmersion.domain.automation.approvals.ApprovalQuery
 import com.histmersion.api.Api
+import com.histmersion.util.database.TestPermits.given
 
 /** Answers from fixtures: DOI metadata, citing papers, searches; counts what was asked. */
 final class StubUpstream extends AgentUpstream:

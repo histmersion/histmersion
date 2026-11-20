@@ -101,9 +101,13 @@ object RouteWrites:
     val processes = List(("java.lang.ProcessBuilder", "start"), ("java.lang.Runtime", "exec")).map(_ -> Kind.Process)
     (db ++ files ++ processes).toMap
 
-  /** Not followed into: a transaction PostgreSQL holds read-only. */
+  /** Not followed into: a transaction PostgreSQL holds read-only, or one rolled back at its end (`snapshot`: nothing it
+    * does is kept; the bundle export's and the merge plan's `REPEATABLE READ, READ ONLY` snapshots, Magnum's `transact`
+    * before X4, which the scan did not follow either).
+    */
   val Barriers: Set[(String, String)] = Set(
     ("com.histmersion.util.database.Transactor", "readOnlyRollback"),
+    ("com.histmersion.util.database.Transactor", "snapshot"),
     ("com.histmersion.util.database.Transactor.Session", "readOnlyRollback")
   )
 

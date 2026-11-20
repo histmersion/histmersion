@@ -120,6 +120,59 @@ class WritePermitSuite extends munit.FunSuite:
     assertEquals(gate.unit(gate.permit(1)), Right(1), "a unit begun after the restore")
     assertEquals(gate.permit(1), Right(1), "a request is no unit")
 
+  test("X4: a write without a permit does not compile; a read, a snapshot and a read-only rollback need none"):
+    val errors = compileErrors("Runs.write(1)")
+    assert(errors.contains("No given instance of type com.histmersion.util.database.WritePermit"), errors)
+    assert(compileErrors("Runs.writeAutocommit(1)").contains("WritePermit"))
+    assert(compileErrors("Transactor(Counting()).transact(1)").nonEmpty, "the unguarded transaction is not callable")
+    assertEquals(compileErrors("Runs.read(1)"), "")
+    assertEquals(compileErrors("Runs.snapshot(1)"), "")
+
+  test(
+    "X4: a worker unit's permit is not counted, writes while a restore drains, and is refused once it holds the database"
+  ):
+    val gate = WritePermit.Gate()
+    val begun = CountDownLatch(1)
+    val drained = CountDownLatch(1)
+    val closed = CountDownLatch(1)
+    val unit = onAnotherThread(gate.unit {
+      val kind = summon[WritePermit].kind
+      begun.countDown()
+      drained.await(10, TimeUnit.SECONDS)
+      val whileDraining = Runs.write(1) // the worker records where it stopped
+      closed.countDown()
+      while gate.stageNow != WritePermit.Stage.Closed do Thread.sleep(5)
+      val whileClosed = scala.util.Try(Runs.write(2)).toEither.left.map(_.getClass.getSimpleName)
+      (kind, whileDraining, whileClosed)
+    })
+    assert(begun.await(10, TimeUnit.SECONDS))
+    assert(gate.drain())
+    assert(gate.awaitPermits(10.millis.fromNow).none, "a unit's permit is not one the restore waits for")
+    drained.countDown()
+    assert(closed.await(10, TimeUnit.SECONDS))
+    gate.close()
+    assertEquals(unit(), Right((WritePermit.Kind.Worker, 1, Left("Raised"))))
+    gate.reopen()
+
+  test("X4: a unit reuses the permit its thread holds, and a guarded write inside a unit reuses the unit's"):
+    val gate = WritePermit.Gate()
+    val same = gate.permit(outer ?=> gate.unit(summon[WritePermit] eq outer))
+    assertEquals(same, Right(true))
+    val inner = gate.unit(outer ?=> gate.permit(summon[WritePermit] eq outer))
+    assertEquals(inner, Right(true))
+
+  test("X4: `writing` throws a refusal as the restore's problem; reads go on while a restore drains"):
+    val gate = WritePermit.Gate()
+    val ds = gate.dataSource(Counting())
+    assert(gate.drain())
+    val refused = intercept[Raised](gate.writing(Runs.write(1)))
+    assertEquals(refused.problems.toVector, Vector(Problem.Conflict.Busy(Problem.Conflict.Activity.Restore)))
+    // a request's read, on another thread, while the restore waits for the writes: no permit, a connection
+    assert(onAnotherThread(ds.getConnection())().isRight)
+    assertEquals(onAnotherThread(Runs.read(7))(), Right(7))
+    gate.reopen()
+    assertEquals(gate.writing(Runs.write(3)), 3)
+
   test("a restore given up before it ran fences nothing off"):
     val gate = WritePermit.Gate()
     val epoch = gate.epochNow

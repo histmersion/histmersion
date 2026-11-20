@@ -11,6 +11,7 @@ import com.histmersion.domain.automation.{EngineStores, EngineStoreSuite}
 import java.time.Instant
 import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.GoalFocus
+import com.histmersion.util.database.TestPermits.given
 
 /** The contract the focus's reads and records keep: every goal with what the focus recorded; the goals of linked
   * sources and articles; each goal's last stop and its sources.

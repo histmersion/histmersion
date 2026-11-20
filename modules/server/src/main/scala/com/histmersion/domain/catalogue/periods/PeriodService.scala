@@ -12,6 +12,7 @@ import java.util.Locale
 import java.util.concurrent.atomic.AtomicReference
 import scala.annotation.tailrec
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.database.WritePermit
 
 /** The named periods: the timeline's presets and the PeriodO definitions behind them, searched, read one by one and
   * written by the seed and the imports.
@@ -36,17 +37,17 @@ trait PeriodService:
   def placement(ids: List[HistoricalPeriod.Id]): Map[HistoricalPeriod.Id, Option[HistoricalPeriod.Id]]
 
   /** Upsert in the order given, parents first, in one transaction; a row with no preset keeps a stored one. */
-  def write(rows: List[HistoricalPeriod], dataset: Dataset): RowCount
+  def write(rows: List[HistoricalPeriod], dataset: Dataset)(using WritePermit): RowCount
 
   /** Take every preset not among `ids` off the menu (the rows stay); how many lost their heading. */
-  def retainPresets(ids: List[HistoricalPeriod.Id]): RowCount
+  def retainPresets(ids: List[HistoricalPeriod.Id])(using WritePermit): RowCount
 
   /** Delete the seed's rows not among `ids` (a collection's own are kept; their parts lose their parent). */
-  def deleteSeedExcept(ids: List[HistoricalPeriod.Id]): RowCount
+  def deleteSeedExcept(ids: List[HistoricalPeriod.Id])(using WritePermit): RowCount
 
   /** The version of the bundled seed `name` last applied here. */
   def seedVersion(name: PeriodService.SeedName): Option[PeriodService.SeedVersion]
-  def setSeedVersion(name: PeriodService.SeedName, version: PeriodService.SeedVersion): Unit
+  def setSeedVersion(name: PeriodService.SeedName, version: PeriodService.SeedVersion)(using WritePermit): Unit
 
 object PeriodService:
   type SeedName = SeedName.T
@@ -73,12 +74,15 @@ object PeriodService:
     def placement(ids: List[HistoricalPeriod.Id]): Map[HistoricalPeriod.Id, Option[HistoricalPeriod.Id]] =
       db.read(PeriodRepo.placement(ids.map(i => PeriodRow.Id(i.value))))
         .map((k, v) => HistoricalPeriod.Id(k.value) -> v.map(p => HistoricalPeriod.Id(p.value)))
-    def write(rows: List[HistoricalPeriod], dataset: Dataset): RowCount = db.transact(PeriodRepo.upsert(rows, dataset))
-    def retainPresets(ids: List[HistoricalPeriod.Id]): RowCount = db.transact(PeriodRepo.retainPresets(ids))
-    def deleteSeedExcept(ids: List[HistoricalPeriod.Id]): RowCount = db.transact(PeriodRepo.deleteSeedExcept(ids))
+    def write(rows: List[HistoricalPeriod], dataset: Dataset)(using WritePermit): RowCount =
+      db.write(PeriodRepo.upsert(rows, dataset))
+    def retainPresets(ids: List[HistoricalPeriod.Id])(using WritePermit): RowCount =
+      db.write(PeriodRepo.retainPresets(ids))
+    def deleteSeedExcept(ids: List[HistoricalPeriod.Id])(using WritePermit): RowCount =
+      db.write(PeriodRepo.deleteSeedExcept(ids))
     def seedVersion(name: SeedName): Option[SeedVersion] =
       db.read(PeriodRepo.seedVersion(PeriodRepo.SeedVersionName(name.value))).map(v => SeedVersion(v.value))
-    def setSeedVersion(name: SeedName, version: SeedVersion): Unit = db.transact(
+    def setSeedVersion(name: SeedName, version: SeedVersion)(using WritePermit): Unit = db.write(
       PeriodRepo.setSeedVersion(PeriodRepo.SetSeedVersionName(name.value), PeriodRepo.SeedVersion(version.value))
     )
 
@@ -111,7 +115,7 @@ object PeriodService:
     def placement(ids: List[HistoricalPeriod.Id]): Map[HistoricalPeriod.Id, Option[HistoricalPeriod.Id]] =
       all.filter(p => ids.contains(p.id)).map(p => p.id -> p.parentId.map(x => HistoricalPeriod.Id(x.value))).toMap
 
-    def write(rows: List[HistoricalPeriod], dataset: Dataset): RowCount =
+    def write(rows: List[HistoricalPeriod], dataset: Dataset)(using WritePermit): RowCount =
       @tailrec def upsert(rest: List[HistoricalPeriod], held: Vector[StoredPeriod]): Vector[StoredPeriod] =
         rest match
           case Nil       => held
@@ -128,7 +132,7 @@ object PeriodService:
         val _ = state.updateAndGet(_.modify(_.periods).using(upsert(rows, _)))
         RowCount(rows.size)
 
-    def retainPresets(ids: List[HistoricalPeriod.Id]): RowCount =
+    def retainPresets(ids: List[HistoricalPeriod.Id])(using WritePermit): RowCount =
       val lost = all.count(p => p.preset.isDefined && !ids.contains(p.id))
       val _ = state.updateAndGet(
         _.modify(_.periods).using(
@@ -137,7 +141,7 @@ object PeriodService:
       )
       RowCount(lost)
 
-    def deleteSeedExcept(ids: List[HistoricalPeriod.Id]): RowCount =
+    def deleteSeedExcept(ids: List[HistoricalPeriod.Id])(using WritePermit): RowCount =
       val gone = state.get.periods.filter(s => s.dataset == Dataset.Seed && !ids.contains(s.period.id))
       val goneIds = gone.map(_.period.id.value).toSet
       val _ = state.updateAndGet(
@@ -152,7 +156,7 @@ object PeriodService:
 
     def seedVersion(name: SeedName): Option[SeedVersion] =
       state.get.seedVersions.get(CatalogueState.SeedVersionsKey(name.value)).map(v => SeedVersion(v.value))
-    def setSeedVersion(name: SeedName, version: SeedVersion): Unit =
+    def setSeedVersion(name: SeedName, version: SeedVersion)(using WritePermit): Unit =
       val _ = state.updateAndGet(
         _.modify(_.seedVersions)
           .using(_.updated(CatalogueState.SeedVersionsKey(name.value), CatalogueState.SeedVersionsValue(version.value)))

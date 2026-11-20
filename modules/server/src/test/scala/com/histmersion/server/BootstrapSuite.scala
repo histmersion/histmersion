@@ -29,6 +29,7 @@ import com.histmersion.config.InitConfig
 import com.histmersion.api.catalogue.Year
 import com.histmersion.util.jobs.Job
 import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.util.database.TestPermits.given
 
 /** Named periods and the first-run job against a real Postgres (#719, #720); skipped without HISTMERSION_TEST_DB_URL.
   * The network is a function the test supplies, and the data directory is a temporary one holding the REAL committed

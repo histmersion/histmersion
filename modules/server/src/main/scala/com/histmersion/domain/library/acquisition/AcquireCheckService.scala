@@ -13,6 +13,7 @@ import java.time.Instant
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.domain.library.Doi
 import io.scalaland.chimney.dsl.*
+import com.histmersion.util.database.WritePermit
 
 /** The acquisition list's re-check: one record per acquisition item that was checked, and what the corpus holds of the
   * DOIs the items name.
@@ -31,7 +32,7 @@ trait AcquireCheckService:
       generation: AcquireRecheck.LastCheck.Generation,
       outcome: AcquireRecheck.Outcome,
       reason: AcquireRecheck.Rationale
-  ): Unit
+  )(using WritePermit): Unit
 
   /** How many checks since `since`, per outcome. */
   def countSince(since: Instant): Map[AcquireRecheck.Outcome.Wire, RowCount]
@@ -52,8 +53,8 @@ object AcquireCheckService:
         generation: AcquireRecheck.LastCheck.Generation,
         outcome: AcquireRecheck.Outcome,
         reason: AcquireRecheck.Rationale
-    ): Unit =
-      db.transact(AcquireCheckRepo.record(item, at, generation, outcome, reason))
+    )(using WritePermit): Unit =
+      db.write(AcquireCheckRepo.record(item, at, generation, outcome, reason))
     def countSince(since: Instant): Map[AcquireRecheck.Outcome.Wire, RowCount] =
       db.read(AcquireCheckRepo.countSince(since))
     def heldByDoi(dois: List[Doi]): Map[Doi, AcquireRecheck.Held] = db.read(AcquireCheckRepo.heldByDoi(dois))
@@ -72,7 +73,7 @@ object AcquireCheckService:
         generation: AcquireRecheck.LastCheck.Generation,
         outcome: AcquireRecheck.Outcome,
         reason: AcquireRecheck.Rationale
-    ): Unit =
+    )(using WritePermit): Unit =
       val _ = state.updateAndGet(
         _.modify(_.checks).using { cs =>
           val key = AcquisitionState.ChecksKey(item.value)

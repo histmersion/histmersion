@@ -12,6 +12,7 @@ import com.histmersion.domain.library.Doi
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.api.library.Citekey
+import com.histmersion.util.database.TestPermits.given
 
 /** The contract the work lists' kernel keeps, run on [[QueueService.InMemory]] and on the database (a scratch database
   * per test, gated on HISTMERSION_TEST_DB_URL): a row survives unchanged — multi-line text, unicode headings, status

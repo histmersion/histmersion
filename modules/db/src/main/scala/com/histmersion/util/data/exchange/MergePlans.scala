@@ -8,6 +8,7 @@ import com.histmersion.api.exchange.{MergePlan, MergeResolutions}
 import com.histmersion.util.data.exchange.MergeState
 import com.histmersion.domain.{MergePlanner, MergeSettings}
 import com.histmersion.util.storage.{ByteSource, ContentStore}
+import com.histmersion.util.database.Transactor
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
@@ -40,7 +41,7 @@ object MergePlans:
     loaded.manifest match
       case None    => Left(loaded.unreadable)
       case Some(m) =>
-        Right(transact(ds) {
+        Right(Transactor(ds).snapshot {
           sql"SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY".update.run()
           MergeState.withGeoJson(plan(bundle, m, loaded, resolutions, cfg, files, chunkChars, kinds, rules)._2.plan)
         })

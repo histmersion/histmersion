@@ -12,20 +12,21 @@ import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.database.WritePermit
 
 /** What an assessment rests on and what it leaves: the local Retraction Watch mirror, and the verdict recorded against
   * a stored source.
   */
 trait AssessmentService:
   /** Replace the whole mirror at once; how many rows it holds now. */
-  def replaceRetractionWatch(rows: List[Acquire.RetractionRow]): RowCount
+  def replaceRetractionWatch(rows: List[Acquire.RetractionRow])(using WritePermit): RowCount
   def retractionCount: RowCount
 
   /** Every notice the mirror records against this DOI. */
   def retractionsFor(doi: Doi): List[RetractionNotice]
 
   /** Record a verdict; its `checked_at` stamp. */
-  def record(assessment: AssessmentRecord): AssessmentService.CheckedAt
+  def record(assessment: AssessmentRecord)(using WritePermit): AssessmentService.CheckedAt
 
   /** `(verdict, checkedAt)` of the source's last assessment. */
   def lastFor(citekey: Citekey): Option[(AssessmentRecord.Verdict, AssessmentService.CheckedAt)]
@@ -37,12 +38,12 @@ object AssessmentService:
   def apply(db: Transactor): AssessmentService = Implementation(db)
 
   final private class Implementation(db: Transactor) extends AssessmentService:
-    def replaceRetractionWatch(rows: List[Acquire.RetractionRow]): RowCount =
-      db.transact(AssessmentRepo.replaceRetractionWatch(rows))
+    def replaceRetractionWatch(rows: List[Acquire.RetractionRow])(using WritePermit): RowCount =
+      db.write(AssessmentRepo.replaceRetractionWatch(rows))
     def retractionCount: RowCount = db.read(AssessmentRepo.retractionCount())
     def retractionsFor(doi: Doi): List[RetractionNotice] = db.read(AssessmentRepo.retractionsFor(doi))
-    def record(assessment: AssessmentRecord): CheckedAt = CheckedAt(
-      db.transact(AssessmentRepo.putAssessment(assessment))
+    def record(assessment: AssessmentRecord)(using WritePermit): CheckedAt = CheckedAt(
+      db.write(AssessmentRepo.putAssessment(assessment))
     )
     def lastFor(citekey: Citekey): Option[(AssessmentRecord.Verdict, CheckedAt)] =
       db.read(AssessmentRepo.assessmentFor(citekey))
@@ -52,7 +53,7 @@ object AssessmentService:
   final class InMemory(state: AtomicReference[AcquisitionState], clock: Clock) extends AssessmentService:
     private val Stamp = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").withZone(ZoneOffset.UTC)
 
-    def replaceRetractionWatch(rows: List[Acquire.RetractionRow]): RowCount =
+    def replaceRetractionWatch(rows: List[Acquire.RetractionRow])(using WritePermit): RowCount =
       val unique = rows.map(r => AcquisitionState.RetractionsKey(r.doi.value) -> r).toMap
       val _ = state.updateAndGet(_.modify(_.retractions).setTo(unique))
       RowCount(unique.size)
@@ -62,7 +63,7 @@ object AssessmentService:
         .get(AcquisitionState.RetractionsKey(doi.value.toLowerCase))
         .toList
         .map(r => RetractionNotice(r.nature, r.reason, Acquire.rwDate(r.date)))
-    def record(assessment: AssessmentRecord): CheckedAt =
+    def record(assessment: AssessmentRecord)(using WritePermit): CheckedAt =
       val at = Stamp.format(clock.instant())
       val _ = state.updateAndGet(
         _.modify(_.assessments).using(

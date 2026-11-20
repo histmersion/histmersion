@@ -2,24 +2,45 @@ package com.histmersion
 package util.database
 
 import com.augustnagro.magnum.{connect as connectTo, transact as transactOn, DbCon}
+import com.histmersion.util.database.Transactor.{onConnection, TimeoutMs}
 import javax.sql.DataSource
 import scala.annotation.nowarn
 import io.github.iltotore.iron.constraint.any.Pure
 
+/** The database's entry points, split by what they may do. A read needs nothing; a write needs a [[WritePermit]], so
+  * writing without one does not compile (X4 / G89): the permit comes from the maintenance gate's `guard` (an operation
+  * a restore waits for) or from a registered worker's unit (one a restore quiesces and fences off).
+  */
 trait Transactor:
+  /** `work` on a connection of its own, in autocommit mode: reads (and the named exceptions that write a cache or a log
+    * line on the way).
+    */
   def read[A](work: DbCon ?=> A): A
-  def transact[A](work: DbCon ?=> A): A
 
-  /** `work` in one transaction, under `permit`: the guarded write. A restore waits for it, and none starts while one
-    * runs ([[WritePermit.Gate]]). The plain [[transact]] is the unguarded one, counted until every write moved here.
+  /** `work` in one transaction that is rolled back at its end: a consistent snapshot to read (the caller may make it
+    * `REPEATABLE READ, READ ONLY`); nothing it does is kept.
+    */
+  def snapshot[A](work: DbCon ?=> A): A = read(onConnection.rollback(work))
+
+  /** `work` in one transaction, committed at its end, under `permit`. A restore waits for an operation's permit to come
+    * back and refuses a worker's while it holds the database ([[WritePermit.Gate]]).
     */
   def write[A](work: DbCon ?=> A)(using permit: WritePermit): A =
     permit.require()
     transact(work)
 
-  def autocommit[A](work: DbCon ?=> A): A = read(Transactor.onConnection.autocommit(work))
-  def readOnlyRollback[A](timeoutMs: Transactor.TimeoutMs)(work: DbCon ?=> A): A =
-    read(Transactor.onConnection.readOnlyRollback(timeoutMs)(work))
+  /** `work` on a connection in autocommit mode, each statement its own transaction (a `VACUUM`, an import in steps),
+    * under `permit`.
+    */
+  def writeAutocommit[A](work: DbCon ?=> A)(using permit: WritePermit): A =
+    permit.require()
+    read(onConnection.autocommit(work))
+
+  def readOnlyRollback[A](timeoutMs: TimeoutMs)(work: DbCon ?=> A): A =
+    read(onConnection.readOnlyRollback(timeoutMs)(work))
+
+  /** One committed transaction, with no permit asked: only [[write]] reaches it. */
+  protected def transact[A](work: DbCon ?=> A): A
 
 object Transactor:
   type TimeoutMs = TimeoutMs.T
@@ -29,11 +50,19 @@ object Transactor:
   def onConnection(using con: DbCon): Session = new Session(con)
 
   final class Session private[Transactor] (con: DbCon):
-    def autocommit[A](work: DbCon ?=> A): A =
+    /** `work` on this connection in autocommit mode, under `permit` (see [[Transactor.writeAutocommit]]). */
+    def writeAutocommit[A](work: DbCon ?=> A)(using permit: WritePermit): A =
+      permit.require()
+      autocommit(work)
+
+    private[Transactor] def autocommit[A](work: DbCon ?=> A): A =
       require(con.connection.getAutoCommit, "Autocommit work cannot borrow an active transaction")
       work(using con)
 
-    def transact[A](work: DbCon ?=> A): A = run(true, None)(work)
+    /** One committed transaction on this connection, under `permit` (see [[Transactor.write]]). */
+    def write[A](work: DbCon ?=> A)(using permit: WritePermit): A =
+      permit.require()
+      run(true, None)(work)
     def rollback[A](work: DbCon ?=> A): A = run(false, None)(work)
     def readOnlyRollback[A](timeoutMs: TimeoutMs)(work: DbCon ?=> A): A = run(false, Some(timeoutMs))(work)
 
@@ -87,4 +116,4 @@ object Transactor:
 
   final private class Implementation(dataSource: DataSource) extends Transactor:
     def read[A](work: DbCon ?=> A): A = connectTo(dataSource)(work)
-    def transact[A](work: DbCon ?=> A): A = transactOn(dataSource)(work)
+    protected def transact[A](work: DbCon ?=> A): A = transactOn(dataSource)(work)

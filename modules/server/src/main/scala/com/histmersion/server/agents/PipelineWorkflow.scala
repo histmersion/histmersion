@@ -10,6 +10,7 @@ import com.histmersion.domain.automation.workflows.WorkflowId
 import com.histmersion.domain.automation.AgentRole
 import com.histmersion.api.automation.Pipeline
 import com.histmersion.domain.automation.TargetKind
+import com.histmersion.util.database.WritePermit
 
 /** One of research's and the engine's pipelines registered as a workflow, through this transition adapter until
   * research defines its own (the library registers its own, `LibraryWorkflow`): its identifier, version, target, roles
@@ -44,7 +45,7 @@ final class PipelineWorkflow(
       .flatMap(_.tools)
       .toSet
 
-  def run(run: RunCtx): Either[Halt, WorkflowDefinition.Summary] =
+  def run(run: RunCtx)(using WritePermit): Either[Halt, WorkflowDefinition.Summary] =
     impl.run(run).map(summary => WorkflowDefinition.Summary(summary.value))
 
 object PipelineWorkflow:

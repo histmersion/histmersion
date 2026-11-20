@@ -4,6 +4,7 @@ import com.histmersion.util.problem.Problems
 
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.database.WritePermit
 
 /** The seam between an acquisition and the ingest's job queue.
   *
@@ -16,4 +17,6 @@ trait IngestJobs:
     *   the acquired file in the acquisition spool, or `None` when no PDF was found (the source is still created from
     *   metadata, so it can be enriched and queued)
     */
-  def enqueue(copy: Option[FetchedCopy], citekey: Citekey, meta: IngestMeta): Either[Problems, IngestOutcome]
+  def enqueue(copy: Option[FetchedCopy], citekey: Citekey, meta: IngestMeta)(using
+      WritePermit
+  ): Either[Problems, IngestOutcome]

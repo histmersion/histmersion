@@ -9,6 +9,7 @@ import com.histmersion.config.MediaConfig
 import com.histmersion.upstreams.wikidata.{WikidataEntities, WikidataItem}
 import com.histmersion.util.jobs.{BackgroundJob, Job}
 import com.histmersion.domain.catalogue.CatalogueJobs
+import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.catalogue.events.EventProviders
 import com.histmersion.pluginhost.{HttpTransport, PluginEvents, Polite}
 
@@ -36,13 +37,13 @@ final class SiteTypesControllers(
   def refineSiteTypes(caller: Caller, req: SiteTypes.Request): Either[Api.Error, JobInfo] =
     jobs.start(
       SiteTypesControllers.SiteTypesJobKind,
-      JobKinds.Subject(s"site types of the Wikidata sites on the map${if req.dryRun.value then " (dry run)" else ""}"),
-      write = !req.dryRun.value
+      JobKinds.Subject(s"site types of the Wikidata sites on the map${if req.dryRun.value then " (dry run)" else ""}")
     ) { (_, progress) =>
       Right(BackgroundJob.Outcome.Summary(SiteTypes.Report.summary(runSiteTypes(req, progress)).value))
     }
 
-  def runSiteTypes(req: SiteTypes.Request, progress: JobInfo.Progress => Unit): SiteTypes.Report =
+  /** The refinement itself, inside the job (under its unit's permit). */
+  def runSiteTypes(req: SiteTypes.Request, progress: JobInfo.Progress => Unit)(using WritePermit): SiteTypes.Report =
     val started = DeepTime.SignedYear(clock.millis())
     val refresh = SiteTypeService.Refresh(req.refresh.value)
     if req.dryRun.value then

@@ -9,6 +9,7 @@ import com.histmersion.util.database.Transactor
 import java.time.{Clock, Instant}
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.domain.library.Doi
+import com.histmersion.util.database.WritePermit
 
 /** The work lists' kernel: one table of items, a list per owner — ACQUIRE (the library's), TASKS and LOG (the
   * engine's). Each owner adds its own rules on top (a log item's dated topic, an acquisition item's DOI); the kernel
@@ -25,16 +26,16 @@ trait QueueService:
   def naming(list: Kind, doi: Doi): List[QueueItem]
 
   /** A new item of `list`, as stored (its status checked by the caller). */
-  def add(list: Kind, item: QueueAdd): QueueItem
+  def add(list: Kind, item: QueueAdd)(using WritePermit): QueueItem
 
   /** Only the parts present change (`Queue.applyPatch`); a done item keeps its first done time. */
-  def patch(id: QueueItemId, patch: QueuePatch): Either[QueueError, QueueItem]
+  def patch(id: QueueItemId, patch: QueuePatch)(using WritePermit): Either[QueueError, QueueItem]
 
   /** The item as it was before it was removed. */
-  def delete(id: QueueItemId): Either[QueueError, QueueItem]
+  def delete(id: QueueItemId)(using WritePermit): Either[QueueError, QueueItem]
 
   /** `items` written into `list` in one transaction, after emptying it when `mode` replaces. */
-  def replace(list: Kind, items: List[QueueAdd], mode: ImportMode): ImportCounts
+  def replace(list: Kind, items: List[QueueAdd], mode: ImportMode)(using WritePermit): ImportCounts
 
 object QueueService:
   def apply(db: Transactor): QueueService = Implementation(db)
@@ -58,23 +59,23 @@ object QueueService:
     def byIds(ids: List[QueueItemId]): List[QueueItem] =
       db.read(QueueRepo.byIds(ids.map(i => QueueRepo.QueueItemId(i.value)))).toList
     def naming(list: Kind, doi: Doi): List[QueueItem] = db.read(QueueRepo.naming(list, doi)).toList
-    def add(list: Kind, item: QueueAdd): QueueItem = db.transact(QueueRepo.insert(list, item))
+    def add(list: Kind, item: QueueAdd)(using WritePermit): QueueItem = db.write(QueueRepo.insert(list, item))
 
-    def patch(id: QueueItemId, p: QueuePatch): Either[QueueError, QueueItem] = db.transact:
+    def patch(id: QueueItemId, p: QueuePatch)(using WritePermit): Either[QueueError, QueueItem] = db.write:
       val rid = QueueRepo.QueueItemId(id.value)
       QueueRepo.get(rid).toRight(QueueError.NotFound(id)).map { cur =>
         QueueRepo.update(Queue.applyPatch(cur, p))
         QueueRepo.get(rid).get
       }
 
-    def delete(id: QueueItemId): Either[QueueError, QueueItem] = db.transact:
+    def delete(id: QueueItemId)(using WritePermit): Either[QueueError, QueueItem] = db.write:
       val rid = QueueRepo.QueueItemId(id.value)
       QueueRepo.get(rid).toRight(QueueError.NotFound(id)).map { item =>
         QueueRepo.delete(rid)
         item
       }
 
-    def replace(list: Kind, items: List[QueueAdd], mode: ImportMode): ImportCounts = db.transact:
+    def replace(list: Kind, items: List[QueueAdd], mode: ImportMode)(using WritePermit): ImportCounts = db.write:
       val removed: Int = if mode == ImportMode.Replace then QueueRepo.deleteList(list).value else 0
       items.foreach { i =>
         val _ = QueueRepo.insert(list, i)
@@ -93,17 +94,18 @@ object QueueService:
       state.get.items.filter(i => wanted(i.id.value)).toList
 
     def naming(list: Kind, doi: Doi): List[QueueItem] = state.get.naming(list, doi).toList
-    def add(list: Kind, item: QueueAdd): QueueItem = state.updateAndGet(_.added(list, item, now)).items.last
+    def add(list: Kind, item: QueueAdd)(using WritePermit): QueueItem =
+      state.updateAndGet(_.added(list, item, now)).items.last
 
-    def patch(id: QueueItemId, p: QueuePatch): Either[QueueError, QueueItem] =
+    def patch(id: QueueItemId, p: QueuePatch)(using WritePermit): Either[QueueError, QueueItem] =
       val after = state.updateAndGet(s => s.get(id).fold(s)(cur => s.updated(Queue.applyPatch(cur, p), now)))
       after.get(id).toRight(QueueError.NotFound(id))
 
-    def delete(id: QueueItemId): Either[QueueError, QueueItem] =
+    def delete(id: QueueItemId)(using WritePermit): Either[QueueError, QueueItem] =
       val before = state.getAndUpdate(_.removed(id))
       before.get(id).toRight(QueueError.NotFound(id))
 
-    def replace(list: Kind, items: List[QueueAdd], mode: ImportMode): ImportCounts =
+    def replace(list: Kind, items: List[QueueAdd], mode: ImportMode)(using WritePermit): ImportCounts =
       val at = now
       val before = state.getAndUpdate { s =>
         val start = if mode == ImportMode.Replace then s.emptied(list) else s

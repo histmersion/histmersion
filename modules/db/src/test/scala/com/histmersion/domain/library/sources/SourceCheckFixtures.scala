@@ -12,6 +12,7 @@ import com.histmersion.util.database.Transactor
 import javax.sql.DataSource
 import com.histmersion.util.ocr.Chunker
 import com.histmersion.api.checks.Lint
+import com.histmersion.util.database.TestPermits.given
 
 /** The library's and the articles' lint rules as the db suites run them: one connection for the lot, each rule by its
   * owner's repository; and the SQL each rule reads.

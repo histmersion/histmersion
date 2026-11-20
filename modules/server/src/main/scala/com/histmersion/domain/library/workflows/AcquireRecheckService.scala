@@ -33,6 +33,7 @@ import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.domain.automation.worklists.WorkListControllers
 import io.github.iltotore.iron.constraint.any.Pure
 import io.scalaland.chimney.dsl.*
+import com.histmersion.util.database.WritePermit
 
 /** The acquisition list's LEGAL RE-CHECK (docs/research-process-managers.md "As built: the acquisition list's
   * re-check"), a model-free pass of the managers' tick like the ingest backlog's drain, every
@@ -182,7 +183,7 @@ final class AcquireRecheckService(
   // ── the pass ───────────────────────────────────────────────────────────────────────────────────
 
   /** From the managers' tick: a pass when on, not draining, and `pass-minutes` passed since the last. */
-  def tick(now: Instant): List[Line] =
+  def tick(now: Instant)(using WritePermit): List[Line] =
     val s = settings
     if jobSlot.isRunning || agents.drain.draining then Nil
     else
@@ -190,7 +191,7 @@ final class AcquireRecheckService(
         case Some(line) => List(line)
         case None       => scheduledPass(s, now)
 
-  private def scheduledPass(s: Settings, now: Instant): List[Line] =
+  private def scheduledPass(s: Settings, now: Instant)(using WritePermit): List[Line] =
     if !s.enabled.value || !AcquireRecheck.passDue(
         Option(lastPass.get).filter(_ > 0).map(Instant.ofEpochMilli),
         s.passMinutes,
@@ -208,7 +209,9 @@ final class AcquireRecheckService(
     * answers at once; any other is started as a job ([[startJob]]), and `all` resumes the `all` job a restart or the
     * drain stopped.
     */
-  def run(in: RecheckRequest, now: Instant = Instant.now(agents.clock)): Either[Api.Error, RecheckResult] =
+  def run(in: RecheckRequest, now: Instant = Instant.now(agents.clock))(using
+      WritePermit
+  ): Either[Api.Error, RecheckResult] =
     in.id.filter(id =>
       !site.queues
         .get(QueueItemId(id.value))
@@ -267,7 +270,7 @@ final class AcquireRecheckService(
   /** A pass by hand, not a dry run, not one item: a job over every item (`all`, resuming the `all` job that was
     * stopped) or over the due ones the caps allow — or, when that is at most one, the pass at once.
     */
-  private def byHand(in: RecheckRequest, now: Instant): Either[Api.Error, RecheckResult] =
+  private def byHand(in: RecheckRequest, now: Instant)(using WritePermit): Either[Api.Error, RecheckResult] =
     val by = By(in.by.map(_.value.trim).filter(_.nonEmpty).getOrElse("person"))
     val fs = facts(None)
     val base = RecheckResult(
@@ -349,7 +352,7 @@ final class AcquireRecheckService(
   /** From the managers' tick (not draining, no job running): the newest re-check job, when a restart or the drain
     * stopped it, goes on as a new job over what it had not checked yet.
     */
-  private def resumeStopped(): Option[Line] =
+  private def resumeStopped()(using WritePermit): Option[Line] =
     latestJob().filter(resumable).flatMap { j =>
       j.detail.flatMap(Acquire.Checks.RecheckJob.Detail.of).flatMap(d => planOf(d).map(d -> _)).flatMap { (d, plan) =>
         startJob(plan, By(d.by.value), Some(jobIdOf(j))) match
@@ -363,7 +366,7 @@ final class AcquireRecheckService(
 
   /** Start `plan` as a `jobs` row (`histmersion jobs <id>` follows it); `resumes` = the stopped job it takes up.
     */
-  private def startJob(plan: JobPlan, by: By, resumes: Option[Job.Id]): Either[Api.Error, JobInfo] =
+  private def startJob(plan: JobPlan, by: By, resumes: Option[Job.Id])(using WritePermit): Either[Api.Error, JobInfo] =
     val detail = RecheckJob(
       RecheckJob.All(plan.all.value),
       RecheckJob.UpTo(plan.upTo.value.toLong),
@@ -388,7 +391,9 @@ final class AcquireRecheckService(
     * come (a rate limit) is a `failed` check and the job goes on. It stops between two items when the autopilot drains
     * (resumable) or a restore starts.
     */
-  private def runJob(jobId: Job.Id, plan: JobPlan, by: By, progress: JobInfo.Progress => Unit): BackgroundJob.Outcome =
+  private def runJob(jobId: Job.Id, plan: JobPlan, by: By, progress: JobInfo.Progress => Unit)(using
+      WritePermit
+  ): BackgroundJob.Outcome =
     passing.lock()
     try
       val up = upstream()
@@ -422,7 +427,9 @@ final class AcquireRecheckService(
         )
         report(AcquireRecheck.progressLine(start))
         @annotation.tailrec
-        def loop(left: List[Facts], t: Tally, rows: List[RecheckRow]): (Tally, List[RecheckRow], Option[Problem]) =
+        def loop(left: List[Facts], t: Tally, rows: List[RecheckRow])(using
+            WritePermit
+        ): (Tally, List[RecheckRow], Option[Problem]) =
           left match
             case Nil                          => (t, rows, None)
             case _ if agents.drain.draining   => (t, rows, Some(Stopped.Draining.problem))
@@ -465,13 +472,13 @@ final class AcquireRecheckService(
     finally passing.unlock()
 
   /** One pass at once (None: another is running). */
-  private[histmersion] def pass(in: RecheckRequest, now: Instant): Option[RecheckResult] =
+  private[histmersion] def pass(in: RecheckRequest, now: Instant)(using WritePermit): Option[RecheckResult] =
     if !passing.tryLock() then None
     else
       try Some(passNow(in, now))
       finally passing.unlock()
 
-  private def passNow(in: RecheckRequest, now: Instant): RecheckResult =
+  private def passNow(in: RecheckRequest, now: Instant)(using WritePermit): RecheckResult =
     val s = settings
     val up = upstream()
     val gen = up.fetcherGeneration
@@ -580,7 +587,7 @@ final class AcquireRecheckService(
       generation: AcquireRecheck.LastCheck.Generation,
       now: Instant,
       job: Option[Job.Id] = None
-  ): Option[RecheckRow] =
+  )(using WritePermit): Option[RecheckRow] =
     site.workLists.patch(
       QueueItemId(f.item.id.value),
       Queue.fulfil(f.item, apiCk(citekey), job.map(j => Queue.QueueItem.ClosedBy(j.value)))
@@ -610,7 +617,9 @@ final class AcquireRecheckService(
   final private case class Tried(row: RecheckRow, outcome: Outcome, detail: String)
 
   /** One item through the legal chain, recorded. */
-  private def attempt(f: Facts, generation: AcquireRecheck.LastCheck.Generation, now: Instant): Tried =
+  private def attempt(f: Facts, generation: AcquireRecheck.LastCheck.Generation, now: Instant)(using
+      WritePermit
+  ): Tried =
     val (doi, into) = f.action match
       case Action.Fetch(d, i) => (Some(d), i)
       case _                  => (None, None)

@@ -56,6 +56,7 @@ import com.histmersion.util.jobs.JobRow
 import com.histmersion.api.automation.Managers
 import com.histmersion.domain.automation.Run
 import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.util.database.TestPermits.given
 
 /** The process managers against a `*_test` database (docs/research-process-managers.md §6): the supervisor's tick with
   * a fixed clock — selection, dispatch, evaluation and the stop rules over several runs, holds, pause (with and without

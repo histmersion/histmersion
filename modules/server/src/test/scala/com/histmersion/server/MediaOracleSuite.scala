@@ -70,6 +70,7 @@ import com.histmersion.cli.Calibre
 import com.histmersion.config.CalibreCliConfig
 import com.histmersion.cli.Client
 import com.histmersion.cli.MediaCovers
+import com.histmersion.util.database.TestPermits.given
 
 /** What media answers, recorded on the code before media moved into its own domain:
   *

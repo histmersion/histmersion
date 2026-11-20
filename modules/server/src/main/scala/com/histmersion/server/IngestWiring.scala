@@ -9,6 +9,7 @@ import com.histmersion.util.ocr.ConverterClient
 import com.histmersion.domain.library.acquisition.Spool
 import com.histmersion.util.storage.{Location, Store}
 import com.histmersion.domain.library.Citekey
+import com.histmersion.util.database.WritePermit
 
 /** The library's ingest over one server's `deps`: the job queue over the converter and the originals' store, the ingest
   * surface, the hand-over an acquisition's fetched copy takes, and the seed. The figures are media's.
@@ -18,7 +19,7 @@ final class IngestWiring(
     converter: ConverterClient,
     sources: SourceService,
     figures: AssetService,
-    afterStore: Citekey => Option[IngestQueue.Note]
+    afterStore: Citekey => WritePermit ?=> Option[IngestQueue.Note]
 ):
   private def originals: Store = deps.storage.store(Location.IngestOriginals)
 
@@ -54,4 +55,4 @@ final class IngestWiring(
   /** What an acquisition hands its fetched copy to: the metadata at once, the file to the OCR queue. */
   val jobs: QueuedIngest = QueuedIngest(controllers, sources, c => spool.get(c.key).map(Upload.stored))
 
-  val seed: SeedImport = SeedImport(sources, figures.addFigures)
+  val seed: SeedImport = SeedImport(sources, (ck, fs) => figures.addFigures(ck, fs))

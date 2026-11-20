@@ -29,6 +29,7 @@ import com.histmersion.api.library.Confidence
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.api.automation.Agents
 import com.histmersion.api.Api
+import com.histmersion.util.database.WritePermit
 
 /** `enrich-source <citekey>` (docs/research-embedded-agents.md §4.2): read one source and propose its summary,
   * classification, period, quoted findings and notes; CODE verifies every answer and writes ONE patch. The LLM steps
@@ -55,7 +56,7 @@ final class EnrichSourcePipeline(
   val pipeline: Pipeline = Pipeline.EnrichSource
   private val name = pipeline.wire
 
-  def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
+  def run(ctx: RunCtx)(using WritePermit): Either[Halt, PipelineDef.Summary] =
     for
       ck <- Citekey.parse(ctx.run.target.value).left.map(Halt.Fail(_))
       loaded <- ctx.code[Loaded](AgentRepo.StepRecord.Name("load"))(load(ck))
@@ -146,7 +147,7 @@ final class EnrichSourcePipeline(
     * gazetteer the `geocode` step will use (#1424: asking before the answer is accepted is the only point where a
     * better name can still be asked for).
     */
-  private def findings(ctx: RunCtx, l: Loaded, c: Classified): Either[Halt, List[VerifiedFinding]] =
+  private def findings(ctx: RunCtx, l: Loaded, c: Classified)(using WritePermit): Either[Halt, List[VerifiedFinding]] =
     val existing = l.existingClaims.toSet
     val guards =
       lib.enrich.guards.guards((name, kind, at) => site.geocode(LibrarySite.PlaceName(name.value), kind, at).isDefined)
@@ -186,7 +187,7 @@ final class EnrichSourcePipeline(
     * so a person can audit it. An unknown place keeps its name with no point, and an approximate choice (a qualifier
     * dropped, a placeholder point) is kept with a warning; both are said.
     */
-  private def geocode(ctx: RunCtx, fs: List[VerifiedFinding]): Geocoded =
+  private def geocode(ctx: RunCtx, fs: List[VerifiedFinding])(using WritePermit): Geocoded =
     val placed = fs.map { f =>
       val hit = f.place.flatMap(p =>
         site.geocode(LibrarySite.PlaceName(p.value), f.placeKind.getOrElse(Geocode.KindHint.Unknown), f.period)
@@ -287,7 +288,7 @@ final class EnrichSourcePipeline(
   /** The record against OpenAlex/Crossref. Differences are WARNINGS for a person (a wrong year can mean a wrong
     * citekey, which only a person renames); nothing is written.
     */
-  private def metadata(ctx: RunCtx, l: Loaded): MetaChecked =
+  private def metadata(ctx: RunCtx, l: Loaded)(using WritePermit): MetaChecked =
     upstreamBlocked(l) match
       case Some(why) => MetaChecked(checked = MetaChecked.Checked(false), Nil, MetaChecked.Note(why))
       case None      =>
@@ -303,7 +304,7 @@ final class EnrichSourcePipeline(
   /** `refs --apply`: the deposited reference list becomes `references` edges (a network failure is a warning, never a
     * failed run — the enrichment is already written).
     */
-  private def refs(ctx: RunCtx, l: Loaded): Upstreamed =
+  private def refs(ctx: RunCtx, l: Loaded)(using WritePermit): Upstreamed =
     upstreamBlocked(l) match
       case Some(why) => Upstreamed(ran = Upstreamed.Ran(false), Upstreamed.Summary(why))
       case None      =>
@@ -323,7 +324,7 @@ final class EnrichSourcePipeline(
             )
 
   /** `assess --apply`: a retraction overwrites the status (the assess rule) and flags the run. */
-  private def assess(ctx: RunCtx, l: Loaded): Upstreamed =
+  private def assess(ctx: RunCtx, l: Loaded)(using WritePermit): Upstreamed =
     upstreamBlocked(l) match
       case Some(why) => Upstreamed(ran = Upstreamed.Ran(false), Upstreamed.Summary(why))
       case None      =>
@@ -343,7 +344,9 @@ final class EnrichSourcePipeline(
   /** The classify step's status, if the patch did not already fill it: through the approval gate. A retraction found by
     * `assess` outranks any proposal.
     */
-  private def status(ctx: RunCtx, ck: Citekey, c: Classified, p: Patched, a: Upstreamed): StatusRouted =
+  private def status(ctx: RunCtx, ck: Citekey, c: Classified, p: Patched, a: Upstreamed)(using
+      WritePermit
+  ): StatusRouted =
     if p.fieldsSet.contains(Patched.FieldsSet("status")) then
       StatusRouted(Some(StatusRouted.Applied(c.status.wire.value)), None, StatusRouted.Note("filled by the patch"))
     else if c.status == ApiSource.Status.Unassessed then
@@ -376,7 +379,9 @@ final class EnrichSourcePipeline(
     * started for ticked off, and a `log` line. Calibre is untouched: a source not in Calibre is already what
     * `histmersion calibre gaps` reports, host-side.
     */
-  private def close(ctx: RunCtx, ck: Citekey, p: Patched, r: StatusRouted): Either[Problems, Closed] =
+  private def close(ctx: RunCtx, ck: Citekey, p: Patched, r: StatusRouted)(using
+      WritePermit
+  ): Either[Problems, Closed] =
     // a dry run patched nothing: the lint would only describe the source as it was before
     val lint = if ctx.dryRun then Nil
     else

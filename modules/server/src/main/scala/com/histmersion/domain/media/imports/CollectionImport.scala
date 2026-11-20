@@ -29,6 +29,7 @@ import com.histmersion.plugin.Plugin
 import com.histmersion.plugin.WorkKey
 import com.histmersion.util.ocr.Pixels
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.database.WritePermit
 
 /** The import of one collection (#1446): for each place, a search by its name; each record judged — its own licence
   * statement first (never assumed), the collection's allowlist, then the match ([[SearchedCollection.matches]]) — and
@@ -58,7 +59,7 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
       dryRun: CollectionImport.DryRun,
       refresh: CollectionImport.Refresh,
       store: MediaStore
-  ): MediaImportReport =
+  )(using WritePermit): MediaImportReport =
     val failed = List.newBuilder[String]
     val allow = LicencePolicy.of(Licence.AllowList(col.conf.licences.value))
     val places = targets.filter(_.targetType == ImportRepo.Place)
@@ -182,7 +183,7 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
       refresh: CollectionImport.Refresh,
       db: MediaStore,
       failed: scala.collection.mutable.Builder[String, List[String]]
-  ): MediaImportReport =
+  )(using WritePermit): MediaImportReport =
     val allow = LicencePolicy.of(Licence.AllowList(col.conf.licences.value))
     val known = db.known(col.provider, judged.map(j => AssetService.ProviderKey(j.rec.key.value)).distinct)
     def knownOf(rec: MediaRecord) = known.get(AssetService.ProviderKey(rec.key.value))

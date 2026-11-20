@@ -60,6 +60,7 @@ import com.histmersion.config.ServerConfig
 import com.histmersion.domain.media.imports.Target
 import com.histmersion.api.media.ImportJobKinds
 import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.util.database.TestPermits.given
 
 /** The second slice of #1446 through the server, against the test database (HISTMERSION_TEST_DB_URL; skipped otherwise)
   * and fakes only — no network, no sidecar: a paper's illustration chosen from its figures with a thumbnail from the

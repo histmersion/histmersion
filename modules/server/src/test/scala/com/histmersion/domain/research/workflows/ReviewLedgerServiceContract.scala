@@ -10,6 +10,7 @@ import com.histmersion.domain.ReviewArticle.{Finding, Reviewer, Severity}
 import com.histmersion.domain.ReviewLedger.{Entry, Ledger, Status}
 import com.histmersion.domain.research.{ResearchStores, ResearchStoreSuite, Slug}
 import com.histmersion.api.research.Article
+import com.histmersion.util.database.TestPermits.given
 
 /** What the review ledgers answer, the same on the database and in memory: a ledger written and read back, none for an
   * article never reviewed, refused for an article that does not exist, passed once no MAJOR is open, following its

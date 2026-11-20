@@ -15,6 +15,7 @@ import com.histmersion.api.Api
 import com.histmersion.util.jobs.Job
 import com.histmersion.api.ByteCount
 import com.histmersion.api.maintenance.Storage
+import com.histmersion.util.database.WritePermit
 
 /** `POST /api/maintenance/vacuum`: VACUUM of registered tables as a [[BackgroundJob]] (kind `vacuum`) — a vacuum of
   * `place_names` (3.7 GB) runs for minutes, past any request timeout. It answers at once with the job; `histmersion
@@ -59,8 +60,10 @@ final class VacuumJobs(
         )((_, progress) => run(plan, progress))
       }
 
-  private def run(plan: VacuumPlan, progress: JobInfo.Progress => Unit): BackgroundJob.Outcome =
-    @tailrec def loop(rest: List[(VacuumPlan.Tables, Int)], lines: List[String]): BackgroundJob.Outcome =
+  private def run(plan: VacuumPlan, progress: JobInfo.Progress => Unit)(using WritePermit): BackgroundJob.Outcome =
+    @tailrec def loop(rest: List[(VacuumPlan.Tables, Int)], lines: List[String])(using
+        WritePermit
+    ): BackgroundJob.Outcome =
       def outcome(failed: Option[String]) =
         BackgroundJob.Outcome(
           Option.when(lines.nonEmpty)(BackgroundJob.Outcome.Summary(lines.mkString("; "))),
@@ -79,7 +82,7 @@ final class VacuumJobs(
           val before = transactor.read(VacuumRepo.state(name))
           val started = System.nanoTime()
           scala.util
-            .Try(transactor.autocommit(VacuumRepo.vacuum(name, VacuumRepo.Analyze(plan.analyze.value))))
+            .Try(transactor.writeAutocommit(VacuumRepo.vacuum(name, VacuumRepo.Analyze(plan.analyze.value))))
             .toEither match
             case Left(e)  => outcome(Some(s"$table: ${e.getMessage}"))
             case Right(_) =>

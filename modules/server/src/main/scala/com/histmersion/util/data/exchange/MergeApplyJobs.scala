@@ -30,10 +30,12 @@ final class MergeApplyJobs(
     workers: Workers = Workers(WritePermit.Gate())
 ):
 
-  /** Start `run` on its own thread and wait up to `waitSeconds` for it. */
+  /** Start `run` on its own thread and wait up to `waitSeconds` for it. The row is written under the caller's permit;
+    * `run` holds the worker unit's.
+    */
   def start(bundle: Sha256, planHash: MergeRow.PlanHash)(
-      run: () => Either[Problems, MergeApplyResult]
-  ): Either[Api.Error, MergeApplyJob] =
+      run: () => WritePermit ?=> Either[Problems, MergeApplyResult]
+  )(using WritePermit): Either[Api.Error, MergeApplyJob] =
     synchronized {
       if runs.running then
         Left(
@@ -52,15 +54,17 @@ final class MergeApplyJobs(
         val done = CompletableFuture[Unit]()
         // on the generation (database) the request was pinned to
         val work = carrier.carryWork { () =>
-          val outcome: Either[Problems, MergeApplyResult] = scala.util
-            .Try(run())
-            .toEither
-            .left
-            .map(e => ProblemLog.unexpected(e, Problem.Where("merge apply")))
-            .flatten
-          try runs.finish(id, outcome)
-          catch case e: Exception => scribe.error(s"merge apply $id: could not record its end: ${e.getMessage}", e)
-          finally { val _ = done.complete(()) }
+          workers.unit {
+            val outcome: Either[Problems, MergeApplyResult] = scala.util
+              .Try(run())
+              .toEither
+              .left
+              .map(e => ProblemLog.unexpected(e, Problem.Where("merge apply")))
+              .flatten
+            try runs.finish(id, outcome)
+            catch case e: Exception => scribe.error(s"merge apply $id: could not record its end: ${e.getMessage}", e)
+            finally { val _ = done.complete(()) }
+          }
         }
         workers.detached(Quiescent.Name("merge-apply"))(() => work())
         Right(id -> done)

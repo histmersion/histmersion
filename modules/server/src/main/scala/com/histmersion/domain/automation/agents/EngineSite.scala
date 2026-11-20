@@ -6,6 +6,7 @@ import com.histmersion.domain.automation.workflows.{AutomationHost, Contribution
 import com.histmersion.domain.automation.worklists.{QueueService, WorkListControllers}
 import com.histmersion.plugin.AiProvider
 import com.histmersion.util.jobs.{JobStops, Pinning, Workers}
+import com.histmersion.util.data.maintenance.WriteGate
 
 import javax.sql.DataSource
 import scala.collection.immutable.ListMap
@@ -38,7 +39,10 @@ trait EngineSite:
   /** The server's long-running workers, as a restore holds them: the engine, the managers and the lease register there,
     * and each run, tick and renewal is one unit of work.
     */
-  def workers: Workers
+  def workers: Workers = maintenance.workers
+
+  /** The maintenance gate: a request that writes holds its permit (`guard`), so a restore waits for it. */
+  def maintenance: WriteGate
 
   /** The time the engine's decisions read: the composition's clock (a suite gives one of its own). */
   def clock: java.time.Clock

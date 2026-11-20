@@ -8,17 +8,18 @@ import com.histmersion.api.automation.PlanQuota.*
 
 import scala.jdk.CollectionConverters.*
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.database.WritePermit
 
 /** What a CLI client reports its readings to and asks mid-step: the plan pools ([[PlanPools]]), or a test's stand-in.
   */
 trait PoolSink:
-  def record(p: PoolId, rs: List[Reading]): Unit
+  def record(p: PoolId, rs: List[Reading])(using WritePermit): Unit
 
   /** Why `p` may not take another call now, and when it frees; None = it may. */
   def blocked(
       p: PoolId,
       model: Option[AgentsControllers.ModelName]
-  ): Option[(PlanQuota.Rationale, Option[PlanQuotaRepo.EpochMillis])]
+  )(using WritePermit): Option[(PlanQuota.Rationale, Option[PlanQuotaRepo.EpochMillis])]
 
   /** Read the ChatGPT plan from the app-server when the last read is old enough (throttled). */
-  def refresh(now: PlanQuotaRepo.EpochMillis): Unit
+  def refresh(now: PlanQuotaRepo.EpochMillis)(using WritePermit): Unit

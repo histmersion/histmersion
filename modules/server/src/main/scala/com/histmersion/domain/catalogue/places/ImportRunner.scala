@@ -9,6 +9,7 @@ import com.histmersion.plugin.GazetteerSource
 import com.histmersion.pluginhost.PluginGazetteers
 import com.histmersion.api.catalogue.Place
 import com.histmersion.plugin.Plugin
+import com.histmersion.util.database.WritePermit
 
 /** Imports a gazetteer source a plugin registered (Cliopatria, AWMC and ChronOntology are Histmersion's own): the
   * source downloads and reads its dataset through the client the host lends it, the host checks and converts each place
@@ -35,7 +36,7 @@ object ImportRunner:
       geometry: PlaceGeometry,
       dryRun: GazetteerControllers.DryRun,
       toleranceKm: GeocodeSettings.ToleranceKm
-  ): Either[Problem, Place.ImportResult] =
+  )(using WritePermit): Either[Problem, Place.ImportResult] =
     for
       (all, refused) <- ImportRunner.places(source, http)
       result <-
@@ -58,7 +59,7 @@ object ImportRunner:
       places: PlaceService,
       geometry: PlaceGeometry,
       toleranceKm: GeocodeSettings.ToleranceKm
-  ): Either[Problem, Place.ImportResult] =
+  )(using WritePermit): Either[Problem, Place.ImportResult] =
     try
       val batches = items.grouped(BatchSize).toList
       val total = batches.zipWithIndex.foldLeft(

@@ -22,6 +22,7 @@ import com.histmersion.domain.automation.Approval as DomainApproval
 import com.histmersion.api.Api
 import com.histmersion.server.ListQueries
 import com.histmersion.domain.automation.Approval
+import com.histmersion.util.database.WritePermit
 
 /** The approval gate (docs/research-embedded-agents.md §5.2): what an agent run PROPOSES — a status, a disagreement
   * edge, a filter, a plan — becomes an `approvals` row a person decides from the web UI or the CLI (the library routes
@@ -102,7 +103,7 @@ final class Approvals(
       id: Approval.Id,
       decision: Approval.Outcome,
       note: Option[Approval.Note]
-  ): Either[Api.Error, ApprovalInfo] =
+  )(using WritePermit): Either[Api.Error, ApprovalInfo] =
     val clean = note.map(_.value.trim).filter(_.nonEmpty).map(n => DomainApproval.Note(n.take(2000)))
     for
       d <- Decision
@@ -152,7 +153,7 @@ final class Approvals(
       k: ApprovalKind,
       d: Decision,
       note: Option[Approval.Note]
-  ): Either[Api.Error, ApprovalInfo] =
+  )(using WritePermit): Either[Api.Error, ApprovalInfo] =
     val to = if d == Decision.Approve then ApprovalState.Approved else ApprovalState.Rejected
     val id = DomainApproval.Id(a.id.value)
     for
@@ -208,7 +209,7 @@ final class Approvals(
       a: ApprovalInfo,
       d: Decision,
       note: Option[Approval.Note]
-  ): Either[Api.Error, ApprovalInfo] =
+  )(using WritePermit): Either[Api.Error, ApprovalInfo] =
     val (to, result) = d match
       case Decision.Approve => (ApprovalState.Approved, "approved — the run that proposed it continues and applies it")
       case Decision.Reject  => (ApprovalState.Rejected, "rejected — the run finishes without applying it")
@@ -241,7 +242,7 @@ final class Approvals(
       id: Approval.Id,
       d: Decision,
       clean: Option[Approval.Note]
-  ): Either[Api.Error, ApprovalInfo] =
+  )(using WritePermit): Either[Api.Error, ApprovalInfo] =
     for
       apply <- store
         .payload(id)

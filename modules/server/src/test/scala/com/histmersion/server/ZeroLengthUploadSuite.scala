@@ -18,6 +18,7 @@ import com.histmersion.config.DbConfig
 import com.histmersion.config.ConverterConfig
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.storage.Blob
+import com.histmersion.util.database.TestPermits.given
 
 /** Uploads over a REUSED connection (plan §1.8) — the SAFETY property, pinned after a real bug.
   *

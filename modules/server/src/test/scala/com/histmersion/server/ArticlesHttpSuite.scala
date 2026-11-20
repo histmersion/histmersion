@@ -10,6 +10,7 @@ import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import com.histmersion.db.TestDb
 import com.histmersion.config.DbConfig
 import com.histmersion.config.ServerConfig
+import com.histmersion.util.database.TestPermits.given
 
 /** The article surface over real HTTP (plan §5.2 stream 2.7): the REST contract including its status codes, and the
   * rendered `/article/{slug}` page — whose whole point is that a `[[citekey]]` and a `[[slug]]` resolve to DIFFERENT

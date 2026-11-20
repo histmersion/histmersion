@@ -23,6 +23,7 @@ import com.histmersion.api.automation.PlanQuota
 import com.histmersion.domain.automation.AgentRole
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.ModelChains
+import com.histmersion.util.database.WritePermit
 
 /** The model chains and allowances in effect — config (`agents.roles.*`, `agents.allowances`) with what was saved in
   * the database over it — and the choice the engine makes before every LLM call (docs/research-embedded-agents.md §15):
@@ -77,7 +78,7 @@ final class ModelPicker(
     * `refresh` names why and the model is wanted, a fresh reading taken first when the verdict hangs only on an old one
     * ([[PlanPools.decide]]).
     */
-  private def working(refresh: Option[PlanQuota.RefreshTrigger]): PoolRead =
+  private def working(refresh: Option[PlanQuota.RefreshTrigger])(using WritePermit): PoolRead =
     (p, m, now, want) =>
       (refresh, want) match
         case (Some(t), Want.Wanted) =>
@@ -340,7 +341,7 @@ final class ModelPicker(
       now: PlanQuotaRepo.EpochMillis = PlanQuotaRepo.EpochMillis(wallClock.millis()),
       refresh: Option[PlanQuota.RefreshTrigger] = Some(PlanQuota.RefreshTrigger.Pick),
       onRefresh: ModelState.Refreshed => Unit = _ => ()
-  ): Either[PickFailure, Picked] =
+  )(using WritePermit): Either[PickFailure, Picked] =
     choose(role, overrideRef, now, working(refresh), onRefresh)
 
   /** The model [[pick]] would choose for `role` now, from what is stored: no pool is read, nothing is written (the

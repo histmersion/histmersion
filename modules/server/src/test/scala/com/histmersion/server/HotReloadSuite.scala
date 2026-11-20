@@ -24,6 +24,7 @@ import com.histmersion.config.DbConfig
 import com.histmersion.util.storage.Blob
 import com.histmersion.config.ServerConfig
 import com.histmersion.domain.library.acquisition.CoreBudget
+import com.histmersion.util.database.TestPermits.given
 
 /** A config reload against a running server (docs/research-plugins.md §3.5, §3.6): the database swapped between two
   * test databases on the same Postgres, with a request and an OCR job that started on the old one finishing there and

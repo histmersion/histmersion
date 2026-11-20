@@ -18,6 +18,7 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.research.Slug
 import com.histmersion.domain.Title
 import com.histmersion.api.catalogue.Year
+import com.histmersion.util.database.TestPermits.given
 
 /** The contract the goals keep: put and read back (sub-goals, a refused period), links in their order with what they
   * point at, plans and caps, the schedules not moved yet and their move.

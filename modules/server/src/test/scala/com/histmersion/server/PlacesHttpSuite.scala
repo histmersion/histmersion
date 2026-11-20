@@ -25,6 +25,7 @@ import com.histmersion.config.BundlesConfig
 import com.histmersion.config.BasemapConfig
 import com.histmersion.config.PlaceSourcesConfig
 import com.histmersion.config.StorageConfig
+import com.histmersion.util.database.TestPermits.given
 
 /** The gazetteer over real HTTP (plan §1.6a): import a tiny Linked-Places document, then read it back through every
   * route. Gated on HISTMERSION_TEST_DB_URL like the other server suites.

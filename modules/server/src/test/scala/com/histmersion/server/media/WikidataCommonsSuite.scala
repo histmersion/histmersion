@@ -19,6 +19,8 @@ import com.histmersion.domain.*
 import com.histmersion.domain.media.assets.{Known, ProviderAsset, Rights}
 import com.histmersion.domain.media.imports.Target
 import com.histmersion.api.media.{AssetKind, MediaCount, MediaImportReport, MediaProvider}
+import com.histmersion.util.database.WritePermit
+import com.histmersion.util.database.TestPermits.given
 
 /** The Wikidata → Commons provider (#1446) end to end against a FAKE provider (captured answers, trimmed) and an
   * in-memory store — the `media-wikidata` plugin's collection, as the host builds it, run by the host's import of a
@@ -55,12 +57,12 @@ class WikidataCommonsSuite extends munit.FunSuite:
         case (k, (uid, a, _)) if wanted(k.value) =>
           AssetService.ProviderKey(k.value) -> Known(Known.Uid(uid.value), Some(Known.License(a.license.value)))
       }.toMap
-    def save(a: ProviderAsset, first: (ImportService.TargetType, ImportService.TargetId)) =
+    def save(a: ProviderAsset, first: (ImportService.TargetType, ImportService.TargetId))(using WritePermit) =
       val existing = saved.get(a.key).map(_._1)
       val uid = existing.getOrElse(AssetService.AssetUid(f"00000000-0000-0000-0000-${saved.size + 1}%012d"))
       saved(a.key) = (uid, a, first)
       (uid, existing.isEmpty)
-    def refreshRights(uid: AssetService.AssetUid, r: Rights) = refreshed += uid -> r
+    def refreshRights(uid: AssetService.AssetUid, r: Rights)(using WritePermit) = refreshed += uid -> r
     def link(
         uid: AssetService.AssetUid,
         tt: ImportService.TargetType,
@@ -69,11 +71,13 @@ class WikidataCommonsSuite extends munit.FunSuite:
         p: Option[AssetService.LinkProperty],
         q: Option[AssetService.LinkItem],
         rank: AssetService.LinkRank
-    ) =
+    )(using WritePermit) =
       val before = links.exists(l => l._1 == uid && l._2 == tt && l._3 == ti && l._4 == role)
       links += ((uid, tt, ti, role, p, q, rank))
       !before
-    def commonsCategory(placeId: Place.Id, category: ImportService.CommonsCategory, qid: Wikidata.Id) =
+    def commonsCategory(placeId: Place.Id, category: ImportService.CommonsCategory, qid: Wikidata.Id)(using
+        WritePermit
+    ) =
       cats.add((placeId, category, qid))
     def checked(
         provider: ImportService.Provider,
@@ -81,7 +85,7 @@ class WikidataCommonsSuite extends munit.FunSuite:
         ti: ImportService.TargetId,
         found: ImportService.FoundCount,
         qid: Option[Wikidata.Id]
-    ) = checks((tt, ti)) = found
+    )(using WritePermit) = checks((tt, ti)) = found
 
   private val wbgetentities = FakeMediaHttp.fixture("wbgetentities.json")
   private val imageinfo = FakeMediaHttp.fixture("imageinfo.json")
@@ -298,7 +302,9 @@ class WikidataCommonsSuite extends munit.FunSuite:
           .setTo(MediaCommonsConfig.Licences("cc0,public-domain,cc-by,cc-by-sa,cc-by-nc-sa"))
       )
     val store = new MemStore:
-      override def save(a: ProviderAsset, first: (ImportService.TargetType, ImportService.TargetId)) =
+      override def save(a: ProviderAsset, first: (ImportService.TargetType, ImportService.TargetId))(using
+          WritePermit
+      ) =
         if a.key == ProviderAsset.Key("File:Mycenae plan NC.png") then throw IllegalStateException("disk full")
         else super.save(a, first)
     val r = run(provider(), dryRun = DryOff, store, cfg = withNc)

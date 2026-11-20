@@ -10,6 +10,7 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Title
 import com.histmersion.domain.library.LibraryStores
+import com.histmersion.util.database.TestPermits.given
 
 /** What the citation graph answers, the same on the database and in memory: a source's edges both ways by kind, the
   * graph around it to a depth, the disagreements by edge and by status.

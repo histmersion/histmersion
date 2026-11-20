@@ -28,7 +28,7 @@ final class Workers(gate: WritePermit.Gate):
     val name: Quiescent.Name = Quiescent.Name("work started once")
     def quiesce(): Unit = ()
     def busy: Vector[Quiescent.Busy] = running.values.asScala.toVector.sorted
-    def restored(): Unit = ()
+    def restored()(using WritePermit): Unit = ()
     def resume(): Unit = ()
 
   registered.add(oneShots)
@@ -40,12 +40,12 @@ final class Workers(gate: WritePermit.Gate):
   def names: List[Quiescent.Name] = registered.asScala.toList.map(_.name)
 
   /** `work` as one unit of a worker's work: fenced off from the database by a restore that happens while it runs. */
-  def unit[A](work: => A): A = gate.unit(work)
+  def unit[A](work: WritePermit ?=> A): A = gate.unit(work)
 
   /** Run `work` once, on a daemon thread of its own named `histmersion-<name>`, as one unit: a restore waits for it
-    * (bounded) and fences it off when it is still running then.
+    * (bounded) and fences it off when it is still running then. `work` holds the unit's permit.
     */
-  def detached(name: Quiescent.Name)(work: () => Unit): Unit =
+  def detached(name: Quiescent.Name)(work: () => WritePermit ?=> Unit): Unit =
     val ticket = Workers.Ticket(tickets.incrementAndGet())
     val _ = running.put(ticket, Quiescent.Busy(s"$name"))
     val _ = Thread
@@ -72,7 +72,8 @@ final class Workers(gate: WritePermit.Gate):
   /** After a restore: every worker takes up the restored rows. A worker that fails to is logged and named in the
     * answer; the others go on.
     */
-  def reconcileAll(): List[Problem] = each(Problem.Where("reconciling with the restored database"))(_.restored())
+  def reconcileAll()(using WritePermit): List[Problem] =
+    each(Problem.Where("reconciling with the restored database"))(_.restored())
 
   /** The restore has ended: every worker takes work again. */
   def resumeAll(): Unit = each(Problem.Where("resuming"))(_.resume())

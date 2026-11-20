@@ -18,6 +18,7 @@ import com.histmersion.config.DbConfig
 import com.histmersion.config.ServerConfig
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.instance.UiNotices
+import com.histmersion.util.database.TestPermits.given
 
 /** The toolbar's notices over HTTP: `GET /api/ui/counters` counts what waits and says what is new,
   * `POST /api/ui/seen/{board}` marks a window read, and the mark only moves forward. From a network the server does not

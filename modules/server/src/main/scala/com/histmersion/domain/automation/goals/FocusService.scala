@@ -9,6 +9,7 @@ import hearth.kindlings.optics.syntax.*
 
 import java.time.{Clock, Instant}
 import java.util.concurrent.atomic.AtomicReference
+import com.histmersion.util.database.WritePermit
 
 /** The focus's reads of every goal at once, as the engine's other features reach them — each goal with what the focus
   * recorded about it, the goals linked to sources and articles, each goal's last stop and its sources — and what the
@@ -31,16 +32,16 @@ trait FocusService:
   def sourceCounts(): Map[domain.automation.Goal.Slug, RowCount]
 
   /** The goal became active at `now`, `why`. */
-  def joined(slug: domain.automation.Goal.Slug, why: GoalFocus.Rationale, now: Instant): Unit
+  def joined(slug: domain.automation.Goal.Slug, why: GoalFocus.Rationale, now: Instant)(using WritePermit): Unit
 
   /** The goal left the active set at `now`, `why`. */
-  def left(slug: domain.automation.Goal.Slug, why: GoalFocus.Rationale, now: Instant): Unit
+  def left(slug: domain.automation.Goal.Slug, why: GoalFocus.Rationale, now: Instant)(using WritePermit): Unit
 
   /** A person's pin; false = no such goal. */
-  def pin(slug: domain.automation.Goal.Slug, pinned: FocusRepo.GoalRow.Pinned): Boolean
+  def pin(slug: domain.automation.Goal.Slug, pinned: FocusRepo.GoalRow.Pinned)(using WritePermit): Boolean
 
   /** A person's priority; false = no such goal. */
-  def priority(slug: domain.automation.Goal.Slug, n: FocusRepo.GoalRow.Priority): Boolean
+  def priority(slug: domain.automation.Goal.Slug, n: FocusRepo.GoalRow.Priority)(using WritePermit): Boolean
 
 object FocusService:
   /** A goal as the focus reads it. */
@@ -57,14 +58,14 @@ object FocusService:
     def lastStops(): Map[domain.automation.Goal.Slug, GoalFocus.Rationale] =
       db.read(FocusRepo.lastStops())
     def sourceCounts(): Map[domain.automation.Goal.Slug, RowCount] = db.read(FocusRepo.sourceCounts())
-    def joined(slug: domain.automation.Goal.Slug, why: GoalFocus.Rationale, now: Instant): Unit =
-      db.transact(FocusRepo.joined(slug, why, now))
-    def left(slug: domain.automation.Goal.Slug, why: GoalFocus.Rationale, now: Instant): Unit =
-      db.transact(FocusRepo.left(slug, why, now))
-    def pin(slug: domain.automation.Goal.Slug, pinned: FocusRepo.GoalRow.Pinned): Boolean =
-      db.transact(FocusRepo.pin(slug, pinned))
-    def priority(slug: domain.automation.Goal.Slug, n: FocusRepo.GoalRow.Priority): Boolean =
-      db.transact(FocusRepo.priority(slug, n))
+    def joined(slug: domain.automation.Goal.Slug, why: GoalFocus.Rationale, now: Instant)(using WritePermit): Unit =
+      db.write(FocusRepo.joined(slug, why, now))
+    def left(slug: domain.automation.Goal.Slug, why: GoalFocus.Rationale, now: Instant)(using WritePermit): Unit =
+      db.write(FocusRepo.left(slug, why, now))
+    def pin(slug: domain.automation.Goal.Slug, pinned: FocusRepo.GoalRow.Pinned)(using WritePermit): Boolean =
+      db.write(FocusRepo.pin(slug, pinned))
+    def priority(slug: domain.automation.Goal.Slug, n: FocusRepo.GoalRow.Priority)(using WritePermit): Boolean =
+      db.write(FocusRepo.priority(slug, n))
 
   /** The focus in memory, over the shared state's goals, links and managers' items. */
   final class InMemory(state: AtomicReference[AutomationState], clock: Clock) extends FocusService:
@@ -140,7 +141,7 @@ object FocusService:
         )
         .goals
         .contains(goalKey) || !mustExist
-    def joined(slug: domain.automation.Goal.Slug, why: GoalFocus.Rationale, now: Instant): Unit =
+    def joined(slug: domain.automation.Goal.Slug, why: GoalFocus.Rationale, now: Instant)(using WritePermit): Unit =
       val _ = changeFocus(slug, mustExist = false)(
         _.modify(_.active)
           .setTo(FocusRecord.Active(true))
@@ -149,7 +150,7 @@ object FocusService:
           .modify(_.why)
           .setTo(Some(why))
       )
-    def left(slug: domain.automation.Goal.Slug, why: GoalFocus.Rationale, now: Instant): Unit =
+    def left(slug: domain.automation.Goal.Slug, why: GoalFocus.Rationale, now: Instant)(using WritePermit): Unit =
       val focusKey = AutomationState.FocusKey(slug.value)
       val _ = state.updateAndGet(
         _.modify(_.focus).using(fs =>
@@ -167,7 +168,7 @@ object FocusService:
             )
         )
       )
-    def pin(slug: domain.automation.Goal.Slug, pinned: FocusRepo.GoalRow.Pinned): Boolean =
+    def pin(slug: domain.automation.Goal.Slug, pinned: FocusRepo.GoalRow.Pinned)(using WritePermit): Boolean =
       changeFocus(slug, mustExist = true)(_.modify(_.pinned).setTo(FocusRecord.Pinned(pinned.value)))
-    def priority(slug: domain.automation.Goal.Slug, n: FocusRepo.GoalRow.Priority): Boolean =
+    def priority(slug: domain.automation.Goal.Slug, n: FocusRepo.GoalRow.Priority)(using WritePermit): Boolean =
       changeFocus(slug, mustExist = true)(_.modify(_.priority).setTo(FocusRecord.Priority(n.value)))

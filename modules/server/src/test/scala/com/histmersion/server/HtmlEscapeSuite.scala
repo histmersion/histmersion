@@ -9,6 +9,7 @@ import com.histmersion.db.TestDb
 import com.histmersion.domain.Title
 import com.histmersion.config.DbConfig
 import com.histmersion.config.ServerConfig
+import com.histmersion.util.database.TestPermits.given
 
 /** The HTML pages are the only place this service emits markup, and both places it interpolated a caller- or
   * agent-supplied string into it were unescaped. These are the regression tests.

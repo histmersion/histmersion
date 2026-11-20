@@ -12,6 +12,7 @@ import hearth.kindlings.optics.syntax.*
 
 import java.util.concurrent.atomic.AtomicReference
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.database.WritePermit
 
 /** Whether a person has read a source or an article — only what they marked ("Mark as read") — and when they last
   * opened it, which marks nothing read. Marking unread keeps the row, with no read time. What is not read yet is the
@@ -26,8 +27,10 @@ trait ReadingService:
       read: ReadingService.Read,
       title: Option[TargetLabel],
       at: MarkTime
+  )(using WritePermit): ReadMark
+  def opened(user: UserId, kind: ItemKind, key: ItemKey, title: Option[TargetLabel], at: MarkTime)(using
+      WritePermit
   ): ReadMark
-  def opened(user: UserId, kind: ItemKind, key: ItemKey, title: Option[TargetLabel], at: MarkTime): ReadMark
 
   /** A page of the records of `kind` not marked read, by title. */
   def unread(user: UserId, kind: ItemKind, size: PageSize, from: Offset): UnreadItems
@@ -69,16 +72,18 @@ object ReadingService:
         read: Read,
         title: Option[TargetLabel],
         at: MarkTime
-    ): ReadMark =
+    )(using WritePermit): ReadMark =
       val r = ref(kind, key, items)
-      val stored = db.transact:
+      val stored = db.write:
         ReadingRepo.setRead(user, r, title, read, at)
         readBack(user, r)
       shown(List(stored), items).head
 
-    def opened(user: UserId, kind: ItemKind, key: ItemKey, title: Option[TargetLabel], at: MarkTime): ReadMark =
+    def opened(user: UserId, kind: ItemKind, key: ItemKey, title: Option[TargetLabel], at: MarkTime)(using
+        WritePermit
+    ): ReadMark =
       val r = ref(kind, key, items)
-      val stored = db.transact:
+      val stored = db.write:
         ReadingRepo.setOpened(user, r, title, at)
         readBack(user, r)
       shown(List(stored), items).head
@@ -128,12 +133,14 @@ object ReadingService:
         read: Read,
         title: Option[TargetLabel],
         at: MarkTime
-    ): ReadMark =
+    )(using WritePermit): ReadMark =
       upsert(user, kind, key, title, at)(m =>
         m.modify(_.readAt).setTo(if read.value then m.readAt.orElse(Some(at)) else None)
       )
 
-    def opened(user: UserId, kind: ItemKind, key: ItemKey, title: Option[TargetLabel], at: MarkTime): ReadMark =
+    def opened(user: UserId, kind: ItemKind, key: ItemKey, title: Option[TargetLabel], at: MarkTime)(using
+        WritePermit
+    ): ReadMark =
       upsert(user, kind, key, title, at)(_.modify(_.openedAt).setTo(Some(at)))
 
     def unread(user: UserId, kind: ItemKind, size: PageSize, from: Offset): UnreadItems =

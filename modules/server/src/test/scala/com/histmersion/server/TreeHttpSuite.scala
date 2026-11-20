@@ -10,6 +10,7 @@ import com.histmersion.api.catalogue.{Lpf, Place}
 import com.histmersion.db.TestDb
 import com.histmersion.config.DbConfig
 import com.histmersion.config.ServerConfig
+import com.histmersion.util.database.TestPermits.given
 
 /** `/api/aggregate` with the §1.6 axes over real HTTP: the nested tree, its parameters and its errors. Gated on
   * HISTMERSION_TEST_DB_URL like every other server suite.

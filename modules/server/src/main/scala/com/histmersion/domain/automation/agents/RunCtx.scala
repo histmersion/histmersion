@@ -28,6 +28,7 @@ import com.histmersion.util.jobs.JobRepo
 import com.histmersion.util.jobs.JobRow
 import com.histmersion.domain.automation.approvals.ApprovalQuery
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.database.WritePermit
 
 /** What a running pipeline sees: its run, and the two kinds of step. Every step is checkpointed in `agent_steps`;
   * before running step `n` the context looks for a finished attempt of `n` and, if there is one, REPLAYS its output
@@ -76,7 +77,8 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
       case Some(h) => Left(h)
       case None    => Right(results.collect { case Right(a) => a }.toList)
 
-  def warn(w: String): Unit = engine.agents.jobRuns.warn(agentJobKind, runId, JobRepo.WarningText(w.take(500)))
+  def warn(w: String)(using WritePermit): Unit =
+    engine.agents.jobRuns.warn(agentJobKind, runId, JobRepo.WarningText(w.take(500)))
 
   /** A DRY run (#992) reads and calls models as usual but writes nothing to the corpus. */
   def dryRun: Boolean = run.dryRun.value
@@ -92,15 +94,17 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
   /** THE write gate: every write a pipeline makes to the corpus (a patch, an article, a queue item, an approval, a
     * goal, a link, an upstream `--apply`) goes through here. In a dry run `perform` is not called: `what` and `payload`
     * (the whole write, as JSON) are recorded on the step under "dry run: not written", and `simulated` stands in for
-    * the result.
+    * the result. `perform` holds the run's unit permit (the engine's worker: a restore pauses the run and fences it
+    * off).
     */
-  def write[A](what: String, payload: => Json)(perform: => A)(simulated: => A): A =
-    if !dryRun then perform
+  def write[A](what: String, payload: => Json)(perform: WritePermit ?=> A)(simulated: => A): A =
+    if !dryRun then engine.agents.workers.unit(perform)
     else
       skipped.add(WouldWrite(WouldWrite.What(what), WouldWrite.Payload(payload.noSpaces)))
       simulated
 
-  def progress(p: String): Unit = engine.agents.jobRuns.progress(agentJobKind, runId, JobRow.Progress(p))
+  def progress(p: String)(using WritePermit): Unit =
+    engine.agents.jobRuns.progress(agentJobKind, runId, JobRow.Progress(p))
 
   /** Replay step `seq` if it finished before; a recorded step of another NAME means the pipeline changed under a paused
     * run, which is refused rather than misread.
@@ -131,7 +135,9 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
   /** A deterministic step. Its output is checkpointed, so a side effect in `body` (a patch, a queue entry) happens at
     * most once per run.
     */
-  def code[O: JsonValueCodec](name: AgentRepo.StepRecord.Name)(body: => Either[Problems, O]): Either[Halt, O] =
+  def code[O: JsonValueCodec](name: AgentRepo.StepRecord.Name)(body: => Either[Problems, O])(using
+      WritePermit
+  ): Either[Halt, O] =
     val seq = claimSeq()
     replay[O](seq, name).getOrElse {
       engine.checkControl(runId).flatMap { _ =>
@@ -202,12 +208,12 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
     */
   def approval(name: AgentRepo.StepRecord.Name, kind: ApprovalKind, subject: ApprovalQuery.Subject, mode: ApprovalMode)(
       payload: => Either[Problems, String]
-  ): Either[Halt, Decided] =
+  )(using WritePermit): Either[Halt, Decided] =
     val seq = claimSeq()
     replay[Decided](seq, name).getOrElse {
       engine.checkControl(runId).flatMap { _ =>
         val started = java.time.Instant.now(engine.agents.clock)
-        def done(d: Decided): Either[Halt, Decided] =
+        def done(d: Decided)(using WritePermit): Either[Halt, Decided] =
           engine.agents.runs.record(
             jobId,
             AgentRepo.StepRecord(
@@ -228,7 +234,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
             Nil
           )
           Right(d)
-        def waitFor(a: ApprovalInfo): Either[Halt, Decided] =
+        def waitFor(a: ApprovalInfo)(using WritePermit): Either[Halt, Decided] =
           progress(s"$name: waiting for approval ${a.id}")
           Left(Halt.Wait(Halt.Wait.Id(a.id.value), Halt.Wait.What(s"$name: approval ${a.id} waits for a person")))
         approvalStore.forStep(jobId, ApprovalService.StepSeq(seq.value)) match
@@ -320,7 +326,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
       schema: ResponseSchema[A],
       maxTokens: Option[RunCtx.MaxTokens] = None,
       turns: Option[AgentRepo.StepRecord.Turns] = None
-  )(validate: (A, RunCtx.LastAttempt) => Either[List[Problem], Checked[O]]): Either[Halt, O] =
+  )(validate: (A, RunCtx.LastAttempt) => Either[List[Problem], Checked[O]])(using WritePermit): Either[Halt, O] =
     llmAt(claimSeq(), name, agent, user, schema, maxTokens, turns)(validate)
 
   /** [[llm]] at a step number taken earlier with [[reserve]] — the form a parallel step uses. `maxTokens` overrides
@@ -336,7 +342,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
       schema: ResponseSchema[A],
       maxTokens: Option[RunCtx.MaxTokens] = None,
       turns: Option[AgentRepo.StepRecord.Turns] = None
-  )(validate: (A, RunCtx.LastAttempt) => Either[List[Problem], Checked[O]]): Either[Halt, O] =
+  )(validate: (A, RunCtx.LastAttempt) => Either[List[Problem], Checked[O]])(using WritePermit): Either[Halt, O] =
     llmAtSeen[A, O](seq, name, agent, user, schema, maxTokens, turns)((a, last, _) => validate(a, last))
 
   /** [[llmAt]] whose `validate` also sees the tool calls the step has made so far — this attempt's and the earlier
@@ -352,7 +358,9 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
       schema: ResponseSchema[A],
       maxTokens: Option[RunCtx.MaxTokens] = None,
       turns: Option[AgentRepo.StepRecord.Turns] = None
-  )(validate: (A, RunCtx.LastAttempt, List[ToolUse]) => Either[List[Problem], Checked[O]]): Either[Halt, O] =
+  )(
+      validate: (A, RunCtx.LastAttempt, List[ToolUse]) => Either[List[Problem], Checked[O]]
+  )(using WritePermit): Either[Halt, O] =
     replay[O](seq, name).getOrElse {
       engine.checkControl(runId).flatMap { _ =>
         engine.beat(runId, Some(Engine.BeatSeq(seq.value)))
@@ -389,7 +397,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
   /** The model for the next call of `role`: the first of its chain with allowance left ([[ModelPicker.pick]]). None
     * left = the run pauses until the earliest window frees.
     */
-  private def pickModel(name: AgentRepo.StepRecord.Name, role: Role): Either[Halt, Picked] =
+  private def pickModel(name: AgentRepo.StepRecord.Name, role: Role)(using WritePermit): Either[Halt, Picked] =
     engine.agents.picker.pick(
       role,
       run.modelFor(role).map(m => AgentsControllers.ModelName(m.value)),
@@ -415,7 +423,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
       turns: AgentDef.MaxTurns,
       validate: (A, RunCtx.LastAttempt, List[ToolUse]) => Either[List[Problem], Checked[O]],
       ceiling: Problem.Run.Ceiling
-  ): Either[Halt, O] =
+  )(using WritePermit): Either[Halt, O] =
     val role = agent.role
     val maxAttempts = 1 + math.max(0, cfg.step.maxRetries.value)
     // a resumed step's earlier attempts count as answers judged: its retries are not handed out twice
@@ -431,7 +439,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
         problems: List[Problem],
         previous: Option[String],
         seen: List[ToolUse]
-    ): Either[Halt, O] =
+    )(using WritePermit): Either[Halt, O] =
       engine.checkControl(runId).flatMap(_ => engine.checkBudget(runId)).flatMap(_ => pickModel(name, role)) match
         case Left(h)                                                       => Left(h)
         case Right(_) if attempt - before > maxAttempts + MaxModelSwitches =>
@@ -657,7 +665,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
       started: java.time.Instant,
       msgs: List[AgentRepo.MessageRecord],
       served: Served = Served.Unknown
-  ): Unit =
+  )(using WritePermit): Unit =
     val cost = billing.cost(use)
     engine.agents.runs.record(
       jobId,

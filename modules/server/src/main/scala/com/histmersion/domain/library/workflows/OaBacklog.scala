@@ -39,6 +39,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Source
 import com.histmersion.domain.automation.worklists.QueueItemId
 import com.histmersion.api.automation.Managers
+import com.histmersion.util.database.WritePermit
 
 /** The watchers' INGEST BACKLOG (docs/research-process-managers.md "As built: the ingest backlog"). A watcher with
   * auto-ingest on used to send every legal open-access pick past the day's allowance to the acquisition list — the
@@ -74,7 +75,7 @@ final class OaBacklog(
     * goal added), or a new entry of `managerId` — nothing when the corpus has it or this watcher settled an entry for
     * it before (a person skipped it).
     */
-  def add(managerId: ManagerInfo.Id, goal: Goal.Slug, w: OaWork): Placement =
+  def add(managerId: ManagerInfo.Id, goal: Goal.Slug, w: OaWork)(using WritePermit): Placement =
     val doi = Doi.assume(w.doi.value)
     val apiGoal = com.histmersion.api.automation.Goal.Slug(goal.value)
     val open = agents.managerStore.backlogOpenFor(doi)
@@ -249,7 +250,7 @@ final class OaBacklog(
     * tried again after the backoff (the acquisition list after `max-failures`). One worklog line per tick that did
     * something.
     */
-  def drain(now: Instant): List[String] =
+  def drain(now: Instant)(using WritePermit): List[String] =
     val pending = agents.managerStore.backlogPending()
     if pending.isEmpty then Nil
     else
@@ -297,11 +298,13 @@ final class OaBacklog(
     case Retried
     case Lost
 
-  private def one(i: ManagerItem, holderGoal: Option[Goal.Slug], now: Instant): Drained =
+  private def one(i: ManagerItem, holderGoal: Option[Goal.Slug], now: Instant)(using WritePermit): Drained =
     val doi = Doi.assume(i.target.value)
     val w = i.state.oa.getOrElse(OaWork(com.histmersion.api.library.Doi(doi.value)))
     val goals = (w.goals.map(g => Goal.Slug.assume(g.value)) ++ holderGoal.toList).distinct
-    def settle(status: ItemStatus, outcome: String, kind: String, text: String, d: Drained): Drained =
+    def settle(status: ItemStatus, outcome: String, kind: String, text: String, d: Drained)(using
+        WritePermit
+    ): Drained =
       if agents.managerStore.settle(i.id, status, ManagerItem.Outcome(outcome), List(ItemStatus.Pending)) then
         agents.managerStore.event(
           i.managerId,
@@ -403,7 +406,7 @@ final class OaBacklog(
   /** The acquisition item for `doi` (an existing one that names it, else a new one in the sweep's wording), linked to
     * every goal. None when the list refused it.
     */
-  private def acquireOnce(goals: List[Goal.Slug], doi: Doi, w: OaWork): Option[Queue.QueueItem.Id] =
+  private def acquireOnce(goals: List[Goal.Slug], doi: Doi, w: OaWork)(using WritePermit): Option[Queue.QueueItem.Id] =
     val existing = site.queues.naming(Queue.Kind.Acquire, doi).headOption.map(_.id)
     val id = existing.orElse {
       val goal = goals.headOption
@@ -468,7 +471,7 @@ final class OaBacklog(
     * stay. Nothing a person added is touched. `dryRun` changes nothing. Each moved item is a manager event; the whole a
     * worklog line.
     */
-  def repair(in: RepairRequest): RepairResult =
+  def repair(in: RepairRequest)(using WritePermit): RepairResult =
     val dryRun = in.dryRun.value
     val by = in.by.map(_.value.trim).filter(_.nonEmpty).getOrElse("person")
     val rows = agents.managerStore.sweepAcquireItems()
@@ -589,7 +592,7 @@ final class OaBacklog(
   /** A moved work's backlog entry: an existing open one of any watcher, else a new one of `managerId`; None when
     * `managerId` settled one for it before (a person's skip is not undone).
     */
-  private def addMoved(managerId: ManagerInfo.Id, w: OaWork): Option[ManagerItem.Id] =
+  private def addMoved(managerId: ManagerInfo.Id, w: OaWork)(using WritePermit): Option[ManagerItem.Id] =
     val doi = Doi.assume(w.doi.value)
     agents.managerStore.backlogOpenFor(doi).map(_.id).orElse {
       val (id, isNew) = agents.managerStore.upsert(
@@ -605,7 +608,7 @@ final class OaBacklog(
       Option.when(isNew)(id)
     }
 
-  private def joinGoal(itemId: ManagerItem.Id, goal: Goal.Slug): Unit =
+  private def joinGoal(itemId: ManagerItem.Id, goal: Goal.Slug)(using WritePermit): Unit =
     val apiGoal = com.histmersion.api.automation.Goal.Slug(goal.value)
     agents.managerStore.item(itemId).foreach { i =>
       val st = i.state.oa.getOrElse(OaWork(com.histmersion.api.library.Doi(i.target.value)))
@@ -617,7 +620,7 @@ final class OaBacklog(
         )
     }
 
-  private def removeAcquire(item: SweepAcquireItem.Item, goals: List[Goal.Slug]): Unit =
+  private def removeAcquire(item: SweepAcquireItem.Item, goals: List[Goal.Slug])(using WritePermit): Unit =
     val _ = site.workLists.delete(QueueItemId(item.value))
     goals.foreach(g => agents.goals.unlink(g, Goal.LinkKind.QueueItem, GoalLink.Ref(item.value.toString)))
 

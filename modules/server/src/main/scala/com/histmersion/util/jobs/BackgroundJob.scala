@@ -16,6 +16,7 @@ import com.histmersion.api.Api
 import io.github.iltotore.iron.constraint.any.Pure
 import scala.annotation.{nowarn, tailrec}
 import scala.util.control.NonFatal
+import com.histmersion.util.database.WritePermit
 
 /** The ONE way the server runs work longer than a request as a background job (#1946): a `jobs` row (`histmersion jobs
   * <id>` follows it; a restart fails it as `interrupted` like every other unfinished job), on its own daemon thread, at
@@ -90,10 +91,10 @@ object BackgroundJob:
       case None               => Right(out)
 
   /** Change the detail the job `id` records. */
-  def amendDetail(ds: DataSource, id: Job.Id)(change: JobDetail => JobDetail): Unit =
+  def amendDetail(ds: DataSource, id: Job.Id)(change: JobDetail => JobDetail)(using WritePermit): Unit =
     Transactor(ds)
       .read(JobRepo.get(id))
-      .foreach(j => Transactor(ds).transact(JobRepo.setDetail(id, change(j.detail.getOrElse(JobDetail.empty)))))
+      .foreach(j => Transactor(ds).write(JobRepo.setDetail(id, change(j.detail.getOrElse(JobDetail.empty)))))
 
   /** Start `body` as a job of `kind` (with `detail` stored on its row) in `slot`; `Left` — naming the running one —
     * when the slot is held. `what` names this kind of work in that refusal ("a vacuum job"), `busyCode` is its error
@@ -117,11 +118,13 @@ object BackgroundJob:
         */
       pins: WorkCarrier = WorkCarrier.none,
       stops: Option[JobStops] = None
-  )(body: (JobInfo, JobInfo.Progress => Unit) => Outcome): Either[Api.Error, JobInfo] =
+  )(
+      body: (JobInfo, JobInfo.Progress => Unit) => WritePermit ?=> Outcome
+  )(using WritePermit): Either[Api.Error, JobInfo] =
     if !slot.claim(Work("starting")) then Left(busy(what, slot.current, busyCode))
     else
       val job =
-        try Transactor(ds).transact(JobRepo.create(kind, None, None, detail = detail))
+        try Transactor(ds).write(JobRepo.create(kind, None, None, detail = detail))
         catch
           // frees the slot and rethrows: every Throwable, or a fatal one would leave the slot claimed for good
           case e: (Throwable @nowarn("id=E235")) =>
@@ -148,7 +151,7 @@ object BackgroundJob:
       busyCode: Option[Api.Error.Code],
       pins: WorkCarrier,
       stops: Option[JobStops],
-      body: (JobInfo, JobInfo.Progress => Unit) => Outcome
+      body: (JobInfo, JobInfo.Progress => Unit) => WritePermit ?=> Outcome
   ):
     /** The job row's id, as the database keeps it. */
     private val id: Job.Id = Job.Id.assume(job.id.value)
@@ -159,30 +162,33 @@ object BackgroundJob:
       */
     def run(from: JobState): Unit =
       slot.note(Work(s"job ${job.id}"))
+      // the body holds the unit's permit (the detached thread's), so a restore fences it off
       val work = pins.carryWork { () =>
-        val last = AtomicReference[Option[JobInfo.Progress]](None)
-        // a report closes a part: what it says is kept, and a stop asked meanwhile takes effect there
-        def report(text: JobInfo.Progress): Unit =
-          last.set(Some(text))
-          db.transact(JobRepo.progress(id, JobRow.Progress(text.value)))
-          stops.flatMap(_.requestedFor(id)).foreach(stop => throw JobStopped(stop))
-        try
-          val moved =
-            db.transact(
-              JobRepo.transition(
-                id,
-                from,
-                JobState.Running,
-                last.get.orElse(Some(JobInfo.Progress("starting"))).map(p => JobRow.Progress(p.value))
+        workers.unit {
+          val last = AtomicReference[Option[JobInfo.Progress]](None)
+          // a report closes a part: what it says is kept, and a stop asked meanwhile takes effect there
+          def report(text: JobInfo.Progress)(using WritePermit): Unit =
+            last.set(Some(text))
+            db.write(JobRepo.progress(id, JobRow.Progress(text.value)))
+            stops.flatMap(_.requestedFor(id)).foreach(stop => throw JobStopped(stop))
+          try
+            val moved =
+              db.write(
+                JobRepo.transition(
+                  id,
+                  from,
+                  JobState.Running,
+                  last.get.orElse(Some(JobInfo.Progress("starting"))).map(p => JobRow.Progress(p.value))
+                )
               )
-            )
-          // a job cancelled (or otherwise moved on) while it waited does not run: its row says what became of it
-          if moved.isEmpty then notStarted(from)
-          else ran(last, report)
-        catch
-          // the database failed before the body ran, or while its end was recorded: logged, the slot freed below
-          case NonFatal(e) => val _ = ProblemLog.unexpected(e, Problem.Where(s"job ${job.id} ($kind)"))
-        finally slot.free()
+            // a job cancelled (or otherwise moved on) while it waited does not run: its row says what became of it
+            if moved.isEmpty then notStarted(from)
+            else ran(last, report)
+          catch
+            // the database failed before the body ran, or while its end was recorded: logged, the slot freed below
+            case NonFatal(e) => val _ = ProblemLog.unexpected(e, Problem.Where(s"job ${job.id} ($kind)"))
+          finally slot.free()
+        }
       }
       workers.detached(Quiescent.Name(s"$kind job ${job.id}"))(() => work())
 
@@ -196,7 +202,9 @@ object BackgroundJob:
       )
 
     /** Run the body and record how it ended. */
-    private def ran(last: AtomicReference[Option[JobInfo.Progress]], report: JobInfo.Progress => Unit): Unit =
+    private def ran(last: AtomicReference[Option[JobInfo.Progress]], report: JobInfo.Progress => Unit)(using
+        WritePermit
+    ): Unit =
       val (out, thrown) =
         try (body(job, report), None)
         catch
@@ -213,13 +221,13 @@ object BackgroundJob:
           o.error match
             case None =>
               recordEnding(JobState.Done)(
-                db.transact(
+                db.write(
                   JobRepo.transition(id, JobState.Running, JobState.Done, o.summary.map(m => JobRow.Progress(m.value)))
                 )
               )
             case Some(e) =>
               recordEnding(JobState.Failed)(
-                db.transact(
+                db.write(
                   JobRepo.transition(
                     id,
                     JobState.Running,
@@ -232,7 +240,7 @@ object BackgroundJob:
         case Left(JobStop.Pause) =>
           stops.foreach(_.pausedWith(id, () => resume()))
           recordEnding(JobState.Paused)(
-            db.transact(
+            db.write(
               JobRepo.transition(
                 id,
                 JobState.Running,
@@ -243,7 +251,7 @@ object BackgroundJob:
           )
         case Left(JobStop.Cancel) =>
           recordEnding(JobState.Cancelled)(
-            db.transact(
+            db.write(
               JobRepo.transition(
                 id,
                 JobState.Running,

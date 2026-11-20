@@ -36,6 +36,7 @@ import com.histmersion.server.ServerPlugins
 import com.histmersion.domain.catalogue.Event
 import com.histmersion.config.ServerConfig
 import com.histmersion.api.media.ImportJobKinds
+import com.histmersion.util.database.TestPermits.given
 
 /** A collection import (#1446) through the real server and database (HISTMERSION_TEST_DB_URL; skipped otherwise): the
   * places on the map and their name keys and periods as the match reads them (V094), a dry run's matches with their

@@ -25,6 +25,7 @@ import com.histmersion.domain.catalogue.Event
 import com.histmersion.api.catalogue.EventSummary
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.catalogue.Event as ApiEvent
+import com.histmersion.util.database.TestPermits.given
 
 /** The contract the events keep: every field read back, with its datings, edges (both ends) and participants in their
   * order; the list narrowed by text, kind, historicity, period and tier, in time order and paged; the map drawing the

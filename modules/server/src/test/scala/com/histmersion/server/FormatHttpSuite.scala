@@ -22,6 +22,7 @@ import com.histmersion.db.DbSuite
 import com.histmersion.db.TestDb
 import com.histmersion.config.DbConfig
 import com.histmersion.config.ServerConfig
+import com.histmersion.util.database.TestPermits.given
 
 /** The formatting lint over real HTTP and MCP: an article write answers with its formatting problems (and
   * `?strict=true` refuses one with an error), `GET …/lint` and `POST …/lint/fix` for an article and a source,

@@ -14,6 +14,7 @@ import com.histmersion.plugin.Plugin
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.plugin.UpstreamQuota
+import com.histmersion.util.database.TestPermits.given
 
 /** The server's CORE budget as the plugin SPI lends it (`ctx.quota("core")`): the same budget the host's own CORE calls
   * spend, so a plugin's lookups and the new-source search's searches share one day's tokens and one block.

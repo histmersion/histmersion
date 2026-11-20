@@ -25,6 +25,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.automation.managers.SweepAcquireItem
 import com.histmersion.domain.automation.goals.FocusRepo
 import com.histmersion.domain.CodexRetention
+import com.histmersion.util.database.WritePermit
 
 /** The agent runs as the engine's features read them — each run's row with its steps' usage summed — and the steps
   * themselves: the checkpoints a resume replays, the attempts, the trace, the spend.
@@ -83,7 +84,9 @@ trait RunService:
   def attempts(jobId: Job.Id, seq: AgentRepo.StepRecord.Seq): RunService.Count
 
   /** One attempt and its trace, together. */
-  def record(jobId: Job.Id, step: AgentRepo.StepRecord, messages: List[AgentRepo.MessageRecord]): Unit
+  def record(jobId: Job.Id, step: AgentRepo.StepRecord, messages: List[AgentRepo.MessageRecord])(using
+      WritePermit
+  ): Unit
   def steps(jobId: Job.Id, outputChars: AgentRepo.OutputChars): List[StepInfo]
   def messages(jobId: Job.Id): List[MessageInfo]
 
@@ -94,7 +97,7 @@ trait RunService:
   def spendDayMonth(): (BigDecimal, BigDecimal)
 
   /** Traced messages older than `days` deleted (none for 0 or less); how many. */
-  def pruneMessages(days: RunService.RetentionDays): RunService.Count
+  def pruneMessages(days: RunService.RetentionDays)(using WritePermit): RunService.Count
 
 object RunService:
   type Active = Active.T
@@ -194,15 +197,17 @@ object RunService:
         .map((name, output) => (AgentRepo.StepRecord.Name(name.value), AgentRepo.StepRecord.Output(output.value)))
     def attempts(jobId: Job.Id, seq: AgentRepo.StepRecord.Seq): Count =
       Count(db.read(AgentRepo.attempts(jobId, StepInfo.Seq(seq.value))).value)
-    def record(jobId: Job.Id, step: AgentRepo.StepRecord, messages: List[AgentRepo.MessageRecord]): Unit =
-      db.transact(AgentRepo.record(jobId, step, messages))
+    def record(jobId: Job.Id, step: AgentRepo.StepRecord, messages: List[AgentRepo.MessageRecord])(using
+        WritePermit
+    ): Unit =
+      db.write(AgentRepo.record(jobId, step, messages))
     def steps(jobId: Job.Id, outputChars: AgentRepo.OutputChars): List[StepInfo] =
       db.read(AgentRepo.steps(jobId, outputChars))
     def messages(jobId: Job.Id): List[MessageInfo] = db.read(AgentRepo.messages(jobId))
     def runSpend(jobId: Job.Id): (Usage, BigDecimal) = db.read(AgentRepo.runSpend(jobId))
     def spendDayMonth(): (BigDecimal, BigDecimal) = db.read(AgentRepo.spendDayMonth())
-    def pruneMessages(days: RetentionDays): Count =
-      count(db.transact(AgentRepo.pruneMessages(CodexRetention.KeepDays(days.value))))
+    def pruneMessages(days: RetentionDays)(using WritePermit): Count =
+      count(db.write(AgentRepo.pruneMessages(CodexRetention.KeepDays(days.value))))
 
   /** The runs in memory: their rows are the jobs area's in-memory runs, their steps and traces the shared state;
     * `clock` stands in for the database's `now()`.
@@ -383,7 +388,9 @@ object RunService:
         .map(s => (s.step.name, s.step.output.getOrElse(AgentRepo.StepRecord.Output("null"))))
     def attempts(jobId: Job.Id, seq: AgentRepo.StepRecord.Seq): Count =
       count(stepsOf(jobId).filter(_.step.seq == seq).map(_.step.attempt.value).maxOption.getOrElse(0))
-    def record(jobId: Job.Id, step: AgentRepo.StepRecord, messages: List[AgentRepo.MessageRecord]): Unit =
+    def record(jobId: Job.Id, step: AgentRepo.StepRecord, messages: List[AgentRepo.MessageRecord])(using
+        WritePermit
+    ): Unit =
       val at = now
       val _ = state.updateAndGet(
         _.modify(_.steps)
@@ -462,7 +469,7 @@ object RunService:
         ss.filter(s => !s.finishedAt.isBefore(day)).map(_.step.costUsd).sum,
         ss.filter(s => !s.finishedAt.isBefore(month)).map(_.step.costUsd).sum
       )
-    def pruneMessages(days: RetentionDays): Count =
+    def pruneMessages(days: RetentionDays)(using WritePermit): Count =
       if days.value <= 0 then Count(0)
       else
         val cut = now.minusSeconds(days.value.toLong * 86400L)

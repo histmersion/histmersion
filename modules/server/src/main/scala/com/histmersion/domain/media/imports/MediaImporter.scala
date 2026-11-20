@@ -14,6 +14,7 @@ import com.histmersion.domain.Title
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.domain.catalogue.Event
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.database.WritePermit
 
 /** One of the imports `media import <provider>` runs (#1446) — what it asks about, what it has still to ask, and a run
   * over a batch of targets. The one-run endpoint and the job share it, so every provider gets the same dry run,
@@ -41,7 +42,7 @@ trait MediaImporter:
   def pending(since: Option[ImportService.Since]): ImportService.PendingCount
 
   /** A run: one polite client for its whole length (the pace is per run). */
-  def start(): MediaImporter.Run
+  def start()(using WritePermit): MediaImporter.Run
 
 object MediaImporter:
   type CheckName = CheckName.T
@@ -121,7 +122,7 @@ object MediaImporter:
             since,
             pleiadesOnly = ImportService.PleiadesOnly(pleiades)
           )
-      def start() =
+      def start()(using WritePermit) =
         val media = cfg()
         // the collection's own pace, one host at a time, and its own patience with a refusal (#2561)
         val fetch = new Polite(

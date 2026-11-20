@@ -51,6 +51,7 @@ import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.server.ConverterWiring
 import com.histmersion.api.Api
 import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.util.database.TestPermits.given
 
 /** Plan pools end to end against a `*_test` database (docs/research-plan-quotas.md §5): the pick with plan readings — a
   * window below its floor, a hold, a provider refusal — pauses a run with `plan-quota` until the reset instead of
@@ -390,7 +391,7 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
         .exists(_.problems.sentences.mkString("; ").contains("unknown pool"))
     )
     // the ChatGPT plan refused by the provider
-    Transactor(ds).transact(
+    Transactor(ds).write(
       PlanQuotaRepo.setRefusal(
         PoolId.ChatgptPlan,
         Some(Problem.Unclassified(Legacy.Text("ordinary usage not allowed"))),

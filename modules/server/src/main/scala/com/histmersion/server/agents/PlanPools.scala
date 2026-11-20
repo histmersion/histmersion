@@ -31,6 +31,7 @@ import javax.sql.DataSource
 import scala.jdk.CollectionConverters.*
 import com.histmersion.util.system.JvmHome
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.database.WritePermit
 
 /** The subscription pools in effect (docs/research-plan-quotas.md §5): the readings every source writes, the floors
   * (saved over config), the hold switch, the provider's own refusals — and the verdict the model pick asks before every
@@ -130,7 +131,9 @@ final class PlanPools(
     * the reading and the provider's refusal); then [[verdict]]. Takes no fresh reading of its own: [[decide]] does, for
     * a pick.
     */
-  def current(p: PoolId, model: Option[ChainEntry.Model], now: PlanQuota.Now = now0): (Verdict, List[WindowState]) =
+  def current(p: PoolId, model: Option[ChainEntry.Model], now: PlanQuota.Now = now0)(using
+      WritePermit
+  ): (Verdict, List[WindowState]) =
     if p == PoolId.ChatgptPlan then poll(now)
     verdict(p, model, now)
 
@@ -157,7 +160,7 @@ final class PlanPools(
       model: Option[ChainEntry.Model],
       trigger: RefreshTrigger,
       now: PlanQuota.Now = now0
-  ): (Verdict, List[WindowState], Option[Refreshed]) =
+  )(using WritePermit): (Verdict, List[WindowState], Option[Refreshed]) =
     val (v, states) = current(p, model, now)
     if need(p, model, now).isEmpty then (v, states, None)
     else
@@ -170,7 +173,7 @@ final class PlanPools(
           val (v2, s2) = current(p, model, now0)
           (v2, s2, Some(r))
 
-  def record(p: PoolId, rs: List[Reading]): Unit = Transactor(ds).transact(PlanQuotaRepo.record(p, rs))
+  def record(p: PoolId, rs: List[Reading])(using WritePermit): Unit = Transactor(ds).write(PlanQuotaRepo.record(p, rs))
 
   /** When `p`'s newest reading was observed (epoch ms), if it has one. */
   def lastObserved(p: PoolId): Option[Reading.ObservedAt] =
@@ -179,20 +182,21 @@ final class PlanPools(
   def blocked(
       p: PoolId,
       model: Option[AgentsControllers.ModelName]
-  ): Option[(PlanQuota.Rationale, Option[PlanQuotaRepo.EpochMillis])] =
+  )(using WritePermit): Option[(PlanQuota.Rationale, Option[PlanQuotaRepo.EpochMillis])] =
     current(p, model.map(m => ChainEntry.Model(m.value)))._1 match
       case Verdict.Blocked(why, until) =>
         Some((why, until.map(u => PlanQuotaRepo.EpochMillis(u.value))))
       case _ => None
 
-  def refresh(now: PlanQuotaRepo.EpochMillis): Unit = { val _ = poll(PlanQuota.Now(now.value)) }
+  def refresh(now: PlanQuotaRepo.EpochMillis)(using WritePermit): Unit = { val _ = poll(PlanQuota.Now(now.value)) }
 
-  def hold(p: PoolId, on: PlanQuotaRepo.Pool.Held): Unit = Transactor(ds).transact(PlanQuotaRepo.setHold(p, on))
+  def hold(p: PoolId, on: PlanQuotaRepo.Pool.Held)(using WritePermit): Unit =
+    Transactor(ds).write(PlanQuotaRepo.setHold(p, on))
 
   /** Whether a person holds `p` (no run draws on it until it is released). */
   def held(p: PoolId): Boolean = Transactor(ds).read(PlanQuotaRepo.pool(p)).held.value
-  def setFloors(p: PoolId, f: Option[PlanQuotaRepo.Pool.Floors]): Unit =
-    Transactor(ds).transact(PlanQuotaRepo.setFloors(p, f))
+  def setFloors(p: PoolId, f: Option[PlanQuotaRepo.Pool.Floors])(using WritePermit): Unit =
+    Transactor(ds).write(PlanQuotaRepo.setFloors(p, f))
 
   // ── logins ─────────────────────────────────────────────────────────────────────────────────────
 
@@ -275,7 +279,7 @@ final class PlanPools(
       autopilotOn: PlanReadSchedule.AutopilotOn,
       wanted: PlanReadSchedule.Wanted,
       now: java.time.Instant
-  ): Either[PlanQuota.Rationale, Refreshed] =
+  )(using WritePermit): Either[PlanQuota.Rationale, Refreshed] =
     val at = now.toEpochMilli
     gate.exclusive(p, at) { last =>
       val newest = lastObserved(p).map(o => java.time.Instant.ofEpochMilli(o.value))
@@ -319,7 +323,7 @@ final class PlanPools(
       model: Option[ChainEntry.Model] = None,
       force: PlanPools.Force = PlanPools.Force(false),
       now: PlanQuota.Now = now0
-  ): Either[PlanQuota.Rationale, Refreshed] =
+  )(using WritePermit): Either[PlanQuota.Rationale, Refreshed] =
     gate.exclusive(p, now.value) { last =>
       // asked again inside the gate: a caller that waited sees the reading the one before it took
       val needNow = need(p, model, now)
@@ -344,11 +348,13 @@ final class PlanPools(
     }
 
   /** One reading of `p`, logged (server log and the pool's refresh log) with why it was taken. */
-  private def takeAndLog(p: PoolId, trigger: RefreshTrigger, why: PlanQuota.Rationale, now: PlanQuota.Now): Refreshed =
+  private def takeAndLog(p: PoolId, trigger: RefreshTrigger, why: PlanQuota.Rationale, now: PlanQuota.Now)(using
+      WritePermit
+  ): Refreshed =
     val r = take(p, now)
     val line = s"plan refresh ${p.wire} ($why) ${r.text}"
     if r.ok.value then scribe.info(line) else scribe.warn(line)
-    Transactor(ds).transact(
+    Transactor(ds).write(
       PlanQuotaRepo.logRefresh(
         p,
         PlanQuotaRepo.RefreshMode(r.mode.value),
@@ -360,7 +366,7 @@ final class PlanPools(
     r
 
   /** One reading of `p`, recorded: the Claude probe or the ChatGPT app-server read. */
-  private def take(p: PoolId, now: PlanQuota.Now): Refreshed = p match
+  private def take(p: PoolId, now: PlanQuota.Now)(using WritePermit): Refreshed = p match
     case PoolId.ChatgptPlan =>
       poll(now, force = PlanPools.Force(true)) match
         case Some(why) => Refreshed(Refreshed.Mode("app-server"), ok = Refreshed.Ok(false), why)
@@ -392,7 +398,9 @@ final class PlanPools(
   /** Read the ChatGPT plan through `codex app-server` (it generates nothing), at most once per `poll-seconds`, and only
     * with `app-server` on and a CODEX_HOME to read.
     */
-  def poll(now: PlanQuota.Now, force: PlanPools.Force = PlanPools.Force(false)): Option[Refreshed.Detail] =
+  def poll(now: PlanQuota.Now, force: PlanPools.Force = PlanPools.Force(false))(using
+      WritePermit
+  ): Option[Refreshed.Detail] =
     val every = math.max(1, cfg.quota.pollSeconds.value).toLong * 1000L
     val last = lastPoll.get()
     if !cfg.providers.codex.appServer.value then
@@ -415,7 +423,7 @@ final class PlanPools(
             case Right(json) =>
               val (rs, refusal, plan) = PlanPools.codexReadings(json, now)
               record(PoolId.ChatgptPlan, rs)
-              Transactor(ds).transact(
+              Transactor(ds).write(
                 PlanQuotaRepo.setRefusal(
                   PoolId.ChatgptPlan,
                   refusal.map(r => r._1),
@@ -426,7 +434,7 @@ final class PlanPools(
               None
 
   /** A mod's report: recorded, and answered with whether the run may go on. */
-  def guard(report: ModReport, now: PlanQuota.Now = now0): GuardAnswer =
+  def guard(report: ModReport, now: PlanQuota.Now = now0)(using WritePermit): GuardAnswer =
     val src = Source
       .parse(Source.Wire(report.source.value))
       .filter(s => s == Source.Mod || s == Source.Interactive)

@@ -12,7 +12,7 @@ import com.histmersion.api.ocr.ConvertedDoc
 import com.histmersion.config.{AppConfig, DbConfig, ServerConfig}
 import com.histmersion.db.{DbSuite, TestDb}
 import com.histmersion.util.data.maintenance.WriteGate
-import com.histmersion.util.database.{Migrate, Transactor}
+import com.histmersion.util.database.{Migrate, Transactor, WritePermit}
 import com.histmersion.util.jobs.{Job, JobRepo, Quiescent}
 import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.testsupport.ComparedByValue.given
@@ -26,6 +26,7 @@ import java.util.concurrent.{ConcurrentLinkedQueue, CountDownLatch, TimeUnit}
 import java.util.concurrent.atomic.AtomicLong
 import scala.concurrent.duration.*
 import scala.jdk.CollectionConverters.*
+import com.histmersion.util.database.TestPermits.given
 
 /** G90, G89 and G123 on the `*_test` database: one server per database, enforced at start; a restore that waits for the
   * writes in flight, refuses the writes and connections asked while it runs, holds every registered worker and has each
@@ -59,10 +60,10 @@ class RestoreSafetySuite extends DbSuite:
 
   /** A job row of `Kind`, moved to `state` (queued, or running). */
   private def jobIn(state: JobState): Job.Id =
-    val j = Transactor(pool).transact(JobRepo.create(Kind, None, None))
+    val j = Transactor(pool).write(JobRepo.create(Kind, None, None))
     val id = Job.Id.applyUnsafe(j.id.value)
     if state == JobState.Running then
-      assert(Transactor(pool).transact(JobRepo.transition(id, JobState.Queued, JobState.Running)).isDefined)
+      assert(Transactor(pool).write(JobRepo.transition(id, JobState.Queued, JobState.Running)).isDefined)
     id
 
   private def statusOf(id: Job.Id): JobInfo = Transactor(pool).read(JobRepo.get(id)).getOrElse(fail(s"no job $id"))
@@ -96,7 +97,7 @@ class RestoreSafetySuite extends DbSuite:
           HttpResponse.BodyHandlers.ofString()
         )
       assertEquals(health.statusCode, 200, health.body)
-      assert(Transactor(pool).transact(JobRepo.transition(running, JobState.Running, JobState.Done)).isDefined)
+      assert(Transactor(pool).write(JobRepo.transition(running, JobState.Running, JobState.Done)).isDefined)
     }
     // the first server's scope ended, and its lock with it: a server starts again
     supervised { val _ = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start() }
@@ -172,7 +173,7 @@ class RestoreSafetySuite extends DbSuite:
     val seen = gate.exclusively(WriteGate.OperationName("restore"), 5.seconds) {
       val guarded = onAnotherThread(gate.guard(WriteGate.OperationName("a write"))(Right(1)))
       val unguarded = onAnotherThread(
-        Transactor(deps.ds).transact(JobRepo.get(Job.Id.applyUnsafe("00000000-0000-0000-0000-000000000000")))
+        Transactor(deps.ds).write(JobRepo.get(Job.Id.applyUnsafe("00000000-0000-0000-0000-000000000000")))
       )
       val own = Transactor(deps.ds).read(JobRepo.get(Job.Id.applyUnsafe("00000000-0000-0000-0000-000000000000")))
       Right((guarded, unguarded.left.map(_.getClass.getSimpleName), own))
@@ -189,6 +190,52 @@ class RestoreSafetySuite extends DbSuite:
       Transactor(deps.ds).read(JobRepo.get(Job.Id.applyUnsafe("00000000-0000-0000-0000-000000000000"))),
       None
     )
+
+  test(
+    "X4: a worker's unit writes while the restore drains, is refused once it holds the database; reads need no permit"
+  ):
+    val h = wiring()
+    val gate = h.maintenance
+    val deps = Deps(cfg, pool, pool, gate)
+    val db = Transactor(deps.ds)
+    val begun = CountDownLatch(1)
+    val drained = CountDownLatch(1)
+    val recorded = CountDownLatch(1)
+    val proceed = CountDownLatch(1)
+    val out = new java.util.concurrent.atomic.AtomicReference[(Boolean, Either[String, Boolean])]()
+    val worker = Thread.ofPlatform().start { () =>
+      gate.workers.unit {
+        begun.countDown()
+        drained.await(10, TimeUnit.SECONDS)
+        // while draining: the worker records where it stopped, through its unit's permit
+        val stopped = scala.util.Try(db.write(JobRepo.create(Kind, None, None))).isSuccess
+        recorded.countDown()
+        proceed.await(10, TimeUnit.SECONDS)
+        // the restore holds the database now: the same permit no longer writes
+        val after = scala.util.Try(db.write(JobRepo.create(Kind, None, None))).toEither
+        out.set((stopped, after.left.map(_.getClass.getSimpleName).map(_ => true)))
+      }
+    }
+    assert(begun.await(10, TimeUnit.SECONDS))
+    val restored = gate.exclusively(
+      WriteGate.OperationName("restore"),
+      10.seconds,
+      refused = {
+        // draining: no new operation gets a permit, but the worker's unit records where it stopped
+        drained.countDown()
+        assert(recorded.await(10, TimeUnit.SECONDS))
+        None
+      }
+    ) {
+      // the restore holds the database: the unit's next write is refused
+      proceed.countDown()
+      worker.join(10000)
+      Right(gate.permits.stageNow)
+    }
+    assertEquals(restored, Right(WritePermit.Stage.Closed))
+    assertEquals(out.get, (true, Left("Raised")))
+    // a request's read, under no permit, before and after
+    assertEquals(db.read(JobRepo.get(Job.Id.applyUnsafe("00000000-0000-0000-0000-000000000000"))), None)
 
   // ── G123: every worker held during the restore, resumed after it, reconciled with it ─────────
 
@@ -207,7 +254,7 @@ class RestoreSafetySuite extends DbSuite:
       }
       def busy: Vector[Quiescent.Busy] =
         if busyUntil.getCount > 0 then Vector(Quiescent.Busy("a unit of work")) else Vector.empty
-      def restored(): Unit = { val _ = events.add("restored") }
+      def restored()(using WritePermit): Unit = { val _ = events.add("restored") }
       def resume(): Unit = { val _ = events.add("resume") })
     assertEquals(
       gate.workers.names.map(n => s"$n"),

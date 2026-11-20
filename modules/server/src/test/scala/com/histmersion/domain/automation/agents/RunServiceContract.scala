@@ -13,6 +13,7 @@ import com.histmersion.util.jobs.{Job, RunRow}
 import java.time.Instant
 import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.automation.managers.ManagerLight
+import com.histmersion.util.database.TestPermits.given
 
 /** The contract the runs' reads and steps keep: a run's usage is its steps' sum; attempts, checkpoints and the trace in
   * their order; the lists and pages, their filters and facets.

@@ -12,6 +12,7 @@ import scala.jdk.CollectionConverters.*
 import com.histmersion.domain.automation.agents.PlanQuotaRepo
 import com.histmersion.domain.automation.agents.AgentsControllers
 import com.histmersion.api.automation.PlanQuota
+import com.histmersion.util.database.WritePermit
 
 /** A fake CLI (`claude`, `codex`, `opencode`): a shell script that records what it was given — its arguments one per
   * line, its stdin, the `--output-schema` file, the environment values a test asserts on, whether its working directory
@@ -131,9 +132,9 @@ object FakeCli:
   final class Sink(var block: Option[(PlanQuota.Rationale, Option[PlanQuotaRepo.EpochMillis])] = None) extends PoolSink:
     val recorded = java.util.concurrent.ConcurrentLinkedQueue[(PoolId, Reading)]()
     @volatile var refreshed = 0 // how often a client asked for a fresh read
-    def record(p: PoolId, rs: List[Reading]): Unit = rs.foreach(r => recorded.add(p -> r))
+    def record(p: PoolId, rs: List[Reading])(using WritePermit): Unit = rs.foreach(r => recorded.add(p -> r))
     def blocked(
         p: PoolId,
         model: Option[AgentsControllers.ModelName]
-    ): Option[(PlanQuota.Rationale, Option[PlanQuotaRepo.EpochMillis])] = block
-    def refresh(now: PlanQuotaRepo.EpochMillis): Unit = refreshed += 1
+    )(using WritePermit): Option[(PlanQuota.Rationale, Option[PlanQuotaRepo.EpochMillis])] = block
+    def refresh(now: PlanQuotaRepo.EpochMillis)(using WritePermit): Unit = refreshed += 1

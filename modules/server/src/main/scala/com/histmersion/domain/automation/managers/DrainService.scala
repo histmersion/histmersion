@@ -16,6 +16,7 @@ import javax.sql.DataSource
 import com.histmersion.api.automation.Agents
 import com.histmersion.domain.automation.worklists.WorkListControllers
 import com.histmersion.api.automation.Queue
+import com.histmersion.util.database.WritePermit
 
 /** Drain mode (#3762 proposal 4): `histmersion agent autopilot drain` stops the central scheduler from admitting
   * anything new — and the managers' tick from deciding approvals by code (a decision wakes a waiting run) and from
@@ -74,7 +75,7 @@ final class DrainService(
     * which stops after the item in flight — records it drained (a run that resumes by itself afterwards — an allowance,
     * a restart — makes it draining again).
     */
-  def tick(now: Instant): List[String] =
+  def tick(now: Instant)(using WritePermit): List[String] =
     agents.autopilotRow.drain() match
       case None                 => Nil
       case Some((since, _, at)) =>
@@ -91,7 +92,7 @@ final class DrainService(
         else Nil
 
   /** Start or lift the drain; answers the autopilot's status with what it did. */
-  def set(in: DrainSet, now: Instant = Instant.now(agents.clock)): EngineStatus =
+  def set(in: DrainSet, now: Instant = Instant.now(agents.clock))(using WritePermit): EngineStatus =
     val by = in.by.map(_.value.trim).filter(_.nonEmpty).getOrElse("person")
     val changed = agents.autopilotRow.setDrain(in.on.value, AutopilotRepo.Row.ChangedBy(by))
     val line =

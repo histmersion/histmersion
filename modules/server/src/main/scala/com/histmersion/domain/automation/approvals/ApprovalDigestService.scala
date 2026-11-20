@@ -21,6 +21,7 @@ import com.histmersion.api.automation.ApprovalDigest
 import com.histmersion.api.Api
 import com.histmersion.domain.automation.Approval
 import com.histmersion.domain.automation.worklists.WorkListControllers
+import com.histmersion.util.database.WritePermit
 
 /** The approval digest (#3762 proposal 3): everything waiting for a person in one view ([[digest]]), ONE worklog line a
   * UTC day after `agents.autopilot.digest-hour` ([[tick]], from the managers' tick), and a whole group decided at once
@@ -58,7 +59,7 @@ final class ApprovalDigestService(
   /** From the managers' tick: once a UTC day (the tick's), after `digest-hour` (on the tick's time or on the digest's
     * clock, when it has one: [[AgentsControllers.digestClock]]), the digest's line goes to the worklog.
     */
-  def tick(now: Instant): List[String] =
+  def tick(now: Instant)(using WritePermit): List[String] =
     val hour = cfg.autopilot.digestHour.value
     val day = ManagerPolicy.dayStart(now)
     def pastHour(t: Instant) = !t.isBefore(ManagerPolicy.dayStart(t).plusSeconds(math.min(23, hour).toLong * 3600L))

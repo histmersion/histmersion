@@ -10,6 +10,7 @@ import com.histmersion.util.database.Transactor
 import hearth.kindlings.optics.syntax.*
 import java.util.concurrent.atomic.AtomicReference
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.database.WritePermit
 
 /** The articles' review ledgers: every finding the review panel raised on an article, with what became of it, read at
   * the start of a `review-article` run and written after each of its passes; and which articles passed their review.
@@ -20,7 +21,7 @@ trait ReviewLedgerService:
   def get(slug: Slug): Either[Problem, Option[Ledger]]
 
   /** Write the ledger (insert or replace). The article must exist. */
-  def put(ledger: Ledger): Unit
+  def put(ledger: Ledger)(using WritePermit): Unit
 
   /** The articles whose ledger holds no open MAJOR and that review manager `reviewId` has no item open on. */
   def passedReview(reviewId: ReviewLedgerService.ReviewId): Set[Slug]
@@ -33,7 +34,7 @@ object ReviewLedgerService:
 
   final private class Implementation(db: Transactor) extends ReviewLedgerService:
     def get(slug: Slug): Either[Problem, Option[Ledger]] = db.read(ReviewLedgerRepo.get(slug))
-    def put(ledger: Ledger): Unit = db.transact(ReviewLedgerRepo.put(ledger))
+    def put(ledger: Ledger)(using WritePermit): Unit = db.write(ReviewLedgerRepo.put(ledger))
     def passedReview(reviewId: ReviewId): Set[Slug] =
       db.read(ReviewLedgerRepo.passedReview(ReviewLedgerRepo.ReviewId(reviewId.value)))
 
@@ -46,7 +47,7 @@ object ReviewLedgerService:
       state.get.ledgers.get(ResearchState.LedgersKey(slug.value))
     )
 
-    def put(ledger: Ledger): Unit =
+    def put(ledger: Ledger)(using WritePermit): Unit =
       val before = state.getAndUpdate(st =>
         if st.articles.contains(ResearchState.ArticlesKey(ledger.slug.value)) then
           st.modify(_.ledgers).using(_.updated(ResearchState.LedgersKey(ledger.slug.value), ledger))

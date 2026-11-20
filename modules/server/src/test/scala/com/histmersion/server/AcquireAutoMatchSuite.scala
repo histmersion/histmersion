@@ -27,6 +27,7 @@ import com.histmersion.config.DbConfig
 import com.histmersion.config.ConverterConfig
 import com.histmersion.util.database.Migrate
 import com.histmersion.config.ServerConfig
+import com.histmersion.util.database.TestPermits.given
 
 /** #970 over real HTTP, the converter stubbed: an import that names no acquisition item closes the open items that name
   * its DOI (whatever case, prefix or punctuation they write it with), and only LISTS the items that resemble it — a

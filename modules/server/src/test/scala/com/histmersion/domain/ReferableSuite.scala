@@ -18,6 +18,7 @@ import java.util.UUID
 import com.histmersion.db.DbSuite
 import com.histmersion.db.TestDb
 import com.histmersion.config.DbConfig
+import com.histmersion.util.database.TestPermits.given
 
 /** A reference resolves and describes the same way in memory and in the database (a scratch database of its own, gated
   * on HISTMERSION_TEST_DB_URL): the source a reference names now, after a rename, a merge and a deletion.
@@ -54,20 +55,20 @@ class ReferableSuite extends DbSuite:
     val db = Transactor(scratch(name))
     val world = World(
       SourceReferable(db),
-      ck => db.transact(sql"INSERT INTO sources (citekey, title) VALUES ($ck, ${s"Title of $ck"})".update.run(): Unit),
+      ck => db.write(sql"INSERT INTO sources (citekey, title) VALUES ($ck, ${s"Title of $ck"})".update.run(): Unit),
       (a, b) =>
-        db.transact {
+        db.write {
           sql"UPDATE sources SET citekey = $b WHERE citekey = $a".update.run(): Unit
           sql"INSERT INTO source_aliases (alias, citekey) VALUES ($a, $b)".update.run(): Unit
         },
       (a, b) =>
-        db.transact {
+        db.write {
           sql"""INSERT INTO uid_aliases (alias_uid, uid, kind)
                 SELECT f.uid, i.uid, 'source' FROM sources f, sources i WHERE f.citekey = $a AND i.citekey = $b""".update
             .run(): Unit
           sql"DELETE FROM sources WHERE citekey = $a".update.run(): Unit
         },
-      ck => db.transact(sql"DELETE FROM sources WHERE citekey = $ck".update.run(): Unit)
+      ck => db.write(sql"DELETE FROM sources WHERE citekey = $ck".update.run(): Unit)
     )
     (world, db)
 

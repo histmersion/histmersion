@@ -31,6 +31,7 @@ import com.histmersion.domain.ManagerPolicy
 import com.histmersion.domain.library.sources.SourcesControllers
 import com.histmersion.domain.research.Slug
 import com.histmersion.domain.ManagerPolicy.Item
+import com.histmersion.util.database.WritePermit
 
 /** The `enrich` manager kind (library-wide: source-enrich items, what `agents.auto-enrich` feeds), registered by this
   * transition adapter until the library contributes it: a source already enriched is settled without a run, unless a
@@ -46,7 +47,8 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
     case SourceEnrich => Pipeline.EnrichSource
     case _            => Pipeline.Fallback
 
-  def fire(c: ManagerContext, m: ManagerInfo, now: Instant): List[ManagerKindDefinition.FirePhrase] = Nil
+  def fire(c: ManagerContext, m: ManagerInfo, now: Instant)(using WritePermit): List[ManagerKindDefinition.FirePhrase] =
+    Nil
 
   def facts(c: ManagerContext, item: ManagerItem, run: Run.Id): StepFacts =
     StepFacts.Finished(Item.Outcome("enriched"))
@@ -150,7 +152,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
     * already is or one is on its way) — an item of the enrich manager while the managers are on, else a run of its own.
     * Answers the ingest job's progress note (None: not asked for).
     */
-  def autoEnrich(citekey: Citekey): Option[AutoEnrich.Note] =
+  def autoEnrich(citekey: Citekey)(using WritePermit): Option[AutoEnrich.Note] =
     def cfg = a.config
     try
       autoEnrichLock.synchronized {
@@ -191,7 +193,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
   /** With the managers on: the ingested source becomes an item of the enrich manager (created paused if missing).
     * Answers the ingest job's progress note.
     */
-  private def ingested(c: ManagerContext, citekey: Citekey): AutoEnrich.Note =
+  private def ingested(c: ManagerContext, citekey: Citekey)(using WritePermit): AutoEnrich.Note =
     val enrichId = ManagerLight.Id(EnrichId)
     val _ = c.ensure(Kind.Review, ManagerLight.Id(ReviewId), None)
     val _ = c.ensure(Kind.Enrich, enrichId, None)
@@ -223,8 +225,8 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
       item: ManagerItem,
       now: Instant,
       out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
-  ): Option[ManagerLight.Id] =
-    def settle(status: ItemStatus, why: String) =
+  )(using WritePermit): Option[ManagerLight.Id] =
+    def settle(status: ItemStatus, why: String)(using WritePermit) =
       c.settleNow(m, item, status, ManagerContext.SettleNowWhy(why))
     item.kind.value match
       case SourceEnrich =>

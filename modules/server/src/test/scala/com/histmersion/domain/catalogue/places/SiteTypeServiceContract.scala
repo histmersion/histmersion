@@ -7,6 +7,7 @@ import com.histmersion.domain.catalogue.CatalogueStoreSuite
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.api.catalogue.SiteTypes
 import com.histmersion.domain.DeepTime
+import com.histmersion.util.database.TestPermits.given
 
 /** The contract the refinement of site types keeps: the Wikidata sites on the map not asked yet, by id, with their item
   * and class; asked ones left out, unless refreshed and asked before the run began.

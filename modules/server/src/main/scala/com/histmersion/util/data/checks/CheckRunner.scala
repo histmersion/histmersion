@@ -3,7 +3,7 @@ package util.data.checks
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.api.checks.Lint.{LintFixResult, LintReport}
-import com.histmersion.util.database.Transactor
+import com.histmersion.util.database.{Transactor, WritePermit}
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The lint runner over the registered checks: selects rules, runs them on one connection into the report, and applies
@@ -43,7 +43,7 @@ final class CheckRunner(registered: List[CheckRule], order: CheckOrder, transact
   /** The safe fixes: every rule's that runs on every call, and those of the rules `requested` names (by name, ignoring
     * case; an unknown name selects nothing), in fix order.
     */
-  def fix(requested: List[CheckRule.Name], context: CheckContext): LintFixResult =
+  def fix(requested: List[CheckRule.Name], context: CheckContext)(using WritePermit): LintFixResult =
     def asked(rule: CheckRule) = requested.exists(_.value.trim.equalsIgnoreCase(rule.rule.name.value))
     val results = order.fixing(rules).flatMap { r =>
       r.fix.collect { case f if f.when == FixWhen.EveryFix || asked(r) => f.run(context) }

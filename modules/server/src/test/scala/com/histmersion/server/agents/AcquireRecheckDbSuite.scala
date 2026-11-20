@@ -64,6 +64,7 @@ import com.histmersion.domain.library.acquisition.RetractionWatchClient
 import com.histmersion.config.AcquireConfig
 import com.histmersion.util.jobs.JobQuery
 import com.histmersion.util.jobs.JobRow
+import com.histmersion.util.database.TestPermits.given
 
 /** The acquisition list's legal re-check against a `*_test` database (docs/research-process-managers.md "As built: the
   * acquisition list's re-check"): an item the corpus holds with its text is closed, a metadata-only source is fetched
@@ -846,7 +847,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     val ids = (1 to 4).toList.map(i => item(h, s"r$i"))
     val since = Instant.now().minusSeconds(600)
     // what a restart leaves: a job that ran, checked two items, and was failed as interrupted at startup
-    val j = Transactor(ds).transact(
+    val j = Transactor(ds).write(
       JobRepo.create(
         Job.Kind.applyUnsafe(RecheckJob.JobKind),
         None,
@@ -864,7 +865,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
         )
       )
     )
-    val _ = Transactor(ds).transact(JobRepo.transition(jobKey(j.id), JobState.Queued, JobState.Running))
+    val _ = Transactor(ds).write(JobRepo.transition(jobKey(j.id), JobState.Queued, JobState.Running))
     ids
       .take(2)
       .foreach(i =>
@@ -878,7 +879,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
             AcquireRecheck.reason(Instant.now(), AcquireRecheck.Outcome.NoCopy, AcquireRecheck.Detail("x"))
           )
       )
-    val _ = Transactor(ds).transact(JobRepo.failInterrupted())
+    val _ = Transactor(ds).write(JobRepo.failInterrupted())
     assertEquals(
       Transactor(ds).read(JobRepo.get(jobKey(j.id))).flatMap(_.problems),
       Some(NonEmptyVector.of[Problem](Problem.Run.Interrupted))
@@ -895,7 +896,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     assertEquals(asked(up).size, 6)
     // the tick resumes an interrupted one by itself
     Thread.sleep(5)
-    val k = Transactor(ds).transact(
+    val k = Transactor(ds).write(
       JobRepo.create(
         Job.Kind.applyUnsafe(RecheckJob.JobKind),
         None,
@@ -913,8 +914,8 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
         )
       )
     )
-    val _ = Transactor(ds).transact(JobRepo.transition(jobKey(k.id), JobState.Queued, JobState.Running))
-    val _ = Transactor(ds).transact(
+    val _ = Transactor(ds).write(JobRepo.transition(jobKey(k.id), JobState.Queued, JobState.Running))
+    val _ = Transactor(ds).write(
       JobRepo.transition(
         jobKey(k.id),
         JobState.Running,

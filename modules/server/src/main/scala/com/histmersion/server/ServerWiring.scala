@@ -92,7 +92,7 @@ import com.histmersion.domain.automation.agents.AgentStateControllers
 import com.histmersion.domain.automation.agents.AgentStateService
 import com.histmersion.server.views.WorkListView
 import com.histmersion.domain.library.acquisition.AcquireCheckService
-import com.histmersion.util.data.checks.CheckControllers
+import com.histmersion.util.data.checks.{CheckControllers, GuardedWrite}
 import com.histmersion.domain.research.Slug
 import com.histmersion.api.research.Article
 import com.histmersion.domain.research.articles.BArticleRow
@@ -105,6 +105,7 @@ import com.histmersion.domain.library.acquisition.UpstreamQuotaService
 import com.histmersion.domain.library.acquisition.CoreBudget
 import com.histmersion.domain.research.ResearchData
 import com.histmersion.util.data.mirror.MirrorPlacement
+import com.histmersion.util.database.WritePermit
 
 /** The composition root's object graph over one server's `Deps`: every domain's wiring and controllers, the views that
   * join several of them (`server.views`) and this instance's own (`server.instance`). REST routes ([[HttpApi]]) and MCP
@@ -233,7 +234,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
   /** Pause, resume and cancel a job: a long background job cooperatively, an agent run by its own control. */
   lazy val jobControl: JobControlControllers =
     import com.histmersion.util.jobs.{JobAction, JobControlControllers, JobControlService}
-    def run(id: Job.Id, a: JobAction): Either[Api.Error, Unit] =
+    def run(id: Job.Id, a: JobAction)(using WritePermit): Either[Api.Error, Unit] =
       Run.Id
         .either(id.value)
         .left
@@ -245,7 +246,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
             case JobAction.Cancel => agents.engine.cancel(run)
           ).map(_ => ())
         )
-    JobControlControllers(JobControlService(ds, deps.jobStops, run))
+    JobControlControllers(JobControlService(ds, deps.jobStops, (id, a) => run(id, a)), maintenance)
 
   /** Every domain's records as others point at them: what the person's marks show of what they point at. */
   lazy val referables: Referables =
@@ -481,7 +482,8 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
       ),
       eventStore,
       deps.eventSources,
-      media.mapLayer
+      media.mapLayer,
+      maintenance.permits
     )
 
   /** `GET /api/places/{id}` — the row, its GeoJSON geometry and the hierarchy around it at `asOf`; with `counts`, also
@@ -556,7 +558,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
               isCitekey = Some(isCitekey)
             )
           ),
-      (record, text, token) =>
+      new GuardedWrite((record, text, token) =>
         Slug
           .either(record.value)
           .exists(slug =>
@@ -565,7 +567,8 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
               Article.Body(text.value),
               token.map(t => BArticleRow.UpdatedAt(t.value))
             )
-          ),
+          )
+      ),
       maintenance
     )(using deps.timer)
 

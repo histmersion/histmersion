@@ -23,6 +23,7 @@ import com.augustnagro.magnum.DbCon
 import javax.sql.DataSource
 import com.histmersion.server.ServerWiring
 import com.histmersion.api.Api
+import com.histmersion.util.database.TestPermits.given
 
 /** How the agent suites set up runs by hand: through the jobs area, as the engine records them. */
 object TestRuns:

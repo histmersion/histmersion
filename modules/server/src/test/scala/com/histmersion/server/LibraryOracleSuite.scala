@@ -31,6 +31,7 @@ import com.histmersion.config.RuntimeConfig
 import com.histmersion.config.BasemapConfig
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.data.exchange.BundleFormat
+import com.histmersion.util.database.TestPermits.given
 
 /** What the library answers, on a crafted collection, recorded on the code before the library's sources, findings,
   * citations, labels and search moved into their own domain:

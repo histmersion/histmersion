@@ -24,6 +24,7 @@ import com.histmersion.util.system.JvmHome
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.library.Title
 import com.histmersion.api.catalogue.Year
+import com.histmersion.util.database.TestPermits.given
 
 /** The `codex` and `opencode` providers against FAKE executables replaying recorded event streams on the generated
   * trees: the argument vector, the isolation environment (no API key, the run token, the generated homes), the empty

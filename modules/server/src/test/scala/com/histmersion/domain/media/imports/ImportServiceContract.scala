@@ -9,6 +9,7 @@ import com.histmersion.domain.catalogue.Place
 import com.histmersion.domain.catalogue.Event
 import com.histmersion.domain.catalogue.places.ExternalIds
 import com.histmersion.domain.catalogue.places.Wikidata
+import com.histmersion.util.database.TestPermits.given
 
 /** What the imports' store answers on a collection that holds no place and no event — the same on the database and in
   * memory: a target named by id is not there, a batch is empty, nothing is pending, a check is recorded.

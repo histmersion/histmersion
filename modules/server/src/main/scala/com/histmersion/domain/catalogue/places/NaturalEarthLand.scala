@@ -14,6 +14,7 @@ import com.histmersion.util.problem.{External, Problem}
   */
 import com.histmersion.api.catalogue.Place
 import com.histmersion.server.HttpDownload
+import com.histmersion.util.database.WritePermit
 object NaturalEarthLand:
   val name = "land"
   val description = "Natural Earth 1:10 m land + minor islands (public domain) — clips polities to the coastline"
@@ -64,7 +65,7 @@ object NaturalEarthLand:
       download: HttpDownload.Url => Either[Problem, HttpDownload.Text],
       geometry: PlaceGeometry,
       dryRun: GazetteerControllers.DryRun
-  ): Either[Problem, Place.ImportResult] =
+  )(using WritePermit): Either[Problem, Place.ImportResult] =
     for
       raws <- urls.foldLeft[Either[Problem, List[String]]](Right(Nil))((acc, u) =>
         acc.flatMap(l => download(HttpDownload.Url(u)).map(l :+ _.value))

@@ -21,6 +21,8 @@ import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.Dataset
 import com.histmersion.api.GeoPick
+import com.histmersion.util.database.WritePermit
+import com.histmersion.util.database.TestPermits.given
 
 /** The gazetteer's controllers over the in-memory records, no server and no database: an LPF document imported (a bad
   * kind or document refused whole), an old id answering as its place, the tree's configured depth, a person's names and
@@ -33,7 +35,7 @@ class PlacesControllersSuite extends munit.FunSuite:
 
   private val shapes: PlaceMap = (kind, time, limit, _) => PlaceDetailRow.Geometry(s"$kind $time $limit")
   private val geometry: PlaceGeometry = new PlaceGeometry:
-    def rebuildFindingPlaces(toleranceKm: GeocodeSettings.ToleranceKm) =
+    def rebuildFindingPlaces(toleranceKm: GeocodeSettings.ToleranceKm)(using WritePermit) =
       api.catalogue.Place.RebuildResult(
         api.catalogue.Place.RebuildResult.Links(0),
         api.catalogue.Place.RebuildResult.ByGeometry(0),
@@ -42,16 +44,16 @@ class PlacesControllersSuite extends munit.FunSuite:
         api.catalogue.Place.RebuildResult.Unlocated(0),
         api.catalogue.Place.RebuildResult.Places(0)
       )
-    def buildHierarchy() = SpatialHierarchyResult(
+    def buildHierarchy()(using WritePermit) = SpatialHierarchyResult(
       SpatialHierarchyResult.EdgesCreated(0),
       SpatialHierarchyResult.PolygonPlaces(0),
       SpatialHierarchyResult.PointPlaces(0)
     )
-    def replaceLand(geometries: List[PlaceDetailRow.Geometry]) = RowCount(geometries.size)
-    def reclip() = RowCount(0)
-    def reclassify(toleranceKm: GeocodeSettings.ToleranceKm) = (RowCount(0), RowCount(0))
-    def relocate(toleranceKm: GeocodeSettings.ToleranceKm) = RowCount(0)
-    def removePointAreas(settings: PointAreaRepo.Settings) = PointAreaRepo.Removal(
+    def replaceLand(geometries: List[PlaceDetailRow.Geometry])(using WritePermit) = RowCount(geometries.size)
+    def reclip()(using WritePermit) = RowCount(0)
+    def reclassify(toleranceKm: GeocodeSettings.ToleranceKm)(using WritePermit) = (RowCount(0), RowCount(0))
+    def relocate(toleranceKm: GeocodeSettings.ToleranceKm)(using WritePermit) = RowCount(0)
+    def removePointAreas(settings: PointAreaRepo.Settings)(using WritePermit) = PointAreaRepo.Removal(
       PointAreaRepo.Removal.Removed(0),
       PointAreaRepo.Removal.Remaining(0),
       PointAreaRepo.Removal.Findings(0),

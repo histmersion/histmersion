@@ -33,7 +33,7 @@ import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.*
 import com.histmersion.domain.automation.worklists.QueueRows
 import com.histmersion.domain.automation.agents.AgentRepo
-import com.histmersion.util.database.{Db, Migrate}
+import com.histmersion.util.database.{Db, Migrate, WritePermit}
 import com.histmersion.util.jobs.{Job, JobRepo}
 import com.histmersion.server.{Deps, ServerWiring}
 import sttp.ai.core.agent.*
@@ -69,6 +69,7 @@ import com.histmersion.config.AgentBudgetsConfig
 import com.histmersion.server.agents.CliProcess
 import com.histmersion.api.Api
 import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.util.database.TestPermits.given
 
 /** A scripted stand-in for a provider: each LLM step (each `run`) consumes the next script — the real sttp-ai loop runs
   * against it, the real tools execute in process. Records every request and counts the steps it served. `fail` makes
@@ -83,7 +84,7 @@ final class ScriptedClient(val model: ModelRef) extends LlmClient:
   val steps: mutable.ArrayBuffer[Seq[RecordedRequest]] = mutable.ArrayBuffer.empty
   @volatile var fail: Boolean = false
 
-  def run[Out](call: LlmCall[Out]): AgentResult[Either[AgentFailure, Out]] =
+  def run[Out](call: LlmCall[Out])(using WritePermit): AgentResult[Either[AgentFailure, Out]] =
     if fail then throw java.net.ConnectException("scripted provider is down")
     val script = ScriptedAgent.synchronous(scripts.dequeue()*)
     val res = LlmClient.configure(script.builder, call).run(call.user.value)(SyncBackendStub)
@@ -330,7 +331,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     // a provider that answers classify and findings, then goes down before notes
     val flaky = new LlmClient:
       val model = Model
-      def run[Out](call: LlmCall[Out]) =
+      def run[Out](call: LlmCall[Out])(using WritePermit) =
         if first.scripts.isEmpty then throw java.net.ConnectException("provider down") else first.run(call)
     val (a, h) = handlers(flaky); seed(h)
     val paused = startAndRun(a)
@@ -484,7 +485,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     val (a, h) = handlers(c); seed(h)
     val run = a.startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget)).toOption.get
     assert(TestRuns.transition(ds, runId(run.id), RunState.Queued, RunState.Running).isDefined)
-    Transactor(ds).transact(JobRepo.failInterrupted())
+    Transactor(ds).write(JobRepo.failInterrupted())
     assertEquals(connect(ds)(AgentRepo.get(run.id)).get.status, "running")
     val (paused, _) = TestRuns.reconcile(ds)
     assert(paused.nonEmpty)
@@ -794,7 +795,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     val seen = mutable.ListBuffer.empty[Decided]
     val racing = new PipelineDef:
       def pipeline: Pipeline = Pipeline.EnrichSource
-      def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
+      def run(ctx: RunCtx)(using WritePermit): Either[Halt, PipelineDef.Summary] =
         ctx.approval(
           AgentRepo.StepRecord.Name("publish"),
           ApprovalKind.ArticlePublish,
@@ -834,7 +835,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     val entered = java.util.concurrent.CountDownLatch(1)
     val blocking = new PipelineDef:
       def pipeline: Pipeline = Pipeline.EnrichSource
-      def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
+      def run(ctx: RunCtx)(using WritePermit): Either[Halt, PipelineDef.Summary] =
         entered.countDown()
         Thread.sleep(60_000) // interrupted by stop()
         Right(PipelineDef.Summary("unreachable"))
@@ -957,7 +958,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     first.scripts ++= List(Seq(text(classifyJson)), Seq(text(s"""{"findings":[$goodFinding]}""")))
     val flaky = new LlmClient:
       val model = Model
-      def run[Out](call: LlmCall[Out]) =
+      def run[Out](call: LlmCall[Out])(using WritePermit) =
         if first.scripts.isEmpty then throw java.net.ConnectException("provider down") else first.run(call)
     val (a, h) = handlersFor((_, _) => Right(flaky)); seed(h)
     val before = CorpusSnapshot.of(ds)
@@ -1058,7 +1059,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     // one LLM step of the pipeline's own agent, so the fake's one answer fits it
     val notesOnly = new PipelineDef:
       def pipeline: Pipeline = Pipeline.EnrichSource
-      def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
+      def run(ctx: RunCtx)(using WritePermit): Either[Halt, PipelineDef.Summary] =
         ctx
           .llm[EnrichSource.Notes, String](
             AgentRepo.StepRecord.Name("notes"),
@@ -1118,7 +1119,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     val notesOnly = new PipelineDef:
       def pipeline: Pipeline = Pipeline.EnrichSource
-      def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
+      def run(ctx: RunCtx)(using WritePermit): Either[Halt, PipelineDef.Summary] =
         ctx
           .llm[EnrichSource.Notes, String](
             AgentRepo.StepRecord.Name("notes"),
@@ -1272,7 +1273,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
   /** One `notes` step of the pipeline's own agent, its output cap overridden when `cap` says so. */
   private def notesOnly(cap: Option[RunCtx.MaxTokens] = None): PipelineDef = new PipelineDef:
     def pipeline: Pipeline = Pipeline.EnrichSource
-    def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
+    def run(ctx: RunCtx)(using WritePermit): Either[Halt, PipelineDef.Summary] =
       ctx
         .llm[EnrichSource.Notes, String](
           AgentRepo.StepRecord.Name("notes"),
@@ -1371,7 +1372,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     c.scripts += Seq(AgentResponse(notesJson, Nil, StopReason.EndTurn, cached, Some("scripted")))
     val twoNotes = new PipelineDef:
       def pipeline: Pipeline = Pipeline.EnrichSource
-      def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
+      def run(ctx: RunCtx)(using WritePermit): Either[Halt, PipelineDef.Summary] =
         for
           a <- ctx.llm[EnrichSource.Notes, String](
             AgentRepo.StepRecord.Name("notes-1"),
@@ -1479,7 +1480,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
   /** A pipeline whose one step starts a CLI that never answers (and a child of its own). */
   final private class Hang(dir: java.nio.file.Path) extends PipelineDef:
     val pipeline = Pipeline.EnrichSource
-    def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
+    def run(ctx: RunCtx)(using WritePermit): Either[Halt, PipelineDef.Summary] =
       ctx
         .code[String](AgentRepo.StepRecord.Name("hang")) {
           val f = dir.resolve("cli")

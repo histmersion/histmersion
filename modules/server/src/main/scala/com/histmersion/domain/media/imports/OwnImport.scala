@@ -19,6 +19,7 @@ import com.histmersion.upstreams.media.MediaText
 import scala.util.control.NonFatal
 import com.histmersion.plugin.MediaTarget
 import com.histmersion.domain.media.MediaRole
+import com.histmersion.util.database.WritePermit
 
 /** The import of a collection of its targets' own pictures ([[MediaMatchRule.Own]]: a Wikidata item's statements, the
   * files a gazetteer record or a depiction search names): the collection is asked about the whole batch at once
@@ -105,7 +106,7 @@ final class OwnImport(name: MediaImporter.ImporterName, col: MediaCollection, fe
       dryRun: MediaImporter.DryRun,
       refresh: ImportService.Refresh,
       store: MediaStore
-  ): MediaImportReport =
+  )(using WritePermit): MediaImportReport =
     val places = targets.filter(_.targetType == ImportRepo.Place)
     val events = targets.filter(_.targetType == ImportRepo.Event)
     val carried =
@@ -211,7 +212,7 @@ final class OwnImport(name: MediaImporter.ImporterName, col: MediaCollection, fe
       failed: scala.collection.mutable.Builder[String, List[String]],
       categories: List[(MediaFound.Category.Target, MediaFound.Category.Name)],
       byId: Map[MediaTarget.Id, Target]
-  ): MediaImportReport =
+  )(using WritePermit): MediaImportReport =
     val known = db.known(ImportService.Provider(provider), verdicts.keys.toList.map(providerKey))
     def each[A](what: => String)(write: => A): Option[A] = MediaStep.each(failed)(what)(write)
 

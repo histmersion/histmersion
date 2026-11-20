@@ -1,8 +1,8 @@
 package com.histmersion
 package domain.automation.agents
 
-import com.augustnagro.magnum.{connect, transact}
-import com.histmersion.util.database.WritePermit
+import com.augustnagro.magnum.connect
+import com.histmersion.util.database.{Transactor, WritePermit}
 import com.histmersion.util.jobs.{Quiescent, Workers}
 
 import javax.sql.DataSource
@@ -22,6 +22,12 @@ final class AgentLease(
 
   @volatile private var held = false
   @volatile private var thread: Option[Thread] = None
+
+  /** One write of the lease's row, as a unit of the lease's worker (the permit of an enclosing unit when there is one):
+    * a restore holds the renewals and fences this off.
+    */
+  private def leaseWrite[A](target: DataSource)(work: com.augustnagro.magnum.DbCon ?=> A): A =
+    workers.unit(Transactor(target).write(work))
   @volatile private var stopping = false
 
   def isHeld: Boolean = held
@@ -38,7 +44,7 @@ final class AgentLease(
     if !started then false
     else
       val ok =
-        try transact(target)(LeaseRepo.claim(AgentLease.Name, owner, ttlSeconds))
+        try leaseWrite(target)(LeaseRepo.claim(AgentLease.Name, owner, ttlSeconds))
         catch
           case e: Exception =>
             scribe.warn(s"agent lease: could not claim it on the new database: ${e.getMessage}")
@@ -51,13 +57,13 @@ final class AgentLease(
     */
   def releaseOn(target: DataSource): Unit =
     if started then
-      try transact(target)(LeaseRepo.release(AgentLease.Name, owner))
+      try leaseWrite(target)(LeaseRepo.release(AgentLease.Name, owner))
       catch case e: Exception => scribe.warn(s"agent lease: could not release it on the old database: ${e.getMessage}")
 
   /** Claim or renew now; `true` = held. A database error is a lost renewal, logged. */
   def claim(): Boolean =
     val ok =
-      try transact(ds)(LeaseRepo.claim(AgentLease.Name, owner, ttlSeconds))
+      try leaseWrite(ds)(LeaseRepo.claim(AgentLease.Name, owner, ttlSeconds))
       catch
         case e: Exception =>
           scribe.warn(s"agent lease: could not claim or renew: ${e.getMessage}")
@@ -102,7 +108,7 @@ final class AgentLease(
     thread.foreach(_.interrupt())
     thread = None
     if held then
-      try transact(ds)(LeaseRepo.release(AgentLease.Name, owner))
+      try leaseWrite(ds)(LeaseRepo.release(AgentLease.Name, owner))
       catch case _: Exception => ()
       held = false
 
@@ -117,9 +123,9 @@ final class AgentLease(
     val name: Quiescent.Name = Quiescent.Name("the agent lease's renewal")
     def quiesce(): Unit = hold.synchronized { holding = true }
     def busy: Vector[Quiescent.Busy] = Vector.empty
-    def restored(): Unit =
+    def restored()(using WritePermit): Unit =
       if started then
-        transact(ds)(LeaseRepo.takeOver(AgentLease.Name, owner, ttlSeconds))
+        Transactor(ds).write(LeaseRepo.takeOver(AgentLease.Name, owner, ttlSeconds))
         held = true
     def resume(): Unit = hold.synchronized { holding = false; hold.notifyAll() }
 
