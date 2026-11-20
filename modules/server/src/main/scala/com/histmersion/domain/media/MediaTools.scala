@@ -12,6 +12,8 @@ import com.histmersion.domain.media.assets.AssetsControllers
 import com.histmersion.domain.media.links.AssetLinksControllers
 import com.histmersion.api.StrictJson
 import com.histmersion.util.mcp.McpOut
+import com.histmersion.util.problem.Problem
+import com.histmersion.api.Api
 import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -116,7 +118,10 @@ object MediaTools:
         .handle { in =>
           val rows = assets.figures(in.citekey)
           if rows.isEmpty && !sourceExists(in.citekey) then
-            ToolResult.text(s"_No source '${in.citekey}' — find a citekey with search._")
+            McpOut.error(
+              Api.Error(Problem.NotFound.Entity(Problem.TypeName("Citekey"), Problem.Raw.of(in.citekey))),
+              "Find a citekey with search."
+            )
           else
             ToolResult.text(AssetsMarkdown.assets(com.histmersion.api.library.Citekey(in.citekey.value), rows.toVector))
         },

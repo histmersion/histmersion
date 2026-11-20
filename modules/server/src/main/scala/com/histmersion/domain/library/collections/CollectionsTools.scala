@@ -7,6 +7,7 @@ import chimp.server.*
 import com.histmersion.api.library.*
 import com.histmersion.domain.Caller
 import com.histmersion.util.mcp.McpOut
+import com.histmersion.util.problem.Problem
 import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -69,8 +70,9 @@ object CollectionsTools:
 
   def apply(c: CollectionsControllers) =
     val me = Caller.Local
-    def answer[A](r: Either[Api.Error, A])(f: A => String) =
-      ToolResult.text(r.fold(McpOut.refusal, f))
+    def answer[A](r: Either[Api.Error, A])(f: A => String) = McpOut.of(r)(f)
+    val noId = McpOut.missing(Problem.Field("id"))
+    val noCitekey = McpOut.missing(Problem.Field("citekey"))
     val collection =
       tool("collection")
         .description(
@@ -101,7 +103,7 @@ object CollectionsTools:
                 else CollectionsMarkdown.search(s.entries)
               )
             case "import" =>
-              in.id.fold(ToolResult.text("_give the entry's `id`_"))(id =>
+              in.id.fold(noId)(id =>
                 answer(
                   c.importItem(
                     me,
@@ -123,9 +125,10 @@ object CollectionsTools:
                   answer(c.link(me, name, CollectionLinkRequest(ck, CollectionLinkRequest.Id(id.value))))(
                     CollectionsMarkdown.linked
                   )
-                case _ => ToolResult.text("_give a `citekey` and the entry's `id`_")
+                case (None, _) => noCitekey
+                case _         => noId
             case "push" =>
-              in.citekey.fold(ToolResult.text("_give a `citekey`_"))(ck =>
+              in.citekey.fold(noCitekey)(ck =>
                 answer(c.push(me, name, CollectionPushRequest(ck, CollectionPushRequest.Replace(in.replace.value))))(
                   CollectionsMarkdown.pushed
                 )
@@ -148,7 +151,7 @@ object CollectionsTools:
                     Some(CollectionFieldValue(CollectionFieldValue.Name(k.trim), CollectionFieldValue.Value(v)))
                   case _ => None
               )
-              in.id.fold(ToolResult.text("_give the entry's `id`_"))(id =>
+              in.id.fold(noId)(id =>
                 answer(c.set(me, name, CollectionSetRequest(CollectionSetRequest.Id(id.value), fields)))(
                   CollectionsMarkdown.set
                 )
@@ -167,8 +170,20 @@ object CollectionsTools:
                 )
               )(CollectionsMarkdown.sync)
             case other =>
-              ToolResult.text(
-                s"_unknown action '$other' — list, info, search, import, link, push, update, set, audit, gaps, sync_"
+              McpOut.unknown(
+                Problem.TypeName("CollectionAction"),
+                other,
+                Problem.Raw("list"),
+                Problem.Raw("info"),
+                Problem.Raw("search"),
+                Problem.Raw("import"),
+                Problem.Raw("link"),
+                Problem.Raw("push"),
+                Problem.Raw("update"),
+                Problem.Raw("set"),
+                Problem.Raw("audit"),
+                Problem.Raw("gaps"),
+                Problem.Raw("sync")
               )
         }
     List(collection)

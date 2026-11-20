@@ -174,7 +174,7 @@ object EventCardTools:
         .input[PatchEventInput]
         .handle { in =>
           EventGeometry.of(in.geometry, in.lat, in.lon) match
-            case Left(msg)   => McpOut.text(McpOut.refusal(msg.sentence))
+            case Left(msg)   => McpOut.refused(msg)
             case Right(geom) =>
               val p = EventPatch(
                 label = in.label,

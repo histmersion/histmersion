@@ -7,6 +7,8 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.util.mcp.McpOut
+import com.histmersion.util.problem.Problem
+import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.api.VocabularyCodecs.given
 
 import chimp.server.*
@@ -50,8 +52,13 @@ final class AcquisitionTools(
 ):
   import AcquisitionTools.*
 
-  private def render[A](r: Either[Api.Error, A])(f: A => String) =
-    ToolResult.text(r.fold(McpOut.refusal, f))
+  private def render[A](r: Either[Api.Error, A])(f: A => String) = McpOut.of(r)(f)
+
+  /** A call that gave none of the arguments `fields`, of which it needs one. */
+  private def oneOf(first: Problem.Field, rest: Problem.Field*) =
+    McpOut.refused(
+      Problem.Invalid.Inconsistent.here(NonEmptyVector.of(first, rest*), Problem.Invalid.Exclusion.AtLeastOne)
+    )
 
   private val discover =
     tool("discover")
@@ -76,7 +83,7 @@ final class AcquisitionTools(
           case (_, Some(doi), _) => render(h.meta(doi))(AcquireMarkdown.work)
           case (Some(q), _, _)   =>
             render(h.discover(q, in.since, in.sort, in.limit, in.notInDb.value))(AcquireMarkdown.discover)
-          case _ => ToolResult.text("_give one of: query, doi, wikipediaUrl_")
+          case _ => oneOf(Problem.Field("query"), Problem.Field("doi"), Problem.Field("wikipediaUrl"))
       }
 
   private val refs =
@@ -111,8 +118,18 @@ final class AcquisitionTools(
           in.id.map(i => AssessRequest.Id(i.value.trim)).filter(_.value.nonEmpty) match
             case Some(id) => render(h.assess(AssessRequest(id, in.apply, in.forceStatus)))(AcquireMarkdown.assessment)
             case None     =>
-              ToolResult.text(
-                "_give an `id` (citekey or DOI), or `updateRetractions: true` / `retractionsStatus: true`_"
+              McpOut.error(
+                Api.Error(
+                  Problem.Invalid.Inconsistent.here(
+                    NonEmptyVector.of(
+                      Problem.Field("id"),
+                      Problem.Field("updateRetractions"),
+                      Problem.Field("retractionsStatus")
+                    ),
+                    Problem.Invalid.Exclusion.AtLeastOne
+                  )
+                ),
+                "`id` is a citekey or a DOI; `updateRetractions: true` or `retractionsStatus: true` stand alone."
               )
       }
 
@@ -180,7 +197,7 @@ final class AcquisitionTools(
               collections
                 .archiveSearch(Caller.Local, Search.Query(q.value), in.rows.map(r => CollectionsService.Limit(r.value)))
             )(AcquireMarkdown.archiveSearch)
-          case _ => ToolResult.text("_give a `query` to search, or an `id`_")
+          case _ => oneOf(Problem.Field("query"), Problem.Field("id"))
       }
 
   private val candidates =
@@ -204,7 +221,7 @@ final class AcquisitionTools(
                   CandidateSweep.Request(CandidateSweep.Request.Goal(g), CandidateSweep.Request.DryRun(in.dryRun.value))
                 )
               )(CandidatesMarkdown.sweep)
-            case None => ToolResult.text("_give `goal` to sweep_")
+            case None => McpOut.missing(Problem.Field("goal"))
         else if in.mark.nonEmpty then
           render(
             h.markCandidates(

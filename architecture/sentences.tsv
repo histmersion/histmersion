@@ -1172,6 +1172,9 @@ com/histmersion/domain/catalogue/places/PlacesControllers#notFound().#0	modules/
 com/histmersion/domain/catalogue/places/PlacesControllers#shapes().#0	modules/server/src/main/scala/com/histmersion/domain/catalogue/places/PlacesControllers.scala	Invalid.Unknown		unknown source status 'dubious' (one of: current, contested)	same	
 com/histmersion/domain/catalogue/places/PlacesRoutes.missing().#0	modules/server/src/main/scala/com/histmersion/domain/catalogue/places/PlacesRoutes.scala	NotFound.Entity		No source 'anthony2007'	same	
 com/histmersion/domain/catalogue/places/PlacesTools.apply().#0	modules/server/src/main/scala/com/histmersion/domain/catalogue/places/PlacesTools.scala	NotFound.Entity		No source 'anthony2007'	same	
+com/histmersion/domain/catalogue/places/PlacesTools.apply().#1	modules/server/src/main/scala/com/histmersion/domain/catalogue/places/PlacesTools.scala	Invalid.Missing		rationale is required	same	
+com/histmersion/domain/catalogue/places/PlacesTools.apply().#2	modules/server/src/main/scala/com/histmersion/domain/catalogue/places/PlacesTools.scala	Invalid.Missing		rationale is required	same	
+com/histmersion/domain/catalogue/places/PlacesTools.apply().#3	modules/server/src/main/scala/com/histmersion/domain/catalogue/places/PlacesTools.scala	Invalid.Inconsistent	Invalid.Exclusion.AtMostOne	give lat, lon together, or none of them	same	
 com/histmersion/domain/catalogue/places/PlacesTools.placeId().#0	modules/server/src/main/scala/com/histmersion/domain/catalogue/places/PlacesTools.scala	NotFound.Entity		No source 'anthony2007'	same	
 com/histmersion/domain/library/acquisition/AcquisitionControllers#discover().#0	modules/server/src/main/scala/com/histmersion/domain/library/acquisition/AcquisitionControllers.scala	Invalid.Broken	Invalid.Rule.QueryGiven	cron: '61 * * * *': minute: '61' is not a number from 0 to 59	same	
 com/histmersion/domain/library/acquisition/AcquisitionControllers#ingestNow().#0	modules/server/src/main/scala/com/histmersion/domain/library/acquisition/AcquisitionControllers.scala	Invalid.Broken	Invalid.Rule.UpstreamRecord	cron: '61 * * * *': minute: '61' is not a number from 0 to 59	same	
@@ -1180,6 +1183,8 @@ com/histmersion/domain/library/acquisition/AcquisitionControllers#noDoi().#0	mod
 com/histmersion/domain/library/acquisition/AcquisitionControllers#unknownState().#0	modules/server/src/main/scala/com/histmersion/domain/library/acquisition/AcquisitionControllers.scala	Invalid.Unknown		unknown source status 'dubious' (one of: current, contested)	same	
 com/histmersion/domain/library/acquisition/AcquisitionControllers.agentChain().#0	modules/server/src/main/scala/com/histmersion/domain/library/acquisition/AcquisitionControllers.scala	Refused.Policy	Refused.Rule.LegalOnly	a live run token is required	same	
 com/histmersion/domain/library/acquisition/AcquisitionControllers.agentChain().#0	modules/server/src/main/scala/com/histmersion/domain/library/acquisition/AcquisitionControllers.scala	Refused.Policy	Refused.Rule.LegalOnly	a live run token is required	removed	
+com/histmersion/domain/library/acquisition/AcquisitionTools#assess.#0	modules/server/src/main/scala/com/histmersion/domain/library/acquisition/AcquisitionTools.scala	Invalid.Inconsistent	Invalid.Exclusion.AtLeastOne	give lat, lon together, or none of them	same	
+com/histmersion/domain/library/acquisition/AcquisitionTools#oneOf().#0	modules/server/src/main/scala/com/histmersion/domain/library/acquisition/AcquisitionTools.scala	Invalid.Inconsistent	Invalid.Exclusion.AtLeastOne	give lat, lon together, or none of them	same	
 com/histmersion/domain/library/acquisition/CandidateSearch#sweep().#0	modules/server/src/main/scala/com/histmersion/domain/library/acquisition/CandidateSearch.scala	NotFound.Entity		No source 'anthony2007'	same	
 com/histmersion/domain/library/acquisition/CandidateSearch#sweep().#1	modules/server/src/main/scala/com/histmersion/domain/library/acquisition/CandidateSearch.scala	Upstream.Unasked		not asked this sweep — CORE asked to wait until 2025-11-10T00:00:00Z	same	
 com/histmersion/domain/library/acquisition/CandidateSearch#sweep().#2	modules/server/src/main/scala/com/histmersion/domain/library/acquisition/CandidateSearch.scala	NotFound.Entity		No source 'anthony2007'	same	
@@ -1258,6 +1263,7 @@ com/histmersion/domain/library/workflows/WatchManagerKind#target().#1	modules/se
 com/histmersion/domain/library/workflows/WatchManagerKind#target().#2	modules/server/src/main/scala/com/histmersion/domain/library/workflows/WatchManagerKind.scala	Unclassified		manager {m.id} watches {m.goal.fold("?")(_.value)}, not {s}	same	
 com/histmersion/domain/library/workflows/WatchManagerKind#target().#3	modules/server/src/main/scala/com/histmersion/domain/library/workflows/WatchManagerKind.scala	Unclassified		unknown item kind '{other}'	same	
 com/histmersion/domain/media/MediaJobs#exclusive().#0	modules/server/src/main/scala/com/histmersion/domain/media/MediaJobs.scala	Unclassified		a media run is already going ({busy.get.fold("?")(_.value)}) — see `histmersion jobs`; try again when it ends	same	
+com/histmersion/domain/media/MediaTools.apply().#0	modules/server/src/main/scala/com/histmersion/domain/media/MediaTools.scala	NotFound.Entity		No source 'anthony2007'	same	
 com/histmersion/domain/media/assets/AssetService.Implementation#patch().#0	modules/server/src/main/scala/com/histmersion/domain/media/assets/AssetService.scala	Unclassified		No asset '{citekey}/{name}'	same	
 com/histmersion/domain/media/assets/AssetService.InMemory#patch().#0	modules/server/src/main/scala/com/histmersion/domain/media/assets/AssetService.scala	Unclassified		No asset '{citekey}/{name}'	same	
 com/histmersion/domain/media/assets/AssetsControllers#detail().#0	modules/server/src/main/scala/com/histmersion/domain/media/assets/AssetsControllers.scala	Unclassified		No asset '{citekey}/{name}'	same	
@@ -1333,11 +1339,14 @@ com/histmersion/server/ListQueries.bad().#0	modules/server/src/main/scala/com/hi
 com/histmersion/server/MarkdownLint.refusal().#0	modules/server/src/main/scala/com/histmersion/server/MarkdownLint.scala	Unclassified		refused (strict): {Plural.count(Plural.CountN(errs.size.toLong), Plural.CountSingular("formatting error"))} — {errs.take(5).map(FormatMarkdown.line).mkString("; ")}{if (errs.sizeIs > 5) s"; … and $( errs.size - 5 ) more" else ""}	same	
 com/histmersion/server/McpTools#configTool.#0	modules/server/src/main/scala/com/histmersion/server/McpTools.scala	Unclassified		`{in.action}` needs a `key`	same	
 com/histmersion/server/McpTools#configTool.#1	modules/server/src/main/scala/com/histmersion/server/McpTools.scala	Unclassified		unknown action '{other}' (one of: get, set, unset, reload, restart)	same	
+com/histmersion/server/McpTools#mergesTool.#0	modules/server/src/main/scala/com/histmersion/server/McpTools.scala	Invalid.Missing		rationale is required	same	
 com/histmersion/server/McpTools#noSuchJob().#0	modules/server/src/main/scala/com/histmersion/server/McpTools.scala	NotFound.Entity		No source 'anthony2007'	same	
 com/histmersion/server/McpTools#refusedValue().#0	modules/server/src/main/scala/com/histmersion/server/McpTools.scala	Unclassified		invalid {what} '{raw}'	same	
 com/histmersion/server/MediaWiring.NoThumbnails.convert().#0	modules/server/src/main/scala/com/histmersion/server/MediaWiring.scala	Config.Unavailable	Config.Capability.Converter	this server has no originals	same	
 com/histmersion/server/MediaWiring.NoThumbnails.health().#0	modules/server/src/main/scala/com/histmersion/server/MediaWiring.scala	Config.Unavailable	Config.Capability.Converter	this server has no originals	same	
 com/histmersion/server/OpsRoutes.refused().#0	modules/server/src/main/scala/com/histmersion/server/OpsRoutes.scala	Unclassified		invalid {what} '{raw}'	same	
+com/histmersion/server/OpsTools.runQueue().#0	modules/server/src/main/scala/com/histmersion/server/OpsTools.scala	Invalid.Missing		rationale is required	same	
+com/histmersion/server/OpsTools.runQueue().#1	modules/server/src/main/scala/com/histmersion/server/OpsTools.scala	Invalid.Missing		rationale is required	same	
 com/histmersion/server/ServerArgs.parse().#0	modules/server/src/main/scala/com/histmersion/server/ServerArgs.scala	Unclassified		unknown argument '{a}'	same	
 com/histmersion/server/ServerArgs.parse().#1	modules/server/src/main/scala/com/histmersion/server/ServerArgs.scala	Unclassified		one argument at most: {args.mkString(" ")}	same	
 com/histmersion/server/ServerGraph#reload().#0	modules/server/src/main/scala/com/histmersion/server/ServerGraph.scala	Conflict.Busy	Conflict.Activity.Restore	a backup is still running	same	
@@ -1509,6 +1518,8 @@ com/histmersion/util/jobs/JobControlService.conflict().#0	modules/server/src/mai
 com/histmersion/util/jobs/JobControlService.notFound().#0	modules/server/src/main/scala/com/histmersion/util/jobs/JobControlService.scala	NotFound.Entity		No source 'anthony2007'	same	
 com/histmersion/util/jobs/JobListing#job().#0	modules/server/src/main/scala/com/histmersion/util/jobs/JobListing.scala	NotFound.Entity		No source 'anthony2007'	same	
 com/histmersion/util/jobs/JobStops#resume().#0	modules/server/src/main/scala/com/histmersion/util/jobs/JobStops.scala	Unclassified		job {id} cannot be resumed by this server	same	
+com/histmersion/util/mcp/McpOut.missing().#0	modules/server/src/main/scala/com/histmersion/util/mcp/McpOut.scala	Invalid.Missing		rationale is required	same	
+com/histmersion/util/mcp/McpOut.unknown().#0	modules/server/src/main/scala/com/histmersion/util/mcp/McpOut.scala	Invalid.Unknown		unknown source status 'dubious' (one of: current, contested)	same	
 com/histmersion/util/ocr/ConverterClient#thumbnail().#0	modules/server/src/main/scala/com/histmersion/util/ocr/ConverterClient.scala	Unclassified		this converter makes no thumbnails	same	
 com/histmersion/util/ocr/ConverterState.of().#0	modules/server/src/main/scala/com/histmersion/util/ocr/ConverterState.scala	Unclassified		{probe.value}	same	
 com/histmersion/util/ocr/HttpConverterClient#convert().#0	modules/server/src/main/scala/com/histmersion/util/ocr/HttpConverterClient.scala	Unclassified		{text}	same	

@@ -37,8 +37,7 @@ object QueryTools:
           queries.run(Query.QueryRequest(Query.QueryRequest.Sql(in.sql.value))).left.map(Api.Error(_)) match
             case Right(r) => ToolResult.text(Query.markdown(r).value)
             // hand the live schema back with the error so the next attempt can be right
-            case Left(e) =>
-              ToolResult.text(s"${McpOut.refusal(e)}\n\n${Query.schemaMarkdown(queries.schemaTables)}")
+            case Left(e) => McpOut.error(e, s"${Query.schemaMarkdown(queries.schemaTables)}")
         }
 
     val schema =

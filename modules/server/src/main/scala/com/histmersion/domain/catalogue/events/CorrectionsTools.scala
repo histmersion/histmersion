@@ -61,7 +61,7 @@ object CorrectionsTools:
               case None    => Right(None)
               case Some(i) =>
                 Event.Id.parse(i).left.map(Api.Error(_)).map(Some(_))
-          ToolResult.text(
+          McpOut.of(
             event
               .flatMap(e =>
                 imports.corrections(
@@ -71,7 +71,6 @@ object CorrectionsTools:
                   None
                 )
               )
-              .fold(McpOut.refusal, c => Corrections.markdown(c).value)
-          )
+          )(c => Corrections.markdown(c).value)
         }
     List(corrections)

@@ -2,6 +2,7 @@ package com.histmersion
 package config
 
 import com.histmersion.util.problem.{Problem, Problems, Raised}
+import com.histmersion.util.mcp.McpConfig
 import org.ekrich.config.ConfigFactory
 import hearth.kindlings.sconfigderivation.ConfigReader
 import hearth.kindlings.sconfigderivation.annotations.configKey
@@ -36,6 +37,7 @@ final case class AppConfig(
     events: EventsConfig,
     config: ConfigReload.Config,
     basemap: BasemapConfig,
+    mcp: McpConfig,
     setup: SetupConfig = SetupConfig(completed = SetupConfig.Completed(false))
 ) derives ConfigReader
 

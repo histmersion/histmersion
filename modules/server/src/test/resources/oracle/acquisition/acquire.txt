@@ -1167,6 +1167,6 @@ Counts: 2 new, 1 seen.
   > GET /openalex/works/https://doi.org/10.5555/zq.cited?select=id,authorships&mailto=oracle@example.org
   > GET /openalex/works?filter=cites:W1661078230,from_publication_date:DAY&per-page=25&sort=publication_date:desc&select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index&mailto=oracle@example.org
 == mcp candidates sweep (no goal)
-_give `goal` to sweep_
+_goal is required_
 == mcp candidates mark
 1 candidate(s) marked dismissed.

@@ -102,7 +102,7 @@ class ContractSnapshotSuite extends munit.FunSuite:
       ),
       deps.maintenance
     )
-    val mcp = McpTools(h, acq, collections)
+    val mcp = McpTools(h, acq, collections, () => deps.cfg.mcp)
     val body = supervised {
       val b = NettySyncServer().host("127.0.0.1").port(0).addEndpoint(mcp.endpoint).start()
       try

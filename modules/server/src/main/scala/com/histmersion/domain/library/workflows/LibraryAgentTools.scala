@@ -25,6 +25,7 @@ import com.histmersion.domain.library.sources.SourcesControllers
 import com.histmersion.domain.library.LibraryTools
 import com.histmersion.api.library.Facet
 import com.histmersion.api.Api
+import com.histmersion.util.mcp.McpOut
 import com.histmersion.domain.library.search.FilterSql
 import com.histmersion.api.library.Citekey
 
@@ -99,7 +100,12 @@ final class LibraryAgentTools(site: => LibrarySite, upstream: () => AgentUpstrea
           "accent-insensitive."
       )(in =>
         cap(
-          LibraryTools.passagesMarkdown(site.sources, in),
+          LibraryTools
+            .passagesMarkdown(site.sources, in)
+            .fold(
+              e => McpOut.refusalText(e) + (if e.isNotFound then s"\n\n${LibraryTools.FindCitekey}" else ""),
+              identity
+            ),
           max,
           "ask for fewer passages (`limit`), less `context`, or a more specific query"
         )

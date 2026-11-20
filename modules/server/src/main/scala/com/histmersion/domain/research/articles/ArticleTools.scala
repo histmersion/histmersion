@@ -95,7 +95,7 @@ object ArticleTools:
               val parts =
                 in.parts.map(_.value.split(',').map(_.trim.toLowerCase).toList).getOrElse(Nil).map(Article.Part(_))
               ToolResult.text(ArticleMarkdown.article(v, parts))
-            case Left(e) => ToolResult.text(s"_No article '${in.slug}' — find a slug with list_articles._")
+            case Left(e) => McpOut.error(e, "Find a slug with list_articles.")
         }
 
     val putArticle =
@@ -162,19 +162,19 @@ object ArticleTools:
       tool("check_edits")
         .description(CheckEditsDoc)
         .input[CheckEditsInput]
-        .handle(in => ToolResult.text(ArticleTools.checkEdits(articles, in)))
+        .handle(in => McpOut.ofText(ArticleTools.checkEdits(articles, in)))
 
     val articleCoverage =
       tool("article_coverage")
         .description(ArticleCoverageDoc)
         .input[ArticleCoverageInput]
-        .handle(in => ToolResult.text(articleCoverageMarkdown(articles, in)))
+        .handle(in => McpOut.ofText(articleCoverageMarkdown(articles, in)))
 
     val articleReview =
       tool("article_review")
         .description(ArticleReviewDoc)
         .input[ArticleReviewInput]
-        .handle(in => ToolResult.text(articleReviewMarkdown(articles, in)))
+        .handle(in => McpOut.ofText(articleReviewMarkdown(articles, in)))
 
     val exportArticle =
       tool("export_article")
@@ -304,8 +304,11 @@ object ArticleTools:
       "that records no filter has none (set it with patch_article `filter`)."
 
   /** `article_coverage`: the one handler, rendered. */
-  def articleCoverageMarkdown(articles: ArticlesControllers, in: ArticleCoverageInput): McpOut.Markdown =
-    readSlug(in.slug).flatMap(articles.coverage).fold(e => McpOut.refusal(e), c => Article.Coverage.markdown(c).value)
+  def articleCoverageMarkdown(
+      articles: ArticlesControllers,
+      in: ArticleCoverageInput
+  ): Either[Api.Error, McpOut.Markdown] =
+    readSlug(in.slug).flatMap(articles.coverage).map(c => Article.Coverage.markdown(c).value)
 
   /** `article_review` as `/mcp` describes it. */
   val ArticleReviewDoc: String =
@@ -317,8 +320,8 @@ object ArticleTools:
       "won't fix, still open). CLI: histmersion article review."
 
   /** `article_review`: the one handler, rendered. */
-  def articleReviewMarkdown(articles: ArticlesControllers, in: ArticleReviewInput): McpOut.Markdown =
-    readSlug(in.slug).flatMap(articles.review).fold(e => McpOut.refusal(e), v => Article.ReviewView.markdown(v).value)
+  def articleReviewMarkdown(articles: ArticlesControllers, in: ArticleReviewInput): Either[Api.Error, McpOut.Markdown] =
+    readSlug(in.slug).flatMap(articles.review).map(v => Article.ReviewView.markdown(v).value)
 
   final case class ArticleReviewInput(slug: ArticleReviewInput.Slug) derives JsonCodec
   object ArticleReviewInput:
@@ -349,7 +352,7 @@ object ArticleTools:
       "checks code runs on a review fixer's answer."
 
   /** `check_edits`: the one handler, rendered. */
-  def checkEdits(articles: ArticlesControllers, in: CheckEditsInput): McpOut.Markdown =
+  def checkEdits(articles: ArticlesControllers, in: CheckEditsInput): Either[Api.Error, McpOut.Markdown] =
     writeSlug(in.slug)
       .flatMap(
         articles.check(
@@ -361,7 +364,7 @@ object ArticleTools:
           )
         )
       )
-      .fold(e => McpOut.refusal(e), c => Article.Edits.markdown(c).value)
+      .map(c => Article.Edits.markdown(c).value)
 
   final case class CheckEditsInput(
       slug: CheckEditsInput.Slug,

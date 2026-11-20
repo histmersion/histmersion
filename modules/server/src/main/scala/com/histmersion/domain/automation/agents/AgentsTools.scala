@@ -22,7 +22,7 @@ import com.histmersion.domain.automation.goals.BGoalLinkRow
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.{DecisionRequest, RunRequest}
-import com.histmersion.util.mcp.McpOut
+import com.histmersion.util.mcp.{McpConfig, McpEdge, McpOut}
 import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.api.automation.{
   AgentMode,
@@ -103,7 +103,7 @@ object AgentsTools:
               ) match
                 case Right(r) => ToolResult.text(AgentsMarkdown.runLine(r))
                 case Left(e)  => McpOut.error(e)
-            case (errs, _) => McpOut.text(McpOut.refusal(errs.map(_.sentence).mkString("; ")))
+            case (errs, _) => NonEmptyVector.from(errs.toVector).fold(McpOut.text(""))(McpOut.refused(_))
         }
 
     val status =
@@ -122,33 +122,24 @@ object AgentsTools:
         .handle { in =>
           in.id.map(_.trim).filter(_.nonEmpty) match
             case _ if in.compare.nonEmpty =>
-              ToolResult.text(
-                AgentsControllers.runIds(in.compare).flatMap(a.compare).fold(McpOut.refusal, AgentsMarkdown.compare)
-              )
+              McpOut.of(AgentsControllers.runIds(in.compare).flatMap(a.compare))(AgentsMarkdown.compare)
             case Some(id) =>
-              ToolResult.text(
-                AgentsControllers.runId(id).flatMap(a.run).fold(McpOut.refusal, AgentsMarkdown.run(_, in.messages))
-              )
+              McpOut.of(AgentsControllers.runId(id).flatMap(a.run))(AgentsMarkdown.run(_, in.messages))
             case None =>
               val f = in.filter
-              ToolResult.text(
-                a.runsPage(f, in.limit.flatMap(PageSize.option(_)), in.before.map(Paging.Cursor(_)), None)
-                  .fold(
-                    McpOut.refusal,
-                    (rs, page) =>
-                      AgentsMarkdown.runs(
-                        rs,
+              McpOut.of(a.runsPage(f, in.limit.flatMap(PageSize.option(_)), in.before.map(Paging.Cursor(_)), None))(
+                (rs, page) =>
+                  AgentsMarkdown.runs(
+                    rs,
+                    page,
+                    f.qualifier.map(q => Agents.RunInfo.Status(q.value)),
+                    Paging
+                      .olderLine(
                         page,
-                        f.qualifier.map(q => Agents.RunInfo.Status(q.value)),
-                        Paging
-                          .olderLine(
-                            page,
-                            c =>
-                              Paging.OlderLine
-                                .Text(s"call `run_status` again with the same filters and `before: \"$c\"`")
-                          )
-                          .map(t => Paging.Cursor(t.value))
+                        c =>
+                          Paging.OlderLine.Text(s"call `run_status` again with the same filters and `before: \"$c\"`")
                       )
+                      .map(t => Paging.Cursor(t.value))
                   )
               )
         }
@@ -171,24 +162,20 @@ object AgentsTools:
           val f = in.filter
           if in.digest then ToolResult.text(ApprovalDigestMarkdown.digest(a.managing.digest))
           else
-            ToolResult.text(
-              a.approvalsPage(f, in.limit.flatMap(PageSize.option(_)), in.before.map(Paging.Cursor(_)), None)
-                .fold(
-                  McpOut.refusal,
-                  (as, page) =>
-                    AgentsMarkdown.approvals(
-                      as,
+            McpOut.of(a.approvalsPage(f, in.limit.flatMap(PageSize.option(_)), in.before.map(Paging.Cursor(_)), None))(
+              (as, page) =>
+                AgentsMarkdown.approvals(
+                  as,
+                  page,
+                  f.qualifier.map(q => Approval.State.Wire(q.value)),
+                  Paging
+                    .olderLine(
                       page,
-                      f.qualifier.map(q => Approval.State.Wire(q.value)),
-                      Paging
-                        .olderLine(
-                          page,
-                          c =>
-                            Paging.OlderLine
-                              .Text(s"call `list_approvals` again with the same filters and `before: \"$c\"`")
-                        )
-                        .map(t => Paging.Cursor(t.value))
+                      c =>
+                        Paging.OlderLine
+                          .Text(s"call `list_approvals` again with the same filters and `before: \"$c\"`")
                     )
+                    .map(t => Paging.Cursor(t.value))
                 )
             )
         }
@@ -207,15 +194,15 @@ object AgentsTools:
         .handle { in =>
           in.id match
             case Some(id) =>
-              ToolResult.text(
+              McpOut.of(
                 a.decide(
                   DomainApproval.Id(id),
                   DomainApproval.Outcome(in.decision),
                   DecisionRequest(in.note.map(DecisionRequest.Note(_)))
-                ).fold(McpOut.refusal, x => AgentsMarkdown.approvalLine(x))
-              )
+                )
+              )(x => AgentsMarkdown.approvalLine(x))
             case None =>
-              ToolResult.text(
+              McpOut.of(
                 a.managing
                   .decideAll(
                     ApprovalDigest
@@ -230,8 +217,7 @@ object AgentsTools:
                         Some(ApprovalDigest.BulkDecide.By("mcp"))
                       )
                   )
-                  .fold(McpOut.refusal, ApprovalDigestMarkdown.bulk)
-              )
+              )(ApprovalDigestMarkdown.bulk)
         }
 
     val links =
@@ -265,11 +251,7 @@ object AgentsTools:
                     ).map(_ => ())
                 }
               }
-          ToolResult.text(
-            done
-              .flatMap(_ => AgentsControllers.goalSlug(in.goal).flatMap(a.goalView))
-              .fold(McpOut.refusal, AgentsMarkdown.goalView)
-          )
+          McpOut.of(done.flatMap(_ => AgentsControllers.goalSlug(in.goal).flatMap(a.goalView)))(AgentsMarkdown.goalView)
         }
 
     val schedule =
@@ -323,7 +305,7 @@ object AgentsTools:
                     )
                 )
               )
-          ToolResult.text(out.fold(McpOut.refusal, identity))
+          McpOut.ofText(out)
         }
 
     val models =
@@ -430,7 +412,7 @@ object AgentsTools:
                     )
                 )
               )
-          ToolResult.text(out.fold(McpOut.refusal, identity))
+          McpOut.ofText(out)
         }
 
     val manager =
@@ -618,7 +600,7 @@ object AgentsTools:
                   )
                 )
               )
-          ToolResult.text(out.fold(McpOut.refusal, identity))
+          McpOut.ofText(out)
         }
 
     val scheduler =
@@ -683,7 +665,7 @@ object AgentsTools:
                   )
                 )
               )
-          ToolResult.text(out.fold(McpOut.refusal, identity))
+          McpOut.ofText(out)
         }
 
     List(start, status, approvals, decide, links, schedule, models, setModels, manager, scheduler)
@@ -695,12 +677,13 @@ object AgentsTools:
     * the role's tools whatever the runtime does. A definition that does not load gets no endpoint (and its steps fail
     * with why).
     */
-  def agentEndpoints(a: AgentsControllers) =
+  def agentEndpoints(a: AgentsControllers, limits: () => McpConfig) =
     a.definitions.agentNames.flatMap { n =>
       a.definitions.agent(n) match
         case Right(d) =>
           List(
-            McpServer(tools = d.tools.flatMap(a.toolbox.tool).map(mcpTool(_)))
+            McpEdge
+              .server(d.tools.flatMap(a.toolbox.tool).map(mcpTool(_)), limits)
               .endpoint(List("mcp", "agent", d.name.value))
           )
         case Left(m) =>

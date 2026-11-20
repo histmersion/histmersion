@@ -1539,7 +1539,9 @@ Whether the gate is older than the walls [[zralpha1990_walls]].
 - [[zrbeta2001_harbour]] — Zrwriter 2001 · _The Harbour of Zrtown_ · **contested**
 - [[zrgamma1975_kings]] — Zrauthor 1975 · _Kings of Zrland_ · **superseded**
 == tool get_article unknown
-_No article 'zr_nothing' — find a slug with list_articles._
+_no article slug 'zr_nothing'_
+
+Find a slug with list_articles.
 == GET /api/articles
 200 {
   "articles" : [

@@ -21,7 +21,7 @@ import com.histmersion.api.{Api, Markdown, Paging, StrictJson}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.VocabularyCodecs.given
-import com.histmersion.util.mcp.McpOut
+import com.histmersion.util.mcp.{McpConfig, McpEdge, McpOut}
 import com.histmersion.api.aliases.{Aliases, LabelRename}
 import com.histmersion.api.automation.{ActivityMarkdown, AgentsMarkdown, AgentStatePut, ListFilters}
 import com.histmersion.api.exchange.{MergeMarkdown, MergePolicy, MergeResolution, MergeResolutions}
@@ -75,7 +75,8 @@ import com.histmersion.domain.library.collections.CollectionsTools
 final class McpTools(
     h: ServerWiring,
     acquire: AcquisitionControllers,
-    collections: CollectionsControllers
+    collections: CollectionsControllers,
+    limits: () => McpConfig
 ):
   import McpTools.*
 
@@ -162,7 +163,7 @@ final class McpTools(
               case Left(e)  => McpOut.error(e)
           case None =>
             val f = in.filter
-            ToolResult.text(
+            McpOut.of(
               h.jobList
                 .page(
                   f,
@@ -171,22 +172,18 @@ final class McpTools(
                   in.before.map(Paging.Cursor(_)),
                   None
                 )
-                .fold(
-                  McpOut.refusal,
-                  (js, page) =>
-                    IngestMarkdown.jobs(
-                      js.toVector,
-                      page,
-                      f.qualifier.map(q => Ingest.JobStatus(q.value)),
-                      Paging
-                        .olderLine(
-                          page,
-                          c =>
-                            Paging.OlderLine.Text(s"call `job_status` again with the same filters and `before: \"$c\"`")
-                        )
-                        .map(t => Ingest.JobAge(t.value))
-                    )
-                )
+            )((js, page) =>
+              IngestMarkdown.jobs(
+                js.toVector,
+                page,
+                f.qualifier.map(q => Ingest.JobStatus(q.value)),
+                Paging
+                  .olderLine(
+                    page,
+                    c => Paging.OlderLine.Text(s"call `job_status` again with the same filters and `before: \"$c\"`")
+                  )
+                  .map(t => Ingest.JobAge(t.value))
+              )
             )
       }
 
@@ -493,8 +490,9 @@ final class McpTools(
       .handle { in =>
         val editions = in.editions.map(_.trim).filter(_.nonEmpty)
         editions.map(e => EditionsPolicy.values.find(_.toString.equalsIgnoreCase(e)).toRight(e)) match
-          case Some(Left(e)) => ToolResult.text(s"_editions '$e' is not merge or separate_")
-          case other         =>
+          case Some(Left(e)) =>
+            McpOut.unknown(Problem.TypeName("EditionsPolicy"), e, Problem.Raw("merge"), Problem.Raw("separate"))
+          case other =>
             val res = MergeResolutions(
               in.resolve.toList
                 .sortBy(_._1)
@@ -521,11 +519,20 @@ final class McpTools(
       .input[MergesInput]
       .handle { in =>
         MergesAction.parse(in.action) match
-          case None => ToolResult.text(s"_action '${in.action.getOrElse("")}' is not list, show or ledger_")
+          case None =>
+            McpOut.unknown(
+              Problem.TypeName("MergesAction"),
+              in.action.getOrElse(""),
+              Problem.Raw("list"),
+              Problem.Raw("show"),
+              Problem.Raw("ledger")
+            )
           case Some(MergesAction.List) =>
             ToolResult.text(MergeMarkdown.merges(h.bundles.merges(in.limit.map(Api.Merge.Limit(_)))))
           case Some(MergesAction.Show) =>
-            in.id.fold(ToolResult.text("_show needs `id` (a merge id from `list`)_"))(id =>
+            in.id.fold(
+              McpOut.error(Api.Error(Problem.Invalid.Missing.here(Problem.Field("id"))), "A merge id from `list`.")
+            )(id =>
               h.bundles
                 .mergeDetail(MergeRepo.MergeIdOrPrefix(id))
                 .fold(McpOut.error, d => ToolResult.text(MergeMarkdown.detail(d)))
@@ -570,13 +577,24 @@ final class McpTools(
             )
           case "place" =>
             renamed(Place.Id.either(in.from.trim), "place id")(h.places.renamed(_, req))
-          case other => Left(s"_kind '$other' is not article, event, goal or place_")
-        r.fold(ToolResult.text, _.fold(McpOut.error, x => ToolResult.text(MergeMarkdown.renamed(x))))
+          case other =>
+            Left(
+              McpOut.unknown(
+                Problem.TypeName("LabelKind"),
+                other,
+                Problem.Raw("article"),
+                Problem.Raw("event"),
+                Problem.Raw("goal"),
+                Problem.Raw("place")
+              )
+            )
+        r.fold(identity, McpOut.of(_)(MergeMarkdown.renamed))
       }
 
   // Declared LAST: every tool above must be initialised before the list is built.
-  val server = McpServer(tools =
-    List(
+  val server = McpEdge.server(
+    limits = limits,
+    tools = List(
       ping
     ) ++ LibraryTools(
       h.library.search,

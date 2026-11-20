@@ -2,6 +2,7 @@ package com.histmersion
 package domain.catalogue.places
 import com.histmersion.util.mcp.ChimpJson.given
 import com.histmersion.util.problem.Problem
+import com.histmersion.util.nonempty.NonEmptyVector
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.Write
@@ -25,6 +26,9 @@ import com.histmersion.api.catalogue.Place.Rationale as PlaceRationale
   * `place_override` (a person's kind, period and point; merge, remove) and `add_place`.
   */
 object PlacesTools:
+
+  /** What a refusal for a missing place id adds: where to find one. */
+  private val FindPlaceId: McpOut.Markdown = "Find the place id with `places`."
 
   import com.histmersion.util.mcp.ToolInputs.given
 
@@ -211,7 +215,7 @@ object PlacesTools:
                     Place.Id.option(raw).fold(List.empty[ManualPlaceName])(i => places.manualNames(Some(i))))
               )
             case (None, Some(_)) =>
-              ToolResult.text("_`placeId` is required to add or remove a name — find it with `places`_")
+              McpOut.error(Api.Error(Problem.Invalid.Missing.here(Problem.Field("placeId"))), FindPlaceId)
             case (Some(pid), Some(n)) =>
               val r = placeId(pid).flatMap(found =>
                 if in.remove.exists(_.value) then
@@ -258,7 +262,7 @@ object PlacesTools:
           val ask =
             gone || in.kind.exists(_.value.trim.nonEmpty) || in.periodStart.isDefined || in.periodEnd.isDefined ||
               in.pointLat.isDefined || in.pointLon.isDefined || in.reset.exists(_.value)
-          def text(r: Either[Api.Error, String]) = ToolResult.text(r.fold(McpOut.refusal, identity))
+          def text(r: Either[Api.Error, String]) = McpOut.ofText(r)
           (id, ask) match
             case (_, false) =>
               ToolResult.text(
@@ -268,10 +272,16 @@ object PlacesTools:
                     Place.Id.option(raw).fold(List.empty[ApiPlace.Override])(i => places.overrides(Some(i))))
               )
             case (None, true) =>
-              ToolResult.text("_`placeId` is required to set, reset, merge or remove — find it with `places`_")
+              McpOut.error(Api.Error(Problem.Invalid.Missing.here(Problem.Field("placeId"))), FindPlaceId)
             case (Some(pid), true) =>
               (into, in.remove.exists(_.value)) match
-                case (Some(_), true)  => ToolResult.text("_`mergeInto` and `remove` exclude each other_")
+                case (Some(_), true) =>
+                  McpOut.refused(
+                    Problem.Invalid.Inconsistent.here(
+                      NonEmptyVector.of(Problem.Field("mergeInto"), Problem.Field("remove")),
+                      Problem.Invalid.Exclusion.AtMostOne
+                    )
+                  )
                 case (Some(t), false) =>
                   text(
                     placeId(pid)

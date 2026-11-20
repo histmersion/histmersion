@@ -222,6 +222,8 @@ The settings of backups and portable bundles are listed with them, in
 | `ui.map-tiles.playback-bucket-seconds` | `HISTMERSION_UI_MAP_TILES_PLAYBACK_BUCKET_SECONDS` | `1.0` | in playback the tiled layers are drawn for the playhead's window widened to whole buckets of the years this many seconds of playback cover (a round number), so their tiles change once a bucket and a replay finds them kept |
 | `ui.map-tiles.undated-kept-zoom` | `HISTMERSION_UI_MAP_TILES_UNDATED_KEPT_ZOOM` | `6` | the sites with no known date (drawn only when a viewer turns on "Also show sites with no known date") are counted by the cells of the tiles up to this zoom ahead of time, and counted again when one of them changes; deeper tiles count their own |
 | `ui.events.outline-tolerance-deg` | `HISTMERSION_UI_EVENTS_OUTLINE_TOLERANCE_DEG` | `0.02` | a regional event's area outline is simplified to this many degrees |
+| `mcp.result-max-chars` | `HISTMERSION_MCP_RESULT_MAX_CHARS` | `100000` | the one cap on an MCP tool's answer: a longer one is cut at a line, with a trailer saying how much was cut and how to read on. 0 = no cap |
+| `mcp.arguments-max-chars` | `HISTMERSION_MCP_ARGUMENTS_MAX_CHARS` | `67108864` | an MCP call whose arguments are longer (a base64 upload to `ingest` included) is refused before the tool runs. 0 = no cap |
 | `query.timeout-ms` | `HISTMERSION_QUERY_TIMEOUT_MS` | `10000` | `SET LOCAL statement_timeout` for `histmersion query` |
 | `query.max-rows` | `HISTMERSION_QUERY_MAX_ROWS` | `500` | row cap; a result that hits it comes back `truncated` |
 | `query.max-cell-chars` | `HISTMERSION_QUERY_MAX_CELL_CHARS` | `2000` | one cell is cut here — `select ocr_markdown …` is otherwise megabytes |

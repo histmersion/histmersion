@@ -26,6 +26,19 @@ object ChimpJson:
     }
   }
 
+  /** `decoder`, refusing arguments whose JSON holds more characters than `fits` takes, before anything is decoded. */
+  def bounded[A](decoder: circe.Decoder[A], fits: Int => Boolean): circe.Decoder[A] =
+    circe.Decoder.instance { cursor =>
+      val chars = cursor.value.noSpaces.length
+      if fits(chars) then decoder(cursor)
+      else
+        Left(circe.DecodingFailure(s"the arguments hold $chars characters, more than the server takes", cursor.history))
+    }
+
+  extension [A](value: A)(using codec: JsonValueCodec[A])
+    /** The value as a tool result's structured content, written by its own codec. */
+    def structured: circe.Json = circe.parser.parse(value.asJson.noSpaces).getOrElse(circe.Json.Null)
+
   /** A tool whose arguments are any JSON object of `schema`. */
   def rawTool(tool: PartialTool, schema: Json)(
       handle: Json => ToolResult[NoStructuredOutput]
