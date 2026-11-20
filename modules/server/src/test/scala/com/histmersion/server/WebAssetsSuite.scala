@@ -2,6 +2,7 @@ package com.histmersion
 package server
 
 import com.histmersion.api.WebPaths
+import com.histmersion.api.Html.html
 import com.histmersion.api.instance.UiConfig
 import com.histmersion.domain.Title
 import com.histmersion.server.instance.WebBundle
@@ -42,7 +43,7 @@ class WebAssetsSuite extends munit.FunSuite:
     assert(shell.contains(s"""<link rel="preload" href="/web/app.bundle.js?v=$id" as="script" />"""), shell)
     assert(shell.contains(s"""<script type="module" src="/web/boot.js?v=$id"></script>"""), shell)
     assert(!shell.contains(WebBundle.Token), shell)
-    val page = ArticleHtml.page(Title("t"), HtmlRender.Html("<p>b</p>"), PageKind.values.head, served).value
+    val page = ArticleHtml.page(Title("t"), html"<p>b</p>", PageKind.values.head, served).markup
     assert(page.contains(s"""<script src="/web/app.bundle.js?v=$id"></script>"""), page)
     // the old constants (`?v=2`, `?v=3`) never come back: a bundle address is built from the build alone
     val fixed = """app\.bundle\.js\?v=[0-9a-zA-Z]""".r
@@ -63,7 +64,7 @@ class WebAssetsSuite extends munit.FunSuite:
     val inline = "<script(?![^>]*\\bsrc=)[^>]*>".r
     for (name, html) <- List(
         "index.html" -> asset("index.html"),
-        "a server page" -> ArticleHtml.page(Title("t"), HtmlRender.Html("<p>b</p>"), PageKind.values.head, bundle).value
+        "a server page" -> ArticleHtml.page(Title("t"), html"<p>b</p>", PageKind.values.head, bundle).markup
       )
     do assertEquals(inline.findFirstIn(html), None, name)
 
@@ -96,7 +97,7 @@ class WebAssetsSuite extends munit.FunSuite:
     val key = "<script src=\"/web/theme.js\"></script>"
     for (name, html) <- List(
         "index.html" -> asset("index.html"),
-        "a server page" -> ArticleHtml.page(Title("t"), HtmlRender.Html("<p>b</p>"), PageKind.values.head, bundle).value
+        "a server page" -> ArticleHtml.page(Title("t"), html"<p>b</p>", PageKind.values.head, bundle).markup
       )
     do
       val at = html.indexOf(key)

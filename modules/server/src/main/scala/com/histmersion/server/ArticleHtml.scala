@@ -1,13 +1,8 @@
 package com.histmersion
 package server
 
-import sttp.tapir.*
-import sttp.tapir.server.ServerEndpoint
-import sttp.tapir.files.*
-import sttp.shared.Identity
-import sttp.model.{Header, MediaType, StatusCode}
-import com.histmersion.api.json.TapirJson.*
-import com.histmersion.api.Plural
+import com.histmersion.api.{Html, Plural}
+import com.histmersion.api.Html.html
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import io.github.iltotore.iron.constraint.any.Pure
@@ -20,16 +15,13 @@ object ArticleHtml:
   type Url = Url.T
   object Url extends Newtype[String, Pure]
 
-  /** HTML-escape a value destined for an attribute or text node. */
   type MatchNavMatches = MatchNavMatches.T
   object MatchNavMatches extends Newtype[Int, Pure]
 
-  def esc(s: HtmlRender.Text): HtmlRender.Html = HtmlRender.esc(s)
+  /** HTML-escape a value destined for an attribute or text node. */
+  def esc(s: HtmlRender.Text): Html = HtmlRender.esc(s)
 
-  private def link(ck: Citekey, full: Boolean, q: Option[HtmlRender.Query]): HtmlRender.Html =
-    esc(HtmlRender.Text(sourceUrl(ck, full, fragment = false, q).value))
-
-  /** `/source/{ck}` with the page's own query parameters (unescaped — for a header or `esc`). */
+  /** `/source/{ck}` with the page's own query parameters (unescaped — for a header, or a splice that escapes it). */
   def sourceUrl(ck: Citekey, full: Boolean, fragment: Boolean, q: Option[HtmlRender.Query]): Url =
     val params = List(
       if full then Some("full=true") else None,
@@ -41,49 +33,46 @@ object ArticleHtml:
                                                                      else params.mkString("?", "&", ""))
     )
 
-  def toggle(ck: Citekey, full: Boolean, q: Option[HtmlRender.Query] = None): HtmlRender.Html =
-    if full then
-      HtmlRender.Html(s"""<p class="toggle"><a href="${link(ck, false, q).value}">▲ hide full text</a></p>""")
-    else
-      HtmlRender.Html(
-        s"""<p class="toggle"><a href="${link(ck, true, q).value}">▼ show full text (whole paper)</a></p>"""
-      )
+  def toggle(ck: Citekey, full: Boolean, q: Option[HtmlRender.Query] = None): Html =
+    val to = sourceUrl(ck, !full, fragment = false, q)
+    if full then html"""<p class="toggle"><a href="$to">▲ hide full text</a></p>"""
+    else html"""<p class="toggle"><a href="$to">▼ show full text (whole paper)</a></p>"""
 
   /** The match counter + jump control for `?q=`; empty when nothing matched (or no query). the web bundle's page entry
     * point wires the link and the `n` shortcut to the `<mark id="hl…">` elements — and the control NAMES that shortcut,
     * because a keyboard shortcut nobody is told about is a shortcut nobody uses (item 14).
     */
-  def matchNav(matches: MatchNavMatches): HtmlRender.Html =
-    if matches.value <= 0 then HtmlRender.Html("")
+  def matchNav(matches: MatchNavMatches): Html =
+    if matches.value <= 0 then Html.empty
     else
-      HtmlRender.Html(
-        s"""<p class="toggle match-nav" data-matches="${matches.value}">${Plural.count(
-            Plural.Count(matches.value.toLong),
-            Plural.CountSingular("match"),
-            Plural.CountPlural("matches")
-          )} · """ +
-          """<a href="#hl1" class="next-match">next ▼</a> <span class="kbd-hint">(n)</span></p>"""
-      )
+      val count =
+        Plural.count(Plural.Count(matches.value.toLong), Plural.CountSingular("match"), Plural.CountPlural("matches"))
+      html"""<p class="toggle match-nav" data-matches="$matches">$count · """ ++
+        html"""<a href="#hl1" class="next-match">next ▼</a> <span class="kbd-hint">(n)</span></p>"""
+
+  private val nl = Html.text("\n")
 
   /** `title` is DATA — a source's or an article's stored title, which an agent wrote — so it is escaped here rather
     * than at every call site. `bodyHtml` is already-rendered HTML and is not. The bundle's address carries its build
     * ([[WebBundle.path]]).
     */
-  def page(title: Title, bodyHtml: HtmlRender.Html, kind: PageKind, bundle: WebBundle): HtmlRender.Html =
-    HtmlRender.Html(
-      s"""<!doctype html><html lang="en"><head><meta charset="utf-8">
-       |<meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(
-          HtmlRender.Text(title.value)
-        )} · Histmersion</title><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%2214%22 fill=%22%231f2433%22/%3E%3Cpath d=%22M6 20c5-7 15-7 20 0%22 stroke=%22%236aa3ff%22 stroke-width=%223%22 fill=%22none%22/%3E%3Ccircle cx=%2216%22 cy=%2212%22 r=%223%22 fill=%22%23f2c14e%22/%3E%3C/svg%3E">
-       |$ThemeScript<link rel="stylesheet" href="/web/style.css"></head><body class="article-page" data-page="${kind.wire}">
-       |<div class="nav"><a href="/">← Histmersion</a></div>
-       |<main id="page-content">$bodyHtml</main>
-       |<script src="${esc(HtmlRender.Text(bundle.path)).value}"></script>
-       |</body></html>""".stripMargin
+  def page(title: Title, bodyHtml: Html, kind: PageKind, bundle: WebBundle): Html =
+    Html.join(
+      List(
+        html"""<!doctype html><html lang="en"><head><meta charset="utf-8">""",
+        html"""<meta name="viewport" content="width=device-width,initial-scale=1"><title>$title · Histmersion</title>""" ++
+          html"""<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%2214%22 fill=%22%231f2433%22/%3E%3Cpath d=%22M6 20c5-7 15-7 20 0%22 stroke=%22%236aa3ff%22 stroke-width=%223%22 fill=%22none%22/%3E%3Ccircle cx=%2216%22 cy=%2212%22 r=%223%22 fill=%22%23f2c14e%22/%3E%3C/svg%3E">""",
+        html"""$ThemeScript<link rel="stylesheet" href="/web/style.css"></head><body class="article-page" data-page="${kind.wire}">""",
+        html"""<div class="nav"><a href="/">← Histmersion</a></div>""",
+        html"""<main id="page-content">$bodyHtml</main>""",
+        html"""<script src="${bundle.path}"></script>""",
+        html"""</body></html>"""
+      ),
+      nl
     )
 
   /** A whole page around an inner body ([[page]]), for a route that renders pages but does not choose the bundle. */
-  type Shell = (Title, HtmlRender.Html, PageKind) => HtmlRender.Html
+  type Shell = (Title, Html, PageKind) => Html
 
   /** [[page]] with `bundle`. */
   def shell(bundle: WebBundle): Shell = page(_, _, _, bundle)
@@ -92,4 +81,4 @@ object ArticleHtml:
     * never flashes the other theme first; the stylesheet follows the system without it. A file, not an inline script:
     * the Content-Security-Policy runs none.
     */
-  val ThemeScript = """<script src="/web/theme.js"></script>"""
+  val ThemeScript: Html = html"""<script src="/web/theme.js"></script>"""

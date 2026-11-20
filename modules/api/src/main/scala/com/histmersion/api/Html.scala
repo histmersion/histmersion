@@ -129,6 +129,99 @@ object Html:
       s"""<span class="conf-badge conf-$wire" title="${esc(ConfidenceStyle.label(c))}">""" +
         s"""${ConfidenceStyle.icon(c).markup}<span class="conf-text">$wire</span></span>"""
 
+  // ── markup derived from markup ───────────────────────────────────────────────────────────────
+
+  private val BareImg = """<img(?![^>]*\bloading=)\s""".r
+
+  /** `h` with every `<img>` that does not say how it loads told to load lazily (`loading="lazy"`): the figures of a
+    * long text load as they scroll into view. Only the code's own attribute is added, to tags already in `h`.
+    */
+  def lazyImages(h: T): T =
+    BareImg.replaceAllIn(h, _ => java.util.regex.Matcher.quoteReplacement("""<img loading="lazy" """))
+
+  /** `h` with each match of `pattern` in its TEXT wrapped in `<mark id="hl<n>">…</mark>` (`n` from 1, in document
+    * order), and how many. Only text is rewritten: a tag (its name, its attributes), the content of a `<script>` or
+    * `<style>` and an entity (`&amp;`) are copied as they are, so a term inside an address or an entity never breaks
+    * the markup. The ids are what the web page's `InPage.nextMatch` steps through.
+    */
+  def marked(h: T, pattern: scala.util.matching.Regex): (T, Int) = markText(h, pattern)
+
+  /** [[marked]] over a text of markup (with its tests: a text that is no `Html` may hold an unterminated tag). */
+  private[api] def markText(src: String, pattern: scala.util.matching.Regex): (String, Int) =
+    if src.isEmpty then (src, 0)
+    else
+      // java.lang.StringBuilder: scala's has no append(CharSequence, from, to), and would silently auto-tuple the
+      // three arguments into append(Any)
+      val sb = new java.lang.StringBuilder(src.length + 32)
+      @tailrec def loop(i: Int, n: Int): Int =
+        if i >= src.length then n
+        else if src.charAt(i) == '<' then
+          val skipTo = verbatimEnd(src, i)
+          val _ = sb.append(src, i, skipTo)
+          loop(skipTo, n)
+        else
+          val end = src.indexOf('<', i) match
+            case -1 => src.length
+            case k  => k
+          val added = marks(src.substring(i, end), pattern, sb, n)
+          loop(end, n + added)
+      val n = loop(0, 0)
+      (sb.toString, n)
+
+  /** Appends `text` to `sb` with each match wrapped; entities are left alone. `soFar` marks were written before (ids go
+    * on from there). Returns how many this call added.
+    */
+  private def marks(text: String, re: scala.util.matching.Regex, sb: java.lang.StringBuilder, soFar: Int): Int =
+    textPieces(text).foldLeft(0) {
+      case (n, Left(entity)) =>
+        val _ = sb.append(entity)
+        n
+      case (n, Right(plain)) =>
+        val (last, added) = re.findAllMatchIn(plain).foldLeft((0, n)) { case ((last, k), m) =>
+          if m.start >= last then
+            val _ = sb
+              .append(plain, last, m.start)
+              .append("<mark id=\"hl")
+              .append(soFar + k + 1)
+              .append("\">")
+              .append(plain, m.start, m.end)
+              .append("</mark>")
+            (m.end, k + 1)
+          else (last, k)
+        }
+        val _ = sb.append(plain, last, plain.length)
+        added
+    }
+
+  /** End index (exclusive) of the verbatim run starting at `<`: a whole tag, or a whole `<script>`/`<style>` element
+    * with its content.
+    */
+  private def verbatimEnd(html: String, at: Int): Int =
+    val close =
+      if html.regionMatches(true, at, "<script", 0, 7) then Some("</script>")
+      else if html.regionMatches(true, at, "<style", 0, 6) then Some("</style>")
+      else None
+    close match
+      case Some(tag) =>
+        html.toLowerCase.indexOf(tag, at) match
+          case -1 => html.length
+          case k  => k + tag.length
+      case None =>
+        html.indexOf('>', at) match
+          case -1 => html.length
+          case k  => k + 1
+
+  private val TextEntity = """&(?:#\d+|#[xX][0-9a-fA-F]+|[A-Za-z][A-Za-z0-9]{1,31});""".r
+
+  /** A text split into `Left(entity)` (copied as it is) and `Right(plain)` (searched) pieces. */
+  private def textPieces(text: String): List[Either[String, String]] =
+    val (pieces, last) =
+      TextEntity.findAllMatchIn(text).foldLeft((List.empty[Either[String, String]], 0)) { case ((acc, last), m) =>
+        val before = if m.start > last then List(Right(text.substring(last, m.start))) else Nil
+        (Left(m.matched) :: before.reverse ::: acc, m.end)
+      }
+    (if last < text.length then Right(text.substring(last)) :: pieces else pieces).reverse
+
   /** Foreign markup through the allow-list. The tags of [[Allowed]] with the attributes listed for them (and
     * [[GlobalAttributes]]) are written again in one form: lower-case names, double-quoted escaped values, an `href` or
     * `src` of a refused scheme dropped ([[Href]]). A tag the allow-list refuses that a browser knows (`<script>`,

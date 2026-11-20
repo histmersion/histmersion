@@ -3,8 +3,8 @@ package server
 
 import io.scalaland.chimney.dsl.*
 
-import com.histmersion.api.{Wording, YearFmt}
-import com.histmersion.api.Html.Atoms
+import com.histmersion.api.{Html, Wording, YearFmt}
+import com.histmersion.api.Html.{html, Atoms}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.library.Confidence
@@ -16,19 +16,18 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.library.Doi
 import com.histmersion.api.research.ReviewGoal
 
-/** The HTML atoms of the server-rendered pages — PURE string builders, one shape per thing, so a source reference looks
-  * and behaves the same in an article's prose, its "Sources cited" footer, a source's "Cites / Cited by" list and the
-  * backlinks.
+/** The HTML atoms of the server-rendered pages — PURE builders of [[Html]], one shape per thing, so a source reference
+  * looks and behaves the same in an article's prose, its "Sources cited" footer, a source's "Cites / Cited by" list and
+  * the backlinks.
   *
   * This is the HUMAN surface. The Markdown in `core` ([[Markdown]], [[ArticleMarkdown]]) is the LLM surface (MCP, CLI)
   * and deliberately stays separate: what reads well to an agent — `[[citekey]]`, "an empty result is not evidence of
   * agreement" — is not what a reader wants on a page.
   *
-  * Every value that came from the database is escaped here, never at the call site.
+  * Every value that came from the database is a text the `html"…"` interpolator escapes; only an [[Html]] is spliced as
+  * it is.
   */
 object HtmlRender:
-  type Html = Html.T
-  object Html extends Newtype[String, Pure]
   type Label = Label.T
   object Label extends Newtype[String, Pure]
   type Query = Query.T
@@ -36,12 +35,10 @@ object HtmlRender:
   type Text = Text.T
   object Text extends Newtype[String, Pure]
 
-  private def escText(s: String): String = Atoms.esc(s)
-
   private def display(s: String): String =
     com.histmersion.api.library.Label.display(com.histmersion.api.library.Label.Text(s)).value
 
-  def esc(s: Text): Html = Html(escText(s.value))
+  def esc(s: Text): Html = Html.text(s.value)
 
   // ── references ───────────────────────────────────────────────────────────────────────────────
 
@@ -50,46 +47,41 @@ object HtmlRender:
     * source link on every page gets both for free.
     */
   def sourceLink(citekey: Citekey, doi: Option[Doi], label: Label): Html =
-    Html(
-      Atoms
-        .sourceLink(
-          com.histmersion.api.library.Citekey(citekey.value),
-          doi.map(d => com.histmersion.api.library.Doi(d.value)),
-          label.value
-        )
-        .markup
+    Atoms.sourceLink(
+      com.histmersion.api.library.Citekey(citekey.value),
+      doi.map(d => com.histmersion.api.library.Doi(d.value)),
+      label.value
     )
 
   /** A source reference labelled with its IDENTIFIER — the DOI when it has one, else the citekey. */
-  def sourceRef(r: Source.Ref): Html = Html(Atoms.sourceLink(r.citekey, r.doi, r.idLabel.value).markup)
+  def sourceRef(r: Source.Ref): Html = Atoms.sourceLink(r.citekey, r.doi, r.idLabel.value)
 
-  def sourceRef(r: Source.Ref, label: Label): Html = Html(Atoms.sourceLink(r.citekey, r.doi, label.value).markup)
+  def sourceRef(r: Source.Ref, label: Label): Html = Atoms.sourceLink(r.citekey, r.doi, label.value)
 
   /** Where a READABLE label is wanted (prose, lists): "Cline 2014", or the title when the source has no authors — never
-    * a bare year.
+    * a bare year. A label: the anchor it goes into escapes it.
     */
-  def readable(r: Source.Ref): Html =
-    if r.authors.exists(_.value.trim.nonEmpty) then Html(r.shortCite.value) else Html(r.title.value)
+  def readable(r: Source.Ref): Label =
+    if r.authors.exists(_.value.trim.nonEmpty) then Label(r.shortCite.value) else Label(r.title.value)
 
   /** THE article anchor: `<a class="art-ref" data-slug href="/article/slug">label</a>`. */
   def articleRef(r: Article.Ref): Html = articleRef(r, Label(r.title.value))
 
   def articleRef(r: Article.Ref, label: Label): Html =
-    Html(Atoms.articleLink(ReviewGoal.Slug(r.slug.value), label.value).markup)
+    Atoms.articleLink(ReviewGoal.Slug(r.slug.value), label.value)
 
   /** A link nothing in the corpus answers to: text, marked, never a link to a 404. */
   def dangling(label: Label): Html =
-    Html(s"""<span class="dangling" title="unresolved link">${escText(label.value)}</span>""")
+    html"""<span class="dangling" title="unresolved link">${label.value}</span>"""
 
   /** The identifier line of a source: its DOI as a resolver link, else our own citekey. */
-  def identifier(r: Source.Ref): Html = Html(identifierText(r.citekey.value, r.doi.map(_.value)))
+  def identifier(r: Source.Ref): Html = identifierOf(r.citekey.value, r.doi.map(_.value))
 
-  def identifier(citekey: Citekey, doi: Option[Doi]): Html =
-    Html(identifierText(citekey.value, doi.map(_.value)))
+  def identifier(citekey: Citekey, doi: Option[Doi]): Html = identifierOf(citekey.value, doi.map(_.value))
 
-  private def identifierText(citekey: String, doi: Option[String]): String = doi.filter(_.nonEmpty) match
-    case Some(d) => s"""<a class="doi" href="https://doi.org/${escText(d)}" rel="noopener">${escText(d)}</a>"""
-    case None    => s"""<code class="citekey">${escText(citekey)}</code>"""
+  private def identifierOf(citekey: String, doi: Option[String]): Html = doi.filter(_.nonEmpty) match
+    case Some(d) => html"""<a class="doi" href="https://doi.org/$d" rel="noopener">$d</a>"""
+    case None    => html"""<code class="citekey">$citekey</code>"""
 
   // ── chips and badges ─────────────────────────────────────────────────────────────────────────
 
@@ -97,29 +89,24 @@ object HtmlRender:
     * filters the web UI by exactly the stored value.
     */
   def chip(field: ChipField, value: Label): Html =
-    Html(
-      s"""<a class="chip chip-${field.hashKey}" data-field="${field.hashKey}" data-value="${escText(value.value)}"""" +
-        s""" href="/#${field.hashKey}=${escText(Atoms.segment(value.value))}">${escText(
-            display(value.value)
-          )}</a>"""
-    )
+    val key = field.hashKey
+    val target = s"/#${key.value}=${Atoms.segment(value.value)}"
+    html"""<a class="chip chip-$key" data-field="$key" data-value="${value.value}"""" ++
+      html""" href="$target">${display(value.value)}</a>"""
 
   def chips(field: ChipField, values: List[Label]): Html =
-    Html(values.map(_.value.trim).filter(_.nonEmpty).distinct.map(v => chip(field, Label(v)).value).mkString(" "))
+    Html.join(values.map(_.value.trim).filter(_.nonEmpty).distinct.map(v => chip(field, Label(v))), Html.text(" "))
 
   /** A source's standing: the one status code — its mark (colour and shape, the stylesheet's `st-<status>`) and its
     * word.
     */
   def statusBadge(status: Source.Status): Html =
-    Html(
-      s"""<span class="status-badge st-${status.wire}" title="Status: ${Wording.status(
-          status.transformInto[Source.Status]
-        )} (${status.wire})">${Wording.status(status.transformInto[Source.Status])}</span>"""
-    )
+    val word = Wording.status(status.transformInto[Source.Status])
+    html"""<span class="status-badge st-${status.wire}" title="Status: $word (${status.wire})">$word</span>"""
 
   /** Icon + colour, the same palette as the map's dots ([[ConfidenceStyle]]). */
   def confidenceBadge(c: Confidence): Html =
-    Html(Atoms.confidenceBadge(c.transformInto[Confidence]).markup)
+    Atoms.confidenceBadge(c.transformInto[Confidence])
 
   // ── findings ─────────────────────────────────────────────────────────────────────────────────
 
@@ -131,9 +118,9 @@ object HtmlRender:
       case (r, _, _) => r.getOrElse("")
     val period = YearFmt.period(f.periodStart, f.periodEnd)
     val meta = List(
-      f.confidence.map(c => confidenceBadge(c).value).getOrElse(""),
-      escText(where),
-      escText(
+      f.confidence.fold(Html.empty)(confidenceBadge),
+      Html.text(where),
+      Html.text(
         f.periodName
           .map(_.value)
           .filter(n => n.nonEmpty && period.nonEmpty)
@@ -142,9 +129,9 @@ object HtmlRender:
       f.significance
         .map(_.value)
         .filter(_.nonEmpty)
-        .fold("")(s => s"""<span class="significance">${escText(display(s))}</span>""")
+        .fold(Html.empty)(s => html"""<span class="significance">${display(s)}</span>""")
     ).filter(_.nonEmpty)
-    Html(
-      s"""<li class="finding"><div class="claim">${escText(f.claim.value)}</div>""" +
-        (if meta.isEmpty then "" else s"""<div class="finding-meta">${meta.mkString(" · ")}</div>""") + "</li>"
-    )
+    html"""<li class="finding"><div class="claim">${f.claim.value}</div>""" ++
+      (if meta.isEmpty then Html.empty
+       else html"""<div class="finding-meta">${Html.join(meta, Html.text(" · "))}</div>""") ++
+      html"</li>"

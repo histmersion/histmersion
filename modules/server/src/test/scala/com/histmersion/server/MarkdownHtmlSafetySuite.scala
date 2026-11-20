@@ -8,7 +8,7 @@ package server
   */
 class MarkdownHtmlSafetySuite extends munit.FunSuite:
 
-  private def render(md: String): String = MarkdownHtml.render(FullText.Shown.Markdown(md)).value
+  private def render(md: String): String = MarkdownHtml.render(FullText.Shown.Markdown(md)).markup
 
   private val Tag = """(?i)<([a-z][a-z0-9:-]*)([^<>]*)>""".r
   private val Attribute = """(?i)\s([a-z][a-z0-9:-]*)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+)))?""".r

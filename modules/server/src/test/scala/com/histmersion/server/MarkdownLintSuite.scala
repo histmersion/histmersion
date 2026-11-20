@@ -30,7 +30,7 @@ class MarkdownLintSuite extends munit.FunSuite:
   private def body(md: Scan.Text, ctx: Context = article) = MarkdownLint.issues(md, FormatField.Body, ctx)
   private def rules(md: Scan.Text, ctx: Context = article): List[FormatRule] = body(md, ctx).map(_.rule)
   private def fixed(md: Scan.Text, ctx: Context = article): Scan.Text = MarkdownLint.fix(md, FormatField.Body, ctx)._1
-  private def html(md: Scan.Text): String = MarkdownHtml.render(FullText.Shown.Markdown(md.value)).value
+  private def html(md: Scan.Text): String = MarkdownHtml.render(FullText.Shown.Markdown(md.value)).markup
 
   /** A clean article in the corpus's own conventions: `# Title`, sections, `[[citekey]]` citations (with labels, in
     * bold, in a Glossary TABLE with a `|label`), a `_Method_` line with snake_case citekeys, starred reconstructions
@@ -394,7 +394,7 @@ class MarkdownLintSuite extends munit.FunSuite:
   test("the page notice: folded, counted, one line per problem, escaped; nothing when clean"):
     val is =
       body(Scan.Text("Intro [[cline2014_year]]:\n| A | B |\n|---|---|\n| 1 | 2 |\n\nThe ** x** <b>bold</b> here.\n"))
-    val html = Pages.formatNotice(is, "This article", Some(Article.Slug("sea_peoples"))).value
+    val html = Pages.formatNotice(is, "This article", Some(Article.Slug("sea_peoples"))).markup
     assert(
       html.startsWith(
         """<details class="format-notice has-errors"><summary>This article may not display correctly: 2 formatting problems</summary>"""
@@ -409,7 +409,7 @@ class MarkdownLintSuite extends munit.FunSuite:
     )
     assert(!html.contains("<b>") && html.contains("&lt;b&gt;bold"), "excerpts are data: escaped")
     assert(html.contains("<code>histmersion article lint sea_peoples --fix</code> repairs all of them"), html)
-    assertEquals(Pages.formatNotice(Nil, "This article", None).value, "")
+    assertEquals(Pages.formatNotice(Nil, "This article", None).markup, "")
     // on the article page it sits under the meta line, above the prose
     val row = Article.Row(
       Article.Slug("sea_peoples"),
@@ -428,7 +428,7 @@ class MarkdownLintSuite extends munit.FunSuite:
           ArticlePage(row, Nil, Nil, MarkdownLint.issues(Scan.Text(row.body.value), FormatField.Body, article)),
           _ => None
         )
-        .value
+        .markup
     assert(
       page.indexOf("format-notice") > page.indexOf("</h1>") && page.indexOf("format-notice") < page.indexOf("<p>The"),
       page
@@ -476,6 +476,6 @@ class MarkdownLintSuite extends munit.FunSuite:
         ),
         _ => None
       )
-      .value
+      .markup
     assert(page.contains("<h2>Not used</h2>") && page.contains("<ul>") && page.contains("<em>Method: "), page)
     assert(!page.contains("_Method"), "the emphasis renders")

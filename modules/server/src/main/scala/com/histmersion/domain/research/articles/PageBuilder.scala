@@ -5,7 +5,7 @@ import com.histmersion.domain.Highlight
 import com.histmersion.domain.research.Slug
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.text.WikiLinks
-import com.histmersion.server.HtmlRender
+import com.histmersion.api.Html
 import com.histmersion.domain.library.citations.CitationsControllers
 import com.histmersion.domain.library.sources.{SourcesControllers, SourceService}
 import com.histmersion.server.{ArticleHtml, ArticlePage, Citation, FullText, Pages, SourcePage}
@@ -29,7 +29,7 @@ final class PageBuilder(
 ):
 
   /** `(title, inner HTML)` of `/source/{citekey}`, `?q=` terms highlighted. */
-  def source(ck: Citekey, full: PageBuilder.SourceFull, q: Option[Search.Query]): Option[(Title, HtmlRender.Html)] =
+  def source(ck: Citekey, full: PageBuilder.SourceFull, q: Option[Search.Query]): Option[(Title, Html)] =
     sources.get(ck).left.map(Api.Error(_)).toOption.map { sw =>
       val s = sw.source
       val ref = Source.Ref(s.citekey, s.doi, s.authors, s.year, s.title, s.status)
@@ -108,7 +108,7 @@ final class PageBuilder(
     }
 
   /** `(title, inner HTML)` of `/article/{slug}`, `?q=` terms highlighted. */
-  def article(slug: Slug, q: Option[Search.Query]): Option[(Title, HtmlRender.Html)] =
+  def article(slug: Slug, q: Option[Search.Query]): Option[(Title, Html)] =
     articles.get(slug).toOption.map { v =>
       val generated = v.coverage.fold(List.empty[WikiLinks.Occurrence.Target])(c =>
         Article.Links.targets(WikiLinks.Body(Article.Coverage.sections(c).value))
@@ -132,10 +132,10 @@ final class PageBuilder(
       (Title(v.article.title.value), highlighted(html, q.map(_.value.trim).filter(_.nonEmpty)))
     }
 
-  private def highlighted(html: HtmlRender.Html, term: Option[String]): HtmlRender.Html = term match
+  private def highlighted(html: Html, term: Option[String]): Html = term match
     case Some(t) =>
-      val (out, n) = Highlight(Highlight.Html(html.value), Highlight.Term(t))
-      HtmlRender.Html(ArticleHtml.matchNav(ArticleHtml.MatchNavMatches(n.value)).value + out.value)
+      val (out, n) = Highlight.pattern(Highlight.Term(t)).fold((html, 0))(Html.marked(html, _))
+      ArticleHtml.matchNav(ArticleHtml.MatchNavMatches(n)) ++ out
     case None => html
 
 object PageBuilder:

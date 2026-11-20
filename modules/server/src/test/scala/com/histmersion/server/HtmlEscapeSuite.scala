@@ -10,6 +10,7 @@ import com.histmersion.domain.Title
 import com.histmersion.config.DbConfig
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.api.Html
 import com.histmersion.api.instance.UiConfig
 import com.histmersion.server.instance.WebBundle
 
@@ -24,14 +25,14 @@ class HtmlEscapeSuite extends munit.FunSuite:
   private val bundle = WebBundle(UiConfig.BuildId("0123456789abcdef0123456789abcdef"))
 
   test("ArticleHtml.page escapes the title into <title> (pure)"):
-    val html = ArticleHtml.page(payload, HtmlRender.Html("<p>body</p>"), PageKind.Source, bundle).value
+    val html = ArticleHtml.page(payload, Html.sanitize("<p>body</p>"), PageKind.Source, bundle).markup
     // the page's own <head> script (the reader's theme) is not the payload
     assert(!html.contains(payload.value) && !html.contains("<script>alert"), html.take(300))
     assert(html.contains("&lt;script&gt;alert(1)&lt;/script&gt; · Histmersion"), html.take(300))
     assert(html.contains("<p>body</p>"), "the body is already HTML and stays as it is")
 
   test("a page title with quotes and ampersands survives escaping"):
-    val html = ArticleHtml.page(Title("""Sea "Peoples" & Co"""), HtmlRender.Html(""), PageKind.Article, bundle).value
+    val html = ArticleHtml.page(Title("""Sea "Peoples" & Co"""), Html.empty, PageKind.Article, bundle).markup
     assert(html.contains("Sea &quot;Peoples&quot; &amp; Co"), html.take(300))
 
   test("GET /source/<script> reflects nothing executable, and /api/junk is a JSON 404"):
