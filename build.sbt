@@ -782,6 +782,26 @@ def buildMetaSource(base: File): String = {
      |""".stripMargin
 }
 
+/** The text the web page holds where its build goes (`web/PageBuild.compiled`): as long as the id, so the source map's
+  * columns stay right when the id is written over it.
+  */
+val WebBuildPlaceholder = "HISTMERSION-BUILD-ID-UNSET-00000"
+
+/** The linked web bundle named by its build (G109): the first 32 hex digits of its SHA-256, and the bundle with that id
+  * written over [[WebBuildPlaceholder]]. The server serves the id beside it (`web/build-id.txt`), and the page compares
+  * the two. A bundle without the placeholder stops the build: the page would compare nothing.
+  */
+def webBuild(js: String): (String, String) = {
+  require(js.contains(WebBuildPlaceholder), s"the linked web bundle does not hold $WebBuildPlaceholder (web PageBuild)")
+  val id = java.security.MessageDigest
+    .getInstance("SHA-256")
+    .digest(js.getBytes("UTF-8"))
+    .map(b => f"${b & 0xff}%02x")
+    .mkString
+    .take(WebBuildPlaceholder.length)
+  (id, js.replace(WebBuildPlaceholder, id))
+}
+
 /** Every module's sources and the files the source-reading suites compare them with (ContractsSuite, ArchitectureSuite,
   * GuidelineRatchetSuite): a digest that keys the server's cached test result, so a change in any module runs those
   * suites again rather than replaying a pass.
@@ -1147,13 +1167,17 @@ lazy val server = project
       val src = jsDir / "main.js"
       val dst = (Compile / resourceManaged).value / "web" / "app.bundle.js"
       dst.getParentFile.mkdirs()
-      val js = IO.read(src).replace("//# sourceMappingURL=main.js.map", "//# sourceMappingURL=app.bundle.js.map")
+      val linked = IO.read(src).replace("//# sourceMappingURL=main.js.map", "//# sourceMappingURL=app.bundle.js.map")
+      // the bundle named by its build (G109): the id written into the bundle and beside it, for the server
+      val (id, js) = webBuild(linked)
       IO.write(dst, js)
+      val idFile = (Compile / resourceManaged).value / "web" / "build-id.txt"
+      if !idFile.exists() || IO.read(idFile) != id then IO.write(idFile, id)
       val srcMap = jsDir / "main.js.map"
       val dstMap = (Compile / resourceManaged).value / "web" / "app.bundle.js.map"
       if srcMap.exists() then IO.copyFile(srcMap, dstMap)
-      log.info(s"Scala.js frontend → $dst")
-      Seq(dst) ++ (if srcMap.exists() then Seq(dstMap) else Nil)
+      log.info(s"Scala.js frontend → $dst (build $id)")
+      Seq(dst, idFile) ++ (if srcMap.exists() then Seq(dstMap) else Nil)
     },
     libraryDependencies ++= Seq(
       "com.softwaremill.chimp" %% "chimp-server" % V.chimp,

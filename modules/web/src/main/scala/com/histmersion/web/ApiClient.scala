@@ -122,6 +122,8 @@ object ApiClient:
     val req = authorize(interp.toRequest(ep, None).apply(in))
     // no answer at all (the fetch itself failed) is a transport failure, never a problem the server sent
     unreachable(req.send(backend)).flatMap { resp =>
+      // the server's build, before its answer is read: an upgraded server is said so, not a decode failure (G109)
+      resp.header(UiConfig.BuildHeader).foreach(id => PageBuild.check(UiConfig.BuildId(id)))
       val code = resp.code.code
       resp.body match
         case DecodeResult.Value(Right(o))    => Future.successful(o)

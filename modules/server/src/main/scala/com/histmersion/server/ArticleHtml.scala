@@ -13,6 +13,7 @@ import com.histmersion.domain.*
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.Title
+import com.histmersion.server.instance.WebBundle
 
 /** Pure helpers for the article pages. */
 object ArticleHtml:
@@ -65,9 +66,10 @@ object ArticleHtml:
       )
 
   /** `title` is DATA — a source's or an article's stored title, which an agent wrote — so it is escaped here rather
-    * than at every call site. `bodyHtml` is already-rendered HTML and is not.
+    * than at every call site. `bodyHtml` is already-rendered HTML and is not. The bundle's address carries its build
+    * ([[WebBundle.path]]).
     */
-  def page(title: Title, bodyHtml: HtmlRender.Html, kind: PageKind): HtmlRender.Html =
+  def page(title: Title, bodyHtml: HtmlRender.Html, kind: PageKind, bundle: WebBundle): HtmlRender.Html =
     HtmlRender.Html(
       s"""<!doctype html><html lang="en"><head><meta charset="utf-8">
        |<meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(
@@ -76,17 +78,18 @@ object ArticleHtml:
        |$ThemeScript<link rel="stylesheet" href="/web/style.css"></head><body class="article-page" data-page="${kind.wire}">
        |<div class="nav"><a href="/">← Histmersion</a></div>
        |<main id="page-content">$bodyHtml</main>
-       |<script src="$BundlePath"></script>
+       |<script src="${esc(HtmlRender.Text(bundle.path)).value}"></script>
        |</body></html>""".stripMargin
     )
+
+  /** A whole page around an inner body ([[page]]), for a route that renders pages but does not choose the bundle. */
+  type Shell = (Title, HtmlRender.Html, PageKind) => HtmlRender.Html
+
+  /** [[page]] with `bundle`. */
+  def shell(bundle: WebBundle): Shell = page(_, _, _, bundle)
 
   /** The reader's theme (the web UI's `Theme`, kept in `localStorage`), applied before the stylesheet paints so a page
     * never flashes the other theme first; the stylesheet follows the system without it. A file, not an inline script:
     * the Content-Security-Policy runs none.
     */
   val ThemeScript = """<script src="/web/theme.js"></script>"""
-
-  /** The Scala.js bundle — the same file the web UI's `index.html` loads, which carries every page's entry point
-    * (`histmersionWeb` dispatches on the path).
-    */
-  val BundlePath = "/web/app.bundle.js?v=2"
