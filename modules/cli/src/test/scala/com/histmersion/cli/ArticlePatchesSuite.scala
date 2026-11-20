@@ -52,7 +52,7 @@ class ArticlePatchesSuite extends munit.FunSuite:
         ifUpdatedAt
       )
       .left
-      .map(Cli.Error(_, exitCode = ExitCode.Usage))
+      .map(Cli.Error(_))
 
   test("no flags at all is an empty patch — nothing is touched"):
     assertEquals(build(), Right(Article.Patch()))
@@ -144,7 +144,7 @@ class ArticlePatchesSuite extends munit.FunSuite:
         )
       )
       .left
-      .map(Cli.Error(_, exitCode = ExitCode.Usage))
+      .map(Cli.Error(_))
       .toOption
       .get
     assertEquals(
@@ -171,7 +171,7 @@ class ArticlePatchesSuite extends munit.FunSuite:
       ArticlePatches
         .withCoverage(base, ArticlePatches.FilterFlags(), Nil)
         .left
-        .map(Cli.Error(_, exitCode = ExitCode.Usage))
+        .map(Cli.Error(_))
         .toOption
         .get
         .filter,
@@ -181,7 +181,7 @@ class ArticlePatchesSuite extends munit.FunSuite:
       ArticlePatches
         .withCoverage(Article.Patch(), ArticlePatches.FilterFlags(clear = ArticlePatches.FilterFlags.Clear(true)), Nil)
         .left
-        .map(Cli.Error(_, exitCode = ExitCode.Usage))
+        .map(Cli.Error(_))
         .toOption
         .get
         .filter,
@@ -196,14 +196,14 @@ class ArticlePatchesSuite extends munit.FunSuite:
           Nil
         )
         .left
-        .map(Cli.Error(_, exitCode = ExitCode.Usage))
+        .map(Cli.Error(_))
         .isLeft
     )
     assert(
       ArticlePatches
         .withCoverage(Article.Patch(), ArticlePatches.FilterFlags(), List(ArticlePatches.ReasonText("no-equals-sign")))
         .left
-        .map(Cli.Error(_, exitCode = ExitCode.Usage))
+        .map(Cli.Error(_))
         .isLeft
     )
     assert(
@@ -214,7 +214,7 @@ class ArticlePatchesSuite extends munit.FunSuite:
           Nil
         )
         .left
-        .map(Cli.Error(_, exitCode = ExitCode.Usage))
+        .map(Cli.Error(_))
         .isLeft
     )
 
@@ -231,7 +231,7 @@ class ArticlePatchesSuite extends munit.FunSuite:
         )
       )
       .left
-      .map(Cli.Error(_, exitCode = ExitCode.Usage))
+      .map(Cli.Error(_))
       .toOption
       .get
     assertEquals(
@@ -247,14 +247,14 @@ class ArticlePatchesSuite extends munit.FunSuite:
       )
     )
     assertEquals(
-      ArticlePatches.withCritiques(base, Nil).left.map(Cli.Error(_, exitCode = ExitCode.Usage)).toOption.get,
+      ArticlePatches.withCritiques(base, Nil).left.map(Cli.Error(_)).toOption.get,
       base
     )
     val bad =
       ArticlePatches
         .withCritiques(Article.Patch(), List(CritiqueReason.Spec("smith1987_dying=no pair")))
         .left
-        .map(Cli.Error(_, exitCode = ExitCode.Usage))
+        .map(Cli.Error(_))
     assert(
       bad.left.exists(e =>
         e.problems.sentences.mkString("; ").startsWith("--critique-reason:") && e.exitCode == ExitCode.Usage

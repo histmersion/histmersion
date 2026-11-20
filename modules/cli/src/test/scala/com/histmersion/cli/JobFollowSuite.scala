@@ -100,7 +100,16 @@ class JobFollowSuite extends munit.FunSuite:
   test("an unreachable server keeps its own exit code"):
     val r =
       JobFollow.job(
-        _ => Left(Cli.Error(Problem.Unclassified(Legacy.Text("cannot reach")))),
+        _ =>
+          Left(
+            Cli.Error(
+              Problem.Upstream.Unreachable.here(
+                Client.Histmersion,
+                Problem.Upstream.Url("http://h:8000"),
+                com.histmersion.util.problem.External.Reported("ConnectException: refused")
+              )
+            )
+          ),
         SpatialHierarchyResult.Job.Id("j1"),
         sleep = _ => (),
         progress = quiet,

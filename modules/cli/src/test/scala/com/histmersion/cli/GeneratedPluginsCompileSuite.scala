@@ -32,7 +32,7 @@ class GeneratedPluginsCompileSuite extends munit.FunSuite:
     val paths = PluginAuthoring
       .write(dir, PluginTemplate.files(request(kind)))
       .left
-      .map(Cli.Error(_, exitCode = ExitCode.Usage))
+      .map(Cli.Error(_))
       .fold(e => fail(e.toString), identity)
     val (tests, mains) = paths
       .filter(_.toString.endsWith(".scala"))

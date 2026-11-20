@@ -59,7 +59,7 @@ class MergeCmdSuite extends munit.FunSuite:
         )
       )
       .left
-      .map(Cli.Error(_, exitCode = ExitCode.Usage))
+      .map(Cli.Error(_))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(
       r.resolve.map(x => x.issue -> x.decision).toMap,
@@ -79,7 +79,7 @@ class MergeCmdSuite extends munit.FunSuite:
           )
         )
         .left
-        .map(Cli.Error(_, exitCode = ExitCode.Usage))
+        .map(Cli.Error(_))
     val msg = bad.left.map(_.problems.sentences.mkString("; ")).swap.getOrElse(fail("accepted"))
     assert(
       msg.contains("no such file") && msg.contains("resolve: 'nonsense'") && msg.contains("--editions sometimes"),
@@ -100,7 +100,7 @@ class MergeCmdSuite extends munit.FunSuite:
         )
       )
       .left
-      .map(Cli.Error(_, exitCode = ExitCode.Usage))
+      .map(Cli.Error(_))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(
       r.resolve.map(x => x.issue -> x.text).toMap,
@@ -116,7 +116,7 @@ class MergeCmdSuite extends munit.FunSuite:
         )
       )
       .left
-      .map(Cli.Error(_, exitCode = ExitCode.Usage))
+      .map(Cli.Error(_))
     assert(
       bad.left.exists(_.problems.sentences.mkString("; ").contains("A-1: file:/no/such/merged.md — no such file")),
       bad.toString

@@ -118,11 +118,10 @@ object MergeCmd:
     c.uploadBundle(f).flatMap { u =>
       if u.manifest.isEmpty then
         Left(
-          Cli.Error(
+          Cli.Error.answered(
             Problem.Unclassified(
               Legacy.Text(s"${f.getPath} is not a readable bundle: ${u.problems.map(_.sentence).mkString("; ")}")
-            ),
-            exitCode = ExitCode.Refused
+            )
           )
         )
       else Right(u)
@@ -137,30 +136,24 @@ object MergeCmd:
     j.state match
       case MergeJobState.Done =>
         j.result.toRight(
-          Cli.Error(
-            Problem.Unclassified(Legacy.Text(s"merge apply ${j.job}: done, but no result")),
-            exitCode = ExitCode.Refused
-          )
+          Cli.Error.answered(Problem.Unclassified(Legacy.Text(s"merge apply ${j.job}: done, but no result")))
         )
       case MergeJobState.Failed =>
         Left(
-          Cli.Error(
+          Cli.Error.answered(
             Problem.Unclassified(
               Legacy.Text(j.problems.fold(s"merge apply ${j.job} failed")(_.sentences.mkString("; ")))
-            ),
-            exitCode = ExitCode.Refused
+            )
           )
         )
-      // the server restarted under it: nothing is half applied, but whether it committed is in `merge list`
+      // the server restarted under it: nothing is half applied, but whether it committed is in `merge list`, so its
+      // outcome is unknown here
       case MergeJobState.Interrupted =>
         Left(
           Cli.Error(
-            Problem.Unclassified(
-              Legacy.Text(
-                s"merge apply ${j.job}: ${j.problems.fold(MergeApplyJob.InterruptedText.sentence)(_.sentences.mkString("; "))}"
-              )
-            ),
-            exitCode = ExitCode.Refused
+            c.unanswered(
+              s"merge apply ${j.job}: ${j.problems.fold(MergeApplyJob.InterruptedText.sentence)(_.sentences.mkString("; "))}"
+            )
           )
         )
       case MergeJobState.Running =>
@@ -200,9 +193,9 @@ object MergeCmd:
             _ <- Either.cond(
               Files.isRegularFile(p),
               (),
-              Cli.Error(Problem.Unclassified(Legacy.Text(s"no such file: $file")), exitCode = ExitCode.Usage)
+              Cli.Error(Problem.Unclassified(Legacy.Text(s"no such file: $file")))
             )
-            res <- resolutions(flags).left.map(Cli.Error(_, exitCode = ExitCode.Usage))
+            res <- resolutions(flags).left.map(Cli.Error(_))
             u <- upload(c, p.toFile)
             plan <- c.mergePlan(MergePlan.Request(MergePlan.Request.Bundle(u.sha256.value), res))
             _ <- template.fold[Either[Cli.Error, Unit]](Right(())) { t =>
@@ -212,8 +205,7 @@ object MergeCmd:
                 .left
                 .map(e =>
                   Cli.Error(
-                    Problem.Unclassified(Legacy.Text(s"could not write $t: ${e.getMessage}")),
-                    exitCode = ExitCode.Usage
+                    Problem.Unclassified(Legacy.Text(s"could not write $t: ${e.getMessage}"))
                   )
                 )
                 .map(_ => ())
@@ -223,9 +215,8 @@ object MergeCmd:
             _ <- Either.cond(
               plan.problems.isEmpty && plan.resolutionErrors.isEmpty,
               (),
-              Cli.Error(
-                Problem.Unclassified(Legacy.Text("the plan has problems or unusable resolutions (listed above)")),
-                exitCode = ExitCode.Refused
+              Cli.Error.answered(
+                Problem.Unclassified(Legacy.Text("the plan has problems or unusable resolutions (listed above)"))
               )
             )
           yield ()
@@ -235,21 +226,20 @@ object MergeCmd:
             _ <- Either.cond(
               Files.isRegularFile(p),
               (),
-              Cli.Error(Problem.Unclassified(Legacy.Text(s"no such file: $file")), exitCode = ExitCode.Usage)
+              Cli.Error(Problem.Unclassified(Legacy.Text(s"no such file: $file")))
             )
-            res0 <- resolutions(flags).left.map(Cli.Error(_, exitCode = ExitCode.Usage))
-            res <- withTexts(res0).left.map(Cli.Error(_, exitCode = ExitCode.Usage))
+            res0 <- resolutions(flags).left.map(Cli.Error(_))
+            res <- withTexts(res0).left.map(Cli.Error(_))
             u <- upload(c, p.toFile)
             plan <- c.mergePlan(MergePlan.Request(MergePlan.Request.Bundle(u.sha256.value), res))
             _ <- Either.cond(
               plan.problems.isEmpty && plan.resolutionErrors.isEmpty && plan.open.isEmpty,
               (), {
                 Cli.out.println(MergeMarkdown.plan(plan))
-                Cli.Error(
+                Cli.Error.answered(
                   Problem.Unclassified(
                     Legacy.Text("the merge cannot be applied yet: decide what is open (listed above), then apply again")
-                  ),
-                  exitCode = ExitCode.Refused
+                  )
                 )
               }
             )
@@ -263,7 +253,7 @@ object MergeCmd:
                   )
                 ),
               (),
-              Cli.Error(Problem.Unclassified(Legacy.Text("aborted")), exitCode = ExitCode.Usage)
+              Cli.Error(Problem.Unclassified(Legacy.Text("aborted")))
             )
             job <- c.mergeApply(MergeApplyRequest(Bundle.Name(u.sha256.value), hash, res))
             r <- follow(c, job)
@@ -271,10 +261,7 @@ object MergeCmd:
             _ <- Either.cond(
               r.applied.value,
               (),
-              Cli.Error(
-                Problem.Unclassified(Legacy.Text("the merge was not applied (see above)")),
-                exitCode = ExitCode.Refused
-              )
+              Cli.Error.answered(Problem.Unclassified(Legacy.Text("the merge was not applied (see above)")))
             )
           yield ()
         case Command.ListCmd(limit, json) =>

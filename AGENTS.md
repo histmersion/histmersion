@@ -190,7 +190,10 @@ is a written reason.
   terminal input belong only to its adapter. Entry points choose adapters, with no global Console instance
   or fallback given. Domain and plugin code must not receive Console. Diagnostic logging uses **scribe**,
   separately from user output; the CLI configures logs to stderr so JSON stdout stays clean. The CLI turns
-  an `Either` into an exit code at the edge (1 = usage, 2 = the server said no, 3 = unreachable/startup failure).
+  an `Either` into an exit code at the edge, worked out from the problem's case and where it was met
+  (`ExitCode.of`; `Cli.Error(problems)` for one the CLI found, `Cli.Error.answered` for one the server answered with),
+  never given at the site: 1 usage, 2 refused, 3 unreachable, 4 not found, 5 conflict, 6 unavailable, 7 fault,
+  8 outcome unknown (the CLI reference's table; `ExitOnProblemsSuite` holds both to it).
 - **No side effects in object initialisers.** `Main` is the composition root: it builds
   config → `DataSource` → migrate → `Deps` → `ServerWiring` → endpoints → bind, in that order, explicitly.
   A `private val ds = Db.fromConfig()` at the top of an `object` is exactly the pattern this replaced.

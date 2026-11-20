@@ -29,8 +29,7 @@ object PluginAuthoring:
               s"the install at ${i.home} has no plugin Maven repository (${i.mavenRepo}): it predates plugin dependencies — " +
                 s"download histmersion-maven-<version>.zip from the release, unzip it and pass its maven/ directory with --repo"
             )
-          ),
-          exitCode = ExitCode.Usage
+          )
         )
       )
     }
@@ -71,10 +70,8 @@ object PluginAuthoring:
         .toEither
         .left
         .map(e =>
-          Cli.Error(
-            Problem.Unclassified(Legacy.Text(s"could not copy ${i.mavenRepo} into $m2: ${e.getMessage}")),
-            exitCode = ExitCode.Refused
-          )
+          // a copy on this machine that failed: this machine's to fix, as a usage error is
+          Cli.Error(Problem.Unclassified(Legacy.Text(s"could not copy ${i.mavenRepo} into $m2: ${e.getMessage}")))
         )
     }
 
@@ -92,7 +89,7 @@ object PluginAuthoring:
         PluginRepository
           .parse(raw, Files.isDirectory(_))
           .left
-          .map(e => Cli.Error(Problem.Unclassified(Legacy.Text(e)), exitCode = ExitCode.Usage))
+          .map(e => Cli.Error(Problem.Unclassified(Legacy.Text(e))))
           .map(r => (TemplateRepository.Remote(r), Nil))
       case None =>
         m2.flatMap(dir => publishToMavenLocal(install, dir)).map(copied => (TemplateRepository.MavenLocal, copied))

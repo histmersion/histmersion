@@ -1,6 +1,6 @@
 package com.histmersion
 package cli
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Legacy, Problem}
 
 import sttp.client4.*
 import sttp.client4.httpclient.HttpClientSyncBackend
@@ -108,7 +108,11 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
   // upload on a reused connection arrives with an EMPTY body and is rejected. `histmersion ingest` sends
   // exactly such requests. (Same reason the server pins 1.1 when calling the OCR sidecar.)
   private val backend = HttpClientSyncBackend.usingClient(
-    java.net.http.HttpClient.newBuilder().version(java.net.http.HttpClient.Version.HTTP_1_1).build()
+    java.net.http.HttpClient
+      .newBuilder()
+      .version(java.net.http.HttpClient.Version.HTTP_1_1)
+      .connectTimeout(Client.ConnectTimeout)
+      .build()
   )
   private val interp = SttpClientInterpreter()
 
@@ -136,10 +140,11 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
       case scala.util.Failure(e) =>
         Left(
           Cli.Error(
-            Problem.Unclassified(
-              Legacy.Text(
-                s"cannot reach Histmersion at $serverUrl (${e.getClass.getSimpleName}: ${e.getMessage}) — is the server running?"
-              )
+            Client.transport(
+              e,
+              serverUrl,
+              Problem.Upstream.Url(s"${req.uri}"),
+              Client.Write(Client.isWrite(req.method))
             )
           )
         )
@@ -147,19 +152,20 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
         resp.body match
           case sttp.tapir.DecodeResult.Value(Right(o)) => Right(o)
           case sttp.tapir.DecodeResult.Value(Left(e))  =>
-            // a refusal of the request itself (a collection's citekey collision) exits as a bad command line does
-            val code =
-              if e.code.contains(CollectionsApi.Usage) then ExitCode.Usage
-              else ExitCode.Refused
-            Left(Cli.Error(e.problems, exitCode = code, notFound = e.isNotFound))
+            Left(Cli.Error(e.problems, ExitCode.Origin.Server, notFound = e.isNotFound))
           case _ =>
             Left(
-              Cli.Error(
+              Cli.Error.answered(
                 Client
-                  .unexpected(Client.HttpStatus(resp.code.code), serverUrl, Client.Write(Client.isWrite(req.method))),
-                exitCode = ExitCode.Refused
+                  .unexpected(Client.HttpStatus(resp.code.code), serverUrl, Client.Write(Client.isWrite(req.method)))
               )
             )
+
+  /** No final answer came for work a request started (`what`: still running when the wait for it ran out, interrupted
+    * by a restart): the request may have been applied, so a caller checks before sending it again.
+    */
+  def unanswered(what: String): Problem =
+    Problem.Upstream.Unanswered(Client.Histmersion, Problem.Upstream.Url(serverUrl.value), External.Reported(what))
 
   def version: Either[Cli.Error, Version.Info] = call(Api.version)(())
   def health: Either[Cli.Error, Health] = call(Api.health)(())
@@ -504,6 +510,33 @@ object Client:
 
     /** Pure: the token a file holds, its first non-blank line trimmed; none for a file of blank lines. */
     def firstLine(text: String): Option[Token] = text.linesIterator.map(_.trim).find(_.nonEmpty).map(Token(_))
+
+  /** The server, as a problem names it. */
+  val Histmersion: Problem.Upstream.Name = Problem.Upstream.Name("Histmersion")
+
+  /** How long the CLI waits to connect to the server before it says it cannot reach it. */
+  val ConnectTimeout: java.time.Duration = java.time.Duration.ofSeconds(10)
+
+  /** What a send that threw means. Pure. A connection never made sent nothing ([[Problem.Upstream.Unreachable]]: safe
+    * to send again); a write whose connection ended after it was sent (a reset, a read that timed out) may have been
+    * applied ([[Problem.Upstream.Unanswered]]); a read that failed changed nothing, and is "cannot reach" too.
+    */
+  def transport(thrown: Throwable, serverUrl: ServerUrl, sent: Problem.Upstream.Url, write: Write): Problem =
+    val reported = External.Reported(s"${thrown.getClass.getSimpleName}: ${thrown.getMessage}")
+    thrown match
+      case _: sttp.client4.SttpClientException.ConnectException =>
+        Problem.Upstream.Unreachable.here(
+          Histmersion,
+          Problem.Upstream.Url(serverUrl.value),
+          External.Reported(s"$reported — is the server running?")
+        )
+      case _ if write.value => Problem.Upstream.Unanswered(Histmersion, sent, reported)
+      case _                =>
+        Problem.Upstream.Unreachable.here(
+          Histmersion,
+          Problem.Upstream.Url(serverUrl.value),
+          External.Reported(s"$reported — is the server running?")
+        )
 
   def isWrite(m: sttp.model.Method): Boolean =
     m == sttp.model.Method.POST || m == sttp.model.Method.PUT || m == sttp.model.Method.PATCH ||

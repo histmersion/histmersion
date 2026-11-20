@@ -213,7 +213,7 @@ object Cli:
       // LinkageError that NonFatal would let through
       case t: (Throwable @nowarn("id=E235")) if WorkingDir.denied(t) =>
         err.println(WorkingDir.message)
-        sys.exit(3)
+        sys.exit(Error(Problem.Unclassified(Legacy.Text(WorkingDir.message))).exitCode.value)
 
   /** The exit code is decided here, at the edge. */
   private def runCommand(args: Array[String])(using console: Console): Unit =
@@ -221,7 +221,7 @@ object Cli:
       case CommandLine.Outcome.Help(text)             => out.println(text); sys.exit(0)
       case CommandLine.Outcome.Failed(problems, help) =>
         err.println(s"${problems.sentences.map(s => s"error: $s").mkString("\n")}\n\n$help");
-        sys.exit(ExitCode.Usage.value)
+        sys.exit(Error(problems).exitCode.value)
       case CommandLine.Outcome.Run(server, cmd) =>
         finish(server, cmd.run)
 
@@ -231,7 +231,7 @@ object Cli:
     val url = server.getOrElse(Client.ServerUrl(Settings.app.cli.serverUrl.value))
     val token = Client.Token.chosen(Option(System.getenv("HISTMERSION_TOKEN")), tokenFile) match
       case Right(t) => t
-      case Left(p)  => err.println(s"error: ${p.sentence}"); sys.exit(ExitCode.Usage.value)
+      case Left(p)  => err.println(s"error: ${p.sentence}"); sys.exit(Error(p).exitCode.value)
     run(new Client(url, token)) match
       case Right(())                     => ()
       case Left(e) if e.workingDirDenied => err.println(WorkingDir.message); sys.exit(e.exitCode.value)
@@ -256,16 +256,24 @@ object Cli:
           )
           .map(Client.Token.firstLine)
 
-  /** A user-facing failure: message + process exit code (1 = usage, 2 = server said no, 3 = unreachable). */
+  /** A user-facing failure: its problems and where they were met. The exit code is worked out from them
+    * ([[ExitCode.of]]), never given (owner decision E15): `Cli.Error(problems)` is one the CLI found itself,
+    * [[Error.answered]] one the server answered with.
+    */
   final case class Error(
       problems: Problems,
-      exitCode: ExitCode = ExitCode.Unreachable,
+      origin: ExitCode.Origin = ExitCode.Origin.Local,
       notFound: Boolean = false,
       workingDirDenied: Boolean = false
-  )
+  ):
+    /** The process's exit code: the problems' own, met at [[origin]]. */
+    def exitCode: ExitCode = ExitCode.of(problems, origin)
 
   object Error:
-    export com.histmersion.cli.ExitCode
+    /** A failure the server answered with: a refusal, or the outcome of its work (a failed job, a bundle that did not
+      * verify).
+      */
+    def answered(problems: Problems): Error = Error(problems, ExitCode.Origin.Server)
 
   /** What `histmersion …` of this group was asked to do, every argument parsed. */
   enum TopCommand extends Command:
@@ -404,8 +412,7 @@ object Cli:
                 case None =>
                   Left(
                     Error(
-                      Problem.Unclassified(Legacy.Text(s"unknown --group '$by' (${GroupAxes.mkString(" | ")})")),
-                      exitCode = ExitCode.Usage
+                      Problem.Unclassified(Legacy.Text(s"unknown --group '$by' (${GroupAxes.mkString(" | ")})"))
                     )
                   )
                 case Some(axes) =>
@@ -434,8 +441,7 @@ object Cli:
                 Error(
                   Problem.Unclassified(
                     Legacy.Text("--json prints the whole record; drop --section/--heading/--offset/--chars")
-                  ),
-                  exitCode = ExitCode.Usage
+                  )
                 )
               )
             else
@@ -489,8 +495,7 @@ object Cli:
             .map(r => Output.emit(json, r)(SourcesMarkdown.contradictions(_, key)))
         case TopCommand.Put(file) =>
           val p = Path.of(file)
-          if !Files.isRegularFile(p) then
-            Left(Error(Problem.Unclassified(Legacy.Text(s"no such file: $file")), exitCode = ExitCode.Usage))
+          if !Files.isRegularFile(p) then Left(Error(Problem.Unclassified(Legacy.Text(s"no such file: $file"))))
           // an explicit `put` is always deliberate → force past the "newer in DB" guard
           else c.importNote(Notes.toImport(p, force = Api.Overwrite(true))).map(report)
         case TopCommand.Patch(
@@ -576,9 +581,8 @@ object Cli:
             meta.flatMap { _ =>
               if failed.nonEmpty then
                 Left(
-                  Error(
-                    Problem.Unclassified(Legacy.Text(s"${failed.size} of $total source(s) could not be exported")),
-                    exitCode = ExitCode.Refused
+                  Error.answered(
+                    Problem.Unclassified(Legacy.Text(s"${failed.size} of $total source(s) could not be exported"))
                   )
                 )
               else if only.nonEmpty then Right(())
@@ -597,9 +601,8 @@ object Cli:
                   .safeName(Backup.Name(r.file.value))
                   .left
                   .map(m =>
-                    Error(
-                      Problem.Unclassified(Legacy.Text(s"server returned an odd file name: ${m.sentence}")),
-                      exitCode = ExitCode.Refused
+                    Error.answered(
+                      Problem.Unclassified(Legacy.Text(s"server returned an odd file name: ${m.sentence}"))
                     )
                   )
                   .flatMap { name =>
@@ -613,7 +616,7 @@ object Cli:
           c.backups.map(rows => Output.emit(json, rows)(rs => Markdown.backups(rs.toVector)))
         case TopCommand.Restore(file, force, yes) =>
           if !yes && !confirm(Question(s"Restore '$file' into the server's database? This DROPS what is there."))
-          then Left(Error(Problem.Unclassified(Legacy.Text("aborted")), exitCode = ExitCode.Usage))
+          then Left(Error(Problem.Unclassified(Legacy.Text("aborted"))))
           else
             c.restore(RestoreRequest(RestoreRequest.File(file), RestoreRequest.Force(force)))
               .map(r => out.println(Markdown.restored(r)))

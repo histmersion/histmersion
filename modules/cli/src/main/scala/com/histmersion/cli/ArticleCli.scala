@@ -169,9 +169,8 @@ object ArticleCli:
       if failed.isEmpty then Right(Exported(total))
       else
         Left(
-          Cli.Error(
-            Problem.Unclassified(Legacy.Text(s"${failed.size} of $total article(s) could not be exported")),
-            exitCode = ExitCode.Refused
+          Cli.Error.answered(
+            Problem.Unclassified(Legacy.Text(s"${failed.size} of $total article(s) could not be exported"))
           )
         )
     }
@@ -197,7 +196,7 @@ object ArticleCli:
     r.skipped.take(10).foreach(s => Cli.out.println(s"  ~ $s"))
     r.failed.take(10).foreach(f => Cli.err.println(s"  ! $f"))
 
-  private def usage(problem: Problem): Cli.Error = Cli.Error(problem, exitCode = ExitCode.Usage)
+  private def usage(problem: Problem): Cli.Error = Cli.Error(problem)
 
   private def readFile(p: Path): Either[Cli.Error, String] =
     if Files.isRegularFile(p) then Right(Files.readString(p))
@@ -283,9 +282,9 @@ object ArticleCli:
               e.ifUpdatedAt
             )
             .left
-            .map(Cli.Error(_, exitCode = ExitCode.Usage))
-            .flatMap(ArticlePatches.withCoverage(_, ff, rs).left.map(Cli.Error(_, exitCode = ExitCode.Usage)))
-            .flatMap(ArticlePatches.withCritiques(_, crs).left.map(Cli.Error(_, exitCode = ExitCode.Usage)))
+            .map(Cli.Error(_))
+            .flatMap(ArticlePatches.withCoverage(_, ff, rs).left.map(Cli.Error(_)))
+            .flatMap(ArticlePatches.withCritiques(_, crs).left.map(Cli.Error(_)))
             .flatMap(p =>
               c.patchArticle(slug, p, strict).map { v =>
                 Cli.out.println(ArticleMarkdown.article(v))

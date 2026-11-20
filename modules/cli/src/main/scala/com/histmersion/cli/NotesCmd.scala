@@ -62,12 +62,12 @@ object NotesCmd:
         case Command.Add(raw, inline, file, title, json) =>
           for
             t <- TargetFlags.target(raw)
-            x <- text(inline, file).left.map(Cli.Error(_, exitCode = ExitCode.Usage))
+            x <- text(inline, file).left.map(Cli.Error(_))
             n <- c.call(PersonalApi.addNote)(Note.New(t, x, title.map(Title(_))))
           yield Output.emit(json, n)(n => s"Noted on ${n.title} (id `${n.id.value}`).")
         case Command.Edit(id, inline, file, json) =>
           text(inline, file).left
-            .map(Cli.Error(_, exitCode = ExitCode.Usage))
+            .map(Cli.Error(_))
             .flatMap(x => c.call(PersonalApi.editNote)((Note.Id(id), Note.Edit(x))))
             .map(n => Output.emit(json, n)(n => s"Changed the note on ${n.title}."))
         case Command.Rm(id, json) =>

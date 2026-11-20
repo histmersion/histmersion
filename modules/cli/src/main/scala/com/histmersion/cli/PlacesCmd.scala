@@ -48,12 +48,11 @@ object PlacesCmd:
       batch: Paging.Limit,
       dataset: Dataset = Dataset.Local
   ): Either[Cli.Error, Place.ImportResult] =
-    if !Files.isRegularFile(file) then
-      Left(Cli.Error(Problem.Unclassified(Legacy.Text(s"no such file: $file")), exitCode = ExitCode.Usage))
+    if !Files.isRegularFile(file) then Left(Cli.Error(Problem.Unclassified(Legacy.Text(s"no such file: $file"))))
     else
       Lpf.parse(Files.readString(file), kind.getOrElse(Place.KindValue(Place.Kind.Region))) match
         case Left(e) =>
-          Left(Cli.Error(Problem.Unclassified(Legacy.Text(s"$file: ${e.sentence}")), exitCode = ExitCode.Usage))
+          Left(Cli.Error(Problem.Unclassified(Legacy.Text(s"$file: ${e.sentence}"))))
         case Right(items) =>
           val groups = items.grouped(batch.value.max(1)).toList
           val total = groups.size
@@ -298,8 +297,7 @@ object PlacesCmd:
               Cli.Error(
                 Problem.Unclassified(
                   Legacy.Text(s"not a directory: ${tried.mkString(", ")} — pass --dir <path to db/places>")
-                ),
-                exitCode = ExitCode.Usage
+                )
               )
             )
           else
@@ -307,8 +305,7 @@ object PlacesCmd:
             if files.isEmpty then
               Left(
                 Cli.Error(
-                  Problem.Unclassified(Legacy.Text(s"no JSON files under $d — run db/places/fetch.sh first")),
-                  exitCode = ExitCode.Usage
+                  Problem.Unclassified(Legacy.Text(s"no JSON files under $d — run db/places/fetch.sh first"))
                 )
               )
             else

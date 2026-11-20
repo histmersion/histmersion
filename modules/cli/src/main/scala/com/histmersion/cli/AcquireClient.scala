@@ -45,6 +45,9 @@ final class AcquireClient(c: Client):
   def assess(req: AssessRequest): Either[Cli.Error, Assessment] = c.call(AcquireApi.assess)(req)
   def updateRetractions: Either[Cli.Error, RetractionsUpdate] = c.call(AcquireApi.updateRetractions)(())
   def retractionsStatus: Either[Cli.Error, RetractionsUpdate] = c.call(AcquireApi.retractionsStatus)(())
+
+  /** No final answer came for work a request started here ([[Client.unanswered]]). */
+  def unanswered(what: String): com.histmersion.util.problem.Problem = c.unanswered(what)
   def followups(req: FollowupsRequest): Either[Cli.Error, FollowupsResult] = c.call(AcquireApi.followups)(req)
   def ingest(req: Ingest.Request): Either[Cli.Error, Ingest.Report] = c.call(AcquireApi.ingest)(req)
   def archiveSearch(q: AcquireApi.Query, rows: Option[AcquireApi.Limit]): Either[Cli.Error, ArchiveSearchResult] =

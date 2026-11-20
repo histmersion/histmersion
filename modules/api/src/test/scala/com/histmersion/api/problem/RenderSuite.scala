@@ -82,6 +82,7 @@ class RenderSuite extends munit.FunSuite:
     "McpServer" -> 502,
     "Hashed" -> 500,
     "Timeout" -> 504,
+    "Unanswered" -> 504,
     "BadReply" -> 502,
     "File" -> 500,
     "Wrong" -> 500,

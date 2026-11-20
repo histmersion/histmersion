@@ -9,7 +9,25 @@ MCP tools. Every command prints the **same Markdown** the matching MCP tool retu
 - `--server <url>` (or `HISTMERSION_SERVER_URL`, or `cli.server-url` in the settings file) points it
   at another server.
 - Years are signed integers: 3300 BCE is `-3300`.
-- Exit codes: 0 success, 1 a usage error, 2 the server said no, 3 the server cannot be reached.
+- Exit codes: see below. Each failure's code follows from the kind of problem it is, so a script can
+  tell what to do next.
+
+## Exit codes
+
+| code | name | what to do next |
+|---|---|---|
+| `0` | success | — |
+| `1` | usage | The command, its input or this machine's setup is wrong (a bad flag, a missing local file, a broken settings file). Fix it; sent again unchanged it fails again. |
+| `2` | refused | The server refused the request, or the work failed (a rule, a policy, a failed job, a tool that exited badly). Sending it again unchanged does not help. |
+| `3` | unreachable | The server could not be reached, and nothing was sent or nothing changed. Sending it again is safe. |
+| `4` | not found | What the command names does not exist. |
+| `5` | conflict | The record is not in the state the command expects: changed since it was read (`--if-updated-at`), already there, or in use. Read it again, then decide. |
+| `6` | unavailable | The server, or a service it needs, is busy, under maintenance, out of allowance or down for now. Try again later. |
+| `7` | fault | A bug, damaged stored data, or a server that cannot work as it is set up. The message and the server's log say what failed. |
+| `8` | outcome unknown | A write was sent and no final answer came (the connection ended, or the job was still running when the wait ran out). It may have been applied: check before sending it again. |
+
+Among several problems, an unknown outcome decides the code first, then "unreachable", else the
+first problem's code.
 
 ## Every command
 

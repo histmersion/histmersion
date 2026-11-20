@@ -64,10 +64,10 @@ object ManagerCmd:
     * it); a malformed one is a usage error before anything is sent.
     */
   def focusRequest(args: List[String]): Either[Cli.Error, Option[Autopilot.FocusSet]] =
-    def usage(m: String) = Left(Cli.Error(Problem.Unclassified(Legacy.Text(m)), exitCode = ExitCode.Usage))
+    def usage(m: String) = Left(Cli.Error(Problem.Unclassified(Legacy.Text(m))))
     def num(s: String) =
       s.trim.toIntOption.toRight(
-        Cli.Error(Problem.Unclassified(Legacy.Text(s"'$s' is not a whole number")), exitCode = ExitCode.Usage)
+        Cli.Error(Problem.Unclassified(Legacy.Text(s"'$s' is not a whole number")))
       )
     def by = Some(Autopilot.FocusSet.By("cli"))
     args.map(_.trim) match
@@ -196,7 +196,7 @@ object ManagerCmd:
           ).map(r => Output.emit(json, r)(ApprovalDigestMarkdown.bulk))
         case Command.Create(kind, goal, kvs, cron, active, json) =>
           config(kvs).left
-            .map(Cli.Error(_, exitCode = ExitCode.Usage))
+            .map(Cli.Error(_))
             .flatMap(cfg =>
               c.call(ManagersApi.create)(
                 ManagerCreate(
@@ -346,6 +346,6 @@ object ManagerCmd:
                 .map(m => Cli.out.println(ManagersMarkdown.line(m)))
             case ManagerVerb.Config(kvs) =>
               config(kvs).left
-                .map(Cli.Error(_, exitCode = ExitCode.Usage))
+                .map(Cli.Error(_))
                 .flatMap(cfg => c.call(ManagersApi.update)((id, ManagerUpdate(Some(cfg)))))
                 .map(m => Cli.out.println(ManagersMarkdown.line(m)))

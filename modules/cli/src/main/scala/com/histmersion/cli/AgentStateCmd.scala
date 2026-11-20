@@ -38,7 +38,6 @@ object AgentStateCmd:
             case Left(err) =>
               Left(
                 Cli.Error(
-                  Problem.Unclassified(Legacy.Text(s"Invalid JSON: $err")),
-                  exitCode = ExitCode.Usage
+                  Problem.Unclassified(Legacy.Text(s"Invalid JSON: $err"))
                 )
               )

@@ -29,7 +29,7 @@ object PluginCmd:
         exe
       )
       .left
-      .map(e => Cli.Error(e, exitCode = ExitCode.Usage))
+      .map(e => Cli.Error(e))
 
   private[cli] def local(c: Client)(using console: Console): Either[Cli.Error, PluginOps] =
     if !PluginKit.isLoopback(c.serverUrl.value) then
@@ -40,8 +40,7 @@ object PluginCmd:
               s"histmersion plugin manages the install on THIS machine, but the CLI is pointed at ${c.serverUrl} — " +
                 "run the command on the machine the server runs on"
             )
-          ),
-          exitCode = ExitCode.Usage
+          )
         )
       )
     else install.map(i => PluginOps(i, Settings.app.cli.plugins))
@@ -87,7 +86,7 @@ object PluginCmd:
           val repos = repoArgs
             .traverse(r => PluginRepository.parse(r, Files.isDirectory(_)).map(_.value))
             .left
-            .map(e => Cli.Error(Problem.Unclassified(Legacy.Text(e)), exitCode = ExitCode.Usage))
+            .map(e => Cli.Error(Problem.Unclassified(Legacy.Text(e))))
           repos.flatMap(rs => local(c).map(_ -> rs)).flatMap { (ops, rs) =>
             ops
               .add(
@@ -143,32 +142,31 @@ object PluginCmd:
             kind <- PluginKind.parse(rawKind)
             pkg <- ScalaPackage.parse(rawPackage.getOrElse(id.packageName.value))
           yield (id, kind, pkg)
-          result.left.map(e => Cli.Error(Problem.Unclassified(Legacy.Text(e)), exitCode = ExitCode.Usage)).flatMap {
-            (id, kind, pkg) =>
-              val target = Path.of(dir.getOrElse(id.value)).toAbsolutePath.normalize
-              for
-                (repo, copied) <- PluginAuthoring.repository(
-                  repoArg,
-                  install,
-                  PluginAuthoring
-                    .mavenLocal(k => Option(java.lang.System.getenv(k.value)).map(LocalInstall.EnvSetting(_)))
-                    .left
-                    .map(Cli.Error(_, exitCode = ExitCode.Usage))
-                )
-                written <- PluginAuthoring
-                  .write(
-                    target,
-                    PluginTemplate
-                      .files(PluginTemplate.Request(id, kind, pkg, repo, PluginTemplate.Request.AgentNotes(agentNotes)))
-                  )
+          result.left.map(e => Cli.Error(Problem.Unclassified(Legacy.Text(e)))).flatMap { (id, kind, pkg) =>
+            val target = Path.of(dir.getOrElse(id.value)).toAbsolutePath.normalize
+            for
+              (repo, copied) <- PluginAuthoring.repository(
+                repoArg,
+                install,
+                PluginAuthoring
+                  .mavenLocal(k => Option(java.lang.System.getenv(k.value)).map(LocalInstall.EnvSetting(_)))
                   .left
-                  .map(Cli.Error(_, exitCode = ExitCode.Usage))
-              yield
-                if copied.nonEmpty then
-                  Cli.out.println(
-                    s"copied the install's plugin API, platform and testkit into the local Maven repository (${copied.size} file(s))"
-                  )
-                PluginAuthoring.nextSteps(target, id, pkg, written).foreach(value => Cli.out.println(value))
+                  .map(Cli.Error(_))
+              )
+              written <- PluginAuthoring
+                .write(
+                  target,
+                  PluginTemplate
+                    .files(PluginTemplate.Request(id, kind, pkg, repo, PluginTemplate.Request.AgentNotes(agentNotes)))
+                )
+                .left
+                .map(Cli.Error(_))
+            yield
+              if copied.nonEmpty then
+                Cli.out.println(
+                  s"copied the install's plugin API, platform and testkit into the local Maven repository (${copied.size} file(s))"
+                )
+              PluginAuthoring.nextSteps(target, id, pkg, written).foreach(value => Cli.out.println(value))
           }
         case Command.Repo(asUrl, m2) =>
           val _ = c
@@ -177,7 +175,7 @@ object PluginCmd:
               dir <- PluginAuthoring
                 .mavenLocal(k => Option(java.lang.System.getenv(k.value)).map(LocalInstall.EnvSetting(_)))
                 .left
-                .map(Cli.Error(_, exitCode = ExitCode.Usage))
+                .map(Cli.Error(_))
               copied <- PluginAuthoring.publishToMavenLocal(install, dir)
             yield
               Cli.out.println(if asUrl then dir.toUri.toString else dir.toString)
@@ -199,6 +197,6 @@ object PluginCmd:
               Either.cond(
                 Files.isRegularFile(src),
                 Cli.out.println(src),
-                Cli.Error(Problem.Unclassified(Legacy.Text(s"no sources jar beside $jar")), exitCode = ExitCode.Refused)
+                Cli.Error(Problem.Unclassified(Legacy.Text(s"no sources jar beside $jar")))
               )
           }
