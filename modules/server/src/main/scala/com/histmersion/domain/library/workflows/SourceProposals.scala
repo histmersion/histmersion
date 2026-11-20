@@ -24,6 +24,7 @@ import com.histmersion.util.database.Jsonb
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.AgentsMarkdown
 import com.histmersion.util.database.WritePermit
+import com.histmersion.util.database.Unused
 
 /** What a run proposes about a source — a status, a disagreement edge — routed by the library's rules
   * ([[AgentProposals.route]]): applied by code (and recorded, already approved), recorded open for a person, or
@@ -93,12 +94,15 @@ final class SourceProposals(
           case Left(m) =>
             Outcome.Failed(Problem.Unclassified(Legacy.Text(s"${p.describe}: ${m.sentences.mkString("; ")}")))
           case Right(w) =>
-            val _ = record(
-              runId,
-              p,
-              now,
-              ApprovalState.Approved,
-              Some(ApprovalRecord.Result(s"${ListFilters.DecidedBy.AutoResult}: $w"))
+            Unused(
+              record(
+                runId,
+                p,
+                now,
+                ApprovalState.Approved,
+                Some(ApprovalRecord.Result(s"${ListFilters.DecidedBy.AutoResult}: $w"))
+              ),
+              Unused.Why.Reported
             )
             Outcome.Applied(w)
       case Route.Ask =>

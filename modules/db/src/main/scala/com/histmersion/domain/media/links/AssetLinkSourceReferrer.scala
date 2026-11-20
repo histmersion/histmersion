@@ -10,6 +10,7 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.augustnagro.magnum.*
 import com.histmersion.api.library.Rename
 import com.histmersion.api.media.AssetLink
+import com.histmersion.util.database.Unused
 
 /** The figures of a source (they go with it) and the links of other figures to it or to one of its findings. */
 final class AssetLinkSourceReferrer extends SourceReferrer:
@@ -40,7 +41,8 @@ final class AssetLinkSourceReferrer extends SourceReferrer:
 
   override def deleting(source: SourceKeys, report: DeleteReport)(using DbCon): Unit =
     val links = linksTo(source).map(_.toString)
-    if links.nonEmpty then sql"DELETE FROM asset_links WHERE id::text = ANY($links::text[])".update.run()
+    if links.nonEmpty then
+      Unused(sql"DELETE FROM asset_links WHERE id::text = ANY($links::text[])".update.run(), Unused.Why.Idempotent)
 
   /** Other figures' links to the source or one of its findings. */
   private def linksTo(source: SourceKeys)(using DbCon): List[AssetLink.Id] =

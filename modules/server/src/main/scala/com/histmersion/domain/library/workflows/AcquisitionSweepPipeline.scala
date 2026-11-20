@@ -322,13 +322,12 @@ final class AcquisitionSweepPipeline(
       s"ingest $doi (legal open access only) for goal $goal",
       Json.obj("doi" -> doi.asJson, "title" -> p.candidate.title.asJson, "why" -> p.why.asJson)
     )(upstream().ingestLegal(doi).map { r =>
-      val _ =
-        goals.link(
-          goal,
-          Goal.LinkKind.Source,
-          GoalLink.Ref(r.citekey.value),
-          Some(GoalLink.Note(s"ingested by a watcher sweep: ${p.why}".take(500)))
-        )
+      goals.linkIfThere(
+        goal,
+        Goal.LinkKind.Source,
+        GoalLink.Ref(r.citekey.value),
+        Some(GoalLink.Note(s"ingested by a watcher sweep: ${p.why}".take(500)))
+      )
       ctx.run.managerId.foreach(mid =>
         agents.managerStore.event(
           mid,

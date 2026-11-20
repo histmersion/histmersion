@@ -33,6 +33,7 @@ import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.library.Confidence
 import com.histmersion.domain.Licence
 import com.histmersion.domain.library.search.FilterSql
+import com.histmersion.util.database.Unused
 
 /** The library's sources: a record with its findings and the edges it makes, written and read whole or by part, its old
   * citekeys, its rename, its full-text chunks and body. Every method runs on the connection or in the transaction its
@@ -171,8 +172,11 @@ private[sources] object SourceRepo:
     // included, silently threw away the gazetteer assignment of every finding of that source. The
     // web UI then showed the source as "unlocated" until somebody ran `places rebuild`.
     val keep = s.findings.map(_.id)
-    sql"""DELETE FROM findings
-          WHERE citekey = ${s.citekey} AND NOT (id = ANY($keep::text[]))""".update.run()
+    Unused(
+      sql"""DELETE FROM findings
+          WHERE citekey = ${s.citekey} AND NOT (id = ANY($keep::text[]))""".update.run(),
+      Unused.Why.Idempotent
+    )
     s.findings.foreach { f =>
       val fperiod = RangeSql.literal(f.period)
       val lon = f.geo.map(_.lon)
@@ -191,16 +195,15 @@ private[sources] object SourceRepo:
     }
     // …and re-materialise this citekey's gazetteer assignment in the SAME transaction, so a moved
     // or newly-added finding is located the moment the write commits.
-    val _ = FindingPlacement(toleranceKm).placeSource(ck)
+    Unused(FindingPlacement(toleranceKm).placeSource(ck), Unused.Why.Reported)
 
-    sql"DELETE FROM edges WHERE src = ${s.citekey}".update.run()
-    sql"DELETE FROM unresolved_edges WHERE src = ${s.citekey}".update.run()
-    val _ = insertEdges(s.edges.map(_.modify(_.src).setTo(s.citekey)))
+    Unused(sql"DELETE FROM edges WHERE src = ${s.citekey}".update.run(), Unused.Why.Idempotent)
+    Unused(sql"DELETE FROM unresolved_edges WHERE src = ${s.citekey}".update.run(), Unused.Why.Idempotent)
+    Unused(insertEdges(s.edges.map(_.modify(_.src).setTo(s.citekey))), Unused.Why.Reported)
     promote(ck)
-    val _ = replaceChunks(
-      ck,
-      s.ocrMarkdown.map(o => Chunker.ChunkMarkdown(o.value)),
-      chunkChars
+    Unused(
+      replaceChunks(ck, s.ocrMarkdown.map(o => Chunker.ChunkMarkdown(o.value)), chunkChars),
+      Unused.Why.Reported
     ) // FTS index follows every body write
 
   /** Store edges, routed by their target (V026): an edge to a stored source goes into `edges`, one to anything else — a
@@ -227,10 +230,13 @@ private[sources] object SourceRepo:
 
   /** A source just arrived: every parked edge that named it exactly becomes a real edge. */
   private[histmersion] def promote(citekey: Citekey)(using DbCon): Unit =
-    sql"""INSERT INTO edges (src, dst, kind)
+    Unused(
+      sql"""INSERT INTO edges (src, dst, kind)
           SELECT src, dst, kind FROM unresolved_edges WHERE dst = $citekey
-          ON CONFLICT DO NOTHING""".update.run()
-    sql"DELETE FROM unresolved_edges WHERE dst = $citekey".update.run()
+          ON CONFLICT DO NOTHING""".update.run(),
+      Unused.Why.Idempotent
+    )
+    Unused(sql"DELETE FROM unresolved_edges WHERE dst = $citekey".update.run(), Unused.Why.Idempotent)
 
   /** The opaque last-write token: `updated_at` rendered UTC-normalised so it is stable to compare and safe to echo back
     * through JSON, whatever the session's TimeZone setting.
@@ -328,7 +334,7 @@ private[sources] object SourceRepo:
       markdown: Option[Chunker.ChunkMarkdown],
       chunkChars: Chunker.ChunkMaxChars
   )(using DbCon): RowCount =
-    sql"DELETE FROM source_chunks WHERE citekey = $citekey".update.run()
+    Unused(sql"DELETE FROM source_chunks WHERE citekey = $citekey".update.run(), Unused.Why.Idempotent)
     val chunks = markdown.map(Chunker.chunk(_, chunkChars)).getOrElse(Nil)
     if chunks.nonEmpty then
       val _ = batchUpdate(chunks)(c => sql"""INSERT INTO source_chunks (citekey, ord, heading, body)
@@ -357,9 +363,15 @@ private[sources] object SourceRepo:
           .map(e -> _)
       )
     moves.foreach { (e, ck) =>
-      sql"""INSERT INTO edges (src, dst, kind) VALUES (${e.src}, $ck, ${e.kind})
-              ON CONFLICT DO NOTHING""".update.run()
-      sql"DELETE FROM unresolved_edges WHERE src = ${e.src} AND dst = ${e.dst} AND kind = ${e.kind}".update.run()
+      Unused(
+        sql"""INSERT INTO edges (src, dst, kind) VALUES (${e.src}, $ck, ${e.kind})
+              ON CONFLICT DO NOTHING""".update.run(),
+        Unused.Why.Idempotent
+      )
+      Unused(
+        sql"DELETE FROM unresolved_edges WHERE src = ${e.src} AND dst = ${e.dst} AND kind = ${e.kind}".update.run(),
+        Unused.Why.Idempotent
+      )
     }
     RowCount(moves.size)
 
@@ -529,11 +541,14 @@ private[sources] object SourceRepo:
               if back.isDefined then
                 // renaming back: the alias goes, and its tombstone stays so an import does not bring it
                 // back (#827) — `newCk` is this source's citekey again
-                sql"DELETE FROM source_aliases WHERE alias = $newCk".update.run()
-                sql"""INSERT INTO alias_tombstones (alias, source_uid)
+                Unused(sql"DELETE FROM source_aliases WHERE alias = $newCk".update.run(), Unused.Why.Idempotent)
+                Unused(
+                  sql"""INSERT INTO alias_tombstones (alias, source_uid)
                     SELECT $newCk, uid FROM sources WHERE citekey = $oldCk
                     ON CONFLICT (alias) DO UPDATE SET source_uid = EXCLUDED.source_uid, deleted_at = now()""".update
-                  .run()
+                    .run(),
+                  Unused.Why.Idempotent
+                )
               Right(renameNow(oldCk, newCk, referrers))
 
   private def renameNow(oldCk: Citekey, newCk: Citekey, referrers: SourceReferrers)(using DbCon): Rename.Counts =
@@ -544,7 +559,10 @@ private[sources] object SourceRepo:
     }.toSet
 
     // the key itself: ON UPDATE CASCADE (V027) carries every foreign key
-    sql"UPDATE sources SET citekey = $newCk, updated_at = now() WHERE citekey = $oldCk".update.run()
+    Unused(
+      sql"UPDATE sources SET citekey = $newCk, updated_at = now() WHERE citekey = $oldCk".update.run(),
+      Unused.Why.Held
+    )
 
     // finding ids; what other domains store of the source follows it (the referrers, in their order)
     val (oldHash, cut) = (oldCk.value + "#", oldCk.value.length + 1)
@@ -570,7 +588,7 @@ private[sources] object SourceRepo:
     sql"""INSERT INTO source_aliases (alias, citekey) VALUES ($oldCk, $newCk)
           ON CONFLICT (alias) DO UPDATE SET citekey = EXCLUDED.citekey""".update.run()
     // an alias that exists again is no longer deleted
-    sql"DELETE FROM alias_tombstones WHERE alias = $oldCk".update.run()
+    Unused(sql"DELETE FROM alias_tombstones WHERE alias = $oldCk".update.run(), Unused.Why.Idempotent)
 
     Rename.Counts(
       Rename.Counts.Findings(findings),
@@ -586,7 +604,7 @@ private[sources] object SourceRepo:
     val n = sql"""INSERT INTO edges (src, dst, kind)
                   SELECT src, $ck, kind FROM unresolved_edges WHERE dst = $dst AND src <> $ck
                   ON CONFLICT DO NOTHING""".update.run()
-    sql"DELETE FROM unresolved_edges WHERE dst = $dst AND src <> $ck".update.run()
+    Unused(sql"DELETE FROM unresolved_edges WHERE dst = $dst AND src <> $ck".update.run(), Unused.Why.Idempotent)
     RowCount(n)
 
   /** Rewrite links in every source's notes and summary; returns (citekey, links moved) per source that changed. A plain
@@ -608,8 +626,11 @@ private[sources] object SourceRepo:
         val s = summary.map(v => WikiLinks.retarget(WikiLinks.Body(v), target))
         val moved = n.fold(0)(_._2.value) + s.fold(0)(_._2.value)
         Option.when(moved > 0) {
-          sql"""UPDATE sources SET notes = ${n.map(_._1)}, summary = ${s.map(_._1)}, updated_at = now()
-                WHERE citekey = $ck""".update.run()
+          Unused(
+            sql"""UPDATE sources SET notes = ${n.map(_._1)}, summary = ${s.map(_._1)}, updated_at = now()
+                WHERE citekey = $ck""".update.run(),
+            Unused.Why.Held
+          )
           ck -> RowCount(moved)
         }
       }
@@ -666,7 +687,7 @@ private[sources] object SourceRepo:
     sql"SELECT citekey FROM sources WHERE sha256 = $sha ORDER BY citekey LIMIT 1".query[Citekey].run().headOption
 
   def setSha256(citekey: Citekey, sha: Sha256)(using DbCon): Unit =
-    val _ = sql"UPDATE sources SET sha256 = $sha WHERE citekey = $citekey".update.run()
+    Unused(sql"UPDATE sources SET sha256 = $sha WHERE citekey = $citekey".update.run(), Unused.Why.Idempotent)
 
   def sha256Of(citekey: Citekey)(using DbCon): Option[Sha256] =
     sql"SELECT sha256 FROM sources WHERE citekey = $citekey".query[Option[Sha256]].run().headOption.flatten

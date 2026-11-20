@@ -32,6 +32,7 @@ import com.histmersion.api.personal.UnreadPage
 import com.histmersion.domain.catalogue.Event
 import com.histmersion.util.identity.AliasTable
 import com.histmersion.util.database.given
+import com.histmersion.util.database.Unused
 
 /** The events (`events`) with their datings, edges and participants (`event_datings`, `event_edges`,
   * `event_participants`) and the old ids of renamed ones (`event_aliases`). Every method runs on the connection it is
@@ -288,9 +289,9 @@ private[events] object EventRepo:
             dating_method = CASE WHEN $sameSpan THEN events.dating_method END""".update.run()
     recordCorrections(id, EventFields.ofPut(in))
 
-    sql"DELETE FROM event_datings WHERE event_id = $id".update.run()
-    sql"DELETE FROM event_edges WHERE src_id = $id OR dst_id = $id".update.run()
-    sql"DELETE FROM event_participants WHERE event_id = $id".update.run()
+    Unused(sql"DELETE FROM event_datings WHERE event_id = $id".update.run(), Unused.Why.Idempotent)
+    Unused(sql"DELETE FROM event_edges WHERE src_id = $id OR dst_id = $id".update.run(), Unused.Why.Idempotent)
+    Unused(sql"DELETE FROM event_participants WHERE event_id = $id".update.run(), Unused.Why.Idempotent)
 
     val _ = batchUpdate(in.datings) { d =>
       sql"""INSERT INTO event_datings (event_id, citekey, not_before, begin_by, end_from, not_after,
@@ -327,32 +328,46 @@ private[events] object EventRepo:
         )
       )
     else
-      p.label.foreach(v => sql"UPDATE events SET label = $v WHERE id = $id".update.run())
-      p.kind.foreach(v => sql"UPDATE events SET kind = $v WHERE id = $id".update.run())
-      p.historicity.foreach(v => sql"UPDATE events SET historicity = $v WHERE id = $id".update.run())
-      p.placeId.foreach(v => sql"UPDATE events SET place_id = $v WHERE id = $id".update.run())
-      p.parentId.foreach(v => sql"UPDATE events SET parent_id = $v WHERE id = $id".update.run())
-      p.description.foreach(v => sql"UPDATE events SET description = $v WHERE id = $id".update.run())
-      p.citekey.foreach(v => sql"UPDATE events SET citekey = $v WHERE id = $id".update.run())
+      p.label.foreach(v => Unused(sql"UPDATE events SET label = $v WHERE id = $id".update.run(), Unused.Why.Held))
+      p.kind.foreach(v => Unused(sql"UPDATE events SET kind = $v WHERE id = $id".update.run(), Unused.Why.Held))
+      p.historicity.foreach(v =>
+        Unused(sql"UPDATE events SET historicity = $v WHERE id = $id".update.run(), Unused.Why.Held)
+      )
+      p.placeId.foreach(v => Unused(sql"UPDATE events SET place_id = $v WHERE id = $id".update.run(), Unused.Why.Held))
+      p.parentId.foreach(v =>
+        Unused(sql"UPDATE events SET parent_id = $v WHERE id = $id".update.run(), Unused.Why.Held)
+      )
+      p.description.foreach(v =>
+        Unused(sql"UPDATE events SET description = $v WHERE id = $id".update.run(), Unused.Why.Held)
+      )
+      p.citekey.foreach(v => Unused(sql"UPDATE events SET citekey = $v WHERE id = $id".update.run(), Unused.Why.Held))
       // `auto` clears the stated scale (derived again); a value the controller did not validate is skipped
-      p.scale.flatMap(EventScale.parse).foreach(v => sql"UPDATE events SET scale = $v WHERE id = $id".update.run())
+      p.scale
+        .flatMap(EventScale.parse)
+        .foreach(v => Unused(sql"UPDATE events SET scale = $v WHERE id = $id".update.run(), Unused.Why.Held))
       // `""` clears the item; anything else the controller checked is a `Q…` id
       p.wikidata.map(_.value.trim).foreach { q =>
         val v = Option(q).filter(_.nonEmpty)
-        sql"UPDATE events SET wikidata = $v WHERE id = $id".update.run()
+        Unused(sql"UPDATE events SET wikidata = $v WHERE id = $id".update.run(), Unused.Why.Held)
       }
       // `""` clears the geometry; anything else the controller checked with [[geometryError]]
       p.geometry.map(_.value.trim).foreach { raw =>
         val g = Option(raw).filter(_.nonEmpty)
-        sql"""UPDATE events SET geom = CASE WHEN $g::text IS NULL THEN NULL
-              ELSE ST_SetSRID(ST_GeomFromGeoJSON($g::text), 4326) END WHERE id = $id""".update.run()
+        Unused(
+          sql"""UPDATE events SET geom = CASE WHEN $g::text IS NULL THEN NULL
+              ELSE ST_SetSRID(ST_GeomFromGeoJSON($g::text), 4326) END WHERE id = $id""".update.run(),
+          Unused.Why.Held
+        )
       }
       p.timeSpan.foreach { ts =>
-        sql"""UPDATE events SET not_before = ${ts.notBefore}, begin_by = ${ts.beginBy},
-              end_from = ${ts.endFrom}, not_after = ${ts.notAfter} WHERE id = $id""".update.run()
+        Unused(
+          sql"""UPDATE events SET not_before = ${ts.notBefore}, begin_by = ${ts.beginBy},
+              end_from = ${ts.endFrom}, not_after = ${ts.notAfter} WHERE id = $id""".update.run(),
+          Unused.Why.Held
+        )
       }
       p.datings.foreach { dts =>
-        sql"DELETE FROM event_datings WHERE event_id = $id".update.run()
+        Unused(sql"DELETE FROM event_datings WHERE event_id = $id".update.run(), Unused.Why.Idempotent)
         val _ = batchUpdate(dts) { d =>
           sql"""INSERT INTO event_datings (event_id, citekey, not_before, begin_by, end_from, not_after,
                                            method, note)
@@ -361,14 +376,14 @@ private[events] object EventRepo:
         }
       }
       p.edges.foreach { es =>
-        sql"DELETE FROM event_edges WHERE src_id = $id OR dst_id = $id".update.run()
+        Unused(sql"DELETE FROM event_edges WHERE src_id = $id OR dst_id = $id".update.run(), Unused.Why.Idempotent)
         val _ = batchUpdate(es) { eg =>
           sql"""INSERT INTO event_edges (src_id, dst_id, kind, citekey, note)
                 VALUES (${eg.srcId}, ${eg.dstId}, ${eg.kind}, ${eg.citekey}, ${eg.note})""".update
         }
       }
       p.participants.foreach { ps =>
-        sql"DELETE FROM event_participants WHERE event_id = $id".update.run()
+        Unused(sql"DELETE FROM event_participants WHERE event_id = $id".update.run(), Unused.Why.Idempotent)
         val _ = batchUpdate(ps) { pp =>
           sql"""INSERT INTO event_participants (event_id, actor, role, citekey)
                 VALUES ($id, ${pp.actor}, ${pp.role}, ${pp.citekey})""".update
@@ -376,7 +391,10 @@ private[events] object EventRepo:
       }
       // a span set by hand replaces the catalogue's dating: its stated year and ± no longer explain it
       p.timeSpan.foreach(_ =>
-        sql"UPDATE events SET central = NULL, plus_minus = NULL, dating_method = NULL WHERE id = $id".update.run()
+        Unused(
+          sql"UPDATE events SET central = NULL, plus_minus = NULL, dating_method = NULL WHERE id = $id".update.run(),
+          Unused.Why.Held
+        )
       )
       recordCorrections(id, EventFields.ofPatch(p))
       Right(())
@@ -411,10 +429,19 @@ private[events] object EventRepo:
       )
     else
       // renaming back to an old id: that alias goes
-      sql"DELETE FROM event_aliases WHERE alias = $newId".update.run()
-      sql"UPDATE events SET id = $newId WHERE id = $oldId".update.run() // its corrections follow (a trigger)
-      sql"UPDATE attestations SET target_id = $newId WHERE target_type = 'event' AND target_id = $oldId".update.run()
-      sql"UPDATE asset_links SET target_id = $newId WHERE target_type = 'event' AND target_id = $oldId".update.run()
+      Unused(sql"DELETE FROM event_aliases WHERE alias = $newId".update.run(), Unused.Why.Idempotent)
+      Unused(
+        sql"UPDATE events SET id = $newId WHERE id = $oldId".update.run(),
+        Unused.Why.Held
+      ) // its corrections follow (a trigger)
+      Unused(
+        sql"UPDATE attestations SET target_id = $newId WHERE target_type = 'event' AND target_id = $oldId".update.run(),
+        Unused.Why.Idempotent
+      )
+      Unused(
+        sql"UPDATE asset_links SET target_id = $newId WHERE target_type = 'event' AND target_id = $oldId".update.run(),
+        Unused.Why.Idempotent
+      )
       sql"""INSERT INTO event_aliases (alias, event_id) VALUES ($oldId, $newId)
             ON CONFLICT (alias) DO UPDATE SET event_id = EXCLUDED.event_id""".update.run()
       Right(())

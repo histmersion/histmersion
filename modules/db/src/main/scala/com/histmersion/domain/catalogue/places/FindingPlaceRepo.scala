@@ -13,6 +13,7 @@ import com.histmersion.api.catalogue.Place
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.catalogue.Year
+import com.histmersion.util.database.Unused
 
 /** The MATERIALISATION of `finding_places` — the only place that decides which findings belong to which places: the
   * whole table rebuilt, one source's findings or some places' findings placed again inside the caller's transaction,
@@ -33,7 +34,7 @@ private[places] object FindingPlaceRepo:
     // (`materialiseFor` touches the same two tables in the same order, for the same reason.)
     val _ = sql"LOCK TABLE findings IN SHARE MODE".update.run()
     val _ = sql"LOCK TABLE finding_places IN EXCLUSIVE MODE".update.run()
-    val _ = sql"DELETE FROM finding_places".update.run()
+    Unused(sql"DELETE FROM finding_places".update.run(), Unused.Why.Idempotent)
     val (byGeometry, byName) = insertAssignments(None, toleranceKm)
     val links = sql"SELECT count(*)::int FROM finding_places".query[Int].run().head
     val located = sql"SELECT count(DISTINCT finding_id)::int FROM finding_places".query[Int].run().head
@@ -59,9 +60,12 @@ private[places] object FindingPlaceRepo:
   def materialiseFor(citekey: Citekey, toleranceKm: FindingPlacement.Implementation.ToleranceKm)(using
       DbCon
   ): RowCount =
-    val _ = sql"""DELETE FROM finding_places fp
+    Unused(
+      sql"""DELETE FROM finding_places fp
                   USING findings f
-                  WHERE f.id = fp.finding_id AND f.citekey = $citekey""".update.run()
+                  WHERE f.id = fp.finding_id AND f.citekey = $citekey""".update.run(),
+      Unused.Why.Idempotent
+    )
     val (byGeometry, byName) = insertAssignments(Some(citekey), toleranceKm)
     RowCount(byGeometry.value + byName.value)
 
@@ -77,7 +81,7 @@ private[places] object FindingPlaceRepo:
     if ids.isEmpty then RowCount(0)
     else
       val _ = sql"LOCK TABLE findings IN SHARE MODE".update.run()
-      val _ = sql"DELETE FROM finding_places WHERE place_id = ANY($ids::text[])".update.run()
+      Unused(sql"DELETE FROM finding_places WHERE place_id = ANY($ids::text[])".update.run(), Unused.Why.Idempotent)
       val (byGeometry, byName) = insertAssignments(None, toleranceKm, Some(ids))
       RowCount(byGeometry.value + byName.value)
 

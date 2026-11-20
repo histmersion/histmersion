@@ -9,6 +9,7 @@ import com.histmersion.domain.catalogue.Place
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.given
 import com.histmersion.util.database.literal
+import com.histmersion.util.database.Unused
 
 /** The sites with no known date, for the map when a viewer asks for them (V106): every site whose period is open on
   * both sides, in a tile's box ([[candidates]], over the partial index `places_site_undated`), and their counts by the
@@ -123,8 +124,8 @@ private[maptiles] object UndatedSiteRepo:
     val locked =
       sql"SELECT pg_try_advisory_xact_lock(hashtext('histmersion.site_undated_cells'))".query[Boolean].run().head
     if locked then
-      val _ = sql"DELETE FROM site_undated_cells".update.run()
-      val _ = rebuildSql(perSide, maxZoom).update.run()
+      Unused(sql"DELETE FROM site_undated_cells".update.run(), Unused.Why.Idempotent)
+      Unused(rebuildSql(perSide, maxZoom).update.run(), Unused.Why.Idempotent)
       val _ =
         sql"""INSERT INTO site_undated_build (id, version, per_side, max_zoom, built_at) VALUES (true, $version, $perSide, $maxZoom, now())
                     ON CONFLICT (id) DO UPDATE SET version = EXCLUDED.version, per_side = EXCLUDED.per_side,

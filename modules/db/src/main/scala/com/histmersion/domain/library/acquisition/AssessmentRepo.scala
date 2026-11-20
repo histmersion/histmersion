@@ -10,6 +10,7 @@ import com.histmersion.api.library.{Acquire, RetractionNotice}
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Doi
+import com.histmersion.util.database.Unused
 
 /** The assessments' store: the local Retraction Watch mirror and the verdict recorded for each stored source. Every
   * method runs on the connection it is given.
@@ -47,7 +48,7 @@ private[acquisition] object AssessmentRepo:
     * Batched — 60 000 single inserts take minutes.
     */
   def replaceRetractionWatch(rows: List[Acquire.RetractionRow])(using DbCon): RowCount =
-    sql"DELETE FROM retraction_watch".update.run()
+    Unused(sql"DELETE FROM retraction_watch".update.run(), Unused.Why.Idempotent)
     // the export can list a DOI twice (a retraction and a later reinstatement); the last wins
     val unique = rows.map(r => r.doi -> r).toMap.values.toVector
     if unique.isEmpty then RowCount(0)

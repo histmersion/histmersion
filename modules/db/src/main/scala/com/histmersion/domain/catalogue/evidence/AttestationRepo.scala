@@ -9,6 +9,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.RowCount
 import com.histmersion.api.personal.UnreadPage
+import com.histmersion.util.database.Unused
 
 /** The attestations (`attestations`): which passage of a source attests a finding, an event, a dating, a place or an
   * edge. Every method runs on the connection it is given.
@@ -71,16 +72,24 @@ private[evidence] object AttestationRepo:
     sql"SELECT 1 FROM attestations WHERE id = $id".query[Int].run().nonEmpty
 
   def update(id: AttestationId, p: Attestation.Patch)(using DbCon): Unit =
-    p.quote.foreach(v => sql"UPDATE attestations SET quote = $v WHERE id = $id".update.run())
-    p.prefix.foreach(v => sql"UPDATE attestations SET prefix = $v WHERE id = $id".update.run())
-    p.suffix.foreach(v => sql"UPDATE attestations SET suffix = $v WHERE id = $id".update.run())
-    p.charStart.foreach(v => sql"UPDATE attestations SET char_start = $v WHERE id = $id".update.run())
-    p.charEnd.foreach(v => sql"UPDATE attestations SET char_end = $v WHERE id = $id".update.run())
-    p.chunkOrd.foreach(v => sql"UPDATE attestations SET chunk_ord = $v WHERE id = $id".update.run())
-    p.page.foreach(v => sql"UPDATE attestations SET page = $v WHERE id = $id".update.run())
-    p.canvas.foreach(v => sql"UPDATE attestations SET canvas = $v WHERE id = $id".update.run())
-    p.xywh.foreach(v => sql"UPDATE attestations SET xywh = $v WHERE id = $id".update.run())
-    p.ctsUrn.foreach(v => sql"UPDATE attestations SET cts_urn = $v WHERE id = $id".update.run())
-    p.note.foreach(v => sql"UPDATE attestations SET note = $v WHERE id = $id".update.run())
+    p.quote.foreach(v => Unused(sql"UPDATE attestations SET quote = $v WHERE id = $id".update.run(), Unused.Why.Held))
+    p.prefix.foreach(v => Unused(sql"UPDATE attestations SET prefix = $v WHERE id = $id".update.run(), Unused.Why.Held))
+    p.suffix.foreach(v => Unused(sql"UPDATE attestations SET suffix = $v WHERE id = $id".update.run(), Unused.Why.Held))
+    p.charStart.foreach(v =>
+      Unused(sql"UPDATE attestations SET char_start = $v WHERE id = $id".update.run(), Unused.Why.Held)
+    )
+    p.charEnd.foreach(v =>
+      Unused(sql"UPDATE attestations SET char_end = $v WHERE id = $id".update.run(), Unused.Why.Held)
+    )
+    p.chunkOrd.foreach(v =>
+      Unused(sql"UPDATE attestations SET chunk_ord = $v WHERE id = $id".update.run(), Unused.Why.Held)
+    )
+    p.page.foreach(v => Unused(sql"UPDATE attestations SET page = $v WHERE id = $id".update.run(), Unused.Why.Held))
+    p.canvas.foreach(v => Unused(sql"UPDATE attestations SET canvas = $v WHERE id = $id".update.run(), Unused.Why.Held))
+    p.xywh.foreach(v => Unused(sql"UPDATE attestations SET xywh = $v WHERE id = $id".update.run(), Unused.Why.Held))
+    p.ctsUrn.foreach(v =>
+      Unused(sql"UPDATE attestations SET cts_urn = $v WHERE id = $id".update.run(), Unused.Why.Held)
+    )
+    p.note.foreach(v => Unused(sql"UPDATE attestations SET note = $v WHERE id = $id".update.run(), Unused.Why.Held))
 
   def delete(id: AttestationId)(using DbCon): Boolean = sql"DELETE FROM attestations WHERE id = $id".update.run() > 0

@@ -9,6 +9,7 @@ import com.histmersion.api.catalogue.{HistoricalPeriod, PeriodO}
 import com.histmersion.api.catalogue.Period
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
+import com.histmersion.util.database.Unused
 
 /** How periods come in: the bundled seed (its rows upserted, its presets made the only presets, its version recorded),
   * a PeriodO dataset a client sends, and the live PeriodO dump's configured collections. `seed` reads the bundled
@@ -32,7 +33,7 @@ final class PeriodImports(
     bundled.map { d =>
       val r = write(d, Dataset.Seed)
       val ids = d.authorities.flatMap(_.periods.map(_.id))
-      val _ = periods.retainPresets(d.presets.keys.toList.map(k => HistoricalPeriod.Id(k.value)))
+      Unused(periods.retainPresets(d.presets.keys.toList.map(k => HistoricalPeriod.Id(k.value))), Unused.Why.Reported)
       val removed = if replace.value then periods.deleteSeedExcept(ids).value else 0
       d.version.foreach(v =>
         periods.setSeedVersion(PeriodService.SeedName(PeriodImports.SeedName), PeriodService.SeedVersion(v.value))

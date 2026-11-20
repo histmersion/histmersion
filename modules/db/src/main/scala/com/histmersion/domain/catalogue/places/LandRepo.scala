@@ -6,6 +6,7 @@ import com.histmersion.util.database.NewtypeColumns.given
 
 import com.augustnagro.magnum.*
 import com.histmersion.domain.catalogue.Place
+import com.histmersion.util.database.Unused
 
 /** Real land, for drawing polities on it rather than over the sea (V025). `land` holds Natural Earth land + minor
   * islands cut into small pieces; `places.geom_clipped` is each polity ∩ land, which a trigger keeps current when a
@@ -25,11 +26,14 @@ private[places] object LandRepo:
     */
   def replace(geometries: List[BPlaceRow.Geom])(using DbCon): RowCount =
     val _ = sql"TRUNCATE land".update.run()
-    val _ = batchUpdate(geometries) { g =>
-      sql"""INSERT INTO land (geom)
+    Unused(
+      batchUpdate(geometries) { g =>
+        sql"""INSERT INTO land (geom)
             SELECT ST_Subdivide(ST_CollectionExtract(ST_MakeValid(ST_SetSRID(ST_GeomFromGeoJSON($g), 4326)), 3),
                                 $PieceVertices)""".update
-    }
+      },
+      Unused.Why.Idempotent
+    )
     RowCount(sql"SELECT count(*)::int FROM land".query[Int].run().head)
 
   /** Statistics for a freshly loaded `land`: clipping runs right after, so the planner uses the index rather than
@@ -59,8 +63,11 @@ private[places] object LandRepo:
   /** One batch of [[polities]] clipped again. */
   def reclip(batch: List[Place.Id])(using DbCon): Unit =
     val list = batch.mkString(Sep)
-    val _ = sql"""UPDATE places SET geom_clipped = clip_to_land(geom)
-            WHERE id = ANY(string_to_array($list, $Sep))""".update.run()
+    Unused(
+      sql"""UPDATE places SET geom_clipped = clip_to_land(geom)
+            WHERE id = ANY(string_to_array($list, $Sep))""".update.run(),
+      Unused.Why.Idempotent
+    )
 
   def clipped()(using DbCon): RowCount =
     RowCount(sql"SELECT count(*)::int FROM places WHERE geom_clipped IS NOT NULL".query[Int].run().head)

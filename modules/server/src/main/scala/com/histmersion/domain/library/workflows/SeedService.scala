@@ -103,8 +103,7 @@ final class SeedService(
         seed(g)
       }
       if lines.nonEmpty then
-        val _ = site.workLists.add(
-          WorkListControllers.ListName("log"),
+        site.workLists.logLine(
           QueueAdd(Queue.QueueItem.Text(s"seed before the plan: ${lines.mkString("; ")}".take(1000)))
         )
       lines
@@ -136,7 +135,15 @@ final class SeedService(
           )
         }
         val queued = placed.count(_._2 == IngestBacklog.Placement.New)
-        val _ = acquisition().markCandidates(oa.map(_.id), Candidates.State.Queued.wire)
+        // the candidates stay `new` when the mark is refused: the next sweep offers them again
+        acquisition()
+          .markCandidates(oa.map(_.id), Candidates.State.Queued.wire)
+          .left
+          .foreach(why =>
+            scribe.warn(
+              s"seed before the plan: goal $goal's candidates not marked queued: ${why.sentences.mkString("; ")}"
+            )
+          )
         val line = s"$goal: ${sw.found} found, ${sw.added} new candidate(s), " +
           s"${Plural.count(Plural.CountN(queued.toLong), Plural.CountSingular("legal open-access work"))} queued for ingest (the plan is not needed for this)"
         agents.managerStore.event(

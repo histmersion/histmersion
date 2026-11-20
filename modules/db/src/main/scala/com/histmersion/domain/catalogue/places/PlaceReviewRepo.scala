@@ -15,6 +15,7 @@ import com.histmersion.api.catalogue.Geocode
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.domain.DeepTime
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.database.Unused
 
 /** The two gazetteer-cleanup lint rules (2026-10-09): `place-kind` — what a point-only seed region really is
   * ([[PlaceReview]]) — and `place-grid-point` — a better point than an atlas grid square's centre
@@ -135,9 +136,12 @@ private[places] object PlaceReviewRepo:
       val mg = todo
         .collect { case p: Proposal.Merge => p }
         .filter(p => mergeIn(Place.Id.assume(p.id.value), Place.Id.assume(p.into.value)))
-      val _ = FindingPlaceRepo.materialisePlaces(
-        (re.map(_.id) ++ mg.map(_.into)).map(i => BPlaceRow.Id(i.value)),
-        FindingPlacement.Implementation.ToleranceKm(toleranceKm.value)
+      Unused(
+        FindingPlaceRepo.materialisePlaces(
+          (re.map(_.id) ++ mg.map(_.into)).map(i => BPlaceRow.Id(i.value)),
+          FindingPlacement.Implementation.ToleranceKm(toleranceKm.value)
+        ),
+        Unused.Why.Reported
       )
       (RowCount(re.size), RowCount(mg.size))
 
@@ -146,27 +150,40 @@ private[places] object PlaceReviewRepo:
     val both = sql"SELECT count(*)::int FROM places WHERE id = $from OR id = $into".query[Int].run().head
     if from == into || both < 2 then false
     else
-      val _ = sql"""INSERT INTO finding_places (finding_id, place_id)
+      Unused(
+        sql"""INSERT INTO finding_places (finding_id, place_id)
                     SELECT finding_id, $into FROM finding_places WHERE place_id = $from
-                    ON CONFLICT DO NOTHING""".update.run()
-      val _ = sql"""INSERT INTO place_links (place_id, scheme, external_id, relation, import_source, import_ref,
+                    ON CONFLICT DO NOTHING""".update.run(),
+        Unused.Why.Idempotent
+      )
+      Unused(
+        sql"""INSERT INTO place_links (place_id, scheme, external_id, relation, import_source, import_ref,
                                              import_version, item_class, item_geom, item_period)
                     SELECT $into, scheme, external_id, relation, import_source, import_ref, import_version,
                            item_class, item_geom, item_period
                     FROM place_links WHERE place_id = $from
-                    ON CONFLICT DO NOTHING""".update.run()
+                    ON CONFLICT DO NOTHING""".update.run(),
+        Unused.Why.Idempotent
+      )
       // the duplicate's children become the replacement's; its own parents and names are its own
-      val _ = sql"""INSERT INTO place_relations (child_id, parent_id, kind, period)
+      Unused(
+        sql"""INSERT INTO place_relations (child_id, parent_id, kind, period)
                     SELECT child_id, $into, kind, period FROM place_relations
                     WHERE parent_id = $from AND child_id <> $into
-                    ON CONFLICT DO NOTHING""".update.run()
-      val _ = sql"UPDATE events SET place_id = $into WHERE place_id = $from".update.run()
-      val _ =
-        sql"UPDATE attestations SET target_id = $into WHERE target_type = 'place' AND target_id = $from".update.run()
-      val _ =
-        sql"UPDATE asset_links SET target_id = $into WHERE target_type = 'place' AND target_id = $from".update.run()
-      val _ = sql"UPDATE place_aliases SET place_id = $into WHERE place_id = $from".update.run()
-      val _ = sql"DELETE FROM places WHERE id = $from".update.run()
+                    ON CONFLICT DO NOTHING""".update.run(),
+        Unused.Why.Idempotent
+      )
+      Unused(sql"UPDATE events SET place_id = $into WHERE place_id = $from".update.run(), Unused.Why.Idempotent)
+      Unused(
+        sql"UPDATE attestations SET target_id = $into WHERE target_type = 'place' AND target_id = $from".update.run(),
+        Unused.Why.Idempotent
+      )
+      Unused(
+        sql"UPDATE asset_links SET target_id = $into WHERE target_type = 'place' AND target_id = $from".update.run(),
+        Unused.Why.Idempotent
+      )
+      Unused(sql"UPDATE place_aliases SET place_id = $into WHERE place_id = $from".update.run(), Unused.Why.Idempotent)
+      Unused(sql"DELETE FROM places WHERE id = $from".update.run(), Unused.Why.Held)
       val _ = sql"""INSERT INTO place_aliases (alias, place_id) VALUES ($from, $into)
                     ON CONFLICT (alias) DO UPDATE SET place_id = EXCLUDED.place_id""".update.run()
       true
@@ -254,8 +271,9 @@ private[places] object PlaceReviewRepo:
                 AND abs(ST_X(geom) - ${r.fromLon}) < 1e-7 AND abs(ST_Y(geom) - ${r.fromLat}) < 1e-7""".update
           .run() > 0
       }
-      val _ = FindingPlaceRepo.materialisePlaces(
-        moved.map(_.id),
-        FindingPlacement.Implementation.ToleranceKm(toleranceKm.value)
+      Unused(
+        FindingPlaceRepo
+          .materialisePlaces(moved.map(_.id), FindingPlacement.Implementation.ToleranceKm(toleranceKm.value)),
+        Unused.Why.Reported
       )
       RowCount(moved.size)

@@ -8,6 +8,7 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.Unused
 
 /** The goals' links to a source, which go with it. */
 final class GoalSourceReferrer extends SourceReferrer:
@@ -23,4 +24,7 @@ final class GoalSourceReferrer extends SourceReferrer:
     })
 
   override def deleting(source: SourceKeys, report: DeleteReport)(using DbCon): Unit =
-    sql"DELETE FROM goal_links WHERE kind = 'source' AND ref = ANY(${source.keys}::text[])".update.run()
+    Unused(
+      sql"DELETE FROM goal_links WHERE kind = 'source' AND ref = ANY(${source.keys}::text[])".update.run(),
+      Unused.Why.Idempotent
+    )

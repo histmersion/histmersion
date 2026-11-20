@@ -15,6 +15,7 @@ import com.histmersion.api.aliases.InstanceInfo
 import com.histmersion.util.data.exchange.Bundle
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.Timestamps
+import com.histmersion.util.database.Unused
 
 given DbCodec[InstanceInfo] = DbCodec.derived
 
@@ -31,7 +32,7 @@ object BundleRepo:
   /** Name this instance; a blank label clears it. */
   def setLabel(label: Option[InstanceInfo.Label])(using DbCon): InstanceInfo =
     val l = label.map(_.value.trim).filter(_.nonEmpty)
-    sql"UPDATE instance SET label = $l".update.run()
+    Unused(sql"UPDATE instance SET label = $l".update.run(), Unused.Why.Held)
     instance
 
   // ── reads, one per file ────────────────────────────────────────────────────────────────────

@@ -32,6 +32,7 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.api.automation.Agents
 import com.histmersion.api.automation.Stopped
 import com.histmersion.domain.automation.Approval
+import com.histmersion.util.database.Unused
 
 /** The store of embedded agent runs (migrations V035, V040, V041): a run is a `jobs` row with kind `agent` (its options
   * in `params`), its steps are `agent_steps` (one row per attempt; a `done` row is the checkpoint a resume replays),
@@ -417,7 +418,7 @@ object AgentRepo:
             VALUES ($jobId, ${s.seq}, ${s.attempt}, ${m.n}, ${m.role}, ${m.content}, ${m.toolName},
                     ${m.toolInput}, ${m.toolResult}, ${m.latencyMs})""".update.run()
     }
-    sql"UPDATE jobs SET updated_at = now() WHERE id = $jobId".update.run()
+    Unused(sql"UPDATE jobs SET updated_at = now() WHERE id = $jobId".update.run(), Unused.Why.Idempotent)
 
   def steps(jobId: Job.Id, outputChars: OutputChars)(using DbCon): List[StepInfo] =
     sql"""SELECT seq, name, kind, attempt, status, model, prompt_hash, tokens_in, tokens_out, tokens_cache_read,
@@ -680,9 +681,12 @@ object AgentRepo:
       now: java.time.Instant
   )(using DbCon): ApprovalInfo =
     val decided = Option.when(state != ApprovalState.Open)(now.toString)
-    sql"""INSERT INTO approvals (job_id, seq, kind, subject, proposal, state, result, decided_at)
+    Unused(
+      sql"""INSERT INTO approvals (job_id, seq, kind, subject, proposal, state, result, decided_at)
           VALUES ($jobId, $seq, ${kind.wire}, $subject, $payload::jsonb, ${state.wire}, $result, $decided::timestamptz)
-          ON CONFLICT (job_id, seq) WHERE seq IS NOT NULL DO NOTHING""".update.run()
+          ON CONFLICT (job_id, seq) WHERE seq IS NOT NULL DO NOTHING""".update.run(),
+      Unused.Why.Idempotent
+    )
     forStep(jobId, seq).get
 
   /** A proposal about a goal or an article (`subject`) that the run does NOT wait for (an inferred filter, a plan of
@@ -793,5 +797,5 @@ object AgentRepo:
 
   /** After [[decide]]: the final state and what applying the decision did. */
   def settle(id: ApprovalInfo.Id, to: ApprovalState, result: ApprovalInfo.Result)(using DbCon): Unit =
-    val _ =
-      sql"UPDATE approvals SET state = ${to.wire}, result = $result WHERE id = $id".update.run()
+    // the row [[decide]] moved out of `open` (an approval is never deleted on its own)
+    Unused(sql"UPDATE approvals SET state = ${to.wire}, result = $result WHERE id = $id".update.run(), Unused.Why.Held)

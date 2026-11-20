@@ -21,6 +21,7 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.given_DbCodec_List
 import com.histmersion.api.catalogue.Correction
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.database.Unused
 
 /** The event catalogues' records (`event_catalogue`) and the parts of each catalogue an import has read
   * (`event_import_parts`): what an import merges with and writes. Every method runs on the connection it is given.
@@ -139,14 +140,17 @@ private[events] object EventImportRepo:
     val geom: Option[String] = keep.get(Correction.Field(EventFields.Geometry)) match
       case Some(g) => Option.when(!g.isNull)(g.noSpaces)
       case None    => for la <- r.lat; lo <- r.lon yield EventFields.point(la, lo).noSpaces
-    sql"""UPDATE events SET label = $label, kind = $kind,
+    Unused(
+      sql"""UPDATE events SET label = $label, kind = $kind,
           not_before = ${ts.notBefore}, begin_by = ${ts.beginBy}, end_from = ${ts.endFrom}, not_after = ${ts.notAfter},
           central = $central, plus_minus = $pm, dating_method = $method,
           historicity = $hist, description = $desc,
           geom = CASE WHEN $geom::text IS NULL THEN NULL ELSE ST_SetSRID(ST_GeomFromGeoJSON($geom::text), 4326) END,
           wikidata = coalesce(wikidata, $wd),
           names = (SELECT coalesce(array_agg(DISTINCT n), '{}') FROM unnest(names || $names::text[]) n)
-        WHERE id = $id""".update.run()
+        WHERE id = $id""".update.run(),
+      Unused.Why.Held
+    )
     Corrections.counts(outcomes)
 
   private def pointSql(r: CatalogRecord): Option[String] =
@@ -168,10 +172,13 @@ private[events] object EventImportRepo:
 
   /** An event the import does not own: its empty Wikidata item filled, its names added to. */
   private def fill(id: Event.Id, names: List[String], wd: Option[EventEntry.Wikidata])(using DbCon): Unit =
-    sql"""UPDATE events SET wikidata = coalesce(wikidata, $wd),
+    Unused(
+      sql"""UPDATE events SET wikidata = coalesce(wikidata, $wd),
           names = (SELECT coalesce(array_agg(DISTINCT n), '{}') FROM unnest(names || $names::text[]) n)
         WHERE id = $id AND (wikidata IS DISTINCT FROM coalesce(wikidata, $wd)
-          OR NOT (names @> $names::text[]))""".update.run()
+          OR NOT (names @> $names::text[]))""".update.run(),
+      Unused.Why.Idempotent
+    )
 
   /** The catalogue an event was created from, with its OWNER record ([[CatalogRecord.owner]]) — what the event's fields
     * are compared with when a person corrects them. `None`: not an import's event.
@@ -251,7 +258,7 @@ private[events] object EventImportRepo:
             ON CONFLICT (provider, part) DO UPDATE SET records = EXCLUDED.records, done_at = now()""".update.run()
 
   def clearParts(provider: CatalogRecord.Provider)(using DbCon): Unit =
-    val _ = sql"DELETE FROM event_import_parts WHERE provider = $provider".update.run()
+    Unused(sql"DELETE FROM event_import_parts WHERE provider = $provider".update.run(), Unused.Why.Idempotent)
 
   /** The catalogue rows of one event, with each provider's licence and citation. */
   def catalogueRefs(id: Event.Id)(using DbCon): List[EventCatalogueRef] =

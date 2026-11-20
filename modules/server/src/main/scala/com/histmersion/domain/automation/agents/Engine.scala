@@ -134,15 +134,16 @@ final class Engine(
       )
     then RowCount(0)
     else
-      try
-        val n = RowCount(agents.runs.pruneMessages(RunService.RetentionDays(cfg.trace.keepMessagesDays.value)).value)
-        if n.value > 0 then
-          scribe.info(s"agent trace: pruned $n message(s) older than ${cfg.trace.keepMessagesDays} day(s)")
-        n
+      try RowCount(agents.runs.pruneMessages(RunService.RetentionDays(cfg.trace.keepMessagesDays.value)).value)
       catch
         case e: Exception =>
           scribe.warn(s"agent trace pruning failed: ${e.getMessage}")
           RowCount(0)
+
+  /** How many traced messages [[pruneTrace]] deleted, said in the log. */
+  private def logPruned(n: RowCount): Unit =
+    if n.value > 0 then
+      scribe.info(s"agent trace: pruned $n message(s) older than ${cfg.trace.keepMessagesDays} day(s)")
 
   /** What a person asked of a RUNNING run, read by the run between steps — and what the stall watchdog watches: the
     * last sign of life, the step it was in, and the CLI processes it has alive.
@@ -252,7 +253,7 @@ final class Engine(
     */
   def start()(using WritePermit): Int =
     val (paused, queued) = reconcile()
-    val _ = pruneTrace(force = Engine.PruneTraceForce(true))
+    logPruned(pruneTrace(force = Engine.PruneTraceForce(true)))
     queued.foreach(submit)
     if scope.isEmpty then
       stopping = false
@@ -292,8 +293,9 @@ final class Engine(
       .now(agents.clock)
       .plusSeconds(math.max(0, cfg.watchdog.interruptedResumeMinutes.value).toLong * 60L)
     paused.foreach { (id, origin) =>
-      if origin.flatMap(o => Origin.parse(Origin.Wire(o.value))).exists(_.unattended) then
-        val _ = agents.jobRuns.resumeAt(jobKind, id, rowStatus(RunState.Paused), at)
+      if origin.flatMap(o => Origin.parse(Origin.Wire(o.value))).exists(_.unattended)
+        && !agents.jobRuns.resumeAt(jobKind, id, rowStatus(RunState.Paused), at)
+      then scribe.warn(s"agent run $id was not set to resume by itself: its row is no longer paused")
     }
     (RowCount(paused.size), queued)
 
@@ -444,7 +446,7 @@ final class Engine(
         if !stopping && (q.era eq era) then
           agents.workers.unit {
             q.work.run()
-            val _ = pruneTrace()
+            logPruned(pruneTrace())
           }
         else q.work.drop()
       // a cancel or a restore that interrupted a run as it ended must not end the worker: only the pool's stop does
@@ -493,7 +495,7 @@ final class Engine(
               Thread.interrupted()
           // a cancel or a stall decides how the run settles, whatever the interrupted step made of it
           val settled = if ctl.cancel then Left(Halt.Cancel) else ctl.stalled.map(Left(_)).getOrElse(outcome)
-          val _ = settled match
+          val recorded = settled match
             case Right(summary) =>
               transition(id, RunState.Running, RunState.Done, progress = Some(summary.take(500)))
             case Left(Halt.Cancel) =>
@@ -520,8 +522,12 @@ final class Engine(
                   .approval(Approval.Id(approval.value))
                   .exists(_.state != ApprovalState.Open.wire)
               then
-                val _ = wake(id)
+                // not woken: the decision's own wake moved it first
+                if !wake(id) then scribe.debug(s"agent run $id: its approval's decision had already woken it")
               waiting
+          // a row that moved on while the run ended (a restore replaced it) keeps what it says
+          if recorded.isEmpty then
+            scribe.warn(s"agent run $id ended, but its row was no longer running (moved on): left as it is")
           notify(run, settled)
           agents.runs
             .get(id)
@@ -686,7 +692,9 @@ final class Engine(
           transition(id, s, RunState.Cancelled, error = Some(Problem.Run.Cancelled(Problem.Run.Actor.Person)))
             .toRight(conflict(Problem.Run.MovedOn(Problem.Raw.of(id))))
             .flatMap { _ =>
-              val _ = agents.approvalStore.closeForRun(Job.Id.assume(id.value), Problem.Run.Withdrawn)
+              val withdrawn = agents.approvalStore.closeForRun(Job.Id.assume(id.value), Problem.Run.Withdrawn)
+              if withdrawn != RowCount(0) then
+                scribe.info(s"agent run $id cancelled: $withdrawn open approval(s) withdrawn")
               get(id)
             }
         case _ =>

@@ -12,6 +12,7 @@ import com.histmersion.api.library.Rename
 import com.histmersion.api.research.Article
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.research.Slug
+import com.histmersion.util.database.Unused
 
 /** The articles that cite a source (`[[citekey]]`, the link graph) or keep a coverage reason for it: a rename rewrites
   * their links through the article write path (each rewrite a recorded version), a citing article refuses a delete, and
@@ -52,8 +53,11 @@ final class ArticleSourceReferrer extends SourceReferrer:
 
   override def deleting(source: SourceKeys, report: DeleteReport)(using DbCon): Unit =
     if report.coverage.nonEmpty then
-      sql"""UPDATE articles SET coverage_reasons = coverage_reasons - ${source.keys}::text[], updated_at = now()
-            WHERE slug = ANY(${report.coverage}::text[])""".update.run()
+      Unused(
+        sql"""UPDATE articles SET coverage_reasons = coverage_reasons - ${source.keys}::text[], updated_at = now()
+            WHERE slug = ANY(${report.coverage}::text[])""".update.run(),
+        Unused.Why.Idempotent
+      )
 
   /** The articles whose body or summary cites the source: the recorded link graph (exact and old citekeys, resolved at
     * write time), and a scan of the text for the short forms the renderer resolves to it (`[[beckman2025]]` for

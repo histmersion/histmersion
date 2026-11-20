@@ -63,16 +63,16 @@ object QueueService:
 
     def patch(id: QueueItemId, p: QueuePatch)(using WritePermit): Either[QueueError, QueueItem] = db.write:
       val rid = QueueRepo.QueueItemId(id.value)
-      QueueRepo.get(rid).toRight(QueueError.NotFound(id)).map { cur =>
-        QueueRepo.update(Queue.applyPatch(cur, p))
-        QueueRepo.get(rid).get
+      // a row removed between the read and the write is not found, never a success over nothing
+      QueueRepo.get(rid).toRight(QueueError.NotFound(id)).flatMap { cur =>
+        if QueueRepo.update(Queue.applyPatch(cur, p)) then QueueRepo.get(rid).toRight(QueueError.NotFound(id))
+        else Left(QueueError.NotFound(id))
       }
 
     def delete(id: QueueItemId)(using WritePermit): Either[QueueError, QueueItem] = db.write:
       val rid = QueueRepo.QueueItemId(id.value)
-      QueueRepo.get(rid).toRight(QueueError.NotFound(id)).map { item =>
-        QueueRepo.delete(rid)
-        item
+      QueueRepo.get(rid).toRight(QueueError.NotFound(id)).flatMap { item =>
+        Either.cond(QueueRepo.delete(rid), item, QueueError.NotFound(id))
       }
 
     def replace(list: Kind, items: List[QueueAdd], mode: ImportMode)(using WritePermit): ImportCounts = db.write:

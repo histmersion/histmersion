@@ -107,17 +107,19 @@ private[worklists] object QueueRepo:
     sql"SELECT $Cols FROM queue_items WHERE id = $id".query[QueueItem].run().head
 
   /** Write `next` over its row. `status = 'done'` keeps the first `done_at` (stamped now when there is none); anything
-    * else clears it, so reopening an item leaves no misleading completion date behind.
+    * else clears it, so reopening an item leaves no misleading completion date behind. False when the row is gone
+    * (removed since it was read).
     */
-  def update(next: QueueItem)(using DbCon): Unit =
-    val _ = sql"""UPDATE queue_items
-                SET text = ${next.text}, topic = ${next.topic}, status = ${next.status}, reason = ${next.reason},
-                    goal_slug = ${next.goal}, closed_job = ${next.closedBy},
-                    done_at = CASE WHEN ${next.status} = $Done THEN coalesce(done_at, now()) END
-                WHERE id = ${next.id}""".update.run()
+  def update(next: QueueItem)(using DbCon): Boolean =
+    sql"""UPDATE queue_items
+          SET text = ${next.text}, topic = ${next.topic}, status = ${next.status}, reason = ${next.reason},
+              goal_slug = ${next.goal}, closed_job = ${next.closedBy},
+              done_at = CASE WHEN ${next.status} = $Done THEN coalesce(done_at, now()) END
+          WHERE id = ${next.id}""".update.run() > 0
 
-  def delete(id: QueueItemId)(using DbCon): Unit =
-    val _ = sql"DELETE FROM queue_items WHERE id = $id".update.run()
+  /** False when the row is gone (removed since it was read). */
+  def delete(id: QueueItemId)(using DbCon): Boolean =
+    sql"DELETE FROM queue_items WHERE id = $id".update.run() > 0
 
   /** Every row of `kind` removed; how many. */
   def deleteList(kind: Kind)(using DbCon): RowCount =

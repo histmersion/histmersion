@@ -16,6 +16,7 @@ import com.histmersion.api.Api
 import com.histmersion.api.library.Source
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.database.Unused
 
 /** Deleting a source (#969) — the database half of `POST /api/sources/{ck}/delete`. The rules are
   * [[com.histmersion.api.library.SourceDelete]]'s; this reads what a delete would touch ([[planIn]]) and does it
@@ -158,9 +159,12 @@ private[sources] object SourceDeleteRepo:
     val ck = p.deletion.citekey
     // other sources' edges to it are PARKED, exactly as an edge to a work not in the corpus is (V026):
     // they are that source's data, and come back if this one is ingested again
-    sql"""INSERT INTO unresolved_edges (src, dst, kind)
+    Unused(
+      sql"""INSERT INTO unresolved_edges (src, dst, kind)
           SELECT src, dst, kind FROM edges WHERE dst = $ck AND src <> $ck
-          ON CONFLICT DO NOTHING""".update.run()
+          ON CONFLICT DO NOTHING""".update.run(),
+      Unused.Why.Idempotent
+    )
     referrers.deleting(source, p.report)
     // the rest goes by ON DELETE CASCADE; the row's trigger leaves its tombstone (V031)
-    sql"DELETE FROM sources WHERE citekey = $ck".update.run()
+    Unused(sql"DELETE FROM sources WHERE citekey = $ck".update.run(), Unused.Why.Held)

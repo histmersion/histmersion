@@ -32,6 +32,7 @@ import com.histmersion.domain.library.sources.SourcesControllers
 import com.histmersion.domain.research.Slug
 import com.histmersion.domain.ManagerPolicy.Item
 import com.histmersion.util.database.WritePermit
+import com.histmersion.util.database.Unused
 
 /** The `enrich` manager kind (library-wide: source-enrich items, what `agents.auto-enrich` feeds), registered by this
   * transition adapter until the library contributes it: a source already enriched is settled without a run, unless a
@@ -195,8 +196,8 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
     */
   private def ingested(c: ManagerContext, citekey: Citekey)(using WritePermit): AutoEnrich.Note =
     val enrichId = ManagerLight.Id(EnrichId)
-    val _ = c.ensure(Kind.Review, ManagerLight.Id(ReviewId), None)
-    val _ = c.ensure(Kind.Enrich, enrichId, None)
+    Unused(c.ensure(Kind.Review, ManagerLight.Id(ReviewId), None), Unused.Why.Idempotent)
+    Unused(c.ensure(Kind.Enrich, enrichId, None), Unused.Why.Idempotent)
     val (itemId, isNew) = c.upsert(
       enrichId,
       ManagerContext.ItemKind(SourceEnrich),

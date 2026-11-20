@@ -5,6 +5,7 @@ import com.histmersion.util.database.{Transactor, WritePermit}
 
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
 import scala.annotation.tailrec
+import com.histmersion.util.database.Unused
 
 /** The sites with no known date in a map tile: counted by the squares of its grid, or listed one by one. */
 trait UndatedSites:
@@ -59,8 +60,7 @@ object UndatedSites:
     ): Unit =
       if rebuilding.compareAndSet(false, true) then
         background { () =>
-          try
-            val _ = db.write(UndatedSiteRepo.rebuild(version, perSide, maxZoom))
+          try db.write(Unused(UndatedSiteRepo.rebuild(version, perSide, maxZoom), Unused.Why.Idempotent))
           catch case e: Exception => scribe.warn(s"counting the undated sites for the map failed: ${e.getMessage}")
           finally rebuilding.set(false)
         }

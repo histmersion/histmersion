@@ -463,5 +463,5 @@ final class GoalFocusService(
     }
 
   private def log(line: String): Unit =
-    val _ = agents.workLists.add(WorkListControllers.ListName("log"), QueueAdd(Queue.QueueItem.Text(line.take(1000))))
+    agents.workLists.logLine(QueueAdd(Queue.QueueItem.Text(line.take(1000))))
     scribe.info(line)

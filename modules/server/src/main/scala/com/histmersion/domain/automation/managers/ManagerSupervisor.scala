@@ -57,6 +57,7 @@ import com.histmersion.domain.automation.goals.BGoalLinkRow
 import com.histmersion.api.automation.Managers
 import com.histmersion.domain.ManagerPolicy.Item
 import com.histmersion.util.database.WritePermit
+import com.histmersion.util.database.Unused
 
 /** The process managers' supervisor (docs/research-process-managers.md §3): a daemon thread that ticks every
   * `agents.managers.tick-seconds`, and at once when a manager's run settles ([[Engine.onSettled]] → [[nudge]]). One
@@ -135,8 +136,8 @@ final class ManagerSupervisor(
     * a person resumes them. Idempotent.
     */
   def ensureDefaults()(using WritePermit): Unit =
-    val _ = ensure(Kind.Review, ManagerLight.Id(ReviewId), None)
-    val _ = ensure(Kind.Enrich, ManagerLight.Id(EnrichId), None)
+    Unused(ensure(Kind.Review, ManagerLight.Id(ReviewId), None), Unused.Why.Idempotent)
+    Unused(ensure(Kind.Enrich, ManagerLight.Id(EnrichId), None), Unused.Why.Idempotent)
 
   /** Manager `id` of kind `k` exists (created PAUSED when it did not — active while the autopilot is on, which runs
     * every manager); true = it was created now.
@@ -264,7 +265,9 @@ final class ManagerSupervisor(
       out ++= guarded(ManagerLight.Id("drain"), out)(agents.drain.tick(now)).map(TickLine(_))
       if now.toEpochMilli - lastPrune.get() > 3600000L then
         lastPrune.set(now.toEpochMilli)
-        val _ = Transactor(ds).write(ManagerRepo.pruneEvents(CodexRetention.KeepDays(mcfg.keepEventsDays.value)))
+        Transactor(ds).write(
+          Unused(ManagerRepo.pruneEvents(CodexRetention.KeepDays(mcfg.keepEventsDays.value)), Unused.Why.Reported)
+        )
       out.result()
   }
 
@@ -524,7 +527,10 @@ final class ManagerSupervisor(
     (a.subject, a.articles) match
       case (Some(goal), Some(plan)) if a.state == ApprovalState.Approved.wire =>
         val id = seedId(Goal.Ref(goal.value))
-        val _ = ensure(Kind.Seed, id.transformInto[ManagerLight.Id], Some(DomainGoal.Slug.assume(goal.value)))
+        Unused(
+          ensure(Kind.Seed, id.transformInto[ManagerLight.Id], Some(DomainGoal.Slug.assume(goal.value))),
+          Unused.Why.Idempotent
+        )
         val added = plan.articles.count { p =>
           val spec = ArticleSpec(p.title, p.kind, p.filter, Managers.Rationale(s"${p.why}"))
           agents.managerStore
@@ -656,8 +662,12 @@ final class ManagerSupervisor(
             val next = plan.nextTick.flatMap(ManagerPolicy.parseInstant)
             val cron = plan.cron.map(c => ManagerInfo.Cron(c.value))
             existing match
-              case None    => ManagerRepo.createIn(id, Kind.Watch, Some(apiGoal), State.Paused, plan.config, cron, next)
-              case Some(_) => ManagerRepo.setConfigIn(id, plan.config, cron, next)
+              case None =>
+                Unused(
+                  ManagerRepo.createIn(id, Kind.Watch, Some(apiGoal), State.Paused, plan.config, cron, next),
+                  Unused.Why.Held
+                )
+              case Some(_) => Unused(ManagerRepo.setConfigIn(id, plan.config, cron, next), Unused.Why.Held)
             val text =
               s"${Plural.count(Plural.CountN(rows.size.toLong), Plural.CountSingular("goal schedule"))} moved into this watcher" +
                 (if existing.isEmpty then " (created paused: resume it for them to fire)" else "") +
@@ -667,8 +677,7 @@ final class ManagerSupervisor(
           }
         }
         moved.toList.map { text =>
-          val _ = workLists.add(
-            WorkListControllers.ListName(Queue.Kind.Log.label.value),
+          workLists.logLine(
             QueueAdd(Queue.QueueItem.Text(s"goal $g: $text (watcher $id)".take(1000)), goal = Some(apiGoal))
           )
           scribe.info(s"goal $g: $text")
@@ -701,10 +710,10 @@ final class ManagerSupervisor(
       ) match
         case ManagerPolicy.CronStep.Idle           => false
         case ManagerPolicy.CronStep.Schedule(next) =>
-          val _ = Transactor(ds).write(ManagerRepo.setNextTick(m.id, next))
+          Transactor(ds).write(Unused(ManagerRepo.setNextTick(m.id, next), Unused.Why.Idempotent))
           false
         case ManagerPolicy.CronStep.Fire(next) =>
-          val _ = Transactor(ds).write(ManagerRepo.setNextTick(m.id, next))
+          Transactor(ds).write(Unused(ManagerRepo.setNextTick(m.id, next), Unused.Why.Idempotent))
           val what = byKind.get(kindOf(m)).fold(Nil)(_.fire(this, m, now))
           recordEvent(
             m.id,
@@ -768,7 +777,7 @@ final class ManagerSupervisor(
       val note = waits.headOption.filter(_ => held.isEmpty) match
         case Some(w) => base.appended(s"; the scheduler: ${w.code} — ${w.why.render.take(200)}")
         case None    => base
-      Transactor(ds).write(ManagerRepo.setStatusNote(m.id, note))
+      Transactor(ds).write(Unused(ManagerRepo.setStatusNote(m.id, note), Unused.Why.Idempotent))
       // a starved (or budget-blocked) manager says so once per change, not every tick
       held.map(_.render).foreach { b =>
         if !agents.managerStore.lastEventOf(m.id, ManagerEvent.Kind(Feed.Starved)).exists(_.text.value == b) then
@@ -781,19 +790,20 @@ final class ManagerSupervisor(
         .parse(m.state)
         .foreach(st =>
           Transactor(ds).write(
-            ManagerRepo
-              .setStatusNote(
+            Unused(
+              ManagerRepo.setStatusNote(
                 m.id,
-                ManagerPolicy
-                  .statusNote(
-                    st.transformInto[Manager.State],
-                    None,
-                    ManagerPolicy.Capacity(0),
-                    ManagerPolicy.PendingCount(m.counts.pending.value),
-                    ManagerPolicy.DueCount(0),
-                    ManagerPolicy.InFlightCount(m.inFlight.value)
-                  )
-              )
+                ManagerPolicy.statusNote(
+                  st.transformInto[Manager.State],
+                  None,
+                  ManagerPolicy.Capacity(0),
+                  ManagerPolicy.PendingCount(m.counts.pending.value),
+                  ManagerPolicy.DueCount(0),
+                  ManagerPolicy.InFlightCount(m.inFlight.value)
+                )
+              ),
+              Unused.Why.Idempotent
+            )
           )
         )
     }
@@ -1165,7 +1175,7 @@ final class ManagerSupervisor(
       ref: BGoalLinkRow.Ref,
       note: Option[BGoalLinkRow.Note]
   )(using WritePermit): Unit =
-    val _ = agents.goals.link(
+    agents.goals.linkIfThere(
       goal,
       kind.transformInto[domain.automation.Goal.LinkKind],
       ref.transformInto[Goal.Plans.GoalLink.Ref],

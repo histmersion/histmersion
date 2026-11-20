@@ -40,6 +40,7 @@ import com.histmersion.api.library.Source
 import com.histmersion.domain.automation.worklists.QueueItemId
 import com.histmersion.api.automation.Managers
 import com.histmersion.util.database.WritePermit
+import com.histmersion.util.database.Unused
 
 /** The watchers' INGEST BACKLOG (docs/research-process-managers.md "As built: the ingest backlog"). A watcher with
   * auto-ingest on used to send every legal open-access pick past the day's allowance to the acquisition list — the
@@ -92,19 +93,18 @@ final class OaBacklog(
       settled
     ) match
       case p @ Placement.InCorpus(ck) =>
-        val _ =
-          agents.goals.link(
-            goal,
-            io.scalaland.chimney.Transformer
-              .derive[com.histmersion.api.automation.Goal.LinkKind, Goal.LinkKind]
-              .transform(LinkKind.Source),
-            GoalLink.Ref(ck.value),
-            Some(GoalLink.Note(s"found again by a watcher sweep: ${w.why}".take(500)))
-          )
+        agents.goals.linkIfThere(
+          goal,
+          io.scalaland.chimney.Transformer
+            .derive[com.histmersion.api.automation.Goal.LinkKind, Goal.LinkKind]
+            .transform(LinkKind.Source),
+          GoalLink.Ref(ck.value),
+          Some(GoalLink.Note(s"found again by a watcher sweep: ${w.why}".take(500)))
+        )
 
         p
       case p @ Placement.JoinAcquire(id) =>
-        val _ = agents.goals.link(
+        agents.goals.linkIfThere(
           goal,
           io.scalaland.chimney.Transformer
             .derive[com.histmersion.api.automation.Goal.LinkKind, Goal.LinkKind]
@@ -117,11 +117,13 @@ final class OaBacklog(
         open.foreach { i =>
           val st = i.state.oa.getOrElse(OaWork(w.doi))
           if !st.goals.contains(apiGoal) then
-            val _ = agents.managerStore.setItemState(
+            val joined = agents.managerStore.setItemState(
               i.id,
               i.state.modify(_.oa).setTo(Some(st.modify(_.goals).setTo(st.goals :+ apiGoal))),
               List(ItemStatus.Pending, ItemStatus.Held, ItemStatus.Active)
             )
+            // settled meanwhile (ingested, failed): the goal is not added to it
+            if !joined then scribe.info(s"$doi (ingest backlog): settled before goal $goal could join it")
             agents.managerStore.event(
               i.managerId,
               Some(i.id),
@@ -288,7 +290,7 @@ final class OaBacklog(
              else "") +
             (if known > 0 then s", $known in the corpus already" else "") +
             (if retried > 0 then s", $retried to try again later" else "") + s"; $waiting waiting"
-        val _ = site.workLists.add(WorkListControllers.ListName("log"), QueueAdd(Queue.QueueItem.Text(line.take(1000))))
+        site.workLists.logLine(QueueAdd(Queue.QueueItem.Text(line.take(1000))))
         List(line)
 
   private enum Drained derives CanEqual:
@@ -318,13 +320,16 @@ final class OaBacklog(
     site.sourceStore.citekeyOfDoi(doi) match
       case Some(ck) =>
         goals.foreach(g =>
-          agents.goals.link(
-            g,
-            io.scalaland.chimney.Transformer
-              .derive[com.histmersion.api.automation.Goal.LinkKind, Goal.LinkKind]
-              .transform(LinkKind.Source),
-            GoalLink.Ref(ck.value),
-            Some(GoalLink.Note(s"found by a watcher sweep: ${w.why}".take(500)))
+          Unused(
+            agents.goals.link(
+              g,
+              io.scalaland.chimney.Transformer
+                .derive[com.histmersion.api.automation.Goal.LinkKind, Goal.LinkKind]
+                .transform(LinkKind.Source),
+              GoalLink.Ref(ck.value),
+              Some(GoalLink.Note(s"found by a watcher sweep: ${w.why}".take(500)))
+            ),
+            Unused.Why.Idempotent
           )
         )
         settle(
@@ -338,13 +343,16 @@ final class OaBacklog(
         upstream().ingestLegal(doi) match
           case Right(r) =>
             goals.foreach(g =>
-              agents.goals.link(
-                g,
-                io.scalaland.chimney.Transformer
-                  .derive[com.histmersion.api.automation.Goal.LinkKind, Goal.LinkKind]
-                  .transform(LinkKind.Source),
-                GoalLink.Ref(r.citekey.value),
-                Some(GoalLink.Note(s"ingested from a watcher's backlog: ${w.why}".take(500)))
+              Unused(
+                agents.goals.link(
+                  g,
+                  io.scalaland.chimney.Transformer
+                    .derive[com.histmersion.api.automation.Goal.LinkKind, Goal.LinkKind]
+                    .transform(LinkKind.Source),
+                  GoalLink.Ref(r.citekey.value),
+                  Some(GoalLink.Note(s"ingested from a watcher's backlog: ${w.why}".take(500)))
+                ),
+                Unused.Why.Idempotent
               )
             )
             settle(
@@ -450,13 +458,16 @@ final class OaBacklog(
     }
     id.foreach(i =>
       goals.foreach(g =>
-        agents.goals.link(
-          g,
-          io.scalaland.chimney.Transformer
-            .derive[com.histmersion.api.automation.Goal.LinkKind, Goal.LinkKind]
-            .transform(LinkKind.QueueItem),
-          GoalLink.Ref(i.value.toString),
-          Some(GoalLink.Note(doi.value))
+        Unused(
+          agents.goals.link(
+            g,
+            io.scalaland.chimney.Transformer
+              .derive[com.histmersion.api.automation.Goal.LinkKind, Goal.LinkKind]
+              .transform(LinkKind.QueueItem),
+            GoalLink.Ref(i.value.toString),
+            Some(GoalLink.Note(doi.value))
+          ),
+          Unused.Why.Idempotent
         )
       )
     )
@@ -511,13 +522,16 @@ final class OaBacklog(
         case RepairAction.Remove(ck) =>
           if !dryRun then
             goals.foreach(g =>
-              agents.goals.link(
-                g,
-                io.scalaland.chimney.Transformer
-                  .derive[com.histmersion.api.automation.Goal.LinkKind, Goal.LinkKind]
-                  .transform(LinkKind.Source),
-                GoalLink.Ref(ck.value),
-                Some(GoalLink.Note("found by a watcher sweep"))
+              Unused(
+                agents.goals.link(
+                  g,
+                  io.scalaland.chimney.Transformer
+                    .derive[com.histmersion.api.automation.Goal.LinkKind, Goal.LinkKind]
+                    .transform(LinkKind.Source),
+                  GoalLink.Ref(ck.value),
+                  Some(GoalLink.Note("found by a watcher sweep"))
+                ),
+                Unused.Why.Idempotent
               )
             )
             removeAcquire(item, goals)
@@ -576,8 +590,7 @@ final class OaBacklog(
       snap.totalDays.map(d => ManagerInfo.BacklogDays(d.value))
     )
     if !dryRun && (result.moved.value > 0 || result.removed.value > 0) then
-      val _ = site.workLists.add(
-        WorkListControllers.ListName("log"),
+      site.workLists.logLine(
         QueueAdd(
           Queue.QueueItem.Text(
             (s"repair-acquire ($by): ${result.moved} legal open-access work(s) moved from the " +
@@ -612,17 +625,20 @@ final class OaBacklog(
     val apiGoal = com.histmersion.api.automation.Goal.Slug(goal.value)
     agents.managerStore.item(itemId).foreach { i =>
       val st = i.state.oa.getOrElse(OaWork(com.histmersion.api.library.Doi(i.target.value)))
-      if !st.goals.contains(apiGoal) then
-        val _ = agents.managerStore.setItemState(
+      if !st.goals.contains(apiGoal)
+        && !agents.managerStore.setItemState(
           i.id,
           i.state.modify(_.oa).setTo(Some(st.modify(_.goals).setTo(st.goals :+ apiGoal))),
           List(ItemStatus.Pending, ItemStatus.Held, ItemStatus.Active)
         )
+      then scribe.info(s"backlog item $itemId settled before goal $goal could join it")
     }
 
   private def removeAcquire(item: SweepAcquireItem.Item, goals: List[Goal.Slug])(using WritePermit): Unit =
-    val _ = site.workLists.delete(QueueItemId(item.value))
-    goals.foreach(g => agents.goals.unlink(g, Goal.LinkKind.QueueItem, GoalLink.Ref(item.value.toString)))
+    site.workLists.removeItem(QueueItemId(item.value))
+    goals.foreach(g =>
+      Unused(agents.goals.unlink(g, Goal.LinkKind.QueueItem, GoalLink.Ref(item.value.toString)), Unused.Why.Idempotent)
+    )
 
 object OaBacklog:
   /** The backlog per watcher (pending + held, and the days its pending items take to drain at the current allowance),

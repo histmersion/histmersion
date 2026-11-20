@@ -20,6 +20,7 @@ import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Finding
+import com.histmersion.util.database.Unused
 
 /** Place NAME → gazetteer point (#981): the ONE geocoder. It fetches the places a name can mean and hands them to
   * [[Geocode]] (core), which reads the name ([[Geocode.attempts]]) and ranks the candidates ([[Geocode.rank]]) — the
@@ -252,8 +253,8 @@ private[places] object Geocoder:
           .run() > 0
       }
       moved.map(_.citekey).distinct.flatMap(c => Citekey.option(c.value)).foreach { ck =>
-        val _ = sql"UPDATE sources SET updated_at = now() WHERE citekey = $ck".update.run()
-        val _ = FindingPlaceRepo.materialiseFor(ck, toleranceKm)
+        Unused(sql"UPDATE sources SET updated_at = now() WHERE citekey = $ck".update.run(), Unused.Why.Idempotent)
+        Unused(FindingPlaceRepo.materialiseFor(ck, toleranceKm), Unused.Why.Reported)
       }
       RowCount(moved.size)
 
@@ -321,7 +322,7 @@ private[places] object Geocoder:
           .run() > 0
       }
       placed.map(_.citekey).distinct.flatMap(c => Citekey.option(c.value)).foreach { ck =>
-        val _ = sql"UPDATE sources SET updated_at = now() WHERE citekey = $ck".update.run()
-        val _ = FindingPlaceRepo.materialiseFor(ck, toleranceKm)
+        Unused(sql"UPDATE sources SET updated_at = now() WHERE citekey = $ck".update.run(), Unused.Why.Idempotent)
+        Unused(FindingPlaceRepo.materialiseFor(ck, toleranceKm), Unused.Why.Reported)
       }
       RowCount(placed.size)

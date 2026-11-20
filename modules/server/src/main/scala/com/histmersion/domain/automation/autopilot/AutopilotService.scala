@@ -40,6 +40,7 @@ import com.histmersion.domain.automation.worklists.WorkListControllers
 import com.histmersion.domain.automation.Approval
 import com.histmersion.api.automation.Autopilot
 import com.histmersion.util.database.WritePermit
+import com.histmersion.util.database.Unused
 
 /** The autopilot (docs/research-process-managers.md "As built: the autopilot"): ONE switch, kept in the database, that
   * lets the process managers carry every research goal from planned to reviewed with no person in the loop — within the
@@ -127,13 +128,19 @@ final class AutopilotService(
         val ids = AutopilotPolicy.toPause(rows())
         ids.foreach { id =>
           val managerId = ManagerInfo.Id(id.value)
-          val _ = agents.managerStore.setState(managerId, State.Paused, pauseRuns = ManagerInfo.PauseRuns(false))
+          Unused(
+            agents.managerStore.setState(managerId, State.Paused, pauseRuns = ManagerInfo.PauseRuns(false)),
+            Unused.Why.Idempotent
+          )
           event(managerId, s"paused: the autopilot was turned off by $by (its runs in flight go on)")
         }
-        val _ = agents.autopilotRow.set(
-          enabled = AutopilotRepo.Row.Enabled(false),
-          changedBy,
-          ids.map(id => AutopilotRepo.Row.Paused(id.value))
+        Unused(
+          agents.autopilotRow.set(
+            enabled = AutopilotRepo.Row.Enabled(false),
+            changedBy,
+            ids.map(id => AutopilotRepo.Row.Paused(id.value))
+          ),
+          Unused.Why.Idempotent
         )
         List(
           s"turned off by $by",
@@ -561,7 +568,7 @@ final class AutopilotService(
     log(line)
 
   private def log(line: String): Unit =
-    val _ = agents.workLists.add(WorkListControllers.ListName("log"), QueueAdd(QueueItem.Text(line.take(1000))))
+    agents.workLists.logLine(QueueAdd(QueueItem.Text(line.take(1000))))
     scribe.info(line)
 
   // ── status ─────────────────────────────────────────────────────────────────────────────────────

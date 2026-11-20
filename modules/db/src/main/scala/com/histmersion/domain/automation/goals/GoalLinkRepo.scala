@@ -9,6 +9,7 @@ import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Goal
+import com.histmersion.util.database.Unused
 
 /** What hangs off a goal (migrations V046, V049): its links (sources, articles, search queries, queue items), its
   * approved plan and run cap, and its schedules. Stateless, like every repo.
@@ -126,11 +127,17 @@ object GoalLinkRepo:
     * one approved later wins").
     */
   def setPlan(goal: domain.automation.Goal.Slug, planJson: BGoalRow.Plan)(using DbCon): Unit =
-    val _ = sql"""UPDATE goals SET plan = $planJson::jsonb, plan_approved_at = now(), updated_at = now()
-                               WHERE slug = $goal""".update.run()
+    Unused(
+      sql"""UPDATE goals SET plan = $planJson::jsonb, plan_approved_at = now(), updated_at = now()
+                               WHERE slug = $goal""".update.run(),
+      Unused.Why.Idempotent
+    )
 
   def setBudget(goal: domain.automation.Goal.Slug, usd: Option[BigDecimal])(using DbCon): Unit =
-    val _ = sql"UPDATE goals SET budget_usd = $usd, updated_at = now() WHERE slug = $goal".update.run()
+    Unused(
+      sql"UPDATE goals SET budget_usd = $usd, updated_at = now() WHERE slug = $goal".update.run(),
+      Unused.Why.Idempotent
+    )
 
   // ── schedules ──────────────────────────────────────────────────────────────────────────────────
 

@@ -4,6 +4,7 @@ package domain.automation.agents
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.database.Unused
 
 /** The agent lease (V087): one agent server per database, the one that holds the named lease. Every statement runs on
   * the connection it is given (`AgentLease` opens it).
@@ -39,7 +40,7 @@ object LeaseRepo:
 
   /** Give it up (a clean stop), so the next server need not wait for it to expire. */
   def release(name: LeaseName, owner: LeaseOwner)(using DbCon): Unit =
-    val _ = sql"DELETE FROM agent_leases WHERE name = $name AND owner = $owner".update.run()
+    Unused(sql"DELETE FROM agent_leases WHERE name = $name AND owner = $owner".update.run(), Unused.Why.Idempotent)
 
   /** Who holds it, until when, and whether that is in the past. */
   def holder(name: LeaseName)(using DbCon): Option[(LeaseOwner, LeaseExpiry, Boolean)] =

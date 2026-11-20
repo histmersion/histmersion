@@ -16,6 +16,7 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.api.catalogue.{Gazetteer, GazGeometry, GazRecord}
 import com.histmersion.api.library.ExternalId
 import com.histmersion.api.catalogue.Place
+import com.histmersion.util.database.Unused
 
 /** The gazetteer's external sources in the store (#1064, V071): joining a batch of [[GazRecord]]s to the places already
   * here BY IDENTIFIER, writing what each record says (its place, if it is the first to bring it; its names and links,
@@ -85,7 +86,7 @@ private[places] object GazetteerRepo:
   )(using DbCon): Unit =
     val lo = span.from.map(y => DeepTime.SignedYear(y.value))
     val hi = span.to.map(y => DeepTime.SignedYear(y.value))
-    val _ =
+    Unused(
       sql"""INSERT INTO gazetteer_sources (key, kind, title, version, sha256, file, url, licence, citation, period,
                     places, names, links, imported_at)
                   VALUES ($key, ${kind.wire}, $title, $version, $sha256, $file, $url, $licence, $citation,
@@ -97,7 +98,9 @@ private[places] object GazetteerRepo:
                     version = EXCLUDED.version, sha256 = EXCLUDED.sha256, file = EXCLUDED.file, url = EXCLUDED.url,
                     licence = EXCLUDED.licence, citation = EXCLUDED.citation, period = EXCLUDED.period,
                     places = EXCLUDED.places, names = EXCLUDED.names, links = EXCLUDED.links,
-                    imported_at = EXCLUDED.imported_at""".update.run()
+                    imported_at = EXCLUDED.imported_at""".update.run(),
+      Unused.Why.Idempotent
+    )
 
   // ── placement (pure) ───────────────────────────────────────────────────────────────────────────
 
@@ -163,7 +166,10 @@ private[places] object GazetteerRepo:
 
     def recordSeen(records: List[GazRecord]): Unit =
       val refs = records.map(_.ref)
-      val _ = sql"INSERT INTO gaz_seen SELECT unnest($refs::text[]) ON CONFLICT DO NOTHING".update.run()
+      Unused(
+        sql"INSERT INTO gaz_seen SELECT unnest($refs::text[]) ON CONFLICT DO NOTHING".update.run(),
+        Unused.Why.Idempotent
+      )
 
     def pruneCandidates: List[domain.catalogue.Place.Id] =
       if pointAreaKinds.isEmpty || !Gazetteer.PointAreaSources.contains(source) then Nil

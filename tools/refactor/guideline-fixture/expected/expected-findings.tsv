@@ -156,3 +156,10 @@ G5problemText	core	modules/core/src/main/scala/com/histmersion/domain/WordChecks
 G5problemText	core	modules/core/src/main/scala/com/histmersion/domain/WordChecks.scala	18	match:Text.sentence
 G60fromString	core	modules/core/src/main/scala/com/histmersion/domain/WordChecks.scala	14	legacyText
 G60fromString	core	modules/core/src/main/scala/com/histmersion/domain/WordChecks.scala	15	legacyText
+G3misplaced	db	modules/db/src/main/scala/com/histmersion/util/database/Unused.scala	13	Unused.apply(answer: A)
+acceptedOutcome	db	modules/db/src/main/scala/com/histmersion/db/Writes.scala	22	Idempotent;magnum:Update.run:Int;DELETE
+discardedOutcome	db	modules/db/src/main/scala/com/histmersion/db/Writes.scala	13	magnum:Update.run:Int;UPDATE
+discardedOutcome	db	modules/db/src/main/scala/com/histmersion/db/Writes.scala	14	magnum:Update.run:Int;DELETE
+discardedOutcome	db	modules/db/src/main/scala/com/histmersion/db/Writes.scala	16	Writes.touched:Boolean
+discardedOutcome	db	modules/db/src/main/scala/com/histmersion/db/Writes.scala	18	Writes.found:Option
+discardedOutcome	db	modules/db/src/main/scala/com/histmersion/db/Writes.scala	20	Writes.touched:Boolean

@@ -10,6 +10,7 @@ import com.augustnagro.magnum.*
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.database.Unused
 
 /** The plan pools' readings, settings and refresh log (migrations V063–V065, V069). Stateless. */
 object PlanQuotaRepo:
@@ -36,13 +37,16 @@ object PlanQuotaRepo:
           val reset = r.resetsAt.map(_.value.toDouble / 1000)
           val seen = r.observedAt.value.toDouble / 1000
           val model = r.model.map(_.value).getOrElse("")
-          sql"""INSERT INTO plan_quota_readings (pool, limit_id, kind, model, used_pct, resets_at, rejected, observed_at, source)
+          Unused(
+            sql"""INSERT INTO plan_quota_readings (pool, limit_id, kind, model, used_pct, resets_at, rejected, observed_at, source)
                 VALUES (${pool.wire}, ${r.limit}, ${r.kind}, $model, ${r.usedPct}, to_timestamp($reset::float8), ${r.rejected},
                         to_timestamp($seen::float8), ${r.source.wire})
                 ON CONFLICT (pool, limit_id, kind, model) DO UPDATE SET used_pct = EXCLUDED.used_pct,
                   resets_at = EXCLUDED.resets_at, rejected = EXCLUDED.rejected, observed_at = EXCLUDED.observed_at,
                   source = EXCLUDED.source
-                WHERE plan_quota_readings.observed_at <= EXCLUDED.observed_at""".update.run()
+                WHERE plan_quota_readings.observed_at <= EXCLUDED.observed_at""".update.run(),
+            Unused.Why.Idempotent
+          )
         }
 
   def readings(pool: PoolId)(using DbCon): List[Reading] =

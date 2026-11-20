@@ -22,6 +22,7 @@ import com.histmersion.domain.catalogue.places.BPlaceRow
 import com.histmersion.api.catalogue.EventScale
 import com.histmersion.api.catalogue.EventSummary
 import com.histmersion.util.database.Timestamps
+import com.histmersion.util.database.Unused
 
 /** The events as a bundle carries them (docs/research-merge-import.md §4, §7.3): the events with their datings, edges
   * and participants, their old ids, what the catalogues say about them and the corrections by hand — read out in a
@@ -265,28 +266,37 @@ private[events] object EventBundleRepo:
     }
     events.foreach { e =>
       val parent = e.parentUid.flatMap(eventIdOf)
-      sql"UPDATE events SET parent_id = $parent WHERE uid = ${e.uid}".update.run()
+      Unused(sql"UPDATE events SET parent_id = $parent WHERE uid = ${e.uid}".update.run(), Unused.Why.Held)
       val id = e.id
-      sql"DELETE FROM event_datings WHERE event_id = $id".update.run()
-      sql"DELETE FROM event_edges WHERE src_id = $id".update.run()
-      sql"DELETE FROM event_participants WHERE event_id = $id".update.run()
+      Unused(sql"DELETE FROM event_datings WHERE event_id = $id".update.run(), Unused.Why.Idempotent)
+      Unused(sql"DELETE FROM event_edges WHERE src_id = $id".update.run(), Unused.Why.Idempotent)
+      Unused(sql"DELETE FROM event_participants WHERE event_id = $id".update.run(), Unused.Why.Idempotent)
       e.datings.foreach { d =>
         val ck = d.sourceUid.flatMap(w.citekeyHere).map(_.value).getOrElse(d.citekey.value)
-        sql"""INSERT INTO event_datings (event_id, citekey, not_before, begin_by, end_from, not_after, method, note)
+        Unused(
+          sql"""INSERT INTO event_datings (event_id, citekey, not_before, begin_by, end_from, not_after, method, note)
               VALUES ($id, $ck, ${d.notBefore}, ${d.beginBy}, ${d.endFrom}, ${d.notAfter}, ${d.method}, ${d.note})
-              ON CONFLICT DO NOTHING""".update.run()
+              ON CONFLICT DO NOTHING""".update.run(),
+          Unused.Why.Idempotent
+        )
       }
       e.edges.foreach { g =>
         val ck = g.sourceUid.flatMap(w.citekeyHere).map(_.value).getOrElse(g.citekey.value)
         eventIdOf(g.dstUid).foreach { dst =>
-          sql"""INSERT INTO event_edges (src_id, dst_id, kind, citekey, note)
-                VALUES ($id, $dst, ${g.kind}, $ck, ${g.note}) ON CONFLICT DO NOTHING""".update.run()
+          Unused(
+            sql"""INSERT INTO event_edges (src_id, dst_id, kind, citekey, note)
+                VALUES ($id, $dst, ${g.kind}, $ck, ${g.note}) ON CONFLICT DO NOTHING""".update.run(),
+            Unused.Why.Idempotent
+          )
         }
       }
       e.participants.foreach { p =>
         val ck = p.sourceUid.flatMap(w.citekeyHere).map(_.value).orElse(p.citekey.map(_.value))
-        sql"""INSERT INTO event_participants (event_id, actor, role, citekey)
-              VALUES ($id, ${p.actor}, ${p.role}, $ck) ON CONFLICT DO NOTHING""".update.run()
+        Unused(
+          sql"""INSERT INTO event_participants (event_id, actor, role, citekey)
+              VALUES ($id, ${p.actor}, ${p.role}, $ck) ON CONFLICT DO NOTHING""".update.run(),
+          Unused.Why.Idempotent
+        )
       }
     }
 
@@ -294,11 +304,14 @@ private[events] object EventBundleRepo:
   def eventAliasesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     w.es.eventAliases.foreach { a =>
-      sql"""INSERT INTO event_aliases (alias, event_id, created_at)
+      Unused(
+        sql"""INSERT INTO event_aliases (alias, event_id, created_at)
             SELECT ${a.alias}, id, ${a.createdAt}::timestamptz FROM events
             WHERE uid = ${a.eventUid} AND id <> ${a.alias}
               AND NOT EXISTS (SELECT 1 FROM events WHERE id = ${a.alias})
-            ON CONFLICT (alias) DO NOTHING""".update.run()
+            ON CONFLICT (alias) DO NOTHING""".update.run(),
+        Unused.Why.Idempotent
+      )
     }
 
   // ── the event-catalogue sets (#1647) ──

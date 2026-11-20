@@ -673,10 +673,7 @@ final class SchedulerService(
             Right(s"strategy ${st.name} (by $by)")
     done.map { line =>
       last = None
-      val _ = agents.workLists.add(
-        WorkListControllers.ListName(Queue.Kind.Log.label.value),
-        QueueAdd(Queue.QueueItem.Text(s"agent scheduler: $line".take(1000)))
-      )
+      agents.workLists.logLine(QueueAdd(Queue.QueueItem.Text(s"agent scheduler: $line".take(1000))))
       scribe.info(s"agent scheduler: $line")
       agents.managers.nudge()
       status(None, now, List(SchedulerStatus.Changes(line)))

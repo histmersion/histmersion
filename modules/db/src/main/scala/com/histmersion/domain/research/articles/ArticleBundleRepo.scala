@@ -15,6 +15,7 @@ import com.histmersion.api.exchange.Bundle
 import com.histmersion.domain.research.Slug
 import com.histmersion.util.data.exchange.PlanQuestions
 import com.histmersion.util.database.Timestamps
+import com.histmersion.util.database.Unused
 
 /** The articles as a bundle carries them (docs/research-merge-import.md §4): each article, its versions (their bodies
   * as blobs) and its old slugs, read out in a deterministic order (by uid; the old slugs by alias, in the "C"
@@ -127,8 +128,11 @@ private[articles] object ArticleBundleRepo:
   def articlesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     w.merged.snapshots.toList.filter(w.writes).foreach { u =>
-      sql"""INSERT INTO article_versions (slug, body, summary, updated_at)
-            SELECT slug, body, summary, updated_at FROM articles WHERE uid = $u""".update.run()
+      Unused(
+        sql"""INSERT INTO article_versions (slug, body, summary, updated_at)
+            SELECT slug, body, summary, updated_at FROM articles WHERE uid = $u""".update.run(),
+        Unused.Why.Idempotent
+      )
     }
     w.es.articles.filter(a => w.writes(a.uid)).foreach { a =>
       sql"""INSERT INTO articles (uid, origin, slug, title, kind, body, summary, tags, regions, period, updated_at)
@@ -143,11 +147,14 @@ private[articles] object ArticleBundleRepo:
     // an article kept beside one here (`both`), and the bundle's texts the merge replaced or
     // rewrote, recorded as versions: the next merge finds them in this collection's history
     w.merged.copies.foreach { a =>
-      sql"""INSERT INTO articles (uid, slug, title, kind, body, summary, tags, regions, period)
+      Unused(
+        sql"""INSERT INTO articles (uid, slug, title, kind, body, summary, tags, regions, period)
             VALUES (${a.uid}, ${a.slug}, ${a.title}, ${a.kind}, ${a.body}, ${a.summary}, ${a.tags}::text[],
               ${a.regions}::text[],
               ${rangeLiteral(a.period)}::int8range)
-            ON CONFLICT (uid) DO NOTHING""".update.run()
+            ON CONFLICT (uid) DO NOTHING""".update.run(),
+        Unused.Why.Idempotent
+      )
       w.once(copiedArticles) += a.uid
     }
 
@@ -155,20 +162,26 @@ private[articles] object ArticleBundleRepo:
   def articleAliasesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     w.es.articleAliases.foreach { a =>
-      sql"""INSERT INTO article_aliases (alias, slug, created_at)
+      Unused(
+        sql"""INSERT INTO article_aliases (alias, slug, created_at)
             SELECT ${a.alias}, slug, ${a.createdAt}::timestamptz FROM articles
             WHERE uid = ${a.articleUid} AND slug <> ${a.alias}
               AND NOT EXISTS (SELECT 1 FROM articles WHERE slug = ${a.alias})
-            ON CONFLICT (alias) DO NOTHING""".update.run()
+            ON CONFLICT (alias) DO NOTHING""".update.run(),
+        Unused.Why.Idempotent
+      )
     }
 
   /** The versions a merge records beside the article texts it wrote. */
   def mergedVersionsIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     w.merged.versions.foreach { v =>
-      sql"""INSERT INTO article_versions (slug, body, summary, updated_at)
+      Unused(
+        sql"""INSERT INTO article_versions (slug, body, summary, updated_at)
             SELECT slug, ${v.body}, ${v.summary}, ${v.versionOf}::timestamptz FROM articles WHERE uid = ${v.articleUid}""".update
-        .run()
+          .run(),
+        Unused.Why.Idempotent
+      )
     }
 
   /** A version's text into its row. */

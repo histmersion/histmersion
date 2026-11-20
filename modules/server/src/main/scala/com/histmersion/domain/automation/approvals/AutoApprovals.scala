@@ -168,10 +168,7 @@ final class AutoApprovals(
                 ManagerEvent.Text(text.take(2000))
               )
             )
-            val _ = agents.workLists.add(
-              WorkListControllers.ListName("log"),
-              QueueAdd(QueueItem.Text(s"autopilot: $text".take(1000)))
-            )
+            agents.workLists.logLine(QueueAdd(QueueItem.Text(s"autopilot: $text".take(1000))))
             scribe.info(s"autopilot: $text")
             List(s"$what: ${decision.wire}")
 

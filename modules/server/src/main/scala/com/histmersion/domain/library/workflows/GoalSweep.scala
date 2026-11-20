@@ -69,8 +69,12 @@ private[workflows] trait GoalSweep:
           s"link queue item $id to goal $goal",
           Json.obj("goal" -> goal.asJson, "item" -> id.asJson, "doi" -> doi.asJson)
         ) {
-          val _ =
-            goals.link(goal, Goal.LinkKind.QueueItem, GoalLink.Ref(id.value.toString), Some(GoalLink.Note(doi.value)))
+          goals.linkIfThere(
+            goal,
+            Goal.LinkKind.QueueItem,
+            GoalLink.Ref(id.value.toString),
+            Some(GoalLink.Note(doi.value))
+          )
         }(())
         Right(false)
       case None =>
@@ -86,7 +90,7 @@ private[workflows] trait GoalSweep:
             .left
             .map(_.problems.sentences.mkString("; "))
             .map { added =>
-              val _ = goals.link(
+              goals.linkIfThere(
                 goal,
                 Goal.LinkKind.QueueItem,
                 GoalLink.Ref(added.id.value.toString),

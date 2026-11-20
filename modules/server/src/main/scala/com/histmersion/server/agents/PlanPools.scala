@@ -32,6 +32,7 @@ import scala.jdk.CollectionConverters.*
 import com.histmersion.util.system.JvmHome
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
+import com.histmersion.util.database.Unused
 
 /** The subscription pools in effect (docs/research-plan-quotas.md §5): the readings every source writes, the floors
   * (saved over config), the hold switch, the provider's own refusals — and the verdict the model pick asks before every
@@ -134,7 +135,7 @@ final class PlanPools(
   def current(p: PoolId, model: Option[ChainEntry.Model], now: PlanQuota.Now = now0)(using
       WritePermit
   ): (Verdict, List[WindowState]) =
-    if p == PoolId.ChatgptPlan then poll(now)
+    if p == PoolId.ChatgptPlan then Unused(poll(now), Unused.Why.Reported)
     verdict(p, model, now)
 
   /** Why `p`'s verdict would wait for a fresh reading now (None = it decides by itself). */
@@ -188,7 +189,8 @@ final class PlanPools(
         Some((why, until.map(u => PlanQuotaRepo.EpochMillis(u.value))))
       case _ => None
 
-  def refresh(now: PlanQuotaRepo.EpochMillis)(using WritePermit): Unit = { val _ = poll(PlanQuota.Now(now.value)) }
+  def refresh(now: PlanQuotaRepo.EpochMillis)(using WritePermit): Unit =
+    Unused(poll(PlanQuota.Now(now.value)), Unused.Why.Reported)
 
   def hold(p: PoolId, on: PlanQuotaRepo.Pool.Held)(using WritePermit): Unit =
     Transactor(ds).write(PlanQuotaRepo.setHold(p, on))

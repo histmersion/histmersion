@@ -13,6 +13,7 @@ import com.augustnagro.magnum.*
 import java.util.UUID
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.util.database.Timestamps
+import com.histmersion.util.database.Unused
 
 /** The named periods as a bundle carries them (docs/research-merge-import.md §4, §7.3): this collection's own, read out
   * in a deterministic order, and written in by an import.
@@ -85,6 +86,9 @@ private[periods] object PeriodBundleRepo:
               dataset = 'local', updated_at = EXCLUDED.updated_at""".update.run()
     }
     periods.foreach { p =>
-      sql"""UPDATE periods SET parent_id = (SELECT id FROM periods WHERE id = ${p.parentId}), updated_at = ${p.updatedAt}::timestamptz
-            WHERE uid = ${p.uid}""".update.run()
+      Unused(
+        sql"""UPDATE periods SET parent_id = (SELECT id FROM periods WHERE id = ${p.parentId}), updated_at = ${p.updatedAt}::timestamptz
+            WHERE uid = ${p.uid}""".update.run(),
+        Unused.Why.Idempotent
+      )
     }

@@ -101,12 +101,11 @@ final class IngestQueue(
     val n = pool.restored(Problem.Run.Restored)
     if n != RowCount(0) then scribe.info(s"restore: $n unfinished job(s) of the restored database marked failed")
 
-  /** Started by the composition root, after construction. Returns the jobs a restart had to fail. */
-  def start(): RowCount =
+  /** Started by the composition root, after construction. The jobs a restart had to fail are counted in the log. */
+  def start(): Unit =
     // an operation under the gate (not a unit: the pool's threads it starts must not inherit a unit's epoch)
     val n = maintenance.writing(pool.start())
     if n.value > 0 then scribe.warn(s"$n unfinished job(s) marked failed: ${JobState.Interrupted}")
-    n
 
   def stop(): Unit = pool.stop()
 
@@ -189,11 +188,13 @@ final class IngestQueue(
   private def runJob(id: Job.Id)(using WritePermit): Unit =
     Option(pending.remove(id)) match
       case None =>
-        val _ = jobs.transition(
-          id,
-          JobState.Queued,
-          JobState.Failed,
-          error = Some(Stopped.Paused(PauseReason.Interrupted, Problem.Run.UploadUnheld).problem)
+        ended(id, JobState.Failed)(
+          jobs.transition(
+            id,
+            JobState.Queued,
+            JobState.Failed,
+            error = Some(Stopped.Paused(PauseReason.Interrupted, Problem.Run.UploadUnheld).problem)
+          )
         )
       case Some(job) =>
         jobs.transition(id, JobState.Queued, JobState.Running, Some(JobRow.Progress("converting"))) match
@@ -225,7 +226,9 @@ final class IngestQueue(
               case Left(why) =>
                 val problem = why.fold(words => Problem.Unclassified(Legacy.Text(words)), identity)
                 scribe.warn(s"job $id failed: ${problem.sentence}")
-                val _ = jobs.transition(id, JobState.Running, JobState.Failed, error = Some(problem))
+                ended(id, JobState.Failed)(
+                  jobs.transition(id, JobState.Running, JobState.Failed, error = Some(problem))
+                )
               case Right((doc, n)) =>
                 // the source is written; only now is the item it was acquired for fulfilled. This
                 // worker holds the job in `running`, so the transition below cannot be refused
@@ -234,13 +237,25 @@ final class IngestQueue(
                   case None if job.kind == IngestPending.IngestKind => matchAcquisitions(job.citekey, id)
                   case None                                         => Nil
                 val enrich = afterStoreSafely(job.citekey)
-                val _ = jobs.transition(
-                  id,
-                  JobState.Running,
-                  JobState.Done,
-                  progress =
-                    Some(JobRow.Progress((s"${doc.pages} page(s), $n asset(s)" :: ticked ++ enrich).mkString(" · ")))
+                ended(id, JobState.Done)(
+                  jobs.transition(
+                    id,
+                    JobState.Running,
+                    JobState.Done,
+                    progress =
+                      Some(JobRow.Progress((s"${doc.pages} page(s), $n asset(s)" :: ticked ++ enrich).mkString(" · ")))
+                  )
                 )
+
+  /** How a job ended, written by compare-and-set: a row that had moved on meanwhile (a person cancelled it, a restore
+    * replaced it) keeps what it says, and the log says what could not be recorded.
+    */
+  private def ended(id: Job.Id, as: JobState)(moved: Option[JobState]): Unit =
+    if moved.isEmpty then
+      val now = jobs.get(id).map(_.status)
+      scribe.warn(
+        s"job $id ended ${as.wire}, but its row had moved on (${now.fold("gone")(s => s"now $s")}): left as it is"
+      )
 
   /** [[afterStore]], whose failure is a note on the job, never a failed job. */
   private def afterStoreSafely(citekey: Citekey)(using WritePermit): List[String] =

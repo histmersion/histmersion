@@ -48,6 +48,7 @@ import com.histmersion.domain.research.Slug
 import com.histmersion.domain.automation.ScheduleKind
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Managers
+import com.histmersion.util.database.Unused
 
 /** The ONE implementation of the process-manager operations (docs/research-process-managers.md §5): REST
   * ([[AgentsRoutes]]), the MCP tool `manager` ([[AgentsTools]]) and the CLI (over REST) call these. Reading and
@@ -248,7 +249,12 @@ final class ManagersControllers(
                   Some(EnqueueRequest.Priority(0))
                 ),
                 ItemOrigin.Selection
-              )
+              ).left
+                .foreach(e =>
+                  scribe.warn(
+                    s"watcher ${lightId(m)}: its first ${sw.wire} item was not queued: ${e.problems.sentences.mkString("; ")}"
+                  )
+                )
             )
           out <- manager(lightId(m))
         yield out
@@ -480,7 +486,7 @@ final class ManagersControllers(
 
   private def deleteHeld(id: ManagerLight.Id)(using WritePermit): Either[Api.Error, Removed] =
     manager(id).map { m =>
-      inFlight(lightId(m)).foreach(r => agents.engine.cancel(runIdOf(r.id)))
+      inFlight(lightId(m)).foreach(r => Unused(agents.engine.cancel(runIdOf(r.id)), Unused.Why.Idempotent))
       Removed(Removed.Value(Transactor(ds).write(ManagerRepo.delete(m.id))))
     }
 
@@ -506,7 +512,7 @@ final class ManagersControllers(
       val withRuns = runs.exists(_.value)
       action.value.trim.toLowerCase match
         case "pause" =>
-          agents.managerStore.setState(m.id, State.Paused, ManagerInfo.PauseRuns(withRuns))
+          Unused(agents.managerStore.setState(m.id, State.Paused, ManagerInfo.PauseRuns(withRuns)), Unused.Why.ReadBack)
           val paused = if withRuns then
             inFlight(lightId(m))
               .filter(r => r.status == RunState.Running.wire || r.status == RunState.Queued.wire)
@@ -523,7 +529,7 @@ final class ManagersControllers(
           )
           manager(lightId(m))
         case "resume" =>
-          agents.managerStore.setState(m.id, State.Active, ManagerInfo.PauseRuns(false))
+          Unused(agents.managerStore.setState(m.id, State.Active, ManagerInfo.PauseRuns(false)), Unused.Why.ReadBack)
           val resumed = if m.pauseRuns.value && cfg.enabled.value then
             inFlight(lightId(m))
               .filter(r =>
@@ -544,7 +550,7 @@ final class ManagersControllers(
           supervisor.nudge()
           manager(lightId(m))
         case "stop" =>
-          agents.managerStore.setState(m.id, State.Stopped, ManagerInfo.PauseRuns(false))
+          Unused(agents.managerStore.setState(m.id, State.Stopped, ManagerInfo.PauseRuns(false)), Unused.Why.ReadBack)
           val cancelled = inFlight(lightId(m)).count(r => agents.engine.cancel(runIdOf(r.id)).isRight)
           val items =
             Transactor(ds).write(
@@ -820,13 +826,19 @@ final class ManagersControllers(
             )
             .map(_ => record(m.id, Some(i.id), None, Feed.Held, s"${i.target}: released by a person"))
         case "priority" =>
-          in.priority.toRight(Api.Error(Problem.Invalid.Missing.here(Problem.Field("priority")))).map { p =>
-            Transactor(ds).write(ManagerRepo.setPriority(i.id, p.transformInto[ManagerItem.Priority]))
-            record(m.id, Some(i.id), None, Feed.Hint, s"${i.target}: priority $p")
+          in.priority.toRight(Api.Error(Problem.Invalid.Missing.here(Problem.Field("priority")))).flatMap { p =>
+            // an item removed since it was read is not found, never a priority set on nothing
+            Either.cond(
+              Transactor(ds).write(ManagerRepo.setPriority(i.id, p.transformInto[ManagerItem.Priority])),
+              record(m.id, Some(i.id), None, Feed.Hint, s"${i.target}: priority $p"),
+              notFound(Problem.NotFound.Entity(Problem.TypeName.of(ManagerItem.Id), Problem.Raw.of(i.id)))
+            )
           }
         case "skip" =>
           // an active item's run is cancelled first; the item is then stopped as skipped
-          i.runId.filter(_ => i.status == ItemStatus.Active.wire).foreach(r => agents.engine.cancel(runIdOf(r)))
+          i.runId
+            .filter(_ => i.status == ItemStatus.Active.wire)
+            .foreach(r => Unused(agents.engine.cancel(runIdOf(r)), Unused.Why.Idempotent))
           val why = in.reason
             .filter(w => s"$w".trim.nonEmpty)
             .fold("skipped by a person")(r => s"skipped by a person: $r")
@@ -1108,13 +1120,17 @@ final class ManagersControllers(
       w <- HintEffect.Action.verb(e.action) match
         case Some(HintEffect.Verb.Config) =>
           val c = m.config.merge(e.config.getOrElse(ManagerConfig()))
-          val _ = agents.managerStore.setConfig(
-            m.id,
-            c,
-            m.cron,
-            m.nextTickAt.flatMap(t => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(t.value)))
-          )
-          Right(s" — settings now: ${ManagersControllers.describe(c)}")
+          // a manager removed since it was read is not found, never settings written to nothing
+          Option
+            .when(
+              agents.managerStore.setConfig(
+                m.id,
+                c,
+                m.cron,
+                m.nextTickAt.flatMap(t => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(t.value)))
+              )
+            )(s" — settings now: ${ManagersControllers.describe(c)}")
+            .toRight(Problem.NotFound.Entity(Problem.TypeName.of(ManagerLight.Id), Problem.Raw.of(m.id)))
         case _ => Right(applyEffect(m, ht.id, ht.text, e))
       _ = Transactor(ds).write(ManagerRepo.setHintEffect(ht.id, Some(e)))
       _ = record(
@@ -1165,7 +1181,12 @@ final class ManagersControllers(
           true
         }
         matched.foreach(i =>
-          Transactor(ds).write(ManagerRepo.setPriority(i.id, ManagerItem.Priority(math.max(i.priority.value, p))))
+          Transactor(ds).write(
+            Unused(
+              ManagerRepo.setPriority(i.id, ManagerItem.Priority(math.max(i.priority.value, p))),
+              Unused.Why.Idempotent
+            )
+          )
         )
         matched.size + added
       case Some(HintEffect.Verb.Hold) =>
@@ -1253,7 +1274,7 @@ final class ManagersControllers(
       _ = agents.managerStore.get(id) match
         case None =>
           val c = ManagerConfig(sweeps = Some(if in.enabled.value then List(sw.wire) else Nil), budgetUsd = budget)
-          val _ =
+          Unused(
             agents.managerStore.create(
               id,
               Kind.Watch,
@@ -1262,7 +1283,9 @@ final class ManagersControllers(
               c,
               Some(ManagerInfo.Cron(cron.text.value)),
               cron.next(now)
-            )
+            ),
+            Unused.Why.Held
+          )
           record(
             id,
             None,
@@ -1282,7 +1305,11 @@ final class ManagersControllers(
           val next = if m.cron.exists(_.value == cron.text.value) && m.nextTickAt.isDefined then
             m.nextTickAt.flatMap(t => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(t.value)))
           else cron.next(now)
-          val _ = agents.managerStore.setConfig(id, c, Some(ManagerInfo.Cron(cron.text.value)), next)
+          // the manager is read back below (`manager(id)`): one removed meanwhile is not found there
+          Unused(
+            agents.managerStore.setConfig(id, c, Some(ManagerInfo.Cron(cron.text.value)), next),
+            Unused.Why.ReadBack
+          )
           if !in.enabled.value then cancelSweep(m, sw, ManagerItem.Outcome("its schedule was turned off"))
           record(
             id,
@@ -1328,22 +1355,24 @@ final class ManagersControllers(
     val fromWatcher =
       agents.managerStore.get(watchId(Goal.Ref(goal.value))).filter(m => Sweep.of(m.config).contains(sw)).exists { m =>
         val rest = Sweep.of(m.config).filterNot(_ == sw)
-        val _ = agents.managerStore.setConfig(
+        // a watcher removed since it was read had no schedule left to remove
+        val removed = agents.managerStore.setConfig(
           m.id,
           m.config.modify(_.sweeps).setTo(Some(rest.map(_.wire))),
           m.cron,
           m.nextTickAt.flatMap(t => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(t.value)))
         )
-        cancelSweep(m, sw, ManagerItem.Outcome("its schedule was removed"))
-        record(
-          m.id,
-          None,
-          None,
-          Feed.Hint,
-          s"the goal's ${kind.wire} schedule removed; sweeps " +
-            (if rest.isEmpty then "none" else rest.map(_.wire).mkString(", "))
-        )
-        true
+        if removed then
+          cancelSweep(m, sw, ManagerItem.Outcome("its schedule was removed"))
+          record(
+            m.id,
+            None,
+            None,
+            Feed.Hint,
+            s"the goal's ${kind.wire} schedule removed; sweeps " +
+              (if rest.isEmpty then "none" else rest.map(_.wire).mkString(", "))
+          )
+        removed
       }
     Goal.Plans.Removed(Goal.Plans.Removed.Value(legacy || fromWatcher))
 
