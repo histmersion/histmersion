@@ -456,8 +456,7 @@ final class AcquireRecheckService(
           rows = closed ++ rows.reverse.filter(_.action.value == Fetched)
         )
         if r.closed.value + r.fetched.value + r.noCopy.value + r.failed.value > 0 || stop.isDefined then
-          val _ = site.workLists.add(
-            WorkListControllers.ListName("log"),
+          site.workLists.logLine(
             QueueAdd(
               Queue.QueueItem.Text(
                 (s"${summary(r)} (by $by, job $jobId" +
@@ -574,10 +573,7 @@ final class AcquireRecheckService(
         .setTo(capNote)
       if r.closed.value + r.fetched.value + r.noCopy.value + r.failed.value > 0 then
         val by = in.by.map(_.value.trim).filter(_.nonEmpty).getOrElse("person")
-        val _ = site.workLists.add(
-          WorkListControllers.ListName("log"),
-          QueueAdd(Queue.QueueItem.Text(s"${summary(r)} (by $by)".take(1000)))
-        )
+        site.workLists.logLine(QueueAdd(Queue.QueueItem.Text(s"${summary(r)} (by $by)".take(1000))))
       r
 
   /** The item ticked off as fulfilled by `citekey` (the one write every import makes), and its check. */

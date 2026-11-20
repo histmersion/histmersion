@@ -7,6 +7,7 @@ import com.histmersion.util.database.given_DbCodec_List
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.DeepTime
 import com.histmersion.domain.catalogue.Place
+import com.histmersion.util.database.Unused
 
 /** The refined site types of the Wikidata sites (`places.site_type`, `site_type_checked_at`). Every method runs on the
   * connection it is given.
@@ -48,7 +49,9 @@ private[places] object SiteTypeRepo:
 
   /** Record the refined types (`None` = asked, none of the curated classes). */
   def setSiteTypes(types: List[(Place.Id, Option[PlaceRepo.SiteType])])(using DbCon): Unit =
-    val _ =
+    Unused(
       batchUpdate(types) { (id, t) =>
         sql"UPDATE places SET site_type = $t, site_type_checked_at = now() WHERE id = $id".update
-      }
+      },
+      Unused.Why.Idempotent
+    )

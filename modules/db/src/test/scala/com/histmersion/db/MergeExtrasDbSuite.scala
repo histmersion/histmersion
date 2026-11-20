@@ -778,7 +778,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
       applyJob(ds, a).map(j => (j.state, j.bundle, j.planHash)),
       Some((MergeJobState.Running, "a" * 64, "abc123"))
     )
-    Transactor(ds).write(JobRepo.finishMergeApply(a, Right(res)))
+    assert(Transactor(ds).write(JobRepo.finishMergeApply(a, Right(res))), "a running apply is finished")
     assert(!Transactor(ds).read(JobRepo.mergeApplyRunning))
     assertEquals(
       applyJob(ds, a).map(j => (j.state, j.result)),
@@ -789,7 +789,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
     assertEquals(Transactor(ds).write(JobRepo.failInterrupted()), 1) // the startup reconciliation
     assertEquals(applyJob(ds, b).map(_.state), Some(MergeJobState.Interrupted))
     // the thread that outlived nothing cannot overwrite it; a crash is failed with its reason
-    Transactor(ds).write(JobRepo.finishMergeApply(b, Right(res)))
+    assert(!Transactor(ds).write(JobRepo.finishMergeApply(b, Right(res))), "the end of an interrupted apply is refused")
     assertEquals(applyJob(ds, b).map(_.state), Some(MergeJobState.Interrupted))
     val c = Transactor(ds).write(JobRepo.startMergeApply(MergeRepo.BundleName("c" * 64), MergeRow.PlanHash("0")))
     Transactor(ds).write(

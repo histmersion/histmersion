@@ -13,6 +13,7 @@ import com.histmersion.api.catalogue.Event
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.library.Title
 import com.histmersion.api.library.Finding
+import com.histmersion.util.database.Unused
 
 /** The proposed links of events to sources (`event_link_candidates`) and when each event's were computed
   * (`event_link_checks`). Every method runs on the connection it is given.
@@ -47,7 +48,10 @@ private[evidence] object EventLinkRepo:
     * (its evidence is refreshed). Records the check.
     */
   def saveCandidates(id: BEventRow.Id, cs: List[EventLinkCandidate])(using DbCon): Unit =
-    sql"DELETE FROM event_link_candidates WHERE event_id = $id AND status = 'proposed'".update.run()
+    Unused(
+      sql"DELETE FROM event_link_candidates WHERE event_id = $id AND status = 'proposed'".update.run(),
+      Unused.Why.Idempotent
+    )
     cs.foreach { c =>
       val ps = Jsonb.write(c.passages)
       sql"""INSERT INTO event_link_candidates (event_id, citekey, score, findings, passages, reasons)

@@ -132,6 +132,18 @@ object GoalService:
 
   def apply(db: Transactor): GoalService = Implementation(db)
 
+  extension (goals: GoalService)
+    /** [[GoalService.link]] by the server itself (a sweep, a plan): a goal deleted meanwhile is said in the log, the
+      * link not written.
+      */
+    def linkIfThere(
+        goal: domain.automation.Goal.Slug,
+        kind: domain.automation.Goal.LinkKind,
+        ref: GoalLink.Ref,
+        note: Option[GoalLink.Note]
+    )(using WritePermit): Unit =
+      if !goals.link(goal, kind, ref, note) then scribe.warn(s"goal $goal is gone: a link to it was not written")
+
   final private class Implementation(db: Transactor) extends GoalService:
     def get(slug: domain.automation.Goal.Slug): Option[Goal] = db.read(GoalRepo.get(slug))
     def all(): List[Goal] = db.read(GoalRepo.all())

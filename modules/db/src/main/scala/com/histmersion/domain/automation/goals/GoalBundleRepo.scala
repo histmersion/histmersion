@@ -18,6 +18,7 @@ import com.histmersion.api.exchange.Bundle
 import com.histmersion.util.data.exchange.PlanQuestions
 import com.histmersion.domain.automation.Goal
 import com.histmersion.util.database.Timestamps
+import com.histmersion.util.database.Unused
 
 /** What a bundle carries of the goals (docs/research-merge-import.md §4), read as the bundle's lines in a deterministic
   * order (by uid; their links and schedules by their goal's uid, then their own key, in the "C" collation), and the
@@ -159,17 +160,23 @@ private[goals] object GoalBundleRepo:
           l.refUid.flatMap(u => sql"SELECT id::text FROM queue_items WHERE uid = $u".query[String].run().headOption)
         case _ => Some(l.ref.value)
       ref.foreach { r =>
-        sql"""INSERT INTO goal_links (goal_slug, kind, ref, note, created_at)
+        Unused(
+          sql"""INSERT INTO goal_links (goal_slug, kind, ref, note, created_at)
               VALUES ($slug, ${l.kind}, $r, ${l.note}, ${l.createdAt}::timestamptz) ON CONFLICT DO NOTHING""".update
-          .run()
+            .run(),
+          Unused.Why.Idempotent
+        )
       }
     }
     g.schedules.getOrElse(Nil).foreach { x =>
       val usd = x.budgetUsd.map(b => BigDecimal(b.value))
-      sql"""INSERT INTO goal_schedules (goal_slug, kind, cron, enabled, budget_usd, last_note)
+      Unused(
+        sql"""INSERT INTO goal_schedules (goal_slug, kind, cron, enabled, budget_usd, last_note)
             VALUES ($slug, ${x.kind}, ${x.cron}, ${x.enabled}, $usd,
               'brought in by a merge: save it once here to schedule it')
-            ON CONFLICT DO NOTHING""".update.run()
+            ON CONFLICT DO NOTHING""".update.run(),
+        Unused.Why.Idempotent
+      )
     }
 
   /** Goals: the rows, their parents, then — after every goal is in (a link can name another goal's record, a schedule
@@ -195,8 +202,11 @@ private[goals] object GoalBundleRepo:
     }
     goals.foreach { g =>
       val parent = g.parentUid.flatMap(goalSlugOf)
-      sql"UPDATE goals SET parent_slug = $parent, updated_at = ${g.updatedAt}::timestamptz WHERE uid = ${g.uid}".update
-        .run()
+      Unused(
+        sql"UPDATE goals SET parent_slug = $parent, updated_at = ${g.updatedAt}::timestamptz WHERE uid = ${g.uid}".update
+          .run(),
+        Unused.Why.Idempotent
+      )
     }
     goals.foreach(goalSets(w, _))
 
@@ -206,9 +216,12 @@ private[goals] object GoalBundleRepo:
   def goalAliasesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     w.es.goalAliases.foreach { a =>
-      sql"""INSERT INTO goal_aliases (alias, goal_slug, created_at)
+      Unused(
+        sql"""INSERT INTO goal_aliases (alias, goal_slug, created_at)
             SELECT ${a.alias}, slug, ${a.createdAt}::timestamptz FROM goals
             WHERE uid = ${a.goalUid} AND slug <> ${a.alias}
               AND NOT EXISTS (SELECT 1 FROM goals WHERE slug = ${a.alias})
-            ON CONFLICT (alias) DO NOTHING""".update.run()
+            ON CONFLICT (alias) DO NOTHING""".update.run(),
+        Unused.Why.Idempotent
+      )
     }

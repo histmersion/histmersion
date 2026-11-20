@@ -46,6 +46,7 @@ import com.histmersion.domain.automation.Run
 import com.histmersion.domain.automation.managers.ManagerContext
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
+import com.histmersion.util.database.Unused
 
 /** `compile-article <slug>` (docs/research-embedded-agents.md §4.5, §14): the five phases of the writing guide, run by
   * the server.
@@ -472,13 +473,16 @@ final class CompileArticlePipeline(
       Pipelines
         .goalOf(ctx.run)
         .foreach(g =>
-          goals.link(
-            g,
-            io.scalaland.chimney.Transformer
-              .derive[Goal.LinkKind, domain.automation.Goal.LinkKind]
-              .transform(LinkKind.Article),
-            Goal.Plans.GoalLink.Ref(d.slug.value),
-            Some(Goal.Plans.GoalLink.Note("compiled by an agent run"))
+          Unused(
+            goals.link(
+              g,
+              io.scalaland.chimney.Transformer
+                .derive[Goal.LinkKind, domain.automation.Goal.LinkKind]
+                .transform(LinkKind.Article),
+              Goal.Plans.GoalLink.Ref(d.slug.value),
+              Some(Goal.Plans.GoalLink.Note("compiled by an agent run"))
+            ),
+            Unused.Why.Idempotent
           )
         )
     log(

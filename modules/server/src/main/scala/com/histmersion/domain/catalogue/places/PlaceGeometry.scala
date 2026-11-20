@@ -9,6 +9,7 @@ import com.histmersion.api.catalogue.Place
 import com.histmersion.util.time.Timer
 import com.histmersion.domain.library.Citekey
 import com.histmersion.util.database.WritePermit
+import com.histmersion.util.database.Unused
 
 /** The gazetteer's geometry operations, a mechanism over PostGIS with no in-memory twin (as the map's tiles): which
   * places each finding belongs to rebuilt from scratch, the hierarchy built from spatial containment, the land the
@@ -53,7 +54,7 @@ object PlaceGeometry:
       db.write(FindingPlaceRepo.rebuildFindingPlaces(toleranceKm))
     def buildHierarchy()(using WritePermit): SpatialHierarchyResult = db.write(PlaceRepo.buildSpatialHierarchy())
     def replaceLand(geometries: List[PlaceDetailRow.Geometry])(using WritePermit): RowCount =
-      val _ = db.write(LandRepo.replace(geometries.map(g => BPlaceRow.Geom(g.value))))
+      db.write(Unused(LandRepo.replace(geometries.map(g => BPlaceRow.Geom(g.value))), Unused.Why.Reported))
       db.read(LandRepo.analyze())
       db.read(LandRepo.pieces())
     def reclip()(using WritePermit): RowCount =

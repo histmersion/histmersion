@@ -187,7 +187,7 @@ object Composition:
     val cfg = hc.app // the listener's settings: restart-only (ConfigReload.RestartOnly)
     val h = ServerWiring(deps, converter.getOrElse(ConverterWiring.client(deps.cfg.converter)))
     onWiring(h) // a test's handle on this server's wiring (its run tokens); nothing in production
-    val _ = h.ingest.queue.start() // reconcile interrupted jobs, then start the bounded worker pool
+    h.ingest.queue.start() // reconcile interrupted jobs, then start the bounded worker pool
     val acq = acquisition(sg, deps, h)
     // embedded agents: the acquisition toolset first (enrich-source checks metadata, refs, assess;
     // the skeptic reads followups); then an interrupted run is PAUSED (resumable), queued ones
@@ -213,7 +213,7 @@ object Composition:
     // started AFTER the reconciliation above so it is not failed as "interrupted". Only `main` asks:
     // a test server must never seed its database behind the test's back
     if autoInit.value then
-      try { val _ = h.maintenance.writing(h.bootstrap.autoStart()) }
+      try h.maintenance.writing(h.bootstrap.autoStart())
       catch
         case e: Exception => scribe.warn(s"first-run import not started: ${e.getMessage}")
     // every request pinned to the generation current when it arrived (hot.PinRequests)
@@ -287,8 +287,8 @@ object Composition:
       Hot.Graph.Def.Name(ServerGraph.Leases),
       deps = List(sg.migrations, sg.pool),
       onPublish = held => {
-        val failed = h.ingest.queue.start()
-        if failed.value > 0 then scribe.info(s"the new database had $failed interrupted job(s): failed them")
+        // the new database's interrupted jobs are failed, and counted in the log, by the start
+        h.ingest.queue.start()
         if held then h.agents.adoptDatabase()
         else if lease.started then
           scribe.warn(

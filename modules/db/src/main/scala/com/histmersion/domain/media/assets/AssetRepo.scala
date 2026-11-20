@@ -21,6 +21,7 @@ import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Year
 import com.histmersion.domain.DeepTime
+import com.histmersion.util.database.Unused
 
 /** The figures that belong with a source's Markdown (plan §1.8).
   *
@@ -50,9 +51,11 @@ private[assets] object AssetRepo:
       .run()
       .toList
     val plan = Reconciled.of(existing, incoming.map(a => a.name -> a.sha256))
-    plan.deletes.foreach(n => sql"DELETE FROM assets WHERE citekey = $citekey AND name = $n".update.run())
+    plan.deletes.foreach(n =>
+      Unused(sql"DELETE FROM assets WHERE citekey = $citekey AND name = $n".update.run(), Unused.Why.Held)
+    )
     plan.renames.foreach((from, to) =>
-      sql"UPDATE assets SET name = $to WHERE citekey = $citekey AND name = $from".update.run()
+      Unused(sql"UPDATE assets SET name = $to WHERE citekey = $citekey AND name = $from".update.run(), Unused.Why.Held)
     )
     val n = insert(citekey, incoming, replaceExisting = ReplaceExisting(true))
     touch(citekey)
@@ -72,7 +75,7 @@ private[assets] object AssetRepo:
     * figures.
     */
   private def touch(citekey: Citekey)(using DbCon): Unit =
-    val _ = sql"UPDATE sources SET updated_at = now() WHERE citekey = $citekey".update.run()
+    Unused(sql"UPDATE sources SET updated_at = now() WHERE citekey = $citekey".update.run(), Unused.Why.Idempotent)
 
   /** `replaceExisting = false` is what [[add]] documents — "leave anything already stored under the same name alone" —
     * and it used to say `DO UPDATE`, i.e. the exact opposite: the seed importer's figures overwrote the (better) ones a
@@ -85,16 +88,23 @@ private[assets] object AssetRepo:
       val sha = a.sha256
       if replaceExisting.value then
         // an unchanged picture is not rewritten: its row (and `updated_at`) stays as it was
-        sql"""INSERT INTO assets (citekey, name, mime, bytes, sha256, width, height)
+        Unused(
+          sql"""INSERT INTO assets (citekey, name, mime, bytes, sha256, width, height)
               VALUES ($citekey, ${a.name}, ${a.mime}, ${a.bytes}, $sha, ${a.width}, ${a.height})
               ON CONFLICT (citekey, name) DO UPDATE SET
                 mime = EXCLUDED.mime, bytes = EXCLUDED.bytes, sha256 = EXCLUDED.sha256,
                 width = EXCLUDED.width, height = EXCLUDED.height
               WHERE (assets.mime, assets.sha256, assets.width, assets.height)
-                IS DISTINCT FROM (EXCLUDED.mime, EXCLUDED.sha256, EXCLUDED.width, EXCLUDED.height)""".update.run()
-      else sql"""INSERT INTO assets (citekey, name, mime, bytes, sha256, width, height)
+                IS DISTINCT FROM (EXCLUDED.mime, EXCLUDED.sha256, EXCLUDED.width, EXCLUDED.height)""".update.run(),
+          Unused.Why.Idempotent
+        )
+      else
+        Unused(
+          sql"""INSERT INTO assets (citekey, name, mime, bytes, sha256, width, height)
               VALUES ($citekey, ${a.name}, ${a.mime}, ${a.bytes}, $sha, ${a.width}, ${a.height})
-              ON CONFLICT (citekey, name) DO NOTHING""".update.run()
+              ON CONFLICT (citekey, name) DO NOTHING""".update.run(),
+          Unused.Why.Idempotent
+        )
     }
     RowCount(assets.size)
 
@@ -172,13 +182,28 @@ private[assets] object AssetRepo:
         )
       )
     else
-      p.kind.foreach(v => sql"UPDATE assets SET kind = $v WHERE citekey = $citekey AND name = $name".update.run())
-      p.caption.foreach(v => sql"UPDATE assets SET caption = $v WHERE citekey = $citekey AND name = $name".update.run())
-      p.license.foreach(v => sql"UPDATE assets SET license = $v WHERE citekey = $citekey AND name = $name".update.run())
+      p.kind.foreach(v =>
+        Unused(sql"UPDATE assets SET kind = $v WHERE citekey = $citekey AND name = $name".update.run(), Unused.Why.Held)
+      )
+      p.caption.foreach(v =>
+        Unused(
+          sql"UPDATE assets SET caption = $v WHERE citekey = $citekey AND name = $name".update.run(),
+          Unused.Why.Held
+        )
+      )
+      p.license.foreach(v =>
+        Unused(
+          sql"UPDATE assets SET license = $v WHERE citekey = $citekey AND name = $name".update.run(),
+          Unused.Why.Held
+        )
+      )
       (p.lat, p.lon) match
         case (Some(lat), Some(lon)) =>
-          sql"UPDATE assets SET geom = ST_SetSRID(ST_Point($lon, $lat), 4326) WHERE citekey = $citekey AND name = $name".update
-            .run()
+          Unused(
+            sql"UPDATE assets SET geom = ST_SetSRID(ST_Point($lon, $lat), 4326) WHERE citekey = $citekey AND name = $name".update
+              .run(),
+            Unused.Why.Held
+          )
         case _ => ()
       val stored =
         sql"SELECT ${RangeSql.cols(sql"period")} FROM assets WHERE citekey = $citekey AND name = $name"

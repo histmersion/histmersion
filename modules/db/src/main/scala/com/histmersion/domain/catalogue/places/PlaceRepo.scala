@@ -27,6 +27,7 @@ import com.histmersion.domain.DeepTime
 import com.histmersion.api.catalogue.CatalogRecord
 import com.histmersion.domain.catalogue.evidence.EventMatcher
 import com.histmersion.domain.library.Citekey
+import com.histmersion.util.database.Unused
 
 /** The gazetteer store (plan §1.6a): import, search, hierarchy, and the MATERIALISATION of `finding_places` — the only
   * place that decides which findings belong to which places.
@@ -185,13 +186,15 @@ private[places] object PlaceRepo:
     }
 
     val idList = ids.toList
-    val _ = GazetteerRepo.linkSeedIds(idList.map(i => BPlaceRow.Id(i.value)))
+    Unused(GazetteerRepo.linkSeedIds(idList.map(i => BPlaceRow.Id(i.value))), Unused.Why.Reported)
     // only the seed's own names (source ''): what GeoNames, Wikidata or an LPF dataset gave a seed
     // place (V071) is theirs to replace, at their next import
-    val _ =
+    Unused(
       sql"DELETE FROM place_names     WHERE place_id = ANY($idList::text[]) AND NOT manual AND import_source = ''".update
-        .run()
-    val _ = sql"DELETE FROM place_relations WHERE child_id = ANY($idList::text[])".update.run()
+        .run(),
+      Unused.Why.Idempotent
+    )
+    Unused(sql"DELETE FROM place_relations WHERE child_id = ANY($idList::text[])".update.run(), Unused.Why.Idempotent)
 
     val names = batch.flatMap(in => in.names.map(in.place.id -> _))
     val _ = batchUpdate(names) { (pid, n) =>
@@ -1008,10 +1011,16 @@ private[places] object PlaceRepo:
         )
       )
     else
-      sql"DELETE FROM place_aliases WHERE alias = $newId".update.run()
-      sql"UPDATE places SET id = $newId WHERE id = $oldId".update.run()
-      sql"UPDATE attestations SET target_id = $newId WHERE target_type = 'place' AND target_id = $oldId".update.run()
-      sql"UPDATE asset_links SET target_id = $newId WHERE target_type = 'place' AND target_id = $oldId".update.run()
+      Unused(sql"DELETE FROM place_aliases WHERE alias = $newId".update.run(), Unused.Why.Idempotent)
+      Unused(sql"UPDATE places SET id = $newId WHERE id = $oldId".update.run(), Unused.Why.Held)
+      Unused(
+        sql"UPDATE attestations SET target_id = $newId WHERE target_type = 'place' AND target_id = $oldId".update.run(),
+        Unused.Why.Idempotent
+      )
+      Unused(
+        sql"UPDATE asset_links SET target_id = $newId WHERE target_type = 'place' AND target_id = $oldId".update.run(),
+        Unused.Why.Idempotent
+      )
       sql"""INSERT INTO place_aliases (alias, place_id) VALUES ($oldId, $newId)
             ON CONFLICT (alias) DO UPDATE SET place_id = EXCLUDED.place_id""".update.run()
       Right(())
@@ -1128,9 +1137,11 @@ private[places] object PlaceRepo:
               )
             )
           case Some(true) =>
-            val _ =
+            Unused(
               sql"DELETE FROM place_names WHERE place_id = $id AND name = $name AND lang = $lang AND manual".update
-                .run()
+                .run(),
+              Unused.Why.Idempotent
+            )
             Right(nameChanged(id, label, name, lang, added = false, changed = true, wasImported = false))
       }
 

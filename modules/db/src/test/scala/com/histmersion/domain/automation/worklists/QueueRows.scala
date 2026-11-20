@@ -26,6 +26,12 @@ object QueueRows:
   def acquireNaming(ds: DataSource, doi: Doi): Vector[QueueItem] =
     connect(ds)(QueueRepo.naming(Kind.Acquire, doi))
 
+  /** The row removed straight, with no read before it: false when it was gone (G94). */
+  def removeRow(ds: DataSource, id: QueueItem.Id): Boolean = transact(ds)(QueueRepo.delete(repoId(id)))
+
+  /** `item` written over its row straight, with no read before it: false when the row was gone (G94). */
+  def writeOver(ds: DataSource, item: QueueItem): Boolean = transact(ds)(QueueRepo.update(item))
+
   private def repoId(id: QueueItem.Id): QueueRepo.QueueItemId = QueueRepo.QueueItemId(id.value)
   private def notFound(id: QueueItem.Id): Api.Error =
     Api.Error(

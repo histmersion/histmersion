@@ -16,6 +16,7 @@ import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.library.Citekey
 import com.histmersion.domain.catalogue.events.BEventRow
 import com.histmersion.util.database.Timestamps
+import com.histmersion.util.database.Unused
 
 /** The evidence as a bundle carries it (docs/research-merge-import.md §4, §7.3): the attestations, the sources that
   * possibly discuss an event and when they were last computed — read out in a deterministic order, and written in by an
@@ -170,9 +171,14 @@ private[evidence] object EvidenceBundleRepo:
     if w.merged.attestations.nonEmpty then
       w.asLocal {
         w.merged.attestations.foreach { f =>
-          if f.drop.value then sql"DELETE FROM attestations WHERE uid = ${f.uid}".update.run()
-          else sql"""UPDATE attestations SET char_start = ${f.anchor.map(_.start)}, char_end = ${f.anchor.map(_.end)},
-                    chunk_ord = ${f.chunkOrd} WHERE uid = ${f.uid}""".update.run()
+          if f.drop.value then
+            Unused(sql"DELETE FROM attestations WHERE uid = ${f.uid}".update.run(), Unused.Why.Idempotent)
+          else
+            Unused(
+              sql"""UPDATE attestations SET char_start = ${f.anchor.map(_.start)}, char_end = ${f.anchor.map(_.end)},
+                    chunk_ord = ${f.chunkOrd} WHERE uid = ${f.uid}""".update.run(),
+              Unused.Why.Idempotent
+            )
         }
       }
 

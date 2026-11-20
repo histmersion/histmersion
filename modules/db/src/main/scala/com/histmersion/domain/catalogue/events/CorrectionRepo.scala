@@ -11,6 +11,7 @@ import com.histmersion.api.catalogue.Correction
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.api.checks.Lint
 import com.histmersion.util.json.RawJson.equality
+import com.histmersion.util.database.Unused
 
 /** CORRECTIONS BY HAND ([[Corrections]]): a person's value for one field of a target an importer writes, with what
   * upstream said then and at the last refresh. Generic over the target kind; the events are the first target
@@ -41,8 +42,10 @@ private[events] object CorrectionRepo:
       DbCon
   ): Unit =
     if value == upstreamValue then
-      val _ =
-        sql"""DELETE FROM corrections WHERE target_kind = $kind AND target_id = $id AND field = $field""".update.run()
+      Unused(
+        sql"DELETE FROM corrections WHERE target_kind = $kind AND target_id = $id AND field = $field".update.run(),
+        Unused.Why.Idempotent
+      )
     else
       val (v, u) = (value.noSpaces, upstreamValue.noSpaces)
       val _ = sql"""INSERT INTO corrections (target_kind, target_id, field, value, upstream, upstream_value)
@@ -64,8 +67,11 @@ private[events] object CorrectionRepo:
       now.get(c.field).map { up =>
         val o = Corrections.reconcile(c.valueJson, c.upstreamValueJson, up)
         val (st, upNow) = (Corrections.status(o), up.noSpaces)
-        val _ = sql"""UPDATE corrections SET status = $st, upstream_now = $upNow::jsonb, checked_at = now(),
-                updated_at = CASE WHEN status = $st THEN updated_at ELSE now() END WHERE id = ${c.id}""".update.run()
+        Unused(
+          sql"""UPDATE corrections SET status = $st, upstream_now = $upNow::jsonb, checked_at = now(),
+                updated_at = CASE WHEN status = $st THEN updated_at ELSE now() END WHERE id = ${c.id}""".update.run(),
+          Unused.Why.Held
+        )
         (c, o)
       }
     }

@@ -33,6 +33,7 @@ import com.histmersion.api.Api
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.data.TableName
 import com.histmersion.util.database.Timestamps
+import com.histmersion.util.database.Unused
 
 /** What a collection remembers of its merges (docs/research-merge-import.md §6.1, milestone M7):
   * `merge list | show | ledger` read `merges`, `merge_ledger`, `uid_aliases` and `merge_decisions`; the web review
@@ -236,7 +237,7 @@ object MergeRepo:
     session(bundle)
 
   def dropSession(bundle: BundleName)(using DbCon): Unit =
-    val _ = (sql"DELETE FROM merge_sessions WHERE bundle = $bundle".update.run())
+    Unused(sql"DELETE FROM merge_sessions WHERE bundle = $bundle".update.run(), Unused.Why.Idempotent)
 
   // ── what an import and a merge write (in the caller's transaction) ─────────────────────────────
 
@@ -304,14 +305,20 @@ object MergeRepo:
   /** The records a merge dropped, as tombstones. */
   def tombstone(dropped: List[(UUID, Bundle.Kind, UUID)])(using DbCon): Unit =
     dropped.foreach { (u, k, origin) =>
-      sql"""INSERT INTO tombstones (uid, kind, origin) VALUES ($u, ${k.wire}, $origin)
-            ON CONFLICT (uid) DO NOTHING""".update.run()
+      Unused(
+        sql"""INSERT INTO tombstones (uid, kind, origin) VALUES ($u, ${k.wire}, $origin)
+            ON CONFLICT (uid) DO NOTHING""".update.run(),
+        Unused.Why.Idempotent
+      )
     }
 
   /** A merge's own change of rows it folded into: their clocks move. */
   def touch(table: TableName, uids: List[UUID])(using DbCon): Unit =
-    sql"UPDATE ${SqlLiteral(table.value)} SET updated_at = now() WHERE uid = ANY(${uids.map(u => u.toString)}::uuid[])".update
-      .run()
+    Unused(
+      sql"UPDATE ${SqlLiteral(table.value)} SET updated_at = now() WHERE uid = ANY(${uids.map(u => u.toString)}::uuid[])".update
+        .run(),
+      Unused.Why.Idempotent
+    )
 
   /** One redirect per folded record: the bundle's uid names the survivor here. */
   def redirect(folds: List[Fold], mergeId: UUID)(using DbCon): Unit =

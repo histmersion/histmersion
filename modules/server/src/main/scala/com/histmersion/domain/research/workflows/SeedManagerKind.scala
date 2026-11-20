@@ -38,6 +38,7 @@ import com.histmersion.domain.automation.Approval
 import com.histmersion.domain.research.articles.ArticlesControllers
 import com.histmersion.domain.ManagerPolicy.Item
 import com.histmersion.util.database.WritePermit
+import com.histmersion.util.database.Unused
 
 /** The `seed:<goal>` manager kind (propose-articles, then one article-compile item per article a person approved — a
   * compiled article is queued for the review manager — and the goal's plan), as research contributes it: over its
@@ -135,7 +136,7 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
           )
         )
         val review = ManagerLight.Id(ReviewId)
-        val _ = c.ensure(Kind.Review, review, None)
+        Unused(c.ensure(Kind.Review, review, None), Unused.Why.Idempotent)
         c.chainReview(
           review,
           Slug.assume(item.target.value),

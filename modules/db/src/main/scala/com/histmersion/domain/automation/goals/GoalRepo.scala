@@ -18,6 +18,7 @@ import com.histmersion.api.RowCount
 import com.histmersion.api.personal.UnreadPage
 import com.histmersion.domain.DeepTime
 import com.histmersion.util.identity.AliasTable
+import com.histmersion.util.database.Unused
 
 object GoalRepo:
 
@@ -130,24 +131,42 @@ object GoalRepo:
           )
         )
       else
-        p.title.foreach(v => sql"UPDATE goals SET title = $v, updated_at = now() WHERE slug = $slug".update.run())
-        p.status.foreach(v => sql"UPDATE goals SET status = $v, updated_at = now() WHERE slug = $slug".update.run())
-        p.notes.foreach(v => sql"UPDATE goals SET notes = $v, updated_at = now() WHERE slug = $slug".update.run())
+        p.title.foreach(v =>
+          Unused(sql"UPDATE goals SET title = $v, updated_at = now() WHERE slug = $slug".update.run(), Unused.Why.Held)
+        )
+        p.status.foreach(v =>
+          Unused(sql"UPDATE goals SET status = $v, updated_at = now() WHERE slug = $slug".update.run(), Unused.Why.Held)
+        )
+        p.notes.foreach(v =>
+          Unused(sql"UPDATE goals SET notes = $v, updated_at = now() WHERE slug = $slug".update.run(), Unused.Why.Held)
+        )
         p.tags.foreach { v =>
-          sql"""UPDATE goals SET tags = $v::text[],
-                updated_at = now() WHERE slug = $slug""".update.run()
+          Unused(
+            sql"""UPDATE goals SET tags = $v::text[],
+                updated_at = now() WHERE slug = $slug""".update.run(),
+            Unused.Why.Held
+          )
         }
         p.regions.foreach { v =>
-          sql"""UPDATE goals SET regions = $v::text[],
-                updated_at = now() WHERE slug = $slug""".update.run()
+          Unused(
+            sql"""UPDATE goals SET regions = $v::text[],
+                updated_at = now() WHERE slug = $slug""".update.run(),
+            Unused.Why.Held
+          )
         }
         p.parentSlug.foreach(v =>
-          sql"UPDATE goals SET parent_slug = $v, updated_at = now() WHERE slug = $slug".update.run()
+          Unused(
+            sql"UPDATE goals SET parent_slug = $v, updated_at = now() WHERE slug = $slug".update.run(),
+            Unused.Why.Held
+          )
         )
         // a cap of 0 (or less) clears it: the runs fall back to the server default
         p.budgetUsd.foreach { v =>
           val usd = Option.when(v.value > 0)(BigDecimal(v.value))
-          sql"UPDATE goals SET budget_usd = $usd, updated_at = now() WHERE slug = $slug".update.run()
+          Unused(
+            sql"UPDATE goals SET budget_usd = $usd, updated_at = now() WHERE slug = $slug".update.run(),
+            Unused.Why.Held
+          )
         }
         // a bound given alone replaces that bound; the other stays as stored ([[RangeSql.merge]])
         val storedRaw = sql"SELECT ${RangeSql.cols(sql"period")} FROM goals WHERE slug = $slug"
@@ -209,8 +228,8 @@ object GoalRepo:
         )
       )
     else
-      sql"DELETE FROM goal_aliases WHERE alias = $newSlug".update.run()
-      sql"UPDATE goals SET slug = $newSlug WHERE slug = $oldSlug".update.run()
+      Unused(sql"DELETE FROM goal_aliases WHERE alias = $newSlug".update.run(), Unused.Why.Idempotent)
+      Unused(sql"UPDATE goals SET slug = $newSlug WHERE slug = $oldSlug".update.run(), Unused.Why.Held)
       sql"""INSERT INTO goal_aliases (alias, goal_slug) VALUES ($oldSlug, $newSlug)
             ON CONFLICT (alias) DO UPDATE SET goal_slug = EXCLUDED.goal_slug""".update.run()
       Right(())

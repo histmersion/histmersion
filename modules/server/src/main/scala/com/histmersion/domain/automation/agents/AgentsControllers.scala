@@ -69,6 +69,7 @@ import com.histmersion.util.jobs.Job
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.Title
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.database.Unused
 
 /** The ONE implementation of the embedded-agent operations (docs/research-embedded-agents.md): the model check, the
   * probe and (through [[Engine]]) pipeline runs. REST ([[AgentsRoutes]]) and the CLI reach it; it is held as
@@ -262,11 +263,15 @@ final class AgentsControllers(
       val paused = java.util.concurrent.atomic.AtomicInteger(0)
       // on the renewing thread when the lease comes later: an operation of its own there (no unit, so the threads it
       // starts inherit no epoch)
-      lease.start { () =>
-        maintenance.writing:
-          paused.set(engine.start())
-          managers.start()
-      }
+      Unused(
+        lease.start { () =>
+          maintenance.writing {
+            paused.set(engine.start())
+            managers.start()
+          }
+        },
+        Unused.Why.Reported
+      )
       paused.get
 
   // ── the generated runtime trees ────────────────────────────────────────────────────────────────
@@ -1187,10 +1192,11 @@ final class AgentsControllers(
   )(using WritePermit): Either[Api.Error, ApprovalInfo] =
     approvals.decide(id, decision, req.note.map(n => DomainApproval.Note(n.value))).map { a =>
       // a blocking approval: the run waiting on it goes back to the queue (it applies the decision)
-      if a.approvalKind.exists(_.blocking.value) then a.runId.foreach(r => engine.wake(DomainRun.Id.assume(r.value)))
+      if a.approvalKind.exists(_.blocking.value) then
+        a.runId.foreach(r => Unused(engine.wake(DomainRun.Id.assume(r.value)), Unused.Why.Idempotent))
       // an approved plan of articles: its seeding manager gets one compile item per article (the item
       // held for it is settled by the next tick, which the nudge brings forward)
-      if a.approvalKind.contains(ApprovalKind.ArticlePlan) then { val _ = managers.applyPlan(a) }
+      if a.approvalKind.contains(ApprovalKind.ArticlePlan) then { Unused(managers.applyPlan(a), Unused.Why.Reported) }
       if a.approvalKind.exists(_.aboutSubject) then managers.nudge()
       a
     }

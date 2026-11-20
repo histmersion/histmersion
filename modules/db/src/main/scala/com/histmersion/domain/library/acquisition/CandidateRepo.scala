@@ -15,6 +15,7 @@ import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.Title
 import com.histmersion.domain.AuthorName
+import com.histmersion.util.database.Unused
 
 /** The deterministic new-source search's store (V099, #3761): each goal's watches with their watermarks, and the
   * candidates found, one per goal and DOI. Every method runs on the connection it is given.
@@ -79,14 +80,16 @@ private[acquisition] object CandidateRepo:
   def upsert(c: Source.Candidate)(using DbCon): Boolean =
     val existed =
       sql"SELECT 1 FROM source_candidates WHERE goal = ${c.goal} AND doi = ${c.doi}".query[Int].run().nonEmpty
-    val _ =
+    Unused(
       sql"""INSERT INTO source_candidates (goal, doi, title, year, authors, venue, abstract, is_oa, arxiv_id, found_by)
                     VALUES (${c.goal}, ${c.doi}, ${c.title}, ${c.year}, ${c.authors}::text[], ${c.venue}, ${c.abstractText},
                             ${c.isOa}, ${c.arxivId}, ${c.foundBy}::text[])
                     ON CONFLICT (goal, doi) DO UPDATE SET last_seen = now(),
                       found_by = (SELECT array_agg(DISTINCT f) FROM unnest(source_candidates.found_by || EXCLUDED.found_by) f),
                       abstract = coalesce(source_candidates.abstract, EXCLUDED.abstract),
-                      is_oa = source_candidates.is_oa OR EXCLUDED.is_oa""".update.run()
+                      is_oa = source_candidates.is_oa OR EXCLUDED.is_oa""".update.run(),
+      Unused.Why.Idempotent
+    )
     !existed
 
   /** The DOIs a goal has candidates for already (any state): a sweep does not count them as new. */

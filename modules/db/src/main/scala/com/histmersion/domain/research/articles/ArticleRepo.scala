@@ -35,6 +35,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.personal.UnreadPage
 import com.histmersion.domain.library.sources.CitekeyMillis
 import com.histmersion.domain.automation.Goal
+import com.histmersion.util.database.Unused
 
 /** Magnum codecs for the article wire DTOs (the types live in `core`, which knows nothing about JDBC). */
 given DbCodec[Backlink] = DbCodec.derived
@@ -143,8 +144,11 @@ private[articles] object ArticleRepo:
     */
   private def write(a: Article)(using DbCon): Unit =
     // Snapshot the PREVIOUS version before the update overwrites it.
-    sql"""INSERT INTO article_versions (slug, body, summary, updated_at)
-          SELECT slug, body, summary, updated_at FROM articles WHERE slug = ${a.slug}""".update.run()
+    Unused(
+      sql"""INSERT INTO article_versions (slug, body, summary, updated_at)
+          SELECT slug, body, summary, updated_at FROM articles WHERE slug = ${a.slug}""".update.run(),
+      Unused.Why.Idempotent
+    )
     val periodLit = RangeSql.literal(a.period)
     val filter = filterJson(a)
     val reasons = reasonsJson(a)
@@ -165,7 +169,7 @@ private[articles] object ArticleRepo:
     linkRows(slug.value, body.value)
 
   private def linkRows(slug: String, body: String)(using DbCon): Unit =
-    sql"DELETE FROM article_links WHERE src_slug = $slug".update.run()
+    Unused(sql"DELETE FROM article_links WHERE src_slug = $slug".update.run(), Unused.Why.Idempotent)
     val written =
       Article.Links.targets(WikiLinks.Body(body)).filter(_.value != slug) // an article does not link to itself
     if written.nonEmpty then
@@ -180,8 +184,11 @@ private[articles] object ArticleRepo:
         .map((from, to) => from.value -> to.value)
       val targets = written.map(t => known.get(t.value).fold(t)(Article.Link.Target(_))).distinct
       val links = Article.Links.classify(targets, t => known.values.toSet.contains(t.value))
-      val _ = batchUpdate(links)(l => sql"""INSERT INTO article_links (src_slug, target_kind, target)
-              VALUES ($slug, ${l.targetKind}, ${l.target}) ON CONFLICT DO NOTHING""".update)
+      Unused(
+        batchUpdate(links)(l => sql"""INSERT INTO article_links (src_slug, target_kind, target)
+              VALUES ($slug, ${l.targetKind}, ${l.target}) ON CONFLICT DO NOTHING""".update),
+        Unused.Why.Idempotent
+      )
 
   /** Retarget wikilinks in every article whose body or summary mentions `needle` (case-insensitive) — the article half
     * of a citekey rename — and the coverage reasons (V066) keyed by a moved citekey. Each changed article goes through
@@ -246,10 +253,13 @@ private[articles] object ArticleRepo:
         )
       )
     else
-      sql"DELETE FROM article_aliases WHERE alias = $newSlug".update.run()
-      sql"UPDATE articles SET slug = $newSlug WHERE slug = $oldSlug".update.run()
-      sql"""UPDATE article_links SET target = $newSlug
-            WHERE target_kind = 'article' AND target = $oldSlug""".update.run()
+      Unused(sql"DELETE FROM article_aliases WHERE alias = $newSlug".update.run(), Unused.Why.Idempotent)
+      Unused(sql"UPDATE articles SET slug = $newSlug WHERE slug = $oldSlug".update.run(), Unused.Why.Held)
+      Unused(
+        sql"""UPDATE article_links SET target = $newSlug
+            WHERE target_kind = 'article' AND target = $oldSlug""".update.run(),
+        Unused.Why.Idempotent
+      )
       val moved = retargetLinks(
         Article.Link.Target(oldSlug.value),
         t => Option.when(t.value == oldSlug.value)(Article.Link.Target(newSlug.value))
@@ -258,9 +268,12 @@ private[articles] object ArticleRepo:
             ON CONFLICT (alias) DO UPDATE SET slug = EXCLUDED.slug""".update.run()
       // a goal linked to the article follows it (goal_links has no foreign key: a link may name a
       // record that is gone)
-      sql"""UPDATE goal_links SET ref = $newSlug WHERE kind = 'article' AND ref = $oldSlug
+      Unused(
+        sql"""UPDATE goal_links SET ref = $newSlug WHERE kind = 'article' AND ref = $oldSlug
             AND NOT EXISTS (SELECT 1 FROM goal_links g2 WHERE g2.goal_slug = goal_links.goal_slug
-                            AND g2.kind = 'article' AND g2.ref = $newSlug)""".update.run()
+                            AND g2.kind = 'article' AND g2.ref = $newSlug)""".update.run(),
+        Unused.Why.Idempotent
+      )
       Right(moved.map(_._1))
 
   /** `histmersion articles rename`: a new slug, the old one kept as an alias (V042); every `[[old]]` in other articles

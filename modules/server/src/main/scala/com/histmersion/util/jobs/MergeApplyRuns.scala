@@ -43,7 +43,8 @@ object MergeApplyRuns:
     def start(bundle: Sha256, planHash: MergeRow.PlanHash)(using WritePermit): Job.Id =
       Transactor(ds).write(JobRepo.startMergeApply(MergeRepo.BundleName(bundle.value), planHash))
     def finish(id: Job.Id, outcome: Either[Problems, MergeApplyResult])(using WritePermit): Unit =
-      Transactor(ds).write(JobRepo.finishMergeApply(id, outcome))
+      if !Transactor(ds).write(JobRepo.finishMergeApply(id, outcome)) then
+        scribe.warn(s"merge apply $id ended, but its row was no longer running (a restart failed it): left as it is")
     def status(id: Job.Id): Option[MergeApplyJob] = Transactor(ds).read(JobRepo.mergeApply(id))
 
   /** One run as the in-memory twin keeps it. */

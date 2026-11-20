@@ -2,6 +2,7 @@ package com.histmersion
 package domain.automation.worklists
 
 import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.Text.sentences
 import io.scalaland.chimney.dsl.*
 import hearth.kindlings.optics.syntax.*
 
@@ -97,6 +98,26 @@ object WorkListControllers:
 
   private def bad(message: Problem): Api.Error = Api.Error(message)
 
+  /** The code of a refusal for an item that is not there. */
+  private val NotFound: Api.Error.Code = Api.Error.Code(Write.CodeNotFound)
+
+  extension (lists: WorkListControllers)
+    /** A line the server writes on the worklog itself (a digest, a sweep's summary, a migration): `in` added to `log`.
+      * A refusal (a restore holds the database, the text is empty) is logged with why, never dropped.
+      */
+    def logLine(in: QueueAdd): Unit =
+      lists
+        .add(ListName("log"), in)
+        .left
+        .foreach(e => scribe.warn(s"a worklog line was not written: ${e.problems.sentences.mkString("; ")}"))
+
+    /** An item removed from its list by the server; one already gone is no news, any other refusal is logged. */
+    def removeItem(id: QueueItemId): Unit =
+      lists.delete(id) match
+        case Left(e) if !e.code.contains(NotFound) =>
+          scribe.warn(s"a work-list item was not removed: ${e.problems.sentences.mkString("; ")}")
+        case _ => ()
+
   def error(e: QueueError): Api.Error = e match
     case QueueError.NotFound(_) =>
-      Api.Error(e.problem, Some(Api.Error.Code(Write.CodeNotFound)))
+      Api.Error(e.problem, Some(NotFound))

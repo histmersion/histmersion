@@ -84,7 +84,7 @@ object Migrate:
     */
   def run(ds: DataSource): Version =
     ensureRole(ds, QueryRole)
-    val _ = squashHistory(ds)
+    Unused(squashHistory(ds), Unused.Why.Reported)
     retrying(MigrateAttempts)(flyway(ds).migrate())
     current(ds).getOrElse(Version("?"))
 
@@ -126,12 +126,13 @@ object Migrate:
                   s"build from before the squash, which brings it to $SquashedAt, then with this one"
               )
             else
-              val _ = st.executeUpdate("DELETE FROM flyway_schema_history")
-              val _ = st.executeUpdate(
-                s"""INSERT INTO flyway_schema_history
+              Unused(st.executeUpdate("DELETE FROM flyway_schema_history"), Unused.Why.Idempotent)
+              Unused(
+                st.executeUpdate(s"""INSERT INTO flyway_schema_history
                    |  (installed_rank, version, description, type, script, checksum, installed_by, execution_time, success)
                    |VALUES (1, '${SquashedAt.value}', '<< Flyway Baseline >>', 'BASELINE', '<< Flyway Baseline >>', NULL,
-                   |        current_user, 0, true)""".stripMargin
+                   |        current_user, 0, true)""".stripMargin),
+                Unused.Why.Reported
               )
               c.commit()
               scribe.info(s"migration history before the squash replaced by a baseline at $SquashedAt")

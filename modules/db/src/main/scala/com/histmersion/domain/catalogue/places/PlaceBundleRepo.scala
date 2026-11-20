@@ -18,6 +18,7 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.util.data.exchange.PlanQuestions
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.util.database.Timestamps
+import com.histmersion.util.database.Unused
 
 /** The places as a bundle carries them (docs/research-merge-import.md §4, §7.3): this collection's own places with
   * their names, parents, links and types, their old ids and the site types refined from outside — read out in a
@@ -261,32 +262,47 @@ private[places] object PlaceBundleRepo:
     }
     places.foreach { p =>
       val id = sql"SELECT id FROM places WHERE uid = ${p.uid}".query[String].run().head
-      sql"DELETE FROM place_names WHERE place_id = $id AND import_source = ''".update.run()
-      sql"DELETE FROM place_relations WHERE child_id = $id".update.run()
-      sql"DELETE FROM place_links WHERE place_id = $id".update.run()
-      sql"DELETE FROM place_types WHERE place_id = $id".update.run()
+      Unused(
+        sql"DELETE FROM place_names WHERE place_id = $id AND import_source = ''".update.run(),
+        Unused.Why.Idempotent
+      )
+      Unused(sql"DELETE FROM place_relations WHERE child_id = $id".update.run(), Unused.Why.Idempotent)
+      Unused(sql"DELETE FROM place_links WHERE place_id = $id".update.run(), Unused.Why.Idempotent)
+      Unused(sql"DELETE FROM place_types WHERE place_id = $id".update.run(), Unused.Why.Idempotent)
       p.names.foreach { n =>
-        sql"""INSERT INTO place_names (place_id, name, lang, period)
+        Unused(
+          sql"""INSERT INTO place_names (place_id, name, lang, period)
               VALUES ($id, ${n.name}, ${n.lang.map(_.value).getOrElse("")},
                 ${rangeLiteral(n.period)}::int8range)
-              ON CONFLICT DO NOTHING""".update.run()
+              ON CONFLICT DO NOTHING""".update.run(),
+          Unused.Why.Idempotent
+        )
       }
       p.relations.foreach { r =>
         val range = rangeOrAll(r.period)
-        sql"""INSERT INTO place_relations (child_id, parent_id, kind, period)
+        Unused(
+          sql"""INSERT INTO place_relations (child_id, parent_id, kind, period)
               SELECT $id, ${placeHere(BPlaceRow.Id(r.parentId.value))}, ${r.kind}, $range::int8range
               WHERE EXISTS (SELECT 1 FROM places WHERE id = ${placeHere(BPlaceRow.Id(r.parentId.value))})
-              ON CONFLICT DO NOTHING""".update.run()
+              ON CONFLICT DO NOTHING""".update.run(),
+          Unused.Why.Idempotent
+        )
       }
       p.links.foreach { l =>
-        sql"""INSERT INTO place_links (place_id, scheme, external_id, relation)
-              VALUES ($id, ${l.scheme}, ${l.externalId}, ${l.relation}) ON CONFLICT DO NOTHING""".update.run()
+        Unused(
+          sql"""INSERT INTO place_links (place_id, scheme, external_id, relation)
+              VALUES ($id, ${l.scheme}, ${l.externalId}, ${l.relation}) ON CONFLICT DO NOTHING""".update.run(),
+          Unused.Why.Idempotent
+        )
       }
       p.types.foreach { t =>
         val range = rangeOrAll(t.period)
-        sql"""INSERT INTO place_types (place_id, type_label, period, citekey)
+        Unused(
+          sql"""INSERT INTO place_types (place_id, type_label, period, citekey)
               VALUES ($id, ${t.typeLabel}, $range::int8range, ${t.citekey})
-              ON CONFLICT DO NOTHING""".update.run()
+              ON CONFLICT DO NOTHING""".update.run(),
+          Unused.Why.Idempotent
+        )
       }
     }
 
@@ -294,11 +310,14 @@ private[places] object PlaceBundleRepo:
   def placeAliasesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     w.es.placeAliases.foreach { a =>
-      sql"""INSERT INTO place_aliases (alias, place_id, created_at)
+      Unused(
+        sql"""INSERT INTO place_aliases (alias, place_id, created_at)
             SELECT ${a.alias}, id, ${a.createdAt}::timestamptz FROM places
             WHERE uid = ${a.placeUid} AND id <> ${a.alias}
               AND NOT EXISTS (SELECT 1 FROM places WHERE id = ${a.alias})
-            ON CONFLICT (alias) DO NOTHING""".update.run()
+            ON CONFLICT (alias) DO NOTHING""".update.run(),
+        Unused.Why.Idempotent
+      )
     }
 
   /** The site types the other side refined: the newer answer wins, as for the event-catalogue sets. */

@@ -76,6 +76,19 @@ class GuidelineRatchetSuite extends munit.FunSuite:
         case Right(used) => RatchetBase.announce(used).foreach(println)
     }
 
+  test(
+    "G94: no write's answer is dropped: discardedOutcome is pinned at 0 (no finding, and never a row an accept " +
+      "script could raise); an answer nobody needs says why with Unused (acceptedOutcome)"
+  ):
+    val dropped = Inventory.findings.filter(_.rule == Ratchet.Pinned)
+    assert(
+      dropped.isEmpty,
+      s"a write's answer dropped (handle it: a conflict, a typed problem, a log line; or say why with " +
+        s"util.database.Unused):\n${dropped.map(f => s"  ${f.path}:${f.line} ${f.detail}").mkString("\n")}"
+    )
+    val listed = Ratchet.parse(Files.readAllLines(RatchetFile, UTF_8).asScala.toList)
+    assert(!listed.keys.exists(_.rule == Ratchet.Pinned), s"$RatchetFile lists ${Ratchet.Pinned}: it is pinned at 0")
+
   test("findings are counted per rule, module and scope"):
     val findings = List(
       Finding("G44", "core", "modules/core/src/main/scala/A.scala", 3, "value:Citekey"),
@@ -161,6 +174,9 @@ object GuidelineRatchetSuite:
       }
 
   object Ratchet:
+    /** The rule pinned at 0 (G94): a write's answer dropped without a reason. */
+    val Pinned: String = "discardedOutcome"
+
     val Header: String =
       "# rule\tmodule\tscope\tcount — guideline findings (GuidelineInventory) that may only go down (G57); " +
         "regenerate with HISTMERSION_UPDATE_ARCHITECTURE=1 sbt 'server/testOnly *GuidelineRatchetSuite'"

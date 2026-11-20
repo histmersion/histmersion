@@ -12,6 +12,7 @@ import java.util.UUID
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.Sha256
 import com.histmersion.util.database.Timestamps
+import com.histmersion.util.database.Unused
 
 /** The figures as a bundle carries them (docs/research-merge-import.md §4): this collection's assets with their
   * source's uid, read out in uid order, the bytes of each one a blob — and written in by an import, the metadata of the
@@ -92,12 +93,15 @@ private[assets] object AssetBundleRepo:
                 license = EXCLUDED.license, geom = EXCLUDED.geom, period = EXCLUDED.period,
                 updated_at = EXCLUDED.updated_at""".update.run()
       case None =>
-        sql"""UPDATE assets SET origin = ${a.origin}, name = ${a.name}, mime = ${a.mime}, width = ${a.width},
+        Unused(
+          sql"""UPDATE assets SET origin = ${a.origin}, name = ${a.name}, mime = ${a.mime}, width = ${a.width},
                 height = ${a.height}, kind = ${a.kind}, caption = ${a.caption}, license = ${a.license},
                 geom = ST_GeomFromEWKB(decode(${a.geom}, 'hex')),
                 period = ${rangeLiteral(a.period)}::int8range,
                 updated_at = ${a.updatedAt}::timestamptz
-              WHERE uid = ${a.uid}""".update.run()
+              WHERE uid = ${a.uid}""".update.run(),
+          Unused.Why.Held
+        )
 
   // ── a merge ──────────────────────────────────────────────────────────────────────────────────
 

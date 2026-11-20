@@ -6,6 +6,7 @@ import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Managers
 import com.histmersion.util.database.Timestamps
+import com.histmersion.util.database.Unused
 
 /** The autopilot's one row (V096, docs/research-process-managers.md "As built: the autopilot"): the switch, who turned
   * it and when, the managers it paused when it was turned off, and when it last ensured the goals' managers and ran its
@@ -67,7 +68,10 @@ object AutopilotRepo:
 
   /** The row made again before a write, if it was deleted (the migration makes it; reads never do). */
   private def made()(using DbCon): Unit =
-    val _ = sql"INSERT INTO agent_autopilot (id) VALUES (true) ON CONFLICT DO NOTHING".update.run()
+    Unused(
+      sql"INSERT INTO agent_autopilot (id) VALUES (true) ON CONFLICT DO NOTHING".update.run(),
+      Unused.Why.Idempotent
+    )
 
   /** Switch it; `paused` = the managers it paused (turning it off) or none (turning it on). True = it changed (it was
     * the other way).
@@ -82,27 +86,30 @@ object AutopilotRepo:
   def ensured(now: java.time.Instant)(using DbCon): Unit =
     val t = now.toString
     made()
-    val _ = sql"UPDATE agent_autopilot SET last_ensure_at = $t::timestamptz WHERE id".update.run()
+    Unused(sql"UPDATE agent_autopilot SET last_ensure_at = $t::timestamptz WHERE id".update.run(), Unused.Why.Held)
 
   /** Ensure again at the next tick (a plan created sub-goals, a goal was added). */
   def ensureSoon()(using DbCon): Unit =
     made()
-    val _ = sql"UPDATE agent_autopilot SET last_ensure_at = NULL WHERE id".update.run()
+    Unused(sql"UPDATE agent_autopilot SET last_ensure_at = NULL WHERE id".update.run(), Unused.Why.Held)
 
   def backedUp(now: java.time.Instant)(using DbCon): Unit =
     val t = now.toString
     made()
-    val _ = sql"UPDATE agent_autopilot SET last_backup_at = $t::timestamptz WHERE id".update.run()
+    Unused(sql"UPDATE agent_autopilot SET last_backup_at = $t::timestamptz WHERE id".update.run(), Unused.Why.Held)
 
   def linted(now: java.time.Instant)(using DbCon): Unit =
     val t = now.toString
     made()
-    val _ = sql"UPDATE agent_autopilot SET last_lint_at = $t::timestamptz WHERE id".update.run()
+    Unused(sql"UPDATE agent_autopilot SET last_lint_at = $t::timestamptz WHERE id".update.run(), Unused.Why.Held)
 
   /** A paused manager the autopilot resumed (it no longer counts as one it paused). */
   def unpaused(managerId: Managers.ManagerInfo.Id)(using DbCon): Unit =
     made()
-    val _ = sql"UPDATE agent_autopilot SET paused = array_remove(paused, $managerId) WHERE id".update.run()
+    Unused(
+      sql"UPDATE agent_autopilot SET paused = array_remove(paused, $managerId) WHERE id".update.run(),
+      Unused.Why.Held
+    )
 
   /** The scheduler's strategy a person chose (V100): (name, by, at); None = agents.scheduler.strategy. */
   def strategy()(using DbCon): Option[(StrategyName, Row.ChangedBy, Row.ChangedAt)] =
@@ -117,9 +124,11 @@ object AutopilotRepo:
   /** Set (Some) or clear (None: back to the config's) the scheduler's strategy. */
   def setStrategy(name: Option[StrategyName], by: Row.ChangedBy)(using DbCon): Unit =
     made()
-    val _ =
-      sql"""UPDATE agent_autopilot SET scheduler_strategy = $name, scheduler_by = $by, scheduler_at = now() WHERE id""".update
-        .run()
+    Unused(
+      sql"UPDATE agent_autopilot SET scheduler_strategy = $name, scheduler_by = $by, scheduler_at = now() WHERE id".update
+        .run(),
+      Unused.Why.Held
+    )
 
   /** When the daily approval digest was last written (V101), if ever. */
   def lastDigest()(using DbCon): Option[Digest] =
@@ -133,7 +142,7 @@ object AutopilotRepo:
   def digested(now: java.time.Instant)(using DbCon): Unit =
     val t = now.toString
     made()
-    val _ = sql"UPDATE agent_autopilot SET last_digest_at = $t::timestamptz WHERE id".update.run()
+    Unused(sql"UPDATE agent_autopilot SET last_digest_at = $t::timestamptz WHERE id".update.run(), Unused.Why.Held)
 
   /** Draining (V102): since when, by whom, and when it was first seen drained; None = not draining. */
   def drain()(using DbCon): Option[(DrainSince, Row.ChangedBy, Option[DrainedAt])] =
@@ -157,5 +166,7 @@ object AutopilotRepo:
   def drained(at: Option[java.time.Instant])(using DbCon): Unit =
     val t = at.map(_.toString)
     made()
-    val _ =
-      sql"UPDATE agent_autopilot SET drained_at = $t::timestamptz WHERE id AND drain_since IS NOT NULL".update.run()
+    Unused(
+      sql"UPDATE agent_autopilot SET drained_at = $t::timestamptz WHERE id AND drain_since IS NOT NULL".update.run(),
+      Unused.Why.Idempotent
+    )

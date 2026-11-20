@@ -30,6 +30,7 @@ import com.histmersion.util.data.exchange.Bundle
 import com.histmersion.api.Api
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.database.Unused
 
 /** What `bundle import` and `merge apply` write for each kind of record (docs/research-merge-import.md §7.3): the
   * [[Writer]] whose steps the carried kinds register. The transaction, the lock, the plan's checks, the blob pass and
@@ -143,8 +144,10 @@ object BundleImport:
           val t = tombs(d.uid)
           if d.decision == Decision.Delete then
             val table = kinds.tableOf(t.kind).value
-            sql"DELETE FROM ${SqlLiteral(table)} WHERE uid = ${t.uid.toString}::uuid".update
-              .run()
+            Unused(
+              sql"DELETE FROM ${SqlLiteral(table)} WHERE uid = ${t.uid.toString}::uuid".update.run(),
+              Unused.Why.Idempotent
+            )
           sql"""INSERT INTO tombstones (uid, kind, origin, deleted_at)
                 VALUES (${t.uid}, ${t.kind.wire}, ${t.origin}, ${t.deletedAt}::timestamptz)
                 ON CONFLICT (uid) DO UPDATE SET deleted_at = EXCLUDED.deleted_at""".update.run()

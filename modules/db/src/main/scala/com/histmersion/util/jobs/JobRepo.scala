@@ -28,6 +28,7 @@ import com.histmersion.util.data.exchange.MergeRepo
 import com.histmersion.util.data.exchange.MergeRow
 import com.histmersion.api.exchange.ExchangeJobKinds
 import com.histmersion.api.exchange.MergePlan
+import com.histmersion.util.database.Unused
 
 /** OCR jobs (plan §1.8). The row is the durable part of a job; the queue itself is in memory, which is precisely why a
   * restart must reconcile: [[failInterrupted]] turns every `running` row into `failed: interrupted` at startup, so no
@@ -102,7 +103,7 @@ object JobRepo:
   /** Replace a job's [[JobDetail]] — e.g. an init job adding the periods it skipped. */
   def setDetail(id: Job.Id, detail: JobDetail)(using DbCon): Unit =
     val js = json(detail)
-    val _ = (sql"UPDATE jobs SET detail = $js::jsonb WHERE id = $id".update.run())
+    Unused(sql"UPDATE jobs SET detail = $js::jsonb WHERE id = $id".update.run(), Unused.Why.Held)
 
   def get(id: Job.Id)(using DbCon): Option[JobInfo] =
     sql"$select WHERE id = $id".query[JobRow].run().headOption.map(toInfo)
@@ -191,9 +192,11 @@ object JobRepo:
 
   /** Free-text progress on a `running` job — what the CLI's progress line prints. */
   def progress(id: Job.Id, text: JobRow.Progress)(using DbCon): Unit =
-    val _ =
+    Unused(
       sql"UPDATE jobs SET progress = $text, updated_at = now() WHERE id = $id AND status = ${JobState.Running.wire}".update
-        .run()
+        .run(),
+      Unused.Why.Idempotent
+    )
 
   /** Apply a [[JobState]] transition, guarded BY THE STORE as well as by the state machine: the `status = <from>`
     * predicate makes the update a compare-and-set, so two workers cannot both claim the same job. Returns the new
@@ -255,7 +258,7 @@ object JobRepo:
       .map(Pipeline.Version(_))
 
   def runHeartbeat(kind: Job.Kind, id: Run.Id)(using DbCon): Unit =
-    val _ = sql"UPDATE jobs SET heartbeat_at = now() WHERE id = $id AND kind = $kind".update.run()
+    Unused(sql"UPDATE jobs SET heartbeat_at = now() WHERE id = $id AND kind = $kind".update.run(), Unused.Why.Held)
 
   /** How many runs of `kind` are in one of `statuses`. */
   def runsIn(kind: Job.Kind, statuses: (RunRow.Status, RunRow.Status))(using DbCon): RowCount =
@@ -301,16 +304,24 @@ object JobRepo:
       .map((id, pipeline, model, error) => (id, pipeline, model, error.map(Problems.asOne)))
 
   def runProgress(kind: Job.Kind, id: Run.Id, text: JobRow.Progress)(using DbCon): Unit =
-    val _ = sql"UPDATE jobs SET progress = $text, updated_at = now() WHERE id = $id AND kind = $kind".update.run()
+    Unused(
+      sql"UPDATE jobs SET progress = $text, updated_at = now() WHERE id = $id AND kind = $kind".update.run(),
+      Unused.Why.Held
+    )
 
   def runWarning(kind: Job.Kind, id: Run.Id, w: WarningText)(using DbCon): Unit =
-    val _ = sql"""UPDATE jobs SET warnings = array_append(warnings, $w), updated_at = now()
-                  WHERE id = $id AND kind = $kind""".update.run()
+    Unused(
+      sql"""UPDATE jobs SET warnings = array_append(warnings, $w), updated_at = now()
+                  WHERE id = $id AND kind = $kind""".update.run(),
+      Unused.Why.Held
+    )
 
   def runBudget(kind: Job.Kind, id: Run.Id, usd: Option[BigDecimal], tokens: Option[TokenBudget])(using DbCon): Unit =
-    val _ =
+    Unused(
       sql"""UPDATE jobs SET budget_usd = coalesce($usd, budget_usd), budget_tokens = coalesce($tokens, budget_tokens),
-                          updated_at = now() WHERE id = $id AND kind = $kind""".update.run()
+                          updated_at = now() WHERE id = $id AND kind = $kind""".update.run(),
+      Unused.Why.Held
+    )
 
   /** The `running` runs (but `except`) moved to `paused` with `error`, returned with their origin; then the `queued`
     * ones (but `except`), oldest first.
@@ -352,16 +363,15 @@ object JobRepo:
     Job.Id.assume(id)
 
   /** Record how a merge apply ended: `done` with its report (applied or refused), or `failed` with why. A row a restart
-    * already failed is left as it is.
+    * already failed is left as it is: false then.
     */
-  def finishMergeApply(id: Job.Id, outcome: Either[Problems, MergeApplyResult])(using DbCon): Unit =
+  def finishMergeApply(id: Job.Id, outcome: Either[Problems, MergeApplyResult])(using DbCon): Boolean =
     val (status, error, result) = outcome match
       case Right(r) => (JobState.Done, None, Some(Jsonb.write(r)))
       case Left(e)  => (JobState.Failed, Some(e.toNonEmpty), None)
-    val _ =
-      sql"""UPDATE jobs SET status = ${status.wire}, error = $error, result = $result::jsonb, updated_at = now()
-            WHERE id = $id AND kind = ${ExchangeJobKinds.MergeApply.kind} AND status = ${JobState.Running.wire}""".update
-        .run()
+    sql"""UPDATE jobs SET status = ${status.wire}, error = $error, result = $result::jsonb, updated_at = now()
+          WHERE id = $id AND kind = ${ExchangeJobKinds.MergeApply.kind} AND status = ${JobState.Running.wire}""".update
+      .run() > 0
 
   /** One merge apply as the API answers it; `None` for an unknown id (or another kind of job). The time so far of a
     * running one is measured against the database's clock.

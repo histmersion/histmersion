@@ -16,6 +16,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.research.Slug
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.research.Coverage
+import com.histmersion.util.database.Unused
 
 /** The critique checklist's stored reasons (V091): why one disagreement between two sources does not bear on an
   * article. The checklist itself is computed (`core.Critiques`); only the reasons are stored. Every method runs on the
@@ -141,7 +142,10 @@ private[articles] object CritiqueRepo:
           sql"""DELETE FROM article_critique_reasons
                 WHERE slug = $slug AND ((src = $a AND dst = $b) OR (src = $b AND dst = $a))""".update.run()
         case Change.Set(s, d, reason, who) =>
-          sql"DELETE FROM article_critique_reasons WHERE slug = $slug AND src = $d AND dst = $s".update.run()
+          Unused(
+            sql"DELETE FROM article_critique_reasons WHERE slug = $slug AND src = $d AND dst = $s".update.run(),
+            Unused.Why.Idempotent
+          )
           sql"""INSERT INTO article_critique_reasons (slug, src, dst, reason, set_by) VALUES ($slug, $s, $d, $reason, $who)
                 ON CONFLICT (slug, src, dst) DO UPDATE SET reason = EXCLUDED.reason, set_by = EXCLUDED.set_by, set_at = now()""".update
             .run()

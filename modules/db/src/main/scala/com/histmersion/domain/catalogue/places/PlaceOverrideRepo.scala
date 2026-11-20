@@ -18,6 +18,7 @@ import com.histmersion.api.catalogue.Place
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.catalogue.Place.Rationale as PlaceRationale
+import com.histmersion.util.database.Unused
 
 /** A person's kind, period and point for a place (V080, V081): `histmersion places set`, MCP `place_override`.
   *
@@ -103,9 +104,12 @@ private[places] object PlaceOverrideRepo:
                   )
                 )
               case Some((k, p, su, hadPoint, srcGeom)) =>
-                val _ = sql"""UPDATE places SET kind = $k, period = $p::int8range, start_unknown = $su,
+                Unused(
+                  sql"""UPDATE places SET kind = $k, period = $p::int8range, start_unknown = $su,
                               geom = CASE WHEN $hadPoint THEN ST_GeomFromText($srcGeom::text, 4326) ELSE geom END
-                            WHERE id = $id""".update.run()
+                            WHERE id = $id""".update.run(),
+                  Unused.Why.Held
+                )
                 Right(())
           case Place.OverrideEdit.Put(_, _, _, Some(_)) if before.hasShape.value =>
             Left(
@@ -128,7 +132,8 @@ private[places] object PlaceOverrideRepo:
             val lat = point.map(_.lat)
             // a new override remembers what the place says now (the source's); a changed one keeps that —
             // and the source's geometry is remembered the first time a point is set
-            val _ = sql"""INSERT INTO place_overrides (place_id, kind, period, reason, source_kind, source_period,
+            Unused(
+              sql"""INSERT INTO place_overrides (place_id, kind, period, reason, source_kind, source_period,
                                                      source_start_unknown, point, source_geom)
                         SELECT p.id, $kind::text,
                                $range::int8range,
@@ -147,16 +152,21 @@ private[places] object PlaceOverrideRepo:
                           point = coalesce(EXCLUDED.point, place_overrides.point),
                           source_geom = CASE WHEN place_overrides.point IS NULL THEN EXCLUDED.source_geom
                                              ELSE place_overrides.source_geom END,
-                          updated_at = now()""".update.run()
+                          updated_at = now()""".update.run(),
+              Unused.Why.Held
+            )
             // a point set by hand replaces a point only: a shape a source gave since then stays
-            val _ = sql"""UPDATE places p SET kind = coalesce(o.kind, p.kind), period = coalesce(o.period, p.period),
+            Unused(
+              sql"""UPDATE places p SET kind = coalesce(o.kind, p.kind), period = coalesce(o.period, p.period),
                           start_unknown = CASE WHEN o.period IS NULL THEN p.start_unknown ELSE false END,
                           geom = CASE WHEN o.point IS NOT NULL AND (p.geom IS NULL OR GeometryType(p.geom) = 'POINT')
                                       THEN o.point ELSE p.geom END
-                        FROM place_overrides o WHERE o.place_id = p.id AND p.id = $id""".update.run()
+                        FROM place_overrides o WHERE o.place_id = p.id AND p.id = $id""".update.run(),
+              Unused.Why.Held
+            )
             Right(())
         done.map { _ =>
-          val _ = FindingPlaceRepo.materialisePlaces(List(id), toleranceKm)
+          Unused(FindingPlaceRepo.materialisePlaces(List(id), toleranceKm), Unused.Why.Reported)
           val after = rowOf(id).getOrElse(before)
           val now = linked(id)
           val lost = sql"""SELECT count(*)::int FROM unnest($had::text[]) AS f(id)
@@ -231,11 +241,12 @@ private[places] object PlaceOverrideRepo:
         )
       case (Some(fl), Some(il)) =>
         val had = (linked(from) ++ linked(into)).distinct
-        val _ = PlaceReviewRepo.mergeIn(
-          domain.catalogue.Place.Id.assume(from.value),
-          domain.catalogue.Place.Id.assume(into.value)
+        Unused(
+          PlaceReviewRepo
+            .mergeIn(domain.catalogue.Place.Id.assume(from.value), domain.catalogue.Place.Id.assume(into.value)),
+          Unused.Why.Held
         )
-        val _ = FindingPlaceRepo.materialisePlaces(List(into), toleranceKm)
+        Unused(FindingPlaceRepo.materialisePlaces(List(into), toleranceKm), Unused.Why.Reported)
         Right(
           Place.Gone(
             Place.Id(from.value),
@@ -295,7 +306,7 @@ private[places] object PlaceOverrideRepo:
             val _ = sql"""INSERT INTO place_removals (id, label, reason) VALUES ($id, $label, $reason::text)
                         ON CONFLICT (id) DO UPDATE SET label = EXCLUDED.label, reason = EXCLUDED.reason,
                           removed_at = now()""".update.run()
-            val _ = sql"DELETE FROM places WHERE id = $id".update.run()
+            Unused(sql"DELETE FROM places WHERE id = $id".update.run(), Unused.Why.Held)
             Right(
               Place.Gone(
                 Place.Id(id.value),

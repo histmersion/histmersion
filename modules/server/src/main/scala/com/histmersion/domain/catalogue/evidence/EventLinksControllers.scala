@@ -56,6 +56,7 @@ import com.histmersion.api.jobs.JobKinds
 import com.histmersion.util.jobs.BackgroundJob
 import com.histmersion.util.jobs.Job
 import com.histmersion.api.catalogue.EvidenceJobKinds
+import com.histmersion.util.database.Unused
 
 /** The links of events to the corpus as REST, MCP and the CLI reach them: the sources proposed as discussing an event
   * (computed on the first ask, stored after) and their confirmation — an attestation from a passage of the source's
@@ -209,7 +210,7 @@ final class EventLinksControllers(
                 case None     => confirm(tail, ok, no :+ s"$raw: no such source")
                 case Some(ck) =>
                   if existing.exists(_.citekey.value == ck.value) then
-                    val _ = links.setStatus(eid, ck, status(Event.LinkStatus.Confirmed))
+                    Unused(links.setStatus(eid, ck, status(Event.LinkStatus.Confirmed)), Unused.Why.Idempotent)
                     confirm(tail, ok, no :+ s"$ck: already attests it")
                   else
                     EventMatcher.attestationPassage(passagesIn(ck, names)) match
@@ -236,7 +237,7 @@ final class EventLinksControllers(
                                 List(EventLinkCandidate.Reasons("confirmed by hand"))
                               )
                           )
-                          val _ = links.setStatus(eid, ck, status(Event.LinkStatus.Confirmed))
+                          Unused(links.setStatus(eid, ck, status(Event.LinkStatus.Confirmed)), Unused.Why.Idempotent)
                         confirm(tail, ok :+ a, no)
         val (attested, refused) = confirm(req.confirm.map(_.value.trim).filter(_.nonEmpty).distinct, Nil, Nil)
         val rejected = req.reject

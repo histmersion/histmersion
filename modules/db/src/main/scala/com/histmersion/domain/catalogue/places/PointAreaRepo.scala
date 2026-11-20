@@ -14,6 +14,7 @@ import com.histmersion.api.checks.Lint
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.domain.library.Citekey
+import com.histmersion.util.database.Unused
 
 /** `lint --rule place-imported-point-area` (2026-10-09): the GeoNames and Wikidata places of an area kind stored with
   * only a point — what the importer no longer creates ([[Gazetteer.dropsPointArea]]). The listing reads; [[remove]]
@@ -204,17 +205,19 @@ private[places] object PointAreaRepo:
   private[places] def deletePlacesIn(ids: List[Place.Id])(using DbCon): RowCount =
     if ids.isEmpty then RowCount(0)
     else
-      val _ = sql"DELETE FROM finding_places WHERE place_id = ANY($ids::text[])".update.run()
-      val _ = sql"DELETE FROM place_names WHERE place_id = ANY($ids::text[])".update.run()
-      val _ = sql"DELETE FROM place_links WHERE place_id = ANY($ids::text[])".update.run()
-      val _ = sql"DELETE FROM place_descriptions WHERE place_id = ANY($ids::text[])".update.run()
-      val _ = sql"DELETE FROM place_types WHERE place_id = ANY($ids::text[])".update.run()
-      val _ = sql"DELETE FROM place_footprints WHERE place_id = ANY($ids::text[])".update.run()
-      val _ =
+      Unused(sql"DELETE FROM finding_places WHERE place_id = ANY($ids::text[])".update.run(), Unused.Why.Idempotent)
+      Unused(sql"DELETE FROM place_names WHERE place_id = ANY($ids::text[])".update.run(), Unused.Why.Idempotent)
+      Unused(sql"DELETE FROM place_links WHERE place_id = ANY($ids::text[])".update.run(), Unused.Why.Idempotent)
+      Unused(sql"DELETE FROM place_descriptions WHERE place_id = ANY($ids::text[])".update.run(), Unused.Why.Idempotent)
+      Unused(sql"DELETE FROM place_types WHERE place_id = ANY($ids::text[])".update.run(), Unused.Why.Idempotent)
+      Unused(sql"DELETE FROM place_footprints WHERE place_id = ANY($ids::text[])".update.run(), Unused.Why.Idempotent)
+      Unused(
         sql"DELETE FROM place_relations WHERE child_id = ANY($ids::text[]) OR parent_id = ANY($ids::text[])".update
-          .run()
-      val _ = sql"DELETE FROM place_aliases WHERE place_id = ANY($ids::text[])".update.run()
-      val _ = sql"DELETE FROM place_overrides WHERE place_id = ANY($ids::text[])".update.run()
+          .run(),
+        Unused.Why.Idempotent
+      )
+      Unused(sql"DELETE FROM place_aliases WHERE place_id = ANY($ids::text[])".update.run(), Unused.Why.Idempotent)
+      Unused(sql"DELETE FROM place_overrides WHERE place_id = ANY($ids::text[])".update.run(), Unused.Why.Idempotent)
       RowCount(sql"DELETE FROM places WHERE id = ANY($ids::text[])".update.run())
 
   /** The ids of `source`'s places the importer no longer keeps: an area kind, only a point, and no evidence naming it
@@ -306,6 +309,9 @@ private[places] object PointAreaRepo:
       val cks = held.map(_._2).toSet ++ byName
       cks.toList.sorted
         .foreach(ck =>
-          FindingPlaceRepo.materialiseFor(ck, FindingPlacement.Implementation.ToleranceKm(toleranceKm.value))
+          Unused(
+            FindingPlaceRepo.materialiseFor(ck, FindingPlacement.Implementation.ToleranceKm(toleranceKm.value)),
+            Unused.Why.Reported
+          )
         )
       (n, RowCount(held.size), cks)

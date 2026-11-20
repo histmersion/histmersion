@@ -41,6 +41,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.domain.PlanGoal
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
+import com.histmersion.util.database.Unused
 
 /** `plan-goal <goal>` (docs/research-embedded-agents.md §7 P3, §14): the planner proposes sub-goals, search queries and
   * candidate works for one goal, as a typed answer. Code checks the vocabulary (slugs, DOIs, caps), looks every DOI up
@@ -244,11 +245,14 @@ final class PlanGoalPipeline(
                 false
     }
     plan.queries.foreach(q =>
-      goals.link(
-        slug,
-        DomainGoal.LinkKind.SearchQuery,
-        GoalLink.Ref(q.value),
-        Some(GoalLink.Note("from the approved plan"))
+      Unused(
+        goals.link(
+          slug,
+          DomainGoal.LinkKind.SearchQuery,
+          GoalLink.Ref(q.value),
+          Some(GoalLink.Note("from the approved plan"))
+        ),
+        Unused.Why.Idempotent
       )
     )
     val queued = workLists
@@ -260,11 +264,14 @@ final class PlanGoalPipeline(
       .toMap
     val (inCorpus, outside) = plan.works.partition(w => w.inCorpus.value && w.citekey.isDefined)
     inCorpus.foreach(w =>
-      goals.link(
-        slug,
-        DomainGoal.LinkKind.Source,
-        GoalLink.Ref(w.citekey.get.value),
-        Option(w.why).filter(w => s"$w".nonEmpty).map(y => GoalLink.Note(s"$y"))
+      Unused(
+        goals.link(
+          slug,
+          DomainGoal.LinkKind.Source,
+          GoalLink.Ref(w.citekey.get.value),
+          Option(w.why).filter(w => s"$w".nonEmpty).map(y => GoalLink.Note(s"$y"))
+        ),
+        Unused.Why.Idempotent
       )
     )
     val items = outside.flatMap { w =>
@@ -285,7 +292,7 @@ final class PlanGoalPipeline(
             .map(_.id)
         ) match
         case Right(id) =>
-          goals.link(
+          goals.linkIfThere(
             slug,
             DomainGoal.LinkKind.QueueItem,
             GoalLink.Ref(id.value.toString),

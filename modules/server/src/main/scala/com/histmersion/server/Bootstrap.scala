@@ -1,6 +1,6 @@
 package com.histmersion
 package server
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.util.problem.{Legacy, Problem}
 import io.scalaland.chimney.dsl.*
 
@@ -95,16 +95,16 @@ final class Bootstrap(
   // ── init ─────────────────────────────────────────────────────────────────────────────────────
 
   /** On a server start (`init.auto`): the init job for whichever table is empty — or, for the periods, whose bundled
-    * seed is newer than the one applied — or nothing.
+    * seed is newer than the one applied — or nothing. An import that could not start (another init job holds the slot)
+    * is logged with why.
     */
-  def autoStart()(using WritePermit): Option[JobInfo] =
+  def autoStart()(using WritePermit): Unit =
     val p = plan(fetch = false, onlyEmpty = true)
-    if p.isEmpty then None
-    else
+    if !p.isEmpty then
       scribe.info(
         s"on start (an empty table, or a newer bundled seed): importing the ${InitPlan.describe(p)} from $dataDir in the background"
       )
-      start(p).toOption
+      start(p).left.foreach(e => scribe.warn(s"first-run import not started: ${e.problems.sentences.mkString("; ")}"))
 
   /** `POST /api/init` — the bundled gazetteer and period presets (re-imported: every write is an upsert) and, with
     * `fetch`, the network sources in `init.fetch-sources`.

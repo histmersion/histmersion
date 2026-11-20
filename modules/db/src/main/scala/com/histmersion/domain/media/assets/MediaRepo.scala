@@ -34,6 +34,7 @@ import com.histmersion.domain.DeepTime
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Year
+import com.histmersion.util.database.Unused
 
 /** Pictures (#1446, V082): one `assets` row each — a provider's with `provider` set instead of a `citekey`, a source's
   * figure with its citekey — and the places, events and sources they are shown on (`media_links`); the read paths every
@@ -108,21 +109,32 @@ private[assets] object MediaRepo:
   private def placeAt(uid: MediaItemRow.Uid, target: (Target.TargetType, Target.Id))(using DbCon): Unit =
     val (tt, id) = target
     if tt == PictureTarget.Source.wire then () // a source's picture (a cover) is not on the map
-    else if tt == PictureTarget.Place.wire then sql"""UPDATE assets a SET geom = coalesce(a.geom, t.g),
+    else if tt == PictureTarget.Place.wire then
+      Unused(
+        sql"""UPDATE assets a SET geom = coalesce(a.geom, t.g),
               period = coalesce(a.period, CASE WHEN lower_inf(t.p) AND upper_inf(t.p) THEN NULL ELSE t.p END)
             FROM (SELECT ST_PointOnSurface(coalesce(geom_clipped, geom)) AS g, period AS p FROM places WHERE id = $id) t
-            WHERE a.uid = $uid::uuid""".update.run()
-    else sql"""UPDATE assets a SET geom = coalesce(a.geom, t.g),
+            WHERE a.uid = $uid::uuid""".update.run(),
+        Unused.Why.Idempotent
+      )
+    else
+      Unused(
+        sql"""UPDATE assets a SET geom = coalesce(a.geom, t.g),
               period = coalesce(a.period, CASE WHEN lower_inf(t.p) AND upper_inf(t.p) THEN NULL ELSE t.p END)
             FROM (SELECT ST_PointOnSurface(coalesce(e.geom, p.geom)) AS g, e.outer_span AS p
                   FROM events e LEFT JOIN places p ON p.id = e.place_id WHERE e.id = $id) t
-            WHERE a.uid = $uid::uuid""".update.run()
+            WHERE a.uid = $uid::uuid""".update.run(),
+        Unused.Why.Idempotent
+      )
     ()
 
   /** Re-read rights on a stored picture whose bytes are kept (a refresh that does not re-download). */
   def refreshRights(uid: MediaItemRow.Uid, r: Rights)(using DbCon): Unit =
-    val _ = sql"""UPDATE assets SET license = ${r.license}, license_url = ${r.licenseUrl}, author = ${r.author},
-            credit = ${r.credit}, retrieved_at = now() WHERE uid = $uid::uuid""".update.run()
+    Unused(
+      sql"""UPDATE assets SET license = ${r.license}, license_url = ${r.licenseUrl}, author = ${r.author},
+            credit = ${r.credit}, retrieved_at = now() WHERE uid = $uid::uuid""".update.run(),
+      Unused.Why.Idempotent
+    )
 
   /** Link a stored picture to a place or event in a role — with `basis`, why a collection's record is tied to it
     * (V094). Returns whether the link is new.
@@ -154,8 +166,11 @@ private[assets] object MediaRepo:
   )(using
       DbCon
   ): Unit =
-    val _ = sql"""UPDATE assets SET thumb = $bytes, thumb_mime = $mime, thumb_width = $width, thumb_height = $height
-          WHERE uid = $uid::uuid""".update.run()
+    Unused(
+      sql"""UPDATE assets SET thumb = $bytes, thumb_mime = $mime, thumb_width = $width, thumb_height = $height
+          WHERE uid = $uid::uuid""".update.run(),
+      Unused.Why.Idempotent
+    )
 
   /** Make `uid` the source's picture in `role` — replacing the one it had in that role. */
   def setSourcePicture(
@@ -164,8 +179,11 @@ private[assets] object MediaRepo:
       role: MediaRole.Wire,
       property: Option[SetSourcePictureProperty]
   )(using DbCon): Unit =
-    val _ = sql"""DELETE FROM media_links WHERE target_type = 'source' AND target_id = $citekey AND role = $role
-            AND asset_uid <> $uid::uuid""".update.run()
+    Unused(
+      sql"""DELETE FROM media_links WHERE target_type = 'source' AND target_id = $citekey AND role = $role
+            AND asset_uid <> $uid::uuid""".update.run(),
+      Unused.Why.Idempotent
+    )
     val _ = sql"""INSERT INTO media_links (asset_uid, target_type, target_id, role, property, item, rank)
           VALUES ($uid::uuid, 'source', $citekey, $role, $property, NULL, 0)
           ON CONFLICT (asset_uid, target_type, target_id, role) DO UPDATE SET property = EXCLUDED.property""".update

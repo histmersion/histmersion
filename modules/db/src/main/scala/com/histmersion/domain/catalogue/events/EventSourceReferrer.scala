@@ -9,6 +9,7 @@ import com.histmersion.util.database.NewtypeColumns.given
 
 import com.augustnagro.magnum.*
 import com.histmersion.api.library.Rename
+import com.histmersion.util.database.Unused
 
 /** The events a source is the primary source of, the relations and participants sourced to it (they refuse a delete),
   * and the datings it gives (they go with it).
@@ -65,4 +66,7 @@ final class EventSourceReferrer extends SourceReferrer:
     )
 
   override def deleting(source: SourceKeys, report: DeleteReport)(using DbCon): Unit =
-    sql"DELETE FROM event_datings WHERE citekey = ANY(${source.keys}::text[])".update.run()
+    Unused(
+      sql"DELETE FROM event_datings WHERE citekey = ANY(${source.keys}::text[])".update.run(),
+      Unused.Why.Idempotent
+    )

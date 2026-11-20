@@ -29,6 +29,7 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.CodexRetention
 import com.histmersion.util.database.Timestamps
+import com.histmersion.util.database.Unused
 
 /** The store of the process managers (V087, docs/research-process-managers.md §2): managers, their work items, hints
   * (and which runs they reached), events, and the agent lease. All state lives in these rows, so a restart picks up
@@ -435,14 +436,17 @@ object ManagerRepo:
             .run()
             .head
         if reopen then
-          sql"""UPDATE manager_items SET
+          Unused(
+            sql"""UPDATE manager_items SET
                   status = CASE WHEN status IN ('done', 'stopped', 'failed', 'cancelled') THEN 'pending' ELSE status END,
                   attempts = CASE WHEN status IN ('done', 'stopped', 'failed', 'cancelled') THEN 0 ELSE attempts END,
                   failures = CASE WHEN status IN ('done', 'stopped', 'failed', 'cancelled') THEN 0 ELSE failures END,
                   not_before = CASE WHEN status IN ('done', 'stopped', 'failed', 'cancelled') THEN NULL ELSE not_before END,
                   outcome = CASE WHEN status IN ('done', 'stopped', 'failed', 'cancelled') THEN NULL ELSE outcome END,
                   priority = greatest(priority, $priority), origin = ${origin.wire}, updated_at = now()
-                WHERE id = $id""".update.run()
+                WHERE id = $id""".update.run(),
+            Unused.Why.Held
+          )
         (id, false)
 
   /** The pending items whose time has come, the most urgent first: (id, target, priority, not-before). */
@@ -1062,8 +1066,14 @@ object ManagerRepo:
   /** In the dispatch transaction: the hints a run was given, and the once-hints among them retired. */
   def usedIn(hints: List[ManagerHint], runId: Run.Id)(using DbCon): Unit =
     hints.foreach { h =>
-      sql"""INSERT INTO manager_hint_uses (hint_id, run_id) VALUES (${h.id}, $runId) ON CONFLICT DO NOTHING""".update
-        .run()
+      Unused(
+        sql"INSERT INTO manager_hint_uses (hint_id, run_id) VALUES (${h.id}, $runId) ON CONFLICT DO NOTHING".update
+          .run(),
+        Unused.Why.Idempotent
+      )
       if !h.standing.value then
-        sql"UPDATE manager_hints SET retired_at = now() WHERE id = ${h.id} AND retired_at IS NULL".update.run()
+        Unused(
+          sql"UPDATE manager_hints SET retired_at = now() WHERE id = ${h.id} AND retired_at IS NULL".update.run(),
+          Unused.Why.Idempotent
+        )
     }

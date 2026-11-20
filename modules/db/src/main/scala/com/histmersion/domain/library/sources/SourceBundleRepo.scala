@@ -39,6 +39,7 @@ import com.histmersion.domain.library.sources.referrers.SourceReferrers
 import com.histmersion.util.ocr.Chunker
 import com.histmersion.api.exchange.Bundle.uidEquality
 import com.histmersion.util.database.Timestamps
+import com.histmersion.util.database.Unused
 
 /** The sources as a bundle carries them (docs/research-merge-import.md §4): each source with its findings, its edges in
   * and out, its parked edges, its old citekeys and its assessment, read out in a deterministic order (by uid; owned
@@ -234,10 +235,11 @@ private[sources] object SourceBundleRepo:
         val before = w.local.sources.find(_.uid == s.uid)
         if before.flatMap(_.bodySha256) != s.bodySha256 then
           if s.bodySha256.isEmpty then
-            sql"UPDATE sources SET ocr_markdown = NULL WHERE uid = ${s.uid}".update.run()
-            sql"DELETE FROM source_chunks WHERE citekey = ${s.citekey}".update.run()
+            Unused(sql"UPDATE sources SET ocr_markdown = NULL WHERE uid = ${s.uid}".update.run(), Unused.Why.Held)
+            Unused(sql"DELETE FROM source_chunks WHERE citekey = ${s.citekey}".update.run(), Unused.Why.Idempotent)
           else bodiesChanged(w) += s.uid
-        sql"""UPDATE sources SET origin = ${s.origin}, title = ${s.title}, authors = ${s.authors}::text[],
+        Unused(
+          sql"""UPDATE sources SET origin = ${s.origin}, title = ${s.title}, authors = ${s.authors}::text[],
                 doi = ${s.doi}, year = ${s.year}, venue = ${s.venue}, status = ${s.status.wire},
                 topics = ${s.topics}::text[], regions = ${s.regions}::text[], tags = ${s.tags}::text[],
                 period = ${rangeLiteral(s.period)}::int8range,
@@ -245,14 +247,24 @@ private[sources] object SourceBundleRepo:
                 cited_by_count = ${s.citedByCount}, influential_citations = ${s.influentialCitations},
                 added_date = ${s.addedDate}::date, sha256 = ${s.originalSha256},
                 updated_at = ${s.updatedAt}::timestamptz
-              WHERE uid = ${s.uid}""".update.run()
+              WHERE uid = ${s.uid}""".update.run(),
+          Unused.Why.Held
+        )
       w.touchSource(s.uid)
       // the ISBNs (doi and sha256 are derived from the row by V032's trigger)
-      sql"DELETE FROM source_identifiers WHERE source_uid = ${s.uid} AND scheme = 'isbn'".update.run()
+      Unused(
+        sql"DELETE FROM source_identifiers WHERE source_uid = ${s.uid} AND scheme = 'isbn'".update.run(),
+        Unused.Why.Idempotent
+      )
       s.isbns
         .getOrElse(Nil)
-        .foreach(i => sql"""INSERT INTO source_identifiers (source_uid, scheme, value) VALUES (${s.uid}, 'isbn', $i)
-              ON CONFLICT DO NOTHING""".update.run())
+        .foreach(i =>
+          Unused(
+            sql"""INSERT INTO source_identifiers (source_uid, scheme, value) VALUES (${s.uid}, 'isbn', $i)
+              ON CONFLICT DO NOTHING""".update.run(),
+            Unused.Why.Idempotent
+          )
+        )
     }
 
   /** A source's whole edge set travels with it: both sets are emptied for every source written, then its edges. */
@@ -260,14 +272,17 @@ private[sources] object SourceBundleRepo:
     given DbCon = w.transaction
     w.es.sources.filter(s => w.writes(s.uid)).foreach { s =>
       val ck = s.citekey
-      sql"DELETE FROM edges WHERE src = $ck".update.run()
-      sql"DELETE FROM unresolved_edges WHERE src = $ck".update.run()
+      Unused(sql"DELETE FROM edges WHERE src = $ck".update.run(), Unused.Why.Idempotent)
+      Unused(sql"DELETE FROM unresolved_edges WHERE src = $ck".update.run(), Unused.Why.Idempotent)
     }
     w.es.edges.filter(e => w.writes(e.srcUid)).foreach { e =>
       // a target deleted here: the edge is left out (reported by the reference check)
       w.citekeyHere(e.dstUid).foreach { dst =>
         val src = w.citekeyOf(e.srcUid)
-        sql"INSERT INTO edges (src, dst, kind) VALUES ($src, $dst, ${e.kind}) ON CONFLICT DO NOTHING".update.run()
+        Unused(
+          sql"INSERT INTO edges (src, dst, kind) VALUES ($src, $dst, ${e.kind}) ON CONFLICT DO NOTHING".update.run(),
+          Unused.Why.Idempotent
+        )
       }
     }
 
@@ -275,7 +290,10 @@ private[sources] object SourceBundleRepo:
     given DbCon = w.transaction
     w.es.unresolvedEdges.filter(e => w.writes(e.srcUid)).foreach { e =>
       Edge.Kind.fromWire(e.kind).foreach { k =>
-        val _ = SourceRepo.insertEdges(List(Edge(Citekey(w.citekeyOf(e.srcUid).value), Citekey(e.dst.value), k)))
+        Unused(
+          SourceRepo.insertEdges(List(Edge(Citekey(w.citekeyOf(e.srcUid).value), Citekey(e.dst.value), k))),
+          Unused.Why.Reported
+        )
       }
     }
 
@@ -314,16 +332,17 @@ private[sources] object SourceBundleRepo:
   def assessmentsIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     w.es.assessments.foreach { a =>
-      sql"""INSERT INTO assessments (citekey, checked_at, retracted, notices, cited_by, influential, verdict)
-            SELECT citekey, ${a.checkedAt}::timestamptz, ${a.retracted}, ${BundleFormat.print(
-          a.notices
-        )}::jsonb,
+      Unused(
+        sql"""INSERT INTO assessments (citekey, checked_at, retracted, notices, cited_by, influential, verdict)
+            SELECT citekey, ${a.checkedAt}::timestamptz, ${a.retracted}, ${BundleFormat.print(a.notices)}::jsonb,
                    ${a.citedBy}, ${a.influential}, ${a.verdict}
             FROM sources WHERE uid = ${a.sourceUid}
             ON CONFLICT (citekey) DO UPDATE SET checked_at = EXCLUDED.checked_at,
               retracted = EXCLUDED.retracted, notices = EXCLUDED.notices, cited_by = EXCLUDED.cited_by,
               influential = EXCLUDED.influential, verdict = EXCLUDED.verdict
-            WHERE assessments.checked_at < EXCLUDED.checked_at""".update.run()
+            WHERE assessments.checked_at < EXCLUDED.checked_at""".update.run(),
+        Unused.Why.Idempotent
+      )
     }
 
   /** What a merge changes in a body it took from the bundle: the figures it renamed. */
@@ -331,8 +350,11 @@ private[sources] object SourceBundleRepo:
     given DbCon = w.transaction
     w.merged.bodyRenames.foreach { (u, renames) =>
       renames.foreach { (from, to) =>
-        sql"""UPDATE sources SET ocr_markdown = replace(ocr_markdown, ${"assets/" + from}, ${"assets/" + to})
-              WHERE uid = $u""".update.run()
+        Unused(
+          sql"""UPDATE sources SET ocr_markdown = replace(ocr_markdown, ${"assets/" + from}, ${"assets/" + to})
+              WHERE uid = $u""".update.run(),
+          Unused.Why.Idempotent
+        )
       }
       bodiesChanged(w) += u
     }
@@ -346,10 +368,13 @@ private[sources] object SourceBundleRepo:
           .query[(domain.library.Citekey, Option[Chunker.ChunkMarkdown])]
           .run()
           .head
-      val _ = SourceRepo.replaceChunks(ck, md, Chunker.ChunkMaxChars(w.opts.chunkChars.value))
+      Unused(SourceRepo.replaceChunks(ck, md, Chunker.ChunkMaxChars(w.opts.chunkChars.value)), Unused.Why.Reported)
     }
     w.touchedSources.foreach { u =>
-      val _ = SourceRepo.placeFindingsIn(w.citekeyOf(u), GeocodeSettings.ToleranceKm(w.opts.toleranceKm.value))
+      Unused(
+        SourceRepo.placeFindingsIn(w.citekeyOf(u), GeocodeSettings.ToleranceKm(w.opts.toleranceKm.value)),
+        Unused.Why.Reported
+      )
     }
     w.insertedSources.foreach(u => SourceRepo.promote(w.citekeyOf(u)))
 

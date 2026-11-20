@@ -9,6 +9,7 @@ import com.histmersion.util.database.NewtypeColumns.given
 
 import com.augustnagro.magnum.*
 import com.histmersion.api.library.Rename
+import com.histmersion.util.database.Unused
 
 /** The attestations that name a source: those it makes (they go with it), and those of other sources whose target is
   * one of its findings, an edge from it or a dating it gives (they lose their target).
@@ -50,7 +51,8 @@ final class AttestationSourceReferrer extends SourceReferrer:
 
   override def deleting(source: SourceKeys, report: DeleteReport)(using DbCon): Unit =
     val gone = losing(source).map(_.toString)
-    if gone.nonEmpty then sql"DELETE FROM attestations WHERE id::text = ANY($gone::text[])".update.run()
+    if gone.nonEmpty then
+      Unused(sql"DELETE FROM attestations WHERE id::text = ANY($gone::text[])".update.run(), Unused.Why.Idempotent)
 
   /** Other sources' attestations whose target goes with the source. */
   private def losing(source: SourceKeys)(using DbCon): List[AttestationRepo.AttestationId] =

@@ -72,7 +72,7 @@ final class ApprovalDigestService(
     else
       val line = ApprovalDigest.line(digest(now))
       agents.autopilotRow.digested(now)
-      val _ = agents.workLists.add(WorkListControllers.ListName("log"), QueueAdd(QueueItem.Text(line.value.take(1000))))
+      agents.workLists.logLine(QueueAdd(QueueItem.Text(line.value.take(1000))))
       scribe.info(line.value)
       List("approval digest written")
 
@@ -161,10 +161,7 @@ final class ApprovalDigestService(
           ).flatten.mkString(", ")
           val line = s"approvals ${if d == Decision.Approve then "approved" else "rejected"} in bulk by $by ($what): " +
             s"${ok.size} of ${ms.size}" + (if bad.nonEmpty then s", ${bad.size} refused" else "") + s"; $left open left"
-          val _ = agents.workLists.add(
-            WorkListControllers.ListName("log"),
-            QueueAdd(QueueItem.Text(line.take(1000)))
-          )
+          agents.workLists.logLine(QueueAdd(QueueItem.Text(line.take(1000))))
           scribe.info(line)
         agents.managers.nudge()
         BulkResult(

@@ -8,6 +8,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.GoalFocus
 import com.histmersion.util.database.Timestamps
+import com.histmersion.util.database.Unused
 
 /** The autopilot's focus (V098, docs/research-process-managers.md "As built: the focus"): one `goal_focus` row per goal
   * it touched or a person pinned (active now, since and why; when and why it last left; a person's pin and priority), a
@@ -215,9 +216,11 @@ object FocusRepo:
   /** The goal left the active set now, `why`. */
   def left(slug: Goal.Slug, why: GoalFocus.Rationale, now: java.time.Instant)(using DbCon): Unit =
     val t = now.toString
-    val _ =
+    Unused(
       sql"""UPDATE goal_focus SET active = false, left_at = $t::timestamptz, left_why = $why, updated_at = now()
-            WHERE slug = $slug""".update.run()
+            WHERE slug = $slug""".update.run(),
+      Unused.Why.Idempotent
+    )
 
   /** A person's pin. False = no such goal. */
   def pin(slug: Goal.Slug, pinned: GoalRow.Pinned)(using DbCon): Boolean =
@@ -248,5 +251,8 @@ object FocusRepo:
 
   def setMaxOverride(n: Option[GoalFocus.Settings.Max])(using DbCon): Unit =
     val _ =
-      sql"INSERT INTO agent_autopilot (id) VALUES (true) ON CONFLICT DO NOTHING".update.run()
-      sql"UPDATE agent_autopilot SET max_active_goals = $n WHERE id".update.run()
+      Unused(
+        sql"INSERT INTO agent_autopilot (id) VALUES (true) ON CONFLICT DO NOTHING".update.run(),
+        Unused.Why.Idempotent
+      )
+      Unused(sql"UPDATE agent_autopilot SET max_active_goals = $n WHERE id".update.run(), Unused.Why.Held)

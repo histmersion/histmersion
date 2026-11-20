@@ -14,6 +14,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.DeepTime
 import com.histmersion.api.catalogue.Year
 import com.histmersion.util.database.given
+import com.histmersion.util.database.Unused
 
 /** The map's point layers cut into vector tiles (`GET /api/tiles/…`, [[TileGrid]]): each layer's selection in a tile's
   * box ([[siteCandidates]], [[EventSql.tileCandidates]], another domain's layer's — every item, never a limit), placed
@@ -59,9 +60,12 @@ private[maptiles] object TileRepo:
   def compact(grp: GroupName)(using DbCon): Unit =
     val locked = sql"SELECT pg_try_advisory_xact_lock(hashtext('histmersion.map_changes'))".query[Boolean].run().head
     if locked then
-      val _ = sql"""WITH d AS (DELETE FROM map_changes WHERE grp = $grp RETURNING weight)
+      Unused(
+        sql"""WITH d AS (DELETE FROM map_changes WHERE grp = $grp RETURNING weight)
                       INSERT INTO map_changes (grp, weight) SELECT $grp, sum(weight) FROM d HAVING count(*) > 0""".update
-        .run()
+          .run(),
+        Unused.Why.Idempotent
+      )
 
   /** The tile's box as a PostGIS envelope; a tile at the grid's top or bottom edge reaches the pole, so a place beyond
     * Web Mercator's last latitude is drawn on the edge rather than nowhere.

@@ -43,6 +43,9 @@ object GuidelineInventory {
     unguardedTransactions: List[String] = List("com/histmersion/util/database/Transactor#transact().",
       "com/histmersion/util/database/Transactor#autocommit().", "com/histmersion/util/database/Transactor.Session#transact().",
       "com/histmersion/util/database/Transactor.Session#autocommit().", "com/histmersion/util/database/WritePermit.standing()."),
+    // G94: the one way to drop a write's answer, with its reason (counted as acceptedOutcome): `Unused(…)` names the
+    // object (its apply is implied), `Unused.apply(…)` the method
+    unusedAnswer: String = "com/histmersion/util/database/Unused.",
     roleSuffixes: List[String] = List("Suite", "Spec", "Test", "Tests", "Service", "Repo", "Repository", "Controllers", "Controller",
       "Routes", "Row", "Rows", "Markdown", "Render", "Renderer", "Codec", "Codecs", "Cmd", "View", "Views", "Page", "Api", "Client",
       "Store", "Config", "Json", "Schema", "Fixtures", "Fixture", "Support", "Impl", "Ops", "Syntax", "Rule"),
@@ -111,6 +114,8 @@ object GuidelineInventory {
     "G60external" -> "`.value` of an outside text a problem carries (`util.problem.External.*`: an exception's message, a process's stderr, a reply's start, a plugin's or a model's words) outside a `render` boundary file and outside the newtype's own companion: outside text is shown at an edge, never read anywhere else",
     "G60unrecognised" -> "main code only: a construction of `util.problem.Problem.Stored.Unrecognised`, the text an older version stored that no case writes; only the stored column's reader (and the cases' examples) builds one",
     "G89unguarded" -> "main code only: a transaction opened without a write permit: a call of Magnum's `transact` (straight on a DataSource) outside util/database/Transactor.scala, or of the test-only `WritePermit.standing`. Since X4 the transactor's own entry points take the permit by type (`write`, `writeAutocommit`; the permit-less `transact` is protected, so a call of it, `Transactor#autocommit` or `Session#transact`/`#autocommit` no longer compiles and is still listed here should it come back)",
+    "discardedOutcome" -> "main code only (G94): a write's answer dropped. The answer: an Option, Either, Try, Boolean, Int, Long, Int[] or RowCount from Magnum's `Update#run` (and its Repo's insert/update/delete), JDBC's executeUpdate/executeBatch, or a project method that reaches the database (a `DbCon` or a `WritePermit` among its parameters). Dropped: `val _ = …`, a statement, the last expression of a dropped block, a branch of a dropped if/match/try, a `finally`, a loop's body, the body of a def declared `: Unit`, a by-name or function argument run for its effect (`foreach`, a Unit by-name, a Runnable), or the block a dropped call hands back (`write { … }`). The caller decides on the answer (a conflict, a typed problem, a log line), never silence",
+    "acceptedOutcome" -> "main code only (G94): a write's answer dropped with its reason, `Unused(answer, Unused.Why.<Idempotent|Held|Reported|ReadBack>)` (util/database/Unused.scala); the detail names the reason and the write. A ratchet: each new site is a reviewed reason",
     "G58raw" -> "raw SQL text:a call of an Sql operator that takes a String or an Sql.Text (Sql.raw, Sql.of, the constructor, `++ \"...\"`, wrap), or an Sql.Text built (also through an alias such as RawText/OfText), or Magnum's SqlLiteral(...)")
   val ironValue = "io/github/iltotore/iron/"
   val newtypeBase = "com/histmersion/Newtype#"
@@ -161,6 +166,12 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
   private val unclassified = new ConcurrentHashMap[String, (Int, String)]()
   private val stale = new ConcurrentLinkedQueue[String]()
   private val controller = policy.controllerFile.r
+  /** G94: each method's implementations (what overrides it), from the project's SemanticDB. */
+  private lazy val overriders: java.util.Map[String, List[String]] = {
+    val out = new java.util.HashMap[String, List[String]]()
+    index.values.asScala.foreach(i => i.overriddenSymbols.foreach(o => out.merge(o, List(i.symbol), (a, b) => a ++ b)))
+    out
+  }
 
   override def withConfiguration(c: Configuration): Configured[Rule] =
     c.conf.getOrElse("GuidelineInventory")(Policy()).map { p =>
@@ -523,6 +534,203 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
       case i: Term.ApplyInfix if rawSqlOperator(i.op.symbol) => report("G58raw", i, "operator:" + i.op.value)
     }
 
+    // ---- G94: where a value is dropped, and whether it is a write's answer ---------------------------------------
+    def wildcardVal(v: Defn.Val): Boolean = v.pats match { case List(_: Pat.Wildcard) => true; case _ => false }
+    def skipCasesBlock(p: Option[Tree]): Option[Tree] = p.flatMap { case b: Term.CasesBlock => b.parent; case other => Some(other) }
+    def calleeOf(fun: Term): Symbol = fun match {
+      case n: Term.Name => n.symbol
+      case Term.Select(_, n) => n.symbol
+      case Term.ApplyType(f, _) => calleeOf(f)
+      case a: Term.Apply => calleeOf(a.fun)
+      case _ => Symbol.None
+    }
+    /** `Unused(answer, why)`: an answer dropped with its reason, counted as `acceptedOutcome`, never a discard. */
+    def unusedAnswer(fun: Term): Boolean = calleeOf(fun).value.startsWith(policy.unusedAnswer)
+    def clausesOf(t: Term): List[Term.ArgClause] = t match { case x: Term.Apply => clausesOf(x.fun) :+ x.argClause; case _ => Nil }
+    def unwrapType(t: s.Type): s.Type = t match {
+      case b: s.ByNameType => unwrapType(b.tpe)
+      case r: s.RepeatedType => unwrapType(r.tpe)
+      case a: s.AnnotatedType => unwrapType(a.tpe)
+      case other => other
+    }
+    /** What a parameter's value gives when it is run: the result of a by-name, a function, a context function, a Runnable. */
+    def runResult(t: s.Type): Option[s.Type] = unwrapType(t) match {
+      case r: s.TypeRef if (r.symbol.startsWith("scala/Function") || r.symbol.startsWith("scala/ContextFunction")) && r.typeArguments.nonEmpty =>
+        Some(r.typeArguments.last)
+      case r: s.TypeRef if r.symbol == "java/lang/Runnable#" => lit("scala/Unit#")
+      case other => Some(other)
+    }
+    def isUnitType(t: s.Type): Boolean = typeSymbol(unwrapType(t)).value == "scala/Unit#"
+    def isTypeParameter(t: s.Type, method: Symbol): Boolean = unwrapType(t) match {
+      case r: s.TypeRef => r.symbol.startsWith(method.value) && r.symbol.endsWith("]") && r.prefix == s.Type.Empty
+      case _ => false
+    }
+    /** An argument whose value the call drops: a by-name or function parameter run for its effect (its result type is
+      * Unit, or a type parameter of a call that answers Unit, as `foreach`), or one the call hands back as its own result
+      * (`write { … }`, `guard(op) { … }`) while the call itself is dropped. */
+    def argumentDiscarded(clause: Term.ArgClause, arg: Tree): Boolean = clause.parent match {
+      case Some(a: Term.Apply) if (a.argClause eq clause) && unusedAnswer(a.fun) => false
+      case Some(a: Term.Apply) if a.argClause eq clause =>
+        val callee = calleeOf(a.fun)
+        val at = clausesOf(a).indexWhere(_ eq clause)
+        val index = clause.values.indexWhere(_ eq arg)
+        info(callee).map(_.signature) match {
+          case Some(m: s.MethodSignature) if at >= 0 && at < m.parameterLists.size && index >= 0 =>
+            val params = m.parameterLists(at).symlinks
+            val param = if (index < params.size) params.lift(index) else params.lastOption
+            param.flatMap(infoS).map(_.signature).collect { case v: s.ValueSignature => v.tpe }.flatMap(runResult).exists { result =>
+              isUnitType(result) ||
+                (isTypeParameter(result, callee) && isUnitType(m.returnType)) ||
+                (isTypeParameter(result, callee) && unwrapType(m.returnType) == unwrapType(result) && discarded(a))
+            }
+          // outside the project's SemanticDB (the standard library's `foreach`, Java's `forEach`): by name
+          case None => Set("foreach", "forEach")(callee.displayName)
+          case _ => false
+        }
+      case _ => false
+    }
+    /** The argument node a term is (a lambda written in braces is a block holding it). */
+    def asArgument(t: Tree): Tree = t.parent match {
+      case Some(b: Term.Block) if b.stats.size == 1 => b
+      case _ => t
+    }
+    def functionDiscarded(f: Tree): Boolean = {
+      val arg = asArgument(f)
+      arg.parent match {
+        case Some(c: Term.ArgClause) => argumentDiscarded(c, arg)
+        case _ => false
+      }
+    }
+    /** A term whose value nobody reads: `val _ = t`, a statement, the last one of a dropped block, a branch of a dropped
+      * if, match or try, a `finally`, a loop's body, a Unit def's body, an argument run for its effect. */
+    def discarded(t: Tree): Boolean = t.parent match {
+      case Some(v: Defn.Val) => (v.rhs eq t) && wildcardVal(v)
+      case Some(b: Term.Block) => !b.stats.lastOption.exists(_ eq t) || discarded(b)
+      case Some(_: Template.Body) | Some(_: Template) => t.is[Term]
+      case Some(i: Term.If) => ((i.thenp eq t) || (i.elsep eq t)) && discarded(i)
+      case Some(c: Case) => (c.body eq t) && (skipCasesBlock(c.parent) match {
+        case Some(m: Term.Match) => discarded(m)
+        case Some(tr: Term.Try) => discarded(tr)
+        case Some(pf: Term.PartialFunction) => functionDiscarded(pf)
+        case _ => false
+      })
+      case Some(tr: Term.Try) => tr.finallyp.exists(_ eq t) || ((tr.expr eq t) && discarded(tr))
+      case Some(f: Term.FunctionTerm) => (f.body eq t) && functionDiscarded(f)
+      case Some(f: Term.AnonymousFunction) => (f.body eq t) && functionDiscarded(f)
+      case Some(w: Term.While) => w.body eq t
+      case Some(d: Term.Do) => d.body eq t
+      case Some(f: Term.For) => f.body eq t
+      case Some(d: Defn.Def) => (d.body eq t) && d.decltpe.exists(_.syntax == "Unit")
+      case Some(c: Term.ArgClause) => !t.is[Term.FunctionTerm] && !t.is[Term.AnonymousFunction] && argumentDiscarded(c, t)
+      case _ => false
+    }
+    val dbConnection = "com/augustnagro/magnum/DbCon#"
+    val writePermit = "com/histmersion/util/database/WritePermit#"
+    val databaseHolders = Set("com/histmersion/util/database/Transactor#", "com/histmersion/util/data/maintenance/WriteGate#",
+      "com/histmersion/util/database/WritePermit.Gate#", "javax/sql/DataSource#")
+    val jdbcWrites = Set("executeUpdate", "executeLargeUpdate", "executeBatch", "executeLargeBatch")
+    /** The kind of answer a type is, when it is one a caller must look at: whether it changed, found, moved, how many. */
+    def outcomeKind(t: s.Type): Option[String] = {
+      val d = dealias(unwrapType(t))
+      newtypeOf(d).filter(_.displayName == "RowCount").map(_ => "RowCount").orElse(typeSymbol(d).value match {
+        case "scala/Option#" | "scala/Some#" => Some("Option")
+        case "scala/util/Either#" | "scala/util/Right#" | "scala/util/Left#" => Some("Either")
+        case "scala/util/Try#" => Some("Try")
+        case "scala/Boolean#" => Some("Boolean")
+        case "scala/Int#" => Some("Int")
+        case "scala/Long#" => Some("Long")
+        case "scala/Array#" if d.isInstanceOf[s.TypeRef] && d.asInstanceOf[s.TypeRef].typeArguments.headOption.exists(a => typeSymbol(a).value == "scala/Int#") => Some("Int[]")
+        case _ => None
+      })
+    }
+    /** Whether a method reaches the database: it takes a connection or a write permit (in any parameter list). */
+    def takesDatabase(m: s.MethodSignature): Boolean = m.parameterLists.flatMap(_.symlinks).exists { p =>
+      infoS(p).map(_.signature).exists {
+        case v: s.ValueSignature =>
+          val t = typeSymbol(dealias(unwrapType(v.tpe))).value
+          t == dbConnection || t == writePermit || databaseHolders(t)
+        case _ => false
+      }
+    }
+    /** The SQL text of a Magnum statement written in place (`sql"…".update.run()`, `batchUpdate(xs)(x => sql"…".update)`),
+      * its splices as `?`. */
+    def statementOf(t: Term): Option[String] =
+      t.collect { case i: Term.Interpolate if i.prefix.value == "sql" => i }.headOption.map(_.parts.map(_.value).mkString("?"))
+    val noCount = "^(SET|RESET|CREATE|DROP|ALTER|ANALYZE|VACUUM|TRUNCATE|LOCK|REFRESH|COMMENT|GRANT|REVOKE|CLUSTER|REINDEX|DISCARD|NOTIFY|LISTEN)\\b.*".r
+    /** A statement whose row count says nothing: a command with no row count (SET, DDL, ANALYZE, LOCK…), or an INSERT of
+      * VALUES (no SELECT) that writes each row it lists or fails: with no ON CONFLICT, or with an unconditional
+      * `ON CONFLICT … DO UPDATE` (no WHERE after it), which inserts or updates every row. `DO NOTHING` and a conditional
+      * DO UPDATE answer whether the row was written. */
+    def silentStatement(sql: String): Boolean = {
+      val text = sql.linesIterator.map(_.replaceAll("--.*$", "")).mkString(" ").trim.replaceAll("\\s+", " ").toUpperCase
+      val values = text.startsWith("INSERT ") && text.contains(" VALUES") && !text.contains("SELECT") && !text.contains("RETURNING")
+      val conflict = text.indexOf("ON CONFLICT")
+      val doUpdate = text.indexOf(" DO UPDATE ")
+      noCount.pattern.matcher(text).matches ||
+        (values && conflict < 0) ||
+        (values && conflict >= 0 && doUpdate > conflict && !text.substring(doUpdate).contains(" WHERE "))
+    }
+    /** A dropped term that is a write's answer: Magnum's `Update#run`, JDBC's executeUpdate/Batch, or a project method
+      * that reaches the database (a connection or a write permit in its parameters) and answers with an outcome. */
+    def writeOutcome(t: Term): Option[String] = {
+      val callee = t match {
+        case a: Term.Apply => calleeOf(a.fun)
+        case sel: Term.Select => sel.name.symbol
+        case n: Term.Name => n.symbol
+        case _ => Symbol.None
+      }
+      val v = callee.value
+      val name = callee.displayName
+      val owner = callee.owner.displayName
+      if (v.startsWith("com/augustnagro/magnum/") || v.startsWith("java/sql/")) {
+        // outside the project's SemanticDB: Scalafix's own symbol table (class files) knows the result's class
+        val result = scala.util.Try(callee.info).toOption.flatten.map(_.signature).collect {
+          case m: MethodSignature => m.returnType
+        }.collect { case TypeRef(_, sym, args) => (sym.value, args) }
+        val kind = result.collect {
+          case ("scala/Int#", _) => "Int"
+          case ("scala/Long#", _) => "Long"
+          case ("scala/Array#", List(TypeRef(_, a, _))) if a.value == "scala/Int#" || a.value == "scala/Long#" => "Int[]"
+        }.orElse {
+          // a Scala 3 library's class files carry no signature Scalafix (2.13) reads: Magnum's two writes, by name
+          if (v == "com/augustnagro/magnum/Update#run().") Some("Int")
+          else if (v.startsWith("com/augustnagro/magnum/") && name == "batchUpdate") Some("BatchUpdateResult")
+          else None
+        }
+        kind.filterNot(_ => statementOf(t).exists(silentStatement)).flatMap { k =>
+          if (v.startsWith("com/augustnagro/magnum/") && Set("run", "batchUpdate", "insert", "insertAll", "update", "updateAll", "delete", "deleteById", "deleteAll", "deleteAllById", "truncate")(name))
+            Some(s"magnum:$owner.$name:$k;" + statementOf(t).map(_.trim.takeWhile(c => !c.isWhitespace).toUpperCase).filter(_.nonEmpty).getOrElse("?"))
+          else if (v.startsWith("java/sql/") && jdbcWrites(name)) Some(s"jdbc:$owner.$name:$k")
+          else None
+        }
+      } else info(callee).map(_.signature) match {
+        case Some(m: s.MethodSignature) if v.startsWith(policy.projectPrefix) && reachesDatabase(callee) =>
+          outcomeKind(m.returnType).map(kind => s"$owner.$name:$kind")
+        case _ => None
+      }
+    }
+    /** Whether a method reaches the database: it takes a connection, a write permit or one of the database holders, or
+      * its class holds one; an abstract method when one of its implementations does. */
+    def reachesDatabase(method: Symbol): Boolean = {
+      def direct(m: Symbol): Boolean = info(m).map(_.signature).exists {
+        case sig: s.MethodSignature => takesDatabase(sig) || holdsDatabase(m.owner)
+        case _ => false
+      }
+      direct(method) || overriders.getOrDefault(method.value, Nil).exists(o => direct(Symbol(o)))
+    }
+    /** Whether a class or object holds a way to write the database: a field of the transactor, the maintenance gate, a
+      * write-permit gate or a DataSource (its constructor's parameters are fields). */
+    def holdsDatabase(owner: Symbol): Boolean = info(owner).map(_.signature).exists {
+      case c: s.ClassSignature => c.declarations.exists(_.symlinks.exists { d =>
+        infoS(d).map(_.signature).exists {
+          case v: s.ValueSignature => databaseHolders(typeSymbol(dealias(unwrapType(v.tpe))).value)
+          case m: s.MethodSignature if m.parameterLists.isEmpty => databaseHolders(typeSymbol(dealias(unwrapType(m.returnType))).value)
+          case _ => false
+        }
+      })
+      case _ => false
+    }
+
     // G89: a transaction opened without a write permit (main code; Transactor.scala defines the entry points)
     def unguardedSymbol(n: Term.Name): Option[String] = {
       val v = n.symbol.value
@@ -538,6 +746,15 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
     }
     if (scope == "main" && !path.endsWith("/util/database/Transactor.scala")) doc.tree.traverse {
       case a: Term.Apply if !inImport(a) => unguardedTransaction(a.fun).foreach(d => report("G89unguarded", a, d))
+    }
+
+    // ---- G94 discardedOutcome: what a write answered, dropped (main code) ----------------------------------------
+    if (scope == "main") doc.tree.traverse {
+      case a: Term.Apply if unusedAnswer(a.fun) && !inImport(a) =>
+        val why = a.argClause.values.lift(1).map(_.syntax.split('.').last).getOrElse("?")
+        val what = a.argClause.values.headOption.collect { case t: Term => writeOutcome(t).getOrElse("not a write") }.getOrElse("?")
+        report("acceptedOutcome", a, s"$why;$what")
+      case t: Term if discarded(t) => writeOutcome(t).foreach(d => report("discardedOutcome", t, d))
     }
 
     // ---- G44 plain-typed defs fed by newtypes: record defs and calls --------------------------------------------
