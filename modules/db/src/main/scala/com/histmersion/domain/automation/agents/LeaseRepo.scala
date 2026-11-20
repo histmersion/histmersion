@@ -29,6 +29,14 @@ object LeaseRepo:
           WHERE agent_leases.until < now() OR agent_leases.owner = EXCLUDED.owner
           RETURNING owner""".query[String].run().nonEmpty
 
+  /** Take lease `name` for `owner` whoever holds it: after a restore, whose rows may name a holder of the database the
+    * dump was taken from. Only the server that holds the database's instance lock calls it, so no other one runs.
+    */
+  def takeOver(name: LeaseName, owner: LeaseOwner, ttlSeconds: TtlSeconds)(using DbCon): Unit =
+    val _ =
+      sql"""INSERT INTO agent_leases (name, owner, until) VALUES ($name, $owner, now() + make_interval(secs => $ttlSeconds))
+            ON CONFLICT (name) DO UPDATE SET owner = EXCLUDED.owner, until = EXCLUDED.until""".update.run()
+
   /** Give it up (a clean stop), so the next server need not wait for it to expire. */
   def release(name: LeaseName, owner: LeaseOwner)(using DbCon): Unit =
     val _ = sql"DELETE FROM agent_leases WHERE name = $name AND owner = $owner".update.run()

@@ -14,7 +14,7 @@ import javax.sql.DataSource
 import com.histmersion.api.jobs.{JobDetail, JobInfo, JobState}
 import com.histmersion.api.Api
 import io.github.iltotore.iron.constraint.any.Pure
-import scala.annotation.nowarn
+import scala.annotation.{nowarn, tailrec}
 import scala.util.control.NonFatal
 
 /** The ONE way the server runs work longer than a request as a background job (#1946): a `jobs` row (`histmersion jobs
@@ -25,11 +25,15 @@ import scala.util.control.NonFatal
   *
   * A job's `body` is given its row and a progress reporter, and answers its [[Outcome]]: a summary, and why it failed
   * when it did. An exception, an interruption included, fails the job with its message; the slot is freed whatever
-  * happens.
+  * happens. The body runs only once its row moved to `running` (a job cancelled while it waited never runs), and how it
+  * ended is written with a bounded retry; a failure to record it is logged with the outcome it could not record.
+  *
+  * The thread is started through the server's [[Workers]] as one unit of work: a restore waits for it, and fences it
+  * off from the database when it outlasts the wait.
   *
   * Adopting it (the media import, #1946's follow-up): keep a `Slot`, and replace the hand-written `startJob` with
-  * `BackgroundJob.start(ds, kind, Some(ImportJobKinds.Media(Some(describe))), slot, "a media run")((job, progress) =>
-  * Outcome.of(…))`, inside `maintenance.guard(kind)` when it writes.
+  * `BackgroundJob.start(ds, workers, kind, Some(ImportJobKinds.Media(Some(describe))), slot, "a media run")((job,
+  * progress) => Outcome.of(…))`, inside `maintenance.guard(kind)` when it writes.
   */
 object BackgroundJob:
   type Work = Work.T
@@ -102,6 +106,7 @@ object BackgroundJob:
     */
   def start(
       ds: DataSource,
+      workers: Workers,
       kind: Job.Kind,
       detail: Option[JobDetail],
       slot: Slot,
@@ -122,18 +127,20 @@ object BackgroundJob:
           case e: (Throwable @nowarn("id=E235")) =>
             slot.free()
             throw e
-      launch(ds, job, kind, slot, what, busyCode, pins, stops, JobState.Queued, body)
+      Launch(ds, workers, job, kind, slot, what, busyCode, pins, stops, body).run(JobState.Queued)
       // the row as created, not read again: by then its thread may have moved it on, and the answer would vary
       Right(job)
 
-  /** A job row's id, as the database keeps it. */
-  private def idOf(job: JobInfo): Job.Id = Job.Id.assume(job.id.value)
-
-  /** The job's body on its own daemon thread, its row moved from `from` to running and on to how it ended. The slot is
-    * held by the caller and freed when the run ends.
+  /** How often how a job ended is tried before the failure to record it is logged, and how long between two tries. The
+    * row stays `running` until the next start when none of them gets through.
     */
-  private def launch(
+  private val EndingAttempts = 5
+  private val EndingBackoffMs = 1000L
+
+  /** One job's runs, the first one and every resume. */
+  final private class Launch(
       ds: DataSource,
+      workers: Workers,
       job: JobInfo,
       kind: Job.Kind,
       slot: Slot,
@@ -141,48 +148,78 @@ object BackgroundJob:
       busyCode: Option[Api.Error.Code],
       pins: WorkCarrier,
       stops: Option[JobStops],
-      from: JobState,
       body: (JobInfo, JobInfo.Progress => Unit) => Outcome
-  ): Unit =
-    val id = idOf(job)
-    slot.note(Work(s"job ${job.id}"))
-    val work = pins.carryWork { () =>
-      val last = AtomicReference[Option[JobInfo.Progress]](None)
-      // a report closes a part: what it says is kept, and a stop asked meanwhile takes effect there
-      def report(text: JobInfo.Progress): Unit =
-        last.set(Some(text))
-        Transactor(ds).transact(JobRepo.progress(id, JobRow.Progress(text.value)))
-        stops.flatMap(_.requestedFor(id)).foreach(stop => throw JobStopped(stop))
-      try
-        val _ =
-          Transactor(ds).transact(
-            JobRepo.transition(
-              id,
-              from,
-              JobState.Running,
-              last.get.orElse(Some(JobInfo.Progress("starting"))).map(p => JobRow.Progress(p.value))
+  ):
+    /** The job row's id, as the database keeps it. */
+    private val id: Job.Id = Job.Id.assume(job.id.value)
+    private val db = Transactor(ds)
+
+    /** The body on its own daemon thread, its row moved from `from` to running and on to how it ended. The slot is held
+      * by the caller and freed when the run ends.
+      */
+    def run(from: JobState): Unit =
+      slot.note(Work(s"job ${job.id}"))
+      val work = pins.carryWork { () =>
+        val last = AtomicReference[Option[JobInfo.Progress]](None)
+        // a report closes a part: what it says is kept, and a stop asked meanwhile takes effect there
+        def report(text: JobInfo.Progress): Unit =
+          last.set(Some(text))
+          db.transact(JobRepo.progress(id, JobRow.Progress(text.value)))
+          stops.flatMap(_.requestedFor(id)).foreach(stop => throw JobStopped(stop))
+        try
+          val moved =
+            db.transact(
+              JobRepo.transition(
+                id,
+                from,
+                JobState.Running,
+                last.get.orElse(Some(JobInfo.Progress("starting"))).map(p => JobRow.Progress(p.value))
+              )
             )
-          )
-        val (out, thrown) =
-          try (body(job, report), None)
-          catch
-            case s: JobStopped => (Outcome.failed(Problem.Run.Cancelled(Problem.Run.Actor.Person)), Some(s.stop))
-            // an interrupt is the job's interruption (`describe`), and a deep recursion fails this job alone: its
-            // stack is unwound here
-            case e: InterruptedException => (Outcome.failed(describe(e)), None)
-            case e: StackOverflowError   => (Outcome.failed(describe(e)), None)
-            case NonFatal(e)             => (Outcome.failed(describe(e)), None)
-        val asked = stops.flatMap(_.requestedFor(id))
-        stops.foreach(_.answered(id))
-        val _ = ending(out, thrown, asked) match
-          case Right(o) =>
-            o.error match
-              case None =>
-                Transactor(ds).transact(
+          // a job cancelled (or otherwise moved on) while it waited does not run: its row says what became of it
+          if moved.isEmpty then notStarted(from)
+          else ran(last, report)
+        catch
+          // the database failed before the body ran, or while its end was recorded: logged, the slot freed below
+          case NonFatal(e) => val _ = ProblemLog.unexpected(e, Problem.Where(s"job ${job.id} ($kind)"))
+        finally slot.free()
+      }
+      workers.detached(Quiescent.Name(s"$kind job ${job.id}"))(() => work())
+
+    /** The row did not move to `running`: the body is not run, and the log says what the row is instead. */
+    private def notStarted(from: JobState): Unit =
+      val now =
+        try db.read(JobRepo.get(id)).map(_.status)
+        catch case NonFatal(_) => None
+      scribe.warn(
+        s"job ${job.id} ($kind) was not started: its row is ${now.fold("gone")(s => s"$s")}, not ${from.wire}"
+      )
+
+    /** Run the body and record how it ended. */
+    private def ran(last: AtomicReference[Option[JobInfo.Progress]], report: JobInfo.Progress => Unit): Unit =
+      val (out, thrown) =
+        try (body(job, report), None)
+        catch
+          case s: JobStopped => (Outcome.failed(Problem.Run.Cancelled(Problem.Run.Actor.Person)), Some(s.stop))
+          // an interrupt is the job's interruption (`describe`), and a deep recursion fails this job alone: its
+          // stack is unwound here
+          case e: InterruptedException => (Outcome.failed(describe(e)), None)
+          case e: StackOverflowError   => (Outcome.failed(describe(e)), None)
+          case NonFatal(e)             => (Outcome.failed(describe(e)), None)
+      val asked = stops.flatMap(_.requestedFor(id))
+      stops.foreach(_.answered(id))
+      ending(out, thrown, asked) match
+        case Right(o) =>
+          o.error match
+            case None =>
+              recordEnding(JobState.Done)(
+                db.transact(
                   JobRepo.transition(id, JobState.Running, JobState.Done, o.summary.map(m => JobRow.Progress(m.value)))
                 )
-              case Some(e) =>
-                Transactor(ds).transact(
+              )
+            case Some(e) =>
+              recordEnding(JobState.Failed)(
+                db.transact(
                   JobRepo.transition(
                     id,
                     JobState.Running,
@@ -191,9 +228,11 @@ object BackgroundJob:
                     Some(e.toNonEmpty)
                   )
                 )
-          case Left(JobStop.Pause) =>
-            stops.foreach(_.pausedWith(id, () => resume(ds, job, kind, slot, what, busyCode, pins, stops, body)))
-            Transactor(ds).transact(
+              )
+        case Left(JobStop.Pause) =>
+          stops.foreach(_.pausedWith(id, () => resume()))
+          recordEnding(JobState.Paused)(
+            db.transact(
               JobRepo.transition(
                 id,
                 JobState.Running,
@@ -201,8 +240,10 @@ object BackgroundJob:
                 Some(JobRow.Progress(JobControlRules.stoppedLine(JobStop.Pause, last.get).value))
               )
             )
-          case Left(JobStop.Cancel) =>
-            Transactor(ds).transact(
+          )
+        case Left(JobStop.Cancel) =>
+          recordEnding(JobState.Cancelled)(
+            db.transact(
               JobRepo.transition(
                 id,
                 JobState.Running,
@@ -211,27 +252,43 @@ object BackgroundJob:
                 Some(Problem.Unclassified(Legacy.Text(JobControlRules.CancelledByPerson)).toNonEmpty)
               )
             )
-      finally slot.free()
-    }
-    val t = Thread.ofPlatform().daemon(true).name(s"histmersion-$kind").unstarted(() => work())
-    t.start()
+          )
 
-  /** A paused job runs again on its row, in its slot; `Left` when the slot is held by another job now. */
-  private def resume(
-      ds: DataSource,
-      job: JobInfo,
-      kind: Job.Kind,
-      slot: Slot,
-      what: Work,
-      busyCode: Option[Api.Error.Code],
-      pins: WorkCarrier,
-      stops: Option[JobStops],
-      body: (JobInfo, JobInfo.Progress => Unit) => Outcome
-  ): Either[Problems, Unit] =
-    if !slot.claim(Work("resuming")) then
-      // the paused job keeps its way to go on: it can be resumed once the other one ends
-      stops.foreach(_.pausedWith(idOf(job), () => resume(ds, job, kind, slot, what, busyCode, pins, stops, body)))
-      Left(busy(what, slot.current, busyCode).problems)
-    else
-      launch(ds, job, kind, slot, what, busyCode, pins, stops, JobState.Paused, body)
-      Right(())
+    /** Write that the job ended `as`, trying again when the database fails, up to [[EndingAttempts]] times. A row that
+      * had moved on meanwhile is left as it is; a refusal of the maintenance gate (a restore runs, or replaced the
+      * database the job wrote to) is not tried again, since the row it would write is gone; either is logged. When
+      * every try fails, the failure is logged with the outcome it could not record.
+      */
+    private def recordEnding(as: JobState)(write: => Option[JobState]): Unit =
+      @tailrec def attempt(left: Int): Unit =
+        val tried =
+          try Right(write)
+          catch case NonFatal(e) => Left(e)
+        tried match
+          case Right(Some(_)) => ()
+          case Right(None)    =>
+            scribe.warn(s"job ${job.id} ($kind) ended ${as.wire}, but its row had moved on: left as it is")
+          case Left(r: Raised) =>
+            scribe.warn(s"job ${job.id} ($kind) ended ${as.wire}, which was not recorded: ${r.getMessage}")
+          case Left(_) if left > 1 =>
+            Thread.sleep(EndingBackoffMs)
+            attempt(left - 1)
+          case Left(e) =>
+            val _ = ProblemLog.unexpected(
+              e,
+              Problem.Where(
+                s"recording that job ${job.id} ($kind) ended ${as.wire}, after $EndingAttempts tries; the row stays " +
+                  "as it was until the next start"
+              )
+            )
+      attempt(EndingAttempts)
+
+    /** A paused job runs again on its row, in its slot; `Left` when the slot is held by another job now. */
+    private def resume(): Either[Problems, Unit] =
+      if !slot.claim(Work("resuming")) then
+        // the paused job keeps its way to go on: it can be resumed once the other one ends
+        stops.foreach(_.pausedWith(id, () => resume()))
+        Left(busy(what, slot.current, busyCode).problems)
+      else
+        run(JobState.Paused)
+        Right(())

@@ -9,6 +9,14 @@ import io.github.iltotore.iron.constraint.any.Pure
 trait Transactor:
   def read[A](work: DbCon ?=> A): A
   def transact[A](work: DbCon ?=> A): A
+
+  /** `work` in one transaction, under `permit`: the guarded write. A restore waits for it, and none starts while one
+    * runs ([[WritePermit.Gate]]). The plain [[transact]] is the unguarded one, counted until every write moved here.
+    */
+  def write[A](work: DbCon ?=> A)(using permit: WritePermit): A =
+    permit.require()
+    transact(work)
+
   def autocommit[A](work: DbCon ?=> A): A = read(Transactor.onConnection.autocommit(work))
   def readOnlyRollback[A](timeoutMs: Transactor.TimeoutMs)(work: DbCon ?=> A): A =
     read(Transactor.onConnection.readOnlyRollback(timeoutMs)(work))

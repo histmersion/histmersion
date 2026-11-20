@@ -12,7 +12,7 @@ import com.histmersion.domain.automation.worklists.{QueueScope, QueueService}
 import com.histmersion.domain.library.ingest.{FetchedCopy, IngestJobs, IngestMeta}
 import com.histmersion.domain.library.sources.SourceService
 import com.histmersion.util.data.maintenance.WriteGate
-import com.histmersion.util.jobs.Pinning
+import com.histmersion.util.jobs.{Pinning, Quiescent}
 import com.histmersion.domain.library.acquisition.Spool
 
 import com.histmersion.domain.library.Citekey
@@ -475,7 +475,7 @@ final class AcquisitionControllers(
         case NonFatal(e) =>
           rwError.set(Some(ProblemLog.unexpected(e, Problem.Where("the Retraction Watch refresh"))))
       finally rwRunning.set(false))
-      val _ = Thread.ofVirtual().name("retraction-watch-refresh").start(() => work.run())
+      maintenance.workers.detached(Quiescent.Name("retraction-watch-refresh"))(() => work.run())
       Right(retractionsStatus.modify(_.running).setTo(RetractionsUpdate.Running(true)))
 
   /** How the mirror is doing: how many rows it holds, whether a refresh is in flight, and the last failure if there was

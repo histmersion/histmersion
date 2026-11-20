@@ -5,7 +5,7 @@ import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.testsupport.ComparedByValue.given
 
-import com.histmersion.util.database.Transactor
+import com.histmersion.util.database.{Transactor, WritePermit}
 
 import com.histmersion.util.jobs.BackgroundJob
 
@@ -147,6 +147,7 @@ class JobControlServiceSuite extends DbSuite:
     val j = BackgroundJob
       .start(
         ds,
+        Workers(WritePermit.Gate()),
         Job.Kind.applyUnsafe(ImportJobKinds.MediaImport.kind.value),
         None,
         BackgroundJob.Slot(),
@@ -172,6 +173,7 @@ class JobControlServiceSuite extends DbSuite:
     val j = BackgroundJob
       .start(
         ds,
+        Workers(WritePermit.Gate()),
         Job.Kind.applyUnsafe(BasemapJobKinds.BasemapFetch.kind.value),
         None,
         BackgroundJob.Slot(),

@@ -10,7 +10,7 @@ import com.histmersion.domain.library.workflows.SourceProposalEffect
 import com.histmersion.domain.research.workflows.ArticleFilterApproval
 import com.histmersion.plugin.AiProvider
 import com.histmersion.server.{Deps, ServerWiring}
-import com.histmersion.util.jobs.{JobStops, Pinning}
+import com.histmersion.util.jobs.{JobStops, Pinning, Workers}
 
 import javax.sql.DataSource
 import scala.collection.immutable.ListMap
@@ -36,6 +36,7 @@ final class ServerEngineSite(deps: Deps, w: ServerWiring, digestOn: Option[java.
   def workLists: WorkListControllers = deps.workLists
   def pins: Pinning = deps.pins
   def jobStops: JobStops = deps.jobStops
+  def workers: Workers = deps.maintenance.workers
   def clock: java.time.Clock = deps.clock
   def timer: Timer = deps.timer
   def pause: Pause = deps.pause

@@ -693,6 +693,14 @@ object Problem:
     /** `activity` is running and must finish first. */
     final case class Busy(activity: Activity) extends Conflict
 
+    /** Another server, `holder` (its host, process and connection time as the database names its session), holds the
+      * database: one server per database.
+      */
+    final case class ServerHeld(holder: Raw) extends Conflict
+
+    /** A restore did not start: `busy` was still at work after `waited` seconds, and nothing was changed. */
+    final case class Undrained(busy: NonEmptyVector[Raw], waited: Count) extends Conflict
+
     /** `count` values of the type `by` refer to it (one problem per type of referrer). */
     final case class Referenced(typeName: TypeName, key: Raw, by: TypeName, count: Count) extends Conflict
 
@@ -2007,6 +2015,9 @@ object Problem:
     /** A restart cut it short. */
     case object Interrupted extends Run
 
+    /** A restore replaced the database while it ran: what it would write next belongs to a database that is gone. */
+    case object Restored extends Run
+
     /** A restart cut `activity` short. It commits or rolls back as a whole, never half applied: its own listing tells
       * whether it took effect.
       */
@@ -2886,6 +2897,8 @@ object Problem:
         Vector(Conflict.State("paused"), Conflict.State("failed"))
       ),
       Conflict.Busy(Conflict.Activity.Backup),
+      Conflict.ServerHeld(Raw("histmersion-server mac.local:4242, connected since 2026-11-19T08:00:00Z")),
+      Conflict.Undrained(NonEmptyVector.of(Raw("2 writes in flight"), Raw("agent runs: 1 running")), Count(60L)),
       Conflict.Referenced(
         TypeName("Place.Id"),
         Raw("pleiades_579885"),
@@ -3129,6 +3142,7 @@ object Problem:
       Run.ProbeUnread(Io.ExitCode(1), Some(External.Reported("Invalid API key"))),
       Run.Blocked(Run.Block.PoolFull(Run.Pool("review"))),
       Run.Interrupted,
+      Run.Restored,
       Run.CutShort(Conflict.Activity.MergeApply),
       Run.Unrecorded(Conflict.Activity.MergeApply),
       Run.Cancelled(Run.Actor.Person),

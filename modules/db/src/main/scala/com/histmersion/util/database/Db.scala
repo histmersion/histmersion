@@ -28,7 +28,13 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object Db:
   type ActiveConnections = ActiveConnections.T
-  object ActiveConnections extends Newtype[Int, Pure]
+  object ActiveConnections extends Newtype[Int, Pure]:
+    /** The connections several pools have lent out together. */
+    def total(each: Iterable[ActiveConnections]): ActiveConnections = ActiveConnections(each.iterator.map(_.value).sum)
+
+    extension (c: ActiveConnections) def none: Boolean = c.value == 0
+  type ApplicationName = ApplicationName.T
+  object ApplicationName extends Newtype[String, Pure]
   type DatabaseName = DatabaseName.T
   object DatabaseName extends Newtype[String, Pure]
   type JdbcUrl = JdbcUrl.T
@@ -76,10 +82,7 @@ object Db:
     * is the rule this codebase already follows for everything else.
     */
   def pooled(url: PooledUrl, user: Login, password: Password, max: PoolMax, name: PoolName): HikariDataSource =
-    val pg = PGSimpleDataSource()
-    pg.setUrl(url.value)
-    pg.setUser(user.value)
-    pg.setPassword(password.value)
+    val pg = unpooled(url, user, password)
     val ds = HikariDataSource()
     ds.setDataSource(pg)
     ds.setMaximumPoolSize(math.max(1, max.value))
@@ -88,6 +91,23 @@ object Db:
     ds.setMinimumIdle(1)
     ds.setPoolName(s"$name@${databaseOf(url)}")
     ds
+
+  private def unpooled(url: PooledUrl, user: Login, password: Password): PGSimpleDataSource =
+    val pg = PGSimpleDataSource()
+    pg.setUrl(url.value)
+    pg.setUser(user.value)
+    pg.setPassword(password.value)
+    pg
+
+  /** One connection of its own on `cfg`'s database, outside every pool, named `application` in `pg_stat_activity`: a
+    * session that must last as long as its holder wants it (the instance lock), which a pool would end whenever it
+    * retires the connection. Kept alive by TCP keep-alives, so a database that went away is noticed.
+    */
+  def session(cfg: DbConfig, application: ApplicationName): java.sql.Connection =
+    val pg = unpooled(PooledUrl(cfg.url.value), Login(cfg.user.value), Password(cfg.password.value))
+    pg.setApplicationName(application.value)
+    pg.setTcpKeepAlive(true)
+    pg.getConnection()
 
   /** The database a JDBC URL names (`jdbc:postgresql://h:p/NAME?…`), for a pool's name in the log. */
   private[histmersion] def databaseOf(url: JdbcUrl): DatabaseName =

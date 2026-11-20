@@ -53,6 +53,7 @@ import com.histmersion.util.jobs.JobRuns
 import com.histmersion.domain.automation.worklists.QueueService
 import com.histmersion.util.jobs.Pinning
 import com.histmersion.util.jobs.JobStops
+import com.histmersion.util.jobs.Workers
 import com.histmersion.util.time.Timer
 import com.histmersion.util.time.Pause
 import com.histmersion.domain.automation.approvals.ApprovalEffects
@@ -152,6 +153,9 @@ final class AgentsControllers(
   /** How the engine, the managers and their threads keep work on the generation it started on. */
   val pins: Pinning = site.pins
 
+  /** The server's long-running workers, as a restore holds them: each run, tick and renewal is one unit of work. */
+  val workers: Workers = site.workers
+
   /** A person's pause and cancel of the server's long background jobs. */
   val jobStops: JobStops = site.jobStops
 
@@ -230,7 +234,8 @@ final class AgentsControllers(
   /** One agent server per database: the engine and the managers start only in the server that holds it (ttl 3 × the
     * managers' tick).
     */
-  val lease: AgentLease = AgentLease(ds, AgentLease.TtlSeconds(3 * math.max(5, cfg.managers.tickSeconds.value)))
+  val lease: AgentLease =
+    AgentLease(ds, AgentLease.TtlSeconds(3 * math.max(5, cfg.managers.tickSeconds.value)), workers = workers)
 
   /** Start the run pool and the managers — only when agents are enabled, and only once this server holds the agent
     * lease (a second server on the same database waits for it to be free); off, no thread is started and queued or

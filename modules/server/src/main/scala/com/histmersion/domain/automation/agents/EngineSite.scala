@@ -5,7 +5,7 @@ import com.histmersion.config.AppConfig
 import com.histmersion.domain.automation.workflows.{AutomationHost, Contributions}
 import com.histmersion.domain.automation.worklists.{QueueService, WorkListControllers}
 import com.histmersion.plugin.AiProvider
-import com.histmersion.util.jobs.{JobStops, Pinning}
+import com.histmersion.util.jobs.{JobStops, Pinning, Workers}
 
 import javax.sql.DataSource
 import scala.collection.immutable.ListMap
@@ -34,6 +34,11 @@ trait EngineSite:
   def workLists: WorkListControllers
   def pins: Pinning
   def jobStops: JobStops
+
+  /** The server's long-running workers, as a restore holds them: the engine, the managers and the lease register there,
+    * and each run, tick and renewal is one unit of work.
+    */
+  def workers: Workers
 
   /** The time the engine's decisions read: the composition's clock (a suite gives one of its own). */
   def clock: java.time.Clock

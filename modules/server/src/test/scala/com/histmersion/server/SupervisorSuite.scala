@@ -10,6 +10,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import java.nio.file.Path
+import com.histmersion.util.database.InstanceLock
 import com.histmersion.config.BackupsConfig
 import com.histmersion.config.RuntimeConfig
 import com.histmersion.config.UserPaths
@@ -140,7 +141,9 @@ class SupervisorSuite extends munit.FunSuite:
       "histmersion.db.pool.max is 44, more than the 100 connections of histmersion.runtime.postgres.max-connections " +
         "leave room for: at most 43"
     // the check is the start's first step: no directory is made, no Postgres run
-    val e = intercept[IllegalStateException](Supervisor.start(crowded, paths, None))
+    val e = intercept[IllegalStateException](
+      Supervisor.start(crowded, paths, None, InstanceLock.Holds(InstanceLock.Holder("histmersion-server test")))
+    )
     assert(e.getMessage.startsWith(said), e.getMessage)
     assert(!java.nio.file.Files.exists(Path.of("/nonexistent")))
     // a reload's pool, against the connections the running Postgres was started with

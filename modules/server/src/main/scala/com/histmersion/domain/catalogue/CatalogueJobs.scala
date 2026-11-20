@@ -32,6 +32,7 @@ final class CatalogueJobs(
     def go: Either[Api.Error, JobInfo] =
       BackgroundJob.start(
         ds,
+        maintenance.workers,
         kind,
         Some(EventsJobKinds.Catalogue(Some(describe))),
         slot,

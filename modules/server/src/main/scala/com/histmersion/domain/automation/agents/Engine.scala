@@ -27,6 +27,7 @@ import com.histmersion.api.automation.{AgentsApi, AgentsMarkdown, PlanQuota}
 import com.histmersion.api.Api
 import com.histmersion.domain.automation.Run
 import com.histmersion.util.jobs.Carried
+import com.histmersion.util.jobs.Quiescent
 import com.histmersion.util.jobs.Job
 import com.histmersion.util.jobs.RunRow
 import com.histmersion.domain.automation.AgentRole
@@ -49,16 +50,57 @@ final class Engine(
     cfgNow: => AgentsConfig,
     val agents: AgentsControllers,
     val workflows: Workflows
-):
+) extends Quiescent:
+  import Engine.Era
 
   /** Read at each use (a config reload switches it); a run reads it once, into its [[RunCtx]]. */
   def cfg: AgentsConfig = cfgNow
 
   /** A queued run and the generation it was queued on: it runs there — on the database it was queued in, even after a
-    * config reload swapped the database (docs/research-plugins.md §3.6).
+    * config reload swapped the database (docs/research-plugins.md §3.6). `era` is the restore era it was queued in: one
+    * queued before the last restore names a row the restore replaced, and is dropped.
     */
-  final private case class Queued(id: Run.Id, work: Carried[Unit])
+  final private case class Queued(id: Run.Id, work: Carried[Unit], era: Era)
   private val queue = LinkedBlockingQueue[Queued]()
+
+  // ── a restore ──────────────────────────────────────────────────────────────────────────────────
+
+  @volatile private var era: Era = Era()
+
+  /** Held while a restore runs: no worker takes a queued run, the resumer does nothing. A `var` guarded by `hold`'s
+    * monitor, because a worker must BLOCK on it rather than spin.
+    */
+  private val hold = Object()
+  private var holding = false
+
+  private def awaitRelease(): Unit = hold.synchronized(while holding do hold.wait())
+
+  val name: Quiescent.Name = Quiescent.Name("the agent run pool")
+
+  /** No queued run starts; every running run is interrupted, so that it pauses at once as interrupted (a run nobody
+    * watches goes on by itself after the restore, as after a restart).
+    */
+  def quiesce(): Unit =
+    hold.synchronized { holding = true }
+    running.values.asScala.foreach(_.thread.interrupt())
+
+  def busy: Vector[Quiescent.Busy] = running.keySet.asScala.toVector.sorted.map(id => Quiescent.Busy(s"agent run $id"))
+
+  /** After a restore: the runs queued in memory name rows the restore replaced, so they are dropped; the restored
+    * database's runs are reconciled as at a start (its running ones paused as interrupted — none of them runs here —
+    * its queued ones queued).
+    */
+  def restored(): Unit =
+    era = Era()
+    Iterator.continually(queue.poll()).takeWhile(_ != null).foreach(_.work.drop())
+    // an engine that never started (agents off, the lease elsewhere) leaves the rows to the start that comes
+    if scope.isDefined then
+      val (paused, queued) = reconcile(except = Nil)
+      queued.foreach(submit)
+      if paused != RowCount(0) then
+        scribe.info(s"restore: $paused agent run(s) of the restored database paused as interrupted")
+
+  def resume(): Unit = hold.synchronized { holding = false; hold.notifyAll() }
 
   private def jobKind: Job.Kind = Job.Kind.assume(JobKind)
 
@@ -218,10 +260,14 @@ final class Engine(
   /** [[start]]'s first half: a run left `running` is paused as interrupted (and, when nobody watches it, set to resume
     * by itself shortly). Returns how many were paused, and the queued runs.
     */
-  private[histmersion] def reconcile(): (RowCount, Vector[Run.Id]) =
+  private[histmersion] def reconcile(): (RowCount, Vector[Run.Id]) = reconcile(running.keySet.asScala.toList)
+
+  /** As [[reconcile]], leaving the runs `except` be: after a restore none (a run still running here is fenced off and
+    * cannot go on with the restored rows).
+    */
+  private def reconcile(except: List[Run.Id]): (RowCount, Vector[Run.Id]) =
     // a run this engine is running is not interrupted, and one it holds queued is not queued twice: a
     // config reload that swapped back to its database must leave them be (docs/research-plugins.md §3.6)
-    import scala.jdk.CollectionConverters.*
     val inQueue = queue.asScala.map(_.id).toSet
     val (paused, queuedAll) = agents.jobRuns.reconcile(
       jobKind,
@@ -229,7 +275,7 @@ final class Engine(
       rowStatus(RunState.Paused),
       Stopped.Interrupted.problem,
       rowStatus(RunState.Queued),
-      running.keySet.asScala.toList
+      except
     )
     val queued = queuedAll.filterNot(inQueue)
     // a run nobody is watching goes on by itself after a restart; a person's waits for them
@@ -251,13 +297,14 @@ final class Engine(
     try
       while !stopping do
         Thread.sleep(every)
+        awaitRelease() // a restore holds the resumer here
         try
-          agents.pins.pinned {
+          agents.workers.unit(agents.pins.pinned {
             val now = java.time.Instant.now(agents.clock)
             val _ = checkStalls(PlanQuotaRepo.EpochMillis(now.toEpochMilli))
             val _ = resumeDue(now)
             val _ = resumeFreed(now)
-          }
+          })
         catch
           case e: InterruptedException => throw e
           case e: Exception            => scribe.warn(s"agent resume check failed: ${e.getMessage}")
@@ -360,7 +407,7 @@ final class Engine(
         )(target)
       )
 
-  def submit(id: Run.Id): Unit = queue.put(Queued(id, agents.pins.carry(execute(id))))
+  def submit(id: Run.Id): Unit = queue.put(Queued(id, agents.pins.carry(execute(id)), era))
 
   private def pool(): Unit =
     try
@@ -379,12 +426,17 @@ final class Engine(
     while alive && !stopping do
       try
         val q = queue.take()
+        awaitRelease() // a restore holds the pool here
         Thread.interrupted() // a cancel aimed at the previous run must not leak into this one
-        if !stopping then
-          q.work.run()
-          val _ = pruneTrace()
+        // a run queued before a restore names a row the restore replaced: its restored row was reconciled instead
+        if !stopping && (q.era eq era) then
+          agents.workers.unit {
+            q.work.run()
+            val _ = pruneTrace()
+          }
         else q.work.drop()
-      catch case _: InterruptedException => alive = false
+      // a cancel or a restore that interrupted a run as it ended must not end the worker: only the pool's stop does
+      catch case _: InterruptedException => alive = !stopping
 
   /** Run one queued run to its next resting state. */
   private[histmersion] def execute(id: Run.Id): Unit =
@@ -647,6 +699,10 @@ final class Engine(
 object Engine:
   type Count = Count.T
   object Count extends Newtype[Int, Pure]
+
+  /** The time between two restores, as an engine sees it: a new one begins with each restore, told apart by identity.
+    */
+  final class Era
   type OutputCapLimit = OutputCapLimit.T
   object OutputCapLimit extends Newtype[Int, Pure]
   type Stall = Stall.T

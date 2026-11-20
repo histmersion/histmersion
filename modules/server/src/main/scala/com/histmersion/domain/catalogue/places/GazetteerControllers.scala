@@ -34,6 +34,7 @@ final class GazetteerControllers(
   private def job(kind: Job.Kind, about: String)(run: => Either[Problem, String]): Either[Api.Error, JobInfo] =
     BackgroundJob.start(
       ds,
+      maintenance.workers,
       kind,
       Some(JobDetail.Purpose(Some(JobKinds.Subject(about)))),
       slot,

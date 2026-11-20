@@ -18,7 +18,8 @@ import com.histmersion.domain.library.sources.SourceService
 import com.histmersion.domain.media.assets.AssetService
 import com.histmersion.domain.media.assets.NewFigure
 import com.histmersion.util.data.maintenance.WriteGate
-import com.histmersion.util.jobs.{Job, JobPool, JobRow}
+import com.histmersion.util.jobs.{Job, JobPool, JobRow, Quiescent}
+import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.automation.agents.Halt.Stopped
 import com.histmersion.util.jobs.JobRecords
 import com.histmersion.util.jobs.Pinning
@@ -74,14 +75,30 @@ final class IngestQueue(
     ds: () => DataSource,
     pins: Pinning,
     afterStore: Citekey => Option[IngestQueue.Note]
-):
+) extends Quiescent:
 
   /** Everything a queued job needs that is not in its row. Concurrent because the HTTP thread writes it and a worker
     * thread reads it; entries die with the process, exactly like the queue.
     */
   private val pending = ConcurrentHashMap[Job.Id, IngestPending]()
 
-  private val pool = JobPool(ds(), JobPool.Parallelism(cfg().converter.parallelism.value), runJob, pins)
+  private val pool =
+    JobPool(ds(), JobPool.Parallelism(cfg().converter.parallelism.value), runJob, maintenance.workers, pins)
+
+  val name: Quiescent.Name = Quiescent.Name("the OCR worker pool")
+
+  /** A restore holds the pool: no queued job starts; the running ones are waited for (bounded). */
+  def quiesce(): Unit = pool.pause()
+
+  def busy: Vector[Quiescent.Busy] = pool.running.map(id => Quiescent.Busy(s"OCR job $id"))
+
+  /** After a restore: the uploads held for queued jobs are dropped with them, and every unfinished job of the restored
+    * database is failed as cut short by the restore.
+    */
+  def restored(): Unit =
+    pending.clear()
+    val n = pool.restored(Problem.Run.Restored)
+    if n != RowCount(0) then scribe.info(s"restore: $n unfinished job(s) of the restored database marked failed")
 
   /** Started by the composition root, after construction. Returns the jobs a restart had to fail. */
   def start(): RowCount =
@@ -231,15 +248,23 @@ final class IngestQueue(
         List(s"enrichment not queued: ${e.getClass.getSimpleName}")
 
   /** Write the conversion: body first (patch when the source exists, so enrichment survives), then the figures, then
-    * the digest of the original. Returns how many assets were kept.
+    * the digest of the original. Returns how many assets were kept. The whole write holds a write permit: a restore
+    * waits for it, and none is written while a restore runs or after one replaced the database under the job.
     */
   private def store(
       jobId: Job.Id,
       job: IngestPending,
       doc: ConvertedDoc
   ): Either[String, AssetService.ReplacedFigureCount] =
-    if maintenance.active then Left("a restore is in progress; this job was not written")
-    else storeNow(jobId, job, doc)
+    maintenance.permits
+      .permit(storeNow(jobId, job, doc))
+      .fold(
+        {
+          case WritePermit.Refusal.Restoring => Left("a restore is in progress; this job was not written")
+          case WritePermit.Refusal.Stale     => Left("a restore replaced the database; this job was not written")
+        },
+        identity
+      )
 
   private def storeNow(
       jobId: Job.Id,

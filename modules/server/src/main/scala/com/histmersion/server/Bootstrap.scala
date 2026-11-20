@@ -147,6 +147,7 @@ final class Bootstrap(
   private def start(p: InitPlan): Either[Api.Error, JobInfo] =
     BackgroundJob.start(
       ds,
+      maintenance.workers,
       Bootstrap.JobKind,
       Some(InitPlan.Detail(Some(p))),
       slot,

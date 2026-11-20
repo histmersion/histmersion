@@ -45,6 +45,8 @@ object Answer:
       case _: NotFound                    => StatusCode.NotFound
       case _: Conflict.Stale              => StatusCode.PreconditionFailed
       case _: Conflict.Busy               => StatusCode.ServiceUnavailable
+      case _: Conflict.ServerHeld         => StatusCode.Conflict
+      case _: Conflict.Undrained          => StatusCode.ServiceUnavailable
       case _: Conflict.AlreadyExists      => StatusCode.Conflict
       case _: Conflict.Renamed            => StatusCode.Conflict
       case _: Conflict.Aliased            => StatusCode.Conflict

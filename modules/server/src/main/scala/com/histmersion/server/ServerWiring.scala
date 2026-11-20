@@ -7,6 +7,7 @@ import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.util.data.diagnostics.DiagnosticsService
 import com.histmersion.util.data.backup.BackupService
 import com.histmersion.util.data.maintenance.{CacheName, WriteGate}
+import com.histmersion.util.jobs.Quiescent
 
 import com.histmersion.util.ocr.ConverterClient
 
@@ -191,7 +192,8 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
     val applyJobs = MergeApplyJobs(
       MergeApplyRuns(deps.ds),
       deps.cfg.merge.applyWaitSeconds.value,
-      deps.pins
+      deps.pins,
+      deps.maintenance.workers
     )
     BundleControllers(
       BundleService(
@@ -475,7 +477,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
       UndatedSites(
         deps.transactor,
         () => UndatedBuild.MaxZoom(cfg.ui.mapTiles.undatedKeptZoom.value),
-        run => { val _ = Thread.ofVirtual().name("histmersion-undated-sites").start(() => run()) }
+        run => maintenance.workers.detached(Quiescent.Name("undated-sites"))(run)
       ),
       eventStore,
       deps.eventSources,
@@ -576,8 +578,6 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
     MaintenanceControllers(
       deps,
       backups,
-      () => ingest.queue.pause(),
-      () => ingest.queue.resume(),
       Map(CacheName("map-tiles") -> (() => tiles.cache.clear()))
     )
 
@@ -612,6 +612,19 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
   lazy val autopilot: AutopilotView =
     EngineContributions.autopilot(agents)
 
+  /** Every long-running worker of this server, as a restore holds it ([[WriteGate.workers]]): the OCR pool, the paused
+    * background jobs' ways to go on, the agent run pool, the managers' loop and the lease's renewal. The work started
+    * once (background jobs, a merge apply, a backup, the housekeeping, the refreshes) registers itself as it starts.
+    */
+  private def registerWorkers(): Unit =
+    List(
+      ingest.queue,
+      deps.jobStops.quiescent,
+      agents.engine,
+      agents.managers.quiescent,
+      agents.lease.quiescent
+    ).foreach(maintenance.workers.register)
+
   /** The metered upstreams' budgets as the database keeps them (CORE's: `upstream_quota`), under today's limits; none
     * before CORE was first asked, and none when the database cannot be read (`about` says that elsewhere).
     */
@@ -645,3 +658,6 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
           )
           .map(n => domain.research.Article.Note(n.value))
     )
+
+  // last, once every worker above exists
+  registerWorkers()

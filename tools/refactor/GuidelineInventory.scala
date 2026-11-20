@@ -39,6 +39,9 @@ object GuidelineInventory {
     rawSqlText: List[String] = List("com/histmersion/util/database/Sql.Text."),
     // Magnum's own: a String spliced into the SQL text as it is (`sql"... ${SqlLiteral(s)} ..."`)
     rawSqlLiterals: List[String] = List("com/augustnagro/magnum/SqlLiteral.", "com/augustnagro/magnum/SqlLiteral.apply()."),
+    // G89: the transaction entry points that take no write permit (`Transactor#write` is the one that does)
+    unguardedTransactions: List[String] = List("com/histmersion/util/database/Transactor#transact().",
+      "com/histmersion/util/database/Transactor#autocommit().", "com/histmersion/util/database/Transactor.Session#transact()."),
     roleSuffixes: List[String] = List("Suite", "Spec", "Test", "Tests", "Service", "Repo", "Repository", "Controllers", "Controller",
       "Routes", "Row", "Rows", "Markdown", "Render", "Renderer", "Codec", "Codecs", "Cmd", "View", "Views", "Page", "Api", "Client",
       "Store", "Config", "Json", "Schema", "Fixtures", "Fixture", "Support", "Impl", "Ops", "Syntax", "Rule"),
@@ -106,7 +109,8 @@ object GuidelineInventory {
     "G60fromString" -> "a Problem built from a String or an interpolation: a construction of one of the five String `Problem` newtypes (values, api, core, plugin-api, plugin-resolver: `Problem(...)`, `Problem.assume(...)`, ...) or of the temporary `util.problem.Problem.Unclassified(...)`; the detail says whether the text is a literal, an interpolation or another expression. Also every read of the temporary accessor `legacyText` (an unclassified problem's text where the api's renderer is out of reach; detail `legacyText`). Goes to 0 as the sites move to the cases of the closed `util.problem.Problem`",
     "G60external" -> "`.value` of an outside text a problem carries (`util.problem.External.*`: an exception's message, a process's stderr, a reply's start, a plugin's or a model's words) outside a `render` boundary file and outside the newtype's own companion: outside text is shown at an edge, never read anywhere else",
     "G60unrecognised" -> "main code only: a construction of `util.problem.Problem.Stored.Unrecognised`, the text an older version stored that no case writes; only the stored column's reader (and the cases' examples) builds one",
-    "G58raw" -> "raw SQL text: a call of an Sql operator that takes a String or an Sql.Text (Sql.raw, Sql.of, the constructor, `++ \"...\"`, wrap), or an Sql.Text built (also through an alias such as RawText/OfText), or Magnum's SqlLiteral(...)")
+    "G89unguarded" -> "main code only: a transaction opened without a write permit: a call of `Transactor#transact`, `Transactor#autocommit`, `Transactor.Session#transact` or Magnum's `transact` outside util/database/Transactor.scala. `Transactor#write` takes the permit the maintenance gate hands out (a restore waits for it); goes to 0 as the writes move there, then `transact` takes a permit itself",
+    "G58raw" -> "raw SQL text:a call of an Sql operator that takes a String or an Sql.Text (Sql.raw, Sql.of, the constructor, `++ \"...\"`, wrap), or an Sql.Text built (also through an alias such as RawText/OfText), or Magnum's SqlLiteral(...)")
   val ironValue = "io/github/iltotore/iron/"
   val newtypeBase = "com/histmersion/Newtype#"
   val primitives = Set("java/lang/String#", "scala/Predef.String#", "scala/Int#", "scala/Long#", "scala/Double#", "scala/Boolean#",
@@ -516,6 +520,23 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
     doc.tree.traverse {
       case a: Term.Apply if !inImport(a) => rawSqlOf(a.fun).foreach(d => report("G58raw", a, d))
       case i: Term.ApplyInfix if rawSqlOperator(i.op.symbol) => report("G58raw", i, "operator:" + i.op.value)
+    }
+
+    // G89: a transaction opened without a write permit (main code; Transactor.scala defines the entry points)
+    def unguardedSymbol(n: Term.Name): Option[String] = {
+      val v = n.symbol.value
+      if (policy.unguardedTransactions.contains(v)) Some("Transactor." + n.value)
+      else if (v.startsWith("com/augustnagro/magnum/") && n.value == "transact") Some("magnum.transact")
+      else None
+    }
+    def unguardedTransaction(fun: Term): Option[String] = fun match {
+      case Term.ApplyType(f, _) => unguardedTransaction(f)
+      case n: Term.Name => unguardedSymbol(n)
+      case Term.Select(_, n) => unguardedSymbol(n)
+      case _ => None
+    }
+    if (scope == "main" && !path.endsWith("/util/database/Transactor.scala")) doc.tree.traverse {
+      case a: Term.Apply if !inImport(a) => unguardedTransaction(a.fun).foreach(d => report("G89unguarded", a, d))
     }
 
     // ---- G44 plain-typed defs fed by newtypes: record defs and calls --------------------------------------------

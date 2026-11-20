@@ -13,11 +13,11 @@ import com.histmersion.util.settings.{info, ConfigSource, HotConfig}
 
 import com.histmersion.pluginhost.Generation
 
-import com.histmersion.config.{AppConfig, ConfigReload}
+import com.histmersion.config.{AppConfig, ConfigReload, DbConfig}
 import com.histmersion.api.settings.ReloadReport
-import com.histmersion.util.database.{Db, Migrate}
+import com.histmersion.util.database.{Db, InstanceLock, Migrate}
 import com.histmersion.server.hot.Hot
-import ox.{forkDiscard, useInScope}
+import ox.{forkDiscard, releaseAfterScope, useInScope}
 
 import java.nio.file.{FileSystems, Path, StandardWatchEventKinds}
 import javax.sql.DataSource
@@ -29,15 +29,20 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** The server's hot components (docs/research-plugins.md §3.6) and the config reload over them (§3.5):
   *
   * {{{
-  * config ─► pool ─► migrations ─► query-pool
-  *                             └─► leases (added by Main once the agents exist)
+  * config ─► pool ─► instance-lock ─► migrations ─► query-pool
+  *                                              └─► leases (added by Main once the agents exist)
   *        ─► plugins ─► acquisition (added by Main)
   *        ─► watch (the config file watcher)
   * }}}
   *
-  * `ds`/`queryDs` are the proxies every repo takes ([[HotDataSource]]); [[deps]] reads the config and the plugins from
-  * the graph at each call. Nothing here is static: a second server in the same JVM (a test) has its own graph, pools
-  * and all, closed with its Ox scope.
+  * The instance lock (one server per database, [[InstanceLock]]) is taken on the database before it is migrated, and so
+  * before any job is reconciled or any worker starts: a second server on the database stops there, having changed
+  * nothing. A reload that moves to another database takes the lock there first, and gives the old one up with the
+  * generation it belonged to.
+  *
+  * `ds`/`queryDs` are the proxies every repo takes ([[HotDataSource]]), behind the maintenance gate (a restore lets no
+  * other thread have a connection); [[deps]] reads the config and the plugins from the graph at each call. Nothing here
+  * is static: a second server in the same JVM (a test) has its own graph, pools and all, closed with its Ox scope.
   */
 final class ServerGraph private (
     val graph: Hot.Graph[HotConfig],
@@ -46,14 +51,15 @@ final class ServerGraph private (
     val migrations: Hot[Migrate.Version],
     val queryPool: Hot[ReadOnlyPool],
     val plugins: Hot[Generation],
-    val core: CoreBudget
+    val core: CoreBudget,
+    val maintenance: WriteGate
 ):
 
-  val ds: DataSource = Hot.DataSource(pool)(identity)
-  val queryDs: DataSource = Hot.DataSource(queryPool)(_.ds)
+  val ds: DataSource = maintenance.permits.dataSource(Hot.DataSource(pool)(identity))
+  val queryDs: DataSource = maintenance.permits.dataSource(Hot.DataSource(queryPool)(_.ds))
 
   /** The handlers' view: config, file and plugins from the graph at each call. */
-  def deps(maintenance: WriteGate, restart: Option[() => Unit], system: SystemContext): Deps =
+  def deps(restart: Option[() => Unit], system: SystemContext): Deps =
     new Deps(
       () => graph.config.app,
       ds,
@@ -90,7 +96,17 @@ final class ServerGraph private (
     val generation = ReloadReport.Generation(gen.value)
     val file = running.loaded.file.path.map(p => ReloadReport.File(p.toString))
     source match
-      case None      => Deps.NoReload().modify(_.generation).setTo(generation)
+      case None                          => Deps.NoReload().modify(_.generation).setTo(generation)
+      case Some(_) if maintenance.active =>
+        // a reload may swap the pools or the database a restore is replacing: it waits for the next one
+        ReloadReport(
+          published = ReloadReport.Published(false),
+          generation,
+          errors = List(
+            ReloadReport.Errors(Problem.Conflict.Busy(Problem.Conflict.Activity.Restore).sentence)
+          ),
+          file = file
+        )
       case Some(src) =>
         val report = (try src.read()
         catch
@@ -190,6 +206,7 @@ final class ServerGraph private (
 object ServerGraph:
 
   val Pool = "pool"
+  val Lock = "instance-lock"
   val Migrations = "migrations"
   val QueryPool = "query-pool"
   val Plugins = "plugins"
@@ -197,15 +214,19 @@ object ServerGraph:
   val Leases = "leases"
   val Watch = "watch"
 
-  /** Build the graph's first generation: the pools, the migrations, the plugins. `plugins` is a generation built
-    * already (Main's, for `--self-check`; a test's), used as the first value. `Left` = the server cannot start (the
-    * database is unreachable, a migration failed).
+  /** Build the graph's first generation: the pools, the instance lock, the migrations, the plugins. `plugins` is a
+    * generation built already (Main's, for `--self-check`; a test's), used as the first value. `Left` = the server
+    * cannot start (the database is unreachable, another server holds it — [[Problem.Conflict.ServerHeld]] —, a
+    * migration failed). `holds` are this server's instance locks; `maintenance` its gate, which the data sources are
+    * behind.
     */
   def start(
       initial: HotConfig,
       source: Option[ConfigSource],
       plugins: Option[Generation],
-      core: CoreBudget
+      core: CoreBudget,
+      holds: InstanceLock.Holds,
+      maintenance: WriteGate
   ): Either[Problem, ServerGraph] =
     val graph = Hot.Graph[HotConfig](initial)
     val prepare = source.map(_.prepare).getOrElse((_: AppConfig) => Right(()))
@@ -229,7 +250,20 @@ object ServerGraph:
                 )
             yield p
           }
-        mig <- graph.node[Migrate.Version](Hot.Graph.Def.Name(Migrations), deps = List(pool)) { ctx =>
+        // one server per database: before the database is migrated, a job reconciled or a worker started
+        lock <- graph.node[InstanceLock.Hold](
+          Hot.Graph.Def.Name(Lock),
+          deps = List(pool),
+          keys = List(Hot.Graph.Def.Keys("histmersion.db"))
+        ) { ctx =>
+          val db = ctx.config.app.db
+          holds.hold(db).map { held =>
+            releaseAfterScope(held.release())
+            forkDiscard(watchLock(holds, db))
+            held
+          }
+        }
+        mig <- graph.node[Migrate.Version](Hot.Graph.Def.Name(Migrations), deps = List(pool, lock)) { ctx =>
           val p = ctx(pool)
           try
             val v = Migrate.run(p)
@@ -263,9 +297,23 @@ object ServerGraph:
             case prev =>
               ServerPlugins.load(ctx.config.loaded, prev, ctx.changed.map(n => ConfigReload.Key(n.value)), core))
         }
-      yield ServerGraph(graph, source, pool, mig, q, plug, core)
+      yield ServerGraph(graph, source, pool, mig, q, plug, core, maintenance)
     built.left.foreach(_ => graph.close())
     built
+
+  /** Look every `db.instance-lock-check-seconds` whether the session holding the instance lock is still there, and take
+    * the lock again when the database dropped it (a restarted database ends every session). Another server that took it
+    * meanwhile is logged as the error it is. Returns when interrupted (the lock node's scope closing).
+    */
+  private def watchLock(holds: InstanceLock.Holds, db: DbConfig): Unit =
+    try
+      while true do
+        Thread.sleep(db.instanceLockCheckSeconds.duration.toMillis)
+        holds
+          .renew(db)
+          .left
+          .foreach(p => scribe.error(s"one server per database: this server lost its instance lock: ${p.sentence}"))
+    catch case _: InterruptedException => ()
 
   /** The read-only role (migration V011) given its password and statement timeout from config here (a migration must
     * not carry a secret; see `reference.conf`), and its own small pool.

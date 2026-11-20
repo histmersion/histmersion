@@ -115,6 +115,7 @@ object BasemapWiring:
     ): Either[Api.Error, JobInfo] =
       BackgroundJob.start(
         deps.ds,
+        deps.maintenance.workers,
         kind,
         Some(JobDetail.Purpose(Some(JobKinds.Subject(about.value)))),
         slot,

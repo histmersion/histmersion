@@ -1,6 +1,6 @@
 package com.histmersion
 package server
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{Legacy, Problem, Raised}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.util.access.{AccessGate, AccessPolicy, Admission}
 import com.histmersion.domain.automation.agents.RunTokens
@@ -37,7 +37,7 @@ import scala.collection.immutable.ListMap
 import com.histmersion.config.ServerConfig
 import com.histmersion.server.instance.Listener
 import com.histmersion.util.nonempty.NonEmptyVector
-import com.histmersion.util.database.Transactor
+import com.histmersion.util.database.{InstanceLock, Transactor}
 import com.histmersion.server.agents.EngineContributions
 import com.histmersion.domain.library.workflows.AgentUpstream
 import com.histmersion.domain.automation.agents.AgentsTools
@@ -152,7 +152,10 @@ object Composition:
       plugins: Generation = ServerPlugins.offline,
       core: Option[CoreBudget] = None,
       restart: Option[() => Unit] = None,
-      system: SystemContext = SystemContext.isolated
+      system: SystemContext = SystemContext.isolated,
+      /** This server's instance locks: the entry point's, which its bundled runtime took first; a fresh one otherwise.
+        */
+      holds: Option[InstanceLock.Holds] = None
   )(using Ox): Listener =
     // who is let in, checked against every bind address before anything is opened: a listener that would be open to a
     // network nobody vouched for does not start
@@ -160,17 +163,27 @@ object Composition:
       .forListener(hc.app.auth, hc.app.server.modify(_.host).setTo(binds))
       .fold(e => throw IllegalStateException(e.sentences.mkString("; ")), identity)
     val selectedCore = core.getOrElse(CoreBudget(() => system.clock.instant()))
+    // the maintenance gate first: the data sources the graph hands out are behind it
+    val maintenance = WriteGate()
+    // a second server on the same database stops here, typed (Problem.Conflict.ServerHeld), having changed nothing
     val sg =
       ServerGraph
-        .start(hc, source, Some(plugins), selectedCore)
-        .fold(e => throw IllegalStateException(s"${e.sentence}"), identity)
+        .start(
+          hc,
+          source,
+          Some(plugins),
+          selectedCore,
+          holds.getOrElse(InstanceLock.Holds(InstanceLock.Holder.thisProcess())),
+          maintenance
+        )
+        .fold(e => throw Raised(e), identity)
     releaseAfterScope(sg.close())
     // the CORE budget, built before the database (the first plugin generation spends from it), kept in it
     // from here on: a restart does not hand the day's tokens out again
     selectedCore.persistTo(
       CoreQuotaStore.of(UpstreamQuotaService(Transactor(sg.ds)))
     )
-    val deps = sg.deps(WriteGate(), restart, system)
+    val deps = sg.deps(restart, system)
     val cfg = hc.app // the listener's settings: restart-only (ConfigReload.RestartOnly)
     val h = ServerWiring(deps, converter.getOrElse(ConverterWiring.client(deps.cfg.converter)))
     onWiring(h) // a test's handle on this server's wiring (its run tokens); nothing in production

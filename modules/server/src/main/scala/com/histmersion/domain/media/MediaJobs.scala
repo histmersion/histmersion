@@ -57,6 +57,7 @@ final class MediaJobs(ds: DataSource, maintenance: WriteGate, pins: WorkCarrier,
     maintenance.guard(WriteGate.OperationName(kind.value)) {
       BackgroundJob.start(
         ds,
+        maintenance.workers,
         kind,
         Some(ImportJobKinds.Media(Some(describe))),
         jobSlot,

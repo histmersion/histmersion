@@ -373,6 +373,7 @@ final class AcquireRecheckService(
     )
     BackgroundJob.start(
       ds,
+      site.maintenance.workers,
       jobKind,
       Some(Acquire.Checks.RecheckJob.Detail(Some(detail))),
       jobSlot,

@@ -30,6 +30,8 @@ final class JobPool(
     ds: DataSource,
     parallelism: JobPool.Parallelism,
     run: Job.Id => Unit,
+    /** The server's workers: each job runs as one unit of work, fenced off by a restore that happens while it runs. */
+    workers: Workers,
     pins: Pinning = Pinning.none
 ):
 
@@ -63,6 +65,23 @@ final class JobPool(
   def resume(): Unit = gate.synchronized { paused = false; gate.notifyAll() }
 
   def isPaused: Boolean = gate.synchronized(paused)
+
+  /** The jobs a worker runs now. */
+  private val active = java.util.concurrent.ConcurrentHashMap.newKeySet[Job.Id]()
+
+  /** The jobs running now, for a restore's report: it waits for them (paused, the pool starts no other). */
+  def running: Vector[Job.Id] =
+    import scala.jdk.CollectionConverters.*
+    active.asScala.toVector.sorted
+
+  /** After a restore: the queued jobs and what the pool held of them describe rows the restore replaced, so they are
+    * dropped (their pins go), and every unfinished job of the restored database is failed, as `cause` (a job of this
+    * process that still runs is fenced off and can no longer write its end). How many rows were failed.
+    */
+  def restored(cause: Problem): RowCount =
+    Iterator.continually(queue.poll()).takeWhile(_ != null).foreach(_.work.drop())
+    held.clear()
+    Transactor(ds).transact(JobRepo.failInterrupted(Nil, cause))
 
   private def awaitResume(): Unit = gate.synchronized(while paused do gate.wait())
 
@@ -99,7 +118,7 @@ final class JobPool(
       // a worker must outlive one bad job, a deep recursion included (its stack is unwound here): record the failure
       // and take the next id
       case e @ (NonFatal(_) | _: StackOverflowError) =>
-        val _ = Transactor(ds).transact(
+        val failed = Transactor(ds).transact(
           JobRepo.transition(
             id,
             JobState.Running,
@@ -107,6 +126,7 @@ final class JobPool(
             error = Some(ProblemLog.unexpected(e, Problem.Where(s"job $id")).toNonEmpty)
           )
         )
+        if failed.isEmpty then scribe.warn(s"job $id failed, but its row was no longer running: left as it is")
 
   /** Stop the pool (tests, shutdown). Interrupting the scope thread cancels every fork. */
   def stop(): Unit =
@@ -135,10 +155,15 @@ final class JobPool(
       try
         val q = queue.take()
         awaitResume() // a restore holds the pool here
-        try q.work.run()
-        catch
-          case e: InterruptedException => throw e
-          case NonFatal(e)             => scribe.error(s"job ${q.id}: recording its failure failed: ${e.getMessage}", e)
+        // a restore that ran meanwhile dropped what the pool held: this job's row was failed with the restored ones
+        if !held.contains(q.id) then q.work.drop()
+        else
+          val _ = active.add(q.id)
+          try workers.unit(q.work.run())
+          catch
+            case e: InterruptedException => throw e
+            case NonFatal(e) => scribe.error(s"job ${q.id}: recording its failure failed: ${e.getMessage}", e)
+          finally { val _ = active.remove(q.id) }
       catch case _: InterruptedException => running = false
 
 object JobPool:

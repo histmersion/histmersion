@@ -2,6 +2,7 @@ package com.histmersion
 package domain.automation.autopilot
 
 import com.histmersion.util.problem.Text.{sentence, sentences}
+import com.histmersion.util.jobs.Quiescent
 import hearth.kindlings.optics.syntax.*
 
 import io.scalaland.chimney.dsl.*
@@ -524,7 +525,7 @@ final class AutopilotService(
               if lintDue then lint()
             finally housekeepingBusy.set(false)
           }
-          val _ = Thread.ofPlatform().daemon(true).name("histmersion-autopilot-housekeeping").start(() => work.run())
+          agents.workers.detached(Quiescent.Name("autopilot-housekeeping"))(() => work.run())
           List(
             List(Option.when(backupDue)("backup"), Option.when(lintDue)("lint --fix")).flatten
               .mkString(" and ") + " started"

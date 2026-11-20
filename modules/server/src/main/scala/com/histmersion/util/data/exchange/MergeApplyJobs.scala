@@ -6,7 +6,8 @@ import com.histmersion.util.problem.{Legacy, Problem, Problems}
 import com.histmersion.api.backup.Backup
 import com.histmersion.api.exchange.{MergeApplyJob, MergeApplyResult, MergeJobState}
 import com.histmersion.api.exchange.{Bundle, MergePlan}
-import com.histmersion.util.jobs.{Job, MergeApplyRuns, WorkCarrier}
+import com.histmersion.util.jobs.{Job, MergeApplyRuns, Quiescent, WorkCarrier, Workers}
+import com.histmersion.util.database.WritePermit
 
 import java.util.concurrent.{CompletableFuture, TimeoutException, TimeUnit}
 import com.histmersion.api.Api
@@ -19,9 +20,15 @@ import com.histmersion.api.Api
   * The job is a `jobs` row (kind `merge-apply`, #888), so the CLI and the web screen can follow it across a restart:
   * what it reported once done, and — when the server stopped while it ran — `interrupted` (the startup reconciliation
   * fails every unfinished job; the apply's transaction committed or rolled back as a whole). Only the wait for the
-  * first answer is in memory.
+  * first answer is in memory. The apply runs through the server's [[Workers]]: a restore waits for it, and fences it
+  * off when it outlasts the wait.
   */
-final class MergeApplyJobs(runs: MergeApplyRuns, waitSeconds: => Int, carrier: WorkCarrier = WorkCarrier.none):
+final class MergeApplyJobs(
+    runs: MergeApplyRuns,
+    waitSeconds: => Int,
+    carrier: WorkCarrier = WorkCarrier.none,
+    workers: Workers = Workers(WritePermit.Gate())
+):
 
   /** Start `run` on its own thread and wait up to `waitSeconds` for it. */
   def start(bundle: Sha256, planHash: MergeRow.PlanHash)(
@@ -55,7 +62,7 @@ final class MergeApplyJobs(runs: MergeApplyRuns, waitSeconds: => Int, carrier: W
           catch case e: Exception => scribe.error(s"merge apply $id: could not record its end: ${e.getMessage}", e)
           finally { val _ = done.complete(()) }
         }
-        val _ = Thread.ofPlatform().daemon(true).name("histmersion-merge-apply").start(() => work())
+        workers.detached(Quiescent.Name("merge-apply"))(() => work())
         Right(id -> done)
     }.map { (id, done) =>
       try { val _ = done.get(math.max(0, waitSeconds).toLong, TimeUnit.SECONDS) }

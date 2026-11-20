@@ -217,10 +217,11 @@ object JobRepo:
     * background job a person paused, whose way to go on was the process's. Returns how many rows were corrected. Agent
     * runs are NOT touched: their finished steps are checkpointed, so an interrupted run is paused and resumable
     * (`JobRuns.reconcile`). * `except`: the jobs this process is still running or holding queued — a config reload that
-    * swapped back to a database (docs/research-plugins.md §3.6) must not fail its own work there.
+    * swapped back to a database (docs/research-plugins.md §3.6) must not fail its own work there. `cause` is what cut
+    * them short: a restart ([[Problem.Run.Interrupted]]), or a restore that replaced the database.
     */
-  def failInterrupted(except: List[Job.Id] = Nil)(using DbCon): RowCount =
-    val interrupted = NonEmptyVector.of[Problem](Problem.Run.Interrupted)
+  def failInterrupted(except: List[Job.Id] = Nil, cause: Problem = Problem.Run.Interrupted)(using DbCon): RowCount =
+    val interrupted = NonEmptyVector.of[Problem](cause)
     RowCount(
       sql"""UPDATE jobs SET status = ${JobState.Failed.wire}, error = $interrupted,
                           progress = NULL, updated_at = now()

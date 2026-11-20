@@ -2,7 +2,8 @@ package com.histmersion
 package util.data.backup
 import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.util.jobs.WorkCarrier
+import com.histmersion.util.jobs.{Quiescent, WorkCarrier, Workers}
+import com.histmersion.util.database.WritePermit
 
 import java.time.Instant
 import java.util.concurrent.{CompletableFuture, TimeoutException, TimeUnit}
@@ -16,12 +17,14 @@ import com.histmersion.api.backup.Backup
   * to `waitSeconds` and otherwise answers `running`, and `GET /api/backup/status` reports the job until it is done or
   * failed.
   *
-  * One job at a time: a second `start` while one runs joins it rather than dumping twice.
+  * One job at a time: a second `start` while one runs joins it rather than dumping twice. The dump runs through the
+  * server's [[Workers]] (a restore refuses to start while one runs).
   */
 final class BackupJobs(
     service: BackupService,
     waitSeconds: => Int,
-    pins: WorkCarrier = WorkCarrier.none
+    pins: WorkCarrier = WorkCarrier.none,
+    workers: Workers = Workers(WritePermit.Gate())
 ):
 
   final private case class Job(
@@ -53,7 +56,7 @@ final class BackupJobs(
                 .flatten
             )
           }
-          val _ = Thread.ofPlatform().daemon(true).name("histmersion-backup").start(() => work())
+          workers.detached(Quiescent.Name("backup"))(() => work())
           j
         }
     job.map { j =>

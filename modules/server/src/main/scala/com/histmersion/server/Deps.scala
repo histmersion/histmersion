@@ -166,8 +166,9 @@ object Deps:
   ): Deps =
     new Deps(
       () => cfg,
-      ds,
-      queryDs,
+      // behind the maintenance gate, as the server's are: a restore lets no other thread have a connection
+      maintenance.permits.dataSource(ds),
+      maintenance.permits.dataSource(queryDs),
       maintenance,
       () => configFile,
       () => plugins,

@@ -47,6 +47,7 @@ import com.histmersion.domain.automation.Manager
 import com.histmersion.api.automation.Run
 import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.util.jobs.Job
+import com.histmersion.util.jobs.Quiescent
 import com.histmersion.api.automation.Approval
 import com.histmersion.domain.research.Slug
 import com.histmersion.domain.ManagerPolicy
@@ -174,14 +175,40 @@ final class ManagerSupervisor(
   private def loop(): Unit =
     try
       while !stopping do
-        // one tick, one generation: its database and config throughout (a reload moves the next one)
-        try { val _ = agents.pins.pinned(tick(Instant.now(agents.clock))) }
+        hold.synchronized(while holding do hold.wait()) // a restore holds the managers here
+        // one tick, one generation: its database and config throughout (a reload moves the next one); one unit of
+        // work, fenced off by a restore that happens during it
+        ticking.set(true)
+        try { val _ = agents.workers.unit(agents.pins.pinned(tick(Instant.now(agents.clock)))) }
         catch
           case e: InterruptedException => throw e
           case e: Exception            => scribe.warn(s"agent managers tick failed: ${e.getMessage}", e)
+        finally ticking.set(false)
         val _ = nudges.poll(math.max(1, mcfg.tickSeconds.value).toLong, TimeUnit.SECONDS)
         nudges.clear()
     catch case _: InterruptedException => ()
+
+  // ── a restore ──────────────────────────────────────────────────────────────────────────────────
+
+  /** A tick of the loop runs now. */
+  private val ticking = java.util.concurrent.atomic.AtomicBoolean(false)
+
+  /** Held while a restore runs: the loop ticks no more. A `var` guarded by `hold`'s monitor, because the loop must
+    * BLOCK on it rather than spin.
+    */
+  private val hold = Object()
+  private var holding = false
+
+  /** The managers' loop, as a restore holds it: the tick in flight is waited for, and no other starts. */
+  val quiescent: Quiescent = new Quiescent:
+    val name: Quiescent.Name = Quiescent.Name("the process managers' loop")
+    def quiesce(): Unit = hold.synchronized { holding = true }
+    def busy: Vector[Quiescent.Busy] =
+      if ticking.get() then Vector(Quiescent.Busy("a tick of the managers")) else Vector.empty
+
+    /** Nothing is kept between ticks but the nudges, which spoke of runs the restore replaced. */
+    def restored(): Unit = nudges.clear()
+    def resume(): Unit = hold.synchronized { holding = false; hold.notifyAll() }
 
   /** When the events were last pruned (epoch ms). */
   private val lastPrune = java.util.concurrent.atomic.AtomicLong(0L)

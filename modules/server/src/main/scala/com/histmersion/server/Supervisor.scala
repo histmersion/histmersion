@@ -1,7 +1,8 @@
 package com.histmersion
 package server
-import com.histmersion.util.problem.{External, Legacy, Problem, Problems}
+import com.histmersion.util.problem.{External, Legacy, Problem, Problems, Raised}
 import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.database.InstanceLock
 
 import hearth.kindlings.optics.syntax.*
 
@@ -314,8 +315,13 @@ object Supervisor:
     * that points at them. Throws with an actionable message when the bundle is incomplete — the server cannot run
     * without its database — or when the database pool does not fit in the connections Postgres is started with
     * ([[PgTuning.admits]]), before anything is started. `memory` is the machine's, which `auto` sizes from.
+    *
+    * One server per database: once its database is up, the instance lock is taken there in `holds` (kept for the
+    * process's life); another server holding it ends the start with [[Raised]] ([[Problem.Conflict.ServerHeld]]) before
+    * the converter starts and before a shutdown hook is registered — that hook would stop the Postgres the other server
+    * runs on.
     */
-  def start(cfg: AppConfig, paths: UserPaths, memory: Option[ByteCount]): AppConfig =
+  def start(cfg: AppConfig, paths: UserPaths, memory: Option[ByteCount], holds: InstanceLock.Holds): AppConfig =
     cfg.runtime.postgres.admits(cfg.db.pool).left.foreach(p => throw IllegalStateException(p.sentence))
     val exe = currentExecutable
     val l = layout(cfg.runtime, exe, paths.environment.lookup, paths.osName)
@@ -359,6 +365,7 @@ object Supervisor:
       scribe.info(s"runtime: postgres up on 127.0.0.1:${cfg.runtime.pgPort}")
     val configured = configure(cfg, l)
     ensureDatabase(configured)
+    holds.hold(configured.db).left.foreach(p => throw Raised(p))
 
     if Files.isExecutable(l.python) then superviseConverter(l, cfg.runtime.converterPort)
     else scribe.warn(s"runtime: no converter in the bundle (${l.python}); OCR ingest is unavailable")

@@ -2,6 +2,8 @@ package com.histmersion
 package domain.automation.agents
 
 import com.augustnagro.magnum.{connect, transact}
+import com.histmersion.util.database.WritePermit
+import com.histmersion.util.jobs.{Quiescent, Workers}
 
 import javax.sql.DataSource
 
@@ -13,7 +15,9 @@ import javax.sql.DataSource
 final class AgentLease(
     ds: DataSource,
     ttlSeconds: AgentLease.TtlSeconds,
-    val owner: AgentLease.Owner = AgentLease.ownerId()
+    val owner: AgentLease.Owner = AgentLease.ownerId(),
+    /** The server's workers: each renewal is one unit of work (a lease of its own, with no restore, by default). */
+    workers: Workers = Workers(WritePermit.Gate())
 ):
 
   @volatile private var held = false
@@ -82,7 +86,8 @@ final class AgentLease(
         try
           while !stopping do
             Thread.sleep(every)
-            if claim() && !started then
+            hold.synchronized(while holding do hold.wait()) // a restore holds the renewals here
+            if workers.unit(claim()) && !started then
               started = true
               scribe.info(s"agent lease acquired by $owner: starting the agents")
               onAcquired()
@@ -100,6 +105,23 @@ final class AgentLease(
       try transact(ds)(LeaseRepo.release(AgentLease.Name, owner))
       catch case _: Exception => ()
       held = false
+
+  /** Held while a restore runs: no renewal. A `var` guarded by `hold`'s monitor (the renewing thread blocks on it). */
+  private val hold = Object()
+  private var holding = false
+
+  /** The renewals, as a restore holds them; afterwards the lease is taken over on the restored rows, which may name the
+    * holder of the database the dump came from (one server per database is enforced at start, so no other runs here).
+    */
+  val quiescent: Quiescent = new Quiescent:
+    val name: Quiescent.Name = Quiescent.Name("the agent lease's renewal")
+    def quiesce(): Unit = hold.synchronized { holding = true }
+    def busy: Vector[Quiescent.Busy] = Vector.empty
+    def restored(): Unit =
+      if started then
+        transact(ds)(LeaseRepo.takeOver(AgentLease.Name, owner, ttlSeconds))
+        held = true
+    def resume(): Unit = hold.synchronized { holding = false; hold.notifyAll() }
 
   /** For About and the doctor: (holder, until, expired, held by this server). */
   def status: Option[(LeaseRepo.LeaseOwner, LeaseRepo.LeaseExpiry, Boolean, Boolean)] =

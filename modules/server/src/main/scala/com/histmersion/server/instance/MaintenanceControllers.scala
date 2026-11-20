@@ -21,24 +21,24 @@ import com.histmersion.api.Api
 import com.histmersion.api.maintenance.Vacuum
 import com.histmersion.util.data.maintenance.MaintenanceTask
 import com.histmersion.util.data.maintenance.WriteGate
+import com.histmersion.util.storage.Store
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** This server's upkeep as REST, MCP and the CLI reach it: the backups (a `pg_dump` as a job, its status, the listing
   * and an archive), the restore under the maintenance lock, the vacuum and the reindex the registry runs, and why a
-  * scheduled backup or repair must not start now. `pauseIngest` and `resumeIngest` hold the OCR workers off during a
-  * restore; `restoredCaches` clears what this server holds of each registered cache a restore makes stale.
+  * scheduled backup or repair must not start now. A restore holds every registered worker (the maintenance gate's);
+  * `restoredCaches` clears what this server holds of each registered cache a restore makes stale.
   */
 final class MaintenanceControllers(
     deps: Deps,
     backups: BackupService,
-    pauseIngest: () => Unit,
-    resumeIngest: () => Unit,
     restoredCaches: Map[CacheName, () => Unit]
 ):
   private val ds = deps.ds
   private def cfg = deps.cfg
   private val maintenance = deps.maintenance
-  private val backupJobs = BackupJobs(backups, deps.cfg.backups.requestWaitSeconds.value, deps.pins)
+  private val backupJobs =
+    BackupJobs(backups, deps.cfg.backups.requestWaitSeconds.value, deps.pins, deps.maintenance.workers)
   private val vacuumJobs =
     VacuumJobs(ds, deps.maintenance, Deps.data, () => cfg.maintenance.tables.map(t => Vacuum.Table(t.value)), deps.pins)
 
@@ -98,15 +98,25 @@ final class MaintenanceControllers(
     * afterwards so a stale dump cannot pass silently.
     */
   def restore(req: RestoreRequest): Either[Api.Error, RestoreResult] =
+    maintenance.exclusively(
+      WriteGate.OperationName("restore"),
+      cfg.backups.restoreDrainSeconds.duration,
+      // checked once no new write or job can start: a backup or a vacuum running, an archive not listed, a database that
+      // still holds sources — each turns the restore down before any worker is held
+      refusedNow(req)
+    )(quiet ?=> restoreNow(req, quiet))
+
+  /** Why the restore must not start, if it must not. */
+  private def refusedNow(req: RestoreRequest): Option[Api.Error] =
     if backupJobs.running then
-      Left(
+      Some(
         Api.Error(
           Problem.Unclassified(Legacy.Text("a backup is still running — wait for `histmersion backup` to finish")),
           Some(Api.Error.Code(Backup.CodeMaintenance))
         )
       )
     else if vacuumJobs.isRunning then
-      Left(
+      Some(
         Api.Error(
           Problem.Unclassified(
             Legacy.Text("a vacuum is still running — wait for its job (`histmersion jobs`) to finish")
@@ -114,19 +124,19 @@ final class MaintenanceControllers(
           Some(Api.Error.Code(Backup.CodeMaintenance))
         )
       )
-    else
-      maintenance.exclusively(WriteGate.OperationName("restore")):
-        // The OCR workers hold long transactions and write sources; a job landing mid-restore writes
-        // into a schema that is being replaced. Paused for the duration, resumed whatever happens.
-        pauseIngest()
-        try restoreNow(req)
-        finally resumeIngest()
+    else forced(req).left.toOption
 
-  private def restoreNow(req: RestoreRequest): Either[Api.Error, RestoreResult] =
+  /** The archive, when the database holds no source or the restore is forced (`pg_restore --clean` DROPS them). */
+  private def forced(req: RestoreRequest): Either[Api.Error, (Store.Key, RowCount)] =
     val before = backups.guardedRows
     for
       archive <- backups.resolve(PreparedBackup.File(req.file.value))
       _ <- if req.force.value || before.value == 0 then Right(()) else Left(backups.refusal(before))
+    yield (archive, before)
+
+  private def restoreNow(req: RestoreRequest, quiet: WriteGate.Quiet): Either[Api.Error, RestoreResult] =
+    for
+      (archive, before) <- forced(req)
       r <- backups.restore(archive)
       // Every pooled connection now holds a session cache describing types the restore dropped;
       // PostGIS in particular fails outright on the next spatial query. Throw them away here,
@@ -161,13 +171,20 @@ final class MaintenanceControllers(
             Problem.Unclassified(Legacy.Text(s"restored ${req.file}, but the schema does not validate: ${m.sentence}"))
           )
         )
+      // every worker takes up the restored rows (its queues and in-memory state described the database that was
+      // dropped); what a worker could not reconcile, and the work fenced off because it outlasted the wait, is said
+      reconciled = quiet.reconcile().map(p => s"not reconciled with the restored database: ${p.sentence}")
+      fenced = quiet.restless.map((name, busy) =>
+        s"$name was still at work ($busy) and is fenced off: it writes nothing more, and its unfinished rows of the " +
+          "restored database are marked interrupted"
+      )
     yield RestoreResult(
       req.file,
       RestoreResult.SchemaVersion(v.value),
       RestoreResult.SourcesBefore(before.value),
       RestoreResult.SourcesAfter(backups.guardedRows.value),
       RestoreResult.DurationMs(r._1.value),
-      r._2.map(n => RestoreResult.Warnings(n.value)) ++ role.map(RestoreResult.Warnings(_))
+      r._2.map(n => RestoreResult.Warnings(n.value)) ++ (role ++ reconciled ++ fenced).map(RestoreResult.Warnings(_))
     )
 
   /** The registered caches a restore makes stale, cleared: what this server holds of each. */

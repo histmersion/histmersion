@@ -49,6 +49,7 @@ final class VacuumJobs(
       Vacuum.plan(in, defaults(), vacuumable).flatMap { plan =>
         BackgroundJob.start(
           ds,
+          gate.workers,
           Job.Kind.applyUnsafe(Vacuum.JobKind),
           Some(VacuumPlan.Detail(Some(plan))),
           slot,

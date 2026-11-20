@@ -11,6 +11,8 @@ import ox.{never, supervised}
 import scala.annotation.nowarn
 import com.histmersion.util.console.Console
 import com.histmersion.util.access.AccessPolicy
+import com.histmersion.util.database.InstanceLock
+import com.histmersion.util.problem.Raised
 
 /** The server binary: the command line, the config and the plugins on the main thread, the bundled runtime when there
   * is one, then [[Composition]] and the listener.
@@ -83,15 +85,21 @@ import com.histmersion.util.access.AccessPolicy
   // a reloaded config is pointed at them the same way (the children themselves are restart-only)
   val explicit = environment.nonBlank(Environment.VariablesKey("HISTMERSION_RUNTIME")).map(_.value.toLowerCase)
   val bundled = loaded.runtime.enabled.value || (explicit.isEmpty && Supervisor.bundled(Supervisor.currentExecutable))
+  // one server per database: this process's instance locks, taken by the bundled runtime as soon as its database is up
+  // (before it starts the converter or would stop the database on exit) and by the database node of the composition
+  val holds = InstanceLock.Holds(InstanceLock.Holder.thisProcess())
   val (cfg, source) =
     if !bundled then (loaded, ConfigSource(reread))
     else
       try
         (
-          Supervisor.start(loaded, system.userPaths, system.memory),
+          Supervisor.start(loaded, system.userPaths, system.memory, holds),
           Supervisor.reloadSource(loaded, reread, system.userPaths)
         )
       catch
+        case r: Raised =>
+          r.problems.sentences.foreach(s => scribe.error(s"Histmersion does not start: $s"))
+          sys.exit(3)
         // the process edge: every Throwable ends it with exit 3, or the threads started so far could keep it alive
         case e: (Throwable @nowarn("id=E235")) =>
           scribe.error(s"Histmersion could not start its bundled runtime: ${e.getMessage}")
@@ -123,9 +131,14 @@ import com.histmersion.util.access.AccessPolicy
           plugins = generation,
           core = Some(core),
           restart = restart,
-          system = system
+          system = system,
+          holds = Some(holds)
         )
       catch
+        // a typed refusal (another server holds the database): its sentences, and exit 3
+        case r: Raised =>
+          r.problems.sentences.foreach(s => scribe.error(s"Histmersion does not start: $s"))
+          sys.exit(3)
         // the process edge: every Throwable ends it with exit 3, or the threads started so far could keep it alive
         case e: (Throwable @nowarn("id=E235")) =>
           scribe.error(s"Histmersion failed to start: ${e.getClass.getName}: ${e.getMessage}", e)

@@ -66,7 +66,13 @@ object Text:
         s"${t.noun} '$key' has moved on: you sent $sent, it is now $now — read it again and re-apply your change"
       case Conflict.WrongState(t, key, is, ws) => s"${t.noun} '$key' is $is; this needs ${ws.mkString(" or ")}"
       case Conflict.Busy(activity)             => activity.running
-      case Conflict.Referenced(t, key, by, n)  =>
+      case Conflict.ServerHeld(holder)         =>
+        s"another Histmersion server holds this database ($holder): one server per database — stop that one, or " +
+          "point this one at another database"
+      case Conflict.Undrained(busy, waited) =>
+        s"the restore did not start: still at work after $waited s: ${busy.toVector.mkString(", ")} — nothing was " +
+          "changed; restore again once that work is done"
+      case Conflict.Referenced(t, key, by, n) =>
         s"${t.noun} '$key' is referred to by ${by.counted(n)} — remove those references first (there is no override)"
       case Conflict.Referred(place, label, refs) =>
         s"'$label' [$place] is referred to by ${refs.toVector.map(_.said).mkString(", ")} — merge it into the place it " +
@@ -263,11 +269,12 @@ object Text:
       case Problem.Run.NoLogin(why)            => s"unavailable: no login — $why"
       case Problem.Run.ProbeUnread(exit, said) =>
         s"the probe printed no rate_limit_event (exit $exit${said.fold("")(m => s": $m")})"
-      case Problem.Run.Blocked(block)        => s"held back: ${block.said}"
-      case Problem.Run.Interrupted           => "interrupted by a restart"
-      case Problem.Run.CutShort(activity)    => activity.cutShort
-      case Problem.Run.Unrecorded(activity)  => activity.unrecorded
-      case Problem.Run.Cancelled(by)         => s"cancelled by ${words(by.productPrefix)}"
+      case Problem.Run.Blocked(block)       => s"held back: ${block.said}"
+      case Problem.Run.Interrupted          => "interrupted by a restart"
+      case Problem.Run.Restored             => "interrupted by a restore, which replaced the database it was writing to"
+      case Problem.Run.CutShort(activity)   => activity.cutShort
+      case Problem.Run.Unrecorded(activity) => activity.unrecorded
+      case Problem.Run.Cancelled(by)        => s"cancelled by ${words(by.productPrefix)}"
       case Problem.Run.Draining(Some(since)) => s"stopped while the autopilot drains (since ${since.iso})"
       case Problem.Run.Draining(None)       => "stopped while the autopilot drains: it resumes once the drain is lifted"
       case Problem.Run.Aborted(step, cause) => s"step $step cannot go on: ${words(cause.productPrefix)}"

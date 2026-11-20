@@ -38,3 +38,15 @@ final class JobStops:
   def forget(id: Job.Id): Unit =
     val _ = resumers.remove(id)
     answered(id)
+
+  /** The paused jobs' ways to go on, as a restore holds them: afterwards they name rows the restore replaced (the
+    * restored database's unfinished jobs are failed), so each is forgotten, with every stop asked.
+    */
+  val quiescent: Quiescent = new Quiescent:
+    val name: Quiescent.Name = Quiescent.Name("the paused background jobs")
+    def quiesce(): Unit = ()
+    def busy: Vector[Quiescent.Busy] = Vector.empty
+    def restored(): Unit =
+      resumers.clear()
+      requested.clear()
+    def resume(): Unit = ()
