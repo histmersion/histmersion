@@ -1140,6 +1140,8 @@ _Re-run with `--apply` to write this verdict to the source's `status`._
   > GET /openalex/works/https://doi.org/10.5555/zq.closed?select=referenced_works&mailto=oracle@example.org
   > GET /crossref/works/10.5555/zq.closed?mailto=oracle@example.org
   > GET /openalex/works/https://doi.org/10.5555/zq.closed?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+== mcp ingest_doi legalOnly false (an agent asking for more: refused)
+_only legal open-access copies may be fetched_
 == jobs
 200 [
   {
@@ -1461,7 +1463,7 @@ _Re-run with `--apply` to write this verdict to the source's `status`._
     "year" : 1990
   }
 }
-== ingest 10.5555/zq.closed (a person: the unauthorised fetcher is asked)
+== ingest 10.5555/zq.closed (the default: legal-only, not asked)
 200 {
   "assessment" : {
     "applied" : "current",
@@ -1495,12 +1497,17 @@ _Re-run with `--apply` to write this verdict to the source's `status`._
       "step" : "metadata"
     },
     {
+      "detail" : "the legal chain only: the fetchers the config marks unauthorised were not asked",
+      "ok" : true,
+      "step" : "legal-only"
+    },
+    {
       "detail" : "no legal open-access PDF found for doi:10.5555/zq.closed",
       "ok" : false,
       "step" : "fetch"
     },
     {
-      "detail" : "archive-org: no copy — archive.org identifier is required; unpaywall: no copy — no copy '10.5555/zq.closed'; core: no copy — no copy '10.5555/zq.closed'; openalex: no copy — no copy '10.5555/zq.closed'; pmc: no copy — no copy '10.5555/zq.closed'; arxiv: no copy — arxiv is required; landing: no copy — no copy '10.5555/zq.closed'; pmc-text: no copy — no copy '10.5555/zq.closed'; zq-shelf: no copy — the zq shelf has only one work; zq-unauthorised: no copy — the zq fixture has no copy",
+      "detail" : "archive-org: no copy — archive.org identifier is required; unpaywall: no copy — no copy '10.5555/zq.closed'; core: no copy — no copy '10.5555/zq.closed'; openalex: no copy — no copy '10.5555/zq.closed'; pmc: no copy — no copy '10.5555/zq.closed'; arxiv: no copy — arxiv is required; landing: no copy — no copy '10.5555/zq.closed'; pmc-text: no copy — no copy '10.5555/zq.closed'; zq-shelf: no copy — the zq shelf has only one work",
       "ok" : false,
       "step" : "chain"
     },
@@ -1516,6 +1523,79 @@ _Re-run with `--apply` to write this verdict to the source's `status`._
     },
     {
       "detail" : "current → status=current",
+      "ok" : true,
+      "step" : "assess"
+    }
+  ],
+  "title" : "A closed study of Zqtell"
+}
+  > GET /openalex/works/https://doi.org/10.5555/zq.closed?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /unpaywall/10.5555/zq.closed?email=oracle@example.org
+  > GET /core/search/works/?q=doi:%2210.5555/zq.closed%22&limit=1
+  > GET /openalex/works/https://doi.org/10.5555/zq.closed?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /europepmc/search?query=DOI:%2210.5555/zq.closed%22&resultType=core&format=json&pageSize=5
+  > GET /datacite/dois/10.5555/zq.closed
+  > GET /crossref/works/10.5555/zq.closed?mailto=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.closed?select=referenced_works&mailto=oracle@example.org
+  > GET /crossref/works/10.5555/zq.closed?mailto=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.closed?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+== asked
+0 time(s)
+== ingest 10.5555/zq.closed legalOnly false (a person's explicit choice: the unauthorised fetcher is asked)
+200 {
+  "assessment" : {
+    "applied" : null,
+    "checkedAt" : "TS",
+    "citedByCount" : 5,
+    "citekey" : "zqreader2021_closed",
+    "crossrefUpdates" : [
+    ],
+    "doi" : "10.5555/zq.closed",
+    "flagged" : false,
+    "influentialCitations" : null,
+    "isRetracted" : false,
+    "kept" : null,
+    "recommendation" : "KEEP — 5 citation(s), no amendment on record",
+    "retractionWatch" : [
+    ],
+    "target" : "zqreader2021_closed",
+    "verdict" : "current",
+    "year" : 2021
+  },
+  "citekey" : "zqreader2021_closed",
+  "created" : false,
+  "doi" : "10.5555/zq.closed",
+  "dropIn" : "No legal open-access PDF exists for this one. Get it through institutional access, an interlibrary loan or the author, then run: histmersion ingest <file.pdf> --citekey zqreader2021_closed",
+  "edgesAdded" : 0,
+  "pdf" : null,
+  "steps" : [
+    {
+      "detail" : "A closed study of Zqtell (2021), 5 citation(s)",
+      "ok" : true,
+      "step" : "metadata"
+    },
+    {
+      "detail" : "no legal open-access PDF found for doi:10.5555/zq.closed",
+      "ok" : false,
+      "step" : "fetch"
+    },
+    {
+      "detail" : "archive-org: no copy — archive.org identifier is required; unpaywall: no copy — no copy '10.5555/zq.closed'; core: no copy — no copy '10.5555/zq.closed'; openalex: no copy — no copy '10.5555/zq.closed'; pmc: no copy — no copy '10.5555/zq.closed'; arxiv: no copy — arxiv is required; landing: no copy — no copy '10.5555/zq.closed'; pmc-text: no copy — no copy '10.5555/zq.closed'; zq-shelf: no copy — the zq shelf has only one work; zq-unauthorised: no copy — the zq fixture has no copy",
+      "ok" : false,
+      "step" : "chain"
+    },
+    {
+      "detail" : "0 reference(s), 0 resolve to stored sources",
+      "ok" : false,
+      "step" : "references"
+    },
+    {
+      "detail" : "updated source from metadata — no file was acquired, so there is nothing to convert",
+      "ok" : true,
+      "step" : "store"
+    },
+    {
+      "detail" : "current",
       "ok" : true,
       "step" : "assess"
     }

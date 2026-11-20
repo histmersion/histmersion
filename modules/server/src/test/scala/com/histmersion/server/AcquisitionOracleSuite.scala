@@ -835,6 +835,9 @@ class AcquisitionOracleSuite extends DbSuite:
     withJobs("mcp ingest_doi --legalOnly")(
       tool(url, "ingest_doi", Json.obj("id" -> "10.5555/zq.closed".asJson, "legalOnly" -> true.asJson))
     )
+    s("mcp ingest_doi legalOnly false (an agent asking for more: refused)")(
+      tool(url, "ingest_doi", Json.obj("id" -> "10.5555/zq.closed".asJson, "legalOnly" -> false.asJson))
+    )
     s("jobs")(get(s"$url/api/jobs?limit=50"))
     s("job (unknown)")(get(s"$url/api/jobs/00000000-0000-0000-0000-000000000000"))
     s("unauthorised fetcher asked")(s"${unauthorisedAsked.get} time(s)")
@@ -842,8 +845,12 @@ class AcquisitionOracleSuite extends DbSuite:
   private def loose(url: String, log: Log): Unit =
     def s(name: String)(a: => String): String = log.step(name)(a)
     unauthorisedAsked.set(0)
-    s("ingest 10.5555/zq.closed (a person: the unauthorised fetcher is asked)")(
+    s("ingest 10.5555/zq.closed (the default: legal-only, not asked)")(
       post(s"$url/api/acquire/ingest", """{"id":"10.5555/zq.closed"}""")
+    )
+    s("asked")(s"${unauthorisedAsked.get} time(s)")
+    s("ingest 10.5555/zq.closed legalOnly false (a person's explicit choice: the unauthorised fetcher is asked)")(
+      post(s"$url/api/acquire/ingest", """{"id":"10.5555/zq.closed","legalOnly":false}""")
     )
     s("asked")(s"${unauthorisedAsked.get} time(s)")
     s("ingest 10.5555/zq.cited --legal-only (not asked)")(

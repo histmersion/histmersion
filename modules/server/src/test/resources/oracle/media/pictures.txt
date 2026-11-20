@@ -2106,7 +2106,9 @@
 | fig-b.png | image/png | 8×8 | 268 | `/source/zqfig2001_tell/assets/fig-b.png` |
 | fig-c.jpg | image/jpeg | 120×90 | 6918 | `/source/zqfig2001_tell/assets/fig-c.jpg` |
 == tool assets {"citekey":"zqnone1900_x"}
-_No source 'zqnone1900_x' — find a citekey with search._
+_No source 'zqnone1900_x'_
+
+Find a citekey with search.
 == tool patch_asset {"citekey":"zqfig2001_tell","name":"fig-b.png","caption":"A tiny sherd","kind":"figure"}
 # `zqfig2001_tell` / `fig-b.png`
 

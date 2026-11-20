@@ -196,7 +196,7 @@ object Composition:
       .work(h.agents)
       .attach(AgentUpstream.of(acq.controllers))
     val collections = collectionsControllers(sg, deps, h, acq.controllers)
-    val mcp = McpTools(h, acq.controllers, collections)
+    val mcp = McpTools(h, acq.controllers, collections, () => deps.cfg.mcp)
     h.agents.attachTools(
       mcp.toolNames.flatMap(n => ToolName.option(n))
     ) // what the generated definitions' placeholders may name
@@ -232,7 +232,7 @@ object Composition:
       )
       .addEndpoint(mcp.endpoint)
       .addEndpoints(
-        AgentsTools.agentEndpoints(h.agents)
+        AgentsTools.agentEndpoints(h.agents, () => deps.cfg.mcp)
       ) // one per agent definition, behind run tokens
       .addEndpoints(HttpApi(deps, h, acq.controllers, collections).endpoints)
     scribe.info(s"access: ${access.summary}")

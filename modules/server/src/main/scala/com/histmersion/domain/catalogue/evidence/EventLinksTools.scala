@@ -82,7 +82,7 @@ object EventLinksTools:
                         .map(EventLinksMarkdown.result)
                     else links.links(id).map(EventLinksMarkdown.list)
                   }
-              ToolResult.text(r.fold(McpOut.refusal, identity))
+              McpOut.ofText(r)
             case None =>
               val q = Api.EventQuery(Filter.of(from = in.from, to = in.to, limit = in.limit), kind = in.kind)
               ToolResult.text(EventLeads.markdown(links.leads(q)).value)

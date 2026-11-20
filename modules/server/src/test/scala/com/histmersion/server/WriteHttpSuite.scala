@@ -11,6 +11,8 @@ import com.histmersion.db.TestDb
 import com.histmersion.config.DbConfig
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
 
 /** The write surface over real HTTP: status codes are part of the contract (412 on a failed `ifUpdatedAt` precondition,
   * 404 on an unknown citekey), so they are asserted through the wire and not just through the repo. Skipped without
@@ -19,6 +21,11 @@ import com.histmersion.util.database.TestPermits.given
 class WriteHttpSuite extends munit.FunSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
+
+  /** The server's settings, on the test database. */
+  private def testConfig: AppConfig =
+    val base = AppConfig.load()
+    base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
 
   private val http = HttpClient.newHttpClient()
   private def send(req: HttpRequest): (Int, String) =
@@ -35,8 +42,7 @@ class WriteHttpSuite extends munit.FunSuite:
   private val ck = "zz_http_writes"
 
   test("put → get → patch → export over HTTP, with 412 on a stale precondition"):
-    val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
+    val cfg = testConfig
     supervised {
       val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}"
@@ -119,8 +125,7 @@ class WriteHttpSuite extends munit.FunSuite:
 
   // #698 / #745 / #721 through the wire: what a JSON caller (the MCP tool, `patch --json`) sends
   test("patch over HTTP: a foreign edge src is a 400, null clears metadata, calibreId re-links"):
-    val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
+    val cfg = testConfig
     val k = "zz_http_patch_rules"
     val dst = "zz_http_patch_dst"
     supervised {
@@ -172,8 +177,7 @@ class WriteHttpSuite extends munit.FunSuite:
 
   // #813: a misplaced or unknown key used to be dropped and the write reported success
   test("strict writes over HTTP and MCP: an unknown or misplaced key is a 400 naming it, and nothing is written"):
-    val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
+    val cfg = testConfig
     val k = "zz_http_strict"
     supervised {
       val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
@@ -215,8 +219,7 @@ class WriteHttpSuite extends munit.FunSuite:
   test(
     "an attestation with an unknown target type is a 400 naming the five, a missing source a 404 — over HTTP and MCP"
   ):
-    val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
+    val cfg = testConfig
     val k = "zz_http_attest"
     supervised {
       val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
@@ -246,8 +249,7 @@ class WriteHttpSuite extends munit.FunSuite:
 
   // #766: put_source rewrote a foreign edge src to the citekey (the #698 pattern, fixed for patch only)
   test("put over HTTP: a foreign edge src is a 400; an omitted src or an old citekey of the source is accepted"):
-    val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
+    val cfg = testConfig
     val k = "zz_http_put_edges"
     val dst = "zz_http_put_edges_dst"
     supervised {
@@ -281,5 +283,42 @@ class WriteHttpSuite extends munit.FunSuite:
         assertEquals(s4, 200, b4)
         val (_, nb2) = get(s"$url/api/neighbors/$k2?kind=challenges")
         assert(nb2.contains(dst), nb2)
+      finally b.stop()
+    }
+
+  /** The `result` of a `tools/call` answer: whether it is flagged as an error, and its structured content. */
+  private def toolResult(body: String): (Boolean, Option[hearth.kindlings.jsoniterjson.Json]) =
+    val result = RawJson.parse(body).toOption.flatMap(_.cursor.downField("result").focus)
+    (
+      result.flatMap(_.cursor.downField("isError").focus).flatMap(_.asBoolean).contains(true),
+      result.flatMap(_.cursor.downField("structuredContent").focus)
+    )
+
+  test("over MCP a refusal is flagged as an error and carries the typed problem; an agent stays on the legal chain"):
+    val cfg = testConfig
+    supervised {
+      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
+      val url = s"http://127.0.0.1:${b.port}"
+      try
+        val refusals = List(
+          "get_source" -> """{"citekey":"zz_no_such_source"}""" -> "Entity",
+          "queue" -> """{"action":"frobnicate"}""" -> "Unknown",
+          "merges" -> """{"action":"show"}""" -> "Missing",
+          "ingest_doi" -> """{"id":"10.1038/zztest001","legalOnly":false}""" -> "LegalOnly",
+          "config" -> """{"action":"set","key":"acquire.allow-unauthorised","value":"true"}""" -> "PersonHeldSetting",
+          "config" -> """{"action":"set","key":"acquire.agents-may-use-unauthorised","value":"true"}""" ->
+            "PersonHeldSetting"
+        )
+        refusals.foreach { case ((tool, args), kind) =>
+          val (s, body) = mcp(url, tool, args)
+          assertEquals(s, 200, body)
+          val (isError, structured) = toolResult(body)
+          assert(isError, s"$tool $args: $body")
+          val problems = structured.flatMap(_.cursor.downField("problems").focus).map(_.noSpaces).getOrElse("")
+          assert(problems.contains(kind), s"$tool $args: $problems")
+        }
+        // an answer is no error
+        val (_, ok) = mcp(url, "ping", "{}")
+        assert(!toolResult(ok)._1, ok)
       finally b.stop()
     }

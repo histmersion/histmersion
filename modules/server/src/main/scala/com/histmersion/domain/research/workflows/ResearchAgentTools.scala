@@ -6,6 +6,7 @@ import com.histmersion.domain.automation.agents.SttpAiJson.given
 
 import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.domain.automation.agents.ToolResultCap
+import com.histmersion.util.mcp.McpOut
 
 import com.histmersion.api.research.{Article, ArticleMarkdown}
 import com.histmersion.config.AgentToolsConfig
@@ -64,7 +65,13 @@ final class ResearchAgentTools(articles: => ArticlesControllers, caps: => AgentT
         ResearchAgentTools.CheckEdits.value,
         "Dry-run edits (or a whole draft `body`) against the stored article: which edits apply, and what the " +
           "review checks find in the result. Nothing is written."
-      )(in => cap(ArticleTools.checkEdits(articles, in), max, "dry-run fewer edits at once"))
+      )(in =>
+        cap(
+          ArticleTools.checkEdits(articles, in).fold(McpOut.refusalText, identity),
+          max,
+          "dry-run fewer edits at once"
+        )
+      )
     },
 
     contribution(ResearchAgentTools.ArticleCoverage) {
@@ -74,7 +81,7 @@ final class ResearchAgentTools(articles: => ArticlesControllers, caps: => AgentT
           "drift (sources with no reason), and the generated Not used list and Method note."
       )(in =>
         cap(
-          ArticleTools.articleCoverageMarkdown(articles, in),
+          ArticleTools.articleCoverageMarkdown(articles, in).fold(McpOut.refusalText, identity),
           max,
           "read one source's record with get_source"
         )

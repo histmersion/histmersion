@@ -63,6 +63,8 @@ object LibraryTools:
       citations: CitationsControllers,
       exportNote: Citekey => Either[Api.Error, Frontmatter.NoteBody]
   ) =
+    val sourceError: Api.Error => ToolResult[NoStructuredOutput] =
+      e => if e.isNotFound then McpOut.error(e, FindCitekey) else McpOut.error(e)
     val searchTool =
       tool("search")
         .description(
@@ -159,14 +161,14 @@ object LibraryTools:
             .left
             .map(Api.Error(_)) match
             case Right(md) => ToolResult.text(md.value)
-            case Left(e)   => ToolResult.text(s"_No source '${in.citekey}' — find a citekey with search._")
+            case Left(e)   => sourceError(e)
         }
 
     val passages =
       tool("passages")
         .description(PassagesDoc)
         .input[PassagesInput]
-        .handle(in => ToolResult.text(passagesMarkdown(sources, in)))
+        .handle(in => passagesMarkdown(sources, in).fold(sourceError, McpOut.text))
 
     val geoWhen =
       tool("geo_when")
@@ -524,13 +526,14 @@ object LibraryTools:
       "`context` characters around each match (default 600, max 3000). Use it to check what a source " +
       "says about a term instead of paging through `get_source` slices."
 
-  /** `passages` as Markdown, with the same wording for an unknown citekey as `get_source`. */
-  def passagesMarkdown(sources: SourcesControllers, in: PassagesInput): String =
-    sources.passages(Api.PassagesQuery(ApiCitekey(in.citekey.value), in.query, in.regex, in.limit, in.context)) match
-      case Right(r)                                                       => PassagesMarkdown.render(r)
-      case Left(e) if e.code.contains(Api.Error.Code(Write.CodeNotFound)) =>
-        s"_No source '${in.citekey}' — find a citekey with search._"
-      case Left(e) => McpOut.refusal(e)
+  /** What a refusal for an unknown citekey adds: where to find a citekey. */
+  val FindCitekey: McpOut.Markdown = "Find a citekey with search."
+
+  /** `passages` as Markdown, or why not. */
+  def passagesMarkdown(sources: SourcesControllers, in: PassagesInput): Either[Api.Error, McpOut.Markdown] =
+    sources
+      .passages(Api.PassagesQuery(ApiCitekey(in.citekey.value), in.query, in.regex, in.limit, in.context))
+      .map(PassagesMarkdown.render)
 
   final case class PassagesInput(
       citekey: Citekey,

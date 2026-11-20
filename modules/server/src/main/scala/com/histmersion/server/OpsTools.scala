@@ -10,7 +10,7 @@ import chimp.server.*
 import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
-import com.histmersion.api.Markdown
+import com.histmersion.api.{Api, Markdown}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Queue.{QueueAdd, QueuePatch}
@@ -65,7 +65,7 @@ object OpsTools:
               Slug
                 .parse(raw)
                 .fold(
-                  p => ToolResult.text(McpOut.refusal(p.sentence)),
+                  p => McpOut.refused(p),
                   slug =>
                     (if in.fix then h.research.articles.fix(slug) else h.research.articles.lint(slug))
                       .fold(McpOut.error, r => ToolResult.text(FormatMarkdown.report(r)))
@@ -74,7 +74,7 @@ object OpsTools:
               Citekey
                 .parse(raw)
                 .fold(
-                  p => ToolResult.text(McpOut.refusal(p.sentence)),
+                  p => McpOut.refused(p),
                   ck =>
                     (if in.fix then h.library.sources.fix(ck) else h.library.sources.lint(ck))
                       .fold(McpOut.error, r => ToolResult.text(FormatMarkdown.report(r)))
@@ -111,7 +111,7 @@ object OpsTools:
             "date, so an added line lands in today's entry."
         )
         .input[QueueInput]
-        .handle(in => ToolResult.text(runQueue(h, in)))
+        .handle(in => runQueue(h, in))
 
     val backups =
       tool("backups")
@@ -130,19 +130,26 @@ object OpsTools:
     List(lint, queue) ++ QueryTools(h.library.query) ++ List(backups)
 
   /** `action` dispatch, kept out of the tool body so the failure modes read as one list. */
-  private def runQueue(h: ServerWiring, in: QueueInput): String =
+  private def runQueue(h: ServerWiring, in: QueueInput): ToolResult[NoStructuredOutput] =
     def render(list: String) =
       h.workListView.list(
         WorkListControllers.KindOfList(list),
         WorkListView.IncludeAll(in.all)
       ) match
         case Right(l) =>
-          l.markdown.map(_.value).getOrElse(s"_unknown list ${l.list}_")
-        case Left(e) => McpOut.refusal(e)
+          l.markdown.map(_.value).fold(McpOut.unknown(Problem.TypeName("Queue.Kind"), s"${l.list}"))(McpOut.text)
+        case Left(e) => McpOut.error(e)
 
     in.action.trim.toLowerCase match
       case "list" =>
-        in.list.map(render).getOrElse(s"_give a list: ${Queue.Kind.all.mkString(", ")}_")
+        in.list
+          .map(render)
+          .getOrElse(
+            McpOut.error(
+              Api.Error(Problem.Invalid.Missing.here(Problem.Field("list"))),
+              s"The lists: ${Queue.Kind.all.mkString(", ")}."
+            )
+          )
       case "add" =>
         (in.list, in.text.map(_.trim).filter(_.nonEmpty)) match
           case (Some(list), Some(text)) =>
@@ -154,39 +161,52 @@ object OpsTools:
                 reason = in.reason.map((text => Queue.Rationale(text)))
               )
             )
-            added match
-              case Right(i) => s"added **#${i.id}** to ${i.list}${i.topic.map(t => s" · $t").getOrElse("")}: ${i.text}"
-              case Left(e)  => McpOut.refusal(e)
-          case _ => "_add needs both `list` and `text`_"
+            McpOut.of(added)(i =>
+              s"added **#${i.id}** to ${i.list}${i.topic.map(t => s" · $t").getOrElse("")}: ${i.text}"
+            )
+          case (None, _) => McpOut.missing(Problem.Field("list"))
+          case _         => McpOut.missing(Problem.Field("text"))
       case "done" =>
         in.id match
           case Some(id) =>
-            h.workLists.patch(
-              QueueItemId(id),
-              QueuePatch(status = Some(Queue.QueueItem.Status(Queue.Done)))
-            ) match
-              case Right(i) => s"done **#${i.id}**: ${i.text}"
-              case Left(e)  => McpOut.refusal(e)
-          case None => "_done needs an `id` (run action=list to see them)_"
-      case "recheck" =>
-        h.maintenance
-          .guard(WriteGate.OperationName("acquire/recheck"))(
-            EngineContributions
-              .work(h.agents)
-              .acquireRecheck
-              .run(
-                Acquire.Checks.RecheckRequest(
-                  Acquire.Checks.RecheckRequest.DryRun(in.dryRun),
-                  in.limit.map(Acquire.Checks.RecheckRequest.Limit(_)),
-                  in.id.map(Acquire.Checks.RecheckRequest.Id(_)),
-                  Some(Acquire.Checks.RecheckRequest.By("mcp")),
-                  Acquire.Checks.RecheckRequest.All(in.all)
-                )
+            McpOut.of(
+              h.workLists.patch(
+                QueueItemId(id),
+                QueuePatch(status = Some(Queue.QueueItem.Status(Queue.Done)))
               )
-          )
-          .fold(McpOut.refusal, AcquireChecksMarkdown.result)
+            )(i => s"done **#${i.id}**: ${i.text}")
+          case None =>
+            McpOut.error(
+              Api.Error(Problem.Invalid.Missing.here(Problem.Field("id"))),
+              "Run `action: list` to see the items' ids."
+            )
+      case "recheck" =>
+        McpOut.of(
+          h.maintenance
+            .guard(WriteGate.OperationName("acquire/recheck"))(
+              EngineContributions
+                .work(h.agents)
+                .acquireRecheck
+                .run(
+                  Acquire.Checks.RecheckRequest(
+                    Acquire.Checks.RecheckRequest.DryRun(in.dryRun),
+                    in.limit.map(Acquire.Checks.RecheckRequest.Limit(_)),
+                    in.id.map(Acquire.Checks.RecheckRequest.Id(_)),
+                    Some(Acquire.Checks.RecheckRequest.By("mcp")),
+                    Acquire.Checks.RecheckRequest.All(in.all)
+                  )
+                )
+            )
+        )(AcquireChecksMarkdown.result)
       case other =>
-        s"_unknown action '$other' — use list, add, done or recheck_"
+        McpOut.unknown(
+          Problem.TypeName("QueueAction"),
+          other,
+          Problem.Raw("list"),
+          Problem.Raw("add"),
+          Problem.Raw("done"),
+          Problem.Raw("recheck")
+        )
 
   // Inputs last, per the file convention: JSON codec + tapir Schema both derived by Kindlings.
   final case class LintInput(

@@ -995,7 +995,7 @@ Zq abstract.
 _A trailhead, not a reading list: assess before ingesting (`histmersion assess <doi>`)._
   > GET /wikipedia?action=parse&page=Zqland&prop=wikitext&format=json&redirects=1
 == mcp discover (nothing)
-_give one of: query, doi, wikipediaUrl_
+_give at least one of query, doi, wikipediaUrl_
 == mcp refs
 _No reference list deposited for **zqa_cited** (backend: openalex)._
   > GET /crossref/works/10.5555/zq.cited?mailto=oracle@example.org
@@ -1013,7 +1013,9 @@ _Re-run with `--apply` to write this verdict to the source's `status`._
 == mcp assess retractionsStatus
 Retraction Watch mirror: **2** row(s) from http://127.0.0.1:PORT/rw/retractions.csv.
 == mcp assess (nothing)
-_give an `id` (citekey or DOI), or `updateRetractions: true` / `retractionsStatus: true`_
+_give at least one of id, updateRetractions, retractionsStatus_
+
+`id` is a citekey or a DOI; `updateRetractions: true` or `retractionsStatus: true` stand alone.
 == mcp followups
 ### 2 paper(s) citing zqa_cited · via semantic-scholar
 
