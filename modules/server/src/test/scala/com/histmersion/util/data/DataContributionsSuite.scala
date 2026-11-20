@@ -48,6 +48,7 @@ class DataContributionsSuite extends DbSuite:
         "util.data",
         "util.jobs",
         "util.identity",
+        "util.log",
         "util.database"
       )
     )

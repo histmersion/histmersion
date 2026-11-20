@@ -39,6 +39,7 @@ import com.histmersion.util.data.DataManagementData
 import com.histmersion.util.jobs.JobsData
 import com.histmersion.util.identity.IdentityData
 import com.histmersion.util.database.DatabaseData
+import com.histmersion.util.log.LogData
 import com.histmersion.domain.library.sources.referrers.SourceReferrers
 import com.histmersion.domain.catalogue.evidence.AttestationSourceReferrer
 import com.histmersion.domain.media.links.AssetLinkSourceReferrer
@@ -201,6 +202,7 @@ object Deps:
           DataManagementData,
           JobsData,
           IdentityData,
+          LogData,
           DatabaseData
         )
       )

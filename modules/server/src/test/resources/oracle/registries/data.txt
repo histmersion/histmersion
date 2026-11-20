@@ -116,6 +116,10 @@ owner util.identity
   stores	
   backup	stores= guarded=
   carried	entities/tombstones.ndjson	record=-	table=-	steps=Rows@0
+owner util.log
+  tables	log_events,log_writes
+  stores	
+  backup	stores= guarded=
 owner util.database
   tables	flyway_schema_history,spatial_ref_sys
   stores	DatabaseCluster

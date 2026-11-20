@@ -25521,6 +25521,9 @@
       "glob": "db/migration/V110__problems_as_entries.sql"
     },
     {
+      "glob": "db/migration/V111__structured_log.sql"
+    },
+    {
       "glob": "db/migration/index.txt"
     },
     {
