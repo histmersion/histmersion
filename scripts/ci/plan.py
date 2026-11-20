@@ -2,7 +2,7 @@
 """Deal every test suite into CI's shards (.github/workflows/ci.yml), each suite into exactly one.
 
     python3 scripts/ci/plan.py target/ci/classes.tsv target/ci/shards \
-        [--unit-server-shards 2] [--it-server-shards 3] [--weights project/test-weights.tsv]
+        [--unit-modules-shards 2] [--unit-server-shards 2] [--it-server-shards 3] [--weights project/test-weights.tsv]
 
 Reads the classes scripts/ci/classify.py wrote (rows `<project> TAB <suite> TAB <unit|it>`) and writes one file per
 shard, `<out>/<shard>.tsv` (rows `<project> TAB <suite>`) — what HISTMERSION_CI_SHARD_FILE narrows a `testOnly *`
@@ -10,7 +10,8 @@ to. Prints the GitHub matrix: a JSON list of {"shard": name, "db": whether it st
 
 Unit shards never start PostgreSQL; IT shards each start their own:
 
-    unit-modules        the unit suites of every project but db and server (all of theirs: they cannot reach TestDb)
+    unit-modules-<n>    the suites of every project but db and server (all unit: they cannot reach TestDb), each
+                        project whole, dealt by suite count; fewer tests per runner keep the timing checks honest
     unit-db             db's unit suites
     unit-server-<n>     server's unit suites, dealt longest first by the weights
     it-db               db's IT suites
@@ -74,7 +75,7 @@ def deal(items, n, weight):
     return [sorted(b) for b in buckets if b]
 
 
-def plan(rows, unit_server, it_server, w):
+def plan(rows, unit_server, it_server, w, unit_modules=2):
     """{shard name: sorted [(project, suite)]}; every classed row in exactly one shard, a unit suite in a unit shard.
     A suite of no class (`unclassified`) is in none: scripts/ci/check.py fails the run on it, after the shards have
     run the rest."""
@@ -92,7 +93,13 @@ def plan(rows, unit_server, it_server, w):
     def of(cls, pred):
         return sorted((p, s) for p, s, c in rows if c == cls and pred(p))
 
-    shards = {"unit-modules": of("unit", lambda p: p not in FORKED), "unit-db": of("unit", lambda p: p == "db")}
+    # the other projects whole (a Scala.js project links its tests once), dealt by suite count
+    modules = of("unit", lambda p: p not in FORKED)
+    sizes = {p: sum(1 for q, _ in modules if q == p) for p, _ in modules}
+    shards = {}
+    for i, ps in enumerate(deal(sorted(sizes), unit_modules, lambda p: float(sizes[p])), 1):
+        shards[f"unit-modules-{i}"] = [r for r in modules if r[0] in ps]
+    shards["unit-db"] = of("unit", lambda p: p == "db")
     for i, b in enumerate(deal(of("unit", lambda p: p == "server"), unit_server, simple), 1):
         shards[f"unit-server-{i}"] = b
     shards["it-db"] = of("it", lambda p: p == "db")
@@ -110,6 +117,7 @@ def main(argv):
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("classes")
     ap.add_argument("out_dir")
+    ap.add_argument("--unit-modules-shards", type=int, default=2)
     ap.add_argument("--unit-server-shards", type=int, default=2)
     ap.add_argument("--it-server-shards", type=int, default=3)
     ap.add_argument("--weights", default="project/test-weights.tsv")
@@ -127,7 +135,7 @@ def main(argv):
         if c not in CLASSES:
             print(f"plan: {p} {s} is {c}: in no shard (the shards check fails on it)", file=sys.stderr)
     try:
-        shards = plan(rows, a.unit_server_shards, a.it_server_shards, w)
+        shards = plan(rows, a.unit_server_shards, a.it_server_shards, w, a.unit_modules_shards)
     except ValueError as e:
         print(f"plan: {e}", file=sys.stderr)
         return 1

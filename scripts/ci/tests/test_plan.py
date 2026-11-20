@@ -36,14 +36,16 @@ class PlanTest(unittest.TestCase):
     def test_every_suite_in_exactly_one_shard_of_its_class(self):
         all_rows = (rows("server", "it", *[f"I{i}" for i in range(9)]) + rows("server", "unit", "U1", "U2", "U3")
                     + rows("db", "it", "D1") + rows("db", "unit", "D2") + rows("core", "unit", "C1")
-                    + rows("api", "unit", "A1") + rows("apiJS", "unit", "A1"))
+                    + rows("api", "unit", "A1", "A2") + rows("apiJS", "unit", "A1"))
         shards = plan.plan(all_rows, 2, 3, {"I0": 50})
         flat = [r for v in shards.values() for r in v]
         self.assertEqual(sorted(flat), sorted((p, s) for p, s, _ in all_rows))
         self.assertEqual(sorted(shards), ["it-db", "it-server-1", "it-server-2", "it-server-3", "unit-db",
-                                          "unit-modules", "unit-server-1", "unit-server-2"])
+                                          "unit-modules-1", "unit-modules-2", "unit-server-1", "unit-server-2"])
         self.assertEqual(shards["it-server-1"], [("server", "com.x.I0")])  # the heavy one alone
-        self.assertEqual(shards["unit-modules"], [("api", "com.x.A1"), ("apiJS", "com.x.A1"), ("core", "com.x.C1")])
+        # the other projects whole, the biggest first: api (2 suites) alone, apiJS and core together
+        self.assertEqual(shards["unit-modules-1"], [("api", "com.x.A1"), ("api", "com.x.A2")])
+        self.assertEqual(shards["unit-modules-2"], [("apiJS", "com.x.A1"), ("core", "com.x.C1")])
         cls = {(p, s): c for p, s, c in all_rows}
         for name, suites in shards.items():
             self.assertTrue(all(cls[s] == name.split("-")[0] for s in suites), name)
@@ -59,9 +61,9 @@ class PlanTest(unittest.TestCase):
 
     def test_empty_shards_are_left_out_and_only_it_shards_start_a_database(self):
         shards = plan.plan(rows("server", "it", "S1") + rows("values", "unit", "V1"), 2, 3, {})
-        self.assertEqual(sorted(shards), ["it-server-1", "unit-modules"])
+        self.assertEqual(sorted(shards), ["it-server-1", "unit-modules-1"])
         self.assertEqual(sorted(plan.matrix(shards), key=lambda m: m["shard"]),
-                         [{"shard": "it-server-1", "db": True}, {"shard": "unit-modules", "db": False}])
+                         [{"shard": "it-server-1", "db": True}, {"shard": "unit-modules-1", "db": False}])
         json.dumps(plan.matrix(shards))
 
     def test_main_writes_one_file_per_shard_and_fails_without_suites(self):
@@ -71,7 +73,7 @@ class PlanTest(unittest.TestCase):
             with open(classes, "w") as f:
                 f.write("db\tcom.x.D1\tit\ndb\tcom.x.D2\tunit\nvalues\tcom.x.V\tunit\n")
             self.assertEqual(plan.main([classes, out, "--weights", os.path.join(d, "none.tsv")]), 0)
-            self.assertEqual(sorted(os.listdir(out)), ["it-db.tsv", "unit-db.tsv", "unit-modules.tsv"])
+            self.assertEqual(sorted(os.listdir(out)), ["it-db.tsv", "unit-db.tsv", "unit-modules-1.tsv"])
             with open(os.path.join(out, "it-db.tsv")) as f:
                 self.assertEqual(f.read(), "db\tcom.x.D1\n")
             with open(classes, "w") as f:
