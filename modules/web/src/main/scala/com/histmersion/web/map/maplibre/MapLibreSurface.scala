@@ -397,7 +397,7 @@ final class MapLibreSurface(
         )
         .asInstanceOf[js.Object]
     )
-    HtmlSink.popup(p.setLngLat(js.Array(at.lon.value, at.lat.value)), html).addTo(gl)
+    p.setLngLat(js.Array(at.lon.value, at.lat.value)).setDOMContent(HtmlSink.fragment(html)).addTo(gl)
     popups += p
     p.on("close", _ => { val _ = popups -= p })
     new Popup:
