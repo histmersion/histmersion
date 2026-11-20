@@ -102,12 +102,15 @@ object Ingest:
     object EdgesAdded extends Newtype[Int, Pure]
     export Ingest.DropInPath as DropIn
 
+  /** An ingest by identifier. `legalOnly` is on unless the caller turns it off: an ingest asks only the legal
+    * open-access chain unless a person asks for more (the owner's rule: agents fetch legal copies alone).
+    */
   final case class Request(
       id: Request.Id,
       citekey: Option[Citekey] = None,
       arxiv: Option[Request.Arxiv] = None,
       refetch: Request.Refetch = Request.Refetch(false),
-      legalOnly: Request.LegalOnly = Request.LegalOnly(false)
+      legalOnly: Request.LegalOnly = Request.LegalOnly(true)
   ) derives JsonCodec,
         KindlingsSchema,
         api.json.Schema

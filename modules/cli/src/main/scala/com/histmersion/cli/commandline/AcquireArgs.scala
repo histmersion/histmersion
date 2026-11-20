@@ -186,7 +186,12 @@ object AcquireArgs:
     )
     private val legalOnly_ = flag(
       "legal-only",
-      "Identifier: ask the legal open-access chain only, never a fetcher the config marks unauthorised"
+      "Identifier: ask the legal open-access chain only, never a fetcher the config marks unauthorised (the default)"
+    )
+    private val allowUnauthorised_ = flag(
+      "allow-unauthorised",
+      "Identifier: a person's explicit choice to also ask the fetchers the config marks unauthorised " +
+        "(only with acquire.allow-unauthorised = true)"
     )
     private val item_ = value[Int](
       "acquire-item",
@@ -194,25 +199,28 @@ object AcquireArgs:
     )
     private val json_ = json()
 
-    def command: Either[Problem, Cli.Command] = Right(
-      AcquireCmd.Command.Ingest(
-        id_(),
-        citekey_.toOption,
-        arxiv_.toOption,
-        quality_.getOrElse(false),
-        force_.getOrElse(false),
-        title_.toOption,
-        authors_.getOrElse(Nil),
-        year_.toOption,
-        doi_.toOption,
-        prov_.toOption,
-        noWait_.getOrElse(false),
-        refetch_.getOrElse(false),
-        legalOnly_.getOrElse(false),
-        item_.toOption,
-        json_()
-      )
-    )
+    def command: Either[Problem, Cli.Command] =
+      AcquireCmd
+        .legalOnly(legalOnly_.getOrElse(false), allowUnauthorised_.getOrElse(false))
+        .map(legalOnly =>
+          AcquireCmd.Command.Ingest(
+            id_(),
+            citekey_.toOption,
+            arxiv_.toOption,
+            quality_.getOrElse(false),
+            force_.getOrElse(false),
+            title_.toOption,
+            authors_.getOrElse(Nil),
+            year_.toOption,
+            doi_.toOption,
+            prov_.toOption,
+            noWait_.getOrElse(false),
+            refetch_.getOrElse(false),
+            legalOnly,
+            item_.toOption,
+            json_()
+          )
+        )
 
   final private class LeafArchiveSearch()
       extends Leaf("histmersion archive", "search", "Search archive.org texts")

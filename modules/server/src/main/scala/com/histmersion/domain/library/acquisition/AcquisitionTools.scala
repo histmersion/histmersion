@@ -142,13 +142,14 @@ final class AcquisitionTools(
           "updates its metadata and never wipes enrichment; one with no original yet (metadata only) is " +
           "fetched and converted, one that has its original keeps it unless `refetch: true`. When no open-access copy exists the source " +
           "is still created from metadata and the report tells you where to drop the file in by hand. " +
-          "`legalOnly: true` asks the legal chain alone (never a fetcher the config marks unauthorised). " +
+          "An agent's ingest asks the legal chain alone (never a fetcher the config marks unauthorised); " +
+          "`legalOnly: false` is refused unless a person allowed agents more. " +
           "Input is a DOI or `arxiv:<id>`."
       )
       .input[IngestInput]
       .handle(in =>
         render(
-          h.ingest(
+          h.ingestByAgent(
             Ingest.Request(in.id, in.citekey, in.arxiv, in.refetch, Ingest.Request.LegalOnly(in.legalOnly.value))
           )
         )(AcquireMarkdown.ingest)
@@ -292,7 +293,7 @@ object AcquisitionTools:
       citekey: Option[Citekey] = None,
       arxiv: Option[Ingest.Request.Arxiv] = None,
       refetch: Ingest.Request.Refetch = Ingest.Request.Refetch(false),
-      legalOnly: IngestInput.LegalOnly = IngestInput.LegalOnly(false)
+      legalOnly: IngestInput.LegalOnly = IngestInput.LegalOnly(true)
   ) derives JsonCodec
   object IngestInput:
     type LegalOnly = LegalOnly.T
@@ -302,7 +303,10 @@ object AcquisitionTools:
       .derived[IngestInput]
       .schema
       .modify(_.legalOnly)(
-        _.description("Ask the legal open-access chain only — never a fetcher the config marks unauthorised")
+        _.description(
+          "The legal open-access chain only (the default) — never a fetcher the config marks unauthorised; " +
+            "false is refused unless a person allowed agents more"
+        )
       )
 
   final case class ArchiveInput(

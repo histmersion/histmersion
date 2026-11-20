@@ -992,7 +992,9 @@ final class AcquisitionControllers(
   def followups(req: FollowupsRequest): Either[Api.Error, FollowupsResult] =
     maintenance.guard(WriteGate.OperationName("followups"))(followupsNow(req))
 
-  /** A person's ingest; `legalOnly` asks the legal chain alone, and is otherwise the same. */
+  /** A person's ingest; `legalOnly` (on unless the person turns it off) asks the legal chain alone, and is otherwise
+    * the same.
+    */
   def ingest(req: Ingest.Request): Either[Api.Error, Ingest.Report] =
     maintenance.guard(WriteGate.OperationName("acquire/ingest"))(
       ingestNow(
@@ -1000,6 +1002,15 @@ final class AcquisitionControllers(
         if req.legalOnly.value then IngestPath.PersonLegal else IngestPath.Person
       )
     )
+
+  /** An agent's ingest (the MCP tool): [[ingest]] on the legal chain. An agent that turns `legalOnly` off is refused,
+    * unless a person set `acquire.agents-may-use-unauthorised`.
+    */
+  def ingestByAgent(req: Ingest.Request): Either[Api.Error, Ingest.Report] =
+    import AcquisitionControllers.agentChain
+    agentChain(req.legalOnly, acq.agentsMayUseUnauthorised).left
+      .map(Api.Error(_))
+      .flatMap(_ => ingest(req))
 
   /** [[ingest]] for a watcher's auto-ingest (docs/research-process-managers.md §4 (c)) and the acquisition list's
     * re-check: the LEGAL open-access chain only — no unauthorised fetcher is asked, whatever
@@ -1043,6 +1054,20 @@ final class AcquisitionControllers(
     }
 
 object AcquisitionControllers:
+
+  /** May an agent's ingest go ahead with the chain it asked for? The legal chain always; one that turns `legalOnly` off
+    * only when a person allowed agents that (`acquire.agents-may-use-unauthorised`). Pure.
+    */
+  def agentChain(
+      legalOnly: Ingest.Request.LegalOnly,
+      agentsMay: AcquireConfig.AgentsMayUseUnauthorised
+  ): Either[Problem, Ingest.Request.LegalOnly] =
+    Either.cond(
+      legalOnly == Ingest.Request.LegalOnly(true) || agentsMay == AcquireConfig.AgentsMayUseUnauthorised(true),
+      legalOnly,
+      Problem.Refused.Policy(Problem.Refused.Rule.LegalOnly)
+    )
+
   def hostOf(url: Option[String]): Option[String] =
     url
       .flatMap(u => scala.util.Try(java.net.URI.create(u).getHost).toOption)

@@ -35,7 +35,27 @@ final class SettingsControllers(
     yield SettingsViews.page(snap, restarts.available)
 
   /** The changes, each value read as its setting's kind; then the reload, when asked for and something changed. */
-  def write(w: ConfigEdit.Write): Either[Api.Error, ConfigEdit.Written] =
+  def write(w: ConfigEdit.Write): Either[Api.Error, ConfigEdit.Written] = writeChecked(w, _ => Right(()))
+
+  /** [[write]] for an agent (the MCP `config` tool): refused before anything is written when a change touches a setting
+    * only a person changes ([[SettingPolicy.PersonHeld]]).
+    */
+  def writeByAgent(w: ConfigEdit.Write): Either[Api.Error, ConfigEdit.Written] =
+    writeChecked(
+      w,
+      edits =>
+        Either.cond(
+          !edits.exists(_.key.personHeld),
+          (),
+          Api.Error(Problem.Refused.Policy(Problem.Refused.Rule.PersonHeldSetting))
+        )
+    )
+
+  /** [[write]], once `allowed` let the parsed changes through. */
+  private def writeChecked(
+      w: ConfigEdit.Write,
+      allowed: List[SettingEdit] => Either[Api.Error, Unit]
+  ): Either[Api.Error, ConfigEdit.Written] =
     for
       edits <- SettingEdit
         .parseAll(
@@ -44,6 +64,7 @@ final class SettingsControllers(
         )
         .left
         .map(SettingsViews.error)
+      _ <- allowed(edits)
       version <- w.version
         .map(_.value.trim)
         .filter(_.nonEmpty)

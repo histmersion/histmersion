@@ -79,6 +79,19 @@ object AcquireCmd:
 
   /** Everything this stream adds to `histmersion`, in one value so `Cli` gains a single line. */
 
+  /** Whether an identifier's ingest asks the legal chain alone: yes, unless the person says `--allow-unauthorised`;
+    * `--legal-only` says the default aloud, and the two together are refused. Pure.
+    */
+  def legalOnly(legalOnly: Boolean, allowUnauthorised: Boolean): Either[Problem, Boolean] =
+    if legalOnly && allowUnauthorised then
+      Left(
+        Problem.Invalid.Inconsistent.here(
+          util.nonempty.NonEmptyVector.of(Problem.Field("legal-only"), Problem.Field("allow-unauthorised")),
+          Problem.Invalid.Exclusion.AtMostOne
+        )
+      )
+    else Right(!allowUnauthorised)
+
   /** What `ingest` brings in: a file on this machine (uploaded) or an identifier the server fetches. */
   enum IngestTarget:
     case File(path: Path)

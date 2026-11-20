@@ -1120,7 +1120,7 @@
       },
       {
         "name" : "config",
-        "description" : "The server's own settings, kept in its settings file (never in the database). `get` shows settings (`key` one, or `prefix` a block such as `acquire`): what the file says, what applies and from where, the default and what the setting does — a credential only as set or not and how it is referred to. `set` (`key`, `value` as a person would type it) and `unset` (`key`) change the file in place, keeping its comments, order, includes and anything written by hand, check the change first (a refused change says why in plain words), keep the old file as .bak and reload the server. A credential is written as a reference — env:NAME or <vault>:<entry> — and `value:` only with `literalConsent`. `reload` reads the file again and switches the running server to it in place; `restart` restarts a server that runs under its service, for the settings only a restart applies (the listening host/port, the bundled runtime, pool sizes).",
+        "description" : "The server's own settings, kept in its settings file (never in the database). `get` shows settings (`key` one, or `prefix` a block such as `acquire`): what the file says, what applies and from where, the default and what the setting does — a credential only as set or not and how it is referred to. `set` (`key`, `value` as a person would type it) and `unset` (`key`) change the file in place, keeping its comments, order, includes and anything written by hand, check the change first (a refused change says why in plain words), keep the old file as .bak and reload the server. A credential is written as a reference — env:NAME or <vault>:<entry> — and `value:` only with `literalConsent`. `reload` reads the file again and switches the running server to it in place; `restart` restarts a server that runs under its service, for the settings only a restart applies (the listening host/port, the bundled runtime, pool sizes). The settings that decide what agents may fetch (acquire.allow-unauthorised, acquire.agents-may-use-unauthorised) are a person's: this tool refuses to change them.",
         "inputSchema" : {
           "$schema" : "https://json-schema.org/draft/2020-12/schema",
           "title" : "ConfigInput",
@@ -3851,7 +3851,7 @@
       },
       {
         "name" : "ingest_doi",
-        "description" : "Bring a paper INTO the corpus from its identifier: metadata from OpenAlex, then a LEGAL open-access PDF (Unpaywall → CORE → OpenAlex OA locations → Europe PMC/PMC → arXiv → repository landing pages resolved one step (Zenodo, an institutional repository's citation_pdf_url); else PMC's JATS full text), then the ingest job, then its reference edges, then an assessment. Idempotent: re-ingesting an existing citekey updates its metadata and never wipes enrichment; one with no original yet (metadata only) is fetched and converted, one that has its original keeps it unless `refetch: true`. When no open-access copy exists the source is still created from metadata and the report tells you where to drop the file in by hand. `legalOnly: true` asks the legal chain alone (never a fetcher the config marks unauthorised). Input is a DOI or `arxiv:<id>`.",
+        "description" : "Bring a paper INTO the corpus from its identifier: metadata from OpenAlex, then a LEGAL open-access PDF (Unpaywall → CORE → OpenAlex OA locations → Europe PMC/PMC → arXiv → repository landing pages resolved one step (Zenodo, an institutional repository's citation_pdf_url); else PMC's JATS full text), then the ingest job, then its reference edges, then an assessment. Idempotent: re-ingesting an existing citekey updates its metadata and never wipes enrichment; one with no original yet (metadata only) is fetched and converted, one that has its original keeps it unless `refetch: true`. When no open-access copy exists the source is still created from metadata and the report tells you where to drop the file in by hand. An agent's ingest asks the legal chain alone (never a fetcher the config marks unauthorised); `legalOnly: false` is refused unless a person allowed agents more. Input is a DOI or `arxiv:<id>`.",
         "inputSchema" : {
           "$schema" : "https://json-schema.org/draft/2020-12/schema",
           "title" : "IngestInput",
@@ -3873,7 +3873,7 @@
               "type" : "boolean"
             },
             "legalOnly" : {
-              "description" : "Ask the legal open-access chain only — never a fetcher the config marks unauthorised",
+              "description" : "The legal open-access chain only (the default) — never a fetcher the config marks unauthorised; false is refused unless a person allowed agents more",
               "type" : "boolean"
             }
           }

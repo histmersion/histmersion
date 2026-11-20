@@ -3762,7 +3762,7 @@ Options and flags:
         Print the raw JSON response instead of Markdown
 
 ==== histmersion ingest
-Usage: histmersion ingest [--citekey <string>] [--arxiv <string>] [--quality] [--force] [--title <string>] [--author <string>]... [--year <integer>] [--doi <string>] [--provenance <string>] [--no-wait] [--refetch] [--legal-only] [--acquire-item <integer>] [--json] <file|doi|arxiv:id>
+Usage: histmersion ingest [--citekey <string>] [--arxiv <string>] [--quality] [--force] [--title <string>] [--author <string>]... [--year <integer>] [--doi <string>] [--provenance <string>] [--no-wait] [--refetch] [--legal-only] [--allow-unauthorised] [--acquire-item <integer>] [--json] <file|doi|arxiv:id>
 
 Bring a paper in: a local PDF/EPUB (uploaded and OCR'd, keeping its figures) or an identifier (metadata → legal OA PDF → the same OCR job → reference edges → assessment)
 
@@ -3792,7 +3792,9 @@ Options and flags:
     --refetch
         Identifier: fetch and convert again although the source already has its original (replaces its body)
     --legal-only
-        Identifier: ask the legal open-access chain only, never a fetcher the config marks unauthorised
+        Identifier: ask the legal open-access chain only, never a fetcher the config marks unauthorised (the default)
+    --allow-unauthorised
+        Identifier: a person's explicit choice to also ask the fetchers the config marks unauthorised (only with acquire.allow-unauthorised = true)
     --acquire-item <integer>
         File upload: id of the acquisition-queue item this file fulfils — ticked off when the OCR job succeeds
     --json

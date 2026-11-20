@@ -48,15 +48,20 @@ Running `ingest` again on the same DOI is safe: it updates the details and never
 
 A plugin you install yourself may add a fetcher that obtains copies **without** the rights holder's
 permission. Histmersion ships none, and such a fetcher runs only when you switch
-`acquire.allow-unauthorised` on. To keep one ingest to the legal services whatever that switch says:
+`acquire.allow-unauthorised` on. Even then, every ingest asks the legal services only unless you ask
+for more for that one ingest:
 
 ```bash
-histmersion ingest 10.1234/example-doi --legal-only
+histmersion ingest 10.1234/example-doi --allow-unauthorised
 ```
 
-With no legal copy it behaves like a plain `ingest`: the source is created with its details only, and
-the report says how to bring the file in by hand. The watchers' auto-ingest and the acquisition list's
-re-check (below) always ask the legal services only.
+(`--legal-only` says the default aloud; the two together are refused.) With no legal copy an ingest
+creates the source with its details only, and the report says how to bring the file in by hand. The
+watchers' auto-ingest and the acquisition list's re-check (below) always ask the legal services only.
+
+An agent's ingest (the MCP `ingest_doi` tool) is legal-only too, and an agent that asks for more is
+refused, unless you also switch `acquire.agents-may-use-unauthorised` on. Both switches are yours: the
+MCP `config` tool refuses to change them.
 
 ### What some services need
 
