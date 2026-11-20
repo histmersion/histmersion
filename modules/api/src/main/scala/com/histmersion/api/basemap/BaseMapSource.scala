@@ -14,6 +14,15 @@ object BaseMapSource:
   val Online = "online"
   val All: List[All] = List(AllValue(Auto), AllValue(Local), AllValue(Online))
 
+  /** The "Muted" online base map's tiles (Humanitarian OSM, OSM France): the one tile server besides `ui.tiles` the
+    * page may ask, so the server's Content-Security-Policy lists it too.
+    */
+  val MutedTiles: BasemapApi.TileTemplate =
+    BasemapApi.TileTemplate("https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png")
+
+  /** The subdomains a tile template's `{s}` stands for: the page asks each, so the policy lists each. */
+  val Subdomains: List[String] = List("a", "b", "c")
+
   def resolve(setting: Wire, status: Basemap.Status): Wire =
     (setting).value.trim.toLowerCase(java.util.Locale.ROOT) match
       case Local  => Wire(Local)

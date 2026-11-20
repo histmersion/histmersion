@@ -47,9 +47,43 @@ class HrefSuite extends munit.FunSuite:
       assertEquals(Href.link(u).map(_.address), Some(u.trim), u)
     }
 
-  test("images come from the web or this server only: no mail, no data"):
+  test("images come from the web, this server or an inline raster only: no mail, no other data"):
     assertEquals(Href.image("https://x.org/a.png").map(_.address), Some("https://x.org/a.png"))
     assertEquals(Href.image("/source/x/assets/a.png").map(_.address), Some("/source/x/assets/a.png"))
-    assertEquals(Href.image("data:image/png;base64,AAAA"), None)
     assertEquals(Href.image("mailto:a@b.org"), None)
     assertEquals(Href.image("javascript:x"), None)
+
+  test("an inline image is a base64 png, jpeg, gif or webp; the type is read case-insensitively"):
+    List(
+      "data:image/png;base64,iVBORw0KGgo=",
+      "data:image/jpeg;base64,/9j/4AAQSkZJRg==",
+      "data:image/gif;base64,R0lGODlhAQABAAAAACw=",
+      "data:image/webp;base64,UklGRhYAAABXRUJQ",
+      "DATA:IMAGE/PNG;BASE64,AAAA",
+      "data:image/png;base64,AAAA"
+    ).foreach(u => assertEquals(Href.image(u).map(_.address), Some(u), u))
+    assertEquals(Href.image(" data:image/png;base64,AA\nAA ").map(_.address), Some("data:image/png;base64,AAAA"))
+
+  test("every other inline image is refused: SVG, other types, not base64, parameters, stray characters"):
+    List(
+      "data:image/svg+xml;base64,PHN2ZyBvbmxvYWQ9YWxlcnQoMSk+",
+      "data:image/svg+xml,<svg onload=alert(1)>",
+      "data:IMAGE/SVG+XML;base64,PHN2Zz4=",
+      "data:image/png,<svg onload=alert(1)>",
+      "data:image/png;charset=utf-8;base64,AAAA",
+      "data:image/png;base64,",
+      "data:image/png;base64,AA AA",
+      "data:image/png;base64,AA%3CAA",
+      "data:image/png;base64,AAAA===",
+      "data:image/png;base64,AAAA\"onerror=x",
+      "data:image/jpg;base64,AAAA",
+      "data:image/bmp;base64,AAAA",
+      "data:image/x-icon;base64,AAAA",
+      "data:text/html;base64,PHNjcmlwdD4=",
+      "data:application/octet-stream;base64,AAAA",
+      "data:;base64,AAAA",
+      "data:,x"
+    ).foreach(u => assertEquals(Href.image(u), None, u))
+
+  test("an inline raster is an image, never a link"):
+    assertEquals(Href.link("data:image/png;base64,AAAA"), None)

@@ -33,6 +33,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   *                                              └─► leases (added by Main once the agents exist)
   *        ─► plugins ─► acquisition (added by Main)
   *        ─► watch (the config file watcher)
+  *        ─► security-headers (the browser's safety headers, from `ui.tiles`; added by Composition)
   * }}}
   *
   * The instance lock (one server per database, [[InstanceLock]]) is taken on the database before it is migrated, and so
@@ -213,6 +214,7 @@ object ServerGraph:
   val Acquisition = "acquisition"
   val Leases = "leases"
   val Watch = "watch"
+  val Headers = "security-headers"
 
   /** Build the graph's first generation: the pools, the instance lock, the migrations, the plugins. `plugins` is a
     * generation built already (Main's, for `--self-check`; a test's), used as the first value. `Left` = the server

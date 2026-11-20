@@ -35,6 +35,14 @@ class HtmlSanitizePropertySuite extends munit.FunSuite:
     assert(violations("""<a href="&#106;avascript:x">""").nonEmpty)
     assert(violations("a <b").nonEmpty)
     assertEquals(violations("""<a class="x" href="/y">z</a> &lt;script&gt;"""), Nil)
+    assert(violations("""<img src="data:image/svg+xml;base64,PHN2Zz4=">""").nonEmpty)
+    assert(violations("""<img src="data:image/png,x">""").nonEmpty)
+    assert(violations("""<a href="data:image/png;base64,AAAA">""").nonEmpty)
+    assert(violations("""<a href="/x" target="_top">""").nonEmpty)
+    assert(violations("""<a href="/x" target="_blank">""").nonEmpty)
+    assert(violations("""<a href="/x" target="_blank" rel="noopener">""").nonEmpty)
+    assertEquals(violations("""<img src="data:image/png;base64,AAAA">"""), Nil)
+    assertEquals(violations("""<a href="/x" target="_blank" rel="noopener noreferrer">"""), Nil)
 
 object HtmlSanitizePropertySuite:
   val Cases = 4000
@@ -124,9 +132,16 @@ object HtmlSanitizePropertySuite:
         )
     )
 
-  private def scriptAddress(v: String): Boolean =
-    val read = decode(v).filterNot(c => c == '\t' || c == '\n' || c == '\r').dropWhile(_ <= ' ').toLowerCase
-    List("javascript:", "vbscript:", "data:").exists(read.startsWith)
+  private def read(v: String): String =
+    decode(v).filterNot(c => c == '\t' || c == '\n' || c == '\r').dropWhile(_ <= ' ').toLowerCase
+
+  /** The one inline image this suite accepts: a base64 raster of a fixed list, nothing else in the address. */
+  private val RasterImage = """data:image/(png|jpeg|gif|webp);base64,[a-z0-9+/]+={0,2}""".r
+
+  private def scriptAddress(element: String, attribute: String, v: String): Boolean =
+    val address = read(v)
+    List("javascript:", "vbscript:").exists(address.startsWith) ||
+    (address.startsWith("data:") && !(element == "img" && attribute == "src" && RasterImage.matches(address)))
 
   def violations(out: String): List[String] =
     val starts = out.indices.filter(out.charAt(_) == '<').toList
@@ -136,11 +151,16 @@ object HtmlSanitizePropertySuite:
         case Some(m) =>
           val name = m.group(2)
           val attributes = Attribute.findAllMatchIn(m.group(3)).map(a => a.group(1) -> Option(a.group(2))).toList
+          val rel = attributes.collectFirst { case ("rel", Some(v)) => read(v).split(' ').toSet }.getOrElse(Set.empty)
           (if Safe(name) then Nil else List(s"the element <$name>")) ++
             attributes.collect {
               case (a, _) if a.startsWith("on")                      => s"the event handler $a in ${m.matched}"
               case (a, _) if Set("style", "srcdoc", "formaction")(a) => s"the attribute $a in ${m.matched}"
-              case (a, Some(v)) if (a == "href" || a == "src") && scriptAddress(v) => s"the address $v in ${m.matched}"
+              case (a, Some(v)) if (a == "href" || a == "src") && scriptAddress(name, a, v) =>
+                s"the address $v in ${m.matched}"
+              case ("target", v) if name != "a" || !v.map(read).contains("_blank") => s"the target $v in ${m.matched}"
+              case ("target", _) if !Set("noopener", "noreferrer").subsetOf(rel)   =>
+                s"a new tab without noopener noreferrer in ${m.matched}"
             }
     }
 
@@ -156,6 +176,34 @@ object HtmlSanitizePropertySuite:
     "<img src=x onerror=alert(1)",
     """<IMG SRC="javascript:alert(1)">""",
     """<img src="data:image/svg+xml,<svg onload=alert(1)>">""",
+    """<img src="data:image/svg+xml;base64,PHN2ZyBvbmxvYWQ9YWxlcnQoMSk+">""",
+    """<img src="DATA:IMAGE/SVG+XML;BASE64,PHN2Zz4=">""",
+    """<img src="data&#58;image/svg+xml;base64,PHN2Zz4=">""",
+    """<img src="data:image/png,<svg onload=alert(1)>">""",
+    """<img src="data:image/png;charset=utf-8;base64,AAAA">""",
+    """<img src="data:image/png;base64,AAAA%3Csvg">""",
+    """<img src="data:image/png;base64,AA&#32;AA">""",
+    """<img src="data:image/png;base64,AA&#x0A;AA">""",
+    """<img src="data:image/png;base64,PHN2Zz4=" onerror="x">""",
+    """<img src='data:image/png;base64,AAAA' x="">""",
+    """<img src="data:text/html;base64,PHNjcmlwdD4=">""",
+    """<img src="data:image/jpg;base64,AAAA">""",
+    """<img src="data:;base64,AAAA">""",
+    """<img src="data:image/png;base64,iVBORw0KGgo=">""",
+    """<img src=data:image/gif;base64,R0lGODlh>""",
+    """<img src="data:image/webp;base64,UklGRg==" alt="ok">""",
+    """<a href="data:image/png;base64,iVBORw0KGgo=">""",
+    """<a href="/ok" target="_blank">""",
+    """<a href="/ok" target=_BLANK rel="opener">""",
+    """<a href="/ok" target="&#95;blank" rel="noopener">""",
+    """<a href="/ok" target="_top">""",
+    """<a href="/ok" target="_parent">""",
+    """<a href="/ok" target="win">""",
+    """<a href="/ok" target=" _blank">""",
+    """<a href="/ok" target>""",
+    """<a target="_blank" target="_self">""",
+    """<span target="_blank">""",
+    """<img src="/x.png" target="_blank">""",
     """<a href="javascript:alert(1)">x</a>""",
     """<a href=" javascript:alert(1)">""",
     """<a href="java&#x09;script:x">""",

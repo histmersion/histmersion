@@ -236,6 +236,13 @@ object Composition:
       ) // one per agent definition, behind run tokens
       .addEndpoints(HttpApi(deps, h, acq.controllers, collections).endpoints)
     scribe.info(s"access: ${access.summary}")
+    // the browser's safety headers, built from the settings they list (the tile servers) and rebuilt by a reload
+    val headers = sg.graph
+      .node[List[(String, String)]](
+        Hot.Graph.Def.Name(ServerGraph.Headers),
+        keys = SecurityHeaders.Keys.map(Hot.Graph.Def.Keys(_))
+      )(ctx => Right(SecurityHeaders.of(ctx.config.app.ui)))
+      .fold(e => throw IllegalStateException(s"${e.sentence}"), identity)
     val agentPaths =
       Admission.AgentPaths(Admission.Path(RunTokens.Path), Admission.Path(RunTokens.QuotaPath))
     val gated = srv.modifyConfig { nc =>
@@ -265,7 +272,7 @@ object Composition:
         )
         // last, so directly after the codec: every response written further in, the gates' refusals included,
         // passes it on its way out
-        val _ = pipeline.addAfter(codec, "histmersion-security-headers", SecurityHeaders())
+        val _ = pipeline.addAfter(codec, "histmersion-security-headers", SecurityHeaders(() => headers.latest))
       }
     }
     Listener(gated, binds)

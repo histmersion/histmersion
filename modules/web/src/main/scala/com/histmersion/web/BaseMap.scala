@@ -4,6 +4,7 @@ package web
 import com.raquo.laminar.api.L.*
 import com.histmersion.web.map.VectorStyle
 import com.histmersion.api.VocabularyCodecs.given
+import com.histmersion.api.basemap.BaseMapSource
 import org.scalajs.dom
 import org.scalajs.dom.window
 
@@ -29,7 +30,7 @@ enum BaseMap(
         BaseMap.Wire("muted"),
         BaseMap.Label("Muted (online)"),
         None,
-        Some(BaseMap.Url("https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"))
+        Some(BaseMap.Url(BaseMapSource.MutedTiles.value))
       )
   case Dark extends BaseMap(BaseMap.Wire("dark"), BaseMap.Label("Dark (online)"), None, None)
 

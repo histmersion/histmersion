@@ -15,6 +15,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.web.map.MapSurface
 import com.histmersion.web.map.BaseMapSpec
 import com.histmersion.api.basemap.BasemapApi
+import com.histmersion.api.basemap.BaseMapSource
 import com.histmersion.api.BBox
 
 /** The library's styles for the app's base maps ([[BaseMapSpec]]): the two vector styles are MapLibre style documents
@@ -103,10 +104,10 @@ object MapLibreStyles:
         .distinct
         .map(a => BaseMapSpec.Raster.Attribution(a))
 
-  /** `{s}` → the subdomains a, b, c. Pure. */
+  /** `{s}` → the subdomains a, b, c ([[BaseMapSource.Subdomains]], which the server's policy lists too). Pure. */
   def expand(template: BasemapApi.TileTemplate): js.Array[String] =
     val t = template.value
-    if t.contains("{s}") then js.Array("a", "b", "c").map(x => t.replace("{s}", x))
+    if t.contains("{s}") then js.Array(BaseMapSource.Subdomains.map(x => t.replace("{s}", x))*)
     else js.Array(t)
 
   def raster(r: BaseMapSpec.Raster): js.Object =

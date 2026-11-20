@@ -70,6 +70,48 @@ class HtmlSuite extends munit.FunSuite:
     assertEquals(clean("""<a href="data:text/html,<script>alert(1)</script>">x</a>"""), "<a>x</a>")
     assertEquals(clean("""<img src="data:image/svg+xml,<svg onload=alert(1)>" alt="a">"""), """<img alt="a">""")
 
+  test("an image may be an inline base64 raster; an inline SVG or any other type loses its address"):
+    assertEquals(
+      clean("""<img src="data:image/png;base64,iVBORw0KGgo=" alt="a">"""),
+      """<img src="data:image/png;base64,iVBORw0KGgo=" alt="a">"""
+    )
+    assertEquals(
+      clean("""<img src="DATA:image/WEBP;base64,UklGRg==" alt="a">"""),
+      """<img src="DATA:image/WEBP;base64,UklGRg==" alt="a">"""
+    )
+    assertEquals(clean("""<img src="data:image/svg+xml;base64,PHN2Zz4=" alt="a">"""), """<img alt="a">""")
+    assertEquals(clean("""<img src="data&#58;image/svg+xml;base64,PHN2Zz4=" alt="a">"""), """<img alt="a">""")
+    assertEquals(clean("""<img src="data:image/png,<svg onload=alert(1)>" alt="a">"""), """<img alt="a">""")
+    assertEquals(clean("""<img src="data:text/html;base64,PHNjcmlwdD4=" alt="a">"""), """<img alt="a">""")
+    assertEquals(clean("""<a href="data:image/png;base64,iVBORw0KGgo=">x</a>"""), "<a>x</a>")
+
+  test("a link may open a new tab; it is always written with rel=\"noopener noreferrer\""):
+    assertEquals(
+      clean("""<a href="https://x.org" target="_blank">x</a>"""),
+      """<a href="https://x.org" target="_blank" rel="noopener noreferrer">x</a>"""
+    )
+    assertEquals(
+      clean("""<a rel="opener" TARGET=_BLANK href="/y">y</a>"""),
+      """<a target="_blank" href="/y" rel="noopener noreferrer">y</a>"""
+    )
+    assertEquals(
+      clean("""<a target="&#95;blank" rel="nofollow" rel="opener">z</a>"""),
+      """<a target="_blank" rel="noopener noreferrer">z</a>"""
+    )
+
+  test("any other target is refused: the tag is shown as text"):
+    List(
+      """<a href="/x" target="_top">""",
+      """<a href="/x" target="_parent">""",
+      """<a href="/x" target="_self">""",
+      """<a href="/x" target="name">""",
+      """<a href="/x" target=" _blank">""",
+      """<a href="/x" target="_blank" target="_top">""",
+      """<a href="/x" target>""",
+      """<img src="/x.png" target="_blank">""",
+      """<span target="_blank">"""
+    ).foreach(t => assertEquals(clean(t), Html.text(t).markup, t))
+
   test("a named entity the cleaner does not decode stays text in an address, never a colon"):
     assertEquals(
       clean("""<a href="javascript&colon;alert(1)">x</a>"""),
@@ -137,6 +179,7 @@ class HtmlSuite extends munit.FunSuite:
     List(
       """<P CLASS='a"b' title=x>t</P>""",
       """<a href=" java&#x09;script:x">y</a><img src=x onerror=y>""",
+      """<a rel="opener" target="_BLANK" href="/y">y</a><img src="data:image/gif;base64,R0lG">""",
       """<span title="&eacute;&#233;&amp;&lt;">t</span>""",
       "a < b <!-- c --> <etal>d</etal> <script>e</script>"
     ).foreach(s => assertEquals(clean(clean(s)), clean(s), s))

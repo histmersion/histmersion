@@ -11,11 +11,13 @@ import com.histmersion.db.TestDb
 import com.histmersion.config.DbConfig
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.access.SecurityHeaders
+import com.histmersion.util.problem.Text.sentences
+import com.histmersion.util.settings.ConfigSource
 
 /** Every page this server serves, over real HTTP: the Content-Security-Policy (no script but the server's own files, no
-  * framing), `nosniff` and `X-Frame-Options` on each, the scripts the shells load served as JavaScript (nosniff refuses
-  * any other type), and a stored text's hostile markup never reaching a page as markup. Skipped without
-  * HISTMERSION_TEST_DB_URL.
+  * framing, connections only to this server and the configured tile servers, rebuilt by a config reload), `nosniff` and
+  * `X-Frame-Options` on each, the scripts the shells load served as JavaScript (nosniff refuses any other type), and a
+  * stored text's hostile markup never reaching a page as markup. Skipped without HISTMERSION_TEST_DB_URL.
   */
 class SecurityHeadersHttpSuite extends munit.FunSuite:
   private val testDb = TestDb.url
@@ -34,20 +36,97 @@ class SecurityHeadersHttpSuite extends munit.FunSuite:
   private val slug = "zz_csp_article"
   private val hostile = """<img src=x onerror=alert(1)> <script>alert(2)</script> [x](javascript:alert(3))"""
 
+  private lazy val base = AppConfig.load()
+  // the headers the settings make: what every response must carry
+  private lazy val expected = SecurityHeaders.of(base.ui)
+
   private def headersOf(r: HttpResponse[String]): Map[String, String] =
-    SecurityHeaders.All.map((name, _) => name -> r.headers().firstValue(name).orElse("")).toMap
+    expected.map((name, _) => name -> r.headers().firstValue(name).orElse("")).toMap
 
   private def assertSafe(r: HttpResponse[String], what: String): Unit =
     val got = headersOf(r)
-    SecurityHeaders.All.foreach((name, value) => assertEquals(got(name), value, s"$what: $name"))
+    expected.foreach((name, value) => assertEquals(got(name), value, s"$what: $name"))
     val csp = got("Content-Security-Policy")
     List("script-src 'self'", "frame-ancestors 'none'", "object-src 'none'").foreach(p =>
       assert(csp.contains(p), s"$what: $p")
     )
     assert(!csp.contains("unsafe-eval") && !csp.matches(".*script-src[^;]*unsafe-inline.*"), csp)
 
+  private def connectSrc(r: HttpResponse[String]): String =
+    r.headers()
+      .firstValue(SecurityHeaders.Policy)
+      .orElse("")
+      .split("; ")
+      .find(_.startsWith("connect-src "))
+      .getOrElse(fail(s"no connect-src: ${r.headers()}"))
+
+  private def imgSrc(r: HttpResponse[String]): String =
+    r.headers().firstValue(SecurityHeaders.Policy).orElse("").split("; ").find(_.startsWith("img-src ")).getOrElse("")
+
+  test("connect-src lists the configured tile server and no other; a config reload changes the list"):
+    val dir = java.nio.file.Files.createTempDirectory("histmersion-csp")
+    val file = dir.resolve("histmersion.conf")
+    val spool = java.nio.file.Files.createDirectories(dir.resolve("spool"))
+    // no environment: the settings come from the file alone
+    val env = org.ekrich.config.ConfigFactory.empty
+    def write(tiles: String): Unit =
+      val _ = java.nio.file.Files.writeString(
+        file,
+        s"""histmersion {
+           |  db.url = "${testDb.get}"
+           |  converter.spool-dir = "$spool"
+           |  config.drain-seconds = 5
+           |  ui.tiles = "$tiles"
+           |}
+           |""".stripMargin
+      )
+    def load() = AppConfig.loadWithUserFile(env, Some(file))
+    write("https://{s}.tiles-one.example.test/{z}/{x}/{y}.png")
+    val loaded = load().fold(e => fail(e.sentences.mkString("; ")), identity)
+    val source = ConfigSource(() => load())
+    supervised {
+      val b = Composition
+        .server(
+          loaded.config,
+          ServerConfig.Host("127.0.0.1"),
+          ServerConfig.Port(0),
+          OfflineConverter(),
+          source = Some((loaded, source))
+        )
+        .start()
+      val url = s"http://127.0.0.1:${b.port}"
+      val muted = List("a", "b", "c").map(s => s"https://$s.tile.openstreetmap.fr")
+      List("/", "/api/health").foreach { p =>
+        val before = connectSrc(get(url + p))
+        assertEquals(
+          before,
+          ("connect-src 'self'" :: List("a", "b", "c").map(s => s"https://$s.tiles-one.example.test") ++ muted)
+            .mkString(" "),
+          p
+        )
+        assert(!before.contains("tiles-two"), before)
+        assertEquals(imgSrc(get(url + p)), "img-src 'self' data: blob: https: http:", p)
+      }
+
+      write("https://tiles-two.example.test:8443/{z}/{x}/{y}.png")
+      val reload = http.send(
+        json(s"$url/api/config/reload").POST(HttpRequest.BodyPublishers.ofString("")).build(),
+        HttpResponse.BodyHandlers.ofString()
+      )
+      assertEquals(reload.statusCode, 200, reload.body)
+      assert(reload.body.contains("\"published\":true"), reload.body)
+      assert(reload.body.contains(ServerGraph.Headers), reload.body)
+      List("/", "/api/health").foreach { p =>
+        val after = connectSrc(get(url + p))
+        assertEquals(after, ("connect-src 'self'" :: "https://tiles-two.example.test:8443" :: muted).mkString(" "), p)
+        assert(!after.contains("tiles-one"), after)
+        // the image directive is no setting: pinned open (thumbnails and stored images come from any host)
+        assertEquals(imgSrc(get(url + p)), "img-src 'self' data: blob: https: http:", p)
+      }
+      b.stop()
+    }
+
   test("every HTML route, error and redirect carries the CSP, nosniff and the framing policy"):
-    val base = AppConfig.load()
     val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     supervised {
       val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()

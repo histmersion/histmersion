@@ -13,7 +13,7 @@ class MarkdownHtmlSafetySuite extends munit.FunSuite:
   private val Tag = """(?i)<([a-z][a-z0-9:-]*)([^<>]*)>""".r
   private val Attribute = """(?i)\s([a-z][a-z0-9:-]*)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+)))?""".r
 
-  private def scriptAddress(v: String): Boolean =
+  private def read(v: String): String =
     val decoded = """&#(\d+);?|&#[xX]([0-9a-fA-F]+);?""".r.replaceAllIn(
       v,
       m =>
@@ -22,21 +22,33 @@ class MarkdownHtmlSafetySuite extends munit.FunSuite:
           else new String(Character.toChars(Integer.parseInt(m.group(2), 16).min(0x10ffff)))
         )
     )
-    val read = decoded.replace("&amp;", "&").filterNot(c => c == '\t' || c == '\n' || c == '\r').dropWhile(_ <= ' ')
-    List("javascript:", "vbscript:", "data:").exists(read.toLowerCase.startsWith)
+    decoded.replace("&amp;", "&").filterNot(c => c == '\t' || c == '\n' || c == '\r').dropWhile(_ <= ' ').toLowerCase
+
+  /** The one inline image this suite accepts: a base64 raster of a fixed list, nothing else in the address. */
+  private val RasterImage = """data:image/(png|jpeg|gif|webp);base64,[a-z0-9+/]+={0,2}""".r
+
+  private def scriptAddress(element: String, attribute: String, v: String): Boolean =
+    val address = read(v)
+    List("javascript:", "vbscript:").exists(address.startsWith) ||
+    (address.startsWith("data:") && !(element == "img" && attribute == "src" && RasterImage.matches(address)))
 
   private def violations(html: String): List[String] =
     Tag.findAllMatchIn(html).toList.flatMap { m =>
       val name = m.group(1).toLowerCase
-      val attributes = Attribute.findAllMatchIn(m.group(2)).toList
+      val attributes = Attribute.findAllMatchIn(m.group(2)).toList.map { a =>
+        a.group(1).toLowerCase -> Option(a.group(2)).orElse(Option(a.group(3))).orElse(Option(a.group(4))).getOrElse("")
+      }
+      val rel = attributes.collectFirst { case ("rel", v) => read(v).split(' ').toSet }.getOrElse(Set.empty)
       (if Set("script", "iframe", "svg", "math", "style", "object", "embed", "form", "base")(name) then
          List(s"the element ${m.matched}")
        else Nil) ++
-        attributes.flatMap { a =>
-          val attr = a.group(1).toLowerCase
-          val value = Option(a.group(2)).orElse(Option(a.group(3))).orElse(Option(a.group(4))).getOrElse("")
+        attributes.flatMap { (attr, value) =>
           if attr.startsWith("on") then List(s"the handler in ${m.matched}")
-          else if (attr == "href" || attr == "src") && scriptAddress(value) then List(s"the address in ${m.matched}")
+          else if (attr == "href" || attr == "src") && scriptAddress(name, attr, value) then
+            List(s"the address in ${m.matched}")
+          else if attr == "target" && (name != "a" || read(value) != "_blank") then List(s"the target in ${m.matched}")
+          else if attr == "target" && !Set("noopener", "noreferrer").subsetOf(rel) then
+            List(s"a new tab without noopener noreferrer in ${m.matched}")
           else Nil
         }
     }
@@ -53,6 +65,18 @@ class MarkdownHtmlSafetySuite extends munit.FunSuite:
     "[x](java&#x09;script:alert(1))",
     "[x](vbscript:x)",
     "![x](data:image/svg+xml,x)",
+    "![x](data:image/svg+xml;base64,PHN2ZyBvbmxvYWQ9YWxlcnQoMSk+)",
+    "![x](DATA:IMAGE/SVG+XML;BASE64,PHN2Zz4=)",
+    "![x](data:image/png,x)",
+    "![x](data:text/html;base64,PHNjcmlwdD4=)",
+    "![x](data:image/png;base64,iVBORw0KGgo=)",
+    "[x](data:image/png;base64,iVBORw0KGgo=)",
+    "<img src=\"data:image/svg+xml;base64,PHN2Zz4=\">",
+    "<img src=\"data:image/gif;base64,R0lGODlh\" alt=\"g\">",
+    "<a href=\"/ok\" target=\"_blank\">t</a>",
+    "<a href=\"/ok\" target=\"_blank\" rel=\"opener\">t</a>",
+    "<a href=\"/ok\" target=\"_top\">t</a>",
+    "<a href=\"/ok\" target=\"w\">t</a>",
     "[x][r]\n\n[r]: javascript:alert(1)\n",
     "<javascript:alert(1)>",
     "<div onclick=\"x\">\n\nblock\n\n</div>",
@@ -97,6 +121,12 @@ class MarkdownHtmlSafetySuite extends munit.FunSuite:
     assert(violations("""<img src=x onerror=y>""").nonEmpty)
     assert(violations("""<a href="&#106;avascript:x">""").nonEmpty)
     assertEquals(violations("""<a href="/x" class="y">z</a>"""), Nil)
+    assert(violations("""<img src="data:image/svg+xml;base64,PHN2Zz4=">""").nonEmpty)
+    assert(violations("""<a href="data:image/png;base64,AAAA">""").nonEmpty)
+    assert(violations("""<a href="/x" target="_top">""").nonEmpty)
+    assert(violations("""<a href="/x" target="_blank">""").nonEmpty)
+    assertEquals(violations("""<img src="data:image/png;base64,AAAA" alt="a" />"""), Nil)
+    assertEquals(violations("""<a href="/x" target="_blank" rel="noopener noreferrer">"""), Nil)
 
   test("what the pages use still renders: a table, a link, an image, code, emphasis and the wikilink anchors"):
     val html = render(
@@ -125,6 +155,11 @@ class MarkdownHtmlSafetySuite extends munit.FunSuite:
     assert(html.contains("&lt;script&gt;alert(2)&lt;/script&gt;"), html)
 
   test("a Markdown link with a script address keeps its text and loses its address"):
-    val html = render("[click](javascript:alert(1)) and ![pic](data:image/png;base64,AAAA)")
+    val html = render("[click](javascript:alert(1)) and ![pic](data:image/svg+xml;base64,PHN2Zz4=)")
     assert(html.contains("click"), html)
     assert(!html.contains("javascript:") && !html.contains("data:image"), html)
+
+  test("a Markdown image may be an inline base64 raster; a link to one is no link"):
+    val html = render("![pic](data:image/png;base64,AAAA) and [link](data:image/png;base64,AAAA)")
+    assert(html.contains("""<img src="data:image/png;base64,AAAA" alt="pic" />"""), html)
+    assert(html.contains("link") && !html.contains("href=\"data:"), html)

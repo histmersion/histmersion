@@ -209,7 +209,7 @@ object Html:
       "var",
       "wbr"
     ).map(_ -> Set.empty[String]).toMap ++ Map(
-      "a" -> Set("href", "rel"),
+      "a" -> Set("href", "rel", "target"),
       "img" -> Set("src", "alt", "width", "height", "loading"),
       "ol" -> Set("start", "reversed", "type"),
       "li" -> Set("value"),
@@ -356,27 +356,42 @@ object Html:
         case Some(tag) =>
           val raw = s.substring(lt, tag.end)
           val _ = Allowed.get(tag.name) match
-            case Some(_) if tag.closing                                      => out.append(s"</${tag.name}>")
-            case Some(own) if tag.attributes.forall(a => keeps(own, a.name)) => out.append(written(tag))
-            case Some(_)                   => out.append(escape(raw, apostrophe = false))
-            case None if Refused(tag.name) => out.append(escape(raw, apostrophe = false))
-            case None                      => out
+            case Some(_) if tag.closing                                 => out.append(s"</${tag.name}>")
+            case Some(own) if tag.attributes.forall(a => keeps(own, a)) => out.append(written(tag))
+            case Some(_)                                                => out.append(escape(raw, apostrophe = false))
+            case None if Refused(tag.name)                              => out.append(escape(raw, apostrophe = false))
+            case None                                                   => out
           tag.end
 
-  private def keeps(own: Set[String], attribute: String): Boolean = GlobalAttributes(attribute) || own(attribute)
+  /** The one `target` a link may have: a new tab. Any other value (a named window, `_parent`, `_top`, a value with
+    * spaces) refuses the tag, as any other refused attribute does.
+    */
+  val BlankTarget = "_blank"
+
+  /** The `rel` every link with [[BlankTarget]] is written with, whatever it said: the opened page gets no handle on
+    * this one (`window.opener`) and no Referer.
+    */
+  val NoOpener = "noopener noreferrer"
+
+  private def keeps(own: Set[String], attribute: Attribute): Boolean =
+    (GlobalAttributes(attribute.name) || own(attribute.name)) &&
+      (attribute.name != "target" || attribute.value.exists(v => decoded(v).equalsIgnoreCase(BlankTarget)))
 
   private def written(tag: Tag): String =
-    val kept = tag.attributes.distinctBy(_.name).flatMap { a =>
+    val blank = tag.name == "a" && tag.attributes.exists(_.name == "target")
+    val kept = tag.attributes.distinctBy(_.name).filterNot(a => blank && a.name == "rel").flatMap { a =>
       a.value match
         case None    => Some(a.name)
         case Some(v) =>
           val shown = (tag.name, a.name) match
-            case ("a", "href")  => Href.link(decoded(v)).map(h => escape(h.address, apostrophe = false))
-            case ("img", "src") => Href.image(decoded(v)).map(h => escape(h.address, apostrophe = false))
-            case _              => Some(reEscaped(v))
+            case ("a", "href")   => Href.link(decoded(v)).map(h => escape(h.address, apostrophe = false))
+            case ("a", "target") => Some(BlankTarget)
+            case ("img", "src")  => Href.image(decoded(v)).map(h => escape(h.address, apostrophe = false))
+            case _               => Some(reEscaped(v))
           shown.map(x => s"""${a.name}="$x"""")
     }
-    s"<${tag.name}${kept.map(" " + _).mkString}${if tag.selfClosing && Void(tag.name) then " /" else ""}>"
+    val forced = if blank then List(s"""rel="$NoOpener"""") else Nil
+    s"<${tag.name}${(kept ++ forced).map(" " + _).mkString}${if tag.selfClosing && Void(tag.name) then " /" else ""}>"
 
   private val NamedEntities: Map[String, String] =
     Map("amp" -> "&", "lt" -> "<", "gt" -> ">", "quot" -> "\"", "apos" -> "'", "nbsp" -> " ")
