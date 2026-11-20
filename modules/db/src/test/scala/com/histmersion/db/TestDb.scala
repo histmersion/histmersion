@@ -31,9 +31,26 @@ object TestDb:
     */
   val BaseEnv = "HISTMERSION_TEST_DB_BASE_URL"
 
+  /** Set where a skip would hide a hole (CI's DB-backed jobs, B8): without `HISTMERSION_TEST_DB_URL` the DB suites then
+    * fail instead of skipping, so a run that lost its database cannot pass as green.
+    */
+  val RequiredEnv = "HISTMERSION_TEST_DB_REQUIRED"
+
+  /** The URL `env` names, or `None` to skip; an error when the URL is not a test database, or when none is named while
+    * `RequiredEnv` asks for one (any value but empty, `0` or `false`).
+    */
+  private[db] def configured(env: Map[String, String]): Either[String, Option[String]] =
+    env.get(Env).filter(_.nonEmpty) match
+      case Some(u) => validate(u).map(Some(_))
+      case None if env.get(RequiredEnv).exists(v => !Set("", "0", "false")(v.trim.toLowerCase)) =>
+        Left(
+          s"$RequiredEnv is set, so the DB suites must run, but $Env is not: start a test database (`just test-db`) " +
+            "and set it, or unset the requirement to let these suites skip."
+        )
+      case None => Right(None)
+
   lazy val url: Option[String] =
-    sys.env.get(Env).filter(_.nonEmpty).map { u =>
-      val ok = validate(u).fold(e => throw IllegalStateException(e), identity)
+    configured(sys.env).fold(e => throw IllegalStateException(e), identity).map { ok =>
       sys.env
         .get(BaseEnv)
         .filter(b => b.nonEmpty && b != ok)

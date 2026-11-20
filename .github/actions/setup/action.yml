@@ -1,0 +1,44 @@
+name: setup
+description: >-
+  The build's toolchain for one CI job: the PINNED GraalVM CE (scripts/bundle/graalvm-pins.txt, provisioned by the
+  same script the installers use, cached per pin), sbt, and the dependency caches (coursier, sbt's boot). The sbt 2
+  disk cache of compiled outputs (target/sbt-cache) is the workflow's to move: ci.yml hands it from its build job to
+  the test shards.
+inputs:
+  save-deps:
+    description: whether this job saves the dependency cache when it missed (only the build job does)
+    default: "false"
+runs:
+  using: composite
+  steps:
+    # setup-graalvm cannot name an innovation release (25.5's assets are `graalvm-community-jdk-25i5-…` under the
+    # tag graal-25.5.5.0.3); toolchain.sh downloads the pinned tarball and checks its SHA-256
+    - name: GraalVM CE cache (the pin)
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ${{ runner.temp }}/histmersion-toolchain
+        key: graalvm-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('scripts/bundle/graalvm-pins.txt') }}
+    - name: GraalVM CE (the pin)
+      shell: bash
+      run: |
+        export HISTMERSION_DATA_DIR="$RUNNER_TEMP/histmersion-toolchain" HISTMERSION_HOME=
+        bash scripts/bundle/toolchain.sh install
+        home="$(bash scripts/bundle/toolchain.sh path)"
+        echo "JAVA_HOME=$home" >> "$GITHUB_ENV"
+        echo "$home/bin" >> "$GITHUB_PATH"
+    - name: dependency cache (restore)
+      id: deps
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: |
+          ~/.cache/coursier
+          ~/Library/Caches/Coursier
+          ~/.sbt
+          ~/.ivy2/cache
+        key: deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('build.sbt', 'project/**') }}
+        restore-keys: deps-${{ runner.os }}-${{ runner.arch }}-
+    - uses: sbt/setup-sbt@7e114eae4f32ec3f93c851c2793376a77f384409 # v1.5.15
+    - name: remember to save the dependency cache
+      if: inputs.save-deps == 'true' && steps.deps.outputs.cache-hit != 'true'
+      shell: bash
+      run: echo "HISTMERSION_CI_SAVE_DEPS=${{ steps.deps.outputs.cache-primary-key }}" >> "$GITHUB_ENV"
