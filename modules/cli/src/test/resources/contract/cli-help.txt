@@ -183,22 +183,26 @@ Subcommands:
         Plugins of the Histmersion installed on THIS machine: add, rm, list, status, rebuild, rollback (refused when the CLI points at another machine); new, repo and api-jar for writing one
 
 ==== histmersion version
-Usage: histmersion version
+Usage: histmersion version [--json]
 
 Print the CLI and server versions
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion health
-Usage: histmersion health
+Usage: histmersion health [--json]
 
 Server health (db, schema version)
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion about
 Usage: histmersion about [--json]
@@ -212,7 +216,7 @@ Options and flags:
         Print the raw JSON response instead of Markdown
 
 ==== histmersion seed
-Usage: histmersion seed [--force] [<dir>]
+Usage: histmersion seed [--force] [--json] [<dir>]
 
 Import a wiki/ or wiki/sources directory (articles beside it come too) — read on the HOST when that path exists here, otherwise asked of the SERVER (empty = configured corpus dir)
 
@@ -221,15 +225,19 @@ Options and flags:
         Display this help text.
     --force
         Overwrite rows newer than the files
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion reindex
-Usage: histmersion reindex
+Usage: histmersion reindex [--json]
 
 Rebuild the full-text chunk index for every source
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion search
 Usage: histmersion search [--group <string>] [--depth <integer>] [--as-of <integer>] [--samples <integer>] [--unit <string>] [--brief] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [--title <string>] [--goal <string>] [--json] [<query>]
@@ -349,7 +357,7 @@ Options and flags:
         Print the raw JSON response instead of Markdown
 
 ==== histmersion passages
-Usage: histmersion passages [--regex] [--limit <integer>] [--context <integer>] <citekey> <query>
+Usage: histmersion passages [--regex] [--limit <integer>] [--context <integer>] [--json] <citekey> <query>
 
 Find a word, phrase or regex inside one source's full text: the passages around each match, with offsets for get --offset
 
@@ -362,6 +370,8 @@ Options and flags:
         Show at most this many passages (default 10, max 50)
     --context <integer>
         Characters of context around each match (default 600, max 3000)
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion geo-when
 Usage: histmersion geo-when [--region <string>] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [--title <string>] [--goal <string>] [--json]
@@ -491,13 +501,15 @@ Options and flags:
         Print the raw JSON response instead of Markdown
 
 ==== histmersion put
-Usage: histmersion put <file.md>
+Usage: histmersion put [--json] <file.md>
 
 Send ONE note file (frontmatter + body) as a full create/replace
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion patch
 Usage: histmersion patch [--json <string>] [--tags-add <string>] [--tags-remove <string>] [--tags-replace <string>] [--topics <string>] [--regions <string>] [--summary <string>] [--status <string>] [--title <string>] [--notes-file <string>] [--period <string>] [--body-file <string>] [--add-finding <string>]... [--remove-finding <string>]... [--if-updated-at <string>] [--add-edge <string>]... [--remove-edge <string>]... [--strict] <citekey>
@@ -569,7 +581,7 @@ Options and flags:
         Print the raw JSON response instead of Markdown
 
 ==== histmersion export
-Usage: histmersion export [--sources-dir <string>] [--articles-dir <string>] [--meta-dir <string>] [--no-meta] <dir> [<citekey>...]
+Usage: histmersion export [--sources-dir <string>] [--articles-dir <string>] [--meta-dir <string>] [--no-meta] [--json] <dir> [<citekey>...]
 
 Write sources to <dir>/sources/, articles to <dir>/<kind>/, bookkeeping to <dir>/meta/ — the seed layout
 
@@ -584,9 +596,11 @@ Options and flags:
         Where ACQUIRE.md/TASKS.md/LOG.md/GOALS.md go (default: <dir>/meta)
     --no-meta
         Do not write the bookkeeping queues and the research goals
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion backup
-Usage: histmersion backup [--download <string>]
+Usage: histmersion backup [--download <string>] [--json]
 
 Take a pg_dump backup of the server's database (optionally copy it here)
 
@@ -595,6 +609,8 @@ Options and flags:
         Display this help text.
     --download <string>
         Also stream the finished dump into this directory
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion backups
 Usage: histmersion backups [--json]
@@ -608,7 +624,7 @@ Options and flags:
         Print the raw JSON response instead of Markdown
 
 ==== histmersion restore
-Usage: histmersion restore [--force] [--yes] <file>
+Usage: histmersion restore [--force] [--yes] [--json] <file>
 
 Restore a server-side backup (pg_restore --clean); refuses a non-empty database without --force
 
@@ -619,6 +635,8 @@ Options and flags:
         Overwrite a database that still holds sources
     --yes
         Do not ask for confirmation
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion maintenance
 Usage:
@@ -635,7 +653,7 @@ Subcommands:
         VACUUM the tables a re-seed rewrites (or --table …) as a server job, outside any transaction; --analyze also refreshes planner statistics
 
 ==== histmersion maintenance vacuum
-Usage: histmersion maintenance vacuum [--analyze] [--table <string>]... [--no-wait]
+Usage: histmersion maintenance vacuum [--analyze] [--table <string>]... [--no-wait] [--json]
 
 VACUUM the tables a re-seed rewrites (or --table …) as a server job, outside any transaction; --analyze also refreshes planner statistics
 
@@ -648,6 +666,8 @@ Options and flags:
         A table to vacuum (repeatable; default: config maintenance.vacuum-tables)
     --no-wait
         Print the job id and return instead of following it
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion bundle
 Usage:
@@ -673,7 +693,7 @@ Subcommands:
         This collection's identity (the origin of every row it creates); --label names it, e.g. work or home
 
 ==== histmersion bundle export
-Usage: histmersion bundle export [--since <string>] <file.hmx>
+Usage: histmersion bundle export [--since <string>] [--json] <file.hmx>
 
 Write the whole database (or, with --since, what changed after a moment, deletions included) to a portable .hmx bundle
 
@@ -682,6 +702,8 @@ Options and flags:
         Display this help text.
     --since <string>
         Only what changed after this moment (ISO-8601, e.g. a previous bundle's asOf)
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion bundle verify
 Usage: histmersion bundle verify [--json] <file.hmx>
@@ -714,7 +736,7 @@ Options and flags:
         Print the raw JSON response instead of Markdown
 
 ==== histmersion bundle instance
-Usage: histmersion bundle instance [--label <string>]
+Usage: histmersion bundle instance [--label <string>] [--json]
 
 This collection's identity (the origin of every row it creates); --label names it, e.g. work or home
 
@@ -723,6 +745,8 @@ Options and flags:
         Display this help text.
     --label <string>
         Name this instance; an empty string clears the name
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion merge
 Usage:
@@ -772,7 +796,7 @@ Options and flags:
         Print the raw JSON response instead of Markdown
 
 ==== histmersion merge apply
-Usage: histmersion merge apply [--resolutions <string>] [--resolve <string>]... [--editions <string>] [--plan <string>] [--yes] <file.hmx>
+Usage: histmersion merge apply [--resolutions <string>] [--resolve <string>]... [--editions <string>] [--plan <string>] [--yes] [--json] <file.hmx>
 
 Carry out the merge of a bundle into this collection, as planned: a backup first, then one transaction
 
@@ -789,6 +813,8 @@ Options and flags:
         Apply only this plan (the hash merge plan printed); refused if the plan is now another
     --yes
         Do not ask for confirmation
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion merge list
 Usage: histmersion merge list [--limit <integer>] [--json]
@@ -941,7 +967,7 @@ Options and flags:
         Print the raw JSON response instead of Markdown
 
 ==== histmersion article put
-Usage: histmersion article put [--kind <string>] [--strict] <file.md>
+Usage: histmersion article put [--kind <string>] [--strict] [--json] <file.md>
 
 Send ONE article note file (frontmatter + body) as a full create/replace
 
@@ -952,6 +978,8 @@ Options and flags:
         Kind when the frontmatter has no `type:`
     --strict
         Refuse the write when the Markdown has a formatting error (default: write, then list them)
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion article patch
 Usage: histmersion article patch [--json <string>] [--title <string>] [--summary <string>] [--kind <string>] [--body-file <string>] [--append-file <string>] [--tags-add <string>] [--tags-remove <string>] [--tags-replace <string>] [--regions <string>] [--period <string>] [--if-updated-at <string>] [--strict] [--filter-query <string>] [--filter-topics <string>] [--filter-tags <string>] [--filter-status <string>] [--filter-places <string>] [--filter-period <string>] [--extra-query <string>]... [--clear-filter] [--reason <string>]... [--critique-reason <string>]... <slug>
@@ -1061,25 +1089,29 @@ Options and flags:
         Print the raw JSON response instead of Markdown
 
 ==== histmersion article delete
-Usage: histmersion article delete <slug>
+Usage: histmersion article delete [--json] <slug>
 
 Remove one article (its links go with it)
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion article export
-Usage: histmersion article export <dir>
+Usage: histmersion article export [--json] <dir>
 
 Write each article to <dir>/<kind>/<slug>.md
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion article import
-Usage: histmersion article import [--force] <dir>
+Usage: histmersion article import [--force] [--json] <dir>
 
 Import <dir>/<kind>/*.md (and any *.md in <dir> itself)
 
@@ -1088,24 +1120,30 @@ Options and flags:
         Display this help text.
     --force
         Overwrite articles newer than the files
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion article versions
-Usage: histmersion article versions <slug>
+Usage: histmersion article versions [--json] <slug>
 
 Show the edit history of one article
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion article version
-Usage: histmersion article version <slug> <id>
+Usage: histmersion article version [--json] <slug> <id>
 
 Show one historical version's full body
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion article rename
 Usage: histmersion article rename [--json] <old> <new>
@@ -1184,7 +1222,7 @@ Subcommands:
         Compute parent-child edges from spatial containment (point inside polygon). Idempotent.
 
 ==== histmersion places search
-Usage: histmersion places search [--as-of <integer>] [--limit <integer>] [<query>]
+Usage: histmersion places search [--as-of <integer>] [--limit <integer>] [--json] [<query>]
 
 Find places by name; the `id` it prints is what `--place` wants
 
@@ -1195,9 +1233,11 @@ Options and flags:
         Signed year the gazetteer is read at (BCE negative, e.g. -1400)
     --limit <integer>
         Max results
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion places show
-Usage: histmersion places show [--as-of <integer>] [--depth <integer>] [--no-tree] <id>
+Usage: histmersion places show [--as-of <integer>] [--depth <integer>] [--no-tree] [--json] <id>
 
 One place: geometry, validity, parents and the subtree
 
@@ -1210,9 +1250,11 @@ Options and flags:
         How deep the subtree goes
     --no-tree
         Skip the hierarchy walk
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion places children
-Usage: histmersion places children [--as-of <integer>] <id>
+Usage: histmersion places children [--as-of <integer>] [--json] <id>
 
 What one place contains, as of a year
 
@@ -1221,9 +1263,11 @@ Options and flags:
         Display this help text.
     --as-of <integer>
         Signed year the gazetteer is read at (BCE negative, e.g. -1400)
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion places site-types
-Usage: histmersion places site-types [--dry-run] [--limit <integer>] [--refresh] [--no-wait]
+Usage: histmersion places site-types [--dry-run] [--limit <integer>] [--refresh] [--no-wait] [--json]
 
 Refine the type (settlement, fortification, burial…) of the Wikidata sites on the map from their items' classes, as a server job; Pleiades and GeoNames sites are typed from their own fields already
 
@@ -1238,6 +1282,8 @@ Options and flags:
         Ask again about sites asked before
     --no-wait
         Print the job id and return
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion places rename
 Usage: histmersion places rename [--json] <old> <new>
@@ -1271,7 +1317,7 @@ Subcommands:
         The names added by hand; --csv prints them as db/places/supplement/names.csv lines, to promote into the seed
 
 ==== histmersion places name add
-Usage: histmersion places name add [--lang <string>] <place-id> <name>
+Usage: histmersion places name add [--lang <string>] [--json] <place-id> <name>
 
 Give a place a further name (kept by every re-seed): `places name add pleiades_678430 'Lake Kinneret' --lang en`
 
@@ -1280,9 +1326,11 @@ Options and flags:
         Display this help text.
     --lang <string>
         Language tag of the name: en, grc, la, pl … (omit when unknown)
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion places name rm
-Usage: histmersion places name rm [--lang <string>] <place-id> <name>
+Usage: histmersion places name rm [--lang <string>] [--json] <place-id> <name>
 
 Remove a name added by hand (a name the seed gives cannot be removed)
 
@@ -1291,9 +1339,11 @@ Options and flags:
         Display this help text.
     --lang <string>
         Language tag of the name: en, grc, la, pl … (omit when unknown)
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion places name list
-Usage: histmersion places name list [--place <string>] [--csv]
+Usage: histmersion places name list [--place <string>] [--csv] [--json]
 
 The names added by hand; --csv prints them as db/places/supplement/names.csv lines, to promote into the seed
 
@@ -1304,9 +1354,11 @@ Options and flags:
         Only this place's (an id)
     --csv
         Print CSV (place_id,name,lang,why) instead of Markdown
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion places set
-Usage: histmersion places set [--kind <string>] [--from <integer>] [--to <integer>] [--point <string>] [--reason <string>] [--reset] <place-id>
+Usage: histmersion places set [--kind <string>] [--from <integer>] [--to <integer>] [--point <string>] [--reason <string>] [--reset] [--json] <place-id>
 
 Set what a place IS over what its source says — kind, period and/or point; kept by every re-seed, its findings matched again: `places set pleiades_886355306 --kind region --reason 'one of the 14 Augustan regiones'`
 
@@ -1325,9 +1377,11 @@ Options and flags:
         Why: the evidence the decision rests on
     --reset
         Drop the override: the kind, period and point its source states come back
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion places overrides
-Usage: histmersion places overrides [--place <string>]
+Usage: histmersion places overrides [--place <string>] [--json]
 
 The kinds, periods and points set by hand (`places set`), with what each source says
 
@@ -1336,9 +1390,11 @@ Options and flags:
         Display this help text.
     --place <string>
         Only this place's (an id)
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion places merge
-Usage: histmersion places merge [--reason <string>] <place-id> <into-id>
+Usage: histmersion places merge [--reason <string>] [--json] <place-id> <into-id>
 
 Merge a place into the one it is the same as — findings, links, children and references move; its id resolves there, and no re-seed brings it back
 
@@ -1347,9 +1403,11 @@ Options and flags:
         Display this help text.
     --reason <string>
         Why: the evidence the decision rests on
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion places rm
-Usage: histmersion places rm [--reason <string>] <place-id>
+Usage: histmersion places rm [--reason <string>] [--json] <place-id>
 
 Remove a place nothing refers to (refused while an event, attestation, child, hand-added name or a finding with no other place does); no re-seed brings it back
 
@@ -1358,9 +1416,11 @@ Options and flags:
         Display this help text.
     --reason <string>
         Why: the evidence the decision rests on
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion places add
-Usage: histmersion places add [--kind <string>] --lon <floating-point> --lat <floating-point> --source <string> [--id <string>] [--name <string>]... [--lang <string>] [--from <integer>] [--to <integer>] <label>
+Usage: histmersion places add [--kind <string>] --lon <floating-point> --lat <floating-point> --source <string> [--id <string>] [--name <string>]... [--lang <string>] [--from <integer>] [--to <integer>] [--json] <label>
 
 Add a point place of this collection's own (never touched by a re-seed); --source says where the point comes from
 
@@ -1385,9 +1445,11 @@ Options and flags:
         Signed year the place begins (BCE negative)
     --to <integer>
         Signed year the place ends (BCE negative)
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion places import
-Usage: histmersion places import [--kind <string>] [--batch <integer>] [--dataset <string>] <file.json>
+Usage: histmersion places import [--kind <string>] [--batch <integer>] [--dataset <string>] [--json] <file.json>
 
 Upsert a Linked Places / GeoJSON file into the gazetteer
 
@@ -1400,9 +1462,11 @@ Options and flags:
         Features per request
     --dataset <string>
         Whose they are: local (this collection's own — the default; carried in a bundle) or seed (reference data every instance imports)
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion places seed
-Usage: histmersion places seed [--dir <string>] [--batch <integer>] [--no-rebuild]
+Usage: histmersion places seed [--dir <string>] [--batch <integer>] [--no-rebuild] [--json]
 
 Import every gazetteer file under db/places (Natural Earth, Pleiades, traced polities)
 
@@ -1415,9 +1479,11 @@ Options and flags:
         Features per request
     --no-rebuild
         Do not re-materialise finding_places afterwards
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion places fetch
-Usage: histmersion places fetch [--dry-run] [--no-wait] <source>
+Usage: histmersion places fetch [--dry-run] [--no-wait] [--json] <source>
 
 Download and import an external gazetteer (cliopatria, awmc, chronontology) or the coastline (land). Re-runnable and idempotent.
 
@@ -1428,18 +1494,22 @@ Options and flags:
         Parse and transform only — do not upsert
     --no-wait
         Print the job id and return instead of following it
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion places sources
-Usage: histmersion places sources
+Usage: histmersion places sources [--json]
 
 The external gazetteer sources: the pinned GeoNames and Wikidata extracts, the LPF files in the drop folder, and what was imported
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion places load
-Usage: histmersion places load [--apply] [--no-wait] <geonames|wikidata|tgn|lpf>
+Usage: histmersion places load [--apply] [--no-wait] [--json] <geonames|wikidata|tgn|lpf>
 
 Import an external source — geonames, wikidata, tgn (Getty) or lpf (the drop folder) — joined to the gazetteer by shared ids; a dry run unless --apply
 
@@ -1450,18 +1520,22 @@ Options and flags:
         Import for real (without it: a dry run that reports what would change and keeps nothing)
     --no-wait
         Print the job id and return instead of following it
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion places rebuild
-Usage: histmersion places rebuild
+Usage: histmersion places rebuild [--json]
 
 Re-materialise which findings fall in which places
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion places build-hierarchy
-Usage: histmersion places build-hierarchy [--no-wait]
+Usage: histmersion places build-hierarchy [--no-wait] [--json]
 
 Compute parent-child edges from spatial containment (point inside polygon). Idempotent.
 
@@ -1470,6 +1544,8 @@ Options and flags:
         Display this help text.
     --no-wait
         Print the job id and return instead of following it
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion periods
 Usage:
@@ -1498,7 +1574,7 @@ Subcommands:
         Download PeriodO and import collections, each under one node; re-runnable and idempotent
 
 ==== histmersion periods search
-Usage: histmersion periods search [--region <string>] [--from <integer>] [--to <integer>] [<query>]
+Usage: histmersion periods search [--region <string>] [--from <integer>] [--to <integer>] [--json] [<query>]
 
 Find named periods by label, region or time span
 
@@ -1511,18 +1587,22 @@ Options and flags:
         Signed year the period must reach (BCE negative)
     --to <integer>
         Signed year the period must start by
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion periods show
-Usage: histmersion periods show <id>
+Usage: histmersion periods show [--json] <id>
 
 One period: its span, authority, what it is part of and its divisions
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion periods seed
-Usage: histmersion periods seed [--file <string>] [--replace]
+Usage: histmersion periods seed [--file <string>] [--replace] [--json]
 
 Import the period presets bundled with the server (a curated PeriodO subset); idempotent
 
@@ -1533,9 +1613,11 @@ Options and flags:
         Send this PeriodO dataset instead (e.g. db/periods/periodo-seed.json)
     --replace
         Also delete the seed periods the bundled seed no longer has (fetched ones too; your own are kept)
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion periods import
-Usage: histmersion periods import [--collection <string>]... [--dataset <string>] <file.json>
+Usage: histmersion periods import [--collection <string>]... [--dataset <string>] [--json] <file.json>
 
 Upsert a PeriodO dataset of your own (a dump or a subset); its periods are this collection's and travel in a bundle
 
@@ -1546,9 +1628,11 @@ Options and flags:
         Keep only this PeriodO authority id (repeatable)
     --dataset <string>
         Whose they are: local (this collection's own — the default; carried in a bundle) or seed (reference data every instance imports)
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion periods fetch
-Usage: histmersion periods fetch [--collection <string>]... <source>
+Usage: histmersion periods fetch [--collection <string>]... [--json] <source>
 
 Download PeriodO and import collections, each under one node; re-runnable and idempotent
 
@@ -1557,9 +1641,11 @@ Options and flags:
         Display this help text.
     --collection <string>
         A PeriodO authority id, e.g. p0ds9qj (repeatable; default: config periods.periodo-collections)
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion init
-Usage: histmersion init [--fetch] [--no-wait]
+Usage: histmersion init [--fetch] [--no-wait] [--json]
 
 Import the bundled gazetteer and period presets (a server job); --fetch adds the network sources
 
@@ -1570,6 +1656,8 @@ Options and flags:
         Also download the network gazetteers and PeriodO (config init.fetch-sources)
     --no-wait
         Print the job id and return instead of following it
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion events
 Usage:
@@ -1678,7 +1766,7 @@ Options and flags:
         Print the raw JSON response instead of Markdown
 
 ==== histmersion events patch
-Usage: histmersion events patch [--scale <string>] [--place-id <string>] [--lat <floating-point>] [--lon <floating-point>] [--geometry <string>] [--kind <string>] [--historicity <string>] [--label <string>] [--parent-id <string>] [--description <string>] [--citekey <string>] [--wikidata <string>] <id>
+Usage: histmersion events patch [--scale <string>] [--place-id <string>] [--lat <floating-point>] [--lon <floating-point>] [--geometry <string>] [--kind <string>] [--historicity <string>] [--label <string>] [--parent-id <string>] [--description <string>] [--citekey <string>] [--wikidata <string>] [--json] <id>
 
 Change fields of one event: its scale, place, point, kind, label… (the rest stay); on a catalogue event the changes are kept across re-imports (`events corrections` lists them)
 
@@ -1709,6 +1797,8 @@ Options and flags:
         Its primary source
     --wikidata <string>
         The Wikidata item it is (Q…; "" clears) — where `media import` reads its picture
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion events rename
 Usage: histmersion events rename [--json] <old> <new>
@@ -1722,7 +1812,7 @@ Options and flags:
         Print the raw JSON response instead of Markdown
 
 ==== histmersion events import
-Usage: histmersion events import [--dry-run] [--limit <integer>] [--bbox <string>] [--from <integer>] [--to <integer>] [--min-vei <integer>] [--min-magnitude <floating-point>] [--refresh] [--no-wait] <provider>
+Usage: histmersion events import [--dry-run] [--limit <integer>] [--bbox <string>] [--from <integer>] [--to <integer>] [--min-vei <integer>] [--min-magnitude <floating-point>] [--refresh] [--no-wait] [--json] <provider>
 
 Bring in every event a catalogue knows — gvp (Smithsonian Holocene eruptions), noaa (NCEI earthquakes, eruptions, tsunamis), wikidata (battles, sieges, wars, treaties, revolts, disasters), or a plugin's catalogue (`histmersion events catalogues` lists them) — merged with the events there (never overwriting a compiled one). A server job; resumable; --dry-run stores nothing and prints what it would import
 
@@ -1747,9 +1837,11 @@ Options and flags:
         Read again the parts an earlier import read
     --no-wait
         Print the job id and return
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion events rederive
-Usage: histmersion events rederive [--provider <string>] [--dry-run] [--no-wait]
+Usage: histmersion events rederive [--provider <string>] [--dry-run] [--no-wait] [--json]
 
 Compute the dating of the stored catalogue records again from the records as read — NO network — and refresh the events the catalogues created (corrections by hand kept): the step after an importer's dating rules change. A server job; --dry-run counts what would change
 
@@ -1762,9 +1854,11 @@ Options and flags:
         Count what would change, store nothing
     --no-wait
         Print the job id and return
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion events corrections
-Usage: histmersion events corrections [--status <string>] [--event <string>] [--limit <integer>]
+Usage: histmersion events corrections [--status <string>] [--event <string>] [--limit <integer>] [--json]
 
 The fields of catalogue events corrected by hand (kept over the catalogue on a re-import): conflicts first — the catalogue changed a corrected field to something else
 
@@ -1777,18 +1871,22 @@ Options and flags:
         Only this event's
     --limit <integer>
         At most this many
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion events catalogues
-Usage: histmersion events catalogues
+Usage: histmersion events catalogues [--json]
 
 The event catalogues `events import` can read on this server (the built-in ones and any a plugin registered), their licences and how to cite them
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion events links
-Usage: histmersion events links [--recompute] [--apply <string>]... [--reject <string>]... <event>
+Usage: histmersion events links [--recompute] [--apply <string>]... [--reject <string>]... [--json] <event>
 
 The sources that may discuss an event (findings near it, passages naming it) — proposed, unconfirmed; --apply confirms one (an attestation from a passage naming the event), --reject stops proposing one
 
@@ -1801,9 +1899,11 @@ Options and flags:
         A citekey to confirm (repeatable)
     --reject <string>
         A citekey to stop proposing (repeatable)
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion events candidates
-Usage: histmersion events candidates [--all] [--event <string>] [--limit <integer>] [--no-wait]
+Usage: histmersion events candidates [--all] [--event <string>] [--limit <integer>] [--no-wait] [--json]
 
 Compute the proposed links of the events not checked yet (--all: every event), as a server job
 
@@ -1818,9 +1918,11 @@ Options and flags:
         Events at most
     --no-wait
         Print the job id and return
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion events leads
-Usage: histmersion events leads [--kind <string>] [--tier <string>] [--area <string>] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [--title <string>] [--goal <string>]
+Usage: histmersion events leads [--kind <string>] [--tier <string>] [--area <string>] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [--title <string>] [--goal <string>] [--json]
 
 Questions the events raise: catalogue events no source in the corpus discusses, with the findings around them counted and the commands that act on them (the filter flags select as for search)
 
@@ -1863,6 +1965,8 @@ Options and flags:
         Case-insensitive substring of the listed item's title
     --goal <string>
         Only the sources a research goal links (its slug)
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion attestations
 Usage:
@@ -1888,7 +1992,7 @@ Subcommands:
         Delete an attestation by id
 
 ==== histmersion attestations search
-Usage: histmersion attestations search [--citekey <string>] [--target-type <string>] [--target-id <string>] [--limit <integer>] [--offset <integer>]
+Usage: histmersion attestations search [--citekey <string>] [--target-type <string>] [--target-id <string>] [--limit <integer>] [--offset <integer>] [--json]
 
 Find attestations by source or target
 
@@ -1905,18 +2009,22 @@ Options and flags:
         Max results
     --offset <integer>
         Skip this many (the list's footer names the next offset)
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion attestations show
-Usage: histmersion attestations show <id>
+Usage: histmersion attestations show [--json] <id>
 
 One attestation by id
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion attestations add
-Usage: histmersion attestations add --citekey <string> --target-type <string> --target-id <string> [--quote <string>] [--page <string>] [--chunk <integer>] [--note <string>]
+Usage: histmersion attestations add --citekey <string> --target-type <string> --target-id <string> [--quote <string>] [--page <string>] [--chunk <integer>] [--note <string>] [--json]
 
 Create an attestation linking an entity to a source passage
 
@@ -1937,21 +2045,25 @@ Options and flags:
         source_chunks ordinal
     --note <string>
         Note
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion attestations rm
-Usage: histmersion attestations rm <id>
+Usage: histmersion attestations rm [--json] <id>
 
 Delete an attestation by id
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion candidates
 Usage:
     histmersion candidates sweep
     histmersion candidates mark
-    histmersion candidates [--goal <string>] [--state <string>] [--limit <integer>] [--offset <integer>]
+    histmersion candidates [--goal <string>] [--state <string>] [--limit <integer>] [--offset <integer>] [--json]
 
 New sources found for the research goals without a model: list, sweep, mark
 
@@ -1966,6 +2078,8 @@ Options and flags:
         Max results
     --offset <integer>
         Skip this many (the list's footer names the next offset)
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 Subcommands:
     sweep
@@ -1974,7 +2088,7 @@ Subcommands:
         Record a decision on candidates by id: seen, queued, dismissed (or new again)
 
 ==== histmersion candidates sweep
-Usage: histmersion candidates sweep [--dry-run] <goal>
+Usage: histmersion candidates sweep [--dry-run] [--json] <goal>
 
 Read a goal's saved queries, citation and author alerts from their watermarks now (no model)
 
@@ -1983,9 +2097,11 @@ Options and flags:
         Display this help text.
     --dry-run
         Read, store nothing (no candidates, no watermarks)
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion candidates mark
-Usage: histmersion candidates mark [--as <string>] <id>...
+Usage: histmersion candidates mark [--as <string>] [--json] <id>...
 
 Record a decision on candidates by id: seen, queued, dismissed (or new again)
 
@@ -1994,6 +2110,8 @@ Options and flags:
         Display this help text.
     --as <string>
         seen|queued|dismissed|new
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion goals
 Usage:
@@ -2062,7 +2180,7 @@ Options and flags:
         Print the raw JSON response instead of Markdown
 
 ==== histmersion goals update
-Usage: histmersion goals update [--title <string>] [--status <string>] [--notes <string>] [--budget-usd <floating-point>] [--from <integer>] [--to <integer>] <slug>
+Usage: histmersion goals update [--title <string>] [--status <string>] [--notes <string>] [--budget-usd <floating-point>] [--from <integer>] [--to <integer>] [--json] <slug>
 
 Update goal fields (patch)
 
@@ -2081,9 +2199,11 @@ Options and flags:
         Signed year the goal's period begins (BCE negative, e.g. --from=-1200); alone, the end stays as set
     --to <integer>
         Signed year the goal's period ends (BCE negative); alone, the start stays as set
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion goals plan
-Usage: histmersion goals plan [--model <string>] [--budget-usd <floating-point>] [--follow] <slug>
+Usage: histmersion goals plan [--model <string>] [--budget-usd <floating-point>] [--follow] [--json] <slug>
 
 Ask the server's planner for sub-goals, search queries and works (DOIs checked upstream); nothing is created until you approve the plan (histmersion agent approve)
 
@@ -2096,9 +2216,11 @@ Options and flags:
         This run's cost cap in USD (default: the goal's, then agents.budgets.run-usd)
     --follow
         Wait for the run to finish (or pause, or wait for an approval), printing its progress
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion goals link
-Usage: histmersion goals link [--source <string>] [--article <string>] [--query <string>] [--item <integer>] [--note <string>] <slug>
+Usage: histmersion goals link [--source <string>] [--article <string>] [--query <string>] [--item <integer>] [--note <string>] [--json] <slug>
 
 Link a goal to a source, an article, a search query or a queue item
 
@@ -2115,18 +2237,22 @@ Options and flags:
         A queue item id
     --note <string>
         Why it is linked
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion goals unlink
-Usage: histmersion goals unlink <slug> <kind> <ref>
+Usage: histmersion goals unlink [--json] <slug> <kind> <ref>
 
 Remove one link of a goal
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion goals schedule
-Usage: histmersion goals schedule [--remove] [--cron <string>] [--off] [--budget-usd <floating-point>] <slug> <kind>
+Usage: histmersion goals schedule [--remove] [--cron <string>] [--off] [--budget-usd <floating-point>] [--json] <slug> <kind>
 
 Set (or --remove) a goal's currency or acquisition schedule: a sweep of its watcher watch:<goal> (created paused — resume it with `agent manager watch:<goal> resume`; its one cron is shared by both sweeps); runs only while the server's agents are enabled
 
@@ -2141,15 +2267,19 @@ Options and flags:
         Take the sweep out of the watcher (its cron stays)
     --budget-usd <floating-point>
         Cost cap of each run it starts
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion goals schedules
-Usage: histmersion goals schedules
+Usage: histmersion goals schedules [--json]
 
 Every goal's schedules, the next due first
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion goals rename
 Usage: histmersion goals rename [--json] <old> <new>
@@ -2183,31 +2313,37 @@ Subcommands:
         Set an agent state key (value as JSON)
 
 ==== histmersion agent-state list
-Usage: histmersion agent-state list
+Usage: histmersion agent-state list [--json]
 
 List all agent state keys
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion agent-state get
-Usage: histmersion agent-state get <key>
+Usage: histmersion agent-state get [--json] <key>
 
 Get one agent state entry
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion agent-state set
-Usage: histmersion agent-state set <key> <value>
+Usage: histmersion agent-state set [--json] <key> <value>
 
 Set an agent state key (value as JSON)
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion agent
 Usage:
@@ -2296,12 +2432,15 @@ Subcommands:
 Usage:
     histmersion agent models set
     histmersion agent models reset
+    histmersion agent models [--json]
 
 Each step role's model chain, the model its next call would use, and every allowance's use per window
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 Subcommands:
     set
@@ -2310,25 +2449,29 @@ Subcommands:
         Drop a role's saved chain: the server's config (agents.roles.<role>) applies again
 
 ==== histmersion agent models set
-Usage: histmersion agent models set <role> <provider:model>...
+Usage: histmersion agent models set [--json] <role> <provider:model>...
 
 Save a role's chain over the config: the models tried in order, first choice first
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion agent models reset
-Usage: histmersion agent models reset <role>
+Usage: histmersion agent models reset [--json] <role>
 
 Drop a role's saved chain: the server's config (agents.roles.<role>) applies again
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion agent allowance
-Usage: histmersion agent allowance [--limit <string>]... [--reserve <integer>] [--remove] <target>
+Usage: histmersion agent allowance [--limit <string>]... [--reserve <integer>] [--remove] [--json] <target>
 
 Save the allowance of a model (provider:model) or of a provider (provider:*): tokens and/or USD per rolling window and a reserve below which the chain's next model is used; --remove goes back to config
 
@@ -2341,6 +2484,8 @@ Options and flags:
         Stop using it once less than this % of any limit is left (0-99)
     --remove
         Drop the saved allowance: the server's config (agents.allowances) applies again
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion agent quota
 Usage:
@@ -2349,12 +2494,15 @@ Usage:
     histmersion agent quota floors
     histmersion agent quota fallthrough
     histmersion agent quota refresh
+    histmersion agent quota [--json]
 
 Subscription pools (Claude plan, ChatGPT plan): each window's use, its floor, reset and reading age; the hold switch; metered allowances
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 Subcommands:
     hold
@@ -2369,25 +2517,29 @@ Subcommands:
         Take a fresh reading of a plan pool now, or of every pool (claude-plan, chatgpt-plan): the ChatGPT plan through codex app-server (spends nothing), the Claude plan through one minimal claude -p turn (spends a little of the plan)
 
 ==== histmersion agent quota hold
-Usage: histmersion agent quota hold <pool>
+Usage: histmersion agent quota hold [--json] <pool>
 
 Hold a plan pool: no agent run draws on it until it is released (claude-plan, chatgpt-plan)
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion agent quota release
-Usage: histmersion agent quota release <pool>
+Usage: histmersion agent quota release [--json] <pool>
 
 Release a held plan pool
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion agent quota floors
-Usage: histmersion agent quota floors [--reset] <pool> [<floors>]
+Usage: histmersion agent quota floors [--reset] [--json] <pool> [<floors>]
 
 Save a plan pool's floors — the share of each window that must stay left, e.g. 'five_hour=30, seven_day=25' (Codex windows by length: '300m=25, 10080m=20'); --reset goes back to config
 
@@ -2396,27 +2548,33 @@ Options and flags:
         Display this help text.
     --reset
         Drop the saved floors
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion agent quota fallthrough
-Usage: histmersion agent quota fallthrough <role> <on|off>
+Usage: histmersion agent quota fallthrough [--json] <role> <on|off>
 
 Whether a role's chain may fall from a plan below its floor to a PAID key (off: the run pauses until the reset)
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion agent quota refresh
-Usage: histmersion agent quota refresh [<pool>]
+Usage: histmersion agent quota refresh [--json] [<pool>]
 
 Take a fresh reading of a plan pool now, or of every pool (claude-plan, chatgpt-plan): the ChatGPT plan through codex app-server (spends nothing), the Claude plan through one minimal claude -p turn (spends a little of the plan)
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion agent generate
-Usage: histmersion agent generate [--runtime <string>]... [--out <string>]
+Usage: histmersion agent generate [--runtime <string>]... [--out <string>] [--json]
 
 Write the per-runtime agent definitions (Claude Code plugins, Codex home, opencode config) from the server's bundled agents and skills — on the SERVER's disk
 
@@ -2427,9 +2585,11 @@ Options and flags:
         Only this runtime: claude-code, codex or opencode (repeatable; default all three)
     --out <string>
         A directory on the server to write to instead of its runtimes directory
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion agent doctor
-Usage: histmersion agent doctor [--offline]
+Usage: histmersion agent doctor [--offline] [--json]
 
 Check every provider without spending anything: keys, the free model listing, prices, the claude CLI and its login
 
@@ -2438,9 +2598,11 @@ Options and flags:
         Display this help text.
     --offline
         Skip the providers' model listings (no network)
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion agent probe
-Usage: histmersion agent probe [--model <string>] <citekey>
+Usage: histmersion agent probe [--model <string>] [--json] <citekey>
 
 One live model call with one read-only tool (get_source) and a typed answer, checked against the record
 
@@ -2449,9 +2611,11 @@ Options and flags:
         Display this help text.
     --model <string>
         provider:model for this call (default: the role's configured model)
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion agent run
-Usage: histmersion agent run [--model <string>] [--budget-usd <floating-point>] [--budget-tokens <integer>] [--fix] [--rounds <integer>] [--acquire-item <integer>] [--title <string>] [--kind <string>] [--query <string>] [--topic <string>]... [--tag <string>]... [--goal <string>] [--dry-run] [--model-for <string>]... [--follow] <pipeline> <target>
+Usage: histmersion agent run [--model <string>] [--budget-usd <floating-point>] [--budget-tokens <integer>] [--fix] [--rounds <integer>] [--acquire-item <integer>] [--title <string>] [--kind <string>] [--query <string>] [--topic <string>]... [--tag <string>]... [--goal <string>] [--dry-run] [--model-for <string>]... [--follow] [--json] <pipeline> <target>
 
 Start a pipeline on a target (enrich-source <source>, review-article <article>, plan-goal <goal>, compile-article <article>, currency-check <goal>, acquisition-sweep <goal>, infer-filter <article>, hint-effect <manager>, propose-articles <goal>)
 
@@ -2488,6 +2652,8 @@ Options and flags:
         role=provider:model: one role's model for this run only, over its chain and over --model (repeatable; roles: probe, extractor, reviewer, cold-reader, skeptic, fixer, planner, writer)
     --follow
         Wait for the run to finish (or pause, or wait for an approval), printing its progress
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion agent runs
 Usage: histmersion agent runs [--status <string>]... [--pipeline <string>]... [--manager <string>]... [--goal <string>] [--model <string>]... [--provider <string>]... [--origin <string>]... [--since <string>] [--until <string>] [--subject <string>] [--limit <integer>] [--before <string>] [--json]
@@ -2525,7 +2691,7 @@ Options and flags:
         Print the raw JSON response instead of Markdown
 
 ==== histmersion agent show
-Usage: histmersion agent show [--messages] [--follow] <id>
+Usage: histmersion agent show [--messages] [--follow] [--json] <id>
 
 One run: its steps — tokens (with the first call's input and the turns), cost — and warnings (and --messages: the trace)
 
@@ -2536,6 +2702,8 @@ Options and flags:
         Include the traced messages and tool calls
     --follow
         Wait for the run to finish (or pause, or wait for an approval), printing its progress
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion agent compare
 Usage: histmersion agent compare [--json] <run-id>...
@@ -2549,16 +2717,18 @@ Options and flags:
         Print the raw JSON response instead of Markdown
 
 ==== histmersion agent pause
-Usage: histmersion agent pause <id>
+Usage: histmersion agent pause [--json] <id>
 
 Pause a run before its next step
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion agent resume
-Usage: histmersion agent resume [--budget-usd <floating-point>] [--budget-tokens <integer>] <id>
+Usage: histmersion agent resume [--budget-usd <floating-point>] [--budget-tokens <integer>] [--json] <id>
 
 Resume a paused run (finished steps are replayed, not re-run)
 
@@ -2569,15 +2739,19 @@ Options and flags:
         Raise the run's cost cap before resuming
     --budget-tokens <integer>
         Raise the run's token cap before resuming
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion agent cancel
-Usage: histmersion agent cancel <id>
+Usage: histmersion agent cancel [--json] <id>
 
 Cancel a run
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion agent approvals
 Usage: histmersion agent approvals [--state <string>] [--kind <string>]... [--subject <string>] [--goal <string>] [--decided-by <string>]... [--limit <integer>] [--before <string>] [--json]
@@ -2605,7 +2779,7 @@ Options and flags:
         Print the raw JSON response instead of Markdown
 
 ==== histmersion agent approve
-Usage: histmersion agent approve [--note <string>] <id>...
+Usage: histmersion agent approve [--note <string>] [--json] <id>...
 
 Approve proposed changes (one or more ids): a source change is applied through the ordinary patch; a plan or an article lets its waiting run go on and apply it
 
@@ -2614,9 +2788,11 @@ Options and flags:
         Display this help text.
     --note <string>
         Why — kept with the decision (with every id)
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion agent reject
-Usage: histmersion agent reject [--note <string>] <id>...
+Usage: histmersion agent reject [--note <string>] [--json] <id>...
 
 Reject proposed changes (one or more ids; they stay on record)
 
@@ -2625,6 +2801,8 @@ Options and flags:
         Display this help text.
     --note <string>
         Why — kept with the decision (with every id)
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion agent digest
 Usage: histmersion agent digest [--json]
@@ -2689,13 +2867,15 @@ Usage:
     histmersion agent manager <id> priority
     histmersion agent manager <id> cron
     histmersion agent manager <id> config
-    histmersion agent manager [<id>]
+    histmersion agent manager [--json] [<id>]
 
 One process manager: new, or <id> status|items|events|pause|resume|stop|hint|enqueue|hold|release|skip|reopen|priority|cron|config
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 Subcommands:
     new
@@ -2779,7 +2959,7 @@ Options and flags:
         Print the raw JSON response instead of Markdown
 
 ==== histmersion agent manager events
-Usage: histmersion agent manager <id> events [--before <integer>] [--limit <integer>]
+Usage: histmersion agent manager <id> events [--before <integer>] [--limit <integer>] [--json]
 
 Its events, newest first
 
@@ -2790,9 +2970,11 @@ Options and flags:
         Only events older than this id
     --limit <integer>
         How many
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion agent manager pause
-Usage: histmersion agent manager <id> pause [--runs]
+Usage: histmersion agent manager <id> pause [--runs] [--json]
 
 Start no new runs (its runs in flight go on, unless --runs)
 
@@ -2801,27 +2983,33 @@ Options and flags:
         Display this help text.
     --runs
         Pause its runs in flight too
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion agent manager resume
-Usage: histmersion agent manager <id> resume
+Usage: histmersion agent manager <id> resume [--json]
 
 Start runs again (and resume the runs a pause --runs paused)
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion agent manager stop
-Usage: histmersion agent manager <id> stop
+Usage: histmersion agent manager <id> stop [--json]
 
 Cancel its runs in flight and its open items
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion agent manager hint
-Usage: histmersion agent manager <id> hint [--item <string>] [--once] [--suggest] <text>
+Usage: histmersion agent manager <id> hint [--item <string>] [--once] [--suggest] [--json] <text>
 
 A note its runs' fixer and skeptic read (standing unless --once); --suggest: the server's model proposes the action it asks for (hold, prioritise, skip, settings), applied only when you approve it
 
@@ -2834,9 +3022,11 @@ Options and flags:
         For the next run only
     --suggest
         Let the server's planner model propose a structured action (an approval you decide)
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion agent manager enqueue
-Usage: histmersion agent manager <id> enqueue [--priority <integer>] <kind> <target>
+Usage: histmersion agent manager <id> enqueue [--priority <integer>] [--json] <kind> <target>
 
 Drive a target: kind review|filter|extend <article> (review manager), enrich <citekey> (enrich), propose <goal> (seed), sweep|currency <goal> (watch); a settled one is re-opened
 
@@ -2845,9 +3035,11 @@ Options and flags:
         Display this help text.
     --priority <integer>
         Its priority (default 10: first)
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion agent manager hold
-Usage: histmersion agent manager <id> hold [--until <string>] [--until-source <string>] [--reason <string>] <target>
+Usage: histmersion agent manager <id> hold [--until <string>] [--until-source <string>] [--reason <string>] [--json] <target>
 
 Hold an item: until a date, until a source (DOI or citekey) is in the corpus, or until released
 
@@ -2860,18 +3052,22 @@ Options and flags:
         A DOI or citekey
     --reason <string>
         Why
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion agent manager release
-Usage: histmersion agent manager <id> release <target>
+Usage: histmersion agent manager <id> release [--json] <target>
 
 Release a held item
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion agent manager skip
-Usage: histmersion agent manager <id> skip [--reason <string>] <target>
+Usage: histmersion agent manager <id> skip [--reason <string>] [--json] <target>
 
 Stop an item as skipped (its run, if any, is cancelled)
 
@@ -2880,42 +3076,52 @@ Options and flags:
         Display this help text.
     --reason <string>
         Why
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion agent manager reopen
-Usage: histmersion agent manager <id> reopen <target>
+Usage: histmersion agent manager <id> reopen [--json] <target>
 
 Bring a settled item back (its runs counted from zero)
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion agent manager priority
-Usage: histmersion agent manager <id> priority <target> <priority>
+Usage: histmersion agent manager <id> priority [--json] <target> <priority>
 
 Set an item's priority (higher first)
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion agent manager cron
-Usage: histmersion agent manager <id> cron <cron>
+Usage: histmersion agent manager <id> cron [--json] <cron>
 
 When it fires (UTC): five fields, or @daily/@weekly/@monthly; "" clears it. A watcher re-opens its sweeps, the review manager refills, a seeding manager proposes again
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion agent manager config
-Usage: histmersion agent manager <id> config [<key=value>...]
+Usage: histmersion agent manager <id> config [--json] [<key=value>...]
 
 Replace its settings: key=value pairs (none: back to the server's defaults): max-runs, rounds, max-runs-per-article, no-progress-runs, reopen-limit, cooldown-minutes, low-water, refill-batch, max-failures, budget-usd, tags, goal, models, stale-after-days, infer-filter, min-sources, max-articles, sweeps, auto-ingest, auto-ingest-per-day, daily-usd (metered spend; 0 = none), auto-approve (its runs' plans and drafts decided by code checks), extend-min-new
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion agent enqueue
 Usage: histmersion agent enqueue [--priority <integer>] [--json] <kind> <target>
@@ -3183,7 +3389,7 @@ Subcommands:
         Update asset metadata
 
 ==== histmersion media import
-Usage: histmersion media import [--dry-run] [--limit <integer>] [--place <string>] [--event <string>] [--refresh] [--no-wait] <provider>
+Usage: histmersion media import [--dry-run] [--limit <integer>] [--place <string>] [--event <string>] [--refresh] [--no-wait] [--json] <provider>
 
 Bring in pictures from an outside provider (legally reusable only): wikidata (the default), depicts, met, cleveland, aic, loc, pleiades, opencontext, smithsonian and europeana (off by default: a key of your own), or a plugin's collection — `histmersion media providers` lists them with their terms. --dry-run asks about one batch and prints the counts per licence (and a collection's matches, with their reasons); otherwise a server JOB asks about every place (or event) not asked yet, batch by batch, and resumes where it stopped
 
@@ -3202,18 +3408,22 @@ Options and flags:
         Ask again about ones already asked, and re-read the licences of stored pictures
     --no-wait
         Print the job id and return instead of following it
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion media providers
-Usage: histmersion media providers
+Usage: histmersion media providers [--json]
 
 The providers `media import` can run on this server: the built-in ones and any a plugin registered, with what each asks about, the plugin that provides it and the licences it may store
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion media covers
-Usage: histmersion media covers [--dry-run] [--limit <integer>] [--citekey <string>] [--refresh] [--no-calibre] [--no-open-library] [--no-illustrations] [--no-wait]
+Usage: histmersion media covers [--dry-run] [--limit <integer>] [--citekey <string>] [--refresh] [--no-calibre] [--no-open-library] [--no-illustrations] [--no-wait] [--json]
 
 Pictures for the sources' hover cards: a book's cover from the local Calibre library (read-only), else Open Library's by ISBN/OCLC; a paper's illustration chosen among its own figures. --dry-run says what would be linked; otherwise the server part runs as a job
 
@@ -3236,9 +3446,11 @@ Options and flags:
         Covers only
     --no-wait
         Print the job id and return instead of following it
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion media list
-Usage: histmersion media list [--provider <string>] [--licence <string>] [--place <string>] [--event <string>] [--q <string>] [--limit <integer>] [--offset <integer>] [--facets]
+Usage: histmersion media list [--provider <string>] [--licence <string>] [--place <string>] [--event <string>] [--q <string>] [--limit <integer>] [--offset <integer>] [--facets] [--json]
 
 Stored pictures — source figures and providers' — with licence and credit
 
@@ -3261,18 +3473,22 @@ Options and flags:
         Skip this many (the list's footer names the next offset)
     --facets
         Only the counts per provider and licence
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion media show
-Usage: histmersion media show <uid>
+Usage: histmersion media show [--json] <uid>
 
 One picture: origin, licence, credit, and what it shows
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion media fill-licences
-Usage: histmersion media fill-licences [--apply]
+Usage: histmersion media fill-licences [--apply] [--json]
 
 Give a source's figures the licence the source records (only figures with none); counts unless --apply
 
@@ -3281,18 +3497,22 @@ Options and flags:
         Display this help text.
     --apply
         Write the licences
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion media detail
-Usage: histmersion media detail <citekey> <name>
+Usage: histmersion media detail [--json] <citekey> <name>
 
 Show asset metadata including spatial/temporal
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion media patch
-Usage: histmersion media patch [--kind <string>] [--caption <string>] [--license <string>] [--lat <floating-point>] [--lon <floating-point>] [--period-start <integer>] [--period-end <integer>] <citekey> <name>
+Usage: histmersion media patch [--kind <string>] [--caption <string>] [--license <string>] [--lat <floating-point>] [--lon <floating-point>] [--period-start <integer>] [--period-end <integer>] [--json] <citekey> <name>
 
 Update asset metadata
 
@@ -3313,6 +3533,8 @@ Options and flags:
         Period start (signed year)
     --period-end <integer>
         Period end (signed year)
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion asset-links
 Usage:
@@ -3335,7 +3557,7 @@ Subcommands:
         Delete an asset link by id
 
 ==== histmersion asset-links search
-Usage: histmersion asset-links search [--citekey <string>] [--asset <string>] [--target-type <string>] [--target-id <string>]
+Usage: histmersion asset-links search [--citekey <string>] [--asset <string>] [--target-type <string>] [--target-id <string>] [--json]
 
 Find asset links
 
@@ -3350,9 +3572,11 @@ Options and flags:
         Target type: event|finding|place|source|article
     --target-id <string>
         Filter by target id
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion asset-links add
-Usage: histmersion asset-links add --citekey <string> --asset <string> --relation <string> --target-type <string> --target-id <string> [--xywh <string>] [--notes <string>]
+Usage: histmersion asset-links add --citekey <string> --asset <string> --relation <string> --target-type <string> --target-id <string> [--xywh <string>] [--notes <string>] [--json]
 
 Create an asset link
 
@@ -3373,15 +3597,19 @@ Options and flags:
         Region within the asset (x,y,w,h)
     --notes <string>
         Free-text notes
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion asset-links rm
-Usage: histmersion asset-links rm <id>
+Usage: histmersion asset-links rm [--json] <id>
 
 Delete an asset link by id
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion lint
 Usage: histmersion lint [--rule <string>]... [--fix] [--article <string>] [--source <string>] [--file <string>] [--json]
@@ -3599,22 +3827,26 @@ Options and flags:
         Print the raw JSON response instead of Markdown
 
 ==== histmersion queue export
-Usage: histmersion queue export <dir>
+Usage: histmersion queue export [--json] <dir>
 
 Write ACQUIRE.md, TASKS.md, LOG.md and GOALS.md into a directory
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion queue import
-Usage: histmersion queue import <dir>
+Usage: histmersion queue import [--json] <dir>
 
 Read ACQUIRE.md, TASKS.md and LOG.md back from a directory (replacing the lists)
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion query
 Usage: histmersion query [--json] <sql>
@@ -3975,7 +4207,7 @@ Options and flags:
         Print the raw JSON response instead of Markdown
 
 ==== histmersion calibre set
-Usage: histmersion calibre set --field <string> [--field <string>]... <calibre-id>
+Usage: histmersion calibre set --field <string> [--field <string>]... [--json] <calibre-id>
 
 Set fields on a Calibre entry, e.g. --field languages:eng (settable: title, authors, publisher, pubdate, languages, identifiers, tags, comments, series; Calibre GUI must be closed)
 
@@ -3984,6 +4216,8 @@ Options and flags:
         Display this help text.
     --field <string>
         <name>:<value>, repeatable
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion calibre audit
 Usage: histmersion calibre audit [--json]
@@ -4027,7 +4261,7 @@ Options and flags:
         Print the raw JSON response instead of Markdown
 
 ==== histmersion reocr
-Usage: histmersion reocr [--quality] [--no-wait] <citekey>
+Usage: histmersion reocr [--quality] [--no-wait] [--json] <citekey>
 
 Convert a source's stored original again (e.g. under the slow, accurate OCR path)
 
@@ -4038,15 +4272,19 @@ Options and flags:
         Slow, accurate OCR (docling)
     --no-wait
         Print the job id and return instead of following it
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion assets
-Usage: histmersion assets <citekey>
+Usage: histmersion assets [--json] <citekey>
 
 The figures stored with a source, and the URLs they are served at
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion jobs
 Usage:
@@ -4353,13 +4591,15 @@ Subcommands:
         Restart the server, for the settings only a restart applies (where it runs under its service: LaunchAgent, systemd)
 
 ==== histmersion config path
-Usage: histmersion config path
+Usage: histmersion config path [--json]
 
 Where the user config file is on this machine (printed alone on stdout), whether it exists and reads cleanly; the running server's file is in histmersion about
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion config reload
 Usage: histmersion config reload [--json]
@@ -4462,7 +4702,7 @@ Options and flags:
         Print the raw JSON response instead of Markdown
 
 ==== histmersion basemap fetch
-Usage: histmersion basemap fetch [--layer <string>] [--max-zoom <integer>] [--terrain-max-zoom <integer>] [--bbox <string>] [--focus <string>] [--dry-run] [--keep-all] [--no-wait]
+Usage: histmersion basemap fetch [--layer <string>] [--max-zoom <integer>] [--terrain-max-zoom <integer>] [--bbox <string>] [--focus <string>] [--dry-run] [--keep-all] [--no-wait] [--json]
 
 Download the local base map (coast, water, rivers, land cover; relief; physical names; sea floor; with --keep-all roads, places and borders) as a server job — resumable; refused when the disk would be left with less than basemap.min-free-gb
 
@@ -4485,9 +4725,11 @@ Options and flags:
         Store the vector layer unfiltered — roads, places and borders too, for the Readable map (basemap.vector.drop not applied)
     --no-wait
         Print the job id and return instead of following it
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion basemap rm
-Usage: histmersion basemap rm [--layer <string>] [--focus <string>] [--cache]
+Usage: histmersion basemap rm [--layer <string>] [--focus <string>] [--cache] [--json]
 
 Remove the downloaded base-map files (and an unfinished download), focus regions, the on-demand relief cache
 
@@ -4500,6 +4742,8 @@ Options and flags:
         A focus region's relief, by name, or all
     --cache
         The caches of tiles read on demand (the deeper relief, the map and the sea floor outside the region)
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion plugin
 Usage:
@@ -4540,7 +4784,7 @@ Subcommands:
         The path of the plugin API jar in this machine's install's Maven repository; --sources: of its sources jar, with the Scaladoc
 
 ==== histmersion plugin add
-Usage: histmersion plugin add [--yes] [--rebuild] [--verify] [--unsigned] [--sha256 <string>] [--repo <string>]... <path|url|group:artifact:version>
+Usage: histmersion plugin add [--yes] [--rebuild] [--verify] [--unsigned] [--sha256 <string>] [--repo <string>]... [--json] <path|url|group:artifact:version>
 
 Install a plugin on this machine: a local path (copied, with the .pom beside it), an https URL (downloaded, SHA-256 shown) or group:artifact:version from Maven (group::artifact:version = a Scala 3 artifact); the dependencies its POM lists are installed with it, except what Histmersion ships; shows its id, version, SPI, access and dependencies first
 
@@ -4559,9 +4803,11 @@ Options and flags:
         The SHA-256 the jar must have (refused otherwise)
     --repo <string>
         A Maven repository (a directory or a URL) to look in first, for the plugin and its dependencies; repeatable
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion plugin rm
-Usage: histmersion plugin rm [--rebuild] <id|file>
+Usage: histmersion plugin rm [--rebuild] [--json] <id|file>
 
 Remove an installed plugin (by id or jar file name) from this machine's plugins directory
 
@@ -4570,27 +4816,33 @@ Options and flags:
         Display this help text.
     --rebuild
         Relink right after removing
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion plugin list
-Usage: histmersion plugin list
+Usage: histmersion plugin list [--json]
 
 The plugin jars in this machine's plugins directory, and whether the installed binary was linked with each
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion plugin status
-Usage: histmersion plugin status
+Usage: histmersion plugin status [--json]
 
 Compare the plugins directory's digest with the installed binary's and the running server's: is a rebuild (relink) or restart needed? Also the kit and signing
 
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion plugin rebuild
-Usage: histmersion plugin rebuild [--no-restart] [--unsigned] [--ignore-memory] [--jvm] [--check]
+Usage: histmersion plugin rebuild [--no-restart] [--unsigned] [--ignore-memory] [--jvm] [--check] [--json]
 
 Relink the server with the plugins directory (bin/histmersion-relink: pre-flight, native-image, self-check, swap, restart, health; the previous binary comes back on failure)
 
@@ -4607,9 +4859,11 @@ Options and flags:
         Switch to JVM mode instead of building (plugins found at each start)
     --check
         Run the pre-flight only
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion plugin rollback
-Usage: histmersion plugin rollback [--no-restart]
+Usage: histmersion plugin rollback [--no-restart] [--json]
 
 Put the previous server binary back (the one before the last relink) and restart
 
@@ -4618,9 +4872,11 @@ Options and flags:
         Display this help text.
     --no-restart
         Do not restart the service
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion plugin new
-Usage: histmersion plugin new [--kind <string>] [--dir <string>] [--package <string>] [--repo <string>] [--with-agent-notes] <id>
+Usage: histmersion plugin new [--kind <string>] [--dir <string>] [--package <string>] [--repo <string>] [--with-agent-notes] [--json] <id>
 
 Write a new plugin project for scala-cli: project.scala (the build), <Name>.scala (the plugin), <Name>.test.scala (its tests) and resources/ (its services file, defaults, native-image metadata)
 
@@ -4637,9 +4893,11 @@ Options and flags:
         The Maven repository with the plugin API, platform and testkit to compile against, a directory or a URL (default: m2Local, the local Maven repository, into which this machine's install's are copied first: histmersion plugin repo --m2)
     --with-agent-notes
         Also write AGENTS.md (and CLAUDE.md pointing at it) for coding agents
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion plugin repo
-Usage: histmersion plugin repo [--url] [--m2]
+Usage: histmersion plugin repo [--url] [--m2] [--json]
 
 The Maven repository of this machine's install that a plugin compiles against: the plugin API, histmersion-plugin-platform (the libraries Histmersion provides, at the versions it ships) and the plugin testkit; --url: as a file: URL; --m2: copy it into the local Maven repository (~/.m2/repository), which a build names as m2Local (scala-cli) or Resolver.mavenLocal (sbt)
 
@@ -4650,9 +4908,11 @@ Options and flags:
         Print it as a file: URL
     --m2
         Copy the install's artifacts into ~/.m2/repository (the files missing or changed there) and print its path
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text
 
 ==== histmersion plugin api-jar
-Usage: histmersion plugin api-jar [--sources]
+Usage: histmersion plugin api-jar [--sources] [--json]
 
 The path of the plugin API jar in this machine's install's Maven repository; --sources: of its sources jar, with the Scaladoc
 
@@ -4661,3 +4921,5 @@ Options and flags:
         Display this help text.
     --sources
         The sources jar instead of the jar
+    --json
+        Print a failure as JSON ({"problems": [...]}, as the API answers it); the answer itself is text

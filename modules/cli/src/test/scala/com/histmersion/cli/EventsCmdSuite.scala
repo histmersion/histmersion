@@ -17,9 +17,9 @@ class EventsCmdSuite extends munit.FunSuite:
   /** The id and the patch `events patch` builds, or the problem it refuses the flags with. */
   private def parse(args: String*): Either[String, (String, EventPatch)] =
     Parsing.parse("events" +: "patch" +: args*) match
-      case Right(EventsCmd.Command.Patch(id, p))        => Right((id, p))
-      case Left(CommandLine.Outcome.Failed(problem, _)) => Left(problem.sentences.mkString("; "))
-      case other                                        => fail(s"${other.toString}")
+      case Right(EventsCmd.Command.Patch(id, p))           => Right((id, p))
+      case Left(CommandLine.Outcome.Failed(problem, _, _)) => Left(problem.sentences.mkString("; "))
+      case other                                           => fail(s"${other.toString}")
 
   test("--scale and --place-id make the patch"):
     assertEquals(

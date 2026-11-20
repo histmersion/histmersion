@@ -15,6 +15,10 @@ object Output:
 
   val JsonHelp: String = "Print the raw JSON response instead of Markdown"
 
+  /** `--json` on a command whose answer is text only (G112): its failures are JSON. */
+  val FailureJsonHelp: String =
+    "Print a failure as JSON ({\"problems\": [...]}, as the API answers it); the answer itself is text"
+
   /** A response as `--json` prints it: the DTO's own codec, two-space indented. Pure. */
   def json[A: JsonValueCodec](a: A): String = a.asJson.spaces2
 
