@@ -14,6 +14,7 @@ final case class AppConfig(
     corpus: CorpusConfig,
     backups: BackupsConfig,
     maintenance: MaintenanceConfig,
+    log: LogConfig,
     bundles: BundlesConfig,
     storage: StorageConfig,
     merge: MergeConfig,

@@ -52,6 +52,7 @@ Usage:
     histmersion [--server <string>] assets
     histmersion [--server <string>] jobs
     histmersion [--server <string>] activity
+    histmersion [--server <string>] log
     histmersion [--server <string>] bookmarks
     histmersion [--server <string>] notes
     histmersion [--server <string>] config
@@ -171,6 +172,8 @@ Subcommands:
         Recent background jobs (OCR, imports, agent runs, …), filtered on the server, or one job by id; `jobs pause|resume|cancel <id>` controls one
     activity
         What the agents, the server and you did, one list, newest first: agent runs, background jobs, worklog lines and your decisions, each with what it touched
+    log
+        What happened, step by step: answered requests, provider calls, problems and database writes, each with the trace that links one request's or job's steps
     bookmarks
         Your bookmarks: list, add, rm
     notes
@@ -4376,6 +4379,41 @@ Options and flags:
         Entries (default 30, at most 200)
     --before <string>
         The next older page: the cursor the last page printed
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion log
+Usage: histmersion log [--trace <string>] [--job <string>] [--run <string>] [--source <string>] [--problem <string>] [--label <string>] [--kind <string>] [--since <string>] [--until <string>] [--limit <integer>] [--before <string>] [--file] [--json]
+
+What happened, step by step: answered requests, provider calls, problems and database writes, each with the trace that links one request's or job's steps
+
+Options and flags:
+    --help
+        Display this help text.
+    --trace <string>
+        One trace: every step of one request or job (an answer's Histmersion-Trace)
+    --job <string>
+        What happened to this job (its id)
+    --run <string>
+        What happened to this agent run (its id)
+    --source <string>
+        What happened to this source (its citekey)
+    --problem <string>
+        A problem's id (the one an answer named); alone: every step of the trace it was raised in
+    --label <string>
+        The label a client gave its calls (Histmersion-Trace-Label)
+    --kind <string>
+        Only: RequestAnswered, RequestsCounted, ProviderCalled, Written, ProblemRaised, Lost
+    --since <string>
+        From: 2026-10-01, an ISO instant, or 7d / 12h / 30m ago
+    --until <string>
+        Up to: a date or an ISO instant
+    --limit <integer>
+        Events (default 100, at most 1000)
+    --before <string>
+        The next older page: the cursor the last page printed
+    --file
+        Read the server's log file, not the database (works while the database is down)
     --json
         Print the raw JSON response instead of Markdown
 

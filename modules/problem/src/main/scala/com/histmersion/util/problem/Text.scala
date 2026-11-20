@@ -535,6 +535,7 @@ object Text:
       case Invalid.Rule.ActivityPage(stated)       => s"'$stated' is not a page of the activity list"
       case Invalid.Rule.ActivityPageTime(stated)   =>
         s"'$stated' is not a page of the activity list (its time is not an instant)"
+      case Invalid.Rule.LogPage(stated) => s"'$stated' is not a page of the log (the cursor a page of it gave)"
       case Invalid.Rule.EventCatalogue(stated, known) =>
         s"unknown event catalogue '$stated' (one of: ${known.mkString(", ")})"
       case Invalid.Rule.CitekeyUnchanged(citekey)  => s"'$citekey' is already the citekey of that source"

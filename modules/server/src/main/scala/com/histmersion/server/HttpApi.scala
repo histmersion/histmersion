@@ -391,7 +391,8 @@ final class HttpApi(
       CollectionsRoutes(collections)
 
   val endpoints: List[ServerEndpoint[Any, Identity]] =
-    EventImportsRoutes(h.eventImports) ++
+    com.histmersion.util.log.LogRoutes(h.log) ++
+      EventImportsRoutes(h.eventImports) ++
       EventLinksRoutes(h.eventLinks) ++
       SiteTypesRoutes(h.siteTypes) ++ rest ++
       ArticleRoutes(h.research.articles, h.research.pages, ArticleHtml.shell(deps.webBundle)) ++ OpsRoutes(

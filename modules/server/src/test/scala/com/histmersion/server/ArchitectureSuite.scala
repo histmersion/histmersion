@@ -308,6 +308,7 @@ object ArchitectureSuite:
       "exchange" -> "util.data.exchange",
       "jobs" -> "util.jobs",
       "json" -> "util.json",
+      "log" -> "util.log",
       "maintenance" -> "util.data.maintenance",
       "ocr" -> "util.ocr",
       "plugins" -> "util.plugins",

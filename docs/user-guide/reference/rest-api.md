@@ -284,6 +284,8 @@ so it lists every endpoint the server defines even where the table above has no 
 | `GET` · `POST` | `/api/acquire/retractions` |
 | `GET` | `/api/acquire/wikirefs` |
 | `GET` | `/api/activity` |
+| `GET` | `/api/log` |
+| `GET` | `/api/problems/{id}` |
 | `GET` | `/api/agent-state` |
 | `GET` · `PUT` · `DELETE` | `/api/agent-state/{key}` |
 | `PUT` · `DELETE` | `/api/agents/allowances` |

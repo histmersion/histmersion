@@ -65,6 +65,7 @@ import com.histmersion.pluginhost.HttpTransport
 import com.histmersion.domain.research.articles.lint.SourceTextFormatting
 import com.histmersion.domain.library.ingest.StoredOriginals
 import com.histmersion.util.storage.Location
+import com.histmersion.util.log.{LogControllers, LogFiles, LogService}
 import com.histmersion.domain.library.collections.CalibreGapControllers
 import com.histmersion.server.views.JobListView
 import com.histmersion.util.jobs.JobListing
@@ -230,6 +231,23 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
   /** Research › Activity: runs, jobs, worklog lines and a person's decisions, one list. */
   val activity: ActivityControllers =
     ActivityControllers(ActivityService(ds), () => Instant.now(deps.clock))
+
+  /** The structured log's rolling files, in `log.dir` (empty: the server's logs directory's `structured`). */
+  val logFiles: LogFiles =
+    LogFiles(() =>
+      Option(deps.cfg.log.dir.value.trim)
+        .filter(_.nonEmpty)
+        .map(java.nio.file.Path.of(_))
+        .orElse(
+          StorageLocations
+            .root(Location.Logs, deps.cfg, deps.loaded, deps.environment, deps.userPaths)
+            .map(_.resolve("structured"))
+        )
+    )
+
+  /** The structured log: what happened, by trace, job, source or problem. */
+  val log: LogControllers =
+    LogControllers(LogService(deps.transactor, logFiles), () => Instant.now(deps.clock))
 
   /** Pause, resume and cancel a job: a long background job cooperatively, an agent run by its own control. */
   lazy val jobControl: JobControlControllers =

@@ -1,3 +1,5 @@
+route	GET /api /log ?trace ?label ?job ?run ?source ?problem ?kind ?since ?until ?limit ?before ?from -> status code - possible codes (Map()) {body as application/json (UTF-8)}/{body as application/json (UTF-8)}
+route	GET /api /problems /[id] -> status code - possible codes (Map()) {body as application/json (UTF-8)}/{body as application/json (UTF-8)}
 route	POST /api /events /import {body as application/json (UTF-8)} -> status code - possible codes (Map()) {body as application/json (UTF-8)}/status code (202) {body as application/json (UTF-8)}
 route	POST /api /events /rederive {body as application/json (UTF-8)} -> status code - possible codes (Map()) {body as application/json (UTF-8)}/status code (202) {body as application/json (UTF-8)}
 route	GET /api /events /corrections ?status ?event ?limit ?offset -> status code - possible codes (Map()) {body as application/json (UTF-8)}/{body as application/json (UTF-8)}

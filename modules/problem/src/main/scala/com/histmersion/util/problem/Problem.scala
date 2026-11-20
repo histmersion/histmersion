@@ -351,6 +351,9 @@ object Problem:
       /** `stated` is not a page of the activity list: its time is not an instant. */
       case ActivityPageTime(stated: Raw)
 
+      /** `stated` is not a page of the structured log (`<instant>~<id>`). */
+      case LogPage(stated: Raw)
+
       /** `stated` is no event catalogue; `known` are. */
       case EventCatalogue(stated: Raw, known: Vector[Raw])
 
