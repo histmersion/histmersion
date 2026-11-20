@@ -2,7 +2,7 @@ package com.histmersion
 package util.access
 
 import io.netty.channel.{ChannelHandlerContext, ChannelOutboundHandlerAdapter, ChannelPromise}
-import io.netty.handler.codec.http.HttpResponse
+import io.netty.handler.codec.http.{HttpResponse, HttpStatusClass}
 
 /** The netty handler that gives every response this server writes the browser's safety headers: a page (the web UI, a
   * source's or an article's page, an error page, a refusal) runs no script but this server's own files, cannot be
@@ -14,7 +14,8 @@ final class SecurityHeaders extends ChannelOutboundHandlerAdapter:
 
   override def write(ctx: ChannelHandlerContext, msg: AnyRef, promise: ChannelPromise): Unit =
     msg match
-      case r: HttpResponse =>
+      // an interim answer (`100 Continue`) is a bare status line a client reads before sending the body: no headers
+      case r: HttpResponse if !r.status().codeClass().equals(HttpStatusClass.INFORMATIONAL) =>
         val headers = r.headers()
         All.foreach((name, value) => if !headers.contains(name) then { val _ = headers.set(name, value) })
       case _ => ()
