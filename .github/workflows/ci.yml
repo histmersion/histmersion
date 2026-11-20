@@ -162,11 +162,20 @@ jobs:
           echo "ratchet base: $(git merge-base HEAD origin/contracts3-pilot)"
       - name: free disk space (the runner's preinstalled SDKs we never use)
         run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL &
-      # BEFORE the setup: scala-cli-setup installs a JVM of its own and points JAVA_HOME at it; the setup's pinned
-      # GraalVM must win, or sbt's cache keys differ from the build job's and everything compiles again
+      # the launcher alone, pinned and checked: scala-cli-setup also installs a JVM (moving JAVA_HOME off the pinned
+      # GraalVM, so every module compiled again) and fetches sbtn from Maven Central, which rate-limits runners
       - name: scala-cli (the guideline ratchet runs Scalafix through it)
         if: contains(matrix.shard, 'server')
-        uses: VirtusLab/scala-cli-setup@9d61091a7d9d19f69faa59b31cdbc6ef2537eccc # v1.19.0
+        env:
+          SCALA_CLI_URL: https://github.com/VirtusLab/scala-cli/releases/download/v1.18.0/scala-cli-x86_64-pc-linux.gz
+          SCALA_CLI_SHA256: eb41442f870bcae75aa5d6622ac96a173dae14fed59f71c97125eb21536bb060
+        run: |
+          mkdir -p "$RUNNER_TEMP/scala-cli"
+          curl -fsSL --retry 5 -o "$RUNNER_TEMP/scala-cli.gz" "$SCALA_CLI_URL"
+          echo "$SCALA_CLI_SHA256  $RUNNER_TEMP/scala-cli.gz" | sha256sum -c -
+          gunzip -c "$RUNNER_TEMP/scala-cli.gz" > "$RUNNER_TEMP/scala-cli/scala-cli"
+          chmod +x "$RUNNER_TEMP/scala-cli/scala-cli"
+          echo "$RUNNER_TEMP/scala-cli" >> "$GITHUB_PATH"
       - uses: ./.github/actions/setup
       - name: the pinned GraalVM is the JDK
         run: test "$(command -v java)" = "$JAVA_HOME/bin/java" && java -version
@@ -244,6 +253,7 @@ jobs:
 
   macos:
     name: macos (native server, CLI docs, browser tests)
+    needs: build
     runs-on: macos-15
     timeout-minutes: 120
     env:
@@ -264,30 +274,21 @@ jobs:
           node-version: 24
           cache: npm
           cache-dependency-path: modules/web/package-lock.json
-      - name: the week (the compile cache starts afresh each ISO week)
-        id: week
-        run: echo "week=$(date -u +%G-%V)" >> "$GITHUB_OUTPUT"
-      - name: compile cache (restore)
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: target/sbt-cache
-          key: sbt-cache-${{ runner.os }}-${{ runner.arch }}-${{ steps.week.outputs.week }}-${{ github.sha }}
-          restore-keys: sbt-cache-${{ runner.os }}-${{ runner.arch }}-${{ steps.week.outputs.week }}-
-
-      # one compile at a time first: Kindlings' derivations give each macro expansion 5 s of wall clock, which this
-      # 3-core runner exceeds when it compiles modules side by side; server.sh then replays these compiles
-      - name: compile the server and the CLI, one module at a time
+      # the build job's compilation output: bytecode is the same on every platform, and replaying it spares this
+      # 3-core runner the compile, where Kindlings' derivations overrun their fixed 5 s per macro expansion
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with: { name: compiled, path: "${{ runner.temp }}" }
+      - name: the build job's compilation output
+        run: |
+          mkdir -p target
+          zstd -d -q -c "$RUNNER_TEMP/compiled.tar.zst" | tar -C target -xf -
+          rm "$RUNNER_TEMP/compiled.tar.zst"
+      - name: compile the server and the CLI (replayed), one module at a time where not
         run: $SBT "set Global / concurrentRestrictions += Tags.limit(Tags.Compile, 1)" server/compile cli/compile
       - name: the native server and CLI, from this branch (scripts/bundle/server.sh, as `just native`)
         env:
           SBT_OPTS: -Xss16m
         run: bash scripts/bundle/server.sh target/native
-      - name: compile cache (save)
-        if: always()
-        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: target/sbt-cache
-          key: sbt-cache-${{ runner.os }}-${{ runner.arch }}-${{ steps.week.outputs.week }}-${{ github.sha }}
       - name: dependency cache (save)
         if: always() && env.HISTMERSION_CI_SAVE_DEPS != ''
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
