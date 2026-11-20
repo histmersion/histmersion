@@ -207,7 +207,8 @@ class HotReloadSuite extends DbSuite:
       assertEquals(rs, 200, rb)
       assert(rb.contains("\"published\":true"), rb)
       assertEquals(list(rb, "applied"), List("histmersion.db.url"))
-      assertEquals(list(rb, "rebuilt"), List("pool", "migrations", "query-pool", "leases"))
+      // the instance lock is taken on the new database before it is migrated (one server per database)
+      assertEquals(list(rb, "rebuilt"), List("pool", "instance-lock", "migrations", "query-pool", "leases"))
       assertEquals(list(rb, "errors"), Nil)
       // the reload waited for the in-flight request (bounded by drain-seconds) and then reported the
       // job's generation as still draining
