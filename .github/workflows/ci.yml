@@ -13,11 +13,11 @@ name: ci
 #              a unit shard has no database, so a unit suite that reaches TestDb fails loudly; an IT shard starts
 #              its own throwaway PostgreSQL (runtime/postgres, PG 18 + PostGIS 3.6), so an IT suite never skips (B8)
 #   shards     each suite classed, and run in exactly one shard of its class (scripts/ci/check.py); skips listed
-#   native     the native server and CLI built from the branch (16 GB Linux runner), its self-check, and the CLI
-#              reference checked against the native CLI's help
-#   macos      on macOS arm64 (the platform the owner runs): the scripts' tests and the browser tests (Playwright,
-#              modules/web/test) against the server on the JVM — a skipped browser test fails (G125). The free
-#              macOS runner (7 GB) cannot link the native server: native-image needs more than 9 GB for it
+#   native     ON DEMAND (workflow_dispatch): the native server and CLI built from the branch, its self-check, and
+#              the CLI reference against the native CLI's help — no free runner has the memory to link the server
+#   macos      on macOS arm64 (the platform the owner runs): the scripts' tests, the CLI reference against the
+#              CLI's help (on the JVM), and the browser tests (Playwright, modules/web/test) against the server on
+#              the JVM — a skipped browser test fails (G125)
 #
 # The ratchet suites compare against the merge base with contracts3-pilot: the test jobs check out the full
 # history, so origin/contracts3-pilot is there (RatchetBase's fallback; HISTMERSION_RATCHET_BASE overrides it).
@@ -254,10 +254,15 @@ jobs:
           python3 scripts/ci/check.py target/ci/classes.tsv target/ci/report --summary "$GITHUB_STEP_SUMMARY"
 
   native:
-    # The native server and CLI from this branch (scripts/bundle/server.sh, as `just native`), on a 16 GB runner, over
-    # the build job's compile; the CLI reference checked against the native CLI's help; the server's self-check.
+    # The native server and CLI from this branch (scripts/bundle/server.sh, as `just native`) over the build job's
+    # compile; its self-check; the CLI reference checked against the native CLI's help.
+    # ON DEMAND ONLY (workflow_dispatch): no free runner can link the server today. On the 16 GB Linux runner the
+    # builder's analysis ran out of heap at 80% of 13 GB (run 44791490700), at -Xmx12g (run 44800796510) and at -Xmx14g
+    # with 12 GB of swap (run 44807036456); the 7 GB macOS runner thrashed for two hours (run 44769953576). A larger
+    # runner (paid) or a smaller image would bring it back on every push.
     name: native (server and CLI, CLI docs)
     needs: build
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-24.04
     timeout-minutes: 75
     steps:
@@ -295,10 +300,9 @@ jobs:
 
   macos:
     # The browser tests on macOS arm64, the platform the owner runs (Chromium draws the map on the GPU there), against
-    # the server on the JVM from the build job's compile. The NATIVE server is built by the `native` job on Linux: the
-    # free macOS arm64 runner has 7 GB and 3 cores, and native-image needs more than 9 GB for the server — it thrashed
-    # there for two hours without finishing its analysis (run 44769953576).
-    name: macos (browser tests, scripts' tests)
+    # the server on the JVM from the build job's compile; the scripts' tests; the CLI reference checked against the
+    # CLI's help (run on the JVM: tools/gen-cli-docs.sh's fallback). The NATIVE build is the `native` job's.
+    name: macos (browser tests, scripts' tests, CLI docs)
     needs: build
     runs-on: macos-15
     timeout-minutes: 60
@@ -329,9 +333,9 @@ jobs:
           mkdir -p target
           zstd -d -q -c "$RUNNER_TEMP/compiled.tar.zst" | tar -C target -xf -
           rm "$RUNNER_TEMP/compiled.tar.zst"
-      - name: the server's class path (compiled from the replay, one module at a time where not)
+      - name: the server's and the CLI's class paths (compiled from the replay, one module at a time where not)
         run: |
-          $SBT "set Global / concurrentRestrictions += Tags.limit(Tags.Compile, 1)" server/writeClasspath
+          $SBT "set Global / concurrentRestrictions += Tags.limit(Tags.Compile, 1)" server/writeClasspath cli/writeClasspath
           cp="$(find target/out -path '*histmersion-server/classpath.txt' | head -1)"
           test -s "$cp" && echo "SERVER_CLASSPATH_FILE=$cp" >> "$GITHUB_ENV"
       - name: dependency cache (save)
@@ -346,6 +350,8 @@ jobs:
           key: ${{ env.HISTMERSION_CI_SAVE_DEPS }}
       - name: the scripts' own tests (the LaunchAgent environment merge, the CI shard tools, …)
         run: just test-scripts
+      - name: CLI reference in the docs is current (the CLI's help, on the JVM)
+        run: ./tools/gen-cli-docs.sh --check
 
       - name: throwaway PostgreSQL 18 + PostGIS
         run: just test-db

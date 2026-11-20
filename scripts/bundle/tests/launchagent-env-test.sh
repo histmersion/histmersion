@@ -21,7 +21,9 @@ passed=0; failed=0
 ok()   { passed=$((passed + 1)); echo "  ok   $1"; }
 bad()  { failed=$((failed + 1)); echo "  FAIL $1"; }
 check() { if eval "$2"; then ok "$1"; else bad "$1"; fi; }  # <what> <shell test>
-val()  { plutil -extract "EnvironmentVariables.$2" raw -n -o - "$1" 2>/dev/null; }   # <plist> <name>
+# <plist> <name>: the value, or nothing when the key is absent (plutil's exit status says so: some macOS versions
+# print their "could not extract" message on standard output, which read as a value)
+val()  { local v; v="$(plutil -extract "EnvironmentVariables.$2" raw -n -o - "$1" 2>/dev/null)" || return 0; printf '%s' "$v"; }
 
 # A plist as the installer writes it, before the environment is applied.
 fresh() { # <path>
