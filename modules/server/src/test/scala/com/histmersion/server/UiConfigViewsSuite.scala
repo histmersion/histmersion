@@ -10,8 +10,28 @@ import com.histmersion.api.instance.MapStartConfig
 import com.histmersion.api.instance.MapStartMode
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Longitude
+import com.histmersion.config.UiSettings
+import hearth.kindlings.optics.syntax.*
 
 class UiConfigViewsSuite extends munit.FunSuite:
+
+  private val muted = "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"
+
+  test("the tile templates the page may fetch from: ui.tiles and the Muted map's, none when the base map is local"):
+    val ui = AppConfig.load(org.ekrich.config.ConfigFactory.empty).ui
+    def at(tiles: String, source: String): List[String] =
+      UiConfigViews.tileTemplates(
+        ui.modify(_.tiles)
+          .setTo(UiSettings.Tiles(tiles))
+          .modify(_.baseMapSource)
+          .setTo(UiSettings.BaseMapSource(source))
+      )
+    assertEquals(at("https://t.example.test/{z}", "auto"), List("https://t.example.test/{z}", muted))
+    assertEquals(at("https://t.example.test/{z}", "online"), List("https://t.example.test/{z}", muted))
+    assertEquals(at("https://t.example.test/{z}", "local"), Nil)
+    assertEquals(at("https://t.example.test/{z}", " Local "), Nil)
+    assertEquals(UiConfigViews.tileTemplates(ui), List(ui.tiles.value, muted))
+    assertEquals(UiConfigViews.TileKeys, List("histmersion.ui.tiles", "histmersion.ui.base-map-source"))
 
   test("the page's settings: every `ui` setting as read, and what the server adds"):
     val ui = AppConfig.load().ui

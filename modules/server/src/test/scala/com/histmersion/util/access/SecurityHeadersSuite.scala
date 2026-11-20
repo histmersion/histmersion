@@ -1,22 +1,18 @@
 package com.histmersion
 package util.access
 
-import hearth.kindlings.optics.syntax.*
-
-import com.histmersion.config.{AppConfig, UiSettings}
-
-/** The browser's safety headers built from the settings: the tile servers the policy lets the page connect to, read
-  * from `ui.tiles` and the Muted map, none when the base map is local; the image directive pinned open (its hosts are
-  * no setting). The headers on the wire and their rebuild on a reload: `SecurityHeadersHttpSuite`.
+/** The browser's safety headers built from the tile templates the settings name: the tile servers the policy lets the
+  * page connect to and no other; the image directive pinned open (its hosts are no setting). Which templates the
+  * settings name: `UiConfigViewsSuite`; the headers on the wire and their rebuild on a reload:
+  * `SecurityHeadersHttpSuite`.
   */
 class SecurityHeadersSuite extends munit.FunSuite:
-  private val ui = AppConfig.load(org.ekrich.config.ConfigFactory.empty).ui
-  private def withTiles(tiles: String, source: String = "auto"): UiSettings =
-    ui.modify(_.tiles).setTo(UiSettings.Tiles(tiles)).modify(_.baseMapSource).setTo(UiSettings.BaseMapSource(source))
   private def directive(policy: String, name: String): String =
     policy.split("; ").find(_.startsWith(name + " ")).getOrElse(fail(s"no $name in $policy"))
+  private def policyOf(tiles: List[String]): String = SecurityHeaders.of(tiles).toMap.apply(SecurityHeaders.Policy)
 
-  private val muted =
+  private val muted = "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"
+  private val mutedOrigins =
     List("https://a.tile.openstreetmap.fr", "https://b.tile.openstreetmap.fr", "https://c.tile.openstreetmap.fr")
 
   test("a tile template's origins: scheme and host, lower-case, {s} as the page expands it"):
@@ -48,39 +44,33 @@ class SecurityHeadersSuite extends munit.FunSuite:
       "https:///x"
     ).foreach(t => assertEquals(SecurityHeaders.origins(t), Nil, t))
 
-  test("the page may connect to this server, ui.tiles and the Muted map; the base map's source decides"):
+  test("connect-src lists this server and the templates' tile servers, each once, and no other host"):
     assertEquals(
-      SecurityHeaders.tileOrigins(withTiles("https://tiles.example.test/{z}/{x}/{y}.png")),
-      "https://tiles.example.test" :: muted
+      directive(policyOf(List("https://tiles.example.test/{z}/{x}/{y}.png", muted)), "connect-src"),
+      ("connect-src 'self'" :: "https://tiles.example.test" :: mutedOrigins).mkString(" ")
     )
     assertEquals(
-      SecurityHeaders.tileOrigins(withTiles("https://tiles.example.test/{z}", "online")),
-      "https://tiles.example.test" :: muted
+      directive(policyOf(List(mutedOrigins.head + "/hot/{z}/{x}/{y}.png", muted)), "connect-src"),
+      ("connect-src 'self'" :: mutedOrigins).mkString(" ")
     )
-    assertEquals(SecurityHeaders.tileOrigins(withTiles(muted.head + "/hot/{z}/{x}/{y}.png")), muted)
-    assertEquals(SecurityHeaders.tileOrigins(withTiles("/tiles/{z}")), muted)
-    assertEquals(SecurityHeaders.tileOrigins(withTiles("https://tiles.example.test/{z}", "local")), Nil)
-    assertEquals(SecurityHeaders.tileOrigins(withTiles("https://tiles.example.test/{z}", " LOCAL ")), Nil)
-
-  test("connect-src lists exactly those; any other host is not let in"):
-    val policy = SecurityHeaders.contentSecurityPolicy(List("https://tiles.example.test"))
-    assertEquals(directive(policy, "connect-src"), "connect-src 'self' https://tiles.example.test")
-    assertEquals(directive(SecurityHeaders.contentSecurityPolicy(Nil), "connect-src"), "connect-src 'self'")
-    val headers = SecurityHeaders.of(withTiles("https://tiles.example.test/{z}")).toMap
-    val connect = directive(headers(SecurityHeaders.Policy), "connect-src")
-    assert(connect.contains("https://tiles.example.test") && !connect.contains("other.example.test"), connect)
+    assertEquals(directive(policyOf(List("/tiles/{z}")), "connect-src"), "connect-src 'self'")
+    assertEquals(directive(policyOf(Nil), "connect-src"), "connect-src 'self'")
+    val connect = directive(policyOf(List("https://tiles.example.test/{z}")), "connect-src")
+    assert(!connect.contains("other.example.test"), connect)
     assert(!connect.matches(".*\\s(https?:|\\*)(\\s.*|$)"), s"no scheme-wide or wildcard source: $connect")
+    assertEquals(
+      directive(SecurityHeaders.contentSecurityPolicy(List("https://x.example.test")), "connect-src"),
+      "connect-src 'self' https://x.example.test"
+    )
 
   test("img-src stays open to any web address (thumbnails and stored images come from hosts no setting lists)"):
     // pinned: a media provider's thumbnail, and an image in a stored summary, note or full text, come from any host
-    List(withTiles("https://tiles.example.test/{z}"), withTiles("https://tiles.example.test/{z}", "local")).foreach {
-      u =>
-        val policy = SecurityHeaders.of(u).toMap.apply(SecurityHeaders.Policy)
-        assertEquals(directive(policy, "img-src"), "img-src 'self' data: blob: https: http:")
+    List(List("https://tiles.example.test/{z}"), Nil).foreach { tiles =>
+      assertEquals(directive(policyOf(tiles), "img-src"), "img-src 'self' data: blob: https: http:")
     }
 
   test("the policy's fixed directives and the other two headers"):
-    val headers = SecurityHeaders.of(ui).toMap
+    val headers = SecurityHeaders.of(List(muted)).toMap
     val policy = headers(SecurityHeaders.Policy)
     List(
       "default-src 'self'",

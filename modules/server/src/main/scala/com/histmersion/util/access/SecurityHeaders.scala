@@ -2,7 +2,6 @@ package com.histmersion
 package util.access
 
 import com.histmersion.api.basemap.BaseMapSource
-import com.histmersion.config.UiSettings
 import io.netty.channel.{ChannelHandlerContext, ChannelOutboundHandlerAdapter, ChannelPromise}
 import io.netty.handler.codec.http.{HttpResponse, HttpStatusClass}
 
@@ -12,8 +11,9 @@ import io.netty.handler.codec.http.{HttpResponse, HttpStatusClass}
   * as another type than the one it declares. It sits directly after the HTTP codec, so the access gate's refusals pass
   * it too. A header a route set itself is kept.
   *
-  * `headers` gives the headers of the config in force: they are built from the settings ([[SecurityHeaders.of]]) when
-  * the config is read, and again when a reload changes those settings, and read here at each response.
+  * `headers` gives the headers of the config in force: they are built ([[SecurityHeaders.of]]) from the tile templates
+  * the settings name when the config is read, and again when a reload changes those settings, and read here at each
+  * response.
   */
 final class SecurityHeaders(headers: () => List[(String, String)]) extends ChannelOutboundHandlerAdapter:
 
@@ -29,13 +29,12 @@ final class SecurityHeaders(headers: () => List[(String, String)]) extends Chann
 object SecurityHeaders:
   val Policy = "Content-Security-Policy"
 
-  /** The settings the headers are built from: a reload that changes one of them builds them again. */
-  val Keys: List[String] = List("histmersion.ui.tiles", "histmersion.ui.base-map-source")
-
-  /** The headers for settings `ui`. */
-  def of(ui: UiSettings): List[(String, String)] =
+  /** The headers when the page's online base maps fetch from the tile templates `tiles` (none: the page asks no other
+    * host for a map).
+    */
+  def of(tiles: List[String]): List[(String, String)] =
     List(
-      Policy -> contentSecurityPolicy(tileOrigins(ui)),
+      Policy -> contentSecurityPolicy(tiles.flatMap(origins).distinct),
       "X-Content-Type-Options" -> "nosniff",
       "X-Frame-Options" -> "DENY"
     )
@@ -67,14 +66,6 @@ object SecurityHeaders:
     "form-action 'self'",
     "frame-ancestors 'none'"
   ).mkString("; ")
-
-  /** The tile servers the page may fetch from: `ui.tiles` and the Muted map's ([[BaseMapSource.MutedTiles]]), each
-    * subdomain its `{s}` stands for. None when `ui.base-map-source` is `local`: the page then asks no other host for a
-    * map.
-    */
-  def tileOrigins(ui: UiSettings): List[String] =
-    if ui.baseMapSource.value.trim.equalsIgnoreCase(BaseMapSource.Local) then Nil
-    else (origins(ui.tiles.value) ++ origins(BaseMapSource.MutedTiles.value)).distinct
 
   private val Absolute = """(?i)^(https?)://([^/?#]*)""".r
   private val HostPort =

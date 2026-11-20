@@ -7,9 +7,23 @@ import com.histmersion.config.UiSettings
 import io.scalaland.chimney.dsl.*
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.instance.MapStartMode
+import com.histmersion.api.basemap.BaseMapSource
 
-/** What the wire says of the `ui` block: the page's settings as `/api/config` serves them. */
+/** What the wire says of the `ui` block: the page's settings as `/api/config` serves them, and the tile servers the
+  * page fetches from as the Content-Security-Policy names them.
+  */
 object UiConfigViews:
+
+  /** The settings [[tileTemplates]] reads: a reload that changes one of them rebuilds what is made from it. */
+  val TileKeys: List[String] = List("histmersion.ui.tiles", "histmersion.ui.base-map-source")
+
+  /** The tile templates the page's online base maps may fetch from: `ui.tiles` (Standard and Dark) and the Muted map's
+    * ([[BaseMapSource.MutedTiles]]). None when `ui.base-map-source` is `local`: the page then offers no online map and
+    * asks no other host for one.
+    */
+  def tileTemplates(ui: UiSettings): List[String] =
+    if ui.baseMapSource.value.trim.equalsIgnoreCase(BaseMapSource.Local) then Nil
+    else List(ui.tiles.value, BaseMapSource.MutedTiles.value)
 
   /** The page's settings: the `ui` block, plus what the server knows and the block does not hold. */
 

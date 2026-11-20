@@ -240,8 +240,8 @@ object Composition:
     val headers = sg.graph
       .node[List[(String, String)]](
         Hot.Graph.Def.Name(ServerGraph.Headers),
-        keys = SecurityHeaders.Keys.map(Hot.Graph.Def.Keys(_))
-      )(ctx => Right(SecurityHeaders.of(ctx.config.app.ui)))
+        keys = UiConfigViews.TileKeys.map(Hot.Graph.Def.Keys(_))
+      )(ctx => Right(SecurityHeaders.of(UiConfigViews.tileTemplates(ctx.config.app.ui))))
       .fold(e => throw IllegalStateException(s"${e.sentence}"), identity)
     val agentPaths =
       Admission.AgentPaths(Admission.Path(RunTokens.Path), Admission.Path(RunTokens.QuotaPath))

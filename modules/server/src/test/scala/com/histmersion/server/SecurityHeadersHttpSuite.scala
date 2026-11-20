@@ -38,7 +38,7 @@ class SecurityHeadersHttpSuite extends munit.FunSuite:
 
   private lazy val base = AppConfig.load()
   // the headers the settings make: what every response must carry
-  private lazy val expected = SecurityHeaders.of(base.ui)
+  private lazy val expected = SecurityHeaders.of(UiConfigViews.tileTemplates(base.ui))
 
   private def headersOf(r: HttpResponse[String]): Map[String, String] =
     expected.map((name, _) => name -> r.headers().firstValue(name).orElse("")).toMap
