@@ -473,7 +473,8 @@ class PlacesHttpSuite extends DbSuite:
       val dated = mcp("place_override", """{"placeId":"zzo_regio","periodStart":-7}""")
       assert(dated.contains("period undated → from 7 BCE"), dated)
       val noId = mcp("place_override", """{"kind":"region"}""")
-      assert(noId.contains("`placeId` is required"), noId)
+      assert(noId.contains("placeId is required") && noId.contains("Find the place id with `places`."), noId)
+      assert(noId.contains("\"isError\":true"), noId)
       val reset = mcp("place_override", """{"placeId":"zzo_regio","reset":true}""")
       assert(
         reset.contains(
@@ -520,7 +521,7 @@ class PlacesHttpSuite extends DbSuite:
       val removed = mcp("place_override", """{"placeId":"zzo_road","remove":true,"reason":"withdrawn"}""")
       assert(removed.contains("removed **Withdrawn: Untitled** `zzo_road`; no re-seed brings it back"), removed)
       val both = mcp("place_override", """{"placeId":"zzo_regio","remove":true,"mergeInto":"zzo_x"}""")
-      assert(both.contains("exclude each other"), both)
+      assert(both.contains("give at most one of mergeInto, remove"), both)
       assertEquals(post(s"$url/api/places/import?dataset=seed", two.value)._1, 200)
       assertEquals(get(s"$url/api/places/zzo_road")._1, 404)
       val (rs, rb) = get(s"$url/api/places/zzo_dup")
