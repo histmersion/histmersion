@@ -1052,6 +1052,12 @@ object Problem:
       /** The problem of the request as a whole: no path into it. */
       def here(upstream: Name, url: Url, after: Millis): Timeout = Timeout(upstream, url, after, Vector.empty)
 
+    /** A request that writes was sent to `upstream` at `url`, and no final answer came (`reported`: the connection
+      * ended, or the work it started was still running when the wait for it ran out): it may have been applied. Not the
+      * same as [[Unreachable]], where nothing was sent: this one is checked before it is sent again.
+      */
+    final case class Unanswered(upstream: Name, url: Url, reported: External.Reported) extends Upstream
+
     /** `upstream` answered at `url`, but not with `expected`. */
     final case class BadReply(
         upstream: Name,
@@ -2949,6 +2955,11 @@ object Problem:
         Raw("20261101.pmtiles")
       ),
       Upstream.Timeout.here(core, url, Millis(30000L)),
+      Upstream.Unanswered(
+        Upstream.Name("Histmersion"),
+        Upstream.Url("http://localhost:8000/api/queue/tasks"),
+        External.Reported("java.io.IOException: connection reset")
+      ),
       Upstream.CallFailed(
         Upstream.Name("anthropic:claude-opus"),
         Plugin.Said(Plugin.Id("hello-ai"), Plugin.Claim.Failed, External.PluginSaid("Claude API error: Overloaded"))

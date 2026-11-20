@@ -52,11 +52,10 @@ object AgentCmd:
           case _ =>
             Cli.out.println(AgentsMarkdown.run(d, withMessages = false))
             Left(
-              Cli.Error(
+              Cli.Error.answered(
                 Problem.Unclassified(
                   Legacy.Text(s"agent run $id ${d.run.status}: ${d.run.error.map(_.sentence).getOrElse("")}")
-                ),
-                exitCode = ExitCode.Refused
+                )
               )
             )
 
@@ -128,8 +127,7 @@ object AgentCmd:
       cmd match
         case Command.Allowance(target, limits, reserve, remove) =>
           if remove then
-            if limits.nonEmpty then
-              Left(Cli.Error(Problem.Unclassified(Legacy.Text("--remove takes no --limit")), exitCode = ExitCode.Usage))
+            if limits.nonEmpty then Left(Cli.Error(Problem.Unclassified(Legacy.Text("--remove takes no --limit"))))
             else
               c.call(AgentsApi.removeAllowance)(ReviewGoal.Slug(target))
                 .map(r =>
@@ -140,7 +138,7 @@ object AgentCmd:
             limits
               .traverse(l => ModelChains.Limit.parse(ModelChains.Limit.Spec(l)))
               .left
-              .map(m => Cli.Error(m, exitCode = ExitCode.Usage))
+              .map(m => Cli.Error(m))
               .flatMap { ls =>
                 c.call(AgentsApi.setAllowance)(
                   ModelChains.AllowanceSet(
@@ -269,9 +267,7 @@ object AgentCmd:
           r.modelFor
             .traverse(m => ModelOverride.parse(ModelOverride.Wire(m)))
             .left
-            .map(m =>
-              Cli.Error(Problem.Unclassified(Legacy.Text(s"--model-for ${m.sentence}")), exitCode = ExitCode.Usage)
-            )
+            .map(m => Cli.Error(Problem.Unclassified(Legacy.Text(s"--model-for ${m.sentence}"))))
             .flatMap { over =>
               c.call(AgentsApi.startRun)(
                 RunRequest(

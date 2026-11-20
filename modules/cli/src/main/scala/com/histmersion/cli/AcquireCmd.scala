@@ -46,20 +46,10 @@ object AcquireCmd:
       case Right(r) if !r.running.value =>
         r.error match
           case Some(msg) =>
-            Left(
-              Cli.Error(
-                Problem.Unclassified(Legacy.Text(s"the refresh failed: ${msg.sentence}")),
-                exitCode = ExitCode.Refused
-              )
-            )
+            Left(Cli.Error.answered(Problem.Unclassified(Legacy.Text(s"the refresh failed: ${msg.sentence}"))))
           case None => Right(r)
       case Right(_) if waited > 600 =>
-        Left(
-          Cli.Error(
-            Problem.Unclassified(Legacy.Text("the refresh is still running after 10 minutes — check the server log")),
-            exitCode = ExitCode.Refused
-          )
-        )
+        Left(Cli.Error(c.unanswered("the refresh is still running after 10 minutes — check the server log")))
       case Right(_) =>
         Thread.sleep(2000)
         Cli.err.print(".")
@@ -223,8 +213,7 @@ object AcquireCmd:
                       "--acquire-item applies to a file upload; for an identifier, tick the item off with " +
                         "`histmersion queue done <id>` once the source is in"
                     )
-                  ),
-                  exitCode = ExitCode.Usage
+                  )
                 )
               )
             case IngestTarget.Identifier(id) =>

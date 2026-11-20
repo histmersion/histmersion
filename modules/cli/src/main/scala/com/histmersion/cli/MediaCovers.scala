@@ -134,7 +134,7 @@ object MediaCovers:
         links <- linked(c, only, refresh)
         books <-
           if links.isEmpty then Right(Nil)
-          else cal.all().left.map(e => Cli.Error(e, exitCode = ExitCode.Refused))
+          else cal.all().left.map(e => Cli.Error(e))
       yield
         val byId = books.map(b => b.id -> b).toMap
         val cap = limit.map(_.value).filter(_ > 0).getOrElse(Int.MaxValue)

@@ -83,8 +83,7 @@ object Ops:
     * `GOALS.md` is never read: it is an export only (see [[GoalsExport]]).
     */
   def readMeta(c: Client, dir: Path, replace: Api.Overwrite): Either[Cli.Error, List[String]] =
-    if !Files.isDirectory(dir) then
-      Left(Cli.Error(Problem.Unclassified(Legacy.Text(s"not a directory: $dir")), exitCode = ExitCode.Usage))
+    if !Files.isDirectory(dir) then Left(Cli.Error(Problem.Unclassified(Legacy.Text(s"not a directory: $dir"))))
     else
       Queue.Kind.values.toList.foldLeft[Either[Cli.Error, List[String]]](Right(Nil)) { (acc, kind) =>
         acc.flatMap { done =>
@@ -172,7 +171,7 @@ object Ops:
     */
   private def lintFile(c: Client, p: java.nio.file.Path, fix: Boolean): Either[Cli.Error, FormatReport] =
     if !java.nio.file.Files.isRegularFile(p) then
-      Left(Cli.Error(Problem.Unclassified(Legacy.Text(s"no such file: $p")), exitCode = ExitCode.Usage))
+      Left(Cli.Error(Problem.Unclassified(Legacy.Text(s"no such file: $p"))))
     else
       val raw = java.nio.file.Files.readString(p)
       val (head, body) = FileFormat.splitFrontmatter(FileFormat.Text(raw))

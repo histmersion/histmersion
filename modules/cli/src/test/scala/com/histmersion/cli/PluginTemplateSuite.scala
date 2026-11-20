@@ -304,14 +304,14 @@ class PluginTemplateSuite extends munit.FunSuite:
     try
       val files = PluginTemplate.files(request("mirror"))
       val written =
-        PluginAuthoring.write(root.resolve("mirror"), files).left.map(Cli.Error(_, exitCode = ExitCode.Usage))
+        PluginAuthoring.write(root.resolve("mirror"), files).left.map(Cli.Error(_))
       assertEquals(written.map(_.size), Right(files.size))
       assert(Files.isRegularFile(root.resolve("mirror/resources/META-INF/services/com.histmersion.plugin.Plugin")))
       assert(
         PluginAuthoring
           .write(root.resolve("mirror"), files)
           .left
-          .map(Cli.Error(_, exitCode = ExitCode.Usage))
+          .map(Cli.Error(_))
           .left
           .exists(_.problems.sentences.mkString("; ").contains("not empty"))
       )
@@ -410,14 +410,14 @@ class PluginTemplateSuite extends munit.FunSuite:
           Map(LocalInstall.EnvVariable("HOME") -> LocalInstall.EnvSetting("/home/someone")).get
         )
         .left
-        .map(Cli.Error(_, exitCode = ExitCode.Usage)),
+        .map(Cli.Error(_)),
       Right(Path.of("/home/someone/.m2/repository"))
     )
     assert(
       PluginAuthoring
         .mavenLocal(Map.empty[LocalInstall.EnvVariable, LocalInstall.EnvSetting].get)
         .left
-        .map(Cli.Error(_, exitCode = ExitCode.Usage))
+        .map(Cli.Error(_))
         .isLeft
     )
 

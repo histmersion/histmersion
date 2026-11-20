@@ -1,6 +1,6 @@
 package com.histmersion
 package cli
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{External, Legacy, Problem}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import hearth.kindlings.optics.syntax.*
@@ -29,8 +29,8 @@ final class PluginOps(using console: Console)(
     confirm: Cli.Question => Boolean = PluginOps.ask
 ):
 
-  private def err(msg: String, code: Cli.Error.ExitCode = ExitCode.Refused) =
-    Cli.Error(Problem.Unclassified(Legacy.Text(msg)), exitCode = code)
+  /** A failure of the plugin tooling on this machine, as a sentence: the command, its input or this install to fix. */
+  private def err(msg: String) = Cli.Error(Problem.Unclassified(Legacy.Text(msg)))
 
   // ── the directory ─────────────────────────────────────────────────────────────────────────────
 
@@ -91,7 +91,7 @@ final class PluginOps(using console: Console)(
 
   def spiVersion: Either[Cli.Error, PluginSet.SpiVersion] =
     if !Files.isRegularFile(install.kitJson) then Left(err(s"no kit manifest at ${install.kitJson}"))
-    else PluginKit.parseKit(Files.readString(install.kitJson)).map(_.spiVersion).left.map(p => err(p.sentence))
+    else PluginKit.parseKit(Files.readString(install.kitJson)).map(_.spiVersion).left.map(Cli.Error(_))
 
   // ── describe (the kit's pluginTool on a JVM, through histmersion-relink) ───────────────────────
 
@@ -104,7 +104,7 @@ final class PluginOps(using console: Console)(
         PluginKit
           .parseJars(json)
           .left
-          .map(p => err(p.sentence))
+          .map(Cli.Error(_))
           .flatMap(_.headOption.toRight(err(s"${jar.getFileName}: nothing described")))
 
   // ── fetching ──────────────────────────────────────────────────────────────────────────────────
@@ -125,7 +125,7 @@ final class PluginOps(using console: Console)(
     origin match
       case Origin.File(path) =>
         val p = Path.of(path.value)
-        if !Files.isRegularFile(p) then Left(err(s"no such file: $path", ExitCode.Usage))
+        if !Files.isRegularFile(p) then Left(err(s"no such file: $path"))
         else
           Files.copy(p, to, StandardCopyOption.REPLACE_EXISTING)
           val asc = Path.of(path.value + ".asc")
@@ -223,7 +223,7 @@ final class PluginOps(using console: Console)(
     PluginKit
       .origin(arg, a => Files.isRegularFile(Path.of(a)))
       .left
-      .map(p => err(p.sentence, ExitCode.Usage))
+      .map(Cli.Error(_))
       .flatMap(addFrom(_, o))
 
   /** The name the plugin is staged under: the one it is published with, which the resolver's report and refusals name.
@@ -273,7 +273,7 @@ final class PluginOps(using console: Console)(
           case Nil      => Right(())
           case problems => Left(err(s"refused:\n${problems.map(p => s"  - ${p.sentence}").mkString("\n")}"))
         _ <- signer.fold(Right(()))(fpr =>
-          PluginKit.checkSigner(jar.plugins.map(_.id), fpr, idx).left.map(p => err(p.sentence))
+          PluginKit.checkSigner(jar.plugins.map(_.id), fpr, idx).left.map(Cli.Error(_))
         )
         _ = show(jar.modify(_.file).setTo(name), sha, source, signer, replaced, deps)
         _ <- Either.cond(
@@ -281,7 +281,7 @@ final class PluginOps(using console: Console)(
             Cli.Question(s"Install ${jar.plugins.map(p => s"${p.id} ${p.version}").mkString(", ")}?")
           ),
           (),
-          err("not installed (answer y, or pass --yes when there is no terminal)", ExitCode.Usage)
+          err("not installed (answer y, or pass --yes when there is no terminal)")
         )
       yield
         replaced.filterNot(_ == name).foreach { f =>
@@ -391,7 +391,7 @@ final class PluginOps(using console: Console)(
     val hits = jars
       .map(j => PluginJar.File(j.getFileName.toString))
       .filter(f => f.value == what || PluginKit.idsOf(f, idx).contains(PluginDescription.Id(what)))
-    if hits.isEmpty then Left(err(s"no installed plugin '$what' (histmersion plugin list)", ExitCode.Usage))
+    if hits.isEmpty then Left(err(s"no installed plugin '$what' (histmersion plugin list)"))
     else
       hits.foreach { f =>
         Files.deleteIfExists(install.plugins.resolve(f.value))
@@ -462,12 +462,17 @@ final class PluginOps(using console: Console)(
     run.interactive(install.relink.toString :: args, install.env) match
       case rc if rc.value == 0 => Right(())
       case rc                  =>
+        val log = install.data.resolve("logs").resolve("relink.log")
+        // the script's 1 is its usage error; any other code is the relink refusing or failing (2 refused before
+        // building, 3 the build or the self-check failed, 4 rolled back)
         Left(
           Cli.Error(
-            Problem.Unclassified(
-              Legacy.Text(s"histmersion-relink exited $rc (log: ${install.data.resolve("logs").resolve("relink.log")})")
-            ),
-            exitCode = if rc.value == 1 then ExitCode.Usage else ExitCode.Refused
+            if rc.value == 1 then Problem.Unclassified(Legacy.Text(s"histmersion-relink exited $rc (log: $log)"))
+            else
+              Problem.Io.Process(
+                Problem.Io.Tool("histmersion-relink"),
+                Problem.Io.Ending.Exited(rc, External.Stderr(s"log: $log"))
+              )
           )
         )
 

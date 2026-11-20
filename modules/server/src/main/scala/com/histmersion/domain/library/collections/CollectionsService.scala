@@ -183,6 +183,9 @@ object CollectionsService:
     private def fail(message: String): Api.Error = Api.Error(Problem.Unclassified(Legacy.Text(message)))
     private def usage(message: String): Api.Error =
       Api.Error(Problem.Unclassified(Legacy.Text(message)), Some(Api.Error.Code(CollectionsApi.Usage)))
+
+    /** A refusal of the request itself, with its own problems (their case gives the CLI's exit code). */
+    private def usageOf(problems: Problems): Api.Error = Api.Error(problems, Some(Api.Error.Code(CollectionsApi.Usage)))
     private def failed(problems: Problems): Api.Error = fail(problems.sentences.mkString("; "))
 
     private def apiKey(ck: domain.library.Citekey): Citekey = Citekey(ck.value)
@@ -299,7 +302,7 @@ object CollectionsService:
           library
             .queueItem(CollectionLibrary.QueueItemId(i.value))
             .flatMap(found =>
-              Queue.fulfillable(Queue.QueueItem.Id(i.value), found).left.map(p => usage(p.sentence)).map(_ => ())
+              Queue.fulfillable(Queue.QueueItem.Id(i.value), found).left.map(usageOf).map(_ => ())
             )
         )
         item <- c
@@ -309,7 +312,7 @@ object CollectionsService:
           .flatMap(_.toRight(fail(s"no Calibre book with id ${req.id}")))
         _ <- c.admits(item).left.map(failed)
         file <- c.file(item, req.format.map(f => SourceCollection.FileFormat(f.value))).left.map(failed)
-        ck <- req.citekey.fold(ImportTarget.citekeyFor(item).left.map(p => usage(p.sentence)))(checked)
+        ck <- req.citekey.fold(ImportTarget.citekeyFor(item).left.map(usageOf))(checked)
         existing <- library.pushMeta(ck) match
           case Right(m)                => Right(Some(m.calibreId.map(i => ImportTarget.Previous(i.value))))
           case Left(e) if e.isNotFound => Right(None)
@@ -317,7 +320,7 @@ object CollectionsService:
         target <- ImportTarget
           .of(ck, ImportTarget.Id(req.id.value), ImportTarget.OfExplicit(req.citekey.isDefined), existing)
           .left
-          .map(p => usage(p.sentence))
+          .map(usageOf)
         record <- upsert(ck, item, target)
       yield
         val cover = Option.when(req.cover.value)(coverOf(c, ck, item))

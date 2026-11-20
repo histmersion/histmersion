@@ -108,6 +108,8 @@ object Text:
       case Upstream.Unasked(why)                  => s"not asked this sweep — ${why.sentence}"
       case Upstream.Unreachable(name, url, r, at) => s"${path(at)}cannot reach $name at $url — $r"
       case Upstream.Timeout(name, url, after, at) => s"${path(at)}$name did not answer at $url within $after ms"
+      case Upstream.Unanswered(name, url, r)      =>
+        s"$name at $url gave no final answer ($r): the request may have been applied — check before sending it again"
       case Upstream.CallFailed(model, why)        => s"the call to $model failed: ${why.sentence}"
       case Upstream.CallThrew(model, reported)    => s"the call to $model failed: $reported"
       case Upstream.Replied(upstream, said)       => s"$upstream: $said"

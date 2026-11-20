@@ -53,8 +53,7 @@ object IngestCmd:
     if citekey.value.trim.isEmpty then
       Left(
         Cli.Error(
-          Problem.Unclassified(Legacy.Text("uploading a file needs --citekey to store it under")),
-          exitCode = ExitCode.Usage
+          Problem.Unclassified(Legacy.Text("uploading a file needs --citekey to store it under"))
         )
       )
     // Refused HERE, not by the server: a zero-length request body leaves the server's netty
@@ -63,8 +62,7 @@ object IngestCmd:
     else if scala.util.Try(Files.size(file)).getOrElse(0L) == 0L then
       Left(
         Cli.Error(
-          Problem.Unclassified(Legacy.Text(s"$file is empty — there is nothing to convert")),
-          exitCode = ExitCode.Usage
+          Problem.Unclassified(Legacy.Text(s"$file is empty — there is nothing to convert"))
         )
       )
     else

@@ -60,34 +60,33 @@ object BundleCmd:
               manifestOf(dest).fold(
                 e =>
                   Left(
-                    Cli.Error(
+                    Cli.Error.answered(
                       Problem.Unclassified(
                         Legacy.Text(s"the server sent something that is not a bundle: ${e.sentence}")
-                      ),
-                      exitCode = ExitCode.Refused
+                      )
                     )
                   ),
                 m => Right(Cli.out.println(s"${BundleMarkdown.manifest(m)}\n\n→ $dest (${Files.size(dest)} bytes)"))
               )
         case Command.Verify(file, json) =>
-          existing(file).left.map(Cli.Error(_, exitCode = ExitCode.Usage)).flatMap(c.verifyBundle).flatMap { r =>
+          existing(file).left.map(Cli.Error(_)).flatMap(c.verifyBundle).flatMap { r =>
             Output.emit(json, r)(BundleMarkdown.verify)
             if r.ok.value then Right(())
             else
               Left(
-                Cli.Error(Problem.Unclassified(Legacy.Text("the bundle did not verify")), exitCode = ExitCode.Refused)
+                Cli.Error.answered(Problem.Unclassified(Legacy.Text("the bundle did not verify")))
               )
           }
         case Command.Import(file, dryRun, res, json) =>
           val run: Either[Cli.Error, Bundle.ImportResult] =
             if res.isEmpty then
               existing(file).left
-                .map(Cli.Error(_, exitCode = ExitCode.Usage))
+                .map(Cli.Error(_))
                 .flatMap(c.importBundle(Cli.DryRun(dryRun), _))
             else
               for
-                f <- existing(file).left.map(Cli.Error(_, exitCode = ExitCode.Usage))
-                r <- MergeCmd.resolutions(res).left.map(Cli.Error(_, exitCode = ExitCode.Usage))
+                f <- existing(file).left.map(Cli.Error(_))
+                r <- MergeCmd.resolutions(res).left.map(Cli.Error(_))
                 u <- MergeCmd.upload(c, f)
                 x <- c.mergeImport(
                   MergeImportRequest(MergeImportRequest.Bundle(u.sha256.value), r, MergeImportRequest.DryRun(dryRun))
@@ -96,8 +95,7 @@ object BundleCmd:
           run.flatMap { r =>
             Output.emit(json, r)(BundleMarkdown.importResult)
             if r.problems.isEmpty then Right(())
-            else
-              Left(Cli.Error(Problem.Unclassified(Legacy.Text("the import was refused")), exitCode = ExitCode.Refused))
+            else Left(Cli.Error.answered(Problem.Unclassified(Legacy.Text("the import was refused"))))
           }
         case Command.Instance(label) =>
           label

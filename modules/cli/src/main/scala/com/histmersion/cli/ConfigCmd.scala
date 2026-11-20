@@ -58,6 +58,6 @@ object ConfigCmd:
             if r.errors.isEmpty then Right(())
             else
               Left(
-                Cli.Error(Problem.Unclassified(Legacy.Text("the config was not reloaded")), exitCode = ExitCode.Refused)
+                Cli.Error.answered(Problem.Unclassified(Legacy.Text("the config was not reloaded")))
               )
           }

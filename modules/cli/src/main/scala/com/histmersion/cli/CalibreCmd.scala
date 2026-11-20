@@ -61,10 +61,19 @@ object CalibreCmd:
   object Unlinked extends Newtype[Boolean, Pure]
   private def calibre(c: Client)(using console: Console): Calibre = Calibre(Settings.app.cli.calibre)
 
-  private def fail(msg: String): Cli.Error =
-    Cli.Error(Problem.Unclassified(Legacy.Text(msg)), exitCode = ExitCode.Refused)
+  /** A failure of the Calibre library on this machine, or of a pass over it, as a sentence. */
+  private def fail(msg: String): Cli.Error = Cli.Error(Problem.Unclassified(Legacy.Text(msg)))
 
-  private def failProblem(p: Problem): Cli.Error = fail(p.sentence)
+  private def failProblem(p: Problem): Cli.Error = Cli.Error(p)
+
+  /** The server's query answered only part of the linked sources. */
+  private def truncated: Cli.Error =
+    Cli.Error.answered(
+      Problem.Unclassified(Legacy.Text("too many linked sources for one query — raise query.max-rows"))
+    )
+
+  /** What a Calibre book not found is, as the problem names it. */
+  private val CalibreBook = Problem.TypeName("Calibre book")
 
   /** The server's `calibre` collection, when the server runs it (see the object's description). */
   private def server(c: Client): Option[CollectionsClient] =
@@ -106,7 +115,7 @@ object CalibreCmd:
       Either.cond(
         !q.truncated.value,
         q.rows.flatMap(_.headOption.flatten).flatMap(_.value.toIntOption).map(Calibre.Book.Id(_)).toSet,
-        fail("too many linked sources for one query — raise query.max-rows")
+        truncated
       )
     }
 
@@ -148,10 +157,8 @@ object CalibreCmd:
       if noConvert then Right(())
       else
         res.jobProblems match
-          case Some(e) =>
-            val code = if res.jobErrorCode.contains(CollectionsApi.Usage) then ExitCode.Usage else ExitCode.Refused
-            Left(Cli.Error(e, exitCode = code))
-          case None =>
+          case Some(e) => Left(Cli.Error.answered(e))
+          case None    =>
             res.job.fold(Right(())) { a =>
               Cli.out.println(
                 s"queued job ${a.jobId} for ${a.citekey}" +
@@ -179,7 +186,7 @@ object CalibreCmd:
             Queue
               .fulfillable(i, l.items.find(_.id == i))
               .left
-              .map(e => Cli.Error(e, exitCode = ExitCode.Usage))
+              .map(e => Cli.Error(e))
               .map(_ => ())
           )
       )
@@ -187,7 +194,7 @@ object CalibreCmd:
         .byId(id)
         .left
         .map(failProblem)
-        .flatMap(_.toRight(fail(s"no Calibre book with id $id")))
+        .flatMap(_.toRight(Cli.Error(Problem.NotFound.Entity(CalibreBook, Problem.Raw.of(id)))))
       _ <- Calibre.guard(book.title, book.authors).left.map(e => fail(s"Calibre id $id has ${e.sentence}"))
       file <- book
         .pick(format)
@@ -205,7 +212,7 @@ object CalibreCmd:
       target <- Calibre
         .importTarget(ck, id, ImportTarget.Explicit(citekey.isDefined), existing)
         .left
-        .map(m => Cli.Error(m, exitCode = ExitCode.Usage))
+        .map(m => Cli.Error(m))
       res <- upsert(c, ck, book, target)
       _ =
         if json.value then Cli.out.println(Output.json(res))
@@ -418,7 +425,7 @@ object CalibreCmd:
       q <- c.query(
         Query.Statement("SELECT citekey, calibre_id FROM sources WHERE calibre_id ~ '^[0-9]+$' ORDER BY citekey")
       )
-      _ <- Either.cond(!q.truncated.value, (), fail("too many linked sources for one query — raise query.max-rows"))
+      _ <- Either.cond(!q.truncated.value, (), truncated)
       keys = q.rows.collect { case List(Some(ck), Some(id)) => Citekey(ck.value) -> id.value.toInt }
       recs <- keys.traverse((ck, id) =>
         AcquireClient(c)
@@ -448,7 +455,7 @@ object CalibreCmd:
             "FROM sources WHERE calibre_id ~ '^[0-9]+$' ORDER BY citekey"
         )
       )
-      _ <- Either.cond(!q.truncated.value, (), fail("too many linked sources for one query — raise query.max-rows"))
+      _ <- Either.cond(!q.truncated.value, (), truncated)
       recs = q.rows.flatMap {
         case List(Some(ck), Some(id), title, authors, year) =>
           Some(
@@ -586,8 +593,7 @@ object CalibreCmd:
                 s"${counted.size} source(s) are not in Calibre yet (${counted.take(3).map(_.citekey).mkString(", ")}" +
                   (if counted.size > 3 then ", …" else "") + ") — run `histmersion calibre sync --apply`"
               )
-            ),
-            exitCode = ExitCode.Usage
+            )
           )
         )
     }
@@ -619,8 +625,7 @@ object CalibreCmd:
                 s"${counted.size} source(s) are not in Calibre yet (${counted.take(3).map(_.gap.citekey).mkString(", ")}" +
                   (if counted.size > 3 then ", …" else "") + ") — run `histmersion calibre sync --apply`"
               )
-            ),
-            exitCode = ExitCode.Usage
+            )
           )
         )
     }
@@ -695,7 +700,7 @@ object CalibreCmd:
                   .byId(id)
                   .left
                   .map(failProblem)
-                  .flatMap(_.toRight(fail(s"no Calibre book with id $id")))
+                  .flatMap(_.toRight(Cli.Error(Problem.NotFound.Entity(CalibreBook, Problem.Raw.of(id)))))
                 sw <- c.patchSource(
                   ck,
                   Source.Patch(metadata = Some(MetadataPatch(calibreId = Some(Source.CalibreId(id.value.toString)))))

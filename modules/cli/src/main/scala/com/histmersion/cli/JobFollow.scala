@@ -36,9 +36,8 @@ object JobFollow:
     def clear()(using console: Console): Unit = Cli.err.print("\r" + " " * Width + "\r")
 
   private def failed(what: String, why: Option[String]): Cli.Error =
-    Cli.Error(
-      Problem.Unclassified(Legacy.Text(s"$what failed: ${why.filter(_.nonEmpty).getOrElse("unknown reason")}")),
-      ExitCode.Refused
+    Cli.Error.answered(
+      Problem.Unclassified(Legacy.Text(s"$what failed: ${why.filter(_.nonEmpty).getOrElse("unknown reason")}"))
     )
 
   /** Poll job `id` until it is done or failed; `Right(job)` only when it succeeded. */
@@ -88,9 +87,6 @@ object JobFollow:
           case Left(e)     => Left(e)
       case Some(Backup.State.Done) =>
         s.result.toRight(
-          Cli.Error(
-            Problem.Unclassified(Legacy.Text(s"backup ${s.file} finished without a checksum")),
-            ExitCode.Refused
-          )
+          Cli.Error.answered(Problem.Unclassified(Legacy.Text(s"backup ${s.file} finished without a checksum")))
         )
       case _ => Left(failed(s"backup ${s.file}", s.problems.map(_.sentences.mkString("; "))))

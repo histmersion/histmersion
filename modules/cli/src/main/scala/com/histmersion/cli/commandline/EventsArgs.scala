@@ -133,7 +133,7 @@ object EventsArgs:
           wd_.toOption
         )
         .left
-        .map(Cli.Error(_, exitCode = ExitCode.Usage))
+        .map(Cli.Error(_))
         .left
         .map(_.problems)
         .map(EventsCmd.Command.Patch(id_(), _))

@@ -64,19 +64,15 @@ object DeleteCmd:
         }
         Output.emit(a.json, d)(Source.Delete.markdown(_, check).value)
         // a refused dry run is not a success: a script that goes on to `--apply` would fail anyway
-        if d.refused then
-          Left(
-            Cli.Error(Source.Delete.refusal(d.citekey, d.blockers), exitCode = ExitCode.Refused)
-          )
+        if d.refused then Left(Cli.Error.answered(Source.Delete.refusal(d.citekey, d.blockers)))
         else if d.filesFailed.nonEmpty then
           Left(
-            Cli.Error(
+            Cli.Error.answered(
               Problem.Unclassified(
                 Legacy.Text(
                   s"deleted, but ${Plural.count(Plural.CountN(d.filesFailed.size.toLong), Plural.CountSingular("stored file"))} could not be removed"
                 )
-              ),
-              exitCode = ExitCode.Refused
+              )
             )
           )
         else Right(())

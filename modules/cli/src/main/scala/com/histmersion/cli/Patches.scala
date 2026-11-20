@@ -55,23 +55,23 @@ object Patches:
     for
       base <- json.fold[Either[Cli.Error, Source.Patch]](
         Right(Source.Patch())
-      )(parse[Source.Patch]("--json", _).left.map(Cli.Error(_, exitCode = ExitCode.Usage)))
+      )(parse[Source.Patch]("--json", _).left.map(Cli.Error(_)))
       adds <- traverse(addFindings)(
-        parse[Finding.Input]("--add-finding", _).left.map(Cli.Error(_, exitCode = ExitCode.Usage))
+        parse[Finding.Input]("--add-finding", _).left.map(Cli.Error(_))
       )
-      eAdd <- traverse(addEdges)(parseEdge("--add-edge", _).left.map(Cli.Error(_, exitCode = ExitCode.Usage)))
-      eRem <- traverse(removeEdges)(parseEdge("--remove-edge", _).left.map(Cli.Error(_, exitCode = ExitCode.Usage)))
+      eAdd <- traverse(addEdges)(parseEdge("--add-edge", _).left.map(Cli.Error(_)))
+      eRem <- traverse(removeEdges)(parseEdge("--remove-edge", _).left.map(Cli.Error(_)))
       p <- period.fold[Either[Cli.Error, Option[Period.Input]]](Right(base.period))(
-        parsePeriod(_).left.map(Cli.Error(_, exitCode = ExitCode.Usage)).map(Some(_))
+        parsePeriod(_).left.map(Cli.Error(_)).map(Some(_))
       )
       notes <- notesFile.fold[Either[Cli.Error, Option[Source.Notes]]](Right(base.notes))(f =>
         readFile("--notes-file", f.value).left
-          .map(Cli.Error(_, exitCode = ExitCode.Usage))
+          .map(Cli.Error(_))
           .map(t => Some(Source.Notes(t)))
       )
       body <- bodyFile.fold[Either[Cli.Error, Option[Source.OcrMarkdown]]](Right(base.body))(f =>
         readFile("--body-file", f.value).left
-          .map(Cli.Error(_, exitCode = ExitCode.Usage))
+          .map(Cli.Error(_))
           .map(t => Some(Source.OcrMarkdown(t)))
       )
       meta = mergeMetadata(base.metadata, title, status)

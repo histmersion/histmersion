@@ -79,6 +79,7 @@ object Answer:
       case _: Upstream.Replied            => StatusCode.BadGateway
       case _: Upstream.McpServer          => StatusCode.BadGateway
       case _: Upstream.Timeout            => StatusCode.GatewayTimeout
+      case _: Upstream.Unanswered         => StatusCode.GatewayTimeout
       case Io.Wrong(_, Io.Kind.Inside(_)) => StatusCode.Forbidden
       case _: Io                          => StatusCode.InternalServerError
       case _: Config                      => StatusCode.ServiceUnavailable

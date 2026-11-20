@@ -63,15 +63,15 @@ object SettingsCmd:
     private def writer: Either[Problems, ConfigFileWriter] =
       file.map(ConfigFileWriter(_, env, ConfigSchema.reference))
 
-    private def failed(e: SettingError) = Cli.Error(e.message, ExitCode.Refused)
+    private def failed(e: SettingError) = Cli.Error(e.message)
 
     def page(prefix: Option[Settings.Prefix]): Either[Cli.Error, ConfigEdit.Page] =
       for
-        f <- file.left.map(Cli.Error(_, ExitCode.Usage))
+        f <- file.left.map(Cli.Error(_))
         p <- prefix
           .fold(Right(None))(k => SettingKey.parse(SettingKey.ParseRaw(k.value)).map(Some(_)))
           .left
-          .map(p => Cli.Error(p, ExitCode.Usage))
+          .map(p => Cli.Error(p))
         state <- f.read().left.map(failed)
       yield
         val loaded = AppConfig.loadWithUserFile(env, Some(f.path))
@@ -112,7 +112,7 @@ object SettingsCmd:
 
     def write(w: ConfigEdit.Write): Either[Cli.Error, ConfigEdit.Written] =
       for
-        fw <- writer.left.map(Cli.Error(_, ExitCode.Usage))
+        fw <- writer.left.map(Cli.Error(_))
         edits <- SettingEdit
           .parseAll(
             w.changes.map(c => SettingKey.ParseRaw(c.key.value) -> c.value.map(v => SettingValue.Typed(v.value))),
@@ -157,7 +157,7 @@ object SettingsCmd:
               case Some(k) =>
                 p.field(ConfigEdit.Field.Key(k))
                   .toRight(
-                    Cli.Error(Problem.Unclassified(Legacy.Text(s"There is no setting called $k.")), ExitCode.Usage)
+                    Cli.Error(Problem.Unclassified(Legacy.Text(s"There is no setting called $k.")))
                   )
                   .map { f =>
                     Output.emit(json, f)(ConfigEditMarkdown.field)
