@@ -1,9 +1,9 @@
 # rule	file	detail	count — the known violations; a slice removes rows and adds none
 # direction: G11/G12 work (package by feature, step 3) — the ratchet's baseline, not permanent exceptions; each move removes rows
-direction	api:api/HtmlAtoms.scala	util.markdown -> library: Citekey	1
-direction	api:api/HtmlAtoms.scala	util.markdown -> library: Confidence	1
-direction	api:api/HtmlAtoms.scala	util.markdown -> library: Doi	1
-direction	api:api/HtmlAtoms.scala	util.markdown -> research: ReviewGoal	1
+direction	api:api/Html.scala	util.markdown -> library: Citekey	1
+direction	api:api/Html.scala	util.markdown -> library: Confidence	1
+direction	api:api/Html.scala	util.markdown -> library: Doi	1
+direction	api:api/Html.scala	util.markdown -> research: ReviewGoal	1
 direction	api:api/Markdown.scala	util.common -> catalogue: Latitude	1
 direction	api:api/Markdown.scala	util.common -> catalogue: Longitude	1
 direction	api:api/Markdown.scala	util.common -> catalogue: Place	1

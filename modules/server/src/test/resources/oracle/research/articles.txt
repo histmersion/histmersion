@@ -6143,7 +6143,7 @@ _Method: search {tags: ["zr-oracle"]} → 4; statuses: 2 current, 1 contested, 1
 == page article/zr_city_walls
 200 <!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>The walls of Zrtown · Histmersion</title><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%2214%22 fill=%22%231f2433%22/%3E%3Cpath d=%22M6 20c5-7 15-7 20 0%22 stroke=%22%236aa3ff%22 stroke-width=%223%22 fill=%22none%22/%3E%3Ccircle cx=%2216%22 cy=%2212%22 r=%223%22 fill=%22%23f2c14e%22/%3E%3C/svg%3E">
-<script>try{var t=localStorage.getItem("histmersion.theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script><link rel="stylesheet" href="/web/style.css"></head><body class="article-page" data-page="article">
+<script src="/web/theme.js"></script><link rel="stylesheet" href="/web/style.css"></head><body class="article-page" data-page="article">
 <div class="nav"><a href="/">← Histmersion</a></div>
 <main id="page-content"><h1>The walls of Zrtown</h1><p class="article-meta-line">concept · <a class="chip chip-place" data-field="place" data-value="Zrland" href="/#place=Zrland">Zrland</a> · 1600 BCE–1400 BCE · <a class="chip chip-tag" data-field="tag" data-value="zr-art" href="/#tag=zr-art">zr-art</a> <a class="chip chip-tag" data-field="tag" data-value="walls" href="/#tag=walls">walls</a> <a class="chip chip-tag" data-field="tag" data-value="renamed" href="/#tag=renamed">renamed</a></p><p class="article-review-line"><span class="muted">review:</span> <span class="job-state review-state state-unreviewed" title="Not reviewed yet: no review of this article is recorded and none is queued.">Not reviewed</span></p><div class="reading article-body"><h2>The question</h2>
 <p>When were the walls of Zrtown raised? The walls rose around 1500 BC <a class="src-ref" data-ck="zralpha1991_walls" href="/source/zralpha1991_walls">Zrauthor &amp; Zrwriter 1990</a><sup class="cite-num"><a class="cite-jump" href="#cite-1">[1]</a></sup>; the harbour
@@ -6216,7 +6216,7 @@ trade paid for them <a class="src-ref" data-ck="zrbeta2001_harbour" href="/sourc
 == page article/zr_nothing
 404 <!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>Not found · Histmersion</title><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%2214%22 fill=%22%231f2433%22/%3E%3Cpath d=%22M6 20c5-7 15-7 20 0%22 stroke=%22%236aa3ff%22 stroke-width=%223%22 fill=%22none%22/%3E%3Ccircle cx=%2216%22 cy=%2212%22 r=%223%22 fill=%22%23f2c14e%22/%3E%3C/svg%3E">
-<script>try{var t=localStorage.getItem("histmersion.theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script><link rel="stylesheet" href="/web/style.css"></head><body class="article-page" data-page="article">
+<script src="/web/theme.js"></script><link rel="stylesheet" href="/web/style.css"></head><body class="article-page" data-page="article">
 <div class="nav"><a href="/">← Histmersion</a></div>
 <main id="page-content"><p>No article <code>zr_nothing</code>.</p></main>
 <script src="/web/app.bundle.js?v=2"></script>

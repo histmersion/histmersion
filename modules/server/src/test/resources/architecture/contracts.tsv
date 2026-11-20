@@ -250,6 +250,11 @@ helper	web:web/BaseMaps.scala	BaseMaps about BaseMap	1
 helper	web:web/PointKinds.scala	PointKinds about PointKind	1
 helper	web:web/map/Engines.scala	Engines about Engine	1
 helper	web:web/map/ShapeHits.scala	ShapeHits about ShapeHit	1
+html-newtype	api:api/media/AssetLinks.scala	an …Html newtype over String: markup any text builds, beside api.Html	1
+html-newtype	core:domain/Highlight.scala	an …Html newtype over String: markup any text builds, beside api.Html	1
+html-newtype	server:server/HtmlRender.scala	an …Html newtype over String: markup any text builds, beside api.Html	1
+html-newtype	upstreams:upstreams/landing/RepositoryLanding.scala	an …Html newtype over String: markup any text builds, beside api.Html	1
+html-newtype	upstreams:upstreams/media/MediaText.scala	an …Html newtype over String: markup any text builds, beside api.Html	1
 layer	api:api/research/Article.scala	the client names a package outside api	1
 layer	core:domain/AcquireMatch.scala	a domain file names the api outside a boundary	1
 layer	core:domain/AcquireRecheck.scala	a domain file names the api outside a boundary	1
@@ -1276,7 +1281,7 @@ unwrap	server:server/Static.scala	.value outside a boundary	1
 unwrap	server:server/StorageLocations.scala	.value outside a boundary	23
 unwrap	server:server/Supervisor.scala	.value outside a boundary	24
 unwrap	server:server/TimeZoneCheck.scala	.value outside a boundary	5
-unwrap	server:server/UiConfigViews.scala	.value outside a boundary	5
+unwrap	server:server/UiConfigViews.scala	.value outside a boundary	8
 unwrap	server:server/agents/AgentDoctor.scala	.value outside a boundary	66
 unwrap	server:server/agents/BuiltinAi.scala	.value outside a boundary	6
 unwrap	server:server/agents/ClaudeCode.scala	.value outside a boundary	49
