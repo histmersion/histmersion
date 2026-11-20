@@ -273,12 +273,18 @@ jobs:
           mkdir -p target
           zstd -d -q -c "$RUNNER_TEMP/compiled.tar.zst" | tar -C target -xf -
           rm "$RUNNER_TEMP/compiled.tar.zst"
-      # the builder's heap set explicitly, sbt's kept small beside it: with its default (80% of the 13 GB it may use)
-      # and sbt's 4 GB on top, the server's analysis ran out of heap (run 44791490700)
+      # the server's image needs more heap than this 16 GB runner has free beside sbt: its analysis ran out of heap with
+      # the builder's default (80% of 13 GB; run 44791490700) and with -Xmx12g (run 44800796510). So: 10 GB more swap,
+      # sbt kept at 2 GB, and the builder at 14 GB
+      - name: more swap for the native-image builder
+        run: |
+          sudo fallocate -l 10G /mnt/hm-swap && sudo chmod 600 /mnt/hm-swap
+          sudo mkswap /mnt/hm-swap >/dev/null && sudo swapon /mnt/hm-swap
+          free -g
       - name: the native server and CLI
         env:
           SBT_OPTS: -Xss16m -Xmx2g
-          HISTMERSION_NATIVE_XMX: 12g
+          HISTMERSION_NATIVE_XMX: 14g
         run: |
           free -g
           bash scripts/bundle/server.sh target/native
