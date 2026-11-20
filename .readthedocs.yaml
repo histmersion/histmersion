@@ -1,0 +1,14 @@
+# Read the Docs: builds the documentation site (docs/mkdocs.yml, built with Zensical, pinned in docs/requirements.txt)
+# and publishes it at https://histmersion.readthedocs.io. Zensical is not one of Read the Docs' built-in builders, so
+# the build runs it directly and copies the site into $READTHEDOCS_OUTPUT/html.
+version: 2
+
+build:
+  os: ubuntu-24.04
+  tools:
+    python: "3.12"
+  commands:
+    - python -m pip install --no-cache-dir -r docs/requirements.txt
+    # not --strict yet: the pages are being rewritten, and a broken link must not take the site down
+    - cd docs && python -m zensical build --clean
+    - mkdir -p "$READTHEDOCS_OUTPUT/html" && cp -R docs/site/. "$READTHEDOCS_OUTPUT/html/"
