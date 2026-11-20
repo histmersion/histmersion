@@ -45,7 +45,7 @@ object LogArgs:
           job = job_.toOption.map(LogEvent.Key(_)),
           run = run_.toOption.map(LogEvent.Key(_)),
           source = source_.toOption.map(LogEvent.Key(_)),
-          problem = problem_.toOption.map(LogEvent.Key(_)),
+          problem = problem_.toOption.map(LogEvent.ProblemId(_)),
           kind = kind_.toOption.map(LogEvent.Kind(_)),
           since = since_.toOption.map(LogEvent.At(_)),
           until = until_.toOption.map(LogEvent.At(_)),

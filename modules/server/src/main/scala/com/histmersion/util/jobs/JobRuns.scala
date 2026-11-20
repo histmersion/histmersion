@@ -3,6 +3,7 @@ package util.jobs
 import com.histmersion.util.problem.Problem
 
 import com.histmersion.util.database.Transactor
+import com.histmersion.api.log.LogEvent
 import com.augustnagro.magnum.DbCon
 import com.histmersion.domain.automation.{Pipeline, Run}
 
@@ -24,6 +25,9 @@ trait JobRuns:
   def createIn(run: RunRow)(using DbCon)(using WritePermit): Run.Id
 
   def pipelineVersion(id: Run.Id): Option[Pipeline.Version]
+
+  /** The trace the run was created under: its steps join it whenever it runs. */
+  def trace(id: Run.Id): Option[LogEvent.Trace]
   def heartbeat(kind: Job.Kind, id: Run.Id)(using WritePermit): Unit
 
   /** How many runs of `kind` are in either of two states. */
@@ -80,6 +84,7 @@ object JobRuns:
     def create(run: RunRow)(using WritePermit): Run.Id = db.write(JobRepo.insertRun(run))
     def createIn(run: RunRow)(using DbCon)(using WritePermit): Run.Id = JobRepo.insertRun(run)
     def pipelineVersion(id: Run.Id): Option[Pipeline.Version] = db.read(JobRepo.runPipelineVersion(id))
+    def trace(id: Run.Id): Option[LogEvent.Trace] = db.read(JobRepo.traceOfRun(id))
     def heartbeat(kind: Job.Kind, id: Run.Id)(using WritePermit): Unit = db.write(JobRepo.runHeartbeat(kind, id))
     def count(kind: Job.Kind, statuses: (RunRow.Status, RunRow.Status)): RowCount =
       db.read(JobRepo.runsIn(kind, statuses))
@@ -170,6 +175,7 @@ object JobRuns:
       id
     def createIn(run: RunRow)(using DbCon)(using WritePermit): Run.Id = create(run)
     def pipelineVersion(id: Run.Id): Option[Pipeline.Version] = get(id).map(_.row.pipelineVersion)
+    def trace(id: Run.Id): Option[LogEvent.Trace] = None
     def heartbeat(kind: Job.Kind, id: Run.Id)(using WritePermit): Unit =
       val _ = change(kind, id)(_.modify(_.heartbeatAt).setTo(Some(now())))
     def count(kind: Job.Kind, statuses: (RunRow.Status, RunRow.Status)): RowCount =

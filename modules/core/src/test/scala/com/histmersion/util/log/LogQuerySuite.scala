@@ -83,15 +83,16 @@ class LogQuerySuite extends munit.FunSuite:
 
   test("a subject filter needs every subject named; a trace's events are found by it alone"):
     val e = event("01", "2026-11-20T10:00:00.000001Z", traceA, Vector(Subject.Job(LogEvent.Key("j1"))))
-    assert(LogQuery.ofSubject(Subject.Job(LogEvent.Key("j1")), 10).matches(e))
-    assert(!LogQuery.ofSubject(Subject.Job(LogEvent.Key("j2")), 10).matches(e))
-    assert(LogQuery.ofTrace(traceA, 10).matches(e))
-    assert(!LogQuery.ofTrace(traceB, 10).matches(e))
+    val ten = LogPage.Limit(10)
+    assert(LogQuery.ofSubject(Subject.Job(LogEvent.Key("j1")), ten).matches(e))
+    assert(!LogQuery.ofSubject(Subject.Job(LogEvent.Key("j2")), ten).matches(e))
+    assert(LogQuery.ofTrace(traceA, ten).matches(e))
+    assert(!LogQuery.ofTrace(traceB, ten).matches(e))
 
   test("ids are UUIDv7: the time in the first 48 bits, version 7, the RFC variant; they sort by time"):
     val a = LogStamp.uuidV7(1700000000000L, -1L, -1L)
     val b = LogStamp.uuidV7(1700000000001L, 0L, 0L)
-    assert(LogQuery.TraceShape.matches(a), a)
+    assert(LogEvent.Trace(a).wellFormed, a)
     assertEquals(a.charAt(14), '7')
     assert("89ab".contains(a.charAt(19)), a)
     assertEquals(java.lang.Long.parseLong(a.replace("-", "").take(12), 16), 1700000000000L)

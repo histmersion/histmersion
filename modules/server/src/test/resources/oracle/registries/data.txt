@@ -117,7 +117,7 @@ owner util.identity
   backup	stores= guarded=
   carried	entities/tombstones.ndjson	record=-	table=-	steps=Rows@0
 owner util.log
-  tables	log_events,log_writes
+  tables	log_events,log_writes,log_counts
   stores	
   backup	stores= guarded=
 owner util.database

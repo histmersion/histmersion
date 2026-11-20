@@ -26,10 +26,20 @@ class LogCmdSuite extends munit.FunSuite:
     )
     assertEquals(Parsing.parse("log"), Right(LogCmd.Command.Log(LogPage.Filter(), json)))
 
-  test("--problem alone asks for the problem's trace; with another filter it is one filter among them"):
-    assertEquals(LogCmd.problemAlone(LogPage.Filter(problem = Some(LogEvent.Key("ab12")))), Some("ab12"))
+  test("--problem is the problem's id"):
     assertEquals(
-      LogCmd.problemAlone(LogPage.Filter(problem = Some(LogEvent.Key("ab12")), job = Some(LogEvent.Key("j1")))),
-      None
+      Parsing.parse("log", "--problem", "ab12"),
+      Right(LogCmd.Command.Log(LogPage.Filter(problem = Some(LogEvent.ProblemId("ab12"))), json))
     )
-    assertEquals(LogCmd.problemAlone(LogPage.Filter()), None)
+
+  test("a failure names the trace the server answered it under, and how to see what happened"):
+    assertEquals(
+      Client.traceOf(Some(" 0193a5f2-7c1e-7b3a-9f0e-2d4c6b8a1e3f ")),
+      Some("0193a5f2-7c1e-7b3a-9f0e-2d4c6b8a1e3f")
+    )
+    assertEquals(Client.traceOf(Some(" ")), None)
+    assertEquals(Client.traceOf(None), None)
+    assertEquals(
+      Cli.Error.traceLine(LogEvent.Trace("t1")),
+      "trace t1 — what happened: histmersion log --trace t1"
+    )

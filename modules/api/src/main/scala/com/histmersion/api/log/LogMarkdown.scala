@@ -36,7 +36,10 @@ object LogMarkdown:
       val keys = if w.keys.isEmpty then "" else w.keys.map(_.value).mkString(": ", ", ", "")
       s"${w.change.toString.toLowerCase} ${w.table.value}$rows$keys"
     case p: What.ProblemRaised => s"problem ${p.problem.value}${p.id.fold("")(i => s" (id `${i.value}`)")}"
-    case l: What.Lost          =>
+    case t: What.ToolCalled    => s"MCP tool `${t.tool.value}`"
+    case w: What.WritesCounted =>
+      s"${w.count.value} ${w.change.toString.toLowerCase} statement(s) on ${w.table.value}, counted"
+    case l: What.Lost =>
       l.loss match
         case LogEvent.Loss.QueueFull       => s"${l.count.value} event(s) lost: the log's queue was full"
         case LogEvent.Loss.DatabaseBacklog =>

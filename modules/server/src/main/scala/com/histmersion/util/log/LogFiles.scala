@@ -6,8 +6,8 @@ import com.histmersion.api.log.{LogEvent, LogPage}
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path, StandardOpenOption}
+import com.histmersion.config.LogConfig
 import java.time.Instant
-import java.time.temporal.ChronoUnit
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
 
@@ -23,7 +23,7 @@ final class LogFiles(dir: () => Option[Path]):
     events.isEmpty || dir().exists { d =>
       Try {
         val _ = Files.createDirectories(d)
-        events.groupBy(e => LogFiles.name(e)).foreach { (name, group) =>
+        events.groupBy(e => LogFiles.name(e.problem, e.at.day)).foreach { (name, group) =>
           val w = Files.newBufferedWriter(
             d.resolve(name),
             UTF_8,
@@ -45,10 +45,10 @@ final class LogFiles(dir: () => Option[Path]):
     * that do not read as an event (one being written now) are skipped.
     */
   def page(q: LogQuery): (Vector[LogEvent], Option[LogPage.Cursor]) =
-    val days = LogFiles.days(files).filter(d => LogFiles.within(d, q))
+    val days = LogFiles.days(files).filter(q.mayHoldDay)
     @annotation.tailrec
     def loop(rest: List[String], found: Vector[LogEvent]): Vector[LogEvent] = rest match
-      case day :: tail if found.size <= q.limit.value =>
+      case day :: tail if !q.limit.below(found.size) =>
         val events = files.filter(f => LogFiles.dayOf(f).contains(day)).flatMap(read)
         loop(tail, found ++ events.filter(e => q.matches(e) && q.older(e)))
       case _ => found
@@ -65,13 +65,13 @@ final class LogFiles(dir: () => Option[Path]):
   /** The files' total size. */
   def bytes: Long = files.map(f => Try(Files.size(f)).getOrElse(0L)).sum
 
-  /** Retention: ordinary files older than `keepDays`, problem files older than `keepProblemDays`, then the oldest until
-    * the files fit in `maxBytes` (today's never). The files deleted.
+  /** Retention at `now`: ordinary files of days before `ordinaryBefore`, problem files of days before `problemsBefore`,
+    * then the oldest until the files fit in `maxBytes` (today's never). The files deleted.
     */
-  def prune(now: Instant, keepDays: Int, keepProblemDays: Int, maxBytes: Long): List[Path] =
+  def prune(now: Instant, ordinaryBefore: Instant, problemsBefore: Instant, maxBytes: LogConfig.MaxBytes): List[Path] =
     val today = LogStamp.day(LogStamp.iso(now))
-    val ordinary = LogStamp.day(LogStamp.iso(now.minus(keepDays.toLong, ChronoUnit.DAYS)))
-    val problems = LogStamp.day(LogStamp.iso(now.minus(keepProblemDays.toLong, ChronoUnit.DAYS)))
+    val ordinary = LogStamp.day(LogStamp.iso(ordinaryBefore))
+    val problems = LogStamp.day(LogStamp.iso(problemsBefore))
     val expired = files.filter { f =>
       val day = LogFiles.dayOf(f).getOrElse(today)
       if f.getFileName.toString.startsWith(LogFiles.Problems) then day < problems else day < ordinary
@@ -80,7 +80,7 @@ final class LogFiles(dir: () => Option[Path]):
     val left = files.sortBy(f => LogFiles.dayOf(f).getOrElse(today))
     @annotation.tailrec
     def shrink(rest: List[Path], total: Long, deleted: List[Path]): List[Path] = rest match
-      case f :: tail if total > maxBytes && !LogFiles.dayOf(f).contains(today) =>
+      case f :: tail if maxBytes.over(total.toDouble) > 0 && !LogFiles.dayOf(f).contains(today) =>
         val size = Try(Files.size(f)).getOrElse(0L)
         if delete(f) then shrink(tail, total - size, f :: deleted) else shrink(tail, total, deleted)
       case _ => deleted
@@ -96,9 +96,8 @@ object LogFiles:
   val Problems = "problems-"
   val Suffix = ".jsonl"
 
-  /** The file `e` goes in. */
-  def name(e: LogEvent): String =
-    s"${if e.problem then Problems else Events}${LogStamp.day(e.at.value)}$Suffix"
+  /** The file of the events of `day`, problems (`problem`) or ordinary ones. */
+  def name(problem: Boolean, day: String): String = s"${if problem then Problems else Events}$day$Suffix"
 
   /** The day of a log file's name, `None` for any other file. */
   def dayOf(f: Path): Option[String] =
@@ -110,9 +109,3 @@ object LogFiles:
 
   /** The days of `files`, newest first, each once. */
   def days(files: List[Path]): List[String] = files.flatMap(dayOf).distinct.sorted.reverse
-
-  /** Can events of `day` match `q`'s time bounds and page? */
-  def within(day: String, q: LogQuery): Boolean =
-    q.since.forall(s => day >= LogStamp.day(LogStamp.iso(s))) &&
-      q.until.forall(u => day <= LogStamp.day(LogStamp.iso(u))) &&
-      q.before.forall(p => day <= LogStamp.day(LogStamp.iso(p.at)))

@@ -2,6 +2,7 @@ package com.histmersion
 package domain.automation.agents
 import com.histmersion.util.problem.{External, Problem, ProblemLog}
 import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.log.JobTrace
 
 import hearth.kindlings.optics.syntax.*
 
@@ -419,9 +420,10 @@ final class Engine(
       )
 
   /** Queue run `id`: it executes later on a pool thread, under the permit of the unit it runs in there (never the
-    * submitter's, whose block has ended by then).
+    * submitter's, whose block has ended by then), and under the run's own trace.
     */
-  def submit(id: Run.Id): Unit = queue.put(Queued(id, agents.pins.carry(agents.workers.unit(execute(id))), era))
+  def submit(id: Run.Id): Unit =
+    queue.put(Queued(id, agents.pins.carry(agents.workers.unit(executeInItsTrace(id))), era))
 
   private def pool(): Unit =
     try
@@ -451,6 +453,10 @@ final class Engine(
         else q.work.drop()
       // a cancel or a restore that interrupted a run as it ended must not end the worker: only the pool's stop does
       catch case _: InterruptedException => alive = !stopping
+
+  /** Run one queued run under its own trace (the one its row keeps), whoever resumed it. */
+  private def executeInItsTrace(id: Run.Id)(using WritePermit): Unit =
+    JobTrace.resumed(agents.jobRuns.trace(id))(execute(id))
 
   /** Run one queued run to its next resting state. */
   private[histmersion] def execute(id: Run.Id)(using WritePermit): Unit =

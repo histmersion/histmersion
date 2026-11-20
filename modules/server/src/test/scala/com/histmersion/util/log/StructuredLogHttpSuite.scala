@@ -61,7 +61,7 @@ class StructuredLogHttpSuite extends DbSuite:
       try
         val searched = get(s"$url/api/search?q=bronze%20age%20collapse", RequestLog.LabelHeader -> "suite-session")
         val trace = searched.headers().firstValue(RequestLog.TraceHeader).orElse("")
-        assert(LogQuery.TraceShape.matches(trace), s"the answer's trace: '$trace'")
+        assert(LogEvent.Trace(trace).wellFormed, s"the answer's trace: '$trace'")
         val p = awaitLog(url, s"trace=$trace", _.what.isInstanceOf[What.RequestAnswered])
         val answered = p.events.collect { case LogEvent(_, _, _, label, _, _, r: What.RequestAnswered) => (label, r) }
         assertEquals(answered.size, 1, p.toString)
@@ -86,6 +86,28 @@ class StructuredLogHttpSuite extends DbSuite:
         val healthTrace = health.headers().firstValue(RequestLog.TraceHeader).orElse("")
         Thread.sleep(500)
         assertEquals(page(get(s"$url/api/log?trace=$healthTrace").body).events, Vector.empty)
+        // an MCP call is POST /mcp, and its tool is named in the same trace
+        val call = http.send(
+          HttpRequest
+            .newBuilder(URI.create(s"$url/mcp"))
+            .header("Authorization", s"Bearer $Secret")
+            .header("Content-Type", "application/json")
+            .header("Accept", "application/json, text/event-stream")
+            .POST(
+              HttpRequest.BodyPublishers.ofString(
+                """{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"ping","arguments":{}}}"""
+              )
+            )
+            .build(),
+          HttpResponse.BodyHandlers.ofString()
+        )
+        val mcpTrace = call.headers().firstValue(RequestLog.TraceHeader).orElse("")
+        val mp = awaitLog(url, s"trace=$mcpTrace", _.what.isInstanceOf[What.ToolCalled])
+        assertEquals(
+          mp.events.collect { case LogEvent(_, _, _, _, _, _, t: What.ToolCalled) => t.tool },
+          Vector(LogEvent.Tool("ping")),
+          s"${call.statusCode} ${call.body}"
+        )
         // a problem id nobody raised
         assertEquals(get(s"$url/api/problems/nobody00").statusCode, 404)
         assertEquals(get(s"$url/api/log?kind=Nope").statusCode, 400)

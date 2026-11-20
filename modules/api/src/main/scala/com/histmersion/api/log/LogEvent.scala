@@ -30,20 +30,52 @@ final case class LogEvent(
 
 object LogEvent:
   type Id = Id.T
-  object Id extends Newtype[String, Pure]
+  object Id extends Newtype[String, Pure]:
+    extension (i: Id)
+      /** Whether it sorts before `other` (as the table orders its UUIDs: byte by byte, as their lower-case text). */
+      def sortsBefore(other: Id): Boolean = i.value < other.value
 
   /** An ISO-8601 instant. */
   type At = At.T
-  object At extends Newtype[String, Pure]
+  object At extends Newtype[String, Pure]:
+    extension (a: At)
+      /** The UTC day it falls on (`2026-11-20`): the log file it goes in. */
+      def day: String = a.value.take(10)
+
+      /** As a filter gives it: trimmed, none when blank. */
+      def present: Option[At] = Option(a.value.trim).filter(_.nonEmpty).map(At(_))
 
   type Trace = Trace.T
-  object Trace extends Newtype[String, Pure]
+  object Trace extends Newtype[String, Pure]:
+    extension (t: Trace)
+      /** As a filter gives it: trimmed and in lower case (as the server mints it), none when blank. */
+      def present: Option[Trace] = Option(t.value.trim.toLowerCase).filter(_.nonEmpty).map(Trace(_))
+
+      /** The request the trace was opened for, as what events concern. */
+      def request: Subject = Subject.Request(Key(t.value))
+
+      /** Whether it has the shape the server mints: a UUID in lower case. */
+      def wellFormed: Boolean =
+        t.value.matches("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
 
   type Label = Label.T
-  object Label extends Newtype[String, Pure]
+  object Label extends Newtype[String, Pure]:
+    /** How long a client's label may be; a longer one is cut. */
+    val MaxLength: Int = 200
+
+    /** A client's label as a header gives it: trimmed and cut to [[MaxLength]], none when blank. */
+    def fromHeader(header: String): Option[Label] =
+      Option(header.trim).filter(_.nonEmpty).map(l => Label(l.take(MaxLength)))
+
+    extension (l: Label) def present: Option[Label] = fromHeader(l.value)
 
   type Kind = Kind.T
-  object Kind extends Newtype[String, Pure]
+  object Kind extends Newtype[String, Pure]:
+    extension (k: Kind)
+      /** The event case it names, whatever its case: none when it names none. */
+      def known: Option[Kind] = Kinds.find(_.equalsIgnoreCase(k.value.trim)).map(Kind(_))
+
+      def present: Boolean = k.value.trim.nonEmpty
 
   /** A route template (`GET /api/sources/{citekey}`), never the raw path with its query. */
   type Operation = Operation.T
@@ -53,7 +85,8 @@ object LogEvent:
   object Method extends Newtype[String, Pure]
 
   type Status = Status.T
-  object Status extends Newtype[Int, Pure]
+  object Status extends Newtype[Int, Pure]:
+    extension (s: Status) def serverError: Boolean = s.value >= 500
 
   type Millis = Millis.T
   object Millis extends Newtype[Long, Pure]
@@ -79,10 +112,26 @@ object LogEvent:
   object Table extends Newtype[String, Pure]
 
   type Key = Key.T
-  object Key extends Newtype[String, Pure]
+  object Key extends Newtype[String, Pure]:
+    extension (k: Key)
+      /** The key as a subject of `kind` (`job:j1`). */
+      def ref(kind: String): String = s"$kind:${k.value}"
+
+      /** As a filter gives it: trimmed, none when blank. */
+      def present: Option[Key] = Option(k.value.trim).filter(_.nonEmpty).map(Key(_))
+
+  /** An MCP tool's name. */
+  type Tool = Tool.T
+  object Tool extends Newtype[String, Pure]
 
   type ProblemId = ProblemId.T
-  object ProblemId extends Newtype[String, Pure]
+  object ProblemId extends Newtype[String, Pure]:
+    extension (p: ProblemId)
+      /** The problem as what events concern. */
+      def subject: Subject = Subject.Problem(Key(p.value))
+
+      /** As a filter gives it: trimmed, none when blank. */
+      def present: Option[ProblemId] = Option(p.value.trim).filter(_.nonEmpty).map(ProblemId(_))
 
   /** A problem's `<group>.<case>`. */
   type ProblemCase = ProblemCase.T
@@ -112,11 +161,11 @@ object LogEvent:
 
     /** The subject as the table's `subjects` column holds it: `<kind>:<key>`. */
     def ref: String = this match
-      case Source(k)   => s"source:${k.value}"
-      case Job(k)      => s"job:${k.value}"
-      case AgentRun(k) => s"run:${k.value}"
-      case Problem(k)  => s"problem:${k.value}"
-      case Request(k)  => s"request:${k.value}"
+      case Source(k)   => k.ref("source")
+      case Job(k)      => k.ref("job")
+      case AgentRun(k) => k.ref("run")
+      case Problem(k)  => k.ref("problem")
+      case Request(k)  => k.ref("request")
 
   /** A write statement's change. */
   enum Change derives CanEqual:
@@ -159,12 +208,20 @@ object LogEvent:
     /** Events lost, and why. */
     case Lost(count: Count, loss: Loss)
 
+    /** An MCP tool called, by its name (the request itself is `POST /mcp`). */
+    case ToolCalled(tool: Tool)
+
+    /** Write statements counted rather than recorded one by one (lease renewals, quota updates, job heartbeats), per
+      * minute: table, change, how many statements.
+      */
+    case WritesCounted(table: Table, change: Change, count: Count)
+
     def kind: Kind = Kind(productPrefix)
 
     /** Kept as long as problems are. */
     def failing: Boolean = this match
-      case r: RequestAnswered => r.status.value >= 500
-      case p: ProviderCalled  => p.status.forall(_.value >= 500)
+      case r: RequestAnswered => r.status.serverError
+      case p: ProviderCalled  => p.status.forall(_.serverError)
       case _: ProblemRaised   => true
       case _: Lost            => true
       case _                  => false
@@ -176,5 +233,7 @@ object LogEvent:
     "ProviderCalled",
     "Written",
     "ProblemRaised",
-    "Lost"
+    "Lost",
+    "ToolCalled",
+    "WritesCounted"
   )

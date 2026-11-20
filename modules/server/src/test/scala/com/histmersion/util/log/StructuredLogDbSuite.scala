@@ -10,6 +10,9 @@ import com.histmersion.db.{DbSuite, TestDb}
 import com.histmersion.server.Deps
 import com.histmersion.util.data.backup.BackupService
 import com.histmersion.util.database.{Migrate, Transactor, WritePermit}
+import com.histmersion.domain.automation.Run
+import com.histmersion.domain.library.search.QueryAccess
+import com.histmersion.util.jobs.{Carried, Job, JobRepo, Pinning}
 import hearth.kindlings.optics.syntax.*
 
 import java.nio.charset.StandardCharsets.UTF_8
@@ -42,21 +45,105 @@ class StructuredLogDbSuite extends DbSuite:
       val triggers = sql"""SELECT c.relname::text, t.tgname::text FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
                           JOIN pg_namespace n ON n.oid = c.relnamespace
                           WHERE n.nspname = 'public' AND NOT t.tgisinternal
-                            AND t.tgname ~ '_log_(insert|update|delete|truncate)$$'"""
+                            AND t.tgname ~ '_log_(insert|update|delete|truncate|count)$$'"""
         .query[(String, String)]
         .run()
         .toList
       (tables, triggers)
     }
     val unrecorded: Set[String] = LogData.unrecorded.map(t => s"$t").toSet
+    val counted: Set[String] = LogData.counted.map(t => s"$t").toSet
+    // the two lists, pinned: a table moved in or out of either is a decision, made here
+    assertEquals(
+      unrecorded,
+      Set(
+        "log_events",
+        "log_writes",
+        "log_counts",
+        "source_chunks",
+        "map_changes",
+        "site_undated_cells",
+        "site_undated_build",
+        "flyway_schema_history",
+        "spatial_ref_sys"
+      )
+    )
+    assertEquals(counted, Set("agent_leases", "upstream_quota", "plan_quota_readings", "plan_quota_refreshes"))
     val ops = List("insert", "update", "delete", "truncate")
     val missing = for
-      t <- tables.filterNot(unrecorded.contains)
+      t <- tables.filterNot(t => unrecorded.contains(t) || counted.contains(t))
       op <- ops
       if !triggers.contains((t, s"${t}_log_$op"))
     yield s"${t}_log_$op"
     assertEquals(missing, Nil, "tables whose writes the database would not record")
     assertEquals(triggers.filter((t, _) => unrecorded.contains(t)), Nil, "triggers on tables left out")
+    assertEquals(
+      triggers.filter((t, _) => counted.contains(t)).sorted,
+      counted.toList.sorted.map(t => (t, s"${t}_log_count")),
+      "a counted table has its one counting trigger and no other"
+    )
+
+  test("the escape hatch's read-only role cannot read the log (client addresses, search text); other tables it can"):
+    val _ = migrated
+    // as the server's start does (and does again after a restore, which runs --no-privileges)
+    assertEquals(QueryAccess.provision(ds, base.query), Right(()))
+    val qds = testQueryPool(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)), base.query)
+    List(
+      sql"SELECT count(*) FROM log_events",
+      sql"SELECT count(*) FROM log_writes",
+      sql"SELECT count(*) FROM log_counts"
+    ).foreach { q =>
+      val refused = scala.util.Try(connect(qds)(q.query[Long].run()))
+      assert(refused.failed.toOption.exists(_.getMessage.contains("permission denied")), s"$q: $refused")
+    }
+    assert(scala.util.Try(connect(qds)(sql"SELECT count(*) FROM sources".query[Long].run())).isSuccess)
+
+  test("lease renewals, quota updates and job heartbeats are counted per minute, not recorded one by one"):
+    val _ = migrated
+    val run = Run.Id("0193a5f2-7c1e-7b3a-9f0e-2d4c6b8a1e99")
+    val agent = Job.Kind("agent")
+    connect(ds) {
+      sql"DELETE FROM log_counts".update.run(): Unit
+      sql"""INSERT INTO jobs (id, kind, status) VALUES ('0193a5f2-7c1e-7b3a-9f0e-2d4c6b8a1e99', 'agent', 'running')""".update
+        .run(): Unit
+    }
+    val staged = connect(ds)(sql"SELECT count(*) FROM log_writes".query[Long].run().head)
+    Transactor(ds).transact(JobRepo.runHeartbeat(agent, run))
+    Transactor(ds).transact(JobRepo.runHeartbeat(agent, run))
+    connect(ds)(sql"UPDATE agent_leases SET owner = owner".update.run(): Unit)
+    val (writes, jobs, leases) = connect(ds)(
+      (
+        sql"SELECT count(*) FROM log_writes".query[Long].run().head,
+        sql"SELECT coalesce(sum(n), 0) FROM log_counts WHERE tbl = 'jobs' AND op = 'update'".query[Long].run().head,
+        sql"SELECT coalesce(sum(n), 0) FROM log_counts WHERE tbl = 'agent_leases'".query[Long].run().head
+      )
+    )
+    assertEquals(writes, staged, "no write statement recorded for the heartbeats or the lease")
+    assertEquals(jobs, 2L)
+    assertEquals(leases, 1L)
+    connect(ds)(sql"DELETE FROM jobs WHERE id = '0193a5f2-7c1e-7b3a-9f0e-2d4c6b8a1e99'".update.run(): Unit)
+
+  test("a request's trace survives the hand-off to a job's or a run's thread; a resumed job takes its own back"):
+    val dir = tempDir()
+    val writer =
+      LogWriter(() => settings(dir), LogFiles(() => Some(dir)), Transactor(ds), WritePermit.Gate(), Clock.systemUTC())
+    val pins = TracedPinning(Pinning.none, () => writer)
+    val request = TraceScope(writer.mintTrace(), Some(LogEvent.Label("hand-off")), LogEvent.Actor.Client, writer)
+    def onAnotherThread[A](carried: Carried[A]): A =
+      val out = java.util.concurrent.atomic.AtomicReference[Option[A]](None)
+      val t = Thread.ofPlatform().start(() => out.set(Some(carried.run())))
+      t.join()
+      out.get.get
+    assertEquals(onAnotherThread(Tracing.within(request)(pins.carry(Tracing.trace))), Some(request.trace))
+    // handed over from no scope: a scope of its own, recording into the writer
+    val own = onAnotherThread(pins.carry(Tracing.scope))
+    assert(own.exists(s => s.trace != request.trace && (s.sink eq writer)), own.toString)
+    // a resumed job: its own trace, kept on its row
+    val kept = writer.mintTrace()
+    assertEquals(
+      onAnotherThread(Tracing.within(request)(pins.carry(JobTrace.resumed(Some(kept))(Tracing.trace)))),
+      Some(kept)
+    )
 
   test(
     "a write statement is recorded once with the connection's trace and label; the writer moves it to table and file"
@@ -80,7 +167,7 @@ class StructuredLogDbSuite extends DbSuite:
     assertEquals(jobTrace, trace.value, "the job keeps the trace it was created under")
     writer.flush()
     val page = LogService(Transactor(ds), LogFiles(() => Some(dir)))
-      .page(LogQuery.ofTrace(trace, 100))
+      .page(LogQuery.ofTrace(trace, LogPage.Limit(100)))
     val written = page.events.collect { case e @ LogEvent(_, _, _, _, _, _, w: What.Written) => (e, w) }
     assertEquals(
       written.map(_._2.table),
@@ -134,10 +221,10 @@ class StructuredLogDbSuite extends DbSuite:
       def unwrap[T](iface: Class[T]): T = throw java.sql.SQLException("no")
       def isWrapperFor(iface: Class[?]) = false
     val service = LogService(Transactor(down), LogFiles(() => Some(dir)))
-    val page = service.page(LogQuery.ofTrace(trace, 10))
+    val page = service.page(LogQuery.ofTrace(trace, LogPage.Limit(10)))
     assertEquals(page.origin, LogPage.Origin.File)
     assertEquals(page.events.map(e => s"${e.id}"), inTable.map(_._1))
-    val around = service.problem(LogEvent.ProblemId("cafe0001"), LogQuery.Limit(10))
+    val around = service.problem(LogEvent.ProblemId("cafe0001"), LogPage.Limit(10))
     assertEquals(around.map(_.events.map(_.trace)), Some(Vector(trace)), "the problem's trace, found in the file")
     // the writer itself, with the database down: the file still gets every event, the table catches up later
     val offline =
@@ -149,7 +236,7 @@ class StructuredLogDbSuite extends DbSuite:
       What.Lost(LogEvent.Count(1), LogEvent.Loss.QueueFull)
     )
     offline.flush()
-    assertEquals(service.page(LogQuery.ofTrace(later, 10)).events.size, 1)
+    assertEquals(service.page(LogQuery.ofTrace(later, LogPage.Limit(10))).events.size, 1)
 
   test("retention: ordinary events past keep-days and problems past keep-problem-days leave the table"):
     val _ = migrated
@@ -170,7 +257,7 @@ class StructuredLogDbSuite extends DbSuite:
     val ok = What.RequestsCounted(LogEvent.Operation("GET /api/health"), LogEvent.Count(1), LogEvent.Count(0))
     val bad = What.ProblemRaised(None, LogEvent.ProblemCase("Io.Unreadable"))
     connect(ds)(LogRepo.insert(Vector(ev(1, 40, ok), ev(2, 40, bad), ev(3, 100, bad), ev(4, 1, ok))))
-    LogRetention.run(settings(dir), LogFiles(() => Some(dir)), Transactor(ds), WritePermit.Gate(), now)
+    LogRetention(LogFiles(() => Some(dir)), Transactor(ds), WritePermit.Gate()).run(settings(dir), now)
     val left = connect(ds)(
       sql"SELECT event::text FROM log_events WHERE trace = ${s"$trace"}::uuid"
         .query[String]
@@ -182,14 +269,20 @@ class StructuredLogDbSuite extends DbSuite:
   test("backups leave the log's rows out; no bundle carries it"):
     assertEquals(
       BackupService.rowsLeftOut(Deps.data),
-      List("--exclude-table-data=public.log_events", "--exclude-table-data=public.log_writes")
+      List(
+        "--exclude-table-data=public.log_events",
+        "--exclude-table-data=public.log_writes",
+        "--exclude-table-data=public.log_counts"
+      )
     )
     assertEquals(LogData.carried, Nil)
 
   test("no code but the log's repository writes the log's tables (the triggers' function aside)"):
     val allowed = Set(
       "modules/server/src/main/scala/com/histmersion/util/log/LogRepo.scala",
-      "modules/server/src/main/scala/com/histmersion/util/log/LogData.scala"
+      "modules/server/src/main/scala/com/histmersion/util/log/LogData.scala",
+      // its REVOKE: the read-only role may not read the log
+      "modules/db/src/main/scala/com/histmersion/domain/library/search/QueryAccess.scala"
     )
     val roots = Files.list(Path.of("modules")).iterator().asScala.toList.map(_.resolve("src/main"))
     val found = roots.filter(Files.isDirectory(_)).flatMap { r =>

@@ -4,6 +4,7 @@ package util.log
 import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.api.log.{LogEvent, LogPage}
 import com.histmersion.api.log.LogEvent.What
+import com.histmersion.config.LogConfig
 
 import java.nio.file.{Files, Path}
 import java.time.Instant
@@ -67,7 +68,7 @@ class LogFilesSuite extends munit.FunSuite:
         )
       )
     )
-    val gone = files.prune(Instant.parse("2026-11-20T12:00:00Z"), 30, 90, Long.MaxValue)
+    val gone = prune(files, 30, 90, Long.MaxValue)
     assertEquals(gone.map(_.getFileName.toString), List("events-2026-10-01.jsonl"))
     assertEquals(all(files).map(e => s"${e.id}").sorted, Vector("new", "oldproblem"))
   }
@@ -83,35 +84,59 @@ class LogFilesSuite extends munit.FunSuite:
         )
       )
     )
-    val gone = files.prune(Instant.parse("2026-11-20T12:00:00Z"), 30, 90, 0L)
+    val gone = prune(files, 30, 90, 0L)
     assertEquals(gone.map(_.getFileName.toString), List("events-2026-11-18.jsonl", "events-2026-11-19.jsonl"))
     assertEquals(all(files).map(_.id), Vector("c"))
   }
 
+  private val Now = Instant.parse("2026-11-20T12:00:00Z")
+
+  private def prune(files: LogFiles, keepDays: Int, keepProblemDays: Int, maxBytes: Long) =
+    files.prune(
+      Now,
+      LogConfig.KeepDays(keepDays).before(Now),
+      LogConfig.KeepDays(keepProblemDays).before(Now),
+      LogConfig.MaxBytes(maxBytes)
+    )
+
   test("the size cap of the table: the live rows over the cap, at the average row size"):
-    assertEquals(LogRetention.excessRows(bytes = 1000, rows = 10, dead = 0, max = 2000), 0)
-    assertEquals(LogRetention.excessRows(bytes = 1000, rows = 10, dead = 0, max = 500), 5)
+    def excess(bytes: Long, rows: Long, dead: Long, max: Long) =
+      LogRetention.excessRows(bytes, rows, dead, LogConfig.MaxBytes(max))
+    assertEquals(excess(bytes = 1000, rows = 10, dead = 0, max = 2000), 0)
+    assertEquals(excess(bytes = 1000, rows = 10, dead = 0, max = 500), 5)
     // half the space is dead rows waiting to be reused: only the live half counts
-    assertEquals(LogRetention.excessRows(bytes = 1000, rows = 5, dead = 5, max = 500), 0)
-    assertEquals(LogRetention.excessRows(bytes = 0, rows = 0, dead = 0, max = 0), 0)
+    assertEquals(excess(bytes = 1000, rows = 5, dead = 5, max = 500), 0)
+    assertEquals(excess(bytes = 0, rows = 0, dead = 0, max = 0), 0)
+
+  test("the settings' rules: the cut-off, the backlog, the counted paths, when a retention run is due"):
+    assertEquals(LogConfig.KeepDays(30).before(Now), Instant.parse("2026-10-21T12:00:00Z"))
+    assertEquals(LogConfig.KeepDays(-1).before(Now), Now)
+    assertEquals(LogConfig.Backlog(2).keep(Vector(1, 2, 3)), (Vector(2, 3), 1))
+    assertEquals(LogConfig.Backlog(5).keep(Vector(1)), (Vector(1), 0))
+    val counted = LogConfig.Counted(" /api/health , /web/ ,,").prefixes
+    assertEquals(counted, List(LogConfig.CountedPrefix("/api/health"), LogConfig.CountedPrefix("/web/")))
+    assert(counted.exists(_.covers("/web")) && counted.exists(_.covers("/web/app.js")))
+    assert(!counted.exists(_.covers("/api/sources")))
+    assert(LogConfig.PruneEveryMinutes(60).due(0L, 3600000L) && !LogConfig.PruneEveryMinutes(60).due(0L, 3599999L))
+    assertEquals(LogConfig.BatchSize(500).after(1), 499)
 
   test(
     "a staged write statement becomes its Written event: the trigger's id, time, trace and label; jobs and sources as subjects"
   ):
     val e = LogWriter.written(
       LogRepo.Staged(
-        "01a1f981-4912-7849-a9dc-9b021af12285",
-        "2026-11-20T09:15:02.123456Z",
-        "0193a5f2-7c1e-7b3a-9f0e-2d4c6b8a1e3f",
-        Some("agent-x"),
-        "jobs",
+        LogEvent.Id("01a1f981-4912-7849-a9dc-9b021af12285"),
+        LogEvent.At("2026-11-20T09:15:02.123456Z"),
+        LogEvent.Trace("0193a5f2-7c1e-7b3a-9f0e-2d4c6b8a1e3f"),
+        Some(LogEvent.Label("agent-x")),
+        LogEvent.Table("jobs"),
         "update",
-        Some(1L),
-        List("j1"),
-        List("smith2020")
+        Some(LogEvent.Count(1L)),
+        List(LogEvent.Key("j1")),
+        List(LogEvent.Key("smith2020"))
       )
     )
-    assertEquals(e.id.value, "01a1f981-4912-7849-a9dc-9b021af12285")
+    assertEquals(e.id, "01a1f981-4912-7849-a9dc-9b021af12285")
     assertEquals(e.label, Some("agent-x"))
     assertEquals(
       e.subjects.map(_.ref),

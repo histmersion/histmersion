@@ -37,6 +37,7 @@ object ConfigReload:
     case LlmCalls extends SetOnce("the LLM-call semaphore, sized once")
     case OcrPool extends SetOnce("the size of the OCR worker pool, started once")
     case Access extends SetOnce("who is let in is checked against the bind addresses once, when the listener is bound")
+    case LogQueue extends SetOnce("the structured log's queue, sized once")
 
   /** The settings a running server cannot change in place, and why. The running value is kept until a restart (see
     * [[effective]]), and the reload report lists them.
@@ -51,6 +52,7 @@ object ConfigReload:
     Key("histmersion.agents.max-concurrent-runs") -> SetOnce.AgentPoolSize,
     Key("histmersion.agents.max-llm-calls-in-flight") -> SetOnce.LlmCalls,
     Key("histmersion.converter.parallelism") -> SetOnce.OcrPool,
+    Key("histmersion.log.queue-size") -> SetOnce.LogQueue,
     Key("histmersion.auth.trusted-networks") -> SetOnce.Access,
     Key("histmersion.auth.authenticated-networks") -> SetOnce.Access,
     Key("histmersion.auth.refused-networks") -> SetOnce.Access,

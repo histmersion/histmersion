@@ -2,6 +2,7 @@ package com.histmersion
 package util.jobs
 import com.histmersion.util.problem.ProblemLog
 import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.log.JobTrace
 
 import com.histmersion.util.database.Transactor
 
@@ -116,7 +117,7 @@ final class JobPool(
 
   /** One job, its unexpected failure recorded — both on the job's own generation. */
   private def runOne(id: Job.Id)(using WritePermit): Unit =
-    try run(id)
+    try JobTrace.resumed(Transactor(ds).read(JobRepo.traceOfJob(id)))(run(id))
     catch
       case e: InterruptedException => throw e
       // a worker must outlive one bad job, a deep recursion included (its stack is unwound here): record the failure

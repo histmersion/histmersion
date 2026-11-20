@@ -47,8 +47,7 @@ object ProblemLog:
       case u: Problem.Internal.Unexpected => Some(LogEvent.ProblemId(u.id.value))
       case _                              => None
     Tracing.record(
-      LogEvent.What.ProblemRaised(id, LogEvent.ProblemCase(s"${problem.group.productPrefix}.${problem.productPrefix}")),
-      id.map(i => LogEvent.Subject.Problem(LogEvent.Key(i.value))).toVector
+      LogEvent.What.ProblemRaised(id, LogEvent.ProblemCase(s"${problem.group.productPrefix}.${problem.productPrefix}"))
     )
 
   /** A value as the log line shows it: quoted when it holds a space, a quote or an equals sign. */

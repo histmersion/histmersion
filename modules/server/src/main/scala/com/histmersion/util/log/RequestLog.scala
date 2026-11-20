@@ -58,11 +58,10 @@ final class RequestLog(writer: LogWriter, settings: () => LogConfig) extends Req
       ): RequestResult[B] =
         val method = request.method.method
         val path = request.uri.pathSegments.segments.map(_.v).mkString("/", "/", "")
-        val counted = (method == "GET" || method == "HEAD") &&
-          settings().countedPrefixes.exists(p => path == p.value.stripSuffix("/") || path.startsWith(p.value))
+        val counted = (method == "GET" || method == "HEAD") && settings().countsPath(path)
         val scope = TraceScope(
           writer.mintTrace(),
-          request.header(RequestLog.LabelHeader).map(_.trim).filter(_.nonEmpty).map(l => LogEvent.Label(l.take(200))),
+          request.header(RequestLog.LabelHeader).flatMap(LogEvent.Label.fromHeader),
           LogEvent.Actor.Client,
           writer
         )
@@ -74,10 +73,10 @@ final class RequestLog(writer: LogWriter, settings: () => LogConfig) extends Req
         val status = result match
           case RequestResult.Response(response, _) => response.code.code
           case _: RequestResult.Failure            => 404
-        if counted then writer.count(LogEvent.Operation(s"$method ${operation.value}"), status >= 500)
+        if counted then writer.count(LogEvent.Operation(s"$method $operation"), status >= 500)
         else
           scope.record(
-            Vector(LogEvent.Subject.Request(LogEvent.Key(scope.trace.value))),
+            Vector(scope.trace.request),
             What.RequestAnswered(
               operation,
               LogEvent.Method(method),
@@ -89,7 +88,7 @@ final class RequestLog(writer: LogWriter, settings: () => LogConfig) extends Req
           )
         result match
           case RequestResult.Response(response, source) =>
-            RequestResult.Response(response.addHeaders(List(Header(RequestLog.TraceHeader, scope.trace.value))), source)
+            RequestResult.Response(response.addHeaders(List(Header(RequestLog.TraceHeader, s"${scope.trace}"))), source)
           case failure => failure
 
 object RequestLog:

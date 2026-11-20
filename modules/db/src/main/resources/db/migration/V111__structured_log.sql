@@ -37,6 +37,32 @@ CREATE TABLE public.log_writes (
     PRIMARY KEY (seq)
 );
 
+-- Write statements counted per minute instead of recorded one by one: the lease renewals, the quota updates and the
+-- jobs' heartbeats. The writer turns each finished minute into one event per table and change.
+CREATE TABLE public.log_counts (
+    minute timestamp with time zone NOT NULL,
+    tbl text NOT NULL,
+    op text NOT NULL,
+    n bigint NOT NULL,
+    PRIMARY KEY (minute, tbl, op)
+);
+
+CREATE FUNCTION public.histmersion_log_counted(tbl text, op text) RETURNS void
+    LANGUAGE sql
+    AS $$
+  INSERT INTO log_counts (minute, tbl, op, n) VALUES (date_trunc('minute', now()), tbl, op, 1)
+  ON CONFLICT (minute, tbl, op) DO UPDATE SET n = log_counts.n + 1
+$$;
+
+-- The statement trigger of a counted table.
+CREATE FUNCTION public.histmersion_log_count() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+  PERFORM histmersion_log_counted(TG_TABLE_NAME, lower(TG_OP));
+  RETURN NULL;
+END $$;
+
 -- The trace of the calling transaction: the one the server set on the connection (histmersion.trace), else one minted
 -- now and kept for the rest of the transaction, so the writes of one untraced transaction share one trace.
 CREATE FUNCTION public.histmersion_trace() RETURNS uuid
@@ -54,7 +80,8 @@ END $$;
 
 -- A write statement's row of log_writes: the table, the change, how many rows, the first 20 values of the table's
 -- one-column key (TG_ARGV[0], '' when it has none) and of its citekey column (TG_ARGV[1], '' when it has none). A
--- statement that changed no row records nothing.
+-- statement that changed no row records nothing. A statement whose transaction set histmersion.log_count (a job's
+-- heartbeat) is counted instead.
 CREATE FUNCTION public.histmersion_log_write() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
@@ -65,6 +92,10 @@ DECLARE
   k text[] := '{}';
   c text[] := '{}';
 BEGIN
+  IF coalesce(current_setting('histmersion.log_count', true), '') = 'on' THEN
+    PERFORM histmersion_log_counted(TG_TABLE_NAME, lower(TG_OP));
+    RETURN NULL;
+  END IF;
   IF TG_OP = 'TRUNCATE' THEN
     n := NULL;
   ELSIF TG_OP = 'DELETE' THEN
@@ -91,7 +122,8 @@ BEGIN
 END $$;
 
 -- The four statement triggers that record `tbl`'s writes. Every table gets them except the log's own, the bulk text
--- chunks and the caches (StructuredLogSchemaSuite holds the list); a new table calls this in its migration.
+-- chunks, the caches and the counted tables (LogData lists them, StructuredLogDbSuite pins both lists); a new table
+-- calls this in its migration.
 CREATE FUNCTION public.histmersion_log_writes_on(tbl text) RETURNS void
     LANGUAGE plpgsql
     AS $$
@@ -117,20 +149,38 @@ BEGIN
                  'FOR EACH STATEMENT EXECUTE FUNCTION public.histmersion_log_write(%s)', tbl || '_log_truncate', tbl, args);
 END $$;
 
+-- The one statement trigger that counts `tbl`'s writes per minute.
+CREATE FUNCTION public.histmersion_log_counts_on(tbl text) RETURNS void
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+  EXECUTE format('CREATE TRIGGER %I AFTER INSERT OR UPDATE OR DELETE OR TRUNCATE ON public.%I '
+                 'FOR EACH STATEMENT EXECUTE FUNCTION public.histmersion_log_count()', tbl || '_log_count', tbl);
+END $$;
+
 DO $$
 DECLARE
   r record;
 BEGIN
   FOR r IN SELECT c.relname FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
            WHERE n.nspname = 'public' AND c.relkind = 'r'
-             AND c.relname NOT IN ('log_events', 'log_writes', 'source_chunks', 'map_changes', 'site_undated_cells',
-                                   'site_undated_build', 'flyway_schema_history', 'spatial_ref_sys')
+             AND c.relname NOT IN ('log_events', 'log_writes', 'log_counts', 'source_chunks', 'map_changes',
+                                   'site_undated_cells', 'site_undated_build', 'flyway_schema_history',
+                                   'spatial_ref_sys', 'agent_leases', 'upstream_quota', 'plan_quota_readings',
+                                   'plan_quota_refreshes')
            ORDER BY c.relname
   LOOP
     PERFORM public.histmersion_log_writes_on(r.relname);
   END LOOP;
+  PERFORM public.histmersion_log_counts_on(t)
+    FROM unnest(ARRAY['agent_leases', 'upstream_quota', 'plan_quota_readings', 'plan_quota_refreshes']) AS t;
 END $$;
 
--- The trace a job was created under, so its events can be found from the job. The jobs already there keep none.
+-- The log holds client addresses and search text: the `query` escape hatch's read-only role may not read it (the
+-- default privileges granted it SELECT on every new table; the server repeats this at each start, after a restore).
+REVOKE ALL ON public.log_events, public.log_writes, public.log_counts FROM histmersion_query;
+
+-- The trace a job was created under, so its events can be found from the job and a resumed job takes it back. The
+-- jobs already there keep none.
 ALTER TABLE public.jobs ADD COLUMN trace_id uuid;
 ALTER TABLE public.jobs ALTER COLUMN trace_id SET DEFAULT public.histmersion_trace();

@@ -16531,7 +16531,7 @@
           {
             "name" : "kind",
             "in" : "query",
-            "description" : "one of: RequestAnswered, RequestsCounted, ProviderCalled, Written, ProblemRaised, Lost",
+            "description" : "one of: RequestAnswered, RequestsCounted, ProviderCalled, Written, ProblemRaised, Lost, ToolCalled, WritesCounted",
             "required" : false,
             "schema" : {
               "type" : "string"
@@ -32652,6 +32652,18 @@
           }
         }
       },
+      "ToolCalled" : {
+        "title" : "ToolCalled",
+        "type" : "object",
+        "required" : [
+          "tool"
+        ],
+        "properties" : {
+          "tool" : {
+            "type" : "string"
+          }
+        }
+      },
       "TreeRow" : {
         "title" : "TreeRow",
         "type" : "object",
@@ -33356,6 +33368,28 @@
           {
             "type" : "object",
             "required" : [
+              "ToolCalled"
+            ],
+            "properties" : {
+              "ToolCalled" : {
+                "$ref" : "#/components/schemas/ToolCalled"
+              }
+            }
+          },
+          {
+            "type" : "object",
+            "required" : [
+              "WritesCounted"
+            ],
+            "properties" : {
+              "WritesCounted" : {
+                "$ref" : "#/components/schemas/WritesCounted"
+              }
+            }
+          },
+          {
+            "type" : "object",
+            "required" : [
               "Written"
             ],
             "properties" : {
@@ -33652,6 +33686,27 @@
           },
           "reload" : {
             "type" : "boolean"
+          }
+        }
+      },
+      "WritesCounted" : {
+        "title" : "WritesCounted",
+        "type" : "object",
+        "required" : [
+          "table",
+          "change",
+          "count"
+        ],
+        "properties" : {
+          "table" : {
+            "type" : "string"
+          },
+          "change" : {
+            "$ref" : "#/components/schemas/Change1"
+          },
+          "count" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         }
       },
