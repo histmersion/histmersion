@@ -4,6 +4,8 @@ package web
 import com.histmersion.web.map.{MapEventKind, MapSurface}
 import org.scalajs.dom
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.Html
+import com.histmersion.api.Html.html
 
 /** The map's overlays that fold away on a phone: its foot (the past-landscape notice and the credits) and its legend
   * (the colour ramp and the key). In the narrow layout each is a small button until the reader opens it; opened, it
@@ -17,10 +19,6 @@ object MapFold:
   object ClassName extends Newtype[String, Pure]
   type ControlsId = ControlsId.T
   object ControlsId extends Newtype[String, Pure]
-  type Html = Html.T
-  object Html extends Newtype[String, Pure]
-  type InnerHtml = InnerHtml.T
-  object InnerHtml extends Newtype[String, Pure]
   type Label = Label.T
   object Label extends Newtype[String, Pure]
   type Open = Open.T
@@ -32,13 +30,9 @@ object MapFold:
   /** Pure: an overlay's button, which opens and closes the part `controls` (an element id); `label` names the overlay
     * to a screen reader, `inner` is what it shows.
     */
-  def toggleHtml(cls: ClassName, controls: ControlsId, label: Label, inner: InnerHtml, open: Open): Html =
-    Html(
-      s"""<button type="button" class="btn btn--sm $cls" aria-controls="$controls" """ +
-        s"""aria-expanded="$open" aria-label="${Fmt.esc(label.value)}" title="${Fmt.esc(
-            label.value
-          )}">$inner</button>"""
-    )
+  def toggleHtml(cls: ClassName, controls: ControlsId, label: Label, inner: Html, open: Open): Html =
+    html"""<button type="button" class="btn btn--sm $cls" aria-controls="$controls" """ ++
+      html"""aria-expanded="$open" aria-label="$label" title="$label">$inner</button>"""
 
   /** Open or close `box`, its button saying which. */
   def set(box: dom.Element, open: Open): Unit =

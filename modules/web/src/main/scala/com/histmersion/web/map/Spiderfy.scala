@@ -6,6 +6,8 @@ import org.scalajs.dom
 import scala.collection.mutable
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.Html
+import com.histmersion.api.Html.html
 
 /** Fanning a bubble's points out around it (the "spiderfy" of the marker-cluster plugins): a ring for a few, a spiral
   * for more, each point on a thin leg back to the spot. Pure but for the legs' markup.
@@ -13,8 +15,6 @@ import io.github.iltotore.iron.constraint.any.Pure
 object Spiderfy:
   type OffsetCoordinate = OffsetCoordinate.T
   object OffsetCoordinate extends Newtype[Double, Pure]
-  type Svg = Svg.T
-  object Svg extends Newtype[String, Pure]
 
   /** A fanned-out point's marker; the bubble it came out of; the legs' element. */
   type Count = Count.T
@@ -62,8 +62,9 @@ object Spiderfy:
       }
 
   /** The legs: an SVG `side` px square, centred on the spot, a line to each offset. */
-  def legsSvg(offsets: Seq[(OffsetCoordinate, OffsetCoordinate)], side: Side): Svg =
+  def legsSvg(offsets: Seq[(OffsetCoordinate, OffsetCoordinate)], side: Side): Html =
     val px = side.value
     val c = px / 2.0
-    val lines = offsets.map((x, y) => s"""<line x1="$c" y1="$c" x2="${c + x.value}" y2="${c + y.value}"/>""").mkString
-    Svg(s"""<svg width="$px" height="$px" viewBox="0 0 $px $px" aria-hidden="true">$lines</svg>""")
+    val lines =
+      Html.concat(offsets.map((x, y) => html"""<line x1="$c" y1="$c" x2="${c + x.value}" y2="${c + y.value}"/>"""))
+    html"""<svg width="$px" height="$px" viewBox="0 0 $px $px" aria-hidden="true">$lines</svg>"""

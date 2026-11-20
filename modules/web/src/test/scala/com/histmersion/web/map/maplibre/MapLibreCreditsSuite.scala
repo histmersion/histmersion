@@ -40,3 +40,16 @@ class MapLibreCreditsSuite extends munit.FunSuite:
       "© OSM · Mapterhorn"
     )
     assertEquals(BaseMaps.creditsHtml(Nil), "")
+
+  test("a credit is markup through the allow-list: its links stay, a script, a handler or a script link never runs"):
+    assertEquals(
+      BaseMaps.creditsHtml(
+        Seq(
+          BaseMapSpec.Raster.Attribution("""© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>"""),
+          BaseMapSpec.Raster.Attribution("""<img src=x onerror="alert(1)"><a href="javascript:alert(2)">x</a>"""),
+          BaseMapSpec.Raster.Attribution("<script>alert(3)</script>")
+        )
+      ),
+      """© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · """ +
+        """&lt;img src=x onerror=&quot;alert(1)&quot;&gt;<a>x</a> · &lt;script&gt;alert(3)&lt;/script&gt;"""
+    )

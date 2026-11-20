@@ -13,6 +13,8 @@ import scala.scalajs.js
 import com.histmersion.api.basemap.{Basemap, BaseMapSource, BaseStyles}
 import com.histmersion.api.instance.UiConfig
 import com.histmersion.web.map.MapSurface
+import com.histmersion.api.Html
+import com.histmersion.api.Html.html as markup
 
 /** The base map (docs/user-guide/exploring/web-ui.md, "The base map"; docs/research-map-styles.md):
   *
@@ -98,12 +100,15 @@ object BaseMaps:
   /** The credit line's link to every dataset's credit (Settings › Credits): the places, boundaries and events drawn
     * over the base map are credited there.
     */
-  val allCreditsLink: String =
-    s"""<a class="map-credits-all" href="${Route.Settings(SettingsSection.Credits).path}">Data sources</a>"""
+  val allCreditsLink: Html =
+    markup"""<a class="map-credits-all" href="${Route.Settings(SettingsSection.Credits).path}">Data sources</a>"""
 
-  /** Pure: the credits line — each source's credit once, in order, separated by a middle dot. */
-  def creditsHtml(credits: Seq[BaseMapSpec.Raster.Attribution]): String =
-    credits.map(_.value.trim).filter(_.nonEmpty).distinct.mkString(" · ")
+  /** Pure: the credits line — each source's credit once, in order, separated by a middle dot. A credit is markup a
+    * base-map spec (a setting) or a map style carries, so it goes through the allow-list: its links stay, of an allowed
+    * scheme; nothing in it runs.
+    */
+  def creditsHtml(credits: Seq[BaseMapSpec.Raster.Attribution]): Html =
+    Html.join(credits.map(_.value.trim).filter(_.nonEmpty).distinct.map(Html.sanitize), markup" · ")
 
   /** How far the notice's corner rises so it clears the right-hand corner's controls: their height and a gap when the
     * two would overlap side by side, else nothing — and nothing when that would take it past the `room` above it in the
@@ -288,23 +293,24 @@ object BaseMaps:
       // open at first (the credits must be seen without any interaction), folded to its (i) button after the
       // reader's first pan or zoom; opened with the button it shows the notice about the past landscape too
       val open = footOpenNow(footOpen, moved, notice.exists(_._2))
-      box.innerHTML = MapFold
-        .toggleHtml(
+      HtmlSink.replace(
+        box,
+        MapFold.toggleHtml(
           MapFold.ClassName("btn--icon map-foot-toggle"),
           MapFold.ControlsId("map-foot-body"),
           if notice.nonEmpty then MapFold.Label("about this map: its terrain and credits")
           else MapFold.Label("map credits"),
-          MapFold.InnerHtml(Icon.html(Icon.Info).value),
+          Icon.html(Icon.Info),
           MapFold.Open(open)
         )
-        .value
+      )
       MapFold.set(box, MapFold.Open(open))
       box.classList.toggle("is-expanded", footOpen.contains(true))
       // the online OpenStreetMap tiles' credit stays in sight, folded or not
       if keepsOsmCredit(shown.now()) then
         val osm = dom.document.createElement("span").asInstanceOf[dom.HTMLElement]
         osm.className = "map-credits-keep"
-        osm.innerHTML = "© <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a>"
+        HtmlSink.replace(osm, markup"""© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>""")
         box.appendChild(osm)
       MapFold.wire(box, o => { footOpen = Some(o.value); box.classList.toggle("is-expanded", o.value); fitNotice() })
       val body = dom.document.createElement("div").asInstanceOf[dom.HTMLElement]
@@ -333,7 +339,7 @@ object BaseMaps:
         val c = dom.document.createElement("div").asInstanceOf[dom.HTMLElement]
         c.className = "map-credits"
         // the sources' own credit lines (their links included), as the map library showed them
-        c.innerHTML = creditsHtml(credits) + " · " + allCreditsLink
+        HtmlSink.replace(c, markup"${creditsHtml(credits)} · $allCreditsLink")
         Option(c.querySelector(".map-credits-all")).foreach(
           _.addEventListener(
             "click",

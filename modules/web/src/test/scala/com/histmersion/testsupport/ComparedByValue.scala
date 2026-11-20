@@ -3,6 +3,7 @@ package testsupport
 
 import io.github.iltotore.iron.RefinedType
 import munit.Compare
+import com.histmersion.api.Html
 
 /** Tests state expected values as literals of the base type. Two values compare by `==` when their types have the same
   * shape — the same type constructor, or one a subtype of the other (`Option` and `Some`, `Seq` and `List`, `Either`
@@ -46,10 +47,20 @@ object ComparedByValue:
     given eitherAlternatives: [E[l, r] <: Either[l, r], L1, R1, L2, R2]
       => (ByValue[L1, L2], ByValue[R1, R2]) => ByValue[E[L1, R1], Left[L2, Nothing] | Right[Nothing, R2]] =
       ByValue()
+
+    /** Markup compares with the text it is: an expected page fragment is written as a literal. */
+    given markupWithText: ByValue[Html, String] = ByValue()
+    given textWithMarkup: ByValue[String, Html] = ByValue()
     given emptyTuples: ByValue[EmptyTuple, EmptyTuple] = ByValue()
     given tuples
         : [H1, T1 <: Tuple, H2, T2 <: Tuple] => (ByValue[H1, H2], ByValue[T1, T2]) => ByValue[H1 *: T1, H2 *: T2] =
       ByValue()
+
+  /** Tests read markup as its text (`html.value.contains(…)`), as they read a newtype's value. */
+  final class MarkupText:
+    extension (h: Html) def value: String = h.markup
+
+  given markupText: MarkupText = MarkupText()
 
   /** `X` and `Y` are one type, or one is a subtype of the other. */
   final class Related[X, Y]

@@ -18,7 +18,16 @@ class WebAssetsSuite extends munit.FunSuite:
   test("the page mounts the Scala.js app into #app and loads the bundle"):
     val html = asset("index.html")
     assert(html.contains("<div id=\"app\"></div>"), html)
-    assert(html.contains("app.src = \"/web/app.bundle.js"), html)
+    assert(html.contains("""<script type="module" src="/web/boot.js"></script>"""), html)
+    assert(asset("boot.js").contains("app.src = \"/web/app.bundle.js"), asset("boot.js"))
+
+  test("the page shells carry no inline script: the Content-Security-Policy runs only the server's own files"):
+    val inline = "<script(?![^>]*\\bsrc=)[^>]*>".r
+    for (name, html) <- List(
+        "index.html" -> asset("index.html"),
+        "a server page" -> ArticleHtml.page(Title("t"), HtmlRender.Html("<p>b</p>"), PageKind.values.head).value
+      )
+    do assertEquals(inline.findFirstIn(html), None, name)
 
   test("the web UI's pages, its items' pages and the old list addresses serve the app; anything else does not"):
     def app(p: String) =
@@ -46,7 +55,7 @@ class WebAssetsSuite extends munit.FunSuite:
       .foreach(p => assert(!app(p), p))
 
   test("both page shells apply the reader's stored theme before the stylesheet paints"):
-    val key = "localStorage.getItem(\"histmersion.theme\")"
+    val key = "<script src=\"/web/theme.js\"></script>"
     for (name, html) <- List(
         "index.html" -> asset("index.html"),
         "a server page" -> ArticleHtml.page(Title("t"), HtmlRender.Html("<p>b</p>"), PageKind.values.head).value
@@ -55,7 +64,9 @@ class WebAssetsSuite extends munit.FunSuite:
       val at = html.indexOf(key)
       assert(at > 0, s"$name: no theme script")
       assert(at < html.indexOf("/web/style.css"), s"$name: the theme is applied after the stylesheet")
-      assert(html.contains("setAttribute(\"data-theme\",t)") && html.contains("catch(e)"), name)
+    val theme = asset("theme.js")
+    assert(theme.contains("localStorage.getItem(\"histmersion.theme\")"), theme)
+    assert(theme.contains("setAttribute(\"data-theme\",t)") && theme.contains("catch(e)"), theme)
     assert(
       asset("index.html").contains(
         """<link rel="preload" href="/web/vendor/source-fonts/SourceSans3-Regular.woff2" as="font""""
@@ -65,12 +76,13 @@ class WebAssetsSuite extends munit.FunSuite:
   test("the bundle is a classic script, never type=module (its top-level `this` must be the window)"):
     val html = asset("index.html")
     assert(!"<script[^>]*src=\"[^\"]*app\\.bundle\\.js".r.findFirstIn(html).exists(_.contains("module")), html)
-    assert(html.contains("document.createElement(\"script\")"), "the bundle is added as a classic script element")
+    val boot = asset("boot.js")
+    assert(boot.contains("document.createElement(\"script\")"), "the bundle is added as a classic script element")
 
   test("the map library (an ES module) is on window before the bundle that uses it is added"):
-    val html = asset("index.html")
-    val lib = html.indexOf("window.maplibregl = maplibregl")
-    assert(lib > 0 && lib < html.indexOf("app.src ="), html)
+    val boot = asset("boot.js")
+    val lib = boot.indexOf("window.maplibregl = maplibregl")
+    assert(lib > 0 && lib < boot.indexOf("app.src ="), boot)
 
   test("the bundle is on the classpath with a source map next to it"):
     val js = asset("app.bundle.js")

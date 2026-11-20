@@ -2,6 +2,9 @@ package com.histmersion
 package web
 
 import hearth.kindlings.optics.syntax.*
+import com.histmersion.testsupport.ComparedByValue.given
+import com.histmersion.api.Html
+import com.histmersion.api.Html.html
 
 import com.histmersion.api.BBox
 import com.histmersion.web.map.*
@@ -336,7 +339,7 @@ class BaseMapsSuite extends munit.FunSuite:
         MapFold.ClassName("hd-legend-toggle"),
         MapFold.ControlsId("hd-legend-body"),
         MapFold.Label("map legend"),
-        MapFold.InnerHtml("<span>legend</span>"),
+        html"<span>legend</span>",
         open = MapFold.Open(false)
       )
     assert(closed.value.startsWith("""<button type="button" class="btn btn--sm hd-legend-toggle" """), closed)
@@ -350,7 +353,7 @@ class BaseMapsSuite extends munit.FunSuite:
           MapFold.ClassName("x"),
           MapFold.ControlsId("y"),
           MapFold.Label("a \"b\" & c"),
-          MapFold.InnerHtml(""),
+          Html.empty,
           open = MapFold.Open(true)
         )
         .value

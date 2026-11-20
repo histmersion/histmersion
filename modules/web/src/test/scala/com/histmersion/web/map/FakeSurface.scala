@@ -6,6 +6,7 @@ import hearth.kindlings.optics.syntax.*
 import org.scalajs.dom
 
 import scala.collection.mutable
+import com.histmersion.api.Html
 
 /** A [[MapSurface]] in memory: Web Mercator on the 256-pixel grid, a fixed size, its events fired by hand, its shapes
   * kept as data, its base maps recorded. The test double of the map engine — the view-model's logic (clustering, what
@@ -95,7 +96,7 @@ final class FakeSurface(
   def shapesAt(p: ScreenPt): Seq[ShapeHit] = Nil
   def pointTiles(id: MapSurface.LayerId, layer: MapSurface.LayerId, maxZoom: MapSurface.PointTilesMaxZoom): PointTiles =
     NoMap.Tiles
-  def popup(at: LatLon, html: MapSurface.PopupHtml, cls: MapSurface.PopupCls = MapSurface.PopupCls("")): Popup =
+  def popup(at: LatLon, html: Html, cls: MapSurface.PopupCls = MapSurface.PopupCls("")): Popup =
     new Popup:
       def close(): Unit = ()
       def isOpen: Boolean = true

@@ -6,6 +6,8 @@ import org.scalajs.dom
 import scala.collection.mutable
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.Html
+import com.histmersion.web.HtmlSink
 
 /** A DOM marker at (`lat`, `lon`): its element's top-left at the point, or — `box` given — the box centred on it.
   * `.hd-marker` is the stylesheet's hook for every marker (and the map's sign that a pointer event is the marker's,
@@ -85,8 +87,8 @@ object DomMarker:
   object ZIndex extends Newtype[Int, Pure]
 
   /** A marker element of class `cls` holding `html`. */
-  def element(cls: String, html: String): dom.HTMLElement =
+  def element(cls: String, html: Html): dom.HTMLElement =
     val el = dom.document.createElement("div").asInstanceOf[dom.HTMLElement]
     el.className = cls
-    el.innerHTML = html
+    HtmlSink.replace(el, html)
     el

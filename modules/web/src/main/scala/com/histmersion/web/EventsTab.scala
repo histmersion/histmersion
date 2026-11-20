@@ -92,7 +92,7 @@ object EventsTab:
               if evt.tier.value == EventTier.Catalogue then "catalogue only" else "attested"
             }",
           onMountCallback(ctx =>
-            ctx.thisNode.ref.innerHTML = Glyphs.badge(Glyphs.BadgeName(EventTaxonomy.icon(evt.kind).value)).value
+            HtmlSink.replace(ctx.thisNode.ref, Glyphs.badge(Glyphs.BadgeName(EventTaxonomy.icon(evt.kind).value)))
           )
         ),
         evt.label.value

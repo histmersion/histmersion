@@ -11,6 +11,8 @@ import scala.scalajs.js.JSConverters.*
 import com.histmersion.web.map.MapSurface
 import com.histmersion.web.map.BaseMapSpec
 import com.histmersion.web.Auth
+import com.histmersion.web.HtmlSink
+import com.histmersion.api.Html
 
 /** A [[MapSurface]] over one MapLibre map. */
 final class MapLibreSurface(
@@ -382,7 +384,7 @@ final class MapLibreSurface(
       gl.keyboard.disableRotation()
     el.classList.toggle("is-map-locked", locked.value)
 
-  def popup(at: LatLon, html: MapSurface.PopupHtml, cls: MapSurface.PopupCls): Popup =
+  def popup(at: LatLon, html: Html, cls: MapSurface.PopupCls): Popup =
     closePopups()
     val p = GlPopup(
       js.Dynamic
@@ -395,7 +397,7 @@ final class MapLibreSurface(
         )
         .asInstanceOf[js.Object]
     )
-    p.setLngLat(js.Array(at.lon.value, at.lat.value)).setHTML(html.value).addTo(gl)
+    HtmlSink.popup(p.setLngLat(js.Array(at.lon.value, at.lat.value)), html).addTo(gl)
     popups += p
     p.on("close", _ => { val _ = popups -= p })
     new Popup:

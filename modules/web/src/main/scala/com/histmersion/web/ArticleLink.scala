@@ -1,7 +1,7 @@
 package com.histmersion
 package web
 
-import com.histmersion.api.HtmlAtoms
+import com.histmersion.api.Html.Atoms
 import com.histmersion.api.research.Article
 import com.raquo.laminar.api.L
 import com.raquo.laminar.api.L.*
@@ -9,10 +9,10 @@ import com.raquo.laminar.api.L.*
 import scala.scalajs.js
 
 /** The one article link: `<a class="art-ref" data-slug href="/article/slug">` — the shape the server renders
-  * ([[HtmlAtoms.articleLink]]), so [[Preview]] previews it the same everywhere.
+  * ([[Atoms.articleLink]]), so [[Preview]] previews it the same everywhere.
   */
 object ArticleLink:
-  def href(slug: Article.Slug): String = s"/article/${HtmlAtoms.segment(slug.value)}"
+  def href(slug: Article.Slug): String = s"/article/${Atoms.segment(slug.value)}"
 
   def apply(slug: Article.Slug, label: String): HtmlElement =
     a(

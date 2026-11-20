@@ -318,6 +318,35 @@ class PagesSuite extends munit.FunSuite:
     assert(html.contains("not in the corpus yet"), html)
     assert(html.contains(HtmlRender.articleRef(topic).value), html)
 
+  test("the pages pass the allow-list unchanged, so the web UI's window (which cleans what it fetches) loses nothing"):
+    val p = sourcePage
+      .modify(_.cites)
+      .setTo(
+        List(
+          Citation.ToSource(drews, Citation.ToSource.Kind("challenges")),
+          Citation.Unresolved(Citation.Unresolved.Id("ghost2019_x"), Citation.Unresolved.Kind("references"))
+        )
+      )
+      .modify(_.citedBy)
+      .setTo(List(Citation.ToArticle(topic, None)))
+    val pages = List(
+      Pages.source(p, links).value,
+      Pages
+        .article(
+          articlePage(
+            Article.Body(
+              "# The Sea Peoples\n\nProse [[cline2014_year]] and [[bronze_age_collapse]] and [[ghost]].\n\n" +
+                "| a | b |\n|:--|--:|\n| 1 | 2 |\n\n![Figure 1](assets/f.png)\n\n`code` *em* **strong**\n\n## Not used\n\n" +
+                "- **[[drews1993_end]]**: why"
+            )
+          ).modify(_.review).setTo(Some(review)),
+          links
+        )
+        .value,
+      Pages.reviewHistory(review).value
+    )
+    pages.foreach(html => assertEquals(api.Html.sanitize(html).markup, html))
+
   test("a standalone page loads the Scala.js bundle and names its page kind"):
     val doc = ArticleHtml.page(Title("T"), HtmlRender.Html("<p>x</p>"), PageKind.Source).value
     assert(doc.contains("""<script src="/web/app.bundle.js"""), doc)

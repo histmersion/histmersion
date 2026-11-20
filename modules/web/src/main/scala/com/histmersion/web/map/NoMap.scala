@@ -8,10 +8,10 @@ import org.scalajs.dom
 import scala.collection.mutable
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.basemap.BasemapApi
+import com.histmersion.api.Html
+import com.histmersion.api.Html.html as markup
 
 object NoMap:
-  type Html = Html.T
-  object Html extends Newtype[String, Pure]
   type MessageText = MessageText.T
   object MessageText extends Newtype[String, Pure]
 
@@ -35,8 +35,6 @@ object NoMap:
     def onChange(f: () => Unit): Subscription = new Subscription { def cancel(): Unit = () }
     def loaded: Boolean = true
 
-  private def esc(s: String) = s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-
   /** Pure: the message in the map's place — why, then what to do; the rest of the app works without it. */
   def message(why: Problem): (MessageText, MessageText) =
     (
@@ -50,4 +48,4 @@ object NoMap:
 
   def html(why: Problem): Html =
     val (head, body) = message(why)
-    Html(s"""<p class="map-unavailable-title">${esc(head.value)}</p><p>${esc(body.value)}</p>""")
+    markup"""<p class="map-unavailable-title">$head</p><p>$body</p>"""

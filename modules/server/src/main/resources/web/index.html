@@ -6,22 +6,15 @@
   <title>Histmersion</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%2214%22 fill=%22%231f2433%22/%3E%3Cpath d=%22M6 20c5-7 15-7 20 0%22 stroke=%22%236aa3ff%22 stroke-width=%223%22 fill=%22none%22/%3E%3Ccircle cx=%2216%22 cy=%2212%22 r=%223%22 fill=%22%23f2c14e%22/%3E%3C/svg%3E">
   <!-- the reader's theme (web Theme), applied before the stylesheet paints: no flash of the other one -->
-  <script>try{var t=localStorage.getItem("histmersion.theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+  <script src="/web/theme.js"></script>
   <link rel="preload" href="/web/vendor/source-fonts/SourceSans3-Regular.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="stylesheet" href="/web/vendor/maplibre-gl/maplibre-gl.css" />
   <link rel="stylesheet" href="/web/style.css" />
 </head>
 <body>
   <div id="app"></div>
-  <!-- MapLibre GL JS (ES modules only) on window.maplibregl, then the app's bundle — a classic script, its
-       download started at once by the preload, run once the map library is there -->
+  <!-- MapLibre GL JS on window.maplibregl, then the app's bundle (web/boot.js); the preload starts its download -->
   <link rel="preload" href="/web/app.bundle.js?v=3" as="script" />
-  <script type="module">
-    import * as maplibregl from "/web/vendor/maplibre-gl/maplibre-gl.js";
-    window.maplibregl = maplibregl;
-    const app = document.createElement("script");
-    app.src = "/web/app.bundle.js?v=3";
-    document.body.append(app);
-  </script>
+  <script type="module" src="/web/boot.js"></script>
 </body>
 </html>

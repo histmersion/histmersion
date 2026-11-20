@@ -1,7 +1,7 @@
 package com.histmersion
 package web
 
-import com.histmersion.api.HtmlAtoms
+import com.histmersion.api.Html.Atoms
 import com.histmersion.api.automation.Queue
 
 import scala.scalajs.js
@@ -36,16 +36,16 @@ enum Route derives CanEqual:
     case Library(s)    => sub("/library", s.slug.value)
     case Research(s)   => sub("/research", s.slug.value)
     case Activity(t)   => sub("/research/activity", t.slug)
-    case Goal(slug)    => s"/research/goals/${HtmlAtoms.segment(slug.value)}"
+    case Goal(slug)    => s"/research/goals/${Atoms.segment(slug.value)}"
     case Settings(s)   => sub("/settings", s.slug.value)
     case Setup         => "/setup"
     case Source(ck)    => SourceLink.href(ck)
     case Article(slug) => ArticleLink.href(api.research.Article.Slug(slug.value))
-    case Place(id)     => s"/place/${HtmlAtoms.segment(id.value)}"
-    case Event(id)     => s"/event/${HtmlAtoms.segment(id.value)}"
-    case Run(id)       => s"/run/${HtmlAtoms.segment(id.value)}"
-    case Manager(id)   => s"/manager/${HtmlAtoms.segment(id.value)}"
-    case Job(id)       => s"/job/${HtmlAtoms.segment(id.value)}"
+    case Place(id)     => s"/place/${Atoms.segment(id.value)}"
+    case Event(id)     => s"/event/${Atoms.segment(id.value)}"
+    case Run(id)       => s"/run/${Atoms.segment(id.value)}"
+    case Manager(id)   => s"/manager/${Atoms.segment(id.value)}"
+    case Job(id)       => s"/job/${Atoms.segment(id.value)}"
 
   private def sub(base: String, slug: String): String = if slug.isEmpty then base else s"$base/$slug"
 

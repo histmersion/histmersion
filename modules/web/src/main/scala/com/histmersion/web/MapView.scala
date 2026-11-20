@@ -33,6 +33,8 @@ import com.histmersion.web.map.MapStart
 import com.histmersion.web.marks.MapMenu
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.Paging
+import com.histmersion.api.Html
+import com.histmersion.api.Html.html as markup
 
 object MapView:
   type ClassName = ClassName.T
@@ -41,8 +43,6 @@ object MapView:
   object Color extends Newtype[String, Pure]
   type HoldsCell = HoldsCell.T
   object HoldsCell extends Newtype[Boolean, Pure]
-  type Html = Html.T
-  object Html extends Newtype[String, Pure]
   type Label = Label.T
   object Label extends Newtype[String, Pure]
   export DotCluster.Mid
@@ -162,7 +162,7 @@ object MapView:
     if TheMap.isUp then {
       val _ = TheMap.surface.popup(
         LatLon(LatLon.Lat(lat.value), LatLon.Lon(lon.value)),
-        MapSurface.PopupHtml(s"""<div class="hd-popup-content">$html</div>""")
+        markup"""<div class="hd-popup-content">$html</div>"""
       )
     }
 
@@ -380,22 +380,18 @@ object MapView:
     */
   private[web] def popupHtml(pt: GeoHit): Html =
     // a finding that states no confidence says so — it is not drawn as high
-    val conf = pt.confidence.fold(s""" <span class="hd-conf">confidence ${Certainty.UnstatedLabel}</span>""")(c =>
-      " " + ConfidenceBadge.html(c)
+    val conf = pt.confidence.fold(markup""" <span class="hd-conf">confidence ${Certainty.UnstatedLabel}</span>""")(c =>
+      markup" ${ConfidenceBadge.html(c)}"
     )
     val period = Fmt.periodStr(pt.periodStart, pt.periodEnd)
-    Html(
-      CardIcons.html(
-        CardIcons.sourceKind(
-          pt.sourceKind.map(k => Source.Kinds.Wire(k.value)).getOrElse(Source.Kinds.Wire(Source.Kinds.Unknown))
-        )
-      ) +
-        s"""${SourceLink.html(pt.citekey, pt.doi, SourceLink.idLabel(pt.citekey, pt.doi))} — ${Fmt.esc(
-            pt.title.value
-          )}""" +
-        s"""<br><i>$period</i><br>${Fmt.esc(pt.claim.value)}$conf<br>""" +
-        s"""<a href="${Fmt.esc(SourceLink.href(pt.citekey))}" target="_blank">new tab ↗</a>"""
-    )
+    CardIcons.html(
+      CardIcons.sourceKind(
+        pt.sourceKind.map(k => Source.Kinds.Wire(k.value)).getOrElse(Source.Kinds.Wire(Source.Kinds.Unknown))
+      )
+    ) ++
+      markup"""${SourceLink.html(pt.citekey, pt.doi, SourceLink.idLabel(pt.citekey, pt.doi))} — ${pt.title}""" ++
+      markup"""<br><i>$period</i><br>${pt.claim}$conf<br>""" ++
+      markup"""<a href="${SourceLink.href(pt.citekey)}" target="_blank">new tab ↗</a>"""
 
   /** A bubble's marker: its count, colours and outline, what it holds; a click lists them (or zooms in). */
   private def bubbleMarker(ds: Seq[Dot]): DomMarker =
@@ -420,7 +416,6 @@ object MapView:
           Some(DotCluster.SpokenText(DotCluster.summary(held).value)),
           DotCluster.form(held)
         )
-        .value
     )
     val lat = LatLon.Lat(ds.map(_.at.lat.value).sum / ds.size)
     val lon = LatLon.Lon(ds.map(_.at.lon.value).sum / ds.size)
@@ -612,36 +607,36 @@ object MapView:
   private def addLegend(surface: MapSurface): Unit =
     legendEl = dom.document.createElement("div").asInstanceOf[dom.HTMLElement]
     legendEl.className = "hd-legend hd-map-control"
-    val ramp = (0 until 10).map(i => s"""<i style="--c:${Fmt.color(Fmt.ColorT(i.toDouble / 9))}"></i>""").mkString
-    val confPips = Confidence.values
-      .map(c =>
+    val ramp =
+      Html.concat((0 until 10).map(i => markup"""<i style="--c:${Fmt.color(Fmt.ColorT(i.toDouble / 9))}"></i>"""))
+    val confPips = Html.concat(
+      Confidence.values.toList.map(c =>
         val wire = c.toString.toLowerCase
-        s"""<i style="--c:var(${Palette.confidence(Confidence.Wire(wire))})" title="$wire"></i>"""
+        markup"""<i style="--c:var(${Palette.confidence(Confidence.Wire(wire))})" title="$wire"></i>"""
       )
-      .mkString
+    )
     // a finding with no confidence: its own pip, apart from the scale (it is not a level of it)
     val unstated = Certainty.UnstatedLabel
     val unstatedPip =
-      s"""<i class="is-unstated" style="--c:var(--conf-unstated)" title="$unstated"></i>""" +
-        s"""<span class="hd-conf-range">$unstated</span>"""
-    legendEl.innerHTML = MapFold
-      .toggleHtml(
+      markup"""<i class="is-unstated" style="--c:var(--conf-unstated)" title="$unstated"></i>""" ++
+        markup"""<span class="hd-conf-range">$unstated</span>"""
+    HtmlSink.replace(
+      legendEl,
+      MapFold.toggleHtml(
         MapFold.ClassName("hd-legend-toggle"),
         MapFold.ControlsId("hd-legend-body"),
         MapFold.Label("map legend"),
-        MapFold.InnerHtml(
-          s"""<span class="hd-ramp hd-ramp--mini" aria-hidden="true">$ramp</span><span>legend</span>"""
-        ),
+        markup"""<span class="hd-ramp hd-ramp--mini" aria-hidden="true">$ramp</span><span>legend</span>""",
         open = MapFold.Open(false)
-      )
-      .value +
-      """<div class="hd-legend-body" id="hd-legend-body">""" +
-      s"""<div class="hd-ramp">$ramp</div>""" +
-      """<div class="hd-ramp-labels"><span class="lo"></span>""" +
-      """<span class="mid">older ← → newer</span><span class="hi"></span></div>""" +
-      s"""<div class="hd-legend-confidence"><span class="hd-conf-label">certainty</span>$confPips""" +
-      """<span class="hd-conf-range">high → contested</span>""" +
-      s"""$unstatedPip</div><div class="hd-key-slot"></div></div>"""
+      ) ++
+        markup"""<div class="hd-legend-body" id="hd-legend-body">""" ++
+        markup"""<div class="hd-ramp">$ramp</div>""" ++
+        markup"""<div class="hd-ramp-labels"><span class="lo"></span>""" ++
+        markup"""<span class="mid">older ← → newer</span><span class="hi"></span></div>""" ++
+        markup"""<div class="hd-legend-confidence"><span class="hd-conf-label">certainty</span>$confPips""" ++
+        markup"""<span class="hd-conf-range">high → contested</span>""" ++
+        markup"""$unstatedPip</div><div class="hd-key-slot"></div></div>"""
+    )
     MapFold.wire(legendEl)
     MapFold.followSize(surface)
     val corner = surface.corner(Corner.BottomRight)
@@ -650,7 +645,7 @@ object MapView:
   /** The legend's key to the icons (#1449), for the layers that draw them. */
   private def updateKey(events: MapKey.Events, sites: MapKey.Sites, undated: MapKey.Undated): Unit =
     if legendEl != null then
-      Option(legendEl.querySelector(".hd-key-slot")).foreach(_.innerHTML = MapKey.html(events, sites, undated).value)
+      Option(legendEl.querySelector(".hd-key-slot")).foreach(HtmlSink.replace(_, MapKey.html(events, sites, undated)))
 
   private def loadEvents(span: (Years.Astronomical, Years.Astronomical)): Unit =
     val tiles = tileSpan(span)

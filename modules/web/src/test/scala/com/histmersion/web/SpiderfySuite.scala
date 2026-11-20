@@ -3,6 +3,7 @@ package web
 
 import com.histmersion.web.map.{Clustering, LatLon, Spiderfy}
 import com.histmersion.web.ui.Layout
+import com.histmersion.testsupport.ComparedByValue.markupText
 
 class SpiderfySuite extends munit.FunSuite:
 

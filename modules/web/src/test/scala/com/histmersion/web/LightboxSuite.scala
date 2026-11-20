@@ -4,6 +4,7 @@ package web
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.media.MediaProvider
+import com.histmersion.testsupport.ComparedByValue.given
 
 class LightboxSuite extends munit.FunSuite:
 
@@ -20,7 +21,7 @@ class LightboxSuite extends munit.FunSuite:
   )
 
   test("a thumbnail's attributes carry its full-size view, and read back as the same item") {
-    val attrs = Lightbox.attrs(item)
+    val attrs = Lightbox.attrs(item).value
     val parsed = """ ([a-z-]+)="([^"]*)"""".r.findAllMatchIn(attrs).map(m => m.group(1) -> m.group(2)).toMap
     assertEquals(parsed("data-full"), "/media/u1/file")
     assertEquals(Lightbox.fromAttrs(parsed.get, "/media/u1/thumb", item.alt), item)
@@ -30,6 +31,7 @@ class LightboxSuite extends munit.FunSuite:
     assert(
       Lightbox
         .attrs(item.modify(_.title).setTo(Some("a \"b\" <c>")))
+        .value
         .contains("""data-lb-title="a &quot;b&quot; &lt;c&gt;"""")
     )
   }
@@ -42,7 +44,7 @@ class LightboxSuite extends munit.FunSuite:
   }
 
   test("the caption: title, credit, the licence's name linked to its text, the provider's page") {
-    val c = Lightbox.captionHtml(item)
+    val c = Lightbox.captionHtml(item).value
     assert(c.contains("""<div class="lightbox-title">Lions_Gate.jpg</div>"""), c)
     // the credit names the author already: not twice
     assert(c.contains("Photo: A. Author, via Commons ·"), c)
@@ -55,7 +57,19 @@ class LightboxSuite extends munit.FunSuite:
   }
 
   test("the caption names an author the credit leaves out; a bare figure has none") {
-    val c = Lightbox.captionHtml(item.modify(_.credit).setTo(Some("The Met")))
+    val c = Lightbox.captionHtml(item.modify(_.credit).setTo(Some("The Met"))).value
     assert(c.contains("A. Author · The Met"), c)
     assertEquals(Lightbox.captionHtml(Lightbox.Item("/assets/x.png", "fig")), "")
+  }
+
+  test("a provider's page or licence link of a refused scheme is no link; its words stay") {
+    val c = Lightbox
+      .captionHtml(
+        item.modify(_.sourceUrl).setTo(Some("javascript:alert(1)")).modify(_.licenseUrl).setTo(Some("vbscript:x"))
+      )
+      .value
+    assert(!c.contains("javascript:") && !c.contains("vbscript:"), c)
+    assert(!c.contains("lightbox-source"), c)
+    assert(c.contains("""<span class="media-license">CC BY-SA 3.0</span>"""), c)
+    assert(c.contains("Photo: A. Author, via Commons"), c)
   }

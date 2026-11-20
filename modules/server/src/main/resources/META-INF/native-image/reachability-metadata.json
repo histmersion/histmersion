@@ -25557,6 +25557,9 @@
       "glob": "web/app.bundle.js.map"
     },
     {
+      "glob": "web/boot.js"
+    },
+    {
       "glob": "web/index.html"
     },
     {
@@ -25567,6 +25570,9 @@
     },
     {
       "glob": "web/styles/readable.json"
+    },
+    {
+      "glob": "web/theme.js"
     },
     {
       "glob": "web/vendor/leaflet.markercluster/LICENSE.txt"

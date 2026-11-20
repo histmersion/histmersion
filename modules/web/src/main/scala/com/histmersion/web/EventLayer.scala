@@ -152,7 +152,7 @@ object EventLayer:
         }
       }
       .getOrElse(false)
-    val el = DomMarker.element("hd-event-wrap", EventPlayback.html(e, a).value)
+    val el = DomMarker.element("hd-event-wrap", EventPlayback.html(e, a))
     val marker = new DomMarker(LatLon.Lat(e.lat.value), LatLon.Lon(e.lon.value), el)
     // a regional label under the local ones: the battle stays readable inside its war
     marker.setZ(if e.scale.value == EventScale.Regional then DomMarker.ZIndex(1) else DomMarker.ZIndex(2))

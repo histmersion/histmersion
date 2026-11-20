@@ -2,6 +2,7 @@ package com.histmersion
 package web
 
 import com.histmersion.api.Years
+import com.histmersion.testsupport.ComparedByValue.markupText
 import com.histmersion.api.catalogue.{Latitude, Longitude}
 import com.histmersion.api.library.Confidence
 import com.histmersion.api.library.GeoHit

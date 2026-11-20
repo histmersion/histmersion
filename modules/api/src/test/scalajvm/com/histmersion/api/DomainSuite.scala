@@ -163,23 +163,23 @@ class DomainSuite extends munit.FunSuite:
 
   // ── the shared HTML atoms ─────────────────────────────────────────────────────────────────────
 
-  test("HtmlAtoms.segment percent-encodes everything but the unreserved characters"):
-    assertEquals(HtmlAtoms.segment("cline2014_year"), "cline2014_year")
-    assertEquals(HtmlAtoms.segment("a b/c"), "a%20b%2Fc")
-    assertEquals(HtmlAtoms.segment("ł"), "%C5%82")
+  test("Html.Atoms.segment percent-encodes everything but the unreserved characters"):
+    assertEquals(Html.Atoms.segment("cline2014_year"), "cline2014_year")
+    assertEquals(Html.Atoms.segment("a b/c"), "a%20b%2Fc")
+    assertEquals(Html.Atoms.segment("ł"), "%C5%82")
 
-  test("HtmlAtoms.sourceLink is the one anchor shape; the DOI attribute only when there is one"):
+  test("Html.Atoms.sourceLink is the one anchor shape; the DOI attribute only when there is one"):
     assertEquals(
-      HtmlAtoms.sourceLink(Citekey("a2020_b"), Some(Doi("10.1/x")), "10.1/x"),
+      Html.Atoms.sourceLink(Citekey("a2020_b"), Some(Doi("10.1/x")), "10.1/x").markup,
       """<a class="src-ref" data-ck="a2020_b" data-doi="10.1/x" href="/source/a2020_b">10.1/x</a>"""
     )
     assertEquals(
-      HtmlAtoms.sourceLink(Citekey("a2020_b"), Some(Doi(" ")), "a2020_b"),
+      Html.Atoms.sourceLink(Citekey("a2020_b"), Some(Doi(" ")), "a2020_b").markup,
       """<a class="src-ref" data-ck="a2020_b" href="/source/a2020_b">a2020_b</a>"""
     )
 
   test("every confidence level has a distinct icon, drawn in currentColor"):
-    val icons = Confidence.values.toList.map(ConfidenceStyle.icon)
+    val icons = Confidence.values.toList.map(c => ConfidenceStyle.icon(c).markup)
     assertEquals(icons.distinct.size, Confidence.values.length)
     assert(icons.forall(_.contains("currentColor")))
-    assert(HtmlAtoms.confidenceBadge(Confidence.Low).contains("conf-badge conf-low"))
+    assert(Html.Atoms.confidenceBadge(Confidence.Low).markup.contains("conf-badge conf-low"))

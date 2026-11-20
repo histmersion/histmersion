@@ -60,7 +60,12 @@ import com.histmersion.server.ArchitectureSuite.{Blank, SourceFile, Violation}
   *     text;
   *   - `first-problem` (G60 step 5, pinned at 0): one problem picked from several (`.toNonEmpty.head`, the head of a
   *     `problems` list or of the problems' sentences) — a job keeps every problem; only the answer's HTTP status
-  *     (`Answer.status`, whose body lists every problem) picks the first.
+  *     (`Answer.status`, whose body lists every problem) picks the first;
+  *   - `html-sink` (G96/G104, pinned at 0): markup written into the page's DOM (`innerHTML =`, `outerHTML =`,
+  *     `insertAdjacentHTML(`, a popup's `setHTML(`, `document.write(`) anywhere but the web page's `HtmlSink`, whose
+  *     every method takes an `api.Html` — so no raw String reaches a sink;
+  *   - `html-newtype` (G96/W1, a ratchet to 0): a newtype `…Html` over String, which takes any text as markup, beside
+  *     the one `api.Html`.
   *
   * Besides the listed rules, a foreign type's `CanEqual` (`given CanEqual[UUID, UUID]`) is defined in one file,
   * imported by name where it is needed (G67): only the types of [[CrossLayerEqualities]], whose users share no module,
@@ -374,6 +379,40 @@ class ContractsSuite extends munit.FunSuite:
     assertEquals(found("server:x/Jobs.scala").map(v => (v.count, v.at)), List((5, "server:x/Jobs.scala:2")))
     assertEquals(found("api:api/problem/Answer.scala"), Nil)
 
+  test("markup reaches the page's DOM only through the one sink that takes Html"):
+    val code =
+      """object View:
+        |  def a(el: Element, s: String) = el.innerHTML = s
+        |  def b(el: Element, s: String) = el.insertAdjacentHTML("beforeend", s)
+        |  def c(p: GlPopup, s: String) = p.setHTML(s)
+        |  def d(el: Element) = el.outerHTML = "<b>x</b>"
+        |  def e(s: String) = document.write(s)
+        |  def same(el: Element) = el.innerHTML == ""
+        |  def read(el: Element) = el.innerHTML.length
+        |  // el.innerHTML = s in a comment is no write
+        |  val words = "el.innerHTML = s"
+        |""".stripMargin
+    def found(key: String) =
+      Rules
+        .all(List(ArchitectureSuite.SourceFile(key, "com.histmersion.x", Blank(code), code)))
+        .filter(_.rule == "html-sink")
+    assertEquals(found("web:web/View.scala").map(v => (v.count, v.at)), List((5, "web:web/View.scala:2")))
+    assertEquals(found("web:web/HtmlSink.scala"), Nil)
+
+  test("a newtype …Html over String is a violation: the one markup type is api.Html"):
+    val code =
+      """object Render:
+        |  type Html = Html.T
+        |  object Html extends Newtype[String, Pure]
+        |  object BubbleHtml extends Newtype[String, Pure]
+        |  object Count extends Newtype[Int, Pure]
+        |  object Htmls extends Newtype[String, Pure]
+        |""".stripMargin
+    val found = Rules
+      .all(List(ArchitectureSuite.SourceFile("web:web/Render.scala", "com.histmersion.x", Blank(code), code)))
+      .filter(_.rule == "html-newtype")
+    assertEquals(found.map(v => (v.count, v.at)), List((2, "web:web/Render.scala:3")))
+
   test("Problem.Relayed is built in main code only by the browser's decoder and the entry builder it needs"):
     val code =
       """object Reads:
@@ -639,6 +678,18 @@ object ContractsSuite:
             s,
             "the first of several problems kept, the rest dropped",
             if FirstProblemPickers(s.key) then Nil else FirstProblem.findAllMatchIn(s.code).map(_.start).toList
+          )
+          ++ counted(
+            "html-sink",
+            s,
+            "a DOM markup sink written to outside the one that takes Html",
+            if s.key == HtmlSinkFile then Nil else HtmlSinkWrite.findAllMatchIn(s.code).map(_.start).toList
+          )
+          ++ counted(
+            "html-newtype",
+            s,
+            "an …Html newtype over String: markup any text builds, beside api.Html",
+            HtmlNewtype.findAllMatchIn(s.code).map(_.start).toList
           )
       ) ++ concept(sources) ++ helper(sources) ++ prefix(sources) ++ problemFields(sources)
 
@@ -1118,6 +1169,21 @@ object ContractsSuite:
       * HTTP status is the first problem's (`Answer.status`; its body lists every problem).
       */
     private val FirstProblemPickers: Set[String] = Set("api:api/problem/Answer.scala")
+
+    /** A write of markup into the page's DOM: `innerHTML =`, `outerHTML =`, `insertAdjacentHTML(`, a popup's
+      * `.setHTML(`, `document.write(`. Only the web page's one sink file does it, and it takes an `Html`, which only
+      * escaping, literal markup or the allow-list makes: no raw String reaches a sink.
+      */
+    private val HtmlSinkWrite =
+      "\\.(?:innerHTML|outerHTML)\\s*=(?!=)|\\binsertAdjacentHTML\\s*\\(|\\.setHTML\\s*\\(|\\bdocument\\.write(?:ln)?\\s*\\(".r
+
+    private val HtmlSinkFile = "web:web/HtmlSink.scala"
+
+    /** A newtype named `…Html` over String: `X(s)` takes any text as markup. The one markup type is `api.Html`, which
+      * only escaping, literal markup or the allow-list builds.
+      */
+    private val HtmlNewtype =
+      "\\bobject\\s+\\w*Html\\s+extends\\s+(?:Newtype|Refined(?:Sub)?Type)\\s*\\[\\s*String\\b".r
 
     /** The files that may build `Problem.Relayed`: the browser's decoder (the Scala.js copy only, not the JVM's
       * `ProblemJson` at the same path), the shared entry builder it needs and the cases' own file.

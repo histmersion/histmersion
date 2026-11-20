@@ -11,7 +11,7 @@ import com.histmersion.api.catalogue.{Latitude, Longitude, MapTilesUiConfig, Yea
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.Years
 import com.histmersion.api.library.Doi
-import com.histmersion.api.HtmlAtoms
+import com.histmersion.api.Html.Atoms
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.Paging
@@ -212,7 +212,7 @@ class MapViewSuite extends munit.FunSuite:
   test("the finding popup links the source by DOI (else citekey) and shows a confidence badge") {
     val withDoi = hit(Year(-1200), Year(-1190), Confidence.Medium).modify(_.doi).setTo(Some(Doi("10.1/x")))
     val html = MapView.popupHtml(withDoi)
-    assert(html.value.contains(HtmlAtoms.sourceLink(Citekey("test"), Some(Doi("10.1/x")), "10.1/x")), html.value)
+    assert(html.value.contains(Atoms.sourceLink(Citekey("test"), Some(Doi("10.1/x")), "10.1/x").value), html.value)
     assert(html.value.contains("conf-badge conf-medium"), html.value)
     assert(!html.value.contains("(medium)"), "the bare parenthesised word is gone: " + html.value)
     assert(MapView.popupHtml(hit(Year(-1200), Year(-1190))).value.contains(">test</a>"))

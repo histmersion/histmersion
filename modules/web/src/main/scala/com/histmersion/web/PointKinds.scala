@@ -18,6 +18,8 @@ import com.histmersion.api.MapStack
 import com.histmersion.api.catalogue.SiteTile
 import com.histmersion.api.Api
 import com.histmersion.api.media.MediaItem
+import com.histmersion.api.Html
+import com.histmersion.api.Html.html as markup
 
 /** The four kinds of point (docs/map-layers.md): findings, sites, events, pictures — each a descriptor of
   * [[PointLayer]].
@@ -37,15 +39,14 @@ object PointKinds:
     def box = (PointKind.BoxPixels(Layout.findingMarkerSize.value), PointKind.BoxPixels(Layout.findingMarkerSize.value))
     def key(s: Spot): PointKind.PointKey = PointKind.PointKey(s"${s.lat.value}|${s.lon.value}")
     def at(s: Spot): (Geo.Latitude, Geo.Longitude) = (Geo.Latitude(s.lat.value), Geo.Longitude(s.lon.value))
-    def inner(s: Spot): String =
-      if s.items.size > 1 then s"""<span class="hd-find-count">${s.items.size}</span>"""
+    def inner(s: Spot): Html =
+      if s.items.size > 1 then markup"""<span class="hd-find-count">${s.items.size}</span>"""
       else
         Glyphs
           .badge(
             CardIcons
               .sourceKind(Source.Kinds.Wire(s.items.head.sourceKind.fold(Source.Kinds.Unknown)(_.value)), marker = true)
           )
-          .value
     override def classes(s: Spot): String =
       val n = s.items.size
       val span = if n == 1 then
@@ -106,8 +107,8 @@ object PointKinds:
       MapStack.Pane.Sites // above every region: a site inside one still takes the click
     def key(p: SitePoint): PointKind.PointKey = PointKind.PointKey(p.id.fold(s"${p.lat}|${p.lon}")(_.value))
     def at(p: SitePoint): (Geo.Latitude, Geo.Longitude) = (Geo.Latitude(p.lat.value), Geo.Longitude(p.lon.value))
-    def inner(p: SitePoint): String =
-      Glyphs.badge(CardIcons.siteMarker(p.known.map(t => Place.Entry.SiteType(t.id.value)))).value
+    def inner(p: SitePoint): Html =
+      Glyphs.badge(CardIcons.siteMarker(p.known.map(t => Place.Entry.SiteType(t.id.value))))
     override def classes(p: SitePoint): String =
       MapView
         .placeClasses(MapView.ClassName("hd-site-icon hd-site-marker"), p.basis.map(b => Place.TimeBasis.Wire(b.value)))
@@ -115,7 +116,7 @@ object PointKinds:
                   else "")
     // a site of no known date beneath the dated ones
     override def zIndex(p: SitePoint): PointKind.ZIndex = PointKind.ZIndex(if p.undated.value then -100 else 0)
-    override def attrs(p: SitePoint): String = p.known.fold("")(t => s""" data-site-type="${t.id}"""")
+    override def attrs(p: SitePoint): Html = p.known.fold(Html.empty)(t => markup""" data-site-type="${t.id}"""")
     def fill(p: SitePoint, span: (Years.Astronomical, Years.Astronomical)): String =
       MapView
         .viridisAt(
@@ -187,8 +188,8 @@ object PointKinds:
     override def pane = MapStack.Pane.Events
     def key(e: EventGeo): PointKind.PointKey = PointKind.PointKey(e.id.value)
     def at(e: EventGeo): (Geo.Latitude, Geo.Longitude) = (Geo.Latitude(e.lat.value), Geo.Longitude(e.lon.value))
-    def inner(e: EventGeo): String =
-      Glyphs.badge(Glyphs.Name(CardIcons.event(EventSummary.Kind(e.kind.value)).value)).value
+    def inner(e: EventGeo): Html =
+      Glyphs.badge(Glyphs.Name(CardIcons.event(EventSummary.Kind(e.kind.value)).value))
     override def classes(e: EventGeo): String =
       s"hd-ev hd-ev--${EventMarker.tierClass(Api.EventQuery.Tier(e.tier.value))} hd-ev--${EventTaxonomy.of(EventSummary.Kind(e.kind.value)).group}" +
         (if e.precision.value == EventPrecision.Approximate then " hd-ev--approximate" else "") +
@@ -196,7 +197,7 @@ object PointKinds:
 
     /** Pure: has it no known date (its outer span open on both sides)? */
     def undated(e: EventGeo): Boolean = e.timeSpan.outer.isEmpty
-    override def attrs(e: EventGeo): String = s""" data-id="${Fmt.esc(e.id.value)}""""
+    override def attrs(e: EventGeo): Html = markup""" data-id="${e.id}""""
     def fill(e: EventGeo, span: (Years.Astronomical, Years.Astronomical)): String =
       Fmt.color(Fmt.ColorT(EventMarker.rampAt(e, (Year(span._1.value), Year(span._2.value))).value)).value
     private def mid(e: EventGeo): Option[Double] = e.timeSpan.outer.map((a, b) => (a.value + b.value).toDouble / 2)
@@ -263,7 +264,7 @@ object PointKinds:
     def box = (PointKind.BoxPixels(Layout.mediaMarkerWidth.value), PointKind.BoxPixels(Layout.mediaMarkerHeight.value))
     def key(h: MediaGeoHit): PointKind.PointKey = PointKind.PointKey(s"${h.uid.value}|${h.lat}|${h.lon}")
     def at(h: MediaGeoHit): (Geo.Latitude, Geo.Longitude) = (Geo.Latitude(h.lat.value), Geo.Longitude(h.lon.value))
-    def inner(h: MediaGeoHit): String = Glyphs.badge(Glyphs.Name(CardIcons.Media)).value
+    def inner(h: MediaGeoHit): Html = Glyphs.badge(Glyphs.Name(CardIcons.Media))
     override def classes(h: MediaGeoHit): String = "hd-media-dot"
     private def mid(h: MediaGeoHit): Option[Double] =
       DotCluster
@@ -303,12 +304,8 @@ object PointKinds:
       h.citekey.map(c => Preview.Target.Source(Preview.Target.Source.Citekey(c.value)))
     private def popup(h: MediaGeoHit): Unit =
       val period = Fmt.periodStr(h.periodStart, h.periodEnd)
-      val caption = h.caption.map(c => s"<br><i>${Fmt.esc(c.value)}</i>").getOrElse("")
-      MapView.popup(
-        h.lat,
-        h.lon,
-        MapView.Html(MediaPopup.html(h, MediaPopup.PeriodText(period.value), MediaPopup.Caption(caption)).value)
-      )
+      val caption = h.caption.fold(Html.empty)(c => markup"<br><i>$c</i>")
+      MapView.popup(h.lat, h.lon, MediaPopup.html(h, MediaPopup.PeriodText(period.value), caption))
     def activate(h: MediaGeoHit, how: Activation): Unit = popup(h)
     def open(key: PointKind.PointKey, h: MediaGeoHit, row: dom.Element): Unit =
       MapView.reveal(PointSet.Key(key.value), () => popup(h))

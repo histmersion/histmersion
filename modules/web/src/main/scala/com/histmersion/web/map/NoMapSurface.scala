@@ -6,6 +6,8 @@ import org.scalajs.dom
 
 import scala.collection.mutable
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.Html
+import com.histmersion.web.HtmlSink
 
 /** The map that could not be drawn: the browser has no WebGL 2 (or WebGL is off), or the engine failed to start.
   * Instead of a blank or a crashing page, the map's place says why and what to do ([[NoMap.message]]), and the app
@@ -24,7 +26,7 @@ final class NoMapSurface(el: dom.HTMLElement, why: Problem, caps: Capabilities, 
   private val note = dom.document.createElement("div").asInstanceOf[dom.HTMLElement]
   note.className = "map-unavailable"
   note.setAttribute("role", "alert")
-  note.innerHTML = NoMap.html(why).value
+  HtmlSink.replace(note, NoMap.html(why))
   el.appendChild(note)
   // the markers' panes live here, hidden: nothing of them is ever shown
   private val overlay = dom.document.createElement("div").asInstanceOf[dom.HTMLElement]
@@ -83,7 +85,7 @@ final class NoMapSurface(el: dom.HTMLElement, why: Problem, caps: Capabilities, 
   def shapesAt(p: ScreenPt): Seq[ShapeHit] = Nil
   def pointTiles(id: MapSurface.LayerId, layer: MapSurface.LayerId, maxZoom: MapSurface.PointTilesMaxZoom): PointTiles =
     NoMap.Tiles
-  def popup(at: LatLon, html: MapSurface.PopupHtml, cls: MapSurface.PopupCls = MapSurface.PopupCls("")): Popup =
+  def popup(at: LatLon, html: Html, cls: MapSurface.PopupCls = MapSurface.PopupCls("")): Popup =
     new Popup:
       def close(): Unit = ()
       def isOpen: Boolean = false

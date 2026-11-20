@@ -7,6 +7,8 @@ import scala.scalajs.js
 import com.histmersion.api.automation.Managers
 import com.histmersion.api.library.{Acquire, Filter}
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.Html
+import com.histmersion.api.Html.html as markup
 
 /** The web UI's shared building blocks. Each thing the UI shows in more than one place — a source link, a chip, a
   * confidence mark, a layer switch, an icon — is built HERE, once, so the sidebar, the tabs, the map popup and the
@@ -182,14 +184,11 @@ enum Icon(val paths: List[String]):
   case Read extends Icon(List("M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18z", "M8 12.5l2.5 2.5 5-5.5"))
 
 object Icon:
-  type Html = Html.T
-  object Html extends Newtype[String, Pure]
-
   /** Pure: the icon as markup, for the places that are HTML strings (the map's key). */
   def html(i: Icon): Html =
-    Html.assume(s"""<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">${i.paths
-        .map(d => s"""<path d="$d"/>""")
-        .mkString}</svg>""")
+    markup"""<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">${Html.concat(
+        i.paths.map(d => markup"""<path d="$d"/>""")
+      )}</svg>"""
 
   /** The icon as a Laminar SVG element. */
   def apply(i: Icon): SvgElement =

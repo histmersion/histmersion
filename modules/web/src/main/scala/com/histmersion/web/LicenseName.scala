@@ -1,6 +1,9 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.{Href, Html}
+import com.histmersion.api.Html.html as markup
+
 /** A picture's licence as a reader reads it: the stored SPDX-style id (`CC-BY-SA-3.0`, `CC0-1.0`, `public-domain`) as
   * the licence's own name (`CC BY-SA 3.0`), and where its text is, when the record gives no link of its own. Pure.
   */
@@ -37,9 +40,9 @@ object LicenseName:
   def link(id: String, recorded: Option[String]): (String, Option[String]) =
     (label(id), recorded.map(_.trim).filter(_.nonEmpty).orElse(url(id)))
 
-  /** The licence as HTML: its name, linked to its text when there is one (escaped). */
-  def html(id: String, recorded: Option[String]): String =
-    link(id, recorded) match
-      case (name, Some(u)) =>
-        s"""<a class="media-license" href="${Fmt.esc(u)}" target="_blank" rel="noopener license">${Fmt.esc(name)}</a>"""
-      case (name, None) => s"""<span class="media-license">${Fmt.esc(name)}</span>"""
+  /** The licence as HTML: its name, linked to its text when there is one of an allowed scheme ([[Href]]). */
+  def html(id: String, recorded: Option[String]): Html =
+    val (name, address) = link(id, recorded)
+    address.flatMap(Href.link) match
+      case Some(u) => markup"""<a class="media-license" href="$u" target="_blank" rel="noopener license">$name</a>"""
+      case None    => markup"""<span class="media-license">$name</span>"""

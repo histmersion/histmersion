@@ -82,11 +82,8 @@ object MapLists:
         MapListRow.Key(id.value),
         MapListRow.Label(p.name.value),
         MapListRow.Note(siteNote(p).value),
-        MapListRow.Icon(
-          Glyphs
-            .svg(CardIcons.place(Place.Kind.Wire(p.kind.value), p.known.map(t => Place.Entry.SiteType(t.id.value))))
-            .value
-        ),
+        Glyphs
+          .svg(CardIcons.place(Place.Kind.Wire(p.kind.value), p.known.map(t => Place.Entry.SiteType(t.id.value)))),
         MapListRow.Href(Route.Place(Route.Place.Id(id.value)).path),
         () => ResultsPanel.show(Preview.Target.Place(Preview.Target.Place.Id(id.value), MapView.spanMid())),
         MapListRow.Undated(p.undated.value)
@@ -103,7 +100,7 @@ object MapLists:
           Fmt.periodStr(h.periodStart, h.periodEnd).value
         ).filter(_.nonEmpty).mkString(" · ")
       ),
-      MapListRow.Icon(Glyphs.svg(CardIcons.place(Place.Kind.Wire(h.kind.value), None)).value),
+      Glyphs.svg(CardIcons.place(Place.Kind.Wire(h.kind.value), None)),
       MapListRow.Href(Route.Place(Route.Place.Id(h.id.value)).path),
       () => ResultsPanel.show(Preview.Target.Place(Preview.Target.Place.Id(h.id.value), MapView.spanMid()))
     )
@@ -120,7 +117,7 @@ object MapLists:
           .filter(_.nonEmpty)
           .mkString(" · ")
       ),
-      MapListRow.Icon(Glyphs.svg(Glyphs.Name(CardIcons.Media)).value),
+      Glyphs.svg(Glyphs.Name(CardIcons.Media)),
       MapListRow.Href(MediaThumb.filePath(Bundle.Asset.Uid(h.uid.value)).value),
       () => PointKinds.Media.open(PointKinds.Media.key(h), h, org.scalajs.dom.document.body)
     )
@@ -274,7 +271,7 @@ object MapLists:
       a(
         cls := "row-link",
         href := r.href.value,
-        span(cls := "cite-tip-icon pick-icon", onMountCallback(ctx => ctx.thisNode.ref.innerHTML = r.icon.value)),
+        span(cls := "cite-tip-icon pick-icon", onMountCallback(ctx => HtmlSink.replace(ctx.thisNode.ref, r.icon))),
         span(cls := "row-title", r.label.value),
         onClick --> { ev => if Router.plain(ev) then { ev.preventDefault(); r.open() } }
       ),

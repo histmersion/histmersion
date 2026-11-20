@@ -11,6 +11,7 @@ import org.scalajs.dom.document
 import scala.scalajs.js
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.UiLabels
+import com.histmersion.api.Html
 
 object WindowManager:
   private case class WinState(
@@ -165,7 +166,8 @@ object WindowManager:
         ApiClient.fetchHtml(ApiClient.Url(fetchUrl)).foreach { html =>
           val contentEl = document.getElementById(s"wm-content-$wid")
           if contentEl != null then
-            contentEl.innerHTML = html
+            // the server's page, through the allow-list once more: a fetched text is never trusted as markup
+            HtmlSink.replace(contentEl, Html.sanitize(html))
             val titleEl = contentEl.querySelector("h1, h2")
             val title = if titleEl != null then UiLabels.Text(titleEl.textContent.trim) else key.initialTitle
             windows.update(_.map(w => if w.id == wid then w.modify(_.title).setTo(title) else w))

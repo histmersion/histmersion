@@ -2,6 +2,7 @@ package com.histmersion
 package web
 
 import com.histmersion.testsupport.ComparedByValue.given
+import com.histmersion.api.Html
 
 import hearth.kindlings.optics.syntax.*
 
@@ -23,7 +24,7 @@ import com.histmersion.api.catalogue.EventEntry
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Longitude
-import com.histmersion.api.HtmlAtoms
+import com.histmersion.api.Html.Atoms
 import com.histmersion.api.UiLabels
 
 /** Pictures on the cards and the media layer (#1446): the place and event cards carry their first picture with its
@@ -215,11 +216,11 @@ class MediaCardSuite extends munit.FunSuite:
       MediaItem.Uid("u1")
     )
     // the source is the app's source link (its card on hover), not a bare bold citekey
-    val f = MediaPopup.html(fig, MediaPopup.PeriodText("1200 BCE"), MediaPopup.Caption(""))
+    val f = MediaPopup.html(fig, MediaPopup.PeriodText("1200 BCE"), Html.empty)
     assert(
       f.value.startsWith(
         s"""<div class="cite-tip-title media-popup-title">${CardIcons.html(Glyphs.Name("image"))}""" +
-          HtmlAtoms.sourceLink(Citekey("cline2014_year"), None, "cline2014_year") + " / fig1.png</div>"
+          Atoms.sourceLink(Citekey("cline2014_year"), None, "cline2014_year").value + " / fig1.png</div>"
       ),
       f.value
     )
@@ -238,7 +239,7 @@ class MediaCardSuite extends munit.FunSuite:
       Some(MediaItem.Credit("A <b>&</b> B")),
       Some(MediaItem.ThumbUrl(thumb.url.value))
     )
-    val h = MediaPopup.html(pic, MediaPopup.PeriodText(""), MediaPopup.Caption(""))
+    val h = MediaPopup.html(pic, MediaPopup.PeriodText(""), Html.empty)
     assert(h.value.contains(s"""src="${thumb.url}""""), h.value)
     assert(h.value.contains("A &lt;b&gt;&amp;&lt;/b&gt; B"), "the credit is escaped: " + h.value)
     // the licence by its name, linked to its text — never the stored id as a code token
@@ -281,7 +282,7 @@ class MediaCardSuite extends munit.FunSuite:
       licenseUrl = None,
       author = Some(MediaItem.Author("A. Author"))
     )
-    val h = MediaPopup.html(pic, MediaPopup.PeriodText(""), MediaPopup.Caption(""))
+    val h = MediaPopup.html(pic, MediaPopup.PeriodText(""), Html.empty)
     assert(h.value.contains(s"""data-full="/media/${thumb.uid}/file""""), h.value)
     assert(h.value.contains("is-zoomable"), h.value)
     assert(h.value.contains("""data-lb-source-url="https://commons.wikimedia.org/wiki/File:Lions.jpg""""), h.value)
