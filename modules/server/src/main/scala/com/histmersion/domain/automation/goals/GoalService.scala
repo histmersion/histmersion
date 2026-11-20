@@ -122,6 +122,11 @@ trait GoalService:
   /** A goal's schedules taken out, in the caller's transaction (moved into its watcher). */
   def takeSchedulesIn(goal: domain.automation.Goal.Slug)(using DbCon): List[GoalSchedule]
 
+  /** A goal created, never replaced, in the caller's transaction (a new research area): a slug in use, or an old slug
+    * of another goal, is a conflict and nothing is written.
+    */
+  def createIn(slug: domain.automation.Goal.Slug, in: Goal.Put)(using DbCon): Either[Api.Error, Unit]
+
 object GoalService:
 
   def apply(db: Transactor): GoalService = Implementation(db)
@@ -211,6 +216,8 @@ object GoalService:
     def scheduleGoals(): List[domain.automation.Goal.Slug] = db.read(GoalLinkRepo.scheduleGoals())
     def takeSchedulesIn(goal: domain.automation.Goal.Slug)(using DbCon): List[GoalSchedule] =
       GoalLinkRepo.takeSchedulesIn(goal)
+    def createIn(slug: domain.automation.Goal.Slug, in: Goal.Put)(using DbCon): Either[Api.Error, Unit] =
+      GoalRepo.createIn(slug, in)
 
   /** The goals in memory; `clock` stands in for the database's `now()`, `targets` for the other domains' rows a link
     * names.
@@ -566,3 +573,14 @@ object GoalService:
         .filter(_.goal.value == goal.value)
         .toList
         .map(view)
+    def createIn(slug: domain.automation.Goal.Slug, in: Goal.Put)(using DbCon): Either[Api.Error, Unit] =
+      val aliasOf = state.get.goalAliases.get(AutomationState.GoalAliasesKey(slug.value)).map(_.value)
+      if goals.contains(key(slug)) then
+        Left(Api.Error(Problem.Conflict.AlreadyExists(Problem.TypeName.of(Goal.Slug), Problem.Raw.of(slug))))
+      else
+        aliasOf match
+          case Some(to) =>
+            Left(
+              Api.Error(Problem.Conflict.Aliased(Problem.TypeName.of(Goal.Slug), Problem.Raw.of(slug), Problem.Raw(to)))
+            )
+          case None => put(slug, in)

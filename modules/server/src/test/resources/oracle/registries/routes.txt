@@ -114,6 +114,7 @@ route	DELETE /api /attestations /[id] -> status code - possible codes (Map()) {b
 route	GET /api /goals ?status ?limit ?offset -> status code - possible codes (Map()) {body as application/json (UTF-8)}/{body as application/json (UTF-8)}
 route	GET /api /goals /[slug] -> status code - possible codes (Map()) {body as application/json (UTF-8)}/{body as application/json (UTF-8)}
 route	PUT /api /goals /[slug] {body as application/json (UTF-8)} -> status code - possible codes (Map()) {body as application/json (UTF-8)}/{body as application/json (UTF-8)}
+route	POST /api /goals /areas {body as application/json (UTF-8)} -> status code - possible codes (Map()) {body as application/json (UTF-8)}/{body as application/json (UTF-8)}
 route	PATCH /api /goals /[slug] {body as application/json (UTF-8)} -> status code - possible codes (Map()) {body as application/json (UTF-8)}/{body as application/json (UTF-8)}
 route	DELETE /api /goals /[slug] -> status code - possible codes (Map()) {body as application/json (UTF-8)}/{body as application/json (UTF-8)}
 route	GET /api /agent-state -> status code - possible codes (Map()) {body as application/json (UTF-8)}/{body as application/json (UTF-8)}

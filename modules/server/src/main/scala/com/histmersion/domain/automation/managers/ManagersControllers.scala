@@ -10,7 +10,6 @@ import hearth.kindlings.optics.syntax.*
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.util.database.{Transactor, WritePermit}
-import com.histmersion.domain.automation.goals.GoalRepo
 
 import com.augustnagro.magnum.{connect, transact}
 
@@ -299,7 +298,7 @@ final class ManagersControllers(
       written <-
         try
           Right(Transactor(ds).write {
-            GoalRepo.createIn(slug, in.goal).left.foreach(e => throw Refused(e))
+            agents.goals.createIn(slug, in.goal).left.foreach(e => throw Refused(e))
             val run = plan.map(pr =>
               agents.jobRuns.createIn(
                 RunService.row(

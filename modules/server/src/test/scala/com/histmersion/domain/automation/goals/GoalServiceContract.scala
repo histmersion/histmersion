@@ -339,6 +339,13 @@ abstract class GoalServiceContract extends EngineStoreSuite:
     assertEquals(g(s).scheduleGoals(), Nil)
   }
 
+  stest("createIn creates a goal and never replaces one (a new research area, G105)") { s =>
+    val slug = domain.automation.Goal.Slug("zz-new")
+    assert(s.within(g(s).createIn(slug, Goal.Put(Goal.Title("First")))).isRight)
+    assert(s.within(g(s).createIn(slug, Goal.Put(Goal.Title("Second")))).isLeft)
+    assertEquals(g(s).get(slug).map(_.title), Some(Goal.Title("First")))
+  }
+
   stest("a page of goals by slug, of one status, with the total and the next offset") { s =>
     List(
       DomainGoal.Slug("zz-c") -> Goal.StatusValue("active"),
