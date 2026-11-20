@@ -67,6 +67,11 @@ object OutboundTls:
         case e: Exception =>
           Left(Problem.Io.File(Problem.Io.Access.Read, Problem.Io.Path(s"$p"), External.Reported.of(e)))
 
+  /** Whether a keychain file is there (the seam a test replaces: the macOS keychains exist on no other system). */
+  type Present = Path => Boolean
+
+  val present: Present = Files.exists(_)
+
   /** None of `paths` is there: each one (an empty list names no path). */
   private def noneOf(paths: List[String]): Problems =
     val missing = (if paths.isEmpty then List("") else paths).map(p =>
@@ -86,10 +91,15 @@ object OutboundTls:
       )
 
   /** The roots one source adds (none for [[HttpPolicy.Trust.Jdk]], which is the base). */
-  def roots(t: HttpPolicy.Trust, run: Run = run, read: Read = read): Either[Problems, List[X509Certificate]] = t match
+  def roots(
+      t: HttpPolicy.Trust,
+      run: Run = run,
+      read: Read = read,
+      present: Present = present
+  ): Either[Problems, List[X509Certificate]] = t match
     case HttpPolicy.Trust.Jdk              => Right(Nil)
     case HttpPolicy.Trust.Keychains(paths) =>
-      val found = paths.filter(p => Files.exists(Path.of(p.value)))
+      val found = paths.filter(p => present(Path.of(p.value)))
       if found.isEmpty then Left(noneOf(paths.map(p => s"$p")))
       else
         run(List("/usr/bin/security", "find-certificate", "-a", "-p") ++ found.map(_.value))
@@ -145,7 +155,8 @@ object OutboundTls:
       cfg: TlsConfig,
       osName: HttpPolicy.OsName = HttpPolicy.OsName(System.getProperty("os.name", "")),
       run: Run = run,
-      read: Read = read
+      read: Read = read,
+      present: Present = present
   ): Option[(SSLContext, Summary)] =
     Option.when(cfg.custom) {
       val sources = HttpPolicy
@@ -155,7 +166,7 @@ object OutboundTls:
           osName
         )
         .filterNot(_ == HttpPolicy.Trust.Jdk)
-      val got = sources.map(s => s -> roots(s, run, read))
+      val got = sources.map(s => s -> roots(s, run, read, present))
       val extra = got.flatMap(_._2.toOption).flatten
       val notes = got.map {
         case (s, Right(cs)) => s"${describe(s)}: ${cs.size} root(s)"
