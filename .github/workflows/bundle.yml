@@ -41,6 +41,9 @@ on:
       - .sdkmanrc
       - .github/workflows/bundle.yml
   workflow_dispatch: {}
+# read-only by default (a public repository); the bundle job asks for write, which only a tag's release upload uses
+permissions:
+  contents: read
 concurrency:
   group: bundle-${{ github.ref }}
   cancel-in-progress: true
@@ -59,7 +62,8 @@ jobs:
     timeout-minutes: 90
     permissions: { contents: write }   # the release upload on tags
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with: { persist-credentials: false }
       # the PINNED GraalVM CE (scripts/bundle/graalvm-pins.txt: version, URL, SHA-256), provisioned by the
       # same script the installers use — setup-graalvm cannot name an innovation release (25.5's assets are
       # `graalvm-community-jdk-25i5-…` under the tag graal-25.5.5.0.3)
@@ -70,7 +74,7 @@ jobs:
           home="$(bash scripts/bundle/toolchain.sh path)"
           echo "JAVA_HOME=$home" >> "$GITHUB_ENV"
           echo "$home/bin" >> "$GITHUB_PATH"
-      - uses: actions/cache@v4
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: |
             ~/.cache/coursier
@@ -79,19 +83,17 @@ jobs:
             ~/.ivy2/cache
           key: sbt-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('build.sbt', 'project/**') }}
           restore-keys: sbt-${{ runner.os }}-${{ runner.arch }}-
-      - uses: sbt/setup-sbt@v1
-      - uses: astral-sh/setup-uv@v6
+      - uses: sbt/setup-sbt@7e114eae4f32ec3f93c851c2793376a77f384409 # v1.5.15
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
         with: { enable-cache: true, cache-dependency-glob: converter/uv.lock }
-      - uses: taiki-e/install-action@v2
+      - uses: taiki-e/install-action@75a7c0f87bd666af3cdb75c5b9e9d03ab6044e6f # v2.90.6
         with: { tool: just }
-      - name: pixi
-        run: |
-          curl -fsSL https://pixi.sh/install.sh | bash
-          echo "$HOME/.pixi/bin" >> "$GITHUB_PATH"
-      - uses: actions/cache@v4
+      # pixi from a pinned action (no `curl | bash` of an unpinned script); it installs runtime/postgres and caches
+      # the environment per pixi.lock
+      - uses: prefix-dev/setup-pixi@9936258fee697aff89b3fed6ca1f80a382ef694e # v0.11.3
         with:
-          path: ~/.cache/rattler
-          key: rattler-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('runtime/postgres/pixi.lock') }}
+          manifest-path: runtime/postgres/pixi.toml
+          cache: true
       - name: system libraries the converter's OpenCV needs (Linux)
         if: runner.os == 'Linux'
         run: sudo apt-get update -qq && sudo apt-get install -y -qq libgl1 libglib2.0-0t64 zstd
@@ -136,7 +138,7 @@ jobs:
           echo "KIT=$kit" >> "$GITHUB_ENV"
       - name: upload the relink kit (manual runs)
         if: github.event_name == 'workflow_dispatch'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: relink-kit-${{ matrix.platform }}
           path: |
@@ -157,7 +159,7 @@ jobs:
           echo "MAVEN=histmersion-maven-$tag.zip" >> "$GITHUB_ENV"
       - name: attach the plugin repository to the release
         if: startsWith(github.ref, 'refs/tags/v') && matrix.platform == 'linux-x64'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
           files: |
             ${{ env.MAVEN }}
@@ -165,7 +167,7 @@ jobs:
             ${{ env.API }}-sources.jar
       - name: attach to the release
         if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
           files: |
             ${{ env.ARCHIVE }}
