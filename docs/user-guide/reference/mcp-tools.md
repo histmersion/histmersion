@@ -4,7 +4,7 @@ The MCP endpoint is `<public-url>/mcp` (by default `http://localhost:8000/mcp`).
 assistant: [Using your AI assistant](../ai-assistant.md). Every tool runs the same handler as the
 matching REST endpoint and CLI command, and returns Markdown.
 
-**80 tools**, wired for Claude Code through `.mcp.json` (`type: http`, `<public-url>/mcp`, written
+**81 tools**, wired for Claude Code through `.mcp.json` (`type: http`, `<public-url>/mcp`, written
 by `just mcp-json`, which `just install` runs). Every tool returns Markdown. The table below is refreshed from the server's own
 `tools/list` — that endpoint, not this file, is the authority on what exists.
 

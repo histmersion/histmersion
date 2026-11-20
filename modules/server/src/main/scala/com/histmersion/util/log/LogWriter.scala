@@ -5,6 +5,7 @@ import com.histmersion.api.log.LogEvent
 import com.histmersion.api.log.LogEvent.{Count, Subject, What}
 import com.histmersion.config.LogConfig
 import com.histmersion.util.database.{Transactor, WritePermit}
+import com.histmersion.util.jobs.Quiescent
 
 import java.time.Clock
 import java.util.concurrent.{ArrayBlockingQueue, ConcurrentHashMap, TimeUnit}
@@ -35,6 +36,19 @@ final class LogWriter(
   private val backlog = AtomicReference(Vector.empty[LogEvent])
   private val countedSince = AtomicLong(clock.millis())
   private val prunedAt = AtomicLong(0L)
+  private val resting = AtomicBoolean(false)
+  private val writing = AtomicBoolean(false)
+
+  /** The writer as a restore holds it: at rest, it keeps appending to the files and leaves the database alone (the
+    * events wait in the backlog, and reach the restored database's table when it resumes).
+    */
+  val quiescent: Quiescent = new Quiescent:
+    val name: Quiescent.Name = Quiescent.Name("the structured log's writer")
+    def quiesce(): Unit = resting.set(true)
+    def busy: Vector[Quiescent.Busy] =
+      if writing.get() then Vector(Quiescent.Busy("a batch of events into the table")) else Vector.empty
+    def restored(): Unit = ()
+    def resume(): Unit = resting.set(false)
 
   /** A new trace, as the server mints one for a request, a start-up or its own work. */
   def mintTrace(): LogEvent.Trace = LogEvent.Trace(mintId())
@@ -123,9 +137,10 @@ final class LogWriter(
     val _ = files.append(batch)
     val pending = backlog.get() ++ batch
     val staged =
-      if gate.active then None
+      if gate.active || resting.get() then None
       else if pending.isEmpty && !stagedDue then Some(Vector.empty)
       else
+        writing.set(true)
         try
           gate.unit {
             gate.permit {
@@ -137,6 +152,7 @@ final class LogWriter(
             }.toOption
           }
         catch case NonFatal(_) => None
+        finally writing.set(false)
     staged match
       case Some(writes) =>
         backlog.set(Vector.empty)

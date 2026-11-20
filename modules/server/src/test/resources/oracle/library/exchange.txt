@@ -972,7 +972,7 @@
     "places" : 0,
     "placesDigest" : ""
   },
-  "schemaVersion" : "110"
+  "schemaVersion" : "111"
 }
 == entities/sources.ndjson (5 lines)
 {   "addedDate" : "DAY",   "authors" : [     "Zxauthor, Ann"   ],   "bodySha256" : "DIGEST",   "citekey" : "zxone2001_storm",   "doi" : "10.9999/zx.one",   "notes" : "Notes on The Storm of Zxtown.",   "origin" : "instance:lib",   "period" : {     "end" : -1200,     "start" : -1500   },   "regions" : [     "Zxland"   ],   "rev" : "DIGEST",   "status" : "current",   "summary" : "On The Storm of Zxtown.",   "tags" : [     "zx-oracle"   ],   "title" : "The Storm of Zxtown",   "topics" : [     "bronze age"   ],   "uid" : "source:zxone2001_storm",   "updatedAt" : "TS",   "venue" : "Zx Review",   "year" : 2001 }
@@ -1169,7 +1169,7 @@
     "places" : 0,
     "placesDigest" : ""
   },
-  "schemaVersion" : "110",
+  "schemaVersion" : "111",
   "since" : "TS"
 }
 == entities/sources.ndjson (5 lines)
@@ -2115,7 +2115,7 @@
   "resolutionErrors" : [
   ],
   "resolved" : 0,
-  "schemaVersion" : "110",
+  "schemaVersion" : "111",
   "sources" : [
     {
       "issue" : null,
@@ -2889,7 +2889,7 @@
   "resolutionErrors" : [
   ],
   "resolved" : 6,
-  "schemaVersion" : "110",
+  "schemaVersion" : "111",
   "sources" : [
     {
       "issue" : null,

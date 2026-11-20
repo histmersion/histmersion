@@ -29,5 +29,9 @@ f basemap/vector.pmtiles
 d config/
 f config/histmersion.conf 382
 f config/histmersion.conf.bak 382
+d data/
+d data/logs/
+d data/logs/structured/
+f data/logs/structured/events-DAY.jsonl
 d spool/
 f spool/c01ccf190978644fcee2931633d367223f77bb88a3ca5f5c5747650053b8d08e.bin 18

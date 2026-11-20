@@ -31,7 +31,7 @@ import com.histmersion.api.media.{MediaCoversRequest, SourceCoverParams}
 import com.histmersion.api.library.Ingest
 import com.histmersion.api.library.Source
 import com.histmersion.server.hot.Pin
-import com.histmersion.util.log.{LogWriter, RequestLog}
+import com.histmersion.util.log.RequestLog
 import com.histmersion.domain.automation.workflows.ToolName
 import com.histmersion.util.plugins.Plugin
 import scala.collection.immutable.ListMap
@@ -188,7 +188,7 @@ object Composition:
     val cfg = hc.app // the listener's settings: restart-only (ConfigReload.RestartOnly)
     val h = ServerWiring(deps, converter.getOrElse(ConverterWiring.client(deps.cfg.converter)))
     // the structured log's one writer, stopped (after writing what it holds) before the pools close
-    val logWriter = LogWriter(() => deps.cfg.log, h.logFiles, Transactor(sg.logDs), maintenance.permits, deps.clock)
+    val logWriter = h.logWriter
     logWriter.start()
     releaseAfterScope(logWriter.close())
     onWiring(h) // a test's handle on this server's wiring (its run tokens); nothing in production

@@ -32,7 +32,8 @@ class WorkersSuite extends munit.FunSuite:
         "the OCR worker pool",
         "the agent run pool",
         "the process managers' loop",
-        "the agent lease's renewal"
+        "the agent lease's renewal",
+        "the structured log's writer"
       )
     )
 
@@ -57,6 +58,7 @@ object WorkersSuite:
     "server:domain/automation/agents/Engine.scala" -> Place.Registered("the agent run pool"),
     "server:domain/automation/managers/ManagerSupervisor.scala" -> Place.Registered("the process managers' loop"),
     "server:domain/automation/agents/AgentLease.scala" -> Place.Registered("the agent lease's renewal"),
+    "server:util/log/LogWriter.scala" -> Place.Registered("the structured log's writer"),
     "server:server/hot/Hot.scala" -> Place.Exempt("the config graph's own build and drain threads"),
     "server:server/ServerGraph.scala" -> Place.Exempt(
       "the config watcher (a reload is refused while a restore runs), the start's ANALYZE, and the instance lock's " +

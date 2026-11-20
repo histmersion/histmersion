@@ -325,6 +325,8 @@ class DataTreeOracleSuite extends DbSuite:
         if Files.isSymbolicLink(p) then s"l $rel"
         else if Files.isDirectory(p) then s"d $rel/"
         else if rel.endsWith(".pmtiles") then s"f $rel"
+        // the structured log's files: named by the day of the run, sized by its times and ids
+        else if rel.endsWith(".jsonl") then s"f ${rel.replaceAll("\\d{4}-\\d{2}-\\d{2}", "DAY")}"
         else if List(".conf", ".bak", ".json").exists(rel.endsWith) then
           s"f $rel ${normalised(Files.readString(p, UTF_8)).getBytes(UTF_8).length}"
         else s"f $rel ${Files.size(p)}"

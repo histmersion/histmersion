@@ -150,7 +150,7 @@
     "places" : 0,
     "placesDigest" : ""
   },
-  "schemaVersion" : "110"
+  "schemaVersion" : "111"
 }
 == entities/sources.ndjson (4 lines)
 {   "addedDate" : "DAY",   "authors" : [     "Doe, Jane"   ],   "bodySha256" : "28ae1f725e71b6a452a60a5df293e0cc3046ad6c63c0052312f8d7f22f8ae757",   "citekey" : "zzalpha2001_storm",   "origin" : "instance:work",   "regions" : [     "Anatolia"   ],   "rev" : "DIGEST",   "status" : "current",   "summary" : "edited at work",   "tags" : [     "zz-oracle"   ],   "title" : "The Storm God",   "topics" : [     "bronze age"   ],   "uid" : "source:zzalpha2001_storm",   "updatedAt" : "TS",   "year" : 2001 }
@@ -369,7 +369,7 @@
     "places" : 0,
     "placesDigest" : ""
   },
-  "schemaVersion" : "110",
+  "schemaVersion" : "111",
   "since" : "TS"
 }
 == entities/sources.ndjson (3 lines)

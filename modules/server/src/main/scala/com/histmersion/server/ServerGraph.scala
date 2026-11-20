@@ -57,11 +57,8 @@ final class ServerGraph private (
     val maintenance: WriteGate
 ):
 
-  /** The structured log's own connections: not traced, for the log's writes are no step of a trace. */
-  val logDs: DataSource = maintenance.permits.dataSource(Hot.DataSource(pool)(identity))
-
-  /** Every other connection, told the calling thread's trace for the database's write triggers. */
-  val ds: DataSource = TracedDataSource(logDs)
+  /** Each connection told the calling thread's trace, for the database's write triggers. */
+  val ds: DataSource = TracedDataSource(maintenance.permits.dataSource(Hot.DataSource(pool)(identity)))
   val queryDs: DataSource = maintenance.permits.dataSource(Hot.DataSource(queryPool)(_.ds))
 
   /** The handlers' view: config, file and plugins from the graph at each call. */

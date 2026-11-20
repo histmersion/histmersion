@@ -10,7 +10,7 @@ class MigrateSuite extends munit.FunSuite:
     val names = Migrate.migrationNames
     assertEquals(
       names,
-      List(s"V${Migrate.SquashedAt}__schema.sql", "V110__problems_as_entries.sql"),
+      List(s"V${Migrate.SquashedAt}__schema.sql", "V110__problems_as_entries.sql", "V111__structured_log.sql"),
       "the squash, then each migration after it, by the next number"
     )
     assertEquals(names, names.sorted)

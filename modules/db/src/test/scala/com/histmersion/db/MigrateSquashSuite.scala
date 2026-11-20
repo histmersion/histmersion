@@ -46,8 +46,8 @@ class MigrateSquashSuite extends DbSuite with Bounded:
   private val created = scala.collection.mutable.ListBuffer.empty[String]
 
   /** The migrations since the squash, by version, in order: each new migration adds itself here. */
-  private val Chain = List("109", "110")
-  private val Latest = Migrate.Version("110")
+  private val Chain = List("109", "110", "111")
+  private val Latest = Migrate.Version("111")
 
   private def exec(ds: DataSource, stmt: String): Unit =
     val c = ds.getConnection

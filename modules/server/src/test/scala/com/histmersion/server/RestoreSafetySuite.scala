@@ -265,6 +265,7 @@ class RestoreSafetySuite extends DbSuite:
         "the agent run pool",
         "the process managers' loop",
         "the agent lease's renewal",
+        "the structured log's writer",
         "probe"
       )
     )

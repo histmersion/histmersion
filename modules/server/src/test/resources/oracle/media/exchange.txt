@@ -333,7 +333,7 @@
   "resolutionErrors" : [
   ],
   "resolved" : 0,
-  "schemaVersion" : "110",
+  "schemaVersion" : "111",
   "sources" : [
   ]
 }
@@ -402,7 +402,7 @@
   "resolutionErrors" : [
   ],
   "resolved" : 1,
-  "schemaVersion" : "110",
+  "schemaVersion" : "111",
   "sources" : [
   ]
 }

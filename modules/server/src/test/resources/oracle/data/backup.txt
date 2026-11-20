@@ -46,7 +46,7 @@
 {
   "durationMs" : "N",
   "file" : "histmersion-STAMP.dump",
-  "schemaVersion" : "110",
+  "schemaVersion" : "111",
   "sourcesAfter" : 4,
   "sourcesBefore" : 0,
   "warnings" : [

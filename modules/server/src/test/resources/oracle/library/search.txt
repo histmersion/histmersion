@@ -18114,7 +18114,7 @@ _unsupported unit='nonsense' — use sources, findings or starts_
 == tool query refused
 _ERROR: cannot execute DROP TABLE in a read-only transaction_
 
-### 89 table(s)
+### 91 table(s)
 
 - **acquire_checks** (table) — item_id integer, checked_at timestamp with time zone, generation text, outcome text, reason text, checks integer
 - **agent_allowances** (table) — target text, limits jsonb, reserve_pct integer, updated_at timestamp with time zone
@@ -18160,8 +18160,10 @@ _ERROR: cannot execute DROP TABLE in a read-only transaction_
 - **goal_schedules** (table) — goal_slug text, kind text, cron text, enabled boolean, budget_usd numeric, next_run_at timestamp with time zone, last_run_at timestamp with time zone, last_job text, last_note text, created_at timestamp with time zone, updated_at timestamp with time zone
 - **goals** (table) — slug text, title text, status text, notes text, tags ARRAY, regions ARRAY, period int8range, parent_slug text, created_at timestamp with time zone, updated_at timestamp with time zone, uid uuid, origin uuid, plan jsonb, budget_usd numeric, plan_approved_at timestamp with time zone
 - **instance** (table) — id uuid, label text, created_at timestamp with time zone, singleton boolean
-- **jobs** (table) — id text, kind text, citekey text, status text, progress text, error jsonb, sha256 text, created_at timestamp with time zone, updated_at timestamp with time zone, acquire_item integer, detail jsonb, pipeline text, pipeline_version integer, target_kind text, target_id text, model text, budget_usd numeric, budget_tokens bigint, warnings ARRAY, params jsonb, goal_slug text, parent_job text, origin text, result jsonb, resume_at timestamp with time zone, dry_run boolean, manager_id text, manager_item bigint, heartbeat_at timestamp with time zone
+- **jobs** (table) — id text, kind text, citekey text, status text, progress text, error jsonb, sha256 text, created_at timestamp with time zone, updated_at timestamp with time zone, acquire_item integer, detail jsonb, pipeline text, pipeline_version integer, target_kind text, target_id text, model text, budget_usd numeric, budget_tokens bigint, warnings ARRAY, params jsonb, goal_slug text, parent_job text, origin text, result jsonb, resume_at timestamp with time zone, dry_run boolean, manager_id text, manager_item bigint, heartbeat_at timestamp with time zone, trace_id uuid
 - **land** (table) — id integer, geom USER-DEFINED
+- **log_events** (table) — id uuid, at timestamp with time zone, trace uuid, label text, kind text, problem boolean, subjects ARRAY, event jsonb
+- **log_writes** (table) — seq bigint, id uuid, at timestamp with time zone, trace uuid, label text, tbl text, op text, rows bigint, keys ARRAY, citekeys ARRAY
 - **manager_events** (table) — id bigint, manager_id text, item_id bigint, run_id text, at timestamp with time zone, kind text, text text
 - **manager_hint_uses** (table) — hint_id bigint, run_id text
 - **manager_hints** (table) — id bigint, manager_id text, item_id bigint, text text, effect jsonb, author text, standing boolean, created_at timestamp with time zone, retired_at timestamp with time zone
@@ -20643,6 +20645,11 @@ _ERROR: cannot execute DROP TABLE in a read-only transaction_
           "dataType" : "timestamp with time zone",
           "name" : "heartbeat_at",
           "nullable" : true
+        },
+        {
+          "dataType" : "uuid",
+          "name" : "trace_id",
+          "nullable" : true
         }
       ],
       "kind" : "table",
@@ -20663,6 +20670,108 @@ _ERROR: cannot execute DROP TABLE in a read-only transaction_
       ],
       "kind" : "table",
       "name" : "land"
+    },
+    {
+      "columns" : [
+        {
+          "dataType" : "uuid",
+          "name" : "id",
+          "nullable" : false
+        },
+        {
+          "dataType" : "timestamp with time zone",
+          "name" : "at",
+          "nullable" : false
+        },
+        {
+          "dataType" : "uuid",
+          "name" : "trace",
+          "nullable" : false
+        },
+        {
+          "dataType" : "text",
+          "name" : "label",
+          "nullable" : true
+        },
+        {
+          "dataType" : "text",
+          "name" : "kind",
+          "nullable" : false
+        },
+        {
+          "dataType" : "boolean",
+          "name" : "problem",
+          "nullable" : false
+        },
+        {
+          "dataType" : "ARRAY",
+          "name" : "subjects",
+          "nullable" : false
+        },
+        {
+          "dataType" : "jsonb",
+          "name" : "event",
+          "nullable" : false
+        }
+      ],
+      "kind" : "table",
+      "name" : "log_events"
+    },
+    {
+      "columns" : [
+        {
+          "dataType" : "bigint",
+          "name" : "seq",
+          "nullable" : false
+        },
+        {
+          "dataType" : "uuid",
+          "name" : "id",
+          "nullable" : false
+        },
+        {
+          "dataType" : "timestamp with time zone",
+          "name" : "at",
+          "nullable" : false
+        },
+        {
+          "dataType" : "uuid",
+          "name" : "trace",
+          "nullable" : false
+        },
+        {
+          "dataType" : "text",
+          "name" : "label",
+          "nullable" : true
+        },
+        {
+          "dataType" : "text",
+          "name" : "tbl",
+          "nullable" : false
+        },
+        {
+          "dataType" : "text",
+          "name" : "op",
+          "nullable" : false
+        },
+        {
+          "dataType" : "bigint",
+          "name" : "rows",
+          "nullable" : true
+        },
+        {
+          "dataType" : "ARRAY",
+          "name" : "keys",
+          "nullable" : false
+        },
+        {
+          "dataType" : "ARRAY",
+          "name" : "citekeys",
+          "nullable" : false
+        }
+      ],
+      "kind" : "table",
+      "name" : "log_writes"
     },
     {
       "columns" : [
