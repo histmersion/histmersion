@@ -273,10 +273,15 @@ jobs:
           mkdir -p target
           zstd -d -q -c "$RUNNER_TEMP/compiled.tar.zst" | tar -C target -xf -
           rm "$RUNNER_TEMP/compiled.tar.zst"
+      # the builder's heap set explicitly, sbt's kept small beside it: with its default (80% of the 13 GB it may use)
+      # and sbt's 4 GB on top, the server's analysis ran out of heap (run 44791490700)
       - name: the native server and CLI
         env:
-          SBT_OPTS: -Xss16m
-        run: bash scripts/bundle/server.sh target/native
+          SBT_OPTS: -Xss16m -Xmx2g
+          HISTMERSION_NATIVE_XMX: 12g
+        run: |
+          free -g
+          bash scripts/bundle/server.sh target/native
       - name: the native server's self-check (time zones, the linked resources)
         run: target/native/bin/histmersion-server --self-check
       - name: CLI reference in the docs is current (the native CLI's help)
