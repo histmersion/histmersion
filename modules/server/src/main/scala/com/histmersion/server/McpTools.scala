@@ -621,7 +621,7 @@ final class McpTools(
         jobStatus,
         jobControlTool,
         activityTool
-      ) ++ MediaTools(
+      ) ++ com.histmersion.util.log.LogTools(h.log) ++ MediaTools(
         h.media.assets,
         h.media.links,
         ck => h.library.sources.get(ck).left.map(Api.Error(_)).isRight

@@ -31,6 +31,7 @@ import com.histmersion.api.media.{MediaCoversRequest, SourceCoverParams}
 import com.histmersion.api.library.Ingest
 import com.histmersion.api.library.Source
 import com.histmersion.server.hot.Pin
+import com.histmersion.util.log.{LogWriter, RequestLog}
 import com.histmersion.domain.automation.workflows.ToolName
 import com.histmersion.util.plugins.Plugin
 import scala.collection.immutable.ListMap
@@ -186,6 +187,10 @@ object Composition:
     val deps = sg.deps(restart, system)
     val cfg = hc.app // the listener's settings: restart-only (ConfigReload.RestartOnly)
     val h = ServerWiring(deps, converter.getOrElse(ConverterWiring.client(deps.cfg.converter)))
+    // the structured log's one writer, stopped (after writing what it holds) before the pools close
+    val logWriter = LogWriter(() => deps.cfg.log, h.logFiles, Transactor(sg.logDs), maintenance.permits, deps.clock)
+    logWriter.start()
+    releaseAfterScope(logWriter.close())
     onWiring(h) // a test's handle on this server's wiring (its run tokens); nothing in production
     h.ingest.queue.start() // reconcile interrupted jobs, then start the bounded worker pool
     val acq = acquisition(sg, deps, h)
@@ -217,7 +222,11 @@ object Composition:
       catch
         case e: Exception => scribe.warn(s"first-run import not started: ${e.getMessage}")
     // every request pinned to the generation current when it arrived (hot.PinRequests)
-    val options = NettySyncServerOptions.customiseInterceptors.prependInterceptor(Pin.Requests(sg.graph)).options
+    // and each one traced, from the outside: answered with its trace, recorded once answered
+    val options = NettySyncServerOptions.customiseInterceptors
+      .prependInterceptor(Pin.Requests(sg.graph))
+      .prependInterceptor(RequestLog(logWriter, () => deps.cfg.log))
+      .options
     val srv = NettySyncServer(options)
       .host(s"${binds.head}")
       .port(port.value)

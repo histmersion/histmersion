@@ -39,6 +39,7 @@ import com.histmersion.cli.commandline.AcquireArgs
 import com.histmersion.cli.commandline.LibraryArgs
 import com.histmersion.cli.commandline.IngestArgs
 import com.histmersion.cli.commandline.ActivityArgs
+import com.histmersion.cli.commandline.LogArgs
 import com.histmersion.cli.commandline.BookmarksArgs
 import com.histmersion.cli.commandline.NoteArgs
 import com.histmersion.cli.commandline.ConfigArgs
@@ -132,6 +133,7 @@ object CommandLine:
     IngestArgs.AssetsEntry,
     IngestArgs.JobsEntry,
     ActivityArgs.ActivityEntry,
+    LogArgs.LogEntry,
     BookmarksArgs.BookmarksEntry,
     NoteArgs.NoteEntry,
     ConfigArgs.ConfigEntry,

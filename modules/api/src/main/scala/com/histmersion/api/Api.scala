@@ -1282,7 +1282,7 @@ object Api:
     backupStatus
   ) ++ OpsApi.all ++ AgentsApi.all ++ ManagersApi.all ++ AutopilotApi.switches ++ AcquisitionWorkApi.all ++
     ManagersApi.steering ++ AutopilotApi.draining ++ ManagersApi.stalled ++ UiApi.all ++ EventsApi.all ++ AcquireApi.all ++ BasemapApi.all ++ TilesApi.all ++ ConfigEditApi.all ++ PersonalApi.all ++
-    CollectionsApi.all
+    CollectionsApi.all ++ com.histmersion.api.log.LogApi.all
 
   lazy val places: PublicEndpoint[
     (Option[Place.Kind.Wire], Option[AggregateQuery.AsOf], Option[PlacesGeoQuery.Limit]),

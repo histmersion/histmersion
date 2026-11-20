@@ -16468,6 +16468,193 @@
           }
         }
       }
+    },
+    "/api/log" : {
+      "get" : {
+        "description" : "The structured log, newest first: requests, provider calls, problems and database writes.",
+        "operationId" : "getApiLog",
+        "parameters" : [
+          {
+            "name" : "trace",
+            "in" : "query",
+            "description" : "one trace: every step of one request or job",
+            "required" : false,
+            "schema" : {
+              "type" : "string"
+            }
+          },
+          {
+            "name" : "label",
+            "in" : "query",
+            "description" : "the label a client gave its calls (Histmersion-Trace-Label)",
+            "required" : false,
+            "schema" : {
+              "type" : "string"
+            }
+          },
+          {
+            "name" : "job",
+            "in" : "query",
+            "description" : "steps concerning this job",
+            "required" : false,
+            "schema" : {
+              "type" : "string"
+            }
+          },
+          {
+            "name" : "run",
+            "in" : "query",
+            "description" : "steps concerning this agent run",
+            "required" : false,
+            "schema" : {
+              "type" : "string"
+            }
+          },
+          {
+            "name" : "source",
+            "in" : "query",
+            "description" : "steps concerning this source (its citekey)",
+            "required" : false,
+            "schema" : {
+              "type" : "string"
+            }
+          },
+          {
+            "name" : "problem",
+            "in" : "query",
+            "description" : "steps concerning this problem (its id)",
+            "required" : false,
+            "schema" : {
+              "type" : "string"
+            }
+          },
+          {
+            "name" : "kind",
+            "in" : "query",
+            "description" : "one of: RequestAnswered, RequestsCounted, ProviderCalled, Written, ProblemRaised, Lost",
+            "required" : false,
+            "schema" : {
+              "type" : "string"
+            }
+          },
+          {
+            "name" : "since",
+            "in" : "query",
+            "description" : "from: an ISO instant, a date, or 7d / 12h / 30m ago",
+            "required" : false,
+            "schema" : {
+              "type" : "string"
+            }
+          },
+          {
+            "name" : "until",
+            "in" : "query",
+            "description" : "up to: an ISO instant or a date",
+            "required" : false,
+            "schema" : {
+              "type" : "string"
+            }
+          },
+          {
+            "name" : "limit",
+            "in" : "query",
+            "description" : "events per page (default 100, at most 1000)",
+            "required" : false,
+            "schema" : {
+              "type" : "integer",
+              "format" : "int32"
+            }
+          },
+          {
+            "name" : "before",
+            "in" : "query",
+            "description" : "the next older page: the cursor the last page gave",
+            "required" : false,
+            "schema" : {
+              "type" : "string"
+            }
+          },
+          {
+            "name" : "from",
+            "in" : "query",
+            "description" : "database (the default; the file when the database cannot answer) or file",
+            "required" : false,
+            "schema" : {
+              "type" : "string"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "description" : "",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LogPage"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Invalid value for: query parameter limit",
+            "content" : {
+              "text/plain" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/problems/{id}" : {
+      "get" : {
+        "description" : "What happened around one problem: every step of the trace it was raised in, oldest first.",
+        "operationId" : "getApiProblemsId",
+        "parameters" : [
+          {
+            "name" : "id",
+            "in" : "path",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "description" : "",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LogPage"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components" : {
@@ -16607,6 +16794,16 @@
             "type" : "string"
           }
         }
+      },
+      "Actor" : {
+        "title" : "Actor",
+        "type" : "string",
+        "enum" : [
+          "Client",
+          "Worker",
+          "Server",
+          "Database"
+        ]
       },
       "Add" : {
         "title" : "Add",
@@ -18471,6 +18668,16 @@
             "type" : "string"
           }
         }
+      },
+      "Change1" : {
+        "title" : "Change",
+        "type" : "string",
+        "enum" : [
+          "Insert",
+          "Update",
+          "Delete",
+          "Truncate"
+        ]
       },
       "CitedSource" : {
         "title" : "CitedSource",
@@ -23887,6 +24094,18 @@
           }
         }
       },
+      "Job" : {
+        "title" : "Job",
+        "type" : "object",
+        "required" : [
+          "key"
+        ],
+        "properties" : {
+          "key" : {
+            "type" : "string"
+          }
+        }
+      },
       "JobCounts" : {
         "title" : "JobCounts",
         "type" : "object",
@@ -24721,6 +24940,89 @@
             "items" : {
               "type" : "string"
             }
+          }
+        }
+      },
+      "LogEvent" : {
+        "title" : "LogEvent",
+        "type" : "object",
+        "required" : [
+          "id",
+          "at",
+          "trace",
+          "actor",
+          "what"
+        ],
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "at" : {
+            "type" : "string"
+          },
+          "trace" : {
+            "type" : "string"
+          },
+          "label" : {
+            "type" : "string"
+          },
+          "actor" : {
+            "$ref" : "#/components/schemas/Actor"
+          },
+          "subjects" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Subject"
+            }
+          },
+          "what" : {
+            "$ref" : "#/components/schemas/What"
+          }
+        }
+      },
+      "LogPage" : {
+        "title" : "LogPage",
+        "type" : "object",
+        "required" : [
+          "origin"
+        ],
+        "properties" : {
+          "events" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/LogEvent"
+            }
+          },
+          "next" : {
+            "type" : "string"
+          },
+          "origin" : {
+            "$ref" : "#/components/schemas/Origin"
+          }
+        }
+      },
+      "Loss" : {
+        "title" : "Loss",
+        "type" : "string",
+        "enum" : [
+          "QueueFull",
+          "DatabaseBacklog"
+        ]
+      },
+      "Lost" : {
+        "title" : "Lost",
+        "type" : "object",
+        "required" : [
+          "count",
+          "loss"
+        ],
+        "properties" : {
+          "count" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "loss" : {
+            "$ref" : "#/components/schemas/Loss"
           }
         }
       },
@@ -27033,6 +27335,14 @@
           }
         }
       },
+      "Origin" : {
+        "title" : "Origin",
+        "type" : "string",
+        "enum" : [
+          "Database",
+          "File"
+        ]
+      },
       "Override" : {
         "title" : "Override",
         "type" : "object",
@@ -28212,6 +28522,33 @@
           }
         }
       },
+      "Problem1" : {
+        "title" : "Problem",
+        "type" : "object",
+        "required" : [
+          "key"
+        ],
+        "properties" : {
+          "key" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ProblemRaised" : {
+        "title" : "ProblemRaised",
+        "type" : "object",
+        "required" : [
+          "problem"
+        ],
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "problem" : {
+            "type" : "string"
+          }
+        }
+      },
       "ProposedArticle" : {
         "title" : "ProposedArticle",
         "type" : "object",
@@ -28247,6 +28584,31 @@
           },
           "overlapWith" : {
             "type" : "string"
+          }
+        }
+      },
+      "ProviderCalled" : {
+        "title" : "ProviderCalled",
+        "type" : "object",
+        "required" : [
+          "upstream",
+          "host",
+          "ms"
+        ],
+        "properties" : {
+          "upstream" : {
+            "type" : "string"
+          },
+          "host" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "ms" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         }
       },
@@ -29844,6 +30206,72 @@
           }
         }
       },
+      "Request8" : {
+        "title" : "Request",
+        "type" : "object",
+        "required" : [
+          "key"
+        ],
+        "properties" : {
+          "key" : {
+            "type" : "string"
+          }
+        }
+      },
+      "RequestAnswered" : {
+        "title" : "RequestAnswered",
+        "type" : "object",
+        "required" : [
+          "operation",
+          "method",
+          "status",
+          "ms"
+        ],
+        "properties" : {
+          "operation" : {
+            "type" : "string"
+          },
+          "method" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "ms" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "client" : {
+            "type" : "string"
+          },
+          "search" : {
+            "type" : "string"
+          }
+        }
+      },
+      "RequestsCounted" : {
+        "title" : "RequestsCounted",
+        "type" : "object",
+        "required" : [
+          "operation",
+          "count",
+          "failed"
+        ],
+        "properties" : {
+          "operation" : {
+            "type" : "string"
+          },
+          "count" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "failed" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
       "ResolvedArticle" : {
         "title" : "ResolvedArticle",
         "type" : "object",
@@ -30514,6 +30942,18 @@
             "$ref" : "#/components/schemas/CollectionRecordView"
           },
           "fix" : {
+            "type" : "string"
+          }
+        }
+      },
+      "Run" : {
+        "title" : "Run",
+        "type" : "object",
+        "required" : [
+          "key"
+        ],
+        "properties" : {
+          "key" : {
             "type" : "string"
           }
         }
@@ -31313,6 +31753,18 @@
           }
         }
       },
+      "Source1" : {
+        "title" : "Source",
+        "type" : "object",
+        "required" : [
+          "key"
+        ],
+        "properties" : {
+          "key" : {
+            "type" : "string"
+          }
+        }
+      },
       "SourceInfo" : {
         "title" : "SourceInfo",
         "type" : "object",
@@ -31845,6 +32297,66 @@
             }
           }
         }
+      },
+      "Subject" : {
+        "title" : "Subject",
+        "oneOf" : [
+          {
+            "type" : "object",
+            "required" : [
+              "Job"
+            ],
+            "properties" : {
+              "Job" : {
+                "$ref" : "#/components/schemas/Job"
+              }
+            }
+          },
+          {
+            "type" : "object",
+            "required" : [
+              "Problem"
+            ],
+            "properties" : {
+              "Problem" : {
+                "$ref" : "#/components/schemas/Problem1"
+              }
+            }
+          },
+          {
+            "type" : "object",
+            "required" : [
+              "Request"
+            ],
+            "properties" : {
+              "Request" : {
+                "$ref" : "#/components/schemas/Request8"
+              }
+            }
+          },
+          {
+            "type" : "object",
+            "required" : [
+              "Run"
+            ],
+            "properties" : {
+              "Run" : {
+                "$ref" : "#/components/schemas/Run"
+              }
+            }
+          },
+          {
+            "type" : "object",
+            "required" : [
+              "Source"
+            ],
+            "properties" : {
+              "Source" : {
+                "$ref" : "#/components/schemas/Source1"
+              }
+            }
+          }
+        ]
       },
       "SubjectCount" : {
         "title" : "SubjectCount",
@@ -32783,6 +33295,77 @@
           }
         }
       },
+      "What" : {
+        "title" : "What",
+        "oneOf" : [
+          {
+            "type" : "object",
+            "required" : [
+              "Lost"
+            ],
+            "properties" : {
+              "Lost" : {
+                "$ref" : "#/components/schemas/Lost"
+              }
+            }
+          },
+          {
+            "type" : "object",
+            "required" : [
+              "ProblemRaised"
+            ],
+            "properties" : {
+              "ProblemRaised" : {
+                "$ref" : "#/components/schemas/ProblemRaised"
+              }
+            }
+          },
+          {
+            "type" : "object",
+            "required" : [
+              "ProviderCalled"
+            ],
+            "properties" : {
+              "ProviderCalled" : {
+                "$ref" : "#/components/schemas/ProviderCalled"
+              }
+            }
+          },
+          {
+            "type" : "object",
+            "required" : [
+              "RequestAnswered"
+            ],
+            "properties" : {
+              "RequestAnswered" : {
+                "$ref" : "#/components/schemas/RequestAnswered"
+              }
+            }
+          },
+          {
+            "type" : "object",
+            "required" : [
+              "RequestsCounted"
+            ],
+            "properties" : {
+              "RequestsCounted" : {
+                "$ref" : "#/components/schemas/RequestsCounted"
+              }
+            }
+          },
+          {
+            "type" : "object",
+            "required" : [
+              "Written"
+            ],
+            "properties" : {
+              "Written" : {
+                "$ref" : "#/components/schemas/Written1"
+              }
+            }
+          }
+        ]
+      },
       "WhyInfo" : {
         "title" : "WhyInfo",
         "type" : "object",
@@ -33120,6 +33703,32 @@
           },
           "restartable" : {
             "type" : "boolean"
+          }
+        }
+      },
+      "Written1" : {
+        "title" : "Written",
+        "type" : "object",
+        "required" : [
+          "table",
+          "change"
+        ],
+        "properties" : {
+          "table" : {
+            "type" : "string"
+          },
+          "change" : {
+            "$ref" : "#/components/schemas/Change1"
+          },
+          "rows" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "keys" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
           }
         }
       }

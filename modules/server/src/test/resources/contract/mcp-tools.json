@@ -2559,6 +2559,66 @@
         }
       },
       {
+        "name" : "log",
+        "description" : "The structured log: what happened, step by step — answered requests, provider calls, problems and every database write statement — each with the trace that links the steps of one request or job. Filter by `trace`, `job`, `run`, `source` (citekey), `problem` (an id an answer named), `label`, `kind`, `since`, `until`; newest first, `before` = the cursor for the next older page. Use to answer \"what happened to job X / source Y / request Z\".",
+        "inputSchema" : {
+          "$schema" : "https://json-schema.org/draft/2020-12/schema",
+          "title" : "Filter",
+          "type" : "object",
+          "properties" : {
+            "trace" : {
+              "description" : "one trace: every step of one request or job (a response's Histmersion-Trace)",
+              "type" : "string"
+            },
+            "label" : {
+              "description" : "the label a client gave its calls (Histmersion-Trace-Label)",
+              "type" : "string"
+            },
+            "job" : {
+              "description" : "what happened to this job (its id)",
+              "type" : "string"
+            },
+            "run" : {
+              "description" : "what happened to this agent run (its id)",
+              "type" : "string"
+            },
+            "source" : {
+              "description" : "what happened to this source (its citekey)",
+              "type" : "string"
+            },
+            "problem" : {
+              "description" : "a problem's id (the one an answer named): alone, every step of the trace it was raised in",
+              "type" : "string"
+            },
+            "kind" : {
+              "description" : "one of: RequestAnswered, RequestsCounted, ProviderCalled, Written, ProblemRaised, Lost",
+              "type" : "string"
+            },
+            "since" : {
+              "description" : "from: an ISO instant, a date, or 7d / 12h / 30m ago",
+              "type" : "string"
+            },
+            "until" : {
+              "description" : "up to: an ISO instant or a date",
+              "type" : "string"
+            },
+            "limit" : {
+              "description" : "events per page (default 100, at most 1000)",
+              "type" : "integer",
+              "format" : "int32"
+            },
+            "before" : {
+              "description" : "the cursor the last page gave, for the next older one",
+              "type" : "string"
+            },
+            "from" : {
+              "description" : "database (default; the file when the database cannot answer) or file",
+              "type" : "string"
+            }
+          }
+        }
+      },
+      {
         "name" : "assets",
         "description" : "The figures stored with a source — name, mime, pixel size and the URL each is served at. The Markdown body links them as `assets/<name>`; `get_source` rewrites those to absolute URLs you can fetch. Use to check what figures are available — not to read the source.",
         "inputSchema" : {

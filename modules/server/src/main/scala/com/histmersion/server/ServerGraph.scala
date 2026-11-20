@@ -17,6 +17,7 @@ import com.histmersion.config.{AppConfig, ConfigReload, DbConfig}
 import com.histmersion.api.settings.ReloadReport
 import com.histmersion.util.database.{Db, InstanceLock, Migrate}
 import com.histmersion.server.hot.Hot
+import com.histmersion.util.log.{TracedDataSource, TracedPinning}
 import ox.{forkDiscard, releaseAfterScope, useInScope}
 
 import java.nio.file.{FileSystems, Path, StandardWatchEventKinds}
@@ -56,7 +57,11 @@ final class ServerGraph private (
     val maintenance: WriteGate
 ):
 
-  val ds: DataSource = maintenance.permits.dataSource(Hot.DataSource(pool)(identity))
+  /** The structured log's own connections: not traced, for the log's writes are no step of a trace. */
+  val logDs: DataSource = maintenance.permits.dataSource(Hot.DataSource(pool)(identity))
+
+  /** Every other connection, told the calling thread's trace for the database's write triggers. */
+  val ds: DataSource = TracedDataSource(logDs)
   val queryDs: DataSource = maintenance.permits.dataSource(Hot.DataSource(queryPool)(_.ds))
 
   /** The handlers' view: config, file and plugins from the graph at each call. */
@@ -68,7 +73,7 @@ final class ServerGraph private (
       maintenance,
       () => graph.config.loaded.file.info,
       () => plugins.peek,
-      graph,
+      TracedPinning(graph),
       () => reload(),
       loadedNow = Some(() => graph.config.loaded),
       restart = restart,
