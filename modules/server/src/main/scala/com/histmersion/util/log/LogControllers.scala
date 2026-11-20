@@ -18,6 +18,6 @@ final class LogControllers(log: LogService, now: () => Instant):
     * first.
     */
   def problem(id: LogEvent.ProblemId): Either[Problems, LogPage] =
-    log
-      .problem(LogEvent.ProblemId(id.value.trim), LogQuery.Limit(LogPage.MaxLimit))
+    id.present
+      .flatMap(log.problem(_, LogPage.Limit.max))
       .toRight(NotFound.Entity(TypeName.of(LogEvent.ProblemId), Raw.of(id)))

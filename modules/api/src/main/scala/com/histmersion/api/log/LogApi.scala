@@ -21,7 +21,7 @@ object LogApi:
       .and(text("job", "steps concerning this job")(LogEvent.Key(_), _.value))
       .and(text("run", "steps concerning this agent run")(LogEvent.Key(_), _.value))
       .and(text("source", "steps concerning this source (its citekey)")(LogEvent.Key(_), _.value))
-      .and(text("problem", "steps concerning this problem (its id)")(LogEvent.Key(_), _.value))
+      .and(text("problem", "steps concerning this problem (its id)")(LogEvent.ProblemId(_), _.value))
       .and(text("kind", s"one of: ${LogEvent.Kinds.mkString(", ")}")(LogEvent.Kind(_), _.value))
       .and(text("since", "from: an ISO instant, a date, or 7d / 12h / 30m ago")(LogEvent.At(_), _.value))
       .and(text("until", "up to: an ISO instant or a date")(LogEvent.At(_), _.value))

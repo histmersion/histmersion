@@ -5,6 +5,7 @@ import com.histmersion.util.problem.{External, Legacy, Problem, Problems}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.api.library.Tree
+import com.histmersion.api.log.LogEvent
 
 import com.histmersion.api.library.SearchMarkdown
 import com.histmersion.api.library.SourcesMarkdown
@@ -243,7 +244,9 @@ object Cli:
         e.printJson(json); err.println(WorkingDir.message); e.exitCode.exit()
       case Left(e) =>
         e.printJson(json)
-        e.problems.sentences.foreach(s => err.println(s"error: $s")); e.exitCode.exit()
+        e.problems.sentences.foreach(s => err.println(s"error: $s"))
+        e.trace.foreach(t => err.println(Error.traceLine(t)))
+        e.exitCode.exit()
 
   /** The token in the file `cli.token-file` names (none when it names none); a file that does not read is a problem. */
   private def tokenFile: Either[Problem, Option[Client.Token]] =
@@ -267,7 +270,8 @@ object Cli:
       problems: Problems,
       origin: ExitCode.Origin = ExitCode.Origin.Local,
       notFound: Boolean = false,
-      workingDirDenied: Boolean = false
+      workingDirDenied: Boolean = false,
+      trace: Option[LogEvent.Trace] = None
   ):
     def exitCode: ExitCode = ExitCode.of(problems, origin)
 
@@ -282,6 +286,10 @@ object Cli:
 
   object Error:
     def answered(problems: Problems): Error = Error(problems, ExitCode.Origin.Server)
+
+    /** The line after a failure's sentences that leads to what the server did with the request. */
+    def traceLine(trace: LogEvent.Trace): String =
+      s"trace ${trace.value} — what happened: histmersion log --trace ${trace.value}"
 
   /** What `histmersion …` of this group was asked to do, every argument parsed. */
   enum TopCommand extends Command:

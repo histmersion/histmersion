@@ -35,7 +35,9 @@ class LogEventSuite extends munit.FunSuite:
     ),
     What.Written(LogEvent.Table("jobs"), LogEvent.Change.Insert, Some(LogEvent.Count(2)), Vector(LogEvent.Key("j1"))),
     What.ProblemRaised(Some(LogEvent.ProblemId("ab12cd34")), LogEvent.ProblemCase("Internal.Unexpected")),
-    What.Lost(LogEvent.Count(3), LogEvent.Loss.QueueFull)
+    What.Lost(LogEvent.Count(3), LogEvent.Loss.QueueFull),
+    What.ToolCalled(LogEvent.Tool("search")),
+    What.WritesCounted(LogEvent.Table("agent_leases"), LogEvent.Change.Update, LogEvent.Count(12))
   )
 
   test("every case reads back as it was written (the table's and the file's one JSON)"):
@@ -48,7 +50,7 @@ class LogEventSuite extends munit.FunSuite:
     assertEquals(every.map(w => s"${w.kind}").sorted, LogEvent.Kinds.sorted)
 
   test("failures are kept as long as problems: a 5xx answer, an unreachable or 5xx provider, a problem, a loss"):
-    assertEquals(every.map(_.failing), List(false, false, true, false, true, true))
+    assertEquals(every.map(_.failing), List(false, false, true, false, true, true, false, false))
     assert(
       What
         .RequestAnswered(
@@ -64,6 +66,7 @@ class LogEventSuite extends munit.FunSuite:
 
   test("a subject's ref is what the table's subjects column holds"):
     assertEquals(Subject.Problem(LogEvent.Key("ab12")).ref, "problem:ab12")
+    assertEquals(LogEvent.ProblemId("ab12").subject.ref, "problem:ab12")
     assertEquals(Subject.Source(LogEvent.Key("smith2020")).ref, "source:smith2020")
 
   test("the Markdown line names the step, its subjects and its trace"):
@@ -73,3 +76,31 @@ class LogEventSuite extends munit.FunSuite:
     assert(line.contains("trace `0193a5f2-7c1e-7b3a-9f0e-2d4c6b8a1e3f` [session-7]"), line)
     val file = LogMarkdown.page(LogPage(Vector.empty, None, LogPage.Origin.File), _ => "")
     assert(file.contains("Read from the log file"), file)
+
+  test("the filters' values: blank is none, a trace is read in lower case and must be a UUID, a kind in any case"):
+    assertEquals(LogEvent.Key("  ").present, None)
+    assertEquals(LogEvent.Key(" j1 ").present, Some(LogEvent.Key("j1")))
+    assertEquals(LogEvent.Trace(" 0193A5F2-7C1E-7B3A-9F0E-2D4C6B8A1E3F ").present.map(_.wellFormed), Some(true))
+    assert(!LogEvent.Trace("abc").wellFormed)
+    assertEquals(LogEvent.Kind("written").known, Some(LogEvent.Kind("Written")))
+    assertEquals(LogEvent.Kind("nope").known, None)
+    assertEquals(LogEvent.Label.fromHeader("x" * 300).map(l => s"$l".length), Some(LogEvent.Label.MaxLength))
+    assertEquals(LogEvent.At("2026-11-20T09:15:02.123456Z").day, "2026-11-20")
+
+  test("a page's size: clamped to 1 … the most, cut, one more to see whether an older page follows"):
+    assertEquals(LogPage.Limit.clamped(None), LogPage.Limit(LogPage.DefaultLimit))
+    assertEquals(LogPage.Limit.clamped(Some(LogPage.Limit(0))), LogPage.Limit(1))
+    assertEquals(LogPage.Limit.clamped(Some(LogPage.Limit(99999))), LogPage.Limit.max)
+    assertEquals(LogPage.Limit(2).cut(Vector(1, 2, 3)), (Vector(1, 2), Vector(3)))
+    assert(LogPage.Limit(2).below(3) && !LogPage.Limit(2).below(2))
+    assertEquals(LogPage.Cursor.of(LogEvent.At("t"), LogEvent.Id("i")).parts, Some(("t", "i")))
+    assertEquals(LogPage.Cursor("garbage").parts, None)
+    assert(LogPage.From("FILE").names("File"))
+    assertEquals(
+      LogPage.Filter(problem = Some(LogEvent.ProblemId("ab12"))).problemAlone,
+      Some(LogEvent.ProblemId("ab12"))
+    )
+    assertEquals(
+      LogPage.Filter(problem = Some(LogEvent.ProblemId("ab12")), job = Some(LogEvent.Key("j1"))).problemAlone,
+      None
+    )

@@ -40,3 +40,13 @@ class TracingSuite extends munit.FunSuite:
     val t = Thread.ofPlatform().start(() => work())
     t.join()
     assertEquals(sink.events.asScala.toList.map(_._1), List("carried"))
+
+  test("a resumed job takes its own trace back, recording where the scope that resumed it records"):
+    val sink = Recorded()
+    val resumer = TraceScope(LogEvent.Trace("resume-request"), None, LogEvent.Actor.Client, sink)
+    Tracing.within(resumer) {
+      JobTrace.resumed(Some(LogEvent.Trace("job-own")))(Tracing.record(lost))
+      JobTrace.resumed(None)(Tracing.record(lost))
+    }
+    JobTrace.resumed(Some(LogEvent.Trace("no-scope")))(Tracing.record(lost))
+    assertEquals(sink.events.asScala.toList.map(_._1), List("job-own", "resume-request"))

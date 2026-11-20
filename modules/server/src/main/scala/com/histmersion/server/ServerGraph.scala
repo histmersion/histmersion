@@ -63,14 +63,15 @@ final class ServerGraph private (
 
   /** The handlers' view: config, file and plugins from the graph at each call. */
   def deps(restart: Option[() => Unit], system: SystemContext): Deps =
-    new Deps(
+    // the pinning hands work over in a trace scope recording into the writer these deps build
+    lazy val built: Deps = new Deps(
       () => graph.config.app,
       ds,
       queryDs,
       maintenance,
       () => graph.config.loaded.file.info,
       () => plugins.peek,
-      TracedPinning(graph),
+      TracedPinning(graph, () => built.logWriter),
       () => reload(),
       loadedNow = Some(() => graph.config.loaded),
       restart = restart,
@@ -81,6 +82,7 @@ final class ServerGraph private (
       pause = system.pause,
       memory = system.memory
     )
+    built
 
   /** Throw away the pooled connections of the pools in use now (after a restore: see [[Db.evict]]). */
   def evict(): Unit =

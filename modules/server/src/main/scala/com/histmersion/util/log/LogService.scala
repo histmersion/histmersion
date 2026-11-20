@@ -15,7 +15,7 @@ trait LogService:
   def page(q: LogQuery): LogPage
 
   /** Every step of the trace `id` was raised in (oldest first), or `None` when no event names that problem. */
-  def problem(id: LogEvent.ProblemId, limit: LogQuery.Limit): Option[LogPage]
+  def problem(id: LogEvent.ProblemId, limit: LogPage.Limit): Option[LogPage]
 
 object LogService:
   /** How long a read of the table may take before the files are read instead. */
@@ -30,20 +30,19 @@ object LogService:
         case LogQuery.Store.Database =>
           try
             val rows = transactor.readOnlyRollback(Transactor.TimeoutMs(ReadTimeoutMs)) {
-              LogRepo.page(where(q), q.limit.value + 1)
+              LogRepo.page(where(q), q.limit.andOne)
             }
             val (events, next) = q.page(rows)
             LogPage(events, next, LogPage.Origin.Database)
           catch case NonFatal(_) => fromFiles(q)
 
-    def problem(id: LogEvent.ProblemId, limit: LogQuery.Limit): Option[LogPage] =
-      val subject = LogEvent.Subject.Problem(LogEvent.Key(id.value))
+    def problem(id: LogEvent.ProblemId, limit: LogPage.Limit): Option[LogPage] =
       val trace =
         try transactor.readOnlyRollback(Transactor.TimeoutMs(ReadTimeoutMs))(LogRepo.traceOfProblem(id))
         catch case NonFatal(_) => None
       trace
-        .orElse(files.page(LogQuery.ofSubject(subject, 1))._1.headOption.map(_.trace))
-        .map(t => oldestFirst(page(LogQuery.ofTrace(t, limit.value))))
+        .orElse(files.page(LogQuery.ofSubject(id.subject, LogPage.Limit(1)))._1.headOption.map(_.trace))
+        .map(t => oldestFirst(page(LogQuery.ofTrace(t, limit))))
 
     private def fromFiles(q: LogQuery): LogPage =
       val (events, next) = files.page(q)
@@ -72,8 +71,7 @@ object LogService:
       val (rows, next) = q.page(events.get)
       LogPage(rows, next, LogPage.Origin.Database)
 
-    def problem(id: LogEvent.ProblemId, limit: LogQuery.Limit): Option[LogPage] =
-      val subject = LogEvent.Subject.Problem(LogEvent.Key(id.value))
+    def problem(id: LogEvent.ProblemId, limit: LogPage.Limit): Option[LogPage] =
       events.get
-        .find(_.subjects.contains(subject))
-        .map(e => oldestFirst(page(LogQuery.ofTrace(e.trace, limit.value))))
+        .find(_.subjects.contains(id.subject))
+        .map(e => oldestFirst(page(LogQuery.ofTrace(e.trace, limit))))

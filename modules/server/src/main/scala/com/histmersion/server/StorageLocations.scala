@@ -65,6 +65,12 @@ object StorageLocations:
       case Location.PostgresTools => nonBlank(cfg.backups.pgBinDir.value).map(Path.of(_))
       case Location.Executables   => None
 
+  /** The structured log's directory: `log.dir` when set, else the logs location's `structured`. */
+  def logDir(cfg: AppConfig, loaded: LoadedConfig, environment: Environment, userPaths: UserPaths): Option[Path] =
+    cfg.log.dir.set
+      .map(Path.of(_))
+      .orElse(root(Location.Logs, cfg, loaded, environment, userPaths).map(_.resolve("structured")))
+
   /** The directories of the executables' search path `path` (`PATH`), each a store, in order. */
   def searchPath(path: Option[Environment.VariablesValue]): List[Store] =
     path.toList

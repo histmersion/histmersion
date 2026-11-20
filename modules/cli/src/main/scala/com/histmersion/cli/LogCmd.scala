@@ -2,7 +2,7 @@ package com.histmersion
 package cli
 
 import com.histmersion.api.Paging
-import com.histmersion.api.log.{LogApi, LogEvent, LogMarkdown, LogPage}
+import com.histmersion.api.log.{LogApi, LogMarkdown, LogPage}
 import com.histmersion.util.console.Console
 
 /** `histmersion log [--trace t] [--job j] [--run r] [--source ck] [--problem id] [--label l] [--kind k] [--since s]
@@ -17,12 +17,6 @@ object LogCmd:
     case Log(filter: LogPage.Filter, json: Cli.JsonOutput)
 
     def run(c: Client)(using Console): Either[Cli.Error, Unit] = Perform(c)(this)
-
-  /** Whether `f` asks for one problem alone (no other filter). */
-  def problemAlone(f: LogPage.Filter): Option[LogEvent.Key] =
-    f.problem.filter(_ =>
-      List(f.trace, f.label, f.job, f.run, f.source, f.kind, f.since, f.until, f.before).forall(_.isEmpty)
-    )
 
   /** Carries out the command against one server. */
   final private[cli] class Perform(c: Client)(using console: Console):
@@ -41,8 +35,8 @@ object LogCmd:
             "until" -> filter.until.map(_.value),
             "limit" -> filter.limit.map(l => s"${l.value}")
           )
-          problemAlone(filter)
-            .fold(c.call(LogApi.events)(filter))(p => c.call(LogApi.problem)(LogEvent.ProblemId(p.value)))
+          filter.problemAlone
+            .fold(c.call(LogApi.events)(filter))(p => c.call(LogApi.problem)(p))
             .map(p =>
               Output.emit(json, p)(
                 LogMarkdown.page(_, cursor => s"Older: `${PageCmd.next("log", opts, Paging.Cursor(cursor.value))}`")

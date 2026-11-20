@@ -3,7 +3,7 @@ package util.log
 
 import com.augustnagro.magnum.*
 import com.github.plokhotnyuk.jsoniter_scala.core.{readFromString, writeToString}
-import com.histmersion.api.log.LogEvent
+import com.histmersion.api.log.{LogEvent, LogPage}
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.Timestamps
@@ -32,16 +32,29 @@ private[log] object LogRepo:
 
   /** A staged write statement, as the trigger recorded it. */
   final case class Staged(
-      id: String,
-      at: String,
-      trace: String,
-      label: Option[String],
-      table: String,
+      id: LogEvent.Id,
+      at: LogEvent.At,
+      trace: LogEvent.Trace,
+      label: Option[LogEvent.Label],
+      table: LogEvent.Table,
       op: String,
-      rows: Option[Long],
-      keys: List[String],
-      citekeys: List[String]
+      rows: Option[LogEvent.Count],
+      keys: List[LogEvent.Key],
+      citekeys: List[LogEvent.Key]
   ) derives DbCodec
+
+  /** The write statements of one table and change counted in one finished minute. */
+  final case class Counted(at: LogEvent.At, table: LogEvent.Table, op: String, count: LogEvent.Count) derives DbCodec
+
+  /** The counts of the minutes that are over, taken out of `log_counts` (in the caller's transaction, as the staged
+    * writes are).
+    */
+  def takeCounted(using DbCon): Vector[Counted] =
+    sql"""DELETE FROM log_counts WHERE minute < date_trunc('minute', now())
+          RETURNING ${Timestamps.iso(sql"minute")}, tbl, op, n"""
+      .returning[Counted]
+      .run()
+      .toVector
 
   /** At most `max` staged write statements, oldest first, taken out of `log_writes`: the caller writes their events in
     * the same transaction, so a failure leaves them staged.
@@ -54,7 +67,7 @@ private[log] object LogRepo:
       .toVector
 
   /** A page of events: `where` the filters, newest first, at most `limit`. */
-  def page(where: Frag, limit: Int)(using DbCon): Vector[LogEvent] =
+  def page(where: Frag, limit: LogPage.Limit)(using DbCon): Vector[LogEvent] =
     sql"SELECT event::text FROM log_events WHERE TRUE $where ORDER BY at DESC, id DESC LIMIT $limit"
       .query[String]
       .run()
@@ -63,12 +76,11 @@ private[log] object LogRepo:
 
   /** The trace a problem was raised in, if its event is kept. */
   def traceOfProblem(id: LogEvent.ProblemId)(using DbCon): Option[LogEvent.Trace] =
-    val subject = LogEvent.Subject.Problem(LogEvent.Key(id.value)).ref
+    val subject = id.subject.ref
     sql"""SELECT trace::text FROM log_events WHERE subjects @> ARRAY[$subject]::text[] ORDER BY at, id LIMIT 1"""
-      .query[String]
+      .query[LogEvent.Trace]
       .run()
       .headOption
-      .map(LogEvent.Trace(_))
 
   /** Ordinary events before `ordinary`, problems before `problems`: deleted; the rows deleted. */
   def deleteOlder(ordinary: String, problems: String)(using DbCon): Long =

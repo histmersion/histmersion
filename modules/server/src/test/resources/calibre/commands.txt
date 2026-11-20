@@ -646,6 +646,7 @@ exit 2
 --- stdout
 --- stderr
 error: no Calibre book with id 99
+trace <uuid> — what happened: histmersion log --trace <uuid>
 --- calls
 calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "1" "--search" "id:99"
 
@@ -654,6 +655,7 @@ exit 2
 --- stdout
 --- stderr
 error: calibre (failed): Calibre id 7 has no pdf/epub (formats: <library>/Author 7/Book 7 (7)/Book 7.mobi); KFX/MOBI must be converted in Calibre first
+trace <uuid> — what happened: histmersion log --trace <uuid>
 --- calls
 calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "1" "--search" "id:7"
 
@@ -662,6 +664,7 @@ exit 2
 --- stdout
 --- stderr
 error: Calibre id 4: title is required; Calibre id 4: author is required
+trace <uuid> — what happened: histmersion log --trace <uuid>
 --- calls
 calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "1" "--search" "id:4"
 
@@ -670,6 +673,7 @@ exit 2
 --- stdout
 --- stderr
 error: the generated citekey 'zzcal2001_collision' is already a record that is not linked to Calibre — importing Calibre id 8 would merge two works into one record. Pass --citekey <another key> for a separate record, or --citekey zzcal2001_collision to import into that record on purpose
+trace <uuid> — what happened: histmersion log --trace <uuid>
 --- calls
 calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "1" "--search" "id:8"
 
@@ -761,6 +765,7 @@ exit 4
 --- stdout
 --- stderr
 error: no queue item id '424242'
+trace <uuid> — what happened: histmersion log --trace <uuid>
 --- calls
 
 ## histmersion calibre import 5 --no-convert --acquire-item 1
@@ -803,6 +808,7 @@ exit 2
 --- stdout
 --- stderr
 error: no Calibre book with id 99
+trace <uuid> — what happened: histmersion log --trace <uuid>
 --- calls
 calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "1" "--search" "id:99"
 
@@ -811,6 +817,7 @@ exit 4
 --- stdout
 --- stderr
 error: No source 'zznosuch'
+trace <uuid> — what happened: histmersion log --trace <uuid>
 --- calls
 calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "1" "--search" "id:6"
 
@@ -830,6 +837,7 @@ exit 2
 --- stdout
 --- stderr
 error: 'zzcal_missing': no original stored — the server keeps uploads in its spool directory (converter.spool-dir); pass the file yourself (--file) — or set cli.calibre.originals-dir (HISTMERSION_CALIBRE_ORIGINALS_DIR) to a directory holding <citekey>/paper.pdf
+trace <uuid> — what happened: histmersion log --trace <uuid>
 --- calls
 
 ## histmersion calibre push zzcal_pushme
@@ -880,6 +888,7 @@ exit 1
 --- stdout
 --- stderr
 error: 'zzcal_missing': no original stored — the server keeps uploads in its spool directory (converter.spool-dir); pass the file yourself (--file)
+trace <uuid> — what happened: histmersion log --trace <uuid>
 --- calls
 
 ## histmersion calibre push zzcal_nolink --replace
@@ -887,6 +896,7 @@ exit 2
 --- stdout
 --- stderr
 error: 'zzcal_nolink' is not linked to a Calibre entry — `histmersion calibre push zzcal_nolink` adds one, `histmersion calibre link zzcal_nolink <id>` links an existing one
+trace <uuid> — what happened: histmersion log --trace <uuid>
 --- calls
 
 ## histmersion calibre push zzcal_nolink
@@ -894,6 +904,7 @@ exit 2
 --- stdout
 --- stderr
 error: 'zzcal_nolink': no original stored — the server keeps uploads in its spool directory (converter.spool-dir); pass the file yourself (--file) — or set cli.calibre.originals-dir (HISTMERSION_CALIBRE_ORIGINALS_DIR) to a directory holding <citekey>/paper.pdf
+trace <uuid> — what happened: histmersion log --trace <uuid>
 --- calls
 
 ## histmersion calibre push zzcal_nolink   [cli.calibre.originals-dir set]
@@ -1176,6 +1187,7 @@ exit 2
 --- stdout
 --- stderr
 error: --field: unknown field name 'bogus' (one of: title, authors, publisher, pubdate, languages, identifiers, tags, comments, series)
+trace <uuid> — what happened: histmersion log --trace <uuid>
 --- calls
 
 ## histmersion calibre set 1 --field title:Unknown
@@ -1183,6 +1195,7 @@ exit 2
 --- stdout
 --- stderr
 error: title is required
+trace <uuid> — what happened: histmersion log --trace <uuid>
 --- calls
 
 ## histmersion calibre set 1 --field nocolon
@@ -1197,6 +1210,7 @@ exit 2
 --- stdout
 --- stderr
 error: no book id '99'
+trace <uuid> — what happened: histmersion log --trace <uuid>
 --- calls
 calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "1" "--search" "id:99"
 

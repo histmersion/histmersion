@@ -1,6 +1,7 @@
 package com.histmersion
 package server
 import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.log.LogRoutes
 import com.histmersion.util.json.Cursor
 import com.histmersion.util.problem.{Problem, Problems}
 import io.github.iltotore.iron.constraint.any.Pure
@@ -391,7 +392,7 @@ final class HttpApi(
       CollectionsRoutes(collections)
 
   val endpoints: List[ServerEndpoint[Any, Identity]] =
-    com.histmersion.util.log.LogRoutes(h.log) ++
+    LogRoutes(h.log) ++
       EventImportsRoutes(h.eventImports) ++
       EventLinksRoutes(h.eventLinks) ++
       SiteTypesRoutes(h.siteTypes) ++ rest ++

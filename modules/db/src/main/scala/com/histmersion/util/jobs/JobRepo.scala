@@ -23,6 +23,7 @@ import com.histmersion.api.Sha256
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.automation.AgentJobKinds
 import com.histmersion.domain.automation.Run
+import com.histmersion.api.log.LogEvent
 import com.histmersion.domain.automation.Pipeline
 import com.histmersion.util.data.exchange.MergeRepo
 import com.histmersion.util.data.exchange.MergeRow
@@ -257,8 +258,22 @@ object JobRepo:
       .flatten
       .map(Pipeline.Version(_))
 
+  /** The trace the job was created under (none for a job older than the structured log). */
+  def traceOfJob(id: Job.Id)(using DbCon): Option[LogEvent.Trace] =
+    sql"SELECT trace_id::text FROM jobs WHERE id = $id AND trace_id IS NOT NULL".query[LogEvent.Trace].run().headOption
+
+  /** The trace the run was created under (none for a run older than the structured log). */
+  def traceOfRun(id: Run.Id)(using DbCon): Option[LogEvent.Trace] =
+    sql"SELECT trace_id::text FROM jobs WHERE id = $id AND trace_id IS NOT NULL".query[LogEvent.Trace].run().headOption
+
   def runHeartbeat(kind: Job.Kind, id: Run.Id)(using DbCon): Unit =
-    Unused(sql"UPDATE jobs SET heartbeat_at = now() WHERE id = $id AND kind = $kind".update.run(), Unused.Why.Held)
+    // the structured log counts heartbeats per minute instead of recording each (histmersion.log_count, set for this
+    // statement's transaction before its triggers run)
+    Unused(
+      sql"""WITH counted AS (SELECT set_config('histmersion.log_count', 'on', true))
+            UPDATE jobs SET heartbeat_at = now() FROM counted WHERE id = $id AND kind = $kind""".update.run(),
+      Unused.Why.Held
+    )
 
   /** How many runs of `kind` are in one of `statuses`. */
   def runsIn(kind: Job.Kind, statuses: (RunRow.Status, RunRow.Status))(using DbCon): RowCount =

@@ -4403,7 +4403,7 @@ Options and flags:
     --label <string>
         The label a client gave its calls (Histmersion-Trace-Label)
     --kind <string>
-        Only: RequestAnswered, RequestsCounted, ProviderCalled, Written, ProblemRaised, Lost
+        Only: RequestAnswered, RequestsCounted, ProviderCalled, Written, ProblemRaised, Lost, ToolCalled, WritesCounted
     --since <string>
         From: 2026-10-01, an ISO instant, or 7d / 12h / 30m ago
     --until <string>

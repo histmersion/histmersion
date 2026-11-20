@@ -1,6 +1,7 @@
 package com.histmersion
 package cli
 import com.histmersion.util.problem.{External, Legacy, Problem}
+import com.histmersion.api.log.LogEvent
 
 import sttp.client4.*
 import sttp.client4.httpclient.HttpClientSyncBackend
@@ -146,12 +147,13 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
       case scala.util.Failure(e) =>
         Left(Cli.Error(transport(e, serverUrl, Problem.Upstream.Url(s"${req.uri}"), write)))
       case scala.util.Success(resp) =>
+        val trace = Client.traceOf(resp.header(Client.TraceHeader))
         resp.body match
           case sttp.tapir.DecodeResult.Value(Right(o)) => Right(o)
           case sttp.tapir.DecodeResult.Value(Left(e))  =>
-            Left(Cli.Error(e.problems, ExitCode.Origin.Server, notFound = e.isNotFound))
+            Left(Cli.Error(e.problems, ExitCode.Origin.Server, notFound = e.isNotFound, trace = trace))
           case _ =>
-            Left(Cli.Error.answered(unexpected(HttpStatus(resp.code.code), serverUrl, write)))
+            Left(Cli.Error(unexpected(HttpStatus(resp.code.code), serverUrl, write), ExitCode.Origin.Server, trace = trace))
 
   def unanswered(what: String): Problem =
     Problem.Upstream.Unanswered(Histmersion, Problem.Upstream.Url.of(serverUrl), External.Reported.of(what))
@@ -474,6 +476,13 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
   def fillFigureLicences(apply: Api.Apply): Either[Cli.Error, FigureLicenceFill] = call(Api.fillFigureLicences)(apply)
 
 object Client:
+  /** The answer's header that names the trace the server handled the request under. */
+  val TraceHeader = "Histmersion-Trace"
+
+  /** The trace an answer named, if any. */
+  def traceOf(header: Option[String]): Option[LogEvent.Trace] =
+    header.map(_.trim).filter(_.nonEmpty).map(LogEvent.Trace(_))
+
   type HttpStatus = HttpStatus.T
   object HttpStatus extends Newtype[Int, Pure]
   type Write = Write.T
