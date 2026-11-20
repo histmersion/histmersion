@@ -725,6 +725,54 @@ prefix	server:util/jobs/JobStopped.scala	JobStopped → Job.Stopped	1
 prefix	server:util/jobs/JobStops.scala	JobStops → Job.Stops	1
 prefix	server:util/plugins/PluginSetResource.scala	PluginSetResource → Plugin.SetResource	1
 problem-field	problem:util/problem/Problem.scala	Unclassified.text: Legacy.Text	1
+raw-request	web:web/AboutView.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	1
+raw-request	web:web/ActivityView.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	4
+raw-request	web:web/App.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	5
+raw-request	web:web/ApprovalsView.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	4
+raw-request	web:web/ArticlesTab.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	1
+raw-request	web:web/BaseMaps.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	1
+raw-request	web:web/EventLayer.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	1
+raw-request	web:web/EventsTab.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	1
+raw-request	web:web/FilterBar.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	1
+raw-request	web:web/GoalPage.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	3
+raw-request	web:web/GoalsView.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	10
+raw-request	web:web/GraphPanel.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	1
+raw-request	web:web/IdentLink.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	1
+raw-request	web:web/JobsView.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	1
+raw-request	web:web/ManagersView.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	24
+raw-request	web:web/MapLists.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	2
+raw-request	web:web/MapRegionsView.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	4
+raw-request	web:web/MapView.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	1
+raw-request	web:web/MediaFilters.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	1
+raw-request	web:web/MergeView.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	8
+raw-request	web:web/ModelsView.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	9
+raw-request	web:web/Notices.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	2
+raw-request	web:web/Pages.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	1
+raw-request	web:web/PlacesInput.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	2
+raw-request	web:web/Preview.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	5
+raw-request	web:web/QueueView.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	11
+raw-request	web:web/ResearchOverview.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	6
+raw-request	web:web/ResultDetail.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	1
+raw-request	web:web/ResultsList.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	1
+raw-request	web:web/RunsView.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	3
+raw-request	web:web/SourceEditor.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	3
+raw-request	web:web/StandalonePage.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	1
+raw-request	web:web/TimelinePlayback.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	1
+raw-request	web:web/TimelineView.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	3
+raw-request	web:web/TreeTab.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	3
+raw-request	web:web/UploadView.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	3
+raw-request	web:web/library/DoiForm.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	1
+raw-request	web:web/library/LibraryLists.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	4
+raw-request	web:web/library/MyLibrary.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	2
+raw-request	web:web/library/ReadingPane.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	4
+raw-request	web:web/library/ShelfList.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	1
+raw-request	web:web/marks/MyItems.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	11
+raw-request	web:web/settings/BackupsSection.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	2
+raw-request	web:web/settings/DataSection.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	9
+raw-request	web:web/settings/DownloadJobs.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	1
+raw-request	web:web/settings/SettingsStore.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	3
+raw-request	web:web/settings/StartPlace.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	2
+raw-request	web:web/setup/SetupPage.scala	requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened	9
 service	server:domain/library/findings/FindingService.scala	FindingService without InMemory	1
 service	server:domain/library/labels/LabelService.scala	LabelService without InMemory	1
 service	server:domain/library/search/QueryService.scala	QueryService without InMemory	1
@@ -1054,7 +1102,7 @@ unwrap	server:domain/automation/agents/AgentStateControllers.scala	.value outsid
 unwrap	server:domain/automation/agents/AgentStateService.scala	.value outside a boundary	10
 unwrap	server:domain/automation/agents/AgentTreeWriter.scala	.value outside a boundary	8
 unwrap	server:domain/automation/agents/AgentTrees.scala	.value outside a boundary	15
-unwrap	server:domain/automation/agents/AgentsControllers.scala	.value outside a boundary	136
+unwrap	server:domain/automation/agents/AgentsControllers.scala	.value outside a boundary	137
 unwrap	server:domain/automation/agents/AgentsSettings.scala	.value outside a boundary	20
 unwrap	server:domain/automation/agents/AllowanceGuard.scala	.value outside a boundary	2
 unwrap	server:domain/automation/agents/ApprovalService.scala	.value outside a boundary	135
@@ -1083,7 +1131,7 @@ unwrap	server:domain/automation/autopilot/AutopilotRowService.scala	.value outsi
 unwrap	server:domain/automation/autopilot/AutopilotService.scala	.value outside a boundary	155
 unwrap	server:domain/automation/goals/FocusService.scala	.value outside a boundary	33
 unwrap	server:domain/automation/goals/GoalFocusService.scala	.value outside a boundary	110
-unwrap	server:domain/automation/goals/GoalService.scala	.value outside a boundary	88
+unwrap	server:domain/automation/goals/GoalService.scala	.value outside a boundary	90
 unwrap	server:domain/automation/goals/GoalsControllers.scala	.value outside a boundary	16
 unwrap	server:domain/automation/goals/PlanGoalPipeline.scala	.value outside a boundary	65
 unwrap	server:domain/automation/managers/DrainService.scala	.value outside a boundary	15
@@ -1092,7 +1140,7 @@ unwrap	server:domain/automation/managers/ManagerDefaultsViews.scala	.value outsi
 unwrap	server:domain/automation/managers/ManagerKindDefinition.scala	.value outside a boundary	2
 unwrap	server:domain/automation/managers/ManagerService.scala	.value outside a boundary	231
 unwrap	server:domain/automation/managers/ManagerSupervisor.scala	.value outside a boundary	88
-unwrap	server:domain/automation/managers/ManagersControllers.scala	.value outside a boundary	116
+unwrap	server:domain/automation/managers/ManagersControllers.scala	.value outside a boundary	126
 unwrap	server:domain/automation/scheduler/SchedulerService.scala	.value outside a boundary	150
 unwrap	server:domain/automation/workflows/Pipelines.scala	.value outside a boundary	7
 unwrap	server:domain/automation/workflows/Workflows.scala	.value outside a boundary	6
