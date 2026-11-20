@@ -108,13 +108,12 @@ object GoalsView:
       plan: NewArea.Plan,
       seed: NewArea.Seed,
       watch: Option[Managers.ManagerConfig] = None
-  )
+  ):
+    /** The one request that creates all of it, on the server, in one transaction. */
+    def create: Goal.AreaCreate = Goal.AreaCreate(slug, put, plan, seed, watch)
 
   object NewArea:
-    type Plan = Plan.T
-    object Plan extends Newtype[Boolean, Pure]
-    type Seed = Seed.T
-    object Seed extends Newtype[Boolean, Pure]
+    export Goal.AreaCreate.{Plan, Seed}
 
   /** The form → what to create. A blank slug comes from the title; tags are comma-separated. Watching: auto-ingest is
     * OFF unless ticked; its cap (blank = the server's default) a whole number.
@@ -178,6 +177,17 @@ object GoalsView:
           s"; watcher ${made(id, "for its weekly sweeps")}" +
             (if a.watch.exists(_.autoIngest.exists(_.value)) then " (it ingests legal open-access finds)" else "")
         )
+    )
+
+  /** What the server's one operation made, in one line. */
+  def madeNote(a: NewArea, made: Goal.AreaCreated): CreatedNote =
+    val managers = made.seed.toList ++ made.watch.toList
+    createdNote(
+      a,
+      Planned(made.run.nonEmpty),
+      made.seed.map(_.id),
+      made.watch.map(_.id),
+      managers.filter(_.state == Managers.State.Active.wire).map(_.id).toSet
     )
 
   // ── the goals window ────────────────────────────────────────────────────────────────────────────
@@ -274,50 +284,9 @@ object GoalsView:
         case Left(m)  => msg.set(Some(Left(m.sentence)))
         case Right(a) =>
           busy.set(true)
-          val created =
-            ApiClient
-              .getGoal(a.slug)
-              .transformWith {
-                case scala.util.Success(_) =>
-                  scala.concurrent.Future.failed(new Exception(s"a goal '${a.slug}' exists already"))
-                case scala.util.Failure(_) => ApiClient.putGoal(a.slug, a.put)
-              }
-              .flatMap { _ =>
-                val planned = if a.plan.value then
-                  ApiClient
-                    .startRun(
-                      Agents.RunRequest(
-                        Agents.RunRequest.Pipeline(Pipeline.PlanGoal.wire.value),
-                        Agents.RunRequest.Target(a.slug.value)
-                      )
-                    )
-                    .map(_ => true)
-                else scala.concurrent.Future.successful(false)
-                planned.flatMap { p =>
-                  val seeded = if a.seed.value then
-                    ApiClient
-                      .managerCreate(Managers.ManagerCreate(Managers.ManagerCreate.Kind("seed"), Some(a.slug)))
-                      .map(m => Some(m))
-                  else scala.concurrent.Future.successful(None)
-                  seeded.flatMap { sd =>
-                    val watched =
-                      a.watch.fold(scala.concurrent.Future.successful(Option.empty[Managers.ManagerInfo]))(c =>
-                        ApiClient
-                          .managerCreate(Managers.ManagerCreate(Managers.ManagerCreate.Kind("watch"), Some(a.slug), c))
-                          .map(m => Some(m))
-                      )
-                    watched.map(w =>
-                      createdNote(
-                        a,
-                        Planned(p),
-                        sd.map(_.id),
-                        w.map(_.id),
-                        (sd.toList ++ w.toList).filter(_.state == Managers.State.Active.wire).map(_.id).toSet
-                      )
-                    )
-                  }
-                }
-              }
+          // ONE request: the server creates the goal (never replacing one), its plan run and its managers in one
+          // transaction, or nothing at all
+          val created = ApiClient.createArea(a.create).map(made => madeNote(a, made))
           created.onComplete { r =>
             busy.set(false)
             msg.set(Some(r.fold(e => Left(e.getMessage), n => Right(n.value))))

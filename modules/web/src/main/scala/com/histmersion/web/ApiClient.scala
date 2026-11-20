@@ -120,7 +120,8 @@ object ApiClient:
 
   private def call[I, O](ep: PublicEndpoint[I, Api.Error, O, Any])(in: I): Future[O] =
     val req = authorize(interp.toRequest(ep, None).apply(in))
-    req.send(backend).flatMap { resp =>
+    // no answer at all (the fetch itself failed) is a transport failure, never a problem the server sent
+    unreachable(req.send(backend)).flatMap { resp =>
       val code = resp.code.code
       resp.body match
         case DecodeResult.Value(Right(o))    => Future.successful(o)
@@ -381,10 +382,10 @@ object ApiClient:
   def goals(limit: Option[Paging.Limit]): Future[Goal.List] =
     call(Api.goals)(Api.GoalQuery(None, limit.map(l => Api.GoalQuery.Limit(l.value)), None))
   def goalView(slug: Goal.Slug): Future[Goal.Plans.GoalView] = call(AgentsApi.goalView)(ReviewGoal.Slug(slug.value))
-  def getGoal(slug: Goal.Slug): Future[Goal] = call(Api.getGoal)(Goal.Uid(slug.value))
 
-  /** Create (or REPLACE) a goal — the New research area form checks the slug is free first. */
-  def putGoal(slug: Goal.Slug, in: Goal.Put): Future[Goal] = call(Api.putGoal)((Goal.Uid(slug.value), in))
+  /** A new research area: the goal (never replacing one), its plan run and its managers, all or nothing, on the server.
+    */
+  def createArea(in: Goal.AreaCreate): Future[Goal.AreaCreated] = call(Api.createArea)(in)
   def addGoalLink(slug: Goal.Slug, in: Goal.Plans.LinkAdd): Future[Goal.Plans.GoalLink] =
     call(AgentsApi.addGoalLink)((ReviewGoal.Slug(slug.value), in))
   def removeGoalLink(
@@ -587,7 +588,11 @@ object ApiClient:
   /** GET `url`: the status and the body, decoded by the browser. */
   private def fetchText(url: String): Future[(Int, String)] =
     import scala.scalajs.js.Thenable.Implicits.*
-    for
+    unreachable(for
       r <- dom.fetch(url).toFuture
       body <- r.text().toFuture
-    yield (r.status, body)
+    yield (r.status, body))
+
+  /** A request's own failure (no response, or its body cut off) as the [[ServerUnreachable]] it is. */
+  private def unreachable[A](sent: Future[A]): Future[A] =
+    sent.transform(identity, e => ServerUnreachable.of(e))

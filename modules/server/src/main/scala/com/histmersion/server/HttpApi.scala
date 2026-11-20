@@ -31,6 +31,7 @@ import com.histmersion.domain.library.LibraryData
 import com.histmersion.util.data.mirror.MirrorPlacement
 import com.histmersion.api.library.Source
 import com.histmersion.server.instance.MaintenanceControllers
+import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.api.aliases.InstanceInfo
 import com.histmersion.util.data.exchange.BundleScope
 import com.histmersion.util.data.exchange.ImportOptions
@@ -232,6 +233,9 @@ final class HttpApi(
     Api.goals.serverLogicSuccess[Identity](q => h.goals.list(q)),
     Api.getGoal.serverLogic[Identity](slug => HttpApi.goalSlug(slug.value).flatMap(h.goals.get)),
     Api.putGoal.serverLogic[Identity]((slug, in) => HttpApi.goalSlug(slug.value).flatMap(g => h.goals.put(g, in))),
+    Api.createArea.serverLogic[Identity](in =>
+      h.maintenance.guard(WriteGate.OperationName("create_area"))(h.agents.managing.createArea(in))
+    ),
     Api.patchGoal.serverLogic[Identity]((slug, p) => HttpApi.goalSlug(slug.value).flatMap(g => h.goals.patch(g, p))),
     Api.deleteGoal.serverLogic[Identity](slug => HttpApi.goalSlug(slug.value).flatMap(h.goals.delete)),
     // ── agent state (plan §1.5) ───────────────────────────────────────────────────────────────

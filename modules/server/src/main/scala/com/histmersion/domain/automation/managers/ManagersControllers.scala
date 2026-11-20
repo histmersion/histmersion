@@ -9,7 +9,8 @@ import hearth.kindlings.optics.syntax.*
 
 import io.scalaland.chimney.dsl.*
 
-import com.histmersion.util.database.Transactor
+import com.histmersion.util.database.{Transactor, WritePermit}
+import com.histmersion.domain.automation.goals.GoalRepo
 
 import com.augustnagro.magnum.{connect, transact}
 
@@ -175,18 +176,7 @@ final class ManagersControllers(
           (),
           conflict(Problem.Conflict.AlreadyExists(Problem.TypeName.of(ManagerLight.Id), Problem.Raw.of(id)))
         )
-        _ = record(
-          infoId,
-          None,
-          None,
-          Feed.Paused,
-          s"created ${state.wire}" +
-            c.fold("")(x =>
-              s", cron `${x.text}` (UTC)"
-            ) + (if state == State.Paused then
-                   s": resume it to start ${ManagerSupervisor.purpose(k)} (nothing is spent until then)"
-                 else "")
-        )
+        _ = record(infoId, None, None, Feed.Paused, createdText(k, state, c))
         m <- manager(id)
       yield m
     Kind.parse(in.kind) match
@@ -256,6 +246,121 @@ final class ManagersControllers(
             )
           out <- manager(lightId(m))
         yield out
+
+  /** A new manager's first event: how it was created, its cron, and what resuming it starts. */
+  private def createdText(k: Kind, state: State, cron: Option[Cron]): String =
+    s"created ${state.wire}" + cron.fold("")(x => s", cron `${x.text}` (UTC)") +
+      (if state == State.Paused then
+         s": resume it to start ${ManagerSupervisor.purpose(k)} (nothing is spent until then)"
+       else "")
+
+  /** A write of [[createArea]]'s transaction that cannot be made: the transaction is rolled back, the error answered.
+    */
+  final private class Refused(val error: Api.Error) extends RuntimeException(error.problems.sentences.mkString("; "))
+
+  /** `POST /api/goals/areas` — a new research area as ONE operation ([[Goal.AreaCreate]]), so that no step of it can be
+    * left half done or replace what exists. Everything that can be checked is checked first: the slug, the plan run
+    * (pipeline, models, budgets — as [[AgentsControllers.startRun]] checks it), the watcher's settings and cron. Then
+    * one transaction writes the goal (create-only: a slug in use, or an old slug of another goal, is refused with 409),
+    * the plan-goal run, the seeding manager with the item that proposes its first articles, the watcher with one item
+    * per sweep, and their events; a failure of any of them leaves nothing behind. The run is handed to the engine after
+    * the commit. The managers start as [[create]] starts them: paused, unless the autopilot is on.
+    */
+  def createArea(
+      in: Goal.AreaCreate,
+      now: java.time.Instant = java.time.Instant.now(agents.clock)
+  )(using WritePermit): Either[Api.Error, Goal.AreaCreated] =
+    val state = if agents.autopilot.on then State.Active else State.Paused
+    def cronOf(k: Kind): Either[Api.Error, Option[Cron]] =
+      kinds
+        .find(_.kind == k)
+        .flatMap(_.cron)
+        .filter(_.value.trim.nonEmpty)
+        .fold[Either[Api.Error, Option[Cron]]](Right(None))(t => checkCron(k, t, now).map(Some(_)))
+    val seeding = in.seed.value
+    for
+      slug <- DomainGoal.Slug.parse(in.slug.value.trim).left.map(Api.Error(_))
+      plan <-
+        if !in.plan.value then Right(None)
+        else
+          agents
+            .prepare(
+              RunRequest(RunRequest.Pipeline(Pipeline.PlanGoal.wire.value), RunRequest.Target(slug.value)),
+              None,
+              creating = Some(slug)
+            )
+            .map(Some(_))
+      _ <- if seeding then validate(Kind.Seed, ManagerConfig()) else Right(())
+      watchCron <- in.watch.fold[Either[Api.Error, Option[Cron]]](Right(None))(c =>
+        validate(Kind.Watch, c).flatMap(_ => cronOf(Kind.Watch))
+      )
+      ref = Goal.Ref(slug.value)
+      target = ManagerItem.Target(slug.value)
+      written <-
+        try
+          Right(Transactor(ds).write {
+            GoalRepo.createIn(slug, in.goal).left.foreach(e => throw Refused(e))
+            val run = plan.map(pr =>
+              agents.jobRuns.createIn(
+                RunService.row(
+                  pr.pipeline,
+                  pr.target,
+                  pr.model,
+                  BigDecimal(pr.usd.value),
+                  pr.tokens,
+                  pr.params,
+                  None,
+                  pr.goal,
+                  None,
+                  Origin.Person,
+                  dryRun = pr.dryRun
+                )
+              )
+            )
+            def made(id: ManagerInfo.Id, k: Kind, config: ManagerConfig, cron: Option[Cron]): ManagerInfo.Id =
+              val goal = Some(slug.transformInto[Goal.Slug])
+              val c = cron.map(x => ManagerInfo.Cron(x.text.value))
+              if !ManagerRepo.createIn(id, k, goal, state, config, c, cron.flatMap(_.next(now))) then
+                throw Refused(
+                  conflict(Problem.Conflict.AlreadyExists(Problem.TypeName.of(ManagerLight.Id), Problem.Raw.of(id)))
+                )
+              ManagerRepo
+                .eventIn(id, None, None, ManagerEvent.Kind(Feed.Paused), ManagerEvent.Text(createdText(k, state, cron)))
+              id
+            def enqueued(id: ManagerInfo.Id, kind: ManagerItem.Kind, origin: ItemOrigin, prio: Int, label: String) =
+              val (item, _) = ManagerRepo.upsert(id, kind, target, origin, ManagerItem.Priority(prio), reopen = true)
+              val text = s"$label enqueued by a ${origin.wire} (priority $prio)"
+              ManagerRepo.eventIn(id, Some(item), None, ManagerEvent.Kind(Feed.Evaluated), ManagerEvent.Text(text))
+            val seed = Option.when(seeding) {
+              val id = made(seedId(ref), Kind.Seed, ManagerConfig(), None)
+              enqueued(
+                id,
+                ManagerItem.Kind(ProposeArticles),
+                ItemOrigin.Person,
+                ManagerSupervisor.PersonPriority,
+                s"$slug"
+              )
+              id
+            }
+            val watch = in.watch.map { c =>
+              val id = made(watchId(ref), Kind.Watch, c, watchCron)
+              Sweep.of(c).foreach(sw => enqueued(id, sw.itemKind, ItemOrigin.Selection, 0, s"$slug (${sw.itemKind})"))
+              id
+            }
+            (run, seed, watch)
+          })
+        catch case r: Refused => Left(r.error)
+      (run, seed, watch) = written
+      _ = run.foreach(agents.engine.submit)
+      _ = supervisor.nudge()
+      goal <- host.goal(slug)
+      seeded <- seed.fold[Either[Api.Error, Option[ManagerInfo]]](Right(None))(id => manager(lightOf(id)).map(Some(_)))
+      watched <- watch.fold[Either[Api.Error, Option[ManagerInfo]]](Right(None))(id =>
+        manager(lightOf(id)).map(Some(_))
+      )
+    yield Goal.AreaCreated(goal, run.flatMap(agents.runs.get), seeded, watched)
+
+  private def lightOf(id: ManagerInfo.Id): ManagerLight.Id = id.transformInto[ManagerLight.Id]
 
   /** `PUT /api/agents/managers/{id}` — the config is replaced as given (an absent key = the default); `cron` set (five
     * fields in UTC, or @daily/@weekly/@monthly; no more often than `agents.scheduler.min-interval-minutes`) or cleared

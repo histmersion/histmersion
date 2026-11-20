@@ -4,7 +4,7 @@ import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.api.{Api, Plural}
-import com.histmersion.web.{ApiClient, Auth, MapRegionsView}
+import com.histmersion.web.{ApiClient, Auth, Loaded, MapRegionsView, Request}
 import com.raquo.laminar.api.L.*
 
 import scala.concurrent.Future
@@ -43,18 +43,24 @@ object DataSection:
     else SharePercent(math.min(100, math.round(used.value.toDouble * 100 / free.value.toDouble).toInt))
 
   def pane(ui: UiConfig): HtmlElement =
-    val about = Var(Option.empty[About])
-    val basemap = Var(Option.empty[Basemap.Status])
-    val sources = Var(List.empty[Gazetteer.SourceInfo])
-    val cats = Var(List.empty[CatalogProviderInfo])
-    val media = Var(List.empty[MediaProvider.Info])
+    // one request per panel: a server restarted while the page is open shows as unreachable, never as empty panels
+    val aboutReq = Request[About]()
+    val basemapReq = Request[Basemap.Status]()
+    val sourcesReq = Request[List[Gazetteer.SourceInfo]]()
+    val catsReq = Request[List[CatalogProviderInfo]]()
+    val mediaReq = Request[List[MediaProvider.Info]]()
+    val about = aboutReq.signal.map(_.shown)
+    val basemap = basemapReq.signal.map(_.shown)
+    val sources = sourcesReq.signal.map(_.shown.getOrElse(Nil))
+    val cats = catsReq.signal.map(_.shown.getOrElse(Nil))
+    val media = mediaReq.signal.map(_.shown.getOrElse(Nil))
     val starter = Starter()
     def reload(): Unit =
-      ApiClient.about().foreach(a => about.set(Some(a)))
-      ApiClient.basemap().foreach(b => basemap.set(Some(b)))
-      ApiClient.placeSources().foreach(sources.set)
-      ApiClient.eventCatalogues().foreach(cats.set)
-      ApiClient.mediaProviders().foreach(media.set)
+      aboutReq.ask(ApiClient.about())
+      basemapReq.ask(ApiClient.basemap())
+      sourcesReq.ask(ApiClient.placeSources())
+      catsReq.ask(ApiClient.eventCatalogues())
+      mediaReq.ask(ApiClient.mediaProviders())
     def act(text: ActionLabel, what: ActionWhat, job: => Future[JobInfo], primary: Boolean = false): HtmlElement =
       starter.act(text, what, job, primary)
     div(
@@ -66,8 +72,9 @@ object DataSection:
           cls := "settings-lead",
           "Reference data Histmersion keeps on this computer. Everything here can also be done from the command line."
         ),
-        child.maybe <-- about.signal.map(_.map(a => disk(a.storage)))
+        child.maybe <-- about.map(_.map(a => disk(a.storage)))
       ),
+      ErrorLine.ofAll(List(aboutReq.signal, basemapReq.signal, sourcesReq.signal, catsReq.signal, mediaReq.signal)),
       child.maybe <-- Auth.writable.map(w =>
         Option.when(!w)(div(cls := "pane-note", Auth.keyNeeded("download or remove data")))
       ),
@@ -79,9 +86,10 @@ object DataSection:
       card(
         "Maps",
         div(
-          child <-- basemap.signal.map {
-            case None    => p(cls := "muted", "Loading…")
-            case Some(b) => div(maps(b, starter))
+          child <-- basemapReq.signal.map {
+            case Loaded.Idle | Loaded.Loading(None) => p(cls := "muted", "Loading…")
+            case l                                  =>
+              l.shown.fold(p(cls := "muted", "Not known: see the line above."))(b => div(maps(b, starter)))
           },
           detailsTag(
             cls := "data-more",
@@ -93,7 +101,7 @@ object DataSection:
       card(
         "Places, periods and events",
         div(
-          child <-- about.signal.map(a =>
+          child <-- about.map(a =>
             row(
               "Ancient places, regions and named periods",
               "Pleiades, the historical boundaries and the named periods (PeriodO)" +
@@ -109,7 +117,7 @@ object DataSection:
               act(ActionLabel("Update now"), ActionWhat("boundaries"), ApiClient.initData(fetch = Api.Overwrite(true)))
             )
           ),
-          children <-- sources.signal.map(
+          children <-- sources.map(
             _.filter(_.kind != Gazetteer.Kind.Lpf).map(s =>
               row(
                 s.title.value,
@@ -128,7 +136,7 @@ object DataSection:
               )
             )
           ),
-          children <-- cats.signal.map(
+          children <-- cats.map(
             _.map(c =>
               row(
                 c.title.value,
@@ -147,7 +155,7 @@ object DataSection:
       card(
         "Pictures of places and objects",
         div(
-          children <-- media.signal.map(ms =>
+          children <-- media.map(ms =>
             ms.map { m =>
               val on = ui.plugins.plugins
                 .find(_.id == m.plugin)

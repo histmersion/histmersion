@@ -152,6 +152,8 @@ object WindowManager:
   def closeAll(): Unit =
     shown = Map.empty
     openers = Map.empty
+    contents.values.foreach(_.cancel())
+    contents.clear()
     windows.set(Nil)
     UiState.set(UiState.open := Nil)()
 
@@ -163,23 +165,37 @@ object WindowManager:
       case WindowKey.Source(_) | WindowKey.Article(_) =>
         val id = key.subject.getOrElse("")
         val fetchUrl = buildUrl(key, fragment = true, extraParams)
-        ApiClient.fetchHtml(ApiClient.Url(fetchUrl)).foreach { html =>
-          val contentEl = document.getElementById(s"wm-content-$wid")
-          if contentEl != null then
-            // the server's page, through the allow-list once more: a fetched text is never trusted as markup
-            HtmlSink.replace(contentEl, Html.sanitize(html))
-            val titleEl = contentEl.querySelector("h1, h2")
-            val title = if titleEl != null then UiLabels.Text(titleEl.textContent.trim) else key.initialTitle
-            windows.update(_.map(w => if w.id == wid then w.modify(_.title).setTo(title) else w))
-            // both handlers are delegated on the content root, which outlives its content: wire it once.
-            // Every reload (a link to the same page inside it, an edit's refresh) added two more, and a
-            // click then ran each of them — N fetches of the page for one click (#1949)
-            if !contentEl.hasAttribute(WiredAttr) then
-              contentEl.setAttribute(WiredAttr, "")
-              wireLinks(wid, contentEl)
-              InPage.wire(contentEl)
+        // one request per window: a reload supersedes the load still out, whose older page is never shown over it
+        val request = contents.getOrElseUpdate(wid, Request[String]())
+        request.askThen(ApiClient.fetchHtml(ApiClient.Url(fetchUrl))) {
+          case Loaded.Ready(page) => showContent(wid, key, page)
+          case failed             =>
+            val contentEl = document.getElementById(s"wm-content-$wid")
+            val said = ErrorLine.said(failed)
+            // a page already shown stays when the server cannot be reached; the line says why it is not newer
+            if contentEl != null && said.nonEmpty then HtmlSink.append(contentEl, ErrorLine.markup(said))
         }
       case _ => ()
+
+  /** Each server-page window's one request (newest wins), by window id. */
+  private val contents = scala.collection.mutable.Map.empty[Int, Request[String]]
+
+  /** A server page fetched for window `wid`, through the allow-list, into its content root. */
+  private def showContent(wid: Int, key: WindowKey, page: String): Unit =
+    val contentEl = document.getElementById(s"wm-content-$wid")
+    if contentEl != null then
+      // the server's page, through the allow-list once more: a fetched text is never trusted as markup
+      HtmlSink.replace(contentEl, Html.sanitize(page))
+      val titleEl = contentEl.querySelector("h1, h2")
+      val title = if titleEl != null then UiLabels.Text(titleEl.textContent.trim) else key.initialTitle
+      windows.update(_.map(w => if w.id == wid then w.modify(_.title).setTo(title) else w))
+      // both handlers are delegated on the content root, which outlives its content: wire it once.
+      // Every reload (a link to the same page inside it, an edit's refresh) added two more, and a
+      // click then ran each of them — N fetches of the page for one click (#1949)
+      if !contentEl.hasAttribute(WiredAttr) then
+        contentEl.setAttribute(WiredAttr, "")
+        wireLinks(wid, contentEl)
+        InPage.wire(contentEl)
 
   /** Marks a window's content root whose delegated click handlers are on. */
   private val WiredAttr = "data-wired"
@@ -277,6 +293,8 @@ object WindowManager:
     key.foreach(k => shown -= k)
     val opener = openers.get(wid)
     openers -= wid
+    // a load still out for the closed window is dropped
+    contents.remove(wid).foreach(_.cancel())
     windows.update(_.filterNot(_.id == wid))
     key.foreach(k => UiState.set(UiState.open := UiState.open.now().filterNot(_ == k))())
     if returnFocus then opener.filter(el => el.isConnected && el.closest(s"#wm-$wid") == null).foreach(_.focus())

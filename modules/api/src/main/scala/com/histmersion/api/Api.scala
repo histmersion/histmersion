@@ -1209,6 +1209,7 @@ object Api:
     goals,
     getGoal,
     putGoal,
+    createArea,
     patchGoal,
     deleteGoal,
     agentStateList,
@@ -2004,6 +2005,14 @@ object Api:
       .mapIn[(Goal.Uid, Goal.Put)]((refactorDecoded183: (String, Goal.Put)) =>
         (Goal.Uid((refactorDecoded183)._1), (refactorDecoded183)._2)
       )((refactorEncoded183: (Goal.Uid, Goal.Put)) => (((refactorEncoded183)._1).value, (refactorEncoded183)._2))
+
+  /** A new research area in one operation ([[Goal.AreaCreate]]): create-only, all or nothing. */
+  lazy val createArea: PublicEndpoint[Goal.AreaCreate, Error, Goal.AreaCreated, Any] =
+    endpoint.post
+      .in("api" / "goals" / "areas")
+      .in(jsonBody[Goal.AreaCreate])
+      .errorOut(problemOut)
+      .out(jsonBody[Goal.AreaCreated])
 
   lazy val patchGoal: PublicEndpoint[(Goal.Uid, Goal.Patch), Error, Goal, Any] =
     (endpoint.patch

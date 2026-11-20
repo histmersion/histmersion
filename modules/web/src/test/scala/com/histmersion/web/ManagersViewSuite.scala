@@ -436,6 +436,28 @@ class ManagersViewSuite extends munit.FunSuite:
     )
     assert(note.value.contains("planner is running") && note.value.contains("created paused"), note.value)
 
+  test("New research area: the form is ONE request to the server; the note says what the server made"):
+    val a = GoalsView
+      .newArea(
+        Goal.Title("Tin"),
+        Goal.Slug(""),
+        Goal.Notes("where from"),
+        GoalsView.TagsText("tin"),
+        GoalsView.NewAreaPlan(true),
+        GoalsView.NewAreaSeed(true),
+        GoalsView.Watch(true)
+      )
+      .toOption
+      .get
+    val req = a.create
+    assertEquals(
+      (req.slug, req.goal.title, req.goal.notes, req.plan, req.seed, req.watch.isDefined),
+      ("tin", "Tin", Some("where from"), true, true, true)
+    )
+    val goal = Goal(Goal.Slug("tin"), Goal.Title("Tin"), Goal.StatusValue("planned"))
+    // what the server made decides the note, not what was asked: here only the goal
+    assertEquals(GoalsView.madeNote(a, Goal.AreaCreated(goal)).value, "research area tin created")
+
   test("hint box: suggest lets the model propose the action (none chosen here); both at once is refused"):
     assertEquals(
       ManagersView.hint(

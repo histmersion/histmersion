@@ -67,6 +67,35 @@ object GoalRepo:
     * ends is refused.
     */
   def put(slug: domain.automation.Goal.Slug, in: Goal.Put)(using DbCon): Either[Api.Error, Unit] =
+    periodOf(slug, in).map(putIn(slug, in, _))
+
+  /** Create a goal, never replace one, in the caller's transaction: a slug in use, or an old slug of another goal
+    * (V053), is a conflict, and so is a period that starts after it ends refused. Nothing is written then.
+    */
+  def createIn(slug: domain.automation.Goal.Slug, in: Goal.Put)(using DbCon): Either[Api.Error, Unit] =
+    periodOf(slug, in).flatMap { period =>
+      val conflict = Api.Error(Problem.Conflict.AlreadyExists(Problem.TypeName.of(Goal.Slug), Problem.Raw.of(slug)))
+      renamedTo(slug) match
+        case Some(to) =>
+          Left(
+            Api.Error(
+              Problem.Conflict.Aliased(Problem.TypeName.of(Goal.Slug), Problem.Raw.of(slug), Problem.Raw.of(to))
+            )
+          )
+        case None =>
+          val made =
+            sql"""INSERT INTO goals (slug, title, status, notes, tags, regions, period, parent_slug, updated_at)
+                  VALUES ($slug, ${in.title}, ${in.status}, ${in.notes},
+                          ${in.tags}::text[], ${in.regions}::text[],
+                          $period::int8range, ${in.parentSlug}, now())
+                  ON CONFLICT (slug) DO NOTHING""".update.run()
+          Either.cond(made > 0, (), conflict)
+    }
+
+  /** The goal's period as a range literal: either bound may be given alone (an open period); one that starts after it
+    * ends is refused.
+    */
+  private def periodOf(slug: domain.automation.Goal.Slug, in: Goal.Put): Either[Api.Error, Option[String]] =
     RangeSql
       .merge(
         (None, None),
@@ -75,7 +104,7 @@ object GoalRepo:
         s"goal '${slug.value}'"
       )
       .getOrElse(Right((None, None)))
-      .map((s, e) => putIn(slug, in, RangeSql.literal(s, e)))
+      .map((s, e) => RangeSql.literal(s, e))
 
   private def putIn(slug: domain.automation.Goal.Slug, in: Goal.Put, period: Option[String])(using
       DbCon

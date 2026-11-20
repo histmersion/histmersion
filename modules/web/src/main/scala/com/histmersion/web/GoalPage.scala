@@ -19,6 +19,7 @@ import com.histmersion.api.Paging
 import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.api.Api
 import com.histmersion.api.research.Article
+import com.histmersion.api.views.QueueListing
 
 /** One research goal's page: its question, state and schedule ("checked for new publications 3 days ago · next check
   * …"), its actions (check for new publications now, pause the goal, edit), its plan — each step linked to the agent
@@ -120,26 +121,29 @@ object GoalPage:
   private def write(f: () => Unit): Unit = if Auth.writableNow then f() else WindowManager.open(WindowKey.ApiKey)
 
   def pane(ui: UiConfig, slug: Goal.Slug): HtmlElement =
-    val view = Var(Option.empty[Either[String, GoalView]])
-    val managers = Var(List.empty[ManagerInfo])
-    val items = Var(List.empty[ManagerItem])
-    val backlog = Var(Option.empty[RowCount])
-    val acquire = Var(Option.empty[RowCount])
+    // each part of the page is one request: the newest answer wins, a failure or an unreachable server is shown
+    val view = Request[GoalView]()
+    val agents = Request[(List[ManagerInfo], List[ManagerItem])]()
+    val tasks = Request[QueueListing]()
+    val toAcquire = Request[QueueListing]()
+    val managers = agents.signal.map(_.shown.fold(List.empty[ManagerInfo])(_._1))
+    val items = agents.signal.map(_.shown.fold(List.empty[ManagerItem])(_._2))
+    val backlog = tasks.signal.map(_.shown.map(l => RowCount(l.items.size)))
+    val acquire = toAcquire.signal.map(_.shown.map(l => RowCount(l.items.size)))
     val note = Var(Option.empty[HeaderNote])
     val editing = Var(false)
 
     def load(): Unit =
-      ApiClient.goalView(slug).onComplete(r => view.set(Some(r.toEither.left.map(_.getMessage))))
-      ApiClient.queueForGoal(Queue.Kind.Tasks.label, slug).foreach(l => backlog.set(Some(RowCount(l.items.size))))
-      ApiClient.queueForGoal(Queue.Kind.Acquire.label, slug).foreach(l => acquire.set(Some(RowCount(l.items.size))))
+      view.ask(ApiClient.goalView(slug))
+      tasks.ask(ApiClient.queueForGoal(Queue.Kind.Tasks.label, slug))
+      toAcquire.ask(ApiClient.queueForGoal(Queue.Kind.Acquire.label, slug))
       if ui.agentsEnabled.value then
-        ApiClient.managers.foreach { all =>
+        agents.ask(ApiClient.managers.flatMap { all =>
           val mine = all.filter(_.goal.contains(slug))
-          managers.set(mine)
           scala.concurrent.Future
             .sequence(mine.map(m => ApiClient.managerItems(m.id, None, Offset(0), Paging.Limit(StepLimit))))
-            .foreach(pages => items.set(pages.flatMap(_.items)))
-        }
+            .map(pages => (mine, pages.flatMap(_.items)))
+        })
 
     def checkNow(): Unit = write { () =>
       ApiClient
@@ -158,11 +162,11 @@ object GoalPage:
     }
 
     def pauseOrResume(): Unit = write { () =>
-      val resume = paused(managers.now())
+      val mine = agents.now.shown.fold(List.empty[ManagerInfo])(_._1)
+      val resume = paused(mine)
       scala.concurrent.Future
         .sequence(
-          managers
-            .now()
+          mine
             .map(m =>
               ApiClient.managerAction(
                 m.id,
@@ -184,16 +188,19 @@ object GoalPage:
     div(
       cls := "goal-page",
       onMountCallback(_ => load()),
-      child <-- view.signal.map {
-        case None           => p(cls := "muted", "Loading…")
-        case Some(Left(m))  => p(cls := "form-error", role := "alert", s"Could not read the goal $slug: $m")
-        case Some(Right(v)) =>
+      ErrorLine.of(view.signal),
+      ErrorLine.of(agents.signal),
+      ErrorLine.of(tasks.signal),
+      ErrorLine.of(toAcquire.signal),
+      child <-- view.signal.map(_.shown).map {
+        case None    => p(cls := "muted", "Loading…")
+        case Some(v) =>
           Router.retitle(Route.Goal(slug), UiLabels.Text(v.goal.title.value))
           div(
             header(
               v,
-              managers.signal,
-              items.signal,
+              managers,
+              items,
               ui,
               note.signal,
               () => checkNow(),
@@ -207,10 +214,10 @@ object GoalPage:
             ),
             div(
               cls := "goal-columns",
-              plan(v, items.signal, ui),
+              plan(v, items, ui),
               div(
                 cls := "goal-side",
-                produced(v, backlog.signal, acquire.signal, slug),
+                produced(v, backlog, acquire, slug),
                 sectionTag(
                   cls := "card goal-history",
                   aria.label := "History",

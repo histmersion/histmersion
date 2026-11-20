@@ -730,9 +730,14 @@ final class AgentsControllers(
   )
 
   /** Everything [[startRunAs]] checks before it queues a run — pipeline, target, models, options, goal, budgets —
-    * without creating it.
+    * without creating it. `creating`: the goal the caller creates in the same transaction as the run (a new research
+    * area); a goal pipeline's target is that goal, which no other connection sees yet.
     */
-  def prepare(req: RunRequest, parent: Option[RunInfo]): Either[Api.Error, Prepared] =
+  def prepare(
+      req: RunRequest,
+      parent: Option[RunInfo],
+      creating: Option[DomainGoal.Slug] = None
+  ): Either[Api.Error, Prepared] =
     for
       _ <- enabled.left.map(Api.Error(_))
       p <- Pipeline
@@ -746,7 +751,9 @@ final class AgentsControllers(
             )
           )
         )
-      target <- targetOf(p, AgentsControllers.Target(req.target.value))
+      target <- creating.filter(_ => p.targetKind == TargetKind.Goal) match
+        case Some(g) => Right(AgentsControllers.Target(g.value))
+        case None    => targetOf(p, AgentsControllers.Target(req.target.value))
       over <- overrides(p, req.modelFor)
       // every role the pipeline uses must have a chain with a priced model it can build, NOW — its
       // own --model-for when it has one, else --model, else its chain

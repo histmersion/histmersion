@@ -62,6 +62,9 @@ class StyleLintSuite extends munit.FunSuite:
     )
     assertEquals(unannounced("// a \"form-error\" in a comment\nval x = 1"), 0)
     assertEquals(unannounced("p(cls := \"form-error\", s\"${f(\"a\", \"b\")}\",\n  role := \"alert\")"), 0)
+    // markup written as an html literal: the tag itself carries the role
+    assertEquals(unannounced("val m = html\"\"\"<p class=\"form-error\" role=\"alert\">$s</p>\"\"\""), 0)
+    assertEquals(unannounced("val m = html\"\"\"<p class=\"form-error\">$s</p><b role=\"alert\">x</b>\"\"\""), 1)
 
   test("a style attribute's value is read from its argument, however far the formatter moves it"):
     def found(text: String): Int = styleFindings(UiSource(Path.of("V.scala"), text)).size
@@ -154,11 +157,19 @@ object StyleLintSuite:
       .iterate(s.text.indexOf(FormError))(i => s.text.indexOf(FormError, i + 1))
       .takeWhile(_ >= 0)
       .filter(i => s.mask(i) == Mask.Literal)
-      .filterNot(i => elementArguments(s, i).exists(_.exists(a => Announced.matches(a.trim))))
+      .filterNot(i => elementArguments(s, i).exists(_.exists(a => Announced.matches(a.trim))) || inAnnouncedTag(s, i))
       .map(s.hit)
       .toList
 
   private val Announced = """role\s*:=\s*"alert"""".r
+
+  /** A `form-error` class written in markup (an `html"…"` literal) whose own tag, from its `<` to its `>`, says
+    * `role="alert"`.
+    */
+  private def inAnnouncedTag(s: UiSource, offset: Int): Boolean =
+    val open = s.text.lastIndexOf('<', offset)
+    val close = s.text.indexOf('>', offset)
+    open >= 0 && close > offset && s.text.substring(open, close).matches("""(?s)<[a-z][a-z0-9]*\s.*\brole="alert".*""")
 
   /** The arguments of the call whose argument list holds `offset` (`div(a, b)` → `a`, `b`), or none when the offset is
     * inside a block or a type argument rather than directly in an argument list.

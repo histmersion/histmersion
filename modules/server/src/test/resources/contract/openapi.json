@@ -5814,6 +5814,53 @@
         }
       }
     },
+    "/api/goals/areas" : {
+      "post" : {
+        "operationId" : "postApiGoalsAreas",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AreaCreate"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AreaCreated"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Invalid value for: body",
+            "content" : {
+              "text/plain" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/agent-state" : {
       "get" : {
         "operationId" : "getApiAgent-state",
@@ -16973,6 +17020,52 @@
             "items" : {
               "$ref" : "#/components/schemas/ArchiveItem"
             }
+          }
+        }
+      },
+      "AreaCreate" : {
+        "title" : "AreaCreate",
+        "type" : "object",
+        "required" : [
+          "slug",
+          "goal"
+        ],
+        "properties" : {
+          "slug" : {
+            "type" : "string"
+          },
+          "goal" : {
+            "$ref" : "#/components/schemas/Put3"
+          },
+          "plan" : {
+            "type" : "boolean"
+          },
+          "seed" : {
+            "type" : "boolean"
+          },
+          "watch" : {
+            "$ref" : "#/components/schemas/ManagerConfig"
+          }
+        }
+      },
+      "AreaCreated" : {
+        "title" : "AreaCreated",
+        "type" : "object",
+        "required" : [
+          "goal"
+        ],
+        "properties" : {
+          "goal" : {
+            "$ref" : "#/components/schemas/Goal"
+          },
+          "run" : {
+            "$ref" : "#/components/schemas/RunInfo"
+          },
+          "seed" : {
+            "$ref" : "#/components/schemas/ManagerInfo"
+          },
+          "watch" : {
+            "$ref" : "#/components/schemas/ManagerInfo"
           }
         }
       },

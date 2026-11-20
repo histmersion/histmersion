@@ -151,6 +151,37 @@ object Goal:
     type BudgetUsd = BudgetUsd.T
     object BudgetUsd extends Newtype[Double, Pure]
 
+  /** `POST /api/goals/areas`: a new research area as one server operation. The goal at `slug` is created, never
+    * replaced (a slug in use, or an old slug of another goal, is refused with 409); then, as asked, its plan-goal run
+    * (`plan`), its seeding manager (`seed`) and its watcher with these settings (`watch`). All of it or none of it.
+    */
+  final case class AreaCreate(
+      slug: Slug,
+      goal: Put,
+      plan: AreaCreate.Plan = AreaCreate.Plan(false),
+      seed: AreaCreate.Seed = AreaCreate.Seed(false),
+      watch: Option[Managers.ManagerConfig] = None
+  ) derives StrictJson,
+        KindlingsSchema,
+        api.json.Schema
+
+  object AreaCreate:
+    type Plan = Plan.T
+    object Plan extends Newtype[Boolean, Pure]
+    type Seed = Seed.T
+    object Seed extends Newtype[Boolean, Pure]
+
+  /** What [[AreaCreate]] made: the goal, its plan-goal run (handed to the engine), its seeding manager and its watcher.
+    */
+  final case class AreaCreated(
+      goal: Goal,
+      run: Option[Agents.RunInfo] = None,
+      seed: Option[Managers.ManagerInfo] = None,
+      watch: Option[Managers.ManagerInfo] = None
+  ) derives JsonCodec,
+        KindlingsSchema,
+        api.json.Schema
+
   object Plans:
 
     final case class PlannedGoal(

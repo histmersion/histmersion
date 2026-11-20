@@ -65,7 +65,13 @@ import com.histmersion.server.ArchitectureSuite.{Blank, SourceFile, Violation}
   *     `insertAdjacentHTML(`, a popup's `setHTML(`, `document.write(`) anywhere but the web page's `HtmlSink`, whose
   *     every method takes an `api.Html` — so no raw String reaches a sink;
   *   - `html-newtype` (G96/W1, a ratchet to 0): a newtype `…Html` over String, which takes any text as markup, beside
-  *     the one `api.Html`.
+  *     the one `api.Html`;
+  *   - `failure-request` (G105/W2, pinned at 0, no row allowed): a request of the web page (`ApiClient.…`) sent from a
+  *     failure branch (`case Failure(…)`, `.recover`, `.recoverWith`, `.fallbackTo`, `.failed.foreach`) — a failure of
+  *     one request never decides that another, a write above all, is sent; a multi-step write is one server operation;
+  *   - `raw-request` (G107/W4, a ratchet to 0): a web file's `ApiClient` calls whose future the view consumes itself,
+  *     outside the one request type (`web/Request.scala`, its `ask`/`askThen`), which applies the newest answer only
+  *     and keeps a failure (typed problems) and an unreachable server as states.
   *
   * Besides the listed rules, a foreign type's `CanEqual` (`given CanEqual[UUID, UUID]`) is defined in one file,
   * imported by name where it is needed (G67): only the types of [[CrossLayerEqualities]], whose users share no module,
@@ -399,6 +405,67 @@ class ContractsSuite extends munit.FunSuite:
     assertEquals(found("web:web/View.scala").map(v => (v.count, v.at)), List((5, "web:web/View.scala:2")))
     assertEquals(found("web:web/HtmlSink.scala"), Nil)
 
+  test("no request of the web page is sent from a failure branch (the New research area's former flow is found)"):
+    // the form as it was (G105): a failed existence check, whatever its cause, wrote the goal
+    val former =
+      """object Form:
+        |  def submit(a: NewArea) =
+        |    ApiClient
+        |      .getGoal(a.slug)
+        |      .transformWith {
+        |        case scala.util.Success(_) =>
+        |          Future.failed(new Exception("exists"))
+        |        case scala.util.Failure(_) => ApiClient.putGoal(a.slug, a.put)
+        |      }
+        |      .flatMap(_ => ApiClient.startRun(req))
+        |""".stripMargin
+    val others =
+      """object View:
+        |  def a(f: Future[Int]) = f.onComplete {
+        |    case Failure(e) =>
+        |      shown.set(e.getMessage)
+        |      ApiClient.log(e)
+        |    case Success(v) => ApiClient.save(v)
+        |  }
+        |  def b(f: Future[Int]) = f.recover { case _ => ApiClient.retry() }.map(x => ApiClient.read(x))
+        |  def c(f: Future[Int]) = f.failed.foreach(e => ApiClient.report(e))
+        |  def d(t: Try[Int]) = t match
+        |    case Failure(e) => note(e)
+        |    case Success(v) =>
+        |      ApiClient.write(v)
+        |  def e = ApiClient.read(1).recover { case _ => 0 }
+        |  // case Failure(e) => ApiClient.inAComment()
+        |  val words = "case Failure(_) => ApiClient.inAString()"
+        |""".stripMargin
+    def found(code: String, key: String = "web:web/View.scala") =
+      Rules
+        .all(List(ArchitectureSuite.SourceFile(key, "com.histmersion.x", Blank(code), code)))
+        .filter(_.rule == "failure-request")
+    assertEquals(found(former).map(v => (v.count, v.at)), List((1, "web:web/View.scala:8")))
+    assertEquals(found(others).map(v => (v.count, v.at)), List((3, "web:web/View.scala:5")))
+    assertEquals(found(others, "server:x/View.scala"), Nil)
+    val listed = Files.readAllLines(ArchitectureSuite.Resources.resolve("contracts.tsv"), UTF_8).asScala
+    assertEquals(listed.filter(_.startsWith("failure-request\t")).toList, Nil, "pinned at 0: no row may accept one")
+
+  test("a request a view consumes outside the one request type is counted; one asked through it is not"):
+    val code =
+      """object View:
+        |  val r = Request[Int]()
+        |  def a() = r.ask(ApiClient.count(Filter()))
+        |  def b() = r.askThen(ApiClient.managers.flatMap(ms => ApiClient.items(ms)))(k)
+        |  def c() = ApiClient.count(Filter()).foreach(n => shown.set(n))
+        |  def d() = ApiClient.save(x).onComplete(_ => ())
+        |  def e() = ApiClient.tileTemplate(q)
+        |  val u = ApiClient.Url("x")
+        |""".stripMargin
+    def found(key: String) =
+      Rules
+        .all(List(ArchitectureSuite.SourceFile(key, "com.histmersion.x", Blank(code), code)))
+        .filter(_.rule == "raw-request")
+    assertEquals(found("web:web/View.scala").map(v => (v.count, v.at)), List((2, "web:web/View.scala:5")))
+    assertEquals(found("web:web/Request.scala"), Nil)
+    assertEquals(found("server:x/View.scala"), Nil)
+
   test("a newtype …Html over String is a violation: the one markup type is api.Html"):
     val code =
       """object Render:
@@ -690,6 +757,18 @@ object ContractsSuite:
             s,
             "an …Html newtype over String: markup any text builds, beside api.Html",
             HtmlNewtype.findAllMatchIn(s.code).map(_.start).toList
+          )
+          ++ counted(
+            "failure-request",
+            s,
+            "a request sent from a failure branch: one request's failure decides another",
+            if module(s) == "web" then failureRequests(s.code) else Nil
+          )
+          ++ counted(
+            "raw-request",
+            s,
+            "requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened",
+            if module(s) == "web" && !RequestFiles(s.key) then rawRequests(s.code) else Nil
           )
       ) ++ concept(sources) ++ helper(sources) ++ prefix(sources) ++ problemFields(sources)
 
@@ -1184,6 +1263,85 @@ object ContractsSuite:
       */
     private val HtmlNewtype =
       "\\bobject\\s+\\w*Html\\s+extends\\s+(?:Newtype|Refined(?:Sub)?Type)\\s*\\[\\s*String\\b".r
+
+    /** Where a failure branch starts: a `case Failure(…)` (of a `Try`, the branch runs to the next line at its own
+      * indentation or less, or to the bracket that closes its block), and a `.recover`/`.recoverWith`/`.fallbackTo`
+      * block or a `.failed.foreach`/`.map`/`.flatMap` continuation (the branch is the bracket that follows).
+      */
+    private val FailureCase = "\\bcase\\s+(?:scala\\.util\\.|util\\.)?Failure\\s*\\(".r
+    private val FailureBlock =
+      "\\.(?:recover|recoverWith|fallbackTo)\\s*[({]|\\.failed\\s*\\.\\s*(?:foreach|map|flatMap)\\s*[({]".r
+
+    /** A request the page sends: a call of the one client. */
+    private val RequestCall = "\\bApiClient\\s*\\.\\s*[a-z]\\w*".r
+
+    /** The requests a web file sends from a failure branch (G105/W2): a failure of one request never decides that
+      * another is sent. The New research area form wrote the goal when its existence check failed for any reason, and
+      * replaced a goal whose read had failed; a multi-step write is one server operation instead. Over the blanked
+      * code, so a word in a string or a comment is none.
+      */
+    def failureRequests(code: String): List[Int] =
+      val cases = FailureCase.findAllMatchIn(code).map(m => (m.start, caseEnd(code, m.start)))
+      val blocks = FailureBlock.findAllMatchIn(code).map(m => (m.end - 1, blockEnd(code, m.end - 1)))
+      (cases ++ blocks).toList
+        .flatMap((from, to) => RequestCall.findAllMatchIn(code.substring(from, to)).map(from + _.start))
+        .distinct
+        .sorted
+
+    /** Where a view asks through the one request type (`web/Request.scala`): the argument of `.ask(` or `.askThen(`. */
+    private val AskCall = "\\.(?:ask|askThen)\\s*\\(".r
+
+    /** The client's members that send nothing (a URL built for the map's tile workers). */
+    private val NoRequest = "\\bApiClient\\s*\\.\\s*tileTemplate\\b".r
+
+    /** The client itself and the request type: where a request is made, not consumed. */
+    private val RequestFiles: Set[String] = Set("web:web/ApiClient.scala", "web:web/Request.scala")
+
+    /** The requests a web file consumes outside the one request type (G107/W4): an `ApiClient` call whose future a view
+      * handles itself (`foreach`, `onComplete`, `map`) — no newest-wins guard, a failure dropped or flattened to its
+      * message, "unreachable" no state. A ratchet to 0 as the views move onto `Request`.
+      */
+    def rawRequests(code: String): List[Int] =
+      val asked = AskCall.findAllMatchIn(code).map(m => (m.end - 1, blockEnd(code, m.end - 1))).toList
+      val pure = NoRequest.findAllMatchIn(code).map(_.start).toSet
+      RequestCall
+        .findAllMatchIn(code)
+        .map(_.start)
+        .filterNot(i => pure(i) || asked.exists((from, to) => i > from && i < to))
+        .toList
+
+    /** The end of the bracketed block that opens at `open`, or the end of the code. */
+    private def blockEnd(code: String, open: Int): Int =
+      @tailrec def loop(i: Int, depth: Int): Int =
+        if i >= code.length then code.length
+        else
+          code.charAt(i) match
+            case '(' | '{' | '['               => loop(i + 1, depth + 1)
+            case ')' | '}' | ']' if depth == 1 => i + 1
+            case ')' | '}' | ']'               => loop(i + 1, depth - 1)
+            case _                             => loop(i + 1, depth)
+      loop(open, 0)
+
+    /** The end of the case clause at `at`: the bracket that closes its block, or the first later line, outside any
+      * bracket the clause opened, that is indented no deeper than the `case` (the next case, or the code after it).
+      */
+    private def caseEnd(code: String, at: Int): Int =
+      val lineStart = code.lastIndexOf('\n', at) + 1
+      val indent = code.substring(lineStart, at).takeWhile(_ == ' ').length
+      @tailrec def loop(i: Int, depth: Int, lineHead: Boolean, col: Int): Int =
+        if i >= code.length then code.length
+        else
+          val c = code.charAt(i)
+          if c == '\n' then loop(i + 1, depth, lineHead = true, 0)
+          else if lineHead && c == ' ' then loop(i + 1, depth, lineHead = true, col + 1)
+          else if lineHead && depth == 0 && col <= indent then i
+          else
+            c match
+              case '(' | '{' | '['               => loop(i + 1, depth + 1, lineHead = false, col)
+              case ')' | '}' | ']' if depth == 0 => i
+              case ')' | '}' | ']'               => loop(i + 1, depth - 1, lineHead = false, col)
+              case _                             => loop(i + 1, depth, lineHead = false, col)
+      loop(at + 1, 0, lineHead = false, 0)
 
     /** The files that may build `Problem.Relayed`: the browser's decoder (the Scala.js copy only, not the JVM's
       * `ProblemJson` at the same path), the shared entry builder it needs and the cases' own file.
