@@ -32,7 +32,8 @@ to="$(cd "$to" && pwd -P)"
 if [ "$verify" = 1 ]; then
   [ -d "$to/target/out" ] || { echo "seed-cache: $to has no target/out — build it first" >&2; exit 2; }
   bad="$(find "$to/target/out" -type l 2>/dev/null | while read -r l; do t="$(readlink "$l")"
-    case "$t" in "$to"/*) ;; /*) echo "$l -> $t" ;; *) ;; esac; done | head -5)"
+    case "$t" in ("$to"/*) ;; (/*) echo "$l -> $t" ;; (*) ;; esac; done | head -5)"
+  # (`(pattern)`: macOS's /bin/bash 3.2 reads an unparenthesised `pattern)` inside `$(…)` as the end of the substitution)
   if [ -n "$bad" ]; then echo "seed-cache: outputs of $to link outside it:"; echo "$bad"; exit 1; fi
   n="$(find "$to/target/out" -type l 2>/dev/null | wc -l | tr -d ' ')"
   echo "seed-cache: $n restored output(s) of $to, every one linked inside it"
