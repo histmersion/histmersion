@@ -164,8 +164,7 @@ class BackgroundJobSuite extends DbSuite:
   /** `under` (the suite's pool by default), failing the next `failing` connections asked of it; `asked` counts them
     * all.
     */
-  final private class Flaky(val failing: AtomicInteger, under: => javax.sql.DataSource = ds)
-      extends javax.sql.DataSource:
+  final private class Flaky(val failing: AtomicInteger, under: javax.sql.DataSource = ds) extends javax.sql.DataSource:
     val asked = AtomicInteger(0)
     def getConnection(): java.sql.Connection =
       val _ = asked.incrementAndGet()
@@ -242,7 +241,17 @@ class BackgroundJobSuite extends DbSuite:
         Outcome.done(Outcome.Summary("after the restore"))
       }
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
-    assert(freed(slot), "the slot is freed")
+    // when the job's thread outlives the wait, where it is, sampled four times a few seconds apart
+    def stacks: String =
+      import scala.jdk.CollectionConverters.*
+      Thread.getAllStackTraces.asScala
+        .collect {
+          case (t, st) if t.getName.startsWith("histmersion-zz-test") =>
+            s"${t.getName} ${t.getState}:\n  ${st.take(30).mkString("\n  ")}"
+        }
+        .mkString("\n")
+    val samples = (1 to 4).toList.flatMap(_ => if freed(slot, 400) then Nil else List(stacks))
+    assert(samples.isEmpty, s"the slot is freed\n${samples.mkString("\n----\n")}")
     assertEquals(counted.asked.get - askedAtRestore.get, 1, "the ending was asked for once, refused, not tried again")
     assertEquals(
       fenced.read(JobRepo.get(Job.Id.applyUnsafe(j.id.value))).map(_.status),
