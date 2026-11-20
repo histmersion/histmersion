@@ -181,6 +181,21 @@
           "credential" : null,
           "locked" : null,
           "resolved" : null
+        },
+        {
+          "key" : "histmersion.db.instance-lock-check-seconds",
+          "section" : "db",
+          "kind" : "number",
+          "doc" : "one server per database: how often the session holding the lock is checked, and the lock taken again if it died",
+          "default" : "30",
+          "value" : null,
+          "effective" : "30",
+          "source" : "default",
+          "envVar" : "HISTMERSION_DB_INSTANCE_LOCK_CHECK_SECONDS",
+          "restart" : null,
+          "credential" : null,
+          "locked" : null,
+          "resolved" : null
         }
       ]
     },
@@ -450,6 +465,21 @@
           "effective" : "5",
           "source" : "default",
           "envVar" : "HISTMERSION_BACKUPS_KEEP",
+          "restart" : null,
+          "credential" : null,
+          "locked" : null,
+          "resolved" : null
+        },
+        {
+          "key" : "histmersion.backups.restore-drain-seconds",
+          "section" : "backups",
+          "kind" : "number",
+          "doc" : "a restore first waits this long for the writes, connections and workers in flight; a write or connection still out then: it changes nothing",
+          "default" : "60",
+          "value" : null,
+          "effective" : "60",
+          "source" : "default",
+          "envVar" : "HISTMERSION_RESTORE_DRAIN_SECONDS",
           "restart" : null,
           "credential" : null,
           "locked" : null,

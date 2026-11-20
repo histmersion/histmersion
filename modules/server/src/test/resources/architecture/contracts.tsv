@@ -1338,7 +1338,6 @@ unwrap	server:util/data/exchange/BundleService.scala	.value outside a boundary	1
 unwrap	server:util/data/exchange/MergeApplyJobs.scala	.value outside a boundary	3
 unwrap	server:util/data/maintenance/PgRelocation.scala	.value outside a boundary	10
 unwrap	server:util/data/maintenance/VacuumJobs.scala	.value outside a boundary	7
-unwrap	server:util/data/maintenance/WriteGate.scala	.value outside a boundary	2
 unwrap	server:util/data/mirror/Mirror.scala	.value outside a boundary	1
 unwrap	server:util/identity/RecordTable.scala	.value outside a boundary	8
 unwrap	server:util/identity/TableReferable.scala	.value outside a boundary	1

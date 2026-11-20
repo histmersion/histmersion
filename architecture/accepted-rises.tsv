@@ -1,0 +1,16 @@
+# file	key	from	to	reason	date — rises of the ratchet files the owner accepted (written only by the owner's notes/accept-*.sh; a row counts on the branch that adds it); key cells joined by \t, \ as \\
+architecture/guidelines-ratchet.tsv	G89unguarded\tdb\tmain	0	9	new rule G89 (a transaction opened without a write permit) at its current value	2026-11-20
+architecture/guidelines-ratchet.tsv	G89unguarded\tserver\tmain	0	217	new rule G89 (a transaction opened without a write permit) at its current value	2026-11-20
+architecture/guidelines-ratchet.tsv	G3misplaced\tdb\tmain	594	597	restore safety: Db.session/Db.unpooled and LeaseRepo.takeOver	2026-11-20
+architecture/guidelines-ratchet.tsv	G3misplaced\tserver\ttest	71	72	restore safety: RestoreSafetySuite's converter stub	2026-11-20
+architecture/guidelines-ratchet.tsv	G44\tdb\tmain	448	450	restore safety: InstanceLock's holder text, WritePermit's count	2026-11-20
+architecture/guidelines-ratchet.tsv	G44\tdb\ttest	1335	1337	restore safety: InstanceLockSuite's fixtures	2026-11-20
+architecture/guidelines-ratchet.tsv	G44\tserver\tmain	10425	10438	restore safety: the workers' and the restore's descriptions, the job ending's lines	2026-11-20
+architecture/guidelines-ratchet.tsv	G44\tserver\ttest	3950	3960	restore safety: the new suites' fixtures	2026-11-20
+architecture/guidelines-ratchet.tsv	G45boundary\tdb\tmain	1794	1798	restore safety: Db.session reads the DB settings as Db.pool does	2026-11-20
+architecture/guidelines-ratchet.tsv	G47self\tconfig\tmain	733	735	restore safety: the two new settings in their records' constructors	2026-11-20
+architecture/guidelines-ratchet.tsv	G47self\tdb\tmain	790	791	restore safety: WritePermit's constructor names WritePermit.Gate	2026-11-20
+architecture/guidelines-ratchet.tsv	G47self\tserver\tmain	1575	1579	restore safety: constructor parameters naming their companion's types	2026-11-20
+architecture/guidelines-ratchet.tsv	G60fromString\tserver\ttest	180	181	restore safety: RestoreSafetySuite's converter stub	2026-11-20
+architecture/guidelines-ratchet.tsv	G9prefixRole\tdb\ttest	37	39	restore safety: WritePermitSuite, InstanceLockSuite	2026-11-20
+architecture/guidelines-ratchet.tsv	G9prefixRole\tserver\ttest	166	167	restore safety: WorkersSuite	2026-11-20
