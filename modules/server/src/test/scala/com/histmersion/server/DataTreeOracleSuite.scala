@@ -297,9 +297,22 @@ class DataTreeOracleSuite extends DbSuite:
         .isRight
     )
 
-  /** Every path under the root: `<kind> <relative path>[ <size>]`, sorted. A text file's size is taken with the root's
-    * own path written as `ROOT` (the settings name it); an archive's is left out (its metadata carries the time it was
-    * made).
+  /** A test database URL as long as the one the oracle was recorded with (59 characters; the oracle keeps only sizes).
+    * A run's own URL (each worktree tests on a database of its own) is written as this one before a text file is
+    * measured, so the oracle does not depend on which test database a run uses.
+    */
+  private val RecordedDbUrl = "jdbc:postgresql://127.0.0.1:55473/histmersion_recorded_test"
+
+  /** A text file's content as the oracle measures it: the root's own path written as `ROOT`, the test database's URL as
+    * [[RecordedDbUrl]].
+    */
+  private def normalised(text: String): String =
+    val rooted = text.replace(root.toString, "ROOT")
+    testDb.filter(_.nonEmpty).fold(rooted)(url => rooted.replace(url, RecordedDbUrl))
+
+  /** Every path under the root: `<kind> <relative path>[ <size>]`, sorted. A text file's size is taken as
+    * [[normalised]] (the settings name the root and the database); an archive's is left out (its metadata carries the
+    * time it was made).
     */
   private def tree(): String =
     Files
@@ -313,7 +326,7 @@ class DataTreeOracleSuite extends DbSuite:
         else if Files.isDirectory(p) then s"d $rel/"
         else if rel.endsWith(".pmtiles") then s"f $rel"
         else if List(".conf", ".bak", ".json").exists(rel.endsWith) then
-          s"f $rel ${Files.readString(p, UTF_8).replace(root.toString, "ROOT").getBytes(UTF_8).length}"
+          s"f $rel ${normalised(Files.readString(p, UTF_8)).getBytes(UTF_8).length}"
         else s"f $rel ${Files.size(p)}"
       }
       .toList
