@@ -12,6 +12,7 @@ import com.histmersion.api.library.AuthorName
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Doi
 import com.histmersion.util.jobs.Job
+import com.histmersion.util.database.WritePermit
 
 /** [[IngestJobs]] backed by the OCR job queue.
   *
@@ -41,7 +42,7 @@ final class QueuedIngest(ingest: IngestControllers, sources: SourceService, spoo
       copy: Option[FetchedCopy],
       citekey: Citekey,
       meta: IngestMeta
-  ): Either[Problems, IngestOutcome] =
+  )(using WritePermit): Either[Problems, IngestOutcome] =
     for
       base <- skeleton.enqueue(None, citekey, meta) // metadata + edges, synchronously
       out <- copy match

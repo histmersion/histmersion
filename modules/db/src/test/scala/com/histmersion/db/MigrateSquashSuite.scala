@@ -23,6 +23,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.automation.Managers.ManagerInfo
 import com.histmersion.domain.automation.managers.ManagerRepo
 import com.histmersion.config.DbConfig
+import com.histmersion.util.database.TestPermits.given
 
 /** The migration chain since its squash ([[Migrate.squashHistory]]): a fresh database gets the squash, then each later
   * migration; a database the chain before it built keeps every row and has its history replaced by a baseline at 109,
@@ -167,7 +168,7 @@ class MigrateSquashSuite extends DbSuite with Bounded:
   test("V110: each master text becomes the entry of the problem it reads as, its words kept; the code reads it back"):
     val ds = problems
     atSquash(ds)
-    Transactor(ds).transact {
+    Transactor(ds).write {
       sql"INSERT INTO goals (slug, title) VALUES ('g', 'G')".update.run()
       Texts.zipWithIndex.foreach { (text, i) =>
         val id = s"job-$i"
@@ -240,7 +241,7 @@ class MigrateSquashSuite extends DbSuite with Bounded:
   test("V110: a pause migrated from its words occupies its manager's place by its case, as one written now does"):
     // after the first V110 test: run-a (allowance) and run-r (requested) were migrated
     assertEquals(Transactor(problems).read(ManagerRepo.running(ManagerInfo.Id("m1"))), RowCount(1), "the allowance")
-    Transactor(problems).transact {
+    Transactor(problems).write {
       val planQuota = NonEmptyVector.of[Problem](
         Problem.Run.Halted(Problem.Run.PauseCause.PlanQuota, Problem.Run.Cooling(Problem.EpochMs(0L)))
       )

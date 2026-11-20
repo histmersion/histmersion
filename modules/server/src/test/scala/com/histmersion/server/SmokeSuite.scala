@@ -8,6 +8,7 @@ import com.histmersion.config.AppConfig
 import com.histmersion.db.TestDb
 import com.histmersion.config.DbConfig
 import com.histmersion.config.ServerConfig
+import com.histmersion.util.database.TestPermits.given
 
 /** Boots the whole server on an ephemeral port against a real Postgres (HISTMERSION_TEST_DB_URL) and hits every
   * surface. Skipped when no test DB is configured.

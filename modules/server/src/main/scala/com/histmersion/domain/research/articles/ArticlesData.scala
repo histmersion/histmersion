@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.research.articles
 
-import com.histmersion.util.database.Transactor
+import com.histmersion.util.database.{Transactor, WritePermit}
 
 import com.histmersion.api.checks.Lint
 import com.histmersion.api.checks.Lint.*
@@ -35,14 +35,14 @@ object ArticlesData:
     names.toList.map(n => Check(owner, Rule.Name(n), None))
 
   private def fixed(owner: DataOwner, name: String, when: FixWhen, rank: FixRank)(
-      run: CheckContext => LintFixResult
+      run: CheckContext => WritePermit ?=> LintFixResult
   ): CheckRule =
     Check(owner, Rule.Name(name), Some(SafeFix(when, rank, run)))
 
   /** The paragraphs that name a disagreement partner they do not cite get its citekey, one guarded write per article (a
     * concurrent writer wins; the next lint lists it again).
     */
-  private def pairCritiques(context: CheckContext): LintFixResult =
+  private def pairCritiques(context: CheckContext)(using WritePermit): LintFixResult =
     val written =
       Transactor(context.dataSource)
         .read(ArticleCheckRepo.pairingRepairs)

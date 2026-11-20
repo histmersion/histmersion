@@ -23,6 +23,7 @@ import com.histmersion.util.jobs.Job
 import com.histmersion.util.database.Jsonb
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.AgentsMarkdown
+import com.histmersion.util.database.WritePermit
 
 /** What a run proposes about a source — a status, a disagreement edge — routed by the library's rules
   * ([[AgentProposals.route]]): applied by code (and recorded, already approved), recorded open for a person, or
@@ -47,7 +48,7 @@ final class SourceProposals(
   /** [[propose]] inside a run, through its write gate: a dry run records the proposal on the step and neither applies
     * nor records it.
     */
-  def propose(ctx: RunCtx, p: Proposal): Outcome =
+  def propose(ctx: RunCtx, p: Proposal)(using WritePermit): Outcome =
     ctx.write(s"${p.kind.wire} proposal: ${p.describe}", p.asJson)(propose(Some(Run.Id.assume(ctx.run.id.value)), p))(
       Outcome.NotProposed(Outcome.NotProposed.What(p.describe.value))
     )
@@ -58,7 +59,7 @@ final class SourceProposals(
       now: Option[Source.Status],
       state: ApprovalState,
       result: Option[ApprovalRecord.Result]
-  ) =
+  )(using WritePermit) =
     approvals.record(
       runId.map(r => Job.Id(r.value)),
       p.kind,
@@ -73,7 +74,7 @@ final class SourceProposals(
     )
 
   /** Route one verified proposal: apply it now (and record it, already approved), or record it open. */
-  def propose(runId: Option[Run.Id], p: Proposal): Outcome =
+  def propose(runId: Option[Run.Id], p: Proposal)(using WritePermit): Outcome =
     // the status it had matters to a status change only (an edge leaves the status alone)
     val now = if p.kind == Approval.Kind.StatusChange then status(p.citekey) else None
     AgentProposals.route(

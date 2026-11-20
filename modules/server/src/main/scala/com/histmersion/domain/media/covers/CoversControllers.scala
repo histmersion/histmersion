@@ -6,6 +6,7 @@ import com.histmersion.api.Write
 import com.histmersion.api.jobs.JobKinds
 import com.histmersion.domain.media.MediaJobs
 import com.histmersion.util.data.maintenance.WriteGate
+import com.histmersion.util.database.WritePermit
 import com.histmersion.util.jobs.BackgroundJob
 
 import hearth.kindlings.optics.syntax.*
@@ -28,7 +29,8 @@ final class CoversControllers(pictures: SourcePictures, jobs: MediaJobs):
     * over every source is [[coversJob]].
     */
   def covers(req: MediaCoversRequest): Either[Api.Error, MediaCoversReport] =
-    if req.dryRun.value then Right(pictures.run(req))
+    // a dry run writes nothing, but runs the one path that may: under the gate too
+    if req.dryRun.value then jobs.guarded(WriteGate.OperationName("media_covers"))(Right(pictures.run(req)))
     else if req.citekey.forall(_.value.trim.isEmpty) then
       Left(
         Api.Error(
@@ -64,7 +66,8 @@ final class CoversControllers(pictures: SourcePictures, jobs: MediaJobs):
     jobs.guarded(WriteGate.OperationName("media_cover"))(pictures.storeCover(p, bytes))
 
   /** After a conversion stored a source's figures (the OCR job's hook). */
-  def afterIngest(citekey: Citekey): Option[SourcePictures.AfterIngestText] = pictures.afterIngest(citekey)
+  def afterIngest(citekey: Citekey)(using WritePermit): Option[SourcePictures.AfterIngestText] =
+    pictures.afterIngest(citekey)
 
 object CoversControllers:
   val CoversJobKind: Job.Kind = Job.Kind.assume(CoversJobKinds.MediaCovers.kind.value)

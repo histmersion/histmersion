@@ -40,6 +40,7 @@ import com.histmersion.domain.automation.Approval
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.SpatialHierarchyResult
+import com.histmersion.util.database.WritePermit
 
 /** The run pool: `agents.max-concurrent-runs` workers draining a queue of run ids, on one daemon thread hosting an Ox
   * scope (the same arrangement as the OCR [[com.histmersion.server.Jobs]]). Runs are durable — `jobs` + `agent_steps` —
@@ -90,7 +91,7 @@ final class Engine(
     * database's runs are reconciled as at a start (its running ones paused as interrupted — none of them runs here —
     * its queued ones queued).
     */
-  def restored(): Unit =
+  def restored()(using WritePermit): Unit =
     era = Era()
     Iterator.continually(queue.poll()).takeWhile(_ != null).foreach(_.work.drop())
     // an engine that never started (agents off, the lease elsewhere) leaves the rows to the start that comes
@@ -124,7 +125,7 @@ final class Engine(
   def pruneTrace(
       force: Engine.PruneTraceForce = Engine.PruneTraceForce(false),
       now: PlanQuotaRepo.EpochMillis = PlanQuotaRepo.EpochMillis(agents.clock.millis())
-  ): RowCount =
+  )(using WritePermit): RowCount =
     val every = math.max(1, cfg.trace.pruneEveryMinutes.value).toLong * 60000L
     val last = lastPrune.get()
     if cfg.trace.keepMessagesDays.value <= 0 || (!force.value && now.value - last < every) || !lastPrune.compareAndSet(
@@ -172,7 +173,10 @@ final class Engine(
     object Seq extends Newtype[Int, Pure]
   private val running = ConcurrentHashMap[Run.Id, Control]()
 
-  /** A sign of life of run `id` (a step boundary, a model call, a CLI line); `seq` = the step it is in. */
+  /** A sign of life of run `id` (a step boundary, a model call, a CLI line); `seq` = the step it is in. Called from the
+    * run's thread and from the threads reading its processes and model calls: the heartbeat's write is a unit of the
+    * engine's worker (the run's own unit, on its thread).
+    */
   private[histmersion] def beat(id: Run.Id, seq: Option[Engine.BeatSeq] = None): Unit =
     Option(running.get(id)).foreach { c =>
       val now = PlanQuotaRepo.EpochMillis(agents.clock.millis())
@@ -180,26 +184,29 @@ final class Engine(
       seq.foreach(s => c.seq = s.value)
       if now.value - c.persisted.value >= math.max(1, cfg.watchdog.heartbeatSeconds.value).toLong * 1000L then
         c.persisted = now
-        try agents.jobRuns.heartbeat(jobKind, id)
+        try agents.workers.unit(agents.jobRuns.heartbeat(jobKind, id))
         catch case e: Exception => scribe.warn(s"agent run $id: heartbeat not written: ${e.getMessage}")
     }
 
   /** Take a plan pool's slot, beating while waiting for it (other runs' calls hold it). */
-  private[histmersion] def acquireBeating(id: Run.Id, slot: Semaphore): Unit =
+  private[histmersion] def acquireBeating(id: Run.Id, slot: Semaphore)(using WritePermit): Unit =
     while !slot.tryAcquire(Engine.BeatWhileWaitingSeconds, java.util.concurrent.TimeUnit.SECONDS) do beat(id)
 
   /** Called with every run that settles (done, failed, cancelled, paused, waiting) — the managers' nudge. A `var`
     * because the supervisor is attached after construction.
     */
-  @volatile private var settledHooks: List[RunInfo => Unit] = Nil
+  @volatile private var settledHooks: List[RunInfo => WritePermit ?=> Unit] = Nil
 
-  def onSettled(f: RunInfo => Unit): Unit = settledHooks = settledHooks :+ f
+  /** `f` runs when a run settles, on the run's thread, under the run's unit permit. */
+  def onSettled(f: RunInfo => WritePermit ?=> Unit): Unit = settledHooks = settledHooks :+ f
 
   /** The stall watchdog's pass at `now` (epoch ms): every running run whose last sign of life is older than
     * `agents.watchdog.stall-minutes` has its processes killed and is interrupted; it settles paused `stalled` (resuming
     * after resume-minutes), or failed on its max-stalls-th stall of one step. Returns the ids.
     */
-  def checkStalls(now: PlanQuotaRepo.EpochMillis = PlanQuotaRepo.EpochMillis(agents.clock.millis())): List[Run.Id] =
+  def checkStalls(now: PlanQuotaRepo.EpochMillis = PlanQuotaRepo.EpochMillis(agents.clock.millis()))(using
+      WritePermit
+  ): List[Run.Id] =
     val limit = cfg.watchdog.stallMinutesFor(cfg.providers).value.toLong * 60000L
     running.asScala.toList
       .filter((_, c) => c.stalled.isEmpty && !c.cancel && now.value - c.lastBeat.value > limit)
@@ -243,7 +250,7 @@ final class Engine(
   /** Reconcile (an interrupted run is paused, not failed), re-enqueue queued runs, start the workers. Idempotent.
     * Returns how many runs were paused as interrupted.
     */
-  def start(): Int =
+  def start()(using WritePermit): Int =
     val (paused, queued) = reconcile()
     val _ = pruneTrace(force = Engine.PruneTraceForce(true))
     queued.foreach(submit)
@@ -260,12 +267,14 @@ final class Engine(
   /** [[start]]'s first half: a run left `running` is paused as interrupted (and, when nobody watches it, set to resume
     * by itself shortly). Returns how many were paused, and the queued runs.
     */
-  private[histmersion] def reconcile(): (RowCount, Vector[Run.Id]) = reconcile(running.keySet.asScala.toList)
+  private[histmersion] def reconcile()(using WritePermit): (RowCount, Vector[Run.Id]) = reconcile(
+    running.keySet.asScala.toList
+  )
 
   /** As [[reconcile]], leaving the runs `except` be: after a restore none (a run still running here is fenced off and
     * cannot go on with the restored rows).
     */
-  private def reconcile(except: List[Run.Id]): (RowCount, Vector[Run.Id]) =
+  private def reconcile(except: List[Run.Id])(using WritePermit): (RowCount, Vector[Run.Id]) =
     // a run this engine is running is not interrupted, and one it holds queued is not queued twice: a
     // config reload that swapped back to its database must leave them be (docs/research-plugins.md §3.6)
     val inQueue = queue.asScala.map(_.id).toSet
@@ -314,7 +323,7 @@ final class Engine(
     * window has not freed enough after all (another run spent it meanwhile), the run simply pauses again with the next
     * time.
     */
-  def resumeDue(now: java.time.Instant): List[Run.Id] =
+  def resumeDue(now: java.time.Instant)(using WritePermit): List[Run.Id] =
     agents.jobRuns.due(jobKind, rowStatus(RunState.Paused), now).toList.filter { id =>
       transition(id, RunState.Paused, RunState.Queued).map(_ => submit(id)).isDefined
     }
@@ -324,7 +333,7 @@ final class Engine(
     * once per `stale-minutes` per pool), and sees a hold released. A run whose pool is still below its floor stays
     * paused; nothing is read for a server with no such run. Returns the ids.
     */
-  def resumeFreed(now: java.time.Instant): List[Run.Id] =
+  def resumeFreed(now: java.time.Instant)(using WritePermit): List[Run.Id] =
     agents.jobRuns
       .pausedWaiting(jobKind, rowStatus(RunState.Paused), now)
       .toList
@@ -390,7 +399,7 @@ final class Engine(
       error: Option[Problem] = None,
       progress: Option[String] = None,
       resumeAt: Option[java.time.Instant] = None
-  ): Option[RunState] =
+  )(using WritePermit): Option[RunState] =
     RunState
       .next(from, to)
       .flatMap(target =>
@@ -407,7 +416,10 @@ final class Engine(
         )(target)
       )
 
-  def submit(id: Run.Id): Unit = queue.put(Queued(id, agents.pins.carry(execute(id)), era))
+  /** Queue run `id`: it executes later on a pool thread, under the permit of the unit it runs in there (never the
+    * submitter's, whose block has ended by then).
+    */
+  def submit(id: Run.Id): Unit = queue.put(Queued(id, agents.pins.carry(agents.workers.unit(execute(id))), era))
 
   private def pool(): Unit =
     try
@@ -439,7 +451,7 @@ final class Engine(
       catch case _: InterruptedException => alive = !stopping
 
   /** Run one queued run to its next resting state. */
-  private[histmersion] def execute(id: Run.Id): Unit =
+  private[histmersion] def execute(id: Run.Id)(using WritePermit): Unit =
     agents.runs.get(id) match
       case None      => ()
       case Some(run) =>
@@ -525,7 +537,7 @@ final class Engine(
     * plan floor resumes by itself, so it leaves none (a batch of imports would otherwise leave one per source each time
     * a plan dips below its floor).
     */
-  private def notify(run: RunInfo, settled: Either[Halt, String]): Unit =
+  private def notify(run: RunInfo, settled: Either[Halt, String])(using WritePermit): Unit =
     val scheduled = run.origin.contains(Origin.Scheduler.wire)
     val ingested = run.origin.contains(Origin.FromIngest.wire)
     // a dry run writes nothing, its backlog item included
@@ -552,7 +564,7 @@ final class Engine(
       }
 
   /** A waiting run whose approval was decided goes back to the queue. `false` = it was not waiting. */
-  def wake(id: Run.Id): Boolean =
+  def wake(id: Run.Id)(using WritePermit): Boolean =
     transition(id, RunState.WaitingApproval, RunState.Queued).map(_ => submit(id)).isDefined
 
   /** Between steps: a requested pause or cancel takes effect here. */
@@ -625,7 +637,7 @@ final class Engine(
   private def conflict(m: Problem) =
     Api.Error(m, Some(Api.Error.Code(AgentsApi.CodeConflict)))
 
-  def pause(id: Run.Id): Either[Api.Error, RunInfo] =
+  def pause(id: Run.Id)(using WritePermit): Either[Api.Error, RunInfo] =
     withRun(id) { r =>
       RunState.parse(RunState.Wire(r.status.value)) match
         case Some(RunState.Running) =>
@@ -648,7 +660,7 @@ final class Engine(
       id: Run.Id,
       budgetUsd: Option[AgentsControllers.BudgetUsd],
       budgetTokens: Option[AgentsControllers.BudgetTokens]
-  ): Either[Api.Error, RunInfo] =
+  )(using WritePermit): Either[Api.Error, RunInfo] =
     withRun(id) { r =>
       if !RunState.parse(RunState.Wire(r.status.value)).contains(RunState.Paused) then
         Left(conflict(Problem.Run.NotNow(Problem.Raw.of(id), Problem.Raw.of(r.status), Problem.Run.Control.Resume)))
@@ -664,7 +676,7 @@ final class Engine(
           .flatMap { _ => submit(id); get(id) }
     }
 
-  def cancel(id: Run.Id): Either[Api.Error, RunInfo] =
+  def cancel(id: Run.Id)(using WritePermit): Either[Api.Error, RunInfo] =
     withRun(id) { r =>
       RunState.parse(RunState.Wire(r.status.value)) match
         case Some(RunState.Running) =>

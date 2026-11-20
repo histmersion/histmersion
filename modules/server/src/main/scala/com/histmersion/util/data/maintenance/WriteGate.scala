@@ -40,6 +40,11 @@ final class WriteGate(val permits: WritePermit.Gate = WritePermit.Gate()):
   def guard[A](op: OperationName)(f: WritePermit ?=> Either[Api.Error, A]): Either[Api.Error, A] =
     permits.permit(f).fold(r => Left(refusal(op, r)), identity)
 
+  /** [[guard]] for an operation that answers no `Either`: a refusal is thrown as `Raised` with the restore's problem
+    * (the answer a request refused a connection gets).
+    */
+  def writing[A](f: WritePermit ?=> A): A = permits.writing(f)
+
   /** Run `f` holding the whole database: a second concurrent attempt is refused rather than queued. Once no new write
     * gets a permit, `refused` may still turn the operation down (work it must not run beside, which can no longer start
     * now). Before `f` runs, every worker is asked to come to rest and the writes and connections in flight are waited
@@ -47,32 +52,36 @@ final class WriteGate(val permits: WritePermit.Gate = WritePermit.Gate()):
     * ([[Problem.Conflict.Undrained]]). A worker still at work then is fenced off and named in what `f` is given. After
     * `f`, every worker reconciles with what is in the database now (once: `f` may do it first, through
     * [[WriteGate.Quiet.reconcile]], to report it), and takes work again.
+    *
+    * The restore's own thread holds a worker's permit for all of it (the workers' quiescing and reconciling write, and
+    * so may `f`): the gate lets that thread through while it holds the database.
     */
   def exclusively[A](
       op: OperationName,
       drain: FiniteDuration = FiniteDuration(0L, java.util.concurrent.TimeUnit.SECONDS),
       refused: => Option[Api.Error] = None
-  )(f: Quiet ?=> Either[Api.Error, A]): Either[Api.Error, A] =
+  )(f: Quiet ?=> WritePermit ?=> Either[Api.Error, A]): Either[Api.Error, A] =
     if !permits.drain() then Left(refusal(op, WritePermit.Refusal.Restoring))
     else
       try
         refused match
           case Some(no) => Left(no)
           case None     =>
-            workers.quiesceAll()
-            val deadline = drain.fromNow
-            val restless = workers.awaitRest(deadline)
-            val out = permits.awaitPermits(deadline)
-            if !out.none then Left(undrained(Problem.Raw(s"$out guarded write(s) in flight"), restless, drain))
-            else
-              permits.close()
-              val lent = permits.awaitIdle(deadline)
-              if !lent.none then Left(undrained(Problem.Raw(s"$lent database connection(s) in use"), restless, drain))
+            permits.holding:
+              workers.quiesceAll()
+              val deadline = drain.fromNow
+              val restless = workers.awaitRest(deadline)
+              val out = permits.awaitPermits(deadline)
+              if !out.none then Left(undrained(Problem.Raw(s"$out guarded write(s) in flight"), restless, drain))
               else
-                permits.fence()
-                val ran = new Quiet(restless, workers)
-                try f(using ran)
-                finally { val _ = ran.reconcile() }
+                permits.close()
+                val lent = permits.awaitIdle(deadline)
+                if !lent.none then Left(undrained(Problem.Raw(s"$lent database connection(s) in use"), restless, drain))
+                else
+                  permits.fence()
+                  val ran = new Quiet(restless, workers)
+                  try f(using ran)
+                  finally { val _ = ran.reconcile() }
       finally
         permits.reopen()
         workers.resumeAll()
@@ -90,7 +99,7 @@ object WriteGate:
     /** Every worker reconciles with the database as it is now; once (later calls answer nothing). The workers that
       * failed to, as problems (each logged).
       */
-    def reconcile(): List[Problem] =
+    def reconcile()(using WritePermit): List[Problem] =
       if reconciled.compareAndSet(false, true) then workers.reconcileAll() else Nil
 
   private def refusal(op: OperationName, why: WritePermit.Refusal): Api.Error = why match

@@ -621,13 +621,15 @@ final class McpTools(
           Right(
             RepairAcquire
               .markdown(
-                EngineContributions
-                  .work(h.agents)
-                  .oaBacklog
-                  .repair(
-                    RepairAcquire
-                      .RepairRequest(RepairAcquire.RepairRequest.DryRun(dry.value), Some(Activity.Actor("mcp")))
-                  )
+                h.maintenance.writing(
+                  EngineContributions
+                    .work(h.agents)
+                    .oaBacklog
+                    .repair(
+                      RepairAcquire
+                        .RepairRequest(RepairAcquire.RepairRequest.DryRun(dry.value), Some(Activity.Actor("mcp")))
+                    )
+                )
               )
               .value
           ),

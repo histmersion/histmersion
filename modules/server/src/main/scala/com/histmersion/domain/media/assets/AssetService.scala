@@ -8,7 +8,7 @@ import com.histmersion.domain.DeepTime
 import com.histmersion.domain.catalogue.evidence.EventMatcher
 import com.histmersion.domain.media.MediaState
 import com.histmersion.domain.media.imports.{MediaMatch, Target}
-import com.histmersion.util.database.{RangeSql, Transactor}
+import com.histmersion.util.database.{RangeSql, Transactor, WritePermit}
 import com.histmersion.domain.media.MediaRole
 
 import hearth.kindlings.optics.syntax.*
@@ -57,17 +57,19 @@ trait AssetService:
   def figureCount(citekey: Citekey): AssetService.FigureCount
 
   /** Figures added, any stored under the same name left alone; how many were written (after deduplication). */
-  def addFigures(citekey: Citekey, figures: List[NewFigure]): AssetService.AddedFigureCount
+  def addFigures(citekey: Citekey, figures: List[NewFigure])(using WritePermit): AssetService.AddedFigureCount
 
   /** The whole set replaced (a re-conversion): the rows of the pictures it still has kept, renamed when only their name
     * moved; how many were kept.
     */
-  def replaceFigures(citekey: Citekey, figures: List[NewFigure]): AssetService.ReplacedFigureCount
+  def replaceFigures(citekey: Citekey, figures: List[NewFigure])(using WritePermit): AssetService.ReplacedFigureCount
 
   def detail(citekey: Citekey, name: AssetService.AssetName): Option[AssetDetail]
 
   /** A figure's description changed; a period that would end before it starts is refused, the other fields kept. */
-  def patch(citekey: Citekey, name: AssetService.AssetName, p: AssetPatch): Either[Api.Error, AssetDetail]
+  def patch(citekey: Citekey, name: AssetService.AssetName, p: AssetPatch)(using
+      WritePermit
+  ): Either[Api.Error, AssetDetail]
 
   /** A source's image figures, as the illustration's choice weighs them. */
   def sourceFigures(citekey: Citekey): List[SourceFigure]
@@ -80,9 +82,9 @@ trait AssetService:
   def save(
       a: ProviderAsset,
       firstTarget: (AssetService.TargetType, AssetService.TargetId)
-  ): (AssetService.AssetUid, Boolean)
+  )(using WritePermit): (AssetService.AssetUid, Boolean)
 
-  def refreshRights(uid: AssetService.AssetUid, r: Rights): Unit
+  def refreshRights(uid: AssetService.AssetUid, r: Rights)(using WritePermit): Unit
 
   def setThumb(
       uid: AssetService.AssetUid,
@@ -90,7 +92,7 @@ trait AssetService:
       mime: ProviderAsset.ThumbMime,
       width: Option[ProviderAsset.ThumbWidth],
       height: Option[ProviderAsset.ThumbHeight]
-  ): Unit
+  )(using WritePermit): Unit
 
   /** A picture shown on a place or event in a role; whether the link is new. */
   def link(
@@ -102,7 +104,7 @@ trait AssetService:
       item: Option[AssetService.LinkItem],
       rank: AssetService.LinkRank,
       basis: Option[MediaMatch.Basis]
-  ): Boolean
+  )(using WritePermit): Boolean
 
   /** `uid` made the source's picture in `role`, replacing the one it had in that role. */
   def setSourcePicture(
@@ -110,7 +112,7 @@ trait AssetService:
       uid: AssetService.AssetUid,
       role: MediaRole.Wire,
       property: Option[AssetService.LinkProperty]
-  ): Unit
+  )(using WritePermit): Unit
 
   /** The source's picture in `role`: its uid and its provider key or figure name. */
   def sourcePicture(citekey: Citekey, role: MediaRole.Wire): Option[(AssetService.AssetUid, AssetService.PictureKey)]
@@ -177,13 +179,13 @@ object AssetService:
     def figure(citekey: Citekey, name: AssetName): Option[(Mime, Bytes)] =
       db.read(AssetRepo.read(citekey, name)).map((m, b) => (Mime(m.value), Bytes(b.value)))
     def figureCount(citekey: Citekey): FigureCount = db.read(AssetRepo.count(citekey))
-    def addFigures(citekey: Citekey, figures: List[NewFigure]): AddedFigureCount =
-      db.transact(AssetRepo.add(citekey, figures))
-    def replaceFigures(citekey: Citekey, figures: List[NewFigure]): ReplacedFigureCount =
-      db.transact(AssetRepo.replace(citekey, figures))
+    def addFigures(citekey: Citekey, figures: List[NewFigure])(using WritePermit): AddedFigureCount =
+      db.write(AssetRepo.add(citekey, figures))
+    def replaceFigures(citekey: Citekey, figures: List[NewFigure])(using WritePermit): ReplacedFigureCount =
+      db.write(AssetRepo.replace(citekey, figures))
     def detail(citekey: Citekey, name: AssetName): Option[AssetDetail] = db.read(AssetRepo.detail(citekey, name))
-    def patch(citekey: Citekey, name: AssetName, p: AssetPatch): Either[Api.Error, AssetDetail] =
-      db.transact(AssetRepo.patch(citekey, name, p))
+    def patch(citekey: Citekey, name: AssetName, p: AssetPatch)(using WritePermit): Either[Api.Error, AssetDetail] =
+      db.write(AssetRepo.patch(citekey, name, p))
         .flatMap(_ =>
           detail(citekey, name).toRight(
             Api.Error(
@@ -195,17 +197,17 @@ object AssetService:
     def sourceFigures(citekey: Citekey): List[SourceFigure] = db.read(MediaRepo.sourceFigures(citekey))
     def known(provider: Provider, keys: List[ProviderKey]): Map[ProviderKey, Known] =
       db.read(MediaRepo.known(provider, keys))
-    def save(a: ProviderAsset, firstTarget: (TargetType, TargetId)): (AssetUid, Boolean) =
-      db.transact(MediaRepo.save(a, firstTarget))
-    def refreshRights(uid: AssetUid, r: Rights): Unit = db.transact(MediaRepo.refreshRights(uid, r))
+    def save(a: ProviderAsset, firstTarget: (TargetType, TargetId))(using WritePermit): (AssetUid, Boolean) =
+      db.write(MediaRepo.save(a, firstTarget))
+    def refreshRights(uid: AssetUid, r: Rights)(using WritePermit): Unit = db.write(MediaRepo.refreshRights(uid, r))
     def setThumb(
         uid: AssetUid,
         bytes: ProviderAsset.Thumb,
         mime: ProviderAsset.ThumbMime,
         width: Option[ProviderAsset.ThumbWidth],
         height: Option[ProviderAsset.ThumbHeight]
-    ): Unit =
-      db.transact(
+    )(using WritePermit): Unit =
+      db.write(
         MediaRepo.setThumb(
           uid,
           bytes,
@@ -223,7 +225,7 @@ object AssetService:
         item: Option[LinkItem],
         rank: LinkRank,
         basis: Option[MediaMatch.Basis]
-    ): Boolean = db.transact(
+    )(using WritePermit): Boolean = db.write(
       MediaRepo.link(
         uid,
         targetType,
@@ -235,8 +237,10 @@ object AssetService:
         basis
       )
     )
-    def setSourcePicture(citekey: Citekey, uid: AssetUid, role: MediaRole.Wire, property: Option[LinkProperty]): Unit =
-      db.transact(
+    def setSourcePicture(citekey: Citekey, uid: AssetUid, role: MediaRole.Wire, property: Option[LinkProperty])(using
+        WritePermit
+    ): Unit =
+      db.write(
         MediaRepo.setSourcePicture(citekey, uid, role, property.map(p => MediaRepo.SetSourcePictureProperty(p.value)))
       )
     def sourcePicture(citekey: Citekey, role: MediaRole.Wire): Option[(AssetUid, PictureKey)] =
@@ -310,7 +314,7 @@ object AssetService:
         f.height.map(h => HeldAsset.Height(h.value))
       )
 
-    def addFigures(citekey: Citekey, figures: List[NewFigure]): AddedFigureCount =
+    def addFigures(citekey: Citekey, figures: List[NewFigure])(using WritePermit): AddedFigureCount =
       val incoming = NewFigure.dedupe(figures)
       val _ = state.updateAndGet { s =>
         val taken = s.assets.filter(_.citekey.contains(citekey)).map(_.name).toSet
@@ -319,7 +323,7 @@ object AssetService:
       }
       RowCount(incoming.size)
 
-    def replaceFigures(citekey: Citekey, figures: List[NewFigure]): ReplacedFigureCount =
+    def replaceFigures(citekey: Citekey, figures: List[NewFigure])(using WritePermit): ReplacedFigureCount =
       val incoming = NewFigure.dedupe(figures)
       val _ = state.updateAndGet { s =>
         val mine = s.assets.filter(_.citekey.contains(citekey)).sortBy(_.name.value)
@@ -399,7 +403,7 @@ object AssetService:
         )
       }
 
-    def patch(citekey: Citekey, name: AssetName, p: AssetPatch): Either[Api.Error, AssetDetail] =
+    def patch(citekey: Citekey, name: AssetName, p: AssetPatch)(using WritePermit): Either[Api.Error, AssetDetail] =
       def missing = Api.Error(
         Problem.Unclassified(Legacy.Text(s"No asset '$citekey/$name'")),
         Some(Api.Error.Code(Write.CodeNotFound))
@@ -456,7 +460,7 @@ object AssetService:
         .flatMap(a => a.providerKey.map(_ -> Known(Known.Uid(a.uid.value), a.license.map(l => Known.License(l.value)))))
         .toMap
 
-    def save(a: ProviderAsset, firstTarget: (TargetType, TargetId)): (AssetUid, Boolean) =
+    def save(a: ProviderAsset, firstTarget: (TargetType, TargetId))(using WritePermit): (AssetUid, Boolean) =
       val t = now
       val license = Option(a.license.value).filter(_.nonEmpty).map(HeldAsset.License(_))
       val kind = a.kind.map(k => HeldAsset.Kind(k.value))
@@ -532,7 +536,7 @@ object AssetService:
           val _ = state.updateAndGet(_.modify(_.assets).using(_ :+ row))
           (uid, true)
 
-    def refreshRights(uid: AssetUid, r: Rights): Unit =
+    def refreshRights(uid: AssetUid, r: Rights)(using WritePermit): Unit =
       val t = now
       change(uid)(
         _.modify(_.license)
@@ -553,7 +557,7 @@ object AssetService:
         mime: ProviderAsset.ThumbMime,
         width: Option[ProviderAsset.ThumbWidth],
         height: Option[ProviderAsset.ThumbHeight]
-    ): Unit =
+    )(using WritePermit): Unit =
       change(uid)(
         _.modify(_.thumb)
           .setTo(Some(bytes))
@@ -574,7 +578,7 @@ object AssetService:
         item: Option[LinkItem],
         rank: LinkRank,
         basis: Option[MediaMatch.Basis]
-    ): Boolean =
+    )(using WritePermit): Boolean =
       require(byUid(uid).isDefined, s"no picture $uid")
       def same(m: HeldMediaLink) =
         m.assetUid == uid && m.targetType == targetType && m.targetId == targetId && m.role == role
@@ -595,7 +599,9 @@ object AssetService:
 
     private def onSource(m: HeldMediaLink, target: PictureTarget): Boolean = m.targetType == target.wire
 
-    def setSourcePicture(citekey: Citekey, uid: AssetUid, role: MediaRole.Wire, property: Option[LinkProperty]): Unit =
+    def setSourcePicture(citekey: Citekey, uid: AssetUid, role: MediaRole.Wire, property: Option[LinkProperty])(using
+        WritePermit
+    ): Unit =
       def mine(m: HeldMediaLink) =
         onSource(m, PictureTarget.Source) && m.targetId.value == citekey.value && m.role == role
       val linked = property.map(p => LinkProperty(p.value))

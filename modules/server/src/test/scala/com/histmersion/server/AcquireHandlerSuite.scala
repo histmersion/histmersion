@@ -16,7 +16,7 @@ import com.histmersion.api.ListPatch
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.domain.automation.worklists.QueueRows
-import com.histmersion.util.database.{Db, Migrate}
+import com.histmersion.util.database.{Db, Migrate, WritePermit}
 import com.histmersion.domain.library.ingest.{FetchedCopy, IngestJobs, IngestMeta}
 import com.histmersion.domain.library.acquisition.*
 import com.histmersion.api.automation.Queue
@@ -63,6 +63,7 @@ import com.histmersion.plugin.WorkKey
 import com.histmersion.plugin.Fetch
 import com.histmersion.config.ConverterConfig
 import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.util.database.TestPermits.given
 
 /** The acquisition handlers against a real Postgres (`HISTMERSION_TEST_DB_URL`), with every upstream replaced by a
   * fake. What is exercised here is the part fixtures cannot reach: resolving references to stored citekeys, writing
@@ -211,7 +212,7 @@ class AcquireHandlerSuite extends DbSuite:
   final private class RecordingJobs extends IngestJobs:
     private val skeleton = AcquisitionTesting.skeleton(Deps(cfg, ds))
     val files = java.util.concurrent.ConcurrentLinkedQueue[Option[FetchedCopy]]()
-    def enqueue(copy: Option[FetchedCopy], citekey: domain.library.Citekey, meta: IngestMeta) =
+    def enqueue(copy: Option[FetchedCopy], citekey: domain.library.Citekey, meta: IngestMeta)(using WritePermit) =
       files.add(copy); skeleton.enqueue(copy, citekey, meta)
 
   /** A PDF fetcher that counts its calls. */

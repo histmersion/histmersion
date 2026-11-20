@@ -13,6 +13,7 @@ import com.histmersion.api.media.AssetRelation
 import com.histmersion.api.media.MediaTarget
 import com.histmersion.domain.media.assets.MediaItemRow
 import com.histmersion.domain.media.imports.Target
+import com.histmersion.util.database.TestPermits.given
 
 /** What the figures' links answer, the same on the database and in memory: a link needs its figure, follows its rename
   * and goes with it.

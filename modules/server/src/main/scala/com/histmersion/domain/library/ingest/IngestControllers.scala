@@ -24,6 +24,7 @@ import com.histmersion.domain.library.Doi
 import com.histmersion.domain.library.acquisition.AcquireCheckRow
 import com.histmersion.api.library.AuthorName
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.database.WritePermit
 
 /** The ingest surface (plan §1.8) — REST routes, MCP tools and the CLI all reach these:
   *
@@ -58,7 +59,7 @@ final class IngestControllers(
   private def invalidCitekey(p: Problem): Api.Error =
     Write.invalid(p, Api.Error.InvalidCitekey)
 
-  private def ingestNow(p: Ingest.Params, upload: Upload): Either[Api.Error, Ingest.Accepted] =
+  private def ingestNow(p: Ingest.Params, upload: Upload)(using WritePermit): Either[Api.Error, Ingest.Accepted] =
     // VALIDATED, not merely non-empty: the citekey becomes part of a stored file's report below.
     Citekey.parse(p.citekey.value).left.map(invalidCitekey).flatMap { validated =>
       val citekey: Citekey = validated
@@ -161,7 +162,9 @@ final class IngestControllers(
       Citekey.parse(citekey.value).left.map(invalidCitekey).flatMap(_ => reocrValid(citekey, quality))
     )
 
-  private def reocrValid(citekey: Citekey, quality: Ingest.Params.Quality): Either[Api.Error, Ingest.Accepted] =
+  private def reocrValid(citekey: Citekey, quality: Ingest.Params.Quality)(using
+      WritePermit
+  ): Either[Api.Error, Ingest.Accepted] =
     sources.load(citekey) match
       case None    => Left(Write.notFound(com.histmersion.api.library.Citekey(citekey.value)))
       case Some(_) =>

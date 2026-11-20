@@ -14,6 +14,7 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.api.library.Doi
 import com.histmersion.api.library.Title
 import com.histmersion.api.catalogue.Year
+import com.histmersion.util.database.TestPermits.given
 
 /** The acquisition list's checks, the same on the database and in memory: a check replaced with its count kept, the
   * checks of the open items only, counted since a time, and what the corpus holds of the items' DOIs.

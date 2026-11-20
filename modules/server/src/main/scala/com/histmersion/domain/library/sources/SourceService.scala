@@ -36,6 +36,7 @@ import com.histmersion.domain.library.Doi
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.catalogue.places.FindingPlacement
 import com.histmersion.api.catalogue.Place
+import com.histmersion.util.database.WritePermit
 
 /** The library's sources: a record with its findings and the edges it makes, its old citekeys, its rename and delete
   * (what other domains hold of it follows through the referrers), and its body as read by part.
@@ -82,12 +83,14 @@ trait SourceService:
   def markdown(citekey: Citekey): FullSourceRow.OcrMarkdown
 
   /** Replace everything under `source.citekey`; the new last-write token. */
-  def put(source: Source, caller: Caller): Source.UpdatedAt
+  def put(source: Source, caller: Caller)(using WritePermit): Source.UpdatedAt
 
   /** Merge `patch` into the source `requested` names (an old citekey follows); the new last-write token. */
-  def patch(requested: Citekey, patch: Source.Patch, caller: Caller): Either[Api.Error, Source.UpdatedAt]
+  def patch(requested: Citekey, patch: Source.Patch, caller: Caller)(using
+      WritePermit
+  ): Either[Api.Error, Source.UpdatedAt]
 
-  def rename(from: Citekey, to: Citekey, caller: Caller): Either[Api.Error, Rename.Counts]
+  def rename(from: Citekey, to: Citekey, caller: Caller)(using WritePermit): Either[Api.Error, Rename.Counts]
 
   /** What deleting the source would do; nothing is changed. */
   def deletion(citekey: Citekey): Either[Api.Error, SourceDeletePlan]
@@ -98,10 +101,10 @@ trait SourceService:
       day: SourceReferrers.Day,
       files: SourceDeletePlan => List[Source.Deletion.Files],
       caller: Caller
-  ): Either[Api.Error, SourceDeletePlan]
+  )(using WritePermit): Either[Api.Error, SourceDeletePlan]
 
   /** Promote the parked edges whose target now names one stored source; how many. */
-  def resolveEdges(caller: Caller): RowCount
+  def resolveEdges(caller: Caller)(using WritePermit): RowCount
 
   // ── what acquisition, ingest and the collections read and write of a source ───────────────
 
@@ -114,7 +117,7 @@ trait SourceService:
   def citekeyOfDoi(doi: Doi): Option[Citekey]
 
   /** Store edges routed by their target (one to a source not stored yet is parked); how many were new. */
-  def addEdges(edges: List[Edge], caller: Caller): RowCount
+  def addEdges(edges: List[Edge], caller: Caller)(using WritePermit): RowCount
 
   /** The digest of the source's stored original. */
   def original(citekey: Citekey): Option[Sha256]
@@ -125,13 +128,13 @@ trait SourceService:
   /** The digests of the stored originals of those of `citekeys` that have one. */
   def originals(citekeys: List[Citekey]): Map[Citekey, Sha256]
 
-  def setOriginal(citekey: Citekey, sha256: Sha256, caller: Caller): Unit
+  def setOriginal(citekey: Citekey, sha256: Sha256, caller: Caller)(using WritePermit): Unit
 
   /** The licence the source is published under, classified as it is read (Q26). */
   def licence(citekey: Citekey): Option[Licence]
 
   /** `licence` recorded as the source's when it has none; `true` when it was written. */
-  def recordLicence(citekey: Citekey, licence: Licence.Id, caller: Caller): Boolean
+  def recordLicence(citekey: Citekey, licence: Licence.Id, caller: Caller)(using WritePermit): Boolean
 
   /** The sources not in Calibre yet, in citekey order, at most `limit` (none: all). */
   def calibreGaps(limit: Option[PageSize]): List[CalibreGap]
@@ -140,7 +143,9 @@ trait SourceService:
   def calibrePushMeta(citekey: Citekey): Option[CalibreGap]
 
   /** The Calibre id written back after a push. */
-  def setCalibreId(citekey: Citekey, calibreId: FullSourceRow.CalibreId, caller: Caller): Either[Api.Error, Unit]
+  def setCalibreId(citekey: Citekey, calibreId: FullSourceRow.CalibreId, caller: Caller)(using
+      WritePermit
+  ): Either[Api.Error, Unit]
 
 object SourceService:
   type Heading = Heading.T
@@ -171,19 +176,21 @@ object SourceService:
     def bodyChunks(citekey: Citekey): List[Chunk] = db.read(SourceRepo.bodyChunks(citekey))
     def markdown(citekey: Citekey): FullSourceRow.OcrMarkdown = db.read(SourceRepo.markdown(citekey))
 
-    def put(source: Source, caller: Caller): Source.UpdatedAt =
+    def put(source: Source, caller: Caller)(using WritePermit): Source.UpdatedAt =
       val s = settings()
-      db.transact(SourceRepo.putIn(source, Chunker.ChunkMaxChars(s.chunkChars.value), toleranceKm(s)))
+      db.write(SourceRepo.putIn(source, Chunker.ChunkMaxChars(s.chunkChars.value), toleranceKm(s)))
 
-    def patch(requested: Citekey, patch: Source.Patch, caller: Caller): Either[Api.Error, Source.UpdatedAt] =
+    def patch(requested: Citekey, patch: Source.Patch, caller: Caller)(using
+        WritePermit
+    ): Either[Api.Error, Source.UpdatedAt] =
       val s = settings()
-      db.transact(SourceRepo.patchIn(requested, patch, Chunker.ChunkMaxChars(s.chunkChars.value), toleranceKm(s)))
+      db.write(SourceRepo.patchIn(requested, patch, Chunker.ChunkMaxChars(s.chunkChars.value), toleranceKm(s)))
 
     private def toleranceKm(s: SourceSettings): FindingPlacement.Implementation.ToleranceKm =
       FindingPlacement.Implementation.ToleranceKm(s.toleranceKm.value)
 
-    def rename(from: Citekey, to: Citekey, caller: Caller): Either[Api.Error, Rename.Counts] =
-      db.transact(SourceRepo.rename(from, Citekeys.RenameToNewRaw(to.value), referrers))
+    def rename(from: Citekey, to: Citekey, caller: Caller)(using WritePermit): Either[Api.Error, Rename.Counts] =
+      db.write(SourceRepo.rename(from, Citekeys.RenameToNewRaw(to.value), referrers))
 
     def deletion(citekey: Citekey): Either[Api.Error, SourceDeletePlan] =
       db.read(SourceDeleteRepo.planIn(citekey, referrers))
@@ -193,35 +200,37 @@ object SourceService:
         day: SourceReferrers.Day,
         files: SourceDeletePlan => List[Source.Deletion.Files],
         caller: Caller
-    ): Either[Api.Error, SourceDeletePlan] =
-      db.transact(SourceDeleteRepo.applyIn(citekey, day, files, referrers))
+    )(using WritePermit): Either[Api.Error, SourceDeletePlan] =
+      db.write(SourceDeleteRepo.applyIn(citekey, day, files, referrers))
 
-    def resolveEdges(caller: Caller): RowCount = db.transact(SourceRepo.resolveEdges())
+    def resolveEdges(caller: Caller)(using WritePermit): RowCount = db.write(SourceRepo.resolveEdges())
 
     def exists(citekey: Citekey): Boolean = db.read(SourceRepo.exists(citekey))
     def doiIndex: Map[Doi, Citekey] = db.read(SourceRepo.doiIndex())
     def citekeyOfDoi(doi: Doi): Option[Citekey] = db.read(SourceRepo.citekeyOfDoi(doi))
-    def addEdges(edges: List[Edge], caller: Caller): RowCount =
-      if edges.isEmpty then RowCount(0) else db.transact(SourceRepo.insertEdges(edges))
+    def addEdges(edges: List[Edge], caller: Caller)(using WritePermit): RowCount =
+      if edges.isEmpty then RowCount(0) else db.write(SourceRepo.insertEdges(edges))
     def original(citekey: Citekey): Option[Sha256] = db.read(SourceRepo.sha256Of(citekey))
     def holderOf(sha256: Sha256): Option[Citekey] = db.read(SourceRepo.citekeyOfSha256(sha256))
     def originals(citekeys: List[Citekey]): Map[Citekey, Sha256] =
       if citekeys.isEmpty then Map.empty else db.read(SourceRepo.sha256s(citekeys))
-    def setOriginal(citekey: Citekey, sha256: Sha256, caller: Caller): Unit =
-      db.transact(SourceRepo.setSha256(citekey, sha256))
+    def setOriginal(citekey: Citekey, sha256: Sha256, caller: Caller)(using WritePermit): Unit =
+      db.write(SourceRepo.setSha256(citekey, sha256))
     def licence(citekey: Citekey): Option[Licence] =
       db.read(SourceRepo.licenceOf(citekey))
         .map(l => Licence.Id(l.value.trim))
         .filter(_.value.nonEmpty)
         .map(Licence.classify)
-    def recordLicence(citekey: Citekey, licence: Licence.Id, caller: Caller): Boolean =
+    def recordLicence(citekey: Citekey, licence: Licence.Id, caller: Caller)(using WritePermit): Boolean =
       val v = licence.value.trim
-      v.nonEmpty && db.transact(SourceRepo.recordLicence(citekey, Licence.Id(v)))
+      v.nonEmpty && db.write(SourceRepo.recordLicence(citekey, Licence.Id(v)))
     def calibreGaps(limit: Option[PageSize]): List[CalibreGap] =
       db.read(SourceRepo.calibreGaps(limit.map(l => SourceRepo.Limit.assume(l.value))))
     def calibrePushMeta(citekey: Citekey): Option[CalibreGap] = db.read(SourceRepo.calibrePushMeta(citekey))
-    def setCalibreId(citekey: Citekey, calibreId: FullSourceRow.CalibreId, caller: Caller): Either[Api.Error, Unit] =
-      db.transact:
+    def setCalibreId(citekey: Citekey, calibreId: FullSourceRow.CalibreId, caller: Caller)(using
+        WritePermit
+    ): Either[Api.Error, Unit] =
+      db.write:
         if SourceRepo.setCalibreId(citekey, calibreId).value == 0 then Left(Write.notFound(ApiCitekey(citekey.value)))
         else Right(())
 
@@ -478,12 +487,14 @@ object SourceService:
       val (waiting, rest) = st.parked.partition(_.dst.value == citekey.value)
       st.modify(_.edges).using(_ ++ waiting).modify(_.parked).setTo(rest)
 
-    def put(source: Source, caller: Caller): Source.UpdatedAt =
+    def put(source: Source, caller: Caller)(using WritePermit): Source.UpdatedAt =
       val at = clock.instant()
       val _ = state.updateAndGet(written(_, source, at))
       Source.UpdatedAt(token(at))
 
-    def patch(requested: Citekey, patch: Source.Patch, caller: Caller): Either[Api.Error, Source.UpdatedAt] =
+    def patch(requested: Citekey, patch: Source.Patch, caller: Caller)(using
+        WritePermit
+    ): Either[Api.Error, Source.UpdatedAt] =
       val at = clock.instant()
       var answer: Either[Api.Error, Source.UpdatedAt] = Left(Write.notFound(apiKey(requested)))
       val _ = state.updateAndGet { st =>
@@ -507,7 +518,7 @@ object SourceService:
       }
       answer
 
-    def rename(from: Citekey, to: Citekey, caller: Caller): Either[Api.Error, Rename.Counts] =
+    def rename(from: Citekey, to: Citekey, caller: Caller)(using WritePermit): Either[Api.Error, Rename.Counts] =
       Citekeys
         .renameTo(from, Citekeys.RenameToNewRaw(to.value))
         .left
@@ -711,7 +722,7 @@ object SourceService:
         day: SourceReferrers.Day,
         files: SourceDeletePlan => List[Source.Deletion.Files],
         caller: Caller
-    ): Either[Api.Error, SourceDeletePlan] =
+    )(using WritePermit): Either[Api.Error, SourceDeletePlan] =
       var answer: Either[Api.Error, SourceDeletePlan] = Left(Write.notFound(apiKey(citekey)))
       val _ = state.updateAndGet { st =>
         planIn(st, citekey) match
@@ -736,7 +747,7 @@ object SourceService:
       }
       answer
 
-    def resolveEdges(caller: Caller): RowCount =
+    def resolveEdges(caller: Caller)(using WritePermit): RowCount =
       var moved = 0
       val _ = state.updateAndGet { st =>
         val targets = resolveIn(st, st.parked.toList.map(e => WikiLinks.Occurrence.Target(e.dst.value)))
@@ -775,7 +786,7 @@ object SourceService:
         )
         .toMap
 
-    def addEdges(edges: List[Edge], caller: Caller): RowCount =
+    def addEdges(edges: List[Edge], caller: Caller)(using WritePermit): RowCount =
       val es = edges.distinct
       if es.isEmpty then RowCount(0)
       else
@@ -805,7 +816,7 @@ object SourceService:
       )
       before.sources.contains(sk(citekey))
 
-    def setOriginal(citekey: Citekey, sha256: Sha256, caller: Caller): Unit =
+    def setOriginal(citekey: Citekey, sha256: Sha256, caller: Caller)(using WritePermit): Unit =
       val _ = updated(citekey)(_.modify(_.sha256).setTo(Some(sha256)))
 
     def licence(citekey: Citekey): Option[Licence] =
@@ -815,7 +826,7 @@ object SourceService:
         .filter(_.value.nonEmpty)
         .map(Licence.classify)
 
-    def recordLicence(citekey: Citekey, licence: Licence.Id, caller: Caller): Boolean =
+    def recordLicence(citekey: Citekey, licence: Licence.Id, caller: Caller)(using WritePermit): Boolean =
       val v = licence.value.trim
       val open = stored(citekey).exists(_.licence.forall(_.value.trim.isEmpty))
       v.nonEmpty && open && updated(citekey)(
@@ -847,7 +858,9 @@ object SourceService:
 
     def calibrePushMeta(citekey: Citekey): Option[CalibreGap] = stored(citekey).map(gapOf)
 
-    def setCalibreId(citekey: Citekey, calibreId: FullSourceRow.CalibreId, caller: Caller): Either[Api.Error, Unit] =
+    def setCalibreId(citekey: Citekey, calibreId: FullSourceRow.CalibreId, caller: Caller)(using
+        WritePermit
+    ): Either[Api.Error, Unit] =
       if updated(citekey)(
           _.modify(_.source.calibreId)
             .setTo(Some(Source.CalibreId(calibreId.value)))

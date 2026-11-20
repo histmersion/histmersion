@@ -28,6 +28,7 @@ import com.histmersion.api.Api
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.jobs.Job
 import com.histmersion.api.basemap.BasemapJobKinds
+import com.histmersion.util.database.WritePermit
 
 /** The terrain base map on this machine (docs/research-terrain-basemap.md): where its two extracts are, the fetch job
   * that downloads them, their removal, and the tiles served to the web page.

@@ -33,6 +33,7 @@ import com.histmersion.util.jobs.Job
 import com.histmersion.util.storage.Reservation
 import com.histmersion.api.ByteCount
 import com.histmersion.util.problem.Problems
+import com.histmersion.util.database.WritePermit
 
 /** The portable bundle and the merge (docs/research-merge-import.md, milestones M0–M7): this instance's identity, the
   * export, verify and import of a `.hmx` bundle, the bundles kept to be planned, the plan, the apply, the review
@@ -44,25 +45,27 @@ import com.histmersion.util.problem.Problems
   */
 trait BundleService:
   def instance: InstanceInfo
-  def setLabel(label: Option[InstanceInfo.Label]): InstanceInfo
+  def setLabel(label: Option[InstanceInfo.Label])(using WritePermit): InstanceInfo
   def exportBundle(since: Option[BundleScope.Since.At]): Either[Api.Error, (HandedFile, Bundle.Manifest)]
   def verify(upload: ByteSource): Bundle.VerifyResult
-  def importBundle(upload: ByteSource, dryRun: ImportOptions.DryRun): Either[Api.Error, Bundle.ImportResult]
+  def importBundle(upload: ByteSource, dryRun: ImportOptions.DryRun)(using
+      WritePermit
+  ): Either[Api.Error, Bundle.ImportResult]
   def keep(upload: ByteSource): Either[Api.Error, Bundle.Upload]
   def plan(bundle: Sha256, resolutions: MergeResolutions): Either[Api.Error, MergePlan]
   def importKept(
       bundle: Sha256,
       resolutions: MergeResolutions,
       dryRun: ImportOptions.DryRun
-  ): Either[Api.Error, Bundle.ImportResult]
+  )(using WritePermit): Either[Api.Error, Bundle.ImportResult]
   def applyKept(
       bundle: Sha256,
       planHash: MergeRow.PlanHash,
       resolutions: MergeResolutions
-  ): Either[Api.Error, MergeApplyJob]
+  )(using WritePermit): Either[Api.Error, MergeApplyJob]
   def applyStatus(job: Job.Id): Option[MergeApplyJob]
   def session(bundle: Sha256): MergeSession
-  def putSession(bundle: Sha256, resolutions: MergeResolutions): MergeSession
+  def putSession(bundle: Sha256, resolutions: MergeResolutions)(using WritePermit): MergeSession
   def merges(limit: PageSize): List[MergeInfo]
   def mergeDetail(id: MergeRepo.MergeIdOrPrefix): Either[Api.Error, MergeDetail]
   def mergeLedger(
@@ -102,8 +105,8 @@ object BundleService:
 
     def instance: InstanceInfo = Transactor(w.ds).read(BundleRepo.instance)
 
-    def setLabel(label: Option[InstanceInfo.Label]): InstanceInfo =
-      Transactor(w.ds).transact(BundleRepo.setLabel(label))
+    def setLabel(label: Option[InstanceInfo.Label])(using WritePermit): InstanceInfo =
+      Transactor(w.ds).write(BundleRepo.setLabel(label))
 
     def exportBundle(since: Option[BundleScope.Since.At]): Either[Api.Error, (HandedFile, Bundle.Manifest)] =
       val store = bundles
@@ -170,7 +173,9 @@ object BundleService:
     def verify(upload: ByteSource): Bundle.VerifyResult =
       upload.read(in => BundleReader.verify(in, Migrate.current(w.ds).map(v => Bundle.Manifest.SchemaVersion(v.value))))
 
-    def importBundle(upload: ByteSource, dryRun: ImportOptions.DryRun): Either[Api.Error, Bundle.ImportResult] =
+    def importBundle(upload: ByteSource, dryRun: ImportOptions.DryRun)(using
+        WritePermit
+    ): Either[Api.Error, Bundle.ImportResult] =
       shaOf(upload).left
         .map(Api.Error(_))
         .flatMap(importFrom(upload, _, MergeResolutions(), dryRun).left.map(Api.Error(_)))
@@ -187,7 +192,7 @@ object BundleService:
         sha: Sha256,
         resolutions: MergeResolutions,
         dryRun: ImportOptions.DryRun
-    ): Either[Problems, Bundle.ImportResult] =
+    )(using WritePermit): Either[Problems, Bundle.ImportResult] =
       BundleImporter
         .run(
           w.ds,
@@ -285,14 +290,14 @@ object BundleService:
         bundle: Sha256,
         resolutions: MergeResolutions,
         dryRun: ImportOptions.DryRun
-    ): Either[Api.Error, Bundle.ImportResult] =
+    )(using WritePermit): Either[Api.Error, Bundle.ImportResult] =
       kept(bundle).flatMap(importFrom(_, bundle, resolutions, dryRun).left.map(Api.Error(_)))
 
     def applyKept(
         bundle: Sha256,
         planHash: MergeRow.PlanHash,
         resolutions: MergeResolutions
-    ): Either[Api.Error, MergeApplyJob] =
+    )(using WritePermit): Either[Api.Error, MergeApplyJob] =
       kept(bundle).flatMap { source =>
         w.applyJobs.start(bundle, planHash) { () =>
           BundleImporter
@@ -312,7 +317,7 @@ object BundleService:
             )
             .map { r =>
               if r.applied.value && r.mergeId.isDefined then
-                Transactor(w.ds).transact(MergeRepo.dropSession(MergeRepo.BundleName(bundle.value)))
+                Transactor(w.ds).write(MergeRepo.dropSession(MergeRepo.BundleName(bundle.value)))
               r
             }
         }
@@ -323,8 +328,8 @@ object BundleService:
     def session(bundle: Sha256): MergeSession =
       Transactor(w.ds).read(MergeRepo.session(MergeRepo.BundleName(bundle.value)))
 
-    def putSession(bundle: Sha256, resolutions: MergeResolutions): MergeSession =
-      Transactor(w.ds).transact(MergeRepo.putSession(MergeRepo.BundleName(bundle.value), resolutions))
+    def putSession(bundle: Sha256, resolutions: MergeResolutions)(using WritePermit): MergeSession =
+      Transactor(w.ds).write(MergeRepo.putSession(MergeRepo.BundleName(bundle.value), resolutions))
 
     def merges(limit: PageSize): List[MergeInfo] = Transactor(w.ds).read(MergeRepo.list(limit))
 

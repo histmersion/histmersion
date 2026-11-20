@@ -40,6 +40,7 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.api.library.Candidates
 import com.histmersion.domain.library.workflows.AgentUpstream
 import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.util.database.TestPermits.given
 
 /** The deterministic new-source search (#3761) over fake indexes: what a sweep stores, the watermarks it keeps,
   * deduplication across indexes and against the corpus and the acquisition list, a failed index, a dry run, marking —

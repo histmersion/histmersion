@@ -18,6 +18,7 @@ import com.histmersion.api.jobs.JobInfo
 import com.histmersion.pluginhost.Registries
 import com.histmersion.server.HttpDownload
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.database.WritePermit
 
 /** How the gazetteer comes in: the bundled seed, the pinned extracts and the drop folder ([[GazetteerLoad]]), a source
   * a plugin registers ([[ImportRunner]]) and the land ([[NaturalEarthLand]]). The composition root gives the stores,
@@ -48,13 +49,13 @@ final class GazetteerImports(
       kind: Gazetteer.Kind,
       apply: GazetteerLoad.LoadApply,
       note: JobInfo.Progress => Unit
-  ): Either[Problem, List[Gazetteer.LoadCounts]] =
+  )(using WritePermit): Either[Problem, List[Gazetteer.LoadCounts]] =
     GazetteerLoad.load(db, settings, kind, apply, note, download)
 
   /** The bundled gazetteer, the way `histmersion places seed` imports it: [[PlaceSeed.files]] order, then a second pass
     * over every file that reported a dangling parent, then `finding_places`.
     */
-  def seed(seed: Store, note: JobInfo.Progress => Unit): Either[Problem, GazetteerImports.Summary] =
+  def seed(seed: Store, note: JobInfo.Progress => Unit)(using WritePermit): Either[Problem, GazetteerImports.Summary] =
     if !seed.isDirectory(Store.Key.Root) then
       Left(
         Problem.Io.Absent(
@@ -76,7 +77,7 @@ final class GazetteerImports(
       def importFile(
           f: Store.Key,
           kind: Option[Place.Kind.Wire]
-      ): Either[Problem, com.histmersion.api.catalogue.Place.ImportResult] =
+      )(using WritePermit): Either[Problem, com.histmersion.api.catalogue.Place.ImportResult] =
         seed
           .get(f)
           .toRight(Problem.Io.Wrong(Problem.Io.Path.of(seed.where(f)), Problem.Io.Kind.Present))
@@ -109,7 +110,7 @@ final class GazetteerImports(
           )
       def pass(
           fs: List[(Store.Key, Option[Place.Kind.Wire])]
-      ): Either[Problem, (Int, List[(Store.Key, Option[Place.Kind.Wire])])] =
+      )(using WritePermit): Either[Problem, (Int, List[(Store.Key, Option[Place.Kind.Wire])])] =
         fs.zipWithIndex.foldLeft[Either[Problem, (Int, List[(Store.Key, Option[Place.Kind.Wire])])]](
           Right((0, Nil))
         ) { case (acc, ((f, kind), i)) =>
@@ -131,7 +132,7 @@ final class GazetteerImports(
   /** Natural Earth's land downloaded and every polity clipped to it again (a dry run counts the polygons). */
   def land(
       dryRun: GazetteerControllers.DryRun
-  ): Either[Problem, com.histmersion.api.catalogue.Place.ImportResult] =
+  )(using WritePermit): Either[Problem, com.histmersion.api.catalogue.Place.ImportResult] =
     NaturalEarthLand.run(text, geometry, dryRun)
 
   /** The source a plugin registered under `name` (or a built-in's), `unknown` when there is none. */
@@ -151,7 +152,7 @@ final class GazetteerImports(
   def fetch(
       source: GazetteerSource,
       dryRun: GazetteerControllers.DryRun
-  ): Either[Problem, com.histmersion.api.catalogue.Place.ImportResult] =
+  )(using WritePermit): Either[Problem, com.histmersion.api.catalogue.Place.ImportResult] =
     ImportRunner.fetchAndImport(source, http(), places, geometry, dryRun, pointTolerance)
 
 object GazetteerImports:

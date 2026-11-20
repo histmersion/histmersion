@@ -19,6 +19,7 @@ import com.histmersion.domain.media.imports.Target
 import com.histmersion.api.RowCount
 import com.histmersion.api.personal.UnreadPage
 import com.histmersion.domain.media.assets.AssetInfoRow
+import com.histmersion.util.database.WritePermit
 
 /** A source's figures tied to what they show (plan §1.6): what a figure depicts, where it was taken, what it
   * illustrates, whose page it is — the links listed by source, figure and target, made and removed.
@@ -32,10 +33,10 @@ trait AssetLinkService:
   ): AssetLink.List
 
   /** A link made; refused when the figure it names is not stored. */
-  def create(in: AssetLink.Put): Either[Api.Error, AssetLink]
+  def create(in: AssetLink.Put)(using WritePermit): Either[Api.Error, AssetLink]
 
   /** Whether there was a link `id` to remove. */
-  def delete(id: AssetLinkService.LinkId): Boolean
+  def delete(id: AssetLinkService.LinkId)(using WritePermit): Boolean
 
 object AssetLinkService:
   type LinkId = LinkId.T
@@ -68,15 +69,15 @@ object AssetLinkService:
       )
       AssetLink.List.of(RowCount(rows.size), rows, UnreadPage.Offset(0))
 
-    def create(in: AssetLink.Put): Either[Api.Error, AssetLink] =
-      db.transact:
+    def create(in: AssetLink.Put)(using WritePermit): Either[Api.Error, AssetLink] =
+      db.write:
         val exists = Citekey
           .option(in.citekey.value)
           .exists(ck => AssetLinkRepo.figureExists(ck, AssetInfoRow.Name(in.assetName.value)))
         if !exists then Left(noFigure(in))
         else Right(AssetLinkRepo.insert(in))
 
-    def delete(id: LinkId): Boolean = db.transact(AssetLinkRepo.delete(AssetLink.Id(id.value)))
+    def delete(id: LinkId)(using WritePermit): Boolean = db.write(AssetLinkRepo.delete(AssetLink.Id(id.value)))
 
   /** The links media holds in memory, beside its pictures (the figure a link names is looked up there). */
   final class InMemory(state: AtomicReference[MediaState]) extends AssetLinkService:
@@ -102,7 +103,7 @@ object AssetLinkService:
         .toList
       AssetLink.List.of(RowCount(rows.size), rows, UnreadPage.Offset(0))
 
-    def create(in: AssetLink.Put): Either[Api.Error, AssetLink] =
+    def create(in: AssetLink.Put)(using WritePermit): Either[Api.Error, AssetLink] =
       if !state.get.assets.exists(a =>
           a.citekey.exists(_.value == in.citekey.value) && a.name.value == in.assetName.value
         )
@@ -124,6 +125,6 @@ object AssetLinkService:
         }
         Right(after.assetLinks.last)
 
-    def delete(id: LinkId): Boolean =
+    def delete(id: LinkId)(using WritePermit): Boolean =
       val before = state.getAndUpdate(_.modify(_.assetLinks).using(_.filterNot(_.id.value == id.value)))
       before.assetLinks.exists(_.id.value == id.value)

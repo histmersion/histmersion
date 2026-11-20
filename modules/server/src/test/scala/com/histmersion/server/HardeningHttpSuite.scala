@@ -14,6 +14,7 @@ import com.histmersion.config.UiSettings
 import com.histmersion.config.UiTimeSettings
 import com.histmersion.config.ConverterConfig
 import com.histmersion.config.CorpusConfig
+import com.histmersion.util.database.TestPermits.given
 
 /** The hardening fixes, asserted through the wire because that is where they have to hold: citekey/slug validation, the
   * unbounded aggregation window, the inverted half-open range, and the page-size cap. Skipped without

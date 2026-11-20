@@ -12,6 +12,7 @@ import ox.supervised
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.file.Files
+import com.histmersion.util.database.TestPermits.given
 
 /** Settings over HTTP against a running server and a settings file of its own: `GET /api/settings`, a change `POST`ed,
   * written into the file with its comments and reloaded into the server; a refused change leaving the file as it was;

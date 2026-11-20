@@ -29,6 +29,7 @@ import com.histmersion.api.catalogue.Gazetteer
 import com.histmersion.api.catalogue.Period
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.domain.catalogue.places.GazetteerControllers
+import com.histmersion.util.database.WritePermit
 
 /** Named periods (#719) and first-run data (#720): the period-preset write path and the `init` job.
   *
@@ -96,7 +97,7 @@ final class Bootstrap(
   /** On a server start (`init.auto`): the init job for whichever table is empty — or, for the periods, whose bundled
     * seed is newer than the one applied — or nothing.
     */
-  def autoStart(): Option[JobInfo] =
+  def autoStart()(using WritePermit): Option[JobInfo] =
     val p = plan(fetch = false, onlyEmpty = true)
     if p.isEmpty then None
     else
@@ -144,7 +145,7 @@ final class Bootstrap(
       fetch = if fetch then cfg.init.sources.map(s => InitPlan.Fetch(s.value)) else Nil
     )
 
-  private def start(p: InitPlan): Either[Api.Error, JobInfo] =
+  private def start(p: InitPlan)(using WritePermit): Either[Api.Error, JobInfo] =
     BackgroundJob.start(
       ds,
       maintenance.workers,
@@ -156,9 +157,9 @@ final class Bootstrap(
       stops = Some(deps.jobStops)
     )((job, note) => run(Job.Id.assume(job.id.value), p, note))
 
-  private def run(id: Job.Id, p: InitPlan, note: JobInfo.Progress => Unit): BackgroundJob.Outcome =
+  private def run(id: Job.Id, p: InitPlan, note: JobInfo.Progress => Unit)(using WritePermit): BackgroundJob.Outcome =
     // the definitions a period import left out go on the job (#771), not just into the log
-    def withSkipped(r: Period.ImportResult): Period.ImportResult =
+    def withSkipped(r: Period.ImportResult)(using WritePermit): Period.ImportResult =
       if r.skippedCount.value > 0 then
         BackgroundJob.amendDetail(ds, id) { found =>
           val d = if found == JobDetail.empty then InitPlan.Detail(Some(p)) else found
@@ -207,7 +208,7 @@ final class Bootstrap(
     )
 
   /** The bundled gazetteer, the way `histmersion places seed` imports it. */
-  private def seedPlaces(note: JobInfo.Progress => Unit): Either[String, String] =
+  private def seedPlaces(note: JobInfo.Progress => Unit)(using WritePermit): Either[String, String] =
     gazetteerImports.seed(deps.storage.store(Location.GazetteerSeed), note).left.map(_.sentence).map(_.value)
 
   private def skippedNote(r: Period.ImportResult): String =
@@ -218,7 +219,7 @@ final class Bootstrap(
       periods: Period.ImportResult => Period.ImportResult,
       check: Boolean = false,
       note: JobInfo.Progress => Unit = _ => ()
-  ): Either[String, String] =
+  )(using WritePermit): Either[String, String] =
     val gazetteer = Gazetteer.Kind.parse(Gazetteer.Kind.Wire(name))
     if check && gazetteer.isEmpty then Left(s"'$name' has no dry run (only ${GazetteerLoad.names.mkString(", ")})")
     else
@@ -231,7 +232,9 @@ final class Bootstrap(
             .map(_.map(_.describe).mkString("; "))
         case None => fetchNetwork(name, periods)
 
-  private def fetchNetwork(name: String, periods: Period.ImportResult => Period.ImportResult): Either[String, String] =
+  private def fetchNetwork(name: String, periods: Period.ImportResult => Period.ImportResult)(using
+      WritePermit
+  ): Either[String, String] =
     name.trim.toLowerCase match
       case PeriodOFetch.name =>
         periodImports

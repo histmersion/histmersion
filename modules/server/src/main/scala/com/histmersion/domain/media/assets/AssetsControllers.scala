@@ -24,6 +24,7 @@ import com.histmersion.api.media.{
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.domain.catalogue.evidence.EventMatcher
 import com.histmersion.domain.catalogue.Event
+import com.histmersion.util.database.WritePermit
 
 /** The pictures over REST and MCP: a source's figures listed, read, uploaded, described and patched (plan §1.8, §1.6);
   * the media list, its facets, one picture, its file and thumbnail, the map feed (#1446); the cards' pictures of a
@@ -88,7 +89,7 @@ final class AssetsControllers(
       citekey: Citekey,
       asked: com.histmersion.api.library.Citekey,
       in: List[AssetInput]
-  ): Either[Api.Error, AssetsStored] =
+  )(using WritePermit): Either[Api.Error, AssetsStored] =
     sources
       .lookup(citekey)
       .left

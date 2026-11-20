@@ -34,6 +34,7 @@ import com.histmersion.domain.library.Doi
 import com.histmersion.domain.automation.Goal
 import com.histmersion.api.library.UpstreamQuota
 import com.histmersion.domain.ManagerPolicy.Item
+import com.histmersion.util.database.WritePermit
 
 /** The `watch:<goal>` manager kind (an acquisition-sweep and a currency-check item, re-opened by its cron; a sweep
   * ingests legal open-access picks when it opted in, within its daily cap), registered by this transition adapter until
@@ -60,7 +61,7 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
     case _                => Pipeline.Fallback
 
   /** A firing re-opens each of the goal's sweeps that has settled (one still open is left to finish). */
-  def fire(c: ManagerContext, m: ManagerInfo, now: Instant): List[ManagerKindDefinition.FirePhrase] =
+  def fire(c: ManagerContext, m: ManagerInfo, now: Instant)(using WritePermit): List[ManagerKindDefinition.FirePhrase] =
     m.goal.toList.flatMap { g =>
       Sweep.of(m.config).map { sw =>
         val id = ManagerLight.Id(m.id.value)
@@ -88,7 +89,7 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
   override def housework(
       now: Instant,
       draining: => Boolean
-  ): List[(ManagerLight.Id, () => List[ManagerContext.TickLine])] =
+  )(using WritePermit): List[(ManagerLight.Id, () => List[ManagerContext.TickLine])] =
     def lines(f: => List[String]): () => List[ManagerContext.TickLine] =
       () => f.map(ManagerContext.TickLine(_))
     List(
@@ -115,7 +116,7 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
       item: ManagerItem,
       run: Option[Run.Id],
       out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
-  ): Unit =
+  )(using WritePermit): Unit =
     if item.kind.value == AcquisitionSweep || item.kind.value == CurrencyCheck then
       run.foreach { r =>
         val found = if item.kind.value == AcquisitionSweep then AcquisitionSweepPipeline.picked(c, r) else Nil
@@ -207,7 +208,7 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
       item: ManagerItem,
       now: Instant,
       out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
-  ): Option[ManagerLight.Id] =
+  )(using WritePermit): Option[ManagerLight.Id] =
     item.kind.value match
       case AcquisitionSweep | CurrencyCheck =>
         Goal.Slug.option(item.target.value).flatMap(work.agents.host.goal(_).toOption) match

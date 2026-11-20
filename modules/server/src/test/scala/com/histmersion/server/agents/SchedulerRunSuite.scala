@@ -48,6 +48,7 @@ import com.histmersion.server.views.WorkListView
 import com.histmersion.domain.automation.approvals.ApprovalQuery
 import com.histmersion.domain.automation.Approval
 import com.histmersion.api.Api
+import com.histmersion.util.database.TestPermits.given
 
 /** The goal sweeps and the goal schedules, against a `*_test` database: a currency check (assess and followups over a
   * goal's sources; a disagreeing paper in the corpus becomes ONE edge proposal, one outside it ONE acquisition item,

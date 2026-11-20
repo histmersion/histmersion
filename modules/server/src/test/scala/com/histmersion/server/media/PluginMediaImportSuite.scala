@@ -55,6 +55,7 @@ import com.histmersion.plugin.Year
 import com.histmersion.api.catalogue.Event
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.util.database.TestPermits.given
 
 /** A THIRD-PARTY plugin's media collection (docs/research-plugins.md §6, §11) run by `media import` through the
   * registries, against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise): the plugin states each record's

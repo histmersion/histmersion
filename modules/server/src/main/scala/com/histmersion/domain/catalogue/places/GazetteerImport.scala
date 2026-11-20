@@ -7,6 +7,7 @@ import com.histmersion.util.database.Transactor
 import hearth.kindlings.optics.syntax.*
 import scala.annotation.tailrec
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.database.WritePermit
 
 private[places] object GazetteerImport:
   def session(
@@ -16,9 +17,9 @@ private[places] object GazetteerImport:
       windowYears: Gazetteer.ValidityWindowYears =
         Gazetteer.ValidityWindowYears(Gazetteer.DefaultOpenStartWindowYears.value),
       pointAreaKinds: Set[Gazetteer.PointAreaKinds] = Gazetteer.DefaultPointAreaKinds.toSet
-  )(using con: DbCon): Session =
+  )(using con: DbCon)(using WritePermit): Session =
     val transactions = Transactor.onConnection
-    val repo = transactions.autocommit(GazetteerRepo.session(source, version, windowYears, pointAreaKinds))
+    val repo = transactions.writeAutocommit(GazetteerRepo.session(source, version, windowYears, pointAreaKinds))
     new Session(repo, transactions, apply)
 
   final class Session private[GazetteerImport] (
@@ -26,10 +27,10 @@ private[places] object GazetteerImport:
       transactions: Transactor.Session,
       apply: Boolean
   ):
-    private def write[A](work: DbCon ?=> A): A =
-      if apply then transactions.transact(work) else transactions.rollback(work)
+    private def write[A](work: DbCon ?=> A)(using WritePermit): A =
+      if apply then transactions.write(work) else transactions.rollback(work)
 
-    def batch(records: List[GazRecord]): Gazetteer.LoadCounts =
+    def batch(records: List[GazRecord])(using WritePermit): Gazetteer.LoadCounts =
       @tailrec def dedupe(
           rest: List[GazRecord],
           ok: Vector[GazRecord],
@@ -43,18 +44,18 @@ private[places] object GazetteerImport:
       val (unique, duplicates) = dedupe(records, Vector.empty, Nil)
       val rows = unique.toList
       val counts = write(repo.writeBatch(rows))
-      transactions.autocommit(repo.recordSeen(rows))
+      transactions.writeAutocommit(repo.recordSeen(rows))
       counts.modify(_.skipped).setTo((duplicates ++ counts.skipped).take(20))
 
-    def prune(batch: Int): Session.Pruned =
+    def prune(batch: Int)(using WritePermit): Session.Pruned =
       if !apply then Session.Pruned(0L)
       else
-        val ids = transactions.autocommit(repo.pruneCandidates)
+        val ids = transactions.writeAutocommit(repo.pruneCandidates)
         Session.Pruned(ids.grouped(math.max(1, batch)).foldLeft(0L) { (count, chunk) =>
-          count + transactions.transact(repo.deletePruneChunk(chunk)).value
+          count + transactions.write(repo.deletePruneChunk(chunk)).value
         })
 
-    def sweep(): Gazetteer.LoadCounts = write(repo.sweep())
+    def sweep()(using WritePermit): Gazetteer.LoadCounts = write(repo.sweep())
 
   object Session:
     type Pruned = Pruned.T

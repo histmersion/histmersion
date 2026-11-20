@@ -36,6 +36,7 @@ import com.histmersion.plugin.Plugin
 import com.histmersion.domain.media.covers.SourcePictures.CoverRefusal
 import com.histmersion.plugin.WorkKey
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.database.WritePermit
 
 /** A source's picture on its hover card (#1446): a book's COVER — the local Calibre library's own (the CLI reads it
   * host-side and uploads it, [[storeCover]]) or the Open Library Covers API's by ISBN/OCLC ([[openLibrary]]) — and a
@@ -80,7 +81,7 @@ final class SourcePictures(
   def illustrate(
       citekey: Citekey,
       dryRun: SourcePictures.DryRun
-  ): Either[SourcePictures.IllustrateText, MediaSourceLine] =
+  )(using WritePermit): Either[SourcePictures.IllustrateText, MediaSourceLine] =
     val figs = assets.sourceFigures(citekey)
     if figs.isEmpty then Left(SourcePictures.IllustrateText("no figures"))
     else
@@ -123,14 +124,14 @@ final class SourcePictures(
       keys: CoverKeys,
       dryRun: SourcePictures.DryRun,
       fetch: Polite
-  ): Either[CoverRefusal, MediaSourceLine] =
+  )(using WritePermit): Either[CoverRefusal, MediaSourceLine] =
     fetch.synchronized(openLibraryNow(keys, dryRun, fetch))
 
   private def openLibraryNow(
       keys: CoverKeys,
       dryRun: SourcePictures.DryRun,
       fetch: Polite
-  ): Either[CoverRefusal, MediaSourceLine] =
+  )(using WritePermit): Either[CoverRefusal, MediaSourceLine] =
     def refused(why: String) = Left(CoverRefusal.Skipped(SourcePictures.OpenLibraryText(why)))
     OpenLibrary.key(keys.isbn.map(i => Isbn(i.value)), keys.oclc.map(o => OpenLibrary.Oclc(o.value))) match
       case None             => refused("no usable ISBN or OCLC number")
@@ -236,7 +237,7 @@ final class SourcePictures(
     else None
 
   /** Store `bytes` (read from the local Calibre library by the CLI) as the source's cover. */
-  def storeCover(p: SourceCoverParams, bytes: AssetService.Bytes): Either[Api.Error, MediaItem] =
+  def storeCover(p: SourceCoverParams, bytes: AssetService.Bytes)(using WritePermit): Either[Api.Error, MediaItem] =
     val bad = (m: String) =>
       Left(Api.Error(Problem.Unclassified(Legacy.Text(m)), Some(Api.Error.Code(Write.CodeInvalid))))
     if p.provider.value != MediaProvider.Calibre then
@@ -301,7 +302,7 @@ final class SourcePictures(
   /** Covers (Open Library) and illustrations for the sources a request names; `progress` hears how far it got. A dry
     * run reads the database only.
     */
-  def run(req: MediaCoversRequest, progress: JobInfo.Progress => Unit = _ => ()): MediaCoversReport =
+  def run(req: MediaCoversRequest, progress: JobInfo.Progress => Unit = _ => ())(using WritePermit): MediaCoversReport =
     val dryRun = SourcePictures.DryRun(req.dryRun.value)
     val refresh = CoverService.CandidatesRefresh(req.refresh.value)
     val named = req.citekey.map(_.value.trim).filter(_.nonEmpty)
@@ -367,7 +368,7 @@ final class SourcePictures(
   /** After a conversion stored a source's figures: its illustration, and — when its record holds an ISBN or OCLC number
     * and it has no cover yet — Open Library's cover. Best-effort: a note for the job's progress line, never a failure.
     */
-  def afterIngest(citekey: Citekey): Option[SourcePictures.AfterIngestText] =
+  def afterIngest(citekey: Citekey)(using WritePermit): Option[SourcePictures.AfterIngestText] =
     try
       val ill =
         illustrate(citekey, dryRun = SourcePictures.DryRun(false)).toOption.map(l => s"illustration ${l.detail}")

@@ -10,6 +10,7 @@ import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import com.histmersion.db.TestDb
 import com.histmersion.config.DbConfig
 import com.histmersion.config.ServerConfig
+import com.histmersion.util.database.TestPermits.given
 
 /** The write surface over real HTTP: status codes are part of the contract (412 on a failed `ifUpdatedAt` precondition,
   * 404 on an unknown citekey), so they are asserted through the wire and not just through the repo. Skipped without

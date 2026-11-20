@@ -28,6 +28,7 @@ import com.histmersion.util.jobs.JobSourceReferrer
 import com.histmersion.domain.catalogue.places.PlaceSourceReferrer
 import com.histmersion.domain.automation.goals.GoalSourceReferrer
 import com.histmersion.domain.automation.worklists.WorkListSourceReferrer
+import com.histmersion.util.database.TestPermits.given
 
 /** The db suites' reads and writes of the library's sources on a database of their own, each in a transaction of its
   * own as the service runs them. A rename follows into every domain's records through the same referrers the server
@@ -41,9 +42,9 @@ object SourceFixtures:
   def citekeyOfSha256(ds: DataSource, sha: Sha256): Option[Citekey] = db(ds).read(SourceRepo.citekeyOfSha256(sha))
   def citekeys(ds: DataSource): Vector[Citekey] = db(ds).read(SourceRepo.citekeys())
   def load(ds: DataSource, citekey: Citekey): Option[Source] = db(ds).read(SourceRepo.load(citekey))
-  def resolveEdges(ds: DataSource): RowCount = db(ds).transact(SourceRepo.resolveEdges())
+  def resolveEdges(ds: DataSource): RowCount = db(ds).write(SourceRepo.resolveEdges())
   def setSha256(ds: DataSource, citekey: Citekey, sha: Sha256): Unit =
-    db(ds).transact(SourceRepo.setSha256(citekey, sha))
+    db(ds).write(SourceRepo.setSha256(citekey, sha))
   def sha256Of(ds: DataSource, citekey: Citekey): Option[Sha256] = db(ds).read(SourceRepo.sha256Of(citekey))
 
   def put(
@@ -52,7 +53,7 @@ object SourceFixtures:
       chunkChars: Limits.ChunkChars,
       toleranceKm: PlacesConfig.PointToleranceKm =
         PlacesConfig.PointToleranceKm(FindingPlacement.DefaultToleranceKm.value)
-  ): Source.UpdatedAt = db(ds).transact(
+  ): Source.UpdatedAt = db(ds).write(
     SourceRepo.putIn(
       s,
       Chunker.ChunkMaxChars(chunkChars.value),
@@ -76,7 +77,7 @@ object SourceFixtures:
       chunkChars: Limits.ChunkChars,
       toleranceKm: PlacesConfig.PointToleranceKm =
         PlacesConfig.PointToleranceKm(FindingPlacement.DefaultToleranceKm.value)
-  ): Either[Api.Error, Source.UpdatedAt] = db(ds).transact(
+  ): Either[Api.Error, Source.UpdatedAt] = db(ds).write(
     SourceRepo.patchIn(
       requested,
       p,

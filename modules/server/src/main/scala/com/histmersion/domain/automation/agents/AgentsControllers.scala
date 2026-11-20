@@ -33,7 +33,8 @@ import com.histmersion.domain.automation.workflows.{ToolName, Workflows}
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.pluginhost.HostAiHttp
 
-import com.histmersion.util.database.Transactor
+import com.histmersion.util.database.{Transactor, WritePermit}
+import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.api.{Paging, Write}
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -206,7 +207,10 @@ final class AgentsControllers(
 
   /** The process managers' supervisor (started with the pool), nudged whenever a run settles. */
   val managers: ManagerSupervisor = ManagerSupervisor(ds, cfg, this, site.workLists, workflows.managerKinds)
-  engine.onSettled(managers.settled)
+  engine.onSettled(r => managers.settled(r))
+
+  /** The maintenance gate: the operations here that write hold its permit, so a restore waits for them. */
+  val maintenance: WriteGate = site.maintenance
 
   /** The operations on the managers (REST, MCP, CLI). */
   val managing: ManagersControllers = ManagersControllers(ds, cfg, site.config.limits, this, managers, host)
@@ -243,7 +247,7 @@ final class AgentsControllers(
     * paused; idempotent — agents on or off). Returns how many interrupted runs were paused (0 when the lease is held
     * elsewhere).
     */
-  def start(): Int =
+  def start(): Int = maintenance.writing:
     val _ = managers.migrateSchedules(java.time.Instant.now(clock))
     if !cfg.enabled.value then 0
     else
@@ -256,9 +260,12 @@ final class AgentsControllers(
           case Left(e) => scribe.warn(s"agent runtimes not generated: ${e.problems.sentences.mkString("; ")}")
       managers.ensureDefaults()
       val paused = java.util.concurrent.atomic.AtomicInteger(0)
+      // on the renewing thread when the lease comes later: an operation of its own there (no unit, so the threads it
+      // starts inherit no epoch)
       lease.start { () =>
-        paused.set(engine.start())
-        managers.start()
+        maintenance.writing:
+          paused.set(engine.start())
+          managers.start()
       }
       paused.get
 
@@ -336,6 +343,12 @@ final class AgentsControllers(
 
   /** `PUT /api/agents/quota/{pool}` — the hold switch and the floors. */
   def setPool(pool: PlanQuota.PoolIdText, in: PlanQuota.PoolSet): Either[Problems, PlanQuota.PoolStatus] =
+    maintenance.writing:
+      setPoolHeld(pool, in)
+
+  private def setPoolHeld(pool: PlanQuota.PoolIdText, in: PlanQuota.PoolSet)(using
+      WritePermit
+  ): Either[Problems, PlanQuota.PoolStatus] =
     for
       p <- poolOf(PlanQuota.PoolId.Wire(pool.value))
       f <- in.floors.map(_.value.trim) match
@@ -355,18 +368,25 @@ final class AgentsControllers(
 
   /** `PUT /api/agents/quota/fallthrough/{role}`. */
   def setFallthrough(role: Role.Wire, in: PlanQuota.FallthroughSet): Either[Problems, PlanQuota.QuotaInfo] =
-    roleOf(role).map { r =>
-      Transactor(ds).transact(
-        PlanQuotaRepo.setFallthrough(ModelSettingsRepo.ChainRole(r.wire.value), in.fallthrough.value)
-      )
-      quota
-    }
+    maintenance.writing:
+      roleOf(role).map { r =>
+        Transactor(ds).write(
+          PlanQuotaRepo.setFallthrough(ModelSettingsRepo.ChainRole(r.wire.value), in.fallthrough.value)
+        )
+        quota
+      }
 
   /** `POST /api/agents/quota/refresh` — a fresh reading of one pool (None: every pool) now, whatever its age: the
     * ChatGPT plan from the app-server (free), the Claude plan from its probe (one minimal `claude -p` turn) unless
     * `refresh = off`. The login is checked again first; a pool without one is not read.
     */
   def refreshQuota(in: PlanQuota.QuotaRefresh): Either[Problems, PlanQuota.QuotaRefreshed] =
+    maintenance.writing:
+      refreshQuotaHeld(in)
+
+  private def refreshQuotaHeld(
+      in: PlanQuota.QuotaRefresh
+  )(using WritePermit): Either[Problems, PlanQuota.QuotaRefreshed] =
     in.pool
       .map(_.value.trim)
       .filter(_.nonEmpty)
@@ -406,7 +426,7 @@ final class AgentsControllers(
       }
 
   /** `POST /api/agents/quota/claude` — a mod's report, answered with go on or stop. */
-  def guard(r: PlanQuota.ModReport): PlanQuota.GuardAnswer = pools.guard(r)
+  def guard(r: PlanQuota.ModReport): PlanQuota.GuardAnswer = maintenance.writing(pools.guard(r))
 
   /** Stop the managers and the pool (tests; the server process just exits). */
   def stop(): Unit =
@@ -419,7 +439,7 @@ final class AgentsControllers(
     * interrupted runs paused and queued ones enqueued (the engine and the managers keep their threads; their next unit
     * of work runs on the new database).
     */
-  def adoptDatabase(): Unit =
+  def adoptDatabase(): Unit = maintenance.writing:
     if cfg.enabled.value then
       val _ = managers.migrateSchedules(java.time.Instant.now(clock))
       managers.ensureDefaults()
@@ -574,6 +594,11 @@ final class AgentsControllers(
     * come next). Works with agents off.
     */
   def setChain(role: Role.Wire, in: ModelChains.ChainSet): Either[Problems, ModelChains.RoleChain] =
+    maintenance.writing(setChainHeld(role, in))
+
+  private def setChainHeld(role: Role.Wire, in: ModelChains.ChainSet)(using
+      WritePermit
+  ): Either[Problems, ModelChains.RoleChain] =
     for
       r <- roleOf(role)
       ms <- ModelChains
@@ -583,20 +608,27 @@ final class AgentsControllers(
         (),
         Problem.Invalid.Broken.here(Problem.Invalid.Rule.ChainGiven)
       )
-      _ = Transactor(ds).transact(ModelSettingsRepo.setChain(ModelSettingsRepo.ChainRole(r.wire.value), ms.map(_.wire)))
+      _ = Transactor(ds).write(ModelSettingsRepo.setChain(ModelSettingsRepo.ChainRole(r.wire.value), ms.map(_.wire)))
       c <- chainOf(r)
     yield c
 
   /** `DELETE /api/agents/models/{role}` — back to `agents.roles.<role>`. */
-  def resetChain(role: Role.Wire): Either[Problems, ModelChains.RoleChain] =
+  def resetChain(role: Role.Wire): Either[Problems, ModelChains.RoleChain] = maintenance.writing(resetChainHeld(role))
+
+  private def resetChainHeld(role: Role.Wire)(using WritePermit): Either[Problems, ModelChains.RoleChain] =
     for
       r <- roleOf(role)
-      _ = Transactor(ds).transact(ModelSettingsRepo.removeChain(ModelSettingsRepo.ChainRole(r.wire.value)))
+      _ = Transactor(ds).write(ModelSettingsRepo.removeChain(ModelSettingsRepo.ChainRole(r.wire.value)))
       c <- chainOf(r)
     yield c
 
   /** `PUT /api/agents/allowances` — one model's or provider's limits and reserve, saved over config. */
   def setAllowance(in: ModelChains.AllowanceSet): Either[Problems, ModelChains.AllowanceStatus] =
+    maintenance.writing(setAllowanceHeld(in))
+
+  private def setAllowanceHeld(in: ModelChains.AllowanceSet)(using
+      WritePermit
+  ): Either[Problems, ModelChains.AllowanceStatus] =
     for
       t <- ModelChains.Target
         .parse(ModelChains.Target.Spec(in.target.value), knownPluginNames)
@@ -604,7 +636,7 @@ final class AgentsControllers(
         case (Nil, ok)          => Right(ok)
         case (first :: more, _) => Left(Problems.of(first, more*))
       a <- ModelChains.Allowance.of(t, ls, in.reservePct)
-      _ = Transactor(ds).transact(
+      _ = Transactor(ds).write(
         ModelSettingsRepo.setAllowance(
           ModelSettingsRepo.Saved.Target(t.wire.value),
           a.limits.map(_.spec),
@@ -621,12 +653,17 @@ final class AgentsControllers(
 
   /** `DELETE /api/agents/allowances?target=…` — the saved allowance goes; config's (if any) applies again. */
   def removeAllowance(target: ModelChains.AllowanceSet.Target): Either[Problems, Goal.Plans.Removed] =
+    maintenance.writing(removeAllowanceHeld(target))
+
+  private def removeAllowanceHeld(target: ModelChains.AllowanceSet.Target)(using
+      WritePermit
+  ): Either[Problems, Goal.Plans.Removed] =
     ModelChains.Target
       .parse(ModelChains.Target.Spec(target.value), knownPluginNames)
       .map(t =>
         Goal.Plans.Removed(
           Goal.Plans.Removed.Value(
-            Transactor(ds).transact(ModelSettingsRepo.removeAllowance(ModelSettingsRepo.Saved.Target(t.wire.value)))
+            Transactor(ds).write(ModelSettingsRepo.removeAllowance(ModelSettingsRepo.Saved.Target(t.wire.value)))
           )
         )
       )
@@ -694,6 +731,14 @@ final class AgentsControllers(
       parent: Option[RunInfo],
       tweak: RunParams => RunParams
   ): Either[Api.Error, RunInfo] =
+    maintenance.guard(WriteGate.OperationName("start_run"))(startRunHeld(req, origin, parent, tweak))
+
+  private def startRunHeld(
+      req: RunRequest,
+      origin: Origin,
+      parent: Option[RunInfo],
+      tweak: RunParams => RunParams
+  )(using WritePermit): Either[Api.Error, RunInfo] =
     prepare(req, parent).map { pr =>
       val id = jobRuns.create(
         RunService.row(
@@ -1057,6 +1102,14 @@ final class AgentsControllers(
       budgetUsd: Option[BudgetUsd],
       budgetTokens: Option[BudgetTokens]
   ): Either[Api.Error, RunInfo] =
+    maintenance.guard(WriteGate.OperationName("control_run"))(controlHeld(id, action, budgetUsd, budgetTokens))
+
+  private def controlHeld(
+      id: DomainRun.Id,
+      action: Action,
+      budgetUsd: Option[BudgetUsd],
+      budgetTokens: Option[BudgetTokens]
+  )(using WritePermit): Either[Api.Error, RunInfo] =
     action.value.trim.toLowerCase match
       case "pause"  => engine.pause(id)
       case "resume" => enabled.left.map(Api.Error(_)).flatMap(_ => engine.resume(id, budgetUsd, budgetTokens))
@@ -1125,6 +1178,13 @@ final class AgentsControllers(
       decision: DomainApproval.Outcome,
       req: DecisionRequest
   ): Either[Api.Error, ApprovalInfo] =
+    maintenance.guard(WriteGate.OperationName("decide_approval"))(decideHeld(id, decision, req))
+
+  private def decideHeld(
+      id: DomainApproval.Id,
+      decision: DomainApproval.Outcome,
+      req: DecisionRequest
+  )(using WritePermit): Either[Api.Error, ApprovalInfo] =
     approvals.decide(id, decision, req.note.map(n => DomainApproval.Note(n.value))).map { a =>
       // a blocking approval: the run waiting on it goes back to the queue (it applies the decision)
       if a.approvalKind.exists(_.blocking.value) then a.runId.foreach(r => engine.wake(DomainRun.Id.assume(r.value)))
@@ -1152,6 +1212,9 @@ final class AgentsControllers(
     }
 
   def addGoalLink(slug: DomainGoal.Slug, in: LinkAdd): Either[Api.Error, GoalLink] =
+    maintenance.guard(WriteGate.OperationName("add_goal_link"))(addGoalLinkHeld(slug, in))
+
+  private def addGoalLinkHeld(slug: DomainGoal.Slug, in: LinkAdd)(using WritePermit): Either[Api.Error, GoalLink] =
     val ref = in.ref.value.trim
     for
       _ <- host.goal(slug)
@@ -1191,6 +1254,11 @@ final class AgentsControllers(
     yield l
 
   def removeGoalLink(slug: DomainGoal.Slug, kind: LinkKind.Wire, ref: BGoalLinkRow.Ref): Either[Api.Error, Removed] =
+    maintenance.guard(WriteGate.OperationName("remove_goal_link"))(removeGoalLinkHeld(slug, kind, ref))
+
+  private def removeGoalLinkHeld(slug: DomainGoal.Slug, kind: LinkKind.Wire, ref: BGoalLinkRow.Ref)(using
+      WritePermit
+  ): Either[Api.Error, Removed] =
     for
       _ <- host.goal(slug)
       k <- LinkKind
@@ -1253,6 +1321,9 @@ final class AgentsControllers(
     * output — and the answer is checked against the record.
     */
   def probe(req: ProbeRequest): Either[Api.Error, ProbeResult] =
+    maintenance.guard(WriteGate.OperationName("probe"))(probeHeld(req))
+
+  private def probeHeld(req: ProbeRequest)(using WritePermit): Either[Api.Error, ProbeResult] =
     for
       _ <- enabled.left.map(Api.Error(_))
       ck <- Citekey
@@ -1267,7 +1338,9 @@ final class AgentsControllers(
       result <- probeWith(picked.client, picked.billing, src)
     yield result
 
-  private def probeWith(client: LlmClient, billing: Billing, src: ProbeAnswer): Either[Api.Error, ProbeResult] =
+  private def probeWith(client: LlmClient, billing: Billing, src: ProbeAnswer)(using
+      WritePermit
+  ): Either[Api.Error, ProbeResult] =
     for
       d <- definitions.agent(StepAgent.Probe).left.map(Api.Error(_))
       sys <- definitions.system(d, ToolStyle.Bare).left.map(Api.Error(_))
@@ -1286,7 +1359,7 @@ final class AgentsControllers(
       src: ProbeAnswer,
       d: AgentDef,
       system: String
-  ): Either[Api.Error, ProbeResult] =
+  )(using WritePermit): Either[Api.Error, ProbeResult] =
     val ask = s"Call get_source with citekey \"${src.citekey}\" and section \"summary\", then " +
       "reply with that source's citekey, exact title and publication year."
     def call(user: String) = LlmCall[ProbeAnswer](

@@ -15,6 +15,7 @@ import com.histmersion.api.library.Source
 import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.library.Doi
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.database.WritePermit
 
 /** The new-source search's records: each goal's watches with their watermarks, and the candidates found, one per goal
   * and DOI.
@@ -30,10 +31,10 @@ trait CandidateService:
       watermark: Option[CandidateWatch.Watermark],
       error: Option[Problem],
       found: CandidateWatch.LastFound
-  ): Unit
+  )(using WritePermit): Unit
 
   /** Store a candidate: a new one (`true`), or one found again. */
-  def upsert(candidate: Source.Candidate): Boolean
+  def upsert(candidate: Source.Candidate)(using WritePermit): Boolean
 
   /** The DOIs a goal has candidates for, in any state. */
   def dois(goal: Goal.Slug): Set[Doi]
@@ -50,10 +51,10 @@ trait CandidateService:
   def counts(goal: Option[Goal.Slug]): List[CandidateCount]
 
   /** Set the state of these candidates; how many there were. */
-  def mark(ids: List[Source.Candidate.Id], state: Source.Candidate.State): RowCount
+  def mark(ids: List[Source.Candidate.Id], state: Source.Candidate.State)(using WritePermit): RowCount
 
   /** Set the state of a goal's candidates with these DOIs. */
-  def markDois(goal: Goal.Slug, dois: List[Doi], state: Source.Candidate.State): RowCount
+  def markDois(goal: Goal.Slug, dois: List[Doi], state: Source.Candidate.State)(using WritePermit): RowCount
 
 object CandidateService:
   type ListLimit = ListLimit.T
@@ -68,9 +69,9 @@ object CandidateService:
         watermark: Option[CandidateWatch.Watermark],
         error: Option[Problem],
         found: CandidateWatch.LastFound
-    ): Unit =
-      db.transact(CandidateRepo.recordWatch(watch, watermark, error, found))
-    def upsert(candidate: Source.Candidate): Boolean = db.transact(CandidateRepo.upsert(candidate))
+    )(using WritePermit): Unit =
+      db.write(CandidateRepo.recordWatch(watch, watermark, error, found))
+    def upsert(candidate: Source.Candidate)(using WritePermit): Boolean = db.write(CandidateRepo.upsert(candidate))
     def dois(goal: Goal.Slug): Set[Doi] = db.read(CandidateRepo.dois(goal))
     def list(
         goal: Option[Goal.Slug],
@@ -80,10 +81,10 @@ object CandidateService:
     ): List[Source.Candidate] =
       db.read(CandidateRepo.list(goal, state, CandidateRepo.Limit(limit.value), offset))
     def counts(goal: Option[Goal.Slug]): List[CandidateCount] = db.read(CandidateRepo.counts(goal))
-    def mark(ids: List[Source.Candidate.Id], state: Source.Candidate.State): RowCount =
-      if ids.isEmpty then RowCount(0) else db.transact(CandidateRepo.mark(ids, state))
-    def markDois(goal: Goal.Slug, dois: List[Doi], state: Source.Candidate.State): RowCount =
-      if dois.isEmpty then RowCount(0) else db.transact(CandidateRepo.markDois(goal, dois, state))
+    def mark(ids: List[Source.Candidate.Id], state: Source.Candidate.State)(using WritePermit): RowCount =
+      if ids.isEmpty then RowCount(0) else db.write(CandidateRepo.mark(ids, state))
+    def markDois(goal: Goal.Slug, dois: List[Doi], state: Source.Candidate.State)(using WritePermit): RowCount =
+      if dois.isEmpty then RowCount(0) else db.write(CandidateRepo.markDois(goal, dois, state))
 
   /** The candidates and watches in memory; `clock` stands in for the database's `now()`, ids count from 1. */
   final class InMemory(state: AtomicReference[AcquisitionState], clock: Clock) extends CandidateService:
@@ -104,7 +105,7 @@ object CandidateService:
         watermark: Option[CandidateWatch.Watermark],
         error: Option[Problem],
         found: CandidateWatch.LastFound
-    ): Unit =
+    )(using WritePermit): Unit =
       val key = (watch.goal, watch.kind, watch.subject, watch.index)
       val at = now
       val _ = state.updateAndGet(
@@ -126,7 +127,7 @@ object CandidateService:
         }
       )
 
-    def upsert(candidate: Source.Candidate): Boolean =
+    def upsert(candidate: Source.Candidate)(using WritePermit): Boolean =
       val at = now
       var created = false
       val _ = state.updateAndGet { st =>
@@ -196,9 +197,9 @@ object CandidateService:
       }
       RowCount(n)
 
-    def mark(ids: List[Source.Candidate.Id], st: Source.Candidate.State): RowCount =
+    def mark(ids: List[Source.Candidate.Id], st: Source.Candidate.State)(using WritePermit): RowCount =
       if ids.isEmpty then RowCount(0) else marked(c => ids.contains(c.id), st)
 
-    def markDois(goal: Goal.Slug, dois: List[Doi], st: Source.Candidate.State): RowCount =
+    def markDois(goal: Goal.Slug, dois: List[Doi], st: Source.Candidate.State)(using WritePermit): RowCount =
       if dois.isEmpty then RowCount(0)
       else marked(c => c.goal.value == goal.value && dois.exists(_.value == c.doi.value), st)

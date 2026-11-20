@@ -24,6 +24,7 @@ import com.histmersion.api.media.MediaProvider
 import com.histmersion.api.media.MediaItem
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.media.ImportJobKinds
+import com.histmersion.util.database.WritePermit
 
 /** Media from outside providers (#1446): the collections `media import` can run, one import run (a dry run, or one
   * place or event), and the import as a JOB over every place not asked yet. Every collection — first-party or a
@@ -99,7 +100,7 @@ final class ImportsControllers(
     * kept going.
     */
   def importMedia(req: MediaImportRequest): Either[Api.Error, MediaImportReport] =
-    def go: Either[Api.Error, MediaImportReport] =
+    def go(using WritePermit): Either[Api.Error, MediaImportReport] =
       providerOf(req.provider).flatMap { imp =>
         targetsOf(req).flatMap { (place, event) =>
           jobs.exclusive(BackgroundJob.Work("media import")) {
@@ -126,7 +127,8 @@ final class ImportsControllers(
           }
         }
       }
-    if req.dryRun.value then go
+    // a dry run stores nothing but runs the importer, which may: under the gate too
+    if req.dryRun.value then jobs.guarded(WriteGate.OperationName("media_import"))(go)
     else if !ImportsControllers.single(req) then
       Left(
         ImportsControllers.error(
@@ -196,7 +198,7 @@ final class ImportsControllers(
       limit: Option[ImportsControllers.ImportLimit],
       since: Option[ImportService.Since],
       progress: JobInfo.Progress => Unit
-  ): MediaImportReport =
+  )(using WritePermit): MediaImportReport =
     val run = imp.start()
     val batch = imp.batch.value.max(1)
     val cap = limit.fold(Int.MaxValue)(_.value)

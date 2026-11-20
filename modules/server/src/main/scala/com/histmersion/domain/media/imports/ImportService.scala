@@ -16,6 +16,7 @@ import com.histmersion.domain.catalogue.Event
 import com.histmersion.domain.catalogue.places.ExternalIds
 import com.histmersion.domain.catalogue.places.Wikidata
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.database.WritePermit
 
 /** What the media imports ask about and what they recorded asking (#1446): the places on the map and the events a
   * provider has not been asked about, the facts a collection's match reads of a place, and the checks — that a provider
@@ -63,7 +64,9 @@ trait ImportService:
   ): Map[(ExternalIds.Scheme, ImportService.ExternalId), List[PlaceFacts]]
 
   /** A place's Commons category recorded as a link of the place; whether it is new. */
-  def commonsCategory(placeId: Place.Id, category: ImportService.CommonsCategory, qid: Wikidata.Id): Boolean
+  def commonsCategory(placeId: Place.Id, category: ImportService.CommonsCategory, qid: Wikidata.Id)(using
+      WritePermit
+  ): Boolean
 
   /** That `provider` was asked about a target, and how many pictures it gave. */
   def checked(
@@ -72,7 +75,7 @@ trait ImportService:
       targetId: ImportService.TargetId,
       found: ImportService.FoundCount,
       qid: Option[Wikidata.Id]
-  ): Unit
+  )(using WritePermit): Unit
 
 object ImportService:
   export ExternalIds.ExternalId
@@ -172,16 +175,16 @@ object ImportService:
         ids: List[(ExternalIds.Scheme, ExternalId)]
     ): Map[(ExternalIds.Scheme, ExternalId), List[PlaceFacts]] =
       db.read(ImportRepo.mapPlacesWithIds(ids))
-    def commonsCategory(placeId: Place.Id, category: CommonsCategory, qid: Wikidata.Id): Boolean =
-      db.transact(ImportRepo.commonsCategory(placeId, ImportRepo.Category(category.value), Target.Qid(qid.value)))
+    def commonsCategory(placeId: Place.Id, category: CommonsCategory, qid: Wikidata.Id)(using WritePermit): Boolean =
+      db.write(ImportRepo.commonsCategory(placeId, ImportRepo.Category(category.value), Target.Qid(qid.value)))
     def checked(
         provider: Provider,
         targetType: TargetType,
         targetId: TargetId,
         found: FoundCount,
         qid: Option[Wikidata.Id]
-    ): Unit =
-      db.transact(ImportRepo.checked(provider, targetType, targetId, found, qid.map(q => Target.Qid(q.value))))
+    )(using WritePermit): Unit =
+      db.write(ImportRepo.checked(provider, targetType, targetId, found, qid.map(q => Target.Qid(q.value))))
 
   /** Media's checks alone, in memory: no place, event or finding is held, so nothing is on the map to ask about — a
     * place or event named by id is not there, a batch is empty, no place has facts — and a Commons category has no
@@ -238,7 +241,8 @@ object ImportService:
     def mapPlacesWithIds(
         ids: List[(ExternalIds.Scheme, ExternalId)]
     ): Map[(ExternalIds.Scheme, ExternalId), List[PlaceFacts]] = Map.empty
-    def commonsCategory(placeId: Place.Id, category: CommonsCategory, qid: Wikidata.Id): Boolean = false
+    def commonsCategory(placeId: Place.Id, category: CommonsCategory, qid: Wikidata.Id)(using WritePermit): Boolean =
+      false
 
     def checked(
         provider: Provider,
@@ -246,7 +250,7 @@ object ImportService:
         targetId: TargetId,
         found: FoundCount,
         qid: Option[Wikidata.Id]
-    ): Unit =
+    )(using WritePermit): Unit =
       val at = Instant.now(clock)
       val held = HeldCheck(
         HeldCheck.Provider(provider.value),

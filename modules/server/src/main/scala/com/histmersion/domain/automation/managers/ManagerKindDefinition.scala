@@ -20,6 +20,7 @@ import com.histmersion.api.Api
 import com.histmersion.api.automation.Manager
 import com.histmersion.domain.automation.Run
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.database.WritePermit
 
 /** A kind of manager a domain contributes (`review`, `enrich`, `seed`, `watch`): the items it drives, what a firing of
   * its cron and its selection put in its queue, the run each of its items starts, what a finished run left and what
@@ -53,7 +54,7 @@ trait ManagerKindDefinition:
   def pipelineOf(itemKind: ManagerContext.ItemKind): Pipeline
 
   /** What a firing of a manager's cron re-opens, one phrase each (the cron event lists them). */
-  def fire(c: ManagerContext, m: ManagerInfo, now: Instant): List[ManagerKindDefinition.FirePhrase]
+  def fire(c: ManagerContext, m: ManagerInfo, now: Instant)(using WritePermit): List[ManagerKindDefinition.FirePhrase]
 
   /** A manager's queue filled by its own selection, below the low water or when its cron fired (`force`). */
   def refill(
@@ -62,7 +63,7 @@ trait ManagerKindDefinition:
       now: Instant,
       force: ManagerKindDefinition.RefillForce,
       out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
-  ): Unit =
+  )(using WritePermit): Unit =
     ()
 
   /** One of its items whose run settled (`st`): by default the one-run rule of [[ManagerContext.evaluateStep]] over
@@ -77,7 +78,7 @@ trait ManagerKindDefinition:
       error: Option[Problem],
       now: Instant,
       out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
-  ): Unit = c.evaluateStep(m, s, item, st, error, now, out, this)
+  )(using WritePermit): Unit = c.evaluateStep(m, s, item, st, error, now, out, this)
 
   /** What a DONE run of one of its items left. */
   def facts(c: ManagerContext, item: ManagerItem, run: Run.Id): StepFacts
@@ -89,7 +90,7 @@ trait ManagerKindDefinition:
       item: ManagerItem,
       run: Option[Run.Id],
       out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
-  ): Unit = ()
+  )(using WritePermit): Unit = ()
 
   /** Start the next run of one of its items (`Some(manager id)` when it started), or settle it without one. */
   def dispatch(
@@ -99,12 +100,14 @@ trait ManagerKindDefinition:
       item: ManagerItem,
       now: Instant,
       out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
-  ): Option[ManagerLight.Id]
+  )(using WritePermit): Option[ManagerLight.Id]
 
   /** The work its domain does at every tick besides the items, after the holds and before the crons: each with the name
     * a failure is logged under. `draining` = nothing new may start.
     */
-  def housework(now: Instant, draining: => Boolean): List[(ManagerLight.Id, () => List[ManagerContext.TickLine])] = Nil
+  def housework(now: Instant, draining: => Boolean)(using
+      WritePermit
+  ): List[(ManagerLight.Id, () => List[ManagerContext.TickLine])] = Nil
 
   // ── what a person adds, and what the kind's domain adds to the engine's figures ──────────────
 
@@ -124,7 +127,7 @@ trait ManagerKindDefinition:
       itemKind: ManagerContext.ItemKind,
       target: ManagerContext.ItemTarget,
       priority: ManagerContext.Priority
-  ): Unit = ()
+  )(using WritePermit): Unit = ()
 
   /** What a person's enqueue of this kind names: the targets to add and, for the others named, why they are skipped. */
   def expand(

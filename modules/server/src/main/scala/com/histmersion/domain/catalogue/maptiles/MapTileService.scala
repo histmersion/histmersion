@@ -20,6 +20,7 @@ import sttp.model.StatusCode
 import com.histmersion.api.Api
 import com.histmersion.domain.catalogue.periods.BPeriodRow
 import com.histmersion.util.problem.Problems
+import com.histmersion.util.database.WritePermit
 
 /** `GET /api/tiles/{layer}/{z}/{x}/{y}` ([[TilesApi]]): a layer's tile cut from the database, kept ([[TileCache]])
   * under the versions of what it reads, and answered 304 when the browser holds it. The sites and the events are the
@@ -34,7 +35,9 @@ final class MapTileService(
     undatedSites: UndatedSites,
     events: EventService,
     related: EventSourceFilter,
-    media: MapLayer
+    media: MapLayer,
+    /** The maintenance gate: the one write a tile read triggers (folding a group's change rows) is made under it. */
+    gate: WritePermit.Gate
 ):
   import MapTiles.*
 
@@ -92,8 +95,16 @@ final class MapTileService(
 
   /** The groups' versions, their change rows folded first where they have grown many. */
   private def currentVersions(): Map[TileRepo.GroupName, UndatedBuild.Version] =
-    db.read(TileRepo.changeRows).foreach((g, n) => if n.value > CompactAbove then db.transact(TileRepo.compact(g)))
+    db.read(TileRepo.changeRows).foreach((g, n) => if n.value > CompactAbove then compact(g))
     db.read(TileRepo.versions)
+
+  /** Fold group `g`'s change rows: an upkeep a tile read triggers, so a tile stays a read while a restore runs — then
+    * it is skipped (the versions read the same either way) and a later tile read folds them.
+    */
+  private def compact(g: TileRepo.GroupName): Unit =
+    gate.permit(db.write(TileRepo.compact(g))) match
+      case Right(_) => ()
+      case Left(_)  => scribe.debug(s"tile change rows of $g not folded now: a restore holds the database")
 
   private def window(f: Filter): Option[(SignedYear, SignedYear)] =
     f.period.map(p => (SignedYear(p.start.value.min(p.end.value)), SignedYear(p.start.value.max(p.end.value))))

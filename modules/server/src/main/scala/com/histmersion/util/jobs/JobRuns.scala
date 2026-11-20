@@ -10,6 +10,7 @@ import hearth.kindlings.optics.syntax.*
 
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicReference
+import com.histmersion.util.database.WritePermit
 
 /** The rows of the jobs that run as checkpointed steps (agent runs), recorded through the jobs area that owns the
   * `jobs` table: created, moved from state to state by compare-and-set, marked alive, annotated, reconciled at a start.
@@ -17,13 +18,13 @@ import java.util.concurrent.atomic.AtomicReference
   */
 trait JobRuns:
   /** A new run; its id. */
-  def create(run: RunRow): Run.Id
+  def create(run: RunRow)(using WritePermit): Run.Id
 
   /** [[create]] inside the caller's transaction (a manager's dispatch commits the run with its item). */
-  def createIn(run: RunRow)(using DbCon): Run.Id
+  def createIn(run: RunRow)(using DbCon)(using WritePermit): Run.Id
 
   def pipelineVersion(id: Run.Id): Option[Pipeline.Version]
-  def heartbeat(kind: Job.Kind, id: Run.Id): Unit
+  def heartbeat(kind: Job.Kind, id: Run.Id)(using WritePermit): Unit
 
   /** How many runs of `kind` are in either of two states. */
   def count(kind: Job.Kind, statuses: (RunRow.Status, RunRow.Status)): RowCount
@@ -37,7 +38,7 @@ trait JobRuns:
       error: Option[Problem],
       progress: Option[JobRow.Progress],
       resumeAt: Option[Instant]
-  ): Boolean
+  )(using WritePermit): Boolean
 
   /** The `paused` runs whose resume time has come by `now`, oldest resume first. */
   def due(kind: Job.Kind, paused: RunRow.Status, now: Instant): Vector[Run.Id]
@@ -51,9 +52,11 @@ trait JobRuns:
       now: Instant
   ): Vector[(Run.Id, Pipeline.Wire, Option[RunRow.Model], Option[Problem])]
 
-  def progress(kind: Job.Kind, id: Run.Id, text: JobRow.Progress): Unit
-  def warn(kind: Job.Kind, id: Run.Id, warning: JobRepo.WarningText): Unit
-  def budget(kind: Job.Kind, id: Run.Id, usd: Option[BigDecimal], tokens: Option[JobRepo.TokenBudget]): Unit
+  def progress(kind: Job.Kind, id: Run.Id, text: JobRow.Progress)(using WritePermit): Unit
+  def warn(kind: Job.Kind, id: Run.Id, warning: JobRepo.WarningText)(using WritePermit): Unit
+  def budget(kind: Job.Kind, id: Run.Id, usd: Option[BigDecimal], tokens: Option[JobRepo.TokenBudget])(using
+      WritePermit
+  ): Unit
 
   /** At a start: the `running` runs (but `except`) paused with `error`, with their origin; the `queued` ones (but
     * `except`), oldest first.
@@ -65,19 +68,19 @@ trait JobRuns:
       error: Problem,
       queued: RunRow.Status,
       except: List[Run.Id]
-  ): (Vector[(Run.Id, Option[RunRow.Origin])], Vector[Run.Id])
+  )(using WritePermit): (Vector[(Run.Id, Option[RunRow.Origin])], Vector[Run.Id])
 
   /** A `paused` run goes on by itself at `at` (unless it moved on meanwhile). */
-  def resumeAt(kind: Job.Kind, id: Run.Id, paused: RunRow.Status, at: Instant): Boolean
+  def resumeAt(kind: Job.Kind, id: Run.Id, paused: RunRow.Status, at: Instant)(using WritePermit): Boolean
 
 object JobRuns:
   def apply(db: Transactor): JobRuns = Implementation(db)
 
   final private class Implementation(db: Transactor) extends JobRuns:
-    def create(run: RunRow): Run.Id = db.transact(JobRepo.insertRun(run))
-    def createIn(run: RunRow)(using DbCon): Run.Id = JobRepo.insertRun(run)
+    def create(run: RunRow)(using WritePermit): Run.Id = db.write(JobRepo.insertRun(run))
+    def createIn(run: RunRow)(using DbCon)(using WritePermit): Run.Id = JobRepo.insertRun(run)
     def pipelineVersion(id: Run.Id): Option[Pipeline.Version] = db.read(JobRepo.runPipelineVersion(id))
-    def heartbeat(kind: Job.Kind, id: Run.Id): Unit = db.transact(JobRepo.runHeartbeat(kind, id))
+    def heartbeat(kind: Job.Kind, id: Run.Id)(using WritePermit): Unit = db.write(JobRepo.runHeartbeat(kind, id))
     def count(kind: Job.Kind, statuses: (RunRow.Status, RunRow.Status)): RowCount =
       db.read(JobRepo.runsIn(kind, statuses))
     def move(
@@ -88,8 +91,8 @@ object JobRuns:
         error: Option[Problem],
         progress: Option[JobRow.Progress],
         resumeAt: Option[Instant]
-    ): Boolean =
-      db.transact(JobRepo.moveRun(kind, id, from, to, error, progress, resumeAt.map(t => JobRepo.ResumeAt(t.toString))))
+    )(using WritePermit): Boolean =
+      db.write(JobRepo.moveRun(kind, id, from, to, error, progress, resumeAt.map(t => JobRepo.ResumeAt(t.toString))))
     def due(kind: Job.Kind, paused: RunRow.Status, now: Instant): Vector[Run.Id] =
       db.read(JobRepo.runsDue(kind, paused, JobRepo.DueAt(now.toString)))
     def pausedWaiting(
@@ -98,12 +101,14 @@ object JobRuns:
         now: Instant
     ): Vector[(Run.Id, Pipeline.Wire, Option[RunRow.Model], Option[Problem])] =
       db.read(JobRepo.runsPausedUntil(kind, paused, JobRepo.DueAt(now.toString)))
-    def progress(kind: Job.Kind, id: Run.Id, text: JobRow.Progress): Unit =
-      db.transact(JobRepo.runProgress(kind, id, text))
-    def warn(kind: Job.Kind, id: Run.Id, warning: JobRepo.WarningText): Unit =
-      db.transact(JobRepo.runWarning(kind, id, warning))
-    def budget(kind: Job.Kind, id: Run.Id, usd: Option[BigDecimal], tokens: Option[JobRepo.TokenBudget]): Unit =
-      db.transact(JobRepo.runBudget(kind, id, usd, tokens))
+    def progress(kind: Job.Kind, id: Run.Id, text: JobRow.Progress)(using WritePermit): Unit =
+      db.write(JobRepo.runProgress(kind, id, text))
+    def warn(kind: Job.Kind, id: Run.Id, warning: JobRepo.WarningText)(using WritePermit): Unit =
+      db.write(JobRepo.runWarning(kind, id, warning))
+    def budget(kind: Job.Kind, id: Run.Id, usd: Option[BigDecimal], tokens: Option[JobRepo.TokenBudget])(using
+        WritePermit
+    ): Unit =
+      db.write(JobRepo.runBudget(kind, id, usd, tokens))
     def reconcile(
         kind: Job.Kind,
         running: RunRow.Status,
@@ -111,10 +116,10 @@ object JobRuns:
         error: Problem,
         queued: RunRow.Status,
         except: List[Run.Id]
-    ): (Vector[(Run.Id, Option[RunRow.Origin])], Vector[Run.Id]) =
-      db.transact(JobRepo.runsReconciled(kind, running, paused, error, queued, except))
-    def resumeAt(kind: Job.Kind, id: Run.Id, paused: RunRow.Status, at: Instant): Boolean =
-      db.transact(JobRepo.runResumesAt(kind, id, paused, JobRepo.ResumeAt(at.toString)))
+    )(using WritePermit): (Vector[(Run.Id, Option[RunRow.Origin])], Vector[Run.Id]) =
+      db.write(JobRepo.runsReconciled(kind, running, paused, error, queued, except))
+    def resumeAt(kind: Job.Kind, id: Run.Id, paused: RunRow.Status, at: Instant)(using WritePermit): Boolean =
+      db.write(JobRepo.runResumesAt(kind, id, paused, JobRepo.ResumeAt(at.toString)))
 
   /** The same rows in memory, stamped by `now` (the database's `now()`), each with the order it was made and last
     * changed in; behaves as the database does.
@@ -139,7 +144,7 @@ object JobRuns:
       */
     def stamped(id: Run.Id): Unit = state.get.get(id).foreach(r => changeOf(r.row.kind.value, id)(touched): Unit)
 
-    def create(run: RunRow): Run.Id =
+    def create(run: RunRow)(using WritePermit): Run.Id =
       val id = Run.Id.applyUnsafe(java.util.UUID.randomUUID().toString)
       val n = stamp.incrementAndGet()
       val _ = state.updateAndGet(
@@ -163,9 +168,9 @@ object JobRuns:
         )
       )
       id
-    def createIn(run: RunRow)(using DbCon): Run.Id = create(run)
+    def createIn(run: RunRow)(using DbCon)(using WritePermit): Run.Id = create(run)
     def pipelineVersion(id: Run.Id): Option[Pipeline.Version] = get(id).map(_.row.pipelineVersion)
-    def heartbeat(kind: Job.Kind, id: Run.Id): Unit =
+    def heartbeat(kind: Job.Kind, id: Run.Id)(using WritePermit): Unit =
       val _ = change(kind, id)(_.modify(_.heartbeatAt).setTo(Some(now())))
     def count(kind: Job.Kind, statuses: (RunRow.Status, RunRow.Status)): RowCount =
       RowCount(
@@ -181,7 +186,7 @@ object JobRuns:
         error: Option[Problem],
         progress: Option[JobRow.Progress],
         resumeAt: Option[Instant]
-    ): Boolean =
+    )(using WritePermit): Boolean =
       get(id).exists(_.row.status == from) && change(kind, id) { r =>
         if r.row.status != from then r
         else
@@ -221,11 +226,13 @@ object JobRuns:
           )
         )
         .toVector
-    def progress(kind: Job.Kind, id: Run.Id, text: JobRow.Progress): Unit =
+    def progress(kind: Job.Kind, id: Run.Id, text: JobRow.Progress)(using WritePermit): Unit =
       val _ = change(kind, id)(r => touched(r.modify(_.progress).setTo(Some(JobRunState.Progress(text.value)))))
-    def warn(kind: Job.Kind, id: Run.Id, warning: JobRepo.WarningText): Unit =
+    def warn(kind: Job.Kind, id: Run.Id, warning: JobRepo.WarningText)(using WritePermit): Unit =
       val _ = change(kind, id)(r => touched(r.modify(_.warnings).using(_ :+ JobRunState.Warnings(warning.value))))
-    def budget(kind: Job.Kind, id: Run.Id, usd: Option[BigDecimal], tokens: Option[JobRepo.TokenBudget]): Unit =
+    def budget(kind: Job.Kind, id: Run.Id, usd: Option[BigDecimal], tokens: Option[JobRepo.TokenBudget])(using
+        WritePermit
+    ): Unit =
       val _ = change(kind, id)(r =>
         touched(
           r.modify(_.row.budgetUsd)
@@ -241,7 +248,7 @@ object JobRuns:
         error: Problem,
         queued: RunRow.Status,
         except: List[Run.Id]
-    ): (Vector[(Run.Id, Option[RunRow.Origin])], Vector[Run.Id]) =
+    )(using WritePermit): (Vector[(Run.Id, Option[RunRow.Origin])], Vector[Run.Id]) =
       val moving = mine(kind)
         .filter((id, r) => r.row.status == running && !except.contains(id))
         .sortBy[Long]((_, r) => r.created.value)
@@ -252,5 +259,5 @@ object JobRuns:
         .filter((id, r) => r.row.status == queued && !except.contains(id))
         .sortBy[Long]((_, r) => r.created.value)
       (moving.map((id, r) => (id, Some(r.row.origin))).toVector, waiting.map(_._1).toVector)
-    def resumeAt(kind: Job.Kind, id: Run.Id, paused: RunRow.Status, at: Instant): Boolean =
+    def resumeAt(kind: Job.Kind, id: Run.Id, paused: RunRow.Status, at: Instant)(using WritePermit): Boolean =
       get(id).exists(_.row.status == paused) && change(kind, id)(r => touched(r.modify(_.resumeAt).setTo(Some(at))))

@@ -13,6 +13,7 @@ import com.histmersion.domain.automation.workflows.WorkflowId
 import com.histmersion.domain.automation.AgentRole
 import com.histmersion.api.automation.Pipeline
 import com.histmersion.domain.automation.TargetKind
+import com.histmersion.util.database.WritePermit
 
 /** One of research's pipelines as the workflow it registers: its identifier, version, target, roles and description are
   * the pipeline's; a role's agents may use the tools the definitions of the pipeline's step agents in that role list;
@@ -47,5 +48,5 @@ final class ResearchWorkflow(
       .flatMap(_.tools)
       .toSet
 
-  def run(run: RunCtx): Either[Halt, WorkflowDefinition.Summary] =
+  def run(run: RunCtx)(using WritePermit): Either[Halt, WorkflowDefinition.Summary] =
     impl.run(run).map(r => WorkflowDefinition.Summary(r.value))

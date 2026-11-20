@@ -5,6 +5,7 @@ import com.histmersion.domain.automation.agents.{Halt, OutputComparison, RunCtx}
 import com.histmersion.domain.automation.{AgentRole, TargetKind}
 import com.histmersion.domain.automation.Pipeline
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.database.WritePermit
 
 /** A kind of workflow a domain defines and the engine runs: what it is called and works on, the roles its agents take,
   * the tools each role's agents may use, and the run — steps in a fixed order (the step number is the order), each
@@ -23,7 +24,7 @@ trait WorkflowDefinition:
   def allowedTools(role: AgentRole): Set[ToolName]
 
   /** One run to its next resting state: a one-line summary for the run's log entry, or why it halted. */
-  def run(run: RunCtx): Either[Halt, WorkflowDefinition.Summary]
+  def run(run: RunCtx)(using WritePermit): Either[Halt, WorkflowDefinition.Summary]
 
   /** How its runs' outputs compare (`agent compare`); none by default. */
   def outputs: OutputComparison = OutputComparison.none

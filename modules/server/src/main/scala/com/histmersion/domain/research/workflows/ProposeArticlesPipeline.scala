@@ -45,6 +45,7 @@ import com.histmersion.util.jobs.Job
 import com.histmersion.api.catalogue.Year
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Api
+import com.histmersion.util.database.WritePermit
 
 /** `propose-articles <goal>` (docs/research-process-managers.md §4 (b), phase 2): the seeding manager's planner step. A
   * model proposes the articles a research area should have; CODE keeps the ones that can be compiled and are new
@@ -68,10 +69,10 @@ final class ProposeArticlesPipeline(
   val pipeline: Pipeline = Pipeline.ProposeArticles
   import ProposeArticlesPipeline.*
 
-  def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
+  def run(ctx: RunCtx)(using WritePermit): Either[Halt, PipelineDef.Summary] =
     Goal.Slug.parse(ctx.run.target.value).left.map(Halt.failed).flatMap(runFor(ctx, _))
 
-  private def runFor(ctx: RunCtx, goal: Goal.Slug): Either[Halt, PipelineDef.Summary] =
+  private def runFor(ctx: RunCtx, goal: Goal.Slug)(using WritePermit): Either[Halt, PipelineDef.Summary] =
     val runId = ctx.runId
     for
       loaded <- ctx.code[Loaded](AgentRepo.StepRecord.Name("load"))(load(goal))

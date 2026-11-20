@@ -31,6 +31,8 @@ import com.histmersion.api.ocr.ConvertedDoc
 import com.histmersion.util.storage.Blob
 import com.histmersion.util.ocr.Pixels
 import com.histmersion.domain.DeepTime
+import com.histmersion.util.database.WritePermit
+import com.histmersion.util.database.TestPermits.given
 
 /** The store as a few maps, with the gazetteer facts the matches read. */
 final class CollStore(facts: Map[Place.Id, PlaceFacts], named: Map[ImportService.PlaceKey, List[PlaceFacts]])
@@ -55,12 +57,12 @@ final class CollStore(facts: Map[Place.Id, PlaceFacts], named: Map[ImportService
       case (k, (uid, a)) if wanted(k.value) =>
         AssetService.ProviderKey(k.value) -> Known(Known.Uid(uid.value), Some(Known.License(a.license.value)))
     }.toMap
-  def save(a: ProviderAsset, first: (ImportService.TargetType, ImportService.TargetId)) =
+  def save(a: ProviderAsset, first: (ImportService.TargetType, ImportService.TargetId))(using WritePermit) =
     val existing = saved.get(a.key).map(_._1)
     val uid = existing.getOrElse(AssetService.AssetUid(f"00000000-0000-0000-0000-${saved.size + 1}%012d"))
     saved(a.key) = (uid, a)
     (uid, existing.isEmpty)
-  def refreshRights(uid: AssetService.AssetUid, r: Rights) = refreshed += uid
+  def refreshRights(uid: AssetService.AssetUid, r: Rights)(using WritePermit) = refreshed += uid
   def link(
       uid: AssetService.AssetUid,
       tt: ImportService.TargetType,
@@ -69,7 +71,7 @@ final class CollStore(facts: Map[Place.Id, PlaceFacts], named: Map[ImportService
       p: Option[AssetService.LinkProperty],
       q: Option[AssetService.LinkItem],
       rank: AssetService.LinkRank
-  ) =
+  )(using WritePermit) =
     linkBasis(uid, tt, ti, role, p, q, rank, None)
   override def linkBasis(
       uid: AssetService.AssetUid,
@@ -80,16 +82,17 @@ final class CollStore(facts: Map[Place.Id, PlaceFacts], named: Map[ImportService
       q: Option[AssetService.LinkItem],
       rank: AssetService.LinkRank,
       basis: Option[AssetService.LinkBasis]
-  ) =
+  )(using WritePermit) =
     links += ((uid, tt, ti, role, rank, basis)); true
-  def commonsCategory(placeId: Place.Id, category: ImportService.CommonsCategory, qid: Wikidata.Id) = false
+  def commonsCategory(placeId: Place.Id, category: ImportService.CommonsCategory, qid: Wikidata.Id)(using WritePermit) =
+    false
   def checked(
       provider: ImportService.Provider,
       tt: ImportService.TargetType,
       ti: ImportService.TargetId,
       found: ImportService.FoundCount,
       qid: Option[Wikidata.Id]
-  ) = checks((provider, ti)) = found
+  )(using WritePermit) = checks((provider, ti)) = found
   override def placeFacts(ids: List[Place.Id]) = facts.view.filterKeys(ids.toSet).toMap
   override def mapPlacesNamed(keys: List[ImportService.PlaceKey]) = named.view.filterKeys(keys.toSet).toMap
 

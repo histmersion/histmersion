@@ -45,6 +45,7 @@ import com.histmersion.api.automation.Goal
 import com.histmersion.domain.automation.Run
 import com.histmersion.domain.automation.managers.ManagerContext
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.database.WritePermit
 
 /** `compile-article <slug>` (docs/research-embedded-agents.md §4.5, §14): the five phases of the writing guide, run by
   * the server.
@@ -79,7 +80,7 @@ final class CompileArticlePipeline(
   val pipeline: Pipeline = Pipeline.CompileArticle
   import CompileArticlePipeline.*
 
-  def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
+  def run(ctx: RunCtx)(using WritePermit): Either[Halt, PipelineDef.Summary] =
     for
       snap <- ctx.code[Snap](StepRecord.Name("snapshot"))(snapshot(ctx, ctx.run.target))
       found <- ctx.code[Found](StepRecord.Name("filter"))(filter(ctx, snap))
@@ -95,7 +96,7 @@ final class CompileArticlePipeline(
         else compile(ctx, snap, found)
     yield PipelineDef.Summary(line)
 
-  private def compile(ctx: RunCtx, snap: Snap, found: Found): Either[Halt, String] =
+  private def compile(ctx: RunCtx, snap: Snap, found: Found)(using WritePermit): Either[Halt, String] =
     for
       extracted <- extractAll(ctx, snap, found)
       ev <- ctx.code[Evidence](StepRecord.Name("evidence"))(Right(evidenceOf(found, extracted)))
@@ -183,7 +184,7 @@ final class CompileArticlePipeline(
   private def isCitekey(ck: Citekey): Boolean =
     site.sources.get(ck, body = SourcesControllers.GetBody(false)).left.map(Api.Error(_)).isRight
 
-  private def filter(ctx: RunCtx, s: Snap): Either[Problems, Found] =
+  private def filter(ctx: RunCtx, s: Snap)(using WritePermit): Either[Problems, Found] =
     val af = s.filter.getOrElse(Article.Filter(query = s.query, topics = s.topics, tags = s.tags))
     val f = af.toFilter.copy(limit = Filter.Limit(research.compile.maxSources.value))
     val res = site.search.sources(f)
@@ -228,7 +229,7 @@ final class CompileArticlePipeline(
       parts.mkString("\n\n").take(research.compile.recordChars.value)
     }
 
-  private def extractAll(ctx: RunCtx, s: Snap, found: Found): Either[Halt, List[Extracted]] =
+  private def extractAll(ctx: RunCtx, s: Snap, found: Found)(using WritePermit): Either[Halt, List[Extracted]] =
     locally {
       found.toExtract.zipWithIndex.foldLeft[Either[Halt, List[Extracted]]](Right(Nil)) { case (acc, (ck, i)) =>
         acc.flatMap { sofar =>
@@ -284,7 +285,7 @@ final class CompileArticlePipeline(
       found: Found,
       ev: Evidence,
       extracted: List[Extracted]
-  ): Either[Halt, ArticleDraft] =
+  )(using WritePermit): Either[Halt, ArticleDraft] =
     locally {
       val task = s.mode match
         case DraftMode.Create =>
@@ -342,8 +343,10 @@ final class CompileArticlePipeline(
   /** The one write, only after approval: a new article only while its slug is still free (never an overwrite), an
     * extension appended with the snapshot's token (a 412 drops it, never overwrites).
     */
-  private def write(ctx: RunCtx, s: Snap, d: ArticleDraft, decided: Decided): Either[Problems, Written] =
-    def task(why: String): Unit =
+  private def write(ctx: RunCtx, s: Snap, d: ArticleDraft, decided: Decided)(using
+      WritePermit
+  ): Either[Problems, Written] =
+    def task(why: String)(using WritePermit): Unit =
       ctx.warn(why)
       val item = Pipelines.entry(
         ctx,
@@ -440,7 +443,7 @@ final class CompileArticlePipeline(
   /** The independent review (phase 5): a review-article run with fix, started by this one. A refusal (no reviewer model
     * configured) is a warning: the article is written either way.
     */
-  private def review(ctx: RunCtx, s: Snap, w: Written): Option[String] =
+  private def review(ctx: RunCtx, s: Snap, w: Written)(using WritePermit): Option[String] =
     if !w.written.value || !ctx.run.params.chainReview.map(_.value).getOrElse(research.compile.review.value) then None
     else
       // the run's per-role models carry over to the roles the review uses
@@ -462,7 +465,9 @@ final class CompileArticlePipeline(
           ctx.warn(s"review: no review-article run started — ${e.problems.sentences.mkString("; ")}; run it by hand")
           None
 
-  private def close(ctx: RunCtx, d: ArticleDraft, w: Written, review: Option[String]): Either[Problems, String] =
+  private def close(ctx: RunCtx, d: ArticleDraft, w: Written, review: Option[String])(using
+      WritePermit
+  ): Either[Problems, String] =
     if w.written.value then
       Pipelines
         .goalOf(ctx.run)

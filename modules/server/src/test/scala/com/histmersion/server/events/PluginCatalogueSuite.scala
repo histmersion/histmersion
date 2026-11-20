@@ -45,6 +45,7 @@ import com.histmersion.plugin.CataloguePage
 import com.histmersion.domain.catalogue.events.BEventRow
 import com.histmersion.domain.DeepTime
 import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.util.database.TestPermits.given
 
 /** A THIRD-PARTY plugin's event catalogue (docs/research-plugins.md §6) read by `events import` through the registries,
   * against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise): its parts in order, a paged part followed, a

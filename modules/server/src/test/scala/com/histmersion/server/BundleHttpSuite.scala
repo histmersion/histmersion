@@ -43,6 +43,7 @@ import com.histmersion.util.jobs.JobRepo
 import com.histmersion.util.data.exchange.MergeRepo
 import com.histmersion.util.data.exchange.MergeRow
 import com.histmersion.api.exchange.Bundle.uidEquality
+import com.histmersion.util.database.TestPermits.given
 
 /** The portable bundle over real HTTP: `GET/PUT /api/instance`, `GET /api/bundle`, `POST /api/bundle/verify` and
   * `POST /api/bundle/import` — the wiring, the write gate, the download name, and an instance importing its own bundle
@@ -362,7 +363,7 @@ class BundleHttpSuite extends DbSuite with db.Bounded:
       }
       // the server stopped while an apply ran (its row still says running)
       val cut = Transactor(testPool(own.db))
-        .transact(JobRepo.startMergeApply(MergeRepo.BundleName("c" * 64), MergeRow.PlanHash("feedbeef")))
+        .write(JobRepo.startMergeApply(MergeRepo.BundleName("c" * 64), MergeRow.PlanHash("feedbeef")))
       serve { url =>
         val done = get(s"$url/api/merge/apply/$job")
         assertEquals(done.statusCode, 200, String(done.body, "UTF-8"))

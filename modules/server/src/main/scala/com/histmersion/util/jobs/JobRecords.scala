@@ -16,6 +16,7 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.api.jobs.JobKinds
 import com.histmersion.api.automation.Queue
+import com.histmersion.util.database.WritePermit
 
 /** The rows of the jobs that run as one piece (an OCR, a re-OCR): created `queued`, moved from state to state by
   * compare-and-set, annotated with their progress. The jobs area owns the `jobs` table; a domain that runs such jobs
@@ -28,7 +29,7 @@ trait JobRecords:
       citekey: Option[Citekey],
       sha256: Option[Sha256],
       acquireItem: Option[JobRow.AcquireItem]
-  ): JobInfo
+  )(using WritePermit): JobInfo
 
   def get(id: Job.Id): Option[JobInfo]
 
@@ -41,10 +42,10 @@ trait JobRecords:
       to: JobState,
       progress: Option[JobRow.Progress] = None,
       error: Option[Problems] = None
-  ): Option[JobState]
+  )(using WritePermit): Option[JobState]
 
   /** Free-text progress on a `running` job. */
-  def progress(id: Job.Id, text: JobRow.Progress): Unit
+  def progress(id: Job.Id, text: JobRow.Progress)(using WritePermit): Unit
 
 object JobRecords:
   /** Over the database `ds` names at each call (a reload may swap it). */
@@ -57,8 +58,8 @@ object JobRecords:
         citekey: Option[Citekey],
         sha256: Option[Sha256],
         acquireItem: Option[JobRow.AcquireItem]
-    ): JobInfo =
-      Transactor(ds()).transact(JobRepo.create(kind, citekey, sha256, acquireItem))
+    )(using WritePermit): JobInfo =
+      Transactor(ds()).write(JobRepo.create(kind, citekey, sha256, acquireItem))
     def get(id: Job.Id): Option[JobInfo] = Transactor(ds()).read(JobRepo.get(id))
     def transition(
         id: Job.Id,
@@ -66,9 +67,10 @@ object JobRecords:
         to: JobState,
         progress: Option[JobRow.Progress],
         error: Option[Problems]
-    ): Option[JobState] =
-      Transactor(ds()).transact(JobRepo.transition(id, from, to, progress, error.map(_.toNonEmpty)))
-    def progress(id: Job.Id, text: JobRow.Progress): Unit = Transactor(ds()).transact(JobRepo.progress(id, text))
+    )(using WritePermit): Option[JobState] =
+      Transactor(ds()).write(JobRepo.transition(id, from, to, progress, error.map(_.toNonEmpty)))
+    def progress(id: Job.Id, text: JobRow.Progress)(using WritePermit): Unit =
+      Transactor(ds()).write(JobRepo.progress(id, text))
 
   /** The jobs in memory, as the table holds them; `clock` stands in for the database's `now()`. */
   final class InMemory(state: AtomicReference[Map[JobInfo.Id, JobInfo]], clock: Clock) extends JobRecords:
@@ -77,7 +79,7 @@ object JobRecords:
         citekey: Option[Citekey],
         sha256: Option[Sha256],
         acquireItem: Option[JobRow.AcquireItem]
-    ): JobInfo =
+    )(using WritePermit): JobInfo =
       val now = clock.instant().toString
       val job = JobInfo(
         SpatialHierarchyResult.Job.Id(UUID.randomUUID().toString),
@@ -100,7 +102,7 @@ object JobRecords:
         to: JobState,
         progress: Option[JobRow.Progress],
         error: Option[Problems]
-    ): Option[JobState] =
+    )(using WritePermit): Option[JobState] =
       JobState.next(from, to).flatMap { target =>
         val now = clock.instant().toString
         val key = JobInfo.Id(id.value)
@@ -122,7 +124,7 @@ object JobRecords:
         )
         Option.when(before.get(key).exists(_.status == from.wire))(target)
       }
-    def progress(id: Job.Id, text: JobRow.Progress): Unit =
+    def progress(id: Job.Id, text: JobRow.Progress)(using WritePermit): Unit =
       val now = clock.instant().toString
       val key = JobInfo.Id(id.value)
       val _ = state.updateAndGet(jobs =>

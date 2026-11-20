@@ -22,6 +22,7 @@ import com.histmersion.db.*
 import com.histmersion.api.jobs.{JobDetail, JobInfo}
 import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.api.jobs.JobKinds
+import com.histmersion.util.database.TestPermits.given
 
 /** [[BackgroundJob]] (#1946): the one runner of the server's long work. Pure parts always; the job rows on a test
   * database (gated on HISTMERSION_TEST_DB_URL).
@@ -191,7 +192,7 @@ class BackgroundJobSuite extends DbSuite:
       }
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     val id = Job.Id.applyUnsafe(j.id.value)
-    assert(Transactor(ds).transact(JobRepo.transition(id, JobState.Queued, JobState.Cancelled)).isDefined)
+    assert(Transactor(ds).write(JobRepo.transition(id, JobState.Queued, JobState.Cancelled)).isDefined)
     go.countDown()
     assert(freed(slot), "the slot is freed")
     assert(!ran.get, "the body of a cancelled job never runs")
@@ -220,7 +221,7 @@ class BackgroundJobSuite extends DbSuite:
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assert(freed(slot), "the slot is freed although the ending was never written")
     assertEquals(row(j.id).status, "running")
-    val _ = Transactor(ds).transact(JobRepo.failInterrupted())
+    val _ = Transactor(ds).write(JobRepo.failInterrupted())
 
   dbTest("a job a restore fenced off writes no ending, and does not try again"):
     val gate = WritePermit.Gate()
@@ -252,9 +253,11 @@ class BackgroundJobSuite extends DbSuite:
         .mkString("\n")
     val samples = (1 to 4).toList.flatMap(_ => if freed(slot, 400) then Nil else List(stacks))
     assert(samples.isEmpty, s"the slot is freed\n${samples.mkString("\n----\n")}")
-    assertEquals(counted.asked.get - askedAtRestore.get, 1, "the ending was asked for once, refused, not tried again")
+    // X4: the job's unit permit is stale now, so the ending is refused before it asks for a connection; tried again,
+    // it would hold the slot for the retries' 4 s, past the samples above
+    assertEquals(counted.asked.get - askedAtRestore.get, 0, "the ending was refused at its permit, not tried again")
     assertEquals(
       fenced.read(JobRepo.get(Job.Id.applyUnsafe(j.id.value))).map(_.status),
       Some(JobInfo.Status("running"))
     )
-    val _ = Transactor(ds).transact(JobRepo.failInterrupted())
+    val _ = Transactor(ds).write(JobRepo.failInterrupted())

@@ -7,6 +7,7 @@ import com.histmersion.api.personal.{MapZoom, ViewState}
 import com.histmersion.api.ItemKind as MarkKind
 import com.histmersion.{Latitude, Longitude, PageSize}
 import com.histmersion.api.personal.Bookmark
+import com.histmersion.util.database.TestPermits.given
 
 /** A person's bookmarks, in memory and in the database. */
 class BookmarkServiceContractSuite extends PersonalServiceContract("bookmark"):

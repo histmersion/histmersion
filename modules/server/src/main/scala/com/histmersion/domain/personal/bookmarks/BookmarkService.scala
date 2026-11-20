@@ -12,6 +12,7 @@ import hearth.kindlings.optics.syntax.*
 
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicReference
+import com.histmersion.util.database.WritePermit
 
 /** A person's bookmarks. A target reaches here checked; an item is bookmarked once, so bookmarking it again answers its
   * bookmark (renamed when a label is given). A removed bookmark is kept as its tombstone. An item's key and title are
@@ -26,16 +27,18 @@ trait BookmarkService:
       label: Option[com.histmersion.api.personal.Bookmark.Label],
       title: Option[TargetLabel],
       at: MarkTime
-  ): Bookmark
+  )(using WritePermit): Bookmark
   def rename(
       user: UserId,
       id: com.histmersion.api.personal.Bookmark.Id,
       label: Option[com.histmersion.api.personal.Bookmark.Label],
       at: MarkTime
-  ): Option[Bookmark]
+  )(using WritePermit): Option[Bookmark]
 
   /** The bookmark as it was before it was removed. */
-  def remove(user: UserId, id: com.histmersion.api.personal.Bookmark.Id, at: MarkTime): Option[Bookmark]
+  def remove(user: UserId, id: com.histmersion.api.personal.Bookmark.Id, at: MarkTime)(using
+      WritePermit
+  ): Option[Bookmark]
 
 object BookmarkService:
 
@@ -64,9 +67,9 @@ object BookmarkService:
         label: Option[com.histmersion.api.personal.Bookmark.Label],
         title: Option[TargetLabel],
         at: MarkTime
-    ): Bookmark =
+    )(using WritePermit): Bookmark =
       val t = resolved(target, items)
-      val stored = db.transact:
+      val stored = db.write:
         val id = t.itemRef.flatMap(BookmarkRepo.ofItem(user, _)) match
           case Some(existing) =>
             if label.isDefined then BookmarkRepo.relabel(user, existing, label, at): Unit
@@ -83,14 +86,16 @@ object BookmarkService:
         id: com.histmersion.api.personal.Bookmark.Id,
         label: Option[com.histmersion.api.personal.Bookmark.Label],
         at: MarkTime
-    ): Option[Bookmark] =
-      db.transact(
+    )(using WritePermit): Option[Bookmark] =
+      db.write(
         if BookmarkRepo.relabel(user, id, label, at).value == 0 then None
         else BookmarkRepo.live(user, id).flatMap(_.stored(user))
       ).map(s => shown(List(s), items).head)
 
-    def remove(user: UserId, id: com.histmersion.api.personal.Bookmark.Id, at: MarkTime): Option[Bookmark] =
-      db.transact {
+    def remove(user: UserId, id: com.histmersion.api.personal.Bookmark.Id, at: MarkTime)(using
+        WritePermit
+    ): Option[Bookmark] =
+      db.write {
         val before = BookmarkRepo.live(user, id).flatMap(_.stored(user))
         before.foreach(_ => BookmarkRepo.tombstone(user, id, at))
         before
@@ -125,7 +130,7 @@ object BookmarkService:
         label: Option[com.histmersion.api.personal.Bookmark.Label],
         title: Option[TargetLabel],
         at: MarkTime
-    ): Bookmark =
+    )(using WritePermit): Bookmark =
       val t = resolved(target, items)
       val id = com.histmersion.api.personal.Bookmark.Id(newId().toString)
       val after = state.updateAndGet { s =>
@@ -152,11 +157,13 @@ object BookmarkService:
         id: com.histmersion.api.personal.Bookmark.Id,
         label: Option[com.histmersion.api.personal.Bookmark.Label],
         at: MarkTime
-    ): Option[Bookmark] =
+    )(using WritePermit): Option[Bookmark] =
       val after = changed(id, user)(_.modify(_.label).setTo(label).modify(_.updatedAt).setTo(at))
       live(after, user).find(_.id == id).map(s => shown(List(s), items).head)
 
-    def remove(user: UserId, id: com.histmersion.api.personal.Bookmark.Id, at: MarkTime): Option[Bookmark] =
+    def remove(user: UserId, id: com.histmersion.api.personal.Bookmark.Id, at: MarkTime)(using
+        WritePermit
+    ): Option[Bookmark] =
       val found = live(state.get, user).find(_.id == id)
       found.foreach(_ => changed(id, user)(_.modify(_.deletedAt).setTo(Some(at)).modify(_.updatedAt).setTo(at)): Unit)
       found.map(s => shown(List(s), items).head)

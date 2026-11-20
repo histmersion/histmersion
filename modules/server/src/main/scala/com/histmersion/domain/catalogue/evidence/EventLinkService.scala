@@ -12,6 +12,7 @@ import com.histmersion.domain.catalogue.Event
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.catalogue.events.BEventRow
 import com.histmersion.domain.Title
+import com.histmersion.util.database.WritePermit
 
 /** The sources proposed as discussing an event — scored, then confirmed or rejected — and which events' proposals were
   * computed.
@@ -25,10 +26,10 @@ trait EventLinkService:
   /** Replace the event's proposed candidates with `cs` (one confirmed or rejected before keeps its status) and record
     * the check.
     */
-  def saveCandidates(id: Event.Id, cs: List[EventLinkCandidate]): Unit
+  def saveCandidates(id: Event.Id, cs: List[EventLinkCandidate])(using WritePermit): Unit
 
   /** Set one candidate's status; `false` when the event has no candidate of that source. */
-  def setStatus(id: Event.Id, citekey: Citekey, status: Event.LinkStatus.Wire): Boolean
+  def setStatus(id: Event.Id, citekey: Citekey, status: Event.LinkStatus.Wire)(using WritePermit): Boolean
 
   def isChecked(id: Event.Id): Boolean
 
@@ -42,10 +43,10 @@ object EventLinkService:
   final private class Implementation(db: Transactor) extends EventLinkService:
     def candidates(id: Event.Id, withRejected: Boolean): List[EventLinkCandidate] =
       db.read(EventLinkRepo.candidates(BEventRow.Id(id.value), withRejected))
-    def saveCandidates(id: Event.Id, cs: List[EventLinkCandidate]): Unit =
-      db.transact(EventLinkRepo.saveCandidates(BEventRow.Id(id.value), cs))
-    def setStatus(id: Event.Id, citekey: Citekey, status: Event.LinkStatus.Wire): Boolean =
-      db.transact(EventLinkRepo.setStatus(BEventRow.Id(id.value), citekey, BCandidateRow.Status(status.value)))
+    def saveCandidates(id: Event.Id, cs: List[EventLinkCandidate])(using WritePermit): Unit =
+      db.write(EventLinkRepo.saveCandidates(BEventRow.Id(id.value), cs))
+    def setStatus(id: Event.Id, citekey: Citekey, status: Event.LinkStatus.Wire)(using WritePermit): Boolean =
+      db.write(EventLinkRepo.setStatus(BEventRow.Id(id.value), citekey, BCandidateRow.Status(status.value)))
     def isChecked(id: Event.Id): Boolean = db.read(EventLinkRepo.isChecked(BEventRow.Id(id.value)))
     def eventsToCheck(all: Boolean, limit: PageSize): List[Event.Id] =
       db.read(EventLinkRepo.eventsToCheck(all, limit)).map(i => Event.Id.assume(i.value))
@@ -68,7 +69,7 @@ object EventLinkService:
         .sortBy(c => (c.status.value != Event.LinkStatus.Confirmed, -c.score.value, c.citekey.value.toString))
         .toList
 
-    def saveCandidates(id: Event.Id, cs: List[EventLinkCandidate]): Unit =
+    def saveCandidates(id: Event.Id, cs: List[EventLinkCandidate])(using WritePermit): Unit =
       val _ = state.updateAndGet { s =>
         val apiId = com.histmersion.api.catalogue.Event.Id(id.value)
         val kept = s.candidates.filterNot(c => c.eventId == apiId && c.status.value == Event.LinkStatus.Proposed)
@@ -102,7 +103,7 @@ object EventLinkService:
         s.modify(_.candidates).setTo(written).modify(_.checked).using(_ + CatalogueState.Checked(id.value))
       }
 
-    def setStatus(id: Event.Id, citekey: Citekey, status: Event.LinkStatus.Wire): Boolean =
+    def setStatus(id: Event.Id, citekey: Citekey, status: Event.LinkStatus.Wire)(using WritePermit): Boolean =
       val apiId = com.histmersion.api.catalogue.Event.Id(id.value)
       val apiKey = com.histmersion.api.library.Citekey(citekey.value)
       val had = state.get.candidates.exists(c => c.eventId == apiId && c.citekey == apiKey)

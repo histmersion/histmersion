@@ -27,6 +27,7 @@ import com.histmersion.pluginhost.Registries
 import com.histmersion.util.plugins.Plugins
 import com.histmersion.plugin.Access
 import com.histmersion.domain.library.search.Search
+import com.histmersion.util.database.TestPermits.given
 
 /** CORE's two uses — the acquisition chain's `core` step and the new-source search's `core` index — over ONE key and
   * ONE budget, against a stub CORE on a loopback port (never the real one): a 429 with its retry time,

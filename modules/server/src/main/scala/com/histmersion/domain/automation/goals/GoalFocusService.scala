@@ -31,6 +31,7 @@ import com.histmersion.domain.automation.Goal
 import com.histmersion.api.automation.Approval
 import com.histmersion.domain.automation.worklists.WorkListControllers
 import com.histmersion.api.automation.Queue
+import com.histmersion.util.database.WritePermit
 
 /** The autopilot's FOCUS (docs/research-process-managers.md "As built: the focus"): while the autopilot is on and the
   * cap (`agents.autopilot.max-active-goals`, or a person's `focus max`) is above 0, at most that many research goals
@@ -179,12 +180,12 @@ final class GoalFocusService(
   // ── the pass ───────────────────────────────────────────────────────────────────────────────────
 
   /** One pass at `now`, from the managers' tick before the dispatch; one line per change. */
-  def tick(now: Instant): List[String] =
+  def tick(now: Instant)(using WritePermit): List[String] =
     if !inForce then
       current = None
       queued = Set.empty
       val released = agents.managerStore.focusReleaseAll()
-      val cleared = Transactor(ds).transact(FocusRepo.clearActive(notInForce, now))
+      val cleared = Transactor(ds).write(FocusRepo.clearActive(notInForce, now))
       if released.value + cleared.value == 0 then Nil
       else
         val line =
@@ -208,14 +209,14 @@ final class GoalFocusService(
   private def managerOf(goal: Goal.Slug): Option[ManagerInfo.Id] =
     List(seed(goal), watch(goal)).find(id => agents.managerStore.get(id).isDefined)
 
-  private def emit(manager: ManagerInfo.Id, feed: String, text: String): Unit =
+  private def emit(manager: ManagerInfo.Id, feed: String, text: String)(using WritePermit): Unit =
     agents.managerStore.event(manager, None, None, ManagerEvent.Kind(feed), ManagerEvent.Text(text.take(2000)))
 
-  private def event(goal: Goal.Slug, text: String): Unit =
+  private def event(goal: Goal.Slug, text: String)(using WritePermit): Unit =
     managerOf(goal).foreach(id => emit(id, Feed.Autopilot, text))
 
   /** The goals that joined and left, recorded with why. */
-  private def record(plan: Plan, r: Read, now: Instant): List[String] =
+  private def record(plan: Plan, r: Read, now: Instant)(using WritePermit): List[String] =
     val joined = plan.joined.flatMap(g => plan.active.find(_.slug == g)).map { p =>
       agents.focusStore.joined(p.slug, p.why, now)
       event(p.slug, s"focus: active — ${p.why}")
@@ -229,7 +230,7 @@ final class GoalFocusService(
     joined ++ left
 
   /** Hold what waits, release what may run; one line per manager that changed. */
-  private def applyHolds(plan: Plan, r: Read): List[String] =
+  private def applyHolds(plan: Plan, r: Read)(using WritePermit): List[String] =
     val items = r.work.map(w =>
       GoalFocus.Item(
         Work.ItemId(w.id.value),
@@ -413,7 +414,7 @@ final class GoalFocusService(
   /** `pin` / `unpin` / `priority` a goal, or the cap (`max`; no value: back to the config's). Applied at the next
     * managers' tick (nudged now); answers the focus as the next pass will decide it.
     */
-  def set(in: FocusSet, now: Instant = Instant.now(agents.clock)): Either[Api.Error, FocusInfo] =
+  def set(in: FocusSet, now: Instant = Instant.now(agents.clock))(using WritePermit): Either[Api.Error, FocusInfo] =
     def error(message: String): Api.Error = Api.Error(Problem.Unclassified(Legacy.Text(message)))
     val by = in.by.map(_.value.trim).filter(_.nonEmpty).getOrElse("person")
     def goal: Either[Api.Error, String] =
@@ -448,7 +449,7 @@ final class GoalFocusService(
         in.value match
           case Some(n) if n.value < 0 => Left(error("`max` is 0 (no cap) or more"))
           case v                      =>
-            Transactor(ds).transact(FocusRepo.setMaxOverride(v.map(n => GoalFocus.Settings.Max(n.value))))
+            Transactor(ds).write(FocusRepo.setMaxOverride(v.map(n => GoalFocus.Settings.Max(n.value))))
             Right(
               v.fold(s"cap back to agents.autopilot.max-active-goals (${acfg.maxActiveGoals.value}) (by $by)")(n =>
                 s"cap ${n.value}${if n.value == 0 then " (no cap)" else ""} (by $by)"

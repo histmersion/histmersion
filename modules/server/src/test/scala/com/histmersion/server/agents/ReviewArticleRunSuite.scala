@@ -23,7 +23,7 @@ import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.*
 import com.histmersion.api.automation.Queue.QueueAdd
 import com.histmersion.domain.automation.agents.AgentRepo
-import com.histmersion.util.database.{Db, Migrate}
+import com.histmersion.util.database.{Db, Migrate, WritePermit}
 import com.histmersion.server.{Deps, ServerWiring}
 import sttp.ai.core.agent.*
 import sttp.ai.core.agent.testing.{RecordedRequest, ScriptedAgent}
@@ -58,6 +58,7 @@ import com.histmersion.api.automation.Queue
 import com.histmersion.config.AgentStepConfig
 import com.histmersion.api.research.CritiqueRef
 import com.histmersion.api.research.CritiqueState
+import com.histmersion.util.database.TestPermits.given
 
 /** A scripted model for steps that run IN PARALLEL: each call is routed by its system prompt to the script queue of its
   * reviewer, so the order the three panel calls arrive in does not matter. A reviewer with no script left answers as an
@@ -92,11 +93,11 @@ final class PanelClient(val model: ModelRef) extends LlmClient:
   /** This panel as the client of `ref`: the same scripts, the call recorded under `ref`. */
   def as(ref: ModelRef): LlmClient = new LlmClient:
     val model = ref
-    def run[Out](call: LlmCall[Out]): AgentResult[Either[AgentFailure, Out]] =
+    def run[Out](call: LlmCall[Out])(using WritePermit): AgentResult[Either[AgentFailure, Out]] =
       modelsUsed.computeIfAbsent(who(call.system), _ => ConcurrentLinkedQueue()).add(ref.wire)
       PanelClient.this.run(call)
 
-  def run[Out](call: LlmCall[Out]): AgentResult[Either[AgentFailure, Out]] =
+  def run[Out](call: LlmCall[Out])(using WritePermit): AgentResult[Either[AgentFailure, Out]] =
     val w = who(call.system)
     turns.put(w, call.maxIterations)
     allTurns.computeIfAbsent(w, _ => ConcurrentLinkedQueue()).add(call.maxIterations)

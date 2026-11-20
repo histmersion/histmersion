@@ -61,6 +61,7 @@ import com.histmersion.domain.research.Slug
 import com.histmersion.util.identity.AliasTable
 import com.histmersion.api.library.Filter
 import com.histmersion.domain.catalogue.places.PlaceScope
+import com.histmersion.util.database.TestPermits.given
 
 /** What a bundle carries and a merge decides beyond M5, against real Postgres (docs/research-merge-import.md §7.8): a
   * collection's own places and named periods (V052) and not its seeds, a goal's plan, links and schedules (#881, V054),
@@ -539,7 +540,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
     assertEquals(EventFixtures.renamedTo(ds, BEventRow.Id("zz_ev_b")), Some("zz_ev_a"))
     assert(
       Transactor(ds)
-        .transact(
+        .write(
           GoalRepo.renameIn(
             domain.automation.Goal.Slug("zz_goal_a"),
             domain.automation.Goal.Slug("zz_goal_b")
@@ -553,7 +554,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
     )
     assert(
       Transactor(ds)
-        .transact(
+        .write(
           GoalRepo.renameIn(
             domain.automation.Goal.Slug("zz_goal_b"),
             domain.automation.Goal.Slug("zz_goal_b")
@@ -669,7 +670,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
     assert(EventFixtures.rename(work, BEventRow.Id("zz_ev_before"), BEventRow.Id("zz_ev_after")).isRight)
     assert(
       Transactor(work)
-        .transact(
+        .write(
           GoalRepo.renameIn(
             domain.automation.Goal.Slug("zz_goal_before"),
             domain.automation.Goal.Slug("zz_goal_after")
@@ -771,27 +772,27 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
       notes = List(MergeApplyResult.Notes("a note"))
     )
     val a =
-      Transactor(ds).transact(JobRepo.startMergeApply(MergeRepo.BundleName("a" * 64), MergeRow.PlanHash("abc123")))
+      Transactor(ds).write(JobRepo.startMergeApply(MergeRepo.BundleName("a" * 64), MergeRow.PlanHash("abc123")))
     assert(Transactor(ds).read(JobRepo.mergeApplyRunning))
     assertEquals(
       applyJob(ds, a).map(j => (j.state, j.bundle, j.planHash)),
       Some((MergeJobState.Running, "a" * 64, "abc123"))
     )
-    Transactor(ds).transact(JobRepo.finishMergeApply(a, Right(res)))
+    Transactor(ds).write(JobRepo.finishMergeApply(a, Right(res)))
     assert(!Transactor(ds).read(JobRepo.mergeApplyRunning))
     assertEquals(
       applyJob(ds, a).map(j => (j.state, j.result)),
       Some((MergeJobState.Done, Some(res)))
     )
     val b =
-      Transactor(ds).transact(JobRepo.startMergeApply(MergeRepo.BundleName("b" * 64), MergeRow.PlanHash("def456")))
-    assertEquals(Transactor(ds).transact(JobRepo.failInterrupted()), 1) // the startup reconciliation
+      Transactor(ds).write(JobRepo.startMergeApply(MergeRepo.BundleName("b" * 64), MergeRow.PlanHash("def456")))
+    assertEquals(Transactor(ds).write(JobRepo.failInterrupted()), 1) // the startup reconciliation
     assertEquals(applyJob(ds, b).map(_.state), Some(MergeJobState.Interrupted))
     // the thread that outlived nothing cannot overwrite it; a crash is failed with its reason
-    Transactor(ds).transact(JobRepo.finishMergeApply(b, Right(res)))
+    Transactor(ds).write(JobRepo.finishMergeApply(b, Right(res)))
     assertEquals(applyJob(ds, b).map(_.state), Some(MergeJobState.Interrupted))
-    val c = Transactor(ds).transact(JobRepo.startMergeApply(MergeRepo.BundleName("c" * 64), MergeRow.PlanHash("0")))
-    Transactor(ds).transact(
+    val c = Transactor(ds).write(JobRepo.startMergeApply(MergeRepo.BundleName("c" * 64), MergeRow.PlanHash("0")))
+    Transactor(ds).write(
       JobRepo.finishMergeApply(c, Left(Problem.Unclassified(Legacy.Text("merge apply crashed: boom"))))
     )
     assertEquals(
@@ -800,7 +801,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
     )
     // not a merge apply, or nothing: no answer
     assertEquals(Transactor(ds).read(JobRepo.mergeApply(Job.Id("00000000-0000-0000-0000-000000000000"))), None)
-    val ocr = Transactor(ds).transact(
+    val ocr = Transactor(ds).write(
       JobRepo.create(
         Job.Kind.applyUnsafe(Ingest.KindIngest),
         Some(domain.library.Citekey("zz2020_x")),

@@ -26,6 +26,7 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.config.DbConfig
 import com.histmersion.config.AuthConfig
 import com.histmersion.config.ServerConfig
+import com.histmersion.util.database.TestPermits.given
 
 /** `passages` (#954) over real HTTP and MCP against a seeded multi-heading body: hits, the offset round trip through
   * `get_source`'s body slice, headings, limit, errors, and an old (renamed) citekey resolving. Skipped without

@@ -8,6 +8,7 @@ import com.histmersion.api.{Dataset, PeriodODataset}
 import com.histmersion.api.catalogue.{HistoricalPeriod, PeriodO}
 import com.histmersion.api.catalogue.Period
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.database.WritePermit
 
 /** How periods come in: the bundled seed (its rows upserted, its presets made the only presets, its version recorded),
   * a PeriodO dataset a client sends, and the live PeriodO dump's configured collections. `seed` reads the bundled
@@ -27,7 +28,7 @@ final class PeriodImports(
     PeriodO.parse(document.value)
 
   /** Apply the bundled seed — with `replace`, the seed rows it no longer has are deleted as well. */
-  def applySeed(replace: PeriodImports.Replace): Either[Problem, Period.ImportResult] =
+  def applySeed(replace: PeriodImports.Replace)(using WritePermit): Either[Problem, Period.ImportResult] =
     bundled.map { d =>
       val r = write(d, Dataset.Seed)
       val ids = d.authorities.flatMap(_.periods.map(_.id))
@@ -49,7 +50,7 @@ final class PeriodImports(
       .exists(v => periods.seedVersion(PeriodService.SeedName(PeriodImports.SeedName)).forall(_.value < v.value))
 
   /** The live PeriodO dump, the named collections only (the configured ones when none is named). */
-  def fetch(collections: List[PeriodSources.Collections]): Either[Problem, Period.ImportResult] =
+  def fetch(collections: List[PeriodSources.Collections])(using WritePermit): Either[Problem, Period.ImportResult] =
     val s = sources()
     val wanted = collections.map(_.value.trim).filter(_.nonEmpty) match
       case Nil => s.collections.map(_.value)
@@ -67,7 +68,7 @@ final class PeriodImports(
   /** Upsert a dataset. A raw PeriodO dump (no curated overlay) is grouped under one node per authority, and every
     * period already in the store keeps its place; a curated seed places its own rows ([[PeriodO.toPeriods]]).
     */
-  def write(d: PeriodODataset, dataset: Dataset): Period.ImportResult =
+  def write(d: PeriodODataset, dataset: Dataset)(using WritePermit): Period.ImportResult =
     val roots = !d.curated
     val ids = d.authorities.flatMap(a => a.id :: a.periods.map(_.id))
     val rows = PeriodO.toPeriods(d, periods.placement(ids), roots)

@@ -12,6 +12,7 @@ import javax.sql.DataSource
 import java.util.concurrent.LinkedBlockingQueue
 import io.github.iltotore.iron.constraint.any.Pure
 import scala.util.control.NonFatal
+import com.histmersion.util.database.WritePermit
 
 /** The bounded OCR worker pool (plan §1.8).
   *
@@ -29,7 +30,7 @@ import scala.util.control.NonFatal
 final class JobPool(
     ds: DataSource,
     parallelism: JobPool.Parallelism,
-    run: Job.Id => Unit,
+    run: Job.Id => WritePermit ?=> Unit,
     /** The server's workers: each job runs as one unit of work, fenced off by a restore that happens while it runs. */
     workers: Workers,
     pins: Pinning = Pinning.none
@@ -78,19 +79,19 @@ final class JobPool(
     * dropped (their pins go), and every unfinished job of the restored database is failed, as `cause` (a job of this
     * process that still runs is fenced off and can no longer write its end). How many rows were failed.
     */
-  def restored(cause: Problem): RowCount =
+  def restored(cause: Problem)(using WritePermit): RowCount =
     Iterator.continually(queue.poll()).takeWhile(_ != null).foreach(_.work.drop())
     held.clear()
-    Transactor(ds).transact(JobRepo.failInterrupted(Nil, cause))
+    Transactor(ds).write(JobRepo.failInterrupted(Nil, cause))
 
   private def awaitResume(): Unit = gate.synchronized(while paused do gate.wait())
 
   /** Reconcile interrupted jobs, then start `parallelism` workers. Returns how many rows the restart had to fail.
     * Idempotent: calling it twice does not start a second pool.
     */
-  def start(): RowCount =
+  def start()(using WritePermit): RowCount =
     import scala.jdk.CollectionConverters.*
-    val interrupted = Transactor(ds).transact(JobRepo.failInterrupted(held.asScala.toList))
+    val interrupted = Transactor(ds).write(JobRepo.failInterrupted(held.asScala.toList))
     if scope.isEmpty then
       val t = Thread.ofPlatform().daemon(true).name("histmersion-jobs").unstarted(() => pool())
       scope = Some(t)
@@ -105,20 +106,23 @@ final class JobPool(
     queue.put(
       Queued(
         jobId,
-        pins.carry(try runOne(jobId)
-        finally { val _ = held.remove(jobId) })
+        // run later on a worker thread: under the permit of the unit it runs in there, never the submitter's
+        pins.carry(workers.unit {
+          try runOne(jobId)
+          finally { val _ = held.remove(jobId) }
+        })
       )
     )
 
   /** One job, its unexpected failure recorded — both on the job's own generation. */
-  private def runOne(id: Job.Id): Unit =
+  private def runOne(id: Job.Id)(using WritePermit): Unit =
     try run(id)
     catch
       case e: InterruptedException => throw e
       // a worker must outlive one bad job, a deep recursion included (its stack is unwound here): record the failure
       // and take the next id
       case e @ (NonFatal(_) | _: StackOverflowError) =>
-        val failed = Transactor(ds).transact(
+        val failed = Transactor(ds).write(
           JobRepo.transition(
             id,
             JobState.Running,

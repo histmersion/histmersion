@@ -5,6 +5,7 @@ import com.histmersion.util.problem.Problem
 
 import com.histmersion.util.data.exchange.BundleRepo
 import com.histmersion.util.storage.ContentStore
+import com.histmersion.util.database.Transactor
 
 import com.augustnagro.magnum.*
 import java.io.OutputStream
@@ -32,7 +33,8 @@ object BundleExport:
       files: ContentStore,
       kinds: CarriedKinds
   ): Either[String, Bundle.Manifest] =
-    transact(ds):
+    // a read-only snapshot: rolled back at its end, so it needs no write permit
+    Transactor(ds).snapshot:
       sql"SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY".update.run()
       val scope = since.fold(BundleScope.All)(BundleScope.Since(_))
       val inst = BundleRepo.instance

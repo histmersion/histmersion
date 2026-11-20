@@ -10,8 +10,9 @@ import hearth.kindlings.optics.syntax.*
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.util.database.{Transactor, WritePermit}
+import com.histmersion.util.data.maintenance.WriteGate
 
-import com.augustnagro.magnum.{connect, transact}
+import com.augustnagro.magnum.connect
 
 import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.workflows.AutomationHost
@@ -63,6 +64,10 @@ final class ManagersControllers(
 
   private def mcfg = cfg.managers
 
+  /** An operation that writes, under the maintenance gate (a restore waits for it; refused, 503, while one runs). */
+  private def held[A](op: WriteGate.OperationName)(f: WritePermit ?=> Either[Api.Error, A]): Either[Api.Error, A] =
+    agents.maintenance.guard(op)(f)
+
   /** The runs manager `id` dispatched, newest first (`status` narrows) — `run_status`'s manager filter. */
   def runs(id: ManagerLight.Id, status: Option[Run.State.Wire], limit: Option[PageSize]): List[RunInfo] =
     val st = status.map(_.value.trim).filter(_.nonEmpty)
@@ -86,7 +91,7 @@ final class ManagersControllers(
       run: Option[DomainRun.Id],
       feed: String,
       text: String
-  ): Unit =
+  )(using WritePermit): Unit =
     agents.managerStore.event(id, item, run, ManagerEvent.Kind(feed), ManagerEvent.Text(text))
 
   private def kindOf(m: ManagerInfo): Kind = Kind.parse(m.kind).getOrElse(Kind.Review)
@@ -152,7 +157,9 @@ final class ManagersControllers(
   def create(
       in: ManagerCreate,
       now: java.time.Instant = java.time.Instant.now(agents.clock)
-  ): Either[Api.Error, ManagerInfo] =
+  ): Either[Api.Error, ManagerInfo] = held(WriteGate.OperationName("create_manager"))(createHeld(in, now))
+
+  private def createHeld(in: ManagerCreate, now: java.time.Instant)(using WritePermit): Either[Api.Error, ManagerInfo] =
     // created paused unless asked otherwise — or, when nothing is asked, while the autopilot runs the goals
     val state =
       if in.paused.exists(!_.value) || (in.paused.isEmpty && agents.autopilot.on) then State.Active else State.Paused
@@ -369,6 +376,10 @@ final class ManagersControllers(
       id: ManagerLight.Id,
       in: ManagerUpdate,
       now: java.time.Instant = java.time.Instant.now(agents.clock)
+  ): Either[Api.Error, ManagerInfo] = held(WriteGate.OperationName("update_manager"))(updateHeld(id, in, now))
+
+  private def updateHeld(id: ManagerLight.Id, in: ManagerUpdate, now: java.time.Instant)(using
+      WritePermit
   ): Either[Api.Error, ManagerInfo] =
     for
       m <- manager(id)
@@ -465,9 +476,12 @@ final class ManagersControllers(
       }
 
   def delete(id: ManagerLight.Id): Either[Api.Error, Removed] =
+    held(WriteGate.OperationName("delete_manager"))(deleteHeld(id))
+
+  private def deleteHeld(id: ManagerLight.Id)(using WritePermit): Either[Api.Error, Removed] =
     manager(id).map { m =>
       inFlight(lightId(m)).foreach(r => agents.engine.cancel(runIdOf(r.id)))
-      Removed(Removed.Value(Transactor(ds).transact(ManagerRepo.delete(m.id))))
+      Removed(Removed.Value(Transactor(ds).write(ManagerRepo.delete(m.id))))
     }
 
   private def inFlight(id: ManagerLight.Id): List[RunInfo] =
@@ -481,7 +495,13 @@ final class ManagersControllers(
       id: ManagerLight.Id,
       action: ManagersControllers.Action,
       runs: Option[ManagerInfo.PauseRuns]
-  ): Either[Api.Error, ManagerInfo] =
+  ): Either[Api.Error, ManagerInfo] = held(WriteGate.OperationName("manager_action"))(actionHeld(id, action, runs))
+
+  private def actionHeld(
+      id: ManagerLight.Id,
+      action: ManagersControllers.Action,
+      runs: Option[ManagerInfo.PauseRuns]
+  )(using WritePermit): Either[Api.Error, ManagerInfo] =
     manager(id).flatMap { m =>
       val withRuns = runs.exists(_.value)
       action.value.trim.toLowerCase match
@@ -527,7 +547,7 @@ final class ManagersControllers(
           agents.managerStore.setState(m.id, State.Stopped, ManagerInfo.PauseRuns(false))
           val cancelled = inFlight(lightId(m)).count(r => agents.engine.cancel(runIdOf(r.id)).isRight)
           val items =
-            Transactor(ds).transact(
+            Transactor(ds).write(
               ManagerRepo.cancelOpen(m.id, Problem.Run.Cancelled(Problem.Run.Actor.Person))
             )
           record(
@@ -618,6 +638,10 @@ final class ManagersControllers(
       id: ManagerLight.Id,
       in: EnqueueRequest,
       origin: ItemOrigin = ItemOrigin.Person
+  ): Either[Api.Error, ManagerItem] = held(WriteGate.OperationName("add_manager_item"))(addItemHeld(id, in, origin))
+
+  private def addItemHeld(id: ManagerLight.Id, in: EnqueueRequest, origin: ItemOrigin)(using
+      WritePermit
   ): Either[Api.Error, ManagerItem] =
     for
       m <- manager(id)
@@ -664,6 +688,9 @@ final class ManagersControllers(
     * (its seeding manager proposes its next articles). A manager that does not exist yet is created PAUSED.
     */
   def enqueue(in: EnqueueRequest): Either[Api.Error, EnqueueResult] =
+    held(WriteGate.OperationName("enqueue"))(enqueueHeld(in))
+
+  private def enqueueHeld(in: EnqueueRequest)(using WritePermit): Either[Api.Error, EnqueueResult] =
     EnqueueKind.parse(in.kind) match
       case None =>
         Left(
@@ -720,6 +747,11 @@ final class ManagersControllers(
           }
 
   def patchItem(id: ManagerLight.Id, ref: ManagerItem.Ref, in: ItemPatch): Either[Api.Error, ManagerItem] =
+    held(WriteGate.OperationName("patch_manager_item"))(patchItemHeld(id, ref, in))
+
+  private def patchItemHeld(id: ManagerLight.Id, ref: ManagerItem.Ref, in: ItemPatch)(using
+      WritePermit
+  ): Either[Api.Error, ManagerItem] =
     for
       m <- manager(id)
       i <- itemOf(m, ref)
@@ -743,7 +775,7 @@ final class ManagersControllers(
                 )
             )
             _ <- Either.cond(
-              transact(ds)(ManagerRepo.hold(i.id, h)),
+              Transactor(ds).write(ManagerRepo.hold(i.id, h)),
               (),
               conflict(
                 Problem.Conflict.WrongState(
@@ -775,7 +807,7 @@ final class ManagersControllers(
         case "release" =>
           Either
             .cond(
-              transact(ds)(ManagerRepo.release(i.id)),
+              Transactor(ds).write(ManagerRepo.release(i.id)),
               (),
               conflict(
                 Problem.Conflict.WrongState(
@@ -789,7 +821,7 @@ final class ManagersControllers(
             .map(_ => record(m.id, Some(i.id), None, Feed.Held, s"${i.target}: released by a person"))
         case "priority" =>
           in.priority.toRight(Api.Error(Problem.Invalid.Missing.here(Problem.Field("priority")))).map { p =>
-            Transactor(ds).transact(ManagerRepo.setPriority(i.id, p.transformInto[ManagerItem.Priority]))
+            Transactor(ds).write(ManagerRepo.setPriority(i.id, p.transformInto[ManagerItem.Priority]))
             record(m.id, Some(i.id), None, Feed.Hint, s"${i.target}: priority $p")
           }
         case "skip" =>
@@ -800,7 +832,7 @@ final class ManagersControllers(
             .fold("skipped by a person")(r => s"skipped by a person: $r")
           Either
             .cond(
-              transact(ds)(
+              Transactor(ds).write(
                 ManagerRepo
                   .settle(
                     i.id,
@@ -827,7 +859,7 @@ final class ManagersControllers(
         case "reopen" =>
           Either
             .cond(
-              Transactor(ds).transact(ManagerRepo.reopen(i.id)),
+              Transactor(ds).write(ManagerRepo.reopen(i.id)),
               (),
               conflict(
                 Problem.Conflict.WrongState(
@@ -874,6 +906,9 @@ final class ManagersControllers(
     * `hint-effect` run, started for the person; its proposal waits for approval the same way).
     */
   def addHint(id: ManagerLight.Id, in: HintAdd): Either[Api.Error, ManagerHint] =
+    held(WriteGate.OperationName("add_hint"))(addHintHeld(id, in))
+
+  private def addHintHeld(id: ManagerLight.Id, in: HintAdd)(using WritePermit): Either[Api.Error, ManagerHint] =
     val propose = in.propose.exists(_.value)
     val suggest = in.suggest.exists(_.value)
     for
@@ -911,7 +946,7 @@ final class ManagersControllers(
             .map(_ => ())
         else Right(())
       author = ManagerHint.Author(in.author.map(_.value.trim).filter(_.nonEmpty).getOrElse("person"))
-      hint = Transactor(ds).transact(
+      hint = Transactor(ds).write(
         ManagerRepo.addHint(
           m.id,
           item.map(i => ManagerHint.ItemId(i.id.value)),
@@ -1024,7 +1059,7 @@ final class ManagersControllers(
       text: ManagerHint.Text,
       e: HintEffect,
       by: ManagerHint.Author
-  ): String =
+  )(using WritePermit): String =
     val a = agents.approvalStore.openSubject(
       None,
       ApprovalKind.HintEffect,
@@ -1045,7 +1080,9 @@ final class ManagersControllers(
     * applied — items prioritised, held or skipped, or the settings changed — and recorded on the hint. Left = why it
     * could not be (the approval is then marked failed with it).
     */
-  def applyProposal(p: HintProposal): Either[Problems, String] =
+  def applyProposal(p: HintProposal): Either[Problems, String] = agents.maintenance.writing(applyProposalHeld(p))
+
+  private def applyProposalHeld(p: HintProposal)(using WritePermit): Either[Problems, String] =
     for
       m <- manager(p.managerId.transformInto[ManagerLight.Id]).left.map(_.problems)
       ht <- Transactor(ds)
@@ -1079,7 +1116,7 @@ final class ManagersControllers(
           )
           Right(s" — settings now: ${ManagersControllers.describe(c)}")
         case _ => Right(applyEffect(m, ht.id, ht.text, e))
-      _ = Transactor(ds).transact(ManagerRepo.setHintEffect(ht.id, Some(e)))
+      _ = Transactor(ds).write(ManagerRepo.setHintEffect(ht.id, Some(e)))
       _ = record(
         m.id,
         ht.itemId.map(i => ManagerItem.Id(i.value)),
@@ -1091,7 +1128,9 @@ final class ManagersControllers(
       supervisor.nudge()
       s"${m.id} hint #${ht.id}: ${ManagersMarkdown.effect(e)}$w"
 
-  private def applyEffect(m: ManagerInfo, hintId: ManagerHint.Id, text: ManagerHint.Text, e: HintEffect): String =
+  private def applyEffect(m: ManagerInfo, hintId: ManagerHint.Id, text: ManagerHint.Text, e: HintEffect)(using
+      WritePermit
+  ): String =
     // the named targets become items of the manager's default kind (a target that exists); the matched
     // ones are the open items
     val kind = itemKinds(kindOf(m)).headOption.getOrElse(ManagerItem.Kind(ArticleReview))
@@ -1126,7 +1165,7 @@ final class ManagersControllers(
           true
         }
         matched.foreach(i =>
-          Transactor(ds).transact(ManagerRepo.setPriority(i.id, ManagerItem.Priority(math.max(i.priority.value, p))))
+          Transactor(ds).write(ManagerRepo.setPriority(i.id, ManagerItem.Priority(math.max(i.priority.value, p))))
         )
         matched.size + added
       case Some(HintEffect.Verb.Hold) =>
@@ -1141,10 +1180,10 @@ final class ManagersControllers(
             agents.managerStore.upsert(m.id, kind, t, ItemOrigin.Hint, ManagerItem.Priority(0), reopen = true)
           agents.managerStore.item(id).filter(_.status == ItemStatus.Pending.wire)
         }
-        (matched ++ added).count(i => transact(ds)(ManagerRepo.hold(i.id, hold)))
+        (matched ++ added).count(i => Transactor(ds).write(ManagerRepo.hold(i.id, hold)))
       case Some(HintEffect.Verb.Skip) =>
         matched.count(i =>
-          transact(ds)(
+          Transactor(ds).write(
             ManagerRepo.settle(
               i.id,
               ItemStatus.Stopped,
@@ -1157,8 +1196,11 @@ final class ManagersControllers(
     s" — ${e.action}: ${Plural.count(Plural.CountN(n.toLong), Plural.CountSingular("item"))}"
 
   def deleteHint(id: ManagerLight.Id, hint: ManagerHint.Id): Either[Api.Error, Removed] =
+    held(WriteGate.OperationName("delete_hint"))(deleteHintHeld(id, hint))
+
+  private def deleteHintHeld(id: ManagerLight.Id, hint: ManagerHint.Id)(using WritePermit): Either[Api.Error, Removed] =
     manager(id).map { m =>
-      val gone = Transactor(ds).transact(ManagerRepo.retireHint(m.id, hint))
+      val gone = Transactor(ds).write(ManagerRepo.retireHint(m.id, hint))
       if gone then record(m.id, None, None, Feed.Hint, s"hint #$hint retired by a person")
       Removed(Removed.Value(gone))
     }
@@ -1188,6 +1230,14 @@ final class ManagersControllers(
       in: Goal.Plans.ScheduleSet,
       now: java.time.Instant
   ): Either[Api.Error, Goal.Plans.GoalSchedule] =
+    held(WriteGate.OperationName("set_schedule"))(setScheduleHeld(goal, kind, in, now))
+
+  private def setScheduleHeld(
+      goal: DomainGoal.Slug,
+      kind: Goal.Plans.ScheduleKind,
+      in: Goal.Plans.ScheduleSet,
+      now: java.time.Instant
+  )(using WritePermit): Either[Api.Error, Goal.Plans.GoalSchedule] =
     val id = watchId(Goal.Ref(goal.value))
     val sw = WatchSchedules.sweepOf(kind)
     val budget = in.budgetUsd.map(b => ManagerConfig.BudgetUsd(b.value))
@@ -1268,6 +1318,11 @@ final class ManagersControllers(
     * watcher itself stays.
     */
   def removeSchedule(goal: DomainGoal.Slug, kind: Goal.Plans.ScheduleKind): Goal.Plans.Removed =
+    agents.maintenance.writing(removeScheduleHeld(goal, kind))
+
+  private def removeScheduleHeld(goal: DomainGoal.Slug, kind: Goal.Plans.ScheduleKind)(using
+      WritePermit
+  ): Goal.Plans.Removed =
     val legacy = agents.goals.removeSchedule(goal, kind.transformInto[ScheduleKind])
     val sw = WatchSchedules.sweepOf(kind)
     val fromWatcher =
@@ -1293,11 +1348,11 @@ final class ManagersControllers(
     Goal.Plans.Removed(Goal.Plans.Removed.Value(legacy || fromWatcher))
 
   /** A sweep the watcher no longer runs: its pending or held item is cancelled (a running one finishes). */
-  private def cancelSweep(m: ManagerInfo, sw: Sweep, why: ManagerItem.Outcome): Unit =
+  private def cancelSweep(m: ManagerInfo, sw: Sweep, why: ManagerItem.Outcome)(using WritePermit): Unit =
     m.goal
       .flatMap(g => agents.managerStore.itemFor(m.id, ManagerItem.Kind(sw.itemKind.value), ManagerItem.Target(g.value)))
       .foreach { i =>
-        if transact(ds)(
+        if Transactor(ds).write(
             ManagerRepo.settle(
               i.id,
               ItemStatus.Cancelled,
@@ -1321,10 +1376,11 @@ final class ManagersControllers(
 
   /** `POST /api/agents/scheduler {strategy}` — switch the strategy live. */
   def setScheduler(in: AgentScheduler.SchedulerSet): Either[Api.Error, AgentScheduler.SchedulerStatus] =
-    agents.scheduler.set(in)
+    held(WriteGate.OperationName("set_scheduler"))(agents.scheduler.set(in))
 
   /** `POST /api/agents/autopilot/drain {on}`. */
-  def drain(in: Autopilot.DrainSet): Either[Problems, Autopilot.EngineStatus] = Right(agents.drain.set(in))
+  def drain(in: Autopilot.DrainSet): Either[Problems, Autopilot.EngineStatus] =
+    Right(agents.maintenance.writing(agents.drain.set(in)))
 
   /** `GET /api/agents/stalls[?days=]` — readable with agents off. */
   def stalls(days: Option[AgentAutopilotConfig.StallDays]): Stalls.StallReport = agents.scheduler.stalls(days)
@@ -1340,12 +1396,16 @@ final class ManagersControllers(
   def schedulerWhy(item: ManagerItem.Ref): Either[Api.Error, AgentScheduler.WhyInfo] = agents.scheduler.why(item)
 
   /** `POST /api/agents/autopilot/focus {action, goal?, value?}` — pin, unpin, priority, max. */
-  def setFocus(in: Autopilot.FocusSet): Either[Api.Error, Autopilot.FocusInfo] = agents.focus.set(in)
+  def setFocus(in: Autopilot.FocusSet): Either[Api.Error, Autopilot.FocusInfo] =
+    held(WriteGate.OperationName("set_focus"))(agents.focus.set(in))
 
   /** `POST /api/agents/autopilot/mode {mode}` — the three-way control ([[AgentMode]]): the autopilot and the drain
     * moved, in order, to what the mode stands for. Idempotent.
     */
   def setMode(in: AgentMode.ModeSet): Either[Api.Error, Autopilot.EngineStatus] =
+    held(WriteGate.OperationName("set_mode"))(setModeHeld(in))
+
+  private def setModeHeld(in: AgentMode.ModeSet)(using WritePermit): Either[Api.Error, Autopilot.EngineStatus] =
     AgentMode
       .parse(in.mode)
       .toRight(
@@ -1375,7 +1435,7 @@ final class ManagersControllers(
 
   /** `POST /api/agents/autopilot {on}` — idempotent; the answer says what it did. */
   def setAutopilot(in: Autopilot.AutopilotSet): Either[Problems, Autopilot.EngineStatus] =
-    Right(agents.autopilot.set(in))
+    Right(agents.maintenance.writing(agents.autopilot.set(in)))
 
   // ── events ─────────────────────────────────────────────────────────────────────────────────────
 

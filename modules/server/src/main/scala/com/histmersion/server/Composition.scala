@@ -37,7 +37,7 @@ import scala.collection.immutable.ListMap
 import com.histmersion.config.ServerConfig
 import com.histmersion.server.instance.Listener
 import com.histmersion.util.nonempty.NonEmptyVector
-import com.histmersion.util.database.{InstanceLock, Transactor}
+import com.histmersion.util.database.{InstanceLock, Transactor, WritePermit}
 import com.histmersion.server.agents.EngineContributions
 import com.histmersion.domain.library.workflows.AgentUpstream
 import com.histmersion.domain.automation.agents.AgentsTools
@@ -181,7 +181,7 @@ object Composition:
     // the CORE budget, built before the database (the first plugin generation spends from it), kept in it
     // from here on: a restart does not hand the day's tokens out again
     selectedCore.persistTo(
-      CoreQuotaStore.of(UpstreamQuotaService(Transactor(sg.ds)))
+      CoreQuotaStore.of(UpstreamQuotaService(Transactor(sg.ds)), maintenance.permits)
     )
     val deps = sg.deps(restart, system)
     val cfg = hc.app // the listener's settings: restart-only (ConfigReload.RestartOnly)
@@ -213,7 +213,7 @@ object Composition:
     // started AFTER the reconciliation above so it is not failed as "interrupted". Only `main` asks:
     // a test server must never seed its database behind the test's back
     if autoInit.value then
-      try { val _ = h.bootstrap.autoStart() }
+      try { val _ = h.maintenance.writing(h.bootstrap.autoStart()) }
       catch
         case e: Exception => scribe.warn(s"first-run import not started: ${e.getMessage}")
     // every request pinned to the generation current when it arrived (hot.PinRequests)

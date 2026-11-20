@@ -12,6 +12,7 @@ import com.histmersion.util.data.maintenance.{MaintenanceSite, MaintenanceSlice,
 import com.histmersion.domain.library.Citekey
 import com.histmersion.util.ocr.Chunker
 import com.augustnagro.magnum.DbCon
+import com.histmersion.util.database.WritePermit
 
 /** The sources' share of the library's data contribution: their counts, the rebuild of their full-text chunks, and
   * their checks with the repairs safe to make without a person — the short edge targets unified, the stale chunks
@@ -31,7 +32,7 @@ object SourcesData:
   def reindex(of: DataOwner): MaintenanceTask = new MaintenanceTask:
     val owner: DataOwner = of
     val name: MaintenanceTask.Name = MaintenanceTask.Name("reindex")
-    def run(slice: MaintenanceSlice, site: MaintenanceSite): ReindexResult =
+    def run(slice: MaintenanceSlice, site: MaintenanceSite)(using WritePermit): ReindexResult =
       SourceRepairs(Transactor(site.dataSource)).reindexChunks(
         Chunker.ChunkMaxChars(site.settings.limits.chunkChars.value),
         slice.after.flatMap(a => Citekey.option(a.value)),
@@ -57,7 +58,7 @@ object SourcesData:
     names.toList.map(n => Check(owner, Rule.Name(n), None))
 
   private def fixed(owner: DataOwner, name: String, when: FixWhen, rank: Int)(
-      run: CheckContext => LintFixResult
+      run: CheckContext => WritePermit ?=> LintFixResult
   ): CheckRule =
     Check(owner, Rule.Name(name), Some(SafeFix(when, FixRank(rank), run)))
 

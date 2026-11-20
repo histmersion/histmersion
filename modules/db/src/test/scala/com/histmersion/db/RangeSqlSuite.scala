@@ -22,6 +22,7 @@ import com.histmersion.api.automation.Goal
 import com.histmersion.util.database.given
 import com.histmersion.domain.DeepTime
 import com.histmersion.api.catalogue.Year
+import com.histmersion.util.database.TestPermits.given
 
 /** [[RangeSql]] (#1798 item 9): the pure literal/merge rules, and — on a test database — a goal or an asset patched
   * with ONE bound (it used to be silently ignored), read back through [[RangeSql.cols]].
@@ -128,7 +129,7 @@ class RangeSqlSuite extends DbSuite:
       Right(())
     )
     assertEquals(
-      Transactor(ds).transact(
+      Transactor(ds).write(
         GoalRepo.patchIn(
           domain.automation.Goal.Slug("zz_period_goal"),
           Goal.Patch(periodStart = Some(Year(-1300)))
@@ -139,7 +140,7 @@ class RangeSqlSuite extends DbSuite:
     val g = connect(ds)(GoalRepo.get(domain.automation.Goal.Slug("zz_period_goal"))).get
     assertEquals((g.periodStart, g.periodEnd), (Some(-1300L), Some(-1000L)))
     assertEquals(
-      Transactor(ds).transact(
+      Transactor(ds).write(
         GoalRepo.patchIn(
           domain.automation.Goal.Slug("zz_period_goal"),
           Goal.Patch(periodEnd = Some(Year(-1100)))
@@ -152,7 +153,7 @@ class RangeSqlSuite extends DbSuite:
     // inverted: refused, stored period unchanged
     assert(
       Transactor(ds)
-        .transact(
+        .write(
           GoalRepo.patchIn(
             domain.automation.Goal.Slug("zz_period_goal"),
             Goal.Patch(periodStart = Some(Year(-1000)))

@@ -4,6 +4,7 @@ package domain.personal
 import com.histmersion.domain.personal.seen.SeenBoard
 
 import java.time.Instant
+import com.histmersion.util.database.TestPermits.given
 
 /** How far a person has seen each window's news, in memory and in the database. */
 class SeenServiceContractSuite extends PersonalServiceContract("seen"):

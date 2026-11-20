@@ -5,6 +5,7 @@ import com.histmersion.domain.media.assets.{AssetService, Known, ProviderAsset, 
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.domain.catalogue.places.Wikidata
 import com.histmersion.domain.catalogue.places.ExternalIds
+import com.histmersion.util.database.WritePermit
 
 /** Where an import writes and what it reads of the map: media's own services in the server ([[MediaStore.apply]]); a
   * map in a test.
@@ -17,8 +18,8 @@ trait MediaStore:
   def save(
       a: ProviderAsset,
       firstTarget: (ImportService.TargetType, ImportService.TargetId)
-  ): (AssetService.AssetUid, Boolean)
-  def refreshRights(uid: AssetService.AssetUid, r: Rights): Unit
+  )(using WritePermit): (AssetService.AssetUid, Boolean)
+  def refreshRights(uid: AssetService.AssetUid, r: Rights)(using WritePermit): Unit
   def link(
       uid: AssetService.AssetUid,
       targetType: ImportService.TargetType,
@@ -27,15 +28,17 @@ trait MediaStore:
       property: Option[AssetService.LinkProperty],
       item: Option[AssetService.LinkItem],
       rank: AssetService.LinkRank
+  )(using WritePermit): Boolean
+  def commonsCategory(placeId: Place.Id, category: ImportService.CommonsCategory, qid: Wikidata.Id)(using
+      WritePermit
   ): Boolean
-  def commonsCategory(placeId: Place.Id, category: ImportService.CommonsCategory, qid: Wikidata.Id): Boolean
   def checked(
       provider: ImportService.Provider,
       targetType: ImportService.TargetType,
       targetId: ImportService.TargetId,
       found: ImportService.FoundCount,
       qid: Option[Wikidata.Id]
-  ): Unit
+  )(using WritePermit): Unit
 
   /** A link with the reason a collection's record is tied to its target (V094). */
   def linkBasis(
@@ -47,7 +50,7 @@ trait MediaStore:
       item: Option[AssetService.LinkItem],
       rank: AssetService.LinkRank,
       basis: Option[AssetService.LinkBasis]
-  ): Boolean =
+  )(using WritePermit): Boolean =
     link(uid, targetType, targetId, role, property, item, rank)
 
   /** The places a collection import asks about, as a match sees them. */
@@ -74,9 +77,9 @@ object MediaStore:
   def apply(assets: AssetService, imports: ImportService): MediaStore = new MediaStore:
     def known(provider: ImportService.Provider, keys: List[AssetService.ProviderKey]) =
       assets.known(AssetService.Provider(provider.value), keys)
-    def save(a: ProviderAsset, firstTarget: (ImportService.TargetType, ImportService.TargetId)) =
+    def save(a: ProviderAsset, firstTarget: (ImportService.TargetType, ImportService.TargetId))(using WritePermit) =
       assets.save(a, (AssetService.TargetType(firstTarget._1.value), AssetService.TargetId(firstTarget._2.value)))
-    def refreshRights(uid: AssetService.AssetUid, r: Rights) = assets.refreshRights(uid, r)
+    def refreshRights(uid: AssetService.AssetUid, r: Rights)(using WritePermit) = assets.refreshRights(uid, r)
     def link(
         uid: AssetService.AssetUid,
         targetType: ImportService.TargetType,
@@ -85,7 +88,7 @@ object MediaStore:
         property: Option[AssetService.LinkProperty],
         item: Option[AssetService.LinkItem],
         rank: AssetService.LinkRank
-    ) =
+    )(using WritePermit) =
       assets.link(
         uid,
         AssetService.TargetType(targetType.value),
@@ -96,7 +99,9 @@ object MediaStore:
         rank,
         None
       )
-    def commonsCategory(placeId: Place.Id, category: ImportService.CommonsCategory, qid: Wikidata.Id) =
+    def commonsCategory(placeId: Place.Id, category: ImportService.CommonsCategory, qid: Wikidata.Id)(using
+        WritePermit
+    ) =
       imports.commonsCategory(placeId, category, qid)
     def checked(
         provider: ImportService.Provider,
@@ -104,7 +109,7 @@ object MediaStore:
         targetId: ImportService.TargetId,
         found: ImportService.FoundCount,
         qid: Option[Wikidata.Id]
-    ) =
+    )(using WritePermit) =
       imports.checked(provider, targetType, targetId, found, qid)
     override def linkBasis(
         uid: AssetService.AssetUid,
@@ -115,7 +120,7 @@ object MediaStore:
         item: Option[AssetService.LinkItem],
         rank: AssetService.LinkRank,
         basis: Option[AssetService.LinkBasis]
-    ) =
+    )(using WritePermit) =
       assets.link(
         uid,
         AssetService.TargetType(targetType.value),

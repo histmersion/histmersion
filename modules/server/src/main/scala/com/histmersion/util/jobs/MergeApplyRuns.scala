@@ -15,6 +15,7 @@ import java.util.concurrent.atomic.AtomicReference
 import javax.sql.DataSource
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.exchange.MergeJobState
+import com.histmersion.util.database.WritePermit
 
 /** The `jobs` rows of merge applies (kind `merge-apply`): one is `running` from its start (it runs on its own thread,
   * never queued), with its bundle and its plan; it ends `done` with its report or `failed` with why. A restart fails an
@@ -25,10 +26,10 @@ trait MergeApplyRuns:
   def running: Boolean
 
   /** A new running row for the bundle and plan; its id. */
-  def start(bundle: Sha256, planHash: MergeRow.PlanHash): Job.Id
+  def start(bundle: Sha256, planHash: MergeRow.PlanHash)(using WritePermit): Job.Id
 
   /** How the run ended; a row a restart already failed is left as it is. */
-  def finish(id: Job.Id, outcome: Either[Problems, MergeApplyResult]): Unit
+  def finish(id: Job.Id, outcome: Either[Problems, MergeApplyResult])(using WritePermit): Unit
 
   /** One merge apply as the API answers it; `None` for an unknown id (or another kind of job). */
   def status(id: Job.Id): Option[MergeApplyJob]
@@ -39,10 +40,10 @@ object MergeApplyRuns:
 
   final private class Implementation(ds: DataSource) extends MergeApplyRuns:
     def running: Boolean = Transactor(ds).read(JobRepo.mergeApplyRunning)
-    def start(bundle: Sha256, planHash: MergeRow.PlanHash): Job.Id =
-      Transactor(ds).transact(JobRepo.startMergeApply(MergeRepo.BundleName(bundle.value), planHash))
-    def finish(id: Job.Id, outcome: Either[Problems, MergeApplyResult]): Unit =
-      Transactor(ds).transact(JobRepo.finishMergeApply(id, outcome))
+    def start(bundle: Sha256, planHash: MergeRow.PlanHash)(using WritePermit): Job.Id =
+      Transactor(ds).write(JobRepo.startMergeApply(MergeRepo.BundleName(bundle.value), planHash))
+    def finish(id: Job.Id, outcome: Either[Problems, MergeApplyResult])(using WritePermit): Unit =
+      Transactor(ds).write(JobRepo.finishMergeApply(id, outcome))
     def status(id: Job.Id): Option[MergeApplyJob] = Transactor(ds).read(JobRepo.mergeApply(id))
 
   /** One run as the in-memory twin keeps it. */
@@ -55,11 +56,11 @@ object MergeApplyRuns:
 
     def running: Boolean = state.get().values.exists(_.outcome.isEmpty)
 
-    def start(bundle: Sha256, planHash: MergeRow.PlanHash): Job.Id =
+    def start(bundle: Sha256, planHash: MergeRow.PlanHash)(using WritePermit): Job.Id =
       val next = state.updateAndGet(m => m + (idOf(m.size + 1) -> Run(bundle, planHash, None)))
       idOf(next.size)
 
-    def finish(id: Job.Id, outcome: Either[Problems, MergeApplyResult]): Unit =
+    def finish(id: Job.Id, outcome: Either[Problems, MergeApplyResult])(using WritePermit): Unit =
       val _ = state.updateAndGet(m =>
         m.get(id).filter(_.outcome.isEmpty).fold(m)(r => m + (id -> r.modify(_.outcome).setTo(Some(outcome))))
       )

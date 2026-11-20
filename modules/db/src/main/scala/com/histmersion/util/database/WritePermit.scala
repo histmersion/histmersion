@@ -1,6 +1,7 @@
 package com.histmersion
 package util.database
 
+import com.histmersion.util.database.WritePermit.{Gate, Kind}
 import com.histmersion.util.problem.{Problem, Raised}
 
 import java.io.PrintWriter
@@ -11,26 +12,52 @@ import javax.sql.DataSource
 import scala.concurrent.duration.Deadline
 import io.github.iltotore.iron.constraint.any.Pure
 
-/** The right to write to the database for the extent of one block. Only a [[WritePermit.Gate]] issues one, and only
-  * while no restore holds it: [[Transactor.write]] takes one, so a write through it cannot run beside a restore, and a
-  * restore waits for every permit out to come back before it starts.
+/** The right to write to the database for the extent of one block. Only a [[WritePermit.Gate]] issues one: every write
+  * transaction ([[Transactor.write]], [[Transactor.writeAutocommit]]) takes one, so a write cannot be opened without
+  * one (a compile error), and so it runs either
+  *   - inside an operation a restore waits for (a [[WritePermit.Kind.Operation]] permit: [[WritePermit.Gate.permit]],
+  *     the maintenance gate's `guard`), or
+  *   - inside a unit of a registered worker (a [[WritePermit.Kind.Worker]] permit: [[WritePermit.Gate.unit]]), which a
+  *     restore quiesces, waits for (bounded) and fences off: each write through it is refused once the restore holds
+  *     the database, and for good when the unit began before it.
   *
   * A permit lives as long as the block it was issued for. Kept past it (captured by a thread that outlives the block),
   * it no longer writes: [[Transactor.write]] refuses a permit whose block has ended.
   */
-final class WritePermit private (gate: WritePermit.Gate):
+final class WritePermit private (gate: Gate, val kind: Kind):
   @volatile private var open = true
 
   /** Whether the block it was issued for still runs. */
   def live: Boolean = open
 
-  /** Its use: refused once the block it was issued for has ended. */
+  /** Its use: refused once the block it was issued for has ended; a unit's, also while a restore holds the database
+    * (thrown as [[Raised]] with the refusal's problem) and once the unit is stale.
+    */
   private[database] def require(): Unit =
     if !open then throw IllegalStateException("a write permit was used after the block it was issued for ended")
+    if kind == Kind.Worker then gate.admit()
 
   private[WritePermit] def end(): Unit = open = false
 
 object WritePermit:
+
+  /** What a permit stands for: what a restore does about the writes made under it. */
+  enum Kind derives CanEqual:
+    /** An operation a restore waits for: counted while its block runs, refused while a restore drains. */
+    case Operation
+
+    /** A unit of a registered worker: not counted (the restore quiesces the worker and waits for it to rest), checked
+      * at each write instead.
+      */
+    case Worker
+
+    /** A test's: from a gate of its own, never drained ([[standing]]). */
+    case Standing
+
+  /** A permit for a test's writes that no restore ever drains: only test code of this package takes it (the test
+    * sources' `TestPermits`). Main code never calls it (counted by the G89unguarded rule).
+    */
+  private[database] def standing(): WritePermit = new WritePermit(Gate(), Kind.Standing)
 
   /** Why the gate turned a permit or a connection down. */
   enum Refusal derives CanEqual:
@@ -106,8 +133,9 @@ object WritePermit:
     def permit[A](work: WritePermit ?=> A): Either[Refusal, A] =
       val outer = current.get()
       outer.filter(_.live) match
-        case Some(own) => Right(work(using own))
-        case None      =>
+        case Some(_) if stale => Left(Refusal.Stale)
+        case Some(own)        => Right(work(using own))
+        case None             =>
           enter() match
             case Left(refused) => Left(refused)
             case Right(p)      =>
@@ -124,8 +152,14 @@ object WritePermit:
         else if stage != Stage.Open then Left(Refusal.Restoring)
         else
           outstanding += 1
-          Right(new WritePermit(this))
+          Right(new WritePermit(this, Kind.Operation))
       finally lock.unlock()
+
+    /** [[permit]] for work that answers no `Either`: a refusal is thrown as [[Raised]] with its problem (as the gate's
+      * data sources refuse a connection).
+      */
+    def writing[A](work: WritePermit ?=> A): A =
+      permit(work).fold(refused => throw Raised(refused.problem), identity)
 
     private def leave(p: WritePermit): Unit =
       p.end()
@@ -135,15 +169,42 @@ object WritePermit:
         changed.signalAll()
       finally lock.unlock()
 
+    /** `work` on the thread of the restore that holds this gate, with a [[Kind.Worker]] permit and no stamp (the
+      * threads it starts are not stale after the restore): the workers' quiescing and reconciling write through it.
+      * Thrown at any other thread. It is not the thread's permit for [[permit]] to hand out again: an operation the
+      * restore's thread asks for is refused like any other while the restore holds the gate.
+      */
+    def holding[A](work: WritePermit ?=> A): A =
+      if !holder.contains(Thread.currentThread()) then
+        throw IllegalStateException("only the thread of the restore holding the gate writes through its permit")
+      val p = new WritePermit(this, Kind.Worker)
+      try work(using p)
+      finally p.end()
+
     /** Run `work` as one unit of a worker's work, stamped with the epoch now: a restore that happens while it runs
       * makes it stale, and from then on it gets no permit and no connection. A unit inside another keeps the outer
       * stamp; threads the unit starts inherit it.
+      *
+      * `work` holds a [[Kind.Worker]] permit (or the permit the calling thread holds already): not counted, since the
+      * restore quiesces the worker and waits for it to come to rest; each write through it is refused while the restore
+      * holds the database, and for good once the unit is stale. It is the worker's to record where it stopped while a
+      * restore drains.
       */
-    def unit[A](work: => A): A =
-      if stamped.get().isDefined then work
+    def unit[A](work: WritePermit ?=> A): A =
+      val outer = current.get()
+      def run(): A = outer.filter(_.live) match
+        case Some(own) => work(using own)
+        case None      =>
+          val p = new WritePermit(this, Kind.Worker)
+          current.set(Some(p))
+          try work(using p)
+          finally
+            current.set(outer)
+            p.end()
+      if stamped.get().isDefined then run()
       else
         stamped.set(Some(epoch))
-        try work
+        try run()
         finally stamped.remove()
 
     /** Whether the calling thread's unit began before the last restore. */
@@ -186,7 +247,7 @@ object WritePermit:
       * The restore's own thread does not count its own.
       */
     def awaitPermits(deadline: Deadline): Outstanding =
-      val own = if current.get().exists(_.live) then 1 else 0
+      val own = if current.get().exists(p => p.live && p.kind == Kind.Operation) then 1 else 0
       lock.lock()
       try
         while outstanding > own && deadline.hasTimeLeft() do

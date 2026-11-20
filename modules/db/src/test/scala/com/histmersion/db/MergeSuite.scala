@@ -69,6 +69,7 @@ import com.histmersion.api.catalogue.EventSummary
 import com.histmersion.util.storage.ContentStore
 import com.histmersion.util.data.exchange.MergeRow
 import com.histmersion.domain.research.Slug
+import com.histmersion.util.database.TestPermits.given
 
 /** `merge plan` against real Postgres (docs/research-merge-import.md §8, milestone M3): the crafted pair of
   * collections, "work" and "home", built through the repositories in two databases of their own; work's bundle planned
@@ -245,8 +246,8 @@ class MergeSuite extends DbSuite with Bounded:
   private def craft(tag: String): (DataSource, DataSource, Path, Path) =
     val (work, home) = (fresh(s"${tag}w"), fresh(s"${tag}h"))
     val (sw, sh) = (spool(s"${tag}w"), spool(s"${tag}h"))
-    Transactor(work).transact(BundleRepo.setLabel(Some(InstanceInfo.Label("work"))))
-    Transactor(home).transact(BundleRepo.setLabel(Some(InstanceInfo.Label("home"))))
+    Transactor(work).write(BundleRepo.setLabel(Some(InstanceInfo.Label("work"))))
+    Transactor(home).write(BundleRepo.setLabel(Some(InstanceInfo.Label("home"))))
     // ── the shared history ──
     put(
       work,
@@ -291,8 +292,8 @@ class MergeSuite extends DbSuite with Bounded:
         Source.Patch(summary = Some(Source.Summary("edited at home"))),
         chunkChars
       )
-    val _ = Transactor(work).transact(GoalRepo.deleteIn(domain.automation.Goal.Slug("zz_shared_goal")))
-    val _ = Transactor(home).transact(
+    val _ = Transactor(work).write(GoalRepo.deleteIn(domain.automation.Goal.Slug("zz_shared_goal")))
+    val _ = Transactor(home).write(
       GoalRepo.patchIn(
         domain.automation.Goal.Slug("zz_shared_goal"),
         Goal.Patch(notes = Some(Goal.Notes("edited at home")))
@@ -1123,7 +1124,7 @@ class MergeSuite extends DbSuite with Bounded:
     (1 to 4).foreach { round =>
       val (a, b) = (fresh(s"p${round}a"), fresh(s"p${round}b"))
       val (sa, sb) = (spool(s"p${round}a"), spool(s"p${round}b"))
-      Transactor(a).transact(BundleRepo.setLabel(Some(InstanceInfo.Label("work"))))
+      Transactor(a).write(BundleRepo.setLabel(Some(InstanceInfo.Label("work"))))
       // six works; each side holds some of them under its own citekeys, a DOI or not, a year off by
       // more than one now and then (an edition question), findings from one pool, edges among its own
       def side(ds: DataSource, tag: String): Unit =

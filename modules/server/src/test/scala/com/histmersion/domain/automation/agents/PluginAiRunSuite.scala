@@ -52,6 +52,7 @@ import com.histmersion.api.automation.Agents
 import com.histmersion.pluginhost.Registries
 import com.histmersion.domain.library.sources.SourcesControllers
 import com.histmersion.api.Api
+import com.histmersion.util.database.TestPermits.given
 
 /** A THIRD-PARTY AI provider end to end (docs/research-plugins.md §23): the hello-ai test plugin's own jar
   * (modules/plugin-fixtures/hello-ai — compiled against plugin-api alone, never on the server's class path) is

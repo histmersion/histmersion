@@ -79,6 +79,7 @@ import com.histmersion.util.data.exchange.BundleScope
 import com.histmersion.util.storage.ContentDirectory
 import com.histmersion.util.data.exchange.BundleImporter
 import com.histmersion.util.storage.ByteSource
+import com.histmersion.util.database.TestPermits.given
 
 /** The portable bundle against real Postgres (docs/research-merge-import.md, milestones M0–M2): identity and tombstones
   * (M0), a deterministic export (M1), and an import without matching — into an empty instance and back into its own —
@@ -921,7 +922,7 @@ class BundleSuite extends DbSuite with Bounded:
     assert(r3c.applied.value, r3c.problems.mkString("\n"))
     assertEquals(r3c.issues, Nil)
     // a deletion over there of a row unchanged here since the last import deletes it here
-    val _ = Transactor(a).transact(GoalRepo.deleteIn(domain.automation.Goal.Slug("zzb_goal_sub")))
+    val _ = Transactor(a).write(GoalRepo.deleteIn(domain.automation.Goal.Slug("zzb_goal_sub")))
     val r4 = importInto(b, exportOf(a, sa), sb)
     assertEquals(
       r4.counts.find(_.kind == Bundle.Kind.Goal).map(_.deleted),

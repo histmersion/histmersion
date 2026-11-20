@@ -45,6 +45,7 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.Title
 import com.histmersion.{Offset, PageSize}
 import com.histmersion.util.data.maintenance.WriteGate
+import com.histmersion.util.database.WritePermit
 import hearth.kindlings.optics.syntax.*
 
 import scala.annotation.tailrec
@@ -136,7 +137,7 @@ final class EventLinksControllers(
     EventLinkList(d.event.id, EventLinkList.Label(d.event.label.value), links.candidates(idOf(d)))
 
   /** Compute and store an event's candidates. */
-  def compute(d: EventEntry): EventLinkList =
+  def compute(d: EventEntry)(using WritePermit): EventLinkList =
     val w = ec.links.weights
     val names = namesOf(d)
     val id = idOf(d)
@@ -167,11 +168,13 @@ final class EventLinksControllers(
     links.saveCandidates(id, cands)
     listOf(d)
 
-  /** An event's candidates — computed on the first ask, stored after. */
+  /** An event's candidates — computed on the first ask, stored after (that first ask writes, under the maintenance
+    * gate).
+    */
   def links(id: Event.Id): Either[Api.Error, EventLinkList] =
-    eventOrFail(id).map { d =>
-      if links.isChecked(idOf(d)) then listOf(d)
-      else compute(d)
+    eventOrFail(id).flatMap { d =>
+      if links.isChecked(idOf(d)) then Right(listOf(d))
+      else maintenance.guard(WriteGate.OperationName("event_links"))(Right(compute(d)))
     }
 
   /** Recompute, confirm or reject. A source is confirmed only from a passage of its body that names the event, read NOW
@@ -267,17 +270,16 @@ final class EventLinksControllers(
           .toRight(notFound(Problem.NotFound.Entity(Problem.TypeName.of(Event.Id), Problem.Raw(s"$one"))))
           .flatMap(eventOrFail)
           .flatMap(_ =>
-            jobs.start(EventLinksControllers.CandidatesJobKind, JobKinds.Subject(s"candidates of $one"), write = true) {
-              (_, _) =>
-                Event.Id
-                  .option(one)
-                  .toRight(notFound(Problem.NotFound.Entity(Problem.TypeName.of(Event.Id), Problem.Raw(s"$one"))))
-                  .flatMap(eventOrFail)
-                  .map(d =>
-                    BackgroundJob.Outcome.Summary(s"${compute(d).candidates.size} candidate(s) for ${d.event.id}")
-                  )
-                  .left
-                  .map(e => e.problems)
+            jobs.start(EventLinksControllers.CandidatesJobKind, JobKinds.Subject(s"candidates of $one")) { (_, _) =>
+              Event.Id
+                .option(one)
+                .toRight(notFound(Problem.NotFound.Entity(Problem.TypeName.of(Event.Id), Problem.Raw(s"$one"))))
+                .flatMap(eventOrFail)
+                .map(d =>
+                  BackgroundJob.Outcome.Summary(s"${compute(d).candidates.size} candidate(s) for ${d.event.id}")
+                )
+                .left
+                .map(e => e.problems)
             }
           )
       case None =>
@@ -285,8 +287,7 @@ final class EventLinksControllers(
           EventLinksControllers.CandidatesJobKind,
           JobKinds.Subject(
             s"candidate links of ${if req.all.value then "every event" else "the events not checked yet"}"
-          ),
-          write = true
+          )
         ) { (_, progress) =>
           val ids = links.eventsToCheck(
             req.all.value,

@@ -32,6 +32,7 @@ import com.histmersion.util.jobs.RunRow
 import com.histmersion.api.automation.Run
 import com.histmersion.domain.automation.worklists.WorkListControllers
 import com.histmersion.domain.ManagerPolicy.Item
+import com.histmersion.util.database.WritePermit
 
 /** The stall report tells a wait by its kind of reason only; the sentence is made from the case. */
 private given waitWhyToStall: Transformer[SchedulerPolicy.Block.Why, Stalls.SchedWait.Why] =
@@ -309,7 +310,7 @@ final class SchedulerService(
     */
   def pass(ms: List[ManagerInfo], now: Instant, stop: Option[Block])(
       start: (ManagerInfo, ManagerItem) => Either[Block.Refusal, Unit]
-  ): Decision =
+  )(using WritePermit): Decision =
     // each role's model picked as a run picks it, so a stale ChatGPT reading is read again (and recorded) first; never
     // a fresh reading taken for a pool (`refresh = None`: that is the run's, when it starts)
     val in = inputs(ms, now, stop, (r, m, at) => agents.picker.pick(r, m, at, refresh = None))
@@ -323,7 +324,7 @@ final class SchedulerService(
     * last pass left work waiting on a pool, so the next passes decide on current numbers. Nothing while draining. One
     * line per reading taken.
     */
-  def refreshPlans(now: Instant): List[String] =
+  def refreshPlans(now: Instant)(using WritePermit): List[String] =
     val wanted = if agents.drain.draining then Set.empty[Candidate.Pools] else wantedPools()
     val autopilotOn = agents.autopilot.on
     PlanQuota.PoolId.values.toList.flatMap { p =>
@@ -641,7 +642,9 @@ final class SchedulerService(
   /** Switch the strategy live (`default` = back to agents.scheduler.strategy); the next tick uses it (nudged now).
     * Answers what a pass would do with it.
     */
-  def set(in: SchedulerSet, now: Instant = Instant.now(agents.clock)): Either[Api.Error, SchedulerStatus] =
+  def set(in: SchedulerSet, now: Instant = Instant.now(agents.clock))(using
+      WritePermit
+  ): Either[Api.Error, SchedulerStatus] =
     val by = in.by.map(_.value.trim).filter(_.nonEmpty).getOrElse("person")
     val name = in.strategy.value.trim.toLowerCase(java.util.Locale.ROOT)
     val done: Either[Api.Error, String] =

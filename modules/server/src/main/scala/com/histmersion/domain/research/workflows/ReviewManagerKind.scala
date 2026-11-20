@@ -40,6 +40,7 @@ import com.histmersion.domain.automation.managers.ManagerRepo
 import com.histmersion.api.research.Articles
 import com.histmersion.api.research.Article
 import com.histmersion.domain.ManagerPolicy.Item
+import com.histmersion.util.database.WritePermit
 
 /** The `review` manager kind (library-wide: article-review, infer-filter and article-extend items), research's: the
   * review's own evaluation over the article's review ledger, the selection that refills the queue (open MAJORs,
@@ -70,9 +71,10 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
   /** When each review manager last looked for articles to extend (epoch ms); in memory. */
   private val lastExtend = java.util.concurrent.ConcurrentHashMap[String, java.lang.Long]()
 
-  def fire(c: ManagerContext, m: ManagerInfo, now: Instant): List[ManagerKindDefinition.FirePhrase] = List(
-    ManagerKindDefinition.FirePhrase("selection refilled")
-  )
+  def fire(c: ManagerContext, m: ManagerInfo, now: Instant)(using WritePermit): List[ManagerKindDefinition.FirePhrase] =
+    List(
+      ManagerKindDefinition.FirePhrase("selection refilled")
+    )
 
   // ── evaluate ───────────────────────────────────────────────────────────────────────────────────
 
@@ -85,7 +87,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
       error: Option[Problem],
       now: Instant,
       out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
-  ): Unit =
+  )(using WritePermit): Unit =
     if item.kind.value == ArticleReview then evaluateReview(c, m, s, item, st, error, now, out)
     else c.evaluateStep(m, s, item, st, error, now, out, this)
 
@@ -98,7 +100,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
       error: Option[Problem],
       now: Instant,
       out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
-  ): Unit =
+  )(using WritePermit): Unit =
     val run = Run.Id.assume(item.runId.get.value)
     val slug = Slug.assume(item.target.value)
     val itemId = ManagerContext.ItemId(item.id.value)
@@ -249,7 +251,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
       item: ManagerItem,
       run: Option[Run.Id],
       out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
-  ): Unit =
+  )(using WritePermit): Unit =
     if item.kind.value == ArticleExtend && run.flatMap(CompileArticlePipeline.written(c, _)).exists(_.written.value)
     then
       c.chainReview(
@@ -280,7 +282,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
       now: Instant,
       force: ManagerKindDefinition.RefillForce,
       out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
-  ): Unit =
+  )(using WritePermit): Unit =
     val s = c.settings(m)
     val manager = ManagerLight.Id(m.id.value)
     val pending = c.pending(manager)
@@ -349,7 +351,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
       m: ManagerInfo,
       now: Instant,
       out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
-  ): Unit =
+  )(using WritePermit): Unit =
     val mcfg = cfg.managers
     val min = m.config.extendMinNew.fold(mcfg.review.extendMinNew.value)(_.value)
     val last = Option(lastExtend.get(m.id.value)).map(_.longValue)
@@ -495,7 +497,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
       itemKind: ManagerContext.ItemKind,
       target: ManagerContext.ItemTarget,
       priority: ManagerContext.Priority
-  ): Unit =
+  )(using WritePermit): Unit =
     if itemKind.value == ArticleReview then
       val on = m.config.inferFilter.fold(cfg.managers.review.inferFilter.value)(_.value)
       val has = site.articles.recordedFilter(Slug.assume(target.value)).isDefined
@@ -528,7 +530,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
       item: ManagerItem,
       now: Instant,
       out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
-  ): Option[ManagerLight.Id] =
+  )(using WritePermit): Option[ManagerLight.Id] =
     val slug = Slug.assume(item.target.value)
     val manager = ManagerLight.Id(m.id.value)
     item.kind.value match

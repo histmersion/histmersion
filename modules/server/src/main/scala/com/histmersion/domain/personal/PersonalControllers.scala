@@ -34,6 +34,7 @@ import com.histmersion.domain.personal.notes.Note
 import com.histmersion.api.personal.ReadMark
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.catalogue.Year
+import com.histmersion.util.database.WritePermit
 
 /** The bookmarks', notes' and read marks' endpoints, the `bookmarks` and `notes` tools (reads only) and
   * `histmersion bookmarks|notes`: what was asked checked, then the caller's own. Writes wait while a restore holds the
@@ -204,7 +205,7 @@ final class PersonalControllers(
       id: com.histmersion.api.personal.Note.Id,
       text: com.histmersion.api.personal.Note.Text,
       seen: Option[MarkTime.Iso]
-  ) =
+  )(using WritePermit) =
     seen.map(s => Try(MarkTime.parse(s)).toOption) match
       case Some(None) =>
         notes

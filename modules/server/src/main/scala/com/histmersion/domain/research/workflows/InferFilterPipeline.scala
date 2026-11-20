@@ -30,6 +30,7 @@ import com.histmersion.util.jobs.Job
 import com.histmersion.domain.automation.Approval
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Api
+import com.histmersion.util.database.WritePermit
 
 /** `infer-filter <article>` (docs/research-process-managers.md §4 (a), phase 2): an article that records no coverage
   * filter (#958) gets one proposed — the review manager runs it BEFORE the article's review, so the review's coverage
@@ -48,10 +49,10 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
   val pipeline: Pipeline = Pipeline.InferFilter
   import InferFilterPipeline.*
 
-  def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
+  def run(ctx: RunCtx)(using WritePermit): Either[Halt, PipelineDef.Summary] =
     Slug.parse(ctx.run.target.value).left.map(p => Halt.Fail(p)).flatMap(runFor(ctx, _))
 
-  private def runFor(ctx: RunCtx, slug: Slug): Either[Halt, PipelineDef.Summary] =
+  private def runFor(ctx: RunCtx, slug: Slug)(using WritePermit): Either[Halt, PipelineDef.Summary] =
     val runId = ctx.runId
     for
       loaded <- ctx.code[Loaded](AgentRepo.StepRecord.Name("load"))(load(slug))
@@ -166,7 +167,7 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
   /** The proposal, through the write gate: an open approval (manual), or the filter recorded at once with an approval
     * already approved (auto). None passed: nothing is recorded.
     */
-  private def record(ctx: RunCtx, slug: Slug, inf: Inferred): Either[Problems, Recorded] =
+  private def record(ctx: RunCtx, slug: Slug, inf: Inferred)(using WritePermit): Either[Problems, Recorded] =
     inf.proposal match
       case None =>
         Right(

@@ -13,6 +13,7 @@ import java.time.{Clock, Instant, ZoneOffset}
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.atomic.AtomicReference
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.database.WritePermit
 
 /** The agents' scratch state: a JSON value under a key, by key. */
 trait AgentStateService:
@@ -20,10 +21,10 @@ trait AgentStateService:
   def get(key: AgentStateRecord.Key): Option[AgentStateEntry]
 
   /** Set a key's value; a value that is not JSON fails, as the database's cast to `jsonb` does. */
-  def set(key: AgentStateRecord.Key, value: AgentStateService.SetValue): Unit
+  def set(key: AgentStateRecord.Key, value: AgentStateService.SetValue)(using WritePermit): Unit
 
   /** Remove a key; false when there was none. */
-  def delete(key: AgentStateRecord.Key): Boolean
+  def delete(key: AgentStateRecord.Key)(using WritePermit): Boolean
 
 object AgentStateService:
   type SetValue = SetValue.T
@@ -38,10 +39,10 @@ object AgentStateService:
     def list(): List[AgentStateEntry] = db.read(AgentStateRepo.list())
     def get(key: AgentStateRecord.Key): Option[AgentStateEntry] =
       db.read(AgentStateRepo.get(AgentStateRepo.StateKey(key.value)))
-    def set(key: AgentStateRecord.Key, value: SetValue): Unit =
-      db.transact(AgentStateRepo.set(AgentStateRepo.StateKey(key.value), AgentStateRepo.SetValue(value.value)))
-    def delete(key: AgentStateRecord.Key): Boolean =
-      db.transact(AgentStateRepo.delete(AgentStateRepo.StateKey(key.value)))
+    def set(key: AgentStateRecord.Key, value: SetValue)(using WritePermit): Unit =
+      db.write(AgentStateRepo.set(AgentStateRepo.StateKey(key.value), AgentStateRepo.SetValue(value.value)))
+    def delete(key: AgentStateRecord.Key)(using WritePermit): Boolean =
+      db.write(AgentStateRepo.delete(AgentStateRepo.StateKey(key.value)))
 
   /** The values in memory, printed back as `jsonb::text` prints them (an object's keys shortest first, then in byte
     * order, the last of a repeated key kept; `", "` and `": "` between); `clock` stands in for the database's `now()`.
@@ -85,7 +86,7 @@ object AgentStateService:
 
     def list(): List[AgentStateEntry] = state.get.agentState.toList.sortBy(_._1.value).map(entry)
     def get(key: AgentStateRecord.Key): Option[AgentStateEntry] = state.get.agentState.get(key).map(entry(key, _))
-    def set(key: AgentStateRecord.Key, value: SetValue): Unit =
+    def set(key: AgentStateRecord.Key, value: SetValue)(using WritePermit): Unit =
       val j = value.json
         .fold(e => throw IllegalArgumentException(s"invalid input syntax for type json: $e"), identity)
       val at = Instant.now(clock)
@@ -94,5 +95,5 @@ object AgentStateService:
           _.modify(_.agentState)
             .using(_.updated(key, AgentStateRecord(AgentStateRecord.Value(print(jsonb(j))), at)))
         )
-    def delete(key: AgentStateRecord.Key): Boolean =
+    def delete(key: AgentStateRecord.Key)(using WritePermit): Boolean =
       state.getAndUpdate(_.modify(_.agentState).using(_ - key)).agentState.contains(key)

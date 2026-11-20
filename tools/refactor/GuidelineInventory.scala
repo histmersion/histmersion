@@ -41,7 +41,8 @@ object GuidelineInventory {
     rawSqlLiterals: List[String] = List("com/augustnagro/magnum/SqlLiteral.", "com/augustnagro/magnum/SqlLiteral.apply()."),
     // G89: the transaction entry points that take no write permit (`Transactor#write` is the one that does)
     unguardedTransactions: List[String] = List("com/histmersion/util/database/Transactor#transact().",
-      "com/histmersion/util/database/Transactor#autocommit().", "com/histmersion/util/database/Transactor.Session#transact()."),
+      "com/histmersion/util/database/Transactor#autocommit().", "com/histmersion/util/database/Transactor.Session#transact().",
+      "com/histmersion/util/database/Transactor.Session#autocommit().", "com/histmersion/util/database/WritePermit.standing()."),
     roleSuffixes: List[String] = List("Suite", "Spec", "Test", "Tests", "Service", "Repo", "Repository", "Controllers", "Controller",
       "Routes", "Row", "Rows", "Markdown", "Render", "Renderer", "Codec", "Codecs", "Cmd", "View", "Views", "Page", "Api", "Client",
       "Store", "Config", "Json", "Schema", "Fixtures", "Fixture", "Support", "Impl", "Ops", "Syntax", "Rule"),
@@ -109,7 +110,7 @@ object GuidelineInventory {
     "G60fromString" -> "a Problem built from a String or an interpolation: a construction of one of the five String `Problem` newtypes (values, api, core, plugin-api, plugin-resolver: `Problem(...)`, `Problem.assume(...)`, ...) or of the temporary `util.problem.Problem.Unclassified(...)`; the detail says whether the text is a literal, an interpolation or another expression. Also every read of the temporary accessor `legacyText` (an unclassified problem's text where the api's renderer is out of reach; detail `legacyText`). Goes to 0 as the sites move to the cases of the closed `util.problem.Problem`",
     "G60external" -> "`.value` of an outside text a problem carries (`util.problem.External.*`: an exception's message, a process's stderr, a reply's start, a plugin's or a model's words) outside a `render` boundary file and outside the newtype's own companion: outside text is shown at an edge, never read anywhere else",
     "G60unrecognised" -> "main code only: a construction of `util.problem.Problem.Stored.Unrecognised`, the text an older version stored that no case writes; only the stored column's reader (and the cases' examples) builds one",
-    "G89unguarded" -> "main code only: a transaction opened without a write permit: a call of `Transactor#transact`, `Transactor#autocommit`, `Transactor.Session#transact` or Magnum's `transact` outside util/database/Transactor.scala. `Transactor#write` takes the permit the maintenance gate hands out (a restore waits for it); goes to 0 as the writes move there, then `transact` takes a permit itself",
+    "G89unguarded" -> "main code only: a transaction opened without a write permit: a call of Magnum's `transact` (straight on a DataSource) outside util/database/Transactor.scala, or of the test-only `WritePermit.standing`. Since X4 the transactor's own entry points take the permit by type (`write`, `writeAutocommit`; the permit-less `transact` is protected, so a call of it, `Transactor#autocommit` or `Session#transact`/`#autocommit` no longer compiles and is still listed here should it come back)",
     "G58raw" -> "raw SQL text:a call of an Sql operator that takes a String or an Sql.Text (Sql.raw, Sql.of, the constructor, `++ \"...\"`, wrap), or an Sql.Text built (also through an alias such as RawText/OfText), or Magnum's SqlLiteral(...)")
   val ironValue = "io/github/iltotore/iron/"
   val newtypeBase = "com/histmersion/Newtype#"

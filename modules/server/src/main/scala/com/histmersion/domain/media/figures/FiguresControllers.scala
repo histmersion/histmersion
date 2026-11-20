@@ -12,4 +12,4 @@ final class FiguresControllers(figures: FigureService, maintenance: WriteGate):
       maintenance.guard(WriteGate.OperationName("media_fill_licences"))(
         Right(figures.fillLicences(apply = FigureService.Apply(true)))
       )
-    else Right(figures.fillLicences(apply = FigureService.Apply(false)))
+    else Right(figures.countLicences()) // the count alone is a read: it answers while a restore runs

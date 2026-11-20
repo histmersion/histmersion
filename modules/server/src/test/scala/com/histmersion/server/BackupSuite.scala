@@ -18,6 +18,7 @@ import scala.jdk.CollectionConverters.*
 import com.histmersion.api.backup.Backup
 import com.histmersion.api.Api
 import com.histmersion.config.BackupsConfig
+import com.histmersion.util.database.TestPermits.given
 
 /** The parts of the server-side backup machinery that need no database and no `pg_dump`: the maintenance lock, and the
   * listing/resolution that keeps a client-supplied name inside `backups.dir`.

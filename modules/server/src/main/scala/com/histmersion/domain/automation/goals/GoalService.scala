@@ -22,6 +22,7 @@ import java.time.format.DateTimeFormatter
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.api.Api
 import com.histmersion.api.personal.UnreadPage
+import com.histmersion.util.database.WritePermit
 
 /** The goals as the engine's other features reach them: a goal and its sub-goals, what hangs off it (its links, its
   * approved plan and run cap) and the schedules not moved into a watcher yet.
@@ -36,7 +37,7 @@ trait GoalService:
   def children(slug: domain.automation.Goal.Slug): List[Goal]
 
   /** Create or replace a goal; a period that starts after it ends is refused. */
-  def put(slug: domain.automation.Goal.Slug, in: Goal.Put): Either[Api.Error, Unit]
+  def put(slug: domain.automation.Goal.Slug, in: Goal.Put)(using WritePermit): Either[Api.Error, Unit]
 
   /** One page of the goals (of one status, when given), by slug, with the total. */
   def page(
@@ -48,10 +49,10 @@ trait GoalService:
   /** A goal's fields changed as given (a cap of 0 or less clears it; a bound given alone replaces that bound); no such
     * goal is a not-found error.
     */
-  def patch(slug: domain.automation.Goal.Slug, p: Goal.Patch): Either[Api.Error, Unit]
+  def patch(slug: domain.automation.Goal.Slug, p: Goal.Patch)(using WritePermit): Either[Api.Error, Unit]
 
   /** A goal removed; false when there was none. */
-  def delete(slug: domain.automation.Goal.Slug): Boolean
+  def delete(slug: domain.automation.Goal.Slug)(using WritePermit): Boolean
 
   /** A new slug, the old one kept as an alias (V053): refused when there is no such goal, or the new slug is another
     * goal's or another goal's old one.
@@ -59,7 +60,7 @@ trait GoalService:
   def rename(
       from: domain.automation.Goal.Slug,
       to: domain.automation.Goal.Slug
-  ): Either[Api.Error, Unit]
+  )(using WritePermit): Either[Api.Error, Unit]
 
   /** The goals that link each of these work-list items: (item id, goal slug, goal title), an item's goals by title. */
   def goalsOfItems(
@@ -75,12 +76,12 @@ trait GoalService:
       kind: domain.automation.Goal.LinkKind,
       ref: GoalLink.Ref,
       note: Option[GoalLink.Note]
-  ): Boolean
+  )(using WritePermit): Boolean
   def unlink(
       goal: domain.automation.Goal.Slug,
       kind: domain.automation.Goal.LinkKind,
       ref: GoalLink.Ref
-  ): Boolean
+  )(using WritePermit): Boolean
 
   /** The refs of a goal's links of one kind (a sweep's queries, a currency check's sources), oldest first. */
   def refs(
@@ -101,8 +102,8 @@ trait GoalService:
   def planAndBudget(
       goal: domain.automation.Goal.Slug
   ): Option[(Option[BGoalRow.Plan], Option[BigDecimal])]
-  def setPlan(goal: domain.automation.Goal.Slug, planJson: BGoalRow.Plan): Unit
-  def setBudget(goal: domain.automation.Goal.Slug, usd: Option[BigDecimal]): Unit
+  def setPlan(goal: domain.automation.Goal.Slug, planJson: BGoalRow.Plan)(using WritePermit): Unit
+  def setBudget(goal: domain.automation.Goal.Slug, usd: Option[BigDecimal])(using WritePermit): Unit
 
   /** The schedules not moved into a watcher (one goal's, or every one), the next due first. */
   def schedules(goal: Option[domain.automation.Goal.Slug]): List[GoalSchedule]
@@ -113,8 +114,8 @@ trait GoalService:
       enabled: GoalSchedule.Enabled,
       budgetUsd: Option[BigDecimal],
       next: Option[Instant]
-  ): Unit
-  def removeSchedule(goal: domain.automation.Goal.Slug, kind: ScheduleKind): Boolean
+  )(using WritePermit): Unit
+  def removeSchedule(goal: domain.automation.Goal.Slug, kind: ScheduleKind)(using WritePermit): Boolean
 
   /** The goals that still have schedules here. */
   def scheduleGoals(): List[domain.automation.Goal.Slug]
@@ -135,21 +136,21 @@ object GoalService:
     def get(slug: domain.automation.Goal.Slug): Option[Goal] = db.read(GoalRepo.get(slug))
     def all(): List[Goal] = db.read(GoalRepo.all())
     def children(slug: domain.automation.Goal.Slug): List[Goal] = db.read(GoalRepo.children(slug))
-    def put(slug: domain.automation.Goal.Slug, in: Goal.Put): Either[Api.Error, Unit] =
-      db.transact(GoalRepo.put(slug, in))
+    def put(slug: domain.automation.Goal.Slug, in: Goal.Put)(using WritePermit): Either[Api.Error, Unit] =
+      db.write(GoalRepo.put(slug, in))
     def page(
         status: Option[domain.automation.Goal.Status.Wire],
         limit: PageSize,
         offset: Offset
     ): Goal.List =
       db.read(GoalRepo.listIn(status.map(s => GoalRow.Status(s.value)), limit, offset))
-    def patch(slug: domain.automation.Goal.Slug, p: Goal.Patch): Either[Api.Error, Unit] =
-      db.transact(GoalRepo.patchIn(slug, p))
-    def delete(slug: domain.automation.Goal.Slug): Boolean = db.transact(GoalRepo.deleteIn(slug))
+    def patch(slug: domain.automation.Goal.Slug, p: Goal.Patch)(using WritePermit): Either[Api.Error, Unit] =
+      db.write(GoalRepo.patchIn(slug, p))
+    def delete(slug: domain.automation.Goal.Slug)(using WritePermit): Boolean = db.write(GoalRepo.deleteIn(slug))
     def rename(
         from: domain.automation.Goal.Slug,
         to: domain.automation.Goal.Slug
-    ): Either[Api.Error, Unit] = db.transact(GoalRepo.renameIn(from.trimmed, to.trimmed))
+    )(using WritePermit): Either[Api.Error, Unit] = db.write(GoalRepo.renameIn(from.trimmed, to.trimmed))
     def goalsOfItems(
         items: List[GoalLinkRepo.ItemId]
     ): List[(GoalLinkRepo.ItemId, domain.automation.Goal.Slug, BGoalRow.Title)] =
@@ -160,16 +161,16 @@ object GoalService:
         kind: domain.automation.Goal.LinkKind,
         ref: GoalLink.Ref,
         note: Option[GoalLink.Note]
-    ): Boolean =
-      db.transact(
+    )(using WritePermit): Boolean =
+      db.write(
         GoalLinkRepo.link(goal, kind.transformInto[Goal.Plans.LinkKind], ref, note)
       )
     def unlink(
         goal: domain.automation.Goal.Slug,
         kind: domain.automation.Goal.LinkKind,
         ref: GoalLink.Ref
-    ): Boolean =
-      db.transact(
+    )(using WritePermit): Boolean =
+      db.write(
         GoalLinkRepo.unlink(goal, kind.transformInto[Goal.Plans.LinkKind], ref)
       )
     def refs(
@@ -186,10 +187,10 @@ object GoalService:
         goal: domain.automation.Goal.Slug
     ): Option[(Option[BGoalRow.Plan], Option[BigDecimal])] =
       db.read(GoalLinkRepo.planAndBudget(goal))
-    def setPlan(goal: domain.automation.Goal.Slug, planJson: BGoalRow.Plan): Unit =
-      db.transact(GoalLinkRepo.setPlan(goal, planJson))
-    def setBudget(goal: domain.automation.Goal.Slug, usd: Option[BigDecimal]): Unit =
-      db.transact(GoalLinkRepo.setBudget(goal, usd))
+    def setPlan(goal: domain.automation.Goal.Slug, planJson: BGoalRow.Plan)(using WritePermit): Unit =
+      db.write(GoalLinkRepo.setPlan(goal, planJson))
+    def setBudget(goal: domain.automation.Goal.Slug, usd: Option[BigDecimal])(using WritePermit): Unit =
+      db.write(GoalLinkRepo.setBudget(goal, usd))
     def schedules(goal: Option[domain.automation.Goal.Slug]): List[GoalSchedule] =
       db.read(GoalLinkRepo.schedules(goal))
     def setSchedule(
@@ -199,7 +200,7 @@ object GoalService:
         enabled: GoalSchedule.Enabled,
         budgetUsd: Option[BigDecimal],
         next: Option[Instant]
-    ): Unit = db.transact(
+    )(using WritePermit): Unit = db.write(
       GoalLinkRepo.setSchedule(
         goal,
         kind.transformInto[Goal.Plans.ScheduleKind],
@@ -209,8 +210,8 @@ object GoalService:
         next
       )
     )
-    def removeSchedule(goal: domain.automation.Goal.Slug, kind: ScheduleKind): Boolean =
-      db.transact(
+    def removeSchedule(goal: domain.automation.Goal.Slug, kind: ScheduleKind)(using WritePermit): Boolean =
+      db.write(
         GoalLinkRepo.removeSchedule(goal, kind.transformInto[Goal.Plans.ScheduleKind])
       )
     def scheduleGoals(): List[domain.automation.Goal.Slug] = db.read(GoalLinkRepo.scheduleGoals())
@@ -256,7 +257,7 @@ object GoalService:
     def all(): List[Goal] = goals.values.toList.sortBy(_.goal.slug.value).map(shown)
     def children(slug: domain.automation.Goal.Slug): List[Goal] =
       all().filter(_.parentSlug.exists(_.value == slug.value))
-    def put(slug: domain.automation.Goal.Slug, in: Goal.Put): Either[Api.Error, Unit] =
+    def put(slug: domain.automation.Goal.Slug, in: Goal.Put)(using WritePermit): Either[Api.Error, Unit] =
       (in.periodStart, in.periodEnd) match
         case (Some(a), Some(b)) if a > b =>
           Left(
@@ -306,7 +307,7 @@ object GoalService:
     private def notFound(slug: domain.automation.Goal.Slug) =
       refused(Problem.NotFound.Entity(Problem.TypeName.of(Goal.Slug), Problem.Raw.of(slug)), Write.CodeNotFound)
 
-    def patch(slug: domain.automation.Goal.Slug, p: Goal.Patch): Either[Api.Error, Unit] =
+    def patch(slug: domain.automation.Goal.Slug, p: Goal.Patch)(using WritePermit): Either[Api.Error, Unit] =
       goals.get(key(slug)).toRight(notFound(slug)).flatMap { r =>
         val g = r.goal
         val start = p.periodStart.orElse(g.periodStart)
@@ -346,7 +347,7 @@ object GoalService:
             Right(())
       }
 
-    def delete(slug: domain.automation.Goal.Slug): Boolean =
+    def delete(slug: domain.automation.Goal.Slug)(using WritePermit): Boolean =
       val before = state.getAndUpdate(
         _.modify(_.goals)
           .using(_ - key(slug))
@@ -360,7 +361,7 @@ object GoalService:
     def rename(
         from: domain.automation.Goal.Slug,
         to: domain.automation.Goal.Slug
-    ): Either[Api.Error, Unit] =
+    )(using WritePermit): Either[Api.Error, Unit] =
       val (oldSlug, newSlug) = (from.trimmed, to.trimmed)
       val (old, now) = (oldSlug.value, newSlug.value)
       val aliasOf = state.get.goalAliases.get(AutomationState.GoalAliasesKey(now)).map(_.value)
@@ -449,7 +450,7 @@ object GoalService:
         kind: domain.automation.Goal.LinkKind,
         ref: GoalLink.Ref,
         note: Option[GoalLink.Note]
-    ): Boolean =
+    )(using WritePermit): Boolean =
       goals.contains(key(goal)) && {
         val at = now
         val newNote = note.map(n => GoalLinkRecord.Note(n.value))
@@ -477,7 +478,7 @@ object GoalService:
         goal: domain.automation.Goal.Slug,
         kind: domain.automation.Goal.LinkKind,
         ref: GoalLink.Ref
-    ): Boolean =
+    )(using WritePermit): Boolean =
       val before =
         state.getAndUpdate(
           _.modify(_.links)
@@ -507,7 +508,7 @@ object GoalService:
     private def changeGoal(goal: domain.automation.Goal.Slug)(f: GoalRecord => GoalRecord): Unit =
       val _ =
         state.updateAndGet(_.modify(_.goals).using(gs => gs.get(key(goal)).fold(gs)(r => gs.updated(key(goal), f(r)))))
-    def setPlan(goal: domain.automation.Goal.Slug, planJson: BGoalRow.Plan): Unit =
+    def setPlan(goal: domain.automation.Goal.Slug, planJson: BGoalRow.Plan)(using WritePermit): Unit =
       val at = now
       changeGoal(goal)(
         _.modify(_.plan)
@@ -517,7 +518,7 @@ object GoalService:
           .modify(_.updatedAt)
           .setTo(at)
       )
-    def setBudget(goal: domain.automation.Goal.Slug, usd: Option[BigDecimal]): Unit =
+    def setBudget(goal: domain.automation.Goal.Slug, usd: Option[BigDecimal])(using WritePermit): Unit =
       val at = now
       changeGoal(goal)(_.modify(_.budgetUsd).setTo(usd).modify(_.updatedAt).setTo(at))
     private def view(r: GoalScheduleRecord): GoalSchedule =
@@ -545,7 +546,7 @@ object GoalService:
         enabled: GoalSchedule.Enabled,
         budgetUsd: Option[BigDecimal],
         next: Option[Instant]
-    ): Unit =
+    )(using WritePermit): Unit =
       val row = GoalScheduleRecord(
         GoalScheduleRecord.Goal(goal.value),
         kind,
@@ -559,7 +560,7 @@ object GoalService:
           case -1 => rs :+ row
           case i  => rs.updated(i, row)
       })
-    def removeSchedule(goal: domain.automation.Goal.Slug, kind: ScheduleKind): Boolean =
+    def removeSchedule(goal: domain.automation.Goal.Slug, kind: ScheduleKind)(using WritePermit): Boolean =
       state
         .getAndUpdate(_.modify(_.schedules).using(_.filterNot(r => r.goal.value == goal.value && r.kind == kind)))
         .schedules

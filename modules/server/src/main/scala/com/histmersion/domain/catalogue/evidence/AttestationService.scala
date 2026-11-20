@@ -13,6 +13,7 @@ import com.histmersion.api.Api
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.RowCount
 import com.histmersion.api.personal.UnreadPage
+import com.histmersion.util.database.WritePermit
 
 /** What attests a data point: an attestation names a source, a target (a finding, an event, an event's dating, a place,
   * an edge) and where in the source it is said (quote, offsets, page, IIIF region, CTS URN).
@@ -30,12 +31,12 @@ trait AttestationService:
   def get(id: Attestation.Id): Option[Attestation]
 
   /** A new attestation, with its id; the citekey and target are stored as given (checked by the caller). */
-  def create(in: Attestation.Put): Attestation
+  def create(in: Attestation.Put)(using WritePermit): Attestation
 
   /** Change the fields `p` names; the others stay. */
-  def patch(id: Attestation.Id, p: Attestation.Patch): Either[Api.Error, Attestation]
+  def patch(id: Attestation.Id, p: Attestation.Patch)(using WritePermit): Either[Api.Error, Attestation]
 
-  def delete(id: Attestation.Id): Boolean
+  def delete(id: Attestation.Id)(using WritePermit): Boolean
 
 object AttestationService:
 
@@ -62,15 +63,15 @@ object AttestationService:
     )
     def get(id: Attestation.Id): Option[Attestation] =
       db.read(AttestationRepo.get(AttestationRepo.AttestationId(id.value)))
-    def create(in: Attestation.Put): Attestation = db.transact(AttestationRepo.create(in))
-    def patch(id: Attestation.Id, p: Attestation.Patch): Either[Api.Error, Attestation] =
-      db.transact:
+    def create(in: Attestation.Put)(using WritePermit): Attestation = db.write(AttestationRepo.create(in))
+    def patch(id: Attestation.Id, p: Attestation.Patch)(using WritePermit): Either[Api.Error, Attestation] =
+      db.write:
         if !AttestationRepo.exists(AttestationRepo.AttestationId(id.value)) then Left(missing(id))
         else
           AttestationRepo.update(AttestationRepo.AttestationId(id.value), p)
           Right(AttestationRepo.get(AttestationRepo.AttestationId(id.value)).get)
-    def delete(id: Attestation.Id): Boolean =
-      db.transact(AttestationRepo.delete(AttestationRepo.AttestationId(id.value)))
+    def delete(id: Attestation.Id)(using WritePermit): Boolean =
+      db.write(AttestationRepo.delete(AttestationRepo.AttestationId(id.value)))
 
   /** The same rules over the shared in-memory state; ids are given in order, as the database's sequence gives them. */
   final class InMemory(state: AtomicReference[CatalogueState]) extends AttestationService:
@@ -95,7 +96,7 @@ object AttestationService:
 
     def get(id: Attestation.Id): Option[Attestation] = state.get.attestations.find(_.id == id)
 
-    def create(in: Attestation.Put): Attestation =
+    def create(in: Attestation.Put)(using WritePermit): Attestation =
       val after = state.updateAndGet { s =>
         val id = s.lastAttestationId.value + 1
         val a = Attestation(
@@ -119,7 +120,7 @@ object AttestationService:
       }
       after.attestations.last
 
-    def patch(id: Attestation.Id, p: Attestation.Patch): Either[Api.Error, Attestation] =
+    def patch(id: Attestation.Id, p: Attestation.Patch)(using WritePermit): Either[Api.Error, Attestation] =
       if get(id).isEmpty then Left(missing(id))
       else
         def patched(a: Attestation): Attestation =
@@ -148,7 +149,7 @@ object AttestationService:
         val after = state.updateAndGet(_.modify(_.attestations).using(_.map(a => if a.id == id then patched(a) else a)))
         Right(after.attestations.find(_.id == id).get)
 
-    def delete(id: Attestation.Id): Boolean =
+    def delete(id: Attestation.Id)(using WritePermit): Boolean =
       val had = get(id).isDefined
       val _ = state.updateAndGet(_.modify(_.attestations).using(_.filterNot(_.id == id)))
       had

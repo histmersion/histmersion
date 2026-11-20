@@ -11,6 +11,7 @@ import hearth.kindlings.optics.syntax.*
 
 import java.util.concurrent.atomic.AtomicReference
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.database.WritePermit
 
 /** The refined types of the Wikidata sites on the map (those a finding or a picture is placed at): which are still to
   * be asked, and what each was found to be.
@@ -28,7 +29,7 @@ trait SiteTypeService:
   def countSitesToType(refresh: SiteTypeService.Refresh, before: Option[DeepTime.SignedYear]): RowCount
 
   /** Record the refined types (`None` = asked, none of the curated classes), asked now. */
-  def setSiteTypes(types: List[(DPlace.Id, Option[SiteTypes.SiteType.Id])]): Unit
+  def setSiteTypes(types: List[(DPlace.Id, Option[SiteTypes.SiteType.Id])])(using WritePermit): Unit
 
 object SiteTypeService:
   type Refresh = Refresh.T
@@ -48,8 +49,8 @@ object SiteTypeService:
         )
     def countSitesToType(refresh: Refresh, before: Option[DeepTime.SignedYear]): RowCount =
       db.read(SiteTypeRepo.countSitesToType(SiteTypeRepo.Refresh(refresh.value), before))
-    def setSiteTypes(types: List[(DPlace.Id, Option[SiteTypes.SiteType.Id])]): Unit =
-      db.transact(SiteTypeRepo.setSiteTypes(types.map((id, t) => id -> t.map(x => PlaceRepo.SiteType(x.value)))))
+    def setSiteTypes(types: List[(DPlace.Id, Option[SiteTypes.SiteType.Id])])(using WritePermit): Unit =
+      db.write(SiteTypeRepo.setSiteTypes(types.map((id, t) => id -> t.map(x => PlaceRepo.SiteType(x.value)))))
 
   /** The same rules over the shared in-memory state; `now` is the time a site is asked at (epoch ms). */
   final class InMemory(state: AtomicReference[CatalogueState], now: () => HeldSite.CheckedAt) extends SiteTypeService:
@@ -87,7 +88,7 @@ object SiteTypeService:
     def countSitesToType(refresh: Refresh, before: Option[DeepTime.SignedYear]): RowCount =
       RowCount(state.get.sites.count(toType(refresh, before)))
 
-    def setSiteTypes(types: List[(DPlace.Id, Option[SiteTypes.SiteType.Id])]): Unit =
+    def setSiteTypes(types: List[(DPlace.Id, Option[SiteTypes.SiteType.Id])])(using WritePermit): Unit =
       val at = now()
       val typed = types.map((id, t) => HeldSite.Id(id.value) -> t).toMap
       val _ = state.updateAndGet(

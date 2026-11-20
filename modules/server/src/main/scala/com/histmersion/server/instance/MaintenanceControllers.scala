@@ -6,7 +6,7 @@ import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.api.Write
-import com.histmersion.util.database.{Db, Migrate}
+import com.histmersion.util.database.{Db, Migrate, WritePermit}
 import com.histmersion.domain.library.search.QueryAccess
 import com.histmersion.server.Deps
 import com.histmersion.util.data.backup.{BackupJobs, BackupService, PreparedBackup}
@@ -134,7 +134,9 @@ final class MaintenanceControllers(
       _ <- if req.force.value || before.value == 0 then Right(()) else Left(backups.refusal(before))
     yield (archive, before)
 
-  private def restoreNow(req: RestoreRequest, quiet: WriteGate.Quiet): Either[Api.Error, RestoreResult] =
+  private def restoreNow(req: RestoreRequest, quiet: WriteGate.Quiet)(using
+      WritePermit
+  ): Either[Api.Error, RestoreResult] =
     for
       (archive, before) <- forced(req)
       r <- backups.restore(archive)

@@ -9,6 +9,7 @@ import com.histmersion.api.checks.Lint.{LintFixResult, LintItem, LintRuleReport,
 import com.histmersion.config.AppConfig
 import com.histmersion.util.data.DataOwner
 import com.histmersion.util.database.Transactor
+import com.histmersion.util.database.TestPermits.given
 import com.augustnagro.magnum.DbCon
 import com.histmersion.api.library.Citekey
 import com.histmersion.util.time.SystemTimer
@@ -79,7 +80,7 @@ class CheckRunnerSuite extends munit.FunSuite:
   )
   private val runner = CheckRunner(registered, order, NoDatabase)
   private lazy val context =
-    CheckContext(AppConfig.load(), null, _ => (_, _, _) => Nil, (_, _, _) => true, new SystemTimer)
+    CheckContext(AppConfig.load(), null, _ => (_, _, _) => Nil, new GuardedWrite((_, _, _) => true), new SystemTimer)
 
   test("the rules in the stated order, an unordered one last"):
     assertEquals(runner.names, List("a", "b", "c", "z"))

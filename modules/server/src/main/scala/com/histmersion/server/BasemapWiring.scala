@@ -25,6 +25,7 @@ import java.net.http.HttpClient
 import java.time.{Duration, Instant}
 import com.histmersion.api.Api
 import com.histmersion.util.jobs.Job
+import com.histmersion.util.database.WritePermit
 
 /** The base map wired into the server: its store, the configuration read at each use, its fetch run as a background
   * job, the sea floor the settings choose, and the providers' client under the product's outbound-HTTP policy.
@@ -99,7 +100,7 @@ object BasemapWiring:
 
     def running: Option[BasemapJobs.Description] = slot.current.map(w => BasemapJobs.Description(w.value))
 
-    def guarded[A](op: BasemapJobs.Operation)(body: => Either[Api.Error, A]): Either[Api.Error, A] =
+    def guarded[A](op: BasemapJobs.Operation)(body: WritePermit ?=> Either[Api.Error, A]): Either[Api.Error, A] =
       deps.maintenance.guard(WriteGate.OperationName(op.value))(body)
 
     def busy(what: BasemapJobs.Target, busyCode: Option[Api.Error.Code]): Api.Error =
@@ -112,7 +113,7 @@ object BasemapWiring:
         busyCode: Option[Api.Error.Code]
     )(
         body: (BasemapJobs.Target => Unit) => Either[Problem, BasemapJobs.Description]
-    ): Either[Api.Error, JobInfo] =
+    )(using WritePermit): Either[Api.Error, JobInfo] =
       BackgroundJob.start(
         deps.ds,
         deps.maintenance.workers,

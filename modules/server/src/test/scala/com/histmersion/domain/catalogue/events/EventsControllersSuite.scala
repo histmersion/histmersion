@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.catalogue.EventEntry
 import com.histmersion.api.catalogue.EventSummary
+import com.histmersion.util.database.TestPermits.given
 
 /** The events' controllers over the in-memory service: an old id resolved before a read or a write, the scale, the
   * geometry and the Wikidata item checked before a write, the card added to what is read, the rename's rule and a held

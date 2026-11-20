@@ -22,6 +22,7 @@ import java.util.UUID
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.db.DbSuite
 import com.histmersion.db.TestDb
+import com.histmersion.util.database.TestPermits.given
 
 /** The contract a service of the person's keeps: it behaves the same in memory and in the database (a scratch database
   * of the suite's own, gated on HISTMERSION_TEST_DB_URL) — each scenario runs over both, the collection's sources
@@ -78,7 +79,7 @@ abstract class PersonalServiceContract(prefix: String) extends DbSuite:
   private def onDatabase(name: String): World =
     val db = Transactor(scratch(name))
     val items = Referables(List(SourceReferable(db)))
-    def run(f: DbCon ?=> Unit): Unit = db.transact(f)
+    def run(f: DbCon ?=> Unit): Unit = db.write(f)
     World(
       BookmarkService(db, items),
       NoteService(db, items),

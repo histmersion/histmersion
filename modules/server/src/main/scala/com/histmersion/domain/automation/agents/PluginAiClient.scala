@@ -15,6 +15,7 @@ import sttp.ai.core.model.{AIModel, Capability}
 import sttp.client4.Backend
 import sttp.shared.Identity
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.database.WritePermit
 
 /** A PLUGIN's AI provider as the engine sees it (docs/research-plugins.md §22): sttp-ai's own agent loop over a backend
   * that asks the provider for ONE turn at a time. So the host keeps everything but the model call — the tools (run in
@@ -23,7 +24,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 final class PluginAiClient(val model: ModelRef, provider: AiProvider, http: AiHttp) extends LlmClient:
 
-  def run[Out](call: LlmCall[Out]): AgentResult[Either[AgentFailure, Out]] =
+  def run[Out](call: LlmCall[Out])(using WritePermit): AgentResult[Either[AgentFailure, Out]] =
     val builder =
       AgentBuilder[Identity, PluginModel.type](conf => PluginAiClient.Turns(model, provider, http, conf))(using
         sttp.monad.IdentityMonad

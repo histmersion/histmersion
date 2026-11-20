@@ -6,6 +6,7 @@ import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.api.ItemKind as MarkKind
 import com.histmersion.domain.ItemKey
 import com.histmersion.api.personal.Note
+import com.histmersion.util.database.TestPermits.given
 
 /** A person's notes, in memory and in the database. */
 class NoteServiceContractSuite extends PersonalServiceContract("note"):

@@ -13,6 +13,7 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.api.library.Source
 import io.github.iltotore.iron.constraint.any.Pure
 import scala.util.control.NonFatal
+import com.histmersion.util.database.WritePermit
 
 /** Seed the library from a folder of `wiki/sources/` notes. Idempotent (a put by citekey).
   *
@@ -24,10 +25,12 @@ import scala.util.control.NonFatal
   */
 final class SeedImport(
     sources: SourceService,
-    addFigures: (Citekey, List[NewFigure]) => AssetService.AddedFigureCount
+    addFigures: (Citekey, List[NewFigure]) => WritePermit ?=> AssetService.AddedFigureCount
 ):
 
-  def run(folder: SeedFolder, force: SeedImport.RunForce, assetBytes: SeedFolder.MaxBytes): SeedResult =
+  def run(folder: SeedFolder, force: SeedImport.RunForce, assetBytes: SeedFolder.MaxBytes)(using
+      WritePermit
+  ): SeedResult =
     val stored =
       if force.value then Map.empty[Citekey, CitekeyMillis.Millis] else sources.updatedAtMillis
     val outcomes = folder.notes.map { listed =>

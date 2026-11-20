@@ -40,6 +40,7 @@ import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.api.catalogue.Year
 import com.histmersion.domain.PlanGoal
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.database.WritePermit
 
 /** `plan-goal <goal>` (docs/research-embedded-agents.md §7 P3, §14): the planner proposes sub-goals, search queries and
   * candidate works for one goal, as a typed answer. Code checks the vocabulary (slugs, DOIs, caps), looks every DOI up
@@ -68,10 +69,10 @@ final class PlanGoalPipeline(
   private def taken(s: domain.automation.Goal.Slug): Boolean =
     Transactor(ds).read(GoalRepo.exists(s)) || Transactor(ds).read(GoalRepo.renamedTo(s)).isDefined
 
-  def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
+  def run(ctx: RunCtx)(using WritePermit): Either[Halt, PipelineDef.Summary] =
     DomainGoal.Slug.parse(ctx.run.target.value).left.map(Halt.failed).flatMap(runFor(ctx, _))
 
-  private def runFor(ctx: RunCtx, slug: DomainGoal.Slug): Either[Halt, PipelineDef.Summary] =
+  private def runFor(ctx: RunCtx, slug: DomainGoal.Slug)(using WritePermit): Either[Halt, PipelineDef.Summary] =
     for
       loaded <- ctx.code[Loaded](AgentRepo.StepRecord.Name("load"))(load(slug))
       proposed <- ctx.llm[PlanAnswer, Proposed](
@@ -159,7 +160,7 @@ final class PlanGoalPipeline(
   /** Every DOI through the discover path (OpenAlex/Crossref). Offline, every work is dropped — a person never sees a
     * DOI code could not check.
     */
-  private def verify(ctx: RunCtx, p: Proposed, slug: DomainGoal.Slug): Plan =
+  private def verify(ctx: RunCtx, p: Proposed, slug: DomainGoal.Slug)(using WritePermit): Plan =
     val plan = PlanGoal.verify(p, slug, host.workLookup)
     plan.dropped.foreach(d => ctx.warn(s"verify: ${d.value}"))
     plan
@@ -174,7 +175,9 @@ final class PlanGoalPipeline(
     * queued for acquisition and linked by item. A rejected plan changes nothing. Idempotent (a re-run after a crash
     * finds what it made: goals are upserted, links are keyed, a DOI already in the queue is not added again).
     */
-  private def apply(ctx: RunCtx, slug: DomainGoal.Slug, plan: Plan, d: Decided): Either[Problems, Applied] =
+  private def apply(ctx: RunCtx, slug: DomainGoal.Slug, plan: Plan, d: Decided)(using
+      WritePermit
+  ): Either[Problems, Applied] =
     if !d.approved.value then
       log(
         ctx,
@@ -210,7 +213,9 @@ final class PlanGoalPipeline(
         )
       )
 
-  private def applyApproved(ctx: RunCtx, slug: DomainGoal.Slug, plan: Plan): Either[Problems, Applied] =
+  private def applyApproved(ctx: RunCtx, slug: DomainGoal.Slug, plan: Plan)(using
+      WritePermit
+  ): Either[Problems, Applied] =
     val parent = host.goal(slug).toOption
     val created = plan.subGoals.filter { g =>
       DomainGoal.Slug.either(g.slug.value) match

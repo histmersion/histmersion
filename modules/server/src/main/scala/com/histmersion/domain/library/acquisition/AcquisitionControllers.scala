@@ -72,6 +72,7 @@ import com.histmersion.domain.AcquireMatch
 import com.histmersion.util.jobs.Job
 import com.histmersion.plugin.{FetchedFile, WorkKey}
 import com.histmersion.domain.AcquireRecheck
+import com.histmersion.util.database.WritePermit
 
 /** Every acquisition & assessment operation (stream 2.6): discovery, a paper's references and follow-ups, its
   * assessment, the Retraction Watch mirror, an ingest by identifier, archive.org's import, the goals' candidates. REST
@@ -196,11 +197,11 @@ final class AcquisitionControllers(
   /** Read a goal's watches from their watermarks and store what is new (no model). */
   def sweepCandidates(r: CandidateSweep.Request): Either[Api.Error, CandidateSweep] =
     goalSlug(r.goal.value.trim).flatMap { g =>
-      if r.dryRun.value then search.sweep(g, dryRun = CandidateSearch.SweepDryRun(true))
-      else
-        maintenance.guard(WriteGate.OperationName("candidates/sweep"))(
-          search.sweep(g, dryRun = CandidateSearch.SweepDryRun(false))
-        )
+      // a dry run runs the same sweep (it stores nothing): under the gate too
+      maintenance.guard(WriteGate.OperationName("candidates/sweep"))(
+        if r.dryRun.value then search.sweep(g, dryRun = CandidateSearch.SweepDryRun(true))
+        else search.sweep(g, dryRun = CandidateSearch.SweepDryRun(false))
+      )
     }
 
   def markCandidates(m: CandidateMark): Either[Api.Error, CandidateMarked] =
@@ -328,13 +329,16 @@ final class AcquisitionControllers(
                 t.citekey match
                   case None      => RowCount(0)
                   case Some(src) =>
-                    sources.addEdges(
-                      resolved
-                        .flatMap(_.citekey)
-                        .distinct
-                        .filter(_.value != src.value)
-                        .map(Edge(com.histmersion.api.library.Citekey(src.value), _, Edge.Kind.References)),
-                      Caller.Local
+                    // only `apply` writes: under the maintenance gate, the listing alone stays a read
+                    maintenance.writing(
+                      sources.addEdges(
+                        resolved
+                          .flatMap(_.citekey)
+                          .distinct
+                          .filter(_.value != src.value)
+                          .map(Edge(com.histmersion.api.library.Citekey(src.value), _, Edge.Kind.References)),
+                        Caller.Local
+                      )
                     )
             RefsResult(
               RefsResult.Target(req.id.value),
@@ -375,7 +379,7 @@ final class AcquisitionControllers(
   // ── assess ──────────────────────────────────────────────────────────────────────────────────
 
   /** `store = false` (an agent's dry run, #992): the verdict is computed but not recorded. */
-  private def assessNow(req: AssessRequest, store: Boolean = true): Either[Api.Error, Assessment] =
+  private def assessNow(req: AssessRequest, store: Boolean = true)(using WritePermit): Either[Api.Error, Assessment] =
     target(req.id.value).flatMap { t =>
       t.doi.toRight(err(noDoi(Problem.Field(s"'${req.id}'"), Problem.Invalid.Purpose.Assessment))).map { doi =>
         val rw = assessments.retractionsFor(doi)
@@ -460,21 +464,24 @@ final class AcquisitionControllers(
     if !rwRunning.compareAndSet(false, true) then Right(retractionsStatus)
     else
       rwError.set(None)
-      // on the generation (database, clients) the request was pinned to
-      val work = pins.carry(try
-        retractionWatch.csv() match
-          case Left(e) =>
-            scribe.warn(s"acquire: Retraction Watch refresh failed — ${e.sentence}")
-            rwError.set(Some(e))
-          case Right(csv) =>
-            val n = assessments.replaceRetractionWatch(
-              Acquire.parseRetractionWatch(csv.value)
-            )
-            scribe.info(s"acquire: Retraction Watch refreshed — $n row(s)")
-      catch
-        case NonFatal(e) =>
-          rwError.set(Some(ProblemLog.unexpected(e, Problem.Where("the Retraction Watch refresh"))))
-      finally rwRunning.set(false))
+      // on the generation (database, clients) the request was pinned to, under the permit of the worker unit it runs
+      // in (never the request's: the request has answered by then)
+      val work = pins.carry(maintenance.workers.unit {
+        try
+          retractionWatch.csv() match
+            case Left(e) =>
+              scribe.warn(s"acquire: Retraction Watch refresh failed — ${e.sentence}")
+              rwError.set(Some(e))
+            case Right(csv) =>
+              val n = assessments.replaceRetractionWatch(
+                Acquire.parseRetractionWatch(csv.value)
+              )
+              scribe.info(s"acquire: Retraction Watch refreshed — $n row(s)")
+        catch
+          case NonFatal(e) =>
+            rwError.set(Some(ProblemLog.unexpected(e, Problem.Where("the Retraction Watch refresh"))))
+        finally rwRunning.set(false)
+      })
       maintenance.workers.detached(Quiescent.Name("retraction-watch-refresh"))(() => work.run())
       Right(retractionsStatus.modify(_.running).setTo(RetractionsUpdate.Running(true)))
 
@@ -491,7 +498,7 @@ final class AcquisitionControllers(
 
   // ── followups ───────────────────────────────────────────────────────────────────────────────
 
-  private def followupsNow(req: FollowupsRequest): Either[Api.Error, FollowupsResult] =
+  private def followupsNow(req: FollowupsRequest)(using WritePermit): Either[Api.Error, FollowupsResult] =
     target(req.id.value).flatMap { t =>
       t.doi
         .toRight(err(noDoi(Problem.Field(s"'${req.id}'"), Problem.Invalid.Purpose.Citations)))
@@ -570,7 +577,7 @@ final class AcquisitionControllers(
     * Every step is reported, including the ones that failed, because "no OA copy" is a normal outcome that the user
     * answers with a manual drop-in.
     */
-  private def ingestNow(req: Ingest.Request, path: IngestPath): Either[Api.Error, Ingest.Report] =
+  private def ingestNow(req: Ingest.Request, path: IngestPath)(using WritePermit): Either[Api.Error, Ingest.Report] =
     Ident.parse(Ident.Written(req.id.value)).left.map(e => err(e)).flatMap { ident =>
       val steps = List.newBuilder[Ingest.Step]
 
@@ -622,7 +629,7 @@ final class AcquisitionControllers(
     }
 
   /** The acquisition item that names `doi`, else a new browser download with `text`; and whether it is new. */
-  private def acquireOnce(doi: Doi, text: Queue.QueueItem.Text): (Queue.QueueItem.Id, Boolean) =
+  private def acquireOnce(doi: Doi, text: Queue.QueueItem.Text)(using WritePermit): (Queue.QueueItem.Id, Boolean) =
     queues.naming(Queue.Kind.Acquire, doi).headOption match
       case Some(existing) => (existing.id, false)
       case None           =>
@@ -645,7 +652,7 @@ final class AcquisitionControllers(
       steps: scala.collection.mutable.Builder[Ingest.Step, List[Ingest.Step]],
       refetch: Boolean,
       path: IngestPath
-  ): Either[Api.Error, Ingest.Report] = {
+  )(using WritePermit): Either[Api.Error, Ingest.Report] = {
     // an existing source WITH its original keeps it (and its body) unless asked to refetch; one
     // without (metadata only, e.g. created when no OA copy was found) is fetched and converted
     val original =
@@ -876,7 +883,7 @@ final class AcquisitionControllers(
       item: ArchiveItem,
       file: ArchiveFile,
       req: ArchiveImportRequest
-  ): Either[Api.Error, Ingest.Report] =
+  )(using WritePermit): Either[Api.Error, Ingest.Report] =
     val steps = List.newBuilder[Ingest.Step]
     val authors = item.creator.map(c => com.histmersion.api.library.AuthorName(c.value))
     val title = item.title.map(t => com.histmersion.api.library.Title(t.value))
@@ -966,7 +973,7 @@ final class AcquisitionControllers(
   private def setStatus(
       citekey: Citekey,
       status: domain.library.Source.Status
-  ): Either[Api.Error, Source.UpdatedAt] =
+  )(using WritePermit): Either[Api.Error, Source.UpdatedAt] =
     sources.patch(
       citekey,
       Source.Patch(metadata = Some(MetadataPatch(status = Some(status.transformInto[Source.Status])))),

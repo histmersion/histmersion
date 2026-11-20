@@ -27,6 +27,7 @@ import com.histmersion.config.ServerConfig
 import com.histmersion.config.ConverterConfig
 import com.histmersion.api.automation.Activity
 import com.histmersion.config.Limits
+import com.histmersion.util.database.TestPermits.given
 
 /** The whole §1.8 path over real HTTP, with the converter STUBBED: upload → job → body + assets → the bytes served with
   * the right headers → the figure rendered as a lazy `<img>` → the absolute URLs MCP hands out. Skipped without

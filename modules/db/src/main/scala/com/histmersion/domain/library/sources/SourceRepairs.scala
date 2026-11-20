@@ -9,6 +9,7 @@ import com.histmersion.api.maintenance.ReindexResult
 import com.histmersion.util.ocr.Chunker
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.database.WritePermit
 
 /** The library's repairs that run as several transactions: the re-chunk of the corpus and of the stale sources (one
   * transaction per source, so a large corpus never sits in one) and the safe fixes of `lint --fix`.
@@ -29,12 +30,12 @@ final class SourceRepairs(db: Transactor):
       after: Option[Citekey] = None,
       maxSources: Option[SourceRepairs.MaxSources] = None,
       maxChars: SourceRepairs.MaxChars = SourceRepairs.MaxChars(Long.MaxValue)
-  ): ReindexResult =
+  )(using WritePermit): ReindexResult =
     val pending = db.read(SourceRepo.bodiesAfter(after))
     val take = SourceRepairs.budget(pending, maxChars).take(maxSources.map(_.value).getOrElse(Int.MaxValue)) match
       case Nil   => pending.take(1).map(_._1).toList
       case batch => batch
-    val counts = take.map(ck => db.transact(SourceRepo.rechunk(ck, chunkChars)))
+    val counts = take.map(ck => db.write(SourceRepo.rechunk(ck, chunkChars)))
     ReindexResult(
       ReindexResult.Sources(take.size),
       ReindexResult.Chunks(counts.map(_.value).sum),
@@ -43,9 +44,9 @@ final class SourceRepairs(db: Transactor):
     )
 
   /** Rebuild every chunk in one go (tests, offline tools) — no budget, so it can run for minutes. */
-  def reindexAll(chunkChars: Chunker.ChunkMaxChars): ReindexResult =
+  def reindexAll(chunkChars: Chunker.ChunkMaxChars)(using WritePermit): ReindexResult =
     @annotation.tailrec
-    def go(after: Option[Citekey], sources: Int, chunks: Int): ReindexResult =
+    def go(after: Option[Citekey], sources: Int, chunks: Int)(using WritePermit): ReindexResult =
       val r = reindexChunks(chunkChars, after)
       val (s, c) = (sources + r.sources.value, chunks + r.chunks.value)
       if r.remaining.value > 0 && r.lastCitekey.isDefined then
@@ -59,7 +60,9 @@ final class SourceRepairs(db: Transactor):
     * and always does at least one source, so repeated calls make progress. Returns the same shape as `/api/reindex`,
     * with `remaining` = stale sources still untouched.
     */
-  def reindexStale(chunkChars: Chunker.ChunkMaxChars, maxChars: SourceRepairs.MaxChars): ReindexResult =
+  def reindexStale(chunkChars: Chunker.ChunkMaxChars, maxChars: SourceRepairs.MaxChars)(using
+      WritePermit
+  ): ReindexResult =
     val pending = db.read(SourceCheckRepo.stale())
     val take = SourceRepairs.budget(pending.map((ck, n) => (ck, SourceRepo.BodyChars(n.value))), maxChars) match
       case Nil   => pending.take(1).map(_._1).toList
@@ -67,7 +70,7 @@ final class SourceRepairs(db: Transactor):
     // Best effort, one transaction per source: another writer may re-chunk or remove a source between
     // the scan and the rewrite, and a bulk repair that aborts on one row is worse than one that keeps
     // going. A skipped source stays stale, so the next `lint` reports it again — nothing is hidden.
-    val done = take.map(ck => scala.util.Try(db.transact(SourceRepo.rechunk(ck, chunkChars))))
+    val done = take.map(ck => scala.util.Try(db.write(SourceRepo.rechunk(ck, chunkChars))))
     done.zip(take).foreach {
       case (scala.util.Failure(e), ck) => scribe.warn(s"reindex of ${ck.value} skipped: ${e.getMessage}")
       case _                           => ()
@@ -83,8 +86,8 @@ final class SourceRepairs(db: Transactor):
   // ── the safe fixes of `lint --fix`, each as the part of the result it reports ─────────────────
 
   /** `unresolved-short-citekeys`: unify the unambiguous short edge targets. */
-  def resolveEdgesFix(): LintFixResult =
-    val resolved = db.transact(SourceRepo.resolveEdges())
+  def resolveEdgesFix()(using WritePermit): LintFixResult =
+    val resolved = db.write(SourceRepo.resolveEdges())
     LintFixResult(
       List(LintFixResult.Applied(s"resolve-edges: ${resolved.value} edge target(s) rewritten")),
       LintFixResult.EdgesResolved(resolved.value),
@@ -94,7 +97,7 @@ final class SourceRepairs(db: Transactor):
     )
 
   /** `stale-chunks`: re-chunk a bounded batch of the sources with a body and no chunks. */
-  def reindexFix(cfg: AppConfig): LintFixResult =
+  def reindexFix(cfg: AppConfig)(using WritePermit): LintFixResult =
     val r = reindexStale(
       Chunker.ChunkMaxChars(cfg.limits.chunkChars.value),
       SourceRepairs.MaxChars(cfg.limits.reindexChars.value)
@@ -109,9 +112,9 @@ final class SourceRepairs(db: Transactor):
     )
 
   /** `finding-geocode`: move the findings the rule lists to the place the current geocoder chooses. */
-  def regeocodeFix(cfg: AppConfig): LintFixResult =
+  def regeocodeFix(cfg: AppConfig)(using WritePermit): LintFixResult =
     val s = SourceCheckRepo.geocodeOf(cfg)
-    val moved = db.transact(
+    val moved = db.write(
       FindingPlacement.move(
         FindingPlacement.movesIn(s),
         FindingPlacement.Implementation.ToleranceKm(s.toleranceKm.value)
@@ -131,9 +134,9 @@ final class SourceRepairs(db: Transactor):
     )
 
   /** `finding-unplaced`: give the findings the rule lists the point of the place they name. */
-  def placeFix(cfg: AppConfig): LintFixResult =
+  def placeFix(cfg: AppConfig)(using WritePermit): LintFixResult =
     val s = SourceCheckRepo.geocodeOf(cfg)
-    val placed = db.transact(
+    val placed = db.write(
       FindingPlacement.place(
         FindingPlacement.placementsIn(s),
         FindingPlacement.Implementation.ToleranceKm(s.toleranceKm.value)

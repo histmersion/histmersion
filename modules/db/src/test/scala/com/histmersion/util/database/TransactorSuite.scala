@@ -4,6 +4,7 @@ package util.database
 import com.augustnagro.magnum.sql
 import com.histmersion.config.{AppConfig, DbConfig}
 import com.histmersion.db.{DbSuite, TestDb}
+import com.histmersion.util.database.TestPermits.given
 
 class TransactorSuite extends DbSuite:
   private val testDb = TestDb.url
@@ -12,16 +13,16 @@ class TransactorSuite extends DbSuite:
 
   override def beforeAll(): Unit =
     if testDb.isDefined then
-      db.transact(sql"CREATE TABLE IF NOT EXISTS transactor_suite (n int NOT NULL)".update.run())
-      db.transact(sql"DELETE FROM transactor_suite".update.run())
+      db.write(sql"CREATE TABLE IF NOT EXISTS transactor_suite (n int NOT NULL)".update.run())
+      db.write(sql"DELETE FROM transactor_suite".update.run())
 
   override protected def afterSuite(): Unit =
-    if testDb.isDefined then db.transact(sql"DROP TABLE IF EXISTS transactor_suite".update.run())
+    if testDb.isDefined then db.write(sql"DROP TABLE IF EXISTS transactor_suite".update.run())
 
   private def count(): Int = db.read(sql"SELECT count(*)::int FROM transactor_suite".query[Int].run().head)
 
   test("the writes of a transaction are seen together once it ends"):
-    db.transact {
+    db.write {
       sql"INSERT INTO transactor_suite VALUES (1)".update.run()
       sql"INSERT INTO transactor_suite VALUES (2)".update.run()
     }
@@ -29,7 +30,7 @@ class TransactorSuite extends DbSuite:
 
   test("an exception rolls every write of its transaction back"):
     val before = count()
-    intercept[IllegalStateException](db.transact {
+    intercept[IllegalStateException](db.write {
       sql"INSERT INTO transactor_suite VALUES (3)".update.run()
       throw IllegalStateException("refused")
     })

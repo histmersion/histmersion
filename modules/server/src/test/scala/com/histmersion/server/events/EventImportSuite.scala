@@ -51,6 +51,7 @@ import com.histmersion.domain.DeepTime
 import com.histmersion.api.catalogue.EventSummary
 import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.domain.catalogue.events.EventSelection
+import com.histmersion.util.database.TestPermits.given
 
 /** #1449 end to end against FAKE catalogues (recorded answers, no socket) and a real PostGIS (HISTMERSION_TEST_DB_URL;
   * skipped otherwise): a dry run stores nothing; GVP then NOAA merge the same eruption into one event; a second run

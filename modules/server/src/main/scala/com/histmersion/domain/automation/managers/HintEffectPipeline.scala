@@ -7,7 +7,7 @@ import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.database.Transactor
 
-import com.augustnagro.magnum.{connect, transact}
+import com.augustnagro.magnum.connect
 
 import com.histmersion.domain.automation.agents.{
   AgentRepo,
@@ -38,6 +38,7 @@ import com.histmersion.util.jobs.Job
 import com.histmersion.api.automation.Goal
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Managers
+import com.histmersion.util.database.WritePermit
 
 /** `hint-effect <manager>` (docs/research-process-managers.md §3.6, phase 3): a person's hint, in words, read by the
   * planner model (the `hint-reader` definition: no tools — the hint, the manager's items and its settings are given as
@@ -57,7 +58,7 @@ final class HintEffectPipeline(
   val pipeline: Pipeline = Pipeline.HintEffect
   import HintEffectPipeline.*
 
-  def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
+  def run(ctx: RunCtx)(using WritePermit): Either[Halt, PipelineDef.Summary] =
     val mid = ManagerInfo.Id(ctx.run.target.value)
     for
       loaded <- ctx.code[Loaded](AgentRepo.StepRecord.Name("load"))(
@@ -140,7 +141,7 @@ final class HintEffectPipeline(
   /** The proposal, through the write gate: an open `hint-effect` approval about the manager (and the manager's event).
     * Nothing passed or asked for: nothing is recorded.
     */
-  private def record(ctx: RunCtx, l: Loaded, p: Proposed): Either[Problems, String] =
+  private def record(ctx: RunCtx, l: Loaded, p: Proposed)(using WritePermit): Either[Problems, String] =
     p.effect match
       case None =>
         Right(if p.problems.isEmpty then "the hint asks for no structured action"
@@ -166,7 +167,7 @@ final class HintEffectPipeline(
             ApprovalQuery.Subject(l.managerId.value),
             ApprovalService.Payload(hp.asJson.noSpaces)
           )
-          transact(ds)(
+          Transactor(ds).write(
             ManagerRepo.event(
               l.managerId,
               None,

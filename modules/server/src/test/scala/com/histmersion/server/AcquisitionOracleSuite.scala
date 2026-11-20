@@ -52,6 +52,7 @@ import com.histmersion.domain.library.acquisition.SttpHttp
 import com.histmersion.pluginhost.PolicyHttp
 import com.histmersion.domain.library.acquisition.HttpPlugin
 import com.histmersion.config.ServerConfig
+import com.histmersion.util.database.TestPermits.given
 
 /** What acquisition, ingest and the collections answer, recorded on the code before they moved into the library's
   * domain. A server on its own scratch database, every upstream a fixture on a loopback port (never the network), the

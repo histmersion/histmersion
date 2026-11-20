@@ -198,7 +198,8 @@ def dbTestGroups(
   Test / fork := true,
   Test / parallelExecution := true,
   Test / testForkedParallel := false,
-  Test / javaOptions ++= Seq(s"-Xmx$heap", "-XX:+UseParallelGC", "-Xss4m"),
+  // uncached: sbt 2's disk cache keys the task by its code, not by `heap`, so every module got the first one's (1g)
+  Test / javaOptions := Def.uncached((Test / javaOptions).value ++ Seq(s"-Xmx$heap", "-XX:+UseParallelGC", "-Xss4m")),
   Test / testGrouping := Def.uncached {
     val tests = (Test / definedTests).value
     val opts = (Test / forkOptions).value

@@ -12,6 +12,7 @@ import com.histmersion.domain.catalogue.Event
 import com.histmersion.api.catalogue.Attestation
 import com.histmersion.api.catalogue.EventSummary
 import com.histmersion.api.library.Citekey
+import com.histmersion.util.database.TestPermits.given
 
 /** The contract of the facts the leads and an event's card are computed from: the sources attesting an event (its own
   * first), and each event's lead — its tier, its catalogue's size, the sources proposed and confirmed — the catalogue's

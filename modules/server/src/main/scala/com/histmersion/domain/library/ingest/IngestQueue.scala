@@ -74,7 +74,8 @@ final class IngestQueue(
     clock: Clock,
     ds: () => DataSource,
     pins: Pinning,
-    afterStore: Citekey => Option[IngestQueue.Note]
+    /** Asked on the job's thread, under the job's unit permit. */
+    afterStore: Citekey => WritePermit ?=> Option[IngestQueue.Note]
 ) extends Quiescent:
 
   /** Everything a queued job needs that is not in its row. Concurrent because the HTTP thread writes it and a worker
@@ -83,7 +84,7 @@ final class IngestQueue(
   private val pending = ConcurrentHashMap[Job.Id, IngestPending]()
 
   private val pool =
-    JobPool(ds(), JobPool.Parallelism(cfg().converter.parallelism.value), runJob, maintenance.workers, pins)
+    JobPool(ds(), JobPool.Parallelism(cfg().converter.parallelism.value), id => runJob(id), maintenance.workers, pins)
 
   val name: Quiescent.Name = Quiescent.Name("the OCR worker pool")
 
@@ -95,14 +96,15 @@ final class IngestQueue(
   /** After a restore: the uploads held for queued jobs are dropped with them, and every unfinished job of the restored
     * database is failed as cut short by the restore.
     */
-  def restored(): Unit =
+  def restored()(using WritePermit): Unit =
     pending.clear()
     val n = pool.restored(Problem.Run.Restored)
     if n != RowCount(0) then scribe.info(s"restore: $n unfinished job(s) of the restored database marked failed")
 
   /** Started by the composition root, after construction. Returns the jobs a restart had to fail. */
   def start(): RowCount =
-    val n = pool.start()
+    // an operation under the gate (not a unit: the pool's threads it starts must not inherit a unit's epoch)
+    val n = maintenance.writing(pool.start())
     if n.value > 0 then scribe.warn(s"$n unfinished job(s) marked failed: ${JobState.Interrupted}")
     n
 
@@ -114,7 +116,9 @@ final class IngestQueue(
   def paused: Boolean = pool.isPaused
 
   /** Queue the conversion of the stored original `file`; the job as the caller is told of it. */
-  def enqueue(kind: Job.Kind, citekey: Citekey, sha: Sha256, file: Store.Key, params: Ingest.Params): Ingest.Accepted =
+  def enqueue(kind: Job.Kind, citekey: Citekey, sha: Sha256, file: Store.Key, params: Ingest.Params)(using
+      WritePermit
+  ): Ingest.Accepted =
     val job = jobs.create(kind, Some(citekey), Some(sha), params.acquireItem.map(i => JobRow.AcquireItem(i.value)))
     val jobId = Job.Id.assume(job.id.value)
     val _ = pending.put(jobId, IngestPending(params, citekey, file, sha, kind))
@@ -182,7 +186,7 @@ final class IngestQueue(
         }
       }
 
-  private def runJob(id: Job.Id): Unit =
+  private def runJob(id: Job.Id)(using WritePermit): Unit =
     Option(pending.remove(id)) match
       case None =>
         val _ = jobs.transition(
@@ -239,7 +243,7 @@ final class IngestQueue(
                 )
 
   /** [[afterStore]], whose failure is a note on the job, never a failed job. */
-  private def afterStoreSafely(citekey: Citekey): List[String] =
+  private def afterStoreSafely(citekey: Citekey)(using WritePermit): List[String] =
     try afterStore(citekey).toList.map(_.value)
     catch
       case e: InterruptedException => throw e
@@ -270,7 +274,7 @@ final class IngestQueue(
       jobId: Job.Id,
       job: IngestPending,
       doc: ConvertedDoc
-  ): Either[String, AssetService.ReplacedFigureCount] =
+  )(using WritePermit): Either[String, AssetService.ReplacedFigureCount] =
     val citekey = job.citekey
     // NUL bytes occur in OCR output and Postgres `text` rejects them
     val body = Source.OcrMarkdown(doc.markdown.value.filterNot(_.toInt == 0))
@@ -304,7 +308,7 @@ final class IngestQueue(
   /** Tick `id` off as fulfilled by `citekey`, and say what happened for the job's progress line. It never fails the
     * job: the source is stored either way. An item deleted or ticked off by hand while the OCR ran is left as it is.
     */
-  private def tickOff(id: Ingest.Params.AcquireItem, citekey: Citekey, jobId: Job.Id): String =
+  private def tickOff(id: Ingest.Params.AcquireItem, citekey: Citekey, jobId: Job.Id)(using WritePermit): String =
     def warning(message: String): String =
       scribe.warn(s"$citekey is stored, but acquisition item $id could not be ticked off: $message")
       s"acquisition item $id NOT ticked off: $message"
@@ -331,7 +335,7 @@ final class IngestQueue(
     * that only resemble it ([[AcquireMatch.decide]]). One line per item, for the job's progress. Like [[tickOff]] it
     * never fails the job: the source is stored either way.
     */
-  private def matchAcquisitions(citekey: Citekey, jobId: Job.Id): List[String] =
+  private def matchAcquisitions(citekey: Citekey, jobId: Job.Id)(using WritePermit): List[String] =
     try
       sources.load(citekey).toList.flatMap { s =>
         val items = queues.list(Queue.Kind.Acquire, QueueScope.Open).toList

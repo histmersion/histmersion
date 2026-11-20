@@ -28,6 +28,8 @@ import com.histmersion.api.automation.AgentJobKinds
 import com.histmersion.db.TestDb
 import com.histmersion.config.DbConfig
 import com.histmersion.api.jobs.JobState
+import com.histmersion.util.database.TestPermits.given
+import com.histmersion.util.data.maintenance.WriteGate
 
 /** Pause, resume and cancel: the in-memory service, then a long background job on a test database (gated on
   * HISTMERSION_TEST_DB_URL) that stops at a part boundary and, resumed, does only the parts it had not done.
@@ -98,7 +100,10 @@ class JobControlServiceSuite extends DbSuite:
     assertEquals(asked.get, List((A1, JobAction.Cancel)))
 
   test("the controller: an unknown action is a 400 naming the three"):
-    val c = JobControlControllers(JobControlService.InMemory(AtomicReference(Map.empty), JobStops()))
+    val c = JobControlControllers(
+      JobControlService.InMemory(AtomicReference(Map.empty), JobStops()),
+      WriteGate()
+    )
     assert(
       c.control(X, JobAction.Wire("stop"))
         .left
@@ -193,20 +198,20 @@ class JobControlServiceSuite extends DbSuite:
     assert(service(stops).control(jobId(j), JobAction.Resume).isLeft)
 
   dbTest("a job that runs as one piece is refused; a paused job is failed as interrupted by a restart"):
-    val vac = Transactor(ds).transact(JobRepo.create(Job.Kind("vacuum"), None, None))
+    val vac = Transactor(ds).write(JobRepo.create(Job.Kind("vacuum"), None, None))
     assert(
       service(JobStops())
         .control(jobId(vac), JobAction.Pause)
         .left
         .exists(_.problems.sentences.mkString("; ").contains("one piece"))
     )
-    val p = Transactor(ds).transact(
+    val p = Transactor(ds).write(
       JobRepo.create(Job.Kind.applyUnsafe(ImportJobKinds.MediaImport.kind.value), None, None)
     )
-    val _ = Transactor(ds).transact(
+    val _ = Transactor(ds).write(
       JobRepo.transition(jobId(p), JobState.Queued, JobState.Running)
     )
-    val _ = Transactor(ds).transact(
+    val _ = Transactor(ds).write(
       JobRepo.transition(
         jobId(p),
         JobState.Running,
@@ -220,7 +225,7 @@ class JobControlServiceSuite extends DbSuite:
         .left
         .exists(_.problems.sentences.mkString("; ").contains("restarted"))
     )
-    val _ = Transactor(ds).transact(JobRepo.failInterrupted())
+    val _ = Transactor(ds).write(JobRepo.failInterrupted())
     assertEquals(
       Transactor(ds).read(JobRepo.get(jobId(p))).map(j => (j.status, j.problems)),
       Some(("failed", Some(Problem.Run.Interrupted.toNonEmpty)))

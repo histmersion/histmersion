@@ -21,6 +21,7 @@ import com.histmersion.db.TestDb
 import com.histmersion.domain.research.workflows.ReviewLedgerFixtures
 import com.histmersion.config.DbConfig
 import com.histmersion.config.ServerConfig
+import com.histmersion.util.database.TestPermits.given
 
 /** An article's review state and history over every surface: the badge on each `GET /api/articles` row (derived from
   * the review manager's item and the ledger counted in SQL), `GET /api/articles/{slug}/review` (the history from the

@@ -33,6 +33,7 @@ import com.histmersion.domain.library.acquisition.CoreBudget
 import com.histmersion.util.plugins.Plugin
 import com.histmersion.domain.HttpPolicy
 import com.histmersion.api.instance.Version
+import com.histmersion.util.database.TestPermits.given
 
 /** The recorded wire of the HTTP AI providers (`anthropic`, `openai`, `local`): the engine's agent loop driven through
   * the server's own factory ([[LlmClient.factory]] over the generation's AI-provider registry) against a loopback

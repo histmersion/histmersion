@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.catalogue.maptiles
 
-import com.histmersion.util.database.Transactor
+import com.histmersion.util.database.{Transactor, WritePermit}
 
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
 import scala.annotation.tailrec
@@ -17,16 +17,20 @@ trait UndatedSites:
 object UndatedSites:
   /** Over the database: a tile up to `keptZoom` reads the counts kept ahead of time while they answer for every write
     * to an undated site; when they do not, it counts from the sites and a rebuild of the kept counts is started
-    * (`background`, one at a time).
+    * (`background`, one at a time: a worker's unit, whose permit the rebuild writes under).
     */
 
-  def apply(db: Transactor, keptZoom: () => UndatedBuild.MaxZoom, background: (() => Unit) => Unit): UndatedSites =
+  def apply(
+      db: Transactor,
+      keptZoom: () => UndatedBuild.MaxZoom,
+      background: (() => WritePermit ?=> Unit) => Unit
+  ): UndatedSites =
     Implementation(db, keptZoom, background)
 
   final private class Implementation(
       db: Transactor,
       keptZoom: () => UndatedBuild.MaxZoom,
-      background: (() => Unit) => Unit
+      background: (() => WritePermit ?=> Unit) => Unit
   ) extends UndatedSites:
     private val rebuilding = AtomicBoolean(false)
 
@@ -56,7 +60,7 @@ object UndatedSites:
       if rebuilding.compareAndSet(false, true) then
         background { () =>
           try
-            val _ = db.transact(UndatedSiteRepo.rebuild(version, perSide, maxZoom))
+            val _ = db.write(UndatedSiteRepo.rebuild(version, perSide, maxZoom))
           catch case e: Exception => scribe.warn(s"counting the undated sites for the map failed: ${e.getMessage}")
           finally rebuilding.set(false)
         }

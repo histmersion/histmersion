@@ -3,15 +3,13 @@ package domain.automation.managers
 
 import com.histmersion.util.database.Transactor
 
-import com.augustnagro.magnum.{connect, transact}
+import com.augustnagro.magnum.connect
 
 import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.goals.GoalFocusService
 import com.histmersion.domain.automation.scheduler.SchedulerService
 
 import com.histmersion.domain.automation.worklists.WorkListControllers
-
-import com.augustnagro.magnum.transact
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.*

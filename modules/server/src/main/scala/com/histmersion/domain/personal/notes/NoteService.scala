@@ -12,6 +12,7 @@ import hearth.kindlings.optics.syntax.*
 
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicReference
+import com.histmersion.util.database.WritePermit
 
 /** A person's notes, each left on an item or a point on the map, which it opens back to. A target and a text reach here
   * checked; a removed note is kept as its tombstone. An item's key and title are its owner's as they are when the notes
@@ -35,7 +36,7 @@ trait NoteService:
       text: com.histmersion.api.personal.Note.Text,
       title: Option[TargetLabel],
       at: MarkTime
-  ): Note
+  )(using WritePermit): Note
 
   /** The note's new text, unless it is gone or changed since `unchangedSince`. */
   def edit(
@@ -44,10 +45,10 @@ trait NoteService:
       text: com.histmersion.api.personal.Note.Text,
       unchangedSince: Option[MarkTime],
       at: MarkTime
-  ): Either[Note.EditRefused, Note]
+  )(using WritePermit): Either[Note.EditRefused, Note]
 
   /** The note as it was before it was removed. */
-  def remove(user: UserId, id: com.histmersion.api.personal.Note.Id, at: MarkTime): Option[Note]
+  def remove(user: UserId, id: com.histmersion.api.personal.Note.Id, at: MarkTime)(using WritePermit): Option[Note]
 
 object NoteService:
 
@@ -90,9 +91,9 @@ object NoteService:
         text: com.histmersion.api.personal.Note.Text,
         title: Option[TargetLabel],
         at: MarkTime
-    ): Note =
+    )(using WritePermit): Note =
       val t = resolved(target, items)
-      val stored = db.transact:
+      val stored = db.write:
         val id = NoteRepo.insert(user, TargetColumns.of(t), text, title, at)
         NoteRepo
           .live(user, id)
@@ -106,8 +107,8 @@ object NoteService:
         text: com.histmersion.api.personal.Note.Text,
         unchangedSince: Option[MarkTime],
         at: MarkTime
-    ): Either[Note.EditRefused, Note] =
-      db.transact {
+    )(using WritePermit): Either[Note.EditRefused, Note] =
+      db.write {
         NoteRepo.live(user, id).flatMap(_.stored(user)) match
           case None                                               => Left(Note.EditRefused.Missing)
           case Some(n) if unchangedSince.exists(_ != n.updatedAt) => Left(Note.EditRefused.Changed(n.updatedAt))
@@ -116,8 +117,8 @@ object NoteService:
             NoteRepo.live(user, id).flatMap(_.stored(user)).toRight(Note.EditRefused.Missing)
       }.map(s => shown(List(s), items).head)
 
-    def remove(user: UserId, id: com.histmersion.api.personal.Note.Id, at: MarkTime): Option[Note] =
-      db.transact {
+    def remove(user: UserId, id: com.histmersion.api.personal.Note.Id, at: MarkTime)(using WritePermit): Option[Note] =
+      db.write {
         val before = NoteRepo.live(user, id).flatMap(_.stored(user))
         before.foreach(_ => NoteRepo.tombstone(user, id, at))
         before
@@ -165,7 +166,7 @@ object NoteService:
         text: com.histmersion.api.personal.Note.Text,
         title: Option[TargetLabel],
         at: MarkTime
-    ): Note =
+    )(using WritePermit): Note =
       val id =
         com.histmersion.api.personal.Note.Id(newId().toString)
       val note = StoredNote(user, id, resolved(target, items), text, title, at, at)
@@ -178,7 +179,7 @@ object NoteService:
         text: com.histmersion.api.personal.Note.Text,
         unchangedSince: Option[MarkTime],
         at: MarkTime
-    ): Either[Note.EditRefused, Note] =
+    )(using WritePermit): Either[Note.EditRefused, Note] =
       stored(user, id) match
         case None                                               => Left(Note.EditRefused.Missing)
         case Some(n) if unchangedSince.exists(_ != n.updatedAt) => Left(Note.EditRefused.Changed(n.updatedAt))
@@ -186,7 +187,7 @@ object NoteService:
           changed(user, id)(_.modify(_.text).setTo(text).modify(_.updatedAt).setTo(at))
           get(user, id).toRight(Note.EditRefused.Missing)
 
-    def remove(user: UserId, id: com.histmersion.api.personal.Note.Id, at: MarkTime): Option[Note] =
+    def remove(user: UserId, id: com.histmersion.api.personal.Note.Id, at: MarkTime)(using WritePermit): Option[Note] =
       val found = get(user, id)
       found.foreach(_ => changed(user, id)(_.modify(_.deletedAt).setTo(Some(at)).modify(_.updatedAt).setTo(at)))
       found

@@ -50,6 +50,7 @@ import com.histmersion.domain.automation.Run
 import com.histmersion.domain.Title
 import com.histmersion.api.text.WikiLinks
 import com.histmersion.domain.library.sources.SourcesControllers
+import com.histmersion.util.database.WritePermit
 
 /** `review-article <slug> [fix] [rounds]` (docs/research-embedded-agents.md §4.3, docs/research-review-convergence.md
   * §6): the adversarial review panel of the `review-article` skill, run by the server, around the article's REVIEW
@@ -130,10 +131,10 @@ final class ReviewArticlePipeline(
 
   private val Reviewers = List(Reviewer.Rules, Reviewer.ColdReader, Reviewer.Skeptic)
 
-  def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
+  def run(ctx: RunCtx)(using WritePermit): Either[Halt, PipelineDef.Summary] =
     Slug.parse(ctx.run.target.value).left.map(p => Halt.Fail(p)).flatMap(runFor(ctx, _))
 
-  private def runFor(ctx: RunCtx, slug: Slug): Either[Halt, PipelineDef.Summary] =
+  private def runFor(ctx: RunCtx, slug: Slug)(using WritePermit): Either[Halt, PipelineDef.Summary] =
     val fix = ctx.run.params.fixes
     val rounds = ReviewArticle.rounds(
       ctx.run.params.rounds.map(r => RequestedRounds(r.value)),
@@ -171,7 +172,7 @@ final class ReviewArticlePipeline(
       fix: Boolean,
       st: State,
       start: Snapshot
-  ): Either[Halt, End] =
+  )(using WritePermit): Either[Halt, End] =
     if done(st.merged, Merged.Round(r), rounds, FixRun(fix)) then finish(ctx, slug, r, st, start)
     else if st.snap.truncated.value then
       ctx.warn(
@@ -204,7 +205,9 @@ final class ReviewArticlePipeline(
     * asks for one (by default: only when no MAJOR is open). A run whose last pass was a full one (no fix, or a fix lost
     * to a concurrent writer) has nothing to confirm.
     */
-  private def finish(ctx: RunCtx, slug: Slug, r: Int, st: State, start: Snapshot): Either[Halt, End] =
+  private def finish(ctx: RunCtx, slug: Slug, r: Int, st: State, start: Snapshot)(using
+      WritePermit
+  ): Either[Halt, End] =
     val confirm = st.targeted && (cfg.review.finalPanelMode match
       case FinalPanel.Always => true
       case FinalPanel.Clear  => st.merged.majors.isEmpty
@@ -228,7 +231,7 @@ final class ReviewArticlePipeline(
       unwritten: Option[ReviewArticle.Fix.Body],
       fixable: Boolean,
       confirming: Option[Snapshot] = None
-  ): Either[Halt, State] =
+  )(using WritePermit): Either[Halt, State] =
     for
       snap <- ctx.code[Snapshot](AgentRepo.StepRecord.Name(s"snapshot-$r"))(
         snapshot(ctx, slug, unwritten, carry.reasons)
@@ -289,7 +292,7 @@ final class ReviewArticlePipeline(
       prev: Snapshot,
       carry: Carry,
       unwritten: Option[ReviewArticle.Fix.Body]
-  ): Either[Halt, State] =
+  )(using WritePermit): Either[Halt, State] =
     for
       snap <- ctx.code[Snapshot](AgentRepo.StepRecord.Name(s"snapshot-$r"))(
         snapshot(ctx, slug, unwritten, carry.reasons)
@@ -313,7 +316,7 @@ final class ReviewArticlePipeline(
     ledgers.get(slug).map(_.getOrElse(Ledger(slug)))
 
   /** Write the ledger through the run's gate (a dry run keeps it in memory only). */
-  private def persist(ctx: RunCtx, l: Ledger): Ledger =
+  private def persist(ctx: RunCtx, l: Ledger)(using WritePermit): Ledger =
     ctx.write(
       s"review ledger of [[${l.slug}]]: ${l.open.size} open (${l.openMajors.size} major), " +
         s"${l.entries.size - l.open.size} closed, ${l.lessons.size} lesson(s)",
@@ -332,7 +335,7 @@ final class ReviewArticlePipeline(
       mech: List[Finding],
       reports: List[Report],
       s: Snapshot
-  ): Ledger =
+  )(using WritePermit): Ledger =
     val run = runId(ctx)
     val pass = merge(Merged.Round(r), mech, reports, Nil)
     val (m, _) = ReviewLedger.recheckMechanical(
@@ -361,7 +364,7 @@ final class ReviewArticlePipeline(
       mech: List[Finding],
       checks: List[Recheck],
       s: Snapshot
-  ): Ledger =
+  )(using WritePermit): Ledger =
     val run = runId(ctx)
     val (m, _) = ReviewLedger.recheckMechanical(l, mech, run, ReviewLedger.RecheckMechanicalRound(r))
     checks.foldLeft(m)((led, rc) =>
@@ -374,7 +377,7 @@ final class ReviewArticlePipeline(
     )
 
   /** The checks of a pass, held to the checklist of the body it reviewed ([[holdPairChecks]]). */
-  private def held(ctx: RunCtx, l: Ledger, cs: List[Check], s: Snapshot): List[Check] =
+  private def held(ctx: RunCtx, l: Ledger, cs: List[Check], s: Snapshot)(using WritePermit): List[Check] =
     val (out, ws) = holdPairChecks(cs, l.entries.map(_.finding), s.critiques)
     ws.foreach(ctx.warn)
     out
@@ -421,7 +424,7 @@ final class ReviewArticlePipeline(
   /** Store reasons through the run's gate (a dry run records them; its snapshots count them from the carry). A refusal
     * — the edge went meanwhile — is a warning, never a failed run.
     */
-  private def storeReasons(ctx: RunCtx, slug: Slug, rs: List[CritiqueReason]): Unit =
+  private def storeReasons(ctx: RunCtx, slug: Slug, rs: List[CritiqueReason])(using WritePermit): Unit =
     if rs.nonEmpty then
       val p = Article.Patch(critiqueReasons = rs)
       ctx.write(s"critique reasons of [[$slug]]: ${rs.map(_.ref.wire).mkString(", ")}", p.asJson)(
@@ -509,7 +512,9 @@ final class ReviewArticlePipeline(
     * run says so once. After a fix (`before`: the body the fixer revised) also the formatting errors `check_edits`
     * finds in the new body and not in the old one — what the edits broke.
     */
-  private def mechanicalOf(ctx: RunCtx, s: Snapshot, r: Int, before: Option[ReviewArticle.Fix.Body]): List[Finding] =
+  private def mechanicalOf(ctx: RunCtx, s: Snapshot, r: Int, before: Option[ReviewArticle.Fix.Body])(using
+      WritePermit
+  ): List[Finding] =
     val body = mechanical(
       s.slug,
       s.kind,
@@ -615,7 +620,7 @@ final class ReviewArticlePipeline(
       l: Ledger,
       fixable: Boolean,
       confirming: Boolean
-  ): Either[Halt, List[Report]] =
+  )(using WritePermit): Either[Halt, List[Report]] =
     val user = reviewInput(s) + (if confirming then FinalNote else "")
     def ledger(lookups: Boolean, only: Option[Reviewer] = None) = ledgerText(l, lookups, only)
     val (checklist, shown) = checklistText(s, confirming)
@@ -711,7 +716,7 @@ final class ReviewArticlePipeline(
       r: Int,
       l: Ledger,
       edited: ReviewLedger.Edited
-  ): Either[Halt, List[Recheck]] =
+  )(using WritePermit): Either[Halt, List[Recheck]] =
     val who = Reviewers.filter(rv => l.claimed(rv).nonEmpty)
     val seqs = ctx.reserve(who.size)
     ctx.parallel(who.zip(seqs).map { (rv, seq) =>
@@ -771,7 +776,7 @@ final class ReviewArticlePipeline(
       Prompt.data("article", s.body.value) + (if rv == Reviewer.ColdReader then "" else generatedText(s) + citedText(s))
 
   /** The skeptic's verified corrections, routed through the approval gate. */
-  private def propose(ctx: RunCtx, m: Merged): List[String] =
+  private def propose(ctx: RunCtx, m: Merged)(using WritePermit): List[String] =
     m.proposals.map { p =>
       val o = approvals.propose(ctx, p)
       o match
@@ -793,7 +798,7 @@ final class ReviewArticlePipeline(
       l: Ledger,
       r: Int,
       reasons: List[CritiqueReason]
-  ): Either[Halt, Fix] =
+  )(using WritePermit): Either[Halt, Fix] =
     val explain = m.explainBack.fold("")(e => s"\n\nThe cold reader's explain-back: $e")
     val history = ReviewLedger.promptText(
       l,
@@ -938,7 +943,9 @@ final class ReviewArticlePipeline(
   /** The one write of a round: the revised body, guarded by the snapshot's token. A 412 (someone else wrote the article
     * meanwhile) drops this fix — the next round reviews their text — and never overwrites it.
     */
-  private def write(ctx: RunCtx, s: Snapshot, f: Fix, r: Int, after: Ledger): Either[Problems, ReviewArticle.Patched] =
+  private def write(ctx: RunCtx, s: Snapshot, f: Fix, r: Int, after: Ledger)(using
+      WritePermit
+  ): Either[Problems, ReviewArticle.Patched] =
     val bodyChanged = f.body.value.trim != s.body.value.trim
     if !bodyChanged && f.reasons.isEmpty && f.setAside.isEmpty && f.pairsAside.isEmpty then
       persist(ctx, after)
@@ -980,7 +987,7 @@ final class ReviewArticlePipeline(
     * lost track of is rewritten rather than duplicated; the per-finding items earlier runs left for it, and any second
     * item, are closed as superseded.
     */
-  private def record(ctx: RunCtx, slug: Slug, end: End): Either[Problems, String] =
+  private def record(ctx: RunCtx, slug: Slug, end: End)(using WritePermit): Either[Problems, String] =
     val st = end.state
     val c = st.carry
     val last = st.merged
@@ -1016,7 +1023,7 @@ final class ReviewArticlePipeline(
       (if pairs.isEmpty then "" else s"; critiques ${Critiques.summary(pairs)}")
     Pipelines.log(site.workLists, ctx, Pipelines.LogLine(line)).map(_.value)
 
-  private def backlog(ctx: RunCtx, slug: Slug, l: Ledger): Ledger =
+  private def backlog(ctx: RunCtx, slug: Slug, l: Ledger)(using WritePermit): Ledger =
     val tasks = Queue.Kind.Tasks.label
     val open = site.queues.list(Queue.Kind.Tasks, QueueScope.Open)
     // the ledger's item, else the article's collapsed item it lost track of (#934: never a second one)

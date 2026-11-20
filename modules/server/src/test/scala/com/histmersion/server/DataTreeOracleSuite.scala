@@ -43,6 +43,7 @@ import com.histmersion.util.storage.Storage
 import com.histmersion.util.storage.Location
 import com.histmersion.domain.library.Citekey
 import com.histmersion.config.UserPaths.pathEquality
+import com.histmersion.util.database.TestPermits.given
 
 /** The files a run of the server leaves in its directories, as a smoke run makes them: one scratch root holding the
   * settings file, the data directory, the converter's and the acquisition's spools, the backups and bundles directories

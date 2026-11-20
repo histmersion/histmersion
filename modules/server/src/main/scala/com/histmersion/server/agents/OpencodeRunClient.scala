@@ -7,6 +7,7 @@ import com.histmersion.domain.automation.agents.{FirstCallProbe, LlmCall, LlmCli
 import com.histmersion.config.OpencodeConfig
 import com.histmersion.api.automation.Agents.ModelRef
 import sttp.ai.core.agent.*
+import com.histmersion.util.database.WritePermit
 
 /** The `opencode` provider: `opencode run --agent <role> --format json -m <provider/model>` on the GENERATED config
   * (`XDG_CONFIG_HOME` and `OPENCODE_CONFIG_DIR` pointed at it, the Claude Code folders and autoupdate off, an empty
@@ -16,7 +17,7 @@ import sttp.ai.core.agent.*
   */
 final class OpencodeRunClient(val model: ModelRef, cfg: OpencodeConfig, rt: CliRuntime) extends LlmClient:
 
-  def run[Out](call: LlmCall[Out]): AgentResult[Either[AgentFailure, Out]] =
+  def run[Out](call: LlmCall[Out])(using WritePermit): AgentResult[Either[AgentFailure, Out]] =
     val agent = call.agent.getOrElse(throw java.io.IOException("opencode: a step must run as an agent definition"))
     val (xdg, conf) = (for x <- rt.trees.opencodeXdg; c <- rt.trees.opencodeConfig yield (x, c))
       .filter(_._2.resolve("agents").resolve(s"${agent.name}.md").toFile.isFile)

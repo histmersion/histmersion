@@ -7,6 +7,7 @@ import com.histmersion.domain.automation.agents.AgentsControllers
 import com.histmersion.api.automation.Autopilot
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.AutoEnrich
+import com.histmersion.util.database.TestPermits.given
 
 /** The library's parts of the engine (the watch kind's acquisition work, the enrich kind's auto-enrich) as the agent
   * suites reach them: through the engine they built.

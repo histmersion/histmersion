@@ -5,6 +5,7 @@ import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.util.mcp.McpOut
+import com.histmersion.util.data.maintenance.WriteGate
 import chimp.server.*
 import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -168,17 +169,20 @@ object OpsTools:
               case Left(e)  => McpOut.refusal(e)
           case None => "_done needs an `id` (run action=list to see them)_"
       case "recheck" =>
-        EngineContributions
-          .work(h.agents)
-          .acquireRecheck
-          .run(
-            Acquire.Checks.RecheckRequest(
-              Acquire.Checks.RecheckRequest.DryRun(in.dryRun),
-              in.limit.map(Acquire.Checks.RecheckRequest.Limit(_)),
-              in.id.map(Acquire.Checks.RecheckRequest.Id(_)),
-              Some(Acquire.Checks.RecheckRequest.By("mcp")),
-              Acquire.Checks.RecheckRequest.All(in.all)
-            )
+        h.maintenance
+          .guard(WriteGate.OperationName("acquire/recheck"))(
+            EngineContributions
+              .work(h.agents)
+              .acquireRecheck
+              .run(
+                Acquire.Checks.RecheckRequest(
+                  Acquire.Checks.RecheckRequest.DryRun(in.dryRun),
+                  in.limit.map(Acquire.Checks.RecheckRequest.Limit(_)),
+                  in.id.map(Acquire.Checks.RecheckRequest.Id(_)),
+                  Some(Acquire.Checks.RecheckRequest.By("mcp")),
+                  Acquire.Checks.RecheckRequest.All(in.all)
+                )
+              )
           )
           .fold(McpOut.refusal, AcquireChecksMarkdown.result)
       case other =>

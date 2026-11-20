@@ -11,7 +11,7 @@ import com.histmersion.api.exchange.MergeDecision
 import com.histmersion.api.exchange.{Bundle, MergeApplyResult, MergeIssue, MergeResolutions, MergeTally}
 import com.histmersion.api.given
 import com.histmersion.util.data.exchange.BundleImport
-import com.histmersion.util.database.Jsonb
+import com.histmersion.util.database.{Jsonb, Transactor, WritePermit}
 import com.histmersion.domain.{MergePlanner, MergeSettings}
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.data.exchange.BundleEntities.BlobUse
@@ -54,14 +54,14 @@ object BundleImporter:
       merge: MergeSettings,
       kinds: CarriedKinds,
       rules: MergeRuleSet
-  ): Either[Problems, Bundle.ImportResult] =
+  )(using WritePermit): Either[Problems, Bundle.ImportResult] =
     val loaded = bundle.read(BundleReader.read(_, hashBlobs = false))
     loaded.manifest match
       case None    => Left(loaded.unreadable)
       case Some(m) =>
         try
           Right(
-            transact(ds)(
+            Transactor(ds).write(
               importIn(bundle, bundleSha256, m, loaded, opts, files, resolutions, merge, kinds, rules)
             )
           )
@@ -298,14 +298,14 @@ object BundleImporter:
       kinds: CarriedKinds,
       rules: MergeRuleSet,
       followUps: MergeFollowUps
-  ): Either[Problems, MergeApplyResult] =
+  )(using WritePermit): Either[Problems, MergeApplyResult] =
     val loaded = bundle.read(BundleReader.read(_, hashBlobs = false))
     loaded.manifest match
       case None    => Left(loaded.unreadable)
       case Some(m) =>
         try
           Right(
-            transact(ds)(
+            Transactor(ds).write(
               applyIn(
                 bundle,
                 bundleSha256,

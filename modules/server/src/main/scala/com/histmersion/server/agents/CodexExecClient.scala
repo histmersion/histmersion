@@ -21,6 +21,7 @@ import sttp.ai.core.agent.*
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
+import com.histmersion.util.database.WritePermit
 
 /** The `codex` provider: `codex exec --json -p <role>` per step attempt, on the GENERATED Codex home
   * (docs/research-agent-runtimes.md §2.4): the role's profile carries its prompt (includes and skills inlined — with
@@ -31,7 +32,7 @@ import java.nio.file.Files
   */
 final class CodexExecClient(val model: ModelRef, cfg: CodexConfig, rt: CliRuntime) extends LlmClient:
 
-  def run[Out](call: LlmCall[Out]): AgentResult[Either[AgentFailure, Out]] =
+  def run[Out](call: LlmCall[Out])(using WritePermit): AgentResult[Either[AgentFailure, Out]] =
     val agent = call.agent.getOrElse(throw java.io.IOException("codex: a step must run as an agent definition"))
     val home = rt.trees.codexHome.getOrElse(
       throw java.io.IOException("codex: no CODEX_HOME — set agents.runtimes.dir or agents.providers.codex.home")
@@ -47,7 +48,7 @@ final class CodexExecClient(val model: ModelRef, cfg: CodexConfig, rt: CliRuntim
       call: LlmCall[Out],
       agent: AgentDef,
       home: java.nio.file.Path
-  ): AgentResult[Either[AgentFailure, Out]] =
+  )(using WritePermit): AgentResult[Either[AgentFailure, Out]] =
     CliProcess.withDir(CliProcess.WithDirPrefix("histmersion-codex-")) { dir =>
       val timeout = CliProcess.RunTimeoutSeconds(cfg.timeoutSeconds.value)
       val grant = rt.grant(call, Some(agent), timeout)

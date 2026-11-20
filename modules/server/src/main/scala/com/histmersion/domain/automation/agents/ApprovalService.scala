@@ -12,7 +12,7 @@ import com.histmersion.api.automation.Agents.{ApprovalInfo, ApprovalKind, Approv
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.domain.automation.approvals.ApprovalQuery
 import com.histmersion.domain.automation.AutomationState
-import com.histmersion.util.database.{Jsonb, Transactor}
+import com.histmersion.util.database.{Jsonb, Transactor, WritePermit}
 import com.histmersion.util.jobs.JobRuns
 import hearth.kindlings.optics.syntax.*
 
@@ -72,7 +72,7 @@ trait ApprovalService:
       payload: ApprovalService.Payload,
       state: ApprovalState = ApprovalState.Open,
       result: Option[ApprovalService.StepOutcome] = None
-  ): ApprovalInfo
+  )(using WritePermit): ApprovalInfo
 
   /** A proposal about a goal or an article that no run waits for. */
   def openSubject(
@@ -82,7 +82,7 @@ trait ApprovalService:
       payload: ApprovalService.Payload,
       state: ApprovalState = ApprovalState.Open,
       result: Option[ApprovalService.SubjectOutcome] = None
-  ): ApprovalInfo
+  )(using WritePermit): ApprovalInfo
 
   /** What run `jobId` opened (of `kind`), oldest first. */
   def approvalsOf(jobId: Job.Id, kind: Option[ApprovalKind] = None): List[ApprovalInfo]
@@ -104,13 +104,15 @@ trait ApprovalService:
   def forStep(jobId: Job.Id, seq: ApprovalService.StepSeq): Option[ApprovalInfo]
 
   /** A cancelled run's open step approvals rejected with `why`; how many. */
-  def closeForRun(jobId: Job.Id, why: Problem): RowCount
+  def closeForRun(jobId: Job.Id, why: Problem)(using WritePermit): RowCount
 
   /** Compare-and-set an open one to its decision; false when it was decided already. */
-  def decide(id: Approval.Id, to: ApprovalState, note: Option[Approval.Note], result: Option[String]): Boolean
+  def decide(id: Approval.Id, to: ApprovalState, note: Option[Approval.Note], result: Option[String])(using
+      WritePermit
+  ): Boolean
 
   /** After [[decide]]: the final state and what applying it did. */
-  def settle(id: Approval.Id, to: ApprovalState, result: Approval.Outcome): Unit
+  def settle(id: Approval.Id, to: ApprovalState, result: Approval.Outcome)(using WritePermit): Unit
 
 object ApprovalService:
   type Payload = Payload.T
@@ -176,8 +178,8 @@ object ApprovalService:
         payload: Payload,
         state: ApprovalState,
         result: Option[StepOutcome]
-    ): ApprovalInfo =
-      db.transact(
+    )(using WritePermit): ApprovalInfo =
+      db.write(
         AgentRepo.openForStep(
           jobId,
           StepInfo.Seq(seq.value),
@@ -196,8 +198,8 @@ object ApprovalService:
         payload: Payload,
         state: ApprovalState,
         result: Option[SubjectOutcome]
-    ): ApprovalInfo =
-      db.transact(
+    )(using WritePermit): ApprovalInfo =
+      db.write(
         AgentRepo.openSubject(
           jobId,
           kind,
@@ -220,10 +222,12 @@ object ApprovalService:
       db.read(AgentRepo.openBySubject()).map((k, v) => ApprovalQuery.Subject(k.value) -> v)
     def forStep(jobId: Job.Id, seq: StepSeq): Option[ApprovalInfo] =
       db.read(AgentRepo.forStep(jobId, StepInfo.Seq(seq.value)))
-    def closeForRun(jobId: Job.Id, why: Problem): RowCount =
-      db.transact(AgentRepo.closeForRun(jobId, why))
-    def decide(id: Approval.Id, to: ApprovalState, note: Option[Approval.Note], result: Option[String]): Boolean =
-      db.transact(
+    def closeForRun(jobId: Job.Id, why: Problem)(using WritePermit): RowCount =
+      db.write(AgentRepo.closeForRun(jobId, why))
+    def decide(id: Approval.Id, to: ApprovalState, note: Option[Approval.Note], result: Option[String])(using
+        WritePermit
+    ): Boolean =
+      db.write(
         AgentRepo.decide(
           ApprovalInfo.Id(id.value),
           to,
@@ -231,8 +235,8 @@ object ApprovalService:
           result.map(ApprovalInfo.Result(_))
         )
       )
-    def settle(id: Approval.Id, to: ApprovalState, result: Approval.Outcome): Unit =
-      db.transact(AgentRepo.settle(ApprovalInfo.Id(id.value), to, ApprovalInfo.Result(result.value)))
+    def settle(id: Approval.Id, to: ApprovalState, result: Approval.Outcome)(using WritePermit): Unit =
+      db.write(AgentRepo.settle(ApprovalInfo.Id(id.value), to, ApprovalInfo.Result(result.value)))
 
   /** The approvals in memory, with the runs they name (their goal and manager match a list's filters); `clock` stands
     * in for the database's `now()`.
@@ -364,7 +368,7 @@ object ApprovalService:
         payload: Payload,
         state: ApprovalState,
         result: Option[StepOutcome]
-    ): ApprovalInfo =
+    )(using WritePermit): ApprovalInfo =
       val at = now
       val _ =
         AutomationState.insertApproval(this.state)(r => r.jobId.contains(jobId) && r.seq.exists(_.value == seq.value))(
@@ -396,7 +400,7 @@ object ApprovalService:
         payload: Payload,
         state: ApprovalState,
         result: Option[SubjectOutcome]
-    ): ApprovalInfo =
+    )(using WritePermit): ApprovalInfo =
       val at = now
       AutomationState
         .insertApproval(this.state)(_ => false)(id =>
@@ -475,7 +479,7 @@ object ApprovalService:
       RowCount(
         state.getAndUpdate(_.modify(_.approvals).using(_.map(r => if which(r) then f(r) else r))).approvals.count(which)
       )
-    def closeForRun(jobId: Job.Id, why: Problem): RowCount =
+    def closeForRun(jobId: Job.Id, why: Problem)(using WritePermit): RowCount =
       val at = now
       change(r => r.jobId.contains(jobId) && r.seq.isDefined && r.state.value == Open)(
         _.modify(_.state)
@@ -485,7 +489,9 @@ object ApprovalService:
           .modify(_.decidedAt)
           .setTo(Some(at))
       )
-    def decide(id: Approval.Id, to: ApprovalState, note: Option[Approval.Note], result: Option[String]): Boolean =
+    def decide(id: Approval.Id, to: ApprovalState, note: Option[Approval.Note], result: Option[String])(using
+        WritePermit
+    ): Boolean =
       val at = now
       change(r => r.id.value == id.value && r.state.value == Open)(
         _.modify(_.state)
@@ -497,7 +503,7 @@ object ApprovalService:
           .modify(_.decidedAt)
           .setTo(Some(at))
       ).value > 0
-    def settle(id: Approval.Id, to: ApprovalState, result: Approval.Outcome): Unit =
+    def settle(id: Approval.Id, to: ApprovalState, result: Approval.Outcome)(using WritePermit): Unit =
       val _ = change(_.id.value == id.value)(
         _.modify(_.state)
           .setTo(ApprovalRecord.State(to.wire.value))

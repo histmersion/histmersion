@@ -51,6 +51,7 @@ import com.histmersion.plugin.AiCapabilities
 import com.histmersion.domain.automation.agents.PluginAiClient
 import com.histmersion.api.Api
 import com.histmersion.api.json.Schema
+import com.histmersion.util.database.TestPermits.given
 
 final case class Ping(word: String) derives JsonCodec, KindlingsSchema, Schema
 

@@ -21,6 +21,7 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import com.histmersion.api.automation.PlanQuota
 import com.histmersion.domain.automation.agents.AgentsControllers
+import com.histmersion.util.database.WritePermit
 
 /** The `claude-code` provider: ONE `claude -p` process per LLM step attempt, run as the step's agent from the GENERATED
   * headless plugin (docs/research-agent-runtimes.md §2.4, §3a):
@@ -48,7 +49,7 @@ import com.histmersion.domain.automation.agents.AgentsControllers
   */
 final class ClaudeCodeClient(val model: ModelRef, cfg: ClaudeCodeConfig, rt: CliRuntime) extends LlmClient:
 
-  def run[Out](call: LlmCall[Out]): AgentResult[Either[AgentFailure, Out]] =
+  def run[Out](call: LlmCall[Out])(using WritePermit): AgentResult[Either[AgentFailure, Out]] =
     CliProcess.withDir(CliProcess.WithDirPrefix("histmersion-claude-")) { dir =>
       val grant = Option
         .when(call.tools.nonEmpty)(rt.grant(call, call.agent, CliProcess.RunTimeoutSeconds(cfg.timeoutSeconds.value)))
