@@ -12,6 +12,7 @@ import org.scalajs.dom
 import scala.collection.mutable
 import com.histmersion.api.checks.FormatIssue
 import com.histmersion.web.map.MapSurface
+import com.histmersion.api.Html
 
 /** The map's "My notes" layer: each note left at a place on the map, as a marker of the map's own kind — off until
   * switched on under Layers. A click or Enter on one shows the note there, to read, change or delete.
@@ -58,7 +59,7 @@ object NoteMarkers:
       }
 
   private def marker(n: Note): DomMarker =
-    val el = DomMarker.element("hd-note-marker", Icon.html(Icon.Note).value)
+    val el = DomMarker.element("hd-note-marker", Icon.html(Icon.Note))
     el.setAttribute("tabindex", "0")
     el.setAttribute("role", "button")
     el.setAttribute("data-note", n.id.value)
@@ -83,7 +84,7 @@ object NoteMarkers:
       shown.foreach(_.unmount())
       val pop = TheMap.surface.popup(
         LatLon(LatLon.Lat(la.value), LatLon.Lon(lo.value)),
-        MapSurface.PopupHtml(""),
+        Html.empty,
         MapSurface.PopupCls("note-popup")
       )
       TheMap.surface.popupBody(pop).foreach { body =>

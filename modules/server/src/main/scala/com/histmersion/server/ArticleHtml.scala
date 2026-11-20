@@ -81,10 +81,10 @@ object ArticleHtml:
     )
 
   /** The reader's theme (the web UI's `Theme`, kept in `localStorage`), applied before the stylesheet paints so a page
-    * never flashes the other theme first; the stylesheet follows the system without it.
+    * never flashes the other theme first; the stylesheet follows the system without it. A file, not an inline script:
+    * the Content-Security-Policy runs none.
     */
-  val ThemeScript =
-    """<script>try{var t=localStorage.getItem("histmersion.theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>"""
+  val ThemeScript = """<script src="/web/theme.js"></script>"""
 
   /** The Scala.js bundle — the same file the web UI's `index.html` loads, which carries every page's entry point
     * (`histmersionWeb` dispatches on the path).

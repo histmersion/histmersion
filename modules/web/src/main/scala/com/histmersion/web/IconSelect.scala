@@ -6,6 +6,7 @@ import com.histmersion.util.problem.Text.sentence
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.Html
 
 /** THE menu with icons (a native `<select>` cannot show one): a button showing the current choice — its icon and label
   * — that opens a listbox of the options, each with the icon the map draws for it (an event kind's square badge, a site
@@ -26,7 +27,7 @@ object IconSelect:
   final case class Opt(
       value: Opt.Value,
       label: Opt.Label,
-      icon: Icon.Html,
+      icon: Html,
       group: Option[Opt.Group] = None,
       hint: Option[Opt.Hint] = None
   )
@@ -186,7 +187,7 @@ object IconSelect:
         onMountCallback(ctx => buttonEl = ctx.thisNode.ref),
         child <-- current.map(
           _.fold(emptyNode: Node)(o =>
-            span(cls := "icon-select-icon", onMountCallback(c => c.thisNode.ref.innerHTML = o.icon.value))
+            span(cls := "icon-select-icon", onMountCallback(c => HtmlSink.replace(c.thisNode.ref, o.icon)))
           )
         ),
         span(
@@ -226,7 +227,7 @@ object IconSelect:
               aria.selected := (o.value.value == chosen),
               dataAttr("value") := o.value.value,
               o.hint.map(h => title := h.value),
-              span(cls := "icon-select-icon", onMountCallback(c => c.thisNode.ref.innerHTML = o.icon.value)),
+              span(cls := "icon-select-icon", onMountCallback(c => HtmlSink.replace(c.thisNode.ref, o.icon))),
               span(o.label.value),
               onMouseMove --> { _ => if active.now() != i then active.set(i) },
               onClick --> { _ => choose(i) }

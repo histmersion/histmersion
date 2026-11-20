@@ -1,7 +1,7 @@
 package com.histmersion
 package web
 
-import com.histmersion.api.HtmlAtoms
+import com.histmersion.api.Html
 import com.raquo.laminar.api.L
 import com.raquo.laminar.api.L.*
 
@@ -20,7 +20,7 @@ object SourceLink:
   def idLabel(citekey: Citekey, doi: Option[Doi]): UiLabels.Text =
     UiLabels.Text(doi.map(_.value.trim).filter(_.nonEmpty).getOrElse(citekey.value))
 
-  def href(citekey: Citekey): String = s"/source/${HtmlAtoms.segment(citekey.value)}"
+  def href(citekey: Citekey): String = s"/source/${Html.Atoms.segment(citekey.value)}"
 
   def apply(citekey: Citekey, doi: Option[Doi] = None, label: Option[UiLabels.Text] = None): HtmlElement =
     a(
@@ -38,5 +38,5 @@ object SourceLink:
     )
 
   /** The same anchor as an HTML string, for map popups (which take markup, not elements). */
-  def html(citekey: Citekey, doi: Option[Doi], label: UiLabels.Text): String =
-    HtmlAtoms.sourceLink(citekey, doi, label.value)
+  def html(citekey: Citekey, doi: Option[Doi], label: UiLabels.Text): Html =
+    Html.Atoms.sourceLink(citekey, doi, label.value)

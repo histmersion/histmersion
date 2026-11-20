@@ -41,12 +41,12 @@ class PlaceGlyphSuite extends munit.FunSuite:
     )
 
   test("a people's label says 'people', not that a boundary is missing"):
-    val h = PlaceGlyph.labelHtml(UiLabels.Text("Ubii"), Place.Summary.Kind(Place.Kind.People))
+    val h = PlaceGlyph.labelHtml(UiLabels.Text("Ubii"), Place.Summary.Kind(Place.Kind.People)).value
     assert(h.contains(">people<"), h)
     assert(!h.contains("no boundary"), h)
 
   test("the label names the place, says it has no boundary yet, and escapes the name"):
-    val h = PlaceGlyph.labelHtml(UiLabels.Text("Kingdom <of> Patones"))
+    val h = PlaceGlyph.labelHtml(UiLabels.Text("Kingdom <of> Patones")).value
     assert(h.contains("Kingdom &lt;of&gt; Patones"), h)
     assert(h.contains("no boundary yet"), h)
     assert(h.contains("class=\"hd-area-point\""), h)

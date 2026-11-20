@@ -10,7 +10,8 @@ api:api/Dataset.scala	kernel
 api:api/Geo.scala	kernel
 api:api/GeoPick.scala	kernel
 api:api/GeoPoint.scala	kernel
-api:api/HtmlAtoms.scala	util.markdown
+api:api/Href.scala	util.markdown
+api:api/Html.scala	util.markdown
 api:api/Jobs.scala	kernel
 api:api/LatinFold.scala	util.common
 api:api/ListPatch.scala	kernel

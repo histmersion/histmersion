@@ -5,6 +5,7 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.Html
 
 trait MapSurface:
   // ── the view ───────────────────────────────────────────────────────────────────────────────
@@ -89,7 +90,7 @@ trait MapSurface:
     * `maxZoom` (MapLibre's 512-pixel zoom; a deeper view reads those). Made once per id.
     */
   def pointTiles(id: MapSurface.LayerId, layer: MapSurface.LayerId, maxZoom: MapSurface.PointTilesMaxZoom): PointTiles
-  def popup(at: LatLon, html: MapSurface.PopupHtml, cls: MapSurface.PopupCls = MapSurface.PopupCls("")): Popup
+  def popup(at: LatLon, html: Html, cls: MapSurface.PopupCls = MapSurface.PopupCls("")): Popup
   def closePopups(): Unit
 
   /** The base map's names placed in the view now, their text as drawn (the regressions read it). */
@@ -152,7 +153,5 @@ object MapSurface:
   object ShapeSetId extends Newtype[String, Pure]
   type PointTilesMaxZoom = PointTilesMaxZoom.T
   object PointTilesMaxZoom extends Newtype[Int, Pure]
-  type PopupHtml = PopupHtml.T
-  object PopupHtml extends Newtype[String, Pure]
   type PopupCls = PopupCls.T
   object PopupCls extends Newtype[String, Pure]

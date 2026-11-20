@@ -4,6 +4,7 @@ package web
 import com.raquo.laminar.api.L.*
 import com.histmersion.web.map.TheMap
 import com.histmersion.api.media.DataCredits
+import com.histmersion.api.Html
 
 /** Settings › Credits: what the base map shown now credits, then every dataset Histmersion draws or reads with its
   * licence and the credit it asks for ([[DataCredits]]), and the software's licences.
@@ -17,8 +18,10 @@ object CreditsView:
         cls := "credits-now",
         onMountCallback { ctx =>
           val credits = if TheMap.isUp then TheMap.surface.credits else Nil
-          ctx.thisNode.ref.innerHTML =
-            if credits.isEmpty then "No base map is drawn." else BaseMaps.creditsHtml(credits)
+          HtmlSink.replace(
+            ctx.thisNode.ref,
+            if credits.isEmpty then Html.text("No base map is drawn.") else BaseMaps.creditsHtml(credits)
+          )
         }
       ),
       h2(cls := "credits-title", "Data sources"),

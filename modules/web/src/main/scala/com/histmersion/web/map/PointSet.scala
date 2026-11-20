@@ -156,7 +156,7 @@ final class PointSet[D](
       val offsets = Spiderfy.offsets(Spiderfy.Count(ds.size), separation)
       val reach = offsets.map((x, y) => math.max(math.abs(x.value), math.abs(y.value))).maxOption.getOrElse(0.0)
       val side = (2 * math.ceil(reach) + 4).toInt
-      val legsEl = DomMarker.element(Spiderfy.Legs, Spiderfy.legsSvg(offsets, Spiderfy.Side(side)).value)
+      val legsEl = DomMarker.element(Spiderfy.Legs, Spiderfy.legsSvg(offsets, Spiderfy.Side(side)))
       val legs = new DomMarker(c.lat, c.lon, legsEl, Some((DomMarker.BoxSize(side), DomMarker.BoxSize(side))))
       pane().add(legs)
       val bubble = bubbles.get(Clustering.GroupLabel(s"${ks.head}|${ks.size}")).filter(_._2 == ks).map(_._1)

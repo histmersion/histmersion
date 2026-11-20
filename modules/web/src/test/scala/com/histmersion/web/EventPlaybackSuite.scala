@@ -2,6 +2,7 @@ package com.histmersion
 package web
 
 import hearth.kindlings.optics.syntax.*
+import com.histmersion.testsupport.ComparedByValue.markupText
 
 import com.histmersion.api.TimeSpan
 import com.histmersion.api.catalogue.{EventGeo, EventScale, Year}

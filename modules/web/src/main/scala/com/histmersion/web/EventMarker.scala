@@ -10,6 +10,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.EventSummary
 import com.histmersion.api.Api
 import com.histmersion.api.catalogue.Year
+import com.histmersion.api.Html
 
 /** The pure half of the map's EVENT markers (#1449). */
 object EventMarker:
@@ -17,8 +18,6 @@ object EventMarker:
   object Color extends Newtype[String, Pure]
   type Description = Description.T
   object Description extends Newtype[String, Pure]
-  type Html = Html.T
-  object Html extends Newtype[String, Pure]
   type Ramp = Ramp.T
   object Ramp extends Newtype[Double, Pure]
   type TierClass = TierClass.T
@@ -29,7 +28,7 @@ object EventMarker:
     * `hd-ev--catalogue` paler and dashed — a research lead, not evidence (docs/visualization-guide.md §1).
     */
 
-  def html(e: EventGeo, color: Color): Html = Html(PointMarker.html(PointKinds.Events, e, color.value))
+  def html(e: EventGeo, color: Color): Html = PointMarker.html(PointKinds.Events, e, color.value)
 
   /** Pure: an event in words — its name, kind and years, size, place and tier (its accessible name). */
   def describe(e: EventGeo): Description =

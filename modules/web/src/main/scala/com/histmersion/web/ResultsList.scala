@@ -22,6 +22,8 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.web.marks.RowActions
 import com.histmersion.web.marks.ItemRef
 import com.histmersion.api.library.Title
+import com.histmersion.api.Html
+import com.histmersion.api.Html.html as markup
 
 object ResultsList:
   type Busy = Busy.T
@@ -206,7 +208,7 @@ object ResultsList:
     span(
       cls := "cite-tip-icon pick-icon",
       title := kind,
-      onMountCallback(ctx => ctx.thisNode.ref.innerHTML = Glyphs.svg(icon).value)
+      onMountCallback(ctx => HtmlSink.replace(ctx.thisNode.ref, Glyphs.svg(icon)))
     )
 
   /** A picked dot that is not a finding: its icon, its name, its kind and years; a click or Enter opens it. */
@@ -228,9 +230,19 @@ object ResultsList:
 
   private def plural(n: Int, word: String): String = s"$n $word${if n == 1 then "" else "s"}"
 
-  private def snippetHtml(text: UiLabels.Text): String =
+  private val Marked = "\\*\\*(.+?)\\*\\*".r
+
+  /** A search snippet: its text, each `**match**` the search marked as a `<mark>`. */
+  private def snippetHtml(text: UiLabels.Text): Html =
     val cleaned = text.value.replaceAll("\\s+", " ").trim
-    Fmt.esc(cleaned).replaceAll("\\*\\*(.+?)\\*\\*", "<mark>$1</mark>")
+    val marks = Marked.findAllMatchIn(cleaned).toList
+    val from = 0 :: marks.map(_.end)
+    Html.concat(
+      marks
+        .zip(from)
+        .flatMap((m, at) => List(Html.text(cleaned.substring(at, m.start)), markup"<mark>${m.group(1)}</mark>")) :+
+        Html.text(cleaned.substring(from.last))
+    )
 
   private def countLine(): UiLabels.Text =
     val findings = pageOpts match
@@ -308,7 +320,10 @@ object ResultsList:
       src.snippet
         .filter(_.value.nonEmpty)
         .map(s =>
-          div(cls := "snip", onMountCallback(ctx => ctx.thisNode.ref.innerHTML = snippetHtml(UiLabels.Text(s.value))))
+          div(
+            cls := "snip",
+            onMountCallback(ctx => HtmlSink.replace(ctx.thisNode.ref, snippetHtml(UiLabels.Text(s.value))))
+          )
         )
         .getOrElse(emptyNode),
       if why.nonEmpty then ul(cls := "why", why.map(w => li(s"$w")))

@@ -1,6 +1,7 @@
 package com.histmersion
 package api
 
+import com.histmersion.api.Html.html
 import com.histmersion.api.library.Confidence
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -52,13 +53,13 @@ object ConfidenceStyle:
 
   val IconViewBox = "0 0 10 10"
 
-  def icon(c: Confidence): String =
-    val parts = iconParts(c)
-      .map(p =>
-        if (p.filled) == IconPart.Filled(true) then s"""<path d="${p.d}" fill="currentColor"/>"""
-        else s"""<path d="${p.d}" fill="none" stroke="currentColor"/>"""
+  def icon(c: Confidence): Html =
+    val parts = Html.concat(
+      iconParts(c).map(p =>
+        if (p.filled) == IconPart.Filled(true) then html"""<path d="${p.d}" fill="currentColor"/>"""
+        else html"""<path d="${p.d}" fill="none" stroke="currentColor"/>"""
       )
-      .mkString
-    (s"""<svg class="conf-icon" width="10" height="10" viewBox="$IconViewBox" aria-hidden="true">$parts</svg>""")
+    )
+    html"""<svg class="conf-icon" width="10" height="10" viewBox="$IconViewBox" aria-hidden="true">$parts</svg>"""
 
   def label(c: Confidence): String = (s"${c.toString.toLowerCase} confidence")

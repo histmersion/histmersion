@@ -99,7 +99,7 @@ class PointKindsSuite extends munit.FunSuite:
 
   test("the marker: the kind's shape, a white-on-halo glyph, the fill as --c — the same markup for every kind"):
     samples.foreach { case Sample(k, a, _) =>
-      val h = PointMarker.html(k, a, "rgb(1,2,3)")
+      val h = PointMarker.html(k, a, "rgb(1,2,3)").value
       assert(h.startsWith(s"""<span class="hd-point hd-badge hd-badge--${k.shape.cls} """), s"${k.dot}: $h")
       assert(h.contains("--c:rgb(1,2,3)") && h.contains("glyph--badge") && h.contains("glyph-halo"), s"${k.dot}: $h")
     }
@@ -107,11 +107,11 @@ class PointKindsSuite extends munit.FunSuite:
   test("an unknown type is its kind's shape with the exclamation mark, never a bare dot"):
     samples.foreach { case Sample(k, _, u) =>
       u.foreach(a =>
-        assert(k.inner(a) == Glyphs.badge(Glyphs.BadgeName(CardIcons.Unknown)).value, s"${k.dot}: ${k.inner(a)}")
+        assert(k.inner(a).value == Glyphs.badge(Glyphs.BadgeName(CardIcons.Unknown)).value, s"${k.dot}: ${k.inner(a)}")
       )
     }
     samples.foreach { case Sample(k, a, _) =>
-      assert(k.inner(a) != Glyphs.badge(Glyphs.BadgeName(CardIcons.Unknown)).value, s"${k.dot} known")
+      assert(k.inner(a).value != Glyphs.badge(Glyphs.BadgeName(CardIcons.Unknown)).value, s"${k.dot} known")
     }
 
   test("the colour lives in --c alone: a span change re-colours in place, it never re-draws"):

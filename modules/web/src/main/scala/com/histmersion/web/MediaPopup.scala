@@ -12,6 +12,8 @@ import scala.scalajs.js.JSConverters.*
 import com.histmersion.api.media.{MediaGeoHit, MediaProvider}
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.UiLabels
+import com.histmersion.api.{Href, Html}
+import com.histmersion.api.Html.html as markup
 
 /** The media layer's popup (#1446): a source's figure names its source; a provider's picture shows its local thumbnail
   * with the credit line and licence its licence requires — the licence's name, linked to its text. A click on the
@@ -19,10 +21,6 @@ import com.histmersion.api.UiLabels
   * with its kind's ([[CardIcons]]). Pure.
   */
 object MediaPopup:
-  type Caption = Caption.T
-  object Caption extends Newtype[String, Pure]
-  type Html = Html.T
-  object Html extends Newtype[String, Pure]
   type PeriodText = PeriodText.T
   object PeriodText extends Newtype[String, Pure]
 
@@ -43,26 +41,30 @@ object MediaPopup:
       )
     )
 
-  def html(h: MediaGeoHit, period: PeriodText, caption: Caption): Html =
+  /** `caption` is markup: the picture's caption line as [[PointKinds]] builds it. */
+  def html(h: MediaGeoHit, period: PeriodText, caption: Html): Html =
     val kind = Fmt.display(UiLabels.Text(h.kind.map(_.value).getOrElse("media")))
-    def title(inner: String) =
-      s"""<div class="cite-tip-title media-popup-title">${CardIcons.html(Glyphs.Name(CardIcons.Media))}$inner</div>"""
-    Html(h.citekey match
+    def title(inner: Html) =
+      markup"""<div class="cite-tip-title media-popup-title">${CardIcons.html(
+          Glyphs.Name(CardIcons.Media)
+        )}$inner</div>"""
+    h.citekey match
       case Some(ck) =>
         // the source as the app's one source link: its card on hover, its window on a click
-        title(
-          s"""${SourceLink.html(ck, None, UiLabels.Text(ck.value))} / ${Fmt.esc(h.assetName.value)}"""
-        ) + s"$kind · $period$caption"
+        title(markup"""${SourceLink.html(ck, None, UiLabels.Text(ck.value))} / ${h.assetName}""") ++
+          markup"$kind · $period$caption"
       case None =>
-        val zoom = full(h).fold("")(i => s""" title="open full size"${Lightbox.attrs(i)}""")
-        val img = h.thumbUrl.fold("")(u =>
-          s"""<img class="media-popup-thumb${if zoom.nonEmpty then " is-zoomable" else ""}" src="${Fmt.esc(
-              u.value
-            )}" alt="${Fmt.esc(h.assetName.value)}" loading="lazy"$zoom><br>"""
-        )
-        val credit = h.credit.fold("")(c => s"""<span class="media-credit">${Fmt.esc(c.value)}</span><br>""")
-        val lic = h.license.fold("")(l => s"""${LicenseName.html(l.value, h.licenseUrl.map(_.value))} · """)
-        title(Fmt.esc(h.assetName.value)) +
-          s"""$img$credit$lic${Fmt.esc(
-              MediaProvider.title(MediaProvider.Id(h.provider.map(_.value).getOrElse(""))).value
-            )}<br>$kind · $period$caption""")
+        val zoom = full(h).fold(Html.empty)(i => markup""" title="open full size"${Lightbox.attrs(i)}""")
+        // the thumbnail only from an address of an allowed scheme
+        val img = h.thumbUrl
+          .flatMap(u => Href.image(u.value))
+          .fold(Html.empty)(u =>
+            val zoomable = if zoom.nonEmpty then " is-zoomable" else ""
+            markup"""<img class="media-popup-thumb$zoomable" src="$u" alt="${h.assetName}" loading="lazy"$zoom><br>"""
+          )
+        val credit = h.credit.fold(Html.empty)(c => markup"""<span class="media-credit">$c</span><br>""")
+        val lic =
+          h.license.fold(Html.empty)(l => markup"""${LicenseName.html(l.value, h.licenseUrl.map(_.value))} · """)
+        title(Html.text(h.assetName.value)) ++
+          markup"""$img$credit$lic${MediaProvider.title(MediaProvider.Id(h.provider.map(_.value).getOrElse("")))}""" ++
+          markup"""<br>$kind · $period$caption"""

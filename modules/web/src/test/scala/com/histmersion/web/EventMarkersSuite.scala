@@ -5,6 +5,7 @@ import com.histmersion.testsupport.ComparedByValue.given
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.TimeSpan
+import com.histmersion.api.Html
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.catalogue.{
   Correction,
@@ -43,7 +44,10 @@ class EventMarkersSuite extends munit.FunSuite:
     val svg = Glyphs.svg(Glyphs.Name("swords")).value
     assert(svg.startsWith("""<svg class="glyph" viewBox="0 0 24 24"""") && svg.contains("<polyline"), svg)
     assertEquals(Glyphs.svg(Glyphs.Name("no-such-icon")).value, "")
-    assert(!Glyphs.inner.values.exists(v => v.contains("fill=\"#") || v.contains("stroke=\"#")), "no colour in an icon")
+    assert(
+      !Glyphs.inner.values.exists(v => v.value.contains("fill=\"#") || v.value.contains("stroke=\"#")),
+      "no colour in an icon"
+    )
 
   // legibility at marker size: within a shape, no two things share a glyph — every event kind, every site
   // type (and the unknown one), every source kind tells itself apart from its siblings
@@ -115,7 +119,7 @@ class EventMarkersSuite extends munit.FunSuite:
       LatLon.Lon(32),
       None
     )
-    val h = PointMarker.html(PointKinds.Sites, fort, "rgb(9,9,9)")
+    val h = PointMarker.html(PointKinds.Sites, fort, "rgb(9,9,9)").value
     assert(
       h.contains("""data-site-type="fortification"""") && h.contains("--c:rgb(9,9,9)") && h.contains(
         Glyphs.badge(Glyphs.BadgeName("castle")).value
@@ -124,7 +128,7 @@ class EventMarkersSuite extends munit.FunSuite:
     )
     assert(h.contains("hd-badge hd-badge--circle"), h)
     val plain = fort.modify(_.siteType).setTo(None).modify(_.label).setTo(SitePoint.Label("Zz plain"))
-    val u = PointMarker.html(PointKinds.Sites, plain, "rgb(9,9,9)")
+    val u = PointMarker.html(PointKinds.Sites, plain, "rgb(9,9,9)").value
     assert(u.contains(Glyphs.badge(Glyphs.BadgeName("alert-mark")).value) && !u.contains("data-site-type"), u)
     assertEquals(
       PointMarker.ariaLabel(PointKinds.Sites, plain).value,
@@ -134,8 +138,8 @@ class EventMarkersSuite extends munit.FunSuite:
   test("a badge's icon is drawn twice: a dark halo under the white ink; the same string for every marker"):
     val b = Glyphs.badge(Glyphs.BadgeName("castle")).value
     assert(b.contains("""<g class="glyph-halo">""") && b.contains("""<g class="glyph-ink">"""), b)
-    assertEquals(b.split(Glyphs.inner("castle"), -1).length - 1, 2)
-    assert(Glyphs.badge(Glyphs.BadgeName("castle")).value eq b, "cached")
+    assertEquals(b.split(Glyphs.inner("castle").value, -1).length - 1, 2)
+    assert(Glyphs.badge(Glyphs.BadgeName("castle")).value.eq(b), "cached")
     assertEquals(Glyphs.badge(Glyphs.BadgeName("no-such-icon")).value, "")
 
   test(
@@ -143,7 +147,7 @@ class EventMarkersSuite extends munit.FunSuite:
   ):
     val k = MapKey.html(events = MapKey.Events(true), sites = MapKey.Sites(true)).value
     EventTaxonomy.kinds.foreach(x => assert(k.contains(x.label.value), x.label))
-    SiteTypes.all.foreach(x => assert(k.contains(Fmt.esc(x.label.value)), x.label))
+    SiteTypes.all.foreach(x => assert(k.contains(Html.text(x.label.value).value), x.label))
     assert(k.contains("catalogue only (a lead)"))
     assert(!MapKey.html(events = MapKey.Events(false), sites = MapKey.Sites(true)).value.contains("natural events"))
     val bare = MapKey.html(events = MapKey.Events(false), sites = MapKey.Sites(false)).value
@@ -205,7 +209,7 @@ class EventMarkersSuite extends munit.FunSuite:
     assertEquals(IconSelect.step("Home", 2, 3), Some(0))
     assertEquals(IconSelect.step("x", 0, 3), None)
     val os = List("all", "battle", "burial", "cave").map(l =>
-      IconSelect.Opt(IconSelect.Opt.Value(l), IconSelect.Opt.Label(l), Icon.Html(""))
+      IconSelect.Opt(IconSelect.Opt.Value(l), IconSelect.Opt.Label(l), Html.empty)
     )
     assertEquals(IconSelect.typeAhead(os, 0, "b"), Some(1))
     assertEquals(IconSelect.typeAhead(os, 1, "b"), Some(2))

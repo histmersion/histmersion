@@ -3,7 +3,8 @@ package server
 
 import io.scalaland.chimney.dsl.*
 
-import com.histmersion.api.{HtmlAtoms, Plural, Wording, YearFmt}
+import com.histmersion.api.{Plural, Wording, YearFmt}
+import com.histmersion.api.Html.Atoms
 import com.histmersion.config.*
 import com.histmersion.domain.*
 // explicit: pins `Article` to the page helpers in HttpApi.scala over `core.Article` (see ArticlesApi)
@@ -289,7 +290,7 @@ object Pages:
     val meaning =
       Goal.Stages.meaning(Goal.Stage(status)).fold("")(m => s""" title="${esc(s"$status: ${m.value}")}"""")
     HtmlRender.Html(
-      s"""<a class="goal-ref" href="/research/goals/${esc(HtmlAtoms.segment(g.slug.value))}" title="${esc(
+      s"""<a class="goal-ref" href="/research/goals/${esc(Atoms.segment(g.slug.value))}" title="${esc(
           g.slug.value
         )}">""" +
         s"""<span class="job-state goal-status state-${esc(status)}"$meaning>${esc(
@@ -432,8 +433,8 @@ object Pages:
       val items = rows.map { b =>
         val label = b.title.map(_.value).filter(_.trim.nonEmpty).getOrElse(display(b.id.value))
         val link =
-          if b.kind.value == Article.Links.TargetSource then HtmlAtoms.sourceLink(Citekey(b.id.value), None, label)
-          else HtmlAtoms.articleLink(ReviewGoal.Slug(b.id.value), label)
-        s"<li>$link</li>"
+          if b.kind.value == Article.Links.TargetSource then Atoms.sourceLink(Citekey(b.id.value), None, label)
+          else Atoms.articleLink(ReviewGoal.Slug(b.id.value), label)
+        s"<li>${link.markup}</li>"
       }
       HtmlRender.Html(s"""<h2>Backlinks (${rows.size})</h2><ul class="backlinks">${items.mkString}</ul>""")

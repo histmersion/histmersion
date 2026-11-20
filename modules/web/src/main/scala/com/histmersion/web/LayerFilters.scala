@@ -7,6 +7,8 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import com.histmersion.api.catalogue.{EventSummary, EventTaxonomy, EventTier, SiteTypes}
+import com.histmersion.api.Html
+import com.histmersion.api.Html.html as markup
 
 /** The events and sites layers' menus (#1449): fixed vocabularies — the kind taxonomy, listed under its two groups
   * (each group's "all" first), and the tiers; the site types. "all" is no filter. Each option shows what the map draws
@@ -15,11 +17,11 @@ import com.histmersion.api.catalogue.{EventSummary, EventTaxonomy, EventTier, Si
   */
 object LayerFilters:
   /** Pure: a badge of `shape` with `glyph`, as an option's icon (in the accent colour: no date). */
-  def badge(shape: Shape, glyph: Glyphs.BadgeName): Icon.Html =
-    Icon.Html.assume(s"""<span class="hd-badge hd-badge--${shape.cls} opt-badge">${Glyphs.badge(glyph)}</span>""")
+  def badge(shape: Shape, glyph: Glyphs.BadgeName): Html =
+    markup"""<span class="hd-badge hd-badge--${shape.cls} opt-badge">${Glyphs.badge(glyph)}</span>"""
 
   /** Pure: a layer's own switch icon, the "all" option's. */
-  def layerIcon(k: PointKind[?]): Icon.Html = Icon.html(k.icon)
+  def layerIcon(k: PointKind[?]): Html = Icon.html(k.icon)
 
   val eventKinds: List[IconSelect.Opt] =
     IconSelect.Opt(
@@ -66,13 +68,13 @@ object LayerFilters:
     IconSelect.Opt(
       IconSelect.Opt.Value(EventTier.Attested),
       IconSelect.Opt.Label("attested by a source"),
-      Icon.Html.assume("""<span class="hd-badge hd-badge--square hd-ev hd-ev--attested opt-badge"></span>"""),
+      markup"""<span class="hd-badge hd-badge--square hd-ev hd-ev--attested opt-badge"></span>""",
       hint = tierMeaning(EventSummary.Tier(EventTier.Attested))
     ),
     IconSelect.Opt(
       IconSelect.Opt.Value(EventTier.Catalogue),
       IconSelect.Opt.Label("catalogue only"),
-      Icon.Html.assume("""<span class="hd-badge hd-badge--square hd-ev hd-ev--catalogue opt-badge"></span>"""),
+      markup"""<span class="hd-badge hd-badge--square hd-ev hd-ev--catalogue opt-badge"></span>""",
       hint = tierMeaning(EventSummary.Tier(EventTier.Catalogue))
     )
   )

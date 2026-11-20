@@ -8,6 +8,7 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import com.histmersion.api.UiLabels
+import com.histmersion.api.Html
 
 /** The cells of a tiled layer drawn as bubbles ([[MapView.dots]] draws a cell alone as the bubble of its count): what
   * they count for and where a click goes — into their box.
@@ -20,7 +21,7 @@ final class CellKind(val dot: DotKind) extends PointKind[TileCellPoint]:
   def box: (PointKind.BoxPixels, PointKind.BoxPixels) = (PointKind.BoxPixels(0), PointKind.BoxPixels(0))
   def key(c: TileCellPoint): PointKind.PointKey = PointKind.PointKey(c.key.value)
   def at(c: TileCellPoint): (Geo.Latitude, Geo.Longitude) = (Geo.Latitude(c.lat.value), Geo.Longitude(c.lon.value))
-  def inner(c: TileCellPoint): String = c.n.value.toString
+  def inner(c: TileCellPoint): Html = Html.text(c.n.value.toString)
   def fill(c: TileCellPoint, span: (Years.Astronomical, Years.Astronomical)): String =
     MapView
       .rampEnds(

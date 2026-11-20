@@ -11,6 +11,7 @@ import com.histmersion.api.UiLabels
 import com.histmersion.api.Geo
 import com.histmersion.api.Years
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.Html
 
 /** What one KIND of point is (docs/map-layers.md): everything the map does with a point that differs between findings,
   * sites, events and pictures, as data. [[PointLayer]] does the rest, the same way for all of them.
@@ -37,13 +38,13 @@ trait PointKind[A]:
 
   /** The badge's content: its glyph ([[Glyphs.badge]]; the exclamation mark when its type is unknown), or a count.
     */
-  def inner(a: A): String
+  def inner(a: A): Html
 
   /** Classes beyond the shape — its tier, its basis, its period-span ring. */
   def classes(a: A): String = ""
 
   /** Data attributes (`data-…`), each with a leading space. */
-  def attrs(a: A): String = ""
+  def attrs(a: A): Html = Html.empty
 
   /** Its fill for the span shown: the period colour of its dates (a gradient over several). */
   def fill(a: A, span: (Years.Astronomical, Years.Astronomical)): String

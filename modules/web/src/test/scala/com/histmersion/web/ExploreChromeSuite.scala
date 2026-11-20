@@ -2,6 +2,7 @@ package com.histmersion
 package web
 
 import hearth.kindlings.optics.syntax.*
+import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.TimeSpan
 import com.histmersion.web.map.{GeoBounds, LatLon, TilePointFeature}
@@ -93,7 +94,7 @@ class ExploreChromeSuite extends munit.FunSuite:
     // the online OpenStreetMap tiles keep their credit in sight
     assert(BaseMaps.keepsOsmCredit(BaseMap.Standard))
     assert(!BaseMaps.keepsOsmCredit(BaseMap.Readable))
-    assert(BaseMaps.allCreditsLink.contains("/settings/credits"))
+    assert(BaseMaps.allCreditsLink.value.contains("/settings/credits"))
 
   test("the places list: the count line on the map and everywhere; a site's note says when its date is unknown"):
     assertEquals(

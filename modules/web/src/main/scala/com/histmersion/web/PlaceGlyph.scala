@@ -7,6 +7,8 @@ import com.histmersion.api.catalogue.Place
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.UiLabels
 import com.histmersion.api.Geo
+import com.histmersion.api.Html
+import com.histmersion.api.Html.html as markup
 
 /** How a gazetteer place is drawn on the map, from its kind and its geometry:
   *   - [[Area]]: a polygon — its outline, as before;
@@ -49,13 +51,13 @@ object PlaceGlyph:
       label: UiLabels.Text,
       kind: Place.Summary.Kind = Place.Summary.Kind(Place.Kind.Region),
       hidden: LabelHidden = LabelHidden(false)
-  ): String =
+  ): Html =
     val (note, title) =
       if Place.Shape.isPeople(kind) then (People, Place.Shape.PeopleNote) else (NoBoundary, Place.Shape.NoBoundaryNote)
     val cls = if hidden.value then "hd-area-point is-culled" else "hd-area-point"
-    s"""<span class="$cls" title="${Fmt.esc(label.value)} — ${title.value}">""" +
-      s"""<span class="hd-area-point-name">${Fmt.esc(label.value)}</span>""" +
-      s"""<span class="hd-area-point-note">${note.value}</span></span>"""
+    markup"""<span class="$cls" title="$label — $title">""" ++
+      markup"""<span class="hd-area-point-name">$label</span>""" ++
+      markup"""<span class="hd-area-point-note">$note</span></span>"""
 
   /** Pure: is the map zoomed out too far for point-only region labels? */
   def far(zoom: ZoomLevel): Boolean = zoom.value < Layout.areaLabelMinZoom.value

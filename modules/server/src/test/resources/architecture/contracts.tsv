@@ -731,7 +731,6 @@ unwrap	api:api/BBox.scala	.value outside a boundary	15
 unwrap	api:api/ConfidenceStyle.scala	.value outside a boundary	4
 unwrap	api:api/Dataset.scala	.value outside a boundary	2
 unwrap	api:api/GeoPick.scala	.value outside a boundary	11
-unwrap	api:api/HtmlAtoms.scala	.value outside a boundary	5
 unwrap	api:api/ItemKind.scala	.value outside a boundary	3
 unwrap	api:api/OffsetPage.scala	.value outside a boundary	21
 unwrap	api:api/Paging.scala	.value outside a boundary	25

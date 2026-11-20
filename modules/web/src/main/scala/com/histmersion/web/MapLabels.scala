@@ -17,6 +17,7 @@ import com.histmersion.api.Years
 import com.histmersion.web.ui.Layout
 import com.histmersion.api.catalogue.Event
 import com.histmersion.api.Geo
+import com.histmersion.api.Html.html as markup
 
 /** The NAMES on the map: every region and polity on the boundaries layer is named, and the names that would collide are
   * thinned out, events first, then larger shapes ([[LabelPlacement]] decides where and which, [[LabelMotion]] how they
@@ -325,7 +326,7 @@ object MapLabels:
       s.lon,
       DomMarker.element(
         wrapClass.value,
-        s"""<span class="hd-map-label is-culled" style="--o:0">${Fmt.esc(label.value)}</span>"""
+        markup"""<span class="hd-map-label is-culled" style="--o:0">$label</span>"""
       )
     )
 

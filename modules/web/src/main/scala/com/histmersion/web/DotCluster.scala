@@ -9,11 +9,11 @@ import com.histmersion.api.library.GeoHit
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.web.map.GeoBounds
 import com.histmersion.api.catalogue.Period
+import com.histmersion.api.Html
+import com.histmersion.api.Html.html as markup
 
 /** The pure half of the mixed clusters: what a bubble holds, says and looks like. */
 object DotCluster:
-  type BubbleHtml = BubbleHtml.T
-  object BubbleHtml extends Newtype[String, Pure]
   type Count = Count.T
   object Count extends Newtype[Int, Pure]
   type EndLabel = EndLabel.T
@@ -126,36 +126,34 @@ object DotCluster:
       extraClass: ExtraClass,
       says: Option[SpokenText],
       form: BubbleForm = BubbleForm.Round
-  ): BubbleHtml =
+  ): Html =
     val label = if n.value > 1 then n.value.toString else ""
-    val words = says.fold("")(w => s""" role="img" title="${Fmt.esc(w.value)}" aria-label="${Fmt.esc(w.value)}"""")
+    val words = says.fold(Html.empty)(w => markup""" role="img" title="$w" aria-label="$w"""")
     val s = d.value + 2 * Ring
     val c = s / 2.0
     val r = d.value / 2.0
     // the disc and its rings, each `out` px beyond the disc's edge: circles, or (events only) rounded
     // squares whose corners round by the same distance out — concentric either way
-    def ring(cls: String, out: Double, extra: String = "") = form match
+    def ring(cls: String, out: Double, extra: Html = Html.empty) = form match
       case BubbleForm.Events =>
         val h = r + out
-        s"""<rect class="$cls" x="${c - h}" y="${c - h}" width="${2 * h}" height="${2 * h}" rx="${SquareCorner + out}"$extra/>"""
-      case _ => s"""<circle class="$cls" cx="$c" cy="$c" r="${r + out}"$extra/>"""
+        markup"""<rect class="$cls" x="${c - h}" y="${c - h}" width="${2 * h}" height="${2 * h}" rx="${SquareCorner + out}"$extra/>"""
+      case _ => markup"""<circle class="$cls" cx="$c" cy="$c" r="${r + out}"$extra/>"""
     // events among other kinds: a small square tab in the upper right corner, clear of the round rings
     val tab =
       if form == BubbleForm.WithEvents then
-        s"""<rect class="hd-bubble-tab" x="${s - Tab - 0.5}" y="0.5" width="$Tab" height="$Tab" rx="1.5"/>"""
-      else ""
+        markup"""<rect class="hd-bubble-tab" x="${s - Tab - 0.5}" y="0.5" width="$Tab" height="$Tab" rx="1.5"/>"""
+      else Html.empty
     val svg =
-      s"""<svg class="hd-bubble" viewBox="0 0 $s $s" aria-hidden="true" focusable="false">""" +
-        s"""<defs><linearGradient id="$id" x1="0" y1="0" x2="1" y2="1">""" +
-        """<stop offset="0" class="hd-bubble-g0"/><stop offset="1" class="hd-bubble-g1"/></linearGradient></defs>""" +
-        ring("hd-bubble-fill", 0, s""" fill="url(#$id)"""") +
-        ring("hd-bubble-line", 0.5) + ring("hd-bubble-coin", 2.5) + ring("hd-bubble-line", 4.5) + tab +
-        "</svg>"
+      markup"""<svg class="hd-bubble" viewBox="0 0 $s $s" aria-hidden="true" focusable="false">""" ++
+        markup"""<defs><linearGradient id="$id" x1="0" y1="0" x2="1" y2="1">""" ++
+        markup"""<stop offset="0" class="hd-bubble-g0"/><stop offset="1" class="hd-bubble-g1"/></linearGradient></defs>""" ++
+        ring("hd-bubble-fill", 0, markup""" fill="url(#$id)"""") ++
+        ring("hd-bubble-line", 0.5) ++ ring("hd-bubble-coin", 2.5) ++ ring("hd-bubble-line", 4.5) ++ tab ++
+        markup"</svg>"
     val classes = List("hd-dot hd-cluster", form.cls.value, extraClass.value).filter(_.nonEmpty).mkString(" ")
-    BubbleHtml(
-      s"""<span class="$classes" style="--d:${d}px;--fs:${math.min(12, d.value / 2)}px;--ring:${Ring}px;""" +
-        s"""--g0:${ends._1};--g1:${ends._2}"$words>$svg<span class="hd-dot-count">$label</span></span>"""
-    )
+    markup"""<span class="$classes" style="--d:${d}px;--fs:${math.min(12, d.value / 2)}px;--ring:${Ring}px;""" ++
+      markup"""--g0:${ends._1};--g1:${ends._2}"$words>$svg<span class="hd-dot-count">$label</span></span>"""
 
   /** Pure: the middle of a dated span, for the ramp. */
   def mid(start: Option[Period.Start], end: Option[Period.End]): Option[Mid] =

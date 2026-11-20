@@ -2,7 +2,7 @@ package com.histmersion
 package server
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.{sentence, sentences}
-import com.histmersion.util.access.{AccessGate, AccessPolicy, Admission}
+import com.histmersion.util.access.{AccessGate, AccessPolicy, Admission, SecurityHeaders}
 import com.histmersion.domain.automation.agents.RunTokens
 
 import hearth.kindlings.optics.syntax.*
@@ -250,6 +250,9 @@ object Composition:
             agentPaths
           )
         )
+        // last, so directly after the codec: every response written further in, the gates' refusals included,
+        // passes it on its way out
+        val _ = pipeline.addAfter(codec, "histmersion-security-headers", SecurityHeaders())
       }
     }
     Listener(gated, binds)

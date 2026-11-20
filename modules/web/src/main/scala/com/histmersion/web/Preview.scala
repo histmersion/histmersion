@@ -3,7 +3,7 @@ package web
 
 import hearth.kindlings.optics.syntax.*
 
-import com.histmersion.api.{Api, YearFmt}
+import com.histmersion.api.{Api, Href, YearFmt}
 import com.raquo.laminar.api.L.*
 import com.histmersion.web.ui.Layout
 import org.scalajs.dom
@@ -1073,7 +1073,7 @@ object Preview:
       div(
         cls := "cite-tip-title",
         c.icon.map(i =>
-          span(cls := "cite-tip-icon", onMountCallback(ctx => ctx.thisNode.ref.innerHTML = Glyphs.svg(i).value))
+          span(cls := "cite-tip-icon", onMountCallback(ctx => HtmlSink.replace(ctx.thisNode.ref, Glyphs.svg(i))))
         ),
         c.title.value,
         c.tier.map(t =>
@@ -1090,14 +1090,19 @@ object Preview:
       Option.when(c.links.nonEmpty)(
         div(
           cls := "cite-tip-links",
-          c.links.map((t, href) =>
-            a(
-              cls := "cite-tip-link",
-              com.raquo.laminar.api.L.href := href.value,
-              target := "_blank",
-              rel := "noopener",
-              t.value + " ↗"
-            )
+          // an upstream's links: only to an address of an allowed scheme
+          c.links.flatMap((t, link) =>
+            Href
+              .link(link.value)
+              .map(u =>
+                a(
+                  cls := "cite-tip-link",
+                  href := u.address,
+                  target := "_blank",
+                  rel := "noopener",
+                  t.value + " ↗"
+                )
+              )
           )
         )
       ),
@@ -1126,7 +1131,9 @@ object Preview:
           .map(slug => ArticleLink(Article.Slug(slug.value), it.text.value): HtmlElement)
           .getOrElse(span(if it.citekey.isDefined then s" ${it.text}" else it.text.value))
       ),
-      it.href.map(u => a(cls := "cite-tip-link", href := u.value, target := "_blank", rel := "noopener", " ↗")),
+      it.href
+        .flatMap(u => Href.link(u.value))
+        .map(u => a(cls := "cite-tip-link", href := u.address, target := "_blank", rel := "noopener", " ↗")),
       it.query.map(q => discoverButton(Api.Search.Text(q.value))),
       it.command.filter(_ => it.query.isEmpty).map(cmd => commandView(cmd))
     )
@@ -1210,7 +1217,7 @@ object Preview:
       ),
       img(
         cls := "cite-tip-thumb is-zoomable",
-        src := t.url.value,
+        Href.image(t.url.value).map(u => src := u.address),
         alt := credit.value,
         loadingAttr := "lazy",
         title := "open full size",
@@ -1222,9 +1229,13 @@ object Preview:
         span(credit.value),
         lic.map((l, u) =>
           val name = LicenseName.label(l.value)
-          if u.value.isEmpty then span(" · ", name)
-          else
-            span(" · ", a(cls := "cite-tip-link", href := u.value, target := "_blank", rel := "noopener license", name))
+          Href.link(u.value).filter(_.address.nonEmpty) match
+            case None    => span(" · ", name)
+            case Some(h) =>
+              span(
+                " · ",
+                a(cls := "cite-tip-link", href := h.address, target := "_blank", rel := "noopener license", name)
+              )
         )
       )
     )

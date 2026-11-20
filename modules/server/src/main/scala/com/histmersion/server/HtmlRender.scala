@@ -3,7 +3,8 @@ package server
 
 import io.scalaland.chimney.dsl.*
 
-import com.histmersion.api.{HtmlAtoms, Wording, YearFmt}
+import com.histmersion.api.{Wording, YearFmt}
+import com.histmersion.api.Html.Atoms
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.library.Confidence
@@ -35,7 +36,7 @@ object HtmlRender:
   type Text = Text.T
   object Text extends Newtype[String, Pure]
 
-  private def escText(s: String): String = HtmlAtoms.esc(s)
+  private def escText(s: String): String = Atoms.esc(s)
 
   private def display(s: String): String =
     com.histmersion.api.library.Label.display(com.histmersion.api.library.Label.Text(s)).value
@@ -50,17 +51,19 @@ object HtmlRender:
     */
   def sourceLink(citekey: Citekey, doi: Option[Doi], label: Label): Html =
     Html(
-      HtmlAtoms.sourceLink(
-        com.histmersion.api.library.Citekey(citekey.value),
-        doi.map(d => com.histmersion.api.library.Doi(d.value)),
-        label.value
-      )
+      Atoms
+        .sourceLink(
+          com.histmersion.api.library.Citekey(citekey.value),
+          doi.map(d => com.histmersion.api.library.Doi(d.value)),
+          label.value
+        )
+        .markup
     )
 
   /** A source reference labelled with its IDENTIFIER — the DOI when it has one, else the citekey. */
-  def sourceRef(r: Source.Ref): Html = Html(HtmlAtoms.sourceLink(r.citekey, r.doi, r.idLabel.value))
+  def sourceRef(r: Source.Ref): Html = Html(Atoms.sourceLink(r.citekey, r.doi, r.idLabel.value).markup)
 
-  def sourceRef(r: Source.Ref, label: Label): Html = Html(HtmlAtoms.sourceLink(r.citekey, r.doi, label.value))
+  def sourceRef(r: Source.Ref, label: Label): Html = Html(Atoms.sourceLink(r.citekey, r.doi, label.value).markup)
 
   /** Where a READABLE label is wanted (prose, lists): "Cline 2014", or the title when the source has no authors — never
     * a bare year.
@@ -72,7 +75,7 @@ object HtmlRender:
   def articleRef(r: Article.Ref): Html = articleRef(r, Label(r.title.value))
 
   def articleRef(r: Article.Ref, label: Label): Html =
-    Html(HtmlAtoms.articleLink(ReviewGoal.Slug(r.slug.value), label.value))
+    Html(Atoms.articleLink(ReviewGoal.Slug(r.slug.value), label.value).markup)
 
   /** A link nothing in the corpus answers to: text, marked, never a link to a 404. */
   def dangling(label: Label): Html =
@@ -96,7 +99,7 @@ object HtmlRender:
   def chip(field: ChipField, value: Label): Html =
     Html(
       s"""<a class="chip chip-${field.hashKey}" data-field="${field.hashKey}" data-value="${escText(value.value)}"""" +
-        s""" href="/#${field.hashKey}=${escText(HtmlAtoms.segment(value.value))}">${escText(
+        s""" href="/#${field.hashKey}=${escText(Atoms.segment(value.value))}">${escText(
             display(value.value)
           )}</a>"""
     )
@@ -116,7 +119,7 @@ object HtmlRender:
 
   /** Icon + colour, the same palette as the map's dots ([[ConfidenceStyle]]). */
   def confidenceBadge(c: Confidence): Html =
-    Html(HtmlAtoms.confidenceBadge(c.transformInto[Confidence]))
+    Html(Atoms.confidenceBadge(c.transformInto[Confidence]).markup)
 
   // ── findings ─────────────────────────────────────────────────────────────────────────────────
 

@@ -2,6 +2,8 @@ package com.histmersion
 package web
 
 import com.histmersion.api.YearFmt
+import com.histmersion.api.Html
+import com.histmersion.api.Html.html as markup
 import com.histmersion.web.map.*
 import org.scalajs.dom
 
@@ -21,8 +23,6 @@ object EventPlayback:
   object AnchorKey extends Newtype[String, Pure]
   type FadeYears = FadeYears.T
   object FadeYears extends Newtype[Double, Pure]
-  type Html = Html.T
-  object Html extends Newtype[String, Pure]
   type Note = Note.T
   object Note extends Newtype[String, Pure]
   type Rank = Rank.T
@@ -103,16 +103,13 @@ object EventPlayback:
       s"${e.label} — ${note(e)}${e.dating.fold("")(d => s" · $d")}${e.placeLabel.fold("")(p => s" · $p")} (${e.historicity})"
     // the dot carries the kind's icon (#1449): what happened reads before the name does
     val dot = if local then
-      s"""<span class="hd-event-dot hd-badge">${Glyphs.badge(
+      markup"""<span class="hd-event-dot hd-badge">${Glyphs.badge(
           Glyphs.BadgeName(EventTaxonomy.icon(EventSummary.Kind(e.kind.value)).value)
         )}</span>"""
-    else ""
+    else Html.empty
     val approx = if e.precision.value == EventPrecision.Approximate then " hd-event--approximate" else ""
-    Html(
-      s"""<span class="hd-event ${
-          if local then "hd-event--local" else "hd-event--regional"
-        }$approx" style="--a:$alpha" """ +
-        s"""title="${Fmt.esc(title)}">$dot<span class="hd-area-point is-culled">""" +
-        s"""<span class="hd-area-point-name">${Fmt.esc(e.label.value)}</span>""" +
-        s"""<span class="hd-area-point-note">${Fmt.esc(note(e).value)}</span></span></span>"""
-    )
+    val scale = if local then "hd-event--local" else "hd-event--regional"
+    markup"""<span class="hd-event $scale$approx" style="--a:$alpha" """ ++
+      markup"""title="$title">$dot<span class="hd-area-point is-culled">""" ++
+      markup"""<span class="hd-area-point-name">${e.label}</span>""" ++
+      markup"""<span class="hd-area-point-note">${note(e)}</span></span></span>"""

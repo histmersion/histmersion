@@ -1,7 +1,7 @@
 package com.histmersion
 package web
 
-import com.histmersion.api.{ConfidenceStyle, HtmlAtoms}
+import com.histmersion.api.{ConfidenceStyle, Html}
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.js
@@ -12,8 +12,6 @@ import io.github.iltotore.iron.constraint.any.Pure
   * labelled for screen readers and on hover.
   */
 object ConfidenceBadge:
-  type Html = Html.T
-  object Html extends Newtype[String, Pure]
 
   def apply(c: Confidence): HtmlElement =
     span(
@@ -35,5 +33,5 @@ object ConfidenceBadge:
       span(cls := "conf-text", c.toString.toLowerCase)
     )
 
-  /** As an HTML string, for map popups — the server's markup, from [[HtmlAtoms]]. */
-  def html(c: Confidence): Html = Html(HtmlAtoms.confidenceBadge(c))
+  /** As markup, for map popups — the server's, from [[Html.Atoms]]. */
+  def html(c: Confidence): Html = Html.Atoms.confidenceBadge(c)

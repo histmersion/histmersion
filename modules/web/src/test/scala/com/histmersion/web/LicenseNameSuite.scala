@@ -1,7 +1,20 @@
 package com.histmersion
 package web
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 class LicenseNameSuite extends munit.FunSuite:
+
+  test("a licence link the record gives with a refused scheme is no link: the name alone") {
+    assertEquals(
+      LicenseName.html("CC0", Some("javascript:alert(1)")),
+      """<span class="media-license">CC0 1.0</span>"""
+    )
+    assertEquals(
+      LicenseName.html("odd", Some(" data:text/html,x")),
+      """<span class="media-license">odd</span>"""
+    )
+  }
 
   test("a Creative Commons id reads as the licence's name, with its text's page") {
     assertEquals(LicenseName.label("CC-BY-SA-3.0"), "CC BY-SA 3.0")
