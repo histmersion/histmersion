@@ -195,3 +195,27 @@ class SettingsControllersSuite extends munit.FunSuite:
     val f = Fixture(Some(ConfigFileState.Text("# only comments\n")))
     write(f, K("setup.completed") -> Some(V("true"))).fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assert(!f.c.setupDue)
+
+  test("an agent may not change the settings that decide what agents may fetch; a person may"):
+    val f = Fixture(Some(Commented))
+    def byAgent(k: ConfigEdit.Change.Key, v: Option[ConfigEdit.Change.Value]) =
+      f.c.writeByAgent(ConfigEdit.Write(List(ConfigEdit.Change(k, v))))
+    for k <- List(
+        K("acquire.allow-unauthorised"),
+        K("histmersion.acquire.allow-unauthorised"),
+        K("acquire.agents-may-use-unauthorised")
+      )
+    do
+      assertEquals(
+        byAgent(k, Some(V("true"))).left.map(e => util.nonempty.NonEmptyVector.toVector(e.problems)),
+        Left(Vector(util.problem.Problem.Refused.Policy(util.problem.Problem.Refused.Rule.PersonHeldSetting))),
+        s"$k"
+      )
+      assert(byAgent(k, None).isLeft, s"unset $k")
+    assertEquals(f.file.get, Some(Commented), "nothing was written")
+    assertEquals(f.reloads.get, 0)
+    // an agent's other changes go through, and a person's change of the same switch does
+    byAgent(K("backups.keep"), Some(V("4"))).fold(e => fail(e.problems.sentences.mkString("; ")), identity)
+    write(f, K("acquire.allow-unauthorised") -> Some(V("true")))
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
+    assert(f.file.get.exists(t => s"$t".contains("allow-unauthorised")), f.file.get.toString)

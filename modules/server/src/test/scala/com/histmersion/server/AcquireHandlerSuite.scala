@@ -796,9 +796,14 @@ class AcquireHandlerSuite extends DbSuite:
       SourceFixtures.load(ds, domain.library.Citekey("zzacq_ingested")).isDefined,
       "the metadata-only source is created"
     )
-    // without the flag the person's path asks it (the switch is on), and the watcher's never does
+    // a request that says nothing is legal-only too
     wipe("zzacq_ingested")
     val _ = handlers(oa = chain, app = allowing).ingest(Ingest.Request(Ingest.Request.Id("10.1038/zztest001")))
+    assertEquals(asked.get, 0, "an ingest that does not ask for more is legal-only")
+    // only a person's explicit choice asks it (the switch is on), and the watcher's path never does
+    wipe("zzacq_ingested")
+    val _ = handlers(oa = chain, app = allowing)
+      .ingest(Ingest.Request(Ingest.Request.Id("10.1038/zztest001"), legalOnly = Ingest.Request.LegalOnly(false)))
     assertEquals(asked.get, 1)
     wipe("zzacq_ingested")
     val legal = handlers(oa = chain, app = allowing).ingestLegal(Ingest.Request(Ingest.Request.Id("10.1038/zztest001")))
@@ -807,6 +812,56 @@ class AcquireHandlerSuite extends DbSuite:
       legal.left.exists(_.problems.sentences.mkString("; ").contains("unpaywall: no copy — no open-access location")),
       legal.toString
     )
+    wipe("zzacq_ingested")
+
+  test("an agent's ingest is legal-only by default; asking for more is refused unless a person allowed it"):
+    wipe("zzacq_ingested")
+    import com.histmersion.plugin.{Access, Fetch, SourceFetcher, WorkKey}
+    val asked = java.util.concurrent.atomic.AtomicInteger(0)
+    val noCopy = Problem.NotFound.Copy(Problem.Raw("10.1038/zztest001"), Vector.empty)
+    val unauthorised = new SourceFetcher:
+      val access = Access.Unauthorised
+      def fetch(w: WorkKey, c: Fetch.Context) = {
+        asked.incrementAndGet(); Fetch.Miss(noCopy)
+      }
+    val open = new SourceFetcher:
+      val access = Access.Open
+      def fetch(w: WorkKey, c: Fetch.Context) = Fetch.Miss(noCopy)
+    val chain = FetchChain(
+      List(FetchChain.Step.Id("unpaywall") -> open, FetchChain.Step.Id("stub-unauthorised") -> unauthorised),
+      allowUnauthorised = FetchChain.AllowUnauthorised(true)
+    )
+    val allowing =
+      cfg.modify(_.acquire).setTo(cfg.acquire.modify(_.allowUnauthorised).setTo(AcquireConfig.AllowUnauthorised(true)))
+    val doi = Ingest.Request.Id("10.1038/zztest001")
+    // the default: the legal chain alone, whatever acquire.allow-unauthorised says
+    val r = handlers(oa = chain, app = allowing)
+      .ingestByAgent(Ingest.Request(doi))
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
+    assertEquals(asked.get, 0, "an agent's ingest never asks a fetcher the config marks unauthorised")
+    assert(r.steps.exists(_.step == Ingest.Step.Value("legal-only")), r.steps.toString)
+    // asking for more is refused with the typed problem, before anything is fetched or stored
+    wipe("zzacq_ingested")
+    val refused =
+      handlers(oa = chain, app = allowing).ingestByAgent(
+        Ingest.Request(doi, legalOnly = Ingest.Request.LegalOnly(false))
+      )
+    assertEquals(
+      refused.left.map(e => util.nonempty.NonEmptyVector.toVector(e.problems)),
+      Left(Vector(Problem.Refused.Policy(Problem.Refused.Rule.LegalOnly)))
+    )
+    assertEquals(asked.get, 0)
+    assert(SourceFixtures.load(ds, domain.library.Citekey("zzacq_ingested")).isEmpty, "nothing is stored")
+    // a person's setting lets an agent that asks for it use them
+    val personAllowed = allowing
+      .modify(_.acquire)
+      .setTo(
+        allowing.acquire.modify(_.agentsMayUseUnauthorised).setTo(AcquireConfig.AgentsMayUseUnauthorised(true))
+      )
+    val _ = handlers(oa = chain, app = personAllowed)
+      .ingestByAgent(Ingest.Request(doi, legalOnly = Ingest.Request.LegalOnly(false)))
+      .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
+    assertEquals(asked.get, 1)
     wipe("zzacq_ingested")
 
   test("no open-access copy: the source is still created and the manual drop-in is explained"):

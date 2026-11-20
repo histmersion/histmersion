@@ -14,6 +14,14 @@ object SettingPolicy:
   type Note = Note.T
   object Note extends Newtype[String, Pure]
 
+  /** The settings that decide what agents may do: a person changes them, an agent's tool call never does (the owner's
+    * rule that agents fetch legal copies alone). A key under one of them counts too.
+    */
+  val PersonHeld: List[SettingKey] = List(
+    SettingKey("histmersion.acquire.allow-unauthorised"),
+    SettingKey("histmersion.acquire.agents-may-use-unauthorised")
+  )
+
   /** [[check]] of every edit, the first refusal ending it; the warnings of all of them. */
 
   type CheckLiteralConsent = LiteralConsent

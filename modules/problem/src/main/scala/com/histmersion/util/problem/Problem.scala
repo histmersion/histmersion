@@ -928,6 +928,9 @@ object Problem:
       /** Bookmarks, notes and read marks belong to a person: an automated run has none. */
       case PersonOnly
 
+      /** The setting decides what agents may do: only a person changes it, never an agent's tool call. */
+      case PersonHeldSetting
+
       /** The run token is another agent's than the one whose tools were asked for. */
       case TokenOtherAgent
 

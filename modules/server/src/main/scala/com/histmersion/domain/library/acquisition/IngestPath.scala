@@ -7,10 +7,10 @@ import io.github.iltotore.iron.constraint.any.Pure
   * whether a work it found no file for is refused instead of stored from its metadata (`needsFile`).
   */
 enum IngestPath(val legalChain: IngestPath.LegalChain, val needsFile: IngestPath.NeedsFile) derives CanEqual:
-  /** `histmersion ingest <doi>`. */
+  /** `histmersion ingest <doi> --allow-unauthorised`: a person's explicit choice. */
   case Person extends IngestPath(IngestPath.LegalChain(false), IngestPath.NeedsFile(false))
 
-  /** `histmersion ingest <doi> --legal-only`. */
+  /** `histmersion ingest <doi>`, and an agent's ingest. */
   case PersonLegal extends IngestPath(IngestPath.LegalChain(true), IngestPath.NeedsFile(false))
 
   /** A watcher's auto-ingest, the acquisition list's re-check. */

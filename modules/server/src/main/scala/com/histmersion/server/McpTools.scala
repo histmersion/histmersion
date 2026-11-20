@@ -259,7 +259,8 @@ final class McpTools(
           "a reference — env:NAME or <vault>:<entry> — and `value:` only with `literalConsent`. `reload` reads the " +
           "file again and switches the running server to it in place; `restart` restarts a server that runs " +
           "under its service, for the settings only a restart applies (the listening host/port, the bundled " +
-          "runtime, pool sizes)."
+          "runtime, pool sizes). The settings that decide what agents may fetch (acquire.allow-unauthorised, " +
+          "acquire.agents-may-use-unauthorised) are a person's: this tool refuses to change them."
       )
       .input[ConfigInput]
       .handle { in =>
@@ -285,7 +286,7 @@ final class McpTools(
               case Some(k) =>
                 val value = if in.action.trim.equalsIgnoreCase("unset") then None else Some(in.value.getOrElse(""))
                 h.settings
-                  .write(
+                  .writeByAgent(
                     ConfigEdit.Write(
                       List(
                         ConfigEdit.Change(

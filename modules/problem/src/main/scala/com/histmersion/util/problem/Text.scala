@@ -756,6 +756,9 @@ object Text:
       case Refused.Rule.RegistrationOver  =>
         "registration is over: a plugin adds to a registry only from inside its register"
       case Refused.Rule.PersonOnly => "bookmarks, notes and read marks are a person's own; an automated run has none"
+      case Refused.Rule.PersonHeldSetting =>
+        "this setting decides what agents may do, so only a person changes it (histmersion config set, or the " +
+          "settings page), not an agent's tool call"
       case Refused.Rule.TokenOtherAgent  => "this run token is not for that agent"
       case Refused.Rule.PlanOutsideLocal =>
         "this provider is refused while the server listens beyond loopback: it spends your own plan, and another " +

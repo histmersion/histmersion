@@ -51,6 +51,9 @@ object SettingKey extends Newtype[String, SettingKeyRule]:
 
     /** Is this key `other` or under it? */
     def within(other: SettingKey): Boolean = k == other || k.value.startsWith(other.value + ".")
+
+    /** Is this key one only a person changes ([[SettingPolicy.PersonHeld]]), or under one? */
+    def personHeld: Boolean = SettingPolicy.PersonHeld.exists(k.within)
     def parent: Option[SettingKey] =
       Option.when(segments.size > 2)(SettingKey.applyUnsafe(segments.init.mkString(".")))
 

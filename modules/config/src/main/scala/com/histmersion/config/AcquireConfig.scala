@@ -36,6 +36,7 @@ final case class AcquireConfig(
     retractionWatch: RetractionWatchConfig,
     chain: CommaList,
     allowUnauthorised: AcquireConfig.AllowUnauthorised,
+    agentsMayUseUnauthorised: AcquireConfig.AgentsMayUseUnauthorised,
     userAgent: AcquireConfig.UserAgent,
     timeoutSeconds: AcquireConfig.TimeoutSeconds,
     spoolDir: AcquireConfig.SpoolDir,
@@ -69,6 +70,13 @@ object AcquireConfig:
   object PublicUserAgent extends Newtype[String, Pure]
   type AllowUnauthorised = AllowUnauthorised.T
   object AllowUnauthorised extends Newtype[Boolean, Pure]
+
+  /** Whether an ingest an agent starts (an MCP call) may ask a fetcher the config marks unauthorised when it asks for
+    * that explicitly. Off, every agent ingest is legal-only. Only a person sets it: the owner's standing rule is that
+    * agents fetch legal copies alone.
+    */
+  type AgentsMayUseUnauthorised = AgentsMayUseUnauthorised.T
+  object AgentsMayUseUnauthorised extends Newtype[Boolean, Pure]
   type UserAgent = UserAgent.T
   object UserAgent extends Newtype[String, Pure]
   type TimeoutSeconds = TimeoutSeconds.T
