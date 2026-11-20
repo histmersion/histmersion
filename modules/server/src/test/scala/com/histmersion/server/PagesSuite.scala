@@ -22,6 +22,7 @@ import com.histmersion.api.catalogue.Latitude
 import com.histmersion.domain.Title
 import com.histmersion.api.automation.Activity
 import com.histmersion.api.instance.UiConfig
+import com.histmersion.api.Html.html
 import com.histmersion.server.instance.WebBundle
 
 /** The server's HTML pages, pure: the anchor/chip/badge atoms and the typed page models rendered from them. No database
@@ -62,24 +63,24 @@ class PagesSuite extends munit.FunSuite:
 
   test("a source reference is ONE anchor shape, labelled by DOI when there is one, else by citekey"):
     assertEquals(
-      HtmlRender.sourceRef(cline),
+      HtmlRender.sourceRef(cline).markup,
       """<a class="src-ref" data-ck="cline2014_year" data-doi="10.1515/9781400849987" """ +
         """href="/source/cline2014_year">10.1515/9781400849987</a>"""
     )
     assertEquals(
-      HtmlRender.sourceRef(drews),
+      HtmlRender.sourceRef(drews).markup,
       """<a class="src-ref" data-ck="drews1993_end" href="/source/drews1993_end">drews1993_end</a>"""
     )
 
   test("an article reference carries data-slug and the title"):
     assertEquals(
-      HtmlRender.articleRef(topic),
+      HtmlRender.articleRef(topic).markup,
       """<a class="art-ref" data-slug="bronze_age_collapse" href="/article/bronze_age_collapse">The Bronze Age Collapse</a>"""
     )
 
   test("values from the database are escaped in every attribute and text node"):
     val evil = cline.modify(_.citekey).setTo(Citekey("x\"><script>")).modify(_.doi).setTo(Some(Doi("\"onmouseover=1")))
-    val html = HtmlRender.sourceRef(evil, HtmlRender.Label("<b>")).value
+    val html = HtmlRender.sourceRef(evil, HtmlRender.Label("<b>")).markup
     assert(!html.contains("<script>") && !html.contains("<b>") && !html.contains("\"onmouseover"), html)
 
   test("the readable label is author-year, or the title when there are no authors"):
@@ -87,21 +88,21 @@ class PagesSuite extends munit.FunSuite:
     assertEquals(HtmlRender.readable(cline.modify(_.authors).setTo(Nil)).value: String, cline.title.value: String)
 
   test("a chip never shows an underscore, and links the raw value into the web UI"):
-    val c = HtmlRender.chip(ChipField.Tag, HtmlRender.Label("sea_peoples")).value
+    val c = HtmlRender.chip(ChipField.Tag, HtmlRender.Label("sea_peoples")).markup
     assert(c.contains(">sea peoples</a>"), c)
     assert(c.contains("""href="/#tag=sea_peoples""""), c)
     assert(c.contains("""data-field="tag""""), c)
     assert(
       !HtmlRender
         .chips(ChipField.Topic, List(HtmlRender.Label("bronze_age_collapse"), HtmlRender.Label("trade_routes")))
-        .value
+        .markup
         .replaceAll("<[^>]*>", "")
         .contains("_")
     )
 
   test("a confidence badge is an icon plus its level's class, which the stylesheet colours"):
     Confidence.values.foreach { c =>
-      val b = HtmlRender.confidenceBadge(c).value
+      val b = HtmlRender.confidenceBadge(c).markup
       assert(b.contains("<svg"), b)
       assert(b.contains(s"conf-badge conf-${c.toString.toLowerCase}"), b)
       assert(!b.contains("style="), s"the colour is the stylesheet's: $b")
@@ -119,7 +120,7 @@ class PagesSuite extends munit.FunSuite:
       Nil,
       Some(Confidence.Medium)
     )
-    val html = HtmlRender.finding(f).value
+    val html = HtmlRender.finding(f).markup
     assert(html.contains("conf-medium"), html)
     assert(html.contains("Ugarit (35.60, 35.78)"), html)
     assert(html.contains("1190 BCE–1185 BCE"), html)
@@ -134,8 +135,8 @@ class PagesSuite extends munit.FunSuite:
         links
       )
       .value
-    assert(out.contains(HtmlRender.sourceRef(cline, HtmlRender.Label("Cline 2014")).value), out)
-    assert(out.contains(HtmlRender.articleRef(topic).value), out)
+    assert(out.contains(HtmlRender.sourceRef(cline, HtmlRender.Label("Cline 2014")).markup), out)
+    assert(out.contains(HtmlRender.articleRef(topic).markup), out)
     assert(out.contains("""<span class="dangling" title="unresolved link">nothing here</span>"""), out)
     assert(out.contains(">Drews</a>"), out)
 
@@ -192,7 +193,7 @@ class PagesSuite extends munit.FunSuite:
         ),
         links
       )
-      .value
+      .markup
     assert(
       html.contains(
         HtmlRender
@@ -200,7 +201,7 @@ class PagesSuite extends munit.FunSuite:
             drews,
             HtmlRender.Label("Drews 1993")
           )
-          .value + """<sup class="cite-num"><a class="cite-jump" href="#cite-1">[1]</a></sup>"""
+          .markup + """<sup class="cite-num"><a class="cite-jump" href="#cite-1">[1]</a></sup>"""
       ),
       html
     )
@@ -211,14 +212,14 @@ class PagesSuite extends munit.FunSuite:
             cline,
             HtmlRender.Label("Cline 2014")
           )
-          .value + """<sup class="cite-num"><a class="cite-jump" href="#cite-2">[2]</a></sup>"""
+          .markup + """<sup class="cite-num"><a class="cite-jump" href="#cite-2">[2]</a></sup>"""
       ),
       html
     )
     // under "Not used": the same anchor (so the same preview), bold, and no number
     assert(
       html.contains(
-        "<strong>" + HtmlRender.sourceRef(cline, HtmlRender.Label("Cline 2014")).value + "</strong>: already cited"
+        "<strong>" + HtmlRender.sourceRef(cline, HtmlRender.Label("Cline 2014")).markup + "</strong>: already cited"
       ),
       html
     )
@@ -230,7 +231,7 @@ class PagesSuite extends munit.FunSuite:
     assert(footer.contains("""<code class="citekey">drews1993_end</code>"""), footer)
 
   test("the article's own title heading is rendered once, with the meta line under it"):
-    val html = Pages.article(articlePage(Article.Body("# The Sea Peoples\n\nprose")), links).value
+    val html = Pages.article(articlePage(Article.Body("# The Sea Peoples\n\nprose")), links).markup
     assertEquals("<h1>".r.findAllIn(html).size, 1, html)
     assert(html.contains("""<p class="article-meta-line">concept · """), html)
     assert(html.contains(">sea peoples</a>"), html)
@@ -252,7 +253,7 @@ class PagesSuite extends munit.FunSuite:
         ),
         links
       )
-      .value
+      .markup
     assertEquals("<h2[^>]*>Sources".r.findAllIn(html).size, 1, html)
     assert(html.contains("""<h2 id="sources-cited">Sources cited ("""), html)
 
@@ -275,7 +276,7 @@ class PagesSuite extends munit.FunSuite:
   )
 
   test("no citations: no section at all, and no agent-worded 'No references recorded' text"):
-    val html = Pages.source(sourcePage, links).value
+    val html = Pages.source(sourcePage, links).markup
     assert(!html.contains("Cites") && !html.contains("Cited by"), html)
     assert(!html.contains("No references recorded"), html)
     assert(html.contains("""<span class="lbl">DOI</span> <a class="doi""""), html)
@@ -295,7 +296,7 @@ class PagesSuite extends munit.FunSuite:
       Some(Confidence.High),
       Some(Finding.Significance("key_evidence"))
     )
-    val html = Pages.source(sourcePage.modify(_.findings).setTo(List(f)), links).value
+    val html = Pages.source(sourcePage.modify(_.findings).setTo(List(f)), links).markup
     assert(html.contains("south caucasus (41.00, 45.00)"), html)
     // Library's reading pane links "All N findings" here
     assert(html.contains("""<h2 id="findings">Findings (1)</h2>"""), html)
@@ -312,13 +313,13 @@ class PagesSuite extends munit.FunSuite:
       )
       .modify(_.citedBy)
       .setTo(List(Citation.ToArticle(topic, None)))
-    val html = Pages.source(p, links).value
+    val html = Pages.source(p, links).markup
     assert(html.contains("""<h2 id="cites">Cites (2)</h2>"""), html)
     assert(html.contains("""<h2 id="cited-by">Cited by (1)</h2>"""), html)
-    assert(html.contains(HtmlRender.sourceRef(drews, HtmlRender.Label("Drews 1993")).value), html)
+    assert(html.contains(HtmlRender.sourceRef(drews, HtmlRender.Label("Drews 1993")).markup), html)
     assert(html.contains("""<span class="edge-kind">challenges</span>"""), html)
     assert(html.contains("not in the corpus yet"), html)
-    assert(html.contains(HtmlRender.articleRef(topic).value), html)
+    assert(html.contains(HtmlRender.articleRef(topic).markup), html)
 
   test("the pages pass the allow-list unchanged, so the web UI's window (which cleans what it fetches) loses nothing"):
     val p = sourcePage
@@ -332,7 +333,7 @@ class PagesSuite extends munit.FunSuite:
       .modify(_.citedBy)
       .setTo(List(Citation.ToArticle(topic, None)))
     val pages = List(
-      Pages.source(p, links).value,
+      Pages.source(p, links).markup,
       Pages
         .article(
           articlePage(
@@ -344,14 +345,14 @@ class PagesSuite extends munit.FunSuite:
           ).modify(_.review).setTo(Some(review)),
           links
         )
-        .value,
-      Pages.reviewHistory(review).value
+        .markup,
+      Pages.reviewHistory(review).markup
     )
     pages.foreach(html => assertEquals(api.Html.sanitize(html).markup, html))
 
   test("a standalone page loads the Scala.js bundle and names its page kind"):
     val bundle = WebBundle(UiConfig.BuildId("0123456789abcdef0123456789abcdef"))
-    val doc = ArticleHtml.page(Title("T"), HtmlRender.Html("<p>x</p>"), PageKind.Source, bundle).value
+    val doc = ArticleHtml.page(Title("T"), html"<p>x</p>", PageKind.Source, bundle).markup
     assert(doc.contains("""<script src="/web/app.bundle.js?v=0123456789abcdef0123456789abcdef"></script>"""), doc)
     assert(doc.contains("""data-page="source""""), doc)
     assert(!doc.contains("article.js") && !doc.contains("citations.js"), doc)
@@ -416,7 +417,7 @@ class PagesSuite extends munit.FunSuite:
   test("the article page shows the review badge with its meaning, and the goals that link it, under the title"):
     val html = Pages
       .article(articlePage(Article.Body("# The Sea Peoples\n\nText.")).modify(_.review).setTo(Some(review)), links)
-      .value
+      .markup
     assert(
       html.contains(
         """<span class="job-state review-state state-majors-open" title="Reviewed: 1 MAJOR finding is still open.">1 major open</span>"""
@@ -437,12 +438,12 @@ class PagesSuite extends munit.FunSuite:
     assert(
       !Pages
         .article(articlePage(Article.Body("# The Sea Peoples\n\nText.")), links)
-        .value
+        .markup
         .contains("article-review-line")
     )
 
   test("the review history: collapsed, counted, run by run, each finding with reviewer, kind, place and fate"):
-    val html = Pages.reviewHistory(review).value
+    val html = Pages.reviewHistory(review).markup
     assert(
       html.startsWith(
         """<details class="review-history"><summary>Review history: 2 findings over 1 run, 1 still open</summary>"""
@@ -471,5 +472,5 @@ class PagesSuite extends munit.FunSuite:
       ),
       html
     )
-    assertEquals(Pages.reviewHistory(review.modify(_.rounds).setTo(Nil)), "")
+    assertEquals(Pages.reviewHistory(review.modify(_.rounds).setTo(Nil)).markup, "")
     assertEquals(Pages.readableUtc("2026-10-01T10:00"), "2026-10-01T10:00")

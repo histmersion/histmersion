@@ -8,8 +8,6 @@ import com.histmersion.api.exchange.Bundle
 object AssetLinks:
   type Body = Body.T
   object Body extends Newtype[String, Pure]
-  type Html = Html.T
-  object Html extends Newtype[String, Pure]
   type Kind = Kind.T
   object Kind extends Newtype[String, Pure]
   type Target = Target.T
@@ -132,11 +130,6 @@ object AssetLinks:
 
   private def enc(s: String): String =
     (java.net.URLEncoder.encode((s), "UTF-8").replace("+", "%20"))
-
-  private val BareImg = """<img(?![^>]*\bloading=)\s""".r
-
-  def lazyImages(html: Html): Html =
-    Html(BareImg.replaceAllIn((html).value, _ => java.util.regex.Matcher.quoteReplacement("""<img loading="lazy" """)))
 
   /** Must match the converter's `_safe_name`: either side may name a file. */
   def safeName(raw: String): SafeName.Sanitized = SafeName.of(raw)

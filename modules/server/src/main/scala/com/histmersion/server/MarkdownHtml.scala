@@ -15,5 +15,5 @@ object MarkdownHtml:
 
   private val renderer = HtmlRenderer.builder(MarkdownFlavor.options).build()
 
-  def render(md: FullText.Shown.Markdown): HtmlRender.Html =
-    HtmlRender.Html(Html.sanitize(renderer.render(MarkdownFlavor.parser.parse(md.value))).markup)
+  def render(md: FullText.Shown.Markdown): Html =
+    Html.sanitize(renderer.render(MarkdownFlavor.parser.parse(md.value)))

@@ -210,3 +210,44 @@ class HtmlSuite extends munit.FunSuite:
       """<span title="&eacute;&#233;&amp;&lt;">t</span>""",
       "a < b <!-- c --> <etal>d</etal> <script>e</script>"
     ).foreach(s => assertEquals(clean(clean(s)), clean(s), s))
+
+  // ── markup derived from markup (moved here with the transforms, from IngestSuite and core's HighlightSuite) ──────
+
+  test("lazyImages adds loading=lazy exactly once"):
+    val out = Html.lazyImages(Html.sanitize("""<p><img src="/source/ck/assets/a.png" alt="A" /></p>""")).markup
+    assertEquals(out.sliding("loading=".length).count(_ == "loading="), 1)
+    assert(out.startsWith("""<p><img loading="lazy" src="""), out)
+
+  test("lazyImages leaves an <img> that already declares loading alone"):
+    val html = Html.sanitize("""<img loading="eager" src="x">""")
+    assertEquals(Html.lazyImages(html).markup, html.markup)
+
+  test("lazyImages: what it adds is markup the cleaner keeps"):
+    List(
+      """<p><img src="/source/ck/assets/a.png" alt="A" /></p>""",
+      """<img src="a.png"><img loading="eager" src="b.png"> <IMG SRC='c.png' ALT=x>""",
+      """<figure><img src="x" width="3" height="4"><figcaption>F</figcaption></figure>"""
+    ).foreach { s =>
+      assertEquals(Html.lazyImages(Html.sanitize(s)).markup, clean(Html.lazyImages(Html.sanitize(s)).markup), s)
+    }
+
+  // without `u`: Scala.js refuses \b with Unicode case before ES2018 (core's Highlight builds its own, on the JVM)
+  private val sea = "(?i)\\bsea\\w*".r
+
+  test("marked wraps the text's hits, numbered in document order, and counts them"):
+    val (out, n) = Html.marked(Html.sanitize("<p>sea</p><p>The Sea</p>"), sea)
+    assertEquals(n, 2)
+    assertEquals(out.markup, """<p><mark id="hl1">sea</mark></p><p>The <mark id="hl2">Sea</mark></p>""")
+
+  test("marked: script and style content is skipped"):
+    val (out, n) = Html.markText("""<style>.sea{color:red}</style><script>var sea=1;</script><p>Sea</p>""", sea)
+    assertEquals(n, 1)
+    assert(out.startsWith("""<style>.sea{color:red}</style><script>var sea=1;</script>"""), out)
+
+  test("marked: an unterminated tag does not lose text"):
+    val (out, _) = Html.markText("<p>sea</p><b", sea)
+    assert(out.endsWith("</p><b"), out)
+
+  test("marked: what it adds is markup the cleaner keeps"):
+    val (out, _) = Html.marked(Html.sanitize("""<p title="sea">sea &amp; Sea <a href="/source/sea">sea</a></p>"""), sea)
+    assertEquals(clean(out.markup), out.markup)

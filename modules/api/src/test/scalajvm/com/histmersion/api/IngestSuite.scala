@@ -181,17 +181,6 @@ class IngestSuite extends munit.FunSuite:
     val once = AssetLinks.toWeb(md, AssetLinks.ToWebCitekey("ck"))
     assertEquals(AssetLinks.toWeb(once, AssetLinks.ToWebCitekey("ck")), once)
 
-  // ── rendered HTML ────────────────────────────────────────────────────────────────────────────
-  test("lazyImages adds loading=lazy exactly once"):
-    val html = AssetLinks.Html("""<p><img src="/source/ck/assets/a.png" alt="A" /></p>""")
-    val out = AssetLinks.lazyImages(html).value
-    assertEquals(out.sliding("loading=".length).count(_ == "loading="), 1)
-    assert(out.startsWith("""<p><img loading="lazy" src="""), out)
-
-  test("lazyImages leaves an <img> that already declares loading alone"):
-    val html = AssetLinks.Html("""<img loading="eager" src="x">""")
-    assertEquals(AssetLinks.lazyImages(html), html)
-
   // ── names and mime types ─────────────────────────────────────────────────────────────────────
   test("safeName strips directories and unsafe characters"):
     assertEquals(AssetLinks.safeName("a/b/../fig 1!.png"), "fig-1-.png")

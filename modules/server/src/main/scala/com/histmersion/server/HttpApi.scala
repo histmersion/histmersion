@@ -12,6 +12,7 @@ import sttp.shared.Identity
 import sttp.model.{Header, MediaType, StatusCode}
 import com.histmersion.api.json.TapirJson.*
 import com.histmersion.api.{Api, OpsApi, WebPaths}
+import com.histmersion.api.Html.html
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.server.ArticleHtml
@@ -319,12 +320,12 @@ final class HttpApi(
       .serverLogicSuccess[Identity] { case (requested, full, fragment, q) =>
         def missing =
           // ESCAPED: `requested` is whatever was in the URL, and this page is served as text/html
-          val body = s"<p>No source <code>${ArticleHtml.esc(HtmlRender.Text(requested)).value}</code>.</p>"
+          val body = html"<p>No source <code>$requested</code>.</p>"
           (
             sttp.model.StatusCode.NotFound,
             None,
-            if fragment then body
-            else ArticleHtml.page(Title("Not found"), HtmlRender.Html(body), PageKind.Source, deps.webBundle).value
+            (if fragment then body
+             else ArticleHtml.page(Title("Not found"), body, PageKind.Source, deps.webBundle)).markup
           )
         Citekey.option(requested) match
           case None     => missing
@@ -335,9 +336,7 @@ final class HttpApi(
               (
                 sttp.model.StatusCode.MovedPermanently,
                 Some(to.value),
-                s"""<p>Moved to <a href="${ArticleHtml
-                    .esc(HtmlRender.Text(to.value))
-                    .value}">${ArticleHtml.esc(HtmlRender.Text(now.value)).value}</a>.</p>"""
+                html"""<p>Moved to <a href="$to">$now</a>.</p>""".markup
               )
             else
               pages.source(
@@ -349,8 +348,7 @@ final class HttpApi(
                   (
                     sttp.model.StatusCode.Ok,
                     None,
-                    if fragment then inner.value
-                    else ArticleHtml.page(title, inner, PageKind.Source, deps.webBundle).value
+                    (if fragment then inner else ArticleHtml.page(title, inner, PageKind.Source, deps.webBundle)).markup
                   )
                 case None => missing
       }

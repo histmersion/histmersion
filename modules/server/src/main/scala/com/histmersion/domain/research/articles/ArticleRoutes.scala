@@ -6,7 +6,8 @@ import io.scalaland.chimney.dsl.*
 import com.histmersion.api.{Api, Write}
 import com.histmersion.api.research.{Article, Articles, ReviewGoal}
 import com.histmersion.domain.research.Slug
-import com.histmersion.server.{ArticleHtml, HtmlRender, PageKind}
+import com.histmersion.api.Html.html
+import com.histmersion.server.{ArticleHtml, PageKind}
 import sttp.model.{Header, MediaType}
 import sttp.shared.Identity
 import sttp.tapir.*
@@ -81,14 +82,13 @@ object ArticleRoutes:
             case Some((title, inner)) =>
               (
                 sttp.model.StatusCode.Ok,
-                if fragment then inner.value else shell(title, inner, PageKind.Article).value
+                (if fragment then inner else shell(title, inner, PageKind.Article)).markup
               )
             case None =>
-              val body = s"<p>No article <code>${ArticleHtml.esc(HtmlRender.Text(slug))}</code>.</p>"
+              val body = html"<p>No article <code>$slug</code>.</p>"
               (
                 sttp.model.StatusCode.NotFound,
-                if fragment then body
-                else shell(Title("Not found"), HtmlRender.Html(body), PageKind.Article).value
+                (if fragment then body else shell(Title("Not found"), body, PageKind.Article)).markup
               )
         }
 

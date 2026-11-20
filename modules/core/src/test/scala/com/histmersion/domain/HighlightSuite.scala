@@ -4,10 +4,25 @@ package domain
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.config.*
+import com.histmersion.api.Html
 import com.histmersion.api.given
 import com.histmersion.config.given
 
+/** The terms of a query, its pattern, and their marks in a page (as PageBuilder marks it: the pattern through api's
+  * `Html.marked`). The page is an [[Html]]: a text of markup that is no `Html` (an unterminated tag, a `<script>`
+  * element) is api's HtmlSuite's, where the marking lives.
+  */
 class HighlightSuite extends munit.FunSuite:
+
+  private def page(markup: String): Html = Html.sanitize(markup)
+
+  private def marked(html: Html, q: String): (Html, Int) =
+    Highlight.pattern(Highlight.Term(q)).fold((html, 0))(Html.marked(html, _))
+
+  test("pattern: none for a query with no term worth highlighting"):
+    assertEquals(Highlight.pattern(Highlight.Term("")), None)
+    assertEquals(Highlight.pattern(Highlight.Term("-only or and")), None)
+    assert(Highlight.pattern(Highlight.Term("sea")).isDefined)
 
   test("terms: bare words, quoted phrases, longest first"):
     assertEquals(
@@ -25,54 +40,51 @@ class HighlightSuite extends munit.FunSuite:
     assertEquals(Highlight.terms(Highlight.Term("")), Nil)
 
   test("marks wrap text hits and count them"):
-    val (html, n) = Highlight(Highlight.ApplyHtml("<p>The Sea Peoples raided.</p>"), Highlight.ApplyQ("sea"))
+    val (html, n) = marked(page("<p>The Sea Peoples raided.</p>"), ("sea"))
     assertEquals(n, 1)
-    assertEquals(html, """<p>The <mark id="hl1">Sea</mark> Peoples raided.</p>""")
+    assertEquals(html.markup, """<p>The <mark id="hl1">Sea</mark> Peoples raided.</p>""")
 
   test("match extends over the rest of the word, so a stemmed hit reads whole"):
-    val (html, n) = Highlight(Highlight.ApplyHtml("<p>Egyptian records</p>"), Highlight.ApplyQ("egypt"))
+    val (html, n) = marked(page("<p>Egyptian records</p>"), ("egypt"))
     assertEquals(n, 1)
-    assert(html.value.contains("""<mark id="hl1">Egyptian</mark>"""), html)
+    assert(html.markup.contains("""<mark id="hl1">Egyptian</mark>"""), html.markup)
 
   test("attributes and tag names are never touched"):
-    val (html, n) =
-      Highlight(Highlight.ApplyHtml("""<a href="/source/egypt" class="egypt">Egypt</a>"""), Highlight.ApplyQ("egypt"))
+    val (html, n) = marked(page("""<a href="/source/egypt" class="egypt">Egypt</a>"""), ("egypt"))
     assertEquals(n, 1)
-    assertEquals(html, """<a href="/source/egypt" class="egypt"><mark id="hl1">Egypt</mark></a>""")
+    assertEquals(html.markup, """<a href="/source/egypt" class="egypt"><mark id="hl1">Egypt</mark></a>""")
 
   test("phrases match across whitespace and newlines, and win over their own words"):
-    val (html, n) =
-      Highlight(Highlight.ApplyHtml("<p>the sea\n  peoples came</p>"), Highlight.ApplyQ(""""sea peoples""""))
+    val (html, n) = marked(page("<p>the sea\n  peoples came</p>"), (""""sea peoples""""))
     assertEquals(n, 1)
-    assert(html.value.contains("<mark id=\"hl1\">sea\n  peoples</mark>"), html)
+    assert(html.markup.contains("<mark id=\"hl1\">sea\n  peoples</mark>"), html.markup)
 
   test("ids are sequential across the whole document"):
-    val (html, n) = Highlight(Highlight.ApplyHtml("<p>sea</p><p>sea</p><p>sea</p>"), Highlight.ApplyQ("sea"))
+    val (html, n) = marked(page("<p>sea</p><p>sea</p><p>sea</p>"), ("sea"))
     assertEquals(n, 3)
-    assertEquals("""id="hl\d"""".r.findAllIn(html.value).toList, List("""id="hl1"""", """id="hl2"""", """id="hl3""""))
+    assertEquals(
+      """id="hl\d"""".r.findAllIn(html.markup).toList,
+      List("""id="hl1"""", """id="hl2"""", """id="hl3"""")
+    )
 
   test("entities are left alone even when a term matches inside them"):
-    val (html, n) = Highlight(Highlight.ApplyHtml("<p>A &amp; B</p>"), Highlight.ApplyQ("amp"))
+    val (html, n) = marked(page("<p>A &amp; B</p>"), ("amp"))
     assertEquals(n, 0)
-    assertEquals(html, "<p>A &amp; B</p>")
+    assertEquals(html.markup, "<p>A &amp; B</p>")
 
-  test("script and style content is skipped"):
-    val src = Highlight.ApplyHtml("""<style>.egypt{color:red}</style><script>var egypt=1;</script><p>Egypt</p>""")
-    val (html, n) = Highlight(src, Highlight.ApplyQ("egypt"))
-    assertEquals(n, 1)
-    assert(html.value.startsWith("""<style>.egypt{color:red}</style><script>var egypt=1;</script>"""), html)
+  test("a page's script and style, shown as text by the cleaner, are text: their words are marked as any other"):
+    val (html, n) = marked(page("""<style>.egypt{}</style><p>Egypt</p>"""), ("egypt"))
+    assertEquals(n, 2)
+    assert(html.markup.startsWith("""&lt;style&gt;.<mark id="hl1">egypt</mark>{}&lt;/style&gt;"""), html.markup)
 
   test("no query, no terms, or no match leaves the html byte-identical"):
-    val src = Highlight.ApplyHtml("<p>nothing here</p>")
-    assertEquals(Highlight(src, Highlight.ApplyQ("")), (src, 0))
-    assertEquals(Highlight(src, Highlight.ApplyQ("-only")), (src, 0))
-    assertEquals(Highlight(src, Highlight.ApplyQ("absent")), (src, 0))
+    val src = page("<p>nothing here</p>")
+    List("", "-only", "absent").foreach { q =>
+      val (html, n) = marked(src, q)
+      assertEquals((html.markup, n), (src.markup, 0), q)
+    }
 
   test("regex metacharacters in the query are literal"):
-    val (html, n) = Highlight(Highlight.ApplyHtml("<p>a.b and axb</p>"), Highlight.ApplyQ("a.b"))
+    val (html, n) = marked(page("<p>a.b and axb</p>"), ("a.b"))
     assertEquals(n, 1)
-    assert(html.value.contains("""<mark id="hl1">a.b</mark>"""), html)
-
-  test("unterminated tag does not lose text"):
-    val (html, _) = Highlight(Highlight.ApplyHtml("<p>sea</p><b"), Highlight.ApplyQ("sea"))
-    assert(html.value.endsWith("</p><b"), html)
+    assert(html.markup.contains("""<mark id="hl1">a.b</mark>"""), html.markup)
