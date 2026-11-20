@@ -74,7 +74,8 @@ class OutboundTlsSuite extends munit.FunSuite:
     val got = OutboundTls.configure(
       TlsConfig(systemTrust = TlsConfig.SystemTrust(true), extraCaFile = TlsConfig.ExtraCaFile("")),
       HttpPolicy.OsName("Mac OS X"),
-      fakeRun(seen)
+      fakeRun(seen),
+      present = _ => true // the keychain files, which only a Mac has
     )
     val (_, line) = got.getOrElse(fail("configured"))
     assertEquals(seen.headOption.map(_.take(4)), Some(List("/usr/bin/security", "find-certificate", "-a", "-p")))

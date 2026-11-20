@@ -452,6 +452,10 @@ object CalibreCommandsSuite:
       (List(
         launcher,
         "--sun-misc-unsafe-memory-access=allow",
+        // the output is read as UTF-8: with the environment cleared, a JVM on Linux has no locale and would print
+        // `—` and `·` as `?` (macOS's native encoding is UTF-8 whatever the environment)
+        "-Dstdout.encoding=UTF-8",
+        "-Dstderr.encoding=UTF-8",
         "-cp",
         classPath,
         "com.histmersion.cli.histmersionCli"
