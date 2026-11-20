@@ -33,8 +33,8 @@ class TypedEntrySuite extends munit.FunSuite:
     assert(written.contains("\"why\":{\"group\":\"Run\",\"case\":\"Interrupted\""), written)
     assertEquals(RawJson.decode[Problem](written), Right(copy))
 
-  test("an entry of a case this side does not know is no problem"):
-    assert(RawJson.decode[Problem]("""{"group":"Run","case":"Nope","data":{},"text":"x"}""").isLeft)
+  // an entry of a case this side does not know: a failure on the JVM (ReadBackSuite), its sentence in the browser
+  // (BareProblemSuite, owner decision E19)
 
   test("the typed entry is written the same on every platform, and read back as its case"):
     // `Invalid.Missing` of `rationale` as the server writes it, and the browser too

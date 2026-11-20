@@ -59,3 +59,20 @@ class BareProblemSuite extends munit.FunSuite:
       RawJson.decode[List[Problem]](s"""[$typed, "interrupted"]"""),
       Right(List[Problem](Run.Interrupted, Relayed(Sentence("interrupted"))))
     )
+
+  test("an entry of a case this page does not know reads as the server's sentence (E19: a tab open across an upgrade)"):
+    val unknownCase = """{"group":"Conflict","case":"Invented","data":{"x":1},"text":"the server's own sentence"}"""
+    val unknownGroup = """{"group":"Galaxy","case":"Far","data":{},"text":"another sentence"}"""
+    val changedFields = """{"group":"Run","case":"Interrupted","data":{"extra":[1]},"text":"interrupted"}"""
+    assertEquals(RawJson.decode[Problem](unknownCase), Right(Relayed(Sentence("the server's own sentence"))))
+    assertEquals(RawJson.decode[Problem](unknownGroup), Right(Relayed(Sentence("another sentence"))))
+    assertEquals(
+      RawJson.decode[Problem]("""{"group":"Run","case":"Nope","data":{},"text":"x"}"""),
+      Right(Relayed(Sentence("x")))
+    )
+    assert(RawJson.decode[Problem](changedFields).isRight)
+    // the whole answer reads: the page shows the sentence, not "could not read the server's answer"
+    RawJson.decode[Api.Error](s"""{"problems":[$unknownCase]}""") match
+      case Right(e) =>
+        assertEquals((e.problems.size, e.problems.head), (1, Relayed(Sentence("the server's own sentence"))))
+      case Left(why) => fail(s"the answer did not read: $why")

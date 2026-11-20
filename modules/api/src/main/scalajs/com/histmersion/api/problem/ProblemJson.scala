@@ -14,3 +14,9 @@ private[api] object ProblemJson:
 
   /** The outside text, as it came. */
   def bare(text: String): Problem = Problem.Relayed(Problem.Sentence(s"$text"))
+
+  /** An entry whose case this page does not know (owner decision E19): a tab left open across an upgrade meets a case
+    * the newer server added, or one whose fields changed. It is shown by the sentence the server wrote for it, never as
+    * a failure to read the whole answer.
+    */
+  def unknown(sentence: Problem.Sentence): Option[Problem] = Some(Problem.Relayed(sentence))

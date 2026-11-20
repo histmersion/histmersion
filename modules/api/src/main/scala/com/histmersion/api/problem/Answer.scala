@@ -165,10 +165,13 @@ object Answer:
 
   extension (json: Json)
     /** The problem a wire record or a stored column carries: an entry as its case ([[problem]]), on the JVM and in the
-      * browser alike; a bare string as this platform reads one ([[ProblemJson.bare]]).
+      * browser alike; a bare string as this platform reads one ([[ProblemJson.bare]]); an entry of a case this build
+      * does not know as this platform reads one ([[ProblemJson.unknown]]: the browser shows its sentence, E19).
       */
     def asProblem: Either[String, Problem] =
-      json.asString.fold(json.as[Entry].flatMap(_.problem))(text => Right(ProblemJson.bare(text)))
+      json.asString.fold(
+        json.as[Entry].flatMap(e => e.problem.left.flatMap(why => ProblemJson.unknown(e.text).toRight(why)))
+      )(text => Right(ProblemJson.bare(text)))
 
   // ---- the derived codecs of the cases' fields ----------------------------------------------------------------
 

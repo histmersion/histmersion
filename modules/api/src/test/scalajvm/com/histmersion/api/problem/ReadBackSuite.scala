@@ -188,3 +188,11 @@ class ReadBackSuite extends munit.FunSuite:
       """{"goal":"g","rationale":"r","articles":[],"dropped":[{"group":"Content","case":"Proposal",""" +
         """"data":{"rule":{"SlugFree":{}},"at":"'old'"},"text":"'old': an article with this slug exists (or did)"}]}"""
     )
+
+  test("an entry of a case this build does not know is a failure on the JVM: a column is read without a fallback"):
+    // only the browser shows such an entry by its sentence (E19); the store and the CLI never guess it (G91)
+    List(
+      """{"group":"Run","case":"Nope","data":{},"text":"x"}""",
+      """{"group":"Conflict","case":"Invented","data":{"x":1},"text":"the server's own sentence"}""",
+      """{"group":"Galaxy","case":"Far","data":{},"text":"another sentence"}"""
+    ).foreach(e => assert(RawJson.decode[Problem](e).isLeft, e))
