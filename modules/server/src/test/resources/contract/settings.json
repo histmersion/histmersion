@@ -5746,6 +5746,21 @@
           "resolved" : null
         },
         {
+          "key" : "histmersion.cli.follow-timeout-seconds",
+          "section" : "cli",
+          "kind" : "number",
+          "doc" : "How long a command waits for the job or backup it started (an ingest, `backup`, `vacuum`), in seconds; past it, it exits 8 (outcome unknown) and the work goes on on the server.",
+          "default" : "21600",
+          "value" : null,
+          "effective" : "21600",
+          "source" : "default",
+          "envVar" : "HISTMERSION_FOLLOW_TIMEOUT",
+          "restart" : null,
+          "credential" : null,
+          "locked" : null,
+          "resolved" : null
+        },
+        {
           "key" : "histmersion.cli.plugins.install-dir",
           "section" : "cli",
           "kind" : "text",
