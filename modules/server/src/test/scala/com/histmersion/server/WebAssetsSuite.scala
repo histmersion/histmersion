@@ -2,7 +2,10 @@ package com.histmersion
 package server
 
 import com.histmersion.api.WebPaths
+import com.histmersion.api.instance.UiConfig
 import com.histmersion.domain.Title
+import com.histmersion.server.instance.WebBundle
+import com.histmersion.util.storage.Resources
 
 /** Regression guards for how the web UI is shipped. The UI itself is Scala.js (`modules/web`, with its own suites);
   * these read the served assets off the classpath — exactly as `Static.read` serves them — and assert the properties
@@ -15,17 +18,52 @@ class WebAssetsSuite extends munit.FunSuite:
 
   private def asset(name: String): String = Static.read(Static.ReadPath(s"web/$name")).value
 
+  private val bundle = WebBundle(UiConfig.BuildId("0123456789abcdef0123456789abcdef"))
+
   test("the page mounts the Scala.js app into #app and loads the bundle"):
     val html = asset("index.html")
     assert(html.contains("<div id=\"app\"></div>"), html)
-    assert(html.contains("""<script type="module" src="/web/boot.js"></script>"""), html)
-    assert(asset("boot.js").contains("app.src = \"/web/app.bundle.js"), asset("boot.js"))
+    assert(html.contains("""<script type="module" src="/web/boot.js?v={{build}}"></script>"""), html)
+    assert(
+      asset("boot.js").contains("app.src = \"/web/app.bundle.js\" + new URL(import.meta.url).search;"),
+      asset("boot.js")
+    )
+
+  test("G109: the bundle, its id, the page shells and the config name one build; no address carries a fixed ?v="):
+    val id = asset("build-id.txt").trim
+    assert(id.matches("[0-9a-f]{32}"), s"the build id is 32 hex digits: '$id'")
+    val js = asset("app.bundle.js")
+    assert(js.contains(s"\"$id\""), "the id is written into the bundle (web PageBuild.compiled)")
+    assert(!js.contains("HISTMERSION-BUILD-ID-UNSET"), "the placeholder is left in the bundle")
+    val served = WebBundle.read(Resources.classpath(getClass.getClassLoader))
+    assertEquals(served.id, UiConfig.BuildId(id))
+    assertEquals(served.header, UiConfig.BuildHeader -> id)
+    val shell = served.shell(Static.read(Static.ReadPath("web/index.html")))
+    assert(shell.contains(s"""<link rel="preload" href="/web/app.bundle.js?v=$id" as="script" />"""), shell)
+    assert(shell.contains(s"""<script type="module" src="/web/boot.js?v=$id"></script>"""), shell)
+    assert(!shell.contains(WebBundle.Token), shell)
+    val page = ArticleHtml.page(Title("t"), HtmlRender.Html("<p>b</p>"), PageKind.values.head, served).value
+    assert(page.contains(s"""<script src="/web/app.bundle.js?v=$id"></script>"""), page)
+    // the old constants (`?v=2`, `?v=3`) never come back: a bundle address is built from the build alone
+    val fixed = """app\.bundle\.js\?v=[0-9a-zA-Z]""".r
+    val text = Set("scala", "js", "html", "css")
+    val roots = List("modules/server/src/main", "modules/web/src/main").map(java.nio.file.Path.of(_))
+    val offenders = roots.flatMap { root =>
+      val files = java.nio.file.Files.walk(root)
+      try
+        files.toArray.toList
+          .collect { case p: java.nio.file.Path => p }
+          .filter(p => java.nio.file.Files.isRegularFile(p) && text.contains(p.toString.split('.').last))
+          .filter(p => fixed.findFirstIn(java.nio.file.Files.readString(p)).isDefined)
+      finally files.close()
+    }
+    assertEquals(offenders, Nil)
 
   test("the page shells carry no inline script: the Content-Security-Policy runs only the server's own files"):
     val inline = "<script(?![^>]*\\bsrc=)[^>]*>".r
     for (name, html) <- List(
         "index.html" -> asset("index.html"),
-        "a server page" -> ArticleHtml.page(Title("t"), HtmlRender.Html("<p>b</p>"), PageKind.values.head).value
+        "a server page" -> ArticleHtml.page(Title("t"), HtmlRender.Html("<p>b</p>"), PageKind.values.head, bundle).value
       )
     do assertEquals(inline.findFirstIn(html), None, name)
 
@@ -58,7 +96,7 @@ class WebAssetsSuite extends munit.FunSuite:
     val key = "<script src=\"/web/theme.js\"></script>"
     for (name, html) <- List(
         "index.html" -> asset("index.html"),
-        "a server page" -> ArticleHtml.page(Title("t"), HtmlRender.Html("<p>b</p>"), PageKind.values.head).value
+        "a server page" -> ArticleHtml.page(Title("t"), HtmlRender.Html("<p>b</p>"), PageKind.values.head, bundle).value
       )
     do
       val at = html.indexOf(key)

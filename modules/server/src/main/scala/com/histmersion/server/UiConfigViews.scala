@@ -34,10 +34,12 @@ object UiConfigViews:
       plugins: PluginsReport,
       baseMapSource: UiConfig.BaseMapSource,
       mapLanguage: UiConfig.MapLanguage,
-      setupDue: UiConfig.SetupDue = UiConfig.SetupDue(false)
+      setupDue: UiConfig.SetupDue = UiConfig.SetupDue(false),
+      buildId: UiConfig.BuildId = UiConfig.BuildId("")
   ): UiConfig =
     ui.into[UiConfig]
       .withFieldConst(_.setupDue, setupDue)
+      .withFieldConst(_.buildId, buildId)
       .withFieldComputed(_.time.min, u => Year(u.time.min.value))
       .withFieldComputed(_.time.max, u => Year(u.time.max.value))
       .withFieldComputed(_.time.defaultFrom, u => Year(u.time.defaultFrom.value))

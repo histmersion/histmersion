@@ -324,7 +324,7 @@ final class HttpApi(
             sttp.model.StatusCode.NotFound,
             None,
             if fragment then body
-            else ArticleHtml.page(Title("Not found"), HtmlRender.Html(body), PageKind.Source).value
+            else ArticleHtml.page(Title("Not found"), HtmlRender.Html(body), PageKind.Source, deps.webBundle).value
           )
         Citekey.option(requested) match
           case None     => missing
@@ -349,7 +349,8 @@ final class HttpApi(
                   (
                     sttp.model.StatusCode.Ok,
                     None,
-                    if fragment then inner.value else ArticleHtml.page(title, inner, PageKind.Source).value
+                    if fragment then inner.value
+                    else ArticleHtml.page(title, inner, PageKind.Source, deps.webBundle).value
                   )
                 case None => missing
       }
@@ -370,7 +371,8 @@ final class HttpApi(
       )
 
   /** The web UI, at its own pages' addresses only ([[WebPaths]]). It used to have no path input at all, so every
-    * unmatched GET — a typo, a probe, a missing asset — came back 200 with the whole HTML page.
+    * unmatched GET — a typo, a probe, a missing asset — came back 200 with the whole HTML page. The page names the
+    * bundle by its build ([[WebBundle.shell]]).
     */
   private val index: ServerEndpoint[Any, Identity] =
     endpoint.get
@@ -382,7 +384,7 @@ final class HttpApi(
       .serverLogic[Identity] { segments =>
         val path = segments.filter(_.nonEmpty)
         if WebPaths.isApp(path.map(WebPaths.Segment(_))) then
-          Right(Static.read(Static.ReadPath("web/index.html")).value)
+          Right(deps.webBundle.shell(Static.read(Static.ReadPath("web/index.html"))))
         else Left(s"not found: /${segments.mkString("/")}")
       }
 
@@ -398,7 +400,7 @@ final class HttpApi(
     EventImportsRoutes(h.eventImports) ++
       EventLinksRoutes(h.eventLinks) ++
       SiteTypesRoutes(h.siteTypes) ++ rest ++
-      ArticleRoutes(h.research.articles, h.research.pages) ++ OpsRoutes(
+      ArticleRoutes(h.research.articles, h.research.pages, ArticleHtml.shell(deps.webBundle)) ++ OpsRoutes(
         h
       ) ++ QueryRoutes(
         h.library.query

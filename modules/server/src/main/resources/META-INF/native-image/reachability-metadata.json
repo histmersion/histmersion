@@ -25560,6 +25560,9 @@
       "glob": "web/boot.js"
     },
     {
+      "glob": "web/build-id.txt"
+    },
+    {
       "glob": "web/index.html"
     },
     {

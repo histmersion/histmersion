@@ -2305,6 +2305,12 @@ body.page-wide .reading { max-width:none; }
   border-radius:var(--radius-pill); background:var(--ink); color:var(--bg); font-size:var(--fs-sm); box-shadow:var(--sh-pop);
   opacity:0; pointer-events:none; transition:opacity .2s; }
 .flash.is-on { opacity:1; }
+/* the server runs another build than the page's (web PageBuild): a line over the page, a reload button; what is shown
+   stays readable under it */
+.build-updated { display:none; position:fixed; left:50%; top:var(--space-3); translate:-50% 0; z-index:5002;
+  align-items:center; gap:var(--space-3); padding:var(--space-2) var(--space-4); border:1px solid var(--attn);
+  border-radius:var(--radius-lg); background:var(--attn-soft); color:var(--ink); font-size:var(--fs-sm); box-shadow:var(--sh-pop); }
+.build-updated.is-on { display:flex; }
 .offscreen { position:fixed; left:-9999px; top:0; }
 
 /* a note: the editor, and a note where it is read */

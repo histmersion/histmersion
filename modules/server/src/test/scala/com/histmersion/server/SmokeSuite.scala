@@ -9,6 +9,7 @@ import com.histmersion.db.TestDb
 import com.histmersion.config.DbConfig
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.api.instance.UiConfig
 
 /** Boots the whole server on an ephemeral port against a real Postgres (HISTMERSION_TEST_DB_URL) and hits every
   * surface. Skipped when no test DB is configured.
@@ -36,6 +37,18 @@ class SmokeSuite extends munit.FunSuite:
       val (hs, hb) = get(s"$url/api/health"); assertEquals(hs, 200); assert(hb.contains("\"ok\""), hb)
       val (is, ib) = get(url); assertEquals(is, 200); assert(ib.contains("<div id=\"app\">"))
       val (cs, _) = get(s"$url/web/app.bundle.js"); assertEquals(cs, 200)
+      // G109: the page, the config and every answer name the bundle's one build
+      val build = Static.read(Static.ReadPath("web/build-id.txt")).value.trim
+      assert(ib.contains(s"/web/app.bundle.js?v=$build") && ib.contains(s"/web/boot.js?v=$build"), ib)
+      val (us, ub) = get(s"$url/api/config"); assertEquals(us, 200)
+      assert(ub.contains(s""""buildId":"$build""""), ub.take(400))
+      val answer = java.net.http.HttpClient
+        .newHttpClient()
+        .send(
+          java.net.http.HttpRequest.newBuilder(java.net.URI.create(s"$url/api/health")).build(),
+          java.net.http.HttpResponse.BodyHandlers.discarding()
+        )
+      assertEquals(answer.headers().firstValue(UiConfig.BuildHeader).orElse(""), build)
       // the bookkeeping lists' addresses serve the page (it opens their window); anything else is a 404
       List("acquire", "tasks", "log").foreach { p =>
         val (ps, pb) = get(s"$url/$p"); assertEquals(ps, 200, p); assert(pb.contains("<div id=\"app\">"), p)

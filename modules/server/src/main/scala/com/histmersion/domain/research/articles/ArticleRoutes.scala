@@ -33,7 +33,12 @@ object ArticleRoutes:
   private def write(slug: ReviewGoal.Slug): Either[Api.Error, Slug] =
     Slug.parse(slug.value).left.map(p => Api.Error(p, Some(Api.Error.Code(Write.CodeInvalid))))
 
-  def apply(articles: ArticlesControllers, pages: PageBuilder): List[ServerEndpoint[Any, Identity]] =
+  /** `shell` puts a whole page around the inner HTML ([[ArticleHtml.shell]]: the server's bundle). */
+  def apply(
+      articles: ArticlesControllers,
+      pages: PageBuilder,
+      shell: ArticleHtml.Shell
+  ): List[ServerEndpoint[Any, Identity]] =
     val rest: List[ServerEndpoint[Any, Identity]] = List(
       Api.articles.serverLogicSuccess[Identity](q => articles.list(q)),
       Api.articleSlugs.serverLogicSuccess[Identity](_ => articles.slugs.map(s => ReviewGoal.Slug(s.value))),
@@ -76,14 +81,14 @@ object ArticleRoutes:
             case Some((title, inner)) =>
               (
                 sttp.model.StatusCode.Ok,
-                if fragment then inner.value else ArticleHtml.page(title, inner, PageKind.Article).value
+                if fragment then inner.value else shell(title, inner, PageKind.Article).value
               )
             case None =>
               val body = s"<p>No article <code>${ArticleHtml.esc(HtmlRender.Text(slug))}</code>.</p>"
               (
                 sttp.model.StatusCode.NotFound,
                 if fragment then body
-                else ArticleHtml.page(Title("Not found"), HtmlRender.Html(body), PageKind.Article).value
+                else shell(Title("Not found"), HtmlRender.Html(body), PageKind.Article).value
               )
         }
 

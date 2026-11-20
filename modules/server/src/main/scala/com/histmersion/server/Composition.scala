@@ -243,6 +243,8 @@ object Composition:
         keys = UiConfigViews.TileKeys.map(Hot.Graph.Def.Keys(_))
       )(ctx => Right(SecurityHeaders.of(UiConfigViews.tileTemplates(ctx.config.app.ui))))
       .fold(e => throw IllegalStateException(s"${e.sentence}"), identity)
+    // and the web bundle's build on every answer, so an open page notices an upgrade at its next request (G109)
+    val build = List(deps.webBundle.header).filter(_._2.nonEmpty)
     val agentPaths =
       Admission.AgentPaths(Admission.Path(RunTokens.Path), Admission.Path(RunTokens.QuotaPath))
     val gated = srv.modifyConfig { nc =>
@@ -272,7 +274,7 @@ object Composition:
         )
         // last, so directly after the codec: every response written further in, the gates' refusals included,
         // passes it on its way out
-        val _ = pipeline.addAfter(codec, "histmersion-security-headers", SecurityHeaders(() => headers.latest))
+        val _ = pipeline.addAfter(codec, "histmersion-security-headers", SecurityHeaders(() => headers.latest ++ build))
       }
     }
     Listener(gated, binds)

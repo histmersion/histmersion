@@ -54,6 +54,7 @@ import com.histmersion.domain.research.articles.ArticleAliasTable
 import com.histmersion.domain.catalogue.events.EventAliasTable
 import com.histmersion.domain.automation.goals.GoalAliasTable
 import com.histmersion.domain.catalogue.places.PlaceAliasTable
+import com.histmersion.server.instance.WebBundle
 
 /** Everything the handlers need. Built once in `Main` (the composition root) and passed down — no object-initialisation
   * side effects anywhere below this.
@@ -103,6 +104,9 @@ final class Deps(
   val resources: Resources = Resources.classpath(getClass.getClassLoader)
   val jvmHome: JvmHome = SystemContext.jvmHome()
   val transactor: Transactor = Transactor(ds)
+
+  /** The web bundle on the class path, named by its build: the page, its config and every answer carry the id. */
+  lazy val webBundle: WebBundle = WebBundle.read(resources)
 
   /** The work lists' kernel (ACQUIRE, TASKS, LOG over `queue_items`). */
   val queues: QueueService =

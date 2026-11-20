@@ -227,7 +227,8 @@ final class InstanceControllers(
     plugins = deps.plugins.report,
     baseMapSource = baseMapSource,
     mapLanguage = UiConfig.MapLanguage(cfg.basemap.labels.language.value),
-    setupDue = UiConfig.SetupDue(Try(setupDue()).getOrElse(false))
+    setupDue = UiConfig.SetupDue(Try(setupDue()).getOrElse(false)),
+    buildId = deps.webBundle.id
   )
 
   /** `ui.base-map-source` resolved ([[BaseMapSource]]): `auto` becomes `local` once the stored extract can draw one of
