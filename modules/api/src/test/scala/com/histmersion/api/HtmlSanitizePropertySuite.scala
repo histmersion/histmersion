@@ -28,7 +28,25 @@ class HtmlSanitizePropertySuite extends munit.FunSuite:
       assertEquals(Html.sanitize(text).markup, text, s"seed $seed")
     }
 
+  test("a new tab's link keeps every other rel token it had, once each, never opener, and gains noopener noreferrer"):
+    (1 to Cases).foreach { seed =>
+      val r = new scala.util.Random(seed)
+      val tokens = List.fill(r.nextInt(7))(RelTokens(r.nextInt(RelTokens.length)))
+      val spaces = Vector(" ", "  ", "\t", "&#9;", "\n")
+      val rel = tokens.map(_ + spaces(r.nextInt(spaces.length))).mkString
+      val in = s"""<a href="/x" target="_blank" rel="$rel">t</a>"""
+      val out = Html.sanitize(in).markup
+      val written = """rel="([^"]*)"""".r.findFirstMatchIn(out).map(_.group(1).split(' ').toList).getOrElse(Nil)
+      val others = tokens.map(_.toLowerCase).filterNot(Set("opener", "noopener", "noreferrer")).distinct
+      assertEquals(written, others ++ List("noopener", "noreferrer"), s"seed $seed: $in -> $out")
+      violations(out).foreach(v => fail(s"seed $seed: $v\ninput:  $in\noutput: $out"))
+      assertEquals(Html.sanitize(out).markup, out, s"seed $seed")
+    }
+
   test("the reader of this suite does find what it looks for"):
+    assert(violations("""<a href="/x" target="_blank" rel="opener noopener noreferrer">""").nonEmpty)
+    assert(violations("""<a href="/x" target="_blank" rel="nofollow nofollow noopener noreferrer">""").nonEmpty)
+    assertEquals(violations("""<a href="/x" target="_blank" rel="nofollow noopener noreferrer">"""), Nil)
     assert(violations("<script>x</script>").nonEmpty)
     assert(violations("""<img src="x" onerror="y">""").nonEmpty)
     assert(violations("""<a href="java&#x09;script:x">""").nonEmpty)
@@ -151,7 +169,9 @@ object HtmlSanitizePropertySuite:
         case Some(m) =>
           val name = m.group(2)
           val attributes = Attribute.findAllMatchIn(m.group(3)).map(a => a.group(1) -> Option(a.group(2))).toList
-          val rel = attributes.collectFirst { case ("rel", Some(v)) => read(v).split(' ').toSet }.getOrElse(Set.empty)
+          val relTokens =
+            attributes.collectFirst { case ("rel", Some(v)) => read(v).split(' ').toList }.getOrElse(Nil)
+          val rel = relTokens.toSet
           (if Safe(name) then Nil else List(s"the element <$name>")) ++
             attributes.collect {
               case (a, _) if a.startsWith("on")                      => s"the event handler $a in ${m.matched}"
@@ -161,8 +181,15 @@ object HtmlSanitizePropertySuite:
               case ("target", v) if name != "a" || !v.map(read).contains("_blank") => s"the target $v in ${m.matched}"
               case ("target", _) if !Set("noopener", "noreferrer").subsetOf(rel)   =>
                 s"a new tab without noopener noreferrer in ${m.matched}"
+              case ("target", _) if rel("opener") => s"a new tab with opener in ${m.matched}"
+              case ("target", _) if relTokens.distinct.size != relTokens.size =>
+                s"a new tab with a repeated rel token in ${m.matched}"
             }
     }
+
+  /** `rel` tokens in several spellings: the ones a new tab must have or drop, and ones it keeps. */
+  val RelTokens: Vector[String] =
+    Vector("nofollow", "NoFollow", "ugc", "sponsored", "opener", "OPENER", "noopener", "noreferrer", "NOREFERRER", "me")
 
   val TextChars: Vector[Char] = "abc xyz 0123 &;:/=\"'>.\n\t#é".toVector
 
@@ -196,6 +223,10 @@ object HtmlSanitizePropertySuite:
     """<a href="/ok" target="_blank">""",
     """<a href="/ok" target=_BLANK rel="opener">""",
     """<a href="/ok" target="&#95;blank" rel="noopener">""",
+    """<a href="/ok" target="_blank" rel="nofollow opener">""",
+    """<a href="/ok" rel="NoFollow noopener nofollow OPENER ugc" target="_blank">""",
+    """<a href="/ok" target="_blank" rel="noreferrer&#9;noreferrer">""",
+    """<a href="/ok" target="_blank" rel="ugc" rel="opener">""",
     """<a href="/ok" target="_top">""",
     """<a href="/ok" target="_parent">""",
     """<a href="/ok" target="win">""",

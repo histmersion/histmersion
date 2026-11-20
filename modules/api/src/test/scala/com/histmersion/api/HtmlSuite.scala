@@ -95,9 +95,35 @@ class HtmlSuite extends munit.FunSuite:
       """<a target="_blank" href="/y" rel="noopener noreferrer">y</a>"""
     )
     assertEquals(
-      clean("""<a target="&#95;blank" rel="nofollow" rel="opener">z</a>"""),
+      clean("""<a target="&#95;blank" rel="opener" rel="nofollow">z</a>"""),
       """<a target="_blank" rel="noopener noreferrer">z</a>"""
     )
+
+  test("a new tab's link keeps its other rel tokens, once each, without opener, and gains noopener noreferrer"):
+    assertEquals(
+      clean("""<a href="/x" target="_blank" rel="nofollow">x</a>"""),
+      """<a href="/x" target="_blank" rel="nofollow noopener noreferrer">x</a>"""
+    )
+    assertEquals(
+      clean("""<a href="/x" rel=" NoFollow  opener ugc&#9;nofollow noreferrer " target="_blank">x</a>"""),
+      """<a href="/x" target="_blank" rel="nofollow ugc noopener noreferrer">x</a>"""
+    )
+    assertEquals(
+      clean("""<a target="&#95;blank" rel="nofollow" rel="opener">z</a>"""),
+      """<a target="_blank" rel="nofollow noopener noreferrer">z</a>"""
+    )
+    assertEquals(
+      clean("""<a target="_blank" rel="noopener noreferrer nofollow">z</a>"""),
+      """<a target="_blank" rel="nofollow noopener noreferrer">z</a>"""
+    )
+    assertEquals(clean("""<a target="_blank" rel>z</a>"""), """<a target="_blank" rel="noopener noreferrer">z</a>""")
+    assertEquals(
+      clean("""<a target="_blank" rel="x&quot;y">z</a>"""),
+      """<a target="_blank" rel="x&quot;y noopener noreferrer">z</a>"""
+    )
+
+  test("a link without a target keeps its rel as written"):
+    assertEquals(clean("""<a href="/x" rel="opener nofollow">x</a>"""), """<a href="/x" rel="opener nofollow">x</a>""")
 
   test("any other target is refused: the tag is shown as text"):
     List(
@@ -180,6 +206,7 @@ class HtmlSuite extends munit.FunSuite:
       """<P CLASS='a"b' title=x>t</P>""",
       """<a href=" java&#x09;script:x">y</a><img src=x onerror=y>""",
       """<a rel="opener" target="_BLANK" href="/y">y</a><img src="data:image/gif;base64,R0lG">""",
+      """<a rel="UGC opener nofollow ugc &amp;x &eacute;" target="_blank">y</a>""",
       """<span title="&eacute;&#233;&amp;&lt;">t</span>""",
       "a < b <!-- c --> <etal>d</etal> <script>e</script>"
     ).foreach(s => assertEquals(clean(clean(s)), clean(s), s))

@@ -38,7 +38,8 @@ class MarkdownHtmlSafetySuite extends munit.FunSuite:
       val attributes = Attribute.findAllMatchIn(m.group(2)).toList.map { a =>
         a.group(1).toLowerCase -> Option(a.group(2)).orElse(Option(a.group(3))).orElse(Option(a.group(4))).getOrElse("")
       }
-      val rel = attributes.collectFirst { case ("rel", v) => read(v).split(' ').toSet }.getOrElse(Set.empty)
+      val relTokens = attributes.collectFirst { case ("rel", v) => read(v).split(' ').toList }.getOrElse(Nil)
+      val rel = relTokens.toSet
       (if Set("script", "iframe", "svg", "math", "style", "object", "embed", "form", "base")(name) then
          List(s"the element ${m.matched}")
        else Nil) ++
@@ -49,6 +50,9 @@ class MarkdownHtmlSafetySuite extends munit.FunSuite:
           else if attr == "target" && (name != "a" || read(value) != "_blank") then List(s"the target in ${m.matched}")
           else if attr == "target" && !Set("noopener", "noreferrer").subsetOf(rel) then
             List(s"a new tab without noopener noreferrer in ${m.matched}")
+          else if attr == "target" && rel("opener") then List(s"a new tab with opener in ${m.matched}")
+          else if attr == "target" && relTokens.distinct.size != relTokens.size then
+            List(s"a new tab with a repeated rel token in ${m.matched}")
           else Nil
         }
     }
@@ -75,6 +79,8 @@ class MarkdownHtmlSafetySuite extends munit.FunSuite:
     "<img src=\"data:image/gif;base64,R0lGODlh\" alt=\"g\">",
     "<a href=\"/ok\" target=\"_blank\">t</a>",
     "<a href=\"/ok\" target=\"_blank\" rel=\"opener\">t</a>",
+    "<a href=\"/ok\" target=\"_blank\" rel=\"nofollow opener\">t</a>",
+    "<a href=\"/ok\" rel=\"NoFollow noopener nofollow ugc noreferrer\" target=\"_blank\">t</a>",
     "<a href=\"/ok\" target=\"_top\">t</a>",
     "<a href=\"/ok\" target=\"w\">t</a>",
     "[x][r]\n\n[r]: javascript:alert(1)\n",
@@ -127,6 +133,24 @@ class MarkdownHtmlSafetySuite extends munit.FunSuite:
     assert(violations("""<a href="/x" target="_blank">""").nonEmpty)
     assertEquals(violations("""<img src="data:image/png;base64,AAAA" alt="a" />"""), Nil)
     assertEquals(violations("""<a href="/x" target="_blank" rel="noopener noreferrer">"""), Nil)
+    assert(violations("""<a href="/x" target="_blank" rel="opener noopener noreferrer">""").nonEmpty)
+    assert(violations("""<a href="/x" target="_blank" rel="ugc ugc noopener noreferrer">""").nonEmpty)
+    assertEquals(violations("""<a href="/x" target="_blank" rel="nofollow noopener noreferrer">"""), Nil)
+
+  test("a new tab's link in Markdown keeps its other rel tokens and gains noopener noreferrer, once each"):
+    val html = render("""See <a href="/ok" rel="NoFollow opener ugc nofollow" target="_blank">t</a> here.""")
+    assert(html.contains("""<a href="/ok" target="_blank" rel="nofollow ugc noopener noreferrer">t</a>"""), html)
+    (1 to 1000).foreach { seed =>
+      val r = new scala.util.Random(seed)
+      val tokens =
+        List.fill(r.nextInt(6))(Vector("nofollow", "UGC", "opener", "noopener", "noreferrer", "me")(r.nextInt(6)))
+      val md = s"""x <a href="/ok" target="_blank" rel="${tokens.mkString(" ")}">t</a> y"""
+      val out = render(md)
+      val kept = tokens.map(_.toLowerCase).filterNot(Set("opener", "noopener", "noreferrer")).distinct
+      val want = (kept ++ List("noopener", "noreferrer")).mkString(" ")
+      assert(out.contains(s"""rel="$want""""), s"seed $seed: $md\n$out")
+      violations(out).foreach(v => fail(s"seed $seed: $v\ninput:  $md\noutput: $out"))
+    }
 
   test("what the pages use still renders: a table, a link, an image, code, emphasis and the wikilink anchors"):
     val html = render(

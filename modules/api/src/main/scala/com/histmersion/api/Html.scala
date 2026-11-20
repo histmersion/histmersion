@@ -368,10 +368,23 @@ object Html:
     */
   val BlankTarget = "_blank"
 
-  /** The `rel` every link with [[BlankTarget]] is written with, whatever it said: the opened page gets no handle on
+  /** The `rel` tokens every link with [[BlankTarget]] ends with, whatever it said: the opened page gets no handle on
     * this one (`window.opener`) and no Referer.
     */
   val NoOpener = "noopener noreferrer"
+
+  private val NoOpenerTokens: List[String] = NoOpener.split(' ').toList
+
+  /** The `rel` of a link that opens a new tab: its own tokens (lower-case, once each, in their order) without `opener`,
+    * then [[NoOpener]]. Its other tokens (`nofollow`, `ugc`, …) are kept, and written again the value is the same.
+    */
+  private def blankRel(rel: Option[String]): String =
+    val own = rel.toList
+      .flatMap(v => decoded(v).split("[ \t\n\f\r]+").toList)
+      .map(_.toLowerCase(java.util.Locale.ROOT))
+      .filter(t => t.nonEmpty && t != "opener" && !NoOpenerTokens.contains(t))
+      .distinct
+    escape((own ++ NoOpenerTokens).mkString(" "), apostrophe = false)
 
   private def keeps(own: Set[String], attribute: Attribute): Boolean =
     (GlobalAttributes(attribute.name) || own(attribute.name)) &&
@@ -379,7 +392,8 @@ object Html:
 
   private def written(tag: Tag): String =
     val blank = tag.name == "a" && tag.attributes.exists(_.name == "target")
-    val kept = tag.attributes.distinctBy(_.name).filterNot(a => blank && a.name == "rel").flatMap { a =>
+    val unique = tag.attributes.distinctBy(_.name)
+    val kept = unique.filterNot(a => blank && a.name == "rel").flatMap { a =>
       a.value match
         case None    => Some(a.name)
         case Some(v) =>
@@ -390,7 +404,7 @@ object Html:
             case _               => Some(reEscaped(v))
           shown.map(x => s"""${a.name}="$x"""")
     }
-    val forced = if blank then List(s"""rel="$NoOpener"""") else Nil
+    val forced = if blank then List(s"""rel="${blankRel(unique.find(_.name == "rel").flatMap(_.value))}"""") else Nil
     s"<${tag.name}${(kept ++ forced).map(" " + _).mkString}${if tag.selfClosing && Void(tag.name) then " /" else ""}>"
 
   private val NamedEntities: Map[String, String] =
