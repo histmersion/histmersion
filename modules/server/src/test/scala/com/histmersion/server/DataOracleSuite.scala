@@ -625,12 +625,15 @@ class DataOracleSuite extends DbSuite with db.Bounded:
     loop()
     out.toString
 
-  /** Every row of every table, as JSON, normalised; the tables the migrations fill whole are counted only. */
+  /** Every row of every table a backup carries, as JSON, normalised; the tables the migrations fill whole are counted
+    * only. The rows a backup leaves out (the structured log's) are not compared: a restore starts them empty.
+    */
   private def rows(ds: DataSource, names: Map[String, String]): String =
+    val leftOut = Deps.data.backups.flatMap(_._2.rowsLeftOut).map(t => s"$t").toSet
     val tables = connect(ds)(
       sql"""SELECT table_name::text FROM information_schema.tables WHERE table_schema = 'public'
             AND table_type = 'BASE TABLE' ORDER BY 1""".query[String].run().toList
-    )
+    ).filterNot(leftOut.contains)
     tables
       .map { t =>
         val rs =

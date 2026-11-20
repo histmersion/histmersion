@@ -65,7 +65,7 @@ import com.histmersion.pluginhost.HttpTransport
 import com.histmersion.domain.research.articles.lint.SourceTextFormatting
 import com.histmersion.domain.library.ingest.StoredOriginals
 import com.histmersion.util.storage.Location
-import com.histmersion.util.log.{LogControllers, LogFiles, LogService}
+import com.histmersion.util.log.{LogControllers, LogFiles, LogService, LogWriter}
 import com.histmersion.domain.library.collections.CalibreGapControllers
 import com.histmersion.server.views.JobListView
 import com.histmersion.util.jobs.JobListing
@@ -244,6 +244,12 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
             .map(_.resolve("structured"))
         )
     )
+
+  /** The structured log's one writer (a worker a restore holds; the composition starts and stops its thread). Its
+    * connections are told no trace: it runs in none, and the log's own tables record no writes.
+    */
+  val logWriter: LogWriter =
+    LogWriter(() => deps.cfg.log, logFiles, deps.transactor, maintenance.permits, deps.clock)
 
   /** The structured log: what happened, by trace, job, source or problem. */
   val log: LogControllers =
@@ -643,7 +649,8 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
       deps.jobStops.quiescent,
       agents.engine,
       agents.managers.quiescent,
-      agents.lease.quiescent
+      agents.lease.quiescent,
+      logWriter.quiescent
     ).foreach(maintenance.workers.register)
 
   /** The metered upstreams' budgets as the database keeps them (CORE's: `upstream_quota`), under today's limits; none

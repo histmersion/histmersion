@@ -6,7 +6,7 @@ runs adversarial reviews — all through one plugin install.
 
 | component | what |
 |---|---|
-| MCP server `histmersion` | **80 tools**, all returning Markdown — listed below |
+| MCP server `histmersion` | **81 tools**, all returning Markdown — listed below |
 | agents | the four review subagents `article-rules-reviewer`, `article-cold-reader`, `article-skeptic`, `article-fixer` — the `review-article` panel |
 
 ### Skills — core
@@ -118,6 +118,7 @@ curl -s -X POST "$HISTMERSION_PUBLIC_URL/mcp" \
 | `job_status` | where an OCR job got to (`queued\|running\|done\|failed`) |
 | `job_control` | pause, resume or cancel a job (a long background job stops after the part it is on) |
 | `activity` | runs, jobs, worklog lines and the person's decisions in one list, newest first |
+| `log` | the structured log: what happened to a request, job, source or around a problem, step by step, by trace |
 | `bookmarks` | the person's own bookmarks (items, places on the map, saved views, periods) — read only |
 | `notes` | the person's own notes and what each was left on — read only |
 | `assets` | the figures stored with a source and the URLs they are served at |

@@ -16881,6 +16881,18 @@
           }
         }
       },
+      "AgentRun" : {
+        "title" : "AgentRun",
+        "type" : "object",
+        "required" : [
+          "key"
+        ],
+        "properties" : {
+          "key" : {
+            "type" : "string"
+          }
+        }
+      },
       "AgentStateDeleted" : {
         "title" : "AgentStateDeleted",
         "type" : "object",
@@ -30946,18 +30958,6 @@
           }
         }
       },
-      "Run" : {
-        "title" : "Run",
-        "type" : "object",
-        "required" : [
-          "key"
-        ],
-        "properties" : {
-          "key" : {
-            "type" : "string"
-          }
-        }
-      },
       "RunDetail" : {
         "title" : "RunDetail",
         "type" : "object",
@@ -32304,6 +32304,17 @@
           {
             "type" : "object",
             "required" : [
+              "AgentRun"
+            ],
+            "properties" : {
+              "AgentRun" : {
+                "$ref" : "#/components/schemas/AgentRun"
+              }
+            }
+          },
+          {
+            "type" : "object",
+            "required" : [
               "Job"
             ],
             "properties" : {
@@ -32331,17 +32342,6 @@
             "properties" : {
               "Request" : {
                 "$ref" : "#/components/schemas/Request8"
-              }
-            }
-          },
-          {
-            "type" : "object",
-            "required" : [
-              "Run"
-            ],
-            "properties" : {
-              "Run" : {
-                "$ref" : "#/components/schemas/Run"
               }
             }
           },

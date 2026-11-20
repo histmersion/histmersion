@@ -221,10 +221,10 @@
         "within" : "agents"
       },
       {
-        "bytes" : null,
+        "bytes" : "N",
         "detail" : null,
-        "exists" : false,
-        "files" : null,
+        "exists" : true,
+        "files" : "N",
         "group" : "logs",
         "host" : "server",
         "key" : "logs",
@@ -258,11 +258,11 @@
       },
       {
         "bytes" : "N",
-        "name" : "articles"
+        "name" : "log_events"
       },
       {
         "bytes" : "N",
-        "name" : "events"
+        "name" : "articles"
       }
     ],
     "tookMillis" : "N",
