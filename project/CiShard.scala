@@ -106,9 +106,16 @@ final class CiSuiteReport(project: String, dir: Path) extends TestsListener {
   def doComplete(finalResult: TestResult): Unit = ()
   def startGroup(name: String): Unit = synchronized(counts.getOrElseUpdate(name, new Counts))
 
+  /** The suite an event belongs to: the longest started group its name is, or starts with (munit names an event
+    * `<suite>.<test>`).
+    */
+  private def suiteOf(name: String): String =
+    counts.keys.filter(g => name == g || name.startsWith(g + ".")).maxByOption(_.length).getOrElse(name)
+
   def testEvent(event: TestEvent): Unit = synchronized {
     event.detail.foreach { (e: TEvent) =>
-      val c = counts.getOrElseUpdate(e.fullyQualifiedName, new Counts)
+      val suite = suiteOf(e.fullyQualifiedName)
+      val c = counts.getOrElseUpdate(suite, new Counts)
       c.millis += math.max(0L, e.duration) // -1: the framework did not measure it
       e.status match {
         case Status.Success                                    => c.passed += 1
@@ -116,12 +123,13 @@ final class CiSuiteReport(project: String, dir: Path) extends TestsListener {
         case Status.Error                                      => c.errors += 1
         case Status.Skipped | Status.Canceled | Status.Pending =>
           c.skipped += 1
-          val test = e.selector match {
+          val name = e.selector match {
             case s: sbt.testing.TestSelector => s.testName
-            case s                           => s.toString
+            case _                           => e.fullyQualifiedName
           }
+          val test = name.stripPrefix(suite + ".")
           val why = if e.throwable.isDefined then Option(e.throwable.get.getMessage).getOrElse("") else ""
-          append(s"$project.skips.tsv", s"$project\t${e.fullyQualifiedName}\t${clean(test)}\t${clean(why)}")
+          append(s"$project.skips.tsv", s"$project\t$suite\t${clean(test)}\t${clean(why)}")
         case Status.Ignored => c.ignored += 1
       }
     }

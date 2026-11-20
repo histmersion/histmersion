@@ -164,11 +164,15 @@ class PluginResolverSuite extends munit.FunSuite:
   test("a SNAPSHOT plugin version resolves as well"):
     val s = setup(Nil)
     val pom = s.plugins.resolve("hello-deps-0.1.0.pom")
+    // the project's own version: the <version> right after its <artifactId> (a dependency's version stays as it is)
     Files.writeString(
       pom,
       Files
         .readString(pom)
-        .replace("<version>0.1.0</version>\n    <licenses>", "<version>0.2.0-SNAPSHOT</version>\n    <licenses>")
+        .replaceFirst(
+          "(<artifactId>histmersion-plugin-hello-deps_3</artifactId>\\s*)<version>0\\.1\\.0</version>",
+          "$1<version>0.2.0-SNAPSHOT</version>"
+        )
     )
     assert(
       Files.readString(pom).contains("0.2.0-SNAPSHOT"),
