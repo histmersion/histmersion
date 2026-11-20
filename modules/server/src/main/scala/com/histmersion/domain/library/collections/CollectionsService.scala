@@ -301,9 +301,7 @@ object CollectionsService:
         _ <- req.acquireItem.fold(Right(()))(i =>
           library
             .queueItem(CollectionLibrary.QueueItemId(i.value))
-            .flatMap(found =>
-              Queue.fulfillable(Queue.QueueItem.Id(i.value), found).left.map(usageOf).map(_ => ())
-            )
+            .flatMap(found => Queue.fulfillable(Queue.QueueItem.Id(i.value), found).left.map(usageOf).map(_ => ()))
         )
         item <- c
           .item(CollectionId(req.id.value))

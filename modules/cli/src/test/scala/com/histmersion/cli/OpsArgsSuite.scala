@@ -51,8 +51,8 @@ class OpsArgsSuite extends munit.FunSuite:
     assertEquals(parse("done", "12"), Right(QueueCmd.Done(Queue.Id(12), json)))
     assertEquals(parse("rm", "3"), Right(QueueCmd.Rm(Queue.Id(3), json)))
     parse("done", "twelve") match
-      case Left(CommandLine.Outcome.Failed(_: Problem.Invalid.Malformed, _)) => ()
-      case other                                                             => fail(s"${other.toString}")
+      case Left(CommandLine.Outcome.Failed(_: Problem.Invalid.Malformed, _, _)) => ()
+      case other                                                                => fail(s"${other.toString}")
 
   test("edit takes an id and the new text"):
     assertEquals(

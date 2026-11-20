@@ -218,24 +218,37 @@ object Cli:
   /** The exit code is decided here, at the edge. */
   private def runCommand(args: Array[String])(using console: Console): Unit =
     CommandLine.parse(args.toSeq) match
-      case CommandLine.Outcome.Help(text)             => out.println(text); sys.exit(0)
-      case CommandLine.Outcome.Failed(problems, help) =>
+      case CommandLine.Outcome.Help(text)                   => out.println(text); sys.exit(0)
+      case CommandLine.Outcome.Failed(problems, help, json) =>
+        failJson(json, problems)
         err.println(s"${problems.sentences.map(s => s"error: $s").mkString("\n")}\n\n$help");
         sys.exit(Error(problems).exitCode.value)
-      case CommandLine.Outcome.Run(server, cmd) =>
-        finish(server, cmd.run)
+      case CommandLine.Outcome.Run(server, cmd, json) =>
+        finish(server, cmd.run, json)
 
-  private def finish(server: Option[Client.ServerUrl], run: Client => Either[Error, Unit])(using
+  /** A failure as `--json` prints it on stdout: the body a failed HTTP request answers, `{"problems": [{"group",
+    * "case", "data", "text"}]}`, so a script reads the same typed entries from the CLI as from the API (G112). Pure.
+    */
+  def failureJson(problems: Problems): String =
+    import com.histmersion.api.problem.Answer.answer
+    Output.json(problems.answer)
+
+  private def failJson(json: JsonOutput, problems: Problems)(using console: Console): Unit =
+    if json.value then out.println(failureJson(problems))
+
+  private def finish(server: Option[Client.ServerUrl], run: Client => Either[Error, Unit], json: JsonOutput)(using
       console: Console
   ): Unit =
     val url = server.getOrElse(Client.ServerUrl(Settings.app.cli.serverUrl.value))
     val token = Client.Token.chosen(Option(System.getenv("HISTMERSION_TOKEN")), tokenFile) match
       case Right(t) => t
-      case Left(p)  => err.println(s"error: ${p.sentence}"); sys.exit(Error(p).exitCode.value)
+      case Left(p)  => failJson(json, p); err.println(s"error: ${p.sentence}"); sys.exit(Error(p).exitCode.value)
     run(new Client(url, token)) match
       case Right(())                     => ()
-      case Left(e) if e.workingDirDenied => err.println(WorkingDir.message); sys.exit(e.exitCode.value)
-      case Left(e)                       =>
+      case Left(e) if e.workingDirDenied =>
+        failJson(json, e.problems); err.println(WorkingDir.message); sys.exit(e.exitCode.value)
+      case Left(e) =>
+        failJson(json, e.problems)
         e.problems.sentences.foreach(s => err.println(s"error: $s")); sys.exit(e.exitCode.value)
 
   /** The token in the file `cli.token-file` names (none when it names none); a file that does not read is a problem. */

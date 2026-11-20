@@ -63,9 +63,10 @@ object CommandLine:
 
   /** What the command line asks for. */
   enum Outcome:
-    case Run(server: Option[Client.ServerUrl], command: Cli.Command)
+    /** `json`: the command line asked for `--json`, so a failure is printed as JSON too. */
+    case Run(server: Option[Client.ServerUrl], command: Cli.Command, json: Cli.JsonOutput)
     case Help(text: HelpText)
-    case Failed(problems: Problems, help: HelpText)
+    case Failed(problems: Problems, help: HelpText, json: Cli.JsonOutput)
 
   /** A top-level word of the command line: a command group, or a command of its own. */
   private[cli] trait Entry:
@@ -331,7 +332,14 @@ object CommandLine:
     /** Declare subcommands, in the order the help lists them. A [[Leaf]] that holds some runs alone too: its own
       * options are the command when none of them is named (`candidates [--goal g]` beside `candidates sweep`).
       */
-    def holds(confs: Subcommand*): Unit = confs.foreach(addSubcommand)
+    def holds(confs: Subcommand*): Unit = confs.foreach(adopt)
+
+    /** Add one subcommand; a [[Leaf]] gets its `--json` first, while its options can still be added. */
+    protected def adopt(conf: Subcommand): Unit =
+      conf match
+        case leaf: Leaf => leaf.declareJson()
+        case _          => ()
+      addSubcommand(conf)
 
     /** A flag: present or not; `short`, a one-letter spelling (`-y`). */
     def flag(name: String, descr: String, short: Char = '\u0000'): ScallopOption[Boolean] =
@@ -416,6 +424,24 @@ object CommandLine:
 
     def command: Either[Problems, Cli.Command]
 
+    // `var`: the `--json` flag, set where it is declared (by the command, or by [[declareJson]])
+    private var output: Option[ScallopOption[Boolean]] = None
+
+    /** `--json`, as every command spells it; the command reads it, and a failure is printed as JSON (G112). */
+    override def json(): () => Cli.JsonOutput =
+      val f = flag("json", Output.JsonHelp)
+      output = Some(f)
+      () => Cli.JsonOutput(f.getOrElse(false))
+
+    /** `--json` on every command (G112): declared after its own options when the command did not declare it. A command
+      * whose `--json` takes a value (a whole patch: `patch`, `article patch`) keeps that one.
+      */
+    private[cli] def declareJson(): Unit =
+      if output.isEmpty && types.of("json").isEmpty then output = Some(flag("json", Output.FailureJsonHelp))
+
+    /** The command line asked for `--json`. */
+    def jsonRequested: Cli.JsonOutput = Cli.JsonOutput(output.exists(_.getOrElse(false)))
+
   /** A subcommand that only holds others: `histmersion article`. */
   abstract private[cli] class Group(parent: String, name: String, help: String) extends Subcommand(name) with Declares:
     guessOptionName = false
@@ -442,7 +468,10 @@ object CommandLine:
         "server",
         "Histmersion server URL (default: config cli.serverUrl / $HISTMERSION_SERVER_URL)"
       )
-    entries.foreach(e => addSubcommand(e.conf()))
+    entries.foreach(e => adopt(e.conf()))
+
+    /** `--json` was on the command line: a command line that does not parse is still answered in JSON. */
+    private val askedJson = Cli.JsonOutput(args.contains("--json"))
 
     /** Scallop's own errors, typed. Help and version still go through the output and exit hooks. */
     override protected def onError(e: Throwable): Unit = e match
@@ -451,16 +480,17 @@ object CommandLine:
 
     def outcome: Outcome =
       failure match
-        case Some(problem)            => Outcome.Failed(problem, HelpText(helpOf(args)))
+        case Some(problem)            => Outcome.Failed(problem, HelpText(helpOf(args)), askedJson)
         case None if exited.isDefined => Outcome.Help(HelpText(printed.mkString("\n")))
         case None                     =>
           subcommands.lastOption match
             case Some(leaf: Leaf) =>
               leaf.command.fold(
-                problem => Outcome.Failed(problem, HelpText(helpOf(args))),
-                Outcome.Run(server.toOption, _)
+                problem => Outcome.Failed(problem, HelpText(helpOf(args)), leaf.jsonRequested),
+                Outcome.Run(server.toOption, _, leaf.jsonRequested)
               )
-            case _ => Outcome.Failed(Problem.Invalid.Missing.here(Problem.Field("command")), HelpText(helpOf(args)))
+            case _ =>
+              Outcome.Failed(Problem.Invalid.Missing.here(Problem.Field("command")), HelpText(helpOf(args)), askedJson)
 
     /** The subcommands `args` name, outermost first. */
     private def confsOf(args: Seq[String]): List[Declares] =
