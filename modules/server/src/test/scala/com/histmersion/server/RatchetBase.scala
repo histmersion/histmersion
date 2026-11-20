@@ -19,9 +19,12 @@ import scala.util.Try
   *     number of copies its count. A row the base does not have (new, or changed: a changed row is a new one) is a
   *     rise; a row removed passes.
   *
-  * A rise passes only when `architecture/accepted-rises.tsv` has a row for it that the base does not have: the owner's
-  * accept script writes it (file, key, from, to, reason, date) with the rise. Which rows count as the owner's is
-  * [[Approvals]] — the seam for a stronger proof (a signed commit, a hook) when the owner chooses one.
+  * A rise passes only when `architecture/accepted-rises.tsv` has rows for its key that the base does not have: the
+  * owner's accept script writes each (file, key, delta, reason, date) with the rise. A row approves a rise of at most
+  * `delta` over the base's count, whatever that count is, so an approval survives a rebase onto a pilot whose count
+  * moved; the rows the branch adds for one key sum. A row of the first form (file, key, from, to, reason, date) reads
+  * as the delta `to - from`. Which rows count as the owner's is [[Approvals]] — the seam for a stronger proof (a signed
+  * commit, a hook) when the owner chooses one.
   *
   * The base is the merge base of `HEAD` with the ref in `HISTMERSION_RATCHET_BASE`, else with `contracts3-pilot`, else
   * with `origin/contracts3-pilot`. Without a git repository, or with none of those refs, the check fails and says so:
@@ -77,10 +80,10 @@ object RatchetBase:
         _ <- Either.cond(
           left.isEmpty,
           (),
-          (s"$path is above its limit, the file at ${b.describe}:" :: left.map(_.describe(shape)) ++
-            List(RiseNeedsOwner)).mkString("\n")
+          (s"$path is above its limit, the file at ${b.describe}:" ::
+            left.map(_.describe(shape, accepted)) ++ List(RiseNeedsOwner)).mkString("\n")
         )
-      yield accepted.filter(a => risen.exists(a.grants))
+      yield accepted.filter(a => risen.exists(a.covers))
 
     /** Holds the working tree's file no higher than the base's; a missing or unreadable file fails (it is never
       * regenerated from the code).
@@ -124,6 +127,18 @@ object RatchetBase:
 
   /** A count above the base's: the file, the key, the base's count (zero when the base has no such row) and the new. */
   final case class Rise(file: String, key: Key, from: Int, to: Int) derives CanEqual:
+
+    /** How far the count rose over the base's. */
+    def by: Int = to - from
+
+    /** How far the accepted rows let this key rise over the base: their deltas summed (none: zero). */
+    def allowance(accepted: List[Accepted]): Int = accepted.filter(_.covers(this)).map(_.delta).sum
+
+    /** The rise's line with what the accepted rows allow, when they allow anything. */
+    def describe(shape: Shape, accepted: List[Accepted]): String =
+      val n = allowance(accepted)
+      describe(shape) + (if n == 0 then "" else s" (+$by; the accepted rows allow +$n)")
+
     def describe(shape: Shape): String = shape match
       case Shape.Counted(_) =>
         val at = if from == 0 then "not at the base" else s"$from at the base"
@@ -132,21 +147,26 @@ object RatchetBase:
         val what = if from == 0 then "a row not at the base (new, or changed)" else s"$from copies at the base -> $to"
         s"  $what: ${key.mkString("\t")}"
 
-  /** A row of the accepted-rises file: the owner allows `key` of `file` to rise from `from` (the base's count) up to
-    * `to`.
+  /** A row of the accepted-rises file: the owner allows `key` of `file` to rise by at most `delta` (positive) over its
+    * count at the merge base, whatever that count is when the suites run.
     */
-  final case class Accepted(file: String, key: Key, from: Int, to: Int, reason: String, date: LocalDate)
-      derives CanEqual:
+  final case class Accepted(file: String, key: Key, delta: Int, reason: String, date: LocalDate) derives CanEqual:
     import Accepted.{encodeKey, escape}
 
-    def grants(rise: Rise): Boolean = file == rise.file && key == rise.key && from == rise.from && rise.to <= to
-    def row: String =
-      List(file, encodeKey(key), from.toString, to.toString, escape(reason), date.toString).mkString("\t")
+    /** The row is about the risen key (it adds `delta` to what the rise may be). */
+    def covers(rise: Rise): Boolean = file == rise.file && key == rise.key
+    def row: String = List(file, encodeKey(key), delta.toString, escape(reason), date.toString).mkString("\t")
 
   object Accepted:
     val Header: String =
-      "# file\tkey\tfrom\tto\treason\tdate — rises of the ratchet files the owner accepted (written only by the " +
-        "owner's notes/accept-*.sh; a row counts on the branch that adds it); key cells joined by \\t, \\ as \\\\"
+      "# file\tkey\tdelta\treason\tdate — rises of the ratchet files the owner accepted, each by at most delta over " +
+        "the count at the merge base (written only by the owner's notes/accept-*.sh; a row counts on the branch that " +
+        "adds it, and a branch's rows for one key sum); key cells joined by \\t, \\ as \\\\"
+
+    /** The file in the delta form: [[Header]], then each row as [[parse]] reads it (a first-form row from, to as its
+      * delta `to - from`), in the file's order. The rows read back equal, so no branch gains an approval by rewriting.
+      */
+    def rewrite(lines: List[String]): Either[String, List[String]] = parse(lines).map(rows => Header :: rows.map(_.row))
 
     /** A cell's tab and backslash as `\t` and `\\`, so a key of several cells fits one cell. */
     def escape(text: String): String = text.replace("\\", "\\\\").replace("\t", "\\t")
@@ -166,15 +186,22 @@ object RatchetBase:
     def encodeKey(key: Key): String = escape(key.mkString("\t"))
     def decodeKey(cell: String): Key = unescape(cell).split("\t", -1).toList
 
+    /** The rows: (file, key, delta, reason, date), or the first form (file, key, from, to, reason, date) as the delta
+      * `to - from`. A delta that is not positive, a missing reason or a date that is not ISO is an error, never a row
+      * skipped.
+      */
     def parse(lines: List[String]): Either[String, List[Accepted]] =
+      def row(l: String, file: String, key: String, delta: Option[Int], reason: String, date: String) =
+        (delta, Try(LocalDate.parse(date)).toOption) match
+          case (Some(n), Some(d)) if n > 0 && reason.nonEmpty =>
+            Right(Accepted(file, decodeKey(key), n, unescape(reason), d))
+          case _ => Left(s"$AcceptedFile: malformed row (a positive delta, a reason and an ISO date): $l")
       val rows = lines.filterNot(l => l.startsWith("#") || l.isBlank).map { l =>
         l.split("\t", -1).toList match
+          case file :: key :: delta :: reason :: date :: Nil      => row(l, file, key, delta.toIntOption, reason, date)
           case file :: key :: from :: to :: reason :: date :: Nil =>
-            (from.toIntOption, to.toIntOption, Try(LocalDate.parse(date)).toOption) match
-              case (Some(f), Some(t), Some(d)) if reason.nonEmpty =>
-                Right(Accepted(file, decodeKey(key), f, t, unescape(reason), d))
-              case _ => Left(s"$AcceptedFile: malformed row (from, to, a reason and an ISO date): $l")
-          case _ => Left(s"$AcceptedFile: malformed row (file, key, from, to, reason, date): $l")
+            row(l, file, key, from.toIntOption.zip(to.toIntOption).map((f, t) => t - f), reason, date)
+          case _ => Left(s"$AcceptedFile: malformed row (file, key, delta, reason, date): $l")
       }
       rows.collectFirst { case Left(e) => e }.toLeft(rows.collect { case Right(a) => a })
 
@@ -184,9 +211,9 @@ object RatchetBase:
       .collect { case (k, n) if n > base.getOrElse(k, 0) => Rise(file, k, base.getOrElse(k, 0), n) }
       .sortBy(_.key.mkString("\t"))
 
-  /** The rises no accepted row grants. */
+  /** The rises above what the accepted rows allow. */
   def unaccepted(rises: List[Rise], accepted: List[Accepted]): List[Rise] =
-    rises.filterNot(r => accepted.exists(_.grants(r)))
+    rises.filter(r => r.by > r.allowance(accepted))
 
   /** The merge base, and the ref it was taken with. */
   final case class Base(commit: String, ref: String):
@@ -246,8 +273,9 @@ object RatchetBase:
     def granted(base: Base): Either[String, List[Accepted]]
 
   object Approvals:
-    /** The rows of the working tree's accepted-rises file that the base's does not have. A row already at the base
-      * grants nothing: the file is a ledger, and only the branch that adds a row is approved by it.
+    /** The rows of the working tree's accepted-rises file that the base's does not have, compared as read (a row
+      * rewritten from the first form to the delta form is the same row). A row already at the base grants nothing: the
+      * file is a ledger, and only the branch that adds a row is approved by it.
       */
     final case class AddedInBranch(git: Git) extends Approvals:
       def granted(base: Base): Either[String, List[Accepted]] =
@@ -264,6 +292,6 @@ object RatchetBase:
   def announce(used: List[Accepted]): Option[String] =
     Option.when(used.nonEmpty)(
       (s"*** RISES ACCEPTED through $AcceptedFile (name them in the hand-back):" :: used.map(a =>
-        s"***   ${a.file}: ${a.key.mkString("\t")} ${a.from} -> ${a.to} (${a.date}: ${a.reason})"
+        s"***   ${a.file}: ${a.key.mkString("\t")} +${a.delta} over the base (${a.date}: ${a.reason})"
       )).mkString("\n")
     )
