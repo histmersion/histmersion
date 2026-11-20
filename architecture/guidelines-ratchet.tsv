@@ -66,8 +66,8 @@ G44	plugins/media	main	103
 G44	plugins/media	test	57
 G44	problem	main	5
 G44	problem	test	1
-G44	server	main	10449
-G44	server	test	3978
+G44	server	main	10446
+G44	server	test	3979
 G44	upstreams	main	147
 G44	upstreams	test	44
 G44	values	main	181
@@ -141,7 +141,7 @@ G47self	cli	main	207
 G47self	config	main	735
 G47self	console	main	7
 G47self	core	main	997
-G47self	db	main	791
+G47self	db	main	787
 G47self	files	main	34
 G47self	plugin-api	main	279
 G47self	plugin-api	test	6
@@ -159,7 +159,7 @@ G47self	plugins/events	main	39
 G47self	plugins/fetchers	main	20
 G47self	plugins/gazetteers	main	11
 G47self	plugins/media	main	88
-G47self	server	main	1580
+G47self	server	main	1578
 G47self	server	test	25
 G47self	upstreams	main	122
 G47self	values	main	156
@@ -229,8 +229,6 @@ G60fromString	web	main	57
 G60fromString	web	test	21
 G60unrecognised	api	main	1
 G60unrecognised	problem	main	1
-G89unguarded	db	main	9
-G89unguarded	server	main	217
 G9prefix	api	main	317
 G9prefix	api	test	1
 G9prefix	chimney-iron-tests	test	1
