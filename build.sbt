@@ -58,7 +58,11 @@ ThisBuild / scalacOptions ++= Seq(
   "-Wconf:id=E235:e",
   // `==` and `!=` compile only between types with a `CanEqual` (G53): a newtype's own (its `Newtype` base), an enum's or
   // record's `derives CanEqual`, the standard library's; comparing two unrelated types is a compile error
-  "-language:strictEquality"
+  "-language:strictEquality",
+  "-Xmacro-settings:jsoniterDerivation.timeout=30s",
+  "-Xmacro-settings:tapirSchemaDerivation.timeout=30s",
+  "-Xmacro-settings:sconfigDerivation.timeout=30s",
+  "-Xmacro-settings:scalacheckDerivation.timeout=30s"
 )
 
 // Every compile writes its SemanticDB (beside the classes, in `meta`/`test-meta`, never into a jar): the guideline
