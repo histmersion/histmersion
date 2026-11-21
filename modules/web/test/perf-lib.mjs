@@ -43,22 +43,28 @@ export function probe() {
   const tick = t => { if (P.recording) P.frames.push(t); requestAnimationFrame(tick); };
   requestAnimationFrame(tick);
   // the next change under `selector` (matching `ready`, when given) after the next input, painted
-  P.armUpdate = (selector, ready) => new Promise(resolve => {
+  const matches = (el, r) => (r.includes == null || el.textContent.includes(r.includes)) &&
+    (r.lacks == null || !el.textContent.includes(r.lacks)) && (r.equals == null || el.textContent === r.equals) &&
+    (r.has == null || !!el.querySelector(r.has)) && (r.hidden == null || el.hidden === r.hidden);
+  P.armUpdate = (selector, ready) => new Promise((resolve, reject) => {
     let inputTs = null;
     const types = ['pointerdown', 'pointermove', 'pointerover', 'click', 'keydown', 'input', 'wheel'];
     const onInput = e => { if (inputTs === null) inputTs = e.timeStamp; };
     types.forEach(t => window.addEventListener(t, onInput, { capture: true, passive: true }));
+    const stop = () => {
+      obs.disconnect();
+      types.forEach(t => window.removeEventListener(t, onInput, { capture: true }));
+    };
     const check = () => {
       if (inputTs === null) return false;
       const el = document.querySelector(selector);
       if (!el) return false;
-      if (ready && !new Function('el', `return (${ready})`)(el)) return false;
-      obs.disconnect();
-      types.forEach(t => window.removeEventListener(t, onInput, { capture: true }));
+      if (ready && !matches(el, ready)) return false;
+      stop();
       nextPaint(t => resolve(t - inputTs));
       return true;
     };
-    const obs = new MutationObserver(() => { check(); });
+    const obs = new MutationObserver(() => { try { check(); } catch (e) { stop(); reject(e); } });
     obs.observe(document.body, { subtree: true, childList: true, attributes: true, characterData: true });
   });
 }
@@ -168,8 +174,9 @@ export async function measure(page, gesture) {
   };
 }
 
-/** From the next input to the first painted change under `selector` (that satisfies `ready`, a JS
-  * expression over `el`): arm, run `trigger`, await. */
+/** From the next input to the first painted change under `selector` (that satisfies `ready`: its text
+  * `includes`, `lacks` or `equals` a string, it `has` a descendant, its `hidden` is as given): arm, run `trigger`,
+  * await. */
 export async function inputToUpdate(page, selector, trigger, ready = null, timeout = 15000) {
   const done = page.evaluate(([s, r]) => window.__perf.armUpdate(s, r), [selector, ready]);
   await page.waitForTimeout(0);
