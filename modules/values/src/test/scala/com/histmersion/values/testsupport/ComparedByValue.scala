@@ -4,16 +4,9 @@ package values.testsupport
 import io.github.iltotore.iron.RefinedType
 import munit.Compare
 
-/** Tests state expected values as literals of the base type. Two values compare by `==` when their types have the same
-  * shape — the same type constructor, or one a subtype of the other (`Option` and `Some`, `Seq` and `List`, `Either`
-  * and `Right`, tuples of the same arity, an option and `Some[…] | None.type`) — and every pair of types inside it is
-  * one type, a subtype and its supertype, or a newtype and its own base type (a newtype erases to its value). Anything
-  * else does not compile: two newtypes, a newtype and another base type, a `Vector` and a `List`.
-  */
 object ComparedByValue:
   given comparedByValue: [A, B] => (byValue: ByValue[A, B]) => Compare[A, B] = Compare.defaultCompare[A, B]
 
-  /** `A` and `B` compare by value. */
   final class ByValue[A, B]
 
   trait SupertypeWithSubtype:
@@ -39,8 +32,6 @@ object ComparedByValue:
       ByValue()
 
   object ByValue extends TwoParameters:
-    /** An expected list mixing `Some(…)` and `None` (or `Left(…)` and `Right(…)`) infers the union of the alternatives.
-      */
     given optionAlternatives: [O[x] <: Option[x], A, B] => ByValue[A, B] => ByValue[O[A], Some[B] | None.type] =
       ByValue()
     given eitherAlternatives: [E[l, r] <: Either[l, r], L1, R1, L2, R2]
@@ -51,7 +42,6 @@ object ComparedByValue:
         : [H1, T1 <: Tuple, H2, T2 <: Tuple] => (ByValue[H1, H2], ByValue[T1, T2]) => ByValue[H1 *: T1, H2 *: T2] =
       ByValue()
 
-  /** `X` and `Y` are one type, or one is a subtype of the other. */
   final class Related[X, Y]
 
   trait RelatedSupertype:

@@ -6,7 +6,6 @@ import io.github.iltotore.iron.constraint.any.Pure
 enum Confidence:
   case High, Medium, Low, Contested
 
-  /** The wire / storage spelling (`high`). */
   def wire: Confidence.Wire = Confidence.Wire(Ascii.lower((toString)))
 
 object Confidence:

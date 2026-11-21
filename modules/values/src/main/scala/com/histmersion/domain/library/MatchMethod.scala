@@ -4,19 +4,14 @@ package domain.library
 import com.histmersion.{Ascii, WireEnumValues}
 import io.github.iltotore.iron.constraint.any.Pure
 enum MatchMethod:
-  /** The same uid. */
   case Uid
 
-  /** A redirect (`uid_aliases`) or the ledger of an earlier merge. */
   case Ledger
 
-  /** A strong key: the same DOI, original file (sha256) or ISBN. */
   case StrongKey
 
-  /** The weighted score. */
   case Score
 
-  /** Nothing here is that work. */
   case Unmatched
 
 object MatchMethod:

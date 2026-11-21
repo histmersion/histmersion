@@ -5,10 +5,6 @@ import com.histmersion.util.problem.Problem
 
 import com.histmersion.values.testsupport.ComparedByValue.given
 
-/** A citekey is a path segment on the server's disk (the ingest spool, the acquisition spool) and a URL segment.
-  * Nothing validated one before, which is how `../../../../tmp/x` became a directory.
-  */
-
 import com.histmersion.domain.library.Citekey
 class CitekeySuite extends munit.FunSuite:
 

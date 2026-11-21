@@ -8,18 +8,15 @@ import io.github.iltotore.iron.constraint.string.Match
 
 object Goal:
 
-  /** A goal's slug: the article slug's rule, but its own type, so a goal never passes for an article. */
   type Slug = Slug.T
 
   object Slug extends Newtype[String, Match["[a-z0-9][a-z0-9_.-]{0,120}"]]:
     extension (s: Slug) def trimmed: Slug = assume(s.value.trim)
 
-  /** A goal's stable identity across renames, merges and databases (`goals.uid`). */
   type Uid = Uid.T
 
   object Uid extends Newtype[java.util.UUID, Pure]
 
-  /** The stages of a research goal, as the store and the wire spell them. */
   object Status:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
@@ -31,7 +28,6 @@ object Goal:
     val Done = "done"
     val all: List[Wire] = List(Wire(Planned), Wire(Seeding), Wire(Compiled), Wire(Reviewed), Wire(Done))
 
-  /** What a goal is linked to. */
   enum LinkKind(val wire: LinkKind.Wire) derives CanEqual:
     case Source extends LinkKind(LinkKind.Wire("source"))
     case Article extends LinkKind(LinkKind.Wire("article"))
@@ -40,7 +36,6 @@ object Goal:
 
   object LinkKind:
 
-    /** The search queries a goal's plan recorded ([[Query]]): the name the engine uses, which no other type shares. */
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 

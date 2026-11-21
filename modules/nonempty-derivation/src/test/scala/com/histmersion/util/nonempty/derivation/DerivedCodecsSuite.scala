@@ -8,7 +8,6 @@ import com.histmersion.util.json.{JsonCodec, RawJson}
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.nonempty.NonEmptyVector
 
-/** A record holding a [[NonEmptyVector]], derived as every module derives one: the provider makes it a list. */
 final case class Box(items: NonEmptyVector[Int], more: Option[NonEmptyVector[String]])
     derives JsonCodec,
       KindlingsSchema
@@ -36,8 +35,6 @@ class DerivedCodecsSuite extends munit.FunSuite:
       case _                           => None
     assert(items.exists(_.schemaType.isInstanceOf[SchemaType.SArray[?, ?]]), s"$items")
 
-  /** The `minSize`s of a validator, through `all` and `mapped`/`contramap`, as the documentation interpreters see them.
-    */
   private def minSizes(v: Validator[?]): List[Int] = v match
     case Validator.MinSize(n)   => List(n)
     case Validator.All(vs)      => vs.toList.flatMap(minSizes)

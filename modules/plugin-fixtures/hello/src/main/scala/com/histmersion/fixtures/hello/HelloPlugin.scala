@@ -5,9 +5,6 @@ import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.plugin.*
 import com.histmersion.plugin.Plugin.Config.given
 
-/** The provider (META-INF/services/com.histmersion.plugin.Plugin): one open-access source fetcher that has no copy of
-  * anything.
-  */
 final class HelloPlugin extends Plugin:
   type Config = HelloConfig
   val info = Plugin.Info(

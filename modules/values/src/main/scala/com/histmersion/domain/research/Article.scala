@@ -20,7 +20,6 @@ object Article:
   type Kind = Kind.T
   object Kind extends Newtype[String, Pure]
 
-  /** An article's stable identity across renames, merges and databases (`articles.uid`). */
   type Uid = Uid.T
 
   object Uid extends Newtype[java.util.UUID, Pure]

@@ -14,7 +14,6 @@ object Source:
   enum Status:
     case Foundational, Current, Contested, Superseded, Debunked, Retracted, Unassessed
 
-    /** The wire / storage spelling (`current`), as the JSON codec writes it. */
     def wire: Status.Wire = Status.Wire(Ascii.lower((toString)))
 
   object Status:
@@ -30,7 +29,6 @@ object Source:
       def fromWire(s: WireEnumValues.Wire): Option[Status] =
         values.find(_.toString.equalsIgnoreCase((s).value))
 
-  /** A source's stable identity across renames, merges and databases (`sources.uid`). */
   type Uid = Uid.T
 
   object Uid extends Newtype[java.util.UUID, Pure]

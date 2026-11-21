@@ -48,7 +48,6 @@ final class IronNewtypePairs(using val quotes: Quotes):
       else NewtypePair.DifferentConstraints(fromNewtype, toNewtype)
     case _ => NewtypePair.NotSameNamedNewtypes
 
-  // Iron's `apply` emits no check when its argument is already refined with the companion's constraint.
   def rewrap[To: Type](from: IronNewtype, to: IronNewtype, source: Expr[?]): Option[Expr[To]] =
     val refinedValue = Select.unique(Ref(from.companion), "value").appliedTo(source.asTerm)
     Implicits.search(TypeRepr.of[Constraint].appliedTo(List(to.base, to.constraint))) match
@@ -63,19 +62,14 @@ final class IronNewtypePairs(using val quotes: Quotes):
         )
       case _: ImplicitSearchFailure => None
 
-  /** A newtype that judges nothing (`Pure`): what a client layer's copy is. */
   def judgesNothing(n: IronNewtype): Boolean = n.constraint =:= TypeRepr.of[Pure]
 
   private def baseValue(from: IronNewtype, source: Expr[?]): Term =
     Select.unique(Ref(from.companion), "value").appliedTo(source.asTerm)
 
-  /** Into a newtype that judges nothing: the base value, wrapped without a check. */
   def unchecked[To: Type](from: IronNewtype, to: IronNewtype, source: Expr[?]): Expr[To] =
     Select.unique(Ref(to.companion), "assume").appliedTo(baseValue(from, source)).asExprOf[To]
 
-  /** Into a newtype with a constraint of its own: the base value checked by the target's constraint, a failure the
-    * target's reason.
-    */
   def checked[To: Type](from: IronNewtype, to: IronNewtype, source: Expr[?]): Expr[partial.Result[To]] =
     val either =
       Select.unique(Ref(to.companion), "either").appliedTo(baseValue(from, source)).asExprOf[Either[String, To]]
