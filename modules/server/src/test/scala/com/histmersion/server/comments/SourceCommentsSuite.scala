@@ -149,6 +149,72 @@ class SourceCommentsSuite extends munit.FunSuite:
     assertEquals(counted("n.sh", numbered), Some(List("5")))
     assertEquals(counted("tool.py", python), Some(List("2")))
 
+  test("api doc: each excuse is found, word-bounded and in any case; ordinary words are not excuses"):
+    val hits = List(
+      "workaround" -> "A WORKAROUND for the upstream bug.",
+      "workaround" -> "We work around the parser.",
+      "hack" -> "A hack.",
+      "for now" -> "Strings for now.",
+      "temporary" -> "Temporarily public.",
+      "TODO" -> "TODO: typed.",
+      "TODO" -> "fixme",
+      "until" -> "Blocks until the job ends.",
+      "kept for old" -> "Kept so that old configs load.",
+      "legacy" -> "The legacy name.",
+      "kept for old builds" -> "The constructor of a provider compiled before reasoning existed.",
+      "kept for old builds" -> "A default, so an earlier context still compiles.",
+      "should be but" -> "It should be a Doi but the host sends text.",
+      "cannot because" -> "It cannot be typed because the SPI is frozen."
+    )
+    hits.foreach((name, text) => assertEquals(ApiDoc(s"/** $text */", "def f: Int").excuse, Some(name), text))
+    List("Hackathon entries.", "Temporal span in years.", "The old format is read.", "Untiled maps.").foreach(text =>
+      assertEquals(ApiDoc(s"/** $text */", "def f: Int").excuse, None, text)
+    )
+
+  test("api doc: a doc made of its signature's own words restates it; one that adds meaning does not"):
+    assert(ApiDoc("/** Returns the source id. */", "def sourceId: Source.Id").tautology)
+    assert(ApiDoc("/** The plugin's settings. */", "def settings: Plugin.Settings").tautology)
+    val explains = ApiDoc(
+      "/** Seconds to wait, at most 300; the call fails with `Timeout` after it. */",
+      "def timeout: Duration"
+    )
+    assert(!explains.tautology, explains.restatedShare.toString)
+    assert(explains.restatedShare < ApiDoc.Threshold)
+
+  test("api doc: a @param or @return that only names the parameter or type restates it"):
+    val doc = "/** Fetches the record once, from the cache when it is fresh.\n  * @param citekey the citekey\n  */"
+    assertEquals(ApiDoc(doc, "def fetch(citekey: Citekey): Fetched").restatedTags, List("@param citekey the citekey"))
+    val useful = "/** Fetches the record once.\n  * @param timeout seconds before the call gives up, at most 300\n  */"
+    assertEquals(ApiDoc(useful, "def fetch(timeout: Duration): Fetched").restatedTags, Nil)
+    val continued = "/** Fetches.\n  * @param citekey the citekey,\n  *   lower-cased first\n  * @param id the id\n  */"
+    val mixed = ApiDoc(continued, "def fetch(citekey: Citekey, id: Id): Fetched")
+    assertEquals(mixed.restatedTags, List("@param id the id"))
+    assertEquals(mixed.restatedTagLines, List(3))
+
+  test("api doc: only a public definition may carry one"):
+    assert(ApiDoc("/** x */", "def f: Int").public)
+    assert(ApiDoc("/** x */", "final case class Box(width: Int)").public)
+    assert(ApiDoc("/** x */", "@deprecated(\"y\") inline def f: Int").public)
+    assert(!ApiDoc("/** x */", "private def f: Int").public)
+    assert(!ApiDoc("/** x */", "private[plugin] final class Hidden").public)
+    assert(!ApiDoc("/** x */", "protected def f: Int").public)
+    assert(!ApiDoc("/** x */", "import a.b").public)
+    assertEquals(
+      ApiDoc.declarationAfter("/** x */\n@nowarn\ndef f(\n  a: Int\n): Int =\n  a\n", 8),
+      "def f( a: Int ): Int ="
+    )
+
+  test("api doc: kept only in a designated public-API module's main sources, on a public definition"):
+    val source =
+      "/** Seconds to wait, at most 300; the call fails with `Timeout` after it. */\ndef timeout: Duration = d\n" +
+        "/** Returns the source id. */\ndef sourceId: Source.Id = s\n" +
+        "/** Seconds to wait, at most 300; an internal helper. */\nprivate def wait: Duration = d\n"
+    def counted(path: String) = CommentScope.default.parsed(path, source).map(_.counted.map(_.lineRange).toList)
+    assertEquals(counted("modules/plugin-api/src/main/scala/P.scala"), Some(List("3", "5")))
+    assertEquals(counted("modules/plugin-testkit/src/main/scala/P.scala"), Some(List("3", "5")))
+    assertEquals(counted("modules/plugin-api/src/test/scala/P.scala"), Some(List("1", "3", "5")))
+    assertEquals(counted("modules/core/src/main/scala/P.scala"), Some(List("1", "3", "5")))
+
   test("files are counted in their module"):
     def module(path: String) = CommentScope.default.parsed(path, "").map(_.module)
     assertEquals(module("modules/core/src/main/scala/A.scala"), Some("core"))

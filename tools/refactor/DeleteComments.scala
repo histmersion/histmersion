@@ -6,6 +6,7 @@
 //> using file ../../modules/server/src/test/scala/com/histmersion/server/comments/CommentedFile.scala
 //> using file ../../modules/server/src/test/scala/com/histmersion/server/comments/CommentScope.scala
 //> using file ../../modules/server/src/test/scala/com/histmersion/server/comments/CommentRemoval.scala
+//> using file ../../modules/server/src/test/scala/com/histmersion/server/comments/ApiDoc.scala
 
 import com.histmersion.server.comments.*
 import java.nio.charset.StandardCharsets.UTF_8
@@ -19,6 +20,10 @@ val categories: Set[String] = Set("tautology", "stale", "excuse", "decision", "k
 val removedCategories: Set[String] = categories - "keep"
 
 val tautologyReason: String = "restates what the names, types and code beside it already say"
+
+val keptDocReason: String = "public-API Scaladoc that explains the contract beyond its signature"
+
+def reviewable(f: CommentedFile): Vector[CommentBlock] = f.blocks.filter(b => f.counted.contains(b) || f.allowedDoc(b))
 
 def squash(comment: String): String =
   comment.linesIterator
@@ -34,24 +39,46 @@ def nextCode(file: CommentedFile, block: CommentBlock): String =
 
 def under(prefixes: Seq[String])(file: CommentedFile): Boolean = prefixes.exists(p => file.path.startsWith(p))
 
-def show(root: Path, prefixes: Seq[String]): Unit =
-  CommentScope.default.files(root).filter(under(prefixes)).filter(_.counted.nonEmpty).foreach { f =>
-    println(s"== ${f.path}")
-    f.counted.foreach(b => println(s"${b.lineRange} ${squash(b.text)} => ${nextCode(f, b)}"))
+def show(root: Path, prefixes: Seq[String], kept: Boolean): Unit =
+  CommentScope.default.files(root).filter(under(prefixes)).foreach { f =>
+    val shown = if kept then f.blocks.filter(f.allowedDoc) else f.counted
+    if shown.nonEmpty then println(s"== ${f.path}")
+    shown.foreach(b => println(s"${b.lineRange} [${f.verdict(b)}] ${squash(b.text)} => ${nextCode(f, b)}"))
   }
+
+def trimTags(root: Path, prefixes: Seq[String]): Unit =
+  var trimmed = 0
+  CommentScope.default.files(root).filter(under(prefixes)).foreach { f =>
+    val edits = f.blocks.flatMap { b =>
+      f.apiDoc(b)
+        .filter(d => d.public && d.excuse.isEmpty && d.restatedTagLines.nonEmpty && !d.restatedTagLines.contains(0))
+        .map(d => b -> d.restatedTagLines.toSet)
+    }
+    if edits.nonEmpty then
+      val result = edits.sortBy((b, _) => -b.start).foldLeft(f.text) { case (text, (b, drop)) =>
+        val lines = b.text.linesIterator.toList
+        val indent = lines.lift(1).map(_.takeWhile(_ == ' ')).getOrElse(" ")
+        val kept = lines.indices.filterNot(drop).map(lines).toList
+        val closed = if drop.exists(i => lines(i).contains("*/")) then kept :+ s"$indent*/" else kept
+        text.substring(0, b.start) + closed.mkString("\n") + text.substring(b.end)
+      }
+      Files.write(root.resolve(f.path), result.getBytes(UTF_8))
+      trimmed += edits.size
+  }
+  println(s"trimmed the restating tags of $trimmed docs")
 
 def decide(root: Path, overridesFile: Path, out: Path, prefixes: Seq[String]): Unit =
   val overrides = readDecisions(overridesFile).map(d => (d.path, d.lines) -> d).toMap
   val files = CommentScope.default.files(root).filter(under(prefixes))
   val rows = files.flatMap { f =>
-    f.counted.map { b =>
-      overrides.getOrElse(
-        (f.path, b.lineRange),
-        Decision(f.path, b.lineRange, f.language.label, "tautology", tautologyReason)
-      )
+    reviewable(f).map { b =>
+      val default =
+        if f.allowedDoc(b) then Decision(f.path, b.lineRange, f.language.label, "keep", keptDocReason)
+        else Decision(f.path, b.lineRange, f.language.label, "tautology", tautologyReason)
+      overrides.getOrElse((f.path, b.lineRange), default)
     }
   }
-  val known = files.flatMap(f => f.counted.map(b => (f.path, b.lineRange))).toSet
+  val known = files.flatMap(f => reviewable(f).map(b => (f.path, b.lineRange))).toSet
   val unmatched = overrides.keySet.filter((p, _) => prefixes.exists(p.startsWith)).diff(known)
   if unmatched.nonEmpty then sys.error(s"overrides that match no block: ${unmatched.toVector.sorted.mkString(", ")}")
   val existing =
@@ -84,8 +111,14 @@ def inventory(root: Path, out: Path): Unit =
     f.blocks.map { b =>
       val status = f.exemption
         .map(why => s"exempt:$why")
-        .getOrElse(if b.directive then "directive" else if f.selfPrinted(b) then "help-text" else "counted")
-      List(f.path, f.module, f.language.label, b.lineRange, b.lines.toString, b.kind, status, b.summary).mkString("\t")
+        .getOrElse(
+          if b.directive then "directive"
+          else if f.selfPrinted(b) then "help-text"
+          else if f.allowedDoc(b) then "api-doc"
+          else "counted"
+        )
+      List(f.path, f.module, f.language.label, b.lineRange, b.lines.toString, f.verdict(b), status, b.summary)
+        .mkString("\t")
     }
   }
   Files.write(out, ("path\tmodule\tlanguage\tlines\tspan\tkind\tstatus\tsummary" +: rows).asJava, UTF_8)
@@ -121,7 +154,7 @@ def apply(root: Path, decisionsFile: Path, prefixes: Seq[String]): Unit =
   var removedBlocks = 0
   decisions.groupBy(_.path).toVector.sortBy(_._1).foreach { (path, rows) =>
     val file = CommentScope.default.file(root, path).getOrElse(sys.error(s"$path: not a file in the comment scope"))
-    val byRange = file.counted.map(b => b.lineRange -> b).toMap
+    val byRange = reviewable(file).map(b => b.lineRange -> b).toMap
     val chosen = rows.map { d =>
       byRange.getOrElse(d.lines, sys.error(s"$path:${d.lines}: no comment block spans exactly these lines now"))
     }
@@ -137,12 +170,14 @@ def apply(root: Path, decisionsFile: Path, prefixes: Seq[String]): Unit =
   val root = Path.of(".").toAbsolutePath.normalize
   (mode, args.toList) match
     case ("inventory", out :: Nil)                                     => inventory(root, Path.of(out))
-    case ("show", prefixes) if prefixes.nonEmpty                       => show(root, prefixes)
+    case ("show", prefixes) if prefixes.nonEmpty                       => show(root, prefixes, kept = false)
+    case ("show-kept", prefixes) if prefixes.nonEmpty                  => show(root, prefixes, kept = true)
+    case ("trim-tags", prefixes) if prefixes.nonEmpty                  => trimTags(root, prefixes)
     case ("decide", overrides :: out :: prefixes) if prefixes.nonEmpty =>
       decide(root, Path.of(overrides), Path.of(out), prefixes)
     case ("apply", decisions :: prefixes) => apply(root, Path.of(decisions), prefixes)
     case _                                =>
       sys.error(
-        "usage: inventory <out.tsv> | show <path prefix>... | decide <overrides.tsv> <decisions.tsv> <path prefix>... | " +
+        "usage: inventory <out.tsv> | show <path prefix>... | show-kept <path prefix>... | decide <overrides.tsv> <decisions.tsv> <path prefix>... | " +
           "apply <decisions.tsv> [path prefix]..."
       )
