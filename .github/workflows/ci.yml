@@ -485,6 +485,10 @@ jobs:
         run: |
           npm ci
           npx playwright install chromium
+      - name: the machine the budgets are measured on (CPU, memory, graphics)
+        run: |
+          sysctl -n machdep.cpu.brand_string hw.ncpu hw.memsize
+          system_profiler SPDisplaysDataType || true
       - name: the speed budgets (the `budgets:` tests of the files of `npm run test:browser`; over a budget warns)
         continue-on-error: true
         timeout-minutes: 40

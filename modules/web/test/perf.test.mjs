@@ -134,7 +134,10 @@ async function withPerfPage(run, viewport, { source = 'online' } = {}) {
 
 test('budgets: first render, map pan, timeline drag, hover cards, filter typing, article open', async () => {
   await withPerfPage(async ({ page, cdp }) => {
-    within('firstRender', await paths.firstRender(page, baseURL));
+    const first = await paths.firstRender(page, baseURL);
+    if (report) console.log(`# browser ${JSON.stringify(await page.evaluate(() => ({ version: navigator.userAgent,
+      cores: navigator.hardwareConcurrency, map: window.histmersionMap.capabilities() })))}`);
+    within('firstRender', first);
     await quiet(page);
     within('memoryAfterLoad', await memory(page, cdp));
     within('mapPan', await paths.mapPan(page));
