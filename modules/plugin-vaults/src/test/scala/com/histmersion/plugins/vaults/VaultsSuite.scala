@@ -151,6 +151,23 @@ class VaultsSuite extends munit.FunSuite:
     )
     assert((System.nanoTime - t0).nanos < 10.seconds)
 
+  test("keepassxc batch: a refusal the tool's stderr carries only after it exited is still read"):
+    val d = bin()
+    script(
+      d,
+      "keepassxc-cli",
+      "(sleep 1; echo 'Error while reading the database: Invalid credentials were provided.' >&2) &\nexit 1\n"
+    )
+    val db = Files.writeString(d.resolve("v.kdbx"), "")
+    val v = registered(
+      KeePassXcPlugin(),
+      s"""database = "$db", password = "env:KP"""",
+      Ctx(Map("PATH" -> d.toString), Map(Secret.Ref.Env(Secret.Ref.Env.Name("KP")) -> "master-pw"))
+    )
+    val r = v.resolveAll(List(Secret.Vault.ResolveRef("A"), Secret.Vault.ResolveRef("B")))
+    assertEquals(r.keySet, Set("A", "B"))
+    assert(r.values.forall(_.left.exists(_.sentences.mkString("; ").contains("the database is locked"))), r)
+
   test("pure helpers: the problem line, the value without its line break, arguments that look like options"):
     assertEquals(
       Processes.Result.Err("\n  Error: locked \nmore").firstLine,
