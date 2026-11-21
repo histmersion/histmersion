@@ -250,9 +250,6 @@ helper	web:web/BaseMaps.scala	BaseMaps about BaseMap	1
 helper	web:web/PointKinds.scala	PointKinds about PointKind	1
 helper	web:web/map/Engines.scala	Engines about Engine	1
 helper	web:web/map/ShapeHits.scala	ShapeHits about ShapeHit	1
-html-newtype	api:api/media/AssetLinks.scala	an …Html newtype over String: markup any text builds, beside api.Html	1
-html-newtype	core:domain/Highlight.scala	an …Html newtype over String: markup any text builds, beside api.Html	1
-html-newtype	server:server/HtmlRender.scala	an …Html newtype over String: markup any text builds, beside api.Html	1
 html-newtype	upstreams:upstreams/landing/RepositoryLanding.scala	an …Html newtype over String: markup any text builds, beside api.Html	1
 html-newtype	upstreams:upstreams/media/MediaText.scala	an …Html newtype over String: markup any text builds, beside api.Html	1
 layer	api:api/research/Article.scala	the client names a package outside api	1
@@ -807,7 +804,7 @@ unwrap	api:api/automation/AgentLeaseInfo.scala	.value outside a boundary	2
 unwrap	api:api/automation/AgentMode.scala	.value outside a boundary	4
 unwrap	api:api/automation/AgentRole.scala	.value outside a boundary	1
 unwrap	api:api/automation/Agents.scala	.value outside a boundary	44
-unwrap	api:api/automation/Approval.scala	.value outside a boundary	8
+unwrap	api:api/automation/Approval.scala	.value outside a boundary	6
 unwrap	api:api/automation/ApprovalDigest.scala	.value outside a boundary	14
 unwrap	api:api/automation/Goal.scala	.value outside a boundary	8
 unwrap	api:api/automation/GoalsExport.scala	.value outside a boundary	14
@@ -850,7 +847,7 @@ unwrap	api:api/catalogue/Lpf.scala	.value outside a boundary	31
 unwrap	api:api/catalogue/MapArea.scala	.value outside a boundary	1
 unwrap	api:api/catalogue/Period.scala	.value outside a boundary	1
 unwrap	api:api/catalogue/PeriodO.scala	.value outside a boundary	26
-unwrap	api:api/catalogue/Place.scala	.value outside a boundary	60
+unwrap	api:api/catalogue/Place.scala	.value outside a boundary	59
 unwrap	api:api/catalogue/PlacesJobKinds.scala	.value outside a boundary	3
 unwrap	api:api/catalogue/PresetMenu.scala	.value outside a boundary	22
 unwrap	api:api/catalogue/PresetRegion.scala	.value outside a boundary	3
@@ -860,7 +857,7 @@ unwrap	api:api/catalogue/TileLayer.scala	.value outside a boundary	1
 unwrap	api:api/checks/FormatField.scala	.value outside a boundary	2
 unwrap	api:api/checks/FormatRule.scala	.value outside a boundary	3
 unwrap	api:api/checks/FormatSeverity.scala	.value outside a boundary	2
-unwrap	api:api/checks/Lint.scala	.value outside a boundary	27
+unwrap	api:api/checks/Lint.scala	.value outside a boundary	26
 unwrap	api:api/exchange/Bundle.scala	.value outside a boundary	11
 unwrap	api:api/exchange/EditionsPolicy.scala	.value outside a boundary	1
 unwrap	api:api/exchange/InitPlan.scala	.value outside a boundary	4
@@ -907,7 +904,7 @@ unwrap	api:api/library/Tree.scala	.value outside a boundary	33
 unwrap	api:api/maintenance/Storage.scala	.value outside a boundary	21
 unwrap	api:api/maintenance/Vacuum.scala	.value outside a boundary	7
 unwrap	api:api/media/AssetLink.scala	.value outside a boundary	4
-unwrap	api:api/media/AssetLinks.scala	.value outside a boundary	26
+unwrap	api:api/media/AssetLinks.scala	.value outside a boundary	25
 unwrap	api:api/media/Iiif.scala	.value outside a boundary	7
 unwrap	api:api/media/ImageSize.scala	.value outside a boundary	11
 unwrap	api:api/media/MediaCount.scala	.value outside a boundary	3
@@ -915,13 +912,9 @@ unwrap	api:api/media/MediaCoversReport.scala	.value outside a boundary	8
 unwrap	api:api/media/MediaImportReport.scala	.value outside a boundary	21
 unwrap	api:api/media/MediaList.scala	.value outside a boundary	4
 unwrap	api:api/media/MediaProvider.scala	.value outside a boundary	1
-unwrap	api:api/personal/Bookmark.scala	.value outside a boundary	5
-unwrap	api:api/personal/ItemKey.scala	.value outside a boundary	1
-unwrap	api:api/personal/MapZoom.scala	.value outside a boundary	1
-unwrap	api:api/personal/Note.scala	.value outside a boundary	3
+unwrap	api:api/personal/Bookmark.scala	.value outside a boundary	2
 unwrap	api:api/personal/PersonalIds.scala	.value outside a boundary	2
 unwrap	api:api/personal/Target.scala	.value outside a boundary	6
-unwrap	api:api/personal/ViewState.scala	.value outside a boundary	1
 unwrap	api:api/plugins/PluginSet.scala	.value outside a boundary	2
 unwrap	api:api/plugins/PluginState.scala	.value outside a boundary	1
 unwrap	api:api/research/Article.scala	.value outside a boundary	128
@@ -935,7 +928,7 @@ unwrap	api:api/research/Critiques.scala	.value outside a boundary	20
 unwrap	api:api/research/DraftMode.scala	.value outside a boundary	3
 unwrap	api:api/research/DriftKind.scala	.value outside a boundary	2
 unwrap	api:api/research/ReviewState.scala	.value outside a boundary	3
-unwrap	api:api/settings/ConfigEdit.scala	.value outside a boundary	4
+unwrap	api:api/settings/ConfigEdit.scala	.value outside a boundary	2
 unwrap	api:api/settings/ConfigFileInfo.scala	.value outside a boundary	1
 unwrap	api:api/text/WikiLinks.scala	.value outside a boundary	11
 unwrap	api:api/views/AutopilotStatus.scala	.value outside a boundary	1
@@ -947,20 +940,20 @@ unwrap	core:domain/AgentVerify.scala	.value outside a boundary	37
 unwrap	core:domain/ArticleReviewStatus.scala	.value outside a boundary	35
 unwrap	core:domain/Attribution.scala	.value outside a boundary	4
 unwrap	core:domain/AutoEnrich.scala	.value outside a boundary	4
-unwrap	core:domain/AutopilotPolicy.scala	.value outside a boundary	96
+unwrap	core:domain/AutopilotPolicy.scala	.value outside a boundary	94
 unwrap	core:domain/BrowserDownload.scala	.value outside a boundary	19
 unwrap	core:domain/CodexRetention.scala	.value outside a boundary	13
-unwrap	core:domain/CompareRuns.scala	.value outside a boundary	18
-unwrap	core:domain/CompileArticle.scala	.value outside a boundary	64
+unwrap	core:domain/CompareRuns.scala	.value outside a boundary	17
+unwrap	core:domain/CompileArticle.scala	.value outside a boundary	63
 unwrap	core:domain/CoreQuota.scala	.value outside a boundary	36
 unwrap	core:domain/Cron.scala	.value outside a boundary	11
 unwrap	core:domain/DeepTime.scala	.value outside a boundary	5
 unwrap	core:domain/EnrichSource.scala	.value outside a boundary	76
 unwrap	core:domain/FilterInference.scala	.value outside a boundary	11
 unwrap	core:domain/GoalFocus.scala	.value outside a boundary	59
-unwrap	core:domain/Highlight.scala	.value outside a boundary	3
+unwrap	core:domain/Highlight.scala	.value outside a boundary	2
 unwrap	core:domain/HintProposals.scala	.value outside a boundary	12
-unwrap	core:domain/HttpPolicy.scala	.value outside a boundary	12
+unwrap	core:domain/HttpPolicy.scala	.value outside a boundary	11
 unwrap	core:domain/IngestBacklog.scala	.value outside a boundary	21
 unwrap	core:domain/JsonRead.scala	.value outside a boundary	1
 unwrap	core:domain/ManagerPolicy.scala	.value outside a boundary	66
@@ -970,9 +963,9 @@ unwrap	core:domain/PassageFinder.scala	.value outside a boundary	14
 unwrap	core:domain/PlanArticles.scala	.value outside a boundary	20
 unwrap	core:domain/PlanGoal.scala	.value outside a boundary	41
 unwrap	core:domain/PlanReadSchedule.scala	.value outside a boundary	2
-unwrap	core:domain/ReviewArticle.scala	.value outside a boundary	187
+unwrap	core:domain/ReviewArticle.scala	.value outside a boundary	179
 unwrap	core:domain/ReviewLedger.scala	.value outside a boundary	68
-unwrap	core:domain/SchedulerPolicy.scala	.value outside a boundary	54
+unwrap	core:domain/SchedulerPolicy.scala	.value outside a boundary	53
 unwrap	core:domain/Scheduling.scala	.value outside a boundary	5
 unwrap	core:domain/SeedPlanDefaults.scala	.value outside a boundary	5
 unwrap	core:domain/WatchManagerDefaults.scala	.value outside a boundary	7
@@ -999,7 +992,7 @@ unwrap	core:domain/catalogue/places/PlaceReview.scala	.value outside a boundary	
 unwrap	core:domain/catalogue/places/PointAreas.scala	.value outside a boundary	21
 unwrap	core:domain/library/acquisition/CandidateDedupe.scala	.value outside a boundary	3
 unwrap	core:domain/library/acquisition/Ident.scala	.value outside a boundary	7
-unwrap	core:domain/library/findings/FindingPlan.scala	.value outside a boundary	43
+unwrap	core:domain/library/findings/FindingPlan.scala	.value outside a boundary	41
 unwrap	core:domain/library/sources/Citekeys.scala	.value outside a boundary	5
 unwrap	core:domain/library/sources/MergeText.scala	.value outside a boundary	31
 unwrap	core:domain/library/sources/SourceMatcher.scala	.value outside a boundary	80
@@ -1021,7 +1014,6 @@ unwrap	core:util/jobs/JobAction.scala	.value outside a boundary	1
 unwrap	core:util/jobs/JobControlRules.scala	.value outside a boundary	1
 unwrap	core:util/ocr/Chunker.scala	.value outside a boundary	2
 unwrap	core:util/text/ComparedText.scala	.value outside a boundary	1
-unwrap	core:util/text/Fingerprint.scala	.value outside a boundary	3
 unwrap	core:util/text/MinHash.scala	.value outside a boundary	6
 unwrap	files:domain/catalogue/places/PlaceSeed.scala	.value outside a boundary	5
 unwrap	files:domain/library/sources/SourceNote.scala	.value outside a boundary	28
@@ -1036,7 +1028,6 @@ unwrap	files:util/data/exchange/MergeResolutionsFile.scala	.value outside a boun
 unwrap	files:util/data/mirror/Frontmatter.scala	.value outside a boundary	3
 unwrap	files:util/plugins/PluginKit.scala	.value outside a boundary	10
 unwrap	files:util/storage/SafePath.scala	.value outside a boundary	4
-unwrap	plugin-api:plugin/Licence.scala	.value outside a boundary	1
 unwrap	plugin-api:plugin/LicenceReader.scala	.value outside a boundary	3
 unwrap	plugin-api:plugin/MediaCollection.scala	.value outside a boundary	2
 unwrap	plugin-api:plugin/Plugin.scala	.value outside a boundary	5
@@ -1050,7 +1041,7 @@ unwrap	plugin-host:pluginhost/HostAiHttp.scala	.value outside a boundary	10
 unwrap	plugin-host:pluginhost/HostCollection.scala	.value outside a boundary	5
 unwrap	plugin-host:pluginhost/HostLicences.scala	.value outside a boundary	5
 unwrap	plugin-host:pluginhost/HostLog.scala	.value outside a boundary	4
-unwrap	plugin-host:pluginhost/HttpAnswer.scala	.value outside a boundary	3
+unwrap	plugin-host:pluginhost/HttpAnswer.scala	.value outside a boundary	2
 unwrap	plugin-host:pluginhost/JavaHttpTransport.scala	.value outside a boundary	7
 unwrap	plugin-host:pluginhost/MediaSettings.scala	.value outside a boundary	7
 unwrap	plugin-host:pluginhost/OaFetcher.scala	.value outside a boundary	3
@@ -1075,12 +1066,10 @@ unwrap	plugin-resolver:pluginresolver/LibDirectory.scala	.value outside a bounda
 unwrap	plugin-resolver:pluginresolver/ModuleCoordinates.scala	.value outside a boundary	2
 unwrap	plugin-resolver:pluginresolver/ModuleKey.scala	.value outside a boundary	3
 unwrap	plugin-resolver:pluginresolver/Pom.scala	.value outside a boundary	2
-unwrap	plugin-resolver:pluginresolver/RepositoryUrl.scala	.value outside a boundary	1
 unwrap	plugin-resolver:pluginresolver/Resolution.scala	.value outside a boundary	1
 unwrap	plugin-resolver:pluginresolver/ServerModules.scala	.value outside a boundary	1
 unwrap	plugin-vaults:plugins/vaults/BitwardenPlugin.scala	.value outside a boundary	5
 unwrap	plugin-vaults:plugins/vaults/BitwardenVault.scala	.value outside a boundary	7
-unwrap	plugin-vaults:plugins/vaults/KeePassXcMessage.scala	.value outside a boundary	1
 unwrap	plugin-vaults:plugins/vaults/KeePassXcPlugin.scala	.value outside a boundary	11
 unwrap	plugin-vaults:plugins/vaults/KeePassXcSession.scala	.value outside a boundary	23
 unwrap	plugin-vaults:plugins/vaults/KeePassXcVault.scala	.value outside a boundary	32
@@ -1099,7 +1088,7 @@ unwrap	server:domain/automation/agents/AgentGenerator.scala	.value outside a bou
 unwrap	server:domain/automation/agents/AgentLease.scala	.value outside a boundary	1
 unwrap	server:domain/automation/agents/AgentRuntime.scala	.value outside a boundary	2
 unwrap	server:domain/automation/agents/AgentStateControllers.scala	.value outside a boundary	3
-unwrap	server:domain/automation/agents/AgentStateService.scala	.value outside a boundary	10
+unwrap	server:domain/automation/agents/AgentStateService.scala	.value outside a boundary	9
 unwrap	server:domain/automation/agents/AgentTreeWriter.scala	.value outside a boundary	8
 unwrap	server:domain/automation/agents/AgentTrees.scala	.value outside a boundary	15
 unwrap	server:domain/automation/agents/AgentsControllers.scala	.value outside a boundary	137
@@ -1279,12 +1268,10 @@ unwrap	server:domain/media/imports/SearchedCollection.scala	.value outside a bou
 unwrap	server:domain/media/links/AssetLinkService.scala	.value outside a boundary	26
 unwrap	server:domain/media/links/AssetLinksControllers.scala	.value outside a boundary	10
 unwrap	server:domain/personal/MarkTarget.scala	.value outside a boundary	24
-unwrap	server:domain/personal/MarkTime.scala	.value outside a boundary	3
 unwrap	server:domain/personal/PersonalControllers.scala	.value outside a boundary	20
 unwrap	server:domain/personal/PersonalState.scala	.value outside a boundary	2
 unwrap	server:domain/personal/PersonalUuid.scala	.value outside a boundary	1
 unwrap	server:domain/personal/SearchWords.scala	.value outside a boundary	2
-unwrap	server:domain/personal/TargetLabel.scala	.value outside a boundary	1
 unwrap	server:domain/personal/bookmarks/Bookmark.scala	.value outside a boundary	7
 unwrap	server:domain/personal/bookmarks/BookmarkService.scala	.value outside a boundary	4
 unwrap	server:domain/personal/marks/Readable.scala	.value outside a boundary	5
@@ -1300,7 +1287,7 @@ unwrap	server:domain/research/articles/ArticleReadable.scala	.value outside a bo
 unwrap	server:domain/research/articles/ArticleService.scala	.value outside a boundary	73
 unwrap	server:domain/research/articles/ArticlesControllers.scala	.value outside a boundary	94
 unwrap	server:domain/research/articles/ArticlesData.scala	.value outside a boundary	7
-unwrap	server:domain/research/articles/PageBuilder.scala	.value outside a boundary	45
+unwrap	server:domain/research/articles/PageBuilder.scala	.value outside a boundary	41
 unwrap	server:domain/research/articles/lint/SourceTextFormatting.scala	.value outside a boundary	5
 unwrap	server:domain/research/workflows/CompileArticlePipeline.scala	.value outside a boundary	69
 unwrap	server:domain/research/workflows/InferFilterPipeline.scala	.value outside a boundary	31
@@ -1310,18 +1297,18 @@ unwrap	server:domain/research/workflows/ReviewArticlePipeline.scala	.value outsi
 unwrap	server:domain/research/workflows/ReviewLedgerService.scala	.value outside a boundary	6
 unwrap	server:domain/research/workflows/ReviewManagerKind.scala	.value outside a boundary	93
 unwrap	server:domain/research/workflows/SeedManagerKind.scala	.value outside a boundary	64
-unwrap	server:server/ArticleHtml.scala	.value outside a boundary	9
+unwrap	server:server/ArticleHtml.scala	.value outside a boundary	4
 unwrap	server:server/Bootstrap.scala	.value outside a boundary	26
 unwrap	server:server/Composition.scala	.value outside a boundary	25
 unwrap	server:server/Deps.scala	.value outside a boundary	3
 unwrap	server:server/GazetteerPaths.scala	.value outside a boundary	5
-unwrap	server:server/HtmlRender.scala	.value outside a boundary	30
+unwrap	server:server/HtmlRender.scala	.value outside a boundary	29
 unwrap	server:server/HttpDownload.scala	.value outside a boundary	4
 unwrap	server:server/LibraryWorkflowSite.scala	.value outside a boundary	2
 unwrap	server:server/ListQueries.scala	.value outside a boundary	22
 unwrap	server:server/MarkdownHtml.scala	.value outside a boundary	1
 unwrap	server:server/MarkdownLint.scala	.value outside a boundary	21
-unwrap	server:server/Pages.scala	.value outside a boundary	118
+unwrap	server:server/Pages.scala	.value outside a boundary	90
 unwrap	server:server/SeedNoteFiles.scala	.value outside a boundary	5
 unwrap	server:server/ServerGraph.scala	.value outside a boundary	20
 unwrap	server:server/ServerToolFiles.scala	.value outside a boundary	2
@@ -1421,12 +1408,12 @@ unwrap	server:util/storage/MemoryStore.scala	.value outside a boundary	27
 unwrap	server:util/storage/PruneReport.scala	.value outside a boundary	1
 unwrap	server:util/storage/Resources.scala	.value outside a boundary	1
 unwrap	server:util/storage/Storage.scala	.value outside a boundary	1
-unwrap	server:util/storage/Store.scala	.value outside a boundary	17
+unwrap	server:util/storage/Store.scala	.value outside a boundary	4
 unwrap	server:util/system/JvmHome.scala	.value outside a boundary	1
 unwrap	upstreams:domain/library/acquisition/LandingSettings.scala	.value outside a boundary	8
 unwrap	upstreams:domain/library/acquisition/WorkLookup.scala	.value outside a boundary	11
 unwrap	upstreams:upstreams/archiveorg/ArchiveOrg.scala	.value outside a boundary	15
-unwrap	upstreams:upstreams/dating/CatalogDating.scala	.value outside a boundary	24
+unwrap	upstreams:upstreams/dating/CatalogDating.scala	.value outside a boundary	12
 unwrap	upstreams:upstreams/http/UpstreamHttp.scala	.value outside a boundary	1
 unwrap	upstreams:upstreams/http/Url.scala	.value outside a boundary	1
 unwrap	upstreams:upstreams/identifiers/Identifiers.scala	.value outside a boundary	2
@@ -1439,13 +1426,10 @@ unwrap	upstreams:upstreams/settings/UpstreamSettings.scala	.value outside a boun
 unwrap	upstreams:upstreams/wikidata/WikidataClasses.scala	.value outside a boundary	1
 unwrap	upstreams:upstreams/wikidata/WikidataEntities.scala	.value outside a boundary	3
 unwrap	upstreams:upstreams/wikidata/WikidataStatement.scala	.value outside a boundary	2
-unwrap	values:ByteCount.scala	.value outside a boundary	1
-unwrap	values:Latitude.scala	.value outside a boundary	1
-unwrap	values:Longitude.scala	.value outside a boundary	1
 unwrap	values:domain/Licence.scala	.value outside a boundary	12
 unwrap	values:domain/automation/AgentRole.scala	.value outside a boundary	1
-unwrap	values:domain/automation/Approval.scala	.value outside a boundary	8
-unwrap	values:domain/automation/Goal.scala	.value outside a boundary	4
+unwrap	values:domain/automation/Approval.scala	.value outside a boundary	6
+unwrap	values:domain/automation/Goal.scala	.value outside a boundary	3
 unwrap	values:domain/automation/ItemStatus.scala	.value outside a boundary	1
 unwrap	values:domain/automation/Manager.scala	.value outside a boundary	2
 unwrap	values:domain/automation/Pipeline.scala	.value outside a boundary	1
@@ -1454,7 +1438,7 @@ unwrap	values:domain/automation/Run.scala	.value outside a boundary	1
 unwrap	values:domain/automation/ScheduleKind.scala	.value outside a boundary	3
 unwrap	values:domain/automation/TargetKind.scala	.value outside a boundary	1
 unwrap	values:domain/catalogue/AttestationTarget.scala	.value outside a boundary	1
-unwrap	values:domain/catalogue/Place.scala	.value outside a boundary	9
+unwrap	values:domain/catalogue/Place.scala	.value outside a boundary	6
 unwrap	values:domain/catalogue/places/Wikidata.scala	.value outside a boundary	1
 unwrap	values:domain/library/Confidence.scala	.value outside a boundary	3
 unwrap	values:domain/library/Edge.scala	.value outside a boundary	4
