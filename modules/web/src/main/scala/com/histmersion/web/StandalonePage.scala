@@ -26,7 +26,7 @@ object StandalonePage:
     // the prompt when the server runs another build than this page's (PageBuild)
     val host = document.createElement("div")
     val _ = document.body.appendChild(host)
-    val _ = com.raquo.laminar.api.L.render(host, PageBuild.element)
+    val _ = com.raquo.laminar.api.L.render(host, PageBuild.current.element)
     topBar()
 
   /** The web UI's top bar in place of the page's "← Histmersion" line: the four places stay one click away from a
@@ -36,7 +36,7 @@ object StandalonePage:
     import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
     Option(document.querySelector("body > .nav")).foreach { nav =>
       ApiClient.config().foreach { ui =>
-        PageBuild.check(ui.buildId)
+        PageBuild.current.check(ui.buildId)
         nav.textContent = ""
         nav.classList.add("has-top-bar")
         // a source and an article are both read in Library

@@ -54,7 +54,7 @@ object App:
     Theme.install()
     configF.foreach { ui =>
       config = ui
-      PageBuild.check(ui.buildId)
+      PageBuild.current.check(ui.buildId)
       UiState.init(ui)
       Viewport.init(ui)
       MobileChrome.install()
@@ -112,7 +112,7 @@ object App:
         NoteEditor.element,
         ContextMenu.element,
         Flash.element,
-        PageBuild.element,
+        PageBuild.current.element,
         statusElement
       )
 

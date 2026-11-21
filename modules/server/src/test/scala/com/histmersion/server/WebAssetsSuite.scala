@@ -3,10 +3,10 @@ package server
 
 import com.histmersion.api.WebPaths
 import com.histmersion.api.Html.html
-import com.histmersion.api.instance.UiConfig
+import com.histmersion.api.instance.BuildId
 import com.histmersion.domain.Title
 import com.histmersion.server.instance.WebBundle
-import com.histmersion.util.storage.Resources
+import com.histmersion.util.storage.{Blob, Resources}
 
 /** Regression guards for how the web UI is shipped. The UI itself is Scala.js (`modules/web`, with its own suites);
   * these read the served assets off the classpath — exactly as `Static.read` serves them — and assert the properties
@@ -19,7 +19,19 @@ class WebAssetsSuite extends munit.FunSuite:
 
   private def asset(name: String): String = Static.read(Static.ReadPath(s"web/$name")).value
 
-  private val bundle = WebBundle(UiConfig.BuildId("0123456789abcdef0123456789abcdef"))
+  private val bundle = WebBundle(BuildId("0123456789abcdef0123456789abcdef"))
+
+  test("G109: the bundle's id is read as the build wrote it, its line break dropped; no file, or no id in it, is none"):
+    def read(files: (String, String)*) =
+      WebBundle.read(Resources.InMemory(files.map((k, v) => Resources.ResourceName(k) -> Blob.Text(v)).toMap)).id
+    assertEquals(read("web/build-id.txt" -> "0123456789abcdef0123456789abcdef\n"), bundle.id)
+    assertEquals(read(), BuildId(""))
+    assertEquals(read("web/build-id.txt" -> "not a build"), BuildId(""))
+    assertEquals(WebBundle(BuildId("")).header, BuildId.Header -> "", "an empty header, which no answer carries")
+    assertEquals(
+      bundle.shell(Static.Asset("""<a href="/x?v={{build}}">{{build}}</a>""")).value,
+      """<a href="/x?v=0123456789abcdef0123456789abcdef">0123456789abcdef0123456789abcdef</a>"""
+    )
 
   test("the page mounts the Scala.js app into #app and loads the bundle"):
     val html = asset("index.html")
@@ -37,9 +49,9 @@ class WebAssetsSuite extends munit.FunSuite:
     assert(js.contains(s"\"$id\""), "the id is written into the bundle (web PageBuild.compiled)")
     assert(!js.contains("HISTMERSION-BUILD-ID-UNSET"), "the placeholder is left in the bundle")
     val served = WebBundle.read(Resources.classpath(getClass.getClassLoader))
-    assertEquals(served.id, UiConfig.BuildId(id))
-    assertEquals(served.header, UiConfig.BuildHeader -> id)
-    val shell = served.shell(Static.read(Static.ReadPath("web/index.html")))
+    assertEquals(served.id, BuildId(id))
+    assertEquals(served.header, BuildId.Header -> id)
+    val shell = served.shell(Static.read(Static.ReadPath("web/index.html"))).value
     assert(shell.contains(s"""<link rel="preload" href="/web/app.bundle.js?v=$id" as="script" />"""), shell)
     assert(shell.contains(s"""<script type="module" src="/web/boot.js?v=$id"></script>"""), shell)
     assert(!shell.contains(WebBundle.Token), shell)

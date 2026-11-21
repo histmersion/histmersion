@@ -2,7 +2,7 @@ package com.histmersion
 package server
 
 import com.histmersion.api.plugins.PluginsReport
-import com.histmersion.api.instance.UiConfig
+import com.histmersion.api.instance.{BuildId, UiConfig}
 import com.histmersion.config.UiSettings
 import io.scalaland.chimney.dsl.*
 import com.histmersion.api.catalogue.Year
@@ -35,7 +35,7 @@ object UiConfigViews:
       baseMapSource: UiConfig.BaseMapSource,
       mapLanguage: UiConfig.MapLanguage,
       setupDue: UiConfig.SetupDue = UiConfig.SetupDue(false),
-      buildId: UiConfig.BuildId = UiConfig.BuildId("")
+      buildId: BuildId = BuildId("")
   ): UiConfig =
     ui.into[UiConfig]
       .withFieldConst(_.setupDue, setupDue)

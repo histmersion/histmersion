@@ -11,7 +11,7 @@ import com.histmersion.config.DbConfig
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.api.Html
-import com.histmersion.api.instance.UiConfig
+import com.histmersion.api.instance.BuildId
 import com.histmersion.server.instance.WebBundle
 
 /** The HTML pages are the only place this service emits markup, and both places it interpolated a caller- or
@@ -22,7 +22,7 @@ class HtmlEscapeSuite extends munit.FunSuite:
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val payload = Title("""<script>alert(1)</script>""")
-  private val bundle = WebBundle(UiConfig.BuildId("0123456789abcdef0123456789abcdef"))
+  private val bundle = WebBundle(BuildId("0123456789abcdef0123456789abcdef"))
 
   test("ArticleHtml.page escapes the title into <title> (pure)"):
     val html = ArticleHtml.page(payload, Html.sanitize("<p>body</p>"), PageKind.Source, bundle).markup

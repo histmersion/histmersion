@@ -48,7 +48,7 @@ import com.histmersion.api.catalogue.{
   TilesApi
 }
 import com.histmersion.api.exchange.{MergeApplyJob, MergeApplyRequest, MergePlan, MergeResolutions, MergeSession}
-import com.histmersion.api.instance.{About, UiApi, UiConfig, UiNotices}
+import com.histmersion.api.instance.{About, BuildId, UiApi, UiConfig, UiNotices}
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.library.{
   AcquireApi,
@@ -123,7 +123,7 @@ object ApiClient:
     // no answer at all (the fetch itself failed) is a transport failure, never a problem the server sent
     unreachable(req.send(backend)).flatMap { resp =>
       // the server's build, before its answer is read: an upgraded server is said so, not a decode failure (G109)
-      resp.header(UiConfig.BuildHeader).foreach(id => PageBuild.check(UiConfig.BuildId(id)))
+      resp.header(BuildId.Header).flatMap(BuildId.parse).foreach(PageBuild.current.check)
       val code = resp.code.code
       resp.body match
         case DecodeResult.Value(Right(o))    => Future.successful(o)

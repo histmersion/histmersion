@@ -382,7 +382,7 @@ final class HttpApi(
       .serverLogic[Identity] { segments =>
         val path = segments.filter(_.nonEmpty)
         if WebPaths.isApp(path.map(WebPaths.Segment(_))) then
-          Right(deps.webBundle.shell(Static.read(Static.ReadPath("web/index.html"))))
+          Right(deps.webBundle.shell(Static.read(Static.ReadPath("web/index.html"))).value)
         else Left(s"not found: /${segments.mkString("/")}")
       }
 
