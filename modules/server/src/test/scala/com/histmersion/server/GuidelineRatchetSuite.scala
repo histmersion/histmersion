@@ -6,6 +6,8 @@ import java.nio.file.{Files, Path}
 import java.util.concurrent.TimeUnit
 import scala.jdk.CollectionConverters.*
 
+import comments.{CommentedFile, CommentScope}
+
 /** Every rule of the guideline inventory (`tools/refactor/GuidelineInventory.scala`: G3misplaced, G9prefix, G44…G49,
   * G58raw and the silent classes silentCompare, silentInterp, silentPure) as a ratchet: a count per rule, module and
   * scope (main or test) in `architecture/guidelines-ratchet.tsv` that may only go down.
@@ -31,7 +33,7 @@ class GuidelineRatchetSuite extends munit.FunSuite:
       s"$RatchetFile is missing: restore it from git (git checkout -- $RatchetFile); it is never regenerated, since a " +
         "regenerated file would accept any count"
     )
-    val findings = Inventory.findings
+    val findings = Inventory.findings ++ Comments.findings
     val actual = Ratchet.counts(findings)
     val listed = Ratchet.parse(Files.readAllLines(RatchetFile, UTF_8).asScala.toList)
     val rises = Ratchet.rises(listed, actual)
@@ -88,6 +90,43 @@ class GuidelineRatchetSuite extends munit.FunSuite:
     )
     val listed = Ratchet.parse(Files.readAllLines(RatchetFile, UTF_8).asScala.toList)
     assert(!listed.keys.exists(_.rule == Ratchet.Pinned), s"$RatchetFile lists ${Ratchet.Pinned}: it is pinned at 0")
+
+  test(
+    "G22: no file has more comments than at the merge base with the pilot, and a file the base does not have has none"
+  ):
+    val git = RatchetBase.Git(Path.of("."))
+    git.base(sys.env) match
+      case Left(why)   => fail(why)
+      case Right(base) =>
+        val changed = Comments.changedSince(git, base.commit)
+        val renamed = Comments.renamedSince(git, base.commit)
+        val counts =
+          Comments.files.filter(f => f.counted.nonEmpty && changed(f.path)).map(f => f.path -> f.counted.size)
+        def atBase(path: String): Int =
+          val before = renamed.getOrElse(path, path)
+          git
+            .show(base.commit, before)
+            .flatMap(lines => CommentScope.default.parsed(before, lines.mkString("\n")))
+            .fold(0)(_.counted.size)
+        val grown = Comments.grown(counts.toList, atBase)
+        assert(
+          grown.isEmpty,
+          s"comments added since ${base.describe} (${Comments.Rule}: code carries no comments; a design decision goes " +
+            "to an ADR in docs/adr/, a shortcut to an issue; see .claude/skills/delete-comment):\n" +
+            grown.map((path, was, now) => s"  $path: $was -> $now").mkString("\n")
+        )
+
+  test("G22: a file whose comments outnumber its base's grows; a new file counts zero at the base"):
+    val counts = List("a.scala" -> 2, "b.scala" -> 3, "new.sh" -> 1)
+    val base = Map("a.scala" -> 2, "b.scala" -> 1)
+    assertEquals(
+      Comments.grown(counts, base.getOrElse(_, 0)),
+      List(("b.scala", 1, 3), ("new.sh", 0, 1))
+    )
+
+  test("G22: a renamed file is compared with its old path"):
+    val status = "R087\tmodules/a/Old.scala\tmodules/b/New.scala\nM\tbuild.sbt\nA\tx.sh\n"
+    assertEquals(Comments.renames(status), Map("modules/b/New.scala" -> "modules/a/Old.scala"))
 
   test("findings are counted per rule, module and scope"):
     val findings = List(
@@ -289,6 +328,35 @@ object GuidelineRatchetSuite:
           s"sbt compile Test/compile):\n$tail"
       )
       Finding.parse(Files.readAllLines(Report, UTF_8).asScala.toList)
+
+  object Comments:
+    val Rule: String = "G22comment"
+
+    lazy val files: Vector[CommentedFile] = CommentScope.default.files(Path.of("."))
+
+    lazy val findings: List[Finding] =
+      files.toList.flatMap(f =>
+        f.counted.map(b => Finding(Rule, f.module, f.path, b.firstLine, s"${f.language.label}:${b.kind}"))
+      )
+
+    def grown(counts: List[(String, Int)], atBase: String => Int): List[(String, Int, Int)] =
+      counts
+        .map((path, now) => (path, atBase(path), now))
+        .filter((_, was, now) => now > was)
+        .sortBy(_._1)
+
+    def renames(nameStatus: String): Map[String, String] =
+      nameStatus.linesIterator
+        .map(_.split("\t").toList)
+        .collect { case status :: from :: to :: Nil if status.startsWith("R") => to -> from }
+        .toMap
+
+    def renamedSince(git: RatchetBase.Git, commit: String): Map[String, String] =
+      renames(git.ok("diff", "-M", "--name-status", commit).getOrElse(""))
+
+    def changedSince(git: RatchetBase.Git, commit: String): Set[String] =
+      (git.ok("diff", "--name-only", commit).getOrElse("") + "\n" +
+        git.ok("ls-files", "--others", "--exclude-standard").getOrElse("")).linesIterator.filter(_.nonEmpty).toSet
 
   /** The files changed since a file was last committed: committed since, staged, unstaged and untracked. */
   object Changes:
