@@ -49,6 +49,8 @@ object GuidelineInventory {
     roleSuffixes: List[String] = List("Suite", "Spec", "Test", "Tests", "Service", "Repo", "Repository", "Controllers", "Controller",
       "Routes", "Row", "Rows", "Markdown", "Render", "Renderer", "Codec", "Codecs", "Cmd", "View", "Views", "Page", "Api", "Client",
       "Store", "Config", "Json", "Schema", "Fixtures", "Fixture", "Support", "Impl", "Ops", "Syntax", "Rule"),
+    // a test suite named for its subject (`PagesSuite`, `PagesOracleSuite`) is how a test is named: no G9 finding
+    testSuiteSuffixes: List[String] = List("Suite", "Spec", "Test", "Tests"),
     collectionOwners: List[String] = List("scala/collection/", "scala/Option#", "scala/Some#", "scala/Array#", "scala/package.", "scala/Predef.", "scala/IArray"),
     collectionOps: List[String] = List("find", "filter", "filterNot", "exists", "forall", "sortBy", "sortWith", "map", "flatMap", "contains",
       "count", "collect", "collectFirst", "groupBy", "groupMap", "partition", "distinctBy", "maxBy", "minBy", "maxByOption", "minByOption",
@@ -91,7 +93,7 @@ object GuidelineInventory {
   val legend: List[(String, String)] = List(
     "G3misplaced" -> "HEURISTIC: a def in a standalone object (no class/trait/enum/type of that name beside it) whose first explicit parameter has a project type",
     "G9prefix" -> "type `<Entity><Property>` while a top-level (or same-owner) type `<Entity>` exists in the same module",
-    "G9prefixRole" -> "as G9prefix, but the suffix is a role word (Suite, Repo, Service, Row, Markdown, ...)",
+    "G9prefixRole" -> "as G9prefix, but the suffix is a role word (Suite, Repo, Service, Row, Markdown, ...); a test-scope type named as a test suite (…Suite, …Spec, …Test, …Tests) is none: it is named for its subject",
     "G44" -> "Iron `.value`, or a newtype built with apply/applyUnsafe/assume/option/either, outside the newtype's companion and outside boundary files. Literal constructors are no finding: `X(\"lit\")`, `X(-3300)`, and, for an unconstrained (Pure) newtype only, `X(s\"...\")` / `X(f\"...\")` whose every splice is a literal (nothing to validate). An interpolation that splices anything else is built from that value and counts as it would (decision 2026-11-15: `X(s\"$y\")` is `X(y)`): a newtype or plain value spliced is a construction (`;interpolation`), a `.value` spliced is the unwrap alone (as `X(y.value)`); a refined newtype built from any interpolation is one",
     "G44conversion" -> "the same inside a *Controller(s)/*Routes file where the value feeds a domain newtype constructor/parse directly, or the construction itself",
     "G44plaindef" -> "a public def with a String/Int/Long/Double/Boolean parameter that some call site feeds with `.value` of a newtype (reported at the def)",
@@ -1120,7 +1122,8 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
     // G9/G50 prefix names within a module
     val defs = typeDefs.asScala.toList.distinct
     val byModule = defs.groupBy(_.module)
-    val prefixRows = defs.flatMap { d =>
+    val suites = (d: TypeDef) => d.scope == "test" && policy.testSuiteSuffixes.exists(d.name.endsWith)
+    val prefixRows = defs.filterNot(suites).flatMap { d =>
       val pool = byModule(d.module)
       val entities = pool.filter(e => e.name.length < d.name.length && d.name.startsWith(e.name) && d.name.charAt(e.name.length).isUpper &&
         Set("class", "trait", "enum", "newtype", "object")(e.kind) && (e.owner.isEmpty || e.owner == d.owner))
