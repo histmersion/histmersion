@@ -1,9 +1,3 @@
-"""Converter contract tests (plan §1.8): text AND embedded images come back from /convert.
-
-A tiny PDF is generated with pymupdf (already a dependency, so no reportlab needed): one page of
-text plus one embedded PNG. The assertions are the contract the Scala server depends on —
-`markdown`, `pages`, and an `images` list whose links appear in the Markdown as `assets/<name>`.
-"""
 from __future__ import annotations
 
 import base64
@@ -21,7 +15,6 @@ TEXT = "Sea Peoples and the Bronze Age collapse"
 
 
 def _png(width: int = 64, height: int = 48, colour: tuple[int, int, int] = (200, 40, 40)) -> bytes:
-    """A minimal, valid RGB PNG — written by hand so the test needs no image library."""
 
     def chunk(kind: bytes, data: bytes) -> bytes:
         return (
@@ -101,18 +94,15 @@ def test_images_are_deduplicated_by_sha256(pdf_bytes):
     assert len(names) == len(set(names))
 
 
-# ── the pure helpers ──────────────────────────────────────────────────────────────────────────────
 def test_rewrite_only_touches_known_images():
     md = "![a](/tmp/x/fig-1.png)\n![b](other.png)\n[link](/tmp/x/fig-1.png)"
     out = converter._rewrite(md, {"fig-1.png": "fig-1.png"})
     assert "![a](assets/fig-1.png)" in out
     assert "![b](other.png)" in out
-    assert "[link](/tmp/x/fig-1.png)" in out  # a plain link is not an image link
+    assert "[link](/tmp/x/fig-1.png)" in out
 
 
 def test_asset_names_drop_the_temporary_input_file_prefix(pdf_bytes):
-    # pymupdf4llm names images after the input file, which here is a temp copy — the public URL must
-    # not carry that name.
     body = _convert(pdf_bytes)
     for img in body["images"]:
         assert not img["name"].startswith("upload"), img["name"]
@@ -151,7 +141,7 @@ def test_inspect_refuses_what_it_cannot_read():
 def test_inspect_counts_pages_without_a_text_layer(pdf_bytes):
     pymupdf = pytest.importorskip("pymupdf")
     doc = pymupdf.open(stream=pdf_bytes, filetype="pdf")
-    doc.new_page()  # a page with no text at all — what a scan looks like to pymupdf
+    doc.new_page()
     out = io.BytesIO()
     doc.save(out)
     res = client.post("/inspect", files={"file": ("two.pdf", out.getvalue(), "application/pdf")})
@@ -159,12 +149,6 @@ def test_inspect_counts_pages_without_a_text_layer(pdf_bytes):
     assert res.json() == {"pages": 2, "scanned": 1}
 
 
-# ── OCR on the fast path (#700/#740) ─────────────────────────────────────────────────────────────
-# ABBYY FineReader writes a page as a full-page scan with the recognised text laid over it. With an
-# OCR engine installed (the bundle has RapidOCR through docling), pymupdf4llm's decision model flags
-# such a page — the image "contains text" — and ADDS the OCR text to the text layer already there:
-# every line came out twice. The OCR engine is replaced by a fake here, so the test needs neither
-# RapidOCR nor Tesseract and is deterministic.
 SCAN_LINES = [
     "Phoenician archives are abundant in ancient sources.",
     "The library of Carthage passed to the Numidian kings.",
@@ -174,8 +158,6 @@ SCAN_LINES = [
 
 
 def _scan_page_pdf(with_text_layer: bool) -> bytes:
-    """One page: a full-page raster of some printed lines and, optionally, those lines again as a
-    text layer on top — the ABBYY shape. Without the text layer it is a plain scan."""
     pymupdf = pytest.importorskip("pymupdf")
     printed = pymupdf.open()
     page = printed.new_page()
@@ -195,7 +177,6 @@ def _scan_page_pdf(with_text_layer: bool) -> bytes:
 
 @pytest.fixture
 def fake_ocr(monkeypatch):
-    """Stand-in OCR engine: 'recognises' the printed lines as invisible text, like a real one."""
     layout = pytest.importorskip("pymupdf4llm.helpers.document_layout")
     calls: list[int] = []
 

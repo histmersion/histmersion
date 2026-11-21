@@ -1,23 +1,3 @@
-"""Histmersion OCR/convert sidecar — the one piece kept in Python (docling gives the best OCR).
-
-POST /convert  (multipart: file=<pdf|epub>, force_quality, dpi, max_image_px)
-  -> {"markdown": "...", "pages": N, "images": [{"name", "mime", "base64", "width", "height"}]}
-POST /thumbnail (multipart: file=<image>, max_px)
-  -> {"mime", "base64", "width", "height"}   a card's thumbnail (a book cover, a paper's figure)
-GET  /health   -> {"status", "docling": bool, "dpi", "maxImagePx"}
-
-Fast path: pymupdf4llm (text-bearing PDFs/EPUBs) with `write_images=True`, so figures survive the
-conversion instead of being dropped. When `force_quality` is set (image-only scans) docling runs
-instead, exporting with `ImageRefMode.REFERENCED` so its pictures land on disk as files too.
-
-Either way the image links in the returned Markdown are rewritten to the RELATIVE form
-`assets/<name>`, which is exactly how the Scala server stores them (table `assets`) and serves them
-(`GET /source/{citekey}/assets/{name}`) — the same Markdown therefore works on disk and on the web.
-Images are deduplicated by sha256 (scans repeat the same logo on every page) and downscaled so that
-neither side is larger than `max_image_px`.
-
-The converter is STATELESS: nothing is written outside a per-request temporary directory.
-"""
 from __future__ import annotations
 
 import base64
@@ -33,14 +13,11 @@ from pathlib import Path
 from fastapi import FastAPI, File, Form, UploadFile
 from fastapi.responses import JSONResponse
 
-# Defaults; the Scala server sends its own (config `histmersion.converter.dpi` / `max-image-px`) per call.
 DEFAULT_DPI = int(os.environ.get("HISTMERSION_CONVERTER_DPI", "150"))
 DEFAULT_MAX_IMAGE_PX = int(os.environ.get("HISTMERSION_CONVERTER_MAX_IMAGE_PX", "2000"))
 
 IMAGE_SUFFIXES = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp"}
 
-# The upload is streamed to the temporary file in blocks of this size — a scanned book runs to
-# hundreds of MB, and holding a whole one in memory per concurrent request is what OOMs the sidecar.
 UPLOAD_CHUNK_BYTES = 1024 * 1024
 
 app = FastAPI(title="Histmersion converter")
@@ -55,10 +32,6 @@ def _docling_available() -> bool:
         return False
 
 
-# Importing docling (torch, transformers) takes ~30 s cold. /health used to do it on every call, so a
-# freshly started converter answered its first health checks too late and the server reported it
-# degraded. Now: a cheap "is it installed" answer at once, the real import warmed in the background
-# (which also makes the first OCR job start fast), and its result reported once known.
 _DOCLING_INSTALLED = importlib.util.find_spec("docling") is not None
 _docling_ok: bool | None = None
 
@@ -104,14 +77,11 @@ async def convert(
     return {"markdown": markdown, "pages": pages, "images": images, "filename": file.filename}
 
 
-SCANNED_TEXT_CHARS = 20  # less embedded text than this (a page number at most): the page is an image
+SCANNED_TEXT_CHARS = 20
 
 
 @app.post("/inspect")
 async def inspect(file: UploadFile = File(...)):
-    """The page count and how many pages are scans (no text layer), cheaply — no conversion: the
-    server scales its patience to them, since a 600-page book legitimately takes far longer than a
-    10-page article, and a scanned page far longer than one with text."""
     suffix = os.path.splitext(file.filename or "upload.pdf")[1] or ".pdf"
     with tempfile.TemporaryDirectory() as work:
         src = Path(work) / f"upload{suffix}"
@@ -123,20 +93,17 @@ async def inspect(file: UploadFile = File(...)):
 
             with pymupdf.open(str(src)) as doc:
                 pages = doc.page_count
-                # a page with no text layer has to be OCR'd, which is several times slower
                 scanned = sum(1 for page in doc if len(page.get_text().strip()) < SCANNED_TEXT_CHARS)
         except Exception as e:  # noqa: BLE001 — an unreadable file is the caller's answer, not a crash
             return JSONResponse(status_code=422, content={"error": f"cannot read the document: {e}"})
     return {"pages": pages, "scanned": scanned}
 
 
-THUMB_MAX_UPLOAD = 32 * 1024 * 1024  # a cover or a figure; anything larger is not an image we show
+THUMB_MAX_UPLOAD = 32 * 1024 * 1024
 
 
 @app.post("/thumbnail")
 async def thumbnail(file: UploadFile = File(...), max_px: int = Form(330)):
-    """A small rendition of one image for a hover card (the native server has no image codec that
-    works there). JPEG for photographs, PNG when the picture has transparency; never upscaled."""
     raw = await file.read(THUMB_MAX_UPLOAD + 1)
     if not raw or len(raw) > THUMB_MAX_UPLOAD:
         return JSONResponse(status_code=422, content={"error": "empty or too large"})
@@ -165,7 +132,6 @@ def _thumbnail(raw: bytes, max_px: int) -> tuple[bytes, str, int, int]:
         return buf.getvalue(), mime, im.size[0], im.size[1]
 
 
-# ── conversion ────────────────────────────────────────────────────────────────────────────────────
 def _to_markdown(
     path: str, work: Path, force_quality: bool, dpi: int, max_px: int
 ) -> tuple[str, int, list[dict]]:
@@ -173,7 +139,6 @@ def _to_markdown(
         quality = _docling(path, work, dpi, max_px)
         if quality is not None:
             return quality
-        # docling not installed in this image → fall through to the fast path
     return _pymupdf(path, work, dpi, max_px)
 
 
@@ -187,21 +152,12 @@ def _pymupdf(path: str, work: Path, dpi: int, max_px: int) -> tuple[str, int, li
         path, write_images=True, image_path=str(imgdir), image_format="png", dpi=dpi,
         **_ocr_kwargs(),
     )
-    # `with` so the document (and its mmap of the file) is released before the temp dir is removed
     with pymupdf.open(path) as doc:
         pages = doc.page_count
     return _finish(md, imgdir, max_px, pages, stem=_safe_name(Path(path).name))
 
 
 def _ocr_kwargs() -> dict:
-    """pymupdf4llm's OCR, restricted to pages that have NO text layer.
-
-    pymupdf4llm (layout mode, with RapidOCR installed — the bundle has it through docling) OCRs
-    every page its decision model flags, and a page that is a full-page scan with the recognised
-    text laid over it (what ABBYY FineReader writes, issue #700) is flagged: the image "contains
-    text". The OCR text is then ADDED to the text layer that is already there, and every line comes
-    out twice. Such a page already has its text; only a page without one needs OCR. Without an OCR
-    engine (or without the layout module) nothing is passed and pymupdf4llm decides as before."""
     try:
         from pymupdf4llm.helpers import document_layout  # type: ignore
     except Exception:  # noqa: BLE001 — the legacy (non-layout) path has no OCR to restrict
@@ -215,19 +171,17 @@ def _ocr_kwargs() -> dict:
 def _ocr_textless_pages_only(engine):
     def ocr(page, **kwargs):
         if _has_text_layer(page):
-            return  # the page's own text is kept; OCR would only repeat it
+            return
         engine(page, **kwargs)
 
     return ocr
 
 
 def _has_text_layer(page) -> bool:
-    """At least a line's worth of extractable text — the same test `/inspect` counts scans with."""
     return len(page.get_text().strip()) >= SCANNED_TEXT_CHARS
 
 
 def _docling(path: str, work: Path, dpi: int, max_px: int) -> tuple[str, int, list[dict]] | None:
-    """docling with REFERENCED images: pictures are written next to the Markdown, not inlined."""
     try:
         from docling.datamodel.base_models import InputFormat  # type: ignore
         from docling.datamodel.pipeline_options import PdfPipelineOptions  # type: ignore
@@ -237,13 +191,11 @@ def _docling(path: str, work: Path, dpi: int, max_px: int) -> tuple[str, int, li
         return None
 
     opts = PdfPipelineOptions()
-    # the native bundle ships the layout/table models next to the interpreter; without this docling
-    # would download them into ~/.cache/huggingface on first use (and fail offline)
     artifacts = os.environ.get("DOCLING_ARTIFACTS_PATH")
     if artifacts:
         opts.artifacts_path = artifacts
     opts.generate_picture_images = True
-    opts.images_scale = max(1.0, dpi / 72.0)  # docling scales relative to 72 dpi
+    opts.images_scale = max(1.0, dpi / 72.0)
     conv = DocumentConverter(format_options={InputFormat.PDF: PdfFormatOption(pipeline_options=opts)})
     doc = conv.convert(path).document
     out = work / "docling"
@@ -255,7 +207,6 @@ def _docling(path: str, work: Path, dpi: int, max_px: int) -> tuple[str, int, li
     return _finish(md, out, max_px, pages)
 
 
-# ── images ────────────────────────────────────────────────────────────────────────────────────────
 IMG_LINK = re.compile(r"!\[([^\]]*)\]\(\s*<?([^)>\s]+)>?(\s+\"[^\"]*\")?\s*\)")
 
 
@@ -265,13 +216,6 @@ def _finish(md: str, imgdir: Path, max_px: int, pages: int, stem: str = "") -> t
 
 
 def _asset_name(name: str, stem: str) -> str:
-    """`upload.pdf-0001-05.png` -> `fig-0001-05.png`.
-
-    pymupdf4llm names an extracted image after the INPUT FILE (`<input>-<page>-<n>.<ext>`), and the
-    input file here is a temporary copy — so without this the stored asset (and its public URL)
-    would carry a meaningless `upload.pdf-` prefix forever. The Markdown links are rewritten through
-    the same mapping, so renaming is safe.
-    """
     safe = _safe_name(name)
     if stem and safe.startswith(stem + "-"):
         return "fig-" + safe[len(stem) + 1 :]
@@ -279,11 +223,6 @@ def _asset_name(name: str, stem: str) -> str:
 
 
 def _collect(imgdir: Path, max_px: int, stem: str = "") -> tuple[list[dict], dict[str, str]]:
-    """Every image file under `imgdir`, deduplicated by sha256 and downscaled to `max_px`.
-
-    Returns the asset list plus a map from each ORIGINAL file's basename to the asset name it ended
-    up as, which is what the Markdown links are rewritten through.
-    """
     images: list[dict] = []
     by_sha: dict[str, str] = {}
     by_basename: dict[str, str] = {}
@@ -296,7 +235,7 @@ def _collect(imgdir: Path, max_px: int, stem: str = "") -> tuple[list[dict], dic
             continue
         raw, width, height, mime = _normalise(raw, f.suffix.lower(), max_px)
         sha = hashlib.sha256(raw).hexdigest()
-        if sha in by_sha:  # the same picture on twenty pages is stored once
+        if sha in by_sha:
             by_basename[f.name] = by_sha[sha]
             continue
         name = _unique(_asset_name(f.name, stem), taken)
@@ -317,7 +256,6 @@ def _collect(imgdir: Path, max_px: int, stem: str = "") -> tuple[list[dict], dic
 
 
 def _normalise(raw: bytes, suffix: str, max_px: int) -> tuple[bytes, int, int, str]:
-    """Downscale to `max_px` on the longest side; report the final dimensions and mime type."""
     mime = IMAGE_SUFFIXES.get(suffix, "application/octet-stream")
     try:
         from PIL import Image  # type: ignore
@@ -337,7 +275,6 @@ def _normalise(raw: bytes, suffix: str, max_px: int) -> tuple[bytes, int, int, s
 
 
 def _safe_name(name: str) -> str:
-    """A link-safe, path-free asset name (the DB primary key is `(citekey, name)`)."""
     cleaned = re.sub(r"[^A-Za-z0-9._-]", "-", Path(name).name).strip("-")
     return cleaned or "image.png"
 
@@ -354,7 +291,6 @@ def _unique(name: str, taken: set[str]) -> str:
 
 
 def _rewrite(md: str, by_basename: dict[str, str]) -> str:
-    """Point every image link at `assets/<name>` — the form the server stores and serves."""
 
     def sub(m: re.Match[str]) -> str:
         alt, target = m.group(1), m.group(2)
