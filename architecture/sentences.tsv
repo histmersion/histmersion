@@ -27,8 +27,8 @@ com/histmersion/api/automation/Agents.ProbeAnswer#problems().#1	modules/api/src/
 com/histmersion/api/automation/Agents.ProbeAnswer#problems().#2	modules/api/src/main/scala/com/histmersion/api/automation/Agents.scala	Invalid.Missing		rationale is required	same	
 com/histmersion/api/automation/ListFilters.known().#0	modules/api/src/main/scala/com/histmersion/api/automation/ListFilters.scala	Invalid.Unknown		unknown source status 'dubious' (one of: current, contested)	same	
 com/histmersion/api/automation/ListFilters.range().#0	modules/api/src/main/scala/com/histmersion/api/automation/ListFilters.scala	Invalid.Inconsistent	Invalid.Exclusion.Ordered	give lat, lon together, or none of them	same	
-com/histmersion/api/automation/ListFilters.timeBound().#0	modules/api/src/main/scala/com/histmersion/api/automation/ListFilters.scala	Invalid.Unreadable		from: '13oo BCE' is not a year (e.g. 1300 BCE, 530 CE, -1300)	same	
-com/histmersion/api/automation/ListFilters.timeBound().#1	modules/api/src/main/scala/com/histmersion/api/automation/ListFilters.scala	Invalid.Unreadable		from: '13oo BCE' is not a year (e.g. 1300 BCE, 530 CE, -1300)	same	
+com/histmersion/api/automation/ListFilters.timeBound().#0	modules/api/src/main/scala/com/histmersion/api/automation/ListFilters.scala	Invalid.Unreadable		from: '13oo BCE' is not a year (e.g. 1300 BCE, 530 CE, -1300)	removed	
+com/histmersion/api/automation/ListFilters.timeBound().#1	modules/api/src/main/scala/com/histmersion/api/automation/ListFilters.scala	Invalid.Unreadable		from: '13oo BCE' is not a year (e.g. 1300 BCE, 530 CE, -1300)	removed	
 com/histmersion/api/automation/Managers.ManagerConfig.bool().#0	modules/api/src/main/scala/com/histmersion/api/automation/Managers.scala	Invalid.Unknown		unknown source status 'dubious' (one of: current, contested)	same	
 com/histmersion/api/automation/Managers.ManagerConfig.parse().#0	modules/api/src/main/scala/com/histmersion/api/automation/Managers.scala	Invalid.OutOfRange	Invalid.Bounds	latitude 91 is not between -90 and 90	same	
 com/histmersion/api/automation/Managers.ManagerConfig.parse().#1	modules/api/src/main/scala/com/histmersion/api/automation/Managers.scala	Invalid.Unknown		unknown source status 'dubious' (one of: current, contested)	same	
@@ -209,6 +209,7 @@ com/histmersion/api/research/Coverage.Reason.merge().#1	modules/api/src/main/sca
 com/histmersion/api/research/CritiqueReason.parse().#0	modules/api/src/main/scala/com/histmersion/api/research/CritiqueReason.scala	Invalid.Unreadable		from: '13oo BCE' is not a year (e.g. 1300 BCE, 530 CE, -1300)	same	
 com/histmersion/api/research/CritiqueReason.tidy().#0	modules/api/src/main/scala/com/histmersion/api/research/CritiqueReason.scala	Invalid.OutOfRange	Invalid.Bounds	latitude 91 is not between -90 and 90	same	
 com/histmersion/api/research/CritiqueRef.parse().#0	modules/api/src/main/scala/com/histmersion/api/research/CritiqueRef.scala	Invalid.Unreadable		from: '13oo BCE' is not a year (e.g. 1300 BCE, 530 CE, -1300)	same	
+com/histmersion/api/time/TimeBound$package.TimeBound.instant().#0	modules/api/src/main/scala/com/histmersion/api/time/TimeBound.scala	Invalid.Unreadable		from: '13oo BCE' is not a year (e.g. 1300 BCE, 530 CE, -1300)	same	
 com/histmersion/api/problem/ProblemJson.bare().#0	modules/api/src/main/scalajs/com/histmersion/api/problem/ProblemJson.scala	Relayed		the server is reindexing	same	
 com/histmersion/api/problem/ProblemJson.unknown().#0	modules/api/src/main/scalajs/com/histmersion/api/problem/ProblemJson.scala	Relayed		the server is reindexing	same	
 com/histmersion/cli/AcquireCmd.Perform#apply().#0	modules/cli/src/main/scala/com/histmersion/cli/AcquireCmd.scala	Unclassified		--acquire-item applies to a file upload; for an identifier, tick the item off with `histmersion queue done <id>` once the source is in	same	
@@ -553,6 +554,10 @@ com/histmersion/domain/media/assets/NewFigure.of().#0	modules/core/src/main/scal
 com/histmersion/domain/media/assets/NewFigure.of().#1	modules/core/src/main/scala/com/histmersion/domain/media/assets/NewFigure.scala	Invalid.Broken	Invalid.Rule.AssetEmpty	cron: '61 * * * *': minute: '61' is not a number from 0 to 59	same	
 com/histmersion/domain/media/assets/NewFigure.of().#2	modules/core/src/main/scala/com/histmersion/domain/media/assets/NewFigure.scala	Invalid.Broken	Invalid.Rule.AssetBytes	cron: '61 * * * *': minute: '61' is not a number from 0 to 59	same	
 com/histmersion/util/jobs/JobControlRules.decide().#0	modules/core/src/main/scala/com/histmersion/util/jobs/JobControlRules.scala	Conflict.Job		job 0193f1c4 has not started yet: cancel it instead	same	
+com/histmersion/util/log/LogQuery.parse().#0	modules/core/src/main/scala/com/histmersion/util/log/LogQuery.scala	Invalid.Unreadable		from: '13oo BCE' is not a year (e.g. 1300 BCE, 530 CE, -1300)	same	
+com/histmersion/util/log/LogQuery.parse().#1	modules/core/src/main/scala/com/histmersion/util/log/LogQuery.scala	Invalid.Unknown		unknown source status 'dubious' (one of: current, contested)	same	
+com/histmersion/util/log/LogQuery.parse().#2	modules/core/src/main/scala/com/histmersion/util/log/LogQuery.scala	Invalid.Unknown		unknown source status 'dubious' (one of: current, contested)	same	
+com/histmersion/util/log/LogQuery.position().#0	modules/core/src/main/scala/com/histmersion/util/log/LogQuery.scala	Invalid.Broken	Invalid.Rule.LogPage	cron: '61 * * * *': minute: '61' is not a number from 0 to 59	same	
 com/histmersion/domain/automation/agents/AgentRepo.approvalPage(+1).#0	modules/db/src/main/scala/com/histmersion/domain/automation/agents/AgentRepo.scala	NotFound.Entity		No source 'anthony2007'	same	
 com/histmersion/domain/automation/agents/AgentRepo.page(+1).#0	modules/db/src/main/scala/com/histmersion/domain/automation/agents/AgentRepo.scala	NotFound.Entity		No source 'anthony2007'	same	
 com/histmersion/domain/automation/agents/ModelSettingsRepo.allowances().#0	modules/db/src/main/scala/com/histmersion/domain/automation/agents/ModelSettingsRepo.scala	Io.Corrupt		the PNG data at terrarium tile 3/4/2 holds 1000 units, not 1024	same	
@@ -1525,6 +1530,7 @@ com/histmersion/util/jobs/JobControlService.conflict().#0	modules/server/src/mai
 com/histmersion/util/jobs/JobControlService.notFound().#0	modules/server/src/main/scala/com/histmersion/util/jobs/JobControlService.scala	NotFound.Entity		No source 'anthony2007'	same	
 com/histmersion/util/jobs/JobListing#job().#0	modules/server/src/main/scala/com/histmersion/util/jobs/JobListing.scala	NotFound.Entity		No source 'anthony2007'	same	
 com/histmersion/util/jobs/JobStops#resume().#0	modules/server/src/main/scala/com/histmersion/util/jobs/JobStops.scala	Unclassified		job {id} cannot be resumed by this server	same	
+com/histmersion/util/log/LogControllers#problem().#0	modules/server/src/main/scala/com/histmersion/util/log/LogControllers.scala	NotFound.Entity		No source 'anthony2007'	same	
 com/histmersion/util/mcp/McpOut.missing().#0	modules/server/src/main/scala/com/histmersion/util/mcp/McpOut.scala	Invalid.Missing		rationale is required	same	
 com/histmersion/util/mcp/McpOut.unknown().#0	modules/server/src/main/scala/com/histmersion/util/mcp/McpOut.scala	Invalid.Unknown		unknown source status 'dubious' (one of: current, contested)	same	
 com/histmersion/util/ocr/ConverterClient#thumbnail().#0	modules/server/src/main/scala/com/histmersion/util/ocr/ConverterClient.scala	Unclassified		this converter makes no thumbnails	same	
