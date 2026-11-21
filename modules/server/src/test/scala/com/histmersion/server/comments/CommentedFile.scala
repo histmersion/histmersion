@@ -26,11 +26,21 @@ final case class CommentedFile(path: String, language: SourceLanguage, text: Str
   def selfPrinted(block: CommentBlock): Boolean =
     printedLines.exists((from, until) => block.firstLine <= until && block.lastLine >= from)
 
-  def counted: Vector[CommentBlock] =
-    if exemption.isDefined then Vector.empty else blocks.filterNot(b => b.directive || selfPrinted(b))
+  def apiDoc(block: CommentBlock): Option[ApiDoc] =
+    Option.when(
+      language == SourceLanguage.Scala && block.kind == "doc" && path.contains("/src/main/") &&
+        ApiDoc.PublicApiModules.contains(module)
+    )(ApiDoc(block.text, ApiDoc.declarationAfter(text, block.end)))
 
-  def exempt: Vector[CommentBlock] =
-    if exemption.isDefined then blocks else blocks.filter(b => b.directive || selfPrinted(b))
+  def allowedDoc(block: CommentBlock): Boolean = apiDoc(block).exists(_.allowed)
+
+  def verdict(block: CommentBlock): String = apiDoc(block).fold(block.kind)(_.verdict)
+
+  private def kept(block: CommentBlock): Boolean = block.directive || selfPrinted(block) || allowedDoc(block)
+
+  def counted: Vector[CommentBlock] = if exemption.isDefined then Vector.empty else blocks.filterNot(kept)
+
+  def exempt: Vector[CommentBlock] = if exemption.isDefined then blocks else blocks.filter(kept)
 
   def lineCount: Int = if text.isEmpty then 0 else text.linesIterator.size
 

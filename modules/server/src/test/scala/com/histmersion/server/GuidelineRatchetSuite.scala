@@ -365,7 +365,7 @@ object GuidelineRatchetSuite:
 
     extension (f: CommentedFile)
       def found: List[Finding] =
-        f.counted.toList.map(b => Finding(Rule, f.module, f.path, b.firstLine, s"${f.language.label}:${b.kind}"))
+        f.counted.toList.map(b => Finding(Rule, f.module, f.path, b.firstLine, s"${f.language.label}:${f.verdict(b)}"))
 
     lazy val findings: List[Finding] = files.toList.flatMap(_.found)
 
