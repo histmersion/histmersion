@@ -543,6 +543,19 @@ class ContractsSuite extends munit.FunSuite:
     assertEquals(Rules.genericCodecGivens(code).map(code.substring(0, _).count(_ == '\n') + 1), List(4, 5, 6, 7, 8, 11))
     assertEquals(lines("json:x/Codecs.scala"), Nil)
 
+  test("a newtype's instance lifted from its base type's is no codec written by hand; any other generic given is"):
+    val code =
+      """object NewtypeCodecs:
+        |  given schema: [T] => (m: RefinedType.Mirror[T]) => (base: Schema[m.BaseType]) => Schema[T] = base.as[T]
+        |  inline given codec: [T] => (m: RefinedType.Mirror[T]) => (base: JsonValueCodec[m.BaseType]) =>
+        |    JsonValueCodec[T] = make
+        |  given plain: [T] => (m: RefinedType.Mirror[T] { type ConstraintType = Pure }) =>
+        |    (base: Codec[String, m.BaseType, TextPlain]) => Codec[String, T, TextPlain] = make
+        |  given wrapped: [T] => (m: Mirror[T]) => (b: JsonKeyCodec[m.Base]) => JsonKeyCodec[T] = make
+        |  given box: [A] => (c: JsonValueCodec[A]) => JsonValueCodec[Box[A]] = make
+        |""".stripMargin
+    assertEquals(Rules.genericCodecGivens(code).map(code.substring(0, _).count(_ == '\n') + 1), List(7, 8))
+
   test("a CanEqual given is no codec given: CanEqual.derived and a hand-written CanEqual do not count for derives"):
     val code =
       """object Equalities:
@@ -999,9 +1012,19 @@ object ContractsSuite:
         .findAllMatchIn(code)
         .flatMap { m =>
           val h = header(code, m.end - "given".length)
-          Option.when(Generic.findFirstIn(h).isDefined && CodecResult.findFirstIn(resultType(h)).isDefined)(m.start)
+          Option.when(
+            Generic.findFirstIn(h).isDefined && CodecResult.findFirstIn(resultType(h)).isDefined &&
+              NewtypeLift.findFirstIn(h).isEmpty
+          )(m.start)
         }
         .toList
+
+    /** A newtype's instance lifted from its base type's (`given x: [T] => (m: RefinedType.Mirror[T]) => (base:
+      * Codec[m.BaseType]) => Codec[T]`): how every newtype gets one (a newtype's instance maps its base type's, G45's
+      * lifted type class), which no derives clause can request, since an opaque type has none. No codec of a record is
+      * written by hand there.
+      */
+    private val NewtypeLift = "\\bRefinedType\\.Mirror\\[".r
 
     /** The text after a header's last `=>` or `:` at depth 0 (the whole header when it has neither). */
     private def resultType(h: String): String =
