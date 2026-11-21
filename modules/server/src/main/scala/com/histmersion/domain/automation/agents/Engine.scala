@@ -236,13 +236,15 @@ final class Engine(
             )
           ))
         scribe.warn(s"agent run $id stalled at step ${c.seq} (no sign of life for $mins min); killing its processes")
+        c.thread.interrupt()
         c.procs.asScala.toList.foreach(p =>
           try CliProcess.kill(p)
           catch case _: Exception => ()
         )
-        c.thread.interrupt()
         id
       }
+
+  private[histmersion] def stalled(id: Run.Id): Option[Halt] = Option(running.get(id)).flatMap(_.stalled)
 
   /** The scope thread; a `var` because the pool starts after construction (no side effects in initialisers) and stops
     * in tests.

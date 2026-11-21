@@ -1505,6 +1505,10 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     while (!java.nio.file.Files.exists(f) || java.nio.file.Files.readString(f).trim.isEmpty) && System
         .currentTimeMillis() < deadline
     do Thread.sleep(50)
+    assert(
+      java.nio.file.Files.exists(f),
+      s"the scripted CLI never wrote $f: it did not start (was its step replayed from a checkpoint?)"
+    )
     val pid = java.nio.file.Files.readString(f).trim.toLong
     java.nio.file.Files.delete(f)
     pid
@@ -1531,18 +1535,12 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
       AgentsControllers.BudgetTokens(1000L),
       origin = Origin.Manager
     )
-    val limit = baseCfg.agents.watchdog.stallMinutesFor(baseCfg.agents.providers).value.toLong * 60000L
+    val limit = stallLimit
     def once(): RunInfo =
       val t = Thread.ofVirtual().start(() => engine.execute(runId(run.id)))
       val (cli, child) = (awaitFile(dir.resolve("pid")), awaitFile(dir.resolve("child")))
-      assertEquals(
-        engine.checkStalls(PlanQuotaRepo.EpochMillis(System.currentTimeMillis() + limit / 2)),
-        Nil
-      ) // not yet
-      assertEquals(
-        engine.checkStalls(PlanQuotaRepo.EpochMillis(System.currentTimeMillis() + limit + 60000L)).map(_.value: String),
-        List(run.id)
-      )
+      assertEquals(engine.checkStalls(later(limit / 2)), Nil) // not yet
+      assertEquals(engine.checkStalls(later(limit + 60000L)).map(_.value: String), List(run.id))
       t.join(java.time.Duration.ofSeconds(20))
       assert(!t.isAlive, "the run did not settle")
       assert(dead(cli) && dead(child), "the CLI or its child is still alive")
@@ -1558,3 +1556,53 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     val third = once()
     assertEquals(third.status, "failed")
     assert(third.error.exists(_.sentence.contains("stalled 3 times")), third.error)
+
+  private def stallLimit: Long =
+    baseCfg.agents.watchdog.stallMinutesFor(baseCfg.agents.providers).value.toLong * 60000L
+
+  private def later(ms: Long): PlanQuotaRepo.EpochMillis = PlanQuotaRepo.EpochMillis(System.currentTimeMillis() + ms)
+
+  private def withholdInterrupt(): Unit =
+    val _ = Thread.interrupted()
+
+  final private class ReturnsAfterStallMarkBeforeInterrupt(engine: () => Engine, limit: Long) extends PipelineDef:
+    val pipeline = Pipeline.EnrichSource
+    val bodies = java.util.concurrent.atomic.AtomicInteger()
+    def run(ctx: RunCtx)(using WritePermit): Either[Halt, PipelineDef.Summary] =
+      ctx
+        .code[String](AgentRepo.StepRecord.Name("killed")) {
+          val _ = bodies.incrementAndGet()
+          assertEquals(engine().checkStalls(later(limit + 60000L)).size, 1)
+          withholdInterrupt()
+          Right("what the killed CLI printed")
+        }
+        .map(PipelineDef.Summary(_))
+
+  test("watchdog: a step that comes back from a stalled run is not checkpointed; the resumed run does it again"):
+    val (a, h) = handlers(ScriptedClient(Model)); seed(h)
+    val limit = stallLimit
+    lazy val engine: Engine = Engine(
+      ds,
+      baseCfg.agents,
+      a,
+      a.engine.workflows.replaced(PipelineWorkflow.of(pipe, a.definitions))
+    )
+    lazy val pipe = ReturnsAfterStallMarkBeforeInterrupt(() => engine, limit)
+    val run = TestRuns.create(
+      ds,
+      Pipeline.EnrichSource,
+      RunTarget,
+      None,
+      BigDecimal(1),
+      AgentsControllers.BudgetTokens(1000L),
+      origin = Origin.Manager
+    )
+    engine.execute(runId(run.id))
+    val first = connect(ds)(AgentRepo.get(run.id)).get
+    assertEquals(first.status, "paused")
+    assert(first.error.exists(_.sentence.startsWith("stalled:")), first.error)
+    assert(connect(ds)(AgentRepo.steps(jobId(run.id), AgentRepo.OutputChars(100))).isEmpty, "a step was checkpointed")
+    assert(TestRuns.transition(ds, runId(run.id), RunState.Paused, RunState.Queued).isDefined)
+    engine.execute(runId(run.id))
+    assertEquals(pipe.bodies.get, 2, "the resumed run replayed the stalled step's output instead of doing it again")
+    assertEquals(connect(ds)(AgentRepo.get(run.id)).get.status, "paused")

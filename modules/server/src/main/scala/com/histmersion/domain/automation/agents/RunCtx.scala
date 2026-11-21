@@ -149,52 +149,55 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
           catch
             case e: InterruptedException => throw e
             case e: Exception            => Left(unexpected(e))
-        engine.beat(runId)
-        val attempt = AgentRepo.StepRecord.Attempt(engine.agents.runs.attempts(jobId, seq).value + 1)
-        val would = drainSkipped()
-        out match
-          case Right(o) =>
-            engine.agents.runs.record(
-              jobId,
-              AgentRepo.StepRecord(
-                seq,
-                attempt,
-                name,
-                StepKind.Code,
-                StepStatus.Done,
-                Some(AgentRepo.StepRecord.Output(o.asJson.noSpaces)),
-                None,
-                None,
-                Usage.Zero,
-                BigDecimal(0),
-                None,
-                started,
-                wouldWrite = would
-              ),
-              Nil
-            )
-            Right(o)
-          case Left(m) =>
-            engine.agents.runs.record(
-              jobId,
-              AgentRepo.StepRecord(
-                seq,
-                attempt,
-                name,
-                StepKind.Code,
-                StepStatus.Failed,
-                None,
-                None,
-                None,
-                Usage.Zero,
-                BigDecimal(0),
-                Some(Problem.Run.Failed(m.toNonEmpty)),
-                started,
-                wouldWrite = would
-              ),
-              Nil
-            )
-            Left(Halt.Fail(Problem.Run.AtStep(Problem.Run.Step.of(name), m.toNonEmpty)))
+        engine.stalled(runId) match
+          case Some(halt) => Left(halt)
+          case None       =>
+            engine.beat(runId)
+            val attempt = AgentRepo.StepRecord.Attempt(engine.agents.runs.attempts(jobId, seq).value + 1)
+            val would = drainSkipped()
+            out match
+              case Right(o) =>
+                engine.agents.runs.record(
+                  jobId,
+                  AgentRepo.StepRecord(
+                    seq,
+                    attempt,
+                    name,
+                    StepKind.Code,
+                    StepStatus.Done,
+                    Some(AgentRepo.StepRecord.Output(o.asJson.noSpaces)),
+                    None,
+                    None,
+                    Usage.Zero,
+                    BigDecimal(0),
+                    None,
+                    started,
+                    wouldWrite = would
+                  ),
+                  Nil
+                )
+                Right(o)
+              case Left(m) =>
+                engine.agents.runs.record(
+                  jobId,
+                  AgentRepo.StepRecord(
+                    seq,
+                    attempt,
+                    name,
+                    StepKind.Code,
+                    StepStatus.Failed,
+                    None,
+                    None,
+                    None,
+                    Usage.Zero,
+                    BigDecimal(0),
+                    Some(Problem.Run.Failed(m.toNonEmpty)),
+                    started,
+                    wouldWrite = would
+                  ),
+                  Nil
+                )
+                Left(Halt.Fail(Problem.Run.AtStep(Problem.Run.Step.of(name), m.toNonEmpty)))
       }
     }
 
